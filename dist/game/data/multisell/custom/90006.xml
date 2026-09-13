@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+    <npcs>
+        <npc>90000</npc> <!-- Mina -->
+    </npcs>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Forgotten Blade Edge -->
+        <production count="1" id="6688" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Basalt Battlehammer Head -->
+        <production count="1" id="6689" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Imperial Staff Head -->
+        <production count="1" id="6690" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Angel Slayer Blade -->
+        <production count="1" id="6691" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Shining Bow Shaft -->
+        <production count="1" id="6692" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Dragon Hunter Axe Blade -->
+        <production count="1" id="6693" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Saint Spear Blade -->
+        <production count="1" id="6694" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Demon Splinter Blade -->
+        <production count="1" id="6695" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Heavens Divider Edge -->
+        <production count="1" id="6696" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Arcana Mace Head -->
+        <production count="1" id="6697" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Tateossian Earring Part -->
+        <production count="1" id="6698" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Tateossian Ring Gem -->
+        <production count="1" id="6699" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Tateossian Necklace Chain -->
+        <production count="1" id="6700" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Imperial Crusader Breastplate Part -->
+        <production count="1" id="6701" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Imperial Crusader Gaiters Pattern -->
+        <production count="1" id="6702" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Imperial Crusader Gauntlets Design -->
+        <production count="1" id="6703" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Imperial Crusader Boots Design -->
+        <production count="1" id="6704" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Imperial Crusader Shield Part -->
+        <production count="1" id="6705" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Imperial Crusader Helmet Pattern -->
+        <production count="1" id="6706" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Draconic Leather Armor Part -->
+        <production count="1" id="6707" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Draconic Leather Gloves Fabric -->
+        <production count="1" id="6708" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Draconic Leather Boots Design -->
+        <production count="1" id="6709" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Draconic Leather Helmet Pattern -->
+        <production count="1" id="6710" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Major Arcana Robe Part -->
+        <production count="1" id="6711" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Major Arcana Gloves fabric -->
+        <production count="1" id="6712" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Major Arcana Boots Design -->
+        <production count="1" id="6713" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Major Arcana Circlet Pattern -->
+        <production count="1" id="6714" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Arcana Sigil Piece -->
+        <production count="1" id="13099" />
+    </item>
+</list>

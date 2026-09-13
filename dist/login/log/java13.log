@@ -1,0 +1,13 @@
+2026.09.12 17:01:08,223	INFO	3	org.l2jmobius.commons.database.DatabaseFactory	Database: HikariCP pool initialized successfully.
+2026.09.12 17:01:08,471	INFO	3	org.l2jmobius.commons.database.DatabaseFactory	Database: Initialized with a valid connection.
+2026.09.12 17:01:08,482	INFO	3	org.l2jmobius.commons.threads.ThreadPool	ThreadPool: Initializing.
+2026.09.12 17:01:08,485	INFO	3	org.l2jmobius.commons.threads.ThreadPool	...scheduled pool executor with 2 total threads.
+2026.09.12 17:01:08,485	INFO	3	org.l2jmobius.commons.threads.ThreadPool	...instant pool executor with 2 total threads.
+2026.09.12 17:01:08,486	INFO	3	org.l2jmobius.loginserver.LoginController	Loading LoginController...
+2026.09.12 17:01:08,850	INFO	3	org.l2jmobius.loginserver.LoginController	Cached 10 KeyPairs for RSA communication.
+2026.09.12 17:01:08,871	INFO	3	org.l2jmobius.loginserver.LoginController	Stored 20 keys for Blowfish communication.
+2026.09.12 17:01:08,947	INFO	3	org.l2jmobius.loginserver.GameServerTable	Loaded 127 server names.
+2026.09.12 17:01:08,963	INFO	3	org.l2jmobius.loginserver.GameServerTable	Loaded 1 registered Game Servers.
+2026.09.12 17:01:09,004	INFO	3	org.l2jmobius.loginserver.GameServerTable	Cached 10 RSA keys for Game Server communication.
+2026.09.12 17:01:09,006	INFO	3	org.l2jmobius.loginserver.LoginServer	Loaded 2 IP Bans.
+2026.09.12 17:01:09,010	SEVERE	3	org.l2jmobius.loginserver.LoginServer	FATAL: Game server listener could not be started on 192.168.0.230:9014. Reason: Cannot assign requested address: bind

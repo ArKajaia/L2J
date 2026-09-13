@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Note: If file is named "ipconfig.xml" this data will be used as network configuration, otherwise server will configure it automatically! -->
+<!-- Externalhost here (Internet IP) or Localhost IP for local test -->
+<gameserver address="10.8.0.6" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../data/xsd/ipconfig.xsd">
+	<!-- Localhost here -->
+	<define subnet="127.0.0.0/8" address="127.0.0.1" />
+	<!-- Internalhosts here (LANs IPs) -->
+	<define subnet="10.0.0.0/8" address="10.8.0.6" />
+	<define subnet="172.16.0.0/19" address="10.8.0.6"" />
+	<define subnet="192.168.0.0/16" address="10.8.0.6" />
+	<define subnet="192.168.0.0/24" address="10.8.0.6" />
+	<define subnet="192.168.1.0/24" address="10.8.0.6" />
+
+    <!-- OpenVPN Subnet (Crucial for your friend) -->
+    <define subnet="10.8.0.0/24" address="10.8.0.6" />
+
+    <!-- Catch-All Fallback (Forces everyone else to your VPN IP as well) -->
+    <define subnet="0.0.0.0/0" address="10.8.0.6" />
+</gameserver>

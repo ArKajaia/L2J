@@ -1,0 +1,24 @@
+2026.09.12 21:04:52,047	INFO	3	org.l2jmobius.commons.database.DatabaseFactory	Database: HikariCP pool initialized successfully.
+2026.09.12 21:04:52,314	INFO	3	org.l2jmobius.commons.database.DatabaseFactory	Database: Initialized with a valid connection.
+2026.09.12 21:04:52,324	INFO	3	org.l2jmobius.commons.threads.ThreadPool	ThreadPool: Initializing.
+2026.09.12 21:04:52,327	INFO	3	org.l2jmobius.commons.threads.ThreadPool	...scheduled pool executor with 2 total threads.
+2026.09.12 21:04:52,327	INFO	3	org.l2jmobius.commons.threads.ThreadPool	...instant pool executor with 2 total threads.
+2026.09.12 21:04:52,328	INFO	3	org.l2jmobius.loginserver.LoginController	Loading LoginController...
+2026.09.12 21:04:52,653	INFO	3	org.l2jmobius.loginserver.LoginController	Cached 10 KeyPairs for RSA communication.
+2026.09.12 21:04:52,670	INFO	3	org.l2jmobius.loginserver.LoginController	Stored 20 keys for Blowfish communication.
+2026.09.12 21:04:52,742	INFO	3	org.l2jmobius.loginserver.GameServerTable	Loaded 127 server names.
+2026.09.12 21:04:52,758	INFO	3	org.l2jmobius.loginserver.GameServerTable	Loaded 2 registered Game Servers.
+2026.09.12 21:04:52,828	INFO	3	org.l2jmobius.loginserver.GameServerTable	Cached 10 RSA keys for Game Server communication.
+2026.09.12 21:04:52,830	INFO	3	org.l2jmobius.loginserver.LoginServer	Loaded 2 IP Bans.
+2026.09.12 21:04:52,834	INFO	3	org.l2jmobius.loginserver.LoginServer	Game server listener is listening on *:9014.
+2026.09.12 21:04:52,844	INFO	3	org.l2jmobius.loginserver.LoginServer	LoginServer: Login client listener started on 0.0.0.0:2106.
+2026.09.12 21:05:39,350	INFO	52	org.l2jmobius.loginserver.GameServerThread	Updated Gameserver [2] Sieghardt IP's:
+2026.09.12 21:05:39,351	INFO	52	org.l2jmobius.loginserver.GameServerThread	127.0.0.1/127.0.0.0/8
+2026.09.12 21:05:39,351	INFO	52	org.l2jmobius.loginserver.GameServerThread	10.8.0.6/10.8.0.0/24
+2026.09.12 21:05:39,351	INFO	52	org.l2jmobius.loginserver.GameServerThread	10.8.0.6/10.0.0.0/8
+2026.09.12 21:05:39,352	INFO	52	org.l2jmobius.loginserver.GameServerThread	10.8.0.6/172.16.0.0/19
+2026.09.12 21:05:39,352	INFO	52	org.l2jmobius.loginserver.GameServerThread	10.8.0.6/192.168.0.0/16
+2026.09.12 21:05:39,352	INFO	52	org.l2jmobius.loginserver.GameServerThread	10.8.0.6/0.0.0.0/0
+2026.09.12 21:05:39,352	INFO	52	org.l2jmobius.loginserver.GameServerThread	0.0.0.0/0.0.0.0/0
+2026.09.12 21:08:05,669	INFO	57	org.l2jmobius.loginserver.LoginController	Auto created account 'bachi1'.
+2026.09.12 21:13:51,759	INFO	59	org.l2jmobius.loginserver.LoginController	Auto created account 'gio'.

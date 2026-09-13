@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+    <npcs>
+        <npc>90000</npc> <!-- Mina -->
+    </npcs>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Dragon Slayer Edge -->
+        <production count="1" id="5529" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Meteor Shower Head -->
+        <production count="1" id="5532" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Elysian Head -->
+        <production count="1" id="5533" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Soul Bow Stave -->
+        <production count="1" id="5534" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Carnage Bow Stave -->
+        <production count="1" id="5535" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Bloody Orchid Head -->
+        <production count="1" id="5536" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Soul Separator Head -->
+        <production count="1" id="5537" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Dragon Grinder Edge -->
+        <production count="1" id="5538" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Blood Tornado Edge -->
+        <production count="1" id="5539" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Tallum Glaive Edge -->
+        <production count="1" id="5541" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Halberd Edge -->
+        <production count="1" id="5542" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Dasparion's Staff Head -->
+        <production count="1" id="5543" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Branch of the Mother Tree Head -->
+        <production count="1" id="5544" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Dark Legion's Edge Blade -->
+        <production count="1" id="5545" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sword of Miracles Edge -->
+        <production count="1" id="5546" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Elemental Sword Edge -->
+        <production count="1" id="5547" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Tallum Blade Edge -->
+        <production count="1" id="5548" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dark Crystal Leather Armor Pattern -->
+        <production count="1" id="5478" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Tallum Leather Armor Pattern -->
+        <production count="1" id="5479" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Leather Armor of Nightmare Fabric -->
+        <production count="1" id="5480" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Majestic Leather Armor Fabric -->
+        <production count="1" id="5481" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dark Crystal Leggings Design -->
+        <production count="1" id="5482" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Tallum Tunic Texture -->
+        <production count="1" id="5485" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dark Crystal Robe Fabric -->
+        <production count="1" id="5486" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Robe of Nightmare Fabric -->
+        <production count="1" id="5487" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Majestic Robe Fabric -->
+        <production count="1" id="5488" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Tallum Stockings Fabric -->
+        <production count="1" id="5489" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dark Crystal Shield Fragment -->
+        <production count="1" id="5494" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Shield of Nightmare Fragment -->
+        <production count="1" id="5495" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dark Crystal Boots Lining -->
+        <production count="1" id="5496" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Tallum Boots Lining -->
+        <production count="1" id="5497" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Boots of Nightmare Lining -->
+        <production count="1" id="5502" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Majestic Boots Lining -->
+        <production count="1" id="5503" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dark Crystal Gloves Design -->
+        <production count="1" id="5508" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Tallum Gloves Design -->
+        <production count="1" id="5509" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Gauntlets of Nightmare Design -->
+        <production count="1" id="5514" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Majestic Gauntlets Design -->
+        <production count="1" id="5515" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dark Legion Gloves Design -->
+        <production count="1" id="5516" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dark Crystal Breastplate Pattern -->
+        <production count="1" id="5520" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Tallum Plate Armor Pattern -->
+        <production count="1" id="5521" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Armor of Nightmare Pattern -->
+        <production count="1" id="5522" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Majestic Plate Armor Pattern -->
+        <production count="1" id="5523" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dark Crystal Gaiters Pattern -->
+        <production count="1" id="5524" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dark Crystal Helmet Design -->
+        <production count="1" id="5525" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Tallum Helm Design -->
+        <production count="1" id="5526" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Helm of Nightmare Design -->
+        <production count="1" id="5527" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Majestic Circlet Design -->
+        <production count="1" id="5528" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sirra's Blade Edge -->
+        <production count="1" id="8712" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sword of Ipos Blade -->
+        <production count="1" id="8713" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Barakiel's Axe Piece -->
+        <production count="1" id="8714" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Behemoth's Tuning Fork Piece -->
+        <production count="1" id="8715" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Naga Storm Piece -->
+        <production count="1" id="8716" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Tiphon's Spear Edge -->
+        <production count="1" id="8717" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Shyeed's Bow Shaft -->
+        <production count="1" id="8718" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sobekk's Hurricane Edge -->
+        <production count="1" id="8719" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Themis' Tongue Piece -->
+        <production count="1" id="8720" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Cabrio's Hand Head -->
+        <production count="1" id="8721" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Daimon Crystal Fragment -->
+        <production count="1" id="8722" />
+    </item>
+</list>

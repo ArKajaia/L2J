@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+	<npcs>
+		<npc>90000</npc> <!-- Master Crafter -->
+	</npcs>
+	
+	<item>
+		<!-- Adena -->
+		<ingredient count="150000" id="57" />
+		<!-- Recipe: Samurai Long Sword (60%) -->
+		<production count="1" id="4178" />
+	</item>
+	
+	<item>
+		<!-- Adena -->
+		<ingredient count="150000" id="57" />
+		<!-- Recipe: Eminence Bow (60%) -->
+		<production count="1" id="4192" />
+	</item>
+</list>

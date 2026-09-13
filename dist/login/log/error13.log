@@ -1,0 +1,16 @@
+Sep 12, 2026 5:01:09 PM org.l2jmobius.loginserver.LoginServer startGameServerListener
+SEVERE: FATAL: Game server listener could not be started on 192.168.0.230:9014. Reason: Cannot assign requested address: bind
+java.net.BindException: Cannot assign requested address: bind
+	at java.base/sun.nio.ch.Net.bind0(Native Method)
+	at java.base/sun.nio.ch.Net.bind(Net.java:522)
+	at java.base/sun.nio.ch.Net.bind(Net.java:511)
+	at java.base/sun.nio.ch.NioSocketImpl.bind(NioSocketImpl.java:641)
+	at java.base/java.net.ServerSocket.bind(ServerSocket.java:326)
+	at java.base/java.net.ServerSocket.<init>(ServerSocket.java:222)
+	at org.l2jmobius.loginserver.FloodProtectorListener.<init>(FloodProtectorListener.java:73)
+	at org.l2jmobius.loginserver.GameServerListener.<init>(GameServerListener.java:58)
+	at org.l2jmobius.loginserver.LoginServer.startGameServerListener(LoginServer.java:220)
+	at org.l2jmobius.loginserver.LoginServer.initializeNetworkListeners(LoginServer.java:209)
+	at org.l2jmobius.loginserver.LoginServer.<init>(LoginServer.java:97)
+	at org.l2jmobius.loginserver.LoginServer.main(LoginServer.java:401)
+

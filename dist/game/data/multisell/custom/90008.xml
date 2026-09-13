@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+    <npcs>
+        <npc>90000</npc> <!-- Mina -->
+    </npcs>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Dynasty Sword Piece -->
+        <production count="1" id="9616" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Dynasty Blade Piece -->
+        <production count="1" id="9617" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Dynasty Phantom Piece -->
+        <production count="1" id="9618" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Dynasty Bow Piece -->
+        <production count="1" id="9619" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Dynasty Knife Piece -->
+        <production count="1" id="9620" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Dynasty Halberd Piece -->
+        <production count="1" id="9621" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Dynasty Cudgel Piece -->
+        <production count="1" id="9622" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Dynasty Mace Piece -->
+        <production count="1" id="9623" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Dynasty Bagh-Nakh Piece -->
+        <production count="1" id="9624" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Breast Plate Piece -->
+        <production count="1" id="9530" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Gaiters Piece -->
+        <production count="1" id="9531" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Helmet Piece -->
+        <production count="1" id="9532" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Gauntlet Piece -->
+        <production count="1" id="9533" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Boot Piece -->
+        <production count="1" id="9534" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Leather Armor Piece -->
+        <production count="1" id="9535" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Leather Leggings Piece -->
+        <production count="1" id="9536" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Leather Helmet Piece -->
+        <production count="1" id="9537" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Leather Glove Piece -->
+        <production count="1" id="9538" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Leather Boots Piece -->
+        <production count="1" id="9539" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Tunic Piece -->
+        <production count="1" id="9540" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Stocking Piece -->
+        <production count="1" id="9541" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Circlet Piece -->
+        <production count="1" id="9542" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Glove Piece -->
+        <production count="1" id="9543" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Shoes Piece -->
+        <production count="1" id="9544" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Shield Piece -->
+        <production count="1" id="9545" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Earring Gemstone -->
+        <production count="1" id="9991" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Necklace Gemstone -->
+        <production count="1" id="9992" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Ring Gemstone -->
+        <production count="1" id="9993" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Sealed Dynasty Sigil Piece -->
+        <production count="1" id="10114" />
+    </item>
+</list>

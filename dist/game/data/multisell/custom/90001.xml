@@ -1,0 +1,450 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+    <npcs>
+        <npc>90000</npc> <!-- Mina -->
+    </npcs>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Adamantite Earrings (100%) -->
+        <production count="1" id="4126" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Adamantite Ring (100%) -->
+        <production count="1" id="4127" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Adamantite Necklace (100%) -->
+        <production count="1" id="4128" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Earrings of Black Ore (100%) -->
+        <production count="1" id="4129" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Ring of Black Ore (100%) -->
+        <production count="1" id="4130" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Necklace of Black Ore (100%) -->
+        <production count="1" id="4131" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Composite Shield (100%) -->
+        <production count="1" id="4132" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Zubei's Breastplate (100%) -->
+        <production count="1" id="4133" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Zubei's Gaiters (100%) -->
+        <production count="1" id="4134" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Implosion Boots (100%) -->
+        <production count="1" id="4135" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Boots of Silence (100%) -->
+        <production count="1" id="4136" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Guardian's Boots (100%) -->
+        <production count="1" id="4137" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Paradia Boots (100%) -->
+        <production count="1" id="4138" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Elemental Boots (100%) -->
+        <production count="1" id="4139" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Boots of Grace (100%) -->
+        <production count="1" id="4140" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Avadon Breastplate (100%) -->
+        <production count="1" id="4141" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Avadon Gaiters (100%) -->
+        <production count="1" id="4142" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Zubei's Leather Shirt (100%) -->
+        <production count="1" id="4143" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Zubei's Leather Gaiters (100%) -->
+        <production count="1" id="4144" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Avadon Leather Armor (100%) -->
+        <production count="1" id="4145" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Tunic of Zubei (100%) -->
+        <production count="1" id="4146" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Stockings of Zubei (100%) -->
+        <production count="1" id="4147" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Avadon Robe (100%) -->
+        <production count="1" id="4148" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Avadon Circlet (100%) -->
+        <production count="1" id="4149" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Sealed Avadon Gloves (100%) -->
+        <production count="1" id="4150" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Chain Gloves of Silence (100%) -->
+        <production count="1" id="4151" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Guardian's Gloves (100%) -->
+        <production count="1" id="4152" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Gloves of Blessing (100%) -->
+        <production count="1" id="4153" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Doom Shield (100%) -->
+        <production count="1" id="4154" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Blue Wolf Breastplate (100%) -->
+        <production count="1" id="4155" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Boots of Blessing (100%) -->
+        <production count="1" id="4156" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Blue Wolf Gaiters (100%) -->
+        <production count="1" id="4157" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Doom Plate Armor (100%) -->
+        <production count="1" id="4158" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Blue Wolf Leather Armor (100%) -->
+        <production count="1" id="4159" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Leather Armor of Doom (100%) -->
+        <production count="1" id="4160" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Blue Wolf Tunic (100%) -->
+        <production count="1" id="4161" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Tunic of Doom (100%) -->
+        <production count="1" id="4162" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Blue Wolf Stockings (100%) -->
+        <production count="1" id="4163" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Stockings of Doom (100%) -->
+        <production count="1" id="4164" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Blue Wolf Helmet (100%) -->
+        <production count="1" id="4165" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Doom Helmet (100%) -->
+        <production count="1" id="4166" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Sealed Blue Wolf Boots (100%) -->
+        <production count="1" id="4167" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Sealed Doom Gloves (100%) -->
+        <production count="1" id="4168" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Elemental Gloves (100%) -->
+        <production count="1" id="4169" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Gloves of Grace (100%) -->
+        <production count="1" id="4170" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Implosion Gauntlets (100%) -->
+        <production count="1" id="4171" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Paradia Gloves (100%) -->
+        <production count="1" id="4172" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Sealed Blue Wolf Gloves (100%) -->
+        <production count="1" id="4173" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Sealed Zubei's Boots (100%) -->
+        <production count="1" id="4174" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Sealed Avadon Boots (100%) -->
+        <production count="1" id="4175" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Sealed Doom Boots (100%) -->
+        <production count="1" id="4176" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Sealed Zubei's Gauntlets (100%) -->
+        <production count="1" id="4177" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Zubei's Shield (100%) -->
+        <production count="1" id="4178" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Zubei's Helmet (100%) -->
+        <production count="1" id="4179" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Silver Arrow (100%) -->
+        <production count="1" id="4180" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Pata (100%) -->
+        <production count="1" id="4181" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Great Sword (100%) -->
+        <production count="1" id="4182" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Heavy War Axe (100%) -->
+        <production count="1" id="4183" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Sprite's Staff (100%) -->
+        <production count="1" id="4184" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Keshanberk (100%) -->
+        <production count="1" id="4185" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Sword of Valhalla (100%) -->
+        <production count="1" id="4186" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Kris (100%) -->
+        <production count="1" id="4187" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Hell Knife (100%) -->
+        <production count="1" id="4188" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Arthro Nail (100%) -->
+        <production count="1" id="4189" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Dark Elven Long Bow (100%) -->
+        <production count="1" id="4190" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Great Axe (100%) -->
+        <production count="1" id="4191" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Sword of Damascus (100%) -->
+        <production count="1" id="4192" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Lance (100%) -->
+        <production count="1" id="4193" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Deadman's Glory (100%) -->
+        <production count="1" id="4194" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Art of Battle Axe (100%) -->
+        <production count="1" id="4195" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Staff of Evil Spirits (100%) -->
+        <production count="1" id="4196" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Demon's Dagger (100%) -->
+        <production count="1" id="4197" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Bellion Cestus (100%) -->
+        <production count="1" id="4198" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Recipe: Bow of Peril (100%) -->
+        <production count="1" id="4199" />
+    </item>
+</list>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+    <npcs>
+        <npc>90000</npc> <!-- Mina -->
+    </npcs>
+
+    <!-- Crystals -->
+    <item>
+        <!-- Crystal (D-Grade) -->
+        <ingredient count="2" id="3481" />
+        <production count="1" id="1458" />
+    </item>
+    <item>
+        <!-- Crystal (C-Grade) -->
+        <ingredient count="5" id="3481" />
+        <production count="1" id="1459" />
+    </item>
+    <item>
+        <!-- Crystal (B-Grade) -->
+        <ingredient count="15" id="3481" />
+        <production count="1" id="1460" />
+    </item>
+    <item>
+        <!-- Crystal (A-Grade) -->
+        <ingredient count="40" id="3481" />
+        <production count="1" id="1461" />
+    </item>
+    <item>
+        <!-- Crystal (S-Grade) -->
+        <ingredient count="100" id="3481" />
+        <production count="1" id="1462" />
+    </item>
+
+    <!-- Gemstones -->
+    <item>
+        <!-- Gemstone D -->
+        <ingredient count="5" id="3481" />
+        <production count="1" id="2130" />
+    </item>
+    <item>
+        <!-- Gemstone C -->
+        <ingredient count="10" id="3481" />
+        <production count="1" id="2131" />
+    </item>
+    <item>
+        <!-- Gemstone B -->
+        <ingredient count="30" id="3481" />
+        <production count="1" id="2132" />
+    </item>
+    <item>
+        <!-- Gemstone A -->
+        <ingredient count="100" id="3481" />
+        <production count="1" id="2133" />
+    </item>
+    <item>
+        <!-- Gemstone S -->
+        <ingredient count="300" id="3481" />
+        <production count="1" id="2134" />
+    </item>
+</list>

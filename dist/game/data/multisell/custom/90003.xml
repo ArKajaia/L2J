@@ -1,0 +1,690 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+    <npcs>
+        <npc>90000</npc> <!-- Mina -->
+    </npcs>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Dragon Slayer(60%) -->
+        <production count="1" id="5434" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Dragon Slayer(100%) -->
+        <production count="1" id="5435" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Meteor Shower(60%) -->
+        <production count="1" id="5438" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Meteor Shower(100%) -->
+        <production count="1" id="5439" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Elysian(60%) -->
+        <production count="1" id="5440" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Elysian(100%) -->
+        <production count="1" id="5441" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Soul Bow(60%) -->
+        <production count="1" id="5442" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Soul Bow(100%) -->
+        <production count="1" id="5443" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Carnage Bow(60%) -->
+        <production count="1" id="5444" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Carnage Bow(100%) -->
+        <production count="1" id="5445" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Bloody Orchid(60%) -->
+        <production count="1" id="5446" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Bloody Orchid(100%) -->
+        <production count="1" id="5447" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Soul Separator(60%) -->
+        <production count="1" id="5448" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Soul Separator(100%) -->
+        <production count="1" id="5449" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Dragon Grinder(60%) -->
+        <production count="1" id="5450" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Dragon Grinder(100%) -->
+        <production count="1" id="5451" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Blood Tornado(60%) -->
+        <production count="1" id="5452" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Blood Tornado(100%) -->
+        <production count="1" id="5453" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Tallum Glaive(60%) -->
+        <production count="1" id="5456" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Tallum Glaive(100%) -->
+        <production count="1" id="5457" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Halberd(60%) -->
+        <production count="1" id="5458" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Halberd(100%) -->
+        <production count="1" id="5459" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Dasparion's Staff(60%) -->
+        <production count="1" id="5460" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Dasparion's Staff(100%) -->
+        <production count="1" id="5461" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Branch of the Mother Tree(60%) -->
+        <production count="1" id="5462" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Branch of the Mother Tree(100%) -->
+        <production count="1" id="5463" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Dark Legion's Edge(60%) -->
+        <production count="1" id="5464" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Dark Legion's Edge(100%) -->
+        <production count="1" id="5465" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sword of Miracles(60%) -->
+        <production count="1" id="5466" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sword of Miracles(100%) -->
+        <production count="1" id="5467" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Elemental Sword(60%) -->
+        <production count="1" id="5468" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Elemental Sword(100%) -->
+        <production count="1" id="5469" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Tallum Blade(60%) -->
+        <production count="1" id="5470" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Tallum Blade(100%) -->
+        <production count="1" id="5471" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Leather Armor(60%) -->
+        <production count="1" id="5332" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Leather Armor(100%) -->
+        <production count="1" id="5333" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Tallum Leather Armor(60%) -->
+        <production count="1" id="5334" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Tallum Leather Armor(100%) -->
+        <production count="1" id="5335" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Leather Armor of Nightmare(60%) -->
+        <production count="1" id="5336" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Leather Armor of Nightmare(100%) -->
+        <production count="1" id="5337" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Majestic Leather Armor(60%) -->
+        <production count="1" id="5338" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Majestic Leather Armor(100%) -->
+        <production count="1" id="5339" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Leggings(60%) -->
+        <production count="1" id="5340" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Leggings(100%) -->
+        <production count="1" id="5341" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Tallum Tunic(60%) -->
+        <production count="1" id="5346" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Tallum Tunic(100%) -->
+        <production count="1" id="5347" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Robe(60%) -->
+        <production count="1" id="5348" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Robe(100%) -->
+        <production count="1" id="5349" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Robe of Nightmare(60%) -->
+        <production count="1" id="5350" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Robe of Nightmare(100%) -->
+        <production count="1" id="5351" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Majestic Robe(60%) -->
+        <production count="1" id="5352" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Majestic Robe(100%) -->
+        <production count="1" id="5353" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Tallum Stockings(60%) -->
+        <production count="1" id="5354" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Tallum Stockings(100%) -->
+        <production count="1" id="5355" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Shield(60%) -->
+        <production count="1" id="5364" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Shield(100%) -->
+        <production count="1" id="5365" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Shield of Nightmare(60%) -->
+        <production count="1" id="5366" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Shield of Nightmare(100%) -->
+        <production count="1" id="5367" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Boots(60%) -->
+        <production count="1" id="5368" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Boots(100%) -->
+        <production count="1" id="5369" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Tallum Boots(60%) -->
+        <production count="1" id="5370" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Tallum Boots(100%) -->
+        <production count="1" id="5371" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Boots of Nightmare(60%) -->
+        <production count="1" id="5380" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Boots of Nightmare(100%) -->
+        <production count="1" id="5381" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Majestic Boots(60%) -->
+        <production count="1" id="5382" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Majestic Boots(100%) -->
+        <production count="1" id="5383" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Gloves(60%) -->
+        <production count="1" id="5392" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Gloves(100%) -->
+        <production count="1" id="5393" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Tallum Gloves(60%) -->
+        <production count="1" id="5394" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Tallum Gloves(100%) -->
+        <production count="1" id="5395" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Gauntlets of Nightmare(60%) -->
+        <production count="1" id="5404" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Gauntlets of Nightmare(100%) -->
+        <production count="1" id="5405" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Majestic Gauntlets(60%) -->
+        <production count="1" id="5406" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Majestic Gauntlets(100%) -->
+        <production count="1" id="5407" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Breastplate(60%) -->
+        <production count="1" id="5416" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Breastplate(100%) -->
+        <production count="1" id="5417" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Tallum Plate Armor(60%) -->
+        <production count="1" id="5418" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Tallum Plate Armor(100%) -->
+        <production count="1" id="5419" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Armor of Nightmare(60%) -->
+        <production count="1" id="5420" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Armor of Nightmare(100%) -->
+        <production count="1" id="5421" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Majestic Plate Armor(60%) -->
+        <production count="1" id="5422" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Majestic Plate Armor(100%) -->
+        <production count="1" id="5423" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Gaiters(60%) -->
+        <production count="1" id="5424" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Gaiters(100%) -->
+        <production count="1" id="5425" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Helmet(60%) -->
+        <production count="1" id="5426" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dark Crystal Helmet(100%) -->
+        <production count="1" id="5427" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Tallum Helmet(60%) -->
+        <production count="1" id="5428" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Tallum Helmet(100%) -->
+        <production count="1" id="5429" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Helm of Nightmare(60%) -->
+        <production count="1" id="5430" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Helm of Nightmare(100%) -->
+        <production count="1" id="5431" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Majestic Circlet (60%) -->
+        <production count="1" id="5432" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Majestic Circlet (100%) -->
+        <production count="1" id="5433" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sirra's Blade (60%) -->
+        <production count="1" id="8690" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sirra's Blade (100%) -->
+        <production count="1" id="8691" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sword of Ipos (60%) -->
+        <production count="1" id="8692" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sword of Ipos (100%) -->
+        <production count="1" id="8693" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Barakiel's Axe (60%) -->
+        <production count="1" id="8694" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Barakiel's Axe (100%) -->
+        <production count="1" id="8695" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Behemoth's Tuning Fork (60%) -->
+        <production count="1" id="8696" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Behemoth's Tuning Fork (100%) -->
+        <production count="1" id="8697" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Naga Storm (60%) -->
+        <production count="1" id="8698" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Naga Storm (100%) -->
+        <production count="1" id="8699" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Tiphon's Spear (60%) -->
+        <production count="1" id="8700" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Tiphon's Spear (100%) -->
+        <production count="1" id="8701" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Shyeed's Bow (60%) -->
+        <production count="1" id="8702" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Shyeed's Bow (100%) -->
+        <production count="1" id="8703" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sobekk's Hurricane (60%) -->
+        <production count="1" id="8704" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sobekk's Hurricane (100%) -->
+        <production count="1" id="8705" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Themis' Tongue (60%) -->
+        <production count="1" id="8706" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Themis' Tongue (100%) -->
+        <production count="1" id="8707" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Cabrio's Hand (60%) -->
+        <production count="1" id="8708" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Cabrio's Hand (100%) -->
+        <production count="1" id="8709" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Daimon Crystal (60%) -->
+        <production count="1" id="8710" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Daimon Crystal (100%) -->
+        <production count="1" id="8711" />
+    </item>
+</list>

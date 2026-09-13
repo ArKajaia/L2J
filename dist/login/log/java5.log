@@ -1,0 +1,16 @@
+2026.09.12 20:57:30,860	INFO	3	org.l2jmobius.commons.database.DatabaseFactory	Database: HikariCP pool initialized successfully.
+2026.09.12 20:57:31,168	INFO	3	org.l2jmobius.commons.database.DatabaseFactory	Database: Initialized with a valid connection.
+2026.09.12 20:57:31,181	INFO	3	org.l2jmobius.commons.threads.ThreadPool	ThreadPool: Initializing.
+2026.09.12 20:57:31,185	INFO	3	org.l2jmobius.commons.threads.ThreadPool	...scheduled pool executor with 2 total threads.
+2026.09.12 20:57:31,185	INFO	3	org.l2jmobius.commons.threads.ThreadPool	...instant pool executor with 2 total threads.
+2026.09.12 20:57:31,187	INFO	3	org.l2jmobius.loginserver.LoginController	Loading LoginController...
+2026.09.12 20:57:31,736	INFO	3	org.l2jmobius.loginserver.LoginController	Cached 10 KeyPairs for RSA communication.
+2026.09.12 20:57:31,762	INFO	3	org.l2jmobius.loginserver.LoginController	Stored 20 keys for Blowfish communication.
+2026.09.12 20:57:31,850	INFO	3	org.l2jmobius.loginserver.GameServerTable	Loaded 127 server names.
+2026.09.12 20:57:31,869	INFO	3	org.l2jmobius.loginserver.GameServerTable	Loaded 2 registered Game Servers.
+2026.09.12 20:57:31,933	INFO	3	org.l2jmobius.loginserver.GameServerTable	Cached 10 RSA keys for Game Server communication.
+2026.09.12 20:57:31,937	INFO	3	org.l2jmobius.loginserver.LoginServer	Loaded 2 IP Bans.
+2026.09.12 20:57:31,941	INFO	3	org.l2jmobius.loginserver.LoginServer	Game server listener is listening on 127.0.0.1:9014.
+2026.09.12 20:57:31,960	INFO	3	org.l2jmobius.loginserver.LoginServer	LoginServer: Login client listener started on 0.0.0.0:2106.
+2026.09.12 20:58:18,792	INFO	60	org.l2jmobius.loginserver.GameServerThread	Updated Gameserver [2] Sieghardt IP's:
+2026.09.12 20:58:18,794	INFO	60	org.l2jmobius.loginserver.GameServerThread	127.0.0.1/0.0.0.0/0

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list enabled="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/spawns.xsd">
+	<spawn name="FakePlayers">
+		<npc id="80000" x="83485" y="147998" z="-3407" heading="23509" respawnDelay="60" /> <!-- Evi -->
+		<npc id="80000" x="-84318" y="244579" z="-3730" heading="15000" respawnDelay="60" /> <!-- Talking Island Village -->
+		<npc id="80000" x="-80826" y="149775" z="-3043" heading="10000" respawnDelay="60" /> <!-- Gludio -->
+		<npc id="80000" x="15670" y="142926" z="-2705" heading="5000" respawnDelay="60" /> <!-- Dion -->
+		<npc id="80000" x="83400" y="53500" z="-1523" heading="20000" respawnDelay="60" /> <!-- Giran -->
+		<npc id="80000" x="82956" y="53161" z="-1476" heading="18000" respawnDelay="60" /> <!-- Giran Harbor -->
+		<npc id="80000" x="115113" y="76095" z="-2694" heading="12000" respawnDelay="60" /> <!-- Oren -->
+		<npc id="80000" x="146331" y="25762" z="-2018" heading="8000" respawnDelay="60" /> <!-- Hunters Village -->
+		<npc id="80000" x="147930" y="-55281" z="-2734" heading="30000" respawnDelay="60" /> <!-- Aden -->
+		<npc id="80000" x="82724" y="-141288" z="-1245" heading="27000" respawnDelay="60" /> <!-- Goddard -->
+		<npc id="80000" x="87386" y="-142801" z="-1291" heading="26000" respawnDelay="60" /> <!-- Goddard Square -->
+		<npc id="80000" x="43835" y="-47749" z="-792" heading="9000" respawnDelay="60" /> <!-- Rune -->
+		<npc id="80000" x="45604" y="-125696" z="-1245" heading="14000" respawnDelay="60" /> <!-- Schuttgart -->
+		<npc id="80000" x="9745" y="15490" z="-4573" heading="22000" respawnDelay="60" /> <!-- Elven Village -->
+		<npc id="80000" x="45472" y="48287" z="-3059" heading="19000" respawnDelay="60" /> <!-- Dark Elf Village -->
+		<npc id="80000" x="-45177" y="-113407" z="-243" heading="3000" respawnDelay="60" /> <!-- Orc Village -->
+		<npc id="80000" x="-44836" y="-113603" z="-233" heading="4000" respawnDelay="60" /> <!-- Orc Village 2 -->
+		<npc id="80000" x="111062" y="219438" z="-3545" heading="17000" respawnDelay="60" /> <!-- Dwarven Village -->
+		<npc id="80000" x="111649" y="219232" z="-3545" heading="16000" respawnDelay="60" /> <!-- Dwarven Village 2 -->
+		<npc id="80000" x="111417" y="16665" z="-4569" heading="7000" respawnDelay="60" /> <!-- Cruma Marsh area -->
+		<npc id="80000" x="17513" y="170220" z="-3505" heading="6000" respawnDelay="60" /> <!-- Windawood area -->
+		<npc id="80000" x="-19265" y="-20087" z="-3540" heading="2000" respawnDelay="60" /> <!-- Neutral Zone -->
+		<npc id="80000" x="47825" y="-56812" z="-2723" heading="13000" respawnDelay="60" /> <!-- Wasteland -->
+		<npc id="80000" x="79831" y="16891" z="-4341" heading="21000" respawnDelay="60" /> <!-- Execution Grounds -->
+		<npc id="80000" x="120424" y="-2999" z="-3131" heading="25000" respawnDelay="60" /> <!-- Sea of Spores -->
+		<npc id="80000" x="106712" y="-58330" z="-1968" heading="1000" respawnDelay="60" /> <!-- Ivory Tower Environ -->
+		<npc id="80000" x="87266" y="-52267" z="-1409" heading="24000" respawnDelay="60" /> <!-- Silent Valley -->
+		<npc id="80000" x="12882" y="181053" z="-3560" heading="11000" respawnDelay="60" /> <!-- Forest of Mirrors -->
+		<npc id="80000" x="79712" y="76542" z="-2717" heading="28000" respawnDelay="60" /> <!-- Plains of Dion -->
+		<npc id="80000" x="55341" y="14712" z="-4204" heading="29000" respawnDelay="60" /> <!-- Cruma Tower Environ -->
+		<npc id="80000" x="-19470" y="209221" z="-3234" heading="31000" respawnDelay="60" /> <!-- Elven Ruins -->
+	</spawn>
+</list>

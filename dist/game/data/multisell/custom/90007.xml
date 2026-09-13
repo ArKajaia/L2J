@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+    <npcs>
+        <npc>90000</npc> <!-- Mina -->
+    </npcs>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Breast Plate (60%) -->
+        <production count="1" id="9482" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Gaiters (60%) -->
+        <production count="1" id="9483" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Helmet (60%) -->
+        <production count="1" id="9484" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Gauntlet (60%) -->
+        <production count="1" id="9485" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Boots (60%) -->
+        <production count="1" id="9486" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Leather Armor (60%) -->
+        <production count="1" id="9487" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Leather Leggings (60%) -->
+        <production count="1" id="9488" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Leather Helmet (60%) -->
+        <production count="1" id="9489" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Leather Gloves (60%) -->
+        <production count="1" id="9490" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Leather Boots (60%) -->
+        <production count="1" id="9491" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Tunic (60%) -->
+        <production count="1" id="9492" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Stockings (60%) -->
+        <production count="1" id="9493" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Circlet (60%) -->
+        <production count="1" id="9494" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Gloves (60%) -->
+        <production count="1" id="9495" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Shoes (60%) -->
+        <production count="1" id="9496" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Shield (60%) -->
+        <production count="1" id="9497" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Breast Plate (100%) -->
+        <production count="1" id="9498" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Gaiters (100%) -->
+        <production count="1" id="9499" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Helmet (100%) -->
+        <production count="1" id="9500" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Gauntlet (100%) -->
+        <production count="1" id="9501" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Boots (100%) -->
+        <production count="1" id="9502" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Leather Armor (100%) -->
+        <production count="1" id="9503" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Leather Leggings (100%) -->
+        <production count="1" id="9504" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Leather Helmet (100%) -->
+        <production count="1" id="9505" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Leather Gloves (100%) -->
+        <production count="1" id="9506" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Leather Boots (100%) -->
+        <production count="1" id="9507" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Tunic (100%) -->
+        <production count="1" id="9508" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Stockings (100%) -->
+        <production count="1" id="9509" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Circlet (100%) -->
+        <production count="1" id="9510" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Gloves (100%) -->
+        <production count="1" id="9511" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Shoes (100%) -->
+        <production count="1" id="9512" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Shield (100%) -->
+        <production count="1" id="9513" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Dynasty Sword (60%) -->
+        <production count="1" id="9967" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Dynasty Blade (60%) -->
+        <production count="1" id="9968" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Dynasty Phantom (60%) -->
+        <production count="1" id="9969" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Dynasty Bow (60%) -->
+        <production count="1" id="9970" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Dynasty Knife (60%) -->
+        <production count="1" id="9971" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Dynasty Halberd (60%) -->
+        <production count="1" id="9972" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Dynasty Cudgel (60%) -->
+        <production count="1" id="9973" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Dynasty Mace (60%) -->
+        <production count="1" id="9974" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Dynasty Bagh-Nakh (60%) -->
+        <production count="1" id="9975" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Dynasty Sword (100%) -->
+        <production count="1" id="9976" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Dynasty Blade (100%) -->
+        <production count="1" id="9977" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Dynasty Phantom (100%) -->
+        <production count="1" id="9978" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Dynasty Bow (100%) -->
+        <production count="1" id="9979" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Dynasty Knife (100%) -->
+        <production count="1" id="9980" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Dynasty Halberd (100%) -->
+        <production count="1" id="9981" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Dynasty Cudgel (100%) -->
+        <production count="1" id="9982" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Dynasty Mace (100%) -->
+        <production count="1" id="9983" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Dynasty Bagh-Nakh (100%) -->
+        <production count="1" id="9984" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Sealed Dynasty Earrings (70%) -->
+        <production count="1" id="9985" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Sealed Dynasty Necklace (70%) -->
+        <production count="1" id="9986" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Sealed Dynasty Ring (70%) -->
+        <production count="1" id="9987" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Sealed Dynasty Earrings (100%) -->
+        <production count="1" id="9988" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Sealed Dynasty Necklace (100%) -->
+        <production count="1" id="9989" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Sealed Dynasty Ring (100%) -->
+        <production count="1" id="9990" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Sigil (60%) -->
+        <production count="1" id="10115" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe: Sealed Dynasty Sigil (100%) -->
+        <production count="1" id="10116" />
+    </item>
+</list>

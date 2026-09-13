@@ -1,0 +1,21 @@
+2026.09.12 20:34:55,499	INFO	3	org.l2jmobius.commons.database.DatabaseFactory	Database: HikariCP pool initialized successfully.
+2026.09.12 20:34:55,784	INFO	3	org.l2jmobius.commons.database.DatabaseFactory	Database: Initialized with a valid connection.
+2026.09.12 20:34:55,796	INFO	3	org.l2jmobius.commons.threads.ThreadPool	ThreadPool: Initializing.
+2026.09.12 20:34:55,799	INFO	3	org.l2jmobius.commons.threads.ThreadPool	...scheduled pool executor with 2 total threads.
+2026.09.12 20:34:55,799	INFO	3	org.l2jmobius.commons.threads.ThreadPool	...instant pool executor with 2 total threads.
+2026.09.12 20:34:55,802	INFO	3	org.l2jmobius.loginserver.LoginController	Loading LoginController...
+2026.09.12 20:34:56,227	INFO	3	org.l2jmobius.loginserver.LoginController	Cached 10 KeyPairs for RSA communication.
+2026.09.12 20:34:56,250	INFO	3	org.l2jmobius.loginserver.LoginController	Stored 20 keys for Blowfish communication.
+2026.09.12 20:34:56,333	INFO	3	org.l2jmobius.loginserver.GameServerTable	Loaded 127 server names.
+2026.09.12 20:34:56,351	INFO	3	org.l2jmobius.loginserver.GameServerTable	Loaded 1 registered Game Servers.
+2026.09.12 20:34:56,416	INFO	3	org.l2jmobius.loginserver.GameServerTable	Cached 10 RSA keys for Game Server communication.
+2026.09.12 20:34:56,417	INFO	3	org.l2jmobius.loginserver.LoginServer	Loaded 2 IP Bans.
+2026.09.12 20:34:56,421	INFO	3	org.l2jmobius.loginserver.LoginServer	Game server listener is listening on 127.0.0.1:9014.
+2026.09.12 20:34:56,437	INFO	3	org.l2jmobius.loginserver.LoginServer	LoginServer: Login client listener started on 0.0.0.0:2106.
+2026.09.12 20:35:43,511	INFO	52	org.l2jmobius.loginserver.GameServerThread	Updated Gameserver [2] Sieghardt IP's:
+2026.09.12 20:35:43,513	INFO	52	org.l2jmobius.loginserver.GameServerThread	127.0.0.1/0.0.0.0/0
+2026.09.12 20:48:50,176	INFO	59	org.l2jmobius.loginserver.LoginController	Auto created account 'admi'.
+2026.09.12 20:48:53,965	INFO	57	org.l2jmobius.loginserver.LoginController	Auto created account 'fasd'.
+2026.09.12 20:54:05,114	WARNING	69	org.l2jmobius.loginserver.GameServerThread	Incomplete packet received from game server. Expected 788 bytes, got 438. Closing connection.
+2026.09.12 20:57:07,111	INFO	52	org.l2jmobius.loginserver.GameServerThread	GameServer [2] Sieghardt: Connection lost - Connection reset
+2026.09.12 20:57:07,112	INFO	52	org.l2jmobius.loginserver.GameServerThread	Server [2] Sieghardt is now marked as disconnected.

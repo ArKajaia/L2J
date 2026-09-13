@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+    <npcs>
+        <npc>90000</npc> <!-- Mina -->
+    </npcs>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Adamantite Earring Gemstone -->
+        <production count="1" id="4049" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Adamantite Ring Wire -->
+        <production count="1" id="4050" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Adamantite Necklace Chain -->
+        <production count="1" id="4051" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Earring of Black Ore Piece -->
+        <production count="1" id="4052" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Ring of Black Ore Gemstone -->
+        <production count="1" id="4053" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Necklace of Black Ore Beads -->
+        <production count="1" id="4054" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Composite Shield Fragment -->
+        <production count="1" id="4055" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Zubei's Breastplate Part -->
+        <production count="1" id="4056" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Zubei's Gaiter Material -->
+        <production count="1" id="4057" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Implosion Boots Part -->
+        <production count="1" id="4058" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Boots of Silence Fabric -->
+        <production count="1" id="4059" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Guardian's Boots Fabric -->
+        <production count="1" id="4060" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Paradia Boots Pattern -->
+        <production count="1" id="4061" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Elemental Boots Lining -->
+        <production count="1" id="4062" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Boots of Grace Lining -->
+        <production count="1" id="4063" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Avadon Breastplate Part -->
+        <production count="1" id="4064" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Avadon Gaiters Material -->
+        <production count="1" id="4065" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Zubei's Leather Shirt Fabric -->
+        <production count="1" id="4066" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Zubei's Leather Gaiter Texture -->
+        <production count="1" id="4067" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Avadon Leather Armor Lining -->
+        <production count="1" id="4068" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Tunic of Zubei Fabric -->
+        <production count="1" id="4069" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Stockings of Zubei Fabric -->
+        <production count="1" id="4070" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Avadon Robe Fabric -->
+        <production count="1" id="4071" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Avadon Circlet Pattern -->
+        <production count="1" id="4072" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Sealed Avadon Gloves Part -->
+        <production count="1" id="4073" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Chain Gloves of Silence Design -->
+        <production count="1" id="4074" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Guardian's Gloves Design -->
+        <production count="1" id="4075" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Gloves of Blessing Pattern -->
+        <production count="1" id="4076" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Doom Shield Fragment -->
+        <production count="1" id="4077" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Blue Wolf Breastplate Part -->
+        <production count="1" id="4078" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Boots of Blessing Design -->
+        <production count="1" id="4079" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Blue Wolf Gaiters Material -->
+        <production count="1" id="4080" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Doom Plate Armor Temper -->
+        <production count="1" id="4081" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Blue Wolf Leather Armor Texture -->
+        <production count="1" id="4082" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Leather Armor of Doom Design -->
+        <production count="1" id="4083" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Blue Wolf Tunic Fabric -->
+        <production count="1" id="4084" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Tunic of Doom Pattern -->
+        <production count="1" id="4085" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Blue Wolf Stockings Pattern -->
+        <production count="1" id="4086" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Stockings of Doom Pattern -->
+        <production count="1" id="4087" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Blue Wolf Helmet Design -->
+        <production count="1" id="4088" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Doom Helmet Pattern -->
+        <production count="1" id="4089" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Sealed Blue Wolf Boots Design -->
+        <production count="1" id="4090" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Sealed Doom Gloves Part -->
+        <production count="1" id="4091" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Elemental Gloves Lining -->
+        <production count="1" id="4092" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Gloves of Grace Lining -->
+        <production count="1" id="4093" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Implosion Gauntlet Fabric -->
+        <production count="1" id="4094" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Paradia Gloves Pattern -->
+        <production count="1" id="4095" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Sealed Blue Wolf Gloves Fabric -->
+        <production count="1" id="4096" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Sealed Zubei's Boots Design -->
+        <production count="1" id="4097" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Sealed Avadon Boots Design -->
+        <production count="1" id="4098" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Sealed Doom Boots Part -->
+        <production count="1" id="4099" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Sealed Zubei's Gauntlets Part -->
+        <production count="1" id="4100" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Zubei's Shield Fragment -->
+        <production count="1" id="4101" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Zubei's Helmet Design -->
+        <production count="1" id="4102" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Pata Blade -->
+        <production count="1" id="4103" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Great Sword Blade -->
+        <production count="1" id="4104" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Heavy War Axe Head -->
+        <production count="1" id="4105" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Sprite's Staff Head -->
+        <production count="1" id="4106" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Keshanberk Blade -->
+        <production count="1" id="4107" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Sword of Valhalla Blade -->
+        <production count="1" id="4108" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Kris Edge -->
+        <production count="1" id="4109" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Hell Knife Edge -->
+        <production count="1" id="4110" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Arthro Nail Blade -->
+        <production count="1" id="4111" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Dark Elven Longbow Shaft -->
+        <production count="1" id="4112" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Great Axe Head -->
+        <production count="1" id="4113" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Sword of Damascus Blade -->
+        <production count="1" id="4114" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Lance Blade -->
+        <production count="1" id="4115" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Deadman's Glory Stone -->
+        <production count="1" id="4116" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Art of Battle Axe Blade -->
+        <production count="1" id="4117" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Evil Spirit Head -->
+        <production count="1" id="4118" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Demon's Dagger Edge -->
+        <production count="1" id="4119" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Bellion Cestus Edge -->
+        <production count="1" id="4120" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="4000" id="3481" />
+        <!-- Bow of Peril Shaft -->
+        <production count="1" id="4121" />
+    </item>
+</list>

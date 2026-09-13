@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+    <npcs>
+        <npc>90000</npc> <!-- Mina -->
+    </npcs>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Icarus Sawsword (60%) -->
+        <production count="1" id="10373" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Icarus Disperser (60%) -->
+        <production count="1" id="10374" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Icarus Spirit (60%) -->
+        <production count="1" id="10375" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Icarus Heavy Arms (60%) -->
+        <production count="1" id="10376" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Icarus Trident (60%) -->
+        <production count="1" id="10377" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Icarus Hammer (60%) -->
+        <production count="1" id="10378" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Icarus Hand (60%) -->
+        <production count="1" id="10379" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Icarus Hall (60%) -->
+        <production count="1" id="10380" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Icarus Spitter (60%) -->
+        <production count="1" id="10381" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Icarus Stinger (60%) -->
+        <production count="1" id="10382" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Icarus Wingblade (60%) -->
+        <production count="1" id="10383" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Icarus Shooter (60%) -->
+        <production count="1" id="10384" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Icarus Sawsword (100%) -->
+        <production count="1" id="10385" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Icarus Disperser (100%) -->
+        <production count="1" id="10386" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Icarus Spirit (100%) -->
+        <production count="1" id="10387" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Icarus Heavy Arms (100%) -->
+        <production count="1" id="10388" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Icarus Trident (100%) -->
+        <production count="1" id="10389" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Icarus Hammer (100%) -->
+        <production count="1" id="10390" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Icarus Hand (100%) -->
+        <production count="1" id="10391" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Icarus Hall (100%) -->
+        <production count="1" id="10392" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Icarus Spitter (100%) -->
+        <production count="1" id="10393" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Icarus Stinger (100%) -->
+        <production count="1" id="10394" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Icarus Wingblade (100%) -->
+        <production count="1" id="10395" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="32000" id="3481" />
+        <!-- Recipe - Icarus Shooter (100%) -->
+        <production count="1" id="10396" />
+    </item>
+</list>

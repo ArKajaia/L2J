@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+    <npcs>
+        <npc>90000</npc> <!-- Mina -->
+    </npcs>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Tateossian Earring (70%) -->
+        <production count="1" id="6847" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Tateossian Earring (100%) -->
+        <production count="1" id="6848" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="800" id="3481" />
+        <!-- Recipe: Sealed Tateossian Ring(70%) -->
+        <production count="1" id="6849" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Tateossian Ring(100%) -->
+        <production count="1" id="6850" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Tateossian Necklace(70%) -->
+        <production count="1" id="6851" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Tateossian Necklace(100%) -->
+        <production count="1" id="6852" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Imperial Crusader Breastplate (60%) -->
+        <production count="1" id="6853" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Imperial Crusader Breastplate (100%) -->
+        <production count="1" id="6854" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Imperial Crusader Gaiters (60%) -->
+        <production count="1" id="6855" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Imperial Crusader Gaiters (100%) -->
+        <production count="1" id="6856" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Imperial Crusader Gauntlets (60%) -->
+        <production count="1" id="6857" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Imperial Crusader Gauntlets (100%) -->
+        <production count="1" id="6858" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Imperial Crusader Boots (60%) -->
+        <production count="1" id="6859" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Imperial Crusader Boots (100%) -->
+        <production count="1" id="6860" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Imperial Crusader Shield (60%) -->
+        <production count="1" id="6861" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Imperial Crusader Shield (100%) -->
+        <production count="1" id="6862" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Imperial Crusader Helmet (60%) -->
+        <production count="1" id="6863" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Imperial Crusader Helmet (100%) -->
+        <production count="1" id="6864" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Draconic Leather Armor (60%) -->
+        <production count="1" id="6865" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Draconic Leather Armor (100%) -->
+        <production count="1" id="6866" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Draconic Leather Gloves (60%) -->
+        <production count="1" id="6867" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Draconic Leather Gloves (100%) -->
+        <production count="1" id="6868" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Draconic Leather Boots (60%) -->
+        <production count="1" id="6869" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Draconic Leather Boots (100%) -->
+        <production count="1" id="6870" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Draconic Leather Helmet (60%) -->
+        <production count="1" id="6871" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Draconic Leather Helmet (100%) -->
+        <production count="1" id="6872" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Major Arcana Robe (60%) -->
+        <production count="1" id="6873" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Major Arcana Robe (100%) -->
+        <production count="1" id="6874" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Major Arcana Gloves (60%) -->
+        <production count="1" id="6875" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Major Arcana Gloves (100%) -->
+        <production count="1" id="6876" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Major Arcana Boots (60%) -->
+        <production count="1" id="6877" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Major Arcana Boots (100%) -->
+        <production count="1" id="6878" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Sealed Major Arcana Circlet (60%) -->
+        <production count="1" id="6879" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Sealed Major Arcana Circlet (100%) -->
+        <production count="1" id="6880" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Forgotten Blade (60%) -->
+        <production count="1" id="6881" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Forgotten Blade (100%) -->
+        <production count="1" id="6882" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Basalt Battlehammer (60%) -->
+        <production count="1" id="6883" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Basalt Battlehammer (100%) -->
+        <production count="1" id="6884" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Imperial Staff (60%) -->
+        <production count="1" id="6885" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Imperial Staff(100%) -->
+        <production count="1" id="6886" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Angel Slayer (60%) -->
+        <production count="1" id="6887" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Angel Slayer (100%) -->
+        <production count="1" id="6888" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Shining Bow (60%) -->
+        <production count="1" id="6889" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Shining Bow (100%) -->
+        <production count="1" id="6890" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Dragon Hunter Axe (60%) -->
+        <production count="1" id="6891" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Dragon Hunter Axe (100%) -->
+        <production count="1" id="6892" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Saint Spear (60%) -->
+        <production count="1" id="6893" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Saint Spear (100%) -->
+        <production count="1" id="6894" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Demon Splinter (60%) -->
+        <production count="1" id="6895" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Demon Splinter (100%) -->
+        <production count="1" id="6896" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Heavens Divider (60%) -->
+        <production count="1" id="6897" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Heavens Divider (100%) -->
+        <production count="1" id="6898" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe: Arcana Mace (60%) -->
+        <production count="1" id="6899" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Arcana Mace (100%) -->
+        <production count="1" id="6900" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="800" id="3481" />
+        <!-- Recipe: Draconic Bow (60%) -->
+        <production count="1" id="7580" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe: Draconic Bow (100%) -->
+        <production count="1" id="7581" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="8000" id="3481" />
+        <!-- Recipe - Sealed Arcana Sigil (60%) -->
+        <production count="1" id="13100" />
+    </item>
+    <item>
+        <!-- Required Ingredient -->
+        <ingredient count="16000" id="3481" />
+        <!-- Recipe - Sealed Arcana Sigil (100%) -->
+        <production count="1" id="13101" />
+    </item>
+</list>
