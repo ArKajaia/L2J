@@ -21,6 +21,7 @@
 package org.l2jmobius.gameserver.geoengine.geodata.blocks;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import org.l2jmobius.gameserver.geoengine.geodata.Cell;
 import org.l2jmobius.gameserver.geoengine.geodata.IBlock;
@@ -121,6 +122,11 @@ public class ComplexBlock implements IBlock
 	public int getNearestZ(int geoX, int geoY, int worldZ)
 	{
 		return getCellHeight(geoX, geoY);
+	}
+
+	public List<Integer> getAllZLayers(int geoX, int geoY)
+	{
+		return List.of((getCellHeight(geoX, geoY)));
 	}
 	
 	@Override

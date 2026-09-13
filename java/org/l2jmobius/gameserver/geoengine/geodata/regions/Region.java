@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.l2jmobius.gameserver.config.GeoEngineConfig;
 import org.l2jmobius.gameserver.geoengine.geodata.Cell;
@@ -221,5 +222,11 @@ public class Region implements IRegion
 		}
 		
 		return true;
+	}
+
+	@Override
+	public List<Integer> getAllZLayers(int geoX, int geoY)
+	{
+		return getBlock(geoX,  geoY).getAllZLayers(geoX, geoY);
 	}
 }

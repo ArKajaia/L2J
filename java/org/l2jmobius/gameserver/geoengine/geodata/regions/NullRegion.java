@@ -22,6 +22,8 @@ package org.l2jmobius.gameserver.geoengine.geodata.regions;
 
 import org.l2jmobius.gameserver.geoengine.geodata.IRegion;
 
+import java.util.List;
+
 /**
  * @author HorridoJoho, Mobius
  */
@@ -73,5 +75,11 @@ public class NullRegion implements IRegion
 	public boolean saveToFile(String fileName)
 	{
 		return false;
+	}
+
+	@Override
+	public List<Integer> getAllZLayers(int geoX, int geoY)
+	{
+		return null;
 	}
 }

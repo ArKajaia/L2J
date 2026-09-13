@@ -21,6 +21,8 @@
 package org.l2jmobius.gameserver.geoengine.geodata.blocks;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.l2jmobius.gameserver.geoengine.geodata.Cell;
 import org.l2jmobius.gameserver.geoengine.geodata.IBlock;
@@ -307,6 +309,26 @@ public class MultilayerBlock implements IBlock
 		}
 		
 		return higherZ == Integer.MAX_VALUE ? worldZ : higherZ;
+	}
+
+	@Override
+	public List<Integer> getAllZLayers(int geoX, int geoY)
+	{
+
+		final int startOffset = getCellDataOffset(geoX, geoY);
+		final byte nLayers = _data[startOffset];
+		final int endOffset = startOffset + 1 + (nLayers * 2);
+
+		List<Integer> list = new ArrayList<>(nLayers);
+
+		for (int offset = startOffset + 1; offset < endOffset; offset += 2)
+		{
+			final short layerData = extractLayerData(offset);
+			final int layerZ = extractLayerHeight(layerData);
+			list.add(layerZ);
+		}
+
+		return list;
 	}
 	
 	public byte[] getData()
