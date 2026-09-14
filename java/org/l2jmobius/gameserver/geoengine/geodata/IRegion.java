@@ -20,6 +20,8 @@
  */
 package org.l2jmobius.gameserver.geoengine.geodata;
 
+import java.util.List;
+
 /**
  * @author HorridoJoho, Mobius
  */
@@ -50,7 +52,9 @@ public interface IRegion
 	int getNextLowerZ(int geoX, int geoY, int worldZ);
 	
 	int getNextHigherZ(int geoX, int geoY, int worldZ);
-	
+
+	public List<Integer> getAllZLayers(int geoX, int geoY);
+
 	boolean hasGeo();
 	
 	boolean saveToFile(String fileName);

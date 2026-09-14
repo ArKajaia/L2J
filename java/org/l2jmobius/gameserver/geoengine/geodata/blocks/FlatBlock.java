@@ -21,6 +21,7 @@
 package org.l2jmobius.gameserver.geoengine.geodata.blocks;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import org.l2jmobius.gameserver.geoengine.geodata.Cell;
 import org.l2jmobius.gameserver.geoengine.geodata.IBlock;
@@ -65,6 +66,12 @@ public class FlatBlock implements IBlock
 	public int getNearestZ(int geoX, int geoY, int worldZ)
 	{
 		return _height;
+	}
+
+	@Override
+	public List<Integer> getAllZLayers(int geoX, int geoY)
+	{
+		return List.of((int)_height);
 	}
 	
 	@Override

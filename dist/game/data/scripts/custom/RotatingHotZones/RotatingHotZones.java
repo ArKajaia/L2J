@@ -11,6 +11,7 @@ import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.geoengine.pathfinding.GeoLocation;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
@@ -20,6 +21,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
+import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.model.zone.ZoneType;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 
@@ -201,20 +203,44 @@ public class RotatingHotZones extends Quest
 	{
 		if (event.startsWith("teleport_"))
 		{
-			int zoneId = Integer.parseInt(event.replace("teleport_", ""));
+			final boolean isPartyTp = event.startsWith("teleport_party_");
+			int zoneId = Integer.parseInt(event.replace(isPartyTp ? "teleport_party_" : "teleport_", ""));
 			
 			if (_activeZoneIds.contains(zoneId))
 			{
+				if (!player.isInParty() && isPartyTp)
+				{
+					player.sendMessage("You are not in the party");
+				}
+				if (player.getParty().getLeader() != player && isPartyTp)
+				{
+					player.sendMessage("Only Party leader can teleport the party");
+				}
+
 				ZoneType zone = ZoneManager.getInstance().getZoneById(zoneId);
 				if ((zone != null) && (zone.getZone() != null))
 				{
 					Location rawPoint = zone.getZone().getRandomPoint();
-					
-					// Fetch the exact floor Z at the world coordinates (X, Y, Z)
-					int floorZ = GeoEngine.getInstance().getHeight(rawPoint.getX(), rawPoint.getY(), rawPoint.getZ());
-					
-					player.teleToLocation(new Location(rawPoint.getX(), rawPoint.getY(), floorZ + 20));
-					player.sendMessage("Teleported to " + zone.getName() + "!");
+					List<Integer> floors = GeoEngine.getInstance().getAllZLayers(GeoEngine.getGeoX(rawPoint.getX()),
+							GeoEngine.getGeoY((rawPoint.getY())));
+					int z = 0;
+					if (floors != null && !floors.isEmpty()) {
+						final int idx = Rnd.get(floors.size());
+						z = floors.get(idx) + 20;
+					}
+
+					List<Player> playersToTp = List.of(player);
+					if (isPartyTp)
+						playersToTp = player.getParty().getMembers();
+
+					for (Player tpPlayer : playersToTp)
+					{
+						if (!tpPlayer.isInsideZone(ZoneId.PEACE))
+							continue;
+
+						tpPlayer.teleToLocation(new Location(rawPoint.getX(), rawPoint.getY(), z));
+						tpPlayer.sendMessage("Teleported to " + zone.getName() + "!");
+					}
 				}
 				else
 				{
@@ -250,7 +276,7 @@ public class RotatingHotZones extends Quest
 		sb.append("<font color=\"LEVEL\">Hotzone Teleporter</font><br1>");
 		sb.append("<font color=\"808080\">Select an active Hotzone to teleport:</font><br><br>");
 		
-		sb.append("<table width=280 border=0 cellpadding=2 cellspacing=1>");
+		sb.append("<table width=380 border=0 cellpadding=2 cellspacing=1>");
 		
 		boolean hasActiveZone = false;
 		
@@ -263,11 +289,39 @@ public class RotatingHotZones extends Quest
 			String zoneName = (zone != null) ? zone.getName() : ("Zone " + zoneId);
 			
 			hasActiveZone = true;
-			
+
+            sb.append("<tr><td align=\"left\" width=80>").append(zoneName)
+					.append(": ").append("<font color=\"LEVEL\">")
+					.append(bracket.getName()).append("</font></td></tr>");
+
 			sb.append("<tr>");
-			sb.append("<td align=\"right\" width=80><font color=\"LEVEL\">").append(bracket.getName()).append(":</font></td>");
-			sb.append("<td align=\"center\" width=200>");
-			sb.append("<button value=\"").append(zoneName).append("\" ").append("action=\"bypass -h Script RotatingHotZones teleport_").append(zoneId).append("\" ").append("width=190 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
+			sb.append("<td>");
+
+			sb.append("<table width=160>");
+			sb.append("<tr>");
+
+			sb.append("<td width=80 align=left>");
+			sb.append("<button value=\"Solo\" ");
+			sb.append("action=\"bypass -h Script RotatingHotZones teleport_").append(zoneId).append("\" ");
+			sb.append("width=70 height=25 ");
+			sb.append("back=\"L2UI_CT1.Button_DF_Down\" ");
+			sb.append("fore=\"L2UI_CT1.Button_DF\">");
+			sb.append("</td>");
+
+			if (player.isInParty() && player.getParty().getLeader() == player)
+			{
+				sb.append("<td width=80 align=left>");
+				sb.append("<button value=\"Party\" ");
+				sb.append("action=\"bypass -h Script RotatingHotZones teleport_party_").append(zoneId).append("\" ");
+				sb.append("width=70 height=25 ");
+				sb.append("back=\"L2UI_CT1.Button_DF_Down\" ");
+				sb.append("fore=\"L2UI_CT1.Button_DF\">");
+				sb.append("</td>");
+			}
+
+			sb.append("</tr>");
+			sb.append("</table>");
+
 			sb.append("</td>");
 			sb.append("</tr>");
 		}

@@ -16,6 +16,8 @@
  */
 package org.l2jmobius.gameserver.geoengine.geodata;
 
+import java.util.List;
+
 /**
  * @author HorridoJoho
  */
@@ -45,4 +47,6 @@ public interface IBlock
 	int getNextLowerZ(int geoX, int geoY, int worldZ);
 	
 	int getNextHigherZ(int geoX, int geoY, int worldZ);
+
+	List<Integer> getAllZLayers(int geoX, int geoY);
 }

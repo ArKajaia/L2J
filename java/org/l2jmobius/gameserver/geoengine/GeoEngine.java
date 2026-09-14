@@ -27,6 +27,7 @@ import java.nio.ByteOrder;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -303,6 +304,12 @@ public class GeoEngine
 	{
 		return getRegion(geoX, geoY).getNearestZ(geoX, geoY, worldZ);
 	}
+
+	public List<Integer> getAllZLayers(int geoX, int geoY)
+	{
+		return getRegion(geoX, geoY).getAllZLayers(geoX, geoY);
+	}
+
 	
 	/**
 	 * Retrieves the next lower Z coordinate at the specified geodata coordinates and height.
