@@ -12,6 +12,16 @@
 		<skill skillName="Anti Magic" skillId="146" skillLevel="6" getLevel="20" levelUpSp="1600" learnedByNpc="true" />
 		<skill skillName="Boost Mana" skillId="213" skillLevel="1" getLevel="20" levelUpSp="3300" learnedByNpc="true" />
 		<skill skillName="Quick Recycle" skillId="164" skillLevel="1" getLevel="20" levelUpSp="3300" learnedByNpc="true" />
+				<skill skillName="Create Item" skillId="172" skillLevel="1" getLevel="5" levelUpSp="310" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="2" getLevel="20" levelUpSp="3700" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="3" getLevel="28" levelUpSp="13000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="4" getLevel="36" levelUpSp="34000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="5" getLevel="43" levelUpSp="38000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="6" getLevel="49" levelUpSp="61000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="7" getLevel="55" levelUpSp="171000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="8" getLevel="62" levelUpSp="360000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="9" getLevel="70" levelUpSp="720000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="10" getLevel="82" learnedByFS="true" />
 		<skill skillName="Heal" skillId="1011" skillLevel="7" getLevel="20" levelUpSp="1100" learnedByNpc="true" />
 		<skill skillName="Heal" skillId="1011" skillLevel="8" getLevel="20" levelUpSp="1100" learnedByNpc="true" />
 		<skill skillName="Heal" skillId="1011" skillLevel="9" getLevel="20" levelUpSp="1100" learnedByNpc="true" />

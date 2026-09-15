@@ -4,6 +4,16 @@
 	<skillTree type="classSkillTree" classId="35" parentClassId="31">
 		<!-- Confirmed CT2.5 and Updated to H5 -->
 		<skill skillName="Bow Mastery" skillId="208" skillLevel="1" getLevel="20" levelUpSp="950" learnedByNpc="true" />
+				<skill skillName="Create Item" skillId="172" skillLevel="1" getLevel="5" levelUpSp="310" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="2" getLevel="20" levelUpSp="3700" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="3" getLevel="28" levelUpSp="13000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="4" getLevel="36" levelUpSp="34000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="5" getLevel="43" levelUpSp="38000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="6" getLevel="49" levelUpSp="61000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="7" getLevel="55" levelUpSp="171000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="8" getLevel="62" levelUpSp="360000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="9" getLevel="70" levelUpSp="720000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="10" getLevel="82" learnedByFS="true" />
 		<skill skillName="Bow Mastery" skillId="208" skillLevel="2" getLevel="20" levelUpSp="950" learnedByNpc="true" />
 		<skill skillName="Bow Mastery" skillId="208" skillLevel="3" getLevel="20" levelUpSp="950" learnedByNpc="true" />
 		<skill skillName="Dagger Mastery" skillId="209" skillLevel="1" getLevel="20" levelUpSp="2800" learnedByNpc="true" />

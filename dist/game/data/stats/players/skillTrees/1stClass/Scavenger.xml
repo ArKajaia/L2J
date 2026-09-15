@@ -36,6 +36,16 @@
 		<skill skillName="Weight Limit" skillId="150" skillLevel="2" getLevel="24" levelUpSp="7000" learnedByNpc="true" />
 		<skill skillName="Sword/Blunt Weapon Mastery" skillId="205" skillLevel="3" getLevel="28" levelUpSp="5000" learnedByNpc="true" />
 		<skill skillName="Sword/Blunt Weapon Mastery" skillId="205" skillLevel="4" getLevel="28" levelUpSp="5000" learnedByNpc="true" />
+						<skill skillName="Create Item" skillId="172" skillLevel="1" getLevel="5" levelUpSp="310" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="2" getLevel="20" levelUpSp="3700" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="3" getLevel="28" levelUpSp="13000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="4" getLevel="36" levelUpSp="34000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="5" getLevel="43" levelUpSp="38000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="6" getLevel="49" levelUpSp="61000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="7" getLevel="55" levelUpSp="171000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="8" getLevel="62" levelUpSp="360000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="9" getLevel="70" levelUpSp="720000" learnedByNpc="true" />
+		<skill skillName="Create Item" skillId="172" skillLevel="10" getLevel="82" learnedByFS="true" />
 		<skill skillName="Polearm Mastery" skillId="216" skillLevel="3" getLevel="28" levelUpSp="5000" learnedByNpc="true" />
 		<skill skillName="Polearm Mastery" skillId="216" skillLevel="4" getLevel="28" levelUpSp="5000" learnedByNpc="true" />
 		<skill skillName="Light Armor Mastery" skillId="227" skillLevel="5" getLevel="28" levelUpSp="3300" learnedByNpc="true" />
