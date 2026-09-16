@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<passiveTree>
+    <node id="1000" type="START" name="Origin" description="Choose a path" classGroup="GENERAL" x="400" y="300"/>
+
+    <node id="1001" type="STAT" name="Might" description="+1 STR" classGroup="WARRIOR" stat="STR" value="1" x="300" y="200">
+        <prerequisite>1000</prerequisite>
+    </node>
+    <node id="1002" type="STAT" name="Vitality" description="+1 VIT" classGroup="TANK" stat="CON" value="1" x="300" y="400">
+        <prerequisite>1000</prerequisite>
+    </node>
+    <node id="1003" type="STAT" name="Precision" description="+1 DEX" classGroup="ARCHER" stat="DEX" value="1" x="500" y="200">
+        <prerequisite>1000</prerequisite>
+    </node>
+    <node id="1004" type="STAT" name="Focus" description="+1 INT" classGroup="MAGE" stat="INT" value="1" x="500" y="400">
+        <prerequisite>1000</prerequisite>
+    </node>
+
+    <node id="1010" type="MINOR" name="Swift Strikes" description="+1% attack speed" classGroup="WARRIOR" stat="P_ATK_SPEED" value="1" x="200" y="200">
+        <prerequisite>1001</prerequisite>
+    </node>
+    <node id="1011" type="MINOR" name="Battle Form" description="+1% physical damage" classGroup="WARRIOR" stat="P_DAMAGE" value="1" x="100" y="200">
+        <prerequisite>1010</prerequisite>
+    </node>
+    <node id="1012" type="KEYSTONE" name="Berserker" description="+5% physical damage" classGroup="WARRIOR" stat="P_DAMAGE" value="5" x="50" y="200">
+        <prerequisite>1011</prerequisite>
+    </node>
+
+    <node id="1020" type="MINOR" name="Guarded Body" description="+1% physical defense" classGroup="TANK" stat="P_DEFENCE" value="1" x="200" y="400">
+        <prerequisite>1002</prerequisite>
+    </node>
+    <node id="1021" type="MINOR" name="Shield Training" description="+1% shield defense" classGroup="TANK" stat="SHIELD_DEFENCE" value="1" x="100" y="400">
+        <prerequisite>1020</prerequisite>
+    </node>
+    <node id="1022" type="KEYSTONE" name="Iron Fortress" description="+5% physical defense" classGroup="TANK" stat="P_DEFENCE" value="5" x="50" y="400">
+        <prerequisite>1021</prerequisite>
+    </node>
+
+    <node id="1030" type="MINOR" name="Quick Aim" description="+1% attack speed" classGroup="ARCHER" stat="P_ATK_SPEED" value="1" x="600" y="200">
+        <prerequisite>1003</prerequisite>
+    </node>
+    <node id="1031" type="MINOR" name="Ranged Training" description="+1% physical damage" classGroup="ARCHER" stat="P_DAMAGE" value="1" x="700" y="200">
+        <prerequisite>1030</prerequisite>
+    </node>
+    <node id="1032" type="KEYSTONE" name="Deadeye" description="+5% ranged damage" classGroup="ARCHER" stat="RANGED_DAMAGE" value="5" x="750" y="200">
+        <prerequisite>1031</prerequisite>
+    </node>
+
+    <node id="1040" type="MINOR" name="Fast Casting" description="+1% casting speed" classGroup="MAGE" stat="M_ATK_SPEED" value="1" x="600" y="400">
+        <prerequisite>1004</prerequisite>
+    </node>
+    <node id="1041" type="MINOR" name="Arcane Power" description="+1% magical damage" classGroup="MAGE" stat="M_DAMAGE" value="1" x="700" y="400">
+        <prerequisite>1040</prerequisite>
+    </node>
+    <node id="1042" type="KEYSTONE" name="Archmage" description="+5% magical damage" classGroup="MAGE" stat="M_DAMAGE" value="5" x="750" y="400">
+        <prerequisite>1041</prerequisite>
+    </node>
+</passiveTree>
