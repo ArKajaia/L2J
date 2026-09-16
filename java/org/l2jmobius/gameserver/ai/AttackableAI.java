@@ -1505,7 +1505,7 @@ public class AttackableAI extends CreatureAI
 		{
 			return false;
 		}
-		
+
 		final AIProfile profile = getProfile();
 		final double dist = caster.calculateDistance2D(attackTarget);
 		double dist2 = dist - attackTarget.getTemplate().getCollisionRadius();
@@ -2141,8 +2141,7 @@ public class AttackableAI extends CreatureAI
 					}
 				}
 			}
-			else if (positive)
-			{
+			else {
 				double dist = 0;
 				double dist2 = 0;
 				int range = 0;
@@ -2152,12 +2151,10 @@ public class AttackableAI extends CreatureAI
 					{
 						continue;
 					}
-					
-					if (targets.isInMyClan(actor))
-					{
+
+					if (!targets.isInMyClan(actor))
 						continue;
-					}
-					
+
 					try
 					{
 						actor.setTarget(getAttackTarget());

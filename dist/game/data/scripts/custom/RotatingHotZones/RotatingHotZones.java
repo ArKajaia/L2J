@@ -1,17 +1,13 @@
 package custom.RotatingHotZones;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.IntStream;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
-import org.l2jmobius.gameserver.geoengine.pathfinding.GeoLocation;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
@@ -31,59 +27,33 @@ public class RotatingHotZones extends Quest
 	private static final int MONSTER_BUFF_ID = 90000;
 	private static final int PLAYER_BUFF_ID = 90001;
 	private static final int ROTATION_HOURS = 1;
-	
-	private static class LevelBracket
+
+	private record LevelBracket(String name, int minLevel, int maxLevel, int[] zoneIds)
 	{
-		private final String name;
-		private final int minLevel;
-		private final int maxLevel;
-		private final int[] zoneIds;
-		
-		public LevelBracket(String name, int minLevel, int maxLevel, int[] zoneIds)
-		{
-			this.name = name;
-			this.minLevel = minLevel;
-			this.maxLevel = maxLevel;
-			this.zoneIds = zoneIds;
-		}
-		
-		public String getName()
-		{
-			return name;
-		}
-		
-		public boolean isInRange(int level)
-		{
+		public boolean isInRange(int level) {
 			return (level >= minLevel) && (level <= maxLevel);
 		}
 	}
-	
-	private static int[] createIdRange(int startId, int endId)
-	{
-		int[] ids = new int[(endId - startId) + 1];
-		for (int i = 0; i < ids.length; i++)
-		{
-			ids[i] = startId + i;
-		}
-		return ids;
-	}
-	
+
 	private static final List<LevelBracket> BRACKETS = new ArrayList<>();
 	static
 	{
-		BRACKETS.add(new LevelBracket("Lv 1-10", 1, 10, createIdRange(90001, 90010)));
-		BRACKETS.add(new LevelBracket("Lv 11-20", 11, 20, createIdRange(90011, 90020)));
-		BRACKETS.add(new LevelBracket("Lv 21-30", 21, 30, createIdRange(90021, 90030)));
-		BRACKETS.add(new LevelBracket("Lv 31-40", 31, 40, createIdRange(90031, 90040)));
-		BRACKETS.add(new LevelBracket("Lv 41-50", 41, 50, createIdRange(90041, 90050)));
-		BRACKETS.add(new LevelBracket("Lv 51-60", 51, 60, createIdRange(90051, 90060)));
-		BRACKETS.add(new LevelBracket("Lv 61-70", 61, 70, createIdRange(90061, 90070)));
-		BRACKETS.add(new LevelBracket("Lv 71-80", 71, 80, createIdRange(90071, 90080)));
-		BRACKETS.add(new LevelBracket("Lv 81+", 81, 999, createIdRange(90081, 90090)));
+		BRACKETS.add(new LevelBracket("Lv 1-10", 1, 10, IntStream.range(90000, 90010).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 11-20", 11, 20, IntStream.range(90011, 90020).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 21-30", 21, 30, IntStream.range(90021, 90030).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 31-40", 31, 40, IntStream.range(90031, 90040).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 41-50", 41, 50, IntStream.range(90041, 90050).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 51-60", 51, 60, IntStream.range(90051, 90060).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 61-70", 61, 70, IntStream.range(90061, 90070).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 71-80", 71, 80, IntStream.range(90071, 90080).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 81+", 81, 999, IntStream.range(90081, 90090).toArray()));
 	}
-	
-	private final Set<Integer> _activeZoneIds = new HashSet<>();
-	private final Map<LevelBracket, Integer> _activeBracketZones = new HashMap<>();
+
+	private record BracketZone(LevelBracket bracket, int activeZoneId) {
+	}
+
+	private final Set<Integer> _activeZoneSet = new HashSet<>();
+	private final List<BracketZone> _activeZones = new ArrayList<BracketZone>();
 	
 	public RotatingHotZones()
 	{
@@ -108,9 +78,9 @@ public class RotatingHotZones extends Quest
 	
 	private void rotateZone()
 	{
-		for (int zoneId : _activeZoneIds)
+		for (BracketZone br : _activeZones)
 		{
-			ZoneType oldZone = ZoneManager.getInstance().getZoneById(zoneId);
+			ZoneType oldZone = ZoneManager.getInstance().getZoneById(br.activeZoneId);
 			if (oldZone != null)
 			{
 				for (Creature creature : oldZone.getCharactersInside())
@@ -126,10 +96,10 @@ public class RotatingHotZones extends Quest
 				}
 			}
 		}
-		
-		_activeZoneIds.clear();
-		_activeBracketZones.clear();
-		
+
+		_activeZones.clear();
+		_activeZoneSet.clear();
+
 		for (LevelBracket bracket : BRACKETS)
 		{
 			if (bracket.zoneIds.length == 0)
@@ -138,8 +108,8 @@ public class RotatingHotZones extends Quest
 			}
 			
 			int chosenZoneId = bracket.zoneIds[Rnd.get(bracket.zoneIds.length)];
-			_activeZoneIds.add(chosenZoneId);
-			_activeBracketZones.put(bracket, chosenZoneId);
+			_activeZones.add(new BracketZone(bracket, chosenZoneId));
+			_activeZoneSet.add(chosenZoneId);
 		}
 		
 		for (Player player : World.getInstance().getPlayers())
@@ -150,12 +120,12 @@ public class RotatingHotZones extends Quest
 			}
 			
 			int playerLevel = player.getLevel();
-			for (Map.Entry<LevelBracket, Integer> entry : _activeBracketZones.entrySet())
+			for (BracketZone bz : _activeZones)
 			{
-				LevelBracket bracket = entry.getKey();
+				LevelBracket bracket = bz.bracket;
 				if (bracket.isInRange(playerLevel))
 				{
-					ZoneType zone = ZoneManager.getInstance().getZoneById(entry.getValue());
+					ZoneType zone = ZoneManager.getInstance().getZoneById(bz.activeZoneId);
 					if (zone != null)
 					{
 						player.sendMessage("=================================");
@@ -171,9 +141,9 @@ public class RotatingHotZones extends Quest
 		Skill playerBuff = SkillData.getInstance().getSkill(PLAYER_BUFF_ID, 1);
 		Skill monsterBuff = SkillData.getInstance().getSkill(MONSTER_BUFF_ID, 1);
 		
-		for (int zoneId : _activeZoneIds)
+		for (BracketZone bz : _activeZones)
 		{
-			ZoneType activeZone = ZoneManager.getInstance().getZoneById(zoneId);
+			ZoneType activeZone = ZoneManager.getInstance().getZoneById(bz.activeZoneId);
 			if (activeZone != null)
 			{
 				for (Creature creature : activeZone.getCharactersInside())
@@ -205,16 +175,15 @@ public class RotatingHotZones extends Quest
 		{
 			final boolean isPartyTp = event.startsWith("teleport_party_");
 			int zoneId = Integer.parseInt(event.replace(isPartyTp ? "teleport_party_" : "teleport_", ""));
-			
-			if (_activeZoneIds.contains(zoneId))
+
+			if (_activeZoneSet.contains(zoneId))
 			{
-				if (!player.isInParty() && isPartyTp)
+				if (isPartyTp)
 				{
-					player.sendMessage("You are not in the party");
-				}
-				if (player.getParty().getLeader() != player && isPartyTp)
-				{
-					player.sendMessage("Only Party leader can teleport the party");
+					if (!player.isInParty())
+						player.sendMessage("You are not in the party");
+					else if (player.getParty().getLeader() != player)
+						player.sendMessage("Only Party leader can teleport the party");
 				}
 
 				ZoneType zone = ZoneManager.getInstance().getZoneById(zoneId);
@@ -230,7 +199,7 @@ public class RotatingHotZones extends Quest
 					}
 
 					List<Player> playersToTp = List.of(player);
-					if (isPartyTp)
+					if (isPartyTp && player.getParty() != null)
 						playersToTp = player.getParty().getMembers();
 
 					for (Player tpPlayer : playersToTp)
@@ -280,10 +249,10 @@ public class RotatingHotZones extends Quest
 		
 		boolean hasActiveZone = false;
 		
-		for (Map.Entry<LevelBracket, Integer> entry : _activeBracketZones.entrySet())
+		for (BracketZone bz : _activeZones)
 		{
-			LevelBracket bracket = entry.getKey();
-			int zoneId = entry.getValue();
+			LevelBracket bracket = bz.bracket;
+			int zoneId = bz.activeZoneId;
 			
 			ZoneType zone = ZoneManager.getInstance().getZoneById(zoneId);
 			String zoneName = (zone != null) ? zone.getName() : ("Zone " + zoneId);
@@ -292,7 +261,7 @@ public class RotatingHotZones extends Quest
 
             sb.append("<tr><td align=\"left\" width=80>").append(zoneName)
 					.append(": ").append("<font color=\"LEVEL\">")
-					.append(bracket.getName()).append("</font></td></tr>");
+					.append(bracket.name()).append("</font></td></tr>");
 
 			sb.append("<tr>");
 			sb.append("<td>");
@@ -344,7 +313,7 @@ public class RotatingHotZones extends Quest
 	@Override
 	public void onEnterZone(Creature character, ZoneType zone)
 	{
-		if (_activeZoneIds.contains(zone.getId()))
+		if (_activeZoneSet.contains(zone.getId()))
 		{
 			if (character.isPlayer())
 			{
@@ -369,7 +338,7 @@ public class RotatingHotZones extends Quest
 	@Override
 	public void onExitZone(Creature character, ZoneType zone)
 	{
-		if (_activeZoneIds.contains(zone.getId()))
+		if (_activeZoneSet.contains(zone.getId()))
 		{
 			if (character.isPlayer())
 			{
