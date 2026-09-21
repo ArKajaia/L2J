@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="list">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="node" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="requires" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:attribute name="nodeId" type="xs:integer" use="required" />
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+						<xs:attribute name="id" type="xs:integer" use="required" />
+						<xs:attribute name="name" type="xs:string" use="required" />
+						<xs:attribute name="sector" type="xs:string" use="required" />
+						<xs:attribute name="tier" type="xs:integer" use="optional" />
+						<xs:attribute name="type" use="required">
+							<xs:simpleType>
+								<xs:restriction base="xs:token">
+									<xs:enumeration value="START" />
+									<xs:enumeration value="SMALL" />
+									<xs:enumeration value="NOTABLE" />
+									<xs:enumeration value="KEYSTONE" />
+									<xs:enumeration value="ACTIVE_SKILL" />
+									<xs:enumeration value="MASTER" />
+									<xs:enumeration value="FUNCTION" />
+									<xs:enumeration value="REGULAR" />
+									<xs:enumeration value="STAT" />
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:attribute>
+						<xs:attribute name="cost" type="xs:integer" use="optional" default="1" />
+						<xs:attribute name="effect" type="xs:string" use="optional" />
+						<xs:attribute name="description" type="xs:string" use="optional" />
+						<xs:attribute name="skillId" type="xs:integer" use="optional" />
+						<xs:attribute name="skillLevel" type="xs:integer" use="optional" />
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Nexus: 19 nodes. x/y are authoritative layout coords. -->
+<list>
+	<node id="9001" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="1808.1" y="1625.5" effect="MAXHP:8">
+		<requires nodeId="1079" />
+		<requires nodeId="9002" />
+		<requires nodeId="9012" />
+		<requires nodeId="9013" />
+	</node>
+	<node id="9002" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="1778.2" y="1733.9" effect="MAXMP:8">
+		<requires nodeId="9001" />
+		<requires nodeId="9003" />
+		<requires nodeId="9013" />
+	</node>
+	<node id="9003" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="1683.6" y="1793.4" effect="PATK_PCT:0.3">
+		<requires nodeId="2079" />
+		<requires nodeId="9002" />
+		<requires nodeId="9004" />
+		<requires nodeId="9014" />
+	</node>
+	<node id="9004" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="1572.5" y="1820.3" effect="MATK_PCT:0.3">
+		<requires nodeId="9003" />
+		<requires nodeId="9005" />
+		<requires nodeId="9014" />
+	</node>
+	<node id="9005" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="1471.1" y="1772.9" effect="PDEF_PCT:0.3">
+		<requires nodeId="3079" />
+		<requires nodeId="9004" />
+		<requires nodeId="9006" />
+		<requires nodeId="9015" />
+	</node>
+	<node id="9006" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="1396.3" y="1685.9" effect="MDEF_PCT:0.3">
+		<requires nodeId="9005" />
+		<requires nodeId="9007" />
+		<requires nodeId="9015" />
+	</node>
+	<node id="9007" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="1391.7" y="1574.0" effect="MAXHP:8">
+		<requires nodeId="4079" />
+		<requires nodeId="9006" />
+		<requires nodeId="9008" />
+		<requires nodeId="9016" />
+	</node>
+	<node id="9008" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="1428.2" y="1466.8" effect="MAXMP:8">
+		<requires nodeId="9007" />
+		<requires nodeId="9009" />
+		<requires nodeId="9016" />
+	</node>
+	<node id="9009" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="1519.3" y="1402.3" effect="PATK_PCT:0.3">
+		<requires nodeId="5079" />
+		<requires nodeId="9008" />
+		<requires nodeId="9010" />
+		<requires nodeId="9017" />
+	</node>
+	<node id="9010" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="1628.9" y="1382.0" effect="MATK_PCT:0.3">
+		<requires nodeId="9009" />
+		<requires nodeId="9011" />
+		<requires nodeId="9017" />
+	</node>
+	<node id="9011" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="1727.0" y="1434.7" effect="PDEF_PCT:0.3">
+		<requires nodeId="6079" />
+		<requires nodeId="9010" />
+		<requires nodeId="9012" />
+		<requires nodeId="9018" />
+	</node>
+	<node id="9012" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="1805.9" y="1513.9" effect="MDEF_PCT:0.3">
+		<requires nodeId="9001" />
+		<requires nodeId="9011" />
+		<requires nodeId="9018" />
+	</node>
+	<node id="9013" name="Pillar of Vitality" sector="Nexus" type="NOTABLE" tier="0" cost="2" x="1700.1" y="1654.0" effect="CON:1;MAXHP:90">
+		<requires nodeId="9001" />
+		<requires nodeId="9002" />
+		<requires nodeId="9014" />
+		<requires nodeId="9018" />
+		<requires nodeId="9019" />
+	</node>
+	<node id="9014" name="Pillar of Force" sector="Nexus" type="NOTABLE" tier="0" cost="2" x="1605.4" y="1713.5" effect="STR:1;PATK_PCT:4">
+		<requires nodeId="9003" />
+		<requires nodeId="9004" />
+		<requires nodeId="9013" />
+		<requires nodeId="9015" />
+		<requires nodeId="9019" />
+	</node>
+	<node id="9015" name="Pillar of Grace" sector="Nexus" type="NOTABLE" tier="0" cost="2" x="1505.7" y="1662.8" effect="DEX:1;MOVE_SPEED_ADD:2.4">
+		<requires nodeId="9005" />
+		<requires nodeId="9006" />
+		<requires nodeId="9014" />
+		<requires nodeId="9016" />
+		<requires nodeId="9019" />
+	</node>
+	<node id="9016" name="Pillar of Intellect" sector="Nexus" type="NOTABLE" tier="0" cost="2" x="1501.6" y="1550.9" effect="INT:1;MATK_PCT:4">
+		<requires nodeId="9007" />
+		<requires nodeId="9008" />
+		<requires nodeId="9015" />
+		<requires nodeId="9017" />
+		<requires nodeId="9019" />
+	</node>
+	<node id="9017" name="Pillar of Wisdom" sector="Nexus" type="NOTABLE" tier="0" cost="2" x="1595.6" y="1489.7" effect="WIT:1;CAST_SPD_PCT:3">
+		<requires nodeId="9009" />
+		<requires nodeId="9010" />
+		<requires nodeId="9016" />
+		<requires nodeId="9018" />
+		<requires nodeId="9019" />
+	</node>
+	<node id="9018" name="Pillar of Will" sector="Nexus" type="NOTABLE" tier="0" cost="2" x="1696.0" y="1542.1" effect="MEN:1;MDEF_PCT:4">
+		<requires nodeId="9011" />
+		<requires nodeId="9012" />
+		<requires nodeId="9013" />
+		<requires nodeId="9017" />
+		<requires nodeId="9019" />
+	</node>
+	<node id="9019" name="Prismatic Attunement" sector="Nexus" type="MASTER" tier="0" cost="3" x="1601.2" y="1601.7" effect="STR:1;DEX:1;CON:1;INT:1;WIT:1;MEN:1" description="TRANSCENDENT: +1 to every base attribute.">
+		<requires nodeId="9013" />
+		<requires nodeId="9014" />
+		<requires nodeId="9015" />
+		<requires nodeId="9016" />
+		<requires nodeId="9017" />
+		<requires nodeId="9018" />
+	</node>
+</list>

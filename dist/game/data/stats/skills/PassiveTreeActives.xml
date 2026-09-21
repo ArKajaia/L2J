@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Passive tree ACTIVE skills - batch 1 (5 skills).
+
+	Place in your server's skill data folder alongside the retail skill files
+	(data/stats/skills/, or a custom/ subfolder if your loader scans recursively).
+
+	What is CONFIRMED from your own data vs. what to verify
+	=======================================================
+	CONFIRMED  - overall <skill> structure, operateType A1/A2, targetType,
+	             abnormal* fields                         (your Body of Avatar)
+	CONFIRMED  - every stat="..." string below comes straight from your
+	             Stat.java (pDef, mDef, pAtk, mAtk, pAtkSpd, critDmg, rShld)
+	CONFIRMED  - <selfEffects>, <flyType>, <activateRate>, <basicProperty>,
+	             <trait>, <isDebuff>, <effectPoint> exist in your skills.xsd
+	VERIFY     - the effect HANDLER names: Buff, PhysicalAttack, Stun,
+	             TeleportToTarget. Run the PowerShell one-liner in README.txt
+	             to list every handler name your datapack actually uses.
+
+	All five use abnormalType NONE so they stack independently of retail
+	buffs (Shield, Might, Haste...) instead of overwriting them. Change to a
+	retail type (e.g. PD_UP) if you WANT them to compete with retail buffs.
+-->
+<list>
+
+	<!-- ===================================================================
+	     90400  VANGUARD AEGIS   (Vanguard / tank)
+	     Short, hard defensive cooldown: big P.Def/M.Def spike plus shield
+	     block, for surviving a burst window - not something you keep up.
+	     Retail reference for comparison: 110 Ultimate Defense.
+	     =================================================================== -->
+	<skill id="90400" levels="1" name="Vanguard Aegis">
+		<icon>icon.skill0110</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>20</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<hitTime>1000</hitTime>
+		<isMagic>0</isMagic> <!-- Physical Skill -->
+		<magicLevel>40</magicLevel>
+		<mpConsume>45</mpConsume>
+		<reuseDelay>90000</reuseDelay>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pDef">1.30</mul>
+				<mul stat="mDef">1.30</mul>
+				<add stat="rShld">20</add> <!-- +20% block chance, only with a shield equipped -->
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- ===================================================================
+	     90401  RALLYING SHOUT   (Vanguard / party support)
+	     Modest party-wide offence+defence lift. Deliberately small (8%)
+	     because it stacks with every retail buff via abnormalType NONE.
+	     Retail reference: 1311 Body of Avatar (party buff structure).
+	     =================================================================== -->
+	<skill id="90401" levels="1" name="Rallying Shout">
+		<icon>icon.skill1311</icon>
+		<operateType>A2</operateType>
+		<targetType>PARTY</targetType>
+		<affectRange>1000</affectRange>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>60</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<hitTime>1500</hitTime>
+		<isMagic>0</isMagic> <!-- Physical Skill -->
+		<magicLevel>40</magicLevel>
+		<mpConsume>70</mpConsume>
+		<reuseDelay>180000</reuseDelay>
+		<effectPoint>300</effectPoint>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pAtk">1.08</mul>
+				<mul stat="mAtk">1.08</mul>
+				<mul stat="pDef">1.08</mul>
+				<mul stat="mDef">1.08</mul>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- ===================================================================
+	     90410  WAR CRY   (Juggernaut / self offence)
+	     Offensive burst with a real downside: +15% P.Atk, +10% Atk.Spd,
+	     but -5% P.Def while active - the Juggernaut sector's trade-off theme.
+	     Retail reference: 78 War Cry.
+	     =================================================================== -->
+	<skill id="90410" levels="1" name="War Cry">
+		<icon>icon.skill0078</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>30</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<hitTime>1000</hitTime>
+		<isMagic>0</isMagic> <!-- Physical Skill -->
+		<magicLevel>40</magicLevel>
+		<mpConsume>35</mpConsume>
+		<reuseDelay>60000</reuseDelay>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pAtk">1.15</mul>
+				<mul stat="pAtkSpd">1.10</mul>
+				<mul stat="pDef">0.95</mul>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- ===================================================================
+	     90411  EARTHSHATTER   (Juggernaut / AoE)
+	     Point-blank physical AoE around the caster, with a chance to stun.
+	     Retail reference: 347 Earthquake.
+
+	     Tuning notes:
+	       power 700     - a mid-tier AoE; retail AoE power varies a lot by
+	                       level, so compare against your own 347 values.
+	       activateRate  - base stun chance before CON resistance.
+	       affectLimit   - omitted on purpose; add one if your retail AoEs
+	                       use it and you want to cap the number of targets.
+	     =================================================================== -->
+	<skill id="90411" levels="1" name="Earthshatter">
+		<icon>icon.skill0347</icon>
+		<operateType>A1</operateType>
+		<targetType>AURA</targetType>
+		<affectRange>220</affectRange>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>2</abnormalTime>
+		<abnormalType>STUN</abnormalType>
+		<activateRate>30</activateRate>
+		<basicProperty>CON</basicProperty>
+		<trait>SHOCK</trait>
+		<isDebuff>true</isDebuff>
+		<effectPoint>-400</effectPoint>
+		<hitTime>1400</hitTime>
+		<coolTime>300</coolTime>
+		<isMagic>0</isMagic> <!-- Physical Skill -->
+		<magicLevel>40</magicLevel>
+		<mpConsume>60</mpConsume>
+		<reuseDelay>30000</reuseDelay>
+		<nextActionAttack>true</nextActionAttack>
+		<effects>
+			<effect name="PhysicalDamage">
+				<power>700</power>
+			</effect>
+			<effect name="Stun" />
+		</effects>
+	</skill>
+
+	<!-- ===================================================================
+	     90420  SHADOW STEP   (Shadowblade / mobility)
+	     Close the gap to a target instantly, then gain +20% critical damage
+	     for 5 seconds - the "open with a big hit" dagger fantasy.
+	     Retail reference: 821 Shadow Step (compare its effect block!).
+
+	     Notes:
+	       * effectPoint is negative on purpose: that marks the skill as
+	         offensive, which is what allows it to be used ON an enemy.
+	       * critDmg is a MULTIPLIER stat (see Formulas.calcPhysDam), so 1.20
+	         means +20% crit damage - not +20x.
+
+	     FALLBACK if TeleportToTarget is not in your handler list:
+	       replace the <effects> block with  <flyType>CHARGE</flyType>
+	       Your Creature.beginCast() already moves the caster onto the target
+	       for any skill that has a flyType, and FlyType.CHARGE is confirmed
+	       to exist (Creature.checkDoCastConditions references it).
+	     =================================================================== -->
+	<skill id="90420" levels="1" name="Shadow Step">
+		<icon>icon.skill0821</icon>
+		<operateType>A1</operateType>
+		<targetType>ONE</targetType>
+		<castRange>600</castRange>
+		<effectRange>1100</effectRange>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>5</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<effectPoint>-100</effectPoint>
+		<hitTime>500</hitTime>
+		<isMagic>0</isMagic> <!-- Physical Skill -->
+		<magicLevel>40</magicLevel>
+		<mpConsume>30</mpConsume>
+		<reuseDelay>30000</reuseDelay>
+		<effects>
+			<effect name="TeleportToTarget" />
+		</effects>
+		<selfEffects>
+			<effect name="Buff">
+				<mul stat="critDmg">1.20</mul>
+			</effect>
+		</selfEffects>
+	</skill>
+
+</list>

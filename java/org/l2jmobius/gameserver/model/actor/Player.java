@@ -119,6 +119,7 @@ import org.l2jmobius.gameserver.managers.IdManager;
 import org.l2jmobius.gameserver.managers.InstanceManager;
 import org.l2jmobius.gameserver.managers.ItemManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
+import org.l2jmobius.gameserver.managers.PassiveTreeManager;
 import org.l2jmobius.gameserver.managers.PunishmentManager;
 import org.l2jmobius.gameserver.managers.RecipeManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
@@ -253,6 +254,7 @@ import org.l2jmobius.gameserver.model.olympiad.Hero;
 import org.l2jmobius.gameserver.model.olympiad.OlympiadGameManager;
 import org.l2jmobius.gameserver.model.olympiad.OlympiadGameTask;
 import org.l2jmobius.gameserver.model.olympiad.OlympiadManager;
+import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
 import org.l2jmobius.gameserver.model.punishment.PunishmentAffect;
 import org.l2jmobius.gameserver.model.punishment.PunishmentType;
 import org.l2jmobius.gameserver.model.script.Quest;
@@ -279,6 +281,7 @@ import org.l2jmobius.gameserver.model.skill.holders.SkillUseHolder;
 import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.functions.FuncAdd;
 import org.l2jmobius.gameserver.model.undergroundColiseum.UCTeam;
 import org.l2jmobius.gameserver.model.variables.AccountVariables;
 import org.l2jmobius.gameserver.model.variables.PlayerVariables;
@@ -10871,6 +10874,8 @@ public class Player extends Playable
 				setCurrentCp(getMaxCp());
 			}
 			
+			PassiveTreeManager.getInstance().onClassContextChanged(this);
+			
 			refreshOverloaded();
 			refreshExpertisePenalty();
 			broadcastUserInfo();
@@ -15329,6 +15334,8 @@ public class Player extends Playable
 		return _autoPlaying.get();
 	}
 	
+	// ===================== Passive Tree stat hooks =====================
+	
 	public void showPassiveSkillsWindow(Player player)
 	{
 		final String idsAsString = getVariables().getString("PASSIVE_SKILL_IDS", "");
@@ -15358,6 +15365,155 @@ public class Player extends Playable
 		final NpcHtmlMessage html = new NpcHtmlMessage(getObjectId());
 		html.setHtml(sb.toString());
 		player.sendPacket(html);
+	}
+	
+	/**
+	 */
+	private final PassiveStatBonusCache _passiveStatBonus = new PassiveStatBonusCache();
+	
+	public PassiveStatBonusCache getPassiveStatBonus()
+	{
+		return _passiveStatBonus;
+	}
+	
+	@Override
+	public double getPAtk(Creature target)
+	{
+		final double base = super.getPAtk(target);
+		final double pct = getPassiveStatBonus().get("PATK_PCT");
+		return base * (1.0 + (pct / 100.0));
+	}
+	
+	public void applyAll(Player player)
+	{
+		// ... existing skill strip/regrant logic ...
+		
+		player.getPassiveStatBonus().recompute(player);
+		syncShieldRateFunc(player);
+	}
+	
+	private static final Object PASSIVE_TREE_FUNC_OWNER = new Object();
+	
+	private void syncShieldRateFunc(Player player)
+	{
+		// Remove any previous passive-tree-owned func for this stat, then add a
+		// fresh one matching the current total - same "rebuild whole" principle
+		// as everything else in this class.
+		player.removeStatsOwner(PASSIVE_TREE_FUNC_OWNER);
+		
+		final double bonus = player.getPassiveStatBonus().get("SHIELD_RATE_PCT");
+		if (bonus != 0)
+		{
+			player.addStatFunc(new FuncAdd(Stat.SHIELD_RATE, 0x30, PASSIVE_TREE_FUNC_OWNER, bonus, null));
+		}
+	}
+	
+	@Override
+	public int getSTR()
+	{
+		return (int) (super.getSTR() + getPassiveStatBonus().get("STR"));
+	}
+	
+	@Override
+	public int getDEX()
+	{
+		return (int) (super.getDEX() + getPassiveStatBonus().get("DEX"));
+	}
+	
+	@Override
+	public int getCON()
+	{
+		return (int) (super.getCON() + getPassiveStatBonus().get("CON"));
+	}
+	
+	@Override
+	public int getINT()
+	{
+		return (int) (super.getINT() + getPassiveStatBonus().get("INT"));
+	}
+	
+	@Override
+	public int getWIT()
+	{
+		return (int) (super.getWIT() + getPassiveStatBonus().get("WIT"));
+	}
+	
+	@Override
+	public int getMEN()
+	{
+		return (int) (super.getMEN() + getPassiveStatBonus().get("MEN"));
+	}
+	
+	@Override
+	public int getMaxHp()
+	{
+		final int base = super.getMaxHp();
+		final double flatBonus = getPassiveStatBonus().get("MAXHP");
+		return (int) (base + flatBonus);
+	}
+	
+	@Override
+	public int getMaxMp()
+	{
+		final int base = super.getMaxMp();
+		final double flatBonus = getPassiveStatBonus().get("MAXMP");
+		return (int) (base + flatBonus);
+	}
+	
+	@Override
+	public int getMaxCp()
+	{
+		final int base = super.getMaxCp();
+		final double flatBonus = getPassiveStatBonus().get("MAXCP");
+		return (int) (base + flatBonus);
+	}
+	
+	@Override
+	public double getPDef(Creature target)
+	{
+		final double base = super.getPDef(target);
+		final double pct = getPassiveStatBonus().get("PDEF_PCT");
+		return base * (1.0 + (pct / 100.0));
+	}
+	
+	@Override
+	public double getMAtk(Creature target, Skill skill)
+	{
+		final double base = super.getMAtk(target, skill);
+		final double pct = getPassiveStatBonus().get("MATK_PCT");
+		return base * (1.0 + (pct / 100.0));
+	}
+	
+	@Override
+	public double getMDef(Creature target, Skill skill)
+	{
+		final double base = super.getMDef(target, skill);
+		final double pct = getPassiveStatBonus().get("MDEF_PCT");
+		return base * (1.0 + (pct / 100.0));
+	}
+	
+	@Override
+	public double getPAtkSpd()
+	{
+		final double base = super.getPAtkSpd();
+		final double pct = getPassiveStatBonus().get("ATK_SPD_PCT");
+		return base * (1.0 + (pct / 100.0));
+	}
+	
+	@Override
+	public int getMAtkSpd()
+	{
+		final double base = super.getMAtkSpd();
+		final double pct = getPassiveStatBonus().get("CAST_SPD_PCT");
+		return (int) (base * (1.0 + (pct / 100.0)));
+	}
+	
+	@Override
+	public int getShldDef()
+	{
+		final int base = super.getShldDef();
+		final double pct = getPassiveStatBonus().get("SHIELD_DEF_PCT");
+		return (int) (base * (1.0 + (pct / 100.0)));
 	}
 	
 }

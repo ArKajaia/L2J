@@ -126,7 +126,17 @@ public class AttackableAI extends CreatureAI
 	private static final int RANDOM_WALK_RATE = 30; // confirmed
 	private static final int MAX_ATTACK_TIMEOUT = 1200; // int ticks, i.e. 2min
 	private static final int SKILL_PROBABILITY_SCALE = 10000;
-	private static final int MAX_PARAMETERIZED_SKILL_SLOTS = 6;
+	private static final int MAX_PARAMETERIZED_SKILL_SLOTS = 10;
+	
+	/**
+	 * Extra radius added when searching for ally/effect targets. The stock code searched with an uninitialised range of 0, so these lookups never found anything at all - see effectTargetReconsider().
+	 */
+	private static final int EFFECT_TARGET_SEARCH_PADDING = 200;
+	
+	/**
+	 * Profiles are immutable value objects derived purely from the archetype, so one instance per archetype is enough. Previously every spawned NPC built its own, which is pure allocation churn on a populated server.
+	 */
+	private static final Map<MonsterArchetype, AIProfile> PROFILE_CACHE = new EnumMap<>(MonsterArchetype.class);
 	
 	/** The delay after which the attacked is stopped. */
 	private int _attackTimeout;
@@ -505,9 +515,14 @@ public class AttackableAI extends CreatureAI
 			final int fleeChance = (int) (15 * profile.fleeChanceScale);
 			if ((fleeChance > 0) && (Rnd.get(100) < fleeChance) && (_fearTask == null))
 			{
-				Creature scaryTarget = (getTarget() instanceof Creature) ? (Creature) getTarget() : npc;
-				onActionAfraid(scaryTarget, true);
-				return; // Skip the rest of the thinking this tick
+				// Only flee from something real. Passing the NPC itself made it
+				// try to path away from its own position, which is undefined.
+				final Creature scaryTarget = (getTarget() instanceof Creature) ? (Creature) getTarget() : null;
+				if (scaryTarget != null)
+				{
+					onActionAfraid(scaryTarget, true);
+					return; // Skip the rest of the thinking this tick
+				}
 			}
 		}
 		
@@ -976,42 +991,17 @@ public class AttackableAI extends CreatureAI
 			}
 		}
 		
-		// ------------------------------------------------------
-		// In case many mobs are trying to hit from same place, move a bit, circling around the target.
-		// Note from Gnacik:
-		// On l2js because of that sometimes mobs don't attack player only running around player without any sense, so decrease chance for now.
 		final int collision = template.getCollisionRadius();
 		final int combinedCollision = collision + mostHate.getTemplate().getCollisionRadius();
-		if ((!npc.isMovementDisabled()) && (npc.getAiType() == AIType.ARCHER))
-		{
-			final float retreatBias = profile.meleeRetreatBias;
-			final int kiteRange = (int) (60 + (40 * Math.max(0f, retreatBias - 1f)));
-			final double distance = npc.calculateDistance2D(mostHate);
-			if (distance <= (kiteRange + combinedCollision))
-			{
-				final boolean shouldKite = (retreatBias >= 1.5f) || (Rnd.get(100) < (15 * retreatBias));
-				if (shouldKite)
-				{
-					final int retreatDistance = (int) (300 * Math.max(0.5f, retreatBias));
-					int posX = npc.getX();
-					int posY = npc.getY();
-					posX += (mostHate.getX() < posX) ? retreatDistance : -retreatDistance;
-					posY += (mostHate.getY() < posY) ? retreatDistance : -retreatDistance;
-					
-					final Location retreatLoc = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), posX, posY, npc.getZ() + 30, npc.getInstanceId());
-					
-					if (GeoEngine.getInstance().canMoveToTarget(npc.getX(), npc.getY(), npc.getZ(), retreatLoc.getX(), retreatLoc.getY(), retreatLoc.getZ(), npc.getInstanceId()))
-					{
-						moveTo(retreatLoc.getX(), retreatLoc.getY(), retreatLoc.getZ());
-					}
-					return;
-				}
-			}
-		}
 		
 		// Archer kiting: back away when the target closes in. Scaled by meleeRetreatBias so Coward/Mage
 		// archers kite hard, early, and far, while Fighter/Rager archers barely bother retreating.
 		// At profile.meleeRetreatBias == 1.0 (BALANCED) this reproduces the original stock behavior exactly.
+		//
+		// NOTE: there used to be a SECOND copy of this block immediately below, which meant a failed
+		// kite roll fell through and rolled again (roughly doubling the real kite rate), and that copy
+		// still used raw unvalidated coordinates - the cause of archers snapping/teleporting instead
+		// of walking. Only this geodata-validated version remains.
 		if ((!npc.isMovementDisabled()) && (npc.getAiType() == AIType.ARCHER))
 		{
 			final float retreatBias = profile.meleeRetreatBias;
@@ -1027,13 +1017,15 @@ public class AttackableAI extends CreatureAI
 					final int retreatDistance = (int) (300 * Math.max(0.5f, retreatBias)); // high-bias archers back off further per step
 					int posX = npc.getX();
 					int posY = npc.getY();
-					final int posZ = npc.getZ() + 30;
 					posX += (mostHate.getX() < posX) ? retreatDistance : -retreatDistance;
 					posY += (mostHate.getY() < posY) ? retreatDistance : -retreatDistance;
 					
-					if (GeoEngine.getInstance().canMoveToTarget(npc.getX(), npc.getY(), npc.getZ(), posX, posY, posZ, npc.getInstanceId()))
+					// Snap the destination onto real geodata BEFORE moving, exactly like the
+					// random-walk code does. Skipping this is what produced the teleport effect.
+					final Location retreatLoc = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), posX, posY, npc.getZ() + 30, npc.getInstanceId());
+					if (GeoEngine.getInstance().canMoveToTarget(npc.getX(), npc.getY(), npc.getZ(), retreatLoc.getX(), retreatLoc.getY(), retreatLoc.getZ(), npc.getInstanceId()))
 					{
-						moveTo(posX, posY, posZ); // Issues move command without breaking ATTACK intention
+						moveTo(retreatLoc.getX(), retreatLoc.getY(), retreatLoc.getZ()); // Issues move command without breaking ATTACK intention
 					}
 					return;
 				}
@@ -1194,7 +1186,14 @@ public class AttackableAI extends CreatureAI
 						if (isParty(sk))
 						{
 							clientStopMoving(null);
+							
+							// Retarget to SELF before casting. Previously this cast the party
+							// heal while the target was still mostHate - i.e. the PLAYER - which
+							// is why monsters were seen healing/buffing whoever they were fighting.
+							final WorldObject target = npc.getTarget();
+							npc.setTarget(npc);
 							npc.doCast(sk);
+							npc.setTarget(target);
 							return;
 						}
 					}
@@ -1333,6 +1332,17 @@ public class AttackableAI extends CreatureAI
 				{
 					if (!checkSkillCastConditions(npc, grantedSkill) || !allowsParameterizedCast(npc, grantedSkill, mostHate))
 					{
+						continue;
+					}
+					
+					// A granted skill can be a heal/buff (SUPPORTER rolls). Those must never be
+					// aimed at mostHate - route them through cast(), which picks a proper target.
+					if (!grantedSkill.hasNegativeEffect())
+					{
+						if (cast(grantedSkill))
+						{
+							return;
+						}
 						continue;
 					}
 					
@@ -1505,7 +1515,7 @@ public class AttackableAI extends CreatureAI
 		{
 			return false;
 		}
-
+		
 		final AIProfile profile = getProfile();
 		final double dist = caster.calculateDistance2D(attackTarget);
 		double dist2 = dist - attackTarget.getTemplate().getCollisionRadius();
@@ -1707,6 +1717,10 @@ public class AttackableAI extends CreatureAI
 					}
 				}
 			}
+			
+			// A heal that reached here found nobody worth healing. Falling through
+			// to the generic block below would cast it AT THE ATTACK TARGET.
+			return false;
 		}
 		
 		if (sk.hasEffectType(EffectType.PHYSICAL_ATTACK, EffectType.PHYSICAL_ATTACK_HP_LINK, EffectType.MAGICAL_ATTACK, EffectType.DEATH_LINK, EffectType.HP_DRAIN))
@@ -1915,6 +1929,22 @@ public class AttackableAI extends CreatureAI
 					}
 				}
 			}
+			
+			// Nobody to resurrect - do NOT fall through and cast it at the enemy.
+			return false;
+		}
+		
+		// ---------------------------------------------------------------------
+		// Generic fallback for anything not matched above.
+		//
+		// This is where monsters were healing and buffing players: a support
+		// skill that failed every branch above reached here and was cast with
+		// attackTarget (the player) still selected. Only offensive skills may
+		// be aimed at the attack target.
+		// ---------------------------------------------------------------------
+		if (!sk.hasNegativeEffect())
+		{
+			return false;
 		}
 		
 		if (!canAura(sk))
@@ -2025,6 +2055,14 @@ public class AttackableAI extends CreatureAI
 				continue;
 			}
 			
+			// Never aim a support skill at the enemy. tryCast() is only ever
+			// called with the attack target, so a non-offensive skill here
+			// would buff/heal whoever the monster is fighting.
+			if (!sk.hasNegativeEffect())
+			{
+				continue;
+			}
+			
 			clientStopMoving(null);
 			npc.doCast(sk);
 			return true;
@@ -2074,6 +2112,12 @@ public class AttackableAI extends CreatureAI
 		}
 		
 		final Attackable actor = getActiveChar();
+		
+		// The stock code declared `range = 0` and then used it as the search
+		// radius BEFORE assigning it inside the loop - so these lookups scanned
+		// a zero-radius area and always came back empty. Compute it up front.
+		final int searchRange = sk.getCastRange() + actor.getTemplate().getCollisionRadius() + EFFECT_TARGET_SEARCH_PADDING;
+		
 		if (!sk.hasEffectType(EffectType.DISPEL, EffectType.DISPEL_BY_SLOT))
 		{
 			if (!positive)
@@ -2112,7 +2156,7 @@ public class AttackableAI extends CreatureAI
 				
 				// ----------------------------------------------------------------------
 				// If there is nearby Target with aggro, start going on random target that is attackable
-				for (Creature obj : World.getInstance().getVisibleObjectsInRange(actor, Creature.class, range))
+				for (Creature obj : World.getInstance().getVisibleObjectsInRange(actor, Creature.class, searchRange))
 				{
 					if (obj.isDead() || !GeoEngine.getInstance().canSeeTarget(actor, obj))
 					{
@@ -2141,20 +2185,26 @@ public class AttackableAI extends CreatureAI
 					}
 				}
 			}
-			else {
+			else
+			{
 				double dist = 0;
 				double dist2 = 0;
 				int range = 0;
-				for (Attackable targets : World.getInstance().getVisibleObjectsInRange(actor, Attackable.class, range))
+				for (Attackable targets : World.getInstance().getVisibleObjectsInRange(actor, Attackable.class, searchRange))
 				{
 					if (targets.isDead() || !GeoEngine.getInstance().canSeeTarget(actor, targets))
 					{
 						continue;
 					}
-
+					
+					// Only buff ACTUAL clan mates. The stock condition was inverted
+					// (`!targets.isInMyClan(actor)`), i.e. it deliberately skipped
+					// allies and considered everything else.
 					if (!targets.isInMyClan(actor))
+					{
 						continue;
-
+					}
+					
 					try
 					{
 						actor.setTarget(getAttackTarget());
@@ -2314,7 +2364,7 @@ public class AttackableAI extends CreatureAI
 		{
 			for (Creature obj : actor.getHateList())
 			{
-				if ((obj == null) || !GeoEngine.getInstance().canSeeTarget(actor, obj) || obj.isDead() || (obj != mostHate) || (obj == actor))
+				if ((obj == null) || !GeoEngine.getInstance().canSeeTarget(actor, obj) || obj.isDead() || (obj == mostHate) || (obj == actor))
 				{
 					continue;
 				}
@@ -2348,7 +2398,7 @@ public class AttackableAI extends CreatureAI
 		{
 			World.getInstance().forEachVisibleObject(actor, Creature.class, obj ->
 			{
-				if ((obj == null) || !GeoEngine.getInstance().canSeeTarget(actor, obj) || obj.isDead() || (obj != mostHate) || (obj == actor) || (obj == getAttackTarget()))
+				if ((obj == null) || !GeoEngine.getInstance().canSeeTarget(actor, obj) || obj.isDead() || (obj == mostHate) || (obj == actor) || (obj == getAttackTarget()))
 				{
 					return;
 				}
@@ -2680,7 +2730,6 @@ public class AttackableAI extends CreatureAI
 		if (_archetype == null)
 		{
 			_archetype = rollArchetype();
-			applyArchetypeVisuals(_archetype);
 			grantArchetypeSkill(_archetype);
 		}
 		return _archetype;
@@ -2694,24 +2743,32 @@ public class AttackableAI extends CreatureAI
 	{
 		_archetype = archetype;
 		_profile = null;
-		applyArchetypeVisuals(archetype);
 		grantArchetypeSkill(archetype);
-	}
-	
-	/**
-	 * Tags the NPC's nameplate with its archetype (e.g. "Orc Archer [Rager]") so the archetype system is visible in-game instead of only affecting hidden dice-rolls. The NPC's original title (from its template or a quest script) is preserved and only appended to, never replaced.
-	 * @param archetype the archetype to display
-	 */
-	private void applyArchetypeVisuals(MonsterArchetype archetype)
-	{
-		return;
 	}
 	
 	private AIProfile getProfile()
 	{
 		if (_profile == null)
 		{
-			_profile = AIProfile.forArchetype(getArchetype());
+			final MonsterArchetype archetype = getArchetype();
+			
+			// Profiles are immutable and depend only on the archetype, so share
+			// one instance per archetype instead of building one per spawned NPC.
+			AIProfile cached = PROFILE_CACHE.get(archetype);
+			if (cached == null)
+			{
+				synchronized (PROFILE_CACHE)
+				{
+					cached = PROFILE_CACHE.get(archetype);
+					if (cached == null)
+					{
+						cached = AIProfile.forArchetype(archetype);
+						PROFILE_CACHE.put(archetype, cached);
+					}
+				}
+			}
+			
+			_profile = cached;
 		}
 		return _profile;
 	}
@@ -3105,11 +3162,22 @@ public class AttackableAI extends CreatureAI
 		return passesParameterizedGates(slot, params, caster, target);
 	}
 	
+	/**
+	 * Builds the datapack parameter prefix for a skill slot.<br>
+	 * Slots 1-9 are zero padded ("Skill01_"), slot 10 is not ("Skill10_") - naive string concatenation produced "Skill010_" and silently matched nothing.
+	 * @param slot the 1-based slot number
+	 * @return the parameter name prefix for that slot
+	 */
+	private static String parameterizedSkillPrefix(int slot)
+	{
+		return String.format("Skill%02d_", slot);
+	}
+	
 	private int findParameterizedSkillSlot(StatSet params, int skillId)
 	{
 		for (int slot = 1; slot <= MAX_PARAMETERIZED_SKILL_SLOTS; slot++)
 		{
-			final SkillHolder declared = params.getObject("Skill0" + slot + "_ID", SkillHolder.class);
+			final SkillHolder declared = params.getObject(parameterizedSkillPrefix(slot) + "ID", SkillHolder.class);
 			if ((declared != null) && (declared.getSkillId() == skillId))
 			{
 				return slot;
@@ -3120,7 +3188,7 @@ public class AttackableAI extends CreatureAI
 	
 	private boolean passesParameterizedGates(int slot, StatSet params, Attackable caster, Creature target)
 	{
-		final String prefix = "Skill0" + slot + "_";
+		final String prefix = parameterizedSkillPrefix(slot);
 		final int probability = params.getInt(prefix + "Probablity", 0);
 		final boolean checksDistance = params.getInt(prefix + "Check_Dist", 0) == 1;
 		final int highHp = params.getInt(prefix + "HighHP", 0);

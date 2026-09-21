@@ -1,49 +1,23 @@
-/*
- * Copyright (c) 2013 L2jMobius
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- */
 package org.l2jmobius.gameserver.config.custom;
 
-import org.l2jmobius.commons.util.ConfigReader;
-
-/** Configuration for the class-based passive tree. */
-public final class PassiveTreeConfig
+/**
+ * Configuration for the Path-of-Exile-style passive tree system. Values here are meant to be loaded from config/custom/PassiveTree.ini the same way your other custom.* config classes work; hardcoded defaults are given so the system is usable immediately.
+ */
+public class PassiveTreeConfig
 {
-    private static final String CONFIG_FILE = "./config/Custom/PassiveTree.ini";
-
-    public static boolean ENABLED;
-    public static int START_LEVEL;
-    public static int POINTS_PER_LEVEL;
-    public static int MAX_POINTS_PER_CLASS;
-    public static int MAX_CLASS_INDEX;
-    public static boolean ALLOW_RESET;
-    public static int RESET_ITEM_ID;
-    public static long RESET_ITEM_COUNT;
-
-    private PassiveTreeConfig()
-    {
-    }
-
-    public static void load()
-    {
-        final ConfigReader config = new ConfigReader(CONFIG_FILE);
-        ENABLED = config.getBoolean("PassiveTreeEnabled", true);
-        START_LEVEL = Math.max(1, config.getInt("PassiveTreeStartLevel", 50));
-        POINTS_PER_LEVEL = Math.max(1, config.getInt("PassiveTreePointsPerLevel", 1));
-        MAX_POINTS_PER_CLASS = Math.max(1, config.getInt("PassiveTreeMaxPointsPerClass", 36));
-        MAX_CLASS_INDEX = Math.max(0, config.getInt("PassiveTreeMaxClassIndex", 2));
-        ALLOW_RESET = config.getBoolean("PassiveTreeAllowReset", true);
-        RESET_ITEM_ID = config.getInt("PassiveTreeResetItemId", 57);
-        RESET_ITEM_COUNT = Math.max(0, config.getLong("PassiveTreeResetItemCount", 0));
-    }
+	public static boolean PASSIVE_TREE_ENABLED = true;
+	
+	/** First level at which a point becomes available. */
+	public static int PASSIVE_TREE_START_LEVEL = 2;
+	
+	/** Hard cap on points per class_index, matching (85 - 50 + 1) = 36 by default. */
+	public static int PASSIVE_TREE_MAX_POINTS = 120;
+	
+	/**
+	 * If true, each subclass (class_index 0-3) keeps its own independent allocation on the same node graph. If false, all class indexes share one pooled allocation (not recommended - changes the "1/5th of the tree per 3 subclasses" design goal into "1/5th total, shared").
+	 */
+	public static boolean SEPARATE_SUBCLASS_POINTS = false;
+	
+	public static int RESET_ITEM_ID = 57; // Adena
+	public static long RESET_ITEM_COUNT = 1000000;
 }

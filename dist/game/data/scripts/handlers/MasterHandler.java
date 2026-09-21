@@ -49,6 +49,7 @@ import org.l2jmobius.gameserver.handler.TargetHandler;
 import org.l2jmobius.gameserver.handler.UserCommandHandler;
 import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
 
+import custom.PassiveSkillTree.PassiveTreeApiServer;
 import handlers.actions.click.ArtefactClick;
 import handlers.actions.click.DecoyClick;
 import handlers.actions.click.DoorClick;
@@ -73,6 +74,7 @@ import handlers.bypass.communityboard.HomeBoard;
 import handlers.bypass.communityboard.HomepageBoard;
 import handlers.bypass.communityboard.MailBoard;
 import handlers.bypass.communityboard.MemoBoard;
+import handlers.bypass.communityboard.PassiveTreeBoard;
 import handlers.bypass.communityboard.RegionBoard;
 import handlers.bypass.npc.Augment;
 import handlers.bypass.npc.Buy;
@@ -226,6 +228,8 @@ import handlers.chat.commands.voiced.Lang;
 import handlers.chat.commands.voiced.Offline;
 import handlers.chat.commands.voiced.OfflinePlay;
 import handlers.chat.commands.voiced.Online;
+import handlers.chat.commands.voiced.PassiveTreeLinkVoiced;
+import handlers.chat.commands.voiced.PassiveTreeVoiced;
 //import handlers.chat.commands.voiced.PassivesCommand;
 import handlers.chat.commands.voiced.Premium;
 import handlers.chat.commands.voiced.SkillsCommand;
@@ -496,6 +500,7 @@ public class MasterHandler
 			MailBoard.class,
 			MemoBoard.class,
 			RegionBoard.class,
+			PassiveTreeBoard.class,
 		},
 		{
 			// Item Handlers
@@ -559,7 +564,8 @@ public class MasterHandler
 			VoiceDpsMeter.class,
 			VoiceAutoLootFilter.class,
 			VoiceHelp.class,
-		
+			PassiveTreeVoiced.class,
+			PassiveTreeLinkVoiced.class,
 		},
 		{
 			// TODO: Add configuration options for this voiced commands.
@@ -620,6 +626,7 @@ public class MasterHandler
 	public static void main(String[] args)
 	{
 		LOGGER.log(Level.INFO, "Loading Handlers...");
+		PassiveTreeApiServer.getInstance().start();
 		
 		final Map<IHandler<?, ?>, Method> registerHandlerMethods = new HashMap<>();
 		for (IHandler<?, ?> loadInstance : LOAD_INSTANCES)

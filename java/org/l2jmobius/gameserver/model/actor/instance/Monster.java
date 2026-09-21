@@ -129,12 +129,12 @@ public class Monster extends Attackable
 		// 2. We use the virtual level passed from onArenaWaveCleared to calculate the roll.
 		// Since we overrode getLevel() to return 85+, we MUST use the effectiveLevel argument
 		// passed in from the wave logic, not the mob's level.
-		final double maxMonsterLevel = 100.0;
+		final double maxMonsterLevel = 90.0;
 		final double levelRatio = Math.min(1.0, effectiveLevel / maxMonsterLevel);
 		final double randomFactor = Rnd.get(0, 1000) / 500.0;
 		final double weightedRoll = Math.min(maxCap, randomFactor * levelRatio);
 		
-		int maxSkillsToAssign = 1 + (int) Math.round(weightedRoll * (maxCap - 1));
+		int maxSkillsToAssign = 1 + (int) Math.round(weightedRoll * (maxCap - 1 - (10 - Math.floor(Math.random() * (effectiveLevel / 8)))));
 		maxSkillsToAssign = Math.max(1, Math.min(maxCap, maxSkillsToAssign));
 		
 		boolean isOverloaded = Rnd.get(100) < RatesConfig.RANDOM_PASSIVE_OVERLOAD_CHANCE;
@@ -191,15 +191,15 @@ public class Monster extends Attackable
 			
 			if (isOverloaded || (skillsSuccessfullyAdded == RatesConfig.RANDOM_PASSIVE_SKILLS_MAX_COUNT))
 			{
-				appliedAve = AbnormalVisualEffect.ULTIMATE_DEFENCE;
+				appliedAve = AbnormalVisualEffect.INVINCIBILITY;
 			}
 			else if (skillsSuccessfullyAdded >= (RatesConfig.RANDOM_PASSIVE_SKILLS_MAX_COUNT * 0.8))
 			{
-				appliedAve = AbnormalVisualEffect.BR_POWER_OF_EVA;
+				appliedAve = AbnormalVisualEffect.NAVIT_ADVENT;
 			}
 			else if (skillsSuccessfullyAdded >= (RatesConfig.RANDOM_PASSIVE_SKILLS_MAX_COUNT * 0.5))
 			{
-				appliedAve = AbnormalVisualEffect.DEATH_MARK;
+				appliedAve = AbnormalVisualEffect.VP_UP;
 			}
 			
 			if (appliedAve != null)
@@ -446,6 +446,20 @@ public class Monster extends Attackable
 	{
 		final double baseMDef = super.getMDef(target, skill);
 		return isArenaChallenger() ? (baseMDef * getArenaStatMultiplier()) : baseMDef;
+	}
+	
+	@Override
+	public double getPAtkSpd()
+	{
+		final double basePAtkSpd = super.getPAtkSpd();
+		return isArenaChallenger() ? (basePAtkSpd * Math.sqrt((getArenaStatMultiplier()))) : basePAtkSpd;
+	}
+	
+	@Override
+	public int getMAtkSpd()
+	{
+		final int baseMAtkSpd = super.getMAtkSpd();
+		return isArenaChallenger() ? (int) (baseMAtkSpd * Math.sqrt(getArenaStatMultiplier())) : baseMAtkSpd;
 	}
 	
 	public static long calculateArenaReward(int finalWave)

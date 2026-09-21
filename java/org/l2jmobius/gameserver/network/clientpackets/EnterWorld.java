@@ -51,6 +51,7 @@ import org.l2jmobius.gameserver.managers.FortManager;
 import org.l2jmobius.gameserver.managers.FortSiegeManager;
 import org.l2jmobius.gameserver.managers.InstanceManager;
 import org.l2jmobius.gameserver.managers.MailManager;
+import org.l2jmobius.gameserver.managers.PassiveTreeManager;
 import org.l2jmobius.gameserver.managers.PcCafePointsManager;
 import org.l2jmobius.gameserver.managers.PetitionManager;
 import org.l2jmobius.gameserver.managers.PunishmentManager;
@@ -82,6 +83,7 @@ import org.l2jmobius.gameserver.model.siege.Siege;
 import org.l2jmobius.gameserver.model.siege.clanhalls.SiegableHall;
 import org.l2jmobius.gameserver.model.skill.CommonSkill;
 import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.variables.AccountVariables;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.network.ConnectionState;
@@ -663,6 +665,10 @@ public class EnterWorld extends ClientPacket
 			player.disableExpGain();
 			player.sendMessage("Experience gain is disabled.");
 		}
+		
+		PassiveTreeManager.getInstance().onClassContextChanged(player);
+		
+		player.stopSkillEffects(SkillFinishType.REMOVED, 90001);
 		
 		player.broadcastUserInfo();
 		

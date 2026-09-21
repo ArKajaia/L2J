@@ -100,7 +100,7 @@ public class QueenAnt extends Script
 	private static final int ACTION_INTERVAL_MILLIS = 10000;
 	private static final int DISTANCE_CHECK_INTERVAL_MILLIS = 5000;
 	private static final int QUEEN_LEASH_MAX_DISTANCE = 2000;
-	private static final int RAID_CURSE_LEVEL_DIFFERENCE = 8;
+	private static final int RAID_CURSE_LEVEL_DIFFERENCE = 35;
 	private static final int RAID_CURSE_CAST_TIME_MILLIS = 300;
 	
 	// Respawn related constants.

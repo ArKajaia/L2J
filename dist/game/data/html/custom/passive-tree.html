@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Passive Skill Tree</title>
+<style>
+	* { box-sizing: border-box; }
+	html, body {
+		margin: 0; padding: 0; width: 100%; height: 100%;
+		background: radial-gradient(circle at center, #14141a 0%, #08080b 100%);
+		font-family: Georgia, 'Times New Roman', serif;
+		overflow: hidden; user-select: none;
+	}
+	#canvas-wrap { width: 100%; height: 100%; cursor: grab; }
+	#canvas-wrap.dragging { cursor: grabbing; }
+	svg { width: 100%; height: 100%; display: block; }
+
+	.hud {
+		position: fixed; top: 16px; left: 16px;
+		background: rgba(12,12,16,0.9); border: 1px solid #7a5c1e;
+		border-radius: 6px; padding: 12px 18px; color: #e8dcb8;
+		min-width: 250px; box-shadow: 0 0 18px rgba(0,0,0,0.6);
+	}
+	.hud h1 { font-size: 15px; margin: 0 0 6px 0; color: #d9b64c; letter-spacing: 0.5px; }
+	.hud .row { font-size: 13px; margin: 2px 0; color: #cfcfcf; }
+	.hud .row b { color: #f0e0a0; }
+	.hud .note { font-size: 11px; color: #888; margin-top: 6px; font-style: italic; }
+
+	#controls {
+		position: fixed; top: 16px; right: 16px;
+		background: rgba(12,12,16,0.9); border: 1px solid #444;
+		border-radius: 6px; padding: 10px 12px; color: #bbb; font-size: 12px;
+		text-align: center;
+	}
+	#controls .zoomrow { display: flex; align-items: center; gap: 6px; justify-content: center; margin-bottom: 8px; }
+	#controls button {
+		background: #2a2a33; color: #e8dcb8; border: 1px solid #555;
+		border-radius: 4px; cursor: pointer; font-size: 15px;
+		width: 30px; height: 28px; line-height: 1;
+	}
+	#controls button:hover { background: #3a3a45; }
+	#controls .wide { width: auto; padding: 0 12px; font-size: 12px; height: 26px; }
+	#zoom-pct { min-width: 52px; color: #f0e0a0; font-size: 13px; }
+	#controls .keys { color: #777; font-size: 11px; line-height: 1.5; margin-top: 6px; }
+
+	.legend {
+		position: fixed; bottom: 16px; left: 16px;
+		background: rgba(12,12,16,0.85); border: 1px solid #444;
+		border-radius: 6px; padding: 10px 14px; color: #ccc; font-size: 12px;
+	}
+	.legend .item { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+	.legend .swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+
+	#tooltip {
+		position: fixed; pointer-events: none;
+		background: rgba(10,10,12,0.96); border: 1px solid #d9b64c;
+		border-radius: 4px; padding: 10px 14px; color: #eee; font-size: 13px;
+		max-width: 280px; display: none; z-index: 50;
+		box-shadow: 0 4px 14px rgba(0,0,0,0.7);
+	}
+	#tooltip .t-name { color: #d9b64c; font-weight: bold; margin-bottom: 4px; }
+	#tooltip .t-type { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+	#tooltip .t-eff  { color: #9fe6a0; margin-top: 6px; font-size: 12px; }
+	#tooltip .t-cost { color: #7fd1ff; margin-top: 4px; }
+	#tooltip .t-desc { color: #bbb; margin-top: 6px; line-height: 1.4; font-size: 12px; font-style: italic; }
+	#tooltip .t-stats { margin-top: 7px; }
+	#tooltip .stat-up   { color: #8fe39a; font-size: 13px; line-height: 1.45; }
+	#tooltip .stat-down { color: #ff9b90; font-size: 13px; line-height: 1.45; }
+
+	.node-label {
+		fill: #ddd; font-size: 11px; pointer-events: none; text-anchor: middle;
+		paint-order: stroke; stroke: #08080b; stroke-width: 3px;
+	}
+	.sector-label {
+		fill: #6a5322; font-size: 40px; font-weight: bold; text-anchor: middle;
+		letter-spacing: 4px; pointer-events: none; opacity: 0.5;
+	}
+
+	#toast {
+		position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+		background: rgba(12,12,16,0.95); border: 1px solid #d9b64c;
+		border-radius: 6px; padding: 10px 20px; color: #f0e0a0;
+		font-size: 14px; display: none; z-index: 100;
+	}
+	#toast.error { border-color: #c0392b; color: #ffb3ab; }
+
+	#pin-overlay {
+		position: fixed; inset: 0; background: rgba(6,6,8,0.88);
+		display: flex; align-items: center; justify-content: center; z-index: 200;
+	}
+	#pin-box {
+		background: #16161c; border: 1px solid #7a5c1e; border-radius: 8px;
+		padding: 26px 32px; text-align: center; color: #e8dcb8;
+		box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+	}
+	#pin-box h2 { margin: 0 0 8px 0; color: #d9b64c; font-size: 18px; }
+	#pin-box p { margin: 0 0 16px 0; color: #aaa; font-size: 13px; }
+	#pin-input {
+		font-size: 22px; letter-spacing: 6px; text-align: center; width: 160px;
+		padding: 8px; border-radius: 4px; border: 1px solid #555;
+		background: #0d0d10; color: #f0e0a0; margin-bottom: 10px;
+	}
+	#pin-submit {
+		display: block; margin: 8px auto 0; padding: 8px 24px;
+		background: #7a5c1e; color: #fff; border: none; border-radius: 4px;
+		cursor: pointer; font-size: 14px;
+	}
+	#pin-submit:hover { background: #96742a; }
+	#pin-error { color: #ff8a80; font-size: 12px; margin-top: 8px; min-height: 14px; }
+	#pin-skip { margin-top: 14px; font-size: 12px; color: #777; cursor: pointer; text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div id="canvas-wrap">
+	<svg id="svg-root">
+		<g id="viewport">
+			<g id="edges"></g>
+			<g id="sector-labels"></g>
+			<g id="nodes"></g>
+		</g>
+	</svg>
+</div>
+
+<div class="hud"><h1>Passive Skill Tree</h1><div id="hud-body">Loading...</div></div>
+
+<div id="controls">
+	<div class="zoomrow">
+		<button id="btn-out" title="Zoom out">&minus;</button>
+		<span id="zoom-pct">100%</span>
+		<button id="btn-in" title="Zoom in">+</button>
+	</div>
+	<button class="wide" id="btn-fit" title="Fit whole tree on screen">Fit to screen</button>
+	<div class="keys">
+		drag / <b>WASD</b> or arrows to move<br>
+		wheel or <b>+ &minus;</b> to zoom &middot; <b>F</b> to fit
+	</div>
+</div>
+
+<div class="legend">
+	<div class="item"><span class="swatch" style="background:#3ecf5b"></span>Allocated</div>
+	<div class="item"><span class="swatch" style="background:#7fd1ff"></span>Available now</div>
+	<div class="item"><span class="swatch" style="background:#555"></span>Locked</div>
+	<div class="item"><span class="swatch" style="background:#d9b64c"></span>Notable</div>
+	<div class="item"><span class="swatch" style="background:#c0392b"></span>Keystone</div>
+	<div class="item"><span class="swatch" style="background:#8e44ad"></span>Master</div>
+	<div class="item"><span class="swatch" style="background:#2f8fd1"></span>Active / Function</div>
+</div>
+
+<div id="tooltip"></div>
+<div id="toast"></div>
+
+<div id="pin-overlay">
+	<div id="pin-box">
+		<h2>Enter Your Code</h2>
+		<p>Type <b>.treelink</b> in-game to get a 6-digit code, then enter it below.</p>
+		<input id="pin-input" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autofocus>
+		<button id="pin-submit">View My Tree</button>
+		<div id="pin-error"></div>
+		<div id="pin-skip" onclick="document.getElementById('pin-overlay').style.display='none'">Just browse the tree without live data</div>
+	</div>
+</div>
+
+<script>
+// ===========================================================================
+//  TUNABLES - everything you'd want to adjust is in this one block.
+// ===========================================================================
+const CFG = {
+	PAN_SPEED:      1.0,   // mouse-drag multiplier. 1.0 = tree follows cursor exactly.
+	KEY_PAN_STEP:   90,    // pixels moved per keypress (WASD / arrows), before zoom
+	ZOOM_STEP:      1.15,  // how much one wheel notch multiplies zoom (1.05 = fine, 1.3 = coarse)
+	ZOOM_MIN:       0.10,  // furthest you can zoom out
+	ZOOM_MAX:       2.50,  // closest you can zoom in
+	FIT_PADDING:    80,    // px of breathing room left around the tree when fitting
+	LABEL_ZOOM:     1.30,  // small-node names appear once zoom is at/above this
+};
+// ===========================================================================
+
+const API_BASE = "";
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+const TYPE_COLOR = {
+	START: "#e8dcb8", SMALL: "#8a8a92", NOTABLE: "#d9b64c",
+	KEYSTONE: "#c0392b", MASTER: "#8e44ad",
+	ACTIVE_SKILL: "#2f8fd1", FUNCTION: "#2f8fd1"
+};
+const TYPE_RADIUS = {
+	START: 20, SMALL: 8, NOTABLE: 16,
+	KEYSTONE: 22, MASTER: 24, ACTIVE_SKILL: 17, FUNCTION: 17
+};
+const ALWAYS_LABEL = new Set(["START","KEYSTONE","MASTER","ACTIVE_SKILL","FUNCTION","NOTABLE"]);
+// "Pathway"/"Approach"/"Crossroads" are pure travel filler - never worth a label.
+const NEVER_LABEL = new Set(["Pathway","Approach","Crossroads"]);
+
+let nodes = [], nodeById = {}, edgeList = [];
+let allocated = new Set();
+let character = null, currentToken = null, allocating = false;
+
+// view state
+let scale = 1, tx = 0, ty = 0;
+let bounds = { minX:0, minY:0, maxX:1, maxY:1 };
+let lastLabelState = null;
+
+// ------------------------------------------------------------------ data
+async function loadNodes() {
+	const res = await fetch(API_BASE + "/api/passivetree/nodes");
+	nodes = await res.json();
+	nodeById = {};
+	nodes.forEach(n => nodeById[n.id] = n);
+
+	// parents are symmetric, so each edge appears twice - dedupe
+	const seen = new Set();
+	edgeList = [];
+	nodes.forEach(n => (n.parents || []).forEach(p => {
+		if (!nodeById[p]) return;
+		const key = Math.min(n.id,p) + "-" + Math.max(n.id,p);
+		if (seen.has(key)) return;
+		seen.add(key);
+		edgeList.push([Math.min(n.id,p), Math.max(n.id,p)]);
+	}));
+
+	// real extent of the tree, used by fitToScreen()
+	if (nodes.length) {
+		bounds.minX = Math.min(...nodes.map(n => n.x));
+		bounds.maxX = Math.max(...nodes.map(n => n.x));
+		bounds.minY = Math.min(...nodes.map(n => n.y));
+		bounds.maxY = Math.max(...nodes.map(n => n.y));
+	}
+}
+
+async function loadCharacterWithToken(token) {
+	currentToken = token;
+	try {
+		const res = await fetch(API_BASE + "/api/passivetree/character?token=" + encodeURIComponent(token));
+		if (!res.ok) { showToast("That code has expired - use .treelink again.", true); currentToken = null; return false; }
+		character = await res.json();
+		allocated = new Set(character.allocatedNodeIds || []);
+		return true;
+	} catch (e) { return false; }
+}
+
+async function submitPin() {
+	const pin = document.getElementById("pin-input").value.trim();
+	if (pin.length !== 6) { document.getElementById("pin-error").textContent = "Enter the 6-digit code shown in-game."; return; }
+	try {
+		const res = await fetch(API_BASE + "/api/passivetree/resolve?pin=" + encodeURIComponent(pin));
+		const data = await res.json();
+		if (!res.ok || !data.token) { document.getElementById("pin-error").textContent = "That code is invalid or has expired."; return; }
+		if (await loadCharacterWithToken(data.token)) {
+			document.getElementById("pin-overlay").style.display = "none";
+			render(); renderHud();
+		} else {
+			document.getElementById("pin-error").textContent = "Could not load your character - are you still online?";
+		}
+	} catch (e) { document.getElementById("pin-error").textContent = "Connection error - try again."; }
+}
+
+async function allocateNode(node) {
+	if (!currentToken) { showToast("Enter your .treelink code to allocate points.", true); return; }
+	if (allocating) return;
+	allocating = true;
+	try {
+		const res = await fetch(API_BASE + "/api/passivetree/allocate?token=" + encodeURIComponent(currentToken) + "&nodeId=" + node.id);
+		const data = await res.json();
+		if (data.success) {
+			character = data.character;
+			allocated = new Set(character.allocatedNodeIds || []);
+			showToast("Allocated: " + node.name);
+			render(); renderHud();
+		} else {
+			showToast("Cannot allocate " + node.name + " right now.", true);
+		}
+	} catch (e) { showToast("Connection error.", true); }
+	finally { allocating = false; }
+}
+
+function showToast(msg, isError) {
+	const t = document.getElementById("toast");
+	t.textContent = msg; t.className = isError ? "error" : ""; t.style.display = "block";
+	clearTimeout(showToast._t);
+	showToast._t = setTimeout(() => { t.style.display = "none"; }, 2500);
+}
+
+
+// ---------------------------------------------------------------- effects
+// Turns a raw spec like "MAXHP:90;CON:1" into readable lines.
+const STAT_LABEL = {
+	STR:"Strength", DEX:"Dexterity", CON:"Constitution",
+	INT:"Intelligence", WIT:"Wit", MEN:"Mentality",
+	MAXHP:"Maximum HP", MAXMP:"Maximum MP", MAXCP:"Maximum CP",
+	PATK_PCT:"Physical Attack", PDEF_PCT:"Physical Defence",
+	MATK_PCT:"Magic Attack", MDEF_PCT:"Magic Defence",
+	ATK_SPD_PCT:"Attack Speed", CAST_SPD_PCT:"Casting Speed",
+	SHIELD_RATE_PCT:"Shield Block Rate", SHIELD_DEF_PCT:"Shield Defence",
+	CRIT_RATE_ADD:"Critical Rate", CRIT_DMG_ADD:"Critical Damage",
+	MCRIT_RATE_ADD:"Magic Critical Rate",
+	ACCURACY_ADD:"Accuracy", EVASION_ADD:"Evasion",
+	MOVE_SPEED_ADD:"Movement Speed", REFLECT_PCT:"Damage Reflected",
+	HP_REGEN_PCT:"HP Regeneration", MP_REGEN_PCT:"MP Regeneration",
+	DROP_RATE_PCT:"Drop Rate", SPOIL_RATE_PCT:"Spoil Rate", EXP_RATE_PCT:"EXP Rate",
+};
+function formatEffects(spec) {
+	if (!spec) return [];
+	return spec.split(";").map(part => {
+		const bits = part.split(":");
+		if (bits.length !== 2) return null;
+		const key = bits[0].trim();
+		const val = parseFloat(bits[1]);
+		if (isNaN(val)) return null;
+		const label = STAT_LABEL[key] || key;
+		const pct = key.endsWith("_PCT");
+		const sign = val > 0 ? "+" : "";
+		return { text: `${sign}${val}${pct ? "%" : ""} ${label}`, good: val > 0 };
+	}).filter(Boolean);
+}
+
+// ---------------------------------------------------------------- render
+function isAvailable(n) {
+	if (allocated.has(n.id)) return false;
+	if (!character) return true;
+	if (!n.parents || n.parents.length === 0) return true;
+	return n.parents.some(p => allocated.has(p));
+}
+
+function render() {
+	const edgesG = document.getElementById("edges");
+	const nodesG = document.getElementById("nodes");
+	const labelG = document.getElementById("sector-labels");
+	edgesG.textContent = ""; nodesG.textContent = ""; labelG.textContent = "";
+
+	const cx = (bounds.minX + bounds.maxX) / 2;
+	const cy = (bounds.minY + bounds.maxY) / 2;
+
+	// sector names out past the rim
+	const bySector = {};
+	nodes.forEach(n => (bySector[n.sector] = bySector[n.sector] || []).push(n));
+	Object.entries(bySector).forEach(([sector, list]) => {
+		if (sector === "Nexus") return;
+		let far = list[0], farD = -1;
+		list.forEach(n => {
+			const d = Math.hypot(n.x - cx, n.y - cy);
+			if (d > farD) { far = n; farD = d; }
+		});
+		const ang = Math.atan2(far.y - cy, far.x - cx);
+		const t = document.createElementNS(SVG_NS, "text");
+		t.setAttribute("x", cx + Math.cos(ang) * (farD + 130));
+		t.setAttribute("y", cy + Math.sin(ang) * (farD + 130));
+		t.setAttribute("class", "sector-label");
+		t.textContent = sector;
+		labelG.appendChild(t);
+	});
+
+	// edges batched into three <path> elements by state (fast for ~950 edges)
+	const buckets = { idle: [], avail: [], alloc: [] };
+	edgeList.forEach(([a,b]) => {
+		const na = nodeById[a], nb = nodeById[b];
+		if (!na || !nb) return;
+		const seg = `M${na.x},${na.y}L${nb.x},${nb.y}`;
+		const aHas = allocated.has(a), bHas = allocated.has(b);
+		if (aHas && bHas) buckets.alloc.push(seg);
+		else if (aHas || bHas) buckets.avail.push(seg);
+		else buckets.idle.push(seg);
+	});
+	const mkPath = (d, stroke, width, dash) => {
+		if (!d.length) return;
+		const p = document.createElementNS(SVG_NS, "path");
+		p.setAttribute("d", d.join(" "));
+		p.setAttribute("stroke", stroke);
+		p.setAttribute("stroke-width", width);
+		p.setAttribute("fill", "none");
+		if (dash) p.setAttribute("stroke-dasharray", dash);
+		edgesG.appendChild(p);
+	};
+	mkPath(buckets.idle,  "#2e2e36", 2);
+	mkPath(buckets.avail, "#7fd1ff", 2.5, "7,5");
+	mkPath(buckets.alloc, "#3ecf5b", 4);
+
+	const showSmallLabels = scale >= CFG.LABEL_ZOOM;
+	lastLabelState = showSmallLabels;
+
+	nodes.forEach(n => {
+		const has = allocated.has(n.id), avail = isAvailable(n);
+		const g = document.createElementNS(SVG_NS, "g");
+		g.setAttribute("transform", `translate(${n.x},${n.y})`);
+		g.style.cursor = "pointer";
+		if (character && !has && !avail) g.style.opacity = "0.3";
+
+		const c = document.createElementNS(SVG_NS, "circle");
+		const r = TYPE_RADIUS[n.type] || 8;
+		c.setAttribute("r", r);
+		c.setAttribute("fill", has ? "#3ecf5b" : (TYPE_COLOR[n.type] || "#8a8a92"));
+		c.setAttribute("stroke", has ? "#eaffea" : (avail ? "#7fd1ff" : "#1b1b20"));
+		c.setAttribute("stroke-width", has ? 3 : (avail ? 2.5 : 1.5));
+		g.appendChild(c);
+
+		if ((ALWAYS_LABEL.has(n.type) || showSmallLabels) && !NEVER_LABEL.has(n.name)) {
+			const t = document.createElementNS(SVG_NS, "text");
+			t.setAttribute("class", "node-label");
+			t.setAttribute("y", r + 17);
+			t.textContent = n.name;
+			g.appendChild(t);
+		}
+
+		g.addEventListener("mouseenter", e => showTooltip(e, n, has, avail));
+		g.addEventListener("mousemove", moveTooltip);
+		g.addEventListener("mouseleave", hideTooltip);
+		g.addEventListener("click", () => { if (avail) allocateNode(n); });
+		nodesG.appendChild(g);
+	});
+}
+
+function showTooltip(e, n, has, avail) {
+	const tip = document.getElementById("tooltip");
+	const status = has ? "Allocated" : (character ? (avail ? "Available" : "Locked") : "");
+	const fx = formatEffects(n.effect);
+	const effHtml = fx.length
+		? `<div class="t-stats">` + fx.map(f =>
+			`<div class="${f.good ? "stat-up" : "stat-down"}">${f.text}</div>`).join("") + `</div>`
+		: "";
+	tip.innerHTML =
+		`<div class="t-name">${n.name}</div>` +
+		`<div class="t-type">${n.type}${status ? " &middot; " + status : ""} &middot; ${n.sector}</div>` +
+		effHtml +
+		(n.description ? `<div class="t-desc">${n.description}</div>` : "") +
+		`<div class="t-cost">Cost: ${n.cost} point${n.cost === 1 ? "" : "s"} &middot; ` +
+		`${(n.parents||[]).length} connection${(n.parents||[]).length===1?"":"s"}</div>`;
+	tip.style.display = "block";
+	moveTooltip(e);
+}
+function moveTooltip(e) {
+	const tip = document.getElementById("tooltip");
+	tip.style.left = Math.min(e.clientX + 16, window.innerWidth - 300) + "px";
+	tip.style.top  = Math.min(e.clientY + 16, window.innerHeight - 170) + "px";
+}
+function hideTooltip() { document.getElementById("tooltip").style.display = "none"; }
+
+function renderHud() {
+	const b = document.getElementById("hud-body");
+	if (character) {
+		b.innerHTML =
+			`<div class="row"><b>${character.name}</b> &middot; Lv ${character.level}</div>` +
+			`<div class="row">Points: <b>${character.availablePoints}</b> available / ` +
+			`${character.spentPoints} spent / ${character.earnedPoints} earned</div>` +
+			`<div class="note">${nodes.length} nodes &middot; ${edgeList.length} connections</div>`;
+	} else {
+		b.innerHTML = `<div class="row">Planner mode &mdash; no character loaded</div>` +
+			`<div class="note">${nodes.length} nodes &middot; ${edgeList.length} connections</div>`;
+	}
+}
+
+// ------------------------------------------------------------ view maths
+function applyTransform() {
+	document.getElementById("viewport").setAttribute("transform",
+		`translate(${tx},${ty}) scale(${scale})`);
+	const pct = document.getElementById("zoom-pct");
+	if (pct) pct.textContent = Math.round(scale * 100) + "%";
+
+	// only redraw when the small-label threshold is actually crossed
+	const shouldShow = scale >= CFG.LABEL_ZOOM;
+	if (lastLabelState !== null && shouldShow !== lastLabelState) render();
+}
+
+/** Zoom about a fixed screen point, so the thing under the cursor stays put. */
+function zoomAt(screenX, screenY, factor) {
+	const next = Math.min(CFG.ZOOM_MAX, Math.max(CFG.ZOOM_MIN, scale * factor));
+	if (next === scale) return;
+	tx = screenX - ((screenX - tx) / scale) * next;
+	ty = screenY - ((screenY - ty) / scale) * next;
+	scale = next;
+	applyTransform();
+}
+
+/** Zoom about the centre of the window (used by buttons and +/- keys). */
+function zoomCentre(factor) {
+	zoomAt(window.innerWidth / 2, window.innerHeight / 2, factor);
+}
+
+/** Scale and centre so the entire tree is visible. */
+function fitToScreen() {
+	const w = Math.max(1, bounds.maxX - bounds.minX);
+	const h = Math.max(1, bounds.maxY - bounds.minY);
+	const availW = window.innerWidth  - CFG.FIT_PADDING * 2;
+	const availH = window.innerHeight - CFG.FIT_PADDING * 2;
+
+	scale = Math.min(CFG.ZOOM_MAX, Math.max(CFG.ZOOM_MIN, Math.min(availW / w, availH / h)));
+
+	const cx = (bounds.minX + bounds.maxX) / 2;
+	const cy = (bounds.minY + bounds.maxY) / 2;
+	tx = window.innerWidth  / 2 - cx * scale;
+	ty = window.innerHeight / 2 - cy * scale;
+	applyTransform();
+}
+
+function setupZoomPan() {
+	const wrap = document.getElementById("canvas-wrap");
+	let dragging = false, lastX = 0, lastY = 0;
+
+	wrap.addEventListener("wheel", e => {
+		e.preventDefault();
+		const r = wrap.getBoundingClientRect();
+		zoomAt(e.clientX - r.left, e.clientY - r.top,
+		       e.deltaY > 0 ? 1 / CFG.ZOOM_STEP : CFG.ZOOM_STEP);
+	}, { passive: false });
+
+	wrap.addEventListener("mousedown", e => {
+		dragging = true; lastX = e.clientX; lastY = e.clientY;
+		wrap.classList.add("dragging");
+	});
+	window.addEventListener("mouseup", () => {
+		dragging = false; wrap.classList.remove("dragging");
+	});
+	window.addEventListener("mousemove", e => {
+		if (!dragging) return;
+		tx += (e.clientX - lastX) * CFG.PAN_SPEED;
+		ty += (e.clientY - lastY) * CFG.PAN_SPEED;
+		lastX = e.clientX; lastY = e.clientY;
+		applyTransform();
+	});
+
+	// buttons
+	document.getElementById("btn-in").addEventListener("click", () => zoomCentre(CFG.ZOOM_STEP));
+	document.getElementById("btn-out").addEventListener("click", () => zoomCentre(1 / CFG.ZOOM_STEP));
+	document.getElementById("btn-fit").addEventListener("click", fitToScreen);
+
+	// keyboard: WASD / arrows to pan, +/- to zoom, F to fit
+	window.addEventListener("keydown", e => {
+		if (document.activeElement && document.activeElement.tagName === "INPUT") return;
+		const step = CFG.KEY_PAN_STEP;
+		let handled = true;
+		switch (e.key) {
+			case "ArrowLeft":  case "a": case "A": tx += step; break;
+			case "ArrowRight": case "d": case "D": tx -= step; break;
+			case "ArrowUp":    case "w": case "W": ty += step; break;
+			case "ArrowDown":  case "s": case "S": ty -= step; break;
+			case "+": case "=": zoomCentre(CFG.ZOOM_STEP); return;
+			case "-": case "_": zoomCentre(1 / CFG.ZOOM_STEP); return;
+			case "f": case "F": fitToScreen(); return;
+			default: handled = false;
+		}
+		if (handled) { e.preventDefault(); applyTransform(); }
+	});
+
+	// keep the view sensible if the window is resized
+	window.addEventListener("resize", () => {
+		document.getElementById("svg-root")
+			.setAttribute("viewBox", `0 0 ${window.innerWidth} ${window.innerHeight}`);
+	});
+}
+
+// ---------------------------------------------------------------- init
+(async function init() {
+	// viewBox in SCREEN pixels - all pan/zoom maths below is then in screen
+	// space, which is what makes cursor-anchored zoom behave predictably.
+	document.getElementById("svg-root")
+		.setAttribute("viewBox", `0 0 ${window.innerWidth} ${window.innerHeight}`);
+
+	await loadNodes();
+	render();
+	renderHud();
+	setupZoomPan();
+	fitToScreen();          // start with the whole tree visible
+
+	document.getElementById("pin-submit").addEventListener("click", submitPin);
+	document.getElementById("pin-input").addEventListener("keydown", e => { if (e.key === "Enter") submitPin(); });
+})();
+</script>
+</body>
+</html>

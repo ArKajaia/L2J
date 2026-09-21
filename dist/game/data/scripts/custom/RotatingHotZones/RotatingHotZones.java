@@ -1,7 +1,11 @@
 package custom.RotatingHotZones;
 
-import java.util.*;
-import java.util.function.Predicate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
 import org.l2jmobius.commons.threads.ThreadPool;
@@ -23,46 +27,129 @@ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 
 public class RotatingHotZones extends Quest
 {
-	private static final int TELEPORTER_NPC_ID = 900004; // Your custom NPC ID
+	private static final int TELEPORTER_NPC_ID = 900004;
 	private static final int MONSTER_BUFF_ID = 90000;
 	private static final int PLAYER_BUFF_ID = 90001;
 	private static final int ROTATION_HOURS = 1;
-
-	private record LevelBracket(String name, int minLevel, int maxLevel, int[] zoneIds)
+	
+	/** How long a party member has to accept a teleport offer. */
+	private static final long TELEPORT_OFFER_TIMEOUT_MS = 30000;
+	
+	/**
+	 * Static handle so EnterWorld can reconcile hot zone buffs on login. Set in the constructor, which the script loader runs once at boot.
+	 */
+	private static RotatingHotZones _instance;
+	
+	private static class LevelBracket
 	{
-		public boolean isInRange(int level) {
+		private final String name;
+		private final int minLevel;
+		private final int maxLevel;
+		private final int[] zoneIds;
+		
+		public LevelBracket(String name, int minLevel, int maxLevel, int[] zoneIds)
+		{
+			this.name = name;
+			this.minLevel = minLevel;
+			this.maxLevel = maxLevel;
+			this.zoneIds = zoneIds;
+		}
+		
+		public String getName()
+		{
+			return name;
+		}
+		
+		public int[] getZoneIds()
+		{
+			return zoneIds;
+		}
+		
+		public boolean isInRange(int level)
+		{
 			return (level >= minLevel) && (level <= maxLevel);
 		}
 	}
-
+	
 	private static final List<LevelBracket> BRACKETS = new ArrayList<>();
 	static
 	{
-		BRACKETS.add(new LevelBracket("Lv 1-10", 1, 10, IntStream.range(90000, 90010).toArray()));
-		BRACKETS.add(new LevelBracket("Lv 11-20", 11, 20, IntStream.range(90011, 90020).toArray()));
-		BRACKETS.add(new LevelBracket("Lv 21-30", 21, 30, IntStream.range(90021, 90030).toArray()));
-		BRACKETS.add(new LevelBracket("Lv 31-40", 31, 40, IntStream.range(90031, 90040).toArray()));
-		BRACKETS.add(new LevelBracket("Lv 41-50", 41, 50, IntStream.range(90041, 90050).toArray()));
-		BRACKETS.add(new LevelBracket("Lv 51-60", 51, 60, IntStream.range(90051, 90060).toArray()));
-		BRACKETS.add(new LevelBracket("Lv 61-70", 61, 70, IntStream.range(90061, 90070).toArray()));
-		BRACKETS.add(new LevelBracket("Lv 71-80", 71, 80, IntStream.range(90071, 90080).toArray()));
-		BRACKETS.add(new LevelBracket("Lv 81+", 81, 999, IntStream.range(90081, 90090).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 1-10", 1, 10, IntStream.rangeClosed(90001, 90010).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 11-20", 11, 20, IntStream.rangeClosed(90011, 90020).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 21-30", 21, 30, IntStream.rangeClosed(90021, 90030).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 31-40", 31, 40, IntStream.rangeClosed(90031, 90040).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 41-50", 41, 50, IntStream.rangeClosed(90041, 90050).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 51-60", 51, 60, IntStream.rangeClosed(90051, 90060).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 61-70", 61, 70, IntStream.rangeClosed(90061, 90070).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 71-80", 71, 80, IntStream.rangeClosed(90071, 90080).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 81+", 81, 999, IntStream.rangeClosed(90081, 90090).toArray()));
 	}
-
-	private record BracketZone(LevelBracket bracket, int activeZoneId) {
+	
+	private static class BracketZone
+	{
+		private final LevelBracket bracket;
+		private final int activeZoneId;
+		
+		public BracketZone(LevelBracket bracket, int activeZoneId)
+		{
+			this.bracket = bracket;
+			this.activeZoneId = activeZoneId;
+		}
+		
+		public LevelBracket getBracket()
+		{
+			return bracket;
+		}
+		
+		public int getActiveZoneId()
+		{
+			return activeZoneId;
+		}
 	}
-
+	
+	/**
+	 * A teleport offer awaiting a party member's answer.
+	 * <p>
+	 * The destination is resolved ONCE by the leader and stored here, so everyone who accepts lands on the same spot instead of each rolling their own random point in the zone.
+	 */
+	private static class PendingTeleport
+	{
+		private final int zoneId;
+		private final int x;
+		private final int y;
+		private final int z;
+		private final long expiry;
+		
+		public PendingTeleport(int zoneId, int x, int y, int z)
+		{
+			this.zoneId = zoneId;
+			this.x = x;
+			this.y = y;
+			this.z = z;
+			this.expiry = System.currentTimeMillis() + TELEPORT_OFFER_TIMEOUT_MS;
+		}
+		
+		public boolean isExpired()
+		{
+			return System.currentTimeMillis() > expiry;
+		}
+	}
+	
 	private final Set<Integer> _activeZoneSet = new HashSet<>();
-	private final List<BracketZone> _activeZones = new ArrayList<BracketZone>();
+	private final List<BracketZone> _activeZones = new ArrayList<>();
+	
+	/** objectId -> pending offer. Removed on accept/decline; stale entries swept on rotation. */
+	private final Map<Integer, PendingTeleport> _pendingTeleports = new ConcurrentHashMap<>();
 	
 	public RotatingHotZones()
 	{
-		// Use a positive custom ID (e.g. 990001) instead of -1 so QuestManager registers this script
 		super(900004);
+		
+		_instance = this;
 		
 		for (LevelBracket bracket : BRACKETS)
 		{
-			for (int zoneId : bracket.zoneIds)
+			for (int zoneId : bracket.getZoneIds())
 			{
 				addEnterZoneId(zoneId);
 				addExitZoneId(zoneId);
@@ -76,11 +163,16 @@ public class RotatingHotZones extends Quest
 		ThreadPool.scheduleAtFixedRate(this::rotateZone, 10000, ROTATION_HOURS * 60 * 60 * 1000L);
 	}
 	
+	public static RotatingHotZones getInstance()
+	{
+		return _instance;
+	}
+	
 	private void rotateZone()
 	{
 		for (BracketZone br : _activeZones)
 		{
-			ZoneType oldZone = ZoneManager.getInstance().getZoneById(br.activeZoneId);
+			ZoneType oldZone = ZoneManager.getInstance().getZoneById(br.getActiveZoneId());
 			if (oldZone != null)
 			{
 				for (Creature creature : oldZone.getCharactersInside())
@@ -96,18 +188,21 @@ public class RotatingHotZones extends Quest
 				}
 			}
 		}
-
+		
 		_activeZones.clear();
 		_activeZoneSet.clear();
-
+		
+		// Offers pointing at the previous rotation are meaningless now.
+		_pendingTeleports.clear();
+		
 		for (LevelBracket bracket : BRACKETS)
 		{
-			if (bracket.zoneIds.length == 0)
+			if (bracket.getZoneIds().length == 0)
 			{
 				continue;
 			}
 			
-			int chosenZoneId = bracket.zoneIds[Rnd.get(bracket.zoneIds.length)];
+			int chosenZoneId = bracket.getZoneIds()[Rnd.get(bracket.getZoneIds().length)];
 			_activeZones.add(new BracketZone(bracket, chosenZoneId));
 			_activeZoneSet.add(chosenZoneId);
 		}
@@ -122,15 +217,15 @@ public class RotatingHotZones extends Quest
 			int playerLevel = player.getLevel();
 			for (BracketZone bz : _activeZones)
 			{
-				LevelBracket bracket = bz.bracket;
+				LevelBracket bracket = bz.getBracket();
 				if (bracket.isInRange(playerLevel))
 				{
-					ZoneType zone = ZoneManager.getInstance().getZoneById(bz.activeZoneId);
+					ZoneType zone = ZoneManager.getInstance().getZoneById(bz.getActiveZoneId());
 					if (zone != null)
 					{
 						player.sendMessage("=================================");
 						player.sendMessage(">>> HOT ZONE ROTATED <<<");
-						player.sendMessage("Hot Zone for your level (" + bracket.name + "): " + zone.getName());
+						player.sendMessage("Hot Zone for your level (" + bracket.getName() + "): " + zone.getName());
 						player.sendMessage("=================================");
 					}
 					break;
@@ -143,7 +238,7 @@ public class RotatingHotZones extends Quest
 		
 		for (BracketZone bz : _activeZones)
 		{
-			ZoneType activeZone = ZoneManager.getInstance().getZoneById(bz.activeZoneId);
+			ZoneType activeZone = ZoneManager.getInstance().getZoneById(bz.getActiveZoneId());
 			if (activeZone != null)
 			{
 				for (Creature creature : activeZone.getCharactersInside())
@@ -171,58 +266,209 @@ public class RotatingHotZones extends Quest
 	@Override
 	public String onEvent(String event, Npc npc, Player player)
 	{
-		if (event.startsWith("teleport_"))
+		// ---------------------------------------------------- offer replies
+		if (event.equals("tp_accept"))
 		{
-			final boolean isPartyTp = event.startsWith("teleport_party_");
-			int zoneId = Integer.parseInt(event.replace(isPartyTp ? "teleport_party_" : "teleport_", ""));
-
-			if (_activeZoneSet.contains(zoneId))
+			final PendingTeleport pending = _pendingTeleports.remove(player.getObjectId());
+			if (pending == null)
 			{
-				if (isPartyTp)
-				{
-					if (!player.isInParty())
-						player.sendMessage("You are not in the party");
-					else if (player.getParty().getLeader() != player)
-						player.sendMessage("Only Party leader can teleport the party");
-				}
-
-				ZoneType zone = ZoneManager.getInstance().getZoneById(zoneId);
-				if ((zone != null) && (zone.getZone() != null))
-				{
-					Location rawPoint = zone.getZone().getRandomPoint();
-					List<Integer> floors = GeoEngine.getInstance().getAllZLayers(GeoEngine.getGeoX(rawPoint.getX()),
-							GeoEngine.getGeoY((rawPoint.getY())));
-					int z = 0;
-					if (floors != null && !floors.isEmpty()) {
-						final int idx = Rnd.get(floors.size());
-						z = floors.get(idx) + 20;
-					}
-
-					List<Player> playersToTp = List.of(player);
-					if (isPartyTp && player.getParty() != null)
-						playersToTp = player.getParty().getMembers();
-
-					for (Player tpPlayer : playersToTp)
-					{
-						if (!tpPlayer.isInsideZone(ZoneId.PEACE))
-							continue;
-
-						tpPlayer.teleToLocation(new Location(rawPoint.getX(), rawPoint.getY(), z));
-						tpPlayer.sendMessage("Teleported to " + zone.getName() + "!");
-					}
-				}
-				else
-				{
-					player.sendMessage("Could not resolve location for the requested zone.");
-				}
+				player.sendMessage("You have no pending teleport offer.");
+			}
+			else if (pending.isExpired())
+			{
+				player.sendMessage("That teleport offer has expired.");
+			}
+			else if (!_activeZoneSet.contains(pending.zoneId))
+			{
+				player.sendMessage("That hot zone is no longer active.");
 			}
 			else
 			{
+				player.teleToLocation(new Location(pending.x, pending.y, pending.z));
+				player.sendMessage("Teleported to the Hot Zone!");
+			}
+			return null;
+		}
+		
+		if (event.equals("tp_decline"))
+		{
+			_pendingTeleports.remove(player.getObjectId());
+			player.sendMessage("You declined the teleport.");
+			return null;
+		}
+		
+		// ---------------------------------------------------- teleport request
+		if (event.startsWith("teleport_"))
+		{
+			final boolean isPartyTp = event.startsWith("teleport_party_");
+			final int zoneId = Integer.parseInt(event.replace(isPartyTp ? "teleport_party_" : "teleport_", ""));
+			
+			if (!_activeZoneSet.contains(zoneId))
+			{
 				player.sendMessage("That hotzone is no longer active!");
 				showTeleportMenu(player, npc);
+				return null;
+			}
+			
+			// Validate party state BEFORE doing anything. These previously
+			// sent a message and then fell through, teleporting anyway.
+			if (isPartyTp)
+			{
+				if (!player.isInParty())
+				{
+					player.sendMessage("You are not in a party.");
+					return null;
+				}
+				
+				if (player.getParty().getLeader() != player)
+				{
+					player.sendMessage("Only the party leader can teleport the party.");
+					return null;
+				}
+			}
+			
+			final ZoneType zone = ZoneManager.getInstance().getZoneById(zoneId);
+			if ((zone == null) || (zone.getZone() == null))
+			{
+				player.sendMessage("Could not resolve location for the requested zone.");
+				return null;
+			}
+			
+			final Location rawPoint = zone.getZone().getRandomPoint();
+			final List<Integer> floors = GeoEngine.getInstance().getAllZLayers(GeoEngine.getGeoX(rawPoint.getX()), GeoEngine.getGeoY(rawPoint.getY()));
+			int z = 0;
+			if ((floors != null) && !floors.isEmpty())
+			{
+				z = floors.get(Rnd.get(floors.size())) + 20;
+			}
+			
+			if (!isPartyTp)
+			{
+				if (!player.isInsideZone(ZoneId.PEACE))
+				{
+					player.sendMessage("You can only teleport to a Hot Zone from a peace zone.");
+					return null;
+				}
+				
+				player.teleToLocation(new Location(rawPoint.getX(), rawPoint.getY(), z));
+				player.sendMessage("Teleported to " + zone.getName() + "!");
+				return null;
+			}
+			
+			// Leader goes immediately; everyone else is asked first.
+			int offered = 0;
+			for (Player member : player.getParty().getMembers())
+			{
+				if (member == null)
+				{
+					continue;
+				}
+				
+				if (member == player)
+				{
+					if (!member.isInsideZone(ZoneId.PEACE))
+					{
+						member.sendMessage("You can only teleport to a Hot Zone from a peace zone.");
+						continue;
+					}
+					
+					member.teleToLocation(new Location(rawPoint.getX(), rawPoint.getY(), z));
+					member.sendMessage("Teleported to " + zone.getName() + "!");
+					continue;
+				}
+				
+				_pendingTeleports.put(member.getObjectId(), new PendingTeleport(zoneId, rawPoint.getX(), rawPoint.getY(), z));
+				sendTeleportOffer(member, player, zone.getName());
+				offered++;
+			}
+			
+			player.sendMessage("Teleport offer sent to " + offered + " party member(s).");
+			return null;
+		}
+		
+		return null;
+	}
+	
+	/**
+	 * Shows a party member an accept/decline window for a leader's teleport.
+	 * @param member
+	 * @param leader
+	 * @param zoneName
+	 */
+	private void sendTeleportOffer(Player member, Player leader, String zoneName)
+	{
+		final NpcHtmlMessage html = new NpcHtmlMessage(0);
+		final StringBuilder sb = new StringBuilder();
+		
+		sb.append("<html><body><center><br>");
+		sb.append("<font color=\"LEVEL\">Hot Zone Teleport</font><br><br>");
+		sb.append("<font color=\"AAAAAA\">").append(leader.getName());
+		sb.append(" wants to teleport the party to</font><br>");
+		sb.append("<font color=\"LEVEL\">").append(zoneName).append("</font><br><br>");
+		sb.append("<font color=\"777777\">This offer expires in ");
+		sb.append(TELEPORT_OFFER_TIMEOUT_MS / 1000).append(" seconds.</font><br><br>");
+		
+		sb.append("<table width=250 border=0 cellpadding=0 cellspacing=0>");
+		sb.append("<tr>");
+		sb.append("<td width=125 align=center>");
+		sb.append("<button value=\"Accept\" action=\"bypass -h Script RotatingHotZones tp_accept\" ");
+		sb.append("width=100 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
+		sb.append("</td>");
+		sb.append("<td width=125 align=center>");
+		sb.append("<button value=\"Decline\" action=\"bypass -h Script RotatingHotZones tp_decline\" ");
+		sb.append("width=100 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
+		sb.append("</td>");
+		sb.append("</tr>");
+		sb.append("</table>");
+		
+		sb.append("</center></body></html>");
+		
+		html.setHtml(sb.toString());
+		member.sendPacket(html);
+	}
+	
+	/**
+	 * Reconciles a player's hot zone buff with where they ACTUALLY are.
+	 * <p>
+	 * Effects persist across a disconnect, so crashing inside a hot zone restores the buff on login no matter where the player reappears - and onExitZone never fired to remove it. Equally, onEnterZone does not fire for a login spawn, so someone relogging inside an active zone would otherwise be
+	 * missing a buff they should have. Call this from EnterWorld.
+	 * @param player
+	 */
+	public void validateHotZoneBuffs(Player player)
+	{
+		if (player == null)
+		{
+			return;
+		}
+		
+		boolean insideActiveZone = false;
+		for (int zoneId : _activeZoneSet)
+		{
+			final ZoneType zone = ZoneManager.getInstance().getZoneById(zoneId);
+			if ((zone != null) && zone.getCharactersInside().contains(player))
+			{
+				insideActiveZone = true;
+				break;
 			}
 		}
-		return null;
+		
+		if (insideActiveZone)
+		{
+			if (!player.isAffectedBySkill(PLAYER_BUFF_ID))
+			{
+				final Skill buff = getSafeSkill(PLAYER_BUFF_ID, 1);
+				if (buff != null)
+				{
+					buff.applyEffects(player, player);
+					player.sendMessage("You are inside an active Hot Zone!");
+				}
+			}
+		}
+		else if (player.isAffectedBySkill(PLAYER_BUFF_ID))
+		{
+			player.stopSkillEffects(SkillFinishType.REMOVED, PLAYER_BUFF_ID);
+			player.sendMessage("Your Hot Zone bonus has ended - you are no longer in an active zone.");
+		}
 	}
 	
 	private Skill getSafeSkill(int skillId, int level)
@@ -251,24 +497,22 @@ public class RotatingHotZones extends Quest
 		
 		for (BracketZone bz : _activeZones)
 		{
-			LevelBracket bracket = bz.bracket;
-			int zoneId = bz.activeZoneId;
+			LevelBracket bracket = bz.getBracket();
+			int zoneId = bz.getActiveZoneId();
 			
 			ZoneType zone = ZoneManager.getInstance().getZoneById(zoneId);
 			String zoneName = (zone != null) ? zone.getName() : ("Zone " + zoneId);
 			
 			hasActiveZone = true;
-
-            sb.append("<tr><td align=\"left\" width=80>").append(zoneName)
-					.append(": ").append("<font color=\"LEVEL\">")
-					.append(bracket.name()).append("</font></td></tr>");
-
+			
+			sb.append("<tr><td align=\"left\" width=80>").append(zoneName).append(": ").append("<font color=\"LEVEL\">").append(bracket.getName()).append("</font></td></tr>");
+			
 			sb.append("<tr>");
 			sb.append("<td>");
-
+			
 			sb.append("<table width=160>");
 			sb.append("<tr>");
-
+			
 			sb.append("<td width=80 align=left>");
 			sb.append("<button value=\"Solo\" ");
 			sb.append("action=\"bypass -h Script RotatingHotZones teleport_").append(zoneId).append("\" ");
@@ -276,8 +520,8 @@ public class RotatingHotZones extends Quest
 			sb.append("back=\"L2UI_CT1.Button_DF_Down\" ");
 			sb.append("fore=\"L2UI_CT1.Button_DF\">");
 			sb.append("</td>");
-
-			if (player.isInParty() && player.getParty().getLeader() == player)
+			
+			if (player.isInParty() && (player.getParty().getLeader() == player))
 			{
 				sb.append("<td width=80 align=left>");
 				sb.append("<button value=\"Party\" ");
@@ -287,10 +531,10 @@ public class RotatingHotZones extends Quest
 				sb.append("fore=\"L2UI_CT1.Button_DF\">");
 				sb.append("</td>");
 			}
-
+			
 			sb.append("</tr>");
 			sb.append("</table>");
-
+			
 			sb.append("</td>");
 			sb.append("</tr>");
 		}

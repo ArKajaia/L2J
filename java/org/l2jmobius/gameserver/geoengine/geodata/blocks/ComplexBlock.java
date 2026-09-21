@@ -123,7 +123,8 @@ public class ComplexBlock implements IBlock
 	{
 		return getCellHeight(geoX, geoY);
 	}
-
+	
+	@Override
 	public List<Integer> getAllZLayers(int geoX, int geoY)
 	{
 		return List.of((getCellHeight(geoX, geoY)));
