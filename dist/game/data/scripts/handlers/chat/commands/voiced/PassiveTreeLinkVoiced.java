@@ -6,7 +6,9 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import custom.PassiveSkillTree.PassiveTreeApiServer;
 
 /**
- * ".treelink" - hands the player a short 6-digit code to type into the web passive tree page, instead of a long link (L2's chat window generally can't be copy-pasted from). The code is valid for 10 minutes and is exchanged for the real session token by the webpage itself.
+ * ".treelink" - hands the player a direct, clickable link to the visual passive tree planner, showing THEIR live allocation for their current class_index. Valid for 15 minutes.
+ * <p>
+ * Sent as its own chat line with nothing else on it, so the client's URL auto-detection picks up the whole thing cleanly - a trailing sentence on the same line risks getting swallowed into the clickable region or breaking the parser depending on client revision.
  */
 public class PassiveTreeLinkVoiced implements IVoicedCommandHandler
 {
@@ -16,15 +18,16 @@ public class PassiveTreeLinkVoiced implements IVoicedCommandHandler
 	};
 	
 	// Point this at wherever your server is reachable from.
-	private static final String WEB_BASE_URL = "http://10.8.0.6:8788/passive-tree.html";
+	private static final String WEB_BASE_URL = "http://YOUR_SERVER_HOST:8788/passive-tree.html";
 	
 	@Override
 	public boolean useVoicedCommand(String command, Player player, String params)
 	{
-		final String pin = PassiveTreeApiServer.getInstance().generatePin(player.getObjectId(), player.getClassIndex());
+		final String token = PassiveTreeApiServer.getInstance().generateToken(player.getObjectId(), player.getClassIndex());
+		final String url = WEB_BASE_URL + "?token=" + token;
 		
-		player.sendMessage("Open this page in your browser: " + WEB_BASE_URL);
-		player.sendMessage("Then enter this code (valid 60 minutes): " + pin);
+		player.sendMessage("Your passive tree link (click to open, valid 15 minutes):");
+		player.sendMessage(url);
 		return true;
 	}
 	

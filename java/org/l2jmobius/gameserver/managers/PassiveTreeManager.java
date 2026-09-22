@@ -3,6 +3,10 @@ package org.l2jmobius.gameserver.managers;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -26,10 +30,26 @@ import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
  * Owns: point math (always DERIVED from level, never stored - see note on getEarnedPoints), the allocated-node cache per (character, class_index), DB persistence, and applyAll() which is the single choke point that keeps granted skills, getter-backed stats, and Func-backed stats all in sync with
  * what's actually allocated. Every mutation (allocate, reset, subclass switch, login) routes through applyAll() rather than patching skills or stats incrementally - a rebuild-from-source-of-truth is immune to the kind of state-desync bugs a partial patch can quietly introduce.
  */
+
 public class PassiveTreeManager
 {
 	// key: "objectId#classIndex" -> allocated node ids for that character+subclass
 	private final Map<String, Set<Integer>> _cache = new ConcurrentHashMap<>();
+	
+	private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(PassiveTreeManager.class.getName());
+	
+	public enum DeallocateResult
+	{
+		OK,
+		NOT_ALLOCATED,
+		IS_ORIGIN,
+		WOULD_DISCONNECT,
+		NOT_ENOUGH_ADENA,
+		ITEM_ERROR
+	}
+	
+	/** Lazily-built, cached full symmetric adjacency map. See neighborMap(). */
+	private volatile Map<Integer, Set<Integer>> _neighborCache = null;
 	
 	/**
 	 * objectId -> (skillId -> level) for skills the TREE added this session. applyAll() only ever removes what's recorded here, so class-owned skills (a dwarf's own Spoil, Crystallize, Create Item...) are never touched.
@@ -412,5 +432,165 @@ public class PassiveTreeManager
 	private static class SingletonHolder
 	{
 		protected static final PassiveTreeManager INSTANCE = new PassiveTreeManager();
+	}
+	
+	/**
+	 * Full symmetric adjacency for every node in the tree, built once and cached for the life of the server.
+	 * <p>
+	 * START nodes deliberately store an EMPTY parents list (see PassiveNode's javadoc from earlier in this build - it's what makes them the sole valid entry points). So a node's true neighbours can't be read off its own getParents() alone; they have to be reconstructed from both directions:
+	 * everything in its own parent list, PLUS every node that lists it as a parent.
+	 * @return
+	 */
+	private Map<Integer, Set<Integer>> neighborMap()
+	{
+		Map<Integer, Set<Integer>> cache = _neighborCache;
+		if (cache != null)
+		{
+			return cache;
+		}
+		
+		synchronized (this)
+		{
+			if (_neighborCache != null)
+			{
+				return _neighborCache;
+			}
+			
+			final Map<Integer, Set<Integer>> map = new HashMap<>();
+			for (PassiveNode node : PassiveTreeData.getInstance().getAllNodes().values())
+			{
+				map.computeIfAbsent(node.getId(), k -> new HashSet<>());
+				for (int parentId : node.getParents())
+				{
+					map.computeIfAbsent(parentId, k -> new HashSet<>()).add(node.getId());
+					map.computeIfAbsent(node.getId(), k -> new HashSet<>()).add(parentId);
+				}
+			}
+			
+			_neighborCache = map;
+			return map;
+		}
+	}
+	
+	/**
+	 * @param allocatedIds a candidate allocation set (e.g. the current allocation minus one node being considered for refund)
+	 * @return {@code true} if every node in {@code allocatedIds} is still reachable from SOME allocated START node, walking only through other nodes that are also in {@code allocatedIds}.
+	 *         <p>
+	 *         This is the real respec rule for a mesh tree (not a strict tree): a node can only be refunded if no OTHER allocated node relies on it to stay connected to its origin. An interior node with a second allocated path around it is safe to remove; one that's the only bridge to a whole
+	 *         allocated branch is not.
+	 */
+	private boolean remainsConnected(Set<Integer> allocatedIds)
+	{
+		if (allocatedIds.isEmpty())
+		{
+			return true;
+		}
+		
+		final Map<Integer, Set<Integer>> neighbors = neighborMap();
+		final Set<Integer> seen = new HashSet<>();
+		final Deque<Integer> queue = new ArrayDeque<>();
+		
+		for (int id : allocatedIds)
+		{
+			final PassiveNode node = PassiveTreeData.getInstance().getNode(id);
+			if ((node != null) && (node.getType() == PassiveNode.NodeType.START))
+			{
+				seen.add(id);
+				queue.add(id);
+			}
+		}
+		
+		while (!queue.isEmpty())
+		{
+			final int current = queue.poll();
+			for (int next : neighbors.getOrDefault(current, Collections.emptySet()))
+			{
+				if (allocatedIds.contains(next) && seen.add(next))
+				{
+					queue.add(next);
+				}
+			}
+		}
+		
+		return seen.containsAll(allocatedIds);
+	}
+	
+	/**
+	 * Refunds ONE allocated node for Adena, provided doing so would not disconnect any other allocated node from its START (see remainsConnected()). Charges PassiveTreeConfig.RESPEC_ADENA_PER_POINT * node.getCost() Adena - intentionally separate from whatever your full-tree reset charges.
+	 * @param player
+	 * @param nodeId
+	 * @return
+	 */
+	public DeallocateResult deallocateNode(Player player, int nodeId)
+	{
+		final PassiveNode node = PassiveTreeData.getInstance().getNode(nodeId);
+		if (node == null)
+		{
+			return DeallocateResult.NOT_ALLOCATED;
+		}
+		
+		if (node.getType() == PassiveNode.NodeType.START)
+		{
+			return DeallocateResult.IS_ORIGIN;
+		}
+		
+		final Set<Integer> allocated = new HashSet<>(getAllocatedNodes(player));
+		if (!allocated.contains(nodeId))
+		{
+			return DeallocateResult.NOT_ALLOCATED;
+		}
+		
+		allocated.remove(nodeId);
+		if (!remainsConnected(allocated))
+		{
+			return DeallocateResult.WOULD_DISCONNECT;
+		}
+		
+		final long cost = PassiveTreeConfig.RESPEC_ADENA_PER_POINT * node.getCost();
+		if (cost > 0)
+		{
+			if (!player.destroyItemByItemId(ItemProcessType.FEE, PassiveTreeConfig.RESET_ITEM_ID, cost, player, true))
+			{
+				return DeallocateResult.NOT_ENOUGH_ADENA;
+			}
+		}
+		
+		persistDelete(player, nodeId);
+		
+		// Rebuild stats and skills from the new allocation set - this reuses
+		// whatever applyAll() already does (including the _treeGranted
+		// skill-ownership tracking, if that patch is already in this file).
+		applyAll(player);
+		
+		return DeallocateResult.OK;
+	}
+	
+	/**
+	 * ============================================================================ PERSISTENCE - VERIFY BEFORE USING ============================================================================ This method's job is simple: delete ONE row from whatever table your allocate() path writes a row INTO
+	 * when a node is allocated. The table name and column names below (character_passive_tree / object_id / class_index / node_id) are my best inference of a typical layout for this system - they were never confirmed against your actual schema in this conversation. Before using this as-is: look at
+	 * whichever method allocate() calls to INSERT a row (it's somewhere in this class, likely named something like persistAllocate() or saveNode()). If one exists, DELETE THIS METHOD and write persistDelete() as its mirror image instead - same table, same column names, same class_index logic - so
+	 * both directions of the allocation can never drift apart. Only fall back to the raw SQL below if no such method exists yet. ============================================================================ public boolean allocate(Player player, int nodeId) { if (!canAllocate(player, nodeId)) {
+	 * return false; } getAllocatedNodes(player).add(nodeId); persistInsert(player, nodeId); applyAll(player); return true; } private void persistInsert(Player player, int nodeId) { final int classIndex = PassiveTreeConfig.SEPARATE_SUBCLASS_POINTS ? player.getClassIndex() : 0; try (Connection con =
+	 * DatabaseFactory.getConnection(); PreparedStatement ps = con.prepareStatement("INSERT INTO character_passive_tree (char_id, class_index, node_id) VALUES (?, ?, ?)")) { ps.setInt(1, player.getObjectId()); ps.setInt(2, classIndex); ps.setInt(3, nodeId); ps.execute(); } catch (Exception e) {
+	 * e.printStackTrace(); } }
+	 * @param player
+	 * @param nodeId
+	 */
+	private void persistDelete(Player player, int nodeId)
+	{
+		final int classIndex = PassiveTreeConfig.SEPARATE_SUBCLASS_POINTS ? player.getClassIndex() : 0;
+		
+		try (Connection con = DatabaseFactory.getConnection();
+			PreparedStatement ps = con.prepareStatement("DELETE FROM character_passive_tree WHERE char_id = ? AND class_index = ? AND node_id = ?"))
+		{
+			ps.setInt(1, player.getObjectId());
+			ps.setInt(2, classIndex);
+			ps.setInt(3, nodeId);
+			ps.executeUpdate();
+		}
+		catch (SQLException e)
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": Failed to delete passive node " + nodeId + " for player " + player.getObjectId() + " - " + e.getMessage());
+		}
 	}
 }

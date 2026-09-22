@@ -15,19 +15,72 @@
 	#canvas-wrap.dragging { cursor: grabbing; }
 	svg { width: 100%; height: 100%; display: block; }
 
-	.hud {
+	.header {
 		position: fixed; top: 16px; left: 16px;
-		background: rgba(12,12,16,0.9); border: 1px solid #7a5c1e;
-		border-radius: 6px; padding: 12px 18px; color: #e8dcb8;
-		min-width: 250px; box-shadow: 0 0 18px rgba(0,0,0,0.6);
+		display: flex; align-items: center; gap: 12px;
+		background: linear-gradient(135deg, rgba(20,20,26,0.92), rgba(12,12,16,0.85));
+		border: 1px solid #7a5c1e; border-radius: 8px; padding: 10px 20px 10px 14px;
+		box-shadow: 0 0 20px rgba(0,0,0,0.6);
 	}
-	.hud h1 { font-size: 15px; margin: 0 0 6px 0; color: #d9b64c; letter-spacing: 0.5px; }
-	.hud .row { font-size: 13px; margin: 2px 0; color: #cfcfcf; }
-	.hud .row b { color: #f0e0a0; }
-	.hud .note { font-size: 11px; color: #888; margin-top: 6px; font-style: italic; }
+	.header .mark {
+		width: 40px; height: 40px; border-radius: 50%;
+		border: 1px solid #d9b64c; display: flex; align-items: center; justify-content: center;
+		background: radial-gradient(circle, rgba(217,182,76,0.18), transparent 70%);
+	}
+	.header .mark svg { width: 22px; height: 22px; fill: #d9b64c; }
+	.header .text h1 {
+		margin: 0; font-size: 17px; letter-spacing: 3px; color: #f0e6c8;
+		text-transform: uppercase; font-weight: normal;
+	}
+	.header .text .sub {
+		margin-top: 2px; font-size: 11px; letter-spacing: 2px; color: #8a7a55;
+		text-transform: uppercase;
+	}
+	.header .text .who {
+		margin-top: 4px; font-size: 12px; color: #9fa8b0;
+	}
+	.header .text .who b { color: #d9b64c; }
+
+	/*
+	 * Right-side stack: points badge, zoom controls, and the detail panel
+	 * used to each be independently position:fixed with hand-guessed pixel
+	 * offsets (96px, 190px margin-top, calc(100% - 206px) height...) to
+	 * avoid sitting on top of each other. That's exactly the kind of thing
+	 * that breaks the moment any box's real rendered height differs even
+	 * slightly from what was guessed - which is what caused the overlap.
+	 * A single flex column wrapper can't overlap by construction: each
+	 * child just takes the space it needs, top to bottom, and the panel
+	 * (flex: 1) fills whatever is left.
+	 */
+	.right-stack {
+		position: fixed; top: 16px; right: 16px; bottom: 16px; width: 300px;
+		display: flex; flex-direction: column; gap: 12px;
+	}
+	.points-badge, .right-stack #controls, .right-stack .detail-panel {
+		position: static; /* the wrapper above owns the fixed positioning now */
+	}
+	.points-badge {
+		flex: 0 0 auto;
+		display: flex; align-items: center; gap: 10px;
+		background: linear-gradient(135deg, rgba(20,20,26,0.92), rgba(12,12,16,0.85));
+		border: 1px solid #7a5c1e; border-radius: 8px; padding: 10px 18px;
+		box-shadow: 0 0 20px rgba(0,0,0,0.6);
+	}
+	.points-badge .label { font-size: 10px; letter-spacing: 2px; color: #8a7a55; text-transform: uppercase; }
+	.points-badge .row { display: flex; align-items: center; gap: 8px; }
+	.points-badge svg { width: 16px; height: 16px; fill: #d9b64c; }
+	.points-badge .value { font-size: 20px; color: #f0e6c8; }
+	#respec-all-btn {
+		margin-top: 8px; width: 100%; padding: 6px 0;
+		background: #2a1512; border: 1px solid #c0392b; color: #ff9b90;
+		font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+		border-radius: 4px; cursor: pointer;
+	}
+	#respec-all-btn:hover { background: #3a1c18; }
+	#respec-all-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 	#controls {
-		position: fixed; top: 16px; right: 16px;
+		flex: 0 0 auto;
 		background: rgba(12,12,16,0.9); border: 1px solid #444;
 		border-radius: 6px; padding: 10px 12px; color: #bbb; font-size: 12px;
 		text-align: center;
@@ -51,21 +104,81 @@
 	.legend .item { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
 	.legend .swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
 
-	#tooltip {
+	.totals {
+		position: fixed; bottom: 16px; left: 280px;
+		background: rgba(12,12,16,0.9); border: 1px solid #7a5c1e;
+		border-radius: 6px; padding: 10px 16px; color: #e8dcb8;
+		min-width: 220px; max-width: 300px;
+		box-shadow: 0 0 18px rgba(0,0,0,0.6);
+	}
+	.totals-head { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+	.totals-head h1 { font-size: 14px; margin: 0; color: #d9b64c; letter-spacing: 0.5px; }
+	.totals-body {
+		margin-top: 8px; max-height: 260px; overflow-y: auto;
+		font-size: 13px; line-height: 1.5;
+	}
+	.totals-body.collapsed { display: none; }
+	.totals-body .stat-up   { color: #8fe39a; }
+	.totals-body .stat-down { color: #ff9b90; }
+
+
+	.detail-panel {
+		flex: 1 1 auto; min-height: 0; width: 100%;
+		background: linear-gradient(180deg, rgba(18,18,23,0.95), rgba(10,10,13,0.95));
+		border: 1px solid #7a5c1e; border-radius: 8px;
+		box-shadow: 0 0 24px rgba(0,0,0,0.6);
+		display: flex; flex-direction: column; overflow: hidden;
+	}
+	.detail-empty {
+		flex: 1; display: flex; align-items: center; justify-content: center;
+		text-align: center; padding: 24px; color: #6b6b73; font-size: 13px; line-height: 1.6;
+	}
+	.detail-body { flex: 1; overflow-y: auto; padding: 20px; }
+	.detail-icon-row { display: flex; justify-content: center; margin-bottom: 14px; }
+	.detail-icon {
+		width: 72px; height: 72px; border-radius: 50%;
+		display: flex; align-items: center; justify-content: center;
+		border: 2px solid #d9b64c; background: radial-gradient(circle, rgba(217,182,76,0.15), transparent 70%);
+	}
+	.detail-icon.has { border-color: #3ecf5b; background: radial-gradient(circle, rgba(62,207,91,0.18), transparent 70%); }
+	.detail-icon svg { width: 34px; height: 34px; }
+	.detail-name { text-align: center; font-size: 18px; color: #f0e6c8; margin: 0 0 2px; }
+	.detail-type { text-align: center; font-size: 10px; letter-spacing: 2px; color: #8a7a55; text-transform: uppercase; margin-bottom: 14px; }
+	.detail-hr { border: none; border-top: 1px solid #333; margin: 12px 0; }
+	.detail-stats .stat-up   { color: #8fe39a; font-size: 13px; line-height: 1.6; }
+	.detail-stats .stat-down { color: #ff9b90; font-size: 13px; line-height: 1.6; }
+	.detail-desc { color: #aaa; font-size: 12px; line-height: 1.5; font-style: italic; }
+	.detail-next { color: #888; font-size: 11px; line-height: 1.5; margin-top: 4px; }
+	.detail-cost-label { font-size: 10px; letter-spacing: 1.5px; color: #8a7a55; text-transform: uppercase; }
+	.detail-cost-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+	.detail-cost-row svg { width: 15px; height: 15px; fill: #d9b64c; }
+	.detail-cost-row .amt { font-size: 16px; color: #f0e6c8; }
+	.detail-action {
+		display: block; width: 100%; margin-top: 16px; padding: 11px;
+		background: linear-gradient(135deg, #7a5c1e, #5c4416); border: 1px solid #d9b64c;
+		color: #fff2d0; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+		border-radius: 4px; cursor: pointer;
+	}
+	.detail-action:hover { background: linear-gradient(135deg, #96742a, #7a5c1e); }
+	.detail-action.respec { background: linear-gradient(135deg, #5c2a1e, #431a12); border-color: #c0392b; }
+	.detail-action.respec:hover { background: linear-gradient(135deg, #7a3a28, #5c2a1e); }
+	.detail-action:disabled { background: #2a2a30; border-color: #444; color: #666; cursor: not-allowed; }
+
+	.node-hover { filter: brightness(1.25); }
+
+	#hover-tip {
 		position: fixed; pointer-events: none;
 		background: rgba(10,10,12,0.96); border: 1px solid #d9b64c;
-		border-radius: 4px; padding: 10px 14px; color: #eee; font-size: 13px;
-		max-width: 280px; display: none; z-index: 50;
+		border-radius: 4px; padding: 9px 13px; color: #eee; font-size: 12px;
+		max-width: 260px; display: none; z-index: 60;
 		box-shadow: 0 4px 14px rgba(0,0,0,0.7);
 	}
-	#tooltip .t-name { color: #d9b64c; font-weight: bold; margin-bottom: 4px; }
-	#tooltip .t-type { color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
-	#tooltip .t-eff  { color: #9fe6a0; margin-top: 6px; font-size: 12px; }
-	#tooltip .t-cost { color: #7fd1ff; margin-top: 4px; }
-	#tooltip .t-desc { color: #bbb; margin-top: 6px; line-height: 1.4; font-size: 12px; font-style: italic; }
-	#tooltip .t-stats { margin-top: 7px; }
-	#tooltip .stat-up   { color: #8fe39a; font-size: 13px; line-height: 1.45; }
-	#tooltip .stat-down { color: #ff9b90; font-size: 13px; line-height: 1.45; }
+	#hover-tip .t-name { color: #d9b64c; font-weight: bold; margin-bottom: 3px; }
+	#hover-tip .t-type { color: #888; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+	#hover-tip .t-stats { margin-top: 6px; }
+	#hover-tip .stat-up   { color: #8fe39a; font-size: 12px; line-height: 1.4; }
+	#hover-tip .stat-down { color: #ff9b90; font-size: 12px; line-height: 1.4; }
+	#hover-tip .t-cost { color: #7fd1ff; margin-top: 5px; font-size: 11px; }
 
 	.node-label {
 		fill: #ddd; font-size: 11px; pointer-events: none; text-anchor: middle;
@@ -114,6 +227,33 @@
 
 <div id="canvas-wrap">
 	<svg id="svg-root">
+		<defs>
+			<filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+				<feGaussianBlur stdDeviation="4" result="blur" />
+				<feMerge>
+					<feMergeNode in="blur" />
+					<feMergeNode in="SourceGraphic" />
+				</feMerge>
+			</filter>
+
+			<!-- Simple hand-built glyphs (no external icon fonts/images) so each
+			     node reads as a category at a glance, the way the reference tree
+			     uses a distinct icon per ability. fill="currentColor" by default;
+			     stroke-based ones set fill="none" explicitly so tint still works. -->
+			<symbol id="icon-star" viewBox="0 0 24 24"><path d="M12 2L14.9 9.1L22 9.6L16.5 14.3L18.2 21.3L12 17.4L5.8 21.3L7.5 14.3L2 9.6L9.1 9.1Z"/></symbol>
+			<symbol id="icon-bolt" viewBox="0 0 24 24"><path d="M13 2L4 13H11L9 22L20 10H13Z"/></symbol>
+			<symbol id="icon-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.6"/><path d="M12 2v3.2M12 18.8V22M2 12h3.2M18.8 12H22M4.9 4.9l2.3 2.3M16.8 16.8l2.3 2.3M19.1 4.9l-2.3 2.3M7.2 16.8l-2.3 2.3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/></symbol>
+			<symbol id="icon-flag" viewBox="0 0 24 24"><path d="M6 2v20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/><path d="M6 3h13l-3.5 5L19 13H6Z"/></symbol>
+			<symbol id="icon-heart" viewBox="0 0 24 24"><path d="M12 21S3 14.6 3 8.6C3 5.5 5.5 3 8.5 3C10.4 3 12 4.1 12 4.1C12 4.1 13.6 3 15.5 3C18.5 3 21 5.5 21 8.6C21 14.6 12 21 12 21Z"/></symbol>
+			<symbol id="icon-drop" viewBox="0 0 24 24"><path d="M12 2C12 2 5 11.2 5 15.7C5 19.7 8.1 22 12 22S19 19.7 19 15.7C19 11.2 12 2 12 2Z"/></symbol>
+			<symbol id="icon-sword" viewBox="0 0 24 24"><path d="M20 3L11 12M20 3L17 10L14 13M20 3L13 6M3 21L10.5 13.5M9 17L4 22L2 20L7 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></symbol>
+			<symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 2L4 5V11C4 16.5 7.4 20.7 12 22C16.6 20.7 20 16.5 20 11V5Z"/></symbol>
+			<symbol id="icon-spark" viewBox="0 0 24 24"><path d="M12 2L13.8 9.2L21 11L13.8 12.8L12 20L10.2 12.8L3 11L10.2 9.2Z"/></symbol>
+			<symbol id="icon-wind" viewBox="0 0 24 24"><path d="M3 8H15A3 3 0 1 0 12 4M3 12H18A3 3 0 1 1 15 17M3 16H12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol>
+			<symbol id="icon-eye" viewBox="0 0 24 24"><path d="M2 12S5.5 5 12 5S22 12 22 12S18.5 19 12 19S2 12 2 12Z"/><circle cx="12" cy="12" r="3" fill="#08080b"/></symbol>
+			<symbol id="icon-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="6.2" fill="none" stroke="#08080b" stroke-width="1.3"/></symbol>
+			<symbol id="icon-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7A4 4 0 0 1 16 7V11" stroke="currentColor" stroke-width="2.2" fill="none"/></symbol>
+		</defs>
 		<g id="viewport">
 			<g id="edges"></g>
 			<g id="sector-labels"></g>
@@ -122,18 +262,40 @@
 	</svg>
 </div>
 
-<div class="hud"><h1>Passive Skill Tree</h1><div id="hud-body">Loading...</div></div>
-
-<div id="controls">
-	<div class="zoomrow">
-		<button id="btn-out" title="Zoom out">&minus;</button>
-		<span id="zoom-pct">100%</span>
-		<button id="btn-in" title="Zoom in">+</button>
+<div class="header">
+	<div class="mark"><svg viewBox="0 0 24 24"><use href="#icon-star"/></svg></div>
+	<div class="text">
+		<h1 id="header-title">Passive Skill Tree</h1>
+		<div class="sub" id="header-sub">Choose your path</div>
+		<div class="who" id="header-who"></div>
 	</div>
-	<button class="wide" id="btn-fit" title="Fit whole tree on screen">Fit to screen</button>
-	<div class="keys">
-		drag / <b>WASD</b> or arrows to move<br>
-		wheel or <b>+ &minus;</b> to zoom &middot; <b>F</b> to fit
+</div>
+
+<div class="right-stack">
+	<div class="points-badge">
+		<div style="width:100%">
+			<div class="label">Skill Points</div>
+			<div class="row"><svg viewBox="0 0 24 24"><use href="#icon-star"/></svg><span class="value" id="points-value">-</span></div>
+			<button id="respec-all-btn">Respec All</button>
+		</div>
+	</div>
+
+	<div id="controls">
+		<div class="zoomrow">
+			<button id="btn-out" title="Zoom out">&minus;</button>
+			<span id="zoom-pct">100%</span>
+			<button id="btn-in" title="Zoom in">+</button>
+		</div>
+		<button class="wide" id="btn-fit" title="Fit whole tree on screen">Fit to screen</button>
+		<div class="keys">
+			drag / <b>WASD</b> or arrows to move<br>
+			wheel or <b>+ &minus;</b> to zoom &middot; <b>F</b> to fit
+		</div>
+	</div>
+
+	<div class="detail-panel" id="detail-panel">
+		<div class="detail-empty" id="detail-empty">Select a node to inspect it.<br><br><span id="detail-meta"></span></div>
+		<div class="detail-body" id="detail-body" style="display:none"></div>
 	</div>
 </div>
 
@@ -147,13 +309,22 @@
 	<div class="item"><span class="swatch" style="background:#2f8fd1"></span>Active / Function</div>
 </div>
 
-<div id="tooltip"></div>
+<div class="totals" id="totals-panel">
+	<div class="totals-head" id="totals-toggle">
+		<h1>Total Bonuses</h1>
+		<span id="totals-caret">&#9662;</span>
+	</div>
+	<div class="totals-body" id="totals-body">Loading...</div>
+</div>
+
+<div id="hover-tip"></div>
 <div id="toast"></div>
 
 <div id="pin-overlay">
 	<div id="pin-box">
-		<h2>Enter Your Code</h2>
-		<p>Type <b>.treelink</b> in-game to get a 6-digit code, then enter it below.</p>
+		<h2>Not Connected</h2>
+		<p>Click the link from <b>.treelink</b> in-game to open this page directly.<br>
+		If you have a 6-digit code instead, enter it below.</p>
 		<input id="pin-input" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autofocus>
 		<button id="pin-submit">View My Tree</button>
 		<div id="pin-error"></div>
@@ -195,6 +366,8 @@ const NEVER_LABEL = new Set(["Pathway","Approach","Crossroads"]);
 let nodes = [], nodeById = {}, edgeList = [];
 let allocated = new Set();
 let character = null, currentToken = null, allocating = false;
+let selectedNodeId = null;   // node currently shown in the detail panel
+let configRespecPerPoint = 0;   // Adena per point, fetched from the server so the page never hardcodes it
 
 // view state
 let scale = 1, tx = 0, ty = 0;
@@ -207,6 +380,18 @@ async function loadNodes() {
 	nodes = await res.json();
 	nodeById = {};
 	nodes.forEach(n => nodeById[n.id] = n);
+
+	// Sanity check: if the API ever sends missing/zero coordinates for
+	// every node (a data or deployment mismatch on the server side, not
+	// something this page can fix), every node collapses onto the exact
+	// same point and the whole tree becomes an illegible stacked mess with
+	// no visible cause. Surface it as a clear message instead of silently
+	// rendering that.
+	const distinctPositions = new Set(nodes.map(n => `${n.x},${n.y}`));
+	if ((nodes.length > 1) && (distinctPositions.size <= 1)) {
+		showToast("Server error: every node has the same position (x/y). Check PassiveTreeData's x/y parsing and the deployed XML files.", true);
+		console.error("passive-tree.html: all " + nodes.length + " nodes share one x/y position - see PassiveTreeApiServer /api/passivetree/nodes output.");
+	}
 
 	// parents are symmetric, so each edge appears twice - dedupe
 	const seen = new Set();
@@ -225,6 +410,16 @@ async function loadNodes() {
 		bounds.maxX = Math.max(...nodes.map(n => n.x));
 		bounds.minY = Math.min(...nodes.map(n => n.y));
 		bounds.maxY = Math.max(...nodes.map(n => n.y));
+	}
+}
+
+async function loadConfig() {
+	try {
+		const res = await fetch(API_BASE + "/api/passivetree/config");
+		const data = await res.json();
+		configRespecPerPoint = data.respecAdenaPerPoint || 0;
+	} catch (e) {
+		configRespecPerPoint = 0; // page still works, respec cost just won't be previewed
 	}
 }
 
@@ -248,7 +443,7 @@ async function submitPin() {
 		if (!res.ok || !data.token) { document.getElementById("pin-error").textContent = "That code is invalid or has expired."; return; }
 		if (await loadCharacterWithToken(data.token)) {
 			document.getElementById("pin-overlay").style.display = "none";
-			render(); renderHud();
+			render(); renderHud(); renderTotals();
 		} else {
 			document.getElementById("pin-error").textContent = "Could not load your character - are you still online?";
 		}
@@ -266,12 +461,114 @@ async function allocateNode(node) {
 			character = data.character;
 			allocated = new Set(character.allocatedNodeIds || []);
 			showToast("Allocated: " + node.name);
-			render(); renderHud();
+			render(); renderHud(); renderTotals(); refreshDetailPanelIfSelected(node.id);
 		} else {
 			showToast("Cannot allocate " + node.name + " right now.", true);
 		}
 	} catch (e) { showToast("Connection error.", true); }
 	finally { allocating = false; }
+}
+
+async function respecAll() {
+	if (!currentToken) { showToast("Enter your .treelink code to respec.", true); return; }
+	if (allocating) return;
+
+	const targets = nodes.filter(n => allocated.has(n.id) && (n.type !== "START"));
+	if (!targets.length) { showToast("Nothing allocated to respec.", true); return; }
+
+	const totalCost = targets.reduce((sum, n) => sum + (configRespecPerPoint * n.cost), 0);
+	const confirmed = window.confirm(
+		`Respec ALL ${targets.length} allocated node(s)?\n\n`
+		+ `Total cost: ${totalCost.toLocaleString()} Adena\n\n`
+		+ `Refunds happen one at a time, innermost-safe first. If you run out of `
+		+ `Adena partway through, it stops there and keeps whatever was already refunded.`
+	);
+	if (!confirmed) return;
+
+	allocating = true;
+	const btn = document.getElementById("respec-all-btn");
+	if (btn) btn.disabled = true;
+	showToast(`Respeccing ${targets.length} node(s)...`);
+
+	let refunded = 0;
+	const remaining = new Set(targets.map(n => n.id));
+
+	try {
+		let madeProgress = true;
+		while ((remaining.size > 0) && madeProgress) {
+			madeProgress = false;
+			for (const nodeId of Array.from(remaining)) {
+				const res = await fetch(API_BASE + "/api/passivetree/deallocate?token=" + encodeURIComponent(currentToken) + "&nodeId=" + nodeId);
+				const data = await res.json();
+
+				if (data.success) {
+					character = data.character;
+					allocated = new Set(character.allocatedNodeIds || []);
+					remaining.delete(nodeId);
+					refunded++;
+					madeProgress = true;
+				} else if (data.reason === "NOT_ENOUGH_ADENA") {
+					showToast(`Refunded ${refunded} node(s) - ran out of Adena.`, true);
+					remaining.clear();
+					madeProgress = false;
+					break;
+				}
+				// WOULD_DISCONNECT (or any other transient reason): leave it in
+				// `remaining` - it becomes removable once whatever depends on it
+				// is cleared, which happens in a later pass.
+			}
+		}
+
+		if ((remaining.size === 0) && (refunded === targets.length)) {
+			showToast(`Respecced all ${refunded} node(s).`);
+		} else if ((refunded > 0) && (remaining.size > 0)) {
+			showToast(`Refunded ${refunded} node(s) - ${remaining.size} could not be refunded.`, true);
+		}
+	} catch (e) {
+		showToast("Connection error during respec - stopped after " + refunded + " node(s).", true);
+	} finally {
+		allocating = false;
+		if (btn) btn.disabled = false;
+		render(); renderHud(); renderTotals();
+		if (selectedNodeId !== null) refreshDetailPanelIfSelected(selectedNodeId);
+	}
+}
+
+async function respecNode(node) {
+	if (!currentToken) { showToast("Enter your .treelink code to respec.", true); return; }
+	if (allocating) return;
+
+	const cost = configRespecPerPoint * node.cost;
+	const confirmed = window.confirm(
+		`Respec "${node.name}"?\n\nCost: ${cost.toLocaleString()} Adena\n\n`
+		+ `This only works if no other allocated node depends on this one to stay connected.`
+	);
+	if (!confirmed) return;
+
+	allocating = true;
+	try {
+		const res = await fetch(API_BASE + "/api/passivetree/deallocate?token=" + encodeURIComponent(currentToken) + "&nodeId=" + node.id);
+		const data = await res.json();
+		if (data.success) {
+			character = data.character;
+			allocated = new Set(character.allocatedNodeIds || []);
+			showToast("Refunded: " + node.name);
+			render(); renderHud(); renderTotals(); refreshDetailPanelIfSelected(node.id);
+		} else {
+			showToast(respecFailureMessage(data.reason), true);
+		}
+	} catch (e) { showToast("Connection error.", true); }
+	finally { allocating = false; }
+}
+
+function respecFailureMessage(reason) {
+	switch (reason) {
+		case "IS_ORIGIN":          return "You cannot refund your starting node.";
+		case "NOT_ALLOCATED":      return "That node isn't currently allocated.";
+		case "WOULD_DISCONNECT":   return "Removing this would cut off other allocated nodes - refund those first.";
+		case "NOT_ENOUGH_ADENA":   return "You don't have enough Adena for this respec.";
+		default:                   return "Cannot respec that node right now.";
+	}
 }
 
 function showToast(msg, isError) {
@@ -281,7 +578,7 @@ function showToast(msg, isError) {
 	showToast._t = setTimeout(() => { t.style.display = "none"; }, 2500);
 }
 
-
+// ---------------------------------------------------------------- render
 // ---------------------------------------------------------------- effects
 // Turns a raw spec like "MAXHP:90;CON:1" into readable lines.
 const STAT_LABEL = {
@@ -292,29 +589,99 @@ const STAT_LABEL = {
 	MATK_PCT:"Magic Attack", MDEF_PCT:"Magic Defence",
 	ATK_SPD_PCT:"Attack Speed", CAST_SPD_PCT:"Casting Speed",
 	SHIELD_RATE_PCT:"Shield Block Rate", SHIELD_DEF_PCT:"Shield Defence",
-	CRIT_RATE_ADD:"Critical Rate", CRIT_DMG_ADD:"Critical Damage",
+	CRIT_RATE_ADD:"Critical Rate", CRIT_DMG_PCT:"Critical Damage",
 	MCRIT_RATE_ADD:"Magic Critical Rate",
 	ACCURACY_ADD:"Accuracy", EVASION_ADD:"Evasion",
 	MOVE_SPEED_ADD:"Movement Speed", REFLECT_PCT:"Damage Reflected",
 	HP_REGEN_PCT:"HP Regeneration", MP_REGEN_PCT:"MP Regeneration",
 	DROP_RATE_PCT:"Drop Rate", SPOIL_RATE_PCT:"Spoil Rate", EXP_RATE_PCT:"EXP Rate",
 };
-function formatEffects(spec) {
+
+// Which glyph represents each stat family, reused for both SMALL and NOTABLE
+// nodes (a Notable just renders its family icon bigger/brighter).
+const STAT_ICON = {
+	STR:"sword", CON:"shield", DEX:"wind", INT:"spark", WIT:"spark", MEN:"shield",
+	MAXHP:"heart", MAXCP:"heart", HP_REGEN_PCT:"heart",
+	MAXMP:"drop", MP_REGEN_PCT:"drop",
+	PATK_PCT:"sword", PDEF_PCT:"shield", SHIELD_RATE_PCT:"shield", SHIELD_DEF_PCT:"shield", REFLECT_PCT:"shield",
+	MATK_PCT:"spark", MDEF_PCT:"shield", CAST_SPD_PCT:"spark",
+	ATK_SPD_PCT:"wind", MOVE_SPEED_ADD:"wind",
+	CRIT_RATE_ADD:"star", CRIT_DMG_PCT:"star", MCRIT_RATE_ADD:"star",
+	ACCURACY_ADD:"eye", EVASION_ADD:"eye",
+	DROP_RATE_PCT:"coin", SPOIL_RATE_PCT:"coin", EXP_RATE_PCT:"coin",
+};
+
+/** Which <symbol id="icon-..."> a node should render, ignoring lock state. */
+function baseIconFor(n) {
+	switch (n.type) {
+		case "START": return "flag";
+		case "ACTIVE_SKILL": return "bolt";
+		case "FUNCTION": return "gear";
+		case "KEYSTONE": case "MASTER": return "star";
+		default: {
+			const fx = parseEffectSpec(n.effect);
+			return (fx[0] && STAT_ICON[fx[0].key]) || "star";
+		}
+	}
+}
+/** Locked SMALL nodes simplify to a plain padlock, matching the reference art
+ *  (landmark types keep their real icon, dimmed, so they stay recognisable
+ *  as destinations worth pathing toward even before they're reachable). */
+function iconFor(n, has, avail) {
+	if (!has && !avail && (n.type === "SMALL")) return "lock";
+	return baseIconFor(n);
+}
+
+function parseEffectSpec(spec) {
+	// [{key, val}] - raw numeric pairs, no formatting. Used by both the
+	// per-node tooltip and the whole-tree aggregate so they can never drift.
 	if (!spec) return [];
 	return spec.split(";").map(part => {
 		const bits = part.split(":");
 		if (bits.length !== 2) return null;
-		const key = bits[0].trim();
 		const val = parseFloat(bits[1]);
 		if (isNaN(val)) return null;
-		const label = STAT_LABEL[key] || key;
-		const pct = key.endsWith("_PCT");
-		const sign = val > 0 ? "+" : "";
-		return { text: `${sign}${val}${pct ? "%" : ""} ${label}`, good: val > 0 };
+		return { key: bits[0].trim(), val };
 	}).filter(Boolean);
 }
+function formatStat(key, val) {
+	const label = STAT_LABEL[key] || key;
+	const pct = key.endsWith("_PCT");
+	const rounded = Math.round(val * 100) / 100;
+	const sign = rounded > 0 ? "+" : "";
+	return { text: `${sign}${rounded}${pct ? "%" : ""} ${label}`, good: rounded >= 0 };
+}
+function formatEffects(spec) {
+	return parseEffectSpec(spec).map(({ key, val }) => formatStat(key, val));
+}
 
-// ---------------------------------------------------------------- render
+/** Sums every allocated node's effect spec into one totals map, keyed by stat. */
+function aggregateTotals() {
+	const totals = {};
+	nodes.forEach(n => {
+		if (!allocated.has(n.id)) return;
+		parseEffectSpec(n.effect).forEach(({ key, val }) => {
+			totals[key] = (totals[key] || 0) + val;
+		});
+	});
+	return totals;
+}
+
+function renderTotals() {
+	const body = document.getElementById("totals-body");
+	if (!body) return;
+	const totals = aggregateTotals();
+	const keys = Object.keys(totals).sort((a, b) => (STAT_LABEL[a] || a).localeCompare(STAT_LABEL[b] || b));
+	if (!keys.length) {
+		body.innerHTML = `<div class="row" style="color:#777">No bonuses allocated yet.</div>`;
+		return;
+	}
+	body.innerHTML = keys.map(key => {
+		const f = formatStat(key, totals[key]);
+		return `<div class="${f.good ? "stat-up" : "stat-down"}">${f.text}</div>`;
+	}).join("");
+}
+
 function isAvailable(n) {
 	if (allocated.has(n.id)) return false;
 	if (!character) return true;
@@ -385,71 +752,211 @@ function render() {
 		g.style.cursor = "pointer";
 		if (character && !has && !avail) g.style.opacity = "0.3";
 
-		const c = document.createElementNS(SVG_NS, "circle");
 		const r = TYPE_RADIUS[n.type] || 8;
+		const fillColor = has ? "#3ecf5b" : (TYPE_COLOR[n.type] || "#8a8a92");
+
+		// Soft glow behind allocated/available nodes - a blurred duplicate
+		// circle under the real one, using the shared <filter id="glow">.
+		if (has || avail) {
+			const glow = document.createElementNS(SVG_NS, "circle");
+			glow.setAttribute("r", r + 5);
+			glow.setAttribute("fill", has ? "#3ecf5b" : "#7fd1ff");
+			glow.setAttribute("opacity", "0.5");
+			glow.setAttribute("filter", "url(#glow)");
+			g.appendChild(glow);
+		}
+
+		// A thin gold ring around whichever node is currently selected in
+		// the detail panel, so it's obvious what the panel is showing.
+		if (n.id === selectedNodeId) {
+			const sel = document.createElementNS(SVG_NS, "circle");
+			sel.setAttribute("r", r + 7);
+			sel.setAttribute("fill", "none");
+			sel.setAttribute("stroke", "#ffe28a");
+			sel.setAttribute("stroke-width", "2");
+			g.appendChild(sel);
+		}
+
+		const c = document.createElementNS(SVG_NS, "circle");
 		c.setAttribute("r", r);
-		c.setAttribute("fill", has ? "#3ecf5b" : (TYPE_COLOR[n.type] || "#8a8a92"));
+		c.setAttribute("fill", fillColor);
 		c.setAttribute("stroke", has ? "#eaffea" : (avail ? "#7fd1ff" : "#1b1b20"));
 		c.setAttribute("stroke-width", has ? 3 : (avail ? 2.5 : 1.5));
 		g.appendChild(c);
 
-		if ((ALWAYS_LABEL.has(n.type) || showSmallLabels) && !NEVER_LABEL.has(n.name)) {
+		// Category glyph, tinted for contrast against the fill colour.
+		const use = document.createElementNS(SVG_NS, "use");
+		const iconSize = r * 1.15;
+		use.setAttribute("href", "#icon-" + iconFor(n, has, avail));
+		use.setAttribute("x", -iconSize / 2);
+		use.setAttribute("y", -iconSize / 2);
+		use.setAttribute("width", iconSize);
+		use.setAttribute("height", iconSize);
+		use.style.color = has ? "#0a2b12" : (avail ? "#062233" : "#d8d8dc");
+		use.style.pointerEvents = "none";
+		g.appendChild(use);
+
+		if (ALWAYS_LABEL.has(n.type) || showSmallLabels) {
 			const t = document.createElementNS(SVG_NS, "text");
 			t.setAttribute("class", "node-label");
-			t.setAttribute("y", r + 17);
+			t.setAttribute("y", r + 16);
 			t.textContent = n.name;
 			g.appendChild(t);
 		}
 
-		g.addEventListener("mouseenter", e => showTooltip(e, n, has, avail));
-		g.addEventListener("mousemove", moveTooltip);
-		g.addEventListener("mouseleave", hideTooltip);
-		g.addEventListener("click", () => { if (avail) allocateNode(n); });
+		g.addEventListener("mouseenter", e => { g.classList.add("node-hover"); showHoverTip(e, n, has, avail); });
+		g.addEventListener("mousemove", moveHoverTip);
+		g.addEventListener("mouseleave", () => { g.classList.remove("node-hover"); hideHoverTip(); });
+		g.addEventListener("click", () => selectNode(n));
+		g.addEventListener("dblclick", () => { if (avail) allocateNode(n); });
 		nodesG.appendChild(g);
 	});
 }
 
-function showTooltip(e, n, has, avail) {
-	const tip = document.getElementById("tooltip");
+// ---------------------------------------------------------------- selection
+// Click-to-select, like the reference: the tree shows a gold ring on the
+// chosen node, and the side panel holds still until you pick another one -
+// no floating tooltip chasing the cursor, and no accidental spend from a
+// stray click while panning around a 565-node tree.
+function selectNode(n) {
+	selectedNodeId = n.id;
+	render();       // redraw so the selection ring appears
+	renderDetailPanel(n);
+}
+
+function renderDetailPanel(n) {
+	const empty = document.getElementById("detail-empty");
+	const body = document.getElementById("detail-body");
+
+	// Recomputed live rather than trusting stale values from click time, so
+	// the panel is always correct even after an allocate/respec updates state.
+	const has = allocated.has(n.id);
+	const avail = isAvailable(n);
+
+	empty.style.display = "none";
+	body.style.display = "block";
+
+	const fx = formatEffects(n.effect);
+	const statsHtml = fx.length
+		? `<div class="detail-stats">` + fx.map(f =>
+			`<div class="${f.good ? "stat-up" : "stat-down"}">${f.text}</div>`).join("") + `</div>`
+		: "";
+
+	let actionHtml;
+	if (has && (n.type === "START")) {
+		actionHtml = `<button class="detail-action" disabled>Starting Node</button>`;
+	} else if (has) {
+		const cost = configRespecPerPoint * n.cost;
+		actionHtml = `<button class="detail-action respec" id="detail-action-btn">Respec - ${cost.toLocaleString()} Adena</button>`;
+	} else if (avail) {
+		actionHtml = `<button class="detail-action" id="detail-action-btn">Allocate - ${n.cost} point${n.cost === 1 ? "" : "s"}</button>`;
+	} else {
+		actionHtml = `<button class="detail-action" disabled>Locked</button>`;
+	}
+
+	body.innerHTML =
+		`<div class="detail-icon-row"><div class="detail-icon ${has ? "has" : ""}">` +
+		`<svg viewBox="0 0 24 24" style="fill:${has ? "#8fe39a" : "#d9b64c"}"><use href="#icon-${iconFor(n, has, avail)}"/></svg>` +
+		`</div></div>` +
+		`<div class="detail-name">${n.name}</div>` +
+		`<div class="detail-type">${n.type} &middot; ${n.sector}</div>` +
+		`<hr class="detail-hr">` +
+		statsHtml +
+		(n.description ? `<div class="detail-desc">${n.description}</div>` : "") +
+		`<hr class="detail-hr">` +
+		`<div class="detail-cost-label">Node Cost</div>` +
+		`<div class="detail-cost-row"><svg viewBox="0 0 24 24"><use href="#icon-star"/></svg>` +
+		`<span class="amt">${n.cost} point${n.cost === 1 ? "" : "s"}</span></div>` +
+		`<div class="detail-next">${(n.parents||[]).length} connection${(n.parents||[]).length===1?"":"s"}</div>` +
+		actionHtml;
+
+	const btn = document.getElementById("detail-action-btn");
+	if (btn) {
+		btn.addEventListener("click", () => {
+			if (has) respecNode(n); else allocateNode(n);
+		});
+	}
+}
+
+/** Re-renders the panel for whichever node is selected, if any - called
+ *  after allocate/respec so the button/cost immediately reflect the change. */
+function refreshDetailPanelIfSelected(nodeId) {
+	if (selectedNodeId === nodeId) {
+		const n = nodeById[nodeId];
+		if (n) renderDetailPanel(n);
+	}
+}
+
+function showHoverTip(e, n, has, avail) {
+	const tip = document.getElementById("hover-tip");
 	const status = has ? "Allocated" : (character ? (avail ? "Available" : "Locked") : "");
 	const fx = formatEffects(n.effect);
-	const effHtml = fx.length
+	const statsHtml = fx.length
 		? `<div class="t-stats">` + fx.map(f =>
 			`<div class="${f.good ? "stat-up" : "stat-down"}">${f.text}</div>`).join("") + `</div>`
 		: "";
 	tip.innerHTML =
 		`<div class="t-name">${n.name}</div>` +
 		`<div class="t-type">${n.type}${status ? " &middot; " + status : ""} &middot; ${n.sector}</div>` +
-		effHtml +
-		(n.description ? `<div class="t-desc">${n.description}</div>` : "") +
-		`<div class="t-cost">Cost: ${n.cost} point${n.cost === 1 ? "" : "s"} &middot; ` +
-		`${(n.parents||[]).length} connection${(n.parents||[]).length===1?"":"s"}</div>`;
+		statsHtml +
+		`<div class="t-cost">${n.cost} point${n.cost === 1 ? "" : "s"}` +
+		(avail ? " &middot; double-click to allocate" : "") + `</div>`;
 	tip.style.display = "block";
-	moveTooltip(e);
+	moveHoverTip(e);
 }
-function moveTooltip(e) {
-	const tip = document.getElementById("tooltip");
-	tip.style.left = Math.min(e.clientX + 16, window.innerWidth - 300) + "px";
-	tip.style.top  = Math.min(e.clientY + 16, window.innerHeight - 170) + "px";
+function moveHoverTip(e) {
+	const tip = document.getElementById("hover-tip");
+	tip.style.left = Math.min(e.clientX + 16, window.innerWidth - 280) + "px";
+	tip.style.top  = Math.min(e.clientY + 16, window.innerHeight - 160) + "px";
 }
-function hideTooltip() { document.getElementById("tooltip").style.display = "none"; }
+function hideHoverTip() {
+	document.getElementById("hover-tip").style.display = "none";
+}
 
 function renderHud() {
-	const b = document.getElementById("hud-body");
+	const sub = document.getElementById("header-sub");
+	const who = document.getElementById("header-who");
+	const pts = document.getElementById("points-value");
+	const meta = document.getElementById("detail-meta");
+
 	if (character) {
-		b.innerHTML =
-			`<div class="row"><b>${character.name}</b> &middot; Lv ${character.level}</div>` +
-			`<div class="row">Points: <b>${character.availablePoints}</b> available / ` +
-			`${character.spentPoints} spent / ${character.earnedPoints} earned</div>` +
-			`<div class="note">${nodes.length} nodes &middot; ${edgeList.length} connections</div>`;
+		sub.textContent = "Live Character";
+		who.innerHTML = `<b>${character.name}</b> &middot; Lv ${character.level}`;
+		pts.textContent = character.availablePoints;
 	} else {
-		b.innerHTML = `<div class="row">Planner mode &mdash; no character loaded</div>` +
-			`<div class="note">${nodes.length} nodes &middot; ${edgeList.length} connections</div>`;
+		sub.textContent = "Planner Mode";
+		who.textContent = "No character loaded";
+		pts.textContent = "-";
 	}
+	if (meta) meta.textContent = `${nodes.length} nodes \u00b7 ${edgeList.length} connections`;
 }
 
 // ------------------------------------------------------------ view maths
+/**
+ * Actual usable canvas size in CSS pixels, measured directly off the
+ * rendered element rather than trusted from window.innerWidth/innerHeight.
+ * getBoundingClientRect() reflects true current layout on every call (self-
+ * correcting), which window.innerWidth does not in every embedded browser.
+ * Falls back to a sane fixed size only if even that comes back empty.
+ */
+function viewportSize() {
+	const wrap = document.getElementById("canvas-wrap");
+	const rect = wrap ? wrap.getBoundingClientRect() : null;
+	let w = (rect && rect.width  > 0) ? rect.width  : (window.innerWidth  || document.documentElement.clientWidth  || 0);
+	let h = (rect && rect.height > 0) ? rect.height : (window.innerHeight || document.documentElement.clientHeight || 0);
+	if (!isFinite(w) || (w <= 0)) w = 1280;
+	if (!isFinite(h) || (h <= 0)) h = 720;
+	return { w, h };
+}
+
 function applyTransform() {
+	// Defensive floor: if scale/tx/ty ever went NaN (e.g. computed once
+	// against a 0-sized viewport before the embedded browser finished laying
+	// out), recover to a known-good state instead of drawing an invalid
+	// transform that hides the whole tree with no way to zoom/pan out of it.
+	if (!isFinite(scale) || (scale <= 0)) { fitToScreen(); return; }
+	if (!isFinite(tx) || !isFinite(ty)) { tx = 0; ty = 0; }
+
 	document.getElementById("viewport").setAttribute("transform",
 		`translate(${tx},${ty}) scale(${scale})`);
 	const pct = document.getElementById("zoom-pct");
@@ -472,22 +979,27 @@ function zoomAt(screenX, screenY, factor) {
 
 /** Zoom about the centre of the window (used by buttons and +/- keys). */
 function zoomCentre(factor) {
-	zoomAt(window.innerWidth / 2, window.innerHeight / 2, factor);
+	const { w, h } = viewportSize();
+	zoomAt(w / 2, h / 2, factor);
 }
 
 /** Scale and centre so the entire tree is visible. */
 function fitToScreen() {
-	const w = Math.max(1, bounds.maxX - bounds.minX);
-	const h = Math.max(1, bounds.maxY - bounds.minY);
-	const availW = window.innerWidth  - CFG.FIT_PADDING * 2;
-	const availH = window.innerHeight - CFG.FIT_PADDING * 2;
+	const treeW = Math.max(1, bounds.maxX - bounds.minX);
+	const treeH = Math.max(1, bounds.maxY - bounds.minY);
+	const { w: vw, h: vh } = viewportSize();
+	const availW = Math.max(1, vw - CFG.FIT_PADDING * 2);
+	const availH = Math.max(1, vh - CFG.FIT_PADDING * 2);
 
-	scale = Math.min(CFG.ZOOM_MAX, Math.max(CFG.ZOOM_MIN, Math.min(availW / w, availH / h)));
+	let next = Math.min(CFG.ZOOM_MAX, Math.max(CFG.ZOOM_MIN, Math.min(availW / treeW, availH / treeH)));
+	if (!isFinite(next) || (next <= 0)) next = 1; // last-resort floor, should never trigger now
+	scale = next;
 
 	const cx = (bounds.minX + bounds.maxX) / 2;
 	const cy = (bounds.minY + bounds.maxY) / 2;
-	tx = window.innerWidth  / 2 - cx * scale;
-	ty = window.innerHeight / 2 - cy * scale;
+	tx = (vw / 2) - (cx * scale);
+	ty = (vh / 2) - (cy * scale);
+
 	applyTransform();
 }
 
@@ -542,8 +1054,9 @@ function setupZoomPan() {
 
 	// keep the view sensible if the window is resized
 	window.addEventListener("resize", () => {
-		document.getElementById("svg-root")
-			.setAttribute("viewBox", `0 0 ${window.innerWidth} ${window.innerHeight}`);
+		const { w, h } = viewportSize();
+		document.getElementById("svg-root").setAttribute("viewBox", `0 0 ${w} ${h}`);
+		if (!isFinite(scale) || (scale <= 0)) fitToScreen();
 	});
 }
 
@@ -551,17 +1064,58 @@ function setupZoomPan() {
 (async function init() {
 	// viewBox in SCREEN pixels - all pan/zoom maths below is then in screen
 	// space, which is what makes cursor-anchored zoom behave predictably.
+	// Measured via viewportSize() rather than window.innerWidth directly,
+	// since some in-game embedded browsers report 0 here on the very first
+	// frame - that's what previously produced the NaN% zoom and a tree
+	// collapsed into the top-left corner with no way to pan or zoom out.
+	const initialSize = viewportSize();
 	document.getElementById("svg-root")
-		.setAttribute("viewBox", `0 0 ${window.innerWidth} ${window.innerHeight}`);
+		.setAttribute("viewBox", `0 0 ${initialSize.w} ${initialSize.h}`);
 
 	await loadNodes();
+	await loadConfig();
 	render();
 	renderHud();
+	renderTotals();
 	setupZoomPan();
 	fitToScreen();          // start with the whole tree visible
 
+	// Safety net: if this embedded browser's first layout pass was the bad
+	// one, its size has usually settled by the next frame - re-fit once
+	// more so the page self-heals without the player needing to click
+	// anything (e.g. "Fit to screen") first.
+	requestAnimationFrame(() => {
+		const { w, h } = viewportSize();
+		document.getElementById("svg-root").setAttribute("viewBox", `0 0 ${w} ${h}`);
+		fitToScreen();
+	});
+
+	// .treelink now hands out a direct clickable URL with the token baked
+	// in, since the client can open web pages in-game - no more typing a
+	// PIN. The PIN flow stays in place underneath as a fallback: if the
+	// page is opened with no token (or an expired one), it falls through
+	// to the same overlay as before instead of just failing silently.
+	const urlToken = new URLSearchParams(window.location.search).get("token");
+	if (urlToken) {
+		const ok = await loadCharacterWithToken(urlToken);
+		if (ok) {
+			document.getElementById("pin-overlay").style.display = "none";
+			render(); renderHud(); renderTotals();
+		} else {
+			document.getElementById("pin-error").textContent = "That link has expired - use .treelink again.";
+		}
+	}
+
 	document.getElementById("pin-submit").addEventListener("click", submitPin);
 	document.getElementById("pin-input").addEventListener("keydown", e => { if (e.key === "Enter") submitPin(); });
+	document.getElementById("respec-all-btn").addEventListener("click", respecAll);
+
+	document.getElementById("totals-toggle").addEventListener("click", () => {
+		const body = document.getElementById("totals-body");
+		const caret = document.getElementById("totals-caret");
+		const collapsed = body.classList.toggle("collapsed");
+		caret.innerHTML = collapsed ? "&#9656;" : "&#9662;";
+	});
 })();
 </script>
 </body>

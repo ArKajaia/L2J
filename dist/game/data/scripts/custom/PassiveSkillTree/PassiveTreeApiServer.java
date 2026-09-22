@@ -22,6 +22,7 @@ import javax.crypto.spec.SecretKeySpec;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
+import org.l2jmobius.gameserver.config.custom.PassiveTreeConfig;
 import org.l2jmobius.gameserver.data.custom.PassiveTreeData;
 import org.l2jmobius.gameserver.managers.PassiveTreeManager;
 import org.l2jmobius.gameserver.model.World;
@@ -31,14 +32,14 @@ import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 /**
  * Minimal, dependency-free (JDK-only) HTTP API backing the web visual tree planner, plus static hosting for the planner page itself.
  * <p>
- * L2's chat window generally can't be copy-pasted from, so instead of handing the player a long link to paste, ".treelink" hands out a short 6-digit PIN the player just types into a box on the webpage. The page exchanges that PIN for the real signed token behind the scenes - no clipboard involved
- * anywhere, because there's no way for a server packet to reach a player's OS clipboard at all.
+ * ".treelink" hands out a direct clickable link with a signed token baked into the URL - the client can open web pages in-game, so there's no need for the player to type anything. A short-PIN fallback (/resolve) is still here underneath for anyone whose client can't do that: the same token this
+ * class mints for a direct link is what a PIN eventually resolves to as well, so both paths lead to the exact same signed credential.
  * <p>
  * Endpoints:
  * <ul>
  * <li>GET /passive-tree.html - the visual tree page itself (static file on disk)</li>
  * <li>GET /api/passivetree/nodes - full node list, public, no auth needed</li>
- * <li>GET /api/passivetree/resolve?pin=... - exchanges a short PIN for a real token</li>
+ * <li>GET /api/passivetree/resolve?pin=... - PIN fallback: exchanges a short PIN for a real token</li>
  * <li>GET /api/passivetree/character?token=... - one player's LIVE allocation state</li>
  * <li>GET /api/passivetree/allocate?token=...&amp;nodeId=... - allocates one node</li>
  * </ul>
@@ -49,11 +50,11 @@ public class PassiveTreeApiServer
 	
 	// CHANGE THIS to a long random secret unique to your server before going
 	// live - anyone who has it can mint valid tokens for any character id.
-	private static final String SECRET = "o83vnw3846vbwnwo385nbn8v3mlc34na394nvm73w";
+	private static final String SECRET = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET_STRING";
 	
 	private static final int PORT = 8788;
-	private static final long TOKEN_VALID_MS = 61 * 60 * 1000L; // 61 minutes, per resolved session
-	private static final long PIN_VALID_MS = 61 * 60 * 1000L; // 61 minutes to actually type the PIN in
+	private static final long TOKEN_VALID_MS = 15 * 60 * 1000L; // 15 minutes, per resolved session
+	private static final long PIN_VALID_MS = 10 * 60 * 1000L; // 10 minutes to actually type the PIN in
 	
 	private static final Path HTML_FILE = Path.of("data/html/custom/passive-tree.html");
 	
@@ -72,6 +73,8 @@ public class PassiveTreeApiServer
 			server.createContext("/api/passivetree/resolve", this::handleResolve);
 			server.createContext("/api/passivetree/character", this::handleCharacter);
 			server.createContext("/api/passivetree/allocate", this::handleAllocate);
+			server.createContext("/api/passivetree/deallocate", this::handleDeallocate);
+			server.createContext("/api/passivetree/config", this::handleConfig);
 			server.setExecutor(Executors.newFixedThreadPool(2));
 			server.start();
 			LOGGER.info("PassiveTreeApiServer: listening on port " + PORT);
@@ -93,11 +96,7 @@ public class PassiveTreeApiServer
 	// ------------------------------------------------------------------
 	// PIN generation (called by the .treelink voiced command)
 	// ------------------------------------------------------------------
-	/**
-	 * @param charId
-	 * @param classIndex
-	 * @return a fresh 6-digit PIN, valid for PIN_VALID_MS, tied to this character+class.
-	 */
+	/** @return a fresh 6-digit PIN, valid for PIN_VALID_MS, tied to this character+class. */
 	public String generatePin(int charId, int classIndex)
 	{
 		cleanupExpiredPins();
@@ -127,7 +126,9 @@ public class PassiveTreeApiServer
 	// ------------------------------------------------------------------
 	// Token sign/verify (the real credential, once resolved from a PIN)
 	// ------------------------------------------------------------------
-	private String generateToken(int charId, int classIndex)
+	// Public now: .treelink calls this directly to hand out a clickable
+	// link, rather than only being reachable indirectly through a PIN.
+	public String generateToken(int charId, int classIndex)
 	{
 		final long expiry = System.currentTimeMillis() + TOKEN_VALID_MS;
 		final String payload = charId + "." + classIndex + "." + expiry;
@@ -156,10 +157,7 @@ public class PassiveTreeApiServer
 		}
 	}
 	
-	/**
-	 * @param token
-	 * @return {@code [charId, classIndex]} if valid and unexpired, otherwise {@code null}.
-	 */
+	/** @return {@code [charId, classIndex]} if valid and unexpired, otherwise {@code null}. */
 	private int[] verifyToken(String token)
 	{
 		try
@@ -333,6 +331,60 @@ public class PassiveTreeApiServer
 	// ------------------------------------------------------------------
 	// Helpers
 	// ------------------------------------------------------------------
+	private void handleDeallocate(HttpExchange exchange) throws IOException
+	{
+		final String query = exchange.getRequestURI().getQuery();
+		final String token = parseQueryParam(query, "token");
+		final String nodeIdStr = parseQueryParam(query, "nodeId");
+		
+		if ((token == null) || (nodeIdStr == null))
+		{
+			sendText(exchange, 400, "application/json", "{\"error\":\"missing token or nodeId\"}");
+			return;
+		}
+		
+		final int[] verified = verifyToken(token);
+		if (verified == null)
+		{
+			sendText(exchange, 401, "application/json", "{\"error\":\"invalid or expired token\"}");
+			return;
+		}
+		
+		final Player player = resolvePlayer(verified);
+		if (player == null)
+		{
+			sendText(exchange, 404, "application/json", "{\"error\":\"character not online on this class\"}");
+			return;
+		}
+		
+		int nodeId;
+		try
+		{
+			nodeId = Integer.parseInt(nodeIdStr);
+		}
+		catch (NumberFormatException e)
+		{
+			sendText(exchange, 400, "application/json", "{\"error\":\"bad nodeId\"}");
+			return;
+		}
+		
+		final PassiveTreeManager.DeallocateResult result = PassiveTreeManager.getInstance().deallocateNode(player, nodeId);
+		final boolean success = result == PassiveTreeManager.DeallocateResult.OK;
+		
+		final StringBuilder json = new StringBuilder();
+		json.append("{\"success\":").append(success).append(",").append("\"reason\":\"").append(result.name()).append("\",").append("\"character\":").append(buildCharacterJson(player)).append("}");
+		
+		sendText(exchange, success ? 200 : 409, "application/json", json.toString());
+	}
+	
+	/** Exposes the respec cost so the web page never has to hardcode it. */
+	private void handleConfig(HttpExchange exchange) throws IOException
+	{
+		final StringBuilder json = new StringBuilder();
+		json.append("{\"respecAdenaPerPoint\":").append(PassiveTreeConfig.RESPEC_ADENA_PER_POINT).append("}");
+		sendText(exchange, 200, "application/json", json.toString());
+	}
+	
 	private Player resolvePlayer(int[] verifiedTokenParts)
 	{
 		final int charId = verifiedTokenParts[0];

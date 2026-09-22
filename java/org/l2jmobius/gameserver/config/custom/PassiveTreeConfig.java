@@ -14,10 +14,15 @@ public class PassiveTreeConfig
 	public static int PASSIVE_TREE_MAX_POINTS = 120;
 	
 	/**
+	 * Adena charged per POINT of a node's cost when respeccing ONE node at a time via the web planner. Separate from your full-tree reset cost.
+	 */
+	public static long RESPEC_ADENA_PER_POINT = 1000;
+	
+	/**
 	 * If true, each subclass (class_index 0-3) keeps its own independent allocation on the same node graph. If false, all class indexes share one pooled allocation (not recommended - changes the "1/5th of the tree per 3 subclasses" design goal into "1/5th total, shared").
 	 */
 	public static boolean SEPARATE_SUBCLASS_POINTS = false;
 	
 	public static int RESET_ITEM_ID = 57; // Adena
-	public static long RESET_ITEM_COUNT = 1000000;
+	public static long RESET_ITEM_COUNT = 100000;
 }
