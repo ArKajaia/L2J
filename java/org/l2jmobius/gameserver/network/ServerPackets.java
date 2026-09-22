@@ -514,7 +514,8 @@ public enum ServerPackets
 	EX_2ND_PASSWORD_CHECK(0xFE, 0xE5),
 	EX_2ND_PASSWORD_VERIFY(0xFE, 0xE6),
 	EX_2ND_PASSWORD_ACK(0xFE, 0xE7),
-	EX_SAY2_FAIL(0xFE, 0xE8);
+	EX_SAY2_FAIL(0xFE, 0xE8),
+	EX_LINK_OPEN(0xFE, 0xE9);
 	
 	private final int _id1;
 	private final int _id2;

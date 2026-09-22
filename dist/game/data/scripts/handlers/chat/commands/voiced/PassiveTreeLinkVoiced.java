@@ -4,6 +4,7 @@ import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
 import org.l2jmobius.gameserver.model.actor.Player;
 
 import custom.PassiveSkillTree.PassiveTreeApiServer;
+import org.l2jmobius.gameserver.network.serverpackets.ExLinkOpen;
 
 /**
  * ".treelink" - hands the player a direct, clickable link to the visual passive tree planner, showing THEIR live allocation for their current class_index. Valid for 15 minutes.
@@ -28,6 +29,9 @@ public class PassiveTreeLinkVoiced implements IVoicedCommandHandler
 		
 		player.sendMessage("Your passive tree link (click to open, valid 15 minutes):");
 		player.sendMessage(url);
+
+		ExLinkOpen lo = new ExLinkOpen(url);
+		player.sendPacket(lo);
 		return true;
 	}
 	
