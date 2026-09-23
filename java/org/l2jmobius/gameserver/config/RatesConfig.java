@@ -124,12 +124,15 @@ public class RatesConfig
 	public static boolean ARENA_SYSTEM_ENABLED;
 	public static List<Integer> ARENA_CHALLENGER_NPC_IDS = new ArrayList<>();
 	public static int ARENA_STAT_GROWTH_PER_WAVE;
+	public static int ARENA_OFFENSE_GROWTH_PER_WAVE;
+	public static int ARENA_DEFENSE_GROWTH_PER_WAVE;
 	public static int ARENA_VIRTUAL_LEVEL_GROWTH_PER_WAVE;
 	public static int ARENA_CURRENCY_ITEM_ID;
 	public static int ARENA_BASE_CURRENCY_PER_WAVE;
 	public static int ARENA_ESCALATION_FACTOR;
 	public static int ARENA_MILESTONE_INTERVAL;
 	public static int ARENA_MILESTONE_BONUS;
+	public static double ARENA_REWARD_MULTIPLIER;
 	public static int ARENA_MASTER_NPC_ID;
 	public static int ARENA_X;
 	public static int ARENA_Y;
@@ -304,12 +307,15 @@ public class RatesConfig
 			}
 		}
 		ARENA_STAT_GROWTH_PER_WAVE = config.getInt("ArenaStatGrowthPerWave", 8);
+		ARENA_OFFENSE_GROWTH_PER_WAVE = config.getInt("ArenaOffenseGrowthPerWave", 13);
+		ARENA_DEFENSE_GROWTH_PER_WAVE = config.getInt("ArenaDefenseGrowthPerWave", 7);
 		ARENA_VIRTUAL_LEVEL_GROWTH_PER_WAVE = config.getInt("ArenaVirtualLevelGrowthPerWave", 2);
 		ARENA_CURRENCY_ITEM_ID = config.getInt("ArenaCurrencyItemId", 900002);
 		ARENA_BASE_CURRENCY_PER_WAVE = config.getInt("ArenaBaseCurrencyPerWave", 50);
 		ARENA_ESCALATION_FACTOR = config.getInt("ArenaEscalationFactor", 15);
 		ARENA_MILESTONE_INTERVAL = config.getInt("ArenaMilestoneInterval", 5);
 		ARENA_MILESTONE_BONUS = config.getInt("ArenaMilestoneBonus", 500);
+		ARENA_REWARD_MULTIPLIER = config.getInt("ArenaRewardBonusPercent", 20) / 100.0 + 1.0;
 		ARENA_MASTER_NPC_ID = config.getInt("ArenaMasterNpcId", 900000);
 		ARENA_X = config.getInt("ArenaX", 0);
 		ARENA_Y = config.getInt("ArenaY", 0);

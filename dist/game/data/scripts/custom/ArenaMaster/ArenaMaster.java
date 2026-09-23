@@ -1,17 +1,13 @@
 package custom.ArenaMaster;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.data.xml.NpcData;
+import org.l2jmobius.gameserver.data.xml.SkillData;
+import org.l2jmobius.gameserver.managers.ArenaSurvivalManager;
 import org.l2jmobius.gameserver.managers.InstanceManager;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -20,52 +16,16 @@ import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.instancezone.Instance;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.script.Quest;
-import org.l2jmobius.gameserver.model.skill.BuffInfo;
 import org.l2jmobius.gameserver.model.skill.Skill;
 
+/**
+ * Death-guard snapshotting and restoration for the arena run now lives in {@link ArenaSurvivalManager} (core), since {@code Player#doDie()} needs to call it directly and core code can't reference a datapack script class.
+ */
 public class ArenaMaster extends Quest
 {
 	private static final Logger LOGGER = Logger.getLogger(ArenaMaster.class.getName());
-	
-	/** How often (ms) the death guard refreshes its "last known good" snapshot / checks for death. */
-	private static final int DEATH_GUARD_INTERVAL_MS = 1000;
-	
-	/** One entry per player currently inside the arena, tracked by player object ID. */
-	private final Map<Integer, ArenaDeathGuard> _deathGuards = new ConcurrentHashMap<>();
-	
-	/**
-	 * Continuously-refreshed snapshot of a player's XP/SP/active buffs while alive inside the arena, used to undo the death penalty (XP/SP loss + buff wipe) the instant death is detected. Since buffs are already gone by the time isDead() can be observed, this snapshots BEFORE death (every tick,
-	 * overwriting the previous one) rather than trying to catch the moment of death itself.
-	 */
-	private static class ArenaDeathGuard
-	{
-		private long snapshotExp;
-		private long snapshotSp;
-		private List<Skill> snapshotBuffs = new ArrayList<>();
-		private boolean restoredThisDeath;
-		private Future<?> task;
-		
-		private void snapshot(Player player)
-		{
-			snapshotExp = player.getExp();
-			snapshotSp = player.getSp();
-			
-			final List<Skill> buffs = new ArrayList<>();
-			// TODO: verify getEffectList()/getEffects()/BuffInfo match your Creature/Player API -
-			// BuffInfo is guessed to live alongside the confirmed-working EffectType import
-			// (org.l2jmobius.gameserver.model.effects), but the exact enumeration method may differ.
-			for (BuffInfo info : player.getEffectList().getEffects())
-			{
-				final Skill skill = info.getSkill();
-				if ((skill != null) && !skill.isPassive() && !skill.isDebuff())
-				{
-					buffs.add(skill);
-				}
-			}
-			snapshotBuffs = buffs;
-		}
-	}
-	
+	private static final int NOBLESSE_BLESSING_SKILL_ID = 1323;
+
 	public ArenaMaster()
 	{
 		super(-1);
@@ -220,106 +180,30 @@ public class ArenaMaster extends Quest
 		
 		player.teleToLocation(RatesConfig.ARENA_X, RatesConfig.ARENA_Y, RatesConfig.ARENA_Z, 0, instanceId);
 		player.sendMessage("You have entered the Survival Arena. Good luck.");
-		
-		startDeathGuard(player, instanceId);
-		
+
+		// Retail Noblesse Blessing: buffs/debuffs survive death and resurrection for the next
+		// hour. Complements rather than replaces ArenaSurvivalManager's own snapshot/restore -
+		// Noblesse Blessing doesn't touch XP/SP loss, which the death guard still covers.
+		final Skill noblesseBlessing = SkillData.getInstance().getSkill(NOBLESSE_BLESSING_SKILL_ID, 1);
+		if (noblesseBlessing != null)
+		{
+			noblesseBlessing.applyEffects(player, player);
+		}
+
+		ArenaSurvivalManager.getInstance().startDeathGuard(player, instanceId);
+
 		System.out.println("ArenaMaster: Spawning challenger " + challengerTemplate.getName() + " in instance " + instanceId);
-		
+
 		final Monster challenger = new Monster(challengerTemplate);
 		challenger.setInstanceId(instanceId);
 		challenger.setXYZ(RatesConfig.ARENA_X + 100, RatesConfig.ARENA_Y, RatesConfig.ARENA_Z);
 		// Tag this specific monster as the Arena Boss before it spawns
 		challenger.getVariables().set("IS_ARENA_CHALLENGER", true);
 		challenger.spawnMe();
-		
+
 		System.out.println("ArenaMaster: Challenger " + challengerTemplate.getName() + " spawned successfully. Setup complete for " + player.getName());
 	}
-	
-	/**
-	 * Starts polling {@code player} once per {@link #DEATH_GUARD_INTERVAL_MS} while they remain inside {@code instanceId}: refreshes the "last known good" snapshot while alive, and restores XP/SP/buffs from that snapshot the instant death is detected. Stops itself automatically once the player
-	 * leaves the instance (run complete, failed, or manually left) for any reason.
-	 * @param player the player entering the arena
-	 * @param instanceId the arena instance they were just teleported into
-	 */
-	private void startDeathGuard(Player player, int instanceId)
-	{
-		final ArenaDeathGuard guard = new ArenaDeathGuard();
-		guard.snapshot(player); // capture an initial baseline immediately, before anything can happen
-		_deathGuards.put(player.getObjectId(), guard);
-		
-		final Runnable task = () ->
-		{
-			if (player.getInstanceId() != instanceId)
-			{
-				stopDeathGuard(player);
-				return;
-			}
-			
-			if (player.isDead())
-			{
-				if (!guard.restoredThisDeath)
-				{
-					restoreOnDeath(player, guard);
-					guard.restoredThisDeath = true;
-				}
-			}
-			else
-			{
-				guard.snapshot(player); // still alive - refresh the baseline
-				guard.restoredThisDeath = false; // arm it again for the next death, if any
-			}
-		};
-		
-		guard.task = ThreadPool.scheduleAtFixedRate(task, DEATH_GUARD_INTERVAL_MS, DEATH_GUARD_INTERVAL_MS);
-	}
-	
-	private void stopDeathGuard(Player player)
-	{
-		final ArenaDeathGuard guard = _deathGuards.remove(player.getObjectId());
-		if ((guard != null) && (guard.task != null))
-		{
-			guard.task.cancel(false);
-		}
-	}
-	
-	/**
-	 * Undoes the XP/SP loss and buff wipe that death just caused, using {@code guard}'s last pre-death snapshot. Revives the player so effects can actually be reapplied.
-	 * @param player the player who just died inside the arena
-	 * @param guard their snapshot from the moment before death
-	 */
-	private void restoreOnDeath(Player player, ArenaDeathGuard guard)
-	{
-		// Compensate for whatever the death penalty took, whatever its formula actually is - we
-		// don't need to know it, just cancel out the difference from the last snapshot.
-		final long expLost = Math.max(0, guard.snapshotExp - player.getExp());
-		final long spLost = Math.max(0, guard.snapshotSp - player.getSp());
-		if ((expLost > 0) || (spLost > 0))
-		{
-			// TODO: verify addExpAndSp(long, long) matches your Player API - this is a very standard
-			// L2J method (used for normal kill rewards everywhere), so fairly high confidence.
-			player.addExpAndSp(expLost, spLost);
-		}
-		
-		if (player.isDead())
-		{
-			// TODO: verify doRevive() is the correct call to programmatically resurrect.
-			player.doRevive();
-		}
-		
-		for (Skill buff : guard.snapshotBuffs)
-		{
-			if (buff != null)
-			{
-				// TODO: verify applyEffects(caster, target) is the right way to silently reapply a
-				// buff at full duration - mirrors the pattern already used for the Stat Boost reward
-				// in TreasureTowerManager.
-				buff.applyEffects(player, player);
-			}
-		}
-		
-		player.sendMessage("Your experience and buffs have been preserved.");
-	}
-	
+
 	public static void main(String[] args)
 	{
 		new ArenaMaster();

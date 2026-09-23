@@ -2863,7 +2863,17 @@ public class AttackableAI extends CreatureAI
 		{
 			return;
 		}
-		
+
+		// Raid bosses and grand bosses use their own hand-tuned skill sets; granting them extra
+		// random archetype skills on top would make encounters unpredictable and unbalanced.
+		// Checked by class rather than isRaid() because plain Monster instances (the Survival
+		// Arena challenger, hotzone minibosses) also set isRaid(true) for unrelated reasons and
+		// are still meant to go through this system.
+		if ((npc instanceof RaidBoss) || (npc instanceof GrandBoss))
+		{
+			return;
+		}
+
 		// This NPC object may be reused across respawns/waves without being fully recreated. Strip
 		// whatever was granted during a previous life before rolling new skills, or they pile up
 		// forever (addSkill() never gets undone by a later grantArchetypeSkill() call otherwise).
@@ -2887,7 +2897,11 @@ public class AttackableAI extends CreatureAI
 			candidates.set(j, tmp);
 		}
 		
-		final int grantTarget = Math.min(candidates.size(), 1 + Rnd.get(3)); // grant 1-3 skills
+		// Base 1-3, plus whatever a hotzone modifier like ARCHETYPE_HUNTER adds for this npc's
+		// current location (0 outside a modified hotzone).
+		final org.l2jmobius.gameserver.model.hotzone.HotzoneModifier hotzoneModifier = org.l2jmobius.gameserver.managers.HotzoneModifierManager.getInstance().getModifierFor(npc);
+		final int extraFromHotzone = hotzoneModifier != null ? hotzoneModifier.getExtraArchetypeSkills() : 0;
+		final int grantTarget = Math.min(candidates.size(), 1 + Rnd.get(3) + extraFromHotzone);
 		final List<Integer> grantedIds = new ArrayList<>();
 		int granted = 0;
 		for (ArchetypeSkillHolder holder : candidates)

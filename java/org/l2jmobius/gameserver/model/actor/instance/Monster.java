@@ -7,13 +7,16 @@ import java.util.stream.Collectors;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.ai.AttackableAI;
 import org.l2jmobius.gameserver.config.NpcConfig;
 import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
+import org.l2jmobius.gameserver.config.custom.HotzoneMinibossConfig;
 import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData;
 import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData.CustomSkill;
 import org.l2jmobius.gameserver.data.xml.SkillData;
+import org.l2jmobius.gameserver.managers.HotzoneModifierManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Attackable;
@@ -23,6 +26,7 @@ import org.l2jmobius.gameserver.model.actor.enums.creature.InstanceType;
 import org.l2jmobius.gameserver.model.actor.holders.npc.MinionList;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.effects.EffectFlag;
+import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
@@ -81,9 +85,39 @@ public class Monster extends Attackable
 	{
 		// Formula: 1 + ((5.0 / 100) * passiveCount)
 		final int passiveCount = getVariables().getInt("PASSIVE_COUNT", 0);
-		return 1.0 + ((RatesConfig.RANDOM_PASSIVE_DROP_PER_SKILL / 100.0) * passiveCount);
+		double passiveMultiplier = 1.0 + ((RatesConfig.RANDOM_PASSIVE_DROP_PER_SKILL / 100.0) * passiveCount);
+		if (isHotzoneMiniboss())
+		{
+			passiveMultiplier *= HotzoneMinibossConfig.DROP_MULTIPLIER;
+		}
+
+		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		if (hotzoneModifier != null)
+		{
+			passiveMultiplier *= hotzoneModifier.getDropRateMult();
+		}
+
+		return passiveMultiplier;
 	}
-	
+
+	/**
+	 * Read at the SPOIL-only drop-chance call site in {@code NpcTemplate.calculateDrops()}, kept separate from {@link #getCustomPassiveDropMultiplier()} since a hotzone modifier like UNBREAKABLE means to double spoil specifically, not the regular kill-drop table too.
+	 * @return the active hotzone modifier's spoil rate multiplier, or 1.0 if none is active
+	 */
+	public double getCustomSpoilMultiplier()
+	{
+		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		return hotzoneModifier != null ? hotzoneModifier.getSpoilRateMult() : 1.0;
+	}
+
+	/**
+	 * @return whichever {@link HotzoneModifier} is currently active for the hotzone this monster is standing in, or {@code null} if it isn't in one or that hotzone has no modifier rolled.
+	 */
+	private HotzoneModifier getActiveHotzoneModifier()
+	{
+		return HotzoneModifierManager.getInstance().getModifierFor(this);
+	}
+
 	@Override
 	public void onSpawn()
 	{
@@ -95,15 +129,45 @@ public class Monster extends Attackable
 		}
 		
 		super.onSpawn();
-		addRandomPassiveSkill();
-		
+
+		// Raid bosses and grand bosses are already hand-tuned; skip the random passive pool for
+		// them. isRaid() is checked here (before the arena branch below sets it for unrelated
+		// reasons) because at this point it's only ever true for a genuine RaidBoss/GrandBoss -
+		// their constructors set it before onSpawn() ever runs.
+		if (!isRaid())
+		{
+			addRandomPassiveSkill();
+		}
+
 		if (isArenaChallenger())
 		{
 			applyArenaBuffs();
-			addRandomPassiveSkill();
+			rerollArenaActiveSkills();
 			getVariables().set("ARENA_WAVE", 0);
 			startArenaWaveReminderTask();
 			setIsRaid(true);
+		}
+
+		if (isHotzoneMiniboss())
+		{
+			// addRandomPassiveSkill() above only rebuilds the title itself when it actually
+			// granted a passive - do it unconditionally here so the tag always shows.
+			this.setCurrentHp(this.getMaxHp());
+			rebuildFullTitle();
+			broadcastInfo();
+		}
+	}
+
+	/**
+	 * Re-rolls which 1-3 active AI skills (from {@code npc_archetype_skills}, via the existing MonsterArchetype/AttackableAI system) this challenger actually knows and can cast in combat. Keeps its current archetype identity (AGGRESSIVE, MAGE, SUPPORTER...) so its general combat
+	 * personality stays consistent - only WHICH specific skills within that archetype's eligible pool it was granted gets re-shuffled. {@link AttackableAI#setArchetype} already strips whatever was granted last time before granting a fresh set, so this is safe to call repeatedly without
+	 * skills piling up.
+	 */
+	private void rerollArenaActiveSkills()
+	{
+		if (getAI() instanceof AttackableAI attackableAi)
+		{
+			attackableAi.setArchetype(attackableAi.getArchetype());
 		}
 	}
 	
@@ -276,8 +340,12 @@ public class Monster extends Attackable
 		final String championTag = getVariables().getString("CHAMPION_TITLE_TAG", "");
 		final String passiveTag = getVariables().getString("PASSIVE_TITLE_TAG", "");
 		final String baseTitle = getTemplate().getTitle() == null ? "" : getTemplate().getTitle();
-		
+
 		final StringBuilder sb = new StringBuilder();
+		if (isHotzoneMiniboss())
+		{
+			sb.append(HotzoneMinibossConfig.TITLE_TAG).append(' ');
+		}
 		if (!championTag.isEmpty())
 		{
 			sb.append(championTag).append(' ');
@@ -287,10 +355,51 @@ public class Monster extends Attackable
 			sb.append(passiveTag).append(' ');
 		}
 		sb.append(baseTitle);
-		
+
 		setTitle(sb.toString().trim());
 	}
-	
+
+	// =======================================================================
+	// Hotzone Miniboss System
+	// =======================================================================
+
+	/**
+	 * @return {@code true} if {@link org.l2jmobius.gameserver.managers.HotZoneMinibossManager} spawned this specific instance as a hotzone miniboss. Drives the stat/reward multipliers below and the title tag in {@link #rebuildFullTitle()}.
+	 */
+	public boolean isHotzoneMiniboss()
+	{
+		return getVariables().getBoolean("IS_HOTZONE_MINIBOSS", false);
+	}
+
+	private double getHotzoneMinibossMultiplier()
+	{
+		return isHotzoneMiniboss() ? HotzoneMinibossConfig.STAT_MULTIPLIER : 1.0;
+	}
+
+	@Override
+	public long getExpReward(int level)
+	{
+		double multiplier = isHotzoneMiniboss() ? HotzoneMinibossConfig.XP_SP_MULTIPLIER : 1.0;
+		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		if (hotzoneModifier != null)
+		{
+			multiplier *= hotzoneModifier.getXpSpMult();
+		}
+		return (long) (super.getExpReward(level) * multiplier);
+	}
+
+	@Override
+	public int getSpReward(int level)
+	{
+		double multiplier = isHotzoneMiniboss() ? HotzoneMinibossConfig.XP_SP_MULTIPLIER : 1.0;
+		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		if (hotzoneModifier != null)
+		{
+			multiplier *= hotzoneModifier.getXpSpMult();
+		}
+		return (int) (super.getSpReward(level) * multiplier);
+	}
+
 	// =======================================================================
 	// Survival Arena System
 	// =======================================================================
@@ -304,6 +413,18 @@ public class Monster extends Attackable
 	{
 		int wave = getVariables().getInt("ARENA_WAVE", 0);
 		return Math.pow(1 + (RatesConfig.ARENA_STAT_GROWTH_PER_WAVE / 100.0), wave);
+	}
+
+	private double getArenaOffenseMultiplier()
+	{
+		int wave = getVariables().getInt("ARENA_WAVE", 0);
+		return Math.pow(1 + (RatesConfig.ARENA_OFFENSE_GROWTH_PER_WAVE / 100.0), wave);
+	}
+
+	private double getArenaDefenseMultiplier()
+	{
+		int wave = getVariables().getInt("ARENA_WAVE", 0);
+		return Math.pow(1 + (RatesConfig.ARENA_DEFENSE_GROWTH_PER_WAVE / 100.0), wave);
 	}
 	
 	/**
@@ -350,10 +471,11 @@ public class Monster extends Attackable
 	{
 		final int wave = getVariables().getInt("ARENA_WAVE", 0) + 1;
 		getVariables().set("ARENA_WAVE", wave);
-		
+
 		final int virtualLevel = Math.min(100, this.getLevel() + (wave * RatesConfig.ARENA_VIRTUAL_LEVEL_GROWTH_PER_WAVE));
 		addRandomPassiveSkill(virtualLevel);
 		applyArenaBuffs();
+		rerollArenaActiveSkills();
 		
 		this.setCurrentHp(this.getMaxHp());
 		this.setCurrentMp(this.getMaxMp());
@@ -415,70 +537,86 @@ public class Monster extends Attackable
 		final int passiveCount = getVariables().getInt("PASSIVE_COUNT", 0);
 		final double hpMultiplier = 1.0 + ((RatesConfig.RANDOM_PASSIVE_HP_PER_SKILL / 100.0) * passiveCount);
 		final double arenaMultiplier = isArenaChallenger() ? getArenaStatMultiplier() : 1.0;
-		
-		return (int) (baseMaxHp * hpMultiplier * arenaMultiplier * championHpMult);
-		
+		final HotzoneModifier hotzoneModifierHp = getActiveHotzoneModifier();
+		final double hotzoneHpMultiplier = hotzoneModifierHp != null ? hotzoneModifierHp.getMonsterHpMult() : 1.0;
+
+		return (int) (baseMaxHp * hpMultiplier * arenaMultiplier * championHpMult * getHotzoneMinibossMultiplier() * hotzoneHpMultiplier);
+
 	}
-	
+
 	@Override
 	public double getPAtk(Creature target)
 	{
 		final double basePAtk = super.getPAtk(target);
-		return isArenaChallenger() ? (basePAtk * getArenaStatMultiplier()) : basePAtk;
+		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
+		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		return basePAtk * multiplier * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() : 1.0);
 	}
-	
+
 	@Override
 	public double getMAtk(Creature target, Skill skill)
 	{
 		final double baseMAtk = super.getMAtk(target, skill);
-		return isArenaChallenger() ? (baseMAtk * getArenaStatMultiplier()) : baseMAtk;
+		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
+		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		return baseMAtk * multiplier * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() : 1.0);
 	}
-	
+
 	@Override
 	public double getPDef(Creature target)
 	{
 		final double basePDef = super.getPDef(target);
-		return isArenaChallenger() ? (basePDef * getArenaStatMultiplier()) : basePDef;
+		final double multiplier = isArenaChallenger() ? getArenaDefenseMultiplier() : getHotzoneMinibossMultiplier();
+		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		return basePDef * multiplier * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0);
 	}
-	
+
 	@Override
 	public double getMDef(Creature target, Skill skill)
 	{
 		final double baseMDef = super.getMDef(target, skill);
-		return isArenaChallenger() ? (baseMDef * getArenaStatMultiplier()) : baseMDef;
+		final double multiplier = isArenaChallenger() ? getArenaDefenseMultiplier() : getHotzoneMinibossMultiplier();
+		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		return baseMDef * multiplier * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0);
 	}
-	
+
 	@Override
 	public double getPAtkSpd()
 	{
 		final double basePAtkSpd = super.getPAtkSpd();
-		return isArenaChallenger() ? (basePAtkSpd * Math.sqrt((getArenaStatMultiplier()))) : basePAtkSpd;
+		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : 1.0;
+		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		final double hotzoneMultiplier = hotzoneModifier != null ? hotzoneModifier.getMonsterSpdMult() : 1.0;
+		return basePAtkSpd * Math.sqrt(multiplier * hotzoneMultiplier);
 	}
-	
+
 	@Override
 	public int getMAtkSpd()
 	{
 		final int baseMAtkSpd = super.getMAtkSpd();
-		return isArenaChallenger() ? (int) (baseMAtkSpd * Math.sqrt(getArenaStatMultiplier())) : baseMAtkSpd;
+		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : 1.0;
+		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		final double hotzoneMultiplier = hotzoneModifier != null ? hotzoneModifier.getMonsterSpdMult() : 1.0;
+		return (int) (baseMAtkSpd * Math.sqrt(multiplier * hotzoneMultiplier));
 	}
-	
+
 	public static long calculateArenaReward(int finalWave)
 	{
 		if (finalWave <= 0)
 		{
 			return 0;
 		}
-		
+
 		double escalatingTotal = 0;
 		for (int w = 1; w <= finalWave; w++)
 		{
 			escalatingTotal += RatesConfig.ARENA_BASE_CURRENCY_PER_WAVE * Math.pow(1 + (RatesConfig.ARENA_ESCALATION_FACTOR / 100.0), w);
 		}
-		
+
 		final long milestonesCrossed = finalWave / Math.max(1, RatesConfig.ARENA_MILESTONE_INTERVAL);
 		final long milestoneBonusTotal = milestonesCrossed * RatesConfig.ARENA_MILESTONE_BONUS;
-		
-		return Math.round(escalatingTotal) + milestoneBonusTotal;
+
+		return Math.round((escalatingTotal + milestoneBonusTotal) * RatesConfig.ARENA_REWARD_MULTIPLIER);
 	}
 	
 	// =========================================================================

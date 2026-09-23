@@ -75,7 +75,7 @@
 		<requires nodeId="5001" />
 		<requires nodeId="5015" />
 	</node>
-	<node id="5015" name="Arcane Nova" sector="Arcanist" type="ACTIVE_SKILL" tier="0" cost="2" x="547.0" y="382.5" effect="MAXHP:15" skillId="90440" skillLevel="1" description="PLACEHOLDER - grants an active skill (not yet authored).">
+	<node id="5015" name="Arcane Nova" sector="Arcanist" type="ACTIVE_SKILL" tier="0" cost="2" x="547.0" y="382.5" effect="MAXHP:15" skillId="90440" skillLevel="1" description="ACTIVE: blast all enemies around you with a magic nova (power 750, 30s cooldown).">
 		<requires nodeId="5014" />
 	</node>
 	<node id="5016" name="Crossroads" sector="Arcanist" type="SMALL" tier="0" cost="1" x="976.5" y="464.3" effect="MATK_PCT:0.2" description="Junction.">
@@ -335,7 +335,7 @@
 		<requires nodeId="5039" />
 		<requires nodeId="5061" />
 	</node>
-	<node id="5061" name="Mana Rift" sector="Arcanist" type="ACTIVE_SKILL" tier="0" cost="2" x="916.4" y="1050.1" effect="MAXHP:15" skillId="90441" skillLevel="1" description="PLACEHOLDER - grants an active skill (not yet authored).">
+	<node id="5061" name="Mana Rift" sector="Arcanist" type="ACTIVE_SKILL" tier="0" cost="2" x="916.4" y="1050.1" effect="MAXHP:15" skillId="90441" skillLevel="1" description="ACTIVE: sacrifice HP to instantly restore MP (60s cooldown).">
 		<requires nodeId="5060" />
 	</node>
 	<node id="5062" name="Crossroads" sector="Arcanist" type="SMALL" tier="0" cost="1" x="1329.3" y="1134.0" effect="MATK_PCT:0.2" description="Junction.">

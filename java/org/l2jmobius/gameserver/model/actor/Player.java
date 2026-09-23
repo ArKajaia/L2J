@@ -5253,18 +5253,24 @@ public class Player extends Playable
 		
 		// Survival Arena System: calculate final reward and return the player to town
 		
-		if (RatesConfig.ARENA_SYSTEM_ENABLED && (killer != null) && killer.isNpc() && RatesConfig.ARENA_CHALLENGER_NPC_IDS.contains(killer.getId()))
+		// Guarded by ARENA_RUN_ENDED so a stray extra doDie() call for the same run (e.g. a DOT
+		// tick racing this same death) can never grant the reward twice. This is belt-and-braces:
+		// the player no longer gets revived while still standing next to a live challenger (see
+		// custom.ArenaMaster.ArenaMaster.finishArenaRun()), so a second death shouldn't happen at all.
+		if (RatesConfig.ARENA_SYSTEM_ENABLED && (killer != null) && killer.isNpc() && RatesConfig.ARENA_CHALLENGER_NPC_IDS.contains(killer.getId()) && !((org.l2jmobius.gameserver.model.actor.instance.Monster) killer).getVariables().getBoolean("ARENA_RUN_ENDED", false))
 		{
 			final org.l2jmobius.gameserver.model.actor.instance.Monster arenaChallenger = (org.l2jmobius.gameserver.model.actor.instance.Monster) killer;
+			arenaChallenger.getVariables().set("ARENA_RUN_ENDED", true);
+
 			final int finalWave = arenaChallenger.getVariables().getInt("ARENA_WAVE", 0);
 			final long reward = org.l2jmobius.gameserver.model.actor.instance.Monster.calculateArenaReward(finalWave);
 			final int arenaInstanceId = arenaChallenger.getInstanceId();
-			
+
 			if (reward > 0)
 			{
 				addItem(ItemProcessType.REWARD, RatesConfig.ARENA_CURRENCY_ITEM_ID, reward, arenaChallenger, true);
 			}
-			
+
 			// Personal best tracking
 			final int previousBest = getVariables().getInt("ARENA_BEST_WAVE", 0);
 			if (finalWave > previousBest)
@@ -5272,15 +5278,33 @@ public class Player extends Playable
 				getVariables().set("ARENA_BEST_WAVE", finalWave);
 				sendMessage("New personal best! You reached Wave " + finalWave + ".");
 			}
-			
+
 			sendMessage("Your Arena Challenge has ended at Wave " + finalWave + ". You earned " + reward + " Arena Coins.");
-			
+
 			ThreadPool.schedule(() ->
 			{
-				teleToLocation(TeleportWhereType.TOWN);
+				try
+				{
+					teleToLocation(TeleportWhereType.TOWN);
+				}
+				catch (Exception e)
+				{
+					// A failed teleport must never also silently cost the player their
+					// pre-death buffs/XP below - log it and keep going.
+					LOGGER.warning("Arena: failed to teleport " + getName() + " to town after their run ended - " + e);
+				}
+
+				// Only NOW - safely out of the instance, away from the challenger - restore the
+				// XP/SP/buffs snapshotted from just before death. Doing this earlier (while still
+				// dead inside the arena) used to revive the player right next to a still-live
+				// monster, which could kill them a second time before this callback even ran.
+				// Unconditional (outside the try above) so a teleport failure can never also
+				// swallow the restore.
+				org.l2jmobius.gameserver.managers.ArenaSurvivalManager.getInstance().finishArenaRun(this);
+
 				org.l2jmobius.gameserver.managers.InstanceManager.getInstance().destroyInstance(arenaInstanceId);
 			}, 3000);
-			
+
 		}
 		
 		if (isMounted())
