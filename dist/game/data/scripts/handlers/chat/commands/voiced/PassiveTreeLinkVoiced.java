@@ -19,7 +19,7 @@ public class PassiveTreeLinkVoiced implements IVoicedCommandHandler
 	};
 	
 	// Point this at wherever your server is reachable from.
-	private static final String WEB_BASE_URL = "http://YOUR_SERVER_HOST:8788/passive-tree.html";
+	private static final String WEB_BASE_URL = "http://10.8.0.6:8788/passive-tree.html";
 	
 	@Override
 	public boolean useVoicedCommand(String command, Player player, String params)

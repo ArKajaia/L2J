@@ -80,11 +80,27 @@ public class Stun extends AbstractEffect
 	@Override
 	public void onStart(Creature effector, Creature effected, Skill skill)
 	{
-		if ((effected == null) || effected.isRaid())
+		if ((effected == null) || effected.isRaid() || isHotzoneStunImmune(effected))
 		{
 			return;
 		}
-		
+
 		effected.startStunning();
+	}
+
+	/**
+	 * @param effected the creature the stun would land on
+	 * @return {@code true} if {@code effected} is a monster standing in a hotzone whose currently-rolled modifier is UNBREAKABLE (see {@link org.l2jmobius.gameserver.model.hotzone.HotzoneModifier#isMonsterStunImmune()}). Mirrors the raid-immunity short-circuit right above it: the visual
+	 *         land can still play, only the actual incapacitation is skipped.
+	 */
+	private boolean isHotzoneStunImmune(Creature effected)
+	{
+		if (!effected.isMonster())
+		{
+			return false;
+		}
+
+		final org.l2jmobius.gameserver.model.hotzone.HotzoneModifier hotzoneModifier = org.l2jmobius.gameserver.managers.HotzoneModifierManager.getInstance().getModifierFor(effected);
+		return (hotzoneModifier != null) && hotzoneModifier.isMonsterStunImmune();
 	}
 }

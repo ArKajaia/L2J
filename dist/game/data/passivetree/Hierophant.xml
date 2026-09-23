@@ -75,7 +75,7 @@
 		<requires nodeId="6001" />
 		<requires nodeId="6015" />
 	</node>
-	<node id="6015" name="Benediction" sector="Hierophant" type="ACTIVE_SKILL" tier="0" cost="2" x="2130.3" y="80.0" effect="MAXHP:15" skillId="90450" skillLevel="1" description="PLACEHOLDER - grants an active skill (not yet authored).">
+	<node id="6015" name="Benediction" sector="Hierophant" type="ACTIVE_SKILL" tier="0" cost="2" x="2130.3" y="80.0" effect="MAXHP:15" skillId="90450" skillLevel="1" description="ACTIVE: restore a large chunk of HP to your whole party (60s cooldown).">
 		<requires nodeId="6014" />
 	</node>
 	<node id="6016" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2283.6" y="497.5" effect="MAXMP:6" description="Junction.">
@@ -335,7 +335,7 @@
 		<requires nodeId="6039" />
 		<requires nodeId="6061" />
 	</node>
-	<node id="6061" name="Sanctuary" sector="Hierophant" type="ACTIVE_SKILL" tier="0" cost="2" x="1715.0" y="734.6" effect="MAXHP:15" skillId="90451" skillLevel="1" description="PLACEHOLDER - grants an active skill (not yet authored).">
+	<node id="6061" name="Sanctuary" sector="Hierophant" type="ACTIVE_SKILL" tier="0" cost="2" x="1715.0" y="734.6" effect="MAXHP:15" skillId="90451" skillLevel="1" description="ACTIVE: party gains +10% P.Def and M.Def for 60s (180s cooldown).">
 		<requires nodeId="6060" />
 	</node>
 	<node id="6062" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1861.2" y="1135.6" effect="MAXMP:6" description="Junction.">

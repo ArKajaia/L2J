@@ -523,6 +523,13 @@ public class Spawn extends Location
 			if (npc.isInsideZone(org.l2jmobius.gameserver.model.zone.ZoneId.HOTZONE))
 			{
 				freqMultiplier = ChampionMonstersConfig.CHAMPION_HOTZONE_MULTIPLIER; // e.g., 2.0 (Double chance)
+
+				// A rolled modifier like CHAMPION_SURGE stacks on top of the flat hotzone bonus above.
+				final org.l2jmobius.gameserver.model.hotzone.HotzoneModifier hotzoneModifier = org.l2jmobius.gameserver.managers.HotzoneModifierManager.getInstance().getModifierFor(npc);
+				if (hotzoneModifier != null)
+				{
+					freqMultiplier *= hotzoneModifier.getChampionSpawnMult();
+				}
 			}
 			
 			// Apply the multiplier to your base frequencies

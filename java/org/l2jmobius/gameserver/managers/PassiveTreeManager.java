@@ -555,8 +555,9 @@ public class PassiveTreeManager
 			}
 		}
 		
+		getAllocatedNodes(player).remove(nodeId);
 		persistDelete(player, nodeId);
-		
+
 		// Rebuild stats and skills from the new allocation set - this reuses
 		// whatever applyAll() already does (including the _treeGranted
 		// skill-ownership tracking, if that patch is already in this file).

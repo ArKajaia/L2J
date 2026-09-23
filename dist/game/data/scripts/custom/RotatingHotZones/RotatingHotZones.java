@@ -12,12 +12,14 @@ import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.managers.HotzoneModifierManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
@@ -187,6 +189,8 @@ public class RotatingHotZones extends Quest
 					}
 				}
 			}
+
+			HotzoneModifierManager.getInstance().clearModifier(br.getActiveZoneId());
 		}
 		
 		_activeZones.clear();
@@ -205,6 +209,7 @@ public class RotatingHotZones extends Quest
 			int chosenZoneId = bracket.getZoneIds()[Rnd.get(bracket.getZoneIds().length)];
 			_activeZones.add(new BracketZone(bracket, chosenZoneId));
 			_activeZoneSet.add(chosenZoneId);
+			HotzoneModifierManager.getInstance().rollModifier(chosenZoneId);
 		}
 		
 		for (Player player : World.getInstance().getPlayers())
@@ -223,9 +228,15 @@ public class RotatingHotZones extends Quest
 					ZoneType zone = ZoneManager.getInstance().getZoneById(bz.getActiveZoneId());
 					if (zone != null)
 					{
+						final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifier(bz.getActiveZoneId());
+
 						player.sendMessage("=================================");
 						player.sendMessage(">>> HOT ZONE ROTATED <<<");
 						player.sendMessage("Hot Zone for your level (" + bracket.getName() + "): " + zone.getName());
+						if (modifier != null)
+						{
+							player.sendMessage("Modifier: " + modifier.getDescription());
+						}
 						player.sendMessage("=================================");
 					}
 					break;
@@ -504,9 +515,15 @@ public class RotatingHotZones extends Quest
 			String zoneName = (zone != null) ? zone.getName() : ("Zone " + zoneId);
 			
 			hasActiveZone = true;
-			
+
 			sb.append("<tr><td align=\"left\" width=80>").append(zoneName).append(": ").append("<font color=\"LEVEL\">").append(bracket.getName()).append("</font></td></tr>");
-			
+
+			final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifier(zoneId);
+			if (modifier != null)
+			{
+				sb.append("<tr><td align=\"left\"><font color=\"999999\">").append(modifier.getDescription()).append("</font></td></tr>");
+			}
+
 			sb.append("<tr>");
 			sb.append("<td>");
 			

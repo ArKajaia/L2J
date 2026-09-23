@@ -325,6 +325,14 @@ public class Attackable extends Npc
 			{
 				EventDispatcher.getInstance().notifyEventAsyncDelayed(new OnAttackableKill(player, this, killer.isSummon()), this, _onKillDelay);
 			}
+
+			// Hotzone miniboss kill counter and coin drop - only for kills that would actually
+			// reward exp/sp, so NPC-on-NPC kills, fake players, etc. can't farm either trigger.
+			if ((player != null) && getMustRewardExpSP())
+			{
+				org.l2jmobius.gameserver.managers.HotZoneMinibossManager.getInstance().onAttackableKilled(this, killer);
+				org.l2jmobius.gameserver.managers.HotzoneCoinDropManager.getInstance().onAttackableKilled(this, player);
+			}
 		}
 		
 		// Notify to minions if there are.

@@ -1277,7 +1277,8 @@ public class NpcTemplate extends CreatureTemplate
 			{
 				// chance
 				final double passiveMultiplier = victim.isMonster() ? ((Monster) victim).getCustomPassiveDropMultiplier() : 1.0;
-				double rateChance = RatesConfig.RATE_SPOIL_DROP_CHANCE_MULTIPLIER * passiveMultiplier;
+				final double spoilMultiplier = victim.isMonster() ? ((Monster) victim).getCustomSpoilMultiplier() : 1.0;
+				double rateChance = RatesConfig.RATE_SPOIL_DROP_CHANCE_MULTIPLIER * passiveMultiplier * spoilMultiplier;
 				
 				// premium chance
 				final Player player = killer.asPlayer();

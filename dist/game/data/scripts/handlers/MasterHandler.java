@@ -232,6 +232,7 @@ import handlers.chat.commands.voiced.PassiveTreeLinkVoiced;
 import handlers.chat.commands.voiced.PassiveTreeVoiced;
 //import handlers.chat.commands.voiced.PassivesCommand;
 import handlers.chat.commands.voiced.Premium;
+import handlers.chat.commands.voiced.SaveHotzoneVoiced;
 import handlers.chat.commands.voiced.SkillsCommand;
 import handlers.chat.commands.voiced.VoiceAutoLootFilter;
 import handlers.chat.commands.voiced.VoiceDpsMeter;
@@ -566,6 +567,7 @@ public class MasterHandler
 			VoiceHelp.class,
 			PassiveTreeVoiced.class,
 			PassiveTreeLinkVoiced.class,
+			SaveHotzoneVoiced.class,
 		},
 		{
 			// TODO: Add configuration options for this voiced commands.

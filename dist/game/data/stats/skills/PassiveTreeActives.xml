@@ -190,4 +190,181 @@
 		</selfEffects>
 	</skill>
 
+	<!-- ===================================================================
+	     BATCH 2 - the remaining 7 ACTIVE_SKILL / FUNCTION nodes that were
+	     left as PLACEHOLDER in the passive tree XML. Same confirmed-handler
+	     policy as batch 1 above: only Buff, PhysicalDamage, MagicalDamage,
+	     Heal, ManaHeal - all verified against real skills already shipping
+	     in dist/game/data/stats/skills/ (Battle Heal 1015, Anakim Sunshine
+	     723, Recharge 417, and the AURA PhysicalDamage/MagicalDamage skills
+	     already used for 90411 above). stat="rEvas"/"runSpd" confirmed via
+	     Stat.java (EVASION_RATE("rEvas"), MOVE_SPEED("runSpd")) and existing
+	     retail Buff skills that use them the same way.
+	     =================================================================== -->
+
+	<!-- 90421  SMOKE VEIL   (Shadowblade / defensive escape)
+	     Mirror of 90420 Shadow Step's "engage" with a matching "disengage":
+	     a short evasion + speed burst to slip out of melee range. -->
+	<skill id="90421" levels="1" name="Smoke Veil">
+		<icon>icon.skill0922</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>8</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<hitTime>500</hitTime>
+		<isMagic>0</isMagic> <!-- Physical Skill -->
+		<magicLevel>40</magicLevel>
+		<mpConsume>25</mpConsume>
+		<reuseDelay>40000</reuseDelay>
+		<effects>
+			<effect name="Buff">
+				<add stat="rEvas">8</add>
+				<add stat="runSpd">20</add>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 90430  DISENGAGE   (Deadeye / mobility)
+	     Same "create distance" fantasy as Smoke Veil, sized for a ranged
+	     class repositioning rather than a melee escape. -->
+	<skill id="90430" levels="1" name="Disengage">
+		<icon>icon.skill1044</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>6</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<hitTime>500</hitTime>
+		<isMagic>0</isMagic> <!-- Physical Skill -->
+		<magicLevel>40</magicLevel>
+		<mpConsume>20</mpConsume>
+		<reuseDelay>35000</reuseDelay>
+		<effects>
+			<effect name="Buff">
+				<add stat="runSpd">25</add>
+				<add stat="rEvas">6</add>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 90431  VOLLEY   (Deadeye / AoE)
+	     Ranged counterpart to 90411 Earthshatter: point-blank AoE around
+	     the caster, pure damage (no stun) so the pair isn't strictly better
+	     than Juggernaut's. Retail reference: Devil Spinning Weapon 735 for
+	     the AURA + PhysicalDamage shape. -->
+	<skill id="90431" levels="1" name="Volley">
+		<icon>icon.skill0407</icon>
+		<operateType>A1</operateType>
+		<targetType>AURA</targetType>
+		<affectRange>500</affectRange>
+		<effectPoint>-350</effectPoint>
+		<hitTime>1200</hitTime>
+		<coolTime>300</coolTime>
+		<isMagic>0</isMagic> <!-- Physical Skill -->
+		<magicLevel>40</magicLevel>
+		<mpConsume>50</mpConsume>
+		<reuseDelay>25000</reuseDelay>
+		<nextActionAttack>true</nextActionAttack>
+		<effects>
+			<effect name="PhysicalDamage">
+				<power>600</power>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 90440  ARCANE NOVA   (Arcanist / AoE)
+	     Magic counterpart to Earthshatter/Volley - point-blank magic nova,
+	     pure damage. Retail reference: Devil Spinning Weapon 735's AURA +
+	     MagicalDamage shape. -->
+	<skill id="90440" levels="1" name="Arcane Nova">
+		<icon>icon.skill1163</icon>
+		<operateType>A1</operateType>
+		<targetType>AURA</targetType>
+		<affectRange>300</affectRange>
+		<effectPoint>-400</effectPoint>
+		<hitTime>1500</hitTime>
+		<coolTime>300</coolTime>
+		<isMagic>1</isMagic> <!-- Magic Skill -->
+		<magicLevel>40</magicLevel>
+		<mpConsume>65</mpConsume>
+		<reuseDelay>30000</reuseDelay>
+		<effects>
+			<effect name="MagicalDamage">
+				<power>750</power>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 90441  MANA RIFT   (Arcanist / resource utility)
+	     Sacrifices HP to restore MP - same shape as retail Recharge (417),
+	     which is HP-for-MP rather than MP-consuming (a mana skill can't
+	     cost mana to cast). Long cooldown: it's an emergency mana top-up,
+	     not something to weave into a normal rotation. -->
+	<skill id="90441" levels="1" name="Mana Rift">
+		<icon>icon.skill0416</icon>
+		<operateType>A1</operateType>
+		<targetType>SELF</targetType>
+		<effectPoint>400</effectPoint>
+		<hitTime>1500</hitTime>
+		<hpConsume>150</hpConsume>
+		<isMagic>1</isMagic> <!-- Magic Skill -->
+		<magicLevel>40</magicLevel>
+		<reuseDelay>60000</reuseDelay>
+		<effects>
+			<effect name="ManaHeal">
+				<power>300</power>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 90450  BENEDICTION   (Hierophant / party heal)
+	     Retail reference: Anakim Sunshine (723) - PARTY targetType, plain
+	     Heal effect, no dispel/cleanse guesswork. Long-ish cooldown so it's
+	     an emergency panic button, not a substitute for a real healer's
+	     normal heal-over-time toolkit. -->
+	<skill id="90450" levels="1" name="Benediction">
+		<icon>icon.skill1015</icon>
+		<operateType>A1</operateType>
+		<targetType>PARTY</targetType>
+		<affectRange>1000</affectRange>
+		<effectPoint>700</effectPoint>
+		<hitTime>2500</hitTime>
+		<isMagic>1</isMagic> <!-- Magic Skill -->
+		<magicLevel>40</magicLevel>
+		<mpConsume>60</mpConsume>
+		<reuseDelay>60000</reuseDelay>
+		<effects>
+			<effect name="Heal">
+				<power>900</power>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 90451  SANCTUARY   (Hierophant / party defence)
+	     Same cadence as 90401 Rallying Shout (Vanguard's party buff
+	     sibling): abnormalType NONE so it stacks with retail buffs,
+	     180s cooldown for a party-wide effect. -->
+	<skill id="90451" levels="1" name="Sanctuary">
+		<icon>icon.skill1010</icon>
+		<operateType>A2</operateType>
+		<targetType>PARTY</targetType>
+		<affectRange>1000</affectRange>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>60</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<hitTime>1500</hitTime>
+		<isMagic>1</isMagic> <!-- Magic Skill -->
+		<magicLevel>40</magicLevel>
+		<mpConsume>70</mpConsume>
+		<reuseDelay>180000</reuseDelay>
+		<effectPoint>300</effectPoint>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pDef">1.10</mul>
+				<mul stat="mDef">1.10</mul>
+			</effect>
+		</effects>
+	</skill>
+
 </list>
