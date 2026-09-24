@@ -1034,7 +1034,7 @@ function setupZoomPan() {
 	document.getElementById("btn-out").addEventListener("click", () => zoomCentre(1 / CFG.ZOOM_STEP));
 	document.getElementById("btn-fit").addEventListener("click", fitToScreen);
 
-	// keyboard: WASD / arrows to pan, +/- to zoom, F to fit
+	// keyboard: WASD / arrows to pan, +/- to zoom, F to fit, Space to allocate the selected node
 	window.addEventListener("keydown", e => {
 		if (document.activeElement && document.activeElement.tagName === "INPUT") return;
 		const step = CFG.KEY_PAN_STEP;
@@ -1047,6 +1047,17 @@ function setupZoomPan() {
 			case "+": case "=": zoomCentre(CFG.ZOOM_STEP); return;
 			case "-": case "_": zoomCentre(1 / CFG.ZOOM_STEP); return;
 			case "f": case "F": fitToScreen(); return;
+			case " ": {
+				// Space allocates whatever node the detail panel is currently
+				// showing - same "must be reachable, not already owned" gate
+				// as a double-click on the node itself. Always prevent the
+				// browser default (page scroll, or re-clicking whichever
+				// button last had focus) even when nothing is selected.
+				e.preventDefault();
+				const selected = selectedNodeId !== null ? nodes.find(x => x.id === selectedNodeId) : null;
+				if (selected && isAvailable(selected)) allocateNode(selected);
+				return;
+			}
 			default: handled = false;
 		}
 		if (handled) { e.preventDefault(); applyTransform(); }
