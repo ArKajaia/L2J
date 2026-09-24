@@ -595,6 +595,15 @@ const STAT_LABEL = {
 	MOVE_SPEED_ADD:"Movement Speed", REFLECT_PCT:"Damage Reflected",
 	HP_REGEN_PCT:"HP Regeneration", MP_REGEN_PCT:"MP Regeneration",
 	DROP_RATE_PCT:"Drop Rate", SPOIL_RATE_PCT:"Spoil Rate", EXP_RATE_PCT:"EXP Rate",
+	ADENA_RATE_PCT:"Adena Drop Amount",
+	LIFESTEAL_PCT:"Life Steal (melee)", MANA_LEECH_PCT:"Mana Leech (melee)",
+	SKILL_DODGE_PCT:"Physical Skill Dodge", MAGIC_REFLECT_PCT:"Magic Skill Reflect", SKILL_REFLECT_PCT:"Physical Skill Reflect",
+	PVE_PDMG_PCT:"Physical Damage vs Monsters", PVE_MDMG_PCT:"Magic Damage vs Monsters", PVE_BOW_DMG_PCT:"Bow Damage vs Monsters",
+	PHYS_SKILL_POWER_PCT:"Physical Skill Power", MCRIT_DMG_PCT:"Magic Critical Damage", BLOW_RATE_PCT:"Blow Success Rate",
+	HEALING_RECEIVED_PCT:"Healing Received",
+	SKILL_CDR_PCT:"Skill Cooldown Reduction", SPELL_CDR_PCT:"Spell Cooldown Reduction",
+	SPELL_MP_COST_RED_PCT:"Spell MP Cost Reduction", CRIT_DMG_TAKEN_RED_PCT:"Critical Damage Taken Reduction",
+	INTERRUPT_RES_PCT:"Cast Interruption Resistance", DEBUFF_RES_PCT:"Debuff Resistance",
 };
 
 // Which glyph represents each stat family, reused for both SMALL and NOTABLE
@@ -608,7 +617,13 @@ const STAT_ICON = {
 	ATK_SPD_PCT:"wind", MOVE_SPEED_ADD:"wind",
 	CRIT_RATE_ADD:"star", CRIT_DMG_PCT:"star", MCRIT_RATE_ADD:"star",
 	ACCURACY_ADD:"eye", EVASION_ADD:"eye",
-	DROP_RATE_PCT:"coin", SPOIL_RATE_PCT:"coin", EXP_RATE_PCT:"coin",
+	DROP_RATE_PCT:"coin", SPOIL_RATE_PCT:"coin", EXP_RATE_PCT:"coin", ADENA_RATE_PCT:"coin",
+	LIFESTEAL_PCT:"heart", HEALING_RECEIVED_PCT:"heart", MANA_LEECH_PCT:"drop", SPELL_MP_COST_RED_PCT:"drop",
+	SKILL_DODGE_PCT:"eye", MAGIC_REFLECT_PCT:"shield", SKILL_REFLECT_PCT:"shield",
+	CRIT_DMG_TAKEN_RED_PCT:"shield", DEBUFF_RES_PCT:"shield", INTERRUPT_RES_PCT:"shield",
+	PVE_PDMG_PCT:"sword", PVE_BOW_DMG_PCT:"sword", PHYS_SKILL_POWER_PCT:"sword", PVE_MDMG_PCT:"spark",
+	MCRIT_DMG_PCT:"star", BLOW_RATE_PCT:"star",
+	SKILL_CDR_PCT:"wind", SPELL_CDR_PCT:"wind",
 };
 
 /** Which <symbol id="icon-..."> a node should render, ignoring lock state. */

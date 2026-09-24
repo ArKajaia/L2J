@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Mystic: 28 nodes, hybrid of Arcanist and Hierophant filling the gap between their arms. x/y are authoritative layout coords. -->
+<list>
+	<node id="30401" name="Confluence" sector="Mystic" type="SMALL" tier="0" cost="1" x="1600.0" y="350.0" effect="MATK_PCT:0.3;MAXMP:8">
+		<requires nodeId="24102" />
+		<requires nodeId="30402" />
+	</node>
+	<node id="30402" name="Confluence" sector="Mystic" type="SMALL" tier="0" cost="1" x="1607.1" y="238.3" effect="MATK_PCT:0.3;MAXMP:8">
+		<requires nodeId="30401" />
+		<requires nodeId="30403" />
+		<requires nodeId="30404" />
+		<requires nodeId="30405" />
+	</node>
+	<node id="30403" name="Arcane Crossing" sector="Mystic" type="SMALL" tier="0" cost="1" x="1429.1" y="206.9" effect="MATK_PCT:0.4;MAXMP:6">
+		<requires nodeId="5028" />
+		<requires nodeId="30402" />
+		<requires nodeId="30406" />
+	</node>
+	<node id="30404" name="Sacred Crossing" sector="Mystic" type="SMALL" tier="0" cost="1" x="1786.6" y="210.6" effect="MP_REGEN_PCT:0.6;MAXMP:6">
+		<requires nodeId="6021" />
+		<requires nodeId="30402" />
+		<requires nodeId="30407" />
+	</node>
+	<node id="30405" name="Flow" sector="Mystic" type="SMALL" tier="0" cost="1" x="1599.7" y="138.6" effect="SPELL_CDR_PCT:0.8">
+		<requires nodeId="30402" />
+		<requires nodeId="30406" />
+		<requires nodeId="30407" />
+		<requires nodeId="30412" />
+	</node>
+	<node id="30406" name="Surging Power" sector="Mystic" type="SMALL" tier="0" cost="1" x="1444.0" y="77.5" effect="MATK_PCT:0.4;CAST_SPD_PCT:0.3">
+		<requires nodeId="30403" />
+		<requires nodeId="30405" />
+		<requires nodeId="30408" />
+		<requires nodeId="30410" />
+	</node>
+	<node id="30407" name="Still Mind" sector="Mystic" type="SMALL" tier="0" cost="1" x="1757.2" y="78.1" effect="MP_REGEN_PCT:0.8;MAXMP:8">
+		<requires nodeId="30404" />
+		<requires nodeId="30405" />
+		<requires nodeId="30409" />
+		<requires nodeId="30411" />
+	</node>
+	<node id="30408" name="Surging Power" sector="Mystic" type="SMALL" tier="0" cost="1" x="1287.1" y="11.6" effect="MATK_PCT:0.4;CAST_SPD_PCT:0.3">
+		<requires nodeId="30406" />
+		<requires nodeId="30410" />
+		<requires nodeId="30413" />
+		<requires nodeId="30415" />
+	</node>
+	<node id="30409" name="Still Mind" sector="Mystic" type="SMALL" tier="0" cost="1" x="1909.0" y="9.3" effect="MP_REGEN_PCT:0.8;MAXMP:8">
+		<requires nodeId="30407" />
+		<requires nodeId="30411" />
+		<requires nodeId="30414" />
+		<requires nodeId="30416" />
+	</node>
+	<node id="30410" name="Surging Power" sector="Mystic" type="SMALL" tier="0" cost="1" x="1425.3" y="-30.0" effect="MATK_PCT:0.4;CAST_SPD_PCT:0.3">
+		<requires nodeId="30406" />
+		<requires nodeId="30408" />
+		<requires nodeId="30412" />
+		<requires nodeId="30415" />
+	</node>
+	<node id="30411" name="Still Mind" sector="Mystic" type="SMALL" tier="0" cost="1" x="1742.3" y="-32.3" effect="MP_REGEN_PCT:0.8;MAXMP:8">
+		<requires nodeId="30407" />
+		<requires nodeId="30409" />
+		<requires nodeId="30412" />
+		<requires nodeId="30416" />
+	</node>
+	<node id="30412" name="Flow" sector="Mystic" type="SMALL" tier="0" cost="1" x="1596.7" y="-33.5" effect="SPELL_CDR_PCT:0.8">
+		<requires nodeId="30405" />
+		<requires nodeId="30410" />
+		<requires nodeId="30411" />
+		<requires nodeId="30417" />
+		<requires nodeId="30418" />
+	</node>
+	<node id="30413" name="Surging Power" sector="Mystic" type="SMALL" tier="0" cost="1" x="1211.1" y="-73.7" effect="MATK_PCT:0.4;CAST_SPD_PCT:0.3">
+		<requires nodeId="30408" />
+		<requires nodeId="30415" />
+		<requires nodeId="30421" />
+		<requires nodeId="30425" />
+	</node>
+	<node id="30414" name="Still Mind" sector="Mystic" type="SMALL" tier="0" cost="1" x="1975.3" y="-70.4" effect="MP_REGEN_PCT:0.8;MAXMP:8">
+		<requires nodeId="30409" />
+		<requires nodeId="30416" />
+		<requires nodeId="30423" />
+		<requires nodeId="30426" />
+	</node>
+	<node id="30415" name="Overcharged Sigils" sector="Mystic" type="NOTABLE" tier="0" cost="2" x="1329.4" y="-78.9" effect="MCRIT_DMG_PCT:10;MATK_PCT:3" description="Surging Power mastery. Magic critical hits erupt.">
+		<requires nodeId="30408" />
+		<requires nodeId="30410" />
+		<requires nodeId="30413" />
+	</node>
+	<node id="30416" name="Clarity" sector="Mystic" type="NOTABLE" tier="0" cost="2" x="1860.6" y="-79.9" effect="SPELL_MP_COST_RED_PCT:8;MP_REGEN_PCT:4" description="Still Mind mastery. Spells cost less MP.">
+		<requires nodeId="30409" />
+		<requires nodeId="30411" />
+		<requires nodeId="30414" />
+	</node>
+	<node id="30417" name="Ley Current" sector="Mystic" type="SMALL" tier="0" cost="1" x="1440.9" y="-130.0" effect="INTERRUPT_RES_PCT:4;MAXMP:8">
+		<requires nodeId="30412" />
+		<requires nodeId="30419" />
+		<requires nodeId="30420" />
+		<requires nodeId="30425" />
+	</node>
+	<node id="30418" name="Ley Current" sector="Mystic" type="SMALL" tier="0" cost="1" x="1751.6" y="-133.5" effect="INTERRUPT_RES_PCT:4;MAXMP:8">
+		<requires nodeId="30412" />
+		<requires nodeId="30419" />
+		<requires nodeId="30420" />
+		<requires nodeId="30426" />
+	</node>
+	<node id="30419" name="Unbroken Chant" sector="Mystic" type="NOTABLE" tier="0" cost="2" x="1611.9" y="-132.1" effect="INTERRUPT_RES_PCT:30;CAST_SPD_PCT:3;SPELL_CDR_PCT:3" description="Ley Current mastery. Taking hits rarely breaks your casting.">
+		<requires nodeId="30417" />
+		<requires nodeId="30418" />
+		<requires nodeId="30420" />
+	</node>
+	<node id="30420" name="Ley Current" sector="Mystic" type="SMALL" tier="0" cost="1" x="1592.8" y="-228.9" effect="INTERRUPT_RES_PCT:4;MAXMP:8">
+		<requires nodeId="30417" />
+		<requires nodeId="30418" />
+		<requires nodeId="30419" />
+		<requires nodeId="30427" />
+	</node>
+	<node id="30421" name="Approach" sector="Mystic" type="SMALL" tier="0" cost="1" x="1328.9" y="-206.3" effect="MAXHP:6">
+		<requires nodeId="30413" />
+		<requires nodeId="30422" />
+	</node>
+	<node id="30422" name="Chronomancer" sector="Mystic" type="KEYSTONE" tier="0" cost="3" x="1256.2" y="-304.2" effect="SPELL_CDR_PCT:15;CAST_SPD_PCT:-12" description="Spells recharge far faster but take longer to cast.">
+		<requires nodeId="30421" />
+	</node>
+	<node id="30423" name="Approach" sector="Mystic" type="SMALL" tier="0" cost="1" x="1871.1" y="-212.5" effect="MAXHP:6">
+		<requires nodeId="30414" />
+		<requires nodeId="30424" />
+	</node>
+	<node id="30424" name="Arcane Hunter" sector="Mystic" type="NOTABLE" tier="0" cost="2" x="1950.7" y="-302.9" effect="PVE_MDMG_PCT:6;MATK_PCT:1" description="Spellwork tuned for clearing monsters.">
+		<requires nodeId="30423" />
+	</node>
+	<node id="30425" name="Arcane Path" sector="Mystic" type="SMALL" tier="0" cost="1" x="1237.0" y="-169.2" effect="MATK_PCT:0.4;MCRIT_RATE_ADD:3">
+		<requires nodeId="5011" />
+		<requires nodeId="30413" />
+		<requires nodeId="30417" />
+	</node>
+	<node id="30426" name="Sacred Path" sector="Mystic" type="SMALL" tier="0" cost="1" x="1959.6" y="-168.0" effect="MAXMP:10;MDEF_PCT:0.3">
+		<requires nodeId="6005" />
+		<requires nodeId="30414" />
+		<requires nodeId="30418" />
+	</node>
+	<node id="30427" name="Approach" sector="Mystic" type="SMALL" tier="0" cost="1" x="1636.2" y="-318.9" effect="MAXHP:6">
+		<requires nodeId="30420" />
+		<requires nodeId="30428" />
+	</node>
+	<node id="30428" name="Eldritch Overflow" sector="Mystic" type="KEYSTONE" tier="0" cost="3" x="1578.5" y="-399.9" effect="MATK_PCT:8;MCRIT_DMG_PCT:12;SPELL_MP_COST_RED_PCT:-30" description="Spells hit much harder but cost 30% more MP.">
+		<requires nodeId="30427" />
+	</node>
+</list>

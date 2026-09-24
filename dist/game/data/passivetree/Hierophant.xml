@@ -27,6 +27,7 @@
 		<requires nodeId="6004" />
 		<requires nodeId="6006" />
 		<requires nodeId="6008" />
+		<requires nodeId="30426" />
 	</node>
 	<node id="6006" name="Devotion" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2315.5" y="-46.4" effect="MAXMP:14">
 		<requires nodeId="6004" />
@@ -60,6 +61,7 @@
 		<requires nodeId="6010" />
 		<requires nodeId="6012" />
 		<requires nodeId="6013" />
+		<requires nodeId="30525" />
 	</node>
 	<node id="6012" name="Meditation" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2625.8" y="280.8" effect="MP_REGEN_PCT:0.8">
 		<requires nodeId="6009" />
@@ -113,6 +115,7 @@
 		<requires nodeId="6020" />
 		<requires nodeId="6022" />
 		<requires nodeId="6024" />
+		<requires nodeId="30404" />
 	</node>
 	<node id="6022" name="Sanctity" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2072.9" y="277.8" effect="MDEF_PCT:0.6">
 		<requires nodeId="6019" />
@@ -154,6 +157,7 @@
 		<requires nodeId="6027" />
 		<requires nodeId="6029" />
 		<requires nodeId="6030" />
+		<requires nodeId="30503" />
 	</node>
 	<node id="6029" name="Litany" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2408.4" y="690.1" effect="CAST_SPD_PCT:0.5">
 		<requires nodeId="6025" />
@@ -451,6 +455,7 @@
 	<node id="25102" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2560.0" y="1045.7" effect="MAXMP:6">
 		<requires nodeId="25101" />
 		<requires nodeId="25103" />
+		<requires nodeId="30501" />
 	</node>
 	<node id="25103" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2723.1" y="1311.1" effect="MAXMP:6">
 		<requires nodeId="1016" />

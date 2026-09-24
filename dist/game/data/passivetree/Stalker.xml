@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Stalker: 28 nodes, hybrid of Shadowblade and Deadeye filling the gap between their arms. x/y are authoritative layout coords. -->
+<list>
+	<node id="30201" name="Confluence" sector="Stalker" type="SMALL" tier="0" cost="1" x="517.5" y="2225.0" effect="EVASION_ADD:0.3;ACCURACY_ADD:0.3">
+		<requires nodeId="22102" />
+		<requires nodeId="30202" />
+	</node>
+	<node id="30202" name="Confluence" sector="Stalker" type="SMALL" tier="0" cost="1" x="415.8" y="2273.4" effect="EVASION_ADD:0.3;ACCURACY_ADD:0.3">
+		<requires nodeId="30201" />
+		<requires nodeId="30203" />
+		<requires nodeId="30204" />
+		<requires nodeId="30205" />
+	</node>
+	<node id="30203" name="Shade Crossing" sector="Stalker" type="SMALL" tier="0" cost="1" x="478.1" y="2443.2" effect="EVASION_ADD:0.3;MAXHP:6">
+		<requires nodeId="3028" />
+		<requires nodeId="30202" />
+		<requires nodeId="30206" />
+	</node>
+	<node id="30204" name="Tracker's Crossing" sector="Stalker" type="SMALL" tier="0" cost="1" x="302.9" y="2130.6" effect="ACCURACY_ADD:0.3;MAXHP:6">
+		<requires nodeId="4021" />
+		<requires nodeId="30202" />
+		<requires nodeId="30207" />
+	</node>
+	<node id="30205" name="Scavenger" sector="Stalker" type="SMALL" tier="0" cost="1" x="333.9" y="2330.7" effect="DROP_RATE_PCT:1;ADENA_RATE_PCT:1">
+		<requires nodeId="30202" />
+		<requires nodeId="30206" />
+		<requires nodeId="30207" />
+		<requires nodeId="30212" />
+	</node>
+	<node id="30206" name="Shade Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="356.1" y="2490.8" effect="EVASION_ADD:0.3;MOVE_SPEED_ADD:0.5">
+		<requires nodeId="30203" />
+		<requires nodeId="30205" />
+		<requires nodeId="30208" />
+		<requires nodeId="30210" />
+	</node>
+	<node id="30207" name="Trackcraft" sector="Stalker" type="SMALL" tier="0" cost="1" x="202.7" y="2222.3" effect="ACCURACY_ADD:0.3;CRIT_RATE_ADD:3">
+		<requires nodeId="30204" />
+		<requires nodeId="30205" />
+		<requires nodeId="30209" />
+		<requires nodeId="30211" />
+	</node>
+	<node id="30208" name="Shade Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="378.5" y="2656.1" effect="EVASION_ADD:0.3;MOVE_SPEED_ADD:0.5">
+		<requires nodeId="30206" />
+		<requires nodeId="30210" />
+		<requires nodeId="30213" />
+		<requires nodeId="30215" />
+	</node>
+	<node id="30209" name="Trackcraft" sector="Stalker" type="SMALL" tier="0" cost="1" x="66.3" y="2123.1" effect="ACCURACY_ADD:0.3;CRIT_RATE_ADD:3">
+		<requires nodeId="30207" />
+		<requires nodeId="30211" />
+		<requires nodeId="30214" />
+		<requires nodeId="30216" />
+	</node>
+	<node id="30210" name="Shade Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="278.3" y="2570.0" effect="EVASION_ADD:0.3;MOVE_SPEED_ADD:0.5">
+		<requires nodeId="30206" />
+		<requires nodeId="30208" />
+		<requires nodeId="30212" />
+		<requires nodeId="30215" />
+	</node>
+	<node id="30211" name="Trackcraft" sector="Stalker" type="SMALL" tier="0" cost="1" x="113.5" y="2288.7" effect="ACCURACY_ADD:0.3;CRIT_RATE_ADD:3">
+		<requires nodeId="30207" />
+		<requires nodeId="30209" />
+		<requires nodeId="30212" />
+		<requires nodeId="30216" />
+	</node>
+	<node id="30212" name="Scavenger" sector="Stalker" type="SMALL" tier="0" cost="1" x="189.0" y="2423.9" effect="DROP_RATE_PCT:1;ADENA_RATE_PCT:1">
+		<requires nodeId="30205" />
+		<requires nodeId="30210" />
+		<requires nodeId="30211" />
+		<requires nodeId="30217" />
+		<requires nodeId="30218" />
+	</node>
+	<node id="30213" name="Shade Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="352.4" y="2782.2" effect="EVASION_ADD:0.3;MOVE_SPEED_ADD:0.5">
+		<requires nodeId="30208" />
+		<requires nodeId="30215" />
+		<requires nodeId="30221" />
+		<requires nodeId="30225" />
+	</node>
+	<node id="30214" name="Trackcraft" sector="Stalker" type="SMALL" tier="0" cost="1" x="-37.9" y="2115.1" effect="ACCURACY_ADD:0.3;CRIT_RATE_ADD:3">
+		<requires nodeId="30209" />
+		<requires nodeId="30216" />
+		<requires nodeId="30223" />
+		<requires nodeId="30226" />
+	</node>
+	<node id="30215" name="Phantom Footwork" sector="Stalker" type="NOTABLE" tier="0" cost="2" x="282.1" y="2682.2" effect="SKILL_DODGE_PCT:3;EVASION_ADD:2;MOVE_SPEED_ADD:2" description="Shade Step mastery. Sidestep physical skills entirely.">
+		<requires nodeId="30208" />
+		<requires nodeId="30210" />
+		<requires nodeId="30213" />
+	</node>
+	<node id="30216" name="Marked Prey" sector="Stalker" type="NOTABLE" tier="0" cost="2" x="15.3" y="2215.5" effect="ACCURACY_ADD:3;CRIT_DMG_PCT:4;PVE_BOW_DMG_PCT:3" description="Trackcraft mastery. Nothing escapes your sights.">
+		<requires nodeId="30209" />
+		<requires nodeId="30211" />
+		<requires nodeId="30214" />
+	</node>
+	<node id="30217" name="Keen Senses" sector="Stalker" type="SMALL" tier="0" cost="1" x="184.6" y="2607.6" effect="SPOIL_RATE_PCT:1;EVASION_ADD:0.2">
+		<requires nodeId="30212" />
+		<requires nodeId="30219" />
+		<requires nodeId="30220" />
+		<requires nodeId="30225" />
+	</node>
+	<node id="30218" name="Keen Senses" sector="Stalker" type="SMALL" tier="0" cost="1" x="25.3" y="2341.5" effect="SPOIL_RATE_PCT:1;EVASION_ADD:0.2">
+		<requires nodeId="30212" />
+		<requires nodeId="30219" />
+		<requires nodeId="30220" />
+		<requires nodeId="30226" />
+	</node>
+	<node id="30219" name="Treasure Hunter" sector="Stalker" type="NOTABLE" tier="0" cost="2" x="96.0" y="2460.2" effect="DROP_RATE_PCT:5;ADENA_RATE_PCT:5;SPOIL_RATE_PCT:5" description="Keen Senses mastery. Every kill is worth a little more.">
+		<requires nodeId="30217" />
+		<requires nodeId="30218" />
+		<requires nodeId="30220" />
+	</node>
+	<node id="30220" name="Keen Senses" sector="Stalker" type="SMALL" tier="0" cost="1" x="22.3" y="2525.8" effect="SPOIL_RATE_PCT:1;EVASION_ADD:0.2">
+		<requires nodeId="30217" />
+		<requires nodeId="30218" />
+		<requires nodeId="30219" />
+		<requires nodeId="30227" />
+	</node>
+	<node id="30221" name="Approach" sector="Stalker" type="SMALL" tier="0" cost="1" x="178.2" y="2743.5" effect="MAXHP:6">
+		<requires nodeId="30213" />
+		<requires nodeId="30222" />
+	</node>
+	<node id="30222" name="Ghost in the Grass" sector="Stalker" type="KEYSTONE" tier="0" cost="3" x="130.1" y="2858.4" effect="SKILL_DODGE_PCT:8;EVASION_ADD:2;PDEF_PCT:-12" description="Dodge physical skills outright - but when something does connect, it hurts.">
+		<requires nodeId="30221" />
+	</node>
+	<node id="30223" name="Approach" sector="Stalker" type="SMALL" tier="0" cost="1" x="-97.8" y="2281.5" effect="MAXHP:6">
+		<requires nodeId="30214" />
+		<requires nodeId="30224" />
+	</node>
+	<node id="30224" name="Fleetfoot" sector="Stalker" type="NOTABLE" tier="0" cost="2" x="-217.9" y="2262.8" effect="MOVE_SPEED_ADD:4;SKILL_DODGE_PCT:2" description="Always one step ahead.">
+		<requires nodeId="30223" />
+	</node>
+	<node id="30225" name="Shade Path" sector="Stalker" type="SMALL" tier="0" cost="1" x="256.1" y="2804.7" effect="EVASION_ADD:0.3;CRIT_DMG_PCT:0.5">
+		<requires nodeId="3012" />
+		<requires nodeId="30213" />
+		<requires nodeId="30217" />
+	</node>
+	<node id="30226" name="Tracker's Path" sector="Stalker" type="SMALL" tier="0" cost="1" x="-109.7" y="2183.1" effect="ACCURACY_ADD:0.3;PATK_PCT:0.3">
+		<requires nodeId="4006" />
+		<requires nodeId="30214" />
+		<requires nodeId="30218" />
+	</node>
+	<node id="30227" name="Approach" sector="Stalker" type="SMALL" tier="0" cost="1" x="-77.6" y="2528.1" effect="MAXHP:6">
+		<requires nodeId="30220" />
+		<requires nodeId="30228" />
+	</node>
+	<node id="30228" name="Scavenger's Creed" sector="Stalker" type="KEYSTONE" tier="0" cost="3" x="-122.1" y="2617.0" effect="DROP_RATE_PCT:12;SPOIL_RATE_PCT:12;ADENA_RATE_PCT:12;PATK_PCT:-8;MATK_PCT:-8" description="Richer hunts at the cost of weaker hits.">
+		<requires nodeId="30227" />
+	</node>
+</list>
