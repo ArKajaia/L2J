@@ -54,6 +54,7 @@ public class ChampionMonstersConfig
 	public static float CHAMPION_SPD_ATK;
 	public static int CHAMPION_REWARD_LOWER_LEVEL_ITEM_CHANCE;
 	public static int CHAMPION_REWARD_HIGHER_LEVEL_ITEM_CHANCE;
+	public static int CHAMPION_REWARD_MAX_LEVEL_DIFFERENCE;
 	public static List<ItemHolder> CHAMPION_REWARD_ITEMS = new ArrayList<>();
 	public static boolean CHAMPION_ENABLE_VITALITY;
 	public static boolean CHAMPION_ENABLE_IN_INSTANCES;
@@ -98,6 +99,7 @@ public class ChampionMonstersConfig
 		CHAMPION_SPD_ATK = config.getFloat("ChampionSpdAtk", 1);
 		CHAMPION_REWARD_LOWER_LEVEL_ITEM_CHANCE = config.getInt("ChampionRewardLowerLvlItemChance", 0);
 		CHAMPION_REWARD_HIGHER_LEVEL_ITEM_CHANCE = config.getInt("ChampionRewardHigherLvlItemChance", 0);
+		CHAMPION_REWARD_MAX_LEVEL_DIFFERENCE = config.getInt("ChampionRewardMaxLevelDifference", 12);
 		CHAMPION_T1_CHANCE = config.getDouble("ChampionTier1Chance", 5.0);
 		CHAMPION_T1_HP = config.getDouble("ChampionTier1HpMultiplier", 3.0);
 		CHAMPION_T1_ATK = config.getDouble("ChampionTier1AtkMultiplier", 1.5);

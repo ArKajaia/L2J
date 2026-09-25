@@ -232,6 +232,11 @@ public class LuckyLootManager
 			return;
 		}
 
+		if ((LuckyLootConfig.SEALED_CACHE_MAX_LEVEL_DIFFERENCE >= 0) && ((killer.getLevel() - victim.getLevel()) > LuckyLootConfig.SEALED_CACHE_MAX_LEVEL_DIFFERENCE))
+		{
+			return;
+		}
+
 		final double chance = LuckyLootConfig.SEALED_CACHE_CHANCE * getLuckChanceMultiplier(killer, LuckyLootConfig.SEALED_CACHE_CHANCE_BONUS_PER_STACK);
 		if ((Rnd.nextDouble() * 100) >= chance)
 		{

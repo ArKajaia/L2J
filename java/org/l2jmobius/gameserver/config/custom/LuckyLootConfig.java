@@ -56,6 +56,7 @@ public class LuckyLootConfig
 	public static double SEALED_CACHE_CHANCE;
 	public static double SEALED_CACHE_CHANCE_BONUS_PER_STACK;
 	public static int SEALED_CACHE_MIN_LEVEL;
+	public static int SEALED_CACHE_MAX_LEVEL_DIFFERENCE;
 	public static int SEALED_CACHE_COMMON_ITEM_ID;
 	public static int SEALED_CACHE_RARE_ITEM_ID;
 	public static int SEALED_CACHE_EPIC_ITEM_ID;
@@ -89,6 +90,7 @@ public class LuckyLootConfig
 		SEALED_CACHE_CHANCE = config.getDouble("SealedCacheChance", 0.5);
 		SEALED_CACHE_CHANCE_BONUS_PER_STACK = config.getDouble("SealedCacheChanceBonusPerStack", 2.0);
 		SEALED_CACHE_MIN_LEVEL = config.getInt("SealedCacheMinLevel", 20);
+		SEALED_CACHE_MAX_LEVEL_DIFFERENCE = config.getInt("SealedCacheMaxLevelDifference", 8);
 		SEALED_CACHE_COMMON_ITEM_ID = config.getInt("SealedCacheCommonItemId", 6492);
 		SEALED_CACHE_RARE_ITEM_ID = config.getInt("SealedCacheRareItemId", 6499);
 		SEALED_CACHE_EPIC_ITEM_ID = config.getInt("SealedCacheEpicItemId", 6509);

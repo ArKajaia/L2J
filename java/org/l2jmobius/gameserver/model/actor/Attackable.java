@@ -1145,7 +1145,7 @@ public class Attackable extends Npc
 			org.l2jmobius.gameserver.managers.LuckyLootManager.getInstance().onJackpotPaid(this, jackpotOwner);
 		}
 		// 2. Custom Champion Buff Book drop
-		if ((this.getChampionTier() > 0) && org.l2jmobius.gameserver.config.custom.CustomBuffConfig.ENABLE)
+		if ((this.getChampionTier() > 0) && org.l2jmobius.gameserver.config.custom.CustomBuffConfig.ENABLE && hasChampionBonusRewards(this, mainDamageDealer))
 		{
 			if (org.l2jmobius.commons.util.Rnd.get(100d) < org.l2jmobius.gameserver.config.custom.CustomBuffConfig.DROP_CHANCE)
 			{
@@ -1252,6 +1252,22 @@ public class Attackable extends Npc
 			
 			deathItems.clear();
 		}
+	}
+	
+	/**
+	 * Champions stop paying their bonus gold (ChampionRewardItems, the champion adena chance/amount bonus) and medals (the champion buff book) once the killer outlevels them by more than {@link ChampionMonstersConfig#CHAMPION_REWARD_MAX_LEVEL_DIFFERENCE}.
+	 * @param victim the monster being looted
+	 * @param killer the creature that owns the drops
+	 * @return {@code true} if {@code victim} is a champion and {@code killer} is still close enough in level to get its bonus gold and medals
+	 */
+	public static boolean hasChampionBonusRewards(Creature victim, Creature killer)
+	{
+		if ((victim == null) || (victim.getChampionTier() <= 0))
+		{
+			return false;
+		}
+		
+		return (killer == null) || (ChampionMonstersConfig.CHAMPION_REWARD_MAX_LEVEL_DIFFERENCE < 0) || ((killer.getLevel() - victim.getLevel()) <= ChampionMonstersConfig.CHAMPION_REWARD_MAX_LEVEL_DIFFERENCE);
 	}
 	
 	/**
