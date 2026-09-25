@@ -27,6 +27,7 @@
 		<requires nodeId="5004" />
 		<requires nodeId="5006" />
 		<requires nodeId="5008" />
+		<requires nodeId="30326" />
 	</node>
 	<node id="5006" name="Spellcraft" sector="Arcanist" type="SMALL" tier="0" cost="1" x="536.4" y="159.4" effect="MATK_PCT:0.6">
 		<requires nodeId="5004" />
@@ -60,6 +61,7 @@
 		<requires nodeId="5010" />
 		<requires nodeId="5012" />
 		<requires nodeId="5013" />
+		<requires nodeId="30425" />
 	</node>
 	<node id="5012" name="Mana Pool" sector="Arcanist" type="SMALL" tier="0" cost="1" x="964.8" y="63.3" effect="MAXMP:12">
 		<requires nodeId="5009" />
@@ -113,6 +115,7 @@
 		<requires nodeId="5020" />
 		<requires nodeId="5022" />
 		<requires nodeId="5024" />
+		<requires nodeId="30304" />
 	</node>
 	<node id="5022" name="Channelling" sector="Arcanist" type="SMALL" tier="0" cost="1" x="704.0" y="548.1" effect="CAST_SPD_PCT:0.5">
 		<requires nodeId="5019" />
@@ -154,6 +157,7 @@
 		<requires nodeId="5027" />
 		<requires nodeId="5029" />
 		<requires nodeId="5030" />
+		<requires nodeId="30403" />
 	</node>
 	<node id="5029" name="Arcane Insight" sector="Arcanist" type="SMALL" tier="0" cost="1" x="1207.8" y="435.1" effect="MCRIT_RATE_ADD:4">
 		<requires nodeId="5025" />
@@ -451,6 +455,7 @@
 	<node id="24102" name="Pathway" sector="Arcanist" type="SMALL" tier="0" cost="1" x="1600.0" y="491.5" effect="MATK_PCT:0.2">
 		<requires nodeId="24101" />
 		<requires nodeId="24103" />
+		<requires nodeId="30401" />
 	</node>
 	<node id="24103" name="Pathway" sector="Arcanist" type="SMALL" tier="0" cost="1" x="1919.3" y="483.3" effect="MATK_PCT:0.2">
 		<requires nodeId="6016" />

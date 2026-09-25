@@ -83,16 +83,43 @@ public class PassiveTreeManager
 		Map.entry("MCRIT_RATE_ADD", Stat.MCRITICAL_RATE), // calcMCrit: /1000 scale
 		Map.entry("EVASION_ADD", Stat.EVASION_RATE), // calcHitMiss: 1 pt = 2%
 		Map.entry("ACCURACY_ADD", Stat.ACCURACY_COMBAT), // calcHitMiss: 1 pt = 2%
-		Map.entry("MOVE_SPEED_ADD", Stat.MOVE_SPEED) // flat onto ~120 base
-	);
-	
+		Map.entry("MOVE_SPEED_ADD", Stat.MOVE_SPEED), // flat onto ~120 base
+		Map.entry("LIFESTEAL_PCT", Stat.ABSORB_DAMAGE_PERCENT), // onHitTimer: % of melee auto-attack damage healed (never bows), init 0
+		Map.entry("MANA_LEECH_PCT", Stat.ABSORB_MANA_DAMAGE_PERCENT), // onHitTimer: same rules as lifesteal, restores MP
+		Map.entry("SKILL_DODGE_PCT", Stat.P_SKILL_EVASION), // calcPhysicalSkillEvasion: straight % chance, init 0
+		Map.entry("MAGIC_REFLECT_PCT", Stat.REFLECT_SKILL_MAGIC), // calcSkillReflect: straight % chance, init 0
+		Map.entry("SKILL_REFLECT_PCT", Stat.REFLECT_SKILL_PHYSIC), // calcSkillReflect: straight % chance, init 0
+		// PlayerStat.getBonus*Multiplier(): 1 + calcStat(stat, 0) / 100 - init 0, so these MUST be adds (a multiplier on 0 is a silent no-op).
+		Map.entry("DROP_RATE_PCT", Stat.BONUS_DROP_RATE), Map.entry("SPOIL_RATE_PCT", Stat.BONUS_SPOIL_RATE), Map.entry("ADENA_RATE_PCT", Stat.BONUS_DROP_ADENA));
+
 	/**
 	 * Stats that are MULTIPLIERS - the value is a percent, applied as (1 + pct/100). Adding to these instead of multiplying is what caused the 200 -> 12,000 crit damage blowout.
 	 */
 	private static final Map<String, Stat> FUNC_MUL_EFFECTS = Map.ofEntries(Map.entry("CRIT_DMG_PCT", Stat.CRITICAL_DAMAGE), // calcPhysDam: init 1, pure multiplier
 		Map.entry("HP_REGEN_PCT", Stat.REGENERATE_HP_RATE), // calcHpRegen: init = base regen
 		Map.entry("MP_REGEN_PCT", Stat.REGENERATE_MP_RATE), // calcMpRegen: init = base regen
-		Map.entry("DROP_RATE_PCT", Stat.BONUS_DROP_RATE), Map.entry("SPOIL_RATE_PCT", Stat.BONUS_SPOIL_RATE), Map.entry("EXP_RATE_PCT", Stat.BONUS_EXP));
+		Map.entry("EXP_RATE_PCT", Stat.BONUS_EXP), // NOTE: BONUS_EXP currently has no consumer anywhere in core - this key does nothing yet.
+		Map.entry("PVE_PDMG_PCT", Stat.PVE_PHYSICAL_DMG), // calcPhysDam vs monsters (melee autos + physical skills), init 1
+		Map.entry("PVE_MDMG_PCT", Stat.PVE_MAGICAL_DMG), // calcMagicDam vs monsters, init 1
+		Map.entry("PVE_BOW_DMG_PCT", Stat.PVE_BOW_DMG), // calcPhysDam vs monsters, bow/crossbow auto-attacks, init 1
+		Map.entry("PHYS_SKILL_POWER_PCT", Stat.PHYSICAL_SKILL_POWER), // calcPhysDam: init = skill damage
+		Map.entry("MCRIT_DMG_PCT", Stat.MAGIC_CRIT_DMG), // calcMagicDam: init 1
+		Map.entry("BLOW_RATE_PCT", Stat.BLOW_RATE), // calcBlowSuccess: init = base blow rate
+		Map.entry("HEALING_RECEIVED_PCT", Stat.HEAL_EFFECT)); // Heal effect: init = heal amount, read on the target
+
+	/**
+	 * Multipliers where LOWER is better (cooldowns, MP cost, damage taken, interrupt chance). The effect value is written as a positive "reduction" percent so the UIs colour it green, and applied as (1 - pct/100). A negative value (keystone drawback) therefore becomes a penalty multiplier above 1.
+	 */
+	private static final Map<String, Stat> FUNC_MUL_REDUCE_EFFECTS = Map.ofEntries(Map.entry("SKILL_CDR_PCT", Stat.P_REUSE), // Creature: physical skill reuse delay, init 1
+		Map.entry("SPELL_CDR_PCT", Stat.MAGIC_REUSE_RATE), // Creature: magic skill reuse delay, init 1
+		Map.entry("SPELL_MP_COST_RED_PCT", Stat.MAGICAL_MP_CONSUME_RATE), // CreatureStat.getMpConsume: init = MP cost
+		Map.entry("CRIT_DMG_TAKEN_RED_PCT", Stat.DEFENCE_CRITICAL_DAMAGE), // calcPhysDam/calcBlowDamage: read on the target, init 1
+		Map.entry("INTERRUPT_RES_PCT", Stat.ATTACK_CANCEL)); // calcAtkBreak: init = break chance
+
+	/**
+	 * Additive stats where LOWER is better, written as a positive "resistance" and applied as a negative add.
+	 */
+	private static final Map<String, Stat> FUNC_SUB_EFFECTS = Map.ofEntries(Map.entry("DEBUFF_RES_PCT", Stat.DEBUFF_VULN)); // calcEffectSuccess: 1 + calcStat(DEBUFF_VULN, 1) / 100
 	
 	private String key(Player player)
 	{
@@ -371,6 +398,24 @@ public class PassiveTreeManager
 			if (pct != 0)
 			{
 				player.addStatFunc(new FuncMul(entry.getValue(), 0x30, PASSIVE_TREE_FUNC_OWNER, 1.0 + (pct / 100.0), null));
+			}
+		}
+
+		for (Map.Entry<String, Stat> entry : FUNC_MUL_REDUCE_EFFECTS.entrySet())
+		{
+			final double pct = player.getPassiveStatBonus().get(entry.getKey());
+			if (pct != 0)
+			{
+				player.addStatFunc(new FuncMul(entry.getValue(), 0x30, PASSIVE_TREE_FUNC_OWNER, 1.0 - (pct / 100.0), null));
+			}
+		}
+
+		for (Map.Entry<String, Stat> entry : FUNC_SUB_EFFECTS.entrySet())
+		{
+			final double bonus = player.getPassiveStatBonus().get(entry.getKey());
+			if (bonus != 0)
+			{
+				player.addStatFunc(new FuncAdd(entry.getValue(), 0x30, PASSIVE_TREE_FUNC_OWNER, -bonus, null));
 			}
 		}
 	}

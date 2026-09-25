@@ -5,19 +5,27 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.l2jmobius.gameserver.data.xml.MapRegionData;
 import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
+import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.instance.GrandBoss;
+import org.l2jmobius.gameserver.model.actor.instance.Monster;
+import org.l2jmobius.gameserver.model.actor.instance.RaidBoss;
 
 /**
- * ".savehotzone &lt;average level&gt; &lt;description&gt;" - lets any player (no admin access needed) drop their current coordinates into a shared log file as a ready-to-paste {@code <zone type="HotZone">} block, in the exact format used by dist/game/data/zones/custom_hotzones.xml. Meant
- * for scouting candidate hotzone spots while playing normally, instead of alt-tabbing to note coordinates down by hand - the zone still needs a real, unused id assigned to it (left as a placeholder here) and to be pasted into the actual zone file by an admin.
+ * ".savehotzone [description]" - lets any player (no admin access needed) drop their current coordinates into a shared log file as a ready-to-paste {@code <zone type="HotZone">} block, in the exact format used by dist/game/data/zones/custom_hotzones.xml. Meant for scouting candidate hotzone
+ * spots while playing normally, instead of alt-tabbing to note coordinates and monster levels down by hand - the zone still needs a real, unused id assigned to it (left as a placeholder here) and to be pasted into the actual zone file by an admin.
  * <p>
- * Usage: {@code .savehotzone 45 Cruma Marshlands} - the average level MUST come first (a single
- * number), everything after it is taken as the description, so a multi-word location name works
- * without extra quoting.
+ * Both the location name and the average level are fetched automatically:
+ * <ul>
+ * <li>Name: the nearest town/region name from {@link MapRegionData} (there's no server-side source for the flavour names used in the existing hotzone list, e.g. "Iris Lake" - a plain description typed as this command's argument overrides it when you want something nicer).
+ * <li>Average level: every {@link Monster} within {@link #SCAN_RADIUS} units, raid/grand bosses excluded so one boss standing nearby can't skew a farming-ground reading.
+ * </ul>
  */
 public class SaveHotzoneVoiced implements IVoicedCommandHandler
 {
@@ -34,7 +42,7 @@ public class SaveHotzoneVoiced implements IVoicedCommandHandler
 		LOG_FILE.getParentFile().mkdirs();
 	}
 
-	private static final String USAGE = "Usage: .savehotzone <average level> <description> (e.g. .savehotzone 45 Cruma Marshlands)";
+	private static final int SCAN_RADIUS = 3000;
 
 	@Override
 	public boolean useVoicedCommand(String command, Player player, String params)
@@ -44,36 +52,27 @@ public class SaveHotzoneVoiced implements IVoicedCommandHandler
 			return false;
 		}
 
-		if ((params == null) || params.isBlank())
-		{
-			player.sendMessage(USAGE);
-			return false;
-		}
+		final String override = (params == null) ? "" : params.trim();
+		final String description = !override.isEmpty() ? override : MapRegionData.getInstance().getClosestTownName(player);
 
-		final String trimmed = params.trim();
-		final int firstSpace = trimmed.indexOf(' ');
-		if (firstSpace < 0)
-		{
-			player.sendMessage(USAGE);
-			return false;
-		}
+		final List<Monster> nearby = World.getInstance().getVisibleObjectsInRange(player, Monster.class, SCAN_RADIUS, m -> !(m instanceof RaidBoss) && !(m instanceof GrandBoss) && !m.isDead());
 
 		final int avgLevel;
-		try
+		final String levelNote;
+		if (nearby.isEmpty())
 		{
-			avgLevel = Integer.parseInt(trimmed.substring(0, firstSpace));
+			avgLevel = 0;
+			levelNote = "no monsters found within " + SCAN_RADIUS + " - check manually";
 		}
-		catch (NumberFormatException e)
+		else
 		{
-			player.sendMessage("The average level must be a plain number, and must come first. " + USAGE);
-			return false;
-		}
-
-		final String description = trimmed.substring(firstSpace + 1).trim();
-		if (description.isEmpty())
-		{
-			player.sendMessage(USAGE);
-			return false;
+			int sum = 0;
+			for (Monster m : nearby)
+			{
+				sum += m.getLevel();
+			}
+			avgLevel = Math.round((float) sum / nearby.size());
+			levelNote = nearby.size() + " monster(s) scanned within " + SCAN_RADIUS;
 		}
 
 		// Never let the description close the XML comment early or break the name attribute.
@@ -84,7 +83,7 @@ public class SaveHotzoneVoiced implements IVoicedCommandHandler
 
 		final StringBuilder sb = new StringBuilder();
 		sb.append(System.lineSeparator());
-		sb.append("<!-- ").append(safeComment).append(" | Avg Level: ").append(avgLevel).append(" | Marked by ").append(player.getName()).append(" at ").append(timestamp).append(" -->").append(System.lineSeparator());
+		sb.append("<!-- ").append(safeComment).append(" | Avg Level: ").append(avgLevel).append(" (").append(levelNote).append(") | Marked by ").append(player.getName()).append(" at ").append(timestamp).append(" -->").append(System.lineSeparator());
 		sb.append("<zone id=\"ASSIGN_ID\" name=\"").append(safeName).append("\" type=\"HotZone\" shape=\"Cylinder\" minZ=\"-10000\" maxZ=\"10000\" rad=\"5000\">").append(System.lineSeparator());
 		sb.append("\t<node X=\"").append(player.getX()).append("\" Y=\"").append(player.getY()).append("\" /><!--Z=").append(player.getZ()).append("-->").append(System.lineSeparator());
 		sb.append("</zone>").append(System.lineSeparator());
@@ -100,7 +99,7 @@ public class SaveHotzoneVoiced implements IVoicedCommandHandler
 			return false;
 		}
 
-		player.sendMessage("Saved hotzone suggestion \"" + description + "\" (avg level " + avgLevel + ") to " + LOG_FILE.getPath() + ".");
+		player.sendMessage("Saved hotzone suggestion \"" + description + "\" (avg level " + avgLevel + ", " + levelNote + ") to " + LOG_FILE.getPath() + ".");
 		return true;
 	}
 

@@ -19,20 +19,29 @@ public class PassiveTreeLinkVoiced implements IVoicedCommandHandler
 	};
 	
 	// Point this at wherever your server is reachable from.
-	private static final String WEB_BASE_URL = "http://10.8.0.6:8788/passive-tree.html";
-	
+	public static final String WEB_BASE_URL = "http://10.8.0.6:8788/passive-tree.html";
+
 	@Override
 	public boolean useVoicedCommand(String command, Player player, String params)
 	{
+		sendPassiveTreeLink(player);
+		return true;
+	}
+
+	/**
+	 * Generates a fresh 15-minute token and hands the player a direct, clickable link to the visual passive tree planner. Shared by both ".treelink" and the Community Board passives page's "Open Web Planner" button, so there's exactly one place that builds this link.
+	 * @param player the player to send the link to
+	 */
+	public static void sendPassiveTreeLink(Player player)
+	{
 		final String token = PassiveTreeApiServer.getInstance().generateToken(player.getObjectId(), player.getClassIndex());
 		final String url = WEB_BASE_URL + "?token=" + token;
-		
+
 		player.sendMessage("Your passive tree link (click to open, valid 15 minutes):");
 		player.sendMessage(url);
 
 		ExLinkOpen lo = new ExLinkOpen(url);
 		player.sendPacket(lo);
-		return true;
 	}
 	
 	@Override

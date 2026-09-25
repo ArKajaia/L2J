@@ -27,6 +27,7 @@
 		<requires nodeId="2004" />
 		<requires nodeId="2006" />
 		<requires nodeId="2008" />
+		<requires nodeId="30026" />
 	</node>
 	<node id="2006" name="Brute Force" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2666.8" y="3031.8" effect="PATK_PCT:0.6">
 		<requires nodeId="2004" />
@@ -60,6 +61,7 @@
 		<requires nodeId="2010" />
 		<requires nodeId="2012" />
 		<requires nodeId="2013" />
+		<requires nodeId="30125" />
 	</node>
 	<node id="2012" name="Battle Rhythm" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2229.8" y="3135.0" effect="ATK_SPD_PCT:0.5">
 		<requires nodeId="2009" />
@@ -113,6 +115,7 @@
 		<requires nodeId="2020" />
 		<requires nodeId="2022" />
 		<requires nodeId="2024" />
+		<requires nodeId="30004" />
 	</node>
 	<node id="2022" name="Savagery" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2508.7" y="2665.9" effect="CRIT_DMG_PCT:0.8">
 		<requires nodeId="2019" />
@@ -148,6 +151,7 @@
 		<requires nodeId="2026" />
 		<requires nodeId="2028" />
 		<requires nodeId="2030" />
+		<requires nodeId="30103" />
 	</node>
 	<node id="2028" name="Conditioning" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2050.2" y="2844.7" effect="MAXHP:12">
 		<requires nodeId="2025" />
@@ -451,6 +455,7 @@
 	<node id="21102" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1600.0" y="2708.5" effect="PATK_PCT:0.2">
 		<requires nodeId="21101" />
 		<requires nodeId="21103" />
+		<requires nodeId="30101" />
 	</node>
 	<node id="21103" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1302.5" y="2746.4" effect="PATK_PCT:0.2">
 		<requires nodeId="3016" />

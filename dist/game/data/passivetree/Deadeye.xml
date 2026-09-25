@@ -33,6 +33,7 @@
 		<requires nodeId="4005" />
 		<requires nodeId="4007" />
 		<requires nodeId="4008" />
+		<requires nodeId="30226" />
 	</node>
 	<node id="4007" name="Aim" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-256.8" y="1729.7" effect="ACCURACY_ADD:0.4">
 		<requires nodeId="4004" />
@@ -65,6 +66,7 @@
 		<requires nodeId="4009" />
 		<requires nodeId="4011" />
 		<requires nodeId="4013" />
+		<requires nodeId="30325" />
 	</node>
 	<node id="4013" name="Longshot" sector="Deadeye" type="NOTABLE" tier="0" cost="2" x="-207.8" y="1297.1" effect="PATK_PCT:5;DEX:1" description="Draw Strength mastery.">
 		<requires nodeId="4010" />
@@ -113,6 +115,7 @@
 		<requires nodeId="4020" />
 		<requires nodeId="4022" />
 		<requires nodeId="4024" />
+		<requires nodeId="30204" />
 	</node>
 	<node id="4022" name="Ballistics" sector="Deadeye" type="SMALL" tier="0" cost="1" x="228.9" y="1854.5" effect="CRIT_DMG_PCT:0.8">
 		<requires nodeId="4019" />
@@ -154,6 +157,7 @@
 		<requires nodeId="4027" />
 		<requires nodeId="4029" />
 		<requires nodeId="4030" />
+		<requires nodeId="30303" />
 	</node>
 	<node id="4029" name="Skirmish" sector="Deadeye" type="SMALL" tier="0" cost="1" x="392.0" y="1360.9" effect="EVASION_ADD:0.4">
 		<requires nodeId="4025" />
@@ -451,6 +455,7 @@
 	<node id="23102" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="640.0" y="1045.7" effect="ACCURACY_ADD:0.2">
 		<requires nodeId="23101" />
 		<requires nodeId="23103" />
+		<requires nodeId="30301" />
 	</node>
 	<node id="23103" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="778.9" y="753.0" effect="ACCURACY_ADD:0.2">
 		<requires nodeId="5016" />

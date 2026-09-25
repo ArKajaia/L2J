@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Warlord: 28 nodes, hybrid of Vanguard and Juggernaut filling the gap between their arms. x/y are authoritative layout coords. -->
+<list>
+	<node id="30001" name="Confluence" sector="Warlord" type="SMALL" tier="0" cost="1" x="2682.5" y="2225.0" effect="MAXHP:8;PATK_PCT:0.3">
+		<requires nodeId="20102" />
+		<requires nodeId="30002" />
+	</node>
+	<node id="30002" name="Confluence" sector="Warlord" type="SMALL" tier="0" cost="1" x="2778.1" y="2282.8" effect="MAXHP:8;PATK_PCT:0.3">
+		<requires nodeId="30001" />
+		<requires nodeId="30003" />
+		<requires nodeId="30004" />
+		<requires nodeId="30005" />
+	</node>
+	<node id="30003" name="Shieldwall Crossing" sector="Warlord" type="SMALL" tier="0" cost="1" x="2893.4" y="2142.5" effect="PDEF_PCT:0.4;MAXHP:6">
+		<requires nodeId="1028" />
+		<requires nodeId="30002" />
+		<requires nodeId="30006" />
+	</node>
+	<node id="30004" name="Warpath Crossing" sector="Warlord" type="SMALL" tier="0" cost="1" x="2713.4" y="2452.2" effect="PATK_PCT:0.4;MAXHP:6">
+		<requires nodeId="2021" />
+		<requires nodeId="30002" />
+		<requires nodeId="30007" />
+	</node>
+	<node id="30005" name="Bloodletting" sector="Warlord" type="SMALL" tier="0" cost="1" x="2865.9" y="2330.7" effect="LIFESTEAL_PCT:0.3;PATK_PCT:0.2">
+		<requires nodeId="30002" />
+		<requires nodeId="30006" />
+		<requires nodeId="30007" />
+		<requires nodeId="30012" />
+	</node>
+	<node id="30006" name="Battle-Hardened" sector="Warlord" type="SMALL" tier="0" cost="1" x="2997.7" y="2224.1" effect="PDEF_PCT:0.4;PATK_PCT:0.3">
+		<requires nodeId="30003" />
+		<requires nodeId="30005" />
+		<requires nodeId="30008" />
+		<requires nodeId="30010" />
+	</node>
+	<node id="30007" name="Warborn" sector="Warlord" type="SMALL" tier="0" cost="1" x="2839.2" y="2497.4" effect="PATK_PCT:0.4;MAXHP:8">
+		<requires nodeId="30004" />
+		<requires nodeId="30005" />
+		<requires nodeId="30009" />
+		<requires nodeId="30011" />
+	</node>
+	<node id="30008" name="Battle-Hardened" sector="Warlord" type="SMALL" tier="0" cost="1" x="3133.1" y="2120.7" effect="PDEF_PCT:0.4;PATK_PCT:0.3">
+		<requires nodeId="30006" />
+		<requires nodeId="30010" />
+		<requires nodeId="30013" />
+		<requires nodeId="30015" />
+	</node>
+	<node id="30009" name="Warborn" sector="Warlord" type="SMALL" tier="0" cost="1" x="2819.2" y="2658.3" effect="PATK_PCT:0.4;MAXHP:8">
+		<requires nodeId="30007" />
+		<requires nodeId="30011" />
+		<requires nodeId="30014" />
+		<requires nodeId="30016" />
+	</node>
+	<node id="30010" name="Battle-Hardened" sector="Warlord" type="SMALL" tier="0" cost="1" x="3098.6" y="2264.2" effect="PDEF_PCT:0.4;PATK_PCT:0.3">
+		<requires nodeId="30006" />
+		<requires nodeId="30008" />
+		<requires nodeId="30012" />
+		<requires nodeId="30015" />
+	</node>
+	<node id="30011" name="Warborn" sector="Warlord" type="SMALL" tier="0" cost="1" x="2942.6" y="2538.9" effect="PATK_PCT:0.4;MAXHP:8">
+		<requires nodeId="30007" />
+		<requires nodeId="30009" />
+		<requires nodeId="30012" />
+		<requires nodeId="30016" />
+	</node>
+	<node id="30012" name="Bloodletting" sector="Warlord" type="SMALL" tier="0" cost="1" x="3016.0" y="2414.8" effect="LIFESTEAL_PCT:0.3;PATK_PCT:0.2">
+		<requires nodeId="30005" />
+		<requires nodeId="30010" />
+		<requires nodeId="30011" />
+		<requires nodeId="30017" />
+		<requires nodeId="30018" />
+	</node>
+	<node id="30013" name="Battle-Hardened" sector="Warlord" type="SMALL" tier="0" cost="1" x="3240.9" y="2109.2" effect="PDEF_PCT:0.4;PATK_PCT:0.3">
+		<requires nodeId="30008" />
+		<requires nodeId="30015" />
+		<requires nodeId="30021" />
+		<requires nodeId="30025" />
+	</node>
+	<node id="30014" name="Warborn" sector="Warlord" type="SMALL" tier="0" cost="1" x="2867.5" y="2745.7" effect="PATK_PCT:0.4;MAXHP:8">
+		<requires nodeId="30009" />
+		<requires nodeId="30016" />
+		<requires nodeId="30023" />
+		<requires nodeId="30026" />
+	</node>
+	<node id="30015" name="Iron Resolve" sector="Warlord" type="NOTABLE" tier="0" cost="2" x="3185.9" y="2212.2" effect="PDEF_PCT:3;PATK_PCT:2;CRIT_DMG_TAKEN_RED_PCT:6" description="Battle-Hardened mastery. Critical hits against you land softer.">
+		<requires nodeId="30008" />
+		<requires nodeId="30010" />
+		<requires nodeId="30013" />
+	</node>
+	<node id="30016" name="Warlord's Presence" sector="Warlord" type="NOTABLE" tier="0" cost="2" x="2934.4" y="2653.2" effect="PATK_PCT:3;MAXHP:60;SKILL_CDR_PCT:3" description="Warborn mastery. Physical skills recharge faster.">
+		<requires nodeId="30009" />
+		<requires nodeId="30011" />
+		<requires nodeId="30014" />
+	</node>
+	<node id="30017" name="Crimson Vein" sector="Warlord" type="SMALL" tier="0" cost="1" x="3176.7" y="2329.4" effect="LIFESTEAL_PCT:0.3;MAXHP:6">
+		<requires nodeId="30012" />
+		<requires nodeId="30019" />
+		<requires nodeId="30020" />
+		<requires nodeId="30025" />
+	</node>
+	<node id="30018" name="Crimson Vein" sector="Warlord" type="SMALL" tier="0" cost="1" x="3025.8" y="2597.9" effect="LIFESTEAL_PCT:0.3;MAXHP:6">
+		<requires nodeId="30012" />
+		<requires nodeId="30019" />
+		<requires nodeId="30020" />
+		<requires nodeId="30026" />
+	</node>
+	<node id="30019" name="Sanguine Carapace" sector="Warlord" type="NOTABLE" tier="0" cost="2" x="3093.3" y="2478.0" effect="LIFESTEAL_PCT:2;PDEF_PCT:2" description="Crimson Vein mastery. Melee blows mend your wounds.">
+		<requires nodeId="30017" />
+		<requires nodeId="30018" />
+		<requires nodeId="30020" />
+	</node>
+	<node id="30020" name="Crimson Vein" sector="Warlord" type="SMALL" tier="0" cost="1" x="3187.1" y="2509.1" effect="LIFESTEAL_PCT:0.3;MAXHP:6">
+		<requires nodeId="30017" />
+		<requires nodeId="30018" />
+		<requires nodeId="30019" />
+		<requires nodeId="30027" />
+	</node>
+	<node id="30021" name="Approach" sector="Warlord" type="SMALL" tier="0" cost="1" x="3299.8" y="2275.1" effect="MAXHP:6">
+		<requires nodeId="30013" />
+		<requires nodeId="30022" />
+	</node>
+	<node id="30022" name="Unending Fury" sector="Warlord" type="KEYSTONE" tier="0" cost="3" x="3417.5" y="2263.9" effect="LIFESTEAL_PCT:4;PATK_PCT:5;HP_REGEN_PCT:-50" description="You heal by fighting: strong melee life steal, but natural HP regeneration is halved.">
+		<requires nodeId="30021" />
+	</node>
+	<node id="30023" name="Approach" sector="Warlord" type="SMALL" tier="0" cost="1" x="3040.7" y="2747.5" effect="MAXHP:6">
+		<requires nodeId="30014" />
+		<requires nodeId="30024" />
+	</node>
+	<node id="30024" name="Siegebreaker" sector="Warlord" type="NOTABLE" tier="0" cost="2" x="3073.1" y="2854.7" effect="PHYS_SKILL_POWER_PCT:5;PVE_PDMG_PCT:3" description="Skills and steel honed for tearing through monsters.">
+		<requires nodeId="30023" />
+	</node>
+	<node id="30025" name="Veteran's Path" sector="Warlord" type="SMALL" tier="0" cost="1" x="3313.4" y="2176.7" effect="MAXHP:10;PDEF_PCT:0.3">
+		<requires nodeId="1011" />
+		<requires nodeId="30013" />
+		<requires nodeId="30017" />
+	</node>
+	<node id="30026" name="Veteran's Path" sector="Warlord" type="SMALL" tier="0" cost="1" x="2953.4" y="2794.9" effect="PATK_PCT:0.4;ATK_SPD_PCT:0.3">
+		<requires nodeId="2005" />
+		<requires nodeId="30014" />
+		<requires nodeId="30018" />
+	</node>
+	<node id="30027" name="Approach" sector="Warlord" type="SMALL" tier="0" cost="1" x="3243.9" y="2591.2" effect="MAXHP:6">
+		<requires nodeId="30020" />
+		<requires nodeId="30028" />
+	</node>
+	<node id="30028" name="Warlord's Mandate" sector="Warlord" type="KEYSTONE" tier="0" cost="3" x="3342.8" y="2581.1" effect="PHYS_SKILL_POWER_PCT:10;SKILL_CDR_PCT:-12" description="Physical skills hit 10% harder but take 12% longer to recharge.">
+		<requires nodeId="30027" />
+	</node>
+</list>

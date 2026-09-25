@@ -53,7 +53,13 @@ public class PassiveStatBonusCache
 	private static final Map<String, Double> CAPS = Map.ofEntries(Map.entry("STR", 5.0), Map.entry("DEX", 5.0), Map.entry("CON", 5.0), Map.entry("INT", 5.0), Map.entry("WIT", 5.0), Map.entry("MEN", 5.0),
 		// keep the worst runaway offenders bounded too
 		Map.entry("CRIT_DMG_PCT", 60.0), Map.entry("CRIT_RATE_ADD", 150.0), // /1000 scale -> +15% crit
-		Map.entry("ACCURACY_ADD", 12.0), Map.entry("EVASION_ADD", 12.0), Map.entry("SHIELD_RATE_PCT", 25.0), Map.entry("REFLECT_PCT", 30.0));
+		Map.entry("ACCURACY_ADD", 12.0), Map.entry("EVASION_ADD", 12.0), Map.entry("SHIELD_RATE_PCT", 25.0), Map.entry("REFLECT_PCT", 30.0),
+		// hybrid-sector mechanics
+		Map.entry("LIFESTEAL_PCT", 8.0), Map.entry("MANA_LEECH_PCT", 6.0), Map.entry("SKILL_DODGE_PCT", 12.0), Map.entry("MAGIC_REFLECT_PCT", 10.0), Map.entry("SKILL_REFLECT_PCT", 10.0), //
+		Map.entry("PVE_PDMG_PCT", 25.0), Map.entry("PVE_MDMG_PCT", 25.0), Map.entry("PVE_BOW_DMG_PCT", 25.0), Map.entry("PHYS_SKILL_POWER_PCT", 20.0), //
+		Map.entry("MCRIT_DMG_PCT", 40.0), Map.entry("BLOW_RATE_PCT", 20.0), Map.entry("HEALING_RECEIVED_PCT", 40.0), //
+		Map.entry("SKILL_CDR_PCT", 20.0), Map.entry("SPELL_CDR_PCT", 20.0), Map.entry("SPELL_MP_COST_RED_PCT", 30.0), //
+		Map.entry("CRIT_DMG_TAKEN_RED_PCT", 30.0), Map.entry("INTERRUPT_RES_PCT", 50.0), Map.entry("DEBUFF_RES_PCT", 30.0));
 	
 	public double get(String key)
 	{

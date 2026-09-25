@@ -27,6 +27,7 @@
 		<requires nodeId="1004" />
 		<requires nodeId="1006" />
 		<requires nodeId="1008" />
+		<requires nodeId="30526" />
 	</node>
 	<node id="1006" name="Iron Skin" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3387.0" y="1391.5" effect="PDEF_PCT:0.6">
 		<requires nodeId="1004" />
@@ -60,6 +61,7 @@
 		<requires nodeId="1010" />
 		<requires nodeId="1012" />
 		<requires nodeId="1013" />
+		<requires nodeId="30025" />
 	</node>
 	<node id="1012" name="Vitality" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3254.6" y="1824.5" effect="MAXHP:14">
 		<requires nodeId="1009" />
@@ -113,6 +115,7 @@
 		<requires nodeId="1020" />
 		<requires nodeId="1022" />
 		<requires nodeId="1024" />
+		<requires nodeId="30504" />
 	</node>
 	<node id="1022" name="Shield Work" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2991.9" y="1347.4" effect="SHIELD_RATE_PCT:0.6">
 		<requires nodeId="1019" />
@@ -154,6 +157,7 @@
 		<requires nodeId="1027" />
 		<requires nodeId="1029" />
 		<requires nodeId="1030" />
+		<requires nodeId="30003" />
 	</node>
 	<node id="1029" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2797.1" y="1847.7" effect="HP_REGEN_PCT:0.8">
 		<requires nodeId="1025" />
@@ -451,6 +455,7 @@
 	<node id="20102" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2560.0" y="2154.3" effect="MAXHP:6">
 		<requires nodeId="20101" />
 		<requires nodeId="20103" />
+		<requires nodeId="30001" />
 	</node>
 	<node id="20103" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2410.0" y="2437.1" effect="MAXHP:6">
 		<requires nodeId="2016" />

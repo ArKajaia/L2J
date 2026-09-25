@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Templar: 28 nodes, hybrid of Hierophant and Vanguard filling the gap between their arms. x/y are authoritative layout coords. -->
+<list>
+	<node id="30501" name="Confluence" sector="Templar" type="SMALL" tier="0" cost="1" x="2682.5" y="975.0" effect="MDEF_PCT:0.3;MAXHP:8">
+		<requires nodeId="25102" />
+		<requires nodeId="30502" />
+	</node>
+	<node id="30502" name="Confluence" sector="Templar" type="SMALL" tier="0" cost="1" x="2782.7" y="924.9" effect="MDEF_PCT:0.3;MAXHP:8">
+		<requires nodeId="30501" />
+		<requires nodeId="30503" />
+		<requires nodeId="30504" />
+		<requires nodeId="30505" />
+	</node>
+	<node id="30503" name="Sacred Crossing" sector="Templar" type="SMALL" tier="0" cost="1" x="2718.8" y="754.7" effect="MP_REGEN_PCT:0.6;MAXHP:6">
+		<requires nodeId="6028" />
+		<requires nodeId="30502" />
+		<requires nodeId="30506" />
+	</node>
+	<node id="30504" name="Shieldwall Crossing" sector="Templar" type="SMALL" tier="0" cost="1" x="2895.9" y="1068.2" effect="PDEF_PCT:0.4;MAXHP:6">
+		<requires nodeId="1021" />
+		<requires nodeId="30502" />
+		<requires nodeId="30507" />
+	</node>
+	<node id="30505" name="Devotion" sector="Templar" type="SMALL" tier="0" cost="1" x="2865.6" y="869.0" effect="HEALING_RECEIVED_PCT:1;MAXHP:6">
+		<requires nodeId="30502" />
+		<requires nodeId="30506" />
+		<requires nodeId="30507" />
+		<requires nodeId="30512" />
+	</node>
+	<node id="30506" name="Consecration" sector="Templar" type="SMALL" tier="0" cost="1" x="2839.3" y="701.4" effect="MDEF_PCT:0.4;MP_REGEN_PCT:0.6">
+		<requires nodeId="30503" />
+		<requires nodeId="30505" />
+		<requires nodeId="30508" />
+		<requires nodeId="30510" />
+	</node>
+	<node id="30507" name="Oathbound" sector="Templar" type="SMALL" tier="0" cost="1" x="2995.2" y="972.1" effect="PDEF_PCT:0.4;MAXHP:8">
+		<requires nodeId="30504" />
+		<requires nodeId="30505" />
+		<requires nodeId="30509" />
+		<requires nodeId="30511" />
+	</node>
+	<node id="30508" name="Consecration" sector="Templar" type="SMALL" tier="0" cost="1" x="2817.3" y="532.5" effect="MDEF_PCT:0.4;MP_REGEN_PCT:0.6">
+		<requires nodeId="30506" />
+		<requires nodeId="30510" />
+		<requires nodeId="30513" />
+		<requires nodeId="30515" />
+	</node>
+	<node id="30509" name="Oathbound" sector="Templar" type="SMALL" tier="0" cost="1" x="3129.8" y="1068.0" effect="PDEF_PCT:0.4;MAXHP:8">
+		<requires nodeId="30507" />
+		<requires nodeId="30511" />
+		<requires nodeId="30514" />
+		<requires nodeId="30516" />
+	</node>
+	<node id="30510" name="Consecration" sector="Templar" type="SMALL" tier="0" cost="1" x="2923.8" y="633.6" effect="MDEF_PCT:0.4;MP_REGEN_PCT:0.6">
+		<requires nodeId="30506" />
+		<requires nodeId="30508" />
+		<requires nodeId="30512" />
+		<requires nodeId="30515" />
+	</node>
+	<node id="30511" name="Oathbound" sector="Templar" type="SMALL" tier="0" cost="1" x="3083.1" y="903.0" effect="PDEF_PCT:0.4;MAXHP:8">
+		<requires nodeId="30507" />
+		<requires nodeId="30509" />
+		<requires nodeId="30512" />
+		<requires nodeId="30516" />
+	</node>
+	<node id="30512" name="Devotion" sector="Templar" type="SMALL" tier="0" cost="1" x="3013.2" y="780.7" effect="HEALING_RECEIVED_PCT:1;MAXHP:6">
+		<requires nodeId="30505" />
+		<requires nodeId="30510" />
+		<requires nodeId="30511" />
+		<requires nodeId="30517" />
+		<requires nodeId="30518" />
+	</node>
+	<node id="30513" name="Consecration" sector="Templar" type="SMALL" tier="0" cost="1" x="2859.7" y="431.5" effect="MDEF_PCT:0.4;MP_REGEN_PCT:0.6">
+		<requires nodeId="30508" />
+		<requires nodeId="30515" />
+		<requires nodeId="30521" />
+		<requires nodeId="30525" />
+	</node>
+	<node id="30514" name="Oathbound" sector="Templar" type="SMALL" tier="0" cost="1" x="3235.4" y="1089.7" effect="PDEF_PCT:0.4;MAXHP:8">
+		<requires nodeId="30509" />
+		<requires nodeId="30516" />
+		<requires nodeId="30523" />
+		<requires nodeId="30526" />
+	</node>
+	<node id="30515" name="Blessed Vessel" sector="Templar" type="NOTABLE" tier="0" cost="2" x="2921.8" y="530.9" effect="HEALING_RECEIVED_PCT:8;MP_REGEN_PCT:3" description="Consecration mastery. Heals on you are stronger.">
+		<requires nodeId="30508" />
+		<requires nodeId="30510" />
+		<requires nodeId="30513" />
+	</node>
+	<node id="30516" name="Warded Soul" sector="Templar" type="NOTABLE" tier="0" cost="2" x="3185.7" y="985.1" effect="DEBUFF_RES_PCT:10;MDEF_PCT:3" description="Oathbound mastery. Debuffs struggle to take hold.">
+		<requires nodeId="30509" />
+		<requires nodeId="30511" />
+		<requires nodeId="30514" />
+	</node>
+	<node id="30517" name="Aegis of Light" sector="Templar" type="SMALL" tier="0" cost="1" x="3019.8" y="598.5" effect="MAGIC_REFLECT_PCT:0.5;MDEF_PCT:0.3">
+		<requires nodeId="30512" />
+		<requires nodeId="30519" />
+		<requires nodeId="30520" />
+		<requires nodeId="30525" />
+	</node>
+	<node id="30518" name="Aegis of Light" sector="Templar" type="SMALL" tier="0" cost="1" x="3176.9" y="864.7" effect="MAGIC_REFLECT_PCT:0.5;MDEF_PCT:0.3">
+		<requires nodeId="30512" />
+		<requires nodeId="30519" />
+		<requires nodeId="30520" />
+		<requires nodeId="30526" />
+	</node>
+	<node id="30519" name="Mirror Ward" sector="Templar" type="NOTABLE" tier="0" cost="2" x="3106.6" y="745.4" effect="MAGIC_REFLECT_PCT:4;SKILL_REFLECT_PCT:3" description="Aegis of Light mastery. Hostile skills may rebound onto their caster.">
+		<requires nodeId="30517" />
+		<requires nodeId="30518" />
+		<requires nodeId="30520" />
+	</node>
+	<node id="30520" name="Aegis of Light" sector="Templar" type="SMALL" tier="0" cost="1" x="3180.8" y="680.2" effect="MAGIC_REFLECT_PCT:0.5;MDEF_PCT:0.3">
+		<requires nodeId="30517" />
+		<requires nodeId="30518" />
+		<requires nodeId="30519" />
+		<requires nodeId="30527" />
+	</node>
+	<node id="30521" name="Approach" sector="Templar" type="SMALL" tier="0" cost="1" x="3033.0" y="464.5" effect="MAXHP:6">
+		<requires nodeId="30513" />
+		<requires nodeId="30522" />
+	</node>
+	<node id="30522" name="Martyr's Vow" sector="Templar" type="KEYSTONE" tier="0" cost="3" x="3082.0" y="355.8" effect="HEALING_RECEIVED_PCT:25;MAXHP:150;PATK_PCT:-8;MATK_PCT:-8" description="Built to be healed: far more HP and healing received, far less damage dealt.">
+		<requires nodeId="30521" />
+	</node>
+	<node id="30523" name="Approach" sector="Templar" type="SMALL" tier="0" cost="1" x="3303.9" y="927.3" effect="MAXHP:6">
+		<requires nodeId="30514" />
+		<requires nodeId="30524" />
+	</node>
+	<node id="30524" name="Steadfast Faith" sector="Templar" type="NOTABLE" tier="0" cost="2" x="3422.3" y="949.2" effect="DEBUFF_RES_PCT:6;CRIT_DMG_TAKEN_RED_PCT:4" description="Unshaken by curses or killing blows.">
+		<requires nodeId="30523" />
+	</node>
+	<node id="30525" name="Sacred Path" sector="Templar" type="SMALL" tier="0" cost="1" x="2954.7" y="403.5" effect="MDEF_PCT:0.4;MAXMP:8">
+		<requires nodeId="6011" />
+		<requires nodeId="30513" />
+		<requires nodeId="30517" />
+	</node>
+	<node id="30526" name="Bulwark Path" sector="Templar" type="SMALL" tier="0" cost="1" x="3311.1" y="1026.1" effect="PDEF_PCT:0.4;MAXHP:8">
+		<requires nodeId="1005" />
+		<requires nodeId="30514" />
+		<requires nodeId="30518" />
+	</node>
+	<node id="30527" name="Approach" sector="Templar" type="SMALL" tier="0" cost="1" x="3280.3" y="671.9" effect="MAXHP:6">
+		<requires nodeId="30520" />
+		<requires nodeId="30528" />
+	</node>
+	<node id="30528" name="Inquisitor" sector="Templar" type="KEYSTONE" tier="0" cost="3" x="3321.1" y="581.2" effect="MANA_LEECH_PCT:3;PATK_PCT:4;MP_REGEN_PCT:-40" description="Your melee blows drain mana, but your spirit barely regenerates on its own.">
+		<requires nodeId="30527" />
+	</node>
+</list>
