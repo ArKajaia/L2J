@@ -722,6 +722,20 @@ public class NpcTemplate extends CreatureTemplate
 				}
 			}
 			
+			// Thieves drop more adena the more kills they stole from.
+			if (victim.isMonster() && victim.asMonster().isThief())
+			{
+				final double adenaMultiplier = victim.asMonster().getThiefAdenaMultiplier();
+				if (groupDrops != null)
+				{
+					groupDrops.replaceAll(i -> i.getId() == Inventory.ADENA_ID ? new ItemHolder(i.getId(), (long) (i.getCount() * adenaMultiplier)) : i);
+				}
+				if (ungroupedDrops != null)
+				{
+					ungroupedDrops.replaceAll(i -> i.getId() == Inventory.ADENA_ID ? new ItemHolder(i.getId(), (long) (i.getCount() * adenaMultiplier)) : i);
+				}
+			}
+			
 			// return results
 			if ((groupDrops != null) && (ungroupedDrops != null))
 			{

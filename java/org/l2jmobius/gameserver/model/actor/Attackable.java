@@ -334,6 +334,7 @@ public class Attackable extends Npc
 				org.l2jmobius.gameserver.managers.HotzoneCoinDropManager.getInstance().onAttackableKilled(this, player);
 				org.l2jmobius.gameserver.managers.WaveChallengeManager.getInstance().onAttackableKilled(this);
 				org.l2jmobius.gameserver.managers.LuckyLootManager.getInstance().onAttackableKilled(this, player);
+				org.l2jmobius.gameserver.managers.ThiefMonsterManager.getInstance().onAttackableKilled(this);
 			}
 		}
 		

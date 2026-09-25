@@ -573,6 +573,9 @@ public class Spawn extends Location
 		// Open-world wave challenge roll - after the champion roll so champions can be excluded.
 		org.l2jmobius.gameserver.managers.WaveChallengeManager.getInstance().tryConvert(npc, getInstanceId());
 		
+		// Thief roll - after the wave roll so wave challenges (which drop no adena) are skipped.
+		org.l2jmobius.gameserver.managers.ThiefMonsterManager.getInstance().tryConvert(npc, getInstanceId());
+		
 		npc.setCurrentHp(npc.getMaxHp());
 		npc.setCurrentMp(npc.getMaxMp());
 		npc.broadcastInfo();

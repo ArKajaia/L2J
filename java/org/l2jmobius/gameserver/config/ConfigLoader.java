@@ -63,6 +63,7 @@ import org.l2jmobius.gameserver.config.custom.SellBuffsConfig;
 import org.l2jmobius.gameserver.config.custom.ServerTimeConfig;
 import org.l2jmobius.gameserver.config.custom.StartingLocationConfig;
 import org.l2jmobius.gameserver.config.custom.StartingTitleConfig;
+import org.l2jmobius.gameserver.config.custom.ThiefMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.TransmogConfig;
 import org.l2jmobius.gameserver.config.custom.WalkerBotProtectionConfig;
 import org.l2jmobius.gameserver.config.custom.WarehouseSortingConfig;
@@ -141,6 +142,7 @@ public class ConfigLoader
 		ServerTimeConfig.load();
 		StartingLocationConfig.load();
 		StartingTitleConfig.load();
+		ThiefMonsterConfig.load();
 		TransmogConfig.load();
 		WalkerBotProtectionConfig.load();
 		WarehouseSortingConfig.load();
