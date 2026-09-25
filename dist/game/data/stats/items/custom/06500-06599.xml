@@ -1,5 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/items.xsd">
+	<item id="6509" type="EtcItem" name="Big Purple Treasure Chest">
+		<!-- Lucky Loot: Epic Sealed Cache (see config/Custom/LuckyLoot.ini). Every entry rolls on its own; Gold Dragons are guaranteed. -->
+		<set name="icon" val="icon.etc_treasure_box_i04" />
+		<set name="default_action" val="PEEL" />
+		<set name="immediate_effect" val="true" />
+		<set name="material" val="FISH" />
+		<set name="weight" val="100" />
+		<set name="price" val="1157" />
+		<set name="is_stackable" val="true" />
+		<set name="is_oly_restricted" val="true" />
+		<set name="handler" val="ExtractableItems" />
+		<capsuled_items>
+			<item id="3481" min="20" max="60" chance="100" /> <!-- Gold Dragon -->
+			<item id="959" min="1" max="1" chance="20" /> <!-- Scroll: Enchant Weapon (S-Grade) -->
+			<item id="960" min="1" max="2" chance="25" /> <!-- Scroll: Enchant Armor (S-Grade) -->
+			<item id="6577" min="1" max="1" chance="3" /> <!-- Blessed Scroll: Enchant Weapon (S-Grade) -->
+			<item id="6578" min="1" max="1" chance="4" /> <!-- Blessed Scroll: Enchant Armor (S-Grade) -->
+			<item id="8752" min="1" max="1" chance="10" /> <!-- High-Grade Life Stone - Level 76 -->
+			<item id="8762" min="1" max="1" chance="2" /> <!-- Top-Grade Life Stone - Level 76 -->
+		</capsuled_items>
+	</item>
 	<item id="6593" type="Weapon" name="Shining Bow - Cheap Shot">
 		<set name="icon" val="icon.weapon_shining_bow_i01" />
 		<set name="default_action" val="EQUIP" />

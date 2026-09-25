@@ -23,6 +23,7 @@ package org.l2jmobius.gameserver.network.serverpackets;
 import org.l2jmobius.commons.network.WritableBuffer;
 import org.l2jmobius.gameserver.config.GeneralConfig;
 import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
+import org.l2jmobius.gameserver.managers.LuckyLootManager;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.appearance.PlayerAppearance;
 import org.l2jmobius.gameserver.model.actor.instance.Decoy;
@@ -168,7 +169,7 @@ public class CharInfo extends ServerPacket
 		buffer.writeInt(appearance.getHairStyle());
 		buffer.writeInt(appearance.getHairColor());
 		buffer.writeInt(appearance.getFace());
-		buffer.writeString(_gmSeeInvis ? "Invisible" : appearance.getVisibleTitle());
+		buffer.writeString(_gmSeeInvis ? "Invisible" : LuckyLootManager.getInstance().decorateTitle(_player, appearance.getVisibleTitle()));
 		if (!_player.isCursedWeaponEquipped())
 		{
 			buffer.writeInt(_player.getClanId());

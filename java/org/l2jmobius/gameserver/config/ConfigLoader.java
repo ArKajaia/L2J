@@ -42,6 +42,7 @@ import org.l2jmobius.gameserver.config.custom.FreeMountsConfig;
 import org.l2jmobius.gameserver.config.custom.HellboundStatusConfig;
 import org.l2jmobius.gameserver.config.custom.HotzoneCoinDropConfig;
 import org.l2jmobius.gameserver.config.custom.HotzoneMinibossConfig;
+import org.l2jmobius.gameserver.config.custom.LuckyLootConfig;
 import org.l2jmobius.gameserver.config.custom.MerchantZeroSellPriceConfig;
 import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
 import org.l2jmobius.gameserver.config.custom.NoblessMasterConfig;
@@ -119,6 +120,7 @@ public class ConfigLoader
 		HellboundStatusConfig.load();
 		HotzoneCoinDropConfig.load();
 		HotzoneMinibossConfig.load();
+		LuckyLootConfig.load();
 		MerchantZeroSellPriceConfig.load();
 		MultilingualSupportConfig.load();
 		NoblessMasterConfig.load();

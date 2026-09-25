@@ -17,6 +17,7 @@
 package org.l2jmobius.gameserver.network.serverpackets;
 
 import org.l2jmobius.commons.network.WritableBuffer;
+import org.l2jmobius.gameserver.managers.LuckyLootManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.network.GameClient;
 import org.l2jmobius.gameserver.network.ServerPackets;
@@ -32,7 +33,7 @@ public class NicknameChanged extends ServerPacket
 	public NicknameChanged(Creature creature)
 	{
 		_objectId = creature.getObjectId();
-		_title = creature.getTitle();
+		_title = creature.isPlayer() ? LuckyLootManager.getInstance().decorateTitle(creature.asPlayer(), creature.getTitle()) : creature.getTitle();
 	}
 	
 	@Override
