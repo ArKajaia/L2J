@@ -333,6 +333,8 @@ public class Attackable extends Npc
 				org.l2jmobius.gameserver.managers.HotZoneMinibossManager.getInstance().onAttackableKilled(this, killer);
 				org.l2jmobius.gameserver.managers.HotzoneCoinDropManager.getInstance().onAttackableKilled(this, player);
 				org.l2jmobius.gameserver.managers.WaveChallengeManager.getInstance().onAttackableKilled(this);
+				org.l2jmobius.gameserver.managers.LuckyLootManager.getInstance().onAttackableKilled(this, player);
+				org.l2jmobius.gameserver.managers.ThiefMonsterManager.getInstance().onAttackableKilled(this);
 			}
 		}
 		
@@ -1126,8 +1128,25 @@ public class Attackable extends Npc
 	public void doItemDrop(Creature mainDamageDealer)
 	{
 		doItemDrop(getTemplate(), mainDamageDealer);
+		// 1. Lucky Loot jackpot: roll the kill drop table again (only DROP, so spoil, cursed weapons and the buff book below don't repeat).
+		final Player jackpotOwner = mainDamageDealer != null ? mainDamageDealer.asPlayer() : null;
+		if ((jackpotOwner != null) && org.l2jmobius.gameserver.managers.LuckyLootManager.getInstance().rollJackpot(this, jackpotOwner))
+		{
+			for (int roll = 1; roll < org.l2jmobius.gameserver.config.custom.LuckyLootConfig.JACKPOT_DROP_ROLLS; roll++)
+			{
+				final Collection<ItemHolder> jackpotItems = getTemplate().calculateDrops(DropType.DROP, this, jackpotOwner);
+				if (jackpotItems != null)
+				{
+					for (ItemHolder drop : jackpotItems)
+					{
+						dropOrAutoLoot(jackpotOwner, drop);
+					}
+				}
+			}
+			org.l2jmobius.gameserver.managers.LuckyLootManager.getInstance().onJackpotPaid(this, jackpotOwner);
+		}
 		// 2. Custom Champion Buff Book drop
-		if ((this.getChampionTier() > 0) && org.l2jmobius.gameserver.config.custom.CustomBuffConfig.ENABLE)
+		if ((this.getChampionTier() > 0) && org.l2jmobius.gameserver.config.custom.CustomBuffConfig.ENABLE && hasChampionBonusRewards(this, mainDamageDealer))
 		{
 			if (org.l2jmobius.commons.util.Rnd.get(100d) < org.l2jmobius.gameserver.config.custom.CustomBuffConfig.DROP_CHANCE)
 			{
@@ -1219,21 +1238,7 @@ public class Attackable extends Npc
 			for (ItemHolder drop : deathItems)
 			{
 				final ItemTemplate item = ItemData.getInstance().getTemplate(drop.getId());
-				
-				// Check if the autoLoot mode is active
-				// 1. Determine if the server's base configuration allows auto-looting this item
-				boolean shouldBaseAutoLoot = PlayerConfig.AUTO_LOOT_ITEM_IDS.contains(item.getId()) || isFlying() || (!item.hasExImmediateEffect() && ((!_isRaid && PlayerConfig.AUTO_LOOT) || (_isRaid && PlayerConfig.AUTO_LOOT_RAIDS))) || (item.hasExImmediateEffect() && PlayerConfig.AUTO_LOOT_HERBS);
-				
-				// 2. If the server allows it, check the player's custom .filter settings.
-				// Note: We bypass the filter if they are flying, otherwise the items would drop in mid-air and get lost!
-				if (shouldBaseAutoLoot && (isFlying() || org.l2jmobius.gameserver.model.actor.AutoLootFilterUtil.shouldAutoLoot(player, item)))
-				{
-					player.doAutoLoot(this, drop); // Give the item(s) to the Player that has killed the Attackable
-				}
-				else
-				{
-					dropItem(player, drop); // Drop the item on the ground (Mobius automatically scatters and applies drop protection here!)
-				}
+				dropOrAutoLoot(player, drop);
 				
 				// Broadcast message if RaidBoss was defeated
 				if (_isRaid && !_isRaidMinion && (drop.getCount() > 0))
@@ -1247,6 +1252,51 @@ public class Attackable extends Npc
 			}
 			
 			deathItems.clear();
+		}
+	}
+	
+	/**
+	 * Champions stop paying their bonus gold (ChampionRewardItems, the champion adena chance/amount bonus) and medals (the champion buff book) once the killer outlevels them by more than {@link ChampionMonstersConfig#CHAMPION_REWARD_MAX_LEVEL_DIFFERENCE}.
+	 * @param victim the monster being looted
+	 * @param killer the creature that owns the drops
+	 * @return {@code true} if {@code victim} is a champion and {@code killer} is still close enough in level to get its bonus gold and medals
+	 */
+	public static boolean hasChampionBonusRewards(Creature victim, Creature killer)
+	{
+		if ((victim == null) || (victim.getChampionTier() <= 0))
+		{
+			return false;
+		}
+		
+		return (killer == null) || (ChampionMonstersConfig.CHAMPION_REWARD_MAX_LEVEL_DIFFERENCE < 0) || ((killer.getLevel() - victim.getLevel()) <= ChampionMonstersConfig.CHAMPION_REWARD_MAX_LEVEL_DIFFERENCE);
+	}
+	
+	/**
+	 * Gives a dropped item to {@code player} through auto-loot when the server settings and the player's .filter allow it, otherwise drops it on the ground with drop protection.
+	 * @param player the player who owns the drop
+	 * @param drop the item and amount to hand out
+	 */
+	public void dropOrAutoLoot(Player player, ItemHolder drop)
+	{
+		final ItemTemplate item = ItemData.getInstance().getTemplate(drop.getId());
+		if (item == null)
+		{
+			return;
+		}
+		
+		// Check if the autoLoot mode is active
+		// 1. Determine if the server's base configuration allows auto-looting this item
+		final boolean shouldBaseAutoLoot = PlayerConfig.AUTO_LOOT_ITEM_IDS.contains(item.getId()) || isFlying() || (!item.hasExImmediateEffect() && ((!_isRaid && PlayerConfig.AUTO_LOOT) || (_isRaid && PlayerConfig.AUTO_LOOT_RAIDS))) || (item.hasExImmediateEffect() && PlayerConfig.AUTO_LOOT_HERBS);
+		
+		// 2. If the server allows it, check the player's custom .filter settings.
+		// Note: We bypass the filter if they are flying, otherwise the items would drop in mid-air and get lost!
+		if (shouldBaseAutoLoot && (isFlying() || org.l2jmobius.gameserver.model.actor.AutoLootFilterUtil.shouldAutoLoot(player, item)))
+		{
+			player.doAutoLoot(this, drop); // Give the item(s) to the Player that has killed the Attackable
+		}
+		else
+		{
+			dropItem(player, drop); // Drop the item on the ground (Mobius automatically scatters and applies drop protection here!)
 		}
 	}
 	

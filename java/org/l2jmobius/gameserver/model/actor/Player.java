@@ -513,6 +513,9 @@ public class Player extends Playable
 	/** The PK counter of the Player (= Number of non PvP Flagged player killed) */
 	private int _pkKills;
 	
+	/** Lucky Loot kill-streak stacks (see LuckyLootManager). Not saved: logging out or dying resets the streak. */
+	private volatile int _luckStacks;
+	
 	/** The PvP Flag state of the Player (0=White, 1=Purple) */
 	private byte _pvpFlag;
 	
@@ -2354,6 +2357,22 @@ public class Player extends Playable
 		{
 			sendPacket(new ExStorageMaxCount(this));
 		}
+	}
+	
+	/**
+	 * @return the Lucky Loot kill-streak stacks of this player.
+	 */
+	public int getLuckStacks()
+	{
+		return _luckStacks;
+	}
+	
+	/**
+	 * @param luckStacks the new Lucky Loot kill-streak stack count
+	 */
+	public void setLuckStacks(int luckStacks)
+	{
+		_luckStacks = luckStacks;
 	}
 	
 	/**
@@ -5228,6 +5247,9 @@ public class Player extends Playable
 		{
 			return false;
 		}
+		
+		// Lucky Loot: dying ends the kill streak.
+		org.l2jmobius.gameserver.managers.LuckyLootManager.getInstance().onPlayerDied(this);
 		
 		// MODERN TWEAK: The Nemesis System
 		if (RatesConfig.NEMESIS_SYSTEM_ENABLED && (killer != null) && killer.isAttackable())

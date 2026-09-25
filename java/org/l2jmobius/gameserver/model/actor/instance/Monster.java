@@ -13,6 +13,7 @@ import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
 import org.l2jmobius.gameserver.config.custom.HotzoneMinibossConfig;
+import org.l2jmobius.gameserver.config.custom.ThiefMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
 import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData;
 import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData.CustomSkill;
@@ -343,6 +344,10 @@ public class Monster extends Attackable
 		final String baseTitle = getTemplate().getTitle() == null ? "" : getTemplate().getTitle();
 
 		final StringBuilder sb = new StringBuilder();
+		if (isThief())
+		{
+			sb.append(String.format(ThiefMonsterConfig.TITLE_TAG, getThiefPercent())).append(' ');
+		}
 		if (isWaveChallenge())
 		{
 			sb.append(String.format(WaveChallengeConfig.TITLE_TAG, getWaveChallengeWave(), WaveChallengeConfig.WAVE_COUNT)).append(' ');
@@ -577,6 +582,80 @@ public class Monster extends Attackable
 		{
 			resetWaveChallenge();
 		}
+	}
+
+	// =======================================================================
+	// Thief Monster System
+	// =======================================================================
+
+	/**
+	 * @return {@code true} if {@link org.l2jmobius.gameserver.managers.ThiefMonsterManager} turned this spawn into a Thief.
+	 */
+	public boolean isThief()
+	{
+		return ThiefMonsterConfig.ENABLED && getVariables().getBoolean("IS_THIEF", false);
+	}
+
+	/**
+	 * @return how many nearby kills this Thief has stolen from, capped at {@link ThiefMonsterConfig#KILLS_FOR_MAX}
+	 */
+	public int getThiefKills()
+	{
+		return Math.min(getVariables().getInt("THIEF_KILLS", 0), ThiefMonsterConfig.KILLS_FOR_MAX);
+	}
+
+	/**
+	 * @return how full this Thief's bag is, 0-100
+	 */
+	public int getThiefPercent()
+	{
+		return (getThiefKills() * 100) / ThiefMonsterConfig.KILLS_FOR_MAX;
+	}
+
+	/**
+	 * @return the adena drop multiplier for this monster: 1.0 unless it is a Thief, otherwise linear from {@link ThiefMonsterConfig#MIN_ADENA_MULTIPLIER} at an empty bag to {@link ThiefMonsterConfig#MAX_ADENA_MULTIPLIER} at a full one
+	 */
+	public double getThiefAdenaMultiplier()
+	{
+		if (!isThief())
+		{
+			return 1.0;
+		}
+
+		final double progress = getThiefKills() / (double) ThiefMonsterConfig.KILLS_FOR_MAX;
+		return ThiefMonsterConfig.MIN_ADENA_MULTIPLIER + ((ThiefMonsterConfig.MAX_ADENA_MULTIPLIER - ThiefMonsterConfig.MIN_ADENA_MULTIPLIER) * progress);
+	}
+
+	/**
+	 * Turns this freshly spawned monster into a Thief with an empty bag. Called by {@link org.l2jmobius.gameserver.managers.ThiefMonsterManager#tryConvert}.
+	 */
+	public void startThief()
+	{
+		getVariables().set("IS_THIEF", true);
+		getVariables().set("THIEF_KILLS", 0);
+		rebuildFullTitle();
+		broadcastInfo();
+	}
+
+	/**
+	 * A monster died nearby: add one kill to the bag (up to {@link ThiefMonsterConfig#KILLS_FOR_MAX}) and refresh the name plate. Synchronized so two kills landing at once can't lose a count.
+	 */
+	public synchronized void addThiefKill()
+	{
+		if (!isThief() || isDead())
+		{
+			return;
+		}
+
+		final int kills = getVariables().getInt("THIEF_KILLS", 0);
+		if (kills >= ThiefMonsterConfig.KILLS_FOR_MAX)
+		{
+			return;
+		}
+
+		getVariables().set("THIEF_KILLS", kills + 1);
+		rebuildFullTitle();
+		broadcastInfo();
 	}
 
 	// =======================================================================

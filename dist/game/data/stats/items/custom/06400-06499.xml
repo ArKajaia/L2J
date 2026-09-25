@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/items.xsd">
+	<item id="6492" type="EtcItem" name="Small Green Treasure Chest">
+		<!-- Lucky Loot: Common Sealed Cache (see config/Custom/LuckyLoot.ini). Always gives Gold Dragons, plus at least 2 random crafting materials: every material rolls on its own (rarer materials have a lower chance), and if too few hit, the table is rolled again until the minimum is reached. -->
+		<set name="icon" val="icon.etc_treasure_box_i07" />
+		<set name="default_action" val="PEEL" />
+		<set name="immediate_effect" val="true" />
+		<set name="material" val="FISH" />
+		<set name="weight" val="100" />
+		<set name="price" val="153" />
+		<set name="is_stackable" val="true" />
+		<set name="is_oly_restricted" val="true" />
+		<set name="handler" val="ExtractableItems" />
+		<!-- extractableCountMin/Max count distinct items, Gold Dragons included. Max is kept well above the expected roll count so the table order doesn't bias which materials drop. -->
+		<set name="extractableCountMin" val="3" />
+		<set name="extractableCountMax" val="10" />
+		<capsuled_items>
+			<item id="3481" min="1000" max="5000" chance="100" /> <!-- Gold Dragon (always) -->
+			<!-- Basic materials -->
+			<item id="1864" min="10" max="30" chance="25" /> <!-- Stem -->
+			<item id="1865" min="10" max="30" chance="25" /> <!-- Varnish -->
+			<item id="1866" min="10" max="30" chance="25" /> <!-- Suede -->
+			<item id="1867" min="10" max="30" chance="25" /> <!-- Animal Skin -->
+			<item id="1868" min="10" max="30" chance="25" /> <!-- Thread -->
+			<item id="1869" min="10" max="30" chance="25" /> <!-- Iron Ore -->
+			<item id="1870" min="10" max="30" chance="25" /> <!-- Coal -->
+			<item id="1871" min="10" max="30" chance="25" /> <!-- Charcoal -->
+			<item id="1872" min="10" max="30" chance="25" /> <!-- Animal Bone -->
+			<!-- Uncommon -->
+			<item id="1873" min="5" max="15" chance="15" /> <!-- Silver Nugget -->
+			<!-- Rare: crafted materials -->
+			<item id="1878" min="2" max="5" chance="5" /> <!-- Braided Hemp -->
+			<item id="1879" min="2" max="5" chance="5" /> <!-- Cokes -->
+			<item id="1880" min="2" max="5" chance="5" /> <!-- Steel -->
+			<item id="1881" min="2" max="5" chance="5" /> <!-- Coarse Bone Powder -->
+			<item id="1882" min="2" max="5" chance="5" /> <!-- Leather -->
+			<!-- Very rare: ores -->
+			<item id="1874" min="1" max="3" chance="4" /> <!-- Oriharukon Ore -->
+			<item id="1875" min="1" max="3" chance="4" /> <!-- Stone of Purity -->
+		</capsuled_items>
+	</item>
+	<item id="6499" type="EtcItem" name="Blue Treasure Chest">
+		<!-- Lucky Loot: Rare Sealed Cache (see config/Custom/LuckyLoot.ini). Always gives Gold Dragons, plus at least 3 random crafting materials: every material rolls on its own (rarer materials have a lower chance), and if too few hit, the table is rolled again until the minimum is reached. -->
+		<set name="icon" val="icon.etc_treasure_box_i01" />
+		<set name="default_action" val="PEEL" />
+		<set name="immediate_effect" val="true" />
+		<set name="material" val="FISH" />
+		<set name="weight" val="100" />
+		<set name="price" val="419" />
+		<set name="is_stackable" val="true" />
+		<set name="is_oly_restricted" val="true" />
+		<set name="handler" val="ExtractableItems" />
+		<!-- extractableCountMin/Max count distinct items, Gold Dragons included. Max is kept well above the expected roll count so the table order doesn't bias which materials drop. -->
+		<set name="extractableCountMin" val="4" />
+		<set name="extractableCountMax" val="14" />
+		<capsuled_items>
+			<item id="3481" min="3000" max="15000" chance="100" /> <!-- Gold Dragon (always) -->
+			<!-- Basic materials -->
+			<item id="1864" min="30" max="80" chance="15" /> <!-- Stem -->
+			<item id="1865" min="30" max="80" chance="15" /> <!-- Varnish -->
+			<item id="1866" min="30" max="80" chance="15" /> <!-- Suede -->
+			<item id="1867" min="30" max="80" chance="15" /> <!-- Animal Skin -->
+			<item id="1868" min="30" max="80" chance="15" /> <!-- Thread -->
+			<item id="1869" min="30" max="80" chance="15" /> <!-- Iron Ore -->
+			<item id="1870" min="30" max="80" chance="15" /> <!-- Coal -->
+			<item id="1871" min="30" max="80" chance="15" /> <!-- Charcoal -->
+			<item id="1872" min="30" max="80" chance="15" /> <!-- Animal Bone -->
+			<item id="1873" min="30" max="80" chance="15" /> <!-- Silver Nugget -->
+			<!-- Crafted materials -->
+			<item id="1878" min="5" max="15" chance="20" /> <!-- Braided Hemp -->
+			<item id="1879" min="5" max="15" chance="20" /> <!-- Cokes -->
+			<item id="1880" min="5" max="15" chance="20" /> <!-- Steel -->
+			<item id="1881" min="5" max="15" chance="20" /> <!-- Coarse Bone Powder -->
+			<item id="1882" min="5" max="15" chance="20" /> <!-- Leather -->
+			<item id="1883" min="5" max="15" chance="20" /> <!-- Steel Mold -->
+			<item id="1884" min="5" max="15" chance="20" /> <!-- Cord -->
+			<item id="1885" min="5" max="15" chance="20" /> <!-- High-Grade Suede -->
+			<item id="1886" min="5" max="15" chance="20" /> <!-- Silver Mold -->
+			<item id="1887" min="5" max="15" chance="20" /> <!-- Varnish of Purity -->
+			<!-- Ores -->
+			<item id="1874" min="3" max="10" chance="20" /> <!-- Oriharukon Ore -->
+			<item id="1875" min="3" max="10" chance="20" /> <!-- Stone of Purity -->
+			<item id="1876" min="3" max="10" chance="20" /> <!-- Mithril Ore -->
+			<item id="1877" min="3" max="10" chance="20" /> <!-- Adamantite Nugget -->
+			<!-- Rare: advanced materials -->
+			<item id="1888" min="1" max="3" chance="8" /> <!-- Synthetic Cokes -->
+			<item id="1889" min="1" max="3" chance="8" /> <!-- Compound Braid -->
+			<item id="1890" min="1" max="3" chance="8" /> <!-- Mithril Alloy -->
+			<item id="1891" min="1" max="3" chance="8" /> <!-- Artisan's Frame -->
+			<item id="1892" min="1" max="3" chance="8" /> <!-- Blacksmith's Frame -->
+			<item id="1893" min="1" max="3" chance="8" /> <!-- Oriharukon -->
+			<item id="1894" min="1" max="3" chance="8" /> <!-- Crafted Leather -->
+			<item id="1895" min="1" max="3" chance="8" /> <!-- Metallic Fiber -->
+			<!-- Very rare: key materials -->
+			<item id="4039" min="1" max="2" chance="4" /> <!-- Mold Glue -->
+			<item id="4040" min="1" max="2" chance="4" /> <!-- Mold Lubricant -->
+			<item id="4041" min="1" max="2" chance="4" /> <!-- Mold Hardener -->
+			<item id="4042" min="1" max="2" chance="4" /> <!-- Enria -->
+			<item id="4043" min="1" max="2" chance="4" /> <!-- Asofe -->
+			<item id="4044" min="1" max="2" chance="4" /> <!-- Thons -->
+		</capsuled_items>
+	</item>
+</list>

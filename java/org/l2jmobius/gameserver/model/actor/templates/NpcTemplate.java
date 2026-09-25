@@ -37,7 +37,9 @@ import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
 import org.l2jmobius.gameserver.data.sql.CharInfoTable;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
+import org.l2jmobius.gameserver.managers.LuckyLootManager;
 import org.l2jmobius.gameserver.model.StatSet;
+import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
@@ -720,6 +722,20 @@ public class NpcTemplate extends CreatureTemplate
 				}
 			}
 			
+			// Thieves drop more adena the more kills they stole from.
+			if (victim.isMonster() && victim.asMonster().isThief())
+			{
+				final double adenaMultiplier = victim.asMonster().getThiefAdenaMultiplier();
+				if (groupDrops != null)
+				{
+					groupDrops.replaceAll(i -> i.getId() == Inventory.ADENA_ID ? new ItemHolder(i.getId(), (long) (i.getCount() * adenaMultiplier)) : i);
+				}
+				if (ungroupedDrops != null)
+				{
+					ungroupedDrops.replaceAll(i -> i.getId() == Inventory.ADENA_ID ? new ItemHolder(i.getId(), (long) (i.getCount() * adenaMultiplier)) : i);
+				}
+			}
+			
 			// return results
 			if ((groupDrops != null) && (ungroupedDrops != null))
 			{
@@ -770,6 +786,7 @@ public class NpcTemplate extends CreatureTemplate
 					final int itemId = dropItem.getItemId();
 					final ItemTemplate item = ItemData.getInstance().getTemplate(itemId);
 					final boolean champion = victim.getChampionTier() > 0;
+					final boolean championGold = Attackable.hasChampionBonusRewards(victim, killer); // bonus adena stops once the killer outlevels the champion
 					
 					// chance
 					
@@ -777,7 +794,7 @@ public class NpcTemplate extends CreatureTemplate
 					if (RatesConfig.RATE_DROP_CHANCE_BY_ID.get(itemId) != null)
 					{
 						rateChance *= RatesConfig.RATE_DROP_CHANCE_BY_ID.get(itemId);
-						if (champion && (itemId == Inventory.ADENA_ID))
+						if (championGold && (itemId == Inventory.ADENA_ID))
 						{
 							rateChance *= ChampionMonstersConfig.CHAMPION_ADENAS_REWARDS_CHANCE;
 						}
@@ -800,6 +817,7 @@ public class NpcTemplate extends CreatureTemplate
 						final double passiveMultiplier = victim.isMonster() ? ((Monster) victim).getCustomPassiveDropMultiplier() : 1.0;
 						
 						rateChance *= RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER * (champion ? ChampionMonstersConfig.CHAMPION_REWARDS_CHANCE : 1) * passiveMultiplier;
+						rateChance *= LuckyLootManager.getInstance().getDropMultiplier(killer);
 					}
 					
 					// premium chance
@@ -925,7 +943,7 @@ public class NpcTemplate extends CreatureTemplate
 			}
 			
 			// champion extra drop
-			if ((victim.getChampionTier() > 0) && (Rnd.get(100) < (victim.getLevel() < killer.getLevel() ? ChampionMonstersConfig.CHAMPION_REWARD_LOWER_LEVEL_ITEM_CHANCE : ChampionMonstersConfig.CHAMPION_REWARD_HIGHER_LEVEL_ITEM_CHANCE)))
+			if (Attackable.hasChampionBonusRewards(victim, killer) && (Rnd.get(100) < (victim.getLevel() < killer.getLevel() ? ChampionMonstersConfig.CHAMPION_REWARD_LOWER_LEVEL_ITEM_CHANCE : ChampionMonstersConfig.CHAMPION_REWARD_HIGHER_LEVEL_ITEM_CHANCE)))
 			{
 				// create list
 				if (calculatedDrops == null)
@@ -1028,7 +1046,7 @@ public class NpcTemplate extends CreatureTemplate
 		}
 		
 		// champion extra drop
-		if ((victim.getChampionTier() > 0) && (Rnd.get(100) < (victim.getLevel() < killer.getLevel() ? ChampionMonstersConfig.CHAMPION_REWARD_LOWER_LEVEL_ITEM_CHANCE : ChampionMonstersConfig.CHAMPION_REWARD_HIGHER_LEVEL_ITEM_CHANCE)))
+		if (Attackable.hasChampionBonusRewards(victim, killer) && (Rnd.get(100) < (victim.getLevel() < killer.getLevel() ? ChampionMonstersConfig.CHAMPION_REWARD_LOWER_LEVEL_ITEM_CHANCE : ChampionMonstersConfig.CHAMPION_REWARD_HIGHER_LEVEL_ITEM_CHANCE)))
 		{
 			// create list
 			if (calculatedDrops == null)
@@ -1058,6 +1076,7 @@ public class NpcTemplate extends CreatureTemplate
 		final int itemId = dropItem.getItemId();
 		final ItemTemplate item = ItemData.getInstance().getTemplate(itemId);
 		final boolean champion = victim.getChampionTier() > 0;
+		final boolean championGold = Attackable.hasChampionBonusRewards(victim, killer); // bonus adena stops once the killer outlevels the champion
 		
 		// calculate if item will drop
 		if ((Rnd.nextDouble() * 100) < chance)
@@ -1067,7 +1086,7 @@ public class NpcTemplate extends CreatureTemplate
 			if (RatesConfig.RATE_DROP_AMOUNT_BY_ID.get(itemId) != null)
 			{
 				rateAmount *= RatesConfig.RATE_DROP_AMOUNT_BY_ID.get(itemId);
-				if (champion && (itemId == Inventory.ADENA_ID))
+				if (championGold && (itemId == Inventory.ADENA_ID))
 				{
 					rateAmount *= ChampionMonstersConfig.CHAMPION_ADENAS_REWARDS_AMOUNT;
 				}
@@ -1140,13 +1159,14 @@ public class NpcTemplate extends CreatureTemplate
 				final int itemId = dropItem.getItemId();
 				final ItemTemplate item = ItemData.getInstance().getTemplate(itemId);
 				final boolean champion = victim.getChampionTier() > 0;
+				final boolean championGold = Attackable.hasChampionBonusRewards(victim, killer); // bonus adena stops once the killer outlevels the champion
 				
 				// chance
 				double rateChance = 1;
 				if (RatesConfig.RATE_DROP_CHANCE_BY_ID.get(itemId) != null)
 				{
 					rateChance *= RatesConfig.RATE_DROP_CHANCE_BY_ID.get(itemId);
-					if (champion && (itemId == Inventory.ADENA_ID))
+					if (championGold && (itemId == Inventory.ADENA_ID))
 					{
 						rateChance *= ChampionMonstersConfig.CHAMPION_ADENAS_REWARDS_CHANCE;
 					}
@@ -1168,6 +1188,7 @@ public class NpcTemplate extends CreatureTemplate
 				{
 					final double passiveMultiplier = victim.isMonster() ? ((Monster) victim).getCustomPassiveDropMultiplier() : 1.0;
 					rateChance *= RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER * (champion ? ChampionMonstersConfig.CHAMPION_REWARDS_CHANCE : 1) * passiveMultiplier;
+					rateChance *= LuckyLootManager.getInstance().getDropMultiplier(killer);
 				}
 				
 				// premium chance
@@ -1206,7 +1227,7 @@ public class NpcTemplate extends CreatureTemplate
 					if (RatesConfig.RATE_DROP_AMOUNT_BY_ID.get(itemId) != null)
 					{
 						rateAmount *= RatesConfig.RATE_DROP_AMOUNT_BY_ID.get(itemId);
-						if (champion && (itemId == Inventory.ADENA_ID))
+						if (championGold && (itemId == Inventory.ADENA_ID))
 						{
 							double adenaAmountBonus = ChampionMonstersConfig.CHAMPION_ADENAS_REWARDS_AMOUNT;
 							

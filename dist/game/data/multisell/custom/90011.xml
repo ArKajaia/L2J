@@ -4,318 +4,318 @@
         <npc>90000</npc> <!-- Mina -->
     </npcs>
     
-    <!-- Tier 1: Basic Raw Materials (50 Arena Coins) -->
+    <!-- Tier 1: Basic Raw Materials (250 Arena Coins) -->
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="50" id="3481" />
+        <ingredient count="250" id="3481" />
         <!-- Stem -->
         <production count="1" id="1864" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="50" id="3481" />
+        <ingredient count="250" id="3481" />
         <!-- Varnish -->
         <production count="1" id="1865" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="50" id="3481" />
+        <ingredient count="250" id="3481" />
         <!-- Suede -->
         <production count="1" id="1866" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="50" id="3481" />
+        <ingredient count="250" id="3481" />
         <!-- Animal Skin -->
         <production count="1" id="1867" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="50" id="3481" />
+        <ingredient count="250" id="3481" />
         <!-- Thread -->
         <production count="1" id="1868" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="50" id="3481" />
+        <ingredient count="250" id="3481" />
         <!-- Iron Ore -->
         <production count="1" id="1869" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="50" id="3481" />
+        <ingredient count="250" id="3481" />
         <!-- Coal -->
         <production count="1" id="1870" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="50" id="3481" />
+        <ingredient count="250" id="3481" />
         <!-- Charcoal -->
         <production count="1" id="1871" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="50" id="3481" />
+        <ingredient count="250" id="3481" />
         <!-- Animal Bone -->
         <production count="1" id="1872" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="50" id="3481" />
+        <ingredient count="250" id="3481" />
         <!-- Silver Nugget -->
         <production count="1" id="1873" />
     </item>
 
-    <!-- Tier 2: Intermediate & Refined Materials (150 Arena Coins) -->
+    <!-- Tier 2: Intermediate & Refined Materials (750 Arena Coins) -->
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="150" id="3481" />
+        <ingredient count="750" id="3481" />
         <!-- Oriharukon Ore -->
         <production count="1" id="1874" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="150" id="3481" />
+        <ingredient count="750" id="3481" />
         <!-- Stone of Purity -->
         <production count="1" id="1875" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="150" id="3481" />
+        <ingredient count="750" id="3481" />
         <!-- Mithril Ore -->
         <production count="1" id="1876" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="150" id="3481" />
+        <ingredient count="750" id="3481" />
         <!-- Adamantite Nugget -->
         <production count="1" id="1877" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="150" id="3481" />
+        <ingredient count="750" id="3481" />
         <!-- Braided Hemp -->
         <production count="1" id="1878" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="150" id="3481" />
+        <ingredient count="750" id="3481" />
         <!-- Cokes -->
         <production count="1" id="1879" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="150" id="3481" />
+        <ingredient count="750" id="3481" />
         <!-- Steel -->
         <production count="1" id="1880" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="150" id="3481" />
+        <ingredient count="750" id="3481" />
         <!-- Coarse Bone Powder -->
         <production count="1" id="1881" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="150" id="3481" />
+        <ingredient count="750" id="3481" />
         <!-- Leather -->
         <production count="1" id="1882" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="150" id="3481" />
+        <ingredient count="750" id="3481" />
         <!-- Cord -->
         <production count="1" id="1884" />
     </item>
 
-    <!-- Tier 3: Advanced Processed Materials (400 Arena Coins) -->
+    <!-- Tier 3: Advanced Processed Materials (2,000 Arena Coins) -->
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="400" id="3481" />
+        <ingredient count="2000" id="3481" />
         <!-- Steel Mold -->
         <production count="1" id="1883" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="400" id="3481" />
+        <ingredient count="2000" id="3481" />
         <!-- High-Grade Suede -->
         <production count="1" id="1885" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="400" id="3481" />
+        <ingredient count="2000" id="3481" />
         <!-- Silver Mold -->
         <production count="1" id="1886" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="400" id="3481" />
+        <ingredient count="2000" id="3481" />
         <!-- Varnish of Purity -->
         <production count="1" id="1887" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="400" id="3481" />
+        <ingredient count="2000" id="3481" />
         <!-- Synthetic Cokes -->
         <production count="1" id="1888" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="400" id="3481" />
+        <ingredient count="2000" id="3481" />
         <!-- Compound Braid -->
         <production count="1" id="1889" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="400" id="3481" />
+        <ingredient count="2000" id="3481" />
         <!-- Mithril Alloy -->
         <production count="1" id="1890" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="400" id="3481" />
+        <ingredient count="2000" id="3481" />
         <!-- Artisan's Frame -->
         <production count="1" id="1891" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="400" id="3481" />
+        <ingredient count="2000" id="3481" />
         <!-- Blacksmith's Frame -->
         <production count="1" id="1892" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="400" id="3481" />
+        <ingredient count="2000" id="3481" />
         <!-- Oriharukon -->
         <production count="1" id="1893" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="400" id="3481" />
+        <ingredient count="2000" id="3481" />
         <!-- Crafted Leather -->
         <production count="1" id="1894" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="400" id="3481" />
+        <ingredient count="2000" id="3481" />
         <!-- Metallic Fiber -->
         <production count="1" id="1895" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="400" id="3481" />
+        <ingredient count="2000" id="3481" />
         <!-- Metallic Thread -->
         <production count="1" id="5549" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="400" id="3481" />
+        <ingredient count="2000" id="3481" />
         <!-- Durable Metal Plate -->
         <production count="1" id="5550" />
     </item>
 
-    <!-- Tier 4: Rare Craft Reagents & Molds (1,000 Arena Coins) -->
+    <!-- Tier 4: Rare Craft Reagents & Molds (5,000 Arena Coins) -->
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="1000" id="3481" />
+        <ingredient count="5000" id="3481" />
         <!-- Mold Glue -->
         <production count="1" id="4039" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="1000" id="3481" />
+        <ingredient count="5000" id="3481" />
         <!-- Mold Lubricant -->
         <production count="1" id="4040" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="1000" id="3481" />
+        <ingredient count="5000" id="3481" />
         <!-- Mold Hardener -->
         <production count="1" id="4041" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="1000" id="3481" />
+        <ingredient count="5000" id="3481" />
         <!-- Enria -->
         <production count="1" id="4042" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="1000" id="3481" />
+        <ingredient count="5000" id="3481" />
         <!-- Asofe -->
         <production count="1" id="4043" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="1000" id="3481" />
+        <ingredient count="5000" id="3481" />
         <!-- Thons -->
         <production count="1" id="4044" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="1000" id="3481" />
+        <ingredient count="5000" id="3481" />
         <!-- Maestro Holder -->
         <production count="1" id="4045" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="1000" id="3481" />
+        <ingredient count="5000" id="3481" />
         <!-- Maestro Anvil Lock -->
         <production count="1" id="4046" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="1000" id="3481" />
+        <ingredient count="5000" id="3481" />
         <!-- Craftsman Mold -->
         <production count="1" id="4047" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="1000" id="3481" />
+        <ingredient count="5000" id="3481" />
         <!-- Maestro Mold -->
         <production count="1" id="4048" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="1000" id="3481" />
+        <ingredient count="5000" id="3481" />
         <!-- Reorin's Mold -->
         <production count="1" id="5551" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="1000" id="3481" />
+        <ingredient count="5000" id="3481" />
         <!-- Warsmith's Mold -->
         <production count="1" id="5552" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="1000" id="3481" />
+        <ingredient count="5000" id="3481" />
         <!-- Arcsmith's Anvil -->
         <production count="1" id="5553" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="1000" id="3481" />
+        <ingredient count="5000" id="3481" />
         <!-- Warsmith's Holder -->
         <production count="1" id="5554" />
     </item>
 
-    <!-- Tier 5: S80 High-Grade Materials (2,500 Arena Coins) -->
+    <!-- Tier 5: S80 High-Grade Materials (12,500 Arena Coins) -->
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="2500" id="3481" />
+        <ingredient count="12500" id="3481" />
         <!-- Leonard -->
         <production count="1" id="9628" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="2500" id="3481" />
+        <ingredient count="12500" id="3481" />
         <!-- Adamantine -->
         <production count="1" id="9629" />
     </item>
     <item>
         <!-- Required Ingredient -->
-        <ingredient count="2500" id="3481" />
+        <ingredient count="12500" id="3481" />
         <!-- Orichalcum -->
         <production count="1" id="9630" />
     </item>
