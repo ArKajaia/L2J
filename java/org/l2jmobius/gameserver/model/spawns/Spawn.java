@@ -570,6 +570,9 @@ public class Spawn extends Location
 			((org.l2jmobius.gameserver.model.actor.Attackable) npc).setChampionTier(0);
 		}
 		
+		// Open-world wave challenge roll - after the champion roll so champions can be excluded.
+		org.l2jmobius.gameserver.managers.WaveChallengeManager.getInstance().tryConvert(npc, getInstanceId());
+		
 		npc.setCurrentHp(npc.getMaxHp());
 		npc.setCurrentMp(npc.getMaxMp());
 		npc.broadcastInfo();
