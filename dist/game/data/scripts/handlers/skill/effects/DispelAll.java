@@ -16,8 +16,14 @@
  */
 package handlers.skill.effects;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.l2jmobius.gameserver.managers.CancelReturnManager;
+import org.l2jmobius.gameserver.managers.CancelReturnManager.CanceledBuff;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.skill.BuffInfo;
 import org.l2jmobius.gameserver.model.conditions.Condition;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.effects.EffectType;
@@ -49,6 +55,21 @@ public class DispelAll extends AbstractEffect
 	@Override
 	public void onStart(Creature effector, Creature effected, Skill skill)
 	{
+		// NPC/BOSS Cancel Magic land here - snapshot buffs and songs/dances first so they can be handed back (see CancelReturn.ini).
+		final CancelReturnManager cancelReturn = CancelReturnManager.getInstance();
+		List<CanceledBuff> toReturn = null;
+		if (cancelReturn.isEligible(effector, effected))
+		{
+			final List<BuffInfo> removed = new ArrayList<>(effected.getEffectList().getBuffs());
+			removed.addAll(effected.getEffectList().getDances());
+			toReturn = cancelReturn.snapshot(removed);
+		}
+
 		effected.stopAllEffects();
+
+		if (toReturn != null)
+		{
+			cancelReturn.scheduleReturn(effected.asPlayer(), toReturn);
+		}
 	}
 }

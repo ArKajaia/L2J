@@ -332,6 +332,7 @@ public class Attackable extends Npc
 			{
 				org.l2jmobius.gameserver.managers.HotZoneMinibossManager.getInstance().onAttackableKilled(this, killer);
 				org.l2jmobius.gameserver.managers.HotzoneCoinDropManager.getInstance().onAttackableKilled(this, player);
+				org.l2jmobius.gameserver.managers.WaveChallengeManager.getInstance().onAttackableKilled(this);
 			}
 		}
 		

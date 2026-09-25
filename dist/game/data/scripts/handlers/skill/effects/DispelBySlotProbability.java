@@ -27,9 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
-import org.l2jmobius.gameserver.config.custom.CancelReturnConfig;
+import org.l2jmobius.gameserver.managers.CancelReturnManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.holders.creature.EffectList;
@@ -94,24 +93,6 @@ public class DispelBySlotProbability extends AbstractEffect
 			return;
 		}
 		
-		if (!CancelReturnConfig.CANCEL_RETURN_ON)
-		{
-			normalCancel(effected);
-			return;
-		}
-		
-		if ((effector.isPlayer() && !CancelReturnConfig.CANCEL_RETURN_PLAYER) || ((effector.isMonster() || effector.isRaid()) && !CancelReturnConfig.CANCEL_RETURN_MOB))
-		{
-			normalCancel(effected);
-			return;
-		}
-		
-		if (!CancelReturnConfig.CANCEL_RETURN_PLAYER_OLYS && effected.isPlayer() && effected.asPlayer().isInOlympiadMode())
-		{
-			normalCancel(effected);
-			return;
-		}
-		
 		final EffectList effectList = effected.getEffectList();
 		final List<BuffInfo> canceled = new LinkedList<>();
 		for (Entry<AbnormalType, Short> entry : _dispelAbnormals.entrySet())
@@ -137,59 +118,12 @@ public class DispelBySlotProbability extends AbstractEffect
 		{
 			return;
 		}
-		
-		ThreadPool.schedule(() ->
+
+		// BuffInfo.getTime() keeps counting from the original start, so snapshotting right after removal is still accurate.
+		final CancelReturnManager cancelReturn = CancelReturnManager.getInstance();
+		if (cancelReturn.isEligible(effector, effected))
 		{
-			if (!effected.isPlayer() || effected.isDead() || !effected.asPlayer().isOnline())
-			{
-				return;
-			}
-			
-			for (BuffInfo oldInfo : canceled)
-			{
-				final Skill sk = oldInfo.getSkill();
-				final int timeLeft = oldInfo.getTime();
-				if ((sk == null) || (timeLeft <= 0))
-				{
-					continue;
-				}
-				
-				if (effected.getEffectList().getBuffInfoBySkillId(sk.getId()) != null)
-				{
-					continue;
-				}
-				
-				sk.applyEffects(effected, effected);
-				
-				final BuffInfo newInfo = effected.getEffectList().getBuffInfoBySkillId(sk.getId());
-				if (newInfo != null)
-				{
-					newInfo.setAbnormalTime(timeLeft);
-				}
-			}
-			
-		}, CancelReturnConfig.TIME_TO_RETURN);
-	}
-	
-	private void normalCancel(Creature effected)
-	{
-		final EffectList effectList = effected.getEffectList();
-		for (Entry<AbnormalType, Short> entry : _dispelAbnormals.entrySet())
-		{
-			if (Rnd.get(100) < _rate)
-			{
-				// Dispel transformations (buff and by GM).
-				if ((entry.getKey() == AbnormalType.TRANSFORM) && (effected.isTransformed() || (effected.isPlayer() || (entry.getValue() == effected.asPlayer().getTransformationId()) || (entry.getValue() < 0))))
-				{
-					effected.stopTransformation(true);
-				}
-				
-				final BuffInfo toDispel = effectList.getBuffInfoByAbnormalType(entry.getKey());
-				if (toDispel != null)
-				{
-					effectList.stopSkillEffects(SkillFinishType.REMOVED, entry.getKey());
-				}
-			}
+			cancelReturn.scheduleReturn(effected.asPlayer(), cancelReturn.snapshot(canceled));
 		}
 	}
 }

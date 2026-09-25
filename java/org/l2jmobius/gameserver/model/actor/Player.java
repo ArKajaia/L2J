@@ -5257,7 +5257,7 @@ public class Player extends Playable
 		// tick racing this same death) can never grant the reward twice. This is belt-and-braces:
 		// the player no longer gets revived while still standing next to a live challenger (see
 		// custom.ArenaMaster.ArenaMaster.finishArenaRun()), so a second death shouldn't happen at all.
-		if (RatesConfig.ARENA_SYSTEM_ENABLED && (killer != null) && killer.isNpc() && RatesConfig.ARENA_CHALLENGER_NPC_IDS.contains(killer.getId()) && !((org.l2jmobius.gameserver.model.actor.instance.Monster) killer).getVariables().getBoolean("ARENA_RUN_ENDED", false))
+		if (RatesConfig.ARENA_SYSTEM_ENABLED && (killer != null) && killer.isMonster() && RatesConfig.ARENA_CHALLENGER_NPC_IDS.contains(killer.getId()) && killer.asMonster().getVariables().getBoolean("IS_ARENA_CHALLENGER", false) && !killer.asMonster().getVariables().getBoolean("ARENA_RUN_ENDED", false))
 		{
 			final org.l2jmobius.gameserver.model.actor.instance.Monster arenaChallenger = (org.l2jmobius.gameserver.model.actor.instance.Monster) killer;
 			arenaChallenger.getVariables().set("ARENA_RUN_ENDED", true);

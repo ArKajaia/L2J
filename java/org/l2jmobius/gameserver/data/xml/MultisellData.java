@@ -295,6 +295,28 @@ public class MultisellData implements IXmlReader
 			});
 		}
 		
+		sendPrepared(list, player);
+	}
+
+	public void separateAndSend(int listId, Player player, Npc npc, boolean inventoryOnly)
+	{
+		separateAndSend(listId, player, npc, inventoryOnly, 1, 1);
+	}
+
+	/**
+	 * Sends a list that was built at runtime rather than loaded from XML (e.g. a filtered search result). The purchase path (MultiSellChoose) only ever reads the player's prepared list, so a runtime list gets exactly the same NPC/distance/ingredient checks as a file-backed one. Entry ids must be unique
+	 * within {@code template}.
+	 * @param template the runtime list; its id must not collide with a real list the player could also have open
+	 * @param player
+	 * @param npc
+	 */
+	public void separateAndSend(ListContainer template, Player player, Npc npc)
+	{
+		sendPrepared(new PreparedListContainer(template, false, player, npc), player);
+	}
+
+	private void sendPrepared(PreparedListContainer list, Player player)
+	{
 		int index = 0;
 		do
 		{
@@ -305,10 +327,14 @@ public class MultisellData implements IXmlReader
 		while (index < list.getEntries().size());
 		player.setMultiSell(list);
 	}
-	
-	public void separateAndSend(int listId, Player player, Npc npc, boolean inventoryOnly)
+
+	/**
+	 * @param listId
+	 * @return the loaded list template, or {@code null}
+	 */
+	public ListContainer getList(int listId)
 	{
-		separateAndSend(listId, player, npc, inventoryOnly, 1, 1);
+		return _entries.get(listId);
 	}
 	
 	public static boolean hasSpecialIngredient(int id, long amount, Player player)

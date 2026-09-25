@@ -22,8 +22,8 @@ package handlers.skill.effects;
 
 import java.util.List;
 
-import org.l2jmobius.commons.threads.ThreadPool;
-import org.l2jmobius.gameserver.config.custom.CancelReturnConfig;
+import org.l2jmobius.gameserver.managers.CancelReturnManager;
+import org.l2jmobius.gameserver.managers.CancelReturnManager.CanceledBuff;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.conditions.Condition;
@@ -73,75 +73,24 @@ public class DispelByCategory extends AbstractEffect
 			return;
 		}
 		
-		if (!CancelReturnConfig.CANCEL_RETURN_ON)
-		{
-			normalCancel(effector, effected, skill);
-			return;
-		}
-		
-		if ((effector.isPlayer() && !CancelReturnConfig.CANCEL_RETURN_PLAYER) || ((effector.isMonster() || effector.isRaid()) && !CancelReturnConfig.CANCEL_RETURN_MOB))
-		{
-			normalCancel(effector, effected, skill);
-			return;
-		}
-		
-		if (!CancelReturnConfig.CANCEL_RETURN_PLAYER_OLYS && effected.isPlayer() && effected.asPlayer().isInOlympiadMode())
-		{
-			normalCancel(effector, effected, skill);
-			return;
-		}
-		
 		final List<BuffInfo> canceled = Formulas.calcCancelStealEffects(effector, effected, skill, _slot, _rate, _max);
 		if (canceled.isEmpty())
 		{
 			return;
 		}
-		
+
+		// Snapshot before removal. Debuffs removed by cleanses (slot=debuff) are filtered out by snapshot() and never come back.
+		final CancelReturnManager cancelReturn = CancelReturnManager.getInstance();
+		final List<CanceledBuff> toReturn = cancelReturn.isEligible(effector, effected) ? cancelReturn.snapshot(canceled) : null;
+
 		for (BuffInfo info : canceled)
 		{
 			effected.getEffectList().stopSkillEffects(SkillFinishType.REMOVED, info.getSkill());
 		}
-		
-		ThreadPool.schedule(() ->
+
+		if (toReturn != null)
 		{
-			if (effected.isMonster() || effected.isDead() || !effected.asPlayer().isOnline())
-			{
-				return;
-			}
-			
-			for (BuffInfo info : canceled)
-			{
-				final Skill sk = info.getSkill();
-				final int timeLeft = info.getTime();
-				
-				if ((sk == null) || (timeLeft <= 0))
-				{
-					continue;
-				}
-				
-				if (effected.getEffectList().getBuffInfoBySkillId(sk.getId()) != null)
-				{
-					continue;
-				}
-				
-				sk.applyEffects(effected, effected);
-				
-				final BuffInfo newInfo = effected.getEffectList().getBuffInfoBySkillId(sk.getId());
-				if (newInfo != null)
-				{
-					newInfo.setAbnormalTime(timeLeft);
-				}
-			}
-			
-		}, CancelReturnConfig.TIME_TO_RETURN);
-	}
-	
-	private void normalCancel(Creature effector, Creature effected, Skill skill)
-	{
-		final List<BuffInfo> canceled = Formulas.calcCancelStealEffects(effector, effected, skill, _slot, _rate, _max);
-		for (BuffInfo info : canceled)
-		{
-			effected.getEffectList().stopSkillEffects(SkillFinishType.REMOVED, info.getSkill());
+			cancelReturn.scheduleReturn(effected.asPlayer(), toReturn);
 		}
 	}
 }
