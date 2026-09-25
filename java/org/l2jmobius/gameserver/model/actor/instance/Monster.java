@@ -13,6 +13,7 @@ import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
 import org.l2jmobius.gameserver.config.custom.HotzoneMinibossConfig;
+import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
 import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData;
 import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData.CustomSkill;
 import org.l2jmobius.gameserver.data.xml.SkillData;
@@ -342,6 +343,10 @@ public class Monster extends Attackable
 		final String baseTitle = getTemplate().getTitle() == null ? "" : getTemplate().getTitle();
 
 		final StringBuilder sb = new StringBuilder();
+		if (isWaveChallenge())
+		{
+			sb.append(String.format(WaveChallengeConfig.TITLE_TAG, getWaveChallengeWave(), WaveChallengeConfig.WAVE_COUNT)).append(' ');
+		}
 		if (isHotzoneMiniboss())
 		{
 			sb.append(HotzoneMinibossConfig.TITLE_TAG).append(' ');
@@ -380,6 +385,10 @@ public class Monster extends Attackable
 	public long getExpReward(int level)
 	{
 		double multiplier = isHotzoneMiniboss() ? HotzoneMinibossConfig.XP_SP_MULTIPLIER : 1.0;
+		if (isWaveChallenge())
+		{
+			multiplier *= WaveChallengeConfig.XP_MULTIPLIER;
+		}
 		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
 		if (hotzoneModifier != null)
 		{
@@ -392,12 +401,182 @@ public class Monster extends Attackable
 	public int getSpReward(int level)
 	{
 		double multiplier = isHotzoneMiniboss() ? HotzoneMinibossConfig.XP_SP_MULTIPLIER : 1.0;
+		if (isWaveChallenge())
+		{
+			multiplier *= WaveChallengeConfig.SP_MULTIPLIER;
+		}
 		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
 		if (hotzoneModifier != null)
 		{
 			multiplier *= hotzoneModifier.getXpSpMult();
 		}
 		return (int) (super.getSpReward(level) * multiplier);
+	}
+
+	// =======================================================================
+	// Wave Challenge System (open world)
+	// =======================================================================
+
+	/**
+	 * @return {@code true} if {@link org.l2jmobius.gameserver.managers.WaveChallengeManager} converted this spawn into an open-world wave challenge.
+	 */
+	public boolean isWaveChallenge()
+	{
+		return WaveChallengeConfig.ENABLED && getVariables().getBoolean("IS_WAVE_CHALLENGE", false);
+	}
+
+	/**
+	 * @return the wave this challenge is currently on (1-based), or 0 if this isn't a wave challenge.
+	 */
+	public int getWaveChallengeWave()
+	{
+		return getVariables().getInt("WAVE_CHALLENGE_WAVE", 0);
+	}
+
+	/**
+	 * @return {@code true} once the final wave has been defeated, i.e. this death is the one that pays out.
+	 */
+	public boolean isWaveChallengeFinalWave()
+	{
+		return isWaveChallenge() && (getWaveChallengeWave() >= WaveChallengeConfig.WAVE_COUNT);
+	}
+
+	/**
+	 * Turns this freshly spawned monster into wave 1 of an open-world wave challenge. Called by {@link org.l2jmobius.gameserver.managers.WaveChallengeManager#tryConvert}.
+	 */
+	public void startWaveChallenge()
+	{
+		getVariables().set("IS_WAVE_CHALLENGE", true);
+		getVariables().set("WAVE_CHALLENGE_WAVE", 1);
+
+		if (WaveChallengeConfig.APPLY_ARENA_BUFFS)
+		{
+			applyArenaBuffs();
+		}
+
+		rebuildFullTitle();
+		setCurrentHp(getMaxHp());
+		setCurrentMp(getMaxMp());
+		broadcastInfo();
+	}
+
+	/**
+	 * Same compounding growth as the arena challenger, except wave 1 is the monster's base strength (arena wave 0).
+	 */
+	private double getWaveChallengeMultiplier(int growthPercent)
+	{
+		if (!isWaveChallenge())
+		{
+			return 1.0;
+		}
+		return Math.pow(1 + (growthPercent / 100.0), Math.max(0, getWaveChallengeWave() - 1));
+	}
+
+	private double getWaveChallengeStatMultiplier()
+	{
+		return getWaveChallengeMultiplier(WaveChallengeConfig.STAT_GROWTH_PER_WAVE);
+	}
+
+	private double getWaveChallengeOffenseMultiplier()
+	{
+		return getWaveChallengeMultiplier(WaveChallengeConfig.OFFENSE_GROWTH_PER_WAVE);
+	}
+
+	private double getWaveChallengeDefenseMultiplier()
+	{
+		return getWaveChallengeMultiplier(WaveChallengeConfig.DEFENSE_GROWTH_PER_WAVE);
+	}
+
+	/**
+	 * A lethal blow before the final wave instead heals the monster and moves it to the next, stronger wave - the open-world counterpart of {@link #onArenaWaveCleared(Creature)}. Synchronized and re-checked so two simultaneous lethal hits (e.g. a DOT tick racing a skill) can't skip a wave.
+	 * @param killer whoever landed the lethal blow
+	 * @return {@code true} if the wave advanced (the death must be cancelled), {@code false} if this is the final wave and the monster should die normally
+	 */
+	private synchronized boolean advanceWaveChallenge(Creature killer)
+	{
+		if (isWaveChallengeFinalWave() || isDead())
+		{
+			return false;
+		}
+
+		final int wave = getWaveChallengeWave() + 1;
+		getVariables().set("WAVE_CHALLENGE_WAVE", wave);
+
+		if (WaveChallengeConfig.REROLL_PASSIVES_PER_WAVE)
+		{
+			addRandomPassiveSkill(getLevel()); // getLevel() already includes this wave's virtual levels
+		}
+		if (WaveChallengeConfig.APPLY_ARENA_BUFFS)
+		{
+			applyArenaBuffs();
+		}
+		rerollArenaActiveSkills();
+
+		rebuildFullTitle();
+		setCurrentHp(getMaxHp());
+		setCurrentMp(getMaxMp());
+		broadcastInfo();
+
+		final String message = (wave >= WaveChallengeConfig.WAVE_COUNT) ? "Final wave " + wave + "/" + WaveChallengeConfig.WAVE_COUNT + "! Defeat " + getName() + " once more to claim the reward." : "Wave " + (wave - 1) + " cleared! " + getName() + " grows stronger... (wave " + wave + "/" + WaveChallengeConfig.WAVE_COUNT + ")";
+		sendWaveChallengeMessage(killer, message);
+		return true;
+	}
+
+	/**
+	 * Resets a partially cleared challenge back to wave 1 once nobody is fighting it any more, so players can't whittle it down across separate attempts.
+	 */
+	private void resetWaveChallenge()
+	{
+		getVariables().set("WAVE_CHALLENGE_WAVE", 1);
+
+		if (WaveChallengeConfig.REROLL_PASSIVES_PER_WAVE)
+		{
+			addRandomPassiveSkill(getLevel());
+		}
+
+		rebuildFullTitle();
+		setCurrentHp(getMaxHp());
+		setCurrentMp(getMaxMp());
+		broadcastInfo();
+	}
+
+	/**
+	 * Sends {@code message} to every player on this monster's aggro list, plus the killer if they somehow aren't on it.
+	 */
+	private void sendWaveChallengeMessage(Creature killer, String message)
+	{
+		final List<Player> recipients = new ArrayList<>();
+		for (Creature attacker : getAggroList().keySet())
+		{
+			final Player player = attacker.asPlayer();
+			if ((player != null) && !recipients.contains(player))
+			{
+				recipients.add(player);
+			}
+		}
+
+		final Player killerPlayer = killer != null ? killer.asPlayer() : null;
+		if ((killerPlayer != null) && !recipients.contains(killerPlayer))
+		{
+			recipients.add(killerPlayer);
+		}
+
+		for (Player player : recipients)
+		{
+			player.sendMessage(message);
+		}
+	}
+
+	@Override
+	public void clearAggroList()
+	{
+		super.clearAggroList();
+
+		// Everyone stopped fighting (leashed home, forgot its attackers, ...) - start over from wave 1.
+		if (WaveChallengeConfig.RESET_ON_LEASH && isWaveChallenge() && !isDead() && (getWaveChallengeWave() > 1))
+		{
+			resetWaveChallenge();
+		}
 	}
 
 	// =======================================================================
@@ -464,6 +643,11 @@ public class Monster extends Attackable
 			return;
 		}
 		
+		if (isWaveChallenge() && ((getCurrentHp() - amount) <= 0) && advanceWaveChallenge(attacker))
+		{
+			return;
+		}
+		
 		super.reduceCurrentHp(amount, attacker, awake, isDOT, skill);
 	}
 	
@@ -510,6 +694,13 @@ public class Monster extends Attackable
 			return Math.min(85, virtualLevel);
 		}
 		
+		if (isWaveChallenge())
+		{
+			final int baseLevel = super.getLevel();
+			final int virtualLevel = baseLevel + (Math.max(0, getWaveChallengeWave() - 1) * WaveChallengeConfig.LEVEL_GROWTH_PER_WAVE);
+			return Math.max(baseLevel, Math.min(WaveChallengeConfig.MAX_VIRTUAL_LEVEL, virtualLevel));
+		}
+		
 		return super.getLevel();
 	}
 	
@@ -540,7 +731,7 @@ public class Monster extends Attackable
 		final HotzoneModifier hotzoneModifierHp = getActiveHotzoneModifier();
 		final double hotzoneHpMultiplier = hotzoneModifierHp != null ? hotzoneModifierHp.getMonsterHpMult() : 1.0;
 
-		return (int) (baseMaxHp * hpMultiplier * arenaMultiplier * championHpMult * getHotzoneMinibossMultiplier() * hotzoneHpMultiplier);
+		return (int) (baseMaxHp * hpMultiplier * arenaMultiplier * championHpMult * getHotzoneMinibossMultiplier() * hotzoneHpMultiplier * getWaveChallengeStatMultiplier());
 
 	}
 
@@ -550,7 +741,7 @@ public class Monster extends Attackable
 		final double basePAtk = super.getPAtk(target);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
-		return basePAtk * multiplier * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() : 1.0);
+		return basePAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() : 1.0);
 	}
 
 	@Override
@@ -559,7 +750,7 @@ public class Monster extends Attackable
 		final double baseMAtk = super.getMAtk(target, skill);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
-		return baseMAtk * multiplier * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() : 1.0);
+		return baseMAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() : 1.0);
 	}
 
 	@Override
@@ -568,7 +759,7 @@ public class Monster extends Attackable
 		final double basePDef = super.getPDef(target);
 		final double multiplier = isArenaChallenger() ? getArenaDefenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
-		return basePDef * multiplier * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0);
+		return basePDef * multiplier * getWaveChallengeDefenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0);
 	}
 
 	@Override
@@ -577,14 +768,14 @@ public class Monster extends Attackable
 		final double baseMDef = super.getMDef(target, skill);
 		final double multiplier = isArenaChallenger() ? getArenaDefenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
-		return baseMDef * multiplier * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0);
+		return baseMDef * multiplier * getWaveChallengeDefenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0);
 	}
 
 	@Override
 	public double getPAtkSpd()
 	{
 		final double basePAtkSpd = super.getPAtkSpd();
-		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : 1.0;
+		final double multiplier = (isArenaChallenger() ? getArenaOffenseMultiplier() : 1.0) * getWaveChallengeOffenseMultiplier();
 		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
 		final double hotzoneMultiplier = hotzoneModifier != null ? hotzoneModifier.getMonsterSpdMult() : 1.0;
 		return basePAtkSpd * Math.sqrt(multiplier * hotzoneMultiplier);
@@ -594,7 +785,7 @@ public class Monster extends Attackable
 	public int getMAtkSpd()
 	{
 		final int baseMAtkSpd = super.getMAtkSpd();
-		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : 1.0;
+		final double multiplier = (isArenaChallenger() ? getArenaOffenseMultiplier() : 1.0) * getWaveChallengeOffenseMultiplier();
 		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
 		final double hotzoneMultiplier = hotzoneModifier != null ? hotzoneModifier.getMonsterSpdMult() : 1.0;
 		return (int) (baseMAtkSpd * Math.sqrt(multiplier * hotzoneMultiplier));
@@ -709,7 +900,7 @@ public class Monster extends Attackable
 	@Override
 	public boolean giveRaidCurse()
 	{
-		if (isArenaChallenger())
+		if (isArenaChallenger() || isWaveChallenge())
 		{
 			return false;
 		}
@@ -741,6 +932,13 @@ public class Monster extends Attackable
 			
 			// Returning false tells the core engine to immediately cancel the death sequence
 			// (no XP is given, no loot drops, and the monster does not disappear).
+			return false;
+		}
+		
+		// Same safety net for open-world wave challenges: anything that bypassed the HP check
+		// before the final wave just advances the wave instead of killing the monster.
+		if (isWaveChallenge() && advanceWaveChallenge(killer))
+		{
 			return false;
 		}
 		

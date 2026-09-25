@@ -65,6 +65,7 @@ import org.l2jmobius.gameserver.config.custom.StartingTitleConfig;
 import org.l2jmobius.gameserver.config.custom.TransmogConfig;
 import org.l2jmobius.gameserver.config.custom.WalkerBotProtectionConfig;
 import org.l2jmobius.gameserver.config.custom.WarehouseSortingConfig;
+import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
 import org.l2jmobius.gameserver.config.custom.WeddingConfig;
 
 /**
@@ -141,6 +142,7 @@ public class ConfigLoader
 		TransmogConfig.load();
 		WalkerBotProtectionConfig.load();
 		WarehouseSortingConfig.load();
+		WaveChallengeConfig.load();
 		WeddingConfig.load();
 		CustomBuffConfig.load();
 	}

@@ -33,6 +33,7 @@ import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.config.custom.NpcStatMultipliersConfig;
 import org.l2jmobius.gameserver.config.custom.PremiumSystemConfig;
+import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
 import org.l2jmobius.gameserver.data.sql.CharInfoTable;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
@@ -703,6 +704,19 @@ public class NpcTemplate extends CreatureTemplate
 				if ((ungroupedDrops != null) && victim.isMonster() && victim.asMonster().isSeeded())
 				{
 					ungroupedDrops.removeIf(i -> (i.getId() != 57 /* Adena */) && (i.getId() != 6361 /* Green Seal Stone */) && (i.getId() != 6362 /* Red Seal Stone */) && (i.getId() != 6360 /* Blue Seal Stone */));
+				}
+			}
+			
+			// Open-world wave challenges pay Dragon coins instead of adena.
+			if (WaveChallengeConfig.NO_ADENA && victim.isMonster() && victim.asMonster().isWaveChallenge())
+			{
+				if (groupDrops != null)
+				{
+					groupDrops.removeIf(i -> i.getId() == Inventory.ADENA_ID);
+				}
+				if (ungroupedDrops != null)
+				{
+					ungroupedDrops.removeIf(i -> i.getId() == Inventory.ADENA_ID);
 				}
 			}
 			
