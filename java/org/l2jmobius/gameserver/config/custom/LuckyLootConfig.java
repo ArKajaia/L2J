@@ -23,7 +23,7 @@ package org.l2jmobius.gameserver.config.custom;
 import org.l2jmobius.commons.util.ConfigReader;
 
 /**
- * Loads the lucky loot configuration: Luck stacks built from a kill streak (see {@link org.l2jmobius.gameserver.managers.LuckyLootManager}), the rare Jackpot kill that re-rolls a monster's drop table several times, and the Sealed Cache drop (Common/Rare/Epic extractable boxes).
+ * Loads the lucky loot configuration: Luck stacks built from a kill streak (see {@link org.l2jmobius.gameserver.managers.LuckyLootManager}), the rare Jackpot kill (its chance grows with Luck) that re-rolls a monster's drop table several times, and the Sealed Cache drop (Common/Rare/Epic extractable boxes).
  * @author Mobius
  */
 public class LuckyLootConfig
@@ -35,6 +35,8 @@ public class LuckyLootConfig
 	public static boolean LUCK_ENABLED;
 	public static int LUCK_MAX_STACKS;
 	public static double LUCK_DROP_BONUS_PER_STACK;
+	public static double LUCK_GAIN_CHANCE_AT_ZERO;
+	public static double LUCK_GAIN_CHANCE_AT_MAX;
 	public static int LUCK_MAX_LEVEL_DIFFERENCE;
 	public static boolean LUCK_TITLE_ENABLED;
 	public static String LUCK_TITLE_FORMAT;
@@ -42,8 +44,9 @@ public class LuckyLootConfig
 
 	// Jackpot
 	public static boolean JACKPOT_ENABLED;
-	public static double JACKPOT_CHANCE;
-	public static double JACKPOT_CHANCE_BONUS_PER_STACK;
+	public static double JACKPOT_CHANCE_AT_MIN_LUCK;
+	public static double JACKPOT_CHANCE_AT_MAX_LUCK;
+	public static boolean JACKPOT_RESETS_LUCK;
 	public static int JACKPOT_DROP_ROLLS;
 	public static boolean JACKPOT_ANNOUNCE;
 	public static int JACKPOT_MIN_LEVEL;
@@ -67,14 +70,17 @@ public class LuckyLootConfig
 		LUCK_ENABLED = config.getBoolean("LuckEnabled", true);
 		LUCK_MAX_STACKS = Math.max(0, config.getInt("LuckMaxStacks", 20));
 		LUCK_DROP_BONUS_PER_STACK = config.getDouble("LuckDropBonusPerStack", 2.0);
+		LUCK_GAIN_CHANCE_AT_ZERO = config.getDouble("LuckGainChanceAtZero", 30.0);
+		LUCK_GAIN_CHANCE_AT_MAX = config.getDouble("LuckGainChanceAtMax", 20.0);
 		LUCK_MAX_LEVEL_DIFFERENCE = config.getInt("LuckMaxLevelDifference", 8);
 		LUCK_TITLE_ENABLED = config.getBoolean("LuckTitleEnabled", true);
 		LUCK_TITLE_FORMAT = config.getString("LuckTitleFormat", "[Luck %d]");
 		LUCK_MILESTONE_MESSAGE = config.getBoolean("LuckMilestoneMessage", true);
 
 		JACKPOT_ENABLED = config.getBoolean("JackpotEnabled", true);
-		JACKPOT_CHANCE = config.getDouble("JackpotChance", 0.05);
-		JACKPOT_CHANCE_BONUS_PER_STACK = config.getDouble("JackpotChanceBonusPerStack", 5.0);
+		JACKPOT_CHANCE_AT_MIN_LUCK = config.getDouble("JackpotChanceAtMinLuck", 0.05);
+		JACKPOT_CHANCE_AT_MAX_LUCK = config.getDouble("JackpotChanceAtMaxLuck", 1.0);
+		JACKPOT_RESETS_LUCK = config.getBoolean("JackpotResetsLuck", true);
 		JACKPOT_DROP_ROLLS = Math.max(1, config.getInt("JackpotDropRolls", 10));
 		JACKPOT_ANNOUNCE = config.getBoolean("JackpotAnnounce", true);
 		JACKPOT_MIN_LEVEL = config.getInt("JackpotMinLevel", 20);

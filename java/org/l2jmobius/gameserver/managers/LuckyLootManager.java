@@ -12,9 +12,10 @@ import org.l2jmobius.gameserver.util.Broadcast;
 /**
  * Lucky loot: three kill rewards that share one per-player Luck counter (see {@link LuckyLootConfig}).
  * <ul>
- * <li><b>Lucky Streak</b> - every kill adds a Luck stack ({@link Player#getLuckStacks()}), each raising the kill drop chance (read by {@code NpcTemplate} through {@link #getDropMultiplier(Creature)}). Dying or logging out resets it. The stacks are shown in front of the title by
+ * <li><b>Lucky Streak</b> - every kill has a chance (lower the higher the Luck) to add a Luck stack ({@link Player#getLuckStacks()}), each raising the kill drop chance (read by {@code NpcTemplate} through {@link #getDropMultiplier(Creature)}). Dying or logging out resets it. The stacks are shown in front of the title by
  * {@link #decorateTitle(Player, String)}, which only the title-carrying packets call, so the stored/saved title never changes.</li>
- * <li><b>Jackpot</b> - {@link #rollJackpot(Attackable, Player)}, called from {@code Attackable#doItemDrop(Creature)}, which re-rolls the drop table on a hit.</li>
+ * <li><b>Jackpot</b> - {@link #rollJackpot(Attackable, Player)}, called from {@code Attackable#doItemDrop(Creature)}, which re-rolls the drop table on a hit and then calls {@link #onJackpotPaid(Attackable, Player)} to reset the Luck. The chance grows with the
+ * Luck, from Luck 1 upwards.</li>
  * <li><b>Sealed Cache</b> - a Common/Rare/Epic extractable box dropped on top of the normal loot.</li>
  * </ul>
  * Called from {@code Attackable#doDie()} alongside {@link HotzoneCoinDropManager}, guarded the same way (only kills that would actually reward exp/sp count).
@@ -25,6 +26,8 @@ public class LuckyLootManager
 	private static final int MILESTONE_STEP = 5;
 	/** Level at which {@link LuckyLootConfig#SEALED_CACHE_HIGH_LEVEL_BONUS} reaches its full effect (Rare/Epic weights doubled). */
 	private static final int CACHE_BONUS_MAX_LEVEL = 85;
+	/** Set on a victim that paid out a jackpot, so its own post-kill hook doesn't hand a fresh stack straight back. */
+	private static final String JACKPOT_VARIABLE = "LUCKY_LOOT_JACKPOT";
 
 	protected LuckyLootManager()
 	{
@@ -41,7 +44,14 @@ public class LuckyLootManager
 			return;
 		}
 
-		addLuckStack(victim, killer);
+		if (victim.getVariables().getBoolean(JACKPOT_VARIABLE, false))
+		{
+			victim.getVariables().remove(JACKPOT_VARIABLE);
+		}
+		else
+		{
+			addLuckStack(victim, killer);
+		}
 		rollSealedCache(victim, killer);
 	}
 
@@ -85,7 +95,7 @@ public class LuckyLootManager
 	}
 
 	/**
-	 * Rolls the jackpot chance for this kill, announcing it on a hit. The caller performs the extra drop rolls.
+	 * Rolls the jackpot chance for this kill, announcing it on a hit. The caller performs the extra drop rolls, then calls {@link #onJackpotPaid(Attackable, Player)}.
 	 * @param victim the attackable whose drops are being handed out
 	 * @param player the player who owns the drops
 	 * @return {@code true} if this kill is a jackpot
@@ -97,8 +107,7 @@ public class LuckyLootManager
 			return false;
 		}
 
-		final double chance = LuckyLootConfig.JACKPOT_CHANCE * getLuckChanceMultiplier(player, LuckyLootConfig.JACKPOT_CHANCE_BONUS_PER_STACK);
-		if ((Rnd.nextDouble() * 100) >= chance)
+		if ((Rnd.nextDouble() * 100) >= getJackpotChance(player))
 		{
 			return false;
 		}
@@ -109,6 +118,44 @@ public class LuckyLootManager
 			Broadcast.toAllOnlinePlayers(player.getName() + " hit a JACKPOT on " + victim.getName() + "!");
 		}
 		return true;
+	}
+
+	/**
+	 * Called once the jackpot's extra drops have been handed out (so they still benefit from the Luck drop bonus): spends the player's Luck.
+	 * @param victim the attackable that paid out the jackpot
+	 * @param player the player who owns the drops
+	 */
+	public void onJackpotPaid(Attackable victim, Player player)
+	{
+		if (!LuckyLootConfig.JACKPOT_RESETS_LUCK || (victim == null) || (player == null))
+		{
+			return;
+		}
+
+		victim.getVariables().set(JACKPOT_VARIABLE, true);
+		if (player.getLuckStacks() > 0)
+		{
+			player.setLuckStacks(0);
+			player.sendMessage("The jackpot used up all your luck.");
+			refreshTitle(player);
+		}
+	}
+
+	/**
+	 * @param player the player whose Luck is checked
+	 * @return the jackpot chance in percent: 0 at Luck 0, then linear from {@link LuckyLootConfig#JACKPOT_CHANCE_AT_MIN_LUCK} at Luck 1 to {@link LuckyLootConfig#JACKPOT_CHANCE_AT_MAX_LUCK} at {@link LuckyLootConfig#LUCK_MAX_STACKS}
+	 */
+	private double getJackpotChance(Player player)
+	{
+		final int stacks = LuckyLootConfig.LUCK_ENABLED ? player.getLuckStacks() : 0;
+		if (stacks < 1)
+		{
+			return 0;
+		}
+
+		final int maxStacks = LuckyLootConfig.LUCK_MAX_STACKS;
+		final double progress = maxStacks <= 1 ? 1.0 : Math.min(1.0, (stacks - 1) / (double) (maxStacks - 1));
+		return LuckyLootConfig.JACKPOT_CHANCE_AT_MIN_LUCK + ((LuckyLootConfig.JACKPOT_CHANCE_AT_MAX_LUCK - LuckyLootConfig.JACKPOT_CHANCE_AT_MIN_LUCK) * progress);
 	}
 
 	/**
@@ -145,6 +192,11 @@ public class LuckyLootManager
 			return;
 		}
 
+		if ((Rnd.nextDouble() * 100) >= getLuckGainChance(stacks))
+		{
+			return;
+		}
+
 		final int newStacks = stacks + 1;
 		killer.setLuckStacks(newStacks);
 		refreshTitle(killer);
@@ -160,6 +212,17 @@ public class LuckyLootManager
 				killer.sendMessage("Your luck is growing! (" + newStacks + " stacks, +" + formatPercent(newStacks * LuckyLootConfig.LUCK_DROP_BONUS_PER_STACK) + "% drop chance)");
 			}
 		}
+	}
+
+	/**
+	 * @param stacks the player's current stacks
+	 * @return the chance in percent to gain the next stack, sliding linearly from {@link LuckyLootConfig#LUCK_GAIN_CHANCE_AT_ZERO} at 0 stacks to {@link LuckyLootConfig#LUCK_GAIN_CHANCE_AT_MAX} one stack below the maximum
+	 */
+	private double getLuckGainChance(int stacks)
+	{
+		final int lastStep = LuckyLootConfig.LUCK_MAX_STACKS - 1;
+		final double progress = lastStep <= 0 ? 0 : Math.min(1.0, stacks / (double) lastStep);
+		return LuckyLootConfig.LUCK_GAIN_CHANCE_AT_ZERO + ((LuckyLootConfig.LUCK_GAIN_CHANCE_AT_MAX - LuckyLootConfig.LUCK_GAIN_CHANCE_AT_ZERO) * progress);
 	}
 
 	private void rollSealedCache(Attackable victim, Player killer)

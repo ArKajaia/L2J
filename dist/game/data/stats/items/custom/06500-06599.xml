@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/items.xsd">
 	<item id="6509" type="EtcItem" name="Big Purple Treasure Chest">
-		<!-- Lucky Loot: Epic Sealed Cache (see config/Custom/LuckyLoot.ini). Every entry rolls on its own; Gold Dragons are guaranteed. -->
+		<!-- Lucky Loot: Epic Sealed Cache (see config/Custom/LuckyLoot.ini). Always gives Gold Dragons, plus at least 4 random crafting materials: every material rolls on its own (rarer materials have a lower chance), and if too few hit, the table is rolled again until the minimum is reached. -->
 		<set name="icon" val="icon.etc_treasure_box_i04" />
 		<set name="default_action" val="PEEL" />
 		<set name="immediate_effect" val="true" />
@@ -11,14 +11,45 @@
 		<set name="is_stackable" val="true" />
 		<set name="is_oly_restricted" val="true" />
 		<set name="handler" val="ExtractableItems" />
+		<!-- extractableCountMin/Max count distinct items, Gold Dragons included. Max is kept well above the expected roll count so the table order doesn't bias which materials drop. -->
+		<set name="extractableCountMin" val="5" />
+		<set name="extractableCountMax" val="18" />
 		<capsuled_items>
-			<item id="3481" min="20" max="60" chance="100" /> <!-- Gold Dragon -->
-			<item id="959" min="1" max="1" chance="20" /> <!-- Scroll: Enchant Weapon (S-Grade) -->
-			<item id="960" min="1" max="2" chance="25" /> <!-- Scroll: Enchant Armor (S-Grade) -->
-			<item id="6577" min="1" max="1" chance="3" /> <!-- Blessed Scroll: Enchant Weapon (S-Grade) -->
-			<item id="6578" min="1" max="1" chance="4" /> <!-- Blessed Scroll: Enchant Armor (S-Grade) -->
-			<item id="8752" min="1" max="1" chance="10" /> <!-- High-Grade Life Stone - Level 76 -->
-			<item id="8762" min="1" max="1" chance="2" /> <!-- Top-Grade Life Stone - Level 76 -->
+			<item id="3481" min="5000" max="50000" chance="100" /> <!-- Gold Dragon (always) -->
+			<!-- Ores -->
+			<item id="1874" min="10" max="30" chance="25" /> <!-- Oriharukon Ore -->
+			<item id="1875" min="10" max="30" chance="25" /> <!-- Stone of Purity -->
+			<item id="1876" min="10" max="30" chance="25" /> <!-- Mithril Ore -->
+			<item id="1877" min="10" max="30" chance="25" /> <!-- Adamantite Nugget -->
+			<!-- Advanced materials -->
+			<item id="1888" min="3" max="10" chance="25" /> <!-- Synthetic Cokes -->
+			<item id="1889" min="3" max="10" chance="25" /> <!-- Compound Braid -->
+			<item id="1890" min="3" max="10" chance="25" /> <!-- Mithril Alloy -->
+			<item id="1891" min="3" max="10" chance="25" /> <!-- Artisan's Frame -->
+			<item id="1892" min="3" max="10" chance="25" /> <!-- Blacksmith's Frame -->
+			<item id="1893" min="3" max="10" chance="25" /> <!-- Oriharukon -->
+			<item id="1894" min="3" max="10" chance="25" /> <!-- Crafted Leather -->
+			<item id="1895" min="3" max="10" chance="25" /> <!-- Metallic Fiber -->
+			<!-- Key materials -->
+			<item id="4039" min="2" max="5" chance="20" /> <!-- Mold Glue -->
+			<item id="4040" min="2" max="5" chance="20" /> <!-- Mold Lubricant -->
+			<item id="4041" min="2" max="5" chance="20" /> <!-- Mold Hardener -->
+			<item id="4042" min="2" max="5" chance="20" /> <!-- Enria -->
+			<item id="4043" min="2" max="5" chance="20" /> <!-- Asofe -->
+			<item id="4044" min="2" max="5" chance="20" /> <!-- Thons -->
+			<!-- Uncommon: plates and threads -->
+			<item id="5549" min="2" max="5" chance="15" /> <!-- Metallic Thread -->
+			<item id="5550" min="2" max="5" chance="15" /> <!-- Durable Metal Plate -->
+			<!-- Rare: molds and holders -->
+			<item id="5551" min="1" max="2" chance="6" /> <!-- Reorin's Mold -->
+			<item id="5552" min="1" max="2" chance="6" /> <!-- Warsmith's Mold -->
+			<item id="5553" min="1" max="2" chance="6" /> <!-- Arcsmith's Anvil -->
+			<item id="5554" min="1" max="2" chance="6" /> <!-- Warsmith's Holder -->
+			<!-- Very rare: S80 materials -->
+			<item id="9628" min="1" max="2" chance="4" /> <!-- Leonard -->
+			<item id="9629" min="1" max="2" chance="4" /> <!-- Adamantine -->
+			<item id="9630" min="1" max="2" chance="4" /> <!-- Orichalcum -->
+			<item id="9631" min="1" max="2" chance="4" /> <!-- Tough Leather -->
 		</capsuled_items>
 	</item>
 	<item id="6593" type="Weapon" name="Shining Bow - Cheap Shot">

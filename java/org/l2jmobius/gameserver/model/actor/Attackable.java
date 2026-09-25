@@ -1142,6 +1142,7 @@ public class Attackable extends Npc
 					}
 				}
 			}
+			org.l2jmobius.gameserver.managers.LuckyLootManager.getInstance().onJackpotPaid(this, jackpotOwner);
 		}
 		// 2. Custom Champion Buff Book drop
 		if ((this.getChampionTier() > 0) && org.l2jmobius.gameserver.config.custom.CustomBuffConfig.ENABLE)
