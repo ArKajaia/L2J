@@ -41,6 +41,7 @@ public class ThiefMonsterConfig
 	// Constants
 	public static boolean ENABLED;
 	public static double SPAWN_CHANCE;
+	public static int RESPAWN_COOLDOWN;
 	public static int MIN_LEVEL;
 	public static int MAX_LEVEL;
 	public static boolean ALLOW_IN_INSTANCES;
@@ -57,6 +58,7 @@ public class ThiefMonsterConfig
 		final ConfigReader config = new ConfigReader(THIEF_MONSTER_CONFIG_FILE);
 		ENABLED = config.getBoolean("ThiefEnabled", true);
 		SPAWN_CHANCE = config.getDouble("ThiefSpawnChance", 2.0);
+		RESPAWN_COOLDOWN = Math.max(0, config.getInt("ThiefRespawnCooldown", 1));
 		MIN_LEVEL = config.getInt("ThiefMinLevel", 20);
 		MAX_LEVEL = config.getInt("ThiefMaxLevel", 99);
 		ALLOW_IN_INSTANCES = config.getBoolean("ThiefAllowInInstances", false);

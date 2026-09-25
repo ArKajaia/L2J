@@ -85,6 +85,8 @@ public class Spawn extends Location
 	private boolean _randomWalk = false; // Is random walk
 	private int _spawnTemplateId = 0;
 	private Location _spawnLocation = null;
+	/** How many upcoming spawns of this spawn point may not roll a Thief (see ThiefMonsterManager). */
+	private int _thiefCooldown = 0;
 	
 	/**
 	 * Constructor of Spawn.<br>
@@ -281,6 +283,22 @@ public class Spawn extends Location
 	/**
 	 * @return true if respawn enabled
 	 */
+	/**
+	 * @return how many upcoming spawns of this spawn point may not roll a Thief
+	 */
+	public int getThiefCooldown()
+	{
+		return _thiefCooldown;
+	}
+	
+	/**
+	 * @param thiefCooldown how many upcoming spawns of this spawn point may not roll a Thief
+	 */
+	public void setThiefCooldown(int thiefCooldown)
+	{
+		_thiefCooldown = Math.max(0, thiefCooldown);
+	}
+	
 	public boolean isRespawnEnabled()
 	{
 		return _doRespawn;
@@ -574,7 +592,7 @@ public class Spawn extends Location
 		org.l2jmobius.gameserver.managers.WaveChallengeManager.getInstance().tryConvert(npc, getInstanceId());
 		
 		// Thief roll - after the wave roll so wave challenges (which drop no adena) are skipped.
-		org.l2jmobius.gameserver.managers.ThiefMonsterManager.getInstance().tryConvert(npc, getInstanceId());
+		org.l2jmobius.gameserver.managers.ThiefMonsterManager.getInstance().tryConvert(npc, this);
 		
 		npc.setCurrentHp(npc.getMaxHp());
 		npc.setCurrentMp(npc.getMaxMp());
