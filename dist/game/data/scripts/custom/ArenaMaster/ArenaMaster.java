@@ -122,21 +122,6 @@ public class ArenaMaster extends Quest
 	private void enterArena(Player player)
 	{
 		
-		// --- ARENA ENTRY FEE LOGIC ---
-		final int ENTRY_FEE_ID = 6393; // Event Medal
-		final long ENTRY_FEE_AMOUNT = 1; // Change this to charge more than 1
-		
-		// 1. Check if the player has enough of the item
-		if (player.getInventory().getInventoryItemCount(ENTRY_FEE_ID, -1) < ENTRY_FEE_AMOUNT)
-		{
-			player.sendMessage("You need " + ENTRY_FEE_AMOUNT + " Event Medal(s) to enter the Arena.");
-			return; // Stops the code here so they don't teleport
-		}
-		
-		// 2. Consume the item from their inventory
-		player.destroyItemByItemId(ItemProcessType.FEE, ENTRY_FEE_ID, ENTRY_FEE_AMOUNT, player, true);
-		// -----------------------------
-		
 		System.out.println("ArenaMaster: enterArena() called for " + player.getName());
 		
 		if (!RatesConfig.ARENA_SYSTEM_ENABLED)
@@ -171,10 +156,31 @@ public class ArenaMaster extends Quest
 			return;
 		}
 		
+		// --- ARENA ENTRY FEE LOGIC ---
+		// Charged only after every check above passed - it used to be taken first, so a closed arena, an
+		// instance check or a misconfigured challenger still cost the player their medal.
+		final int ENTRY_FEE_ID = 6393; // Event Medal
+		final long ENTRY_FEE_AMOUNT = 1; // Change this to charge more than 1
+		
+		if (player.getInventory().getInventoryItemCount(ENTRY_FEE_ID, -1) < ENTRY_FEE_AMOUNT)
+		{
+			player.sendMessage("You need " + ENTRY_FEE_AMOUNT + " Event Medal(s) to enter the Arena.");
+			return; // Stops the code here so they don't teleport
+		}
+		
+		if (!player.destroyItemByItemId(ItemProcessType.FEE, ENTRY_FEE_ID, ENTRY_FEE_AMOUNT, player, true))
+		{
+			return;
+		}
+		// -----------------------------
+		
 		System.out.println("ArenaMaster: Challenger template found (" + challengerTemplate.getName() + " [ID " + selectedNpcId + "]). Creating instance...");
 		
 		final Instance instance = InstanceManager.getInstance().createDynamicInstance(0);
 		final int instanceId = instance.getId();
+		// Anyone removed from the instance without a teleport of their own (e.g. relogging after it was cleaned up) lands back where they entered from,
+		// not at the arena coordinates in the open world.
+		instance.setExitLoc(player.getLocation());
 		
 		System.out.println("ArenaMaster: Dynamic instance created with ID " + instanceId + ". Teleporting player to (" + RatesConfig.ARENA_X + ", " + RatesConfig.ARENA_Y + ", " + RatesConfig.ARENA_Z + ")");
 		
