@@ -56,7 +56,12 @@ public class Monster extends Attackable
 	private final AtomicInteger _rageDisables = new AtomicInteger();
 	private volatile boolean _raging = false;
 	private ScheduledFuture<?> _rageTask = null;
-	
+
+	// Random passives (and their visual) granted to this object. Kept outside getVariables() because Spawn.initializeNpc() wipes the variables before a
+	// respawn's onSpawn() runs - the ids stored there were lost, so clearRandomPassiveSkills() couldn't remove the previous life's passives and they piled up.
+	private final List<Integer> _randomPassiveSkillIds = new ArrayList<>();
+	private AbnormalVisualEffect _randomPassiveAve = null;
+
 	public Monster(NpcTemplate template)
 	{
 		super(template);
@@ -259,6 +264,11 @@ public class Monster extends Attackable
 			
 		}
 		
+		synchronized (_randomPassiveSkillIds)
+		{
+			_randomPassiveSkillIds.addAll(addedSkillIds);
+		}
+
 		if (skillsSuccessfullyAdded > 0)
 		{
 			this.getVariables().set("PASSIVE_COUNT", skillsSuccessfullyAdded);
@@ -289,6 +299,7 @@ public class Monster extends Attackable
 			{
 				this.startAbnormalVisualEffect(true, appliedAve);
 				this.getVariables().set("PASSIVE_AVE", appliedAve.name());
+				_randomPassiveAve = appliedAve;
 			}
 			this.setCurrentHp(this.getMaxHp());
 			this.broadcastInfo();
@@ -313,26 +324,25 @@ public class Monster extends Attackable
 			}
 			getVariables().remove("PASSIVE_AVE");
 		}
-		
-		// Remove the actual skills from the monster's known skill list
-		final String idsAsString = getVariables().getString("PASSIVE_SKILL_IDS", "");
-		if (!idsAsString.isEmpty())
+		if (_randomPassiveAve != null)
 		{
-			for (String idStr : idsAsString.split(","))
+			this.stopAbnormalVisualEffect(true, _randomPassiveAve);
+			_randomPassiveAve = null;
+		}
+
+		// Remove the actual skills from the monster's known skill list
+		final List<Integer> oldIds;
+		synchronized (_randomPassiveSkillIds)
+		{
+			oldIds = new ArrayList<>(_randomPassiveSkillIds);
+			_randomPassiveSkillIds.clear();
+		}
+		for (int skillId : oldIds)
+		{
+			final Skill oldSkill = getKnownSkill(skillId);
+			if (oldSkill != null)
 			{
-				try
-				{
-					int skillId = Integer.parseInt(idStr.trim());
-					Skill oldSkill = getKnownSkill(skillId);
-					if (oldSkill != null)
-					{
-						this.removeSkill(oldSkill, true);
-					}
-				}
-				catch (NumberFormatException e)
-				{
-					// ignored
-				}
+				this.removeSkill(oldSkill, true);
 			}
 		}
 		
@@ -361,6 +371,14 @@ public class Monster extends Attackable
 		final String baseTitle = getTemplate().getTitle() == null ? "" : getTemplate().getTitle();
 
 		final StringBuilder sb = new StringBuilder();
+		if (isArenaChallenger())
+		{
+			final int arenaWave = getVariables().getInt("ARENA_WAVE", 0);
+			if (arenaWave > 0)
+			{
+				sb.append("Wave ").append(arenaWave).append(" -").append(' ');
+			}
+		}
 		if (isRaging())
 		{
 			sb.append(MonsterRageConfig.TITLE_TAG).append(' ');
@@ -555,7 +573,7 @@ public class Monster extends Attackable
 	}
 
 	/**
-	 * A lethal blow before the final wave instead heals the monster and moves it to the next, stronger wave - the open-world counterpart of {@link #onArenaWaveCleared(Creature)}. Synchronized and re-checked so two simultaneous lethal hits (e.g. a DOT tick racing a skill) can't skip a wave.
+	 * A lethal blow before the final wave instead heals the monster and moves it to the next, stronger wave - the open-world counterpart of {@link #onArenaWaveCleared(Creature, double)}. Synchronized and re-checked so two simultaneous lethal hits (e.g. a DOT tick racing a skill) can't skip a wave.
 	 * @param killer whoever landed the lethal blow
 	 * @return {@code true} if the wave advanced (the death must be cancelled), {@code false} if this is the final wave and the monster should die normally
 	 */
@@ -897,9 +915,8 @@ public class Monster extends Attackable
 	@Override
 	public void reduceCurrentHp(double amount, Creature attacker, boolean awake, boolean isDOT, Skill skill)
 	{
-		if (isArenaChallenger() && ((getCurrentHp() - amount) <= 0))
+		if (isArenaChallenger() && ((getCurrentHp() - amount) <= 0) && onArenaWaveCleared(attacker, amount))
 		{
-			onArenaWaveCleared(attacker);
 			return;
 		}
 		
@@ -911,24 +928,33 @@ public class Monster extends Attackable
 		super.reduceCurrentHp(amount, attacker, awake, isDOT, skill);
 	}
 	
-	private void onArenaWaveCleared(Creature killer)
+	/**
+	 * Synchronized and re-checked so two simultaneous lethal hits (e.g. a summon and its owner, or a DOT tick racing a skill) can't clear two waves at once - same guard as {@link #advanceWaveChallenge(Creature)}.
+	 * @param killer whoever landed the lethal blow
+	 * @param amount the damage of that blow (0 from the doDie() safety net)
+	 * @return {@code true} if a wave was cleared (the damage is consumed), {@code false} if the blow is no longer lethal because a racing hit already cleared the wave and refilled HP - the caller then applies it as normal damage
+	 */
+	private synchronized boolean onArenaWaveCleared(Creature killer, double amount)
 	{
+		if (isDead() || ((getCurrentHp() - amount) > 0))
+		{
+			return false;
+		}
+
 		final int wave = getVariables().getInt("ARENA_WAVE", 0) + 1;
 		getVariables().set("ARENA_WAVE", wave);
 
-		final int virtualLevel = Math.min(100, this.getLevel() + (wave * RatesConfig.ARENA_VIRTUAL_LEVEL_GROWTH_PER_WAVE));
-		addRandomPassiveSkill(virtualLevel);
+		// getLevel() already adds this wave's virtual levels for an arena challenger - adding them again here double-counted them.
+		addRandomPassiveSkill(getLevel());
 		applyArenaBuffs();
 		rerollArenaActiveSkills();
-		
+
 		this.setCurrentHp(this.getMaxHp());
 		this.setCurrentMp(this.getMaxMp());
-		
-		String currentTitle = this.getTitle() == null ? "" : this.getTitle();
-		// Remove previous "Wave X -" tags to avoid infinite stacking
-		currentTitle = currentTitle.replaceAll("Wave \\d+ - ", "");
-		this.setTitle("Wave " + wave + " - " + currentTitle);
-		
+
+		// The "Wave N" tag lives in rebuildFullTitle(), so a later rebuild (rage, passive reroll...) no longer wipes it.
+		rebuildFullTitle();
+
 		this.broadcastInfo();
 		
 		if ((killer != null) && killer.isPlayer())
@@ -939,6 +965,7 @@ public class Monster extends Attackable
 		this.getEffectList().stopSkillEffects(SkillFinishType.REMOVED, 7029);
 		
 		startEnrageTimer();
+		return true;
 	}
 	
 	@Override
@@ -1207,7 +1234,7 @@ public class Monster extends Attackable
 			// This acts as an ultimate safety net.
 			// If a Dagger's Lethal Strike or a reflect bypasses the normal HP check,
 			// it hits this wall, triggers the next wave, and fully heals the boss.
-			onArenaWaveCleared(killer);
+			onArenaWaveCleared(killer, 0);
 			
 			// Returning false tells the core engine to immediately cancel the death sequence
 			// (no XP is given, no loot drops, and the monster does not disappear).

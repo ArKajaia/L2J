@@ -19,6 +19,10 @@ import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.events.Containers;
+import org.l2jmobius.gameserver.model.events.EventType;
+import org.l2jmobius.gameserver.model.events.holders.actor.player.OnPlayerLogin;
+import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.skill.Skill;
@@ -137,8 +141,10 @@ public class RotatingHotZones extends Quest
 		}
 	}
 	
-	private final Set<Integer> _activeZoneSet = new HashSet<>();
-	private final List<BracketZone> _activeZones = new ArrayList<>();
+	// Replaced wholesale (never mutated in place) on each rotation: zone enter/exit events and teleport bypasses read these from other
+	// threads, and the old clear()-then-add() on a plain HashSet/ArrayList could hand them a half-built rotation or throw mid-iteration.
+	private volatile Set<Integer> _activeZoneSet = Set.of();
+	private volatile List<BracketZone> _activeZones = List.of();
 	
 	/** objectId -> pending offer. Removed on accept/decline; stale entries swept on rotation. */
 	private final Map<Integer, PendingTeleport> _pendingTeleports = new ConcurrentHashMap<>();
@@ -161,6 +167,10 @@ public class RotatingHotZones extends Quest
 		addFirstTalkId(TELEPORTER_NPC_ID);
 		addStartNpc(TELEPORTER_NPC_ID);
 		addTalkId(TELEPORTER_NPC_ID);
+		
+		// Hotzone buffs never expire and are saved on logout, so without this a player who logged out inside a zone kept them forever,
+		// anywhere. OnPlayerLogin fires after the effect restore and the zone revalidation, so the zone lists are already up to date.
+		Containers.Players().addListener(new ConsumerEventListener(Containers.Players(), EventType.ON_PLAYER_LOGIN, (OnPlayerLogin event) -> validateHotZoneBuffs(event.getPlayer()), this));
 		
 		ThreadPool.scheduleAtFixedRate(this::rotateZone, 10000, ROTATION_HOURS * 60 * 60 * 1000L);
 	}
@@ -193,12 +203,11 @@ public class RotatingHotZones extends Quest
 			HotzoneModifierManager.getInstance().clearModifier(br.getActiveZoneId());
 		}
 		
-		_activeZones.clear();
-		_activeZoneSet.clear();
-		
 		// Offers pointing at the previous rotation are meaningless now.
 		_pendingTeleports.clear();
 		
+		final List<BracketZone> newZones = new ArrayList<>();
+		final Set<Integer> newZoneSet = new HashSet<>();
 		for (LevelBracket bracket : BRACKETS)
 		{
 			if (bracket.getZoneIds().length == 0)
@@ -207,10 +216,12 @@ public class RotatingHotZones extends Quest
 			}
 			
 			int chosenZoneId = bracket.getZoneIds()[Rnd.get(bracket.getZoneIds().length)];
-			_activeZones.add(new BracketZone(bracket, chosenZoneId));
-			_activeZoneSet.add(chosenZoneId);
+			newZones.add(new BracketZone(bracket, chosenZoneId));
+			newZoneSet.add(chosenZoneId);
 			HotzoneModifierManager.getInstance().rollModifier(chosenZoneId);
 		}
+		_activeZones = List.copyOf(newZones);
+		_activeZoneSet = Set.copyOf(newZoneSet);
 		
 		for (Player player : World.getInstance().getPlayers())
 		{
@@ -302,6 +313,10 @@ public class RotatingHotZones extends Quest
 			{
 				player.sendMessage("That hot zone is no longer active.");
 			}
+			else if (!canTeleport(player))
+			{
+				// The offer window can be clicked from anywhere - hold members to the same rules as a solo teleport.
+			}
 			else
 			{
 				player.teleToLocation(new Location(pending.x, pending.y, pending.z));
@@ -359,9 +374,8 @@ public class RotatingHotZones extends Quest
 			
 			if (!isPartyTp)
 			{
-				if (!player.isInsideZone(ZoneId.PEACE))
+				if (!canTeleport(player))
 				{
-					player.sendMessage("You can only teleport to a Hot Zone from a peace zone.");
 					return null;
 				}
 				
@@ -381,9 +395,8 @@ public class RotatingHotZones extends Quest
 				
 				if (member == player)
 				{
-					if (!member.isInsideZone(ZoneId.PEACE))
+					if (!canTeleport(member))
 					{
-						member.sendMessage("You can only teleport to a Hot Zone from a peace zone.");
 						continue;
 					}
 					
@@ -402,6 +415,34 @@ public class RotatingHotZones extends Quest
 		}
 		
 		return null;
+	}
+	
+	/**
+	 * Hot zone teleports are only allowed from a peace zone in the open world, and never while dead, in Olympiad, jailed, in a duel or event, trading, or holding a cursed weapon.
+	 * @param player the player about to be teleported
+	 * @return {@code true} if they may go; otherwise they were already told why not
+	 */
+	private boolean canTeleport(Player player)
+	{
+		if (player.isAlikeDead() || player.isTeleporting())
+		{
+			player.sendMessage("You cannot teleport right now.");
+			return false;
+		}
+		
+		if (player.isInOlympiadMode() || player.isJailed() || player.isInDuel() || player.isOnEvent() || player.isCursedWeaponEquipped() || player.isInStoreMode() || player.isFlyingMounted() || (player.getInstanceId() != 0))
+		{
+			player.sendMessage("You cannot teleport to a Hot Zone from here.");
+			return false;
+		}
+		
+		if (!player.isInsideZone(ZoneId.PEACE))
+		{
+			player.sendMessage("You can only teleport to a Hot Zone from a peace zone.");
+			return false;
+		}
+		
+		return true;
 	}
 	
 	/**

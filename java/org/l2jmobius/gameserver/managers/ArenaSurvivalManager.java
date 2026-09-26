@@ -34,25 +34,38 @@ public class ArenaSurvivalManager
 	{
 	}
 
+	/** A buff as it was at snapshot time: the skill and how many seconds it had left. */
+	private record SnapshotBuff(Skill skill, int remainingSeconds)
+	{
+	}
+
 	private static class ArenaDeathGuard
 	{
+		private final int instanceId;
 		private long snapshotExp;
 		private long snapshotSp;
-		private List<Skill> snapshotBuffs = new ArrayList<>();
+		private List<SnapshotBuff> snapshotBuffs = new ArrayList<>();
 		private Future<?> task;
+
+		private ArenaDeathGuard(int instanceId)
+		{
+			this.instanceId = instanceId;
+		}
 
 		private void snapshot(Player player)
 		{
 			snapshotExp = player.getExp();
 			snapshotSp = player.getSp();
 
-			final List<Skill> buffs = new ArrayList<>();
+			final List<SnapshotBuff> buffs = new ArrayList<>();
 			for (BuffInfo info : player.getEffectList().getEffects())
 			{
 				final Skill skill = info.getSkill();
-				if ((skill != null) && !skill.isPassive() && !skill.isDebuff())
+				// Only timed buffs. Endless ones (abnormal time <= 0) are owned by whatever system granted them - hotzone buffs, for one, are
+				// given/taken on zone enter/exit - so restoring them from here could hand out a zone buff permanently, outside its zone.
+				if ((skill != null) && !skill.isPassive() && !skill.isDebuff() && !skill.isToggle() && (info.getAbnormalTime() > 0) && (info.getTime() > 0))
 				{
-					buffs.add(skill);
+					buffs.add(new SnapshotBuff(skill, info.getTime()));
 				}
 			}
 			snapshotBuffs = buffs;
@@ -67,12 +80,32 @@ public class ArenaSurvivalManager
 	 */
 	public void startDeathGuard(Player player, int instanceId)
 	{
-		final ArenaDeathGuard guard = new ArenaDeathGuard();
+		final ArenaDeathGuard guard = new ArenaDeathGuard(instanceId);
 		guard.snapshot(player); // capture an initial baseline immediately, before anything can happen
-		_deathGuards.put(player.getObjectId(), guard);
+		final ArenaDeathGuard previous = _deathGuards.put(player.getObjectId(), guard);
+		if ((previous != null) && (previous.task != null))
+		{
+			// A leftover guard (e.g. from a run abandoned by logging out) must not keep ticking - or later remove this new one.
+			previous.task.cancel(false);
+		}
 
 		final Runnable task = () ->
 		{
+			if (!player.isOnline())
+			{
+				// Logged out mid-run: nothing to restore to an offline object (they left alive, or their loss already got saved).
+				// Just stop polling and free the arena instance, which would otherwise live forever with its challenger in it.
+				if (_deathGuards.remove(player.getObjectId(), guard))
+				{
+					if (guard.task != null)
+					{
+						guard.task.cancel(false);
+					}
+					InstanceManager.getInstance().destroyInstance(guard.instanceId);
+				}
+				return;
+			}
+
 			if (player.getInstanceId() != instanceId)
 			{
 				// Already outside the arena instance - whether doDie()'s own teleport got them
@@ -130,13 +163,18 @@ public class ArenaSurvivalManager
 			player.doRevive();
 		}
 
-		for (Skill buff : guard.snapshotBuffs)
+		// Only give back buffs the player actually lost, with the time they had left. Re-casting every snapshot buff at full duration used to
+		// refresh all of them for free on every run - even one abandoned alive through a scroll of escape.
+		for (SnapshotBuff buff : guard.snapshotBuffs)
 		{
-			if (buff != null)
+			if (!player.isAffectedBySkill(buff.skill().getId()))
 			{
-				buff.applyEffects(player, player);
+				buff.skill().applyEffects(player, player, false, buff.remainingSeconds());
 			}
 		}
+
+		// However the run ended (death, "To Village", escape, unstuck...), its instance and challenger are no longer needed.
+		InstanceManager.getInstance().destroyInstance(guard.instanceId);
 
 		player.sendMessage("Your experience and buffs have been preserved.");
 	}
