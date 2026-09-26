@@ -261,8 +261,14 @@ public class Spawn extends Location
 			// Update the current number of SpawnTask in progress or stand by of this Spawn
 			_scheduledCount++;
 			
-			// Schedule the next respawn.
-			RespawnTaskManager.getInstance().add(oldNpc, System.currentTimeMillis() + (hasRespawnRandom() ? Rnd.get(_respawnMinDelay, _respawnMaxDelay) : _respawnMinDelay));
+			// Schedule the next respawn - hotzone modifiers like BLOOD_MOON shorten it for monsters that died inside.
+			long respawnDelay = hasRespawnRandom() ? Rnd.get(_respawnMinDelay, _respawnMaxDelay) : _respawnMinDelay;
+			final org.l2jmobius.gameserver.model.hotzone.HotzoneModifier hotzoneModifier = org.l2jmobius.gameserver.managers.HotzoneModifierManager.getInstance().getModifierFor(oldNpc);
+			if (hotzoneModifier != null)
+			{
+				respawnDelay = (long) (respawnDelay * hotzoneModifier.getRespawnDelayMult());
+			}
+			RespawnTaskManager.getInstance().add(oldNpc, System.currentTimeMillis() + respawnDelay);
 		}
 	}
 	

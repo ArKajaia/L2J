@@ -6,9 +6,14 @@ import java.util.concurrent.ScheduledFuture;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.data.xml.SkillData;
+import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
+import org.l2jmobius.gameserver.model.skill.BuffInfo;
+import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.model.zone.ZoneType;
 import org.l2jmobius.gameserver.model.zone.type.HotZone;
@@ -24,6 +29,9 @@ public class HotzoneModifierManager
 {
 	/** How often (ms) FRAGILE_GROUND-style modifiers tick their player HP drain. */
 	public static final int PLAYER_DRAIN_INTERVAL_MS = 5000;
+
+	/** Delay (ms) before a RESTLESS_DEAD victim rises again, so the corpse is seen first. */
+	private static final int RISE_DELAY_MS = 1500;
 
 	/** zone id -> the modifier currently active there, if any. Absent = no modifier (vanilla hotzone). */
 	private final Map<Integer, HotzoneModifier> _activeModifiers = new ConcurrentHashMap<>();
@@ -105,6 +113,64 @@ public class HotzoneModifierManager
 		}
 
 		return null;
+	}
+
+	/**
+	 * Kill-triggered modifier effects: VAMPIRIC_HUNT heals the killer, KILL_STREAK stacks its XP/SP buff one level higher, RESTLESS_DEAD may raise the victim once more. Called from {@code Attackable.doDie} only for kills that reward exp/sp.
+	 * @param victim the attackable that just died
+	 * @param killer the player credited with the kill
+	 */
+	public void onAttackableKilled(Attackable victim, Player killer)
+	{
+		if ((victim == null) || (killer == null))
+		{
+			return;
+		}
+
+		final HotzoneModifier modifier = getModifierFor(victim);
+		if (modifier == null)
+		{
+			return;
+		}
+
+		if ((modifier.getKillHealPct() > 0) && !killer.isDead())
+		{
+			final double pct = modifier.getKillHealPct() / 100.0;
+			killer.setCurrentHp(Math.min(killer.getMaxHp(), killer.getCurrentHp() + (killer.getMaxHp() * pct)));
+			killer.setCurrentMp(Math.min(killer.getMaxMp(), killer.getCurrentMp() + (killer.getMaxMp() * pct)));
+		}
+
+		if (modifier.isKillStreak() && !killer.isDead())
+		{
+			final BuffInfo current = killer.getEffectList().getBuffInfoBySkillId(HotzoneModifier.KILL_STREAK_SKILL_ID);
+			final int level = Math.min((current != null ? current.getSkill().getLevel() : 0) + 1, HotzoneModifier.KILL_STREAK_MAX_LEVEL);
+			final Skill streak = SkillData.getInstance().getSkill(HotzoneModifier.KILL_STREAK_SKILL_ID, level);
+			if (streak != null)
+			{
+				streak.applyEffects(killer, killer);
+			}
+		}
+
+		if ((modifier.getRiseChancePct() > 0) && victim.isMonster() && victim.asMonster().canHotzoneRise() && (Rnd.get(100) < modifier.getRiseChancePct()))
+		{
+			ThreadPool.schedule(() -> raiseAgain(victim.asMonster(), killer), RISE_DELAY_MS);
+		}
+	}
+
+	private void raiseAgain(Monster victim, Player killer)
+	{
+		final Monster risen = new Monster(victim.getTemplate());
+		risen.setInstanceId(victim.getInstanceId());
+		risen.getVariables().set(Monster.HOTZONE_RISEN_VAR, true);
+		risen.setXYZ(victim.getX(), victim.getY(), victim.getZ());
+		risen.setHeading(victim.getHeading());
+		risen.spawnMe();
+		risen.setCurrentHp(risen.getMaxHp() * 0.5);
+
+		if ((killer != null) && killer.isOnline())
+		{
+			killer.sendMessage("The " + risen.getName() + " rises again!");
+		}
 	}
 
 	private void drainPlayers(int zoneId, HotzoneModifier modifier)

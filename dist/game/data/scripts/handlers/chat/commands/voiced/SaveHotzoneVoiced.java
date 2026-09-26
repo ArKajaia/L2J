@@ -84,7 +84,7 @@ public class SaveHotzoneVoiced implements IVoicedCommandHandler
 		final StringBuilder sb = new StringBuilder();
 		sb.append(System.lineSeparator());
 		sb.append("<!-- ").append(safeComment).append(" | Avg Level: ").append(avgLevel).append(" (").append(levelNote).append(") | Marked by ").append(player.getName()).append(" at ").append(timestamp).append(" -->").append(System.lineSeparator());
-		sb.append("<zone id=\"ASSIGN_ID\" name=\"").append(safeName).append("\" type=\"HotZone\" shape=\"Cylinder\" minZ=\"-10000\" maxZ=\"10000\" rad=\"5000\">").append(System.lineSeparator());
+		sb.append("<zone id=\"ASSIGN_ID\" name=\"").append(safeName).append("\" type=\"HotZone\" shape=\"Cylinder\" minZ=\"-10000\" maxZ=\"10000\" rad=\"10000\">").append(System.lineSeparator());
 		sb.append("\t<node X=\"").append(player.getX()).append("\" Y=\"").append(player.getY()).append("\" /><!--Z=").append(player.getZ()).append("-->").append(System.lineSeparator());
 		sb.append("</zone>").append(System.lineSeparator());
 

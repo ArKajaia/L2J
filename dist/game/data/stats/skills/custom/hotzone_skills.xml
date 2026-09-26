@@ -17,7 +17,8 @@
 		</effects>
 	</skill>
 
-	<!-- Player Buff: +200% XP, +100% SP, +40% Atk Spd, +20% Cast Spd, +50% Drops -->
+	<!-- Player Buff: +50% XP, +50% SP, +40% Atk Spd, +20% Cast Spd, +25% Drop Amount -->
+	<!-- bonusExp/bonusSp/bonusDropAmount are read as "1 + stat / 100" from a base of 0 (PlayerStat), so they must be "add" in percent - a "mul" on them does nothing. -->
 	<skill id="90001" levels="1" name="Hot Zone: Fortune">
 		<icon>icon.skill4001</icon>
 		<operateType>A2</operateType>
@@ -25,11 +26,57 @@
 		<isMagic>4</isMagic>
 		<effects>
 			<effect name="Buff">
-				<mul stat="bonusExp">3</mul>
-				<mul stat="bonusSp">2</mul>
+				<add stat="bonusExp">50</add>
+				<add stat="bonusSp">50</add>
 				<mul stat="pAtkSpd">1.4</mul>
 				<mul stat="mAtkSpd">1.2</mul>
-				<mul stat="bonusDropAmount">1.5</mul>
+				<add stat="bonusDropAmount">25</add>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- Hotzone modifier KILL_STREAK: +3% XP/SP per chained kill (max 10 = +30%). Re-applied one level higher on every kill; the 15s timer is the chain window. -->
+	<skill id="90002" levels="10" name="Hot Zone: Kill Streak">
+		<table name="#bonus">3 6 9 12 15 18 21 24 27 30</table>
+		<icon>icon.skill4001</icon>
+		<operateType>A2</operateType>
+		<abnormalTime>15</abnormalTime>
+		<isMagic>4</isMagic>
+		<effects>
+			<effect name="Buff">
+				<add stat="bonusExp">#bonus</add>
+				<add stat="bonusSp">#bonus</add>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- Hotzone modifier GLASS_CANNON: +25% P.Atk/M.Atk, P.Def/M.Def x0.8 (= +25% damage taken) -->
+	<skill id="90003" levels="1" name="Hot Zone: Glass Cannon">
+		<icon>icon.skill4001</icon>
+		<operateType>A2</operateType>
+		<abnormalTime>-1</abnormalTime>
+		<isMagic>4</isMagic>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pAtk">1.25</mul>
+				<mul stat="mAtk">1.25</mul>
+				<mul stat="pDef">0.8</mul>
+				<mul stat="mDef">0.8</mul>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- Hotzone modifier ARCANE_SURGE: -20% physical/magic skill reuse, -30% MP cost -->
+	<skill id="90004" levels="1" name="Hot Zone: Arcane Surge">
+		<icon>icon.skill4001</icon>
+		<operateType>A2</operateType>
+		<abnormalTime>-1</abnormalTime>
+		<isMagic>4</isMagic>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pReuse">0.8</mul>
+				<mul stat="mReuse">0.8</mul>
+				<mul stat="mpConsume">0.7</mul>
 			</effect>
 		</effects>
 	</skill>

@@ -736,7 +736,24 @@ public class NpcTemplate extends CreatureTemplate
 					ungroupedDrops.replaceAll(i -> i.getId() == Inventory.ADENA_ID ? new ItemHolder(i.getId(), (long) (i.getCount() * adenaMultiplier)) : i);
 				}
 			}
-			
+
+			// Hotzone modifiers like GOLD_RUSH boost adena.
+			if (victim.isMonster())
+			{
+				final double hotzoneAdenaMultiplier = victim.asMonster().getHotzoneAdenaMultiplier();
+				if (hotzoneAdenaMultiplier != 1.0)
+				{
+					if (groupDrops != null)
+					{
+						groupDrops.replaceAll(i -> i.getId() == Inventory.ADENA_ID ? new ItemHolder(i.getId(), (long) (i.getCount() * hotzoneAdenaMultiplier)) : i);
+					}
+					if (ungroupedDrops != null)
+					{
+						ungroupedDrops.replaceAll(i -> i.getId() == Inventory.ADENA_ID ? new ItemHolder(i.getId(), (long) (i.getCount() * hotzoneAdenaMultiplier)) : i);
+					}
+				}
+			}
+
 			// Mages drop more of everything.
 			if (victim.isMonster() && victim.asMonster().isMageMonster())
 			{

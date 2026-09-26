@@ -411,10 +411,43 @@ public class Monster extends Attackable
 		return isHotzoneMiniboss() ? HotzoneMinibossConfig.STAT_MULTIPLIER : 1.0;
 	}
 
+	/** Set on the clone a RESTLESS_DEAD hotzone modifier raises from a slain monster (see {@link HotzoneModifierManager#onAttackableKilled}). */
+	public static final String HOTZONE_RISEN_VAR = "IS_HOTZONE_RISEN";
+
+	/**
+	 * @return {@code true} if this monster was raised again by a RESTLESS_DEAD hotzone modifier - it is worth double XP/SP and never rises a second time.
+	 */
+	public boolean isHotzoneRisen()
+	{
+		return getVariables().getBoolean(HOTZONE_RISEN_VAR, false);
+	}
+
+	/**
+	 * @return {@code true} if a RESTLESS_DEAD hotzone modifier may raise this monster again after it dies: plain monsters only - not raids, minions, hotzone minibosses, wave/arena challengers, thieves, or anything that already rose once.
+	 */
+	public boolean canHotzoneRise()
+	{
+		return !isRaid() && !isMinion() && !isHotzoneMiniboss() && !isHotzoneRisen() && !isWaveChallenge() && !isArenaChallenger() && !isThief();
+	}
+
+	/**
+	 * Read next to the thief adena scaling in {@code NpcTemplate.calculateDrops()}.
+	 * @return the active hotzone modifier's adena multiplier (GOLD_RUSH), or 1.0 if none is active
+	 */
+	public double getHotzoneAdenaMultiplier()
+	{
+		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		return hotzoneModifier != null ? hotzoneModifier.getAdenaMult() : 1.0;
+	}
+
 	@Override
 	public long getExpReward(int level)
 	{
 		double multiplier = isHotzoneMiniboss() ? HotzoneMinibossConfig.XP_SP_MULTIPLIER : 1.0;
+		if (isHotzoneRisen())
+		{
+			multiplier *= 2;
+		}
 		if (isWaveChallenge())
 		{
 			multiplier *= WaveChallengeConfig.XP_MULTIPLIER;
@@ -431,6 +464,10 @@ public class Monster extends Attackable
 	public int getSpReward(int level)
 	{
 		double multiplier = isHotzoneMiniboss() ? HotzoneMinibossConfig.XP_SP_MULTIPLIER : 1.0;
+		if (isHotzoneRisen())
+		{
+			multiplier *= 2;
+		}
 		if (isWaveChallenge())
 		{
 			multiplier *= WaveChallengeConfig.SP_MULTIPLIER;
@@ -990,7 +1027,7 @@ public class Monster extends Attackable
 		final double baseMAtk = super.getMAtk(target, skill);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
-		return baseMAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() : 1.0);
+		return baseMAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getMonsterMAtkMult() : 1.0);
 	}
 
 	@Override
