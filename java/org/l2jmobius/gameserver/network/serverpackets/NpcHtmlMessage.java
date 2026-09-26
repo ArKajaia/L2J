@@ -28,7 +28,9 @@ import org.l2jmobius.gameserver.network.enums.HtmlActionScope;
 public class NpcHtmlMessage extends AbstractHtmlPacket
 {
 	private final int _itemId;
-	
+	private int _width = 0;
+	private int _height = 0;
+
 	public NpcHtmlMessage()
 	{
 		_itemId = 0;
@@ -81,6 +83,13 @@ public class NpcHtmlMessage extends AbstractHtmlPacket
 		buffer.writeInt(getNpcObjId());
 		buffer.writeString(getHtml());
 		buffer.writeInt(_itemId);
+		buffer.writeInt(_width);
+		buffer.writeInt(_height);
+	}
+
+	public void setWindowSize(int width, int height) {
+		_width = width;
+		_height = height;
 	}
 	
 	@Override

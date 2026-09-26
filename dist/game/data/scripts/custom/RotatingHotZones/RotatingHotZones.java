@@ -493,7 +493,8 @@ public class RotatingHotZones extends Quest
 	
 	private void showTeleportMenu(Player player, Npc npc)
 	{
-		final NpcHtmlMessage html = new NpcHtmlMessage(npc.getObjectId());
+		NpcHtmlMessage html = new NpcHtmlMessage(npc.getObjectId());
+		html.setWindowSize(450, 500);
 		final StringBuilder sb = new StringBuilder();
 		
 		sb.append("<html><body>");
@@ -501,7 +502,6 @@ public class RotatingHotZones extends Quest
 		sb.append("<br>");
 		sb.append("<font color=\"LEVEL\">Hotzone Teleporter</font><br1>");
 		sb.append("<font color=\"808080\">Select an active Hotzone to teleport:</font><br><br>");
-		
 		sb.append("<table width=380 border=0 cellpadding=2 cellspacing=1>");
 		
 		boolean hasActiveZone = false;
