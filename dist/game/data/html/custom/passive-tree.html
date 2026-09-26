@@ -276,17 +276,17 @@
 		<div style="width:100%">
 			<div class="label">Skill Points</div>
 			<div class="row"><svg viewBox="0 0 24 24"><use href="#icon-star"/></svg><span class="value" id="points-value">-</span></div>
-			<button id="reset-tree-btn">Reset Tree</button>
+			<button id="reset-tree-btn">Reset Tree
 		</div>
 	</div>
 
 	<div id="controls">
 		<div class="zoomrow">
-			<button id="btn-out" title="Zoom out">&minus;</button>
+			<button id="btn-out" title="Zoom out">&minus;
 			<span id="zoom-pct">100%</span>
-			<button id="btn-in" title="Zoom in">+</button>
+			<button id="btn-in" title="Zoom in">+
 		</div>
-		<button class="wide" id="btn-fit" title="Fit whole tree on screen">Fit to screen</button>
+		<button class="wide" id="btn-fit" title="Fit whole tree on screen">Fit to screen
 		<div class="keys">
 			drag / <b>WASD</b> or arrows to move<br>
 			wheel or <b>+ &minus;</b> to zoom &middot; <b>F</b> to fit
@@ -326,7 +326,7 @@
 		<p>Click the link from <b>.treelink</b> in-game to open this page directly.<br>
 		If you have a 6-digit code instead, enter it below.</p>
 		<input id="pin-input" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autofocus>
-		<button id="pin-submit">View My Tree</button>
+		<button id="pin-submit">View My Tree
 		<div id="pin-error"></div>
 		<div id="pin-skip" onclick="document.getElementById('pin-overlay').style.display='none'">Just browse the tree without live data</div>
 	</div>
@@ -843,16 +843,16 @@ function renderDetailPanel(n) {
 
 	let actionHtml;
 	if (has && (n.type === "START")) {
-		actionHtml = `<button class="detail-action" disabled>Starting Node</button>`;
+		actionHtml = `<button class="detail-action" disabled>Starting Node`;
 	} else if (has) {
 		const cost = configRespecPerPoint * n.cost;
-		actionHtml = `<button class="detail-action respec" id="detail-action-btn">Respec - ${cost.toLocaleString()} Adena</button>`;
+		actionHtml = `<button class="detail-action respec" id="detail-action-btn">Respec - ${cost.toLocaleString()} Adena`;
 	} else if (avail) {
-		actionHtml = `<button class="detail-action" id="detail-action-btn">Allocate - ${n.cost} point${n.cost === 1 ? "" : "s"}</button>`;
+		actionHtml = `<button class="detail-action" id="detail-action-btn">Allocate - ${n.cost} point${n.cost === 1 ? "" : "s"}`;
 	} else if (character && isRootNode(n) && hasStartNode()) {
-		actionHtml = `<button class="detail-action" disabled>Starting point already chosen</button>`;
+		actionHtml = `<button class="detail-action" disabled>Starting point already chosen`;
 	} else {
-		actionHtml = `<button class="detail-action" disabled>Locked</button>`;
+		actionHtml = `<button class="detail-action" disabled>Locked`;
 	}
 
 	body.innerHTML =

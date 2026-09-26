@@ -130,7 +130,7 @@ public class PassiveTreeBoard implements IParseBoardHandler
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<html><body><center>");
 		sb.append("<br><font color=\"LEVEL\" name=\"hs16\">Passive Skill Tree</font><br><br>");
-		sb.append("<button value=\"Open Passive Tree for ").append(player.getName()).append("\" action=\"bypass _bbspassives_weblink\" width=260 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></button><br>");
+		sb.append("<button value=\"Open Passive Tree for ").append(player.getName()).append("\" action=\"bypass _bbspassives_weblink\" width=260 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"><br>");
 		sb.append("<img src=\"L2UI.SquareGray\" width=700 height=1><br><br>");
 
 		appendTotalsSection(sb, player);
@@ -140,7 +140,7 @@ public class PassiveTreeBoard implements IParseBoardHandler
 		appendSkillsSection(sb, player);
 
 		sb.append("<img src=\"L2UI.SquareGray\" width=700 height=1><br><br>");
-		sb.append("<button value=\"Reset Tree (").append(PassiveTreeManager.getInstance().getResetCostText()).append(")\" action=\"bypass _bbspassives_reset\" width=260 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></button>");
+		sb.append("<button value=\"Reset Tree (").append(PassiveTreeManager.getInstance().getResetCostText()).append(")\" action=\"bypass _bbspassives_reset\" width=260 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
 		sb.append("</center></body></html>");
 
 		CommunityBoardHandler.separateAndSend(sb.toString(), player);
