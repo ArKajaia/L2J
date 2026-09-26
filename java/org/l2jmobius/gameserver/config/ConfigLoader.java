@@ -65,6 +65,7 @@ import org.l2jmobius.gameserver.config.custom.StartingLocationConfig;
 import org.l2jmobius.gameserver.config.custom.StartingTitleConfig;
 import org.l2jmobius.gameserver.config.custom.ThiefMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.TransmogConfig;
+import org.l2jmobius.gameserver.config.custom.TreasureChestConfig;
 import org.l2jmobius.gameserver.config.custom.WalkerBotProtectionConfig;
 import org.l2jmobius.gameserver.config.custom.WarehouseSortingConfig;
 import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
@@ -144,6 +145,7 @@ public class ConfigLoader
 		StartingTitleConfig.load();
 		ThiefMonsterConfig.load();
 		TransmogConfig.load();
+		TreasureChestConfig.load();
 		WalkerBotProtectionConfig.load();
 		WarehouseSortingConfig.load();
 		WaveChallengeConfig.load();

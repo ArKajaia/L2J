@@ -16,18 +16,37 @@
  */
 package org.l2jmobius.gameserver.model.actor.instance;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.config.custom.TreasureChestConfig;
+import org.l2jmobius.gameserver.config.custom.TreasureChestConfig.ChestMaterial;
 import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.InstanceType;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
+import org.l2jmobius.gameserver.model.skill.Skill;
 
 /**
- * This class manages all chest.
+ * This class manages all chest.<br>
+ * With {@link TreasureChestConfig#ENABLED}, the world treasure chests work like retail: every treasure chest spawn point holds a real chest ({@link #FIRST_REAL_CHEST_ID}-{@link #LAST_REAL_CHEST_ID}) and a mimic (the real chest id + {@link #MIMIC_ID_OFFSET}). Both are shown with the mimic's model so
+ * they can't be told apart. A real chest vanishes when it is hit and gives crafting materials when it is opened with a key; a mimic attacks whoever tries to open it (see handlers.skill.effects.OpenChest).
  * @author Julian
  */
 public class Chest extends Monster
 {
+	/** First and last NPC id of the real treasure chests. */
+	public static final int FIRST_REAL_CHEST_ID = 18265;
+	public static final int LAST_REAL_CHEST_ID = 18286;
+	/** A real treasure chest's mimic has the id of the real chest + this offset (18265 -> 21801 ... 18286 -> 21822). Levels and names match. */
+	public static final int MIMIC_ID_OFFSET = 3536;
+	
 	private volatile boolean _specialDrop;
+	private volatile boolean _vanished;
 	
 	/**
 	 * Creates a chest.
@@ -46,6 +65,7 @@ public class Chest extends Monster
 	{
 		super.onSpawn();
 		_specialDrop = false;
+		_vanished = false;
 		setMustRewardExpSp(true);
 	}
 	
@@ -54,9 +74,83 @@ public class Chest extends Monster
 		_specialDrop = true;
 	}
 	
+	/**
+	 * @return {@code true} if this is a real world treasure chest (the one that can be opened with a key for a reward)
+	 */
+	public boolean isRealTreasureChest()
+	{
+		final int id = getId();
+		return (id >= FIRST_REAL_CHEST_ID) && (id <= LAST_REAL_CHEST_ID);
+	}
+	
+	/**
+	 * @return {@code true} if this is a mimic, the treasure chest monster that fights back
+	 */
+	public boolean isMimic()
+	{
+		final int id = getId();
+		return (id >= (FIRST_REAL_CHEST_ID + MIMIC_ID_OFFSET)) && (id <= (LAST_REAL_CHEST_ID + MIMIC_ID_OFFSET));
+	}
+	
+	/**
+	 * Real treasure chests borrow the model of their mimic, so the client shows both the same way.
+	 */
+	@Override
+	public int getDisplayId()
+	{
+		if (TreasureChestConfig.ENABLED && isRealTreasureChest())
+		{
+			final NpcTemplate mimic = NpcData.getInstance().getTemplate(getId() + MIMIC_ID_OFFSET);
+			if (mimic != null)
+			{
+				return mimic.getDisplayId();
+			}
+		}
+		return super.getDisplayId();
+	}
+	
+	@Override
+	public void reduceCurrentHp(double amount, Creature attacker, boolean awake, boolean isDOT, Skill skill)
+	{
+		// A real treasure chest can only be opened with a key. Hitting it makes it vanish.
+		if (TreasureChestConfig.ENABLED && isRealTreasureChest() && !_specialDrop)
+		{
+			vanish(attacker);
+			return;
+		}
+		
+		super.reduceCurrentHp(amount, attacker, awake, isDOT, skill);
+	}
+	
+	private void vanish(Creature attacker)
+	{
+		synchronized (this)
+		{
+			if (_vanished || isDead())
+			{
+				return;
+			}
+			_vanished = true;
+		}
+		
+		if (TreasureChestConfig.MESSAGES && (attacker != null) && (attacker.asPlayer() != null))
+		{
+			attacker.asPlayer().sendMessage("The treasure chest vanished before your eyes.");
+		}
+		
+		// Removes the chest and lets its spawn point respawn it on the normal timer.
+		deleteMe();
+	}
+	
 	@Override
 	public void doItemDrop(NpcTemplate npcTemplate, Creature lastAttacker)
 	{
+		if (TreasureChestConfig.ENABLED && _specialDrop && isRealTreasureChest())
+		{
+			giveMaterials(lastAttacker);
+			return;
+		}
+		
 		int id = getTemplate().getId();
 		if (!_specialDrop)
 		{
@@ -91,6 +185,66 @@ public class Chest extends Monster
 		}
 		
 		super.doItemDrop(NpcData.getInstance().getTemplate(id), lastAttacker);
+	}
+	
+	/**
+	 * Rolls the reward tier of an opened real chest (Common / Rare / Epic) and hands out random materials from that tier.
+	 * @param opener the player who opened the chest
+	 */
+	private void giveMaterials(Creature opener)
+	{
+		final Player player = opener == null ? null : opener.asPlayer();
+		if (player == null)
+		{
+			return;
+		}
+		
+		final String tierName;
+		final List<ChestMaterial> pool;
+		final int minItems;
+		final int maxItems;
+		final double roll = Rnd.get(TreasureChestConfig.COMMON_CHANCE + TreasureChestConfig.RARE_CHANCE + TreasureChestConfig.EPIC_CHANCE);
+		if (roll < TreasureChestConfig.EPIC_CHANCE)
+		{
+			tierName = "Epic";
+			pool = TreasureChestConfig.EPIC_MATERIALS;
+			minItems = TreasureChestConfig.EPIC_MIN_ITEMS;
+			maxItems = TreasureChestConfig.EPIC_MAX_ITEMS;
+		}
+		else if (roll < (TreasureChestConfig.EPIC_CHANCE + TreasureChestConfig.RARE_CHANCE))
+		{
+			tierName = "Rare";
+			pool = TreasureChestConfig.RARE_MATERIALS;
+			minItems = TreasureChestConfig.RARE_MIN_ITEMS;
+			maxItems = TreasureChestConfig.RARE_MAX_ITEMS;
+		}
+		else
+		{
+			tierName = "Common";
+			pool = TreasureChestConfig.COMMON_MATERIALS;
+			minItems = TreasureChestConfig.COMMON_MIN_ITEMS;
+			maxItems = TreasureChestConfig.COMMON_MAX_ITEMS;
+		}
+		
+		if (pool.isEmpty())
+		{
+			return;
+		}
+		
+		// Pick different materials, each with the same chance.
+		final List<ChestMaterial> materials = new ArrayList<>(pool);
+		Collections.shuffle(materials);
+		final int count = Math.min(materials.size(), Rnd.get(minItems, maxItems));
+		for (int i = 0; i < count; i++)
+		{
+			final ChestMaterial material = materials.get(i);
+			dropOrAutoLoot(player, new ItemHolder(material.itemId, Rnd.get(material.min, material.max)));
+		}
+		
+		if (TreasureChestConfig.MESSAGES)
+		{
+			player.sendMessage("You opened the treasure chest and found " + tierName + " materials!");
+		}
 	}
 	
 	@Override
