@@ -244,6 +244,15 @@ public class RotatingHotZones extends Quest
 			}
 		}
 		
+		// Modifier buffs (GLASS_CANNON, ARCANE_SURGE...) follow the freshly rolled modifiers - drops stale ones from players in last rotation's zones too.
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player != null)
+			{
+				syncModifierBuff(player);
+			}
+		}
+		
 		Skill playerBuff = SkillData.getInstance().getSkill(PLAYER_BUFF_ID, 1);
 		Skill monsterBuff = SkillData.getInstance().getSkill(MONSTER_BUFF_ID, 1);
 		
@@ -345,13 +354,8 @@ public class RotatingHotZones extends Quest
 				return null;
 			}
 			
-			final Location rawPoint = zone.getZone().getRandomPoint();
-			final List<Integer> floors = GeoEngine.getInstance().getAllZLayers(GeoEngine.getGeoX(rawPoint.getX()), GeoEngine.getGeoY(rawPoint.getY()));
-			int z = 0;
-			if ((floors != null) && !floors.isEmpty())
-			{
-				z = floors.get(Rnd.get(floors.size())) + 20;
-			}
+			final Location rawPoint = pickTeleportPoint(zone);
+			final int z = rawPoint.getZ();
 			
 			if (!isPartyTp)
 			{
@@ -480,8 +484,100 @@ public class RotatingHotZones extends Quest
 			player.stopSkillEffects(SkillFinishType.REMOVED, PLAYER_BUFF_ID);
 			player.sendMessage("Your Hot Zone bonus has ended - you are no longer in an active zone.");
 		}
+		
+		syncModifierBuff(player);
 	}
 	
+	/**
+	 * Makes {@code player} hold exactly the buff of the modifier active in the hotzone they stand in (see {@link HotzoneModifier#getPlayerBuffSkillId()}) - or none, if they are outside every active zone or its modifier has no buff. Every other modifier buff is removed.
+	 * @param player the player to update
+	 */
+	private void syncModifierBuff(Player player)
+	{
+		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(player);
+		final int wantedSkillId = modifier != null ? modifier.getPlayerBuffSkillId() : 0;
+		for (HotzoneModifier each : HotzoneModifier.values())
+		{
+			final int skillId = each.getPlayerBuffSkillId();
+			if ((skillId > 0) && (skillId != wantedSkillId) && player.isAffectedBySkill(skillId))
+			{
+				player.stopSkillEffects(SkillFinishType.REMOVED, skillId);
+			}
+		}
+		
+		if ((wantedSkillId > 0) && !player.isAffectedBySkill(wantedSkillId))
+		{
+			final Skill buff = getSafeSkill(wantedSkillId, 1);
+			if (buff != null)
+			{
+				buff.applyEffects(player, player);
+			}
+		}
+	}
+	
+	/**
+	 * Picks a random ground point inside {@code zone}. Zones with a narrowed minZ/maxZ (to leave out a catacomb above/below) only accept a geodata layer within that Z range, so a teleport never lands in the excluded level; after a few misses it falls back to any layer.
+	 * @param zone the hotzone to land in
+	 * @return the teleport location, Z already resolved from geodata
+	 */
+	private Location pickTeleportPoint(ZoneType zone)
+	{
+		final int lowZ = zone.getZone().getLowZ();
+		final int highZ = zone.getZone().getHighZ();
+		Location fallback = null;
+		for (int attempt = 0; attempt < 10; attempt++)
+		{
+			final Location point = zone.getZone().getRandomPoint();
+			final List<Integer> floors = GeoEngine.getInstance().getAllZLayers(GeoEngine.getGeoX(point.getX()), GeoEngine.getGeoY(point.getY()));
+			if ((floors == null) || floors.isEmpty())
+			{
+				if (fallback == null)
+				{
+					fallback = new Location(point.getX(), point.getY(), 0);
+				}
+				continue;
+			}
+
+			if (fallback == null)
+			{
+				fallback = new Location(point.getX(), point.getY(), floors.get(Rnd.get(floors.size())) + 20);
+			}
+
+			final List<Integer> inRange = new ArrayList<>();
+			for (int floor : floors)
+			{
+				if ((floor >= lowZ) && (floor <= highZ))
+				{
+					inRange.add(floor);
+				}
+			}
+
+			if (!inRange.isEmpty())
+			{
+				return new Location(point.getX(), point.getY(), inRange.get(Rnd.get(inRange.size())) + 20);
+			}
+		}
+		return fallback;
+	}
+
+	private boolean isInsideOtherActiveZone(Creature creature, int excludedZoneId)
+	{
+		for (int zoneId : _activeZoneSet)
+		{
+			if (zoneId == excludedZoneId)
+			{
+				continue;
+			}
+
+			final ZoneType zone = ZoneManager.getInstance().getZoneById(zoneId);
+			if ((zone != null) && zone.isInsideZone(creature))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private Skill getSafeSkill(int skillId, int level)
 	{
 		if (skillId <= 0)
@@ -584,6 +680,7 @@ public class RotatingHotZones extends Quest
 					buff.applyEffects(character, character);
 				}
 				character.asPlayer().sendMessage("You have entered an active Hot Zone!");
+				syncModifierBuff(character.asPlayer());
 			}
 			else if (character.isMonster())
 			{
@@ -601,9 +698,21 @@ public class RotatingHotZones extends Quest
 	{
 		if (_activeZoneSet.contains(zone.getId()))
 		{
+			// Overlapping active zones share the same buff - keep it while still inside another one.
+			if (isInsideOtherActiveZone(character, zone.getId()))
+			{
+				// ...but their modifiers can differ, so the modifier buff still has to follow.
+				if (character.isPlayer())
+				{
+					syncModifierBuff(character.asPlayer());
+				}
+				return;
+			}
+
 			if (character.isPlayer())
 			{
 				character.stopSkillEffects(SkillFinishType.REMOVED, PLAYER_BUFF_ID);
+				syncModifierBuff(character.asPlayer());
 				character.asPlayer().sendMessage("You have left the active Hot Zone.");
 			}
 			else if (character.isMonster())

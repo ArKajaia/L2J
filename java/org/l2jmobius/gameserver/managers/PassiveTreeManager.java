@@ -92,7 +92,7 @@ public class PassiveTreeManager
 		Map.entry("MAGIC_REFLECT_PCT", Stat.REFLECT_SKILL_MAGIC), // calcSkillReflect: straight % chance, init 0
 		Map.entry("SKILL_REFLECT_PCT", Stat.REFLECT_SKILL_PHYSIC), // calcSkillReflect: straight % chance, init 0
 		// PlayerStat.getBonus*Multiplier(): 1 + calcStat(stat, 0) / 100 - init 0, so these MUST be adds (a multiplier on 0 is a silent no-op).
-		Map.entry("DROP_RATE_PCT", Stat.BONUS_DROP_RATE), Map.entry("SPOIL_RATE_PCT", Stat.BONUS_SPOIL_RATE), Map.entry("ADENA_RATE_PCT", Stat.BONUS_DROP_ADENA));
+		Map.entry("DROP_RATE_PCT", Stat.BONUS_DROP_RATE), Map.entry("SPOIL_RATE_PCT", Stat.BONUS_SPOIL_RATE), Map.entry("ADENA_RATE_PCT", Stat.BONUS_DROP_ADENA), Map.entry("EXP_RATE_PCT", Stat.BONUS_EXP));
 
 	/**
 	 * Stats that are MULTIPLIERS - the value is a percent, applied as (1 + pct/100). Adding to these instead of multiplying is what caused the 200 -> 12,000 crit damage blowout.
@@ -100,7 +100,6 @@ public class PassiveTreeManager
 	private static final Map<String, Stat> FUNC_MUL_EFFECTS = Map.ofEntries(Map.entry("CRIT_DMG_PCT", Stat.CRITICAL_DAMAGE), // calcPhysDam: init 1, pure multiplier
 		Map.entry("HP_REGEN_PCT", Stat.REGENERATE_HP_RATE), // calcHpRegen: init = base regen
 		Map.entry("MP_REGEN_PCT", Stat.REGENERATE_MP_RATE), // calcMpRegen: init = base regen
-		Map.entry("EXP_RATE_PCT", Stat.BONUS_EXP), // NOTE: BONUS_EXP currently has no consumer anywhere in core - this key does nothing yet.
 		Map.entry("PVE_PDMG_PCT", Stat.PVE_PHYSICAL_DMG), // calcPhysDam vs monsters (melee autos + physical skills), init 1
 		Map.entry("PVE_MDMG_PCT", Stat.PVE_MAGICAL_DMG), // calcMagicDam vs monsters, init 1
 		Map.entry("PVE_BOW_DMG_PCT", Stat.PVE_BOW_DMG), // calcPhysDam vs monsters, bow/crossbow auto-attacks, init 1

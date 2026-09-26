@@ -1,371 +1,373 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list enabled="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/zones.xsd">
+	<!-- Locations and brackets checked against the High Five datapack (stats/npcs levels + spawns) - median monster level inside each zone sits in its bracket. -->
+	<!-- Zones with a lower/higher-level catacomb under or above them use a narrowed minZ/maxZ so that area is not counted as part of the hotzone. -->
 	<!-- ================= LEVEL 1-10 (90001 - 90010) ================= -->
-	<zone id="90001" name="Shadow of the Mother Tree" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90001" name="Shadow of the Mother Tree" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="50953" Y="42105" />
 	</zone>
 
-	<zone id="90002" name="Einhovant's School of Magic" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90002" name="Einhovant's School of Magic" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="-89041" Y="248907" />
 	</zone>
 
-	<zone id="90003" name="The Shilen Temple" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90003" name="The Shilen Temple" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="25934" Y="11037" />
 	</zone>
 
-	<zone id="90004" name="Elven Forest" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="21362" Y="51122 " />
+	<zone id="90004" name="Obelisk of Victory" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="-99586" Y="237637" />
 	</zone>
 
-	<zone id="90005" name="Immortal Plateau, Northern Region" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="-9465" Y="-134046" />
+	<zone id="90005" name="Valley of Heroes" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="-39347" Y="-107274" />
 	</zone>
 
-	<zone id="90006" name="Western Mining Zone" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="128527" Y="-204036" /><!--Z=-3408-->
+	<zone id="90006" name="Southern Dwarven Territory" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="118008" Y="-201492" />
 	</zone>
 
-	<zone id="90007" name="Iris Lake" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="51469" Y="82600" />
+	<zone id="90007" name="Starlight Waterfall" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="58502" Y="53453" />
 	</zone>
 
-	<zone id="90008" name="Talking Island Harbor" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="-96811" Y="259153" />
+	<zone id="90008" name="Isle of Souls" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="-121436" Y="56288" />
 	</zone>
 
-	<zone id="90009" name="Devil's Isle" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="43408" Y="206881" />
+	<zone id="90009" name="Hills of Gold" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="-116114" Y="87005" />
 	</zone>
 
-	<zone id="90010" name="Garden of Eva" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="84413" Y="234334" />
+	<zone id="90010" name="Dwarven Village Outskirts" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="115120" Y="-178224" />
 	</zone>
 
 	<!-- ================= LEVEL 11-20 (90011 - 90020) ================= -->
-	<zone id="90011" name="Elven Ruins" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="-112367" Y="234703" />
+	<zone id="90011" name="Elven Forest" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="21362" Y="51122" />
 	</zone>
 
-	<zone id="90012" name="Neutral Zone" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90012" name="Neutral Zone" type="HotZone" shape="Cylinder" minZ="-4400" maxZ="10000" rad="10000">
 		<node X="-10612" Y="75881" />
 	</zone>
 
-	<zone id="90013" name="School of Dark Arts (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90013" name="School of Dark Arts" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="-47543" Y="58478" />
 	</zone>
 
-	<zone id="90014" name="Altar of Rites" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="-44566" Y="77508" />
+	<zone id="90014" name="Mimir's Forest" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="-103032" Y="46457" />
 	</zone>
 
-	<zone id="90015" name="Abandoned Coal Mines" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90015" name="Abandoned Coal Mines" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="139714" Y="-177456" />
 	</zone>
 
-	<zone id="90016" name="Black Rock Hill" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90016" name="Black Rock Hill" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="-29466" Y="66678" />
 	</zone>
 
-	<zone id="90017" name="Ruins of Agony" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90017" name="Ruins of Agony" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="-42628" Y="119766" />
 	</zone>
 
-	<zone id="90018" name="Frozen Waterfalls" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="11810" Y="-139730" />
+	<zone id="90018" name="Immortal Plateau, Northern Region" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="-10983" Y="-117484" />
 	</zone>
 
-	<zone id="90019" name="Windmill Hill" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90019" name="Windmill Hill" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="-72417" Y="173629" />
 	</zone>
 
-	<zone id="90020" name="Fellmere Harvesting Grounds" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90020" name="Fellmere Harvesting Grounds" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="-63736" Y="101522" />
 	</zone>
 
 	<!-- ================= LEVEL 21-30 (90021 - 90030) ================= -->
-	<zone id="90021" name="Mithril Mines" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="171946" Y="-173352" />
+	<zone id="90021" name="Orc Barracks" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="-89763" Y="105359" />
 	</zone>
 
-	<zone id="90022" name="Ol Mahum Checkpoint" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90022" name="Ol Mahum Checkpoint" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="-6661" Y="201880" />
 	</zone>
 
-	<zone id="90023" name="Plains of Dion" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90023" name="Plains of Dion" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="630" Y="179184" />
 	</zone>
 
-	<zone id="90024" name="Dion Hills" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90024" name="Dion Hills" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="29928" Y="151415" />
 	</zone>
 
-	<zone id="90025" name="Partisan's Hideaway" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="43962" Y="108861" />
+	<zone id="90025" name="Partisan's Hideaway" type="HotZone" shape="Cylinder" minZ="-4400" maxZ="10000" rad="10000">
+		<node X="50081" Y="116859" />
 	</zone>
 
-	<zone id="90026" name="Cruma Marshlands" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90026" name="Cruma Marshlands" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="5106" Y="126916" />
 	</zone>
 
-	<zone id="90027" name="Floran Agricultural Area" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="10610" Y="156322" />
+	<zone id="90027" name="Windy Hill" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="-88539" Y="83389" />
 	</zone>
 
-	<zone id="90028" name="Langk Lizardmen Dwellings" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90028" name="Langk Lizardmen Dwellings" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="-44763" Y="203497" />
 	</zone>
 
-	<zone id="90029" name="Forgotten Temple" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90029" name="Forgotten Temple" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="-53001" Y="191425" />
 	</zone>
 
-	<zone id="90030" name="Maille Lizardmen Barracks" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90030" name="Maille Lizardmen Barracks" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="-25283" Y="106820" />
 	</zone>
 
 	<!-- ================= LEVEL 31-40 (90031 - 90040) ================= -->
-	<zone id="90031" name="Bee Hive" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90031" name="Bee Hive" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="22944" Y="182122" />
 	</zone>
 
-	<zone id="90032" name="Brigand Stronghold" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90032" name="Brigand Stronghold" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="126272" Y="-159336" />
 	</zone>
 
-	<zone id="90033" name="Breka's Stronghold" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90033" name="Breka's Stronghold" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="85546" Y="131328" />
 	</zone>
 
-	<zone id="90034" name="Gorgon Flower Garden" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90034" name="Gorgon Flower Garden" type="HotZone" shape="Cylinder" minZ="-4200" maxZ="10000" rad="10000">
 		<node X="113553" Y="134813" />
 	</zone>
 
-	<zone id="90035" name="Sky Wagon Relic" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90035" name="Sky Wagon Relic" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="121618" Y="-141554" />
 	</zone>
 
-	<zone id="90036" name="Death Pass" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90036" name="Death Pass" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="67933" Y="117045" />
 	</zone>
 
-	<zone id="90037" name="Plains of the Lizardmen" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="87252" Y="85514" />
+	<zone id="90037" name="The Ant Nest" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="-9959" Y="176184" />
 	</zone>
 
-	<zone id="90038" name="Field of Silence" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="91088" Y="182384" />
+	<zone id="90038" name="Execution Grounds" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="50568" Y="152408" />
 	</zone>
 
-	<zone id="90039" name="Alligator Beach" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90039" name="Alligator Beach" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="116267" Y="201177" />
 	</zone>
 
-	<zone id="90040" name="Fortress of Resistance" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="43962" Y="108861" />
+	<zone id="90040" name="Floran Agricultural Area" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="10610" Y="156322" />
 	</zone>
 
 	<!-- ================= LEVEL 41-50 (90041 - 90050) ================= -->
-	<zone id="90041" name="Tanor Canyon" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90041" name="Tanor Canyon" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="59170" Y="164817" />
 	</zone>
 
-	<zone id="90042" name="Alligator Island" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90042" name="Alligator Island" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="115583" Y="192261" />
 	</zone>
 
-	<zone id="90043" name="Caron's Dungeon" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="76021" Y="-110477" />
+	<zone id="90043" name="Devil's Isle" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="43408" Y="206881" />
 	</zone>
 
-	<zone id="90044" name="Sea of Spores" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90044" name="Sea of Spores" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="64328" Y="26803" />
 	</zone>
 
-	<zone id="90045" name="Pavel Ruins" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="91129" Y="-123951" />
+	<zone id="90045" name="Timak Outpost" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="67097" Y="68815" />
 	</zone>
 
-	<zone id="90046" name="The Enchanted Valley" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90046" name="The Enchanted Valley" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="124904" Y="61992" />
 	</zone>
 
-	<zone id="90047" name="The Forest of Mirrors" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90047" name="The Forest of Mirrors" type="HotZone" shape="Cylinder" minZ="-4500" maxZ="10000" rad="10000">
 		<node X="142065" Y="81300" />
 	</zone>
 
-	<zone id="90048" name="Forest of Evil" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90048" name="Forest of Evil" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="93218" Y="16969" />
 	</zone>
 
-	<zone id="90049" name="Hunters Valley" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90049" name="Hunters Valley" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="114306" Y="86573" />
 	</zone>
 
-	<zone id="90050" name="Archaic Laboratory" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="90418" Y="-107317" />
+	<zone id="90050" name="Plains of Glory" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="135580" Y="19467" />
 	</zone>
 
 	<!-- ================= LEVEL 51-60 (90051 - 90060) ================= -->
-	<zone id="90051" name="The Forbidden Gateway" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90051" name="The Forbidden Gateway" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="185319" Y="20218" />
 	</zone>
 
-	<zone id="90052" name="Outlaw Forest" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90052" name="Outlaw Forest" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="91539" Y="-12204" />
 	</zone>
 
-	<zone id="90053" name="Anghel Waterfall" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90053" name="Anghel Waterfall" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="166304" Y="91741" />
 	</zone>
 
-	<zone id="90054" name="The Cemetery" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90054" name="The Cemetery" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="167047" Y="20304" />
 	</zone>
 
-	<zone id="90055" name="Frost Lake" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90055" name="Frost Lake" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="108251" Y="-120886" />
 	</zone>
 
-	<zone id="90056" name="Frozen Labyrinth" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90056" name="Frozen Labyrinth" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="123037" Y="-118112" />
 	</zone>
 
-	<zone id="90057" name="Fields of Massacre" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="183543" Y="-14974" />
+	<zone id="90057" name="Forsaken Plains" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="168217" Y="37990" />
 	</zone>
 
-	<zone id="90058" name="Ancient Battleground" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90058" name="Ancient Battleground" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="106517" Y="-2871" />
 	</zone>
 
-	<zone id="90059" name="Ice Merchant Cabin" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90059" name="Ice Merchant Cabin" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="113750" Y="-109163" />
 	</zone>
 
-	<zone id="90060" name="Silent Valley" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="170838" Y="55776" />
+	<zone id="90060" name="Fields of Massacre (West)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="168508" Y="-6023" />
 	</zone>
 
 	<!-- ================= LEVEL 61-70 (90061 - 90070) ================= -->
-	<zone id="90061" name="Tower of Insolence Lower Floors (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="112000" Y="12000" />
+	<zone id="90061" name="Tower of Insolence" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="114649" Y="11115" />
 	</zone>
 
-	<zone id="90062" name="Forest of the Dead (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="57000" Y="-7000" />
+	<zone id="90062" name="Forest of the Dead" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="52107" Y="-54328" />
 	</zone>
 
-	<zone id="90063" name="Swamp of Screams (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="77000" Y="-53000" />
+	<zone id="90063" name="Swamp of Screams" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="69340" Y="-50203" />
 	</zone>
 
-	<zone id="90064" name="Valley of Saints (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="77000" Y="-103000" />
+	<zone id="90064" name="Valley of Saints" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="80471" Y="-84022" />
 	</zone>
 
-	<zone id="90065" name="Wall of Argos Lower (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="177000" Y="-53000" />
+	<zone id="90065" name="Wall of Argos" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="165054" Y="-47861" />
 	</zone>
 
-	<zone id="90066" name="Blazing Swamp (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="137000" Y="-63000" />
+	<zone id="90066" name="Blazing Swamp" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="155310" Y="-16339" />
 	</zone>
 
-	<zone id="90067" name="Devastated Castle (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="172000" Y="-13000" />
+	<zone id="90067" name="Fields of Massacre" type="HotZone" shape="Cylinder" minZ="-4200" maxZ="10000" rad="10000">
+		<node X="183543" Y="-14974" />
 	</zone>
 
-	<zone id="90068" name="Field of Silence (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="102000" Y="197000" />
+	<zone id="90068" name="Cursed Village" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="57670" Y="-41672" />
 	</zone>
 
-	<zone id="90069" name="Field of Whispers (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="112000" Y="197000" />
+	<zone id="90069" name="Garden of Beasts" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="132997" Y="-60608" />
 	</zone>
 
-	<zone id="90070" name="Hot Springs Entrance (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="147000" Y="-113000" />
+	<zone id="90070" name="Devil's Pass" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="106349" Y="-61870" />
 	</zone>
 
 	<!-- ================= LEVEL 71-80 (90071 - 90080) ================= -->
-	<zone id="90071" name="Imperial Tomb (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="175152" Y="-87908" />
+	<zone id="90071" name="Imperial Tomb" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="186699" Y="-75915" />
 	</zone>
 
-	<zone id="90072" name="Forge of the Gods (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="179967" Y="-78053" />
+	<zone id="90072" name="Forge of the Gods" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="169091" Y="-116162" />
 	</zone>
 
-	<zone id="90073" name="Varka Silenos Outpost (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="106273" Y="-64358" />
+	<zone id="90073" name="Varka Silenos Barracks" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="125740" Y="-40864" />
 	</zone>
 
-	<zone id="90074" name="Ketra Orc Outpost (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="127000" Y="-58000" />
+	<zone id="90074" name="Ketra Orc Outpost" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="146990" Y="-67128" />
 	</zone>
 
-	<zone id="90075" name="Wall of Argos Upper (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90075" name="Wall of Argos Upper" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="179000" Y="-55000" />
 	</zone>
 
-	<zone id="90076" name="Monastery of Silence Lower (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="82000" Y="-78000" />
+	<zone id="90076" name="Pavel Ruins" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="91280" Y="-117152" />
 	</zone>
 
-	<zone id="90077" name="Primeval Island (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="7000" Y="-233000" />
+	<zone id="90077" name="Primeval Isle" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="8480" Y="-14624" />
 	</zone>
 
-	<zone id="90078" name="Tower of Insolence Upper Floors (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="112000" Y="12000" />
+	<zone id="90078" name="Stakato Nest" type="HotZone" shape="Cylinder" minZ="-4200" maxZ="10000" rad="10000">
+		<node X="88969" Y="-45307" />
 	</zone>
 
-	<zone id="90079" name="Hot Springs Deep (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90079" name="Hot Springs" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="149000" Y="-115000" />
 	</zone>
 
-	<zone id="90080" name="Pagan Temple (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90080" name="Pagan Temple" type="HotZone" shape="Cylinder" minZ="-12000" maxZ="10000" rad="10000">
 		<node X="-18000" Y="-43000" />
 	</zone>
 
 	<!-- ================= LEVEL 81+ (90081 - 90090) ================= -->
-	<zone id="90081" name="Seed of Destruction (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="-243000" Y="247000" />
+	<zone id="90081" name="Field of Silence" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="91088" Y="182384" />
 	</zone>
 
-	<zone id="90082" name="Seed of Infinity (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="-213000" Y="237000" />
+	<zone id="90082" name="Crypts of Disgrace" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="-3000" rad="10000">
+		<node X="47692" Y="-115745" />
 	</zone>
 
-	<zone id="90083" name="Seed of Annihilation (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="-183000" Y="197000" />
+	<zone id="90083" name="Den of Evil" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="68693" Y="-110438" />
 	</zone>
 
-	<zone id="90084" name="Dragon Valley Revamp (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90084" name="Dragon Valley" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="107000" Y="112000" />
 	</zone>
 
-	<zone id="90085" name="Antharas Lair Revamp (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90085" name="Antharas' Lair" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="127000" Y="112000" />
 	</zone>
 
-	<zone id="90086" name="Plains of Lizardmen Revamp (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="77000" Y="77000" />
+	<zone id="90086" name="Plains of the Lizardmen" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="87252" Y="85514" />
 	</zone>
 
-	<zone id="90087" name="Sel Mahum Training Grounds (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="97000" Y="-43000" />
+	<zone id="90087" name="Sel Mahum Training Grounds" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="84517" Y="62538" />
 	</zone>
 
-	<zone id="90088" name="Monastery of Silence Upper (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="82000" Y="-76000" />
+	<zone id="90088" name="Monastery of Silence" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="106414" Y="-87799" />
 	</zone>
 
-	<zone id="90089" name="Stakato Nest Revamp (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
-		<node X="85000" Y="-58000" />
+	<zone id="90089" name="Mithril Mines" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="171946" Y="-173352" />
 	</zone>
 
-	<zone id="90090" name="Isle of Prayer (Hot Zone)" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="5000">
+	<zone id="90090" name="Isle of Prayer" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="137000" Y="177000" />
 	</zone>
 </list>

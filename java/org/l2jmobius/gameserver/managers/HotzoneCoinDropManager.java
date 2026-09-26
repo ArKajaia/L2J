@@ -5,6 +5,7 @@ import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.HotzoneCoinDropConfig;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 
@@ -29,12 +30,20 @@ public class HotzoneCoinDropManager
 			return;
 		}
 
-		if ((Rnd.nextDouble() * 100) >= HotzoneCoinDropConfig.DROP_CHANCE)
+		// GOLD_RUSH multiplies every payout; MINIBOSS_FRENZY makes a miniboss always pay, and pay more.
+		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(victim);
+		double multiplier = modifier != null ? modifier.getCoinMult() : 1.0;
+		final boolean frenzyMiniboss = (modifier != null) && (modifier.getMinibossCoinMult() > 1.0) && victim.isMonster() && victim.asMonster().isHotzoneMiniboss();
+		if (frenzyMiniboss)
+		{
+			multiplier *= modifier.getMinibossCoinMult();
+		}
+		else if ((Rnd.nextDouble() * 100) >= HotzoneCoinDropConfig.DROP_CHANCE)
 		{
 			return;
 		}
 
-		final int amount = calculateAmount(victim.getLevel());
+		final int amount = (int) Math.round(calculateAmount(victim.getLevel()) * multiplier);
 		if (amount > 0)
 		{
 			killer.addItem(ItemProcessType.REWARD, RatesConfig.ARENA_CURRENCY_ITEM_ID, amount, victim, true);

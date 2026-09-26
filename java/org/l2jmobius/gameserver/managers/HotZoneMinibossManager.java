@@ -9,6 +9,7 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.model.zone.ZoneType;
 import org.l2jmobius.gameserver.model.zone.type.HotZone;
@@ -53,6 +54,7 @@ public class HotZoneMinibossManager
 			return;
 		}
 
+		// Credit only ONE hotzone per kill - where hotzones overlap, counting every zone would double the miniboss rate there.
 		for (ZoneType zone : ZoneManager.getInstance().getZones(victim))
 		{
 			if (!(zone instanceof HotZone))
@@ -60,14 +62,16 @@ public class HotZoneMinibossManager
 				continue;
 			}
 
+			// MINIBOSS_FRENZY-style modifiers lower the kill threshold for this zone.
+			final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifier(zone.getId());
+			final int killsRequired = modifier != null ? Math.max(1, (int) Math.ceil(HotzoneMinibossConfig.KILLS_REQUIRED * modifier.getMinibossKillsMult())) : HotzoneMinibossConfig.KILLS_REQUIRED;
 			final AtomicInteger counter = _killCounters.computeIfAbsent(zone.getId(), k -> new AtomicInteger());
-			if (counter.incrementAndGet() < HotzoneMinibossConfig.KILLS_REQUIRED)
+			if (counter.incrementAndGet() >= killsRequired)
 			{
-				continue;
+				counter.set(0);
+				spawnMiniboss(template, victim, zone);
 			}
-
-			counter.set(0);
-			spawnMiniboss(template, victim, zone);
+			return;
 		}
 	}
 
