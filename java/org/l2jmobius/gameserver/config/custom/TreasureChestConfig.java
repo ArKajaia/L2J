@@ -76,6 +76,8 @@ public class TreasureChestConfig
 	public static boolean MIMIC_DEBUFF_ON_KEY;
 	public static boolean MIMIC_DEBUFF_IGNORE_RESIST;
 	public static List<Integer> MIMIC_DEBUFF_SKILLS = Collections.emptyList();
+	public static boolean MIMIC_CAN_MOVE;
+	public static int MIMIC_CHASE_RANGE;
 	
 	public static void load()
 	{
@@ -124,6 +126,9 @@ public class TreasureChestConfig
 			}
 		}
 		MIMIC_DEBUFF_SKILLS = skills;
+		
+		MIMIC_CAN_MOVE = config.getBoolean("MimicCanMove", true);
+		MIMIC_CHASE_RANGE = Math.max(0, config.getInt("MimicChaseRange", 1000));
 	}
 	
 	private static List<ChestMaterial> parseMaterials(ConfigReader config, String key, String defaultValue)

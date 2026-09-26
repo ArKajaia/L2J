@@ -42,7 +42,7 @@ import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
 /**
  * This class manages all chest.<br>
  * With {@link TreasureChestConfig#ENABLED}, the world treasure chests work like retail: every treasure chest spawn point holds a real chest ({@link #FIRST_REAL_CHEST_ID}-{@link #LAST_REAL_CHEST_ID}) and a mimic (the real chest id + {@link #MIMIC_ID_OFFSET}). Both are shown with the mimic's model so
- * they can't be told apart. A real chest vanishes when it is hit and gives crafting materials when it is opened with a key; a mimic attacks whoever tries to open it (see handlers.skill.effects.OpenChest) and curses whoever hits it with random debuffs.
+ * they can't be told apart. A real chest vanishes when it is hit and gives crafting materials when it is opened with a key; a mimic attacks whoever tries to open it (see handlers.skill.effects.OpenChest), curses whoever hits it with random debuffs, and chases its target up to a leash range.
  * @author Julian
  */
 public class Chest extends Monster
@@ -74,6 +74,8 @@ public class Chest extends Monster
 	public void onSpawn()
 	{
 		super.onSpawn();
+		// Npc#onSpawn turns random walking back on from the template. Chests never wander, so an idle mimic can't give itself away.
+		setRandomWalking(false);
 		_specialDrop = false;
 		_vanished = false;
 		_cursedPlayers.clear();
@@ -367,9 +369,42 @@ public class Chest extends Monster
 		}
 	}
 	
+	/**
+	 * Real chests never move. Mimics can walk and chase the player who woke them (with {@link TreasureChestConfig#MIMIC_CAN_MOVE}), but they never walk around on their own.
+	 */
 	@Override
 	public boolean isMovementDisabled()
 	{
+		if (TreasureChestConfig.ENABLED && TreasureChestConfig.MIMIC_CAN_MOVE && isMimic())
+		{
+			return super.isMovementDisabled();
+		}
+		return true;
+	}
+	
+	/**
+	 * Called while this chest is fighting. A mimic that has chased someone further than {@link TreasureChestConfig#MIMIC_CHASE_RANGE} from its spawn point gives up: it forgets its attackers, heals up and walks back.
+	 * @return {@code true} if the mimic gave up the chase
+	 */
+	public boolean checkMimicLeash()
+	{
+		if (!TreasureChestConfig.ENABLED || !TreasureChestConfig.MIMIC_CAN_MOVE || (TreasureChestConfig.MIMIC_CHASE_RANGE <= 0) || !isMimic() || isDead() || (getSpawn() == null))
+		{
+			return false;
+		}
+		
+		if (calculateDistance2D(getSpawn()) <= TreasureChestConfig.MIMIC_CHASE_RANGE)
+		{
+			return false;
+		}
+		
+		abortAttack();
+		abortCast();
+		getAttackByList().clear();
+		setCurrentHp(getMaxHp());
+		setCurrentMp(getMaxMp());
+		setWalking();
+		returnHome();
 		return true;
 	}
 	

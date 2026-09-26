@@ -54,6 +54,7 @@ import org.l2jmobius.gameserver.model.actor.enums.npc.AISkillScope;
 import org.l2jmobius.gameserver.model.actor.enums.npc.AIType;
 import org.l2jmobius.gameserver.model.actor.enums.npc.MonsterArchetype;
 import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
+import org.l2jmobius.gameserver.model.actor.instance.Chest;
 import org.l2jmobius.gameserver.model.actor.instance.FestivalMonster;
 import org.l2jmobius.gameserver.model.actor.instance.FriendlyMob;
 import org.l2jmobius.gameserver.model.actor.instance.GrandBoss;
@@ -852,6 +853,12 @@ public class AttackableAI extends CreatureAI
 	{
 		final Attackable npc = getActiveChar();
 		if ((npc == null) || npc.isCastingNow())
+		{
+			return;
+		}
+		
+		// Mimics (treasure chest monsters) give up the chase at their own leash range.
+		if ((npc instanceof Chest) && ((Chest) npc).checkMimicLeash())
 		{
 			return;
 		}
