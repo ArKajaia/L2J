@@ -16,8 +16,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.l2jmobius.commons.database.DatabaseFactory;
 import org.l2jmobius.gameserver.config.custom.PassiveTreeConfig;
 import org.l2jmobius.gameserver.data.custom.PassiveTreeData;
+import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.skill.PassiveTreeArchetypes;
@@ -280,9 +282,32 @@ public class PassiveTreeManager
 			return false; // not enough points
 		}
 		
-		// A root (START) node is always allocatable; anything else needs at
-		// least one already-allocated parent to connect through.
-		return node.isRoot() || node.getParents().stream().anyMatch(allocated::contains);
+		// A character picks ONE starting point: a root (START) node is only
+		// allocatable while no other one is owned, and the rest stay locked until
+		// a full reset. Anything else needs at least one already-allocated parent
+		// to connect through.
+		if (node.isRoot())
+		{
+			return !hasStartNode(player);
+		}
+		return node.getParents().stream().anyMatch(allocated::contains);
+	}
+
+	/**
+	 * @param player the player to check
+	 * @return {@code true} if the player's current class_index has already allocated a starting (root) node, which locks every other one
+	 */
+	public boolean hasStartNode(Player player)
+	{
+		for (int allocatedId : getAllocatedNodes(player))
+		{
+			final PassiveNode allocatedNode = PassiveTreeData.getInstance().getNode(allocatedId);
+			if ((allocatedNode != null) && allocatedNode.isRoot())
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public boolean allocate(Player player, int nodeId)
@@ -438,17 +463,28 @@ public class PassiveTreeManager
 	 */
 	public boolean resetTree(Player player)
 	{
-		if (player.getInventory().getInventoryItemCount(PassiveTreeConfig.RESET_ITEM_ID, -1) < PassiveTreeConfig.RESET_ITEM_COUNT)
+		if (getAllocatedNodes(player).isEmpty())
 		{
-			player.sendMessage("You don't have enough materials to reset your passive tree.");
+			player.sendMessage("Your passive tree has nothing to reset.");
 			return false;
 		}
-		
-		if (!player.destroyItemByItemId(ItemProcessType.DESTROY, PassiveTreeConfig.RESET_ITEM_ID, PassiveTreeConfig.RESET_ITEM_COUNT, player, true))
+
+		// A cost of 0 means a free reset - skip the item check entirely, since
+		// destroying 0 of a non-Adena item is reported as a failure.
+		if (PassiveTreeConfig.RESET_ITEM_COUNT > 0)
 		{
-			return false;
+			if (player.getInventory().getInventoryItemCount(PassiveTreeConfig.RESET_ITEM_ID, -1) < PassiveTreeConfig.RESET_ITEM_COUNT)
+			{
+				player.sendMessage("You don't have enough materials to reset your passive tree.");
+				return false;
+			}
+
+			if (!player.destroyItemByItemId(ItemProcessType.DESTROY, PassiveTreeConfig.RESET_ITEM_ID, PassiveTreeConfig.RESET_ITEM_COUNT, player, true))
+			{
+				return false;
+			}
 		}
-		
+
 		getAllocatedNodes(player).clear();
 		
 		final int classIndex = PassiveTreeConfig.SEPARATE_SUBCLASS_POINTS ? player.getClassIndex() : 0;
@@ -469,6 +505,20 @@ public class PassiveTreeManager
 		return true;
 	}
 	
+	/**
+	 * @return the full-reset price as players should read it, e.g. "100,000 Adena", or "Free" when the configured cost is 0. Shared by the Community Board button and the web planner so both always quote the same price.
+	 */
+	public String getResetCostText()
+	{
+		if (PassiveTreeConfig.RESET_ITEM_COUNT <= 0)
+		{
+			return "Free";
+		}
+
+		final ItemTemplate item = ItemData.getInstance().getTemplate(PassiveTreeConfig.RESET_ITEM_ID);
+		return String.format("%,d", PassiveTreeConfig.RESET_ITEM_COUNT) + " " + (item != null ? item.getName() : "items");
+	}
+
 	public static PassiveTreeManager getInstance()
 	{
 		return SingletonHolder.INSTANCE;

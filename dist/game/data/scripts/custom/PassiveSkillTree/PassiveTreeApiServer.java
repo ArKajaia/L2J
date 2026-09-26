@@ -42,6 +42,7 @@ import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
  * <li>GET /api/passivetree/resolve?pin=... - PIN fallback: exchanges a short PIN for a real token</li>
  * <li>GET /api/passivetree/character?token=... - one player's LIVE allocation state</li>
  * <li>GET /api/passivetree/allocate?token=...&amp;nodeId=... - allocates one node</li>
+ * <li>GET /api/passivetree/reset?token=... - clears the whole tree for the configured reset cost</li>
  * </ul>
  */
 public class PassiveTreeApiServer
@@ -74,6 +75,7 @@ public class PassiveTreeApiServer
 			server.createContext("/api/passivetree/character", this::handleCharacter);
 			server.createContext("/api/passivetree/allocate", this::handleAllocate);
 			server.createContext("/api/passivetree/deallocate", this::handleDeallocate);
+			server.createContext("/api/passivetree/reset", this::handleReset);
 			server.createContext("/api/passivetree/config", this::handleConfig);
 			server.setExecutor(Executors.newFixedThreadPool(2));
 			server.start();
@@ -376,12 +378,44 @@ public class PassiveTreeApiServer
 		
 		sendText(exchange, success ? 200 : 409, "application/json", json.toString());
 	}
-	
-	/** Exposes the respec cost so the web page never has to hardcode it. */
+
+	/** Full-tree reset - the same PassiveTreeManager.resetTree() the Community Board button calls, so both charge the same cost and clear the same rows. */
+	private void handleReset(HttpExchange exchange) throws IOException
+	{
+		final String token = parseQueryParam(exchange.getRequestURI().getQuery(), "token");
+		if (token == null)
+		{
+			sendText(exchange, 400, "application/json", "{\"error\":\"missing token\"}");
+			return;
+		}
+
+		final int[] verified = verifyToken(token);
+		if (verified == null)
+		{
+			sendText(exchange, 401, "application/json", "{\"error\":\"invalid or expired token\"}");
+			return;
+		}
+
+		final Player player = resolvePlayer(verified);
+		if (player == null)
+		{
+			sendText(exchange, 404, "application/json", "{\"error\":\"character not online on this class\"}");
+			return;
+		}
+
+		final boolean success = PassiveTreeManager.getInstance().resetTree(player);
+
+		final StringBuilder json = new StringBuilder();
+		json.append("{\"success\":").append(success).append(",").append("\"character\":").append(buildCharacterJson(player)).append("}");
+
+		sendText(exchange, success ? 200 : 409, "application/json", json.toString());
+	}
+
+	/** Exposes the respec and reset costs so the web page never has to hardcode them. */
 	private void handleConfig(HttpExchange exchange) throws IOException
 	{
 		final StringBuilder json = new StringBuilder();
-		json.append("{\"respecAdenaPerPoint\":").append(PassiveTreeConfig.RESPEC_ADENA_PER_POINT).append("}");
+		json.append("{\"respecAdenaPerPoint\":").append(PassiveTreeConfig.RESPEC_ADENA_PER_POINT).append(",").append("\"resetCost\":\"").append(escape(PassiveTreeManager.getInstance().getResetCostText())).append("\"}");
 		sendText(exchange, 200, "application/json", json.toString());
 	}
 	

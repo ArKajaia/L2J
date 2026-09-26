@@ -70,14 +70,14 @@
 	.points-badge .row { display: flex; align-items: center; gap: 8px; }
 	.points-badge svg { width: 16px; height: 16px; fill: #d9b64c; }
 	.points-badge .value { font-size: 20px; color: #f0e6c8; }
-	#respec-all-btn {
+	#reset-tree-btn {
 		margin-top: 8px; width: 100%; padding: 6px 0;
 		background: #2a1512; border: 1px solid #c0392b; color: #ff9b90;
 		font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
 		border-radius: 4px; cursor: pointer;
 	}
-	#respec-all-btn:hover { background: #3a1c18; }
-	#respec-all-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+	#reset-tree-btn:hover { background: #3a1c18; }
+	#reset-tree-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 	#controls {
 		flex: 0 0 auto;
@@ -276,7 +276,7 @@
 		<div style="width:100%">
 			<div class="label">Skill Points</div>
 			<div class="row"><svg viewBox="0 0 24 24"><use href="#icon-star"/></svg><span class="value" id="points-value">-</span></div>
-			<button id="respec-all-btn">Respec All</button>
+			<button id="reset-tree-btn">Reset Tree</button>
 		</div>
 	</div>
 
@@ -367,6 +367,7 @@ let nodes = [], nodeById = {}, edgeList = [];
 let allocated = new Set();
 let character = null, currentToken = null, allocating = false;
 let selectedNodeId = null;   // node currently shown in the detail panel
+let configResetCost = "";      // full-reset price text ("Free", "100,000 Adena"), fetched from the server too
 let configRespecPerPoint = 0;   // Adena per point, fetched from the server so the page never hardcodes it
 
 // view state
@@ -418,8 +419,10 @@ async function loadConfig() {
 		const res = await fetch(API_BASE + "/api/passivetree/config");
 		const data = await res.json();
 		configRespecPerPoint = data.respecAdenaPerPoint || 0;
+		configResetCost = data.resetCost || "";
 	} catch (e) {
 		configRespecPerPoint = 0; // page still works, respec cost just won't be previewed
+		configResetCost = "";
 	}
 }
 
@@ -469,64 +472,36 @@ async function allocateNode(node) {
 	finally { allocating = false; }
 }
 
-async function respecAll() {
-	if (!currentToken) { showToast("Enter your .treelink code to respec.", true); return; }
+async function resetTree() {
+	if (!currentToken) { showToast("Enter your .treelink code to reset.", true); return; }
 	if (allocating) return;
+	if (!allocated.size) { showToast("Nothing allocated to reset.", true); return; }
 
-	const targets = nodes.filter(n => allocated.has(n.id) && (n.type !== "START"));
-	if (!targets.length) { showToast("Nothing allocated to respec.", true); return; }
-
-	const totalCost = targets.reduce((sum, n) => sum + (configRespecPerPoint * n.cost), 0);
 	const confirmed = window.confirm(
-		`Respec ALL ${targets.length} allocated node(s)?\n\n`
-		+ `Total cost: ${totalCost.toLocaleString()} Adena\n\n`
-		+ `Refunds happen one at a time, innermost-safe first. If you run out of `
-		+ `Adena partway through, it stops there and keeps whatever was already refunded.`
+		`Reset your WHOLE passive tree, including your starting node?
+
+`
+		+ (configResetCost ? `Cost: ${configResetCost}
+
+` : "")
+		+ `Every point comes back and you can pick a new starting point.`
 	);
 	if (!confirmed) return;
 
 	allocating = true;
-	const btn = document.getElementById("respec-all-btn");
+	const btn = document.getElementById("reset-tree-btn");
 	if (btn) btn.disabled = true;
-	showToast(`Respeccing ${targets.length} node(s)...`);
-
-	let refunded = 0;
-	const remaining = new Set(targets.map(n => n.id));
-
 	try {
-		let madeProgress = true;
-		while ((remaining.size > 0) && madeProgress) {
-			madeProgress = false;
-			for (const nodeId of Array.from(remaining)) {
-				const res = await fetch(API_BASE + "/api/passivetree/deallocate?token=" + encodeURIComponent(currentToken) + "&nodeId=" + nodeId);
-				const data = await res.json();
-
-				if (data.success) {
-					character = data.character;
-					allocated = new Set(character.allocatedNodeIds || []);
-					remaining.delete(nodeId);
-					refunded++;
-					madeProgress = true;
-				} else if (data.reason === "NOT_ENOUGH_ADENA") {
-					showToast(`Refunded ${refunded} node(s) - ran out of Adena.`, true);
-					remaining.clear();
-					madeProgress = false;
-					break;
-				}
-				// WOULD_DISCONNECT (or any other transient reason): leave it in
-				// `remaining` - it becomes removable once whatever depends on it
-				// is cleared, which happens in a later pass.
-			}
+		const res = await fetch(API_BASE + "/api/passivetree/reset?token=" + encodeURIComponent(currentToken));
+		const data = await res.json();
+		if (data.character) {
+			character = data.character;
+			allocated = new Set(character.allocatedNodeIds || []);
 		}
-
-		if ((remaining.size === 0) && (refunded === targets.length)) {
-			showToast(`Respecced all ${refunded} node(s).`);
-		} else if ((refunded > 0) && (remaining.size > 0)) {
-			showToast(`Refunded ${refunded} node(s) - ${remaining.size} could not be refunded.`, true);
-		}
-	} catch (e) {
-		showToast("Connection error during respec - stopped after " + refunded + " node(s).", true);
-	} finally {
+		if (data.success) showToast("Passive tree reset.");
+		else showToast("Could not reset - check you can pay the reset cost.", true);
+	} catch (e) { showToast("Connection error.", true); }
+	finally {
 		allocating = false;
 		if (btn) btn.disabled = false;
 		render(); renderHud(); renderTotals();
@@ -700,8 +675,17 @@ function renderTotals() {
 function isAvailable(n) {
 	if (allocated.has(n.id)) return false;
 	if (!character) return true;
-	if (!n.parents || n.parents.length === 0) return true;
+	// Only one starting point per character: once one is taken the others lock.
+	if (isRootNode(n)) return !hasStartNode();
 	return n.parents.some(p => allocated.has(p));
+}
+
+function isRootNode(n) {
+	return !n.parents || n.parents.length === 0;
+}
+
+function hasStartNode() {
+	return nodes.some(m => allocated.has(m.id) && isRootNode(m));
 }
 
 function render() {
@@ -865,6 +849,8 @@ function renderDetailPanel(n) {
 		actionHtml = `<button class="detail-action respec" id="detail-action-btn">Respec - ${cost.toLocaleString()} Adena</button>`;
 	} else if (avail) {
 		actionHtml = `<button class="detail-action" id="detail-action-btn">Allocate - ${n.cost} point${n.cost === 1 ? "" : "s"}</button>`;
+	} else if (character && isRootNode(n) && hasStartNode()) {
+		actionHtml = `<button class="detail-action" disabled>Starting point already chosen</button>`;
 	} else {
 		actionHtml = `<button class="detail-action" disabled>Locked</button>`;
 	}
@@ -1134,7 +1120,7 @@ function setupZoomPan() {
 
 	document.getElementById("pin-submit").addEventListener("click", submitPin);
 	document.getElementById("pin-input").addEventListener("keydown", e => { if (e.key === "Enter") submitPin(); });
-	document.getElementById("respec-all-btn").addEventListener("click", respecAll);
+	document.getElementById("reset-tree-btn").addEventListener("click", resetTree);
 
 	document.getElementById("totals-toggle").addEventListener("click", () => {
 		const body = document.getElementById("totals-body");
