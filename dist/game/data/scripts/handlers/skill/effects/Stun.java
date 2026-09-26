@@ -17,6 +17,7 @@
 package handlers.skill.effects;
 
 import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.managers.MonsterRageManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.conditions.Condition;
@@ -86,6 +87,7 @@ public class Stun extends AbstractEffect
 		}
 
 		effected.startStunning();
+		MonsterRageManager.getInstance().onDisableLanded(effector, effected);
 	}
 
 	/**

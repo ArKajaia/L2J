@@ -3,6 +3,7 @@ package org.l2jmobius.gameserver.model.actor.instance;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.l2jmobius.commons.threads.ThreadPool;
@@ -13,6 +14,7 @@ import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
 import org.l2jmobius.gameserver.config.custom.HotzoneMinibossConfig;
+import org.l2jmobius.gameserver.config.custom.MonsterRageConfig;
 import org.l2jmobius.gameserver.config.custom.ThiefMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
 import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData;
@@ -28,10 +30,14 @@ import org.l2jmobius.gameserver.model.actor.enums.creature.InstanceType;
 import org.l2jmobius.gameserver.model.actor.holders.npc.MinionList;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.effects.EffectFlag;
+import org.l2jmobius.gameserver.model.effects.EffectType;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
+import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.functions.AbstractFunction;
+import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
 
 public class Monster extends Attackable
@@ -43,6 +49,12 @@ public class Monster extends Attackable
 	private ScheduledFuture<?> _arenaEnrageTask = null;
 	private ScheduledFuture<?> _arenaWaveReminderTask;
 	private double championHpMult;
+	
+	// Owns every stat Func a rage adds, so removeStatsOwner() strips them all at once.
+	private static final Object RAGE_FUNC_OWNER = new Object();
+	private final AtomicInteger _rageDisables = new AtomicInteger();
+	private volatile boolean _raging = false;
+	private ScheduledFuture<?> _rageTask = null;
 	
 	public Monster(NpcTemplate template)
 	{
@@ -131,6 +143,10 @@ public class Monster extends Attackable
 		}
 		
 		super.onSpawn();
+
+		// Every spawn starts calm with a clean stun/hold count.
+		endRage(false);
+		_rageDisables.set(0);
 
 		// Raid bosses and grand bosses are already hand-tuned; skip the random passive pool for
 		// them. isRaid() is checked here (before the arena branch below sets it for unrelated
@@ -344,6 +360,10 @@ public class Monster extends Attackable
 		final String baseTitle = getTemplate().getTitle() == null ? "" : getTemplate().getTitle();
 
 		final StringBuilder sb = new StringBuilder();
+		if (isRaging())
+		{
+			sb.append(MonsterRageConfig.TITLE_TAG).append(' ');
+		}
 		if (isThief())
 		{
 			sb.append(String.format(ThiefMonsterConfig.TITLE_TAG, getThiefPercent())).append(' ');
@@ -523,7 +543,7 @@ public class Monster extends Attackable
 		broadcastInfo();
 
 		final String message = (wave >= WaveChallengeConfig.WAVE_COUNT) ? "Final wave " + wave + "/" + WaveChallengeConfig.WAVE_COUNT + "! Defeat " + getName() + " once more to claim the reward." : "Wave " + (wave - 1) + " cleared! " + getName() + " grows stronger... (wave " + wave + "/" + WaveChallengeConfig.WAVE_COUNT + ")";
-		sendWaveChallengeMessage(killer, message);
+		sendMessageToAttackers(killer, message);
 		return true;
 	}
 
@@ -548,7 +568,7 @@ public class Monster extends Attackable
 	/**
 	 * Sends {@code message} to every player on this monster's aggro list, plus the killer if they somehow aren't on it.
 	 */
-	private void sendWaveChallengeMessage(Creature killer, String message)
+	private void sendMessageToAttackers(Creature killer, String message)
 	{
 		final List<Player> recipients = new ArrayList<>();
 		for (Creature attacker : getAggroList().keySet())
@@ -656,6 +676,103 @@ public class Monster extends Attackable
 		getVariables().set("THIEF_KILLS", kills + 1);
 		rebuildFullTitle();
 		broadcastInfo();
+	}
+
+	// =======================================================================
+	// Monster Rage System
+	// =======================================================================
+
+	/**
+	 * @return {@code true} while this monster is raging (see {@link org.l2jmobius.gameserver.managers.MonsterRageManager}).
+	 */
+	public boolean isRaging()
+	{
+		return _raging;
+	}
+
+	/**
+	 * Counts one more stun/hold landed on this monster by a player since it spawned.
+	 * @return the new count
+	 */
+	public int addRageDisable()
+	{
+		return _rageDisables.incrementAndGet();
+	}
+
+	/**
+	 * Starts a {@link MonsterRageConfig#DURATION_SECONDS}-second rage: the monster grows larger, gains attack/cast power and speed, resists negative effects (checked in {@code Formulas.calcEffectSuccess()}) and, if configured, breaks out of its current stuns/holds. Does nothing
+	 * if it is already raging.
+	 */
+	public synchronized void startRage()
+	{
+		if (_raging || isDead())
+		{
+			return;
+		}
+
+		_raging = true;
+
+		final double attackMultiplier = 1.0 + (MonsterRageConfig.ATTACK_BONUS / 100.0);
+		final double speedMultiplier = 1.0 + (MonsterRageConfig.SPEED_BONUS / 100.0);
+		final List<AbstractFunction> functions = new ArrayList<>(4);
+		functions.add(new FuncMul(Stat.POWER_ATTACK, 0x30, RAGE_FUNC_OWNER, attackMultiplier, null));
+		functions.add(new FuncMul(Stat.MAGIC_ATTACK, 0x30, RAGE_FUNC_OWNER, attackMultiplier, null));
+		functions.add(new FuncMul(Stat.POWER_ATTACK_SPEED, 0x30, RAGE_FUNC_OWNER, speedMultiplier, null));
+		functions.add(new FuncMul(Stat.MAGIC_ATTACK_SPEED, 0x30, RAGE_FUNC_OWNER, speedMultiplier, null));
+		addStatFuncs(functions);
+
+		startAbnormalVisualEffect(false, AbnormalVisualEffect.BIG_BODY);
+		rebuildFullTitle();
+		broadcastInfo();
+
+		if (MonsterRageConfig.BREAKS_DISABLES)
+		{
+			// The rage is rolled from inside the stun/hold effect's onStart(), so that effect isn't
+			// in the effect list yet - break free on the next tick, once it is.
+			ThreadPool.execute(() ->
+			{
+				if (_raging && !isDead())
+				{
+					getEffectList().stopEffects(EffectType.STUN);
+					getEffectList().stopEffects(EffectType.ROOT);
+					getEffectList().stopEffects(EffectType.PARALYZE);
+				}
+			});
+		}
+
+		if (!MonsterRageConfig.MESSAGE.isEmpty())
+		{
+			sendMessageToAttackers(null, String.format(MonsterRageConfig.MESSAGE, getName()));
+		}
+
+		_rageTask = ThreadPool.schedule(() -> endRage(true), MonsterRageConfig.DURATION_SECONDS * 1000L);
+	}
+
+	/**
+	 * Ends the current rage, if any, and removes its bonuses and visuals.
+	 * @param broadcast {@code true} to refresh the monster for nearby players
+	 */
+	private synchronized void endRage(boolean broadcast)
+	{
+		if (_rageTask != null)
+		{
+			_rageTask.cancel(false);
+			_rageTask = null;
+		}
+
+		if (!_raging)
+		{
+			return;
+		}
+
+		_raging = false;
+		removeStatsOwner(RAGE_FUNC_OWNER);
+		stopAbnormalVisualEffect(false, AbnormalVisualEffect.BIG_BODY);
+		rebuildFullTitle();
+		if (broadcast)
+		{
+			broadcastInfo();
+		}
 	}
 
 	// =======================================================================
@@ -906,6 +1023,7 @@ public class Monster extends Attackable
 	public boolean deleteMe()
 	{
 		cancelEnrageTimer();
+		endRage(false);
 		stopArenaWaveReminderTask();
 		
 		if (hasMinions())
@@ -1021,7 +1139,13 @@ public class Monster extends Attackable
 			return false;
 		}
 		
-		return super.doDie(killer);
+		if (!super.doDie(killer))
+		{
+			return false;
+		}
+		
+		endRage(true);
+		return true;
 	}
 	
 	private void startEnrageTimer()
