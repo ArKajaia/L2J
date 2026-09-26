@@ -19,22 +19,30 @@ package org.l2jmobius.gameserver.model.actor.instance;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.custom.TreasureChestConfig;
 import org.l2jmobius.gameserver.config.custom.TreasureChestConfig.ChestMaterial;
 import org.l2jmobius.gameserver.data.xml.NpcData;
+import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.InstanceType;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
+import org.l2jmobius.gameserver.model.skill.BuffInfo;
+import org.l2jmobius.gameserver.model.skill.EffectScope;
 import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
 
 /**
  * This class manages all chest.<br>
  * With {@link TreasureChestConfig#ENABLED}, the world treasure chests work like retail: every treasure chest spawn point holds a real chest ({@link #FIRST_REAL_CHEST_ID}-{@link #LAST_REAL_CHEST_ID}) and a mimic (the real chest id + {@link #MIMIC_ID_OFFSET}). Both are shown with the mimic's model so
- * they can't be told apart. A real chest vanishes when it is hit and gives crafting materials when it is opened with a key; a mimic attacks whoever tries to open it (see handlers.skill.effects.OpenChest).
+ * they can't be told apart. A real chest vanishes when it is hit and gives crafting materials when it is opened with a key; a mimic attacks whoever tries to open it (see handlers.skill.effects.OpenChest) and curses whoever hits it with random debuffs.
  * @author Julian
  */
 public class Chest extends Monster
@@ -47,6 +55,8 @@ public class Chest extends Monster
 	
 	private volatile boolean _specialDrop;
 	private volatile boolean _vanished;
+	/** Object ids of the players this mimic has already cursed since it spawned. */
+	private final Set<Integer> _cursedPlayers = ConcurrentHashMap.newKeySet();
 	
 	/**
 	 * Creates a chest.
@@ -66,6 +76,7 @@ public class Chest extends Monster
 		super.onSpawn();
 		_specialDrop = false;
 		_vanished = false;
+		_cursedPlayers.clear();
 		setMustRewardExpSp(true);
 	}
 	
@@ -119,7 +130,116 @@ public class Chest extends Monster
 			return;
 		}
 		
+		// A mimic curses whoever hits it.
+		if (TreasureChestConfig.ENABLED && isMimic() && !isDOT && (attacker != null) && !isDead())
+		{
+			curse(attacker.asPlayer());
+		}
+		
 		super.reduceCurrentHp(amount, attacker, awake, isDOT, skill);
+	}
+	
+	/**
+	 * Puts {@link TreasureChestConfig#MIMIC_DEBUFF_COUNT} different random debuffs from {@link TreasureChestConfig#MIMIC_DEBUFF_SKILLS} on the player, at a skill level that follows this mimic's level. Each player is cursed only once per spawn. Cancel and dispel skills are never used.
+	 * @param player the player to curse
+	 */
+	public void curse(Player player)
+	{
+		if (!TreasureChestConfig.MIMIC_DEBUFF_ENABLED || (TreasureChestConfig.MIMIC_DEBUFF_COUNT <= 0) || !isMimic() || (player == null) || player.isDead() || !_cursedPlayers.add(player.getObjectId()))
+		{
+			return;
+		}
+		
+		final List<Integer> skillIds = new ArrayList<>(TreasureChestConfig.MIMIC_DEBUFF_SKILLS);
+		Collections.shuffle(skillIds);
+		int applied = 0;
+		Skill shown = null;
+		for (int skillId : skillIds)
+		{
+			if (applied >= TreasureChestConfig.MIMIC_DEBUFF_COUNT)
+			{
+				break;
+			}
+			
+			final Skill debuff = getCurseSkill(skillId);
+			if (debuff == null)
+			{
+				continue;
+			}
+			
+			if (TreasureChestConfig.MIMIC_DEBUFF_IGNORE_RESIST)
+			{
+				if (player.isInvul() || player.isInvulAgainst(debuff.getId(), debuff.getLevel()) || (player.calcStat(Stat.DEBUFF_IMMUNITY, 0, this, debuff) > 0))
+				{
+					continue;
+				}
+				
+				// Only the lasting effects, so no instant damage (e.g. from the stun skill) and no land rate roll.
+				final BuffInfo info = new BuffInfo(this, player, debuff);
+				debuff.applyEffectScope(EffectScope.GENERAL, info, false, true);
+				player.getEffectList().add(info);
+			}
+			else
+			{
+				debuff.applyEffects(this, player, false, 0);
+			}
+			
+			if (shown == null)
+			{
+				shown = debuff;
+			}
+			applied++;
+		}
+		
+		if (shown != null)
+		{
+			broadcastPacket(new MagicSkillUse(this, player, shown.getId(), shown.getLevel(), 0, 0));
+			if (TreasureChestConfig.MESSAGES)
+			{
+				player.sendMessage("The Mimic curses you!");
+			}
+		}
+	}
+	
+	/**
+	 * @param skillId a debuff skill id
+	 * @return the highest level of the skill this mimic's level allows (level 1 at least), or {@code null} if the skill doesn't exist or is a cancel / dispel skill
+	 */
+	private Skill getCurseSkill(int skillId)
+	{
+		final int maxLevel = SkillData.getInstance().getMaxLevel(skillId);
+		Skill result = null;
+		for (int level = 1; level <= maxLevel; level++)
+		{
+			final Skill skill = SkillData.getInstance().getSkill(skillId, level);
+			if ((skill != null) && ((result == null) || (skill.getMagicLevel() <= getLevel())))
+			{
+				result = skill;
+			}
+		}
+		
+		if ((result == null) || isCancelSkill(result))
+		{
+			return null;
+		}
+		return result;
+	}
+	
+	private static boolean isCancelSkill(Skill skill)
+	{
+		final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+		if (effects != null)
+		{
+			for (AbstractEffect effect : effects)
+			{
+				final String name = effect.getClass().getSimpleName();
+				if (name.startsWith("Dispel") || name.contains("Cancel") || name.equals("StealAbnormal"))
+				{
+					return true;
+				}
+			}
+		}
+		return skill.getName().toLowerCase().contains("cancel");
 	}
 	
 	private void vanish(Creature attacker)

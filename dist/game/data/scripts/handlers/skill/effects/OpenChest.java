@@ -80,7 +80,7 @@ public class OpenChest extends AbstractEffect
 	}
 	
 	/**
-	 * Retail-like treasure chests: the level check comes first and looks the same for both kinds, then a mimic attacks the player and a real chest opens and pays out materials.
+	 * Retail-like treasure chests: the level check comes first and looks the same for both kinds, then a mimic attacks (and curses) the player and a real chest opens and pays out materials.
 	 * @param player the player using the key
 	 * @param chest the targeted real treasure chest or mimic
 	 * @param skill the key skill
@@ -106,6 +106,10 @@ public class OpenChest extends AbstractEffect
 			}
 			chest.addDamageHate(player, 0, 999);
 			chest.getAI().setIntention(Intention.ATTACK, player);
+			if (TreasureChestConfig.MIMIC_DEBUFF_ON_KEY)
+			{
+				chest.curse(player);
+			}
 			return;
 		}
 		

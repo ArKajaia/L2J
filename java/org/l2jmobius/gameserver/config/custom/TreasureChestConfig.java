@@ -28,7 +28,7 @@ import java.util.logging.Logger;
 import org.l2jmobius.commons.util.ConfigReader;
 
 /**
- * Loads the treasure chest configuration: real treasure chests look exactly like mimics, a real chest vanishes when it is hit, a mimic attacks whoever tries to open it with a key, and an opened real chest gives Common, Rare or Epic crafting materials (see {@link org.l2jmobius.gameserver.model.actor.instance.Chest}).
+ * Loads the treasure chest configuration: real treasure chests look exactly like mimics, a real chest vanishes when it is hit, a mimic attacks whoever tries to open it with a key and curses whoever hits it with random debuffs, and an opened real chest gives Common, Rare or Epic crafting materials (see {@link org.l2jmobius.gameserver.model.actor.instance.Chest}).
  * @author Mobius
  */
 public class TreasureChestConfig
@@ -71,6 +71,11 @@ public class TreasureChestConfig
 	public static int RARE_MAX_ITEMS;
 	public static int EPIC_MIN_ITEMS;
 	public static int EPIC_MAX_ITEMS;
+	public static boolean MIMIC_DEBUFF_ENABLED;
+	public static int MIMIC_DEBUFF_COUNT;
+	public static boolean MIMIC_DEBUFF_ON_KEY;
+	public static boolean MIMIC_DEBUFF_IGNORE_RESIST;
+	public static List<Integer> MIMIC_DEBUFF_SKILLS = Collections.emptyList();
 	
 	public static void load()
 	{
@@ -93,6 +98,32 @@ public class TreasureChestConfig
 		RARE_MAX_ITEMS = Math.max(RARE_MIN_ITEMS, config.getInt("TreasureChestRareMaxItems", 3));
 		EPIC_MIN_ITEMS = Math.max(1, config.getInt("TreasureChestEpicMinItems", 2));
 		EPIC_MAX_ITEMS = Math.max(EPIC_MIN_ITEMS, config.getInt("TreasureChestEpicMaxItems", 3));
+		
+		MIMIC_DEBUFF_ENABLED = config.getBoolean("MimicDebuffEnabled", true);
+		MIMIC_DEBUFF_COUNT = Math.max(0, config.getInt("MimicDebuffCount", 5));
+		MIMIC_DEBUFF_ON_KEY = config.getBoolean("MimicDebuffOnKey", true);
+		MIMIC_DEBUFF_IGNORE_RESIST = config.getBoolean("MimicDebuffIgnoreResist", true);
+		final List<Integer> skills = new ArrayList<>();
+		for (String idStr : config.getString("MimicDebuffSkills", "4182,4188,4183,4184,4187,4190,4054,4119,4098,4186,4185,4189,4208").split(","))
+		{
+			idStr = idStr.trim();
+			if (!idStr.isEmpty())
+			{
+				try
+				{
+					final int skillId = Integer.parseInt(idStr);
+					if (!skills.contains(skillId))
+					{
+						skills.add(skillId);
+					}
+				}
+				catch (NumberFormatException e)
+				{
+					LOGGER.warning("Invalid MimicDebuffSkills entry: " + idStr);
+				}
+			}
+		}
+		MIMIC_DEBUFF_SKILLS = skills;
 	}
 	
 	private static List<ChestMaterial> parseMaterials(ConfigReader config, String key, String defaultValue)
