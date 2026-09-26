@@ -87,6 +87,8 @@ public class Spawn extends Location
 	private Location _spawnLocation = null;
 	/** How many upcoming spawns of this spawn point may not roll a Thief (see ThiefMonsterManager). */
 	private int _thiefCooldown = 0;
+	/** How many upcoming spawns of this spawn point may not roll a Mage (see MageMonsterManager). */
+	private int _mageCooldown = 0;
 	
 	/**
 	 * Constructor of Spawn.<br>
@@ -281,9 +283,6 @@ public class Spawn extends Location
 	}
 	
 	/**
-	 * @return true if respawn enabled
-	 */
-	/**
 	 * @return how many upcoming spawns of this spawn point may not roll a Thief
 	 */
 	public int getThiefCooldown()
@@ -299,6 +298,25 @@ public class Spawn extends Location
 		_thiefCooldown = Math.max(0, thiefCooldown);
 	}
 	
+	/**
+	 * @return how many upcoming spawns of this spawn point may not roll a Mage
+	 */
+	public int getMageCooldown()
+	{
+		return _mageCooldown;
+	}
+	
+	/**
+	 * @param mageCooldown how many upcoming spawns of this spawn point may not roll a Mage
+	 */
+	public void setMageCooldown(int mageCooldown)
+	{
+		_mageCooldown = Math.max(0, mageCooldown);
+	}
+	
+	/**
+	 * @return true if respawn enabled
+	 */
 	public boolean isRespawnEnabled()
 	{
 		return _doRespawn;
@@ -593,6 +611,9 @@ public class Spawn extends Location
 		
 		// Thief roll - after the wave roll so wave challenges (which drop no adena) are skipped.
 		org.l2jmobius.gameserver.managers.ThiefMonsterManager.getInstance().tryConvert(npc, this);
+		
+		// Mage roll - after the Thief roll so a Thief never becomes a Mage too. The HP/MP refill below fills the boosted MP.
+		org.l2jmobius.gameserver.managers.MageMonsterManager.getInstance().tryConvert(npc, this);
 		
 		npc.setCurrentHp(npc.getMaxHp());
 		npc.setCurrentMp(npc.getMaxMp());

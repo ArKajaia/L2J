@@ -35,12 +35,14 @@ import org.l2jmobius.gameserver.config.NpcConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.config.custom.FactionSystemConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
+import org.l2jmobius.gameserver.config.custom.MageMonsterConfig;
 import org.l2jmobius.gameserver.data.sql.ArchetypeSkillData;
 import org.l2jmobius.gameserver.data.sql.ArchetypeSkillHolder;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.DimensionalRiftManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
+import org.l2jmobius.gameserver.managers.MageMonsterManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.World;
@@ -160,6 +162,10 @@ public class AttackableAI extends CreatureAI
 	// doesn't provide (e.g. a SUPPORTER roll on a template with no heal skill). Never mutates the
 	// shared NpcTemplate skill lists - only this spawned NPC gets the granted skill.
 	private Map<AISkillScope, List<Skill>> _grantedSkills = null;
+	
+	// Mage monster kiting (see thinkMageAttack): when the current retreat step should be over, and when the next one may start.
+	private long _mageKiteEndTime = 0;
+	private long _mageNextKiteTime = 0;
 	
 	/**
 	 * Constructor of AttackableAI.
@@ -1001,6 +1007,12 @@ public class AttackableAI extends CreatureAI
 		final int collision = template.getCollisionRadius();
 		final int combinedCollision = collision + mostHate.getTemplate().getCollisionRadius();
 		
+		// Mage monsters cast and kite until they run low on mana, then fall through to the stock logic below (melee).
+		if (npc.isMonster() && npc.asMonster().isMageMonster() && thinkMageAttack(npc, mostHate, combinedCollision, true))
+		{
+			return;
+		}
+		
 		// Archer kiting: back away when the target closes in. Scaled by meleeRetreatBias so Coward/Mage
 		// archers kite hard, early, and far, while Fighter/Rager archers barely bother retreating.
 		// At profile.meleeRetreatBias == 1.0 (BALANCED) this reproduces the original stock behavior exactly.
@@ -1085,8 +1097,9 @@ public class AttackableAI extends CreatureAI
 			setTarget(mostHate);
 		}
 		
-		// Cast skills.
-		if (!npc.isMoving() || (npc.getAiType() == AIType.MAGE))
+		// Cast skills. A Mage only gets here once it is out of mana (or silenced), and then it only auto-attacks.
+		final boolean mageOutOfMana = npc.isMonster() && npc.asMonster().isMageMonster();
+		if (!mageOutOfMana && (!npc.isMoving() || (npc.getAiType() == AIType.MAGE)))
 		{
 			final List<Skill> generalSkills = resolveAISkills(AISkillScope.GENERAL);
 			if (!generalSkills.isEmpty())
@@ -1983,6 +1996,125 @@ public class AttackableAI extends CreatureAI
 		return false;
 	}
 	
+	/**
+	 * Combat tick of a Mage monster (see {@link MageMonsterManager}): while it has mana it casts its magic damage spells back to back - ignoring the template's skill chance and the datapack's per-skill probability gates - and steps away from targets that get too close. It never melees while it
+	 * has mana: with every spell on cooldown it keeps its distance instead.
+	 * @param npc the Mage
+	 * @param target the target it is fighting
+	 * @param combinedCollision the Mage's plus the target's collision radius
+	 * @param canMove {@code false} while the Mage is held in place (cast only, no kiting or approaching)
+	 * @return {@code true} if this tick was handled, {@code false} to fall back to the stock logic (out of mana, silenced, or nothing it can do from here)
+	 */
+	private boolean thinkMageAttack(Attackable npc, Creature target, int combinedCollision, boolean canMove)
+	{
+		if ((target == null) || npc.isMuted() || MageMonsterManager.isOutOfMana(npc))
+		{
+			return false;
+		}
+		
+		final List<Skill> spells = MageMonsterManager.getMagicDamageSkills(npc);
+		if (spells.isEmpty())
+		{
+			return false;
+		}
+		
+		int cheapestMp = Integer.MAX_VALUE;
+		int shortestRange = Integer.MAX_VALUE;
+		final List<Skill> readySpells = new ArrayList<>(spells.size());
+		for (Skill spell : spells)
+		{
+			cheapestMp = Math.min(cheapestMp, spell.getMpConsume());
+			shortestRange = Math.min(shortestRange, spell.getCastRange());
+			if (checkSkillCastConditions(npc, spell))
+			{
+				readySpells.add(spell);
+			}
+		}
+		
+		// Can't afford any spell - melee.
+		if (cheapestMp >= npc.getCurrentMp())
+		{
+			return false;
+		}
+		
+		// Let the current cast or retreat step finish.
+		final long now = System.currentTimeMillis();
+		if (npc.isCastingNow() || (npc.isMoving() && (now < _mageKiteEndTime)))
+		{
+			return true;
+		}
+		
+		// Too close: step back. With a spell ready this waits for the kite interval, so the Mage alternates between stepping back and casting.
+		final boolean tooClose = canMove && ((npc.calculateDistance2D(target) - combinedCollision) < MageMonsterConfig.KITE_DISTANCE);
+		if (tooClose && (readySpells.isEmpty() || (now >= _mageNextKiteTime)) && mageKiteStep(npc, target, now))
+		{
+			return true;
+		}
+		
+		if (!readySpells.isEmpty())
+		{
+			final Skill spell = readySpells.get(Rnd.get(readySpells.size()));
+			if (npc.calculateDistance3D(target) > (spell.getCastRange() + combinedCollision))
+			{
+				if (!canMove)
+				{
+					return false;
+				}
+				
+				moveToPawn(target, spell.getCastRange());
+				return true;
+			}
+			
+			clientStopMoving(null);
+			npc.setTarget(target);
+			npc.doCast(spell);
+			return true;
+		}
+		
+		// Every spell is on cooldown: stay in casting range, but don't close in to melee.
+		if (canMove && (npc.calculateDistance2D(target) > (shortestRange + combinedCollision)))
+		{
+			moveToPawn(target, shortestRange);
+		}
+		return true;
+	}
+	
+	/**
+	 * Moves a Mage {@link MageMonsterConfig#KITE_STEP} away from {@code target}, onto a geodata-validated point.
+	 * @param npc the Mage
+	 * @param target the target it is backing away from
+	 * @param now the current time in milliseconds
+	 * @return {@code true} if the Mage started moving, {@code false} if there is no room to back away
+	 */
+	private boolean mageKiteStep(Attackable npc, Creature target, long now)
+	{
+		double dx = npc.getX() - target.getX();
+		double dy = npc.getY() - target.getY();
+		double length = Math.hypot(dx, dy);
+		if (length < 1)
+		{
+			// Standing on top of each other - pick any direction.
+			final double angle = Rnd.nextDouble() * 2 * Math.PI;
+			dx = Math.cos(angle);
+			dy = Math.sin(angle);
+			length = 1;
+		}
+		
+		final int step = MageMonsterConfig.KITE_STEP;
+		final int posX = npc.getX() + (int) ((dx / length) * step);
+		final int posY = npc.getY() + (int) ((dy / length) * step);
+		final Location retreatLoc = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), posX, posY, npc.getZ() + 30, npc.getInstanceId());
+		if ((npc.calculateDistance2D(retreatLoc) < 50) || !GeoEngine.getInstance().canMoveToTarget(npc.getX(), npc.getY(), npc.getZ(), retreatLoc.getX(), retreatLoc.getY(), retreatLoc.getZ(), npc.getInstanceId()))
+		{
+			return false;
+		}
+		
+		moveTo(retreatLoc.getX(), retreatLoc.getY(), retreatLoc.getZ()); // Issues move command without breaking ATTACK intention
+		_mageKiteEndTime = now + Math.min(3000, (long) ((step * 1000.0) / Math.max(1, npc.getMoveSpeed())));
+		_mageNextKiteTime = now + MageMonsterConfig.KITE_INTERVAL;
+		return true;
+	}
+	
 	private void movementDisable()
 	{
 		final Creature target = getAttackTarget();
@@ -1997,10 +2129,17 @@ public class AttackableAI extends CreatureAI
 			npc.setTarget(target);
 		}
 		
+		// A held Mage still casts from where it stands. If it falls through (out of mana), it only auto-attacks.
+		final boolean isMage = npc.isMonster() && npc.asMonster().isMageMonster();
+		if (isMage && thinkMageAttack(npc, target, npc.getTemplate().getCollisionRadius() + target.getTemplate().getCollisionRadius(), false))
+		{
+			return;
+		}
+		
 		final double dist = npc.calculateDistance2D(target);
 		
 		// TODO(Zoey76): Review this "magic changes".
-		final int random = Rnd.get(100);
+		final int random = isMage ? 100 : Rnd.get(100);
 		if (!target.isImmobilized() && (random < 15) && tryCast(npc, target, AISkillScope.IMMOBILIZE, dist))
 		{
 			return;
@@ -2021,12 +2160,12 @@ public class AttackableAI extends CreatureAI
 			return;
 		}
 		
-		if ((npc.isMovementDisabled() || (npc.getAiType() == AIType.MAGE) || (npc.getAiType() == AIType.HEALER)) && tryCast(npc, target, AISkillScope.ATTACK, dist))
+		if (!isMage && (npc.isMovementDisabled() || (npc.getAiType() == AIType.MAGE) || (npc.getAiType() == AIType.HEALER)) && tryCast(npc, target, AISkillScope.ATTACK, dist))
 		{
 			return;
 		}
 		
-		if (tryCast(npc, target, AISkillScope.UNIVERSAL, dist))
+		if (!isMage && tryCast(npc, target, AISkillScope.UNIVERSAL, dist))
 		{
 			return;
 		}

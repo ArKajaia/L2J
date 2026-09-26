@@ -14,6 +14,7 @@ import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
 import org.l2jmobius.gameserver.config.custom.HotzoneMinibossConfig;
+import org.l2jmobius.gameserver.config.custom.MageMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.MonsterRageConfig;
 import org.l2jmobius.gameserver.config.custom.ThiefMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
@@ -368,6 +369,10 @@ public class Monster extends Attackable
 		{
 			sb.append(String.format(ThiefMonsterConfig.TITLE_TAG, getThiefPercent())).append(' ');
 		}
+		if (isMageMonster())
+		{
+			sb.append(MageMonsterConfig.TITLE_TAG).append(' ');
+		}
 		if (isWaveChallenge())
 		{
 			sb.append(String.format(WaveChallengeConfig.TITLE_TAG, getWaveChallengeWave(), WaveChallengeConfig.WAVE_COUNT)).append(' ');
@@ -679,6 +684,28 @@ public class Monster extends Attackable
 	}
 
 	// =======================================================================
+	// Mage Monster System
+	// =======================================================================
+
+	/**
+	 * @return {@code true} if {@link org.l2jmobius.gameserver.managers.MageMonsterManager} turned this spawn into a Mage.
+	 */
+	public boolean isMageMonster()
+	{
+		return MageMonsterConfig.ENABLED && getVariables().getBoolean("IS_MAGE", false);
+	}
+
+	/**
+	 * Turns this freshly spawned monster into a Mage. Called by {@link org.l2jmobius.gameserver.managers.MageMonsterManager#tryConvert}.
+	 */
+	public void startMage()
+	{
+		getVariables().set("IS_MAGE", true);
+		rebuildFullTitle();
+		broadcastInfo();
+	}
+
+	// =======================================================================
 	// Monster Rage System
 	// =======================================================================
 
@@ -932,6 +959,23 @@ public class Monster extends Attackable
 	}
 
 	@Override
+	public int getMaxMp()
+	{
+		final int baseMaxMp = super.getMaxMp();
+		return isMageMonster() ? (int) (baseMaxMp * MageMonsterConfig.MP_MULTIPLIER) : baseMaxMp;
+	}
+
+	/**
+	 * Regeneration stops at this value, and the stat layer computes it from the unboosted max MP - scale it too so a Mage regenerates its whole pool.
+	 */
+	@Override
+	public int getMaxRecoverableMp()
+	{
+		final int baseMaxRecoverableMp = super.getMaxRecoverableMp();
+		return isMageMonster() ? (int) (baseMaxRecoverableMp * MageMonsterConfig.MP_MULTIPLIER) : baseMaxRecoverableMp;
+	}
+
+	@Override
 	public double getPAtk(Creature target)
 	{
 		final double basePAtk = super.getPAtk(target);
@@ -984,7 +1028,8 @@ public class Monster extends Attackable
 		final double multiplier = (isArenaChallenger() ? getArenaOffenseMultiplier() : 1.0) * getWaveChallengeOffenseMultiplier();
 		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
 		final double hotzoneMultiplier = hotzoneModifier != null ? hotzoneModifier.getMonsterSpdMult() : 1.0;
-		return (int) (baseMAtkSpd * Math.sqrt(multiplier * hotzoneMultiplier));
+		final double mageMultiplier = isMageMonster() ? 1.0 + (MageMonsterConfig.CAST_SPEED_BONUS / 100.0) : 1.0;
+		return (int) (baseMAtkSpd * Math.sqrt(multiplier * hotzoneMultiplier) * mageMultiplier);
 	}
 
 	public static long calculateArenaReward(int finalWave)

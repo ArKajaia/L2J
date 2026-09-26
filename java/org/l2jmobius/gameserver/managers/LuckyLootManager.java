@@ -251,6 +251,30 @@ public class LuckyLootManager
 	}
 
 	/**
+	 * Drops one Sealed Cache without the chance roll (used by Mage monsters). The tier is still picked by weight, and the {@link LuckyLootConfig#SEALED_CACHE_MAX_LEVEL_DIFFERENCE} rule still applies.
+	 * @param victim the attackable that just died
+	 * @param killer the player credited with the kill
+	 */
+	public void dropGuaranteedCache(Attackable victim, Player killer)
+	{
+		if ((victim == null) || (killer == null))
+		{
+			return;
+		}
+
+		if ((LuckyLootConfig.SEALED_CACHE_MAX_LEVEL_DIFFERENCE >= 0) && ((killer.getLevel() - victim.getLevel()) > LuckyLootConfig.SEALED_CACHE_MAX_LEVEL_DIFFERENCE))
+		{
+			return;
+		}
+
+		final int itemId = pickCacheTier(victim.getLevel());
+		if (itemId > 0)
+		{
+			victim.dropOrAutoLoot(killer, new ItemHolder(itemId, 1));
+		}
+	}
+
+	/**
 	 * @param level the victim's level
 	 * @return the item id of the cache tier picked by weight, or 0 if every weight is 0
 	 */
