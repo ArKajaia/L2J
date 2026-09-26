@@ -103,7 +103,7 @@ public abstract class AbstractNpcInfo extends ServerPacket
 		{
 			super(cha, attacker.isGM());
 			_npc = cha;
-			_displayId = cha.getTemplate().getDisplayId(); // On every subclass
+			_displayId = cha.getDisplayId(); // On every subclass
 			_rhand = cha.getRightHandItem(); // On every subclass
 			_lhand = cha.getLeftHandItem(); // On every subclass
 			_enchantEffect = cha.getEnchantEffect();

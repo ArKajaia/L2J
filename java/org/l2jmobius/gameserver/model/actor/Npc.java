@@ -348,6 +348,14 @@ public class Npc extends Creature
 	}
 	
 	/**
+	 * @return the NPC id the client uses to show this NPC (its model and client-side name)
+	 */
+	public int getDisplayId()
+	{
+		return getTemplate().getDisplayId();
+	}
+	
+	/**
 	 * Gets the NPC ID.
 	 * @return the NPC ID
 	 */

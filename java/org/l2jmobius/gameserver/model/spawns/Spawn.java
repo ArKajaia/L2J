@@ -531,7 +531,7 @@ public class Spawn extends Location
 		// 1. Check if the NPC is allowed to be a champion (Level, Instance, Type, etc.)
 		// 1. Check if the NPC is allowed to be a champion
 		// 1. Check if the NPC is allowed to be a champion
-		if (ChampionMonstersConfig.CHAMPION_ENABLE && npc.isMonster() && !npc.isQuestMonster() && !_template.isUndying() && !npc.isRaid() && !npc.isRaidMinion() && (npc.getLevel() >= ChampionMonstersConfig.CHAMP_MIN_LEVEL) && (npc.getLevel() <= ChampionMonstersConfig.CHAMP_MAX_LEVEL) && (ChampionMonstersConfig.CHAMPION_ENABLE_IN_INSTANCES || (getInstanceId() == 0)))
+		if (ChampionMonstersConfig.CHAMPION_ENABLE && npc.isMonster() && !(npc instanceof org.l2jmobius.gameserver.model.actor.instance.Chest) && !npc.isQuestMonster() && !_template.isUndying() && !npc.isRaid() && !npc.isRaidMinion() && (npc.getLevel() >= ChampionMonstersConfig.CHAMP_MIN_LEVEL) && (npc.getLevel() <= ChampionMonstersConfig.CHAMP_MAX_LEVEL) && (ChampionMonstersConfig.CHAMPION_ENABLE_IN_INSTANCES || (getInstanceId() == 0)))
 		{
 			// --- NEW HOTZONE LOGIC ---
 			double freqMultiplier = 1.0; // Default is 1x (normal chance)
