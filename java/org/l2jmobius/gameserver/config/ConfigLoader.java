@@ -43,6 +43,7 @@ import org.l2jmobius.gameserver.config.custom.HellboundStatusConfig;
 import org.l2jmobius.gameserver.config.custom.HotzoneCoinDropConfig;
 import org.l2jmobius.gameserver.config.custom.HotzoneMinibossConfig;
 import org.l2jmobius.gameserver.config.custom.LuckyLootConfig;
+import org.l2jmobius.gameserver.config.custom.MageMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.MerchantZeroSellPriceConfig;
 import org.l2jmobius.gameserver.config.custom.MonsterRageConfig;
 import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
@@ -124,6 +125,7 @@ public class ConfigLoader
 		HotzoneCoinDropConfig.load();
 		HotzoneMinibossConfig.load();
 		LuckyLootConfig.load();
+		MageMonsterConfig.load();
 		MerchantZeroSellPriceConfig.load();
 		MonsterRageConfig.load();
 		MultilingualSupportConfig.load();

@@ -31,6 +31,7 @@ import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.NpcConfig;
 import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
+import org.l2jmobius.gameserver.config.custom.MageMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.NpcStatMultipliersConfig;
 import org.l2jmobius.gameserver.config.custom.PremiumSystemConfig;
 import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
@@ -736,6 +737,13 @@ public class NpcTemplate extends CreatureTemplate
 				}
 			}
 			
+			// Mages drop more of everything.
+			if (victim.isMonster() && victim.asMonster().isMageMonster())
+			{
+				scaleDropCounts(groupDrops, MageMonsterConfig.DROP_AMOUNT_MULTIPLIER);
+				scaleDropCounts(ungroupedDrops, MageMonsterConfig.DROP_AMOUNT_MULTIPLIER);
+			}
+			
 			// return results
 			if ((groupDrops != null) && (ungroupedDrops != null))
 			{
@@ -756,11 +764,33 @@ public class NpcTemplate extends CreatureTemplate
 		}
 		else if ((dropType == DropType.SPOIL) && (_dropListSpoil != null))
 		{
-			return calculateUngroupedDrops(dropType, victim, killer);
+			final List<ItemHolder> spoilDrops = calculateUngroupedDrops(dropType, victim, killer);
+			
+			// Mages give more of everything when swept.
+			if (victim.isMonster() && victim.asMonster().isMageMonster())
+			{
+				scaleDropCounts(spoilDrops, MageMonsterConfig.SPOIL_AMOUNT_MULTIPLIER);
+			}
+			return spoilDrops;
 		}
 		
 		// no drops
 		return null;
+	}
+	
+	/**
+	 * Multiplies the count of every item in {@code drops}, keeping at least 1 of each.
+	 * @param drops the calculated drops, may be {@code null}
+	 * @param multiplier the amount multiplier
+	 */
+	private static void scaleDropCounts(List<ItemHolder> drops, double multiplier)
+	{
+		if ((drops == null) || (multiplier == 1.0))
+		{
+			return;
+		}
+		
+		drops.replaceAll(i -> new ItemHolder(i.getId(), Math.max(1, (long) (i.getCount() * multiplier))));
 	}
 	
 	private List<ItemHolder> calculateGroupDrops(Creature victim, Creature killer)
