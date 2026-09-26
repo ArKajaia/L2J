@@ -44,6 +44,7 @@ import org.l2jmobius.gameserver.config.custom.HotzoneCoinDropConfig;
 import org.l2jmobius.gameserver.config.custom.HotzoneMinibossConfig;
 import org.l2jmobius.gameserver.config.custom.LuckyLootConfig;
 import org.l2jmobius.gameserver.config.custom.MerchantZeroSellPriceConfig;
+import org.l2jmobius.gameserver.config.custom.MonsterRageConfig;
 import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
 import org.l2jmobius.gameserver.config.custom.NoblessMasterConfig;
 import org.l2jmobius.gameserver.config.custom.NpcStatMultipliersConfig;
@@ -124,6 +125,7 @@ public class ConfigLoader
 		HotzoneMinibossConfig.load();
 		LuckyLootConfig.load();
 		MerchantZeroSellPriceConfig.load();
+		MonsterRageConfig.load();
 		MultilingualSupportConfig.load();
 		NoblessMasterConfig.load();
 		NpcStatMultipliersConfig.load();

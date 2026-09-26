@@ -17,6 +17,7 @@
 package handlers.skill.effects;
 
 import org.l2jmobius.gameserver.ai.Action;
+import org.l2jmobius.gameserver.managers.MonsterRageManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.conditions.Condition;
@@ -62,5 +63,6 @@ public class Root extends AbstractEffect
 	{
 		effected.stopMove(null);
 		effected.getAI().notifyAction(Action.ROOTED);
+		MonsterRageManager.getInstance().onDisableLanded(effector, effected);
 	}
 }
