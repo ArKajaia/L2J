@@ -20,11 +20,18 @@
  */
 package handlers.chat.commands.admin;
 
+import java.util.ArrayList;
+import java.util.StringTokenizer;
+
 import org.l2jmobius.gameserver.data.xml.FakePlayerData;
+import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
 import org.l2jmobius.gameserver.handler.IAdminCommandHandler;
 import org.l2jmobius.gameserver.managers.FakePlayerChatManager;
+import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.model.World;
+import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 
 /**
  * @author Mobius
@@ -33,7 +40,10 @@ public class AdminFakePlayers implements IAdminCommandHandler
 {
 	private static final String[] ADMIN_COMMANDS =
 	{
-		"admin_fakechat"
+		"admin_fakechat",
+		"admin_fakepvp",
+		"admin_fakepvp_list",
+		"admin_fakepvp_clear"
 	};
 	
 	@Override
@@ -75,6 +85,69 @@ public class AdminFakePlayers implements IAdminCommandHandler
 			
 			FakePlayerChatManager.getInstance().sendChat(player, fpcName, message);
 			activeChar.sendSysMessage("Your message has been sent.");
+		}
+		else if (command.startsWith("admin_fakepvp_list"))
+		{
+			final StringBuilder sb = new StringBuilder();
+			for (FakePlayerPvpBuild build : FakePlayerPvpData.getInstance().getBuilds())
+			{
+				sb.append(sb.length() > 0 ? ", " : "").append(build.getName().replace(" ", "").replace("'", ""));
+			}
+			activeChar.sendSysMessage("Builds: " + sb);
+			activeChar.sendSysMessage("Roaming fake players alive: " + FakePlayerPvpManager.getInstance().getFakePlayers().size() + (FakePlayerPvpManager.getInstance().isEnabled() ? "" : " (spawning disabled)"));
+		}
+		else if (command.startsWith("admin_fakepvp_clear"))
+		{
+			int count = 0;
+			for (Npc fake : new ArrayList<>(FakePlayerPvpManager.getInstance().getFakePlayers()))
+			{
+				fake.deleteMe();
+				count++;
+			}
+			activeChar.sendSysMessage("Removed " + count + " roaming fake players.");
+		}
+		else if (command.startsWith("admin_fakepvp"))
+		{
+			final StringTokenizer st = new StringTokenizer(command);
+			st.nextToken();
+			FakePlayerPvpBuild build = null;
+			int level = activeChar.getLevel();
+			if (st.hasMoreTokens())
+			{
+				final String buildName = st.nextToken();
+				if (!buildName.equalsIgnoreCase("random"))
+				{
+					build = FakePlayerPvpData.getInstance().getBuild(buildName);
+					if (build == null)
+					{
+						activeChar.sendSysMessage("Unknown build. Use //fakepvp_list to see them.");
+						return false;
+					}
+				}
+			}
+			
+			if (st.hasMoreTokens())
+			{
+				try
+				{
+					level = Math.max(1, Math.min(85, Integer.parseInt(st.nextToken())));
+				}
+				catch (NumberFormatException e)
+				{
+					activeChar.sendSysMessage("Usage: //fakepvp [build|random] [level]");
+					return false;
+				}
+			}
+			
+			final Npc fake = FakePlayerPvpManager.getInstance().spawnFakePlayer(build, level, activeChar.getX(), activeChar.getY(), activeChar.getZ(), activeChar.getInstanceId(), null, null);
+			if (fake == null)
+			{
+				activeChar.sendSysMessage("Could not spawn a roaming fake player.");
+				return false;
+			}
+			
+			final FakePlayerPvpBuild usedBuild = fake.getTemplate().getFakePlayerPvpProfile().getBuild();
+			activeChar.sendSysMessage("Spawned " + fake.getName() + ": level " + level + " " + usedBuild.getName() + " (" + fake.getTemplate().getFakePlayerPvpProfile().getPlayerClass().name() + ") HP " + (int) fake.getMaxHp() + " P.Atk " + (int) fake.getPAtk(null) + " M.Atk " + (int) fake.getMAtk(null, null) + " P.Def " + (int) fake.getPDef(null) + " M.Def " + (int) fake.getMDef(null, null) + ".");
 		}
 		
 		return true;

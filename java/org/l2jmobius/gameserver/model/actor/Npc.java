@@ -52,6 +52,7 @@ import org.l2jmobius.gameserver.handler.BypassHandler;
 import org.l2jmobius.gameserver.handler.IBypassHandler;
 import org.l2jmobius.gameserver.managers.CHSiegeManager;
 import org.l2jmobius.gameserver.managers.CastleManager;
+import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.FortManager;
 import org.l2jmobius.gameserver.managers.ItemManager;
 import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
@@ -1402,6 +1403,12 @@ public class Npc extends Creature
 		
 		// Clear script value
 		_scriptValue = 0;
+		
+		// A roaming fake player gives its spot back to the monster it replaced.
+		if (isPvpFakePlayer())
+		{
+			FakePlayerPvpManager.getInstance().onFakePlayerDecay(this);
+		}
 	}
 	
 	/**
@@ -1747,7 +1754,9 @@ public class Npc extends Creature
 			if (magic)
 			{
 				broadcastPacket(new MagicSkillUse(this, this, 2159, 1, 0, 0));
-				setChargedShot(ShotType.SPIRITSHOTS, true);
+				
+				// Roaming fake players use blessed spiritshots, like real mages.
+				setChargedShot(isPvpFakePlayer() ? ShotType.BLESSED_SPIRITSHOTS : ShotType.SPIRITSHOTS, true);
 			}
 		}
 		else if ((_soulshotamount > 0) || (_spiritshotamount > 0))
@@ -2040,6 +2049,15 @@ public class Npc extends Creature
 	public boolean isFakePlayer()
 	{
 		return _isFakePlayer;
+	}
+	
+	/**
+	 * @return {@code true} if this is a roaming fake player that took a monster's place (see {@link org.l2jmobius.gameserver.managers.FakePlayerPvpManager})
+	 */
+	@Override
+	public boolean isPvpFakePlayer()
+	{
+		return _isFakePlayer && (getTemplate().getFakePlayerPvpProfile() != null);
 	}
 	
 	/**

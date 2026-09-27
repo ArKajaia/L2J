@@ -3019,6 +3019,12 @@ public class AttackableAI extends CreatureAI
 		{
 			return;
 		}
+		
+		// Roaming fake players only use the skills of their class.
+		if (npc.isPvpFakePlayer())
+		{
+			return;
+		}
 
 		// This NPC object may be reused across respawns/waves without being fully recreated. Strip
 		// whatever was granted during a previous life before rolling new skills, or they pile up

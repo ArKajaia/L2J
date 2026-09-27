@@ -20,7 +20,6 @@ import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.custom.ClassBalanceConfig;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
-import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.conditions.Condition;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.effects.EffectType;
@@ -73,7 +72,8 @@ public class EnergyDamage extends AbstractEffect
 	@Override
 	public void onStart(Creature effector, Creature effected, Skill skill)
 	{
-		final Player attacker = effector.isPlayer() ? effector.asPlayer() : null;
+		// Players, and roaming fake players that use the same class skills.
+		final Creature attacker = (effector.isPlayer() || effector.isPvpFakePlayer()) ? effector : null;
 		if (attacker == null)
 		{
 			return;
@@ -123,7 +123,9 @@ public class EnergyDamage extends AbstractEffect
 			
 			// charge count should be the count before casting the skill but since its reduced before calling effects
 			// we add skill consume charges to current charges
-			final double energyChargesBoost = (((attacker.getCharges() + skill.getChargeConsumeCount()) - 1) * 0.2) + 1;
+			// A roaming fake player fights with its class' full charges.
+			final int charges = attacker.isPlayer() ? attacker.asPlayer().getCharges() + skill.getChargeConsumeCount() : Math.max(attacker.asNpc().getTemplate().getFakePlayerPvpProfile().getCharges(), skill.getChargeConsumeCount());
+			final double energyChargesBoost = ((charges - 1) * 0.2) + 1;
 			attack += _power;
 			attack *= ssBoost;
 			attack *= energyChargesBoost;

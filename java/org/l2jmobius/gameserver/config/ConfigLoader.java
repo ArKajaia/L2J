@@ -36,6 +36,7 @@ import org.l2jmobius.gameserver.config.custom.CustomMailManagerConfig;
 import org.l2jmobius.gameserver.config.custom.DelevelManagerConfig;
 import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
 import org.l2jmobius.gameserver.config.custom.FactionSystemConfig;
+import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
 import org.l2jmobius.gameserver.config.custom.FindPvpConfig;
 import org.l2jmobius.gameserver.config.custom.FreeMountsConfig;
@@ -119,6 +120,7 @@ public class ConfigLoader
 		DualboxCheckConfig.load();
 		FactionSystemConfig.load();
 		FakePlayersConfig.load();
+		FakePlayerPvpConfig.load();
 		FindPvpConfig.load();
 		FreeMountsConfig.load();
 		HellboundStatusConfig.load();

@@ -1,0 +1,57 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:complexType name="gearTier">
+		<xs:attribute type="xs:int" name="minLevel" use="required" />
+		<xs:attribute type="xs:int" name="rhand" />
+		<xs:attribute type="xs:int" name="lhand" />
+		<xs:attribute type="xs:int" name="chest" />
+		<xs:attribute type="xs:int" name="legs" />
+		<xs:attribute type="xs:int" name="head" />
+		<xs:attribute type="xs:int" name="gloves" />
+		<xs:attribute type="xs:int" name="feet" />
+		<xs:attribute type="xs:int" name="earring" />
+		<xs:attribute type="xs:int" name="necklace" />
+		<xs:attribute type="xs:int" name="ring" />
+	</xs:complexType>
+	<xs:complexType name="gearKit">
+		<xs:sequence>
+			<xs:element name="tier" type="gearTier" maxOccurs="unbounded" minOccurs="1" />
+		</xs:sequence>
+		<xs:attribute type="xs:string" name="name" use="required" />
+	</xs:complexType>
+	<xs:element name="list">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="kit" type="gearKit" maxOccurs="unbounded" minOccurs="0" />
+				<xs:element name="build" maxOccurs="unbounded" minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="attack" type="xs:string" minOccurs="0" />
+							<xs:element name="debuff" type="xs:string" minOccurs="0" />
+							<xs:element name="buff" type="xs:string" minOccurs="0" />
+							<xs:element name="heal" type="xs:string" minOccurs="0" />
+							<xs:element name="emergency" type="xs:string" minOccurs="0" />
+							<xs:element name="toggle" type="xs:string" minOccurs="0" />
+						</xs:sequence>
+						<xs:attribute type="xs:string" name="name" use="required" />
+						<xs:attribute type="xs:int" name="classId" use="required" />
+						<xs:attribute name="role" use="required">
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:enumeration value="FIGHTER" />
+									<xs:enumeration value="TANK" />
+									<xs:enumeration value="DAGGER" />
+									<xs:enumeration value="ARCHER" />
+									<xs:enumeration value="MAGE" />
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:attribute>
+						<xs:attribute type="xs:string" name="weapon" use="required" />
+						<xs:attribute type="xs:string" name="armor" use="required" />
+						<xs:attribute type="xs:string" name="jewels" />
+						<xs:attribute type="xs:int" name="weight" />
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

@@ -89,6 +89,8 @@ public class Spawn extends Location
 	private int _thiefCooldown = 0;
 	/** How many upcoming spawns of this spawn point may not roll a Mage (see MageMonsterManager). */
 	private int _mageCooldown = 0;
+	/** How many upcoming spawns of this spawn point may not be replaced by a roaming fake player (see FakePlayerPvpManager). */
+	private int _fakePlayerCooldown = 0;
 	
 	/**
 	 * Constructor of Spawn.<br>
@@ -321,6 +323,22 @@ public class Spawn extends Location
 	}
 	
 	/**
+	 * @return how many upcoming spawns of this spawn point may not be replaced by a roaming fake player
+	 */
+	public int getFakePlayerCooldown()
+	{
+		return _fakePlayerCooldown;
+	}
+	
+	/**
+	 * @param fakePlayerCooldown how many upcoming spawns of this spawn point may not be replaced by a roaming fake player
+	 */
+	public void setFakePlayerCooldown(int fakePlayerCooldown)
+	{
+		_fakePlayerCooldown = Math.max(0, fakePlayerCooldown);
+	}
+	
+	/**
 	 * @return true if respawn enabled
 	 */
 	public boolean isRespawnEnabled()
@@ -518,6 +536,14 @@ public class Spawn extends Location
 		// Link the Npc to this Spawn
 		npc.setSpawn(this);
 		
+		// Roaming fake player roll: a fake player hunts here instead, and this monster stays out of the world (still counted by this spawn) until the fake player is gone.
+		if (org.l2jmobius.gameserver.managers.FakePlayerPvpManager.getInstance().tryReplace(npc, this, newlocx, newlocy, newlocz))
+		{
+			_spawnedNpcs.add(npc);
+			_currentCount++;
+			return npc;
+		}
+		
 		// Spawn NPC
 		npc.spawnMe(newlocx, newlocy, newlocz);
 		
@@ -555,7 +581,7 @@ public class Spawn extends Location
 		// 1. Check if the NPC is allowed to be a champion (Level, Instance, Type, etc.)
 		// 1. Check if the NPC is allowed to be a champion
 		// 1. Check if the NPC is allowed to be a champion
-		if (ChampionMonstersConfig.CHAMPION_ENABLE && npc.isMonster() && !(npc instanceof org.l2jmobius.gameserver.model.actor.instance.Chest) && !npc.isQuestMonster() && !_template.isUndying() && !npc.isRaid() && !npc.isRaidMinion() && (npc.getLevel() >= ChampionMonstersConfig.CHAMP_MIN_LEVEL) && (npc.getLevel() <= ChampionMonstersConfig.CHAMP_MAX_LEVEL) && (ChampionMonstersConfig.CHAMPION_ENABLE_IN_INSTANCES || (getInstanceId() == 0)))
+		if (ChampionMonstersConfig.CHAMPION_ENABLE && npc.isMonster() && !npc.isFakePlayer() && !(npc instanceof org.l2jmobius.gameserver.model.actor.instance.Chest) && !npc.isQuestMonster() && !_template.isUndying() && !npc.isRaid() && !npc.isRaidMinion() && (npc.getLevel() >= ChampionMonstersConfig.CHAMP_MIN_LEVEL) && (npc.getLevel() <= ChampionMonstersConfig.CHAMP_MAX_LEVEL) && (ChampionMonstersConfig.CHAMPION_ENABLE_IN_INSTANCES || (getInstanceId() == 0)))
 		{
 			// --- NEW HOTZONE LOGIC ---
 			double freqMultiplier = 1.0; // Default is 1x (normal chance)

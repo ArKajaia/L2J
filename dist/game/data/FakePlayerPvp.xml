@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Roaming fake players (see config/Custom/FakePlayerPvp.ini).
+
+	kit: gear worn by a fake player. Each tier is used from its minLevel until the next tier
+	     (1 = no grade, 20 = D, 40 = C, 52 = B, 61 = A, 76 = S, 80 = S80, 84 = S84).
+	     Stats are read from the item data, so any item id can be used.
+
+	build: a class a fake player can be.
+	     classId - the final (3rd) class; below 76 the matching 2nd/1st/base class is used.
+	     role    - FIGHTER, TANK, DAGGER (melee), ARCHER (keeps distance) or MAGE (casts and kites).
+	     weight  - relative chance to pick this build.
+	     Skills are lists of skill ids. The level of each skill (and whether the fake player
+	     has it at all) comes from the class skill tree for its level, like a real character.
+	     "a|b|c" means only the first learned one is used (e.g. exclusive totems).
+	     attack    - damage skills, most preferred first.
+	     debuff    - stuns, roots and debuffs (mostly used against players).
+	     buff      - self buffs kept up while fighting.
+	     heal      - self heals.
+	     emergency - used below 30% HP.
+	     toggle    - toggles switched on at spawn.
+	     Class passive skills (masteries, etc.) for the level are always added.
+-->
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="xsd/FakePlayerPvp.xsd">
+	<!-- Jewels: two earrings, a necklace and two rings. -->
+	<kit name="JEWELS">
+		<tier minLevel="1" earring="846" necklace="909" ring="878" /> <!-- Coral / Blue Diamond / Blue Coral -->
+		<tier minLevel="20" earring="851" necklace="914" ring="882" /> <!-- Omen Beast's Eye / Darkness / Mithril -->
+		<tier minLevel="40" earring="855" necklace="119" ring="886" /> <!-- Nassen's / Seal / Seal -->
+		<tier minLevel="52" earring="864" necklace="926" ring="895" /> <!-- Black Ore -->
+		<tier minLevel="61" earring="862" necklace="924" ring="893" /> <!-- Majestic -->
+		<tier minLevel="76" earring="858" necklace="920" ring="889" /> <!-- Tateossian -->
+		<tier minLevel="80" earring="9455" necklace="9456" ring="9457" /> <!-- Dynasty -->
+		<tier minLevel="84" earring="14163" necklace="14164" ring="14165" /> <!-- Vesper -->
+	</kit>
+
+	<!-- Armor -->
+	<kit name="HEAVY">
+		<tier minLevel="1" chest="23" legs="2386" head="43" gloves="51" feet="39" /> <!-- Wooden -->
+		<tier minLevel="20" chest="352" legs="2378" head="2411" gloves="61" feet="2425" /> <!-- Brigandine -->
+		<tier minLevel="40" chest="356" head="2414" gloves="2462" feet="2438" /> <!-- Full Plate -->
+		<tier minLevel="52" chest="358" legs="2380" head="2416" gloves="5718" feet="5734" /> <!-- Blue Wolf -->
+		<tier minLevel="61" chest="2383" head="2419" gloves="5774" feet="5786" /> <!-- Majestic -->
+		<tier minLevel="76" chest="6373" legs="6374" head="6378" gloves="6375" feet="6376" /> <!-- Imperial Crusader -->
+		<tier minLevel="80" chest="9418" legs="9421" head="9422" gloves="9423" feet="9424" /> <!-- Dynasty - Weapon Master -->
+		<tier minLevel="84" chest="13432" legs="13438" head="13137" gloves="13439" feet="13440" /> <!-- Vesper -->
+	</kit>
+	<kit name="HEAVY_FORCE">
+		<tier minLevel="1" chest="23" legs="2386" head="43" gloves="51" feet="39" /> <!-- Wooden -->
+		<tier minLevel="20" chest="352" legs="2378" head="2411" gloves="61" feet="2425" /> <!-- Brigandine -->
+		<tier minLevel="40" chest="356" head="2414" gloves="2462" feet="2438" /> <!-- Full Plate -->
+		<tier minLevel="52" chest="358" legs="2380" head="2416" gloves="5718" feet="5734" /> <!-- Blue Wolf -->
+		<tier minLevel="61" chest="2383" head="2419" gloves="5774" feet="5786" /> <!-- Majestic -->
+		<tier minLevel="76" chest="6373" legs="6374" head="6378" gloves="6375" feet="6376" /> <!-- Imperial Crusader -->
+		<tier minLevel="80" chest="9419" legs="9421" head="9422" gloves="9423" feet="9424" /> <!-- Dynasty - Force Master -->
+		<tier minLevel="84" chest="13432" legs="13438" head="13137" gloves="13439" feet="13440" /> <!-- Vesper -->
+	</kit>
+	<kit name="HEAVY_TANK">
+		<tier minLevel="1" chest="23" legs="2386" head="43" gloves="51" feet="39" /> <!-- Wooden -->
+		<tier minLevel="20" chest="352" legs="2378" head="2411" gloves="61" feet="2425" /> <!-- Brigandine -->
+		<tier minLevel="40" chest="356" head="2414" gloves="2462" feet="2438" /> <!-- Full Plate -->
+		<tier minLevel="52" chest="2381" head="2417" gloves="5722" feet="5738" /> <!-- Doom -->
+		<tier minLevel="61" chest="374" head="2418" gloves="5771" feet="5783" /> <!-- Nightmare -->
+		<tier minLevel="76" chest="6373" legs="6374" head="6378" gloves="6375" feet="6376" /> <!-- Imperial Crusader -->
+		<tier minLevel="80" chest="9417" legs="9421" head="9422" gloves="9423" feet="9424" /> <!-- Dynasty - Shield Master -->
+		<tier minLevel="84" chest="13432" legs="13438" head="13137" gloves="13439" feet="13440" /> <!-- Vesper -->
+	</kit>
+	<kit name="LIGHT_DAGGER">
+		<tier minLevel="1" chest="23" legs="2386" head="43" gloves="51" feet="39" /> <!-- Wooden -->
+		<tier minLevel="20" chest="395" legs="417" head="2411" gloves="2450" feet="2424" /> <!-- Manticore Skin -->
+		<tier minLevel="40" chest="401" head="2414" gloves="2461" feet="2437" /> <!-- Drake Leather -->
+		<tier minLevel="52" chest="2392" head="2417" gloves="5723" feet="5739" /> <!-- Leather of Doom -->
+		<tier minLevel="61" chest="2394" head="2418" gloves="5772" feet="5784" /> <!-- Leather of Nightmare -->
+		<tier minLevel="76" chest="6379" head="6382" gloves="6380" feet="6381" /> <!-- Draconic -->
+		<tier minLevel="80" chest="9426" legs="9428" head="9429" gloves="9430" feet="9431" /> <!-- Dynasty Leather - Dagger Master -->
+		<tier minLevel="84" chest="13433" legs="13441" head="13138" gloves="13442" feet="13443" /> <!-- Vesper Leather -->
+	</kit>
+	<kit name="LIGHT_ARCHER">
+		<tier minLevel="1" chest="23" legs="2386" head="43" gloves="51" feet="39" /> <!-- Wooden -->
+		<tier minLevel="20" chest="395" legs="417" head="2411" gloves="2450" feet="2424" /> <!-- Manticore Skin -->
+		<tier minLevel="40" chest="401" head="2414" gloves="2461" feet="2437" /> <!-- Drake Leather -->
+		<tier minLevel="52" chest="2392" head="2417" gloves="5723" feet="5739" /> <!-- Leather of Doom -->
+		<tier minLevel="61" chest="2395" head="2419" gloves="5775" feet="5787" /> <!-- Majestic Leather -->
+		<tier minLevel="76" chest="6379" head="6382" gloves="6380" feet="6381" /> <!-- Draconic -->
+		<tier minLevel="80" chest="9427" legs="9428" head="9429" gloves="9430" feet="9431" /> <!-- Dynasty Leather - Bow Master -->
+		<tier minLevel="84" chest="13433" legs="13441" head="13138" gloves="13442" feet="13443" /> <!-- Vesper Leather -->
+	</kit>
+	<kit name="ROBE">
+		<tier minLevel="1" chest="1101" legs="1104" head="44" gloves="51" feet="39" /> <!-- Devotion -->
+		<tier minLevel="20" chest="437" legs="470" head="2411" gloves="2450" feet="2426" /> <!-- Mithril Tunic -->
+		<tier minLevel="40" chest="441" legs="472" head="2414" gloves="2459" feet="2435" /> <!-- Demon's -->
+		<tier minLevel="52" chest="2399" legs="2404" head="2417" gloves="5724" feet="5740" /> <!-- Tunic of Doom -->
+		<tier minLevel="61" chest="2409" head="2419" gloves="5776" feet="5788" /> <!-- Majestic Robe -->
+		<tier minLevel="76" chest="6383" head="6386" gloves="6384" feet="6385" /> <!-- Major Arcana -->
+		<tier minLevel="80" chest="9436" legs="9437" head="9438" gloves="9439" feet="9440" /> <!-- Dynasty Tunic - Wizard -->
+		<tier minLevel="84" chest="13434" legs="13444" head="13139" gloves="13445" feet="13446" /> <!-- Vesper Tunic -->
+	</kit>
+
+	<!-- Weapons -->
+	<kit name="SWORD_SHIELD">
+		<tier minLevel="1" rhand="68" lhand="102" /> <!-- Falchion / Round Shield -->
+		<tier minLevel="20" rhand="2499" lhand="2493" /> <!-- Elven Long Sword / Brigandine Shield -->
+		<tier minLevel="40" rhand="135" lhand="2497" /> <!-- Samurai Longsword / Full Plate Shield -->
+		<tier minLevel="52" rhand="79" lhand="110" /> <!-- Sword of Damascus / Doom Shield -->
+		<tier minLevel="61" rhand="2500" lhand="2498" /> <!-- Dark Legion's Edge / Shield of Nightmare -->
+		<tier minLevel="76" rhand="6364" lhand="6377" /> <!-- Forgotten Blade / Imperial Crusader Shield -->
+		<tier minLevel="80" rhand="10215" lhand="9441" /> <!-- Icarus Sawsword / Dynasty Shield -->
+		<tier minLevel="84" rhand="13457" lhand="13471" /> <!-- Vesper Cutter / Vesper Shield -->
+	</kit>
+	<kit name="DUAL">
+		<tier minLevel="1" rhand="68" /> <!-- Falchion -->
+		<tier minLevel="20" rhand="70" /> <!-- Claymore -->
+		<tier minLevel="40" rhand="2582" /> <!-- Katana*Katana -->
+		<tier minLevel="52" rhand="2626" /> <!-- Samurai Long Sword*Samurai Long Sword -->
+		<tier minLevel="61" rhand="5706" /> <!-- Damascus*Damascus -->
+		<tier minLevel="76" rhand="6580" /> <!-- Tallum Blade*Dark Legion's Edge -->
+		<tier minLevel="80" rhand="10415" /> <!-- Icarus Dual Sword -->
+		<tier minLevel="84" rhand="52" /> <!-- Vesper Dual Sword -->
+	</kit>
+	<kit name="BIGSWORD">
+		<tier minLevel="1" rhand="5284" /> <!-- Zweihander -->
+		<tier minLevel="20" rhand="70" /> <!-- Claymore -->
+		<tier minLevel="40" rhand="5286" /> <!-- Berserker Blade -->
+		<tier minLevel="52" rhand="7883" /> <!-- Guardian Sword -->
+		<tier minLevel="61" rhand="81" /> <!-- Dragon Slayer -->
+		<tier minLevel="76" rhand="6372" /> <!-- Heaven's Divider -->
+		<tier minLevel="80" rhand="10218" /> <!-- Icarus Heavy Arms -->
+		<tier minLevel="84" rhand="13458" /> <!-- Vesper Slasher -->
+	</kit>
+	<kit name="FIST">
+		<tier minLevel="1" rhand="256" /> <!-- Cestus -->
+		<tier minLevel="20" rhand="262" /> <!-- Scallop Jamadhr -->
+		<tier minLevel="40" rhand="266" /> <!-- Great Pata -->
+		<tier minLevel="52" rhand="268" /> <!-- Bellion Cestus -->
+		<tier minLevel="61" rhand="270" /> <!-- Dragon Grinder -->
+		<tier minLevel="76" rhand="6371" /> <!-- Demon Splinter -->
+		<tier minLevel="80" rhand="10221" /> <!-- Icarus Hand -->
+		<tier minLevel="84" rhand="13461" /> <!-- Vesper Fighter -->
+	</kit>
+	<kit name="DAGGER">
+		<tier minLevel="1" rhand="219" /> <!-- Sword Breaker -->
+		<tier minLevel="20" rhand="225" /> <!-- Mithril Dagger -->
+		<tier minLevel="40" rhand="228" /> <!-- Crystal Dagger -->
+		<tier minLevel="52" rhand="234" /> <!-- Demon's Dagger -->
+		<tier minLevel="61" rhand="236" /> <!-- Soul Separator -->
+		<tier minLevel="76" rhand="6367" /> <!-- Angel Slayer -->
+		<tier minLevel="80" rhand="10216" /> <!-- Icarus Disperser -->
+		<tier minLevel="84" rhand="13460" /> <!-- Vesper Shaper -->
+	</kit>
+	<kit name="BOW">
+		<tier minLevel="1" rhand="273" /> <!-- Composite Bow -->
+		<tier minLevel="20" rhand="280" /> <!-- Light Crossbow -->
+		<tier minLevel="40" rhand="286" /> <!-- Eminence Bow -->
+		<tier minLevel="52" rhand="287" /> <!-- Bow of Peril -->
+		<tier minLevel="61" rhand="289" /> <!-- Soul Bow -->
+		<tier minLevel="76" rhand="7575" /> <!-- Draconic Bow -->
+		<tier minLevel="80" rhand="10223" /> <!-- Icarus Spitter -->
+		<tier minLevel="84" rhand="13467" /> <!-- Vesper Thrower -->
+	</kit>
+	<kit name="MAGE">
+		<tier minLevel="1" rhand="177" /> <!-- Mage Staff -->
+		<tier minLevel="20" rhand="188" /> <!-- Ghost Staff -->
+		<tier minLevel="40" rhand="206" /> <!-- Demon's Staff -->
+		<tier minLevel="52" rhand="210" /> <!-- Staff of Evil Spirits -->
+		<tier minLevel="61" rhand="151" /> <!-- Sword of Miracles -->
+		<tier minLevel="76" rhand="6579" /> <!-- Arcana Mace -->
+		<tier minLevel="80" rhand="10217" /> <!-- Icarus Spirit -->
+		<tier minLevel="84" rhand="13459" /> <!-- Vesper Buster -->
+	</kit>
+
+	<!-- Mages -->
+	<build name="Archmage" classId="94" role="MAGE" weapon="MAGE" armor="ROBE" weight="1">
+		<attack>1292,1289,1288,1339,1451,1230,1231,1275,1220,1274,1184,1177,1147</attack>
+		<debuff>1083,1160,1338</debuff>
+		<buff>1285,1532</buff>
+		<heal>1216,1011</heal>
+		<toggle>337</toggle>
+	</build>
+	<build name="Mystic Muse" classId="103" role="MAGE" weapon="MAGE" armor="ROBE" weight="1">
+		<attack>1293,1290,1288,1340,1453,1342,1235,1236,1237,1265,1275,1175,1274,1184,1177</attack>
+		<debuff>1071,1164,1338</debuff>
+		<buff>1286,1532,1047</buff>
+		<heal>1216,1011</heal>
+		<toggle>337</toggle>
+	</build>
+	<build name="Storm Screamer" classId="110" role="MAGE" weapon="MAGE" armor="ROBE" weight="1">
+		<attack>1294,1291,1288,1343,1341,1456,1239,1148,1234,1267,1159,1178,1184,1177,1147</attack>
+		<debuff>1074,1160,1064,1338</debuff>
+		<buff>1287,1532,1457</buff>
+		<heal>1216,1011</heal>
+		<toggle>337</toggle>
+	</build>
+
+	<!-- Tanks -->
+	<build name="Phoenix Knight" classId="90" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" weight="1">
+		<attack>984,49,3,70</attack>
+		<debuff>92,353,400</debuff>
+		<buff>82,72,406,350,527,760</buff>
+		<heal>45,262</heal>
+		<emergency>110</emergency>
+		<toggle>322,335</toggle>
+	</build>
+	<build name="Eva's Templar" classId="99" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" weight="1">
+		<attack>984,3</attack>
+		<debuff>352,402,102</debuff>
+		<buff>123,77,91,351,527,760</buff>
+		<heal>58</heal>
+		<emergency>110</emergency>
+		<toggle>322,335</toggle>
+	</build>
+	<build name="Shillien Templar" classId="106" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" weight="1">
+		<attack>279,223,289,105,984,70,3</attack>
+		<debuff>352,402,115,122,401,129</debuff>
+		<buff>77,91,351,527,760</buff>
+		<emergency>110</emergency>
+		<toggle>322,335</toggle>
+	</build>
+
+	<!-- Daggers -->
+	<build name="Adventurer" classId="93" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="1">
+		<attack>991,409,344,263,30,16</attack>
+		<debuff>358,531,96</debuff>
+		<buff>356,357,768</buff>
+		<toggle>312,256</toggle>
+	</build>
+	<build name="Wind Rider" classId="101" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="1">
+		<attack>991,344,263,30,16</attack>
+		<debuff>358,531,102,96</debuff>
+		<buff>355,356,410,769,446,123,77</buff>
+		<heal>58</heal>
+		<toggle>312,256</toggle>
+	</build>
+	<build name="Ghost Hunter" classId="108" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="1">
+		<attack>991,344,263,30,223,16</attack>
+		<debuff>358,531,115,122,96</debuff>
+		<buff>355,357,410,770,77</buff>
+		<toggle>312,256</toggle>
+	</build>
+
+	<!-- Archers -->
+	<build name="Sagittarius" classId="92" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="1">
+		<attack>990,771,343,19,56</attack>
+		<debuff>354,101</debuff>
+		<buff>99,131,303,415,416</buff>
+		<toggle>312,256</toggle>
+	</build>
+	<build name="Moonlight Sentinel" classId="102" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="1">
+		<attack>990,343,369,19,56</attack>
+		<debuff>354,101,102</debuff>
+		<buff>99,413,303,415,416,123,77</buff>
+		<heal>58</heal>
+		<toggle>312,256</toggle>
+	</build>
+	<build name="Ghost Sentinel" classId="109" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="1">
+		<attack>990,773,343,314,369,19,56</attack>
+		<debuff>354,101,115,122</debuff>
+		<buff>99,414,303,415,77</buff>
+		<toggle>312,256</toggle>
+	</build>
+
+	<!-- Warriors -->
+	<build name="Duelist" classId="88" role="FIGHTER" weapon="DUAL" armor="HEAVY" weight="1">
+		<attack>345,261,5,1,6,255,3</attack>
+		<buff>297,451,917,78,121,287</buff>
+		<emergency>442</emergency>
+		<toggle>312,424</toggle>
+	</build>
+	<build name="Grand Khavatari" classId="114" role="FIGHTER" weapon="FIST" armor="HEAVY_FORCE" weight="1">
+		<attack>776,346,81,284,280,54,29,3</attack>
+		<debuff>120,281,95</debuff>
+		<buff>425|292|298|109|282|76|83,420,917</buff>
+		<emergency>443</emergency>
+		<toggle>222</toggle>
+	</build>
+	<build name="Titan" classId="113" role="FIGHTER" weapon="BIGSWORD" armor="HEAVY" weight="1">
+		<attack>777,315,190,255,3</attack>
+		<debuff>362</debuff>
+		<buff>94,176,139,121,287,420,536,917</buff>
+		<toggle>312,424,335</toggle>
+	</build>
+</list>

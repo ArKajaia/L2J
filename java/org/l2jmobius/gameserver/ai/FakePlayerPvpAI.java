@@ -1,0 +1,540 @@
+/*
+ * Copyright (c) 2013 L2jMobius
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+ * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+package org.l2jmobius.gameserver.ai;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
+import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
+import org.l2jmobius.gameserver.model.Location;
+import org.l2jmobius.gameserver.model.World;
+import org.l2jmobius.gameserver.model.WorldObject;
+import org.l2jmobius.gameserver.model.WorldRegion;
+import org.l2jmobius.gameserver.model.actor.Attackable;
+import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
+import org.l2jmobius.gameserver.model.actor.instance.Chest;
+import org.l2jmobius.gameserver.model.actor.instance.Monster;
+import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.skill.targets.TargetType;
+import org.l2jmobius.gameserver.model.spawns.Spawn;
+import org.l2jmobius.gameserver.model.zone.ZoneId;
+
+/**
+ * AI of a roaming fake player (see {@link FakePlayerPvpManager}). It plays like a character of its class: hunts the monsters around its spawn point, keeps its buffs up, uses the class skills it has learned (best ones first), drinks potions, archers and mages keep their
+ * distance, and it fights any player that attacks it or steals its kill until one of them dies.
+ */
+public class FakePlayerPvpAI extends AttackableAI
+{
+	/** One in this many idle ticks the fake player walks somewhere else around its spawn point. */
+	private static final int WANDER_CHANCE = 8;
+	/** Monsters more levels away than this are not worth hunting. */
+	private static final int MAX_HUNT_LEVEL_DIFFERENCE = 10;
+	/** The range a mage tries to fight from. */
+	private static final int MAGE_RANGE = 600;
+	
+	private long _kiteEndTime = 0;
+	private long _nextKiteTime = 0;
+	
+	public FakePlayerPvpAI(Attackable creature)
+	{
+		super(creature);
+	}
+	
+	@Override
+	protected void thinkActive()
+	{
+		final WorldRegion region = _actor.getWorldRegion();
+		if ((region == null) || !region.areNeighborsActive())
+		{
+			return;
+		}
+		
+		final Attackable npc = getActiveChar();
+		if (npc.isDead() || npc.isCoreAIDisabled() || npc.isCastingNow())
+		{
+			return;
+		}
+		
+		// Someone picked a fight (a player, or a monster that hit first).
+		final Creature hated = npc.getMostHated();
+		if ((hated != null) && isValidTarget(npc, hated))
+		{
+			npc.setRunning();
+			setIntention(Intention.ATTACK, hated);
+			return;
+		}
+		
+		// Hunt the monsters around.
+		final Creature prey = findPrey(npc);
+		if (prey != null)
+		{
+			npc.addDamageHate(prey, 0, 1);
+			npc.setRunning();
+			setIntention(Intention.ATTACK, prey);
+			return;
+		}
+		
+		// Nothing to hunt: go back to the hunting ground or look around it.
+		final Spawn spawn = npc.getSpawn();
+		if ((spawn == null) || npc.isMoving() || npc.isMovementDisabled())
+		{
+			return;
+		}
+		
+		npc.setRunning();
+		if (npc.calculateDistance2D(spawn) > FakePlayerPvpConfig.HUNT_RANGE)
+		{
+			final Location home = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), spawn.getX(), spawn.getY(), spawn.getZ(), npc.getInstanceId());
+			moveTo(home.getX(), home.getY(), home.getZ());
+			return;
+		}
+		
+		if (Rnd.get(WANDER_CHANCE) == 0)
+		{
+			final int radius = Math.max(100, FakePlayerPvpConfig.HUNT_RANGE / 2);
+			final int x = (spawn.getX() + Rnd.get(-radius, radius));
+			final int y = (spawn.getY() + Rnd.get(-radius, radius));
+			final Location destination = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, npc.getZ(), npc.getInstanceId());
+			moveTo(destination.getX(), destination.getY(), destination.getZ());
+		}
+	}
+	
+	@Override
+	protected void thinkAttack()
+	{
+		final Attackable npc = getActiveChar();
+		if (npc.isDead() || npc.isCastingNow() || npc.isCoreAIDisabled())
+		{
+			return;
+		}
+		
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		if (profile == null)
+		{
+			super.thinkAttack();
+			return;
+		}
+		
+		// Drop targets that are dead, gone or out of reach.
+		Creature target = npc.getMostHated();
+		for (int i = 0; (target != null) && !isValidTarget(npc, target) && (i < 10); i++)
+		{
+			if (target.isPlayer() && target.isAlikeDead() && (npc.getHating(target) >= FakePlayerPvpManager.PVP_HATE))
+			{
+				FakePlayerPvpManager.getInstance().onPlayerDefeated(npc);
+			}
+			
+			npc.stopHating(target);
+			target = npc.getMostHated();
+		}
+		
+		if ((target == null) || !isValidTarget(npc, target))
+		{
+			setAttackTarget(null);
+			npc.setTarget(null);
+			setIntention(Intention.ACTIVE);
+			return;
+		}
+		
+		if (getAttackTarget() != target)
+		{
+			setAttackTarget(target);
+		}
+		
+		if (npc.getTarget() != target)
+		{
+			npc.setTarget(target);
+		}
+		
+		// Monsters are only hunted around the spawn point, players are chased further.
+		final Spawn spawn = npc.getSpawn();
+		if ((spawn != null) && (npc.calculateDistance2D(spawn) > (target.isPlayable() ? FakePlayerPvpConfig.CHASE_RANGE : FakePlayerPvpConfig.LEASH_RANGE)))
+		{
+			npc.stopHating(target);
+			setAttackTarget(null);
+			npc.setTarget(null);
+			npc.setRunning();
+			setIntention(Intention.MOVE_TO, spawn.getLocation());
+			return;
+		}
+		
+		final long now = System.currentTimeMillis();
+		if (npc.isMoving() && (now < _kiteEndTime))
+		{
+			return; // Let the step back finish.
+		}
+		
+		FakePlayerPvpManager.getInstance().tryPotion(npc);
+		
+		final Role role = profile.getRole();
+		final boolean canMove = !npc.isMovementDisabled();
+		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
+		final double distance = npc.calculateDistance2D(target);
+		final int collision = npc.getTemplate().getCollisionRadius() + target.getTemplate().getCollisionRadius();
+		
+		// Take care of itself first: emergency skills, heals, buffs.
+		if ((hpRatio < 0.3) && castOnSelf(npc, target, profile.getSkills(SkillCategory.EMERGENCY), true))
+		{
+			return;
+		}
+		
+		if ((hpRatio < 0.5) && (Rnd.get(100) < 50) && castOnSelf(npc, target, profile.getSkills(SkillCategory.HEAL), true))
+		{
+			return;
+		}
+		
+		if (castOnSelf(npc, target, profile.getSkills(SkillCategory.BUFF), false))
+		{
+			return;
+		}
+		
+		// Archers and mages step back from melee.
+		if (canMove && role.isRanged() && ((distance - collision) < FakePlayerPvpConfig.KITE_DISTANCE) && (now >= _nextKiteTime) && kiteStep(npc, target, now))
+		{
+			return;
+		}
+		
+		// Stuns, roots and debuffs are mostly for players.
+		final boolean mage = role == Role.MAGE;
+		final double reach = distance - collision;
+		if ((Rnd.get(100) < (target.isPlayable() ? 30 : 5)) && useSkill(npc, target, pickSkill(npc, target, profile.getSkills(SkillCategory.DEBUFF), true, role.isRanged() ? reach : -1), distance, collision, canMove))
+		{
+			return;
+		}
+		
+		// Attack skills. Mages cast whenever they can.
+		if ((mage || (Rnd.get(100) < FakePlayerPvpConfig.SKILL_CHANCE)) && useSkill(npc, target, pickSkill(npc, target, profile.getSkills(SkillCategory.ATTACK), false, role.isRanged() ? reach : -1), distance, collision, canMove))
+		{
+			return;
+		}
+		
+		// A mage with mana waits for its spells in casting range instead of meleeing.
+		if (mage && (npc.getCurrentMp() > (npc.getMaxMp() * 0.05)) && !profile.getSkills(SkillCategory.ATTACK).isEmpty())
+		{
+			if (canMove && (distance > (MAGE_RANGE + collision)))
+			{
+				moveToPawn(target, MAGE_RANGE);
+			}
+			return;
+		}
+		
+		// Normal attack.
+		final int range = npc.getPhysicalAttackRange();
+		if ((distance > (range + collision)) || !GeoEngine.getInstance().canSeeTarget(npc, target))
+		{
+			if (canMove)
+			{
+				moveToPawn(target, range);
+			}
+			return;
+		}
+		
+		_actor.doAttack(target);
+	}
+	
+	@Override
+	protected void onActionAttacked(Creature attacker)
+	{
+		FakePlayerPvpManager.getInstance().onFakePlayerAttacked(getActiveChar(), attacker);
+		super.onActionAttacked(attacker);
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param target a creature it hates
+	 * @return {@code true} if it can keep fighting {@code target}
+	 */
+	private static boolean isValidTarget(Attackable npc, Creature target)
+	{
+		if (target.isAlikeDead() || !target.isSpawned() || target.isInvisible() || (target.getInstanceId() != npc.getInstanceId()))
+		{
+			return false;
+		}
+		
+		if (npc.calculateDistance2D(target) > FakePlayerPvpConfig.CHASE_RANGE)
+		{
+			return false;
+		}
+		
+		// Players are safe in town.
+		return !target.isPlayable() || !target.isInsideZone(ZoneId.PEACE);
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @return the closest monster worth hunting, or {@code null} if there is none
+	 */
+	private static Creature findPrey(Attackable npc)
+	{
+		final Spawn spawn = npc.getSpawn();
+		Monster prey = null;
+		double preyDistance = Double.MAX_VALUE;
+		for (Monster monster : World.getInstance().getVisibleObjectsInRange(npc, Monster.class, FakePlayerPvpConfig.HUNT_RANGE))
+		{
+			if (monster.isDead() || monster.isFakePlayer() || monster.isRaid() || (monster instanceof Chest) || monster.isInvul() || !monster.isTargetable() || (monster.getInstanceId() != npc.getInstanceId()))
+			{
+				continue;
+			}
+			
+			if (Math.abs(monster.getLevel() - npc.getLevel()) > MAX_HUNT_LEVEL_DIFFERENCE)
+			{
+				continue;
+			}
+			
+			if ((spawn != null) && (monster.calculateDistance2D(spawn) > FakePlayerPvpConfig.LEASH_RANGE))
+			{
+				continue;
+			}
+			
+			final double distance = npc.calculateDistance2D(monster);
+			if ((distance >= preyDistance) || !monster.isAutoAttackable(npc))
+			{
+				continue;
+			}
+			
+			// Don't take a monster someone else is already fighting.
+			if (FakePlayerPvpConfig.AVOID_PLAYER_MONSTERS && isFoughtByOthers(monster, npc))
+			{
+				continue;
+			}
+			
+			if (!GeoEngine.getInstance().canSeeTarget(npc, monster))
+			{
+				continue;
+			}
+			
+			prey = monster;
+			preyDistance = distance;
+		}
+		
+		return prey;
+	}
+	
+	private static boolean isFoughtByOthers(Monster monster, Attackable npc)
+	{
+		final WorldObject monsterTarget = monster.getTarget();
+		if ((monsterTarget != null) && (monsterTarget != npc) && (monsterTarget.isPlayable() || monsterTarget.isFakePlayer()) && monster.isInCombat())
+		{
+			return true;
+		}
+		
+		for (Creature attacker : monster.getAggroList().keySet())
+		{
+			if ((attacker != npc) && (attacker.isPlayable() || attacker.isFakePlayer()) && (monster.getHating(attacker) > 0))
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * @param npc the caster
+	 * @param skill the skill
+	 * @param target its target
+	 * @return {@code true} if {@code npc} could cast {@code skill} right now like a player would (reuse, MP/HP, silence, and the skill's own conditions such as the weapon or being behind the target)
+	 */
+	private static boolean canCast(Attackable npc, Skill skill, Creature target)
+	{
+		if (npc.isSkillDisabled(skill))
+		{
+			return false;
+		}
+		
+		if (npc.getCurrentMp() < (npc.getStat().getMpConsume(skill) + npc.getStat().getMpInitialConsume(skill)))
+		{
+			return false;
+		}
+		
+		if ((skill.getHpConsume() > 0) && (npc.getCurrentHp() <= skill.getHpConsume()))
+		{
+			return false;
+		}
+		
+		if (!skill.isStatic() && (skill.isMagic() ? npc.isMuted() : npc.isPhysicalMuted()))
+		{
+			return false;
+		}
+		
+		return skill.checkPreConditions(npc, target);
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param target its target
+	 * @param skills skills in order of preference
+	 * @param debuff {@code true} to skip the ones already on the target
+	 * @param reach the distance to the target for a ranged fighter, which prefers skills that reach it from where it stands, -1 for melee
+	 * @return a skill it can cast now, or {@code null}
+	 */
+	private static Skill pickSkill(Attackable npc, Creature target, List<Skill> skills, boolean debuff, double reach)
+	{
+		if (skills.isEmpty() || (debuff && (target.isStunned() || target.isRooted())))
+		{
+			return null;
+		}
+		
+		final List<Skill> ready = new ArrayList<>(3);
+		Skill outOfReach = null;
+		for (Skill skill : skills)
+		{
+			if ((debuff && target.isAffectedBySkill(skill.getId())) || !canCast(npc, skill, target))
+			{
+				continue;
+			}
+			
+			if ((reach >= 0) && (skill.getCastRange() > 0) && (skill.getCastRange() < reach))
+			{
+				if (outOfReach == null)
+				{
+					outOfReach = skill;
+				}
+				continue;
+			}
+			
+			ready.add(skill);
+			if (ready.size() == 3)
+			{
+				break;
+			}
+		}
+		
+		if (ready.isEmpty())
+		{
+			return outOfReach;
+		}
+		
+		// Mostly the best one, sometimes another ready one.
+		return Rnd.get(100) < 70 ? ready.get(0) : ready.get(Rnd.get(ready.size()));
+	}
+	
+	/**
+	 * Casts {@code skill} on {@code target}, or walks into range first.
+	 * @return {@code true} if something was done this tick
+	 */
+	private boolean useSkill(Attackable npc, Creature target, Skill skill, double distance, int collision, boolean canMove)
+	{
+		if (skill == null)
+		{
+			return false;
+		}
+		
+		int range = skill.getCastRange();
+		if (range <= 0)
+		{
+			range = skill.getAffectRange() > 0 ? skill.getAffectRange() : 80;
+		}
+		
+		if (((distance - collision) > range) || !GeoEngine.getInstance().canSeeTarget(npc, target))
+		{
+			if (!canMove)
+			{
+				return false;
+			}
+			
+			moveToPawn(target, Math.max(20, range - 20));
+			return true;
+		}
+		
+		clientStopMoving(null);
+		npc.setTarget(target);
+		npc.doCast(skill);
+		return true;
+	}
+	
+	/**
+	 * Casts the first usable skill of {@code skills} on itself.
+	 * @param npc the fake player
+	 * @param target its current target, restored after the cast
+	 * @param skills the skills
+	 * @param recast {@code true} to cast even if the effect is already on (heals), {@code false} to only put back missing effects (buffs)
+	 * @return {@code true} if it cast one
+	 */
+	private boolean castOnSelf(Attackable npc, Creature target, List<Skill> skills, boolean recast)
+	{
+		for (Skill skill : skills)
+		{
+			if (!recast && npc.isAffectedBySkill(skill.getId()))
+			{
+				continue;
+			}
+			
+			final TargetType targetType = skill.getTargetType();
+			if ((targetType != TargetType.SELF) && (targetType != TargetType.ONE) && (targetType != TargetType.PARTY) && (targetType != TargetType.AURA))
+			{
+				continue;
+			}
+			
+			if (!canCast(npc, skill, npc))
+			{
+				continue;
+			}
+			
+			clientStopMoving(null);
+			npc.setTarget(npc);
+			npc.doCast(skill);
+			npc.setTarget(target);
+			return true;
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Steps back from {@code target}, onto a point geodata allows.
+	 * @return {@code true} if it started moving
+	 */
+	private boolean kiteStep(Attackable npc, Creature target, long now)
+	{
+		double dx = npc.getX() - target.getX();
+		double dy = npc.getY() - target.getY();
+		double length = Math.hypot(dx, dy);
+		if (length < 1)
+		{
+			final double angle = Rnd.nextDouble() * 2 * Math.PI;
+			dx = Math.cos(angle);
+			dy = Math.sin(angle);
+			length = 1;
+		}
+		
+		final int step = FakePlayerPvpConfig.KITE_STEP;
+		final int x = npc.getX() + (int) ((dx / length) * step);
+		final int y = npc.getY() + (int) ((dy / length) * step);
+		final Location destination = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, npc.getZ() + 30, npc.getInstanceId());
+		if ((npc.calculateDistance2D(destination) < 50) || !GeoEngine.getInstance().canMoveToTarget(npc.getX(), npc.getY(), npc.getZ(), destination.getX(), destination.getY(), destination.getZ(), npc.getInstanceId()))
+		{
+			_nextKiteTime = now + 3000; // Cornered - fight for a while.
+			return false;
+		}
+		
+		moveTo(destination.getX(), destination.getY(), destination.getZ());
+		_kiteEndTime = now + Math.min(3000, (long) ((step * 1000.0) / Math.max(1, npc.getMoveSpeed())));
+		_nextKiteTime = now + 3000 + Rnd.get(2000);
+		return true;
+	}
+}

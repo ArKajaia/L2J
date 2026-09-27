@@ -52,6 +52,7 @@ import org.l2jmobius.gameserver.model.actor.enums.player.Sex;
 import org.l2jmobius.gameserver.model.actor.holders.npc.DropGroupHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.DropHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.stat.PlayerStat;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
@@ -96,6 +97,7 @@ public class NpcTemplate extends CreatureTemplate
 	private boolean _flying;
 	private boolean _fakePlayer;
 	private FakePlayerHolder _fakePlayerInfo;
+	private FakePlayerPvpProfile _fakePlayerPvpProfile;
 	private boolean _canMove;
 	private boolean _noSleepMode;
 	private boolean _passableDoor;
@@ -209,7 +211,8 @@ public class NpcTemplate extends CreatureTemplate
 		_baseAttackAngle = set.getInt("width", 120);
 		_collisionRadiusGrown = set.getDouble("collisionRadiusGrown", 0);
 		_collisionHeightGrown = set.getDouble("collisionHeightGrown", 0);
-		if (NpcStatMultipliersConfig.ENABLE_NPC_STAT_MULTIPLIERS) // Custom NPC Stat Multipliers
+		// Roaming fake players get real player stats, not monster multipliers.
+		if (NpcStatMultipliersConfig.ENABLE_NPC_STAT_MULTIPLIERS && !set.getBoolean("fakePlayerPvp", false)) // Custom NPC Stat Multipliers
 		{
 			switch (_type)
 			{
@@ -419,6 +422,19 @@ public class NpcTemplate extends CreatureTemplate
 	public FakePlayerHolder getFakePlayerInfo()
 	{
 		return _fakePlayerInfo;
+	}
+	
+	/**
+	 * @return the runtime data of a roaming fake player (see {@link org.l2jmobius.gameserver.managers.FakePlayerPvpManager}), {@code null} for every other npc
+	 */
+	public FakePlayerPvpProfile getFakePlayerPvpProfile()
+	{
+		return _fakePlayerPvpProfile;
+	}
+	
+	public void setFakePlayerPvpProfile(FakePlayerPvpProfile profile)
+	{
+		_fakePlayerPvpProfile = profile;
 	}
 	
 	public boolean canMove()
