@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
@@ -61,6 +62,8 @@ public class FakePlayerPvpProfile
 	private Spawn _replacedSpawn;
 	
 	private long _spawnTime;
+	// How long it stays compared to FakePvpLifetime, so fake players that arrived together don't all log off together.
+	private final double _lifetimeScale = Rnd.get(50, 150) / 100.0;
 	private volatile long _nextPotionTime;
 	
 	// Its temper: whether it runs away from a PvP it is losing, and when it may speak again.
@@ -275,6 +278,14 @@ public class FakePlayerPvpProfile
 	public void setSpawnTime(long spawnTime)
 	{
 		_spawnTime = spawnTime;
+	}
+	
+	/**
+	 * @return its share of {@link org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig#LIFETIME}, between 0.5 and 1.5
+	 */
+	public double getLifetimeScale()
+	{
+		return _lifetimeScale;
 	}
 	
 	public long getNextPotionTime()
