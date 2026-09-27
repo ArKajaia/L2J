@@ -89,7 +89,8 @@ public class ItemData
 	
 	private void load()
 	{
-		final Collection<ItemTemplate> items = ConcurrentHashMap.newKeySet();
+		// Parsed items per file, so they can be applied in _itemFiles order and custom items reliably override base items with the same id.
+		final Map<File, List<ItemTemplate>> itemsByFile = new ConcurrentHashMap<>();
 		int highestId = 0;
 		_armors.clear();
 		_etcItems.clear();
@@ -105,7 +106,7 @@ public class ItemData
 				{
 					final DocumentItem document = new DocumentItem(file);
 					document.parse();
-					items.addAll(document.getItemList());
+					itemsByFile.put(file, document.getItemList());
 				}, 0));
 			}
 			
@@ -127,11 +128,17 @@ public class ItemData
 			{
 				final DocumentItem document = new DocumentItem(file);
 				document.parse();
-				items.addAll(document.getItemList());
+				itemsByFile.put(file, document.getItemList());
 			}
 		}
 		
 		// Process each loaded item and organize them into their respective collections.
+		final List<ItemTemplate> items = new ArrayList<>();
+		for (File file : _itemFiles)
+		{
+			items.addAll(itemsByFile.getOrDefault(file, List.of()));
+		}
+		
 		for (ItemTemplate item : items)
 		{
 			if (highestId < item.getId())
