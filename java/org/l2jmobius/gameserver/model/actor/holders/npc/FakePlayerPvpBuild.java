@@ -76,12 +76,13 @@ public class FakePlayerPvpBuild
 	private final String _weaponKit;
 	private final String _armorKit;
 	private final String _jewelKit;
+	private final String _bowKit;
 	private final String _buffList;
 	private final int _weight;
 	private final Map<SkillCategory, List<int[]>> _skills = new EnumMap<>(SkillCategory.class);
 	private final List<FakePlayerPvpCombo> _combos = new ArrayList<>();
 	
-	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String buffList, int weight)
+	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String buffList, int weight)
 	{
 		_name = name;
 		_playerClass = playerClass;
@@ -89,6 +90,7 @@ public class FakePlayerPvpBuild
 		_weaponKit = weaponKit;
 		_armorKit = armorKit;
 		_jewelKit = jewelKit;
+		_bowKit = bowKit;
 		_buffList = buffList;
 		_weight = weight;
 	}
@@ -171,6 +173,14 @@ public class FakePlayerPvpBuild
 	public String getJewelKit()
 	{
 		return _jewelKit;
+	}
+	
+	/**
+	 * @return the kit of the bow it carries besides its weapon and takes out against a player it can't catch, {@code null} for none
+	 */
+	public String getBowKit()
+	{
+		return _bowKit;
 	}
 	
 	/**

@@ -32,6 +32,7 @@ import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.config.custom.ClassBalanceConfig;
 import org.l2jmobius.gameserver.data.sql.ClanHallTable;
 import org.l2jmobius.gameserver.data.xml.HitConditionBonusData;
+import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.KarmaLossData;
 import org.l2jmobius.gameserver.managers.CastleManager;
 import org.l2jmobius.gameserver.managers.FortManager;
@@ -1343,13 +1344,15 @@ public class Formulas
 			return 0;
 		}
 		
-		final ItemTemplate item = target.getSecondaryWeaponItem();
+		// A roaming fake player holds a real shield (while it doesn't have its bow out).
+		final boolean pvpFakePlayer = target.isPvpFakePlayer();
+		final ItemTemplate item = pvpFakePlayer ? ItemData.getInstance().getTemplate(target.asNpc().getTemplate().getLHandId()) : target.getSecondaryWeaponItem();
 		if ((item == null) || !(item instanceof Armor) || (((Armor) item).getItemType() == ArmorType.SIGIL))
 		{
 			return 0;
 		}
 		
-		double shldRate = target.calcStat(Stat.SHIELD_RATE, 0, attacker, null) * BaseStat.DEX.calcBonus(target);
+		double shldRate = target.calcStat(Stat.SHIELD_RATE, pvpFakePlayer ? target.getTemplate().getBaseShldRate() : 0, attacker, null) * BaseStat.DEX.calcBonus(target);
 		if (shldRate <= 1e-6)
 		{
 			return 0;

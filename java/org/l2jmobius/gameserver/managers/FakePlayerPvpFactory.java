@@ -44,6 +44,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Skill
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpCombo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpGearTier;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpWeapon;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.actor.templates.PlayerTemplate;
 import org.l2jmobius.gameserver.model.item.Armor;
@@ -212,13 +213,20 @@ public class FakePlayerPvpFactory
 		mDef += defenceEnchantBonus(armorEnchant) * jewelPieces;
 		
 		// Weapon: its stats replace the unarmed ones (weapon "set" functions).
-		final double pAtk = weapon != null ? getStat(weapon, Stat.POWER_ATTACK) + weaponPAtkBonus(weapon, weaponEnchant) : classTemplate.getBasePAtk();
-		final double mAtk = weapon != null ? getStat(weapon, Stat.MAGIC_ATTACK) + weaponMAtkBonus(weapon, weaponEnchant) : classTemplate.getBaseMAtk();
-		final double pAtkSpd = weapon != null ? getStat(weapon, Stat.POWER_ATTACK_SPEED) : classTemplate.getBasePAtkSpd();
-		final double critRate = weapon != null ? getStat(weapon, Stat.CRITICAL_RATE) : classTemplate.getBaseCritRate();
-		final double atkRange = weapon != null ? getStat(weapon, Stat.POWER_ATTACK_RANGE) : classTemplate.getBaseAttackRange();
-		final double randomDamage = weapon != null ? getStat(weapon, Stat.RANDOM_DAMAGE) : classTemplate.getRandomDamage();
-		final WeaponType attackType = weapon != null ? weapon.getItemType() : WeaponType.FIST;
+		final FakePlayerPvpWeapon mainWeapon = createWeapon(classTemplate, weapon, shield, weaponEnchant);
+		
+		// Tanks and tyrants carry a bow for players they can't catch.
+		FakePlayerPvpWeapon bow = null;
+		if (FakePlayerPvpConfig.WEAPON_SWAP_ENABLED && (build.getBowKit() != null) && (level >= FakePlayerPvpConfig.WEAPON_SWAP_MIN_LEVEL))
+		{
+			final FakePlayerPvpGearTier bows = data.getGear(build.getBowKit(), level);
+			final ItemTemplate bowItem = getItem(bows != null ? bows.getRHand() : 0);
+			if ((bowItem instanceof Weapon) && ((Weapon) bowItem).isRange())
+			{
+				// A spare weapon is rarely enchanted as high as the main one.
+				bow = createWeapon(classTemplate, (Weapon) bowItem, null, FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.WEAPON_ENCHANT, level) / 2);
+			}
+		}
 		
 		// HP/MP (a real character also has CP on top of HP).
 		final double hp = classTemplate.getBaseHpMax(level) + (FakePlayerPvpConfig.INCLUDE_CP_IN_HP ? classTemplate.getBaseCpMax(level) : 0);
@@ -246,19 +254,19 @@ public class FakePlayerPvpFactory
 		set.set("baseMpMax", mp);
 		set.set("baseHpReg", classTemplate.getBaseHpRegen(level));
 		set.set("baseMpReg", classTemplate.getBaseMpRegen(level));
-		set.set("basePAtk", Math.max(1, (int) Math.round(pAtk)));
-		set.set("baseMAtk", Math.max(1, (int) Math.round(mAtk)));
+		set.set("basePAtk", mainWeapon.getPAtk());
+		set.set("baseMAtk", mainWeapon.getMAtk());
 		set.set("basePDef", Math.max(1, (int) Math.round(pDef)));
 		set.set("baseMDef", Math.max(1, (int) Math.round(mDef)));
-		set.set("basePAtkSpd", (int) Math.round(pAtkSpd));
+		set.set("basePAtkSpd", mainWeapon.getPAtkSpd());
 		set.set("baseMAtkSpd", classTemplate.getBaseMAtkSpd());
-		set.set("baseCritRate", (int) Math.round(critRate));
+		set.set("baseCritRate", mainWeapon.getCritRate());
 		set.set("baseMCritRate", classTemplate.getBaseMCritRate());
-		set.set("baseRndDam", (int) Math.round(randomDamage));
-		set.set("baseAtkType", attackType);
-		set.set("baseAtkRange", (int) Math.round(atkRange));
-		set.set("baseShldDef", shield != null ? (int) getStat(shield, Stat.SHIELD_DEFENCE) : 0);
-		set.set("baseShldRate", shield != null ? (int) getStat(shield, Stat.SHIELD_RATE) : 0);
+		set.set("baseRndDam", mainWeapon.getRandomDamage());
+		set.set("baseAtkType", mainWeapon.getAttackType());
+		set.set("baseAtkRange", mainWeapon.getAttackRange());
+		set.set("baseShldDef", mainWeapon.getShieldDefence());
+		set.set("baseShldRate", mainWeapon.getShieldRate());
 		set.set("baseRunSpd", classTemplate.getBaseMoveSpeed(MoveType.RUN));
 		set.set("baseWalkSpd", classTemplate.getBaseMoveSpeed(MoveType.WALK));
 		set.set("baseSwimRunSpd", classTemplate.getBaseMoveSpeed(MoveType.FAST_SWIM));
@@ -331,11 +339,9 @@ public class FakePlayerPvpFactory
 		// How many energy charges the class can hold: the Sonic Focus/Focused Force level, or Sonic/Force Mastery for 3rd classes.
 		final int maxCharges = Math.max(Math.max(learned.getOrDefault(8, 0), learned.getOrDefault(50, 0)), Math.max(learned.getOrDefault(992, 0), learned.getOrDefault(993, 0)));
 		
-		int wornMask = 0;
+		int armorWornMask = 0;
 		for (ItemTemplate item : new ItemTemplate[]
 		{
-			weapon,
-			shield,
 			chest,
 			legs,
 			head,
@@ -345,7 +351,7 @@ public class FakePlayerPvpFactory
 		{
 			if (item != null)
 			{
-				wornMask |= item.getItemMask();
+				armorWornMask |= item.getItemMask();
 			}
 		}
 		
@@ -375,8 +381,12 @@ public class FakePlayerPvpFactory
 				equipment.add(new ItemEnchantHolder(item.getId(), 1, armorEnchant));
 			}
 		}
+		if (bow != null)
+		{
+			equipment.add(new ItemEnchantHolder(bow.getWeaponId(), 1, bow.getEnchant()));
+		}
 		
-		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), wornMask, chest != null ? chest.getItemMask() : 0, maxCharges, equipment);
+		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), armorWornMask, chest != null ? chest.getItemMask() : 0, maxCharges, equipment, mainWeapon, bow);
 		for (SkillCategory category : SkillCategory.values())
 		{
 			final List<Skill> list = new ArrayList<>();
@@ -444,6 +454,27 @@ public class FakePlayerPvpFactory
 		}
 		
 		return result;
+	}
+	
+	/**
+	 * @param classTemplate the class
+	 * @param weapon the weapon, {@code null} for bare hands
+	 * @param shield the shield, {@code null} for none
+	 * @param enchant the weapon enchant level
+	 * @return the stats holding {@code weapon} gives, like its "set" functions for a real character, with the enchant bonus
+	 */
+	private static FakePlayerPvpWeapon createWeapon(PlayerTemplate classTemplate, Weapon weapon, Armor shield, int enchant)
+	{
+		final double pAtk = weapon != null ? getStat(weapon, Stat.POWER_ATTACK) + weaponPAtkBonus(weapon, enchant) : classTemplate.getBasePAtk();
+		final double mAtk = weapon != null ? getStat(weapon, Stat.MAGIC_ATTACK) + weaponMAtkBonus(weapon, enchant) : classTemplate.getBaseMAtk();
+		final double pAtkSpd = weapon != null ? getStat(weapon, Stat.POWER_ATTACK_SPEED) : classTemplate.getBasePAtkSpd();
+		final double critRate = weapon != null ? getStat(weapon, Stat.CRITICAL_RATE) : classTemplate.getBaseCritRate();
+		final double atkRange = weapon != null ? getStat(weapon, Stat.POWER_ATTACK_RANGE) : classTemplate.getBaseAttackRange();
+		final double randomDamage = weapon != null ? getStat(weapon, Stat.RANDOM_DAMAGE) : classTemplate.getRandomDamage();
+		final WeaponType attackType = weapon != null ? weapon.getItemType() : WeaponType.FIST;
+		final int shieldDefence = shield != null ? (int) getStat(shield, Stat.SHIELD_DEFENCE) : 0;
+		final int shieldRate = shield != null ? (int) getStat(shield, Stat.SHIELD_RATE) : 0;
+		return new FakePlayerPvpWeapon(weapon, shield, weapon != null ? enchant : 0, Math.max(1, (int) Math.round(pAtk)), Math.max(1, (int) Math.round(mAtk)), (int) Math.round(pAtkSpd), (int) Math.round(critRate), (int) Math.round(atkRange), (int) Math.round(randomDamage), attackType, shieldDefence, shieldRate);
 	}
 	
 	private static void addSkills(Map<Integer, Skill> skills, List<SkillHolder> holders)

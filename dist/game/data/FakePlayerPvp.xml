@@ -15,6 +15,9 @@
 	     classId - the final (3rd) class; below 76 the matching 2nd/1st/base class is used.
 	     role    - FIGHTER, TANK, DAGGER (melee), ARCHER (keeps distance) or MAGE (casts and kites).
 	     buffs   - buff list to use, default MAGE for mystic classes and FIGHTER for the others.
+	     bow     - kit of a bow it carries besides its weapon (tanks, tyrants). It takes the bow out against
+	               a player it can't catch and switches back to its weapon (and shield) when the player comes
+	               close (see FakePvpWeaponSwap* in config/Custom/FakePlayerPvp.ini).
 	     weight  - relative chance to pick this build.
 	     Skills are lists of skill ids. The level of each skill (and whether the fake player
 	     has it at all) comes from the class skill tree for its level, like a real character.
@@ -272,7 +275,7 @@
 	</build>
 
 	<!-- Tanks -->
-	<build name="Phoenix Knight" classId="90" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" buffs="TANK" weight="1">
+	<build name="Phoenix Knight" classId="90" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="1">
 		<attack>984,49,3,70</attack>
 		<debuff>92,353,400</debuff>
 		<buff>82,406,350,527,760</buff>
@@ -286,7 +289,7 @@
 			<step skill="400" optional="true" /> <!-- Tribunal -->
 		</combo>
 	</build>
-	<build name="Eva's Templar" classId="99" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" buffs="TANK" weight="1">
+	<build name="Eva's Templar" classId="99" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="1">
 		<attack>984,3</attack>
 		<debuff>352,402,102</debuff>
 		<buff>351,527,760</buff>
@@ -303,7 +306,7 @@
 			<step skill="402" optional="true" /> <!-- Arrest -->
 		</combo>
 	</build>
-	<build name="Shillien Templar" classId="106" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" buffs="TANK" weight="1">
+	<build name="Shillien Templar" classId="106" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="1">
 		<attack>279,223,289,105,984,70,3</attack>
 		<debuff>352,402,115,122,401,129</debuff>
 		<buff>351,527,760</buff>
@@ -508,7 +511,7 @@
 			<step skill="1" optional="true" /> <!-- Triple Slash -->
 		</combo>
 	</build>
-	<build name="Grand Khavatari" classId="114" role="FIGHTER" weapon="FIST" armor="HEAVY_FORCE" weight="1">
+	<build name="Grand Khavatari" classId="114" role="FIGHTER" weapon="FIST" armor="HEAVY_FORCE" bow="BOW" weight="1">
 		<attack>35,17,776,346,81,284,280,54,29,3</attack>
 		<debuff>120,281,95</debuff>
 		<buff>425|292|298|109|282|76|83,420,917</buff>

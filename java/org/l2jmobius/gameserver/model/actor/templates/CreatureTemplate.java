@@ -431,6 +431,31 @@ public class CreatureTemplate extends ListenersContainer
 		return _baseMCritRate;
 	}
 	
+	/**
+	 * Replaces the stats given by the weapon and shield, for a roaming fake player switching weapons (its template is its own).
+	 * @param pAtk the P. Atk.
+	 * @param mAtk the M. Atk.
+	 * @param pAtkSpd the attack speed
+	 * @param critRate the critical rate
+	 * @param attackRange the attack range
+	 * @param randomDamage the random damage
+	 * @param attackType the weapon type
+	 * @param shieldDefence the shield defence, 0 without shield
+	 * @param shieldRate the shield rate, 0 without shield
+	 */
+	public void setWeaponStats(int pAtk, int mAtk, int pAtkSpd, int critRate, int attackRange, int randomDamage, WeaponType attackType, int shieldDefence, int shieldRate)
+	{
+		_basePAtk = pAtk;
+		_baseMAtk = mAtk;
+		_basePAtkSpd = pAtkSpd;
+		_baseCritRate = critRate;
+		_baseAttackRange = attackRange;
+		_randomDamage = randomDamage;
+		_baseAttackType = attackType;
+		_baseShldDef = shieldDefence;
+		_baseShldRate = shieldRate;
+	}
+	
 	public void setBaseMoveSpeed(MoveType type, double value)
 	{
 		_moveType[type.ordinal()] = value;

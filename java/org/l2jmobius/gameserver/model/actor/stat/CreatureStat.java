@@ -693,7 +693,7 @@ public class CreatureStat
 		{
 			baseAttackRange = transform.getBaseAttackRange(_creature.asPlayer());
 		}
-		else if (_creature.getActiveWeaponItem() == null)
+		else if ((_creature.getActiveWeaponItem() == null) || _creature.isNpc()) // NPC weapons have no stat functions: the range is the one of the template (for a roaming fake player, the one of the weapon it holds).
 		{
 			baseAttackRange = _creature.getTemplate().getBaseAttackRange();
 		}
@@ -724,7 +724,8 @@ public class CreatureStat
 	 */
 	public int getShldDef()
 	{
-		return (int) calcStat(Stat.SHIELD_DEFENCE, 0);
+		// A roaming fake player's template holds the defence of the shield it holds.
+		return (int) calcStat(Stat.SHIELD_DEFENCE, _creature.isPvpFakePlayer() ? _creature.getTemplate().getBaseShldDef() : 0);
 	}
 	
 	public long getSp()

@@ -7185,13 +7185,20 @@ public abstract class Creature extends WorldObject
 			}
 		}
 		
+		// An NPC its data makes a ranged attacker (javelin throwers, lizardman scouts...) shoots, whatever weapon it shows.
+		final WeaponType baseAttackType = _template.getBaseAttackType();
+		if (isNpc() && ((baseAttackType == WeaponType.BOW) || (baseAttackType == WeaponType.CROSSBOW)))
+		{
+			return baseAttackType;
+		}
+		
 		final Weapon weapon = getActiveWeaponItem();
 		if (weapon != null)
 		{
 			return weapon.getItemType();
 		}
 		
-		return _template.getBaseAttackType();
+		return baseAttackType;
 	}
 	
 	public boolean isInCategory(CategoryType type)

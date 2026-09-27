@@ -46,8 +46,11 @@ public class FakePlayerPvpProfile
 	private final int _level;
 	private final Map<SkillCategory, List<Skill>> _skills = new EnumMap<>(SkillCategory.class);
 	private final List<SkillHolder> _buffs;
-	private final int _wornMask;
+	private final int _armorWornMask;
 	private final int _armorMask;
+	private final FakePlayerPvpWeapon _mainWeapon;
+	private final FakePlayerPvpWeapon _bow;
+	private volatile FakePlayerPvpWeapon _heldWeapon;
 	private final int _maxCharges;
 	private final AtomicInteger _charges = new AtomicInteger();
 	private final List<FakePlayerPvpCombo.Chain> _combos = new ArrayList<>();
@@ -65,19 +68,24 @@ public class FakePlayerPvpProfile
 	 * @param playerClass the class for this level
 	 * @param level the level
 	 * @param buffs the buffs it keeps up
-	 * @param wornMask the item mask of everything it wears (like {@code Inventory#getWearedMask()})
+	 * @param armorWornMask the item mask of the armor it wears (like {@code Inventory#getWearedMask()}, without the weapon and shield)
 	 * @param armorMask the item mask of its body armor, 0 if it wears none
 	 * @param maxCharges the most Sonic/Force energy charges its class can hold
-	 * @param equipment every item it wears, with its enchant level
+	 * @param equipment every item it wears or carries, with its enchant level
+	 * @param mainWeapon its weapon (and shield)
+	 * @param bow the bow it carries besides its weapon, {@code null} for none
 	 */
-	public FakePlayerPvpProfile(FakePlayerPvpBuild build, PlayerClass playerClass, int level, List<SkillHolder> buffs, int wornMask, int armorMask, int maxCharges, List<ItemEnchantHolder> equipment)
+	public FakePlayerPvpProfile(FakePlayerPvpBuild build, PlayerClass playerClass, int level, List<SkillHolder> buffs, int armorWornMask, int armorMask, int maxCharges, List<ItemEnchantHolder> equipment, FakePlayerPvpWeapon mainWeapon, FakePlayerPvpWeapon bow)
 	{
 		_build = build;
 		_playerClass = playerClass;
 		_level = level;
 		_buffs = buffs;
-		_wornMask = wornMask;
+		_armorWornMask = armorWornMask;
 		_armorMask = armorMask;
+		_mainWeapon = mainWeapon;
+		_bow = bow;
+		_heldWeapon = mainWeapon;
 		_maxCharges = maxCharges;
 		_charges.set(maxCharges);
 		_equipment = equipment;
@@ -122,11 +130,45 @@ public class FakePlayerPvpProfile
 	}
 	
 	/**
-	 * @return the item mask of every item it wears, used for skill conditions
+	 * @return the item mask of every item it wears and holds, used for skill conditions
 	 */
 	public int getWornMask()
 	{
-		return _wornMask;
+		return _armorWornMask | _heldWeapon.getItemMask();
+	}
+	
+	public FakePlayerPvpWeapon getMainWeapon()
+	{
+		return _mainWeapon;
+	}
+	
+	/**
+	 * @return the bow it carries besides its weapon, {@code null} for none
+	 */
+	public FakePlayerPvpWeapon getBow()
+	{
+		return _bow;
+	}
+	
+	/**
+	 * @return the weapon it holds now
+	 */
+	public FakePlayerPvpWeapon getHeldWeapon()
+	{
+		return _heldWeapon;
+	}
+	
+	public void setHeldWeapon(FakePlayerPvpWeapon weapon)
+	{
+		_heldWeapon = weapon;
+	}
+	
+	/**
+	 * @return {@code true} if it has switched to its bow
+	 */
+	public boolean isBowHeld()
+	{
+		return (_bow != null) && (_heldWeapon == _bow);
 	}
 	
 	/**
@@ -185,7 +227,7 @@ public class FakePlayerPvpProfile
 	}
 	
 	/**
-	 * @return every item it wears, with its enchant level
+	 * @return every item it wears or carries, with its enchant level
 	 */
 	public List<ItemEnchantHolder> getEquipment()
 	{
