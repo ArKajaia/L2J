@@ -133,18 +133,43 @@ public class ExtractableItems implements IItemHandler
 	
 	/**
 	 * One rolled product: a stackable product is one stack of {@code count}, a non-stackable one is {@code count} separate items.
-	 * @param product the extractable product that hit
-	 * @param template its item template
-	 * @param count the amount rolled
+	 * <p>
+	 * Not a record: scripts are compiled with -source 1.8 (see ScriptExecutor).
 	 */
-	private record ExtractedProduct(ExtractableProduct product, ItemTemplate template, long count)
+	private static class ExtractedProduct
 	{
+		private final ExtractableProduct _product;
+		private final ItemTemplate _template;
+		private final long _count;
+		
+		ExtractedProduct(ExtractableProduct product, ItemTemplate template, long count)
+		{
+			_product = product;
+			_template = template;
+			_count = count;
+		}
+		
+		ExtractableProduct product()
+		{
+			return _product;
+		}
+		
+		ItemTemplate template()
+		{
+			return _template;
+		}
+		
+		long count()
+		{
+			return _count;
+		}
+		
 		/**
 		 * @return how many distinct items this adds to the extraction (a stack counts once)
 		 */
 		int distinctItems()
 		{
-			return template.isStackable() ? 1 : (int) count;
+			return _template.isStackable() ? 1 : (int) _count;
 		}
 	}
 	
