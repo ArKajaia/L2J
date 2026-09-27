@@ -97,6 +97,7 @@ public class FakePlayerPvpConfig
 	public static int WEAPON_SWAP_MELEE_DISTANCE;
 	public static int WEAPON_SWAP_INTERVAL;
 	public static int TAUNT_CHANCE;
+	public static int GREET_CHANCE;
 	public static int RETURN_CHANCE;
 	public static int RETURN_DELAY_MIN;
 	public static int RETURN_DELAY_MAX;
@@ -192,6 +193,7 @@ public class FakePlayerPvpConfig
 		WEAPON_SWAP_MELEE_DISTANCE = Math.max(0, config.getInt("FakePvpWeaponSwapMeleeDistance", 150));
 		WEAPON_SWAP_INTERVAL = Math.max(500, config.getInt("FakePvpWeaponSwapInterval", 3000));
 		TAUNT_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpTauntChance", 50)));
+		GREET_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpGreetChance", 25)));
 		RETURN_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpReturnChance", 30)));
 		RETURN_DELAY_MIN = 60;
 		RETURN_DELAY_MAX = 180;

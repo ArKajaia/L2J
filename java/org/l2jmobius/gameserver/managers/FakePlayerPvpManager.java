@@ -169,7 +169,44 @@ public class FakePlayerPvpManager
 		"thx for the pvp",
 		"sit",
 		"learn to play",
-		"go back to town"
+		"go back to town",
+		"rip",
+		"nice try",
+		"better luck next time",
+		"cya in town",
+		"bye",
+		"stay dead",
+		"thx for exp",
+		"was that all?",
+		"lol ok",
+		"gg ez",
+		"too slow",
+		"outplayed",
+		"come back with buffs",
+		"need more pots?",
+		"u ok?",
+		":)",
+		"haha",
+		"that was fast",
+		"one more?",
+		"rematch anytime",
+		"zzz",
+		"sleep",
+		"get gear first",
+		"not today",
+		"try again",
+		"gj tho",
+		"close one",
+		"almost had me",
+		"respect for trying",
+		"wp",
+		"bye bye",
+		"done",
+		"next",
+		"whos next",
+		"nice fight",
+		"ty for fight",
+		"go res"
 	};
 	private static final String[] TAUNTS_KILL_STEAL_COMPLAIN =
 	{
@@ -216,7 +253,43 @@ public class FakePlayerPvpManager
 		"i was afk",
 		"u were buffed",
 		"ill be back",
-		"damn"
+		"damn",
+		"gg wp",
+		"nooo",
+		"ugh",
+		"rip",
+		"rip me",
+		"not fair",
+		"no pots left",
+		"my pc froze",
+		"cheater",
+		"k",
+		"lol ok",
+		"gj",
+		"wow",
+		"so lucky",
+		"one shot?",
+		"that hurt",
+		"didnt see u coming",
+		"sneaky",
+		"u have better gear",
+		"ok u win",
+		"nice skills",
+		"i was low already",
+		"mobs took half my hp",
+		"again...",
+		"not again",
+		"fml",
+		"cant believe it",
+		"my bad",
+		"misclick",
+		"ez for u huh",
+		"well played",
+		"respect",
+		"wait for me",
+		"see u soon",
+		"this isnt over",
+		"next time u wont be so lucky"
 	};
 	private static final String[] TAUNTS_FLAGGED =
 	{
@@ -258,6 +331,114 @@ public class FakePlayerPvpManager
 		"rematch",
 		"not so easy now",
 		"u thought i was done?"
+	};
+	/** Said when it first sees a player (see {@link FakePlayerPvpConfig#GREET_CHANCE}). */
+	private static final String[] TAUNTS_GREET =
+	{
+		"hi",
+		"hey",
+		"yo",
+		"hello",
+		"sup",
+		"hi there",
+		"heya",
+		"o/",
+		"hey hey",
+		"hi :)",
+		"yo whats up",
+		"hello there",
+		"sup dude",
+		"evening",
+		"hey man",
+		"hi hi",
+		"howdy",
+		"oh hi",
+		"oh hey",
+		"hey :)",
+		"hello :)",
+		"yo yo",
+		"hiya",
+		"hi all",
+		"hey guys",
+		"greetings",
+		"sup bro",
+		"hey stranger",
+		"long time no see",
+		"oh another one",
+		"finally someone",
+		"didnt expect company",
+		"company!",
+		"share spot?",
+		"spot is big enough for us",
+		"hey good hunting",
+		"hi gl",
+		"gl hf",
+		"gl with drops",
+		"wow people here",
+		"hows exp here?",
+		"hello friend",
+		"hey lets not ks ok?",
+		"careful mobs hit hard here",
+		"oh hi didnt see u",
+		"hey nice gear",
+		"rare to see someone here",
+		"hello mate",
+		"hey neighbor",
+		"whats up"
+	};
+	/** Said when a player hits the monster it is fighting. */
+	private static final String[] TAUNTS_MOB_HUNT =
+	{
+		"hey thats my mob",
+		"i was on that one",
+		"dude",
+		"my mob",
+		"go find ur own",
+		"?",
+		"wtf",
+		"hey",
+		"lol really",
+		"stop hitting my mob",
+		"im already on it",
+		"get off my mob",
+		"ks?",
+		"plenty mobs around",
+		"not cool",
+		"this spot is mine",
+		"i pulled it first",
+		"my target",
+		"u see me hitting it right?",
+		"bro wtf",
+		"ok nice",
+		"seriously",
+		"hey hey hey",
+		"back off",
+		"thats mine",
+		"i had aggro",
+		"leave it",
+		"take the next one",
+		"there are others",
+		"stop",
+		"pls no ks",
+		"cmon",
+		"why",
+		"hands off",
+		"i was here first",
+		"rude",
+		"ks alert",
+		"go away",
+		"dont",
+		"wait ur turn",
+		"omg",
+		"come on man",
+		"u blind?",
+		"last warning",
+		"keep doing that and see",
+		"want pvp?",
+		"u looking for trouble?",
+		"mine!",
+		"ffs",
+		"unbelievable"
 	};
 	
 	private final AtomicInteger _nextNpcId = new AtomicInteger(FIRST_NPC_ID);
@@ -771,6 +952,50 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
+	 * Called by the fake player AI the first time it sees a player: maybe a hello in general chat.
+	 * @param fake the fake player
+	 */
+	public void greet(Attackable fake)
+	{
+		taunt(fake, TAUNTS_GREET, false, FakePlayerPvpConfig.GREET_CHANCE);
+	}
+	
+	/**
+	 * Called when a player (or a summon) hits a monster: a roaming fake player that is fighting that monster complains in general chat.
+	 * @param monster the monster being hit
+	 * @param attacker the attacker
+	 */
+	public void onMonsterAttacked(Attackable monster, Creature attacker)
+	{
+		if (_fakePlayers.isEmpty() || (FakePlayerPvpConfig.TAUNT_CHANCE <= 0))
+		{
+			return;
+		}
+		
+		final Player player = attacker.asPlayer();
+		if (player == null)
+		{
+			return;
+		}
+		
+		for (Map.Entry<Creature, AggroInfo> entry : monster.getAggroList().entrySet())
+		{
+			final Creature creature = entry.getKey();
+			if ((creature == null) || !creature.isAttackable() || !creature.asAttackable().isPvpFakePlayer() || creature.isDead() || (entry.getValue().getDamage() <= 0) || (creature.getTarget() != monster))
+			{
+				continue;
+			}
+			
+			// Already fighting that player: no time to talk about the monster.
+			final Attackable fake = creature.asAttackable();
+			if (!isFighting(fake, player))
+			{
+				taunt(fake, TAUNTS_MOB_HUNT, false);
+			}
+		}
+	}
+	
+	/**
 	 * Called by the fake player AI when it runs away from a PvP it is losing.
 	 * @param fake the fake player
 	 */
@@ -858,7 +1083,19 @@ public class FakePlayerPvpManager
 	 */
 	private void taunt(Npc fake, String[] taunts, boolean dead)
 	{
-		if ((FakePlayerPvpConfig.TAUNT_CHANCE <= 0) || (Rnd.get(100) >= FakePlayerPvpConfig.TAUNT_CHANCE))
+		taunt(fake, taunts, dead, FakePlayerPvpConfig.TAUNT_CHANCE);
+	}
+	
+	/**
+	 * Maybe says something in general chat, like {@link #taunt(Npc, String[], boolean)}, with its own chance.
+	 * @param fake the fake player
+	 * @param taunts what it may say
+	 * @param dead {@code true} if it is said by a dead fake player
+	 * @param chance the chance (in %) to say something
+	 */
+	private void taunt(Npc fake, String[] taunts, boolean dead, int chance)
+	{
+		if ((chance <= 0) || (Rnd.get(100) >= chance))
 		{
 			return;
 		}

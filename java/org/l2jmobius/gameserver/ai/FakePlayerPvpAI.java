@@ -23,6 +23,7 @@ package org.l2jmobius.gameserver.ai;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.l2jmobius.commons.threads.ThreadPool;
@@ -115,6 +116,8 @@ public class FakePlayerPvpAI extends AttackableAI
 	private static final int OPPORTUNITY_RANGE = 900;
 	private static final long OPPORTUNITY_SCAN_INTERVAL = 3000;
 	private static final long OPPORTUNITY_MEMORY = 180000;
+	/** Milliseconds between two looks for players it hasn't seen yet. */
+	private static final long GREET_SCAN_INTERVAL = 4000;
 	/** It doesn't go after a flagged or karma player more than this many levels above it. */
 	private static final int OPPORTUNITY_MAX_LEVEL_ABOVE = 3;
 	/** A player chains the next skill a moment after the last one ends, not a whole AI tick later. */
@@ -142,6 +145,9 @@ public class FakePlayerPvpAI extends AttackableAI
 	private long _nextOpportunityScan = 0;
 	private final Map<Integer, Long> _consideredPlayers = new ConcurrentHashMap<>();
 	private long _nextRevengeScan;
+	/** Players it has already seen (and maybe said hello to), so it doesn't greet anyone twice. */
+	private final Set<Integer> _seenPlayers = ConcurrentHashMap.newKeySet();
+	private long _nextGreetScan;
 	
 	// The player it is fighting, to notice when that player goes down (the aggro list drops dead attackers by itself).
 	private Creature _pvpTarget = null;
@@ -239,6 +245,8 @@ public class FakePlayerPvpAI extends AttackableAI
 		{
 			return;
 		}
+		
+		lookForNewFaces(npc, System.currentTimeMillis());
 		
 		// Back from town for its killer, or a flagged or karma player passing by.
 		if (lookForRevenge(npc, System.currentTimeMillis()) || lookForPvp(npc, System.currentTimeMillis()))
@@ -380,6 +388,10 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		// A flagged or karma player passing by is better game than a monster.
+		if (!target.isPlayable())
+		{
+			lookForNewFaces(npc, now);
+		}
 		if (!target.isPlayable() && (lookForRevenge(npc, now) || lookForPvp(npc, now)))
 		{
 			return;
@@ -970,6 +982,35 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * Like a player meeting someone at its hunting ground, it may say hello to a player it sees for the first time (see {@link FakePlayerPvpConfig#GREET_CHANCE}). Not while fighting a player.
+	 * @param npc the fake player
+	 * @param now the current time
+	 */
+	private void lookForNewFaces(Attackable npc, long now)
+	{
+		if ((FakePlayerPvpConfig.GREET_CHANCE <= 0) || (now < _nextGreetScan))
+		{
+			return;
+		}
+		
+		_nextGreetScan = now + GREET_SCAN_INTERVAL;
+		for (Player player : World.getInstance().getVisibleObjectsInRange(npc, Player.class, OPPORTUNITY_RANGE))
+		{
+			if (_seenPlayers.contains(player.getObjectId()) || player.isAlikeDead() || player.isInvisible() || (player.getInstanceId() != npc.getInstanceId()) || hates(npc, player, FakePlayerPvpManager.PVP_HATE) || !GeoEngine.getInstance().canSeeTarget(npc, player))
+			{
+				continue;
+			}
+			
+			// One hello at most per scan, the others are greeted (or not) later.
+			if (_seenPlayers.add(player.getObjectId()))
+			{
+				FakePlayerPvpManager.getInstance().greet(npc);
+				return;
+			}
+		}
 	}
 	
 	/**
