@@ -22,9 +22,11 @@ package handlers.items;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.RatesConfig;
@@ -65,9 +67,12 @@ public class ExtractableItems implements IItemHandler
 			return false;
 		}
 		
-		if (!player.isInventoryUnder80(false))
+		// Roll the contents first, so the box is only used up if this exact result fits in the inventory.
+		final List<ExtractedProduct> rolled = rollProducts(etcitem, exitems);
+		final int requiredSlots = getRequiredSlots(player, rolled);
+		if (!player.getInventory().validateCapacity(requiredSlots))
 		{
-			player.sendMessage("You've exceeded the limit and cannot retrieve the item. Please check your limit in the inventory.");
+			player.sendMessage("You need " + requiredSlots + " free inventory slots to open this item.");
 			return false;
 		}
 		
@@ -79,133 +84,26 @@ public class ExtractableItems implements IItemHandler
 		
 		final Map<Item, Long> extractedItems = new HashMap<>();
 		final List<Item> enchantedItems = new ArrayList<>();
-		if (etcitem.getExtractableCountMin() > 0)
+		for (ExtractedProduct extracted : rolled)
 		{
-			while (extractedItems.size() < etcitem.getExtractableCountMin())
+			final ExtractableProduct expi = extracted.product();
+			final int count = extracted.template().isStackable() ? 1 : (int) extracted.count();
+			final long amountEach = extracted.template().isStackable() ? extracted.count() : 1;
+			for (int i = 0; i < count; i++)
 			{
-				for (ExtractableProduct expi : exitems)
+				final Item newItem = player.addItem(ItemProcessType.REWARD, expi.getId(), amountEach, player, false);
+				if (newItem == null)
 				{
-					if ((etcitem.getExtractableCountMax() > 0) && (extractedItems.size() == etcitem.getExtractableCountMax()))
-					{
-						break;
-					}
-					
-					if (Rnd.get(100000) <= expi.getChance())
-					{
-						final long min = (long) (expi.getMin() * RatesConfig.RATE_EXTRACTABLE);
-						final long max = (long) (expi.getMax() * RatesConfig.RATE_EXTRACTABLE);
-						long createItemAmount = (max == min) ? min : (Rnd.get((max - min) + 1) + min);
-						if (createItemAmount == 0)
-						{
-							continue;
-						}
-						
-						// Do not extract the same item.
-						boolean alreadyExtracted = false;
-						for (Item i : extractedItems.keySet())
-						{
-							if (i.getTemplate().getId() == expi.getId())
-							{
-								alreadyExtracted = true;
-								break;
-							}
-						}
-						
-						if (alreadyExtracted && (exitems.size() >= etcitem.getExtractableCountMax()))
-						{
-							continue;
-						}
-						
-						final ItemTemplate template = ItemData.getInstance().getTemplate(expi.getId());
-						if (template == null)
-						{
-							LOGGER.warning("ExtractableItems: Could not find " + item + " product template with id " + expi.getId() + "!");
-							continue;
-						}
-						
-						if (template.isStackable() || (createItemAmount == 1))
-						{
-							final Item newItem = player.addItem(ItemProcessType.REWARD, expi.getId(), createItemAmount, player, false);
-							if (expi.getMaxEnchant() > 0)
-							{
-								newItem.setEnchantLevel(Rnd.get(expi.getMinEnchant(), expi.getMaxEnchant()));
-								enchantedItems.add(newItem);
-							}
-							
-							addItem(extractedItems, newItem, createItemAmount);
-						}
-						else
-						{
-							while (createItemAmount > 0)
-							{
-								final Item newItem = player.addItem(ItemProcessType.REWARD, expi.getId(), 1, player, false);
-								if (expi.getMaxEnchant() > 0)
-								{
-									newItem.setEnchantLevel(Rnd.get(expi.getMinEnchant(), expi.getMaxEnchant()));
-									enchantedItems.add(newItem);
-								}
-								
-								addItem(extractedItems, newItem, 1);
-								createItemAmount--;
-							}
-						}
-					}
-				}
-			}
-		}
-		else
-		{
-			for (ExtractableProduct expi : exitems)
-			{
-				if ((etcitem.getExtractableCountMax() > 0) && (extractedItems.size() == etcitem.getExtractableCountMax()))
-				{
-					break;
+					continue;
 				}
 				
-				if (Rnd.get(100000) <= expi.getChance())
+				if (expi.getMaxEnchant() > 0)
 				{
-					final long min = (long) (expi.getMin() * RatesConfig.RATE_EXTRACTABLE);
-					final long max = (long) (expi.getMax() * RatesConfig.RATE_EXTRACTABLE);
-					long createItemAmount = (max == min) ? min : (Rnd.get((max - min) + 1) + min);
-					if (createItemAmount == 0)
-					{
-						continue;
-					}
-					
-					final ItemTemplate template = ItemData.getInstance().getTemplate(expi.getId());
-					if (template == null)
-					{
-						LOGGER.warning("ExtractableItems: Could not find " + item + " product template with id " + expi.getId() + "!");
-						continue;
-					}
-					
-					if (template.isStackable() || (createItemAmount == 1))
-					{
-						final Item newItem = player.addItem(ItemProcessType.REWARD, expi.getId(), createItemAmount, player, false);
-						if (expi.getMaxEnchant() > 0)
-						{
-							newItem.setEnchantLevel(Rnd.get(expi.getMinEnchant(), expi.getMaxEnchant()));
-							enchantedItems.add(newItem);
-						}
-						
-						addItem(extractedItems, newItem, createItemAmount);
-					}
-					else
-					{
-						while (createItemAmount > 0)
-						{
-							final Item newItem = player.addItem(ItemProcessType.REWARD, expi.getId(), 1, player, false);
-							if (expi.getMaxEnchant() > 0)
-							{
-								newItem.setEnchantLevel(Rnd.get(expi.getMinEnchant(), expi.getMaxEnchant()));
-								enchantedItems.add(newItem);
-							}
-							
-							addItem(extractedItems, newItem, 1);
-							createItemAmount--;
-						}
-					}
+					newItem.setEnchantLevel(Rnd.get(expi.getMinEnchant(), expi.getMaxEnchant()));
+					enchantedItems.add(newItem);
 				}
+				
+				addItem(extractedItems, newItem, amountEach);
 			}
 		}
 		
@@ -231,6 +129,118 @@ public class ExtractableItems implements IItemHandler
 		}
 		
 		return true;
+	}
+	
+	/**
+	 * One rolled product: a stackable product is one stack of {@code count}, a non-stackable one is {@code count} separate items.
+	 * @param product the extractable product that hit
+	 * @param template its item template
+	 * @param count the amount rolled
+	 */
+	private record ExtractedProduct(ExtractableProduct product, ItemTemplate template, long count)
+	{
+		/**
+		 * @return how many distinct items this adds to the extraction (a stack counts once)
+		 */
+		int distinctItems()
+		{
+			return template.isStackable() ? 1 : (int) count;
+		}
+	}
+	
+	/**
+	 * Rolls what the item gives, without handing anything out. Follows the extractableCountMin/Max rules: with a minimum, the product list is rolled again until at least that many distinct items hit, never going past the maximum.
+	 * @param etcitem the extractable item template
+	 * @param exitems its possible products
+	 * @return the rolled products
+	 */
+	private List<ExtractedProduct> rollProducts(EtcItem etcitem, List<ExtractableProduct> exitems)
+	{
+		final List<ExtractedProduct> rolled = new ArrayList<>();
+		final int countMin = etcitem.getExtractableCountMin();
+		final int countMax = etcitem.getExtractableCountMax();
+		int distinctItems = 0;
+		do
+		{
+			for (ExtractableProduct expi : exitems)
+			{
+				if ((countMax > 0) && (distinctItems >= countMax))
+				{
+					break;
+				}
+				
+				if (Rnd.get(100000) > expi.getChance())
+				{
+					continue;
+				}
+				
+				final long min = (long) (expi.getMin() * RatesConfig.RATE_EXTRACTABLE);
+				final long max = (long) (expi.getMax() * RatesConfig.RATE_EXTRACTABLE);
+				final long createItemAmount = (max == min) ? min : (Rnd.get((max - min) + 1) + min);
+				if (createItemAmount == 0)
+				{
+					continue;
+				}
+				
+				// Do not extract the same item twice on a re-roll.
+				if ((countMin > 0) && (exitems.size() >= countMax) && isRolled(rolled, expi.getId()))
+				{
+					continue;
+				}
+				
+				final ItemTemplate template = ItemData.getInstance().getTemplate(expi.getId());
+				if (template == null)
+				{
+					LOGGER.warning("ExtractableItems: Could not find " + etcitem + " product template with id " + expi.getId() + "!");
+					continue;
+				}
+				
+				final ExtractedProduct extracted = new ExtractedProduct(expi, template, createItemAmount);
+				if (!template.isStackable() || !isRolled(rolled, expi.getId()))
+				{
+					distinctItems += extracted.distinctItems();
+				}
+				rolled.add(extracted);
+			}
+		}
+		while (distinctItems < countMin);
+		
+		return rolled;
+	}
+	
+	private static boolean isRolled(List<ExtractedProduct> rolled, int itemId)
+	{
+		for (ExtractedProduct extracted : rolled)
+		{
+			if (extracted.product().getId() == itemId)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * @param player the player opening the item
+	 * @param rolled the rolled products
+	 * @return the free inventory slots the rolled products need: one per stackable item the player doesn't already hold, one per non-stackable item
+	 */
+	private int getRequiredSlots(Player player, List<ExtractedProduct> rolled)
+	{
+		final Set<Integer> newStacks = new HashSet<>();
+		long slots = 0;
+		for (ExtractedProduct extracted : rolled)
+		{
+			if (!extracted.template().isStackable())
+			{
+				slots += extracted.count();
+			}
+			else if ((player.getInventory().getItemByItemId(extracted.product().getId()) == null) && newStacks.add(extracted.product().getId()))
+			{
+				slots++;
+			}
+		}
+		return (int) Math.min(slots, Integer.MAX_VALUE);
 	}
 	
 	private void addItem(Map<Item, Long> extractedItems, Item newItem, long count)
