@@ -63,6 +63,10 @@ public class FakePlayerPvpProfile
 	private long _spawnTime;
 	private volatile long _nextPotionTime;
 	
+	// Its temper: whether it runs away from a PvP it is losing, and when it may speak again.
+	private final boolean _runner;
+	private volatile long _nextChatTime;
+	
 	/**
 	 * @param build the build
 	 * @param playerClass the class for this level
@@ -74,8 +78,9 @@ public class FakePlayerPvpProfile
 	 * @param equipment every item it wears or carries, with its enchant level
 	 * @param mainWeapon its weapon (and shield)
 	 * @param bow the bow it carries besides its weapon, {@code null} for none
+	 * @param runner {@code true} if it runs away from a PvP it is losing, {@code false} if it fights to the death
 	 */
-	public FakePlayerPvpProfile(FakePlayerPvpBuild build, PlayerClass playerClass, int level, List<SkillHolder> buffs, int armorWornMask, int armorMask, int maxCharges, List<ItemEnchantHolder> equipment, FakePlayerPvpWeapon mainWeapon, FakePlayerPvpWeapon bow)
+	public FakePlayerPvpProfile(FakePlayerPvpBuild build, PlayerClass playerClass, int level, List<SkillHolder> buffs, int armorWornMask, int armorMask, int maxCharges, List<ItemEnchantHolder> equipment, FakePlayerPvpWeapon mainWeapon, FakePlayerPvpWeapon bow, boolean runner)
 	{
 		_build = build;
 		_playerClass = playerClass;
@@ -89,6 +94,7 @@ public class FakePlayerPvpProfile
 		_maxCharges = maxCharges;
 		_charges.set(maxCharges);
 		_equipment = equipment;
+		_runner = runner;
 	}
 	
 	public void setSkills(SkillCategory category, List<Skill> skills)
@@ -279,5 +285,23 @@ public class FakePlayerPvpProfile
 	public void setNextPotionTime(long nextPotionTime)
 	{
 		_nextPotionTime = nextPotionTime;
+	}
+	
+	/**
+	 * @return {@code true} if it runs away from a PvP it is losing (and reads a Scroll of Escape once it got away), {@code false} if it fights to the death
+	 */
+	public boolean isRunner()
+	{
+		return _runner;
+	}
+	
+	public long getNextChatTime()
+	{
+		return _nextChatTime;
+	}
+	
+	public void setNextChatTime(long nextChatTime)
+	{
+		_nextChatTime = nextChatTime;
 	}
 }

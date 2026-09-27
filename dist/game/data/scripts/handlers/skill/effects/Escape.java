@@ -17,6 +17,7 @@
 package handlers.skill.effects;
 
 import org.l2jmobius.gameserver.data.xml.MapRegionData;
+import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -60,6 +61,13 @@ public class Escape extends AbstractEffect
 	{
 		if (_escapeType == null)
 		{
+			return;
+		}
+		
+		// A roaming fake player that reads a Scroll of Escape leaves (and its monster respawns), like a player teleporting to town.
+		if (effected.isPvpFakePlayer())
+		{
+			FakePlayerPvpManager.getInstance().onFakePlayerEscaped(effected.asNpc());
 			return;
 		}
 		

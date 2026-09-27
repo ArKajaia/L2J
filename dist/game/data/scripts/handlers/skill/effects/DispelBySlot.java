@@ -73,6 +73,32 @@ public class DispelBySlot extends AbstractEffect
 		return true;
 	}
 	
+	/**
+	 * Tells the roaming fake player AI whether casting this cleanse on itself would remove anything (Break Duress when rooted, Remedy when bleeding...).
+	 * @param obj the creature that would be cleansed
+	 * @return {@code true} if {@code obj} is a creature with an effect this dispels (or anything else than a creature)
+	 */
+	@Override
+	public boolean checkCondition(Object obj)
+	{
+		if (!(obj instanceof Creature))
+		{
+			return true;
+		}
+		
+		final EffectList effectList = ((Creature) obj).getEffectList();
+		for (Entry<AbnormalType, Short> entry : _dispelAbnormals.entrySet())
+		{
+			final BuffInfo info = effectList.getBuffInfoByAbnormalType(entry.getKey());
+			if ((info != null) && ((entry.getValue() < 0) || (entry.getValue() >= info.getSkill().getAbnormalLevel())))
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
 	@Override
 	public void onStart(Creature effector, Creature effected, Skill skill)
 	{

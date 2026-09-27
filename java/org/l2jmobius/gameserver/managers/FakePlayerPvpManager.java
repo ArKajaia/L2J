@@ -44,6 +44,7 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
@@ -56,6 +57,7 @@ import org.l2jmobius.gameserver.model.skill.AbnormalType;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
+import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.model.zone.ZoneType;
 import org.l2jmobius.gameserver.model.zone.type.ArenaZone;
 import org.l2jmobius.gameserver.model.zone.type.BossZone;
@@ -93,6 +95,10 @@ public class FakePlayerPvpManager
 	public static final long PVP_HATE = 1_000_000;
 	/** Greater Healing Potion effect. */
 	private static final int POTION_SKILL_ID = 2037;
+	/** A fake player says at most one thing in this many milliseconds. */
+	private static final long CHAT_INTERVAL = 20000;
+	/** A fake player doesn't pick a fight with a player this many levels above it (it only complains). */
+	private static final int OUTLEVELED_DIFFERENCE = 6;
 	
 	private static final String[] NAME_PREFIXES =
 	{
@@ -138,6 +144,51 @@ public class FakePlayerPvpManager
 		"bb",
 		"lol",
 		"stay down"
+	};
+	private static final String[] TAUNTS_KILL_STEAL_COMPLAIN =
+	{
+		"ks...",
+		"thx for ks",
+		"wow ks",
+		"nice ks bro",
+		"my mob..."
+	};
+	private static final String[] TAUNTS_FLEE =
+	{
+		"brb",
+		"lag",
+		"omg",
+		"wtf lag",
+		"cya",
+		"no pots",
+		"2vs1 gj"
+	};
+	private static final String[] TAUNTS_DEATH =
+	{
+		"gg",
+		"lag...",
+		"wtf",
+		"nice one",
+		"ok gj",
+		"omg lag",
+		"rematch?",
+		"lucky"
+	};
+	private static final String[] TAUNTS_FLAGGED =
+	{
+		"flag = free kill",
+		"hi",
+		"pvp?",
+		"sorry, you were flagged",
+		"lets go"
+	};
+	private static final String[] TAUNTS_KARMA =
+	{
+		"pk!",
+		"die pk",
+		"got a pk here",
+		"red = dead",
+		"pk scum"
 	};
 	
 	private final AtomicInteger _nextNpcId = new AtomicInteger(FIRST_NPC_ID);
@@ -441,16 +492,26 @@ public class FakePlayerPvpManager
 		
 		World.getInstance().forEachVisibleObjectInRange(victim, Attackable.class, FakePlayerPvpConfig.REVENGE_RANGE, fake ->
 		{
-			if (!fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || (fake.getHating(killer) >= PVP_HATE))
+			if (!fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || isFighting(fake, killer))
 			{
 				return;
 			}
 			
-			// Only the fake players that were fighting this monster care.
-			if ((fake.getAI().getAttackTarget() == victim) || (fake.getTarget() == victim))
+			// Only a stolen kill counts: a monster it had already hit, not one it was just running to.
+			final AggroInfo damageDone = victim.getAggroList().get(fake);
+			if ((damageDone == null) || (damageDone.getDamage() <= 0))
 			{
-				startFight(fake, killer, TAUNTS_KILL_STEAL);
+				return;
 			}
+			
+			// Like a player, it doesn't always go for it: not hurt, not against a much higher level, and not every time.
+			if ((fake.getCurrentHp() < (fake.getMaxHp() * 0.5)) || (killer.getLevel() >= (fake.getLevel() + OUTLEVELED_DIFFERENCE)) || (Rnd.get(100) >= FakePlayerPvpConfig.REVENGE_CHANCE))
+			{
+				taunt(fake, TAUNTS_KILL_STEAL_COMPLAIN, false);
+				return;
+			}
+			
+			startFight(fake, killer, TAUNTS_KILL_STEAL);
 		});
 	}
 	
@@ -462,7 +523,7 @@ public class FakePlayerPvpManager
 	public void onFakePlayerAttacked(Attackable fake, Creature attacker)
 	{
 		final Player player = attacker != null ? attacker.asPlayer() : null;
-		if ((player == null) || fake.isDead() || (fake.getHating(player) >= PVP_HATE))
+		if ((player == null) || fake.isDead() || isFighting(fake, player))
 		{
 			return;
 		}
@@ -471,12 +532,79 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
+	 * Called by the fake player AI when it goes after a flagged (purple) or karma (red) player passing by, like PvPers do.
+	 * @param fake the fake player
+	 * @param player the player
+	 * @param karma {@code true} if the player is a PK
+	 */
+	public void attackPlayer(Attackable fake, Player player, boolean karma)
+	{
+		if (!fake.isDead() && !isFighting(fake, player))
+		{
+			startFight(fake, player, karma ? TAUNTS_KARMA : TAUNTS_FLAGGED);
+		}
+	}
+	
+	/**
+	 * Called by the fake player AI when it runs away from a PvP it is losing.
+	 * @param fake the fake player
+	 */
+	public void onFakePlayerFlee(Attackable fake)
+	{
+		taunt(fake, TAUNTS_FLEE, false);
+	}
+	
+	/**
+	 * Called when a roaming fake player finishes reading a Scroll of Escape: it teleports away, which for everyone around is the same as leaving. Its monster respawns as usual.
+	 * @param fake the fake player
+	 */
+	public void onFakePlayerEscaped(Npc fake)
+	{
+		// Out of the cast that got it here first.
+		ThreadPool.schedule(() ->
+		{
+			if (!fake.isDead() && fake.isSpawned())
+			{
+				fake.deleteMe();
+			}
+		}, 300);
+	}
+	
+	/**
+	 * Whether an area skill of a roaming fake player may hit {@code player}, like the area skill of a player that doesn't hold Ctrl: a player it is fighting, or a flagged or karma one, never a bystander, nor anyone in town.
+	 * @param fake the fake player casting
+	 * @param player a player (or a summon's owner) in the area
+	 * @return {@code true} if {@code player} may be hit
+	 */
+	public static boolean isFairAreaTarget(Attackable fake, Player player)
+	{
+		if (player.isInsideZone(ZoneId.PEACE))
+		{
+			return false;
+		}
+		
+		return isFighting(fake, player) || (player.getPvpFlag() > 0) || (player.getKarma() > 0);
+	}
+	
+	/**
+	 * @param fake a fake player
+	 * @param player a player
+	 * @return {@code true} if {@code fake} is already fighting {@code player}
+	 */
+	private static boolean isFighting(Attackable fake, Player player)
+	{
+		// Read from the aggro list itself: getHating() also drops invulnerable players from it.
+		final AggroInfo info = fake.getAggroList().get(player);
+		return (info != null) && (info.getHate() >= PVP_HATE);
+	}
+	
+	/**
 	 * Called by the fake player AI when the player it was fighting dies.
 	 * @param fake the fake player
 	 */
 	public void onPlayerDefeated(Attackable fake)
 	{
-		taunt(fake, TAUNTS_KILL);
+		taunt(fake, TAUNTS_KILL, false);
 	}
 	
 	/**
@@ -494,20 +622,34 @@ public class FakePlayerPvpManager
 		
 		fake.addDamageHate(player, 0, PVP_HATE);
 		fake.getAI().setIntention(Intention.ATTACK, player);
-		taunt(fake, taunts);
+		taunt(fake, taunts, false);
 	}
 	
-	private void taunt(Npc fake, String[] taunts)
+	/**
+	 * Maybe says something in general chat, a moment later (typing takes a while), and not more than once every {@link #CHAT_INTERVAL} ms (except a last word when it dies).
+	 * @param fake the fake player
+	 * @param taunts what it may say
+	 * @param dead {@code true} if it is said by a dead fake player (players still talk once dead)
+	 */
+	private void taunt(Npc fake, String[] taunts, boolean dead)
 	{
 		if ((FakePlayerPvpConfig.TAUNT_CHANCE <= 0) || (Rnd.get(100) >= FakePlayerPvpConfig.TAUNT_CHANCE))
 		{
 			return;
 		}
 		
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		final long now = System.currentTimeMillis();
+		if ((profile == null) || (!dead && (now < profile.getNextChatTime())))
+		{
+			return;
+		}
+		profile.setNextChatTime(now + CHAT_INTERVAL);
+		
 		final String text = taunts[Rnd.get(taunts.length)];
 		ThreadPool.schedule(() ->
 		{
-			if (!fake.isDead() && fake.isSpawned())
+			if ((dead || !fake.isDead()) && fake.isSpawned())
 			{
 				fake.broadcastPacket(new CreatureSay(fake, ChatType.GENERAL, fake.getName(), text));
 			}
@@ -517,6 +659,9 @@ public class FakePlayerPvpManager
 	private void rewardKill(Attackable fake, Player killer)
 	{
 		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		
+		// A few words from the ground.
+		taunt(fake, TAUNTS_DEATH, true);
 		
 		// Rarely, one piece of its gear, enchant included.
 		final List<ItemEnchantHolder> equipment = profile.getEquipment();

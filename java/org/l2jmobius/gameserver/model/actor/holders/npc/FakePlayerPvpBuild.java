@@ -67,7 +67,15 @@ public class FakePlayerPvpBuild
 		EMERGENCY,
 		TOGGLE,
 		/** Skills that build Sonic/Force energy (Sonic Focus, Maximum Focus Sonic...). */
-		CHARGE
+		CHARGE,
+		/** Speed buffs used to catch a player that runs away, or to run away (Dash, Sprint, Sonic Move). */
+		MOVE,
+		/** Gap closers used on a target out of reach (Rush, Shadow Step). */
+		RUSH,
+		/** Skills that stop a player in melee range before stepping back or running away (roots, stuns, Aura Flash, Trick). */
+		PEEL,
+		/** Skills that remove what holds it back (Break Duress against roots, Remedy against bleeding...). */
+		CLEANSE
 	}
 	
 	private final String _name;

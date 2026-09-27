@@ -57,7 +57,7 @@ public class FakePlayerHolder
 	private final boolean _hero;
 	private final int _clanId;
 	private final int _pledgeStatus;
-	private final boolean _isSitting;
+	private volatile boolean _isSitting;
 	private final int _privateStoreType;
 	private final String _privateStoreMessage;
 	private final boolean _talkable;
@@ -264,6 +264,15 @@ public class FakePlayerHolder
 	public boolean isSitting()
 	{
 		return _isSitting;
+	}
+	
+	/**
+	 * Sits down or stands up, for a roaming fake player resting after a fight (its holder is its own).
+	 * @param sitting {@code true} to sit down
+	 */
+	public void setSitting(boolean sitting)
+	{
+		_isSitting = sitting;
 	}
 	
 	public int getPrivateStoreType()

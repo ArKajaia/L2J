@@ -74,7 +74,8 @@ public class Monster extends Attackable
 	{
 		if (isFakePlayer())
 		{
-			return FakePlayersConfig.FAKE_PLAYER_AUTO_ATTACKABLE || isInCombat() || attacker.isMonster() || (getScriptValue() > 0);
+			// Like a player: attackable without Ctrl while fighting, while flagged, or with karma (a PK).
+			return FakePlayersConfig.FAKE_PLAYER_AUTO_ATTACKABLE || isInCombat() || attacker.isMonster() || (getScriptValue() > 0) || (getKarma() > 0);
 		}
 		
 		if (NpcConfig.GUARD_ATTACK_AGGRO_MOB && isAggressive() && (attacker instanceof Guard))

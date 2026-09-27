@@ -22,10 +22,14 @@ package org.l2jmobius.gameserver.ai;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.GeneralConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
+import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
@@ -35,8 +39,11 @@ import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.WorldRegion;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpCombo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.instance.Chest;
@@ -49,10 +56,12 @@ import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
+import org.l2jmobius.gameserver.network.serverpackets.ChangeWaitType;
 
 /**
  * AI of a roaming fake player (see {@link FakePlayerPvpManager}). It plays like a character of its class: hunts the monsters around its spawn point, keeps its buffs up, uses the class skills it has learned (best ones first), drinks potions, archers and mages keep their
- * distance, and it fights any player that attacks it or steals its kill until one of them dies.
+ * distance, and it fights any player that attacks it or steals its kill. In a PvP it plays like a player: it focuses the weakest enemy, closes the gap (Rush, Shadow Step, Dash), stops a melee attacker before stepping back (roots, stuns), waits out an invincible enemy,
+ * cleanses roots and bleeds, and some fake players run from a fight they are losing and read a Scroll of Escape once they got away. It sits down to rest after a hard fight, and may go after a flagged or karma player passing by.
  */
 public class FakePlayerPvpAI extends AttackableAI
 {
@@ -77,9 +86,63 @@ public class FakePlayerPvpAI extends AttackableAI
 	/** How long a monster it gave up on is left alone. */
 	private static final long UNREACHABLE_IGNORE_TIME = 60000;
 	
+	/** Scroll of Escape (20 seconds, only interrupted by stuns and the like). */
+	private static final int SCROLL_OF_ESCAPE = 2013;
+	/** How far it runs in one go when it runs away. */
+	private static final int FLEE_STEP = 700;
+	/** Turns (in radians) it tries, from straight away from its pursuer, when a wall is in the way. */
+	private static final double[] FLEE_TURNS =
+	{
+		0,
+		0.5,
+		-0.5,
+		1.0,
+		-1.0,
+		1.6,
+		-1.6
+	};
+	/** It reads its Scroll of Escape once its pursuer is this far away. */
+	private static final int ESCAPE_DISTANCE = 900;
+	/** A pursuer this close is shaken off (root, stun...) before running on. */
+	private static final int PEEL_DISTANCE = 300;
+	/** After running this long with a pursuer on its heels, it turns around and fights to the end. */
+	private static final long FLEE_TIMEOUT = 45000;
+	/** A player at least this many levels above is a fight it can't win: runners leave early. */
+	private static final int HOPELESS_LEVEL_DIFFERENCE = 8;
+	/** How long it sticks to the player it chose to focus in a fight against several. */
+	private static final long FOCUS_TIME = 6000;
+	/** It chases a player getting away for this long before using a speed buff or a gap closer. */
+	private static final long CHASE_BEFORE_SPRINT = 1500;
+	/** Flagged and karma players are spotted within this range, looked for this often, and each one is only considered once in this time. */
+	private static final int OPPORTUNITY_RANGE = 900;
+	private static final long OPPORTUNITY_SCAN_INTERVAL = 3000;
+	private static final long OPPORTUNITY_MEMORY = 180000;
+	/** It doesn't go after a flagged or karma player more than this many levels above it. */
+	private static final int OPPORTUNITY_MAX_LEVEL_ABOVE = 3;
+	/** A player chains the next skill a moment after the last one ends, not a whole AI tick later. */
+	private static final int SKILL_CHAIN_MIN_DELAY = 150;
+	private static final int SKILL_CHAIN_MAX_DELAY = 400;
+	/** Skill ids of the stuns, roots, sleeps... which a disabled target doesn't need again. */
+	private static final Map<Integer, Boolean> HARD_DISABLES = new ConcurrentHashMap<>();
+	
 	private long _kiteEndTime = 0;
 	private long _nextKiteTime = 0;
 	private volatile boolean _resting = false;
+	
+	// Running away from a PvP it is losing: since when, when it runs on and may read its scroll, and whether it gave up running (then it fights to the end).
+	private boolean _fleeing = false;
+	private long _fleeStart = 0;
+	private long _nextFleeStep = 0;
+	private long _nextEscapeTime = 0;
+	private boolean _lastStand = false;
+	
+	// The player it focuses in a fight against several (the weakest one), and until when.
+	private Creature _focus = null;
+	private long _focusUntil = 0;
+	
+	// Flagged and karma players passing by: when it looks next, and whom it already thought about (object id -> time).
+	private long _nextOpportunityScan = 0;
+	private final Map<Integer, Long> _consideredPlayers = new ConcurrentHashMap<>();
 	
 	// The player it is fighting, to notice when that player goes down (the aggro list drops dead attackers by itself).
 	private Creature _pvpTarget = null;
@@ -90,7 +153,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	private Creature _unreachable = null;
 	private long _unreachableUntil = 0;
 	
-	// The player it is chasing out of melee reach, and since when (tanks and tyrants take out their bow when it takes too long).
+	// The player it is chasing out of melee reach, and since when (it sprints, rushes in, or takes out its bow when it takes too long).
 	private Creature _chaseTarget = null;
 	private long _chaseStart = 0;
 	private long _nextWeaponSwapTime = 0;
@@ -136,10 +199,31 @@ public class FakePlayerPvpAI extends AttackableAI
 		// Fight over: the bow goes back in the bag.
 		_chaseTarget = null;
 		_progressTarget = null;
+		_focus = null;
+		_fleeing = false;
+		_lastStand = false;
 		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
 		if ((profile != null) && profile.isBowHeld())
 		{
 			FakePlayerPvpManager.getInstance().equipWeapon(npc, profile.getMainWeapon());
+		}
+		
+		// After a hard fight, sit down and rest like a player until HP is back before doing anything else. They don't use MP.
+		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
+		_resting = hpRatio < (_resting ? 0.9 : 0.5);
+		if (_resting)
+		{
+			if (!npc.isMoving() && !npc.isMovementDisabled())
+			{
+				sitDown(npc);
+			}
+			return;
+		}
+		
+		// Rested: up again (that takes a moment, like for a player).
+		if (standUp(npc))
+		{
+			return;
 		}
 		
 		// Loot of its kills (FakePlayerCanDropItems), picked up like a player does.
@@ -154,11 +238,8 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// After a hard fight, rest (like a player sitting down) until HP is back before looking for more monsters. They don't use MP.
-		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
-		_resting = hpRatio < (_resting ? 0.9 : 0.5);
-		
-		if (_resting)
+		// A flagged or karma player passing by.
+		if (lookForPvp(npc, System.currentTimeMillis()))
 		{
 			return;
 		}
@@ -183,8 +264,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		npc.setRunning();
 		if (npc.calculateDistance2D(spawn) > FakePlayerPvpConfig.HUNT_RANGE)
 		{
-			final Location home = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), spawn.getX(), spawn.getY(), spawn.getZ(), npc.getInstanceId());
-			moveTo(home.getX(), home.getY(), home.getZ());
+			goHome(npc, spawn);
 			return;
 		}
 		
@@ -202,8 +282,18 @@ public class FakePlayerPvpAI extends AttackableAI
 	protected void thinkAttack()
 	{
 		final Attackable npc = getActiveChar();
-		if (npc.isDead() || npc.isCastingNow() || npc.isCoreAIDisabled())
+		if (npc.isDead() || npc.isCoreAIDisabled())
 		{
+			return;
+		}
+		
+		// Casting (a spell, a Scroll of Escape...): a player still drinks potions meanwhile.
+		if (npc.isCastingNow())
+		{
+			if (npc.getTemplate().getFakePlayerPvpProfile() != null)
+			{
+				FakePlayerPvpManager.getInstance().tryPotion(npc);
+			}
 			return;
 		}
 		
@@ -211,6 +301,12 @@ public class FakePlayerPvpAI extends AttackableAI
 		if (profile == null)
 		{
 			super.thinkAttack();
+			return;
+		}
+		
+		// A sitting player stands up first.
+		if (standUp(npc))
+		{
 			return;
 		}
 		
@@ -230,6 +326,13 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
+		// Against several players, the one it can finish first.
+		final long now = System.currentTimeMillis();
+		if (target.isPlayable())
+		{
+			target = chooseFocus(npc, target, now);
+		}
+		
 		if (getAttackTarget() != target)
 		{
 			setAttackTarget(target);
@@ -245,21 +348,19 @@ public class FakePlayerPvpAI extends AttackableAI
 			_pvpTarget = target;
 		}
 		
-		// Monsters are only hunted around the spawn point, players are chased further.
+		// Monsters are only hunted around the spawn point, players are chased further (and it runs away as far as it needs to).
 		final Spawn spawn = npc.getSpawn();
-		if ((spawn != null) && (npc.calculateDistance2D(spawn) > (target.isPlayable() ? FakePlayerPvpConfig.CHASE_RANGE : FakePlayerPvpConfig.LEASH_RANGE)))
+		if ((spawn != null) && !_fleeing && (npc.calculateDistance2D(spawn) > (target.isPlayable() ? FakePlayerPvpConfig.CHASE_RANGE : FakePlayerPvpConfig.LEASH_RANGE)))
 		{
+			// Back to its hunting ground, staying ACTIVE: a MOVE_TO that finds no path never arrives, and the AI would stop thinking.
 			npc.stopHating(target);
-			setAttackTarget(null);
-			npc.setTarget(null);
-			npc.setRunning();
-			setIntention(Intention.MOVE_TO, spawn.getLocation());
+			dropTarget(npc);
+			goHome(npc, spawn);
 			return;
 		}
 		
-		// Give up on a target it hasn't been able to hit for a while (no way to it, a ledge...).
-		final long now = System.currentTimeMillis();
-		if (_progressTarget != target)
+		// Give up on a target it hasn't been able to hit for a while (no way to it, a ledge...), but not on the one it runs from.
+		if ((_progressTarget != target) || _fleeing)
 		{
 			_progressTarget = target;
 			_progressTime = now;
@@ -276,6 +377,12 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
+		// A flagged or karma player passing by is better game than a monster.
+		if (!target.isPlayable() && lookForPvp(npc, now))
+		{
+			return;
+		}
+		
 		if (npc.isMoving() && (now < _kiteEndTime))
 		{
 			return; // Let the step back finish.
@@ -283,23 +390,39 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		FakePlayerPvpManager.getInstance().tryPotion(npc);
 		
-		// Tanks and tyrants take out their bow against a player they can't catch.
-		if (profile.getBow() != null)
-		{
-			chooseWeapon(npc, profile, target, now);
-		}
-		
 		final Role role = profile.getRole();
-		final boolean bowHeld = profile.isBowHeld();
 		final boolean mage = role == Role.MAGE;
 		final boolean pvp = target.isPlayable();
 		final boolean canMove = !npc.isMovementDisabled();
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
 		final double distance = npc.calculateDistance2D(target);
 		final int collision = npc.getTemplate().getCollisionRadius() + target.getTemplate().getCollisionRadius();
+		trackChase(target, distance - collision, now);
 		
-		// Take care of itself first: emergency skills, heals, buffs.
+		// Some players run from a fight they are losing.
+		if (!pvp)
+		{
+			_fleeing = false;
+		}
+		else if (thinkFlee(npc, profile, target, hpRatio, now))
+		{
+			return;
+		}
+		
+		// Tanks and tyrants take out their bow against a player they can't catch.
+		if (profile.getBow() != null)
+		{
+			chooseWeapon(npc, profile, target, distance - collision, now);
+		}
+		final boolean bowHeld = profile.isBowHeld();
+		
+		// Take care of itself first: emergency skills, cleansing, heals, buffs.
 		if ((hpRatio < 0.3) && castOnSelf(npc, target, profile.getSkills(SkillCategory.EMERGENCY), true, true))
+		{
+			return;
+		}
+		
+		if (castCleanse(npc, target, profile))
 		{
 			return;
 		}
@@ -315,10 +438,43 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// Archers and mages step back from melee (unless a combo is finishing a stunned target).
-		if (canMove && role.isRanged() && (_combo == null) && !npc.isAttackingNow() && ((distance - collision) < FakePlayerPvpConfig.KITE_DISTANCE) && (now >= _nextKiteTime) && kiteStep(npc, target, now))
+		// Nothing gets through an invincible player (Sonic Barrier, Force Barrier...): wait it out close by, like a player does.
+		if (pvp && target.isInvul())
 		{
+			final int range = npc.getPhysicalAttackRange();
+			if (canMove && !mage && ((distance - collision) > (range + 100)))
+			{
+				moveToPawn(target, range);
+			}
 			return;
+		}
+		
+		// Archers and mages stop a player in melee range (root, stun, Aura Flash...), then step back (unless a combo is finishing a stunned target).
+		if (canMove && role.isRanged() && (_combo == null) && !npc.isAttackingNow() && ((distance - collision) < FakePlayerPvpConfig.KITE_DISTANCE) && (now >= _nextKiteTime))
+		{
+			if (pvp && !isDisabled(target) && useSkill(npc, target, pickPeel(npc, target, profile), distance, collision, false))
+			{
+				return;
+			}
+			
+			if (kiteStep(npc, target, now))
+			{
+				return;
+			}
+		}
+		
+		// Catching up: a speed buff on a player getting away, then a gap closer (Rush, Shadow Step).
+		if (canMove && !role.isRanged() && !bowHeld)
+		{
+			if (pvp && isChasing(target, now) && castOnSelf(npc, target, profile.getSkills(SkillCategory.MOVE), false, true))
+			{
+				return;
+			}
+			
+			if ((pvp ? isChasing(target, now) : (Rnd.get(100) < 20)) && useRush(npc, profile, target, distance, collision, pvp))
+			{
+				return;
+			}
 		}
 		
 		// Duelists and tyrants recharge their energy when they are running low (big energy skills need 2-4 charges).
@@ -385,6 +541,556 @@ public class FakePlayerPvpAI extends AttackableAI
 	public boolean isResting()
 	{
 		return _resting;
+	}
+	
+	@Override
+	protected void onActionFinishCasting()
+	{
+		super.onActionFinishCasting();
+		
+		// A player chains the next skill a moment after the last one, not a whole AI tick later (Shadow Step leaves it ACTIVE).
+		if ((getIntention() == Intention.ATTACK) || (getIntention() == Intention.ACTIVE))
+		{
+			ThreadPool.schedule(this::onActionThink, Rnd.get(SKILL_CHAIN_MIN_DELAY, SKILL_CHAIN_MAX_DELAY));
+		}
+	}
+	
+	@Override
+	protected void onActionDeath()
+	{
+		_fleeing = false;
+		_resting = false;
+		
+		// Whoever comes by later sees a body lying down, not sitting.
+		final FakePlayerHolder holder = getActiveChar().getTemplate().getFakePlayerInfo();
+		if (holder != null)
+		{
+			holder.setSitting(false);
+		}
+		
+		super.onActionDeath();
+	}
+	
+	/**
+	 * Some players run from a fight they are losing (see {@link FakePlayerPvpProfile#isRunner()}): they use their emergency and speed skills, stop a pursuer on their heels (root, stun, Trick...), drink potions and run, then read a Scroll of Escape once they got away. Held
+	 * in place they fight back, and caught after running too long (or cornered) they turn around and fight to the end.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param target the player it fights
+	 * @param hpRatio its HP ratio
+	 * @param now the current time
+	 * @return {@code true} if it acted this tick
+	 */
+	private boolean thinkFlee(Attackable npc, FakePlayerPvpProfile profile, Creature target, double hpRatio, long now)
+	{
+		if (!_fleeing)
+		{
+			if (!shouldFlee(npc, profile, target, hpRatio))
+			{
+				return false;
+			}
+			
+			_fleeing = true;
+			_fleeStart = now;
+			_nextFleeStep = 0;
+			_nextEscapeTime = 0;
+			endCombo(now);
+			FakePlayerPvpManager.getInstance().onFakePlayerFlee(npc);
+		}
+		
+		final Creature closest = getClosestPvpEnemy(npc);
+		final Creature pursuer = closest != null ? closest : target;
+		final double pursuerDistance = npc.calculateDistance2D(pursuer);
+		final int pursuerCollision = npc.getTemplate().getCollisionRadius() + pursuer.getTemplate().getCollisionRadius();
+		final double pursuerGap = pursuerDistance - pursuerCollision;
+		
+		// Held in place (root, stun...): cleanse it if it can, otherwise fight back this tick.
+		if (npc.isMovementDisabled())
+		{
+			return castCleanse(npc, target, profile);
+		}
+		
+		// Caught after running too long: turn around and fight to the end.
+		if ((pursuerGap < PEEL_DISTANCE) && ((now - _fleeStart) > FLEE_TIMEOUT))
+		{
+			_fleeing = false;
+			_lastStand = true;
+			return false;
+		}
+		
+		// Survive on the run: emergency skill, speed buff.
+		if ((hpRatio < 0.3) && castOnSelf(npc, target, profile.getSkills(SkillCategory.EMERGENCY), true, true))
+		{
+			return true;
+		}
+		
+		if (castOnSelf(npc, target, profile.getSkills(SkillCategory.MOVE), false, true))
+		{
+			return true;
+		}
+		
+		// A pursuer on its heels: stop it before running on.
+		if ((pursuerGap < PEEL_DISTANCE) && !isDisabled(pursuer) && useSkill(npc, pursuer, pickPeel(npc, pursuer, profile), pursuerDistance, pursuerCollision, false))
+		{
+			return true;
+		}
+		
+		// Got away.
+		if (pursuerGap > ESCAPE_DISTANCE)
+		{
+			// A Scroll of Escape: 20 seconds, a pursuer that catches up can still stun it or finish it.
+			if (FakePlayerPvpConfig.ESCAPE_SCROLL)
+			{
+				if ((now >= _nextEscapeTime) && readEscapeScroll(npc, target, now))
+				{
+					return true;
+				}
+			}
+			else
+			{
+				// No scroll: the fight is over, it rests (the player can start it again).
+				giveUpPvp(npc);
+				return true;
+			}
+		}
+		
+		// Keep running.
+		if (!npc.isMoving() || (now >= _nextFleeStep))
+		{
+			if (!runAway(npc, pursuer))
+			{
+				// Cornered: nothing left but to fight.
+				_fleeing = false;
+				_lastStand = true;
+				return false;
+			}
+			_nextFleeStep = now + 1200;
+		}
+		return true;
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param target the player it fights
+	 * @param hpRatio its HP ratio
+	 * @return {@code true} if a runner should leave this fight: low on HP while its enemy is still in good shape, outnumbered, or against a much higher level
+	 */
+	private boolean shouldFlee(Attackable npc, FakePlayerPvpProfile profile, Creature target, double hpRatio)
+	{
+		if (!profile.isRunner() || _lastStand)
+		{
+			return false;
+		}
+		
+		final double targetHpRatio = target.getCurrentHp() / Math.max(1, target.getMaxHp());
+		if ((hpRatio < 0.25) && (targetHpRatio > (hpRatio + 0.25)))
+		{
+			return true;
+		}
+		
+		if ((hpRatio < 0.5) && (countPvpEnemies(npc) >= 2))
+		{
+			return true;
+		}
+		
+		return (hpRatio < 0.7) && (target.getLevel() >= (npc.getLevel() + HOPELESS_LEVEL_DIFFERENCE));
+	}
+	
+	/**
+	 * Runs straight away from {@code pursuer}, or at an angle when a wall is in the way.
+	 * @return {@code true} if it found somewhere to run to
+	 */
+	private boolean runAway(Attackable npc, Creature pursuer)
+	{
+		final double away = Math.atan2(npc.getY() - pursuer.getY(), npc.getX() - pursuer.getX());
+		for (double turn : FLEE_TURNS)
+		{
+			final double angle = away + turn;
+			final int x = npc.getX() + (int) (Math.cos(angle) * FLEE_STEP);
+			final int y = npc.getY() + (int) (Math.sin(angle) * FLEE_STEP);
+			final Location destination = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, npc.getZ(), npc.getInstanceId());
+			if (npc.calculateDistance2D(destination) >= (FLEE_STEP / 3))
+			{
+				npc.setRunning();
+				moveTo(destination.getX(), destination.getY(), destination.getZ());
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Starts reading a Scroll of Escape. When it finishes, the fake player teleports away (see {@link FakePlayerPvpManager#onFakePlayerEscaped}).
+	 * @return {@code true} if it started
+	 */
+	private boolean readEscapeScroll(Attackable npc, Creature target, long now)
+	{
+		final Skill scroll = SkillData.getInstance().getSkill(SCROLL_OF_ESCAPE, 1);
+		if ((scroll == null) || npc.isSkillDisabled(scroll))
+		{
+			return false;
+		}
+		
+		_nextEscapeTime = now + 5000; // Another try soon if a stun stops this one.
+		clientStopMoving(null);
+		npc.setTarget(npc);
+		npc.doCast(scroll);
+		npc.setTarget(target);
+		return true;
+	}
+	
+	/**
+	 * Ends the PvP it ran away from: it forgets the players it was fighting and goes back to its own business.
+	 */
+	private void giveUpPvp(Attackable npc)
+	{
+		for (AggroInfo info : npc.getAggroList().values())
+		{
+			final Creature enemy = info.getAttacker();
+			if ((enemy != null) && enemy.isPlayable())
+			{
+				info.stopHate();
+			}
+		}
+		
+		_fleeing = false;
+		_focus = null;
+		dropTarget(npc);
+	}
+	
+	/**
+	 * @return the closest player (or summon) it is fighting, {@code null} if there is none
+	 */
+	private static Creature getClosestPvpEnemy(Attackable npc)
+	{
+		Creature closest = null;
+		double closestDistance = Double.MAX_VALUE;
+		for (AggroInfo info : npc.getAggroList().values())
+		{
+			final Creature enemy = info.getAttacker();
+			if ((enemy == null) || !enemy.isPlayable() || (info.getHate() < FakePlayerPvpManager.PVP_HATE) || !isValidTarget(npc, enemy))
+			{
+				continue;
+			}
+			
+			final double distance = npc.calculateDistance2D(enemy);
+			if (distance < closestDistance)
+			{
+				closest = enemy;
+				closestDistance = distance;
+			}
+		}
+		
+		return closest;
+	}
+	
+	/**
+	 * @return how many players it is fighting close by
+	 */
+	private static int countPvpEnemies(Attackable npc)
+	{
+		int count = 0;
+		for (AggroInfo info : npc.getAggroList().values())
+		{
+			final Creature enemy = info.getAttacker();
+			if ((enemy != null) && enemy.isPlayable() && (info.getHate() >= FakePlayerPvpManager.PVP_HATE) && isValidTarget(npc, enemy) && (npc.calculateDistance2D(enemy) < 1200))
+			{
+				count++;
+			}
+		}
+		
+		return count;
+	}
+	
+	/**
+	 * In a fight against several players, a player goes for the one it can finish first: low on HP, close by, and never an invincible one. It sticks to its choice for a while.
+	 * @param npc the fake player
+	 * @param mostHated the player it hates most
+	 * @param now the current time
+	 * @return the player to fight
+	 */
+	private Creature chooseFocus(Attackable npc, Creature mostHated, long now)
+	{
+		final Creature focus = _focus;
+		if ((focus != null) && (now < _focusUntil) && !focus.isInvul() && focus.isPlayable() && hates(npc, focus, FakePlayerPvpManager.PVP_HATE) && isValidTarget(npc, focus))
+		{
+			return focus;
+		}
+		
+		_focus = null;
+		Creature best = mostHated;
+		double bestScore = focusScore(npc, mostHated);
+		for (AggroInfo info : npc.getAggroList().values())
+		{
+			final Creature enemy = info.getAttacker();
+			if ((enemy == null) || (enemy == mostHated) || !enemy.isPlayable() || (info.getHate() < FakePlayerPvpManager.PVP_HATE) || !isValidTarget(npc, enemy))
+			{
+				continue;
+			}
+			
+			// Clearly better only, so it doesn't flip between two.
+			final double score = focusScore(npc, enemy);
+			if (score < (bestScore - 0.25))
+			{
+				best = enemy;
+				bestScore = score;
+			}
+		}
+		
+		if (best != mostHated)
+		{
+			_focus = best;
+			_focusUntil = now + FOCUS_TIME;
+		}
+		return best;
+	}
+	
+	/**
+	 * @return how good a target {@code enemy} is, lower is better
+	 */
+	private static double focusScore(Attackable npc, Creature enemy)
+	{
+		return (enemy.getCurrentHp() / Math.max(1, enemy.getMaxHp())) + (npc.calculateDistance2D(enemy) / 2000.0) + (enemy.isInvul() ? 2 : 0);
+	}
+	
+	/**
+	 * Notes since when it chases a player out of melee reach.
+	 */
+	private void trackChase(Creature target, double gap, long now)
+	{
+		if (!target.isPlayable() || (gap <= FakePlayerPvpConfig.WEAPON_SWAP_MELEE_DISTANCE))
+		{
+			_chaseTarget = null;
+		}
+		else if (_chaseTarget != target)
+		{
+			_chaseTarget = target;
+			_chaseStart = now;
+		}
+	}
+	
+	/**
+	 * @return {@code true} if {@code target} has been getting away from it for a moment
+	 */
+	private boolean isChasing(Creature target, long now)
+	{
+		return (_chaseTarget == target) && ((now - _chaseStart) >= CHASE_BEFORE_SPRINT);
+	}
+	
+	/**
+	 * @return the first skill of its peel list (in order of preference) it can use on {@code target} now, {@code null} if none: used for its effect on that one player, an area peel like Aura Flash is fine against a single one
+	 */
+	private static Skill pickPeel(Attackable npc, Creature target, FakePlayerPvpProfile profile)
+	{
+		for (Skill skill : profile.getSkills(SkillCategory.PEEL))
+		{
+			if (!target.isAffectedBySkill(skill.getId()) && canCast(npc, skill, target))
+			{
+				return skill;
+			}
+		}
+		
+		return null;
+	}
+	
+	/**
+	 * Closes the gap to {@code target} with a skill that reaches it from where it stands (Rush, Shadow Step).
+	 * @return {@code true} if it used one
+	 */
+	private boolean useRush(Attackable npc, FakePlayerPvpProfile profile, Creature target, double distance, int collision, boolean pvp)
+	{
+		final double gap = distance - collision;
+		if (gap <= FakePlayerPvpConfig.WEAPON_SWAP_MELEE_DISTANCE)
+		{
+			return false;
+		}
+		
+		for (Skill skill : profile.getSkills(SkillCategory.RUSH))
+		{
+			if ((skill.getCastRange() >= gap) && (pvp || !isPvpOnly(skill)) && canCast(npc, skill, target) && (castOrApproach(npc, target, skill, distance, collision, false) == CastResult.CAST))
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Removes what holds it back (Break Duress against a root, Remedy against bleeding...), only when it has it.
+	 * @return {@code true} if it cast one
+	 */
+	private boolean castCleanse(Attackable npc, Creature target, FakePlayerPvpProfile profile)
+	{
+		for (Skill skill : profile.getSkills(SkillCategory.CLEANSE))
+		{
+			if (removesSomething(skill, npc) && canCast(npc, skill, npc))
+			{
+				clientStopMoving(null);
+				npc.setTarget(npc);
+				npc.doCast(skill);
+				npc.setTarget(target);
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * @return {@code true} if casting {@code skill} would remove one of the effects on {@code creature}
+	 */
+	private static boolean removesSomething(Skill skill, Creature creature)
+	{
+		final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+		if (effects != null)
+		{
+			for (AbstractEffect effect : effects)
+			{
+				if ("DispelBySlot".equals(effect.getClass().getSimpleName()) && effect.checkCondition(creature))
+				{
+					return true;
+				}
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Like PvPers do, a healthy fake player may go after a flagged (purple) or karma (red) player passing by: not a much higher level, not a player in town or in an arena, and each player is only considered once in a while.
+	 * @param npc the fake player
+	 * @param now the current time
+	 * @return {@code true} if it picked a fight
+	 */
+	private boolean lookForPvp(Attackable npc, long now)
+	{
+		if (((FakePlayerPvpConfig.ATTACK_FLAGGED_CHANCE <= 0) && (FakePlayerPvpConfig.ATTACK_KARMA_CHANCE <= 0)) || (now < _nextOpportunityScan))
+		{
+			return false;
+		}
+		
+		_nextOpportunityScan = now + OPPORTUNITY_SCAN_INTERVAL;
+		_consideredPlayers.values().removeIf(time -> (now - time) > OPPORTUNITY_MEMORY);
+		if ((npc.getCurrentHp() < (npc.getMaxHp() * 0.7)) || npc.isInsideZone(ZoneId.PEACE))
+		{
+			return false;
+		}
+		
+		for (Player player : World.getInstance().getVisibleObjectsInRange(npc, Player.class, OPPORTUNITY_RANGE))
+		{
+			final boolean karma = player.getKarma() > 0;
+			if ((!karma && (player.getPvpFlag() == 0)) || player.isAlikeDead() || player.isInvisible() || (player.isGM() && !player.getAccessLevel().canTakeAggro()))
+			{
+				continue;
+			}
+			
+			if ((player.getInstanceId() != npc.getInstanceId()) || player.isInsideZone(ZoneId.PEACE) || player.isInsideZone(ZoneId.PVP) || player.isInsideZone(ZoneId.SIEGE) || player.isInOlympiadMode() || player.isInDuel())
+			{
+				continue;
+			}
+			
+			if ((player.getLevel() > (npc.getLevel() + OPPORTUNITY_MAX_LEVEL_ABOVE)) || hates(npc, player, FakePlayerPvpManager.PVP_HATE) || !GeoEngine.getInstance().canSeeTarget(npc, player))
+			{
+				continue;
+			}
+			
+			if ((_consideredPlayers.putIfAbsent(player.getObjectId(), now) == null) && (Rnd.get(100) < (karma ? FakePlayerPvpConfig.ATTACK_KARMA_CHANCE : FakePlayerPvpConfig.ATTACK_FLAGGED_CHANCE)))
+			{
+				FakePlayerPvpManager.getInstance().attackPlayer(npc, player, karma);
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Sits down to rest, like a player (it regenerates faster that way, see {@link #isResting()}).
+	 */
+	private void sitDown(Attackable npc)
+	{
+		final FakePlayerHolder holder = npc.getTemplate().getFakePlayerInfo();
+		if ((holder == null) || holder.isSitting())
+		{
+			return;
+		}
+		
+		clientStopMoving(null);
+		holder.setSitting(true);
+		npc.broadcastPacket(new ChangeWaitType(npc, ChangeWaitType.WT_SITTING));
+	}
+	
+	/**
+	 * Stands up if it sits.
+	 * @return {@code true} if it was sitting (getting up takes this tick, like for a player)
+	 */
+	private boolean standUp(Attackable npc)
+	{
+		final FakePlayerHolder holder = npc.getTemplate().getFakePlayerInfo();
+		if ((holder == null) || !holder.isSitting())
+		{
+			return false;
+		}
+		
+		holder.setSitting(false);
+		npc.broadcastPacket(new ChangeWaitType(npc, ChangeWaitType.WT_STANDING));
+		return true;
+	}
+	
+	/**
+	 * Runs back to its hunting ground.
+	 */
+	private void goHome(Attackable npc, Spawn spawn)
+	{
+		final Location home = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), spawn.getX(), spawn.getY(), spawn.getZ(), npc.getInstanceId());
+		npc.setRunning();
+		moveTo(home.getX(), home.getY(), home.getZ());
+	}
+	
+	/**
+	 * Reads the aggro list directly: {@link Attackable#getHating(Creature)} also removes invulnerable and invisible players from it, which would end a PvP in the middle.
+	 * @param attackable the one that hates
+	 * @param creature the one it may hate
+	 * @param minHate the hate needed
+	 * @return {@code true} if {@code attackable} hates {@code creature} at least {@code minHate}
+	 */
+	private static boolean hates(Attackable attackable, Creature creature, long minHate)
+	{
+		final AggroInfo info = attackable.getAggroList().get(creature);
+		return (info != null) && (info.getHate() >= minHate);
+	}
+	
+	/**
+	 * @param skill a skill
+	 * @return {@code true} if it stuns, roots, puts to sleep, paralyzes or fears, which a target already held doesn't need again
+	 */
+	private static boolean isHardDisable(Skill skill)
+	{
+		return HARD_DISABLES.computeIfAbsent(skill.getId(), _ ->
+		{
+			final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+			if (effects != null)
+			{
+				for (AbstractEffect effect : effects)
+				{
+					switch (effect.getClass().getSimpleName())
+					{
+						case "Stun":
+						case "Root":
+						case "Sleep":
+						case "Paralyze":
+						case "Fear":
+						{
+							return true;
+						}
+					}
+				}
+			}
+			return false;
+		});
 	}
 	
 	/**
@@ -550,7 +1256,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		for (Creature attacker : monster.getAggroList().keySet())
 		{
-			if ((attacker != npc) && (attacker.isPlayable() || attacker.isFakePlayer()) && (monster.getHating(attacker) > 0))
+			if ((attacker != npc) && (attacker.isPlayable() || attacker.isFakePlayer()) && hates(monster, attacker, 1))
 			{
 				return true;
 			}
@@ -602,16 +1308,18 @@ public class FakePlayerPvpAI extends AttackableAI
 	 */
 	private static Skill pickSkill(Attackable npc, Creature target, List<Skill> skills, boolean debuff, double reach, boolean pvp)
 	{
-		if (skills.isEmpty() || (debuff && (target.isStunned() || target.isRooted())))
+		if (skills.isEmpty())
 		{
 			return null;
 		}
 		
+		// A stunned or rooted target doesn't need another stun or root yet, but it is the moment for the other debuffs (Hex, Cancel...).
+		final boolean disabled = debuff && isDisabled(target);
 		final List<Skill> ready = new ArrayList<>(3);
 		Skill outOfReach = null;
 		for (Skill skill : skills)
 		{
-			if ((debuff && target.isAffectedBySkill(skill.getId())) || (!pvp && isPvpOnly(skill)) || !canCast(npc, skill, target) || !isWorthCasting(npc, target, skill))
+			if ((debuff && (target.isAffectedBySkill(skill.getId()) || (disabled && isHardDisable(skill)))) || (!pvp && isPvpOnly(skill)) || !canCast(npc, skill, target) || !isWorthCasting(npc, target, skill, pvp))
 			{
 				continue;
 			}
@@ -664,22 +1372,12 @@ public class FakePlayerPvpAI extends AttackableAI
 	 * @param npc the fake player
 	 * @param profile its profile, with a bow
 	 * @param target its target
+	 * @param gap the distance to the target, collisions excluded
 	 * @param now the current time
 	 */
-	private void chooseWeapon(Attackable npc, FakePlayerPvpProfile profile, Creature target, long now)
+	private void chooseWeapon(Attackable npc, FakePlayerPvpProfile profile, Creature target, double gap, long now)
 	{
-		final double gap = npc.calculateDistance2D(target) - npc.getTemplate().getCollisionRadius() - target.getTemplate().getCollisionRadius();
 		final boolean close = gap <= FakePlayerPvpConfig.WEAPON_SWAP_MELEE_DISTANCE;
-		if (!target.isPlayable() || close)
-		{
-			_chaseTarget = null;
-		}
-		else if (_chaseTarget != target)
-		{
-			_chaseTarget = target;
-			_chaseStart = now;
-		}
-		
 		if ((now < _nextWeaponSwapTime) || npc.isAttackingNow() || npc.isCastingNow() || npc.isStunned() || npc.isSleeping() || npc.isParalyzed())
 		{
 			return;
@@ -1000,10 +1698,10 @@ public class FakePlayerPvpAI extends AttackableAI
 	}
 	
 	/**
-	 * Area skills are only worth it with at least two enemies in their area.
+	 * Area skills are only worth it with at least two enemies in their area, except the big ones in PvP (Flame Hawk, Demolition Impact, Arrow Rain...), which players use as burst skills on a single target.
 	 * @return {@code true} if {@code skill} is a single target skill or would hit two or more enemies
 	 */
-	private static boolean isWorthCasting(Attackable npc, Creature target, Skill skill)
+	private static boolean isWorthCasting(Attackable npc, Creature target, Skill skill, boolean pvp)
 	{
 		final WorldObject center;
 		switch (skill.getTargetType())
@@ -1028,11 +1726,16 @@ public class FakePlayerPvpAI extends AttackableAI
 			}
 		}
 		
+		if (pvp && (skill.getReuseDelay() >= 10000))
+		{
+			return true;
+		}
+		
 		final int radius = skill.getAffectRange() > 0 ? skill.getAffectRange() : 150;
 		int enemies = center == target ? 1 : 0;
 		for (Creature creature : World.getInstance().getVisibleObjectsInRange(center, Creature.class, radius))
 		{
-			if ((creature != npc) && !creature.isDead() && ((creature == target) || (npc.getHating(creature) > 0)))
+			if ((creature != npc) && !creature.isDead() && ((creature == target) || hates(npc, creature, 1)))
 			{
 				if (++enemies >= 2)
 				{
