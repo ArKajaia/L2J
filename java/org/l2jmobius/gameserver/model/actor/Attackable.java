@@ -244,6 +244,11 @@ public class Attackable extends Npc
 		{
 			damage = FakePlayerPvpManager.getInstance().limitDamage(this, damage, attacker);
 		}
+		// A player hitting the monster a roaming fake player is fighting hears about it.
+		else if ((attacker != null) && attacker.isPlayable() && isMonster())
+		{
+			FakePlayerPvpManager.getInstance().onMonsterAttacked(this, attacker);
+		}
 		
 		if (_isRaid && !isMinion() && (attacker != null) && (attacker.getParty() != null) && attacker.getParty().isInCommandChannel() && attacker.getParty().getCommandChannel().meetRaidWarCondition(this))
 		{

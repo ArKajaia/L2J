@@ -70,6 +70,16 @@ public class FakePlayerPvpProfile
 	private final boolean _runner;
 	private volatile long _nextChatTime;
 	
+	// Coming back after a death (see FakePlayerPvpManager#returnFakePlayer): where it died, who killed it, and until when it looks for them.
+	private volatile boolean _returnPending;
+	private volatile boolean _returned;
+	private volatile int _deathX;
+	private volatile int _deathY;
+	private volatile int _deathZ;
+	private volatile int _deathInstanceId;
+	private volatile int _killerObjectId;
+	private volatile long _revengeUntil;
+	
 	/**
 	 * @param build the build
 	 * @param playerClass the class for this level
@@ -314,5 +324,91 @@ public class FakePlayerPvpProfile
 	public void setNextChatTime(long nextChatTime)
 	{
 		_nextChatTime = nextChatTime;
+	}
+	
+	/**
+	 * Remembers that this fake player comes back to where it died, after a while, to find its killer.
+	 * @param x the death x
+	 * @param y the death y
+	 * @param z the death z
+	 * @param instanceId the death instance
+	 * @param killerObjectId the object id of the player that killed it
+	 */
+	public void setReturn(int x, int y, int z, int instanceId, int killerObjectId)
+	{
+		_deathX = x;
+		_deathY = y;
+		_deathZ = z;
+		_deathInstanceId = instanceId;
+		_killerObjectId = killerObjectId;
+		_returnPending = true;
+	}
+	
+	/**
+	 * @return {@code true} if it comes back to where it died once its body is gone
+	 */
+	public boolean isReturnPending()
+	{
+		return _returnPending;
+	}
+	
+	/**
+	 * Called when it comes back: it looks for its killer until {@code revengeUntil}, and won't come back another time.
+	 * @param revengeUntil the time until which it looks for its killer
+	 */
+	public void onReturn(long revengeUntil)
+	{
+		_returnPending = false;
+		_returned = true;
+		_revengeUntil = revengeUntil;
+		_charges.set(_maxCharges);
+		_nextPotionTime = 0;
+		_nextChatTime = 0;
+	}
+	
+	/**
+	 * @return {@code true} if it already came back once after a death
+	 */
+	public boolean hasReturned()
+	{
+		return _returned;
+	}
+	
+	public int getDeathX()
+	{
+		return _deathX;
+	}
+	
+	public int getDeathY()
+	{
+		return _deathY;
+	}
+	
+	public int getDeathZ()
+	{
+		return _deathZ;
+	}
+	
+	public int getDeathInstanceId()
+	{
+		return _deathInstanceId;
+	}
+	
+	/**
+	 * @param now the current time
+	 * @return the object id of the player it is looking for, 0 if none (not a returned fake player, window over, or already found)
+	 */
+	public int getRevengeTarget(long now)
+	{
+		return now < _revengeUntil ? _killerObjectId : 0;
+	}
+	
+	/**
+	 * Its killer was found (or it gave up): it doesn't look for them anymore.
+	 */
+	public void clearRevengeTarget()
+	{
+		_killerObjectId = 0;
+		_revengeUntil = 0;
 	}
 }

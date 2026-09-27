@@ -23,8 +23,10 @@ package org.l2jmobius.gameserver.managers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -128,7 +130,59 @@ public class FakePlayerPvpManager
 		"ks noob",
 		"really? ks?",
 		"my mob, go away",
-		"ok you asked for it"
+		"ok you asked for it",
+		"dude i was hitting that",
+		"get your own mob",
+		"ks = pk",
+		"no ks here pls",
+		"find your own spot",
+		"u blind? my mob",
+		"i was hitting that mob for a while, now ur mine",
+		"you stole my kill so now i steal your exp lol",
+		"bad move, that mob had my name written on it",
+		"ks me one more time and see what happens next",
+		"alright you want to steal? lets see you fight",
+		"that was my kill, time to pay for it buddy",
+		"nobody steals from me in my own spot, nobody",
+		"ok thats it, you just picked the wrong guy",
+		"you took my mob, now i take your whole life",
+		"do u even know how long i was hitting that",
+		"i warned people about ks here, now u learn",
+		"nice ks, now lets see if you can tank me too",
+		"stealing kills is fun until someone fights back",
+		"you really thought i would just let that go?",
+		"my mob, my exp, and now my pvp kill as well",
+		"next time find your own mob, if you survive",
+		"that was the last mob you ever stole from me",
+		"you better have pots because im coming for u",
+		"cant believe you did that right in front of me",
+		"i had it at 5 percent hp, you just finished it",
+		"ok ks king, show me what else you can do",
+		"u like stealing? lets see how u like dying",
+		"that spawn is mine, i was here way before you",
+		"this is what happens when u ks in my spot",
+		"thanks for the ks, here is my thank you gift",
+		"you just ks me? really? ok lets go then",
+		"i let the first ks slide, not this one tho",
+		"im tired of kill stealers, time to clean up",
+		"u should have walked away while u could",
+		"alright then, lets settle this like players",
+		"stealing mobs from someone fully buffed, bold",
+		"you want exp? come take it from me instead",
+		"that mob was half dead because of me, not you",
+		"hope that exp was worth what comes next",
+		"learn some manners, dont touch other mobs",
+		"so you think ks is ok here? wrong answer",
+		"i didnt burn all my mp so you could ks it",
+		"you just made this farm session interesting",
+		"im done being nice to kill stealers today",
+		"two can play that game, now you are my mob",
+		"that kill was mine and you know it very well",
+		"dont run now, you wanted this when you ks me",
+		"your gear looks nice, lets see if you can use it",
+		"pro tip, dont ks someone who is flag happy",
+		"i dont care who you are, ks means pvp here",
+		"see what happens when u take someone mob"
 	};
 	private static final String[] TAUNTS_ATTACKED =
 	{
@@ -139,7 +193,59 @@ public class FakePlayerPvpManager
 		"come on then",
 		"bad idea",
 		"wtf",
-		"ok lets go"
+		"ok lets go",
+		"big mistake",
+		"u sure?",
+		"hahaha ok",
+		"here we go",
+		"lets dance",
+		"wrong target buddy",
+		"you really want to fight me? ok lets do it",
+		"wrong target buddy, you will regret this one",
+		"did you just hit me? big mistake my friend",
+		"i was just farming, now you have my attention",
+		"ok if you want pvp, you got it right now",
+		"cant a guy farm in peace around here lol",
+		"you must be bored, let me fix that for you",
+		"hitting me from behind? how brave of you",
+		"come on then, show me what you got",
+		"i hope you brought enough pots for this",
+		"alright, farming can wait, you cant though",
+		"u picked a fight with the wrong player",
+		"you just flagged on me, now its my turn",
+		"really? while im fighting a mob? classy",
+		"lets see if your skills match your gear",
+		"ok round one, try not to die too fast",
+		"you should have kept walking past me",
+		"is this a joke? you really attacking me?",
+		"i was having a nice day until you showed up",
+		"fine, lets see who goes back to town first",
+		"careful, i bite back when someone hits me",
+		"nice try but you will need way more than that",
+		"you want my spot that bad? come take it",
+		"i dont even know you and you attack me, ok",
+		"alright then, no more mister nice guy",
+		"did someone pay you to attack me or what?",
+		"my mob can wait, you are more fun anyway",
+		"oh you wanna play? lets play then",
+		"you just woke up the wrong player buddy",
+		"hitting me with that gear? brave choice",
+		"fine, i needed some pvp practice anyway",
+		"bad idea to attack someone who is buffed",
+		"alright, i accept your little challenge",
+		"you think im an easy kill? think again",
+		"i hope your clan is ready to res you",
+		"keep hitting me and see what happens next",
+		"no warning, no talk, just a hit? ok then",
+		"someone clearly doesnt like my farming spot",
+		"your funeral buddy, lets go right now",
+		"you should check my level before attacking",
+		"thanks for the free pvp, i was getting bored",
+		"cmon at least say hi before you attack me",
+		"seriously, i didnt even do anything to you",
+		"you just made a very expensive mistake",
+		"never attack a player who is fully buffed",
+		"alright lets dance, dont step on my feet"
 	};
 	private static final String[] TAUNTS_KILL =
 	{
@@ -149,7 +255,60 @@ public class FakePlayerPvpManager
 		"next time",
 		"bb",
 		"lol",
-		"stay down"
+		"stay down",
+		"gg wp",
+		"too easy",
+		"thx for the pvp",
+		"sit",
+		"learn to play",
+		"go back to town",
+		"rip",
+		"nice try",
+		"better luck next time",
+		"cya in town",
+		"bye",
+		"stay dead",
+		"thx for exp",
+		"was that all?",
+		"lol ok",
+		"gg ez",
+		"too slow",
+		"outplayed",
+		"come back with buffs",
+		"need more pots?",
+		"u ok?",
+		":)",
+		"haha",
+		"that was fast",
+		"one more?",
+		"rematch anytime",
+		"zzz",
+		"sleep",
+		"get gear first",
+		"not today",
+		"try again",
+		"gj tho",
+		"close one",
+		"almost had me",
+		"respect for trying",
+		"wp",
+		"bye bye",
+		"done",
+		"next",
+		"whos next",
+		"nice fight",
+		"ty for fight",
+		"go res",
+		"thanks for the fight, come back when ready",
+		"that was fun, lets do it again sometime",
+		"you almost had me, maybe next time buddy",
+		"go get some better gear and then come back",
+		"dont feel bad, i have been doing this for years",
+		"walk it off, the town is not that far away",
+		"maybe try fighting mobs first, they hit softer",
+		"good try, but you need way more practice",
+		"tell your friends who sent you back to town",
+		"see you in town, dont forget to buff up"
 	};
 	private static final String[] TAUNTS_KILL_STEAL_COMPLAIN =
 	{
@@ -157,7 +316,62 @@ public class FakePlayerPvpManager
 		"thx for ks",
 		"wow ks",
 		"nice ks bro",
-		"my mob..."
+		"my mob...",
+		"cmon man",
+		"was about to die...",
+		"ty for stealing",
+		"seriously?",
+		"ks again...",
+		"whatever, spawn is big",
+		"wow, i hit that mob for a minute and u ks it",
+		"thanks for the ks, really appreciate it man",
+		"cmon man there are like fifty mobs around here",
+		"i was almost done with that one, nice timing",
+		"really? you had to take the one i was hitting?",
+		"not cool dude, please find your own mobs",
+		"i would fight you but im too low hp right now",
+		"next time i wont be so nice about the ks",
+		"ks in a spot this big, some people are funny",
+		"i saw that, dont think i didnt notice the ks",
+		"you owe me one mob, just saying lol",
+		"great, now i need to pull another one again",
+		"my mob was literally at one percent hp, wow",
+		"ok whatever, there is enough exp for both",
+		"please dont do that again, its really annoying",
+		"lucky for you im busy farming right now",
+		"ks is so lame, go farm somewhere else pls",
+		"i guess you needed that exp more than me",
+		"just because u can doesnt mean u should ks",
+		"thats the second time u take my mob today",
+		"i am writing your name down, remember that",
+		"some people have no respect for others mobs",
+		"fine keep it, i hope it dropped nothing good",
+		"not worth the fight, but you know what u did",
+		"if u need exp that bad, just ask for a party",
+		"cmon i spent half my mp on that thing",
+		"the whole spot is empty and you take my mob",
+		"you realise you just ks me right?",
+		"ok ok, i will go hit another one, no worries",
+		"ks again and we will have a problem buddy",
+		"i let it slide this time, dont push it",
+		"bro there is a mob right behind you, take that",
+		"i was hitting it first and you know it",
+		"nice ks, didnt know that was allowed here lol",
+		"seriously, the mob was already dying from me",
+		"my grandma could kill that mob faster than u",
+		"do you have a problem with finding mobs?",
+		"learn to share the spot, its not hard",
+		"every time i pull a mob someone steals it",
+		"people ks here like its a sport or something",
+		"im too tired to pvp you, but that was rude",
+		"i hope your next enchant fails for that one",
+		"ugh, back to pulling mobs one by one again",
+		"this is why i hate farming in busy spots",
+		"dont do that again or i will flag on you",
+		"thanks a lot, my exp bar stopped moving now",
+		"whatever, i will get the next one before u",
+		"im gonna remember your name, just so you know",
+		"i was really close to finishing that one off"
 	};
 	private static final String[] TAUNTS_FLEE =
 	{
@@ -167,7 +381,60 @@ public class FakePlayerPvpManager
 		"wtf lag",
 		"cya",
 		"no pots",
-		"2vs1 gj"
+		"2vs1 gj",
+		"nope",
+		"not today",
+		"gtg",
+		"no mp lol",
+		"later",
+		"u wont catch me",
+		"nope, not today, im out of here right now",
+		"i have no pots left, see you another time",
+		"this lag is killing me, i am leaving",
+		"two on one? thats not fair, im out",
+		"brb, need to go restock pots in town",
+		"you win this time, but i will be back",
+		"my mp is gone, not dying for nothing",
+		"gotta go, mom is calling me for dinner",
+		"i dont fight people who cheat with buffs",
+		"running is a strategy too you know",
+		"not worth it, i have a lot of exp to lose",
+		"catch me if you can, i have wind walk",
+		"i will come back with my clan, you wait",
+		"my connection is terrible, cant fight now",
+		"you are too strong with that gear, bye",
+		"my weapon is not enchanted enough for this",
+		"i need a healer for this one, later",
+		"lol no way im staying to die here",
+		"cya later, i have better things to do",
+		"you can have the spot, i am leaving",
+		"this is not over, i will see you again",
+		"im too low hp, gonna heal and come back",
+		"i know when to leave, and that is now",
+		"enjoy the spot while it lasts buddy",
+		"my buffs just ran out, bad timing, bye",
+		"im not dying today, too much to lose",
+		"this fight is lagging too much for me",
+		"you guys brought friends, not fair at all",
+		"i will return with better gear, promise",
+		"my potions are all gone, gotta go restock",
+		"got a phone call, need to leave right now",
+		"this is a tactical retreat, not running lol",
+		"fine, the spot is yours for now, enjoy",
+		"not today, my exp is too precious to lose",
+		"you will not catch me with those boots",
+		"im going to town, feel free to follow me",
+		"you win the spot, but not the fight yet",
+		"bye, i dont have time for this right now",
+		"my soulshots ran out, cant fight like this",
+		"dont chase me, it will not end well for u",
+		"i need to rebuff, i will be right back",
+		"ok ok you win, im going back to town now",
+		"need to save my exp, maybe another time",
+		"too many people here for a fair fight",
+		"lol cya, i have somewhere else to be",
+		"im outta here before i lose all my exp",
+		"retreat, retreat, too much damage coming in"
 	};
 	private static final String[] TAUNTS_DEATH =
 	{
@@ -178,7 +445,59 @@ public class FakePlayerPvpManager
 		"ok gj",
 		"omg lag",
 		"rematch?",
-		"lucky"
+		"lucky",
+		"ok ok gg",
+		"crit spam...",
+		"i was afk",
+		"u were buffed",
+		"ill be back",
+		"damn",
+		"gg wp",
+		"nooo",
+		"ugh",
+		"rip",
+		"rip me",
+		"not fair",
+		"no pots left",
+		"my pc froze",
+		"cheater",
+		"k",
+		"lol ok",
+		"gj",
+		"wow",
+		"so lucky",
+		"one shot?",
+		"that hurt",
+		"didnt see u coming",
+		"sneaky",
+		"u have better gear",
+		"ok u win",
+		"nice skills",
+		"i was low already",
+		"mobs took half my hp",
+		"again...",
+		"not again",
+		"fml",
+		"cant believe it",
+		"my bad",
+		"misclick",
+		"ez for u huh",
+		"well played",
+		"respect",
+		"wait for me",
+		"see u soon",
+		"this isnt over",
+		"next time u wont be so lucky",
+		"well played, you got me fair and square",
+		"that last hit was crazy, how did u do that",
+		"ok you win this one, see you again later",
+		"my exp, noooo, i was almost level up",
+		"i blame the lag, but ok good fight anyway",
+		"back to town i go, thanks for nothing lol",
+		"i had no pots left, otherwise you are dead",
+		"nice fight, but i will get you next time",
+		"res me pls, oh wait, you killed me lol",
+		"i will remember your name, see you soon"
 	};
 	private static final String[] TAUNTS_FLAGGED =
 	{
@@ -186,7 +505,62 @@ public class FakePlayerPvpManager
 		"hi",
 		"pvp?",
 		"sorry, you were flagged",
-		"lets go"
+		"lets go",
+		"purple? ok",
+		"u asked for it",
+		"flag hunter here",
+		"free pvp",
+		"nice flag",
+		"dont flag near me",
+		"you are flagged, so you are fair game now",
+		"purple name in my spot? not for long pal",
+		"if you flag, you better be ready for pvp",
+		"flagged players are free kills around here",
+		"saw your purple name from across the map",
+		"you wanted pvp when you flagged, here it is",
+		"flagging near me is a really bad idea",
+		"lets see what that purple name is worth",
+		"nice flag, too bad i am not scared of it",
+		"you should not walk around flagged here",
+		"i was bored anyway, thanks for the flag",
+		"purple means you are looking for trouble",
+		"you flagged, so lets do this the fun way",
+		"i always hunt purple names, nothing personal",
+		"flag is on, so the gloves are off now",
+		"who were you fighting? doesnt matter now",
+		"you just hit someone, now its my turn",
+		"flagged and alone? that was a mistake",
+		"walking around purple, you must be brave",
+		"hope your pvp was worth it, here i come",
+		"lets see if your fight left you any hp",
+		"your flag is still on, lucky me today",
+		"i like my exp with a little pvp on the side",
+		"purple players are my favourite mobs",
+		"you look hurt, let me finish the job",
+		"this is what happens when you flag near me",
+		"you should wait for your flag to go away",
+		"no karma for me if i kill you now, sweet",
+		"flag hunting is the best part of this game",
+		"you look like you need a trip to town",
+		"i will take that flag as an invitation",
+		"oh look, a flagged player, free exp for me",
+		"did you think nobody would notice the flag?",
+		"im always ready for a fight with a flagger",
+		"you started the pvp, i am just joining in",
+		"a purple name passing by, how convenient",
+		"that flag will cost you some exp now",
+		"lets have some fun while your flag is up",
+		"i dont need a reason, you are flagged",
+		"i see purple, i attack, thats the rule",
+		"careful with that flag, someone might see it",
+		"i dont know who you fought, but you lost now",
+		"your fight is not over yet, round two",
+		"lets see if you can handle two pvps in a row",
+		"i hope you still have some pots left",
+		"flag up means fight on, lets go",
+		"not every purple name gets away, not you",
+		"your flag says pvp and i say yes please",
+		"purple and in my spot, you asked for it"
 	};
 	private static final String[] TAUNTS_KARMA =
 	{
@@ -194,12 +568,260 @@ public class FakePlayerPvpManager
 		"die pk",
 		"got a pk here",
 		"red = dead",
-		"pk scum"
+		"pk scum",
+		"kill the pk",
+		"no pk in my spot",
+		"ur karma is showing",
+		"payback time",
+		"go clean ur karma",
+		"justice",
+		"a red name in my spot? not on my watch",
+		"pk spotted, time to clean up this area",
+		"you killed someone innocent, now you pay",
+		"red names do not live long around here",
+		"hunting pks is my favourite hobby in game",
+		"your karma is showing, let me fix that",
+		"how many innocent players did you kill?",
+		"i will drop your gear for all your victims",
+		"this is for everyone you pked today",
+		"pk scum like you should stay in town",
+		"nice karma, time to lose some of it",
+		"i hope you drop that nice weapon of yours",
+		"red name means free kill, thats the rule",
+		"no pk is safe while i am in this area",
+		"you think you can pk here? think again",
+		"guards cant help you now, but i can end you",
+		"all those kills and now you meet me",
+		"time for some justice, pk, lets go",
+		"your red name is visible from a mile away",
+		"careful pk, i am not an easy target",
+		"im going to make you drop something good",
+		"pking noobs is easy, try me instead",
+		"you picked the wrong place to go red",
+		"lets see how brave you are against me",
+		"im the reason pks go back to town naked",
+		"this server does not need more pks",
+		"did you really think nobody would stop you?",
+		"your karma will be gone soon, with your gear",
+		"killing a pk always makes my day better",
+		"you should have cleaned your karma first",
+		"i can see your name glowing red, bad luck",
+		"a pk in the wild, what a nice surprise",
+		"you wont get another innocent kill today",
+		"let me send you back to town where you belong",
+		"everyone around here will thank me for this",
+		"no mercy for pks, never, not even once",
+		"so you like killing people? me too, pks",
+		"im taking you down before you hurt anyone",
+		"you are about to meet your first real fight",
+		"pk hunting season just started, run",
+		"i hope you are ready to lose some items",
+		"your victims say hi, and so do i",
+		"red name and alone, that was not smart",
+		"lets see if you fight as good as you pk",
+		"the only good pk is a dead pk, remember that",
+		"cleaning the map one pk at a time",
+		"i have been waiting for a pk all day",
+		"you should not have gone red near me",
+		"drop your weapon, it will happen anyway lol"
+	};
+	private static final String[] TAUNTS_RETURN =
+	{
+		"remember me?",
+		"round 2",
+		"im back",
+		"again?",
+		"now im buffed",
+		"lets try that again",
+		"found you",
+		"rematch",
+		"not so easy now",
+		"u thought i was done?",
+		"remember me? i died right here to you",
+		"i told you i would come back, here i am",
+		"round two, and this time i am fully buffed",
+		"walked all the way from town just for you",
+		"you got lucky last time, not this time",
+		"i am back and i brought my good pots",
+		"thought you got rid of me? think again",
+		"lets see how you do when i am ready",
+		"last fight was lag, this one is for real",
+		"i just rebuffed in town, now we are even",
+		"did you miss me? because i missed you",
+		"i never forget the ones who kill me",
+		"time for a rematch, no excuses this time",
+		"you owe me some exp, i came to collect",
+		"this time i wont go down so easily",
+		"back from town and very angry now",
+		"you killed me once, shame on you",
+		"i ran all the way here, lets go",
+		"i knew you would still be farming here",
+		"you really thought that was the end of it?",
+		"i came back just to settle our little score",
+		"it took me a while, but i found you again",
+		"lets finish what we started earlier",
+		"i am not done with you yet, not even close",
+		"this is the part where you run away",
+		"all my buffs are fresh, you are not",
+		"i remember your face, and your name too",
+		"a second chance to beat me, good luck",
+		"this spot is mine and so is this fight",
+		"you should have logged out while you could",
+		"revenge time, i hope you are ready for it",
+		"same place, same guy, different ending",
+		"you took my exp, now i take yours",
+		"fully potted, fully buffed, fully angry",
+		"i only lose to lag, and my ping is fine now",
+		"walk of shame from town is over, lets go",
+		"guess who is back to reclaim this spot",
+		"i practiced my combo in town, wanna see?",
+		"you wont get lucky twice in a row",
+		"there you are, i was looking all over",
+		"i told my clan about you, they say hi",
+		"back for more and this time you go down",
+		"you hit and run, now i hit and stay",
+		"i have been waiting for this all the way here",
+		"lets see who goes to town this time",
+		"killing me once was easy, twice is not",
+		"you should know by now, i always come back",
+		"the first fight was a warm up, this is real",
+		"here we go again, but this time i win",
+		"i am like a bad dream, i keep coming back"
+	};
+	/** Said when it first sees a player (see {@link FakePlayerPvpConfig#GREET_CHANCE}). */
+	private static final String[] TAUNTS_GREET =
+	{
+		"hi",
+		"hey",
+		"yo",
+		"hello",
+		"sup",
+		"hi there",
+		"heya",
+		"o/",
+		"hey hey",
+		"hi :)",
+		"yo whats up",
+		"hello there",
+		"sup dude",
+		"evening",
+		"hey man",
+		"hi hi",
+		"howdy",
+		"oh hi",
+		"oh hey",
+		"hey :)",
+		"hello :)",
+		"yo yo",
+		"hiya",
+		"hi all",
+		"hey guys",
+		"greetings",
+		"sup bro",
+		"hey stranger",
+		"long time no see",
+		"oh another one",
+		"finally someone",
+		"didnt expect company",
+		"company!",
+		"share spot?",
+		"spot is big enough for us",
+		"hey good hunting",
+		"hi gl",
+		"gl hf",
+		"gl with drops",
+		"wow people here",
+		"hows exp here?",
+		"hello friend",
+		"hey lets not ks ok?",
+		"careful mobs hit hard here",
+		"oh hi didnt see u",
+		"hey nice gear",
+		"rare to see someone here",
+		"hello mate",
+		"hey neighbor",
+		"whats up",
+		"hey there, how is the exp in this spot?",
+		"hello, mind if i farm around here too?",
+		"hi, looks like we both had the same idea",
+		"oh hey, didnt expect anyone out here today",
+		"hi, good luck with the drops today",
+		"hey, lets not ks each other, deal?",
+		"hello there, this spot is big enough for two",
+		"yo, finally someone else is farming here",
+		"hi, be careful the mobs here hit pretty hard",
+		"hey, nice to see another player out here"
+	};
+	/** Said when a player hits the monster it is fighting. */
+	private static final String[] TAUNTS_MOB_HUNT =
+	{
+		"hey thats my mob",
+		"i was on that one",
+		"dude",
+		"my mob",
+		"go find ur own",
+		"?",
+		"wtf",
+		"hey",
+		"lol really",
+		"stop hitting my mob",
+		"im already on it",
+		"get off my mob",
+		"ks?",
+		"plenty mobs around",
+		"not cool",
+		"this spot is mine",
+		"i pulled it first",
+		"my target",
+		"u see me hitting it right?",
+		"bro wtf",
+		"ok nice",
+		"seriously",
+		"hey hey hey",
+		"back off",
+		"thats mine",
+		"i had aggro",
+		"leave it",
+		"take the next one",
+		"there are others",
+		"stop",
+		"pls no ks",
+		"cmon",
+		"why",
+		"hands off",
+		"i was here first",
+		"rude",
+		"ks alert",
+		"go away",
+		"dont",
+		"wait ur turn",
+		"omg",
+		"come on man",
+		"u blind?",
+		"last warning",
+		"keep doing that and see",
+		"want pvp?",
+		"u looking for trouble?",
+		"mine!",
+		"ffs",
+		"unbelievable",
+		"hey, i was already hitting that mob, stop",
+		"please find your own mob, this one is mine",
+		"do you not see me fighting that mob right now?",
+		"dude, i pulled that one first, back off",
+		"there are plenty of mobs around, take another",
+		"you touch my mob again and we will have a problem",
+		"stop hitting my mob, last warning buddy",
+		"i have been fighting that thing for a minute",
+		"seriously, get your own mob, this is mine",
+		"if you want my mob, you have to fight me first"
 	};
 	
 	private final AtomicInteger _nextNpcId = new AtomicInteger(FIRST_NPC_ID);
 	private final Set<Npc> _fakePlayers = ConcurrentHashMap.newKeySet();
 	private final Set<String> _names = ConcurrentHashMap.newKeySet();
+	/** Fake players killed by a player that come back to where they died (see {@link #returnFakePlayer}), by name. */
+	private final Map<String, ScheduledFuture<?>> _pendingReturns = new ConcurrentHashMap<>();
 	
 	protected FakePlayerPvpManager()
 	{
@@ -349,12 +971,9 @@ public class FakePlayerPvpManager
 	
 	private boolean isAllowedLocation(int x, int y, int z, int instanceId)
 	{
-		for (ZoneType zone : ZoneManager.getInstance().getZones(x, y, z))
+		if (!isAllowedZone(x, y, z))
 		{
-			if ((zone instanceof PeaceZone) || (zone instanceof TownZone) || (zone instanceof NoPvPZone) || (zone instanceof SiegeZone) || (zone instanceof ArenaZone) || (zone instanceof OlympiadStadiumZone) || (zone instanceof JailZone) || (zone instanceof BossZone) || (zone instanceof CastleZone) || (zone instanceof FortZone) || (zone instanceof ClanHallZone))
-			{
-				return false;
-			}
+			return false;
 		}
 		
 		if (FakePlayerPvpConfig.MIN_DISTANCE > 0)
@@ -368,6 +987,25 @@ public class FakePlayerPvpManager
 				{
 					return false;
 				}
+			}
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @return {@code true} if the point is not in town, a no PvP zone, a siege, an arena, a boss zone...
+	 */
+	private static boolean isAllowedZone(int x, int y, int z)
+	{
+		for (ZoneType zone : ZoneManager.getInstance().getZones(x, y, z))
+		{
+			if ((zone instanceof PeaceZone) || (zone instanceof TownZone) || (zone instanceof NoPvPZone) || (zone instanceof SiegeZone) || (zone instanceof ArenaZone) || (zone instanceof OlympiadStadiumZone) || (zone instanceof JailZone) || (zone instanceof BossZone) || (zone instanceof CastleZone) || (zone instanceof FortZone) || (zone instanceof ClanHallZone))
+			{
+				return false;
 			}
 		}
 		
@@ -408,31 +1046,12 @@ public class FakePlayerPvpManager
 			profile.setReplacedMonster(replacedMonster, replacedSpawn);
 			profile.setSpawnTime(System.currentTimeMillis());
 			
-			final Spawn spawn = new Spawn(template);
-			spawn.setXYZ(x, y, z);
-			spawn.setHeading(-1);
-			spawn.setAmount(1);
-			spawn.setInstanceId(instanceId);
-			spawn.setRespawnDelay(0);
-			spawn.stopRespawn();
-			SpawnTable.getInstance().addSpawn(spawn);
-			
-			final Npc fake = spawn.doSpawn(false);
+			final Npc fake = spawnFromTemplate(template, x, y, z, instanceId);
 			if (fake == null)
 			{
-				SpawnTable.getInstance().removeSpawn(spawn);
 				FakePlayerData.getInstance().removeFakePlayer(name);
 				_names.remove(name.toLowerCase());
-				return null;
 			}
-			
-			_fakePlayers.add(fake);
-			
-			// Toggles on, buffed, full HP/MP - like a player that just arrived.
-			refreshToggles(fake, profile);
-			refreshBuffs(fake, profile);
-			fake.setCurrentHpMp(fake.getMaxHp(), fake.getMaxMp());
-			fake.broadcastInfo();
 			return fake;
 		}
 		catch (Exception e)
@@ -442,6 +1061,44 @@ public class FakePlayerPvpManager
 			_names.remove(name.toLowerCase());
 			return null;
 		}
+	}
+	
+	/**
+	 * Spawns a roaming fake player from its template: toggles on, buffed, full HP/MP - like a player that just arrived.
+	 * @param template the fake player template
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @param instanceId the instance
+	 * @return the fake player, or {@code null} if it could not be spawned
+	 * @throws Exception if the spawn could not be created
+	 */
+	private Npc spawnFromTemplate(NpcTemplate template, int x, int y, int z, int instanceId) throws Exception
+	{
+		final Spawn spawn = new Spawn(template);
+		spawn.setXYZ(x, y, z);
+		spawn.setHeading(-1);
+		spawn.setAmount(1);
+		spawn.setInstanceId(instanceId);
+		spawn.setRespawnDelay(0);
+		spawn.stopRespawn();
+		SpawnTable.getInstance().addSpawn(spawn);
+		
+		final Npc fake = spawn.doSpawn(false);
+		if (fake == null)
+		{
+			SpawnTable.getInstance().removeSpawn(spawn);
+			return null;
+		}
+		
+		_fakePlayers.add(fake);
+		
+		final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+		refreshToggles(fake, profile);
+		refreshBuffs(fake, profile);
+		fake.setCurrentHpMp(fake.getMaxHp(), fake.getMaxMp());
+		fake.broadcastInfo();
+		return fake;
 	}
 	
 	/**
@@ -470,7 +1127,107 @@ public class FakePlayerPvpManager
 		}
 		
 		FakePlayerData.getInstance().removeFakePlayer(fake.getName());
+		
+		// Killed by a player and walking back from town: its name stays taken until it comes back.
+		if (profile.isReturnPending() && isEnabled())
+		{
+			final NpcTemplate template = fake.getTemplate();
+			final String name = fake.getName();
+			_pendingReturns.put(name, ThreadPool.schedule(() -> returnFakePlayer(template), Rnd.get(FakePlayerPvpConfig.RETURN_DELAY_MIN, FakePlayerPvpConfig.RETURN_DELAY_MAX) * 1000L));
+			return;
+		}
+		
 		_names.remove(fake.getName().toLowerCase());
+	}
+	
+	/**
+	 * Like a player that walks back from town for round two, a fake player killed by a player comes back to where it died (see {@link FakePlayerPvpConfig#RETURN_CHANCE}): same template, so same name, looks and gear. It looks for its killer for a while
+	 * ({@link org.l2jmobius.gameserver.ai.FakePlayerPvpAI}, then {@link #revenge}) and otherwise hunts like any other fake player. It doesn't replace a monster anymore, so killing it again gives no monster loot or exp.
+	 * @param template the template of the fake player that died
+	 */
+	private void returnFakePlayer(NpcTemplate template)
+	{
+		// Cancelled meanwhile (//fakepvp_clear).
+		final String name = template.getName();
+		if (_pendingReturns.remove(name) == null)
+		{
+			return;
+		}
+		
+		final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+		final int x = profile.getDeathX();
+		final int y = profile.getDeathY();
+		final int z = profile.getDeathZ();
+		final int instanceId = profile.getDeathInstanceId();
+		if (!isEnabled() || ((FakePlayerPvpConfig.MAX_ALIVE > 0) && (_fakePlayers.size() >= FakePlayerPvpConfig.MAX_ALIVE)) || !isAllowedZone(x, y, z) || ((instanceId != 0) && (InstanceManager.getInstance().getInstance(instanceId) == null)))
+		{
+			_names.remove(name.toLowerCase());
+			return;
+		}
+		
+		try
+		{
+			profile.setReplacedMonster(null, null);
+			profile.setSpawnTime(System.currentTimeMillis());
+			profile.onReturn(System.currentTimeMillis() + (FakePlayerPvpConfig.RETURN_REVENGE_TIME * 1000L));
+			
+			// It comes back with its weapon out, not the bow it may have died with.
+			if (profile.getHeldWeapon() != profile.getMainWeapon())
+			{
+				setTemplateWeapon(template, profile, profile.getMainWeapon());
+			}
+			
+			// The template was made once, so it is known again by name for whispers.
+			final String lowercaseName = name.toLowerCase();
+			FakePlayerData.getInstance().addFakePlayerId(name, template.getId());
+			FakePlayerData.getInstance().addFakePlayerName(lowercaseName, name);
+			FakePlayerData.getInstance().addTalkableFakePlayerName(lowercaseName);
+			
+			if (spawnFromTemplate(template, x, y, z, instanceId) == null)
+			{
+				FakePlayerData.getInstance().removeFakePlayer(name);
+				_names.remove(lowercaseName);
+			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not bring back fake player " + name + ".", e);
+			FakePlayerData.getInstance().removeFakePlayer(name);
+			_names.remove(name.toLowerCase());
+		}
+	}
+	
+	/**
+	 * Called by the fake player AI when a returned fake player finds the player that killed it.
+	 * @param fake the fake player
+	 * @param player its killer
+	 */
+	public void revenge(Attackable fake, Player player)
+	{
+		fake.getTemplate().getFakePlayerPvpProfile().clearRevengeTarget();
+		if (!fake.isDead() && !isFighting(fake, player))
+		{
+			startFight(fake, player, TAUNTS_RETURN);
+		}
+	}
+	
+	/**
+	 * Cancels the fake players on their way back to where they died.
+	 * @return how many were cancelled
+	 */
+	public int clearPendingReturns()
+	{
+		int count = 0;
+		for (Map.Entry<String, ScheduledFuture<?>> entry : _pendingReturns.entrySet())
+		{
+			if (_pendingReturns.remove(entry.getKey(), entry.getValue()))
+			{
+				entry.getValue().cancel(false);
+				_names.remove(entry.getKey().toLowerCase());
+				count++;
+			}
+		}
+		return count;
 	}
 	
 	/**
@@ -571,6 +1328,50 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
+	 * Called by the fake player AI the first time it sees a player: maybe a hello in general chat.
+	 * @param fake the fake player
+	 */
+	public void greet(Attackable fake)
+	{
+		taunt(fake, TAUNTS_GREET, false, FakePlayerPvpConfig.GREET_CHANCE);
+	}
+	
+	/**
+	 * Called when a player (or a summon) hits a monster: a roaming fake player that is fighting that monster complains in general chat.
+	 * @param monster the monster being hit
+	 * @param attacker the attacker
+	 */
+	public void onMonsterAttacked(Attackable monster, Creature attacker)
+	{
+		if (_fakePlayers.isEmpty() || (FakePlayerPvpConfig.TAUNT_CHANCE <= 0))
+		{
+			return;
+		}
+		
+		final Player player = attacker.asPlayer();
+		if (player == null)
+		{
+			return;
+		}
+		
+		for (Map.Entry<Creature, AggroInfo> entry : monster.getAggroList().entrySet())
+		{
+			final Creature creature = entry.getKey();
+			if ((creature == null) || !creature.isAttackable() || !creature.asAttackable().isPvpFakePlayer() || creature.isDead() || (entry.getValue().getDamage() <= 0) || (creature.getTarget() != monster))
+			{
+				continue;
+			}
+			
+			// Already fighting that player: no time to talk about the monster.
+			final Attackable fake = creature.asAttackable();
+			if (!isFighting(fake, player))
+			{
+				taunt(fake, TAUNTS_MOB_HUNT, false);
+			}
+		}
+	}
+	
+	/**
 	 * Called by the fake player AI when it runs away from a PvP it is losing.
 	 * @param fake the fake player
 	 */
@@ -658,7 +1459,19 @@ public class FakePlayerPvpManager
 	 */
 	private void taunt(Npc fake, String[] taunts, boolean dead)
 	{
-		if ((FakePlayerPvpConfig.TAUNT_CHANCE <= 0) || (Rnd.get(100) >= FakePlayerPvpConfig.TAUNT_CHANCE))
+		taunt(fake, taunts, dead, FakePlayerPvpConfig.TAUNT_CHANCE);
+	}
+	
+	/**
+	 * Maybe says something in general chat, like {@link #taunt(Npc, String[], boolean)}, with its own chance.
+	 * @param fake the fake player
+	 * @param taunts what it may say
+	 * @param dead {@code true} if it is said by a dead fake player
+	 * @param chance the chance (in %) to say something
+	 */
+	private void taunt(Npc fake, String[] taunts, boolean dead, int chance)
+	{
+		if ((chance <= 0) || (Rnd.get(100) >= chance))
 		{
 			return;
 		}
@@ -687,6 +1500,12 @@ public class FakePlayerPvpManager
 		
 		// A few words from the ground.
 		taunt(fake, TAUNTS_DEATH, true);
+		
+		// Maybe it walks back from town for round two, unless it already did or its killer is far above it.
+		if ((FakePlayerPvpConfig.RETURN_CHANCE > 0) && !profile.hasReturned() && ((FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE <= 0) || (killer.getLevel() < (fake.getLevel() + FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE))) && (Rnd.get(100) < FakePlayerPvpConfig.RETURN_CHANCE))
+		{
+			profile.setReturn(fake.getX(), fake.getY(), fake.getZ(), fake.getInstanceId(), killer.getObjectId());
+		}
 		
 		// Nothing to loot for a player far above its level.
 		final boolean outleveled = (FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE > 0) && (killer.getLevel() >= (fake.getLevel() + FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE));
@@ -776,14 +1595,24 @@ public class FakePlayerPvpManager
 			return false;
 		}
 		
-		profile.setHeldWeapon(weapon);
-		template.setWeaponStats(weapon.getPAtk(), weapon.getMAtk(), weapon.getPAtkSpd(), weapon.getCritRate(), weapon.getAttackRange(), weapon.getRandomDamage(), weapon.getAttackType(), weapon.getShieldDefence(), weapon.getShieldRate());
-		template.setHandIds(weapon.getWeaponId(), weapon.getShieldId());
-		template.getFakePlayerInfo().setWeapon(weapon.getWeaponId(), weapon.getShieldId(), weapon.getEnchant());
+		setTemplateWeapon(template, profile, weapon);
 		
 		// Shows the new weapon to the players around.
 		fake.setLRHandId(weapon.getShieldId(), weapon.getWeaponId());
 		return true;
+	}
+	
+	/**
+	 * @param template the fake player template
+	 * @param profile its profile
+	 * @param weapon the weapon (and shield) it now holds
+	 */
+	private static void setTemplateWeapon(NpcTemplate template, FakePlayerPvpProfile profile, FakePlayerPvpWeapon weapon)
+	{
+		profile.setHeldWeapon(weapon);
+		template.setWeaponStats(weapon.getPAtk(), weapon.getMAtk(), weapon.getPAtkSpd(), weapon.getCritRate(), weapon.getAttackRange(), weapon.getRandomDamage(), weapon.getAttackType(), weapon.getShieldDefence(), weapon.getShieldRate());
+		template.setHandIds(weapon.getWeaponId(), weapon.getShieldId());
+		template.getFakePlayerInfo().setWeapon(weapon.getWeaponId(), weapon.getShieldId(), weapon.getEnchant());
 	}
 	
 	/**

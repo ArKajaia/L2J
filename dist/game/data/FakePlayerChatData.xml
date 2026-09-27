@@ -21,4 +21,270 @@
 	<fakePlayerChat fpcName="Evi" searchMethod="CONTAINS" searchText="is th;server;good" answers="it's good :D;i like it :P;yes it is :)" />
 	<fakePlayerChat fpcName="Evi" searchMethod="CONTAINS" searchText="where;you;go;?" answers="i look for something;checking stuff;looking for curius people :P" />
 	<fakePlayerChat fpcName="Evi" searchMethod="CONTAINS" searchText="are;you;kidding" answers="^^;:D;:P" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="hi!" answers="hi;hey;hello;yo" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="hii" answers="hii;hey;hi :)" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="yo" answers="yo;sup;hey" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="sup" answers="nm u?;farming;sup" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="hey!" answers="hey;hi;yo" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="helo" answers="hello;hi;hey" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="hallo" answers="hallo;hi;hey there" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="hola" answers="hola;hi;hey" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="privet" answers="privet;hi;hey" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="gm" answers="gm;morning;hey" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="good morning" answers="morning;gm;good morning :)" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="good evening" answers="evening;hey;hi there" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="good night" answers="gn;night;sleep well" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="gn" answers="gn;night;cya" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="hi " answers="hi;hey;hello there;hi :)" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="hello " answers="hello;hi;hey" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="hey " answers="hey;hi;whats up" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="yo " answers="yo;hey;sup" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="bye" answers="bye;cya;bb" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="bb" answers="bb;cya;later" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="cya" answers="cya;bb;see ya" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="see you" answers="see ya;cya;bb" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="later" answers="later;cya;bb" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="see you later" answers="cya;later;bb" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="gtg" answers="ok bb;cya;later" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="wassup" answers="nm;farming;chillin" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="how are you" answers="fine u?;good;tired lol;ok" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="how are u" answers="good u?;fine;ok" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="how r you" answers="good;fine u?;ok" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="what's up" answers="nothing much;farming;same old" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="whats up" answers="nothing much;just farming;chillin" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="wazzup" answers="nm u?;farming;lol hi" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="how r u" answers="good u?;fine;tired lol" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="how r u?" answers="good u?;fine;ok" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="hru" answers="good u?;fine;ok" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="hru?" answers="good u?;fine;not bad" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="how is it going" answers="good;not bad;slow exp" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="how are things" answers="good;ok;could be better" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="you ok" answers="yes;im fine;ya why" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="u ok" answers="ya;fine;yes why" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="how;day" answers="good;long;boring lol" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="what are you doing" answers="farming;leveling;hunting mobs;nothing much" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="what r u doing" answers="farming;leveling;killing stuff" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="wat r u doing" answers="farming;leveling;u see" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="what you doing" answers="farming;exp;just hunting" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="wyd" answers="farming;exp;nothing" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="what;farming" answers="adena mostly;exp;mats" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="what;looking for" answers="mobs;drops;exp" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="lvl?" answers="u can see it;why;mid lvl" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="lvl" answers="why;guess;check it" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="level?" answers="u can see;why;guess" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="what level" answers="u can see it;why;guess lol" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="what lvl" answers="u can see;why;guess" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="what's your level" answers="u can see it;why;guess" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="whats your level" answers="u can see it;why;guess" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="how;long;level" answers="few days;long time;too long lol" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="exp;slow" answers="ye slow;normal;its fine" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="how much;exp" answers="not much;slow;decent" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="level up" answers="gz;nice;gratz" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="ding" answers="gz;nice;gratz" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="ding!" answers="gz;nice;gratz" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="gz" answers="ty;thx;:)" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="gratz" answers="ty;thx;thanks" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="congrats" answers="ty;thanks;:)" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="what class" answers="u can see;why;guess" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="whats your class" answers="u can see it;why;guess" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="what's your class" answers="u can see it;why;guess" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="best;class" answers="all good;depends;dagger lol;tank" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="which class" answers="depends;dunno;any class" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="good;class" answers="its ok;decent;fun" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="mage;fighter" answers="fighter;mage;both fun" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="skill;build" answers="dunno;just level;ask forum" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="where to farm" answers="depends on lvl;look around;ask in trade" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="where to level" answers="depends on lvl;check spots;here is ok" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="where to lvl" answers="depends;here is ok;try around" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="where should i" answers="dunno;depends on lvl;look around" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="where can i find" answers="no idea;dunno;look around" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="where is" answers="dunno;look at map;no idea" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="good;spot" answers="this one is ok;crowded;its fine" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="good place" answers="this one is ok;depends;dunno" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="drop;good" answers="meh;ok;sometimes" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="what;drop" answers="adena;mats;junk mostly" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="any;drop" answers="nope;meh;some mats" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="party?" answers="no thx;solo;maybe later" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="pt?" answers="no thx;solo;busy" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="pt" answers="no thx;solo;busy" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="party pls" answers="no thx;solo;maybe later" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="pt pls" answers="no thx;solo;later maybe" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="want party" answers="no thx;im solo;not now" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="join party" answers="no thx;solo;busy" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="can i join" answers="no sry;solo;not now" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="party;with me" answers="no thx;solo;not now" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="need;party" answers="solo;no thx;busy" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="need;healer" answers="no;im fine;solo" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="clan?" answers="no thx;already have;not looking" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="want clan" answers="no thx;not now;maybe later" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="join clan" answers="no thx;not looking;busy" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="join my clan" answers="no thx;not now;maybe later" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="clan;recruit" answers="no thx;not interested;good luck" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="have;clan" answers="kinda;no;not really" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="your;clan" answers="small one;no clan;not telling" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="alliance" answers="no thx;not interested;dunno" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="wts" answers="what;no thx;not buying" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="wtb" answers="what;no;not selling" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="wts " answers="no thx;no adena;not buying" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="wtb " answers="nope;dont have;not selling" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="trade?" answers="no thx;busy;not now" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="trade " answers="no thx;busy;not now" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="sell me" answers="no;dont have;not selling" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="buy;from" answers="no;not buying;broke" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="how much" answers="dunno;no idea;not selling" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="price" answers="no idea;dunno;check shops" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="adena;pls" answers="no;lol;im broke too" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="give;adena" answers="no;lol;farm it" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="give me" answers="no;lol;why" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="spare" answers="no sry;nope;dont have" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="scam" answers="lol;no;wat" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="buff?" answers="no buffs;cant sry;not a buffer" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="buff pls" answers="cant sry;no buffs;not buffer" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="buff plz" answers="cant sry;no buffs;im no buffer" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="buff pls" answers="cant sry;no buffs;im no buffer" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="buff me" answers="cant;not buffer;no sry" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="can you buff" answers="cant sry;no buffs;not a buffer" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="can u buff" answers="cant sry;no buffs;nope" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="where;buff" answers="buffer in town;npc buffer;town" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="need;buff" answers="town buffer;cant sry;npc" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="heal me" answers="cant;no heals;sry" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="res me" answers="cant;sry no res;cant res" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="bot?" answers="no lol;wat;im real" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="bot" answers="no;lol;wat" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="are you a bot" answers="no lol;wat;no u;do i look like one" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="r u bot" answers="no lol;nope;wat" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="are u bot" answers="no lol;nope;wat" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="are you bot" answers="no lol;nope;no u" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="u bot" answers="no;lol no;wat" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="you;real" answers="yes;lol;ofc" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="botting" answers="no lol;not me;report them" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="macro" answers="no;lol;wat" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="report" answers="for what;lol;ok" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="robot" answers="lol;no;beep boop" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="answer" answers="what;im here;?" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="reply" answers="what;?;im here" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="hello?" answers="yes;what;hi" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="hey?" answers="yes;?;what" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="afk?" answers="no;back;here" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="afk" answers="no;back;im here" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="there?" answers="yes;here;what" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="u there?" answers="yes;here;yep" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="you there?" answers="yes;here;yep" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="why no answer" answers="was busy;sry;fighting" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="why u ignore" answers="sry busy;was fighting;?" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="ignore" answers="sry busy;wat;?" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="pvp?" answers="no thx;later;maybe" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="duel?" answers="no thx;busy;later" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="1v1?" answers="no;later;busy" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="1v1" answers="no;later;busy" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="pvp " answers="no thx;later;busy farming" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="duel " answers="no thx;busy;maybe later" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="fight me" answers="no;busy;later" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="pvp" answers="no thx;later;busy farming" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="duel" answers="no thx;busy;maybe later" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="noob" answers="ok;lol;k;sure buddy" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="ks" answers="wasnt me;what;lol no" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="ks?" answers="wasnt me;no;lol" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="kill steal" answers="wasnt me;didnt see u;sry" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText=" ks" answers="wasnt me;what;lol no" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="my mob" answers="sry;didnt see;ok ok" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="flag" answers="wasnt me;lol;so?" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="pk?" answers="not me;lol;no" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="pker" answers="not me;lol;report him" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="pking" answers="not me;lol;wasnt me" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="gg" answers="gg;:);gg wp" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="gg wp" answers="ty;gg;wp" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="wp" answers="ty;thx;u too" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="rates" answers="dunno;normal;its ok" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="how;server" answers="its good;ok;i like it" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="server;dead" answers="nah;its ok;wait for evening" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="online" answers="some people;dunno;ok amount" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="how many;players" answers="dunno;enough;some" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="donate" answers="no;lol;never" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="admin" answers="no idea;dunno;ask forum" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="where;gms" answers="no idea;dunno;ask forum" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="gm?" answers="no;lol;nope" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="event" answers="dunno;no idea;maybe later" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="update" answers="no idea;dunno;maybe" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="wipe" answers="hope not;dunno;lol" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="lag" answers="ye;lag;same" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="lag?" answers="little;no;bit" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="lag;you" answers="a bit;no;sometimes" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="lagging" answers="little;me too;ye" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="disconnect" answers="happens;me too;relog" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="stuck" answers="try unstuck;soe;relog" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="bug" answers="dunno;report it;didnt see" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="crash" answers="me too sometimes;relog;hm" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="where are you from" answers="far;europe;guess;why" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="where r u from" answers="far;europe;guess" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="where u from" answers="far;europe;guess" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="how old" answers="old enough;why;guess" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="are you a girl" answers="lol;maybe;guess;why" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="r u girl" answers="lol;why;maybe" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="are you a boy" answers="lol;maybe;why" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="what is your name" answers="u can see it;why;lol" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="whats your name" answers="u can see it;lol;why" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="discord" answers="dont use it;no;maybe later" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="facebook" answers="no;dont use it;nope" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="real life" answers="busy;lol;work" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="play;long" answers="years;long time;since c1 lol" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="first time" answers="no;played before;long ago" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="old;player" answers="ye;kinda;since long ago" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="help" answers="what;with what;?" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="help?" answers="what;?;with what" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="help me" answers="with what;cant;what" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="help pls" answers="with what;busy;what" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="need help" answers="with what;busy;ask chat" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="can you help" answers="with what;maybe;what" />
+	<fakePlayerChat fpcName="ALL" searchMethod="STARTS_WITH" searchText="can u help" answers="with what;maybe;busy" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="question" answers="ask;what;go ahead" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="quest" answers="dunno;no idea;check wiki" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="how to" answers="dunno;check wiki;ask chat" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="ty" answers="np;:);yw" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="thx" answers="np;:);yw" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="tnx" answers="np;:);yw" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="thanks" answers="np;yw;:)" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="np" answers=":);ok;k" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="sorry" answers="np;its ok;k" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="sry" answers="np;ok;k" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="ok" answers="ok;k;:)" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="k" answers="k;ok;:)" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="okay" answers="ok;k;:)" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="yes" answers="ok;k;good" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="no" answers="ok;k;why" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="ya" answers="ok;k;yep" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="nope" answers="ok;k;:(" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="lol" answers="lol;:D;xD" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="lmao" answers="lol;:D;xD" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="haha" answers=":D;lol;xD" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="xd" answers="xD;lol;:D" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText=":)" answers=":);:D;^^" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText=":(" answers=":(;?;why sad" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText=":d" answers=":D;lol;:)" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="?" answers="?;what;hm" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="??" answers="what;?;hm?" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="what?" answers="nothing;?;hm" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="why?" answers="why not;dunno;just because" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="really?" answers="yes;ya;really" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="really" answers="yes;ya;for real" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="srsly?" answers="ya;yes;lol ya" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="!" answers="?;what;hm" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="wtf" answers="?;what;lol" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="omg" answers="?;what;lol" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="nice" answers=":);ty;ye" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="cool" answers="ye;:);ty" />
+	<fakePlayerChat fpcName="ALL" searchMethod="EQUALS" searchText="nice gear" answers="ty;:);took long" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="nice;weapon" answers="ty;:);lucky enchant" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="nice;armor" answers="ty;:);thx" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="what;enchant" answers="secret;enough;lucky" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="love you" answers="lol;wat;ok..." />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="marry" answers="lol;no;wat" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="friend" answers="sure;ok;why not" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="follow me" answers="no;busy;why" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="come here" answers="busy;no;why" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="stupid" answers="ok;lol;k" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="idiot" answers="ok;lol;k" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="shut up" answers="k;lol;ok" />
+	<fakePlayerChat fpcName="ALL" searchMethod="CONTAINS" searchText="funny" answers=":D;lol;ye" />
+	<fakePlayerChat fpcName="ALL" searchMethod="DEFAULT" searchText="*" answers="?;what;busy atm;sry cant talk, farming;hm?;dont understand;lol;ok" />
 </list>
