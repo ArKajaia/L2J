@@ -243,11 +243,7 @@ public class LuckyLootManager
 			return;
 		}
 
-		final int itemId = pickCacheTier(victim.getLevel());
-		if (itemId > 0)
-		{
-			victim.dropOrAutoLoot(killer, new ItemHolder(itemId, 1));
-		}
+		dropCache(victim, killer);
 	}
 
 	/**
@@ -264,14 +260,51 @@ public class LuckyLootManager
 
 		if ((LuckyLootConfig.SEALED_CACHE_MAX_LEVEL_DIFFERENCE >= 0) && ((killer.getLevel() - victim.getLevel()) > LuckyLootConfig.SEALED_CACHE_MAX_LEVEL_DIFFERENCE))
 		{
+			if (LuckyLootConfig.SEALED_CACHE_MESSAGE)
+			{
+				killer.sendMessage(victim.getName() + " was too weak for you to leave a Sealed Cache (more than " + LuckyLootConfig.SEALED_CACHE_MAX_LEVEL_DIFFERENCE + " levels below you).");
+			}
 			return;
 		}
 
+		dropCache(victim, killer);
+	}
+
+	/**
+	 * Picks a cache tier by weight, drops it (or auto-loots it) for the killer and tells the killer which tier it was.
+	 * @param victim the attackable that just died
+	 * @param killer the player credited with the kill
+	 */
+	private void dropCache(Attackable victim, Player killer)
+	{
 		final int itemId = pickCacheTier(victim.getLevel());
-		if (itemId > 0)
+		if (itemId <= 0)
 		{
-			victim.dropOrAutoLoot(killer, new ItemHolder(itemId, 1));
+			return;
 		}
+
+		victim.dropOrAutoLoot(killer, new ItemHolder(itemId, 1));
+		if (LuckyLootConfig.SEALED_CACHE_MESSAGE)
+		{
+			killer.sendMessage(victim.getName() + " left behind " + getCacheTierName(itemId) + " Sealed Cache!");
+		}
+	}
+
+	/**
+	 * @param itemId a cache item id
+	 * @return "a Common", "a Rare" or "an Epic", matching the configured cache item ids
+	 */
+	private static String getCacheTierName(int itemId)
+	{
+		if (itemId == LuckyLootConfig.SEALED_CACHE_EPIC_ITEM_ID)
+		{
+			return "an Epic";
+		}
+		if (itemId == LuckyLootConfig.SEALED_CACHE_RARE_ITEM_ID)
+		{
+			return "a Rare";
+		}
+		return "a Common";
 	}
 
 	/**
