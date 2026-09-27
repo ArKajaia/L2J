@@ -106,7 +106,7 @@ public class FakePlayerPvpConfig
 	{
 		final ConfigReader config = new ConfigReader(FAKE_PLAYER_PVP_CONFIG_FILE);
 		ENABLED = config.getBoolean("FakePvpEnabled", true);
-		SPAWN_CHANCE = Math.max(0, config.getDouble("FakePvpSpawnChance", 2.0));
+		SPAWN_CHANCE = Math.max(0, config.getDouble("FakePvpSpawnChance", 3.0));
 		HOTZONE_SPAWN_MULTIPLIER = Math.max(0, config.getDouble("FakePvpHotzoneSpawnMultiplier", 2.0));
 		RESPAWN_COOLDOWN = Math.max(0, config.getInt("FakePvpRespawnCooldown", 3));
 		MIN_LEVEL = config.getInt("FakePvpMinLevel", 1);
