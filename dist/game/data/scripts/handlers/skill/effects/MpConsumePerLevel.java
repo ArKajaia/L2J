@@ -49,6 +49,12 @@ public class MpConsumePerLevel extends AbstractEffect
 			return false;
 		}
 		
+		// Roaming fake players don't use MP: their toggles stay on for free.
+		if (effected.isPvpFakePlayer())
+		{
+			return skill.isToggle();
+		}
+		
 		final double consume = _power * getTicksMultiplier() * ((effected.getLevel() - 1) / 7.5);
 		if (consume > effected.getCurrentMp())
 		{

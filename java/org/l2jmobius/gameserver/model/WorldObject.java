@@ -421,6 +421,15 @@ public abstract class WorldObject extends ListenersContainer implements IPositio
 	}
 	
 	/**
+	 * Verify if object is a roaming fake player (a fake player that took a monster's place).
+	 * @return {@code true} if object is a roaming fake player, {@code false} otherwise.
+	 */
+	public boolean isPvpFakePlayer()
+	{
+		return false;
+	}
+	
+	/**
 	 * Verifies if this object is a fence.
 	 * @return {@code true} if object is Fence, {@code false} otherwise.
 	 */

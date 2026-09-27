@@ -21,6 +21,7 @@
 package org.l2jmobius.gameserver.model.conditions;
 
 import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.BodyPart;
 import org.l2jmobius.gameserver.model.item.instance.Item;
@@ -57,6 +58,18 @@ public class ConditionUsingItemType extends Condition
 		
 		if (!effector.isPlayer())
 		{
+			// A roaming fake player "wears" real items: check them like a player's inventory.
+			if (effector.isPvpFakePlayer())
+			{
+				final FakePlayerPvpProfile profile = effector.asNpc().getTemplate().getFakePlayerPvpProfile();
+				if (_armor)
+				{
+					return profile.getArmorMask() == 0 ? (ArmorType.NONE.mask() & _mask) == ArmorType.NONE.mask() : (_mask & profile.getArmorMask()) != 0;
+				}
+				
+				return (_mask & profile.getWornMask()) != 0;
+			}
+			
 			return !_armor && ((_mask & effector.getAttackType().mask()) != 0);
 		}
 		

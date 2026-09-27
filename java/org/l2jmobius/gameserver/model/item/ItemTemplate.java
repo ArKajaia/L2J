@@ -702,6 +702,14 @@ public abstract class ItemTemplate extends ListenersContainer
 	}
 	
 	/**
+	 * @return the stat function templates of this item (its {@code <stats>}), never {@code null}
+	 */
+	public List<FuncTemplate> getFuncTemplates()
+	{
+		return _funcTemplates != null ? _funcTemplates : Collections.emptyList();
+	}
+	
+	/**
 	 * Checks if a function of the specified class is already attached to this item.
 	 * @param functionClass the class of the function to search for
 	 * @return {@code true} if a function of the specified class exists, {@code false} otherwise

@@ -980,6 +980,13 @@ public abstract class Creature extends WorldObject
 				}
 				
 				mpConsume = (int) calcStat(Stat.BOW_MP_CONSUME_RATE, mpConsume, null, null);
+				
+				// Roaming fake players don't use MP.
+				if (isPvpFakePlayer())
+				{
+					mpConsume = 0;
+				}
+				
 				if (_status.getCurrentMp() < mpConsume)
 				{
 					// If Player doesn't have enough MP, stop the attack
@@ -2022,7 +2029,7 @@ public abstract class Creature extends WorldObject
 		}
 		
 		// Check if this skill consume mp on start casting
-		final int initmpcons = _stat.getMpInitialConsume(skill);
+		final int initmpcons = isPvpFakePlayer() ? 0 : _stat.getMpInitialConsume(skill); // Roaming fake players don't use MP.
 		if (initmpcons > 0)
 		{
 			_status.reduceMp(initmpcons);
@@ -2203,8 +2210,8 @@ public abstract class Creature extends WorldObject
 			return false;
 		}
 		
-		// Check if the caster has enough MP
-		if (_status.getCurrentMp() < (_stat.getMpConsume(skill) + _stat.getMpInitialConsume(skill)))
+		// Check if the caster has enough MP (roaming fake players don't use MP)
+		if (!isPvpFakePlayer() && (_status.getCurrentMp() < (_stat.getMpConsume(skill) + _stat.getMpInitialConsume(skill))))
 		{
 			// Send a System Message to the caster
 			sendPacket(SystemMessageId.NOT_ENOUGH_MP);
@@ -5996,7 +6003,7 @@ public abstract class Creature extends WorldObject
 			boolean isSendStatus = false;
 			
 			// Consume MP of the Creature and Send the Server->Client packet StatusUpdate with current HP and MP to all other Player to inform
-			final double mpConsume = _stat.getMpConsume(skill);
+			final double mpConsume = isPvpFakePlayer() ? 0 : _stat.getMpConsume(skill); // Roaming fake players don't use MP.
 			if (mpConsume > 0)
 			{
 				if (mpConsume > _status.getCurrentMp())
@@ -6048,6 +6055,12 @@ public abstract class Creature extends WorldObject
 					abortCast();
 					return;
 				}
+			}
+			
+			// A roaming fake player spends its energy charges like a player.
+			if (isPvpFakePlayer() && (mut.getSkill().getChargeConsumeCount() > 0))
+			{
+				asNpc().getTemplate().getFakePlayerPvpProfile().decreaseCharges(mut.getSkill().getChargeConsumeCount());
 			}
 			
 			// Launch the magic skill in order to calculate its effects

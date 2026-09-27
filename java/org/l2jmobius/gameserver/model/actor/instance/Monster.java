@@ -158,7 +158,8 @@ public class Monster extends Attackable
 		// them. isRaid() is checked here (before the arena branch below sets it for unrelated
 		// reasons) because at this point it's only ever true for a genuine RaidBoss/GrandBoss -
 		// their constructors set it before onSpawn() ever runs.
-		if (!isRaid())
+		// Roaming fake players only have the skills of their class.
+		if (!isRaid() && !isPvpFakePlayer())
 		{
 			addRandomPassiveSkill();
 		}

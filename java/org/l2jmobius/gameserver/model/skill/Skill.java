@@ -943,6 +943,32 @@ public class Skill
 		return (_effectPoint < 0) && (_targetType != TargetType.SELF);
 	}
 	
+	/**
+	 * Checks the skill conditions (weapon, HP, position...) without the fake player and GM bypass of {@link #checkCondition(Creature, WorldObject, boolean)} and without sending messages. Used by the roaming fake player AI to only use skills a real character could use at that moment.
+	 * @param creature the caster
+	 * @param object the target
+	 * @return {@code true} if every condition is met
+	 */
+	public boolean checkPreConditions(Creature creature, WorldObject object)
+	{
+		final List<Condition> preCondition = _preCondition;
+		if ((preCondition == null) || preCondition.isEmpty())
+		{
+			return true;
+		}
+		
+		final Creature target = object instanceof Creature ? object.asCreature() : null;
+		for (Condition cond : preCondition)
+		{
+			if (!cond.test(creature, target, this))
+			{
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
 	public boolean checkCondition(Creature creature, WorldObject object, boolean itemOrWeapon)
 	{
 		if (creature.isFakePlayer() || (creature.isGM() && !GeneralConfig.GM_SKILL_RESTRICTION))

@@ -43,6 +43,12 @@ public class ConditionPlayerCharges extends Condition
 	@Override
 	public boolean testImpl(Creature effector, Creature effected, Skill skill, ItemTemplate item)
 	{
+		// A roaming fake player builds and spends energy like a player.
+		if (effector.isPvpFakePlayer())
+		{
+			return effector.asNpc().getTemplate().getFakePlayerPvpProfile().getCharges() >= _charges;
+		}
+		
 		return effector.isPlayer() && (effector.asPlayer().getCharges() >= _charges);
 	}
 }

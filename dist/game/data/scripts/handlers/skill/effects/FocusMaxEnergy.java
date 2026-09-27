@@ -19,6 +19,7 @@ package handlers.skill.effects;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.conditions.Condition;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.skill.Skill;
@@ -43,6 +44,14 @@ public class FocusMaxEnergy extends AbstractEffect
 	@Override
 	public void onStart(Creature effector, Creature effected, Skill skill)
 	{
+		// Roaming fake players fill up to their class maximum.
+		if (effected.isPvpFakePlayer())
+		{
+			final FakePlayerPvpProfile profile = effected.asNpc().getTemplate().getFakePlayerPvpProfile();
+			profile.increaseCharges(profile.getMaxCharges(), profile.getMaxCharges());
+			return;
+		}
+		
 		if (effected.isPlayer())
 		{
 			final Skill sonicMastery = effected.getSkills().get(992);

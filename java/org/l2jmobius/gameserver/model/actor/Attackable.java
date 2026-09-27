@@ -35,6 +35,7 @@ import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.ai.Action;
 import org.l2jmobius.gameserver.ai.AttackableAI;
 import org.l2jmobius.gameserver.ai.CreatureAI;
+import org.l2jmobius.gameserver.ai.FakePlayerPvpAI;
 import org.l2jmobius.gameserver.ai.FortSiegeGuardAI;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.ai.SiegeGuardAI;
@@ -48,6 +49,7 @@ import org.l2jmobius.gameserver.config.custom.PremiumSystemConfig;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
 import org.l2jmobius.gameserver.managers.EventDropManager;
+import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.PcCafePointsManager;
 import org.l2jmobius.gameserver.managers.WalkingManager;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -149,7 +151,7 @@ public class Attackable extends Npc
 	@Override
 	protected CreatureAI initAI()
 	{
-		return new AttackableAI(this);
+		return isPvpFakePlayer() ? new FakePlayerPvpAI(this) : new AttackableAI(this);
 	}
 	
 	public Map<Creature, AggroInfo> getAggroList()
@@ -237,6 +239,12 @@ public class Attackable extends Npc
 	@Override
 	public void reduceCurrentHp(double damage, Creature attacker, boolean awake, boolean isDOT, Skill skill)
 	{
+		// Only players can bring a roaming fake player below its monster damage floor.
+		if (isPvpFakePlayer())
+		{
+			damage = FakePlayerPvpManager.getInstance().limitDamage(this, damage, attacker);
+		}
+		
 		if (_isRaid && !isMinion() && (attacker != null) && (attacker.getParty() != null) && attacker.getParty().isInCommandChannel() && attacker.getParty().getCommandChannel().meetRaidWarCondition(this))
 		{
 			if (_firstCommandChannelAttacked == null) // looting right isn't set
@@ -337,6 +345,12 @@ public class Attackable extends Npc
 				org.l2jmobius.gameserver.managers.LuckyLootManager.getInstance().onAttackableKilled(this, player);
 				org.l2jmobius.gameserver.managers.ThiefMonsterManager.getInstance().onAttackableKilled(this);
 				org.l2jmobius.gameserver.managers.MageMonsterManager.getInstance().onAttackableKilled(this, player);
+			}
+			
+			// Roaming fake players: revenge on a player who stole their kill, rewards for killing one.
+			if (player != null)
+			{
+				FakePlayerPvpManager.getInstance().onAttackableKilled(this, player);
 			}
 		}
 		

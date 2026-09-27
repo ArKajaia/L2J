@@ -113,6 +113,18 @@ public class FakePlayerData
 		return _talkableFakePlayerNames.contains(name.toLowerCase());
 	}
 	
+	/**
+	 * Forgets a fake player that no longer exists (a roaming fake player that died or logged off).
+	 * @param name the name of the fake player
+	 */
+	public void removeFakePlayer(String name)
+	{
+		final String lowercaseName = name.toLowerCase();
+		_fakePlayerIds.remove(name);
+		_fakePlayerNames.remove(lowercaseName);
+		_talkableFakePlayerNames.remove(lowercaseName);
+	}
+	
 	public static FakePlayerData getInstance()
 	{
 		return SingletonHolder.INSTANCE;

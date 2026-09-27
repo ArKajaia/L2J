@@ -36,7 +36,8 @@ public class ConditionUsingSlotType extends Condition
 	@Override
 	public boolean testImpl(Creature effector, Creature effected, Skill skill, ItemTemplate item)
 	{
-		if ((effector == null) || !effector.isPlayer())
+		// Roaming fake players hold a real weapon too.
+		if ((effector == null) || !(effector.isPlayer() || effector.isPvpFakePlayer()))
 		{
 			return false;
 		}
