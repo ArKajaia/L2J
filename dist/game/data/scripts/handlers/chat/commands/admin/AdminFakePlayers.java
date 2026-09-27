@@ -21,7 +21,9 @@
 package handlers.chat.commands.admin;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.TreeMap;
 
 import org.l2jmobius.gameserver.data.xml.FakePlayerData;
 import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
@@ -95,6 +97,17 @@ public class AdminFakePlayers implements IAdminCommandHandler
 			}
 			activeChar.sendSysMessage("Builds: " + sb);
 			activeChar.sendSysMessage("Roaming fake players alive: " + FakePlayerPvpManager.getInstance().getFakePlayers().size() + (FakePlayerPvpManager.getInstance().isEnabled() ? "" : " (spawning disabled)"));
+			
+			// How many of each build are around right now.
+			final Map<String, Integer> alive = new TreeMap<>();
+			for (Npc fake : FakePlayerPvpManager.getInstance().getFakePlayers())
+			{
+				alive.merge(fake.getTemplate().getFakePlayerPvpProfile().getBuild().getName(), 1, Integer::sum);
+			}
+			if (!alive.isEmpty())
+			{
+				activeChar.sendSysMessage("Alive by build: " + alive);
+			}
 		}
 		else if (command.startsWith("admin_fakepvp_clear"))
 		{
