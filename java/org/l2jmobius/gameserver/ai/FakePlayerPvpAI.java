@@ -251,7 +251,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		// Archers and mages step back from melee (unless a combo is finishing a stunned target).
-		if (canMove && role.isRanged() && (_combo == null) && ((distance - collision) < FakePlayerPvpConfig.KITE_DISTANCE) && (now >= _nextKiteTime) && kiteStep(npc, target, now))
+		if (canMove && role.isRanged() && (_combo == null) && !npc.isAttackingNow() && ((distance - collision) < FakePlayerPvpConfig.KITE_DISTANCE) && (now >= _nextKiteTime) && kiteStep(npc, target, now))
 		{
 			return;
 		}
@@ -901,6 +901,7 @@ public class FakePlayerPvpAI extends AttackableAI
 			return false;
 		}
 		
+		npc.setRunning();
 		moveTo(destination.getX(), destination.getY(), destination.getZ());
 		_kiteEndTime = now + Math.min(3000, (long) ((step * 1000.0) / Math.max(1, npc.getMoveSpeed())));
 		_nextKiteTime = now + 3000 + Rnd.get(2000);

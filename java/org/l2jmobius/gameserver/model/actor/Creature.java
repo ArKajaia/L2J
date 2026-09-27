@@ -671,7 +671,8 @@ public abstract class Creature extends WorldObject
 			final WorldObject target = ((intention == Intention.ATTACK) || (intention == Intention.FOLLOW)) ? _target : null;
 			if (target != null)
 			{
-				if ((target != this) && !isOnGeodataPath(move))
+				// MoveToPawn only while actually moving to the target. A move to a point (a mage or archer stepping back, a dagger getting behind) makes the client walk to the target instead and then snap to the real position.
+				if ((target != this) && !isOnGeodataPath(move) && (ai.getClientMovingToPawnOffset() > 0))
 				{
 					broadcastPacket(new MoveToPawn(this, target, getAI().getClientMovingToPawnOffset()));
 				}

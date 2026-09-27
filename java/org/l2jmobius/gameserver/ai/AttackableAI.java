@@ -1044,6 +1044,7 @@ public class AttackableAI extends CreatureAI
 					final Location retreatLoc = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), posX, posY, npc.getZ() + 30, npc.getInstanceId());
 					if (GeoEngine.getInstance().canMoveToTarget(npc.getX(), npc.getY(), npc.getZ(), retreatLoc.getX(), retreatLoc.getY(), retreatLoc.getZ(), npc.getInstanceId()))
 					{
+						npc.setRunning();
 						moveTo(retreatLoc.getX(), retreatLoc.getY(), retreatLoc.getZ()); // Issues move command without breaking ATTACK intention
 					}
 					return;
@@ -2109,6 +2110,7 @@ public class AttackableAI extends CreatureAI
 			return false;
 		}
 		
+		npc.setRunning();
 		moveTo(retreatLoc.getX(), retreatLoc.getY(), retreatLoc.getZ()); // Issues move command without breaking ATTACK intention
 		_mageKiteEndTime = now + Math.min(3000, (long) ((step * 1000.0) / Math.max(1, npc.getMoveSpeed())));
 		_mageNextKiteTime = now + MageMonsterConfig.KITE_INTERVAL;
