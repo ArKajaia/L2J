@@ -78,6 +78,7 @@ public class FakePlayerPvpConfig
 	public static int ATTACK_FLAGGED_CHANCE;
 	public static int ATTACK_KARMA_CHANCE;
 	public static int FLEE_CHANCE;
+	public static int OUTLEVELED_DIFFERENCE;
 	public static boolean ESCAPE_SCROLL;
 	public static int CORPSE_TIME_MIN;
 	public static int CORPSE_TIME_MAX;
@@ -153,7 +154,8 @@ public class FakePlayerPvpConfig
 		REVENGE_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpRevengeChance", 70)));
 		ATTACK_FLAGGED_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpAttackFlaggedChance", 15)));
 		ATTACK_KARMA_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpAttackKarmaChance", 40)));
-		FLEE_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpFleeChance", 50)));
+		FLEE_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpFleeChance", 20)));
+		OUTLEVELED_DIFFERENCE = Math.max(0, config.getInt("FakePvpOutleveledDifference", 8));
 		ESCAPE_SCROLL = config.getBoolean("FakePvpEscapeScroll", true);
 		CORPSE_TIME_MIN = 10;
 		CORPSE_TIME_MAX = 30;
