@@ -65,9 +65,10 @@ public class ExtractableItems implements IItemHandler
 			return false;
 		}
 		
-		if (!player.isInventoryUnder80(false))
+		final int requiredSlots = getRequiredSlots(player, etcitem, exitems);
+		if (!player.getInventory().validateCapacity(requiredSlots))
 		{
-			player.sendMessage("You've exceeded the limit and cannot retrieve the item. Please check your limit in the inventory.");
+			player.sendMessage("You need " + requiredSlots + " free inventory slots to open this item.");
 			return false;
 		}
 		
@@ -231,6 +232,41 @@ public class ExtractableItems implements IItemHandler
 		}
 		
 		return true;
+	}
+	
+	/**
+	 * Worst-case number of new inventory slots the extraction can take: one per stackable product the player doesn't already hold, one per unit of a non-stackable product, capped at extractableCountMax when it is set.
+	 * @param player the player opening the item
+	 * @param etcitem the extractable item template
+	 * @param exitems its possible products
+	 * @return the number of free slots needed
+	 */
+	private int getRequiredSlots(Player player, EtcItem etcitem, List<ExtractableProduct> exitems)
+	{
+		long slots = 0;
+		for (ExtractableProduct expi : exitems)
+		{
+			final ItemTemplate template = ItemData.getInstance().getTemplate(expi.getId());
+			if (template == null)
+			{
+				continue;
+			}
+			
+			if (!template.isStackable())
+			{
+				slots += (long) (expi.getMax() * RatesConfig.RATE_EXTRACTABLE);
+			}
+			else if (player.getInventory().getItemByItemId(expi.getId()) == null)
+			{
+				slots++;
+			}
+		}
+		
+		if (etcitem.getExtractableCountMax() > 0)
+		{
+			slots = Math.min(slots, etcitem.getExtractableCountMax());
+		}
+		return (int) Math.min(slots, Integer.MAX_VALUE);
 	}
 	
 	private void addItem(Map<Item, Long> extractedItems, Item newItem, long count)
