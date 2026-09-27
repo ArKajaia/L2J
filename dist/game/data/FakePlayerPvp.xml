@@ -35,7 +35,8 @@
 	                   self           - cast on itself (buff before the burst)
 	                   behind         - get behind the target first (Backstab, Lethal Blow)
 	                   disabledTarget - only while the target is stunned, asleep, paralyzed or rooted
-	                 A debuff that is already on the target is skipped.
+	                 A debuff that is already on the target is skipped, and so is a self buff when it, or any
+	                 buff of the same type, is already on (e.g. Focus Chance/Power/Death replace each other).
 	     Class passive skills (masteries, etc.) for the level are always added.
 -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="xsd/FakePlayerPvp.xsd">
@@ -274,7 +275,7 @@
 	<build name="Phoenix Knight" classId="90" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" buffs="TANK" weight="1">
 		<attack>984,49,3,70</attack>
 		<debuff>92,353,400</debuff>
-		<buff>82,72,406,350,527,760</buff>
+		<buff>82,406,350,527,760</buff>
 		<heal>45,262</heal>
 		<emergency>110</emergency>
 		<toggle>322,335</toggle>
@@ -288,7 +289,7 @@
 	<build name="Eva's Templar" classId="99" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" buffs="TANK" weight="1">
 		<attack>984,3</attack>
 		<debuff>352,402,102</debuff>
-		<buff>123,77,91,351,527,760</buff>
+		<buff>351,527,760</buff>
 		<heal>58</heal>
 		<emergency>110</emergency>
 		<toggle>322,335</toggle>
@@ -305,7 +306,7 @@
 	<build name="Shillien Templar" classId="106" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" buffs="TANK" weight="1">
 		<attack>279,223,289,105,984,70,3</attack>
 		<debuff>352,402,115,122,401,129</debuff>
-		<buff>77,91,351,527,760</buff>
+		<buff>351,527,760</buff>
 		<emergency>110</emergency>
 		<toggle>322,335</toggle>
 		<combo name="Curse burst" pvp="true">
@@ -330,83 +331,104 @@
 	<build name="Adventurer" classId="93" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="1">
 		<attack>991,409,344,263,30,16</attack>
 		<debuff>358,531,96</debuff>
-		<buff>356,357,768</buff>
+		<buff>357|356,768</buff>
 		<toggle>312,256</toggle>
+		<combo name="Backstab opener (already behind)" pvp="true">
+			<step skill="357|356" self="true" optional="true" /> <!-- Focus Power / Focus Chance (one Focus buff: they replace each other) -->
+			<step skill="30" /> <!-- Backstab -->
+			<step skill="344" optional="true" /> <!-- Lethal Blow -->
+			<step skill="263" optional="true" /> <!-- Deadly Blow -->
+		</combo>
 		<combo name="Bluff backstab" pvp="true">
-			<step skill="356" self="true" optional="true" /> <!-- Focus Chance -->
-			<step skill="357" self="true" optional="true" /> <!-- Focus Power -->
-			<step skill="358" /> <!-- Bluff -->
+			<step skill="357|356" self="true" optional="true" /> <!-- Focus Power / Focus Chance (one Focus buff: they replace each other) -->
+			<step skill="358" /> <!-- Bluff: stuns and turns the target around -->
 			<step skill="30" behind="true" optional="true" /> <!-- Backstab -->
-			<step skill="344" behind="true" optional="true" /> <!-- Lethal Blow -->
+			<step skill="344" optional="true" /> <!-- Lethal Blow -->
 			<step skill="409" optional="true" /> <!-- Critical Blow -->
 			<step skill="263" optional="true" /> <!-- Deadly Blow -->
+		</combo>
+		<combo name="Critical wound" pvp="true">
+			<step skill="531" /> <!-- Critical Wound -->
+			<step skill="344" optional="true" /> <!-- Lethal Blow -->
+			<step skill="263" /> <!-- Deadly Blow -->
+			<step skill="409" optional="true" /> <!-- Critical Blow -->
 		</combo>
 		<combo name="Bleed and blow" pvp="true">
 			<step skill="96" /> <!-- Bleed -->
 			<step skill="263" /> <!-- Deadly Blow -->
-			<step skill="30" behind="true" optional="true" /> <!-- Backstab -->
-		</combo>
-		<combo name="Critical wound" pvp="true">
-			<step skill="531" /> <!-- Critical Wound -->
-			<step skill="263" /> <!-- Deadly Blow -->
-			<step skill="344" optional="true" />
+			<step skill="344" optional="true" /> <!-- Lethal Blow -->
 		</combo>
 		<combo name="Blows">
 			<step skill="263" /> <!-- Deadly Blow -->
-			<step skill="30" behind="true" optional="true" />
-			<step skill="344" optional="true" />
+			<step skill="344" optional="true" /> <!-- Lethal Blow -->
+			<step skill="30" optional="true" /> <!-- Backstab, only when not in front -->
 		</combo>
 	</build>
 	<build name="Wind Rider" classId="101" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="1">
 		<attack>991,344,263,30,16</attack>
 		<debuff>358,531,102,96</debuff>
-		<buff>355,356,410,769,446,123,77</buff>
+		<buff>355|356,410,769,446</buff>
 		<heal>58</heal>
 		<toggle>312,256</toggle>
+		<combo name="Backstab opener (already behind)" pvp="true">
+			<step skill="355|356" self="true" optional="true" /> <!-- Focus Death / Focus Chance (one Focus buff: they replace each other) -->
+			<step skill="410" self="true" optional="true" /> <!-- Mortal Strike -->
+			<step skill="30" /> <!-- Backstab -->
+			<step skill="344" optional="true" /> <!-- Lethal Blow -->
+			<step skill="263" optional="true" /> <!-- Deadly Blow -->
+		</combo>
 		<combo name="Bluff backstab" pvp="true">
-			<step skill="355" self="true" optional="true" /> <!-- Focus Death -->
-			<step skill="356" self="true" optional="true" /> <!-- Focus Chance -->
-			<step skill="358" /> <!-- Bluff -->
+			<step skill="355|356" self="true" optional="true" /> <!-- Focus Death / Focus Chance (one Focus buff: they replace each other) -->
+			<step skill="410" self="true" optional="true" /> <!-- Mortal Strike -->
+			<step skill="358" /> <!-- Bluff: stuns and turns the target around -->
 			<step skill="30" behind="true" optional="true" /> <!-- Backstab -->
-			<step skill="344" behind="true" optional="true" /> <!-- Lethal Blow -->
-			<step skill="263" optional="true" />
+			<step skill="344" optional="true" /> <!-- Lethal Blow -->
+			<step skill="263" optional="true" /> <!-- Deadly Blow -->
 		</combo>
 		<combo name="Entangle and blow" pvp="true">
 			<step skill="102" /> <!-- Entangle -->
-			<step skill="531" optional="true" />
+			<step skill="531" optional="true" /> <!-- Critical Wound -->
+			<step skill="344" optional="true" /> <!-- Lethal Blow -->
 			<step skill="263" /> <!-- Deadly Blow -->
-			<step skill="344" optional="true" />
 		</combo>
 		<combo name="Blows">
-			<step skill="263" />
-			<step skill="30" behind="true" optional="true" />
-			<step skill="344" optional="true" />
+			<step skill="263" /> <!-- Deadly Blow -->
+			<step skill="344" optional="true" /> <!-- Lethal Blow -->
+			<step skill="30" optional="true" /> <!-- Backstab, only when not in front -->
 		</combo>
 	</build>
 	<build name="Ghost Hunter" classId="108" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="1">
 		<attack>991,344,263,30,223,16</attack>
 		<debuff>358,531,115,122,96</debuff>
-		<buff>355,357,410,770,77</buff>
+		<buff>355|357,410,770</buff>
 		<toggle>312,256</toggle>
+		<combo name="Backstab opener (already behind)" pvp="true">
+			<step skill="355|357" self="true" optional="true" /> <!-- Focus Death / Focus Power (one Focus buff: they replace each other) -->
+			<step skill="410" self="true" optional="true" /> <!-- Mortal Strike -->
+			<step skill="30" /> <!-- Backstab -->
+			<step skill="344" optional="true" /> <!-- Lethal Blow -->
+			<step skill="263" optional="true" /> <!-- Deadly Blow -->
+		</combo>
 		<combo name="Bluff backstab" pvp="true">
-			<step skill="355" self="true" optional="true" /> <!-- Focus Death -->
-			<step skill="357" self="true" optional="true" /> <!-- Focus Power -->
-			<step skill="358" /> <!-- Bluff -->
+			<step skill="355|357" self="true" optional="true" /> <!-- Focus Death / Focus Power (one Focus buff: they replace each other) -->
+			<step skill="410" self="true" optional="true" /> <!-- Mortal Strike -->
+			<step skill="358" /> <!-- Bluff: stuns and turns the target around -->
 			<step skill="30" behind="true" optional="true" /> <!-- Backstab -->
-			<step skill="344" behind="true" optional="true" /> <!-- Lethal Blow -->
-			<step skill="263" optional="true" />
+			<step skill="344" optional="true" /> <!-- Lethal Blow -->
+			<step skill="263" optional="true" /> <!-- Deadly Blow -->
 		</combo>
 		<combo name="Hex and blow" pvp="true">
 			<step skill="122" /> <!-- Hex -->
 			<step skill="115" optional="true" /> <!-- Power Break -->
+			<step skill="531" optional="true" /> <!-- Critical Wound -->
+			<step skill="344" optional="true" /> <!-- Lethal Blow -->
 			<step skill="263" /> <!-- Deadly Blow -->
-			<step skill="344" optional="true" />
 			<step skill="223" optional="true" /> <!-- Sting -->
 		</combo>
 		<combo name="Blows">
-			<step skill="263" />
-			<step skill="30" behind="true" optional="true" />
-			<step skill="344" optional="true" />
+			<step skill="263" /> <!-- Deadly Blow -->
+			<step skill="344" optional="true" /> <!-- Lethal Blow -->
+			<step skill="30" optional="true" /> <!-- Backstab, only when not in front -->
 		</combo>
 	</build>
 
@@ -414,7 +436,7 @@
 	<build name="Sagittarius" classId="92" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="1">
 		<attack>987,24,990,771,343,19,56</attack>
 		<debuff>354,101</debuff>
-		<buff>99,131,303,415,416</buff>
+		<buff>99,131,415,416</buff>
 		<toggle>312,256</toggle>
 		<combo name="Stun shot" pvp="true">
 			<step skill="101" /> <!-- Stun Shot -->
@@ -431,7 +453,7 @@
 	<build name="Moonlight Sentinel" classId="102" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="1">
 		<attack>987,24,990,343,369,19,56</attack>
 		<debuff>354,101,102</debuff>
-		<buff>99,413,303,415,416,123,77</buff>
+		<buff>99,413,415,416</buff>
 		<heal>58</heal>
 		<toggle>312,256</toggle>
 		<combo name="Stun shot" pvp="true">
@@ -450,7 +472,7 @@
 	<build name="Ghost Sentinel" classId="109" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="1">
 		<attack>987,990,773,343,314,369,19,56</attack>
 		<debuff>354,101,115,122</debuff>
-		<buff>99,414,303,415,77</buff>
+		<buff>99,414,415</buff>
 		<toggle>312,256</toggle>
 		<combo name="Stun shot" pvp="true">
 			<step skill="101" /> <!-- Stun Shot -->
@@ -469,7 +491,8 @@
 	<!-- Warriors -->
 	<build name="Duelist" classId="88" role="FIGHTER" weapon="DUAL" armor="HEAVY" weight="1">
 		<attack>7,9,345,261,5,1,6,255,3</attack>
-		<buff>297,451,917,78,121,287</buff>
+		<buff>297,451,917,78,287</buff>
+		<heal>121</heal>
 		<emergency>442</emergency>
 		<toggle>312,424</toggle>
 		<charge>919,8</charge>
@@ -512,12 +535,13 @@
 	<build name="Titan" classId="113" role="FIGHTER" weapon="BIGSWORD" armor="HEAVY" weight="1">
 		<attack>777,315,190,255,3</attack>
 		<debuff>362</debuff>
-		<buff>94,176,139,121,287,420,536,917</buff>
+		<buff>94,176|139,287,420,917</buff>
+		<heal>121</heal>
+		<emergency>536</emergency>
 		<toggle>312,424,335</toggle>
 		<combo name="Berserk crush" pvp="true">
 			<step skill="420" self="true" optional="true" /> <!-- Zealot -->
-			<step skill="176" self="true" optional="true" /> <!-- Frenzy -->
-			<step skill="139" self="true" optional="true" /> <!-- Guts -->
+			<step skill="176|139" self="true" optional="true" /> <!-- Frenzy / Guts (they replace each other) -->
 			<step skill="362" /> <!-- Armor Crush -->
 			<step skill="315" /> <!-- Crush of Doom -->
 			<step skill="190" optional="true" /> <!-- Fatal Strike -->

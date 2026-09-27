@@ -51,6 +51,7 @@ import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.item.holders.ItemEnchantHolder;
 import org.l2jmobius.gameserver.model.item.instance.Item;
+import org.l2jmobius.gameserver.model.skill.AbnormalType;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
@@ -565,6 +566,35 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
+	 * A buff counts as active when the skill itself, or any buff of the same abnormal type, is on: Focus Chance, Focus Power and Focus Death (or Might and Attack Aura...) replace each other, and a weaker one can't replace a stronger one, so casting it again would
+	 * just loop. The same goes for a slot an improved buff blocks (Improved Combat blocks Might and Shield).
+	 * @param creature the one to check
+	 * @param skill a buff
+	 * @return {@code true} if {@code skill}, or another buff taking its place, is already on {@code creature}
+	 */
+	public static boolean isBuffActive(Creature creature, Skill skill)
+	{
+		if (creature.isAffectedBySkill(skill.getId()))
+		{
+			return true;
+		}
+		
+		final AbnormalType type = skill.getAbnormalType();
+		if ((type == null) || (type == AbnormalType.NONE))
+		{
+			return false;
+		}
+		
+		if (creature.isAffectedByAbnormalType(type))
+		{
+			return true;
+		}
+		
+		final Set<AbnormalType> blocked = creature.getEffectList().getBlockedAbnormalTypes();
+		return (blocked != null) && blocked.contains(type);
+	}
+	
+	/**
 	 * Puts back the buffs (from other players) that ran out.
 	 * @param fake the fake player
 	 * @param profile its profile
@@ -579,7 +609,7 @@ public class FakePlayerPvpManager
 		for (SkillHolder holder : profile.getBuffs())
 		{
 			final Skill skill = holder.getSkill();
-			if ((skill != null) && !fake.isAffectedBySkill(skill.getId()))
+			if ((skill != null) && !isBuffActive(fake, skill))
 			{
 				skill.applyEffects(fake, fake);
 			}

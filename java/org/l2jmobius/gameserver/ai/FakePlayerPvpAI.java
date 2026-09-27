@@ -39,6 +39,8 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpCombo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.instance.Chest;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
+import org.l2jmobius.gameserver.model.effects.AbstractEffect;
+import org.l2jmobius.gameserver.model.skill.EffectScope;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
@@ -423,6 +425,12 @@ public class FakePlayerPvpAI extends AttackableAI
 			return false;
 		}
 		
+		// Backstab fails from the front: never waste it there.
+		if ((target != npc) && isBackstab(skill) && npc.isInFrontOf(target))
+		{
+			return false;
+		}
+		
 		return skill.checkPreConditions(npc, target);
 	}
 	
@@ -572,7 +580,8 @@ public class FakePlayerPvpAI extends AttackableAI
 			// A buff before the burst.
 			if (step.isSelf())
 			{
-				if (!npc.isAffectedBySkill(skill.getId()) && canCast(npc, skill, npc))
+				final boolean active = FakePlayerPvpManager.isBuffActive(npc, skill);
+				if (!active && canCast(npc, skill, npc))
 				{
 					clientStopMoving(null);
 					npc.setTarget(npc);
@@ -582,7 +591,7 @@ public class FakePlayerPvpAI extends AttackableAI
 					return true;
 				}
 				
-				if (step.isOptional() || npc.isAffectedBySkill(skill.getId()))
+				if (step.isOptional() || active)
 				{
 					nextComboStep(now);
 					continue;
@@ -809,7 +818,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	{
 		for (Skill skill : skills)
 		{
-			if ((!recast && npc.isAffectedBySkill(skill.getId())) || (!pvp && isPvpOnly(skill)))
+			if ((!recast && FakePlayerPvpManager.isBuffActive(npc, skill)) || (!pvp && isPvpOnly(skill)))
 			{
 				continue;
 			}
@@ -830,6 +839,27 @@ public class FakePlayerPvpAI extends AttackableAI
 			npc.doCast(skill);
 			npc.setTarget(target);
 			return true;
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * @param skill a skill
+	 * @return {@code true} if it has a Backstab effect, which only lands from the side or behind
+	 */
+	private static boolean isBackstab(Skill skill)
+	{
+		final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+		if (effects != null)
+		{
+			for (AbstractEffect effect : effects)
+			{
+				if ("Backstab".equals(effect.getClass().getSimpleName()))
+				{
+					return true;
+				}
+			}
 		}
 		
 		return false;
