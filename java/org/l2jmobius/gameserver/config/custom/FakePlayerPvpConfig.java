@@ -74,6 +74,13 @@ public class FakePlayerPvpConfig
 	public static boolean AVOID_PLAYER_MONSTERS;
 	public static boolean REVENGE_ON_KILL_STEAL;
 	public static int REVENGE_RANGE;
+	public static int REVENGE_CHANCE;
+	public static int ATTACK_FLAGGED_CHANCE;
+	public static int ATTACK_KARMA_CHANCE;
+	public static int FLEE_CHANCE;
+	public static boolean ESCAPE_SCROLL;
+	public static int CORPSE_TIME_MIN;
+	public static int CORPSE_TIME_MAX;
 	public static int SKILL_CHANCE;
 	public static int PVP_SKILL_CHANCE;
 	public static int PVP_DEBUFF_CHANCE;
@@ -143,6 +150,24 @@ public class FakePlayerPvpConfig
 		AVOID_PLAYER_MONSTERS = config.getBoolean("FakePvpAvoidPlayerMonsters", true);
 		REVENGE_ON_KILL_STEAL = config.getBoolean("FakePvpRevengeOnKillSteal", true);
 		REVENGE_RANGE = Math.max(100, config.getInt("FakePvpRevengeRange", 1500));
+		REVENGE_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpRevengeChance", 70)));
+		ATTACK_FLAGGED_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpAttackFlaggedChance", 15)));
+		ATTACK_KARMA_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpAttackKarmaChance", 40)));
+		FLEE_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpFleeChance", 50)));
+		ESCAPE_SCROLL = config.getBoolean("FakePvpEscapeScroll", true);
+		CORPSE_TIME_MIN = 10;
+		CORPSE_TIME_MAX = 30;
+		final String corpseTime = config.getString("FakePvpCorpseTime", "10-30");
+		try
+		{
+			final String[] range = corpseTime.split("-");
+			CORPSE_TIME_MIN = Math.max(1, Integer.parseInt(range[0].trim()));
+			CORPSE_TIME_MAX = Math.max(CORPSE_TIME_MIN, Integer.parseInt(range[range.length - 1].trim()));
+		}
+		catch (Exception e)
+		{
+			LOGGER.warning("Invalid FakePvpCorpseTime: " + corpseTime);
+		}
 		SKILL_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpSkillChance", 65)));
 		PVP_SKILL_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpPvpSkillChance", 90)));
 		PVP_DEBUFF_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpPvpDebuffChance", 35)));

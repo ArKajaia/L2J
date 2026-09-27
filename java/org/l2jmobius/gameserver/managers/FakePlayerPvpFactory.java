@@ -286,6 +286,7 @@ public class FakePlayerPvpFactory
 		set.set("clanHelpRange", 0);
 		set.set("isAggressive", false);
 		set.set("fakePlayerPvp", true);
+		set.set("corpseTime", Rnd.get(FakePlayerPvpConfig.CORPSE_TIME_MIN, FakePlayerPvpConfig.CORPSE_TIME_MAX)); // A dead player lies there a while before going to town.
 		
 		// Fake player appearance.
 		set.set("fakePlayer", true);
@@ -386,7 +387,7 @@ public class FakePlayerPvpFactory
 			equipment.add(new ItemEnchantHolder(bow.getWeaponId(), 1, bow.getEnchant()));
 		}
 		
-		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), armorWornMask, chest != null ? chest.getItemMask() : 0, maxCharges, equipment, mainWeapon, bow);
+		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), armorWornMask, chest != null ? chest.getItemMask() : 0, maxCharges, equipment, mainWeapon, bow, Rnd.get(100) < FakePlayerPvpConfig.FLEE_CHANCE);
 		for (SkillCategory category : SkillCategory.values())
 		{
 			final List<Skill> list = new ArrayList<>();
