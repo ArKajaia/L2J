@@ -84,6 +84,8 @@ public class FakePlayerPvpConfig
 	public static int CORPSE_TIME_MAX;
 	public static int SKILL_CHANCE;
 	public static int PVP_SKILL_CHANCE;
+	public static int AUTO_ATTACK_SKILL_CHANCE;
+	public static int AUTO_ATTACK_PVP_SKILL_CHANCE;
 	public static int PVP_DEBUFF_CHANCE;
 	public static int PVP_ONLY_REUSE;
 	public static int KITE_DISTANCE;
@@ -172,6 +174,8 @@ public class FakePlayerPvpConfig
 		}
 		SKILL_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpSkillChance", 65)));
 		PVP_SKILL_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpPvpSkillChance", 90)));
+		AUTO_ATTACK_SKILL_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpAutoAttackSkillChance", 10)));
+		AUTO_ATTACK_PVP_SKILL_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpAutoAttackPvpSkillChance", 25)));
 		PVP_DEBUFF_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpPvpDebuffChance", 35)));
 		PVP_ONLY_REUSE = Math.max(0, config.getInt("FakePvpPvpOnlyReuse", 30000));
 		KITE_DISTANCE = Math.max(0, config.getInt("FakePvpKiteDistance", 250));

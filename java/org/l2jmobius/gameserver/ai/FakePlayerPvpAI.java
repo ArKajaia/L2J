@@ -164,6 +164,9 @@ public class FakePlayerPvpAI extends AttackableAI
 	private long _comboEnd = 0;
 	private long _nextComboTime = 0;
 	
+	// A class whose damage is its normal attack (tanks, archers, most warriors), not its skills: it plays its combos less often.
+	private boolean _autoAttacker = false;
+	
 	public FakePlayerPvpAI(Attackable creature)
 	{
 		super(creature);
@@ -390,6 +393,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		final Role role = profile.getRole();
 		final boolean mage = role == Role.MAGE;
+		_autoAttacker = !mage && !profile.getBuild().isSkillFighter();
 		final boolean pvp = target.isPlayable();
 		final boolean canMove = !npc.isMovementDisabled();
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
@@ -487,16 +491,18 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// Stuns, roots and debuffs are mostly for players.
+		// Stuns, roots and debuffs are mostly for players (and half as often for a class that fights with its normal attack).
 		final double reach = distance - collision;
+		final int debuffChance = pvp ? (_autoAttacker ? (FakePlayerPvpConfig.PVP_DEBUFF_CHANCE / 2) : FakePlayerPvpConfig.PVP_DEBUFF_CHANCE) : 5;
 		// With the bow out it only uses what reaches the target from where it stands, instead of running in.
-		if ((Rnd.get(100) < (pvp ? FakePlayerPvpConfig.PVP_DEBUFF_CHANCE : 5)) && useSkill(npc, target, inReach(pickSkill(npc, target, profile.getSkills(SkillCategory.DEBUFF), true, (role.isRanged() || bowHeld) ? reach : -1, pvp), bowHeld, reach), distance, collision, canMove))
+		if ((Rnd.get(100) < debuffChance) && useSkill(npc, target, inReach(pickSkill(npc, target, profile.getSkills(SkillCategory.DEBUFF), true, (role.isRanged() || bowHeld) ? reach : -1, pvp), bowHeld, reach), distance, collision, canMove))
 		{
 			return;
 		}
 		
-		// Attack skills, best first. Mages cast whenever they can, and everyone spams skills against players.
-		if ((mage || (Rnd.get(100) < (pvp ? FakePlayerPvpConfig.PVP_SKILL_CHANCE : FakePlayerPvpConfig.SKILL_CHANCE))) && useSkill(npc, target, inReach(pickSkill(npc, target, profile.getSkills(SkillCategory.ATTACK), false, (role.isRanged() || bowHeld) ? reach : -1, pvp), bowHeld, reach), distance, collision, canMove))
+		// Attack skills, best first. Mages cast whenever they can, Gladiators, Tyrants and daggers fight with their skills, and the other classes (tanks, archers, most warriors) auto attack and use a skill now and then, like players.
+		final int skillChance = _autoAttacker ? (pvp ? FakePlayerPvpConfig.AUTO_ATTACK_PVP_SKILL_CHANCE : FakePlayerPvpConfig.AUTO_ATTACK_SKILL_CHANCE) : (pvp ? FakePlayerPvpConfig.PVP_SKILL_CHANCE : FakePlayerPvpConfig.SKILL_CHANCE);
+		if ((mage || (Rnd.get(100) < skillChance)) && useSkill(npc, target, inReach(pickSkill(npc, target, profile.getSkills(SkillCategory.ATTACK), false, (role.isRanged() || bowHeld) ? reach : -1, pvp), bowHeld, reach), distance, collision, canMove))
 		{
 			return;
 		}
@@ -1669,7 +1675,9 @@ public class FakePlayerPvpAI extends AttackableAI
 		_combo = null;
 		_comboTarget = null;
 		_comboStep = 0;
-		_nextComboTime = now + 1000 + Rnd.get(1500);
+		
+		// A class that fights with its normal attack goes back to it for a while between two combos.
+		_nextComboTime = _autoAttacker ? (now + 8000 + Rnd.get(7000)) : (now + 1000 + Rnd.get(1500));
 	}
 	
 	/**
