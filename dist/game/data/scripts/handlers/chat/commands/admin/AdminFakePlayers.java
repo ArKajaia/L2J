@@ -117,7 +117,9 @@ public class AdminFakePlayers implements IAdminCommandHandler
 				fake.deleteMe();
 				count++;
 			}
-			activeChar.sendSysMessage("Removed " + count + " roaming fake players.");
+			// After the deletes: a dead one removed here would otherwise still come back.
+			final int returns = FakePlayerPvpManager.getInstance().clearPendingReturns();
+			activeChar.sendSysMessage("Removed " + count + " roaming fake players and " + returns + " on their way back.");
 		}
 		else if (command.startsWith("admin_fakepvp"))
 		{

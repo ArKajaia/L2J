@@ -103,7 +103,7 @@ public class FakePlayerChatManager implements IXmlReader
 			return;
 		}
 		
-		final String text = message.toLowerCase();
+		final String text = message.toLowerCase().trim();
 		
 		// tricky question
 		if (text.contains("can you see me"))
@@ -134,49 +134,62 @@ public class FakePlayerChatManager implements IXmlReader
 			}
 		}
 		
+		// One answer per message, from the first template that matches (DEFAULT ones only when nothing else does).
+		FakePlayerChatHolder fallback = null;
 		for (FakePlayerChatHolder chatHolder : MESSAGES)
 		{
 			if (!chatHolder.getFpcName().equals(fpcName) && !chatHolder.getFpcName().equals("ALL"))
 			{
 				continue;
 			}
-			
+
+			boolean matches = false;
 			switch (chatHolder.getSearchMethod())
 			{
 				case "EQUALS":
 				{
-					if (text.equals(chatHolder.getSearchText().get(0)))
-					{
-						sendChat(player, fpcName, chatHolder.getAnswers().get(Rnd.get(chatHolder.getAnswers().size())));
-					}
+					matches = text.equals(chatHolder.getSearchText().get(0));
 					break;
 				}
 				case "STARTS_WITH":
 				{
-					if (text.startsWith(chatHolder.getSearchText().get(0)))
-					{
-						sendChat(player, fpcName, chatHolder.getAnswers().get(Rnd.get(chatHolder.getAnswers().size())));
-					}
+					matches = text.startsWith(chatHolder.getSearchText().get(0));
 					break;
 				}
 				case "CONTAINS":
 				{
-					boolean allFound = true;
+					matches = true;
 					for (String word : chatHolder.getSearchText())
 					{
 						if (!text.contains(word))
 						{
-							allFound = false;
+							matches = false;
+							break;
 						}
 					}
-					
-					if (allFound)
+					break;
+				}
+				case "DEFAULT":
+				{
+					// A specific fake player's default wins over the ALL one.
+					if ((fallback == null) || !chatHolder.getFpcName().equals("ALL"))
 					{
-						sendChat(player, fpcName, chatHolder.getAnswers().get(Rnd.get(chatHolder.getAnswers().size())));
+						fallback = chatHolder;
 					}
 					break;
 				}
 			}
+
+			if (matches)
+			{
+				sendChat(player, fpcName, chatHolder.getAnswers().get(Rnd.get(chatHolder.getAnswers().size())));
+				return;
+			}
+		}
+
+		if (fallback != null)
+		{
+			sendChat(player, fpcName, fallback.getAnswers().get(Rnd.get(fallback.getAnswers().size())));
 		}
 	}
 	

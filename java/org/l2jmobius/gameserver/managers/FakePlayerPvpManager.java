@@ -23,8 +23,10 @@ package org.l2jmobius.gameserver.managers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -128,7 +130,13 @@ public class FakePlayerPvpManager
 		"ks noob",
 		"really? ks?",
 		"my mob, go away",
-		"ok you asked for it"
+		"ok you asked for it",
+		"dude i was hitting that",
+		"get your own mob",
+		"ks = pk",
+		"no ks here pls",
+		"find your own spot",
+		"u blind? my mob"
 	};
 	private static final String[] TAUNTS_ATTACKED =
 	{
@@ -139,7 +147,13 @@ public class FakePlayerPvpManager
 		"come on then",
 		"bad idea",
 		"wtf",
-		"ok lets go"
+		"ok lets go",
+		"big mistake",
+		"u sure?",
+		"hahaha ok",
+		"here we go",
+		"lets dance",
+		"wrong target buddy"
 	};
 	private static final String[] TAUNTS_KILL =
 	{
@@ -149,7 +163,13 @@ public class FakePlayerPvpManager
 		"next time",
 		"bb",
 		"lol",
-		"stay down"
+		"stay down",
+		"gg wp",
+		"too easy",
+		"thx for the pvp",
+		"sit",
+		"learn to play",
+		"go back to town"
 	};
 	private static final String[] TAUNTS_KILL_STEAL_COMPLAIN =
 	{
@@ -157,7 +177,13 @@ public class FakePlayerPvpManager
 		"thx for ks",
 		"wow ks",
 		"nice ks bro",
-		"my mob..."
+		"my mob...",
+		"cmon man",
+		"was about to die...",
+		"ty for stealing",
+		"seriously?",
+		"ks again...",
+		"whatever, spawn is big"
 	};
 	private static final String[] TAUNTS_FLEE =
 	{
@@ -167,7 +193,13 @@ public class FakePlayerPvpManager
 		"wtf lag",
 		"cya",
 		"no pots",
-		"2vs1 gj"
+		"2vs1 gj",
+		"nope",
+		"not today",
+		"gtg",
+		"no mp lol",
+		"later",
+		"u wont catch me"
 	};
 	private static final String[] TAUNTS_DEATH =
 	{
@@ -178,7 +210,13 @@ public class FakePlayerPvpManager
 		"ok gj",
 		"omg lag",
 		"rematch?",
-		"lucky"
+		"lucky",
+		"ok ok gg",
+		"crit spam...",
+		"i was afk",
+		"u were buffed",
+		"ill be back",
+		"damn"
 	};
 	private static final String[] TAUNTS_FLAGGED =
 	{
@@ -186,7 +224,13 @@ public class FakePlayerPvpManager
 		"hi",
 		"pvp?",
 		"sorry, you were flagged",
-		"lets go"
+		"lets go",
+		"purple? ok",
+		"u asked for it",
+		"flag hunter here",
+		"free pvp",
+		"nice flag",
+		"dont flag near me"
 	};
 	private static final String[] TAUNTS_KARMA =
 	{
@@ -194,12 +238,33 @@ public class FakePlayerPvpManager
 		"die pk",
 		"got a pk here",
 		"red = dead",
-		"pk scum"
+		"pk scum",
+		"kill the pk",
+		"no pk in my spot",
+		"ur karma is showing",
+		"payback time",
+		"go clean ur karma",
+		"justice"
+	};
+	private static final String[] TAUNTS_RETURN =
+	{
+		"remember me?",
+		"round 2",
+		"im back",
+		"again?",
+		"now im buffed",
+		"lets try that again",
+		"found you",
+		"rematch",
+		"not so easy now",
+		"u thought i was done?"
 	};
 	
 	private final AtomicInteger _nextNpcId = new AtomicInteger(FIRST_NPC_ID);
 	private final Set<Npc> _fakePlayers = ConcurrentHashMap.newKeySet();
 	private final Set<String> _names = ConcurrentHashMap.newKeySet();
+	/** Fake players killed by a player that come back to where they died (see {@link #returnFakePlayer}), by name. */
+	private final Map<String, ScheduledFuture<?>> _pendingReturns = new ConcurrentHashMap<>();
 	
 	protected FakePlayerPvpManager()
 	{
@@ -349,12 +414,9 @@ public class FakePlayerPvpManager
 	
 	private boolean isAllowedLocation(int x, int y, int z, int instanceId)
 	{
-		for (ZoneType zone : ZoneManager.getInstance().getZones(x, y, z))
+		if (!isAllowedZone(x, y, z))
 		{
-			if ((zone instanceof PeaceZone) || (zone instanceof TownZone) || (zone instanceof NoPvPZone) || (zone instanceof SiegeZone) || (zone instanceof ArenaZone) || (zone instanceof OlympiadStadiumZone) || (zone instanceof JailZone) || (zone instanceof BossZone) || (zone instanceof CastleZone) || (zone instanceof FortZone) || (zone instanceof ClanHallZone))
-			{
-				return false;
-			}
+			return false;
 		}
 		
 		if (FakePlayerPvpConfig.MIN_DISTANCE > 0)
@@ -368,6 +430,25 @@ public class FakePlayerPvpManager
 				{
 					return false;
 				}
+			}
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @return {@code true} if the point is not in town, a no PvP zone, a siege, an arena, a boss zone...
+	 */
+	private static boolean isAllowedZone(int x, int y, int z)
+	{
+		for (ZoneType zone : ZoneManager.getInstance().getZones(x, y, z))
+		{
+			if ((zone instanceof PeaceZone) || (zone instanceof TownZone) || (zone instanceof NoPvPZone) || (zone instanceof SiegeZone) || (zone instanceof ArenaZone) || (zone instanceof OlympiadStadiumZone) || (zone instanceof JailZone) || (zone instanceof BossZone) || (zone instanceof CastleZone) || (zone instanceof FortZone) || (zone instanceof ClanHallZone))
+			{
+				return false;
 			}
 		}
 		
@@ -408,31 +489,12 @@ public class FakePlayerPvpManager
 			profile.setReplacedMonster(replacedMonster, replacedSpawn);
 			profile.setSpawnTime(System.currentTimeMillis());
 			
-			final Spawn spawn = new Spawn(template);
-			spawn.setXYZ(x, y, z);
-			spawn.setHeading(-1);
-			spawn.setAmount(1);
-			spawn.setInstanceId(instanceId);
-			spawn.setRespawnDelay(0);
-			spawn.stopRespawn();
-			SpawnTable.getInstance().addSpawn(spawn);
-			
-			final Npc fake = spawn.doSpawn(false);
+			final Npc fake = spawnFromTemplate(template, x, y, z, instanceId);
 			if (fake == null)
 			{
-				SpawnTable.getInstance().removeSpawn(spawn);
 				FakePlayerData.getInstance().removeFakePlayer(name);
 				_names.remove(name.toLowerCase());
-				return null;
 			}
-			
-			_fakePlayers.add(fake);
-			
-			// Toggles on, buffed, full HP/MP - like a player that just arrived.
-			refreshToggles(fake, profile);
-			refreshBuffs(fake, profile);
-			fake.setCurrentHpMp(fake.getMaxHp(), fake.getMaxMp());
-			fake.broadcastInfo();
 			return fake;
 		}
 		catch (Exception e)
@@ -442,6 +504,44 @@ public class FakePlayerPvpManager
 			_names.remove(name.toLowerCase());
 			return null;
 		}
+	}
+	
+	/**
+	 * Spawns a roaming fake player from its template: toggles on, buffed, full HP/MP - like a player that just arrived.
+	 * @param template the fake player template
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @param instanceId the instance
+	 * @return the fake player, or {@code null} if it could not be spawned
+	 * @throws Exception if the spawn could not be created
+	 */
+	private Npc spawnFromTemplate(NpcTemplate template, int x, int y, int z, int instanceId) throws Exception
+	{
+		final Spawn spawn = new Spawn(template);
+		spawn.setXYZ(x, y, z);
+		spawn.setHeading(-1);
+		spawn.setAmount(1);
+		spawn.setInstanceId(instanceId);
+		spawn.setRespawnDelay(0);
+		spawn.stopRespawn();
+		SpawnTable.getInstance().addSpawn(spawn);
+		
+		final Npc fake = spawn.doSpawn(false);
+		if (fake == null)
+		{
+			SpawnTable.getInstance().removeSpawn(spawn);
+			return null;
+		}
+		
+		_fakePlayers.add(fake);
+		
+		final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+		refreshToggles(fake, profile);
+		refreshBuffs(fake, profile);
+		fake.setCurrentHpMp(fake.getMaxHp(), fake.getMaxMp());
+		fake.broadcastInfo();
+		return fake;
 	}
 	
 	/**
@@ -470,7 +570,107 @@ public class FakePlayerPvpManager
 		}
 		
 		FakePlayerData.getInstance().removeFakePlayer(fake.getName());
+		
+		// Killed by a player and walking back from town: its name stays taken until it comes back.
+		if (profile.isReturnPending() && isEnabled())
+		{
+			final NpcTemplate template = fake.getTemplate();
+			final String name = fake.getName();
+			_pendingReturns.put(name, ThreadPool.schedule(() -> returnFakePlayer(template), Rnd.get(FakePlayerPvpConfig.RETURN_DELAY_MIN, FakePlayerPvpConfig.RETURN_DELAY_MAX) * 1000L));
+			return;
+		}
+		
 		_names.remove(fake.getName().toLowerCase());
+	}
+	
+	/**
+	 * Like a player that walks back from town for round two, a fake player killed by a player comes back to where it died (see {@link FakePlayerPvpConfig#RETURN_CHANCE}): same template, so same name, looks and gear. It looks for its killer for a while
+	 * ({@link org.l2jmobius.gameserver.ai.FakePlayerPvpAI}, then {@link #revenge}) and otherwise hunts like any other fake player. It doesn't replace a monster anymore, so killing it again gives no monster loot or exp.
+	 * @param template the template of the fake player that died
+	 */
+	private void returnFakePlayer(NpcTemplate template)
+	{
+		// Cancelled meanwhile (//fakepvp_clear).
+		final String name = template.getName();
+		if (_pendingReturns.remove(name) == null)
+		{
+			return;
+		}
+		
+		final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+		final int x = profile.getDeathX();
+		final int y = profile.getDeathY();
+		final int z = profile.getDeathZ();
+		final int instanceId = profile.getDeathInstanceId();
+		if (!isEnabled() || ((FakePlayerPvpConfig.MAX_ALIVE > 0) && (_fakePlayers.size() >= FakePlayerPvpConfig.MAX_ALIVE)) || !isAllowedZone(x, y, z) || ((instanceId != 0) && (InstanceManager.getInstance().getInstance(instanceId) == null)))
+		{
+			_names.remove(name.toLowerCase());
+			return;
+		}
+		
+		try
+		{
+			profile.setReplacedMonster(null, null);
+			profile.setSpawnTime(System.currentTimeMillis());
+			profile.onReturn(System.currentTimeMillis() + (FakePlayerPvpConfig.RETURN_REVENGE_TIME * 1000L));
+			
+			// It comes back with its weapon out, not the bow it may have died with.
+			if (profile.getHeldWeapon() != profile.getMainWeapon())
+			{
+				setTemplateWeapon(template, profile, profile.getMainWeapon());
+			}
+			
+			// The template was made once, so it is known again by name for whispers.
+			final String lowercaseName = name.toLowerCase();
+			FakePlayerData.getInstance().addFakePlayerId(name, template.getId());
+			FakePlayerData.getInstance().addFakePlayerName(lowercaseName, name);
+			FakePlayerData.getInstance().addTalkableFakePlayerName(lowercaseName);
+			
+			if (spawnFromTemplate(template, x, y, z, instanceId) == null)
+			{
+				FakePlayerData.getInstance().removeFakePlayer(name);
+				_names.remove(lowercaseName);
+			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not bring back fake player " + name + ".", e);
+			FakePlayerData.getInstance().removeFakePlayer(name);
+			_names.remove(name.toLowerCase());
+		}
+	}
+	
+	/**
+	 * Called by the fake player AI when a returned fake player finds the player that killed it.
+	 * @param fake the fake player
+	 * @param player its killer
+	 */
+	public void revenge(Attackable fake, Player player)
+	{
+		fake.getTemplate().getFakePlayerPvpProfile().clearRevengeTarget();
+		if (!fake.isDead() && !isFighting(fake, player))
+		{
+			startFight(fake, player, TAUNTS_RETURN);
+		}
+	}
+	
+	/**
+	 * Cancels the fake players on their way back to where they died.
+	 * @return how many were cancelled
+	 */
+	public int clearPendingReturns()
+	{
+		int count = 0;
+		for (Map.Entry<String, ScheduledFuture<?>> entry : _pendingReturns.entrySet())
+		{
+			if (_pendingReturns.remove(entry.getKey(), entry.getValue()))
+			{
+				entry.getValue().cancel(false);
+				_names.remove(entry.getKey().toLowerCase());
+				count++;
+			}
+		}
+		return count;
 	}
 	
 	/**
@@ -688,6 +888,12 @@ public class FakePlayerPvpManager
 		// A few words from the ground.
 		taunt(fake, TAUNTS_DEATH, true);
 		
+		// Maybe it walks back from town for round two, unless it already did or its killer is far above it.
+		if ((FakePlayerPvpConfig.RETURN_CHANCE > 0) && !profile.hasReturned() && ((FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE <= 0) || (killer.getLevel() < (fake.getLevel() + FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE))) && (Rnd.get(100) < FakePlayerPvpConfig.RETURN_CHANCE))
+		{
+			profile.setReturn(fake.getX(), fake.getY(), fake.getZ(), fake.getInstanceId(), killer.getObjectId());
+		}
+		
 		// Nothing to loot for a player far above its level.
 		final boolean outleveled = (FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE > 0) && (killer.getLevel() >= (fake.getLevel() + FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE));
 		
@@ -776,14 +982,24 @@ public class FakePlayerPvpManager
 			return false;
 		}
 		
-		profile.setHeldWeapon(weapon);
-		template.setWeaponStats(weapon.getPAtk(), weapon.getMAtk(), weapon.getPAtkSpd(), weapon.getCritRate(), weapon.getAttackRange(), weapon.getRandomDamage(), weapon.getAttackType(), weapon.getShieldDefence(), weapon.getShieldRate());
-		template.setHandIds(weapon.getWeaponId(), weapon.getShieldId());
-		template.getFakePlayerInfo().setWeapon(weapon.getWeaponId(), weapon.getShieldId(), weapon.getEnchant());
+		setTemplateWeapon(template, profile, weapon);
 		
 		// Shows the new weapon to the players around.
 		fake.setLRHandId(weapon.getShieldId(), weapon.getWeaponId());
 		return true;
+	}
+	
+	/**
+	 * @param template the fake player template
+	 * @param profile its profile
+	 * @param weapon the weapon (and shield) it now holds
+	 */
+	private static void setTemplateWeapon(NpcTemplate template, FakePlayerPvpProfile profile, FakePlayerPvpWeapon weapon)
+	{
+		profile.setHeldWeapon(weapon);
+		template.setWeaponStats(weapon.getPAtk(), weapon.getMAtk(), weapon.getPAtkSpd(), weapon.getCritRate(), weapon.getAttackRange(), weapon.getRandomDamage(), weapon.getAttackType(), weapon.getShieldDefence(), weapon.getShieldRate());
+		template.setHandIds(weapon.getWeaponId(), weapon.getShieldId());
+		template.getFakePlayerInfo().setWeapon(weapon.getWeaponId(), weapon.getShieldId(), weapon.getEnchant());
 	}
 	
 	/**

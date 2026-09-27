@@ -141,6 +141,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	// Flagged and karma players passing by: when it looks next, and whom it already thought about (object id -> time).
 	private long _nextOpportunityScan = 0;
 	private final Map<Integer, Long> _consideredPlayers = new ConcurrentHashMap<>();
+	private long _nextRevengeScan;
 	
 	// The player it is fighting, to notice when that player goes down (the aggro list drops dead attackers by itself).
 	private Creature _pvpTarget = null;
@@ -239,8 +240,8 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// A flagged or karma player passing by.
-		if (lookForPvp(npc, System.currentTimeMillis()))
+		// Back from town for its killer, or a flagged or karma player passing by.
+		if (lookForRevenge(npc, System.currentTimeMillis()) || lookForPvp(npc, System.currentTimeMillis()))
 		{
 			return;
 		}
@@ -379,7 +380,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		// A flagged or karma player passing by is better game than a monster.
-		if (!target.isPlayable() && lookForPvp(npc, now))
+		if (!target.isPlayable() && (lookForRevenge(npc, now) || lookForPvp(npc, now)))
 		{
 			return;
 		}
@@ -969,6 +970,49 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * A fake player that came back to where it died (see {@link FakePlayerPvpManager}) goes after its killer as soon as it sees them: healthy, not a much higher level (then it gives up), not in town, an arena, a siege, the Olympiad or a duel.
+	 * @param npc the fake player
+	 * @param now the current time
+	 * @return {@code true} if it picked the fight
+	 */
+	private boolean lookForRevenge(Attackable npc, long now)
+	{
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		final int killerId = profile != null ? profile.getRevengeTarget(now) : 0;
+		if ((killerId == 0) || (now < _nextRevengeScan))
+		{
+			return false;
+		}
+		
+		_nextRevengeScan = now + OPPORTUNITY_SCAN_INTERVAL;
+		if ((npc.getCurrentHp() < (npc.getMaxHp() * 0.7)) || npc.isInsideZone(ZoneId.PEACE))
+		{
+			return false;
+		}
+		
+		final Player player = World.getInstance().getPlayer(killerId);
+		if ((player == null) || player.isAlikeDead() || player.isInvisible() || (player.isGM() && !player.getAccessLevel().canTakeAggro()) || (player.getInstanceId() != npc.getInstanceId()))
+		{
+			return false;
+		}
+		
+		// Gained too many levels since: not worth it.
+		if ((FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE > 0) && (player.getLevel() >= (npc.getLevel() + FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE)))
+		{
+			profile.clearRevengeTarget();
+			return false;
+		}
+		
+		if (!npc.isInsideRadius3D(player, FakePlayerPvpConfig.REVENGE_RANGE) || player.isInsideZone(ZoneId.PEACE) || player.isInsideZone(ZoneId.PVP) || player.isInsideZone(ZoneId.SIEGE) || player.isInOlympiadMode() || player.isInDuel() || !GeoEngine.getInstance().canSeeTarget(npc, player))
+		{
+			return false;
+		}
+		
+		FakePlayerPvpManager.getInstance().revenge(npc, player);
+		return true;
 	}
 	
 	/**
