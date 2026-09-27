@@ -112,18 +112,9 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// After a hard fight, rest (like a player sitting down) before looking for more monsters.
-		final boolean mage = (profile != null) && (profile.getRole() == Role.MAGE);
+		// After a hard fight, rest (like a player sitting down) until HP is back before looking for more monsters. They don't use MP.
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
-		final double mpRatio = npc.getCurrentMp() / npc.getMaxMp();
-		if (_resting)
-		{
-			_resting = (hpRatio < 0.9) || (mpRatio < (mage ? 0.7 : 0.3));
-		}
-		else
-		{
-			_resting = (hpRatio < 0.5) || (mpRatio < (mage ? 0.25 : 0.05));
-		}
+		_resting = hpRatio < (_resting ? 0.9 : 0.5);
 		
 		if (_resting)
 		{
@@ -288,7 +279,7 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// Mages never melee: between spells (or waiting for mana) they stay in casting range.
+		// Mages never melee: between spells they stay in casting range.
 		if (mage)
 		{
 			if (canMove && (distance > (MAGE_RANGE + collision)))
@@ -413,16 +404,11 @@ public class FakePlayerPvpAI extends AttackableAI
 	 * @param npc the caster
 	 * @param skill the skill
 	 * @param target its target
-	 * @return {@code true} if {@code npc} could cast {@code skill} right now like a player would (reuse, MP/HP, silence, and the skill's own conditions such as the weapon or being behind the target)
+	 * @return {@code true} if {@code npc} could cast {@code skill} right now like a player would (reuse, HP, silence, and the skill's own conditions such as the weapon or being behind the target). Fake players don't use MP.
 	 */
 	private static boolean canCast(Attackable npc, Skill skill, Creature target)
 	{
 		if (npc.isSkillDisabled(skill))
-		{
-			return false;
-		}
-		
-		if (npc.getCurrentMp() < (npc.getStat().getMpConsume(skill) + npc.getStat().getMpInitialConsume(skill)))
 		{
 			return false;
 		}
@@ -668,11 +654,10 @@ public class FakePlayerPvpAI extends AttackableAI
 	}
 	
 	/**
-	 * A combo can start when every required step is learned and off cooldown, its MP and energy are there, and its first step can be used now.
+	 * A combo can start when every required step is learned and off cooldown, its energy is there, and its first step can be used now.
 	 */
 	private static boolean isComboReady(Attackable npc, FakePlayerPvpProfile profile, FakePlayerPvpCombo.Chain combo, Creature target)
 	{
-		int mpNeeded = 0;
 		int chargesNeeded = 0;
 		boolean firstChecked = false;
 		for (int i = 0; i < combo.size(); i++)
@@ -689,7 +674,6 @@ public class FakePlayerPvpAI extends AttackableAI
 				return false;
 			}
 			
-			mpNeeded += npc.getStat().getMpConsume(skill) + npc.getStat().getMpInitialConsume(skill);
 			chargesNeeded += skill.getChargeConsumeCount();
 			if (!firstChecked && !step.isSelf() && isAlreadyOn(skill, target))
 			{
@@ -706,7 +690,7 @@ public class FakePlayerPvpAI extends AttackableAI
 			}
 		}
 		
-		return firstChecked && (npc.getCurrentMp() >= mpNeeded) && (profile.getCharges() >= chargesNeeded);
+		return firstChecked && (profile.getCharges() >= chargesNeeded);
 	}
 	
 	private void nextComboStep(long now)

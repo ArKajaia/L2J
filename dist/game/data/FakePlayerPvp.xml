@@ -28,7 +28,7 @@
 	     charge    - skills that build Sonic/Force energy (Duelist, Tyrant). Energy is spent by the energy
 	                 skills like a player's, so they charge up between and during fights.
 	     combo     - skill chains played in order, like a practiced player's rotation. The first one that is
-	                 ready (required steps learned and off cooldown, enough MP and energy) starts.
+	                 ready (required steps learned and off cooldown, enough energy) starts.
 	                 pvp="true": only against players. chance: % to start it when ready (default 100).
 	                 step attributes:
 	                   optional       - skipped when it can't be used right now (otherwise it is waited for)
