@@ -663,9 +663,12 @@ public class FakePlayerPvpManager
 		// A few words from the ground.
 		taunt(fake, TAUNTS_DEATH, true);
 		
+		// Nothing to loot for a player far above its level.
+		final boolean outleveled = (FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE > 0) && (killer.getLevel() >= (fake.getLevel() + FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE));
+		
 		// Rarely, one piece of its gear, enchant included.
 		final List<ItemEnchantHolder> equipment = profile.getEquipment();
-		if (!equipment.isEmpty() && ((Rnd.nextDouble() * 100) < FakePlayerPvpConfig.EQUIPMENT_DROP_CHANCE))
+		if (!outleveled && !equipment.isEmpty() && ((Rnd.nextDouble() * 100) < FakePlayerPvpConfig.EQUIPMENT_DROP_CHANCE))
 		{
 			final ItemEnchantHolder piece = equipment.get(Rnd.get(equipment.size()));
 			final Item item = fake.dropItem(killer, piece.getId(), 1);
@@ -696,7 +699,7 @@ public class FakePlayerPvpManager
 			}
 		}
 		
-		if (FakePlayerPvpConfig.REWARD_DROPS)
+		if (FakePlayerPvpConfig.REWARD_DROPS && !outleveled)
 		{
 			fake.doItemDrop(monster.getTemplate(), killer);
 		}

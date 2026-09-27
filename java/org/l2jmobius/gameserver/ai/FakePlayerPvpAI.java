@@ -107,8 +107,6 @@ public class FakePlayerPvpAI extends AttackableAI
 	private static final int PEEL_DISTANCE = 300;
 	/** After running this long with a pursuer on its heels, it turns around and fights to the end. */
 	private static final long FLEE_TIMEOUT = 45000;
-	/** A player at least this many levels above is a fight it can't win: runners leave early. */
-	private static final int HOPELESS_LEVEL_DIFFERENCE = 8;
 	/** How long it sticks to the player it chose to focus in a fight against several. */
 	private static final long FOCUS_TIME = 6000;
 	/** It chases a player getting away for this long before using a speed buff or a gap closer. */
@@ -674,11 +672,24 @@ public class FakePlayerPvpAI extends AttackableAI
 	 * @param profile its profile
 	 * @param target the player it fights
 	 * @param hpRatio its HP ratio
-	 * @return {@code true} if a runner should leave this fight: low on HP while its enemy is still in good shape, outnumbered, or against a much higher level
+	 * @return {@code true} if it should leave this fight: any fake player against a player {@link FakePlayerPvpConfig#OUTLEVELED_DIFFERENCE} levels above it, a runner when low on HP while its enemy is still in good shape, or outnumbered
 	 */
 	private boolean shouldFlee(Attackable npc, FakePlayerPvpProfile profile, Creature target, double hpRatio)
 	{
-		if (!profile.isRunner() || _lastStand)
+		if (_lastStand)
+		{
+			return false;
+		}
+		
+		// Every fake player tries to get away from a player far above its level (who gets nothing for the kill anyway).
+		final Player player = target.asPlayer();
+		if ((FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE > 0) && (player != null) && (player.getLevel() >= (npc.getLevel() + FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE)))
+		{
+			return true;
+		}
+		
+		// Only runners leave a fight they are losing.
+		if (!profile.isRunner())
 		{
 			return false;
 		}
@@ -689,12 +700,7 @@ public class FakePlayerPvpAI extends AttackableAI
 			return true;
 		}
 		
-		if ((hpRatio < 0.5) && (countPvpEnemies(npc) >= 2))
-		{
-			return true;
-		}
-		
-		return (hpRatio < 0.7) && (target.getLevel() >= (npc.getLevel() + HOPELESS_LEVEL_DIFFERENCE));
+		return (hpRatio < 0.5) && (countPvpEnemies(npc) >= 2);
 	}
 	
 	/**
