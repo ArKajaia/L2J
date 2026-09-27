@@ -21,6 +21,7 @@
 package org.l2jmobius.gameserver.managers;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,6 +49,8 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Skill
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.item.holders.ItemEnchantHolder;
+import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
@@ -490,6 +493,24 @@ public class FakePlayerPvpManager
 	private void rewardKill(Attackable fake, Player killer)
 	{
 		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		
+		// Rarely, one piece of its gear, enchant included.
+		final List<ItemEnchantHolder> equipment = profile.getEquipment();
+		if (!equipment.isEmpty() && ((Rnd.nextDouble() * 100) < FakePlayerPvpConfig.EQUIPMENT_DROP_CHANCE))
+		{
+			final ItemEnchantHolder piece = equipment.get(Rnd.get(equipment.size()));
+			final Item item = fake.dropItem(killer, piece.getId(), 1);
+			if (item != null)
+			{
+				if (item.isEnchantable() && (piece.getEnchantLevel() > 0))
+				{
+					item.setEnchantLevel(piece.getEnchantLevel());
+				}
+				
+				killer.sendMessage(fake.getName() + " dropped " + (item.getEnchantLevel() > 0 ? "+" + item.getEnchantLevel() + " " : "") + item.getName() + "!");
+			}
+		}
+		
 		final Npc monster = profile.getReplacedMonster();
 		if (monster == null)
 		{

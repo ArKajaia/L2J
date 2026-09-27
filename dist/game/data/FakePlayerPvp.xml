@@ -6,9 +6,15 @@
 	     (1 = no grade, 20 = D, 40 = C, 52 = B, 61 = A, 76 = S, 80 = S80, 84 = S84).
 	     Stats are read from the item data, so any item id can be used.
 
+	buffs: buffs a fake player keeps on itself, like a player coming from the buffer.
+	     Tiers add up: a level 76 fighter gets the 1, 40, 61 and 76 lists. Format: id,level;id,level
+	     Buffs sharing an abnormal type (e.g. Chant of Victory, Magnus' Chant and the Prophecies,
+	     or Greater Might and Greater Shield) overwrite each other, so list only one of them.
+
 	build: a class a fake player can be.
 	     classId - the final (3rd) class; below 76 the matching 2nd/1st/base class is used.
 	     role    - FIGHTER, TANK, DAGGER (melee), ARCHER (keeps distance) or MAGE (casts and kites).
+	     buffs   - buff list to use, default MAGE for mystic classes and FIGHTER for the others.
 	     weight  - relative chance to pick this build.
 	     Skills are lists of skill ids. The level of each skill (and whether the fake player
 	     has it at all) comes from the class skill tree for its level, like a real character.
@@ -168,6 +174,29 @@
 		<tier minLevel="84" rhand="13459" /> <!-- Vesper Buster -->
 	</kit>
 
+	<!-- Buffs -->
+	<buffs name="FIGHTER">
+		<tier minLevel="1">1068,3;1040,3;1204,2;1086,2;1045,6;1048,6;1035,4;1036,2</tier> <!-- Might, Shield, Wind Walk, Haste, Bless the Body/Soul, Mental Shield, Magic Barrier -->
+		<tier minLevel="40">1077,3;1242,3;1240,3;1268,4;1062,2;271,1;275,1;264,1;268,1;304,1</tier> <!-- Focus, Death Whisper, Guidance, Vampiric Rage, Berserker Spirit, Dance of the Warrior/Fury, Song of Earth/Wind/Vitality -->
+		<tier minLevel="61">1388,3;310,1;269,1;267,1;1259,4;1461,1</tier> <!-- Greater Might, Dance of the Vampire, Song of Hunter/Warding, Resist Shock, Chant of Protection -->
+		<tier minLevel="76">1363,1;364,1;915,1;765,1;764,1;1542,1</tier> <!-- Chant of Victory, Song of Champion, Dance of Berserker/Blade Storm, Song of Wind Storm, Counter Critical -->
+		<tier minLevel="80">1499,1;1501,1;1502,1;1519,1;1504,1</tier> <!-- Improved Combat/Condition/Critical Attack/Movement, Chant of Blood Awakening -->
+	</buffs>
+	<buffs name="TANK"> <!-- Fighter buffs without Dance of Blade Storm, which would cripple the tanks' magic skills. -->
+		<tier minLevel="1">1068,3;1040,3;1204,2;1086,2;1045,6;1048,6;1035,4;1036,2</tier>
+		<tier minLevel="40">1077,3;1242,3;1240,3;1268,4;1062,2;271,1;275,1;264,1;268,1;304,1</tier>
+		<tier minLevel="61">1388,3;310,1;269,1;267,1;1259,4;1461,1</tier>
+		<tier minLevel="76">1363,1;364,1;915,1;764,1;1542,1</tier>
+		<tier minLevel="80">1499,1;1501,1;1502,1;1519,1;1504,1</tier>
+	</buffs>
+	<buffs name="MAGE">
+		<tier minLevel="1">1040,3;1204,2;1045,6;1048,6;1035,4;1036,2;1059,3;1085,3;1078,6</tier> <!-- Shield, Wind Walk, Bless the Body/Soul, Mental Shield, Magic Barrier, Empower, Acumen, Concentration -->
+		<tier minLevel="40">1303,2;1062,2;1397,3;273,1;276,1;264,1;268,1;304,1;363,1</tier> <!-- Wild Magic, Berserker Spirit, Clarity, Dance of the Mystic/Concentration, Song of Earth/Wind/Vitality/Meditation -->
+		<tier minLevel="61">1389,3;365,1;267,1;529,1;1259,4;1461,1</tier> <!-- Greater Shield, Dance of Siren, Song of Warding/Elemental, Resist Shock, Chant of Protection -->
+		<tier minLevel="76">1413,1;915,1;764,1;1542,1</tier> <!-- Magnus' Chant, Dance of Berserker, Song of Wind Storm, Counter Critical -->
+		<tier minLevel="80">1500,1;1501,1;1504,1</tier> <!-- Improved Magic/Condition/Movement -->
+	</buffs>
+
 	<!-- Mages -->
 	<build name="Archmage" classId="94" role="MAGE" weapon="MAGE" armor="ROBE" weight="1">
 		<attack>1292,1289,1288,1339,1451,1230,1231,1275,1220,1274,1184,1177,1147</attack>
@@ -192,7 +221,7 @@
 	</build>
 
 	<!-- Tanks -->
-	<build name="Phoenix Knight" classId="90" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" weight="1">
+	<build name="Phoenix Knight" classId="90" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" buffs="TANK" weight="1">
 		<attack>984,49,3,70</attack>
 		<debuff>92,353,400</debuff>
 		<buff>82,72,406,350,527,760</buff>
@@ -200,7 +229,7 @@
 		<emergency>110</emergency>
 		<toggle>322,335</toggle>
 	</build>
-	<build name="Eva's Templar" classId="99" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" weight="1">
+	<build name="Eva's Templar" classId="99" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" buffs="TANK" weight="1">
 		<attack>984,3</attack>
 		<debuff>352,402,102</debuff>
 		<buff>123,77,91,351,527,760</buff>
@@ -208,7 +237,7 @@
 		<emergency>110</emergency>
 		<toggle>322,335</toggle>
 	</build>
-	<build name="Shillien Templar" classId="106" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" weight="1">
+	<build name="Shillien Templar" classId="106" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" buffs="TANK" weight="1">
 		<attack>279,223,289,105,984,70,3</attack>
 		<debuff>352,402,115,122,401,129</debuff>
 		<buff>77,91,351,527,760</buff>

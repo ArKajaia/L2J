@@ -22,6 +22,22 @@
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element name="kit" type="gearKit" maxOccurs="unbounded" minOccurs="0" />
+				<xs:element name="buffs" maxOccurs="unbounded" minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="tier" maxOccurs="unbounded" minOccurs="1">
+								<xs:complexType>
+									<xs:simpleContent>
+										<xs:extension base="xs:string">
+											<xs:attribute type="xs:int" name="minLevel" use="required" />
+										</xs:extension>
+									</xs:simpleContent>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+						<xs:attribute type="xs:string" name="name" use="required" />
+					</xs:complexType>
+				</xs:element>
 				<xs:element name="build" maxOccurs="unbounded" minOccurs="0">
 					<xs:complexType>
 						<xs:sequence>
@@ -48,6 +64,7 @@
 						<xs:attribute type="xs:string" name="weapon" use="required" />
 						<xs:attribute type="xs:string" name="armor" use="required" />
 						<xs:attribute type="xs:string" name="jewels" />
+						<xs:attribute type="xs:string" name="buffs" />
 						<xs:attribute type="xs:int" name="weight" />
 					</xs:complexType>
 				</xs:element>

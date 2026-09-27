@@ -58,6 +58,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	
 	private long _kiteEndTime = 0;
 	private long _nextKiteTime = 0;
+	private boolean _resting = false;
 	
 	public FakePlayerPvpAI(Attackable creature)
 	{
@@ -85,6 +86,25 @@ public class FakePlayerPvpAI extends AttackableAI
 		{
 			npc.setRunning();
 			setIntention(Intention.ATTACK, hated);
+			return;
+		}
+		
+		// After a hard fight, rest (like a player sitting down) before looking for more monsters.
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		final boolean mage = (profile != null) && (profile.getRole() == Role.MAGE);
+		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
+		final double mpRatio = npc.getCurrentMp() / npc.getMaxMp();
+		if (_resting)
+		{
+			_resting = (hpRatio < 0.9) || (mpRatio < (mage ? 0.7 : 0.3));
+		}
+		else
+		{
+			_resting = (hpRatio < 0.5) || (mpRatio < (mage ? 0.25 : 0.05));
+		}
+		
+		if (_resting)
+		{
 			return;
 		}
 		
@@ -191,23 +211,26 @@ public class FakePlayerPvpAI extends AttackableAI
 		FakePlayerPvpManager.getInstance().tryPotion(npc);
 		
 		final Role role = profile.getRole();
+		final boolean mage = role == Role.MAGE;
+		final boolean pvp = target.isPlayable();
 		final boolean canMove = !npc.isMovementDisabled();
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
 		final double distance = npc.calculateDistance2D(target);
 		final int collision = npc.getTemplate().getCollisionRadius() + target.getTemplate().getCollisionRadius();
 		
 		// Take care of itself first: emergency skills, heals, buffs.
-		if ((hpRatio < 0.3) && castOnSelf(npc, target, profile.getSkills(SkillCategory.EMERGENCY), true))
+		if ((hpRatio < 0.3) && castOnSelf(npc, target, profile.getSkills(SkillCategory.EMERGENCY), true, true))
 		{
 			return;
 		}
 		
-		if ((hpRatio < 0.5) && (Rnd.get(100) < 50) && castOnSelf(npc, target, profile.getSkills(SkillCategory.HEAL), true))
+		if ((hpRatio < 0.5) && (Rnd.get(100) < 50) && castOnSelf(npc, target, profile.getSkills(SkillCategory.HEAL), true, true))
 		{
 			return;
 		}
 		
-		if (castOnSelf(npc, target, profile.getSkills(SkillCategory.BUFF), false))
+		// Long cooldown buffs (Frenzy, Zealot, Focus Power...) are saved for players.
+		if (castOnSelf(npc, target, profile.getSkills(SkillCategory.BUFF), false, pvp))
 		{
 			return;
 		}
@@ -219,21 +242,20 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		// Stuns, roots and debuffs are mostly for players.
-		final boolean mage = role == Role.MAGE;
 		final double reach = distance - collision;
-		if ((Rnd.get(100) < (target.isPlayable() ? 30 : 5)) && useSkill(npc, target, pickSkill(npc, target, profile.getSkills(SkillCategory.DEBUFF), true, role.isRanged() ? reach : -1), distance, collision, canMove))
+		if ((Rnd.get(100) < (pvp ? FakePlayerPvpConfig.PVP_DEBUFF_CHANCE : 5)) && useSkill(npc, target, pickSkill(npc, target, profile.getSkills(SkillCategory.DEBUFF), true, role.isRanged() ? reach : -1, pvp), distance, collision, canMove))
 		{
 			return;
 		}
 		
-		// Attack skills. Mages cast whenever they can.
-		if ((mage || (Rnd.get(100) < FakePlayerPvpConfig.SKILL_CHANCE)) && useSkill(npc, target, pickSkill(npc, target, profile.getSkills(SkillCategory.ATTACK), false, role.isRanged() ? reach : -1), distance, collision, canMove))
+		// Attack skills, best first. Mages cast whenever they can, and everyone spams skills against players.
+		if ((mage || (Rnd.get(100) < (pvp ? FakePlayerPvpConfig.PVP_SKILL_CHANCE : FakePlayerPvpConfig.SKILL_CHANCE))) && useSkill(npc, target, pickSkill(npc, target, profile.getSkills(SkillCategory.ATTACK), false, role.isRanged() ? reach : -1, pvp), distance, collision, canMove))
 		{
 			return;
 		}
 		
-		// A mage with mana waits for its spells in casting range instead of meleeing.
-		if (mage && (npc.getCurrentMp() > (npc.getMaxMp() * 0.05)) && !profile.getSkills(SkillCategory.ATTACK).isEmpty())
+		// Mages never melee: between spells (or waiting for mana) they stay in casting range.
+		if (mage)
 		{
 			if (canMove && (distance > (MAGE_RANGE + collision)))
 			{
@@ -390,9 +412,10 @@ public class FakePlayerPvpAI extends AttackableAI
 	 * @param skills skills in order of preference
 	 * @param debuff {@code true} to skip the ones already on the target
 	 * @param reach the distance to the target for a ranged fighter, which prefers skills that reach it from where it stands, -1 for melee
+	 * @param pvp {@code true} against a player, the only time long cooldown skills are used
 	 * @return a skill it can cast now, or {@code null}
 	 */
-	private static Skill pickSkill(Attackable npc, Creature target, List<Skill> skills, boolean debuff, double reach)
+	private static Skill pickSkill(Attackable npc, Creature target, List<Skill> skills, boolean debuff, double reach, boolean pvp)
 	{
 		if (skills.isEmpty() || (debuff && (target.isStunned() || target.isRooted())))
 		{
@@ -403,7 +426,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		Skill outOfReach = null;
 		for (Skill skill : skills)
 		{
-			if ((debuff && target.isAffectedBySkill(skill.getId())) || !canCast(npc, skill, target))
+			if ((debuff && target.isAffectedBySkill(skill.getId())) || (!pvp && isPvpOnly(skill)) || !canCast(npc, skill, target))
 			{
 				continue;
 			}
@@ -473,13 +496,14 @@ public class FakePlayerPvpAI extends AttackableAI
 	 * @param target its current target, restored after the cast
 	 * @param skills the skills
 	 * @param recast {@code true} to cast even if the effect is already on (heals), {@code false} to only put back missing effects (buffs)
+	 * @param pvp {@code true} to also use the long cooldown ones
 	 * @return {@code true} if it cast one
 	 */
-	private boolean castOnSelf(Attackable npc, Creature target, List<Skill> skills, boolean recast)
+	private boolean castOnSelf(Attackable npc, Creature target, List<Skill> skills, boolean recast, boolean pvp)
 	{
 		for (Skill skill : skills)
 		{
-			if (!recast && npc.isAffectedBySkill(skill.getId()))
+			if ((!recast && npc.isAffectedBySkill(skill.getId())) || (!pvp && isPvpOnly(skill)))
 			{
 				continue;
 			}
@@ -503,6 +527,15 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * @param skill a skill
+	 * @return {@code true} if its cooldown is long enough that a player would save it for PvP
+	 */
+	private static boolean isPvpOnly(Skill skill)
+	{
+		return (FakePlayerPvpConfig.PVP_ONLY_REUSE > 0) && (skill.getReuseDelay() >= FakePlayerPvpConfig.PVP_ONLY_REUSE);
 	}
 	
 	/**

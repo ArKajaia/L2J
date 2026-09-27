@@ -74,10 +74,11 @@ public class FakePlayerPvpBuild
 	private final String _weaponKit;
 	private final String _armorKit;
 	private final String _jewelKit;
+	private final String _buffList;
 	private final int _weight;
 	private final Map<SkillCategory, List<int[]>> _skills = new EnumMap<>(SkillCategory.class);
 	
-	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, int weight)
+	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String buffList, int weight)
 	{
 		_name = name;
 		_playerClass = playerClass;
@@ -85,6 +86,7 @@ public class FakePlayerPvpBuild
 		_weaponKit = weaponKit;
 		_armorKit = armorKit;
 		_jewelKit = jewelKit;
+		_buffList = buffList;
 		_weight = weight;
 	}
 	
@@ -153,6 +155,14 @@ public class FakePlayerPvpBuild
 	public String getJewelKit()
 	{
 		return _jewelKit;
+	}
+	
+	/**
+	 * @return the name of the buff list it keeps up (see data/FakePlayerPvp.xml)
+	 */
+	public String getBuffList()
+	{
+		return _buffList;
 	}
 	
 	public int getWeight()

@@ -49,6 +49,7 @@ import org.l2jmobius.gameserver.model.item.Armor;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.Weapon;
 import org.l2jmobius.gameserver.model.item.enums.BodyPart;
+import org.l2jmobius.gameserver.model.item.holders.ItemEnchantHolder;
 import org.l2jmobius.gameserver.model.item.type.ArmorType;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
 import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
@@ -113,8 +114,9 @@ public class FakePlayerPvpFactory
 		final ItemTemplate ring = getItem(jewels != null ? jewels.getRing() : 0);
 		final boolean fullArmor = (chest != null) && (chest.getBodyPart() == BodyPart.FULL_ARMOR);
 		
-		final int weaponEnchant = weapon != null ? Rnd.get(FakePlayerPvpConfig.WEAPON_ENCHANT_MIN, FakePlayerPvpConfig.WEAPON_ENCHANT_MAX) : 0;
-		final int armorEnchant = chest != null ? Rnd.get(FakePlayerPvpConfig.ARMOR_ENCHANT_MIN, FakePlayerPvpConfig.ARMOR_ENCHANT_MAX) : 0;
+		// Higher levels have better enchanted gear.
+		final int weaponEnchant = weapon != null ? FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.WEAPON_ENCHANT, level) : 0;
+		final int armorEnchant = FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.ARMOR_ENCHANT, level);
 		
 		// Armor set.
 		final ArmorSet armorSet = chest != null ? ArmorSetData.getInstance().getSet(chest.getId()) : null;
@@ -135,6 +137,24 @@ public class FakePlayerPvpFactory
 			intel += armorSet.getINT();
 			wit += armorSet.getWIT();
 			men += armorSet.getMEN();
+		}
+		
+		// Extra points in the main stats (like dyes or passive tree points), growing with the level.
+		if (FakePlayerPvpConfig.BONUS_STAT_MAX > 0)
+		{
+			final int maxBonus = Math.max(1, (int) Math.round((FakePlayerPvpConfig.BONUS_STAT_MAX * level) / 85.0));
+			if (playerClass.isMage())
+			{
+				intel += Rnd.get(1, maxBonus);
+				wit += Rnd.get(1, maxBonus);
+				men += Rnd.get(1, maxBonus);
+			}
+			else
+			{
+				str += Rnd.get(1, maxBonus);
+				dex += Rnd.get(1, maxBonus);
+				con += Rnd.get(1, maxBonus);
+			}
 		}
 		
 		// P. Def.: the class default of every covered slot is replaced by the item (FuncPDefMod).
@@ -328,7 +348,34 @@ public class FakePlayerPvpFactory
 			}
 		}
 		
-		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, playerClass.isMage() ? FakePlayerPvpConfig.MAGE_BUFFS : FakePlayerPvpConfig.FIGHTER_BUFFS, wornMask, chest != null ? chest.getItemMask() : 0, charges);
+		// What it wears, for the equipment drop.
+		final List<ItemEnchantHolder> equipment = new ArrayList<>();
+		if (weapon != null)
+		{
+			equipment.add(new ItemEnchantHolder(weapon.getId(), 1, weaponEnchant));
+		}
+		for (ItemTemplate item : new ItemTemplate[]
+		{
+			shield,
+			chest,
+			legs,
+			head,
+			gloves,
+			feet,
+			earring,
+			earring,
+			necklace,
+			ring,
+			ring
+		})
+		{
+			if (item != null)
+			{
+				equipment.add(new ItemEnchantHolder(item.getId(), 1, armorEnchant));
+			}
+		}
+		
+		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), wornMask, chest != null ? chest.getItemMask() : 0, charges, equipment);
 		for (SkillCategory category : SkillCategory.values())
 		{
 			final List<Skill> list = new ArrayList<>();

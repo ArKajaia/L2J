@@ -21,13 +21,14 @@
 package org.l2jmobius.gameserver.config.custom;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.util.ConfigReader;
-import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
+import org.l2jmobius.commons.util.Rnd;
 
 /**
  * Loads the roaming fake player configuration: a regular monster has {@link #SPAWN_CHANCE}% chance on every spawn to be replaced by a fake player of the same level that hunts nearby monsters and fights back against real players (see
@@ -55,13 +56,11 @@ public class FakePlayerPvpConfig
 	
 	// Strength
 	public static boolean INCLUDE_CP_IN_HP;
-	public static int WEAPON_ENCHANT_MIN;
-	public static int WEAPON_ENCHANT_MAX;
-	public static int ARMOR_ENCHANT_MIN;
-	public static int ARMOR_ENCHANT_MAX;
+	/** {minLevel, minEnchant, maxEnchant} rows sorted by level. */
+	public static List<int[]> WEAPON_ENCHANT = new ArrayList<>();
+	public static List<int[]> ARMOR_ENCHANT = new ArrayList<>();
+	public static int BONUS_STAT_MAX;
 	public static boolean BUFFS_ENABLED;
-	public static List<SkillHolder> FIGHTER_BUFFS = new ArrayList<>();
-	public static List<SkillHolder> MAGE_BUFFS = new ArrayList<>();
 	public static int POTION_HP_PERCENT;
 	public static int POTION_HEAL_PERCENT;
 	public static int POTION_REUSE;
@@ -75,6 +74,9 @@ public class FakePlayerPvpConfig
 	public static boolean REVENGE_ON_KILL_STEAL;
 	public static int REVENGE_RANGE;
 	public static int SKILL_CHANCE;
+	public static int PVP_SKILL_CHANCE;
+	public static int PVP_DEBUFF_CHANCE;
+	public static int PVP_ONLY_REUSE;
 	public static int KITE_DISTANCE;
 	public static int KITE_STEP;
 	public static int TAUNT_CHANCE;
@@ -82,6 +84,7 @@ public class FakePlayerPvpConfig
 	// Rewards
 	public static double REWARD_EXP_SP_MULTIPLIER;
 	public static boolean REWARD_DROPS;
+	public static double EQUIPMENT_DROP_CHANCE;
 	
 	public static void load()
 	{
@@ -115,13 +118,10 @@ public class FakePlayerPvpConfig
 		LIFETIME = Math.max(0, config.getInt("FakePvpLifetime", 3600));
 		
 		INCLUDE_CP_IN_HP = config.getBoolean("FakePvpIncludeCpInHp", true);
-		WEAPON_ENCHANT_MIN = Math.max(0, config.getInt("FakePvpWeaponEnchantMin", 0));
-		WEAPON_ENCHANT_MAX = Math.max(WEAPON_ENCHANT_MIN, config.getInt("FakePvpWeaponEnchantMax", 6));
-		ARMOR_ENCHANT_MIN = Math.max(0, config.getInt("FakePvpArmorEnchantMin", 0));
-		ARMOR_ENCHANT_MAX = Math.max(ARMOR_ENCHANT_MIN, config.getInt("FakePvpArmorEnchantMax", 4));
+		WEAPON_ENCHANT = parseEnchantTiers(config.getString("FakePvpWeaponEnchant", "1:0-3;20:0-4;40:1-5;52:2-6;61:3-8;76:4-10;80:5-12;84:6-16"), "FakePvpWeaponEnchant");
+		ARMOR_ENCHANT = parseEnchantTiers(config.getString("FakePvpArmorEnchant", "1:0-2;20:0-3;40:1-4;52:2-4;61:3-5;76:3-6;80:4-7;84:4-8"), "FakePvpArmorEnchant");
+		BONUS_STAT_MAX = Math.max(0, config.getInt("FakePvpBonusStatMax", 10));
 		BUFFS_ENABLED = config.getBoolean("FakePvpBuffsEnabled", true);
-		FIGHTER_BUFFS = parseSkills(config.getString("FakePvpFighterBuffs", ""), "FakePvpFighterBuffs");
-		MAGE_BUFFS = parseSkills(config.getString("FakePvpMageBuffs", ""), "FakePvpMageBuffs");
 		POTION_HP_PERCENT = Math.max(0, Math.min(100, config.getInt("FakePvpPotionHpPercent", 50)));
 		POTION_HEAL_PERCENT = Math.max(0, Math.min(100, config.getInt("FakePvpPotionHealPercent", 6)));
 		POTION_REUSE = Math.max(1000, config.getInt("FakePvpPotionReuse", 10000));
@@ -134,17 +134,47 @@ public class FakePlayerPvpConfig
 		REVENGE_ON_KILL_STEAL = config.getBoolean("FakePvpRevengeOnKillSteal", true);
 		REVENGE_RANGE = Math.max(100, config.getInt("FakePvpRevengeRange", 1500));
 		SKILL_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpSkillChance", 65)));
+		PVP_SKILL_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpPvpSkillChance", 90)));
+		PVP_DEBUFF_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpPvpDebuffChance", 35)));
+		PVP_ONLY_REUSE = Math.max(0, config.getInt("FakePvpPvpOnlyReuse", 30000));
 		KITE_DISTANCE = Math.max(0, config.getInt("FakePvpKiteDistance", 250));
 		KITE_STEP = Math.max(50, config.getInt("FakePvpKiteStep", 300));
 		TAUNT_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpTauntChance", 50)));
 		
 		REWARD_EXP_SP_MULTIPLIER = Math.max(0, config.getDouble("FakePvpRewardExpSpMultiplier", 1.0));
 		REWARD_DROPS = config.getBoolean("FakePvpRewardDrops", true);
+		EQUIPMENT_DROP_CHANCE = Math.max(0, Math.min(100, config.getDouble("FakePvpEquipmentDropChance", 0.5)));
 	}
 	
-	private static List<SkillHolder> parseSkills(String value, String key)
+	/**
+	 * @param tiers {minLevel, minEnchant, maxEnchant} rows sorted by level
+	 * @param level a fake player level
+	 * @return a random enchant level from the highest row usable at {@code level}
+	 */
+	public static int rollEnchant(List<int[]> tiers, int level)
 	{
-		final List<SkillHolder> result = new ArrayList<>();
+		int[] range = null;
+		for (int[] tier : tiers)
+		{
+			if (tier[0] > level)
+			{
+				break;
+			}
+			range = tier;
+		}
+		
+		return range == null ? 0 : Rnd.get(range[1], range[2]);
+	}
+	
+	/**
+	 * Parses "minLevel:min-max;minLevel:min-max...".
+	 * @param value the config value
+	 * @param key the config key, for warnings
+	 * @return the rows sorted by level
+	 */
+	private static List<int[]> parseEnchantTiers(String value, String key)
+	{
+		final List<int[]> result = new ArrayList<>();
 		for (String entry : value.split(";"))
 		{
 			entry = entry.trim();
@@ -153,17 +183,26 @@ public class FakePlayerPvpConfig
 				continue;
 			}
 			
-			final String[] parts = entry.split(",");
 			try
 			{
-				result.add(new SkillHolder(Integer.parseInt(parts[0].trim()), parts.length > 1 ? Integer.parseInt(parts[1].trim()) : 1));
+				final String[] levelAndRange = entry.split(":");
+				final String[] range = levelAndRange[1].split("-");
+				final int min = Math.max(0, Integer.parseInt(range[0].trim()));
+				final int max = Math.max(min, Integer.parseInt(range[range.length - 1].trim()));
+				result.add(new int[]
+				{
+					Integer.parseInt(levelAndRange[0].trim()),
+					min,
+					max
+				});
 			}
-			catch (NumberFormatException e)
+			catch (Exception e)
 			{
 				LOGGER.warning("Invalid " + key + " entry: " + entry);
 			}
 		}
 		
+		result.sort(Comparator.comparingInt(tier -> tier[0]));
 		return result;
 	}
 }

@@ -29,6 +29,7 @@ import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
+import org.l2jmobius.gameserver.model.item.holders.ItemEnchantHolder;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
@@ -46,6 +47,7 @@ public class FakePlayerPvpProfile
 	private final int _wornMask;
 	private final int _armorMask;
 	private final int _charges;
+	private final List<ItemEnchantHolder> _equipment;
 	
 	// The monster this fake player replaced and the spawn it came from (null for admin spawns).
 	private Npc _replacedMonster;
@@ -62,8 +64,9 @@ public class FakePlayerPvpProfile
 	 * @param wornMask the item mask of everything it wears (like {@code Inventory#getWearedMask()})
 	 * @param armorMask the item mask of its body armor, 0 if it wears none
 	 * @param charges the energy charges it fights with
+	 * @param equipment every item it wears, with its enchant level
 	 */
-	public FakePlayerPvpProfile(FakePlayerPvpBuild build, PlayerClass playerClass, int level, List<SkillHolder> buffs, int wornMask, int armorMask, int charges)
+	public FakePlayerPvpProfile(FakePlayerPvpBuild build, PlayerClass playerClass, int level, List<SkillHolder> buffs, int wornMask, int armorMask, int charges, List<ItemEnchantHolder> equipment)
 	{
 		_build = build;
 		_playerClass = playerClass;
@@ -72,6 +75,7 @@ public class FakePlayerPvpProfile
 		_wornMask = wornMask;
 		_armorMask = armorMask;
 		_charges = charges;
+		_equipment = equipment;
 	}
 	
 	public void setSkills(SkillCategory category, List<Skill> skills)
@@ -134,6 +138,14 @@ public class FakePlayerPvpProfile
 	public int getCharges()
 	{
 		return _charges;
+	}
+	
+	/**
+	 * @return every item it wears, with its enchant level
+	 */
+	public List<ItemEnchantHolder> getEquipment()
+	{
+		return _equipment;
 	}
 	
 	public void setReplacedMonster(Npc monster, Spawn spawn)

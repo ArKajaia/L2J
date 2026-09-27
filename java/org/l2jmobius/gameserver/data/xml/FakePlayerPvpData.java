@@ -41,6 +41,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpGearTier;
+import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 
 /**
  * Loads the roaming fake player gear kits and class builds from data/FakePlayerPvp.xml.
@@ -51,6 +52,8 @@ public class FakePlayerPvpData implements IXmlReader
 	
 	private final Map<String, List<FakePlayerPvpGearTier>> _kits = new HashMap<>();
 	private final List<FakePlayerPvpBuild> _builds = new ArrayList<>();
+	/** Buff list name -> (tier min level -> buffs), tiers sorted by level. */
+	private final Map<String, List<Map.Entry<Integer, List<SkillHolder>>>> _buffs = new HashMap<>();
 	private int _totalWeight;
 	
 	protected FakePlayerPvpData()
@@ -63,6 +66,7 @@ public class FakePlayerPvpData implements IXmlReader
 	{
 		_kits.clear();
 		_builds.clear();
+		_buffs.clear();
 		_totalWeight = 0;
 		parseDatapackFile("data/FakePlayerPvp.xml");
 		
@@ -90,7 +94,7 @@ public class FakePlayerPvpData implements IXmlReader
 			_totalWeight += build.getWeight();
 		}
 		
-		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _kits.size() + " gear kits and " + _builds.size() + " builds.");
+		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _kits.size() + " gear kits, " + _buffs.size() + " buff lists and " + _builds.size() + " builds.");
 	}
 	
 	@Override
@@ -107,6 +111,29 @@ public class FakePlayerPvpData implements IXmlReader
 				_kits.put(name, tiers);
 			});
 			
+			forEach(listNode, "buffs", buffsNode ->
+			{
+				final List<Map.Entry<Integer, List<SkillHolder>>> tiers = new ArrayList<>();
+				forEach(buffsNode, "tier", tierNode ->
+				{
+					final List<SkillHolder> buffs = new ArrayList<>();
+					for (String entry : tierNode.getTextContent().split(";"))
+					{
+						entry = entry.trim();
+						if (entry.isEmpty())
+						{
+							continue;
+						}
+						
+						final String[] idAndLevel = entry.split(",");
+						buffs.add(new SkillHolder(Integer.parseInt(idAndLevel[0].trim()), idAndLevel.length > 1 ? Integer.parseInt(idAndLevel[1].trim()) : 1));
+					}
+					tiers.add(Map.entry(parseInteger(tierNode.getAttributes(), "minLevel"), buffs));
+				});
+				tiers.sort(Map.Entry.comparingByKey());
+				_buffs.put(parseString(buffsNode.getAttributes(), "name"), tiers);
+			});
+			
 			forEach(listNode, "build", buildNode ->
 			{
 				final NamedNodeMap attrs = buildNode.getAttributes();
@@ -118,7 +145,7 @@ public class FakePlayerPvpData implements IXmlReader
 					return;
 				}
 				
-				final FakePlayerPvpBuild build = new FakePlayerPvpBuild(name, playerClass, parseEnum(attrs, Role.class, "role"), parseString(attrs, "weapon"), parseString(attrs, "armor"), parseString(attrs, "jewels", "JEWELS"), Math.max(0, parseInteger(attrs, "weight", 1)));
+				final FakePlayerPvpBuild build = new FakePlayerPvpBuild(name, playerClass, parseEnum(attrs, Role.class, "role"), parseString(attrs, "weapon"), parseString(attrs, "armor"), parseString(attrs, "jewels", "JEWELS"), parseString(attrs, "buffs", playerClass.isMage() ? "MAGE" : "FIGHTER"), Math.max(0, parseInteger(attrs, "weight", 1)));
 				for (Node skillsNode = buildNode.getFirstChild(); skillsNode != null; skillsNode = skillsNode.getNextSibling())
 				{
 					final SkillCategory category;
@@ -175,6 +202,26 @@ public class FakePlayerPvpData implements IXmlReader
 				break;
 			}
 			result = tier;
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * @param name the buff list name
+	 * @param level a character level
+	 * @return every buff of the list's tiers up to {@code level}
+	 */
+	public List<SkillHolder> getBuffs(String name, int level)
+	{
+		final List<SkillHolder> result = new ArrayList<>();
+		for (Map.Entry<Integer, List<SkillHolder>> tier : _buffs.getOrDefault(name, Collections.emptyList()))
+		{
+			if (tier.getKey() > level)
+			{
+				break;
+			}
+			result.addAll(tier.getValue());
 		}
 		
 		return result;
