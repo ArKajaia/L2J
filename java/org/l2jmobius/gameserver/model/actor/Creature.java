@@ -3979,11 +3979,11 @@ public abstract class Creature extends WorldObject
 			{
 				if (stat == Stat.POWER_ATTACK_SPEED)
 				{
-					su.addAttribute(StatusUpdate.ATK_SPD, (int) _stat.getPAtkSpd());
+					su.addAttribute(StatusUpdate.ATK_SPD, (int) getPAtkSpd());
 				}
 				else if (stat == Stat.MAGIC_ATTACK_SPEED)
 				{
-					su.addAttribute(StatusUpdate.CAST_SPD, _stat.getMAtkSpd());
+					su.addAttribute(StatusUpdate.CAST_SPD, getMAtkSpd());
 				}
 				else if (stat == Stat.MOVE_SPEED)
 				{
@@ -5626,7 +5626,7 @@ public abstract class Creature extends WorldObject
 	 */
 	public int calculateTimeBetweenAttacks()
 	{
-		return (int) (500000 / _stat.getPAtkSpd());
+		return (int) (500000 / getPAtkSpd());
 	}
 	
 	/**
@@ -5641,11 +5641,11 @@ public abstract class Creature extends WorldObject
 			{
 				case BOW:
 				{
-					return (int) ((1500 * 333 * _stat.getWeaponReuseModifier(null)) / _stat.getPAtkSpd());
+					return (int) ((1500 * 333 * _stat.getWeaponReuseModifier(null)) / getPAtkSpd());
 				}
 				case CROSSBOW:
 				{
-					return (int) ((1200 * 333 * _stat.getWeaponReuseModifier(null)) / _stat.getPAtkSpd());
+					return (int) ((1200 * 333 * _stat.getWeaponReuseModifier(null)) / getPAtkSpd());
 				}
 			}
 		}
@@ -5655,7 +5655,7 @@ public abstract class Creature extends WorldObject
 			return 0;
 		}
 		
-		return (int) ((weapon.getReuseDelay() * 333) / _stat.getPAtkSpd());
+		return (int) ((weapon.getReuseDelay() * 333) / getPAtkSpd());
 	}
 	
 	/**

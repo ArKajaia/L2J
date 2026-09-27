@@ -85,7 +85,7 @@ public class NpcShiftClick implements IActionShiftHandler
 			html.replace("%evas%", String.valueOf(target.asCreature().getEvasionRate(null)));
 			html.replace("%crit%", String.valueOf(target.asCreature().getCriticalHit(null, null)));
 			html.replace("%rspd%", String.valueOf((int) target.asCreature().getRunSpeed()));
-			html.replace("%aspd%", String.valueOf(target.asCreature().getPAtkSpd()));
+			html.replace("%aspd%", String.valueOf(Math.round(target.asCreature().getPAtkSpd())));
 			html.replace("%cspd%", String.valueOf(target.asCreature().getMAtkSpd()));
 			html.replace("%atkType%", String.valueOf(target.asCreature().getTemplate().getBaseAttackType()));
 			html.replace("%atkRng%", String.valueOf(target.asCreature().getTemplate().getBaseAttackRange()));
