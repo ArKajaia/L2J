@@ -70,6 +70,11 @@ public class FakePlayerPvpAI extends AttackableAI
 	private long _nextKiteTime = 0;
 	private boolean _resting = false;
 	
+	// The player it is chasing out of melee reach, and since when (tanks and tyrants take out their bow when it takes too long).
+	private Creature _chaseTarget = null;
+	private long _chaseStart = 0;
+	private long _nextWeaponSwapTime = 0;
+	
 	// The combo being played: which one, on whom, which step, and since when.
 	private FakePlayerPvpCombo.Chain _combo = null;
 	private Creature _comboTarget = null;
@@ -107,8 +112,15 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// Duelists and tyrants keep their energy full between fights, like players do.
+		// Fight over: the bow goes back in the bag.
+		_chaseTarget = null;
 		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		if ((profile != null) && profile.isBowHeld())
+		{
+			FakePlayerPvpManager.getInstance().equipWeapon(npc, profile.getMainWeapon());
+		}
+		
+		// Duelists and tyrants keep their energy full between fights, like players do.
 		if ((profile != null) && (profile.getCharges() < profile.getMaxCharges()) && castOnSelf(npc, null, profile.getSkills(SkillCategory.CHARGE), true, false))
 		{
 			return;
@@ -225,7 +237,14 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		FakePlayerPvpManager.getInstance().tryPotion(npc);
 		
+		// Tanks and tyrants take out their bow against a player they can't catch.
+		if (profile.getBow() != null)
+		{
+			chooseWeapon(npc, profile, target, now);
+		}
+		
 		final Role role = profile.getRole();
+		final boolean bowHeld = profile.isBowHeld();
 		final boolean mage = role == Role.MAGE;
 		final boolean pvp = target.isPlayable();
 		final boolean canMove = !npc.isMovementDisabled();
@@ -262,21 +281,22 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// Combos: the skill chains a practiced player of this class plays.
-		if (playCombo(npc, profile, target, pvp, distance, collision, canMove, now))
+		// Combos: the skill chains a practiced player of this class plays (with its weapon, not with the spare bow).
+		if (!bowHeld && playCombo(npc, profile, target, pvp, distance, collision, canMove, now))
 		{
 			return;
 		}
 		
 		// Stuns, roots and debuffs are mostly for players.
 		final double reach = distance - collision;
-		if ((Rnd.get(100) < (pvp ? FakePlayerPvpConfig.PVP_DEBUFF_CHANCE : 5)) && useSkill(npc, target, pickSkill(npc, target, profile.getSkills(SkillCategory.DEBUFF), true, role.isRanged() ? reach : -1, pvp), distance, collision, canMove))
+		// With the bow out it only uses what reaches the target from where it stands, instead of running in.
+		if ((Rnd.get(100) < (pvp ? FakePlayerPvpConfig.PVP_DEBUFF_CHANCE : 5)) && useSkill(npc, target, inReach(pickSkill(npc, target, profile.getSkills(SkillCategory.DEBUFF), true, (role.isRanged() || bowHeld) ? reach : -1, pvp), bowHeld, reach), distance, collision, canMove))
 		{
 			return;
 		}
 		
 		// Attack skills, best first. Mages cast whenever they can, and everyone spams skills against players.
-		if ((mage || (Rnd.get(100) < (pvp ? FakePlayerPvpConfig.PVP_SKILL_CHANCE : FakePlayerPvpConfig.SKILL_CHANCE))) && useSkill(npc, target, pickSkill(npc, target, profile.getSkills(SkillCategory.ATTACK), false, role.isRanged() ? reach : -1, pvp), distance, collision, canMove))
+		if ((mage || (Rnd.get(100) < (pvp ? FakePlayerPvpConfig.PVP_SKILL_CHANCE : FakePlayerPvpConfig.SKILL_CHANCE))) && useSkill(npc, target, inReach(pickSkill(npc, target, profile.getSkills(SkillCategory.ATTACK), false, (role.isRanged() || bowHeld) ? reach : -1, pvp), bowHeld, reach), distance, collision, canMove))
 		{
 			return;
 		}
@@ -482,6 +502,83 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		// Mostly the best one, sometimes another ready one.
 		return Rnd.get(100) < 70 ? ready.get(0) : ready.get(Rnd.get(ready.size()));
+	}
+	
+	/**
+	 * @param skill a skill, or {@code null}
+	 * @param onlyInReach {@code true} to only keep a skill that reaches the target from where the fake player stands
+	 * @param reach the distance to the target
+	 * @return {@code skill}, or {@code null} if it has to be dropped
+	 */
+	private static Skill inReach(Skill skill, boolean onlyInReach, double reach)
+	{
+		if ((skill == null) || !onlyInReach)
+		{
+			return skill;
+		}
+		
+		final int range = skill.getCastRange() > 0 ? skill.getCastRange() : skill.getAffectRange();
+		return range >= reach ? skill : null;
+	}
+	
+	/**
+	 * Tanks and tyrants switch to their bow when a player keeps out of melee reach: after chasing for a while, sooner when there is no straight way to the player, right away when they can't move. They switch back to their weapon (and shield) when the player comes close, or
+	 * when they fight a monster again. A real player swaps weapons instantly, so it doesn't cost a tick.
+	 * @param npc the fake player
+	 * @param profile its profile, with a bow
+	 * @param target its target
+	 * @param now the current time
+	 */
+	private void chooseWeapon(Attackable npc, FakePlayerPvpProfile profile, Creature target, long now)
+	{
+		final double gap = npc.calculateDistance2D(target) - npc.getTemplate().getCollisionRadius() - target.getTemplate().getCollisionRadius();
+		final boolean close = gap <= FakePlayerPvpConfig.WEAPON_SWAP_MELEE_DISTANCE;
+		if (!target.isPlayable() || close)
+		{
+			_chaseTarget = null;
+		}
+		else if (_chaseTarget != target)
+		{
+			_chaseTarget = target;
+			_chaseStart = now;
+		}
+		
+		if ((now < _nextWeaponSwapTime) || npc.isAttackingNow() || npc.isCastingNow() || npc.isStunned() || npc.isSleeping() || npc.isParalyzed())
+		{
+			return;
+		}
+		
+		final FakePlayerPvpManager manager = FakePlayerPvpManager.getInstance();
+		if (profile.isBowHeld())
+		{
+			if ((!target.isPlayable() || close) && manager.equipWeapon(npc, profile.getMainWeapon()))
+			{
+				_nextWeaponSwapTime = now + FakePlayerPvpConfig.WEAPON_SWAP_INTERVAL;
+			}
+			return;
+		}
+		
+		// Not worth it unless the player is at bow range, or almost.
+		if ((_chaseTarget == null) || (gap > (profile.getBow().getAttackRange() + 300)))
+		{
+			return;
+		}
+		
+		// Rooted: right away. No straight way to the player (a ledge, a wall): a shorter chase, pathfinding may still get there.
+		long chaseTime = FakePlayerPvpConfig.WEAPON_SWAP_CHASE_TIME;
+		if (npc.isMovementDisabled())
+		{
+			chaseTime = 0;
+		}
+		else if (!GeoEngine.getInstance().canMoveToTarget(npc.getX(), npc.getY(), npc.getZ(), target.getX(), target.getY(), target.getZ(), npc.getInstanceId()))
+		{
+			chaseTime /= 2;
+		}
+		
+		if (((now - _chaseStart) >= chaseTime) && manager.equipWeapon(npc, profile.getBow()))
+		{
+			_nextWeaponSwapTime = now + FakePlayerPvpConfig.WEAPON_SWAP_INTERVAL;
+		}
 	}
 	
 	/**

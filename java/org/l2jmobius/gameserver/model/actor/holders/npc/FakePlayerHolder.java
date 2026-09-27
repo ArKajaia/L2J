@@ -36,8 +36,8 @@ public class FakePlayerHolder
 	private final int _nameColor;
 	private final int _titleColor;
 	private final int _equipHead;
-	private final int _equipRHand;
-	private final int _equipLHand;
+	private int _equipRHand;
+	private int _equipLHand;
 	private final int _equipGloves;
 	private final int _equipChest;
 	private final int _equipLegs;
@@ -46,7 +46,7 @@ public class FakePlayerHolder
 	private final int _equipHair;
 	private final int _equipHair2;
 	private final int _agathionId;
-	private final int _weaponEnchantLevel;
+	private int _weaponEnchantLevel;
 	private final int _armorEnchantLevel;
 	private final boolean _fishing;
 	private final int _baitLocationX;
@@ -196,6 +196,19 @@ public class FakePlayerHolder
 	public int getWeaponEnchantLevel()
 	{
 		return _weaponEnchantLevel;
+	}
+	
+	/**
+	 * Changes the weapon it shows, for a roaming fake player switching weapons (its holder is its own).
+	 * @param rightHand the weapon id
+	 * @param leftHand the shield id
+	 * @param enchantLevel the weapon enchant level
+	 */
+	public void setWeapon(int rightHand, int leftHand, int enchantLevel)
+	{
+		_equipRHand = rightHand;
+		_equipLHand = leftHand;
+		_weaponEnchantLevel = enchantLevel;
 	}
 	
 	public int getArmorEnchantLevel()

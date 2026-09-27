@@ -344,6 +344,17 @@ public class NpcTemplate extends CreatureTemplate
 		return _lhandId;
 	}
 	
+	/**
+	 * Changes the weapon and shield, for a roaming fake player switching weapons (its template is its own).
+	 * @param rhandId the weapon id
+	 * @param lhandId the shield id
+	 */
+	public void setHandIds(int rhandId, int lhandId)
+	{
+		_rhandId = rhandId;
+		_lhandId = lhandId;
+	}
+	
 	public int getWeaponEnchant()
 	{
 		return _weaponEnchant;

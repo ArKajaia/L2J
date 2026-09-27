@@ -79,6 +79,11 @@ public class FakePlayerPvpConfig
 	public static int PVP_ONLY_REUSE;
 	public static int KITE_DISTANCE;
 	public static int KITE_STEP;
+	public static boolean WEAPON_SWAP_ENABLED;
+	public static int WEAPON_SWAP_MIN_LEVEL;
+	public static int WEAPON_SWAP_CHASE_TIME;
+	public static int WEAPON_SWAP_MELEE_DISTANCE;
+	public static int WEAPON_SWAP_INTERVAL;
 	public static int TAUNT_CHANCE;
 	
 	// Rewards
@@ -139,6 +144,11 @@ public class FakePlayerPvpConfig
 		PVP_ONLY_REUSE = Math.max(0, config.getInt("FakePvpPvpOnlyReuse", 30000));
 		KITE_DISTANCE = Math.max(0, config.getInt("FakePvpKiteDistance", 250));
 		KITE_STEP = Math.max(50, config.getInt("FakePvpKiteStep", 300));
+		WEAPON_SWAP_ENABLED = config.getBoolean("FakePvpWeaponSwapEnabled", true);
+		WEAPON_SWAP_MIN_LEVEL = config.getInt("FakePvpWeaponSwapMinLevel", 20);
+		WEAPON_SWAP_CHASE_TIME = Math.max(0, config.getInt("FakePvpWeaponSwapChaseTime", 4000));
+		WEAPON_SWAP_MELEE_DISTANCE = Math.max(0, config.getInt("FakePvpWeaponSwapMeleeDistance", 150));
+		WEAPON_SWAP_INTERVAL = Math.max(500, config.getInt("FakePvpWeaponSwapInterval", 3000));
 		TAUNT_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpTauntChance", 50)));
 		
 		REWARD_EXP_SP_MULTIPLIER = Math.max(0, config.getDouble("FakePvpRewardExpSpMultiplier", 1.0));

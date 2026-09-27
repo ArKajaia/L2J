@@ -83,6 +83,7 @@
 						<xs:attribute type="xs:string" name="weapon" use="required" />
 						<xs:attribute type="xs:string" name="armor" use="required" />
 						<xs:attribute type="xs:string" name="jewels" />
+						<xs:attribute type="xs:string" name="bow" />
 						<xs:attribute type="xs:string" name="buffs" />
 						<xs:attribute type="xs:int" name="weight" />
 					</xs:complexType>

@@ -47,6 +47,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpWeapon;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.item.holders.ItemEnchantHolder;
@@ -562,6 +563,31 @@ public class FakePlayerPvpManager
 		profile.setNextPotionTime(now + FakePlayerPvpConfig.POTION_REUSE);
 		fake.setCurrentHp(Math.min(maxHp, fake.getCurrentHp() + ((maxHp * FakePlayerPvpConfig.POTION_HEAL_PERCENT) / 100.0)));
 		fake.broadcastPacket(new MagicSkillUse(fake, fake, POTION_SKILL_ID, 1, 0, 0));
+		return true;
+	}
+	
+	/**
+	 * Switches the weapon (and shield) a fake player holds, like a player equipping another weapon: its stats, the skills that need a weapon type and what players see follow the new weapon.
+	 * @param fake the fake player
+	 * @param weapon its main weapon or its bow
+	 * @return {@code true} if it switched
+	 */
+	public boolean equipWeapon(Npc fake, FakePlayerPvpWeapon weapon)
+	{
+		final NpcTemplate template = fake.getTemplate();
+		final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+		if ((profile == null) || (weapon == null) || (profile.getHeldWeapon() == weapon) || fake.isAttackingNow() || fake.isCastingNow())
+		{
+			return false;
+		}
+		
+		profile.setHeldWeapon(weapon);
+		template.setWeaponStats(weapon.getPAtk(), weapon.getMAtk(), weapon.getPAtkSpd(), weapon.getCritRate(), weapon.getAttackRange(), weapon.getRandomDamage(), weapon.getAttackType(), weapon.getShieldDefence(), weapon.getShieldRate());
+		template.setHandIds(weapon.getWeaponId(), weapon.getShieldId());
+		template.getFakePlayerInfo().setWeapon(weapon.getWeaponId(), weapon.getShieldId(), weapon.getEnchant());
+		
+		// Shows the new weapon to the players around.
+		fake.setLRHandId(weapon.getShieldId(), weapon.getWeaponId());
 		return true;
 	}
 	
