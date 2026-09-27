@@ -67,11 +67,11 @@ public class FakePlayerData
 	/**
 	 * Retrieves the NPC ID associated with the given fake player name.
 	 * @param name the name of the fake player
-	 * @return the NPC ID corresponding to the given name, or {@code null} if no match is found
+	 * @return the NPC ID corresponding to the given name, or {@code 0} if no match is found (e.g. a roaming fake player that died since)
 	 */
 	public int getNpcIdByName(String name)
 	{
-		return _fakePlayerIds.get(name);
+		return _fakePlayerIds.getOrDefault(name, 0);
 	}
 	
 	/**

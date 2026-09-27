@@ -43,6 +43,12 @@ public class ConditionPlayerCp extends Condition
 	@Override
 	public boolean testImpl(Creature effector, Creature effected, Skill skill, ItemTemplate item)
 	{
+		// A roaming fake player has no CP bar (its CP is part of its HP), so a CP requirement (Over the Body) can't block it.
+		if ((effector != null) && effector.isPvpFakePlayer())
+		{
+			return true;
+		}
+		
 		return (effector != null) && (((effector.getCurrentCp() * 100) / effector.getMaxCp()) >= _cp);
 	}
 }

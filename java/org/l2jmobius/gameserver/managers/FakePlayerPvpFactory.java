@@ -252,7 +252,7 @@ public class FakePlayerPvpFactory
 		set.set("baseMEN", men);
 		set.set("baseHpMax", hp);
 		set.set("baseMpMax", mp);
-		set.set("baseHpReg", classTemplate.getBaseHpRegen(level));
+		set.set("baseHpReg", classTemplate.getBaseHpRegen(level) + (FakePlayerPvpConfig.INCLUDE_CP_IN_HP ? classTemplate.getBaseCpRegen(level) : 0)); // CP regenerates too.
 		set.set("baseMpReg", classTemplate.getBaseMpRegen(level));
 		set.set("basePAtk", mainWeapon.getPAtk());
 		set.set("baseMAtk", mainWeapon.getMAtk());

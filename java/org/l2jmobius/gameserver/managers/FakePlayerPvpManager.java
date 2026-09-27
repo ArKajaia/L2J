@@ -146,6 +146,9 @@ public class FakePlayerPvpManager
 	
 	protected FakePlayerPvpManager()
 	{
+		// Also runs while spawning is off: fake players spawned with //fakepvp still need rebuffs and their lifetime.
+		ThreadPool.scheduleAtFixedRate(this::maintain, 30000, 30000);
+		
 		if (!FakePlayerPvpConfig.ENABLED)
 		{
 			LOGGER.info(getClass().getSimpleName() + ": Disabled.");
@@ -159,7 +162,6 @@ public class FakePlayerPvpManager
 		}
 		
 		FakePlayerPvpData.getInstance();
-		ThreadPool.scheduleAtFixedRate(this::maintain, 30000, 30000);
 	}
 	
 	/**
@@ -351,10 +353,7 @@ public class FakePlayerPvpManager
 			_fakePlayers.add(fake);
 			
 			// Toggles on, buffed, full HP/MP - like a player that just arrived.
-			for (Skill toggle : profile.getSkills(SkillCategory.TOGGLE))
-			{
-				toggle.applyEffects(fake, fake);
-			}
+			refreshToggles(fake, profile);
 			refreshBuffs(fake, profile);
 			fake.setCurrentHpMp(fake.getMaxHp(), fake.getMaxMp());
 			fake.broadcastInfo();
@@ -666,7 +665,39 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
-	 * Every 30 seconds: rebuff idle fake players and log off the ones that lived long enough.
+	 * Puts back the toggles that went off (canceled, or switched off for lack of HP).
+	 * @param fake the fake player
+	 * @param profile its profile
+	 */
+	private void refreshToggles(Npc fake, FakePlayerPvpProfile profile)
+	{
+		for (Skill toggle : profile.getSkills(SkillCategory.TOGGLE))
+		{
+			if (!fake.isAffectedBySkill(toggle.getId()))
+			{
+				toggle.applyEffects(fake, fake);
+			}
+		}
+	}
+	
+	/**
+	 * @param fake a roaming fake player
+	 * @return {@code true} if it is fighting a player: flagged, or a player (or summon) is the one it hates most
+	 */
+	private static boolean isInPvp(Npc fake)
+	{
+		if (fake.getScriptValue() > 0)
+		{
+			return true;
+		}
+		
+		final Creature hated = fake.isAttackable() ? fake.asAttackable().getMostHated() : null;
+		return (hated != null) && hated.isPlayable();
+	}
+	
+	/**
+	 * Every 30 seconds: rebuff fake players and log off the ones that lived long enough. A fake player hunts non stop (it picks its next monster right after a kill), so only a fight with a player keeps it from rebuffing or logging off, like a player that
+	 * leaves a hunt at any time but not in the middle of a PvP.
 	 */
 	private void maintain()
 	{
@@ -687,7 +718,7 @@ public class FakePlayerPvpManager
 					continue;
 				}
 				
-				if (fake.isInCombat() || fake.isCastingNow() || (fake.isAttackable() && !fake.asAttackable().getAggroList().isEmpty() && (fake.asAttackable().getMostHated() != null)))
+				if (fake.isCastingNow() || isInPvp(fake))
 				{
 					continue;
 				}
@@ -699,6 +730,7 @@ public class FakePlayerPvpManager
 					continue;
 				}
 				
+				refreshToggles(fake, profile);
 				refreshBuffs(fake, profile);
 			}
 			catch (Exception e)

@@ -24,9 +24,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.config.GeneralConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
+import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -40,8 +42,10 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.instance.Chest;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
+import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.skill.EffectScope;
 import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
@@ -66,9 +70,25 @@ public class FakePlayerPvpAI extends AttackableAI
 	/** How long it tries to get behind its target before using the skill from where it is. */
 	private static final long BEHIND_TIMEOUT = 2500;
 	
+	/** How long it goes on with a monster it can't hit (no path, a ledge...) before giving it up. */
+	private static final long MONSTER_STUCK_TIMEOUT = 15000;
+	/** How long it goes on with a player it can't hit before giving up (the player can pick the fight again). */
+	private static final long PLAYER_STUCK_TIMEOUT = 30000;
+	/** How long a monster it gave up on is left alone. */
+	private static final long UNREACHABLE_IGNORE_TIME = 60000;
+	
 	private long _kiteEndTime = 0;
 	private long _nextKiteTime = 0;
-	private boolean _resting = false;
+	private volatile boolean _resting = false;
+	
+	// The player it is fighting, to notice when that player goes down (the aggro list drops dead attackers by itself).
+	private Creature _pvpTarget = null;
+	
+	// Its current target and when it last attacked it or cast on it, to give up on a target it can't reach.
+	private Creature _progressTarget = null;
+	private long _progressTime = 0;
+	private Creature _unreachable = null;
+	private long _unreachableUntil = 0;
 	
 	// The player it is chasing out of melee reach, and since when (tanks and tyrants take out their bow when it takes too long).
 	private Creature _chaseTarget = null;
@@ -105,6 +125,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		// Someone picked a fight (a player, or a monster that hit first).
 		final Creature hated = npc.getMostHated();
+		checkPvpTarget(npc, hated);
 		if ((hated != null) && isValidTarget(npc, hated))
 		{
 			npc.setRunning();
@@ -114,10 +135,17 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		// Fight over: the bow goes back in the bag.
 		_chaseTarget = null;
+		_progressTarget = null;
 		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
 		if ((profile != null) && profile.isBowHeld())
 		{
 			FakePlayerPvpManager.getInstance().equipWeapon(npc, profile.getMainWeapon());
+		}
+		
+		// Loot of its kills (FakePlayerCanDropItems), picked up like a player does.
+		if (pickUpDrops(npc))
+		{
+			return;
 		}
 		
 		// Duelists and tyrants keep their energy full between fights, like players do.
@@ -188,22 +216,17 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		// Drop targets that are dead, gone or out of reach.
 		Creature target = npc.getMostHated();
+		checkPvpTarget(npc, target);
 		for (int i = 0; (target != null) && !isValidTarget(npc, target) && (i < 10); i++)
 		{
-			if (target.isPlayer() && target.isAlikeDead() && (npc.getHating(target) >= FakePlayerPvpManager.PVP_HATE))
-			{
-				FakePlayerPvpManager.getInstance().onPlayerDefeated(npc);
-			}
-			
 			npc.stopHating(target);
 			target = npc.getMostHated();
+			checkPvpTarget(npc, target);
 		}
 		
 		if ((target == null) || !isValidTarget(npc, target))
 		{
-			setAttackTarget(null);
-			npc.setTarget(null);
-			setIntention(Intention.ACTIVE);
+			dropTarget(npc);
 			return;
 		}
 		
@@ -215,6 +238,11 @@ public class FakePlayerPvpAI extends AttackableAI
 		if (npc.getTarget() != target)
 		{
 			npc.setTarget(target);
+		}
+		
+		if (target.isPlayable())
+		{
+			_pvpTarget = target;
 		}
 		
 		// Monsters are only hunted around the spawn point, players are chased further.
@@ -229,7 +257,25 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
+		// Give up on a target it hasn't been able to hit for a while (no way to it, a ledge...).
 		final long now = System.currentTimeMillis();
+		if (_progressTarget != target)
+		{
+			_progressTarget = target;
+			_progressTime = now;
+		}
+		else if ((now - _progressTime) > (target.isPlayable() ? PLAYER_STUCK_TIMEOUT : MONSTER_STUCK_TIMEOUT))
+		{
+			npc.stopHating(target);
+			if (!target.isPlayable())
+			{
+				_unreachable = target;
+				_unreachableUntil = now + UNREACHABLE_IGNORE_TIME;
+			}
+			dropTarget(npc);
+			return;
+		}
+		
 		if (npc.isMoving() && (now < _kiteEndTime))
 		{
 			return; // Let the step back finish.
@@ -322,6 +368,7 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
+		_progressTime = now;
 		_actor.doAttack(target);
 	}
 	
@@ -330,6 +377,95 @@ public class FakePlayerPvpAI extends AttackableAI
 	{
 		FakePlayerPvpManager.getInstance().onFakePlayerAttacked(getActiveChar(), attacker);
 		super.onActionAttacked(attacker);
+	}
+	
+	/**
+	 * @return {@code true} while it rests after a hard fight (it regenerates like a sitting player)
+	 */
+	public boolean isResting()
+	{
+		return _resting;
+	}
+	
+	/**
+	 * Notices the end of a fight with a player: when the player it was fighting is no longer the one it hates most, and that is because the player went down, it says so ("gg"...). A dead player can't be caught in the aggro list itself, which forgets dead attackers.
+	 * @param npc the fake player
+	 * @param mostHated the creature it hates most now, can be {@code null}
+	 */
+	private void checkPvpTarget(Attackable npc, Creature mostHated)
+	{
+		final Creature pvpTarget = _pvpTarget;
+		if ((pvpTarget == null) || (pvpTarget == mostHated))
+		{
+			return;
+		}
+		
+		_pvpTarget = null;
+		if (pvpTarget.isPlayer() && pvpTarget.isAlikeDead())
+		{
+			npc.stopHating(pvpTarget);
+			FakePlayerPvpManager.getInstance().onPlayerDefeated(npc);
+		}
+	}
+	
+	/**
+	 * Stops fighting: no target, back to hunting.
+	 * @param npc the fake player
+	 */
+	private void dropTarget(Attackable npc)
+	{
+		_progressTarget = null;
+		setAttackTarget(null);
+		npc.setTarget(null);
+		setIntention(Intention.ACTIVE);
+	}
+	
+	/**
+	 * Picks up the items its kills dropped for it (only when FakePlayerCanDropItems is on), last one first, like the regular fake player AI.
+	 * @param npc the fake player
+	 * @return {@code true} if it is busy with it this tick
+	 */
+	private boolean pickUpDrops(Attackable npc)
+	{
+		final List<Item> drops = npc.getFakePlayerDrops();
+		while (!drops.isEmpty())
+		{
+			final int index = drops.size() - 1;
+			final Item item = drops.get(index);
+			if ((item == null) || !item.isSpawned() || (item.getInstanceId() != npc.getInstanceId()) || (npc.calculateDistance2D(item) > FakePlayerPvpConfig.HUNT_RANGE))
+			{
+				drops.remove(index); // Taken by someone else, or too far to bother.
+				continue;
+			}
+			
+			if (npc.calculateDistance2D(item) > 50)
+			{
+				if (!npc.isMovementDisabled())
+				{
+					npc.setRunning();
+					moveTo(item.getX(), item.getY(), item.getZ());
+				}
+				return true;
+			}
+			
+			drops.remove(index);
+			item.pickupMe(npc);
+			if (GeneralConfig.SAVE_DROPPED_ITEM)
+			{
+				ItemsOnGroundManager.getInstance().removeObject(item);
+			}
+			
+			if (item.getTemplate().hasExImmediateEffect() && (item.getTemplate().getSkills() != null))
+			{
+				for (SkillHolder holder : item.getTemplate().getSkills())
+				{
+					npc.doSimultaneousCast(holder.getSkill());
+				}
+			}
+			return true;
+		}
+		
+		return false;
 	}
 	
 	/**
@@ -357,14 +493,15 @@ public class FakePlayerPvpAI extends AttackableAI
 	 * @param npc the fake player
 	 * @return the closest monster worth hunting, or {@code null} if there is none
 	 */
-	private static Creature findPrey(Attackable npc)
+	private Creature findPrey(Attackable npc)
 	{
 		final Spawn spawn = npc.getSpawn();
+		final Creature unreachable = System.currentTimeMillis() < _unreachableUntil ? _unreachable : null;
 		Monster prey = null;
 		double preyDistance = Double.MAX_VALUE;
 		for (Monster monster : World.getInstance().getVisibleObjectsInRange(npc, Monster.class, FakePlayerPvpConfig.HUNT_RANGE))
 		{
-			if (monster.isDead() || monster.isFakePlayer() || monster.isRaid() || (monster instanceof Chest) || monster.isInvul() || !monster.isTargetable() || (monster.getInstanceId() != npc.getInstanceId()))
+			if ((monster == unreachable) || monster.isDead() || monster.isFakePlayer() || monster.isRaid() || (monster instanceof Chest) || monster.isInvul() || !monster.isTargetable() || (monster.getInstanceId() != npc.getInstanceId()))
 			{
 				continue;
 			}
@@ -618,6 +755,11 @@ public class FakePlayerPvpAI extends AttackableAI
 			
 			moveToPawn(target, Math.max(20, range - 20));
 			return CastResult.MOVING;
+		}
+		
+		if (target == _progressTarget)
+		{
+			_progressTime = System.currentTimeMillis();
 		}
 		
 		clientStopMoving(null);
