@@ -15543,7 +15543,9 @@ public class Player extends Playable
 	{
 		final double base = super.getPAtkSpd();
 		final double pct = getPassiveStatBonus().get("ATK_SPD_PCT");
-		return base * (1.0 + (pct / 100.0));
+		final double val = base * (1.0 + (pct / 100.0));
+		// This value drives real attack timings, so keep the passive bonus within the configured cap.
+		return isGM() ? val : Math.min(val, PlayerConfig.MAX_PATK_SPEED);
 	}
 	
 	@Override

@@ -163,7 +163,7 @@ public class CreatureStat
 	 */
 	public float getAttackSpeedMultiplier()
 	{
-		return (float) ((1.1 * getPAtkSpd()) / _creature.getTemplate().getBasePAtkSpd());
+		return (float) ((1.1 * _creature.getPAtkSpd()) / _creature.getTemplate().getBasePAtkSpd());
 	}
 	
 	/**
