@@ -346,6 +346,11 @@ public class Attackable extends Npc
 				org.l2jmobius.gameserver.managers.ThiefMonsterManager.getInstance().onAttackableKilled(this);
 				org.l2jmobius.gameserver.managers.MageMonsterManager.getInstance().onAttackableKilled(this, player);
 			}
+			else if (killer.isPvpFakePlayer() && getMustRewardExpSP())
+			{
+				// A roaming fake player gets the hotzone kill effects a player would (VAMPIRIC_HUNT, KILL_STREAK).
+				org.l2jmobius.gameserver.managers.HotzoneModifierManager.getInstance().onAttackableKilledByFakePlayer(this, killer);
+			}
 			
 			// Roaming fake players: revenge on a player who stole their kill, rewards for killing one.
 			if (player != null)

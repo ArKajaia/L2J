@@ -97,7 +97,8 @@ public class Stun extends AbstractEffect
 	 */
 	private boolean isHotzoneStunImmune(Creature effected)
 	{
-		if (!effected.isMonster())
+		// A roaming fake player is no monster: it can be stunned like a player.
+		if (!effected.isMonster() || effected.isPvpFakePlayer())
 		{
 			return false;
 		}

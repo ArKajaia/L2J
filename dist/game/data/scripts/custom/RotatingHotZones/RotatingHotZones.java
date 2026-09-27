@@ -193,6 +193,12 @@ public class RotatingHotZones extends Quest
 					{
 						creature.stopSkillEffects(SkillFinishType.REMOVED, PLAYER_BUFF_ID);
 					}
+					else if (creature.isPvpFakePlayer())
+					{
+						// Roaming fake players are treated as players: they lose the player buffs (their modifier buff follows the new rotation below).
+						creature.stopSkillEffects(SkillFinishType.REMOVED, PLAYER_BUFF_ID);
+						removeModifierBuffs(creature, 0);
+					}
 					else if (creature.isMonster())
 					{
 						creature.stopSkillEffects(SkillFinishType.REMOVED, MONSTER_BUFF_ID);
@@ -277,6 +283,14 @@ public class RotatingHotZones extends Quest
 					if (creature.isPlayer() && (playerBuff != null))
 					{
 						playerBuff.applyEffects(creature, creature);
+					}
+					else if (creature.isPvpFakePlayer())
+					{
+						if (playerBuff != null)
+						{
+							playerBuff.applyEffects(creature, creature);
+						}
+						syncModifierBuff(creature);
 					}
 					else if (creature.isMonster() && (monsterBuff != null))
 					{
@@ -530,21 +544,31 @@ public class RotatingHotZones extends Quest
 	}
 	
 	/**
-	 * Makes {@code player} hold exactly the buff of the modifier active in the hotzone they stand in (see {@link HotzoneModifier#getPlayerBuffSkillId()}) - or none, if they are outside every active zone or its modifier has no buff. Every other modifier buff is removed.
-	 * @param player the player to update
+	 * Removes every modifier buff from {@code creature} but {@code keepSkillId}.
+	 * @param creature the player or roaming fake player
+	 * @param keepSkillId the modifier buff to keep, 0 for none
 	 */
-	private void syncModifierBuff(Player player)
+	private void removeModifierBuffs(Creature creature, int keepSkillId)
 	{
-		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(player);
-		final int wantedSkillId = modifier != null ? modifier.getPlayerBuffSkillId() : 0;
 		for (HotzoneModifier each : HotzoneModifier.values())
 		{
 			final int skillId = each.getPlayerBuffSkillId();
-			if ((skillId > 0) && (skillId != wantedSkillId) && player.isAffectedBySkill(skillId))
+			if ((skillId > 0) && (skillId != keepSkillId) && creature.isAffectedBySkill(skillId))
 			{
-				player.stopSkillEffects(SkillFinishType.REMOVED, skillId);
+				creature.stopSkillEffects(SkillFinishType.REMOVED, skillId);
 			}
 		}
+	}
+	
+	/**
+	 * Makes {@code player} hold exactly the buff of the modifier active in the hotzone they stand in (see {@link HotzoneModifier#getPlayerBuffSkillId()}) - or none, if they are outside every active zone or its modifier has no buff. Every other modifier buff is removed.
+	 * @param player the player (or roaming fake player, which gets the player side of a hotzone) to update
+	 */
+	private void syncModifierBuff(Creature player)
+	{
+		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(player);
+		final int wantedSkillId = modifier != null ? modifier.getPlayerBuffSkillId() : 0;
+		removeModifierBuffs(player, wantedSkillId);
 		
 		if ((wantedSkillId > 0) && !player.isAffectedBySkill(wantedSkillId))
 		{
@@ -723,6 +747,16 @@ public class RotatingHotZones extends Quest
 				character.asPlayer().sendMessage("You have entered an active Hot Zone!");
 				syncModifierBuff(character.asPlayer());
 			}
+			else if (character.isPvpFakePlayer())
+			{
+				// A roaming fake player is no monster: it gets the player side of the hotzone.
+				Skill buff = getSafeSkill(PLAYER_BUFF_ID, 1);
+				if (buff != null)
+				{
+					buff.applyEffects(character, character);
+				}
+				syncModifierBuff(character);
+			}
 			else if (character.isMonster())
 			{
 				Skill buff = getSafeSkill(MONSTER_BUFF_ID, 1);
@@ -743,9 +777,9 @@ public class RotatingHotZones extends Quest
 			if (isInsideOtherActiveZone(character, zone.getId()))
 			{
 				// ...but their modifiers can differ, so the modifier buff still has to follow.
-				if (character.isPlayer())
+				if (character.isPlayer() || character.isPvpFakePlayer())
 				{
-					syncModifierBuff(character.asPlayer());
+					syncModifierBuff(character);
 				}
 				return;
 			}
@@ -755,6 +789,11 @@ public class RotatingHotZones extends Quest
 				character.stopSkillEffects(SkillFinishType.REMOVED, PLAYER_BUFF_ID);
 				syncModifierBuff(character.asPlayer());
 				character.asPlayer().sendMessage("You have left the active Hot Zone.");
+			}
+			else if (character.isPvpFakePlayer())
+			{
+				character.stopSkillEffects(SkillFinishType.REMOVED, PLAYER_BUFF_ID);
+				syncModifierBuff(character);
 			}
 			else if (character.isMonster())
 			{
