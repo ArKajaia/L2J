@@ -87,10 +87,11 @@ public class FakePlayerPvpBuild
 	private final String _bowKit;
 	private final String _buffList;
 	private final int _weight;
+	private final boolean _skillFighter;
 	private final Map<SkillCategory, List<int[]>> _skills = new EnumMap<>(SkillCategory.class);
 	private final List<FakePlayerPvpCombo> _combos = new ArrayList<>();
 	
-	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String buffList, int weight)
+	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String buffList, int weight, boolean skillFighter)
 	{
 		_name = name;
 		_playerClass = playerClass;
@@ -101,6 +102,7 @@ public class FakePlayerPvpBuild
 		_bowKit = bowKit;
 		_buffList = buffList;
 		_weight = weight;
+		_skillFighter = skillFighter;
 	}
 	
 	/**
@@ -202,5 +204,13 @@ public class FakePlayerPvpBuild
 	public int getWeight()
 	{
 		return _weight;
+	}
+	
+	/**
+	 * @return {@code true} for a class that deals its damage with skills (Gladiator/Duelist, Tyrant, daggers), {@code false} for one whose damage is its normal attack and uses skills now and then (tanks, archers, most warriors)
+	 */
+	public boolean isSkillFighter()
+	{
+		return _skillFighter;
 	}
 }

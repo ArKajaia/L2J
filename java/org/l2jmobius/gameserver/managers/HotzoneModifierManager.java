@@ -133,14 +133,53 @@ public class HotzoneModifierManager
 			return;
 		}
 
-		if ((modifier.getKillHealPct() > 0) && !killer.isDead())
+		rewardKiller(modifier, killer);
+
+		if ((modifier.getRiseChancePct() > 0) && victim.isMonster() && victim.asMonster().canHotzoneRise() && (Rnd.get(100) < modifier.getRiseChancePct()))
+		{
+			ThreadPool.schedule(() -> raiseAgain(victim.asMonster(), killer), RISE_DELAY_MS);
+		}
+	}
+
+	/**
+	 * A roaming fake player is no monster: like a player, it gets the kill effects of the modifier (VAMPIRIC_HUNT heal, KILL_STREAK buff) for the monsters it kills in a hotzone. Called from {@code Attackable.doDie}.
+	 * @param victim the monster that just died
+	 * @param killer the roaming fake player that killed it
+	 */
+	public void onAttackableKilledByFakePlayer(Attackable victim, Creature killer)
+	{
+		if ((victim == null) || (killer == null) || !killer.isPvpFakePlayer())
+		{
+			return;
+		}
+
+		final HotzoneModifier modifier = getModifierFor(victim);
+		if (modifier != null)
+		{
+			rewardKiller(modifier, killer);
+		}
+	}
+
+	/**
+	 * VAMPIRIC_HUNT heals the killer, KILL_STREAK stacks its buff one level higher.
+	 * @param modifier the modifier of the zone the kill happened in
+	 * @param killer the player (or roaming fake player) that made the kill
+	 */
+	private void rewardKiller(HotzoneModifier modifier, Creature killer)
+	{
+		if (killer.isDead())
+		{
+			return;
+		}
+
+		if (modifier.getKillHealPct() > 0)
 		{
 			final double pct = modifier.getKillHealPct() / 100.0;
 			killer.setCurrentHp(Math.min(killer.getMaxHp(), killer.getCurrentHp() + (killer.getMaxHp() * pct)));
 			killer.setCurrentMp(Math.min(killer.getMaxMp(), killer.getCurrentMp() + (killer.getMaxMp() * pct)));
 		}
 
-		if (modifier.isKillStreak() && !killer.isDead())
+		if (modifier.isKillStreak())
 		{
 			final BuffInfo current = killer.getEffectList().getBuffInfoBySkillId(HotzoneModifier.KILL_STREAK_SKILL_ID);
 			final int level = Math.min((current != null ? current.getSkill().getLevel() : 0) + 1, HotzoneModifier.KILL_STREAK_MAX_LEVEL);
@@ -149,11 +188,6 @@ public class HotzoneModifierManager
 			{
 				streak.applyEffects(killer, killer);
 			}
-		}
-
-		if ((modifier.getRiseChancePct() > 0) && victim.isMonster() && victim.asMonster().canHotzoneRise() && (Rnd.get(100) < modifier.getRiseChancePct()))
-		{
-			ThreadPool.schedule(() -> raiseAgain(victim.asMonster(), killer), RISE_DELAY_MS);
 		}
 	}
 
@@ -185,7 +219,8 @@ public class HotzoneModifierManager
 		final double pct = modifier.getPlayerHpDrainPctPerTick() / 100.0;
 		for (Creature creature : zone.getCharactersInside())
 		{
-			final Player player = creature.asPlayer();
+			// Players, and roaming fake players, which get the player side of a hotzone (the drain can't take them below their monster damage floor).
+			final Creature player = creature.isPvpFakePlayer() ? creature : creature.asPlayer();
 			if ((player == null) || player.isDead() || player.isInvul())
 			{
 				continue;

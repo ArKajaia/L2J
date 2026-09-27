@@ -19,6 +19,10 @@
 	               a player it can't catch and switches back to its weapon (and shield) when the player comes
 	               close (see FakePvpWeaponSwap* in config/Custom/FakePlayerPvp.ini).
 	     weight  - relative chance to pick this build.
+	     skillFighter - true for a class that deals its damage with skills (Gladiator/Duelist, Tyrant,
+	               daggers): it uses a skill most of the time (FakePvpSkillChance). The others (tanks,
+	               archers, most warriors) fight with their normal attack and use a skill now and then
+	               (FakePvpAutoAttackSkillChance); mages always cast.
 	     Skills are lists of skill ids. The level of each skill (and whether the fake player
 	     has it at all) comes from the class skill tree for its level, like a real character.
 	     "a|b|c" means only the first learned one is used (e.g. exclusive totems).
@@ -347,7 +351,7 @@
 	</build>
 
 	<!-- Daggers -->
-	<build name="Adventurer" classId="93" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="1">
+	<build name="Adventurer" classId="93" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="1" skillFighter="true">
 		<attack>991,409,344,263,30,16</attack>
 		<debuff>358,531,412,96</debuff>
 		<buff>357|356,768,445</buff>
@@ -387,7 +391,7 @@
 			<step skill="30" optional="true" /> <!-- Backstab, only when not in front -->
 		</combo>
 	</build>
-	<build name="Wind Rider" classId="101" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="1">
+	<build name="Wind Rider" classId="101" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="1" skillFighter="true">
 		<attack>991,344,263,321,30,16</attack>
 		<debuff>358,531,102,412,96</debuff>
 		<buff>355|356,410,769,446,230</buff>
@@ -423,7 +427,7 @@
 			<step skill="30" optional="true" /> <!-- Backstab, only when not in front -->
 		</combo>
 	</build>
-	<build name="Ghost Hunter" classId="108" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="1">
+	<build name="Ghost Hunter" classId="108" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="1" skillFighter="true">
 		<attack>991,344,263,321,30,223,16</attack>
 		<debuff>358,531,115,122,412,96</debuff>
 		<buff>355|357,410,770,447</buff>
@@ -525,7 +529,7 @@
 	</build>
 
 	<!-- Warriors -->
-	<build name="Duelist" classId="88" role="FIGHTER" weapon="DUAL" armor="HEAVY" weight="1">
+	<build name="Duelist" classId="88" role="FIGHTER" weapon="DUAL" armor="HEAVY" weight="1" skillFighter="true">
 		<attack>7,9,345,261,5,1,6,255,3</attack>
 		<debuff>775</debuff>
 		<buff>297,917,78,287</buff>
@@ -547,7 +551,7 @@
 			<step skill="1" optional="true" /> <!-- Triple Slash -->
 		</combo>
 	</build>
-	<build name="Grand Khavatari" classId="114" role="FIGHTER" weapon="FIST" armor="HEAVY_FORCE" bow="BOW" weight="1">
+	<build name="Grand Khavatari" classId="114" role="FIGHTER" weapon="FIST" armor="HEAVY_FORCE" bow="BOW" weight="1" skillFighter="true">
 		<attack>35,17,776,346,81,284,280,54,29,3</attack>
 		<debuff>120,281,95</debuff>
 		<buff>425|292|298|109|282|76|83,420,917</buff>

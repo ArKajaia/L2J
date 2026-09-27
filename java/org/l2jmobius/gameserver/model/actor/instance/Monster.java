@@ -138,6 +138,14 @@ public class Monster extends Attackable
 	{
 		return HotzoneModifierManager.getInstance().getModifierFor(this);
 	}
+	
+	/**
+	 * @return the modifier whose monster stat changes (HP, attack, defence, speed) apply to this monster: none for a roaming fake player, which is no monster and gets the player side of the hotzone instead (see {@code custom.RotatingHotZones}). Loot still follows the zone.
+	 */
+	private HotzoneModifier getHotzoneStatModifier()
+	{
+		return isPvpFakePlayer() ? null : getActiveHotzoneModifier();
+	}
 
 	@Override
 	public void onSpawn()
@@ -1017,7 +1025,7 @@ public class Monster extends Attackable
 		final int passiveCount = getVariables().getInt("PASSIVE_COUNT", 0);
 		final double hpMultiplier = 1.0 + ((RatesConfig.RANDOM_PASSIVE_HP_PER_SKILL / 100.0) * passiveCount);
 		final double arenaMultiplier = isArenaChallenger() ? getArenaStatMultiplier() : 1.0;
-		final HotzoneModifier hotzoneModifierHp = getActiveHotzoneModifier();
+		final HotzoneModifier hotzoneModifierHp = getHotzoneStatModifier();
 		final double hotzoneHpMultiplier = hotzoneModifierHp != null ? hotzoneModifierHp.getMonsterHpMult() : 1.0;
 
 		return (int) (baseMaxHp * hpMultiplier * arenaMultiplier * championHpMult * getHotzoneMinibossMultiplier() * hotzoneHpMultiplier * getWaveChallengeStatMultiplier());
@@ -1046,7 +1054,7 @@ public class Monster extends Attackable
 	{
 		final double basePAtk = super.getPAtk(target);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
-		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
 		return basePAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() : 1.0);
 	}
 
@@ -1055,7 +1063,7 @@ public class Monster extends Attackable
 	{
 		final double baseMAtk = super.getMAtk(target, skill);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
-		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
 		return baseMAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getMonsterMAtkMult() : 1.0);
 	}
 
@@ -1064,7 +1072,7 @@ public class Monster extends Attackable
 	{
 		final double basePDef = super.getPDef(target);
 		final double multiplier = isArenaChallenger() ? getArenaDefenseMultiplier() : getHotzoneMinibossMultiplier();
-		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
 		return basePDef * multiplier * getWaveChallengeDefenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0);
 	}
 
@@ -1073,7 +1081,7 @@ public class Monster extends Attackable
 	{
 		final double baseMDef = super.getMDef(target, skill);
 		final double multiplier = isArenaChallenger() ? getArenaDefenseMultiplier() : getHotzoneMinibossMultiplier();
-		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
 		return baseMDef * multiplier * getWaveChallengeDefenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0);
 	}
 
@@ -1082,7 +1090,7 @@ public class Monster extends Attackable
 	{
 		final double basePAtkSpd = super.getPAtkSpd();
 		final double multiplier = (isArenaChallenger() ? getArenaOffenseMultiplier() : 1.0) * getWaveChallengeOffenseMultiplier();
-		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
 		final double hotzoneMultiplier = hotzoneModifier != null ? hotzoneModifier.getMonsterSpdMult() : 1.0;
 		return basePAtkSpd * Math.sqrt(multiplier * hotzoneMultiplier);
 	}
@@ -1092,7 +1100,7 @@ public class Monster extends Attackable
 	{
 		final int baseMAtkSpd = super.getMAtkSpd();
 		final double multiplier = (isArenaChallenger() ? getArenaOffenseMultiplier() : 1.0) * getWaveChallengeOffenseMultiplier();
-		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
+		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
 		final double hotzoneMultiplier = hotzoneModifier != null ? hotzoneModifier.getMonsterSpdMult() : 1.0;
 		final double mageMultiplier = isMageMonster() ? 1.0 + (MageMonsterConfig.CAST_SPEED_BONUS / 100.0) : 1.0;
 		return (int) (baseMAtkSpd * Math.sqrt(multiplier * hotzoneMultiplier) * mageMultiplier);
