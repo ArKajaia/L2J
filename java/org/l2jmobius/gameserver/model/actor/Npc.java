@@ -1234,7 +1234,8 @@ public class Npc extends Creature
 		if (_isFakePlayer && (killer != null) && killer.isPlayable())
 		{
 			final Player player = killer.asPlayer();
-			if (isScriptValue(0) && (getKarma() < 0))
+			// Not flagged and no karma: a PK. (Karma is positive here, "< 0" could never be true.)
+			if (isScriptValue(0) && (getKarma() <= 0))
 			{
 				if (FakePlayersConfig.FAKE_PLAYER_KILL_KARMA)
 				{

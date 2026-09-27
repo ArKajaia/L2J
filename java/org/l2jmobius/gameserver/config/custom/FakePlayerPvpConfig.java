@@ -103,7 +103,8 @@ public class FakePlayerPvpConfig
 		MAX_LEVEL = config.getInt("FakePvpMaxLevel", 85);
 		LEVEL_VARIANCE = Math.max(0, config.getInt("FakePvpLevelVariance", 0));
 		ALLOW_IN_INSTANCES = config.getBoolean("FakePvpAllowInInstances", false);
-		EXCLUDED_NPC_IDS.clear();
+		// Built aside and swapped in, so a config reload never shows spawning threads a half filled set.
+		final Set<Integer> excludedNpcIds = new HashSet<>();
 		for (String idStr : config.getString("FakePvpExcludedNpcIds", "").split(","))
 		{
 			idStr = idStr.trim();
@@ -111,7 +112,7 @@ public class FakePlayerPvpConfig
 			{
 				try
 				{
-					EXCLUDED_NPC_IDS.add(Integer.parseInt(idStr));
+					excludedNpcIds.add(Integer.parseInt(idStr));
 				}
 				catch (NumberFormatException e)
 				{
@@ -119,6 +120,8 @@ public class FakePlayerPvpConfig
 				}
 			}
 		}
+		
+		EXCLUDED_NPC_IDS = excludedNpcIds;
 		
 		MAX_ALIVE = Math.max(0, config.getInt("FakePvpMaxAlive", 500));
 		MIN_DISTANCE = Math.max(0, config.getInt("FakePvpMinDistance", 1500));

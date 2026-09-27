@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.ai.FakePlayerPvpAI;
 import org.l2jmobius.gameserver.config.GeneralConfig;
 import org.l2jmobius.gameserver.config.NpcConfig;
 import org.l2jmobius.gameserver.config.PlayerConfig;
@@ -360,6 +361,21 @@ public class Formulas
 			}
 			
 			// Add CON bonus
+			init *= creature.getLevelMod() * BaseStat.CON.calcBonus(creature);
+		}
+		else if (creature.isPvpFakePlayer())
+		{
+			// Roaming fake players regenerate like a character of their class: faster out of combat, and much faster while resting after a fight (a player sits down).
+			if (creature.hasAI() && (creature.getAI() instanceof FakePlayerPvpAI ai) && ai.isResting())
+			{
+				hpRegenMultiplier *= 2.5;
+			}
+			
+			if (!creature.isInCombat())
+			{
+				hpRegenMultiplier *= 2.0;
+			}
+			
 			init *= creature.getLevelMod() * BaseStat.CON.calcBonus(creature);
 		}
 		else if (creature.isPet())
