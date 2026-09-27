@@ -1380,15 +1380,15 @@ public class AttackableAI extends CreatureAI
 		}
 		
 		// Check if target is within range or move.
-		int range = npc.getPhysicalAttackRange() + combinedCollision;
-		if (npc.isMoving())
+		final int attackRange = npc.getPhysicalAttackRange();
+		int range = attackRange + combinedCollision;
+		if ((npc.getAiType() == AIType.ARCHER) && (attackRange < 200))
 		{
-			range *= 2;
+			range = 850 + combinedCollision; // Base bow range for NPC archers whose data has a melee range.
 		}
-		
-		if (npc.getAiType() == AIType.ARCHER)
+		else if (npc.isMoving() && (attackRange < 200))
 		{
-			range = 850 + combinedCollision; // Base bow range for NPCs.
+			range *= 2; // Melee only: a ranged attacker would start shooting from twice its range.
 		}
 		
 		if (npc.calculateDistance2D(mostHate) > range)

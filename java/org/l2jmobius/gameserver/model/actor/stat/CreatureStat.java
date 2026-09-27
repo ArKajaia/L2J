@@ -693,7 +693,7 @@ public class CreatureStat
 		{
 			baseAttackRange = transform.getBaseAttackRange(_creature.asPlayer());
 		}
-		else if ((_creature.getActiveWeaponItem() == null) || _creature.isPvpFakePlayer()) // A roaming fake player's template holds the range of the weapon it holds.
+		else if ((_creature.getActiveWeaponItem() == null) || _creature.isNpc()) // NPC weapons have no stat functions: the range is the one of the template (for a roaming fake player, the one of the weapon it holds).
 		{
 			baseAttackRange = _creature.getTemplate().getBaseAttackRange();
 		}
