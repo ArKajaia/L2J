@@ -12,6 +12,8 @@ import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.handler.BypassHandler;
+import org.l2jmobius.gameserver.handler.IBypassHandler;
 import org.l2jmobius.gameserver.managers.HotzoneModifierManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.Location;
@@ -40,6 +42,10 @@ public class RotatingHotZones extends Quest
 	
 	/** How long a party member has to accept a teleport offer. */
 	private static final long TELEPORT_OFFER_TIMEOUT_MS = 30000;
+	
+	/** Offer reply bypasses, handled by {@link OfferBypassHandler}. */
+	private static final String BYPASS_ACCEPT = "hotzone_tp_accept";
+	private static final String BYPASS_DECLINE = "hotzone_tp_decline";
 	
 	/**
 	 * Static handle so EnterWorld can reconcile hot zone buffs on login. Set in the constructor, which the script loader runs once at boot.
@@ -167,6 +173,8 @@ public class RotatingHotZones extends Quest
 		addFirstTalkId(TELEPORTER_NPC_ID);
 		addStartNpc(TELEPORTER_NPC_ID);
 		addTalkId(TELEPORTER_NPC_ID);
+		
+		BypassHandler.getInstance().registerHandler(new OfferBypassHandler());
 		
 		// Hotzone buffs never expire and are saved on logout, so without this a player who logged out inside a zone kept them forever,
 		// anywhere. OnPlayerLogin fires after the effect restore and the zone revalidation, so the zone lists are already up to date.
@@ -301,6 +309,84 @@ public class RotatingHotZones extends Quest
 		}
 	}
 	
+	/**
+	 * Accept/decline replies to a party teleport offer.
+	 * <p>
+	 * These must NOT go through "bypass Script RotatingHotZones ...": script bypasses are only delivered when the player is standing next to the last NPC they talked to, and a party member receives the offer wherever they are - so the click was silently dropped unless they happened to be beside an NPC.
+	 */
+	private class OfferBypassHandler implements IBypassHandler
+	{
+		@Override
+		public boolean onCommand(String command, Player player, Creature bypassOrigin)
+		{
+			if (command.equals(BYPASS_ACCEPT))
+			{
+				acceptOffer(player);
+			}
+			else if (command.equals(BYPASS_DECLINE))
+			{
+				declineOffer(player);
+			}
+			return true;
+		}
+		
+		@Override
+		public String[] getCommandList()
+		{
+			return new String[]
+			{
+				BYPASS_ACCEPT,
+				BYPASS_DECLINE
+			};
+		}
+	}
+	
+	private void acceptOffer(Player player)
+	{
+		final PendingTeleport pending = _pendingTeleports.get(player.getObjectId());
+		if (pending == null)
+		{
+			player.sendMessage("You have no pending teleport offer.");
+			return;
+		}
+		
+		if (pending.isExpired())
+		{
+			_pendingTeleports.remove(player.getObjectId(), pending);
+			player.sendMessage("That teleport offer has expired.");
+			return;
+		}
+		
+		if (!_activeZoneSet.contains(pending.zoneId))
+		{
+			_pendingTeleports.remove(player.getObjectId(), pending);
+			player.sendMessage("That hot zone is no longer active.");
+			return;
+		}
+		
+		// The offer window can be clicked from anywhere - hold members to the same rules as a solo teleport.
+		// The offer is kept on failure, so they can fix the problem (e.g. walk into town) and accept again before it expires.
+		if (!canTeleport(player))
+		{
+			return;
+		}
+		
+		// Only the click that actually consumes the offer teleports - guards against a double click.
+		if (_pendingTeleports.remove(player.getObjectId(), pending))
+		{
+			player.teleToLocation(new Location(pending.x, pending.y, pending.z));
+			player.sendMessage("Teleported to the Hot Zone!");
+		}
+	}
+	
+	private void declineOffer(Player player)
+	{
+		if (_pendingTeleports.remove(player.getObjectId()) != null)
+		{
+			player.sendMessage("You declined the teleport.");
+		}
+	}
+	
 	@Override
 	public String onFirstTalk(Npc npc, Player player)
 	{
@@ -311,41 +397,6 @@ public class RotatingHotZones extends Quest
 	@Override
 	public String onEvent(String event, Npc npc, Player player)
 	{
-		// ---------------------------------------------------- offer replies
-		if (event.equals("tp_accept"))
-		{
-			final PendingTeleport pending = _pendingTeleports.remove(player.getObjectId());
-			if (pending == null)
-			{
-				player.sendMessage("You have no pending teleport offer.");
-			}
-			else if (pending.isExpired())
-			{
-				player.sendMessage("That teleport offer has expired.");
-			}
-			else if (!_activeZoneSet.contains(pending.zoneId))
-			{
-				player.sendMessage("That hot zone is no longer active.");
-			}
-			else if (!canTeleport(player))
-			{
-				// The offer window can be clicked from anywhere - hold members to the same rules as a solo teleport.
-			}
-			else
-			{
-				player.teleToLocation(new Location(pending.x, pending.y, pending.z));
-				player.sendMessage("Teleported to the Hot Zone!");
-			}
-			return null;
-		}
-		
-		if (event.equals("tp_decline"))
-		{
-			_pendingTeleports.remove(player.getObjectId());
-			player.sendMessage("You declined the teleport.");
-			return null;
-		}
-		
 		// ---------------------------------------------------- teleport request
 		if (event.startsWith("teleport_"))
 		{
@@ -481,11 +532,11 @@ public class RotatingHotZones extends Quest
 		sb.append("<table width=250 border=0 cellpadding=0 cellspacing=0>");
 		sb.append("<tr>");
 		sb.append("<td width=125 align=center>");
-		sb.append("<button value=\"Accept\" action=\"bypass -h Script RotatingHotZones tp_accept\" ");
+		sb.append("<button value=\"Accept\" action=\"bypass -h " + BYPASS_ACCEPT + "\" ");
 		sb.append("width=100 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
 		sb.append("</td>");
 		sb.append("<td width=125 align=center>");
-		sb.append("<button value=\"Decline\" action=\"bypass -h Script RotatingHotZones tp_decline\" ");
+		sb.append("<button value=\"Decline\" action=\"bypass -h " + BYPASS_DECLINE + "\" ");
 		sb.append("width=100 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
 		sb.append("</td>");
 		sb.append("</tr>");
