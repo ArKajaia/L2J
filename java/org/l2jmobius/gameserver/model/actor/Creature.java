@@ -6050,6 +6050,12 @@ public abstract class Creature extends WorldObject
 				}
 			}
 			
+			// A roaming fake player spends its energy charges like a player.
+			if (isPvpFakePlayer() && (mut.getSkill().getChargeConsumeCount() > 0))
+			{
+				asNpc().getTemplate().getFakePlayerPvpProfile().decreaseCharges(mut.getSkill().getChargeConsumeCount());
+			}
+			
 			// Launch the magic skill in order to calculate its effects
 			callSkill(mut.getSkill(), mut.getTargets());
 		}

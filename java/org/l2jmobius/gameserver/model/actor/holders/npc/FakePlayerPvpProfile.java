@@ -20,10 +20,12 @@
  */
 package org.l2jmobius.gameserver.model.actor.holders.npc;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
@@ -46,7 +48,9 @@ public class FakePlayerPvpProfile
 	private final List<SkillHolder> _buffs;
 	private final int _wornMask;
 	private final int _armorMask;
-	private final int _charges;
+	private final int _maxCharges;
+	private final AtomicInteger _charges = new AtomicInteger();
+	private final List<FakePlayerPvpCombo.Chain> _combos = new ArrayList<>();
 	private final List<ItemEnchantHolder> _equipment;
 	
 	// The monster this fake player replaced and the spawn it came from (null for admin spawns).
@@ -63,10 +67,10 @@ public class FakePlayerPvpProfile
 	 * @param buffs the buffs it keeps up
 	 * @param wornMask the item mask of everything it wears (like {@code Inventory#getWearedMask()})
 	 * @param armorMask the item mask of its body armor, 0 if it wears none
-	 * @param charges the energy charges it fights with
+	 * @param maxCharges the most Sonic/Force energy charges its class can hold
 	 * @param equipment every item it wears, with its enchant level
 	 */
-	public FakePlayerPvpProfile(FakePlayerPvpBuild build, PlayerClass playerClass, int level, List<SkillHolder> buffs, int wornMask, int armorMask, int charges, List<ItemEnchantHolder> equipment)
+	public FakePlayerPvpProfile(FakePlayerPvpBuild build, PlayerClass playerClass, int level, List<SkillHolder> buffs, int wornMask, int armorMask, int maxCharges, List<ItemEnchantHolder> equipment)
 	{
 		_build = build;
 		_playerClass = playerClass;
@@ -74,7 +78,8 @@ public class FakePlayerPvpProfile
 		_buffs = buffs;
 		_wornMask = wornMask;
 		_armorMask = armorMask;
-		_charges = charges;
+		_maxCharges = maxCharges;
+		_charges.set(maxCharges);
 		_equipment = equipment;
 	}
 	
@@ -133,11 +138,50 @@ public class FakePlayerPvpProfile
 	}
 	
 	/**
-	 * @return the energy charges (Sonic/Force) it is considered to have
+	 * @return the Sonic/Force energy charges it has now
 	 */
 	public int getCharges()
 	{
-		return _charges;
+		return _charges.get();
+	}
+	
+	/**
+	 * @return the most Sonic/Force energy charges its class can hold, 0 for classes without energy
+	 */
+	public int getMaxCharges()
+	{
+		return _maxCharges;
+	}
+	
+	/**
+	 * Adds energy like {@code Player#increaseCharges(int, int)}.
+	 * @param count how many
+	 * @param max the most this skill can charge up to
+	 */
+	public void increaseCharges(int count, int max)
+	{
+		_charges.updateAndGet(charges -> charges >= max ? charges : Math.min(max, charges + count));
+	}
+	
+	/**
+	 * @param count how many charges a skill consumes
+	 */
+	public void decreaseCharges(int count)
+	{
+		_charges.updateAndGet(charges -> Math.max(0, charges - count));
+	}
+	
+	public void addCombo(FakePlayerPvpCombo.Chain combo)
+	{
+		_combos.add(combo);
+	}
+	
+	/**
+	 * @return the combos it can play at its level, most preferred first
+	 */
+	public List<FakePlayerPvpCombo.Chain> getCombos()
+	{
+		return _combos;
 	}
 	
 	/**

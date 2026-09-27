@@ -47,6 +47,25 @@
 							<xs:element name="heal" type="xs:string" minOccurs="0" />
 							<xs:element name="emergency" type="xs:string" minOccurs="0" />
 							<xs:element name="toggle" type="xs:string" minOccurs="0" />
+							<xs:element name="charge" type="xs:string" minOccurs="0" />
+							<xs:element name="combo" maxOccurs="unbounded" minOccurs="0">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="step" maxOccurs="unbounded" minOccurs="1">
+											<xs:complexType>
+												<xs:attribute type="xs:string" name="skill" use="required" />
+												<xs:attribute type="xs:boolean" name="optional" />
+												<xs:attribute type="xs:boolean" name="self" />
+												<xs:attribute type="xs:boolean" name="behind" />
+												<xs:attribute type="xs:boolean" name="disabledTarget" />
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+									<xs:attribute type="xs:string" name="name" />
+									<xs:attribute type="xs:boolean" name="pvp" />
+									<xs:attribute type="xs:int" name="chance" />
+								</xs:complexType>
+							</xs:element>
 						</xs:sequence>
 						<xs:attribute type="xs:string" name="name" use="required" />
 						<xs:attribute type="xs:int" name="classId" use="required" />

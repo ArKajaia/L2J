@@ -40,6 +40,7 @@ import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpCombo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpGearTier;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 
@@ -148,6 +149,23 @@ public class FakePlayerPvpData implements IXmlReader
 				final FakePlayerPvpBuild build = new FakePlayerPvpBuild(name, playerClass, parseEnum(attrs, Role.class, "role"), parseString(attrs, "weapon"), parseString(attrs, "armor"), parseString(attrs, "jewels", "JEWELS"), parseString(attrs, "buffs", playerClass.isMage() ? "MAGE" : "FIGHTER"), Math.max(0, parseInteger(attrs, "weight", 1)));
 				for (Node skillsNode = buildNode.getFirstChild(); skillsNode != null; skillsNode = skillsNode.getNextSibling())
 				{
+					if ("combo".equalsIgnoreCase(skillsNode.getNodeName()))
+					{
+						final NamedNodeMap comboAttrs = skillsNode.getAttributes();
+						final FakePlayerPvpCombo combo = new FakePlayerPvpCombo(parseString(comboAttrs, "name", ""), parseBoolean(comboAttrs, "pvp", false), Math.max(0, Math.min(100, parseInteger(comboAttrs, "chance", 100))));
+						forEach(skillsNode, "step", stepNode ->
+						{
+							final NamedNodeMap stepAttrs = stepNode.getAttributes();
+							combo.addStep(new FakePlayerPvpCombo.Step(parseIds(parseString(stepAttrs, "skill")), parseBoolean(stepAttrs, "optional", false), parseBoolean(stepAttrs, "self", false), parseBoolean(stepAttrs, "behind", false), parseBoolean(stepAttrs, "disabledTarget", false)));
+						});
+						
+						if (!combo.getSteps().isEmpty())
+						{
+							build.addCombo(combo);
+						}
+						continue;
+					}
+					
 					final SkillCategory category;
 					try
 					{
@@ -166,19 +184,29 @@ public class FakePlayerPvpData implements IXmlReader
 							continue;
 						}
 						
-						final String[] ids = entry.split("\\|");
-						final int[] alternatives = new int[ids.length];
-						for (int i = 0; i < ids.length; i++)
-						{
-							alternatives[i] = Integer.parseInt(ids[i].trim());
-						}
-						build.addSkill(category, alternatives);
+						build.addSkill(category, parseIds(entry));
 					}
 				}
 				
 				_builds.add(build);
 			});
 		});
+	}
+	
+	/**
+	 * @param value skill ids separated by "|"
+	 * @return the ids
+	 */
+	private static int[] parseIds(String value)
+	{
+		final String[] ids = value.split("\\|");
+		final int[] result = new int[ids.length];
+		for (int i = 0; i < ids.length; i++)
+		{
+			result[i] = Integer.parseInt(ids[i].trim());
+		}
+		
+		return result;
 	}
 	
 	/**

@@ -41,6 +41,7 @@ import org.l2jmobius.gameserver.model.actor.enums.player.Sex;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpCombo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpGearTier;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
@@ -327,8 +328,8 @@ public class FakePlayerPvpFactory
 			}
 		}
 		
-		// Sonic/Force focus level = how many energy charges the class can hold.
-		final int charges = Math.max(learned.getOrDefault(8, 0), learned.getOrDefault(50, 0));
+		// How many energy charges the class can hold: the Sonic Focus/Focused Force level, or Sonic/Force Mastery for 3rd classes.
+		final int maxCharges = Math.max(Math.max(learned.getOrDefault(8, 0), learned.getOrDefault(50, 0)), Math.max(learned.getOrDefault(992, 0), learned.getOrDefault(993, 0)));
 		
 		int wornMask = 0;
 		for (ItemTemplate item : new ItemTemplate[]
@@ -375,7 +376,7 @@ public class FakePlayerPvpFactory
 			}
 		}
 		
-		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), wornMask, chest != null ? chest.getItemMask() : 0, charges, equipment);
+		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), wornMask, chest != null ? chest.getItemMask() : 0, maxCharges, equipment);
 		for (SkillCategory category : SkillCategory.values())
 		{
 			final List<Skill> list = new ArrayList<>();
@@ -399,6 +400,24 @@ public class FakePlayerPvpFactory
 				}
 			}
 			profile.setSkills(category, list);
+		}
+		
+		// The combos it has the skills for at this level.
+		for (FakePlayerPvpCombo combo : build.getCombos())
+		{
+			final FakePlayerPvpCombo.Chain chain = combo.resolve(learned);
+			if (chain != null)
+			{
+				profile.addCombo(chain);
+				for (int i = 0; i < chain.size(); i++)
+				{
+					final Skill skill = chain.getSkill(i);
+					if (skill != null)
+					{
+						skills.put(skill.getId(), skill);
+					}
+				}
+			}
 		}
 		
 		template.setSkills(skills);

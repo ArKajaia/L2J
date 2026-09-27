@@ -46,6 +46,13 @@ public class FocusEnergy extends AbstractEffect
 	@Override
 	public void onStart(Creature effector, Creature effected, Skill skill)
 	{
+		// Roaming fake players build energy too (Sonic Focus, Sonic Rage...).
+		if (effected.isPvpFakePlayer())
+		{
+			effected.asNpc().getTemplate().getFakePlayerPvpProfile().increaseCharges(1, _charge);
+			return;
+		}
+		
 		if (!effected.isPlayer())
 		{
 			return;

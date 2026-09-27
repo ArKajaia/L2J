@@ -123,8 +123,8 @@ public class EnergyDamage extends AbstractEffect
 			
 			// charge count should be the count before casting the skill but since its reduced before calling effects
 			// we add skill consume charges to current charges
-			// A roaming fake player fights with its class' full charges.
-			final int charges = attacker.isPlayer() ? attacker.asPlayer().getCharges() + skill.getChargeConsumeCount() : Math.max(attacker.asNpc().getTemplate().getFakePlayerPvpProfile().getCharges(), skill.getChargeConsumeCount());
+			// A roaming fake player spends its energy like a player (already reduced as well).
+			final int charges = (attacker.isPlayer() ? attacker.asPlayer().getCharges() : attacker.asNpc().getTemplate().getFakePlayerPvpProfile().getCharges()) + skill.getChargeConsumeCount();
 			final double energyChargesBoost = ((charges - 1) * 0.2) + 1;
 			attack += _power;
 			attack *= ssBoost;

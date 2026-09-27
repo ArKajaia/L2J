@@ -35,6 +35,7 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpCombo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.instance.Chest;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
@@ -56,9 +57,24 @@ public class FakePlayerPvpAI extends AttackableAI
 	/** The range a mage tries to fight from. */
 	private static final int MAGE_RANGE = 600;
 	
+	/** How long a combo waits for a required step (cooldown, casting range...) before giving up. */
+	private static final long COMBO_STEP_TIMEOUT = 3000;
+	/** How long a combo may take in total. */
+	private static final long COMBO_TIMEOUT = 15000;
+	/** How long it tries to get behind its target before using the skill from where it is. */
+	private static final long BEHIND_TIMEOUT = 2500;
+	
 	private long _kiteEndTime = 0;
 	private long _nextKiteTime = 0;
 	private boolean _resting = false;
+	
+	// The combo being played: which one, on whom, which step, and since when.
+	private FakePlayerPvpCombo.Chain _combo = null;
+	private Creature _comboTarget = null;
+	private int _comboStep = 0;
+	private long _comboStepStart = 0;
+	private long _comboEnd = 0;
+	private long _nextComboTime = 0;
 	
 	public FakePlayerPvpAI(Attackable creature)
 	{
@@ -89,8 +105,14 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// After a hard fight, rest (like a player sitting down) before looking for more monsters.
+		// Duelists and tyrants keep their energy full between fights, like players do.
 		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		if ((profile != null) && (profile.getCharges() < profile.getMaxCharges()) && castOnSelf(npc, null, profile.getSkills(SkillCategory.CHARGE), true, false))
+		{
+			return;
+		}
+		
+		// After a hard fight, rest (like a player sitting down) before looking for more monsters.
 		final boolean mage = (profile != null) && (profile.getRole() == Role.MAGE);
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
 		final double mpRatio = npc.getCurrentMp() / npc.getMaxMp();
@@ -235,8 +257,20 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// Archers and mages step back from melee.
-		if (canMove && role.isRanged() && ((distance - collision) < FakePlayerPvpConfig.KITE_DISTANCE) && (now >= _nextKiteTime) && kiteStep(npc, target, now))
+		// Archers and mages step back from melee (unless a combo is finishing a stunned target).
+		if (canMove && role.isRanged() && (_combo == null) && ((distance - collision) < FakePlayerPvpConfig.KITE_DISTANCE) && (now >= _nextKiteTime) && kiteStep(npc, target, now))
+		{
+			return;
+		}
+		
+		// Duelists and tyrants recharge their energy when they are running low (big energy skills need 2-4 charges).
+		if ((profile.getMaxCharges() > 0) && (profile.getCharges() < profile.getMaxCharges()) && ((profile.getCharges() < Math.min(4, profile.getMaxCharges())) || (Rnd.get(100) < 20)) && castOnSelf(npc, target, profile.getSkills(SkillCategory.CHARGE), true, pvp))
+		{
+			return;
+		}
+		
+		// Combos: the skill chains a practiced player of this class plays.
+		if (playCombo(npc, profile, target, pvp, distance, collision, canMove, now))
 		{
 			return;
 		}
@@ -426,7 +460,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		Skill outOfReach = null;
 		for (Skill skill : skills)
 		{
-			if ((debuff && target.isAffectedBySkill(skill.getId())) || (!pvp && isPvpOnly(skill)) || !canCast(npc, skill, target))
+			if ((debuff && target.isAffectedBySkill(skill.getId())) || (!pvp && isPvpOnly(skill)) || !canCast(npc, skill, target) || !isWorthCasting(npc, target, skill))
 			{
 				continue;
 			}
@@ -462,11 +496,22 @@ public class FakePlayerPvpAI extends AttackableAI
 	 */
 	private boolean useSkill(Attackable npc, Creature target, Skill skill, double distance, int collision, boolean canMove)
 	{
-		if (skill == null)
-		{
-			return false;
-		}
-		
+		return (skill != null) && (castOrApproach(npc, target, skill, distance, collision, canMove) != CastResult.FAILED);
+	}
+	
+	private enum CastResult
+	{
+		CAST,
+		MOVING,
+		FAILED
+	}
+	
+	/**
+	 * Casts {@code skill} on {@code target}, or walks into range first.
+	 * @return what happened
+	 */
+	private CastResult castOrApproach(Attackable npc, Creature target, Skill skill, double distance, int collision, boolean canMove)
+	{
 		int range = skill.getCastRange();
 		if (range <= 0)
 		{
@@ -477,17 +522,294 @@ public class FakePlayerPvpAI extends AttackableAI
 		{
 			if (!canMove)
 			{
-				return false;
+				return CastResult.FAILED;
 			}
 			
 			moveToPawn(target, Math.max(20, range - 20));
-			return true;
+			return CastResult.MOVING;
 		}
 		
 		clientStopMoving(null);
 		npc.setTarget(target);
 		npc.doCast(skill);
-		return true;
+		return CastResult.CAST;
+	}
+	
+	/**
+	 * Starts or continues a combo (see data/FakePlayerPvp.xml). Steps are played in order; an optional step is skipped when it can't be used right now, a required one is waited for up to {@link #COMBO_STEP_TIMEOUT}, and blows marked "behind" first try to get behind
+	 * the target.
+	 * @return {@code true} if the combo acted this tick
+	 */
+	private boolean playCombo(Attackable npc, FakePlayerPvpProfile profile, Creature target, boolean pvp, double distance, int collision, boolean canMove, long now)
+	{
+		if ((_combo != null) && ((_comboTarget != target) || (now > _comboEnd)))
+		{
+			endCombo(now);
+		}
+		
+		if (_combo == null)
+		{
+			if (now < _nextComboTime)
+			{
+				return false;
+			}
+			
+			for (FakePlayerPvpCombo.Chain combo : profile.getCombos())
+			{
+				if ((!combo.isPvp() || pvp) && (Rnd.get(100) < combo.getChance()) && isComboReady(npc, profile, combo, target))
+				{
+					_combo = combo;
+					_comboTarget = target;
+					_comboStep = 0;
+					_comboStepStart = now;
+					_comboEnd = now + COMBO_TIMEOUT;
+					break;
+				}
+			}
+			
+			if (_combo == null)
+			{
+				return false;
+			}
+		}
+		
+		while (_comboStep < _combo.size())
+		{
+			final FakePlayerPvpCombo.Step step = _combo.getStep(_comboStep);
+			final Skill skill = _combo.getSkill(_comboStep);
+			if (skill == null)
+			{
+				nextComboStep(now);
+				continue;
+			}
+			
+			// A buff before the burst.
+			if (step.isSelf())
+			{
+				if (!npc.isAffectedBySkill(skill.getId()) && canCast(npc, skill, npc))
+				{
+					clientStopMoving(null);
+					npc.setTarget(npc);
+					npc.doCast(skill);
+					npc.setTarget(target);
+					nextComboStep(now);
+					return true;
+				}
+				
+				if (step.isOptional() || npc.isAffectedBySkill(skill.getId()))
+				{
+					nextComboStep(now);
+					continue;
+				}
+				return waitForStep(now);
+			}
+			
+			// The debuff is already on: nothing to do.
+			if (isAlreadyOn(skill, target))
+			{
+				nextComboStep(now);
+				continue;
+			}
+			
+			// Follow-ups that only make sense on a stunned/held target.
+			if (step.needsDisabledTarget() && !isDisabled(target))
+			{
+				if (step.isOptional())
+				{
+					nextComboStep(now);
+					continue;
+				}
+				return waitForStep(now);
+			}
+			
+			// Blows: get behind the target first.
+			if (step.isBehind() && canMove && !npc.isBehind(target) && ((now - _comboStepStart) < BEHIND_TIMEOUT))
+			{
+				moveBehind(npc, target, collision);
+				return true;
+			}
+			
+			if (!canCast(npc, skill, target))
+			{
+				if (step.isOptional())
+				{
+					nextComboStep(now);
+					continue;
+				}
+				return waitForStep(now);
+			}
+			
+			switch (castOrApproach(npc, target, skill, distance, collision, canMove))
+			{
+				case CAST:
+				{
+					nextComboStep(now);
+					return true;
+				}
+				case MOVING:
+				{
+					return true;
+				}
+				default:
+				{
+					if (step.isOptional())
+					{
+						nextComboStep(now);
+						continue;
+					}
+					endCombo(now);
+					return false;
+				}
+			}
+		}
+		
+		endCombo(now);
+		return false;
+	}
+	
+	/**
+	 * A combo can start when every required step is learned and off cooldown, its MP and energy are there, and its first step can be used now.
+	 */
+	private static boolean isComboReady(Attackable npc, FakePlayerPvpProfile profile, FakePlayerPvpCombo.Chain combo, Creature target)
+	{
+		int mpNeeded = 0;
+		int chargesNeeded = 0;
+		boolean firstChecked = false;
+		for (int i = 0; i < combo.size(); i++)
+		{
+			final FakePlayerPvpCombo.Step step = combo.getStep(i);
+			final Skill skill = combo.getSkill(i);
+			if ((skill == null) || step.isOptional())
+			{
+				continue;
+			}
+			
+			if (npc.isSkillDisabled(skill))
+			{
+				return false;
+			}
+			
+			mpNeeded += npc.getStat().getMpConsume(skill) + npc.getStat().getMpInitialConsume(skill);
+			chargesNeeded += skill.getChargeConsumeCount();
+			if (!firstChecked && !step.isSelf() && isAlreadyOn(skill, target))
+			{
+				continue; // Its opening debuff is still on the target, the combo starts at the next step.
+			}
+			
+			if (!firstChecked)
+			{
+				firstChecked = true;
+				if (!step.isSelf() && ((step.needsDisabledTarget() && !isDisabled(target)) || !canCast(npc, skill, target)))
+				{
+					return false;
+				}
+			}
+		}
+		
+		return firstChecked && (npc.getCurrentMp() >= mpNeeded) && (profile.getCharges() >= chargesNeeded);
+	}
+	
+	private void nextComboStep(long now)
+	{
+		_comboStep++;
+		_comboStepStart = now;
+	}
+	
+	/**
+	 * A required step isn't usable yet: keep fighting normally meanwhile, and give up on the combo if it takes too long.
+	 * @return always {@code false}, so the regular logic acts this tick
+	 */
+	private boolean waitForStep(long now)
+	{
+		if ((now - _comboStepStart) > COMBO_STEP_TIMEOUT)
+		{
+			endCombo(now);
+		}
+		return false;
+	}
+	
+	private void endCombo(long now)
+	{
+		_combo = null;
+		_comboTarget = null;
+		_comboStep = 0;
+		_nextComboTime = now + 1000 + Rnd.get(1500);
+	}
+	
+	/**
+	 * @return {@code true} if {@code skill} is a debuff that is already on {@code target}
+	 */
+	private static boolean isAlreadyOn(Skill skill, Creature target)
+	{
+		return skill.isContinuous() && skill.hasNegativeEffect() && target.isAffectedBySkill(skill.getId());
+	}
+	
+	/**
+	 * @param target a creature
+	 * @return {@code true} if it can't act or move freely (stun, sleep, paralysis, root)
+	 */
+	private static boolean isDisabled(Creature target)
+	{
+		return target.isStunned() || target.isSleeping() || target.isParalyzed() || target.isRooted();
+	}
+	
+	/**
+	 * Runs to the point right behind {@code target} (it faces its heading), for blows like Backstab.
+	 */
+	private void moveBehind(Attackable npc, Creature target, int collision)
+	{
+		final double angle = (target.getHeading() * 2 * Math.PI) / 65536.0;
+		final int offset = collision + 25;
+		final int x = target.getX() - (int) (Math.cos(angle) * offset);
+		final int y = target.getY() - (int) (Math.sin(angle) * offset);
+		final Location destination = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, target.getZ(), npc.getInstanceId());
+		npc.setRunning();
+		moveTo(destination.getX(), destination.getY(), destination.getZ());
+	}
+	
+	/**
+	 * Area skills are only worth it with at least two enemies in their area.
+	 * @return {@code true} if {@code skill} is a single target skill or would hit two or more enemies
+	 */
+	private static boolean isWorthCasting(Attackable npc, Creature target, Skill skill)
+	{
+		final WorldObject center;
+		switch (skill.getTargetType())
+		{
+			case AREA:
+			case FRONT_AREA:
+			case BEHIND_AREA:
+			{
+				center = target;
+				break;
+			}
+			case AURA:
+			case FRONT_AURA:
+			case BEHIND_AURA:
+			{
+				center = npc;
+				break;
+			}
+			default:
+			{
+				return true;
+			}
+		}
+		
+		final int radius = skill.getAffectRange() > 0 ? skill.getAffectRange() : 150;
+		int enemies = center == target ? 1 : 0;
+		for (Creature creature : World.getInstance().getVisibleObjectsInRange(center, Creature.class, radius))
+		{
+			if ((creature != npc) && !creature.isDead() && ((creature == target) || (npc.getHating(creature) > 0)))
+			{
+				if (++enemies >= 2)
+				{
+					return true;
+				}
+			}
+		}
+		
+		return false;
 	}
 	
 	/**

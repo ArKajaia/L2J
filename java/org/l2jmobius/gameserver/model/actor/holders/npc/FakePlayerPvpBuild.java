@@ -65,7 +65,9 @@ public class FakePlayerPvpBuild
 		BUFF,
 		HEAL,
 		EMERGENCY,
-		TOGGLE
+		TOGGLE,
+		/** Skills that build Sonic/Force energy (Sonic Focus, Maximum Focus Sonic...). */
+		CHARGE
 	}
 	
 	private final String _name;
@@ -77,6 +79,7 @@ public class FakePlayerPvpBuild
 	private final String _buffList;
 	private final int _weight;
 	private final Map<SkillCategory, List<int[]>> _skills = new EnumMap<>(SkillCategory.class);
+	private final List<FakePlayerPvpCombo> _combos = new ArrayList<>();
 	
 	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String buffList, int weight)
 	{
@@ -106,6 +109,19 @@ public class FakePlayerPvpBuild
 	public List<int[]> getSkills(SkillCategory category)
 	{
 		return _skills.getOrDefault(category, Collections.emptyList());
+	}
+	
+	public void addCombo(FakePlayerPvpCombo combo)
+	{
+		_combos.add(combo);
+	}
+	
+	/**
+	 * @return its combos, most preferred first
+	 */
+	public List<FakePlayerPvpCombo> getCombos()
+	{
+		return _combos;
 	}
 	
 	public String getName()
