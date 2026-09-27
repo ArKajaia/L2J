@@ -62,6 +62,7 @@ import org.l2jmobius.gameserver.model.zone.type.BossZone;
 import org.l2jmobius.gameserver.model.zone.type.CastleZone;
 import org.l2jmobius.gameserver.model.zone.type.ClanHallZone;
 import org.l2jmobius.gameserver.model.zone.type.FortZone;
+import org.l2jmobius.gameserver.model.zone.type.HotZone;
 import org.l2jmobius.gameserver.model.zone.type.JailZone;
 import org.l2jmobius.gameserver.model.zone.type.NoPvPZone;
 import org.l2jmobius.gameserver.model.zone.type.OlympiadStadiumZone;
@@ -170,7 +171,27 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
-	 * Rolls {@link FakePlayerPvpConfig#SPAWN_CHANCE} for a monster that is about to enter the world and, if it hits, spawns a roaming fake player in its place. The monster is then kept out of the world, still counted by {@code spawn}, until the fake player is gone.
+	 * Checks the spawn point itself: the monster isn't in the world yet, so its zone flags aren't set.
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @return {@code true} if the point is inside an enabled hotzone
+	 */
+	private static boolean isInHotzone(int x, int y, int z)
+	{
+		for (ZoneType zone : ZoneManager.getInstance().getZones(x, y, z))
+		{
+			if ((zone instanceof HotZone) && zone.isEnabled())
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Rolls {@link FakePlayerPvpConfig#SPAWN_CHANCE} (times {@link FakePlayerPvpConfig#HOTZONE_SPAWN_MULTIPLIER} inside a hotzone) for a monster that is about to enter the world and, if it hits, spawns a roaming fake player in its place. The monster is then kept out of the world, still counted by {@code spawn}, until the fake player is gone.
 	 * @param npc the monster that is spawning
 	 * @param spawn its spawn point
 	 * @param x the spawn x
@@ -216,7 +237,9 @@ public class FakePlayerPvpManager
 			return false;
 		}
 		
-		if ((Rnd.nextDouble() * 100) >= FakePlayerPvpConfig.SPAWN_CHANCE)
+		// Hotzones draw more of them.
+		final double chance = isInHotzone(x, y, z) ? FakePlayerPvpConfig.SPAWN_CHANCE * FakePlayerPvpConfig.HOTZONE_SPAWN_MULTIPLIER : FakePlayerPvpConfig.SPAWN_CHANCE;
+		if ((Rnd.nextDouble() * 100) >= chance)
 		{
 			return false;
 		}
