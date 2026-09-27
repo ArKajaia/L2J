@@ -20,6 +20,7 @@
  */
 package org.l2jmobius.gameserver.managers;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -58,6 +59,7 @@ import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
+import org.l2jmobius.gameserver.model.zone.ZoneRegion;
 import org.l2jmobius.gameserver.model.zone.ZoneType;
 import org.l2jmobius.gameserver.model.zone.type.ArenaZone;
 import org.l2jmobius.gameserver.model.zone.type.BossZone;
@@ -95,6 +97,10 @@ public class FakePlayerPvpManager
 	public static final long PVP_HATE = 1_000_000;
 	/** Greater Healing Potion effect. */
 	private static final int POTION_SKILL_ID = 2037;
+	/** Milliseconds between two {@link #maintain} runs. */
+	private static final long MAINTAIN_INTERVAL = 30000;
+	/** {@link #keepPopulation} only replaces a monster no player is this close to, so nobody sees it turn into a fake player. */
+	private static final int UNSEEN_RANGE = 2500;
 	/** A fake player says at most one thing in this many milliseconds. */
 	private static final long CHAT_INTERVAL = 20000;
 	/** A fake player doesn't pick a fight with a player this many levels above it (it only complains). */
@@ -198,7 +204,7 @@ public class FakePlayerPvpManager
 	protected FakePlayerPvpManager()
 	{
 		// Also runs while spawning is off: fake players spawned with //fakepvp still need rebuffs and their lifetime.
-		ThreadPool.scheduleAtFixedRate(this::maintain, 30000, 30000);
+		ThreadPool.scheduleAtFixedRate(this::maintain, MAINTAIN_INTERVAL, MAINTAIN_INTERVAL);
 		
 		if (!FakePlayerPvpConfig.ENABLED)
 		{
@@ -254,33 +260,12 @@ public class FakePlayerPvpManager
 	 */
 	public boolean tryReplace(Npc npc, Spawn spawn, int x, int y, int z)
 	{
-		if ((npc == null) || (spawn == null) || (npc.getClass() != Monster.class) || npc.isFakePlayer() || !isEnabled())
+		if (!isEnabled() || !isReplaceable(npc, spawn))
 		{
 			return false;
 		}
 		
-		// Only regular, respawning world monsters.
 		final Monster monster = npc.asMonster();
-		if (monster.isQuestMonster() || monster.getTemplate().isUndying() || monster.isRaid() || monster.isRaidMinion() || (monster.getLeader() != null) || NpcData.getMasterMonsterIDs().contains(monster.getId()))
-		{
-			return false;
-		}
-		
-		if (!spawn.isRespawnEnabled() || (spawn.getRespawnDelay() <= 0) || WalkingManager.getInstance().isTargeted(monster))
-		{
-			return false;
-		}
-		
-		if (!FakePlayerPvpConfig.ALLOW_IN_INSTANCES && (spawn.getInstanceId() != 0))
-		{
-			return false;
-		}
-		
-		final int level = monster.getLevel();
-		if ((level < FakePlayerPvpConfig.MIN_LEVEL) || (level > FakePlayerPvpConfig.MAX_LEVEL) || FakePlayerPvpConfig.EXCLUDED_NPC_IDS.contains(monster.getId()))
-		{
-			return false;
-		}
 		
 		// This spawn point had a fake player recently - sit this spawn out.
 		final int cooldown = spawn.getFakePlayerCooldown();
@@ -307,8 +292,7 @@ public class FakePlayerPvpManager
 			return false;
 		}
 		
-		final int fakeLevel = Math.max(1, Math.min(85, level + (FakePlayerPvpConfig.LEVEL_VARIANCE > 0 ? Rnd.get(-FakePlayerPvpConfig.LEVEL_VARIANCE, FakePlayerPvpConfig.LEVEL_VARIANCE) : 0)));
-		final Npc fake = spawnFakePlayer(FakePlayerPvpData.getInstance().getRandomBuild(), fakeLevel, x, y, z, spawn.getInstanceId(), monster, spawn);
+		final Npc fake = spawnFakePlayer(FakePlayerPvpData.getInstance().getRandomBuild(), getFakeLevel(monster), x, y, z, spawn.getInstanceId(), monster, spawn);
 		if (fake == null)
 		{
 			return false;
@@ -320,6 +304,47 @@ public class FakePlayerPvpManager
 		monster.setDead(true);
 		monster.setDecayed(true);
 		return true;
+	}
+	
+	/**
+	 * @param npc the npc
+	 * @param spawn its spawn point
+	 * @return {@code true} if {@code npc} is a regular, respawning world monster a fake player may take the place of
+	 */
+	private static boolean isReplaceable(Npc npc, Spawn spawn)
+	{
+		if ((npc == null) || (spawn == null) || (npc.getClass() != Monster.class) || npc.isFakePlayer())
+		{
+			return false;
+		}
+		
+		final Monster monster = npc.asMonster();
+		if (monster.isQuestMonster() || monster.getTemplate().isUndying() || monster.isRaid() || monster.isRaidMinion() || (monster.getLeader() != null) || NpcData.getMasterMonsterIDs().contains(monster.getId()))
+		{
+			return false;
+		}
+		
+		if (!spawn.isRespawnEnabled() || (spawn.getRespawnDelay() <= 0) || WalkingManager.getInstance().isTargeted(monster))
+		{
+			return false;
+		}
+		
+		if (!FakePlayerPvpConfig.ALLOW_IN_INSTANCES && (spawn.getInstanceId() != 0))
+		{
+			return false;
+		}
+		
+		final int level = monster.getLevel();
+		return (level >= FakePlayerPvpConfig.MIN_LEVEL) && (level <= FakePlayerPvpConfig.MAX_LEVEL) && !FakePlayerPvpConfig.EXCLUDED_NPC_IDS.contains(monster.getId());
+	}
+	
+	/**
+	 * @param monster the monster being replaced
+	 * @return the level of the fake player that takes its place
+	 */
+	private static int getFakeLevel(Monster monster)
+	{
+		return Math.max(1, Math.min(85, monster.getLevel() + (FakePlayerPvpConfig.LEVEL_VARIANCE > 0 ? Rnd.get(-FakePlayerPvpConfig.LEVEL_VARIANCE, FakePlayerPvpConfig.LEVEL_VARIANCE) : 0)));
 	}
 	
 	private boolean isAllowedLocation(int x, int y, int z, int instanceId)
@@ -872,7 +897,7 @@ public class FakePlayerPvpManager
 				}
 				
 				final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
-				if ((FakePlayerPvpConfig.LIFETIME > 0) && ((now - profile.getSpawnTime()) > (FakePlayerPvpConfig.LIFETIME * 1000L)))
+				if ((FakePlayerPvpConfig.LIFETIME > 0) && ((now - profile.getSpawnTime()) > (FakePlayerPvpConfig.LIFETIME * 1000L * profile.getLifetimeScale())))
 				{
 					fake.deleteMe();
 					continue;
@@ -886,6 +911,99 @@ public class FakePlayerPvpManager
 				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem while maintaining " + fake.getName() + ".", e);
 			}
 		}
+		
+		if (FakePlayerPvpConfig.KEEP_POPULATION && (FakePlayerPvpConfig.LIFETIME > 0) && isEnabled())
+		{
+			try
+			{
+				keepPopulation();
+			}
+			catch (Exception e)
+			{
+				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem while keeping the population.", e);
+			}
+		}
+	}
+	
+	/**
+	 * Server start rolls every monster of the world at once, but afterwards only respawning monsters roll: once that first generation logs off, fake players would only come back where players kill monsters and vanish from everywhere else. So every
+	 * {@link #maintain}, each idle monster no player is near rolls {@link FakePlayerPvpConfig#SPAWN_CHANCE} spread over {@link FakePlayerPvpConfig#LIFETIME}, which brings in about as many fake players as log off - like players arriving at a hunting ground.
+	 */
+	private void keepPopulation()
+	{
+		final double chance = (FakePlayerPvpConfig.SPAWN_CHANCE * MAINTAIN_INTERVAL) / (FakePlayerPvpConfig.LIFETIME * 1000.0);
+		final double hotzoneChance = chance * FakePlayerPvpConfig.HOTZONE_SPAWN_MULTIPLIER;
+		final double maxChance = Math.max(chance, hotzoneChance);
+		
+		// Picked first and replaced after, the fake players' own spawns join the spawn table.
+		final List<Npc> picked = new ArrayList<>();
+		for (Set<Spawn> spawns : SpawnTable.getInstance().getSpawnTable().values())
+		{
+			for (Spawn spawn : spawns)
+			{
+				for (Npc npc : spawn.getSpawnedNpcs())
+				{
+					// The zone lookup only for the few that pass the higher of both chances.
+					final double roll = Rnd.nextDouble() * 100;
+					if ((roll < maxChance) && npc.isSpawned() && !npc.isDead() && (roll < (isInHotzone(npc.getX(), npc.getY(), npc.getZ()) ? hotzoneChance : chance)))
+					{
+						picked.add(npc);
+					}
+				}
+			}
+		}
+		
+		for (Npc npc : picked)
+		{
+			if ((FakePlayerPvpConfig.MAX_ALIVE > 0) && (_fakePlayers.size() >= FakePlayerPvpConfig.MAX_ALIVE))
+			{
+				return;
+			}
+			
+			final Spawn spawn = npc.getSpawn();
+			if (!isReplaceable(npc, spawn) || !isIdle(npc.asMonster()) || !isAllowedLocation(npc.getX(), npc.getY(), npc.getZ(), npc.getInstanceId()))
+			{
+				continue;
+			}
+			
+			final Monster monster = npc.asMonster();
+			if (spawnFakePlayer(FakePlayerPvpData.getInstance().getRandomBuild(), getFakeLevel(monster), monster.getX(), monster.getY(), monster.getZ(), monster.getInstanceId(), monster, spawn) == null)
+			{
+				continue;
+			}
+			
+			spawn.setFakePlayerCooldown(FakePlayerPvpConfig.RESPAWN_COOLDOWN);
+			
+			// Out of the world like a monster that died and decayed, but still counted by its spawn until the fake player is gone, see onFakePlayerDecay().
+			monster.decayMe();
+			final ZoneRegion region = ZoneManager.getInstance().getRegion(monster);
+			if (region != null)
+			{
+				region.removeFromZones(monster);
+			}
+			
+			monster.setDead(true);
+			monster.setDecayed(true);
+		}
+	}
+	
+	/**
+	 * @param monster the monster
+	 * @return {@code true} if {@code monster} is a plain monster (no champion, thief, mage or other special one) that isn't fighting and that no player is near
+	 */
+	private static boolean isIdle(Monster monster)
+	{
+		if (!monster.isSpawned() || monster.isDead() || monster.isInCombat() || !monster.getAggroList().isEmpty() || (monster.getTarget() != null))
+		{
+			return false;
+		}
+		
+		if ((monster.getChampionTier() > 0) || monster.isMageMonster() || !monster.canHotzoneRise())
+		{
+			return false;
+		}
+		
+		return World.getInstance().getVisibleObjectsInRange(monster, Player.class, UNSEEN_RANGE).isEmpty();
 	}
 	
 	/**

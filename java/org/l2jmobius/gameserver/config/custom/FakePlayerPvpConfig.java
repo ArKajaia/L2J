@@ -54,6 +54,7 @@ public class FakePlayerPvpConfig
 	public static int MAX_ALIVE;
 	public static int MIN_DISTANCE;
 	public static int LIFETIME;
+	public static boolean KEEP_POPULATION;
 	
 	// Strength
 	public static boolean INCLUDE_CP_IN_HP;
@@ -136,6 +137,7 @@ public class FakePlayerPvpConfig
 		MAX_ALIVE = Math.max(0, config.getInt("FakePvpMaxAlive", 500));
 		MIN_DISTANCE = Math.max(0, config.getInt("FakePvpMinDistance", 1500));
 		LIFETIME = Math.max(0, config.getInt("FakePvpLifetime", 3600));
+		KEEP_POPULATION = config.getBoolean("FakePvpKeepPopulation", true);
 		
 		INCLUDE_CP_IN_HP = config.getBoolean("FakePvpIncludeCpInHp", true);
 		WEAPON_ENCHANT = parseEnchantTiers(config.getString("FakePvpWeaponEnchant", "1:0-3;20:0-4;40:1-5;52:2-6;61:3-8;76:4-10;80:5-12;84:6-16"), "FakePvpWeaponEnchant");
