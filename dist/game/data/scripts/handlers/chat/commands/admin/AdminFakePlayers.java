@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
 
 /**
  * @author Mobius
@@ -107,6 +108,16 @@ public class AdminFakePlayers implements IAdminCommandHandler
 			if (!alive.isEmpty())
 			{
 				activeChar.sendSysMessage("Alive by build: " + alive);
+			}
+
+			// The temper of the targeted one.
+			if ((activeChar.getTarget() instanceof Npc target) && (target.getTemplate().getFakePlayerPvpProfile() != null))
+			{
+				final FakePlayerPvpPersonality personality = target.getTemplate().getFakePlayerPvpProfile().getPersonality();
+				activeChar.sendSysMessage(target.getName() + ": " + personality);
+				activeChar.sendSysMessage("Skill " + personality.getSkillChance() + "%/" + personality.getPvpSkillChance() + "% pvp, auto attacker skill " + personality.getAutoAttackSkillChance() + "%/" + personality.getAutoAttackPvpSkillChance() + "% pvp, debuff " + personality.getPvpDebuffChance() + "%");
+				activeChar.sendSysMessage("Revenge " + personality.getRevengeChance() + "%, flagged " + personality.getAttackFlaggedChance() + "%, karma " + personality.getAttackKarmaChance() + "%, return " + personality.getReturnChance() + "%, runner " + target.getTemplate().getFakePlayerPvpProfile().isRunner());
+				activeChar.sendSysMessage("Hunt " + personality.getHuntRange() + ", leash " + personality.getLeashRange() + ", chase " + personality.getChaseRange() + ", taunt " + personality.getTauntChance() + "%, greet " + personality.getGreetChance() + "%");
 			}
 		}
 		else if (command.startsWith("admin_fakepvp_clear"))

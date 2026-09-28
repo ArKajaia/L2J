@@ -111,6 +111,10 @@ public class FakePlayerPvpConfig
 	public static int RETURN_DELAY_MAX;
 	public static int RETURN_REVENGE_TIME;
 	
+	// Personality
+	public static int PERSONALITY_VARIANCE;
+	public static int PERSONALITY_RANGE_VARIANCE;
+	
 	// Rewards
 	public static double REWARD_EXP_SP_MULTIPLIER;
 	public static boolean REWARD_DROPS;
@@ -225,6 +229,9 @@ public class FakePlayerPvpConfig
 			LOGGER.warning("Invalid FakePvpReturnDelay: " + returnDelay);
 		}
 		RETURN_REVENGE_TIME = Math.max(0, config.getInt("FakePvpReturnRevengeTime", 300));
+		
+		PERSONALITY_VARIANCE = Math.max(0, Math.min(100, config.getInt("FakePvpPersonalityVariance", 30)));
+		PERSONALITY_RANGE_VARIANCE = Math.max(0, Math.min(90, config.getInt("FakePvpPersonalityRangeVariance", 20)));
 		
 		REWARD_EXP_SP_MULTIPLIER = Math.max(0, config.getDouble("FakePvpRewardExpSpMultiplier", 1.0));
 		REWARD_DROPS = config.getBoolean("FakePvpRewardDrops", true);

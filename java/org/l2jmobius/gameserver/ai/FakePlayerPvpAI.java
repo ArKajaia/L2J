@@ -47,6 +47,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpCombo;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.instance.Chest;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
@@ -362,7 +363,8 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		npc.setRunning();
-		if (npc.calculateDistance2D(spawn) > FakePlayerPvpConfig.HUNT_RANGE)
+		final int huntRange = FakePlayerPvpPersonality.of(npc).getHuntRange();
+		if (npc.calculateDistance2D(spawn) > huntRange)
 		{
 			goHome(npc, spawn);
 			return;
@@ -370,7 +372,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		if (Rnd.get(WANDER_CHANCE) == 0)
 		{
-			final int radius = Math.max(100, FakePlayerPvpConfig.HUNT_RANGE / 2);
+			final int radius = Math.max(100, huntRange / 2);
 			final int x = (spawn.getX() + Rnd.get(-radius, radius));
 			final int y = (spawn.getY() + Rnd.get(-radius, radius));
 			final Location destination = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, npc.getZ(), npc.getInstanceId());
@@ -466,7 +468,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		// Monsters are only hunted around the spawn point, players are chased further (and it runs away as far as it needs to).
 		final Spawn spawn = npc.getSpawn();
-		if ((spawn != null) && !_fleeing && !_regrouping && !_returning && (npc.calculateDistance2D(spawn) > (target.isPlayable() ? FakePlayerPvpConfig.CHASE_RANGE : FakePlayerPvpConfig.LEASH_RANGE)))
+		if ((spawn != null) && !_fleeing && !_regrouping && !_returning && (npc.calculateDistance2D(spawn) > (target.isPlayable() ? profile.getPersonality().getChaseRange() : profile.getPersonality().getLeashRange())))
 		{
 			// Back to its hunting ground, staying ACTIVE: a MOVE_TO that finds no path never arrives, and the AI would stop thinking.
 			npc.stopHating(target);
@@ -618,7 +620,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		// Archers and mages stop a player in melee range (root, stun, Aura Flash...), then step back (unless a combo is finishing a stunned target).
-		if (canMove && role.isRanged() && (_combo == null) && !npc.isAttackingNow() && ((distance - collision) < FakePlayerPvpConfig.KITE_DISTANCE) && (now >= _nextKiteTime))
+		if (canMove && role.isRanged() && (_combo == null) && !npc.isAttackingNow() && ((distance - collision) < profile.getPersonality().getKiteDistance()) && (now >= _nextKiteTime))
 		{
 			if (pvp && !isDisabled(target) && useSkill(npc, target, pickPeel(npc, target, profile, defenses, distance - collision), distance, collision, false))
 			{
@@ -659,7 +661,8 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		// Stuns, roots and debuffs are mostly for players (and half as often for a class that fights with its normal attack).
 		final double reach = distance - collision;
-		final int debuffChance = pvp ? (_autoAttacker ? (FakePlayerPvpConfig.PVP_DEBUFF_CHANCE / 2) : FakePlayerPvpConfig.PVP_DEBUFF_CHANCE) : 5;
+		final FakePlayerPvpPersonality personality = profile.getPersonality();
+		final int debuffChance = pvp ? (_autoAttacker ? (personality.getPvpDebuffChance() / 2) : personality.getPvpDebuffChance()) : 5;
 		// With the bow out it only uses what reaches the target from where it stands, instead of running in.
 		if ((Rnd.get(100) < debuffChance) && useSkill(npc, target, inReach(pickSkill(npc, target, profile.getSkills(SkillCategory.DEBUFF), true, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))
 		{
@@ -667,7 +670,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		// Attack skills, best first. Mages cast whenever they can, Gladiators, Tyrants and daggers fight with their skills, and the other classes (tanks, archers, most warriors) auto attack and use a skill now and then, like players.
-		final int skillChance = _autoAttacker ? (pvp ? FakePlayerPvpConfig.AUTO_ATTACK_PVP_SKILL_CHANCE : FakePlayerPvpConfig.AUTO_ATTACK_SKILL_CHANCE) : (pvp ? FakePlayerPvpConfig.PVP_SKILL_CHANCE : FakePlayerPvpConfig.SKILL_CHANCE);
+		final int skillChance = _autoAttacker ? (pvp ? personality.getAutoAttackPvpSkillChance() : personality.getAutoAttackSkillChance()) : (pvp ? personality.getPvpSkillChance() : personality.getSkillChance());
 		if ((mage || (Rnd.get(100) < skillChance)) && useSkill(npc, target, inReach(pickSkill(npc, target, profile.getSkills(SkillCategory.ATTACK), false, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))
 		{
 			return;
@@ -1184,14 +1187,15 @@ public class FakePlayerPvpAI extends AttackableAI
 	}
 	
 	/**
-	 * Like a player who sees their hits do nothing, each attack or skill on a player under Ultimate Defense, Guts, Zealot, Angelic Icon or a magic mirror has {@link FakePlayerPvpConfig#DEFENSE_DETECT_CHANCE}% chance to make it notice: it doesn't stop attacking right away.
+	 * Like a player who sees their hits do nothing, each attack or skill on a player under Ultimate Defense, Guts, Zealot, Angelic Icon or a magic mirror has its own {@link FakePlayerPvpConfig#DEFENSE_DETECT_CHANCE}% chance (see {@link FakePlayerPvpPersonality}) to make it notice: it doesn't stop attacking right away.
 	 * Guts is only noticed by physical hits, a magic mirror by magic skills.
 	 * @param target what it attacks
 	 * @param magic {@code true} for a magic skill
 	 */
 	private void noticeDefenses(Creature target, boolean magic)
 	{
-		if (!target.isPlayable() || (FakePlayerPvpConfig.DEFENSE_DETECT_CHANCE <= 0))
+		final int detectChance = FakePlayerPvpPersonality.of(getActiveChar()).getDefenseDetectChance();
+		if (!target.isPlayable() || (detectChance <= 0))
 		{
 			return;
 		}
@@ -1202,7 +1206,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		for (BuffInfo info : target.getEffectList().getBuffs())
 		{
 			final Defense defense = Defense.of(info.getSkill());
-			if ((defense != null) && (magic ? defense._noticedByMagic : defense._noticedByPhysical) && !info.isRemoved() && !_noticedDefenses.contains(info) && (Rnd.get(100) < FakePlayerPvpConfig.DEFENSE_DETECT_CHANCE))
+			if ((defense != null) && (magic ? defense._noticedByMagic : defense._noticedByPhysical) && !info.isRemoved() && !_noticedDefenses.contains(info) && (Rnd.get(100) < detectChance))
 			{
 				_noticedDefenses.add(info);
 			}
@@ -1280,11 +1284,12 @@ public class FakePlayerPvpAI extends AttackableAI
 		// Waiting on purpose, not stuck.
 		_progressTime = now;
 		
-		final int keep = FakePlayerPvpConfig.DEFENSE_KEEP_DISTANCE;
+		final FakePlayerPvpPersonality personality = FakePlayerPvpPersonality.of(npc);
+		final int keep = personality.getDefenseKeepDistance();
 		if (gap < keep)
 		{
 			// Too close: step away when it can, otherwise fight back meanwhile.
-			return canMove && (now >= _nextKiteTime) && kiteStep(npc, target, now, Math.max(FakePlayerPvpConfig.KITE_STEP, (int) (keep - gap) + 50));
+			return canMove && (now >= _nextKiteTime) && kiteStep(npc, target, now, Math.max(personality.getKiteStep(), (int) (keep - gap) + 50));
 		}
 		
 		// Far enough: shoot what still gets through, or wait it out.
@@ -1491,7 +1496,8 @@ public class FakePlayerPvpAI extends AttackableAI
 	 */
 	private boolean lookForPvp(Attackable npc, long now)
 	{
-		if (((FakePlayerPvpConfig.ATTACK_FLAGGED_CHANCE <= 0) && (FakePlayerPvpConfig.ATTACK_KARMA_CHANCE <= 0)) || (now < _nextOpportunityScan))
+		final FakePlayerPvpPersonality personality = FakePlayerPvpPersonality.of(npc);
+		if (((personality.getAttackFlaggedChance() <= 0) && (personality.getAttackKarmaChance() <= 0)) || (now < _nextOpportunityScan))
 		{
 			return false;
 		}
@@ -1521,7 +1527,7 @@ public class FakePlayerPvpAI extends AttackableAI
 				continue;
 			}
 			
-			if ((_consideredPlayers.putIfAbsent(player.getObjectId(), now) == null) && (Rnd.get(100) < (karma ? FakePlayerPvpConfig.ATTACK_KARMA_CHANCE : FakePlayerPvpConfig.ATTACK_FLAGGED_CHANCE)))
+			if ((_consideredPlayers.putIfAbsent(player.getObjectId(), now) == null) && (Rnd.get(100) < (karma ? personality.getAttackKarmaChance() : personality.getAttackFlaggedChance())))
 			{
 				FakePlayerPvpManager.getInstance().attackPlayer(npc, player, karma);
 				return true;
@@ -1662,7 +1668,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		{
 			final int index = drops.size() - 1;
 			final Item item = drops.get(index);
-			if ((item == null) || !item.isSpawned() || (item.getInstanceId() != npc.getInstanceId()) || (npc.calculateDistance2D(item) > FakePlayerPvpConfig.HUNT_RANGE))
+			if ((item == null) || !item.isSpawned() || (item.getInstanceId() != npc.getInstanceId()) || (npc.calculateDistance2D(item) > FakePlayerPvpPersonality.of(npc).getHuntRange()))
 			{
 				drops.remove(index); // Taken by someone else, or too far to bother.
 				continue;
@@ -1710,7 +1716,7 @@ public class FakePlayerPvpAI extends AttackableAI
 			return false;
 		}
 		
-		if (npc.calculateDistance2D(target) > FakePlayerPvpConfig.CHASE_RANGE)
+		if (npc.calculateDistance2D(target) > FakePlayerPvpPersonality.of(npc).getChaseRange())
 		{
 			return false;
 		}
@@ -1726,9 +1732,11 @@ public class FakePlayerPvpAI extends AttackableAI
 	private Creature findPrey(Attackable npc)
 	{
 		final Spawn spawn = npc.getSpawn();
+		final FakePlayerPvpPersonality personality = FakePlayerPvpPersonality.of(npc);
+		final int leashRange = personality.getLeashRange();
 
 		// Off its hunting ground (back from a chase, or walking back from town): home first, it would drop any monster right away.
-		if ((spawn != null) && (npc.calculateDistance2D(spawn) > FakePlayerPvpConfig.LEASH_RANGE))
+		if ((spawn != null) && (npc.calculateDistance2D(spawn) > leashRange))
 		{
 			return null;
 		}
@@ -1736,7 +1744,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		final Creature unreachable = System.currentTimeMillis() < _unreachableUntil ? _unreachable : null;
 		Monster prey = null;
 		double preyDistance = Double.MAX_VALUE;
-		for (Monster monster : World.getInstance().getVisibleObjectsInRange(npc, Monster.class, FakePlayerPvpConfig.HUNT_RANGE))
+		for (Monster monster : World.getInstance().getVisibleObjectsInRange(npc, Monster.class, personality.getHuntRange()))
 		{
 			if ((monster == unreachable) || monster.isDead() || monster.isFakePlayer() || monster.isRaid() || (monster instanceof Chest) || monster.isInvul() || !monster.isTargetable() || (monster.getInstanceId() != npc.getInstanceId()))
 			{
@@ -1748,7 +1756,7 @@ public class FakePlayerPvpAI extends AttackableAI
 				continue;
 			}
 			
-			if ((spawn != null) && (monster.calculateDistance2D(spawn) > FakePlayerPvpConfig.LEASH_RANGE))
+			if ((spawn != null) && (monster.calculateDistance2D(spawn) > leashRange))
 			{
 				continue;
 			}
@@ -1938,7 +1946,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		// Rooted: right away. No straight way to the player (a ledge, a wall): a shorter chase, pathfinding may still get there.
-		long chaseTime = FakePlayerPvpConfig.WEAPON_SWAP_CHASE_TIME;
+		long chaseTime = profile.getPersonality().getWeaponSwapChaseTime();
 		if (npc.isMovementDisabled())
 		{
 			chaseTime = 0;
@@ -2464,12 +2472,12 @@ public class FakePlayerPvpAI extends AttackableAI
 	}
 	
 	/**
-	 * Steps back from {@code target} by {@link FakePlayerPvpConfig#KITE_STEP}, onto a point geodata allows.
+	 * Steps back from {@code target} by its {@link FakePlayerPvpConfig#KITE_STEP}, onto a point geodata allows.
 	 * @return {@code true} if it started moving
 	 */
 	private boolean kiteStep(Attackable npc, Creature target, long now)
 	{
-		return kiteStep(npc, target, now, FakePlayerPvpConfig.KITE_STEP);
+		return kiteStep(npc, target, now, FakePlayerPvpPersonality.of(npc).getKiteStep());
 	}
 	
 	/**

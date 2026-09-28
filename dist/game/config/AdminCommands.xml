@@ -382,7 +382,7 @@
 	<!-- ADMIN FAKE PLAYERS -->
 	<admin command="fakechat" description="Send a fake chat message appearing to come from a fake player." accessLevel="100" />
 	<admin command="fakepvp" description="Spawn a roaming fake player at your location: //fakepvp [build|random] [level]." accessLevel="100" />
-	<admin command="fakepvp_list" description="Show the roaming fake player builds and how many are alive." accessLevel="100" />
+	<admin command="fakepvp_list" description="Show the roaming fake player builds and how many are alive, and the personality of the targeted one." accessLevel="100" />
 	<admin command="fakepvp_clear" description="Log off all roaming fake players (their monsters respawn)." accessLevel="100" />
 
 	<!-- ADMIN ONLINE -->
