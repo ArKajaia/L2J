@@ -37,6 +37,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
+import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 
 /**
  * @author Mobius
@@ -45,6 +46,7 @@ public class AdminFakePlayers implements IAdminCommandHandler
 {
 	private static final String[] ADMIN_COMMANDS =
 	{
+		"admin_fakeplayers",
 		"admin_fakechat",
 		"admin_fakepvp",
 		"admin_fakepvp_list",
@@ -52,11 +54,28 @@ public class AdminFakePlayers implements IAdminCommandHandler
 	};
 	
 	@Override
-	public boolean onCommand(String command, Player activeChar)
+	public boolean onCommand(String commandLine, Player activeChar)
 	{
-		if (command.startsWith("admin_fakechat"))
+		// Buttons of the fake player menu end with "menu": the menu opens again after the command.
+		final boolean fromMenu = commandLine.endsWith(" menu");
+		final String command = fromMenu ? commandLine.substring(0, commandLine.length() - 5) : commandLine;
+		final boolean result = runCommand(command, activeChar);
+		if (fromMenu)
 		{
-			final String[] words = command.substring(15).split(" ");
+			showMenu(activeChar);
+		}
+		return result;
+	}
+	
+	private boolean runCommand(String command, Player activeChar)
+	{
+		if (command.startsWith("admin_fakeplayers"))
+		{
+			showMenu(activeChar);
+		}
+		else if (command.startsWith("admin_fakechat"))
+		{
+			final String[] words = command.length() > 15 ? command.substring(15).trim().split(" +") : new String[0];
 			if (words.length < 3)
 			{
 				activeChar.sendSysMessage("Usage: //fakechat playername fpcname message");
@@ -184,6 +203,38 @@ public class AdminFakePlayers implements IAdminCommandHandler
 		}
 		
 		return true;
+	}
+	
+	/**
+	 * The fake player page of the admin panel (//fakeplayers): every //fakepvp and //fakechat command as buttons.
+	 * @param activeChar the GM
+	 */
+	private static void showMenu(Player activeChar)
+	{
+		final FakePlayerPvpManager manager = FakePlayerPvpManager.getInstance();
+		final StringBuilder builds = new StringBuilder("random");
+		for (FakePlayerPvpBuild build : FakePlayerPvpData.getInstance().getBuilds())
+		{
+			builds.append(';').append(build.getName().replace(" ", "").replace("'", ""));
+		}
+		
+		String target = "none";
+		if ((activeChar.getTarget() instanceof Npc) && (((Npc) activeChar.getTarget()).getTemplate().getFakePlayerPvpProfile() != null))
+		{
+			final Npc fake = (Npc) activeChar.getTarget();
+			final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+			target = fake.getName() + " - Lv " + fake.getLevel() + " " + profile.getBuild().getName();
+		}
+		
+		final NpcHtmlMessage html = new NpcHtmlMessage();
+		html.setFile(activeChar, "data/html/admin/fakeplayers.htm");
+		html.replace("%alive%", manager.getFakePlayers().size());
+		html.replace("%spawning%", manager.isEnabled() ? "<font color=\"66CC66\">on</font>" : "<font color=\"FF6666\">off</font>");
+		html.replace("%builds%", builds.toString());
+		html.replace("%buildCount%", FakePlayerPvpData.getInstance().getBuilds().size());
+		html.replace("%target%", target);
+		html.replace("%level%", activeChar.getLevel());
+		activeChar.sendPacket(html);
 	}
 	
 	@Override
