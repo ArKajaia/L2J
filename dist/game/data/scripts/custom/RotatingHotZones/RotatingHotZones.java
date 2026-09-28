@@ -47,6 +47,19 @@ public class RotatingHotZones extends Quest
 	private static final String BYPASS_ACCEPT = "hotzone_tp_accept";
 	private static final String BYPASS_DECLINE = "hotzone_tp_decline";
 	
+	// Teleporter window layout and palette.
+	private static final int MENU_WIDTH = 460;
+	private static final int OFFER_WIDTH = 270;
+	private static final String BG_BAR = "1A1A1A";
+	private static final String BG_CARD = "111111";
+	private static final String BG_CARD_HIGHLIGHT = "2B2410";
+	private static final String COLOR_TITLE = "FFFFFF";
+	private static final String COLOR_VALUE = "E6C35C";
+	private static final String COLOR_MODIFIER = "FF9955";
+	private static final String COLOR_POSITIVE = "66CC66";
+	private static final String COLOR_MUTED = "A0A0A0";
+	private static final String COLOR_HINT = "707070";
+	
 	/**
 	 * Static handle so EnterWorld can reconcile hot zone buffs on login. Set in the constructor, which the script loader runs once at boot.
 	 */
@@ -157,6 +170,8 @@ public class RotatingHotZones extends Quest
 	// threads, and the old clear()-then-add() on a plain HashSet/ArrayList could hand them a half-built rotation or throw mid-iteration.
 	private volatile Set<Integer> _activeZoneSet = Set.of();
 	private volatile List<BracketZone> _activeZones = List.of();
+	/** When the next rotation is due, shown as a countdown in the teleporter. */
+	private volatile long _nextRotationAt;
 	
 	/** objectId -> pending offer. Removed on accept/decline; stale entries swept on rotation. */
 	private final Map<Integer, PendingTeleport> _pendingTeleports = new ConcurrentHashMap<>();
@@ -186,6 +201,7 @@ public class RotatingHotZones extends Quest
 		// anywhere. OnPlayerLogin fires after the effect restore and the zone revalidation, so the zone lists are already up to date.
 		Containers.Players().addListener(new ConsumerEventListener(Containers.Players(), EventType.ON_PLAYER_LOGIN, (OnPlayerLogin event) -> validateHotZoneBuffs(event.getPlayer()), this));
 		
+		_nextRotationAt = System.currentTimeMillis() + 10000;
 		ThreadPool.scheduleAtFixedRate(this::rotateZone, 10000, ROTATION_HOURS * 60 * 60 * 1000L);
 	}
 	
@@ -242,6 +258,7 @@ public class RotatingHotZones extends Quest
 		}
 		_activeZones = List.copyOf(newZones);
 		_activeZoneSet = Set.copyOf(newZoneSet);
+		_nextRotationAt = System.currentTimeMillis() + (ROTATION_HOURS * 60 * 60 * 1000L);
 		
 		for (Player player : World.getInstance().getPlayers())
 		{
@@ -477,7 +494,7 @@ public class RotatingHotZones extends Quest
 				}
 				
 				_pendingTeleports.put(member.getObjectId(), new PendingTeleport(zoneId, rawPoint.getX(), rawPoint.getY(), z));
-				sendTeleportOffer(member, player, zone.getName());
+				sendTeleportOffer(member, player, zone);
 				offered++;
 			}
 			
@@ -518,40 +535,64 @@ public class RotatingHotZones extends Quest
 	
 	/**
 	 * Shows a party member an accept/decline window for a leader's teleport.
-	 * @param member
-	 * @param leader
-	 * @param zoneName
+	 * @param member the party member being asked
+	 * @param leader the party leader who is teleporting
+	 * @param zone the destination hotzone
 	 */
-	private void sendTeleportOffer(Player member, Player leader, String zoneName)
+	private void sendTeleportOffer(Player member, Player leader, ZoneType zone)
 	{
 		final NpcHtmlMessage html = new NpcHtmlMessage(0);
-		final StringBuilder sb = new StringBuilder();
+		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifier(zone.getId());
+		final StringBuilder sb = new StringBuilder(2000);
 		
-		sb.append("<html><body><center><br>");
-		sb.append("<font color=\"LEVEL\">Hot Zone Teleport</font><br><br>");
-		sb.append("<font color=\"AAAAAA\">").append(leader.getName());
-		sb.append(" wants to teleport the party to</font><br>");
-		sb.append("<font color=\"LEVEL\">").append(zoneName).append("</font><br><br>");
-		sb.append("<font color=\"777777\">This offer expires in ");
-		sb.append(TELEPORT_OFFER_TIMEOUT_MS / 1000).append(" seconds.</font><br><br>");
+		sb.append("<html><body><center>");
+		sb.append("<br><font color=\"LEVEL\">Hot Zone Teleport</font><br1>");
+		sb.append("<img src=\"L2UI_CH3.herotower_deco\" width=256 height=32><br>");
 		
-		sb.append("<table width=250 border=0 cellpadding=0 cellspacing=0>");
-		sb.append("<tr>");
-		sb.append("<td width=125 align=center>");
-		sb.append("<button value=\"Accept\" action=\"bypass -h " + BYPASS_ACCEPT + "\" ");
-		sb.append("width=100 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
-		sb.append("</td>");
-		sb.append("<td width=125 align=center>");
-		sb.append("<button value=\"Decline\" action=\"bypass -h " + BYPASS_DECLINE + "\" ");
-		sb.append("width=100 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
-		sb.append("</td>");
-		sb.append("</tr>");
-		sb.append("</table>");
+		sb.append("<table width=").append(OFFER_WIDTH).append(" cellpadding=6 cellspacing=0 bgcolor=\"").append(BG_CARD).append("\"><tr><td align=center>");
+		sb.append("<font color=\"").append(COLOR_VALUE).append("\">").append(leader.getName()).append("</font>");
+		sb.append("<font color=\"").append(COLOR_MUTED).append("\"> invites you to</font><br1>");
+		sb.append("<font color=\"").append(COLOR_TITLE).append("\">").append(zone.getName()).append("</font>");
+		final LevelBracket bracket = getBracketFor(zone.getId());
+		if (bracket != null)
+		{
+			sb.append("<br1><font color=\"LEVEL\">").append(bracket.getName()).append("</font>");
+		}
+		if (modifier != null)
+		{
+			sb.append("<br><font color=\"").append(COLOR_MODIFIER).append("\">").append(getModifierName(modifier)).append("</font>");
+			sb.append("<br1><font color=\"").append(COLOR_MUTED).append("\">").append(modifier.getDescription()).append("</font>");
+		}
+		sb.append("</td></tr></table>");
+		appendDivider(sb, OFFER_WIDTH);
+		sb.append("<br>");
 		
+		sb.append("<table width=").append(OFFER_WIDTH).append(" cellpadding=0 cellspacing=0><tr>");
+		sb.append("<td width=135 align=center>").append(button("Accept", "bypass -h " + BYPASS_ACCEPT, 100)).append("</td>");
+		sb.append("<td width=135 align=center>").append(button("Decline", "bypass -h " + BYPASS_DECLINE, 100)).append("</td>");
+		sb.append("</tr></table><br>");
+		
+		sb.append("<font color=\"").append(COLOR_HINT).append("\">Expires in ").append(TELEPORT_OFFER_TIMEOUT_MS / 1000).append(" seconds. You must be in a peace zone to accept.</font>");
 		sb.append("</center></body></html>");
 		
 		html.setHtml(sb.toString());
 		member.sendPacket(html);
+	}
+	
+	/**
+	 * @param zoneId an active hotzone
+	 * @return the level bracket that zone is active for, or {@code null} if it is not active
+	 */
+	private LevelBracket getBracketFor(int zoneId)
+	{
+		for (BracketZone bz : _activeZones)
+		{
+			if (bz.getActiveZoneId() == zoneId)
+			{
+				return bz.getBracket();
+			}
+		}
+		return null;
 	}
 	
 	/**
@@ -711,82 +752,142 @@ public class RotatingHotZones extends Quest
 	
 	private void showTeleportMenu(Player player, Npc npc)
 	{
-		NpcHtmlMessage html = new NpcHtmlMessage(npc.getObjectId());
+		final NpcHtmlMessage html = new NpcHtmlMessage(npc.getObjectId());
 		html.setWindowSize(500, 850);
-		final StringBuilder sb = new StringBuilder();
 		
-		sb.append("<html><body>");
-		sb.append("<center>");
+		final boolean isPartyLeader = player.isInParty() && (player.getParty().getLeader() == player);
+		final List<BracketZone> activeZones = _activeZones;
+		final StringBuilder sb = new StringBuilder(12000);
+		
+		sb.append("<html><body><center>");
+		
+		// Header
+		sb.append("<br><font color=\"LEVEL\">Hotzone Teleporter</font><br1>");
+		sb.append("<img src=\"L2UI_CH3.herotower_deco\" width=256 height=32><br1>");
+		sb.append("<font color=\"").append(COLOR_MUTED).append("\">Boosted hunting grounds rotate every ").append(ROTATION_HOURS == 1 ? "hour" : ROTATION_HOURS + " hours").append(".</font><br>");
+		
+		// Status bar
+		sb.append("<table width=").append(MENU_WIDTH).append(" cellpadding=4 cellspacing=0 bgcolor=\"").append(BG_BAR).append("\"><tr>");
+		sb.append("<td width=150 align=left>Active: <font color=\"").append(COLOR_VALUE).append("\">").append(activeZones.size()).append("</font></td>");
+		sb.append("<td width=160 align=center>Next rotation: <font color=\"").append(COLOR_VALUE).append("\">").append(formatTimeLeft(_nextRotationAt - System.currentTimeMillis())).append("</font></td>");
+		sb.append("<td width=150 align=right>Your level: <font color=\"").append(COLOR_VALUE).append("\">").append(player.getLevel()).append("</font></td>");
+		sb.append("</tr></table>");
+		appendDivider(sb, MENU_WIDTH);
 		sb.append("<br>");
-		sb.append("<font color=\"LEVEL\">Hotzone Teleporter</font><br1>");
-		sb.append("<font color=\"808080\">Select an active Hotzone to teleport:</font><br><br>");
-		sb.append("<table width=460 border=0 cellpadding=2 cellspacing=1>");
 		
-		boolean hasActiveZone = false;
-		
-		for (BracketZone bz : _activeZones)
+		if (activeZones.isEmpty())
 		{
-			LevelBracket bracket = bz.getBracket();
-			int zoneId = bz.getActiveZoneId();
-			
-			ZoneType zone = ZoneManager.getInstance().getZoneById(zoneId);
-			String zoneName = (zone != null) ? zone.getName() : ("Zone " + zoneId);
-			
-			hasActiveZone = true;
-
-			sb.append("<tr><td align=\"left\" width=80>").append(zoneName).append(": ").append("<font color=\"LEVEL\">").append(bracket.getName()).append("</font></td></tr>");
-
+			sb.append("<table width=").append(MENU_WIDTH).append(" cellpadding=12 cellspacing=0 bgcolor=\"").append(BG_CARD).append("\"><tr>");
+			sb.append("<td align=center><font color=\"").append(COLOR_MUTED).append("\">No hotzones are active right now.<br1>Check back after the next rotation.</font></td>");
+			sb.append("</tr></table>");
+		}
+		
+		for (BracketZone bz : activeZones)
+		{
+			final LevelBracket bracket = bz.getBracket();
+			final int zoneId = bz.getActiveZoneId();
+			final ZoneType zone = ZoneManager.getInstance().getZoneById(zoneId);
+			final String zoneName = (zone != null) ? zone.getName() : ("Zone " + zoneId);
 			final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifier(zoneId);
+			final boolean isYourLevel = bracket.isInRange(player.getLevel());
+			
+			sb.append("<table width=").append(MENU_WIDTH).append(" cellpadding=3 cellspacing=0 bgcolor=\"").append(isYourLevel ? BG_CARD_HIGHLIGHT : BG_CARD).append("\"><tr>");
+			
+			// Level bracket badge
+			sb.append("<td width=64 align=center valign=top><font color=\"LEVEL\">").append(bracket.getName()).append("</font>");
+			if (isYourLevel)
+			{
+				sb.append("<br1><font color=\"").append(COLOR_POSITIVE).append("\">Your level</font>");
+			}
+			sb.append("</td>");
+			
+			// Zone name and modifier
+			sb.append("<td width=276 align=left valign=top>");
+			sb.append("<font color=\"").append(COLOR_TITLE).append("\">").append(zoneName).append("</font>");
 			if (modifier != null)
 			{
-				sb.append("<tr><td align=\"left\"><font color=\"999999\">").append(modifier.getDescription()).append("</font></td></tr>");
+				sb.append("<br1><font color=\"").append(COLOR_MODIFIER).append("\">").append(getModifierName(modifier)).append("</font>");
+				sb.append("<br1><font color=\"").append(COLOR_MUTED).append("\">").append(modifier.getDescription()).append("</font>");
 			}
-
-			sb.append("<tr>");
-			sb.append("<td>");
-			
-			sb.append("<table width=160>");
-			sb.append("<tr>");
-			
-			sb.append("<td width=80 align=left>");
-			sb.append("<button value=\"Solo\" ");
-			sb.append("action=\"bypass -h Script RotatingHotZones teleport_").append(zoneId).append("\" ");
-			sb.append("width=70 height=25 ");
-			sb.append("back=\"L2UI_CT1.Button_DF_Down\" ");
-			sb.append("fore=\"L2UI_CT1.Button_DF\">");
 			sb.append("</td>");
 			
-			if (player.isInParty() && (player.getParty().getLeader() == player))
+			// Actions
+			sb.append("<td width=60 align=right valign=top>");
+			sb.append(button("Solo", "bypass -h Script RotatingHotZones teleport_" + zoneId, 56));
+			sb.append("</td>");
+			sb.append("<td width=60 align=right valign=top>");
+			if (isPartyLeader)
 			{
-				sb.append("<td width=80 align=left>");
-				sb.append("<button value=\"Party\" ");
-				sb.append("action=\"bypass -h Script RotatingHotZones teleport_party_").append(zoneId).append("\" ");
-				sb.append("width=70 height=25 ");
-				sb.append("back=\"L2UI_CT1.Button_DF_Down\" ");
-				sb.append("fore=\"L2UI_CT1.Button_DF\">");
-				sb.append("</td>");
+				sb.append(button("Party", "bypass -h Script RotatingHotZones teleport_party_" + zoneId, 56));
 			}
-			
-			sb.append("</tr>");
-			sb.append("</table>");
-			
 			sb.append("</td>");
-			sb.append("</tr>");
+			
+			sb.append("</tr></table>");
+			appendDivider(sb, MENU_WIDTH);
 		}
 		
-		if (!hasActiveZone)
+		// Footer
+		sb.append("<br><font color=\"").append(COLOR_HINT).append("\">Teleports work from peace zones only.<br1>");
+		if (isPartyLeader)
 		{
-			sb.append("<tr>");
-			sb.append("<td align=\"center\" colspan=\"2\"><font color=\"808080\">No active hotzones available.</font></td>");
-			sb.append("</tr>");
+			sb.append("Party sends your members an invite to join you.");
 		}
+		else if (player.isInParty())
+		{
+			sb.append("Only your party leader can teleport the party.");
+		}
+		else
+		{
+			sb.append("Form a party and lead it to teleport everyone together.");
+		}
+		sb.append("</font>");
 		
-		sb.append("</table>");
-		sb.append("</center>");
-		sb.append("</body></html>");
+		sb.append("</center></body></html>");
 		
 		html.setHtml(sb.toString());
 		player.sendPacket(html);
+	}
+	
+	/**
+	 * @param modifier the modifier to name
+	 * @return the modifier's enum name in title case, e.g. {@code BLOODY_HARVEST} becomes "Bloody Harvest"
+	 */
+	private static String getModifierName(HotzoneModifier modifier)
+	{
+		final StringBuilder name = new StringBuilder();
+		for (String word : modifier.name().split("_"))
+		{
+			if (name.length() > 0)
+			{
+				name.append(' ');
+			}
+			name.append(word.charAt(0)).append(word.substring(1).toLowerCase());
+		}
+		return name.toString();
+	}
+	
+	/**
+	 * @param millis time left, clamped to zero
+	 * @return a compact "1h 05m" / "42m" / "under 1m" countdown
+	 */
+	private static String formatTimeLeft(long millis)
+	{
+		final long minutes = Math.max(0, millis) / 60000;
+		if (minutes >= 60)
+		{
+			return (minutes / 60) + "h " + String.format("%02d", minutes % 60) + "m";
+		}
+		return minutes > 0 ? minutes + "m" : "under 1m";
+	}
+	
+	private static String button(String value, String action, int width)
+	{
+		return "<button value=\"" + value + "\" action=\"" + action + "\" width=" + width + " height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">";
+	}
+	
+	private static void appendDivider(StringBuilder sb, int width)
+	{
+		sb.append("<img src=\"L2UI.SquareGray\" width=").append(width).append(" height=1>");
 	}
 	
 	@Override
@@ -863,4 +964,4 @@ public class RotatingHotZones extends Quest
 	{
 		new RotatingHotZones();
 	}
-}
+}
