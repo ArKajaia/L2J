@@ -86,6 +86,7 @@ import handlers.bypass.npc.Festival;
 import handlers.bypass.npc.FindPvP;
 import handlers.bypass.npc.Freight;
 import handlers.bypass.npc.ItemAuctionLink;
+import handlers.bypass.npc.LifeStoneAugment;
 import handlers.bypass.npc.Link;
 import handlers.bypass.npc.Loto;
 import handlers.bypass.npc.Multisell;
@@ -452,6 +453,7 @@ public class MasterHandler
 			FindPvP.class,
 			Freight.class,
 			ItemAuctionLink.class,
+			LifeStoneAugment.class,
 			Link.class,
 			Loto.class,
 			Multisell.class,

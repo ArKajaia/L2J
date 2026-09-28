@@ -25,14 +25,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.l2jmobius.gameserver.config.PlayerConfig;
+import org.l2jmobius.gameserver.data.AugmentationData;
+import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.item.Armor;
+import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.Weapon;
 import org.l2jmobius.gameserver.model.item.enums.BodyPart;
 import org.l2jmobius.gameserver.model.item.enums.ItemLocation;
+import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.item.type.CrystalType;
+import org.l2jmobius.gameserver.model.options.Augmentation;
 import org.l2jmobius.gameserver.network.SystemMessageId;
+import org.l2jmobius.gameserver.network.serverpackets.InventoryUpdate;
+import org.l2jmobius.gameserver.network.serverpackets.StatusUpdate;
 
 public abstract class AbstractRefinePacket extends ClientPacket
 {
@@ -217,13 +224,113 @@ public abstract class AbstractRefinePacket extends ClientPacket
 	{
 		for (Item item : player.getInventory().getItems())
 		{
-			if (isValid(player, item, lifeStone))
+			if (isAugmentableWith(player, item, lifeStone))
 			{
 				return true;
 			}
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * @param player the player
+	 * @param item the weapon or accessory
+	 * @param lifeStone the life stone
+	 * @return {@code true} if the item can be augmented with this life stone (Gemstones not checked)
+	 */
+	public static boolean isAugmentableWith(Player player, Item item, Item lifeStone)
+	{
+		return isValid(player, item, lifeStone);
+	}
+	
+	/**
+	 * @param targetItem the item to augment
+	 * @return the Gemstone item id the augmentation of this item costs
+	 */
+	public static int getRequiredGemStoneId(Item targetItem)
+	{
+		return getGemStoneId(targetItem.getTemplate().getCrystalType());
+	}
+	
+	/**
+	 * @param targetItem the item to augment
+	 * @param lifeStone the life stone used
+	 * @return how many Gemstones the augmentation of this item with this life stone costs, 0 if the stone is not a life stone
+	 */
+	public static int getRequiredGemStoneCount(Item targetItem, Item lifeStone)
+	{
+		final LifeStone ls = _lifeStones.get(lifeStone.getId());
+		return ls == null ? 0 : getGemStoneCount(targetItem.getTemplate().getCrystalType(), ls.getGrade());
+	}
+	
+	/**
+	 * Augments an item with a life stone, taking the life stone and the required Gemstones straight from the inventory (no refinery window needed).<br>
+	 * An equipped item is unequipped for the augmentation and equipped back afterwards so the new augmentation applies right away.
+	 * @param player the player
+	 * @param targetItem the weapon or accessory to augment
+	 * @param lifeStone the life stone to use
+	 * @return {@code null} if the item was augmented, otherwise the reason it wasn't (also sent to the player)
+	 */
+	public static String augmentFromInventory(Player player, Item targetItem, Item lifeStone)
+	{
+		if (!isValid(player, targetItem, lifeStone))
+		{
+			player.sendPacket(SystemMessageId.AUGMENTATION_FAILED_DUE_TO_INAPPROPRIATE_CONDITIONS);
+			return "Augmentation failed due to inappropriate conditions.";
+		}
+		
+		final LifeStone ls = _lifeStones.get(lifeStone.getId());
+		final int gemStoneId = getRequiredGemStoneId(targetItem);
+		final int gemStoneCount = getGemStoneCount(targetItem.getTemplate().getCrystalType(), ls.getGrade());
+		final Item gemStones = player.getInventory().getItemByItemId(gemStoneId);
+		final long ownedGemStones = gemStones == null ? 0 : gemStones.getCount();
+		if ((gemStoneCount <= 0) || (ownedGemStones < gemStoneCount))
+		{
+			final ItemTemplate gemStoneTemplate = ItemData.getInstance().getTemplate(gemStoneId);
+			final String reason = "You do not have enough " + (gemStoneTemplate == null ? "Gemstones" : gemStoneTemplate.getName()) + ". Required: " + gemStoneCount + ", you have: " + ownedGemStones + ".";
+			player.sendMessage(reason);
+			return reason;
+		}
+		
+		// Unequip the item.
+		final boolean wasEquipped = targetItem.isEquipped();
+		if (wasEquipped)
+		{
+			final InventoryUpdate iu = new InventoryUpdate();
+			for (Item itm : player.getInventory().unEquipItemInSlotAndRecord(targetItem.getLocationSlot()))
+			{
+				iu.addModifiedItem(itm);
+			}
+			
+			player.sendPacket(iu); // Sent inventory update for unequip instantly.
+			player.broadcastUserInfo();
+		}
+		
+		// Consume the life stone and the gemstones.
+		if (!player.destroyItem(ItemProcessType.FEE, lifeStone, 1, null, false) || !player.destroyItem(ItemProcessType.FEE, gemStones, gemStoneCount, null, false))
+		{
+			return "Augmentation failed due to inappropriate conditions.";
+		}
+		
+		final Augmentation aug = AugmentationData.getInstance().generateRandomAugmentation(ls.getLevel(), ls.getGrade(), targetItem.getTemplate().getBodyPart(), lifeStone.getId(), targetItem);
+		targetItem.setAugmentation(aug);
+		
+		final InventoryUpdate iu = new InventoryUpdate();
+		iu.addModifiedItem(targetItem);
+		player.sendPacket(iu);
+		
+		final StatusUpdate su = new StatusUpdate(player);
+		su.addAttribute(StatusUpdate.CUR_LOAD, player.getCurrentLoad());
+		player.sendPacket(su);
+		
+		if (wasEquipped)
+		{
+			player.useEquippableItem(targetItem, false);
+		}
+		
+		player.sendPacket(SystemMessageId.THE_ITEM_WAS_SUCCESSFULLY_AUGMENTED);
+		return null;
 	}
 	
 	protected static LifeStone getLifeStone(int itemId)
