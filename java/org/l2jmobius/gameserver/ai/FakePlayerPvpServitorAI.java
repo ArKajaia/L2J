@@ -133,11 +133,17 @@ public class FakePlayerPvpServitorAI extends AttackableAI
 			return;
 		}
 
-		// A player hitting its servitor picks a fight with the fake player, like hitting a player's summon.
+		// A player (or another fake player) hitting its servitor picks a fight with the fake player, like hitting a player's summon.
 		final Npc owner = getOwner();
-		if ((owner != null) && !owner.isDead() && owner.isAttackable() && attacker.isPlayable())
+		if ((owner != null) && !owner.isDead() && owner.isAttackable() && FakePlayerPvpManager.isPvpEnemy(attacker))
 		{
 			FakePlayerPvpManager.getInstance().onFakePlayerAttacked(owner.asAttackable(), attacker);
+			
+			// Its owner doesn't want that fight: neither does it.
+			if (FakePlayerPvpManager.isRefusing(owner.asAttackable(), attacker))
+			{
+				return;
+			}
 		}
 
 		if (getIntention() != Intention.ATTACK)
@@ -217,7 +223,13 @@ public class FakePlayerPvpServitorAI extends AttackableAI
 			return false;
 		}
 
-		return !target.isPlayable() || !target.isInsideZone(ZoneId.PEACE);
+		// Not someone its owner chose not to hit back.
+		if (owner.isAttackable() && FakePlayerPvpManager.isRefusing(owner.asAttackable(), target))
+		{
+			return false;
+		}
+
+		return !FakePlayerPvpManager.isPvpEnemy(target) || !target.isInsideZone(ZoneId.PEACE);
 	}
 
 	private void follow(Attackable servitor)

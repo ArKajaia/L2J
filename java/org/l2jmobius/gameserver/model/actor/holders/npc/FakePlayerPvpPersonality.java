@@ -28,7 +28,7 @@ import org.l2jmobius.gameserver.model.actor.Npc;
  * The temper of a single roaming fake player: how its behaviour values differ from the ones in FakePlayerPvp.ini, so no two fake players play exactly alike.<br>
  * Every fake player rolls four traits, and each behaviour value follows one of them, with a bit of its own randomness on top:
  * <ul>
- * <li>aggression: picks fights with flagged and karma players, takes revenge for a stolen kill, comes back for round two and chases further; the opposite runs away sooner and drinks potions earlier;</li>
+ * <li>aggression: picks fights with flagged and karma players, taunts lower levels, takes revenge for a stolen kill, comes back for round two and chases further; the opposite runs away sooner, refuses to hit back more often and drinks potions earlier;</li>
  * <li>skill: uses its skills and debuffs more, notices a player's defensive buffs sooner, keeps a better distance and takes out its bow sooner;</li>
  * <li>chattiness: talks more (or less) in general chat;</li>
  * <li>roaming: hunts further from its spawn point.</li>
@@ -63,6 +63,8 @@ public class FakePlayerPvpPersonality
 	private final double _returnChance;
 	private final double _tauntChance;
 	private final double _greetChance;
+	private final double _pokeChance;
+	private final double _refuseChance;
 
 	// Distances, times and thresholds, from -1 to 1 of FakePvpPersonalityRangeVariance.
 	private final double _huntRange;
@@ -113,6 +115,8 @@ public class FakePlayerPvpPersonality
 		_returnChance = follow(random, _aggression);
 		_tauntChance = follow(random, _chattiness);
 		_greetChance = follow(random, _chattiness);
+		_pokeChance = follow(random, _aggression);
+		_refuseChance = follow(random, -_aggression);
 
 		_huntRange = follow(random, _roaming);
 		_leashRange = follow(random, _roaming);
@@ -148,7 +152,7 @@ public class FakePlayerPvpPersonality
 	 * @param offset how far this fake player is from it, from -1 to 1
 	 * @return its own chance, from 0 to 100
 	 */
-	private static int chance(int value, double offset)
+	private static int chance(double value, double offset)
 	{
 		return Math.max(0, Math.min(100, (int) Math.round(value * (1 + ((offset * FakePlayerPvpConfig.PERSONALITY_VARIANCE) / 100.0)))));
 	}
@@ -287,6 +291,24 @@ public class FakePlayerPvpPersonality
 		return chance(FakePlayerPvpConfig.GREET_CHANCE, _greetChance);
 	}
 
+	/**
+	 * @param levelDiff how many levels it is above the one it may taunt
+	 * @return its chance (in %) to walk up to them and hit them once (see {@link FakePlayerPvpConfig#POKE_CHANCE_MIN})
+	 */
+	public int getPokeChance(int levelDiff)
+	{
+		return chance(FakePlayerPvpConfig.levelDiffChance(FakePlayerPvpConfig.POKE_CHANCE_MIN, FakePlayerPvpConfig.POKE_CHANCE_MAX, FakePlayerPvpConfig.POKE_MAX_CHANCE_LEVEL_DIFF, levelDiff), _pokeChance);
+	}
+	
+	/**
+	 * @param levelDiff how many levels it is below the one that attacks it
+	 * @return its chance (in %) not to hit back while it isn't flagged (see {@link FakePlayerPvpConfig#REFUSE_CHANCE_MIN})
+	 */
+	public int getRefuseChance(int levelDiff)
+	{
+		return chance(FakePlayerPvpConfig.levelDiffChance(FakePlayerPvpConfig.REFUSE_CHANCE_MIN, FakePlayerPvpConfig.REFUSE_CHANCE_MAX, FakePlayerPvpConfig.REFUSE_MAX_CHANCE_LEVEL_DIFF, levelDiff), _refuseChance);
+	}
+	
 	/**
 	 * @return its {@link FakePlayerPvpConfig#HUNT_RANGE}
 	 */

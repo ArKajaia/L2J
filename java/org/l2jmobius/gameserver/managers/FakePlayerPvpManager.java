@@ -123,6 +123,8 @@ public class FakePlayerPvpManager
 	private static final int RETURN_MAX_RETRIES = 15;
 	/** A fake player says at most one thing in this many milliseconds. */
 	private static final long CHAT_INTERVAL = 20000;
+	/** How long a fake player keeps not hitting back an attacker it chose not to fight, after their last hit. */
+	private static final long REFUSE_MEMORY = 60000;
 	/** A fake player doesn't pick a fight with a player this many levels above it (it only complains). */
 	private static final int OUTLEVELED_DIFFERENCE = 6;
 	
@@ -835,6 +837,52 @@ public class FakePlayerPvpManager
 		"if you want my mob, you have to fight me first"
 	};
 	
+	/** Said standing next to a lower level it is about to hit once, to invite a PvP. */
+	private static final String[] TAUNTS_POKE =
+	{
+		"pvp?",
+		"1v1?",
+		"fight me",
+		"u scared?",
+		"come on",
+		"hit me back",
+		"lets go",
+		"duel?",
+		"wanna fight?",
+		"show me what u got",
+		"u gonna hit back or what",
+		"pvp or run",
+		"hi :)",
+		"boo",
+		"try me",
+		"flag and fight",
+		"u farming here? not anymore",
+		"lets see what u got"
+	};
+	
+	/** Said when it doesn't hit back a higher level that attacks it while it isn't flagged. */
+	private static final String[] TAUNTS_REFUSE =
+	{
+		"not flagging",
+		"enjoy the karma",
+		"go ahead, get red",
+		"not gonna hit back",
+		"im not flagging for you",
+		"pk me then",
+		"no pvp, im farming",
+		"lol no",
+		"ur higher lvl, go away",
+		"pick on someone your level",
+		"im not fighting u",
+		"leave me alone",
+		"hope u like karma",
+		"kill me and u go red",
+		"not worth it",
+		"go bother someone else",
+		"what do u want",
+		"bored?"
+	};
+	
 	private final AtomicInteger _nextNpcId = new AtomicInteger(FIRST_NPC_ID);
 	private final Set<Npc> _fakePlayers = ConcurrentHashMap.newKeySet();
 	private final Set<String> _names = ConcurrentHashMap.newKeySet();
@@ -1327,7 +1375,7 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
-	 * Monsters (and anything else that isn't a player or a player's summon) cannot bring a roaming fake player below {@link FakePlayerPvpConfig#MONSTER_DAMAGE_FLOOR}% HP.
+	 * Monsters (and anything else that isn't a player, a player's summon or another roaming fake player) cannot bring a roaming fake player below {@link FakePlayerPvpConfig#MONSTER_DAMAGE_FLOOR}% HP.
 	 * @param fake the fake player being hit
 	 * @param damage the damage
 	 * @param attacker who deals it, can be {@code null}
@@ -1335,7 +1383,7 @@ public class FakePlayerPvpManager
 	 */
 	public double limitDamage(Attackable fake, double damage, Creature attacker)
 	{
-		if ((attacker != null) && attacker.isPlayable())
+		if ((attacker != null) && isPvpEnemy(attacker))
 		{
 			return damage;
 		}
@@ -1394,19 +1442,114 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
-	 * Called by the fake player AI when it gets hit: a player that attacks it becomes its target.
+	 * Called by the fake player AI when it gets hit: a player (or another roaming fake player) that attacks it becomes its target.<br>
+	 * Like a player that doesn't want to fight, a fake player that isn't flagged may not hit back someone of a higher level (see {@link FakePlayerPvpPersonality#getRefuseChance}): it goes on hunting and lets them get the karma. It decides once, and keeps to it
+	 * while they keep hitting it.
 	 * @param fake the fake player
 	 * @param attacker the attacker
 	 */
 	public void onFakePlayerAttacked(Attackable fake, Creature attacker)
 	{
-		final Player player = attacker != null ? attacker.asPlayer() : null;
-		if ((player == null) || fake.isDead() || isFighting(fake, player))
+		final Creature enemy = getPvpEnemy(attacker);
+		if ((enemy == null) || (enemy == fake) || fake.isDead() || isFighting(fake, enemy))
 		{
 			return;
 		}
 		
-		startFight(fake, player, TAUNTS_ATTACKED);
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		if (profile == null)
+		{
+			return;
+		}
+		
+		final long now = System.currentTimeMillis();
+		final boolean unflagged = fake.isScriptValue(0) && (fake.getKarma() <= 0);
+		if (profile.isRefusing(enemy, now))
+		{
+			// Still not hitting back, for a while longer since they go on.
+			if (unflagged)
+			{
+				profile.refuse(enemy, now + REFUSE_MEMORY);
+				return;
+			}
+			
+			// Flagged meanwhile (it attacked someone): no reason to hold back anymore.
+			profile.stopRefusing(enemy);
+		}
+		else if (unflagged && (enemy.getLevel() > fake.getLevel()) && (Rnd.get(100) < profile.getPersonality().getRefuseChance(enemy.getLevel() - fake.getLevel())))
+		{
+			profile.refuse(enemy, now + REFUSE_MEMORY);
+			taunt(fake, TAUNTS_REFUSE, false);
+			return;
+		}
+		
+		startFight(fake, enemy, TAUNTS_ATTACKED);
+	}
+	
+	/**
+	 * @param fake a roaming fake player
+	 * @param attacker a creature that attacked it
+	 * @return {@code true} if it chose not to hit {@code attacker} (or its owner) back, see {@link #onFakePlayerAttacked}
+	 */
+	public static boolean isRefusing(Attackable fake, Creature attacker)
+	{
+		final Creature enemy = getPvpEnemy(attacker);
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		return (enemy != null) && (profile != null) && profile.isRefusing(enemy, System.currentTimeMillis());
+	}
+	
+	/**
+	 * @param creature a creature
+	 * @return {@code true} if a roaming fake player fighting {@code creature} is in a PvP: a player, a player's summon, or another roaming fake player
+	 */
+	public static boolean isPvpEnemy(Creature creature)
+	{
+		return (creature != null) && (creature.isPlayable() || creature.isPvpFakePlayer());
+	}
+	
+	/**
+	 * @param attacker a creature that attacks a roaming fake player
+	 * @return who it would fight for that: the player (the owner of a summon), or the other roaming fake player, {@code null} for anything else
+	 */
+	private static Creature getPvpEnemy(Creature attacker)
+	{
+		if (attacker == null)
+		{
+			return null;
+		}
+		
+		if (attacker.isPvpFakePlayer())
+		{
+			return attacker;
+		}
+		
+		// Another fake player's servitor: that fake player.
+		if (attacker instanceof FakePlayerPvpServitor)
+		{
+			final Npc owner = ((FakePlayerPvpServitor) attacker).getOwner();
+			return (owner != null) && owner.isPvpFakePlayer() ? owner : null;
+		}
+		
+		return attacker.asPlayer();
+	}
+	
+	/**
+	 * Called by the fake player AI when it walks up to a lower level and hits it once to invite a PvP.
+	 * @param fake the fake player
+	 */
+	public void onPoke(Attackable fake)
+	{
+		taunt(fake, TAUNTS_POKE, false);
+	}
+	
+	/**
+	 * Called when a roaming fake player is killed by another roaming fake player: a few words from the ground. There is nothing to loot, no exp and no coming back for revenge, which are for players.
+	 * @param victim the fake player that died
+	 * @param killer the fake player that killed it
+	 */
+	public void onFakePlayerKilledByFake(Attackable victim, Creature killer)
+	{
+		taunt(victim, TAUNTS_DEATH, true);
 	}
 	
 	/**
@@ -1568,11 +1711,27 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
+	 * Like {@link #isFairAreaTarget(Attackable, Player)} for another roaming fake player: one it is fighting, or a flagged or karma one.
+	 * @param fake the fake player casting
+	 * @param other another roaming fake player in the area
+	 * @return {@code true} if {@code other} may be hit
+	 */
+	public static boolean isFairAreaTarget(Attackable fake, Npc other)
+	{
+		if (other.isInsideZone(ZoneId.PEACE))
+		{
+			return false;
+		}
+		
+		return isFighting(fake, other) || (other.getScriptValue() > 0) || (other.getKarma() > 0);
+	}
+	
+	/**
 	 * @param fake a fake player
-	 * @param player a player
+	 * @param player a player, or another roaming fake player
 	 * @return {@code true} if {@code fake} is already fighting {@code player}
 	 */
-	private static boolean isFighting(Attackable fake, Player player)
+	private static boolean isFighting(Attackable fake, Creature player)
 	{
 		// Read from the aggro list itself: getHating() also drops invulnerable players from it.
 		final AggroInfo info = fake.getAggroList().get(player);
@@ -1591,12 +1750,12 @@ public class FakePlayerPvpManager
 	/**
 	 * Makes a fake player drop what it is doing and fight {@code player}.
 	 * @param fake the fake player
-	 * @param player the player
+	 * @param player the player, or another roaming fake player
 	 * @param taunts what it may say about it
 	 */
-	private void startFight(Attackable fake, Player player, String[] taunts)
+	private void startFight(Attackable fake, Creature player, String[] taunts)
 	{
-		if (player.isDead() || player.isInvisible() || (player.isGM() && !player.getAccessLevel().canTakeAggro()))
+		if (player.isDead() || player.isInvisible() || (player.isPlayer() && player.isGM() && !player.asPlayer().getAccessLevel().canTakeAggro()))
 		{
 			return;
 		}
@@ -2096,7 +2255,7 @@ public class FakePlayerPvpManager
 	 * @param fake a roaming fake player
 	 * @return {@code true} if it is fighting a player: flagged, or a player (or summon) is the one it hates most
 	 */
-	private static boolean isInPvp(Npc fake)
+	public static boolean isInPvp(Npc fake)
 	{
 		if (fake.getScriptValue() > 0)
 		{
@@ -2104,7 +2263,7 @@ public class FakePlayerPvpManager
 		}
 		
 		final Creature hated = fake.isAttackable() ? fake.asAttackable().getMostHated() : null;
-		return (hated != null) && hated.isPlayable();
+		return isPvpEnemy(hated);
 	}
 	
 	/**

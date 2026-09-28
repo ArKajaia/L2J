@@ -25,9 +25,11 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
@@ -91,6 +93,9 @@ public class FakePlayerPvpProfile
 	private volatile int _deathInstanceId;
 	private volatile int _killerObjectId;
 	private volatile long _revengeUntil;
+	
+	/** Who attacked it while it wasn't flagged and it chose not to hit back (object id -> until when). */
+	private final Map<Integer, Long> _refused = new ConcurrentHashMap<>();
 	
 	/**
 	 * @param build the build
@@ -525,6 +530,7 @@ public class FakePlayerPvpProfile
 		_charges.set(_maxCharges);
 		_nextPotionTime = 0;
 		_nextChatTime = 0;
+		_refused.clear();
 	}
 	
 	/**
@@ -571,5 +577,36 @@ public class FakePlayerPvpProfile
 	{
 		_killerObjectId = 0;
 		_revengeUntil = 0;
+	}
+	
+	/**
+	 * It doesn't hit {@code attacker} back (it wasn't flagged, see {@code FakePlayerPvpManager#onFakePlayerAttacked}) until {@code until}.
+	 * @param attacker the attacker
+	 * @param until the time until which it keeps refusing
+	 */
+	public void refuse(WorldObject attacker, long until)
+	{
+		_refused.put(attacker.getObjectId(), until);
+		_refused.values().removeIf(time -> time < System.currentTimeMillis());
+	}
+	
+	/**
+	 * @param attacker a creature that attacked it
+	 * @param now the current time
+	 * @return {@code true} if it chose not to hit {@code attacker} back
+	 */
+	public boolean isRefusing(WorldObject attacker, long now)
+	{
+		final Long until = _refused.get(attacker.getObjectId());
+		return (until != null) && (now < until);
+	}
+	
+	/**
+	 * It hits {@code attacker} back after all (it got flagged meanwhile).
+	 * @param attacker the attacker
+	 */
+	public void stopRefusing(WorldObject attacker)
+	{
+		_refused.remove(attacker.getObjectId());
 	}
 }

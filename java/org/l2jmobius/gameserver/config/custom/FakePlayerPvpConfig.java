@@ -66,6 +66,8 @@ public class FakePlayerPvpConfig
 	public static int POTION_HP_PERCENT;
 	public static int POTION_HEAL_PERCENT;
 	public static int POTION_REUSE;
+	public static int GEAR_LEVEL_DROP_ABOVE_80;
+	public static int GEAR_LEVEL_DROP_ABOVE_51;
 	
 	// Behaviour
 	public static double MONSTER_DAMAGE_FLOOR;
@@ -110,6 +112,17 @@ public class FakePlayerPvpConfig
 	public static int RETURN_DELAY_MIN;
 	public static int RETURN_DELAY_MAX;
 	public static int RETURN_REVENGE_TIME;
+	
+	// PvP taunt
+	public static int POKE_CHANCE_MIN;
+	public static int POKE_CHANCE_MAX;
+	public static int POKE_MAX_CHANCE_LEVEL_DIFF;
+	public static boolean POKE_FAKE_PLAYERS;
+	public static int POKE_LOITER_MIN;
+	public static int POKE_LOITER_MAX;
+	public static int REFUSE_CHANCE_MIN;
+	public static int REFUSE_CHANCE_MAX;
+	public static int REFUSE_MAX_CHANCE_LEVEL_DIFF;
 	
 	// Personality
 	public static int PERSONALITY_VARIANCE;
@@ -164,6 +177,8 @@ public class FakePlayerPvpConfig
 		POTION_HP_PERCENT = Math.max(0, Math.min(100, config.getInt("FakePvpPotionHpPercent", 50)));
 		POTION_HEAL_PERCENT = Math.max(0, Math.min(100, config.getInt("FakePvpPotionHealPercent", 6)));
 		POTION_REUSE = Math.max(1000, config.getInt("FakePvpPotionReuse", 10000));
+		GEAR_LEVEL_DROP_ABOVE_80 = Math.max(0, config.getInt("FakePvpGearLevelDropAbove80", 7));
+		GEAR_LEVEL_DROP_ABOVE_51 = Math.max(0, config.getInt("FakePvpGearLevelDropAbove51", 15));
 		
 		MONSTER_DAMAGE_FLOOR = Math.max(0, Math.min(100, config.getDouble("FakePvpMonsterDamageFloor", 70)));
 		HUNT_RANGE = Math.max(100, config.getInt("FakePvpHuntRange", 900));
@@ -230,12 +245,44 @@ public class FakePlayerPvpConfig
 		}
 		RETURN_REVENGE_TIME = Math.max(0, config.getInt("FakePvpReturnRevengeTime", 300));
 		
+		POKE_CHANCE_MIN = Math.max(0, Math.min(100, config.getInt("FakePvpPokeChanceMin", 5)));
+		POKE_CHANCE_MAX = Math.max(0, Math.min(100, config.getInt("FakePvpPokeChanceMax", 20)));
+		POKE_MAX_CHANCE_LEVEL_DIFF = Math.max(1, config.getInt("FakePvpPokeMaxChanceLevelDiff", 8));
+		POKE_FAKE_PLAYERS = config.getBoolean("FakePvpPokeFakePlayers", true);
+		POKE_LOITER_MIN = Math.max(0, config.getInt("FakePvpPokeLoiterMin", 3000));
+		POKE_LOITER_MAX = Math.max(POKE_LOITER_MIN, config.getInt("FakePvpPokeLoiterMax", 7000));
+		REFUSE_CHANCE_MIN = Math.max(0, Math.min(100, config.getInt("FakePvpRefuseChanceMin", 5)));
+		REFUSE_CHANCE_MAX = Math.max(0, Math.min(100, config.getInt("FakePvpRefuseChanceMax", 40)));
+		REFUSE_MAX_CHANCE_LEVEL_DIFF = Math.max(1, config.getInt("FakePvpRefuseMaxChanceLevelDiff", 8));
+		
 		PERSONALITY_VARIANCE = Math.max(0, Math.min(100, config.getInt("FakePvpPersonalityVariance", 30)));
 		PERSONALITY_RANGE_VARIANCE = Math.max(0, Math.min(90, config.getInt("FakePvpPersonalityRangeVariance", 20)));
 		
 		REWARD_EXP_SP_MULTIPLIER = Math.max(0, config.getDouble("FakePvpRewardExpSpMultiplier", 1.0));
 		REWARD_DROPS = config.getBoolean("FakePvpRewardDrops", true);
 		EQUIPMENT_DROP_CHANCE = Math.max(0, Math.min(100, config.getDouble("FakePvpEquipmentDropChance", 0.5)));
+	}
+	
+	/**
+	 * @param min the chance (in %) at 1 level of difference
+	 * @param max the chance (in %) at {@code maxLevelDiff} levels of difference and more
+	 * @param maxLevelDiff the level difference that reaches {@code max}
+	 * @param levelDiff the level difference
+	 * @return the chance (in %) for {@code levelDiff}, growing linearly from {@code min} to {@code max}, 0 below 1 level
+	 */
+	public static double levelDiffChance(int min, int max, int maxLevelDiff, int levelDiff)
+	{
+		if (levelDiff < 1)
+		{
+			return 0;
+		}
+		
+		if ((levelDiff >= maxLevelDiff) || (maxLevelDiff <= 1))
+		{
+			return max;
+		}
+		
+		return min + (((max - min) * (levelDiff - 1)) / (double) (maxLevelDiff - 1));
 	}
 	
 	/**

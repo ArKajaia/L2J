@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
+import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.data.xml.FakePlayerData;
 import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
 import org.l2jmobius.gameserver.handler.IAdminCommandHandler;
@@ -119,6 +120,7 @@ public class AdminFakePlayers implements IAdminCommandHandler
 				activeChar.sendSysMessage("Skill " + personality.getSkillChance() + "%/" + personality.getPvpSkillChance() + "% pvp, auto attacker skill " + personality.getAutoAttackSkillChance() + "%/" + personality.getAutoAttackPvpSkillChance() + "% pvp, debuff " + personality.getPvpDebuffChance() + "%");
 				activeChar.sendSysMessage("Revenge " + personality.getRevengeChance() + "%, flagged " + personality.getAttackFlaggedChance() + "%, karma " + personality.getAttackKarmaChance() + "%, return " + personality.getReturnChance() + "%, runner " + target.getTemplate().getFakePlayerPvpProfile().isRunner());
 				activeChar.sendSysMessage("Hunt " + personality.getHuntRange() + ", leash " + personality.getLeashRange() + ", chase " + personality.getChaseRange() + ", taunt " + personality.getTauntChance() + "%, greet " + personality.getGreetChance() + "%");
+				activeChar.sendSysMessage("PvP taunt " + personality.getPokeChance(1) + "%-" + personality.getPokeChance(FakePlayerPvpConfig.POKE_MAX_CHANCE_LEVEL_DIFF) + "%, refuse to hit back " + personality.getRefuseChance(1) + "%-" + personality.getRefuseChance(FakePlayerPvpConfig.REFUSE_MAX_CHANCE_LEVEL_DIFF) + "% (1-" + FakePlayerPvpConfig.POKE_MAX_CHANCE_LEVEL_DIFF + "/" + FakePlayerPvpConfig.REFUSE_MAX_CHANCE_LEVEL_DIFF + " levels)");
 			}
 		}
 		else if (command.startsWith("admin_fakepvp_clear"))

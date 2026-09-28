@@ -67,7 +67,8 @@ import org.l2jmobius.gameserver.util.LocationUtil;
  * AI of a roaming fake player (see {@link FakePlayerPvpManager}). It plays like a character of its class: hunts the monsters around its spawn point, keeps its buffs up, uses the class skills it has learned (best ones first), drinks potions, archers and mages keep their
  * distance, and it fights any player that attacks it or steals its kill. In a PvP it plays like a player: it focuses the weakest enemy, closes the gap (Rush, Shadow Step, Dash), stops a melee attacker before stepping back (roots, stuns), waits out an invincible enemy,
  * cleanses roots and bleeds, and some fake players run from a fight they are losing and read a Scroll of Escape once they got away (and out of every player's sight). After a few hits it notices a player's Ultimate Defense, Guts, Zealot, Angelic Icon or magic mirror, stops
- * wasting what doesn't get through and keeps its distance while it can. It sits down to rest after a hard fight, and may go after a flagged or karma player passing by. Warriors surrounded by monsters take out a polearm to hit several of them at once. Necromancers keep their servitor out
+ * wasting what doesn't get through and keeps its distance while it can. It sits down to rest after a hard fight, and may go after a flagged or karma player passing by, or walk up to a lower level player (or fake player), hit them once and see whether they
+ * want a fight (see {@link #lookForPoke}). Unflagged, it may not hit back a higher level (see {@link FakePlayerPvpManager#onFakePlayerAttacked}). Warriors surrounded by monsters take out a polearm to hit several of them at once. Necromancers keep their servitor out
  * with Transfer Pain on, and when it dies in a PvP they run off to summon a new one and come back (see {@link #thinkRegroup}).
  */
 public class FakePlayerPvpAI extends AttackableAI
@@ -134,6 +135,12 @@ public class FakePlayerPvpAI extends AttackableAI
 	private static final long GREET_SCAN_INTERVAL = 4000;
 	/** It doesn't go after a flagged or karma player more than this many levels above it. */
 	private static final int OPPORTUNITY_MAX_LEVEL_ABOVE = 3;
+	/** A taunt (see {@link #lookForPoke}): how close it stands to the one it taunts, how far they may walk off before it follows, how long it waits for an answer after its hit, and how long it may take in total. */
+	private static final int POKE_STAND_DISTANCE = 60;
+	private static final int POKE_FOLLOW_DISTANCE = 250;
+	private static final int POKE_WATCH_MIN = 4000;
+	private static final int POKE_WATCH_MAX = 8000;
+	private static final long POKE_TIMEOUT = 30000;
 	/** A player chains the next skill a moment after the last one ends, not a whole AI tick later. */
 	private static final int SKILL_CHAIN_MIN_DELAY = 150;
 	private static final int SKILL_CHAIN_MAX_DELAY = 400;
@@ -228,6 +235,25 @@ public class FakePlayerPvpAI extends AttackableAI
 	private final Set<Integer> _seenPlayers = ConcurrentHashMap.newKeySet();
 	private long _nextGreetScan;
 	
+	/**
+	 * The steps of a taunt: walk up to them, stand there a moment, hit them once, then see whether they hit back.
+	 */
+	private enum PokePhase
+	{
+		APPROACH,
+		LOITER,
+		HIT,
+		WATCH
+	}
+	
+	// Taunting a lower level for a PvP: whom, which step and until when, since when, when it looks next and whom it already thought about (object id -> time).
+	private Creature _pokeTarget = null;
+	private PokePhase _pokePhase = null;
+	private long _pokePhaseEnd = 0;
+	private long _pokeStart = 0;
+	private long _nextPokeScan = 0;
+	private final Map<Integer, Long> _pokeConsidered = new ConcurrentHashMap<>();
+	
 	// The player it is fighting, to notice when that player goes down (the aggro list drops dead attackers by itself).
 	private Creature _pvpTarget = null;
 	
@@ -306,6 +332,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		_resting = hpRatio < (_resting ? 0.9 : 0.5);
 		if (_resting)
 		{
+			endPoke(npc);
 			if (!npc.isMoving() && !npc.isMovementDisabled())
 			{
 				sitDown(npc);
@@ -337,10 +364,17 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		lookForNewFaces(npc, System.currentTimeMillis());
+		final long now = System.currentTimeMillis();
+		lookForNewFaces(npc, now);
 		
-		// Back from town for its killer, or a flagged or karma player passing by.
-		if (lookForRevenge(npc, System.currentTimeMillis()) || lookForPvp(npc, System.currentTimeMillis()))
+		// Taunting a lower level: walking up to them, standing there, hitting them once.
+		if (thinkPoke(npc, now))
+		{
+			return;
+		}
+		
+		// Back from town for its killer, a flagged or karma player passing by, or a lower level to taunt.
+		if (lookForRevenge(npc, now) || lookForPvp(npc, now) || lookForPoke(npc, now))
 		{
 			return;
 		}
@@ -422,6 +456,9 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
+		// A real fight (they hit back, or a monster came) ends a taunt.
+		endPoke(npc);
+		
 		// A sitting player stands up first.
 		if (standUp(npc))
 		{
@@ -446,7 +483,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		// Against several players, the one it can finish first.
 		final long now = System.currentTimeMillis();
-		if (target.isPlayable())
+		if (isPvpEnemy(target))
 		{
 			target = chooseFocus(npc, target, now);
 		}
@@ -461,14 +498,14 @@ public class FakePlayerPvpAI extends AttackableAI
 			npc.setTarget(target);
 		}
 		
-		if (target.isPlayable())
+		if (isPvpEnemy(target))
 		{
 			_pvpTarget = target;
 		}
 		
 		// Monsters are only hunted around the spawn point, players are chased further (and it runs away as far as it needs to).
 		final Spawn spawn = npc.getSpawn();
-		if ((spawn != null) && !_fleeing && !_regrouping && !_returning && (npc.calculateDistance2D(spawn) > (target.isPlayable() ? profile.getPersonality().getChaseRange() : profile.getPersonality().getLeashRange())))
+		if ((spawn != null) && !_fleeing && !_regrouping && !_returning && (npc.calculateDistance2D(spawn) > (isPvpEnemy(target) ? profile.getPersonality().getChaseRange() : profile.getPersonality().getLeashRange())))
 		{
 			// Back to its hunting ground, staying ACTIVE: a MOVE_TO that finds no path never arrives, and the AI would stop thinking.
 			npc.stopHating(target);
@@ -483,10 +520,10 @@ public class FakePlayerPvpAI extends AttackableAI
 			_progressTarget = target;
 			_progressTime = now;
 		}
-		else if ((now - _progressTime) > (target.isPlayable() ? PLAYER_STUCK_TIMEOUT : MONSTER_STUCK_TIMEOUT))
+		else if ((now - _progressTime) > (isPvpEnemy(target) ? PLAYER_STUCK_TIMEOUT : MONSTER_STUCK_TIMEOUT))
 		{
 			npc.stopHating(target);
-			if (!target.isPlayable())
+			if (!isPvpEnemy(target))
 			{
 				_unreachable = target;
 				_unreachableUntil = now + UNREACHABLE_IGNORE_TIME;
@@ -496,11 +533,11 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		// A flagged or karma player passing by is better game than a monster.
-		if (!target.isPlayable())
+		if (!isPvpEnemy(target))
 		{
 			lookForNewFaces(npc, now);
 		}
-		if (!target.isPlayable() && (lookForRevenge(npc, now) || lookForPvp(npc, now)))
+		if (!isPvpEnemy(target) && (lookForRevenge(npc, now) || lookForPvp(npc, now)))
 		{
 			return;
 		}
@@ -516,7 +553,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		final Role role = profile.isTransformed() ? Role.FIGHTER : profile.getRole();
 		final boolean mage = role == Role.MAGE;
 		_autoAttacker = !mage && !profile.getBuild().isSkillFighter() && !profile.isTransformed();
-		final boolean pvp = target.isPlayable();
+		final boolean pvp = isPvpEnemy(target);
 		final boolean canMove = !npc.isMovementDisabled();
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
 		final double distance = npc.calculateDistance2D(target);
@@ -709,6 +746,13 @@ public class FakePlayerPvpAI extends AttackableAI
 	protected void onActionAttacked(Creature attacker)
 	{
 		FakePlayerPvpManager.getInstance().onFakePlayerAttacked(getActiveChar(), attacker);
+		
+		// It chose not to hit them back: it goes on with what it was doing.
+		if (FakePlayerPvpManager.isRefusing(getActiveChar(), attacker))
+		{
+			return;
+		}
+		
 		super.onActionAttacked(attacker);
 	}
 	
@@ -735,6 +779,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	@Override
 	protected void onActionDeath()
 	{
+		endPoke(getActiveChar());
 		_fleeing = false;
 		_resting = false;
 		_regrouping = false;
@@ -996,8 +1041,8 @@ public class FakePlayerPvpAI extends AttackableAI
 			return false;
 		}
 		
-		// Every fake player tries to get away from a player far above its level (who gets nothing for the kill anyway).
-		final Player player = target.asPlayer();
+		// Every fake player tries to get away from a player (or fake player) far above its level (who gets nothing for the kill anyway).
+		final Creature player = target.isPvpFakePlayer() ? target : target.asPlayer();
 		if ((FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE > 0) && (player != null) && (player.getLevel() >= (npc.getLevel() + FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE)))
 		{
 			return true;
@@ -1070,7 +1115,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		for (AggroInfo info : npc.getAggroList().values())
 		{
 			final Creature enemy = info.getAttacker();
-			if ((enemy != null) && enemy.isPlayable())
+			if ((enemy != null) && isPvpEnemy(enemy))
 			{
 				info.stopHate();
 			}
@@ -1091,7 +1136,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		for (AggroInfo info : npc.getAggroList().values())
 		{
 			final Creature enemy = info.getAttacker();
-			if ((enemy == null) || !enemy.isPlayable() || (info.getHate() < FakePlayerPvpManager.PVP_HATE) || !isValidTarget(npc, enemy))
+			if ((enemy == null) || !isPvpEnemy(enemy) || (info.getHate() < FakePlayerPvpManager.PVP_HATE) || !isValidTarget(npc, enemy))
 			{
 				continue;
 			}
@@ -1116,7 +1161,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		for (AggroInfo info : npc.getAggroList().values())
 		{
 			final Creature enemy = info.getAttacker();
-			if ((enemy != null) && enemy.isPlayable() && (info.getHate() >= FakePlayerPvpManager.PVP_HATE) && isValidTarget(npc, enemy) && (npc.calculateDistance2D(enemy) < 1200))
+			if ((enemy != null) && isPvpEnemy(enemy) && (info.getHate() >= FakePlayerPvpManager.PVP_HATE) && isValidTarget(npc, enemy) && (npc.calculateDistance2D(enemy) < 1200))
 			{
 				count++;
 			}
@@ -1135,7 +1180,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	private Creature chooseFocus(Attackable npc, Creature mostHated, long now)
 	{
 		final Creature focus = _focus;
-		if ((focus != null) && (now < _focusUntil) && !focus.isInvul() && !isPlayedAround(npc, focus) && focus.isPlayable() && hates(npc, focus, FakePlayerPvpManager.PVP_HATE) && isValidTarget(npc, focus))
+		if ((focus != null) && (now < _focusUntil) && !focus.isInvul() && !isPlayedAround(npc, focus) && isPvpEnemy(focus) && hates(npc, focus, FakePlayerPvpManager.PVP_HATE) && isValidTarget(npc, focus))
 		{
 			return focus;
 		}
@@ -1146,7 +1191,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		for (AggroInfo info : npc.getAggroList().values())
 		{
 			final Creature enemy = info.getAttacker();
-			if ((enemy == null) || (enemy == mostHated) || !enemy.isPlayable() || (info.getHate() < FakePlayerPvpManager.PVP_HATE) || !isValidTarget(npc, enemy))
+			if ((enemy == null) || (enemy == mostHated) || !isPvpEnemy(enemy) || (info.getHate() < FakePlayerPvpManager.PVP_HATE) || !isValidTarget(npc, enemy))
 			{
 				continue;
 			}
@@ -1195,7 +1240,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	private void noticeDefenses(Creature target, boolean magic)
 	{
 		final int detectChance = FakePlayerPvpPersonality.of(getActiveChar()).getDefenseDetectChance();
-		if (!target.isPlayable() || (detectChance <= 0))
+		if (!isPvpEnemy(target) || (detectChance <= 0))
 		{
 			return;
 		}
@@ -1219,7 +1264,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	 */
 	private int getKnownDefenses(Creature target)
 	{
-		if (_noticedDefenses.isEmpty() || !target.isPlayable())
+		if (_noticedDefenses.isEmpty() || !isPvpEnemy(target))
 		{
 			return 0;
 		}
@@ -1310,7 +1355,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	 */
 	private void trackChase(Creature target, double gap, long now)
 	{
-		if (!target.isPlayable() || (gap <= FakePlayerPvpConfig.WEAPON_SWAP_MELEE_DISTANCE))
+		if (!isPvpEnemy(target) || (gap <= FakePlayerPvpConfig.WEAPON_SWAP_MELEE_DISTANCE))
 		{
 			_chaseTarget = null;
 		}
@@ -1538,6 +1583,231 @@ public class FakePlayerPvpAI extends AttackableAI
 	}
 	
 	/**
+	 * Like players that pick on lower levels, a healthy fake player may walk up to a player (or another fake player) of a lower level it sees, stand there a moment, hit them once and see whether they want a fight (see {@link #thinkPoke}). The more levels above
+	 * them, the more likely (see {@link FakePlayerPvpPersonality#getPokeChance}); each one is only considered once in a while.
+	 * @param npc the fake player
+	 * @param now the current time
+	 * @return {@code true} if it started a taunt
+	 */
+	private boolean lookForPoke(Attackable npc, long now)
+	{
+		if (((FakePlayerPvpConfig.POKE_CHANCE_MIN <= 0) && (FakePlayerPvpConfig.POKE_CHANCE_MAX <= 0)) || (now < _nextPokeScan))
+		{
+			return false;
+		}
+		
+		_nextPokeScan = now + OPPORTUNITY_SCAN_INTERVAL;
+		_pokeConsidered.values().removeIf(time -> (now - time) > OPPORTUNITY_MEMORY);
+		if ((npc.getCurrentHp() < (npc.getMaxHp() * 0.7)) || npc.isInsideZone(ZoneId.PEACE))
+		{
+			return false;
+		}
+		
+		final FakePlayerPvpPersonality personality = FakePlayerPvpPersonality.of(npc);
+		for (Creature creature : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, OPPORTUNITY_RANGE))
+		{
+			if (!canPoke(npc, creature, true))
+			{
+				continue;
+			}
+			
+			if ((_pokeConsidered.putIfAbsent(creature.getObjectId(), now) == null) && (Rnd.get(100) < personality.getPokeChance(npc.getLevel() - creature.getLevel())))
+			{
+				_pokeTarget = creature;
+				_pokePhase = PokePhase.APPROACH;
+				_pokeStart = now;
+				_pokePhaseEnd = 0;
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param target a creature it sees
+	 * @param starting {@code true} when it thinks about starting a taunt, {@code false} when it goes on with one
+	 * @return {@code true} if it may taunt {@code target}: a player or a roaming fake player of a lower level, out of town, arenas, sieges, the Olympiad and duels, and not in a PvP already (a flagged or karma player is fair game anyway, see {@link #lookForPvp})
+	 */
+	private static boolean canPoke(Attackable npc, Creature target, boolean starting)
+	{
+		if ((target == null) || (target == npc) || target.isAlikeDead() || !target.isSpawned() || target.isInvisible() || (target.getInstanceId() != npc.getInstanceId()) || (target.getLevel() >= npc.getLevel()))
+		{
+			return false;
+		}
+		
+		if (target.isInsideZone(ZoneId.PEACE) || target.isInsideZone(ZoneId.PVP) || target.isInsideZone(ZoneId.SIEGE) || npc.isInsideZone(ZoneId.PEACE))
+		{
+			return false;
+		}
+		
+		if (target.isPlayer())
+		{
+			final Player player = target.asPlayer();
+			if ((player.isGM() && !player.getAccessLevel().canTakeAggro()) || player.isInOlympiadMode() || player.isInDuel() || (starting && ((player.getPvpFlag() > 0) || (player.getKarma() > 0))))
+			{
+				return false;
+			}
+		}
+		else if (!target.isPvpFakePlayer() || !FakePlayerPvpConfig.POKE_FAKE_PLAYERS || (starting && FakePlayerPvpManager.isInPvp(target.asNpc())))
+		{
+			return false;
+		}
+		
+		if (hates(npc, target, FakePlayerPvpManager.PVP_HATE))
+		{
+			return false;
+		}
+		
+		if (starting)
+		{
+			return GeoEngine.getInstance().canSeeTarget(npc, target);
+		}
+		
+		return npc.calculateDistance2D(target) <= FakePlayerPvpPersonality.of(npc).getChaseRange();
+	}
+	
+	/**
+	 * Goes on with a taunt (see {@link #lookForPoke}): it runs up to them, stands there targeting them for a few seconds (and may say "pvp?"), hits them once with its normal attack, which flags it, then waits a moment. If they hit back, the fight starts like any
+	 * other ({@link FakePlayerPvpManager#onFakePlayerAttacked}); if not, it goes back to hunting.
+	 * @param npc the fake player
+	 * @param now the current time
+	 * @return {@code true} if it is busy with it this tick
+	 */
+	private boolean thinkPoke(Attackable npc, long now)
+	{
+		final Creature target = _pokeTarget;
+		if (target == null)
+		{
+			return false;
+		}
+		
+		if (!canPoke(npc, target, false) || ((_pokePhase != PokePhase.WATCH) && ((now - _pokeStart) > POKE_TIMEOUT)))
+		{
+			endPoke(npc);
+			return false;
+		}
+		
+		final int collision = npc.getTemplate().getCollisionRadius() + target.getTemplate().getCollisionRadius();
+		final double gap = npc.calculateDistance2D(target) - collision;
+		switch (_pokePhase)
+		{
+			case APPROACH:
+			{
+				if (gap > POKE_STAND_DISTANCE)
+				{
+					walkUpTo(npc, target, collision + (POKE_STAND_DISTANCE / 2));
+					return true;
+				}
+				
+				// There: it stops in front of them and targets them, which they see.
+				clientStopMoving(null);
+				npc.setTarget(target);
+				_pokePhase = PokePhase.LOITER;
+				_pokePhaseEnd = now + Rnd.get(FakePlayerPvpConfig.POKE_LOITER_MIN, FakePlayerPvpConfig.POKE_LOITER_MAX);
+				FakePlayerPvpManager.getInstance().onPoke(npc);
+				return true;
+			}
+			case LOITER:
+			{
+				// They walk off: it follows.
+				if (gap > POKE_FOLLOW_DISTANCE)
+				{
+					walkUpTo(npc, target, collision + (POKE_STAND_DISTANCE / 2));
+					return true;
+				}
+				
+				if (now < _pokePhaseEnd)
+				{
+					return true;
+				}
+				
+				_pokePhase = PokePhase.HIT;
+				return true;
+			}
+			case HIT:
+			{
+				final int range = npc.getPhysicalAttackRange();
+				if (gap > range)
+				{
+					walkUpTo(npc, target, collision + Math.max(10, Math.min(range, POKE_STAND_DISTANCE) - 10));
+					return true;
+				}
+				
+				if (npc.isAttackingNow() || npc.isAttackDisabled())
+				{
+					return true;
+				}
+				
+				// One hit with its normal attack, no more.
+				clientStopMoving(null);
+				npc.setTarget(target);
+				_actor.doAttack(target);
+				_pokePhase = PokePhase.WATCH;
+				_pokePhaseEnd = now + Rnd.get(POKE_WATCH_MIN, POKE_WATCH_MAX);
+				return true;
+			}
+			case WATCH:
+			{
+				// No answer: back to hunting.
+				if (now < _pokePhaseEnd)
+				{
+					return true;
+				}
+				
+				endPoke(npc);
+				return false;
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Runs to {@code target}, stopping {@code offset} from them.
+	 */
+	private void walkUpTo(Attackable npc, Creature target, int offset)
+	{
+		if (npc.isMovementDisabled())
+		{
+			return;
+		}
+		
+		npc.setRunning();
+		moveToPawn(target, offset);
+	}
+	
+	/**
+	 * Ends a taunt, if it is taunting someone.
+	 * @param npc the fake player
+	 */
+	private void endPoke(Attackable npc)
+	{
+		final Creature target = _pokeTarget;
+		if (target == null)
+		{
+			return;
+		}
+		
+		_pokeTarget = null;
+		_pokePhase = null;
+		if ((npc.getTarget() == target) && (getIntention() != Intention.ATTACK))
+		{
+			npc.setTarget(null);
+		}
+	}
+	
+	/**
+	 * @param creature a creature
+	 * @return {@code true} if fighting {@code creature} is a PvP: a player, a player's summon, or another roaming fake player
+	 */
+	private static boolean isPvpEnemy(Creature creature)
+	{
+		return FakePlayerPvpManager.isPvpEnemy(creature);
+	}
+	
+	/**
 	 * Sits down to rest, like a player (it regenerates faster that way, see {@link #isResting()}).
 	 */
 	private void sitDown(Attackable npc)
@@ -1637,7 +1907,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		_pvpTarget = null;
-		if (pvpTarget.isPlayer() && pvpTarget.isAlikeDead())
+		if ((pvpTarget.isPlayer() || pvpTarget.isPvpFakePlayer()) && pvpTarget.isAlikeDead())
 		{
 			npc.stopHating(pvpTarget);
 			FakePlayerPvpManager.getInstance().onPlayerDefeated(npc);
@@ -1721,8 +1991,14 @@ public class FakePlayerPvpAI extends AttackableAI
 			return false;
 		}
 		
+		// Someone it chose not to hit back.
+		if (FakePlayerPvpManager.isRefusing(npc, target))
+		{
+			return false;
+		}
+		
 		// Players are safe in town.
-		return !target.isPlayable() || !target.isInsideZone(ZoneId.PEACE);
+		return !isPvpEnemy(target) || !target.isInsideZone(ZoneId.PEACE);
 	}
 	
 	/**
@@ -1932,7 +2208,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		final FakePlayerPvpManager manager = FakePlayerPvpManager.getInstance();
 		if (profile.isBowHeld())
 		{
-			if ((!target.isPlayable() || close) && manager.equipWeapon(npc, profile.getMainWeapon()))
+			if ((!isPvpEnemy(target) || close) && manager.equipWeapon(npc, profile.getMainWeapon()))
 			{
 				_nextWeaponSwapTime = now + FakePlayerPvpConfig.WEAPON_SWAP_INTERVAL;
 			}
@@ -1980,7 +2256,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		final FakePlayerPvpManager manager = FakePlayerPvpManager.getInstance();
 		if (profile.isPolearmHeld())
 		{
-			if ((target.isPlayable() || (countSurroundingMonsters(npc) <= FakePlayerPvpConfig.POLEARM_PUT_AWAY_MONSTERS)) && manager.equipWeapon(npc, profile.getMainWeapon()))
+			if ((isPvpEnemy(target) || (countSurroundingMonsters(npc) <= FakePlayerPvpConfig.POLEARM_PUT_AWAY_MONSTERS)) && manager.equipWeapon(npc, profile.getMainWeapon()))
 			{
 				_nextWeaponSwapTime = now + FakePlayerPvpConfig.WEAPON_SWAP_INTERVAL;
 			}
@@ -1988,7 +2264,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		// Only against monsters, and not with the bow out (it goes back to its weapon first).
-		if (target.isPlayable() || profile.isBowHeld())
+		if (isPvpEnemy(target) || profile.isBowHeld())
 		{
 			return;
 		}

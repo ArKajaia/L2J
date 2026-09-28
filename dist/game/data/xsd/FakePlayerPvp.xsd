@@ -73,6 +73,18 @@
 									<xs:attribute type="xs:int" name="chance" />
 								</xs:complexType>
 							</xs:element>
+							<xs:element name="variant" maxOccurs="unbounded" minOccurs="0">
+								<xs:complexType>
+									<xs:attribute type="xs:string" name="name" use="required" />
+									<xs:attribute type="xs:string" name="weapon" />
+									<xs:attribute type="xs:string" name="armor" />
+									<xs:attribute type="xs:string" name="jewels" />
+									<xs:attribute type="xs:string" name="bow" />
+									<xs:attribute type="xs:string" name="polearm" />
+									<xs:attribute type="xs:string" name="buffs" />
+									<xs:attribute type="xs:int" name="weight" />
+								</xs:complexType>
+							</xs:element>
 						</xs:sequence>
 						<xs:attribute type="xs:string" name="name" use="required" />
 						<xs:attribute type="xs:int" name="classId" use="required" />
