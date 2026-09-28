@@ -49,6 +49,13 @@ public class FocusSouls extends AbstractEffect
 	@Override
 	public void onStart(Creature effector, Creature effected, Skill skill)
 	{
+		// A roaming fake player (Kamael) absorbs souls like a player.
+		if (effected.isPvpFakePlayer() && !effected.isAlikeDead())
+		{
+			effected.asNpc().getTemplate().getFakePlayerPvpProfile().increaseSouls(_charge, (int) effected.getStat().calcStat(Stat.MAX_SOULS, 0, null, null));
+			return;
+		}
+		
 		if (!effected.isPlayer() || effected.isAlikeDead())
 		{
 			return;

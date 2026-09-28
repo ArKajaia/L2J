@@ -12882,6 +12882,7 @@ public class Player extends Playable
 	 * Returns the Number of Souls this Player got.
 	 * @return
 	 */
+	@Override
 	public int getChargedSouls()
 	{
 		return _souls;

@@ -43,6 +43,7 @@ public class ConditionPlayerSouls extends Condition
 	@Override
 	public boolean testImpl(Creature effector, Creature effected, Skill skill, ItemTemplate item)
 	{
-		return effector.isPlayer() && (effector.asPlayer().getChargedSouls() >= _souls);
+		// Roaming fake players (Kamael) have souls too.
+		return (effector.isPlayer() || effector.isPvpFakePlayer()) && (effector.getChargedSouls() >= _souls);
 	}
 }

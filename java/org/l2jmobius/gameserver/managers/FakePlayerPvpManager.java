@@ -1115,6 +1115,7 @@ public class FakePlayerPvpManager
 		refreshToggles(fake, profile);
 		refreshBuffs(fake, profile);
 		fake.setCurrentHpMp(fake.getMaxHp(), fake.getMaxMp());
+		profile.setSouls(getMaxSouls(fake)); // A Kamael comes from its hunt with its souls.
 		fake.broadcastInfo();
 		
 		// A necromancer arrives with its servitor out, like a player.
@@ -1768,6 +1769,28 @@ public class FakePlayerPvpManager
 		template.setWeaponStats(weapon.getPAtk(), weapon.getMAtk(), weapon.getPAtkSpd(), weapon.getCritRate(), weapon.getAttackRange(), weapon.getRandomDamage(), weapon.getAttackType(), weapon.getShieldDefence(), weapon.getShieldRate());
 		template.setHandIds(weapon.getWeaponId(), weapon.getShieldId());
 		template.getFakePlayerInfo().setWeapon(weapon.getWeaponId(), weapon.getShieldId(), weapon.getEnchant());
+	}
+	
+	/**
+	 * A Kamael fake player absorbs a soul from a monster it kills, like a player with Soul Mastery gaining exp.
+	 * @param fake the fake player
+	 */
+	public void absorbSoul(Npc fake)
+	{
+		final int maxSouls = getMaxSouls(fake);
+		if (maxSouls > 0)
+		{
+			fake.getTemplate().getFakePlayerPvpProfile().increaseSouls(1, maxSouls);
+		}
+	}
+	
+	/**
+	 * @param fake a fake player
+	 * @return how many souls it can hold (Soul Mastery), 0 for a class without souls
+	 */
+	private static int getMaxSouls(Npc fake)
+	{
+		return (int) fake.getStat().calcStat(Stat.MAX_SOULS, 0, null, null);
 	}
 	
 	/**

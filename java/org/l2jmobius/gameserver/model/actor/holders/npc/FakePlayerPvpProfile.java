@@ -57,6 +57,8 @@ public class FakePlayerPvpProfile
 	private volatile Npc _servitor;
 	private final int _maxCharges;
 	private final AtomicInteger _charges = new AtomicInteger();
+	// Kamael souls, used by the soul skills like a player's (see Creature#getChargedSouls()).
+	private final AtomicInteger _souls = new AtomicInteger();
 	private final List<FakePlayerPvpCombo.Chain> _combos = new ArrayList<>();
 	private final List<ItemEnchantHolder> _equipment;
 	
@@ -273,6 +275,37 @@ public class FakePlayerPvpProfile
 	public void decreaseCharges(int count)
 	{
 		_charges.updateAndGet(charges -> Math.max(0, charges - count));
+	}
+	
+	/**
+	 * @return the Kamael souls it has now
+	 */
+	public int getSouls()
+	{
+		return _souls.get();
+	}
+	
+	public void setSouls(int souls)
+	{
+		_souls.set(Math.max(0, souls));
+	}
+	
+	/**
+	 * Absorbs souls like {@code Player#increaseSouls(int)}.
+	 * @param count how many
+	 * @param max the most its class can hold
+	 */
+	public void increaseSouls(int count, int max)
+	{
+		_souls.updateAndGet(souls -> souls >= max ? souls : Math.min(max, souls + count));
+	}
+	
+	/**
+	 * @param count how many souls a skill consumes
+	 */
+	public void decreaseSouls(int count)
+	{
+		_souls.updateAndGet(souls -> Math.max(0, souls - count));
 	}
 	
 	public void addCombo(FakePlayerPvpCombo.Chain combo)
