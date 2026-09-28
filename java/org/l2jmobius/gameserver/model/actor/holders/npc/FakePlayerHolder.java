@@ -58,6 +58,8 @@ public class FakePlayerHolder
 	private final int _clanId;
 	private final int _pledgeStatus;
 	private volatile boolean _isSitting;
+	// The transformation it shows (a roaming Kamael fake player in Final Form), 0 for none.
+	private volatile int _transformDisplayId;
 	private final int _privateStoreType;
 	private final String _privateStoreMessage;
 	private final boolean _talkable;
@@ -273,6 +275,16 @@ public class FakePlayerHolder
 	public void setSitting(boolean sitting)
 	{
 		_isSitting = sitting;
+	}
+	
+	public int getTransformDisplayId()
+	{
+		return _transformDisplayId;
+	}
+	
+	public void setTransformDisplayId(int transformDisplayId)
+	{
+		_transformDisplayId = transformDisplayId;
 	}
 	
 	public int getPrivateStoreType()

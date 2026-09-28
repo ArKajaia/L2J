@@ -79,7 +79,9 @@ public class FakePlayerPvpBuild
 		/** Servitor summons (Summon Reanimated Man...): it keeps one out, and resummons it away from a PvP when it dies. */
 		SUMMON,
 		/** Toggles that only make sense with its servitor out (Transfer Pain), switched on with the servitor and off when it dies. */
-		LINK
+		LINK,
+		/** Combat transformations used when a PvP gets serious (Kamael Final Form): it then fights with the transformation's skills. */
+		TRANSFORM
 	}
 	
 	private final String _name;

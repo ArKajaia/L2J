@@ -245,8 +245,9 @@ public class FakePlayerPvpFactory
 		final double hp = classTemplate.getBaseHpMax(level) + (FakePlayerPvpConfig.INCLUDE_CP_IN_HP ? classTemplate.getBaseCpMax(level) : 0);
 		final double mp = classTemplate.getBaseMpMax(level) + sumStat(Stat.MAX_MP, weapon, shield, chest, legs, head, gloves, feet, earring, earring, necklace, ring, ring);
 		
-		// Looks.
-		final boolean female = Rnd.nextBoolean();
+		// Looks. Kamael classes are male (Trooper, Berserker, Doombringer...) or female (Warder, Arbalester, Trickster...) from their base class on.
+		final PlayerClass baseClass = build.getPlayerClass(0);
+		final boolean female = (baseClass == PlayerClass.FEMALE_SOLDIER) || ((baseClass != PlayerClass.MALE_SOLDIER) && Rnd.nextBoolean());
 		final Role role = build.getRole();
 		
 		final StatSet set = new StatSet(new HashMap<>());
@@ -452,6 +453,9 @@ public class FakePlayerPvpFactory
 				}
 			}
 		}
+		
+		// Bare hands (keeping its shield), for when a player's Disarm takes its weapon.
+		profile.setUnarmed(createWeapon(classTemplate, null, shield, 0));
 		
 		template.setSkills(skills);
 		template.setFakePlayerPvpProfile(profile);

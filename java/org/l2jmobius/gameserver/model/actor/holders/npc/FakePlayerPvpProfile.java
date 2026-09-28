@@ -53,10 +53,18 @@ public class FakePlayerPvpProfile
 	private final FakePlayerPvpWeapon _bow;
 	private final FakePlayerPvpWeapon _polearm;
 	private volatile FakePlayerPvpWeapon _heldWeapon;
+	// Its bare hands (and shield) while a player's Disarm holds, and the weapon it had out before.
+	private FakePlayerPvpWeapon _unarmed;
+	private volatile FakePlayerPvpWeapon _disarmedWeapon;
+	// A combat transformation (Kamael Final Form): its id and the skills it fights with meanwhile, instead of its class skills.
+	private volatile int _transformId;
+	private volatile List<Skill> _transformSkills = Collections.emptyList();
 	// Its servitor (necromancers), null when it has none out.
 	private volatile Npc _servitor;
 	private final int _maxCharges;
 	private final AtomicInteger _charges = new AtomicInteger();
+	// Kamael souls, used by the soul skills like a player's (see Creature#getChargedSouls()).
+	private final AtomicInteger _souls = new AtomicInteger();
 	private final List<FakePlayerPvpCombo.Chain> _combos = new ArrayList<>();
 	private final List<ItemEnchantHolder> _equipment;
 	
@@ -120,9 +128,75 @@ public class FakePlayerPvpProfile
 		_skills.put(category, skills);
 	}
 	
+	/**
+	 * @param category a skill category
+	 * @return its skills of that category; in a combat transformation (Final Form), like a player, only the transformation's attacks
+	 */
 	public List<Skill> getSkills(SkillCategory category)
 	{
+		if (_transformId > 0)
+		{
+			return category == SkillCategory.ATTACK ? _transformSkills : Collections.emptyList();
+		}
+		
 		return _skills.getOrDefault(category, Collections.emptyList());
+	}
+	
+	/**
+	 * @return {@code true} while it is in a combat transformation (Final Form)
+	 */
+	public boolean isTransformed()
+	{
+		return _transformId > 0;
+	}
+	
+	public int getTransformId()
+	{
+		return _transformId;
+	}
+	
+	/**
+	 * @param transformId the transformation, 0 to end it
+	 * @param skills the skills it fights with meanwhile
+	 */
+	public void setTransform(int transformId, List<Skill> skills)
+	{
+		_transformSkills = transformId > 0 ? skills : Collections.emptyList();
+		_transformId = transformId;
+	}
+	
+	/**
+	 * @return the transformation's attacks (empty when not transformed)
+	 */
+	public List<Skill> getTransformSkills()
+	{
+		return _transformSkills;
+	}
+	
+	/**
+	 * @return its bare hands (with its shield), what it holds while disarmed
+	 */
+	public FakePlayerPvpWeapon getUnarmed()
+	{
+		return _unarmed;
+	}
+	
+	public void setUnarmed(FakePlayerPvpWeapon unarmed)
+	{
+		_unarmed = unarmed;
+	}
+	
+	/**
+	 * @return the weapon a player's Disarm took from it, {@code null} if none
+	 */
+	public FakePlayerPvpWeapon getDisarmedWeapon()
+	{
+		return _disarmedWeapon;
+	}
+	
+	public void setDisarmedWeapon(FakePlayerPvpWeapon weapon)
+	{
+		_disarmedWeapon = weapon;
 	}
 	
 	public FakePlayerPvpBuild getBuild()
@@ -275,6 +349,37 @@ public class FakePlayerPvpProfile
 		_charges.updateAndGet(charges -> Math.max(0, charges - count));
 	}
 	
+	/**
+	 * @return the Kamael souls it has now
+	 */
+	public int getSouls()
+	{
+		return _souls.get();
+	}
+	
+	public void setSouls(int souls)
+	{
+		_souls.set(Math.max(0, souls));
+	}
+	
+	/**
+	 * Absorbs souls like {@code Player#increaseSouls(int)}.
+	 * @param count how many
+	 * @param max the most its class can hold
+	 */
+	public void increaseSouls(int count, int max)
+	{
+		_souls.updateAndGet(souls -> souls >= max ? souls : Math.min(max, souls + count));
+	}
+	
+	/**
+	 * @param count how many souls a skill consumes
+	 */
+	public void decreaseSouls(int count)
+	{
+		_souls.updateAndGet(souls -> Math.max(0, souls - count));
+	}
+	
 	public void addCombo(FakePlayerPvpCombo.Chain combo)
 	{
 		_combos.add(combo);
@@ -283,9 +388,12 @@ public class FakePlayerPvpProfile
 	/**
 	 * @return the combos it can play at its level, most preferred first
 	 */
+	/**
+	 * @return its combos, none in a combat transformation (Final Form)
+	 */
 	public List<FakePlayerPvpCombo.Chain> getCombos()
 	{
-		return _combos;
+		return _transformId > 0 ? Collections.emptyList() : _combos;
 	}
 	
 	/**

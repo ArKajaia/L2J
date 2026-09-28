@@ -38,6 +38,12 @@ public class ConditionPlayerCanTransform extends Condition
 	@Override
 	public boolean testImpl(Creature effector, Creature effected, Skill skill, ItemTemplate item)
 	{
+		// A roaming fake player (Kamael Final Form) can while alive and not transformed yet.
+		if (effector.isPvpFakePlayer())
+		{
+			return _value == (!effector.isAlikeDead() && !effector.asNpc().getTemplate().getFakePlayerPvpProfile().isTransformed());
+		}
+		
 		boolean canTransform = true;
 		final Player player = effector.asPlayer();
 		if ((player == null) || player.isAlikeDead() || player.isCursedWeaponEquipped())

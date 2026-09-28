@@ -188,7 +188,7 @@ public class FakePlayerInfo extends ServerPacket
 		buffer.writeInt(0); // getClanId() > 0 ? getClan().getReputationScore() : 0
 		
 		// T1
-		buffer.writeInt(0); // getTransformationDisplayId()
+		buffer.writeInt(_fpcHolder.getTransformDisplayId());
 		buffer.writeInt(_fpcHolder.getAgathionId());
 		
 		// T2

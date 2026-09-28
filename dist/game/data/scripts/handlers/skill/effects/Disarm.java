@@ -19,6 +19,7 @@ package handlers.skill.effects;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -47,7 +48,8 @@ public class Disarm extends AbstractEffect
 	@Override
 	public boolean canStart(Creature effector, Creature effected, Skill skill)
 	{
-		return effected.isPlayer();
+		// Roaming fake players hold real weapons and get disarmed like players.
+		return effected.isPlayer() || effected.isPvpFakePlayer();
 	}
 	
 	@Override
@@ -59,6 +61,12 @@ public class Disarm extends AbstractEffect
 	@Override
 	public void onStart(Creature effector, Creature effected, Skill skill)
 	{
+		if (effected.isPvpFakePlayer())
+		{
+			FakePlayerPvpManager.getInstance().disarm(effected.asNpc());
+			return;
+		}
+		
 		final Player player = effected.asPlayer();
 		if (player == null)
 		{
@@ -85,6 +93,12 @@ public class Disarm extends AbstractEffect
 	@Override
 	public void onExit(Creature effector, Creature effected, Skill skill)
 	{
+		if (effected.isPvpFakePlayer())
+		{
+			FakePlayerPvpManager.getInstance().rearm(effected.asNpc());
+			return;
+		}
+		
 		final Player player = effected.asPlayer();
 		if (player == null)
 		{

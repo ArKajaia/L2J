@@ -356,6 +356,9 @@ public class Attackable extends Npc
 			{
 				// A roaming fake player gets the hotzone kill effects a player would (VAMPIRIC_HUNT, KILL_STREAK).
 				org.l2jmobius.gameserver.managers.HotzoneModifierManager.getInstance().onAttackableKilledByFakePlayer(this, killer);
+				
+				// A Kamael one absorbs a soul, like a player gaining exp.
+				FakePlayerPvpManager.getInstance().absorbSoul(killer.asNpc());
 			}
 			
 			// Roaming fake players: revenge on a player who stole their kill, rewards for killing one.

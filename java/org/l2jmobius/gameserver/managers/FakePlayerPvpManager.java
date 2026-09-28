@@ -42,6 +42,7 @@ import org.l2jmobius.gameserver.data.sql.CharInfoTable;
 import org.l2jmobius.gameserver.data.xml.FakePlayerData;
 import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
+import org.l2jmobius.gameserver.data.xml.TransformData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
@@ -51,6 +52,7 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.enums.player.Sex;
 import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
@@ -59,12 +61,15 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpWeapon;
 import org.l2jmobius.gameserver.model.actor.instance.FakePlayerPvpServitor;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.actor.transform.Transform;
+import org.l2jmobius.gameserver.model.actor.transform.TransformTemplate;
 import org.l2jmobius.gameserver.model.item.holders.ItemEnchantHolder;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.skill.AbnormalType;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
+import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
@@ -1112,9 +1117,13 @@ public class FakePlayerPvpManager
 		_fakePlayers.add(fake);
 		
 		final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+		profile.setTransform(0, null);
+		profile.setDisarmedWeapon(null);
+		template.getFakePlayerInfo().setTransformDisplayId(0);
 		refreshToggles(fake, profile);
 		refreshBuffs(fake, profile);
 		fake.setCurrentHpMp(fake.getMaxHp(), fake.getMaxMp());
+		profile.setSouls(getMaxSouls(fake)); // A Kamael comes from its hunt with its souls.
 		fake.broadcastInfo();
 		
 		// A necromancer arrives with its servitor out, like a player.
@@ -1735,17 +1744,27 @@ public class FakePlayerPvpManager
 	{
 		final NpcTemplate template = fake.getTemplate();
 		final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
-		if ((profile == null) || (weapon == null) || (profile.getHeldWeapon() == weapon) || fake.isAttackingNow() || fake.isCastingNow())
+		// Like a player, no weapon goes in its hands while a Disarm holds.
+		if ((profile == null) || (weapon == null) || (profile.getHeldWeapon() == weapon) || fake.isAttackingNow() || fake.isCastingNow() || fake.isDisarmed())
 		{
 			return false;
 		}
 		
+		switchWeapon(fake, profile, weapon);
+		return true;
+	}
+	
+	/**
+	 * Puts {@code weapon} in the fake player's hands: its stats, its item skills and what players see.
+	 */
+	private static void switchWeapon(Npc fake, FakePlayerPvpProfile profile, FakePlayerPvpWeapon weapon)
+	{
 		for (Skill skill : profile.getHeldWeapon().getSkills())
 		{
 			fake.removeSkill(skill, true);
 		}
 		
-		setTemplateWeapon(template, profile, weapon);
+		setTemplateWeapon(fake.getTemplate(), profile, weapon);
 		
 		for (Skill skill : weapon.getSkills())
 		{
@@ -1754,7 +1773,96 @@ public class FakePlayerPvpManager
 		
 		// Shows the new weapon to the players around.
 		fake.setLRHandId(weapon.getShieldId(), weapon.getWeaponId());
-		return true;
+	}
+	
+	/**
+	 * Called by the Disarm effect: like a player's, the fake player's weapon leaves its hands (its shield stays) until the effect ends. It fights with its bare hands meanwhile, without the skills that need a weapon.
+	 * @param fake the fake player
+	 */
+	public void disarm(Npc fake)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		final FakePlayerPvpWeapon unarmed = profile.getUnarmed();
+		if ((unarmed == null) || (profile.getHeldWeapon() == unarmed))
+		{
+			return;
+		}
+		
+		profile.setDisarmedWeapon(profile.getHeldWeapon());
+		fake.abortAttack();
+		switchWeapon(fake, profile, unarmed);
+	}
+	
+	/**
+	 * Called when the Disarm effect ends: the fake player takes back the weapon it had, like a player's weapon going back on.
+	 * @param fake the fake player
+	 */
+	public void rearm(Npc fake)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		final FakePlayerPvpWeapon weapon = profile.getDisarmedWeapon();
+		profile.setDisarmedWeapon(null);
+		if ((weapon != null) && (profile.getHeldWeapon() == profile.getUnarmed()))
+		{
+			switchWeapon(fake, profile, weapon);
+		}
+	}
+	
+	/**
+	 * Called by the Transformation effect: a Kamael fake player in Final Form looks transformed to the players around and fights with the transformation's skills instead of its class skills, like a player. Its stats come from the effect itself.
+	 * @param fake the fake player
+	 * @param transformId the transformation
+	 */
+	public void transform(Npc fake, int transformId)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		final Transform transform = TransformData.getInstance().getTransform(transformId);
+		if ((transform == null) || profile.isTransformed())
+		{
+			return;
+		}
+		
+		final TransformTemplate template = transform.getTemplate(fake.getTemplate().getSex() == Sex.FEMALE);
+		final List<Skill> skills = new ArrayList<>();
+		if (template != null)
+		{
+			for (SkillHolder holder : template.getSkills())
+			{
+				// Its attacks: not the passives, the self skills (Transform Dispel) nor the channeled ones.
+				final Skill skill = holder.getSkill();
+				if ((skill != null) && !skill.isPassive() && (skill.getTargetType() != TargetType.SELF) && !skill.isChanneling())
+				{
+					skills.add(skill);
+					fake.addSkill(skill);
+				}
+			}
+		}
+		
+		profile.setTransform(transformId, skills);
+		fake.getTemplate().getFakePlayerInfo().setTransformDisplayId(transform.getDisplayId());
+		fake.broadcastInfo();
+	}
+	
+	/**
+	 * Called when the transformation ends (its time is up, or the fake player died): back to its own looks and class skills.
+	 * @param fake the fake player
+	 */
+	public void untransform(Npc fake)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		if (!profile.isTransformed())
+		{
+			return;
+		}
+		
+		for (Skill skill : profile.getTransformSkills())
+		{
+			fake.removeSkill(skill, true);
+		}
+		
+		profile.setTransform(0, null);
+		fake.getTemplate().getFakePlayerInfo().setTransformDisplayId(0);
+		fake.broadcastInfo();
 	}
 	
 	/**
@@ -1768,6 +1876,28 @@ public class FakePlayerPvpManager
 		template.setWeaponStats(weapon.getPAtk(), weapon.getMAtk(), weapon.getPAtkSpd(), weapon.getCritRate(), weapon.getAttackRange(), weapon.getRandomDamage(), weapon.getAttackType(), weapon.getShieldDefence(), weapon.getShieldRate());
 		template.setHandIds(weapon.getWeaponId(), weapon.getShieldId());
 		template.getFakePlayerInfo().setWeapon(weapon.getWeaponId(), weapon.getShieldId(), weapon.getEnchant());
+	}
+	
+	/**
+	 * A Kamael fake player absorbs a soul from a monster it kills, like a player with Soul Mastery gaining exp.
+	 * @param fake the fake player
+	 */
+	public void absorbSoul(Npc fake)
+	{
+		final int maxSouls = getMaxSouls(fake);
+		if (maxSouls > 0)
+		{
+			fake.getTemplate().getFakePlayerPvpProfile().increaseSouls(1, maxSouls);
+		}
+	}
+	
+	/**
+	 * @param fake a fake player
+	 * @return how many souls it can hold (Soul Mastery), 0 for a class without souls
+	 */
+	private static int getMaxSouls(Npc fake)
+	{
+		return (int) fake.getStat().calcStat(Stat.MAX_SOULS, 0, null, null);
 	}
 	
 	/**

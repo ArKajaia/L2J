@@ -49,6 +49,9 @@
 	                 is safe (the cast is 15 seconds, and it runs on when a player catches up) and goes back to the fight.
 	     link      - toggles switched on with the servitor and off when it dies (Transfer Pain: part of the damage it
 	                 takes goes to the servitor).
+	     transform - combat transformations (Kamael Final Form) used once a PvP gets serious (hurt, or several
+	                 players). It then looks transformed and fights up close with the transformation's skills only,
+	                 like a player, until it ends.
 	     combo     - skill chains played in order, like a practiced player's rotation. The first one that is
 	                 ready (required steps learned and off cooldown, enough energy) starts.
 	                 pvp="true": only against players. chance: % to start it when ready (default 100).
@@ -216,6 +219,37 @@
 		<tier minLevel="76" rhand="6579" /> <!-- Arcana Mace -->
 		<tier minLevel="80" rhand="10217" /> <!-- Icarus Spirit -->
 		<tier minLevel="84" rhand="13459" /> <!-- Vesper Buster -->
+	</kit>
+	<!-- Kamael (they can't use a shield) -->
+	<kit name="ANCIENT_SWORD">
+		<tier minLevel="1" rhand="68" /> <!-- Falchion -->
+		<tier minLevel="20" rhand="9223" /> <!-- Katzbalger -->
+		<tier minLevel="40" rhand="9296" /> <!-- Saber Tooth -->
+		<tier minLevel="52" rhand="9320" /> <!-- Dismantler -->
+		<tier minLevel="61" rhand="9356" /> <!-- Durendal -->
+		<tier minLevel="76" rhand="9368" /> <!-- Gram -->
+		<tier minLevel="80" rhand="10225" /> <!-- Icarus Wingblade -->
+		<tier minLevel="84" rhand="13470" /> <!-- Vesper Nagan -->
+	</kit>
+	<kit name="RAPIER">
+		<tier minLevel="1" rhand="9720" /> <!-- Warrior's Sword -->
+		<tier minLevel="20" rhand="9222" /> <!-- Epee -->
+		<tier minLevel="40" rhand="9292" /> <!-- Admiral's Estoc -->
+		<tier minLevel="52" rhand="9316" /> <!-- Colichemarde -->
+		<tier minLevel="61" rhand="9352" /> <!-- Eclair Bijou -->
+		<tier minLevel="76" rhand="9364" /> <!-- Laevateinn -->
+		<tier minLevel="80" rhand="10224" /> <!-- Icarus Stinger -->
+		<tier minLevel="84" rhand="13468" /> <!-- Vesper Pincer -->
+	</kit>
+	<kit name="CROSSBOW">
+		<tier minLevel="1" rhand="9212" /> <!-- Field Gun -->
+		<tier minLevel="20" rhand="9224" /> <!-- Arm Breaker -->
+		<tier minLevel="40" rhand="9300" /> <!-- Sharpshooter -->
+		<tier minLevel="52" rhand="9324" /> <!-- Hell Hound -->
+		<tier minLevel="61" rhand="9360" /> <!-- Screaming Vengeance -->
+		<tier minLevel="76" rhand="9372" /> <!-- Sarunga -->
+		<tier minLevel="80" rhand="10226" /> <!-- Icarus Shooter -->
+		<tier minLevel="84" rhand="13469" /> <!-- Vesper Shooter -->
 	</kit>
 	<kit name="MAGE_BLUNT"> <!-- Blunts only, for the Stun Attack and Hammer Crush of orc mystics. -->
 		<tier minLevel="1" rhand="177" /> <!-- Mage Staff -->
@@ -679,6 +713,95 @@
 		<combo name="Crush">
 			<step skill="315" /> <!-- Crush of Doom -->
 			<step skill="190" optional="true" /> <!-- Fatal Strike -->
+		</combo>
+	</build>
+	<!-- Kamael: the soul skills spend souls like a player's (a monster kill gives one, Soul Rage more). -->
+	<build name="Doombringer" classId="131" role="FIGHTER" weapon="ANCIENT_SWORD" armor="HEAVY" weight="1" skillFighter="true"> <!-- Kamael, male -->
+		<attack>526,497,477,939,498,476,496,492,1434,468</attack>
+		<debuff>1435,485,501,1445,794</debuff>
+		<buff>1432,482,499,1514,20006,917,948</buff>
+		<emergency>833,483</emergency>
+		<toggle>500,480,481,335</toggle>
+		<rush>793,494,493,484</rush>
+		<peel>485</peel>
+		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
+		<transform>538</transform> <!-- Final Form -->
+		<combo name="Shoulder charge" pvp="true">
+			<step skill="494" /> <!-- Shoulder Charge: charges in and stuns -->
+			<step skill="482" self="true" optional="true" /> <!-- Furious Soul -->
+			<step skill="497" /> <!-- Crush of Pain -->
+			<step skill="477" optional="true" /> <!-- Dark Smash -->
+			<step skill="526" optional="true" /> <!-- Enuma Elish -->
+		</combo>
+		<combo name="Death mark" pvp="true" chance="50">
+			<step skill="1435" /> <!-- Death Mark -->
+			<step skill="498" optional="true" /> <!-- Contagion -->
+			<step skill="497" /> <!-- Crush of Pain -->
+			<step skill="477" optional="true" /> <!-- Dark Smash -->
+		</combo>
+	</build>
+	<build name="Male Soul Hound" classId="132" role="MAGE" weapon="RAPIER" armor="ROBE" buffs="MAGE" weight="1"> <!-- Kamael, male -->
+		<attack>1469,1512,1516,1436,1433,1439,1438,1434,1554,1431,939,505,504,478</attack>
+		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
+		<buff>1441,482,1532,1515</buff>
+		<emergency>837,1556</emergency>
+		<toggle>481,480</toggle>
+		<peel>1448,1446,1447</peel> <!-- Blink stuns around it and jumps back -->
+		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
+		<transform>538</transform> <!-- Final Form -->
+		<combo name="Soul vortex" pvp="true">
+			<step skill="1512" /> <!-- Soul Vortex -->
+			<step skill="1513" optional="true" /> <!-- Soul Vortex Extinction -->
+			<step skill="1516" optional="true" /> <!-- Soul Strike -->
+			<step skill="1436" /> <!-- Soul of Pain -->
+		</combo>
+		<combo name="Voice bind" pvp="true" chance="50">
+			<step skill="1447" /> <!-- Voice Bind -->
+			<step skill="1435" optional="true" /> <!-- Death Mark -->
+			<step skill="1436" /> <!-- Soul of Pain -->
+			<step skill="1433" optional="true" /> <!-- Abyssal Blaze -->
+		</combo>
+	</build>
+	<build name="Female Soul Hound" classId="133" role="MAGE" weapon="RAPIER" armor="ROBE" buffs="MAGE" weight="1"> <!-- Kamael, female -->
+		<attack>1469,1512,1516,1436,1433,1439,1438,1434,1554,1431,939,505,504,478</attack>
+		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
+		<buff>1441,482,1532,1515</buff>
+		<emergency>837,1556</emergency>
+		<toggle>481,480</toggle>
+		<peel>1448,1446,1447</peel> <!-- Blink stuns around it and jumps back -->
+		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
+		<transform>538</transform> <!-- Final Form -->
+		<combo name="Soul vortex" pvp="true">
+			<step skill="1512" /> <!-- Soul Vortex -->
+			<step skill="1513" optional="true" /> <!-- Soul Vortex Extinction -->
+			<step skill="1516" optional="true" /> <!-- Soul Strike -->
+			<step skill="1436" /> <!-- Soul of Pain -->
+		</combo>
+		<combo name="Voice bind" pvp="true" chance="50">
+			<step skill="1447" /> <!-- Voice Bind -->
+			<step skill="1435" optional="true" /> <!-- Death Mark -->
+			<step skill="1436" /> <!-- Soul of Pain -->
+			<step skill="1433" optional="true" /> <!-- Abyssal Blaze -->
+		</combo>
+	</build>
+	<build name="Trickster" classId="134" role="ARCHER" weapon="CROSSBOW" armor="LIGHT_ARCHER" weight="1"> <!-- Kamael, female -->
+		<attack>790,990,987,507,509,508,487,939</attack>
+		<debuff>522,1435,792,1445,627</debuff>
+		<buff>490,482,1514,1470</buff>
+		<toggle>334,481,479</toggle>
+		<move>622</move>
+		<peel>627,628</peel> <!-- Soul Shock, Warp (jumps back from a player in melee range) -->
+		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
+		<transform>538</transform> <!-- Final Form -->
+		<combo name="Real target" pvp="true">
+			<step skill="522" /> <!-- Real Target -->
+			<step skill="790" optional="true" /> <!-- Wild Shot -->
+			<step skill="990" optional="true" /> <!-- Death Shot -->
+			<step skill="507" /> <!-- Twin Shot -->
+		</combo>
+		<combo name="Bleeding shot" pvp="true" chance="50">
+			<step skill="509" /> <!-- Bleeding Shot -->
+			<step skill="507" /> <!-- Twin Shot -->
 		</combo>
 	</build>
 	<build name="Dreadnought" classId="89" role="FIGHTER" weapon="POLEARM" armor="HEAVY" weight="1"> <!-- Warlord line -->

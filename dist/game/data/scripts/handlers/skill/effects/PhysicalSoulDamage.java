@@ -90,10 +90,10 @@ public class PhysicalSoulDamage extends AbstractEffect
 		}
 		
 		damage = (int) Formulas.calcPhysDam(effector, effected, skill, shld, false, ss);
-		if ((skill.getMaxSoulConsumeCount() > 0) && effector.isPlayer())
+		if ((skill.getMaxSoulConsumeCount() > 0) && (effector.isPlayer() || effector.isPvpFakePlayer()))
 		{
 			// Souls Formula (each soul increase +4.8%).
-			final int chargedSouls = (effector.asPlayer().getChargedSouls() <= skill.getMaxSoulConsumeCount()) ? effector.asPlayer().getChargedSouls() : skill.getMaxSoulConsumeCount();
+			final int chargedSouls = Math.min(effector.getChargedSouls(), skill.getMaxSoulConsumeCount());
 			damage *= 1 + (chargedSouls * 0.048);
 		}
 		

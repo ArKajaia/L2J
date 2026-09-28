@@ -17,6 +17,7 @@
 package handlers.skill.effects;
 
 import org.l2jmobius.gameserver.data.xml.TransformData;
+import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.conditions.Condition;
@@ -41,18 +42,31 @@ public class Transformation extends AbstractEffect
 	@Override
 	public boolean canStart(Creature effector, Creature effected, Skill skill)
 	{
-		return effected.isPlayer();
+		// A roaming Kamael fake player uses Final Form like a player (see FakePlayerPvpManager#transform).
+		return effected.isPlayer() || effected.isPvpFakePlayer();
 	}
 	
 	@Override
 	public void onExit(Creature effector, Creature effected, Skill skill)
 	{
+		if (effected.isPvpFakePlayer())
+		{
+			FakePlayerPvpManager.getInstance().untransform(effected.asNpc());
+			return;
+		}
+		
 		effected.stopTransformation(false);
 	}
 	
 	@Override
 	public void onStart(Creature effector, Creature effected, Skill skill)
 	{
+		if (effected.isPvpFakePlayer())
+		{
+			FakePlayerPvpManager.getInstance().transform(effected.asNpc(), _id);
+			return;
+		}
+		
 		TransformData.getInstance().transformPlayer(_id, effected.asPlayer());
 	}
 }

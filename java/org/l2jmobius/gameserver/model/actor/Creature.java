@@ -6065,6 +6065,12 @@ public abstract class Creature extends WorldObject
 				asNpc().getTemplate().getFakePlayerPvpProfile().decreaseCharges(mut.getSkill().getChargeConsumeCount());
 			}
 			
+			// And its Kamael souls.
+			if (isPvpFakePlayer() && (mut.getSkill().getMaxSoulConsumeCount() > 0))
+			{
+				asNpc().getTemplate().getFakePlayerPvpProfile().decreaseSouls(mut.getSkill().getMaxSoulConsumeCount());
+			}
+			
 			// Launch the magic skill in order to calculate its effects
 			callSkill(mut.getSkill(), mut.getTargets());
 		}
@@ -7458,6 +7464,14 @@ public abstract class Creature extends WorldObject
 	public int getKarma()
 	{
 		return _karma;
+	}
+	
+	/**
+	 * @return the Kamael souls it has: a player's, or a roaming fake player's (they use the soul skills like players), 0 for others
+	 */
+	public int getChargedSouls()
+	{
+		return isPvpFakePlayer() ? asNpc().getTemplate().getFakePlayerPvpProfile().getSouls() : 0;
 	}
 	
 	public void setKarma(int karma)

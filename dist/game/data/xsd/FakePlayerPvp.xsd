@@ -54,6 +54,7 @@
 							<xs:element name="cleanse" type="xs:string" minOccurs="0" />
 							<xs:element name="summon" type="xs:string" minOccurs="0" />
 							<xs:element name="link" type="xs:string" minOccurs="0" />
+							<xs:element name="transform" type="xs:string" minOccurs="0" />
 							<xs:element name="combo" maxOccurs="unbounded" minOccurs="0">
 								<xs:complexType>
 									<xs:sequence>
