@@ -21,6 +21,7 @@
 	     polearm - kit of a polearm it carries besides its weapon (warriors). It takes the polearm out when
 	               monsters surround it, so its normal attacks hit several of them, and switches back to its
 	               weapon once most of them are dead (see FakePvpPolearm* in config/Custom/FakePlayerPvp.ini).
+	               A build whose weapon is a polearm (Dreadnought) always has its multi-attack.
 	     weight  - relative chance to pick this build.
 	     skillFighter - true for a class that deals its damage with skills (Gladiator/Duelist, Tyrant,
 	               daggers): it uses a skill most of the time (FakePvpSkillChance). The others (tanks,
@@ -299,6 +300,30 @@
 			<step skill="1341" /> <!-- Wind Vortex -->
 			<step skill="1456" optional="true" /> <!-- Wind Vortex Slug -->
 			<step skill="1239" optional="true" />
+		</combo>
+	</build>
+	<build name="Dominator" classId="115" role="MAGE" weapon="MAGE" armor="ROBE" weight="1"> <!-- Overlord line -->
+		<attack>1245,1090,1107,1100,1102,1095,1101</attack>
+		<debuff>1246,1367,1366,1462,1208,1097,1105,1104,1099,1096,1209</debuff>
+		<buff>1533</buff>
+		<heal>1229</heal>
+		<toggle>337</toggle>
+		<peel>1208,1097,1092</peel>
+		<combo name="Silence and drain" pvp="true">
+			<step skill="1246" /> <!-- Seal of Silence -->
+			<step skill="1367" optional="true" /> <!-- Seal of Disease -->
+			<step skill="1245" /> <!-- Steal Essence -->
+			<step skill="1245" />
+		</combo>
+		<combo name="Despair" pvp="true" chance="50">
+			<step skill="1366" /> <!-- Seal of Despair -->
+			<step skill="1462" optional="true" /> <!-- Seal of Blockade -->
+			<step skill="1245" /> <!-- Steal Essence -->
+		</combo>
+		<combo name="Bind and drain" pvp="true" chance="50">
+			<step skill="1208" /> <!-- Seal of Binding -->
+			<step skill="1107" optional="true" /> <!-- Frost Flame -->
+			<step skill="1245|1090" /> <!-- Steal Essence / Life Drain -->
 		</combo>
 	</build>
 
@@ -609,6 +634,27 @@
 		<combo name="Crush">
 			<step skill="315" /> <!-- Crush of Doom -->
 			<step skill="190" optional="true" /> <!-- Fatal Strike -->
+		</combo>
+	</build>
+	<build name="Dreadnought" classId="89" role="FIGHTER" weapon="POLEARM" armor="HEAVY" weight="1"> <!-- Warlord line -->
+		<attack>921,920,320,347,36,245,255,3</attack>
+		<debuff>361,452,48,100,116</debuff>
+		<buff>78,287,917</buff>
+		<heal>121</heal>
+		<toggle>312,424</toggle>
+		<rush>995,994</rush>
+		<peel>452,48</peel>
+		<combo name="Shock crush" pvp="true">
+			<step skill="78" self="true" optional="true" /> <!-- War Cry -->
+			<step skill="361" /> <!-- Shock Blast -->
+			<step skill="920" /> <!-- Power Crush -->
+			<step skill="921" optional="true" /> <!-- Cursed Pierce -->
+			<step skill="320" optional="true" /> <!-- Wrath -->
+		</combo>
+		<combo name="Stun and crush" pvp="true">
+			<step skill="100" /> <!-- Stun Attack -->
+			<step skill="920" /> <!-- Power Crush -->
+			<step skill="921" optional="true" /> <!-- Cursed Pierce -->
 		</combo>
 	</build>
 </list>
