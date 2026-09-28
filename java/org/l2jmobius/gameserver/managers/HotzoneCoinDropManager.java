@@ -7,7 +7,6 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
-import org.l2jmobius.gameserver.model.zone.ZoneId;
 
 /**
  * Pays out {@link RatesConfig#ARENA_CURRENCY_ITEM_ID} - the same currency the Survival Arena awards - for player kills inside a hotzone (see {@link org.l2jmobius.gameserver.model.zone.type.HotZone}), scaled by the victim's level: {@link HotzoneCoinDropConfig#MIN_AMOUNT} at level 1, rising
@@ -25,15 +24,21 @@ public class HotzoneCoinDropManager
 	 */
 	public void onAttackableKilled(Attackable victim, Player killer)
 	{
-		if (!HotzoneCoinDropConfig.ENABLED || (victim == null) || (killer == null) || !victim.isInsideZone(ZoneId.HOTZONE))
+		if (!HotzoneCoinDropConfig.ENABLED || (victim == null) || (killer == null))
+		{
+			return;
+		}
+
+		// Only a hotzone the rotation currently has active pays out - every hotzone stays flagged HOTZONE, but only active ones have a modifier rolled.
+		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(victim);
+		if (modifier == null)
 		{
 			return;
 		}
 
 		// GOLD_RUSH multiplies every payout; MINIBOSS_FRENZY makes a miniboss always pay, and pay more.
-		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(victim);
-		double multiplier = modifier != null ? modifier.getCoinMult() : 1.0;
-		final boolean frenzyMiniboss = (modifier != null) && (modifier.getMinibossCoinMult() > 1.0) && victim.isMonster() && victim.asMonster().isHotzoneMiniboss();
+		double multiplier = modifier.getCoinMult();
+		final boolean frenzyMiniboss = (modifier.getMinibossCoinMult() > 1.0) && victim.isMonster() && victim.asMonster().isHotzoneMiniboss();
 		if (frenzyMiniboss)
 		{
 			multiplier *= modifier.getMinibossCoinMult();

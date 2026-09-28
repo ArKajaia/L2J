@@ -586,18 +586,14 @@ public class Spawn extends Location
 			// --- NEW HOTZONE LOGIC ---
 			double freqMultiplier = 1.0; // Default is 1x (normal chance)
 			
-			// Check if the NPC spawned inside a Hotzone
-			// Note: Replace ZoneId.ALTERED with whatever ZoneId you use for hotzones!
-			if (npc.isInsideZone(org.l2jmobius.gameserver.model.zone.ZoneId.HOTZONE))
+			// Check if the NPC spawned inside a hotzone the rotation currently has active - every hotzone stays flagged HOTZONE, but only active ones have a modifier rolled.
+			final org.l2jmobius.gameserver.model.hotzone.HotzoneModifier hotzoneModifier = org.l2jmobius.gameserver.managers.HotzoneModifierManager.getInstance().getModifierFor(npc);
+			if (hotzoneModifier != null)
 			{
 				freqMultiplier = ChampionMonstersConfig.CHAMPION_HOTZONE_MULTIPLIER; // e.g., 2.0 (Double chance)
 
 				// A rolled modifier like CHAMPION_SURGE stacks on top of the flat hotzone bonus above.
-				final org.l2jmobius.gameserver.model.hotzone.HotzoneModifier hotzoneModifier = org.l2jmobius.gameserver.managers.HotzoneModifierManager.getInstance().getModifierFor(npc);
-				if (hotzoneModifier != null)
-				{
-					freqMultiplier *= hotzoneModifier.getChampionSpawnMult();
-				}
+				freqMultiplier *= hotzoneModifier.getChampionSpawnMult();
 			}
 			
 			// Apply the multiplier to your base frequencies
