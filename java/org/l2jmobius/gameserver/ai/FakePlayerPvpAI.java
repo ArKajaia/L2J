@@ -567,7 +567,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		// Archers and mages stop a player in melee range (root, stun, Aura Flash...), then step back (unless a combo is finishing a stunned target).
 		if (canMove && role.isRanged() && (_combo == null) && !npc.isAttackingNow() && ((distance - collision) < FakePlayerPvpConfig.KITE_DISTANCE) && (now >= _nextKiteTime))
 		{
-			if (pvp && !isDisabled(target) && useSkill(npc, target, pickPeel(npc, target, profile, defenses), distance, collision, false))
+			if (pvp && !isDisabled(target) && useSkill(npc, target, pickPeel(npc, target, profile, defenses, distance - collision), distance, collision, false))
 			{
 				return;
 			}
@@ -752,7 +752,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		// A pursuer on its heels: stop it before running on.
-		if ((pursuerGap < PEEL_DISTANCE) && !isDisabled(pursuer) && useSkill(npc, pursuer, pickPeel(npc, pursuer, profile, getKnownDefenses(pursuer)), pursuerDistance, pursuerCollision, false))
+		if ((pursuerGap < PEEL_DISTANCE) && !isDisabled(pursuer) && useSkill(npc, pursuer, pickPeel(npc, pursuer, profile, getKnownDefenses(pursuer), pursuerGap), pursuerDistance, pursuerCollision, false))
 		{
 			return true;
 		}
@@ -1137,13 +1137,14 @@ public class FakePlayerPvpAI extends AttackableAI
 	}
 	
 	/**
-	 * @return the first skill of its peel list (in order of preference) it can use on {@code target} now and that gets through its defenses, {@code null} if none: used for its effect on that one player, an area peel like Aura Flash is fine against a single one
+	 * @param gap the distance to {@code target}, collisions excluded: it is used without moving, so a melee one (Hammer Crush) is left for when the player is on it
+	 * @return the first skill of its peel list (in order of preference) it can use on {@code target} now from where it stands and that gets through its defenses, {@code null} if none: used for its effect on that one player, an area peel like Aura Flash is fine against a single one
 	 */
-	private static Skill pickPeel(Attackable npc, Creature target, FakePlayerPvpProfile profile, int defenses)
+	private static Skill pickPeel(Attackable npc, Creature target, FakePlayerPvpProfile profile, int defenses, double gap)
 	{
 		for (Skill skill : profile.getSkills(SkillCategory.PEEL))
 		{
-			if (!target.isAffectedBySkill(skill.getId()) && !isBlocked(defenses, skill, true) && canCast(npc, skill, target))
+			if ((gap <= getSkillReach(skill)) && !target.isAffectedBySkill(skill.getId()) && !isBlocked(defenses, skill, true) && canCast(npc, skill, target))
 			{
 				return skill;
 			}
@@ -1823,6 +1824,20 @@ public class FakePlayerPvpAI extends AttackableAI
 		return (skill != null) && (castOrApproach(npc, target, skill, distance, collision, canMove) != CastResult.FAILED);
 	}
 	
+	/**
+	 * @param skill a skill
+	 * @return how far from the target (collisions excluded) it can be used: its cast range, or its area for one centered on the caster
+	 */
+	private static int getSkillReach(Skill skill)
+	{
+		if (skill.getCastRange() > 0)
+		{
+			return skill.getCastRange();
+		}
+		
+		return skill.getAffectRange() > 0 ? skill.getAffectRange() : 80;
+	}
+	
 	private enum CastResult
 	{
 		CAST,
@@ -1836,12 +1851,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	 */
 	private CastResult castOrApproach(Attackable npc, Creature target, Skill skill, double distance, int collision, boolean canMove)
 	{
-		int range = skill.getCastRange();
-		if (range <= 0)
-		{
-			range = skill.getAffectRange() > 0 ? skill.getAffectRange() : 80;
-		}
-		
+		final int range = getSkillReach(skill);
 		if (((distance - collision) > range) || !GeoEngine.getInstance().canSeeTarget(npc, target))
 		{
 			if (!canMove)

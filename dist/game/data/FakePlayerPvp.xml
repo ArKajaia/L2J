@@ -42,6 +42,7 @@
 	     rush      - gap closers used on a target out of reach (Rush, Shadow Step).
 	     peel      - skills that stop a player in melee range: archers and mages use them before stepping
 	                 back, and a fake player running away uses them on its pursuer (roots, stuns, Aura Flash, Trick).
+	                 The first one that reaches the player from where it stands is used (a melee stun only once it is on it).
 	     cleanse   - skills that remove what holds it back, only used when it has it (Break Duress, Remedy...).
 	     combo     - skill chains played in order, like a practiced player's rotation. The first one that is
 	                 ready (required steps learned and off cooldown, enough energy) starts.
@@ -211,6 +212,16 @@
 		<tier minLevel="80" rhand="10217" /> <!-- Icarus Spirit -->
 		<tier minLevel="84" rhand="13459" /> <!-- Vesper Buster -->
 	</kit>
+	<kit name="MAGE_BLUNT"> <!-- Blunts only, for the Stun Attack and Hammer Crush of orc mystics. -->
+		<tier minLevel="1" rhand="177" /> <!-- Mage Staff -->
+		<tier minLevel="20" rhand="188" /> <!-- Ghost Staff -->
+		<tier minLevel="40" rhand="206" /> <!-- Demon's Staff -->
+		<tier minLevel="52" rhand="210" /> <!-- Staff of Evil Spirits -->
+		<tier minLevel="61" rhand="8687" /> <!-- Cabrio's Hand -->
+		<tier minLevel="76" rhand="6579" /> <!-- Arcana Mace -->
+		<tier minLevel="80" rhand="10222" /> <!-- Icarus Hall -->
+		<tier minLevel="84" rhand="13465" /> <!-- Vesper Caster -->
+	</kit>
 
 	<!-- Buffs -->
 	<buffs name="FIGHTER">
@@ -302,13 +313,13 @@
 			<step skill="1239" optional="true" />
 		</combo>
 	</build>
-	<build name="Dominator" classId="115" role="MAGE" weapon="MAGE" armor="ROBE" weight="1"> <!-- Overlord line -->
+	<build name="Dominator" classId="115" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="1"> <!-- Overlord line -->
 		<attack>1245,1090,1107,1100,1102,1095,1101</attack>
 		<debuff>1246,1367,1366,1462,1208,1097,1105,1104,1099,1096,1209</debuff>
 		<buff>1533</buff>
 		<heal>1229</heal>
 		<toggle>337</toggle>
-		<peel>1208,1097,1092</peel>
+		<peel>260,100,1208,1097,1092</peel> <!-- Hammer Crush / Stun Attack on a player that reached it -->
 		<combo name="Silence and drain" pvp="true">
 			<step skill="1246" /> <!-- Seal of Silence -->
 			<step skill="1367" optional="true" /> <!-- Seal of Disease -->
