@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list enabled="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/zones.xsd">
 	<!-- Locations and brackets checked against the High Five datapack (stats/npcs levels + spawns) - median monster level inside each zone sits in its bracket. -->
+	<!-- From level 80 on there is one tier per level, following each area's recommended hunting level rather than the bare monster level: dense, aggressive areas such as Primeval Isle (level 80 monsters) or Pagan Temple (level 78) are rated higher than their monsters. -->
 	<!-- Zones with a lower/higher-level catacomb under or above them use a narrowed minZ/maxZ so that area is not counted as part of the hotzone. -->
 	<!-- ================= LEVEL 1-10 (90001 - 90010) ================= -->
 	<zone id="90001" name="Shadow of the Mother Tree" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
@@ -257,7 +258,7 @@
 		<node X="52107" Y="-54328" />
 	</zone>
 
-	<zone id="90063" name="Swamp of Screams" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+	<zone id="90063" name="Swamp of Screams" type="HotZone" shape="Cylinder" minZ="-4200" maxZ="10000" rad="10000">
 		<node X="69340" Y="-50203" />
 	</zone>
 
@@ -289,7 +290,7 @@
 		<node X="106349" Y="-61870" />
 	</zone>
 
-	<!-- ================= LEVEL 71-80 (90071 - 90080) ================= -->
+	<!-- ================= LEVEL 71-79 (90071 - 90077) ================= -->
 	<zone id="90071" name="Imperial Tomb" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="186699" Y="-75915" />
 	</zone>
@@ -314,60 +315,92 @@
 		<node X="91280" Y="-117152" />
 	</zone>
 
-	<zone id="90077" name="Primeval Isle" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
-		<node X="8480" Y="-14624" />
-	</zone>
-
-	<zone id="90078" name="Stakato Nest" type="HotZone" shape="Cylinder" minZ="-4200" maxZ="10000" rad="10000">
-		<node X="88969" Y="-45307" />
-	</zone>
-
-	<zone id="90079" name="Hot Springs" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+	<zone id="90077" name="Hot Springs" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="149000" Y="-115000" />
 	</zone>
 
-	<zone id="90080" name="Pagan Temple" type="HotZone" shape="Cylinder" minZ="-12000" maxZ="10000" rad="10000">
-		<node X="-18000" Y="-43000" />
+	<!-- ================= LEVEL 80 (90078 - 90081) ================= -->
+	<zone id="90078" name="Giant's Cave" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="7000">
+		<node X="189000" Y="58000" />
 	</zone>
 
-	<!-- ================= LEVEL 81+ (90081 - 90090) ================= -->
-	<zone id="90081" name="Field of Silence" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
-		<node X="91088" Y="182384" />
-	</zone>
-
-	<zone id="90082" name="Crypts of Disgrace" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="-3000" rad="10000">
+	<zone id="90079" name="Crypts of Disgrace" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="-3000" rad="10000">
 		<node X="47692" Y="-115745" />
 	</zone>
 
-	<zone id="90083" name="Den of Evil" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+	<zone id="90080" name="Isle of Prayer" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="137000" Y="177000" />
+	</zone>
+
+	<zone id="90081" name="Hellbound Island" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="-22000" Y="244000" />
+	</zone>
+
+	<!-- ================= LEVEL 81 (90082 - 90085) ================= -->
+	<zone id="90082" name="Mithril Mines" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="171946" Y="-173352" />
+	</zone>
+
+	<zone id="90083" name="Pagan Temple" type="HotZone" shape="Cylinder" minZ="-12000" maxZ="10000" rad="10000">
+		<node X="-18000" Y="-43000" />
+	</zone>
+
+	<zone id="90084" name="Dragon Valley Entrance" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="8000">
+		<node X="88000" Y="112000" />
+	</zone>
+
+	<zone id="90085" name="Den of Evil" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="68693" Y="-110438" />
 	</zone>
 
-	<zone id="90084" name="Dragon Valley" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
-		<node X="107000" Y="112000" />
+	<!-- ================= LEVEL 82 (90086 - 90087) ================= -->
+	<zone id="90086" name="Stakato Nest" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="-4200" rad="10000">
+		<node X="84000" Y="-48000" />
 	</zone>
 
-	<zone id="90085" name="Antharas' Lair" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
-		<node X="127000" Y="112000" />
+	<zone id="90087" name="Tully's Workshop" type="HotZone" shape="Cylinder" minZ="-16200" maxZ="-8500" rad="5300">
+		<node X="-12450" Y="276760" />
 	</zone>
 
-	<zone id="90086" name="Plains of the Lizardmen" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
-		<node X="87252" Y="85514" />
-	</zone>
-
-	<zone id="90087" name="Sel Mahum Training Grounds" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
-		<node X="84517" Y="62538" />
-	</zone>
-
+	<!-- ================= LEVEL 83 (90088 - 90095) ================= -->
 	<zone id="90088" name="Monastery of Silence" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
 		<node X="106414" Y="-87799" />
 	</zone>
 
-	<zone id="90089" name="Mithril Mines" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
-		<node X="171946" Y="-173352" />
+	<zone id="90089" name="Plains of the Lizardmen" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="87252" Y="85514" />
 	</zone>
 
-	<zone id="90090" name="Isle of Prayer" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
-		<node X="137000" Y="177000" />
+	<zone id="90090" name="Sel Mahum Training Grounds" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="84517" Y="62538" />
+	</zone>
+
+	<zone id="90091" name="Beast Farm" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="51800" Y="-83400" />
+	</zone>
+
+	<zone id="90092" name="Field of Silence" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="91088" Y="182384" />
+	</zone>
+
+	<zone id="90093" name="Field of Whispers" type="HotZone" shape="Cylinder" minZ="-5000" maxZ="10000" rad="10000">
+		<node X="85458" Y="215289" />
+	</zone>
+
+	<zone id="90094" name="Primeval Isle" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="8480" Y="-14624" />
+	</zone>
+
+	<zone id="90095" name="Dragon Valley" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="107000" Y="112000" />
+	</zone>
+
+	<!-- ================= LEVEL 84+ (90096 - 90097) ================= -->
+	<zone id="90096" name="Antharas' Lair" type="HotZone" shape="Cylinder" minZ="-10000" maxZ="10000" rad="10000">
+		<node X="148000" Y="116000" />
+	</zone>
+
+	<zone id="90097" name="Seed of Annihilation" type="HotZone" shape="Cylinder" minZ="-17000" maxZ="-9000" rad="10000">
+		<node X="-181000" Y="182000" />
 	</zone>
 </list>
