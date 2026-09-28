@@ -861,6 +861,13 @@ public class FakePlayerPvpAI extends AttackableAI
 	 */
 	private boolean thinkRegroup(Attackable npc, FakePlayerPvpProfile profile, Creature target, double hpRatio, long now)
 	{
+		// Only a servitor that takes its damage (Transfer Pain) is worth leaving a fight for: another one (a Dark Avenger's panther) is summoned again once the fight is over.
+		if (profile.getSkills(SkillCategory.LINK).isEmpty())
+		{
+			_regrouping = false;
+			return false;
+		}
+		
 		// A servitor Transfer Pain has worn down takes no more of its damage: sent away, a fresh one is summoned like for a dead one.
 		final Npc servitor = profile.getServitor();
 		if (!_regrouping && (now >= _nextRegroupTime) && (servitor != null) && !servitor.isDead() && (servitor.getCurrentHp() < (servitor.getMaxHp() * SPENT_SERVITOR_HP)))
