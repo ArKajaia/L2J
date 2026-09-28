@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Arcanist: 91 nodes. x/y are authoritative layout coords. -->
-<list>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="5000" name="Arcanist Origin" sector="Arcanist" type="START" tier="0" cost="0" x="608.7" y="-126.4" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="5001" name="Crossroads" sector="Arcanist" type="SMALL" tier="0" cost="1" x="784.0" y="140.1" effect="MATK_PCT:0.2" description="Junction.">
 		<requires nodeId="5003" />

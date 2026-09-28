@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Hierophant: 91 nodes. x/y are authoritative layout coords. -->
-<list>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="6000" name="Hierophant Origin" sector="Hierophant" type="START" tier="0" cost="0" x="2598.5" y="-127.8" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="6001" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2469.4" y="177.9" effect="MAXMP:6" description="Junction.">
 		<requires nodeId="6003" />

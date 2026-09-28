@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Shadowblade: 91 nodes. x/y are authoritative layout coords. -->
-<list>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="3000" name="Shadowblade Origin" sector="Shadowblade" type="START" tier="0" cost="0" x="605.1" y="3312.5" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="3001" name="Crossroads" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="764.5" y="3088.0" effect="EVASION_ADD:0.2" description="Junction.">
 		<requires nodeId="3003" />

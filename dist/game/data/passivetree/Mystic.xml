@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Mystic: 28 nodes, hybrid of Arcanist and Hierophant filling the gap between their arms. x/y are authoritative layout coords. -->
-<list>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="30401" name="Confluence" sector="Mystic" type="SMALL" tier="0" cost="1" x="1600.0" y="350.0" effect="MATK_PCT:0.3;MAXMP:8">
 		<requires nodeId="24102" />
 		<requires nodeId="30402" />

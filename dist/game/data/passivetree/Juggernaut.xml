@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Juggernaut: 91 nodes. x/y are authoritative layout coords. -->
-<list>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="2000" name="Juggernaut Origin" sector="Juggernaut" type="START" tier="0" cost="0" x="2589.1" y="3334.7" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="2001" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2430.4" y="3075.4" effect="PATK_PCT:0.2" description="Junction.">
 		<requires nodeId="2003" />

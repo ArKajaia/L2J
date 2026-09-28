@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Vanguard: 91 nodes. x/y are authoritative layout coords. -->
-<list>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="1000" name="Vanguard Origin" sector="Vanguard" type="START" tier="0" cost="0" x="3591.7" y="1596.8" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="1001" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3266.5" y="1648.5" effect="MAXHP:6" description="Junction.">
 		<requires nodeId="1003" />
@@ -445,7 +445,7 @@
 		<requires nodeId="1062" />
 		<requires nodeId="1079" />
 	</node>
-	<node id="1081" name="Field Repairs" sector="Vanguard" type="FUNCTION" tier="0" cost="2" x="1885.9" y="1705.2" effect="MAXHP:15" skillId="90302" skillLevel="1" description="Utility unlock.">
+	<node id="1081" name="Field Repairs" sector="Vanguard" type="FUNCTION" tier="0" cost="2" x="1885.9" y="1705.2" effect="MAXHP:15" description="Utility unlock.">
 		<requires nodeId="1062" />
 	</node>
 	<node id="20101" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2718.7" y="1927.6" effect="MAXHP:6">
