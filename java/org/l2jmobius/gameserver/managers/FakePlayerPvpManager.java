@@ -837,27 +837,29 @@ public class FakePlayerPvpManager
 		"if you want my mob, you have to fight me first"
 	};
 	
-	/** Said standing next to a lower level it is about to hit once, to invite a PvP. */
+	/** Said in general chat standing next to a lower level, before it hits them once to invite a PvP (3 to 60 characters). */
 	private static final String[] TAUNTS_POKE =
 	{
 		"pvp?",
-		"1v1?",
+		"1v1",
 		"fight me",
 		"u scared?",
-		"come on",
 		"hit me back",
-		"lets go",
-		"duel?",
-		"wanna fight?",
+		"wanna duel? :)",
 		"show me what u got",
-		"u gonna hit back or what",
-		"pvp or run",
-		"hi :)",
-		"boo",
-		"try me",
-		"flag and fight",
-		"u farming here? not anymore",
-		"lets see what u got"
+		"u gonna hit back or what?",
+		"this spot is mine now, fight for it",
+		"lets see if you can handle a real pvp",
+		"you farm here, you pay the toll. hit me back",
+		"i am bored, lets see how long you can last vs me",
+		"come on, hit back or go farm somewhere else noob",
+		"one hit coming, show me you are not a coward",
+		"flag up and fight me, or keep farming like a scared kid",
+		"incoming hit, answer it or run, your choice",
+		"whats wrong? afraid of a little pvp? lol",
+		"hey you, yes you, 1v1 me right here",
+		"ur gear looks weak, lets test it",
+		"gg in advance"
 	};
 	
 	/** Said when it doesn't hit back a higher level that attacks it while it isn't flagged. */
