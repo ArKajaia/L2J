@@ -8,34 +8,132 @@ This document describes what the codebase actually *does* — its architecture a
 
 ## Table of Contents
 
-1. [Architecture at a Glance](#architecture-at-a-glance)
-2. [Repository Layout](#repository-layout)
-3. [Login & Authentication System](#login--authentication-system)
-4. [Network Engine](#network-engine)
-5. [World & Entity Model](#world--entity-model)
-6. [Stat & Combat Calculation](#stat--combat-calculation)
-7. [Skill System](#skill-system)
-8. [Item & Economy System](#item--economy-system)
-9. [Zone System](#zone-system)
-10. [Instance Dungeon System](#instance-dungeon-system)
-11. [AI System](#ai-system)
-12. [Geodata & Pathfinding Engine](#geodata--pathfinding-engine)
-13. [Clan, Residence & Siege Systems](#clan-residence--siege-systems)
-14. [Olympiad, Heroes & Seven Signs](#olympiad-heroes--seven-signs)
-15. [Minigames & Competitive Systems](#minigames--competitive-systems)
-16. [Social & Grouping Systems](#social--grouping-systems)
-17. [Community Board](#community-board)
-18. [Scripting / Quest Engine](#scripting--quest-engine)
-19. [Manager & Background Task Subsystems](#manager--background-task-subsystems)
-20. [Security & Anti-Cheat](#security--anti-cheat)
-21. [Caching](#caching)
-22. [Admin Tools & Console](#admin-tools--console)
-23. [Standalone Utilities](#standalone-utilities)
-24. [Database Layer](#database-layer)
-25. [Data-Driven Content Pack](#data-driven-content-pack)
-26. [Custom (Non-Retail) Feature Set](#custom-non-retail-feature-set)
+1. [Custom (Non-Retail) Feature Set](#custom-non-retail-feature-set)
+2. [Architecture at a Glance](#architecture-at-a-glance)
+3. [Repository Layout](#repository-layout)
+4. [Login & Authentication System](#login--authentication-system)
+5. [Network Engine](#network-engine)
+6. [World & Entity Model](#world--entity-model)
+7. [Stat & Combat Calculation](#stat--combat-calculation)
+8. [Skill System](#skill-system)
+9. [Item & Economy System](#item--economy-system)
+10. [Zone System](#zone-system)
+11. [Instance Dungeon System](#instance-dungeon-system)
+12. [AI System](#ai-system)
+13. [Geodata & Pathfinding Engine](#geodata--pathfinding-engine)
+14. [Clan, Residence & Siege Systems](#clan-residence--siege-systems)
+15. [Olympiad, Heroes & Seven Signs](#olympiad-heroes--seven-signs)
+16. [Minigames & Competitive Systems](#minigames--competitive-systems)
+17. [Social & Grouping Systems](#social--grouping-systems)
+18. [Community Board](#community-board)
+19. [Scripting / Quest Engine](#scripting--quest-engine)
+20. [Manager & Background Task Subsystems](#manager--background-task-subsystems)
+21. [Security & Anti-Cheat](#security--anti-cheat)
+22. [Caching](#caching)
+23. [Admin Tools & Console](#admin-tools--console)
+24. [Standalone Utilities](#standalone-utilities)
+25. [Database Layer](#database-layer)
+26. [Data-Driven Content Pack](#data-driven-content-pack)
 27. [Build System & Requirements](#build-system--requirements)
 28. [License](#license)
+
+---
+
+## Custom (Non-Retail) Feature Set
+
+Beyond reproducing the High Five chronicle, this server layers on a substantial set of original, operator-toggleable systems — roughly 60 dedicated `Custom/*.ini` files plus dozens of supporting manager classes and runtime-compiled scripts. The eleven systems below were traced directly through their implementation; the remaining custom features are cataloged in the summary table at the end of this section.
+
+### Fake Player Population & PvP
+
+Twenty dedicated Java classes implement this feature, split across two subsystems that share infrastructure but serve different purposes:
+
+- **Static "talkable" fake players** — `FakePlayersConfig`, `FakePlayerData`, `FakePlayerHolder`, `FakePlayerChatManager`/`FakePlayerChatHolder`. Pre-placed NPCs that stand, sit, or fish around town to simulate population and answer whispered chat.
+- **Roaming PvP fake players** — `FakePlayerPvpManager`, `FakePlayerPvpFactory`, `FakePlayerPvpAI` (a ~2,500-line class), `FakePlayerPvpServitor`/`FakePlayerPvpServitorAI`, `FakePlayerPvpData`, and seven runtime-state/data-holder classes (`FakePlayerPvpProfile`, `FakePlayerPvpBuild`, `FakePlayerPvpPersonality`, `FakePlayerPvpCombo`, `FakePlayerPvpWeapon`, `FakePlayerPvpGearTier`). Dynamically spawned in place of ordinary world monsters, fully capable of PvP combat. The remaining classes round out the feature: an admin command set (`//fakepvp`, `//fakepvp_list`, `//fakepvp_clear`, `//fakechat`), a dedicated `FakePlayerInfo` network packet, and two config classes.
+
+A roaming fake player is not a lightweight NPC approximation of a player, nor a real `Player` instance — it's spawned as an NPC/`Monster`-type template whose every stat is independently computed by re-implementing the real player stat formulas: base attributes and HP/MP/CP tables come from the same per-class/level data a real character uses, P.Atk/M.Atk/speed/crit come from its equipped weapon, defense mirrors the real armor stat-function pipeline including enchant bonuses, and it's granted every passive skill its class would have learned by that level plus armor-set and weapon item skills. Gear is drawn from level-tiered kits with level-gated enchant rolls; level, class/build, and gear are fixed at spawn time (weighted-random from a pool of data-defined class builds) and don't change over its lifetime, though a per-individual randomized "personality" nudges its aggression, chattiness, roaming range, and potion-use away from the server baseline so individuals don't play identically.
+
+PvP engagement is triggered by five independent paths: being attacked, retaliating against a kill-stealer (chance scaled by its personality), opportunistically picking fights with PvP-flagged or karma (red) players it notices nearby, hunting down its own killer for a while after a delayed respawn, and — separately — a one-time greeting when it notices a new player. In a fight it plays tactically: focuses the weakest of multiple attackers, closes gaps with gap-closer skills, kites archers/mages, probabilistically learns to work around a target's defensive buffs, and runs data-defined skill combos (opener → positional attack → finisher). Individually-rolled "runners" flee a losing fight, can read a Scroll of Escape once genuinely unseen, and make a last stand if cornered.
+
+Chat is simulated two ways: static fake players match incoming whispers against a rule table (exact/starts-with/contains matching, per-name or shared pools) and reply from a random canned line after a simulated typing delay; roaming PvP fake players broadcast randomly-chosen, personality-gated lines from eleven separate situational pools (kill-steal accusation, victory, death, fleeing, attacking a flagged/karma player, revenge return, first-sight greeting, and more).
+
+The feature is deliberately built to be indistinguishable from a real character on every player-facing surface: `FakePlayerInfo` reimplements the actual `CHAR_INFO` network packet field-for-field (equipment, class, PvP flag/karma, clan, title, transform, noble/hero flags, and more), names are procedurally generated and checked against collisions with real characters, and its PvP flag runs through the same timer stages (flagged → blinking → clear) a real player's does. It sits to rest, drinks potions with the normal visual effect, and can be disarmed or transformed like a player. It is still a real `Npc` internally, though — anything that specifically iterates the server's actual player collection never includes it, and GM commands can list or target it directly.
+
+### Rotating Hot Zones
+
+A `HotZone` is a minimal zone type that just flags a creature as standing in hot-zone terrain; all the real logic lives in a hand-authored candidate pool (`dist/game/data/zones/custom_hotzones.xml`) of zone polygons purpose-built over real named hunting locations, grouped into level brackets whose monster levels were checked against the bracket at authoring time. A scheduled script (`RotatingHotZones`) periodically strips hot-zone buffs from everyone in the previous rotation's active zones, then for every level bracket randomly picks one candidate zone to become newly "active" and rolls a fresh random modifier for it, announcing the change to every online player and re-applying buffs to whoever is currently standing inside. A player who logs out inside an active zone and back in elsewhere has their buff reconciled against their real position on login, since zone enter/exit events don't fire during login.
+
+Two independent bonus layers stack on an active hot zone: a flat zone-wide buff (one buff for players, a separate one for monsters), and a **rolled modifier** — one random themed risk/reward twist per zone per rotation (some purely positive, some trading a bonus for a real downside, like tougher/faster monsters in exchange for better loot, or a zone that drains player HP while halving monster HP). The modifier is a pure data enum where every field defaults to "no effect" and each variant only overrides what it cares about, so every consuming system (drop rates, monster stats, the champion spawn roll, archetype skill grants, crowd-control resistance) reads the same generic fields regardless of which modifier is active.
+
+Two dedicated managers layer on top: a **coin drop** manager pays a bonus-currency reward (the same currency the Arena Challenge system uses) for player kills anywhere on hot-zone terrain, scaled by victim level and multiplied by the active modifier's coin bonus if any; and a **miniboss** manager counts kills per hot-zone-flagged zone and, once a threshold is reached, spawns a buffed clone of whichever monster template last died there, flagged so the client and other systems can identify it, and broadcasts a warning to everyone in the zone. Players get several forms of feedback: the rotation announcement, enter/exit chat lines, a dedicated teleporter NPC showing every bracket's current hot zone and its modifier with solo/party teleport options, and the miniboss spawn warning. A `.savehotzone` voiced command additionally lets an operator stand somewhere, scan nearby monster levels, and log a ready-to-paste zone-block suggestion — a scouting tool for expanding the candidate pool, not a player-facing mechanic.
+
+### Arena Challenges & Arena Shop
+
+This is two independently-coded scripts (`ArenaMaster`, `ArenaShop`) plus a core `ArenaSurvivalManager`, tied together only by a shared reward-currency convention rather than any direct code reference.
+
+**The Arena Challenge** is solo PvE wave-survival against a single boss that can never actually be defeated. Talking to the Arena Master NPC and confirming spends an entry-fee item — charged only after every validation (system enabled, not already in another instance, a valid challenger pool configured) passes, so a misconfigured or closed arena never costs the player anything. A random challenger template is picked, a **fresh dynamic instance is created per run** (so multiple players can challenge concurrently without interfering with each other), the player is teleported in, buffed, and a death-guard begins polling once a second to snapshot their XP/SP and remaining buff durations in case of death.
+
+The core loop intercepts the challenger's death entirely: instead of dying, it clears the wave, re-rolls a random passive skill sized to its new virtual level, reshuffles which active skills its AI personality currently grants it, fully heals, updates its nameplate, and starts an escalating "enrage" timer that punishes stalling. HP, attack, defense, and speed each grow by independent compounding per-wave multipliers (offense deliberately outpaces defense so the fight stays a damage race), and its effective level is overridden to a wave-scaled **virtual level** specifically to defeat the game's level-gap penalty — so even a low-level challenger template can land full-strength hits on a high-level character. There is no way to permanently defeat it; only the player's own death ends a run. On death, the payout is an escalating per-wave sum plus periodic milestone bonuses, the player's personal-best wave is updated if beaten, and their snapshotted XP/SP loss and buffs are restored once they're safely back outside the instance, which is then destroyed.
+
+An open-world sibling, the **Wave Challenge**, reuses the exact same mechanics on a small percentage of ordinary monster spawns: a fixed-length version of the same escalating-wave, virtual-level pattern, except it does have a final wave — killing it for real converts its final virtual level back into an equivalent arena-wave reward and splits the payout among everyone who damaged it, ranked by contribution.
+
+**The Arena Shop** is a stock multisell merchant with twelve category lists (paired recipe/part catalogs across ascending gear grades, plus materials and crystals) that all price their goods in the same currency item the Arena Challenge and Wave Challenge award — the *only* link between "challenge" and "shop," expressed purely as a shared item id rather than any code coupling. What the shop script itself actually adds is a keyword-search convenience layer on top of stock multisell (the retail multisell window has no built-in search): a `search <words>` command collects matching entries from all twelve source lists into a synthetic, runtime-only list and sends it through the same purchase path a normal category button uses, so search results are validated identically to a real page.
+
+### Buff Skill Purchase (Player Buff Shops)
+
+Lets any player become a "buff seller" through a voiced command (`.sellbuff`) that opens a browsable list of their own known skills intersected with a server-curated whitelist (`SellBuffData.xml`), letting them attach a self-chosen price to each. Going live (`sellbuffstart`) repurposes the existing private-store machinery rather than building a new one — the seller is seated and switched into a package-sell-type store with a custom title, so bystanders see exactly the normal private-store UI even though nothing is actually listed as an item for sale. Entry is blocked during fake death, Olympiad participation, event registration, karma/chaotic state, dueling, fishing, transformation, or while outside a peace zone — the same situational gates a normal store would respect.
+
+A buyer simply walks up and opens the storefront to see the seller's buffs (icon, level, MP cost, price) with buy buttons for themselves or their pet. The purchase is resolved entirely server-side with no action from the seller: proximity, the seller's remaining MP (and any item their skill itself consumes), and the buyer's payment are all re-checked, payment is transferred, the seller's cost is deducted, and the skill is cast directly from seller to buyer — a direct server-side cast, not a queued player action. Pricing uses one configurable currency item shared by every seller on the server. Because nothing tangible changes hands, this is architecturally distinct from a normal trade or item-selling private store: it only borrows the private-store *type flag* and *packets* for its visual presentation, while the actual offer list, whitelist, and transaction logic are separate bypass-command code layered on top.
+
+### Tiered Champion Monsters
+
+Rolled once per spawn, gated to ordinary monsters within a configured level range (never quest NPCs, "undying" templates, raid bosses/minions, or fake players). The roll frequency itself is boosted for spawns inside hot-zone terrain, and boosted again if that zone's currently active modifier happens to be the champion-themed one — a direct cross-reference between the Champion and Hot Zone systems. Three tiers are tried in descending order (tier 3 first, then 2, then 1), each tier its own independent chance, so a monster becomes the highest tier it happens to roll rather than climbing tiers sequentially.
+
+Each tier applies its own HP, attack, attack-speed, and XP/SP-reward multipliers, layered *on top of* a separate, older set of flat "legacy" champion bonuses (regen, drop chance/amount, adena bonus, an extra reward-item list) that still apply uniformly to a champion of any tier — so a champion's total bonus is the product of both layers, not one clean tier definition. A player who outlevels the champion by too much keeps the XP/SP and drop bonuses but loses eligibility for the bonus adena/item/medal drop specifically. Visually, tier 1 gets its own team color and a distinct "Ultra" title tag, while tiers 2 and 3 share the same team color and get "Elite" and a configurable title word respectively — so on screen, tiers 2 and 3 are distinguished only by their title text, not their aura color. An operator toggle can additionally make every champion, regardless of tier, passive instead of auto-aggressive, and champions are excluded from vitality consumption by default.
+
+### Thief & Mage Monster Variants
+
+Both are pure core-engine features — no NPC dialog, no quest hook, nothing in the script content pack at all — rolled at spawn time after the Champion and Wave Challenge rolls, mutually exclusive with each other and with the Champion/Wave-Challenge/Hot-Zone-Miniboss states, and each with their own per-spawn-point cooldown so a location can't immediately re-roll the same variant.
+
+**Thief** monsters are not a stealth or theft mechanic in the literal sense — nothing is ever taken from a player. A tagged Thief fights exactly like the base monster it converted from, with no AI changes whatsoever. What's different is a hidden "bag" counter: every qualifying monster kill by anyone nearby (while the Thief is alive) fills its bag a little further, shown live as a fill-percentage on its nameplate. The only payoff is on the Thief's own death, where its adena drop (and only its adena drop — the rest of its loot table is untouched) is multiplied according to how full its bag was, rewarding players who let a Thief "cook" before killing it rather than sniping it fresh off spawn.
+
+**Mage** monsters are the opposite — a real behavioral rewrite. Eligibility depends on whether the monster actually knows a qualifying offensive spell (from its own template or from its AI-archetype-granted skills), regardless of its base AI type, so even a nominally melee monster can qualify if it happens to know one. A tagged Mage gets a bonus to max MP and cast speed and, while it has mana, a dedicated AI routine takes over: it ignores melee entirely, always casts a ready spell rather than rolling the normal per-skill cast chance, closes distance only far enough to stay in range, and kites — stepping directly away with a validated movement step whenever a target closes inside its preferred range, alternating between retreating and casting rather than continuously backpedaling. Once its mana runs low it falls back to ordinary melee AI until regeneration brings it back above the threshold. Its normal kill-drop and spoil amounts are both scaled up, and its death unconditionally forces a bonus Sealed Cache drop on top of whatever the normal chance-based one would have given.
+
+### Treasure Chests & Sealed Caches
+
+These are two unrelated loot systems that happen to share the word "chest."
+
+**Treasure Chests** (`Chest`, a `Monster` subclass with no separate AI class) sit as passive, motionless scenery until interacted with. Each chest spawn point actually holds two templates — a real chest and a "mimic" — with the real chest's client-visible model deliberately redirected to look identical to the mimic, so a player cannot tell them apart on sight. Attacking a real chest normally (instead of using the correct unlock method) makes it silently disappear with no reward, to respawn later; attacking a mimic makes it curse the attacker and fight back as an ordinary monster. Opening one properly requires casting a dedicated "Open Chest" skill effect (from a key item) at it: the same level-range check is applied identically whether the target is real or a mimic, so a failed attempt never reveals which one it was, before a real chest plays a special animation and yields a randomly-tiered (Common/Rare/Epic) selection of distinct crafting materials, while a mimic instead springs to attack (and can curse) the would-be key user. A woken mimic can optionally chase its attacker within a leash range before healing up and returning home.
+
+**Sealed Caches** are unrelated — they're one of three outcomes of the "Lucky Loot" kill-reward system, which shares one per-player "Luck" stack counter across all three: **Lucky Streak** (not an item — the stack counter itself, built by chance on qualifying kills, reset on death, whose only effect is a drop-rate multiplier and a cosmetic title prefix), **Jackpot** (also not an item — spends accumulated Luck for a chance to re-roll a kill's entire normal drop table several extra times), and **Sealed Cache** (the only physical item of the three — its own independent per-kill chance, boosted but not gated by Luck stacks, that drops one item from a randomly-chosen Common/Rare/Epic tier). Mechanically a Sealed Cache is just a normal item drop reusing the game's existing extractable-lootbox item handler, so opening one is a simple inventory action — a completely separate code path from the Chest/mimic system above, with no skill, no NPC, and no key item involved. It can also be granted unconditionally by a Mage-variant monster's death (see above), on top of whatever the normal chance roll would have given.
+
+### Passive Skill Tree
+
+A Path-of-Exile-style node graph layered on top of normal class progression, allocated points for which are never stored as a counter but derived live from the character's current level each time they're needed — deliberately avoiding a stored "points remaining" value that could drift out of sync. Depending on configuration, each subclass can either get its own independent allocation on the shared graph, or all subclasses can pool into one shared total. Allocated nodes persist per character (and per subclass) in the database; removing a single node refunds its own cost but is only permitted if doing so wouldn't disconnect any other allocated node from its tree's root, verified with a live graph-connectivity check, while a full reset clears everything for a flat cost. Every allocation change funnels through one rebuild routine that strips only the skills the tree itself previously granted (never touching an identically-named skill the character's class already knows on its own), regrants exactly what the current allocation implies, and rebuilds the character's tree-derived stat bonuses from scratch — run after every allocation, reset, login, and subclass switch so the granted skills and the stat bonuses can never drift out of agreement with each other.
+
+Nodes come in several types — a plain root, ordinary small bonuses, mid-tier "notable" nodes, rare and expensive keystones and masters, and nodes that grant a real, permanent skill exactly as if the class had taught it. A keystone isn't a separate mechanism so much as the node type that happens to carry the single most powerful (and priciest) bonus in a given area, often bundled with a deliberate drawback that — unlike ordinary positive bonuses, which are capped — is never softened. The tree is organized into six main archetype sectors with their own lore identities (tank, melee DPS, rogue/dagger DPS, archer, mage/summoner, and support/healer), each with a single entry point, plus six smaller hybrid sectors with no entry point of their own (reachable only by pathing in from an already-allocated neighbor) and a central hub sector that bridges all six main sectors together. A player's class only determines which sector the tree browser opens to by default and which single entry node they can take first — the actual allocation rule has no class restriction at all, so a player who spends enough points can eventually path from their starting archetype into any other sector via the hub or hybrid sectors.
+
+Allocation itself doesn't happen through any in-game window — the in-client Community Board page for this feature is read-only (a summary of granted bonuses and skills, plus a reset button). Real allocation happens on a standalone web page served by an embedded HTTP server the feature starts on its own port, reachable only through a signed, time-limited link (or a short PIN-based exchange) handed to the player in-game, which talks back to the game server to list nodes and submit allocation changes.
+
+### Random Monster Skill Assignment
+
+Two genuinely separate systems implement this, not one — the codebase itself cross-references both:
+
+- **Archetype-driven active skills** (part of the [AI System](#ai-system) described later): every monster lazily rolls one of nine behavioral archetypes (coward, aggressive, skillful, mage, fighter, supporter, rager, avenger, balanced), weighted by traits already on its template, and is granted a small, randomly-chosen set of real castable skills appropriate to that archetype (a support-flavored roll draws from heal/buff-type skills, a mage-flavored one from magic-damage skills, and so on) from a dedicated skill table, filtered by the monster's level. These skills are wired into the AI's own skill-selection logic, so they're genuinely used in combat — the effect is behavioral (the monster fights like its rolled personality) rather than a visible tag. Raid/grand bosses and fake players never roll this.
+- **A separate random passive-skill pool**: independently of the above, an eligible monster can be granted a handful of skills drawn completely at random — with no category filtering at all — from one large, flat database-backed pool of monster-appropriate passive skills (weapon/armor masteries, elemental and status resistances, stat bonuses, and similar innate traits; explicitly *not* attack skills). How many it receives scales with its level (or its wave-scaled virtual level, for a monster mid-way through the Arena/Wave Challenge systems, which re-roll this on every wave), with a small independent chance to max it out entirely. These skills are granted exactly like a real skill but are deliberately never registered into the AI's active skill-selection logic, since the source pool is curated to be passive-only. The result is visible to players in two ways: a count is appended to the monster's nameplate, and once the granted count crosses certain thresholds the monster gains a persistent visual aura — one of three escalating effects, the strongest reserved for a fully "overloaded" roll — so a heavily-buffed instance stands out at a glance before a fight even starts.
+
+Both systems clear and re-roll whatever they previously granted a given NPC object each time it (re)spawns, since NPC objects are recycled across respawns rather than recreated from scratch.
+
+### Other Custom Features at a Glance
+
+| Area | Features |
+|---|---|
+| **Automation & convenience** | Client auto-play, auto-potion use, offline shop/offline play, a bank/deposit system, warehouse sorting, a savable buff-"scheme" system, free (item-less) mount use |
+| **Progression & balance** | Per-class balance adjustments, per-NPC stat multipliers, a "de-level" system, a Nobless-status grant NPC, transmogrification (cosmetic item appearance) |
+| **Economy** | A premium-account system, zero-price merchant selling, configurable private-store range |
+| **PvP & social** | PvP kill announcements and reward items, PvP-title name coloring, a "find PvP" locator, boss-kill announcements, a faction (open-world team) system, an in-game wedding/couple system |
+| **World & spawns** | Randomized spawn variation, monster enrage-on-crowd-control, Hellbound zone status progression, configurable starting location and allowed player races |
+| **Anti-bot & moderation** | Image CAPTCHA challenges, dual-box detection, bot/macro-client ("walker") detection, automated chat moderation, account-side secondary password change |
+| **Server identity** | A configurable login welcome screen message, adjustable in-game server time, an online-player-count/info display, a custom starting title, and **multilingual support** — serving server messages and NPC dialogue in multiple languages from the same data pack |
 
 ---
 
@@ -370,23 +468,6 @@ Everything under `dist/game/data` and `dist/game/config` is loaded through a sha
 - **Localization (`lang/`)** — server-message and NPC-string translations layered on top of the base client strings, enabling the [multilingual support](#custom-non-retail-feature-set) feature.
 
 Configuration itself is split between the main `dist/game/config` (and `dist/login/config`) directories — one `.ini`/`.xml` file per core subsystem (server/network identity, database, threading, rates, PvP, player rules, floodprotection, NPCs, geo engine, grand bosses, Olympiad, sieges, territory wars, underground coliseum, access levels, admin command permissions, bot-report punishments, class-master, script include/exclude rules, secondary auth, siege scheduling, dynamic per-level XP/SP curves) — and a **`Custom/` overlay directory** of roughly 60 additional files for the non-retail feature set described next, keeping stock-chronicle configuration cleanly separated from added features.
-
----
-
-## Custom (Non-Retail) Feature Set
-
-Beyond reproducing the High Five chronicle, the server ships a substantial layer of original, operator-toggleable features, each with its own script and/or configuration file:
-
-| Area | Features |
-|---|---|
-| **Automation & convenience** | Client auto-play, auto-potion use, offline shop/offline play, a bank/deposit system, warehouse sorting, a savable buff-"scheme" system, free (item-less) mount use |
-| **Progression & balance** | A custom Path-of-Exile-style **passive skill tree** (a node graph of stat/keystone bonuses layered on top of normal class progression), per-class balance adjustments, per-NPC stat multipliers, a "de-level" system, a Nobless-status grant NPC, transmogrification (cosmetic item appearance) |
-| **Economy** | A premium-account system, player-run buff shops with a server-side allow-list of sellable buffs, zero-price merchant selling, configurable private-store range, enhanced treasure chests |
-| **PvP & social** | PvP kill announcements and reward items, PvP-title name coloring, a "find PvP" locator, boss-kill announcements, a faction (open-world team) system, an in-game wedding/couple system |
-| **World & spawns** | Randomized spawn variation, "champion" elite monster variants, mage- and thief-type special monsters, monster enrage-on-crowd-control, rotating bonus-drop "hot zones" with their own coin drops and minibosses, Hellbound zone status progression, configurable starting location and allowed player races |
-| **Anti-bot & moderation** | Image CAPTCHA challenges, dual-box detection, bot/macro-client ("walker") detection, automated chat moderation, account-side secondary password change |
-| **Server identity** | A configurable login welcome screen message, adjustable in-game server time, an online-player-count/info display, a custom starting title, and **multilingual support** — serving server messages and NPC dialogue in multiple languages from the same data pack |
-| **Population** | "Fake players" — NPCs built with real character stats, gear, and skills that participate in world PvP and simulate chat, to help populate a low-population world |
 
 ---
 
