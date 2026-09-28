@@ -197,6 +197,35 @@ public abstract class AbstractRefinePacket extends ClientPacket
 		_lifeStones.put(16178, new LifeStone(GRADE_ACC, 13));
 	}
 	
+	/**
+	 * Checks the player's own conditions for augmentation (store, trade, dead, sitting...), sending the reason on failure.
+	 * @param player the player
+	 * @return {@code true} if the player can augment right now
+	 */
+	public static boolean canAugment(Player player)
+	{
+		return isValid(player);
+	}
+	
+	/**
+	 * Checks whether the player has at least one weapon or accessory the given life stone can augment.
+	 * @param player the player using the life stone
+	 * @param lifeStone the life stone
+	 * @return {@code true} if some item in the inventory or paperdoll can be augmented with this life stone
+	 */
+	public static boolean hasAugmentableItem(Player player, Item lifeStone)
+	{
+		for (Item item : player.getInventory().getItems())
+		{
+			if (isValid(player, item, lifeStone))
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
 	protected static LifeStone getLifeStone(int itemId)
 	{
 		return _lifeStones.get(itemId);

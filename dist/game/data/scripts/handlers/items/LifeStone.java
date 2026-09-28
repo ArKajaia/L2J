@@ -25,10 +25,13 @@ import org.l2jmobius.gameserver.model.actor.Playable;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.network.SystemMessageId;
-import org.l2jmobius.gameserver.network.clientpackets.RequestExEnchantItemAttribute;
-import org.l2jmobius.gameserver.network.serverpackets.ExChooseInventoryAttributeItem;
+import org.l2jmobius.gameserver.network.clientpackets.AbstractRefinePacket;
+import org.l2jmobius.gameserver.network.serverpackets.ExShowVariationMakeWindow;
 
-public class EnchantAttribute implements IItemHandler
+/**
+ * Opens the augmentation window when a Life Stone is used from the inventory, without having to visit a Blacksmith.
+ */
+public class LifeStone implements IItemHandler
 {
 	@Override
 	public boolean onItemUse(Playable playable, Item item, boolean forceUse)
@@ -40,26 +43,19 @@ public class EnchantAttribute implements IItemHandler
 		}
 		
 		final Player player = playable.asPlayer();
-		if (player.isCastingNow())
+		if (player.isCastingNow() || !AbstractRefinePacket.canAugment(player))
 		{
 			return false;
 		}
 		
-		if (player.isEnchanting())
+		// Don't open an empty window: only when there is something this life stone can augment.
+		if (!AbstractRefinePacket.hasAugmentableItem(player, item))
 		{
-			player.sendPacket(SystemMessageId.ANOTHER_ENCHANTMENT_IS_IN_PROGRESS_PLEASE_COMPLETE_THE_PREVIOUS_TASK_THEN_TRY_AGAIN);
+			player.sendPacket(SystemMessageId.THIS_IS_NOT_A_SUITABLE_ITEM);
 			return false;
 		}
 		
-		// The client can't close an empty attribute window (it keeps reopening), so don't open it when nothing can take this attribute.
-		if (!RequestExEnchantItemAttribute.hasAttributableItem(player, item))
-		{
-			player.sendPacket(SystemMessageId.ELEMENTAL_POWER_ENHANCER_USAGE_REQUIREMENT_IS_NOT_SUFFICIENT);
-			return false;
-		}
-		
-		player.setActiveEnchantAttrItemId(item.getObjectId());
-		player.sendPacket(new ExChooseInventoryAttributeItem(item));
+		player.sendPacket(ExShowVariationMakeWindow.STATIC_PACKET);
 		return true;
 	}
 }

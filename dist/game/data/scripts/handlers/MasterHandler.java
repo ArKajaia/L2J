@@ -256,6 +256,7 @@ import handlers.items.FishShots;
 import handlers.items.Harvester;
 import handlers.items.ItemSkills;
 import handlers.items.ItemSkillsTemplate;
+import handlers.items.LifeStone;
 import handlers.items.Maps;
 import handlers.items.MercTicket;
 import handlers.items.NicknameColor;
@@ -524,6 +525,7 @@ public class MasterHandler
 			Harvester.class,
 			ItemSkills.class,
 			ItemSkillsTemplate.class,
+			LifeStone.class,
 			Maps.class,
 			MercTicket.class,
 			NicknameColor.class,
