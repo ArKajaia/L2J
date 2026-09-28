@@ -93,8 +93,14 @@ public class RotatingHotZones extends Quest
 		BRACKETS.add(new LevelBracket("Lv 41-50", 41, 50, IntStream.rangeClosed(90041, 90050).toArray()));
 		BRACKETS.add(new LevelBracket("Lv 51-60", 51, 60, IntStream.rangeClosed(90051, 90060).toArray()));
 		BRACKETS.add(new LevelBracket("Lv 61-70", 61, 70, IntStream.rangeClosed(90061, 90070).toArray()));
-		BRACKETS.add(new LevelBracket("Lv 71-80", 71, 80, IntStream.rangeClosed(90071, 90080).toArray()));
-		BRACKETS.add(new LevelBracket("Lv 81+", 81, 999, IntStream.rangeClosed(90081, 90090).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 71-79", 71, 79, IntStream.rangeClosed(90071, 90077).toArray()));
+		// One tier per level from 80 on: these zones are packed with mobs, so a zone that suits a level 84 is far too much for a level 80.
+		// Each tier's range only picks which zone the rotation message announces - the teleporter still lists every active zone.
+		BRACKETS.add(new LevelBracket("Lv 80+", 80, 80, IntStream.rangeClosed(90078, 90081).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 81+", 81, 81, IntStream.rangeClosed(90082, 90085).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 82+", 82, 82, IntStream.rangeClosed(90086, 90087).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 83+", 83, 83, IntStream.rangeClosed(90088, 90095).toArray()));
+		BRACKETS.add(new LevelBracket("Lv 84+", 84, 999, IntStream.rangeClosed(90096, 90097).toArray()));
 	}
 	
 	private static class BracketZone
