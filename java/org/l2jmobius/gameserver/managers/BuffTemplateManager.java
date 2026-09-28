@@ -30,11 +30,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import org.l2jmobius.gameserver.config.PlayerConfig;
-import org.l2jmobius.gameserver.config.custom.ClassBalanceConfig;
 import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
 import org.l2jmobius.gameserver.config.custom.CustomBuffConfig;
+import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.data.xml.SkillTreeData;
-import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.Summon;
@@ -43,17 +42,15 @@ import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.skill.EffectScope;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.targets.TargetType;
-import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 
 /**
- * Community Board buff templates: each character keeps a few named lists of buffs taken from its own class skill tree and can re-apply a whole list from the Community Board instead of casting every buff by hand.<br>
- * The only thing a template saves is casting time. Every use behaves like casting each buff:
+ * Community Board buff templates: each character keeps a few named lists of buffs taken from its own class skill tree and can apply a whole list instantly from the Community Board instead of casting every buff by hand.<br>
+ * Applying a template has no casting prerequisites (no MP, items, reuse or cast conditions). What keeps it cheat-proof is which buffs can be in a template at all, re-checked on every use:
  * <ul>
  * <li>the skill must still be known, at the level the character knows it now (stored templates hold skill ids only, never levels);</li>
- * <li>the skill must be in the character's class skill tree and pass the same structural buff filter used when it was added;</li>
- * <li>MP and consumed items are charged, the skill's reuse delay must have expired and is started again, and its cast conditions are tested;</li>
- * <li>the buff only lands on a target a real cast on that target would have reached.</li>
+ * <li>it must come from the character's own skill tree, be listed in Player.ini SkillDurationList and pass the structural buff filter;</li>
+ * <li>it is only placed on the character or its own summon, never on anyone else.</li>
  * </ul>
  * Templates are stored in character variables, so they are saved and deleted together with the character.
  */
@@ -212,12 +209,6 @@ public class BuffTemplateManager
 			return false;
 		}
 		
-		// Costs a template cannot reproduce faithfully.
-		if ((skill.getHpConsume() > 0) || (skill.getChargeConsumeCount() > 0) || (skill.getMaxSoulConsumeCount() > 0) || (skill.getReferenceItemId() > 0))
-		{
-			return false;
-		}
-		
 		if (!ALLOWED_TARGET_TYPES.contains(skill.getTargetType()) || !hasOnlyAllowedEffects(skill))
 		{
 			return false;
@@ -283,11 +274,17 @@ public class BuffTemplateManager
 		return result;
 	}
 	
-	public boolean addBuff(Player player, int slot, int skillId)
+	/**
+	 * @param player the owner
+	 * @param slot the template slot, 1-based
+	 * @param skillId the buff to add
+	 * @return {@code null} on success, otherwise the reason it was not added
+	 */
+	public String addBuff(Player player, int slot, int skillId)
 	{
 		if (!isValidSlot(slot))
 		{
-			return false;
+			return "Invalid template.";
 		}
 		
 		synchronized (getLock(player))
@@ -295,64 +292,105 @@ public class BuffTemplateManager
 			final BuffTemplate template = getTemplate(player, slot);
 			if (template.skillIds().contains(skillId))
 			{
-				return false;
+				return null;
 			}
 			
 			if (template.skillIds().size() >= getMaxBuffs())
 			{
-				player.sendMessage("A template can hold at most " + getMaxBuffs() + " buffs.");
-				return false;
+				return "A template can hold at most " + getMaxBuffs() + " buffs.";
 			}
 			
 			final Skill skill = player.getKnownSkill(skillId);
 			if (!isEligible(player, skill))
 			{
-				player.sendMessage("That skill cannot be added to a buff template.");
-				return false;
+				return "That skill cannot be added to a buff template.";
 			}
 			
 			final List<Integer> skillIds = new ArrayList<>(template.skillIds());
 			skillIds.add(skillId);
 			storeTemplate(player, slot, template.name(), skillIds);
-			return true;
+			return null;
 		}
 	}
 	
-	public boolean removeBuff(Player player, int slot, int skillId)
+	/**
+	 * Adds every eligible buff the template does not hold yet, in name order, until the template is full.
+	 * @param player the owner
+	 * @param slot the template slot, 1-based
+	 * @return the number of buffs added
+	 */
+	public int addAllBuffs(Player player, int slot)
 	{
 		if (!isValidSlot(slot))
 		{
-			return false;
+			return 0;
 		}
 		
 		synchronized (getLock(player))
 		{
 			final BuffTemplate template = getTemplate(player, slot);
-			if (!template.skillIds().contains(skillId))
+			final List<Integer> skillIds = new ArrayList<>(template.skillIds());
+			int added = 0;
+			for (Skill skill : getEligibleBuffs(player))
 			{
-				return false;
+				if (skillIds.size() >= getMaxBuffs())
+				{
+					break;
+				}
+				
+				if (!skillIds.contains(skill.getId()))
+				{
+					skillIds.add(skill.getId());
+					added++;
+				}
 			}
 			
-			final List<Integer> skillIds = new ArrayList<>(template.skillIds());
-			skillIds.remove(Integer.valueOf(skillId));
-			storeTemplate(player, slot, template.name(), skillIds);
-			return true;
+			if (added > 0)
+			{
+				storeTemplate(player, slot, template.name(), skillIds);
+			}
+			
+			return added;
 		}
 	}
 	
-	public boolean rename(Player player, int slot, String name)
+	public void removeBuff(Player player, int slot, int skillId)
+	{
+		if (!isValidSlot(slot))
+		{
+			return;
+		}
+		
+		synchronized (getLock(player))
+		{
+			final BuffTemplate template = getTemplate(player, slot);
+			if (template.skillIds().contains(skillId))
+			{
+				final List<Integer> skillIds = new ArrayList<>(template.skillIds());
+				skillIds.remove(Integer.valueOf(skillId));
+				storeTemplate(player, slot, template.name(), skillIds);
+			}
+		}
+	}
+	
+	/**
+	 * @param player the owner
+	 * @param slot the template slot, 1-based
+	 * @param name the new name
+	 * @return {@code null} on success, otherwise the reason it was not renamed
+	 */
+	public String rename(Player player, int slot, String name)
 	{
 		final String trimmed = (name == null) ? "" : name.trim();
 		if (!isValidSlot(slot) || !isValidName(trimmed))
 		{
-			player.sendMessage("Template names must be 1-" + MAX_NAME_LENGTH + " characters: letters, digits, spaces, '-' or '_'.");
-			return false;
+			return "Names must be 1-" + MAX_NAME_LENGTH + " characters: letters, digits, spaces, '-' or '_'.";
 		}
 		
 		synchronized (getLock(player))
 		{
 			storeTemplate(player, slot, trimmed, getTemplate(player, slot).skillIds());
-			return true;
+			return null;
 		}
 	}
 	
@@ -365,73 +403,70 @@ public class BuffTemplateManager
 		
 		synchronized (getLock(player))
 		{
-			player.getVariables().remove(VARIABLE_PREFIX + slot);
+			storeTemplate(player, slot, getTemplate(player, slot).name(), Collections.emptyList());
 		}
 	}
 	
 	/**
-	 * Checks the character state a template may be used in. Sends the reason to the player on failure.
+	 * Checks the character state a template may be used in.
 	 * @param player the player
-	 * @return {@code true} if the player may use a template right now
+	 * @return {@code null} if the player may use a template right now, otherwise the reason
 	 */
-	public boolean canUseTemplates(Player player)
+	public String checkUseConditions(Player player)
 	{
-		final String reason;
 		if (player.isAlikeDead())
 		{
-			reason = "You cannot use buff templates while dead.";
-		}
-		else if (player.isInOlympiadMode() || player.inObserverMode() || player.isOnEvent())
-		{
-			reason = "You cannot use buff templates right now.";
-		}
-		else if (player.isInCombat() || player.isInDuel() || (player.getPvpFlag() > 0))
-		{
-			reason = "You cannot use buff templates during combat.";
-		}
-		else if (player.isCursedWeaponEquipped() || (CommunityBoardConfig.COMMUNITYBOARD_KARMA_DISABLED && (player.getKarma() > 0)))
-		{
-			reason = "You cannot use buff templates in a chaotic state.";
-		}
-		else if (player.isInsideZone(ZoneId.SIEGE) || player.isInsideZone(ZoneId.PVP) || player.isJailed() || (CommunityBoardConfig.COMMUNITYBOARD_BUFF_TEMPLATE_PEACE_ONLY && !player.isInsideZone(ZoneId.PEACE)))
-		{
-			reason = CommunityBoardConfig.COMMUNITYBOARD_BUFF_TEMPLATE_PEACE_ONLY ? "Buff templates can only be used inside a peace zone." : "You cannot use buff templates here.";
-		}
-		else if (player.isInStoreMode() || player.isFishing() || player.isMounted() || player.isFlying() || player.isFlyingMounted() || player.isTransformed() || player.isSitting() || player.isTeleporting())
-		{
-			reason = "You cannot use buff templates in your current state.";
-		}
-		else if (player.isCastingNow() || player.isCastingSimultaneouslyNow() || player.isAllSkillsDisabled())
-		{
-			reason = "You cannot use buff templates while casting or unable to use skills.";
-		}
-		else
-		{
-			return true;
+			return "You cannot use buff templates while dead.";
 		}
 		
-		player.sendMessage(reason);
-		return false;
+		if (player.isInOlympiadMode() || player.inObserverMode() || player.isOnEvent())
+		{
+			return "You cannot use buff templates right now.";
+		}
+		
+		if (player.isInCombat() || player.isInDuel() || (player.getPvpFlag() > 0))
+		{
+			return "You cannot use buff templates during combat.";
+		}
+		
+		if (player.isCursedWeaponEquipped() || (CommunityBoardConfig.COMMUNITYBOARD_KARMA_DISABLED && (player.getKarma() > 0)))
+		{
+			return "You cannot use buff templates in a chaotic state.";
+		}
+		
+		if (player.isInsideZone(ZoneId.SIEGE) || player.isInsideZone(ZoneId.PVP) || player.isJailed() || (CommunityBoardConfig.COMMUNITYBOARD_BUFF_TEMPLATE_PEACE_ONLY && !player.isInsideZone(ZoneId.PEACE)))
+		{
+			return CommunityBoardConfig.COMMUNITYBOARD_BUFF_TEMPLATE_PEACE_ONLY ? "Buff templates can only be used inside a peace zone." : "You cannot use buff templates here.";
+		}
+		
+		if (player.isInStoreMode() || player.isFishing() || player.isMounted() || player.isFlying() || player.isFlyingMounted() || player.isTransformed() || player.isTeleporting())
+		{
+			return "You cannot use buff templates in your current state.";
+		}
+		
+		return null;
 	}
 	
 	/**
-	 * Applies a template the same way casting its buffs one by one would, minus the cast time.
+	 * Applies every buff of a template instantly. No MP, items, reuse or cast conditions are involved; a buff is only skipped when the character does not know it (anymore) or it cannot be placed on the chosen target.
 	 * @param player the owner
 	 * @param slot the template slot, 1-based
 	 * @param onSummon {@code true} to buff the player's summon instead of the player
+	 * @return whether anything was applied, with a summary of what was applied and, per buff, why anything was skipped
 	 */
-	public void useTemplate(Player player, int slot, boolean onSummon)
+	public UseResult useTemplate(Player player, int slot, boolean onSummon)
 	{
 		if (!isEnabled() || !isValidSlot(slot))
 		{
-			return;
+			return new UseResult(false, "Invalid template.");
 		}
 		
 		synchronized (getLock(player))
 		{
-			if (!canUseTemplates(player))
+			final String reason = checkUseConditions(player);
+			if (reason != null)
 			{
-				return;
+				return new UseResult(false, reason);
 			}
 			
 			final long now = System.currentTimeMillis();
@@ -439,15 +474,13 @@ public class BuffTemplateManager
 			final Long lastUse = _lastUse.get(player.getObjectId());
 			if ((lastUse != null) && ((now - lastUse) < cooldown))
 			{
-				player.sendMessage("You must wait " + (((cooldown - (now - lastUse)) / 1000) + 1) + " more second(s) before using a buff template again.");
-				return;
+				return new UseResult(false, "Please wait " + (((cooldown - (now - lastUse)) / 1000) + 1) + " second(s) before using a buff template again.");
 			}
 			
 			final BuffTemplate template = getTemplate(player, slot);
 			if (template.skillIds().isEmpty())
 			{
-				player.sendMessage("This template is empty.");
-				return;
+				return new UseResult(false, "\"" + template.name() + "\" is empty. Press Edit to add buffs.");
 			}
 			
 			final Creature target;
@@ -456,8 +489,7 @@ public class BuffTemplateManager
 				final Summon summon = player.getSummon();
 				if ((summon == null) || summon.isAlikeDead() || !summon.isSpawned() || (summon.getInstanceId() != player.getInstanceId()) || !player.isInsideRadius3D(summon, SUMMON_MAX_DISTANCE))
 				{
-					player.sendMessage("Your summon must be alive and near you.");
-					return;
+					return new UseResult(false, "Your summon must be alive and near you.");
 				}
 				
 				target = summon;
@@ -467,139 +499,96 @@ public class BuffTemplateManager
 				target = player;
 			}
 			
-			// Dry run first, so the player is not charged for a template that cannot apply anything.
-			final List<Skill> castable = new ArrayList<>();
+			// Work out what lands before charging anything.
+			final List<Skill> toApply = new ArrayList<>();
+			final List<String> skipped = new ArrayList<>();
 			for (int skillId : template.skillIds())
 			{
 				final Skill skill = player.getKnownSkill(skillId);
-				if (canCastOn(player, skill, target, false))
+				if (skill == null)
 				{
-					castable.add(skill);
+					skipped.add(skillName(skillId) + " (not learned)");
+				}
+				else if (!isEligible(player, skill))
+				{
+					skipped.add(skill.getName() + " (no longer allowed)");
+				}
+				else if (!canTarget(skill, target))
+				{
+					skipped.add(skill.getName() + (onSummon ? " (self only)" : " (summon only)"));
+				}
+				else
+				{
+					toApply.add(skill);
 				}
 			}
 			
-			if (castable.isEmpty())
+			if (toApply.isEmpty())
 			{
-				player.sendMessage("None of the buffs in this template can be used on " + (onSummon ? "your summon" : "yourself") + " right now.");
-				return;
+				return new UseResult(false, "Nothing to apply. Skipped: " + String.join(", ", skipped) + ".");
 			}
 			
 			final int price = CommunityBoardConfig.COMMUNITYBOARD_BUFF_TEMPLATE_PRICE;
 			if ((price > 0) && !player.destroyItemByItemId(ItemProcessType.FEE, CommunityBoardConfig.COMMUNITYBOARD_CURRENCY, price, player, true))
 			{
-				player.sendMessage("Not enough currency!");
-				return;
+				return new UseResult(false, "Not enough currency!");
 			}
 			
 			_lastUse.put(player.getObjectId(), now);
-			
-			int applied = 0;
-			for (Skill skill : castable)
+			for (Skill skill : toApply)
 			{
-				// Re-checked with messages: MP drops and reuse starts as buffs are applied.
-				if (!canCastOn(player, skill, target, true))
+				skill.applyEffects(player, target);
+				if (skill.hasEffects(EffectScope.SELF))
 				{
-					continue;
+					skill.applyEffects(player, player, true, false, true, 0);
 				}
-				
-				final int mpCost = player.getStat().getMpConsume(skill) + player.getStat().getMpInitialConsume(skill);
-				if ((skill.getItemConsumeId() > 0) && !player.destroyItemByItemId(ItemProcessType.NONE, skill.getItemConsumeId(), skill.getItemConsumeCount(), player, true))
-				{
-					continue;
-				}
-				
-				if (mpCost > 0)
-				{
-					player.getStatus().reduceMp(mpCost);
-				}
-				
-				startReuse(player, skill);
-				skill.activateSkill(player, Collections.singletonList(target));
-				applied++;
 			}
 			
-			player.broadcastStatusUpdate();
+			final StringBuilder sb = new StringBuilder();
+			sb.append('"').append(template.name()).append("\": applied ").append(toApply.size()).append(" buff(s) to ").append(onSummon ? "your summon" : "you").append('.');
+			if (!skipped.isEmpty())
+			{
+				sb.append(" Skipped: ").append(String.join(", ", skipped)).append('.');
+			}
 			
-			final int skipped = template.skillIds().size() - applied;
-			player.sendMessage("Template \"" + template.name() + "\": " + applied + " buff(s) applied" + (skipped > 0 ? ", " + skipped + " skipped (unknown, not usable, on reuse, or not enough MP/items)." : "."));
+			final String result = sb.toString();
+			player.sendMessage(result);
+			return new UseResult(true, result);
 		}
 	}
 	
 	/**
-	 * Everything a real cast of this buff on this target would check, except range/geodata for the player itself.
-	 * @param player the caster
-	 * @param skill the skill as currently known by the player, may be {@code null}
+	 * @param skill the buff
 	 * @param target the player or its summon
-	 * @param verbose whether failing conditions may send their system messages
-	 * @return {@code true} if the buff can be applied now
+	 * @return {@code false} only for buffs that can never be placed on that kind of target (self-only buffs on a summon, summon-only buffs on a player)
 	 */
-	private boolean canCastOn(Player player, Skill skill, Creature target, boolean verbose)
+	private boolean canTarget(Skill skill, Creature target)
 	{
-		if (!isEligible(player, skill) || player.isSkillDisabled(skill))
+		switch (skill.getTargetType())
 		{
-			return false;
+			case SELF:
+			{
+				return target.isPlayer();
+			}
+			case SUMMON:
+			{
+				return target.isSummon();
+			}
+			case SERVITOR:
+			{
+				return target.isServitor();
+			}
+			default:
+			{
+				return true;
+			}
 		}
-		
-		if (!skill.isStatic() && (skill.isMagic() ? player.isMuted() : player.isPhysicalMuted()))
-		{
-			return false;
-		}
-		
-		final int mpCost = player.getStat().getMpConsume(skill) + player.getStat().getMpInitialConsume(skill);
-		if (player.getCurrentMp() < mpCost)
-		{
-			return false;
-		}
-		
-		if ((skill.getItemConsumeId() > 0) && (player.getInventory().getInventoryItemCount(skill.getItemConsumeId(), -1) < skill.getItemConsumeCount()))
-		{
-			return false;
-		}
-		
-		if (verbose ? !skill.checkCondition(player, target, false) : !skill.checkPreConditions(player, target))
-		{
-			return false;
-		}
-		
-		// The buff must be able to reach this target the way a real cast would (e.g. a self-only buff never reaches the summon).
-		final List<WorldObject> targets = skill.getTargetList(player, false, target);
-		return (targets != null) && targets.contains(target);
 	}
 	
-	/**
-	 * Starts the skill reuse exactly like {@link Creature#doCast(Skill)} does, without the skill mastery chance.
-	 * @param player the caster
-	 * @param skill the skill
-	 */
-	private void startReuse(Player player, Skill skill)
+	private static String skillName(int skillId)
 	{
-		int reuseDelay;
-		if (skill.isStaticReuse() || skill.isStatic())
-		{
-			reuseDelay = skill.getReuseDelay();
-		}
-		else if (skill.isMagic())
-		{
-			reuseDelay = (int) (skill.getReuseDelay() * player.calcStat(Stat.MAGIC_REUSE_RATE, 1, null, null));
-		}
-		else if (skill.isPhysical())
-		{
-			reuseDelay = (int) (skill.getReuseDelay() * player.calcStat(Stat.P_REUSE, 1, null, null));
-		}
-		else
-		{
-			reuseDelay = (int) (skill.getReuseDelay() * player.calcStat(Stat.DANCE_REUSE, 1, null, null));
-		}
-		
-		reuseDelay = (int) (reuseDelay * ClassBalanceConfig.SKILL_REUSE_MULTIPLIERS[player.getPlayerClass().getId()]);
-		if (reuseDelay > 1000)
-		{
-			player.addTimeStamp(skill, reuseDelay);
-		}
-		else if (reuseDelay > 10)
-		{
-			player.disableSkill(skill, reuseDelay);
-		}
+		final Skill skill = SkillData.getInstance().getSkill(skillId, 1);
+		return skill != null ? skill.getName() : "Skill " + skillId;
 	}
 	
 	private Object getLock(Player player)
@@ -614,6 +603,15 @@ public class BuffTemplateManager
 	 * @param skillIds the buff skill ids in application order
 	 */
 	public record BuffTemplate(int slot, String name, List<Integer> skillIds)
+	{
+	}
+	
+	/**
+	 * Outcome of {@link BuffTemplateManager#useTemplate(Player, int, boolean)}.
+	 * @param applied whether at least one buff was applied
+	 * @param message what happened, for the player
+	 */
+	public record UseResult(boolean applied, String message)
 	{
 	}
 	

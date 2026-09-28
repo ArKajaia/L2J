@@ -110,7 +110,7 @@ public class CommunityBoardConfig
 		COMMUNITYBOARD_BUFF_TEMPLATE_PEACE_ONLY = config.getBoolean("CommunityBuffTemplatePeaceOnly", true);
 		
 		COMMUNITYBOARD_BUFF_TEMPLATE_ALLOWED_EFFECTS = new HashSet<>();
-		for (String s : config.getString("CommunityBuffTemplateAllowedEffects", "Buff,MaxHp,MaxCp,AttackTrait,DefenceTrait,BlockAbnormalSlot,DispelBySlot,TriggerSkillByDamageReceived,HealOverTime").split(","))
+		for (String s : config.getString("CommunityBuffTemplateAllowedEffects", "Buff,MaxHp,MaxCp,AttackTrait,DefenceTrait,BlockAbnormalSlot,DispelBySlot,TriggerSkillByDamageReceived,HealOverTime,SilentMove").split(","))
 		{
 			if (!s.isBlank())
 			{
