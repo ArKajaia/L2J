@@ -63,7 +63,7 @@ import org.l2jmobius.gameserver.network.serverpackets.ChangeWaitType;
 /**
  * AI of a roaming fake player (see {@link FakePlayerPvpManager}). It plays like a character of its class: hunts the monsters around its spawn point, keeps its buffs up, uses the class skills it has learned (best ones first), drinks potions, archers and mages keep their
  * distance, and it fights any player that attacks it or steals its kill. In a PvP it plays like a player: it focuses the weakest enemy, closes the gap (Rush, Shadow Step, Dash), stops a melee attacker before stepping back (roots, stuns), waits out an invincible enemy,
- * cleanses roots and bleeds, and some fake players run from a fight they are losing and read a Scroll of Escape once they got away (and out of every player's sight). After a few hits it notices a player's Ultimate Defense, Guts, Zealot or magic mirror, stops
+ * cleanses roots and bleeds, and some fake players run from a fight they are losing and read a Scroll of Escape once they got away (and out of every player's sight). After a few hits it notices a player's Ultimate Defense, Guts, Zealot, Angelic Icon or magic mirror, stops
  * wasting what doesn't get through and keeps its distance while it can. It sits down to rest after a hard fight, and may go after a flagged or karma player passing by.
  */
 public class FakePlayerPvpAI extends AttackableAI
@@ -147,6 +147,8 @@ public class FakePlayerPvpAI extends AttackableAI
 		GUTS(PHYSICAL_DAMAGE, true, false, 139),
 		/** Zealot: resists debuffs, and hits hard and fast. */
 		ZEALOT(PHYSICAL_DEBUFFS | MAGIC_DEBUFFS | DANGEROUS, true, true, 420),
+		/** Angelic Icon: resists debuffs, P. Def. and M. Def. up by half, and hits hard and fast. */
+		ANGELIC_ICON(PHYSICAL_DEBUFFS | MAGIC_DEBUFFS | DANGEROUS, true, true, 406),
 		/** Magical Mirror, Shield Deflect Magic, Reflect Magic: magic skills come back, only magic skills notice it. */
 		MAGIC_MIRROR(MAGIC_DAMAGE | MAGIC_DEBUFFS, false, true, 351, 916, 6282);
 		
@@ -233,7 +235,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	// A class whose damage is its normal attack (tanks, archers, most warriors), not its skills: it plays its combos less often.
 	private boolean _autoAttacker = false;
 	
-	/** The defensive buffs (Ultimate Defense, Guts, Zealot, magic mirror) it noticed on the players it fights. */
+	/** The defensive buffs (Ultimate Defense, Guts, Zealot, Angelic Icon, magic mirror) it noticed on the players it fights. */
 	private final Set<BuffInfo> _noticedDefenses = ConcurrentHashMap.newKeySet();
 	
 	public FakePlayerPvpAI(Attackable creature)
@@ -536,7 +538,7 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// A player under Ultimate Defense, Guts, Zealot or a magic mirror: once it noticed, it leaves aside what doesn't get through and keeps its distance while it can.
+		// A player under Ultimate Defense, Guts, Zealot, Angelic Icon or a magic mirror: once it noticed, it leaves aside what doesn't get through and keeps its distance while it can.
 		final int defenses = pvp ? getKnownDefenses(target) : 0;
 		if (defenses != 0)
 		{
@@ -965,7 +967,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	}
 	
 	/**
-	 * @return how good a target {@code enemy} is, lower is better: never an invincible one, nor one whose Ultimate Defense, Guts or Zealot it noticed if there is another
+	 * @return how good a target {@code enemy} is, lower is better: never an invincible one, nor one whose Ultimate Defense, Guts, Zealot or Angelic Icon it noticed if there is another
 	 */
 	private double focusScore(Attackable npc, Creature enemy)
 	{
@@ -983,7 +985,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	}
 	
 	/**
-	 * Like a player who sees their hits do nothing, each attack or skill on a player under Ultimate Defense, Guts, Zealot or a magic mirror has {@link FakePlayerPvpConfig#DEFENSE_DETECT_CHANCE}% chance to make it notice: it doesn't stop attacking right away.
+	 * Like a player who sees their hits do nothing, each attack or skill on a player under Ultimate Defense, Guts, Zealot, Angelic Icon or a magic mirror has {@link FakePlayerPvpConfig#DEFENSE_DETECT_CHANCE}% chance to make it notice: it doesn't stop attacking right away.
 	 * Guts is only noticed by physical hits, a magic mirror by magic skills.
 	 * @param target what it attacks
 	 * @param magic {@code true} for a magic skill
@@ -1055,7 +1057,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	}
 	
 	/**
-	 * Plays around a player's defensive buff it noticed, like a player would: when its damage doesn't get through (Ultimate Defense, Guts against a fighter, a magic mirror against a mage) or the player hits hard (Zealot), it steps away to
+	 * Plays around a player's defensive buff it noticed, like a player would: when its damage doesn't get through (Ultimate Defense, Guts against a fighter, a magic mirror against a mage) or the player hits hard (Zealot, Angelic Icon), it steps away to
 	 * {@link FakePlayerPvpConfig#DEFENSE_KEEP_DISTANCE} and waits it out there, drinking potions and keeping its buffs up. Archers, mages and a tank with its bow out keep shooting from there when their damage still gets through. A player that catches up
 	 * anyway is fought back (with what gets through) until it can step away again.
 	 * @param npc the fake player
