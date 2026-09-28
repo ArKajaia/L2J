@@ -98,6 +98,15 @@ Lets players sell their own buffs to other players for a fee, similar to a priva
 - Buyers browse the list and purchase a buff for themselves or their pet with one click; it's cast immediately and automatically.
 - Restricted to normal, non-combat situations (no Olympiad, duels, fishing, transformation, etc.), matching the rules for a normal store.
 
+### Buff Templates (Community Board Self-Buffing)
+
+Lets a player save their own buffs as reusable templates and re-apply a whole set from the Community Board instead of casting each buff by hand.
+
+- Each character has a few named template slots, filled from buffs in their own class skill tree (plus buffs learned from Custom Buff books) — the board never offers buffs of its own.
+- A template is applied to the character or to its summon in one click; the only thing saved is casting time.
+- Every use is re-validated server-side like a real cast: the skill must still be known (at its current level), MP and consumed items are charged, reuse delays are respected and restarted, cast conditions are tested, and a buff only lands on a target a real cast could reach.
+- A strict filter keeps anything that isn't a plain timed buff out of templates (heals, invincibility, Ultimate Defense, Noblesse Blessing, stealth, transformations, toggles, item- or GM-granted skills), and use is limited to out-of-combat, non-PvP situations.
+
 ### Tiered Champion Monsters
 
 Rare, significantly stronger monster variants with better rewards.
@@ -357,7 +366,7 @@ Beyond the core combat loop, the server implements a number of self-contained si
 
 ## Community Board
 
-The in-client Community Board (the ".bbs" interface) is backed by a lightweight forum/topic/post data model (with clan, memo, and mail-flavored forum types alongside normal ones) and a set of interactive board pages served as cached HTML and routed through the same bypass-handling pipeline used for NPC dialogs: clan management, regional teleport/info, a home page with favorites/bookmarks, a friends list, personal memos, in-client mail, an item drop-source search utility, and management of the passive skill tree feature (see [Custom Feature Set](#custom-non-retail-feature-set)).
+The in-client Community Board (the ".bbs" interface) is backed by a lightweight forum/topic/post data model (with clan, memo, and mail-flavored forum types alongside normal ones) and a set of interactive board pages served as cached HTML and routed through the same bypass-handling pipeline used for NPC dialogs: clan management, regional teleport/info, a home page with favorites/bookmarks, a friends list, personal memos, in-client mail, an item drop-source search utility, personal buff templates (see [Custom Feature Set](#custom-non-retail-feature-set)), and management of the passive skill tree feature (see [Custom Feature Set](#custom-non-retail-feature-set)).
 
 ---
 

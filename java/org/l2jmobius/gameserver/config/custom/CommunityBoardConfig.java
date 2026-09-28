@@ -58,6 +58,14 @@ public class CommunityBoardConfig
 	public static int COMMUNITY_PREMIUM_PRICE_PER_DAY;
 	public static Set<Integer> COMMUNITY_AVAILABLE_BUFFS;
 	public static Map<String, Location> COMMUNITY_AVAILABLE_TELEPORTS;
+	public static boolean COMMUNITYBOARD_ENABLE_BUFF_TEMPLATES;
+	public static int COMMUNITYBOARD_BUFF_TEMPLATE_SLOTS;
+	public static int COMMUNITYBOARD_BUFF_TEMPLATE_MAX_BUFFS;
+	public static int COMMUNITYBOARD_BUFF_TEMPLATE_PRICE;
+	public static int COMMUNITYBOARD_BUFF_TEMPLATE_COOLDOWN;
+	public static boolean COMMUNITYBOARD_BUFF_TEMPLATE_PEACE_ONLY;
+	public static Set<String> COMMUNITYBOARD_BUFF_TEMPLATE_ALLOWED_EFFECTS;
+	public static Set<Integer> COMMUNITYBOARD_BUFF_TEMPLATE_FORBIDDEN_SKILLS;
 	
 	public static void load()
 	{
@@ -92,6 +100,31 @@ public class CommunityBoardConfig
 		{
 			final String[] splitInfo = s.split(",");
 			COMMUNITY_AVAILABLE_TELEPORTS.put(splitInfo[0], new Location(Integer.parseInt(splitInfo[1]), Integer.parseInt(splitInfo[2]), Integer.parseInt(splitInfo[3])));
+		}
+		
+		COMMUNITYBOARD_ENABLE_BUFF_TEMPLATES = config.getBoolean("CommunityEnableBuffTemplates", true);
+		COMMUNITYBOARD_BUFF_TEMPLATE_SLOTS = Math.max(1, Math.min(10, config.getInt("CommunityBuffTemplateSlots", 3)));
+		COMMUNITYBOARD_BUFF_TEMPLATE_MAX_BUFFS = Math.max(1, Math.min(48, config.getInt("CommunityBuffTemplateMaxBuffs", 24)));
+		COMMUNITYBOARD_BUFF_TEMPLATE_PRICE = Math.max(0, config.getInt("CommunityBuffTemplatePrice", 0));
+		COMMUNITYBOARD_BUFF_TEMPLATE_COOLDOWN = Math.max(1, config.getInt("CommunityBuffTemplateCooldown", 5));
+		COMMUNITYBOARD_BUFF_TEMPLATE_PEACE_ONLY = config.getBoolean("CommunityBuffTemplatePeaceOnly", true);
+		
+		COMMUNITYBOARD_BUFF_TEMPLATE_ALLOWED_EFFECTS = new HashSet<>();
+		for (String s : config.getString("CommunityBuffTemplateAllowedEffects", "Buff,MaxHp,MaxCp,AttackTrait,DefenceTrait,BlockAbnormalSlot,DispelBySlot,TriggerSkillByDamageReceived,HealOverTime").split(","))
+		{
+			if (!s.isBlank())
+			{
+				COMMUNITYBOARD_BUFF_TEMPLATE_ALLOWED_EFFECTS.add(s.trim());
+			}
+		}
+		
+		COMMUNITYBOARD_BUFF_TEMPLATE_FORBIDDEN_SKILLS = new HashSet<>();
+		for (String s : config.getString("CommunityBuffTemplateForbiddenSkills", "").split(","))
+		{
+			if (!s.isBlank())
+			{
+				COMMUNITYBOARD_BUFF_TEMPLATE_FORBIDDEN_SKILLS.add(Integer.parseInt(s.trim()));
+			}
 		}
 	}
 }
