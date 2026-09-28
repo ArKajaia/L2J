@@ -36,6 +36,7 @@ import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 
 /**
  * @author Mobius
@@ -120,6 +121,9 @@ public class AdminFakePlayers implements IAdminCommandHandler
 				activeChar.sendSysMessage("Skill " + personality.getSkillChance() + "%/" + personality.getPvpSkillChance() + "% pvp, auto attacker skill " + personality.getAutoAttackSkillChance() + "%/" + personality.getAutoAttackPvpSkillChance() + "% pvp, debuff " + personality.getPvpDebuffChance() + "%");
 				activeChar.sendSysMessage("Revenge " + personality.getRevengeChance() + "%, flagged " + personality.getAttackFlaggedChance() + "%, karma " + personality.getAttackKarmaChance() + "%, return " + personality.getReturnChance() + "%, runner " + target.getTemplate().getFakePlayerPvpProfile().isRunner());
 				activeChar.sendSysMessage("Hunt " + personality.getHuntRange() + ", leash " + personality.getLeashRange() + ", chase " + personality.getChaseRange() + ", taunt " + personality.getTauntChance() + "%, greet " + personality.getGreetChance() + "%");
+				final FakePlayerPvpProfile targetProfile = target.getTemplate().getFakePlayerPvpProfile();
+				final long leaveIn = targetProfile.getLeaveTime() > 0 ? Math.max(0, (targetProfile.getLeaveTime() - System.currentTimeMillis()) / 1000) : -1;
+				activeChar.sendSysMessage("Blessed SoE " + (targetProfile.hasBlessedEscape() ? "yes" : "no") + ", hotzone " + (targetProfile.getHotzoneId() > 0 ? targetProfile.getHotzoneId() + (leaveIn >= 0 ? " (leaving in " + leaveIn + "s)" : "") : "none"));
 				activeChar.sendSysMessage("PvP taunt " + personality.getPokeChance(1) + "%-" + personality.getPokeChance(FakePlayerPvpConfig.POKE_MAX_CHANCE_LEVEL_DIFF) + "%, refuse to hit back " + personality.getRefuseChance(1) + "%-" + personality.getRefuseChance(FakePlayerPvpConfig.REFUSE_MAX_CHANCE_LEVEL_DIFF) + "% (1-" + FakePlayerPvpConfig.POKE_MAX_CHANCE_LEVEL_DIFF + "/" + FakePlayerPvpConfig.REFUSE_MAX_CHANCE_LEVEL_DIFF + " levels)");
 			}
 		}

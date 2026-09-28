@@ -413,6 +413,10 @@ public class FakePlayerPvpFactory
 		}
 		
 		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), armorWornMask, chest != null ? chest.getItemMask() : 0, maxCharges, equipment, mainWeapon, bow, polearm, FakePlayerPvpPersonality.random());
+		
+		// High levels sometimes carry Blessed Scrolls of Escape.
+		profile.setBlessedEscape((level >= FakePlayerPvpConfig.BLESSED_ESCAPE_MIN_LEVEL) && (Rnd.get(100) < FakePlayerPvpConfig.BLESSED_ESCAPE_CHANCE));
+		
 		for (SkillCategory category : SkillCategory.values())
 		{
 			final List<Skill> list = new ArrayList<>();

@@ -924,19 +924,31 @@ public class FakePlayerPvpManager
 	 * @param x the x
 	 * @param y the y
 	 * @param z the z
-	 * @return {@code true} if the point is inside an enabled hotzone
+	 * @return {@code true} if the point is inside a hotzone the rotation currently has active
 	 */
 	private static boolean isInHotzone(int x, int y, int z)
 	{
+		return getActiveHotzoneId(x, y, z) != 0;
+	}
+	
+	/**
+	 * Every hotzone stays enabled, but only the rotation's current picks are hot (see {@link HotzoneModifierManager#isActive}).
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @return the id of the active hotzone at that point, 0 if none
+	 */
+	private static int getActiveHotzoneId(int x, int y, int z)
+	{
 		for (ZoneType zone : ZoneManager.getInstance().getZones(x, y, z))
 		{
-			if ((zone instanceof HotZone) && zone.isEnabled())
+			if ((zone instanceof HotZone) && HotzoneModifierManager.getInstance().isActive(zone.getId()))
 			{
-				return true;
+				return zone.getId();
 			}
 		}
 		
-		return false;
+		return 0;
 	}
 	
 	/**
@@ -1119,6 +1131,7 @@ public class FakePlayerPvpManager
 			final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
 			profile.setReplacedMonster(replacedMonster, replacedSpawn);
 			profile.setSpawnTime(System.currentTimeMillis());
+			profile.setHotzoneId(getActiveHotzoneId(x, y, z)); // It leaves once that hotzone rotates out.
 			
 			final Npc fake = spawnFromTemplate(template, x, y, z, instanceId);
 			if (fake == null)
@@ -1631,7 +1644,15 @@ public class FakePlayerPvpManager
 		// Out of the cast that got it here first.
 		ThreadPool.schedule(() ->
 		{
-			if (!fake.isDead() && fake.isSpawned() && !isSeenByPlayer(fake))
+			final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+			final boolean inView = (profile != null) && profile.isEscapeInView();
+			if (profile != null)
+			{
+				profile.setEscapeInView(false);
+			}
+			
+			// Leaving a hotzone that rotated out, or a blessed scroll: gone in front of whoever watches, like a player going to town.
+			if (!fake.isDead() && fake.isSpawned() && (inView || !isSeenByPlayer(fake)))
 			{
 				fake.deleteMe();
 			}
@@ -2297,6 +2318,8 @@ public class FakePlayerPvpManager
 				}
 				
 				final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+				checkHotzoneLeave(fake, profile, now);
+				
 				// Logs off once nobody is watching: it doesn't vanish in front of a player.
 				if ((FakePlayerPvpConfig.LIFETIME > 0) && ((now - profile.getSpawnTime()) > (FakePlayerPvpConfig.LIFETIME * 1000L * profile.getLifetimeScale())) && !isSeenByPlayer(fake))
 				{
@@ -2327,6 +2350,32 @@ public class FakePlayerPvpManager
 			{
 				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem while keeping the population.", e);
 			}
+		}
+	}
+	
+	/**
+	 * A fake player that came to an active hotzone leaves some time after the rotation moves on (see {@link FakePlayerPvpConfig#HOTZONE_LEAVE}): its AI then reads a Scroll of Escape and it logs off, which leaves room for the new hotzones. It stays if the zone
+	 * becomes hot again before that. One that was already there when the zone became hot (at server start, before the first rotation...) counts as having come for it.
+	 * @param fake the fake player
+	 * @param profile its profile
+	 * @param now the current time
+	 */
+	private static void checkHotzoneLeave(Npc fake, FakePlayerPvpProfile profile, long now)
+	{
+		final Spawn spawn = fake.getSpawn();
+		if ((profile.getHotzoneId() == 0) && (spawn != null))
+		{
+			profile.setHotzoneId(getActiveHotzoneId(spawn.getX(), spawn.getY(), spawn.getZ()));
+		}
+		
+		final int hotzoneId = profile.getHotzoneId();
+		if (!FakePlayerPvpConfig.HOTZONE_LEAVE || (hotzoneId == 0) || HotzoneModifierManager.getInstance().isActive(hotzoneId))
+		{
+			profile.setLeaveTime(0);
+		}
+		else if (profile.getLeaveTime() == 0)
+		{
+			profile.setLeaveTime(now + (Rnd.get(FakePlayerPvpConfig.HOTZONE_LEAVE_DELAY_MIN, FakePlayerPvpConfig.HOTZONE_LEAVE_DELAY_MAX) * 1000L));
 		}
 	}
 	

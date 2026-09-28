@@ -94,6 +94,14 @@ public class FakePlayerPvpProfile
 	private volatile int _killerObjectId;
 	private volatile long _revengeUntil;
 	
+	// Scrolls of Escape: whether it carries a blessed one, and whether the one it is reading may take it away in front of players.
+	private volatile boolean _blessedEscape;
+	private volatile boolean _escapeInView;
+	
+	// The active hotzone it came to (0 for none), and when it leaves once that hotzone rotated out (0 for never).
+	private volatile int _hotzoneId;
+	private volatile long _leaveTime;
+	
 	/** Who attacked it while it wasn't flagged and it chose not to hit back (object id -> until when). */
 	private final Map<Integer, Long> _refused = new ConcurrentHashMap<>();
 	
@@ -531,6 +539,8 @@ public class FakePlayerPvpProfile
 		_nextPotionTime = 0;
 		_nextChatTime = 0;
 		_refused.clear();
+		_escapeInView = false;
+		_leaveTime = 0;
 	}
 	
 	/**
@@ -608,5 +618,57 @@ public class FakePlayerPvpProfile
 	public void stopRefusing(WorldObject attacker)
 	{
 		_refused.remove(attacker.getObjectId());
+	}
+	
+	/**
+	 * @return {@code true} if it carries Blessed Scrolls of Escape (see {@code FakePvpBlessedEscapeChance})
+	 */
+	public boolean hasBlessedEscape()
+	{
+		return _blessedEscape;
+	}
+	
+	public void setBlessedEscape(boolean blessedEscape)
+	{
+		_blessedEscape = blessedEscape;
+	}
+	
+	/**
+	 * @return {@code true} if the Scroll of Escape it is reading takes it away even in front of players (a blessed one, or leaving a hotzone that rotated out), like a player going to town
+	 */
+	public boolean isEscapeInView()
+	{
+		return _escapeInView;
+	}
+	
+	public void setEscapeInView(boolean escapeInView)
+	{
+		_escapeInView = escapeInView;
+	}
+	
+	/**
+	 * @return the id of the active hotzone it spawned in, 0 if none
+	 */
+	public int getHotzoneId()
+	{
+		return _hotzoneId;
+	}
+	
+	public void setHotzoneId(int hotzoneId)
+	{
+		_hotzoneId = hotzoneId;
+	}
+	
+	/**
+	 * @return when it reads its Scroll of Escape and logs off because its hotzone rotated out, 0 if it stays
+	 */
+	public long getLeaveTime()
+	{
+		return _leaveTime;
+	}
+	
+	public void setLeaveTime(long leaveTime)
+	{
+		_leaveTime = leaveTime;
 	}
 }

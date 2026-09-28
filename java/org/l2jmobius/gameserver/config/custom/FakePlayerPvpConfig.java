@@ -83,6 +83,12 @@ public class FakePlayerPvpConfig
 	public static int FLEE_CHANCE;
 	public static int OUTLEVELED_DIFFERENCE;
 	public static boolean ESCAPE_SCROLL;
+	public static int BLESSED_ESCAPE_MIN_LEVEL;
+	public static int BLESSED_ESCAPE_CHANCE;
+	public static int BLESSED_ESCAPE_DISTANCE;
+	public static boolean HOTZONE_LEAVE;
+	public static int HOTZONE_LEAVE_DELAY_MIN;
+	public static int HOTZONE_LEAVE_DELAY_MAX;
 	public static int UNSEEN_RANGE;
 	public static int DEFENSE_DETECT_CHANCE;
 	public static int DEFENSE_KEEP_DISTANCE;
@@ -193,6 +199,23 @@ public class FakePlayerPvpConfig
 		FLEE_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpFleeChance", 20)));
 		OUTLEVELED_DIFFERENCE = Math.max(0, config.getInt("FakePvpOutleveledDifference", 8));
 		ESCAPE_SCROLL = config.getBoolean("FakePvpEscapeScroll", true);
+		BLESSED_ESCAPE_MIN_LEVEL = config.getInt("FakePvpBlessedEscapeMinLevel", 76);
+		BLESSED_ESCAPE_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpBlessedEscapeChance", 35)));
+		BLESSED_ESCAPE_DISTANCE = Math.max(0, config.getInt("FakePvpBlessedEscapeDistance", 400));
+		HOTZONE_LEAVE = config.getBoolean("FakePvpHotzoneLeave", true);
+		HOTZONE_LEAVE_DELAY_MIN = 60;
+		HOTZONE_LEAVE_DELAY_MAX = 600;
+		final String leaveDelay = config.getString("FakePvpHotzoneLeaveDelay", "60-600");
+		try
+		{
+			final String[] range = leaveDelay.split("-");
+			HOTZONE_LEAVE_DELAY_MIN = Math.max(0, Integer.parseInt(range[0].trim()));
+			HOTZONE_LEAVE_DELAY_MAX = Math.max(HOTZONE_LEAVE_DELAY_MIN, Integer.parseInt(range[range.length - 1].trim()));
+		}
+		catch (Exception e)
+		{
+			LOGGER.warning("Invalid FakePvpHotzoneLeaveDelay: " + leaveDelay);
+		}
 		UNSEEN_RANGE = Math.max(0, config.getInt("FakePvpUnseenRange", 2500));
 		DEFENSE_DETECT_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpDefenseDetectChance", 25)));
 		DEFENSE_KEEP_DISTANCE = Math.max(0, config.getInt("FakePvpDefenseKeepDistance", 450));

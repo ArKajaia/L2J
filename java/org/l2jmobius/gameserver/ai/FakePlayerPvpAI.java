@@ -96,6 +96,8 @@ public class FakePlayerPvpAI extends AttackableAI
 	
 	/** Scroll of Escape (20 seconds, only interrupted by stuns and the like). */
 	private static final int SCROLL_OF_ESCAPE = 2013;
+	/** Blessed Scroll of Escape (0.2 seconds), which some high levels carry. */
+	private static final int BLESSED_SCROLL_OF_ESCAPE = 2036;
 	/** How far it runs in one go when it runs away. */
 	private static final int FLEE_STEP = 700;
 	/** Turns (in radians) it tries, from straight away from its pursuer, when a wall is in the way. */
@@ -327,6 +329,12 @@ public class FakePlayerPvpAI extends AttackableAI
 			FakePlayerPvpManager.getInstance().equipWeapon(npc, profile.getMainWeapon());
 		}
 		
+		// Its hotzone rotated out a while ago: off to town, and it logs off.
+		if (thinkLeave(npc, profile, System.currentTimeMillis()))
+		{
+			return;
+		}
+		
 		// After a hard fight, sit down and rest like a player until HP is back before doing anything else. They don't use MP.
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
 		_resting = hpRatio < (_resting ? 0.9 : 0.5);
@@ -426,9 +434,10 @@ public class FakePlayerPvpAI extends AttackableAI
 		// Casting (a spell, a Scroll of Escape...): a player still drinks potions meanwhile.
 		if (npc.isCastingNow())
 		{
-			// A player comes into sight while it reads its Scroll of Escape: it doesn't teleport in front of them, it runs on.
+			// A player comes into sight while it reads its Scroll of Escape to get away from a fight: it doesn't teleport in front of them, it runs on. Leaving a hotzone that rotated out, it goes anyway.
 			final Skill casting = npc.getLastSkillCast();
-			if ((casting != null) && (casting.getId() == SCROLL_OF_ESCAPE) && FakePlayerPvpManager.isSeenByPlayer(npc))
+			final FakePlayerPvpProfile castingProfile = npc.getTemplate().getFakePlayerPvpProfile();
+			if ((casting != null) && (casting.getId() == SCROLL_OF_ESCAPE) && ((castingProfile == null) || !castingProfile.isEscapeInView()) && FakePlayerPvpManager.isSeenByPlayer(npc))
 			{
 				npc.abortCast();
 				_nextEscapeTime = System.currentTimeMillis() + 3000;
@@ -863,13 +872,19 @@ public class FakePlayerPvpAI extends AttackableAI
 			return true;
 		}
 		
+		// A Blessed Scroll of Escape (0.2 seconds): read as soon as it has a little room, seen or not, like a player getting out of a fight.
+		if (FakePlayerPvpConfig.ESCAPE_SCROLL && profile.hasBlessedEscape() && (pursuerGap > FakePlayerPvpConfig.BLESSED_ESCAPE_DISTANCE) && (now >= _nextEscapeTime) && readEscapeScroll(npc, target, now, true, true))
+		{
+			return true;
+		}
+		
 		// Got away.
 		if (pursuerGap > ESCAPE_DISTANCE)
 		{
 			// A Scroll of Escape: 20 seconds, a pursuer that catches up can still stun it or finish it. Never in front of a player: it runs on until nobody sees it.
 			if (FakePlayerPvpConfig.ESCAPE_SCROLL)
 			{
-				if ((now >= _nextEscapeTime) && !FakePlayerPvpManager.isSeenByPlayer(npc) && readEscapeScroll(npc, target, now))
+				if (!profile.hasBlessedEscape() && (now >= _nextEscapeTime) && !FakePlayerPvpManager.isSeenByPlayer(npc) && readEscapeScroll(npc, target, now, false, false))
 				{
 					return true;
 				}
@@ -1089,14 +1104,25 @@ public class FakePlayerPvpAI extends AttackableAI
 	
 	/**
 	 * Starts reading a Scroll of Escape. When it finishes, the fake player teleports away (see {@link FakePlayerPvpManager#onFakePlayerEscaped}).
-	 * @return {@code true} if it started
+	 * @param npc the fake player
+	 * @param target what it targets afterwards ({@code null} for nothing)
+	 * @param now the current time
+	 * @param blessed {@code true} for a Blessed Scroll of Escape (0.2 seconds), {@code false} for a normal one (20 seconds)
+	 * @param inView {@code true} if it goes even in front of players (a blessed scroll, leaving a hotzone), {@code false} if a player seeing it stops it
+	 * @return {@code true} if it started reading
 	 */
-	private boolean readEscapeScroll(Attackable npc, Creature target, long now)
+	private boolean readEscapeScroll(Attackable npc, Creature target, long now, boolean blessed, boolean inView)
 	{
-		final Skill scroll = SkillData.getInstance().getSkill(SCROLL_OF_ESCAPE, 1);
+		final Skill scroll = SkillData.getInstance().getSkill(blessed ? BLESSED_SCROLL_OF_ESCAPE : SCROLL_OF_ESCAPE, 1);
 		if ((scroll == null) || npc.isSkillDisabled(scroll))
 		{
 			return false;
+		}
+		
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		if (profile != null)
+		{
+			profile.setEscapeInView(inView);
 		}
 		
 		_nextEscapeTime = now + 5000; // Another try soon if a stun stops this one.
@@ -1805,6 +1831,45 @@ public class FakePlayerPvpAI extends AttackableAI
 	private static boolean isPvpEnemy(Creature creature)
 	{
 		return FakePlayerPvpManager.isPvpEnemy(creature);
+	}
+	
+	/**
+	 * Leaves a hotzone the rotation moved on from (see {@link FakePlayerPvpManager}): once its time is up and it isn't fighting, it stops and reads a Scroll of Escape (the blessed one if it carries it), in front of whoever watches, like a player going to town,
+	 * and logs off when it finishes. Stopped (stun, silence...), it tries again a moment later.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param now the current time
+	 * @return {@code true} if it is busy leaving this tick
+	 */
+	private boolean thinkLeave(Attackable npc, FakePlayerPvpProfile profile, long now)
+	{
+		if ((profile == null) || (profile.getLeaveTime() <= 0) || (now < profile.getLeaveTime()))
+		{
+			return false;
+		}
+		
+		endPoke(npc);
+		_resting = false;
+		if (standUp(npc))
+		{
+			return true;
+		}
+		
+		if (now < _nextEscapeTime)
+		{
+			return true;
+		}
+		
+		if (!readEscapeScroll(npc, null, now, profile.hasBlessedEscape(), true))
+		{
+			// No scroll to read (should not happen): it just logs off once nobody watches.
+			if (!FakePlayerPvpManager.isSeenByPlayer(npc))
+			{
+				npc.deleteMe();
+			}
+			_nextEscapeTime = now + 5000;
+		}
+		return true;
 	}
 	
 	/**
