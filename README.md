@@ -103,8 +103,8 @@ Lets players sell their own buffs to other players for a fee, similar to a priva
 Lets a player save their own buffs as reusable templates and re-apply a whole set from the Community Board instead of casting each buff by hand.
 
 - Each character has a few named template slots, filled from buffs in their own class skill tree (plus buffs learned from Custom Buff books) — the board never offers buffs of its own.
-- A template is applied to the character or to its summon in one click; the only thing saved is casting time.
-- Every use is re-validated server-side like a real cast: the skill must still be known (at its current level), MP and consumed items are charged, reuse delays are respected and restarted, cast conditions are tested, and a buff only lands on a target a real cast could reach.
+- A template is applied instantly to the character or to its summon in one click, with no MP, item or reuse requirements.
+- Every use is re-validated server-side: each buff must still be known by the character (at its current level) and still pass the template filter, and only the character or its own summon is ever buffed.
 - Only buffs the operator lists in the extended skill-duration list qualify, and a strict filter keeps anything that isn't a plain timed buff out of templates (heals, invincibility, Ultimate Defense, Noblesse Blessing, stealth, transformations, toggles, item- or GM-granted skills), and use is limited to out-of-combat, non-PvP situations.
 
 ### Tiered Champion Monsters
