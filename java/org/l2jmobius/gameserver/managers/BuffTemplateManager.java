@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
+import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.ClassBalanceConfig;
 import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
 import org.l2jmobius.gameserver.config.custom.CustomBuffConfig;
@@ -165,7 +166,7 @@ public class BuffTemplateManager
 	}
 	
 	/**
-	 * Structural filter deciding whether a skill the player knows may be kept in a template. Deliberately strict: anything that is not a plain, positive, timed buff from the class skill tree is rejected.
+	 * Structural filter deciding whether a skill the player knows may be kept in a template. Deliberately strict: anything that is not a plain, positive, timed buff from the class skill tree, listed in Player.ini SkillDurationList, is rejected.
 	 * @param player the owner
 	 * @param skill the skill as the player knows it now
 	 * @return {@code true} if the skill may be placed in (and applied from) a template
@@ -173,6 +174,12 @@ public class BuffTemplateManager
 	public boolean isEligible(Player player, Skill skill)
 	{
 		if ((skill == null) || CommunityBoardConfig.COMMUNITYBOARD_BUFF_TEMPLATE_FORBIDDEN_SKILLS.contains(skill.getId()))
+		{
+			return false;
+		}
+		
+		// Only buffs listed in Player.ini SkillDurationList (loaded only while EnableModifySkillDuration is on).
+		if (!PlayerConfig.ENABLE_MODIFY_SKILL_DURATION || (PlayerConfig.SKILL_DURATION_LIST == null) || !PlayerConfig.SKILL_DURATION_LIST.containsKey(skill.getId()))
 		{
 			return false;
 		}
