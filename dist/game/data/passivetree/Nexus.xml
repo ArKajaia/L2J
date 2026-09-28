@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Nexus: 19 nodes. x/y are authoritative layout coords. -->
-<list>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="9001" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="1808.1" y="1625.5" effect="MAXHP:8">
 		<requires nodeId="1079" />
 		<requires nodeId="9002" />

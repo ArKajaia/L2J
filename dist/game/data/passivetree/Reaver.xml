@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Reaver: 28 nodes, hybrid of Juggernaut and Shadowblade filling the gap between their arms. x/y are authoritative layout coords. -->
-<list>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="30101" name="Confluence" sector="Reaver" type="SMALL" tier="0" cost="1" x="1600.0" y="2850.0" effect="PATK_PCT:0.3;CRIT_DMG_PCT:0.5">
 		<requires nodeId="21102" />
 		<requires nodeId="30102" />

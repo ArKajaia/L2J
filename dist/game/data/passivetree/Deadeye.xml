@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Deadeye: 91 nodes. x/y are authoritative layout coords. -->
-<list>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="4000" name="Deadeye Origin" sector="Deadeye" type="START" tier="0" cost="0" x="-380.2" y="1595.4" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="4001" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-113.7" y="1621.8" effect="ACCURACY_ADD:0.2" description="Junction.">
 		<requires nodeId="4003" />

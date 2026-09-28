@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Templar: 28 nodes, hybrid of Hierophant and Vanguard filling the gap between their arms. x/y are authoritative layout coords. -->
-<list>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="30501" name="Confluence" sector="Templar" type="SMALL" tier="0" cost="1" x="2682.5" y="975.0" effect="MDEF_PCT:0.3;MAXHP:8">
 		<requires nodeId="25102" />
 		<requires nodeId="30502" />

@@ -136,7 +136,7 @@ ACTIVES={
 "Arcanist":[("Arcane Nova",90440),("Mana Rift",90441)],
 "Hierophant":[("Benediction",90450),("Sanctuary",90451)],
 }
-FUNCTIONS={"Vanguard":("Field Repairs",90302),"Juggernaut":("Common Craft Mastery",1322),
+FUNCTIONS={"Vanguard":("Field Repairs",None),"Juggernaut":("Common Craft Mastery",1322),
 "Shadowblade":("Master Spoil",248),"Deadeye":("Tracker's Guile",None),
 "Arcanist":("Scholar's Insight",None),"Hierophant":("Sacred Artisan",None)}
 
@@ -373,7 +373,7 @@ print("total cost:",sum(n['cost'] for n in nodes.values()))
 def write(sector):
     rows=sorted([n for n in nodes.values() if n['sector']==sector],key=lambda r:r['id'])
     out=['<?xml version="1.0" encoding="UTF-8"?>',
-         f'<!-- {sector}: {len(rows)} nodes. x/y are authoritative layout coords. -->','<list>']
+         f'<!-- {sector}: {len(rows)} nodes. x/y are authoritative layout coords. -->','<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">']
     for n in rows:
         a=(f'id="{n["id"]}" name="{sx.escape(n["name"])}" sector="{n["sector"]}" '
            f'type="{n["type"]}" tier="{n["tier"]}" cost="{n["cost"]}" x="{n["x"]}" y="{n["y"]}"')
