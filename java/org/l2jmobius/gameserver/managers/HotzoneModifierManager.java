@@ -71,6 +71,7 @@ public class HotzoneModifierManager
 	public void clearModifier(int zoneId)
 	{
 		_activeModifiers.remove(zoneId);
+		HotZoneMinibossManager.getInstance().resetKills(zoneId);
 
 		final ScheduledFuture<?> task = _drainTasks.remove(zoneId);
 		if (task != null)
@@ -86,6 +87,16 @@ public class HotzoneModifierManager
 	public HotzoneModifier getModifier(int zoneId)
 	{
 		return _activeModifiers.get(zoneId);
+	}
+
+	/**
+	 * Every hotzone stays flagged {@link ZoneId#HOTZONE} permanently, but only the rotation's current picks are actually hot - and each of those always has a modifier rolled.
+	 * @param zoneId the hotzone's zone id
+	 * @return {@code true} if {@code zoneId} is one of the hotzones the rotation currently has active
+	 */
+	public boolean isActive(int zoneId)
+	{
+		return _activeModifiers.containsKey(zoneId);
 	}
 
 	/**
