@@ -380,6 +380,7 @@
 	<admin command="msg" description="Displays a system message based on its ID." accessLevel="100" />
 
 	<!-- ADMIN FAKE PLAYERS -->
+	<admin command="fakeplayers" description="Open the fake player menu (every fake player command as buttons)." accessLevel="100" />
 	<admin command="fakechat" description="Send a fake chat message appearing to come from a fake player." accessLevel="100" />
 	<admin command="fakepvp" description="Spawn a roaming fake player at your location: //fakepvp [build|random] [level]." accessLevel="100" />
 	<admin command="fakepvp_list" description="Show the roaming fake player builds and how many are alive, and the personality of the targeted one." accessLevel="100" />

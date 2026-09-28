@@ -1345,49 +1345,4 @@ public class Monster extends Attackable
 			_arenaEnrageTask = null;
 		}
 	}
-	
-	@Override
-	public void onActionShift(org.l2jmobius.gameserver.model.actor.Player player)
-	{
-		if (player.isGM())
-		{
-			super.onActionShift(player);
-		}
-		else
-		{
-			org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage html = new org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage(this.getObjectId());
-			StringBuilder sb = new StringBuilder();
-			
-			sb.append("<html><body>");
-			sb.append("<center>");
-			sb.append("<font color=\"LEVEL\">").append(this.getName()).append("</font><br>");
-			sb.append("<font color=\"AAAAAA\">Level ").append(this.getLevel()).append("</font><br>");
-			sb.append("<img src=\"L2UI.SquareWhite\" width=260 height=1><br>");
-			sb.append("</center>");
-			
-			sb.append("<font color=\"LEVEL\">Active Passives:</font><br>");
-			
-			int skillCount = 0;
-			for (Skill skill : this.getSkills().values())
-			{
-				if (skill.isPassive())
-				{
-					sb.append("<font color=\"00FFFF\">").append(skill.getName()).append("</font> Lv. ").append(skill.getLevel()).append("<br>");
-					skillCount++;
-				}
-			}
-			
-			if (skillCount == 0)
-			{
-				sb.append("<font color=\"777777\">No passives active.</font>");
-			}
-			
-			sb.append("</body></html>");
-			
-			html.setHtml(sb.toString());
-			player.sendPacket(html);
-			
-			player.sendPacket(org.l2jmobius.gameserver.network.serverpackets.ActionFailed.STATIC_PACKET);
-		}
-	}
 }

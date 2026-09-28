@@ -5251,8 +5251,8 @@ public abstract class Creature extends WorldObject
 			return;
 		}
 		
-		// Check if fake players should aggro each other.
-		if (isFakePlayer() && !FakePlayersConfig.FAKE_PLAYER_AGGRO_FPC && target.isFakePlayer())
+		// Check if fake players should aggro each other (roaming fake players fight each other like players).
+		if (isFakePlayer() && !FakePlayersConfig.FAKE_PLAYER_AGGRO_FPC && target.isFakePlayer() && !(isPvpFakePlayer() && target.isPvpFakePlayer()))
 		{
 			return;
 		}

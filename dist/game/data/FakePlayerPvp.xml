@@ -23,6 +23,12 @@
 	               weapon once most of them are dead (see FakePvpPolearm* in config/Custom/FakePlayerPvp.ini).
 	               A build whose weapon is a polearm (Dreadnought) always has its multi-attack.
 	     weight  - relative chance to pick this build.
+     variant - a second build of the same class: the same skills and combos, other gear, like players of
+               a class that don't all wear the same set (a dagger in Tallum Plate, a mage still in its Dark
+               Crystal Robe at S grade...). name is the build name (//fakepvp), weapon/armor/jewels/bow/
+               polearm/buffs replace the build's (the others are kept) and weight is its own chance to be picked.
+     Each fake player's weapon, armor and jewels are also picked for a level a bit below its own (each on
+     its own, see FakePvpGearLevelDrop* in config/Custom/FakePlayerPvp.ini), like players behind on gear.
 	     skillFighter - true for a class that deals its damage with skills (Gladiator/Duelist, Tyrant,
 	               daggers): it uses a skill most of the time (FakePvpSkillChance). The others (tanks,
 	               archers, most warriors) fight with their normal attack and use a skill now and then
@@ -263,6 +269,119 @@
 		<tier minLevel="84" rhand="13465" /> <!-- Vesper Caster -->
 	</kit>
 
+	<!-- Second builds (see <variant>): other sets of the same grades, and "legacy" kits that keep their A grade gear through the S grade (76) tier and only move on at S80. -->
+	<kit name="ROBE_LEGACY">
+		<tier minLevel="1" chest="1101" legs="1104" head="44" gloves="51" feet="39" /> <!-- Devotion -->
+		<tier minLevel="20" chest="437" legs="470" head="2411" gloves="2450" feet="2426" /> <!-- Mithril Tunic -->
+		<tier minLevel="40" chest="439" legs="471" head="2414" gloves="2454" feet="2430" /> <!-- Karmian -->
+		<tier minLevel="52" chest="2406" head="2415" gloves="5716" feet="5732" /> <!-- Avadon Robe -->
+		<tier minLevel="61" chest="2407" head="512" gloves="5767" feet="5779" /> <!-- Dark Crystal Robe, kept at S grade -->
+		<tier minLevel="80" chest="10239" legs="9437" head="9438" gloves="9439" feet="9440" /> <!-- Dynasty Silver Satin Tunic - Wizard -->
+		<tier minLevel="84" chest="13437" legs="13454" head="13142" gloves="13455" feet="13456" /> <!-- Vesper Noble Tunic -->
+	</kit>
+	<kit name="ROBE_TALLUM">
+		<tier minLevel="1" chest="1101" legs="1104" head="44" gloves="51" feet="39" /> <!-- Devotion -->
+		<tier minLevel="20" chest="437" legs="470" head="2411" gloves="2450" feet="2426" /> <!-- Mithril Tunic -->
+		<tier minLevel="40" chest="442" legs="473" head="2414" gloves="2463" feet="603" /> <!-- Divine -->
+		<tier minLevel="52" chest="2398" legs="2403" head="2416" gloves="5720" feet="5736" /> <!-- Blue Wolf Tunic -->
+		<tier minLevel="61" chest="2400" legs="2405" head="547" gloves="5770" feet="5782" /> <!-- Tallum Tunic, kept at S grade -->
+		<tier minLevel="80" chest="9432" legs="9437" head="9438" gloves="9439" feet="9440" /> <!-- Dynasty Tunic -->
+		<tier minLevel="84" chest="13437" legs="13454" head="13142" gloves="13455" feet="13456" /> <!-- Vesper Noble Tunic -->
+	</kit>
+	<kit name="HEAVY_LEGACY">
+		<tier minLevel="1" chest="23" legs="2386" head="43" gloves="51" feet="39" /> <!-- Wooden -->
+		<tier minLevel="20" chest="352" legs="2378" head="2411" gloves="61" feet="2425" /> <!-- Brigandine -->
+		<tier minLevel="40" chest="60" head="517" gloves="2462" feet="64" /> <!-- Composite -->
+		<tier minLevel="52" chest="357" legs="383" head="503" gloves="5710" feet="5726" /> <!-- Zubei's -->
+		<tier minLevel="61" chest="365" legs="388" head="512" gloves="5765" feet="5777" /> <!-- Dark Crystal, kept at S grade -->
+		<tier minLevel="80" chest="10229" legs="9421" head="9422" gloves="9423" feet="9424" /> <!-- Dynasty Platinum Plate - Weapon Master -->
+		<tier minLevel="84" chest="13435" legs="13448" head="13140" gloves="13449" feet="13450" /> <!-- Vesper Noble -->
+	</kit>
+	<kit name="HEAVY_DAGGER"> <!-- Daggers in heavy armor, for the P. Def. -->
+		<tier minLevel="1" chest="23" legs="2386" head="43" gloves="51" feet="39" /> <!-- Wooden -->
+		<tier minLevel="20" chest="352" legs="2378" head="2411" gloves="61" feet="2425" /> <!-- Brigandine -->
+		<tier minLevel="40" chest="356" head="2414" gloves="2462" feet="2438" /> <!-- Full Plate -->
+		<tier minLevel="52" chest="357" legs="383" head="503" gloves="5710" feet="5726" /> <!-- Zubei's -->
+		<tier minLevel="61" chest="2382" head="547" gloves="5768" feet="5780" /> <!-- Tallum Plate Armor, kept at S grade -->
+		<tier minLevel="80" chest="9416" legs="9421" head="9422" gloves="9423" feet="9424" /> <!-- Dynasty Breast Plate -->
+		<tier minLevel="84" chest="13432" legs="13438" head="13137" gloves="13439" feet="13440" /> <!-- Vesper -->
+	</kit>
+	<kit name="LIGHT_LEGACY">
+		<tier minLevel="1" chest="23" legs="2386" head="43" gloves="51" feet="39" /> <!-- Wooden -->
+		<tier minLevel="20" chest="395" legs="417" head="2411" gloves="2450" feet="2424" /> <!-- Manticore Skin -->
+		<tier minLevel="40" chest="398" legs="418" head="2414" gloves="2455" feet="2431" /> <!-- Plated Leather -->
+		<tier minLevel="52" chest="2384" legs="2388" head="503" gloves="5711" feet="5727" /> <!-- Zubei's Leather -->
+		<tier minLevel="61" chest="2385" legs="2389" head="512" gloves="5766" feet="5778" /> <!-- Dark Crystal Leather, kept at S grade -->
+		<tier minLevel="80" chest="9425" legs="9428" head="9429" gloves="9430" feet="9431" /> <!-- Dynasty Leather -->
+		<tier minLevel="84" chest="13436" legs="13451" head="13141" gloves="13452" feet="13453" /> <!-- Vesper Noble Leather -->
+	</kit>
+	<kit name="LIGHT_FIGHTER"> <!-- Warriors in light armor, for the attack speed and evasion. -->
+		<tier minLevel="1" chest="23" legs="2386" head="43" gloves="51" feet="39" /> <!-- Wooden -->
+		<tier minLevel="20" chest="395" legs="417" head="2411" gloves="2450" feet="2424" /> <!-- Manticore Skin -->
+		<tier minLevel="40" chest="400" legs="420" head="2414" gloves="2460" feet="2436" /> <!-- Theca Leather -->
+		<tier minLevel="52" chest="2391" head="2416" gloves="5719" feet="5735" /> <!-- Blue Wolf Leather -->
+		<tier minLevel="61" chest="2395" head="2419" gloves="5775" feet="5787" /> <!-- Majestic Leather -->
+		<tier minLevel="76" chest="6379" head="6382" gloves="6380" feet="6381" /> <!-- Draconic -->
+		<tier minLevel="80" chest="10127" legs="9428" head="9429" gloves="9430" feet="9431" /> <!-- Dynasty Leather - Weapon Master -->
+		<tier minLevel="84" chest="13433" legs="13441" head="13138" gloves="13442" feet="13443" /> <!-- Vesper Leather -->
+	</kit>
+	<kit name="SWORD_SHIELD_ALT"> <!-- Shields of the HEAVY_LEGACY sets. -->
+		<tier minLevel="1" rhand="68" lhand="102" /> <!-- Falchion / Round Shield -->
+		<tier minLevel="20" rhand="2499" lhand="2493" /> <!-- Elven Long Sword / Brigandine Shield -->
+		<tier minLevel="40" rhand="72" lhand="107" /> <!-- Stormbringer / Composite Shield -->
+		<tier minLevel="52" rhand="142" lhand="633" /> <!-- Keshanberk / Zubei's Shield -->
+		<tier minLevel="61" rhand="80" lhand="641" /> <!-- Tallum Blade / Dark Crystal Shield, kept at S grade -->
+		<tier minLevel="80" rhand="9442" lhand="9441" /> <!-- Dynasty Sword / Dynasty Shield -->
+		<tier minLevel="84" rhand="10215" lhand="13471" /> <!-- Icarus Sawsword / Vesper Shield -->
+	</kit>
+	<kit name="DAGGER_ALT">
+		<tier minLevel="1" rhand="219" /> <!-- Sword Breaker -->
+		<tier minLevel="20" rhand="225" /> <!-- Mithril Dagger -->
+		<tier minLevel="40" rhand="233" /> <!-- Dark Screamer -->
+		<tier minLevel="52" rhand="229" /> <!-- Kris -->
+		<tier minLevel="61" rhand="235" /> <!-- Bloody Orchid -->
+		<tier minLevel="76" rhand="8682" /> <!-- Naga Storm, kept at S grade -->
+		<tier minLevel="80" rhand="9446" /> <!-- Dynasty Knife -->
+		<tier minLevel="84" rhand="10216" /> <!-- Icarus Disperser -->
+	</kit>
+	<kit name="BOW_ALT">
+		<tier minLevel="1" rhand="273" /> <!-- Composite Bow -->
+		<tier minLevel="20" rhand="280" /> <!-- Light Crossbow -->
+		<tier minLevel="40" rhand="283" /> <!-- Akat Long Bow -->
+		<tier minLevel="52" rhand="284" /> <!-- Dark Elven Long Bow -->
+		<tier minLevel="61" rhand="288" /> <!-- Carnage Bow -->
+		<tier minLevel="76" rhand="8684" /> <!-- Shyeed's Bow, kept at S grade -->
+		<tier minLevel="80" rhand="9445" /> <!-- Dynasty Bow -->
+		<tier minLevel="84" rhand="10223" /> <!-- Icarus Spitter -->
+	</kit>
+	<kit name="MAGE_ALT">
+		<tier minLevel="1" rhand="177" /> <!-- Mage Staff -->
+		<tier minLevel="20" rhand="188" /> <!-- Ghost Staff -->
+		<tier minLevel="40" rhand="198" /> <!-- Inferno Staff -->
+		<tier minLevel="52" rhand="92" /> <!-- Sprite's Staff -->
+		<tier minLevel="61" rhand="213" /> <!-- Branch of the Mother Tree, kept at S grade -->
+		<tier minLevel="80" rhand="10252" /> <!-- Dynasty Staff -->
+		<tier minLevel="84" rhand="10217" /> <!-- Icarus Spirit -->
+	</kit>
+	<kit name="BIGSWORD_ALT">
+		<tier minLevel="1" rhand="5284" /> <!-- Zweihander -->
+		<tier minLevel="20" rhand="70" /> <!-- Claymore -->
+		<tier minLevel="40" rhand="71" /> <!-- Flamberge -->
+		<tier minLevel="52" rhand="78" /> <!-- Great Sword -->
+		<tier minLevel="61" rhand="8679" /> <!-- Sword of Ipos, kept at S grade -->
+		<tier minLevel="80" rhand="9443" /> <!-- Dynasty Blade -->
+		<tier minLevel="84" rhand="10218" /> <!-- Icarus Heavy Arms -->
+	</kit>
+	<kit name="POLEARM_ALT">
+		<tier minLevel="1" rhand="16" /> <!-- Great Spear -->
+		<tier minLevel="20" rhand="93" /> <!-- Winged Spear -->
+		<tier minLevel="40" rhand="303" /> <!-- Widow Maker -->
+		<tier minLevel="52" rhand="300" /> <!-- Great Axe -->
+		<tier minLevel="61" rhand="305" /> <!-- Tallum Glaive, kept at S grade -->
+		<tier minLevel="80" rhand="9447" /> <!-- Dynasty Halberd -->
+		<tier minLevel="84" rhand="10219" /> <!-- Icarus Trident -->
+	</kit>
+
 	<!-- Buffs -->
 	<buffs name="FIGHTER">
 		<tier minLevel="1">1068,3;1040,3;1204,2;1086,2;1045,6;1048,6;1035,4;1036,2</tier> <!-- Might, Shield, Wind Walk, Haste, Bless the Body/Soul, Mental Shield, Magic Barrier -->
@@ -287,7 +406,7 @@
 	</buffs>
 
 	<!-- Mages -->
-	<build name="Archmage" classId="94" role="MAGE" weapon="MAGE" armor="ROBE" weight="1">
+	<build name="Archmage" classId="94" role="MAGE" weapon="MAGE" armor="ROBE" weight="2">
 		<attack>1296,1292,1289,1288,1339,1451,1230,1555,1231,1275,1220,1274,1184,1177,1147</attack>
 		<debuff>1083,1160,1056,1452,1338</debuff>
 		<buff>1285,1532</buff>
@@ -310,8 +429,9 @@
 			<step skill="1160" /> <!-- Slow -->
 			<step skill="1230" />
 		</combo>
+		<variant name="Archmage Legacy" armor="ROBE_LEGACY" weight="1" />
 	</build>
-	<build name="Mystic Muse" classId="103" role="MAGE" weapon="MAGE" armor="ROBE" weight="1">
+	<build name="Mystic Muse" classId="103" role="MAGE" weapon="MAGE" armor="ROBE" weight="2">
 		<attack>1295,1293,1290,1288,1340,1453,1342,1235,1555,1236,1237,1265,1275,1175,1274,1184,1177</attack>
 		<debuff>1071,1164,1056,1455,1338</debuff>
 		<buff>1286,1532,1047</buff>
@@ -331,8 +451,9 @@
 			<step skill="1453" optional="true" /> <!-- Ice Vortex Crusher -->
 			<step skill="1235" optional="true" />
 		</combo>
+		<variant name="Mystic Muse Tallum" weapon="MAGE_ALT" armor="ROBE_TALLUM" weight="1" />
 	</build>
-	<build name="Storm Screamer" classId="110" role="MAGE" weapon="MAGE" armor="ROBE" weight="1">
+	<build name="Storm Screamer" classId="110" role="MAGE" weapon="MAGE" armor="ROBE" weight="2">
 		<attack>1176,1294,1291,1288,1343,1341,1456,1239,1555,1148,1234,1267,1159,1178,1184,1177,1147</attack>
 		<debuff>1074,1160,1064,1458,1338</debuff>
 		<buff>1287,1532,1457</buff>
@@ -352,8 +473,9 @@
 			<step skill="1456" optional="true" /> <!-- Wind Vortex Slug -->
 			<step skill="1239" optional="true" />
 		</combo>
+		<variant name="Storm Screamer Legacy" weapon="MAGE_ALT" armor="ROBE_LEGACY" weight="1" />
 	</build>
-	<build name="Dominator" classId="115" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="1"> <!-- Overlord line -->
+	<build name="Dominator" classId="115" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="2"> <!-- Overlord line -->
 		<attack>1245,1090,1107,1100,1102,1095,1101</attack>
 		<debuff>1246,1367,1366,1462,1208,1097,1105,1104,1099,1096,1209</debuff>
 		<buff>1533</buff>
@@ -376,8 +498,9 @@
 			<step skill="1107" optional="true" /> <!-- Frost Flame -->
 			<step skill="1245|1090" /> <!-- Steal Essence / Life Drain -->
 		</combo>
+		<variant name="Dominator Tallum" armor="ROBE_TALLUM" weight="1" />
 	</build>
-	<build name="Soultaker" classId="95" role="MAGE" weapon="MAGE" armor="ROBE" weight="1"> <!-- Necromancer line -->
+	<build name="Soultaker" classId="95" role="MAGE" weapon="MAGE" armor="ROBE" weight="2"> <!-- Necromancer line -->
 		<attack>1467,1343,1159,1148,1234,1382,1181,1147,1220,1184,1177</attack>
 		<debuff>1336,1337,1064,1263,1269,1160,1164,1222,1163,1168,1298</debuff>
 		<buff>1532</buff>
@@ -405,10 +528,11 @@
 			<step skill="1234" /> <!-- Vampiric Claw -->
 			<step skill="1148" optional="true" /> <!-- Death Spike -->
 		</combo>
+		<variant name="Soultaker Legacy" weapon="MAGE_ALT" armor="ROBE_LEGACY" weight="1" />
 	</build>
 
 	<!-- Tanks -->
-	<build name="Phoenix Knight" classId="90" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="1">
+	<build name="Phoenix Knight" classId="90" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2">
 		<attack>984,49,3,70</attack>
 		<debuff>92,353,400,403</debuff>
 		<buff>82,406,350,916,112,527,760</buff>
@@ -423,8 +547,9 @@
 			<step skill="984" /> <!-- Shield Strike -->
 			<step skill="400" optional="true" /> <!-- Tribunal -->
 		</combo>
+		<variant name="Phoenix Knight Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
 	</build>
-	<build name="Eva's Templar" classId="99" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="1">
+	<build name="Eva's Templar" classId="99" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2">
 		<attack>984,3</attack>
 		<debuff>352,402,102</debuff>
 		<buff>351,916,112,123,230,527,760</buff>
@@ -442,8 +567,9 @@
 			<step skill="102" /> <!-- Entangle -->
 			<step skill="402" optional="true" /> <!-- Arrest -->
 		</combo>
+		<variant name="Eva's Templar Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
 	</build>
-	<build name="Hell Knight" classId="91" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="1"> <!-- Dark Avenger line -->
+	<build name="Hell Knight" classId="91" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2"> <!-- Dark Avenger line -->
 		<attack>762,401,984,70,3</attack>
 		<debuff>92,353,403,127,65,342</debuff>
 		<buff>82,86,350,916,112,527,760,761</buff>
@@ -468,8 +594,9 @@
 			<step skill="127" optional="true" /> <!-- Hamstring -->
 			<step skill="70" /> <!-- Drain Health -->
 		</combo>
+		<variant name="Hell Knight Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
 	</build>
-	<build name="Shillien Templar" classId="106" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="1">
+	<build name="Shillien Templar" classId="106" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2">
 		<attack>279,223,289,105,984,70,3</attack>
 		<debuff>342,352,402,115,122,401,129</debuff>
 		<buff>351,916,112,527,760</buff>
@@ -492,10 +619,11 @@
 			<step skill="223" /> <!-- Sting -->
 			<step skill="289" optional="true" /> <!-- Life Leech -->
 		</combo>
+		<variant name="Shillien Templar Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
 	</build>
 
 	<!-- Daggers -->
-	<build name="Adventurer" classId="93" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="1" skillFighter="true">
+	<build name="Adventurer" classId="93" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="2" skillFighter="true">
 		<attack>991,409,344,263,30,16</attack>
 		<debuff>358,531,412,96</debuff>
 		<buff>357|356,768,445</buff>
@@ -534,8 +662,9 @@
 			<step skill="344" optional="true" /> <!-- Lethal Blow -->
 			<step skill="30" optional="true" /> <!-- Backstab, only when not in front -->
 		</combo>
+		<variant name="Adventurer Heavy" armor="HEAVY_DAGGER" weight="1" />
 	</build>
-	<build name="Wind Rider" classId="101" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="1" skillFighter="true">
+	<build name="Wind Rider" classId="101" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="2" skillFighter="true">
 		<attack>991,344,263,321,30,16</attack>
 		<debuff>358,531,102,412,96</debuff>
 		<buff>355|356,410,769,446,230</buff>
@@ -570,8 +699,9 @@
 			<step skill="344" optional="true" /> <!-- Lethal Blow -->
 			<step skill="30" optional="true" /> <!-- Backstab, only when not in front -->
 		</combo>
+		<variant name="Wind Rider Heavy" weapon="DAGGER_ALT" armor="HEAVY_DAGGER" weight="1" />
 	</build>
-	<build name="Ghost Hunter" classId="108" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="1" skillFighter="true">
+	<build name="Ghost Hunter" classId="108" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="2" skillFighter="true">
 		<attack>991,344,263,321,30,223,16</attack>
 		<debuff>358,531,115,122,412,96</debuff>
 		<buff>355|357,410,770,447</buff>
@@ -607,10 +737,11 @@
 			<step skill="344" optional="true" /> <!-- Lethal Blow -->
 			<step skill="30" optional="true" /> <!-- Backstab, only when not in front -->
 		</combo>
+		<variant name="Ghost Hunter Legacy" weapon="DAGGER_ALT" armor="LIGHT_LEGACY" weight="1" />
 	</build>
 
 	<!-- Archers -->
-	<build name="Sagittarius" classId="92" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="1">
+	<build name="Sagittarius" classId="92" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="2">
 		<attack>987,24,990,771,343,19,56</attack>
 		<debuff>354,101</debuff>
 		<buff>99,131,415,416,303</buff>
@@ -629,8 +760,9 @@
 			<step skill="990" optional="true" />
 			<step skill="19" />
 		</combo>
+		<variant name="Sagittarius Legacy" weapon="BOW_ALT" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Moonlight Sentinel" classId="102" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="1">
+	<build name="Moonlight Sentinel" classId="102" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="2">
 		<attack>987,24,990,772,343,369,19,56</attack>
 		<debuff>354,101,102</debuff>
 		<buff>99,413,415,416,303,230</buff>
@@ -650,8 +782,9 @@
 			<step skill="990" optional="true" />
 			<step skill="19" />
 		</combo>
+		<variant name="Moonlight Sentinel Legacy" weapon="BOW_ALT" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Ghost Sentinel" classId="109" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="1">
+	<build name="Ghost Sentinel" classId="109" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="2">
 		<attack>987,990,773,343,314,369,19,56</attack>
 		<debuff>354,101,115,122</debuff>
 		<buff>99,414,415,303</buff>
@@ -670,10 +803,11 @@
 			<step skill="990" optional="true" />
 			<step skill="19" />
 		</combo>
+		<variant name="Ghost Sentinel Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
 
 	<!-- Warriors -->
-	<build name="Duelist" classId="88" role="FIGHTER" weapon="DUAL" armor="HEAVY" polearm="POLEARM" weight="1" skillFighter="true">
+	<build name="Duelist" classId="88" role="FIGHTER" weapon="DUAL" armor="HEAVY" polearm="POLEARM" weight="2" skillFighter="true">
 		<attack>7,9,345,261,5,1,6,255,3</attack>
 		<debuff>775</debuff>
 		<buff>297,917,78,287</buff>
@@ -694,8 +828,9 @@
 			<step skill="5" /> <!-- Double Sonic Slash -->
 			<step skill="1" optional="true" /> <!-- Triple Slash -->
 		</combo>
+		<variant name="Duelist Light" armor="LIGHT_FIGHTER" weight="1" />
 	</build>
-	<build name="Grand Khavatari" classId="114" role="FIGHTER" weapon="FIST" armor="HEAVY_FORCE" bow="BOW" polearm="POLEARM" weight="1" skillFighter="true">
+	<build name="Grand Khavatari" classId="114" role="FIGHTER" weapon="FIST" armor="HEAVY_FORCE" bow="BOW" polearm="POLEARM" weight="2" skillFighter="true">
 		<attack>35,17,776,346,81,284,280,54,29,3</attack>
 		<debuff>120,281,95</debuff>
 		<buff>425|292|298|109|282|76|83,420,917</buff>
@@ -720,8 +855,9 @@
 			<step skill="284" /> <!-- Hurricane Assault -->
 			<step skill="280" optional="true" /> <!-- Burning Fist -->
 		</combo>
+		<variant name="Grand Khavatari Light" armor="LIGHT_FIGHTER" weight="1" />
 	</build>
-	<build name="Titan" classId="113" role="FIGHTER" weapon="BIGSWORD" armor="HEAVY" polearm="POLEARM" weight="1">
+	<build name="Titan" classId="113" role="FIGHTER" weapon="BIGSWORD" armor="HEAVY" polearm="POLEARM" weight="2">
 		<attack>777,315,190,255,3</attack>
 		<debuff>362</debuff>
 		<buff>94,176|139,287,420,917</buff>
@@ -741,9 +877,10 @@
 			<step skill="315" /> <!-- Crush of Doom -->
 			<step skill="190" optional="true" /> <!-- Fatal Strike -->
 		</combo>
+		<variant name="Titan Light" weapon="BIGSWORD_ALT" armor="LIGHT_FIGHTER" weight="1" />
 	</build>
 	<!-- Kamael: the soul skills spend souls like a player's (a monster kill gives one, Soul Rage more). -->
-	<build name="Doombringer" classId="131" role="FIGHTER" weapon="ANCIENT_SWORD" armor="HEAVY" weight="1" skillFighter="true"> <!-- Kamael, male -->
+	<build name="Doombringer" classId="131" role="FIGHTER" weapon="ANCIENT_SWORD" armor="HEAVY" weight="2" skillFighter="true"> <!-- Kamael, male -->
 		<attack>526,497,477,939,498,476,496,492,1434,468</attack>
 		<debuff>1435,485,501,1445,794</debuff>
 		<buff>1432,482,499,1514,20006,917,948</buff>
@@ -766,8 +903,9 @@
 			<step skill="497" /> <!-- Crush of Pain -->
 			<step skill="477" optional="true" /> <!-- Dark Smash -->
 		</combo>
+		<variant name="Doombringer Light" armor="LIGHT_FIGHTER" weight="1" />
 	</build>
-	<build name="Male Soul Hound" classId="132" role="MAGE" weapon="RAPIER" armor="ROBE" buffs="MAGE" weight="1"> <!-- Kamael, male -->
+	<build name="Male Soul Hound" classId="132" role="MAGE" weapon="RAPIER" armor="ROBE" buffs="MAGE" weight="2"> <!-- Kamael, male -->
 		<attack>1469,1512,1516,1436,1433,1439,1438,1434,1554,1431,939,505,504,478</attack>
 		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
 		<buff>1441,482,1532,1515</buff>
@@ -788,8 +926,9 @@
 			<step skill="1436" /> <!-- Soul of Pain -->
 			<step skill="1433" optional="true" /> <!-- Abyssal Blaze -->
 		</combo>
+		<variant name="Male Soul Hound Legacy" armor="ROBE_LEGACY" weight="1" />
 	</build>
-	<build name="Female Soul Hound" classId="133" role="MAGE" weapon="RAPIER" armor="ROBE" buffs="MAGE" weight="1"> <!-- Kamael, female -->
+	<build name="Female Soul Hound" classId="133" role="MAGE" weapon="RAPIER" armor="ROBE" buffs="MAGE" weight="2"> <!-- Kamael, female -->
 		<attack>1469,1512,1516,1436,1433,1439,1438,1434,1554,1431,939,505,504,478</attack>
 		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
 		<buff>1441,482,1532,1515</buff>
@@ -810,8 +949,9 @@
 			<step skill="1436" /> <!-- Soul of Pain -->
 			<step skill="1433" optional="true" /> <!-- Abyssal Blaze -->
 		</combo>
+		<variant name="Female Soul Hound Legacy" armor="ROBE_LEGACY" weight="1" />
 	</build>
-	<build name="Judicator" classId="136" role="FIGHTER" weapon="RAPIER" armor="LIGHT_DAGGER" weight="1" skillFighter="true"> <!-- Kamael, female (Warder, Inspector) -->
+	<build name="Judicator" classId="136" role="FIGHTER" weapon="RAPIER" armor="LIGHT_DAGGER" weight="2" skillFighter="true"> <!-- Kamael, female (Warder, Inspector) -->
 		<attack>505,504,939,478,492,1433,1434,468,1431</attack>
 		<debuff>1482,1483,1484,1485,1486,1435,1445</debuff> <!-- Curses that trigger when the target takes damage -->
 		<buff>469,482,1476,1515</buff> <!-- Appetite for Destruction: the instincts share one slot -->
@@ -833,8 +973,9 @@
 			<step skill="504" /> <!-- Triple Thrust -->
 			<step skill="505" optional="true" /> <!-- Shining Edge -->
 		</combo>
+		<variant name="Judicator Heavy" armor="HEAVY_LEGACY" weight="1" />
 	</build>
-	<build name="Trickster" classId="134" role="ARCHER" weapon="CROSSBOW" armor="LIGHT_ARCHER" weight="1"> <!-- Kamael, female -->
+	<build name="Trickster" classId="134" role="ARCHER" weapon="CROSSBOW" armor="LIGHT_ARCHER" weight="2"> <!-- Kamael, female -->
 		<attack>790,990,987,507,509,508,487,939</attack>
 		<debuff>522,1435,792,1445,627</debuff>
 		<buff>490,482,1514,1470</buff>
@@ -853,8 +994,9 @@
 			<step skill="509" /> <!-- Bleeding Shot -->
 			<step skill="507" /> <!-- Twin Shot -->
 		</combo>
+		<variant name="Trickster Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Dreadnought" classId="89" role="FIGHTER" weapon="POLEARM" armor="HEAVY" weight="1"> <!-- Warlord line -->
+	<build name="Dreadnought" classId="89" role="FIGHTER" weapon="POLEARM" armor="HEAVY" weight="2"> <!-- Warlord line -->
 		<attack>921,920,320,347,36,245,255,3</attack>
 		<debuff>361,452,48,100,116</debuff>
 		<buff>78,287,917</buff>
@@ -874,5 +1016,6 @@
 			<step skill="920" /> <!-- Power Crush -->
 			<step skill="921" optional="true" /> <!-- Cursed Pierce -->
 		</combo>
+		<variant name="Dreadnought Legacy" weapon="POLEARM_ALT" armor="HEAVY_LEGACY" weight="1" />
 	</build>
 </list>

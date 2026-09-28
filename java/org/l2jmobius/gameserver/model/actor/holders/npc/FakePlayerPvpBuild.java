@@ -95,10 +95,15 @@ public class FakePlayerPvpBuild
 	private final String _buffList;
 	private final int _weight;
 	private final boolean _skillFighter;
-	private final Map<SkillCategory, List<int[]>> _skills = new EnumMap<>(SkillCategory.class);
-	private final List<FakePlayerPvpCombo> _combos = new ArrayList<>();
+	private final Map<SkillCategory, List<int[]>> _skills;
+	private final List<FakePlayerPvpCombo> _combos;
 	
 	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight, boolean skillFighter)
+	{
+		this(name, playerClass, role, weaponKit, armorKit, jewelKit, bowKit, polearmKit, buffList, weight, skillFighter, new EnumMap<>(SkillCategory.class), new ArrayList<>());
+	}
+	
+	private FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight, boolean skillFighter, Map<SkillCategory, List<int[]>> skills, List<FakePlayerPvpCombo> combos)
 	{
 		_name = name;
 		_playerClass = playerClass;
@@ -111,6 +116,25 @@ public class FakePlayerPvpBuild
 		_buffList = buffList;
 		_weight = weight;
 		_skillFighter = skillFighter;
+		_skills = skills;
+		_combos = combos;
+	}
+	
+	/**
+	 * A second build of the same class: the same skills and combos (shared with this build), other gear, like players of a class that don't all wear the same set.
+	 * @param name the name of the variant
+	 * @param weaponKit its weapon kit, {@code null} for this build's
+	 * @param armorKit its armor kit, {@code null} for this build's
+	 * @param jewelKit its jewel kit, {@code null} for this build's
+	 * @param bowKit its bow kit, {@code null} for this build's
+	 * @param polearmKit its polearm kit, {@code null} for this build's
+	 * @param buffList its buff list, {@code null} for this build's
+	 * @param weight its relative chance to be picked
+	 * @return the variant
+	 */
+	public FakePlayerPvpBuild createVariant(String name, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight)
+	{
+		return new FakePlayerPvpBuild(name, _playerClass, _role, weaponKit != null ? weaponKit : _weaponKit, armorKit != null ? armorKit : _armorKit, jewelKit != null ? jewelKit : _jewelKit, bowKit != null ? bowKit : _bowKit, polearmKit != null ? polearmKit : _polearmKit, buffList != null ? buffList : _buffList, weight, _skillFighter, _skills, _combos);
 	}
 	
 	/**
