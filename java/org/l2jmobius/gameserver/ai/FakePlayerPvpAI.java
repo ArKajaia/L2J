@@ -60,6 +60,7 @@ import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.network.serverpackets.ChangeWaitType;
+import org.l2jmobius.gameserver.util.LocationUtil;
 
 /**
  * AI of a roaming fake player (see {@link FakePlayerPvpManager}). It plays like a character of its class: hunts the monsters around its spawn point, keeps its buffs up, uses the class skills it has learned (best ones first), drinks potions, archers and mages keep their
@@ -509,9 +510,10 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		FakePlayerPvpManager.getInstance().tryPotion(npc);
 		
-		final Role role = profile.getRole();
+		// In Final Form a Kamael fights up close with the transformation's skills, whatever its class.
+		final Role role = profile.isTransformed() ? Role.FIGHTER : profile.getRole();
 		final boolean mage = role == Role.MAGE;
-		_autoAttacker = !mage && !profile.getBuild().isSkillFighter();
+		_autoAttacker = !mage && !profile.getBuild().isSkillFighter() && !profile.isTransformed();
 		final boolean pvp = target.isPlayable();
 		final boolean canMove = !npc.isMovementDisabled();
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
@@ -573,6 +575,12 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		// Long cooldown buffs (Frenzy, Zealot, Focus Power...) are saved for players.
 		if (castOnSelf(npc, target, profile.getSkills(SkillCategory.BUFF), false, pvp))
+		{
+			return;
+		}
+		
+		// A Kamael goes into Final Form (once an hour) when a PvP gets serious: hurt, or against several players.
+		if (pvp && !profile.isTransformed() && ((hpRatio < 0.7) || (countPvpEnemies(npc) >= 2)) && castOnSelf(npc, target, profile.getSkills(SkillCategory.TRANSFORM), true, true))
 		{
 			return;
 		}
@@ -1164,7 +1172,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	private boolean isPlayedAround(Attackable npc, Creature enemy)
 	{
 		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
-		final boolean mage = (profile != null) && (profile.getRole() == Role.MAGE);
+		final boolean mage = (profile != null) && !profile.isTransformed() && (profile.getRole() == Role.MAGE);
 		return (getKnownDefenses(enemy) & ((mage ? MAGIC_DAMAGE : PHYSICAL_DAMAGE) | DANGEROUS)) != 0;
 	}
 	
@@ -1381,6 +1389,12 @@ public class FakePlayerPvpAI extends AttackableAI
 			for (AbstractEffect effect : effects)
 			{
 				if ("DispelBySlot".equals(effect.getClass().getSimpleName()) && effect.checkCondition(creature))
+				{
+					return true;
+				}
+				
+				// Soul Cleanse removes debuffs, whatever they are.
+				if ("DispelByCategory".equals(effect.getClass().getSimpleName()) && creature.getEffectList().hasDebuffs())
 				{
 					return true;
 				}
@@ -1804,6 +1818,12 @@ public class FakePlayerPvpAI extends AttackableAI
 			return false;
 		}
 		
+		// Disarm only takes a player's weapon (monsters have none to lose), and not while one is already gone.
+		if ((target != npc) && hasEffect(skill, "Disarm") && ((!target.isPlayer() && !target.isPvpFakePlayer()) || target.isDisarmed()))
+		{
+			return false;
+		}
+		
 		return skill.checkPreConditions(npc, target);
 	}
 	
@@ -2043,6 +2063,13 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		noticeDefenses(target, skill.isMagic());
 		clientStopMoving(null);
+		
+		// Blink and Warp jump back from where it faces: it faces the player it gets away from.
+		if (hasEffect(skill, "Blink"))
+		{
+			npc.setHeading(LocationUtil.calculateHeadingFrom(npc, target));
+		}
+		
 		npc.setTarget(target);
 		npc.doCast(skill);
 		return CastResult.CAST;
@@ -2365,6 +2392,35 @@ public class FakePlayerPvpAI extends AttackableAI
 			npc.doCast(skill);
 			npc.setTarget(target);
 			return true;
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * @param skill a skill
+	 * @param effectName the simple class name of an effect handler (Disarm, Blink...)
+	 * @return {@code true} if {@code skill} has that effect, on its targets or on the caster
+	 */
+	private static boolean hasEffect(Skill skill, String effectName)
+	{
+		for (EffectScope scope : new EffectScope[]
+		{
+			EffectScope.GENERAL,
+			EffectScope.SELF
+		})
+		{
+			final List<AbstractEffect> effects = skill.getEffects(scope);
+			if (effects != null)
+			{
+				for (AbstractEffect effect : effects)
+				{
+					if (effectName.equals(effect.getClass().getSimpleName()))
+					{
+						return true;
+					}
+				}
+			}
 		}
 		
 		return false;

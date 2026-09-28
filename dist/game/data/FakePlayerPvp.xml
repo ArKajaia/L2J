@@ -49,6 +49,9 @@
 	                 is safe (the cast is 15 seconds, and it runs on when a player catches up) and goes back to the fight.
 	     link      - toggles switched on with the servitor and off when it dies (Transfer Pain: part of the damage it
 	                 takes goes to the servitor).
+	     transform - combat transformations (Kamael Final Form) used once a PvP gets serious (hurt, or several
+	                 players). It then looks transformed and fights up close with the transformation's skills only,
+	                 like a player, until it ends.
 	     combo     - skill chains played in order, like a practiced player's rotation. The first one that is
 	                 ready (required steps learned and off cooldown, enough energy) starts.
 	                 pvp="true": only against players. chance: % to start it when ready (default 100).
@@ -721,6 +724,8 @@
 		<toggle>500,480,481,335</toggle>
 		<rush>793,494,493,484</rush>
 		<peel>485</peel>
+		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
+		<transform>538</transform> <!-- Final Form -->
 		<combo name="Shoulder charge" pvp="true">
 			<step skill="494" /> <!-- Shoulder Charge: charges in and stuns -->
 			<step skill="482" self="true" optional="true" /> <!-- Furious Soul -->
@@ -741,7 +746,9 @@
 		<buff>1441,482,1532,1515</buff>
 		<emergency>837,1556</emergency>
 		<toggle>481,480</toggle>
-		<peel>1448,1446,1447</peel>
+		<peel>1448,1446,1447</peel> <!-- Blink stuns around it and jumps back -->
+		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
+		<transform>538</transform> <!-- Final Form -->
 		<combo name="Soul vortex" pvp="true">
 			<step skill="1512" /> <!-- Soul Vortex -->
 			<step skill="1513" optional="true" /> <!-- Soul Vortex Extinction -->
@@ -761,7 +768,9 @@
 		<buff>1441,482,1532,1515</buff>
 		<emergency>837,1556</emergency>
 		<toggle>481,480</toggle>
-		<peel>1448,1446,1447</peel>
+		<peel>1448,1446,1447</peel> <!-- Blink stuns around it and jumps back -->
+		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
+		<transform>538</transform> <!-- Final Form -->
 		<combo name="Soul vortex" pvp="true">
 			<step skill="1512" /> <!-- Soul Vortex -->
 			<step skill="1513" optional="true" /> <!-- Soul Vortex Extinction -->
@@ -781,7 +790,9 @@
 		<buff>490,482,1514,1470</buff>
 		<toggle>334,481,479</toggle>
 		<move>622</move>
-		<peel>627</peel>
+		<peel>627,628</peel> <!-- Soul Shock, Warp (jumps back from a player in melee range) -->
+		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
+		<transform>538</transform> <!-- Final Form -->
 		<combo name="Real target" pvp="true">
 			<step skill="522" /> <!-- Real Target -->
 			<step skill="790" optional="true" /> <!-- Wild Shot -->

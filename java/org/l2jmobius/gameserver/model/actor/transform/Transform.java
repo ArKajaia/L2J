@@ -111,6 +111,15 @@ public class Transform
 		return player != null ? (player.getAppearance().isFemale() ? _femaleTemplate : _maleTemplate) : null;
 	}
 	
+	/**
+	 * @param female {@code true} for the female template
+	 * @return the template of that sex (for a roaming fake player, which has no player appearance)
+	 */
+	public TransformTemplate getTemplate(boolean female)
+	{
+		return female ? _femaleTemplate : _maleTemplate;
+	}
+	
 	public void setTemplate(boolean male, TransformTemplate template)
 	{
 		if (male)

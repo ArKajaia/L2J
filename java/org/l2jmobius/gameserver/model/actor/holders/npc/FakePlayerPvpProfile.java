@@ -53,6 +53,12 @@ public class FakePlayerPvpProfile
 	private final FakePlayerPvpWeapon _bow;
 	private final FakePlayerPvpWeapon _polearm;
 	private volatile FakePlayerPvpWeapon _heldWeapon;
+	// Its bare hands (and shield) while a player's Disarm holds, and the weapon it had out before.
+	private FakePlayerPvpWeapon _unarmed;
+	private volatile FakePlayerPvpWeapon _disarmedWeapon;
+	// A combat transformation (Kamael Final Form): its id and the skills it fights with meanwhile, instead of its class skills.
+	private volatile int _transformId;
+	private volatile List<Skill> _transformSkills = Collections.emptyList();
 	// Its servitor (necromancers), null when it has none out.
 	private volatile Npc _servitor;
 	private final int _maxCharges;
@@ -122,9 +128,75 @@ public class FakePlayerPvpProfile
 		_skills.put(category, skills);
 	}
 	
+	/**
+	 * @param category a skill category
+	 * @return its skills of that category; in a combat transformation (Final Form), like a player, only the transformation's attacks
+	 */
 	public List<Skill> getSkills(SkillCategory category)
 	{
+		if (_transformId > 0)
+		{
+			return category == SkillCategory.ATTACK ? _transformSkills : Collections.emptyList();
+		}
+		
 		return _skills.getOrDefault(category, Collections.emptyList());
+	}
+	
+	/**
+	 * @return {@code true} while it is in a combat transformation (Final Form)
+	 */
+	public boolean isTransformed()
+	{
+		return _transformId > 0;
+	}
+	
+	public int getTransformId()
+	{
+		return _transformId;
+	}
+	
+	/**
+	 * @param transformId the transformation, 0 to end it
+	 * @param skills the skills it fights with meanwhile
+	 */
+	public void setTransform(int transformId, List<Skill> skills)
+	{
+		_transformSkills = transformId > 0 ? skills : Collections.emptyList();
+		_transformId = transformId;
+	}
+	
+	/**
+	 * @return the transformation's attacks (empty when not transformed)
+	 */
+	public List<Skill> getTransformSkills()
+	{
+		return _transformSkills;
+	}
+	
+	/**
+	 * @return its bare hands (with its shield), what it holds while disarmed
+	 */
+	public FakePlayerPvpWeapon getUnarmed()
+	{
+		return _unarmed;
+	}
+	
+	public void setUnarmed(FakePlayerPvpWeapon unarmed)
+	{
+		_unarmed = unarmed;
+	}
+	
+	/**
+	 * @return the weapon a player's Disarm took from it, {@code null} if none
+	 */
+	public FakePlayerPvpWeapon getDisarmedWeapon()
+	{
+		return _disarmedWeapon;
+	}
+	
+	public void setDisarmedWeapon(FakePlayerPvpWeapon weapon)
+	{
+		_disarmedWeapon = weapon;
 	}
 	
 	public FakePlayerPvpBuild getBuild()
@@ -316,9 +388,12 @@ public class FakePlayerPvpProfile
 	/**
 	 * @return the combos it can play at its level, most preferred first
 	 */
+	/**
+	 * @return its combos, none in a combat transformation (Final Form)
+	 */
 	public List<FakePlayerPvpCombo.Chain> getCombos()
 	{
-		return _combos;
+		return _transformId > 0 ? Collections.emptyList() : _combos;
 	}
 	
 	/**

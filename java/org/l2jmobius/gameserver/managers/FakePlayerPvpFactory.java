@@ -454,6 +454,9 @@ public class FakePlayerPvpFactory
 			}
 		}
 		
+		// Bare hands (keeping its shield), for when a player's Disarm takes its weapon.
+		profile.setUnarmed(createWeapon(classTemplate, null, shield, 0));
+		
 		template.setSkills(skills);
 		template.setFakePlayerPvpProfile(profile);
 		return template;
