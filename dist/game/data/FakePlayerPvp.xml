@@ -44,6 +44,11 @@
 	                 back, and a fake player running away uses them on its pursuer (roots, stuns, Aura Flash, Trick).
 	                 The first one that reaches the player from where it stands is used (a melee stun only once it is on it).
 	     cleanse   - skills that remove what holds it back, only used when it has it (Break Duress, Remedy...).
+	     summon    - servitor summons, "a|b" for the one to use (e.g. Summon Reanimated Man). It spawns with its servitor out,
+	                 which fights what it fights. When the servitor dies in a PvP it runs off, summons a new one where it
+	                 is safe (the cast is 15 seconds, and it runs on when a player catches up) and goes back to the fight.
+	     link      - toggles switched on with the servitor and off when it dies (Transfer Pain: part of the damage it
+	                 takes goes to the servitor).
 	     combo     - skill chains played in order, like a practiced player's rotation. The first one that is
 	                 ready (required steps learned and off cooldown, enough energy) starts.
 	                 pvp="true": only against players. chance: % to start it when ready (default 100).
@@ -345,6 +350,8 @@
 		<emergency>1495</emergency>
 		<toggle>337</toggle>
 		<peel>1169,1170,1069,1381</peel>
+		<summon>1129|1154</summon> <!-- Summon Reanimated Man (skeleton), Summon Corrupted Man before 44 -->
+		<link>1262</link> <!-- Transfer Pain -->
 		<combo name="Doom and death link" pvp="true">
 			<step skill="1336" /> <!-- Curse of Doom -->
 			<step skill="1337" optional="true" /> <!-- Curse of Abyss -->

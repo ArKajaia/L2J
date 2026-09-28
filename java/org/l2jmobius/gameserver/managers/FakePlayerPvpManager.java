@@ -56,14 +56,17 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpWeapon;
+import org.l2jmobius.gameserver.model.actor.instance.FakePlayerPvpServitor;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.item.holders.ItemEnchantHolder;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.skill.AbnormalType;
 import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
+import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.model.zone.ZoneRegion;
 import org.l2jmobius.gameserver.model.zone.ZoneType;
@@ -103,6 +106,8 @@ public class FakePlayerPvpManager
 	public static final long PVP_HATE = 1_000_000;
 	/** Greater Healing Potion effect. */
 	private static final int POTION_SKILL_ID = 2037;
+	/** Transfer Pain only works with the servitor this close, like a player's. */
+	private static final int SERVITOR_TRANSFER_RANGE = 1000;
 	/** Milliseconds between two {@link #maintain} runs. */
 	private static final long MAINTAIN_INTERVAL = 30000;
 	/** A player this close sees a fake player even behind a wall (see {@link #isSeenByPlayer}). */
@@ -1111,6 +1116,12 @@ public class FakePlayerPvpManager
 		refreshBuffs(fake, profile);
 		fake.setCurrentHpMp(fake.getMaxHp(), fake.getMaxMp());
 		fake.broadcastInfo();
+		
+		// A necromancer arrives with its servitor out, like a player.
+		if (profile.needsServitor())
+		{
+			profile.getSkills(SkillCategory.SUMMON).get(0).applyEffects(fake, fake);
+		}
 		return fake;
 	}
 	
@@ -1124,6 +1135,8 @@ public class FakePlayerPvpManager
 		{
 			return;
 		}
+		
+		unsummonServitor(fake);
 		
 		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
 		final Npc monster = profile.takeReplacedMonster();
@@ -1758,6 +1771,130 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
+	 * Called by the Summon effect when a fake player finishes summoning its servitor (a player's {@link org.l2jmobius.gameserver.model.actor.instance.Servitor} needs a player owner): the servitor, made from the same template, comes out next to it, and its link toggles
+	 * (Transfer Pain) go on.
+	 * @param fake the fake player
+	 * @param npcId the servitor npc id of the summon skill
+	 */
+	public void summonServitor(Npc fake, int npcId)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		if ((profile == null) || fake.isDead() || !fake.isSpawned() || !profile.needsServitor())
+		{
+			return;
+		}
+		
+		final NpcTemplate template = NpcData.getInstance().getTemplate(npcId);
+		if (template == null)
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": " + fake.getName() + " could not summon unknown servitor " + npcId + ".");
+			return;
+		}
+		
+		final FakePlayerPvpServitor servitor = new FakePlayerPvpServitor(template, fake);
+		servitor.setTitle(fake.getName());
+		servitor.setInstanceId(fake.getInstanceId());
+		servitor.setHeading(fake.getHeading());
+		servitor.setCurrentHpMp(servitor.getMaxHp(), servitor.getMaxMp());
+		profile.setServitor(servitor);
+		
+		final double angle = Rnd.nextDouble() * 2 * Math.PI;
+		final int offset = fake.getTemplate().getCollisionRadius() + template.getCollisionRadius() + 30;
+		final Location location = GeoEngine.getInstance().getValidLocation(fake.getX(), fake.getY(), fake.getZ(), fake.getX() + (int) (Math.cos(angle) * offset), fake.getY() + (int) (Math.sin(angle) * offset), fake.getZ(), fake.getInstanceId());
+		servitor.spawnMe(location.getX(), location.getY(), location.getZ());
+		servitor.setRunning();
+		if (servitor.getInstanceId() > 0)
+		{
+			servitor.broadcastInfo();
+		}
+		
+		switchLink(fake, profile, true);
+	}
+	
+	/**
+	 * Sends a fake player's servitor away (it died, logged off, or left it behind) and switches its link toggles off.
+	 * @param fake the fake player
+	 */
+	public void unsummonServitor(Npc fake)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		if (profile == null)
+		{
+			return;
+		}
+		
+		final Npc servitor = profile.getServitor();
+		profile.setServitor(null);
+		switchLink(fake, profile, false);
+		if ((servitor != null) && servitor.isSpawned())
+		{
+			servitor.deleteMe();
+		}
+	}
+	
+	/**
+	 * Called when a fake player's servitor dies: Transfer Pain has nothing left to link to, so it goes off. The fake player summons a new one (see {@link org.l2jmobius.gameserver.ai.FakePlayerPvpAI}).
+	 * @param servitor the servitor
+	 */
+	public void onServitorDeath(FakePlayerPvpServitor servitor)
+	{
+		final Npc owner = servitor.getOwner();
+		final FakePlayerPvpProfile profile = owner.getTemplate().getFakePlayerPvpProfile();
+		if ((profile != null) && (profile.getServitor() == servitor))
+		{
+			switchLink(owner, profile, false);
+		}
+	}
+	
+	/**
+	 * Switches the link toggles (Transfer Pain) of a fake player on or off.
+	 * @param fake the fake player
+	 * @param profile its profile
+	 * @param on {@code true} to switch them on (when missing), {@code false} to switch them off
+	 */
+	public void switchLink(Npc fake, FakePlayerPvpProfile profile, boolean on)
+	{
+		for (Skill skill : profile.getSkills(SkillCategory.LINK))
+		{
+			if (!on)
+			{
+				fake.stopSkillEffects(SkillFinishType.REMOVED, skill.getId());
+			}
+			else if (!fake.isAffectedBySkill(skill.getId()))
+			{
+				skill.applyEffects(fake, fake);
+			}
+		}
+	}
+	
+	/**
+	 * Transfer Pain: like a player's, part of the damage a fake player takes goes to its servitor when it is close by, never enough to kill the servitor.
+	 * @param fake the fake player being hit
+	 * @param damage the damage
+	 * @param attacker who deals it, can be {@code null}
+	 * @return the damage the fake player still takes
+	 */
+	public double transferDamage(Attackable fake, double damage, Creature attacker)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		final Npc servitor = profile.getServitor();
+		if ((damage <= 0) || (servitor == null) || (servitor == attacker) || servitor.isDead() || !servitor.isSpawned() || (fake.calculateDistance3D(servitor) > SERVITOR_TRANSFER_RANGE))
+		{
+			return damage;
+		}
+		
+		final double percent = fake.getStat().calcStat(Stat.TRANSFER_DAMAGE_PERCENT, 0, null, null);
+		final double transferred = Math.min(servitor.getCurrentHp() - 1, (damage * percent) / 100);
+		if (transferred <= 0)
+		{
+			return damage;
+		}
+		
+		servitor.reduceCurrentHp(transferred, attacker, null);
+		return damage - transferred;
+	}
+	
+	/**
 	 * A buff counts as active when the skill itself, or any buff of the same abnormal type, is on: Focus Chance, Focus Power and Focus Death (or Might and Attack Aura...) replace each other, and a weaker one can't replace a stronger one, so casting it again would
 	 * just loop. The same goes for a slot an improved buff blocks (Improved Combat blocks Might and Shield).
 	 * @param creature the one to check
@@ -1877,6 +2014,10 @@ public class FakePlayerPvpManager
 				
 				refreshToggles(fake, profile);
 				refreshBuffs(fake, profile);
+				if (profile.getServitor() != null)
+				{
+					switchLink(fake, profile, !profile.needsServitor());
+				}
 			}
 			catch (Exception e)
 			{

@@ -18,6 +18,7 @@ package handlers.skill.effects;
 
 import org.l2jmobius.gameserver.data.xml.ExperienceData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
+import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -66,6 +67,13 @@ public class Summon extends AbstractEffect
 	@Override
 	public void onStart(Creature effector, Creature effected, Skill skill)
 	{
+		// A roaming fake player (necromancer) has no player to own a Servitor: its servitor is an npc of the same template.
+		if (effector.isPvpFakePlayer())
+		{
+			FakePlayerPvpManager.getInstance().summonServitor(effector.asNpc(), _npcId);
+			return;
+		}
+		
 		if (!effector.isPlayer() || effector.asPlayer().hasSummon())
 		{
 			return;

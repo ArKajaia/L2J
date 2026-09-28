@@ -75,7 +75,11 @@ public class FakePlayerPvpBuild
 		/** Skills that stop a player in melee range before stepping back or running away (roots, stuns, Aura Flash, Trick). */
 		PEEL,
 		/** Skills that remove what holds it back (Break Duress against roots, Remedy against bleeding...). */
-		CLEANSE
+		CLEANSE,
+		/** Servitor summons (Summon Reanimated Man...): it keeps one out, and resummons it away from a PvP when it dies. */
+		SUMMON,
+		/** Toggles that only make sense with its servitor out (Transfer Pain), switched on with the servitor and off when it dies. */
+		LINK
 	}
 	
 	private final String _name;
