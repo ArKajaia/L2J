@@ -1200,7 +1200,7 @@ public class FakePlayerPvpManager
 			profile.setSpawnTime(System.currentTimeMillis());
 			profile.onReturn(System.currentTimeMillis() + (FakePlayerPvpConfig.RETURN_REVENGE_TIME * 1000L));
 			
-			// It comes back with its weapon out, not the bow it may have died with.
+			// It comes back with its weapon out, not the bow or polearm it may have died with (the new body only has the skills of the template).
 			if (profile.getHeldWeapon() != profile.getMainWeapon())
 			{
 				setTemplateWeapon(template, profile, profile.getMainWeapon());
@@ -1713,9 +1713,9 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
-	 * Switches the weapon (and shield) a fake player holds, like a player equipping another weapon: its stats, the skills that need a weapon type and what players see follow the new weapon.
+	 * Switches the weapon (and shield) a fake player holds, like a player equipping another weapon: its stats, its item skills (a polearm's multi-attack), the skills that need a weapon type and what players see follow the new weapon.
 	 * @param fake the fake player
-	 * @param weapon its main weapon or its bow
+	 * @param weapon its main weapon, its bow or its polearm
 	 * @return {@code true} if it switched
 	 */
 	public boolean equipWeapon(Npc fake, FakePlayerPvpWeapon weapon)
@@ -1727,7 +1727,17 @@ public class FakePlayerPvpManager
 			return false;
 		}
 		
+		for (Skill skill : profile.getHeldWeapon().getSkills())
+		{
+			fake.removeSkill(skill, true);
+		}
+		
 		setTemplateWeapon(template, profile, weapon);
+		
+		for (Skill skill : weapon.getSkills())
+		{
+			fake.addSkill(skill);
+		}
 		
 		// Shows the new weapon to the players around.
 		fake.setLRHandId(weapon.getShieldId(), weapon.getWeaponId());

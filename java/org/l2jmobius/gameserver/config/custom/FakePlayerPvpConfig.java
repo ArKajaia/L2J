@@ -99,6 +99,11 @@ public class FakePlayerPvpConfig
 	public static int WEAPON_SWAP_CHASE_TIME;
 	public static int WEAPON_SWAP_MELEE_DISTANCE;
 	public static int WEAPON_SWAP_INTERVAL;
+	public static boolean POLEARM_SWAP_ENABLED;
+	public static int POLEARM_SWAP_MIN_LEVEL;
+	public static int POLEARM_SWAP_MONSTERS;
+	public static int POLEARM_PUT_AWAY_MONSTERS;
+	public static int POLEARM_SURROUND_RANGE;
 	public static int TAUNT_CHANCE;
 	public static int GREET_CHANCE;
 	public static int RETURN_CHANCE;
@@ -198,6 +203,11 @@ public class FakePlayerPvpConfig
 		WEAPON_SWAP_CHASE_TIME = Math.max(0, config.getInt("FakePvpWeaponSwapChaseTime", 4000));
 		WEAPON_SWAP_MELEE_DISTANCE = Math.max(0, config.getInt("FakePvpWeaponSwapMeleeDistance", 150));
 		WEAPON_SWAP_INTERVAL = Math.max(500, config.getInt("FakePvpWeaponSwapInterval", 3000));
+		POLEARM_SWAP_ENABLED = config.getBoolean("FakePvpPolearmSwapEnabled", true);
+		POLEARM_SWAP_MIN_LEVEL = config.getInt("FakePvpPolearmSwapMinLevel", 20);
+		POLEARM_SWAP_MONSTERS = Math.max(1, config.getInt("FakePvpPolearmSwapMonsters", 8));
+		POLEARM_PUT_AWAY_MONSTERS = Math.max(0, Math.min(POLEARM_SWAP_MONSTERS, config.getInt("FakePvpPolearmPutAwayMonsters", 4)));
+		POLEARM_SURROUND_RANGE = Math.max(50, config.getInt("FakePvpPolearmSurroundRange", 300));
 		TAUNT_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpTauntChance", 50)));
 		GREET_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpGreetChance", 25)));
 		RETURN_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpReturnChance", 30)));

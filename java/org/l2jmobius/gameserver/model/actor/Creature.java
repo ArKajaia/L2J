@@ -1621,11 +1621,12 @@ public abstract class Creature extends WorldObject
 						continue;
 					}
 					
-					if (isAttackable() && obj.isAttackable() && !asAttackable().isChaos())
+					// A roaming fake player's polearm also sweeps the monsters fighting it, like a player's.
+					if (isAttackable() && obj.isAttackable() && !asAttackable().isChaos() && !(isPvpFakePlayer() && obj.isMonster() && !obj.isFakePlayer() && obj.asAttackable().getAggroList().containsKey(this)))
 					{
 						continue;
 					}
-					
+
 					// Launch a simple attack against the additional target.
 					hitted |= doAttackHitSimple(attack, obj, attackpercent, sAtk, false);
 					attackpercent /= 1.15;

@@ -21,6 +21,7 @@
 package org.l2jmobius.gameserver.managers;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -228,6 +229,18 @@ public class FakePlayerPvpFactory
 			}
 		}
 		
+		// Warriors carry a polearm for when monsters surround them. It hits several of them with the Polearm Multi-attack of the item, which it only has while it holds it.
+		FakePlayerPvpWeapon polearm = null;
+		if (FakePlayerPvpConfig.POLEARM_SWAP_ENABLED && (build.getPolearmKit() != null) && (level >= FakePlayerPvpConfig.POLEARM_SWAP_MIN_LEVEL))
+		{
+			final FakePlayerPvpGearTier polearms = data.getGear(build.getPolearmKit(), level);
+			final ItemTemplate polearmItem = getItem(polearms != null ? polearms.getRHand() : 0);
+			if ((polearmItem instanceof Weapon) && (polearmItem.getItemType() == WeaponType.POLE))
+			{
+				polearm = createWeapon(classTemplate, (Weapon) polearmItem, null, FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.WEAPON_ENCHANT, level) / 2, getPassiveSkills(polearmItem));
+			}
+		}
+		
 		// HP/MP (a real character also has CP on top of HP).
 		final double hp = classTemplate.getBaseHpMax(level) + (FakePlayerPvpConfig.INCLUDE_CP_IN_HP ? classTemplate.getBaseCpMax(level) : 0);
 		final double mp = classTemplate.getBaseMpMax(level) + sumStat(Stat.MAX_MP, weapon, shield, chest, legs, head, gloves, feet, earring, earring, necklace, ring, ring);
@@ -386,8 +399,12 @@ public class FakePlayerPvpFactory
 		{
 			equipment.add(new ItemEnchantHolder(bow.getWeaponId(), 1, bow.getEnchant()));
 		}
+		if (polearm != null)
+		{
+			equipment.add(new ItemEnchantHolder(polearm.getWeaponId(), 1, polearm.getEnchant()));
+		}
 		
-		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), armorWornMask, chest != null ? chest.getItemMask() : 0, maxCharges, equipment, mainWeapon, bow, Rnd.get(100) < FakePlayerPvpConfig.FLEE_CHANCE);
+		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), armorWornMask, chest != null ? chest.getItemMask() : 0, maxCharges, equipment, mainWeapon, bow, polearm, Rnd.get(100) < FakePlayerPvpConfig.FLEE_CHANCE);
 		for (SkillCategory category : SkillCategory.values())
 		{
 			final List<Skill> list = new ArrayList<>();
@@ -466,6 +483,19 @@ public class FakePlayerPvpFactory
 	 */
 	private static FakePlayerPvpWeapon createWeapon(PlayerTemplate classTemplate, Weapon weapon, Armor shield, int enchant)
 	{
+		return createWeapon(classTemplate, weapon, shield, enchant, Collections.emptyList());
+	}
+	
+	/**
+	 * @param classTemplate the class
+	 * @param weapon the weapon, {@code null} for bare hands
+	 * @param shield the shield, {@code null} for none
+	 * @param enchant the weapon enchant level
+	 * @param skills the passive skills it gives while held
+	 * @return the stats holding {@code weapon} gives, like its "set" functions for a real character, with the enchant bonus
+	 */
+	private static FakePlayerPvpWeapon createWeapon(PlayerTemplate classTemplate, Weapon weapon, Armor shield, int enchant, List<Skill> skills)
+	{
 		final double pAtk = weapon != null ? getStat(weapon, Stat.POWER_ATTACK) + weaponPAtkBonus(weapon, enchant) : classTemplate.getBasePAtk();
 		final double mAtk = weapon != null ? getStat(weapon, Stat.MAGIC_ATTACK) + weaponMAtkBonus(weapon, enchant) : classTemplate.getBaseMAtk();
 		final double pAtkSpd = weapon != null ? getStat(weapon, Stat.POWER_ATTACK_SPEED) : classTemplate.getBasePAtkSpd();
@@ -475,7 +505,30 @@ public class FakePlayerPvpFactory
 		final WeaponType attackType = weapon != null ? weapon.getItemType() : WeaponType.FIST;
 		final int shieldDefence = shield != null ? (int) getStat(shield, Stat.SHIELD_DEFENCE) : 0;
 		final int shieldRate = shield != null ? (int) getStat(shield, Stat.SHIELD_RATE) : 0;
-		return new FakePlayerPvpWeapon(weapon, shield, weapon != null ? enchant : 0, Math.max(1, (int) Math.round(pAtk)), Math.max(1, (int) Math.round(mAtk)), (int) Math.round(pAtkSpd), (int) Math.round(critRate), (int) Math.round(atkRange), (int) Math.round(randomDamage), attackType, shieldDefence, shieldRate);
+		return new FakePlayerPvpWeapon(weapon, shield, weapon != null ? enchant : 0, Math.max(1, (int) Math.round(pAtk)), Math.max(1, (int) Math.round(mAtk)), (int) Math.round(pAtkSpd), (int) Math.round(critRate), (int) Math.round(atkRange), (int) Math.round(randomDamage), attackType, shieldDefence, shieldRate, skills);
+	}
+	
+	/**
+	 * @param item an item
+	 * @return the passive skills of {@code item} (a polearm's Polearm Multi-attack)
+	 */
+	private static List<Skill> getPassiveSkills(ItemTemplate item)
+	{
+		final List<Skill> skills = new ArrayList<>();
+		final SkillHolder[] holders = item.getSkills();
+		if (holders != null)
+		{
+			for (SkillHolder holder : holders)
+			{
+				final Skill skill = holder.getSkill();
+				if ((skill != null) && skill.isPassive())
+				{
+					skills.add(skill);
+				}
+			}
+		}
+		
+		return skills;
 	}
 	
 	private static void addSkills(Map<Integer, Skill> skills, List<SkillHolder> holders)

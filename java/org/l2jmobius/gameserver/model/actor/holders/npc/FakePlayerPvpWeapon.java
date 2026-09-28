@@ -20,12 +20,15 @@
  */
 package org.l2jmobius.gameserver.model.actor.holders.npc;
 
+import java.util.List;
+
 import org.l2jmobius.gameserver.model.item.Armor;
 import org.l2jmobius.gameserver.model.item.Weapon;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
+import org.l2jmobius.gameserver.model.skill.Skill;
 
 /**
- * A weapon (and shield) a roaming fake player can hold, with the stats it gives, like the weapon "set" functions of a real character. A fake player holds its main weapon, and tanks and tyrants also carry a bow they switch to.
+ * A weapon (and shield) a roaming fake player can hold, with the stats it gives, like the weapon "set" functions of a real character. A fake player holds its main weapon, tanks and tyrants also carry a bow and warriors a polearm they switch to.
  */
 public class FakePlayerPvpWeapon
 {
@@ -41,8 +44,9 @@ public class FakePlayerPvpWeapon
 	private final WeaponType _attackType;
 	private final int _shieldDefence;
 	private final int _shieldRate;
+	private final List<Skill> _skills;
 	
-	public FakePlayerPvpWeapon(Weapon weapon, Armor shield, int enchant, int pAtk, int mAtk, int pAtkSpd, int critRate, int attackRange, int randomDamage, WeaponType attackType, int shieldDefence, int shieldRate)
+	public FakePlayerPvpWeapon(Weapon weapon, Armor shield, int enchant, int pAtk, int mAtk, int pAtkSpd, int critRate, int attackRange, int randomDamage, WeaponType attackType, int shieldDefence, int shieldRate, List<Skill> skills)
 	{
 		_weapon = weapon;
 		_shield = shield;
@@ -56,6 +60,7 @@ public class FakePlayerPvpWeapon
 		_attackType = attackType;
 		_shieldDefence = shieldDefence;
 		_shieldRate = shieldRate;
+		_skills = skills;
 	}
 	
 	/**
@@ -132,6 +137,14 @@ public class FakePlayerPvpWeapon
 	public int getShieldRate()
 	{
 		return _shieldRate;
+	}
+	
+	/**
+	 * @return the passive skills it gives while held, like the item skills of a real character's weapon (a polearm's Polearm Multi-attack)
+	 */
+	public List<Skill> getSkills()
+	{
+		return _skills;
 	}
 	
 	/**

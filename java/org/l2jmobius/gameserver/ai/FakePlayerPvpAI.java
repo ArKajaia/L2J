@@ -64,7 +64,7 @@ import org.l2jmobius.gameserver.network.serverpackets.ChangeWaitType;
  * AI of a roaming fake player (see {@link FakePlayerPvpManager}). It plays like a character of its class: hunts the monsters around its spawn point, keeps its buffs up, uses the class skills it has learned (best ones first), drinks potions, archers and mages keep their
  * distance, and it fights any player that attacks it or steals its kill. In a PvP it plays like a player: it focuses the weakest enemy, closes the gap (Rush, Shadow Step, Dash), stops a melee attacker before stepping back (roots, stuns), waits out an invincible enemy,
  * cleanses roots and bleeds, and some fake players run from a fight they are losing and read a Scroll of Escape once they got away (and out of every player's sight). After a few hits it notices a player's Ultimate Defense, Guts, Zealot, Angelic Icon or magic mirror, stops
- * wasting what doesn't get through and keeps its distance while it can. It sits down to rest after a hard fight, and may go after a flagged or karma player passing by.
+ * wasting what doesn't get through and keeps its distance while it can. It sits down to rest after a hard fight, and may go after a flagged or karma player passing by. Warriors surrounded by monsters take out a polearm to hit several of them at once.
  */
 public class FakePlayerPvpAI extends AttackableAI
 {
@@ -268,7 +268,7 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// Fight over: the bow goes back in the bag.
+		// Fight over: the bow or polearm goes back in the bag.
 		_chaseTarget = null;
 		_progressTarget = null;
 		_focus = null;
@@ -276,7 +276,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		_lastStand = false;
 		_noticedDefenses.clear();
 		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
-		if ((profile != null) && profile.isBowHeld())
+		if ((profile != null) && (profile.getHeldWeapon() != profile.getMainWeapon()))
 		{
 			FakePlayerPvpManager.getInstance().equipWeapon(npc, profile.getMainWeapon());
 		}
@@ -498,12 +498,23 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// Tanks and tyrants take out their bow against a player they can't catch.
+		// Warriors take out their polearm when monsters surround them, tanks and tyrants their bow against a player they can't catch.
+		if (profile.getPolearm() != null)
+		{
+			choosePolearm(npc, profile, target, now);
+		}
 		if (profile.getBow() != null)
 		{
 			chooseWeapon(npc, profile, target, distance - collision, now);
 		}
 		final boolean bowHeld = profile.isBowHeld();
+		final boolean polearmHeld = profile.isPolearmHeld();
+		
+		// With the polearm out its damage is its normal attack, which hits several monsters at once, whatever its class.
+		if (polearmHeld)
+		{
+			_autoAttacker = true;
+		}
 		
 		// Take care of itself first: emergency skills, cleansing, heals, buffs.
 		if ((hpRatio < 0.3) && castOnSelf(npc, target, profile.getSkills(SkillCategory.EMERGENCY), true, true))
@@ -587,8 +598,8 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// Combos: the skill chains a practiced player of this class plays (with its weapon, not with the spare bow).
-		if (!bowHeld && (defenses == 0) && playCombo(npc, profile, target, pvp, distance, collision, canMove, now))
+		// Combos: the skill chains a practiced player of this class plays (with its weapon, not with the spare bow or polearm).
+		if (!bowHeld && !polearmHeld && (defenses == 0) && playCombo(npc, profile, target, pvp, distance, collision, canMove, now))
 		{
 			return;
 		}
@@ -1740,6 +1751,67 @@ public class FakePlayerPvpAI extends AttackableAI
 		{
 			_nextWeaponSwapTime = now + FakePlayerPvpConfig.WEAPON_SWAP_INTERVAL;
 		}
+	}
+	
+	/**
+	 * Warriors switch to their polearm when more than {@link FakePlayerPvpConfig#POLEARM_SWAP_MONSTERS} monsters surround them, so their normal attacks hit several of them at once. They switch back to their weapon once only
+	 * {@link FakePlayerPvpConfig#POLEARM_PUT_AWAY_MONSTERS} or fewer are left, or when they fight a player. A real player swaps weapons instantly, so it doesn't cost a tick.
+	 * @param npc the fake player
+	 * @param profile its profile, with a polearm
+	 * @param target its target
+	 * @param now the current time
+	 */
+	private void choosePolearm(Attackable npc, FakePlayerPvpProfile profile, Creature target, long now)
+	{
+		if ((now < _nextWeaponSwapTime) || npc.isAttackingNow() || npc.isCastingNow() || npc.isStunned() || npc.isSleeping() || npc.isParalyzed())
+		{
+			return;
+		}
+		
+		final FakePlayerPvpManager manager = FakePlayerPvpManager.getInstance();
+		if (profile.isPolearmHeld())
+		{
+			if ((target.isPlayable() || (countSurroundingMonsters(npc) <= FakePlayerPvpConfig.POLEARM_PUT_AWAY_MONSTERS)) && manager.equipWeapon(npc, profile.getMainWeapon()))
+			{
+				_nextWeaponSwapTime = now + FakePlayerPvpConfig.WEAPON_SWAP_INTERVAL;
+			}
+			return;
+		}
+		
+		// Only against monsters, and not with the bow out (it goes back to its weapon first).
+		if (target.isPlayable() || profile.isBowHeld())
+		{
+			return;
+		}
+		
+		if ((countSurroundingMonsters(npc) > FakePlayerPvpConfig.POLEARM_SWAP_MONSTERS) && manager.equipWeapon(npc, profile.getPolearm()))
+		{
+			_nextWeaponSwapTime = now + FakePlayerPvpConfig.WEAPON_SWAP_INTERVAL;
+			
+			// The combo it was playing needs its weapon.
+			if (_combo != null)
+			{
+				endCombo(now);
+			}
+		}
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @return how many monsters fight it close by (the ones its polearm sweeps)
+	 */
+	private static int countSurroundingMonsters(Attackable npc)
+	{
+		int count = 0;
+		for (Monster monster : World.getInstance().getVisibleObjectsInRange(npc, Monster.class, FakePlayerPvpConfig.POLEARM_SURROUND_RANGE))
+		{
+			if (!monster.isAlikeDead() && !monster.isFakePlayer() && hates(monster, npc, 1))
+			{
+				count++;
+			}
+		}
+		
+		return count;
 	}
 	
 	/**
