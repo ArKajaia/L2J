@@ -71,71 +71,11 @@ public class RequestConfirmCancelItem extends ClientPacket
 			return;
 		}
 		
-		int price = 0;
-		switch (item.getTemplate().getCrystalType())
+		final long price = AbstractRefinePacket.getAugmentRemovalPrice(item);
+		if (price <= 0)
 		{
-			case C:
-			{
-				if (item.getCrystalCount() < 1720)
-				{
-					price = 95000;
-				}
-				else if (item.getCrystalCount() < 2452)
-				{
-					price = 150000;
-				}
-				else
-				{
-					price = 210000;
-				}
-				break;
-			}
-			case B:
-			{
-				if (item.getCrystalCount() < 1746)
-				{
-					price = 240000;
-				}
-				else
-				{
-					price = 270000;
-				}
-				break;
-			}
-			case A:
-			{
-				if (item.getCrystalCount() < 2160)
-				{
-					price = 330000;
-				}
-				else if (item.getCrystalCount() < 2824)
-				{
-					price = 390000;
-				}
-				else
-				{
-					price = 420000;
-				}
-				break;
-			}
-			case S:
-			{
-				price = 480000;
-				break;
-			}
-			case S80:
-			case S84:
-			{
-				price = 920000;
-				break;
-			}
-			
-			// TODO: S84 TOP price 3.2M
 			// any other item type is not augmentable
-			default:
-			{
-				return;
-			}
+			return;
 		}
 		
 		player.sendPacket(new ExPutItemResultForVariationCancel(item, price));

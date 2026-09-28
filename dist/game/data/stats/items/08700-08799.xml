@@ -274,6 +274,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="5000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="46" />
 		</conditions>
@@ -286,6 +287,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="6000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="49" />
 		</conditions>
@@ -298,6 +300,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="7200" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="52" />
 		</conditions>
@@ -310,6 +313,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="8640" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="55" />
 		</conditions>
@@ -322,6 +326,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="10000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="58" />
 		</conditions>
@@ -334,6 +339,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="12000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="61" />
 		</conditions>
@@ -346,6 +352,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="15000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="64" />
 		</conditions>
@@ -358,6 +365,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="18000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="67" />
 		</conditions>
@@ -370,6 +378,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="21600" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="70" />
 		</conditions>
@@ -382,6 +391,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="24000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="76" />
 		</conditions>
@@ -394,6 +404,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="20000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="46" />
 		</conditions>
@@ -406,6 +417,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="24000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="49" />
 		</conditions>
@@ -418,6 +430,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="28800" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="52" />
 		</conditions>
@@ -430,6 +443,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="34560" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="55" />
 		</conditions>
@@ -442,6 +456,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="40000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="58" />
 		</conditions>
@@ -454,6 +469,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="48000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="61" />
 		</conditions>
@@ -466,6 +482,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="60000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="64" />
 		</conditions>
@@ -478,6 +495,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="72000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="67" />
 		</conditions>
@@ -490,6 +508,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="86400" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="70" />
 		</conditions>
@@ -502,6 +521,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="96000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="76" />
 		</conditions>
@@ -514,6 +534,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="200000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="46" />
 		</conditions>
@@ -526,6 +547,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="240000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="49" />
 		</conditions>
@@ -538,6 +560,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="288000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="52" />
 		</conditions>
@@ -550,6 +573,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="345600" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="55" />
 		</conditions>
@@ -562,6 +586,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="400000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="58" />
 		</conditions>
@@ -574,6 +599,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="480000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="61" />
 		</conditions>
@@ -586,6 +612,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="600000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="64" />
 		</conditions>
@@ -598,6 +625,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="720000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="67" />
 		</conditions>
@@ -610,6 +638,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="864000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="70" />
 		</conditions>
@@ -622,6 +651,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="960000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="76" />
 		</conditions>
@@ -634,6 +664,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="1000000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="46" />
 		</conditions>
@@ -646,6 +677,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="1200000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="49" />
 		</conditions>
@@ -658,6 +690,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="1440000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="52" />
 		</conditions>
@@ -670,6 +703,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="1728000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="55" />
 		</conditions>
@@ -682,6 +716,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="2000000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="58" />
 		</conditions>
@@ -694,6 +729,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="2400000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="61" />
 		</conditions>
@@ -706,6 +742,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="3000000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="64" />
 		</conditions>
@@ -718,6 +755,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="3600000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="67" />
 		</conditions>
@@ -730,6 +768,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="4320000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="70" />
 		</conditions>
@@ -742,6 +781,7 @@
 		<set name="weight" val="2" />
 		<set name="price" val="4800000" />
 		<set name="is_stackable" val="true" />
+		<set name="handler" val="LifeStone" />
 		<conditions msgId="113" addName="1">
 			<player level="76" />
 		</conditions>

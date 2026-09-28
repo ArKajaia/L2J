@@ -25,6 +25,7 @@ import org.l2jmobius.gameserver.model.actor.Playable;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.network.SystemMessageId;
+import org.l2jmobius.gameserver.network.clientpackets.RequestExEnchantItemAttribute;
 import org.l2jmobius.gameserver.network.serverpackets.ExChooseInventoryAttributeItem;
 
 public class EnchantAttribute implements IItemHandler
@@ -47,6 +48,13 @@ public class EnchantAttribute implements IItemHandler
 		if (player.isEnchanting())
 		{
 			player.sendPacket(SystemMessageId.ANOTHER_ENCHANTMENT_IS_IN_PROGRESS_PLEASE_COMPLETE_THE_PREVIOUS_TASK_THEN_TRY_AGAIN);
+			return false;
+		}
+		
+		// The client can't close an empty attribute window (it keeps reopening), so don't open it when nothing can take this attribute.
+		if (!RequestExEnchantItemAttribute.hasAttributableItem(player, item))
+		{
+			player.sendPacket(SystemMessageId.ELEMENTAL_POWER_ENHANCER_USAGE_REQUIREMENT_IS_NOT_SUFFICIENT);
 			return false;
 		}
 		

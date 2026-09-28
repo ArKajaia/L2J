@@ -86,6 +86,7 @@ import handlers.bypass.npc.Festival;
 import handlers.bypass.npc.FindPvP;
 import handlers.bypass.npc.Freight;
 import handlers.bypass.npc.ItemAuctionLink;
+import handlers.bypass.npc.LifeStoneAugment;
 import handlers.bypass.npc.Link;
 import handlers.bypass.npc.Loto;
 import handlers.bypass.npc.Multisell;
@@ -256,6 +257,7 @@ import handlers.items.FishShots;
 import handlers.items.Harvester;
 import handlers.items.ItemSkills;
 import handlers.items.ItemSkillsTemplate;
+import handlers.items.LifeStone;
 import handlers.items.Maps;
 import handlers.items.MercTicket;
 import handlers.items.NicknameColor;
@@ -451,6 +453,7 @@ public class MasterHandler
 			FindPvP.class,
 			Freight.class,
 			ItemAuctionLink.class,
+			LifeStoneAugment.class,
 			Link.class,
 			Loto.class,
 			Multisell.class,
@@ -524,6 +527,7 @@ public class MasterHandler
 			Harvester.class,
 			ItemSkills.class,
 			ItemSkillsTemplate.class,
+			LifeStone.class,
 			Maps.class,
 			MercTicket.class,
 			NicknameColor.class,

@@ -70,71 +70,12 @@ public class RequestRefineCancel extends ClientPacket
 		}
 		
 		// get the price
-		int price = 0;
-		switch (targetItem.getTemplate().getCrystalType())
+		final long price = AbstractRefinePacket.getAugmentRemovalPrice(targetItem);
+		if (price <= 0)
 		{
-			case C:
-			{
-				if (targetItem.getCrystalCount() < 1720)
-				{
-					price = 95000;
-				}
-				else if (targetItem.getCrystalCount() < 2452)
-				{
-					price = 150000;
-				}
-				else
-				{
-					price = 210000;
-				}
-				break;
-			}
-			case B:
-			{
-				if (targetItem.getCrystalCount() < 1746)
-				{
-					price = 240000;
-				}
-				else
-				{
-					price = 270000;
-				}
-				break;
-			}
-			case A:
-			{
-				if (targetItem.getCrystalCount() < 2160)
-				{
-					price = 330000;
-				}
-				else if (targetItem.getCrystalCount() < 2824)
-				{
-					price = 390000;
-				}
-				else
-				{
-					price = 420000;
-				}
-				break;
-			}
-			case S:
-			{
-				price = 480000;
-				break;
-			}
-			case S80:
-			case S84:
-			{
-				price = 920000;
-				break;
-			}
-			
 			// any other item type is not augmentable
-			default:
-			{
-				player.sendPacket(new ExVariationCancelResult(0));
-				return;
-			}
+			player.sendPacket(new ExVariationCancelResult(0));
+			return;
 		}
 		
 		// try to reduce the players adena
