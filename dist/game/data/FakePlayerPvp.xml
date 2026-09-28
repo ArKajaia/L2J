@@ -45,8 +45,9 @@
 	                 The first one that reaches the player from where it stands is used (a melee stun only once it is on it).
 	     cleanse   - skills that remove what holds it back, only used when it has it (Break Duress, Remedy...).
 	     summon    - servitor summons, "a|b" for the one to use (e.g. Summon Reanimated Man). It spawns with its servitor out,
-	                 which fights what it fights. When the servitor dies in a PvP it runs off, summons a new one where it
-	                 is safe (the cast is 15 seconds, and it runs on when a player catches up) and goes back to the fight.
+	                 which fights what it fights. When the servitor dies in a PvP, a build with a link toggle runs off,
+	                 summons a new one where it is safe (the cast is 15 seconds, and it runs on when a player catches up)
+	                 and goes back to the fight; the others summon it again once the fight is over.
 	     link      - toggles switched on with the servitor and off when it dies (Transfer Pain: part of the damage it
 	                 takes goes to the servitor).
 	     transform - combat transformations (Kamael Final Form) used once a PvP gets serious (hurt, or several
@@ -440,6 +441,32 @@
 		<combo name="Hold" pvp="true" chance="50">
 			<step skill="102" /> <!-- Entangle -->
 			<step skill="402" optional="true" /> <!-- Arrest -->
+		</combo>
+	</build>
+	<build name="Hell Knight" classId="91" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="1"> <!-- Dark Avenger line -->
+		<attack>762,401,984,70,3</attack>
+		<debuff>92,353,403,127,65,342</debuff>
+		<buff>82,86,350,916,112,527,760,761</buff>
+		<heal>45</heal> <!-- Divine Heal -->
+		<emergency>110</emergency> <!-- Ultimate Defense -->
+		<toggle>322,335</toggle>
+		<peel>92,403,763</peel> <!-- Shield Stun, Shackle, Hell Scream -->
+		<summon>283</summon> <!-- Summon Dark Panther -->
+		<combo name="Shield stun" pvp="true">
+			<step skill="92" /> <!-- Shield Stun -->
+			<step skill="353" optional="true" /> <!-- Shield Slam -->
+			<step skill="401" /> <!-- Judgment -->
+			<step skill="984" optional="true" /> <!-- Shield Strike -->
+		</combo>
+		<combo name="Touch of death" pvp="true">
+			<step skill="342" /> <!-- Touch of Death: burns CP and cancels buffs -->
+			<step skill="401" optional="true" /> <!-- Judgment -->
+			<step skill="984" /> <!-- Shield Strike -->
+		</combo>
+		<combo name="Shackle" pvp="true" chance="50">
+			<step skill="403" /> <!-- Shackle -->
+			<step skill="127" optional="true" /> <!-- Hamstring -->
+			<step skill="70" /> <!-- Drain Health -->
 		</combo>
 	</build>
 	<build name="Shillien Templar" classId="106" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="1">
