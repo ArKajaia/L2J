@@ -85,13 +85,14 @@ public class FakePlayerPvpBuild
 	private final String _armorKit;
 	private final String _jewelKit;
 	private final String _bowKit;
+	private final String _polearmKit;
 	private final String _buffList;
 	private final int _weight;
 	private final boolean _skillFighter;
 	private final Map<SkillCategory, List<int[]>> _skills = new EnumMap<>(SkillCategory.class);
 	private final List<FakePlayerPvpCombo> _combos = new ArrayList<>();
 	
-	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String buffList, int weight, boolean skillFighter)
+	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight, boolean skillFighter)
 	{
 		_name = name;
 		_playerClass = playerClass;
@@ -100,6 +101,7 @@ public class FakePlayerPvpBuild
 		_armorKit = armorKit;
 		_jewelKit = jewelKit;
 		_bowKit = bowKit;
+		_polearmKit = polearmKit;
 		_buffList = buffList;
 		_weight = weight;
 		_skillFighter = skillFighter;
@@ -191,6 +193,14 @@ public class FakePlayerPvpBuild
 	public String getBowKit()
 	{
 		return _bowKit;
+	}
+	
+	/**
+	 * @return the kit of the polearm it carries besides its weapon and takes out when monsters surround it, {@code null} for none
+	 */
+	public String getPolearmKit()
+	{
+		return _polearmKit;
 	}
 	
 	/**

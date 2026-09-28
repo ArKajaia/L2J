@@ -51,6 +51,7 @@ public class FakePlayerPvpProfile
 	private final int _armorMask;
 	private final FakePlayerPvpWeapon _mainWeapon;
 	private final FakePlayerPvpWeapon _bow;
+	private final FakePlayerPvpWeapon _polearm;
 	private volatile FakePlayerPvpWeapon _heldWeapon;
 	private final int _maxCharges;
 	private final AtomicInteger _charges = new AtomicInteger();
@@ -91,9 +92,10 @@ public class FakePlayerPvpProfile
 	 * @param equipment every item it wears or carries, with its enchant level
 	 * @param mainWeapon its weapon (and shield)
 	 * @param bow the bow it carries besides its weapon, {@code null} for none
+	 * @param polearm the polearm it carries besides its weapon, {@code null} for none
 	 * @param runner {@code true} if it runs away from a PvP it is losing, {@code false} if it fights to the death
 	 */
-	public FakePlayerPvpProfile(FakePlayerPvpBuild build, PlayerClass playerClass, int level, List<SkillHolder> buffs, int armorWornMask, int armorMask, int maxCharges, List<ItemEnchantHolder> equipment, FakePlayerPvpWeapon mainWeapon, FakePlayerPvpWeapon bow, boolean runner)
+	public FakePlayerPvpProfile(FakePlayerPvpBuild build, PlayerClass playerClass, int level, List<SkillHolder> buffs, int armorWornMask, int armorMask, int maxCharges, List<ItemEnchantHolder> equipment, FakePlayerPvpWeapon mainWeapon, FakePlayerPvpWeapon bow, FakePlayerPvpWeapon polearm, boolean runner)
 	{
 		_build = build;
 		_playerClass = playerClass;
@@ -103,6 +105,7 @@ public class FakePlayerPvpProfile
 		_armorMask = armorMask;
 		_mainWeapon = mainWeapon;
 		_bow = bow;
+		_polearm = polearm;
 		_heldWeapon = mainWeapon;
 		_maxCharges = maxCharges;
 		_charges.set(maxCharges);
@@ -170,6 +173,14 @@ public class FakePlayerPvpProfile
 	}
 	
 	/**
+	 * @return the polearm it carries besides its weapon, {@code null} for none
+	 */
+	public FakePlayerPvpWeapon getPolearm()
+	{
+		return _polearm;
+	}
+	
+	/**
 	 * @return the weapon it holds now
 	 */
 	public FakePlayerPvpWeapon getHeldWeapon()
@@ -188,6 +199,14 @@ public class FakePlayerPvpProfile
 	public boolean isBowHeld()
 	{
 		return (_bow != null) && (_heldWeapon == _bow);
+	}
+	
+	/**
+	 * @return {@code true} if it has switched to its polearm
+	 */
+	public boolean isPolearmHeld()
+	{
+		return (_polearm != null) && (_heldWeapon == _polearm);
 	}
 	
 	/**
