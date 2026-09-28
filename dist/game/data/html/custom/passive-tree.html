@@ -56,7 +56,7 @@
 		position: fixed; top: 16px; right: 16px; bottom: 16px; width: 300px;
 		display: flex; flex-direction: column; gap: 12px;
 	}
-	.points-badge, .right-stack #controls, .right-stack .detail-panel {
+	.points-badge, .right-stack #controls, .right-stack #search-box, .right-stack .detail-panel {
 		position: static; /* the wrapper above owns the fixed positioning now */
 	}
 	.points-badge {
@@ -95,6 +95,34 @@
 	#controls .wide { width: auto; padding: 0 12px; font-size: 12px; height: 26px; }
 	#zoom-pct { min-width: 52px; color: #f0e0a0; font-size: 13px; }
 	#controls .keys { color: #777; font-size: 11px; line-height: 1.5; margin-top: 6px; }
+
+	#search-box {
+		flex: 0 0 auto;
+		background: rgba(12,12,16,0.9); border: 1px solid #7a5c1e;
+		border-radius: 6px; padding: 8px 10px;
+	}
+	#search-box .search-row { display: flex; align-items: center; gap: 6px; }
+	#search-input {
+		flex: 1; min-width: 0; padding: 6px 8px;
+		background: #0d0d10; border: 1px solid #555; border-radius: 4px;
+		color: #f0e0a0; font-family: inherit; font-size: 13px;
+		user-select: text;
+	}
+	#search-input:focus { outline: none; border-color: #d9b64c; }
+	#search-clear {
+		background: #2a2a33; color: #e8dcb8; border: 1px solid #555;
+		border-radius: 4px; cursor: pointer; font-size: 15px;
+		width: 28px; height: 28px; line-height: 1;
+	}
+	#search-clear:hover { background: #3a3a45; }
+	#search-count { margin-top: 5px; font-size: 11px; color: #8a7a55; min-height: 14px; }
+	#search-count.none { color: #ff9b90; }
+
+	/* Search results: matches get a pulsing white ring, everything else fades. */
+	.search-ring { animation: search-pulse 1.4s ease-in-out infinite; }
+	@keyframes search-pulse { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.3; } }
+	#svg-root.searching #edges,
+	#svg-root.searching #sector-labels { opacity: 0.35; }
 
 	.legend {
 		position: fixed; bottom: 16px; left: 16px;
@@ -280,6 +308,14 @@
 		</div>
 	</div>
 
+	<div id="search-box">
+		<div class="search-row">
+			<input id="search-input" type="text" placeholder="Search name, stat, description..." autocomplete="off" spellcheck="false">
+			<button id="search-clear" title="Clear search (Esc)">&times;
+		</div>
+		<div id="search-count"></div>
+	</div>
+
 	<div id="controls">
 		<div class="zoomrow">
 			<button id="btn-out" title="Zoom out">&minus;
@@ -289,7 +325,8 @@
 		<button class="wide" id="btn-fit" title="Fit whole tree on screen">Fit to screen
 		<div class="keys">
 			drag / <b>WASD</b> or arrows to move<br>
-			wheel or <b>+ &minus;</b> to zoom &middot; <b>F</b> to fit
+			wheel or <b>+ &minus;</b> to zoom &middot; <b>F</b> to fit<br>
+			<b>Ctrl+F</b> to search
 		</div>
 	</div>
 
@@ -370,6 +407,14 @@ let selectedNodeId = null;   // node currently shown in the detail panel
 let configResetCost = "";      // full-reset price text ("Free", "100,000 Adena"), fetched from the server too
 let configRespecPerPoint = 0;   // Adena per point, fetched from the server so the page never hardcodes it
 
+// search state
+const SEARCH_LABEL_MAX = 40;    // force-label matched nodes only when there are this few, to avoid clutter
+let searchText = {};            // node id -> lowercased name + description + readable stats
+let searchMatches = null;       // Set of matching node ids, or null when the search box is empty
+let searchOrder = [];           // matches in node order, for Enter-to-jump
+let searchCursor = -1;
+let searchQuery = "";          // last query actually applied (input is debounced)
+
 // view state
 let scale = 1, tx = 0, ty = 0;
 let bounds = { minX:0, minY:0, maxX:1, maxY:1 };
@@ -412,6 +457,8 @@ async function loadNodes() {
 		bounds.minY = Math.min(...nodes.map(n => n.y));
 		bounds.maxY = Math.max(...nodes.map(n => n.y));
 	}
+
+	buildSearchIndex();
 }
 
 async function loadConfig() {
@@ -672,6 +719,85 @@ function renderTotals() {
 	}).join("");
 }
 
+// ---------------------------------------------------------------- search
+/** Searchable text per node: its name, description, and each stat both as
+ *  shown ("+5% Physical Attack") and as the raw key ("PATK_PCT"). */
+function buildSearchIndex() {
+	searchText = {};
+	nodes.forEach(n => {
+		const stats = parseEffectSpec(n.effect).map(({ key, val }) => formatStat(key, val).text + " " + key);
+		const desc = (n.description || "").replace(/<[^>]*>/g, " ");
+		searchText[n.id] = [n.name, desc, ...stats].join("\n").toLowerCase();
+	});
+}
+
+/** Every whitespace-separated word must appear somewhere in the node's text,
+ *  so "crit dmg" style partial queries still find "Critical Damage". */
+function applySearch(query) {
+	searchQuery = query;
+	const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+	if (!terms.length) {
+		searchMatches = null;
+		searchOrder = [];
+	} else {
+		searchOrder = nodes.filter(n => terms.every(t => searchText[n.id].includes(t))).map(n => n.id);
+		searchMatches = new Set(searchOrder);
+	}
+	searchCursor = -1;
+	render();
+	renderSearchCount();
+}
+
+function renderSearchCount() {
+	const el = document.getElementById("search-count");
+	if (searchMatches === null) { el.textContent = ""; el.className = ""; return; }
+	const total = searchOrder.length;
+	if (!total) { el.textContent = "No matches"; el.className = "none"; return; }
+	el.className = "";
+	el.textContent = (searchCursor >= 0 ? `${searchCursor + 1} / ${total}` : `${total} match${total === 1 ? "" : "es"}`)
+		+ " · Enter to jump";
+}
+
+/** Steps through the matches (Shift+Enter goes backwards), centring and selecting each. */
+function jumpToMatch(step) {
+	if (!searchOrder.length) return;
+	searchCursor = (searchCursor + step + searchOrder.length) % searchOrder.length;
+	const n = nodeById[searchOrder[searchCursor]];
+	const { w, h } = viewportSize();
+	if (scale < 0.8) scale = 0.8;
+	tx = (w / 2) - (n.x * scale);
+	ty = (h / 2) - (n.y * scale);
+	applyTransform();
+	selectNode(n);
+	renderSearchCount();
+}
+
+function setupSearch() {
+	const input = document.getElementById("search-input");
+	let debounce = null;
+	input.addEventListener("input", () => {
+		clearTimeout(debounce);
+		debounce = setTimeout(() => applySearch(input.value), 120);
+	});
+	input.addEventListener("keydown", e => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			clearTimeout(debounce);
+			if (input.value !== searchQuery) applySearch(input.value);
+			jumpToMatch(e.shiftKey ? -1 : 1);
+		} else if (e.key === "Escape") {
+			e.preventDefault();
+			if (input.value) { input.value = ""; applySearch(""); }
+			else input.blur();
+		}
+	});
+	document.getElementById("search-clear").addEventListener("click", () => {
+		input.value = "";
+		applySearch("");
+		input.focus();
+	});
+}
+
 function isAvailable(n) {
 	if (allocated.has(n.id)) return false;
 	if (!character) return true;
@@ -744,14 +870,36 @@ function render() {
 	const showSmallLabels = scale >= CFG.LABEL_ZOOM;
 	lastLabelState = showSmallLabels;
 
+	const searching = searchMatches !== null;
+	document.getElementById("svg-root").classList.toggle("searching", searching);
+	const labelMatches = searching && (searchMatches.size <= SEARCH_LABEL_MAX);
+
 	nodes.forEach(n => {
 		const has = allocated.has(n.id), avail = isAvailable(n);
+		const hit = searching && searchMatches.has(n.id);
 		const g = document.createElementNS(SVG_NS, "g");
 		g.setAttribute("transform", `translate(${n.x},${n.y})`);
 		g.style.cursor = "pointer";
-		if (character && !has && !avail) g.style.opacity = "0.3";
+
+		// Locked nodes are faded; during a search, non-matches fade further and
+		// matches are lifted back up so locked hits are still easy to spot.
+		let opacity = (character && !has && !avail) ? 0.3 : 1;
+		if (searching) opacity = hit ? Math.max(opacity, 0.85) : opacity * 0.35;
+		if (opacity < 1) g.style.opacity = opacity;
 
 		const r = TYPE_RADIUS[n.type] || 8;
+
+		if (hit) {
+			const ring = document.createElementNS(SVG_NS, "circle");
+			ring.setAttribute("r", r + 10);
+			ring.setAttribute("fill", "none");
+			ring.setAttribute("stroke", "#ffffff");
+			ring.setAttribute("stroke-width", "2.5");
+			ring.setAttribute("filter", "url(#glow)");
+			ring.setAttribute("class", "search-ring");
+			ring.style.pointerEvents = "none";
+			g.appendChild(ring);
+		}
 		const fillColor = has ? "#3ecf5b" : (TYPE_COLOR[n.type] || "#8a8a92");
 
 		// Soft glow behind allocated/available nodes - a blurred duplicate
@@ -795,7 +943,7 @@ function render() {
 		use.style.pointerEvents = "none";
 		g.appendChild(use);
 
-		if (ALWAYS_LABEL.has(n.type) || showSmallLabels) {
+		if (ALWAYS_LABEL.has(n.type) || showSmallLabels || (hit && labelMatches)) {
 			const t = document.createElementNS(SVG_NS, "text");
 			t.setAttribute("class", "node-label");
 			t.setAttribute("y", r + 16);
@@ -1037,6 +1185,14 @@ function setupZoomPan() {
 
 	// keyboard: WASD / arrows to pan, +/- to zoom, F to fit, Space to allocate the selected node
 	window.addEventListener("keydown", e => {
+		// Ctrl+F jumps to the tree search instead of the browser's page find.
+		if ((e.ctrlKey || e.metaKey) && (e.key === "f" || e.key === "F")) {
+			e.preventDefault();
+			const input = document.getElementById("search-input");
+			input.focus();
+			input.select();
+			return;
+		}
 		if (document.activeElement && document.activeElement.tagName === "INPUT") return;
 		const step = CFG.KEY_PAN_STEP;
 		let handled = true;
@@ -1090,6 +1246,7 @@ function setupZoomPan() {
 	renderHud();
 	renderTotals();
 	setupZoomPan();
+	setupSearch();
 	fitToScreen();          // start with the whole tree visible
 
 	// Safety net: if this embedded browser's first layout pass was the bad
