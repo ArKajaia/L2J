@@ -183,9 +183,9 @@
 	</target>
 
 	<target name="adding-readme" depends="adding-datapack"
-		description="Copying readme.txt to server folder.">
+		description="Copying README.md to server folder.">
 
-		<copy file="readme.txt"
+		<copy file="README.md"
 			todir="${build}/server" />
 
 	</target>
