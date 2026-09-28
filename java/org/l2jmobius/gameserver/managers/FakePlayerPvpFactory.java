@@ -213,8 +213,8 @@ public class FakePlayerPvpFactory
 		}
 		mDef += defenceEnchantBonus(armorEnchant) * jewelPieces;
 		
-		// Weapon: its stats replace the unarmed ones (weapon "set" functions).
-		final FakePlayerPvpWeapon mainWeapon = createWeapon(classTemplate, weapon, shield, weaponEnchant);
+		// Weapon: its stats replace the unarmed ones (weapon "set" functions). A polearm (Dreadnoughts) also gives its Polearm Multi-attack while it holds it.
+		final FakePlayerPvpWeapon mainWeapon = createWeapon(classTemplate, weapon, shield, weaponEnchant, (weapon != null) && (weapon.getItemType() == WeaponType.POLE) ? getPassiveSkills(weapon) : Collections.emptyList());
 		
 		// Tanks and tyrants carry a bow for players they can't catch.
 		FakePlayerPvpWeapon bow = null;
@@ -336,7 +336,12 @@ public class FakePlayerPvpFactory
 				skills.put(skill.getId(), skill);
 			}
 		}
-		
+
+		for (Skill skill : mainWeapon.getSkills())
+		{
+			skills.put(skill.getId(), skill);
+		}
+
 		if (fullSet)
 		{
 			addSkills(skills, armorSet.getSkills());

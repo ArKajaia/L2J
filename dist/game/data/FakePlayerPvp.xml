@@ -21,6 +21,7 @@
 	     polearm - kit of a polearm it carries besides its weapon (warriors). It takes the polearm out when
 	               monsters surround it, so its normal attacks hit several of them, and switches back to its
 	               weapon once most of them are dead (see FakePvpPolearm* in config/Custom/FakePlayerPvp.ini).
+	               A build whose weapon is a polearm (Dreadnought) always has its multi-attack.
 	     weight  - relative chance to pick this build.
 	     skillFighter - true for a class that deals its damage with skills (Gladiator/Duelist, Tyrant,
 	               daggers): it uses a skill most of the time (FakePvpSkillChance). The others (tanks,
@@ -41,6 +42,7 @@
 	     rush      - gap closers used on a target out of reach (Rush, Shadow Step).
 	     peel      - skills that stop a player in melee range: archers and mages use them before stepping
 	                 back, and a fake player running away uses them on its pursuer (roots, stuns, Aura Flash, Trick).
+	                 The first one that reaches the player from where it stands is used (a melee stun only once it is on it).
 	     cleanse   - skills that remove what holds it back, only used when it has it (Break Duress, Remedy...).
 	     combo     - skill chains played in order, like a practiced player's rotation. The first one that is
 	                 ready (required steps learned and off cooldown, enough energy) starts.
@@ -210,6 +212,16 @@
 		<tier minLevel="80" rhand="10217" /> <!-- Icarus Spirit -->
 		<tier minLevel="84" rhand="13459" /> <!-- Vesper Buster -->
 	</kit>
+	<kit name="MAGE_BLUNT"> <!-- Blunts only, for the Stun Attack and Hammer Crush of orc mystics. -->
+		<tier minLevel="1" rhand="177" /> <!-- Mage Staff -->
+		<tier minLevel="20" rhand="188" /> <!-- Ghost Staff -->
+		<tier minLevel="40" rhand="206" /> <!-- Demon's Staff -->
+		<tier minLevel="52" rhand="210" /> <!-- Staff of Evil Spirits -->
+		<tier minLevel="61" rhand="8687" /> <!-- Cabrio's Hand -->
+		<tier minLevel="76" rhand="6579" /> <!-- Arcana Mace -->
+		<tier minLevel="80" rhand="10222" /> <!-- Icarus Hall -->
+		<tier minLevel="84" rhand="13465" /> <!-- Vesper Caster -->
+	</kit>
 
 	<!-- Buffs -->
 	<buffs name="FIGHTER">
@@ -299,6 +311,30 @@
 			<step skill="1341" /> <!-- Wind Vortex -->
 			<step skill="1456" optional="true" /> <!-- Wind Vortex Slug -->
 			<step skill="1239" optional="true" />
+		</combo>
+	</build>
+	<build name="Dominator" classId="115" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="1"> <!-- Overlord line -->
+		<attack>1245,1090,1107,1100,1102,1095,1101</attack>
+		<debuff>1246,1367,1366,1462,1208,1097,1105,1104,1099,1096,1209</debuff>
+		<buff>1533</buff>
+		<heal>1229</heal>
+		<toggle>337</toggle>
+		<peel>260,100,1208,1097,1092</peel> <!-- Hammer Crush / Stun Attack on a player that reached it -->
+		<combo name="Silence and drain" pvp="true">
+			<step skill="1246" /> <!-- Seal of Silence -->
+			<step skill="1367" optional="true" /> <!-- Seal of Disease -->
+			<step skill="1245" /> <!-- Steal Essence -->
+			<step skill="1245" />
+		</combo>
+		<combo name="Despair" pvp="true" chance="50">
+			<step skill="1366" /> <!-- Seal of Despair -->
+			<step skill="1462" optional="true" /> <!-- Seal of Blockade -->
+			<step skill="1245" /> <!-- Steal Essence -->
+		</combo>
+		<combo name="Bind and drain" pvp="true" chance="50">
+			<step skill="1208" /> <!-- Seal of Binding -->
+			<step skill="1107" optional="true" /> <!-- Frost Flame -->
+			<step skill="1245|1090" /> <!-- Steal Essence / Life Drain -->
 		</combo>
 	</build>
 
@@ -609,6 +645,27 @@
 		<combo name="Crush">
 			<step skill="315" /> <!-- Crush of Doom -->
 			<step skill="190" optional="true" /> <!-- Fatal Strike -->
+		</combo>
+	</build>
+	<build name="Dreadnought" classId="89" role="FIGHTER" weapon="POLEARM" armor="HEAVY" weight="1"> <!-- Warlord line -->
+		<attack>921,920,320,347,36,245,255,3</attack>
+		<debuff>361,452,48,100,116</debuff>
+		<buff>78,287,917</buff>
+		<heal>121</heal>
+		<toggle>312,424</toggle>
+		<rush>995,994</rush>
+		<peel>452,48</peel>
+		<combo name="Shock crush" pvp="true">
+			<step skill="78" self="true" optional="true" /> <!-- War Cry -->
+			<step skill="361" /> <!-- Shock Blast -->
+			<step skill="920" /> <!-- Power Crush -->
+			<step skill="921" optional="true" /> <!-- Cursed Pierce -->
+			<step skill="320" optional="true" /> <!-- Wrath -->
+		</combo>
+		<combo name="Stun and crush" pvp="true">
+			<step skill="100" /> <!-- Stun Attack -->
+			<step skill="920" /> <!-- Power Crush -->
+			<step skill="921" optional="true" /> <!-- Cursed Pierce -->
 		</combo>
 	</build>
 </list>
