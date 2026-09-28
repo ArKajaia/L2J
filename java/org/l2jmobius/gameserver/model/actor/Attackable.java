@@ -1224,8 +1224,18 @@ public class Attackable extends Npc
 		{
 			if (org.l2jmobius.commons.util.Rnd.get(100d) < org.l2jmobius.gameserver.config.custom.CustomBuffConfig.DROP_CHANCE)
 			{
-				// Drops the item on the ground, assigning drop rights to the damage dealer
-				this.dropItem(mainDamageDealer, org.l2jmobius.gameserver.config.custom.CustomBuffConfig.ITEM_ID, this.getChampionTier());
+				final ItemHolder buffBookDrop = new ItemHolder(org.l2jmobius.gameserver.config.custom.CustomBuffConfig.ITEM_ID, this.getChampionTier());
+				final Player buffBookOwner = mainDamageDealer != null ? mainDamageDealer.asPlayer() : null;
+				if (buffBookOwner != null)
+				{
+					// Auto-loot it like the regular drops (respects server auto-loot settings and the player's .filter)
+					dropOrAutoLoot(buffBookOwner, buffBookDrop);
+				}
+				else
+				{
+					// Drops the item on the ground, assigning drop rights to the damage dealer
+					this.dropItem(mainDamageDealer, buffBookDrop);
+				}
 			}
 		}
 	}
