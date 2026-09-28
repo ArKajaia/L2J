@@ -52,6 +52,7 @@ import org.l2jmobius.gameserver.managers.EventDropManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.PcCafePointsManager;
 import org.l2jmobius.gameserver.managers.WalkingManager;
+import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.enums.creature.InstanceType;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
@@ -425,12 +426,14 @@ public class Attackable extends Npc
 			Player maxDealer = null;
 			long maxDamage = 0;
 			long totalDamage = 0;
+			Creature maxFakeDealer = null;
+			long maxFakeDamage = 0;
 			
 			// While Iterating over This Map Removing Object is Not Allowed
 			// Go through the _aggroList of the Attackable
 			for (AggroInfo info : _aggroList.values())
 			{
-				if (info == null)
+				if ((info == null) || (info.getAttacker() == null))
 				{
 					continue;
 				}
@@ -439,6 +442,13 @@ public class Attackable extends Npc
 				final Player attacker = info.getAttacker().asPlayer();
 				if (attacker == null)
 				{
+					// Fake players can't be rewarded, but their damage still counts when deciding who owns the drop.
+					final Creature fake = info.getAttacker();
+					if (fake.isFakePlayer() && !fake.isDead() && (info.getDamage() > maxFakeDamage) && (calculateDistance3D(fake) <= PlayerConfig.ALT_PARTY_RANGE))
+					{
+						maxFakeDealer = fake;
+						maxFakeDamage = info.getDamage();
+					}
 					continue;
 				}
 				
@@ -524,7 +534,12 @@ public class Attackable extends Npc
 			mostDamageParty = !damagingParties.isEmpty() ? damagingParties.get(0) : null;
 			
 			// Manage Base, Quests and Sweep drops of the Attackable
-			if ((mostDamageParty != null) && (mostDamageParty.damage > maxDamage))
+			if ((maxFakeDealer != null) && (maxFakeDamage > maxDamage) && ((mostDamageParty == null) || (maxFakeDamage > mostDamageParty.damage)))
+			{
+				// A fake player did more damage than any player or party: a player that only chipped in doesn't get its loot.
+				doFakePlayerItemDrop(maxFakeDealer);
+			}
+			else if ((mostDamageParty != null) && (mostDamageParty.damage > maxDamage))
 			{
 				Player leader = mostDamageParty.party.getLeader();
 				doItemDrop(leader);
@@ -1153,6 +1168,24 @@ public class Attackable extends Npc
 		}
 		
 		return ai.getHate();
+	}
+	
+	/**
+	 * Drops the loot of a monster a fake player did most of the damage to: the fake player gets the base drops (only if {@link FakePlayersConfig#FAKE_PLAYER_CAN_DROP_ITEMS}), while a player that spoiled the monster can still sweep it.
+	 * @param fake the fake player that did the most damage
+	 */
+	private void doFakePlayerItemDrop(Creature fake)
+	{
+		doItemDrop(getTemplate(), fake);
+		
+		if (isSpoiled())
+		{
+			final Player spoiler = World.getInstance().getPlayer(getSpoilerObjectId());
+			if (spoiler != null)
+			{
+				_sweepItems.set(getTemplate().calculateDrops(DropType.SPOIL, this, spoiler));
+			}
+		}
 	}
 	
 	public void doItemDrop(Creature mainDamageDealer)
