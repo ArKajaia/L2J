@@ -200,8 +200,7 @@ public class BuffTemplateManager
 			return false;
 		}
 		
-		// Only long-lasting buffs (duration in seconds, as currently learned/enchanted).
-		if ((skill.getAbnormalTime() < CommunityBoardConfig.COMMUNITYBOARD_BUFF_TEMPLATE_MIN_DURATION) || skill.isAbnormalInstant())
+		if ((skill.getAbnormalTime() <= 0) || skill.isAbnormalInstant())
 		{
 			return false;
 		}

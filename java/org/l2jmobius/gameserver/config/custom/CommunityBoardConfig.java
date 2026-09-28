@@ -63,7 +63,6 @@ public class CommunityBoardConfig
 	public static int COMMUNITYBOARD_BUFF_TEMPLATE_MAX_BUFFS;
 	public static int COMMUNITYBOARD_BUFF_TEMPLATE_PRICE;
 	public static int COMMUNITYBOARD_BUFF_TEMPLATE_COOLDOWN;
-	public static int COMMUNITYBOARD_BUFF_TEMPLATE_MIN_DURATION;
 	public static boolean COMMUNITYBOARD_BUFF_TEMPLATE_PEACE_ONLY;
 	public static Set<String> COMMUNITYBOARD_BUFF_TEMPLATE_ALLOWED_EFFECTS;
 	public static Set<Integer> COMMUNITYBOARD_BUFF_TEMPLATE_FORBIDDEN_SKILLS;
@@ -108,7 +107,6 @@ public class CommunityBoardConfig
 		COMMUNITYBOARD_BUFF_TEMPLATE_MAX_BUFFS = Math.max(1, Math.min(48, config.getInt("CommunityBuffTemplateMaxBuffs", 24)));
 		COMMUNITYBOARD_BUFF_TEMPLATE_PRICE = Math.max(0, config.getInt("CommunityBuffTemplatePrice", 0));
 		COMMUNITYBOARD_BUFF_TEMPLATE_COOLDOWN = Math.max(1, config.getInt("CommunityBuffTemplateCooldown", 5));
-		COMMUNITYBOARD_BUFF_TEMPLATE_MIN_DURATION = Math.max(1, config.getInt("CommunityBuffTemplateMinDuration", 1200));
 		COMMUNITYBOARD_BUFF_TEMPLATE_PEACE_ONLY = config.getBoolean("CommunityBuffTemplatePeaceOnly", true);
 		
 		COMMUNITYBOARD_BUFF_TEMPLATE_ALLOWED_EFFECTS = new HashSet<>();
