@@ -53,6 +53,8 @@ public class FakePlayerPvpProfile
 	private final FakePlayerPvpWeapon _bow;
 	private final FakePlayerPvpWeapon _polearm;
 	private volatile FakePlayerPvpWeapon _heldWeapon;
+	// Its servitor (necromancers), null when it has none out.
+	private volatile Npc _servitor;
 	private final int _maxCharges;
 	private final AtomicInteger _charges = new AtomicInteger();
 	private final List<FakePlayerPvpCombo.Chain> _combos = new ArrayList<>();
@@ -199,6 +201,28 @@ public class FakePlayerPvpProfile
 	public boolean isBowHeld()
 	{
 		return (_bow != null) && (_heldWeapon == _bow);
+	}
+	
+	/**
+	 * @return its servitor, {@code null} if it has none out
+	 */
+	public Npc getServitor()
+	{
+		return _servitor;
+	}
+	
+	public void setServitor(Npc servitor)
+	{
+		_servitor = servitor;
+	}
+	
+	/**
+	 * @return {@code true} if it has a class servitor summon but no living servitor out
+	 */
+	public boolean needsServitor()
+	{
+		final Npc servitor = _servitor;
+		return !getSkills(SkillCategory.SUMMON).isEmpty() && ((servitor == null) || servitor.isDead() || !servitor.isSpawned());
 	}
 	
 	/**

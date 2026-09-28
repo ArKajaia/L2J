@@ -40,6 +40,12 @@ public class ConditionPlayerCanSummon extends Condition
 	@Override
 	public boolean testImpl(Creature effector, Creature effected, Skill skill, ItemTemplate item)
 	{
+		// A roaming fake player can summon while it has no servitor out.
+		if (effector.isPvpFakePlayer())
+		{
+			return _value == effector.asNpc().getTemplate().getFakePlayerPvpProfile().needsServitor();
+		}
+		
 		final Player player = effector.asPlayer();
 		if ((player == null) || player.isSpawnProtected() || player.isTeleportProtected())
 		{

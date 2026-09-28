@@ -40,6 +40,7 @@ import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.WorldRegion;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
@@ -64,7 +65,8 @@ import org.l2jmobius.gameserver.network.serverpackets.ChangeWaitType;
  * AI of a roaming fake player (see {@link FakePlayerPvpManager}). It plays like a character of its class: hunts the monsters around its spawn point, keeps its buffs up, uses the class skills it has learned (best ones first), drinks potions, archers and mages keep their
  * distance, and it fights any player that attacks it or steals its kill. In a PvP it plays like a player: it focuses the weakest enemy, closes the gap (Rush, Shadow Step, Dash), stops a melee attacker before stepping back (roots, stuns), waits out an invincible enemy,
  * cleanses roots and bleeds, and some fake players run from a fight they are losing and read a Scroll of Escape once they got away (and out of every player's sight). After a few hits it notices a player's Ultimate Defense, Guts, Zealot, Angelic Icon or magic mirror, stops
- * wasting what doesn't get through and keeps its distance while it can. It sits down to rest after a hard fight, and may go after a flagged or karma player passing by. Warriors surrounded by monsters take out a polearm to hit several of them at once.
+ * wasting what doesn't get through and keeps its distance while it can. It sits down to rest after a hard fight, and may go after a flagged or karma player passing by. Warriors surrounded by monsters take out a polearm to hit several of them at once. Necromancers keep their servitor out
+ * with Transfer Pain on, and when it dies in a PvP they run off to summon a new one and come back (see {@link #thinkRegroup}).
  */
 public class FakePlayerPvpAI extends AttackableAI
 {
@@ -110,6 +112,14 @@ public class FakePlayerPvpAI extends AttackableAI
 	private static final int PEEL_DISTANCE = 300;
 	/** After running this long with a pursuer on its heels, it turns around and fights to the end. */
 	private static final long FLEE_TIMEOUT = 45000;
+	/** A necromancer summons its new servitor (15 seconds) once the players it fights are this far, and runs on when one comes this close. */
+	private static final int SUMMON_SAFE_DISTANCE = 900;
+	private static final int SUMMON_ABORT_DISTANCE = 300;
+	/** It gives up running off to summon after this long (it fights on without a servitor), and tries again after this long. */
+	private static final long REGROUP_TIMEOUT = 60000;
+	private static final long REGROUP_RETRY = 30000;
+	/** Transfer Pain never takes a servitor below 1 HP: below this HP ratio in a PvP it is spent, and sent away to summon a fresh one. */
+	private static final double SPENT_SERVITOR_HP = 0.1;
 	/** How long it sticks to the player it chose to focus in a fight against several. */
 	private static final long FOCUS_TIME = 6000;
 	/** It chases a player getting away for this long before using a speed buff or a gap closer. */
@@ -198,6 +208,12 @@ public class FakePlayerPvpAI extends AttackableAI
 	private long _nextEscapeTime = 0;
 	private boolean _lastStand = false;
 	
+	// A necromancer running off to summon a new servitor: since when, when it may try again after giving up, and whether it is on its way back to the fight.
+	private boolean _regrouping = false;
+	private long _regroupStart = 0;
+	private long _nextRegroupTime = 0;
+	private boolean _returning = false;
+	
 	// The player it focuses in a fight against several (the weakest one), and until when.
 	private Creature _focus = null;
 	private long _focusUntil = 0;
@@ -274,6 +290,8 @@ public class FakePlayerPvpAI extends AttackableAI
 		_focus = null;
 		_fleeing = false;
 		_lastStand = false;
+		_regrouping = false;
+		_returning = false;
 		_noticedDefenses.clear();
 		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
 		if ((profile != null) && (profile.getHeldWeapon() != profile.getMainWeapon()))
@@ -295,6 +313,12 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		// Rested: up again (that takes a moment, like for a player).
 		if (standUp(npc))
+		{
+			return;
+		}
+		
+		// A necromancer keeps its servitor out: a new one once the fight is over.
+		if ((profile != null) && profile.needsServitor() && castOnSelf(npc, null, profile.getSkills(SkillCategory.SUMMON), true, false))
 		{
 			return;
 		}
@@ -374,6 +398,13 @@ public class FakePlayerPvpAI extends AttackableAI
 				return;
 			}
 			
+			// Summoning takes 15 seconds: a player that catches up doesn't find it standing there, it runs on (and summons further away).
+			if ((casting != null) && isSummonSkill(npc, casting) && isPvpEnemyWithin(npc, SUMMON_ABORT_DISTANCE))
+			{
+				npc.abortCast();
+				return;
+			}
+			
 			if (npc.getTemplate().getFakePlayerPvpProfile() != null)
 			{
 				FakePlayerPvpManager.getInstance().tryPotion(npc);
@@ -434,7 +465,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		// Monsters are only hunted around the spawn point, players are chased further (and it runs away as far as it needs to).
 		final Spawn spawn = npc.getSpawn();
-		if ((spawn != null) && !_fleeing && (npc.calculateDistance2D(spawn) > (target.isPlayable() ? FakePlayerPvpConfig.CHASE_RANGE : FakePlayerPvpConfig.LEASH_RANGE)))
+		if ((spawn != null) && !_fleeing && !_regrouping && !_returning && (npc.calculateDistance2D(spawn) > (target.isPlayable() ? FakePlayerPvpConfig.CHASE_RANGE : FakePlayerPvpConfig.LEASH_RANGE)))
 		{
 			// Back to its hunting ground, staying ACTIVE: a MOVE_TO that finds no path never arrives, and the AI would stop thinking.
 			npc.stopHating(target);
@@ -444,7 +475,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		// Give up on a target it hasn't been able to hit for a while (no way to it, a ledge...), but not on the one it runs from.
-		if ((_progressTarget != target) || _fleeing)
+		if ((_progressTarget != target) || _fleeing || _regrouping)
 		{
 			_progressTarget = target;
 			_progressTime = now;
@@ -492,10 +523,18 @@ public class FakePlayerPvpAI extends AttackableAI
 		if (!pvp)
 		{
 			_fleeing = false;
+			_regrouping = false;
+			_returning = false;
 		}
-		else if (thinkFlee(npc, profile, target, hpRatio, now))
+		else if (thinkFlee(npc, profile, target, hpRatio, now) || thinkRegroup(npc, profile, target, hpRatio, now))
 		{
 			return;
+		}
+		
+		// Back from summoning: until it is back in range, it doesn't give up on the fight for being far from its hunting ground.
+		if (_returning && ((distance - collision) <= MAGE_RANGE))
+		{
+			_returning = false;
 		}
 		
 		// Warriors take out their polearm when monsters surround them, tanks and tyrants their bow against a player they can't catch.
@@ -534,6 +573,12 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		// Long cooldown buffs (Frenzy, Zealot, Focus Power...) are saved for players.
 		if (castOnSelf(npc, target, profile.getSkills(SkillCategory.BUFF), false, pvp))
+		{
+			return;
+		}
+		
+		// Monsters can't bring it down: a necromancer summons a new servitor right away.
+		if (!pvp && profile.needsServitor() && castOnSelf(npc, target, profile.getSkills(SkillCategory.SUMMON), true, false))
 		{
 			return;
 		}
@@ -681,6 +726,11 @@ public class FakePlayerPvpAI extends AttackableAI
 	{
 		_fleeing = false;
 		_resting = false;
+		_regrouping = false;
+		_returning = false;
+		
+		// Its servitor goes away with it.
+		FakePlayerPvpManager.getInstance().unsummonServitor(getActiveChar());
 		
 		// Whoever comes by later sees a body lying down, not sitting.
 		final FakePlayerHolder holder = getActiveChar().getTemplate().getFakePlayerInfo();
@@ -789,6 +839,129 @@ public class FakePlayerPvpAI extends AttackableAI
 			_nextFleeStep = now + 1200;
 		}
 		return true;
+	}
+	
+	/**
+	 * A necromancer whose servitor died (or is worn down to nothing by Transfer Pain) in a PvP does what a player does: it runs off, summons a new one (15 seconds) once the players it fights are far enough, switches Transfer Pain back on and goes back to the fight. A player catching up interrupts the summon
+	 * (see {@link #thinkAttack}) and it runs on. Held in place it fights back, and cornered or still chased after {@link #REGROUP_TIMEOUT} it fights on without a servitor for a while.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param target the player it fights
+	 * @param hpRatio its HP ratio
+	 * @param now the current time
+	 * @return {@code true} if it acted this tick
+	 */
+	private boolean thinkRegroup(Attackable npc, FakePlayerPvpProfile profile, Creature target, double hpRatio, long now)
+	{
+		// A servitor Transfer Pain has worn down takes no more of its damage: sent away, a fresh one is summoned like for a dead one.
+		final Npc servitor = profile.getServitor();
+		if (!_regrouping && (now >= _nextRegroupTime) && (servitor != null) && !servitor.isDead() && (servitor.getCurrentHp() < (servitor.getMaxHp() * SPENT_SERVITOR_HP)))
+		{
+			FakePlayerPvpManager.getInstance().unsummonServitor(npc);
+		}
+		
+		if (!profile.needsServitor())
+		{
+			// Summoned: Transfer Pain on, back to the fight.
+			if (_regrouping)
+			{
+				_regrouping = false;
+				_returning = true;
+				FakePlayerPvpManager.getInstance().switchLink(npc, profile, true);
+			}
+			return false;
+		}
+		
+		if (!_regrouping)
+		{
+			if (now < _nextRegroupTime)
+			{
+				return false;
+			}
+			
+			_regrouping = true;
+			_regroupStart = now;
+			_nextFleeStep = 0;
+			endCombo(now);
+		}
+		
+		final Creature closest = getClosestPvpEnemy(npc);
+		final Creature pursuer = closest != null ? closest : target;
+		final double pursuerDistance = npc.calculateDistance2D(pursuer);
+		final int pursuerCollision = npc.getTemplate().getCollisionRadius() + pursuer.getTemplate().getCollisionRadius();
+		final double pursuerGap = pursuerDistance - pursuerCollision;
+		
+		// Held in place (root, stun...): cleanse it if it can, otherwise fight back this tick.
+		if (npc.isMovementDisabled())
+		{
+			return castCleanse(npc, target, profile);
+		}
+		
+		// Can't get away: it fights on without a servitor for a while.
+		if ((now - _regroupStart) > REGROUP_TIMEOUT)
+		{
+			stopRegroup(now);
+			return false;
+		}
+		
+		if ((hpRatio < 0.3) && castOnSelf(npc, target, profile.getSkills(SkillCategory.EMERGENCY), true, true))
+		{
+			return true;
+		}
+		
+		// Far enough: the new servitor.
+		if ((pursuerGap > SUMMON_SAFE_DISTANCE) && castOnSelf(npc, target, profile.getSkills(SkillCategory.SUMMON), true, true))
+		{
+			return true;
+		}
+		
+		if (castOnSelf(npc, target, profile.getSkills(SkillCategory.MOVE), false, true))
+		{
+			return true;
+		}
+		
+		// A pursuer on its heels: stop it before running on.
+		if ((pursuerGap < PEEL_DISTANCE) && !isDisabled(pursuer) && useSkill(npc, pursuer, pickPeel(npc, pursuer, profile, getKnownDefenses(pursuer), pursuerGap), pursuerDistance, pursuerCollision, false))
+		{
+			return true;
+		}
+		
+		// Not far enough yet: keep running.
+		if ((pursuerGap <= SUMMON_SAFE_DISTANCE) && (!npc.isMoving() || (now >= _nextFleeStep)))
+		{
+			if (!runAway(npc, pursuer))
+			{
+				// Cornered.
+				stopRegroup(now);
+				return false;
+			}
+			_nextFleeStep = now + 1200;
+		}
+		return true;
+	}
+	
+	private void stopRegroup(long now)
+	{
+		_regrouping = false;
+		_nextRegroupTime = now + REGROUP_RETRY;
+	}
+	
+	/**
+	 * @return {@code true} if {@code skill} is one of its servitor summons
+	 */
+	private static boolean isSummonSkill(Attackable npc, Skill skill)
+	{
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		return (profile != null) && profile.getSkills(SkillCategory.SUMMON).contains(skill);
+	}
+	
+	/**
+	 * @return {@code true} if a player (or summon) it is fighting is within {@code range} of it, collisions excluded
+	 */
+	private static boolean isPvpEnemyWithin(Attackable npc, int range)
+	{
+		final Creature enemy = getClosestPvpEnemy(npc);
+		return (enemy != null) && ((npc.calculateDistance2D(enemy) - npc.getTemplate().getCollisionRadius() - enemy.getTemplate().getCollisionRadius()) < range);
 	}
 	
 	/**

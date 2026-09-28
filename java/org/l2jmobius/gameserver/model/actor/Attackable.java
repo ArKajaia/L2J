@@ -243,6 +243,7 @@ public class Attackable extends Npc
 		if (isPvpFakePlayer())
 		{
 			damage = FakePlayerPvpManager.getInstance().limitDamage(this, damage, attacker);
+			damage = FakePlayerPvpManager.getInstance().transferDamage(this, damage, attacker);
 		}
 		// A player hitting the monster a roaming fake player is fighting hears about it.
 		else if ((attacker != null) && attacker.isPlayable() && isMonster())
