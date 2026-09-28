@@ -124,7 +124,7 @@ public class BuffTemplateBoard implements IParseBoardHandler
 		final BuffTemplateManager manager = BuffTemplateManager.getInstance();
 		final StringBuilder sb = new StringBuilder();
 		appendTitle(sb, "Buff Templates");
-		sb.append("<table width=520><tr><td align=center><font color=\"B09878\">Put buffs from your own skill tree into a template and apply them all at once.<br1>");
+		sb.append("<table width=520><tr><td align=center><font color=\"B09878\">Put buffs from your own skill tree into a template and apply them all at once (only the server's extended-duration buffs qualify).<br1>");
 		sb.append("Each buff still costs its MP and items and starts its reuse, exactly as if you cast it.</font></td></tr></table><br>");
 		
 		final int price = CommunityBoardConfig.COMMUNITYBOARD_BUFF_TEMPLATE_PRICE;
