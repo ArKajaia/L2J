@@ -442,12 +442,18 @@ public class Attackable extends Npc
 				final Player attacker = info.getAttacker().asPlayer();
 				if (attacker == null)
 				{
-					// Fake players can't be rewarded, but their damage still counts when deciding who owns the drop.
+					// Fake players can't be rewarded, but their damage still lowers the players' exp/sp share and counts when deciding who owns the drop.
 					final Creature fake = info.getAttacker();
-					if (fake.isFakePlayer() && !fake.isDead() && (info.getDamage() > maxFakeDamage) && (calculateDistance3D(fake) <= PlayerConfig.ALT_PARTY_RANGE))
+					final long fakeDamage = info.getDamage();
+					if (fake.isFakePlayer() && (fakeDamage > 1) && (calculateDistance3D(fake) <= PlayerConfig.ALT_PARTY_RANGE))
 					{
-						maxFakeDealer = fake;
-						maxFakeDamage = info.getDamage();
+						totalDamage += fakeDamage;
+						
+						if (!fake.isDead() && (fakeDamage > maxFakeDamage))
+						{
+							maxFakeDealer = fake;
+							maxFakeDamage = fakeDamage;
+						}
 					}
 					continue;
 				}
