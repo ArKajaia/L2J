@@ -66,6 +66,7 @@ import handlers.actions.shiftclick.NpcShiftClick;
 import handlers.actions.shiftclick.PlayerShiftClick;
 import handlers.actions.shiftclick.StaticObjectShiftClick;
 import handlers.actions.shiftclick.SummonShiftClick;
+import handlers.bypass.communityboard.BuffTemplateBoard;
 import handlers.bypass.communityboard.ClanBoard;
 import handlers.bypass.communityboard.DropSearchBoard;
 import handlers.bypass.communityboard.FavoriteBoard;
@@ -492,6 +493,7 @@ public class MasterHandler
 		},
 		{
 			// Community Board
+			BuffTemplateBoard.class,
 			ClanBoard.class,
 			DropSearchBoard.class,
 			FavoriteBoard.class,
