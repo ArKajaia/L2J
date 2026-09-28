@@ -56,6 +56,7 @@ import org.l2jmobius.gameserver.model.actor.enums.player.Sex;
 import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpWeapon;
 import org.l2jmobius.gameserver.model.actor.instance.FakePlayerPvpServitor;
@@ -1220,7 +1221,7 @@ public class FakePlayerPvpManager
 		{
 			profile.setReplacedMonster(null, null);
 			profile.setSpawnTime(System.currentTimeMillis());
-			profile.onReturn(System.currentTimeMillis() + (FakePlayerPvpConfig.RETURN_REVENGE_TIME * 1000L));
+			profile.onReturn(System.currentTimeMillis() + (profile.getPersonality().getReturnRevengeTime() * 1000L));
 			
 			// It comes back with its weapon out, not the bow or polearm it may have died with (the new body only has the skills of the template).
 			if (profile.getHeldWeapon() != profile.getMainWeapon())
@@ -1382,7 +1383,7 @@ public class FakePlayerPvpManager
 			}
 			
 			// Like a player, it doesn't always go for it: not hurt, not against a much higher level, and not every time.
-			if ((fake.getCurrentHp() < (fake.getMaxHp() * 0.5)) || (killer.getLevel() >= (fake.getLevel() + OUTLEVELED_DIFFERENCE)) || (Rnd.get(100) >= FakePlayerPvpConfig.REVENGE_CHANCE))
+			if ((fake.getCurrentHp() < (fake.getMaxHp() * 0.5)) || (killer.getLevel() >= (fake.getLevel() + OUTLEVELED_DIFFERENCE)) || (Rnd.get(100) >= FakePlayerPvpPersonality.of(fake).getRevengeChance()))
 			{
 				taunt(fake, TAUNTS_KILL_STEAL_COMPLAIN, false);
 				return;
@@ -1428,7 +1429,7 @@ public class FakePlayerPvpManager
 	 */
 	public void greet(Attackable fake)
 	{
-		taunt(fake, TAUNTS_GREET, false, FakePlayerPvpConfig.GREET_CHANCE);
+		taunt(fake, TAUNTS_GREET, false, FakePlayerPvpPersonality.of(fake).getGreetChance());
 	}
 	
 	/**
@@ -1613,7 +1614,7 @@ public class FakePlayerPvpManager
 	 */
 	private void taunt(Npc fake, String[] taunts, boolean dead)
 	{
-		taunt(fake, taunts, dead, FakePlayerPvpConfig.TAUNT_CHANCE);
+		taunt(fake, taunts, dead, FakePlayerPvpPersonality.of(fake).getTauntChance());
 	}
 	
 	/**
@@ -1656,7 +1657,7 @@ public class FakePlayerPvpManager
 		taunt(fake, TAUNTS_DEATH, true);
 		
 		// Maybe it walks back from town for round two, unless it already did or its killer is far above it.
-		if ((FakePlayerPvpConfig.RETURN_CHANCE > 0) && !profile.hasReturned() && ((FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE <= 0) || (killer.getLevel() < (fake.getLevel() + FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE))) && (Rnd.get(100) < FakePlayerPvpConfig.RETURN_CHANCE))
+		if (!profile.hasReturned() && ((FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE <= 0) || (killer.getLevel() < (fake.getLevel() + FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE))) && (Rnd.get(100) < profile.getPersonality().getReturnChance()))
 		{
 			profile.setReturn(fake.getX(), fake.getY(), fake.getZ(), fake.getInstanceId(), killer.getObjectId());
 		}
@@ -1704,7 +1705,7 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
-	 * A potion: below {@link FakePlayerPvpConfig#POTION_HP_PERCENT}% HP a fake player heals {@link FakePlayerPvpConfig#POTION_HEAL_PERCENT}% of its max HP, once every {@link FakePlayerPvpConfig#POTION_REUSE} ms.
+	 * A potion: below its {@link FakePlayerPvpConfig#POTION_HP_PERCENT}% HP (see {@link FakePlayerPvpPersonality}) a fake player heals {@link FakePlayerPvpConfig#POTION_HEAL_PERCENT}% of its max HP, once every {@link FakePlayerPvpConfig#POTION_REUSE} ms.
 	 * @param fake the fake player
 	 * @return {@code true} if it drank one
 	 */
@@ -1715,13 +1716,13 @@ public class FakePlayerPvpManager
 			return false;
 		}
 		
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
 		final double maxHp = fake.getMaxHp();
-		if (fake.isDead() || (fake.getCurrentHp() >= ((maxHp * FakePlayerPvpConfig.POTION_HP_PERCENT) / 100.0)))
+		if (fake.isDead() || (fake.getCurrentHp() >= ((maxHp * profile.getPersonality().getPotionHpPercent()) / 100.0)))
 		{
 			return false;
 		}
 		
-		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
 		final long now = System.currentTimeMillis();
 		if (now < profile.getNextPotionTime())
 		{

@@ -77,7 +77,8 @@ public class FakePlayerPvpProfile
 	private final double _lifetimeScale = Rnd.get(50, 150) / 100.0;
 	private volatile long _nextPotionTime;
 	
-	// Its temper: whether it runs away from a PvP it is losing, and when it may speak again.
+	// Its temper: how its behaviour differs from the config, whether it runs away from a PvP it is losing, and when it may speak again.
+	private final FakePlayerPvpPersonality _personality;
 	private final boolean _runner;
 	private volatile long _nextChatTime;
 	
@@ -103,9 +104,9 @@ public class FakePlayerPvpProfile
 	 * @param mainWeapon its weapon (and shield)
 	 * @param bow the bow it carries besides its weapon, {@code null} for none
 	 * @param polearm the polearm it carries besides its weapon, {@code null} for none
-	 * @param runner {@code true} if it runs away from a PvP it is losing, {@code false} if it fights to the death
+	 * @param personality its temper (see {@link FakePlayerPvpPersonality}); it runs away from a PvP it is losing with its own flee chance, otherwise it fights to the death
 	 */
-	public FakePlayerPvpProfile(FakePlayerPvpBuild build, PlayerClass playerClass, int level, List<SkillHolder> buffs, int armorWornMask, int armorMask, int maxCharges, List<ItemEnchantHolder> equipment, FakePlayerPvpWeapon mainWeapon, FakePlayerPvpWeapon bow, FakePlayerPvpWeapon polearm, boolean runner)
+	public FakePlayerPvpProfile(FakePlayerPvpBuild build, PlayerClass playerClass, int level, List<SkillHolder> buffs, int armorWornMask, int armorMask, int maxCharges, List<ItemEnchantHolder> equipment, FakePlayerPvpWeapon mainWeapon, FakePlayerPvpWeapon bow, FakePlayerPvpWeapon polearm, FakePlayerPvpPersonality personality)
 	{
 		_build = build;
 		_playerClass = playerClass;
@@ -120,7 +121,8 @@ public class FakePlayerPvpProfile
 		_maxCharges = maxCharges;
 		_charges.set(maxCharges);
 		_equipment = equipment;
-		_runner = runner;
+		_personality = personality;
+		_runner = Rnd.get(100) < personality.getFleeChance();
 	}
 	
 	public void setSkills(SkillCategory category, List<Skill> skills)
@@ -459,6 +461,14 @@ public class FakePlayerPvpProfile
 		_nextPotionTime = nextPotionTime;
 	}
 	
+	/**
+	 * @return its temper: its own skill, debuff, revenge, flee... chances and ranges around the configured ones
+	 */
+	public FakePlayerPvpPersonality getPersonality()
+	{
+		return _personality;
+	}
+
 	/**
 	 * @return {@code true} if it runs away from a PvP it is losing (and reads a Scroll of Escape once it got away), {@code false} if it fights to the death
 	 */
