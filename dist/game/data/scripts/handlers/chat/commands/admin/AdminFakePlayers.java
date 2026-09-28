@@ -111,7 +111,8 @@ public class AdminFakePlayers implements IAdminCommandHandler
 			}
 
 			// The temper of the targeted one.
-			if ((activeChar.getTarget() instanceof Npc target) && (target.getTemplate().getFakePlayerPvpProfile() != null))
+			final Npc target = activeChar.getTarget() instanceof Npc ? (Npc) activeChar.getTarget() : null;
+			if ((target != null) && (target.getTemplate().getFakePlayerPvpProfile() != null))
 			{
 				final FakePlayerPvpPersonality personality = target.getTemplate().getFakePlayerPvpProfile().getPersonality();
 				activeChar.sendSysMessage(target.getName() + ": " + personality);
