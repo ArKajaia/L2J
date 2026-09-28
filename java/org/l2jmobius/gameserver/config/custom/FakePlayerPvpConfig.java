@@ -81,6 +81,9 @@ public class FakePlayerPvpConfig
 	public static int FLEE_CHANCE;
 	public static int OUTLEVELED_DIFFERENCE;
 	public static boolean ESCAPE_SCROLL;
+	public static int UNSEEN_RANGE;
+	public static int DEFENSE_DETECT_CHANCE;
+	public static int DEFENSE_KEEP_DISTANCE;
 	public static int CORPSE_TIME_MIN;
 	public static int CORPSE_TIME_MAX;
 	public static int SKILL_CHANCE;
@@ -166,6 +169,9 @@ public class FakePlayerPvpConfig
 		FLEE_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpFleeChance", 20)));
 		OUTLEVELED_DIFFERENCE = Math.max(0, config.getInt("FakePvpOutleveledDifference", 8));
 		ESCAPE_SCROLL = config.getBoolean("FakePvpEscapeScroll", true);
+		UNSEEN_RANGE = Math.max(0, config.getInt("FakePvpUnseenRange", 2500));
+		DEFENSE_DETECT_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpDefenseDetectChance", 25)));
+		DEFENSE_KEEP_DISTANCE = Math.max(0, config.getInt("FakePvpDefenseKeepDistance", 450));
 		CORPSE_TIME_MIN = 10;
 		CORPSE_TIME_MAX = 30;
 		final String corpseTime = config.getString("FakePvpCorpseTime", "10-30");

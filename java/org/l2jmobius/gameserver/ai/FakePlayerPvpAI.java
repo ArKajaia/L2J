@@ -51,6 +51,7 @@ import org.l2jmobius.gameserver.model.actor.instance.Chest;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.item.instance.Item;
+import org.l2jmobius.gameserver.model.skill.BuffInfo;
 import org.l2jmobius.gameserver.model.skill.EffectScope;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
@@ -62,7 +63,8 @@ import org.l2jmobius.gameserver.network.serverpackets.ChangeWaitType;
 /**
  * AI of a roaming fake player (see {@link FakePlayerPvpManager}). It plays like a character of its class: hunts the monsters around its spawn point, keeps its buffs up, uses the class skills it has learned (best ones first), drinks potions, archers and mages keep their
  * distance, and it fights any player that attacks it or steals its kill. In a PvP it plays like a player: it focuses the weakest enemy, closes the gap (Rush, Shadow Step, Dash), stops a melee attacker before stepping back (roots, stuns), waits out an invincible enemy,
- * cleanses roots and bleeds, and some fake players run from a fight they are losing and read a Scroll of Escape once they got away. It sits down to rest after a hard fight, and may go after a flagged or karma player passing by.
+ * cleanses roots and bleeds, and some fake players run from a fight they are losing and read a Scroll of Escape once they got away (and out of every player's sight). After a few hits it notices a player's Ultimate Defense, Guts, Zealot, Angelic Icon or magic mirror, stops
+ * wasting what doesn't get through and keeps its distance while it can. It sits down to rest after a hard fight, and may go after a flagged or karma player passing by.
  */
 public class FakePlayerPvpAI extends AttackableAI
 {
@@ -126,6 +128,65 @@ public class FakePlayerPvpAI extends AttackableAI
 	/** Skill ids of the stuns, roots, sleeps... which a disabled target doesn't need again. */
 	private static final Map<Integer, Boolean> HARD_DISABLES = new ConcurrentHashMap<>();
 	
+	/** What a defensive buff of a player keeps from working (bit flags, see {@link Defense}). */
+	private static final int PHYSICAL_DAMAGE = 1;
+	private static final int MAGIC_DAMAGE = 2;
+	private static final int PHYSICAL_DEBUFFS = 4;
+	private static final int MAGIC_DEBUFFS = 8;
+	/** The player hits hard meanwhile: better stay away from it. */
+	private static final int DANGEROUS = 16;
+	
+	/**
+	 * The defensive buffs of players a fake player learns to play around. It doesn't know right away: each of its attacks or skills on the player may make it notice (see {@link #noticeDefenses}).
+	 */
+	private enum Defense
+	{
+		/** Ultimate Defense, Vengeance: huge P. Def. and M. Def., but it can't move. */
+		ULTIMATE_DEFENSE(PHYSICAL_DAMAGE | MAGIC_DAMAGE, true, true, 110, 368),
+		/** Guts: P. Def. tripled at low HP, only physical hits notice it. */
+		GUTS(PHYSICAL_DAMAGE, true, false, 139),
+		/** Zealot: resists debuffs, and hits hard and fast. */
+		ZEALOT(PHYSICAL_DEBUFFS | MAGIC_DEBUFFS | DANGEROUS, true, true, 420),
+		/** Angelic Icon: resists debuffs, P. Def. and M. Def. up by half, and hits hard and fast. */
+		ANGELIC_ICON(PHYSICAL_DEBUFFS | MAGIC_DEBUFFS | DANGEROUS, true, true, 406),
+		/** Magical Mirror, Shield Deflect Magic, Reflect Magic: magic skills come back, only magic skills notice it. */
+		MAGIC_MIRROR(MAGIC_DAMAGE | MAGIC_DEBUFFS, false, true, 351, 916, 6282);
+		
+		private static final Map<Integer, Defense> BY_SKILL_ID = new ConcurrentHashMap<>();
+		static
+		{
+			for (Defense defense : values())
+			{
+				for (int skillId : defense._skillIds)
+				{
+					BY_SKILL_ID.put(skillId, defense);
+				}
+			}
+		}
+		
+		private final int _flags;
+		private final boolean _noticedByPhysical;
+		private final boolean _noticedByMagic;
+		private final int[] _skillIds;
+		
+		Defense(int flags, boolean noticedByPhysical, boolean noticedByMagic, int... skillIds)
+		{
+			_flags = flags;
+			_noticedByPhysical = noticedByPhysical;
+			_noticedByMagic = noticedByMagic;
+			_skillIds = skillIds;
+		}
+		
+		/**
+		 * @param skill a skill
+		 * @return the defense {@code skill} gives, {@code null} if none
+		 */
+		static Defense of(Skill skill)
+		{
+			return skill == null ? null : BY_SKILL_ID.get(skill.getId());
+		}
+	}
+	
 	private long _kiteEndTime = 0;
 	private long _nextKiteTime = 0;
 	private volatile boolean _resting = false;
@@ -174,6 +235,9 @@ public class FakePlayerPvpAI extends AttackableAI
 	// A class whose damage is its normal attack (tanks, archers, most warriors), not its skills: it plays its combos less often.
 	private boolean _autoAttacker = false;
 	
+	/** The defensive buffs (Ultimate Defense, Guts, Zealot, Angelic Icon, magic mirror) it noticed on the players it fights. */
+	private final Set<BuffInfo> _noticedDefenses = ConcurrentHashMap.newKeySet();
+	
 	public FakePlayerPvpAI(Attackable creature)
 	{
 		super(creature);
@@ -210,6 +274,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		_focus = null;
 		_fleeing = false;
 		_lastStand = false;
+		_noticedDefenses.clear();
 		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
 		if ((profile != null) && profile.isBowHeld())
 		{
@@ -300,6 +365,15 @@ public class FakePlayerPvpAI extends AttackableAI
 		// Casting (a spell, a Scroll of Escape...): a player still drinks potions meanwhile.
 		if (npc.isCastingNow())
 		{
+			// A player comes into sight while it reads its Scroll of Escape: it doesn't teleport in front of them, it runs on.
+			final Skill casting = npc.getLastSkillCast();
+			if ((casting != null) && (casting.getId() == SCROLL_OF_ESCAPE) && FakePlayerPvpManager.isSeenByPlayer(npc))
+			{
+				npc.abortCast();
+				_nextEscapeTime = System.currentTimeMillis() + 3000;
+				return;
+			}
+			
 			if (npc.getTemplate().getFakePlayerPvpProfile() != null)
 			{
 				FakePlayerPvpManager.getInstance().tryPotion(npc);
@@ -464,10 +538,25 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
+		// A player under Ultimate Defense, Guts, Zealot, Angelic Icon or a magic mirror: once it noticed, it leaves aside what doesn't get through and keeps its distance while it can.
+		final int defenses = pvp ? getKnownDefenses(target) : 0;
+		if (defenses != 0)
+		{
+			if (_combo != null)
+			{
+				endCombo(now);
+			}
+			
+			if (holdOff(npc, target, defenses, mage, role.isRanged() || bowHeld, distance - collision, canMove, now))
+			{
+				return;
+			}
+		}
+		
 		// Archers and mages stop a player in melee range (root, stun, Aura Flash...), then step back (unless a combo is finishing a stunned target).
 		if (canMove && role.isRanged() && (_combo == null) && !npc.isAttackingNow() && ((distance - collision) < FakePlayerPvpConfig.KITE_DISTANCE) && (now >= _nextKiteTime))
 		{
-			if (pvp && !isDisabled(target) && useSkill(npc, target, pickPeel(npc, target, profile), distance, collision, false))
+			if (pvp && !isDisabled(target) && useSkill(npc, target, pickPeel(npc, target, profile, defenses), distance, collision, false))
 			{
 				return;
 			}
@@ -499,7 +588,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		// Combos: the skill chains a practiced player of this class plays (with its weapon, not with the spare bow).
-		if (!bowHeld && playCombo(npc, profile, target, pvp, distance, collision, canMove, now))
+		if (!bowHeld && (defenses == 0) && playCombo(npc, profile, target, pvp, distance, collision, canMove, now))
 		{
 			return;
 		}
@@ -508,14 +597,14 @@ public class FakePlayerPvpAI extends AttackableAI
 		final double reach = distance - collision;
 		final int debuffChance = pvp ? (_autoAttacker ? (FakePlayerPvpConfig.PVP_DEBUFF_CHANCE / 2) : FakePlayerPvpConfig.PVP_DEBUFF_CHANCE) : 5;
 		// With the bow out it only uses what reaches the target from where it stands, instead of running in.
-		if ((Rnd.get(100) < debuffChance) && useSkill(npc, target, inReach(pickSkill(npc, target, profile.getSkills(SkillCategory.DEBUFF), true, (role.isRanged() || bowHeld) ? reach : -1, pvp), bowHeld, reach), distance, collision, canMove))
+		if ((Rnd.get(100) < debuffChance) && useSkill(npc, target, inReach(pickSkill(npc, target, profile.getSkills(SkillCategory.DEBUFF), true, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))
 		{
 			return;
 		}
 		
 		// Attack skills, best first. Mages cast whenever they can, Gladiators, Tyrants and daggers fight with their skills, and the other classes (tanks, archers, most warriors) auto attack and use a skill now and then, like players.
 		final int skillChance = _autoAttacker ? (pvp ? FakePlayerPvpConfig.AUTO_ATTACK_PVP_SKILL_CHANCE : FakePlayerPvpConfig.AUTO_ATTACK_SKILL_CHANCE) : (pvp ? FakePlayerPvpConfig.PVP_SKILL_CHANCE : FakePlayerPvpConfig.SKILL_CHANCE);
-		if ((mage || (Rnd.get(100) < skillChance)) && useSkill(npc, target, inReach(pickSkill(npc, target, profile.getSkills(SkillCategory.ATTACK), false, (role.isRanged() || bowHeld) ? reach : -1, pvp), bowHeld, reach), distance, collision, canMove))
+		if ((mage || (Rnd.get(100) < skillChance)) && useSkill(npc, target, inReach(pickSkill(npc, target, profile.getSkills(SkillCategory.ATTACK), false, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))
 		{
 			return;
 		}
@@ -542,6 +631,10 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		_progressTime = now;
+		if (!npc.isAttackingNow())
+		{
+			noticeDefenses(target, false);
+		}
 		_actor.doAttack(target);
 	}
 	
@@ -589,7 +682,8 @@ public class FakePlayerPvpAI extends AttackableAI
 	}
 	
 	/**
-	 * Some players run from a fight they are losing (see {@link FakePlayerPvpProfile#isRunner()}): they use their emergency and speed skills, stop a pursuer on their heels (root, stun, Trick...), drink potions and run, then read a Scroll of Escape once they got away. Held
+	 * Some players run from a fight they are losing (see {@link FakePlayerPvpProfile#isRunner()}): they use their emergency and speed skills, stop a pursuer on their heels (root, stun, Trick...), drink potions and run, then read a Scroll of Escape once they got away
+	 * and no player sees them (see {@link FakePlayerPvpManager#isSeenByPlayer}). Held
 	 * in place they fight back, and caught after running too long (or cornered) they turn around and fight to the end.
 	 * @param npc the fake player
 	 * @param profile its profile
@@ -647,7 +741,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		// A pursuer on its heels: stop it before running on.
-		if ((pursuerGap < PEEL_DISTANCE) && !isDisabled(pursuer) && useSkill(npc, pursuer, pickPeel(npc, pursuer, profile), pursuerDistance, pursuerCollision, false))
+		if ((pursuerGap < PEEL_DISTANCE) && !isDisabled(pursuer) && useSkill(npc, pursuer, pickPeel(npc, pursuer, profile, getKnownDefenses(pursuer)), pursuerDistance, pursuerCollision, false))
 		{
 			return true;
 		}
@@ -655,10 +749,10 @@ public class FakePlayerPvpAI extends AttackableAI
 		// Got away.
 		if (pursuerGap > ESCAPE_DISTANCE)
 		{
-			// A Scroll of Escape: 20 seconds, a pursuer that catches up can still stun it or finish it.
+			// A Scroll of Escape: 20 seconds, a pursuer that catches up can still stun it or finish it. Never in front of a player: it runs on until nobody sees it.
 			if (FakePlayerPvpConfig.ESCAPE_SCROLL)
 			{
-				if ((now >= _nextEscapeTime) && readEscapeScroll(npc, target, now))
+				if ((now >= _nextEscapeTime) && !FakePlayerPvpManager.isSeenByPlayer(npc) && readEscapeScroll(npc, target, now))
 				{
 					return true;
 				}
@@ -839,7 +933,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	private Creature chooseFocus(Attackable npc, Creature mostHated, long now)
 	{
 		final Creature focus = _focus;
-		if ((focus != null) && (now < _focusUntil) && !focus.isInvul() && focus.isPlayable() && hates(npc, focus, FakePlayerPvpManager.PVP_HATE) && isValidTarget(npc, focus))
+		if ((focus != null) && (now < _focusUntil) && !focus.isInvul() && !isPlayedAround(npc, focus) && focus.isPlayable() && hates(npc, focus, FakePlayerPvpManager.PVP_HATE) && isValidTarget(npc, focus))
 		{
 			return focus;
 		}
@@ -873,11 +967,138 @@ public class FakePlayerPvpAI extends AttackableAI
 	}
 	
 	/**
-	 * @return how good a target {@code enemy} is, lower is better
+	 * @return how good a target {@code enemy} is, lower is better: never an invincible one, nor one whose Ultimate Defense, Guts, Zealot or Angelic Icon it noticed if there is another
 	 */
-	private static double focusScore(Attackable npc, Creature enemy)
+	private double focusScore(Attackable npc, Creature enemy)
 	{
-		return (enemy.getCurrentHp() / Math.max(1, enemy.getMaxHp())) + (npc.calculateDistance2D(enemy) / 2000.0) + (enemy.isInvul() ? 2 : 0);
+		return (enemy.getCurrentHp() / Math.max(1, enemy.getMaxHp())) + (npc.calculateDistance2D(enemy) / 2000.0) + (enemy.isInvul() ? 2 : 0) + (isPlayedAround(npc, enemy) ? 1.5 : 0);
+	}
+	
+	/**
+	 * @return {@code true} if it noticed a defensive buff on {@code enemy} that keeps its damage from getting through, or that makes it keep away (see {@link #holdOff})
+	 */
+	private boolean isPlayedAround(Attackable npc, Creature enemy)
+	{
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		final boolean mage = (profile != null) && (profile.getRole() == Role.MAGE);
+		return (getKnownDefenses(enemy) & ((mage ? MAGIC_DAMAGE : PHYSICAL_DAMAGE) | DANGEROUS)) != 0;
+	}
+	
+	/**
+	 * Like a player who sees their hits do nothing, each attack or skill on a player under Ultimate Defense, Guts, Zealot, Angelic Icon or a magic mirror has {@link FakePlayerPvpConfig#DEFENSE_DETECT_CHANCE}% chance to make it notice: it doesn't stop attacking right away.
+	 * Guts is only noticed by physical hits, a magic mirror by magic skills.
+	 * @param target what it attacks
+	 * @param magic {@code true} for a magic skill
+	 */
+	private void noticeDefenses(Creature target, boolean magic)
+	{
+		if (!target.isPlayable() || (FakePlayerPvpConfig.DEFENSE_DETECT_CHANCE <= 0))
+		{
+			return;
+		}
+		
+		// Forget the ones that ended.
+		_noticedDefenses.removeIf(info -> info.isRemoved() || (info.getEffected() == null) || (info.getEffected().getEffectList().getBuffInfoBySkillId(info.getSkill().getId()) != info));
+		
+		for (BuffInfo info : target.getEffectList().getBuffs())
+		{
+			final Defense defense = Defense.of(info.getSkill());
+			if ((defense != null) && (magic ? defense._noticedByMagic : defense._noticedByPhysical) && !info.isRemoved() && !_noticedDefenses.contains(info) && (Rnd.get(100) < FakePlayerPvpConfig.DEFENSE_DETECT_CHANCE))
+			{
+				_noticedDefenses.add(info);
+			}
+		}
+	}
+	
+	/**
+	 * @param target a creature
+	 * @return what the defensive buffs it noticed on {@code target} keep from working (see {@link Defense}), 0 if none
+	 */
+	private int getKnownDefenses(Creature target)
+	{
+		if (_noticedDefenses.isEmpty() || !target.isPlayable())
+		{
+			return 0;
+		}
+		
+		int flags = 0;
+		for (BuffInfo info : target.getEffectList().getBuffs())
+		{
+			if (!info.isRemoved() && _noticedDefenses.contains(info))
+			{
+				final Defense defense = Defense.of(info.getSkill());
+				if (defense != null)
+				{
+					flags |= defense._flags;
+				}
+			}
+		}
+		return flags;
+	}
+	
+	/**
+	 * @param defenses what the defensive buffs it noticed on the target keep from working
+	 * @param skill a skill
+	 * @param debuff {@code true} if it is used as a debuff, {@code false} for its damage
+	 * @return {@code true} if {@code skill} wouldn't get through
+	 */
+	private static boolean isBlocked(int defenses, Skill skill, boolean debuff)
+	{
+		if (defenses == 0)
+		{
+			return false;
+		}
+		
+		if (debuff)
+		{
+			return (defenses & (skill.isMagic() ? MAGIC_DEBUFFS : PHYSICAL_DEBUFFS)) != 0;
+		}
+		return (defenses & (skill.isMagic() ? MAGIC_DAMAGE : PHYSICAL_DAMAGE)) != 0;
+	}
+	
+	/**
+	 * Plays around a player's defensive buff it noticed, like a player would: when its damage doesn't get through (Ultimate Defense, Guts against a fighter, a magic mirror against a mage) or the player hits hard (Zealot, Angelic Icon), it steps away to
+	 * {@link FakePlayerPvpConfig#DEFENSE_KEEP_DISTANCE} and waits it out there, drinking potions and keeping its buffs up. Archers, mages and a tank with its bow out keep shooting from there when their damage still gets through. A player that catches up
+	 * anyway is fought back (with what gets through) until it can step away again.
+	 * @param npc the fake player
+	 * @param target the player it fights
+	 * @param defenses what the defensive buffs it noticed on {@code target} keep from working
+	 * @param mage {@code true} for a mage, whose damage is magic
+	 * @param ranged {@code true} if it fights from range (archer, mage, bow out)
+	 * @param gap the distance to the target, collisions excluded
+	 * @param canMove {@code true} if it can move
+	 * @param now the current time
+	 * @return {@code true} if it acted (or waits) this tick
+	 */
+	private boolean holdOff(Attackable npc, Creature target, int defenses, boolean mage, boolean ranged, double gap, boolean canMove, long now)
+	{
+		final boolean wasted = (defenses & (mage ? MAGIC_DAMAGE : PHYSICAL_DAMAGE)) != 0;
+		if (!wasted && ((defenses & DANGEROUS) == 0))
+		{
+			return false; // A magic mirror against a fighter: it only leaves its magic skills aside.
+		}
+		
+		// Waiting on purpose, not stuck.
+		_progressTime = now;
+		
+		final int keep = FakePlayerPvpConfig.DEFENSE_KEEP_DISTANCE;
+		if (gap < keep)
+		{
+			// Too close: step away when it can, otherwise fight back meanwhile.
+			return canMove && (now >= _nextKiteTime) && kiteStep(npc, target, now, Math.max(FakePlayerPvpConfig.KITE_STEP, (int) (keep - gap) + 50));
+		}
+		
+		// Far enough: shoot what still gets through, or wait it out.
+		if (!wasted && ranged)
+		{
+			return false;
+		}
+		
+		if (npc.isMoving())
+		{
+			clientStopMoving(null);
+		}
+		return true;
 	}
 	
 	/**
@@ -905,13 +1126,13 @@ public class FakePlayerPvpAI extends AttackableAI
 	}
 	
 	/**
-	 * @return the first skill of its peel list (in order of preference) it can use on {@code target} now, {@code null} if none: used for its effect on that one player, an area peel like Aura Flash is fine against a single one
+	 * @return the first skill of its peel list (in order of preference) it can use on {@code target} now and that gets through its defenses, {@code null} if none: used for its effect on that one player, an area peel like Aura Flash is fine against a single one
 	 */
-	private static Skill pickPeel(Attackable npc, Creature target, FakePlayerPvpProfile profile)
+	private static Skill pickPeel(Attackable npc, Creature target, FakePlayerPvpProfile profile, int defenses)
 	{
 		for (Skill skill : profile.getSkills(SkillCategory.PEEL))
 		{
-			if (!target.isAffectedBySkill(skill.getId()) && canCast(npc, skill, target))
+			if (!target.isAffectedBySkill(skill.getId()) && !isBlocked(defenses, skill, true) && canCast(npc, skill, target))
 			{
 				return skill;
 			}
@@ -1299,6 +1520,13 @@ public class FakePlayerPvpAI extends AttackableAI
 	private Creature findPrey(Attackable npc)
 	{
 		final Spawn spawn = npc.getSpawn();
+
+		// Off its hunting ground (back from a chase, or walking back from town): home first, it would drop any monster right away.
+		if ((spawn != null) && (npc.calculateDistance2D(spawn) > FakePlayerPvpConfig.LEASH_RANGE))
+		{
+			return null;
+		}
+
 		final Creature unreachable = System.currentTimeMillis() < _unreachableUntil ? _unreachable : null;
 		Monster prey = null;
 		double preyDistance = Double.MAX_VALUE;
@@ -1401,9 +1629,10 @@ public class FakePlayerPvpAI extends AttackableAI
 	 * @param debuff {@code true} to skip the ones already on the target
 	 * @param reach the distance to the target for a ranged fighter, which prefers skills that reach it from where it stands, -1 for melee
 	 * @param pvp {@code true} against a player, the only time long cooldown skills are used
+	 * @param defenses what the defensive buffs it noticed on the target keep from working (see {@link Defense}), its skills that wouldn't get through are left aside
 	 * @return a skill it can cast now, or {@code null}
 	 */
-	private static Skill pickSkill(Attackable npc, Creature target, List<Skill> skills, boolean debuff, double reach, boolean pvp)
+	private static Skill pickSkill(Attackable npc, Creature target, List<Skill> skills, boolean debuff, double reach, boolean pvp, int defenses)
 	{
 		if (skills.isEmpty())
 		{
@@ -1416,7 +1645,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		Skill outOfReach = null;
 		for (Skill skill : skills)
 		{
-			if ((debuff && (target.isAffectedBySkill(skill.getId()) || (disabled && isHardDisable(skill)))) || (!pvp && isPvpOnly(skill)) || !canCast(npc, skill, target) || !isWorthCasting(npc, target, skill, pvp))
+			if ((debuff && (target.isAffectedBySkill(skill.getId()) || (disabled && isHardDisable(skill)))) || (!pvp && isPvpOnly(skill)) || isBlocked(defenses, skill, debuff) || !canCast(npc, skill, target) || !isWorthCasting(npc, target, skill, pvp))
 			{
 				continue;
 			}
@@ -1557,6 +1786,7 @@ public class FakePlayerPvpAI extends AttackableAI
 			_progressTime = System.currentTimeMillis();
 		}
 		
+		noticeDefenses(target, skill.isMagic());
 		clientStopMoving(null);
 		npc.setTarget(target);
 		npc.doCast(skill);
@@ -1916,10 +2146,19 @@ public class FakePlayerPvpAI extends AttackableAI
 	}
 	
 	/**
-	 * Steps back from {@code target}, onto a point geodata allows.
+	 * Steps back from {@code target} by {@link FakePlayerPvpConfig#KITE_STEP}, onto a point geodata allows.
 	 * @return {@code true} if it started moving
 	 */
 	private boolean kiteStep(Attackable npc, Creature target, long now)
+	{
+		return kiteStep(npc, target, now, FakePlayerPvpConfig.KITE_STEP);
+	}
+	
+	/**
+	 * Steps back from {@code target} by {@code step}, onto a point geodata allows.
+	 * @return {@code true} if it started moving
+	 */
+	private boolean kiteStep(Attackable npc, Creature target, long now, int step)
 	{
 		double dx = npc.getX() - target.getX();
 		double dy = npc.getY() - target.getY();
@@ -1932,7 +2171,6 @@ public class FakePlayerPvpAI extends AttackableAI
 			length = 1;
 		}
 		
-		final int step = FakePlayerPvpConfig.KITE_STEP;
 		final int x = npc.getX() + (int) ((dx / length) * step);
 		final int y = npc.getY() + (int) ((dy / length) * step);
 		final Location destination = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, npc.getZ() + 30, npc.getInstanceId());

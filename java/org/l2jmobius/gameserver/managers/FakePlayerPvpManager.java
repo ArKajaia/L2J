@@ -42,7 +42,11 @@ import org.l2jmobius.gameserver.data.sql.CharInfoTable;
 import org.l2jmobius.gameserver.data.xml.FakePlayerData;
 import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
+import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
+import org.l2jmobius.gameserver.model.WorldObject;
+import org.l2jmobius.gameserver.model.WorldRegion;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
@@ -101,8 +105,11 @@ public class FakePlayerPvpManager
 	private static final int POTION_SKILL_ID = 2037;
 	/** Milliseconds between two {@link #maintain} runs. */
 	private static final long MAINTAIN_INTERVAL = 30000;
-	/** {@link #keepPopulation} only replaces a monster no player is this close to, so nobody sees it turn into a fake player. */
-	private static final int UNSEEN_RANGE = 2500;
+	/** A player this close sees a fake player even behind a wall (see {@link #isSeenByPlayer}). */
+	private static final int CLOSE_SEEN_RANGE = 800;
+	/** Seconds between two tries of a fake player coming back from town while its spot is watched, and how many tries it makes. */
+	private static final int RETURN_RETRY_DELAY = 20;
+	private static final int RETURN_MAX_RETRIES = 15;
 	/** A fake player says at most one thing in this many milliseconds. */
 	private static final long CHAT_INTERVAL = 20000;
 	/** A fake player doesn't pick a fight with a player this many levels above it (it only complains). */
@@ -914,6 +921,12 @@ public class FakePlayerPvpManager
 			return false;
 		}
 		
+		// Nobody sees a fake player pop out of nowhere: the monster spawns as usual.
+		if (isSeenByPlayer(x, y, z, spawn.getInstanceId()))
+		{
+			return false;
+		}
+		
 		final Npc fake = spawnFakePlayer(FakePlayerPvpData.getInstance().getRandomBuild(), getFakeLevel(monster), x, y, z, spawn.getInstanceId(), monster, spawn);
 		if (fake == null)
 		{
@@ -1133,7 +1146,7 @@ public class FakePlayerPvpManager
 		{
 			final NpcTemplate template = fake.getTemplate();
 			final String name = fake.getName();
-			_pendingReturns.put(name, ThreadPool.schedule(() -> returnFakePlayer(template), Rnd.get(FakePlayerPvpConfig.RETURN_DELAY_MIN, FakePlayerPvpConfig.RETURN_DELAY_MAX) * 1000L));
+			_pendingReturns.put(name, ThreadPool.schedule(() -> returnFakePlayer(template, 0), Rnd.get(FakePlayerPvpConfig.RETURN_DELAY_MIN, FakePlayerPvpConfig.RETURN_DELAY_MAX) * 1000L));
 			return;
 		}
 		
@@ -1142,10 +1155,12 @@ public class FakePlayerPvpManager
 	
 	/**
 	 * Like a player that walks back from town for round two, a fake player killed by a player comes back to where it died (see {@link FakePlayerPvpConfig#RETURN_CHANCE}): same template, so same name, looks and gear. It looks for its killer for a while
-	 * ({@link org.l2jmobius.gameserver.ai.FakePlayerPvpAI}, then {@link #revenge}) and otherwise hunts like any other fake player. It doesn't replace a monster anymore, so killing it again gives no monster loot or exp.
+	 * ({@link org.l2jmobius.gameserver.ai.FakePlayerPvpAI}, then {@link #revenge}) and otherwise hunts like any other fake player. It doesn't replace a monster anymore, so killing it again gives no monster loot or exp. It doesn't appear in front of a player: when a
+	 * player sees the spot, it arrives out of sight and walks back to it (see {@link #findArrival}), and when there is no such place it tries again a bit later.
 	 * @param template the template of the fake player that died
+	 * @param retries how many times it already tried
 	 */
-	private void returnFakePlayer(NpcTemplate template)
+	private void returnFakePlayer(NpcTemplate template, int retries)
 	{
 		// Cancelled meanwhile (//fakepvp_clear).
 		final String name = template.getName();
@@ -1162,6 +1177,20 @@ public class FakePlayerPvpManager
 		if (!isEnabled() || ((FakePlayerPvpConfig.MAX_ALIVE > 0) && (_fakePlayers.size() >= FakePlayerPvpConfig.MAX_ALIVE)) || !isAllowedZone(x, y, z) || ((instanceId != 0) && (InstanceManager.getInstance().getInstance(instanceId) == null)))
 		{
 			_names.remove(name.toLowerCase());
+			return;
+		}
+		
+		final Location arrival = findArrival(x, y, z, instanceId);
+		if (arrival == null)
+		{
+			if (retries < RETURN_MAX_RETRIES)
+			{
+				_pendingReturns.put(name, ThreadPool.schedule(() -> returnFakePlayer(template, retries + 1), RETURN_RETRY_DELAY * 1000L));
+			}
+			else
+			{
+				_names.remove(name.toLowerCase());
+			}
 			return;
 		}
 		
@@ -1183,10 +1212,16 @@ public class FakePlayerPvpManager
 			FakePlayerData.getInstance().addFakePlayerName(lowercaseName, name);
 			FakePlayerData.getInstance().addTalkableFakePlayerName(lowercaseName);
 			
-			if (spawnFromTemplate(template, x, y, z, instanceId) == null)
+			final Npc fake = spawnFromTemplate(template, arrival.getX(), arrival.getY(), arrival.getZ(), instanceId);
+			if (fake == null)
 			{
 				FakePlayerData.getInstance().removeFakePlayer(name);
 				_names.remove(lowercaseName);
+			}
+			else if (fake.getSpawn() != null)
+			{
+				// Its hunting ground is still where it died: its AI walks it back there.
+				fake.getSpawn().setXYZ(x, y, z);
 			}
 		}
 		catch (Exception e)
@@ -1195,6 +1230,44 @@ public class FakePlayerPvpManager
 			FakePlayerData.getInstance().removeFakePlayer(name);
 			_names.remove(name.toLowerCase());
 		}
+	}
+	
+	/**
+	 * @param x where it died
+	 * @param y where it died
+	 * @param z where it died
+	 * @param instanceId the instance
+	 * @return where a fake player coming back from town appears: where it died if no player sees it, otherwise a point out of sight that it can walk back from, {@code null} if there is none
+	 */
+	private static Location findArrival(int x, int y, int z, int instanceId)
+	{
+		if (!isSeenByPlayer(x, y, z, instanceId))
+		{
+			return new Location(x, y, z);
+		}
+		
+		final int distance = FakePlayerPvpConfig.UNSEEN_RANGE + 300;
+		final double start = Rnd.nextDouble() * 2 * Math.PI;
+		for (int i = 0; i < 8; i++)
+		{
+			final double angle = start + ((i * Math.PI) / 4);
+			final Location point = GeoEngine.getInstance().getValidLocation(x, y, z, x + (int) (Math.cos(angle) * distance), y + (int) (Math.sin(angle) * distance), z, instanceId);
+			
+			// A wall close by: not a way back.
+			final long dx = point.getX() - x;
+			final long dy = point.getY() - y;
+			if (Math.sqrt((dx * dx) + (dy * dy)) < (distance / 2))
+			{
+				continue;
+			}
+			
+			if (isAllowedZone(point.getX(), point.getY(), point.getZ()) && !isSeenByPlayer(point.getX(), point.getY(), point.getZ(), instanceId))
+			{
+				return point;
+			}
+		}
+		
+		return null;
 	}
 	
 	/**
@@ -1381,7 +1454,8 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
-	 * Called when a roaming fake player finishes reading a Scroll of Escape: it teleports away, which for everyone around is the same as leaving. Its monster respawns as usual.
+	 * Called when a roaming fake player finishes reading a Scroll of Escape: it teleports away, which for everyone around is the same as leaving. Its monster respawns as usual. Its AI only reads the scroll out of sight and cancels it when a player shows up, but
+	 * should a player see it right when it finishes, it stays (and reads it again later).
 	 * @param fake the fake player
 	 */
 	public void onFakePlayerEscaped(Npc fake)
@@ -1389,11 +1463,69 @@ public class FakePlayerPvpManager
 		// Out of the cast that got it here first.
 		ThreadPool.schedule(() ->
 		{
-			if (!fake.isDead() && fake.isSpawned())
+			if (!fake.isDead() && fake.isSpawned() && !isSeenByPlayer(fake))
 			{
 				fake.deleteMe();
 			}
 		}, 300);
+	}
+	
+	/**
+	 * A fake player doesn't teleport (Scroll of Escape, logging off, its dead body going to town) nor appear while a player sees it: a player within {@link FakePlayerPvpConfig#UNSEEN_RANGE} that has a line of sight on it, or that is closer than
+	 * {@link #CLOSE_SEEN_RANGE} (walls or not).
+	 * @param fake a fake player
+	 * @return {@code true} if a player sees {@code fake}
+	 */
+	public static boolean isSeenByPlayer(WorldObject fake)
+	{
+		return isSeenByPlayer(fake.getX(), fake.getY(), fake.getZ(), fake.getInstanceId());
+	}
+	
+	/**
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @param instanceId the instance
+	 * @return {@code true} if a player sees that point (see {@link #isSeenByPlayer(WorldObject)})
+	 */
+	public static boolean isSeenByPlayer(int x, int y, int z, int instanceId)
+	{
+		final int range = FakePlayerPvpConfig.UNSEEN_RANGE;
+		if (range <= 0)
+		{
+			return false;
+		}
+		
+		// The players that know about that point are the ones in the surrounding regions.
+		final WorldRegion region = World.getInstance().getRegion(x, y, z);
+		if (region == null)
+		{
+			return false;
+		}
+		
+		final long rangeSq = (long) range * range;
+		final long closeSq = (long) CLOSE_SEEN_RANGE * CLOSE_SEEN_RANGE;
+		for (WorldRegion surrounding : region.getSurroundingRegions())
+		{
+			for (WorldObject object : surrounding.getVisibleObjects())
+			{
+				if (!object.isPlayer() || (object.getInstanceId() != instanceId))
+				{
+					continue;
+				}
+				
+				final long dx = object.getX() - x;
+				final long dy = object.getY() - y;
+				final long dz = object.getZ() - z;
+				final long distanceSq = (dx * dx) + (dy * dy) + (dz * dz);
+				if ((distanceSq <= closeSq) || ((distanceSq <= rangeSq) && GeoEngine.getInstance().canSeeTarget(object.getX(), object.getY(), object.getZ(), x, y, z, instanceId)))
+				{
+					return true;
+				}
+			}
+		}
+		
+		return false;
 	}
 	
 	/**
@@ -1699,7 +1831,7 @@ public class FakePlayerPvpManager
 	
 	/**
 	 * Every 30 seconds: rebuff fake players and log off the ones that lived long enough. A fake player hunts non stop (it picks its next monster right after a kill), so only a fight with a player keeps it from rebuffing or logging off, like a player that
-	 * leaves a hunt at any time but not in the middle of a PvP.
+	 * leaves a hunt at any time but not in the middle of a PvP. It doesn't log off in front of a player either (see {@link #isSeenByPlayer}), it waits until nobody is watching.
 	 */
 	private void maintain()
 	{
@@ -1726,7 +1858,8 @@ public class FakePlayerPvpManager
 				}
 				
 				final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
-				if ((FakePlayerPvpConfig.LIFETIME > 0) && ((now - profile.getSpawnTime()) > (FakePlayerPvpConfig.LIFETIME * 1000L * profile.getLifetimeScale())))
+				// Logs off once nobody is watching: it doesn't vanish in front of a player.
+				if ((FakePlayerPvpConfig.LIFETIME > 0) && ((now - profile.getSpawnTime()) > (FakePlayerPvpConfig.LIFETIME * 1000L * profile.getLifetimeScale())) && !isSeenByPlayer(fake))
 				{
 					fake.deleteMe();
 					continue;
@@ -1818,7 +1951,7 @@ public class FakePlayerPvpManager
 	
 	/**
 	 * @param monster the monster
-	 * @return {@code true} if {@code monster} is a plain monster (no champion, thief, mage or other special one) that isn't fighting and that no player is near
+	 * @return {@code true} if {@code monster} is a plain monster (no champion, thief, mage or other special one) that isn't fighting and that no player sees, so nobody sees it turn into a fake player
 	 */
 	private static boolean isIdle(Monster monster)
 	{
@@ -1832,7 +1965,7 @@ public class FakePlayerPvpManager
 			return false;
 		}
 		
-		return World.getInstance().getVisibleObjectsInRange(monster, Player.class, UNSEEN_RANGE).isEmpty();
+		return !isSeenByPlayer(monster);
 	}
 	
 	/**
