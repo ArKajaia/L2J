@@ -29,8 +29,12 @@ import org.l2jmobius.gameserver.network.clientpackets.AbstractRefinePacket;
 import handlers.items.LifeStone;
 
 /**
- * Buttons of the Life Stone augmentation list (see {@link LifeStone}).<br>
- * Format: {@code lifestone_augment <lifeStoneObjId> <page>} to show a page, {@code lifestone_augment <lifeStoneObjId> <page> <targetObjId>} to augment an item.
+ * Buttons of the Life Stone augmentation window (see {@link LifeStone}). Format:
+ * <ul>
+ * <li>{@code lifestone_augment <lifeStoneObjId> <page>} shows a page of the equipment list</li>
+ * <li>{@code lifestone_augment <lifeStoneObjId> <page> <targetObjId>} shows the costs of augmenting an item and asks for confirmation</li>
+ * <li>{@code lifestone_augment <lifeStoneObjId> <page> <targetObjId> confirm} augments it (replacing its augmentation if it has one)</li>
+ * </ul>
  */
 public class LifeStoneAugment implements IBypassHandler
 {
@@ -63,27 +67,29 @@ public class LifeStoneAugment implements IBypassHandler
 		}
 		
 		final Item lifeStone = player.getInventory().getItemByObjectId(lifeStoneObjId);
+		if ((lifeStone == null) || !AbstractRefinePacket.canAugment(player))
+		{
+			return true;
+		}
+		
 		if (targetObjId == 0)
 		{
-			if ((lifeStone != null) && AbstractRefinePacket.canAugment(player))
-			{
-				LifeStone.showList(player, lifeStone, page, null);
-			}
+			LifeStone.showList(player, lifeStone, page, null);
 			return true;
 		}
 		
 		final Item item = player.getInventory().getItemByObjectId(targetObjId);
-		if ((lifeStone == null) || (item == null))
+		if ((parts.length < 5) || !LifeStone.CONFIRM.equals(parts[4]) || (item == null))
 		{
+			LifeStone.showItem(player, lifeStone, page, item, null);
 			return true;
 		}
 		
-		final String itemName = (item.getEnchantLevel() > 0 ? "+" + item.getEnchantLevel() + " " : "") + item.getName();
 		final String failure = AbstractRefinePacket.augmentFromInventory(player, item, lifeStone);
-		final String notice = failure == null ? "<font color=\"88CC88\">" + itemName + " has been augmented!</font>" : "<font color=\"CC6666\">" + failure + "</font>";
+		final String notice = failure == null ? "<font color=\"88CC88\">The item was successfully augmented!</font><br1>New augment: " + LifeStone.describe(item.getAugmentation()) : "<font color=\"CC6666\">" + failure + "</font>";
 		
-		// The stack object is gone once the last life stone is used.
-		LifeStone.showList(player, player.getInventory().getItemByObjectId(lifeStoneObjId), page, notice);
+		// Back to the same item so it can be augmented again; the stack object is gone once the last life stone is used.
+		LifeStone.showItem(player, player.getInventory().getItemByObjectId(lifeStoneObjId), page, item, notice);
 		return true;
 	}
 	

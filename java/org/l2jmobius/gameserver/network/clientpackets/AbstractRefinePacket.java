@@ -237,11 +237,69 @@ public abstract class AbstractRefinePacket extends ClientPacket
 	 * @param player the player
 	 * @param item the weapon or accessory
 	 * @param lifeStone the life stone
-	 * @return {@code true} if the item can be augmented with this life stone (Gemstones not checked)
+	 * @return {@code true} if the item can be augmented with this life stone, already augmented items included (costs not checked)
 	 */
 	public static boolean isAugmentableWith(Player player, Item item, Item lifeStone)
 	{
-		return isValid(player, item, lifeStone);
+		return isValid(player, item, lifeStone, true);
+	}
+	
+	/**
+	 * @param item the augmented item
+	 * @return the adena it costs to remove the augmentation of this item, 0 if its grade can't be augmented
+	 */
+	public static long getAugmentRemovalPrice(Item item)
+	{
+		switch (item.getTemplate().getCrystalType())
+		{
+			case C:
+			{
+				if (item.getCrystalCount() < 1720)
+				{
+					return 95000;
+				}
+				else if (item.getCrystalCount() < 2452)
+				{
+					return 150000;
+				}
+				return 210000;
+			}
+			case B:
+			{
+				if (item.getCrystalCount() < 1746)
+				{
+					return 240000;
+				}
+				return 270000;
+			}
+			case A:
+			{
+				if (item.getCrystalCount() < 2160)
+				{
+					return 330000;
+				}
+				else if (item.getCrystalCount() < 2824)
+				{
+					return 390000;
+				}
+				return 420000;
+			}
+			case S:
+			{
+				return 480000;
+			}
+			case S80:
+			case S84:
+			{
+				// TODO: S84 TOP price 3.2M
+				return 920000;
+			}
+			default:
+			{
+				// any other item type is not augmentable
+				return 0;
+			}
+		}
 	}
 	
 	/**
@@ -266,6 +324,7 @@ public abstract class AbstractRefinePacket extends ClientPacket
 	
 	/**
 	 * Augments an item with a life stone, taking the life stone and the required Gemstones straight from the inventory (no refinery window needed).<br>
+	 * An already augmented item has its augmentation removed first, for the usual removal adena fee, and gets the new one in the same action.<br>
 	 * An equipped item is unequipped for the augmentation and equipped back afterwards so the new augmentation applies right away.
 	 * @param player the player
 	 * @param targetItem the weapon or accessory to augment
@@ -274,7 +333,7 @@ public abstract class AbstractRefinePacket extends ClientPacket
 	 */
 	public static String augmentFromInventory(Player player, Item targetItem, Item lifeStone)
 	{
-		if (!isValid(player, targetItem, lifeStone))
+		if (!isValid(player, targetItem, lifeStone, true))
 		{
 			player.sendPacket(SystemMessageId.AUGMENTATION_FAILED_DUE_TO_INAPPROPRIATE_CONDITIONS);
 			return "Augmentation failed due to inappropriate conditions.";
@@ -285,10 +344,28 @@ public abstract class AbstractRefinePacket extends ClientPacket
 		final int gemStoneCount = getGemStoneCount(targetItem.getTemplate().getCrystalType(), ls.getGrade());
 		final Item gemStones = player.getInventory().getItemByItemId(gemStoneId);
 		final long ownedGemStones = gemStones == null ? 0 : gemStones.getCount();
-		if ((gemStoneCount <= 0) || (ownedGemStones < gemStoneCount))
+		final boolean replace = targetItem.isAugmented();
+		final long removalPrice = replace ? getAugmentRemovalPrice(targetItem) : 0;
+		if ((gemStoneCount <= 0) || (replace && (removalPrice <= 0)))
+		{
+			player.sendPacket(SystemMessageId.AUGMENTATION_FAILED_DUE_TO_INAPPROPRIATE_CONDITIONS);
+			return "Augmentation failed due to inappropriate conditions.";
+		}
+		
+		// Check every cost before taking anything.
+		final StringBuilder missing = new StringBuilder();
+		if (ownedGemStones < gemStoneCount)
 		{
 			final ItemTemplate gemStoneTemplate = ItemData.getInstance().getTemplate(gemStoneId);
-			final String reason = "You do not have enough " + (gemStoneTemplate == null ? "Gemstones" : gemStoneTemplate.getName()) + ". Required: " + gemStoneCount + ", you have: " + ownedGemStones + ".";
+			missing.append(gemStoneTemplate == null ? "Gemstones" : gemStoneTemplate.getName()).append(" (required: ").append(gemStoneCount).append(", you have: ").append(ownedGemStones).append(")");
+		}
+		if (player.getAdena() < removalPrice)
+		{
+			missing.append(missing.length() > 0 ? " and " : "").append("Adena (required: ").append(removalPrice).append(", you have: ").append(player.getAdena()).append(")");
+		}
+		if (missing.length() > 0)
+		{
+			final String reason = "You do not have enough " + missing + ".";
 			player.sendMessage(reason);
 			return reason;
 		}
@@ -307,10 +384,16 @@ public abstract class AbstractRefinePacket extends ClientPacket
 			player.broadcastUserInfo();
 		}
 		
-		// Consume the life stone and the gemstones.
-		if (!player.destroyItem(ItemProcessType.FEE, lifeStone, 1, null, false) || !player.destroyItem(ItemProcessType.FEE, gemStones, gemStoneCount, null, false))
+		// Consume the removal fee, the life stone and the gemstones.
+		if (((removalPrice > 0) && !player.reduceAdena(ItemProcessType.FEE, removalPrice, null, true)) || !player.destroyItem(ItemProcessType.FEE, lifeStone, 1, null, false) || !player.destroyItem(ItemProcessType.FEE, gemStones, gemStoneCount, null, false))
 		{
 			return "Augmentation failed due to inappropriate conditions.";
+		}
+		
+		// Remove the old augmentation.
+		if (replace)
+		{
+			targetItem.removeAugmentation();
 		}
 		
 		final Augmentation aug = AugmentationData.getInstance().generateRandomAugmentation(ls.getLevel(), ls.getGrade(), targetItem.getTemplate().getBodyPart(), lifeStone.getId(), targetItem);
@@ -392,7 +475,20 @@ public abstract class AbstractRefinePacket extends ClientPacket
 	 */
 	protected static boolean isValid(Player player, Item item, Item refinerItem)
 	{
-		if (!isValid(player, item))
+		return isValid(player, item, refinerItem, false);
+	}
+	
+	/**
+	 * Checks player, source item and lifestone validity for augmentation process
+	 * @param player
+	 * @param item
+	 * @param refinerItem
+	 * @param allowAugmented {@code true} to accept an already augmented item (its augmentation gets replaced)
+	 * @return
+	 */
+	protected static boolean isValid(Player player, Item item, Item refinerItem, boolean allowAugmented)
+	{
+		if (!isValid(player, item, allowAugmented))
 		{
 			return false;
 		}
@@ -444,6 +540,18 @@ public abstract class AbstractRefinePacket extends ClientPacket
 	 */
 	protected static boolean isValid(Player player, Item item)
 	{
+		return isValid(player, item, false);
+	}
+	
+	/**
+	 * Check both player and source item conditions for augmentation process
+	 * @param player
+	 * @param item
+	 * @param allowAugmented {@code true} to accept an already augmented item (its augmentation gets replaced)
+	 * @return
+	 */
+	protected static boolean isValid(Player player, Item item, boolean allowAugmented)
+	{
 		if (!isValid(player))
 		{
 			return false;
@@ -455,7 +563,7 @@ public abstract class AbstractRefinePacket extends ClientPacket
 			return false;
 		}
 		
-		if (item.isAugmented())
+		if (item.isAugmented() && !allowAugmented)
 		{
 			return false;
 		}
