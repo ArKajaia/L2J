@@ -784,6 +784,29 @@
 			<step skill="1433" optional="true" /> <!-- Abyssal Blaze -->
 		</combo>
 	</build>
+	<build name="Judicator" classId="136" role="FIGHTER" weapon="RAPIER" armor="LIGHT_DAGGER" weight="1" skillFighter="true"> <!-- Kamael, female (Warder, Inspector) -->
+		<attack>505,504,939,478,492,1433,1434,468,1431</attack>
+		<debuff>1482,1483,1484,1485,1486,1435,1445</debuff> <!-- Curses that trigger when the target takes damage -->
+		<buff>469,482,1476,1515</buff> <!-- Appetite for Destruction: the instincts share one slot -->
+		<emergency>1478,837</emergency> <!-- Protection Instinct, Painkiller -->
+		<toggle>480,481</toggle>
+		<move>622</move>
+		<peel>628</peel> <!-- Warp -->
+		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
+		<transform>538</transform> <!-- Final Form -->
+		<combo name="Weak constitution" pvp="true">
+			<step skill="1482" /> <!-- Weak Constitution: makes the target faint when hit -->
+			<step skill="1476" self="true" optional="true" /> <!-- Appetite for Destruction -->
+			<step skill="505" /> <!-- Shining Edge -->
+			<step skill="504" optional="true" /> <!-- Triple Thrust -->
+		</combo>
+		<combo name="Thin skin" pvp="true" chance="50">
+			<step skill="1483" /> <!-- Thin Skin -->
+			<step skill="1484" optional="true" /> <!-- Enervation -->
+			<step skill="504" /> <!-- Triple Thrust -->
+			<step skill="505" optional="true" /> <!-- Shining Edge -->
+		</combo>
+	</build>
 	<build name="Trickster" classId="134" role="ARCHER" weapon="CROSSBOW" armor="LIGHT_ARCHER" weight="1"> <!-- Kamael, female -->
 		<attack>790,990,987,507,509,508,487,939</attack>
 		<debuff>522,1435,792,1445,627</debuff>
