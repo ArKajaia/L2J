@@ -160,7 +160,8 @@ public class SkillsCommand implements IVoicedCommandHandler
 		
 		sb.append("</body></html>");
 		
-		final NpcHtmlMessage html = new NpcHtmlMessage(0);
+		final NpcHtmlMessage html = new NpcHtmlMessage(npc.getObjectId());
+		html.setWindowSize(340, 640); // Same window as the NPC view it is opened from (shift-click).
 		html.setHtml(sb.toString());
 		player.sendPacket(html);
 	}

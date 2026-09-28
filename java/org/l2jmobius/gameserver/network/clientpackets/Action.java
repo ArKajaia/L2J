@@ -149,7 +149,8 @@ public class Action extends ClientPacket
 			}
 			case 1:
 			{
-				if (!player.isGM() && (!(obj.isNpc() && NpcConfig.ALT_GAME_VIEWNPC) || obj.isFakePlayer()))
+				// Players inspect NPCs, and fake players like other players, with AltGameViewNpc.
+				if (!player.isGM() && !(obj.isNpc() && NpcConfig.ALT_GAME_VIEWNPC))
 				{
 					obj.onAction(player, false);
 				}
