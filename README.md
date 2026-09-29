@@ -140,6 +140,7 @@ Two unrelated loot systems that both involve opening something for a reward.
 A short, solo, instanced trial at the Class Master NPCs that stands in for the long class transfer quest chains: clearing it unlocks that tier's Class Master transfer.
 
 - Each tier (1st, 2nd, 3rd class) has a fighter trial and a mage trial, picked by a fallback chain (class, parent class, race, fighter/mage, generic), so more can be added per class without touching code.
+- Every race can use it, Kamael included. Kamael take the fighter trials, except Soul Breakers, who are about to become Soul Hounds and take the Archmage trial.
 - Entering is an instant teleport from the Class Master into a private copy of a small hall; clearing it sends the player straight back. No one else can enter or affect the trial.
 - Objectives run in order and show on screen with a countdown: kill, collect (only marks won inside the trial count), reach a spot, talk, activate seals, protect a ward, survive, defeat a boss, use an item, clear waves, and duel.
 - Built from the server's own systems:
@@ -527,7 +528,8 @@ Changes from 28–29 September 2026.
 - **Forgiving**: falling sends you back to the entrance with your progress; disconnects are held for a while.
 - **Rewards**: Survival Arena currency (bonus for a fast clear) and a Sealed Cache.
 - **Commands**: `.trial` shows your progress (`.trial abandon` gives up); GMs get `//challenge_status|start|complete|abort|reset` and `//reload classtransferchallenge`.
-- **Setup**: run `class_transfer_challenge_completion.sql`; settings are in `Custom/ClassTransferChallenge.ini`, trials in `data/ClassTransferChallenges/`.
+- **Kamael**: the Class Masters now transfer Kamael too (Trooper/Warder, then Berserker, Soul Breaker or Arbalester, then Doombringer, Soul Hound, Trickster, or Judicator for Inspectors). Soul Breakers take the Archmage trial, other Kamael the fighter trials, and the Rival Shade uses the Kamael fake-player builds.
+- **Setup**: run `class_transfer_challenge_completion.sql`, and on an existing database the Kamael block at the end of `class_transfer_tree.sql` (it only adds missing rows). Settings are in `Custom/ClassTransferChallenge.ini`, trials in `data/ClassTransferChallenges/`.
 
 ### Fake Players
 - **New builds**: Dreadnought, Dominator, Soultaker, Hell Knight, and the Kamael classes (Doombringer, Male/Female Soul Hound, Trickster, Judicator). Every class also gets a second gear variant.

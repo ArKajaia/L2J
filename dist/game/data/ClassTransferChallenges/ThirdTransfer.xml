@@ -98,6 +98,9 @@
 			<sealedCache />
 		</rewards>
 	</challenge>
+	<!-- Kamael are all "fighters" to the server, but the Soul Breakers become the Soul Hounds, Kamael's magic class: they take the Archmage trial. -->
+	<mapping stage="THIRD_TRANSFER" type="CLASS" value="128" challenge="third_archmage" />
+	<mapping stage="THIRD_TRANSFER" type="CLASS" value="129" challenge="third_archmage" />
 	<mapping stage="THIRD_TRANSFER" type="ARCHETYPE" value="FIGHTER" challenge="third_champion" />
 	<mapping stage="THIRD_TRANSFER" type="ARCHETYPE" value="MAGE" challenge="third_archmage" />
 	<mapping stage="THIRD_TRANSFER" type="GENERIC" challenge="third_champion" />
