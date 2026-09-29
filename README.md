@@ -543,4 +543,3 @@ Changes from 28–29 September 2026.
 - The passive tree XSD validation errors and the missing skill 90302 are fixed. The passive skill tree page now has a search box.
 - Attribute stones no longer open an empty window when no item can take the attribute.
 - The champion buff medal now follows auto-loot rules.
-- `readme.txt` was replaced with this `README.md`.
