@@ -5,6 +5,7 @@ import org.l2jmobius.gameserver.config.custom.LuckyLootConfig;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.util.Broadcast;
@@ -268,6 +269,31 @@ public class LuckyLootManager
 		}
 
 		dropCache(victim, killer);
+	}
+
+	/**
+	 * Puts one Sealed Cache straight into a player's inventory, the tier picked by weight as for a drop of a {@code level} monster (used as a class transfer challenge reward, where nothing may be left on the ground).
+	 * @param player the player
+	 * @param level the level the tier is picked for
+	 */
+	public void giveGuaranteedCache(Player player, int level)
+	{
+		if (player == null)
+		{
+			return;
+		}
+
+		final int itemId = pickCacheTier(level);
+		if (itemId <= 0)
+		{
+			return;
+		}
+
+		player.addItem(ItemProcessType.REWARD, itemId, 1, null, true);
+		if (LuckyLootConfig.SEALED_CACHE_MESSAGE)
+		{
+			player.sendMessage("You received " + getCacheTierName(itemId) + " Sealed Cache!");
+		}
 	}
 
 	/**

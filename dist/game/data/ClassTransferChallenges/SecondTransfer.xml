@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/ClassTransferChallenges.xsd">
+	<!-- Alternative Class Transfer Challenges - Second Class Transfer (Class Master 900002). See FirstTransfer.xml for the format. -->
+	<challenge id="second_steel" name="Trial of Steel" stage="SECOND_TRANSFER" difficulty="Hard" duration="1500" parTime="750">
+		<description>Break the Timak orc line and its champion, win back the Trial Marks from under the Mark Thief's nose, shield the Trial Ward, and face the Shade of the path you seek.</description>
+		<entry x="-88429" y="-220629" z="-7903" heading="24740" />
+		<guide npcId="900240" x="-88471" y="-220672" z="-7903" heading="24740" />
+		<omens>
+			<omen name="GENEROUS_SPIRITS" />
+			<omen name="KILL_STREAK" />
+			<omen name="VAMPIRIC_HUNT" />
+			<omen name="VETERAN_GROUNDS" />
+			<omen name="FRAGILE_GROUND" />
+			<omen name="GLASS_CANNON" />
+			<omen name="IRONCLAD" />
+			<omen name="ARCANE_SURGE" />
+			<omen name="BLOODY_HARVEST" />
+			<omen name="RESTLESS_DEAD" />
+		</omens>
+		<objectives>
+			<objective type="KILL" text="Break the Timak line" count="12">
+				<spawn npcId="900210" count="3" x="-88714" y="-220353" z="-7900" radius="200" />
+				<spawn npcId="900212" count="1" x="-88856" y="-220215" z="-7896" championTier="1" />
+			</objective>
+			<objective type="COLLECT" text="Win back the Trial Marks" count="5" itemId="8940" chance="50" thiefBonus="3">
+				<spawn npcId="900210" count="3" x="-88714" y="-220353" z="-7900" radius="200" />
+				<spawn npcId="900213" count="1" x="-88575" y="-220210" z="-7900" variant="THIEF" />
+			</objective>
+			<objective type="PROTECT" text="Shield the Trial Ward" npcId="900244" x="-88714" y="-220353" z="-7900" seconds="90" interval="20" maxAlive="8">
+				<spawn npcId="900210" count="3" x="-88998" y="-220077" z="-7892" radius="150" />
+			</objective>
+			<objective type="DUEL" text="Face the Shade of your path" title="Rival Shade" npcId="900214" x="-88856" y="-220215" z="-7896" heading="57508" />
+			<objective type="TALK" text="Speak with the Trial Master" npcId="900241" x="-88998" y="-220077" z="-7892" heading="57508" />
+		</objectives>
+		<twists>
+			<twist type="INVADER" chance="20" afterObjective="2" arenaCoins="10" />
+		</twists>
+		<rewards>
+			<arenaCoins count="20" parBonus="10" />
+			<sealedCache />
+		</rewards>
+	</challenge>
+	<challenge id="second_insight" name="Trial of Insight" stage="SECOND_TRANSFER" difficulty="Hard" duration="1500" parTime="750">
+		<description>Outduel the Timak spellcasters, invoke the Trial Sigil in the Trial Circle, weather three waves, and face the Shade of the path you seek.</description>
+		<entry x="-88429" y="-220629" z="-7903" heading="24740" />
+		<guide npcId="900240" x="-88471" y="-220672" z="-7903" heading="24740" />
+		<omens>
+			<omen name="GENEROUS_SPIRITS" />
+			<omen name="KILL_STREAK" />
+			<omen name="VAMPIRIC_HUNT" />
+			<omen name="VETERAN_GROUNDS" />
+			<omen name="FRAGILE_GROUND" />
+			<omen name="GLASS_CANNON" />
+			<omen name="IRONCLAD" />
+			<omen name="ARCANE_SURGE" />
+			<omen name="BLOODY_HARVEST" />
+			<omen name="RESTLESS_DEAD" />
+		</omens>
+		<objectives>
+			<objective type="KILL" text="Defeat the Arcane Skirmishers" count="10">
+				<spawn npcId="900211" count="3" x="-88714" y="-220353" z="-7900" radius="220" variant="MAGE" />
+			</objective>
+			<objective type="USE_ITEM" text="Invoke the Trial Sigil in the Trial Circle" itemId="17227" x="-88998" y="-220077" z="-7892" radius="150" npcId="900243">
+				<spawn npcId="900210" count="2" x="-88856" y="-220215" z="-7896" radius="100" />
+			</objective>
+			<objective type="WAVES" text="Weather the waves" waveSeconds="60" delay="5">
+				<wave>
+					<spawn npcId="900210" count="4" x="-88856" y="-220215" z="-7896" radius="150" />
+				</wave>
+				<wave>
+					<spawn npcId="900210" count="3" x="-88856" y="-220215" z="-7896" radius="150" />
+					<spawn npcId="900211" count="2" x="-88575" y="-220210" z="-7900" radius="100" variant="MAGE" />
+				</wave>
+				<wave>
+					<spawn npcId="900212" count="2" x="-88856" y="-220215" z="-7896" radius="150" championTier="1" />
+					<spawn npcId="900211" count="2" x="-88853" y="-220496" z="-7900" radius="100" variant="MAGE" />
+				</wave>
+			</objective>
+			<objective type="DUEL" text="Face the Shade of your path" title="Rival Shade" npcId="900214" x="-88856" y="-220215" z="-7896" heading="57508" />
+			<objective type="TALK" text="Speak with the Trial Master" npcId="900241" x="-88998" y="-220077" z="-7892" heading="57508" />
+		</objectives>
+		<twists>
+			<twist type="INVADER" chance="20" afterObjective="2" arenaCoins="10" />
+		</twists>
+		<rewards>
+			<arenaCoins count="20" parBonus="10" />
+			<sealedCache />
+		</rewards>
+	</challenge>
+	<mapping stage="SECOND_TRANSFER" type="ARCHETYPE" value="FIGHTER" challenge="second_steel" />
+	<mapping stage="SECOND_TRANSFER" type="ARCHETYPE" value="MAGE" challenge="second_insight" />
+	<mapping stage="SECOND_TRANSFER" type="GENERIC" challenge="second_steel" />
+</list>

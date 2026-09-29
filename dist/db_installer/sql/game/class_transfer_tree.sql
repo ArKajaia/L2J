@@ -1,7 +1,8 @@
 -- ---------------------------------------------------------------------------
 -- class_transfer_tree
 --
--- Full H5 class transfer tree, built from the real PlayerClass IDs provided.
+-- Full H5 class transfer tree (every race, Kamael included), built from the
+-- real PlayerClass IDs provided.
 -- Defines every valid transfer: which class ID a character must currently be
 -- (from_class_id) to unlock which class ID (to_class_id) at which tier
 -- (1/2/3). Branching classes get multiple rows with the same
@@ -167,3 +168,30 @@ INSERT INTO class_transfer_tree (from_class_id, to_class_id, tier) VALUES
 INSERT INTO class_transfer_tree (from_class_id, to_class_id, tier) VALUES
 (55, 117, 3),
 (57, 118, 3);
+
+-- =============================================================================
+-- KAMAEL
+-- =============================================================================
+-- Written so the block can also be run on its own on an existing database:
+-- it only adds the rows that are missing.
+--
+-- Tier 1: Male Soldier (123) -> Trooper; Female Soldier (124) -> Warder
+-- Tier 2: Trooper (125) -> Berserker/Male Soul Breaker; Warder (126) -> Female Soul Breaker/Arbalester
+-- Tier 3: Berserker -> Doombringer, Male Soul Breaker -> Male Soul Hound,
+--         Female Soul Breaker -> Female Soul Hound, Arbalester -> Trickster,
+--         Inspector (135, a subclass only) -> Judicator
+INSERT INTO class_transfer_tree (from_class_id, to_class_id, tier)
+SELECT k.from_class_id, k.to_class_id, k.tier FROM (
+	SELECT 123 AS from_class_id, 125 AS to_class_id, 1 AS tier
+	UNION ALL SELECT 124, 126, 1
+	UNION ALL SELECT 125, 127, 2
+	UNION ALL SELECT 125, 128, 2
+	UNION ALL SELECT 126, 129, 2
+	UNION ALL SELECT 126, 130, 2
+	UNION ALL SELECT 127, 131, 3
+	UNION ALL SELECT 128, 132, 3
+	UNION ALL SELECT 129, 133, 3
+	UNION ALL SELECT 130, 134, 3
+	UNION ALL SELECT 135, 136, 3
+) k
+WHERE NOT EXISTS (SELECT 1 FROM class_transfer_tree t WHERE t.from_class_id = k.from_class_id AND t.to_class_id = k.to_class_id AND t.tier = k.tier);

@@ -28,6 +28,7 @@ import org.l2jmobius.gameserver.config.ServerConfig;
 import org.l2jmobius.gameserver.data.sql.CrestTable;
 import org.l2jmobius.gameserver.data.xml.AdminData;
 import org.l2jmobius.gameserver.data.xml.BuyListData;
+import org.l2jmobius.gameserver.data.xml.ClassTransferChallengeData;
 import org.l2jmobius.gameserver.data.xml.DoorData;
 import org.l2jmobius.gameserver.data.xml.EnchantItemData;
 import org.l2jmobius.gameserver.data.xml.EnchantItemGroupsData;
@@ -265,6 +266,13 @@ public class AdminReload implements IAdminCommandHandler
 				{
 					FakePlayerChatManager.getInstance().load();
 					AdminData.getInstance().broadcastMessageToGMs(activeChar.getName() + ": Reloaded Fake Player Chat data.");
+					break;
+				}
+				case "classtransferchallenge":
+				{
+					ClassTransferChallengeData.getInstance().load();
+					ClassTransferChallengeData.getInstance().validateNpcs();
+					AdminData.getInstance().broadcastMessageToGMs(activeChar.getName() + ": Reloaded Class Transfer Challenge data (running trials keep their old definition).");
 					break;
 				}
 				case "localisations":

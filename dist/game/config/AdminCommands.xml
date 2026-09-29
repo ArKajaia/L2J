@@ -386,6 +386,13 @@
 	<admin command="fakepvp_list" description="Show the roaming fake player builds and how many are alive, and the personality of the targeted one." accessLevel="100" />
 	<admin command="fakepvp_clear" description="Log off all roaming fake players (their monsters respawn)." accessLevel="100" />
 
+	<!-- ADMIN CLASS TRANSFER CHALLENGES (each works on the named player, else the target, else yourself) -->
+	<admin command="challenge_status" description="Show a player's running class transfer trial and cleared stages: //challenge_status [name]." accessLevel="100" />
+	<admin command="challenge_start" description="Start a class transfer trial skipping the level/completion/attempt checks: //challenge_start 1|2|3 [name]." accessLevel="100" />
+	<admin command="challenge_complete" description="Complete a running trial (or its current objective), or grant a stage: //challenge_complete [objective] [name] | //challenge_complete grant 1|2|3 [name]." accessLevel="100" />
+	<admin command="challenge_abort" description="Fail a player's running class transfer trial and send them back: //challenge_abort [name]." accessLevel="100" />
+	<admin command="challenge_reset" description="Clear a stage's trial completion, failed attempts and cooldown: //challenge_reset 1|2|3 [name]." accessLevel="100" />
+
 	<!-- ADMIN ONLINE -->
 	<admin command="online" description="Display a list of all currently online players." accessLevel="100" />
 

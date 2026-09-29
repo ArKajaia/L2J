@@ -3,14 +3,20 @@ package custom.ClassTransferMaster;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.l2jmobius.gameserver.config.PlayerConfig;
+import org.l2jmobius.gameserver.config.custom.ClassTransferChallengeConfig;
 import org.l2jmobius.gameserver.config.custom.ClassTransferConfig;
+import org.l2jmobius.gameserver.data.sql.ClassTransferChallengeCompletionTable;
 import org.l2jmobius.gameserver.data.sql.ClassTransferData;
 import org.l2jmobius.gameserver.data.sql.ClassTransferHolder;
+import org.l2jmobius.gameserver.managers.ClassTransferChallengeManager;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
+import org.l2jmobius.gameserver.model.classtransfer.TransferStage;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.script.Quest;
+import org.l2jmobius.gameserver.network.serverpackets.PlaySound;
 
 /**
  * Class transfer NPC, handling all three tiers (900001/900002/900003) through one script. Gated by level only, per design - the class tree itself (which current class unlocks which target class(es) at which tier) lives in the class_transfer_tree table, so this script never needs to know
@@ -59,7 +65,7 @@ public class ClassTransferMaster extends Quest
 			{
 				final int tier = Integer.parseInt(parts[0]);
 				final int toClassId = Integer.parseInt(parts[1]);
-				attemptTransfer(player, tier, toClassId);
+				attemptTransfer(player, npc, tier, toClassId);
 			}
 			catch (NumberFormatException e)
 			{
@@ -84,13 +90,26 @@ public class ClassTransferMaster extends Quest
 		return buildHtml(npc, player);
 	}
 	
-	private void attemptTransfer(Player player, int tier, int toClassId)
+	private void attemptTransfer(Player player, Npc npc, int tier, int toClassId)
 	{
 		System.out.println("ClassTransferMaster: attemptTransfer() called - player=" + player.getName() + ", tier=" + tier + ", toClassId=" + toClassId);
 		
 		if (!ClassTransferConfig.CLASS_TRANSFER_ENABLED)
 		{
 			player.sendMessage("Class transfers are currently disabled.");
+			return;
+		}
+		
+		// The tier is the one of the Class Master the player talks to, whatever the link says.
+		if ((npc == null) || (getTier(npc.getId()) != tier))
+		{
+			player.sendMessage("That class transfer is not available here.");
+			return;
+		}
+		
+		if (player.isDead() || (player.getInstanceId() != 0))
+		{
+			player.sendMessage("You can't change your class right now.");
 			return;
 		}
 		
@@ -127,6 +146,14 @@ public class ClassTransferMaster extends Quest
 			return;
 		}
 		
+		// Alternative Class Transfer Challenge: checked here, right before the transfer, so no dialog or hand-made link can skip it.
+		final TransferStage stage = TransferStage.fromTier(tier);
+		if (!ClassTransferChallengeManager.getInstance().isTransferUnlocked(player, stage))
+		{
+			player.sendMessage("You must clear the " + stage.getDisplayName() + " trial before this transfer.");
+			return;
+		}
+		
 		if (chosen.getRequiredItemId() != null)
 		{
 			// TODO: verify destroyItemByItemId's signature - mirrors the exact call already used in
@@ -143,6 +170,12 @@ public class ClassTransferMaster extends Quest
 		// Properly set the class and update the database/subclass records
 		final int newClassId = chosen.getToClassId();
 		player.setPlayerClass(newClassId);
+		if (player.getPlayerClass().getId() != newClassId)
+		{
+			// setPlayerClass refuses while a subclass change is in progress.
+			player.sendMessage("Your class could not be changed right now. Please try again.");
+			return;
+		}
 		
 		if (player.isSubClassActive())
 		{
@@ -153,7 +186,18 @@ public class ClassTransferMaster extends Quest
 			player.setBaseClass(newClassId);
 		}
 		
+		if (PlayerConfig.AUTO_LEARN_SKILLS)
+		{
+			player.giveAvailableSkills(PlayerConfig.AUTO_LEARN_FS_SKILLS, true, PlayerConfig.AUTO_LEARN_SKILLS_WITHOUT_ITEMS);
+		}
+		player.store(false); // Saved at once, so a crash can't lose the new class (or give back the used trial).
+		
+		// The trial was cleared for this transfer: it is used up.
+		ClassTransferChallengeManager.getInstance().onClassTransferred(player, stage);
+		
 		player.broadcastUserInfo(); // Updates the client UI immediately
+		player.sendSkillList();
+		player.sendPacket(new PlaySound("ItemSound.quest_fanfare_2"));
 		
 		System.out.println("ClassTransferMaster: " + player.getName() + " transferred " + currentClassId + " -> " + newClassId);
 		player.sendMessage("Congratulations! Your class has been changed.");
@@ -194,6 +238,24 @@ public class ClassTransferMaster extends Quest
 			sb.append("<font color=\"999999\">Your level: ").append(player.getLevel()).append("</font>");
 			sb.append("</td></tr></table></body></html>");
 			return sb.toString();
+		}
+		
+		// Alternative Class Transfer Challenge: a trial must be cleared before the transfer is offered.
+		final TransferStage stage = TransferStage.fromTier(tier);
+		if (ClassTransferChallengeConfig.ENABLED && (stage != null))
+		{
+			if (!ClassTransferChallengeManager.getInstance().isTransferUnlocked(player, stage))
+			{
+				sb.append("<font color=\"CCCCCC\">Before I grant your new class, you must prove yourself in a trial.<br1>It takes place in a private hall - no long journey needed.</font><br><br>");
+				sb.append("<button value=\"Alternative Class Transfer Challenge\" action=\"bypass -h Script ClassTransferChallenge info\" width=230 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"><br>");
+				sb.append("<font color=\"999999\">Prefer the old ways? The village masters still offer the classic class transfer quests.</font>");
+				sb.append("</td></tr></table></body></html>");
+				return sb.toString();
+			}
+			if (ClassTransferChallengeCompletionTable.getInstance().hasValidCompletion(player, stage))
+			{
+				sb.append("<font color=\"55FF55\">You have cleared your trial.</font><br1>");
+			}
 		}
 		
 		sb.append("<font color=\"CCCCCC\">Choose your path:</font><br><br>");

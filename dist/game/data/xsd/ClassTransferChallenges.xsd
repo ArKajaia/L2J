@@ -1,0 +1,205 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:simpleType name="stageType">
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="FIRST_TRANSFER" />
+			<xs:enumeration value="SECOND_TRANSFER" />
+			<xs:enumeration value="THIRD_TRANSFER" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="objectiveType">
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="KILL" />
+			<xs:enumeration value="COLLECT" />
+			<xs:enumeration value="REACH" />
+			<xs:enumeration value="TALK" />
+			<xs:enumeration value="ACTIVATE" />
+			<xs:enumeration value="PROTECT" />
+			<xs:enumeration value="SURVIVE" />
+			<xs:enumeration value="BOSS" />
+			<xs:enumeration value="USE_ITEM" />
+			<xs:enumeration value="WAVES" />
+			<xs:enumeration value="DUEL" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="omenType">
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="ARCHETYPE_HUNTER" />
+			<xs:enumeration value="CHAMPION_SURGE" />
+			<xs:enumeration value="BLOODY_HARVEST" />
+			<xs:enumeration value="VETERAN_GROUNDS" />
+			<xs:enumeration value="UNBREAKABLE" />
+			<xs:enumeration value="FRAGILE_GROUND" />
+			<xs:enumeration value="IRONCLAD" />
+			<xs:enumeration value="GENEROUS_SPIRITS" />
+			<xs:enumeration value="GOLD_RUSH" />
+			<xs:enumeration value="KILL_STREAK" />
+			<xs:enumeration value="GLASS_CANNON" />
+			<xs:enumeration value="VAMPIRIC_HUNT" />
+			<xs:enumeration value="ARCANE_SURGE" />
+			<xs:enumeration value="BLOOD_MOON" />
+			<xs:enumeration value="RESTLESS_DEAD" />
+			<xs:enumeration value="MINIBOSS_FRENZY" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="locationType">
+		<xs:attribute name="x" type="xs:integer" use="required" />
+		<xs:attribute name="y" type="xs:integer" use="required" />
+		<xs:attribute name="z" type="xs:integer" use="required" />
+		<xs:attribute name="heading" type="xs:integer" />
+	</xs:complexType>
+	<xs:complexType name="spawnType">
+		<xs:attribute name="npcId" type="xs:positiveInteger" use="required" />
+		<xs:attribute name="count" type="xs:positiveInteger" />
+		<xs:attribute name="x" type="xs:integer" use="required" />
+		<xs:attribute name="y" type="xs:integer" use="required" />
+		<xs:attribute name="z" type="xs:integer" use="required" />
+		<xs:attribute name="heading" type="xs:integer" />
+		<xs:attribute name="radius" type="xs:nonNegativeInteger" />
+		<xs:attribute name="championTier">
+			<xs:simpleType>
+				<xs:restriction base="xs:integer">
+					<xs:minInclusive value="0" />
+					<xs:maxInclusive value="3" />
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="variant">
+			<xs:simpleType>
+				<xs:restriction base="xs:token">
+					<xs:enumeration value="NONE" />
+					<xs:enumeration value="MAGE" />
+					<xs:enumeration value="THIEF" />
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="waves" type="xs:positiveInteger" />
+		<xs:attribute name="arenaBuffs" type="xs:boolean" />
+		<xs:attribute name="enrageSeconds" type="xs:nonNegativeInteger" />
+	</xs:complexType>
+	<xs:complexType name="amountRewardType">
+		<xs:attribute name="count" type="xs:positiveInteger" use="required" />
+		<xs:attribute name="parBonus" type="xs:nonNegativeInteger" />
+	</xs:complexType>
+	<xs:element name="list">
+		<xs:complexType>
+			<xs:choice maxOccurs="unbounded" minOccurs="0">
+				<xs:element name="challenge">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="description" type="xs:string" minOccurs="0" />
+							<xs:element name="entry" type="locationType" />
+							<xs:element name="guide" minOccurs="0">
+								<xs:complexType>
+									<xs:complexContent>
+										<xs:extension base="locationType">
+											<xs:attribute name="npcId" type="xs:positiveInteger" use="required" />
+										</xs:extension>
+									</xs:complexContent>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="omens" minOccurs="0">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="omen" maxOccurs="unbounded">
+											<xs:complexType>
+												<xs:attribute name="name" type="omenType" use="required" />
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="objectives">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="objective" maxOccurs="unbounded">
+											<xs:complexType>
+												<xs:choice maxOccurs="unbounded" minOccurs="0">
+													<xs:element name="spawn" type="spawnType" />
+													<xs:element name="wave">
+														<xs:complexType>
+															<xs:sequence>
+																<xs:element name="spawn" type="spawnType" maxOccurs="unbounded" />
+															</xs:sequence>
+														</xs:complexType>
+													</xs:element>
+												</xs:choice>
+												<xs:attribute name="type" type="objectiveType" use="required" />
+												<xs:attribute name="text" type="xs:string" use="required" />
+												<!-- Type-specific settings: count, itemId, chance, seconds, interval, npcId, x, y, z, heading, radius, title, waveSeconds, markBonus... -->
+												<xs:anyAttribute processContents="lax" />
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="twists" minOccurs="0">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="twist" maxOccurs="unbounded">
+											<xs:complexType>
+												<xs:attribute name="type" use="required">
+													<xs:simpleType>
+														<xs:restriction base="xs:token">
+															<xs:enumeration value="INVADER" />
+														</xs:restriction>
+													</xs:simpleType>
+												</xs:attribute>
+												<xs:attribute name="chance" type="xs:nonNegativeInteger" />
+												<xs:attribute name="afterObjective" type="xs:nonNegativeInteger" />
+												<xs:attribute name="arenaCoins" type="xs:nonNegativeInteger" />
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="rewards" minOccurs="0">
+								<xs:complexType>
+									<xs:choice maxOccurs="unbounded">
+										<xs:element name="item">
+											<xs:complexType>
+												<xs:attribute name="id" type="xs:positiveInteger" use="required" />
+												<xs:attribute name="count" type="xs:positiveInteger" use="required" />
+												<xs:attribute name="parBonus" type="xs:nonNegativeInteger" />
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="arenaCoins" type="amountRewardType" />
+										<xs:element name="exp" type="amountRewardType" />
+										<xs:element name="sp" type="amountRewardType" />
+										<xs:element name="sealedCache">
+											<xs:complexType />
+										</xs:element>
+									</xs:choice>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+						<xs:attribute name="id" type="xs:string" use="required" />
+						<xs:attribute name="name" type="xs:string" use="required" />
+						<xs:attribute name="stage" type="stageType" use="required" />
+						<xs:attribute name="difficulty" type="xs:string" />
+						<xs:attribute name="duration" type="xs:positiveInteger" />
+						<xs:attribute name="parTime" type="xs:nonNegativeInteger" />
+						<xs:attribute name="minLevel" type="xs:nonNegativeInteger" />
+						<xs:attribute name="classes" type="xs:string" />
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="mapping">
+					<xs:complexType>
+						<xs:attribute name="stage" type="stageType" use="required" />
+						<xs:attribute name="type" use="required">
+							<xs:simpleType>
+								<xs:restriction base="xs:token">
+									<xs:enumeration value="CLASS" />
+									<xs:enumeration value="RACE" />
+									<xs:enumeration value="ARCHETYPE" />
+									<xs:enumeration value="GENERIC" />
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:attribute>
+						<xs:attribute name="value" type="xs:string" />
+						<xs:attribute name="challenge" type="xs:string" use="required" />
+					</xs:complexType>
+				</xs:element>
+			</xs:choice>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

@@ -29,6 +29,12 @@ public class HotzoneCoinDropManager
 			return;
 		}
 
+		// A class transfer challenge's Omen is a hotzone modifier too, but trials pay their own reward instead of farmable coins.
+		if (ClassTransferChallengeManager.isChallengeInstance(victim.getInstanceId()))
+		{
+			return;
+		}
+
 		// Only a hotzone the rotation currently has active pays out - every hotzone stays flagged HOTZONE, but only active ones have a modifier rolled.
 		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(victim);
 		if (modifier == null)

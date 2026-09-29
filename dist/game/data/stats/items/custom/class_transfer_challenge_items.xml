@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/items.xsd">
+	<!-- Alternative Class Transfer Challenges: retail quest items no script uses, reused as trial items (the client already knows them). -->
+	<!-- They only exist inside a trial: the trial takes them back when it ends, and any left over after a disconnect is removed at login. -->
+	<item id="8940" type="EtcItem" name="Mark of the Future: Human">
+		<!-- Trial Mark: dropped by trial monsters in COLLECT objectives. -->
+		<set name="icon" val="icon.etc_jewel_green_i00" />
+		<set name="immediate_effect" val="true" />
+		<set name="material" val="STEEL" />
+		<set name="is_tradable" val="false" />
+		<set name="is_dropable" val="false" />
+		<set name="is_sellable" val="false" />
+		<set name="is_depositable" val="false" />
+		<set name="is_freightable" val="false" />
+		<set name="is_stackable" val="true" />
+		<set name="is_questitem" val="true" />
+	</item>
+	<item id="17227" type="EtcItem" name="Elcadia's Token">
+		<!-- Trial Sigil: handed out by USE_ITEM objectives, used (double-click) at the marked spot. -->
+		<set name="icon" val="icon.etc_fire_rune_i00" />
+		<set name="immediate_effect" val="true" />
+		<set name="material" val="PAPER" />
+		<set name="is_tradable" val="false" />
+		<set name="is_dropable" val="false" />
+		<set name="is_sellable" val="false" />
+		<set name="is_depositable" val="false" />
+		<set name="is_freightable" val="false" />
+		<set name="is_stackable" val="true" />
+		<set name="is_questitem" val="true" />
+		<set name="handler" val="ClassTransferChallengeItem" />
+	</item>
+</list>

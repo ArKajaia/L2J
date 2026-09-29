@@ -329,6 +329,13 @@ public class FakePlayerPvpAI extends AttackableAI
 			FakePlayerPvpManager.getInstance().equipWeapon(npc, profile.getMainWeapon());
 		}
 		
+		// A class transfer challenge opponent does nothing but wait for its challenger: no roaming, poking, greeting or hunting.
+		if ((profile != null) && profile.isTrialDuelist())
+		{
+			FakePlayerPvpManager.getInstance().engageTrialTarget(npc);
+			return;
+		}
+		
 		// Its hotzone rotated out a while ago: off to town, and it logs off.
 		if (thinkLeave(npc, profile, System.currentTimeMillis()))
 		{
@@ -1051,7 +1058,8 @@ public class FakePlayerPvpAI extends AttackableAI
 	 */
 	private boolean shouldFlee(Attackable npc, FakePlayerPvpProfile profile, Creature target, double hpRatio)
 	{
-		if (_lastStand)
+		// A class transfer challenge opponent fights to the end.
+		if (_lastStand || profile.isTrialDuelist())
 		{
 			return false;
 		}

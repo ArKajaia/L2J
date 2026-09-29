@@ -52,6 +52,7 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.enums.player.Sex;
 import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
@@ -1151,6 +1152,95 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
+	 * Spawns a class transfer challenge opponent: a fake player of {@code build} forced into {@code playerClass}, that only fights {@code target}. It never flees, escapes, logs off or comes back after dying, stays flagged (so it never refuses the fight and killing it is never a PK), and its
+	 * death pays no PvP count, karma or reward (see {@link FakePlayerPvpProfile#isTrialDuelist()}). The challenge removes it with {@code deleteMe()} or by destroying its instance.
+	 * @param build the build
+	 * @param level the level
+	 * @param playerClass a class of the build's class line, {@code null} for the one its level gives
+	 * @param title the title it shows
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @param instanceId the instance
+	 * @param target the challenger it duels
+	 * @return the opponent, or {@code null} if it could not be created
+	 */
+	public Npc spawnTrialDuelist(FakePlayerPvpBuild build, int level, PlayerClass playerClass, String title, int x, int y, int z, int instanceId, Player target)
+	{
+		if ((build == null) || (target == null))
+		{
+			return null;
+		}
+		
+		final String name = generateName();
+		try
+		{
+			final NpcTemplate template = FakePlayerPvpFactory.createTemplate(build, level, _nextNpcId.getAndIncrement(), name, playerClass, title);
+			if (template == null)
+			{
+				_names.remove(name.toLowerCase());
+				return null;
+			}
+			
+			final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+			profile.setSpawnTime(System.currentTimeMillis());
+			profile.setHotzoneId(0);
+			profile.setBlessedEscape(false);
+			profile.setTrialDuelTarget(target.getObjectId());
+			profile.onReturn(0); // Marks it as already returned: it never walks back after dying.
+			
+			final Npc fake = spawnFromTemplate(template, x, y, z, instanceId);
+			if (fake == null)
+			{
+				FakePlayerData.getInstance().removeFakePlayer(name);
+				_names.remove(name.toLowerCase());
+				return null;
+			}
+			
+			// Flagged for good (no PvP flag timer is started for a script value set by hand).
+			fake.setScriptValue(1);
+			fake.broadcastInfo();
+			engageTrialTarget(fake.asAttackable());
+			return fake;
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn trial duelist " + build.getName() + " level " + level + ".", e);
+			FakePlayerData.getInstance().removeFakePlayer(name);
+			_names.remove(name.toLowerCase());
+			return null;
+		}
+	}
+	
+	/**
+	 * Points a class transfer challenge opponent at its challenger when the challenger can be fought (online, alive, attackable and in the same instance).
+	 * @param fake the opponent
+	 * @return {@code true} if it is (now) fighting its challenger
+	 */
+	public boolean engageTrialTarget(Attackable fake)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		if ((profile == null) || !profile.isTrialDuelist() || fake.isDead())
+		{
+			return false;
+		}
+		
+		final Player target = World.getInstance().getPlayer(profile.getTrialDuelTarget());
+		if ((target == null) || !target.isOnline() || target.isDead() || target.isInvul() || (target.getInstanceId() != fake.getInstanceId()))
+		{
+			return false;
+		}
+		
+		if (isFighting(fake, target))
+		{
+			return true;
+		}
+		
+		startFight(fake, target, TAUNTS_FLAGGED);
+		return true;
+	}
+	
+	/**
 	 * Spawns a roaming fake player from its template: toggles on, buffed, full HP/MP - like a player that just arrived.
 	 * @param template the fake player template
 	 * @param x the x
@@ -1838,6 +1928,12 @@ public class FakePlayerPvpManager
 		// A few words from the ground.
 		taunt(fake, TAUNTS_DEATH, true);
 		
+		// A class transfer challenge opponent is part of the trial: no return trip, no gear, no loot.
+		if (profile.isTrialDuelist())
+		{
+			return;
+		}
+		
 		// Maybe it walks back from town for round two, unless it already did or its killer is far above it.
 		if (!profile.hasReturned() && ((FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE <= 0) || (killer.getLevel() < (fake.getLevel() + FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE))) && (Rnd.get(100) < profile.getPersonality().getReturnChance()))
 		{
@@ -2318,13 +2414,18 @@ public class FakePlayerPvpManager
 				}
 				
 				final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
-				checkHotzoneLeave(fake, profile, now);
 				
-				// Logs off once nobody is watching: it doesn't vanish in front of a player.
-				if ((FakePlayerPvpConfig.LIFETIME > 0) && ((now - profile.getSpawnTime()) > (FakePlayerPvpConfig.LIFETIME * 1000L * profile.getLifetimeScale())) && !isSeenByPlayer(fake))
+				// A class transfer challenge opponent stays until its challenge removes it.
+				if (!profile.isTrialDuelist())
 				{
-					fake.deleteMe();
-					continue;
+					checkHotzoneLeave(fake, profile, now);
+					
+					// Logs off once nobody is watching: it doesn't vanish in front of a player.
+					if ((FakePlayerPvpConfig.LIFETIME > 0) && ((now - profile.getSpawnTime()) > (FakePlayerPvpConfig.LIFETIME * 1000L * profile.getLifetimeScale())) && !isSeenByPlayer(fake))
+					{
+						fake.deleteMe();
+						continue;
+					}
 				}
 				
 				refreshToggles(fake, profile);

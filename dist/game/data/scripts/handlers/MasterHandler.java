@@ -130,6 +130,7 @@ import handlers.chat.commands.admin.AdminCHSiege;
 import handlers.chat.commands.admin.AdminCamera;
 import handlers.chat.commands.admin.AdminChangeAccessLevel;
 import handlers.chat.commands.admin.AdminClan;
+import handlers.chat.commands.admin.AdminClassTransferChallenge;
 import handlers.chat.commands.admin.AdminCreateItem;
 import handlers.chat.commands.admin.AdminCursedWeapons;
 import handlers.chat.commands.admin.AdminDebug;
@@ -225,6 +226,7 @@ import handlers.chat.commands.voiced.AutoPotion;
 import handlers.chat.commands.voiced.Banking;
 import handlers.chat.commands.voiced.ChangePassword;
 import handlers.chat.commands.voiced.ChatAdmin;
+import handlers.chat.commands.voiced.ClassTransferChallengeVoiced;
 import handlers.chat.commands.voiced.ExperienceGain;
 import handlers.chat.commands.voiced.Lang;
 import handlers.chat.commands.voiced.Offline;
@@ -247,6 +249,7 @@ import handlers.items.Book;
 import handlers.items.Bypass;
 import handlers.items.Calculator;
 import handlers.items.CharmOfCourage;
+import handlers.items.ClassTransferChallengeItem;
 import handlers.items.Disguise;
 import handlers.items.Elixir;
 import handlers.items.EnchantAttribute;
@@ -366,6 +369,7 @@ public class MasterHandler
 			AdminChangeAccessLevel.class,
 			AdminCHSiege.class,
 			AdminClan.class,
+			AdminClassTransferChallenge.class,
 			AdminCreateItem.class,
 			AdminCursedWeapons.class,
 			AdminDebug.class,
@@ -517,6 +521,7 @@ public class MasterHandler
 			Bypass.class,
 			Calculator.class,
 			CharmOfCourage.class,
+			ClassTransferChallengeItem.class,
 			Disguise.class,
 			Elixir.class,
 			EnchantAttribute.class,
@@ -574,6 +579,7 @@ public class MasterHandler
 			PassiveTreeVoiced.class,
 			PassiveTreeLinkVoiced.class,
 			SaveHotzoneVoiced.class,
+			ClassTransferChallengeVoiced.class,
 		},
 		{
 			// TODO: Add configuration options for this voiced commands.
