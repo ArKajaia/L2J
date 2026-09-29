@@ -1,36 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/optionsData.xsd">
 	<option id="24800" name="o_f_84_2u_acc_ring_17">
-		<!-- M. Atk. + 4.7 HP Regeneration + 0.16 -->
+		<!-- M. Atk. increases by 5.64. HP Regen increases by 0.32. -->
 		<stats>
-			<add stat="mAtk" val="4.7" />
-			<add stat="regHp" val="0.16" />
+			<add stat="mAtk" val="5.64" />
+			<add stat="regHp" val="0.32" />
 		</stats>
 	</option>
 	<option id="24801" name="o_f_84_2u_acc_ring_18">
-		<!-- M. Atk. + 4.7 MP Regeneration + 0.05 -->
+		<!-- M. Atk. increases by 5.64. MP Regen increases by 0.1. -->
 		<stats>
-			<add stat="mAtk" val="4.7" />
-			<add stat="regMp" val="0.05" />
-		</stats>
-	</option>
-	<option id="24802" name="o_f_84_2u_acc_ring_19">
-		<!-- HP Regeneration + 0.34 -->
-		<stats>
-			<add stat="regHp" val="0.34" />
-		</stats>
-	</option>
-	<option id="24803" name="o_f_84_2u_acc_ring_20">
-		<!-- MP Regeneration + 0.1 -->
-		<stats>
+			<add stat="mAtk" val="5.64" />
 			<add stat="regMp" val="0.1" />
 		</stats>
 	</option>
-	<option id="24804" name="o_f_84_2u_acc_ring_21">
-		<!-- HP Regeneration + 0.16 MP Regeneration + 0.05 -->
+	<option id="24802" name="o_f_84_2u_acc_ring_19">
+		<!-- HP Regen increases by 0.68. -->
 		<stats>
-			<add stat="regHp" val="0.16" />
-			<add stat="regMp" val="0.05" />
+			<add stat="regHp" val="0.68" />
+		</stats>
+	</option>
+	<option id="24803" name="o_f_84_2u_acc_ring_20">
+		<!-- MP Regen increases by 0.2. -->
+		<stats>
+			<add stat="regMp" val="0.2" />
+		</stats>
+	</option>
+	<option id="24804" name="o_f_84_2u_acc_ring_21">
+		<!-- HP Regen increases by 0.32. MP Regen increases by 0.1. -->
+		<stats>
+			<add stat="regHp" val="0.32" />
+			<add stat="regMp" val="0.1" />
 		</stats>
 	</option>
 	<option id="24805" name="o_july_shirt_p_1">

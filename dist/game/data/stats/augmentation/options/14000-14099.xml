@@ -1,690 +1,690 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/optionsData.xsd">
 	<option id="14000" name="o_w_55_2u_77">
-		<!-- HP Regen increases by 0.2. MP Regen increases by 0.13. -->
+		<!-- HP Regen increases by 0.39. MP Regen increases by 0.25. -->
 		<stats>
-			<add stat="regHp" val="0.19584" />
-			<add stat="regMp" val="0.12563" />
+			<add stat="regHp" val="0.3917" />
+			<add stat="regMp" val="0.2513" />
 		</stats>
 	</option>
 	<option id="14001" name="o_w_55_2u_78">
-		<!-- HP Regen increases by 0.2. CP Regen increases by 0.18. -->
+		<!-- HP Regen increases by 0.39. CP Regen increases by 0.37. -->
 		<stats>
-			<add stat="regHp" val="0.19584" />
-			<add stat="regCp" val="0.18496" />
+			<add stat="regHp" val="0.3917" />
+			<add stat="regCp" val="0.3699" />
 		</stats>
 	</option>
 	<option id="14002" name="o_w_55_2u_79">
-		<!-- HP Regen increases by 0.2. Evasion increases by 0.71. -->
+		<!-- HP Regen increases by 0.39. Evasion increases by 1.06. -->
 		<stats>
-			<add stat="regHp" val="0.19584" />
-			<add stat="rEvas" val="0.709981" />
+			<add stat="regHp" val="0.3917" />
+			<add stat="rEvas" val="1.065" />
 		</stats>
 	</option>
 	<option id="14003" name="o_w_55_2u_80">
-		<!-- HP Regen increases by 0.2. Accuracy increases by 0.71. -->
+		<!-- HP Regen increases by 0.39. Accuracy increases by 1.06. -->
 		<stats>
-			<add stat="regHp" val="0.19584" />
-			<add stat="accCombat" val="0.709981" />
+			<add stat="regHp" val="0.3917" />
+			<add stat="accCombat" val="1.065" />
 		</stats>
 	</option>
 	<option id="14004" name="o_w_55_2u_81">
-		<!-- HP Regen increases by 0.2. Critical increases by 7.69. -->
+		<!-- HP Regen increases by 0.39. Critical increases by 9.23. -->
 		<stats>
-			<add stat="regHp" val="0.19584" />
-			<add stat="critRate" val="7.687674268" />
+			<add stat="regHp" val="0.3917" />
+			<add stat="critRate" val="9.2252" />
 		</stats>
 	</option>
 	<option id="14005" name="o_w_55_2u_82">
-		<!-- MP Regen increases by 0.13. CP Regen increases by 0.18. -->
+		<!-- MP Regen increases by 0.27. CP Regen increases by 0.37. -->
 		<stats>
-			<add stat="regMp" val="0.13302" />
-			<add stat="regCp" val="0.18496" />
+			<add stat="regMp" val="0.266" />
+			<add stat="regCp" val="0.3699" />
 		</stats>
 	</option>
 	<option id="14006" name="o_w_55_2u_83">
-		<!-- MP Regen increases by 0.13. Evasion increases by 0.71. -->
+		<!-- MP Regen increases by 0.27. Evasion increases by 1.06. -->
 		<stats>
-			<add stat="regMp" val="0.13302" />
-			<add stat="rEvas" val="0.709981" />
+			<add stat="regMp" val="0.266" />
+			<add stat="rEvas" val="1.065" />
 		</stats>
 	</option>
 	<option id="14007" name="o_w_55_2u_84">
-		<!-- MP Regen increases by 0.13. Accuracy increases by 0.71. -->
+		<!-- MP Regen increases by 0.27. Accuracy increases by 1.06. -->
 		<stats>
-			<add stat="regMp" val="0.13302" />
-			<add stat="accCombat" val="0.709981" />
+			<add stat="regMp" val="0.266" />
+			<add stat="accCombat" val="1.065" />
 		</stats>
 	</option>
 	<option id="14008" name="o_w_55_2u_85">
-		<!-- MP Regen increases by 0.13. Critical increases by 7.69. -->
+		<!-- MP Regen increases by 0.27. Critical increases by 9.23. -->
 		<stats>
-			<add stat="regMp" val="0.13302" />
-			<add stat="critRate" val="7.687674268" />
+			<add stat="regMp" val="0.266" />
+			<add stat="critRate" val="9.2252" />
 		</stats>
 	</option>
 	<option id="14009" name="o_w_55_2u_86">
-		<!-- CP Regen increases by 0.2. Evasion increases by 0.71. -->
+		<!-- CP Regen increases by 0.39. Evasion increases by 1.06. -->
 		<stats>
-			<add stat="regCp" val="0.19584" />
-			<add stat="rEvas" val="0.709981" />
+			<add stat="regCp" val="0.3917" />
+			<add stat="rEvas" val="1.065" />
 		</stats>
 	</option>
 	<option id="14010" name="o_w_55_2u_87">
-		<!-- CP Regen increases by 0.2. Accuracy increases by 0.71. -->
+		<!-- CP Regen increases by 0.39. Accuracy increases by 1.06. -->
 		<stats>
-			<add stat="regCp" val="0.19584" />
-			<add stat="accCombat" val="0.709981" />
+			<add stat="regCp" val="0.3917" />
+			<add stat="accCombat" val="1.065" />
 		</stats>
 	</option>
 	<option id="14011" name="o_w_55_2u_88">
-		<!-- CP Regen increases by 0.2. Critical increases by 7.69. -->
+		<!-- CP Regen increases by 0.39. Critical increases by 9.23. -->
 		<stats>
-			<add stat="regCp" val="0.19584" />
-			<add stat="critRate" val="7.687674268" />
+			<add stat="regCp" val="0.3917" />
+			<add stat="critRate" val="9.2252" />
 		</stats>
 	</option>
 	<option id="14012" name="o_w_55_2u_89">
-		<!-- Evasion increases by 0.78. Accuracy increases by 0.71. -->
+		<!-- Evasion increases by 1.18. Accuracy increases by 1.06. -->
 		<stats>
-			<add stat="rEvas" val="0.784715" />
-			<add stat="accCombat" val="0.709981" />
+			<add stat="rEvas" val="1.1771" />
+			<add stat="accCombat" val="1.065" />
 		</stats>
 	</option>
 	<option id="14013" name="o_w_55_2u_90">
-		<!-- Evasion increases by 0.78. Critical increases by 7.69. -->
+		<!-- Evasion increases by 1.18. Critical increases by 9.23. -->
 		<stats>
-			<add stat="rEvas" val="0.784715" />
-			<add stat="critRate" val="7.687674268" />
+			<add stat="rEvas" val="1.1771" />
+			<add stat="critRate" val="9.2252" />
 		</stats>
 	</option>
 	<option id="14014" name="o_w_55_2u_91">
-		<!-- Accuracy increases by 0.78. Critical increases by 7.69. -->
+		<!-- Accuracy increases by 1.18. Critical increases by 9.23. -->
 		<stats>
-			<add stat="accCombat" val="0.784715" />
-			<add stat="critRate" val="7.687674268" />
+			<add stat="accCombat" val="1.1771" />
+			<add stat="critRate" val="9.2252" />
 		</stats>
 	</option>
 	<option id="14015" name="o_w_58_2u_1">
-		<!-- P. Def. increases by 24.19. -->
+		<!-- P. Def. increases by 30.24. -->
 		<stats>
-			<add stat="pDef" val="24.189" />
+			<add stat="pDef" val="30.2362" />
 		</stats>
 	</option>
 	<option id="14016" name="o_w_58_2u_2">
-		<!-- M. Def. increases by 19.44. -->
+		<!-- M. Def. increases by 24.3. -->
 		<stats>
-			<add stat="mDef" val="19.437" />
+			<add stat="mDef" val="24.2963" />
 		</stats>
 	</option>
 	<option id="14017" name="o_w_58_2u_3">
-		<!-- Max HP increases by 61.31 -->
+		<!-- Max HP increases by 76.64. -->
 		<stats>
-			<add stat="maxHp" val="61.314" />
+			<add stat="maxHp" val="76.6425" />
 		</stats>
 	</option>
 	<option id="14018" name="o_w_58_2u_4">
-		<!-- Max HP increases by 70.69. -->
+		<!-- Max MP increases by 91.89. -->
 		<stats>
-			<add stat="maxMp" val="70.686" />
+			<add stat="maxMp" val="91.8918" />
 		</stats>
 	</option>
 	<option id="14019" name="o_w_58_2u_5">
-		<!-- Max CP increases by 92.57. -->
+		<!-- Max CP increases by 115.71. -->
 		<stats>
-			<add stat="maxCp" val="92.565" />
+			<add stat="maxCp" val="115.7062" />
 		</stats>
 	</option>
 	<option id="14020" name="o_w_58_2u_6">
-		<!-- P. Atk. increases by 12.9. -->
+		<!-- P. Atk. increases by 15.48. -->
 		<stats>
-			<add stat="pAtk" val="12.903" />
+			<add stat="pAtk" val="15.4836" />
 		</stats>
 	</option>
 	<option id="14021" name="o_w_58_2u_7">
-		<!-- M. Atk. increases by 14.85. -->
+		<!-- M. Atk. increases by 17.82. -->
 		<stats>
-			<add stat="mAtk" val="14.85" />
+			<add stat="mAtk" val="17.82" />
 		</stats>
 	</option>
 	<option id="14022" name="o_w_58_2u_8">
-		<!-- HP Regen increases by 0.38. -->
+		<!-- HP Regen increases by 0.76. -->
 		<stats>
-			<add stat="regHp" val="0.37851" />
+			<add stat="regHp" val="0.757" />
 		</stats>
 	</option>
 	<option id="14023" name="o_w_58_2u_9">
-		<!-- MP Regen increases by 0.25. -->
+		<!-- MP Regen increases by 0.49. -->
 		<stats>
-			<add stat="regMp" val="0.2475" />
+			<add stat="regMp" val="0.495" />
 		</stats>
 	</option>
 	<option id="14024" name="o_w_58_2u_10">
-		<!-- CP Regen increases by 0.38. -->
+		<!-- CP Regen increases by 0.76. -->
 		<stats>
-			<add stat="regCp" val="0.37851" />
+			<add stat="regCp" val="0.757" />
 		</stats>
 	</option>
 	<option id="14025" name="o_w_58_2u_11">
-		<!-- Evasion increases by 1.67. -->
+		<!-- Evasion increases by 2.5. -->
 		<stats>
-			<add stat="rEvas" val="1.668296" />
+			<add stat="rEvas" val="2.5024" />
 		</stats>
 	</option>
 	<option id="14026" name="o_w_58_2u_12">
-		<!-- Accuracy increases by 1.67. -->
+		<!-- Accuracy increases by 2.5. -->
 		<stats>
-			<add stat="accCombat" val="1.668296" />
+			<add stat="accCombat" val="2.5024" />
 		</stats>
 	</option>
 	<option id="14027" name="o_w_58_2u_13">
-		<!-- Critical increases by 18.06. -->
+		<!-- Critical increases by 21.68. -->
 		<stats>
-			<add stat="critRate" val="18.064309087999998" />
+			<add stat="critRate" val="21.6772" />
 		</stats>
 	</option>
 	<option id="14028" name="o_w_58_2u_14">
-		<!-- P. Def. increases by 12.46. M. Def. increases by 9.42. -->
+		<!-- P. Def. increases by 15.58. M. Def. increases by 11.78. -->
 		<stats>
-			<add stat="pDef" val="12.461" />
-			<add stat="mDef" val="9.424" />
+			<add stat="pDef" val="15.5762" />
+			<add stat="mDef" val="11.78" />
 		</stats>
 	</option>
 	<option id="14029" name="o_w_58_2u_15">
-		<!-- P. Def. increases by 12.46. Max HP increases by 29.73 -->
+		<!-- P. Def. increases by 15.58. Max HP increases by 37.16. -->
 		<stats>
-			<add stat="pDef" val="12.461" />
-			<add stat="maxHp" val="29.728" />
+			<add stat="pDef" val="15.5762" />
+			<add stat="maxHp" val="37.16" />
 		</stats>
 	</option>
 	<option id="14030" name="o_w_58_2u_16">
-		<!-- P. Def. increases by 12.46. Max HP increases by 34.27. -->
+		<!-- P. Def. increases by 15.58. Max MP increases by 44.55. -->
 		<stats>
-			<add stat="pDef" val="12.461" />
-			<add stat="maxMp" val="34.272" />
+			<add stat="pDef" val="15.5762" />
+			<add stat="maxMp" val="44.5536" />
 		</stats>
 	</option>
 	<option id="14031" name="o_w_58_2u_17">
-		<!-- P. Def. increases by 12.46. Max CP increases by 44.88. -->
+		<!-- P. Def. increases by 15.58. Max CP increases by 56.1. -->
 		<stats>
-			<add stat="pDef" val="12.461" />
-			<add stat="maxCp" val="44.88" />
+			<add stat="pDef" val="15.5762" />
+			<add stat="maxCp" val="56.1" />
 		</stats>
 	</option>
 	<option id="14032" name="o_w_58_2u_18">
-		<!-- P. Def. increases by 12.46. P. Atk. increases by 6.26. -->
+		<!-- P. Def. increases by 15.58. P. Atk. increases by 7.51. -->
 		<stats>
-			<add stat="pDef" val="12.461" />
-			<add stat="pAtk" val="6.256" />
+			<add stat="pDef" val="15.5762" />
+			<add stat="pAtk" val="7.5072" />
 		</stats>
 	</option>
 	<option id="14033" name="o_w_58_2u_19">
-		<!-- P. Def. increases by 12.46. M. Atk. increases by 7.2. -->
+		<!-- P. Def. increases by 15.58. M. Atk. increases by 8.64. -->
 		<stats>
-			<add stat="pDef" val="12.461" />
-			<add stat="mAtk" val="7.2" />
+			<add stat="pDef" val="15.5762" />
+			<add stat="mAtk" val="8.64" />
 		</stats>
 	</option>
 	<option id="14034" name="o_w_58_2u_20">
-		<!-- P. Def. increases by 12.46. HP Regen increases by 0.18. -->
+		<!-- P. Def. increases by 15.58. HP Regen increases by 0.37. -->
 		<stats>
-			<add stat="pDef" val="12.461" />
-			<add stat="regHp" val="0.18352" />
+			<add stat="pDef" val="15.5762" />
+			<add stat="regHp" val="0.367" />
 		</stats>
 	</option>
 	<option id="14035" name="o_w_58_2u_21">
-		<!-- P. Def. increases by 12.46. MP Regen increases by 0.12. -->
+		<!-- P. Def. increases by 15.58. MP Regen increases by 0.24. -->
 		<stats>
-			<add stat="pDef" val="12.461" />
-			<add stat="regMp" val="0.12" />
+			<add stat="pDef" val="15.5762" />
+			<add stat="regMp" val="0.24" />
 		</stats>
 	</option>
 	<option id="14036" name="o_w_58_2u_22">
-		<!-- P. Def. increases by 12.46. CP Regen increases by 0.18. -->
+		<!-- P. Def. increases by 15.58. CP Regen increases by 0.37. -->
 		<stats>
-			<add stat="pDef" val="12.461" />
-			<add stat="regCp" val="0.18352" />
+			<add stat="pDef" val="15.5762" />
+			<add stat="regCp" val="0.367" />
 		</stats>
 	</option>
 	<option id="14037" name="o_w_58_2u_23">
-		<!-- P. Def. increases by 12.46. Evasion increases by 0.79. -->
+		<!-- P. Def. increases by 15.58. Evasion increases by 1.19. -->
 		<stats>
-			<add stat="pDef" val="12.461" />
-			<add stat="rEvas" val="0.792441" />
+			<add stat="pDef" val="15.5762" />
+			<add stat="rEvas" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14038" name="o_w_58_2u_24">
-		<!-- P. Def. increases by 12.46. Accuracy increases by 0.79. -->
+		<!-- P. Def. increases by 15.58. Accuracy increases by 1.19. -->
 		<stats>
-			<add stat="pDef" val="12.461" />
-			<add stat="accCombat" val="0.792441" />
+			<add stat="pDef" val="15.5762" />
+			<add stat="accCombat" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14039" name="o_w_58_2u_25">
-		<!-- P. Def. increases by 12.46. Critical increases by 8.58. -->
+		<!-- P. Def. increases by 15.58. Critical increases by 10.3. -->
 		<stats>
-			<add stat="pDef" val="12.461" />
-			<add stat="critRate" val="8.580551148" />
+			<add stat="pDef" val="15.5762" />
+			<add stat="critRate" val="10.2967" />
 		</stats>
 	</option>
 	<option id="14040" name="o_w_58_2u_26">
-		<!-- M. Def. increases by 10.01. Max HP increases by 29.73 -->
+		<!-- M. Def. increases by 12.52. Max HP increases by 37.16. -->
 		<stats>
-			<add stat="mDef" val="10.013" />
-			<add stat="maxHp" val="29.728" />
+			<add stat="mDef" val="12.5162" />
+			<add stat="maxHp" val="37.16" />
 		</stats>
 	</option>
 	<option id="14041" name="o_w_58_2u_27">
-		<!-- M. Def. increases by 10.01. Max HP increases by 34.27. -->
+		<!-- M. Def. increases by 12.52. Max MP increases by 44.55. -->
 		<stats>
-			<add stat="mDef" val="10.013" />
-			<add stat="maxMp" val="34.272" />
+			<add stat="mDef" val="12.5162" />
+			<add stat="maxMp" val="44.5536" />
 		</stats>
 	</option>
 	<option id="14042" name="o_w_58_2u_28">
-		<!-- M. Def. increases by 10.01. Max CP increases by 44.88. -->
+		<!-- M. Def. increases by 12.52. Max CP increases by 56.1. -->
 		<stats>
-			<add stat="mDef" val="10.013" />
-			<add stat="maxCp" val="44.88" />
+			<add stat="mDef" val="12.5162" />
+			<add stat="maxCp" val="56.1" />
 		</stats>
 	</option>
 	<option id="14043" name="o_w_58_2u_29">
-		<!-- M. Def. increases by 10.01. P. Atk. increases by 6.26. -->
+		<!-- M. Def. increases by 12.52. P. Atk. increases by 7.51. -->
 		<stats>
-			<add stat="mDef" val="10.013" />
-			<add stat="pAtk" val="6.256" />
+			<add stat="mDef" val="12.5162" />
+			<add stat="pAtk" val="7.5072" />
 		</stats>
 	</option>
 	<option id="14044" name="o_w_58_2u_30">
-		<!-- M. Def. increases by 10.01. M. Atk. increases by 7.2. -->
+		<!-- M. Def. increases by 12.52. M. Atk. increases by 8.64. -->
 		<stats>
-			<add stat="mDef" val="10.013" />
-			<add stat="mAtk" val="7.2" />
+			<add stat="mDef" val="12.5162" />
+			<add stat="mAtk" val="8.64" />
 		</stats>
 	</option>
 	<option id="14045" name="o_w_58_2u_31">
-		<!-- M. Def. increases by 10.01. HP Regen increases by 0.18. -->
+		<!-- M. Def. increases by 12.52. HP Regen increases by 0.37. -->
 		<stats>
-			<add stat="mDef" val="10.013" />
-			<add stat="regHp" val="0.18352" />
+			<add stat="mDef" val="12.5162" />
+			<add stat="regHp" val="0.367" />
 		</stats>
 	</option>
 	<option id="14046" name="o_w_58_2u_32">
-		<!-- M. Def. increases by 10.01. MP Regen increases by 0.12. -->
+		<!-- M. Def. increases by 12.52. MP Regen increases by 0.24. -->
 		<stats>
-			<add stat="mDef" val="10.013" />
-			<add stat="regMp" val="0.12" />
+			<add stat="mDef" val="12.5162" />
+			<add stat="regMp" val="0.24" />
 		</stats>
 	</option>
 	<option id="14047" name="o_w_58_2u_33">
-		<!-- M. Def. increases by 10.01. CP Regen increases by 0.18. -->
+		<!-- M. Def. increases by 12.52. CP Regen increases by 0.37. -->
 		<stats>
-			<add stat="mDef" val="10.013" />
-			<add stat="regCp" val="0.18352" />
+			<add stat="mDef" val="12.5162" />
+			<add stat="regCp" val="0.367" />
 		</stats>
 	</option>
 	<option id="14048" name="o_w_58_2u_34">
-		<!-- M. Def. increases by 10.01. Evasion increases by 0.79. -->
+		<!-- M. Def. increases by 12.52. Evasion increases by 1.19. -->
 		<stats>
-			<add stat="mDef" val="10.013" />
-			<add stat="rEvas" val="0.792441" />
+			<add stat="mDef" val="12.5162" />
+			<add stat="rEvas" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14049" name="o_w_58_2u_35">
-		<!-- M. Def. increases by 10.01. Accuracy increases by 0.79. -->
+		<!-- M. Def. increases by 12.52. Accuracy increases by 1.19. -->
 		<stats>
-			<add stat="mDef" val="10.013" />
-			<add stat="accCombat" val="0.792441" />
+			<add stat="mDef" val="12.5162" />
+			<add stat="accCombat" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14050" name="o_w_58_2u_36">
-		<!-- M. Def. increases by 10.01. Critical increases by 8.58. -->
+		<!-- M. Def. increases by 12.52. Critical increases by 10.3. -->
 		<stats>
-			<add stat="mDef" val="10.013" />
-			<add stat="critRate" val="8.580551148" />
+			<add stat="mDef" val="12.5162" />
+			<add stat="critRate" val="10.2967" />
 		</stats>
 	</option>
 	<option id="14051" name="o_w_58_2u_37">
-		<!-- Max HP increases by 31.59 Max HP increases by 34.27. -->
+		<!-- Max HP increases by 39.48. Max MP increases by 44.55. -->
 		<stats>
-			<add stat="maxHp" val="31.586" />
-			<add stat="maxMp" val="34.272" />
+			<add stat="maxHp" val="39.4825" />
+			<add stat="maxMp" val="44.5536" />
 		</stats>
 	</option>
 	<option id="14052" name="o_w_58_2u_38">
-		<!-- Max HP increases by 31.59 Max CP increases by 44.88. -->
+		<!-- Max HP increases by 39.48. Max CP increases by 56.1. -->
 		<stats>
-			<add stat="maxHp" val="31.586" />
-			<add stat="maxCp" val="44.88" />
+			<add stat="maxHp" val="39.4825" />
+			<add stat="maxCp" val="56.1" />
 		</stats>
 	</option>
 	<option id="14053" name="o_w_58_2u_39">
-		<!-- Max HP increases by 31.59 P. Atk. increases by 6.26. -->
+		<!-- Max HP increases by 39.48. P. Atk. increases by 7.51. -->
 		<stats>
-			<add stat="maxHp" val="31.586" />
-			<add stat="pAtk" val="6.256" />
+			<add stat="maxHp" val="39.4825" />
+			<add stat="pAtk" val="7.5072" />
 		</stats>
 	</option>
 	<option id="14054" name="o_w_58_2u_40">
-		<!-- Max HP increases by 31.59 M. Atk. increases by 7.2. -->
+		<!-- Max HP increases by 39.48. M. Atk. increases by 8.64. -->
 		<stats>
-			<add stat="maxHp" val="31.586" />
-			<add stat="mAtk" val="7.2" />
+			<add stat="maxHp" val="39.4825" />
+			<add stat="mAtk" val="8.64" />
 		</stats>
 	</option>
 	<option id="14055" name="o_w_58_2u_41">
-		<!-- Max HP increases by 31.59 HP Regen increases by 0.18. -->
+		<!-- Max HP increases by 39.48. HP Regen increases by 0.37. -->
 		<stats>
-			<add stat="maxHp" val="31.586" />
-			<add stat="regHp" val="0.18352" />
+			<add stat="maxHp" val="39.4825" />
+			<add stat="regHp" val="0.367" />
 		</stats>
 	</option>
 	<option id="14056" name="o_w_58_2u_42">
-		<!-- Max HP increases by 31.59 MP Regen increases by 0.12. -->
+		<!-- Max HP increases by 39.48. MP Regen increases by 0.24. -->
 		<stats>
-			<add stat="maxHp" val="31.586" />
-			<add stat="regMp" val="0.12" />
+			<add stat="maxHp" val="39.4825" />
+			<add stat="regMp" val="0.24" />
 		</stats>
 	</option>
 	<option id="14057" name="o_w_58_2u_43">
-		<!-- Max HP increases by 31.59 CP Regen increases by 0.18. -->
+		<!-- Max HP increases by 39.48. CP Regen increases by 0.37. -->
 		<stats>
-			<add stat="maxHp" val="31.586" />
-			<add stat="regCp" val="0.18352" />
+			<add stat="maxHp" val="39.4825" />
+			<add stat="regCp" val="0.367" />
 		</stats>
 	</option>
 	<option id="14058" name="o_w_58_2u_44">
-		<!-- Max HP increases by 31.59 Evasion increases by 0.79. -->
+		<!-- Max HP increases by 39.48. Evasion increases by 1.19. -->
 		<stats>
-			<add stat="maxHp" val="31.586" />
-			<add stat="rEvas" val="0.792441" />
+			<add stat="maxHp" val="39.4825" />
+			<add stat="rEvas" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14059" name="o_w_58_2u_45">
-		<!-- Max HP increases by 31.59 Accuracy increases by 0.79. -->
+		<!-- Max HP increases by 39.48. Accuracy increases by 1.19. -->
 		<stats>
-			<add stat="maxHp" val="31.586" />
-			<add stat="accCombat" val="0.792441" />
+			<add stat="maxHp" val="39.4825" />
+			<add stat="accCombat" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14060" name="o_w_58_2u_46">
-		<!-- Max HP increases by 31.59 Critical increases by 8.58. -->
+		<!-- Max HP increases by 39.48. Critical increases by 10.3. -->
 		<stats>
-			<add stat="maxHp" val="31.586" />
-			<add stat="critRate" val="8.580551148" />
+			<add stat="maxHp" val="39.4825" />
+			<add stat="critRate" val="10.2967" />
 		</stats>
 	</option>
 	<option id="14061" name="o_w_58_2u_47">
-		<!-- Max HP increases by 36.41. Max CP increases by 44.88. -->
+		<!-- Max MP increases by 47.34. Max CP increases by 56.1. -->
 		<stats>
-			<add stat="maxMp" val="36.414" />
-			<add stat="maxCp" val="44.88" />
+			<add stat="maxMp" val="47.3382" />
+			<add stat="maxCp" val="56.1" />
 		</stats>
 	</option>
 	<option id="14062" name="o_w_58_2u_48">
-		<!-- Max HP increases by 36.41. P. Atk. increases by 6.26. -->
+		<!-- Max MP increases by 47.34. P. Atk. increases by 7.51. -->
 		<stats>
-			<add stat="maxMp" val="36.414" />
-			<add stat="pAtk" val="6.256" />
+			<add stat="maxMp" val="47.3382" />
+			<add stat="pAtk" val="7.5072" />
 		</stats>
 	</option>
 	<option id="14063" name="o_w_58_2u_49">
-		<!-- Max HP increases by 36.41. M. Atk. increases by 7.2. -->
+		<!-- Max MP increases by 47.34. M. Atk. increases by 8.64. -->
 		<stats>
-			<add stat="maxMp" val="36.414" />
-			<add stat="mAtk" val="7.2" />
+			<add stat="maxMp" val="47.3382" />
+			<add stat="mAtk" val="8.64" />
 		</stats>
 	</option>
 	<option id="14064" name="o_w_58_2u_50">
-		<!-- Max HP increases by 36.41. HP Regen increases by 0.18. -->
+		<!-- Max MP increases by 47.34. HP Regen increases by 0.37. -->
 		<stats>
-			<add stat="maxMp" val="36.414" />
-			<add stat="regHp" val="0.18352" />
+			<add stat="maxMp" val="47.3382" />
+			<add stat="regHp" val="0.367" />
 		</stats>
 	</option>
 	<option id="14065" name="o_w_58_2u_51">
-		<!-- Max HP increases by 36.41. MP Regen increases by 0.12. -->
+		<!-- Max MP increases by 47.34. MP Regen increases by 0.24. -->
 		<stats>
-			<add stat="maxMp" val="36.414" />
-			<add stat="regMp" val="0.12" />
+			<add stat="maxMp" val="47.3382" />
+			<add stat="regMp" val="0.24" />
 		</stats>
 	</option>
 	<option id="14066" name="o_w_58_2u_52">
-		<!-- Max HP increases by 36.41. CP Regen increases by 0.18. -->
+		<!-- Max MP increases by 47.34. CP Regen increases by 0.37. -->
 		<stats>
-			<add stat="maxMp" val="36.414" />
-			<add stat="regCp" val="0.18352" />
+			<add stat="maxMp" val="47.3382" />
+			<add stat="regCp" val="0.367" />
 		</stats>
 	</option>
 	<option id="14067" name="o_w_58_2u_53">
-		<!-- Max HP increases by 36.41. Evasion increases by 0.79. -->
+		<!-- Max MP increases by 47.34. Evasion increases by 1.19. -->
 		<stats>
-			<add stat="maxMp" val="36.414" />
-			<add stat="rEvas" val="0.792441" />
+			<add stat="maxMp" val="47.3382" />
+			<add stat="rEvas" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14068" name="o_w_58_2u_54">
-		<!-- Max HP increases by 36.41. Accuracy increases by 0.79. -->
+		<!-- Max MP increases by 47.34. Accuracy increases by 1.19. -->
 		<stats>
-			<add stat="maxMp" val="36.414" />
-			<add stat="accCombat" val="0.792441" />
+			<add stat="maxMp" val="47.3382" />
+			<add stat="accCombat" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14069" name="o_w_58_2u_55">
-		<!-- Max HP increases by 36.41. Critical increases by 8.58. -->
+		<!-- Max MP increases by 47.34. Critical increases by 10.3. -->
 		<stats>
-			<add stat="maxMp" val="36.414" />
-			<add stat="critRate" val="8.580551148" />
+			<add stat="maxMp" val="47.3382" />
+			<add stat="critRate" val="10.2967" />
 		</stats>
 	</option>
 	<option id="14070" name="o_w_58_2u_56">
-		<!-- Max CP increases by 47.69. P. Atk. increases by 6.26. -->
+		<!-- Max CP increases by 59.61. P. Atk. increases by 7.51. -->
 		<stats>
-			<add stat="maxCp" val="47.685" />
-			<add stat="pAtk" val="6.256" />
+			<add stat="maxCp" val="59.6063" />
+			<add stat="pAtk" val="7.5072" />
 		</stats>
 	</option>
 	<option id="14071" name="o_w_58_2u_57">
-		<!-- Max CP increases by 47.69. M. Atk. increases by 7.2. -->
+		<!-- Max CP increases by 59.61. M. Atk. increases by 8.64. -->
 		<stats>
-			<add stat="maxCp" val="47.685" />
-			<add stat="mAtk" val="7.2" />
+			<add stat="maxCp" val="59.6063" />
+			<add stat="mAtk" val="8.64" />
 		</stats>
 	</option>
 	<option id="14072" name="o_w_58_2u_58">
-		<!-- Max CP increases by 47.69. HP Regen increases by 0.18. -->
+		<!-- Max CP increases by 59.61. HP Regen increases by 0.37. -->
 		<stats>
-			<add stat="maxCp" val="47.685" />
-			<add stat="regHp" val="0.18352" />
+			<add stat="maxCp" val="59.6063" />
+			<add stat="regHp" val="0.367" />
 		</stats>
 	</option>
 	<option id="14073" name="o_w_58_2u_59">
-		<!-- Max CP increases by 47.69. MP Regen increases by 0.12. -->
+		<!-- Max CP increases by 59.61. MP Regen increases by 0.24. -->
 		<stats>
-			<add stat="maxCp" val="47.685" />
-			<add stat="regMp" val="0.12" />
+			<add stat="maxCp" val="59.6063" />
+			<add stat="regMp" val="0.24" />
 		</stats>
 	</option>
 	<option id="14074" name="o_w_58_2u_60">
-		<!-- Max CP increases by 47.69. CP Regen increases by 0.18. -->
+		<!-- Max CP increases by 59.61. CP Regen increases by 0.37. -->
 		<stats>
-			<add stat="maxCp" val="47.685" />
-			<add stat="regCp" val="0.18352" />
+			<add stat="maxCp" val="59.6063" />
+			<add stat="regCp" val="0.367" />
 		</stats>
 	</option>
 	<option id="14075" name="o_w_58_2u_61">
-		<!-- Max CP increases by 47.69. Evasion increases by 0.79. -->
+		<!-- Max CP increases by 59.61. Evasion increases by 1.19. -->
 		<stats>
-			<add stat="maxCp" val="47.685" />
-			<add stat="rEvas" val="0.792441" />
+			<add stat="maxCp" val="59.6063" />
+			<add stat="rEvas" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14076" name="o_w_58_2u_62">
-		<!-- Max CP increases by 47.69. Accuracy increases by 0.79. -->
+		<!-- Max CP increases by 59.61. Accuracy increases by 1.19. -->
 		<stats>
-			<add stat="maxCp" val="47.685" />
-			<add stat="accCombat" val="0.792441" />
+			<add stat="maxCp" val="59.6063" />
+			<add stat="accCombat" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14077" name="o_w_58_2u_63">
-		<!-- Max CP increases by 47.69. Critical increases by 8.58. -->
+		<!-- Max CP increases by 59.61. Critical increases by 10.3. -->
 		<stats>
-			<add stat="maxCp" val="47.685" />
-			<add stat="critRate" val="8.580551148" />
+			<add stat="maxCp" val="59.6063" />
+			<add stat="critRate" val="10.2967" />
 		</stats>
 	</option>
 	<option id="14078" name="o_w_58_2u_64">
-		<!-- P. Atk. increases by 6.65. M. Atk. increases by 7.2. -->
+		<!-- P. Atk. increases by 7.98. M. Atk. increases by 8.64. -->
 		<stats>
-			<add stat="pAtk" val="6.647" />
-			<add stat="mAtk" val="7.2" />
+			<add stat="pAtk" val="7.9764" />
+			<add stat="mAtk" val="8.64" />
 		</stats>
 	</option>
 	<option id="14079" name="o_w_58_2u_65">
-		<!-- P. Atk. increases by 6.65. HP Regen increases by 0.18. -->
+		<!-- P. Atk. increases by 7.98. HP Regen increases by 0.37. -->
 		<stats>
-			<add stat="pAtk" val="6.647" />
-			<add stat="regHp" val="0.18352" />
+			<add stat="pAtk" val="7.9764" />
+			<add stat="regHp" val="0.367" />
 		</stats>
 	</option>
 	<option id="14080" name="o_w_58_2u_66">
-		<!-- P. Atk. increases by 6.65. MP Regen increases by 0.12. -->
+		<!-- P. Atk. increases by 7.98. MP Regen increases by 0.24. -->
 		<stats>
-			<add stat="pAtk" val="6.647" />
-			<add stat="regMp" val="0.12" />
+			<add stat="pAtk" val="7.9764" />
+			<add stat="regMp" val="0.24" />
 		</stats>
 	</option>
 	<option id="14081" name="o_w_58_2u_67">
-		<!-- P. Atk. increases by 6.65. CP Regen increases by 0.18. -->
+		<!-- P. Atk. increases by 7.98. CP Regen increases by 0.37. -->
 		<stats>
-			<add stat="pAtk" val="6.647" />
-			<add stat="regCp" val="0.18352" />
+			<add stat="pAtk" val="7.9764" />
+			<add stat="regCp" val="0.367" />
 		</stats>
 	</option>
 	<option id="14082" name="o_w_58_2u_68">
-		<!-- P. Atk. increases by 6.65. Evasion increases by 0.79. -->
+		<!-- P. Atk. increases by 7.98. Evasion increases by 1.19. -->
 		<stats>
-			<add stat="pAtk" val="6.647" />
-			<add stat="rEvas" val="0.792441" />
+			<add stat="pAtk" val="7.9764" />
+			<add stat="rEvas" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14083" name="o_w_58_2u_69">
-		<!-- P. Atk. increases by 6.65. Accuracy increases by 0.79. -->
+		<!-- P. Atk. increases by 7.98. Accuracy increases by 1.19. -->
 		<stats>
-			<add stat="pAtk" val="6.647" />
-			<add stat="accCombat" val="0.792441" />
+			<add stat="pAtk" val="7.9764" />
+			<add stat="accCombat" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14084" name="o_w_58_2u_70">
-		<!-- P. Atk. increases by 6.65. Critical increases by 8.58. -->
+		<!-- P. Atk. increases by 7.98. Critical increases by 10.3. -->
 		<stats>
-			<add stat="pAtk" val="6.647" />
-			<add stat="critRate" val="8.580551148" />
+			<add stat="pAtk" val="7.9764" />
+			<add stat="critRate" val="10.2967" />
 		</stats>
 	</option>
 	<option id="14085" name="o_w_58_2u_71">
-		<!-- M. Atk. increases by 7.65. HP Regen increases by 0.18. -->
+		<!-- M. Atk. increases by 9.18. HP Regen increases by 0.37. -->
 		<stats>
-			<add stat="mAtk" val="7.65" />
-			<add stat="regHp" val="0.18352" />
+			<add stat="mAtk" val="9.18" />
+			<add stat="regHp" val="0.367" />
 		</stats>
 	</option>
 	<option id="14086" name="o_w_58_2u_72">
-		<!-- M. Atk. increases by 7.65. MP Regen increases by 0.12. -->
+		<!-- M. Atk. increases by 9.18. MP Regen increases by 0.24. -->
 		<stats>
-			<add stat="mAtk" val="7.65" />
-			<add stat="regMp" val="0.12" />
+			<add stat="mAtk" val="9.18" />
+			<add stat="regMp" val="0.24" />
 		</stats>
 	</option>
 	<option id="14087" name="o_w_58_2u_73">
-		<!-- M. Atk. increases by 7.65. CP Regen increases by 0.18. -->
+		<!-- M. Atk. increases by 9.18. CP Regen increases by 0.37. -->
 		<stats>
-			<add stat="mAtk" val="7.65" />
-			<add stat="regCp" val="0.18352" />
+			<add stat="mAtk" val="9.18" />
+			<add stat="regCp" val="0.367" />
 		</stats>
 	</option>
 	<option id="14088" name="o_w_58_2u_74">
-		<!-- M. Atk. increases by 7.65. Evasion increases by 0.79. -->
+		<!-- M. Atk. increases by 9.18. Evasion increases by 1.19. -->
 		<stats>
-			<add stat="mAtk" val="7.65" />
-			<add stat="rEvas" val="0.792441" />
+			<add stat="mAtk" val="9.18" />
+			<add stat="rEvas" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14089" name="o_w_58_2u_75">
-		<!-- M. Atk. increases by 7.65. Accuracy increases by 0.79. -->
+		<!-- M. Atk. increases by 9.18. Accuracy increases by 1.19. -->
 		<stats>
-			<add stat="mAtk" val="7.65" />
-			<add stat="accCombat" val="0.792441" />
+			<add stat="mAtk" val="9.18" />
+			<add stat="accCombat" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14090" name="o_w_58_2u_76">
-		<!-- M. Atk. increases by 7.65. Critical increases by 8.58. -->
+		<!-- M. Atk. increases by 9.18. Critical increases by 10.3. -->
 		<stats>
-			<add stat="mAtk" val="7.65" />
-			<add stat="critRate" val="8.580551148" />
+			<add stat="mAtk" val="9.18" />
+			<add stat="critRate" val="10.2967" />
 		</stats>
 	</option>
 	<option id="14091" name="o_w_58_2u_77">
-		<!-- HP Regen increases by 0.19. MP Regen increases by 0.12. -->
+		<!-- HP Regen increases by 0.39. MP Regen increases by 0.24. -->
 		<stats>
-			<add stat="regHp" val="0.19499" />
-			<add stat="regMp" val="0.12" />
+			<add stat="regHp" val="0.39" />
+			<add stat="regMp" val="0.24" />
 		</stats>
 	</option>
 	<option id="14092" name="o_w_58_2u_78">
-		<!-- HP Regen increases by 0.19. CP Regen increases by 0.18. -->
+		<!-- HP Regen increases by 0.39. CP Regen increases by 0.37. -->
 		<stats>
-			<add stat="regHp" val="0.19499" />
-			<add stat="regCp" val="0.18352" />
+			<add stat="regHp" val="0.39" />
+			<add stat="regCp" val="0.367" />
 		</stats>
 	</option>
 	<option id="14093" name="o_w_58_2u_79">
-		<!-- HP Regen increases by 0.19. Evasion increases by 0.79. -->
+		<!-- HP Regen increases by 0.39. Evasion increases by 1.19. -->
 		<stats>
-			<add stat="regHp" val="0.19499" />
-			<add stat="rEvas" val="0.792441" />
+			<add stat="regHp" val="0.39" />
+			<add stat="rEvas" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14094" name="o_w_58_2u_80">
-		<!-- HP Regen increases by 0.19. Accuracy increases by 0.79. -->
+		<!-- HP Regen increases by 0.39. Accuracy increases by 1.19. -->
 		<stats>
-			<add stat="regHp" val="0.19499" />
-			<add stat="accCombat" val="0.792441" />
+			<add stat="regHp" val="0.39" />
+			<add stat="accCombat" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14095" name="o_w_58_2u_81">
-		<!-- HP Regen increases by 0.19. Critical increases by 8.58. -->
+		<!-- HP Regen increases by 0.39. Critical increases by 10.3. -->
 		<stats>
-			<add stat="regHp" val="0.19499" />
-			<add stat="critRate" val="8.580551148" />
+			<add stat="regHp" val="0.39" />
+			<add stat="critRate" val="10.2967" />
 		</stats>
 	</option>
 	<option id="14096" name="o_w_58_2u_82">
-		<!-- MP Regen increases by 0.13. CP Regen increases by 0.18. -->
+		<!-- MP Regen increases by 0.26. CP Regen increases by 0.37. -->
 		<stats>
-			<add stat="regMp" val="0.1275" />
-			<add stat="regCp" val="0.18352" />
+			<add stat="regMp" val="0.255" />
+			<add stat="regCp" val="0.367" />
 		</stats>
 	</option>
 	<option id="14097" name="o_w_58_2u_83">
-		<!-- MP Regen increases by 0.13. Evasion increases by 0.79. -->
+		<!-- MP Regen increases by 0.26. Evasion increases by 1.19. -->
 		<stats>
-			<add stat="regMp" val="0.1275" />
-			<add stat="rEvas" val="0.792441" />
+			<add stat="regMp" val="0.255" />
+			<add stat="rEvas" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14098" name="o_w_58_2u_84">
-		<!-- MP Regen increases by 0.13. Accuracy increases by 0.79. -->
+		<!-- MP Regen increases by 0.26. Accuracy increases by 1.19. -->
 		<stats>
-			<add stat="regMp" val="0.1275" />
-			<add stat="accCombat" val="0.792441" />
+			<add stat="regMp" val="0.255" />
+			<add stat="accCombat" val="1.1887" />
 		</stats>
 	</option>
 	<option id="14099" name="o_w_58_2u_85">
-		<!-- MP Regen increases by 0.13. Critical increases by 8.58. -->
+		<!-- MP Regen increases by 0.26. Critical increases by 10.3. -->
 		<stats>
-			<add stat="regMp" val="0.1275" />
-			<add stat="critRate" val="8.580551148" />
+			<add stat="regMp" val="0.255" />
+			<add stat="critRate" val="10.2967" />
 		</stats>
 	</option>
 </list>
