@@ -18,7 +18,7 @@
 		<magicLevel>#magicLevel</magicLevel>
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
-		<reuseDelay>600000</reuseDelay>
+		<reuseDelay>300000</reuseDelay>
 		<effects>
 			<effect name="Buff">
 				<mul stat="mReuse">0.85</mul>
@@ -43,7 +43,7 @@
 		<magicLevel>#magicLevel</magicLevel>
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
-		<reuseDelay>600000</reuseDelay>
+		<reuseDelay>300000</reuseDelay>
 		<effects>
 			<effect name="Buff">
 				<mul stat="dReuse">0.85</mul>
@@ -68,7 +68,7 @@
 		<magicLevel>#magicLevel</magicLevel>
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
-		<reuseDelay>600000</reuseDelay>
+		<reuseDelay>300000</reuseDelay>
 		<effects>
 			<effect name="Buff">
 				<mul stat="mReuse">0.85</mul>
@@ -139,7 +139,7 @@
 		<magicLevel>#magicLevel</magicLevel>
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
-		<reuseDelay>3600000</reuseDelay>
+		<reuseDelay>1800000</reuseDelay>
 		<conditions msgId="113" addName="1">
 			<and>
 				<player canEscape="true" />

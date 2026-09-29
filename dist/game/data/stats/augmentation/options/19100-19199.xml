@@ -1,280 +1,280 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/optionsData.xsd">
 	<option id="19100" name="o_w_55_2r_acc_necklace_2">
-		<!-- M. Def. + 1.7 Increase Max HP 18.0 -->
+		<!-- M. Def. increases by 2.12. Max HP increases by 22.5. -->
 		<stats>
-			<add stat="mDef" val="1.7" />
-			<add stat="maxHp" val="18.0" />
+			<add stat="mDef" val="2.125" />
+			<add stat="maxHp" val="22.5" />
 		</stats>
 	</option>
 	<option id="19101" name="o_w_55_2r_acc_necklace_3">
-		<!-- M. Def. + 1.7 Max MP + 11.0 -->
+		<!-- M. Def. increases by 2.12. Max MP increases by 14.3. -->
 		<stats>
-			<add stat="mDef" val="1.7" />
-			<add stat="maxMp" val="11.0" />
+			<add stat="mDef" val="2.125" />
+			<add stat="maxMp" val="14.3" />
 		</stats>
 	</option>
 	<option id="19102" name="o_w_55_2r_acc_necklace_4">
-		<!-- M. Def. + 1.7 Increase M. Atk. 2.5 -->
+		<!-- M. Def. increases by 2.12. M. Atk. increases by 3. -->
 		<stats>
-			<add stat="mDef" val="1.7" />
-			<add stat="mAtk" val="2.5" />
+			<add stat="mDef" val="2.125" />
+			<add stat="mAtk" val="3" />
 		</stats>
 	</option>
 	<option id="19103" name="o_w_55_2r_acc_necklace_5">
-		<!-- M. Def. + 1.7 HP Regeneration + 0.09 -->
+		<!-- M. Def. increases by 2.12. HP Regen increases by 0.18. -->
 		<stats>
-			<add stat="mDef" val="1.7" />
-			<add stat="regHp" val="0.09" />
-		</stats>
-	</option>
-	<option id="19104" name="o_w_55_2r_acc_necklace_6">
-		<!-- M. Def. + 1.7 MP Regeneration + 0.03 -->
-		<stats>
-			<add stat="mDef" val="1.7" />
-			<add stat="regMp" val="0.03" />
-		</stats>
-	</option>
-	<option id="19105" name="o_w_55_2r_acc_necklace_7">
-		<!-- Increase Max HP 36.0 -->
-		<stats>
-			<add stat="maxHp" val="36.0" />
-		</stats>
-	</option>
-	<option id="19106" name="o_w_55_2r_acc_necklace_8">
-		<!-- Increase Max HP 18.0 Max MP + 11.0 -->
-		<stats>
-			<add stat="maxHp" val="18.0" />
-			<add stat="maxMp" val="11.0" />
-		</stats>
-	</option>
-	<option id="19107" name="o_w_55_2r_acc_necklace_9">
-		<!-- Increase Max HP 18.0 Increase M. Atk. 2.5 -->
-		<stats>
-			<add stat="maxHp" val="18.0" />
-			<add stat="mAtk" val="2.5" />
-		</stats>
-	</option>
-	<option id="19108" name="o_w_55_2r_acc_necklace_10">
-		<!-- Increase Max HP 18.0 HP Regeneration + 0.09 -->
-		<stats>
-			<add stat="maxHp" val="18.0" />
-			<add stat="regHp" val="0.09" />
-		</stats>
-	</option>
-	<option id="19109" name="o_w_55_2r_acc_necklace_11">
-		<!-- Increase Max HP 18.0 MP Regeneration + 0.03 -->
-		<stats>
-			<add stat="maxHp" val="18.0" />
-			<add stat="regMp" val="0.03" />
-		</stats>
-	</option>
-	<option id="19110" name="o_w_55_2r_acc_necklace_12">
-		<!-- Max MP + 22.0 -->
-		<stats>
-			<add stat="maxMp" val="22.0" />
-		</stats>
-	</option>
-	<option id="19111" name="o_w_55_2r_acc_necklace_13">
-		<!-- Max MP + 11.0 Increase M. Atk. 2.5 -->
-		<stats>
-			<add stat="maxMp" val="11.0" />
-			<add stat="mAtk" val="2.5" />
-		</stats>
-	</option>
-	<option id="19112" name="o_w_55_2r_acc_necklace_14">
-		<!-- Max MP + 11.0 HP Regeneration + 0.09 -->
-		<stats>
-			<add stat="maxMp" val="11.0" />
-			<add stat="regHp" val="0.09" />
-		</stats>
-	</option>
-	<option id="19113" name="o_w_55_2r_acc_necklace_15">
-		<!-- Max MP + 11.0 MP Regeneration + 0.03 -->
-		<stats>
-			<add stat="maxMp" val="11.0" />
-			<add stat="regMp" val="0.03" />
-		</stats>
-	</option>
-	<option id="19114" name="o_w_55_2r_acc_necklace_16">
-		<!-- Increase M. Atk. 5.0 -->
-		<stats>
-			<add stat="mAtk" val="5.0" />
-		</stats>
-	</option>
-	<option id="19115" name="o_w_55_2r_acc_necklace_17">
-		<!-- Increase M. Atk. 2.5 HP Regeneration + 0.09 -->
-		<stats>
-			<add stat="mAtk" val="2.5" />
-			<add stat="regHp" val="0.09" />
-		</stats>
-	</option>
-	<option id="19116" name="o_w_55_2r_acc_necklace_18">
-		<!-- Increase M. Atk. 2.5 MP Regeneration + 0.03 -->
-		<stats>
-			<add stat="mAtk" val="2.5" />
-			<add stat="regMp" val="0.03" />
-		</stats>
-	</option>
-	<option id="19117" name="o_w_55_2r_acc_necklace_19">
-		<!-- HP Regeneration + 0.18 -->
-		<stats>
+			<add stat="mDef" val="2.125" />
 			<add stat="regHp" val="0.18" />
 		</stats>
 	</option>
-	<option id="19118" name="o_w_55_2r_acc_necklace_20">
-		<!-- MP Regeneration + 0.06 -->
+	<option id="19104" name="o_w_55_2r_acc_necklace_6">
+		<!-- M. Def. increases by 2.12. MP Regen increases by 0.06. -->
 		<stats>
+			<add stat="mDef" val="2.125" />
 			<add stat="regMp" val="0.06" />
 		</stats>
 	</option>
-	<option id="19119" name="o_w_55_2r_acc_necklace_21">
-		<!-- HP Regeneration + 0.09 MP Regeneration + 0.03 -->
+	<option id="19105" name="o_w_55_2r_acc_necklace_7">
+		<!-- Max HP increases by 45. -->
 		<stats>
-			<add stat="regHp" val="0.09" />
-			<add stat="regMp" val="0.03" />
+			<add stat="maxHp" val="45" />
+		</stats>
+	</option>
+	<option id="19106" name="o_w_55_2r_acc_necklace_8">
+		<!-- Max HP increases by 22.5. Max MP increases by 14.3. -->
+		<stats>
+			<add stat="maxHp" val="22.5" />
+			<add stat="maxMp" val="14.3" />
+		</stats>
+	</option>
+	<option id="19107" name="o_w_55_2r_acc_necklace_9">
+		<!-- Max HP increases by 22.5. M. Atk. increases by 3. -->
+		<stats>
+			<add stat="maxHp" val="22.5" />
+			<add stat="mAtk" val="3" />
+		</stats>
+	</option>
+	<option id="19108" name="o_w_55_2r_acc_necklace_10">
+		<!-- Max HP increases by 22.5. HP Regen increases by 0.18. -->
+		<stats>
+			<add stat="maxHp" val="22.5" />
+			<add stat="regHp" val="0.18" />
+		</stats>
+	</option>
+	<option id="19109" name="o_w_55_2r_acc_necklace_11">
+		<!-- Max HP increases by 22.5. MP Regen increases by 0.06. -->
+		<stats>
+			<add stat="maxHp" val="22.5" />
+			<add stat="regMp" val="0.06" />
+		</stats>
+	</option>
+	<option id="19110" name="o_w_55_2r_acc_necklace_12">
+		<!-- Max MP increases by 28.6. -->
+		<stats>
+			<add stat="maxMp" val="28.6" />
+		</stats>
+	</option>
+	<option id="19111" name="o_w_55_2r_acc_necklace_13">
+		<!-- Max MP increases by 14.3. M. Atk. increases by 3. -->
+		<stats>
+			<add stat="maxMp" val="14.3" />
+			<add stat="mAtk" val="3" />
+		</stats>
+	</option>
+	<option id="19112" name="o_w_55_2r_acc_necklace_14">
+		<!-- Max MP increases by 14.3. HP Regen increases by 0.18. -->
+		<stats>
+			<add stat="maxMp" val="14.3" />
+			<add stat="regHp" val="0.18" />
+		</stats>
+	</option>
+	<option id="19113" name="o_w_55_2r_acc_necklace_15">
+		<!-- Max MP increases by 14.3. MP Regen increases by 0.06. -->
+		<stats>
+			<add stat="maxMp" val="14.3" />
+			<add stat="regMp" val="0.06" />
+		</stats>
+	</option>
+	<option id="19114" name="o_w_55_2r_acc_necklace_16">
+		<!-- M. Atk. increases by 6. -->
+		<stats>
+			<add stat="mAtk" val="6" />
+		</stats>
+	</option>
+	<option id="19115" name="o_w_55_2r_acc_necklace_17">
+		<!-- M. Atk. increases by 3. HP Regen increases by 0.18. -->
+		<stats>
+			<add stat="mAtk" val="3" />
+			<add stat="regHp" val="0.18" />
+		</stats>
+	</option>
+	<option id="19116" name="o_w_55_2r_acc_necklace_18">
+		<!-- M. Atk. increases by 3. MP Regen increases by 0.06. -->
+		<stats>
+			<add stat="mAtk" val="3" />
+			<add stat="regMp" val="0.06" />
+		</stats>
+	</option>
+	<option id="19117" name="o_w_55_2r_acc_necklace_19">
+		<!-- HP Regen increases by 0.36. -->
+		<stats>
+			<add stat="regHp" val="0.36" />
+		</stats>
+	</option>
+	<option id="19118" name="o_w_55_2r_acc_necklace_20">
+		<!-- MP Regen increases by 0.12. -->
+		<stats>
+			<add stat="regMp" val="0.12" />
+		</stats>
+	</option>
+	<option id="19119" name="o_w_55_2r_acc_necklace_21">
+		<!-- HP Regen increases by 0.18. MP Regen increases by 0.06. -->
+		<stats>
+			<add stat="regHp" val="0.18" />
+			<add stat="regMp" val="0.06" />
 		</stats>
 	</option>
 	<option id="19120" name="o_w_55_2u_acc_necklace_1">
-		<!-- M. Def. + 4.0 -->
+		<!-- M. Def. increases by 5. -->
 		<stats>
-			<add stat="mDef" val="4.0" />
+			<add stat="mDef" val="5" />
 		</stats>
 	</option>
 	<option id="19121" name="o_w_55_2u_acc_necklace_2">
-		<!-- M. Def. + 2.0 Increase Max HP 21.0 -->
+		<!-- M. Def. increases by 2.5. Max HP increases by 26.25. -->
 		<stats>
-			<add stat="mDef" val="2.0" />
-			<add stat="maxHp" val="21.0" />
+			<add stat="mDef" val="2.5" />
+			<add stat="maxHp" val="26.25" />
 		</stats>
 	</option>
 	<option id="19122" name="o_w_55_2u_acc_necklace_3">
-		<!-- M. Def. + 2.0 Max MP + 13.0 -->
+		<!-- M. Def. increases by 2.5. Max MP increases by 16.9. -->
 		<stats>
-			<add stat="mDef" val="2.0" />
-			<add stat="maxMp" val="13.0" />
+			<add stat="mDef" val="2.5" />
+			<add stat="maxMp" val="16.9" />
 		</stats>
 	</option>
 	<option id="19123" name="o_w_55_2u_acc_necklace_4">
-		<!-- M. Def. + 2.0 Increase M. Atk. 2.9 -->
+		<!-- M. Def. increases by 2.5. M. Atk. increases by 3.48. -->
 		<stats>
-			<add stat="mDef" val="2.0" />
-			<add stat="mAtk" val="2.9" />
+			<add stat="mDef" val="2.5" />
+			<add stat="mAtk" val="3.48" />
 		</stats>
 	</option>
 	<option id="19124" name="o_w_55_2u_acc_necklace_5">
-		<!-- M. Def. + 2.0 HP Regeneration + 0.1 -->
+		<!-- M. Def. increases by 2.5. HP Regen increases by 0.2. -->
 		<stats>
-			<add stat="mDef" val="2.0" />
-			<add stat="regHp" val="0.1" />
-		</stats>
-	</option>
-	<option id="19125" name="o_w_55_2u_acc_necklace_6">
-		<!-- M. Def. + 2.0 MP Regeneration + 0.02 -->
-		<stats>
-			<add stat="mDef" val="2.0" />
-			<add stat="regMp" val="0.02" />
-		</stats>
-	</option>
-	<option id="19126" name="o_w_55_2u_acc_necklace_7">
-		<!-- Increase Max HP 42.0 MP Regeneration + 0.02 -->
-		<stats>
-			<add stat="maxHp" val="42.0" />
-			<add stat="regMp" val="0.02" />
-		</stats>
-	</option>
-	<option id="19127" name="o_w_55_2u_acc_necklace_8">
-		<!-- Increase Max HP 21.0 Max MP + 13.0 -->
-		<stats>
-			<add stat="maxHp" val="21.0" />
-			<add stat="maxMp" val="13.0" />
-		</stats>
-	</option>
-	<option id="19128" name="o_w_55_2u_acc_necklace_9">
-		<!-- Increase Max HP 21.0 Increase M. Atk. 2.9 -->
-		<stats>
-			<add stat="maxHp" val="21.0" />
-			<add stat="mAtk" val="2.9" />
-		</stats>
-	</option>
-	<option id="19129" name="o_w_55_2u_acc_necklace_10">
-		<!-- Increase Max HP 21.0 HP Regeneration + 0.1 -->
-		<stats>
-			<add stat="maxHp" val="21.0" />
-			<add stat="regHp" val="0.1" />
-		</stats>
-	</option>
-	<option id="19130" name="o_w_55_2u_acc_necklace_11">
-		<!-- Increase Max HP 21.0 MP Regeneration + 0.02 -->
-		<stats>
-			<add stat="maxHp" val="21.0" />
-			<add stat="regMp" val="0.02" />
-		</stats>
-	</option>
-	<option id="19131" name="o_w_55_2u_acc_necklace_12">
-		<!-- Max MP + 26.0 -->
-		<stats>
-			<add stat="maxMp" val="26.0" />
-		</stats>
-	</option>
-	<option id="19132" name="o_w_55_2u_acc_necklace_13">
-		<!-- Max MP + 13.0 Increase M. Atk. 2.9 -->
-		<stats>
-			<add stat="maxMp" val="13.0" />
-			<add stat="mAtk" val="2.9" />
-		</stats>
-	</option>
-	<option id="19133" name="o_w_55_2u_acc_necklace_14">
-		<!-- Max MP + 13.0 HP Regeneration + 0.1 -->
-		<stats>
-			<add stat="maxMp" val="13.0" />
-			<add stat="regHp" val="0.1" />
-		</stats>
-	</option>
-	<option id="19134" name="o_w_55_2u_acc_necklace_15">
-		<!-- Max MP + 13.0 MP Regeneration + 0.02 -->
-		<stats>
-			<add stat="maxMp" val="13.0" />
-			<add stat="regMp" val="0.02" />
-		</stats>
-	</option>
-	<option id="19135" name="o_w_55_2u_acc_necklace_16">
-		<!-- Increase M. Atk. 5.8 -->
-		<stats>
-			<add stat="mAtk" val="5.8" />
-		</stats>
-	</option>
-	<option id="19136" name="o_w_55_2u_acc_necklace_17">
-		<!-- Increase M. Atk. 2.9 HP Regeneration + 0.1 -->
-		<stats>
-			<add stat="mAtk" val="2.9" />
-			<add stat="regHp" val="0.1" />
-		</stats>
-	</option>
-	<option id="19137" name="o_w_55_2u_acc_necklace_18">
-		<!-- Increase M. Atk. 2.9 MP Regeneration + 0.02 -->
-		<stats>
-			<add stat="mAtk" val="2.9" />
-			<add stat="regMp" val="0.02" />
-		</stats>
-	</option>
-	<option id="19138" name="o_w_55_2u_acc_necklace_19">
-		<!-- HP Regeneration + 0.2 -->
-		<stats>
+			<add stat="mDef" val="2.5" />
 			<add stat="regHp" val="0.2" />
 		</stats>
 	</option>
-	<option id="19139" name="o_w_55_2u_acc_necklace_20">
-		<!-- MP Regeneration + 0.04 -->
+	<option id="19125" name="o_w_55_2u_acc_necklace_6">
+		<!-- M. Def. increases by 2.5. MP Regen increases by 0.04. -->
 		<stats>
+			<add stat="mDef" val="2.5" />
 			<add stat="regMp" val="0.04" />
 		</stats>
 	</option>
-	<option id="19140" name="o_w_55_2u_acc_necklace_21">
-		<!-- HP Regeneration + 0.1 MP Regeneration + 0.02 -->
+	<option id="19126" name="o_w_55_2u_acc_necklace_7">
+		<!-- Max HP increases by 52.5. MP Regen increases by 0.04. -->
 		<stats>
-			<add stat="regHp" val="0.1" />
-			<add stat="regMp" val="0.02" />
+			<add stat="maxHp" val="52.5" />
+			<add stat="regMp" val="0.04" />
+		</stats>
+	</option>
+	<option id="19127" name="o_w_55_2u_acc_necklace_8">
+		<!-- Max HP increases by 26.25. Max MP increases by 16.9. -->
+		<stats>
+			<add stat="maxHp" val="26.25" />
+			<add stat="maxMp" val="16.9" />
+		</stats>
+	</option>
+	<option id="19128" name="o_w_55_2u_acc_necklace_9">
+		<!-- Max HP increases by 26.25. M. Atk. increases by 3.48. -->
+		<stats>
+			<add stat="maxHp" val="26.25" />
+			<add stat="mAtk" val="3.48" />
+		</stats>
+	</option>
+	<option id="19129" name="o_w_55_2u_acc_necklace_10">
+		<!-- Max HP increases by 26.25. HP Regen increases by 0.2. -->
+		<stats>
+			<add stat="maxHp" val="26.25" />
+			<add stat="regHp" val="0.2" />
+		</stats>
+	</option>
+	<option id="19130" name="o_w_55_2u_acc_necklace_11">
+		<!-- Max HP increases by 26.25. MP Regen increases by 0.04. -->
+		<stats>
+			<add stat="maxHp" val="26.25" />
+			<add stat="regMp" val="0.04" />
+		</stats>
+	</option>
+	<option id="19131" name="o_w_55_2u_acc_necklace_12">
+		<!-- Max MP increases by 33.8. -->
+		<stats>
+			<add stat="maxMp" val="33.8" />
+		</stats>
+	</option>
+	<option id="19132" name="o_w_55_2u_acc_necklace_13">
+		<!-- Max MP increases by 16.9. M. Atk. increases by 3.48. -->
+		<stats>
+			<add stat="maxMp" val="16.9" />
+			<add stat="mAtk" val="3.48" />
+		</stats>
+	</option>
+	<option id="19133" name="o_w_55_2u_acc_necklace_14">
+		<!-- Max MP increases by 16.9. HP Regen increases by 0.2. -->
+		<stats>
+			<add stat="maxMp" val="16.9" />
+			<add stat="regHp" val="0.2" />
+		</stats>
+	</option>
+	<option id="19134" name="o_w_55_2u_acc_necklace_15">
+		<!-- Max MP increases by 16.9. MP Regen increases by 0.04. -->
+		<stats>
+			<add stat="maxMp" val="16.9" />
+			<add stat="regMp" val="0.04" />
+		</stats>
+	</option>
+	<option id="19135" name="o_w_55_2u_acc_necklace_16">
+		<!-- M. Atk. increases by 6.96. -->
+		<stats>
+			<add stat="mAtk" val="6.96" />
+		</stats>
+	</option>
+	<option id="19136" name="o_w_55_2u_acc_necklace_17">
+		<!-- M. Atk. increases by 3.48. HP Regen increases by 0.2. -->
+		<stats>
+			<add stat="mAtk" val="3.48" />
+			<add stat="regHp" val="0.2" />
+		</stats>
+	</option>
+	<option id="19137" name="o_w_55_2u_acc_necklace_18">
+		<!-- M. Atk. increases by 3.48. MP Regen increases by 0.04. -->
+		<stats>
+			<add stat="mAtk" val="3.48" />
+			<add stat="regMp" val="0.04" />
+		</stats>
+	</option>
+	<option id="19138" name="o_w_55_2u_acc_necklace_19">
+		<!-- HP Regen increases by 0.4. -->
+		<stats>
+			<add stat="regHp" val="0.4" />
+		</stats>
+	</option>
+	<option id="19139" name="o_w_55_2u_acc_necklace_20">
+		<!-- MP Regen increases by 0.08. -->
+		<stats>
+			<add stat="regMp" val="0.08" />
+		</stats>
+	</option>
+	<option id="19140" name="o_w_55_2u_acc_necklace_21">
+		<!-- HP Regen increases by 0.2. MP Regen increases by 0.04. -->
+		<stats>
+			<add stat="regHp" val="0.2" />
+			<add stat="regMp" val="0.04" />
 		</stats>
 	</option>
 	<option id="19141" name="o_s_58_1g_acc_necklace_1">
@@ -374,240 +374,240 @@
 		<passive_skill id="3920" level="1" /> <!-- Augment Option - Wind Attack -->
 	</option>
 	<option id="19165" name="o_w_58_2g_acc_necklace_1">
-		<!-- M. Def. + 2.5 -->
+		<!-- M. Def. increases by 3.12. -->
 		<stats>
-			<add stat="mDef" val="2.5" />
+			<add stat="mDef" val="3.125" />
 		</stats>
 	</option>
 	<option id="19166" name="o_w_58_2g_acc_necklace_2">
-		<!-- M. Def. + 1.25 Increase Max HP 13.5 -->
+		<!-- M. Def. increases by 1.56. Max HP increases by 16.88. -->
 		<stats>
-			<add stat="mDef" val="1.25" />
-			<add stat="maxHp" val="13.5" />
+			<add stat="mDef" val="1.5625" />
+			<add stat="maxHp" val="16.875" />
 		</stats>
 	</option>
 	<option id="19167" name="o_w_58_2g_acc_necklace_3">
-		<!-- M. Def. + 1.25 Max MP + 8.0 -->
+		<!-- M. Def. increases by 1.56. Max MP increases by 10.4. -->
 		<stats>
-			<add stat="mDef" val="1.25" />
-			<add stat="maxMp" val="8.0" />
+			<add stat="mDef" val="1.5625" />
+			<add stat="maxMp" val="10.4" />
 		</stats>
 	</option>
 	<option id="19168" name="o_w_58_2g_acc_necklace_4">
-		<!-- M. Def. + 1.25 Increase M. Atk. 1.9 -->
+		<!-- M. Def. increases by 1.56. M. Atk. increases by 2.28. -->
 		<stats>
-			<add stat="mDef" val="1.25" />
-			<add stat="mAtk" val="1.9" />
+			<add stat="mDef" val="1.5625" />
+			<add stat="mAtk" val="2.28" />
 		</stats>
 	</option>
 	<option id="19169" name="o_w_58_2g_acc_necklace_5">
-		<!-- M. Def. + 1.25 HP Regeneration + 0.06 -->
+		<!-- M. Def. increases by 1.56. HP Regen increases by 0.12. -->
 		<stats>
-			<add stat="mDef" val="1.25" />
-			<add stat="regHp" val="0.06" />
-		</stats>
-	</option>
-	<option id="19170" name="o_w_58_2g_acc_necklace_6">
-		<!-- M. Def. + 1.25 MP Regeneration + 0.02 -->
-		<stats>
-			<add stat="mDef" val="1.25" />
-			<add stat="regMp" val="0.02" />
-		</stats>
-	</option>
-	<option id="19171" name="o_w_58_2g_acc_necklace_7">
-		<!-- Increase Max HP 27.0 MP Regeneration + 0.02 -->
-		<stats>
-			<add stat="maxHp" val="27.0" />
-			<add stat="regMp" val="0.02" />
-		</stats>
-	</option>
-	<option id="19172" name="o_w_58_2g_acc_necklace_8">
-		<!-- Increase Max HP 13.5 Max MP + 8.0 -->
-		<stats>
-			<add stat="maxHp" val="13.5" />
-			<add stat="maxMp" val="8.0" />
-		</stats>
-	</option>
-	<option id="19173" name="o_w_58_2g_acc_necklace_9">
-		<!-- Increase Max HP 13.5 Increase M. Atk. 1.9 -->
-		<stats>
-			<add stat="maxHp" val="13.5" />
-			<add stat="mAtk" val="1.9" />
-		</stats>
-	</option>
-	<option id="19174" name="o_w_58_2g_acc_necklace_10">
-		<!-- Increase Max HP 13.5 HP Regeneration + 0.06 -->
-		<stats>
-			<add stat="maxHp" val="13.5" />
-			<add stat="regHp" val="0.06" />
-		</stats>
-	</option>
-	<option id="19175" name="o_w_58_2g_acc_necklace_11">
-		<!-- Increase Max HP 13.5 MP Regeneration + 0.02 -->
-		<stats>
-			<add stat="maxHp" val="13.5" />
-			<add stat="regMp" val="0.02" />
-		</stats>
-	</option>
-	<option id="19176" name="o_w_58_2g_acc_necklace_12">
-		<!-- Max MP + 16.0 -->
-		<stats>
-			<add stat="maxMp" val="16.0" />
-		</stats>
-	</option>
-	<option id="19177" name="o_w_58_2g_acc_necklace_13">
-		<!-- Max MP + 8.0 Increase M. Atk. 1.9 -->
-		<stats>
-			<add stat="maxMp" val="8.0" />
-			<add stat="mAtk" val="1.9" />
-		</stats>
-	</option>
-	<option id="19178" name="o_w_58_2g_acc_necklace_14">
-		<!-- Max MP + 8.0 HP Regeneration + 0.06 -->
-		<stats>
-			<add stat="maxMp" val="8.0" />
-			<add stat="regHp" val="0.06" />
-		</stats>
-	</option>
-	<option id="19179" name="o_w_58_2g_acc_necklace_15">
-		<!-- Max MP + 8.0 MP Regeneration + 0.02 -->
-		<stats>
-			<add stat="maxMp" val="8.0" />
-			<add stat="regMp" val="0.02" />
-		</stats>
-	</option>
-	<option id="19180" name="o_w_58_2g_acc_necklace_16">
-		<!-- Increase M. Atk. 3.8 -->
-		<stats>
-			<add stat="mAtk" val="3.8" />
-		</stats>
-	</option>
-	<option id="19181" name="o_w_58_2g_acc_necklace_17">
-		<!-- Increase M. Atk. 1.9 HP Regeneration + 0.06 -->
-		<stats>
-			<add stat="mAtk" val="1.9" />
-			<add stat="regHp" val="0.06" />
-		</stats>
-	</option>
-	<option id="19182" name="o_w_58_2g_acc_necklace_18">
-		<!-- Increase M. Atk. 1.9 MP Regeneration + 0.02 -->
-		<stats>
-			<add stat="mAtk" val="1.9" />
-			<add stat="regMp" val="0.02" />
-		</stats>
-	</option>
-	<option id="19183" name="o_w_58_2g_acc_necklace_19">
-		<!-- HP Regeneration + 0.12 -->
-		<stats>
+			<add stat="mDef" val="1.5625" />
 			<add stat="regHp" val="0.12" />
 		</stats>
 	</option>
-	<option id="19184" name="o_w_58_2g_acc_necklace_20">
-		<!-- MP Regeneration + 0.04 -->
+	<option id="19170" name="o_w_58_2g_acc_necklace_6">
+		<!-- M. Def. increases by 1.56. MP Regen increases by 0.04. -->
 		<stats>
+			<add stat="mDef" val="1.5625" />
 			<add stat="regMp" val="0.04" />
 		</stats>
 	</option>
-	<option id="19185" name="o_w_58_2g_acc_necklace_21">
-		<!-- HP Regeneration + 0.06 MP Regeneration + 0.02 -->
+	<option id="19171" name="o_w_58_2g_acc_necklace_7">
+		<!-- Max HP increases by 33.75. MP Regen increases by 0.04. -->
 		<stats>
-			<add stat="regHp" val="0.06" />
-			<add stat="regMp" val="0.02" />
+			<add stat="maxHp" val="33.75" />
+			<add stat="regMp" val="0.04" />
+		</stats>
+	</option>
+	<option id="19172" name="o_w_58_2g_acc_necklace_8">
+		<!-- Max HP increases by 16.88. Max MP increases by 10.4. -->
+		<stats>
+			<add stat="maxHp" val="16.875" />
+			<add stat="maxMp" val="10.4" />
+		</stats>
+	</option>
+	<option id="19173" name="o_w_58_2g_acc_necklace_9">
+		<!-- Max HP increases by 16.88. M. Atk. increases by 2.28. -->
+		<stats>
+			<add stat="maxHp" val="16.875" />
+			<add stat="mAtk" val="2.28" />
+		</stats>
+	</option>
+	<option id="19174" name="o_w_58_2g_acc_necklace_10">
+		<!-- Max HP increases by 16.88. HP Regen increases by 0.12. -->
+		<stats>
+			<add stat="maxHp" val="16.875" />
+			<add stat="regHp" val="0.12" />
+		</stats>
+	</option>
+	<option id="19175" name="o_w_58_2g_acc_necklace_11">
+		<!-- Max HP increases by 16.88. MP Regen increases by 0.04. -->
+		<stats>
+			<add stat="maxHp" val="16.875" />
+			<add stat="regMp" val="0.04" />
+		</stats>
+	</option>
+	<option id="19176" name="o_w_58_2g_acc_necklace_12">
+		<!-- Max MP increases by 20.8. -->
+		<stats>
+			<add stat="maxMp" val="20.8" />
+		</stats>
+	</option>
+	<option id="19177" name="o_w_58_2g_acc_necklace_13">
+		<!-- Max MP increases by 10.4. M. Atk. increases by 2.28. -->
+		<stats>
+			<add stat="maxMp" val="10.4" />
+			<add stat="mAtk" val="2.28" />
+		</stats>
+	</option>
+	<option id="19178" name="o_w_58_2g_acc_necklace_14">
+		<!-- Max MP increases by 10.4. HP Regen increases by 0.12. -->
+		<stats>
+			<add stat="maxMp" val="10.4" />
+			<add stat="regHp" val="0.12" />
+		</stats>
+	</option>
+	<option id="19179" name="o_w_58_2g_acc_necklace_15">
+		<!-- Max MP increases by 10.4. MP Regen increases by 0.04. -->
+		<stats>
+			<add stat="maxMp" val="10.4" />
+			<add stat="regMp" val="0.04" />
+		</stats>
+	</option>
+	<option id="19180" name="o_w_58_2g_acc_necklace_16">
+		<!-- M. Atk. increases by 4.56. -->
+		<stats>
+			<add stat="mAtk" val="4.56" />
+		</stats>
+	</option>
+	<option id="19181" name="o_w_58_2g_acc_necklace_17">
+		<!-- M. Atk. increases by 2.28. HP Regen increases by 0.12. -->
+		<stats>
+			<add stat="mAtk" val="2.28" />
+			<add stat="regHp" val="0.12" />
+		</stats>
+	</option>
+	<option id="19182" name="o_w_58_2g_acc_necklace_18">
+		<!-- M. Atk. increases by 2.28. MP Regen increases by 0.04. -->
+		<stats>
+			<add stat="mAtk" val="2.28" />
+			<add stat="regMp" val="0.04" />
+		</stats>
+	</option>
+	<option id="19183" name="o_w_58_2g_acc_necklace_19">
+		<!-- HP Regen increases by 0.24. -->
+		<stats>
+			<add stat="regHp" val="0.24" />
+		</stats>
+	</option>
+	<option id="19184" name="o_w_58_2g_acc_necklace_20">
+		<!-- MP Regen increases by 0.08. -->
+		<stats>
+			<add stat="regMp" val="0.08" />
+		</stats>
+	</option>
+	<option id="19185" name="o_w_58_2g_acc_necklace_21">
+		<!-- HP Regen increases by 0.12. MP Regen increases by 0.04. -->
+		<stats>
+			<add stat="regHp" val="0.12" />
+			<add stat="regMp" val="0.04" />
 		</stats>
 	</option>
 	<option id="19186" name="o_w_58_2s_acc_necklace_1">
-		<!-- M. Def. + 3.0 -->
+		<!-- M. Def. increases by 3.75. -->
 		<stats>
-			<add stat="mDef" val="3.0" />
+			<add stat="mDef" val="3.75" />
 		</stats>
 	</option>
 	<option id="19187" name="o_w_58_2s_acc_necklace_2">
-		<!-- M. Def. + 1.5 Increase Max HP 15.5 -->
+		<!-- M. Def. increases by 1.88. Max HP increases by 19.38. -->
 		<stats>
-			<add stat="mDef" val="1.5" />
-			<add stat="maxHp" val="15.5" />
+			<add stat="mDef" val="1.875" />
+			<add stat="maxHp" val="19.375" />
 		</stats>
 	</option>
 	<option id="19188" name="o_w_58_2s_acc_necklace_3">
-		<!-- M. Def. + 1.5 Max MP + 10.0 -->
+		<!-- M. Def. increases by 1.88. Max MP increases by 13. -->
 		<stats>
-			<add stat="mDef" val="1.5" />
-			<add stat="maxMp" val="10.0" />
+			<add stat="mDef" val="1.875" />
+			<add stat="maxMp" val="13" />
 		</stats>
 	</option>
 	<option id="19189" name="o_w_58_2s_acc_necklace_4">
-		<!-- M. Def. + 1.5 Increase M. Atk. 2.2 -->
+		<!-- M. Def. increases by 1.88. M. Atk. increases by 2.64. -->
 		<stats>
-			<add stat="mDef" val="1.5" />
-			<add stat="mAtk" val="2.2" />
+			<add stat="mDef" val="1.875" />
+			<add stat="mAtk" val="2.64" />
 		</stats>
 	</option>
 	<option id="19190" name="o_w_58_2s_acc_necklace_5">
-		<!-- M. Def. + 1.5 HP Regeneration + 0.75 -->
+		<!-- M. Def. increases by 1.88. HP Regen increases by 1.5. -->
 		<stats>
-			<add stat="mDef" val="1.5" />
-			<add stat="regHp" val="0.75" />
+			<add stat="mDef" val="1.875" />
+			<add stat="regHp" val="1.5" />
 		</stats>
 	</option>
 	<option id="19191" name="o_w_58_2s_acc_necklace_6">
-		<!-- M. Def. + 1.5 MP Regeneration + 0.025 -->
+		<!-- M. Def. increases by 1.88. MP Regen increases by 0.05. -->
 		<stats>
-			<add stat="mDef" val="1.5" />
-			<add stat="regMp" val="0.025" />
+			<add stat="mDef" val="1.875" />
+			<add stat="regMp" val="0.05" />
 		</stats>
 	</option>
 	<option id="19192" name="o_w_58_2s_acc_necklace_7">
-		<!-- Increase Max HP 31.0 -->
+		<!-- Max HP increases by 38.75. -->
 		<stats>
-			<add stat="maxHp" val="31.0" />
+			<add stat="maxHp" val="38.75" />
 		</stats>
 	</option>
 	<option id="19193" name="o_w_58_2s_acc_necklace_8">
-		<!-- Increase Max HP 15.5 Max MP + 10.0 -->
+		<!-- Max HP increases by 19.38. Max MP increases by 13. -->
 		<stats>
-			<add stat="maxHp" val="15.5" />
-			<add stat="maxMp" val="10.0" />
+			<add stat="maxHp" val="19.375" />
+			<add stat="maxMp" val="13" />
 		</stats>
 	</option>
 	<option id="19194" name="o_w_58_2s_acc_necklace_9">
-		<!-- Increase Max HP 15.5 Increase M. Atk. 2.2 -->
+		<!-- Max HP increases by 19.38. M. Atk. increases by 2.64. -->
 		<stats>
-			<add stat="maxHp" val="15.5" />
-			<add stat="mAtk" val="2.2" />
+			<add stat="maxHp" val="19.375" />
+			<add stat="mAtk" val="2.64" />
 		</stats>
 	</option>
 	<option id="19195" name="o_w_58_2s_acc_necklace_10">
-		<!-- Increase Max HP 15.5 HP Regeneration + 0.75 -->
+		<!-- Max HP increases by 19.38. HP Regen increases by 1.5. -->
 		<stats>
-			<add stat="maxHp" val="15.5" />
-			<add stat="regHp" val="0.75" />
+			<add stat="maxHp" val="19.375" />
+			<add stat="regHp" val="1.5" />
 		</stats>
 	</option>
 	<option id="19196" name="o_w_58_2s_acc_necklace_11">
-		<!-- Increase Max HP 15.5 MP Regeneration + 0.025 -->
+		<!-- Max HP increases by 19.38. MP Regen increases by 0.05. -->
 		<stats>
-			<add stat="maxHp" val="15.5" />
-			<add stat="regMp" val="0.025" />
+			<add stat="maxHp" val="19.375" />
+			<add stat="regMp" val="0.05" />
 		</stats>
 	</option>
 	<option id="19197" name="o_w_58_2s_acc_necklace_12">
-		<!-- Max MP + 20.0 -->
+		<!-- Max MP increases by 26. -->
 		<stats>
-			<add stat="maxMp" val="20.0" />
+			<add stat="maxMp" val="26" />
 		</stats>
 	</option>
 	<option id="19198" name="o_w_58_2s_acc_necklace_13">
-		<!-- Max MP + 10.0 Increase M. Atk. 2.2 -->
+		<!-- Max MP increases by 13. M. Atk. increases by 2.64. -->
 		<stats>
-			<add stat="maxMp" val="10.0" />
-			<add stat="mAtk" val="2.2" />
+			<add stat="maxMp" val="13" />
+			<add stat="mAtk" val="2.64" />
 		</stats>
 	</option>
 	<option id="19199" name="o_w_58_2s_acc_necklace_14">
-		<!-- Max MP + 10.0 HP Regeneration + 0.75 -->
+		<!-- Max MP increases by 13. HP Regen increases by 1.5. -->
 		<stats>
-			<add stat="maxMp" val="10.0" />
-			<add stat="regHp" val="0.75" />
+			<add stat="maxMp" val="13" />
+			<add stat="regHp" val="1.5" />
 		</stats>
 	</option>
 </list>

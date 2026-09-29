@@ -1,534 +1,534 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/optionsData.xsd">
 	<option id="17100" name="o_f_58_1g_acc_ring_6">
-		<!-- M. Def. + 1.25 MP Regeneration + 0.02 -->
+		<!-- M. Def. increases by 1.56. MP Regen increases by 0.04. -->
 		<stats>
-			<add stat="mDef" val="1.25" />
-			<add stat="regMp" val="0.02" />
-		</stats>
-	</option>
-	<option id="17101" name="o_f_58_1g_acc_ring_7">
-		<!-- Increase Max HP 27.0 MP Regeneration + 0.02 -->
-		<stats>
-			<add stat="maxHp" val="27.0" />
-			<add stat="regMp" val="0.02" />
-		</stats>
-	</option>
-	<option id="17102" name="o_f_58_1g_acc_ring_8">
-		<!-- Increase Max HP 13.5 Max MP + 8.0 -->
-		<stats>
-			<add stat="maxHp" val="13.5" />
-			<add stat="maxMp" val="8.0" />
-		</stats>
-	</option>
-	<option id="17103" name="o_f_58_1g_acc_ring_9">
-		<!-- Increase Max HP 13.5 Increase M. Atk. 1.9 -->
-		<stats>
-			<add stat="maxHp" val="13.5" />
-			<add stat="mAtk" val="1.9" />
-		</stats>
-	</option>
-	<option id="17104" name="o_f_58_1g_acc_ring_10">
-		<!-- Increase Max HP 13.5 HP Regeneration + 0.06 -->
-		<stats>
-			<add stat="maxHp" val="13.5" />
-			<add stat="regHp" val="0.06" />
-		</stats>
-	</option>
-	<option id="17105" name="o_f_58_1g_acc_ring_11">
-		<!-- Increase Max HP 13.5 MP Regeneration + 0.02 -->
-		<stats>
-			<add stat="maxHp" val="13.5" />
-			<add stat="regMp" val="0.02" />
-		</stats>
-	</option>
-	<option id="17106" name="o_f_58_1g_acc_ring_12">
-		<!-- Max MP + 16.0 -->
-		<stats>
-			<add stat="maxMp" val="16.0" />
-		</stats>
-	</option>
-	<option id="17107" name="o_f_58_1g_acc_ring_13">
-		<!-- Max MP + 8.0 Increase M. Atk. 1.9 -->
-		<stats>
-			<add stat="maxMp" val="8.0" />
-			<add stat="mAtk" val="1.9" />
-		</stats>
-	</option>
-	<option id="17108" name="o_f_58_1g_acc_ring_14">
-		<!-- Max MP + 8.0 HP Regeneration + 0.06 -->
-		<stats>
-			<add stat="maxMp" val="8.0" />
-			<add stat="regHp" val="0.06" />
-		</stats>
-	</option>
-	<option id="17109" name="o_f_58_1g_acc_ring_15">
-		<!-- Max MP + 8.0 MP Regeneration + 0.02 -->
-		<stats>
-			<add stat="maxMp" val="8.0" />
-			<add stat="regMp" val="0.02" />
-		</stats>
-	</option>
-	<option id="17110" name="o_f_58_1g_acc_ring_16">
-		<!-- Increase M. Atk. 3.8 -->
-		<stats>
-			<add stat="mAtk" val="3.8" />
-		</stats>
-	</option>
-	<option id="17111" name="o_f_58_1g_acc_ring_17">
-		<!-- Increase M. Atk. 1.9 HP Regeneration + 0.06 -->
-		<stats>
-			<add stat="mAtk" val="1.9" />
-			<add stat="regHp" val="0.06" />
-		</stats>
-	</option>
-	<option id="17112" name="o_f_58_1g_acc_ring_18">
-		<!-- Increase M. Atk. 1.9 MP Regeneration + 0.02 -->
-		<stats>
-			<add stat="mAtk" val="1.9" />
-			<add stat="regMp" val="0.02" />
-		</stats>
-	</option>
-	<option id="17113" name="o_f_58_2g_acc_ring_19">
-		<!-- HP Regeneration + 0.12 -->
-		<stats>
-			<add stat="regHp" val="0.12" />
-		</stats>
-	</option>
-	<option id="17114" name="o_f_58_2g_acc_ring_20">
-		<!-- MP Regeneration + 0.04 -->
-		<stats>
+			<add stat="mDef" val="1.5625" />
 			<add stat="regMp" val="0.04" />
 		</stats>
 	</option>
-	<option id="17115" name="o_f_58_2g_acc_ring_21">
-		<!-- HP Regeneration + 0.06 MP Regeneration + 0.02 -->
+	<option id="17101" name="o_f_58_1g_acc_ring_7">
+		<!-- Max HP increases by 33.75. MP Regen increases by 0.04. -->
 		<stats>
-			<add stat="regHp" val="0.06" />
-			<add stat="regMp" val="0.02" />
+			<add stat="maxHp" val="33.75" />
+			<add stat="regMp" val="0.04" />
+		</stats>
+	</option>
+	<option id="17102" name="o_f_58_1g_acc_ring_8">
+		<!-- Max HP increases by 16.88. Max MP increases by 10.4. -->
+		<stats>
+			<add stat="maxHp" val="16.875" />
+			<add stat="maxMp" val="10.4" />
+		</stats>
+	</option>
+	<option id="17103" name="o_f_58_1g_acc_ring_9">
+		<!-- Max HP increases by 16.88. M. Atk. increases by 2.28. -->
+		<stats>
+			<add stat="maxHp" val="16.875" />
+			<add stat="mAtk" val="2.28" />
+		</stats>
+	</option>
+	<option id="17104" name="o_f_58_1g_acc_ring_10">
+		<!-- Max HP increases by 16.88. HP Regen increases by 0.12. -->
+		<stats>
+			<add stat="maxHp" val="16.875" />
+			<add stat="regHp" val="0.12" />
+		</stats>
+	</option>
+	<option id="17105" name="o_f_58_1g_acc_ring_11">
+		<!-- Max HP increases by 16.88. MP Regen increases by 0.04. -->
+		<stats>
+			<add stat="maxHp" val="16.875" />
+			<add stat="regMp" val="0.04" />
+		</stats>
+	</option>
+	<option id="17106" name="o_f_58_1g_acc_ring_12">
+		<!-- Max MP increases by 20.8. -->
+		<stats>
+			<add stat="maxMp" val="20.8" />
+		</stats>
+	</option>
+	<option id="17107" name="o_f_58_1g_acc_ring_13">
+		<!-- Max MP increases by 10.4. M. Atk. increases by 2.28. -->
+		<stats>
+			<add stat="maxMp" val="10.4" />
+			<add stat="mAtk" val="2.28" />
+		</stats>
+	</option>
+	<option id="17108" name="o_f_58_1g_acc_ring_14">
+		<!-- Max MP increases by 10.4. HP Regen increases by 0.12. -->
+		<stats>
+			<add stat="maxMp" val="10.4" />
+			<add stat="regHp" val="0.12" />
+		</stats>
+	</option>
+	<option id="17109" name="o_f_58_1g_acc_ring_15">
+		<!-- Max MP increases by 10.4. MP Regen increases by 0.04. -->
+		<stats>
+			<add stat="maxMp" val="10.4" />
+			<add stat="regMp" val="0.04" />
+		</stats>
+	</option>
+	<option id="17110" name="o_f_58_1g_acc_ring_16">
+		<!-- M. Atk. increases by 4.56. -->
+		<stats>
+			<add stat="mAtk" val="4.56" />
+		</stats>
+	</option>
+	<option id="17111" name="o_f_58_1g_acc_ring_17">
+		<!-- M. Atk. increases by 2.28. HP Regen increases by 0.12. -->
+		<stats>
+			<add stat="mAtk" val="2.28" />
+			<add stat="regHp" val="0.12" />
+		</stats>
+	</option>
+	<option id="17112" name="o_f_58_1g_acc_ring_18">
+		<!-- M. Atk. increases by 2.28. MP Regen increases by 0.04. -->
+		<stats>
+			<add stat="mAtk" val="2.28" />
+			<add stat="regMp" val="0.04" />
+		</stats>
+	</option>
+	<option id="17113" name="o_f_58_2g_acc_ring_19">
+		<!-- HP Regen increases by 0.24. -->
+		<stats>
+			<add stat="regHp" val="0.24" />
+		</stats>
+	</option>
+	<option id="17114" name="o_f_58_2g_acc_ring_20">
+		<!-- MP Regen increases by 0.08. -->
+		<stats>
+			<add stat="regMp" val="0.08" />
+		</stats>
+	</option>
+	<option id="17115" name="o_f_58_2g_acc_ring_21">
+		<!-- HP Regen increases by 0.12. MP Regen increases by 0.04. -->
+		<stats>
+			<add stat="regHp" val="0.12" />
+			<add stat="regMp" val="0.04" />
 		</stats>
 	</option>
 	<option id="17116" name="o_f_58_2s_acc_ring_1">
-		<!-- M. Def. + 3.0 -->
+		<!-- M. Def. increases by 3.75. -->
 		<stats>
-			<add stat="mDef" val="3.0" />
+			<add stat="mDef" val="3.75" />
 		</stats>
 	</option>
 	<option id="17117" name="o_f_58_2s_acc_ring_2">
-		<!-- M. Def. + 1.5 Increase Max HP 15.5 -->
+		<!-- M. Def. increases by 1.88. Max HP increases by 19.38. -->
 		<stats>
-			<add stat="mDef" val="1.5" />
-			<add stat="maxHp" val="15.5" />
+			<add stat="mDef" val="1.875" />
+			<add stat="maxHp" val="19.375" />
 		</stats>
 	</option>
 	<option id="17118" name="o_f_58_2s_acc_ring_3">
-		<!-- M. Def. + 1.5 Max MP + 10.0 -->
+		<!-- M. Def. increases by 1.88. Max MP increases by 13. -->
 		<stats>
-			<add stat="mDef" val="1.5" />
-			<add stat="maxMp" val="10.0" />
+			<add stat="mDef" val="1.875" />
+			<add stat="maxMp" val="13" />
 		</stats>
 	</option>
 	<option id="17119" name="o_f_58_2s_acc_ring_4">
-		<!-- M. Def. + 1.5 Increase M. Atk. 2.2 -->
+		<!-- M. Def. increases by 1.88. M. Atk. increases by 2.64. -->
 		<stats>
-			<add stat="mDef" val="1.5" />
-			<add stat="mAtk" val="2.2" />
+			<add stat="mDef" val="1.875" />
+			<add stat="mAtk" val="2.64" />
 		</stats>
 	</option>
 	<option id="17120" name="o_f_58_2s_acc_ring_5">
-		<!-- M. Def. + 1.5 HP Regeneration + 0.75 -->
+		<!-- M. Def. increases by 1.88. HP Regen increases by 1.5. -->
 		<stats>
-			<add stat="mDef" val="1.5" />
-			<add stat="regHp" val="0.75" />
+			<add stat="mDef" val="1.875" />
+			<add stat="regHp" val="1.5" />
 		</stats>
 	</option>
 	<option id="17121" name="o_f_58_2s_acc_ring_6">
-		<!-- M. Def. + 1.5 MP Regeneration + 0.025 -->
+		<!-- M. Def. increases by 1.88. MP Regen increases by 0.05. -->
 		<stats>
-			<add stat="mDef" val="1.5" />
-			<add stat="regMp" val="0.025" />
-		</stats>
-	</option>
-	<option id="17122" name="o_f_58_2s_acc_ring_7">
-		<!-- Increase Max HP 31.0 -->
-		<stats>
-			<add stat="maxHp" val="31.0" />
-		</stats>
-	</option>
-	<option id="17123" name="o_f_58_2s_acc_ring_8">
-		<!-- Increase Max HP 15.5 Max MP + 10.0 -->
-		<stats>
-			<add stat="maxHp" val="15.5" />
-			<add stat="maxMp" val="10.0" />
-		</stats>
-	</option>
-	<option id="17124" name="o_f_58_2s_acc_ring_9">
-		<!-- Increase Max HP 15.5 Increase M. Atk. 2.2 -->
-		<stats>
-			<add stat="maxHp" val="15.5" />
-			<add stat="mAtk" val="2.2" />
-		</stats>
-	</option>
-	<option id="17125" name="o_f_58_2s_acc_ring_10">
-		<!-- Increase Max HP 15.5 HP Regeneration + 0.75 -->
-		<stats>
-			<add stat="maxHp" val="15.5" />
-			<add stat="regHp" val="0.75" />
-		</stats>
-	</option>
-	<option id="17126" name="o_f_58_2s_acc_ring_11">
-		<!-- Increase Max HP 15.5 MP Regeneration + 0.025 -->
-		<stats>
-			<add stat="maxHp" val="15.5" />
-			<add stat="regMp" val="0.025" />
-		</stats>
-	</option>
-	<option id="17127" name="o_f_58_2s_acc_ring_12">
-		<!-- Max MP + 20.0 -->
-		<stats>
-			<add stat="maxMp" val="20.0" />
-		</stats>
-	</option>
-	<option id="17128" name="o_f_58_2s_acc_ring_13">
-		<!-- Max MP + 10.0 Increase M. Atk. 2.2 -->
-		<stats>
-			<add stat="maxMp" val="10.0" />
-			<add stat="mAtk" val="2.2" />
-		</stats>
-	</option>
-	<option id="17129" name="o_f_58_2s_acc_ring_14">
-		<!-- Max MP + 10.0 HP Regeneration + 0.75 -->
-		<stats>
-			<add stat="maxMp" val="10.0" />
-			<add stat="regHp" val="0.75" />
-		</stats>
-	</option>
-	<option id="17130" name="o_f_58_2s_acc_ring_15">
-		<!-- Max MP + 10.0 MP Regeneration + 0.025 -->
-		<stats>
-			<add stat="maxMp" val="10.0" />
-			<add stat="regMp" val="0.025" />
-		</stats>
-	</option>
-	<option id="17131" name="o_f_58_2s_acc_ring_16">
-		<!-- Increase M. Atk. 4.4 -->
-		<stats>
-			<add stat="mAtk" val="4.4" />
-		</stats>
-	</option>
-	<option id="17132" name="o_f_58_2s_acc_ring_17">
-		<!-- Increase M. Atk. 2.2 HP Regeneration + 0.75 -->
-		<stats>
-			<add stat="mAtk" val="2.2" />
-			<add stat="regHp" val="0.75" />
-		</stats>
-	</option>
-	<option id="17133" name="o_f_58_2s_acc_ring_18">
-		<!-- Increase M. Atk. 2.2 MP Regeneration + 0.025 -->
-		<stats>
-			<add stat="mAtk" val="2.2" />
-			<add stat="regMp" val="0.025" />
-		</stats>
-	</option>
-	<option id="17134" name="o_f_58_2s_acc_ring_19">
-		<!-- HP Regeneration + 0.15 -->
-		<stats>
-			<add stat="regHp" val="0.15" />
-		</stats>
-	</option>
-	<option id="17135" name="o_f_58_2s_acc_ring_20">
-		<!-- MP Regeneration + 0.05 -->
-		<stats>
+			<add stat="mDef" val="1.875" />
 			<add stat="regMp" val="0.05" />
 		</stats>
 	</option>
-	<option id="17136" name="o_f_58_2s_acc_ring_21">
-		<!-- HP Regeneration + 0.75 MP Regeneration + 0.025 -->
+	<option id="17122" name="o_f_58_2s_acc_ring_7">
+		<!-- Max HP increases by 38.75. -->
 		<stats>
-			<add stat="regHp" val="0.75" />
-			<add stat="regMp" val="0.025" />
+			<add stat="maxHp" val="38.75" />
+		</stats>
+	</option>
+	<option id="17123" name="o_f_58_2s_acc_ring_8">
+		<!-- Max HP increases by 19.38. Max MP increases by 13. -->
+		<stats>
+			<add stat="maxHp" val="19.375" />
+			<add stat="maxMp" val="13" />
+		</stats>
+	</option>
+	<option id="17124" name="o_f_58_2s_acc_ring_9">
+		<!-- Max HP increases by 19.38. M. Atk. increases by 2.64. -->
+		<stats>
+			<add stat="maxHp" val="19.375" />
+			<add stat="mAtk" val="2.64" />
+		</stats>
+	</option>
+	<option id="17125" name="o_f_58_2s_acc_ring_10">
+		<!-- Max HP increases by 19.38. HP Regen increases by 1.5. -->
+		<stats>
+			<add stat="maxHp" val="19.375" />
+			<add stat="regHp" val="1.5" />
+		</stats>
+	</option>
+	<option id="17126" name="o_f_58_2s_acc_ring_11">
+		<!-- Max HP increases by 19.38. MP Regen increases by 0.05. -->
+		<stats>
+			<add stat="maxHp" val="19.375" />
+			<add stat="regMp" val="0.05" />
+		</stats>
+	</option>
+	<option id="17127" name="o_f_58_2s_acc_ring_12">
+		<!-- Max MP increases by 26. -->
+		<stats>
+			<add stat="maxMp" val="26" />
+		</stats>
+	</option>
+	<option id="17128" name="o_f_58_2s_acc_ring_13">
+		<!-- Max MP increases by 13. M. Atk. increases by 2.64. -->
+		<stats>
+			<add stat="maxMp" val="13" />
+			<add stat="mAtk" val="2.64" />
+		</stats>
+	</option>
+	<option id="17129" name="o_f_58_2s_acc_ring_14">
+		<!-- Max MP increases by 13. HP Regen increases by 1.5. -->
+		<stats>
+			<add stat="maxMp" val="13" />
+			<add stat="regHp" val="1.5" />
+		</stats>
+	</option>
+	<option id="17130" name="o_f_58_2s_acc_ring_15">
+		<!-- Max MP increases by 13. MP Regen increases by 0.05. -->
+		<stats>
+			<add stat="maxMp" val="13" />
+			<add stat="regMp" val="0.05" />
+		</stats>
+	</option>
+	<option id="17131" name="o_f_58_2s_acc_ring_16">
+		<!-- M. Atk. increases by 5.28. -->
+		<stats>
+			<add stat="mAtk" val="5.28" />
+		</stats>
+	</option>
+	<option id="17132" name="o_f_58_2s_acc_ring_17">
+		<!-- M. Atk. increases by 2.64. HP Regen increases by 1.5. -->
+		<stats>
+			<add stat="mAtk" val="2.64" />
+			<add stat="regHp" val="1.5" />
+		</stats>
+	</option>
+	<option id="17133" name="o_f_58_2s_acc_ring_18">
+		<!-- M. Atk. increases by 2.64. MP Regen increases by 0.05. -->
+		<stats>
+			<add stat="mAtk" val="2.64" />
+			<add stat="regMp" val="0.05" />
+		</stats>
+	</option>
+	<option id="17134" name="o_f_58_2s_acc_ring_19">
+		<!-- HP Regen increases by 0.3. -->
+		<stats>
+			<add stat="regHp" val="0.3" />
+		</stats>
+	</option>
+	<option id="17135" name="o_f_58_2s_acc_ring_20">
+		<!-- MP Regen increases by 0.1. -->
+		<stats>
+			<add stat="regMp" val="0.1" />
+		</stats>
+	</option>
+	<option id="17136" name="o_f_58_2s_acc_ring_21">
+		<!-- HP Regen increases by 1.5. MP Regen increases by 0.05. -->
+		<stats>
+			<add stat="regHp" val="1.5" />
+			<add stat="regMp" val="0.05" />
 		</stats>
 	</option>
 	<option id="17137" name="o_f_58_2r_acc_ring_1">
-		<!-- M. Def. + 3.6 -->
+		<!-- M. Def. increases by 4.5. -->
 		<stats>
-			<add stat="mDef" val="3.6" />
+			<add stat="mDef" val="4.5" />
 		</stats>
 	</option>
 	<option id="17138" name="o_f_58_2r_acc_ring_2">
-		<!-- M. Def. + 1.8 Increase Max HP 19.0 -->
+		<!-- M. Def. increases by 2.25. Max HP increases by 23.75. -->
 		<stats>
-			<add stat="mDef" val="1.8" />
-			<add stat="maxHp" val="19.0" />
+			<add stat="mDef" val="2.25" />
+			<add stat="maxHp" val="23.75" />
 		</stats>
 	</option>
 	<option id="17139" name="o_f_58_2r_acc_ring_3">
-		<!-- M. Def. + 1.8 Max MP + 12.0 -->
+		<!-- M. Def. increases by 2.25. Max MP increases by 15.6. -->
 		<stats>
-			<add stat="mDef" val="1.8" />
-			<add stat="maxMp" val="12.0" />
+			<add stat="mDef" val="2.25" />
+			<add stat="maxMp" val="15.6" />
 		</stats>
 	</option>
 	<option id="17140" name="o_f_58_2r_acc_ring_4">
-		<!-- M. Def. + 1.8 Increase M. Atk. 2.7 -->
+		<!-- M. Def. increases by 2.25. M. Atk. increases by 3.24. -->
 		<stats>
-			<add stat="mDef" val="1.8" />
-			<add stat="mAtk" val="2.7" />
+			<add stat="mDef" val="2.25" />
+			<add stat="mAtk" val="3.24" />
 		</stats>
 	</option>
 	<option id="17141" name="o_f_58_2r_acc_ring_5">
-		<!-- M. Def. + 1.8 HP Regeneration + 0.09 -->
+		<!-- M. Def. increases by 2.25. HP Regen increases by 0.18. -->
 		<stats>
-			<add stat="mDef" val="1.8" />
-			<add stat="regHp" val="0.09" />
-		</stats>
-	</option>
-	<option id="17142" name="o_f_58_2r_acc_ring_6">
-		<!-- M. Def. + 1.8 MP Regeneration + 0.03 -->
-		<stats>
-			<add stat="mDef" val="1.8" />
-			<add stat="regMp" val="0.03" />
-		</stats>
-	</option>
-	<option id="17143" name="o_f_58_2r_acc_ring_7">
-		<!-- Increase Max HP 38.0 -->
-		<stats>
-			<add stat="maxHp" val="38.0" />
-		</stats>
-	</option>
-	<option id="17144" name="o_f_58_2r_acc_ring_8">
-		<!-- Increase Max HP 19.0 Max MP + 12.0 -->
-		<stats>
-			<add stat="maxHp" val="19.0" />
-			<add stat="maxMp" val="12.0" />
-		</stats>
-	</option>
-	<option id="17145" name="o_f_58_2r_acc_ring_9">
-		<!-- Increase Max HP 19.0 Increase M. Atk. 2.7 -->
-		<stats>
-			<add stat="maxHp" val="19.0" />
-			<add stat="mAtk" val="2.7" />
-		</stats>
-	</option>
-	<option id="17146" name="o_f_58_2r_acc_ring_10">
-		<!-- Increase Max HP 19.0 HP Regeneration + 0.09 -->
-		<stats>
-			<add stat="maxHp" val="19.0" />
-			<add stat="regHp" val="0.09" />
-		</stats>
-	</option>
-	<option id="17147" name="o_f_58_2r_acc_ring_11">
-		<!-- Increase Max HP 19.0 MP Regeneration + 0.03 -->
-		<stats>
-			<add stat="maxHp" val="19.0" />
-			<add stat="regMp" val="0.03" />
-		</stats>
-	</option>
-	<option id="17148" name="o_f_58_2r_acc_ring_12">
-		<!-- Max MP + 24.0 -->
-		<stats>
-			<add stat="maxMp" val="24.0" />
-		</stats>
-	</option>
-	<option id="17149" name="o_f_58_2r_acc_ring_13">
-		<!-- Max MP + 12.0 Increase M. Atk. 2.7 -->
-		<stats>
-			<add stat="maxMp" val="12.0" />
-			<add stat="mAtk" val="2.7" />
-		</stats>
-	</option>
-	<option id="17150" name="o_f_58_2r_acc_ring_14">
-		<!-- Max MP + 12.0 HP Regeneration + 0.09 -->
-		<stats>
-			<add stat="maxMp" val="12.0" />
-			<add stat="regHp" val="0.09" />
-		</stats>
-	</option>
-	<option id="17151" name="o_f_58_2r_acc_ring_15">
-		<!-- Max MP + 12.0 MP Regeneration + 0.03 -->
-		<stats>
-			<add stat="maxMp" val="12.0" />
-			<add stat="regMp" val="0.03" />
-		</stats>
-	</option>
-	<option id="17152" name="o_f_58_2r_acc_ring_16">
-		<!-- Increase M. Atk. 5.4 -->
-		<stats>
-			<add stat="mAtk" val="5.4" />
-		</stats>
-	</option>
-	<option id="17153" name="o_f_58_2r_acc_ring_17">
-		<!-- Increase M. Atk. 2.7 HP Regeneration + 0.09 -->
-		<stats>
-			<add stat="mAtk" val="2.7" />
-			<add stat="regHp" val="0.09" />
-		</stats>
-	</option>
-	<option id="17154" name="o_f_58_2r_acc_ring_18">
-		<!-- Increase M. Atk. 2.7 MP Regeneration + 0.03 -->
-		<stats>
-			<add stat="mAtk" val="2.7" />
-			<add stat="regMp" val="0.03" />
-		</stats>
-	</option>
-	<option id="17155" name="o_f_58_2r_acc_ring_19">
-		<!-- HP Regeneration + 0.18 -->
-		<stats>
+			<add stat="mDef" val="2.25" />
 			<add stat="regHp" val="0.18" />
 		</stats>
 	</option>
-	<option id="17156" name="o_f_58_2r_acc_ring_20">
-		<!-- MP Regeneration + 0.06 -->
+	<option id="17142" name="o_f_58_2r_acc_ring_6">
+		<!-- M. Def. increases by 2.25. MP Regen increases by 0.06. -->
 		<stats>
+			<add stat="mDef" val="2.25" />
 			<add stat="regMp" val="0.06" />
 		</stats>
 	</option>
-	<option id="17157" name="o_f_58_2r_acc_ring_21">
-		<!-- HP Regeneration + 0.09 MP Regeneration + 0.03 -->
+	<option id="17143" name="o_f_58_2r_acc_ring_7">
+		<!-- Max HP increases by 47.5. -->
 		<stats>
-			<add stat="regHp" val="0.09" />
-			<add stat="regMp" val="0.03" />
+			<add stat="maxHp" val="47.5" />
+		</stats>
+	</option>
+	<option id="17144" name="o_f_58_2r_acc_ring_8">
+		<!-- Max HP increases by 23.75. Max MP increases by 15.6. -->
+		<stats>
+			<add stat="maxHp" val="23.75" />
+			<add stat="maxMp" val="15.6" />
+		</stats>
+	</option>
+	<option id="17145" name="o_f_58_2r_acc_ring_9">
+		<!-- Max HP increases by 23.75. M. Atk. increases by 3.24. -->
+		<stats>
+			<add stat="maxHp" val="23.75" />
+			<add stat="mAtk" val="3.24" />
+		</stats>
+	</option>
+	<option id="17146" name="o_f_58_2r_acc_ring_10">
+		<!-- Max HP increases by 23.75. HP Regen increases by 0.18. -->
+		<stats>
+			<add stat="maxHp" val="23.75" />
+			<add stat="regHp" val="0.18" />
+		</stats>
+	</option>
+	<option id="17147" name="o_f_58_2r_acc_ring_11">
+		<!-- Max HP increases by 23.75. MP Regen increases by 0.06. -->
+		<stats>
+			<add stat="maxHp" val="23.75" />
+			<add stat="regMp" val="0.06" />
+		</stats>
+	</option>
+	<option id="17148" name="o_f_58_2r_acc_ring_12">
+		<!-- Max MP increases by 31.2. -->
+		<stats>
+			<add stat="maxMp" val="31.2" />
+		</stats>
+	</option>
+	<option id="17149" name="o_f_58_2r_acc_ring_13">
+		<!-- Max MP increases by 15.6. M. Atk. increases by 3.24. -->
+		<stats>
+			<add stat="maxMp" val="15.6" />
+			<add stat="mAtk" val="3.24" />
+		</stats>
+	</option>
+	<option id="17150" name="o_f_58_2r_acc_ring_14">
+		<!-- Max MP increases by 15.6. HP Regen increases by 0.18. -->
+		<stats>
+			<add stat="maxMp" val="15.6" />
+			<add stat="regHp" val="0.18" />
+		</stats>
+	</option>
+	<option id="17151" name="o_f_58_2r_acc_ring_15">
+		<!-- Max MP increases by 15.6. MP Regen increases by 0.06. -->
+		<stats>
+			<add stat="maxMp" val="15.6" />
+			<add stat="regMp" val="0.06" />
+		</stats>
+	</option>
+	<option id="17152" name="o_f_58_2r_acc_ring_16">
+		<!-- M. Atk. increases by 6.48. -->
+		<stats>
+			<add stat="mAtk" val="6.48" />
+		</stats>
+	</option>
+	<option id="17153" name="o_f_58_2r_acc_ring_17">
+		<!-- M. Atk. increases by 3.24. HP Regen increases by 0.18. -->
+		<stats>
+			<add stat="mAtk" val="3.24" />
+			<add stat="regHp" val="0.18" />
+		</stats>
+	</option>
+	<option id="17154" name="o_f_58_2r_acc_ring_18">
+		<!-- M. Atk. increases by 3.24. MP Regen increases by 0.06. -->
+		<stats>
+			<add stat="mAtk" val="3.24" />
+			<add stat="regMp" val="0.06" />
+		</stats>
+	</option>
+	<option id="17155" name="o_f_58_2r_acc_ring_19">
+		<!-- HP Regen increases by 0.36. -->
+		<stats>
+			<add stat="regHp" val="0.36" />
+		</stats>
+	</option>
+	<option id="17156" name="o_f_58_2r_acc_ring_20">
+		<!-- MP Regen increases by 0.12. -->
+		<stats>
+			<add stat="regMp" val="0.12" />
+		</stats>
+	</option>
+	<option id="17157" name="o_f_58_2r_acc_ring_21">
+		<!-- HP Regen increases by 0.18. MP Regen increases by 0.06. -->
+		<stats>
+			<add stat="regHp" val="0.18" />
+			<add stat="regMp" val="0.06" />
 		</stats>
 	</option>
 	<option id="17158" name="o_f_58_2u_acc_ring_1">
-		<!-- M. Def. + 4.2 -->
+		<!-- M. Def. increases by 5.25. -->
 		<stats>
-			<add stat="mDef" val="4.2" />
+			<add stat="mDef" val="5.25" />
 		</stats>
 	</option>
 	<option id="17159" name="o_f_58_2u_acc_ring_2">
-		<!-- M. Def. + 2.1 Increase Max HP 22.0 -->
+		<!-- M. Def. increases by 2.62. Max HP increases by 27.5. -->
 		<stats>
-			<add stat="mDef" val="2.1" />
-			<add stat="maxHp" val="22.0" />
+			<add stat="mDef" val="2.625" />
+			<add stat="maxHp" val="27.5" />
 		</stats>
 	</option>
 	<option id="17160" name="o_f_58_2u_acc_ring_3">
-		<!-- M. Def. + 2.1 Max MP + 14.0 -->
+		<!-- M. Def. increases by 2.62. Max MP increases by 18.2. -->
 		<stats>
-			<add stat="mDef" val="2.1" />
-			<add stat="maxMp" val="14.0" />
+			<add stat="mDef" val="2.625" />
+			<add stat="maxMp" val="18.2" />
 		</stats>
 	</option>
 	<option id="17161" name="o_f_58_2u_acc_ring_4">
-		<!-- M. Def. + 2.1 Increase M. Atk. 3.2 -->
+		<!-- M. Def. increases by 2.62. M. Atk. increases by 3.84. -->
 		<stats>
-			<add stat="mDef" val="2.1" />
-			<add stat="mAtk" val="3.2" />
+			<add stat="mDef" val="2.625" />
+			<add stat="mAtk" val="3.84" />
 		</stats>
 	</option>
 	<option id="17162" name="o_f_58_2u_acc_ring_5">
-		<!-- M. Def. + 2.1 HP Regeneration + 0.1 -->
+		<!-- M. Def. increases by 2.62. HP Regen increases by 0.2. -->
 		<stats>
-			<add stat="mDef" val="2.1" />
-			<add stat="regHp" val="0.1" />
-		</stats>
-	</option>
-	<option id="17163" name="o_f_58_2u_acc_ring_6">
-		<!-- M. Def. + 2.1 MP Regeneration + 0.035 -->
-		<stats>
-			<add stat="mDef" val="2.1" />
-			<add stat="regMp" val="0.035" />
-		</stats>
-	</option>
-	<option id="17164" name="o_f_58_2u_acc_ring_7">
-		<!-- Increase Max HP 44.0 -->
-		<stats>
-			<add stat="maxHp" val="44.0" />
-		</stats>
-	</option>
-	<option id="17165" name="o_f_58_2u_acc_ring_8">
-		<!-- Increase Max HP 22.0 Max MP + 14.0 -->
-		<stats>
-			<add stat="maxHp" val="22.0" />
-			<add stat="maxMp" val="14.0" />
-		</stats>
-	</option>
-	<option id="17166" name="o_f_58_2u_acc_ring_9">
-		<!-- Increase Max HP 22.0 Increase M. Atk. 3.2 -->
-		<stats>
-			<add stat="maxHp" val="22.0" />
-			<add stat="mAtk" val="3.2" />
-		</stats>
-	</option>
-	<option id="17167" name="o_f_58_2u_acc_ring_10">
-		<!-- Increase Max HP 22.0 HP Regeneration + 0.1 -->
-		<stats>
-			<add stat="maxHp" val="22.0" />
-			<add stat="regHp" val="0.1" />
-		</stats>
-	</option>
-	<option id="17168" name="o_f_58_2u_acc_ring_11">
-		<!-- Increase Max HP 22.0 MP Regeneration + 0.035 -->
-		<stats>
-			<add stat="maxHp" val="22.0" />
-			<add stat="regMp" val="0.035" />
-		</stats>
-	</option>
-	<option id="17169" name="o_f_58_2u_acc_ring_12">
-		<!-- Max MP + 28.0 -->
-		<stats>
-			<add stat="maxMp" val="28.0" />
-		</stats>
-	</option>
-	<option id="17170" name="o_f_58_2u_acc_ring_13">
-		<!-- Max MP + 14.0 Increase M. Atk. 3.2 -->
-		<stats>
-			<add stat="maxMp" val="14.0" />
-			<add stat="mAtk" val="3.2" />
-		</stats>
-	</option>
-	<option id="17171" name="o_f_58_2u_acc_ring_14">
-		<!-- Max MP + 14.0 HP Regeneration + 0.1 -->
-		<stats>
-			<add stat="maxMp" val="14.0" />
-			<add stat="regHp" val="0.1" />
-		</stats>
-	</option>
-	<option id="17172" name="o_f_58_2u_acc_ring_15">
-		<!-- Max MP + 14.0 MP Regeneration + 0.035 -->
-		<stats>
-			<add stat="maxMp" val="14.0" />
-			<add stat="regMp" val="0.035" />
-		</stats>
-	</option>
-	<option id="17173" name="o_f_58_2u_acc_ring_16">
-		<!-- Increase M. Atk. 6.4 -->
-		<stats>
-			<add stat="mAtk" val="6.4" />
-		</stats>
-	</option>
-	<option id="17174" name="o_f_58_2u_acc_ring_17">
-		<!-- Increase M. Atk. 3.2 HP Regeneration + 0.1 -->
-		<stats>
-			<add stat="mAtk" val="3.2" />
-			<add stat="regHp" val="0.1" />
-		</stats>
-	</option>
-	<option id="17175" name="o_f_58_2u_acc_ring_18">
-		<!-- Increase M. Atk. 3.2 MP Regeneration + 0.035 -->
-		<stats>
-			<add stat="mAtk" val="3.2" />
-			<add stat="regMp" val="0.035" />
-		</stats>
-	</option>
-	<option id="17176" name="o_f_58_2u_acc_ring_19">
-		<!-- HP Regeneration + 0.2 -->
-		<stats>
+			<add stat="mDef" val="2.625" />
 			<add stat="regHp" val="0.2" />
 		</stats>
 	</option>
-	<option id="17177" name="o_f_58_2u_acc_ring_20">
-		<!-- MP Regeneration + 0.07 -->
+	<option id="17163" name="o_f_58_2u_acc_ring_6">
+		<!-- M. Def. increases by 2.62. MP Regen increases by 0.07. -->
 		<stats>
+			<add stat="mDef" val="2.625" />
 			<add stat="regMp" val="0.07" />
 		</stats>
 	</option>
-	<option id="17178" name="o_f_58_2u_acc_ring_21">
-		<!-- HP Regeneration + 0.1 MP Regeneration + 0.035 -->
+	<option id="17164" name="o_f_58_2u_acc_ring_7">
+		<!-- Max HP increases by 55. -->
 		<stats>
-			<add stat="regHp" val="0.1" />
-			<add stat="regMp" val="0.035" />
+			<add stat="maxHp" val="55" />
+		</stats>
+	</option>
+	<option id="17165" name="o_f_58_2u_acc_ring_8">
+		<!-- Max HP increases by 27.5. Max MP increases by 18.2. -->
+		<stats>
+			<add stat="maxHp" val="27.5" />
+			<add stat="maxMp" val="18.2" />
+		</stats>
+	</option>
+	<option id="17166" name="o_f_58_2u_acc_ring_9">
+		<!-- Max HP increases by 27.5. M. Atk. increases by 3.84. -->
+		<stats>
+			<add stat="maxHp" val="27.5" />
+			<add stat="mAtk" val="3.84" />
+		</stats>
+	</option>
+	<option id="17167" name="o_f_58_2u_acc_ring_10">
+		<!-- Max HP increases by 27.5. HP Regen increases by 0.2. -->
+		<stats>
+			<add stat="maxHp" val="27.5" />
+			<add stat="regHp" val="0.2" />
+		</stats>
+	</option>
+	<option id="17168" name="o_f_58_2u_acc_ring_11">
+		<!-- Max HP increases by 27.5. MP Regen increases by 0.07. -->
+		<stats>
+			<add stat="maxHp" val="27.5" />
+			<add stat="regMp" val="0.07" />
+		</stats>
+	</option>
+	<option id="17169" name="o_f_58_2u_acc_ring_12">
+		<!-- Max MP increases by 36.4. -->
+		<stats>
+			<add stat="maxMp" val="36.4" />
+		</stats>
+	</option>
+	<option id="17170" name="o_f_58_2u_acc_ring_13">
+		<!-- Max MP increases by 18.2. M. Atk. increases by 3.84. -->
+		<stats>
+			<add stat="maxMp" val="18.2" />
+			<add stat="mAtk" val="3.84" />
+		</stats>
+	</option>
+	<option id="17171" name="o_f_58_2u_acc_ring_14">
+		<!-- Max MP increases by 18.2. HP Regen increases by 0.2. -->
+		<stats>
+			<add stat="maxMp" val="18.2" />
+			<add stat="regHp" val="0.2" />
+		</stats>
+	</option>
+	<option id="17172" name="o_f_58_2u_acc_ring_15">
+		<!-- Max MP increases by 18.2. MP Regen increases by 0.07. -->
+		<stats>
+			<add stat="maxMp" val="18.2" />
+			<add stat="regMp" val="0.07" />
+		</stats>
+	</option>
+	<option id="17173" name="o_f_58_2u_acc_ring_16">
+		<!-- M. Atk. increases by 7.68. -->
+		<stats>
+			<add stat="mAtk" val="7.68" />
+		</stats>
+	</option>
+	<option id="17174" name="o_f_58_2u_acc_ring_17">
+		<!-- M. Atk. increases by 3.84. HP Regen increases by 0.2. -->
+		<stats>
+			<add stat="mAtk" val="3.84" />
+			<add stat="regHp" val="0.2" />
+		</stats>
+	</option>
+	<option id="17175" name="o_f_58_2u_acc_ring_18">
+		<!-- M. Atk. increases by 3.84. MP Regen increases by 0.07. -->
+		<stats>
+			<add stat="mAtk" val="3.84" />
+			<add stat="regMp" val="0.07" />
+		</stats>
+	</option>
+	<option id="17176" name="o_f_58_2u_acc_ring_19">
+		<!-- HP Regen increases by 0.4. -->
+		<stats>
+			<add stat="regHp" val="0.4" />
+		</stats>
+	</option>
+	<option id="17177" name="o_f_58_2u_acc_ring_20">
+		<!-- MP Regen increases by 0.14. -->
+		<stats>
+			<add stat="regMp" val="0.14" />
+		</stats>
+	</option>
+	<option id="17178" name="o_f_58_2u_acc_ring_21">
+		<!-- HP Regen increases by 0.2. MP Regen increases by 0.07. -->
+		<stats>
+			<add stat="regHp" val="0.2" />
+			<add stat="regMp" val="0.07" />
 		</stats>
 	</option>
 	<option id="17179" name="o_s_61_2g_acc_ring_1">
@@ -604,23 +604,23 @@
 		<passive_skill id="8070" level="1" /> <!-- Augment Option - Sleep Resistance -->
 	</option>
 	<option id="17197" name="o_f_61_1g_acc_ring_1">
-		<!-- M. Def. + 2.6 -->
+		<!-- M. Def. increases by 3.25. -->
 		<stats>
-			<add stat="mDef" val="2.6" />
+			<add stat="mDef" val="3.25" />
 		</stats>
 	</option>
 	<option id="17198" name="o_f_61_1g_acc_ring_2">
-		<!-- M. Def. + 1.3 Increase Max HP 13.5 -->
+		<!-- M. Def. increases by 1.62. Max HP increases by 16.88. -->
 		<stats>
-			<add stat="mDef" val="1.3" />
-			<add stat="maxHp" val="13.5" />
+			<add stat="mDef" val="1.625" />
+			<add stat="maxHp" val="16.875" />
 		</stats>
 	</option>
 	<option id="17199" name="o_f_61_1g_acc_ring_3">
-		<!-- M. Def. + 1.3 Max MP + 9.0 -->
+		<!-- M. Def. increases by 1.62. Max MP increases by 11.7. -->
 		<stats>
-			<add stat="mDef" val="1.3" />
-			<add stat="maxMp" val="9.0" />
+			<add stat="mDef" val="1.625" />
+			<add stat="maxMp" val="11.7" />
 		</stats>
 	</option>
 </list>
