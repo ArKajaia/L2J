@@ -999,7 +999,7 @@
 		<magicLevel>#magicLevel</magicLevel>
 		<effects>
 			<effect name="Buff">
-				<add stat="mCritRate">4</add>
+				<add stat="mCritRate">2</add>
 			</effect>
 		</effects>
 	</skill>
