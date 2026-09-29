@@ -36,6 +36,7 @@ This document describes what the codebase actually *does* — its architecture a
 26. [Data-Driven Content Pack](#data-driven-content-pack)
 27. [Build System & Requirements](#build-system--requirements)
 28. [License](#license)
+29. [Recent Updates](#recent-updates)
 
 ---
 
@@ -496,3 +497,49 @@ Configuration itself is split between the main `dist/game/config` (and `dist/log
 ## License
 
 This program is free software, licensed under the **GNU General Public License, version 3** (or, at your option, any later version). See the license header in `build.xml` for the full notice.
+
+---
+
+## Recent Updates
+
+Changes from 28–29 September 2026.
+
+### Fake Players
+- **New builds**: Dreadnought, Dominator, Soultaker, Hell Knight, and the Kamael classes (Doombringer, Male/Female Soul Hound, Trickster, Judicator). Every class also gets a second gear variant.
+- **Servitors**: Necromancers and Hell Knights summon their servitors. Necromancers link theirs with Transfer Pain and re-summon it during PvP.
+- **Kamael mechanics**: fake players use souls, Final Form, Soul Cleanse and Warp. Disarm now works on fake players.
+- **Personality**: each fake player rolls its own aggression, skill use, chattiness and roaming. The spread around the config values is set by `FakePvpPersonality*` options.
+- **Smarter play**:
+  - They teleport and log off only when no player can see them.
+  - They notice defensive buffs (UD, Guts, Zealot, mirrors, Angelic Icon) and wait them out.
+  - Warriors switch to a polearm when many monsters surround them.
+  - They can taunt and fight each other.
+  - Some carry a Blessed SoE, and they leave hotzones that have rotated out.
+- **Loot and exp**: fake player damage now counts toward drop ownership and the exp/sp split.
+- **Admin and UI**:
+  - `//fakeplayers` opens an admin menu with all fake player commands.
+  - Shift-clicking a fake player shows its equipment and stats.
+  - Shift-clicking a monster opens a redesigned NPC info window.
+  - There are now 20 PvP taunt chat lines.
+
+### Hotzones
+- The level 71+ brackets are split into 71-79, 80+, 81+, 82+, 83+ and 84+. The Stakato Nest and Antharas' Lair locations are fixed.
+- The teleporter windows are redesigned with a card layout and a larger window.
+- Minibosses, coin drops, champion boosts and the spawn multiplier now apply only to zones that are active in the current rotation.
+
+### Augmentation
+- **Life Stones**: using one opens a list of equipment it can augment and a cost confirmation page. It can replace an existing augment, and no Blacksmith is needed.
+- **Stronger options**: augment option values are raised. Weapon rolls are weighted by stone grade and weapon type, and higher-grade stones roll more blue options.
+- **Faster skills**: active augment skills reuse faster. Damage skills reuse 10% slower than their class versions.
+- **Wild Magic**: the passive Wild Magic augment is halved (+4 → +2).
+
+### Community Board Buff Templates
+- Players can save up to 3 templates of their own class buffs and apply one to themselves or their summon.
+- Buffs are limited to the Player.ini `SkillDurationList` and checked server-side.
+- Templates apply instantly, and the editor fits on one page without scrolling.
+
+### Fixes & Misc
+- `AdminFakePlayers` failed to compile under the script engine's Java 8 source level, which disabled all handlers. This is fixed.
+- The passive tree XSD validation errors and the missing skill 90302 are fixed. The passive skill tree page now has a search box.
+- Attribute stones no longer open an empty window when no item can take the attribute.
+- The champion buff medal now follows auto-loot rules.
