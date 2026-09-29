@@ -50,6 +50,11 @@ public class RotatingHotZones extends Quest
 	// Teleporter window layout and palette.
 	private static final int MENU_WIDTH = 460;
 	private static final int OFFER_WIDTH = 270;
+	// Card columns - fixwidth locks them, so long zone names or descriptions cannot push the buttons around.
+	private static final int COL_BADGE = 64;
+	private static final int COL_ACTIONS = 90;
+	private static final int COL_INFO = MENU_WIDTH - COL_BADGE - COL_ACTIONS;
+	private static final int BUTTON_WIDTH = 80;
 	private static final String BG_BAR = "1A1A1A";
 	private static final String BG_CARD = "111111";
 	private static final String BG_CARD_HIGHLIGHT = "2B2410";
@@ -794,7 +799,7 @@ public class RotatingHotZones extends Quest
 			sb.append("<table width=").append(MENU_WIDTH).append(" cellpadding=3 cellspacing=0 bgcolor=\"").append(isYourLevel ? BG_CARD_HIGHLIGHT : BG_CARD).append("\"><tr>");
 			
 			// Level bracket badge
-			sb.append("<td width=64 align=center valign=top><font color=\"LEVEL\">").append(bracket.getName()).append("</font>");
+			sb.append("<td width=").append(COL_BADGE).append(" fixwidth=").append(COL_BADGE).append(" align=center valign=top><font color=\"LEVEL\">").append(bracket.getName()).append("</font>");
 			if (isYourLevel)
 			{
 				sb.append("<br1><font color=\"").append(COLOR_POSITIVE).append("\">Your level</font>");
@@ -802,7 +807,7 @@ public class RotatingHotZones extends Quest
 			sb.append("</td>");
 			
 			// Zone name and modifier
-			sb.append("<td width=276 align=left valign=top>");
+			sb.append("<td width=").append(COL_INFO).append(" fixwidth=").append(COL_INFO).append(" align=left valign=top>");
 			sb.append("<font color=\"").append(COLOR_TITLE).append("\">").append(zoneName).append("</font>");
 			if (modifier != null)
 			{
@@ -811,15 +816,17 @@ public class RotatingHotZones extends Quest
 			}
 			sb.append("</td>");
 			
-			// Actions
-			sb.append("<td width=60 align=right valign=top>");
-			sb.append(button("Solo", "bypass -h Script RotatingHotZones teleport_" + zoneId, 56));
-			sb.append("</td>");
-			sb.append("<td width=60 align=right valign=top>");
+			// Actions: one fixed-width column, Solo always on top so it sits at the same spot on every card.
+			sb.append("<td width=").append(COL_ACTIONS).append(" fixwidth=").append(COL_ACTIONS).append(" align=center valign=top>");
+			sb.append("<table width=").append(COL_ACTIONS).append(" cellpadding=0 cellspacing=2>");
+			sb.append("<tr><td width=").append(COL_ACTIONS).append(" fixwidth=").append(COL_ACTIONS).append(" align=center>");
+			sb.append(button("Solo", "bypass -h Script RotatingHotZones teleport_" + zoneId, BUTTON_WIDTH)).append("</td></tr>");
 			if (isPartyLeader)
 			{
-				sb.append(button("Party", "bypass -h Script RotatingHotZones teleport_party_" + zoneId, 56));
+				sb.append("<tr><td width=").append(COL_ACTIONS).append(" fixwidth=").append(COL_ACTIONS).append(" align=center>");
+				sb.append(button("Party", "bypass -h Script RotatingHotZones teleport_party_" + zoneId, BUTTON_WIDTH)).append("</td></tr>");
 			}
+			sb.append("</table>");
 			sb.append("</td>");
 			
 			sb.append("</tr></table>");
