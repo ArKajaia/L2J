@@ -1523,7 +1523,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>30000</reuseDelay>
+		<reuseDelay>3300</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="HpDrain">
@@ -1559,7 +1559,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>30000</reuseDelay>
+		<reuseDelay>8800</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamageMp" />
@@ -1843,7 +1843,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>6000</reuseDelay>
+		<reuseDelay>1320</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -1879,7 +1879,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>6000</reuseDelay>
+		<reuseDelay>1320</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -1915,7 +1915,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>6000</reuseDelay>
+		<reuseDelay>1320</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -1951,7 +1951,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>6000</reuseDelay>
+		<reuseDelay>1320</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -2057,7 +2057,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>6000</reuseDelay>
+		<reuseDelay>1100</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -2095,7 +2095,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>15000</reuseDelay>
+		<reuseDelay>4400</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -2133,7 +2133,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>15000</reuseDelay>
+		<reuseDelay>4400</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -2171,7 +2171,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>15000</reuseDelay>
+		<reuseDelay>4400</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -2209,7 +2209,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>15000</reuseDelay>
+		<reuseDelay>4400</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -2247,7 +2247,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>15000</reuseDelay>
+		<reuseDelay>4400</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -2285,7 +2285,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>15000</reuseDelay>
+		<reuseDelay>4400</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -2321,7 +2321,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>15000</reuseDelay>
+		<reuseDelay>4400</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -2357,7 +2357,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>15000</reuseDelay>
+		<reuseDelay>4400</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -2393,7 +2393,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>15000</reuseDelay>
+		<reuseDelay>4400</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -2429,7 +2429,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>15000</reuseDelay>
+		<reuseDelay>4400</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -2465,7 +2465,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>15000</reuseDelay>
+		<reuseDelay>4400</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -2501,7 +2501,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>15000</reuseDelay>
+		<reuseDelay>4400</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -2537,7 +2537,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>15000</reuseDelay>
+		<reuseDelay>4400</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
@@ -2571,7 +2571,7 @@
 		<mpConsume>#mpConsume</mpConsume>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
 		<power>#power</power>
-		<reuseDelay>15000</reuseDelay>
+		<reuseDelay>4400</reuseDelay>
 		<staticReuse>true</staticReuse>
 		<effects>
 			<effect name="MagicalDamage" />
