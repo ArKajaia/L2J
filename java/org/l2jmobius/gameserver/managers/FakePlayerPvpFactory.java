@@ -92,7 +92,21 @@ public class FakePlayerPvpFactory
 	 */
 	public static NpcTemplate createTemplate(FakePlayerPvpBuild build, int level, int npcId, String name)
 	{
-		final PlayerClass playerClass = build.getPlayerClass(level);
+		return createTemplate(build, level, npcId, name, null, "");
+	}
+	
+	/**
+	 * @param build the build
+	 * @param level the level
+	 * @param npcId a free npc id for the template
+	 * @param name the character name
+	 * @param forcedClass a class of the build's class line to use instead of the one its level gives ({@code null} for the level's class)
+	 * @param title the character title
+	 * @return a new template with its {@link FakePlayerPvpProfile} attached, or {@code null} if the build can't be made at this level
+	 */
+	public static NpcTemplate createTemplate(FakePlayerPvpBuild build, int level, int npcId, String name, PlayerClass forcedClass, String title)
+	{
+		final PlayerClass playerClass = forcedClass != null ? forcedClass : build.getPlayerClass(level);
 		final PlayerTemplate classTemplate = PlayerTemplateData.getInstance().getTemplate(playerClass);
 		if (classTemplate == null)
 		{
@@ -257,7 +271,7 @@ public class FakePlayerPvpFactory
 		set.set("level", level);
 		set.set("type", "Monster");
 		set.set("name", name);
-		set.set("title", "");
+		set.set("title", title != null ? title : "");
 		set.set("race", playerClass.getRace().name());
 		set.set("sex", female ? Sex.FEMALE.name() : Sex.MALE.name());
 		set.set("baseSTR", str);

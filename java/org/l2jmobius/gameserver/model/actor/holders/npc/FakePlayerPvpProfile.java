@@ -105,6 +105,9 @@ public class FakePlayerPvpProfile
 	/** Who attacked it while it wasn't flagged and it chose not to hit back (object id -> until when). */
 	private final Map<Integer, Long> _refused = new ConcurrentHashMap<>();
 	
+	/** Object id of the player it was summoned to duel in a class transfer challenge (0 for a roaming fake player). */
+	private volatile int _trialDuelTarget;
+	
 	/**
 	 * @param build the build
 	 * @param playerClass the class for this level
@@ -487,7 +490,32 @@ public class FakePlayerPvpProfile
 	 */
 	public boolean isRunner()
 	{
-		return _runner;
+		return _runner && (_trialDuelTarget == 0);
+	}
+	
+	/**
+	 * @return {@code true} if it is a class transfer challenge opponent: it only fights its challenger, never flees, escapes, logs off, comes back after dying or pays PvP/PK rewards
+	 */
+	public boolean isTrialDuelist()
+	{
+		return _trialDuelTarget != 0;
+	}
+	
+	/**
+	 * @return object id of the player it duels, 0 if it is a roaming fake player
+	 */
+	public int getTrialDuelTarget()
+	{
+		return _trialDuelTarget;
+	}
+	
+	/**
+	 * Makes it a class transfer challenge opponent of {@code objectId}. See {@link #isTrialDuelist()}.
+	 * @param objectId object id of the challenger
+	 */
+	public void setTrialDuelTarget(int objectId)
+	{
+		_trialDuelTarget = objectId;
 	}
 	
 	public long getNextChatTime()

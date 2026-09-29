@@ -135,6 +135,22 @@ Two unrelated loot systems that both involve opening something for a reward.
 - Sealed Caches are a separate, simpler system: a chance-based bonus item drop on any kill, one of three possible outcomes (alongside a "Lucky Streak" drop-rate bonus and a "Jackpot" loot reroll) from the same kill-reward roll.
 - A Sealed Cache is just an ordinary lootbox item, opened from the inventory — no key or NPC involved.
 
+### Alternative Class Transfer Challenges
+
+A short, solo, instanced trial at the Class Master NPCs that stands in for the long class transfer quest chains: clearing it unlocks that tier's Class Master transfer.
+
+- Each tier (1st, 2nd, 3rd class) has a fighter trial and a mage trial, picked by a fallback chain (class, parent class, race, fighter/mage, generic), so more can be added per class without touching code.
+- Entering is an instant teleport from the Class Master into a private copy of a small hall; clearing it sends the player straight back. No one else can enter or affect the trial.
+- Objectives run in order and show on screen with a countdown: kill, collect (only marks won inside the trial count), reach a spot, talk, activate seals, protect a ward, survive, defeat a boss, use an item, clear waves, and duel.
+- Built from the server's own systems:
+  - **Omens** — every attempt rolls a Hot Zone modifier that applies to the whole trial (Kill Streak, Glass Cannon, Restless Dead, Fragile Ground...), shown before entering.
+  - **Wave/Arena Champions** — bosses come back stronger each phase through the Wave Challenge engine; the toughest also get the Survival Arena buffs and enrage.
+  - **Mark Thief and Arcane Skirmishers** — forced Thief and Mage monsters: the Thief pockets marks won near it and pays them back (with a bonus for a full bag) when killed; Mage monsters kite and cast.
+  - **Rival Shade and Invaders** — the duel is against a fake player built as one of the classes the player is about to become, at their level; a rival may also invade mid-trial.
+  - **Rewards** — Survival Arena currency (more for a fast clear) and one Sealed Cache per clear, while the trials themselves drop no hotzone coins and their Mage monsters no caches.
+- Falling doesn't kill: the player is knocked out and returns to the entrance with progress kept (or, if configured, the trial fails). A disconnect keeps the trial for a grace period; a relog after it, or after a restart, lands the player back where they entered.
+- The requirement is enforced right where the Class Master changes the class, and a clear only counts for the class and class slot that earned it; the transfer uses it up. GMs have `//challenge_status`, `//challenge_start`, `//challenge_complete`, `//challenge_abort` and `//challenge_reset`; players have `.trial`.
+
 ### Other Custom Features at a Glance
 
 | Area | Features |
@@ -459,7 +475,7 @@ Four small dual-mode (GUI-or-console) tools sit alongside the two servers:
 
 Database access is centralized through a **HikariCP** connection pool (self-tuning pool sizing, leak detection, connection validation, and optional startup self-tests that probe whether the database can really serve the configured pool size) talking to **MySQL/MariaDB** over the standard MySQL JDBC driver. SQL is written directly against MySQL syntax rather than through a vendor-abstracted ORM. A backup routine can shell out to `mysqldump` for timestamped, age-pruned dumps, invoked around login-server shutdown when enabled.
 
-The shipped schema spans roughly **115 game-server tables** — covering accounts' game-side data, characters and every per-character subsystem (skills, subclasses, recipes, macros, shortcuts, hennas, friends, contacts, premium items, instance timers, item reuse state, offline trade/play), clans and every clan subsystem (privileges, notices, subpledges, wars, crests), castles/forts/clan-halls and their sieges and functions, item auctions, the manor economy, grand bosses and raid points, heroes and their diaries, the Olympiad, Seven Signs and its festival, cursed weapons, the Dimensional Rift, fishing championship, lottery, Monster Derby, wedding/couple data, custom mail, the passive skill tree, and global server variables — plus roughly **4 login-server tables** for accounts, per-account IP authentication rules, and registered game servers.
+The shipped schema spans roughly **115 game-server tables** — covering accounts' game-side data, characters and every per-character subsystem (skills, subclasses, recipes, macros, shortcuts, hennas, friends, contacts, premium items, instance timers, item reuse state, offline trade/play), clans and every clan subsystem (privileges, notices, subpledges, wars, crests), castles/forts/clan-halls and their sieges and functions, item auctions, the manor economy, grand bosses and raid points, heroes and their diaries, the Olympiad, Seven Signs and its festival, cursed weapons, the Dimensional Rift, fishing championship, lottery, Monster Derby, wedding/couple data, custom mail, the passive skill tree, class transfer trial completions, and global server variables — plus roughly **4 login-server tables** for accounts, per-account IP authentication rules, and registered game servers.
 
 ---
 
@@ -503,6 +519,15 @@ This program is free software, licensed under the **GNU General Public License, 
 ## Recent Updates
 
 Changes from 28–29 September 2026.
+
+### Alternative Class Transfer Challenges
+- **New**: the Class Masters now offer a short solo trial for each class transfer. Clearing it unlocks the transfer at that Class Master; the village-master quests are unchanged.
+- **Six trials**: a fighter and a mage trial per tier, each 4-6 objectives in a private hall reached by teleport — no walking across the world.
+- **Built from existing systems**: a rolled Hot Zone Omen per attempt, multi-phase Wave/Arena Champion bosses, the Mark Thief, Mage skirmishers, champion elites, a fake-player Rival Shade of your future class, and occasional fake-player Invaders.
+- **Forgiving**: falling sends you back to the entrance with your progress; disconnects are held for a while.
+- **Rewards**: Survival Arena currency (bonus for a fast clear) and a Sealed Cache.
+- **Commands**: `.trial` shows your progress (`.trial abandon` gives up); GMs get `//challenge_status|start|complete|abort|reset` and `//reload classtransferchallenge`.
+- **Setup**: run `class_transfer_challenge_completion.sql`; settings are in `Custom/ClassTransferChallenge.ini`, trials in `data/ClassTransferChallenges/`.
 
 ### Fake Players
 - **New builds**: Dreadnought, Dominator, Soultaker, Hell Knight, and the Kamael classes (Doombringer, Male/Female Soul Hound, Trickster, Judicator). Every class also gets a second gear variant.

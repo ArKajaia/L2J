@@ -83,6 +83,7 @@ import org.l2jmobius.gameserver.data.holders.SellBuffHolder;
 import org.l2jmobius.gameserver.data.sql.CharInfoTable;
 import org.l2jmobius.gameserver.data.sql.CharSummonTable;
 import org.l2jmobius.gameserver.data.sql.ClanTable;
+import org.l2jmobius.gameserver.data.sql.ClassTransferChallengeCompletionTable;
 import org.l2jmobius.gameserver.data.sql.OfflinePlayTable;
 import org.l2jmobius.gameserver.data.sql.OfflineTraderTable;
 import org.l2jmobius.gameserver.data.xml.AdminData;
@@ -10716,6 +10717,9 @@ public class Player extends Playable
 			LOGGER.log(Level.WARNING, "Could not modify sub class for " + getName() + " to class index " + classIndex + ": " + e.getMessage(), e);
 			return false;
 		}
+		
+		// Cleared class transfer challenges belong to the class being removed.
+		ClassTransferChallengeCompletionTable.getInstance().deleteClassIndex(getObjectId(), classIndex);
 		
 		return addSubClass(newClassId, classIndex);
 	}

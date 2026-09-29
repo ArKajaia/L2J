@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.config.custom.RandomSpawnsConfig;
 import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.data.xml.NpcPersonalAIData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.managers.ClassTransferChallengeManager;
 import org.l2jmobius.gameserver.managers.WalkingManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.Location;
@@ -536,8 +537,11 @@ public class Spawn extends Location
 		// Link the Npc to this Spawn
 		npc.setSpawn(this);
 		
+		// Class transfer challenge monsters are hand-tuned: none of the random spawn rolls below apply to them.
+		final boolean challengeInstance = ClassTransferChallengeManager.isChallengeInstance(getInstanceId());
+		
 		// Roaming fake player roll: a fake player hunts here instead, and this monster stays out of the world (still counted by this spawn) until the fake player is gone.
-		if (org.l2jmobius.gameserver.managers.FakePlayerPvpManager.getInstance().tryReplace(npc, this, newlocx, newlocy, newlocz))
+		if (!challengeInstance && org.l2jmobius.gameserver.managers.FakePlayerPvpManager.getInstance().tryReplace(npc, this, newlocx, newlocy, newlocz))
 		{
 			_spawnedNpcs.add(npc);
 			_currentCount++;
@@ -581,7 +585,7 @@ public class Spawn extends Location
 		// 1. Check if the NPC is allowed to be a champion (Level, Instance, Type, etc.)
 		// 1. Check if the NPC is allowed to be a champion
 		// 1. Check if the NPC is allowed to be a champion
-		if (ChampionMonstersConfig.CHAMPION_ENABLE && npc.isMonster() && !npc.isFakePlayer() && !(npc instanceof org.l2jmobius.gameserver.model.actor.instance.Chest) && !npc.isQuestMonster() && !_template.isUndying() && !npc.isRaid() && !npc.isRaidMinion() && (npc.getLevel() >= ChampionMonstersConfig.CHAMP_MIN_LEVEL) && (npc.getLevel() <= ChampionMonstersConfig.CHAMP_MAX_LEVEL) && (ChampionMonstersConfig.CHAMPION_ENABLE_IN_INSTANCES || (getInstanceId() == 0)))
+		if (ChampionMonstersConfig.CHAMPION_ENABLE && !challengeInstance && npc.isMonster() && !npc.isFakePlayer() && !(npc instanceof org.l2jmobius.gameserver.model.actor.instance.Chest) && !npc.isQuestMonster() && !_template.isUndying() && !npc.isRaid() && !npc.isRaidMinion() && (npc.getLevel() >= ChampionMonstersConfig.CHAMP_MIN_LEVEL) && (npc.getLevel() <= ChampionMonstersConfig.CHAMP_MAX_LEVEL) && (ChampionMonstersConfig.CHAMPION_ENABLE_IN_INSTANCES || (getInstanceId() == 0)))
 		{
 			// --- NEW HOTZONE LOGIC ---
 			double freqMultiplier = 1.0; // Default is 1x (normal chance)
@@ -634,14 +638,17 @@ public class Spawn extends Location
 			((org.l2jmobius.gameserver.model.actor.Attackable) npc).setChampionTier(0);
 		}
 		
-		// Open-world wave challenge roll - after the champion roll so champions can be excluded.
-		org.l2jmobius.gameserver.managers.WaveChallengeManager.getInstance().tryConvert(npc, getInstanceId());
-		
-		// Thief roll - after the wave roll so wave challenges (which drop no adena) are skipped.
-		org.l2jmobius.gameserver.managers.ThiefMonsterManager.getInstance().tryConvert(npc, this);
-		
-		// Mage roll - after the Thief roll so a Thief never becomes a Mage too. The HP/MP refill below fills the boosted MP.
-		org.l2jmobius.gameserver.managers.MageMonsterManager.getInstance().tryConvert(npc, this);
+		if (!challengeInstance)
+		{
+			// Open-world wave challenge roll - after the champion roll so champions can be excluded.
+			org.l2jmobius.gameserver.managers.WaveChallengeManager.getInstance().tryConvert(npc, getInstanceId());
+			
+			// Thief roll - after the wave roll so wave challenges (which drop no adena) are skipped.
+			org.l2jmobius.gameserver.managers.ThiefMonsterManager.getInstance().tryConvert(npc, this);
+			
+			// Mage roll - after the Thief roll so a Thief never becomes a Mage too. The HP/MP refill below fills the boosted MP.
+			org.l2jmobius.gameserver.managers.MageMonsterManager.getInstance().tryConvert(npc, this);
+		}
 		
 		npc.setCurrentHp(npc.getMaxHp());
 		npc.setCurrentMp(npc.getMaxMp());
