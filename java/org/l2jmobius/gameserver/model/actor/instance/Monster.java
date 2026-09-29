@@ -21,6 +21,7 @@ import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
 import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData;
 import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData.CustomSkill;
 import org.l2jmobius.gameserver.data.xml.SkillData;
+import org.l2jmobius.gameserver.managers.ClassTransferChallengeManager;
 import org.l2jmobius.gameserver.managers.HotzoneModifierManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -168,7 +169,7 @@ public class Monster extends Attackable
 		// reasons) because at this point it's only ever true for a genuine RaidBoss/GrandBoss -
 		// their constructors set it before onSpawn() ever runs.
 		// Roaming fake players only have the skills of their class.
-		if (!isRaid() && !isPvpFakePlayer())
+		if (!isRaid() && !isPvpFakePlayer() && canRollRandomPassives())
 		{
 			addRandomPassiveSkill();
 		}
@@ -208,6 +209,15 @@ public class Monster extends Attackable
 	private void addRandomPassiveSkill()
 	{
 		addRandomPassiveSkill(this.getLevel());
+	}
+
+	/**
+	 * Class transfer challenge monsters are hand-tuned: every modifier they carry is chosen by the challenge and shown to the player, so the random passive pool stays out of them.
+	 * @return {@code true} if this monster may roll random passive skills
+	 */
+	private boolean canRollRandomPassives()
+	{
+		return !ClassTransferChallengeManager.isChallengeInstance(getInstanceId());
 	}
 	
 	// Random Passive skills
@@ -403,7 +413,7 @@ public class Monster extends Attackable
 		}
 		if (isWaveChallenge())
 		{
-			sb.append(String.format(WaveChallengeConfig.TITLE_TAG, getWaveChallengeWave(), WaveChallengeConfig.WAVE_COUNT)).append(' ');
+			sb.append(String.format(WaveChallengeConfig.TITLE_TAG, getWaveChallengeWave(), getWaveChallengeTotal())).append(' ');
 		}
 		if (isHotzoneMiniboss())
 		{
@@ -533,7 +543,25 @@ public class Monster extends Attackable
 	 */
 	public boolean isWaveChallengeFinalWave()
 	{
-		return isWaveChallenge() && (getWaveChallengeWave() >= WaveChallengeConfig.WAVE_COUNT);
+		return isWaveChallenge() && (getWaveChallengeWave() >= getWaveChallengeTotal());
+	}
+
+	/**
+	 * @return how many waves this challenge has: its own count when started with {@link #startWaveChallenge(int)}, otherwise the configured {@code WaveChallengeWaveCount}.
+	 */
+	public int getWaveChallengeTotal()
+	{
+		return getVariables().getInt("WAVE_CHALLENGE_TOTAL", WaveChallengeConfig.WAVE_COUNT);
+	}
+
+	/**
+	 * Turns this freshly spawned monster into wave 1 of a wave challenge with its own number of waves (a class transfer challenge's multi-phase boss).
+	 * @param totalWaves how many times it must be defeated
+	 */
+	public void startWaveChallenge(int totalWaves)
+	{
+		getVariables().set("WAVE_CHALLENGE_TOTAL", Math.max(1, totalWaves));
+		startWaveChallenge();
 	}
 
 	/**
@@ -595,9 +623,10 @@ public class Monster extends Attackable
 		}
 
 		final int wave = getWaveChallengeWave() + 1;
+		final int totalWaves = getWaveChallengeTotal();
 		getVariables().set("WAVE_CHALLENGE_WAVE", wave);
 
-		if (WaveChallengeConfig.REROLL_PASSIVES_PER_WAVE)
+		if (WaveChallengeConfig.REROLL_PASSIVES_PER_WAVE && canRollRandomPassives())
 		{
 			addRandomPassiveSkill(getLevel()); // getLevel() already includes this wave's virtual levels
 		}
@@ -612,7 +641,7 @@ public class Monster extends Attackable
 		setCurrentMp(getMaxMp());
 		broadcastInfo();
 
-		final String message = (wave >= WaveChallengeConfig.WAVE_COUNT) ? "Final wave " + wave + "/" + WaveChallengeConfig.WAVE_COUNT + "! Defeat " + getName() + " once more to claim the reward." : "Wave " + (wave - 1) + " cleared! " + getName() + " grows stronger... (wave " + wave + "/" + WaveChallengeConfig.WAVE_COUNT + ")";
+		final String message = (wave >= totalWaves) ? "Final wave " + wave + "/" + totalWaves + "! Defeat " + getName() + " once more to claim the reward." : "Wave " + (wave - 1) + " cleared! " + getName() + " grows stronger... (wave " + wave + "/" + totalWaves + ")";
 		sendMessageToAttackers(killer, message);
 		return true;
 	}
@@ -624,7 +653,7 @@ public class Monster extends Attackable
 	{
 		getVariables().set("WAVE_CHALLENGE_WAVE", 1);
 
-		if (WaveChallengeConfig.REROLL_PASSIVES_PER_WAVE)
+		if (WaveChallengeConfig.REROLL_PASSIVES_PER_WAVE && canRollRandomPassives())
 		{
 			addRandomPassiveSkill(getLevel());
 		}
@@ -1343,51 +1372,6 @@ public class Monster extends Attackable
 		{
 			_arenaEnrageTask.cancel(false);
 			_arenaEnrageTask = null;
-		}
-	}
-	
-	@Override
-	public void onActionShift(org.l2jmobius.gameserver.model.actor.Player player)
-	{
-		if (player.isGM())
-		{
-			super.onActionShift(player);
-		}
-		else
-		{
-			org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage html = new org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage(this.getObjectId());
-			StringBuilder sb = new StringBuilder();
-			
-			sb.append("<html><body>");
-			sb.append("<center>");
-			sb.append("<font color=\"LEVEL\">").append(this.getName()).append("</font><br>");
-			sb.append("<font color=\"AAAAAA\">Level ").append(this.getLevel()).append("</font><br>");
-			sb.append("<img src=\"L2UI.SquareWhite\" width=260 height=1><br>");
-			sb.append("</center>");
-			
-			sb.append("<font color=\"LEVEL\">Active Passives:</font><br>");
-			
-			int skillCount = 0;
-			for (Skill skill : this.getSkills().values())
-			{
-				if (skill.isPassive())
-				{
-					sb.append("<font color=\"00FFFF\">").append(skill.getName()).append("</font> Lv. ").append(skill.getLevel()).append("<br>");
-					skillCount++;
-				}
-			}
-			
-			if (skillCount == 0)
-			{
-				sb.append("<font color=\"777777\">No passives active.</font>");
-			}
-			
-			sb.append("</body></html>");
-			
-			html.setHtml(sb.toString());
-			player.sendPacket(html);
-			
-			player.sendPacket(org.l2jmobius.gameserver.network.serverpackets.ActionFailed.STATIC_PACKET);
 		}
 	}
 }

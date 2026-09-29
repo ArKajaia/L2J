@@ -86,6 +86,7 @@ import handlers.bypass.npc.Festival;
 import handlers.bypass.npc.FindPvP;
 import handlers.bypass.npc.Freight;
 import handlers.bypass.npc.ItemAuctionLink;
+import handlers.bypass.npc.LifeStoneAugment;
 import handlers.bypass.npc.Link;
 import handlers.bypass.npc.Loto;
 import handlers.bypass.npc.Multisell;
@@ -129,6 +130,7 @@ import handlers.chat.commands.admin.AdminCHSiege;
 import handlers.chat.commands.admin.AdminCamera;
 import handlers.chat.commands.admin.AdminChangeAccessLevel;
 import handlers.chat.commands.admin.AdminClan;
+import handlers.chat.commands.admin.AdminClassTransferChallenge;
 import handlers.chat.commands.admin.AdminCreateItem;
 import handlers.chat.commands.admin.AdminCursedWeapons;
 import handlers.chat.commands.admin.AdminDebug;
@@ -224,6 +226,7 @@ import handlers.chat.commands.voiced.AutoPotion;
 import handlers.chat.commands.voiced.Banking;
 import handlers.chat.commands.voiced.ChangePassword;
 import handlers.chat.commands.voiced.ChatAdmin;
+import handlers.chat.commands.voiced.ClassTransferChallengeVoiced;
 import handlers.chat.commands.voiced.ExperienceGain;
 import handlers.chat.commands.voiced.Lang;
 import handlers.chat.commands.voiced.Offline;
@@ -246,6 +249,7 @@ import handlers.items.Book;
 import handlers.items.Bypass;
 import handlers.items.Calculator;
 import handlers.items.CharmOfCourage;
+import handlers.items.ClassTransferChallengeItem;
 import handlers.items.Disguise;
 import handlers.items.Elixir;
 import handlers.items.EnchantAttribute;
@@ -256,6 +260,7 @@ import handlers.items.FishShots;
 import handlers.items.Harvester;
 import handlers.items.ItemSkills;
 import handlers.items.ItemSkillsTemplate;
+import handlers.items.LifeStone;
 import handlers.items.Maps;
 import handlers.items.MercTicket;
 import handlers.items.NicknameColor;
@@ -364,6 +369,7 @@ public class MasterHandler
 			AdminChangeAccessLevel.class,
 			AdminCHSiege.class,
 			AdminClan.class,
+			AdminClassTransferChallenge.class,
 			AdminCreateItem.class,
 			AdminCursedWeapons.class,
 			AdminDebug.class,
@@ -451,6 +457,7 @@ public class MasterHandler
 			FindPvP.class,
 			Freight.class,
 			ItemAuctionLink.class,
+			LifeStoneAugment.class,
 			Link.class,
 			Loto.class,
 			Multisell.class,
@@ -514,6 +521,7 @@ public class MasterHandler
 			Bypass.class,
 			Calculator.class,
 			CharmOfCourage.class,
+			ClassTransferChallengeItem.class,
 			Disguise.class,
 			Elixir.class,
 			EnchantAttribute.class,
@@ -524,6 +532,7 @@ public class MasterHandler
 			Harvester.class,
 			ItemSkills.class,
 			ItemSkillsTemplate.class,
+			LifeStone.class,
 			Maps.class,
 			MercTicket.class,
 			NicknameColor.class,
@@ -570,6 +579,7 @@ public class MasterHandler
 			PassiveTreeVoiced.class,
 			PassiveTreeLinkVoiced.class,
 			SaveHotzoneVoiced.class,
+			ClassTransferChallengeVoiced.class,
 		},
 		{
 			// TODO: Add configuration options for this voiced commands.

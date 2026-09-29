@@ -189,16 +189,21 @@ public class NpcShiftClick implements IActionShiftHandler
 		}
 		else if (NpcConfig.ALT_GAME_VIEWNPC)
 		{
-			if (!target.isNpc() || target.isFakePlayer())
+			if (!target.isNpc())
 			{
 				return false;
 			}
 			
 			player.setTarget(target);
 			
-			// Only show view if NPC is alive.
+			// A fake player shows what a player would: its gear, class, level and base stats.
 			final Npc npc = target.asNpc();
-			if ((npc != null) && !npc.isDead())
+			if (npc.isFakePlayer())
+			{
+				NpcViewMod.sendFakePlayerView(player, npc);
+			}
+			// Only show view if NPC is alive.
+			else if (!npc.isDead())
 			{
 				NpcViewMod.sendNpcView(player, npc);
 			}

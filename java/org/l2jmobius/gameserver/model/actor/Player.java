@@ -83,6 +83,7 @@ import org.l2jmobius.gameserver.data.holders.SellBuffHolder;
 import org.l2jmobius.gameserver.data.sql.CharInfoTable;
 import org.l2jmobius.gameserver.data.sql.CharSummonTable;
 import org.l2jmobius.gameserver.data.sql.ClanTable;
+import org.l2jmobius.gameserver.data.sql.ClassTransferChallengeCompletionTable;
 import org.l2jmobius.gameserver.data.sql.OfflinePlayTable;
 import org.l2jmobius.gameserver.data.sql.OfflineTraderTable;
 import org.l2jmobius.gameserver.data.xml.AdminData;
@@ -5293,13 +5294,25 @@ public class Player extends Playable
 				addItem(ItemProcessType.REWARD, RatesConfig.ARENA_CURRENCY_ITEM_ID, reward, arenaChallenger, true);
 			}
 
-			// Personal best tracking
+			// Personal best tracking (shown by the Arena Master), with the level it was reached at.
 			final int previousBest = getVariables().getInt("ARENA_BEST_WAVE", 0);
 			if (finalWave > previousBest)
 			{
 				getVariables().set("ARENA_BEST_WAVE", finalWave);
+				getVariables().set("ARENA_BEST_WAVE_LEVEL", getLevel());
 				sendMessage("New personal best! You reached Wave " + finalWave + ".");
 			}
+			
+			// The best payout of a single run is also what a quick run (a medal exchanged at the Arena Master) pays.
+			if (reward > getVariables().getLong("ARENA_BEST_REWARD", 0))
+			{
+				getVariables().set("ARENA_BEST_REWARD", reward);
+				getVariables().set("ARENA_BEST_REWARD_LEVEL", getLevel());
+			}
+			
+			getVariables().set("ARENA_LAST_WAVE", finalWave);
+			getVariables().set("ARENA_RUNS", getVariables().getInt("ARENA_RUNS", 0) + 1);
+			getVariables().set("ARENA_TOTAL_REWARD", getVariables().getLong("ARENA_TOTAL_REWARD", 0) + reward);
 
 			sendMessage("Your Arena Challenge has ended at Wave " + finalWave + ". You earned " + reward + " Arena Coins.");
 
@@ -10716,6 +10729,9 @@ public class Player extends Playable
 			LOGGER.log(Level.WARNING, "Could not modify sub class for " + getName() + " to class index " + classIndex + ": " + e.getMessage(), e);
 			return false;
 		}
+		
+		// Cleared class transfer challenges belong to the class being removed.
+		ClassTransferChallengeCompletionTable.getInstance().deleteClassIndex(getObjectId(), classIndex);
 		
 		return addSubClass(newClassId, classIndex);
 	}

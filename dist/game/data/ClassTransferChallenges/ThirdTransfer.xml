@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/ClassTransferChallenges.xsd">
+	<!-- Alternative Class Transfer Challenges - Third Class Transfer (Class Master 900003). See FirstTransfer.xml for the format. -->
+	<challenge id="third_champion" name="Trial of the Champion" stage="THIRD_TRANSFER" difficulty="Very Hard" duration="1800" parTime="900">
+		<description>Survive the Ketra onslaught and its elites, reclaim the Trial Marks from the Mark Thief, topple the Arena Champion through all three of its lives before it enrages, and face the Shade of the path you seek.</description>
+		<entry x="-88429" y="-220629" z="-7903" heading="24740" />
+		<guide npcId="900240" x="-88471" y="-220672" z="-7903" heading="24740" />
+		<omens>
+			<omen name="GENEROUS_SPIRITS" />
+			<omen name="KILL_STREAK" />
+			<omen name="VAMPIRIC_HUNT" />
+			<omen name="VETERAN_GROUNDS" />
+			<omen name="FRAGILE_GROUND" />
+			<omen name="GLASS_CANNON" />
+			<omen name="IRONCLAD" />
+			<omen name="ARCANE_SURGE" />
+			<omen name="BLOODY_HARVEST" />
+			<omen name="RESTLESS_DEAD" />
+			<omen name="UNBREAKABLE" />
+			<omen name="ARCHETYPE_HUNTER" />
+		</omens>
+		<objectives>
+			<objective type="WAVES" text="Survive the Ketra onslaught" waveSeconds="75" delay="5">
+				<wave>
+					<spawn npcId="900220" count="3" x="-88856" y="-220215" z="-7896" radius="150" />
+				</wave>
+				<wave>
+					<spawn npcId="900220" count="2" x="-88856" y="-220215" z="-7896" radius="150" />
+					<spawn npcId="900222" count="1" x="-88575" y="-220210" z="-7900" championTier="1" />
+				</wave>
+				<wave>
+					<spawn npcId="900222" count="2" x="-88856" y="-220215" z="-7896" radius="150" championTier="1" />
+					<spawn npcId="900221" count="1" x="-88853" y="-220496" z="-7900" variant="MAGE" />
+				</wave>
+			</objective>
+			<objective type="COLLECT" text="Reclaim the Trial Marks" count="5" itemId="8940" chance="50" thiefBonus="3">
+				<spawn npcId="900220" count="3" x="-88714" y="-220353" z="-7900" radius="200" />
+				<spawn npcId="900223" count="1" x="-88575" y="-220210" z="-7900" variant="THIEF" />
+			</objective>
+			<objective type="BOSS" text="Topple the Arena Champion">
+				<spawn npcId="900224" x="-88856" y="-220215" z="-7896" heading="57508" waves="3" arenaBuffs="true" enrageSeconds="120" />
+			</objective>
+			<objective type="DUEL" text="Face the Shade of your path" title="Rival Shade" npcId="900225" x="-88856" y="-220215" z="-7896" heading="57508" />
+			<objective type="TALK" text="Speak with the Trial Master" npcId="900241" x="-88998" y="-220077" z="-7892" heading="57508" />
+		</objectives>
+		<twists>
+			<twist type="INVADER" chance="20" afterObjective="1" arenaCoins="20" />
+		</twists>
+		<rewards>
+			<arenaCoins count="40" parBonus="20" />
+			<sealedCache />
+		</rewards>
+	</challenge>
+	<challenge id="third_archmage" name="Trial of the Archmage" stage="THIRD_TRANSFER" difficulty="Very Hard" duration="1800" parTime="900">
+		<description>Overpower the Ketra seers, awaken the four Trial Seals, endure the storm, topple the Arena Champion through all three of its lives before it enrages, and face the Shade of the path you seek.</description>
+		<entry x="-88429" y="-220629" z="-7903" heading="24740" />
+		<guide npcId="900240" x="-88471" y="-220672" z="-7903" heading="24740" />
+		<omens>
+			<omen name="GENEROUS_SPIRITS" />
+			<omen name="KILL_STREAK" />
+			<omen name="VAMPIRIC_HUNT" />
+			<omen name="VETERAN_GROUNDS" />
+			<omen name="FRAGILE_GROUND" />
+			<omen name="GLASS_CANNON" />
+			<omen name="IRONCLAD" />
+			<omen name="ARCANE_SURGE" />
+			<omen name="BLOODY_HARVEST" />
+			<omen name="RESTLESS_DEAD" />
+			<omen name="UNBREAKABLE" />
+			<omen name="ARCHETYPE_HUNTER" />
+		</omens>
+		<objectives>
+			<objective type="KILL" text="Overpower the Ketra seers" count="12">
+				<spawn npcId="900221" count="3" x="-88714" y="-220353" z="-7900" radius="220" variant="MAGE" />
+			</objective>
+			<objective type="ACTIVATE" text="Awaken the Trial Seals" npcId="900242" count="4">
+				<spawn npcId="900242" x="-88575" y="-220210" z="-7900" />
+				<spawn npcId="900242" x="-88853" y="-220496" z="-7900" />
+				<spawn npcId="900242" x="-88856" y="-220215" z="-7896" />
+				<spawn npcId="900242" x="-88571" y="-220491" z="-7902" />
+				<spawn npcId="900220" count="2" x="-88714" y="-220353" z="-7900" radius="150" />
+			</objective>
+			<objective type="SURVIVE" text="Endure the storm" seconds="90" interval="15" maxAlive="6">
+				<spawn npcId="900220" count="1" x="-88856" y="-220215" z="-7896" radius="150" />
+				<spawn npcId="900221" count="1" x="-88575" y="-220210" z="-7900" radius="100" variant="MAGE" />
+			</objective>
+			<objective type="BOSS" text="Topple the Arena Champion">
+				<spawn npcId="900224" x="-88856" y="-220215" z="-7896" heading="57508" waves="3" arenaBuffs="true" enrageSeconds="120" />
+			</objective>
+			<objective type="DUEL" text="Face the Shade of your path" title="Rival Shade" npcId="900225" x="-88856" y="-220215" z="-7896" heading="57508" />
+			<objective type="TALK" text="Speak with the Trial Master" npcId="900241" x="-88998" y="-220077" z="-7892" heading="57508" />
+		</objectives>
+		<twists>
+			<twist type="INVADER" chance="20" afterObjective="2" arenaCoins="20" />
+		</twists>
+		<rewards>
+			<arenaCoins count="40" parBonus="20" />
+			<sealedCache />
+		</rewards>
+	</challenge>
+	<!-- Kamael are all "fighters" to the server, but the Soul Breakers become the Soul Hounds, Kamael's magic class: they take the Archmage trial. -->
+	<mapping stage="THIRD_TRANSFER" type="CLASS" value="128" challenge="third_archmage" />
+	<mapping stage="THIRD_TRANSFER" type="CLASS" value="129" challenge="third_archmage" />
+	<mapping stage="THIRD_TRANSFER" type="ARCHETYPE" value="FIGHTER" challenge="third_champion" />
+	<mapping stage="THIRD_TRANSFER" type="ARCHETYPE" value="MAGE" challenge="third_archmage" />
+	<mapping stage="THIRD_TRANSFER" type="GENERIC" challenge="third_champion" />
+</list>

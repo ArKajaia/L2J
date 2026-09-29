@@ -18,8 +18,8 @@ import org.l2jmobius.gameserver.model.zone.type.HotZone;
  * Counts monster kills per hotzone (see {@link HotZone}) and, once {@link HotzoneMinibossConfig#KILLS_REQUIRED} is reached in one zone, spawns a buffed clone of whichever monster type died LAST there as a miniboss - tough, but tuned for roughly 2 players rather than a full raid (see
  * {@link Monster#isHotzoneMiniboss()} and the stat/reward overrides that key off it).
  * <p>
- * Scoped to any zone flagged {@link ZoneId#HOTZONE}, matching the existing convention in {@code Spawn} (the champion-frequency hotzone bonus applies the same way) - not gated behind whichever single zone the hourly rotation currently has "active", since all hotzone-flagged terrain is
- * already treated as boosted ground elsewhere in this codebase.
+ * Only the zones the hourly rotation currently has active count (see {@link HotzoneModifierManager#isActive(int)}): every {@link HotZone} stays flagged {@link ZoneId#HOTZONE} whether or not it is the rotation's pick, so without that gate a zone that was no longer hot kept
+ * spawning minibosses. A zone's progress is dropped when it rotates out (see {@link #resetKills(int)}).
  */
 public class HotZoneMinibossManager
 {
@@ -57,7 +57,8 @@ public class HotZoneMinibossManager
 		// Credit only ONE hotzone per kill - where hotzones overlap, counting every zone would double the miniboss rate there.
 		for (ZoneType zone : ZoneManager.getInstance().getZones(victim))
 		{
-			if (!(zone instanceof HotZone))
+			// Skip hotzones the rotation isn't currently running - they're still flagged HOTZONE, but no longer hot.
+			if (!(zone instanceof HotZone) || !HotzoneModifierManager.getInstance().isActive(zone.getId()))
 			{
 				continue;
 			}
@@ -73,6 +74,15 @@ public class HotZoneMinibossManager
 			}
 			return;
 		}
+	}
+
+	/**
+	 * Drops the kill progress of a hotzone, so a zone that rotates out doesn't carry a half-filled counter into its next activation.
+	 * @param zoneId the hotzone's zone id
+	 */
+	public void resetKills(int zoneId)
+	{
+		_killCounters.remove(zoneId);
 	}
 
 	private void spawnMiniboss(NpcTemplate template, Attackable victim, ZoneType zone)

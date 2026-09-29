@@ -52,6 +52,7 @@ import org.l2jmobius.gameserver.managers.EventDropManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.PcCafePointsManager;
 import org.l2jmobius.gameserver.managers.WalkingManager;
+import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.enums.creature.InstanceType;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
@@ -366,6 +367,11 @@ public class Attackable extends Npc
 			{
 				FakePlayerPvpManager.getInstance().onAttackableKilled(this, player);
 			}
+			// One roaming fake player killed by another.
+			else if (isPvpFakePlayer() && killer.isPvpFakePlayer())
+			{
+				FakePlayerPvpManager.getInstance().onFakePlayerKilledByFake(this, killer);
+			}
 		}
 		
 		// Notify to minions if there are.
@@ -425,12 +431,14 @@ public class Attackable extends Npc
 			Player maxDealer = null;
 			long maxDamage = 0;
 			long totalDamage = 0;
+			Creature maxFakeDealer = null;
+			long maxFakeDamage = 0;
 			
 			// While Iterating over This Map Removing Object is Not Allowed
 			// Go through the _aggroList of the Attackable
 			for (AggroInfo info : _aggroList.values())
 			{
-				if (info == null)
+				if ((info == null) || (info.getAttacker() == null))
 				{
 					continue;
 				}
@@ -439,6 +447,19 @@ public class Attackable extends Npc
 				final Player attacker = info.getAttacker().asPlayer();
 				if (attacker == null)
 				{
+					// Fake players can't be rewarded, but their damage still lowers the players' exp/sp share and counts when deciding who owns the drop.
+					final Creature fake = info.getAttacker();
+					final long fakeDamage = info.getDamage();
+					if (fake.isFakePlayer() && (fakeDamage > 1) && (calculateDistance3D(fake) <= PlayerConfig.ALT_PARTY_RANGE))
+					{
+						totalDamage += fakeDamage;
+						
+						if (!fake.isDead() && (fakeDamage > maxFakeDamage))
+						{
+							maxFakeDealer = fake;
+							maxFakeDamage = fakeDamage;
+						}
+					}
 					continue;
 				}
 				
@@ -524,7 +545,12 @@ public class Attackable extends Npc
 			mostDamageParty = !damagingParties.isEmpty() ? damagingParties.get(0) : null;
 			
 			// Manage Base, Quests and Sweep drops of the Attackable
-			if ((mostDamageParty != null) && (mostDamageParty.damage > maxDamage))
+			if ((maxFakeDealer != null) && (maxFakeDamage > maxDamage) && ((mostDamageParty == null) || (maxFakeDamage > mostDamageParty.damage)))
+			{
+				// A fake player did more damage than any player or party: a player that only chipped in doesn't get its loot.
+				doFakePlayerItemDrop(maxFakeDealer);
+			}
+			else if ((mostDamageParty != null) && (mostDamageParty.damage > maxDamage))
 			{
 				Player leader = mostDamageParty.party.getLeader();
 				doItemDrop(leader);
@@ -887,8 +913,8 @@ public class Attackable extends Npc
 			return;
 		}
 		
-		// Check if fake players should aggro each other.
-		if (isFakePlayer() && !FakePlayersConfig.FAKE_PLAYER_AGGRO_FPC && attacker.isFakePlayer())
+		// Check if fake players should aggro each other (roaming fake players fight each other like players).
+		if (isFakePlayer() && !FakePlayersConfig.FAKE_PLAYER_AGGRO_FPC && attacker.isFakePlayer() && !(isPvpFakePlayer() && attacker.isPvpFakePlayer()))
 		{
 			return;
 		}
@@ -1155,6 +1181,24 @@ public class Attackable extends Npc
 		return ai.getHate();
 	}
 	
+	/**
+	 * Drops the loot of a monster a fake player did most of the damage to: the fake player gets the base drops (only if {@link FakePlayersConfig#FAKE_PLAYER_CAN_DROP_ITEMS}), while a player that spoiled the monster can still sweep it.
+	 * @param fake the fake player that did the most damage
+	 */
+	private void doFakePlayerItemDrop(Creature fake)
+	{
+		doItemDrop(getTemplate(), fake);
+		
+		if (isSpoiled())
+		{
+			final Player spoiler = World.getInstance().getPlayer(getSpoilerObjectId());
+			if (spoiler != null)
+			{
+				_sweepItems.set(getTemplate().calculateDrops(DropType.SPOIL, this, spoiler));
+			}
+		}
+	}
+	
 	public void doItemDrop(Creature mainDamageDealer)
 	{
 		doItemDrop(getTemplate(), mainDamageDealer);
@@ -1180,8 +1224,18 @@ public class Attackable extends Npc
 		{
 			if (org.l2jmobius.commons.util.Rnd.get(100d) < org.l2jmobius.gameserver.config.custom.CustomBuffConfig.DROP_CHANCE)
 			{
-				// Drops the item on the ground, assigning drop rights to the damage dealer
-				this.dropItem(mainDamageDealer, org.l2jmobius.gameserver.config.custom.CustomBuffConfig.ITEM_ID, this.getChampionTier());
+				final ItemHolder buffBookDrop = new ItemHolder(org.l2jmobius.gameserver.config.custom.CustomBuffConfig.ITEM_ID, this.getChampionTier());
+				final Player buffBookOwner = mainDamageDealer != null ? mainDamageDealer.asPlayer() : null;
+				if (buffBookOwner != null)
+				{
+					// Auto-loot it like the regular drops (respects server auto-loot settings and the player's .filter)
+					dropOrAutoLoot(buffBookOwner, buffBookDrop);
+				}
+				else
+				{
+					// Drops the item on the ground, assigning drop rights to the damage dealer
+					this.dropItem(mainDamageDealer, buffBookDrop);
+				}
 			}
 		}
 	}

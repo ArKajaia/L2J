@@ -39,6 +39,9 @@ public class HotzoneModifierManager
 	/** zone id -> its player-HP-drain ticking task, only present while that zone's modifier actually drains HP. */
 	private final Map<Integer, ScheduledFuture<?>> _drainTasks = new ConcurrentHashMap<>();
 
+	/** instance id -> the modifier applied to everything inside that instance (a class transfer challenge "Omen"). The HP drain of such a modifier is ticked by its owner, not here. */
+	private final Map<Integer, HotzoneModifier> _instanceModifiers = new ConcurrentHashMap<>();
+
 	protected HotzoneModifierManager()
 	{
 	}
@@ -71,6 +74,7 @@ public class HotzoneModifierManager
 	public void clearModifier(int zoneId)
 	{
 		_activeModifiers.remove(zoneId);
+		HotZoneMinibossManager.getInstance().resetKills(zoneId);
 
 		final ScheduledFuture<?> task = _drainTasks.remove(zoneId);
 		if (task != null)
@@ -89,13 +93,69 @@ public class HotzoneModifierManager
 	}
 
 	/**
+	 * Applies {@code modifier} to every creature inside {@code instanceId}, whatever its coordinates. Set it before spawning the instance's monsters so their stats pick it up from the start.
+	 * @param instanceId the instance id
+	 * @param modifier the modifier to apply
+	 */
+	public void setInstanceModifier(int instanceId, HotzoneModifier modifier)
+	{
+		if ((instanceId > 0) && (modifier != null))
+		{
+			_instanceModifiers.put(instanceId, modifier);
+		}
+	}
+
+	/**
+	 * Removes the instance-wide modifier of {@code instanceId}, if any.
+	 * @param instanceId the instance id
+	 */
+	public void clearInstanceModifier(int instanceId)
+	{
+		_instanceModifiers.remove(instanceId);
+	}
+
+	/**
+	 * @param instanceId the instance id
+	 * @return the instance-wide modifier of {@code instanceId}, or {@code null} if none
+	 */
+	public HotzoneModifier getInstanceModifier(int instanceId)
+	{
+		return _instanceModifiers.get(instanceId);
+	}
+
+	/**
+	 * Every hotzone stays flagged {@link ZoneId#HOTZONE} permanently, but only the rotation's current picks are actually hot - and each of those always has a modifier rolled.
+	 * @param zoneId the hotzone's zone id
+	 * @return {@code true} if {@code zoneId} is one of the hotzones the rotation currently has active
+	 */
+	public boolean isActive(int zoneId)
+	{
+		return _activeModifiers.containsKey(zoneId);
+	}
+
+	/**
 	 * Resolves whichever hotzone {@code creature} is currently standing in and returns its active modifier.
 	 * @param creature the creature to check
 	 * @return the active modifier for that creature's current hotzone, or {@code null} if it isn't in one, or its hotzone has no modifier active
 	 */
 	public HotzoneModifier getModifierFor(Creature creature)
 	{
-		if ((creature == null) || !creature.isInsideZone(ZoneId.HOTZONE))
+		if (creature == null)
+		{
+			return null;
+		}
+
+		// An instance-wide modifier wins over whatever world hotzone the instance's coordinates happen to overlap.
+		if ((creature.getInstanceId() > 0) && !_instanceModifiers.isEmpty())
+		{
+			final HotzoneModifier instanceModifier = _instanceModifiers.get(creature.getInstanceId());
+			if (instanceModifier != null)
+			{
+				return instanceModifier;
+			}
+		}
+
+		if (!creature.isInsideZone(ZoneId.HOTZONE))
 		{
 			return null;
 		}
@@ -193,6 +253,12 @@ public class HotzoneModifierManager
 
 	private void raiseAgain(Monster victim, Player killer)
 	{
+		// The instance may have been destroyed (and its id reused) during the rise delay.
+		if ((victim.getInstanceId() > 0) && (InstanceManager.getInstance().getInstance(victim.getInstanceId()) == null))
+		{
+			return;
+		}
+
 		final Monster risen = new Monster(victim.getTemplate());
 		risen.setInstanceId(victim.getInstanceId());
 		risen.getVariables().set(Monster.HOTZONE_RISEN_VAR, true);
@@ -200,6 +266,12 @@ public class HotzoneModifierManager
 		risen.setHeading(victim.getHeading());
 		risen.spawnMe();
 		risen.setCurrentHp(risen.getMaxHp() * 0.5);
+
+		// A class transfer challenge tracks the risen monster so killing it again counts.
+		if (ClassTransferChallengeManager.isChallengeInstance(risen.getInstanceId()))
+		{
+			ClassTransferChallengeManager.getInstance().onMonsterRisen(victim, risen);
+		}
 
 		if ((killer != null) && killer.isOnline())
 		{

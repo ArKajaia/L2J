@@ -52,6 +52,7 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.enums.player.Sex;
 import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
@@ -123,6 +124,8 @@ public class FakePlayerPvpManager
 	private static final int RETURN_MAX_RETRIES = 15;
 	/** A fake player says at most one thing in this many milliseconds. */
 	private static final long CHAT_INTERVAL = 20000;
+	/** How long a fake player keeps not hitting back an attacker it chose not to fight, after their last hit. */
+	private static final long REFUSE_MEMORY = 60000;
 	/** A fake player doesn't pick a fight with a player this many levels above it (it only complains). */
 	private static final int OUTLEVELED_DIFFERENCE = 6;
 	
@@ -835,6 +838,54 @@ public class FakePlayerPvpManager
 		"if you want my mob, you have to fight me first"
 	};
 	
+	/** Said in general chat standing next to a lower level, before it hits them once to invite a PvP (3 to 60 characters). */
+	private static final String[] TAUNTS_POKE =
+	{
+		"pvp?",
+		"1v1",
+		"fight me",
+		"u scared?",
+		"hit me back",
+		"wanna duel? :)",
+		"show me what u got",
+		"u gonna hit back or what?",
+		"this spot is mine now, fight for it",
+		"lets see if you can handle a real pvp",
+		"you farm here, you pay the toll. hit me back",
+		"i am bored, lets see how long you can last vs me",
+		"come on, hit back or go farm somewhere else noob",
+		"one hit coming, show me you are not a coward",
+		"flag up and fight me, or keep farming like a scared kid",
+		"incoming hit, answer it or run, your choice",
+		"whats wrong? afraid of a little pvp? lol",
+		"hey you, yes you, 1v1 me right here",
+		"ur gear looks weak, lets test it",
+		"gg in advance"
+	};
+	
+	/** Said when it doesn't hit back a higher level that attacks it while it isn't flagged. */
+	private static final String[] TAUNTS_REFUSE =
+	{
+		"not flagging",
+		"enjoy the karma",
+		"go ahead, get red",
+		"not gonna hit back",
+		"im not flagging for you",
+		"pk me then",
+		"no pvp, im farming",
+		"lol no",
+		"ur higher lvl, go away",
+		"pick on someone your level",
+		"im not fighting u",
+		"leave me alone",
+		"hope u like karma",
+		"kill me and u go red",
+		"not worth it",
+		"go bother someone else",
+		"what do u want",
+		"bored?"
+	};
+	
 	private final AtomicInteger _nextNpcId = new AtomicInteger(FIRST_NPC_ID);
 	private final Set<Npc> _fakePlayers = ConcurrentHashMap.newKeySet();
 	private final Set<String> _names = ConcurrentHashMap.newKeySet();
@@ -874,19 +925,31 @@ public class FakePlayerPvpManager
 	 * @param x the x
 	 * @param y the y
 	 * @param z the z
-	 * @return {@code true} if the point is inside an enabled hotzone
+	 * @return {@code true} if the point is inside a hotzone the rotation currently has active
 	 */
 	private static boolean isInHotzone(int x, int y, int z)
 	{
+		return getActiveHotzoneId(x, y, z) != 0;
+	}
+	
+	/**
+	 * Every hotzone stays enabled, but only the rotation's current picks are hot (see {@link HotzoneModifierManager#isActive}).
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @return the id of the active hotzone at that point, 0 if none
+	 */
+	private static int getActiveHotzoneId(int x, int y, int z)
+	{
 		for (ZoneType zone : ZoneManager.getInstance().getZones(x, y, z))
 		{
-			if ((zone instanceof HotZone) && zone.isEnabled())
+			if ((zone instanceof HotZone) && HotzoneModifierManager.getInstance().isActive(zone.getId()))
 			{
-				return true;
+				return zone.getId();
 			}
 		}
 		
-		return false;
+		return 0;
 	}
 	
 	/**
@@ -1069,6 +1132,7 @@ public class FakePlayerPvpManager
 			final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
 			profile.setReplacedMonster(replacedMonster, replacedSpawn);
 			profile.setSpawnTime(System.currentTimeMillis());
+			profile.setHotzoneId(getActiveHotzoneId(x, y, z)); // It leaves once that hotzone rotates out.
 			
 			final Npc fake = spawnFromTemplate(template, x, y, z, instanceId);
 			if (fake == null)
@@ -1085,6 +1149,95 @@ public class FakePlayerPvpManager
 			_names.remove(name.toLowerCase());
 			return null;
 		}
+	}
+	
+	/**
+	 * Spawns a class transfer challenge opponent: a fake player of {@code build} forced into {@code playerClass}, that only fights {@code target}. It never flees, escapes, logs off or comes back after dying, stays flagged (so it never refuses the fight and killing it is never a PK), and its
+	 * death pays no PvP count, karma or reward (see {@link FakePlayerPvpProfile#isTrialDuelist()}). The challenge removes it with {@code deleteMe()} or by destroying its instance.
+	 * @param build the build
+	 * @param level the level
+	 * @param playerClass a class of the build's class line, {@code null} for the one its level gives
+	 * @param title the title it shows
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @param instanceId the instance
+	 * @param target the challenger it duels
+	 * @return the opponent, or {@code null} if it could not be created
+	 */
+	public Npc spawnTrialDuelist(FakePlayerPvpBuild build, int level, PlayerClass playerClass, String title, int x, int y, int z, int instanceId, Player target)
+	{
+		if ((build == null) || (target == null))
+		{
+			return null;
+		}
+		
+		final String name = generateName();
+		try
+		{
+			final NpcTemplate template = FakePlayerPvpFactory.createTemplate(build, level, _nextNpcId.getAndIncrement(), name, playerClass, title);
+			if (template == null)
+			{
+				_names.remove(name.toLowerCase());
+				return null;
+			}
+			
+			final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+			profile.setSpawnTime(System.currentTimeMillis());
+			profile.setHotzoneId(0);
+			profile.setBlessedEscape(false);
+			profile.setTrialDuelTarget(target.getObjectId());
+			profile.onReturn(0); // Marks it as already returned: it never walks back after dying.
+			
+			final Npc fake = spawnFromTemplate(template, x, y, z, instanceId);
+			if (fake == null)
+			{
+				FakePlayerData.getInstance().removeFakePlayer(name);
+				_names.remove(name.toLowerCase());
+				return null;
+			}
+			
+			// Flagged for good (no PvP flag timer is started for a script value set by hand).
+			fake.setScriptValue(1);
+			fake.broadcastInfo();
+			engageTrialTarget(fake.asAttackable());
+			return fake;
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn trial duelist " + build.getName() + " level " + level + ".", e);
+			FakePlayerData.getInstance().removeFakePlayer(name);
+			_names.remove(name.toLowerCase());
+			return null;
+		}
+	}
+	
+	/**
+	 * Points a class transfer challenge opponent at its challenger when the challenger can be fought (online, alive, attackable and in the same instance).
+	 * @param fake the opponent
+	 * @return {@code true} if it is (now) fighting its challenger
+	 */
+	public boolean engageTrialTarget(Attackable fake)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		if ((profile == null) || !profile.isTrialDuelist() || fake.isDead())
+		{
+			return false;
+		}
+		
+		final Player target = World.getInstance().getPlayer(profile.getTrialDuelTarget());
+		if ((target == null) || !target.isOnline() || target.isDead() || target.isInvul() || (target.getInstanceId() != fake.getInstanceId()))
+		{
+			return false;
+		}
+		
+		if (isFighting(fake, target))
+		{
+			return true;
+		}
+		
+		startFight(fake, target, TAUNTS_FLAGGED);
+		return true;
 	}
 	
 	/**
@@ -1327,7 +1480,7 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
-	 * Monsters (and anything else that isn't a player or a player's summon) cannot bring a roaming fake player below {@link FakePlayerPvpConfig#MONSTER_DAMAGE_FLOOR}% HP.
+	 * Monsters (and anything else that isn't a player, a player's summon or another roaming fake player) cannot bring a roaming fake player below {@link FakePlayerPvpConfig#MONSTER_DAMAGE_FLOOR}% HP.
 	 * @param fake the fake player being hit
 	 * @param damage the damage
 	 * @param attacker who deals it, can be {@code null}
@@ -1335,7 +1488,7 @@ public class FakePlayerPvpManager
 	 */
 	public double limitDamage(Attackable fake, double damage, Creature attacker)
 	{
-		if ((attacker != null) && attacker.isPlayable())
+		if ((attacker != null) && isPvpEnemy(attacker))
 		{
 			return damage;
 		}
@@ -1394,19 +1547,114 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
-	 * Called by the fake player AI when it gets hit: a player that attacks it becomes its target.
+	 * Called by the fake player AI when it gets hit: a player (or another roaming fake player) that attacks it becomes its target.<br>
+	 * Like a player that doesn't want to fight, a fake player that isn't flagged may not hit back someone of a higher level (see {@link FakePlayerPvpPersonality#getRefuseChance}): it goes on hunting and lets them get the karma. It decides once, and keeps to it
+	 * while they keep hitting it.
 	 * @param fake the fake player
 	 * @param attacker the attacker
 	 */
 	public void onFakePlayerAttacked(Attackable fake, Creature attacker)
 	{
-		final Player player = attacker != null ? attacker.asPlayer() : null;
-		if ((player == null) || fake.isDead() || isFighting(fake, player))
+		final Creature enemy = getPvpEnemy(attacker);
+		if ((enemy == null) || (enemy == fake) || fake.isDead() || isFighting(fake, enemy))
 		{
 			return;
 		}
 		
-		startFight(fake, player, TAUNTS_ATTACKED);
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		if (profile == null)
+		{
+			return;
+		}
+		
+		final long now = System.currentTimeMillis();
+		final boolean unflagged = fake.isScriptValue(0) && (fake.getKarma() <= 0);
+		if (profile.isRefusing(enemy, now))
+		{
+			// Still not hitting back, for a while longer since they go on.
+			if (unflagged)
+			{
+				profile.refuse(enemy, now + REFUSE_MEMORY);
+				return;
+			}
+			
+			// Flagged meanwhile (it attacked someone): no reason to hold back anymore.
+			profile.stopRefusing(enemy);
+		}
+		else if (unflagged && (enemy.getLevel() > fake.getLevel()) && (Rnd.get(100) < profile.getPersonality().getRefuseChance(enemy.getLevel() - fake.getLevel())))
+		{
+			profile.refuse(enemy, now + REFUSE_MEMORY);
+			taunt(fake, TAUNTS_REFUSE, false);
+			return;
+		}
+		
+		startFight(fake, enemy, TAUNTS_ATTACKED);
+	}
+	
+	/**
+	 * @param fake a roaming fake player
+	 * @param attacker a creature that attacked it
+	 * @return {@code true} if it chose not to hit {@code attacker} (or its owner) back, see {@link #onFakePlayerAttacked}
+	 */
+	public static boolean isRefusing(Attackable fake, Creature attacker)
+	{
+		final Creature enemy = getPvpEnemy(attacker);
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		return (enemy != null) && (profile != null) && profile.isRefusing(enemy, System.currentTimeMillis());
+	}
+	
+	/**
+	 * @param creature a creature
+	 * @return {@code true} if a roaming fake player fighting {@code creature} is in a PvP: a player, a player's summon, or another roaming fake player
+	 */
+	public static boolean isPvpEnemy(Creature creature)
+	{
+		return (creature != null) && (creature.isPlayable() || creature.isPvpFakePlayer());
+	}
+	
+	/**
+	 * @param attacker a creature that attacks a roaming fake player
+	 * @return who it would fight for that: the player (the owner of a summon), or the other roaming fake player, {@code null} for anything else
+	 */
+	private static Creature getPvpEnemy(Creature attacker)
+	{
+		if (attacker == null)
+		{
+			return null;
+		}
+		
+		if (attacker.isPvpFakePlayer())
+		{
+			return attacker;
+		}
+		
+		// Another fake player's servitor: that fake player.
+		if (attacker instanceof FakePlayerPvpServitor)
+		{
+			final Npc owner = ((FakePlayerPvpServitor) attacker).getOwner();
+			return (owner != null) && owner.isPvpFakePlayer() ? owner : null;
+		}
+		
+		return attacker.asPlayer();
+	}
+	
+	/**
+	 * Called by the fake player AI when it walks up to a lower level and hits it once to invite a PvP.
+	 * @param fake the fake player
+	 */
+	public void onPoke(Attackable fake)
+	{
+		taunt(fake, TAUNTS_POKE, false);
+	}
+	
+	/**
+	 * Called when a roaming fake player is killed by another roaming fake player: a few words from the ground. There is nothing to loot, no exp and no coming back for revenge, which are for players.
+	 * @param victim the fake player that died
+	 * @param killer the fake player that killed it
+	 */
+	public void onFakePlayerKilledByFake(Attackable victim, Creature killer)
+	{
+		taunt(victim, TAUNTS_DEATH, true);
 	}
 	
 	/**
@@ -1486,7 +1734,15 @@ public class FakePlayerPvpManager
 		// Out of the cast that got it here first.
 		ThreadPool.schedule(() ->
 		{
-			if (!fake.isDead() && fake.isSpawned() && !isSeenByPlayer(fake))
+			final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+			final boolean inView = (profile != null) && profile.isEscapeInView();
+			if (profile != null)
+			{
+				profile.setEscapeInView(false);
+			}
+			
+			// Leaving a hotzone that rotated out, or a blessed scroll: gone in front of whoever watches, like a player going to town.
+			if (!fake.isDead() && fake.isSpawned() && (inView || !isSeenByPlayer(fake)))
 			{
 				fake.deleteMe();
 			}
@@ -1568,11 +1824,27 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
+	 * Like {@link #isFairAreaTarget(Attackable, Player)} for another roaming fake player: one it is fighting, or a flagged or karma one.
+	 * @param fake the fake player casting
+	 * @param other another roaming fake player in the area
+	 * @return {@code true} if {@code other} may be hit
+	 */
+	public static boolean isFairAreaTarget(Attackable fake, Npc other)
+	{
+		if (other.isInsideZone(ZoneId.PEACE))
+		{
+			return false;
+		}
+		
+		return isFighting(fake, other) || (other.getScriptValue() > 0) || (other.getKarma() > 0);
+	}
+	
+	/**
 	 * @param fake a fake player
-	 * @param player a player
+	 * @param player a player, or another roaming fake player
 	 * @return {@code true} if {@code fake} is already fighting {@code player}
 	 */
-	private static boolean isFighting(Attackable fake, Player player)
+	private static boolean isFighting(Attackable fake, Creature player)
 	{
 		// Read from the aggro list itself: getHating() also drops invulnerable players from it.
 		final AggroInfo info = fake.getAggroList().get(player);
@@ -1591,12 +1863,12 @@ public class FakePlayerPvpManager
 	/**
 	 * Makes a fake player drop what it is doing and fight {@code player}.
 	 * @param fake the fake player
-	 * @param player the player
+	 * @param player the player, or another roaming fake player
 	 * @param taunts what it may say about it
 	 */
-	private void startFight(Attackable fake, Player player, String[] taunts)
+	private void startFight(Attackable fake, Creature player, String[] taunts)
 	{
-		if (player.isDead() || player.isInvisible() || (player.isGM() && !player.getAccessLevel().canTakeAggro()))
+		if (player.isDead() || player.isInvisible() || (player.isPlayer() && player.isGM() && !player.asPlayer().getAccessLevel().canTakeAggro()))
 		{
 			return;
 		}
@@ -1655,6 +1927,12 @@ public class FakePlayerPvpManager
 		
 		// A few words from the ground.
 		taunt(fake, TAUNTS_DEATH, true);
+		
+		// A class transfer challenge opponent is part of the trial: no return trip, no gear, no loot.
+		if (profile.isTrialDuelist())
+		{
+			return;
+		}
 		
 		// Maybe it walks back from town for round two, unless it already did or its killer is far above it.
 		if (!profile.hasReturned() && ((FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE <= 0) || (killer.getLevel() < (fake.getLevel() + FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE))) && (Rnd.get(100) < profile.getPersonality().getReturnChance()))
@@ -2096,7 +2374,7 @@ public class FakePlayerPvpManager
 	 * @param fake a roaming fake player
 	 * @return {@code true} if it is fighting a player: flagged, or a player (or summon) is the one it hates most
 	 */
-	private static boolean isInPvp(Npc fake)
+	public static boolean isInPvp(Npc fake)
 	{
 		if (fake.getScriptValue() > 0)
 		{
@@ -2104,7 +2382,7 @@ public class FakePlayerPvpManager
 		}
 		
 		final Creature hated = fake.isAttackable() ? fake.asAttackable().getMostHated() : null;
-		return (hated != null) && hated.isPlayable();
+		return isPvpEnemy(hated);
 	}
 	
 	/**
@@ -2136,11 +2414,18 @@ public class FakePlayerPvpManager
 				}
 				
 				final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
-				// Logs off once nobody is watching: it doesn't vanish in front of a player.
-				if ((FakePlayerPvpConfig.LIFETIME > 0) && ((now - profile.getSpawnTime()) > (FakePlayerPvpConfig.LIFETIME * 1000L * profile.getLifetimeScale())) && !isSeenByPlayer(fake))
+				
+				// A class transfer challenge opponent stays until its challenge removes it.
+				if (!profile.isTrialDuelist())
 				{
-					fake.deleteMe();
-					continue;
+					checkHotzoneLeave(fake, profile, now);
+					
+					// Logs off once nobody is watching: it doesn't vanish in front of a player.
+					if ((FakePlayerPvpConfig.LIFETIME > 0) && ((now - profile.getSpawnTime()) > (FakePlayerPvpConfig.LIFETIME * 1000L * profile.getLifetimeScale())) && !isSeenByPlayer(fake))
+					{
+						fake.deleteMe();
+						continue;
+					}
 				}
 				
 				refreshToggles(fake, profile);
@@ -2166,6 +2451,32 @@ public class FakePlayerPvpManager
 			{
 				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem while keeping the population.", e);
 			}
+		}
+	}
+	
+	/**
+	 * A fake player that came to an active hotzone leaves some time after the rotation moves on (see {@link FakePlayerPvpConfig#HOTZONE_LEAVE}): its AI then reads a Scroll of Escape and it logs off, which leaves room for the new hotzones. It stays if the zone
+	 * becomes hot again before that. One that was already there when the zone became hot (at server start, before the first rotation...) counts as having come for it.
+	 * @param fake the fake player
+	 * @param profile its profile
+	 * @param now the current time
+	 */
+	private static void checkHotzoneLeave(Npc fake, FakePlayerPvpProfile profile, long now)
+	{
+		final Spawn spawn = fake.getSpawn();
+		if ((profile.getHotzoneId() == 0) && (spawn != null))
+		{
+			profile.setHotzoneId(getActiveHotzoneId(spawn.getX(), spawn.getY(), spawn.getZ()));
+		}
+		
+		final int hotzoneId = profile.getHotzoneId();
+		if (!FakePlayerPvpConfig.HOTZONE_LEAVE || (hotzoneId == 0) || HotzoneModifierManager.getInstance().isActive(hotzoneId))
+		{
+			profile.setLeaveTime(0);
+		}
+		else if (profile.getLeaveTime() == 0)
+		{
+			profile.setLeaveTime(now + (Rnd.get(FakePlayerPvpConfig.HOTZONE_LEAVE_DELAY_MIN, FakePlayerPvpConfig.HOTZONE_LEAVE_DELAY_MAX) * 1000L));
 		}
 	}
 	

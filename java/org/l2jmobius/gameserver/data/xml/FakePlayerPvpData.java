@@ -159,8 +159,15 @@ public class FakePlayerPvpData implements IXmlReader
 				}
 				
 				final FakePlayerPvpBuild build = new FakePlayerPvpBuild(name, playerClass, parseEnum(attrs, Role.class, "role"), parseString(attrs, "weapon"), parseString(attrs, "armor"), parseString(attrs, "jewels", "JEWELS"), parseString(attrs, "bow", null), parseString(attrs, "polearm", null), parseString(attrs, "buffs", playerClass.isMage() ? "MAGE" : "FIGHTER"), Math.max(0, parseInteger(attrs, "weight", 1)), parseBoolean(attrs, "skillFighter", false));
+				final List<NamedNodeMap> variants = new ArrayList<>();
 				for (Node skillsNode = buildNode.getFirstChild(); skillsNode != null; skillsNode = skillsNode.getNextSibling())
 				{
+					if ("variant".equalsIgnoreCase(skillsNode.getNodeName()))
+					{
+						variants.add(skillsNode.getAttributes());
+						continue;
+					}
+
 					if ("combo".equalsIgnoreCase(skillsNode.getNodeName()))
 					{
 						final NamedNodeMap comboAttrs = skillsNode.getAttributes();
@@ -201,6 +208,12 @@ public class FakePlayerPvpData implements IXmlReader
 				}
 				
 				_builds.add(build);
+
+				// Second builds: other gear, the same skills and combos (shared, so only once the build has them all).
+				for (NamedNodeMap variantAttrs : variants)
+				{
+					_builds.add(build.createVariant(parseString(variantAttrs, "name"), parseString(variantAttrs, "weapon", null), parseString(variantAttrs, "armor", null), parseString(variantAttrs, "jewels", null), parseString(variantAttrs, "bow", null), parseString(variantAttrs, "polearm", null), parseString(variantAttrs, "buffs", null), Math.max(0, parseInteger(variantAttrs, "weight", 1))));
+				}
 			});
 		});
 	}

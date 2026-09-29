@@ -92,17 +92,32 @@ public class FakePlayerPvpFactory
 	 */
 	public static NpcTemplate createTemplate(FakePlayerPvpBuild build, int level, int npcId, String name)
 	{
-		final PlayerClass playerClass = build.getPlayerClass(level);
+		return createTemplate(build, level, npcId, name, null, "");
+	}
+	
+	/**
+	 * @param build the build
+	 * @param level the level
+	 * @param npcId a free npc id for the template
+	 * @param name the character name
+	 * @param forcedClass a class of the build's class line to use instead of the one its level gives ({@code null} for the level's class)
+	 * @param title the character title
+	 * @return a new template with its {@link FakePlayerPvpProfile} attached, or {@code null} if the build can't be made at this level
+	 */
+	public static NpcTemplate createTemplate(FakePlayerPvpBuild build, int level, int npcId, String name, PlayerClass forcedClass, String title)
+	{
+		final PlayerClass playerClass = forcedClass != null ? forcedClass : build.getPlayerClass(level);
 		final PlayerTemplate classTemplate = PlayerTemplateData.getInstance().getTemplate(playerClass);
 		if (classTemplate == null)
 		{
 			return null;
 		}
 		
+		// Like players, not everyone wears the best gear for their level: weapon, armor and jewels each lag behind on their own.
 		final FakePlayerPvpData data = FakePlayerPvpData.getInstance();
-		final FakePlayerPvpGearTier weapons = data.getGear(build.getWeaponKit(), level);
-		final FakePlayerPvpGearTier armors = data.getGear(build.getArmorKit(), level);
-		final FakePlayerPvpGearTier jewels = data.getGear(build.getJewelKit(), level);
+		final FakePlayerPvpGearTier weapons = data.getGear(build.getWeaponKit(), rollGearLevel(level));
+		final FakePlayerPvpGearTier armors = data.getGear(build.getArmorKit(), rollGearLevel(level));
+		final FakePlayerPvpGearTier jewels = data.getGear(build.getJewelKit(), rollGearLevel(level));
 		
 		final ItemTemplate weaponItem = getItem(weapons != null ? weapons.getRHand() : 0);
 		final Weapon weapon = weaponItem instanceof Weapon ? (Weapon) weaponItem : null;
@@ -221,7 +236,7 @@ public class FakePlayerPvpFactory
 		FakePlayerPvpWeapon bow = null;
 		if (FakePlayerPvpConfig.WEAPON_SWAP_ENABLED && (build.getBowKit() != null) && (level >= FakePlayerPvpConfig.WEAPON_SWAP_MIN_LEVEL))
 		{
-			final FakePlayerPvpGearTier bows = data.getGear(build.getBowKit(), level);
+			final FakePlayerPvpGearTier bows = data.getGear(build.getBowKit(), rollGearLevel(level));
 			final ItemTemplate bowItem = getItem(bows != null ? bows.getRHand() : 0);
 			if ((bowItem instanceof Weapon) && ((Weapon) bowItem).isRange())
 			{
@@ -234,7 +249,7 @@ public class FakePlayerPvpFactory
 		FakePlayerPvpWeapon polearm = null;
 		if (FakePlayerPvpConfig.POLEARM_SWAP_ENABLED && (build.getPolearmKit() != null) && (level >= FakePlayerPvpConfig.POLEARM_SWAP_MIN_LEVEL))
 		{
-			final FakePlayerPvpGearTier polearms = data.getGear(build.getPolearmKit(), level);
+			final FakePlayerPvpGearTier polearms = data.getGear(build.getPolearmKit(), rollGearLevel(level));
 			final ItemTemplate polearmItem = getItem(polearms != null ? polearms.getRHand() : 0);
 			if ((polearmItem instanceof Weapon) && (polearmItem.getItemType() == WeaponType.POLE))
 			{
@@ -256,7 +271,7 @@ public class FakePlayerPvpFactory
 		set.set("level", level);
 		set.set("type", "Monster");
 		set.set("name", name);
-		set.set("title", "");
+		set.set("title", title != null ? title : "");
 		set.set("race", playerClass.getRace().name());
 		set.set("sex", female ? Sex.FEMALE.name() : Sex.MALE.name());
 		set.set("baseSTR", str);
@@ -412,6 +427,10 @@ public class FakePlayerPvpFactory
 		}
 		
 		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), armorWornMask, chest != null ? chest.getItemMask() : 0, maxCharges, equipment, mainWeapon, bow, polearm, FakePlayerPvpPersonality.random());
+		
+		// High levels sometimes carry Blessed Scrolls of Escape.
+		profile.setBlessedEscape((level >= FakePlayerPvpConfig.BLESSED_ESCAPE_MIN_LEVEL) && (Rnd.get(100) < FakePlayerPvpConfig.BLESSED_ESCAPE_CHANCE));
+		
 		for (SkillCategory category : SkillCategory.values())
 		{
 			final List<Skill> list = new ArrayList<>();
@@ -461,6 +480,17 @@ public class FakePlayerPvpFactory
 		template.setSkills(skills);
 		template.setFakePlayerPvpProfile(profile);
 		return template;
+	}
+	
+	/**
+	 * @param level the character level
+	 * @return the level a piece of its gear is picked for: up to {@link FakePlayerPvpConfig#GEAR_LEVEL_DROP_ABOVE_80} levels lower above level 80, up to {@link FakePlayerPvpConfig#GEAR_LEVEL_DROP_ABOVE_51} levels lower above level 51 (a player still in last grade's gear), its level
+	 *         below
+	 */
+	private static int rollGearLevel(int level)
+	{
+		final int maxDrop = level > 80 ? FakePlayerPvpConfig.GEAR_LEVEL_DROP_ABOVE_80 : level > 51 ? FakePlayerPvpConfig.GEAR_LEVEL_DROP_ABOVE_51 : 0;
+		return maxDrop > 0 ? Math.max(1, level - Rnd.get(0, maxDrop)) : level;
 	}
 	
 	/**

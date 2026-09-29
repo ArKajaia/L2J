@@ -1231,7 +1231,8 @@ public class Npc extends Creature
 		
 		final Weapon weapon = (killer != null) ? killer.getActiveWeaponItem() : null;
 		_killingBlowWeaponId = (weapon != null) ? weapon.getId() : 0;
-		if (_isFakePlayer && (killer != null) && killer.isPlayable())
+		// A class transfer challenge opponent is part of the trial: killing it is neither a PK nor a PvP kill.
+		if (_isFakePlayer && (killer != null) && killer.isPlayable() && !isTrialDuelist())
 		{
 			final Player player = killer.asPlayer();
 			// Not flagged and no karma: a PK. (Karma is positive here, "< 0" could never be true.)
@@ -2059,6 +2060,14 @@ public class Npc extends Creature
 	public boolean isPvpFakePlayer()
 	{
 		return _isFakePlayer && (getTemplate().getFakePlayerPvpProfile() != null);
+	}
+	
+	/**
+	 * @return {@code true} if this is a roaming fake player summoned as a class transfer challenge opponent
+	 */
+	public boolean isTrialDuelist()
+	{
+		return isPvpFakePlayer() && getTemplate().getFakePlayerPvpProfile().isTrialDuelist();
 	}
 	
 	/**

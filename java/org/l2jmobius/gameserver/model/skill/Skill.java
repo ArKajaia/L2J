@@ -1212,10 +1212,17 @@ public class Skill
 		}
 		else if (caster.isPvpFakePlayer())
 		{
-			// A roaming fake player's area skills hit monsters like a player's (not other fake players), and, like a player that doesn't hold Ctrl, spare the players it isn't fighting unless they are flagged or PKs.
+			// A roaming fake player's area skills hit monsters like a player's, and, like a player that doesn't hold Ctrl, spare the players (and other roaming fake players) it isn't fighting unless they are flagged or PKs.
 			if (targetPlayer == null)
 			{
-				if (target.isAttackable() && (!target.isMonster() || target.isFakePlayer()))
+				if (target.isPvpFakePlayer())
+				{
+					if (!FakePlayerPvpManager.isFairAreaTarget(caster.asAttackable(), target.asNpc()))
+					{
+						return false;
+					}
+				}
+				else if (target.isAttackable() && (!target.isMonster() || target.isFakePlayer()))
 				{
 					return false;
 				}

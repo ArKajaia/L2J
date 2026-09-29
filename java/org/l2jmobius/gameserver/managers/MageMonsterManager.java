@@ -138,6 +138,12 @@ public class MageMonsterManager
 			return;
 		}
 
+		// Class transfer challenges force Mage monsters on purpose and pay one Sealed Cache per clear instead, so failed attempts can't be farmed for caches.
+		if (ClassTransferChallengeManager.isChallengeInstance(victim.getInstanceId()))
+		{
+			return;
+		}
+
 		LuckyLootManager.getInstance().dropGuaranteedCache(victim, killer);
 	}
 

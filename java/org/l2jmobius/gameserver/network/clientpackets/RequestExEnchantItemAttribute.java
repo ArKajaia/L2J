@@ -267,7 +267,74 @@ public class RequestExEnchantItemAttribute extends ClientPacket
 		player.setActiveEnchantAttrItemId(Player.ID_NONE);
 	}
 	
-	public int getLimit(Item item, int sotneId)
+	/**
+	 * Checks whether the player has at least one weapon or armor the given attribute stone/crystal can still add power to.<br>
+	 * Used before opening the attribute window: the client can't close that window when the list is empty and keeps reopening it.
+	 * @param player the player using the stone
+	 * @param stone the attribute stone, crystal, jewel or energy
+	 * @return {@code true} if some item in the inventory or paperdoll can receive this attribute
+	 */
+	public static boolean hasAttributableItem(Player player, Item stone)
+	{
+		final byte stoneElement = Elementals.getItemElement(stone.getId());
+		if (stoneElement == Elementals.NONE)
+		{
+			return false;
+		}
+		
+		for (Item item : player.getInventory().getItems())
+		{
+			if (!item.isElementable() || (!item.isWeapon() && !item.isArmor()))
+			{
+				continue;
+			}
+			
+			// Armors have the opposite element
+			final byte elementToAdd = item.isArmor() ? Elementals.getOppositeElement(stoneElement) : stoneElement;
+			if (item.isWeapon())
+			{
+				// A weapon can hold a single attack attribute.
+				final byte attackElement = item.getAttackElementType();
+				if ((attackElement != -2) && (attackElement != elementToAdd))
+				{
+					continue;
+				}
+			}
+			else if (item.getElementals() != null)
+			{
+				// Up to three defense attributes, never together with the opposite one.
+				if ((item.getElemental(elementToAdd) == null) && (item.getElementals().length >= 3))
+				{
+					continue;
+				}
+				
+				final byte opositeElement = Elementals.getOppositeElement(elementToAdd);
+				boolean hasOposite = false;
+				for (Elementals elm : item.getElementals())
+				{
+					if (elm.getElement() == opositeElement)
+					{
+						hasOposite = true;
+						break;
+					}
+				}
+				if (hasOposite)
+				{
+					continue;
+				}
+			}
+			
+			final Elementals oldElement = item.getElemental(elementToAdd);
+			if (((oldElement == null) ? 0 : oldElement.getValue()) < getLimit(item, stone.getId()))
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	public static int getLimit(Item item, int sotneId)
 	{
 		final ElementalItemHolder elementItem = Elementals.getItemElemental(sotneId);
 		if (elementItem == null)

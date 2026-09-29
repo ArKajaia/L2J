@@ -1,0 +1,37 @@
+<html><title>Fake Players</title><body>
+<center>
+<table width=270><tr>
+<td width=45><button value="Main" action="bypass admin_admin" width=45 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td width=180><center>Fake Players</center></td>
+<td width=45><button value="Back" action="bypass admin_admin" width=45 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><br>
+<font color="LEVEL">ROAMING FAKE PLAYERS (PVP)</font>
+<table width=270 border=0 bgcolor="444444">
+<tr><td width=90>Alive:</td><td width=180>%alive% (spawning %spawning%)</td></tr>
+<tr><td width=90>Builds:</td><td width=180>%buildCount%</td></tr>
+<tr><td width=90>Target:</td><td width=180>%target%</td></tr>
+</table><br1>
+<table width=270>
+<tr><td width=90>Build:</td><td width=180><combobox width=160 height=17 var="build" list="%builds%"></td></tr>
+<tr><td width=90>Level (%level%):</td><td width=180><edit var="level" width=60 height=15 type=number></td></tr>
+</table>
+<font color="A0A0A0">Spawns at your location. Empty level = your level.</font><br1>
+<table width=270><tr>
+<td><button value="Spawn" action="bypass -h admin_fakepvp $build $level menu" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="List" action="bypass -h admin_fakepvp_list menu" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Clear All" action="bypass -h admin_fakepvp_clear menu" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Refresh" action="bypass -h admin_fakeplayers" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table>
+<font color="A0A0A0">List: builds, alive per build, and the personality of your targeted fake player (system messages).</font><br>
+<font color="LEVEL">FAKE PLAYER CHAT</font>
+<table width=270 border=0 bgcolor="444444">
+<tr><td width=90>To player:</td><td width=180><edit var="fcplayer" width=150 height=15></td></tr>
+<tr><td width=90>From fake:</td><td width=180><edit var="fcfake" width=150 height=15></td></tr>
+<tr><td width=90>Message:</td><td width=180><edit var="fcmsg" width=150 height=15></td></tr>
+</table><br1>
+<table width=270><tr>
+<td><button value="Send" action="bypass -h admin_fakechat $fcplayer $fcfake $fcmsg menu" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Reload Chat" action="bypass -h admin_reload fakeplayerchat" width=90 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table>
+<font color="A0A0A0">Sends a private message to the player that looks like it comes from a fake player.</font>
+</center></body></html>

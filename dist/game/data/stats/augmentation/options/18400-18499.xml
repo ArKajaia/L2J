@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/optionsData.xsd">
 	<option id="18400" name="o_f_64_2u_acc_earring_19">
-		<!-- HP Regeneration + 0.26 -->
+		<!-- HP Regen increases by 0.52. -->
 		<stats>
-			<add stat="regHp" val="0.26" />
+			<add stat="regHp" val="0.52" />
 		</stats>
 	</option>
 	<option id="18401" name="o_f_64_2u_acc_earring_20">
-		<!-- MP Regeneration + 0.08 -->
+		<!-- MP Regen increases by 0.16. -->
 		<stats>
-			<add stat="regMp" val="0.08" />
+			<add stat="regMp" val="0.16" />
 		</stats>
 	</option>
 	<option id="18402" name="o_f_64_2u_acc_earring_21">
-		<!-- HP Regeneration + 0.13 MP Regeneration + 0.04 -->
+		<!-- HP Regen increases by 0.26. MP Regen increases by 0.08. -->
 		<stats>
-			<add stat="regHp" val="0.13" />
-			<add stat="regMp" val="0.04" />
+			<add stat="regHp" val="0.26" />
+			<add stat="regMp" val="0.08" />
 		</stats>
 	</option>
 	<option id="18403" name="o_s_67_1g_acc_earring_1">
@@ -92,535 +92,535 @@
 		<passive_skill id="8178" level="1" /> <!-- Augment Option - Sleep Resistance -->
 	</option>
 	<option id="18421" name="o_f_67_2g_acc_earring_1">
-		<!-- M. Def. + 2.7 -->
+		<!-- M. Def. increases by 3.38. -->
 		<stats>
-			<add stat="mDef" val="2.7" />
+			<add stat="mDef" val="3.375" />
 		</stats>
 	</option>
 	<option id="18422" name="o_f_67_2g_acc_earring_2">
-		<!-- M. Def. + 1.35 Increase Max HP 14.5 -->
+		<!-- M. Def. increases by 1.69. Max HP increases by 18.12. -->
 		<stats>
-			<add stat="mDef" val="1.35" />
-			<add stat="maxHp" val="14.5" />
+			<add stat="mDef" val="1.6875" />
+			<add stat="maxHp" val="18.125" />
 		</stats>
 	</option>
 	<option id="18423" name="o_f_67_2g_acc_earring_3">
-		<!-- M. Def. + 1.35 Max MP + 6.5 -->
+		<!-- M. Def. increases by 1.69. Max MP increases by 8.45. -->
 		<stats>
-			<add stat="mDef" val="1.35" />
-			<add stat="maxMp" val="6.5" />
+			<add stat="mDef" val="1.6875" />
+			<add stat="maxMp" val="8.45" />
 		</stats>
 	</option>
 	<option id="18424" name="o_f_67_2g_acc_earring_4">
-		<!-- M. Def. + 1.35 Increase M. Atk. 2.3 -->
+		<!-- M. Def. increases by 1.69. M. Atk. increases by 2.76. -->
 		<stats>
-			<add stat="mDef" val="1.35" />
-			<add stat="mAtk" val="2.3" />
+			<add stat="mDef" val="1.6875" />
+			<add stat="mAtk" val="2.76" />
 		</stats>
 	</option>
 	<option id="18425" name="o_f_67_2g_acc_earring_5">
-		<!-- M. Def. + 1.35 HP Regeneration + 0.08 -->
+		<!-- M. Def. increases by 1.69. HP Regen increases by 0.16. -->
 		<stats>
-			<add stat="mDef" val="1.35" />
-			<add stat="regHp" val="0.08" />
-		</stats>
-	</option>
-	<option id="18426" name="o_f_67_2g_acc_earring_6">
-		<!-- M. Def. + 1.35 MP Regeneration + 0.025 -->
-		<stats>
-			<add stat="mDef" val="1.35" />
-			<add stat="regMp" val="0.025" />
-		</stats>
-	</option>
-	<option id="18427" name="o_f_67_2g_acc_earring_7">
-		<!-- Increase Max HP 29.0 -->
-		<stats>
-			<add stat="maxHp" val="29.0" />
-		</stats>
-	</option>
-	<option id="18428" name="o_f_67_2g_acc_earring_8">
-		<!-- Increase Max HP 14.5 Max MP + 6.5 -->
-		<stats>
-			<add stat="maxHp" val="14.5" />
-			<add stat="maxMp" val="6.5" />
-		</stats>
-	</option>
-	<option id="18429" name="o_f_67_2g_acc_earring_9">
-		<!-- Increase Max HP 14.5 Increase M. Atk. 2.3 -->
-		<stats>
-			<add stat="maxHp" val="14.5" />
-			<add stat="mAtk" val="2.3" />
-		</stats>
-	</option>
-	<option id="18430" name="o_f_67_2g_acc_earring_10">
-		<!-- Increase Max HP 14.5 HP Regeneration + 0.08 -->
-		<stats>
-			<add stat="maxHp" val="14.5" />
-			<add stat="regHp" val="0.08" />
-		</stats>
-	</option>
-	<option id="18431" name="o_f_67_2g_acc_earring_11">
-		<!-- Increase Max HP 14.5 MP Regeneration + 0.025 -->
-		<stats>
-			<add stat="maxHp" val="14.5" />
-			<add stat="regMp" val="0.025" />
-		</stats>
-	</option>
-	<option id="18432" name="o_f_67_2g_acc_earring_12">
-		<!-- Max MP + 13.0 -->
-		<stats>
-			<add stat="maxMp" val="13.0" />
-		</stats>
-	</option>
-	<option id="18433" name="o_f_67_2g_acc_earring_13">
-		<!-- Max MP + 6.5 Increase M. Atk. 2.3 -->
-		<stats>
-			<add stat="maxMp" val="6.5" />
-			<add stat="mAtk" val="2.3" />
-		</stats>
-	</option>
-	<option id="18434" name="o_f_67_2g_acc_earring_14">
-		<!-- Max MP + 6.5 HP Regeneration + 0.08 -->
-		<stats>
-			<add stat="maxMp" val="6.5" />
-			<add stat="regHp" val="0.08" />
-		</stats>
-	</option>
-	<option id="18435" name="o_f_67_2g_acc_earring_15">
-		<!-- Max MP + 6.5 MP Regeneration + 0.025 -->
-		<stats>
-			<add stat="maxMp" val="6.5" />
-			<add stat="regMp" val="0.025" />
-		</stats>
-	</option>
-	<option id="18436" name="o_f_67_2g_acc_earring_16">
-		<!-- Increase M. Atk. 4.6 -->
-		<stats>
-			<add stat="mAtk" val="4.6" />
-		</stats>
-	</option>
-	<option id="18437" name="o_f_67_2g_acc_earring_17">
-		<!-- Increase M. Atk. 2.3 HP Regeneration + 0.08 -->
-		<stats>
-			<add stat="mAtk" val="2.3" />
-			<add stat="regHp" val="0.08" />
-		</stats>
-	</option>
-	<option id="18438" name="o_f_67_2g_acc_earring_18">
-		<!-- Increase M. Atk. 2.3 MP Regeneration + 0.025 -->
-		<stats>
-			<add stat="mAtk" val="2.3" />
-			<add stat="regMp" val="0.025" />
-		</stats>
-	</option>
-	<option id="18439" name="o_f_67_2g_acc_earring_19">
-		<!-- HP Regeneration + 0.16 -->
-		<stats>
+			<add stat="mDef" val="1.6875" />
 			<add stat="regHp" val="0.16" />
 		</stats>
 	</option>
-	<option id="18440" name="o_f_67_2g_acc_earring_20">
-		<!-- MP Regeneration + 0.05 -->
+	<option id="18426" name="o_f_67_2g_acc_earring_6">
+		<!-- M. Def. increases by 1.69. MP Regen increases by 0.05. -->
 		<stats>
+			<add stat="mDef" val="1.6875" />
 			<add stat="regMp" val="0.05" />
 		</stats>
 	</option>
-	<option id="18441" name="o_f_67_2g_acc_earring_21">
-		<!-- HP Regeneration + 0.08 MP Regeneration + 0.025 -->
+	<option id="18427" name="o_f_67_2g_acc_earring_7">
+		<!-- Max HP increases by 36.25. -->
 		<stats>
-			<add stat="regHp" val="0.08" />
-			<add stat="regMp" val="0.025" />
+			<add stat="maxHp" val="36.25" />
+		</stats>
+	</option>
+	<option id="18428" name="o_f_67_2g_acc_earring_8">
+		<!-- Max HP increases by 18.12. Max MP increases by 8.45. -->
+		<stats>
+			<add stat="maxHp" val="18.125" />
+			<add stat="maxMp" val="8.45" />
+		</stats>
+	</option>
+	<option id="18429" name="o_f_67_2g_acc_earring_9">
+		<!-- Max HP increases by 18.12. M. Atk. increases by 2.76. -->
+		<stats>
+			<add stat="maxHp" val="18.125" />
+			<add stat="mAtk" val="2.76" />
+		</stats>
+	</option>
+	<option id="18430" name="o_f_67_2g_acc_earring_10">
+		<!-- Max HP increases by 18.12. HP Regen increases by 0.16. -->
+		<stats>
+			<add stat="maxHp" val="18.125" />
+			<add stat="regHp" val="0.16" />
+		</stats>
+	</option>
+	<option id="18431" name="o_f_67_2g_acc_earring_11">
+		<!-- Max HP increases by 18.12. MP Regen increases by 0.05. -->
+		<stats>
+			<add stat="maxHp" val="18.125" />
+			<add stat="regMp" val="0.05" />
+		</stats>
+	</option>
+	<option id="18432" name="o_f_67_2g_acc_earring_12">
+		<!-- Max MP increases by 16.9. -->
+		<stats>
+			<add stat="maxMp" val="16.9" />
+		</stats>
+	</option>
+	<option id="18433" name="o_f_67_2g_acc_earring_13">
+		<!-- Max MP increases by 8.45. M. Atk. increases by 2.76. -->
+		<stats>
+			<add stat="maxMp" val="8.45" />
+			<add stat="mAtk" val="2.76" />
+		</stats>
+	</option>
+	<option id="18434" name="o_f_67_2g_acc_earring_14">
+		<!-- Max MP increases by 8.45. HP Regen increases by 0.16. -->
+		<stats>
+			<add stat="maxMp" val="8.45" />
+			<add stat="regHp" val="0.16" />
+		</stats>
+	</option>
+	<option id="18435" name="o_f_67_2g_acc_earring_15">
+		<!-- Max MP increases by 8.45. MP Regen increases by 0.05. -->
+		<stats>
+			<add stat="maxMp" val="8.45" />
+			<add stat="regMp" val="0.05" />
+		</stats>
+	</option>
+	<option id="18436" name="o_f_67_2g_acc_earring_16">
+		<!-- M. Atk. increases by 5.52. -->
+		<stats>
+			<add stat="mAtk" val="5.52" />
+		</stats>
+	</option>
+	<option id="18437" name="o_f_67_2g_acc_earring_17">
+		<!-- M. Atk. increases by 2.76. HP Regen increases by 0.16. -->
+		<stats>
+			<add stat="mAtk" val="2.76" />
+			<add stat="regHp" val="0.16" />
+		</stats>
+	</option>
+	<option id="18438" name="o_f_67_2g_acc_earring_18">
+		<!-- M. Atk. increases by 2.76. MP Regen increases by 0.05. -->
+		<stats>
+			<add stat="mAtk" val="2.76" />
+			<add stat="regMp" val="0.05" />
+		</stats>
+	</option>
+	<option id="18439" name="o_f_67_2g_acc_earring_19">
+		<!-- HP Regen increases by 0.32. -->
+		<stats>
+			<add stat="regHp" val="0.32" />
+		</stats>
+	</option>
+	<option id="18440" name="o_f_67_2g_acc_earring_20">
+		<!-- MP Regen increases by 0.1. -->
+		<stats>
+			<add stat="regMp" val="0.1" />
+		</stats>
+	</option>
+	<option id="18441" name="o_f_67_2g_acc_earring_21">
+		<!-- HP Regen increases by 0.16. MP Regen increases by 0.05. -->
+		<stats>
+			<add stat="regHp" val="0.16" />
+			<add stat="regMp" val="0.05" />
 		</stats>
 	</option>
 	<option id="18442" name="o_f_67_2s_acc_earring_1">
-		<!-- M. Def. + 3.2 -->
+		<!-- M. Def. increases by 4. -->
 		<stats>
-			<add stat="mDef" val="3.2" />
+			<add stat="mDef" val="4" />
 		</stats>
 	</option>
 	<option id="18443" name="o_f_67_2s_acc_earring_2">
-		<!-- M. Def. + 1.6 Increase Max HP 16.5 -->
+		<!-- M. Def. increases by 2. Max HP increases by 20.62. -->
 		<stats>
-			<add stat="mDef" val="1.6" />
-			<add stat="maxHp" val="16.5" />
+			<add stat="mDef" val="2" />
+			<add stat="maxHp" val="20.625" />
 		</stats>
 	</option>
 	<option id="18444" name="o_f_67_2s_acc_earring_3">
-		<!-- M. Def. + 1.6 Max MP + 7.5 -->
+		<!-- M. Def. increases by 2. Max MP increases by 9.75. -->
 		<stats>
-			<add stat="mDef" val="1.6" />
-			<add stat="maxMp" val="7.5" />
+			<add stat="mDef" val="2" />
+			<add stat="maxMp" val="9.75" />
 		</stats>
 	</option>
 	<option id="18445" name="o_f_67_2s_acc_earring_4">
-		<!-- M. Def. + 1.6 Increase M. Atk. 2.7 -->
+		<!-- M. Def. increases by 2. M. Atk. increases by 3.24. -->
 		<stats>
-			<add stat="mDef" val="1.6" />
-			<add stat="mAtk" val="2.7" />
+			<add stat="mDef" val="2" />
+			<add stat="mAtk" val="3.24" />
 		</stats>
 	</option>
 	<option id="18446" name="o_f_67_2s_acc_earring_5">
-		<!-- M. Def. + 1.6 HP Regeneration + 0.09 -->
+		<!-- M. Def. increases by 2. HP Regen increases by 0.18. -->
 		<stats>
-			<add stat="mDef" val="1.6" />
-			<add stat="regHp" val="0.09" />
-		</stats>
-	</option>
-	<option id="18447" name="o_f_67_2s_acc_earring_6">
-		<!-- M. Def. + 1.6 MP Regeneration + 0.03 -->
-		<stats>
-			<add stat="mDef" val="1.6" />
-			<add stat="regMp" val="0.03" />
-		</stats>
-	</option>
-	<option id="18448" name="o_f_67_2s_acc_earring_7">
-		<!-- Increase Max HP 33.0 -->
-		<stats>
-			<add stat="maxHp" val="33.0" />
-		</stats>
-	</option>
-	<option id="18449" name="o_f_67_2s_acc_earring_8">
-		<!-- Increase Max HP 16.5 Max MP + 7.5 -->
-		<stats>
-			<add stat="maxHp" val="16.5" />
-			<add stat="maxMp" val="7.5" />
-		</stats>
-	</option>
-	<option id="18450" name="o_f_67_2s_acc_earring_9">
-		<!-- Increase Max HP 16.5 Increase M. Atk. 2.7 -->
-		<stats>
-			<add stat="maxHp" val="16.5" />
-			<add stat="mAtk" val="2.7" />
-		</stats>
-	</option>
-	<option id="18451" name="o_f_67_2s_acc_earring_10">
-		<!-- Increase Max HP 16.5 HP Regeneration + 0.09 -->
-		<stats>
-			<add stat="maxHp" val="16.5" />
-			<add stat="regHp" val="0.09" />
-		</stats>
-	</option>
-	<option id="18452" name="o_f_67_2s_acc_earring_11">
-		<!-- Increase Max HP 16.5 MP Regeneration + 0.03 -->
-		<stats>
-			<add stat="maxHp" val="16.5" />
-			<add stat="regMp" val="0.03" />
-		</stats>
-	</option>
-	<option id="18453" name="o_f_67_2s_acc_earring_12">
-		<!-- Max MP + 15.0 -->
-		<stats>
-			<add stat="maxMp" val="15.0" />
-		</stats>
-	</option>
-	<option id="18454" name="o_f_67_2s_acc_earring_13">
-		<!-- Max MP + 7.5 Increase M. Atk. 2.7 -->
-		<stats>
-			<add stat="maxMp" val="7.5" />
-			<add stat="mAtk" val="2.7" />
-		</stats>
-	</option>
-	<option id="18455" name="o_f_67_2s_acc_earring_14">
-		<!-- Max MP + 7.5 HP Regeneration + 0.09 -->
-		<stats>
-			<add stat="maxMp" val="7.5" />
-			<add stat="regHp" val="0.09" />
-		</stats>
-	</option>
-	<option id="18456" name="o_f_67_2s_acc_earring_15">
-		<!-- Max MP + 7.5 MP Regeneration + 0.03 -->
-		<stats>
-			<add stat="maxMp" val="7.5" />
-			<add stat="regMp" val="0.03" />
-		</stats>
-	</option>
-	<option id="18457" name="o_f_67_2s_acc_earring_16">
-		<!-- Increase M. Atk. 5.4 -->
-		<stats>
-			<add stat="mAtk" val="5.4" />
-		</stats>
-	</option>
-	<option id="18458" name="o_f_67_2s_acc_earring_17">
-		<!-- Increase M. Atk. 2.7 HP Regeneration + 0.09 -->
-		<stats>
-			<add stat="mAtk" val="2.7" />
-			<add stat="regHp" val="0.09" />
-		</stats>
-	</option>
-	<option id="18459" name="o_f_67_2s_acc_earring_18">
-		<!-- Increase M. Atk. 2.7 MP Regeneration + 0.03 -->
-		<stats>
-			<add stat="mAtk" val="2.7" />
-			<add stat="regMp" val="0.03" />
-		</stats>
-	</option>
-	<option id="18460" name="o_f_67_2s_acc_earring_19">
-		<!-- HP Regeneration + 0.18 -->
-		<stats>
+			<add stat="mDef" val="2" />
 			<add stat="regHp" val="0.18" />
 		</stats>
 	</option>
-	<option id="18461" name="o_f_67_2s_acc_earring_20">
-		<!-- MP Regeneration + 0.06 -->
+	<option id="18447" name="o_f_67_2s_acc_earring_6">
+		<!-- M. Def. increases by 2. MP Regen increases by 0.06. -->
 		<stats>
+			<add stat="mDef" val="2" />
 			<add stat="regMp" val="0.06" />
 		</stats>
 	</option>
-	<option id="18462" name="o_f_67_2s_acc_earring_21">
-		<!-- HP Regeneration + 0.05 MP Regeneration + 0.03 -->
+	<option id="18448" name="o_f_67_2s_acc_earring_7">
+		<!-- Max HP increases by 41.25. -->
 		<stats>
-			<add stat="regHp" val="0.05" />
-			<add stat="regMp" val="0.03" />
+			<add stat="maxHp" val="41.25" />
+		</stats>
+	</option>
+	<option id="18449" name="o_f_67_2s_acc_earring_8">
+		<!-- Max HP increases by 20.62. Max MP increases by 9.75. -->
+		<stats>
+			<add stat="maxHp" val="20.625" />
+			<add stat="maxMp" val="9.75" />
+		</stats>
+	</option>
+	<option id="18450" name="o_f_67_2s_acc_earring_9">
+		<!-- Max HP increases by 20.62. M. Atk. increases by 3.24. -->
+		<stats>
+			<add stat="maxHp" val="20.625" />
+			<add stat="mAtk" val="3.24" />
+		</stats>
+	</option>
+	<option id="18451" name="o_f_67_2s_acc_earring_10">
+		<!-- Max HP increases by 20.62. HP Regen increases by 0.18. -->
+		<stats>
+			<add stat="maxHp" val="20.625" />
+			<add stat="regHp" val="0.18" />
+		</stats>
+	</option>
+	<option id="18452" name="o_f_67_2s_acc_earring_11">
+		<!-- Max HP increases by 20.62. MP Regen increases by 0.06. -->
+		<stats>
+			<add stat="maxHp" val="20.625" />
+			<add stat="regMp" val="0.06" />
+		</stats>
+	</option>
+	<option id="18453" name="o_f_67_2s_acc_earring_12">
+		<!-- Max MP increases by 19.5. -->
+		<stats>
+			<add stat="maxMp" val="19.5" />
+		</stats>
+	</option>
+	<option id="18454" name="o_f_67_2s_acc_earring_13">
+		<!-- Max MP increases by 9.75. M. Atk. increases by 3.24. -->
+		<stats>
+			<add stat="maxMp" val="9.75" />
+			<add stat="mAtk" val="3.24" />
+		</stats>
+	</option>
+	<option id="18455" name="o_f_67_2s_acc_earring_14">
+		<!-- Max MP increases by 9.75. HP Regen increases by 0.18. -->
+		<stats>
+			<add stat="maxMp" val="9.75" />
+			<add stat="regHp" val="0.18" />
+		</stats>
+	</option>
+	<option id="18456" name="o_f_67_2s_acc_earring_15">
+		<!-- Max MP increases by 9.75. MP Regen increases by 0.06. -->
+		<stats>
+			<add stat="maxMp" val="9.75" />
+			<add stat="regMp" val="0.06" />
+		</stats>
+	</option>
+	<option id="18457" name="o_f_67_2s_acc_earring_16">
+		<!-- M. Atk. increases by 6.48. -->
+		<stats>
+			<add stat="mAtk" val="6.48" />
+		</stats>
+	</option>
+	<option id="18458" name="o_f_67_2s_acc_earring_17">
+		<!-- M. Atk. increases by 3.24. HP Regen increases by 0.18. -->
+		<stats>
+			<add stat="mAtk" val="3.24" />
+			<add stat="regHp" val="0.18" />
+		</stats>
+	</option>
+	<option id="18459" name="o_f_67_2s_acc_earring_18">
+		<!-- M. Atk. increases by 3.24. MP Regen increases by 0.06. -->
+		<stats>
+			<add stat="mAtk" val="3.24" />
+			<add stat="regMp" val="0.06" />
+		</stats>
+	</option>
+	<option id="18460" name="o_f_67_2s_acc_earring_19">
+		<!-- HP Regen increases by 0.36. -->
+		<stats>
+			<add stat="regHp" val="0.36" />
+		</stats>
+	</option>
+	<option id="18461" name="o_f_67_2s_acc_earring_20">
+		<!-- MP Regen increases by 0.12. -->
+		<stats>
+			<add stat="regMp" val="0.12" />
+		</stats>
+	</option>
+	<option id="18462" name="o_f_67_2s_acc_earring_21">
+		<!-- HP Regen increases by 0.1. MP Regen increases by 0.06. -->
+		<stats>
+			<add stat="regHp" val="0.1" />
+			<add stat="regMp" val="0.06" />
 		</stats>
 	</option>
 	<option id="18463" name="o_f_67_2r_acc_earring_1">
-		<!-- M. Def. + 3.9 -->
+		<!-- M. Def. increases by 4.88. -->
 		<stats>
-			<add stat="mDef" val="3.9" />
+			<add stat="mDef" val="4.875" />
 		</stats>
 	</option>
 	<option id="18464" name="o_f_67_2r_acc_earring_2">
-		<!-- M. Def. + 1.95 Increase Max HP 20.5 -->
+		<!-- M. Def. increases by 2.44. Max HP increases by 25.62. -->
 		<stats>
-			<add stat="mDef" val="1.95" />
-			<add stat="maxHp" val="20.5" />
+			<add stat="mDef" val="2.4375" />
+			<add stat="maxHp" val="25.625" />
 		</stats>
 	</option>
 	<option id="18465" name="o_f_67_2r_acc_earring_3">
-		<!-- M. Def. + 1.95 Max MP + 9.0 -->
+		<!-- M. Def. increases by 2.44. Max MP increases by 11.7. -->
 		<stats>
-			<add stat="mDef" val="1.95" />
-			<add stat="maxMp" val="9.0" />
+			<add stat="mDef" val="2.4375" />
+			<add stat="maxMp" val="11.7" />
 		</stats>
 	</option>
 	<option id="18466" name="o_f_67_2r_acc_earring_4">
-		<!-- M. Def. + 1.95 Increase M. Atk. 3.25 -->
+		<!-- M. Def. increases by 2.44. M. Atk. increases by 3.9. -->
 		<stats>
-			<add stat="mDef" val="1.95" />
-			<add stat="mAtk" val="3.25" />
+			<add stat="mDef" val="2.4375" />
+			<add stat="mAtk" val="3.9" />
 		</stats>
 	</option>
 	<option id="18467" name="o_f_67_2r_acc_earring_5">
-		<!-- M. Def. + 1.95 HP Regeneration + 0.11 -->
+		<!-- M. Def. increases by 2.44. HP Regen increases by 0.22. -->
 		<stats>
-			<add stat="mDef" val="1.95" />
-			<add stat="regHp" val="0.11" />
-		</stats>
-	</option>
-	<option id="18468" name="o_f_67_2r_acc_earring_6">
-		<!-- M. Def. + 1.95 MP Regeneration + 0.035 -->
-		<stats>
-			<add stat="mDef" val="1.95" />
-			<add stat="regMp" val="0.035" />
-		</stats>
-	</option>
-	<option id="18469" name="o_f_67_2r_acc_earring_7">
-		<!-- Increase Max HP 41.0 -->
-		<stats>
-			<add stat="maxHp" val="41.0" />
-		</stats>
-	</option>
-	<option id="18470" name="o_f_67_2r_acc_earring_8">
-		<!-- Increase Max HP 20.5 Max MP + 9.0 -->
-		<stats>
-			<add stat="maxHp" val="20.5" />
-			<add stat="maxMp" val="9.0" />
-		</stats>
-	</option>
-	<option id="18471" name="o_f_67_2r_acc_earring_9">
-		<!-- Increase Max HP 20.5 Increase M. Atk. 3.25 -->
-		<stats>
-			<add stat="maxHp" val="20.5" />
-			<add stat="mAtk" val="3.25" />
-		</stats>
-	</option>
-	<option id="18472" name="o_f_67_2r_acc_earring_10">
-		<!-- Increase Max HP 20.5 HP Regeneration + 0.11 -->
-		<stats>
-			<add stat="maxHp" val="20.5" />
-			<add stat="regHp" val="0.11" />
-		</stats>
-	</option>
-	<option id="18473" name="o_f_67_2r_acc_earring_11">
-		<!-- Increase Max HP 20.5 MP Regeneration + 0.035 -->
-		<stats>
-			<add stat="maxHp" val="20.5" />
-			<add stat="regMp" val="0.035" />
-		</stats>
-	</option>
-	<option id="18474" name="o_f_67_2r_acc_earring_12">
-		<!-- Max MP + 18.0 -->
-		<stats>
-			<add stat="maxMp" val="18.0" />
-		</stats>
-	</option>
-	<option id="18475" name="o_f_67_2r_acc_earring_13">
-		<!-- Max MP + 9.0 Increase M. Atk. 3.25 -->
-		<stats>
-			<add stat="maxMp" val="9.0" />
-			<add stat="mAtk" val="3.25" />
-		</stats>
-	</option>
-	<option id="18476" name="o_f_67_2r_acc_earring_14">
-		<!-- Max MP + 9.0 HP Regeneration + 0.11 -->
-		<stats>
-			<add stat="maxMp" val="9.0" />
-			<add stat="regHp" val="0.11" />
-		</stats>
-	</option>
-	<option id="18477" name="o_f_67_2r_acc_earring_15">
-		<!-- Max MP + 9.0 MP Regeneration + 0.035 -->
-		<stats>
-			<add stat="maxMp" val="9.0" />
-			<add stat="regMp" val="0.035" />
-		</stats>
-	</option>
-	<option id="18478" name="o_f_67_2r_acc_earring_16">
-		<!-- Increase M. Atk. 6.5 -->
-		<stats>
-			<add stat="mAtk" val="6.5" />
-		</stats>
-	</option>
-	<option id="18479" name="o_f_67_2r_acc_earring_17">
-		<!-- Increase M. Atk. 3.25 HP Regeneration + 0.11 -->
-		<stats>
-			<add stat="mAtk" val="3.25" />
-			<add stat="regHp" val="0.11" />
-		</stats>
-	</option>
-	<option id="18480" name="o_f_67_2r_acc_earring_18">
-		<!-- Increase M. Atk. 3.25 MP Regeneration + 0.035 -->
-		<stats>
-			<add stat="mAtk" val="3.25" />
-			<add stat="regMp" val="0.035" />
-		</stats>
-	</option>
-	<option id="18481" name="o_f_67_2r_acc_earring_19">
-		<!-- HP Regeneration + 0.22 -->
-		<stats>
+			<add stat="mDef" val="2.4375" />
 			<add stat="regHp" val="0.22" />
 		</stats>
 	</option>
-	<option id="18482" name="o_f_67_2r_acc_earring_20">
-		<!-- MP Regeneration + 0.07 -->
+	<option id="18468" name="o_f_67_2r_acc_earring_6">
+		<!-- M. Def. increases by 2.44. MP Regen increases by 0.07. -->
 		<stats>
+			<add stat="mDef" val="2.4375" />
 			<add stat="regMp" val="0.07" />
 		</stats>
 	</option>
-	<option id="18483" name="o_f_67_2r_acc_earring_21">
-		<!-- HP Regeneration + 0.11 MP Regeneration + 0.035 -->
+	<option id="18469" name="o_f_67_2r_acc_earring_7">
+		<!-- Max HP increases by 51.25. -->
 		<stats>
-			<add stat="regHp" val="0.11" />
-			<add stat="regMp" val="0.035" />
+			<add stat="maxHp" val="51.25" />
+		</stats>
+	</option>
+	<option id="18470" name="o_f_67_2r_acc_earring_8">
+		<!-- Max HP increases by 25.62. Max MP increases by 11.7. -->
+		<stats>
+			<add stat="maxHp" val="25.625" />
+			<add stat="maxMp" val="11.7" />
+		</stats>
+	</option>
+	<option id="18471" name="o_f_67_2r_acc_earring_9">
+		<!-- Max HP increases by 25.62. M. Atk. increases by 3.9. -->
+		<stats>
+			<add stat="maxHp" val="25.625" />
+			<add stat="mAtk" val="3.9" />
+		</stats>
+	</option>
+	<option id="18472" name="o_f_67_2r_acc_earring_10">
+		<!-- Max HP increases by 25.62. HP Regen increases by 0.22. -->
+		<stats>
+			<add stat="maxHp" val="25.625" />
+			<add stat="regHp" val="0.22" />
+		</stats>
+	</option>
+	<option id="18473" name="o_f_67_2r_acc_earring_11">
+		<!-- Max HP increases by 25.62. MP Regen increases by 0.07. -->
+		<stats>
+			<add stat="maxHp" val="25.625" />
+			<add stat="regMp" val="0.07" />
+		</stats>
+	</option>
+	<option id="18474" name="o_f_67_2r_acc_earring_12">
+		<!-- Max MP increases by 23.4. -->
+		<stats>
+			<add stat="maxMp" val="23.4" />
+		</stats>
+	</option>
+	<option id="18475" name="o_f_67_2r_acc_earring_13">
+		<!-- Max MP increases by 11.7. M. Atk. increases by 3.9. -->
+		<stats>
+			<add stat="maxMp" val="11.7" />
+			<add stat="mAtk" val="3.9" />
+		</stats>
+	</option>
+	<option id="18476" name="o_f_67_2r_acc_earring_14">
+		<!-- Max MP increases by 11.7. HP Regen increases by 0.22. -->
+		<stats>
+			<add stat="maxMp" val="11.7" />
+			<add stat="regHp" val="0.22" />
+		</stats>
+	</option>
+	<option id="18477" name="o_f_67_2r_acc_earring_15">
+		<!-- Max MP increases by 11.7. MP Regen increases by 0.07. -->
+		<stats>
+			<add stat="maxMp" val="11.7" />
+			<add stat="regMp" val="0.07" />
+		</stats>
+	</option>
+	<option id="18478" name="o_f_67_2r_acc_earring_16">
+		<!-- M. Atk. increases by 7.8. -->
+		<stats>
+			<add stat="mAtk" val="7.8" />
+		</stats>
+	</option>
+	<option id="18479" name="o_f_67_2r_acc_earring_17">
+		<!-- M. Atk. increases by 3.9. HP Regen increases by 0.22. -->
+		<stats>
+			<add stat="mAtk" val="3.9" />
+			<add stat="regHp" val="0.22" />
+		</stats>
+	</option>
+	<option id="18480" name="o_f_67_2r_acc_earring_18">
+		<!-- M. Atk. increases by 3.9. MP Regen increases by 0.07. -->
+		<stats>
+			<add stat="mAtk" val="3.9" />
+			<add stat="regMp" val="0.07" />
+		</stats>
+	</option>
+	<option id="18481" name="o_f_67_2r_acc_earring_19">
+		<!-- HP Regen increases by 0.44. -->
+		<stats>
+			<add stat="regHp" val="0.44" />
+		</stats>
+	</option>
+	<option id="18482" name="o_f_67_2r_acc_earring_20">
+		<!-- MP Regen increases by 0.14. -->
+		<stats>
+			<add stat="regMp" val="0.14" />
+		</stats>
+	</option>
+	<option id="18483" name="o_f_67_2r_acc_earring_21">
+		<!-- HP Regen increases by 0.22. MP Regen increases by 0.07. -->
+		<stats>
+			<add stat="regHp" val="0.22" />
+			<add stat="regMp" val="0.07" />
 		</stats>
 	</option>
 	<option id="18484" name="o_f_67_2u_acc_earring_1">
-		<!-- M. Def. + 4.5 -->
+		<!-- M. Def. increases by 5.62. -->
 		<stats>
-			<add stat="mDef" val="4.5" />
+			<add stat="mDef" val="5.625" />
 		</stats>
 	</option>
 	<option id="18485" name="o_f_67_2u_acc_earring_2">
-		<!-- M. Def. + 2.25 Increase Max HP 24.0 -->
+		<!-- M. Def. increases by 2.81. Max HP increases by 30. -->
 		<stats>
-			<add stat="mDef" val="2.25" />
-			<add stat="maxHp" val="24.0" />
+			<add stat="mDef" val="2.8125" />
+			<add stat="maxHp" val="30" />
 		</stats>
 	</option>
 	<option id="18486" name="o_f_67_2u_acc_earring_3">
-		<!-- M. Def. + 2.25 Max MP + 10.5 -->
+		<!-- M. Def. increases by 2.81. Max MP increases by 13.65. -->
 		<stats>
-			<add stat="mDef" val="2.25" />
-			<add stat="maxMp" val="10.5" />
+			<add stat="mDef" val="2.8125" />
+			<add stat="maxMp" val="13.65" />
 		</stats>
 	</option>
 	<option id="18487" name="o_f_67_2u_acc_earring_4">
-		<!-- M. Def. + 2.25 Increase M. Atk. 3.85 -->
+		<!-- M. Def. increases by 2.81. M. Atk. increases by 4.62. -->
 		<stats>
-			<add stat="mDef" val="2.25" />
-			<add stat="mAtk" val="3.85" />
+			<add stat="mDef" val="2.8125" />
+			<add stat="mAtk" val="4.62" />
 		</stats>
 	</option>
 	<option id="18488" name="o_f_67_2u_acc_earring_5">
-		<!-- M. Def. + 2.25 HP Regeneration + 0.13 -->
+		<!-- M. Def. increases by 2.81. HP Regen increases by 0.26. -->
 		<stats>
-			<add stat="mDef" val="2.25" />
-			<add stat="regHp" val="0.13" />
+			<add stat="mDef" val="2.8125" />
+			<add stat="regHp" val="0.26" />
 		</stats>
 	</option>
 	<option id="18489" name="o_f_67_2u_acc_earring_6">
-		<!-- M. Def. + 2.25 MP Regeneration + 0.04 -->
+		<!-- M. Def. increases by 2.81. MP Regen increases by 0.08. -->
 		<stats>
-			<add stat="mDef" val="2.25" />
-			<add stat="regMp" val="0.04" />
+			<add stat="mDef" val="2.8125" />
+			<add stat="regMp" val="0.08" />
 		</stats>
 	</option>
 	<option id="18490" name="o_f_67_2u_acc_earring_7">
-		<!-- Increase Max HP 48.0 MP Regeneration + 0.04 -->
+		<!-- Max HP increases by 60. MP Regen increases by 0.08. -->
 		<stats>
-			<add stat="maxHp" val="48.0" />
-			<add stat="regMp" val="0.04" />
+			<add stat="maxHp" val="60" />
+			<add stat="regMp" val="0.08" />
 		</stats>
 	</option>
 	<option id="18491" name="o_f_67_2u_acc_earring_8">
-		<!-- Increase Max HP 24.0 Max MP + 10.5 -->
+		<!-- Max HP increases by 30. Max MP increases by 13.65. -->
 		<stats>
-			<add stat="maxHp" val="24.0" />
-			<add stat="maxMp" val="10.5" />
+			<add stat="maxHp" val="30" />
+			<add stat="maxMp" val="13.65" />
 		</stats>
 	</option>
 	<option id="18492" name="o_f_67_2u_acc_earring_9">
-		<!-- Increase Max HP 24.0 Increase M. Atk. 3.85 -->
+		<!-- Max HP increases by 30. M. Atk. increases by 4.62. -->
 		<stats>
-			<add stat="maxHp" val="24.0" />
-			<add stat="mAtk" val="3.85" />
+			<add stat="maxHp" val="30" />
+			<add stat="mAtk" val="4.62" />
 		</stats>
 	</option>
 	<option id="18493" name="o_f_67_2u_acc_earring_10">
-		<!-- Increase Max HP 24.0 HP Regeneration + 0.13 -->
+		<!-- Max HP increases by 30. HP Regen increases by 0.26. -->
 		<stats>
-			<add stat="maxHp" val="24.0" />
-			<add stat="regHp" val="0.13" />
+			<add stat="maxHp" val="30" />
+			<add stat="regHp" val="0.26" />
 		</stats>
 	</option>
 	<option id="18494" name="o_f_67_2u_acc_earring_11">
-		<!-- Increase Max HP 24.0 MP Regeneration + 0.04 -->
+		<!-- Max HP increases by 30. MP Regen increases by 0.08. -->
 		<stats>
-			<add stat="maxHp" val="24.0" />
-			<add stat="regMp" val="0.04" />
+			<add stat="maxHp" val="30" />
+			<add stat="regMp" val="0.08" />
 		</stats>
 	</option>
 	<option id="18495" name="o_f_67_2u_acc_earring_12">
-		<!-- Max MP + 21.0 -->
+		<!-- Max MP increases by 27.3. -->
 		<stats>
-			<add stat="maxMp" val="21.0" />
+			<add stat="maxMp" val="27.3" />
 		</stats>
 	</option>
 	<option id="18496" name="o_f_67_2u_acc_earring_13">
-		<!-- Max MP + 10.5 Increase M. Atk. 3.85 -->
+		<!-- Max MP increases by 13.65. M. Atk. increases by 4.62. -->
 		<stats>
-			<add stat="maxMp" val="10.5" />
-			<add stat="mAtk" val="3.85" />
+			<add stat="maxMp" val="13.65" />
+			<add stat="mAtk" val="4.62" />
 		</stats>
 	</option>
 	<option id="18497" name="o_f_67_2u_acc_earring_14">
-		<!-- Max MP + 10.5 HP Regeneration + 0.13 -->
+		<!-- Max MP increases by 13.65. HP Regen increases by 0.26. -->
 		<stats>
-			<add stat="maxMp" val="10.5" />
-			<add stat="regHp" val="0.13" />
+			<add stat="maxMp" val="13.65" />
+			<add stat="regHp" val="0.26" />
 		</stats>
 	</option>
 	<option id="18498" name="o_f_67_2u_acc_earring_15">
-		<!-- Max MP + 10.5 MP Regeneration + 0.04 -->
+		<!-- Max MP increases by 13.65. MP Regen increases by 0.08. -->
 		<stats>
-			<add stat="maxMp" val="10.5" />
-			<add stat="regMp" val="0.04" />
+			<add stat="maxMp" val="13.65" />
+			<add stat="regMp" val="0.08" />
 		</stats>
 	</option>
 	<option id="18499" name="o_f_67_2u_acc_earring_16">
-		<!-- Increase M. Atk. 7.7 -->
+		<!-- M. Atk. increases by 9.24. -->
 		<stats>
-			<add stat="mAtk" val="7.7" />
+			<add stat="mAtk" val="9.24" />
 		</stats>
 	</option>
 </list>
