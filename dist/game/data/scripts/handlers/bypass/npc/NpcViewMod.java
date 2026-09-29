@@ -22,14 +22,20 @@ package handlers.bypass.npc;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.TimeUnit;
 
 import org.l2jmobius.commons.util.StringUtil;
 import org.l2jmobius.gameserver.ai.AttackableAI;
-import org.l2jmobius.gameserver.cache.HtmCache;
 import org.l2jmobius.gameserver.config.NpcConfig;
 import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.PremiumSystemConfig;
@@ -51,14 +57,18 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpWeapon;
 import org.l2jmobius.gameserver.model.actor.holders.player.ClassInfoHolder;
 import org.l2jmobius.gameserver.model.actor.stat.PlayerStat;
+import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.Weapon;
 import org.l2jmobius.gameserver.model.item.enums.BodyPart;
 import org.l2jmobius.gameserver.model.item.holders.Elementals;
 import org.l2jmobius.gameserver.model.item.holders.ItemEnchantHolder;
 import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
+import org.l2jmobius.gameserver.model.skill.EffectScope;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
+import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.functions.FuncTemplate;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 import org.l2jmobius.gameserver.util.HtmlUtil;
 
@@ -83,6 +93,47 @@ public class NpcViewMod implements IBypassHandler
 	// The NPC variables listing the skills the mods grant (see the .skills command).
 	private static final String VAR_PASSIVE_SKILL_IDS = "PASSIVE_SKILL_IDS";
 	private static final String VAR_ARCHETYPE_SKILL_IDS = "AI_ARCHETYPE_GRANTED_SKILL_IDS";
+	
+	// The passives that say what an NPC is rather than what it is good at.
+	private static final int SKILL_STRONG_TYPE = 4407;
+	private static final int SKILL_ARMOR_TYPE = 4414;
+	private static final int SKILL_WEAPON_TYPE = 4415;
+	private static final int SKILL_RACE = 4416;
+	
+	/** Stats that make a passive an attack boost. */
+	private static final Set<Stat> OFFENSE_STATS = EnumSet.of(Stat.POWER_ATTACK, Stat.MAGIC_ATTACK, Stat.PHYSICAL_SKILL_POWER, Stat.POWER_ATTACK_SPEED, Stat.MAGIC_ATTACK_SPEED, Stat.CRITICAL_DAMAGE, Stat.CRITICAL_DAMAGE_POS, Stat.CRITICAL_DAMAGE_ADD, Stat.MAGIC_CRIT_DMG, Stat.CRITICAL_RATE, Stat.CRITICAL_RATE_POS, Stat.BLOW_RATE, Stat.MCRITICAL_RATE, Stat.ACCURACY_COMBAT, Stat.POWER_ATTACK_RANGE, Stat.ATK_REUSE, Stat.P_REUSE, Stat.MAGIC_REUSE_RATE, Stat.PVP_PHYSICAL_DMG, Stat.PVP_MAGICAL_DMG, Stat.PVP_PHYS_SKILL_DMG, Stat.PVE_PHYSICAL_DMG, Stat.PVE_PHYS_SKILL_DMG, Stat.PVE_BOW_DMG, Stat.PVE_BOW_SKILL_DMG, Stat.PVE_MAGICAL_DMG, Stat.FIRE_POWER, Stat.WATER_POWER, Stat.WIND_POWER, Stat.EARTH_POWER, Stat.HOLY_POWER, Stat.DARK_POWER, Stat.STAT_STR, Stat.STAT_DEX, Stat.STAT_INT, Stat.STAT_WIT);
+	/** Stats that make a passive a defense boost. */
+	private static final Set<Stat> DEFENSE_STATS = EnumSet.of(Stat.MAX_HP, Stat.MAX_MP, Stat.MAX_CP, Stat.REGENERATE_HP_RATE, Stat.REGENERATE_MP_RATE, Stat.REGENERATE_CP_RATE, Stat.POWER_DEFENCE, Stat.MAGIC_DEFENCE, Stat.SHIELD_DEFENCE, Stat.SHIELD_RATE, Stat.EVASION_RATE, Stat.P_SKILL_EVASION, Stat.DEFENCE_CRITICAL_RATE, Stat.DEFENCE_CRITICAL_RATE_ADD, Stat.DEFENCE_CRITICAL_DAMAGE, Stat.DEFENCE_CRITICAL_DAMAGE_ADD, Stat.PVP_PHYSICAL_DEF, Stat.PVP_MAGICAL_DEF, Stat.PVP_PHYS_SKILL_DEF, Stat.FIRE_RES, Stat.WATER_RES, Stat.WIND_RES, Stat.EARTH_RES, Stat.HOLY_RES, Stat.DARK_RES, Stat.MAGIC_SUCCESS_RES, Stat.DEBUFF_VULN, Stat.DEBUFF_IMMUNITY, Stat.REFLECT_DAMAGE_PERCENT, Stat.REFLECT_SKILL_MAGIC, Stat.REFLECT_SKILL_PHYSIC, Stat.ABSORB_DAMAGE_PERCENT, Stat.STAT_CON, Stat.STAT_MEN);
+	
+	/** The groups passives are shown in, in this order. */
+	private enum PassiveGroup
+	{
+		NATURE("Nature", "A0A0A0"),
+		OFFENSE("Offense", "FF9955"),
+		DEFENSE("Defense", "66CCFF"),
+		RESISTANCES("Resistances", "99DD77"),
+		WEAKNESSES("Weaknesses", "FF6666"),
+		OTHER("Other", "CCCCCC");
+		
+		private final String _title;
+		private final String _color;
+		
+		PassiveGroup(String title, String color)
+		{
+			_title = title;
+			_color = color;
+		}
+		
+		public String getTitle()
+		{
+			return _title;
+		}
+		
+		public String getColor()
+		{
+			return _color;
+		}
+	}
 	
 	/** Empty inventory slot, like the client's paperdoll. */
 	private static final String SLOT_BACKGROUND = "L2UI_CT1.ItemWindow_DF_SlotBox_Default";
@@ -294,7 +345,7 @@ public class NpcViewMod implements IBypassHandler
 	
 	public static void sendNpcView(Player player, Npc npc)
 	{
-		final NpcHtmlMessage html = new NpcHtmlMessage(npc.getObjectId());
+		final NpcHtmlMessage html = new NpcHtmlMessage();
 		html.setWindowSize(VIEW_WIDTH, VIEW_HEIGHT);
 		html.setFile(player, "data/html/mods/NpcView/Info.htm");
 		html.replace("%name%", npc.getName());
@@ -462,25 +513,185 @@ public class NpcViewMod implements IBypassHandler
 	
 	/**
 	 * @param npc an NPC
-	 * @return its passive skills, in a compact section, empty if it has none
+	 * @return its passive skills grouped by what they do (icon, name and level of each), empty if it has none
 	 */
 	private static String getPassives(Npc npc)
 	{
-		final StringBuilder sb = new StringBuilder();
+		final Set<Integer> bonusIds = new HashSet<>();
+		readSkillIds(npc, VAR_PASSIVE_SKILL_IDS, bonusIds);
+		readSkillIds(npc, VAR_ARCHETYPE_SKILL_IDS, bonusIds);
+		
+		final Map<PassiveGroup, List<Skill>> groups = new EnumMap<>(PassiveGroup.class);
 		for (Skill skill : npc.getSkills().values())
 		{
 			if (skill.isPassive())
 			{
-				sb.append(sb.length() > 0 ? "<font color=\"707070\">, </font>" : "").append("<font color=\"66CCFF\">").append(skill.getName()).append("</font>");
+				groups.computeIfAbsent(getPassiveGroup(skill), g -> new ArrayList<>()).add(skill);
 			}
 		}
 		
-		if (sb.length() == 0)
+		if (groups.isEmpty())
 		{
 			return "";
 		}
 		
-		return "<br1><table width=300 cellpadding=3 cellspacing=0 bgcolor=\"111111\"><tr><td><font color=\"LEVEL\">Passives</font></td></tr></table><table width=300 cellpadding=2 cellspacing=0><tr><td width=300>" + sb + "</td></tr></table>";
+		boolean hasBonus = false;
+		final StringBuilder sb = new StringBuilder();
+		for (Entry<PassiveGroup, List<Skill>> entry : groups.entrySet())
+		{
+			final PassiveGroup group = entry.getKey();
+			final List<Skill> skills = entry.getValue();
+			sb.append("<br1><table width=300 cellpadding=3 cellspacing=0 bgcolor=\"111111\"><tr><td><font color=\"").append(group.getColor()).append("\">").append(group.getTitle()).append("</font> <font color=\"707070\">(").append(skills.size()).append(")</font></td></tr></table>");
+			sb.append("<table width=300 cellpadding=1 cellspacing=0>");
+			for (int i = 0; i < skills.size(); i += 2)
+			{
+				sb.append("<tr>");
+				for (int j = i; j < (i + 2); j++)
+				{
+					if (j >= skills.size())
+					{
+						sb.append("<td width=150></td>");
+						continue;
+					}
+					
+					final Skill skill = skills.get(j);
+					final boolean bonus = bonusIds.contains(skill.getId());
+					hasBonus |= bonus;
+					sb.append("<td width=150><table cellpadding=0 cellspacing=0><tr><td width=34 height=34><img src=\"").append(skill.getIcon() != null ? skill.getIcon() : "icon.skill0000").append("\" width=32 height=32></td><td width=114><font color=\"").append(bonus ? "E6C35C" : "FFFFFF").append("\">");
+					if (group == PassiveGroup.NATURE)
+					{
+						sb.append(getNatureLabel(npc, skill)).append("</font>");
+					}
+					else
+					{
+						sb.append(skill.getName()).append("</font><br1><font color=\"808080\">Lv. ").append(skill.getLevel()).append("</font>");
+					}
+					sb.append("</td></tr></table></td>");
+				}
+				sb.append("</tr>");
+			}
+			sb.append("</table>");
+		}
+		
+		if (hasBonus)
+		{
+			sb.append("<font color=\"707070\">Gold: bonus passives this monster rolled.</font>");
+		}
+		
+		return sb.toString();
+	}
+	
+	/**
+	 * @param skill a passive skill
+	 * @return the group it is shown in: its nature (race, weapon, armor), a weakness, a resistance, a boost to attack or defense, or anything else
+	 */
+	private static PassiveGroup getPassiveGroup(Skill skill)
+	{
+		switch (skill.getId())
+		{
+			case SKILL_STRONG_TYPE:
+			case SKILL_ARMOR_TYPE:
+			case SKILL_WEAPON_TYPE:
+			case SKILL_RACE:
+			{
+				return PassiveGroup.NATURE;
+			}
+		}
+		
+		final String name = skill.getName().toLowerCase(Locale.ROOT);
+		if (name.contains("weak") || name.contains("vulnerab"))
+		{
+			return PassiveGroup.WEAKNESSES;
+		}
+		
+		if (name.contains("resist") || name.contains("immun"))
+		{
+			return PassiveGroup.RESISTANCES;
+		}
+		
+		// What its stat modifiers change, attack or defense.
+		int offense = 0;
+		int defense = 0;
+		for (EffectScope scope : EffectScope.values())
+		{
+			final List<AbstractEffect> effects = skill.getEffects(scope);
+			if (effects == null)
+			{
+				continue;
+			}
+			
+			for (AbstractEffect effect : effects)
+			{
+				final List<FuncTemplate> funcs = effect.getFuncTemplates();
+				if (funcs == null)
+				{
+					continue;
+				}
+				
+				for (FuncTemplate func : funcs)
+				{
+					if (OFFENSE_STATS.contains(func.getStat()))
+					{
+						offense++;
+					}
+					else if (DEFENSE_STATS.contains(func.getStat()))
+					{
+						defense++;
+					}
+				}
+			}
+		}
+		
+		if ((offense > 0) && (offense >= defense))
+		{
+			return PassiveGroup.OFFENSE;
+		}
+		
+		return defense > 0 ? PassiveGroup.DEFENSE : PassiveGroup.OTHER;
+	}
+	
+	/**
+	 * The race and weapon skills keep one name for all their levels (the race skill is called "Undead" whatever the race), so they are named after the NPC itself.
+	 * @param npc the NPC
+	 * @param skill one of its nature skills
+	 * @return what the skill says about the NPC
+	 */
+	private static String getNatureLabel(Npc npc, Skill skill)
+	{
+		switch (skill.getId())
+		{
+			case SKILL_RACE:
+			{
+				return "Race: " + StringUtil.capitalizeFirst(npc.getTemplate().getRace().name().toLowerCase().replace('_', ' '));
+			}
+			case SKILL_WEAPON_TYPE:
+			{
+				return "Weapon: " + StringUtil.capitalizeFirst(npc.getAttackType().name().toLowerCase());
+			}
+			case SKILL_ARMOR_TYPE:
+			{
+				return skill.getLevel() == 3 ? "Light Armor" : "Heavy Armor";
+			}
+			default:
+			{
+				return skill.getName();
+			}
+		}
+	}
+	
+	/**
+	 * Adds the skill ids listed (comma separated) in an NPC variable to {@code ids}.
+	 */
+	private static void readSkillIds(Npc npc, String variable, Set<Integer> ids)
+	{
+		for (String id : npc.getVariables().getString(variable, "").split(","))
+		{
+			final int skillId = parseInt(id.trim());
+			if (skillId > 0)
+			{
+				ids.add(skillId);
+			}
+		}
 	}
 	
 	/**
@@ -623,7 +834,7 @@ public class NpcViewMod implements IBypassHandler
 		}
 		
 		final ClassInfoHolder classInfo = playerClass != null ? ClassListData.getInstance().getClass(playerClass) : null;
-		final NpcHtmlMessage html = new NpcHtmlMessage(npc.getObjectId());
+		final NpcHtmlMessage html = new NpcHtmlMessage();
 		html.setWindowSize(FAKE_VIEW_WIDTH, FAKE_VIEW_HEIGHT);
 		html.setFile(player, "data/html/mods/NpcView/FakePlayer.htm");
 		html.replace("%name%", npc.getName());
@@ -694,7 +905,7 @@ public class NpcViewMod implements IBypassHandler
 	
 	private void sendNpcSkillView(Player player, Npc npc)
 	{
-		final NpcHtmlMessage html = new NpcHtmlMessage(npc.getObjectId());
+		final NpcHtmlMessage html = new NpcHtmlMessage();
 		html.setWindowSize(VIEW_WIDTH, VIEW_HEIGHT);
 		html.setFile(player, "data/html/mods/NpcView/Skills.htm");
 		
@@ -726,7 +937,7 @@ public class NpcViewMod implements IBypassHandler
 	
 	private void sendAggroListView(Player player, Npc npc)
 	{
-		final NpcHtmlMessage html = new NpcHtmlMessage(npc.getObjectId());
+		final NpcHtmlMessage html = new NpcHtmlMessage();
 		html.setWindowSize(VIEW_WIDTH, VIEW_HEIGHT);
 		html.setFile(player, "data/html/mods/NpcView/AggroList.htm");
 		
@@ -758,25 +969,19 @@ public class NpcViewMod implements IBypassHandler
 	private static String getDropListButtons(Npc npc)
 	{
 		final StringBuilder sb = new StringBuilder();
-		final List<DropGroupHolder> dropListGroups = npc.getTemplate().getDropGroups();
-		final List<DropHolder> dropListDeath = npc.getTemplate().getDropList();
-		final List<DropHolder> dropListSpoil = npc.getTemplate().getSpoilList();
-		if ((dropListGroups != null) || (dropListDeath != null) || (dropListSpoil != null))
+		sb.append("<table width=300 cellpadding=0 cellspacing=0><tr>");
+		sb.append("<td align=center><button value=\"Back\" width=90 height=25 action=\"bypass NpcViewMod view ").append(npc.getObjectId()).append("\" back=\"L2UI_CT1.Button_DF_Calculator_Down\" fore=\"L2UI_CT1.Button_DF_Calculator\"></td>");
+		if ((npc.getTemplate().getDropGroups() != null) || (npc.getTemplate().getDropList() != null))
 		{
-			sb.append("<table width=275 cellpadding=0 cellspacing=0><tr>");
-			if ((dropListGroups != null) || (dropListDeath != null))
-			{
-				sb.append("<td align=center><button value=\"Show Drop\" width=100 height=25 action=\"bypass NpcViewMod dropList DROP " + npc.getObjectId() + "\" back=\"L2UI_CT1.Button_DF_Calculator_Down\" fore=\"L2UI_CT1.Button_DF_Calculator\"></td>");
-			}
-			
-			if (dropListSpoil != null)
-			{
-				sb.append("<td align=center><button value=\"Show Spoil\" width=100 height=25 action=\"bypass NpcViewMod dropList SPOIL " + npc.getObjectId() + "\" back=\"L2UI_CT1.Button_DF_Calculator_Down\" fore=\"L2UI_CT1.Button_DF_Calculator\"></td>");
-			}
-			
-			sb.append("</tr></table>");
+			sb.append("<td align=center><button value=\"Drop\" width=90 height=25 action=\"bypass NpcViewMod dropList DROP ").append(npc.getObjectId()).append("\" back=\"L2UI_CT1.Button_DF_Calculator_Down\" fore=\"L2UI_CT1.Button_DF_Calculator\"></td>");
 		}
 		
+		if (npc.getTemplate().getSpoilList() != null)
+		{
+			sb.append("<td align=center><button value=\"Spoil\" width=90 height=25 action=\"bypass NpcViewMod dropList SPOIL ").append(npc.getObjectId()).append("\" back=\"L2UI_CT1.Button_DF_Calculator_Down\" fore=\"L2UI_CT1.Button_DF_Calculator\"></td>");
+		}
+		
+		sb.append("</tr></table>");
 		return sb.toString();
 	}
 	
@@ -785,7 +990,11 @@ public class NpcViewMod implements IBypassHandler
 		List<DropHolder> dropList = null;
 		if (dropType == DropType.SPOIL)
 		{
-			dropList = new ArrayList<>(npc.getTemplate().getSpoilList());
+			final List<DropHolder> spoils = npc.getTemplate().getSpoilList();
+			if (spoils != null)
+			{
+				dropList = new ArrayList<>(spoils);
+			}
 		}
 		else
 		{
@@ -819,7 +1028,8 @@ public class NpcViewMod implements IBypassHandler
 			return;
 		}
 		
-		Collections.sort(dropList, (d1, d2) -> Integer.valueOf(d1.getItemId()).compareTo(Integer.valueOf(d2.getItemId())));
+		// Most likely first.
+		dropList.sort(Comparator.comparingDouble(DropHolder::getChance).reversed());
 		
 		int pages = dropList.size() / DROP_LIST_ITEMS_PER_PAGE;
 		if ((DROP_LIST_ITEMS_PER_PAGE * pages) < dropList.size())
@@ -853,20 +1063,15 @@ public class NpcViewMod implements IBypassHandler
 		
 		final DecimalFormat amountFormat = new DecimalFormat("#,###");
 		final DecimalFormat chanceFormat = new DecimalFormat("0.00##");
-		int leftHeight = 0;
-		int rightHeight = 0;
 		final PlayerStat stat = player.getStat();
 		final double dropAmountAdenaEffectBonus = stat.getBonusDropAdenaMultiplier();
 		final double dropAmountEffectBonus = stat.getBonusDropAmountMultiplier();
 		final double dropRateEffectBonus = stat.getBonusDropRateMultiplier();
 		final double spoilRateEffectBonus = stat.getBonusSpoilRateMultiplier();
-		final StringBuilder leftSb = new StringBuilder();
-		final StringBuilder rightSb = new StringBuilder();
-		String limitReachedMsg = "";
+		final StringBuilder sb = new StringBuilder();
+		boolean shade = false;
 		for (int i = start; i < end; i++)
 		{
-			final StringBuilder sb = new StringBuilder();
-			final int height = 64;
 			final DropHolder dropItem = dropList.get(i);
 			final ItemTemplate item = ItemData.getInstance().getTemplate(dropItem.getItemId());
 			
@@ -983,71 +1188,31 @@ public class NpcViewMod implements IBypassHandler
 				continue;
 			}
 			
-			sb.append("<table width=332 cellpadding=2 cellspacing=0 background=\"L2UI_CT1.Windows.Windows_DF_TooltipBG\">");
-			sb.append("<tr><td width=32 valign=top>");
-			sb.append("<img src=\"" + (item.getIcon() == null ? "icon.etc_question_mark_i00" : item.getIcon()) + "\" width=32 height=32>");
-			sb.append("</td><td fixwidth=300 align=center><font name=\"hs9\" color=\"CD9000\">");
-			sb.append(item.getName());
-			sb.append("</font></td></tr><tr><td width=32></td><td width=300><table width=295 cellpadding=0 cellspacing=0>");
-			sb.append("<tr><td width=48 align=right valign=top><font color=\"LEVEL\">Amount:</font></td>");
-			sb.append("<td width=247 align=center>");
-			
 			final long min = (long) (dropItem.getMin() * rateAmount);
 			final long max = (long) (dropItem.getMax() * rateAmount);
-			if (min == max)
+			final double chance = Math.min(dropItem.getChance() * rateChance, 100);
+			final String chanceColor = chance >= 50 ? "99DD77" : chance >= 10 ? "E6C35C" : "FF9955";
+			sb.append("<table width=300 cellpadding=1 cellspacing=0").append(shade ? " bgcolor=\"111111\"" : "").append("><tr>");
+			sb.append("<td width=36 height=36><img src=\"").append(item.getIcon() == null ? "icon.etc_question_mark_i00" : item.getIcon()).append("\" width=32 height=32></td>");
+			sb.append("<td width=194>").append(item.getName()).append("<br1><font color=\"808080\">Amount: ").append(amountFormat.format(min));
+			if (min != max)
 			{
-				sb.append(amountFormat.format(min));
+				sb.append(" - ").append(amountFormat.format(max));
 			}
-			else
-			{
-				sb.append(amountFormat.format(min));
-				sb.append(" - ");
-				sb.append(amountFormat.format(max));
-			}
-			
-			sb.append("</td></tr><tr><td width=48 align=right valign=top><font color=\"LEVEL\">Chance:</font></td>");
-			sb.append("<td width=247 align=center>");
-			sb.append(chanceFormat.format(Math.min(dropItem.getChance() * rateChance, 100)));
-			sb.append("%</td></tr></table></td></tr><tr><td width=32></td><td width=300>&nbsp;</td></tr></table>");
-			if ((sb.length() + rightSb.length() + leftSb.length()) < 16000) // limit of 32766?
-			{
-				if (leftHeight >= (rightHeight + height))
-				{
-					rightSb.append(sb);
-					rightHeight += height;
-				}
-				else
-				{
-					leftSb.append(sb);
-					leftHeight += height;
-				}
-			}
-			else
-			{
-				limitReachedMsg = "<br><center>Too many drops! Could not display them all!</center>";
-			}
+			sb.append("</font></td>");
+			sb.append("<td width=70 align=right><font color=\"").append(chanceColor).append("\">").append(chanceFormat.format(chance)).append("%</font></td>");
+			sb.append("</tr></table>");
+			shade = !shade;
 		}
 		
-		final StringBuilder bodySb = new StringBuilder();
-		bodySb.append("<table><tr>");
-		bodySb.append("<td>");
-		bodySb.append(leftSb.toString());
-		bodySb.append("</td><td>");
-		bodySb.append(rightSb.toString());
-		bodySb.append("</td>");
-		bodySb.append("</tr></table>");
-		
-		String html = HtmCache.getInstance().getHtm(player, "data/html/mods/NpcView/DropList.htm");
-		if (html == null)
-		{
-			LOGGER.warning(NpcViewMod.class.getSimpleName() + ": The html file data/html/mods/NpcView/DropList.htm could not be found.");
-			return;
-		}
-		
-		html = html.replace("%name%", npc.getName());
-		html = html.replace("%dropListButtons%", getDropListButtons(npc));
-		html = html.replace("%pages%", pagesSb.toString());
-		html = html.replace("%items%", bodySb.toString() + limitReachedMsg);
-		HtmlUtil.sendCBHtml(player, html);
+		final NpcHtmlMessage html = new NpcHtmlMessage();
+		html.setWindowSize(VIEW_WIDTH, VIEW_HEIGHT);
+		html.setFile(player, "data/html/mods/NpcView/DropList.htm");
+		html.replace("%name%", npc.getName());
+		html.replace("%type%", dropType == DropType.SPOIL ? "Spoil" : "Drop");
+		html.replace("%dropListButtons%", getDropListButtons(npc));
+		html.replace("%pages%", pagesSb.toString());
+		html.replace("%items%", sb.length() > 0 ? sb.toString() : "<font color=\"707070\">Nothing to show.</font>");
+		player.sendPacket(html);
 	}
 }
