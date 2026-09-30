@@ -37,7 +37,18 @@
 						<xs:attribute name="effect" type="xs:string" use="optional" />
 						<xs:attribute name="description" type="xs:string" use="optional" />
 						<xs:attribute name="skillId" type="xs:integer" use="optional" />
-						<xs:attribute name="skillLevel" type="xs:integer" use="optional" />
+						<!-- A level, or "auto": the highest level of the skill whose magicLevel the character has reached. -->
+						<xs:attribute name="skillLevel" use="optional">
+							<xs:simpleType>
+								<xs:union memberTypes="xs:positiveInteger">
+									<xs:simpleType>
+										<xs:restriction base="xs:string">
+											<xs:enumeration value="auto" />
+										</xs:restriction>
+									</xs:simpleType>
+								</xs:union>
+							</xs:simpleType>
+						</xs:attribute>
 					</xs:complexType>
 				</xs:element>
 			</xs:sequence>

@@ -61,7 +61,8 @@ public class PassiveTreeData implements IXmlReader
 				final int tier = attrs.getNamedItem("tier") != null ? parseInteger(attrs, "tier") : 0;
 				final String effect = attrs.getNamedItem("effect") != null ? parseString(attrs, "effect") : "";
 				final int skillId = attrs.getNamedItem("skillId") != null ? parseInteger(attrs, "skillId") : 0;
-				final int skillLevel = attrs.getNamedItem("skillLevel") != null ? parseInteger(attrs, "skillLevel") : 1;
+				final String skillLevelText = attrs.getNamedItem("skillLevel") != null ? parseString(attrs, "skillLevel").trim() : "1";
+				final int skillLevel = skillLevelText.equalsIgnoreCase("auto") ? 0 : Integer.parseInt(skillLevelText); // 0 = scaled to the character level
 				final int cost = attrs.getNamedItem("cost") != null ? parseInteger(attrs, "cost") : defaultCost(type);
 				final double x = attrs.getNamedItem("x") != null ? Double.parseDouble(attrs.getNamedItem("x").getNodeValue()) : 0;
 				final double y = attrs.getNamedItem("y") != null ? Double.parseDouble(attrs.getNamedItem("y").getNodeValue()) : 0;

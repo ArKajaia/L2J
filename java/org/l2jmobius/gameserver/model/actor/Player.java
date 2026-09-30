@@ -282,7 +282,6 @@ import org.l2jmobius.gameserver.model.skill.holders.SkillUseHolder;
 import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.model.stats.Stat;
-import org.l2jmobius.gameserver.model.stats.functions.FuncAdd;
 import org.l2jmobius.gameserver.model.undergroundColiseum.UCTeam;
 import org.l2jmobius.gameserver.model.variables.AccountVariables;
 import org.l2jmobius.gameserver.model.variables.PlayerVariables;
@@ -15445,30 +15444,6 @@ public class Player extends Playable
 		final double base = super.getPAtk(target);
 		final double pct = getPassiveStatBonus().get("PATK_PCT");
 		return base * (1.0 + (pct / 100.0));
-	}
-	
-	public void applyAll(Player player)
-	{
-		// ... existing skill strip/regrant logic ...
-		
-		player.getPassiveStatBonus().recompute(player);
-		syncShieldRateFunc(player);
-	}
-	
-	private static final Object PASSIVE_TREE_FUNC_OWNER = new Object();
-	
-	private void syncShieldRateFunc(Player player)
-	{
-		// Remove any previous passive-tree-owned func for this stat, then add a
-		// fresh one matching the current total - same "rebuild whole" principle
-		// as everything else in this class.
-		player.removeStatsOwner(PASSIVE_TREE_FUNC_OWNER);
-		
-		final double bonus = player.getPassiveStatBonus().get("SHIELD_RATE_PCT");
-		if (bonus != 0)
-		{
-			player.addStatFunc(new FuncAdd(Stat.SHIELD_RATE, 0x30, PASSIVE_TREE_FUNC_OWNER, bonus, null));
-		}
 	}
 	
 	@Override

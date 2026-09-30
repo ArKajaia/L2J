@@ -76,6 +76,9 @@ public class PassiveTreeBoard implements IParseBoardHandler
 		STAT_LABEL.put("DROP_RATE_PCT", "Drop Rate");
 		STAT_LABEL.put("SPOIL_RATE_PCT", "Spoil Rate");
 		STAT_LABEL.put("EXP_RATE_PCT", "EXP Rate");
+		STAT_LABEL.put("SP_RATE_PCT", "SP Rate");
+		STAT_LABEL.put("INVENTORY_SLOTS_ADD", "Inventory Slots");
+		STAT_LABEL.put("WEIGHT_LIMIT_PCT", "Weight Limit");
 		STAT_LABEL.put("ADENA_RATE_PCT", "Adena Drop Amount");
 		STAT_LABEL.put("LIFESTEAL_PCT", "Life Steal (melee)");
 		STAT_LABEL.put("MANA_LEECH_PCT", "Mana Leech (melee)");
@@ -239,7 +242,7 @@ public class PassiveTreeBoard implements IParseBoardHandler
 					continue;
 				}
 
-				final Skill skill = SkillData.getInstance().getSkill(node.getSkillId(), node.getSkillLevel());
+				final Skill skill = SkillData.getInstance().getSkill(node.getSkillId(), PassiveTreeManager.getNodeSkillLevel(player, node));
 				if (skill != null)
 				{
 					skills.merge(skill.getId(), skill, (a, b) -> a.getLevel() >= b.getLevel() ? a : b);

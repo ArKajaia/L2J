@@ -54,6 +54,7 @@ import org.l2jmobius.gameserver.config.custom.NpcStatMultipliersConfig;
 import org.l2jmobius.gameserver.config.custom.OfflinePlayConfig;
 import org.l2jmobius.gameserver.config.custom.OfflineTradeConfig;
 import org.l2jmobius.gameserver.config.custom.OnlineInfoConfig;
+import org.l2jmobius.gameserver.config.custom.PassiveTreeConfig;
 import org.l2jmobius.gameserver.config.custom.PasswordChangeConfig;
 import org.l2jmobius.gameserver.config.custom.PremiumSystemConfig;
 import org.l2jmobius.gameserver.config.custom.PrivateStoreRangeConfig;
@@ -138,6 +139,7 @@ public class ConfigLoader
 		OfflinePlayConfig.load();
 		OfflineTradeConfig.load();
 		OnlineInfoConfig.load();
+		PassiveTreeConfig.load();
 		PasswordChangeConfig.load();
 		PremiumSystemConfig.load();
 		PrivateStoreRangeConfig.load();

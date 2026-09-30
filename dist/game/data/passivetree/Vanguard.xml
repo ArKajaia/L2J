@@ -445,7 +445,7 @@
 		<requires nodeId="1062" />
 		<requires nodeId="1079" />
 	</node>
-	<node id="1081" name="Field Repairs" sector="Vanguard" type="FUNCTION" tier="0" cost="2" x="1885.9" y="1705.2" effect="MAXHP:15" description="Utility unlock.">
+	<node id="1081" name="Field Salvage" sector="Vanguard" type="FUNCTION" tier="0" cost="2" x="1885.9" y="1705.2" effect="MAXHP:15" skillId="248" skillLevel="5" description="Unlocks Crystallize: break equipment of any grade down into crystals.">
 		<requires nodeId="1062" />
 	</node>
 	<node id="20101" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2718.7" y="1927.6" effect="MAXHP:6">

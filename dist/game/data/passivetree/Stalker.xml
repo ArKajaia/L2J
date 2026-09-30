@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Stalker: 28 nodes, hybrid of Shadowblade and Deadeye filling the gap between their arms. x/y are authoritative layout coords. -->
+<!-- Stalker: 30 nodes, hybrid of Shadowblade and Deadeye filling the gap between their arms. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="30201" name="Confluence" sector="Stalker" type="SMALL" tier="0" cost="1" x="517.5" y="2225.0" effect="EVASION_ADD:0.3;ACCURACY_ADD:0.3">
 		<requires nodeId="22102" />
@@ -133,6 +133,7 @@
 		<requires nodeId="3012" />
 		<requires nodeId="30213" />
 		<requires nodeId="30217" />
+		<requires nodeId="30229" />
 	</node>
 	<node id="30226" name="Tracker's Path" sector="Stalker" type="SMALL" tier="0" cost="1" x="-109.7" y="2183.1" effect="ACCURACY_ADD:0.3;PATK_PCT:0.3">
 		<requires nodeId="4006" />
@@ -145,5 +146,12 @@
 	</node>
 	<node id="30228" name="Scavenger's Creed" sector="Stalker" type="KEYSTONE" tier="0" cost="3" x="-122.1" y="2617.0" effect="DROP_RATE_PCT:12;SPOIL_RATE_PCT:12;ADENA_RATE_PCT:12;PATK_PCT:-8;MATK_PCT:-8" description="Richer hunts at the cost of weaker hits.">
 		<requires nodeId="30227" />
+	</node>
+	<node id="30229" name="Approach" sector="Stalker" type="SMALL" tier="0" cost="1" x="280.4" y="2942.6" effect="MAXHP:6">
+		<requires nodeId="30225" />
+		<requires nodeId="30230" />
+	</node>
+	<node id="30230" name="Hunter's Mark" sector="Stalker" type="ACTIVE_SKILL" tier="0" cost="2" x="304.7" y="3080.4" effect="MAXHP:15" skillId="90462" skillLevel="auto" description="ACTIVE: mark a target up to 900 away: -6 Evasion and -10% P.Def for 20s (30s cooldown).">
+		<requires nodeId="30229" />
 	</node>
 </list>

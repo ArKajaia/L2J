@@ -339,7 +339,7 @@
 		<requires nodeId="4039" />
 		<requires nodeId="4061" />
 	</node>
-	<node id="4061" name="Volley" sector="Deadeye" type="ACTIVE_SKILL" tier="0" cost="2" x="777.0" y="1920.1" effect="MAXHP:15" skillId="90431" skillLevel="1" description="ACTIVE: loose a volley of arrows at all enemies around you (power 600, 25s cooldown).">
+	<node id="4061" name="Volley" sector="Deadeye" type="ACTIVE_SKILL" tier="0" cost="2" x="777.0" y="1920.1" effect="MAXHP:15" skillId="90431" skillLevel="auto" description="ACTIVE: loose a volley of arrows at all enemies around you (25s cooldown). Grows stronger with your level.">
 		<requires nodeId="4060" />
 	</node>
 	<node id="4062" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="1061.2" y="1604.8" effect="ACCURACY_ADD:0.2" description="Junction.">
@@ -445,7 +445,7 @@
 		<requires nodeId="4062" />
 		<requires nodeId="4079" />
 	</node>
-	<node id="4081" name="Tracker's Guile" sector="Deadeye" type="FUNCTION" tier="0" cost="2" x="1317.9" y="1481.7" effect="MAXHP:15" description="Utility unlock.">
+	<node id="4081" name="Tracker's Guile" sector="Deadeye" type="FUNCTION" tier="0" cost="2" x="1317.9" y="1481.7" effect="MAXHP:15" skillId="221" skillLevel="1" description="Unlocks Silent Move: monsters won't attack you first while it is on (-40% Speed, drains MP).">
 		<requires nodeId="4062" />
 	</node>
 	<node id="23101" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="472.2" y="1282.7" effect="ACCURACY_ADD:0.2">

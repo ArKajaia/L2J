@@ -59,7 +59,9 @@ public class PassiveStatBonusCache
 		Map.entry("PVE_PDMG_PCT", 25.0), Map.entry("PVE_MDMG_PCT", 25.0), Map.entry("PVE_BOW_DMG_PCT", 25.0), Map.entry("PHYS_SKILL_POWER_PCT", 20.0), //
 		Map.entry("MCRIT_DMG_PCT", 40.0), Map.entry("BLOW_RATE_PCT", 20.0), Map.entry("HEALING_RECEIVED_PCT", 40.0), //
 		Map.entry("SKILL_CDR_PCT", 20.0), Map.entry("SPELL_CDR_PCT", 20.0), Map.entry("SPELL_MP_COST_RED_PCT", 30.0), //
-		Map.entry("CRIT_DMG_TAKEN_RED_PCT", 30.0), Map.entry("INTERRUPT_RES_PCT", 50.0), Map.entry("DEBUFF_RES_PCT", 30.0));
+		Map.entry("CRIT_DMG_TAKEN_RED_PCT", 30.0), Map.entry("INTERRUPT_RES_PCT", 50.0), Map.entry("DEBUFF_RES_PCT", 30.0), //
+		// utility unlocks
+		Map.entry("INVENTORY_SLOTS_ADD", 40.0), Map.entry("WEIGHT_LIMIT_PCT", 100.0), Map.entry("EXP_RATE_PCT", 25.0), Map.entry("SP_RATE_PCT", 25.0));
 	
 	public double get(String key)
 	{

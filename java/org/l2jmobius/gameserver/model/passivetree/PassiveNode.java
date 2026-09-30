@@ -35,6 +35,7 @@ public class PassiveNode
 
 	/** 0 if this node grants no skill. */
 	private final int skillId;
+	/** 0 = "auto": scaled to the character level. */
 	private final int skillLevel;
 
 	private final List<Integer> parents = new ArrayList<>();
@@ -72,4 +73,6 @@ public class PassiveNode
 	public void addParent(int nodeId) { parents.add(nodeId); }
 	public boolean isRoot() { return parents.isEmpty(); }
 	public boolean grantsSkill() { return skillId > 0; }
+	/** skillLevel="auto" in the XML: the granted level follows the character level (see PassiveTreeManager.getScaledSkillLevel). */
+	public boolean isSkillLevelScaled() { return skillLevel <= 0; }
 }
