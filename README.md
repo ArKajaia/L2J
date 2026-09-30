@@ -519,7 +519,16 @@ This program is free software, licensed under the **GNU General Public License, 
 
 ## Recent Updates
 
-Changes from 28–29 September 2026.
+Changes from 28–30 September 2026.
+
+### Passive Skill Tree
+- **Active skills fixed**: Earthshatter, Volley and Arcane Nova now deal their intended damage (Arcane Nova did none), Earthshatter's stun can land, and Shadow Lunge's critical damage bonus applies.
+- **Scale with level**: the damage, heal and debuff actives have 9 levels. You get the level that matches your character level, it moves up as you level, and the cooldown carries over. Before, they failed against high-level targets.
+- **Hybrid actives**: each hybrid sector has an active skill node: Crimson Bulwark (Warlord), Reaving Strike (Reaver), Hunter's Mark (Stalker), Binding Rune (Spellbow), Temporal Flow (Mystic), Purifying Aegis (Templar).
+- **Renamed** to avoid clashing with retail skills: War Cry is Battle Fervor, Shadow Step is Shadow Lunge, Benediction is Sacred Chorus, Sanctuary is Hallowed Ward.
+- **Utility nodes that do something**: Field Salvage (was Field Repairs) grants Crystallize for every grade, Tracker's Guile grants Silent Move, Scholar's Insight gives +5% XP and SP, and Pilgrim's Provisions (was Sacred Artisan) gives +12 inventory slots and +30% weight limit.
+- **Settings**: `Custom/PassiveTree.ini` is now loaded, with the same values as before. Single-node refunds are charged in Adena.
+- **Client**: the custom skills need Skillname-e.dat / Skillgrp.dat entries to show their names and icons.
 
 ### Alternative Class Transfer Challenges
 - **New**: the Class Masters now offer a short solo trial for each class transfer. Clearing it unlocks the transfer at that Class Master; the village-master quests are unchanged.

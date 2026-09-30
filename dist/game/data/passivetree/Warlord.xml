@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Warlord: 28 nodes, hybrid of Vanguard and Juggernaut filling the gap between their arms. x/y are authoritative layout coords. -->
+<!-- Warlord: 30 nodes, hybrid of Vanguard and Juggernaut filling the gap between their arms. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="30001" name="Confluence" sector="Warlord" type="SMALL" tier="0" cost="1" x="2682.5" y="2225.0" effect="MAXHP:8;PATK_PCT:0.3">
 		<requires nodeId="20102" />
@@ -133,6 +133,7 @@
 		<requires nodeId="1011" />
 		<requires nodeId="30013" />
 		<requires nodeId="30017" />
+		<requires nodeId="30029" />
 	</node>
 	<node id="30026" name="Veteran's Path" sector="Warlord" type="SMALL" tier="0" cost="1" x="2953.4" y="2794.9" effect="PATK_PCT:0.4;ATK_SPD_PCT:0.3">
 		<requires nodeId="2005" />
@@ -145,5 +146,12 @@
 	</node>
 	<node id="30028" name="Warlord's Mandate" sector="Warlord" type="KEYSTONE" tier="0" cost="3" x="3342.8" y="2581.1" effect="PHYS_SKILL_POWER_PCT:10;SKILL_CDR_PCT:-12" description="Physical skills hit 10% harder but take 12% longer to recharge.">
 		<requires nodeId="30027" />
+	</node>
+	<node id="30029" name="Approach" sector="Warlord" type="SMALL" tier="0" cost="1" x="3420.6" y="2086.7" effect="MAXHP:6">
+		<requires nodeId="30025" />
+		<requires nodeId="30030" />
+	</node>
+	<node id="30030" name="Crimson Bulwark" sector="Warlord" type="ACTIVE_SKILL" tier="0" cost="2" x="3552.2" y="2038.8" effect="MAXHP:15" skillId="90460" skillLevel="1" description="ACTIVE: 6% of your melee damage heals you and +15% P.Def for 20s (120s cooldown).">
+		<requires nodeId="30029" />
 	</node>
 </list>

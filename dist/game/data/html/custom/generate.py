@@ -130,15 +130,18 @@ MASTERS={
 }
 ACTIVES={
 "Vanguard":[("Vanguard Aegis",90400),("Rallying Shout",90401)],
-"Juggernaut":[("War Cry",90410),("Earthshatter",90411)],
-"Shadowblade":[("Shadow Step",90420),("Smoke Veil",90421)],
+"Juggernaut":[("Battle Fervor",90410),("Earthshatter",90411)],
+"Shadowblade":[("Shadow Lunge",90420),("Smoke Veil",90421)],
 "Deadeye":[("Disengage",90430),("Volley",90431)],
 "Arcanist":[("Arcane Nova",90440),("Mana Rift",90441)],
-"Hierophant":[("Benediction",90450),("Sanctuary",90451)],
+"Hierophant":[("Sacred Chorus",90450),("Hallowed Ward",90451)],
 }
-FUNCTIONS={"Vanguard":("Field Repairs",None),"Juggernaut":("Common Craft Mastery",1322),
-"Shadowblade":("Master Spoil",248),"Deadeye":("Tracker's Guile",None),
-"Arcanist":("Scholar's Insight",None),"Hierophant":("Sacred Artisan",None)}
+# The hand-tuned XML has since diverged (Shadowblade has a second Sweeper node,
+# some FUNCTION nodes grant a stat instead of a skill, the hybrid sectors are
+# hand-made); data/passivetree/*.xml is the source of truth, not this script.
+FUNCTIONS={"Vanguard":("Field Salvage",248),"Juggernaut":("Dwarven Craft Mastery",1321),
+"Shadowblade":("Master Spoil",254),"Deadeye":("Tracker's Guile",221),
+"Arcanist":("Scholar's Insight",None),"Hierophant":("Pilgrim's Provisions",None)}
 
 # ---------------------------------------------------------------------------
 def make_cluster(sector, base_id, attach_id, origin, out_angle, theme, size):

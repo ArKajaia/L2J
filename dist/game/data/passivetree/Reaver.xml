@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Reaver: 28 nodes, hybrid of Juggernaut and Shadowblade filling the gap between their arms. x/y are authoritative layout coords. -->
+<!-- Reaver: 30 nodes, hybrid of Juggernaut and Shadowblade filling the gap between their arms. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="30101" name="Confluence" sector="Reaver" type="SMALL" tier="0" cost="1" x="1600.0" y="2850.0" effect="PATK_PCT:0.3;CRIT_DMG_PCT:0.5">
 		<requires nodeId="21102" />
@@ -138,6 +138,7 @@
 		<requires nodeId="3006" />
 		<requires nodeId="30114" />
 		<requires nodeId="30118" />
+		<requires nodeId="30129" />
 	</node>
 	<node id="30127" name="Approach" sector="Reaver" type="SMALL" tier="0" cost="1" x="1564.0" y="3518.3" effect="MAXHP:6">
 		<requires nodeId="30120" />
@@ -145,5 +146,12 @@
 	</node>
 	<node id="30128" name="Executioner's Creed" sector="Reaver" type="KEYSTONE" tier="0" cost="3" x="1620.9" y="3599.9" effect="CRIT_DMG_PCT:14;PVE_PDMG_PCT:6;CRIT_RATE_ADD:-40" description="Fewer critical hits, but the ones that land are devastating.">
 		<requires nodeId="30127" />
+	</node>
+	<node id="30129" name="Approach" sector="Reaver" type="SMALL" tier="0" cost="1" x="1125.4" y="3441.9" effect="MAXHP:6">
+		<requires nodeId="30126" />
+		<requires nodeId="30130" />
+	</node>
+	<node id="30130" name="Reaving Strike" sector="Reaver" type="ACTIVE_SKILL" tier="0" cost="2" x="1018.1" y="3531.9" effect="MAXHP:15" skillId="90461" skillLevel="auto" description="ACTIVE: heavy melee strike that can make the target bleed for 10s (20s cooldown). Grows stronger with your level.">
+		<requires nodeId="30129" />
 	</node>
 </list>

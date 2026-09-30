@@ -28,6 +28,7 @@ import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.data.holders.PetLevelData;
 import org.l2jmobius.gameserver.data.xml.ExperienceData;
 import org.l2jmobius.gameserver.data.xml.PetDataTable;
+import org.l2jmobius.gameserver.managers.PassiveTreeManager;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.player.SubClassHolder;
 import org.l2jmobius.gameserver.model.actor.instance.Pet;
@@ -291,6 +292,9 @@ public class PlayerStat extends PlayableStat
 		
 		// Give AutoGet skills and all normal skills if Auto-Learn is activated.
 		player.rewardSkills();
+		
+		// Passive tree skills granted at the character's level move with it.
+		PassiveTreeManager.getInstance().onLevelChanged(player);
 		
 		final Clan clan = player.getClan();
 		if (clan != null)

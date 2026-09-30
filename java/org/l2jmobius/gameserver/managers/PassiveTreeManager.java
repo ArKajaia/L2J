@@ -19,14 +19,18 @@ import org.l2jmobius.gameserver.data.custom.PassiveTreeData;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.creature.TimeStamp;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
+import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.skill.PassiveTreeArchetypes;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.model.stats.functions.FuncAdd;
 import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
+import org.l2jmobius.gameserver.network.serverpackets.ExStorageMaxCount;
+import org.l2jmobius.gameserver.network.serverpackets.SkillCoolTime;
 
 /**
  * Owns: point math (always DERIVED from level, never stored - see note on getEarnedPoints), the allocated-node cache per (character, class_index), DB persistence, and applyAll() which is the single choke point that keeps granted skills, getter-backed stats, and Func-backed stats all in sync with
@@ -92,7 +96,9 @@ public class PassiveTreeManager
 		Map.entry("MAGIC_REFLECT_PCT", Stat.REFLECT_SKILL_MAGIC), // calcSkillReflect: straight % chance, init 0
 		Map.entry("SKILL_REFLECT_PCT", Stat.REFLECT_SKILL_PHYSIC), // calcSkillReflect: straight % chance, init 0
 		// PlayerStat.getBonus*Multiplier(): 1 + calcStat(stat, 0) / 100 - init 0, so these MUST be adds (a multiplier on 0 is a silent no-op).
-		Map.entry("DROP_RATE_PCT", Stat.BONUS_DROP_RATE), Map.entry("SPOIL_RATE_PCT", Stat.BONUS_SPOIL_RATE), Map.entry("ADENA_RATE_PCT", Stat.BONUS_DROP_ADENA), Map.entry("EXP_RATE_PCT", Stat.BONUS_EXP));
+		Map.entry("DROP_RATE_PCT", Stat.BONUS_DROP_RATE), Map.entry("SPOIL_RATE_PCT", Stat.BONUS_SPOIL_RATE), Map.entry("ADENA_RATE_PCT", Stat.BONUS_DROP_ADENA), Map.entry("EXP_RATE_PCT", Stat.BONUS_EXP), Map.entry("SP_RATE_PCT", Stat.BONUS_SP),
+		// Player.getInventoryLimit(): base slots + calcStat(INV_LIM, 0).
+		Map.entry("INVENTORY_SLOTS_ADD", Stat.INV_LIM));
 
 	/**
 	 * Stats that are MULTIPLIERS - the value is a percent, applied as (1 + pct/100). Adding to these instead of multiplying is what caused the 200 -> 12,000 crit damage blowout.
@@ -106,7 +112,8 @@ public class PassiveTreeManager
 		Map.entry("PHYS_SKILL_POWER_PCT", Stat.PHYSICAL_SKILL_POWER), // calcPhysDam: init = skill damage
 		Map.entry("MCRIT_DMG_PCT", Stat.MAGIC_CRIT_DMG), // calcMagicDam: init 1
 		Map.entry("BLOW_RATE_PCT", Stat.BLOW_RATE), // calcBlowSuccess: init = base blow rate
-		Map.entry("HEALING_RECEIVED_PCT", Stat.HEAL_EFFECT)); // Heal effect: init = heal amount, read on the target
+		Map.entry("HEALING_RECEIVED_PCT", Stat.HEAL_EFFECT), // Heal effect: init = heal amount, read on the target
+		Map.entry("WEIGHT_LIMIT_PCT", Stat.WEIGHT_LIMIT)); // Creature.getMaxLoad: init = CON-based base load
 
 	/**
 	 * Multipliers where LOWER is better (cooldowns, MP cost, damage taken, interrupt chance). The effect value is written as a positive "reduction" percent so the UIs colour it green, and applied as (1 - pct/100). A negative value (keystone drawback) therefore becomes a penalty multiplier above 1.
@@ -342,31 +349,21 @@ public class PassiveTreeManager
 	/**
 	 * Full rebuild for this player's CURRENT class_index:
 	 * <ol>
-	 * <li>Strips every skill any tree node could have granted, then regrants exactly what the current allocated set says.</li>
+	 * <li>Works out the skills the allocation grants (scaling skillLevel="auto" nodes to the character level), strips tree-granted skills that are no longer granted at that level, and grants what is missing.</li>
 	 * <li>Rebuilds the aggregated stat bonus cache from scratch (read by the getter overrides in Player.java: STR/DEX/CON/INT/WIT/MEN, MAXHP/MP/CP, PATK/PDEF/MATK/MDEF %, attack/cast speed %, shield def %).</li>
 	 * <li>Strips and reapplies every Func-backed stat (shield rate, reflect, crit rate/damage, evasion, accuracy, regen rates, drop/spoil/exp rate, move speed) in one pass via {@link #syncPassiveTreeStatFuncs}.</li>
 	 * </ol>
-	 * Called after allocate(), after resetTree(), on login, and on subclass switch - never call addSkill/removeSkill/addStatFunc for tree nodes anywhere else, or two code paths can disagree about current state.
+	 * Called after allocate(), after resetTree(), on login, on subclass switch and (via onLevelChanged) on level change - never call addSkill/removeSkill/addStatFunc for tree nodes anywhere else, or two code paths can disagree about current state.
 	 * @param player
 	 */
 	public void applyAll(Player player)
 	{
 		final Map<Integer, Integer> granted = _treeGranted.computeIfAbsent(player.getObjectId(), k -> new ConcurrentHashMap<>());
 		
-		// 1) Remove ONLY what the tree added - and only if it's still our copy.
-		// The level check matters: if the character has since gained their own
-		// version of the skill, the levels won't match and we leave it alone.
-		for (Map.Entry<Integer, Integer> entry : granted.entrySet())
-		{
-			final Skill known = player.getKnownSkill(entry.getKey());
-			if ((known != null) && (known.getLevel() == entry.getValue()))
-			{
-				player.removeSkill(known, false, true);
-			}
-		}
-		granted.clear();
-		
-		// 2) Grant allocated skills the character does NOT already have.
+		// 1) Work out what the allocation grants now: skill id -> level. A node
+		// with skillLevel="auto" gets the highest level of its skill whose magic
+		// level the character has reached, like a retail skill learned on level up.
+		final Map<Integer, Integer> wanted = new HashMap<>();
 		for (int nodeId : getAllocatedNodes(player))
 		{
 			final PassiveNode node = PassiveTreeData.getInstance().getNode(nodeId);
@@ -375,27 +372,74 @@ public class PassiveTreeManager
 				continue;
 			}
 			
-			// Already owned - by the class, or by another node granting the same
-			// skill. Either way, keep what's there and don't record it as ours.
-			if (player.getKnownSkill(node.getSkillId()) != null)
+			wanted.merge(node.getSkillId(), getNodeSkillLevel(player, node), Math::max);
+		}
+		
+		// 2) Remove ONLY what the tree added and no longer grants at that level -
+		// and only if it's still our copy. The level check matters: if the
+		// character has since gained their own version of the skill, the levels
+		// won't match and we leave it alone. A skill that stays as it is is not
+		// touched, so allocating some other node doesn't cancel its running buff.
+		final Map<Integer, TimeStamp> cooldowns = new HashMap<>();
+		for (Map.Entry<Integer, Integer> entry : granted.entrySet())
+		{
+			if (entry.getValue().equals(wanted.get(entry.getKey())))
 			{
 				continue;
 			}
 			
-			final Skill skill = SkillData.getInstance().getSkill(node.getSkillId(), node.getSkillLevel());
-			if (skill != null)
+			final Skill known = player.getKnownSkill(entry.getKey());
+			if ((known != null) && (known.getLevel() == entry.getValue()))
 			{
-				player.addSkill(skill, false);
-				granted.put(skill.getId(), skill.getLevel());
+				// Reuse is keyed by skill level: remember it, so moving to the
+				// next level of the same skill doesn't reset its cooldown.
+				final TimeStamp reuse = player.getSkillReuseTimeStamp(known.getReuseHashCode());
+				if ((reuse != null) && reuse.hasNotPassed())
+				{
+					cooldowns.put(known.getId(), reuse);
+				}
+				player.removeSkill(known, false, true);
+			}
+		}
+		granted.keySet().retainAll(wanted.keySet());
+		granted.entrySet().removeIf(entry -> !entry.getValue().equals(wanted.get(entry.getKey())));
+		
+		// 3) Grant what the character does NOT already have.
+		for (Map.Entry<Integer, Integer> entry : wanted.entrySet())
+		{
+			// Already ours at this level, or owned by the class. Keep what's there
+			// and don't record a class-owned skill as ours.
+			if (player.getKnownSkill(entry.getKey()) != null)
+			{
+				continue;
+			}
+			
+			final Skill skill = SkillData.getInstance().getSkill(entry.getKey(), entry.getValue());
+			if (skill == null)
+			{
+				continue;
+			}
+			
+			player.addSkill(skill, false);
+			granted.put(skill.getId(), skill.getLevel());
+			
+			final TimeStamp reuse = cooldowns.get(skill.getId());
+			if ((reuse != null) && reuse.hasNotPassed())
+			{
+				player.addTimeStamp(skill, reuse.getReuse(), reuse.getStamp());
+				player.disableSkill(skill, reuse.getRemaining());
 			}
 		}
 		
-		// 3) Stat bonuses (getter-backed + Func-backed), rebuilt from scratch.
+		// 4) Stat bonuses (getter-backed + Func-backed), rebuilt from scratch.
 		player.getPassiveStatBonus().recompute(player);
 		syncPassiveTreeStatFuncs(player);
 		
-		// 4) Tell the client. Skill window first, then stats/HP bars.
+		// 5) Tell the client. Skill window first, then inventory size / weight (tree
+		// nodes can change both), then stats/HP bars.
 		player.sendSkillList();
+		player.sendPacket(new ExStorageMaxCount(player));
+		player.refreshOverloaded();
 		player.broadcastUserInfo();
 	}
 	
@@ -452,6 +496,67 @@ public class PassiveTreeManager
 	{
 		_treeGranted.remove(player.getObjectId());
 		applyAll(player);
+		
+		// The login and subclass paths send SkillCoolTime before the tree skills
+		// exist, so the client would show them ready while they are on cooldown.
+		player.sendPacket(new SkillCoolTime(player));
+	}
+	
+	/**
+	 * Call after the character's level changes. Moves skillLevel="auto" skills to the level that matches the new character level, if any of them changed.
+	 * @param player
+	 */
+	public void onLevelChanged(Player player)
+	{
+		final Map<Integer, Integer> granted = _treeGranted.get(player.getObjectId());
+		if (granted == null)
+		{
+			return; // Tree not applied yet (still logging in).
+		}
+		
+		for (int nodeId : getAllocatedNodes(player))
+		{
+			final PassiveNode node = PassiveTreeData.getInstance().getNode(nodeId);
+			if ((node != null) && node.grantsSkill() && node.isSkillLevelScaled())
+			{
+				final Integer current = granted.get(node.getSkillId());
+				if ((current != null) && (current != getNodeSkillLevel(player, node)))
+				{
+					applyAll(player);
+					return;
+				}
+			}
+		}
+	}
+	
+	/**
+	 * @param player
+	 * @param node a node that grants a skill
+	 * @return the level of the node's skill this character gets: the fixed skillLevel, or for skillLevel="auto" the level matching the character level
+	 */
+	public static int getNodeSkillLevel(Player player, PassiveNode node)
+	{
+		return node.isSkillLevelScaled() ? getScaledSkillLevel(node.getSkillId(), player.getLevel()) : node.getSkillLevel();
+	}
+	
+	/**
+	 * @param skillId
+	 * @param characterLevel
+	 * @return the highest level of the skill whose magic level is at most {@code characterLevel}, and at least 1
+	 */
+	public static int getScaledSkillLevel(int skillId, int characterLevel)
+	{
+		int result = 1;
+		final int maxLevel = SkillData.getInstance().getMaxLevel(skillId);
+		for (int level = 2; level <= maxLevel; level++)
+		{
+			final Skill skill = SkillData.getInstance().getSkill(skillId, level);
+			if ((skill != null) && (skill.getMagicLevel() <= characterLevel))
+			{
+				result = level;
+			}
+		}
+		return result;
 	}
 	
 	/**
@@ -643,7 +748,7 @@ public class PassiveTreeManager
 		final long cost = PassiveTreeConfig.RESPEC_ADENA_PER_POINT * node.getCost();
 		if (cost > 0)
 		{
-			if (!player.destroyItemByItemId(ItemProcessType.FEE, PassiveTreeConfig.RESET_ITEM_ID, cost, player, true))
+			if (!player.destroyItemByItemId(ItemProcessType.FEE, Inventory.ADENA_ID, cost, player, true))
 			{
 				return DeallocateResult.NOT_ENOUGH_ADENA;
 			}
@@ -661,13 +766,7 @@ public class PassiveTreeManager
 	}
 	
 	/**
-	 * ============================================================================ PERSISTENCE - VERIFY BEFORE USING ============================================================================ This method's job is simple: delete ONE row from whatever table your allocate() path writes a row INTO
-	 * when a node is allocated. The table name and column names below (character_passive_tree / object_id / class_index / node_id) are my best inference of a typical layout for this system - they were never confirmed against your actual schema in this conversation. Before using this as-is: look at
-	 * whichever method allocate() calls to INSERT a row (it's somewhere in this class, likely named something like persistAllocate() or saveNode()). If one exists, DELETE THIS METHOD and write persistDelete() as its mirror image instead - same table, same column names, same class_index logic - so
-	 * both directions of the allocation can never drift apart. Only fall back to the raw SQL below if no such method exists yet. ============================================================================ public boolean allocate(Player player, int nodeId) { if (!canAllocate(player, nodeId)) {
-	 * return false; } getAllocatedNodes(player).add(nodeId); persistInsert(player, nodeId); applyAll(player); return true; } private void persistInsert(Player player, int nodeId) { final int classIndex = PassiveTreeConfig.SEPARATE_SUBCLASS_POINTS ? player.getClassIndex() : 0; try (Connection con =
-	 * DatabaseFactory.getConnection(); PreparedStatement ps = con.prepareStatement("INSERT INTO character_passive_tree (char_id, class_index, node_id) VALUES (?, ?, ?)")) { ps.setInt(1, player.getObjectId()); ps.setInt(2, classIndex); ps.setInt(3, nodeId); ps.execute(); } catch (Exception e) {
-	 * e.printStackTrace(); } }
+	 * Mirror of persistInsert(): deletes one allocated node row.
 	 * @param player
 	 * @param nodeId
 	 */

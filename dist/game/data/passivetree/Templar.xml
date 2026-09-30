@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Templar: 28 nodes, hybrid of Hierophant and Vanguard filling the gap between their arms. x/y are authoritative layout coords. -->
+<!-- Templar: 30 nodes, hybrid of Hierophant and Vanguard filling the gap between their arms. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="30501" name="Confluence" sector="Templar" type="SMALL" tier="0" cost="1" x="2682.5" y="975.0" effect="MDEF_PCT:0.3;MAXHP:8">
 		<requires nodeId="25102" />
@@ -138,6 +138,7 @@
 		<requires nodeId="1005" />
 		<requires nodeId="30514" />
 		<requires nodeId="30518" />
+		<requires nodeId="30529" />
 	</node>
 	<node id="30527" name="Approach" sector="Templar" type="SMALL" tier="0" cost="1" x="3280.3" y="671.9" effect="MAXHP:6">
 		<requires nodeId="30520" />
@@ -145,5 +146,12 @@
 	</node>
 	<node id="30528" name="Inquisitor" sector="Templar" type="KEYSTONE" tier="0" cost="3" x="3321.1" y="581.2" effect="MANA_LEECH_PCT:3;PATK_PCT:4;MP_REGEN_PCT:-40" description="Your melee blows drain mana, but your spirit barely regenerates on its own.">
 		<requires nodeId="30527" />
+	</node>
+	<node id="30529" name="Approach" sector="Templar" type="SMALL" tier="0" cost="1" x="3425.8" y="1106.4" effect="MAXHP:6">
+		<requires nodeId="30526" />
+		<requires nodeId="30530" />
+	</node>
+	<node id="30530" name="Purifying Aegis" sector="Templar" type="ACTIVE_SKILL" tier="0" cost="2" x="3540.5" y="1186.7" effect="MAXHP:15" skillId="90465" skillLevel="1" description="ACTIVE: remove up to 3 debuffs from yourself, then +20% healing received for 15s (150s cooldown).">
+		<requires nodeId="30529" />
 	</node>
 </list>
