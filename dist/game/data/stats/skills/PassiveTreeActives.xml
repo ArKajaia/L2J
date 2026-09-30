@@ -57,7 +57,7 @@
 	     stacks with every retail buff. Retail reference: 1311 Body of Avatar.
 	     =================================================================== -->
 	<skill id="90401" levels="1" name="Rallying Shout">
-		<icon>icon.skill1311</icon>
+		<icon>icon.skill0121</icon>
 		<operateType>A2</operateType>
 		<targetType>PARTY</targetType>
 		<affectRange>1000</affectRange>
@@ -207,7 +207,7 @@
 	     Speed + evasion burst sized for a ranged class repositioning.
 	     =================================================================== -->
 	<skill id="90430" levels="1" name="Disengage">
-		<icon>icon.skill1044</icon>
+		<icon>icon.skill0004</icon>
 		<operateType>A2</operateType>
 		<targetType>SELF</targetType>
 		<abnormalLevel>1</abnormalLevel>
@@ -235,7 +235,7 @@
 		<table name="#magicLevel">1 20 40 52 58 64 70 76 82</table>
 		<table name="#mpConsume">20 30 50 60 68 75 82 90 98</table>
 		<table name="#power">120 270 600 1140 1500 1920 2340 2700 3000</table>
-		<icon>icon.skill0407</icon>
+		<icon>icon.skill0772</icon>
 		<operateType>A1</operateType>
 		<targetType>AURA</targetType>
 		<affectRange>500</affectRange>
@@ -265,7 +265,7 @@
 		<table name="#magicLevel">1 20 40 52 58 64 70 76 82</table>
 		<table name="#mpConsume">26 39 65 78 88 98 107 117 127</table>
 		<table name="#power">22 45 75 102 118 132 146 158 169</table>
-		<icon>icon.skill1163</icon>
+		<icon>icon.skill1417</icon>
 		<operateType>A1</operateType>
 		<targetType>AURA</targetType>
 		<affectRange>300</affectRange>
@@ -316,7 +316,7 @@
 		<table name="#magicLevel">1 20 40 52 58 64 70 76 82</table>
 		<table name="#mpConsume">24 36 60 72 81 90 99 108 117</table>
 		<table name="#amount">270 540 900 1080 1170 1260 1350 1440 1530</table>
-		<icon>icon.skill1015</icon>
+		<icon>icon.skill1027</icon>
 		<operateType>A1</operateType>
 		<targetType>PARTY</targetType>
 		<affectRange>1000</affectRange>
@@ -494,7 +494,7 @@
 	     Spell haste window: magic skills recharge 25% faster and cast 10%
 	     faster for 15s. -->
 	<skill id="90464" levels="1" name="Temporal Flow">
-		<icon>icon.skill1062</icon>
+		<icon>icon.skill1085</icon>
 		<operateType>A2</operateType>
 		<targetType>SELF</targetType>
 		<abnormalLevel>1</abnormalLevel>
@@ -518,7 +518,7 @@
 	     Removes up to 3 debuffs from yourself (retail cleanse parameters),
 	     then +20% healing received for 15s. -->
 	<skill id="90465" levels="1" name="Purifying Aegis">
-		<icon>icon.skill1018</icon>
+		<icon>icon.skill1409</icon>
 		<operateType>A2</operateType>
 		<targetType>SELF</targetType>
 		<abnormalLevel>1</abnormalLevel>
