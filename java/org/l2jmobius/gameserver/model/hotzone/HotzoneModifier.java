@@ -118,12 +118,12 @@ public enum HotzoneModifier
 	};
 
 	/** Stacking XP/SP buff (levels 1-{@link #KILL_STREAK_MAX_LEVEL}) re-applied one level higher on every kill under {@link #KILL_STREAK}; its 15s abnormal time is the chain window. */
-	public static final int KILL_STREAK_SKILL_ID = 90002;
+	public static final int KILL_STREAK_SKILL_ID = 27002;
 	public static final int KILL_STREAK_MAX_LEVEL = 10;
 	/** Player buff held while inside a {@link #GLASS_CANNON} zone. */
-	public static final int GLASS_CANNON_SKILL_ID = 90003;
+	public static final int GLASS_CANNON_SKILL_ID = 27003;
 	/** Player buff held while inside an {@link #ARCANE_SURGE} zone. */
-	public static final int ARCANE_SURGE_SKILL_ID = 90004;
+	public static final int ARCANE_SURGE_SKILL_ID = 27004;
 
 	private final String description;
 

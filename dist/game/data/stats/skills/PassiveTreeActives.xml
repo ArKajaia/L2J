@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 	Passive tree ACTIVE skills, granted by the ACTIVE_SKILL nodes in data/passivetree/*.xml
-	(see PassiveTreeManager.applyAll). Ids 90400-90451 are the six archetype sectors (two
-	each), 90460-90465 the six hybrid sectors (one each).
+	(see PassiveTreeManager.applyAll). Ids 27400-27451 are the six archetype sectors (two
+	each), 27460-27465 the six hybrid sectors (one each).
+
+	Keep custom skill ids below 32768 (retail H5 ends near 26xxx). The H5 client does not
+	resolve skill ids in the 90000s even when Skillgrp.dat has rows for them: such skills are
+	missing from the skill window and show a black buff icon. These skills were 904xx before.
 
 	Engine rules these follow (DocumentSkill / Skill / Formulas):
 	  * Damage power is read from the skill (<power> as a direct child of <skill>), never from
@@ -26,11 +30,11 @@
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/skills.xsd">
 
 	<!-- ===================================================================
-	     90400  VANGUARD AEGIS   (Vanguard / tank)
+	     27400  VANGUARD AEGIS   (Vanguard / tank)
 	     Short, hard defensive cooldown: big P.Def/M.Def spike plus shield
 	     block, for surviving a burst window. Retail reference: 110 Ultimate Defense.
 	     =================================================================== -->
-	<skill id="90400" levels="1" name="Vanguard Aegis">
+	<skill id="27400" levels="1" name="Vanguard Aegis">
 		<icon>icon.skill0110</icon>
 		<operateType>A2</operateType>
 		<targetType>SELF</targetType>
@@ -52,11 +56,11 @@
 	</skill>
 
 	<!-- ===================================================================
-	     90401  RALLYING SHOUT   (Vanguard / party support)
+	     27401  RALLYING SHOUT   (Vanguard / party support)
 	     Modest party-wide offence and defence lift. Small (8%) because it
 	     stacks with every retail buff. Retail reference: 1311 Body of Avatar.
 	     =================================================================== -->
-	<skill id="90401" levels="1" name="Rallying Shout">
+	<skill id="27401" levels="1" name="Rallying Shout">
 		<icon>icon.skill0121</icon>
 		<operateType>A2</operateType>
 		<targetType>PARTY</targetType>
@@ -81,11 +85,11 @@
 	</skill>
 
 	<!-- ===================================================================
-	     90410  BATTLE FERVOR   (Juggernaut / self offence)
+	     27410  BATTLE FERVOR   (Juggernaut / self offence)
 	     Offensive burst with a downside: +15% P.Atk, +10% Atk. Spd, -5% P.Def.
 	     Retail reference: 78 War Cry (renamed so it isn't mistaken for it).
 	     =================================================================== -->
-	<skill id="90410" levels="1" name="Battle Fervor">
+	<skill id="27410" levels="1" name="Battle Fervor">
 		<icon>icon.skill0078</icon>
 		<operateType>A2</operateType>
 		<targetType>SELF</targetType>
@@ -107,12 +111,12 @@
 	</skill>
 
 	<!-- ===================================================================
-	     90411  EARTHSHATTER   (Juggernaut / AoE)
+	     27411  EARTHSHATTER   (Juggernaut / AoE)
 	     Point-blank physical AoE with a chance to stun. Shaped like retail
 	     48 Thunder Storm: A2 so the Stun can land, skill-level power, and the
 	     stun chance comes from activateRate + basicProperty + trait.
 	     =================================================================== -->
-	<skill id="90411" levels="9" name="Earthshatter">
+	<skill id="27411" levels="9" name="Earthshatter">
 		<table name="#magicLevel">1 20 40 52 58 64 70 76 82</table>
 		<table name="#mpConsume">24 36 60 72 81 90 99 108 117</table>
 		<table name="#power">140 315 700 1330 1750 2240 2730 3150 3500</table>
@@ -147,13 +151,13 @@
 	</skill>
 
 	<!-- ===================================================================
-	     90420  SHADOW LUNGE   (Shadowblade / mobility)
+	     27420  SHADOW LUNGE   (Shadowblade / mobility)
 	     Appear behind a target, then +20% critical damage for 5 seconds.
 	     A3 so the self Buff applies (retail 409 Critical Blow); the jump is
 	     retail 821 Shadow Step's TeleportToTarget (renamed so it isn't
 	     mistaken for it). effectPoint is negative so it targets enemies.
 	     =================================================================== -->
-	<skill id="90420" levels="1" name="Shadow Lunge">
+	<skill id="27420" levels="1" name="Shadow Lunge">
 		<icon>icon.skill0821</icon>
 		<operateType>A3</operateType>
 		<targetType>ONE</targetType>
@@ -179,10 +183,10 @@
 	</skill>
 
 	<!-- ===================================================================
-	     90421  SMOKE VEIL   (Shadowblade / escape)
+	     27421  SMOKE VEIL   (Shadowblade / escape)
 	     Short evasion + speed burst to slip out of melee range.
 	     =================================================================== -->
-	<skill id="90421" levels="1" name="Smoke Veil">
+	<skill id="27421" levels="1" name="Smoke Veil">
 		<icon>icon.skill0922</icon>
 		<operateType>A2</operateType>
 		<targetType>SELF</targetType>
@@ -203,10 +207,10 @@
 	</skill>
 
 	<!-- ===================================================================
-	     90430  DISENGAGE   (Deadeye / mobility)
+	     27430  DISENGAGE   (Deadeye / mobility)
 	     Speed + evasion burst sized for a ranged class repositioning.
 	     =================================================================== -->
-	<skill id="90430" levels="1" name="Disengage">
+	<skill id="27430" levels="1" name="Disengage">
 		<icon>icon.skill0004</icon>
 		<operateType>A2</operateType>
 		<targetType>SELF</targetType>
@@ -227,11 +231,11 @@
 	</skill>
 
 	<!-- ===================================================================
-	     90431  VOLLEY   (Deadeye / AoE)
+	     27431  VOLLEY   (Deadeye / AoE)
 	     Physical AoE around the caster, pure damage (no stun) so it isn't
 	     strictly better than Earthshatter. Retail reference: 36 Whirlwind.
 	     =================================================================== -->
-	<skill id="90431" levels="9" name="Volley">
+	<skill id="27431" levels="9" name="Volley">
 		<table name="#magicLevel">1 20 40 52 58 64 70 76 82</table>
 		<table name="#mpConsume">20 30 50 60 68 75 82 90 98</table>
 		<table name="#power">120 270 600 1140 1500 1920 2340 2700 3000</table>
@@ -256,12 +260,12 @@
 	</skill>
 
 	<!-- ===================================================================
-	     90440  ARCANE NOVA   (Arcanist / AoE)
+	     27440  ARCANE NOVA   (Arcanist / AoE)
 	     Point-blank magic nova, pure damage. Retail reference: 735 Devil
 	     Spinning Weapon (A1 AURA MagicalDamage, skill-level power). Magic power
 	     scale, not physical: 1231 Aura Flare is 42 at mLvl 40.
 	     =================================================================== -->
-	<skill id="90440" levels="9" name="Arcane Nova">
+	<skill id="27440" levels="9" name="Arcane Nova">
 		<table name="#magicLevel">1 20 40 52 58 64 70 76 82</table>
 		<table name="#mpConsume">26 39 65 78 88 98 107 117 127</table>
 		<table name="#power">22 45 75 102 118 132 146 158 169</table>
@@ -284,10 +288,10 @@
 	</skill>
 
 	<!-- ===================================================================
-	     90441  MANA RIFT   (Arcanist / resource)
+	     27441  MANA RIFT   (Arcanist / resource)
 	     Sacrifice HP to restore MP. Same shape as retail 1157 Body To Mind.
 	     =================================================================== -->
-	<skill id="90441" levels="9" name="Mana Rift">
+	<skill id="27441" levels="9" name="Mana Rift">
 		<table name="#magicLevel">1 20 40 52 58 64 70 76 82</table>
 		<table name="#amount">90 180 300 360 390 420 450 480 510</table>
 		<table name="#hpConsume">45 90 150 180 195 210 225 240 255</table>
@@ -308,11 +312,11 @@
 	</skill>
 
 	<!-- ===================================================================
-	     90450  SACRED CHORUS   (Hierophant / party heal)
+	     27450  SACRED CHORUS   (Hierophant / party heal)
 	     Party heal on a long cooldown. Retail reference: 723 Anakim Sunshine
 	     (renamed from Benediction so it isn't mistaken for retail 1271).
 	     =================================================================== -->
-	<skill id="90450" levels="9" name="Sacred Chorus">
+	<skill id="27450" levels="9" name="Sacred Chorus">
 		<table name="#magicLevel">1 20 40 52 58 64 70 76 82</table>
 		<table name="#mpConsume">24 36 60 72 81 90 99 108 117</table>
 		<table name="#amount">270 540 900 1080 1170 1260 1350 1440 1530</table>
@@ -334,11 +338,11 @@
 	</skill>
 
 	<!-- ===================================================================
-	     90451  HALLOWED WARD   (Hierophant / party defence)
+	     27451  HALLOWED WARD   (Hierophant / party defence)
 	     Same cadence as Rallying Shout (renamed from Sanctuary so it isn't
 	     mistaken for retail 97).
 	     =================================================================== -->
-	<skill id="90451" levels="1" name="Hallowed Ward">
+	<skill id="27451" levels="1" name="Hallowed Ward">
 		<icon>icon.skill1010</icon>
 		<operateType>A2</operateType>
 		<targetType>PARTY</targetType>
@@ -364,10 +368,10 @@
 	     HYBRID SECTORS - one active each.
 	     =================================================================== -->
 
-	<!-- 90460  CRIMSON BULWARK   (Warlord = Vanguard + Juggernaut)
+	<!-- 27460  CRIMSON BULWARK   (Warlord = Vanguard + Juggernaut)
 	     Lifesteal and armour in one window: 6% of melee damage dealt comes
 	     back as HP (absorbDam, the stat Vampiric Rage uses), +15% P.Def. -->
-	<skill id="90460" levels="1" name="Crimson Bulwark">
+	<skill id="27460" levels="1" name="Crimson Bulwark">
 		<icon>icon.skill1268</icon>
 		<operateType>A2</operateType>
 		<targetType>SELF</targetType>
@@ -387,10 +391,10 @@
 		</effects>
 	</skill>
 
-	<!-- 90461  REAVING STRIKE   (Reaver = Juggernaut + Shadowblade)
+	<!-- 27461  REAVING STRIKE   (Reaver = Juggernaut + Shadowblade)
 	     Heavy melee strike that can crit, with a chance to open a bleed.
 	     A2 so the bleed can land; bleed shaped like retail 96 Bleed. -->
-	<skill id="90461" levels="9" name="Reaving Strike">
+	<skill id="27461" levels="9" name="Reaving Strike">
 		<table name="#magicLevel">1 20 40 52 58 64 70 76 82</table>
 		<table name="#mpConsume">18 27 45 54 61 68 74 81 88</table>
 		<table name="#power">200 450 1000 1900 2500 3200 3900 4500 5000</table>
@@ -427,10 +431,10 @@
 		</effects>
 	</skill>
 
-	<!-- 90462  HUNTER'S MARK   (Stalker = Shadowblade + Deadeye)
+	<!-- 27462  HUNTER'S MARK   (Stalker = Shadowblade + Deadeye)
 	     Ranged debuff that makes the target easier to hit and to hurt:
 	     Evasion -6, P.Def -10% for 20s. Land rate shaped like retail 102 Entangle. -->
-	<skill id="90462" levels="9" name="Hunter's Mark">
+	<skill id="27462" levels="9" name="Hunter's Mark">
 		<table name="#magicLevel">1 20 40 52 58 64 70 76 82</table>
 		<table name="#mpConsume">14 21 35 42 47 52 58 63 68</table>
 		<icon>icon.skill0101</icon>
@@ -459,10 +463,10 @@
 		</effects>
 	</skill>
 
-	<!-- 90463  BINDING RUNE   (Spellbow = Deadeye + Arcanist)
+	<!-- 27463  BINDING RUNE   (Spellbow = Deadeye + Arcanist)
 	     Kiting tool: roots the target in place for 4s from long range.
 	     Shaped like retail root spells (ROOT_MAGICALLY, trait HOLD). -->
-	<skill id="90463" levels="9" name="Binding Rune">
+	<skill id="27463" levels="9" name="Binding Rune">
 		<table name="#magicLevel">1 20 40 52 58 64 70 76 82</table>
 		<table name="#mpConsume">16 24 40 48 54 60 66 72 78</table>
 		<icon>icon.skill1201</icon>
@@ -490,10 +494,10 @@
 		</effects>
 	</skill>
 
-	<!-- 90464  TEMPORAL FLOW   (Mystic = Arcanist + Hierophant)
+	<!-- 27464  TEMPORAL FLOW   (Mystic = Arcanist + Hierophant)
 	     Spell haste window: magic skills recharge 25% faster and cast 10%
 	     faster for 15s. -->
-	<skill id="90464" levels="1" name="Temporal Flow">
+	<skill id="27464" levels="1" name="Temporal Flow">
 		<icon>icon.skill1085</icon>
 		<operateType>A2</operateType>
 		<targetType>SELF</targetType>
@@ -514,10 +518,10 @@
 		</effects>
 	</skill>
 
-	<!-- 90465  PURIFYING AEGIS   (Templar = Hierophant + Vanguard)
+	<!-- 27465  PURIFYING AEGIS   (Templar = Hierophant + Vanguard)
 	     Removes up to 3 debuffs from yourself (retail cleanse parameters),
 	     then +20% healing received for 15s. -->
-	<skill id="90465" levels="1" name="Purifying Aegis">
+	<skill id="27465" levels="1" name="Purifying Aegis">
 		<icon>icon.skill1409</icon>
 		<operateType>A2</operateType>
 		<targetType>SELF</targetType>

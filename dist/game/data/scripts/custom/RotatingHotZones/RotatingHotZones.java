@@ -36,8 +36,8 @@ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 public class RotatingHotZones extends Quest
 {
 	private static final int TELEPORTER_NPC_ID = 900004;
-	private static final int MONSTER_BUFF_ID = 90000;
-	private static final int PLAYER_BUFF_ID = 90001;
+	private static final int MONSTER_BUFF_ID = 27000;
+	private static final int PLAYER_BUFF_ID = 27001;
 	private static final int ROTATION_HOURS = 1;
 	
 	/** How long a party member has to accept a teleport offer. */

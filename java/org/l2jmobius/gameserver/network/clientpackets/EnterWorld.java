@@ -668,7 +668,7 @@ public class EnterWorld extends ClientPacket
 		
 		PassiveTreeManager.getInstance().onClassContextChanged(player);
 		
-		player.stopSkillEffects(SkillFinishType.REMOVED, 90001);
+		player.stopSkillEffects(SkillFinishType.REMOVED, 27001);
 		
 		player.broadcastUserInfo();
 		

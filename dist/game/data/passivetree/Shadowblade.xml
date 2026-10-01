@@ -53,7 +53,7 @@
 		<requires nodeId="3001" />
 		<requires nodeId="3015" />
 	</node>
-	<node id="3015" name="Shadow Lunge" sector="Shadowblade" type="ACTIVE_SKILL" tier="0" cost="1" x="-1487.1" y="2236.4" effect="MAXHP:15" skillId="90420" skillLevel="1" description="ACTIVE: appear behind a target up to 600 away, then +20% critical damage for 5s (30s cooldown).">
+	<node id="3015" name="Shadow Lunge" sector="Shadowblade" type="ACTIVE_SKILL" tier="0" cost="1" x="-1487.1" y="2236.4" effect="MAXHP:15" skillId="27420" skillLevel="1" description="ACTIVE: appear behind a target up to 600 away, then +20% critical damage for 5s (30s cooldown).">
 		<requires nodeId="3014" />
 	</node>
 	<node id="3016" name="Crossroads" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1125.0" y="1948.6" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.2" description="Junction.">
@@ -195,7 +195,7 @@
 		<requires nodeId="3039" />
 		<requires nodeId="3061" />
 	</node>
-	<node id="3061" name="Smoke Veil" sector="Shadowblade" type="ACTIVE_SKILL" tier="0" cost="1" x="-887.1" y="1197.1" effect="MAXHP:15" skillId="90421" skillLevel="1" description="ACTIVE: burst of Evasion and Speed to slip out of melee range for 8s (40s cooldown).">
+	<node id="3061" name="Smoke Veil" sector="Shadowblade" type="ACTIVE_SKILL" tier="0" cost="1" x="-887.1" y="1197.1" effect="MAXHP:15" skillId="27421" skillLevel="1" description="ACTIVE: burst of Evasion and Speed to slip out of melee range for 8s (40s cooldown).">
 		<requires nodeId="3060" />
 	</node>
 	<node id="3062" name="Crossroads" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-525.0" y="909.3" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.2" description="Junction.">

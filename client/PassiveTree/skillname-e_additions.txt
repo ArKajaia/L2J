@@ -1,82 +1,96 @@
-90400	1	a,Vanguard Aegis\0	a,Increases P. Def. and M. Def. by 30% and Shield Block Rate by 20% for 20 seconds. Reuse time is 90 seconds.\0	a,none\0	a,none\0
-90401	1	a,Rallying Shout\0	a,Increases the P. Atk., M. Atk., P. Def. and M. Def. of all party members by 8% for 60 seconds. Reuse time is 180 seconds.\0	a,none\0	a,none\0
-90410	1	a,Battle Fervor\0	a,Increases P. Atk. by 15% and Atk. Spd. by 10%, but decreases P. Def. by 5% for 30 seconds. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90411	1	a,Earthshatter\0	a,Strikes all nearby enemies with 140 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90411	2	a,Earthshatter\0	a,Strikes all nearby enemies with 315 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90411	3	a,Earthshatter\0	a,Strikes all nearby enemies with 700 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90411	4	a,Earthshatter\0	a,Strikes all nearby enemies with 1330 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90411	5	a,Earthshatter\0	a,Strikes all nearby enemies with 1750 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90411	6	a,Earthshatter\0	a,Strikes all nearby enemies with 2240 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90411	7	a,Earthshatter\0	a,Strikes all nearby enemies with 2730 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90411	8	a,Earthshatter\0	a,Strikes all nearby enemies with 3150 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90411	9	a,Earthshatter\0	a,Strikes all nearby enemies with 3500 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90420	1	a,Shadow Lunge\0	a,Instantly moves behind the target and increases Critical Damage by 20% for 5 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90421	1	a,Smoke Veil\0	a,Increases Evasion by 8 and Speed by 20 for 8 seconds. Reuse time is 40 seconds.\0	a,none\0	a,none\0
-90430	1	a,Disengage\0	a,Increases Speed by 25 and Evasion by 6 for 6 seconds. Reuse time is 35 seconds.\0	a,none\0	a,none\0
-90431	1	a,Volley\0	a,Strikes all enemies within 500 range with 120 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
-90431	2	a,Volley\0	a,Strikes all enemies within 500 range with 270 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
-90431	3	a,Volley\0	a,Strikes all enemies within 500 range with 600 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
-90431	4	a,Volley\0	a,Strikes all enemies within 500 range with 1140 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
-90431	5	a,Volley\0	a,Strikes all enemies within 500 range with 1500 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
-90431	6	a,Volley\0	a,Strikes all enemies within 500 range with 1920 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
-90431	7	a,Volley\0	a,Strikes all enemies within 500 range with 2340 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
-90431	8	a,Volley\0	a,Strikes all enemies within 500 range with 2700 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
-90431	9	a,Volley\0	a,Strikes all enemies within 500 range with 3000 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
-90440	1	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 22 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90440	2	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 45 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90440	3	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 75 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90440	4	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 102 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90440	5	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 118 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90440	6	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 132 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90440	7	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 146 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90440	8	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 158 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90440	9	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 169 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90441	1	a,Mana Rift\0	a,Consumes 45 HP to instantly restore 90 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90441	2	a,Mana Rift\0	a,Consumes 90 HP to instantly restore 180 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90441	3	a,Mana Rift\0	a,Consumes 150 HP to instantly restore 300 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90441	4	a,Mana Rift\0	a,Consumes 180 HP to instantly restore 360 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90441	5	a,Mana Rift\0	a,Consumes 195 HP to instantly restore 390 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90441	6	a,Mana Rift\0	a,Consumes 210 HP to instantly restore 420 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90441	7	a,Mana Rift\0	a,Consumes 225 HP to instantly restore 450 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90441	8	a,Mana Rift\0	a,Consumes 240 HP to instantly restore 480 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90441	9	a,Mana Rift\0	a,Consumes 255 HP to instantly restore 510 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90450	1	a,Sacred Chorus\0	a,Restores 270 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90450	2	a,Sacred Chorus\0	a,Restores 540 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90450	3	a,Sacred Chorus\0	a,Restores 900 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90450	4	a,Sacred Chorus\0	a,Restores 1080 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90450	5	a,Sacred Chorus\0	a,Restores 1170 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90450	6	a,Sacred Chorus\0	a,Restores 1260 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90450	7	a,Sacred Chorus\0	a,Restores 1350 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90450	8	a,Sacred Chorus\0	a,Restores 1440 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90450	9	a,Sacred Chorus\0	a,Restores 1530 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
-90451	1	a,Hallowed Ward\0	a,Increases the P. Def. and M. Def. of all party members by 10% for 60 seconds. Reuse time is 180 seconds.\0	a,none\0	a,none\0
-90460	1	a,Crimson Bulwark\0	a,For 20 seconds, 6% of the damage dealt by your melee attacks is restored as HP and P. Def. is increased by 15%. Reuse time is 120 seconds.\0	a,none\0	a,none\0
-90461	1	a,Reaving Strike\0	a,Strikes the target with 200 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
-90461	2	a,Reaving Strike\0	a,Strikes the target with 450 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
-90461	3	a,Reaving Strike\0	a,Strikes the target with 1000 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
-90461	4	a,Reaving Strike\0	a,Strikes the target with 1900 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
-90461	5	a,Reaving Strike\0	a,Strikes the target with 2500 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
-90461	6	a,Reaving Strike\0	a,Strikes the target with 3200 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
-90461	7	a,Reaving Strike\0	a,Strikes the target with 3900 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
-90461	8	a,Reaving Strike\0	a,Strikes the target with 4500 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
-90461	9	a,Reaving Strike\0	a,Strikes the target with 5000 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
-90462	1	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90462	2	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90462	3	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90462	4	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90462	5	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90462	6	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90462	7	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90462	8	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90462	9	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90463	1	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90463	2	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90463	3	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90463	4	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90463	5	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90463	6	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90463	7	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90463	8	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90463	9	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
-90464	1	a,Temporal Flow\0	a,Decreases the reuse time of magic skills by 25% and increases Casting Spd. by 10% for 15 seconds. Reuse time is 180 seconds.\0	a,none\0	a,none\0
-90465	1	a,Purifying Aegis\0	a,Removes up to 3 debuffs and increases HP recovered from healing by 20% for 15 seconds. Reuse time is 150 seconds.\0	a,none\0	a,none\0
+27400	1	a,Vanguard Aegis\0	a,Increases P. Def. and M. Def. by 30% and Shield Block Rate by 20% for 20 seconds. Reuse time is 90 seconds.\0	a,none\0	a,none\0
+27401	1	a,Rallying Shout\0	a,Increases the P. Atk., M. Atk., P. Def. and M. Def. of all party members by 8% for 60 seconds. Reuse time is 180 seconds.\0	a,none\0	a,none\0
+27410	1	a,Battle Fervor\0	a,Increases P. Atk. by 15% and Atk. Spd. by 10%, but decreases P. Def. by 5% for 30 seconds. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27411	1	a,Earthshatter\0	a,Strikes all nearby enemies with 140 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27411	2	a,Earthshatter\0	a,Strikes all nearby enemies with 315 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27411	3	a,Earthshatter\0	a,Strikes all nearby enemies with 700 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27411	4	a,Earthshatter\0	a,Strikes all nearby enemies with 1330 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27411	5	a,Earthshatter\0	a,Strikes all nearby enemies with 1750 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27411	6	a,Earthshatter\0	a,Strikes all nearby enemies with 2240 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27411	7	a,Earthshatter\0	a,Strikes all nearby enemies with 2730 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27411	8	a,Earthshatter\0	a,Strikes all nearby enemies with 3150 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27411	9	a,Earthshatter\0	a,Strikes all nearby enemies with 3500 Power added to P. Atk. and may stun them for 2 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27420	1	a,Shadow Lunge\0	a,Instantly moves behind the target and increases Critical Damage by 20% for 5 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27421	1	a,Smoke Veil\0	a,Increases Evasion by 8 and Speed by 20 for 8 seconds. Reuse time is 40 seconds.\0	a,none\0	a,none\0
+27430	1	a,Disengage\0	a,Increases Speed by 25 and Evasion by 6 for 6 seconds. Reuse time is 35 seconds.\0	a,none\0	a,none\0
+27431	1	a,Volley\0	a,Strikes all enemies within 500 range with 120 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
+27431	2	a,Volley\0	a,Strikes all enemies within 500 range with 270 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
+27431	3	a,Volley\0	a,Strikes all enemies within 500 range with 600 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
+27431	4	a,Volley\0	a,Strikes all enemies within 500 range with 1140 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
+27431	5	a,Volley\0	a,Strikes all enemies within 500 range with 1500 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
+27431	6	a,Volley\0	a,Strikes all enemies within 500 range with 1920 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
+27431	7	a,Volley\0	a,Strikes all enemies within 500 range with 2340 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
+27431	8	a,Volley\0	a,Strikes all enemies within 500 range with 2700 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
+27431	9	a,Volley\0	a,Strikes all enemies within 500 range with 3000 Power added to P. Atk. Reuse time is 25 seconds.\0	a,none\0	a,none\0
+27440	1	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 22 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27440	2	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 45 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27440	3	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 75 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27440	4	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 102 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27440	5	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 118 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27440	6	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 132 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27440	7	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 146 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27440	8	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 158 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27440	9	a,Arcane Nova\0	a,Blasts all nearby enemies with a magic nova of 169 Power. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27441	1	a,Mana Rift\0	a,Consumes 45 HP to instantly restore 90 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27441	2	a,Mana Rift\0	a,Consumes 90 HP to instantly restore 180 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27441	3	a,Mana Rift\0	a,Consumes 150 HP to instantly restore 300 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27441	4	a,Mana Rift\0	a,Consumes 180 HP to instantly restore 360 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27441	5	a,Mana Rift\0	a,Consumes 195 HP to instantly restore 390 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27441	6	a,Mana Rift\0	a,Consumes 210 HP to instantly restore 420 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27441	7	a,Mana Rift\0	a,Consumes 225 HP to instantly restore 450 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27441	8	a,Mana Rift\0	a,Consumes 240 HP to instantly restore 480 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27441	9	a,Mana Rift\0	a,Consumes 255 HP to instantly restore 510 MP. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27450	1	a,Sacred Chorus\0	a,Restores 270 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27450	2	a,Sacred Chorus\0	a,Restores 540 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27450	3	a,Sacred Chorus\0	a,Restores 900 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27450	4	a,Sacred Chorus\0	a,Restores 1080 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27450	5	a,Sacred Chorus\0	a,Restores 1170 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27450	6	a,Sacred Chorus\0	a,Restores 1260 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27450	7	a,Sacred Chorus\0	a,Restores 1350 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27450	8	a,Sacred Chorus\0	a,Restores 1440 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27450	9	a,Sacred Chorus\0	a,Restores 1530 HP to all party members. Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27451	1	a,Hallowed Ward\0	a,Increases the P. Def. and M. Def. of all party members by 10% for 60 seconds. Reuse time is 180 seconds.\0	a,none\0	a,none\0
+27460	1	a,Crimson Bulwark\0	a,For 20 seconds, 6% of the damage dealt by your melee attacks is restored as HP and P. Def. is increased by 15%. Reuse time is 120 seconds.\0	a,none\0	a,none\0
+27461	1	a,Reaving Strike\0	a,Strikes the target with 200 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
+27461	2	a,Reaving Strike\0	a,Strikes the target with 450 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
+27461	3	a,Reaving Strike\0	a,Strikes the target with 1000 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
+27461	4	a,Reaving Strike\0	a,Strikes the target with 1900 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
+27461	5	a,Reaving Strike\0	a,Strikes the target with 2500 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
+27461	6	a,Reaving Strike\0	a,Strikes the target with 3200 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
+27461	7	a,Reaving Strike\0	a,Strikes the target with 3900 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
+27461	8	a,Reaving Strike\0	a,Strikes the target with 4500 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
+27461	9	a,Reaving Strike\0	a,Strikes the target with 5000 Power added to P. Atk. and may cause bleeding for 10 seconds, draining HP over time. Reuse time is 20 seconds.\0	a,none\0	a,none\0
+27462	1	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27462	2	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27462	3	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27462	4	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27462	5	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27462	6	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27462	7	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27462	8	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27462	9	a,Hunter's Mark\0	a,Marks the target, decreasing its Evasion by 6 and P. Def. by 10% for 20 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27463	1	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27463	2	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27463	3	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27463	4	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27463	5	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27463	6	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27463	7	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27463	8	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27463	9	a,Binding Rune\0	a,Holds the target in place for 4 seconds. Reuse time is 30 seconds.\0	a,none\0	a,none\0
+27464	1	a,Temporal Flow\0	a,Decreases the reuse time of magic skills by 25% and increases Casting Spd. by 10% for 15 seconds. Reuse time is 180 seconds.\0	a,none\0	a,none\0
+27465	1	a,Purifying Aegis\0	a,Removes up to 3 debuffs and increases HP recovered from healing by 20% for 15 seconds. Reuse time is 150 seconds.\0	a,none\0	a,none\0
+27000	1	a,Hot Zone: Frenzy\0	a,Hot zone monster buff: Speed +50%, Max HP +50%, Atk. Spd. and Casting Spd. +30%.\0	a,none\0	a,none\0
+27001	1	a,Hot Zone: Fortune\0	a,Hunting in an active hot zone: XP and SP +50%, Atk. Spd. +40%, Casting Spd. +20%, drop amount +25%.\0	a,none\0	a,none\0
+27002	1	a,Hot Zone: Kill Streak\0	a,Hot zone kill streak: XP and SP +3%. Kill again within 15 seconds to raise it.\0	a,none\0	a,none\0
+27002	2	a,Hot Zone: Kill Streak\0	a,Hot zone kill streak: XP and SP +6%. Kill again within 15 seconds to raise it.\0	a,none\0	a,none\0
+27002	3	a,Hot Zone: Kill Streak\0	a,Hot zone kill streak: XP and SP +9%. Kill again within 15 seconds to raise it.\0	a,none\0	a,none\0
+27002	4	a,Hot Zone: Kill Streak\0	a,Hot zone kill streak: XP and SP +12%. Kill again within 15 seconds to raise it.\0	a,none\0	a,none\0
+27002	5	a,Hot Zone: Kill Streak\0	a,Hot zone kill streak: XP and SP +15%. Kill again within 15 seconds to raise it.\0	a,none\0	a,none\0
+27002	6	a,Hot Zone: Kill Streak\0	a,Hot zone kill streak: XP and SP +18%. Kill again within 15 seconds to raise it.\0	a,none\0	a,none\0
+27002	7	a,Hot Zone: Kill Streak\0	a,Hot zone kill streak: XP and SP +21%. Kill again within 15 seconds to raise it.\0	a,none\0	a,none\0
+27002	8	a,Hot Zone: Kill Streak\0	a,Hot zone kill streak: XP and SP +24%. Kill again within 15 seconds to raise it.\0	a,none\0	a,none\0
+27002	9	a,Hot Zone: Kill Streak\0	a,Hot zone kill streak: XP and SP +27%. Kill again within 15 seconds to raise it.\0	a,none\0	a,none\0
+27002	10	a,Hot Zone: Kill Streak\0	a,Hot zone kill streak: XP and SP +30%. Kill again within 15 seconds to raise it.\0	a,none\0	a,none\0
+27003	1	a,Hot Zone: Glass Cannon\0	a,Hot zone omen: P. Atk. and M. Atk. +25%, but P. Def. and M. Def. -20%.\0	a,none\0	a,none\0
+27004	1	a,Hot Zone: Arcane Surge\0	a,Hot zone omen: skill reuse time -20% and MP consumption -30%.\0	a,none\0	a,none\0
