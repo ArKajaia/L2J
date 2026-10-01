@@ -53,6 +53,7 @@ import org.l2jmobius.gameserver.model.item.Weapon;
 import org.l2jmobius.gameserver.model.item.enums.ShotType;
 import org.l2jmobius.gameserver.model.item.type.ArmorType;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.residences.ClanHall;
 import org.l2jmobius.gameserver.model.sevensigns.SevenSigns;
 import org.l2jmobius.gameserver.model.sevensigns.SevenSignsFestival;
@@ -872,6 +873,9 @@ public class Formulas
 			damage = attacker.calcStat(Stat.PHYSICAL_SKILL_POWER, damage, null, null);
 		}
 		
+		// Passive tree Point Blank / Far Shot.
+		damage *= PassiveMechanics.bowDamageMultiplier(attacker, target);
+		
 		damage *= calcAttributeBonus(attacker, target, skill);
 		if (target.isAttackable())
 		{
@@ -1060,6 +1064,9 @@ public class Formulas
 			damage *= attacker.calcStat(stat, 1, null, null);
 		}
 		
+		// Passive tree Arcane Overload and Point Blank / Far Shot.
+		damage *= PassiveMechanics.spellDamageMultiplier(attacker, target, skill);
+		
 		damage *= calcAttributeBonus(attacker, target, skill);
 		
 		if (target.isAttackable())
@@ -1197,6 +1204,12 @@ public class Formulas
 	 */
 	public static boolean calcCrit(Creature attacker, Creature target, Skill skill)
 	{
+		// Passive tree Resolute Technique.
+		if (PassiveMechanics.cannotCrit(attacker))
+		{
+			return false;
+		}
+		
 		double rate;
 		if (skill != null)
 		{
@@ -1331,6 +1344,12 @@ public class Formulas
 	 */
 	public static boolean calcHitMiss(Creature attacker, Creature target)
 	{
+		// Passive tree Resolute Technique.
+		if (PassiveMechanics.neverMisses(attacker))
+		{
+			return false;
+		}
+		
 		int chance = (80 + (2 * (attacker.getAccuracy() - target.getEvasionRate(attacker)))) * 10;
 		
 		// Get additional bonus from the conditions when you are attacking
@@ -1499,7 +1518,7 @@ public class Formulas
 		}
 		
 		int targetBaseStat = 0;
-		switch (skill.getBasicProperty())
+		switch (PassiveMechanics.resistStat(target, skill.getBasicProperty()))
 		{
 			case STR:
 			{
@@ -1596,7 +1615,7 @@ public class Formulas
 		
 		// Calculate BaseRate.
 		final double baseRate = skill.getPower();
-		final double statMod = skill.getBasicProperty().calcBonus(target);
+		final double statMod = PassiveMechanics.resistStat(target, skill.getBasicProperty()).calcBonus(target);
 		double rate = (baseRate / statMod);
 		
 		// Resist Modifier.
@@ -1755,7 +1774,7 @@ public class Formulas
 	
 	public static boolean calcPhysicalSkillEvasion(Creature creature, Creature target, Skill skill)
 	{
-		if (skill.isMagic() || skill.isDebuff())
+		if (skill.isMagic() || skill.isDebuff() || PassiveMechanics.neverMisses(creature))
 		{
 			return false;
 		}
@@ -2049,7 +2068,7 @@ public class Formulas
 		// Debuffs Duration Affected by Resistances.
 		if ((caster != null) && (target != null) && skill.isDebuff() && GeneralConfig.DEBUFF_DURATION_USES_RESISTS)
 		{
-			final double statMod = skill.getBasicProperty().calcBonus(target);
+			final double statMod = PassiveMechanics.resistStat(target, skill.getBasicProperty()).calcBonus(target);
 			final double resMod = calcGeneralTraitBonus(caster, target, skill.getTraitType(), false);
 			final double lvlBonusMod = calcLvlBonusMod(caster, target, skill);
 			final double elementMod = calcAttributeBonus(caster, target, skill);

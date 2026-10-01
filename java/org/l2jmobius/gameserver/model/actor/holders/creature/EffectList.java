@@ -44,6 +44,7 @@ import org.l2jmobius.gameserver.model.effects.EffectFlag;
 import org.l2jmobius.gameserver.model.effects.EffectType;
 import org.l2jmobius.gameserver.model.olympiad.OlympiadGameManager;
 import org.l2jmobius.gameserver.model.olympiad.OlympiadGameTask;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.skill.AbnormalType;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
 import org.l2jmobius.gameserver.model.skill.EffectScope;
@@ -1421,6 +1422,12 @@ public class EffectList
 		// Support for blocked buff slots.
 		final Skill skill = info.getSkill();
 		if (_blockedAbnormalTypes.contains(skill.getAbnormalType()))
+		{
+			return;
+		}
+		
+		// Passive tree Unwavering Stance (stuns) and Purity of Flesh (poison, bleed).
+		if (PassiveMechanics.isAbnormalBlocked(_owner, info))
 		{
 			return;
 		}

@@ -1,157 +1,125 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Reaver: 30 nodes, hybrid of Juggernaut and Shadowblade filling the gap between their arms. x/y are authoritative layout coords. -->
+<!-- Reaver: 28 nodes, hybrid of Juggernaut and Shadowblade filling the gap between their arms. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
-	<node id="30101" name="Confluence" sector="Reaver" type="SMALL" tier="0" cost="1" x="1600.0" y="2850.0" effect="PATK_PCT:0.3;CRIT_DMG_PCT:0.5">
+	<node id="30101" name="Confluence" sector="Reaver" type="SMALL" tier="0" cost="1" x="1600.0" y="3200.0" effect="PATK_PCT:0.3;CRIT_DMG_PCT:0.5">
 		<requires nodeId="21102" />
 		<requires nodeId="30102" />
 	</node>
-	<node id="30102" name="Confluence" sector="Reaver" type="SMALL" tier="0" cost="1" x="1596.2" y="2962.0" effect="PATK_PCT:0.3;CRIT_DMG_PCT:0.5">
+	<node id="30102" name="Confluence" sector="Reaver" type="SMALL" tier="0" cost="1" x="1595.2" y="3312.0" effect="PATK_PCT:0.3;CRIT_DMG_PCT:0.5">
 		<requires nodeId="30101" />
 		<requires nodeId="30103" />
 		<requires nodeId="30104" />
 		<requires nodeId="30105" />
 	</node>
-	<node id="30103" name="Savage Crossing" sector="Reaver" type="SMALL" tier="0" cost="1" x="1776.1" y="2990.7" effect="PATK_PCT:0.4;MAXHP:6">
-		<requires nodeId="2027" />
+	<node id="30103" name="Savage Crossing" sector="Reaver" type="SMALL" tier="0" cost="1" x="1820.1" y="3337.9" effect="PATK_PCT:0.4;MAXHP:6">
+		<requires nodeId="2025" />
 		<requires nodeId="30102" />
 		<requires nodeId="30106" />
 	</node>
-	<node id="30104" name="Shadow Crossing" sector="Reaver" type="SMALL" tier="0" cost="1" x="1415.9" y="2988.9" effect="CRIT_RATE_ADD:3;EVASION_ADD:0.2">
-		<requires nodeId="3021" />
+	<node id="30104" name="Shadow Crossing" sector="Reaver" type="SMALL" tier="0" cost="1" x="1369.9" y="3335.9" effect="CRIT_RATE_ADD:3;EVASION_ADD:0.2">
+		<requires nodeId="3019" />
 		<requires nodeId="30102" />
 		<requires nodeId="30107" />
 	</node>
-	<node id="30105" name="Predator" sector="Reaver" type="SMALL" tier="0" cost="1" x="1599.0" y="3061.9" effect="PVE_PDMG_PCT:0.6">
+	<node id="30105" name="Predator" sector="Reaver" type="SMALL" tier="0" cost="1" x="1598.8" y="3411.9" effect="PVE_PDMG_PCT:0.6">
 		<requires nodeId="30102" />
 		<requires nodeId="30106" />
 		<requires nodeId="30107" />
 		<requires nodeId="30112" />
 	</node>
-	<node id="30106" name="Rending Blows" sector="Reaver" type="SMALL" tier="0" cost="1" x="1745.5" y="3123.1" effect="ATK_SPD_PCT:0.4;PATK_PCT:0.3">
+	<node id="30106" name="Rending Blows" sector="Reaver" type="SMALL" tier="0" cost="1" x="1778.8" y="3471.5" effect="ATK_SPD_PCT:0.5;PATK_PCT:0.4">
 		<requires nodeId="30103" />
 		<requires nodeId="30105" />
-		<requires nodeId="30108" />
 		<requires nodeId="30110" />
 	</node>
-	<node id="30107" name="Keen Edge" sector="Reaver" type="SMALL" tier="0" cost="1" x="1439.3" y="3120.9" effect="CRIT_RATE_ADD:3;CRIT_DMG_PCT:0.5">
+	<node id="30107" name="Keen Edge" sector="Reaver" type="SMALL" tier="0" cost="1" x="1402.5" y="3469.0" effect="CRIT_RATE_ADD:4;CRIT_DMG_PCT:0.7">
 		<requires nodeId="30104" />
 		<requires nodeId="30105" />
-		<requires nodeId="30109" />
 		<requires nodeId="30111" />
 	</node>
-	<node id="30108" name="Rending Blows" sector="Reaver" type="SMALL" tier="0" cost="1" x="1892.1" y="3187.6" effect="ATK_SPD_PCT:0.4;PATK_PCT:0.3">
-		<requires nodeId="30106" />
+	<node id="30108" name="Rending Blows" sector="Reaver" type="SMALL" tier="0" cost="1" x="1868.8" y="3569.8" effect="ATK_SPD_PCT:0.5;PATK_PCT:0.4">
 		<requires nodeId="30110" />
-		<requires nodeId="30113" />
 		<requires nodeId="30115" />
 	</node>
-	<node id="30109" name="Keen Edge" sector="Reaver" type="SMALL" tier="0" cost="1" x="1284.0" y="3189.4" effect="CRIT_RATE_ADD:3;CRIT_DMG_PCT:0.5">
-		<requires nodeId="30107" />
+	<node id="30109" name="Keen Edge" sector="Reaver" type="SMALL" tier="0" cost="1" x="1321.0" y="3574.5" effect="CRIT_RATE_ADD:4;CRIT_DMG_PCT:0.7">
 		<requires nodeId="30111" />
-		<requires nodeId="30114" />
 		<requires nodeId="30116" />
 	</node>
-	<node id="30110" name="Rending Blows" sector="Reaver" type="SMALL" tier="0" cost="1" x="1727.7" y="3234.1" effect="ATK_SPD_PCT:0.4;PATK_PCT:0.3">
+	<node id="30110" name="Rending Blows" sector="Reaver" type="SMALL" tier="0" cost="1" x="1823.8" y="3520.7" effect="ATK_SPD_PCT:0.5;PATK_PCT:0.4">
 		<requires nodeId="30106" />
 		<requires nodeId="30108" />
-		<requires nodeId="30112" />
-		<requires nodeId="30115" />
 	</node>
-	<node id="30111" name="Keen Edge" sector="Reaver" type="SMALL" tier="0" cost="1" x="1451.2" y="3231.4" effect="CRIT_RATE_ADD:3;CRIT_DMG_PCT:0.5">
+	<node id="30111" name="Keen Edge" sector="Reaver" type="SMALL" tier="0" cost="1" x="1361.7" y="3521.8" effect="CRIT_RATE_ADD:4;CRIT_DMG_PCT:0.7">
 		<requires nodeId="30107" />
 		<requires nodeId="30109" />
-		<requires nodeId="30112" />
-		<requires nodeId="30116" />
 	</node>
-	<node id="30112" name="Predator" sector="Reaver" type="SMALL" tier="0" cost="1" x="1603.4" y="3233.9" effect="PVE_PDMG_PCT:0.6">
+	<node id="30112" name="Predator" sector="Reaver" type="SMALL" tier="0" cost="1" x="1604.1" y="3583.9" effect="PVE_PDMG_PCT:0.6">
 		<requires nodeId="30105" />
-		<requires nodeId="30110" />
-		<requires nodeId="30111" />
 		<requires nodeId="30117" />
-		<requires nodeId="30118" />
-	</node>
-	<node id="30113" name="Rending Blows" sector="Reaver" type="SMALL" tier="0" cost="1" x="1988.8" y="3273.6" effect="ATK_SPD_PCT:0.4;PATK_PCT:0.3">
-		<requires nodeId="30108" />
-		<requires nodeId="30115" />
-		<requires nodeId="30121" />
 		<requires nodeId="30125" />
-	</node>
-	<node id="30114" name="Keen Edge" sector="Reaver" type="SMALL" tier="0" cost="1" x="1221.1" y="3276.3" effect="CRIT_RATE_ADD:3;CRIT_DMG_PCT:0.5">
-		<requires nodeId="30109" />
-		<requires nodeId="30116" />
-		<requires nodeId="30123" />
 		<requires nodeId="30126" />
-	</node>
-	<node id="30115" name="Carnage" sector="Reaver" type="NOTABLE" tier="0" cost="2" x="1869.1" y="3284.8" effect="ATK_SPD_PCT:3;PATK_PCT:2;LIFESTEAL_PCT:1" description="Rending Blows mastery. Every flurry feeds you.">
-		<requires nodeId="30108" />
-		<requires nodeId="30110" />
-		<requires nodeId="30113" />
-	</node>
-	<node id="30116" name="Throat Cutter" sector="Reaver" type="NOTABLE" tier="0" cost="2" x="1336.1" y="3279.4" effect="BLOW_RATE_PCT:6;CRIT_DMG_PCT:5" description="Keen Edge mastery. Blow skills land more often.">
-		<requires nodeId="30109" />
-		<requires nodeId="30111" />
-		<requires nodeId="30114" />
-	</node>
-	<node id="30117" name="Hunter's Hunger" sector="Reaver" type="SMALL" tier="0" cost="1" x="1759.9" y="3329.4" effect="PVE_PDMG_PCT:0.5;ATK_SPD_PCT:0.3">
-		<requires nodeId="30112" />
-		<requires nodeId="30119" />
-		<requires nodeId="30120" />
-		<requires nodeId="30125" />
-	</node>
-	<node id="30118" name="Hunter's Hunger" sector="Reaver" type="SMALL" tier="0" cost="1" x="1451.1" y="3334.8" effect="PVE_PDMG_PCT:0.5;ATK_SPD_PCT:0.3">
-		<requires nodeId="30112" />
-		<requires nodeId="30119" />
-		<requires nodeId="30120" />
-		<requires nodeId="30126" />
-	</node>
-	<node id="30119" name="Apex Predator" sector="Reaver" type="NOTABLE" tier="0" cost="2" x="1588.8" y="3332.7" effect="PVE_PDMG_PCT:5;CRIT_RATE_ADD:12" description="Hunter's Hunger mastery. Monsters are prey.">
-		<requires nodeId="30117" />
-		<requires nodeId="30118" />
-		<requires nodeId="30120" />
-	</node>
-	<node id="30120" name="Hunter's Hunger" sector="Reaver" type="SMALL" tier="0" cost="1" x="1609.2" y="3429.3" effect="PVE_PDMG_PCT:0.5;ATK_SPD_PCT:0.3">
-		<requires nodeId="30117" />
-		<requires nodeId="30118" />
-		<requires nodeId="30119" />
 		<requires nodeId="30127" />
 	</node>
-	<node id="30121" name="Approach" sector="Reaver" type="SMALL" tier="0" cost="1" x="1871.4" y="3406.4" effect="MAXHP:6">
-		<requires nodeId="30113" />
-		<requires nodeId="30122" />
+	<node id="30115" name="Carnage" sector="Reaver" type="NOTABLE" tier="0" cost="2" x="1913.9" y="3619.0" effect="ATK_SPD_PCT:3;PATK_PCT:2;LIFESTEAL_PCT:1" description="Rending Blows mastery. Every flurry feeds you.">
+		<requires nodeId="30108" />
 	</node>
-	<node id="30122" name="Bloodrush" sector="Reaver" type="KEYSTONE" tier="0" cost="3" x="1943.6" y="3504.3" effect="ATK_SPD_PCT:10;LIFESTEAL_PCT:2;MAXHP:-160" description="Frenzied, leeching strikes on a fragile frame.">
+	<node id="30116" name="Throat Cutter" sector="Reaver" type="NOTABLE" tier="0" cost="2" x="1280.2" y="3627.3" effect="BLOW_RATE_PCT:6;CRIT_DMG_PCT:5" description="Keen Edge mastery. Blow skills land more often.">
+		<requires nodeId="30109" />
+	</node>
+	<node id="30117" name="Hunter's Hunger" sector="Reaver" type="SMALL" tier="0" cost="1" x="1792.1" y="3677.9" effect="PVE_PDMG_PCT:0.5;ATK_SPD_PCT:0.3">
+		<requires nodeId="30112" />
+		<requires nodeId="30120" />
+		<requires nodeId="30125" />
+	</node>
+	<node id="30118" name="Hunter's Hunger" sector="Reaver" type="SMALL" tier="0" cost="1" x="1678.2" y="3747.2" effect="PVE_PDMG_PCT:0.5;ATK_SPD_PCT:0.3">
+		<requires nodeId="30119" />
+		<requires nodeId="30120" />
+	</node>
+	<node id="30119" name="Apex Predator" sector="Reaver" type="NOTABLE" tier="0" cost="2" x="1621.3" y="3781.9" effect="PVE_PDMG_PCT:5;CRIT_RATE_ADD:12" description="Hunter's Hunger mastery. Monsters are prey.">
+		<requires nodeId="30118" />
+	</node>
+	<node id="30120" name="Hunter's Hunger" sector="Reaver" type="SMALL" tier="0" cost="1" x="1735.2" y="3712.6" effect="PVE_PDMG_PCT:0.5;ATK_SPD_PCT:0.3">
+		<requires nodeId="30117" />
+		<requires nodeId="30118" />
+	</node>
+	<node id="30121" name="Approach" sector="Reaver" type="SMALL" tier="0" cost="1" x="1923.4" y="3752.5" effect="MAXHP:6">
+		<requires nodeId="30122" />
+		<requires nodeId="30125" />
+	</node>
+	<node id="30122" name="Blood Stance" sector="Reaver" type="KEYSTONE" tier="0" cost="3" x="2005.7" y="3848.7" effect="KS_BLOOD_TOGGLES:1" description="KEYSTONE: Your toggle skills cost and drain HP instead of MP. They cannot kill you - a toggle ends when your HP runs too low.">
 		<requires nodeId="30121" />
 	</node>
-	<node id="30123" name="Approach" sector="Reaver" type="SMALL" tier="0" cost="1" x="1338.4" y="3409.1" effect="MAXHP:6">
-		<requires nodeId="30114" />
+	<node id="30123" name="Approach" sector="Reaver" type="SMALL" tier="0" cost="1" x="1288.3" y="3755.5" effect="MAXHP:6">
 		<requires nodeId="30124" />
+		<requires nodeId="30126" />
 	</node>
-	<node id="30124" name="Relentless" sector="Reaver" type="NOTABLE" tier="0" cost="2" x="1263.1" y="3505.4" effect="SKILL_CDR_PCT:4;ATK_SPD_PCT:2" description="Never let up: skills recharge faster and you swing quicker.">
+	<node id="30124" name="Relentless" sector="Reaver" type="NOTABLE" tier="0" cost="2" x="1202.2" y="3850.1" effect="SKILL_CDR_PCT:4;ATK_SPD_PCT:2" description="Never let up: skills recharge faster and you swing quicker.">
 		<requires nodeId="30123" />
 	</node>
-	<node id="30125" name="Savage Path" sector="Reaver" type="SMALL" tier="0" cost="1" x="1963.3" y="3369.2" effect="PATK_PCT:0.4;MAXHP:6">
-		<requires nodeId="2011" />
-		<requires nodeId="30113" />
+	<node id="30125" name="Savage Path" sector="Reaver" type="SMALL" tier="0" cost="1" x="2033.7" y="3712.0" effect="PATK_PCT:0.4;MAXHP:6">
+		<requires nodeId="2009" />
+		<requires nodeId="30112" />
 		<requires nodeId="30117" />
+		<requires nodeId="30121" />
 	</node>
-	<node id="30126" name="Shadow Path" sector="Reaver" type="SMALL" tier="0" cost="1" x="1246.6" y="3371.9" effect="EVASION_ADD:0.3;CRIT_RATE_ADD:3">
-		<requires nodeId="3006" />
-		<requires nodeId="30114" />
-		<requires nodeId="30118" />
+	<node id="30126" name="Shadow Path" sector="Reaver" type="SMALL" tier="0" cost="1" x="1178.1" y="3715.1" effect="EVASION_ADD:0.3;CRIT_RATE_ADD:3">
+		<requires nodeId="3004" />
+		<requires nodeId="30112" />
+		<requires nodeId="30123" />
 		<requires nodeId="30129" />
 	</node>
-	<node id="30127" name="Approach" sector="Reaver" type="SMALL" tier="0" cost="1" x="1564.0" y="3518.3" effect="MAXHP:6">
-		<requires nodeId="30120" />
+	<node id="30127" name="Approach" sector="Reaver" type="SMALL" tier="0" cost="1" x="1557.4" y="3868.2" effect="MAXHP:6">
+		<requires nodeId="30112" />
 		<requires nodeId="30128" />
 	</node>
-	<node id="30128" name="Executioner's Creed" sector="Reaver" type="KEYSTONE" tier="0" cost="3" x="1620.9" y="3599.9" effect="CRIT_DMG_PCT:14;PVE_PDMG_PCT:6;CRIT_RATE_ADD:-40" description="Fewer critical hits, but the ones that land are devastating.">
+	<node id="30128" name="Soul Harvest" sector="Reaver" type="KEYSTONE" tier="0" cost="3" x="1624.6" y="3949.9" effect="KS_SOUL_HARVEST:25" description="KEYSTONE: Your landed normal attacks have a 25% chance to grant a Force charge (up to your class maximum) and to absorb a soul (Kamael).">
 		<requires nodeId="30127" />
 	</node>
-	<node id="30129" name="Approach" sector="Reaver" type="SMALL" tier="0" cost="1" x="1125.4" y="3441.9" effect="MAXHP:6">
+	<node id="30129" name="Approach" sector="Reaver" type="SMALL" tier="0" cost="1" x="1038.1" y="3780.8" effect="MAXHP:6">
 		<requires nodeId="30126" />
 		<requires nodeId="30130" />
 	</node>
-	<node id="30130" name="Reaving Strike" sector="Reaver" type="ACTIVE_SKILL" tier="0" cost="2" x="1018.1" y="3531.9" effect="MAXHP:15" skillId="90461" skillLevel="auto" description="ACTIVE: heavy melee strike that can make the target bleed for 10s (20s cooldown). Grows stronger with your level.">
+	<node id="30130" name="Reaving Strike" sector="Reaver" type="ACTIVE_SKILL" tier="0" cost="2" x="917.2" y="3867.0" effect="MAXHP:15" skillId="90461" skillLevel="auto" description="ACTIVE: heavy melee strike that can make the target bleed for 10s (20s cooldown). Grows stronger with your level.">
 		<requires nodeId="30129" />
 	</node>
 </list>

@@ -36,6 +36,7 @@ import org.l2jmobius.gameserver.model.actor.instance.Guard;
 import org.l2jmobius.gameserver.model.item.EtcItem;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.instance.Item;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.skill.AbnormalType;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
 import org.l2jmobius.gameserver.model.skill.Skill;
@@ -406,8 +407,9 @@ public class AutoUseTaskManager
 				return false;
 			}
 			
+			// Passive tree blood keystones pay the MP cost with HP (checked by checkDoCastConditions).
 			final int mpConsume = skill.getMpInitialConsume() + skill.getMpConsume();
-			if ((mpConsume > 0) && (playable.getCurrentMp() < mpConsume))
+			if ((mpConsume > 0) && !PassiveMechanics.paysWithHp(playable, skill) && (playable.getCurrentMp() < mpConsume))
 			{
 				return false;
 			}

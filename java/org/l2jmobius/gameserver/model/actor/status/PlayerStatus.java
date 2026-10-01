@@ -33,6 +33,7 @@ import org.l2jmobius.gameserver.model.actor.Summon;
 import org.l2jmobius.gameserver.model.actor.enums.player.PrivateStoreType;
 import org.l2jmobius.gameserver.model.actor.holders.player.Duel;
 import org.l2jmobius.gameserver.model.actor.stat.PlayerStat;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.script.QuestState;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.stats.Formulas;
@@ -231,6 +232,9 @@ public class PlayerStatus extends PlayableStatus
 					setCurrentCp(0, false); // Set Cp to 0
 				}
 			}
+			
+			// Passive tree Mind Over Matter: part of what is left for HP is taken from MP first.
+			amount = PassiveMechanics.absorbDamageWithMp(player, amount);
 			
 			if ((fullValue > 0) && !isDOT)
 			{

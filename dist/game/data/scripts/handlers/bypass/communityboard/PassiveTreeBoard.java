@@ -98,6 +98,32 @@ public class PassiveTreeBoard implements IParseBoardHandler
 		STAT_LABEL.put("CRIT_DMG_TAKEN_RED_PCT", "Critical Damage Taken Reduction");
 		STAT_LABEL.put("INTERRUPT_RES_PCT", "Cast Interruption Resistance");
 		STAT_LABEL.put("DEBUFF_RES_PCT", "Debuff Resistance");
+		STAT_LABEL.put("MAXHP_PCT", "Maximum HP");
+		STAT_LABEL.put("SERVITOR_SHARE_PCT", "Damage Taken Redirected to Servitor");
+		STAT_LABEL.put("SHIELD_RATE_MUL_PCT", "More Shield Blocks");
+	}
+
+	// Keystone mechanics read as rules, not numbers ("%s" is the value). Mirrors KEYSTONE_TEXT in passive-tree.html.
+	private static final Map<String, String> KEYSTONE_TEXT = new LinkedHashMap<>();
+	static
+	{
+		KEYSTONE_TEXT.put("KS_MIND_OVER_MATTER", "%s%% of damage taken is drained from MP first");
+		KEYSTONE_TEXT.put("KS_ARCANE_OVERLOAD", "Up to +%s%% spell damage as your MP runs low");
+		KEYSTONE_TEXT.put("KS_STUN_IMMUNE", "Cannot be stunned");
+		KEYSTONE_TEXT.put("KS_BLOOD_TOGGLES", "Toggle skills cost and drain HP instead of MP");
+		KEYSTONE_TEXT.put("KS_BLOOD_MAGIC", "Skills cost HP instead of MP; +%s%% of max MP as max HP");
+		KEYSTONE_TEXT.put("KS_POINT_BLANK", "Bow and spell damage +%1$s%% up close, -%1$s%% at long range");
+		KEYSTONE_TEXT.put("KS_FAR_SHOT", "Bow and spell damage +%1$s%% at long range, -%1$s%% up close");
+		KEYSTONE_TEXT.put("KS_MEN_STUN", "Stuns and other CON-resisted effects are resisted with MEN");
+		KEYSTONE_TEXT.put("KS_PDEF_AS_MDEF", "M.Def is your P.Def -%s%%");
+		KEYSTONE_TEXT.put("KS_SOUL_HARVEST", "%s%% chance per landed hit for a Force charge and a soul");
+		KEYSTONE_TEXT.put("KS_CRIT_CAP", "Critical rate cap raised to %s");
+		KEYSTONE_TEXT.put("KS_RESOLUTE", "Attacks never miss, but never critically hit");
+		KEYSTONE_TEXT.put("KS_RAMPAGE", "Up to +%s%% P.Atk as your HP runs low");
+		KEYSTONE_TEXT.put("KS_SPELL_LEECH", "%s%% of spell damage dealt heals you");
+		KEYSTONE_TEXT.put("KS_ELDRITCH_BATTERY", "Max CP is 1; %s%% of it becomes max MP");
+		KEYSTONE_TEXT.put("KS_PURITY", "Immune to poison and bleeding");
+		KEYSTONE_TEXT.put("KS_OVERHEAL_CP", "%s%% of overhealing you cast becomes CP");
 	}
 
 	private static final String[] COMMAND =
@@ -212,6 +238,13 @@ public class PassiveTreeBoard implements IParseBoardHandler
 		{
 			final double val = totals.get(key);
 			final double rounded = Math.round(val * 100) / 100.0;
+			final String keystone = KEYSTONE_TEXT.get(key);
+			if (keystone != null)
+			{
+				sb.append("<font color=\"FFCC33\">").append(String.format(keystone, formatNumber(rounded))).append("</font><br1>");
+				continue;
+			}
+
 			final boolean pct = key.endsWith("_PCT");
 			final String sign = rounded > 0 ? "+" : "";
 			final String color = rounded >= 0 ? "55FF55" : "FF6060";

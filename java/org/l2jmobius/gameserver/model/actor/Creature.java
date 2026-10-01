@@ -125,6 +125,7 @@ import org.l2jmobius.gameserver.model.item.type.WeaponType;
 import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.model.options.OptionSkillHolder;
 import org.l2jmobius.gameserver.model.options.OptionSkillType;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.skill.AbnormalType;
 import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
 import org.l2jmobius.gameserver.model.skill.BuffFinishTask;
@@ -2034,9 +2035,17 @@ public abstract class Creature extends WorldObject
 		final int initmpcons = isPvpFakePlayer() ? 0 : _stat.getMpInitialConsume(skill); // Roaming fake players don't use MP.
 		if (initmpcons > 0)
 		{
-			_status.reduceMp(initmpcons);
 			final StatusUpdate su = new StatusUpdate(this);
-			su.addAttribute(StatusUpdate.CUR_MP, (int) _status.getCurrentMp());
+			if (PassiveMechanics.paysWithHp(this, skill))
+			{
+				PassiveMechanics.payWithHp(this, initmpcons);
+				su.addAttribute(StatusUpdate.CUR_HP, (int) _status.getCurrentHp());
+			}
+			else
+			{
+				_status.reduceMp(initmpcons);
+				su.addAttribute(StatusUpdate.CUR_MP, (int) _status.getCurrentMp());
+			}
 			sendPacket(su);
 		}
 		
@@ -2212,8 +2221,10 @@ public abstract class Creature extends WorldObject
 			return false;
 		}
 		
-		// Check if the caster has enough MP (roaming fake players don't use MP)
-		if (!isPvpFakePlayer() && (_status.getCurrentMp() < (_stat.getMpConsume(skill) + _stat.getMpInitialConsume(skill))))
+		// Check if the caster has enough MP (roaming fake players don't use MP). Passive tree blood keystones pay it with HP instead.
+		final boolean paysWithHp = PassiveMechanics.paysWithHp(this, skill);
+		final int mpCost = _stat.getMpConsume(skill) + _stat.getMpInitialConsume(skill);
+		if (!paysWithHp && !isPvpFakePlayer() && (_status.getCurrentMp() < mpCost))
 		{
 			// Send a System Message to the caster
 			sendPacket(SystemMessageId.NOT_ENOUGH_MP);
@@ -2224,7 +2235,7 @@ public abstract class Creature extends WorldObject
 		}
 		
 		// Check if the caster has enough HP
-		if (_status.getCurrentHp() <= skill.getHpConsume())
+		if (_status.getCurrentHp() <= (skill.getHpConsume() + (paysWithHp ? mpCost : 0)))
 		{
 			// Send a System Message to the caster
 			sendPacket(SystemMessageId.NOT_ENOUGH_HP);
@@ -5387,6 +5398,9 @@ public abstract class Creature extends WorldObject
 				}
 			}
 			
+			// Passive tree Soul Harvest.
+			PassiveMechanics.onNormalHitLanded(this);
+			
 			// Notify AI with ATTACKED
 			if (target.hasAI())
 			{
@@ -6006,7 +6020,20 @@ public abstract class Creature extends WorldObject
 			
 			// Consume MP of the Creature and Send the Server->Client packet StatusUpdate with current HP and MP to all other Player to inform
 			final double mpConsume = isPvpFakePlayer() ? 0 : _stat.getMpConsume(skill); // Roaming fake players don't use MP.
-			if (mpConsume > 0)
+			if ((mpConsume > 0) && PassiveMechanics.paysWithHp(this, skill))
+			{
+				// Passive tree blood keystones: the MP cost is paid with HP, and can never kill.
+				if (!PassiveMechanics.payWithHp(this, mpConsume))
+				{
+					sendPacket(SystemMessageId.NOT_ENOUGH_HP);
+					abortCast();
+					return;
+				}
+				
+				su.addAttribute(StatusUpdate.CUR_HP, (int) _status.getCurrentHp());
+				isSendStatus = true;
+			}
+			else if (mpConsume > 0)
 			{
 				if (mpConsume > _status.getCurrentMp())
 				{
@@ -7118,6 +7145,12 @@ public abstract class Creature extends WorldObject
 	 */
 	public void notifyDamageReceived(double damage, Creature attacker, Skill skill, boolean critical, boolean damageOverTime)
 	{
+		// Passive tree Vampiric Sorcery.
+		if (attacker != null)
+		{
+			PassiveMechanics.onDamageDealt(attacker, skill, damage, damageOverTime);
+		}
+		
 		// Auto attacks make you stand up.
 		if (isPlayer() && asPlayer().isFakeDeath() && PlayerConfig.FAKE_DEATH_DAMAGE_STAND && (damage > 0))
 		{

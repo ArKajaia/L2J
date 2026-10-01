@@ -25,6 +25,7 @@ import org.l2jmobius.gameserver.model.effects.EffectType;
 import org.l2jmobius.gameserver.model.item.enums.ShotType;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.item.type.CrystalType;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.model.stats.Stat;
@@ -112,6 +113,9 @@ public class Heal extends AbstractEffect
 				amount *= 3;
 			}
 		}
+		
+		// Passive tree Overflowing Grace: what would overheal becomes CP.
+		PassiveMechanics.grantOverhealAsCp(effector, effected, amount - (effected.getMaxRecoverableHp() - effected.getCurrentHp()));
 		
 		// Prevents overheal and negative amount.
 		amount = Math.max(Math.min(amount, effected.getMaxRecoverableHp() - effected.getCurrentHp()), 0);

@@ -23,6 +23,7 @@ import org.l2jmobius.gameserver.model.actor.holders.creature.TimeStamp;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.skill.PassiveTreeArchetypes;
 import org.l2jmobius.gameserver.model.skill.Skill;
@@ -78,7 +79,7 @@ public class PassiveTreeManager
 	 * Effect keys that ride the Calculator/Func system instead of a getter override, because the underlying Stat has no dedicated method on Creature (shield rate, reflect, crit rate/damage, evasion, accuracy, regen rates, drop/spoil/exp rate bonuses, move speed). Adding a new one of these later is
 	 * a one-line addition here, not a new method.
 	 * <p>
-	 * Effect keys NOT in this map (STR/DEX/CON/INT/WIT/MEN, MAXHP/MP/CP, PATK_PCT/PDEF_PCT/MATK_PCT/MDEF_PCT, ATK_SPD_PCT/CAST_SPD_PCT, SHIELD_DEF_PCT) are read directly by getter overrides in Player.java instead - both mechanisms coexist and PassiveStatBonusCache.get() is the single source either
+	 * Effect keys NOT in this map (STR/DEX/CON/INT/WIT/MEN, PATK_PCT/PDEF_PCT/MATK_PCT/MDEF_PCT, ATK_SPD_PCT/CAST_SPD_PCT, SHIELD_DEF_PCT) are read directly by getter overrides in Player.java instead (MAXHP/MP/CP and the pool keystones by PlayerStat via PassiveMechanics, so HP/MP/CP clamping and regen see them too; the other KS_* keystone keys by the combat hooks that call PassiveMechanics) - both mechanisms coexist and PassiveStatBonusCache.get() is the single source either
 	 * one reads from.
 	 */
 	
@@ -98,7 +99,9 @@ public class PassiveTreeManager
 		// PlayerStat.getBonus*Multiplier(): 1 + calcStat(stat, 0) / 100 - init 0, so these MUST be adds (a multiplier on 0 is a silent no-op).
 		Map.entry("DROP_RATE_PCT", Stat.BONUS_DROP_RATE), Map.entry("SPOIL_RATE_PCT", Stat.BONUS_SPOIL_RATE), Map.entry("ADENA_RATE_PCT", Stat.BONUS_DROP_ADENA), Map.entry("EXP_RATE_PCT", Stat.BONUS_EXP), Map.entry("SP_RATE_PCT", Stat.BONUS_SP),
 		// Player.getInventoryLimit(): base slots + calcStat(INV_LIM, 0).
-		Map.entry("INVENTORY_SLOTS_ADD", Stat.INV_LIM));
+		Map.entry("INVENTORY_SLOTS_ADD", Stat.INV_LIM),
+		// PlayerStatus.reduceHp: % of damage taken redirected to a servitor within 1000 range (Soul Link), init 0
+		Map.entry("SERVITOR_SHARE_PCT", Stat.TRANSFER_DAMAGE_PERCENT));
 
 	/**
 	 * Stats that are MULTIPLIERS - the value is a percent, applied as (1 + pct/100). Adding to these instead of multiplying is what caused the 200 -> 12,000 crit damage blowout.
@@ -128,6 +131,11 @@ public class PassiveTreeManager
 	 * Additive stats where LOWER is better, written as a positive "resistance" and applied as a negative add.
 	 */
 	private static final Map<String, Stat> FUNC_SUB_EFFECTS = Map.ofEntries(Map.entry("DEBUFF_RES_PCT", Stat.DEBUFF_VULN)); // calcEffectSuccess: 1 + calcStat(DEBUFF_VULN, 1) / 100
+	
+	/**
+	 * Multipliers applied after every other tree Func (order 0x31 instead of 0x30), so they scale the whole total including the tree's own flat adds.
+	 */
+	private static final Map<String, Stat> FUNC_MUL_LATE_EFFECTS = Map.ofEntries(Map.entry("SHIELD_RATE_MUL_PCT", Stat.SHIELD_RATE)); // Deflection: calcShldUse block rate
 	
 	private String key(Player player)
 	{
@@ -266,7 +274,33 @@ public class PassiveTreeManager
 		{
 			e.printStackTrace();
 		}
-		return result;
+		
+		// The tree layout can change between releases: drop saved nodes that no
+		// longer exist or no longer connect to the allocated START. Their points
+		// come back on their own, since points are derived from level.
+		final Set<Integer> valid = connectedSubset(result);
+		if (valid.size() < result.size())
+		{
+			result.removeAll(valid);
+			try (Connection con = DatabaseFactory.getConnection();
+				PreparedStatement ps = con.prepareStatement("DELETE FROM character_passive_tree WHERE char_id = ? AND class_index = ? AND node_id = ?"))
+			{
+				for (int nodeId : result)
+				{
+					ps.setInt(1, player.getObjectId());
+					ps.setInt(2, classIndex);
+					ps.setInt(3, nodeId);
+					ps.addBatch();
+				}
+				ps.executeBatch();
+			}
+			catch (Exception e)
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": Failed to prune passive nodes for player " + player.getObjectId() + " - " + e.getMessage());
+			}
+			LOGGER.info(getClass().getSimpleName() + ": Refunded " + result.size() + " passive node(s) of " + player.getName() + " that no longer connect to the tree.");
+		}
+		return valid;
 	}
 	
 	public boolean canAllocate(Player player, int nodeId)
@@ -288,6 +322,11 @@ public class PassiveTreeManager
 			return false; // not enough points
 		}
 		
+		if (getConflictingNode(player, node) != null)
+		{
+			return false; // mutually exclusive keystone (Point Blank / Far Shot) already taken
+		}
+		
 		// A character picks ONE starting point: a root (START) node is only
 		// allocatable while no other one is owned, and the rest stay locked until
 		// a full reset. Anything else needs at least one already-allocated parent
@@ -299,6 +338,24 @@ public class PassiveTreeManager
 		return node.getParents().stream().anyMatch(allocated::contains);
 	}
 
+	/**
+	 * @param player the player to check
+	 * @param node a node the player wants to allocate
+	 * @return an allocated node whose keystone can't be combined with {@code node}'s (see {@link PassiveMechanics#conflicts}), or {@code null}
+	 */
+	public PassiveNode getConflictingNode(Player player, PassiveNode node)
+	{
+		for (int allocatedId : getAllocatedNodes(player))
+		{
+			final PassiveNode allocated = PassiveTreeData.getInstance().getNode(allocatedId);
+			if ((allocated != null) && PassiveMechanics.conflicts(node, allocated))
+			{
+				return allocated;
+			}
+		}
+		return null;
+	}
+	
 	/**
 	 * @param player the player to check
 	 * @return {@code true} if the player's current class_index has already allocated a starting (root) node, which locks every other one
@@ -350,7 +407,7 @@ public class PassiveTreeManager
 	 * Full rebuild for this player's CURRENT class_index:
 	 * <ol>
 	 * <li>Works out the skills the allocation grants (scaling skillLevel="auto" nodes to the character level), strips tree-granted skills that are no longer granted at that level, and grants what is missing.</li>
-	 * <li>Rebuilds the aggregated stat bonus cache from scratch (read by the getter overrides in Player.java: STR/DEX/CON/INT/WIT/MEN, MAXHP/MP/CP, PATK/PDEF/MATK/MDEF %, attack/cast speed %, shield def %).</li>
+	 * <li>Rebuilds the aggregated stat bonus cache from scratch (read by the getter overrides in Player.java: STR/DEX/CON/INT/WIT/MEN, PATK/PDEF/MATK/MDEF %, attack/cast speed %, shield def %; by PlayerStat for MAXHP/MP/CP; and by PassiveMechanics for the keystones).</li>
 	 * <li>Strips and reapplies every Func-backed stat (shield rate, reflect, crit rate/damage, evasion, accuracy, regen rates, drop/spoil/exp rate, move speed) in one pass via {@link #syncPassiveTreeStatFuncs}.</li>
 	 * </ol>
 	 * Called after allocate(), after resetTree(), on login, on subclass switch and (via onLevelChanged) on level change - never call addSkill/removeSkill/addStatFunc for tree nodes anywhere else, or two code paths can disagree about current state.
@@ -502,6 +559,15 @@ public class PassiveTreeManager
 			if (bonus != 0)
 			{
 				player.addStatFunc(new FuncAdd(entry.getValue(), 0x30, PASSIVE_TREE_FUNC_OWNER, -bonus, null));
+			}
+		}
+		
+		for (Map.Entry<String, Stat> entry : FUNC_MUL_LATE_EFFECTS.entrySet())
+		{
+			final double pct = player.getPassiveStatBonus().get(entry.getKey());
+			if (pct != 0)
+			{
+				player.addStatFunc(new FuncMul(entry.getValue(), 0x31, PASSIVE_TREE_FUNC_OWNER, 1.0 + (pct / 100.0), null));
 			}
 		}
 	}
@@ -698,11 +764,15 @@ public class PassiveTreeManager
 	 */
 	private boolean remainsConnected(Set<Integer> allocatedIds)
 	{
-		if (allocatedIds.isEmpty())
-		{
-			return true;
-		}
-		
+		return connectedSubset(allocatedIds).containsAll(allocatedIds);
+	}
+	
+	/**
+	 * @param allocatedIds a candidate allocation set
+	 * @return the nodes of {@code allocatedIds} that are reachable from an allocated START node, walking only through other nodes of {@code allocatedIds}. Ids that no longer exist in the tree data are never part of the result.
+	 */
+	private Set<Integer> connectedSubset(Set<Integer> allocatedIds)
+	{
 		final Map<Integer, Set<Integer>> neighbors = neighborMap();
 		final Set<Integer> seen = new HashSet<>();
 		final Deque<Integer> queue = new ArrayDeque<>();
@@ -729,7 +799,7 @@ public class PassiveTreeManager
 			}
 		}
 		
-		return seen.containsAll(allocatedIds);
+		return seen;
 	}
 	
 	/**

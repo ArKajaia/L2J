@@ -256,6 +256,7 @@ import org.l2jmobius.gameserver.model.olympiad.Hero;
 import org.l2jmobius.gameserver.model.olympiad.OlympiadGameManager;
 import org.l2jmobius.gameserver.model.olympiad.OlympiadGameTask;
 import org.l2jmobius.gameserver.model.olympiad.OlympiadManager;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
 import org.l2jmobius.gameserver.model.punishment.PunishmentAffect;
 import org.l2jmobius.gameserver.model.punishment.PunishmentType;
@@ -15445,7 +15446,7 @@ public class Player extends Playable
 	{
 		final double base = super.getPAtk(target);
 		final double pct = getPassiveStatBonus().get("PATK_PCT");
-		return base * (1.0 + (pct / 100.0));
+		return base * (1.0 + (pct / 100.0)) * PassiveMechanics.rampageMultiplier(this);
 	}
 	
 	@Override
@@ -15485,30 +15486,6 @@ public class Player extends Playable
 	}
 	
 	@Override
-	public int getMaxHp()
-	{
-		final int base = super.getMaxHp();
-		final double flatBonus = getPassiveStatBonus().get("MAXHP");
-		return (int) (base + flatBonus);
-	}
-	
-	@Override
-	public int getMaxMp()
-	{
-		final int base = super.getMaxMp();
-		final double flatBonus = getPassiveStatBonus().get("MAXMP");
-		return (int) (base + flatBonus);
-	}
-	
-	@Override
-	public int getMaxCp()
-	{
-		final int base = super.getMaxCp();
-		final double flatBonus = getPassiveStatBonus().get("MAXCP");
-		return (int) (base + flatBonus);
-	}
-	
-	@Override
 	public double getPDef(Creature target)
 	{
 		final double base = super.getPDef(target);
@@ -15527,6 +15504,13 @@ public class Player extends Playable
 	@Override
 	public double getMDef(Creature target, Skill skill)
 	{
+		// Arcane Plating: M.Def is replaced by P.Def, reduced by the keystone's %.
+		final double pdefAsMdef = getPassiveStatBonus().get(PassiveMechanics.PDEF_AS_MDEF);
+		if (pdefAsMdef > 0)
+		{
+			return getPDef(target) * Math.max(0, 1.0 - (pdefAsMdef / 100.0));
+		}
+		
 		final double base = super.getMDef(target, skill);
 		final double pct = getPassiveStatBonus().get("MDEF_PCT");
 		return base * (1.0 + (pct / 100.0));
