@@ -23,11 +23,11 @@ public class CustomBuffConfig
 		
 		try
 		{
-			File file = new File("config/custom/CustomBuffSystem.ini");
+			File file = new File("./config/Custom/CustomBuffSystem.ini");
 			
 			if (!file.exists())
 			{
-				LOGGER.warning("[CustomBuffConfig] config/custom/CustomBuffSystem.ini missing! System disabled.");
+				LOGGER.warning("[CustomBuffConfig] config/Custom/CustomBuffSystem.ini missing! System disabled.");
 				ENABLE = false;
 				return;
 			}

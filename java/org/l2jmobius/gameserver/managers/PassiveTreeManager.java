@@ -358,6 +358,15 @@ public class PassiveTreeManager
 	 */
 	public void applyAll(Player player)
 	{
+		applyAll(player, true);
+	}
+	
+	/**
+	 * @param player
+	 * @param announce tell the player which skills the tree just granted or took away (off for the login / subclass rebuild, where every skill would be "new")
+	 */
+	private void applyAll(Player player, boolean announce)
+	{
 		final Map<Integer, Integer> granted = _treeGranted.computeIfAbsent(player.getObjectId(), k -> new ConcurrentHashMap<>());
 		
 		// 1) Work out what the allocation grants now: skill id -> level. A node
@@ -399,6 +408,10 @@ public class PassiveTreeManager
 					cooldowns.put(known.getId(), reuse);
 				}
 				player.removeSkill(known, false, true);
+				if (announce && !wanted.containsKey(known.getId()))
+				{
+					player.sendMessage("Passive tree: you lost " + known.getName() + ".");
+				}
 			}
 		}
 		granted.keySet().retainAll(wanted.keySet());
@@ -422,6 +435,11 @@ public class PassiveTreeManager
 			
 			player.addSkill(skill, false);
 			granted.put(skill.getId(), skill.getLevel());
+			if (announce)
+			{
+				player.sendMessage("Passive tree: you learned " + skill.getName() + " (Lv " + skill.getLevel() + ").");
+				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " learned " + skill.getName() + " (" + skill.getId() + "/" + skill.getLevel() + ").");
+			}
 			
 			final TimeStamp reuse = cooldowns.get(skill.getId());
 			if ((reuse != null) && reuse.hasNotPassed())
@@ -495,7 +513,7 @@ public class PassiveTreeManager
 	public void onClassContextChanged(Player player)
 	{
 		_treeGranted.remove(player.getObjectId());
-		applyAll(player);
+		applyAll(player, false);
 		
 		// The login and subclass paths send SkillCoolTime before the tree skills
 		// exist, so the client would show them ready while they are on cooldown.
