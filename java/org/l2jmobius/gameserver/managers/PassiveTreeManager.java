@@ -24,6 +24,7 @@ import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics.ConditionalKey;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.skill.PassiveTreeArchetypes;
 import org.l2jmobius.gameserver.model.skill.Skill;
@@ -136,6 +137,11 @@ public class PassiveTreeManager
 	 * Multipliers applied after every other tree Func (order 0x31 instead of 0x30), so they scale the whole total including the tree's own flat adds.
 	 */
 	private static final Map<String, Stat> FUNC_MUL_LATE_EFFECTS = Map.ofEntries(Map.entry("SHIELD_RATE_MUL_PCT", Stat.SHIELD_RATE)); // Deflection: calcShldUse block rate
+	
+	/**
+	 * Getter-backed % keys (read by the Player getter overrides) and the Stat their conditional versions (PATK_PCT@BOW...) multiply instead, since a getter can't test a condition.
+	 */
+	private static final Map<String, Stat> CONDITIONAL_GETTER_EFFECTS = Map.ofEntries(Map.entry("PATK_PCT", Stat.POWER_ATTACK), Map.entry("PDEF_PCT", Stat.POWER_DEFENCE), Map.entry("MATK_PCT", Stat.MAGIC_ATTACK), Map.entry("MDEF_PCT", Stat.MAGIC_DEFENCE), Map.entry("ATK_SPD_PCT", Stat.POWER_ATTACK_SPEED), Map.entry("CAST_SPD_PCT", Stat.MAGIC_ATTACK_SPEED), Map.entry("SHIELD_DEF_PCT", Stat.SHIELD_DEFENCE));
 	
 	private String key(Player player)
 	{
@@ -568,6 +574,40 @@ public class PassiveTreeManager
 			if (pct != 0)
 			{
 				player.addStatFunc(new FuncMul(entry.getValue(), 0x31, PASSIVE_TREE_FUNC_OWNER, 1.0 + (pct / 100.0), null));
+			}
+		}
+		
+		// Conditional bonuses (PDEF_PCT@HEAVY, PATK_PCT@LOWHP...): the same Func as the plain key, gated by its condition.
+		// Funcs test their condition on every stat calculation, so gear swaps, HP% and day/night apply live.
+		for (String key : player.getPassiveStatBonus().keys())
+		{
+			final ConditionalKey conditional = PassiveMechanics.parseConditional(key);
+			final double value = player.getPassiveStatBonus().get(key);
+			if ((conditional == null) || (value == 0))
+			{
+				continue;
+			}
+			
+			final String base = conditional.baseKey();
+			if (CONDITIONAL_GETTER_EFFECTS.containsKey(base))
+			{
+				player.addStatFunc(new FuncMul(CONDITIONAL_GETTER_EFFECTS.get(base), 0x30, PASSIVE_TREE_FUNC_OWNER, 1.0 + (value / 100.0), conditional.condition()));
+			}
+			else if (FUNC_ADD_EFFECTS.containsKey(base))
+			{
+				player.addStatFunc(new FuncAdd(FUNC_ADD_EFFECTS.get(base), 0x30, PASSIVE_TREE_FUNC_OWNER, value, conditional.condition()));
+			}
+			else if (FUNC_MUL_EFFECTS.containsKey(base))
+			{
+				player.addStatFunc(new FuncMul(FUNC_MUL_EFFECTS.get(base), 0x30, PASSIVE_TREE_FUNC_OWNER, 1.0 + (value / 100.0), conditional.condition()));
+			}
+			else if (FUNC_MUL_REDUCE_EFFECTS.containsKey(base))
+			{
+				player.addStatFunc(new FuncMul(FUNC_MUL_REDUCE_EFFECTS.get(base), 0x30, PASSIVE_TREE_FUNC_OWNER, 1.0 - (value / 100.0), conditional.condition()));
+			}
+			else if (FUNC_SUB_EFFECTS.containsKey(base))
+			{
+				player.addStatFunc(new FuncAdd(FUNC_SUB_EFFECTS.get(base), 0x30, PASSIVE_TREE_FUNC_OWNER, -value, conditional.condition()));
 			}
 		}
 	}

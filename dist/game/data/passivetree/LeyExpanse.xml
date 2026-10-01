@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ley Expanse: 53 nodes, an outer region beyond the rim between Arcanist and Hierophant. x/y are authoritative layout coords. -->
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
+	<node id="44001" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1429.6" y="-3927.9" effect="MATK_PCT:0.8">
+		<requires nodeId="39419" />
+		<requires nodeId="44020" />
+		<requires nodeId="44060" />
+		<requires nodeId="44062" />
+	</node>
+	<node id="44002" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="0.0" y="-4180.0" effect="MAXHP_PCT:0.8">
+		<requires nodeId="39415" />
+		<requires nodeId="44006" />
+	</node>
+	<node id="44003" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1429.6" y="-3927.9" effect="MAXHP:18">
+		<requires nodeId="39411" />
+		<requires nodeId="44032" />
+		<requires nodeId="44063" />
+	</node>
+	<node id="44004" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="746.7" y="-4234.7" effect="MATK_PCT:0.8">
+		<requires nodeId="44024" />
+		<requires nodeId="44061" />
+		<requires nodeId="44065" />
+	</node>
+	<node id="44005" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-746.7" y="-4234.7" effect="MAXHP_PCT:0.8">
+		<requires nodeId="44028" />
+		<requires nodeId="44064" />
+		<requires nodeId="44068" />
+	</node>
+	<node id="44006" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="0.0" y="-4430.0" effect="MAXHP:18">
+		<requires nodeId="44002" />
+		<requires nodeId="44050" />
+		<requires nodeId="44067" />
+		<requires nodeId="44070" />
+	</node>
+	<node id="44007" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="500.7" y="-4763.8" effect="MATK_PCT:0.8">
+		<requires nodeId="44036" />
+		<requires nodeId="44071" />
+	</node>
+	<node id="44008" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-500.7" y="-4763.8" effect="MAXHP_PCT:0.8">
+		<requires nodeId="44072" />
+		<requires nodeId="44073" />
+	</node>
+	<node id="44050" name="Threshold" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="0.0" y="-4640.0" effect="MAXHP:20">
+		<requires nodeId="44006" />
+		<requires nodeId="44051" />
+		<requires nodeId="44071" />
+		<requires nodeId="44073" />
+	</node>
+	<node id="44051" name="Threshold" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="0.0" y="-4830.0" effect="MAXHP_PCT:1">
+		<requires nodeId="44050" />
+		<requires nodeId="44052" />
+	</node>
+	<node id="44052" name="Iron Mage" sector="Ley Expanse" type="KEYSTONE" tier="0" cost="1" x="0.0" y="-5030.0" effect="MATK_PCT@HEAVY:15;CAST_SPD_PCT@HEAVY:10;MP_REGEN_PCT:-30" description="KEYSTONE: In heavy armour: +15% M.Atk and +10% casting speed. MP regeneration is 30% slower.">
+		<requires nodeId="44051" />
+	</node>
+	<node id="44020" name="Leyblood" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1281.7" y="-4204.3" orbitX="1232.1" orbitY="-4296.8" effect="MAXHP_PCT:1.5">
+		<requires nodeId="44001" />
+		<requires nodeId="44021" />
+	</node>
+	<node id="44021" name="Leyblood" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1162.1" y="-4218.6" orbitX="1232.1" orbitY="-4296.8" effect="MAXHP_PCT:1.5">
+		<requires nodeId="44020" />
+		<requires nodeId="44022" />
+	</node>
+	<node id="44022" name="Leyblood" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1134.6" y="-4335.9" orbitX="1232.1" orbitY="-4296.8" effect="MAXHP_PCT:1.5">
+		<requires nodeId="44021" />
+		<requires nodeId="44023" />
+	</node>
+	<node id="44023" name="Arcane Flesh" sector="Ley Expanse" type="NOTABLE" tier="0" cost="1" x="1235.5" y="-4401.8" orbitX="1232.1" orbitY="-4296.8" effect="MAXHP_PCT:4;MDEF_PCT:3" description="Leyblood mastery. Mana-hardened flesh.">
+		<requires nodeId="44022" />
+	</node>
+	<node id="44024" name="Robe Weaving" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="674.1" y="-4399.7" orbitX="631.8" orbitY="-4495.8" effect="CAST_SPD_PCT@ROBE:2">
+		<requires nodeId="44004" />
+		<requires nodeId="44025" />
+	</node>
+	<node id="44025" name="Robe Weaving" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="736.6" y="-4502.7" orbitX="631.8" orbitY="-4495.8" effect="CAST_SPD_PCT@ROBE:2">
+		<requires nodeId="44024" />
+		<requires nodeId="44026" />
+	</node>
+	<node id="44026" name="Robe Weaving" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="661.2" y="-4596.6" orbitX="631.8" orbitY="-4495.8" effect="CAST_SPD_PCT@ROBE:2">
+		<requires nodeId="44025" />
+		<requires nodeId="44027" />
+	</node>
+	<node id="44027" name="Silken Focus" sector="Ley Expanse" type="NOTABLE" tier="0" cost="1" x="547.2" y="-4557.9" orbitX="631.8" orbitY="-4495.8" effect="CAST_SPD_PCT@ROBE:6;MATK_PCT@ROBE:4" description="Robe Weaving mastery. Robes only.">
+		<requires nodeId="44026" />
+	</node>
+	<node id="44028" name="Runeplate" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-674.1" y="-4399.7" orbitX="-631.8" orbitY="-4495.8" effect="MDEF_PCT@HEAVY:2">
+		<requires nodeId="44005" />
+		<requires nodeId="44029" />
+	</node>
+	<node id="44029" name="Runeplate" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-736.6" y="-4502.7" orbitX="-631.8" orbitY="-4495.8" effect="MDEF_PCT@HEAVY:2">
+		<requires nodeId="44028" />
+		<requires nodeId="44030" />
+	</node>
+	<node id="44030" name="Runeplate" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-661.2" y="-4596.6" orbitX="-631.8" orbitY="-4495.8" effect="MDEF_PCT@HEAVY:2">
+		<requires nodeId="44029" />
+		<requires nodeId="44031" />
+	</node>
+	<node id="44031" name="Warded Plate" sector="Ley Expanse" type="NOTABLE" tier="0" cost="1" x="-547.2" y="-4557.9" orbitX="-631.8" orbitY="-4495.8" effect="MDEF_PCT@HEAVY:8;MAXHP_PCT:2" description="Runeplate mastery. Heavy armour only.">
+		<requires nodeId="44030" />
+	</node>
+	<node id="44032" name="Bladecaster" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1281.7" y="-4204.3" orbitX="-1232.1" orbitY="-4296.8" effect="MATK_PCT@SWORD:2">
+		<requires nodeId="44003" />
+		<requires nodeId="44033" />
+	</node>
+	<node id="44033" name="Bladecaster" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1162.1" y="-4218.6" orbitX="-1232.1" orbitY="-4296.8" effect="MATK_PCT@SWORD:2">
+		<requires nodeId="44032" />
+		<requires nodeId="44034" />
+	</node>
+	<node id="44034" name="Bladecaster" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1134.6" y="-4335.9" orbitX="-1232.1" orbitY="-4296.8" effect="MATK_PCT@SWORD:2">
+		<requires nodeId="44033" />
+		<requires nodeId="44035" />
+	</node>
+	<node id="44035" name="Spellblade" sector="Ley Expanse" type="NOTABLE" tier="0" cost="1" x="-1235.5" y="-4401.8" orbitX="-1232.1" orbitY="-4296.8" effect="MATK_PCT@SWORD:6;PATK_PCT@ROBE:5" description="Bladecaster mastery. A sword in hand, a robe on your back.">
+		<requires nodeId="44034" />
+	</node>
+	<node id="44036" name="Mana Skin" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="766.8" y="-4866.5" orbitX="864.8" orbitY="-4904.3" effect="MAXMP:15">
+		<requires nodeId="44007" />
+		<requires nodeId="44037" />
+	</node>
+	<node id="44037" name="Mana Skin" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="866.8" y="-4799.4" orbitX="864.8" orbitY="-4904.3" effect="MAXMP:15">
+		<requires nodeId="44036" />
+		<requires nodeId="44038" />
+	</node>
+	<node id="44038" name="Mana Skin" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="964.1" y="-4870.4" orbitX="864.8" orbitY="-4904.3" effect="MAXMP:15">
+		<requires nodeId="44037" />
+		<requires nodeId="44039" />
+	</node>
+	<node id="44039" name="Overflowing Well" sector="Ley Expanse" type="NOTABLE" tier="0" cost="1" x="930.7" y="-4986.1" orbitX="864.8" orbitY="-4904.3" effect="MAXMP:120;MP_REGEN_PCT@ROBE:8" description="Mana Skin mastery. Regenerates faster in a robe.">
+		<requires nodeId="44038" />
+	</node>
+	<node id="44040" name="Ley Line" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1859.5" y="-3987.8" effect="MAXHP:20">
+		<requires nodeId="44041" />
+		<requires nodeId="44062" />
+	</node>
+	<node id="44041" name="Ley Line" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1944.0" y="-4169.0" effect="MAXHP:20">
+		<requires nodeId="44040" />
+		<requires nodeId="44042" />
+	</node>
+	<node id="44042" name="Ley Line" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="2028.6" y="-4350.3" effect="MAXHP:20">
+		<requires nodeId="44041" />
+		<requires nodeId="44043" />
+	</node>
+	<node id="44043" name="Living Conduit" sector="Ley Expanse" type="NOTABLE" tier="0" cost="1" x="2113.1" y="-4531.5" effect="MAXHP:100;MP_REGEN_PCT:8" description="Ley Line mastery. Health and mana flow together.">
+		<requires nodeId="44042" />
+	</node>
+	<node id="44044" name="Scholar's Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-864.8" y="-4904.3" orbitX="0.0" orbitY="0.0" effect="MAXMP:15">
+		<requires nodeId="44045" />
+		<requires nodeId="44072" />
+	</node>
+	<node id="44045" name="Scholar's Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1204.8" y="-4832.1" orbitX="0.0" orbitY="0.0" effect="MAXMP:15">
+		<requires nodeId="44044" />
+		<requires nodeId="44046" />
+	</node>
+	<node id="44046" name="Scholar's Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1538.9" y="-4736.3" orbitX="0.0" orbitY="0.0" effect="MAXMP:15">
+		<requires nodeId="44045" />
+		<requires nodeId="44047" />
+	</node>
+	<node id="44047" name="Endless Mind" sector="Ley Expanse" type="NOTABLE" tier="0" cost="1" x="-1865.5" y="-4617.4" orbitX="0.0" orbitY="0.0" effect="MAXMP:120;SPELL_MP_COST_RED_PCT:5" description="Scholar's Path mastery. Spells cost less.">
+		<requires nodeId="44046" />
+	</node>
+	<node id="44060" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1202.2" y="-4030.1" effect="MAXHP:18">
+		<requires nodeId="44001" />
+		<requires nodeId="44061" />
+	</node>
+	<node id="44061" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="974.6" y="-4132.3" effect="MAXHP_PCT:0.8">
+		<requires nodeId="44004" />
+		<requires nodeId="44060" />
+	</node>
+	<node id="44062" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1644.3" y="-3957.9" effect="MATK_PCT:0.8">
+		<requires nodeId="44001" />
+		<requires nodeId="44040" />
+	</node>
+	<node id="44063" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1202.2" y="-4030.1" effect="MAXHP:18">
+		<requires nodeId="44003" />
+		<requires nodeId="44064" />
+	</node>
+	<node id="44064" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-974.6" y="-4132.3" effect="MAXHP_PCT:0.8">
+		<requires nodeId="44005" />
+		<requires nodeId="44063" />
+	</node>
+	<node id="44065" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="560.1" y="-4283.5" effect="MATK_PCT:0.8">
+		<requires nodeId="44004" />
+		<requires nodeId="44066" />
+	</node>
+	<node id="44066" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="373.7" y="-4332.3" effect="MAXHP:18">
+		<requires nodeId="44065" />
+		<requires nodeId="44067" />
+	</node>
+	<node id="44067" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="186.7" y="-4381.1" effect="MAXHP_PCT:0.8">
+		<requires nodeId="44006" />
+		<requires nodeId="44066" />
+	</node>
+	<node id="44068" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-560.1" y="-4283.5" effect="MATK_PCT:0.8">
+		<requires nodeId="44005" />
+		<requires nodeId="44069" />
+	</node>
+	<node id="44069" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-373.7" y="-4332.3" effect="MAXHP:18">
+		<requires nodeId="44068" />
+		<requires nodeId="44070" />
+	</node>
+	<node id="44070" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-186.7" y="-4381.1" effect="MAXHP_PCT:0.8">
+		<requires nodeId="44006" />
+		<requires nodeId="44069" />
+	</node>
+	<node id="44071" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="250.5" y="-4701.8" effect="MATK_PCT:0.8">
+		<requires nodeId="44007" />
+		<requires nodeId="44050" />
+	</node>
+	<node id="44072" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-682.8" y="-4834.0" effect="MAXHP:18">
+		<requires nodeId="44008" />
+		<requires nodeId="44044" />
+	</node>
+	<node id="44073" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-250.5" y="-4701.8" effect="MAXHP_PCT:0.8">
+		<requires nodeId="44008" />
+		<requires nodeId="44050" />
+	</node>
+</list>

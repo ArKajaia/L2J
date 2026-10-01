@@ -16,7 +16,7 @@ public class PassiveTreeConfig
 	public static int PASSIVE_TREE_START_LEVEL = 2;
 
 	/** Hard cap on the points a character can earn. */
-	public static int PASSIVE_TREE_MAX_POINTS = 120;
+	public static int PASSIVE_TREE_MAX_POINTS = 150;
 
 	/**
 	 * Adena charged per POINT of a node's cost when respeccing ONE node at a time via the web planner. Separate from the full-tree reset cost.
@@ -36,7 +36,7 @@ public class PassiveTreeConfig
 		final ConfigReader config = new ConfigReader(PASSIVE_TREE_CONFIG_FILE);
 		PASSIVE_TREE_ENABLED = config.getBoolean("PassiveTreeEnabled", true);
 		PASSIVE_TREE_START_LEVEL = Math.max(1, config.getInt("PassiveTreeStartLevel", 2));
-		PASSIVE_TREE_MAX_POINTS = Math.max(0, config.getInt("PassiveTreeMaxPoints", 120));
+		PASSIVE_TREE_MAX_POINTS = Math.max(0, config.getInt("PassiveTreeMaxPoints", 150));
 		SEPARATE_SUBCLASS_POINTS = config.getBoolean("PassiveTreeSeparateSubclassPoints", false);
 		RESET_ITEM_ID = config.getInt("PassiveTreeResetItemId", 57);
 		RESET_ITEM_COUNT = Math.max(0, config.getLong("PassiveTreeResetItemCount", 100000));

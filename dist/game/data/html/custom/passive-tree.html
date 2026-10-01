@@ -378,7 +378,7 @@ const CFG = {
 	PAN_SPEED:      1.0,   // mouse-drag multiplier. 1.0 = tree follows cursor exactly.
 	KEY_PAN_STEP:   90,    // pixels moved per keypress (WASD / arrows), before zoom
 	ZOOM_STEP:      1.15,  // how much one wheel notch multiplies zoom (1.05 = fine, 1.3 = coarse)
-	ZOOM_MIN:       0.10,  // furthest you can zoom out
+	ZOOM_MIN:       0.05,  // furthest you can zoom out (low enough to fit the whole tree)
 	ZOOM_MAX:       2.50,  // closest you can zoom in
 	FIT_PADDING:    80,    // px of breathing room left around the tree when fitting
 	LABEL_ZOOM:     1.30,  // small-node names appear once zoom is at/above this
@@ -696,6 +696,14 @@ const KEYSTONE_TEXT = {
 	KS_OVERHEAL_CP: v => `${v}% of overhealing you cast becomes CP`,
 };
 
+// Conditional bonuses ("PDEF_PCT@HEAVY") only apply in that situation. Mirrors COND_TEXT in PassiveTreeBoard.java.
+const COND_TEXT = {
+	HEAVY: "in heavy armour", LIGHT: "in light armour", ROBE: "in a robe", NOARMOR: "wearing no armour",
+	SHIELD: "with a shield", BOW: "with a bow", DAGGER: "with a dagger", DUAL: "with dual swords",
+	SWORD: "with a sword", BLUNT: "with a blunt weapon", POLE: "with a polearm", FIST: "with fist weapons",
+	LOWHP: "below 50% HP", FULLHP: "above 90% HP", NIGHT: "at night", DAY: "during the day",
+};
+
 // Keystones that cancel each other out: only one of each group per character. Mirrors PassiveMechanics.EXCLUSIVE_GROUPS.
 const EXCLUSIVE_GROUPS = [["KS_POINT_BLANK", "KS_FAR_SHOT"]];
 
@@ -730,7 +738,7 @@ function baseIconFor(n) {
 		case "KEYSTONE": case "MASTER": return "star";
 		default: {
 			const fx = parseEffectSpec(n.effect);
-			return (fx[0] && STAT_ICON[fx[0].key]) || "star";
+			return (fx[0] && STAT_ICON[fx[0].key.split("@")[0]]) || "star";
 		}
 	}
 }
@@ -757,6 +765,11 @@ function parseEffectSpec(spec) {
 function formatStat(key, val) {
 	const rounded = Math.round(val * 100) / 100;
 	if (KEYSTONE_TEXT[key]) return { text: KEYSTONE_TEXT[key](rounded), good: true };
+	const [base, cond] = key.split("@");
+	if (cond) {
+		const f = formatStat(base, val);
+		return { text: `${f.text} (${COND_TEXT[cond] || cond.toLowerCase()})`, good: f.good };
+	}
 	const label = STAT_LABEL[key] || key;
 	const pct = key.endsWith("_PCT");
 	const sign = rounded > 0 ? "+" : "";

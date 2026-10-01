@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Deadeye: 73 nodes. x/y are authoritative layout coords. -->
+<!-- Deadeye: 81 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="4000" name="Deadeye Origin" sector="Deadeye" type="START" tier="0" cost="0" x="-3300.0" y="0.0" effect="MAXHP:8" description="Starting point for this archetype." />
-	<node id="4001" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2850.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2" description="Junction.">
+	<node id="4001" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2850.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5" description="Junction.">
 		<requires nodeId="4003" />
 		<requires nodeId="4004" />
 		<requires nodeId="4009" />
 		<requires nodeId="4014" />
 		<requires nodeId="4017" />
 	</node>
-	<node id="4002" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3150.0" y="0.0" effect="ACCURACY_ADD:0.2">
+	<node id="4002" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3150.0" y="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12">
 		<requires nodeId="4000" />
 		<requires nodeId="4003" />
 	</node>
-	<node id="4003" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3000.0" y="0.0" effect="ACCURACY_ADD:0.2">
+	<node id="4003" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3000.0" y="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="4001" />
 		<requires nodeId="4002" />
 	</node>
 	<node id="4004" name="Aim" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2945.5" y="95.5" orbitX="-3019.7" orbitY="169.7" effect="ACCURACY_ADD:0.6">
 		<requires nodeId="4001" />
 		<requires nodeId="4005" />
-		<requires nodeId="30226" />
+		<requires nodeId="33208" />
 	</node>
 	<node id="4005" name="Aim" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3064.1" y="74.5" orbitX="-3019.7" orbitY="169.7" effect="ACCURACY_ADD:0.6">
 		<requires nodeId="4004" />
@@ -36,7 +36,7 @@
 	<node id="4009" name="Draw Strength" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2945.5" y="-95.5" orbitX="-3019.7" orbitY="-169.7" effect="PATK_PCT:1">
 		<requires nodeId="4001" />
 		<requires nodeId="4010" />
-		<requires nodeId="30325" />
+		<requires nodeId="33306" />
 	</node>
 	<node id="4010" name="Draw Strength" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3064.1" y="-74.5" orbitX="-3019.7" orbitY="-169.7" effect="PATK_PCT:1">
 		<requires nodeId="4009" />
@@ -56,28 +56,28 @@
 	<node id="4015" name="Disengage" sector="Deadeye" type="ACTIVE_SKILL" tier="0" cost="1" x="-2680.3" y="-169.7" effect="MAXHP:15" skillId="90430" skillLevel="1" description="ACTIVE: burst of Speed and Evasion to break away for 6s (35s cooldown).">
 		<requires nodeId="4014" />
 	</node>
-	<node id="4016" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2250.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2" description="Junction.">
+	<node id="4016" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2250.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12" description="Junction.">
 		<requires nodeId="4018" />
 		<requires nodeId="4019" />
 		<requires nodeId="4025" />
 		<requires nodeId="4031" />
 		<requires nodeId="4037" />
 		<requires nodeId="4040" />
-		<requires nodeId="22103" />
-		<requires nodeId="23101" />
+		<requires nodeId="22107" />
+		<requires nodeId="23104" />
 	</node>
-	<node id="4017" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2650.0" y="0.0" effect="ACCURACY_ADD:0.2">
+	<node id="4017" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2650.0" y="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="4001" />
 		<requires nodeId="4018" />
 	</node>
-	<node id="4018" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2450.0" y="0.0" effect="ACCURACY_ADD:0.2">
+	<node id="4018" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2450.0" y="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12">
 		<requires nodeId="4016" />
 		<requires nodeId="4017" />
 	</node>
 	<node id="4019" name="Ballistics" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2345.5" y="95.5" orbitX="-2419.7" orbitY="169.7" effect="CRIT_DMG_PCT:1.6">
 		<requires nodeId="4016" />
 		<requires nodeId="4020" />
-		<requires nodeId="30204" />
+		<requires nodeId="33204" />
 	</node>
 	<node id="4020" name="Ballistics" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2464.1" y="74.5" orbitX="-2419.7" orbitY="169.7" effect="CRIT_DMG_PCT:1.6">
 		<requires nodeId="4019" />
@@ -93,7 +93,7 @@
 	<node id="4025" name="Skirmish" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2345.5" y="-95.5" orbitX="-2419.7" orbitY="-169.7" effect="EVASION_ADD:0.9">
 		<requires nodeId="4016" />
 		<requires nodeId="4026" />
-		<requires nodeId="30303" />
+		<requires nodeId="33303" />
 	</node>
 	<node id="4026" name="Skirmish" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2464.1" y="-74.5" orbitX="-2419.7" orbitY="-169.7" effect="EVASION_ADD:0.9">
 		<requires nodeId="4025" />
@@ -128,21 +128,21 @@
 	<node id="4038" name="Far Shot" sector="Deadeye" type="KEYSTONE" tier="0" cost="1" x="-2080.3" y="-169.7" effect="KS_FAR_SHOT:30" description="KEYSTONE: Bow and spell damage grows with distance, from -30% at point-blank range to +30% at 900+ range. Cannot be combined with Point Blank.">
 		<requires nodeId="4037" />
 	</node>
-	<node id="4039" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1650.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2" description="Junction.">
+	<node id="4039" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1650.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5" description="Junction.">
 		<requires nodeId="4041" />
 		<requires nodeId="4042" />
 		<requires nodeId="4048" />
 		<requires nodeId="4054" />
 		<requires nodeId="4060" />
 		<requires nodeId="4063" />
-		<requires nodeId="22203" />
-		<requires nodeId="23201" />
+		<requires nodeId="22205" />
+		<requires nodeId="23204" />
 	</node>
-	<node id="4040" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2050.0" y="0.0" effect="ACCURACY_ADD:0.2">
+	<node id="4040" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2050.0" y="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12">
 		<requires nodeId="4016" />
 		<requires nodeId="4041" />
 	</node>
-	<node id="4041" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1850.0" y="0.0" effect="ACCURACY_ADD:0.2">
+	<node id="4041" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1850.0" y="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="4039" />
 		<requires nodeId="4040" />
 	</node>
@@ -198,21 +198,21 @@
 	<node id="4061" name="Volley" sector="Deadeye" type="ACTIVE_SKILL" tier="0" cost="1" x="-1480.3" y="-169.7" effect="MAXHP:15" skillId="90431" skillLevel="auto" description="ACTIVE: loose a volley of arrows at all enemies around you (25s cooldown). Grows stronger with your level.">
 		<requires nodeId="4060" />
 	</node>
-	<node id="4062" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1050.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2" description="Junction.">
+	<node id="4062" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1050.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12" description="Junction.">
 		<requires nodeId="4064" />
 		<requires nodeId="4065" />
 		<requires nodeId="4071" />
 		<requires nodeId="4077" />
 		<requires nodeId="4080" />
 		<requires nodeId="4081" />
-		<requires nodeId="22303" />
-		<requires nodeId="23301" />
+		<requires nodeId="22305" />
+		<requires nodeId="23304" />
 	</node>
-	<node id="4063" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1450.0" y="0.0" effect="ACCURACY_ADD:0.2">
+	<node id="4063" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1450.0" y="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="4039" />
 		<requires nodeId="4064" />
 	</node>
-	<node id="4064" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1250.0" y="0.0" effect="ACCURACY_ADD:0.2">
+	<node id="4064" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1250.0" y="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12">
 		<requires nodeId="4062" />
 		<requires nodeId="4063" />
 	</node>
@@ -257,52 +257,85 @@
 		<requires nodeId="4080" />
 		<requires nodeId="9007" />
 	</node>
-	<node id="4080" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-885.0" y="0.0" effect="ACCURACY_ADD:0.2">
+	<node id="4080" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-885.0" y="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12">
 		<requires nodeId="4062" />
 		<requires nodeId="4079" />
 	</node>
 	<node id="4081" name="Tracker's Guile" sector="Deadeye" type="FUNCTION" tier="0" cost="1" x="-965.1" y="-84.9" effect="MAXHP:15" skillId="221" skillLevel="1" description="Unlocks Silent Move: monsters won't attack you first while it is on (-40% Speed, drains MP).">
 		<requires nodeId="4062" />
 	</node>
-	<node id="23101" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2173.3" y="-582.3" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2">
-		<requires nodeId="4016" />
-		<requires nodeId="23102" />
+	<node id="23101" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2173.3" y="-582.3" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
+		<requires nodeId="23104" />
+		<requires nodeId="23105" />
 	</node>
-	<node id="23102" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1948.6" y="-1125.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2">
-		<requires nodeId="23101" />
-		<requires nodeId="23103" />
+	<node id="23102" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1948.6" y="-1125.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12">
+		<requires nodeId="23105" />
+		<requires nodeId="23106" />
 		<requires nodeId="30301" />
 	</node>
-	<node id="23103" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1591.0" y="-1591.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2">
-		<requires nodeId="5016" />
-		<requires nodeId="23102" />
+	<node id="23103" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1591.0" y="-1591.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
+		<requires nodeId="23106" />
+		<requires nodeId="23107" />
 		<requires nodeId="30362" />
 	</node>
-	<node id="23201" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1593.8" y="-427.1" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2">
-		<requires nodeId="4039" />
+	<node id="23104" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2230.8" y="-293.7" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12">
+		<requires nodeId="4016" />
+		<requires nodeId="23101" />
+	</node>
+	<node id="23105" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2078.7" y="-861.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
+		<requires nodeId="23101" />
+		<requires nodeId="23102" />
+	</node>
+	<node id="23106" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1785.0" y="-1369.7" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12">
+		<requires nodeId="23102" />
+		<requires nodeId="23103" />
+	</node>
+	<node id="23107" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1369.7" y="-1785.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
+		<requires nodeId="5016" />
+		<requires nodeId="23103" />
+	</node>
+	<node id="23201" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1550.5" y="-564.3" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="23202" />
+		<requires nodeId="23204" />
 		<requires nodeId="30356" />
 	</node>
-	<node id="23202" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1428.9" y="-825.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2">
+	<node id="23202" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1428.9" y="-825.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12">
 		<requires nodeId="23201" />
 		<requires nodeId="23203" />
 	</node>
-	<node id="23203" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1166.7" y="-1166.7" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2">
-		<requires nodeId="5039" />
+	<node id="23203" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1264.0" y="-1060.6" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="23202" />
+		<requires nodeId="23205" />
 		<requires nodeId="30361" />
 	</node>
-	<node id="23301" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1014.2" y="-271.8" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2">
-		<requires nodeId="4062" />
-		<requires nodeId="23302" />
+	<node id="23204" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1624.9" y="-286.5" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12">
+		<requires nodeId="4039" />
+		<requires nodeId="23201" />
 	</node>
-	<node id="23302" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-909.3" y="-525.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2">
+	<node id="23205" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1060.6" y="-1264.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
+		<requires nodeId="5039" />
+		<requires nodeId="23203" />
+	</node>
+	<node id="23301" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-986.7" y="-359.1" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
+		<requires nodeId="23302" />
+		<requires nodeId="23304" />
+	</node>
+	<node id="23302" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-909.3" y="-525.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12">
 		<requires nodeId="23301" />
 		<requires nodeId="23303" />
 		<requires nodeId="30351" />
+		<requires nodeId="30364" />
 	</node>
-	<node id="23303" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-742.5" y="-742.5" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2">
-		<requires nodeId="5062" />
+	<node id="23303" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-804.3" y="-674.9" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="23302" />
+		<requires nodeId="23305" />
+	</node>
+	<node id="23304" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1034.0" y="-182.3" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12">
+		<requires nodeId="4062" />
+		<requires nodeId="23301" />
+	</node>
+	<node id="23305" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-674.9" y="-804.3" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
+		<requires nodeId="5062" />
+		<requires nodeId="23303" />
 	</node>
 </list>

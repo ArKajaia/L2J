@@ -10,6 +10,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
 import org.l2jmobius.commons.util.IXmlReader;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode.NodeType;
 
@@ -134,6 +135,21 @@ public class PassiveTreeData implements IXmlReader
 				if (!_nodes.containsKey(parentId))
 				{
 					LOGGER.warning(getClass().getSimpleName() + ": Node " + node.getId() + " (\"" + node.getName() + "\") references missing parent id " + parentId + ".");
+					refErrors++;
+				}
+			}
+		}
+		
+		// Conditional effect keys (PDEF_PCT@HEAVY) must name a known condition, or they would silently do nothing.
+		for (PassiveNode node : _nodes.values())
+		{
+			for (String part : node.getEffectSpec().split(";"))
+			{
+				final int colon = part.indexOf(':');
+				final String key = colon > 0 ? part.substring(0, colon).trim() : part.trim();
+				if ((key.indexOf('@') > 0) && (PassiveMechanics.parseConditional(key) == null))
+				{
+					LOGGER.warning(getClass().getSimpleName() + ": Node " + node.getId() + " (\"" + node.getName() + "\") has an unknown conditional effect " + key + ".");
 					refErrors++;
 				}
 			}

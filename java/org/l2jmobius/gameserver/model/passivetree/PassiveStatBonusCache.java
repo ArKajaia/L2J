@@ -61,14 +61,24 @@ public class PassiveStatBonusCache
 		Map.entry("SKILL_CDR_PCT", 20.0), Map.entry("SPELL_CDR_PCT", 20.0), Map.entry("SPELL_MP_COST_RED_PCT", 30.0), //
 		Map.entry("CRIT_DMG_TAKEN_RED_PCT", 30.0), Map.entry("INTERRUPT_RES_PCT", 50.0), Map.entry("DEBUFF_RES_PCT", 30.0), //
 		// keystones
-		Map.entry("SERVITOR_SHARE_PCT", 50.0), Map.entry("SHIELD_RATE_MUL_PCT", 50.0), //
+		Map.entry("SERVITOR_SHARE_PCT", 50.0), Map.entry("SHIELD_RATE_MUL_PCT", 50.0), Map.entry("MAXHP_PCT", 60.0), //
 		// utility unlocks
 		Map.entry("INVENTORY_SLOTS_ADD", 40.0), Map.entry("WEIGHT_LIMIT_PCT", 100.0), Map.entry("EXP_RATE_PCT", 25.0), Map.entry("SP_RATE_PCT", 25.0));
+	
+	/**
+	 * @return every effect key the allocated nodes carry, including conditional ones such as {@code PDEF_PCT@HEAVY}
+	 */
+	public Set<String> keys()
+	{
+		return _totals.keySet();
+	}
 	
 	public double get(String key)
 	{
 		final double raw = _totals.getOrDefault(key, 0.0);
-		final Double cap = CAPS.get(key);
+		// a conditional key (PDEF_PCT@HEAVY) is capped like its base key
+		final int at = key.indexOf('@');
+		final Double cap = CAPS.get(at > 0 ? key.substring(0, at) : key);
 		if (cap == null)
 		{
 			return raw;

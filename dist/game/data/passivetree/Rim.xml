@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Rim: 90 nodes, the outer ring road: a spur from every Origin out to its gate, and an arc road between the gates. x/y are authoritative layout coords. -->
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
+	<node id="39000" name="Rim Gate" sector="Vanguard" type="SMALL" tier="0" cost="1" x="4000.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:25;MAXHP_PCT:0.5" description="Where the Outer Rim meets the road from the Origin.">
+		<requires nodeId="39003" />
+		<requires nodeId="39010" />
+		<requires nodeId="39520" />
+	</node>
+	<node id="39001" name="Outbound Road" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3475.0" y="0.0" effect="MAXHP:12">
+		<requires nodeId="1000" />
+		<requires nodeId="39002" />
+	</node>
+	<node id="39002" name="Outbound Road" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3650.0" y="0.0" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39001" />
+		<requires nodeId="39003" />
+	</node>
+	<node id="39003" name="Outbound Road" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3825.0" y="0.0" effect="MAXHP:12">
+		<requires nodeId="39000" />
+		<requires nodeId="39002" />
+	</node>
+	<node id="39100" name="Rim Gate" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2000.0" y="3464.1" orbitX="0.0" orbitY="0.0" effect="MAXHP:25;MAXHP_PCT:0.5" description="Where the Outer Rim meets the road from the Origin.">
+		<requires nodeId="39020" />
+		<requires nodeId="39103" />
+		<requires nodeId="39110" />
+	</node>
+	<node id="39101" name="Outbound Road" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1737.5" y="3009.4" effect="MAXHP:12">
+		<requires nodeId="2000" />
+		<requires nodeId="39102" />
+	</node>
+	<node id="39102" name="Outbound Road" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1825.0" y="3161.0" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39101" />
+		<requires nodeId="39103" />
+	</node>
+	<node id="39103" name="Outbound Road" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1912.5" y="3312.5" effect="MAXHP:12">
+		<requires nodeId="39100" />
+		<requires nodeId="39102" />
+	</node>
+	<node id="39200" name="Rim Gate" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-2000.0" y="3464.1" orbitX="0.0" orbitY="0.0" effect="MAXHP:25;MAXHP_PCT:0.5" description="Where the Outer Rim meets the road from the Origin.">
+		<requires nodeId="39120" />
+		<requires nodeId="39203" />
+		<requires nodeId="39210" />
+	</node>
+	<node id="39201" name="Outbound Road" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1737.5" y="3009.4" effect="MAXHP:12">
+		<requires nodeId="3000" />
+		<requires nodeId="39202" />
+	</node>
+	<node id="39202" name="Outbound Road" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1825.0" y="3161.0" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39201" />
+		<requires nodeId="39203" />
+	</node>
+	<node id="39203" name="Outbound Road" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1912.5" y="3312.5" effect="MAXHP:12">
+		<requires nodeId="39200" />
+		<requires nodeId="39202" />
+	</node>
+	<node id="39300" name="Rim Gate" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-4000.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:25;MAXHP_PCT:0.5" description="Where the Outer Rim meets the road from the Origin.">
+		<requires nodeId="39220" />
+		<requires nodeId="39303" />
+		<requires nodeId="39310" />
+	</node>
+	<node id="39301" name="Outbound Road" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3475.0" y="0.0" effect="MAXHP:12">
+		<requires nodeId="4000" />
+		<requires nodeId="39302" />
+	</node>
+	<node id="39302" name="Outbound Road" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3650.0" y="0.0" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39301" />
+		<requires nodeId="39303" />
+	</node>
+	<node id="39303" name="Outbound Road" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3825.0" y="0.0" effect="MAXHP:12">
+		<requires nodeId="39300" />
+		<requires nodeId="39302" />
+	</node>
+	<node id="39400" name="Rim Gate" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2000.0" y="-3464.1" orbitX="0.0" orbitY="0.0" effect="MAXHP:25;MAXHP_PCT:0.5" description="Where the Outer Rim meets the road from the Origin.">
+		<requires nodeId="39320" />
+		<requires nodeId="39403" />
+		<requires nodeId="39410" />
+	</node>
+	<node id="39401" name="Outbound Road" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1737.5" y="-3009.4" effect="MAXHP:12">
+		<requires nodeId="5000" />
+		<requires nodeId="39402" />
+	</node>
+	<node id="39402" name="Outbound Road" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1825.0" y="-3161.0" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39401" />
+		<requires nodeId="39403" />
+	</node>
+	<node id="39403" name="Outbound Road" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1912.5" y="-3312.5" effect="MAXHP:12">
+		<requires nodeId="39400" />
+		<requires nodeId="39402" />
+	</node>
+	<node id="39500" name="Rim Gate" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2000.0" y="-3464.1" orbitX="0.0" orbitY="0.0" effect="MAXHP:25;MAXHP_PCT:0.5" description="Where the Outer Rim meets the road from the Origin.">
+		<requires nodeId="39420" />
+		<requires nodeId="39503" />
+		<requires nodeId="39510" />
+	</node>
+	<node id="39501" name="Outbound Road" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1737.5" y="-3009.4" effect="MAXHP:12">
+		<requires nodeId="6000" />
+		<requires nodeId="39502" />
+	</node>
+	<node id="39502" name="Outbound Road" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1825.0" y="-3161.0" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39501" />
+		<requires nodeId="39503" />
+	</node>
+	<node id="39503" name="Outbound Road" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1912.5" y="-3312.5" effect="MAXHP:12">
+		<requires nodeId="39500" />
+		<requires nodeId="39502" />
+	</node>
+	<node id="39010" name="Outer Rim" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3984.8" y="348.6" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39000" />
+		<requires nodeId="39011" />
+	</node>
+	<node id="39011" name="Outer Rim" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3939.2" y="694.6" orbitX="0.0" orbitY="0.0" effect="STR:1">
+		<requires nodeId="39010" />
+		<requires nodeId="39012" />
+		<requires nodeId="40001" />
+	</node>
+	<node id="39012" name="Outer Rim" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3863.7" y="1035.3" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39011" />
+		<requires nodeId="39013" />
+	</node>
+	<node id="39013" name="Outer Rim" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3758.8" y="1368.1" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39012" />
+		<requires nodeId="39014" />
+	</node>
+	<node id="39014" name="Outer Rim" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3625.2" y="1690.5" orbitX="0.0" orbitY="0.0" effect="CON:1">
+		<requires nodeId="39013" />
+		<requires nodeId="39015" />
+	</node>
+	<node id="39015" name="Outer Rim" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3464.1" y="2000.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39014" />
+		<requires nodeId="39016" />
+		<requires nodeId="40002" />
+	</node>
+	<node id="39016" name="Outer Rim" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3276.6" y="2294.3" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39015" />
+		<requires nodeId="39017" />
+	</node>
+	<node id="39017" name="Outer Rim" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3064.2" y="2571.2" orbitX="0.0" orbitY="0.0" effect="STR:1">
+		<requires nodeId="39016" />
+		<requires nodeId="39018" />
+	</node>
+	<node id="39018" name="Outer Rim" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="2828.4" y="2828.4" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39017" />
+		<requires nodeId="39019" />
+	</node>
+	<node id="39019" name="Outer Rim" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="2571.2" y="3064.2" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39018" />
+		<requires nodeId="39020" />
+		<requires nodeId="40003" />
+	</node>
+	<node id="39020" name="Outer Rim" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="2294.3" y="3276.6" orbitX="0.0" orbitY="0.0" effect="CON:1">
+		<requires nodeId="39019" />
+		<requires nodeId="39100" />
+	</node>
+	<node id="39110" name="Outer Rim" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="1690.5" y="3625.2" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39100" />
+		<requires nodeId="39111" />
+	</node>
+	<node id="39111" name="Outer Rim" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="1368.1" y="3758.8" orbitX="0.0" orbitY="0.0" effect="DEX:1">
+		<requires nodeId="39110" />
+		<requires nodeId="39112" />
+		<requires nodeId="41001" />
+	</node>
+	<node id="39112" name="Outer Rim" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="1035.3" y="3863.7" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39111" />
+		<requires nodeId="39113" />
+	</node>
+	<node id="39113" name="Outer Rim" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="694.6" y="3939.2" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39112" />
+		<requires nodeId="39114" />
+	</node>
+	<node id="39114" name="Outer Rim" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="348.6" y="3984.8" orbitX="0.0" orbitY="0.0" effect="STR:1">
+		<requires nodeId="39113" />
+		<requires nodeId="39115" />
+	</node>
+	<node id="39115" name="Outer Rim" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="0.0" y="4000.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39114" />
+		<requires nodeId="39116" />
+	</node>
+	<node id="39116" name="Outer Rim" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="-348.6" y="3984.8" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39115" />
+		<requires nodeId="39117" />
+	</node>
+	<node id="39117" name="Outer Rim" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="-694.6" y="3939.2" orbitX="0.0" orbitY="0.0" effect="DEX:1">
+		<requires nodeId="39116" />
+		<requires nodeId="39118" />
+		<requires nodeId="41008" />
+	</node>
+	<node id="39118" name="Outer Rim" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="-1035.3" y="3863.7" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39117" />
+		<requires nodeId="39119" />
+	</node>
+	<node id="39119" name="Outer Rim" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="-1368.1" y="3758.8" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39118" />
+		<requires nodeId="39120" />
+	</node>
+	<node id="39120" name="Outer Rim" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="-1690.5" y="3625.2" orbitX="0.0" orbitY="0.0" effect="STR:1">
+		<requires nodeId="39119" />
+		<requires nodeId="39200" />
+	</node>
+	<node id="39210" name="Outer Rim" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-2294.3" y="3276.6" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39200" />
+		<requires nodeId="39211" />
+	</node>
+	<node id="39211" name="Outer Rim" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-2571.2" y="3064.2" orbitX="0.0" orbitY="0.0" effect="WIT:1">
+		<requires nodeId="39210" />
+		<requires nodeId="39212" />
+	</node>
+	<node id="39212" name="Outer Rim" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-2828.4" y="2828.4" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39211" />
+		<requires nodeId="39213" />
+		<requires nodeId="42001" />
+	</node>
+	<node id="39213" name="Outer Rim" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3064.2" y="2571.2" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39212" />
+		<requires nodeId="39214" />
+	</node>
+	<node id="39214" name="Outer Rim" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3276.6" y="2294.3" orbitX="0.0" orbitY="0.0" effect="DEX:1">
+		<requires nodeId="39213" />
+		<requires nodeId="39215" />
+	</node>
+	<node id="39215" name="Outer Rim" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3464.1" y="2000.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39214" />
+		<requires nodeId="39216" />
+	</node>
+	<node id="39216" name="Outer Rim" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3625.2" y="1690.5" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39215" />
+		<requires nodeId="39217" />
+	</node>
+	<node id="39217" name="Outer Rim" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3758.8" y="1368.1" orbitX="0.0" orbitY="0.0" effect="WIT:1">
+		<requires nodeId="39216" />
+		<requires nodeId="39218" />
+	</node>
+	<node id="39218" name="Outer Rim" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3863.7" y="1035.3" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39217" />
+		<requires nodeId="39219" />
+		<requires nodeId="42003" />
+	</node>
+	<node id="39219" name="Outer Rim" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3939.2" y="694.6" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39218" />
+		<requires nodeId="39220" />
+	</node>
+	<node id="39220" name="Outer Rim" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3984.8" y="348.6" orbitX="0.0" orbitY="0.0" effect="DEX:1">
+		<requires nodeId="39219" />
+		<requires nodeId="39300" />
+	</node>
+	<node id="39310" name="Outer Rim" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3984.8" y="-348.6" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39300" />
+		<requires nodeId="39311" />
+	</node>
+	<node id="39311" name="Outer Rim" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3939.2" y="-694.6" orbitX="0.0" orbitY="0.0" effect="INT:1">
+		<requires nodeId="39310" />
+		<requires nodeId="39312" />
+	</node>
+	<node id="39312" name="Outer Rim" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3863.7" y="-1035.3" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39311" />
+		<requires nodeId="39313" />
+	</node>
+	<node id="39313" name="Outer Rim" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3758.8" y="-1368.1" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39312" />
+		<requires nodeId="39314" />
+		<requires nodeId="43008" />
+	</node>
+	<node id="39314" name="Outer Rim" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3625.2" y="-1690.5" orbitX="0.0" orbitY="0.0" effect="WIT:1">
+		<requires nodeId="39313" />
+		<requires nodeId="39315" />
+	</node>
+	<node id="39315" name="Outer Rim" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3464.1" y="-2000.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39314" />
+		<requires nodeId="39316" />
+	</node>
+	<node id="39316" name="Outer Rim" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3276.6" y="-2294.3" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39315" />
+		<requires nodeId="39317" />
+	</node>
+	<node id="39317" name="Outer Rim" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3064.2" y="-2571.2" orbitX="0.0" orbitY="0.0" effect="INT:1">
+		<requires nodeId="39316" />
+		<requires nodeId="39318" />
+	</node>
+	<node id="39318" name="Outer Rim" sector="Starfall" type="SMALL" tier="0" cost="1" x="-2828.4" y="-2828.4" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39317" />
+		<requires nodeId="39319" />
+	</node>
+	<node id="39319" name="Outer Rim" sector="Starfall" type="SMALL" tier="0" cost="1" x="-2571.2" y="-3064.2" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39318" />
+		<requires nodeId="39320" />
+		<requires nodeId="43001" />
+	</node>
+	<node id="39320" name="Outer Rim" sector="Starfall" type="SMALL" tier="0" cost="1" x="-2294.3" y="-3276.6" orbitX="0.0" orbitY="0.0" effect="WIT:1">
+		<requires nodeId="39319" />
+		<requires nodeId="39400" />
+	</node>
+	<node id="39410" name="Outer Rim" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1690.5" y="-3625.2" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39400" />
+		<requires nodeId="39411" />
+	</node>
+	<node id="39411" name="Outer Rim" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1368.1" y="-3758.8" orbitX="0.0" orbitY="0.0" effect="MEN:1">
+		<requires nodeId="39410" />
+		<requires nodeId="39412" />
+		<requires nodeId="44003" />
+	</node>
+	<node id="39412" name="Outer Rim" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1035.3" y="-3863.7" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39411" />
+		<requires nodeId="39413" />
+	</node>
+	<node id="39413" name="Outer Rim" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-694.6" y="-3939.2" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39412" />
+		<requires nodeId="39414" />
+	</node>
+	<node id="39414" name="Outer Rim" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-348.6" y="-3984.8" orbitX="0.0" orbitY="0.0" effect="INT:1">
+		<requires nodeId="39413" />
+		<requires nodeId="39415" />
+	</node>
+	<node id="39415" name="Outer Rim" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="0.0" y="-4000.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39414" />
+		<requires nodeId="39416" />
+		<requires nodeId="44002" />
+	</node>
+	<node id="39416" name="Outer Rim" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="348.6" y="-3984.8" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39415" />
+		<requires nodeId="39417" />
+	</node>
+	<node id="39417" name="Outer Rim" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="694.6" y="-3939.2" orbitX="0.0" orbitY="0.0" effect="MEN:1">
+		<requires nodeId="39416" />
+		<requires nodeId="39418" />
+	</node>
+	<node id="39418" name="Outer Rim" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1035.3" y="-3863.7" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39417" />
+		<requires nodeId="39419" />
+	</node>
+	<node id="39419" name="Outer Rim" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1368.1" y="-3758.8" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39418" />
+		<requires nodeId="39420" />
+		<requires nodeId="44001" />
+	</node>
+	<node id="39420" name="Outer Rim" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1690.5" y="-3625.2" orbitX="0.0" orbitY="0.0" effect="INT:1">
+		<requires nodeId="39419" />
+		<requires nodeId="39500" />
+	</node>
+	<node id="39510" name="Outer Rim" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="2294.3" y="-3276.6" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39500" />
+		<requires nodeId="39511" />
+	</node>
+	<node id="39511" name="Outer Rim" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="2571.2" y="-3064.2" orbitX="0.0" orbitY="0.0" effect="CON:1">
+		<requires nodeId="39510" />
+		<requires nodeId="39512" />
+	</node>
+	<node id="39512" name="Outer Rim" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="2828.4" y="-2828.4" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39511" />
+		<requires nodeId="39513" />
+		<requires nodeId="45003" />
+	</node>
+	<node id="39513" name="Outer Rim" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3064.2" y="-2571.2" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39512" />
+		<requires nodeId="39514" />
+	</node>
+	<node id="39514" name="Outer Rim" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3276.6" y="-2294.3" orbitX="0.0" orbitY="0.0" effect="MEN:1">
+		<requires nodeId="39513" />
+		<requires nodeId="39515" />
+	</node>
+	<node id="39515" name="Outer Rim" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3464.1" y="-2000.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39514" />
+		<requires nodeId="39516" />
+	</node>
+	<node id="39516" name="Outer Rim" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3625.2" y="-1690.5" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39515" />
+		<requires nodeId="39517" />
+	</node>
+	<node id="39517" name="Outer Rim" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3758.8" y="-1368.1" orbitX="0.0" orbitY="0.0" effect="CON:1">
+		<requires nodeId="39516" />
+		<requires nodeId="39518" />
+	</node>
+	<node id="39518" name="Outer Rim" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3863.7" y="-1035.3" orbitX="0.0" orbitY="0.0" effect="MAXHP:15">
+		<requires nodeId="39517" />
+		<requires nodeId="39519" />
+		<requires nodeId="45001" />
+	</node>
+	<node id="39519" name="Outer Rim" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3939.2" y="-694.6" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="39518" />
+		<requires nodeId="39520" />
+	</node>
+	<node id="39520" name="Outer Rim" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3984.8" y="-348.6" orbitX="0.0" orbitY="0.0" effect="MEN:1">
+		<requires nodeId="39000" />
+		<requires nodeId="39519" />
+	</node>
+</list>

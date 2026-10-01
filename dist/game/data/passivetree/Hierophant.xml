@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Hierophant: 73 nodes. x/y are authoritative layout coords. -->
+<!-- Hierophant: 81 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="6000" name="Hierophant Origin" sector="Hierophant" type="START" tier="0" cost="0" x="1650.0" y="-2857.9" effect="MAXHP:8" description="Starting point for this archetype." />
-	<node id="6001" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1425.0" y="-2468.2" orbitX="0.0" orbitY="0.0" effect="MAXMP:6" description="Junction.">
+	<node id="6001" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1425.0" y="-2468.2" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5" description="Junction.">
 		<requires nodeId="6003" />
 		<requires nodeId="6004" />
 		<requires nodeId="6009" />
 		<requires nodeId="6014" />
 		<requires nodeId="6017" />
 	</node>
-	<node id="6002" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1575.0" y="-2728.0" effect="MAXMP:6">
+	<node id="6002" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1575.0" y="-2728.0" effect="MAXMP:6;MAXHP:12">
 		<requires nodeId="6000" />
 		<requires nodeId="6003" />
 	</node>
-	<node id="6003" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1500.0" y="-2598.1" effect="MAXMP:6">
+	<node id="6003" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1500.0" y="-2598.1" effect="MAXMP:6;MAXHP_PCT:0.5">
 		<requires nodeId="6001" />
 		<requires nodeId="6002" />
 	</node>
 	<node id="6004" name="Devotion" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1390.1" y="-2598.6" orbitX="1362.9" orbitY="-2700.0" effect="MAXMP:24">
 		<requires nodeId="6001" />
 		<requires nodeId="6006" />
-		<requires nodeId="30426" />
+		<requires nodeId="33408" />
 	</node>
 	<node id="6006" name="Devotion" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1467.5" y="-2690.8" orbitX="1362.9" orbitY="-2700.0" effect="MAXMP:24">
 		<requires nodeId="6004" />
@@ -36,7 +36,7 @@
 	<node id="6009" name="Meditation" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1555.4" y="-2503.1" orbitX="1656.8" orbitY="-2530.3" effect="MP_REGEN_PCT:1.4">
 		<requires nodeId="6001" />
 		<requires nodeId="6010" />
-		<requires nodeId="30525" />
+		<requires nodeId="33506" />
 	</node>
 	<node id="6010" name="Meditation" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1596.6" y="-2616.3" orbitX="1656.8" orbitY="-2530.3" effect="MP_REGEN_PCT:1.4">
 		<requires nodeId="6009" />
@@ -56,28 +56,28 @@
 	<node id="6015" name="Sacred Chorus" sector="Hierophant" type="ACTIVE_SKILL" tier="0" cost="1" x="1487.1" y="-2236.4" effect="MAXHP:15" skillId="90450" skillLevel="auto" description="ACTIVE: restore a large chunk of HP to your whole party (60s cooldown). Grows stronger with your level.">
 		<requires nodeId="6014" />
 	</node>
-	<node id="6016" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1125.0" y="-1948.6" orbitX="0.0" orbitY="0.0" effect="MAXMP:6" description="Junction.">
+	<node id="6016" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1125.0" y="-1948.6" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP:12" description="Junction.">
 		<requires nodeId="6018" />
 		<requires nodeId="6019" />
 		<requires nodeId="6025" />
 		<requires nodeId="6031" />
 		<requires nodeId="6037" />
 		<requires nodeId="6040" />
-		<requires nodeId="24103" />
-		<requires nodeId="25101" />
+		<requires nodeId="24107" />
+		<requires nodeId="25104" />
 	</node>
-	<node id="6017" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1325.0" y="-2295.0" effect="MAXMP:6">
+	<node id="6017" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1325.0" y="-2295.0" effect="MAXMP:6;MAXHP_PCT:0.5">
 		<requires nodeId="6001" />
 		<requires nodeId="6018" />
 	</node>
-	<node id="6018" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1225.0" y="-2121.8" effect="MAXMP:6">
+	<node id="6018" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1225.0" y="-2121.8" effect="MAXMP:6;MAXHP:12">
 		<requires nodeId="6016" />
 		<requires nodeId="6017" />
 	</node>
 	<node id="6019" name="Sanctity" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1090.1" y="-2079.0" orbitX="1062.9" orbitY="-2180.4" effect="MDEF_PCT:1.2">
 		<requires nodeId="6016" />
 		<requires nodeId="6020" />
-		<requires nodeId="30404" />
+		<requires nodeId="33404" />
 	</node>
 	<node id="6020" name="Sanctity" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1167.5" y="-2171.2" orbitX="1062.9" orbitY="-2180.4" effect="MDEF_PCT:1.2">
 		<requires nodeId="6019" />
@@ -93,7 +93,7 @@
 	<node id="6025" name="Litany" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1255.4" y="-1983.5" orbitX="1356.8" orbitY="-2010.7" effect="CAST_SPD_PCT:1">
 		<requires nodeId="6016" />
 		<requires nodeId="6026" />
-		<requires nodeId="30503" />
+		<requires nodeId="33503" />
 	</node>
 	<node id="6026" name="Litany" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1296.6" y="-2096.7" orbitX="1356.8" orbitY="-2010.7" effect="CAST_SPD_PCT:1">
 		<requires nodeId="6025" />
@@ -128,21 +128,21 @@
 	<node id="6038" name="Unshaken Mind" sector="Hierophant" type="KEYSTONE" tier="0" cost="1" x="1187.1" y="-1716.7" effect="KS_MEN_STUN:1" description="KEYSTONE: Stuns and other CON-resisted effects are resisted with your MEN instead of your CON.">
 		<requires nodeId="6037" />
 	</node>
-	<node id="6039" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="825.0" y="-1428.9" orbitX="0.0" orbitY="0.0" effect="MAXMP:6" description="Junction.">
+	<node id="6039" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="825.0" y="-1428.9" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5" description="Junction.">
 		<requires nodeId="6041" />
 		<requires nodeId="6042" />
 		<requires nodeId="6048" />
 		<requires nodeId="6054" />
 		<requires nodeId="6060" />
 		<requires nodeId="6063" />
-		<requires nodeId="24203" />
-		<requires nodeId="25201" />
+		<requires nodeId="24205" />
+		<requires nodeId="25204" />
 	</node>
-	<node id="6040" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1025.0" y="-1775.4" effect="MAXMP:6">
+	<node id="6040" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1025.0" y="-1775.4" effect="MAXMP:6;MAXHP:12">
 		<requires nodeId="6016" />
 		<requires nodeId="6041" />
 	</node>
-	<node id="6041" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="925.0" y="-1602.1" effect="MAXMP:6">
+	<node id="6041" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="925.0" y="-1602.1" effect="MAXMP:6;MAXHP_PCT:0.5">
 		<requires nodeId="6039" />
 		<requires nodeId="6040" />
 	</node>
@@ -198,21 +198,21 @@
 	<node id="6061" name="Hallowed Ward" sector="Hierophant" type="ACTIVE_SKILL" tier="0" cost="1" x="887.1" y="-1197.1" effect="MAXHP:15" skillId="90451" skillLevel="1" description="ACTIVE: party gains +10% P.Def and M.Def for 60s (180s cooldown).">
 		<requires nodeId="6060" />
 	</node>
-	<node id="6062" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="525.0" y="-909.3" orbitX="0.0" orbitY="0.0" effect="MAXMP:6" description="Junction.">
+	<node id="6062" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="525.0" y="-909.3" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP:12" description="Junction.">
 		<requires nodeId="6064" />
 		<requires nodeId="6065" />
 		<requires nodeId="6071" />
 		<requires nodeId="6077" />
 		<requires nodeId="6080" />
 		<requires nodeId="6081" />
-		<requires nodeId="24303" />
-		<requires nodeId="25301" />
+		<requires nodeId="24305" />
+		<requires nodeId="25304" />
 	</node>
-	<node id="6063" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="725.0" y="-1255.7" effect="MAXMP:6">
+	<node id="6063" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="725.0" y="-1255.7" effect="MAXMP:6;MAXHP_PCT:0.5">
 		<requires nodeId="6039" />
 		<requires nodeId="6064" />
 	</node>
-	<node id="6064" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="625.0" y="-1082.5" effect="MAXMP:6">
+	<node id="6064" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="625.0" y="-1082.5" effect="MAXMP:6;MAXHP:12">
 		<requires nodeId="6062" />
 		<requires nodeId="6063" />
 	</node>
@@ -257,52 +257,85 @@
 		<requires nodeId="6080" />
 		<requires nodeId="9011" />
 	</node>
-	<node id="6080" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="442.5" y="-766.4" effect="MAXMP:6">
+	<node id="6080" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="442.5" y="-766.4" effect="MAXMP:6;MAXHP:12">
 		<requires nodeId="6062" />
 		<requires nodeId="6079" />
 	</node>
 	<node id="6081" name="Pilgrim's Provisions" sector="Hierophant" type="FUNCTION" tier="0" cost="1" x="556.1" y="-793.4" effect="INVENTORY_SLOTS_ADD:12;WEIGHT_LIMIT_PCT:30" description="Travel light: +12 inventory slots and +30% weight limit.">
 		<requires nodeId="6062" />
 	</node>
-	<node id="25101" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1591.0" y="-1591.0" orbitX="0.0" orbitY="0.0" effect="MAXMP:6">
-		<requires nodeId="6016" />
-		<requires nodeId="25102" />
+	<node id="25101" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1591.0" y="-1591.0" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5">
+		<requires nodeId="25104" />
+		<requires nodeId="25105" />
 	</node>
-	<node id="25102" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1948.6" y="-1125.0" orbitX="0.0" orbitY="0.0" effect="MAXMP:6">
-		<requires nodeId="25101" />
-		<requires nodeId="25103" />
+	<node id="25102" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1948.6" y="-1125.0" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP:12">
+		<requires nodeId="25105" />
+		<requires nodeId="25106" />
 		<requires nodeId="30501" />
 	</node>
-	<node id="25103" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2173.3" y="-582.3" orbitX="0.0" orbitY="0.0" effect="MAXMP:6">
-		<requires nodeId="1016" />
-		<requires nodeId="25102" />
+	<node id="25103" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2173.3" y="-582.3" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5">
+		<requires nodeId="25106" />
+		<requires nodeId="25107" />
 		<requires nodeId="30562" />
 	</node>
-	<node id="25201" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1166.7" y="-1166.7" orbitX="0.0" orbitY="0.0" effect="MAXMP:6">
-		<requires nodeId="6039" />
-		<requires nodeId="25202" />
+	<node id="25104" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1369.7" y="-1785.0" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP:12">
+		<requires nodeId="6016" />
+		<requires nodeId="25101" />
 	</node>
-	<node id="25202" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1428.9" y="-825.0" orbitX="0.0" orbitY="0.0" effect="MAXMP:6">
+	<node id="25105" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1785.0" y="-1369.7" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5">
+		<requires nodeId="25101" />
+		<requires nodeId="25102" />
+	</node>
+	<node id="25106" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2078.7" y="-861.0" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP:12">
+		<requires nodeId="25102" />
+		<requires nodeId="25103" />
+	</node>
+	<node id="25107" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2230.8" y="-293.7" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5">
+		<requires nodeId="1016" />
+		<requires nodeId="25103" />
+	</node>
+	<node id="25201" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1264.0" y="-1060.6" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5">
+		<requires nodeId="25202" />
+		<requires nodeId="25204" />
+	</node>
+	<node id="25202" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1428.9" y="-825.0" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP:12">
 		<requires nodeId="25201" />
 		<requires nodeId="25203" />
 		<requires nodeId="30556" />
 	</node>
-	<node id="25203" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1593.8" y="-427.1" orbitX="0.0" orbitY="0.0" effect="MAXMP:6">
-		<requires nodeId="1039" />
+	<node id="25203" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1550.5" y="-564.3" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5">
 		<requires nodeId="25202" />
+		<requires nodeId="25205" />
 		<requires nodeId="30561" />
 	</node>
-	<node id="25301" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="742.5" y="-742.5" orbitX="0.0" orbitY="0.0" effect="MAXMP:6">
-		<requires nodeId="6062" />
-		<requires nodeId="25302" />
+	<node id="25204" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1060.6" y="-1264.0" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP:12">
+		<requires nodeId="6039" />
+		<requires nodeId="25201" />
 	</node>
-	<node id="25302" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="909.3" y="-525.0" orbitX="0.0" orbitY="0.0" effect="MAXMP:6">
+	<node id="25205" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1624.9" y="-286.5" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5">
+		<requires nodeId="1039" />
+		<requires nodeId="25203" />
+	</node>
+	<node id="25301" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="804.3" y="-674.9" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5">
+		<requires nodeId="25302" />
+		<requires nodeId="25304" />
+	</node>
+	<node id="25302" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="909.3" y="-525.0" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP:12">
 		<requires nodeId="25301" />
 		<requires nodeId="25303" />
+		<requires nodeId="30564" />
 	</node>
-	<node id="25303" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1014.2" y="-271.8" orbitX="0.0" orbitY="0.0" effect="MAXMP:6">
-		<requires nodeId="1062" />
+	<node id="25303" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="986.7" y="-359.1" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5">
 		<requires nodeId="25302" />
+		<requires nodeId="25305" />
 		<requires nodeId="30551" />
+	</node>
+	<node id="25304" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="674.9" y="-804.3" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP:12">
+		<requires nodeId="6062" />
+		<requires nodeId="25301" />
+	</node>
+	<node id="25305" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1034.0" y="-182.3" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5">
+		<requires nodeId="1062" />
+		<requires nodeId="25303" />
 	</node>
 </list>
