@@ -53,7 +53,7 @@
 		<requires nodeId="6001" />
 		<requires nodeId="6015" />
 	</node>
-	<node id="6015" name="Sacred Chorus" sector="Hierophant" type="ACTIVE_SKILL" tier="0" cost="1" x="1487.1" y="-2236.4" effect="MAXHP:15" skillId="90450" skillLevel="auto" description="ACTIVE: restore a large chunk of HP to your whole party (60s cooldown). Grows stronger with your level.">
+	<node id="6015" name="Sacred Chorus" sector="Hierophant" type="ACTIVE_SKILL" tier="0" cost="1" x="1487.1" y="-2236.4" effect="MAXHP:15" skillId="27450" skillLevel="auto" description="ACTIVE: restore a large chunk of HP to your whole party (60s cooldown). Grows stronger with your level.">
 		<requires nodeId="6014" />
 	</node>
 	<node id="6016" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1125.0" y="-1948.6" orbitX="0.0" orbitY="0.0" effect="MAXMP:6" description="Junction.">
@@ -195,7 +195,7 @@
 		<requires nodeId="6039" />
 		<requires nodeId="6061" />
 	</node>
-	<node id="6061" name="Hallowed Ward" sector="Hierophant" type="ACTIVE_SKILL" tier="0" cost="1" x="887.1" y="-1197.1" effect="MAXHP:15" skillId="90451" skillLevel="1" description="ACTIVE: party gains +10% P.Def and M.Def for 60s (180s cooldown).">
+	<node id="6061" name="Hallowed Ward" sector="Hierophant" type="ACTIVE_SKILL" tier="0" cost="1" x="887.1" y="-1197.1" effect="MAXHP:15" skillId="27451" skillLevel="1" description="ACTIVE: party gains +10% P.Def and M.Def for 60s (180s cooldown).">
 		<requires nodeId="6060" />
 	</node>
 	<node id="6062" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="525.0" y="-909.3" orbitX="0.0" orbitY="0.0" effect="MAXMP:6" description="Junction.">

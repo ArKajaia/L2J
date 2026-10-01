@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/skills.xsd">
+	<!-- Ids 27000-27004 (were 90000-90004): the H5 client does not resolve skill ids in the 90000s, so they showed a black buff icon. Keep custom skill ids below 32768. -->
 	
 <!-- Monster Buff: +50% Run Speed, +50% Max HP, +30% Atk/Cast Speed -->
-	<skill id="90000" levels="1" name="Hot Zone: Frenzy">
+	<skill id="27000" levels="1" name="Hot Zone: Frenzy">
 		<icon>icon.skill4001</icon>
 		<operateType>A2</operateType>
 		<abnormalTime>-1</abnormalTime>
@@ -19,7 +20,7 @@
 
 	<!-- Player Buff: +50% XP, +50% SP, +40% Atk Spd, +20% Cast Spd, +25% Drop Amount -->
 	<!-- bonusExp/bonusSp/bonusDropAmount are read as "1 + stat / 100" from a base of 0 (PlayerStat), so they must be "add" in percent - a "mul" on them does nothing. -->
-	<skill id="90001" levels="1" name="Hot Zone: Fortune">
+	<skill id="27001" levels="1" name="Hot Zone: Fortune">
 		<icon>icon.skill4001</icon>
 		<operateType>A2</operateType>
 		<abnormalTime>-1</abnormalTime>
@@ -36,7 +37,7 @@
 	</skill>
 
 	<!-- Hotzone modifier KILL_STREAK: +3% XP/SP per chained kill (max 10 = +30%). Re-applied one level higher on every kill; the 15s timer is the chain window. -->
-	<skill id="90002" levels="10" name="Hot Zone: Kill Streak">
+	<skill id="27002" levels="10" name="Hot Zone: Kill Streak">
 		<table name="#bonus">3 6 9 12 15 18 21 24 27 30</table>
 		<icon>icon.skill4001</icon>
 		<operateType>A2</operateType>
@@ -51,7 +52,7 @@
 	</skill>
 
 	<!-- Hotzone modifier GLASS_CANNON: +25% P.Atk/M.Atk, P.Def/M.Def x0.8 (= +25% damage taken) -->
-	<skill id="90003" levels="1" name="Hot Zone: Glass Cannon">
+	<skill id="27003" levels="1" name="Hot Zone: Glass Cannon">
 		<icon>icon.skill4001</icon>
 		<operateType>A2</operateType>
 		<abnormalTime>-1</abnormalTime>
@@ -67,7 +68,7 @@
 	</skill>
 
 	<!-- Hotzone modifier ARCANE_SURGE: -20% physical/magic skill reuse, -30% MP cost -->
-	<skill id="90004" levels="1" name="Hot Zone: Arcane Surge">
+	<skill id="27004" levels="1" name="Hot Zone: Arcane Surge">
 		<icon>icon.skill4001</icon>
 		<operateType>A2</operateType>
 		<abnormalTime>-1</abnormalTime>
