@@ -139,6 +139,7 @@ ACTIVES={
 # The hand-tuned XML has since diverged (Shadowblade has a second Sweeper node,
 # some FUNCTION nodes grant a stat instead of a skill, the hybrid sectors are
 # hand-made); data/passivetree/*.xml is the source of truth, not this script.
+# Node positions now come from layout_tree.py, which re-lays out the XML in place.
 FUNCTIONS={"Vanguard":("Field Salvage",248),"Juggernaut":("Dwarven Craft Mastery",1321),
 "Shadowblade":("Master Spoil",254),"Deadeye":("Tracker's Guile",221),
 "Arcanist":("Scholar's Insight",None),"Hierophant":("Pilgrim's Provisions",None)}

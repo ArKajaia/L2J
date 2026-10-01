@@ -40,6 +40,10 @@ public class PassiveNode
 
 	private final List<Integer> parents = new ArrayList<>();
 
+	/** Centre of the circle this node sits on (orbitX/orbitY in the XML), NaN if none. The planner draws a link between two nodes on the same circle as an arc. */
+	private double orbitX = Double.NaN;
+	private double orbitY = Double.NaN;
+
 	public PassiveNode(int id, String name, String description, String sector, NodeType type, int tier, int cost,
 		double x, double y, String effectSpec, int skillId, int skillLevel)
 	{
@@ -72,6 +76,10 @@ public class PassiveNode
 	public List<Integer> getParents() { return parents; }
 	public void addParent(int nodeId) { parents.add(nodeId); }
 	public boolean isRoot() { return parents.isEmpty(); }
+	public boolean hasOrbit() { return !Double.isNaN(orbitX) && !Double.isNaN(orbitY); }
+	public double getOrbitX() { return orbitX; }
+	public double getOrbitY() { return orbitY; }
+	public void setOrbit(double centerX, double centerY) { orbitX = centerX; orbitY = centerY; }
 	public boolean grantsSkill() { return skillId > 0; }
 	/** skillLevel="auto" in the XML: the granted level follows the character level (see PassiveTreeManager.getScaledSkillLevel). */
 	public boolean isSkillLevelScaled() { return skillLevel <= 0; }

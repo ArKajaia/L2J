@@ -1,125 +1,171 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Spellbow: 28 nodes, hybrid of Deadeye and Arcanist filling the gap between their arms. x/y are authoritative layout coords. -->
+<!-- Spellbow: 40 nodes, hybrid of Deadeye and Arcanist filling the gap between their arms. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
-	<node id="30301" name="Confluence" sector="Spellbow" type="SMALL" tier="0" cost="1" x="214.4" y="800.0" effect="PATK_PCT:0.3;MATK_PCT:0.3">
+	<node id="30301" name="Confluence" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2078.5" y="-1200.0" effect="PATK_PCT:0.3;MATK_PCT:0.3">
 		<requires nodeId="23102" />
 		<requires nodeId="30302" />
 	</node>
-	<node id="30302" name="Confluence" sector="Spellbow" type="SMALL" tier="0" cost="1" x="120.9" y="738.3" effect="PATK_PCT:0.3;MATK_PCT:0.3">
+	<node id="30302" name="Confluence" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2208.4" y="-1275.0" effect="PATK_PCT:0.3;MATK_PCT:0.3">
 		<requires nodeId="30301" />
 		<requires nodeId="30303" />
 		<requires nodeId="30304" />
 		<requires nodeId="30305" />
 	</node>
-	<node id="30303" name="Fletcher's Crossing" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-15.4" y="914.8" effect="ACCURACY_ADD:0.3;MAXHP:6">
+	<node id="30303" name="Fletcher's Crossing" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2441.8" y="-670.7" effect="ACCURACY_ADD:0.3;MAXHP:6">
 		<requires nodeId="4025" />
 		<requires nodeId="30302" />
 		<requires nodeId="30306" />
 	</node>
-	<node id="30304" name="Arcane Crossing" sector="Spellbow" type="SMALL" tier="0" cost="1" x="209.0" y="532.5" effect="MATK_PCT:0.4;MAXMP:6">
+	<node id="30304" name="Arcane Crossing" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1801.8" y="-1779.3" effect="MATK_PCT:0.4;MAXMP:6">
 		<requires nodeId="5019" />
 		<requires nodeId="30302" />
 		<requires nodeId="30307" />
 	</node>
-	<node id="30305" name="Quickdraw" sector="Spellbow" type="SMALL" tier="0" cost="1" x="33.2" y="690.0" effect="ATK_SPD_PCT:0.3;CAST_SPD_PCT:0.3">
+	<node id="30305" name="Quickdraw" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2364.2" y="-1365.0" effect="ATK_SPD_PCT:0.3;CAST_SPD_PCT:0.3">
 		<requires nodeId="30302" />
 		<requires nodeId="30306" />
 		<requires nodeId="30307" />
 		<requires nodeId="30312" />
 	</node>
-	<node id="30306" name="Runed Arrow" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-113.9" y="827.2" effect="PATK_PCT:0.4;ACCURACY_ADD:0.4">
+	<node id="30306" name="Runed Arrow" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2469.7" y="-1011.4" orbitX="-2574.2" orbitY="-1001.3" effect="PATK_PCT:0.5;ACCURACY_ADD:0.5">
 		<requires nodeId="30303" />
 		<requires nodeId="30305" />
 		<requires nodeId="30310" />
 	</node>
-	<node id="30307" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="83.5" y="491.0" effect="MATK_PCT:0.5;MCRIT_RATE_ADD:4">
+	<node id="30307" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2110.8" y="-1633.2" orbitX="-2154.2" orbitY="-1728.7" effect="MATK_PCT:0.6;MCRIT_RATE_ADD:5">
 		<requires nodeId="30304" />
 		<requires nodeId="30305" />
 		<requires nodeId="30311" />
 	</node>
-	<node id="30308" name="Runed Arrow" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-243.4" y="859.0" effect="PATK_PCT:0.4;ACCURACY_ADD:0.4">
+	<node id="30308" name="Runed Arrow" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2660.8" y="-1060.7" orbitX="-2574.2" orbitY="-1001.3" effect="PATK_PCT:0.5;ACCURACY_ADD:0.5">
 		<requires nodeId="30310" />
 		<requires nodeId="30315" />
 	</node>
-	<node id="30309" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="26.9" y="370.3" effect="MATK_PCT:0.5;MCRIT_RATE_ADD:4">
+	<node id="30309" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2249.0" y="-1774.0" orbitX="-2154.2" orbitY="-1728.7" effect="MATK_PCT:0.6;MCRIT_RATE_ADD:5">
 		<requires nodeId="30311" />
 		<requires nodeId="30316" />
 	</node>
-	<node id="30310" name="Runed Arrow" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-178.6" y="843.1" effect="PATK_PCT:0.4;ACCURACY_ADD:0.4">
+	<node id="30310" name="Runed Arrow" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2548.0" y="-1102.9" orbitX="-2574.2" orbitY="-1001.3" effect="PATK_PCT:0.5;ACCURACY_ADD:0.5">
 		<requires nodeId="30306" />
 		<requires nodeId="30308" />
 	</node>
-	<node id="30311" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="55.2" y="430.6" effect="MATK_PCT:0.5;MCRIT_RATE_ADD:4">
+	<node id="30311" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2229.2" y="-1655.2" orbitX="-2154.2" orbitY="-1728.7" effect="MATK_PCT:0.6;MCRIT_RATE_ADD:5">
 		<requires nodeId="30307" />
 		<requires nodeId="30309" />
 	</node>
-	<node id="30312" name="Quickdraw" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-121.2" y="613.9" effect="ATK_SPD_PCT:0.3;CAST_SPD_PCT:0.3">
+	<node id="30312" name="Quickdraw" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2606.7" y="-1505.0" effect="ATK_SPD_PCT:0.3;CAST_SPD_PCT:0.3">
 		<requires nodeId="30305" />
 		<requires nodeId="30317" />
 		<requires nodeId="30325" />
 		<requires nodeId="30326" />
 		<requires nodeId="30327" />
 	</node>
-	<node id="30315" name="Runic Fletching" sector="Spellbow" type="NOTABLE" tier="0" cost="2" x="-308.1" y="874.9" effect="PVE_BOW_DMG_PCT:5;ACCURACY_ADD:2;MATK_PCT:2" description="Runed Arrow mastery. Enchanted shafts tear through monsters.">
+	<node id="30315" name="Runic Fletching" sector="Spellbow" type="NOTABLE" tier="0" cost="2" x="-2659.7" y="-940.2" orbitX="-2574.2" orbitY="-1001.3" effect="PVE_BOW_DMG_PCT:5;ACCURACY_ADD:2;MATK_PCT:2" description="Runed Arrow mastery. Enchanted shafts tear through monsters.">
 		<requires nodeId="30308" />
 	</node>
-	<node id="30316" name="Seeker Spells" sector="Spellbow" type="NOTABLE" tier="0" cost="2" x="-1.4" y="309.9" effect="MCRIT_RATE_ADD:20;MATK_PCT:3;ACCURACY_ADD:1" description="Arcane Sight mastery. Spells find the weak point.">
+	<node id="30316" name="Seeker Spells" sector="Spellbow" type="NOTABLE" tier="0" cost="2" x="-2144.1" y="-1833.2" orbitX="-2154.2" orbitY="-1728.7" effect="MCRIT_RATE_ADD:20;MATK_PCT:3;ACCURACY_ADD:1" description="Arcane Sight mastery. Spells find the weak point.">
 		<requires nodeId="30309" />
 	</node>
-	<node id="30317" name="Focus" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-297.7" y="730.6" effect="CRIT_DMG_PCT:0.5;MCRIT_DMG_PCT:1">
+	<node id="30317" name="Focus" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2856.3" y="-1354.7" orbitX="-2924.6" orbitY="-1434.5" effect="CRIT_DMG_PCT:0.6;MCRIT_DMG_PCT:1.2">
 		<requires nodeId="30312" />
 		<requires nodeId="30320" />
 		<requires nodeId="30325" />
 	</node>
-	<node id="30318" name="Focus" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-300.4" y="597.3" effect="CRIT_DMG_PCT:0.5;MCRIT_DMG_PCT:1">
+	<node id="30318" name="Focus" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3028.2" y="-1451.7" orbitX="-2924.6" orbitY="-1434.5" effect="CRIT_DMG_PCT:0.6;MCRIT_DMG_PCT:1.2">
 		<requires nodeId="30319" />
 		<requires nodeId="30320" />
 	</node>
-	<node id="30319" name="Twin Focus" sector="Spellbow" type="NOTABLE" tier="0" cost="2" x="-301.8" y="530.6" effect="CRIT_DMG_PCT:5;MCRIT_DMG_PCT:8" description="Focus mastery. Both arrow and spell critical hits strike harder.">
+	<node id="30319" name="Twin Focus" sector="Spellbow" type="NOTABLE" tier="0" cost="2" x="-2943.8" y="-1537.7" orbitX="-2924.6" orbitY="-1434.5" effect="CRIT_DMG_PCT:5;MCRIT_DMG_PCT:8" description="Focus mastery. Both arrow and spell critical hits strike harder.">
 		<requires nodeId="30318" />
 	</node>
-	<node id="30320" name="Focus" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-299.1" y="663.9" effect="CRIT_DMG_PCT:0.5;MCRIT_DMG_PCT:1">
+	<node id="30320" name="Focus" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2976.2" y="-1343.0" orbitX="-2924.6" orbitY="-1434.5" effect="CRIT_DMG_PCT:0.6;MCRIT_DMG_PCT:1.2">
 		<requires nodeId="30317" />
 		<requires nodeId="30318" />
 	</node>
-	<node id="30321" name="Approach" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-426.7" y="813.5" effect="MAXHP:6">
+	<node id="30321" name="Approach" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3223.9" y="-1076.1" effect="MAXHP:6">
 		<requires nodeId="30322" />
 		<requires nodeId="30325" />
 	</node>
-	<node id="30322" name="Point Blank" sector="Spellbow" type="KEYSTONE" tier="0" cost="3" x="-555.3" y="841.2" effect="KS_POINT_BLANK:30" description="KEYSTONE: Bow and spell damage is 30% higher at point-blank range, falling to 30% lower at 900+ range. Cannot be combined with Far Shot.">
+	<node id="30322" name="Point Blank" sector="Spellbow" type="KEYSTONE" tier="0" cost="3" x="-3385.1" y="-1076.8" effect="KS_POINT_BLANK:30" description="KEYSTONE: Bow and spell damage is 30% higher at point-blank range, falling to 30% lower at 900+ range. Cannot be combined with Far Shot.">
 		<requires nodeId="30321" />
 	</node>
-	<node id="30323" name="Approach" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-108.7" y="240.9" effect="MAXHP:6">
+	<node id="30323" name="Approach" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2543.9" y="-2253.9" effect="MAXHP:6">
 		<requires nodeId="30324" />
 		<requires nodeId="30326" />
 	</node>
-	<node id="30324" name="Kiting Stance" sector="Spellbow" type="NOTABLE" tier="0" cost="2" x="-137.4" y="115.9" effect="MOVE_SPEED_ADD:3;SKILL_DODGE_PCT:2" description="Shoot, step, repeat.">
+	<node id="30324" name="Kiting Stance" sector="Spellbow" type="NOTABLE" tier="0" cost="2" x="-2625.1" y="-2393.2" effect="MOVE_SPEED_ADD:3;SKILL_DODGE_PCT:2" description="Shoot, step, repeat.">
 		<requires nodeId="30323" />
 	</node>
-	<node id="30325" name="Fletcher's Path" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-446.9" y="929.1" effect="ACCURACY_ADD:0.3;PATK_PCT:0.3">
+	<node id="30325" name="Fletcher's Path" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3008.0" y="-1090.0" effect="ACCURACY_ADD:0.3;PATK_PCT:0.3">
 		<requires nodeId="4009" />
 		<requires nodeId="30312" />
 		<requires nodeId="30317" />
 		<requires nodeId="30321" />
 		<requires nodeId="30329" />
 	</node>
-	<node id="30326" name="Arcane Path" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-13.9" y="173.2" effect="MATK_PCT:0.4;CAST_SPD_PCT:0.3">
+	<node id="30326" name="Arcane Path" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2448.0" y="-2060.0" effect="MATK_PCT:0.4;CAST_SPD_PCT:0.3">
 		<requires nodeId="5004" />
 		<requires nodeId="30312" />
 		<requires nodeId="30323" />
 	</node>
-	<node id="30327" name="Approach" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-343.0" y="429.3" effect="MAXHP:6">
+	<node id="30327" name="Approach" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2669.0" y="-1737.2" effect="MAXHP:6">
 		<requires nodeId="30312" />
 		<requires nodeId="30328" />
 	</node>
-	<node id="30328" name="Eldritch Battery" sector="Spellbow" type="KEYSTONE" tier="0" cost="3" x="-447.2" y="446.1" effect="KS_ELDRITCH_BATTERY:100" description="KEYSTONE: Your maximum CP becomes 1, and all the CP you would have had is added to your maximum MP instead.">
+	<node id="30328" name="Eldritch Battery" sector="Spellbow" type="KEYSTONE" tier="0" cost="3" x="-2736.5" y="-1880.2" effect="KS_ELDRITCH_BATTERY:100" description="KEYSTONE: Your maximum CP becomes 1, and all the CP you would have had is added to your maximum MP instead.">
 		<requires nodeId="30327" />
 	</node>
-	<node id="30329" name="Approach" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-543.7" y="1059.8" effect="MAXHP:6">
+	<node id="30329" name="Approach" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3234.6" y="-897.5" effect="MAXHP:6">
 		<requires nodeId="30325" />
 		<requires nodeId="30330" />
 	</node>
-	<node id="30330" name="Binding Rune" sector="Spellbow" type="ACTIVE_SKILL" tier="0" cost="2" x="-668.7" y="1146.7" effect="MAXHP:15" skillId="90463" skillLevel="auto" description="ACTIVE: root a target up to 900 away in place for 4s (30s cooldown).">
+	<node id="30330" name="Binding Rune" sector="Spellbow" type="ACTIVE_SKILL" tier="0" cost="2" x="-3352.9" y="-792.6" effect="MAXHP:15" skillId="90463" skillLevel="auto" description="ACTIVE: root a target up to 900 away in place for 4s (30s cooldown).">
 		<requires nodeId="30329" />
+	</node>
+	<node id="30351" name="Waystone" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1047.9" y="-605.0" effect="ACCURACY_ADD:0.4">
+		<requires nodeId="23302" />
+		<requires nodeId="30352" />
+	</node>
+	<node id="30356" name="Waystone" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1721.3" y="-526.3" effect="MAXHP:10">
+		<requires nodeId="23201" />
+		<requires nodeId="30357" />
+	</node>
+	<node id="30361" name="Clarity" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1309.2" y="-1264.3" effect="MAXMP:15">
+		<requires nodeId="23203" />
+		<requires nodeId="30362" />
+	</node>
+	<node id="30362" name="Clarity" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1492.0" y="-1391.3" effect="WIT:1">
+		<requires nodeId="23103" />
+		<requires nodeId="30361" />
+	</node>
+	<node id="30352" name="Arcane Fletching" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1121.5" y="-647.5" orbitX="-1212.4" orbitY="-700.0" effect="ACCURACY_ADD:0.3;MATK_PCT:0.6">
+		<requires nodeId="30351" />
+		<requires nodeId="30353" />
+	</node>
+	<node id="30353" name="Arcane Fletching" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1230.7" y="-596.6" orbitX="-1212.4" orbitY="-700.0" effect="ACCURACY_ADD:0.3;MATK_PCT:0.6">
+		<requires nodeId="30352" />
+		<requires nodeId="30354" />
+	</node>
+	<node id="30354" name="Arcane Fletching" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1315.8" y="-681.8" orbitX="-1212.4" orbitY="-700.0" effect="ACCURACY_ADD:0.3;MATK_PCT:0.6">
+		<requires nodeId="30353" />
+		<requires nodeId="30355" />
+	</node>
+	<node id="30355" name="Starshot" sector="Spellbow" type="NOTABLE" tier="0" cost="2" x="-1264.9" y="-790.9" orbitX="-1212.4" orbitY="-700.0" effect="WIT:1;CAST_SPD_PCT:3;PATK_PCT:3" description="Arcane Fletching mastery. Suits a Deadeye/Arcanist hybrid.">
+		<requires nodeId="30354" />
+	</node>
+	<node id="30357" name="Iron Will" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1767.7" y="-697.9" orbitX="-1795.1" orbitY="-799.2" effect="LIFESTEAL_PCT:0.3;PDEF_PCT:0.4">
+		<requires nodeId="30356" />
+		<requires nodeId="30358" />
+	</node>
+	<node id="30358" name="Iron Will" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1690.5" y="-790.3" orbitX="-1795.1" orbitY="-799.2" effect="LIFESTEAL_PCT:0.3;PDEF_PCT:0.4">
+		<requires nodeId="30357" />
+		<requires nodeId="30359" />
+	</node>
+	<node id="30359" name="Iron Will" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1750.9" y="-894.5" orbitX="-1795.1" orbitY="-799.2" effect="LIFESTEAL_PCT:0.3;PDEF_PCT:0.4">
+		<requires nodeId="30358" />
+		<requires nodeId="30360" />
+	</node>
+	<node id="30360" name="Brawler's Blood" sector="Spellbow" type="NOTABLE" tier="0" cost="2" x="-1869.5" y="-873.3" orbitX="-1795.1" orbitY="-799.2" effect="CON:1;LIFESTEAL_PCT:2;PDEF_PCT:2" description="Iron Will mastery. Off-path: pays off only if you rebuild around it.">
+		<requires nodeId="30359" />
 	</node>
 </list>

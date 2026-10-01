@@ -75,6 +75,10 @@ public class PassiveTreeData implements IXmlReader
 				}
 				
 				final PassiveNode node = new PassiveNode(id, name, description, sector, type, tier, cost, x, y, effect, skillId, skillLevel);
+				if ((attrs.getNamedItem("orbitX") != null) && (attrs.getNamedItem("orbitY") != null))
+				{
+					node.setOrbit(Double.parseDouble(attrs.getNamedItem("orbitX").getNodeValue()), Double.parseDouble(attrs.getNamedItem("orbitY").getNodeValue()));
+				}
 				
 				for (Node child = n.getFirstChild(); child != null; child = child.getNextSibling())
 				{

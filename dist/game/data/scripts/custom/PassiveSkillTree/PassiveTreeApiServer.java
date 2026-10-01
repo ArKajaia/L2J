@@ -228,7 +228,12 @@ public class PassiveTreeApiServer
 				json.append(",");
 			}
 			first = false;
-			json.append("{").append("\"id\":").append(node.getId()).append(",").append("\"name\":\"").append(escape(node.getName())).append("\",").append("\"sector\":\"").append(escape(node.getSector())).append("\",").append("\"type\":\"").append(node.getType()).append("\",").append("\"cost\":").append(node.getCost()).append(",").append("\"x\":").append(node.getX()).append(",").append("\"y\":").append(node.getY()).append(",").append("\"effect\":\"").append(escape(node.getEffectSpec())).append("\",").append("\"description\":\"").append(escape(node.getDescription())).append("\",").append("\"parents\":[").append(joinInts(node.getParents())).append("]").append("}");
+			json.append("{").append("\"id\":").append(node.getId()).append(",").append("\"name\":\"").append(escape(node.getName())).append("\",").append("\"sector\":\"").append(escape(node.getSector())).append("\",").append("\"type\":\"").append(node.getType()).append("\",").append("\"cost\":").append(node.getCost()).append(",").append("\"x\":").append(node.getX()).append(",").append("\"y\":").append(node.getY()).append(",").append("\"effect\":\"").append(escape(node.getEffectSpec())).append("\",").append("\"description\":\"").append(escape(node.getDescription())).append("\",").append("\"parents\":[").append(joinInts(node.getParents())).append("]");
+			if (node.hasOrbit())
+			{
+				json.append(",\"ox\":").append(node.getOrbitX()).append(",\"oy\":").append(node.getOrbitY());
+			}
+			json.append("}");
 		}
 		json.append("]");
 		sendText(exchange, 200, "application/json", json.toString());
