@@ -30,7 +30,7 @@
 		<requires nodeId="1006" />
 		<requires nodeId="1008" />
 	</node>
-	<node id="1008" name="Ironhide" sector="Vanguard" type="NOTABLE" tier="0" cost="2" x="3046.9" y="-271.1" orbitX="3019.7" orbitY="-169.7" effect="PDEF_PCT:5;CON:1" description="Iron Skin mastery.">
+	<node id="1008" name="Ironhide" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="3046.9" y="-271.1" orbitX="3019.7" orbitY="-169.7" effect="PDEF_PCT:5;CON:1" description="Iron Skin mastery.">
 		<requires nodeId="1007" />
 	</node>
 	<node id="1009" name="Vitality" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2945.5" y="95.5" orbitX="3019.7" orbitY="169.7" effect="MAXHP:24">
@@ -46,14 +46,14 @@
 		<requires nodeId="1010" />
 		<requires nodeId="1013" />
 	</node>
-	<node id="1013" name="Robust Frame" sector="Vanguard" type="NOTABLE" tier="0" cost="2" x="3046.9" y="271.1" orbitX="3019.7" orbitY="169.7" effect="MAXHP:90;CON:1" description="Vitality mastery.">
+	<node id="1013" name="Robust Frame" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="3046.9" y="271.1" orbitX="3019.7" orbitY="169.7" effect="MAXHP:90;CON:1" description="Vitality mastery.">
 		<requires nodeId="1012" />
 	</node>
 	<node id="1014" name="Approach" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2765.1" y="84.9" effect="MAXHP:6">
 		<requires nodeId="1001" />
 		<requires nodeId="1015" />
 	</node>
-	<node id="1015" name="Vanguard Aegis" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="2" x="2680.3" y="169.7" effect="MAXHP:15" skillId="90400" skillLevel="1" description="ACTIVE: +30% P.Def and M.Def, +20% shield block for 20s (90s cooldown).">
+	<node id="1015" name="Vanguard Aegis" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="1" x="2680.3" y="169.7" effect="MAXHP:15" skillId="90400" skillLevel="1" description="ACTIVE: +30% P.Def and M.Def, +20% shield block for 20s (90s cooldown).">
 		<requires nodeId="1014" />
 	</node>
 	<node id="1016" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2250.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6" description="Junction.">
@@ -87,7 +87,7 @@
 		<requires nodeId="1020" />
 		<requires nodeId="1024" />
 	</node>
-	<node id="1024" name="Aegis Training" sector="Vanguard" type="NOTABLE" tier="0" cost="2" x="2446.9" y="-271.1" orbitX="2419.7" orbitY="-169.7" effect="SHIELD_RATE_PCT:5;PDEF_PCT:2" description="Shield Work mastery.">
+	<node id="1024" name="Aegis Training" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="2446.9" y="-271.1" orbitX="2419.7" orbitY="-169.7" effect="SHIELD_RATE_PCT:5;PDEF_PCT:2" description="Shield Work mastery.">
 		<requires nodeId="1022" />
 	</node>
 	<node id="1025" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2345.5" y="95.5" orbitX="2419.7" orbitY="169.7" effect="HP_REGEN_PCT:1.6">
@@ -103,7 +103,7 @@
 		<requires nodeId="1026" />
 		<requires nodeId="1030" />
 	</node>
-	<node id="1030" name="Wellspring" sector="Vanguard" type="NOTABLE" tier="0" cost="2" x="2446.9" y="271.1" orbitX="2419.7" orbitY="169.7" effect="HP_REGEN_PCT:6;MAXHP:40" description="Recovery mastery.">
+	<node id="1030" name="Wellspring" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="2446.9" y="271.1" orbitX="2419.7" orbitY="169.7" effect="HP_REGEN_PCT:6;MAXHP:40" description="Recovery mastery.">
 		<requires nodeId="1027" />
 	</node>
 	<node id="1031" name="Warding" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2154.5" y="-95.5" orbitX="2080.3" orbitY="-169.7" effect="MDEF_PCT:1.2">
@@ -118,14 +118,14 @@
 		<requires nodeId="1032" />
 		<requires nodeId="1036" />
 	</node>
-	<node id="1036" name="Spellbreaker" sector="Vanguard" type="NOTABLE" tier="0" cost="2" x="2053.1" y="-271.1" orbitX="2080.3" orbitY="-169.7" effect="MDEF_PCT:5;MEN:1" description="Warding mastery.">
+	<node id="1036" name="Spellbreaker" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="2053.1" y="-271.1" orbitX="2080.3" orbitY="-169.7" effect="MDEF_PCT:5;MEN:1" description="Warding mastery.">
 		<requires nodeId="1033" />
 	</node>
 	<node id="1037" name="Approach" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2165.1" y="84.9" effect="MAXHP:6">
 		<requires nodeId="1016" />
 		<requires nodeId="1038" />
 	</node>
-	<node id="1038" name="Deflection" sector="Vanguard" type="KEYSTONE" tier="0" cost="3" x="2080.3" y="169.7" effect="SHIELD_RATE_MUL_PCT:50;SHIELD_DEF_PCT:-40" description="KEYSTONE: You block with your shield 50% more often, but your shield defence is 40% lower.">
+	<node id="1038" name="Deflection" sector="Vanguard" type="KEYSTONE" tier="0" cost="1" x="2080.3" y="169.7" effect="SHIELD_RATE_MUL_PCT:50;SHIELD_DEF_PCT:-40" description="KEYSTONE: You block with your shield 50% more often, but your shield defence is 40% lower.">
 		<requires nodeId="1037" />
 	</node>
 	<node id="1039" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1650.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6" description="Junction.">
@@ -158,7 +158,7 @@
 		<requires nodeId="1043" />
 		<requires nodeId="1047" />
 	</node>
-	<node id="1047" name="Spiked Bulwark" sector="Vanguard" type="NOTABLE" tier="0" cost="2" x="1899.9" y="-175.7" orbitX="1798.5" orbitY="-148.5" effect="REFLECT_PCT:7;PDEF_PCT:2" description="Thorns mastery.">
+	<node id="1047" name="Spiked Bulwark" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="1899.9" y="-175.7" orbitX="1798.5" orbitY="-148.5" effect="REFLECT_PCT:7;PDEF_PCT:2" description="Thorns mastery.">
 		<requires nodeId="1044" />
 	</node>
 	<node id="1048" name="Iron Skin" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1745.5" y="95.5" orbitX="1819.7" orbitY="169.7" effect="PDEF_PCT:1.2">
@@ -173,7 +173,7 @@
 		<requires nodeId="1049" />
 		<requires nodeId="1053" />
 	</node>
-	<node id="1053" name="Ironhide" sector="Vanguard" type="NOTABLE" tier="0" cost="2" x="1846.9" y="271.1" orbitX="1819.7" orbitY="169.7" effect="PDEF_PCT:5;CON:1" description="Iron Skin mastery.">
+	<node id="1053" name="Ironhide" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="1846.9" y="271.1" orbitX="1819.7" orbitY="169.7" effect="PDEF_PCT:5;CON:1" description="Iron Skin mastery.">
 		<requires nodeId="1050" />
 	</node>
 	<node id="1054" name="Vitality" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1554.5" y="-95.5" orbitX="1480.3" orbitY="-169.7" effect="MAXHP:29">
@@ -188,14 +188,14 @@
 		<requires nodeId="1055" />
 		<requires nodeId="1059" />
 	</node>
-	<node id="1059" name="Robust Frame" sector="Vanguard" type="NOTABLE" tier="0" cost="2" x="1453.1" y="-271.1" orbitX="1480.3" orbitY="-169.7" effect="MAXHP:90;CON:1" description="Vitality mastery.">
+	<node id="1059" name="Robust Frame" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="1453.1" y="-271.1" orbitX="1480.3" orbitY="-169.7" effect="MAXHP:90;CON:1" description="Vitality mastery.">
 		<requires nodeId="1056" />
 	</node>
 	<node id="1060" name="Approach" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1565.1" y="84.9" effect="MAXHP:6">
 		<requires nodeId="1039" />
 		<requires nodeId="1061" />
 	</node>
-	<node id="1061" name="Rallying Shout" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="2" x="1480.3" y="169.7" effect="MAXHP:15" skillId="90401" skillLevel="1" description="ACTIVE: party gains +8% P.Atk, M.Atk, P.Def and M.Def for 60s (180s cooldown).">
+	<node id="1061" name="Rallying Shout" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="1" x="1480.3" y="169.7" effect="MAXHP:15" skillId="90401" skillLevel="1" description="ACTIVE: party gains +8% P.Atk, M.Atk, P.Def and M.Def for 60s (180s cooldown).">
 		<requires nodeId="1060" />
 	</node>
 	<node id="1062" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1050.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6" description="Junction.">
@@ -228,7 +228,7 @@
 		<requires nodeId="1066" />
 		<requires nodeId="1070" />
 	</node>
-	<node id="1070" name="Aegis Training" sector="Vanguard" type="NOTABLE" tier="0" cost="2" x="1299.9" y="-175.7" orbitX="1198.5" orbitY="-148.5" effect="SHIELD_RATE_PCT:5;PDEF_PCT:2" description="Shield Work mastery.">
+	<node id="1070" name="Aegis Training" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="1299.9" y="-175.7" orbitX="1198.5" orbitY="-148.5" effect="SHIELD_RATE_PCT:5;PDEF_PCT:2" description="Shield Work mastery.">
 		<requires nodeId="1067" />
 	</node>
 	<node id="1071" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1145.5" y="95.5" orbitX="1219.7" orbitY="169.7" effect="HP_REGEN_PCT:1.6">
@@ -243,17 +243,17 @@
 		<requires nodeId="1072" />
 		<requires nodeId="1076" />
 	</node>
-	<node id="1076" name="Wellspring" sector="Vanguard" type="NOTABLE" tier="0" cost="2" x="1246.9" y="271.1" orbitX="1219.7" orbitY="169.7" effect="HP_REGEN_PCT:6;MAXHP:40" description="Recovery mastery.">
+	<node id="1076" name="Wellspring" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="1246.9" y="271.1" orbitX="1219.7" orbitY="169.7" effect="HP_REGEN_PCT:6;MAXHP:40" description="Recovery mastery.">
 		<requires nodeId="1073" />
 	</node>
 	<node id="1077" name="Approach" sector="Vanguard" type="SMALL" tier="0" cost="1" x="965.1" y="-84.9" effect="MAXHP:6">
 		<requires nodeId="1062" />
 		<requires nodeId="1078" />
 	</node>
-	<node id="1078" name="Arcane Plating" sector="Vanguard" type="KEYSTONE" tier="0" cost="3" x="880.3" y="-169.7" effect="KS_PDEF_AS_MDEF:25" description="KEYSTONE: Your M.Def is replaced by your P.Def, reduced by 25%.">
+	<node id="1078" name="Arcane Plating" sector="Vanguard" type="KEYSTONE" tier="0" cost="1" x="880.3" y="-169.7" effect="KS_PDEF_AS_MDEF:25" description="KEYSTONE: Your M.Def is replaced by your P.Def, reduced by 25%.">
 		<requires nodeId="1077" />
 	</node>
-	<node id="1079" name="Avatar of the Phalanx" sector="Vanguard" type="MASTER" tier="0" cost="3" x="720.0" y="0.0" effect="CON:2;SHIELD_RATE_PCT:7;PDEF_PCT:5;MDEF_PCT:5" description="Archetype capstone.">
+	<node id="1079" name="Avatar of the Phalanx" sector="Vanguard" type="MASTER" tier="0" cost="1" x="720.0" y="0.0" effect="CON:2;SHIELD_RATE_PCT:7;PDEF_PCT:5;MDEF_PCT:5" description="Archetype capstone.">
 		<requires nodeId="1080" />
 		<requires nodeId="9001" />
 	</node>
@@ -261,7 +261,7 @@
 		<requires nodeId="1062" />
 		<requires nodeId="1079" />
 	</node>
-	<node id="1081" name="Field Salvage" sector="Vanguard" type="FUNCTION" tier="0" cost="2" x="965.1" y="84.9" effect="MAXHP:15" skillId="248" skillLevel="5" description="Unlocks Crystallize: break equipment of any grade down into crystals.">
+	<node id="1081" name="Field Salvage" sector="Vanguard" type="FUNCTION" tier="0" cost="1" x="965.1" y="84.9" effect="MAXHP:15" skillId="248" skillLevel="5" description="Unlocks Crystallize: break equipment of any grade down into crystals.">
 		<requires nodeId="1062" />
 	</node>
 	<node id="20101" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2173.3" y="582.3" orbitX="0.0" orbitY="0.0" effect="MAXHP:6">

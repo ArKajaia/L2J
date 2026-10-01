@@ -30,7 +30,7 @@
 		<requires nodeId="5006" />
 		<requires nodeId="5008" />
 	</node>
-	<node id="5008" name="Spell Surge" sector="Arcanist" type="NOTABLE" tier="0" cost="2" x="-1758.2" y="-2503.1" orbitX="-1656.8" orbitY="-2530.3" effect="MATK_PCT:5;INT:1" description="Spellcraft mastery.">
+	<node id="5008" name="Spell Surge" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-1758.2" y="-2503.1" orbitX="-1656.8" orbitY="-2530.3" effect="MATK_PCT:5;INT:1" description="Spellcraft mastery.">
 		<requires nodeId="5007" />
 	</node>
 	<node id="5009" name="Mana Pool" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1390.1" y="-2598.6" orbitX="-1362.9" orbitY="-2700.0" effect="MAXMP:20">
@@ -46,14 +46,14 @@
 		<requires nodeId="5010" />
 		<requires nodeId="5013" />
 	</node>
-	<node id="5013" name="Deep Reservoir" sector="Arcanist" type="NOTABLE" tier="0" cost="2" x="-1288.6" y="-2774.2" orbitX="-1362.9" orbitY="-2700.0" effect="MAXMP:120;INT:1" description="Mana Pool mastery.">
+	<node id="5013" name="Deep Reservoir" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-1288.6" y="-2774.2" orbitX="-1362.9" orbitY="-2700.0" effect="MAXMP:120;INT:1" description="Mana Pool mastery.">
 		<requires nodeId="5012" />
 	</node>
 	<node id="5014" name="Approach" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1309.1" y="-2437.1" effect="MATK_PCT:0.2">
 		<requires nodeId="5001" />
 		<requires nodeId="5015" />
 	</node>
-	<node id="5015" name="Arcane Nova" sector="Arcanist" type="ACTIVE_SKILL" tier="0" cost="2" x="-1193.2" y="-2406.1" effect="MAXHP:15" skillId="90440" skillLevel="auto" description="ACTIVE: blast all enemies around you with a magic nova (30s cooldown). Grows stronger with your level.">
+	<node id="5015" name="Arcane Nova" sector="Arcanist" type="ACTIVE_SKILL" tier="0" cost="1" x="-1193.2" y="-2406.1" effect="MAXHP:15" skillId="90440" skillLevel="auto" description="ACTIVE: blast all enemies around you with a magic nova (30s cooldown). Grows stronger with your level.">
 		<requires nodeId="5014" />
 	</node>
 	<node id="5016" name="Crossroads" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1125.0" y="-1948.6" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2" description="Junction.">
@@ -87,7 +87,7 @@
 		<requires nodeId="5020" />
 		<requires nodeId="5024" />
 	</node>
-	<node id="5024" name="Quickened Mind" sector="Arcanist" type="NOTABLE" tier="0" cost="2" x="-1458.2" y="-1983.5" orbitX="-1356.8" orbitY="-2010.7" effect="CAST_SPD_PCT:4;WIT:1" description="Channelling mastery.">
+	<node id="5024" name="Quickened Mind" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-1458.2" y="-1983.5" orbitX="-1356.8" orbitY="-2010.7" effect="CAST_SPD_PCT:4;WIT:1" description="Channelling mastery.">
 		<requires nodeId="5022" />
 	</node>
 	<node id="5025" name="Arcane Insight" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1090.1" y="-2079.0" orbitX="-1062.9" orbitY="-2180.4" effect="MCRIT_RATE_ADD:8.4">
@@ -103,7 +103,7 @@
 		<requires nodeId="5026" />
 		<requires nodeId="5030" />
 	</node>
-	<node id="5030" name="Arcane Fury" sector="Arcanist" type="NOTABLE" tier="0" cost="2" x="-988.6" y="-2254.6" orbitX="-1062.9" orbitY="-2180.4" effect="MCRIT_RATE_ADD:32;INT:1" description="Arcane Insight mastery.">
+	<node id="5030" name="Arcane Fury" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-988.6" y="-2254.6" orbitX="-1062.9" orbitY="-2180.4" effect="MCRIT_RATE_ADD:32;INT:1" description="Arcane Insight mastery.">
 		<requires nodeId="5027" />
 	</node>
 	<node id="5031" name="Meditation" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1159.9" y="-1818.2" orbitX="-1187.1" orbitY="-1716.7" effect="MP_REGEN_PCT:1.6">
@@ -118,14 +118,14 @@
 		<requires nodeId="5032" />
 		<requires nodeId="5036" />
 	</node>
-	<node id="5036" name="Font of Power" sector="Arcanist" type="NOTABLE" tier="0" cost="2" x="-1261.4" y="-1642.5" orbitX="-1187.1" orbitY="-1716.7" effect="MP_REGEN_PCT:6;MAXMP:60" description="Meditation mastery.">
+	<node id="5036" name="Font of Power" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-1261.4" y="-1642.5" orbitX="-1187.1" orbitY="-1716.7" effect="MP_REGEN_PCT:6;MAXMP:60" description="Meditation mastery.">
 		<requires nodeId="5033" />
 	</node>
 	<node id="5037" name="Approach" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1009.1" y="-1917.5" effect="MATK_PCT:0.2">
 		<requires nodeId="5016" />
 		<requires nodeId="5038" />
 	</node>
-	<node id="5038" name="Arcane Overload" sector="Arcanist" type="KEYSTONE" tier="0" cost="3" x="-893.2" y="-1886.4" effect="KS_ARCANE_OVERLOAD:40" description="KEYSTONE: Your spells deal up to 40% more damage the emptier your MP is (full bonus at 0% MP).">
+	<node id="5038" name="Arcane Overload" sector="Arcanist" type="KEYSTONE" tier="0" cost="1" x="-893.2" y="-1886.4" effect="KS_ARCANE_OVERLOAD:40" description="KEYSTONE: Your spells deal up to 40% more damage the emptier your MP is (full bonus at 0% MP).">
 		<requires nodeId="5037" />
 	</node>
 	<node id="5039" name="Crossroads" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-825.0" y="-1428.9" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2" description="Junction.">
@@ -158,7 +158,7 @@
 		<requires nodeId="5043" />
 		<requires nodeId="5047" />
 	</node>
-	<node id="5047" name="Runic Shell" sector="Arcanist" type="NOTABLE" tier="0" cost="2" x="-1102.1" y="-1557.5" orbitX="-1027.8" orbitY="-1483.3" effect="MDEF_PCT:4;MAXMP:50" description="Ward mastery.">
+	<node id="5047" name="Runic Shell" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-1102.1" y="-1557.5" orbitX="-1027.8" orbitY="-1483.3" effect="MDEF_PCT:4;MAXMP:50" description="Ward mastery.">
 		<requires nodeId="5044" />
 	</node>
 	<node id="5048" name="Spellcraft" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-790.1" y="-1559.3" orbitX="-762.9" orbitY="-1660.8" effect="MATK_PCT:1.2">
@@ -173,7 +173,7 @@
 		<requires nodeId="5049" />
 		<requires nodeId="5053" />
 	</node>
-	<node id="5053" name="Spell Surge" sector="Arcanist" type="NOTABLE" tier="0" cost="2" x="-688.6" y="-1735.0" orbitX="-762.9" orbitY="-1660.8" effect="MATK_PCT:5;INT:1" description="Spellcraft mastery.">
+	<node id="5053" name="Spell Surge" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-688.6" y="-1735.0" orbitX="-762.9" orbitY="-1660.8" effect="MATK_PCT:5;INT:1" description="Spellcraft mastery.">
 		<requires nodeId="5050" />
 	</node>
 	<node id="5054" name="Mana Pool" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-859.9" y="-1298.5" orbitX="-887.1" orbitY="-1197.1" effect="MAXMP:25">
@@ -188,14 +188,14 @@
 		<requires nodeId="5055" />
 		<requires nodeId="5059" />
 	</node>
-	<node id="5059" name="Deep Reservoir" sector="Arcanist" type="NOTABLE" tier="0" cost="2" x="-961.4" y="-1122.9" orbitX="-887.1" orbitY="-1197.1" effect="MAXMP:120;INT:1" description="Mana Pool mastery.">
+	<node id="5059" name="Deep Reservoir" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-961.4" y="-1122.9" orbitX="-887.1" orbitY="-1197.1" effect="MAXMP:120;INT:1" description="Mana Pool mastery.">
 		<requires nodeId="5056" />
 	</node>
 	<node id="5060" name="Approach" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-709.1" y="-1397.9" effect="MATK_PCT:0.2">
 		<requires nodeId="5039" />
 		<requires nodeId="5061" />
 	</node>
-	<node id="5061" name="Mana Rift" sector="Arcanist" type="ACTIVE_SKILL" tier="0" cost="2" x="-593.2" y="-1366.8" effect="MAXHP:15" skillId="90441" skillLevel="auto" description="ACTIVE: sacrifice HP to instantly restore MP (60s cooldown). Grows stronger with your level.">
+	<node id="5061" name="Mana Rift" sector="Arcanist" type="ACTIVE_SKILL" tier="0" cost="1" x="-593.2" y="-1366.8" effect="MAXHP:15" skillId="90441" skillLevel="auto" description="ACTIVE: sacrifice HP to instantly restore MP (60s cooldown). Grows stronger with your level.">
 		<requires nodeId="5060" />
 	</node>
 	<node id="5062" name="Crossroads" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-525.0" y="-909.3" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2" description="Junction.">
@@ -228,7 +228,7 @@
 		<requires nodeId="5066" />
 		<requires nodeId="5070" />
 	</node>
-	<node id="5070" name="Quickened Mind" sector="Arcanist" type="NOTABLE" tier="0" cost="2" x="-802.1" y="-1037.9" orbitX="-727.8" orbitY="-963.7" effect="CAST_SPD_PCT:4;WIT:1" description="Channelling mastery.">
+	<node id="5070" name="Quickened Mind" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-802.1" y="-1037.9" orbitX="-727.8" orbitY="-963.7" effect="CAST_SPD_PCT:4;WIT:1" description="Channelling mastery.">
 		<requires nodeId="5067" />
 	</node>
 	<node id="5071" name="Arcane Insight" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-490.1" y="-1039.7" orbitX="-462.9" orbitY="-1141.1" effect="MCRIT_RATE_ADD:8.4">
@@ -243,17 +243,17 @@
 		<requires nodeId="5072" />
 		<requires nodeId="5076" />
 	</node>
-	<node id="5076" name="Arcane Fury" sector="Arcanist" type="NOTABLE" tier="0" cost="2" x="-388.6" y="-1215.4" orbitX="-462.9" orbitY="-1141.1" effect="MCRIT_RATE_ADD:32;INT:1" description="Arcane Insight mastery.">
+	<node id="5076" name="Arcane Fury" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-388.6" y="-1215.4" orbitX="-462.9" orbitY="-1141.1" effect="MCRIT_RATE_ADD:32;INT:1" description="Arcane Insight mastery.">
 		<requires nodeId="5073" />
 	</node>
 	<node id="5077" name="Approach" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-556.1" y="-793.4" effect="MATK_PCT:0.2">
 		<requires nodeId="5062" />
 		<requires nodeId="5078" />
 	</node>
-	<node id="5078" name="Mind Over Matter" sector="Arcanist" type="KEYSTONE" tier="0" cost="3" x="-587.1" y="-677.5" effect="KS_MIND_OVER_MATTER:30" description="KEYSTONE: 30% of the damage you take is drained from your MP instead of your HP, until your MP runs out.">
+	<node id="5078" name="Mind Over Matter" sector="Arcanist" type="KEYSTONE" tier="0" cost="1" x="-587.1" y="-677.5" effect="KS_MIND_OVER_MATTER:30" description="KEYSTONE: 30% of the damage you take is drained from your MP instead of your HP, until your MP runs out.">
 		<requires nodeId="5077" />
 	</node>
-	<node id="5079" name="Elemental Singularity" sector="Arcanist" type="MASTER" tier="0" cost="3" x="-360.0" y="-623.5" effect="INT:2;MATK_PCT:8;CAST_SPD_PCT:2" description="Archetype capstone.">
+	<node id="5079" name="Elemental Singularity" sector="Arcanist" type="MASTER" tier="0" cost="1" x="-360.0" y="-623.5" effect="INT:2;MATK_PCT:8;CAST_SPD_PCT:2" description="Archetype capstone.">
 		<requires nodeId="5080" />
 		<requires nodeId="9009" />
 	</node>
@@ -261,7 +261,7 @@
 		<requires nodeId="5062" />
 		<requires nodeId="5079" />
 	</node>
-	<node id="5081" name="Scholar's Insight" sector="Arcanist" type="FUNCTION" tier="0" cost="2" x="-409.1" y="-878.3" effect="EXP_RATE_PCT:5;SP_RATE_PCT:5" description="Learn faster: +5% XP and +5% SP from hunting.">
+	<node id="5081" name="Scholar's Insight" sector="Arcanist" type="FUNCTION" tier="0" cost="1" x="-409.1" y="-878.3" effect="EXP_RATE_PCT:5;SP_RATE_PCT:5" description="Learn faster: +5% XP and +5% SP from hunting.">
 		<requires nodeId="5062" />
 	</node>
 	<node id="24101" name="Pathway" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-582.3" y="-2173.3" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2">

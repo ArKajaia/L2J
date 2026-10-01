@@ -60,10 +60,10 @@
 		<requires nodeId="30526" />
 		<requires nodeId="30527" />
 	</node>
-	<node id="30515" name="Blessed Vessel" sector="Templar" type="NOTABLE" tier="0" cost="2" x="2144.1" y="-1833.2" orbitX="2154.2" orbitY="-1728.7" effect="HEALING_RECEIVED_PCT:8;MP_REGEN_PCT:3" description="Consecration mastery. Heals on you are stronger.">
+	<node id="30515" name="Blessed Vessel" sector="Templar" type="NOTABLE" tier="0" cost="1" x="2144.1" y="-1833.2" orbitX="2154.2" orbitY="-1728.7" effect="HEALING_RECEIVED_PCT:8;MP_REGEN_PCT:3" description="Consecration mastery. Heals on you are stronger.">
 		<requires nodeId="30508" />
 	</node>
-	<node id="30516" name="Warded Soul" sector="Templar" type="NOTABLE" tier="0" cost="2" x="2659.7" y="-940.2" orbitX="2574.2" orbitY="-1001.3" effect="DEBUFF_RES_PCT:10;MDEF_PCT:3" description="Oathbound mastery. Debuffs struggle to take hold.">
+	<node id="30516" name="Warded Soul" sector="Templar" type="NOTABLE" tier="0" cost="1" x="2659.7" y="-940.2" orbitX="2574.2" orbitY="-1001.3" effect="DEBUFF_RES_PCT:10;MDEF_PCT:3" description="Oathbound mastery. Debuffs struggle to take hold.">
 		<requires nodeId="30509" />
 	</node>
 	<node id="30517" name="Aegis of Light" sector="Templar" type="SMALL" tier="0" cost="1" x="2601.4" y="-1796.3" orbitX="2704.6" orbitY="-1815.5" effect="MAGIC_REFLECT_PCT:0.6;MDEF_PCT:0.4">
@@ -75,7 +75,7 @@
 		<requires nodeId="30519" />
 		<requires nodeId="30520" />
 	</node>
-	<node id="30519" name="Mirror Ward" sector="Templar" type="NOTABLE" tier="0" cost="2" x="2803.6" y="-1780.6" orbitX="2704.6" orbitY="-1815.5" effect="MAGIC_REFLECT_PCT:4;SKILL_REFLECT_PCT:3" description="Aegis of Light mastery. Hostile skills may rebound onto their caster.">
+	<node id="30519" name="Mirror Ward" sector="Templar" type="NOTABLE" tier="0" cost="1" x="2803.6" y="-1780.6" orbitX="2704.6" orbitY="-1815.5" effect="MAGIC_REFLECT_PCT:4;SKILL_REFLECT_PCT:3" description="Aegis of Light mastery. Hostile skills may rebound onto their caster.">
 		<requires nodeId="30518" />
 	</node>
 	<node id="30520" name="Aegis of Light" sector="Templar" type="SMALL" tier="0" cost="1" x="2651.2" y="-1905.9" orbitX="2704.6" orbitY="-1815.5" effect="MAGIC_REFLECT_PCT:0.6;MDEF_PCT:0.4">
@@ -86,14 +86,14 @@
 		<requires nodeId="30522" />
 		<requires nodeId="30525" />
 	</node>
-	<node id="30522" name="Martyr's Vow" sector="Templar" type="KEYSTONE" tier="0" cost="3" x="2625.1" y="-2393.2" effect="KS_BLOOD_MAGIC:50" description="KEYSTONE: Your skills cost HP instead of MP (they cannot kill you), and you gain maximum HP equal to 50% of your maximum MP.">
+	<node id="30522" name="Martyr's Vow" sector="Templar" type="KEYSTONE" tier="0" cost="1" x="2625.1" y="-2393.2" effect="KS_BLOOD_MAGIC:50" description="KEYSTONE: Your skills cost HP instead of MP (they cannot kill you), and you gain maximum HP equal to 50% of your maximum MP.">
 		<requires nodeId="30521" />
 	</node>
 	<node id="30523" name="Approach" sector="Templar" type="SMALL" tier="0" cost="1" x="3223.9" y="-1076.1" effect="MAXHP:6">
 		<requires nodeId="30524" />
 		<requires nodeId="30526" />
 	</node>
-	<node id="30524" name="Steadfast Faith" sector="Templar" type="NOTABLE" tier="0" cost="2" x="3385.1" y="-1076.8" effect="DEBUFF_RES_PCT:6;CRIT_DMG_TAKEN_RED_PCT:4" description="Unshaken by curses or killing blows.">
+	<node id="30524" name="Steadfast Faith" sector="Templar" type="NOTABLE" tier="0" cost="1" x="3385.1" y="-1076.8" effect="DEBUFF_RES_PCT:6;CRIT_DMG_TAKEN_RED_PCT:4" description="Unshaken by curses or killing blows.">
 		<requires nodeId="30523" />
 	</node>
 	<node id="30525" name="Sacred Path" sector="Templar" type="SMALL" tier="0" cost="1" x="2448.0" y="-2060.0" effect="MDEF_PCT:0.4;MAXMP:8">
@@ -112,14 +112,14 @@
 		<requires nodeId="30512" />
 		<requires nodeId="30528" />
 	</node>
-	<node id="30528" name="Purity of Flesh" sector="Templar" type="KEYSTONE" tier="0" cost="3" x="2996.5" y="-1429.8" effect="KS_PURITY:1;MAXHP_PCT:-15" description="KEYSTONE: You are immune to poison and bleeding, but your maximum HP is 15% lower.">
+	<node id="30528" name="Purity of Flesh" sector="Templar" type="KEYSTONE" tier="0" cost="1" x="2996.5" y="-1429.8" effect="KS_PURITY:1;MAXHP_PCT:-15" description="KEYSTONE: You are immune to poison and bleeding, but your maximum HP is 15% lower.">
 		<requires nodeId="30527" />
 	</node>
 	<node id="30529" name="Approach" sector="Templar" type="SMALL" tier="0" cost="1" x="3234.6" y="-897.5" effect="MAXHP:6">
 		<requires nodeId="30526" />
 		<requires nodeId="30530" />
 	</node>
-	<node id="30530" name="Purifying Aegis" sector="Templar" type="ACTIVE_SKILL" tier="0" cost="2" x="3352.9" y="-792.6" effect="MAXHP:15" skillId="90465" skillLevel="1" description="ACTIVE: remove up to 3 debuffs from yourself, then +20% healing received for 15s (150s cooldown).">
+	<node id="30530" name="Purifying Aegis" sector="Templar" type="ACTIVE_SKILL" tier="0" cost="1" x="3352.9" y="-792.6" effect="MAXHP:15" skillId="90465" skillLevel="1" description="ACTIVE: remove up to 3 debuffs from yourself, then +20% healing received for 15s (150s cooldown).">
 		<requires nodeId="30529" />
 	</node>
 	<node id="30551" name="Waystone" sector="Templar" type="SMALL" tier="0" cost="1" x="1141.3" y="-370.8" effect="MDEF_PCT:0.4">
@@ -150,7 +150,7 @@
 		<requires nodeId="30553" />
 		<requires nodeId="30555" />
 	</node>
-	<node id="30555" name="Bastion of Faith" sector="Templar" type="NOTABLE" tier="0" cost="2" x="1344.3" y="-641.0" orbitX="1255.2" orbitY="-585.3" effect="MEN:1;CON:1;MDEF_PCT:2" description="Sanctified Plate mastery. Suits a Hierophant/Vanguard hybrid.">
+	<node id="30555" name="Bastion of Faith" sector="Templar" type="NOTABLE" tier="0" cost="1" x="1344.3" y="-641.0" orbitX="1255.2" orbitY="-585.3" effect="MEN:1;CON:1;MDEF_PCT:2" description="Sanctified Plate mastery. Suits a Hierophant/Vanguard hybrid.">
 		<requires nodeId="30554" />
 	</node>
 	<node id="30557" name="Shadow Arts" sector="Templar" type="SMALL" tier="0" cost="1" x="1541.1" y="-1119.7" orbitX="1564.2" orbitY="-1222.1" effect="CRIT_RATE_ADD:4;BLOW_RATE_PCT:0.6">
@@ -165,7 +165,7 @@
 		<requires nodeId="30558" />
 		<requires nodeId="30560" />
 	</node>
-	<node id="30560" name="Assassin's Creed" sector="Templar" type="NOTABLE" tier="0" cost="2" x="1635.4" y="-1299.2" orbitX="1564.2" orbitY="-1222.1" effect="DEX:1;CRIT_RATE_ADD:15;BLOW_RATE_PCT:4" description="Shadow Arts mastery. Off-path: pays off only if you rebuild around it.">
+	<node id="30560" name="Assassin's Creed" sector="Templar" type="NOTABLE" tier="0" cost="1" x="1635.4" y="-1299.2" orbitX="1564.2" orbitY="-1222.1" effect="DEX:1;CRIT_RATE_ADD:15;BLOW_RATE_PCT:4" description="Shadow Arts mastery. Off-path: pays off only if you rebuild around it.">
 		<requires nodeId="30559" />
 	</node>
 </list>

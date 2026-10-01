@@ -67,25 +67,25 @@
 		<requires nodeId="9011" />
 		<requires nodeId="9035" />
 	</node>
-	<node id="9013" name="Pillar of Vitality" sector="Nexus" type="NOTABLE" tier="0" cost="2" x="142.9" y="82.5" effect="CON:1;MAXHP:90">
+	<node id="9013" name="Pillar of Vitality" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="142.9" y="82.5" effect="CON:1;MAXHP:90">
 		<requires nodeId="9022" />
 	</node>
-	<node id="9014" name="Pillar of Force" sector="Nexus" type="NOTABLE" tier="0" cost="2" x="0.0" y="165.0" effect="STR:1;PATK_PCT:4">
+	<node id="9014" name="Pillar of Force" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="0.0" y="165.0" effect="STR:1;PATK_PCT:4">
 		<requires nodeId="9025" />
 	</node>
-	<node id="9015" name="Pillar of Grace" sector="Nexus" type="NOTABLE" tier="0" cost="2" x="-142.9" y="82.5" effect="DEX:1;MOVE_SPEED_ADD:2.4">
+	<node id="9015" name="Pillar of Grace" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="-142.9" y="82.5" effect="DEX:1;MOVE_SPEED_ADD:2.4">
 		<requires nodeId="9028" />
 	</node>
-	<node id="9016" name="Pillar of Intellect" sector="Nexus" type="NOTABLE" tier="0" cost="2" x="-142.9" y="-82.5" effect="INT:1;MATK_PCT:4">
+	<node id="9016" name="Pillar of Intellect" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="-142.9" y="-82.5" effect="INT:1;MATK_PCT:4">
 		<requires nodeId="9031" />
 	</node>
-	<node id="9017" name="Pillar of Wisdom" sector="Nexus" type="NOTABLE" tier="0" cost="2" x="0.0" y="-165.0" effect="WIT:1;CAST_SPD_PCT:3">
+	<node id="9017" name="Pillar of Wisdom" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="0.0" y="-165.0" effect="WIT:1;CAST_SPD_PCT:3">
 		<requires nodeId="9034" />
 	</node>
-	<node id="9018" name="Pillar of Will" sector="Nexus" type="NOTABLE" tier="0" cost="2" x="142.9" y="-82.5" effect="MEN:1;MDEF_PCT:4">
+	<node id="9018" name="Pillar of Will" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="142.9" y="-82.5" effect="MEN:1;MDEF_PCT:4">
 		<requires nodeId="9037" />
 	</node>
-	<node id="9019" name="Prismatic Attunement" sector="Nexus" type="MASTER" tier="0" cost="3" x="0.0" y="0.0" effect="STR:1;DEX:1;CON:1;INT:1;WIT:1;MEN:1" description="TRANSCENDENT: +1 to every base attribute.">
+	<node id="9019" name="Prismatic Attunement" sector="Nexus" type="MASTER" tier="0" cost="1" x="0.0" y="0.0" effect="STR:1;DEX:1;CON:1;INT:1;WIT:1;MEN:1" description="TRANSCENDENT: +1 to every base attribute.">
 		<requires nodeId="9039" />
 		<requires nodeId="9041" />
 		<requires nodeId="9043" />

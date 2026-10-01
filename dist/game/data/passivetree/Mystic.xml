@@ -60,10 +60,10 @@
 		<requires nodeId="30426" />
 		<requires nodeId="30427" />
 	</node>
-	<node id="30415" name="Overcharged Sigils" sector="Mystic" type="NOTABLE" tier="0" cost="2" x="-515.6" y="-2773.5" orbitX="-420.0" orbitY="-2730.0" effect="MCRIT_DMG_PCT:10;MATK_PCT:3" description="Surging Power mastery. Magic critical hits erupt.">
+	<node id="30415" name="Overcharged Sigils" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="-515.6" y="-2773.5" orbitX="-420.0" orbitY="-2730.0" effect="MCRIT_DMG_PCT:10;MATK_PCT:3" description="Surging Power mastery. Magic critical hits erupt.">
 		<requires nodeId="30408" />
 	</node>
-	<node id="30416" name="Clarity" sector="Mystic" type="NOTABLE" tier="0" cost="2" x="515.6" y="-2773.5" orbitX="420.0" orbitY="-2730.0" effect="SPELL_MP_COST_RED_PCT:8;MP_REGEN_PCT:4" description="Still Mind mastery. Spells cost less MP.">
+	<node id="30416" name="Clarity" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="515.6" y="-2773.5" orbitX="420.0" orbitY="-2730.0" effect="SPELL_MP_COST_RED_PCT:8;MP_REGEN_PCT:4" description="Still Mind mastery. Spells cost less MP.">
 		<requires nodeId="30409" />
 	</node>
 	<node id="30417" name="Ley Current" sector="Mystic" type="SMALL" tier="0" cost="1" x="-254.9" y="-3151.0" orbitX="-220.0" orbitY="-3250.0" effect="INTERRUPT_RES_PCT:5;MAXMP:10">
@@ -75,7 +75,7 @@
 		<requires nodeId="30419" />
 		<requires nodeId="30420" />
 	</node>
-	<node id="30419" name="Unbroken Chant" sector="Mystic" type="NOTABLE" tier="0" cost="2" x="-140.2" y="-3318.3" orbitX="-220.0" orbitY="-3250.0" effect="INTERRUPT_RES_PCT:30;CAST_SPD_PCT:3;SPELL_CDR_PCT:3" description="Ley Current mastery. Taking hits rarely breaks your casting.">
+	<node id="30419" name="Unbroken Chant" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="-140.2" y="-3318.3" orbitX="-220.0" orbitY="-3250.0" effect="INTERRUPT_RES_PCT:30;CAST_SPD_PCT:3;SPELL_CDR_PCT:3" description="Ley Current mastery. Taking hits rarely breaks your casting.">
 		<requires nodeId="30418" />
 	</node>
 	<node id="30420" name="Ley Current" sector="Mystic" type="SMALL" tier="0" cost="1" x="-325.0" y="-3249.0" orbitX="-220.0" orbitY="-3250.0" effect="INTERRUPT_RES_PCT:5;MAXMP:10">
@@ -86,14 +86,14 @@
 		<requires nodeId="30422" />
 		<requires nodeId="30425" />
 	</node>
-	<node id="30422" name="Soul Link" sector="Mystic" type="KEYSTONE" tier="0" cost="3" x="-760.0" y="-3470.0" effect="SERVITOR_SHARE_PCT:30;PATK_PCT:-10;MATK_PCT:-10" description="KEYSTONE: 30% of the damage you take is redirected to your nearby servitor, but you deal 10% less damage.">
+	<node id="30422" name="Soul Link" sector="Mystic" type="KEYSTONE" tier="0" cost="1" x="-760.0" y="-3470.0" effect="SERVITOR_SHARE_PCT:30;PATK_PCT:-10;MATK_PCT:-10" description="KEYSTONE: 30% of the damage you take is redirected to your nearby servitor, but you deal 10% less damage.">
 		<requires nodeId="30421" />
 	</node>
 	<node id="30423" name="Approach" sector="Mystic" type="SMALL" tier="0" cost="1" x="680.0" y="-3330.0" effect="MAXHP:6">
 		<requires nodeId="30424" />
 		<requires nodeId="30426" />
 	</node>
-	<node id="30424" name="Arcane Hunter" sector="Mystic" type="NOTABLE" tier="0" cost="2" x="760.0" y="-3470.0" effect="PVE_MDMG_PCT:6;MATK_PCT:1" description="Spellwork tuned for clearing monsters.">
+	<node id="30424" name="Arcane Hunter" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="760.0" y="-3470.0" effect="PVE_MDMG_PCT:6;MATK_PCT:1" description="Spellwork tuned for clearing monsters.">
 		<requires nodeId="30423" />
 	</node>
 	<node id="30425" name="Arcane Path" sector="Mystic" type="SMALL" tier="0" cost="1" x="-560.0" y="-3150.0" effect="MATK_PCT:0.4;MCRIT_RATE_ADD:3">
@@ -112,14 +112,14 @@
 		<requires nodeId="30412" />
 		<requires nodeId="30428" />
 	</node>
-	<node id="30428" name="Vampiric Sorcery" sector="Mystic" type="KEYSTONE" tier="0" cost="3" x="260.0" y="-3310.0" effect="KS_SPELL_LEECH:8;HP_REGEN_PCT:-50" description="KEYSTONE: Your direct spell damage heals you for 8% of the damage dealt, but your natural HP regeneration is halved.">
+	<node id="30428" name="Vampiric Sorcery" sector="Mystic" type="KEYSTONE" tier="0" cost="1" x="260.0" y="-3310.0" effect="KS_SPELL_LEECH:8;HP_REGEN_PCT:-50" description="KEYSTONE: Your direct spell damage heals you for 8% of the damage dealt, but your natural HP regeneration is halved.">
 		<requires nodeId="30427" />
 	</node>
 	<node id="30429" name="Approach" sector="Mystic" type="SMALL" tier="0" cost="1" x="840.0" y="-3250.0" effect="MAXHP:6">
 		<requires nodeId="30426" />
 		<requires nodeId="30430" />
 	</node>
-	<node id="30430" name="Temporal Flow" sector="Mystic" type="ACTIVE_SKILL" tier="0" cost="2" x="990.0" y="-3300.0" effect="MAXHP:15" skillId="90464" skillLevel="1" description="ACTIVE: magic skills recharge 25% faster and cast 10% faster for 15s (180s cooldown).">
+	<node id="30430" name="Temporal Flow" sector="Mystic" type="ACTIVE_SKILL" tier="0" cost="1" x="990.0" y="-3300.0" effect="MAXHP:15" skillId="90464" skillLevel="1" description="ACTIVE: magic skills recharge 25% faster and cast 10% faster for 15s (180s cooldown).">
 		<requires nodeId="30429" />
 	</node>
 	<node id="30451" name="Waystone" sector="Mystic" type="SMALL" tier="0" cost="1" x="94.2" y="-1797.5" effect="MATK_PCT:0.4">
@@ -154,7 +154,7 @@
 		<requires nodeId="30453" />
 		<requires nodeId="30455" />
 	</node>
-	<node id="30455" name="Archon's Insight" sector="Mystic" type="NOTABLE" tier="0" cost="2" x="307.4" y="-2065.9" orbitX="276.3" orbitY="-1965.7" effect="INT:1;MEN:1;MATK_PCT:2" description="Ley Wellspring mastery. Suits a Arcanist/Hierophant hybrid.">
+	<node id="30455" name="Archon's Insight" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="307.4" y="-2065.9" orbitX="276.3" orbitY="-1965.7" effect="INT:1;MEN:1;MATK_PCT:2" description="Ley Wellspring mastery. Suits a Arcanist/Hierophant hybrid.">
 		<requires nodeId="30454" />
 	</node>
 	<node id="30457" name="War Hymn" sector="Mystic" type="SMALL" tier="0" cost="1" x="45.6" y="-865.0" orbitX="66.7" orbitY="-762.1" effect="PATK_PCT:0.6;ATK_SPD_PCT:0.4">
@@ -169,7 +169,7 @@
 		<requires nodeId="30458" />
 		<requires nodeId="30460" />
 	</node>
-	<node id="30460" name="Crusader's Fervor" sector="Mystic" type="NOTABLE" tier="0" cost="2" x="33.5" y="-662.5" orbitX="66.7" orbitY="-762.1" effect="STR:1;PATK_PCT:4;ATK_SPD_PCT:3" description="War Hymn mastery. Off-path: pays off only if you rebuild around it.">
+	<node id="30460" name="Crusader's Fervor" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="33.5" y="-662.5" orbitX="66.7" orbitY="-762.1" effect="STR:1;PATK_PCT:4;ATK_SPD_PCT:3" description="War Hymn mastery. Off-path: pays off only if you rebuild around it.">
 		<requires nodeId="30459" />
 	</node>
 </list>
