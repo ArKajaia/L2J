@@ -283,6 +283,7 @@
 			<symbol id="icon-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7A4 4 0 0 1 16 7V11" stroke="currentColor" stroke-width="2.2" fill="none"/></symbol>
 		</defs>
 		<g id="viewport">
+			<g id="sockets"></g>
 			<g id="edges"></g>
 			<g id="sector-labels"></g>
 			<g id="nodes"></g>
@@ -459,6 +460,7 @@ async function loadNodes() {
 	}
 
 	buildSearchIndex();
+	renderSockets();
 }
 
 async function loadConfig() {
@@ -601,6 +603,49 @@ function showToast(msg, isError) {
 }
 
 // ---------------------------------------------------------------- render
+/** Two linked nodes on the same circle (same orbit centre and radius) are joined by an arc along it, PoE style. */
+function edgePath(na, nb) {
+	if ((na.ox !== undefined) && (na.ox === nb.ox) && (na.oy === nb.oy)) {
+		const ra = Math.hypot(na.x - na.ox, na.y - na.oy);
+		if (Math.abs(ra - Math.hypot(nb.x - nb.ox, nb.y - nb.oy)) < 1) {
+			let d = Math.atan2(nb.y - nb.oy, nb.x - nb.ox) - Math.atan2(na.y - na.oy, na.x - na.ox);
+			d = Math.atan2(Math.sin(d), Math.cos(d)); // shorter way round
+			return `M${na.x},${na.y}A${ra},${ra} 0 0 ${d > 0 ? 1 : 0} ${nb.x},${nb.y}`;
+		}
+	}
+	return `M${na.x},${na.y}L${nb.x},${nb.y}`;
+}
+
+/** The dark round "socket" behind every cluster ring (any orbit centre other than the tree centre). */
+function renderSockets() {
+	const g = document.getElementById("sockets");
+	g.textContent = "";
+	const rings = {};
+	nodes.forEach(n => {
+		if ((n.ox === undefined) || ((n.ox === 0) && (n.oy === 0))) return;
+		const key = n.ox + "," + n.oy;
+		(rings[key] = rings[key] || { x: n.ox, y: n.oy, r: 0 }).r = Math.hypot(n.x - n.ox, n.y - n.oy);
+	});
+	Object.values(rings).forEach(ring => {
+		const disc = document.createElementNS(SVG_NS, "circle");
+		disc.setAttribute("cx", ring.x);
+		disc.setAttribute("cy", ring.y);
+		disc.setAttribute("r", Math.max(10, ring.r - 26));
+		disc.setAttribute("fill", "#141419");
+		disc.setAttribute("stroke", "#3a3326");
+		disc.setAttribute("stroke-width", "3");
+		g.appendChild(disc);
+		const track = document.createElementNS(SVG_NS, "circle");
+		track.setAttribute("cx", ring.x);
+		track.setAttribute("cy", ring.y);
+		track.setAttribute("r", ring.r);
+		track.setAttribute("fill", "none");
+		track.setAttribute("stroke", "#1f1f26");
+		track.setAttribute("stroke-width", "2");
+		g.appendChild(track);
+	});
+}
+
 // ---------------------------------------------------------------- effects
 // Turns a raw spec like "MAXHP:90;CON:1" into readable lines.
 const STAT_LABEL = {
@@ -890,7 +935,7 @@ function render() {
 	edgeList.forEach(([a,b]) => {
 		const na = nodeById[a], nb = nodeById[b];
 		if (!na || !nb) return;
-		const seg = `M${na.x},${na.y}L${nb.x},${nb.y}`;
+		const seg = edgePath(na, nb);
 		const aHas = allocated.has(a), bHas = allocated.has(b);
 		if (aHas && bHas) buckets.alloc.push(seg);
 		else if (aHas || bHas) buckets.avail.push(seg);
@@ -906,7 +951,7 @@ function render() {
 		if (dash) p.setAttribute("stroke-dasharray", dash);
 		edgesG.appendChild(p);
 	};
-	mkPath(buckets.idle,  "#2e2e36", 2);
+	mkPath(buckets.idle,  "#3b362c", 2.5);
 	mkPath(buckets.avail, "#7fd1ff", 2.5, "7,5");
 	mkPath(buckets.alloc, "#3ecf5b", 4);
 
