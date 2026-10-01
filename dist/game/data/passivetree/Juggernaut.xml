@@ -280,6 +280,8 @@
 	<node id="21201" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="427.1" y="1593.8" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2">
 		<requires nodeId="2039" />
 		<requires nodeId="21202" />
+		<requires nodeId="30151" />
+		<requires nodeId="30163" />
 	</node>
 	<node id="21202" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="0.0" y="1650.0" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2">
 		<requires nodeId="21201" />
@@ -296,9 +298,11 @@
 	<node id="21302" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="0.0" y="1050.0" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2">
 		<requires nodeId="21301" />
 		<requires nodeId="21303" />
+		<requires nodeId="30161" />
 	</node>
 	<node id="21303" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="-271.8" y="1014.2" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2">
 		<requires nodeId="3062" />
 		<requires nodeId="21302" />
+		<requires nodeId="30156" />
 	</node>
 </list>

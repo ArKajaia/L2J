@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Stalker: 28 nodes, hybrid of Shadowblade and Deadeye filling the gap between their arms. x/y are authoritative layout coords. -->
+<!-- Stalker: 40 nodes, hybrid of Shadowblade and Deadeye filling the gap between their arms. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="30201" name="Confluence" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2078.5" y="1200.0" effect="EVASION_ADD:0.3;ACCURACY_ADD:0.3">
 		<requires nodeId="22102" />
@@ -121,5 +121,51 @@
 	</node>
 	<node id="30230" name="Hunter's Mark" sector="Stalker" type="ACTIVE_SKILL" tier="0" cost="2" x="-2362.9" y="2507.4" effect="MAXHP:15" skillId="90462" skillLevel="auto" description="ACTIVE: mark a target up to 900 away: -6 Evasion and -10% P.Def for 20s (30s cooldown).">
 		<requires nodeId="30229" />
+	</node>
+	<node id="30251" name="Waystone" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1691.4" y="615.6" effect="EVASION_ADD:0.4">
+		<requires nodeId="22203" />
+		<requires nodeId="30252" />
+	</node>
+	<node id="30256" name="Waystone" sector="Stalker" type="SMALL" tier="0" cost="1" x="-805.4" y="465.0" effect="MAXMP:10">
+		<requires nodeId="22302" />
+		<requires nodeId="30257" />
+	</node>
+	<node id="30261" name="Swift Feet" sector="Stalker" type="SMALL" tier="0" cost="1" x="-935.8" y="813.5" effect="MOVE_SPEED_ADD:1">
+		<requires nodeId="22301" />
+		<requires nodeId="30262" />
+	</node>
+	<node id="30262" name="Swift Feet" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1060.5" y="988.9" effect="DEX:1">
+		<requires nodeId="22201" />
+		<requires nodeId="30261" />
+	</node>
+	<node id="30252" name="Hunter's Instinct" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1751.4" y="774.2" orbitX="-1788.6" orbitY="872.4" effect="EVASION_ADD:0.4;ACCURACY_ADD:0.4">
+		<requires nodeId="30251" />
+		<requires nodeId="30253" />
+	</node>
+	<node id="30253" name="Hunter's Instinct" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1868.2" y="803.8" orbitX="-1788.6" orbitY="872.4" effect="EVASION_ADD:0.4;ACCURACY_ADD:0.4">
+		<requires nodeId="30252" />
+		<requires nodeId="30254" />
+	</node>
+	<node id="30254" name="Hunter's Instinct" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1880.2" y="923.7" orbitX="-1788.6" orbitY="872.4" effect="EVASION_ADD:0.4;ACCURACY_ADD:0.4">
+		<requires nodeId="30253" />
+		<requires nodeId="30255" />
+	</node>
+	<node id="30255" name="Predator's Focus" sector="Stalker" type="NOTABLE" tier="0" cost="2" x="-1771.7" y="976.0" orbitX="-1788.6" orbitY="872.4" effect="DEX:1;CRIT_RATE_ADD:12;EVASION_ADD:1.5" description="Hunter's Instinct mastery. Suits a Shadowblade/Deadeye hybrid.">
+		<requires nodeId="30254" />
+	</node>
+	<node id="30257" name="Mana Well" sector="Stalker" type="SMALL" tier="0" cost="1" x="-742.4" y="440.6" orbitX="-644.5" orbitY="402.7" effect="MAXMP:16;MP_REGEN_PCT:0.6">
+		<requires nodeId="30256" />
+		<requires nodeId="30258" />
+	</node>
+	<node id="30258" name="Mana Well" sector="Stalker" type="SMALL" tier="0" cost="1" x="-713.6" y="323.7" orbitX="-644.5" orbitY="402.7" effect="MAXMP:16;MP_REGEN_PCT:0.6">
+		<requires nodeId="30257" />
+		<requires nodeId="30259" />
+	</node>
+	<node id="30259" name="Mana Well" sector="Stalker" type="SMALL" tier="0" cost="1" x="-593.9" y="310.8" orbitX="-644.5" orbitY="402.7" effect="MAXMP:16;MP_REGEN_PCT:0.6">
+		<requires nodeId="30258" />
+		<requires nodeId="30260" />
+	</node>
+	<node id="30260" name="Inner Spring" sector="Stalker" type="NOTABLE" tier="0" cost="2" x="-540.8" y="418.9" orbitX="-644.5" orbitY="402.7" effect="MEN:1;MAXMP:80;MP_REGEN_PCT:4" description="Mana Well mastery. Off-path: pays off only if you rebuild around it.">
+		<requires nodeId="30259" />
 	</node>
 </list>

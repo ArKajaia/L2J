@@ -276,10 +276,12 @@
 	<node id="23103" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1591.0" y="-1591.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2">
 		<requires nodeId="5016" />
 		<requires nodeId="23102" />
+		<requires nodeId="30362" />
 	</node>
 	<node id="23201" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1593.8" y="-427.1" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2">
 		<requires nodeId="4039" />
 		<requires nodeId="23202" />
+		<requires nodeId="30356" />
 	</node>
 	<node id="23202" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1428.9" y="-825.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2">
 		<requires nodeId="23201" />
@@ -288,6 +290,7 @@
 	<node id="23203" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1166.7" y="-1166.7" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2">
 		<requires nodeId="5039" />
 		<requires nodeId="23202" />
+		<requires nodeId="30361" />
 	</node>
 	<node id="23301" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1014.2" y="-271.8" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2">
 		<requires nodeId="4062" />
@@ -296,6 +299,7 @@
 	<node id="23302" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-909.3" y="-525.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2">
 		<requires nodeId="23301" />
 		<requires nodeId="23303" />
+		<requires nodeId="30351" />
 	</node>
 	<node id="23303" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-742.5" y="-742.5" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2">
 		<requires nodeId="5062" />

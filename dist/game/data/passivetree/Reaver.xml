@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Reaver: 28 nodes, hybrid of Juggernaut and Shadowblade filling the gap between their arms. x/y are authoritative layout coords. -->
+<!-- Reaver: 41 nodes, hybrid of Juggernaut and Shadowblade filling the gap between their arms. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="30101" name="Confluence" sector="Reaver" type="SMALL" tier="0" cost="1" x="0.0" y="2400.0" effect="PATK_PCT:0.3;CRIT_DMG_PCT:0.5">
 		<requires nodeId="21102" />
@@ -121,5 +121,55 @@
 	</node>
 	<node id="30130" name="Reaving Strike" sector="Reaver" type="ACTIVE_SKILL" tier="0" cost="2" x="-990.0" y="3300.0" effect="MAXHP:15" skillId="90461" skillLevel="auto" description="ACTIVE: heavy melee strike that can make the target bleed for 10s (20s cooldown). Grows stronger with your level.">
 		<requires nodeId="30129" />
+	</node>
+	<node id="30151" name="Waystone" sector="Reaver" type="SMALL" tier="0" cost="1" x="310.8" y="1762.8" effect="PATK_PCT:0.4">
+		<requires nodeId="21201" />
+		<requires nodeId="30152" />
+	</node>
+	<node id="30156" name="Waystone" sector="Reaver" type="SMALL" tier="0" cost="1" x="-204.9" y="1162.1" effect="MAXHP:10">
+		<requires nodeId="21303" />
+		<requires nodeId="30157" />
+	</node>
+	<node id="30161" name="Grit" sector="Reaver" type="SMALL" tier="0" cost="1" x="124.4" y="1183.5" effect="MAXHP:12">
+		<requires nodeId="21302" />
+		<requires nodeId="30162" />
+	</node>
+	<node id="30162" name="Grit" sector="Reaver" type="SMALL" tier="0" cost="1" x="232.7" y="1319.6" effect="HP_REGEN_PCT:1">
+		<requires nodeId="30161" />
+		<requires nodeId="30163" />
+	</node>
+	<node id="30163" name="Grit" sector="Reaver" type="SMALL" tier="0" cost="1" x="337.4" y="1461.6" effect="MAXHP:12">
+		<requires nodeId="21201" />
+		<requires nodeId="30162" />
+	</node>
+	<node id="30152" name="Bloodlust" sector="Reaver" type="SMALL" tier="0" cost="1" x="119.1" y="1902.8" orbitX="34.3" orbitY="1964.7" effect="ATK_SPD_PCT:0.6;CRIT_DMG_PCT:0.6">
+		<requires nodeId="30151" />
+		<requires nodeId="30153" />
+	</node>
+	<node id="30153" name="Bloodlust" sector="Reaver" type="SMALL" tier="0" cost="1" x="121.5" y="2023.2" orbitX="34.3" orbitY="1964.7" effect="ATK_SPD_PCT:0.6;CRIT_DMG_PCT:0.6">
+		<requires nodeId="30152" />
+		<requires nodeId="30154" />
+	</node>
+	<node id="30154" name="Bloodlust" sector="Reaver" type="SMALL" tier="0" cost="1" x="9.1" y="2066.6" orbitX="34.3" orbitY="1964.7" effect="ATK_SPD_PCT:0.6;CRIT_DMG_PCT:0.6">
+		<requires nodeId="30153" />
+		<requires nodeId="30155" />
+	</node>
+	<node id="30155" name="Berserker's Edge" sector="Reaver" type="NOTABLE" tier="0" cost="2" x="-70.1" y="1975.9" orbitX="34.3" orbitY="1964.7" effect="STR:1;DEX:1;ATK_SPD_PCT:2" description="Bloodlust mastery. Suits a Juggernaut/Shadowblade hybrid.">
+		<requires nodeId="30154" />
+	</node>
+	<node id="30157" name="Bulwark Drill" sector="Reaver" type="SMALL" tier="0" cost="1" x="-128.7" y="1279.9" orbitX="-71.7" orbitY="1368.1" effect="PDEF_PCT:0.8;SHIELD_RATE_PCT:0.5">
+		<requires nodeId="30156" />
+		<requires nodeId="30158" />
+	</node>
+	<node id="30158" name="Bulwark Drill" sector="Reaver" type="SMALL" tier="0" cost="1" x="-174.1" y="1391.5" orbitX="-71.7" orbitY="1368.1" effect="PDEF_PCT:0.8;SHIELD_RATE_PCT:0.5">
+		<requires nodeId="30157" />
+		<requires nodeId="30159" />
+	</node>
+	<node id="30159" name="Bulwark Drill" sector="Reaver" type="SMALL" tier="0" cost="1" x="-84.7" y="1472.3" orbitX="-71.7" orbitY="1368.1" effect="PDEF_PCT:0.8;SHIELD_RATE_PCT:0.5">
+		<requires nodeId="30158" />
+		<requires nodeId="30160" />
+	</node>
+	<node id="30160" name="Hold the Line" sector="Reaver" type="NOTABLE" tier="0" cost="2" x="21.8" y="1416.0" orbitX="-71.7" orbitY="1368.1" effect="CON:1;SHIELD_RATE_PCT:4;PDEF_PCT:3" description="Bulwark Drill mastery. Off-path: pays off only if you rebuild around it.">
+		<requires nodeId="30159" />
 	</node>
 </list>

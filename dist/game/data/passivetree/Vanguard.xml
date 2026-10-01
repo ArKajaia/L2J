@@ -284,14 +284,17 @@
 	<node id="20202" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1428.9" y="825.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6">
 		<requires nodeId="20201" />
 		<requires nodeId="20203" />
+		<requires nodeId="30051" />
 	</node>
 	<node id="20203" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1166.7" y="1166.7" orbitX="0.0" orbitY="0.0" effect="MAXHP:6">
 		<requires nodeId="2039" />
 		<requires nodeId="20202" />
+		<requires nodeId="30062" />
 	</node>
 	<node id="20301" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1014.2" y="271.8" orbitX="0.0" orbitY="0.0" effect="MAXHP:6">
 		<requires nodeId="1062" />
 		<requires nodeId="20302" />
+		<requires nodeId="30056" />
 	</node>
 	<node id="20302" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="909.3" y="525.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6">
 		<requires nodeId="20301" />
@@ -300,5 +303,6 @@
 	<node id="20303" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="742.5" y="742.5" orbitX="0.0" orbitY="0.0" effect="MAXHP:6">
 		<requires nodeId="2062" />
 		<requires nodeId="20302" />
+		<requires nodeId="30061" />
 	</node>
 </list>

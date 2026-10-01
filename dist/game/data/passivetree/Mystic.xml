@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Mystic: 28 nodes, hybrid of Arcanist and Hierophant filling the gap between their arms. x/y are authoritative layout coords. -->
+<!-- Mystic: 41 nodes, hybrid of Arcanist and Hierophant filling the gap between their arms. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="30401" name="Confluence" sector="Mystic" type="SMALL" tier="0" cost="1" x="0.0" y="-2400.0" effect="MATK_PCT:0.3;MAXMP:8">
 		<requires nodeId="24102" />
@@ -121,5 +121,55 @@
 	</node>
 	<node id="30430" name="Temporal Flow" sector="Mystic" type="ACTIVE_SKILL" tier="0" cost="2" x="990.0" y="-3300.0" effect="MAXHP:15" skillId="90464" skillLevel="1" description="ACTIVE: magic skills recharge 25% faster and cast 10% faster for 15s (180s cooldown).">
 		<requires nodeId="30429" />
+	</node>
+	<node id="30451" name="Waystone" sector="Mystic" type="SMALL" tier="0" cost="1" x="94.2" y="-1797.5" effect="MATK_PCT:0.4">
+		<requires nodeId="24202" />
+		<requires nodeId="30452" />
+	</node>
+	<node id="30456" name="Waystone" sector="Mystic" type="SMALL" tier="0" cost="1" x="32.5" y="-929.4" effect="MAXHP:10">
+		<requires nodeId="24302" />
+		<requires nodeId="30457" />
+	</node>
+	<node id="30461" name="Focus" sector="Mystic" type="SMALL" tier="0" cost="1" x="-278.9" y="-1208.2" effect="CAST_SPD_PCT:0.5">
+		<requires nodeId="24301" />
+		<requires nodeId="30462" />
+	</node>
+	<node id="30462" name="Focus" sector="Mystic" type="SMALL" tier="0" cost="1" x="-357.2" y="-1333.0" effect="INT:1">
+		<requires nodeId="30461" />
+		<requires nodeId="30463" />
+	</node>
+	<node id="30463" name="Focus" sector="Mystic" type="SMALL" tier="0" cost="1" x="-341.9" y="-1481.0" effect="CAST_SPD_PCT:0.5">
+		<requires nodeId="24201" />
+		<requires nodeId="30462" />
+	</node>
+	<node id="30452" name="Ley Wellspring" sector="Mystic" type="SMALL" tier="0" cost="1" x="199.1" y="-1894.4" orbitX="276.3" orbitY="-1965.7" effect="MATK_PCT:0.5;MP_REGEN_PCT:0.5">
+		<requires nodeId="30451" />
+		<requires nodeId="30453" />
+	</node>
+	<node id="30453" name="Ley Wellspring" sector="Mystic" type="SMALL" tier="0" cost="1" x="316.8" y="-1868.8" orbitX="276.3" orbitY="-1965.7" effect="MATK_PCT:0.5;MP_REGEN_PCT:0.5">
+		<requires nodeId="30452" />
+		<requires nodeId="30454" />
+	</node>
+	<node id="30454" name="Ley Wellspring" sector="Mystic" type="SMALL" tier="0" cost="1" x="381.1" y="-1970.7" orbitX="276.3" orbitY="-1965.7" effect="MATK_PCT:0.5;MP_REGEN_PCT:0.5">
+		<requires nodeId="30453" />
+		<requires nodeId="30455" />
+	</node>
+	<node id="30455" name="Archon's Insight" sector="Mystic" type="NOTABLE" tier="0" cost="2" x="307.4" y="-2065.9" orbitX="276.3" orbitY="-1965.7" effect="INT:1;MEN:1;MATK_PCT:2" description="Ley Wellspring mastery. Suits a Arcanist/Hierophant hybrid.">
+		<requires nodeId="30454" />
+	</node>
+	<node id="30457" name="War Hymn" sector="Mystic" type="SMALL" tier="0" cost="1" x="45.6" y="-865.0" orbitX="66.7" orbitY="-762.1" effect="PATK_PCT:0.6;ATK_SPD_PCT:0.4">
+		<requires nodeId="30456" />
+		<requires nodeId="30458" />
+	</node>
+	<node id="30458" name="War Hymn" sector="Mystic" type="SMALL" tier="0" cost="1" x="156.1" y="-817.0" orbitX="66.7" orbitY="-762.1" effect="PATK_PCT:0.6;ATK_SPD_PCT:0.4">
+		<requires nodeId="30457" />
+		<requires nodeId="30459" />
+	</node>
+	<node id="30459" name="War Hymn" sector="Mystic" type="SMALL" tier="0" cost="1" x="148.9" y="-696.8" orbitX="66.7" orbitY="-762.1" effect="PATK_PCT:0.6;ATK_SPD_PCT:0.4">
+		<requires nodeId="30458" />
+		<requires nodeId="30460" />
+	</node>
+	<node id="30460" name="Crusader's Fervor" sector="Mystic" type="NOTABLE" tier="0" cost="2" x="33.5" y="-662.5" orbitX="66.7" orbitY="-762.1" effect="STR:1;PATK_PCT:4;ATK_SPD_PCT:3" description="War Hymn mastery. Off-path: pays off only if you rebuild around it.">
+		<requires nodeId="30459" />
 	</node>
 </list>

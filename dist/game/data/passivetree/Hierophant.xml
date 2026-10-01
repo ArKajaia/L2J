@@ -276,6 +276,7 @@
 	<node id="25103" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2173.3" y="-582.3" orbitX="0.0" orbitY="0.0" effect="MAXMP:6">
 		<requires nodeId="1016" />
 		<requires nodeId="25102" />
+		<requires nodeId="30562" />
 	</node>
 	<node id="25201" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1166.7" y="-1166.7" orbitX="0.0" orbitY="0.0" effect="MAXMP:6">
 		<requires nodeId="6039" />
@@ -284,10 +285,12 @@
 	<node id="25202" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1428.9" y="-825.0" orbitX="0.0" orbitY="0.0" effect="MAXMP:6">
 		<requires nodeId="25201" />
 		<requires nodeId="25203" />
+		<requires nodeId="30556" />
 	</node>
 	<node id="25203" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1593.8" y="-427.1" orbitX="0.0" orbitY="0.0" effect="MAXMP:6">
 		<requires nodeId="1039" />
 		<requires nodeId="25202" />
+		<requires nodeId="30561" />
 	</node>
 	<node id="25301" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="742.5" y="-742.5" orbitX="0.0" orbitY="0.0" effect="MAXMP:6">
 		<requires nodeId="6062" />
@@ -300,5 +303,6 @@
 	<node id="25303" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1014.2" y="-271.8" orbitX="0.0" orbitY="0.0" effect="MAXMP:6">
 		<requires nodeId="1062" />
 		<requires nodeId="25302" />
+		<requires nodeId="30551" />
 	</node>
 </list>

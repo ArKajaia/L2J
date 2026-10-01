@@ -60,6 +60,26 @@ HYBRID_NODES = {
 HYBRID_RINGS = {6: (480, -420, -1), 7: (480, 420, 1), 17: (1000, -220, 1)}
 HYBRID_ACTIVE_POD = {25: [(1000, -840), (1050, -990)], 26: [(1000, 840), (1050, 990)]}  # approach 29 / active 30, off whichever Veteran's Path they hang from
 
+# The space between two arms, inside ring 1, belongs to that wedge's hybrid (local ids 51+). Each wedge is laid
+# out differently on purpose. Positions are (radius, degrees past the wedge's first spine); rings are
+# first small -> (centre radius, degrees, curl).
+WEDGE_NODES = {
+	0: {51: (1820, 30), 56: (1200, 20), 61: (1230, 42), 62: (1440, 44)},
+	1: {51: (1790, 20), 56: (1180, 40), 61: (1190, 24), 62: (1340, 20), 63: (1500, 17)},
+	2: {51: (1800, 40), 56: (930, 30), 61: (1240, 19), 62: (1450, 17)},
+	3: {51: (1210, 30), 56: (1800, 17), 61: (1820, 44), 62: (2040, 43)},
+	4: {51: (1800, 33), 56: (930, 32), 61: (1240, 17), 62: (1380, 15), 63: (1520, 17)},
+	5: {51: (1200, 42), 56: (1800, 27), 61: (1830, 45), 62: (2040, 47)},
+}
+WEDGE_RINGS = {
+	0: {52: (2010, 24, 1), 57: (1390, 27, -1)},
+	1: {52: (1965, 29, 1), 57: (1370, 33, -1)},
+	2: {52: (1990, 34, -1), 57: (760, 28, 1)},
+	3: {52: (1400, 30, 1), 57: (1965, 24, -1)},
+	4: {52: (1985, 38, -1), 57: (765, 35, 1)},
+	5: {52: (1385, 35, 1), 57: (1985, 22, 1)},
+}
+
 # ------------------------------------------------------------------ XML in / out
 class Node:
 	def __init__(self, attrs, parents):
@@ -338,6 +358,16 @@ def layout(nodes):
 			entry = [nodes[j].pos for j in adj[base + first] if (nodes[j].pos is not None) and (j not in ring)]
 			place_ring(nodes, ring, at((cu, cv)), (sum(p[0] for p in entry) / len(entry), sum(p[1] for p in entry) / len(entry)), curl)
 
+	# The in-between wedges inside ring 1.
+	for hi, base in enumerate(HYBRID_BASES):
+		start = hi * SPINE_DEG
+		for local, (r, deg) in WEDGE_NODES[hi].items():
+			nodes[base + local].pos = polar(r, start + deg)
+		for first, (r, deg, curl) in WEDGE_RINGS[hi].items():
+			ring = ring_chain(nodes, adj, base + first)
+			entry = [nodes[j].pos for j in adj[base + first] if (nodes[j].pos is not None) and (j not in ring)]
+			place_ring(nodes, ring, polar(r, start + deg), entry[0], curl)
+	
 	# Junction attachments: each slot's angle, distance and curl is chosen once for all six sectors
 	# (so they stay identical by rotation), picking the cleanest candidate.
 	for junction, slots in JUNCTION_SLOTS.items():

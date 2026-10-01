@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Templar: 28 nodes, hybrid of Hierophant and Vanguard filling the gap between their arms. x/y are authoritative layout coords. -->
+<!-- Templar: 40 nodes, hybrid of Hierophant and Vanguard filling the gap between their arms. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="30501" name="Confluence" sector="Templar" type="SMALL" tier="0" cost="1" x="2078.5" y="-1200.0" effect="MDEF_PCT:0.3;MAXHP:8">
 		<requires nodeId="25102" />
@@ -121,5 +121,51 @@
 	</node>
 	<node id="30530" name="Purifying Aegis" sector="Templar" type="ACTIVE_SKILL" tier="0" cost="2" x="3352.9" y="-792.6" effect="MAXHP:15" skillId="90465" skillLevel="1" description="ACTIVE: remove up to 3 debuffs from yourself, then +20% healing received for 15s (150s cooldown).">
 		<requires nodeId="30529" />
+	</node>
+	<node id="30551" name="Waystone" sector="Templar" type="SMALL" tier="0" cost="1" x="1141.3" y="-370.8" effect="MDEF_PCT:0.4">
+		<requires nodeId="25303" />
+		<requires nodeId="30552" />
+	</node>
+	<node id="30556" name="Waystone" sector="Templar" type="SMALL" tier="0" cost="1" x="1509.6" y="-980.4" effect="MAXMP:10">
+		<requires nodeId="25202" />
+		<requires nodeId="30557" />
+	</node>
+	<node id="30561" name="Resolve" sector="Templar" type="SMALL" tier="0" cost="1" x="1767.6" y="-473.6" effect="MAXHP:15">
+		<requires nodeId="25203" />
+		<requires nodeId="30562" />
+	</node>
+	<node id="30562" name="Resolve" sector="Templar" type="SMALL" tier="0" cost="1" x="1987.7" y="-458.9" effect="MEN:1">
+		<requires nodeId="25103" />
+		<requires nodeId="30561" />
+	</node>
+	<node id="30552" name="Sanctified Plate" sector="Templar" type="SMALL" tier="0" cost="1" x="1206.0" y="-492.6" orbitX="1255.2" orbitY="-585.3" effect="MDEF_PCT:0.6;MAXHP:10">
+		<requires nodeId="30551" />
+		<requires nodeId="30553" />
+	</node>
+	<node id="30553" name="Sanctified Plate" sector="Templar" type="SMALL" tier="0" cost="1" x="1151.3" y="-599.9" orbitX="1255.2" orbitY="-585.3" effect="MDEF_PCT:0.6;MAXHP:10">
+		<requires nodeId="30552" />
+		<requires nodeId="30554" />
+	</node>
+	<node id="30554" name="Sanctified Plate" sector="Templar" type="SMALL" tier="0" cost="1" x="1233.4" y="-688.0" orbitX="1255.2" orbitY="-585.3" effect="MDEF_PCT:0.6;MAXHP:10">
+		<requires nodeId="30553" />
+		<requires nodeId="30555" />
+	</node>
+	<node id="30555" name="Bastion of Faith" sector="Templar" type="NOTABLE" tier="0" cost="2" x="1344.3" y="-641.0" orbitX="1255.2" orbitY="-585.3" effect="MEN:1;CON:1;MDEF_PCT:2" description="Sanctified Plate mastery. Suits a Hierophant/Vanguard hybrid.">
+		<requires nodeId="30554" />
+	</node>
+	<node id="30557" name="Shadow Arts" sector="Templar" type="SMALL" tier="0" cost="1" x="1541.1" y="-1119.7" orbitX="1564.2" orbitY="-1222.1" effect="CRIT_RATE_ADD:4;BLOW_RATE_PCT:0.6">
+		<requires nodeId="30556" />
+		<requires nodeId="30558" />
+	</node>
+	<node id="30558" name="Shadow Arts" sector="Templar" type="SMALL" tier="0" cost="1" x="1460.0" y="-1208.8" orbitX="1564.2" orbitY="-1222.1" effect="CRIT_RATE_ADD:4;BLOW_RATE_PCT:0.6">
+		<requires nodeId="30557" />
+		<requires nodeId="30559" />
+	</node>
+	<node id="30559" name="Shadow Arts" sector="Templar" type="SMALL" tier="0" cost="1" x="1516.1" y="-1315.4" orbitX="1564.2" orbitY="-1222.1" effect="CRIT_RATE_ADD:4;BLOW_RATE_PCT:0.6">
+		<requires nodeId="30558" />
+		<requires nodeId="30560" />
+	</node>
+	<node id="30560" name="Assassin's Creed" sector="Templar" type="NOTABLE" tier="0" cost="2" x="1635.4" y="-1299.2" orbitX="1564.2" orbitY="-1222.1" effect="DEX:1;CRIT_RATE_ADD:15;BLOW_RATE_PCT:4" description="Shadow Arts mastery. Off-path: pays off only if you rebuild around it.">
+		<requires nodeId="30559" />
 	</node>
 </list>

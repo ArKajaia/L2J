@@ -284,6 +284,7 @@
 	<node id="22201" name="Pathway" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1166.7" y="1166.7" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.2">
 		<requires nodeId="3039" />
 		<requires nodeId="22202" />
+		<requires nodeId="30262" />
 	</node>
 	<node id="22202" name="Pathway" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1428.9" y="825.0" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.2">
 		<requires nodeId="22201" />
@@ -292,14 +293,17 @@
 	<node id="22203" name="Pathway" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1593.8" y="427.1" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.2">
 		<requires nodeId="4039" />
 		<requires nodeId="22202" />
+		<requires nodeId="30251" />
 	</node>
 	<node id="22301" name="Pathway" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-742.5" y="742.5" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.2">
 		<requires nodeId="3062" />
 		<requires nodeId="22302" />
+		<requires nodeId="30261" />
 	</node>
 	<node id="22302" name="Pathway" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-909.3" y="525.0" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.2">
 		<requires nodeId="22301" />
 		<requires nodeId="22303" />
+		<requires nodeId="30256" />
 	</node>
 	<node id="22303" name="Pathway" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1014.2" y="271.8" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.2">
 		<requires nodeId="4062" />

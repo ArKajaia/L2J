@@ -280,10 +280,12 @@
 	<node id="24201" name="Pathway" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-427.1" y="-1593.8" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2">
 		<requires nodeId="5039" />
 		<requires nodeId="24202" />
+		<requires nodeId="30463" />
 	</node>
 	<node id="24202" name="Pathway" sector="Arcanist" type="SMALL" tier="0" cost="1" x="0.0" y="-1650.0" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2">
 		<requires nodeId="24201" />
 		<requires nodeId="24203" />
+		<requires nodeId="30451" />
 	</node>
 	<node id="24203" name="Pathway" sector="Arcanist" type="SMALL" tier="0" cost="1" x="427.1" y="-1593.8" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2">
 		<requires nodeId="6039" />
@@ -292,10 +294,12 @@
 	<node id="24301" name="Pathway" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-271.8" y="-1014.2" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2">
 		<requires nodeId="5062" />
 		<requires nodeId="24302" />
+		<requires nodeId="30461" />
 	</node>
 	<node id="24302" name="Pathway" sector="Arcanist" type="SMALL" tier="0" cost="1" x="0.0" y="-1050.0" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2">
 		<requires nodeId="24301" />
 		<requires nodeId="24303" />
+		<requires nodeId="30456" />
 	</node>
 	<node id="24303" name="Pathway" sector="Arcanist" type="SMALL" tier="0" cost="1" x="271.8" y="-1014.2" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2">
 		<requires nodeId="6062" />
