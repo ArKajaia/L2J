@@ -39,6 +39,7 @@ import org.l2jmobius.gameserver.model.effects.EffectType;
 import org.l2jmobius.gameserver.model.events.EventDispatcher;
 import org.l2jmobius.gameserver.model.events.EventType;
 import org.l2jmobius.gameserver.model.events.holders.actor.player.OnPlayerLevelChanged;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.script.QuestState;
 import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.model.stats.MoveType;
@@ -531,7 +532,7 @@ public class PlayerStat extends PlayableStat
 	{
 		// Get the Max CP (base+modifier) of the Player
 		final Player player = getActiveChar();
-		final int val = (player == null) ? 1 : (int) calcStat(Stat.MAX_CP, player.getTemplate().getBaseCpMax(player.getLevel()));
+		final int val = (player == null) ? 1 : (int) PassiveMechanics.maxCp(player, calcStat(Stat.MAX_CP, player.getTemplate().getBaseCpMax(player.getLevel())));
 		if (val != _oldMaxCp)
 		{
 			_oldMaxCp = val;
@@ -555,7 +556,7 @@ public class PlayerStat extends PlayableStat
 	{
 		// Get the Max HP (base+modifier) of the Player
 		final Player player = getActiveChar();
-		final int val = (player == null) ? 1 : (int) calcStat(Stat.MAX_HP, player.getTemplate().getBaseHpMax(player.getLevel()));
+		final int val = (player == null) ? 1 : (int) PassiveMechanics.maxHp(player, calcStat(Stat.MAX_HP, player.getTemplate().getBaseHpMax(player.getLevel())));
 		if (val != _oldMaxHp)
 		{
 			_oldMaxHp = val;
@@ -579,7 +580,7 @@ public class PlayerStat extends PlayableStat
 	{
 		// Get the Max MP (base+modifier) of the Player
 		final Player player = getActiveChar();
-		final int val = (player == null) ? 1 : (int) calcStat(Stat.MAX_MP, player.getTemplate().getBaseMpMax(player.getLevel()));
+		final int val = (player == null) ? 1 : (int) PassiveMechanics.maxMp(player, calcStat(Stat.MAX_MP, player.getTemplate().getBaseMpMax(player.getLevel())), calcStat(Stat.MAX_CP, player.getTemplate().getBaseCpMax(player.getLevel())));
 		if (val != _oldMaxMp)
 		{
 			_oldMaxMp = val;

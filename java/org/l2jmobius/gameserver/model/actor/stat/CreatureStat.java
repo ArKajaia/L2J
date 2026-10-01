@@ -31,6 +31,7 @@ import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.transform.Transform;
 import org.l2jmobius.gameserver.model.item.holders.Elementals;
 import org.l2jmobius.gameserver.model.item.instance.Item;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.stats.Calculator;
 import org.l2jmobius.gameserver.model.stats.MoveType;
@@ -187,7 +188,7 @@ public class CreatureStat
 		
 		// if (!_creature.isGM())
 		// {
-		val = Math.min(val, PlayerConfig.MAX_PCRIT_RATE);
+		val = Math.min(val, PassiveMechanics.critCap(_creature, PlayerConfig.MAX_PCRIT_RATE)); // Passive tree Thousand Cuts raises the cap.
 		// }
 		
 		return (int) (val + .5);

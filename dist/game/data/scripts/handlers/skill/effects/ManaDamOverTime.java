@@ -24,6 +24,7 @@ import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.conditions.Condition;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.network.SystemMessageId;
 
@@ -50,6 +51,14 @@ public class ManaDamOverTime extends AbstractEffect
 		}
 		
 		final double manaDam = _power * getTicksMultiplier();
+		
+		// Passive tree Blood Stance / Martyr's Vow: a toggle drains HP instead.
+		final Boolean paidWithHp = PassiveMechanics.drainToggleWithHp(effected, skill, manaDam);
+		if (paidWithHp != null)
+		{
+			return paidWithHp;
+		}
+		
 		if ((manaDam > effected.getCurrentMp()) && skill.isToggle())
 		{
 			effected.sendPacket(SystemMessageId.YOUR_SKILL_WAS_DEACTIVATED_DUE_TO_LACK_OF_MP);

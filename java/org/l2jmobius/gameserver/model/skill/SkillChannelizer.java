@@ -28,6 +28,7 @@ import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.item.enums.ShotType;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.network.SystemMessageId;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillLaunched;
 import org.l2jmobius.gameserver.util.LocationUtil;
@@ -134,7 +135,17 @@ public class SkillChannelizer implements Runnable
 		
 		try
 		{
-			if (skill.getMpPerChanneling() > 0)
+			if ((skill.getMpPerChanneling() > 0) && PassiveMechanics.paysWithHp(_channelizer, skill))
+			{
+				// Passive tree blood keystones: the channeling cost is paid with HP, and can never kill.
+				if (!PassiveMechanics.payWithHp(_channelizer, skill.getMpPerChanneling()))
+				{
+					_channelizer.sendPacket(SystemMessageId.YOUR_SKILL_HAS_BEEN_CANCELED_DUE_TO_LACK_OF_HP);
+					_channelizer.abortCast();
+					return;
+				}
+			}
+			else if (skill.getMpPerChanneling() > 0)
 			{
 				// Validate mana per tick.
 				if (_channelizer.getCurrentMp() < skill.getMpPerChanneling())

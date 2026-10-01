@@ -627,7 +627,32 @@ const STAT_LABEL = {
 	SKILL_CDR_PCT:"Skill Cooldown Reduction", SPELL_CDR_PCT:"Spell Cooldown Reduction",
 	SPELL_MP_COST_RED_PCT:"Spell MP Cost Reduction", CRIT_DMG_TAKEN_RED_PCT:"Critical Damage Taken Reduction",
 	INTERRUPT_RES_PCT:"Cast Interruption Resistance", DEBUFF_RES_PCT:"Debuff Resistance",
+	MAXHP_PCT:"Maximum HP", SERVITOR_SHARE_PCT:"Damage Taken Redirected to Servitor", SHIELD_RATE_MUL_PCT:"More Shield Blocks",
 };
+
+// Keystone mechanics read as rules, not numbers. Mirrors KEYSTONE_TEXT in PassiveTreeBoard.java.
+const KEYSTONE_TEXT = {
+	KS_MIND_OVER_MATTER: v => `${v}% of damage taken is drained from MP first`,
+	KS_ARCANE_OVERLOAD: v => `Up to +${v}% spell damage as your MP runs low`,
+	KS_STUN_IMMUNE: () => "Cannot be stunned",
+	KS_BLOOD_TOGGLES: () => "Toggle skills cost and drain HP instead of MP",
+	KS_BLOOD_MAGIC: v => `Skills cost HP instead of MP; +${v}% of max MP as max HP`,
+	KS_POINT_BLANK: v => `Bow and spell damage +${v}% up close, -${v}% at long range`,
+	KS_FAR_SHOT: v => `Bow and spell damage +${v}% at long range, -${v}% up close`,
+	KS_MEN_STUN: () => "Stuns and other CON-resisted effects are resisted with MEN",
+	KS_PDEF_AS_MDEF: v => `M.Def is your P.Def -${v}%`,
+	KS_SOUL_HARVEST: v => `${v}% chance per landed hit for a Force charge and a soul`,
+	KS_CRIT_CAP: v => `Critical rate cap raised to ${v}`,
+	KS_RESOLUTE: () => "Attacks never miss, but never critically hit",
+	KS_RAMPAGE: v => `Up to +${v}% P.Atk as your HP runs low`,
+	KS_SPELL_LEECH: v => `${v}% of spell damage dealt heals you`,
+	KS_ELDRITCH_BATTERY: v => `Max CP is 1; ${v}% of it becomes max MP`,
+	KS_PURITY: () => "Immune to poison and bleeding",
+	KS_OVERHEAL_CP: v => `${v}% of overhealing you cast becomes CP`,
+};
+
+// Keystones that cancel each other out: only one of each group per character. Mirrors PassiveMechanics.EXCLUSIVE_GROUPS.
+const EXCLUSIVE_GROUPS = [["KS_POINT_BLANK", "KS_FAR_SHOT"]];
 
 // Which glyph represents each stat family, reused for both SMALL and NOTABLE
 // nodes (a Notable just renders its family icon bigger/brighter).
@@ -648,6 +673,7 @@ const STAT_ICON = {
 	PVE_PDMG_PCT:"sword", PVE_BOW_DMG_PCT:"sword", PHYS_SKILL_POWER_PCT:"sword", PVE_MDMG_PCT:"spark",
 	MCRIT_DMG_PCT:"star", BLOW_RATE_PCT:"star",
 	SKILL_CDR_PCT:"wind", SPELL_CDR_PCT:"wind",
+	MAXHP_PCT:"heart", SERVITOR_SHARE_PCT:"shield", SHIELD_RATE_MUL_PCT:"shield",
 };
 
 /** Which <symbol id="icon-..."> a node should render, ignoring lock state. */
@@ -684,9 +710,10 @@ function parseEffectSpec(spec) {
 	}).filter(Boolean);
 }
 function formatStat(key, val) {
+	const rounded = Math.round(val * 100) / 100;
+	if (KEYSTONE_TEXT[key]) return { text: KEYSTONE_TEXT[key](rounded), good: true };
 	const label = STAT_LABEL[key] || key;
 	const pct = key.endsWith("_PCT");
-	const rounded = Math.round(val * 100) / 100;
 	const sign = rounded > 0 ? "+" : "";
 	return { text: `${sign}${rounded}${pct ? "%" : ""} ${label}`, good: rounded >= 0 };
 }
@@ -805,7 +832,21 @@ function isAvailable(n) {
 	if (!character) return true;
 	// Only one starting point per character: once one is taken the others lock.
 	if (isRootNode(n)) return !hasStartNode();
+	if (conflictingNode(n)) return false;
 	return n.parents.some(p => allocated.has(p));
+}
+
+/** An allocated node whose keystone can't be combined with n's (see EXCLUSIVE_GROUPS), or null. */
+function conflictingNode(n) {
+	const keys = parseEffectSpec(n.effect).map(e => e.key);
+	for (const group of EXCLUSIVE_GROUPS) {
+		const mine = keys.filter(k => group.includes(k));
+		if (!mine.length) continue;
+		const other = nodes.find(m => allocated.has(m.id) &&
+			parseEffectSpec(m.effect).some(e => group.includes(e.key) && !mine.includes(e.key)));
+		if (other) return other;
+	}
+	return null;
 }
 
 function isRootNode(n) {
@@ -1001,6 +1042,8 @@ function renderDetailPanel(n) {
 		actionHtml = `<button class="detail-action" id="detail-action-btn">Allocate - ${n.cost} point${n.cost === 1 ? "" : "s"}`;
 	} else if (character && isRootNode(n) && hasStartNode()) {
 		actionHtml = `<button class="detail-action" disabled>Starting point already chosen`;
+	} else if (character && conflictingNode(n)) {
+		actionHtml = `<button class="detail-action" disabled>Can't be combined with ${conflictingNode(n).name}`;
 	} else {
 		actionHtml = `<button class="detail-action" disabled>Locked`;
 	}

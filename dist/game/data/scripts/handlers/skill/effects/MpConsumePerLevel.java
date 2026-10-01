@@ -24,6 +24,7 @@ import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.conditions.Condition;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.network.SystemMessageId;
 
@@ -56,6 +57,14 @@ public class MpConsumePerLevel extends AbstractEffect
 		}
 		
 		final double consume = _power * getTicksMultiplier() * ((effected.getLevel() - 1) / 7.5);
+		
+		// Passive tree Blood Stance / Martyr's Vow: the toggle drains HP instead.
+		final Boolean paidWithHp = PassiveMechanics.drainToggleWithHp(effected, skill, consume);
+		if (paidWithHp != null)
+		{
+			return paidWithHp;
+		}
+		
 		if (consume > effected.getCurrentMp())
 		{
 			effected.sendPacket(SystemMessageId.YOUR_SKILL_WAS_DEACTIVATED_DUE_TO_LACK_OF_MP);
