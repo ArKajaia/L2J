@@ -262,7 +262,14 @@ public class PassiveTreeBoard implements IParseBoardHandler
 
 		for (Skill skill : sorted)
 		{
-			sb.append("<font color=\"60C0FF\">").append(skill.getName()).append("</font> <font color=\"777777\">Lv. ").append(skill.getLevel()).append(skill.isPassive() ? " (passive)" : "").append("</font><br1>");
+			// Show what the character really knows, so this page also confirms the server granted it.
+			final Skill known = player.getKnownSkill(skill.getId());
+			if (known == null)
+			{
+				sb.append("<font color=\"FF6060\">").append(skill.getName()).append("</font> <font color=\"777777\">not active - relog, or report it</font><br1>");
+				continue;
+			}
+			sb.append("<font color=\"60C0FF\">").append(known.getName()).append("</font> <font color=\"777777\">Lv. ").append(known.getLevel()).append(known.isPassive() ? " (passive)" : "").append("</font><br1>");
 		}
 		sb.append("<br>");
 	}

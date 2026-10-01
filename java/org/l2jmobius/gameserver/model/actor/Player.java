@@ -64,6 +64,7 @@ import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.PvpConfig;
 import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
+import org.l2jmobius.gameserver.config.custom.CustomBuffConfig;
 import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
 import org.l2jmobius.gameserver.config.custom.FactionSystemConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
@@ -8309,7 +8310,8 @@ public class Player extends Playable
 					// Add the Skill object to the Creature _skills and its Func objects to the calculator set of the Creature
 					addSkill(skill);
 					
-					if (GeneralConfig.SKILL_CHECK_ENABLE && (!isGM() || GeneralConfig.SKILL_CHECK_GM) && !SkillTreeData.getInstance().isSkillAllowed(this, skill))
+					// Buffs learned with Glittering Medals (CustomBuffBook) are not in the class tree on purpose - don't treat them as illegal.
+					if (GeneralConfig.SKILL_CHECK_ENABLE && (!isGM() || GeneralConfig.SKILL_CHECK_GM) && !SkillTreeData.getInstance().isSkillAllowed(this, skill) && !CustomBuffConfig.SKILLS.contains(skill.getId()))
 					{
 						PunishmentManager.handleIllegalPlayerAction(this, "Player " + getName() + " has invalid skill " + skill.getName() + " (" + skill.getId() + "/" + skill.getLevel() + "), class:" + ClassListData.getInstance().getClass(getPlayerClass()).getClassName(), IllegalActionPunishmentType.BROADCAST);
 						if (GeneralConfig.SKILL_CHECK_REMOVE)
