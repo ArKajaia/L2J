@@ -126,6 +126,9 @@ public class PassiveTreeBoard implements IParseBoardHandler
 		KEYSTONE_TEXT.put("KS_OVERHEAL_CP", "%s%% of overhealing you cast becomes CP");
 	}
 
+	// Conditional bonuses ("PDEF_PCT@HEAVY") only apply in that situation. Mirrors COND_TEXT in passive-tree.html.
+	private static final Map<String, String> COND_TEXT = Map.ofEntries(Map.entry("HEAVY", "in heavy armour"), Map.entry("LIGHT", "in light armour"), Map.entry("ROBE", "in a robe"), Map.entry("NOARMOR", "wearing no armour"), Map.entry("SHIELD", "with a shield"), Map.entry("BOW", "with a bow"), Map.entry("DAGGER", "with a dagger"), Map.entry("DUAL", "with dual swords"), Map.entry("SWORD", "with a sword"), Map.entry("BLUNT", "with a blunt weapon"), Map.entry("POLE", "with a polearm"), Map.entry("FIST", "with fist weapons"), Map.entry("LOWHP", "below 50% HP"), Map.entry("FULLHP", "above 90% HP"), Map.entry("NIGHT", "at night"), Map.entry("DAY", "during the day"));
+
 	private static final String[] COMMAND =
 	{
 		"_bbspassives",
@@ -245,11 +248,14 @@ public class PassiveTreeBoard implements IParseBoardHandler
 				continue;
 			}
 
-			final boolean pct = key.endsWith("_PCT");
+			final int at = key.indexOf('@');
+			final String base = at > 0 ? key.substring(0, at) : key;
+			final String condition = at > 0 ? " (" + COND_TEXT.getOrDefault(key.substring(at + 1), key.substring(at + 1).toLowerCase()) + ")" : "";
+			final boolean pct = base.endsWith("_PCT");
 			final String sign = rounded > 0 ? "+" : "";
 			final String color = rounded >= 0 ? "55FF55" : "FF6060";
 
-			sb.append("<font color=\"").append(color).append("\">").append(sign).append(formatNumber(rounded)).append(pct ? "%" : "").append(" ").append(STAT_LABEL.getOrDefault(key, key)).append("</font><br1>");
+			sb.append("<font color=\"").append(color).append("\">").append(sign).append(formatNumber(rounded)).append(pct ? "%" : "").append(" ").append(STAT_LABEL.getOrDefault(base, base)).append(condition).append("</font><br1>");
 		}
 		sb.append("<br>");
 	}

@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Vanguard: 73 nodes. x/y are authoritative layout coords. -->
+<!-- Vanguard: 81 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="1000" name="Vanguard Origin" sector="Vanguard" type="START" tier="0" cost="0" x="3300.0" y="0.0" effect="MAXHP:8" description="Starting point for this archetype." />
-	<node id="1001" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2850.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6" description="Junction.">
+	<node id="1001" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2850.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5" description="Junction.">
 		<requires nodeId="1003" />
 		<requires nodeId="1004" />
 		<requires nodeId="1009" />
 		<requires nodeId="1014" />
 		<requires nodeId="1017" />
 	</node>
-	<node id="1002" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3150.0" y="0.0" effect="MAXHP:6">
+	<node id="1002" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3150.0" y="0.0" effect="MAXHP:18">
 		<requires nodeId="1000" />
 		<requires nodeId="1003" />
 	</node>
-	<node id="1003" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3000.0" y="0.0" effect="MAXHP:6">
+	<node id="1003" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3000.0" y="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
 		<requires nodeId="1001" />
 		<requires nodeId="1002" />
 	</node>
 	<node id="1004" name="Iron Skin" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2945.5" y="-95.5" orbitX="3019.7" orbitY="-169.7" effect="PDEF_PCT:1">
 		<requires nodeId="1001" />
 		<requires nodeId="1006" />
-		<requires nodeId="30526" />
+		<requires nodeId="33508" />
 	</node>
 	<node id="1006" name="Iron Skin" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3064.1" y="-74.5" orbitX="3019.7" orbitY="-169.7" effect="PDEF_PCT:1">
 		<requires nodeId="1004" />
@@ -36,7 +36,7 @@
 	<node id="1009" name="Vitality" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2945.5" y="95.5" orbitX="3019.7" orbitY="169.7" effect="MAXHP:24">
 		<requires nodeId="1001" />
 		<requires nodeId="1010" />
-		<requires nodeId="30025" />
+		<requires nodeId="33006" />
 	</node>
 	<node id="1010" name="Vitality" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3064.1" y="74.5" orbitX="3019.7" orbitY="169.7" effect="MAXHP:24">
 		<requires nodeId="1009" />
@@ -56,28 +56,28 @@
 	<node id="1015" name="Vanguard Aegis" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="1" x="2680.3" y="169.7" effect="MAXHP:15" skillId="27400" skillLevel="1" description="ACTIVE: +30% P.Def and M.Def, +20% shield block for 20s (90s cooldown).">
 		<requires nodeId="1014" />
 	</node>
-	<node id="1016" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2250.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6" description="Junction.">
+	<node id="1016" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2250.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:18" description="Junction.">
 		<requires nodeId="1018" />
 		<requires nodeId="1019" />
 		<requires nodeId="1025" />
 		<requires nodeId="1031" />
 		<requires nodeId="1037" />
 		<requires nodeId="1040" />
-		<requires nodeId="20101" />
-		<requires nodeId="25103" />
+		<requires nodeId="20104" />
+		<requires nodeId="25107" />
 	</node>
-	<node id="1017" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2650.0" y="0.0" effect="MAXHP:6">
+	<node id="1017" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2650.0" y="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
 		<requires nodeId="1001" />
 		<requires nodeId="1018" />
 	</node>
-	<node id="1018" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2450.0" y="0.0" effect="MAXHP:6">
+	<node id="1018" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2450.0" y="0.0" effect="MAXHP:18">
 		<requires nodeId="1016" />
 		<requires nodeId="1017" />
 	</node>
 	<node id="1019" name="Shield Work" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2345.5" y="-95.5" orbitX="2419.7" orbitY="-169.7" effect="SHIELD_RATE_PCT:1.2">
 		<requires nodeId="1016" />
 		<requires nodeId="1020" />
-		<requires nodeId="30504" />
+		<requires nodeId="33504" />
 	</node>
 	<node id="1020" name="Shield Work" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2464.1" y="-74.5" orbitX="2419.7" orbitY="-169.7" effect="SHIELD_RATE_PCT:1.2">
 		<requires nodeId="1019" />
@@ -93,7 +93,7 @@
 	<node id="1025" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2345.5" y="95.5" orbitX="2419.7" orbitY="169.7" effect="HP_REGEN_PCT:1.6">
 		<requires nodeId="1016" />
 		<requires nodeId="1026" />
-		<requires nodeId="30003" />
+		<requires nodeId="33003" />
 	</node>
 	<node id="1026" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2464.1" y="74.5" orbitX="2419.7" orbitY="169.7" effect="HP_REGEN_PCT:1.6">
 		<requires nodeId="1025" />
@@ -128,21 +128,21 @@
 	<node id="1038" name="Deflection" sector="Vanguard" type="KEYSTONE" tier="0" cost="1" x="2080.3" y="169.7" effect="SHIELD_RATE_MUL_PCT:50;SHIELD_DEF_PCT:-40" description="KEYSTONE: You block with your shield 50% more often, but your shield defence is 40% lower.">
 		<requires nodeId="1037" />
 	</node>
-	<node id="1039" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1650.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6" description="Junction.">
+	<node id="1039" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1650.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5" description="Junction.">
 		<requires nodeId="1041" />
 		<requires nodeId="1042" />
 		<requires nodeId="1048" />
 		<requires nodeId="1054" />
 		<requires nodeId="1060" />
 		<requires nodeId="1063" />
-		<requires nodeId="20201" />
-		<requires nodeId="25203" />
+		<requires nodeId="20204" />
+		<requires nodeId="25205" />
 	</node>
-	<node id="1040" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2050.0" y="0.0" effect="MAXHP:6">
+	<node id="1040" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2050.0" y="0.0" effect="MAXHP:18">
 		<requires nodeId="1016" />
 		<requires nodeId="1041" />
 	</node>
-	<node id="1041" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1850.0" y="0.0" effect="MAXHP:6">
+	<node id="1041" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1850.0" y="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
 		<requires nodeId="1039" />
 		<requires nodeId="1040" />
 	</node>
@@ -198,21 +198,21 @@
 	<node id="1061" name="Rallying Shout" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="1" x="1480.3" y="169.7" effect="MAXHP:15" skillId="27401" skillLevel="1" description="ACTIVE: party gains +8% P.Atk, M.Atk, P.Def and M.Def for 60s (180s cooldown).">
 		<requires nodeId="1060" />
 	</node>
-	<node id="1062" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1050.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6" description="Junction.">
+	<node id="1062" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1050.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:18" description="Junction.">
 		<requires nodeId="1064" />
 		<requires nodeId="1065" />
 		<requires nodeId="1071" />
 		<requires nodeId="1077" />
 		<requires nodeId="1080" />
 		<requires nodeId="1081" />
-		<requires nodeId="20301" />
-		<requires nodeId="25303" />
+		<requires nodeId="20304" />
+		<requires nodeId="25305" />
 	</node>
-	<node id="1063" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1450.0" y="0.0" effect="MAXHP:6">
+	<node id="1063" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1450.0" y="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
 		<requires nodeId="1039" />
 		<requires nodeId="1064" />
 	</node>
-	<node id="1064" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1250.0" y="0.0" effect="MAXHP:6">
+	<node id="1064" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1250.0" y="0.0" effect="MAXHP:18">
 		<requires nodeId="1062" />
 		<requires nodeId="1063" />
 	</node>
@@ -257,52 +257,85 @@
 		<requires nodeId="1080" />
 		<requires nodeId="9001" />
 	</node>
-	<node id="1080" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="885.0" y="0.0" effect="MAXHP:6">
+	<node id="1080" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="885.0" y="0.0" effect="MAXHP:18">
 		<requires nodeId="1062" />
 		<requires nodeId="1079" />
 	</node>
 	<node id="1081" name="Field Salvage" sector="Vanguard" type="FUNCTION" tier="0" cost="1" x="965.1" y="84.9" effect="MAXHP:15" skillId="248" skillLevel="5" description="Unlocks Crystallize: break equipment of any grade down into crystals.">
 		<requires nodeId="1062" />
 	</node>
-	<node id="20101" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2173.3" y="582.3" orbitX="0.0" orbitY="0.0" effect="MAXHP:6">
-		<requires nodeId="1016" />
-		<requires nodeId="20102" />
+	<node id="20101" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2173.3" y="582.3" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
+		<requires nodeId="20104" />
+		<requires nodeId="20105" />
 	</node>
-	<node id="20102" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1948.6" y="1125.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6">
-		<requires nodeId="20101" />
-		<requires nodeId="20103" />
+	<node id="20102" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1948.6" y="1125.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:18">
+		<requires nodeId="20105" />
+		<requires nodeId="20106" />
 		<requires nodeId="30001" />
 	</node>
-	<node id="20103" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1591.0" y="1591.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6">
-		<requires nodeId="2016" />
+	<node id="20103" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1591.0" y="1591.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
+		<requires nodeId="20106" />
+		<requires nodeId="20107" />
+	</node>
+	<node id="20104" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2230.8" y="293.7" orbitX="0.0" orbitY="0.0" effect="MAXHP:18">
+		<requires nodeId="1016" />
+		<requires nodeId="20101" />
+	</node>
+	<node id="20105" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2078.7" y="861.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
+		<requires nodeId="20101" />
 		<requires nodeId="20102" />
 	</node>
-	<node id="20201" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1593.8" y="427.1" orbitX="0.0" orbitY="0.0" effect="MAXHP:6">
-		<requires nodeId="1039" />
-		<requires nodeId="20202" />
+	<node id="20106" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1785.0" y="1369.7" orbitX="0.0" orbitY="0.0" effect="MAXHP:18">
+		<requires nodeId="20102" />
+		<requires nodeId="20103" />
 	</node>
-	<node id="20202" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1428.9" y="825.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6">
+	<node id="20107" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1369.7" y="1785.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
+		<requires nodeId="2016" />
+		<requires nodeId="20103" />
+	</node>
+	<node id="20201" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1550.5" y="564.3" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
+		<requires nodeId="20202" />
+		<requires nodeId="20204" />
+	</node>
+	<node id="20202" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1428.9" y="825.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:18">
 		<requires nodeId="20201" />
 		<requires nodeId="20203" />
 		<requires nodeId="30051" />
 	</node>
-	<node id="20203" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1166.7" y="1166.7" orbitX="0.0" orbitY="0.0" effect="MAXHP:6">
-		<requires nodeId="2039" />
+	<node id="20203" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1264.0" y="1060.6" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
 		<requires nodeId="20202" />
+		<requires nodeId="20205" />
 		<requires nodeId="30062" />
 	</node>
-	<node id="20301" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1014.2" y="271.8" orbitX="0.0" orbitY="0.0" effect="MAXHP:6">
-		<requires nodeId="1062" />
+	<node id="20204" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1624.9" y="286.5" orbitX="0.0" orbitY="0.0" effect="MAXHP:18">
+		<requires nodeId="1039" />
+		<requires nodeId="20201" />
+	</node>
+	<node id="20205" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1060.6" y="1264.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
+		<requires nodeId="2039" />
+		<requires nodeId="20203" />
+	</node>
+	<node id="20301" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="986.7" y="359.1" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
 		<requires nodeId="20302" />
+		<requires nodeId="20304" />
 		<requires nodeId="30056" />
 	</node>
-	<node id="20302" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="909.3" y="525.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6">
+	<node id="20302" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="909.3" y="525.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:18">
 		<requires nodeId="20301" />
 		<requires nodeId="20303" />
+		<requires nodeId="30064" />
 	</node>
-	<node id="20303" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="742.5" y="742.5" orbitX="0.0" orbitY="0.0" effect="MAXHP:6">
-		<requires nodeId="2062" />
+	<node id="20303" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="804.3" y="674.9" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
 		<requires nodeId="20302" />
+		<requires nodeId="20305" />
 		<requires nodeId="30061" />
+	</node>
+	<node id="20304" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1034.0" y="182.3" orbitX="0.0" orbitY="0.0" effect="MAXHP:18">
+		<requires nodeId="1062" />
+		<requires nodeId="20301" />
+	</node>
+	<node id="20305" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="674.9" y="804.3" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
+		<requires nodeId="2062" />
+		<requires nodeId="20303" />
 	</node>
 </list>

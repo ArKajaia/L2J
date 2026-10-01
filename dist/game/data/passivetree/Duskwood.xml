@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Duskwood: 43 nodes, an outer region beyond the rim between Shadowblade and Deadeye. x/y are authoritative layout coords. -->
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
+	<node id="42001" name="Shadowed Path" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-2948.6" y="2948.6" effect="EVASION_ADD:0.5">
+		<requires nodeId="39212" />
+		<requires nodeId="42002" />
+	</node>
+	<node id="42002" name="Shadowed Path" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3061.8" y="3061.8" effect="MAXHP_PCT:0.8">
+		<requires nodeId="42001" />
+		<requires nodeId="42005" />
+	</node>
+	<node id="42003" name="Shadowed Path" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4027.9" y="1079.3" effect="MAXHP:18">
+		<requires nodeId="39218" />
+		<requires nodeId="42004" />
+	</node>
+	<node id="42004" name="Shadowed Path" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4182.5" y="1120.7" effect="EVASION_ADD:0.5">
+		<requires nodeId="42003" />
+		<requires nodeId="42009" />
+	</node>
+	<node id="42005" name="Shadowed Path" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3167.8" y="3167.8" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.8">
+		<requires nodeId="42002" />
+		<requires nodeId="42006" />
+		<requires nodeId="42040" />
+	</node>
+	<node id="42006" name="Shadowed Path" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3554.2" y="2727.3" orbitX="0.0" orbitY="0.0" effect="MAXHP:18">
+		<requires nodeId="42005" />
+		<requires nodeId="42007" />
+		<requires nodeId="42020" />
+		<requires nodeId="42024" />
+	</node>
+	<node id="42007" name="Shadowed Path" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3879.8" y="2240.0" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.5">
+		<requires nodeId="42006" />
+		<requires nodeId="42008" />
+		<requires nodeId="42050" />
+	</node>
+	<node id="42008" name="Shadowed Path" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4139.0" y="1714.4" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.8">
+		<requires nodeId="42007" />
+		<requires nodeId="42009" />
+		<requires nodeId="42028" />
+		<requires nodeId="42032" />
+	</node>
+	<node id="42009" name="Shadowed Path" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4327.3" y="1159.5" orbitX="0.0" orbitY="0.0" effect="MAXHP:18">
+		<requires nodeId="42004" />
+		<requires nodeId="42008" />
+		<requires nodeId="42044" />
+	</node>
+	<node id="42010" name="Shadowed Path" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4112.4" y="2826.4" effect="EVASION_ADD:0.5">
+		<requires nodeId="42060" />
+		<requires nodeId="42061" />
+	</node>
+	<node id="42050" name="Threshold" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4061.7" y="2345.0" effect="MAXHP:20">
+		<requires nodeId="42007" />
+		<requires nodeId="42051" />
+	</node>
+	<node id="42051" name="Threshold" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4226.2" y="2440.0" effect="MAXHP_PCT:1">
+		<requires nodeId="42050" />
+		<requires nodeId="42052" />
+		<requires nodeId="42061" />
+	</node>
+	<node id="42052" name="Child of Night" sector="Duskwood" type="KEYSTONE" tier="0" cost="1" x="-4399.4" y="2540.0" effect="EVASION_ADD@NIGHT:6;CRIT_RATE_ADD@NIGHT:60;PATK_PCT@DAY:-12;MATK_PCT@DAY:-12" description="KEYSTONE: At night: +6 Evasion and +60 Critical Rate. During the day: -12% P.Atk and M.Atk.">
+		<requires nodeId="42051" />
+	</node>
+	<node id="42020" name="Moonblood" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3485.7" y="2591.8" orbitX="-3438.3" orbitY="2498.1" effect="MAXHP_PCT:1.5">
+		<requires nodeId="42006" />
+		<requires nodeId="42021" />
+	</node>
+	<node id="42021" name="Moonblood" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3542.6" y="2485.6" orbitX="-3438.3" orbitY="2498.1" effect="MAXHP_PCT:1.5">
+		<requires nodeId="42020" />
+		<requires nodeId="42022" />
+	</node>
+	<node id="42022" name="Moonblood" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3462.2" y="2395.8" orbitX="-3438.3" orbitY="2498.1" effect="MAXHP_PCT:1.5">
+		<requires nodeId="42021" />
+		<requires nodeId="42023" />
+	</node>
+	<node id="42023" name="Nightborn Vigor" sector="Duskwood" type="NOTABLE" tier="0" cost="1" x="-3350.4" y="2440.6" orbitX="-3438.3" orbitY="2498.1" effect="MAXHP_PCT:4;EVASION_ADD@NIGHT:2" description="Moonblood mastery. Stronger after dark.">
+		<requires nodeId="42022" />
+	</node>
+	<node id="42024" name="Shadow Steel" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3623.6" y="2875.3" orbitX="-3668.1" orbitY="2970.4" effect="CRIT_DMG_PCT@DAGGER:3">
+		<requires nodeId="42006" />
+		<requires nodeId="42025" />
+	</node>
+	<node id="42025" name="Shadow Steel" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3742.2" y="2896.0" orbitX="-3668.1" orbitY="2970.4" effect="CRIT_DMG_PCT@DAGGER:3">
+		<requires nodeId="42024" />
+		<requires nodeId="42026" />
+	</node>
+	<node id="42026" name="Shadow Steel" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3763.4" y="3014.6" orbitX="-3668.1" orbitY="2970.4" effect="CRIT_DMG_PCT@DAGGER:3">
+		<requires nodeId="42025" />
+		<requires nodeId="42027" />
+	</node>
+	<node id="42027" name="Hamstring" sector="Duskwood" type="NOTABLE" tier="0" cost="1" x="-3659.2" y="3075.0" orbitX="-3668.1" orbitY="2970.4" effect="BLOW_RATE_PCT:5;CRIT_DMG_PCT@DAGGER:8" description="Shadow Steel mastery. Dagger crits only.">
+		<requires nodeId="42026" />
+	</node>
+	<node id="42028" name="Moonlit Arrows" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4301.9" y="1700.5" orbitX="-4406.5" orbitY="1691.5" effect="PATK_PCT@BOW:2">
+		<requires nodeId="42008" />
+		<requires nodeId="42029" />
+	</node>
+	<node id="42029" name="Moonlit Arrows" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4379.1" y="1792.9" orbitX="-4406.5" orbitY="1691.5" effect="PATK_PCT@BOW:2">
+		<requires nodeId="42028" />
+		<requires nodeId="42030" />
+	</node>
+	<node id="42030" name="Moonlit Arrows" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4492.4" y="1751.9" orbitX="-4406.5" orbitY="1691.5" effect="PATK_PCT@BOW:2">
+		<requires nodeId="42029" />
+		<requires nodeId="42031" />
+	</node>
+	<node id="42031" name="Night Hunter" sector="Duskwood" type="NOTABLE" tier="0" cost="1" x="-4492.6" y="1631.4" orbitX="-4406.5" orbitY="1691.5" effect="PATK_PCT@NIGHT:6;ACCURACY_ADD@BOW:3" description="Moonlit Arrows mastery. Bows, and the night.">
+		<requires nodeId="42030" />
+	</node>
+	<node id="42032" name="Leather Craft" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3987.4" y="1722.8" orbitX="-3882.6" orbitY="1728.6" effect="EVASION_ADD@LIGHT:0.6">
+		<requires nodeId="42008" />
+		<requires nodeId="42033" />
+	</node>
+	<node id="42033" name="Leather Craft" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3923.9" y="1825.2" orbitX="-3882.6" orbitY="1728.6" effect="EVASION_ADD@LIGHT:0.6">
+		<requires nodeId="42032" />
+		<requires nodeId="42034" />
+	</node>
+	<node id="42034" name="Leather Craft" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3806.0" y="1800.5" orbitX="-3882.6" orbitY="1728.6" effect="EVASION_ADD@LIGHT:0.6">
+		<requires nodeId="42033" />
+		<requires nodeId="42035" />
+	</node>
+	<node id="42035" name="Wind Leathers" sector="Duskwood" type="NOTABLE" tier="0" cost="1" x="-3788.9" y="1681.2" orbitX="-3882.6" orbitY="1728.6" effect="EVASION_ADD@LIGHT:3;MOVE_SPEED_ADD:4" description="Leather Craft mastery. Light armour only.">
+		<requires nodeId="42034" />
+	</node>
+	<node id="42036" name="Silent Step" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3942.2" y="3115.3" orbitX="-3889.0" orbitY="3205.8" effect="EVASION_ADD@NIGHT:0.6">
+		<requires nodeId="42037" />
+		<requires nodeId="42060" />
+	</node>
+	<node id="42037" name="Silent Step" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3822.2" y="3124.8" orbitX="-3889.0" orbitY="3205.8" effect="EVASION_ADD@NIGHT:0.6">
+		<requires nodeId="42036" />
+		<requires nodeId="42038" />
+	</node>
+	<node id="42038" name="Silent Step" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3790.0" y="3240.9" orbitX="-3889.0" orbitY="3205.8" effect="EVASION_ADD@NIGHT:0.6">
+		<requires nodeId="42037" />
+		<requires nodeId="42039" />
+	</node>
+	<node id="42039" name="Unseen" sector="Duskwood" type="NOTABLE" tier="0" cost="1" x="-3888.1" y="3310.8" orbitX="-3889.0" orbitY="3205.8" effect="EVASION_ADD@NIGHT:2.5;SKILL_DODGE_PCT:3" description="Silent Step mastery. Harder to hit at night.">
+		<requires nodeId="42038" />
+	</node>
+	<node id="42040" name="Thicket" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3178.1" y="3408.1" effect="MAXHP:20">
+		<requires nodeId="42005" />
+		<requires nodeId="42041" />
+	</node>
+	<node id="42041" name="Thicket" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3223.0" y="3564.5" effect="MAXHP:20">
+		<requires nodeId="42040" />
+		<requires nodeId="42042" />
+	</node>
+	<node id="42042" name="Thicket" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3267.2" y="3721.6" effect="MAXHP:20">
+		<requires nodeId="42041" />
+		<requires nodeId="42043" />
+	</node>
+	<node id="42043" name="Deep Roots" sector="Duskwood" type="NOTABLE" tier="0" cost="1" x="-3312.2" y="3878.1" effect="MAXHP:120;HP_REGEN_PCT:10" description="Thicket mastery. Health that grows back.">
+		<requires nodeId="42042" />
+	</node>
+	<node id="42044" name="Owl Eyes" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4540.6" y="1048.3" effect="ACCURACY_ADD@NIGHT:1">
+		<requires nodeId="42009" />
+		<requires nodeId="42045" />
+	</node>
+	<node id="42045" name="Owl Eyes" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4698.5" y="1009.0" effect="ACCURACY_ADD@NIGHT:1">
+		<requires nodeId="42044" />
+		<requires nodeId="42046" />
+	</node>
+	<node id="42046" name="Owl Eyes" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4856.6" y="968.7" effect="ACCURACY_ADD@NIGHT:1">
+		<requires nodeId="42045" />
+		<requires nodeId="42047" />
+	</node>
+	<node id="42047" name="Midnight Sight" sector="Duskwood" type="NOTABLE" tier="0" cost="1" x="-5014.6" y="929.4" effect="CRIT_RATE_ADD@NIGHT:30;ACCURACY_ADD@NIGHT:2" description="Owl Eyes mastery. Only at night.">
+		<requires nodeId="42046" />
+	</node>
+	<node id="42060" name="Shadowed Path" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4027.1" y="2971.2" effect="MAXHP:18">
+		<requires nodeId="42010" />
+		<requires nodeId="42036" />
+	</node>
+	<node id="42061" name="Shadowed Path" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4169.1" y="2633.5" effect="MAXHP_PCT:0.8">
+		<requires nodeId="42010" />
+		<requires nodeId="42051" />
+	</node>
+</list>

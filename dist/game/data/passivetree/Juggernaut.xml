@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Juggernaut: 73 nodes. x/y are authoritative layout coords. -->
+<!-- Juggernaut: 81 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="2000" name="Juggernaut Origin" sector="Juggernaut" type="START" tier="0" cost="0" x="1650.0" y="2857.9" effect="MAXHP:8" description="Starting point for this archetype." />
-	<node id="2001" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1425.0" y="2468.2" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2" description="Junction.">
+	<node id="2001" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1425.0" y="2468.2" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5" description="Junction.">
 		<requires nodeId="2003" />
 		<requires nodeId="2004" />
 		<requires nodeId="2009" />
 		<requires nodeId="2014" />
 		<requires nodeId="2017" />
 	</node>
-	<node id="2002" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1575.0" y="2728.0" effect="PATK_PCT:0.2">
+	<node id="2002" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1575.0" y="2728.0" effect="PATK_PCT:0.2;MAXHP:12">
 		<requires nodeId="2000" />
 		<requires nodeId="2003" />
 	</node>
-	<node id="2003" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1500.0" y="2598.1" effect="PATK_PCT:0.2">
+	<node id="2003" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1500.0" y="2598.1" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="2001" />
 		<requires nodeId="2002" />
 	</node>
 	<node id="2004" name="Brute Force" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1555.4" y="2503.1" orbitX="1656.8" orbitY="2530.3" effect="PATK_PCT:1">
 		<requires nodeId="2001" />
 		<requires nodeId="2006" />
-		<requires nodeId="30026" />
+		<requires nodeId="33008" />
 	</node>
 	<node id="2006" name="Brute Force" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1596.6" y="2616.3" orbitX="1656.8" orbitY="2530.3" effect="PATK_PCT:1">
 		<requires nodeId="2004" />
@@ -36,7 +36,7 @@
 	<node id="2009" name="Battle Rhythm" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1390.1" y="2598.6" orbitX="1362.9" orbitY="2700.0" effect="ATK_SPD_PCT:0.9">
 		<requires nodeId="2001" />
 		<requires nodeId="2010" />
-		<requires nodeId="30125" />
+		<requires nodeId="33106" />
 	</node>
 	<node id="2010" name="Battle Rhythm" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1467.5" y="2690.8" orbitX="1362.9" orbitY="2700.0" effect="ATK_SPD_PCT:0.9">
 		<requires nodeId="2009" />
@@ -56,28 +56,28 @@
 	<node id="2015" name="Battle Fervor" sector="Juggernaut" type="ACTIVE_SKILL" tier="0" cost="1" x="1193.2" y="2406.1" effect="MAXHP:15" skillId="27410" skillLevel="1" description="ACTIVE: +15% P.Atk and +10% Atk. Speed, but -5% P.Def, for 30s (60s cooldown).">
 		<requires nodeId="2014" />
 	</node>
-	<node id="2016" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1125.0" y="1948.6" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2" description="Junction.">
+	<node id="2016" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1125.0" y="1948.6" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP:12" description="Junction.">
 		<requires nodeId="2018" />
 		<requires nodeId="2019" />
 		<requires nodeId="2025" />
 		<requires nodeId="2031" />
 		<requires nodeId="2037" />
 		<requires nodeId="2040" />
-		<requires nodeId="20103" />
-		<requires nodeId="21101" />
+		<requires nodeId="20107" />
+		<requires nodeId="21104" />
 	</node>
-	<node id="2017" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1325.0" y="2295.0" effect="PATK_PCT:0.2">
+	<node id="2017" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1325.0" y="2295.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="2001" />
 		<requires nodeId="2018" />
 	</node>
-	<node id="2018" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1225.0" y="2121.8" effect="PATK_PCT:0.2">
+	<node id="2018" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1225.0" y="2121.8" effect="PATK_PCT:0.2;MAXHP:12">
 		<requires nodeId="2016" />
 		<requires nodeId="2017" />
 	</node>
 	<node id="2019" name="Savagery" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1255.4" y="1983.5" orbitX="1356.8" orbitY="2010.7" effect="CRIT_DMG_PCT:1.6">
 		<requires nodeId="2016" />
 		<requires nodeId="2020" />
-		<requires nodeId="30004" />
+		<requires nodeId="33004" />
 	</node>
 	<node id="2020" name="Savagery" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1296.6" y="2096.7" orbitX="1356.8" orbitY="2010.7" effect="CRIT_DMG_PCT:1.6">
 		<requires nodeId="2019" />
@@ -93,7 +93,7 @@
 	<node id="2025" name="Conditioning" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1090.1" y="2079.0" orbitX="1062.9" orbitY="2180.4" effect="MAXHP:25">
 		<requires nodeId="2016" />
 		<requires nodeId="2026" />
-		<requires nodeId="30103" />
+		<requires nodeId="33103" />
 	</node>
 	<node id="2026" name="Conditioning" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1167.5" y="2171.2" orbitX="1062.9" orbitY="2180.4" effect="MAXHP:25">
 		<requires nodeId="2025" />
@@ -128,21 +128,21 @@
 	<node id="2038" name="Resolute Technique" sector="Juggernaut" type="KEYSTONE" tier="0" cost="1" x="893.2" y="1886.4" effect="KS_RESOLUTE:1" description="KEYSTONE: Your attacks and physical skills never miss, but you can never land a critical hit.">
 		<requires nodeId="2037" />
 	</node>
-	<node id="2039" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="825.0" y="1428.9" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2" description="Junction.">
+	<node id="2039" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="825.0" y="1428.9" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5" description="Junction.">
 		<requires nodeId="2041" />
 		<requires nodeId="2042" />
 		<requires nodeId="2048" />
 		<requires nodeId="2054" />
 		<requires nodeId="2060" />
 		<requires nodeId="2063" />
-		<requires nodeId="20203" />
-		<requires nodeId="21201" />
+		<requires nodeId="20205" />
+		<requires nodeId="21204" />
 	</node>
-	<node id="2040" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1025.0" y="1775.4" effect="PATK_PCT:0.2">
+	<node id="2040" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1025.0" y="1775.4" effect="PATK_PCT:0.2;MAXHP:12">
 		<requires nodeId="2016" />
 		<requires nodeId="2041" />
 	</node>
-	<node id="2041" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="925.0" y="1602.1" effect="PATK_PCT:0.2">
+	<node id="2041" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="925.0" y="1602.1" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="2039" />
 		<requires nodeId="2040" />
 	</node>
@@ -198,21 +198,21 @@
 	<node id="2061" name="Earthshatter" sector="Juggernaut" type="ACTIVE_SKILL" tier="0" cost="1" x="593.2" y="1366.8" effect="MAXHP:15" skillId="27411" skillLevel="auto" description="ACTIVE: strike all enemies around you, with a chance to stun them for 2s (30s cooldown). Grows stronger with your level.">
 		<requires nodeId="2060" />
 	</node>
-	<node id="2062" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="525.0" y="909.3" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2" description="Junction.">
+	<node id="2062" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="525.0" y="909.3" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP:12" description="Junction.">
 		<requires nodeId="2064" />
 		<requires nodeId="2065" />
 		<requires nodeId="2071" />
 		<requires nodeId="2077" />
 		<requires nodeId="2080" />
 		<requires nodeId="2081" />
-		<requires nodeId="20303" />
-		<requires nodeId="21301" />
+		<requires nodeId="20305" />
+		<requires nodeId="21304" />
 	</node>
-	<node id="2063" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="725.0" y="1255.7" effect="PATK_PCT:0.2">
+	<node id="2063" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="725.0" y="1255.7" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="2039" />
 		<requires nodeId="2064" />
 	</node>
-	<node id="2064" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="625.0" y="1082.5" effect="PATK_PCT:0.2">
+	<node id="2064" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="625.0" y="1082.5" effect="PATK_PCT:0.2;MAXHP:12">
 		<requires nodeId="2062" />
 		<requires nodeId="2063" />
 	</node>
@@ -257,52 +257,85 @@
 		<requires nodeId="2080" />
 		<requires nodeId="9003" />
 	</node>
-	<node id="2080" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="442.5" y="766.4" effect="PATK_PCT:0.2">
+	<node id="2080" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="442.5" y="766.4" effect="PATK_PCT:0.2;MAXHP:12">
 		<requires nodeId="2062" />
 		<requires nodeId="2079" />
 	</node>
 	<node id="2081" name="Dwarven Craft Mastery" sector="Juggernaut" type="FUNCTION" tier="0" cost="1" x="409.1" y="878.3" effect="MAXHP:15" skillId="1321" skillLevel="1" description="Unlock Dwarven Craft skill.">
 		<requires nodeId="2062" />
 	</node>
-	<node id="21101" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="582.3" y="2173.3" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2">
-		<requires nodeId="2016" />
-		<requires nodeId="21102" />
+	<node id="21101" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="582.3" y="2173.3" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
+		<requires nodeId="21104" />
+		<requires nodeId="21105" />
 	</node>
-	<node id="21102" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="0.0" y="2250.0" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2">
-		<requires nodeId="21101" />
-		<requires nodeId="21103" />
+	<node id="21102" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="0.0" y="2250.0" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP:12">
+		<requires nodeId="21105" />
+		<requires nodeId="21106" />
 		<requires nodeId="30101" />
 	</node>
-	<node id="21103" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="-582.3" y="2173.3" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2">
-		<requires nodeId="3016" />
+	<node id="21103" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="-582.3" y="2173.3" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
+		<requires nodeId="21106" />
+		<requires nodeId="21107" />
+	</node>
+	<node id="21104" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="861.0" y="2078.7" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP:12">
+		<requires nodeId="2016" />
+		<requires nodeId="21101" />
+	</node>
+	<node id="21105" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="293.7" y="2230.8" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
+		<requires nodeId="21101" />
 		<requires nodeId="21102" />
 	</node>
-	<node id="21201" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="427.1" y="1593.8" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2">
-		<requires nodeId="2039" />
+	<node id="21106" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="-293.7" y="2230.8" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP:12">
+		<requires nodeId="21102" />
+		<requires nodeId="21103" />
+	</node>
+	<node id="21107" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="-861.0" y="2078.7" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
+		<requires nodeId="3016" />
+		<requires nodeId="21103" />
+	</node>
+	<node id="21201" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="286.5" y="1624.9" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="21202" />
+		<requires nodeId="21204" />
 		<requires nodeId="30151" />
 		<requires nodeId="30163" />
 	</node>
-	<node id="21202" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="0.0" y="1650.0" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2">
+	<node id="21202" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="0.0" y="1650.0" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP:12">
 		<requires nodeId="21201" />
 		<requires nodeId="21203" />
 	</node>
-	<node id="21203" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="-427.1" y="1593.8" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2">
-		<requires nodeId="3039" />
+	<node id="21203" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="-286.5" y="1624.9" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="21202" />
+		<requires nodeId="21205" />
 	</node>
-	<node id="21301" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="271.8" y="1014.2" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2">
-		<requires nodeId="2062" />
+	<node id="21204" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="564.3" y="1550.5" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP:12">
+		<requires nodeId="2039" />
+		<requires nodeId="21201" />
+	</node>
+	<node id="21205" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="-564.3" y="1550.5" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
+		<requires nodeId="3039" />
+		<requires nodeId="21203" />
+	</node>
+	<node id="21301" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="182.3" y="1034.0" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="21302" />
+		<requires nodeId="21304" />
 	</node>
-	<node id="21302" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="0.0" y="1050.0" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2">
+	<node id="21302" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="0.0" y="1050.0" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP:12">
 		<requires nodeId="21301" />
 		<requires nodeId="21303" />
 		<requires nodeId="30161" />
+		<requires nodeId="30164" />
 	</node>
-	<node id="21303" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="-271.8" y="1014.2" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2">
-		<requires nodeId="3062" />
+	<node id="21303" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="-182.3" y="1034.0" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="21302" />
+		<requires nodeId="21305" />
 		<requires nodeId="30156" />
+	</node>
+	<node id="21304" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="359.1" y="986.7" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP:12">
+		<requires nodeId="2062" />
+		<requires nodeId="21301" />
+	</node>
+	<node id="21305" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="-359.1" y="986.7" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
+		<requires nodeId="3062" />
+		<requires nodeId="21303" />
 	</node>
 </list>

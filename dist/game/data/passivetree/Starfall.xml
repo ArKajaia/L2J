@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Starfall: 44 nodes, an outer region beyond the rim between Deadeye and Arcanist. x/y are authoritative layout coords. -->
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
+	<node id="43001" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-2680.4" y="-3194.4" effect="CRIT_DMG_PCT:1">
+		<requires nodeId="39319" />
+		<requires nodeId="43002" />
+		<requires nodeId="43040" />
+	</node>
+	<node id="43002" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-2975.1" y="-3146.1" effect="MAXHP_PCT:0.8">
+		<requires nodeId="43001" />
+		<requires nodeId="43003" />
+		<requires nodeId="43020" />
+	</node>
+	<node id="43003" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3271.1" y="-3061.1" effect="MAXHP:18">
+		<requires nodeId="43002" />
+		<requires nodeId="43004" />
+		<requires nodeId="43024" />
+	</node>
+	<node id="43004" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3549.5" y="-2926.0" effect="CRIT_DMG_PCT:1">
+		<requires nodeId="43003" />
+		<requires nodeId="43005" />
+		<requires nodeId="43028" />
+	</node>
+	<node id="43005" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3814.4" y="-2746.0" effect="MAXHP_PCT:0.8">
+		<requires nodeId="43004" />
+		<requires nodeId="43006" />
+		<requires nodeId="43032" />
+	</node>
+	<node id="43006" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4062.2" y="-2538.3" effect="MAXHP:18">
+		<requires nodeId="43005" />
+		<requires nodeId="43007" />
+		<requires nodeId="43036" />
+		<requires nodeId="43060" />
+	</node>
+	<node id="43007" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4289.9" y="-2305.1" effect="CRIT_DMG_PCT:1">
+		<requires nodeId="43006" />
+		<requires nodeId="43050" />
+	</node>
+	<node id="43008" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3918.5" y="-1426.2" effect="MAXHP_PCT:0.8">
+		<requires nodeId="39313" />
+		<requires nodeId="43010" />
+		<requires nodeId="43061" />
+	</node>
+	<node id="43009" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4066.6" y="-2063.1" effect="MAXHP:18">
+		<requires nodeId="43060" />
+		<requires nodeId="43062" />
+	</node>
+	<node id="43010" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4031.8" y="-1711.4" effect="CRIT_DMG_PCT:1">
+		<requires nodeId="43008" />
+		<requires nodeId="43062" />
+	</node>
+	<node id="43050" name="Threshold" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4468.1" y="-2083.5" effect="MAXHP:20">
+		<requires nodeId="43007" />
+		<requires nodeId="43051" />
+	</node>
+	<node id="43051" name="Threshold" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4639.2" y="-1864.9" effect="MAXHP_PCT:1">
+		<requires nodeId="43050" />
+		<requires nodeId="43052" />
+	</node>
+	<node id="43052" name="Glass Cannon" sector="Starfall" type="KEYSTONE" tier="0" cost="1" x="-4810.4" y="-1632.9" effect="PATK_PCT:15;MATK_PCT:15;MAXHP_PCT:-30" description="KEYSTONE: +15% P.Atk and M.Atk, but 30% less maximum HP.">
+		<requires nodeId="43051" />
+	</node>
+	<node id="43020" name="Starblood" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3043.8" y="-3306.0" orbitX="-3085.2" orbitY="-3402.5" effect="MAXHP_PCT:1.5">
+		<requires nodeId="43002" />
+		<requires nodeId="43021" />
+	</node>
+	<node id="43021" name="Starblood" sector="Starfall" type="SMALL" tier="0" cost="1" x="-2980.4" y="-3408.4" orbitX="-3085.2" orbitY="-3402.5" effect="MAXHP_PCT:1.5">
+		<requires nodeId="43020" />
+		<requires nodeId="43022" />
+	</node>
+	<node id="43022" name="Starblood" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3054.9" y="-3503.1" orbitX="-3085.2" orbitY="-3402.5" effect="MAXHP_PCT:1.5">
+		<requires nodeId="43021" />
+		<requires nodeId="43023" />
+	</node>
+	<node id="43023" name="Astral Body" sector="Starfall" type="NOTABLE" tier="0" cost="1" x="-3169.3" y="-3465.4" orbitX="-3085.2" orbitY="-3402.5" effect="MAXHP_PCT:4;MAXMP:80" description="Starblood mastery. Body and mind both grow.">
+		<requires nodeId="43022" />
+	</node>
+	<node id="43024" name="Perfect Form" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3186.1" y="-2912.8" orbitX="-3133.8" orbitY="-2821.7" effect="PATK_PCT@FULLHP:3">
+		<requires nodeId="43003" />
+		<requires nodeId="43025" />
+	</node>
+	<node id="43025" name="Perfect Form" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3066.1" y="-2902.0" orbitX="-3133.8" orbitY="-2821.7" effect="PATK_PCT@FULLHP:3">
+		<requires nodeId="43024" />
+		<requires nodeId="43026" />
+	</node>
+	<node id="43026" name="Perfect Form" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3035.3" y="-2785.5" orbitX="-3133.8" orbitY="-2821.7" effect="PATK_PCT@FULLHP:3">
+		<requires nodeId="43025" />
+		<requires nodeId="43027" />
+	</node>
+	<node id="43027" name="Untouched" sector="Starfall" type="NOTABLE" tier="0" cost="1" x="-3134.1" y="-2716.7" orbitX="-3133.8" orbitY="-2821.7" effect="PATK_PCT@FULLHP:8;MATK_PCT@FULLHP:8" description="Perfect Form mastery. Only above 90% HP.">
+		<requires nodeId="43026" />
+	</node>
+	<node id="43028" name="Meteor Strike" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3637.0" y="-3077.1" orbitX="-3689.6" orbitY="-3167.9" effect="CRIT_DMG_PCT:2">
+		<requires nodeId="43004" />
+		<requires nodeId="43029" />
+	</node>
+	<node id="43029" name="Meteor Strike" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3586.2" y="-3186.3" orbitX="-3689.6" orbitY="-3167.9" effect="CRIT_DMG_PCT:2">
+		<requires nodeId="43028" />
+		<requires nodeId="43030" />
+	</node>
+	<node id="43030" name="Meteor Strike" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3671.5" y="-3271.4" orbitX="-3689.6" orbitY="-3167.9" effect="CRIT_DMG_PCT:2">
+		<requires nodeId="43029" />
+		<requires nodeId="43031" />
+	</node>
+	<node id="43031" name="Starfire" sector="Starfall" type="NOTABLE" tier="0" cost="1" x="-3780.6" y="-3220.3" orbitX="-3689.6" orbitY="-3167.9" effect="CRIT_DMG_PCT:8;MCRIT_DMG_PCT:8" description="Meteor Strike mastery. Physical and magic crits alike.">
+		<requires nodeId="43030" />
+	</node>
+	<node id="43032" name="Crossbow Drill" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3713.4" y="-2604.9" orbitX="-3652.3" orbitY="-2519.5" effect="ATK_SPD_PCT@BOW:2">
+		<requires nodeId="43005" />
+		<requires nodeId="43033" />
+	</node>
+	<node id="43033" name="Crossbow Drill" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3592.9" y="-2606.2" orbitX="-3652.3" orbitY="-2519.5" effect="ATK_SPD_PCT@BOW:2">
+		<requires nodeId="43032" />
+		<requires nodeId="43034" />
+	</node>
+	<node id="43034" name="Crossbow Drill" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3550.6" y="-2493.4" orbitX="-3652.3" orbitY="-2519.5" effect="ATK_SPD_PCT@BOW:2">
+		<requires nodeId="43033" />
+		<requires nodeId="43035" />
+	</node>
+	<node id="43035" name="Rapid Bolts" sector="Starfall" type="NOTABLE" tier="0" cost="1" x="-3642.0" y="-2415.0" orbitX="-3652.3" orbitY="-2519.5" effect="ATK_SPD_PCT@BOW:6;PVE_BOW_DMG_PCT:4" description="Crossbow Drill mastery. Bows and crossbows only.">
+		<requires nodeId="43034" />
+	</node>
+	<node id="43036" name="Steady Hands" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4167.6" y="-2679.1" orbitX="-4230.6" orbitY="-2763.1" effect="ACCURACY_ADD@FULLHP:0.6">
+		<requires nodeId="43006" />
+		<requires nodeId="43037" />
+	</node>
+	<node id="43037" name="Steady Hands" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4130.1" y="-2793.6" orbitX="-4230.6" orbitY="-2763.1" effect="ACCURACY_ADD@FULLHP:0.6">
+		<requires nodeId="43036" />
+		<requires nodeId="43038" />
+	</node>
+	<node id="43038" name="Steady Hands" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4224.8" y="-2868.0" orbitX="-4230.6" orbitY="-2763.1" effect="ACCURACY_ADD@FULLHP:0.6">
+		<requires nodeId="43037" />
+		<requires nodeId="43039" />
+	</node>
+	<node id="43039" name="Calm Before" sector="Starfall" type="NOTABLE" tier="0" cost="1" x="-4327.1" y="-2804.4" orbitX="-4230.6" orbitY="-2763.1" effect="ACCURACY_ADD@FULLHP:3;CRIT_RATE_ADD@FULLHP:20" description="Steady Hands mastery. Only above 90% HP.">
+		<requires nodeId="43038" />
+	</node>
+	<node id="43040" name="Comet Trail" sector="Starfall" type="SMALL" tier="0" cost="1" x="-2542.6" y="-3467.7" effect="MAXHP:20">
+		<requires nodeId="43001" />
+		<requires nodeId="43041" />
+	</node>
+	<node id="43041" name="Comet Trail" sector="Starfall" type="SMALL" tier="0" cost="1" x="-2618.0" y="-3659.5" effect="MAXHP:20">
+		<requires nodeId="43040" />
+		<requires nodeId="43042" />
+	</node>
+	<node id="43042" name="Comet Trail" sector="Starfall" type="SMALL" tier="0" cost="1" x="-2692.8" y="-3851.5" effect="MAXHP:20">
+		<requires nodeId="43041" />
+		<requires nodeId="43043" />
+	</node>
+	<node id="43043" name="Falling Star" sector="Starfall" type="NOTABLE" tier="0" cost="1" x="-2768.3" y="-4043.1" effect="MAXHP:100;MOVE_SPEED_ADD:4" description="Comet Trail mastery. Health and speed.">
+		<requires nodeId="43042" />
+	</node>
+	<node id="43044" name="Star Chart" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4205.0" y="-1225.7" effect="MCRIT_RATE_ADD:4">
+		<requires nodeId="43045" />
+		<requires nodeId="43061" />
+	</node>
+	<node id="43045" name="Star Chart" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4415.9" y="-1211.4" effect="MCRIT_RATE_ADD:4">
+		<requires nodeId="43044" />
+		<requires nodeId="43046" />
+	</node>
+	<node id="43046" name="Star Chart" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4626.6" y="-1197.4" effect="MCRIT_RATE_ADD:4">
+		<requires nodeId="43045" />
+		<requires nodeId="43047" />
+	</node>
+	<node id="43047" name="Constellation" sector="Starfall" type="NOTABLE" tier="0" cost="1" x="-4837.3" y="-1183.7" effect="MCRIT_RATE_ADD:25;CAST_SPD_PCT@FULLHP:5" description="Star Chart mastery. Casts faster above 90% HP.">
+		<requires nodeId="43046" />
+	</node>
+	<node id="43060" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4064.5" y="-2300.5" effect="MAXHP:18">
+		<requires nodeId="43006" />
+		<requires nodeId="43009" />
+	</node>
+	<node id="43061" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4061.7" y="-1326.0" effect="MAXHP_PCT:0.8">
+		<requires nodeId="43008" />
+		<requires nodeId="43044" />
+	</node>
+	<node id="43062" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4049.2" y="-1887.3" effect="CRIT_DMG_PCT:1">
+		<requires nodeId="43009" />
+		<requires nodeId="43010" />
+	</node>
+</list>

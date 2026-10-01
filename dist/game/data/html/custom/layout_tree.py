@@ -5,7 +5,9 @@ Lays out the passive tree in data/passivetree/*.xml, Path of Exile style:
    curve around it to the notable (those links are drawn as arcs),
  - the six sector spines are straight roads from the START to the archetype MASTER,
  - the bridges between neighbouring sectors are big circular roads around the tree centre,
- - the six hybrid sectors sit in the wedges between the arms, each built from one shared template.
+ - the six hybrid sectors sit in the wedges between the arms, each built from one shared template,
+ - the Outer Rim is one more circular road round the whole tree, reached by a spur from every START,
+   with six regions beyond it, each shaped differently.
 
 Only x/y and orbitX/orbitY are written; ids, links and stats are never touched, so it can be re-run
 after editing the tree. orbitX/orbitY is the centre of the circle a node sits on: the web planner draws a
@@ -37,6 +39,12 @@ R_MASTER = 720
 R_JUNCTION = {1: 2850, 16: 2250, 39: 1650, 62: 1050}  # local id -> radius: J0 (outer) .. J3 (inner)
 R_START = 3300
 
+R_RIM = 4000  # the Outer Rim road
+R_RIM_SPUR = [3475, 3650, 3825]  # the spur from each START out to its rim gate
+RIM_BASE = 39000  # rim ids: 39000 + sector * 100 (+0 gate, +1.. spur, +10.. arc road towards the next sector)
+REGION_BASE = 40000  # region ids: 40000 + region * 1000 + local id, region i sitting beyond the rim between sectors i and i+1
+ROAD_IDS = range(33000, 34000)  # "Lifeblood Trail" nodes lengthening a hybrid's long links: spaced evenly along the link they split
+
 RING_RADIUS = 105  # radius of a notable cluster's ring
 RING_STEP = 70  # degrees between consecutive nodes on a ring
 
@@ -58,6 +66,9 @@ HYBRID_NODES = {
 	27: (930, 170), 28: (1060, 260),
 }
 HYBRID_RINGS = {6: (480, -420, -1), 7: (480, 420, 1), 17: (1000, -220, 1)}
+# Each hybrid's outer extension (trail 70, an HP wheel at 71, a conditional mastery at 75), mirrored (v -> -v) on every other hybrid.
+HYBRID_EXTRA_NODES = {70: (1180, -40)}
+HYBRID_EXTRA_RINGS = {71: (1400, -200, -1), 75: (1420, 200, 1)}
 HYBRID_ACTIVE_POD = {25: [(1000, -840), (1050, -990)], 26: [(1000, 840), (1050, 990)]}  # approach 29 / active 30, off whichever Veteran's Path they hang from
 
 # The space between two arms, inside ring 1, belongs to that wedge's hybrid (local ids 51+). Each wedge is laid
@@ -71,6 +82,8 @@ WEDGE_NODES = {
 	4: {51: (1800, 33), 56: (930, 32), 61: (1240, 17), 62: (1380, 15), 63: (1520, 17)},
 	5: {51: (1200, 42), 56: (1800, 27), 61: (1830, 45), 62: (2040, 47)},
 }
+for _hi, _p in {0: (925, 35), 1: (925, 25), 2: (1820, 21), 3: (925, 35), 4: (1820, 21), 5: (925, 25)}.items():
+	WEDGE_NODES[_hi][64] = _p  # the third structure's entry
 WEDGE_RINGS = {
 	0: {52: (2010, 24, 1), 57: (1390, 27, -1)},
 	1: {52: (1965, 29, 1), 57: (1370, 33, -1)},
@@ -79,6 +92,39 @@ WEDGE_RINGS = {
 	4: {52: (1985, 38, -1), 57: (765, 35, 1)},
 	5: {52: (1385, 35, 1), 57: (1985, 22, 1)},
 }
+for _hi, _p in {0: (765, 30, 1), 1: (765, 30, -1), 2: (2000, 19.5, 1), 3: (765, 30, -1), 4: (2000, 19.5, -1), 5: (765, 30, 1)}.items():
+	WEDGE_RINGS[_hi][65] = _p  # the third structure: an HP wheel or a conditional mastery
+
+# BEGIN REGIONS
+# The six regions beyond the rim (region i between sectors i and i+1), each shaped differently: a fan, a winding
+# road and a ladder, the other three mirrored. Positions are (radius, degrees past the region's first spine);
+# rings are first small -> (centre radius, degrees, curl); REGION_ARCS lists the nodes that sit on a circle round
+# the tree centre (their links are drawn as arcs).
+REGION_NODES = {
+	0: {1: (4180, 10), 2: (4180, 30), 3: (4180, 50), 4: (4300, 20), 5: (4300, 40), 6: (4430, 30), 7: (4790, 24), 8: (4790, 36), 40: (4400.0, 5.0), 41: (4600.0, 5.0), 42: (4800.0, 5.0), 43: (5000.0, 5.0), 44: (4980, 40.0), 45: (4980, 44.0), 46: (4980, 48.0), 47: (4980, 52.0), 50: (4640, 30), 51: (4830, 30), 52: (5030, 30), 60: (4205.6, 13.39), 61: (4245.7, 16.73), 62: (4285.9, 7.44), 63: (4205.6, 46.61), 64: (4245.7, 43.27), 65: (4320.0, 22.55), 66: (4348.4, 25.07), 67: (4385.1, 27.56), 68: (4320.0, 37.45), 69: (4348.4, 34.93), 70: (4385.1, 32.44), 71: (4708.5, 26.95), 72: (4882.0, 38.04), 73: (4708.5, 33.05)},
+	1: {1: (4170, 10), 2: (4330, 13.4), 3: (4480, 16.9), 4: (4600, 20.5), 5: (4700, 24.25), 6: (4790, 28), 7: (4870, 31.75), 8: (4170, 40), 9: (4560, 33.1), 10: (4380, 37), 40: (4300.0, 6.25), 41: (4499.5, 5.58), 42: (4699.5, 4.96), 43: (4900.0, 4.4), 44: (4380.0, 43.75), 45: (4579.0, 44.66), 46: (4779.0, 45.49), 47: (4980.0, 46.25), 50: (4930, 35), 51: (5000, 38.1), 52: (5080, 41.25), 60: (4670.4, 30.49), 61: (4272.7, 41.92), 62: (4467.4, 35.01)},
+	2: {1: (4170, 15), 2: (4330, 15), 3: (4170, 45), 4: (4330, 45), 5: (4480, 15), 6: (4480, 22.5), 7: (4480, 30), 8: (4480, 37.5), 9: (4480, 45), 10: (4990, 25.5), 40: (4660.0, 13.0), 41: (4805.6, 12.12), 42: (4952.3, 11.28), 43: (5100.0, 10.5), 44: (4660.0, 47.0), 45: (4805.6, 47.88), 46: (4952.3, 48.72), 47: (5100.0, 49.5), 50: (4690, 30), 51: (4880, 30), 52: (5080, 30), 60: (5004.5, 23.58), 61: (4931.2, 27.72)},
+	3: {1: (4170, 50), 2: (4330, 46.6), 3: (4480, 43.1), 4: (4600, 39.5), 5: (4700, 35.75), 6: (4790, 32), 7: (4870, 28.25), 8: (4170, 20), 9: (4560, 26.9), 10: (4380, 23), 40: (4300.0, 53.75), 41: (4499.5, 54.42), 42: (4699.5, 55.04), 43: (4900.0, 55.6), 44: (4380.0, 16.25), 45: (4579.0, 15.34), 46: (4779.0, 14.51), 47: (4980.0, 13.75), 50: (4930, 25), 51: (5000, 21.9), 52: (5080, 18.75), 60: (4670.4, 29.51), 61: (4272.7, 18.08), 62: (4467.4, 24.99)},
+	4: {1: (4180, 50), 2: (4180, 30), 3: (4180, 10), 4: (4300, 40), 5: (4300, 20), 6: (4430, 30), 7: (4790, 36), 8: (4790, 24), 40: (4400.0, 55.0), 41: (4600.0, 55.0), 42: (4800.0, 55.0), 43: (5000.0, 55.0), 44: (4980, 20.0), 45: (4980, 16.0), 46: (4980, 12.0), 47: (4980, 8.0), 50: (4640, 30), 51: (4830, 30), 52: (5030, 30), 60: (4205.6, 46.61), 61: (4245.7, 43.27), 62: (4285.9, 52.56), 63: (4205.6, 13.39), 64: (4245.7, 16.73), 65: (4320.0, 37.45), 66: (4348.4, 34.93), 67: (4385.1, 32.44), 68: (4320.0, 22.55), 69: (4348.4, 25.07), 70: (4385.1, 27.56), 71: (4708.5, 33.05), 72: (4882.0, 21.96), 73: (4708.5, 26.95)},
+	5: {1: (4170, 45), 2: (4330, 45), 3: (4170, 15), 4: (4330, 15), 5: (4480, 45), 6: (4480, 37.5), 7: (4480, 30), 8: (4480, 22.5), 9: (4480, 15), 10: (4990, 34.5), 40: (4660.0, 47.0), 41: (4805.6, 47.88), 42: (4952.3, 48.72), 43: (5100.0, 49.5), 44: (4660.0, 13.0), 45: (4805.6, 12.12), 46: (4952.3, 11.28), 47: (5100.0, 10.5), 50: (4690, 30), 51: (4880, 30), 52: (5080, 30), 60: (5004.5, 36.42), 61: (4931.2, 32.28)},
+}
+REGION_RINGS = {
+	0: {20: (4470, 14, -1), 24: (4540, 22, 1), 28: (4540, 38, -1), 32: (4470, 46, 1), 36: (4980, 20, 1)},
+	1: {20: (4593, 12.2, 1), 24: (4217, 18, -1), 28: (4863, 19.35, 1), 32: (4437, 25.4, -1), 36: (5053, 26.85, 1)},
+	2: {20: (4250, 24, 1), 24: (4720, 21, -1), 28: (4720, 39, 1), 32: (4250, 36, -1), 36: (5040, 20.5, 1)},
+	3: {20: (4593, 47.8, -1), 24: (4217, 42, 1), 28: (4863, 40.65, -1), 32: (4437, 34.6, 1), 36: (5053, 33.15, -1)},
+	4: {20: (4470, 46, 1), 24: (4540, 38, -1), 28: (4540, 22, 1), 32: (4470, 14, -1), 36: (4980, 40, -1)},
+	5: {20: (4250, 36, -1), 24: (4720, 39, 1), 28: (4720, 21, -1), 32: (4250, 24, 1), 36: (5040, 39.5, -1)},
+}
+REGION_ARCS = {
+	0: [44, 45, 46, 47],
+	1: [],
+	2: [5, 6, 7, 8, 9],
+	3: [],
+	4: [44, 45, 46, 47],
+	5: [5, 6, 7, 8, 9],
+}
+# END REGIONS
 
 # ------------------------------------------------------------------ XML in / out
 class Node:
@@ -259,7 +305,9 @@ def problems(nodes, adj, only=None):
 
 # ------------------------------------------------------------------ layout
 def group_of(i):
-	"""Which block of ids a node belongs to: a main sector (1000s), a bridge or hybrid (per 100), the Nexus (9000s)."""
+	"""Which block of ids a node belongs to: a main sector (1000s), a bridge, hybrid or rim stretch (per 100), the Nexus (9000s), a region (per 1000 from 40000)."""
+	if i >= REGION_BASE:
+		return i // 1000
 	return i // 100 if i >= 20000 else i // 1000
 
 
@@ -289,6 +337,43 @@ def place_ring(nodes, chain, center, entry_point, curl):
 	for k, i in enumerate(chain):
 		nodes[i].pos = on_circle(center, RING_RADIUS, start + (curl * RING_STEP * k))
 		nodes[i].orbit = center
+
+
+def walk(nodes, adj, start, group, first=None):
+	"""The run of nodes of one id block leaving `start` (through `first` if given), in order, e.g. a bridge from its junction."""
+	path, prev = [], start
+	cur = first if first is not None else [j for j in adj[start] if group_of(j) == group][0]
+	while True:
+		path.append(cur)
+		nxt = [j for j in adj[cur] if (j != prev) and (group_of(j) == group) and (j not in path)]
+		if not nxt:
+			return path
+		prev, cur = cur, nxt[0]
+
+
+def place_roads(nodes, adj, touching=None):
+	"""Spaces the road nodes that lengthen a link evenly along it, once both ends are placed. Returns the ids placed."""
+	placed, seen = set(), set()
+	for i in sorted(nodes):
+		if (i not in ROAD_IDS) or (i in seen):
+			continue
+		chain = [i]
+		for side in (0, 1):
+			end = chain[-1] if side else chain[0]
+			prev, cur = end, [j for j in adj[end] if j not in chain][0]
+			while cur in ROAD_IDS:
+				chain = (chain + [cur]) if side else ([cur] + chain)
+				prev, cur = cur, [j for j in adj[cur] if (j != prev) and (j not in chain)][0]
+			chain = (chain + [cur]) if side else ([cur] + chain)
+		seen.update(chain[1:-1])
+		a, b = nodes[chain[0]].pos, nodes[chain[-1]].pos
+		if (a is None) or (b is None) or ((touching is not None) and not ({chain[0], chain[-1]} & touching)):
+			continue
+		for k, j in enumerate(chain[1:-1], 1):
+			nodes[j].pos = add(a, (b[0] - a[0], b[1] - a[1]), k / (len(chain) - 1))
+			nodes[j].orbit = None
+			placed.add(j)
+	return placed
 
 
 def place_straight(nodes, chain, origin, direction, first, step):
@@ -336,11 +421,39 @@ def layout(nodes):
 			assert len(path) == len(radii), (base, a, b, path)
 			for i, r in zip(path, radii):
 				nodes[i].pos = polar(r, ang)
+		# a bridge's nodes are spread evenly along its arc to the next sector's junction
 		for ring, local in ((1, 16), (2, 39), (3, 62)):
-			for k in (1, 2, 3):
-				bridge = 20000 + (si * 1000) + (ring * 100) + k
-				nodes[bridge].pos = polar(R_JUNCTION[local], ang + (15 * k))
-				nodes[bridge].orbit = centre
+			path = walk(nodes, adj, base + local, (20000 + (si * 1000) + (ring * 100)) // 100)
+			for k, i in enumerate(path, 1):
+				nodes[i].pos = polar(R_JUNCTION[local], ang + ((SPINE_DEG * k) / (len(path) + 1)))
+				nodes[i].orbit = centre
+
+	# The Outer Rim: a spur from each START to its gate, then an arc road to the next gate.
+	for si, base in enumerate(SECTOR_BASES):
+		ang = si * SPINE_DEG
+		gate = RIM_BASE + (si * 100)
+		nodes[gate].pos = polar(R_RIM, ang)
+		nodes[gate].orbit = centre
+		spur = walk(nodes, adj, base, gate // 100)
+		spur = spur[:spur.index(gate)]
+		assert len(spur) == len(R_RIM_SPUR), spur
+		for i, r in zip(spur, R_RIM_SPUR):
+			nodes[i].pos = polar(r, ang)
+		road = walk(nodes, adj, gate, gate // 100, min(j for j in adj[gate] if j >= gate + 10))
+		for k, i in enumerate(road, 1):
+			nodes[i].pos = polar(R_RIM, ang + ((SPINE_DEG * k) / (len(road) + 1)))
+			nodes[i].orbit = centre
+
+	# The regions beyond the rim.
+	for ri in range(6):
+		start, base = ri * SPINE_DEG, REGION_BASE + (ri * 1000)
+		for local, (r, deg) in REGION_NODES[ri].items():
+			nodes[base + local].pos = polar(r, start + deg)
+			nodes[base + local].orbit = centre if local in REGION_ARCS[ri] else None
+		for first, (r, deg, curl) in REGION_RINGS[ri].items():
+			ring = ring_chain(nodes, adj, base + first)
+			entry = [nodes[j].pos for j in adj[base + first] if (nodes[j].pos is not None) and (j not in ring)]
+			place_ring(nodes, ring, polar(r, start + deg), (sum(p[0] for p in entry) / len(entry), sum(p[1] for p in entry) / len(entry)), curl)
 
 	# Hybrids: one template, rotated into each wedge.
 	for hi, base in enumerate(HYBRID_BASES):
@@ -353,10 +466,16 @@ def layout(nodes):
 		active_from = [j - base for j in adj[base + 29] if base < j <= base + 28][0]
 		for local, p in zip((29, 30), HYBRID_ACTIVE_POD[active_from]):
 			nodes[base + local].pos = at(p)
-		for first, (cu, cv, curl) in HYBRID_RINGS.items():
+		flip = -1 if (hi % 2) else 1
+		for local, (pu, pv) in HYBRID_EXTRA_NODES.items():
+			nodes[base + local].pos = at((pu, pv * flip))
+		rings = dict(HYBRID_RINGS)
+		rings.update({first: (cu, cv * flip, curl * flip) for first, (cu, cv, curl) in HYBRID_EXTRA_RINGS.items()})
+		for first, (cu, cv, curl) in rings.items():
 			ring = ring_chain(nodes, adj, base + first)
 			entry = [nodes[j].pos for j in adj[base + first] if (nodes[j].pos is not None) and (j not in ring)]
 			place_ring(nodes, ring, at((cu, cv)), (sum(p[0] for p in entry) / len(entry), sum(p[1] for p in entry) / len(entry)), curl)
+	place_roads(nodes, adj)
 
 	# The in-between wedges inside ring 1.
 	for hi, base in enumerate(HYBRID_BASES):
@@ -377,6 +496,7 @@ def layout(nodes):
 				placed_ids = set()
 				for si, base in enumerate(SECTOR_BASES):
 					placed_ids |= place_attachment(nodes, adj, base, junction, first, io, side, alpha, d, curl)
+				placed_ids |= place_roads(nodes, adj, placed_ids)
 				crossings, crowded = problems(nodes, adj, placed_ids)
 				score = ((2 * len(crowded)) + len(crossings), abs(alpha - 45) + (abs(d - 240) / 10) + (0 if curl == 1 else 0.5))
 				if (best is None) or (score < best[0]):
@@ -386,6 +506,7 @@ def layout(nodes):
 				print(f"junction {junction} slot {first}: angle {alpha}, distance {d}, curl {curl}, score {best[0]}")
 			for si, base in enumerate(SECTOR_BASES):
 				place_attachment(nodes, adj, base, junction, first, io, side, alpha, d, curl)
+			place_roads(nodes, adj)
 
 	missing = [i for i, n in nodes.items() if n.pos is None]
 	assert not missing, f"nodes without a position: {missing}"

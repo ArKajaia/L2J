@@ -5,10 +5,16 @@ import java.util.List;
 import java.util.Set;
 
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.model.conditions.Condition;
+import org.l2jmobius.gameserver.model.conditions.ConditionGameTime;
+import org.l2jmobius.gameserver.model.conditions.ConditionLogicNot;
+import org.l2jmobius.gameserver.model.conditions.ConditionPlayerHp;
+import org.l2jmobius.gameserver.model.conditions.ConditionUsingItemType;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.effects.EffectType;
 import org.l2jmobius.gameserver.model.item.Weapon;
+import org.l2jmobius.gameserver.model.item.type.ArmorType;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
 import org.l2jmobius.gameserver.model.skill.AbnormalType;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
@@ -466,6 +472,86 @@ public final class PassiveMechanics
 			final SystemMessage sm = new SystemMessage(SystemMessageId.S1_CP_HAS_BEEN_RESTORED);
 			sm.addInt((int) cp);
 			target.sendPacket(sm);
+		}
+	}
+	
+	// ---------------------------------------------------------------- conditional stats
+	
+	/**
+	 * A conditional effect key such as {@code PDEF_PCT@HEAVY}: the base key and the condition that gates it.
+	 * @param baseKey the effect key the bonus applies to, e.g. {@code PDEF_PCT}
+	 * @param token the condition token, e.g. {@code HEAVY}
+	 * @param condition the condition, tested on every stat calculation
+	 */
+	public record ConditionalKey(String baseKey, String token, Condition condition)
+	{
+	}
+	
+	/**
+	 * @param key an effect key, possibly with an {@code @CONDITION} suffix
+	 * @return the parsed key, or {@code null} if it has no condition, the condition is unknown, or the base key can't be conditional (max HP/MP/CP and keystone keys)
+	 */
+	public static ConditionalKey parseConditional(String key)
+	{
+		final int at = key.indexOf('@');
+		if (at <= 0)
+		{
+			return null;
+		}
+		
+		final String base = key.substring(0, at).trim();
+		final String token = key.substring(at + 1).trim().toUpperCase();
+		if (base.startsWith("MAXHP") || base.startsWith("MAXMP") || base.startsWith("MAXCP") || base.startsWith("KS_"))
+		{
+			return null; // a pool that depends on HP% would feed back into itself
+		}
+		
+		final Condition condition = conditionFor(token);
+		return condition == null ? null : new ConditionalKey(base, token, condition);
+	}
+	
+	/**
+	 * @param token a condition token
+	 * @return the condition, or {@code null} if the token is unknown
+	 */
+	private static Condition conditionFor(String token)
+	{
+		switch (token)
+		{
+			case "HEAVY":
+				return new ConditionUsingItemType(ArmorType.HEAVY.mask());
+			case "LIGHT":
+				return new ConditionUsingItemType(ArmorType.LIGHT.mask());
+			case "ROBE":
+				return new ConditionUsingItemType(ArmorType.MAGIC.mask());
+			case "NOARMOR":
+				return new ConditionUsingItemType(ArmorType.NONE.mask());
+			case "SHIELD":
+				return new ConditionUsingItemType(ArmorType.SHIELD.mask());
+			case "BOW":
+				return new ConditionUsingItemType(WeaponType.BOW.mask() | WeaponType.CROSSBOW.mask());
+			case "DAGGER":
+				return new ConditionUsingItemType(WeaponType.DAGGER.mask() | WeaponType.DUALDAGGER.mask());
+			case "DUAL":
+				return new ConditionUsingItemType(WeaponType.DUAL.mask());
+			case "SWORD":
+				return new ConditionUsingItemType(WeaponType.SWORD.mask() | WeaponType.ANCIENTSWORD.mask() | WeaponType.RAPIER.mask());
+			case "BLUNT":
+				return new ConditionUsingItemType(WeaponType.BLUNT.mask());
+			case "POLE":
+				return new ConditionUsingItemType(WeaponType.POLE.mask());
+			case "FIST":
+				return new ConditionUsingItemType(WeaponType.FIST.mask() | WeaponType.DUALFIST.mask());
+			case "LOWHP":
+				return new ConditionPlayerHp(50);
+			case "FULLHP":
+				return new ConditionLogicNot(new ConditionPlayerHp(90));
+			case "NIGHT":
+				return new ConditionGameTime(true);
+			case "DAY":
+				return new ConditionGameTime(false);
+			default:
+				return null;
 		}
 	}
 	

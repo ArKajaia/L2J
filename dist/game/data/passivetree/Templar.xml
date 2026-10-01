@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Templar: 40 nodes, hybrid of Hierophant and Vanguard filling the gap between their arms. x/y are authoritative layout coords. -->
+<!-- Templar: 62 nodes, hybrid of Hierophant and Vanguard filling the gap between their arms. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="30501" name="Confluence" sector="Templar" type="SMALL" tier="0" cost="1" x="2078.5" y="-1200.0" effect="MDEF_PCT:0.3;MAXHP:8">
 		<requires nodeId="25102" />
@@ -7,19 +7,19 @@
 	</node>
 	<node id="30502" name="Confluence" sector="Templar" type="SMALL" tier="0" cost="1" x="2208.4" y="-1275.0" effect="MDEF_PCT:0.3;MAXHP:8">
 		<requires nodeId="30501" />
-		<requires nodeId="30503" />
-		<requires nodeId="30504" />
 		<requires nodeId="30505" />
+		<requires nodeId="33501" />
+		<requires nodeId="33502" />
 	</node>
 	<node id="30503" name="Sacred Crossing" sector="Templar" type="SMALL" tier="0" cost="1" x="1801.8" y="-1779.3" effect="MP_REGEN_PCT:0.6;MAXHP:6">
-		<requires nodeId="6025" />
-		<requires nodeId="30502" />
 		<requires nodeId="30506" />
+		<requires nodeId="33501" />
+		<requires nodeId="33503" />
 	</node>
 	<node id="30504" name="Shieldwall Crossing" sector="Templar" type="SMALL" tier="0" cost="1" x="2441.8" y="-670.7" effect="PDEF_PCT:0.4;MAXHP:6">
-		<requires nodeId="1019" />
-		<requires nodeId="30502" />
 		<requires nodeId="30507" />
+		<requires nodeId="33502" />
+		<requires nodeId="33504" />
 	</node>
 	<node id="30505" name="Devotion" sector="Templar" type="SMALL" tier="0" cost="1" x="2364.2" y="-1365.0" effect="HEALING_RECEIVED_PCT:1;MAXHP:6">
 		<requires nodeId="30502" />
@@ -59,6 +59,7 @@
 		<requires nodeId="30525" />
 		<requires nodeId="30526" />
 		<requires nodeId="30527" />
+		<requires nodeId="30570" />
 	</node>
 	<node id="30515" name="Blessed Vessel" sector="Templar" type="NOTABLE" tier="0" cost="1" x="2144.1" y="-1833.2" orbitX="2154.2" orbitY="-1728.7" effect="HEALING_RECEIVED_PCT:8;MP_REGEN_PCT:3" description="Consecration mastery. Heals on you are stronger.">
 		<requires nodeId="30508" />
@@ -97,16 +98,16 @@
 		<requires nodeId="30523" />
 	</node>
 	<node id="30525" name="Sacred Path" sector="Templar" type="SMALL" tier="0" cost="1" x="2448.0" y="-2060.0" effect="MDEF_PCT:0.4;MAXMP:8">
-		<requires nodeId="6009" />
 		<requires nodeId="30512" />
 		<requires nodeId="30517" />
 		<requires nodeId="30521" />
+		<requires nodeId="33505" />
 	</node>
 	<node id="30526" name="Bulwark Path" sector="Templar" type="SMALL" tier="0" cost="1" x="3008.0" y="-1090.0" effect="PDEF_PCT:0.4;MAXHP:8">
-		<requires nodeId="1004" />
 		<requires nodeId="30512" />
 		<requires nodeId="30523" />
 		<requires nodeId="30529" />
+		<requires nodeId="33507" />
 	</node>
 	<node id="30527" name="Approach" sector="Templar" type="SMALL" tier="0" cost="1" x="2839.0" y="-1442.8" effect="MAXHP:6">
 		<requires nodeId="30512" />
@@ -167,5 +168,91 @@
 	</node>
 	<node id="30560" name="Assassin's Creed" sector="Templar" type="NOTABLE" tier="0" cost="1" x="1635.4" y="-1299.2" orbitX="1564.2" orbitY="-1222.1" effect="DEX:1;CRIT_RATE_ADD:15;BLOW_RATE_PCT:4" description="Shadow Arts mastery. Off-path: pays off only if you rebuild around it.">
 		<requires nodeId="30559" />
+	</node>
+	<node id="33501" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2005.1" y="-1527.1" effect="MAXHP:15">
+		<requires nodeId="30502" />
+		<requires nodeId="30503" />
+	</node>
+	<node id="33502" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2325.1" y="-972.9" effect="MAXHP_PCT:1">
+		<requires nodeId="30502" />
+		<requires nodeId="30504" />
+	</node>
+	<node id="33503" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="1528.6" y="-1881.4" effect="MAXHP:15">
+		<requires nodeId="6025" />
+		<requires nodeId="30503" />
+	</node>
+	<node id="33504" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2393.6" y="-383.1" effect="MAXHP_PCT:1">
+		<requires nodeId="1019" />
+		<requires nodeId="30504" />
+	</node>
+	<node id="33505" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2150.5" y="-2207.7" effect="MAXHP:15">
+		<requires nodeId="30525" />
+		<requires nodeId="33506" />
+	</node>
+	<node id="33506" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="1852.9" y="-2355.4" effect="MAXHP_PCT:1">
+		<requires nodeId="6009" />
+		<requires nodeId="33505" />
+	</node>
+	<node id="33507" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2987.1" y="-758.5" effect="MAXHP:15">
+		<requires nodeId="30526" />
+		<requires nodeId="33508" />
+	</node>
+	<node id="33508" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2966.3" y="-427.0" effect="MAXHP_PCT:1">
+		<requires nodeId="1004" />
+		<requires nodeId="33507" />
+	</node>
+	<node id="30570" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2990.5" y="-1680.4" effect="MAXHP:15">
+		<requires nodeId="30512" />
+		<requires nodeId="30571" />
+		<requires nodeId="30575" />
+	</node>
+	<node id="30571" name="Templar's Blood" sector="Templar" type="SMALL" tier="0" cost="1" x="3156.6" y="-1662.8" orbitX="3261.0" orbitY="-1651.8" effect="MAXHP_PCT:1.2">
+		<requires nodeId="30570" />
+		<requires nodeId="30572" />
+	</node>
+	<node id="30572" name="Templar's Blood" sector="Templar" type="SMALL" tier="0" cost="1" x="3235.6" y="-1753.7" orbitX="3261.0" orbitY="-1651.8" effect="MAXHP_PCT:1.2">
+		<requires nodeId="30571" />
+		<requires nodeId="30573" />
+	</node>
+	<node id="30573" name="Templar's Blood" sector="Templar" type="SMALL" tier="0" cost="1" x="3348.1" y="-1710.5" orbitX="3261.0" orbitY="-1651.8" effect="MAXHP_PCT:1.2">
+		<requires nodeId="30572" />
+		<requires nodeId="30574" />
+	</node>
+	<node id="30574" name="Oathsworn Body" sector="Templar" type="NOTABLE" tier="0" cost="1" x="3345.9" y="-1590.0" orbitX="3261.0" orbitY="-1651.8" effect="MAXHP_PCT:4;MDEF_PCT:3" description="Templar's Blood mastery. A body sworn to the faith.">
+		<requires nodeId="30573" />
+	</node>
+	<node id="30575" name="Shield Prayer" sector="Templar" type="SMALL" tier="0" cost="1" x="3051.1" y="-1906.8" orbitX="3078.3" orbitY="-2008.2" effect="MDEF_PCT@SHIELD:1.5">
+		<requires nodeId="30570" />
+		<requires nodeId="30576" />
+	</node>
+	<node id="30576" name="Shield Prayer" sector="Templar" type="SMALL" tier="0" cost="1" x="3164.3" y="-1948.0" orbitX="3078.3" orbitY="-2008.2" effect="MDEF_PCT@SHIELD:1.5">
+		<requires nodeId="30575" />
+		<requires nodeId="30577" />
+	</node>
+	<node id="30577" name="Shield Prayer" sector="Templar" type="SMALL" tier="0" cost="1" x="3164.3" y="-2068.4" orbitX="3078.3" orbitY="-2008.2" effect="MDEF_PCT@SHIELD:1.5">
+		<requires nodeId="30576" />
+		<requires nodeId="30578" />
+	</node>
+	<node id="30578" name="Aegis of Dawn" sector="Templar" type="NOTABLE" tier="0" cost="1" x="3051.1" y="-2109.6" orbitX="3078.3" orbitY="-2008.2" effect="MDEF_PCT@SHIELD:6;PDEF_PCT@DAY:4" description="Shield Prayer mastery. A shield, and the sun.">
+		<requires nodeId="30577" />
+	</node>
+	<node id="30564" name="Heartstone" sector="Templar" type="SMALL" tier="0" cost="1" x="757.7" y="-530.6" effect="MAXHP:12">
+		<requires nodeId="25302" />
+		<requires nodeId="30565" />
+	</node>
+	<node id="30565" name="Crusader Heart" sector="Templar" type="SMALL" tier="0" cost="1" x="719.3" y="-470.8" orbitX="662.5" orbitY="-382.5" effect="MAXHP_PCT:1.5">
+		<requires nodeId="30564" />
+		<requires nodeId="30566" />
+	</node>
+	<node id="30566" name="Crusader Heart" sector="Templar" type="SMALL" tier="0" cost="1" x="764.9" y="-359.3" orbitX="662.5" orbitY="-382.5" effect="MAXHP_PCT:1.5">
+		<requires nodeId="30565" />
+		<requires nodeId="30567" />
+	</node>
+	<node id="30567" name="Crusader Heart" sector="Templar" type="SMALL" tier="0" cost="1" x="675.8" y="-278.3" orbitX="662.5" orbitY="-382.5" effect="MAXHP_PCT:1.5">
+		<requires nodeId="30566" />
+		<requires nodeId="30568" />
+	</node>
+	<node id="30568" name="Templar's Oath" sector="Templar" type="NOTABLE" tier="0" cost="1" x="569.2" y="-334.4" orbitX="662.5" orbitY="-382.5" effect="MAXHP_PCT:4;MDEF_PCT@HEAVY:5" description="Crusader Heart mastery. The M.Def needs heavy armour.">
+		<requires nodeId="30567" />
 	</node>
 </list>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Stalker: 40 nodes, hybrid of Shadowblade and Deadeye filling the gap between their arms. x/y are authoritative layout coords. -->
+<!-- Stalker: 62 nodes, hybrid of Shadowblade and Deadeye filling the gap between their arms. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="30201" name="Confluence" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2078.5" y="1200.0" effect="EVASION_ADD:0.3;ACCURACY_ADD:0.3">
 		<requires nodeId="22102" />
@@ -7,19 +7,19 @@
 	</node>
 	<node id="30202" name="Confluence" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2208.4" y="1275.0" effect="EVASION_ADD:0.3;ACCURACY_ADD:0.3">
 		<requires nodeId="30201" />
-		<requires nodeId="30203" />
-		<requires nodeId="30204" />
 		<requires nodeId="30205" />
+		<requires nodeId="33201" />
+		<requires nodeId="33202" />
 	</node>
 	<node id="30203" name="Shade Crossing" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1801.8" y="1779.3" effect="EVASION_ADD:0.3;MAXHP:6">
-		<requires nodeId="3025" />
-		<requires nodeId="30202" />
 		<requires nodeId="30206" />
+		<requires nodeId="33201" />
+		<requires nodeId="33203" />
 	</node>
 	<node id="30204" name="Tracker's Crossing" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2441.8" y="670.7" effect="ACCURACY_ADD:0.3;MAXHP:6">
-		<requires nodeId="4019" />
-		<requires nodeId="30202" />
 		<requires nodeId="30207" />
+		<requires nodeId="33202" />
+		<requires nodeId="33204" />
 	</node>
 	<node id="30205" name="Scavenger" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2364.2" y="1365.0" effect="DROP_RATE_PCT:1;ADENA_RATE_PCT:1">
 		<requires nodeId="30202" />
@@ -59,6 +59,7 @@
 		<requires nodeId="30225" />
 		<requires nodeId="30226" />
 		<requires nodeId="30227" />
+		<requires nodeId="30270" />
 	</node>
 	<node id="30215" name="Phantom Footwork" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-2144.1" y="1833.2" orbitX="-2154.2" orbitY="1728.7" effect="SKILL_DODGE_PCT:3;EVASION_ADD:2;MOVE_SPEED_ADD:2" description="Shade Step mastery. Sidestep physical skills entirely.">
 		<requires nodeId="30208" />
@@ -97,16 +98,16 @@
 		<requires nodeId="30223" />
 	</node>
 	<node id="30225" name="Shade Path" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2448.0" y="2060.0" effect="EVASION_ADD:0.3;CRIT_DMG_PCT:0.5">
-		<requires nodeId="3009" />
 		<requires nodeId="30212" />
 		<requires nodeId="30217" />
 		<requires nodeId="30221" />
 		<requires nodeId="30229" />
+		<requires nodeId="33205" />
 	</node>
 	<node id="30226" name="Tracker's Path" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3008.0" y="1090.0" effect="ACCURACY_ADD:0.3;PATK_PCT:0.3">
-		<requires nodeId="4004" />
 		<requires nodeId="30212" />
 		<requires nodeId="30223" />
+		<requires nodeId="33207" />
 	</node>
 	<node id="30227" name="Approach" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2839.0" y="1442.8" effect="MAXHP:6">
 		<requires nodeId="30212" />
@@ -167,5 +168,91 @@
 	</node>
 	<node id="30260" name="Inner Spring" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-540.8" y="418.9" orbitX="-644.5" orbitY="402.7" effect="MEN:1;MAXMP:80;MP_REGEN_PCT:4" description="Mana Well mastery. Off-path: pays off only if you rebuild around it.">
 		<requires nodeId="30259" />
+	</node>
+	<node id="33201" name="Lifeblood Trail" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2005.1" y="1527.1" effect="MAXHP:15">
+		<requires nodeId="30202" />
+		<requires nodeId="30203" />
+	</node>
+	<node id="33202" name="Lifeblood Trail" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2325.1" y="972.9" effect="MAXHP_PCT:1">
+		<requires nodeId="30202" />
+		<requires nodeId="30204" />
+	</node>
+	<node id="33203" name="Lifeblood Trail" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1528.6" y="1881.4" effect="MAXHP:15">
+		<requires nodeId="3025" />
+		<requires nodeId="30203" />
+	</node>
+	<node id="33204" name="Lifeblood Trail" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2393.6" y="383.1" effect="MAXHP_PCT:1">
+		<requires nodeId="4019" />
+		<requires nodeId="30204" />
+	</node>
+	<node id="33205" name="Lifeblood Trail" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2150.5" y="2207.7" effect="MAXHP:15">
+		<requires nodeId="30225" />
+		<requires nodeId="33206" />
+	</node>
+	<node id="33206" name="Lifeblood Trail" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1852.9" y="2355.4" effect="MAXHP_PCT:1">
+		<requires nodeId="3009" />
+		<requires nodeId="33205" />
+	</node>
+	<node id="33207" name="Lifeblood Trail" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2987.1" y="758.5" effect="MAXHP:15">
+		<requires nodeId="30226" />
+		<requires nodeId="33208" />
+	</node>
+	<node id="33208" name="Lifeblood Trail" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2966.3" y="427.0" effect="MAXHP_PCT:1">
+		<requires nodeId="4004" />
+		<requires nodeId="33207" />
+	</node>
+	<node id="30270" name="Lifeblood Trail" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2950.5" y="1749.6" effect="MAXHP:15">
+		<requires nodeId="30212" />
+		<requires nodeId="30271" />
+		<requires nodeId="30275" />
+	</node>
+	<node id="30271" name="Stalker's Pulse" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3018.3" y="1902.3" orbitX="-3061.0" orbitY="1998.2" effect="MAXHP_PCT:1.2">
+		<requires nodeId="30270" />
+		<requires nodeId="30272" />
+	</node>
+	<node id="30272" name="Stalker's Pulse" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3136.6" y="1925.3" orbitX="-3061.0" orbitY="1998.2" effect="MAXHP_PCT:1.2">
+		<requires nodeId="30271" />
+		<requires nodeId="30273" />
+	</node>
+	<node id="30273" name="Stalker's Pulse" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3155.3" y="2044.3" orbitX="-3061.0" orbitY="1998.2" effect="MAXHP_PCT:1.2">
+		<requires nodeId="30272" />
+		<requires nodeId="30274" />
+	</node>
+	<node id="30274" name="Lean Muscle" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-3050.0" y="2102.6" orbitX="-3061.0" orbitY="1998.2" effect="MAXHP_PCT:3;EVASION_ADD:1.5" description="Stalker's Pulse mastery. Light on your feet, hard to put down.">
+		<requires nodeId="30273" />
+	</node>
+	<node id="30275" name="Light Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3176.9" y="1689.0" orbitX="-3278.3" orbitY="1661.8" effect="EVASION_ADD@LIGHT:0.5">
+		<requires nodeId="30270" />
+		<requires nodeId="30276" />
+	</node>
+	<node id="30276" name="Light Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3269.2" y="1766.4" orbitX="-3278.3" orbitY="1661.8" effect="EVASION_ADD@LIGHT:0.5">
+		<requires nodeId="30275" />
+		<requires nodeId="30277" />
+	</node>
+	<node id="30277" name="Light Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3373.5" y="1706.2" orbitX="-3278.3" orbitY="1661.8" effect="EVASION_ADD@LIGHT:0.5">
+		<requires nodeId="30276" />
+		<requires nodeId="30278" />
+	</node>
+	<node id="30278" name="Shadow Leathers" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-3352.6" y="1587.5" orbitX="-3278.3" orbitY="1661.8" effect="EVASION_ADD@LIGHT:2.5;CRIT_RATE_ADD@LIGHT:15" description="Light Step mastery. Light armour only.">
+		<requires nodeId="30277" />
+	</node>
+	<node id="30264" name="Heartstone" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1414.4" y="1145.4" effect="MAXHP:12">
+		<requires nodeId="22201" />
+		<requires nodeId="30265" />
+	</node>
+	<node id="30265" name="Ranger Hide" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1461.0" y="1212.6" orbitX="-1520.8" orbitY="1298.9" effect="MAXHP_PCT:1.5">
+		<requires nodeId="30264" />
+		<requires nodeId="30266" />
+	</node>
+	<node id="30266" name="Ranger Hide" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1419.3" y="1325.6" orbitX="-1520.8" orbitY="1298.9" effect="MAXHP_PCT:1.5">
+		<requires nodeId="30265" />
+		<requires nodeId="30267" />
+	</node>
+	<node id="30267" name="Ranger Hide" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1511.2" y="1403.5" orbitX="-1520.8" orbitY="1298.9" effect="MAXHP_PCT:1.5">
+		<requires nodeId="30266" />
+		<requires nodeId="30268" />
+	</node>
+	<node id="30268" name="Survivalist" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-1615.8" y="1343.7" orbitX="-1520.8" orbitY="1298.9" effect="MAXHP_PCT:4;EVASION_ADD@LIGHT:2" description="Ranger Hide mastery. The evasion needs light armour.">
+		<requires nodeId="30267" />
 	</node>
 </list>
