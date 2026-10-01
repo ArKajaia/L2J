@@ -522,7 +522,7 @@ public class PlayerConfig
 			}
 		}
 		ENABLE_KEYBOARD_MOVEMENT = config.getBoolean("KeyboardMovement", true);
-		UNSTUCK_INTERVAL = config.getInt("UnstuckInterval", 300);
+		UNSTUCK_INTERVAL = config.getInt("UnstuckInterval", 5);
 		TELEPORT_WATCHDOG_TIMEOUT = config.getInt("TeleportWatchdogTimeout", 0);
 		PLAYER_SPAWN_PROTECTION = config.getInt("PlayerSpawnProtection", 0);
 		PLAYER_TELEPORT_PROTECTION = config.getInt("PlayerTeleportProtection", 0);
