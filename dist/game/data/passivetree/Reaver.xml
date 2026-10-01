@@ -120,7 +120,7 @@
 		<requires nodeId="30126" />
 		<requires nodeId="30130" />
 	</node>
-	<node id="30130" name="Reaving Strike" sector="Reaver" type="ACTIVE_SKILL" tier="0" cost="1" x="-990.0" y="3300.0" effect="MAXHP:15" skillId="90461" skillLevel="auto" description="ACTIVE: heavy melee strike that can make the target bleed for 10s (20s cooldown). Grows stronger with your level.">
+	<node id="30130" name="Reaving Strike" sector="Reaver" type="ACTIVE_SKILL" tier="0" cost="1" x="-990.0" y="3300.0" effect="MAXHP:15" skillId="27461" skillLevel="auto" description="ACTIVE: heavy melee strike that can make the target bleed for 10s (20s cooldown). Grows stronger with your level.">
 		<requires nodeId="30129" />
 	</node>
 	<node id="30151" name="Waystone" sector="Reaver" type="SMALL" tier="0" cost="1" x="310.8" y="1762.8" effect="PATK_PCT:0.4">

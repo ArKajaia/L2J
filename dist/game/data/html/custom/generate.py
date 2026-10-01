@@ -129,12 +129,12 @@ MASTERS={
 "Hierophant":("Avatar of Salvation","MEN:2;WIT:1;MP_REGEN_PCT:5;MDEF_PCT:5"),
 }
 ACTIVES={
-"Vanguard":[("Vanguard Aegis",90400),("Rallying Shout",90401)],
-"Juggernaut":[("Battle Fervor",90410),("Earthshatter",90411)],
-"Shadowblade":[("Shadow Lunge",90420),("Smoke Veil",90421)],
-"Deadeye":[("Disengage",90430),("Volley",90431)],
-"Arcanist":[("Arcane Nova",90440),("Mana Rift",90441)],
-"Hierophant":[("Sacred Chorus",90450),("Hallowed Ward",90451)],
+"Vanguard":[("Vanguard Aegis",27400),("Rallying Shout",27401)],
+"Juggernaut":[("Battle Fervor",27410),("Earthshatter",27411)],
+"Shadowblade":[("Shadow Lunge",27420),("Smoke Veil",27421)],
+"Deadeye":[("Disengage",27430),("Volley",27431)],
+"Arcanist":[("Arcane Nova",27440),("Mana Rift",27441)],
+"Hierophant":[("Sacred Chorus",27450),("Hallowed Ward",27451)],
 }
 # The hand-tuned XML has since diverged (Shadowblade has a second Sweeper node,
 # some FUNCTION nodes grant a stat instead of a skill, the hybrid sectors are

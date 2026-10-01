@@ -120,7 +120,7 @@
 		<requires nodeId="30426" />
 		<requires nodeId="30430" />
 	</node>
-	<node id="30430" name="Temporal Flow" sector="Mystic" type="ACTIVE_SKILL" tier="0" cost="1" x="990.0" y="-3300.0" effect="MAXHP:15" skillId="90464" skillLevel="1" description="ACTIVE: magic skills recharge 25% faster and cast 10% faster for 15s (180s cooldown).">
+	<node id="30430" name="Temporal Flow" sector="Mystic" type="ACTIVE_SKILL" tier="0" cost="1" x="990.0" y="-3300.0" effect="MAXHP:15" skillId="27464" skillLevel="1" description="ACTIVE: magic skills recharge 25% faster and cast 10% faster for 15s (180s cooldown).">
 		<requires nodeId="30429" />
 	</node>
 	<node id="30451" name="Waystone" sector="Mystic" type="SMALL" tier="0" cost="1" x="94.2" y="-1797.5" effect="MATK_PCT:0.4">

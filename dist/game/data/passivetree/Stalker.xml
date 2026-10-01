@@ -120,7 +120,7 @@
 		<requires nodeId="30225" />
 		<requires nodeId="30230" />
 	</node>
-	<node id="30230" name="Hunter's Mark" sector="Stalker" type="ACTIVE_SKILL" tier="0" cost="1" x="-2362.9" y="2507.4" effect="MAXHP:15" skillId="90462" skillLevel="auto" description="ACTIVE: mark a target up to 900 away: -6 Evasion and -10% P.Def for 20s (30s cooldown).">
+	<node id="30230" name="Hunter's Mark" sector="Stalker" type="ACTIVE_SKILL" tier="0" cost="1" x="-2362.9" y="2507.4" effect="MAXHP:15" skillId="27462" skillLevel="auto" description="ACTIVE: mark a target up to 900 away: -6 Evasion and -10% P.Def for 20s (30s cooldown).">
 		<requires nodeId="30229" />
 	</node>
 	<node id="30251" name="Waystone" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1691.4" y="615.6" effect="EVASION_ADD:0.4">

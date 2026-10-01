@@ -53,7 +53,7 @@
 		<requires nodeId="4001" />
 		<requires nodeId="4015" />
 	</node>
-	<node id="4015" name="Disengage" sector="Deadeye" type="ACTIVE_SKILL" tier="0" cost="1" x="-2680.3" y="-169.7" effect="MAXHP:15" skillId="90430" skillLevel="1" description="ACTIVE: burst of Speed and Evasion to break away for 6s (35s cooldown).">
+	<node id="4015" name="Disengage" sector="Deadeye" type="ACTIVE_SKILL" tier="0" cost="1" x="-2680.3" y="-169.7" effect="MAXHP:15" skillId="27430" skillLevel="1" description="ACTIVE: burst of Speed and Evasion to break away for 6s (35s cooldown).">
 		<requires nodeId="4014" />
 	</node>
 	<node id="4016" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2250.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12" description="Junction.">
@@ -195,7 +195,7 @@
 		<requires nodeId="4039" />
 		<requires nodeId="4061" />
 	</node>
-	<node id="4061" name="Volley" sector="Deadeye" type="ACTIVE_SKILL" tier="0" cost="1" x="-1480.3" y="-169.7" effect="MAXHP:15" skillId="90431" skillLevel="auto" description="ACTIVE: loose a volley of arrows at all enemies around you (25s cooldown). Grows stronger with your level.">
+	<node id="4061" name="Volley" sector="Deadeye" type="ACTIVE_SKILL" tier="0" cost="1" x="-1480.3" y="-169.7" effect="MAXHP:15" skillId="27431" skillLevel="auto" description="ACTIVE: loose a volley of arrows at all enemies around you (25s cooldown). Grows stronger with your level.">
 		<requires nodeId="4060" />
 	</node>
 	<node id="4062" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1050.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12" description="Junction.">

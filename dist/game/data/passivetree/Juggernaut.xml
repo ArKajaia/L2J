@@ -53,7 +53,7 @@
 		<requires nodeId="2001" />
 		<requires nodeId="2015" />
 	</node>
-	<node id="2015" name="Battle Fervor" sector="Juggernaut" type="ACTIVE_SKILL" tier="0" cost="1" x="1193.2" y="2406.1" effect="MAXHP:15" skillId="90410" skillLevel="1" description="ACTIVE: +15% P.Atk and +10% Atk. Speed, but -5% P.Def, for 30s (60s cooldown).">
+	<node id="2015" name="Battle Fervor" sector="Juggernaut" type="ACTIVE_SKILL" tier="0" cost="1" x="1193.2" y="2406.1" effect="MAXHP:15" skillId="27410" skillLevel="1" description="ACTIVE: +15% P.Atk and +10% Atk. Speed, but -5% P.Def, for 30s (60s cooldown).">
 		<requires nodeId="2014" />
 	</node>
 	<node id="2016" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1125.0" y="1948.6" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP:12" description="Junction.">
@@ -195,7 +195,7 @@
 		<requires nodeId="2039" />
 		<requires nodeId="2061" />
 	</node>
-	<node id="2061" name="Earthshatter" sector="Juggernaut" type="ACTIVE_SKILL" tier="0" cost="1" x="593.2" y="1366.8" effect="MAXHP:15" skillId="90411" skillLevel="auto" description="ACTIVE: strike all enemies around you, with a chance to stun them for 2s (30s cooldown). Grows stronger with your level.">
+	<node id="2061" name="Earthshatter" sector="Juggernaut" type="ACTIVE_SKILL" tier="0" cost="1" x="593.2" y="1366.8" effect="MAXHP:15" skillId="27411" skillLevel="auto" description="ACTIVE: strike all enemies around you, with a chance to stun them for 2s (30s cooldown). Grows stronger with your level.">
 		<requires nodeId="2060" />
 	</node>
 	<node id="2062" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="525.0" y="909.3" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP:12" description="Junction.">

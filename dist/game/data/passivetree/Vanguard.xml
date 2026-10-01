@@ -53,7 +53,7 @@
 		<requires nodeId="1001" />
 		<requires nodeId="1015" />
 	</node>
-	<node id="1015" name="Vanguard Aegis" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="1" x="2680.3" y="169.7" effect="MAXHP:15" skillId="90400" skillLevel="1" description="ACTIVE: +30% P.Def and M.Def, +20% shield block for 20s (90s cooldown).">
+	<node id="1015" name="Vanguard Aegis" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="1" x="2680.3" y="169.7" effect="MAXHP:15" skillId="27400" skillLevel="1" description="ACTIVE: +30% P.Def and M.Def, +20% shield block for 20s (90s cooldown).">
 		<requires nodeId="1014" />
 	</node>
 	<node id="1016" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2250.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:18" description="Junction.">
@@ -195,7 +195,7 @@
 		<requires nodeId="1039" />
 		<requires nodeId="1061" />
 	</node>
-	<node id="1061" name="Rallying Shout" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="1" x="1480.3" y="169.7" effect="MAXHP:15" skillId="90401" skillLevel="1" description="ACTIVE: party gains +8% P.Atk, M.Atk, P.Def and M.Def for 60s (180s cooldown).">
+	<node id="1061" name="Rallying Shout" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="1" x="1480.3" y="169.7" effect="MAXHP:15" skillId="27401" skillLevel="1" description="ACTIVE: party gains +8% P.Atk, M.Atk, P.Def and M.Def for 60s (180s cooldown).">
 		<requires nodeId="1060" />
 	</node>
 	<node id="1062" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1050.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:18" description="Junction.">
