@@ -98,6 +98,9 @@ public class FakePlayerPvpProfile
 	private volatile boolean _blessedEscape;
 	private volatile boolean _escapeInView;
 	
+	/** Its allocated passive tree, {@code null} for none. */
+	private FakePlayerPvpPassives _passives;
+	
 	// The active hotzone it came to (0 for none), and when it leaves once that hotzone rotated out (0 for never).
 	private volatile int _hotzoneId;
 	private volatile long _leaveTime;
@@ -659,6 +662,19 @@ public class FakePlayerPvpProfile
 	public void setBlessedEscape(boolean blessedEscape)
 	{
 		_blessedEscape = blessedEscape;
+	}
+	
+	/**
+	 * @return its allocated passive tree, {@code null} for none
+	 */
+	public FakePlayerPvpPassives getPassives()
+	{
+		return _passives;
+	}
+	
+	public void setPassives(FakePlayerPvpPassives passives)
+	{
+		_passives = passives;
 	}
 	
 	/**

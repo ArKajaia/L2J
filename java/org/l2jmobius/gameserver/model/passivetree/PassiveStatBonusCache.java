@@ -1,5 +1,6 @@
 package org.l2jmobius.gameserver.model.passivetree;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -18,33 +19,28 @@ public class PassiveStatBonusCache
 	
 	public void recompute(Player player)
 	{
+		recompute(PassiveTreeManager.getInstance().getAllocatedNodes(player));
+	}
+	
+	/**
+	 * Rebuilds the totals from an allocation that isn't a player's own (a roaming fake player's precomputed path).
+	 * @param nodeIds the allocated node ids
+	 */
+	public void recompute(Collection<Integer> nodeIds)
+	{
 		_totals.clear();
 		
-		final Set<Integer> allocated = PassiveTreeManager.getInstance().getAllocatedNodes(player);
-		for (int nodeId : allocated)
+		for (int nodeId : nodeIds)
 		{
 			final PassiveNode node = PassiveTreeData.getInstance().getNode(nodeId);
-			if ((node == null) || node.getEffectSpec().isEmpty())
+			if (node == null)
 			{
 				continue;
 			}
 			
-			for (String part : node.getEffectSpec().split(";"))
+			for (Map.Entry<String, Double> effect : node.getEffects().entrySet())
 			{
-				final String[] kv = part.split(":");
-				if (kv.length != 2)
-				{
-					continue;
-				}
-				
-				try
-				{
-					_totals.merge(kv[0].trim(), Double.parseDouble(kv[1].trim()), Double::sum);
-				}
-				catch (NumberFormatException ignored)
-				{
-					// Malformed effect spec in the XML - skip rather than crash stat calc.
-				}
+				_totals.merge(effect.getKey(), effect.getValue(), Double::sum);
 			}
 		}
 	}

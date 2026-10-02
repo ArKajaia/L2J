@@ -16,18 +16,23 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.l2jmobius.commons.database.DatabaseFactory;
+import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.config.custom.PassiveTreeConfig;
 import org.l2jmobius.gameserver.data.custom.PassiveTreeData;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.SkillData;
+import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.creature.TimeStamp;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics.ConditionalKey;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
+import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
 import org.l2jmobius.gameserver.model.skill.PassiveTreeArchetypes;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.stats.Stat;
@@ -145,6 +150,14 @@ public class PassiveTreeManager
 	 * Getter-backed % keys (read by the Player getter overrides) and the Stat their conditional versions (PATK_PCT@BOW...) multiply instead, since a getter can't test a condition.
 	 */
 	private static final Map<String, Stat> CONDITIONAL_GETTER_EFFECTS = Map.ofEntries(Map.entry("PATK_PCT", Stat.POWER_ATTACK), Map.entry("PDEF_PCT", Stat.POWER_DEFENCE), Map.entry("MATK_PCT", Stat.MAGIC_ATTACK), Map.entry("MDEF_PCT", Stat.MAGIC_DEFENCE), Map.entry("ATK_SPD_PCT", Stat.POWER_ATTACK_SPEED), Map.entry("CAST_SPD_PCT", Stat.MAGIC_ATTACK_SPEED), Map.entry("SHIELD_DEF_PCT", Stat.SHIELD_DEFENCE));
+	
+	/**
+	 * Base stat keys {@link Player} adds in its getSTR()..getMEN() overrides, as the Stat a roaming fake player gets them through instead (see {@link #applyToFakePlayer}).
+	 */
+	private static final Map<String, Stat> FAKE_BASE_STAT_EFFECTS = Map.ofEntries(Map.entry("STR", Stat.STAT_STR), Map.entry("DEX", Stat.STAT_DEX), Map.entry("CON", Stat.STAT_CON), Map.entry("INT", Stat.STAT_INT), Map.entry("WIT", Stat.STAT_WIT), Map.entry("MEN", Stat.STAT_MEN));
+	
+	/** Order of the Funcs that stand in for the Player getter overrides on a fake player: after every other Func (the highest order in use is 0x40). */
+	private static final int FAKE_GETTER_ORDER = 0x50;
 	
 	private String key(Player player)
 	{
@@ -534,58 +547,67 @@ public class PassiveTreeManager
 	private void syncPassiveTreeStatFuncs(Player player)
 	{
 		player.removeStatsOwner(PASSIVE_TREE_FUNC_OWNER);
-		
+		addTreeStatFuncs(player, player.getPassiveStatBonus());
+	}
+	
+	/**
+	 * Adds the Func-backed tree stats of {@code bonus} to {@code creature}, all owned by {@link #PASSIVE_TREE_FUNC_OWNER}. Shared by players and roaming fake players, so both read the effect keys the same way.
+	 * @param creature the creature
+	 * @param bonus its summed node effects
+	 */
+	private static void addTreeStatFuncs(Creature creature, PassiveStatBonusCache bonus)
+	{
 		for (Map.Entry<String, Stat> entry : FUNC_ADD_EFFECTS.entrySet())
 		{
-			final double bonus = player.getPassiveStatBonus().get(entry.getKey());
-			if (bonus != 0)
+			final double value = bonus.get(entry.getKey());
+			if (value != 0)
 			{
-				player.addStatFunc(new FuncAdd(entry.getValue(), 0x30, PASSIVE_TREE_FUNC_OWNER, bonus, null));
+				creature.addStatFunc(new FuncAdd(entry.getValue(), 0x30, PASSIVE_TREE_FUNC_OWNER, value, null));
 			}
 		}
 		
 		for (Map.Entry<String, Stat> entry : FUNC_MUL_EFFECTS.entrySet())
 		{
-			final double pct = player.getPassiveStatBonus().get(entry.getKey());
+			final double pct = bonus.get(entry.getKey());
 			if (pct != 0)
 			{
-				player.addStatFunc(new FuncMul(entry.getValue(), 0x30, PASSIVE_TREE_FUNC_OWNER, 1.0 + (pct / 100.0), null));
+				creature.addStatFunc(new FuncMul(entry.getValue(), 0x30, PASSIVE_TREE_FUNC_OWNER, 1.0 + (pct / 100.0), null));
 			}
 		}
 
 		for (Map.Entry<String, Stat> entry : FUNC_MUL_REDUCE_EFFECTS.entrySet())
 		{
-			final double pct = player.getPassiveStatBonus().get(entry.getKey());
+			final double pct = bonus.get(entry.getKey());
 			if (pct != 0)
 			{
-				player.addStatFunc(new FuncMul(entry.getValue(), 0x30, PASSIVE_TREE_FUNC_OWNER, 1.0 - (pct / 100.0), null));
+				creature.addStatFunc(new FuncMul(entry.getValue(), 0x30, PASSIVE_TREE_FUNC_OWNER, 1.0 - (pct / 100.0), null));
 			}
 		}
 
 		for (Map.Entry<String, Stat> entry : FUNC_SUB_EFFECTS.entrySet())
 		{
-			final double bonus = player.getPassiveStatBonus().get(entry.getKey());
-			if (bonus != 0)
+			final double value = bonus.get(entry.getKey());
+			if (value != 0)
 			{
-				player.addStatFunc(new FuncAdd(entry.getValue(), 0x30, PASSIVE_TREE_FUNC_OWNER, -bonus, null));
+				creature.addStatFunc(new FuncAdd(entry.getValue(), 0x30, PASSIVE_TREE_FUNC_OWNER, -value, null));
 			}
 		}
 		
 		for (Map.Entry<String, Stat> entry : FUNC_MUL_LATE_EFFECTS.entrySet())
 		{
-			final double pct = player.getPassiveStatBonus().get(entry.getKey());
+			final double pct = bonus.get(entry.getKey());
 			if (pct != 0)
 			{
-				player.addStatFunc(new FuncMul(entry.getValue(), 0x31, PASSIVE_TREE_FUNC_OWNER, 1.0 + (pct / 100.0), null));
+				creature.addStatFunc(new FuncMul(entry.getValue(), 0x31, PASSIVE_TREE_FUNC_OWNER, 1.0 + (pct / 100.0), null));
 			}
 		}
 		
 		// Conditional bonuses (PDEF_PCT@HEAVY, PATK_PCT@LOWHP...): the same Func as the plain key, gated by its condition.
 		// Funcs test their condition on every stat calculation, so gear swaps, HP% and day/night apply live.
-		for (String key : player.getPassiveStatBonus().keys())
+		for (String key : bonus.keys())
 		{
 			final ConditionalKey conditional = PassiveMechanics.parseConditional(key);
-			final double value = player.getPassiveStatBonus().get(key);
+			final double value = bonus.get(key);
 			if ((conditional == null) || (value == 0))
 			{
 				continue;
@@ -594,24 +616,79 @@ public class PassiveTreeManager
 			final String base = conditional.baseKey();
 			if (CONDITIONAL_GETTER_EFFECTS.containsKey(base))
 			{
-				player.addStatFunc(new FuncMul(CONDITIONAL_GETTER_EFFECTS.get(base), 0x30, PASSIVE_TREE_FUNC_OWNER, 1.0 + (value / 100.0), conditional.condition()));
+				creature.addStatFunc(new FuncMul(CONDITIONAL_GETTER_EFFECTS.get(base), 0x30, PASSIVE_TREE_FUNC_OWNER, 1.0 + (value / 100.0), conditional.condition()));
 			}
 			else if (FUNC_ADD_EFFECTS.containsKey(base))
 			{
-				player.addStatFunc(new FuncAdd(FUNC_ADD_EFFECTS.get(base), 0x30, PASSIVE_TREE_FUNC_OWNER, value, conditional.condition()));
+				creature.addStatFunc(new FuncAdd(FUNC_ADD_EFFECTS.get(base), 0x30, PASSIVE_TREE_FUNC_OWNER, value, conditional.condition()));
 			}
 			else if (FUNC_MUL_EFFECTS.containsKey(base))
 			{
-				player.addStatFunc(new FuncMul(FUNC_MUL_EFFECTS.get(base), 0x30, PASSIVE_TREE_FUNC_OWNER, 1.0 + (value / 100.0), conditional.condition()));
+				creature.addStatFunc(new FuncMul(FUNC_MUL_EFFECTS.get(base), 0x30, PASSIVE_TREE_FUNC_OWNER, 1.0 + (value / 100.0), conditional.condition()));
 			}
 			else if (FUNC_MUL_REDUCE_EFFECTS.containsKey(base))
 			{
-				player.addStatFunc(new FuncMul(FUNC_MUL_REDUCE_EFFECTS.get(base), 0x30, PASSIVE_TREE_FUNC_OWNER, 1.0 - (value / 100.0), conditional.condition()));
+				creature.addStatFunc(new FuncMul(FUNC_MUL_REDUCE_EFFECTS.get(base), 0x30, PASSIVE_TREE_FUNC_OWNER, 1.0 - (value / 100.0), conditional.condition()));
 			}
 			else if (FUNC_SUB_EFFECTS.containsKey(base))
 			{
-				player.addStatFunc(new FuncAdd(FUNC_SUB_EFFECTS.get(base), 0x30, PASSIVE_TREE_FUNC_OWNER, -value, conditional.condition()));
+				creature.addStatFunc(new FuncAdd(FUNC_SUB_EFFECTS.get(base), 0x30, PASSIVE_TREE_FUNC_OWNER, -value, conditional.condition()));
 			}
+		}
+	}
+	
+	/**
+	 * Gives a roaming fake player the stats of its passive tree (see {@link FakePlayerPvpPassiveTree}). Call on every spawn, since each life is a new body.
+	 * <p>
+	 * Besides the Func-backed keys a player has, the keys {@link Player} reads in its getter overrides (STR..MEN, the P. Atk./P. Def./M. Atk./M. Def./speed/shield % bonuses and max HP/MP) become Funcs too, ordered after every other one ({@link #FAKE_GETTER_ORDER}), so they
+	 * apply on top of the whole stat the way those getters do.
+	 * @param npc the fake player
+	 * @param passives its passive tree, {@code null} for none
+	 */
+	public void applyToFakePlayer(Npc npc, FakePlayerPvpPassives passives)
+	{
+		npc.removeStatsOwner(PASSIVE_TREE_FUNC_OWNER);
+		if (passives == null)
+		{
+			return;
+		}
+		
+		final PassiveStatBonusCache bonus = passives.getBonus();
+		addTreeStatFuncs(npc, bonus);
+		
+		for (Map.Entry<String, Stat> entry : FAKE_BASE_STAT_EFFECTS.entrySet())
+		{
+			final double value = bonus.get(entry.getKey());
+			if (value != 0)
+			{
+				npc.addStatFunc(new FuncAdd(entry.getValue(), FAKE_GETTER_ORDER, PASSIVE_TREE_FUNC_OWNER, value, null));
+			}
+		}
+		
+		for (Map.Entry<String, Stat> entry : CONDITIONAL_GETTER_EFFECTS.entrySet())
+		{
+			final double pct = bonus.get(entry.getKey());
+			if (pct != 0)
+			{
+				npc.addStatFunc(new FuncMul(entry.getValue(), FAKE_GETTER_ORDER, PASSIVE_TREE_FUNC_OWNER, 1.0 + (pct / 100.0), null));
+			}
+		}
+		
+		// Max HP: like PassiveMechanics.maxHp, (HP + flat) * (1 + %). The class CP folded into a fake player's HP takes the flat CP bonus, but not the HP %.
+		final double maxHp = bonus.get("MAXHP") + (FakePlayerPvpConfig.INCLUDE_CP_IN_HP ? bonus.get("MAXCP") : 0);
+		if (maxHp != 0)
+		{
+			npc.addStatFunc(new FuncAdd(Stat.MAX_HP, FAKE_GETTER_ORDER, PASSIVE_TREE_FUNC_OWNER, maxHp, null));
+		}
+		final double maxHpPct = bonus.get("MAXHP_PCT");
+		if (maxHpPct != 0)
+		{
+			npc.addStatFunc(new FuncMul(Stat.MAX_HP, FAKE_GETTER_ORDER + 1, PASSIVE_TREE_FUNC_OWNER, 1.0 + ((maxHpPct / 100.0) * passives.getHpShare()), null));
+		}
+		final double maxMp = bonus.get("MAXMP");
+		if (maxMp != 0)
+		{
+			npc.addStatFunc(new FuncAdd(Stat.MAX_MP, FAKE_GETTER_ORDER, PASSIVE_TREE_FUNC_OWNER, maxMp, null));
 		}
 	}
 	

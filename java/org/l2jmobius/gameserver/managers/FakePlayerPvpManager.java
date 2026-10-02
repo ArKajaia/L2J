@@ -910,6 +910,12 @@ public class FakePlayerPvpManager
 		}
 		
 		FakePlayerPvpData.getInstance();
+		
+		// The passive trees are grown here, once, so a spawn only adds up a prepared one.
+		if (FakePlayerPvpPassiveTree.isEnabled())
+		{
+			FakePlayerPvpPassiveTree.getInstance();
+		}
 	}
 	
 	/**
@@ -1271,6 +1277,7 @@ public class FakePlayerPvpManager
 		_fakePlayers.add(fake);
 		
 		final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+		PassiveTreeManager.getInstance().applyToFakePlayer(fake, profile.getPassives()); // Before the HP is filled up: the tree raises max HP.
 		profile.setTransform(0, null);
 		profile.setDisarmedWeapon(null);
 		template.getFakePlayerInfo().setTransformDisplayId(0);
