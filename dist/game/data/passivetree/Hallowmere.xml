@@ -57,112 +57,112 @@
 		<requires nodeId="45052" />
 		<requires nodeId="45061" />
 	</node>
-	<node id="45052" name="Undying Vigil" sector="Hallowmere" type="KEYSTONE" tier="0" cost="1" x="4399.4" y="-2540.0" effect="MAXHP_PCT:15;HP_REGEN_PCT:60;PATK_PCT:-10;MATK_PCT:-10" description="KEYSTONE: +15% maximum HP and 60% faster HP regeneration, but 10% less P.Atk and M.Atk.">
+	<node id="45052" name="Undying Vigil" sector="Hallowmere" type="KEYSTONE" tier="0" cost="1" x="4399.4" y="-2540.0" effect="MAXHP_PCT:15;HP_REGEN_PCT:60;PATK_PCT:-10;MATK_PCT:-10" icon="ankh" description="KEYSTONE: +15% maximum HP and 60% faster HP regeneration, but 10% less P.Atk and M.Atk.">
 		<requires nodeId="45051" />
 	</node>
-	<node id="45020" name="Hallowed Blood" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3987.4" y="-1722.8" orbitX="3882.6" orbitY="-1728.6" effect="MAXHP_PCT:1.5">
+	<node id="45020" name="Hallowed Blood" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3987.4" y="-1722.8" orbitX="3882.6" orbitY="-1728.6" effect="MAXHP_PCT:1.5" icon="heart-plus">
 		<requires nodeId="45006" />
 		<requires nodeId="45021" />
 	</node>
-	<node id="45021" name="Hallowed Blood" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3923.9" y="-1825.2" orbitX="3882.6" orbitY="-1728.6" effect="MAXHP_PCT:1.5">
+	<node id="45021" name="Hallowed Blood" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3923.9" y="-1825.2" orbitX="3882.6" orbitY="-1728.6" effect="MAXHP_PCT:1.5" icon="heart-plus">
 		<requires nodeId="45020" />
 		<requires nodeId="45022" />
 	</node>
-	<node id="45022" name="Hallowed Blood" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3806.0" y="-1800.5" orbitX="3882.6" orbitY="-1728.6" effect="MAXHP_PCT:1.5">
+	<node id="45022" name="Hallowed Blood" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3806.0" y="-1800.5" orbitX="3882.6" orbitY="-1728.6" effect="MAXHP_PCT:1.5" icon="heart-plus">
 		<requires nodeId="45021" />
 		<requires nodeId="45023" />
 	</node>
-	<node id="45023" name="Saint's Constitution" sector="Hallowmere" type="NOTABLE" tier="0" cost="1" x="3788.9" y="-1681.2" orbitX="3882.6" orbitY="-1728.6" effect="MAXHP_PCT:5;MEN:1" description="Hallowed Blood mastery. A body blessed to endure.">
+	<node id="45023" name="Saint's Constitution" sector="Hallowmere" type="NOTABLE" tier="0" cost="1" x="3788.9" y="-1681.2" orbitX="3882.6" orbitY="-1728.6" effect="MAXHP_PCT:5;MEN:1" icon="heart-plus" description="Hallowed Blood mastery. A body blessed to endure.">
 		<requires nodeId="45022" />
 	</node>
-	<node id="45024" name="Mending Light" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4301.9" y="-1700.5" orbitX="4406.5" orbitY="-1691.5" effect="HEALING_RECEIVED_PCT:2">
+	<node id="45024" name="Mending Light" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4301.9" y="-1700.5" orbitX="4406.5" orbitY="-1691.5" effect="HEALING_RECEIVED_PCT:2" icon="chalice">
 		<requires nodeId="45006" />
 		<requires nodeId="45025" />
 	</node>
-	<node id="45025" name="Mending Light" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4379.1" y="-1792.9" orbitX="4406.5" orbitY="-1691.5" effect="HEALING_RECEIVED_PCT:2">
+	<node id="45025" name="Mending Light" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4379.1" y="-1792.9" orbitX="4406.5" orbitY="-1691.5" effect="HEALING_RECEIVED_PCT:2" icon="chalice">
 		<requires nodeId="45024" />
 		<requires nodeId="45026" />
 	</node>
-	<node id="45026" name="Mending Light" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4492.4" y="-1751.9" orbitX="4406.5" orbitY="-1691.5" effect="HEALING_RECEIVED_PCT:2">
+	<node id="45026" name="Mending Light" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4492.4" y="-1751.9" orbitX="4406.5" orbitY="-1691.5" effect="HEALING_RECEIVED_PCT:2" icon="chalice">
 		<requires nodeId="45025" />
 		<requires nodeId="45027" />
 	</node>
-	<node id="45027" name="Grace Received" sector="Hallowmere" type="NOTABLE" tier="0" cost="1" x="4492.6" y="-1631.4" orbitX="4406.5" orbitY="-1691.5" effect="HEALING_RECEIVED_PCT:8;HP_REGEN_PCT:10" description="Mending Light mastery. Heals land harder on you.">
+	<node id="45027" name="Grace Received" sector="Hallowmere" type="NOTABLE" tier="0" cost="1" x="4492.6" y="-1631.4" orbitX="4406.5" orbitY="-1691.5" effect="HEALING_RECEIVED_PCT:8;HP_REGEN_PCT:10" icon="chalice" description="Mending Light mastery. Heals land harder on you.">
 		<requires nodeId="45026" />
 	</node>
-	<node id="45028" name="Holy Ward" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3623.6" y="-2875.3" orbitX="3668.1" orbitY="-2970.4" effect="MDEF_PCT:1.5">
+	<node id="45028" name="Holy Ward" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3623.6" y="-2875.3" orbitX="3668.1" orbitY="-2970.4" effect="MDEF_PCT:1.5" icon="sun">
 		<requires nodeId="45008" />
 		<requires nodeId="45029" />
 	</node>
-	<node id="45029" name="Holy Ward" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3742.2" y="-2896.0" orbitX="3668.1" orbitY="-2970.4" effect="MDEF_PCT:1.5">
+	<node id="45029" name="Holy Ward" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3742.2" y="-2896.0" orbitX="3668.1" orbitY="-2970.4" effect="MDEF_PCT:1.5" icon="sun">
 		<requires nodeId="45028" />
 		<requires nodeId="45030" />
 	</node>
-	<node id="45030" name="Holy Ward" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3763.4" y="-3014.6" orbitX="3668.1" orbitY="-2970.4" effect="MDEF_PCT:1.5">
+	<node id="45030" name="Holy Ward" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3763.4" y="-3014.6" orbitX="3668.1" orbitY="-2970.4" effect="MDEF_PCT:1.5" icon="sun">
 		<requires nodeId="45029" />
 		<requires nodeId="45031" />
 	</node>
-	<node id="45031" name="Sanctum" sector="Hallowmere" type="NOTABLE" tier="0" cost="1" x="3659.2" y="-3075.0" orbitX="3668.1" orbitY="-2970.4" effect="MDEF_PCT:6;DEBUFF_RES_PCT:5" description="Holy Ward mastery. Spells and curses slide off.">
+	<node id="45031" name="Sanctum" sector="Hallowmere" type="NOTABLE" tier="0" cost="1" x="3659.2" y="-3075.0" orbitX="3668.1" orbitY="-2970.4" effect="MDEF_PCT:6;DEBUFF_RES_PCT:5" icon="sun" description="Holy Ward mastery. Spells and curses slide off.">
 		<requires nodeId="45030" />
 	</node>
-	<node id="45032" name="Pilgrim's Mace" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3485.7" y="-2591.8" orbitX="3438.3" orbitY="-2498.1" effect="PATK_PCT@BLUNT:2">
+	<node id="45032" name="Pilgrim's Mace" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3485.7" y="-2591.8" orbitX="3438.3" orbitY="-2498.1" effect="PATK_PCT@BLUNT:2" icon="hammer">
 		<requires nodeId="45008" />
 		<requires nodeId="45033" />
 	</node>
-	<node id="45033" name="Pilgrim's Mace" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3542.6" y="-2485.6" orbitX="3438.3" orbitY="-2498.1" effect="PATK_PCT@BLUNT:2">
+	<node id="45033" name="Pilgrim's Mace" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3542.6" y="-2485.6" orbitX="3438.3" orbitY="-2498.1" effect="PATK_PCT@BLUNT:2" icon="hammer">
 		<requires nodeId="45032" />
 		<requires nodeId="45034" />
 	</node>
-	<node id="45034" name="Pilgrim's Mace" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3462.2" y="-2395.8" orbitX="3438.3" orbitY="-2498.1" effect="PATK_PCT@BLUNT:2">
+	<node id="45034" name="Pilgrim's Mace" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3462.2" y="-2395.8" orbitX="3438.3" orbitY="-2498.1" effect="PATK_PCT@BLUNT:2" icon="hammer">
 		<requires nodeId="45033" />
 		<requires nodeId="45035" />
 	</node>
-	<node id="45035" name="Righteous Hammer" sector="Hallowmere" type="NOTABLE" tier="0" cost="1" x="3350.4" y="-2440.6" orbitX="3438.3" orbitY="-2498.1" effect="PATK_PCT@BLUNT:6;MDEF_PCT@SHIELD:6" description="Pilgrim's Mace mastery. Mace and shield.">
+	<node id="45035" name="Righteous Hammer" sector="Hallowmere" type="NOTABLE" tier="0" cost="1" x="3350.4" y="-2440.6" orbitX="3438.3" orbitY="-2498.1" effect="PATK_PCT@BLUNT:6;MDEF_PCT@SHIELD:6" icon="hammer" description="Pilgrim's Mace mastery. Mace and shield.">
 		<requires nodeId="45034" />
 	</node>
-	<node id="45036" name="Cleansing" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4669.1" y="-1856.4" orbitX="4720.8" orbitY="-1765.0" effect="DEBUFF_RES_PCT:1.5">
+	<node id="45036" name="Cleansing" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4669.1" y="-1856.4" orbitX="4720.8" orbitY="-1765.0" effect="DEBUFF_RES_PCT:1.5" icon="drop">
 		<requires nodeId="45037" />
 		<requires nodeId="45060" />
 	</node>
-	<node id="45037" name="Cleansing" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4617.3" y="-1747.7" orbitX="4720.8" orbitY="-1765.0" effect="DEBUFF_RES_PCT:1.5">
+	<node id="45037" name="Cleansing" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4617.3" y="-1747.7" orbitX="4720.8" orbitY="-1765.0" effect="DEBUFF_RES_PCT:1.5" icon="drop">
 		<requires nodeId="45036" />
 		<requires nodeId="45038" />
 	</node>
-	<node id="45038" name="Cleansing" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4701.7" y="-1661.8" orbitX="4720.8" orbitY="-1765.0" effect="DEBUFF_RES_PCT:1.5">
+	<node id="45038" name="Cleansing" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4701.7" y="-1661.8" orbitX="4720.8" orbitY="-1765.0" effect="DEBUFF_RES_PCT:1.5" icon="drop">
 		<requires nodeId="45037" />
 		<requires nodeId="45039" />
 	</node>
-	<node id="45039" name="Purified" sector="Hallowmere" type="NOTABLE" tier="0" cost="1" x="4811.3" y="-1711.8" orbitX="4720.8" orbitY="-1765.0" effect="DEBUFF_RES_PCT:6;HP_REGEN_PCT:6" description="Cleansing mastery. Shrugs off debuffs.">
+	<node id="45039" name="Purified" sector="Hallowmere" type="NOTABLE" tier="0" cost="1" x="4811.3" y="-1711.8" orbitX="4720.8" orbitY="-1765.0" effect="DEBUFF_RES_PCT:6;HP_REGEN_PCT:6" icon="drop" description="Cleansing mastery. Shrugs off debuffs.">
 		<requires nodeId="45038" />
 	</node>
-	<node id="45040" name="Vigil" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4540.6" y="-1048.3" effect="MAXHP:20">
+	<node id="45040" name="Vigil" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4540.6" y="-1048.3" effect="MAXHP:20" icon="heart">
 		<requires nodeId="45005" />
 		<requires nodeId="45041" />
 	</node>
-	<node id="45041" name="Vigil" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4698.5" y="-1009.0" effect="MAXHP:20">
+	<node id="45041" name="Vigil" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4698.5" y="-1009.0" effect="MAXHP:20" icon="heart">
 		<requires nodeId="45040" />
 		<requires nodeId="45042" />
 	</node>
-	<node id="45042" name="Vigil" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4856.6" y="-968.7" effect="MAXHP:20">
+	<node id="45042" name="Vigil" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4856.6" y="-968.7" effect="MAXHP:20" icon="heart">
 		<requires nodeId="45041" />
 		<requires nodeId="45043" />
 	</node>
-	<node id="45043" name="Steadfast Vigil" sector="Hallowmere" type="NOTABLE" tier="0" cost="1" x="5014.6" y="-929.4" effect="MAXHP:140;HP_REGEN_PCT:6" description="Vigil mastery. Raw health.">
+	<node id="45043" name="Steadfast Vigil" sector="Hallowmere" type="NOTABLE" tier="0" cost="1" x="5014.6" y="-929.4" effect="MAXHP:140;HP_REGEN_PCT:6" icon="heart" description="Vigil mastery. Raw health.">
 		<requires nodeId="45042" />
 	</node>
-	<node id="45044" name="Lantern" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3178.1" y="-3408.1" effect="MP_REGEN_PCT:1.5">
+	<node id="45044" name="Lantern" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3178.1" y="-3408.1" effect="MP_REGEN_PCT:1.5" icon="lantern">
 		<requires nodeId="45009" />
 		<requires nodeId="45045" />
 	</node>
-	<node id="45045" name="Lantern" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3223.0" y="-3564.5" effect="MP_REGEN_PCT:1.5">
+	<node id="45045" name="Lantern" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3223.0" y="-3564.5" effect="MP_REGEN_PCT:1.5" icon="lantern">
 		<requires nodeId="45044" />
 		<requires nodeId="45046" />
 	</node>
-	<node id="45046" name="Lantern" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3267.2" y="-3721.6" effect="MP_REGEN_PCT:1.5">
+	<node id="45046" name="Lantern" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3267.2" y="-3721.6" effect="MP_REGEN_PCT:1.5" icon="lantern">
 		<requires nodeId="45045" />
 		<requires nodeId="45047" />
 	</node>
-	<node id="45047" name="Lamplight" sector="Hallowmere" type="NOTABLE" tier="0" cost="1" x="3312.2" y="-3878.1" effect="MP_REGEN_PCT:6;HEALING_RECEIVED_PCT:4" description="Lantern mastery. Mana and mending.">
+	<node id="45047" name="Lamplight" sector="Hallowmere" type="NOTABLE" tier="0" cost="1" x="3312.2" y="-3878.1" effect="MP_REGEN_PCT:6;HEALING_RECEIVED_PCT:4" icon="lantern" description="Lantern mastery. Mana and mending.">
 		<requires nodeId="45046" />
 	</node>
 	<node id="45060" name="Pilgrim's Road" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4586.6" y="-2001.9" effect="MAXHP:18">

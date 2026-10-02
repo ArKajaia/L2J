@@ -27,29 +27,29 @@
 		<requires nodeId="30407" />
 		<requires nodeId="30412" />
 	</node>
-	<node id="30406" name="Surging Power" sector="Mystic" type="SMALL" tier="0" cost="1" x="-359.0" y="-2644.6" orbitX="-420.0" orbitY="-2730.0" effect="MATK_PCT:0.6;CAST_SPD_PCT:0.5">
+	<node id="30406" name="Surging Power" sector="Mystic" type="SMALL" tier="0" cost="1" x="-359.0" y="-2644.6" orbitX="-420.0" orbitY="-2730.0" effect="MATK_PCT:0.6;CAST_SPD_PCT:0.5" icon="rune">
 		<requires nodeId="30403" />
 		<requires nodeId="30405" />
 		<requires nodeId="30410" />
 	</node>
-	<node id="30407" name="Still Mind" sector="Mystic" type="SMALL" tier="0" cost="1" x="359.0" y="-2644.6" orbitX="420.0" orbitY="-2730.0" effect="MP_REGEN_PCT:1.4;MAXMP:14">
+	<node id="30407" name="Still Mind" sector="Mystic" type="SMALL" tier="0" cost="1" x="359.0" y="-2644.6" orbitX="420.0" orbitY="-2730.0" effect="MP_REGEN_PCT:1.4;MAXMP:14" icon="crystal">
 		<requires nodeId="30404" />
 		<requires nodeId="30405" />
 		<requires nodeId="30411" />
 	</node>
-	<node id="30408" name="Surging Power" sector="Mystic" type="SMALL" tier="0" cost="1" x="-411.8" y="-2834.7" orbitX="-420.0" orbitY="-2730.0" effect="MATK_PCT:0.6;CAST_SPD_PCT:0.5">
+	<node id="30408" name="Surging Power" sector="Mystic" type="SMALL" tier="0" cost="1" x="-411.8" y="-2834.7" orbitX="-420.0" orbitY="-2730.0" effect="MATK_PCT:0.6;CAST_SPD_PCT:0.5" icon="rune">
 		<requires nodeId="30410" />
 		<requires nodeId="30415" />
 	</node>
-	<node id="30409" name="Still Mind" sector="Mystic" type="SMALL" tier="0" cost="1" x="411.8" y="-2834.7" orbitX="420.0" orbitY="-2730.0" effect="MP_REGEN_PCT:1.4;MAXMP:14">
+	<node id="30409" name="Still Mind" sector="Mystic" type="SMALL" tier="0" cost="1" x="411.8" y="-2834.7" orbitX="420.0" orbitY="-2730.0" effect="MP_REGEN_PCT:1.4;MAXMP:14" icon="crystal">
 		<requires nodeId="30411" />
 		<requires nodeId="30416" />
 	</node>
-	<node id="30410" name="Surging Power" sector="Mystic" type="SMALL" tier="0" cost="1" x="-318.8" y="-2758.1" orbitX="-420.0" orbitY="-2730.0" effect="MATK_PCT:0.6;CAST_SPD_PCT:0.5">
+	<node id="30410" name="Surging Power" sector="Mystic" type="SMALL" tier="0" cost="1" x="-318.8" y="-2758.1" orbitX="-420.0" orbitY="-2730.0" effect="MATK_PCT:0.6;CAST_SPD_PCT:0.5" icon="rune">
 		<requires nodeId="30406" />
 		<requires nodeId="30408" />
 	</node>
-	<node id="30411" name="Still Mind" sector="Mystic" type="SMALL" tier="0" cost="1" x="318.8" y="-2758.1" orbitX="420.0" orbitY="-2730.0" effect="MP_REGEN_PCT:1.4;MAXMP:14">
+	<node id="30411" name="Still Mind" sector="Mystic" type="SMALL" tier="0" cost="1" x="318.8" y="-2758.1" orbitX="420.0" orbitY="-2730.0" effect="MP_REGEN_PCT:1.4;MAXMP:14" icon="crystal">
 		<requires nodeId="30407" />
 		<requires nodeId="30409" />
 	</node>
@@ -61,25 +61,25 @@
 		<requires nodeId="30427" />
 		<requires nodeId="30470" />
 	</node>
-	<node id="30415" name="Overcharged Sigils" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="-515.6" y="-2773.5" orbitX="-420.0" orbitY="-2730.0" effect="MCRIT_DMG_PCT:10;MATK_PCT:3" description="Surging Power mastery. Magic critical hits erupt.">
+	<node id="30415" name="Overcharged Sigils" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="-515.6" y="-2773.5" orbitX="-420.0" orbitY="-2730.0" effect="MCRIT_DMG_PCT:10;MATK_PCT:3" icon="rune" description="Surging Power mastery. Magic critical hits erupt.">
 		<requires nodeId="30408" />
 	</node>
-	<node id="30416" name="Clarity" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="515.6" y="-2773.5" orbitX="420.0" orbitY="-2730.0" effect="SPELL_MP_COST_RED_PCT:8;MP_REGEN_PCT:4" description="Still Mind mastery. Spells cost less MP.">
+	<node id="30416" name="Clarity" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="515.6" y="-2773.5" orbitX="420.0" orbitY="-2730.0" effect="SPELL_MP_COST_RED_PCT:8;MP_REGEN_PCT:4" icon="crystal" description="Still Mind mastery. Spells cost less MP.">
 		<requires nodeId="30409" />
 	</node>
-	<node id="30417" name="Ley Current" sector="Mystic" type="SMALL" tier="0" cost="1" x="-254.9" y="-3151.0" orbitX="-220.0" orbitY="-3250.0" effect="INTERRUPT_RES_PCT:5;MAXMP:10">
+	<node id="30417" name="Ley Current" sector="Mystic" type="SMALL" tier="0" cost="1" x="-254.9" y="-3151.0" orbitX="-220.0" orbitY="-3250.0" effect="INTERRUPT_RES_PCT:5;MAXMP:10" icon="book">
 		<requires nodeId="30412" />
 		<requires nodeId="30420" />
 		<requires nodeId="30425" />
 	</node>
-	<node id="30418" name="Ley Current" sector="Mystic" type="SMALL" tier="0" cost="1" x="-256.9" y="-3348.3" orbitX="-220.0" orbitY="-3250.0" effect="INTERRUPT_RES_PCT:5;MAXMP:10">
+	<node id="30418" name="Ley Current" sector="Mystic" type="SMALL" tier="0" cost="1" x="-256.9" y="-3348.3" orbitX="-220.0" orbitY="-3250.0" effect="INTERRUPT_RES_PCT:5;MAXMP:10" icon="book">
 		<requires nodeId="30419" />
 		<requires nodeId="30420" />
 	</node>
-	<node id="30419" name="Unbroken Chant" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="-140.2" y="-3318.3" orbitX="-220.0" orbitY="-3250.0" effect="INTERRUPT_RES_PCT:30;CAST_SPD_PCT:3;SPELL_CDR_PCT:3" description="Ley Current mastery. Taking hits rarely breaks your casting.">
+	<node id="30419" name="Unbroken Chant" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="-140.2" y="-3318.3" orbitX="-220.0" orbitY="-3250.0" effect="INTERRUPT_RES_PCT:30;CAST_SPD_PCT:3;SPELL_CDR_PCT:3" icon="book" description="Ley Current mastery. Taking hits rarely breaks your casting.">
 		<requires nodeId="30418" />
 	</node>
-	<node id="30420" name="Ley Current" sector="Mystic" type="SMALL" tier="0" cost="1" x="-325.0" y="-3249.0" orbitX="-220.0" orbitY="-3250.0" effect="INTERRUPT_RES_PCT:5;MAXMP:10">
+	<node id="30420" name="Ley Current" sector="Mystic" type="SMALL" tier="0" cost="1" x="-325.0" y="-3249.0" orbitX="-220.0" orbitY="-3250.0" effect="INTERRUPT_RES_PCT:5;MAXMP:10" icon="book">
 		<requires nodeId="30417" />
 		<requires nodeId="30418" />
 	</node>
@@ -87,14 +87,14 @@
 		<requires nodeId="30422" />
 		<requires nodeId="30425" />
 	</node>
-	<node id="30422" name="Soul Link" sector="Mystic" type="KEYSTONE" tier="0" cost="1" x="-760.0" y="-3470.0" effect="SERVITOR_SHARE_PCT:30;PATK_PCT:-10;MATK_PCT:-10" description="KEYSTONE: 30% of the damage you take is redirected to your nearby servitor, but you deal 10% less damage.">
+	<node id="30422" name="Soul Link" sector="Mystic" type="KEYSTONE" tier="0" cost="1" x="-760.0" y="-3470.0" effect="SERVITOR_SHARE_PCT:30;PATK_PCT:-10;MATK_PCT:-10" icon="paw" description="KEYSTONE: 30% of the damage you take is redirected to your nearby servitor, but you deal 10% less damage.">
 		<requires nodeId="30421" />
 	</node>
 	<node id="30423" name="Approach" sector="Mystic" type="SMALL" tier="0" cost="1" x="680.0" y="-3330.0" effect="MAXHP:6">
 		<requires nodeId="30424" />
 		<requires nodeId="30426" />
 	</node>
-	<node id="30424" name="Arcane Hunter" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="760.0" y="-3470.0" effect="PVE_MDMG_PCT:6;MATK_PCT:1" description="Spellwork tuned for clearing monsters.">
+	<node id="30424" name="Arcane Hunter" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="760.0" y="-3470.0" effect="PVE_MDMG_PCT:6;MATK_PCT:1" icon="staff" description="Spellwork tuned for clearing monsters.">
 		<requires nodeId="30423" />
 	</node>
 	<node id="30425" name="Arcane Path" sector="Mystic" type="SMALL" tier="0" cost="1" x="-560.0" y="-3150.0" effect="MATK_PCT:0.4;MCRIT_RATE_ADD:3">
@@ -113,7 +113,7 @@
 		<requires nodeId="30412" />
 		<requires nodeId="30428" />
 	</node>
-	<node id="30428" name="Vampiric Sorcery" sector="Mystic" type="KEYSTONE" tier="0" cost="1" x="260.0" y="-3310.0" effect="KS_SPELL_LEECH:8;HP_REGEN_PCT:-50" description="KEYSTONE: Your direct spell damage heals you for 8% of the damage dealt, but your natural HP regeneration is halved.">
+	<node id="30428" name="Vampiric Sorcery" sector="Mystic" type="KEYSTONE" tier="0" cost="1" x="260.0" y="-3310.0" effect="KS_SPELL_LEECH:8;HP_REGEN_PCT:-50" icon="blood" description="KEYSTONE: Your direct spell damage heals you for 8% of the damage dealt, but your natural HP regeneration is halved.">
 		<requires nodeId="30427" />
 	</node>
 	<node id="30429" name="Approach" sector="Mystic" type="SMALL" tier="0" cost="1" x="840.0" y="-3250.0" effect="MAXHP:6">
@@ -143,34 +143,34 @@
 		<requires nodeId="24201" />
 		<requires nodeId="30462" />
 	</node>
-	<node id="30452" name="Ley Wellspring" sector="Mystic" type="SMALL" tier="0" cost="1" x="199.1" y="-1894.4" orbitX="276.3" orbitY="-1965.7" effect="MATK_PCT:0.5;MP_REGEN_PCT:0.5">
+	<node id="30452" name="Ley Wellspring" sector="Mystic" type="SMALL" tier="0" cost="1" x="199.1" y="-1894.4" orbitX="276.3" orbitY="-1965.7" effect="MATK_PCT:0.5;MP_REGEN_PCT:0.5" icon="eye">
 		<requires nodeId="30451" />
 		<requires nodeId="30453" />
 	</node>
-	<node id="30453" name="Ley Wellspring" sector="Mystic" type="SMALL" tier="0" cost="1" x="316.8" y="-1868.8" orbitX="276.3" orbitY="-1965.7" effect="MATK_PCT:0.5;MP_REGEN_PCT:0.5">
+	<node id="30453" name="Ley Wellspring" sector="Mystic" type="SMALL" tier="0" cost="1" x="316.8" y="-1868.8" orbitX="276.3" orbitY="-1965.7" effect="MATK_PCT:0.5;MP_REGEN_PCT:0.5" icon="eye">
 		<requires nodeId="30452" />
 		<requires nodeId="30454" />
 	</node>
-	<node id="30454" name="Ley Wellspring" sector="Mystic" type="SMALL" tier="0" cost="1" x="381.1" y="-1970.7" orbitX="276.3" orbitY="-1965.7" effect="MATK_PCT:0.5;MP_REGEN_PCT:0.5">
+	<node id="30454" name="Ley Wellspring" sector="Mystic" type="SMALL" tier="0" cost="1" x="381.1" y="-1970.7" orbitX="276.3" orbitY="-1965.7" effect="MATK_PCT:0.5;MP_REGEN_PCT:0.5" icon="eye">
 		<requires nodeId="30453" />
 		<requires nodeId="30455" />
 	</node>
-	<node id="30455" name="Archon's Insight" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="307.4" y="-2065.9" orbitX="276.3" orbitY="-1965.7" effect="INT:1;MEN:1;MATK_PCT:2" description="Ley Wellspring mastery. Suits a Arcanist/Hierophant hybrid.">
+	<node id="30455" name="Archon's Insight" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="307.4" y="-2065.9" orbitX="276.3" orbitY="-1965.7" effect="INT:1;MEN:1;MATK_PCT:2" icon="eye" description="Ley Wellspring mastery. Suits a Arcanist/Hierophant hybrid.">
 		<requires nodeId="30454" />
 	</node>
-	<node id="30457" name="War Hymn" sector="Mystic" type="SMALL" tier="0" cost="1" x="45.6" y="-865.0" orbitX="66.7" orbitY="-762.1" effect="PATK_PCT:0.6;ATK_SPD_PCT:0.4">
+	<node id="30457" name="War Hymn" sector="Mystic" type="SMALL" tier="0" cost="1" x="45.6" y="-865.0" orbitX="66.7" orbitY="-762.1" effect="PATK_PCT:0.6;ATK_SPD_PCT:0.4" icon="sword">
 		<requires nodeId="30456" />
 		<requires nodeId="30458" />
 	</node>
-	<node id="30458" name="War Hymn" sector="Mystic" type="SMALL" tier="0" cost="1" x="156.1" y="-817.0" orbitX="66.7" orbitY="-762.1" effect="PATK_PCT:0.6;ATK_SPD_PCT:0.4">
+	<node id="30458" name="War Hymn" sector="Mystic" type="SMALL" tier="0" cost="1" x="156.1" y="-817.0" orbitX="66.7" orbitY="-762.1" effect="PATK_PCT:0.6;ATK_SPD_PCT:0.4" icon="sword">
 		<requires nodeId="30457" />
 		<requires nodeId="30459" />
 	</node>
-	<node id="30459" name="War Hymn" sector="Mystic" type="SMALL" tier="0" cost="1" x="148.9" y="-696.8" orbitX="66.7" orbitY="-762.1" effect="PATK_PCT:0.6;ATK_SPD_PCT:0.4">
+	<node id="30459" name="War Hymn" sector="Mystic" type="SMALL" tier="0" cost="1" x="148.9" y="-696.8" orbitX="66.7" orbitY="-762.1" effect="PATK_PCT:0.6;ATK_SPD_PCT:0.4" icon="sword">
 		<requires nodeId="30458" />
 		<requires nodeId="30460" />
 	</node>
-	<node id="30460" name="Crusader's Fervor" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="33.5" y="-662.5" orbitX="66.7" orbitY="-762.1" effect="STR:1;PATK_PCT:4;ATK_SPD_PCT:3" description="War Hymn mastery. Off-path: pays off only if you rebuild around it.">
+	<node id="30460" name="Crusader's Fervor" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="33.5" y="-662.5" orbitX="66.7" orbitY="-762.1" effect="STR:1;PATK_PCT:4;ATK_SPD_PCT:3" icon="sword" description="War Hymn mastery. Off-path: pays off only if you rebuild around it.">
 		<requires nodeId="30459" />
 	</node>
 	<node id="33401" name="Lifeblood Trail" sector="Mystic" type="SMALL" tier="0" cost="1" x="-320.0" y="-2500.0" effect="MAXHP:15">
@@ -210,53 +210,53 @@
 		<requires nodeId="30471" />
 		<requires nodeId="30475" />
 	</node>
-	<node id="30471" name="Mystic Vigor" sector="Mystic" type="SMALL" tier="0" cost="1" x="-138.2" y="-3565.1" orbitX="-200.0" orbitY="-3650.0" effect="MAXHP_PCT:1.2">
+	<node id="30471" name="Mystic Vigor" sector="Mystic" type="SMALL" tier="0" cost="1" x="-138.2" y="-3565.1" orbitX="-200.0" orbitY="-3650.0" effect="MAXHP_PCT:1.2" icon="flame">
 		<requires nodeId="30470" />
 		<requires nodeId="30472" />
 	</node>
-	<node id="30472" name="Mystic Vigor" sector="Mystic" type="SMALL" tier="0" cost="1" x="-99.1" y="-3679.0" orbitX="-200.0" orbitY="-3650.0" effect="MAXHP_PCT:1.2">
+	<node id="30472" name="Mystic Vigor" sector="Mystic" type="SMALL" tier="0" cost="1" x="-99.1" y="-3679.0" orbitX="-200.0" orbitY="-3650.0" effect="MAXHP_PCT:1.2" icon="flame">
 		<requires nodeId="30471" />
 		<requires nodeId="30473" />
 	</node>
-	<node id="30473" name="Mystic Vigor" sector="Mystic" type="SMALL" tier="0" cost="1" x="-192.7" y="-3754.7" orbitX="-200.0" orbitY="-3650.0" effect="MAXHP_PCT:1.2">
+	<node id="30473" name="Mystic Vigor" sector="Mystic" type="SMALL" tier="0" cost="1" x="-192.7" y="-3754.7" orbitX="-200.0" orbitY="-3650.0" effect="MAXHP_PCT:1.2" icon="flame">
 		<requires nodeId="30472" />
 		<requires nodeId="30474" />
 	</node>
-	<node id="30474" name="Inner Fire" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="-295.9" y="-3692.7" orbitX="-200.0" orbitY="-3650.0" effect="MAXHP_PCT:4;MP_REGEN_PCT:5" description="Mystic Vigor mastery. Mana and health both.">
+	<node id="30474" name="Inner Fire" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="-295.9" y="-3692.7" orbitX="-200.0" orbitY="-3650.0" effect="MAXHP_PCT:4;MP_REGEN_PCT:5" icon="flame" description="Mystic Vigor mastery. Mana and health both.">
 		<requires nodeId="30473" />
 	</node>
-	<node id="30475" name="Robed Grace" sector="Mystic" type="SMALL" tier="0" cost="1" x="125.8" y="-3595.8" orbitX="200.0" orbitY="-3670.0" effect="MDEF_PCT@ROBE:1.5">
+	<node id="30475" name="Robed Grace" sector="Mystic" type="SMALL" tier="0" cost="1" x="125.8" y="-3595.8" orbitX="200.0" orbitY="-3670.0" effect="MDEF_PCT@ROBE:1.5" icon="robe">
 		<requires nodeId="30470" />
 		<requires nodeId="30476" />
 	</node>
-	<node id="30476" name="Robed Grace" sector="Mystic" type="SMALL" tier="0" cost="1" x="104.8" y="-3714.4" orbitX="200.0" orbitY="-3670.0" effect="MDEF_PCT@ROBE:1.5">
+	<node id="30476" name="Robed Grace" sector="Mystic" type="SMALL" tier="0" cost="1" x="104.8" y="-3714.4" orbitX="200.0" orbitY="-3670.0" effect="MDEF_PCT@ROBE:1.5" icon="robe">
 		<requires nodeId="30475" />
 		<requires nodeId="30477" />
 	</node>
-	<node id="30477" name="Robed Grace" sector="Mystic" type="SMALL" tier="0" cost="1" x="209.2" y="-3774.6" orbitX="200.0" orbitY="-3670.0" effect="MDEF_PCT@ROBE:1.5">
+	<node id="30477" name="Robed Grace" sector="Mystic" type="SMALL" tier="0" cost="1" x="209.2" y="-3774.6" orbitX="200.0" orbitY="-3670.0" effect="MDEF_PCT@ROBE:1.5" icon="robe">
 		<requires nodeId="30476" />
 		<requires nodeId="30478" />
 	</node>
-	<node id="30478" name="Sanctified Robes" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="301.4" y="-3697.2" orbitX="200.0" orbitY="-3670.0" effect="MDEF_PCT@ROBE:6;CAST_SPD_PCT@ROBE:3" description="Robed Grace mastery. Robes only.">
+	<node id="30478" name="Sanctified Robes" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="301.4" y="-3697.2" orbitX="200.0" orbitY="-3670.0" effect="MDEF_PCT@ROBE:6;CAST_SPD_PCT@ROBE:3" icon="robe" description="Robed Grace mastery. Robes only.">
 		<requires nodeId="30477" />
 	</node>
 	<node id="30464" name="Heartstone" sector="Mystic" type="SMALL" tier="0" cost="1" x="-284.7" y="-1797.6" effect="MAXHP:12">
 		<requires nodeId="24201" />
 		<requires nodeId="30465" />
 	</node>
-	<node id="30465" name="Cloth of Life" sector="Mystic" type="SMALL" tier="0" cost="1" x="-319.6" y="-1871.6" orbitX="-364.5" orbitY="-1966.5" effect="MAXHP_PCT:1.5">
+	<node id="30465" name="Cloth of Life" sector="Mystic" type="SMALL" tier="0" cost="1" x="-319.6" y="-1871.6" orbitX="-364.5" orbitY="-1966.5" effect="MAXHP_PCT:1.5" icon="heart-plus">
 		<requires nodeId="30464" />
 		<requires nodeId="30466" />
 	</node>
-	<node id="30466" name="Cloth of Life" sector="Mystic" type="SMALL" tier="0" cost="1" x="-259.9" y="-1976.2" orbitX="-364.5" orbitY="-1966.5" effect="MAXHP_PCT:1.5">
+	<node id="30466" name="Cloth of Life" sector="Mystic" type="SMALL" tier="0" cost="1" x="-259.9" y="-1976.2" orbitX="-364.5" orbitY="-1966.5" effect="MAXHP_PCT:1.5" icon="heart-plus">
 		<requires nodeId="30465" />
 		<requires nodeId="30467" />
 	</node>
-	<node id="30467" name="Cloth of Life" sector="Mystic" type="SMALL" tier="0" cost="1" x="-337.8" y="-2068.1" orbitX="-364.5" orbitY="-1966.5" effect="MAXHP_PCT:1.5">
+	<node id="30467" name="Cloth of Life" sector="Mystic" type="SMALL" tier="0" cost="1" x="-337.8" y="-2068.1" orbitX="-364.5" orbitY="-1966.5" effect="MAXHP_PCT:1.5" icon="heart-plus">
 		<requires nodeId="30466" />
 		<requires nodeId="30468" />
 	</node>
-	<node id="30468" name="Lifeweave" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="-450.8" y="-2026.3" orbitX="-364.5" orbitY="-1966.5" effect="MAXHP_PCT:4;CAST_SPD_PCT@ROBE:3" description="Cloth of Life mastery. The casting speed needs a robe.">
+	<node id="30468" name="Lifeweave" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="-450.8" y="-2026.3" orbitX="-364.5" orbitY="-1966.5" effect="MAXHP_PCT:4;CAST_SPD_PCT@ROBE:3" icon="heart-plus" description="Cloth of Life mastery. The casting speed needs a robe.">
 		<requires nodeId="30467" />
 	</node>
 </list>

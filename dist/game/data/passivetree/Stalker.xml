@@ -27,29 +27,29 @@
 		<requires nodeId="30207" />
 		<requires nodeId="30212" />
 	</node>
-	<node id="30206" name="Shade Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2110.8" y="1633.2" orbitX="-2154.2" orbitY="1728.7" effect="EVASION_ADD:0.5;MOVE_SPEED_ADD:0.9">
+	<node id="30206" name="Shade Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2110.8" y="1633.2" orbitX="-2154.2" orbitY="1728.7" effect="EVASION_ADD:0.5;MOVE_SPEED_ADD:0.9" icon="feather">
 		<requires nodeId="30203" />
 		<requires nodeId="30205" />
 		<requires nodeId="30210" />
 	</node>
-	<node id="30207" name="Trackcraft" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2469.7" y="1011.4" orbitX="-2574.2" orbitY="1001.3" effect="ACCURACY_ADD:0.5;CRIT_RATE_ADD:5">
+	<node id="30207" name="Trackcraft" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2469.7" y="1011.4" orbitX="-2574.2" orbitY="1001.3" effect="ACCURACY_ADD:0.5;CRIT_RATE_ADD:5" icon="target">
 		<requires nodeId="30204" />
 		<requires nodeId="30205" />
 		<requires nodeId="30211" />
 	</node>
-	<node id="30208" name="Shade Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2249.0" y="1774.0" orbitX="-2154.2" orbitY="1728.7" effect="EVASION_ADD:0.5;MOVE_SPEED_ADD:0.9">
+	<node id="30208" name="Shade Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2249.0" y="1774.0" orbitX="-2154.2" orbitY="1728.7" effect="EVASION_ADD:0.5;MOVE_SPEED_ADD:0.9" icon="feather">
 		<requires nodeId="30210" />
 		<requires nodeId="30215" />
 	</node>
-	<node id="30209" name="Trackcraft" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2660.8" y="1060.7" orbitX="-2574.2" orbitY="1001.3" effect="ACCURACY_ADD:0.5;CRIT_RATE_ADD:5">
+	<node id="30209" name="Trackcraft" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2660.8" y="1060.7" orbitX="-2574.2" orbitY="1001.3" effect="ACCURACY_ADD:0.5;CRIT_RATE_ADD:5" icon="target">
 		<requires nodeId="30211" />
 		<requires nodeId="30216" />
 	</node>
-	<node id="30210" name="Shade Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2229.2" y="1655.2" orbitX="-2154.2" orbitY="1728.7" effect="EVASION_ADD:0.5;MOVE_SPEED_ADD:0.9">
+	<node id="30210" name="Shade Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2229.2" y="1655.2" orbitX="-2154.2" orbitY="1728.7" effect="EVASION_ADD:0.5;MOVE_SPEED_ADD:0.9" icon="feather">
 		<requires nodeId="30206" />
 		<requires nodeId="30208" />
 	</node>
-	<node id="30211" name="Trackcraft" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2548.0" y="1102.9" orbitX="-2574.2" orbitY="1001.3" effect="ACCURACY_ADD:0.5;CRIT_RATE_ADD:5">
+	<node id="30211" name="Trackcraft" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2548.0" y="1102.9" orbitX="-2574.2" orbitY="1001.3" effect="ACCURACY_ADD:0.5;CRIT_RATE_ADD:5" icon="target">
 		<requires nodeId="30207" />
 		<requires nodeId="30209" />
 	</node>
@@ -61,25 +61,25 @@
 		<requires nodeId="30227" />
 		<requires nodeId="30270" />
 	</node>
-	<node id="30215" name="Phantom Footwork" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-2144.1" y="1833.2" orbitX="-2154.2" orbitY="1728.7" effect="SKILL_DODGE_PCT:3;EVASION_ADD:2;MOVE_SPEED_ADD:2" description="Shade Step mastery. Sidestep physical skills entirely.">
+	<node id="30215" name="Phantom Footwork" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-2144.1" y="1833.2" orbitX="-2154.2" orbitY="1728.7" effect="SKILL_DODGE_PCT:3;EVASION_ADD:2;MOVE_SPEED_ADD:2" icon="feather" description="Shade Step mastery. Sidestep physical skills entirely.">
 		<requires nodeId="30208" />
 	</node>
-	<node id="30216" name="Marked Prey" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-2659.7" y="940.2" orbitX="-2574.2" orbitY="1001.3" effect="ACCURACY_ADD:3;CRIT_DMG_PCT:4;PVE_BOW_DMG_PCT:3" description="Trackcraft mastery. Nothing escapes your sights.">
+	<node id="30216" name="Marked Prey" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-2659.7" y="940.2" orbitX="-2574.2" orbitY="1001.3" effect="ACCURACY_ADD:3;CRIT_DMG_PCT:4;PVE_BOW_DMG_PCT:3" icon="target" description="Trackcraft mastery. Nothing escapes your sights.">
 		<requires nodeId="30209" />
 	</node>
-	<node id="30217" name="Keen Senses" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2601.4" y="1796.3" orbitX="-2704.6" orbitY="1815.5" effect="SPOIL_RATE_PCT:1.2;EVASION_ADD:0.2">
+	<node id="30217" name="Keen Senses" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2601.4" y="1796.3" orbitX="-2704.6" orbitY="1815.5" effect="SPOIL_RATE_PCT:1.2;EVASION_ADD:0.2" icon="coin">
 		<requires nodeId="30212" />
 		<requires nodeId="30220" />
 		<requires nodeId="30225" />
 	</node>
-	<node id="30218" name="Keen Senses" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2771.3" y="1896.6" orbitX="-2704.6" orbitY="1815.5" effect="SPOIL_RATE_PCT:1.2;EVASION_ADD:0.2">
+	<node id="30218" name="Keen Senses" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2771.3" y="1896.6" orbitX="-2704.6" orbitY="1815.5" effect="SPOIL_RATE_PCT:1.2;EVASION_ADD:0.2" icon="coin">
 		<requires nodeId="30219" />
 		<requires nodeId="30220" />
 	</node>
-	<node id="30219" name="Treasure Hunter" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-2803.6" y="1780.6" orbitX="-2704.6" orbitY="1815.5" effect="DROP_RATE_PCT:5;ADENA_RATE_PCT:5;SPOIL_RATE_PCT:5" description="Keen Senses mastery. Every kill is worth a little more.">
+	<node id="30219" name="Treasure Hunter" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-2803.6" y="1780.6" orbitX="-2704.6" orbitY="1815.5" effect="DROP_RATE_PCT:5;ADENA_RATE_PCT:5;SPOIL_RATE_PCT:5" icon="coin" description="Keen Senses mastery. Every kill is worth a little more.">
 		<requires nodeId="30218" />
 	</node>
-	<node id="30220" name="Keen Senses" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2651.2" y="1905.9" orbitX="-2704.6" orbitY="1815.5" effect="SPOIL_RATE_PCT:1.2;EVASION_ADD:0.2">
+	<node id="30220" name="Keen Senses" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2651.2" y="1905.9" orbitX="-2704.6" orbitY="1815.5" effect="SPOIL_RATE_PCT:1.2;EVASION_ADD:0.2" icon="coin">
 		<requires nodeId="30217" />
 		<requires nodeId="30218" />
 	</node>
@@ -87,14 +87,14 @@
 		<requires nodeId="30222" />
 		<requires nodeId="30225" />
 	</node>
-	<node id="30222" name="Ghost in the Grass" sector="Stalker" type="KEYSTONE" tier="0" cost="1" x="-2625.1" y="2393.2" effect="SKILL_DODGE_PCT:8;EVASION_ADD:2;PDEF_PCT:-12" description="Dodge physical skills outright - but when something does connect, it hurts.">
+	<node id="30222" name="Ghost in the Grass" sector="Stalker" type="KEYSTONE" tier="0" cost="1" x="-2625.1" y="2393.2" effect="SKILL_DODGE_PCT:8;EVASION_ADD:2;PDEF_PCT:-12" icon="leaf" description="Dodge physical skills outright - but when something does connect, it hurts.">
 		<requires nodeId="30221" />
 	</node>
 	<node id="30223" name="Approach" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3223.9" y="1076.1" effect="MAXHP:6">
 		<requires nodeId="30224" />
 		<requires nodeId="30226" />
 	</node>
-	<node id="30224" name="Fleetfoot" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-3385.1" y="1076.8" effect="MOVE_SPEED_ADD:4;SKILL_DODGE_PCT:2" description="Always one step ahead.">
+	<node id="30224" name="Fleetfoot" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-3385.1" y="1076.8" effect="MOVE_SPEED_ADD:4;SKILL_DODGE_PCT:2" icon="boot" description="Always one step ahead.">
 		<requires nodeId="30223" />
 	</node>
 	<node id="30225" name="Shade Path" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2448.0" y="2060.0" effect="EVASION_ADD:0.3;CRIT_DMG_PCT:0.5">
@@ -113,7 +113,7 @@
 		<requires nodeId="30212" />
 		<requires nodeId="30228" />
 	</node>
-	<node id="30228" name="Scavenger's Creed" sector="Stalker" type="KEYSTONE" tier="0" cost="1" x="-2996.5" y="1429.8" effect="DROP_RATE_PCT:12;SPOIL_RATE_PCT:12;ADENA_RATE_PCT:12;PATK_PCT:-8;MATK_PCT:-8" description="Richer hunts at the cost of weaker hits.">
+	<node id="30228" name="Scavenger's Creed" sector="Stalker" type="KEYSTONE" tier="0" cost="1" x="-2996.5" y="1429.8" effect="DROP_RATE_PCT:12;SPOIL_RATE_PCT:12;ADENA_RATE_PCT:12;PATK_PCT:-8;MATK_PCT:-8" icon="coin" description="Richer hunts at the cost of weaker hits.">
 		<requires nodeId="30227" />
 	</node>
 	<node id="30229" name="Approach" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2394.6" y="2352.5" effect="MAXHP:6">
@@ -139,34 +139,34 @@
 		<requires nodeId="22201" />
 		<requires nodeId="30261" />
 	</node>
-	<node id="30252" name="Hunter's Instinct" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1751.4" y="774.2" orbitX="-1788.6" orbitY="872.4" effect="EVASION_ADD:0.4;ACCURACY_ADD:0.4">
+	<node id="30252" name="Hunter's Instinct" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1751.4" y="774.2" orbitX="-1788.6" orbitY="872.4" effect="EVASION_ADD:0.4;ACCURACY_ADD:0.4" icon="paw">
 		<requires nodeId="30251" />
 		<requires nodeId="30253" />
 	</node>
-	<node id="30253" name="Hunter's Instinct" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1868.2" y="803.8" orbitX="-1788.6" orbitY="872.4" effect="EVASION_ADD:0.4;ACCURACY_ADD:0.4">
+	<node id="30253" name="Hunter's Instinct" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1868.2" y="803.8" orbitX="-1788.6" orbitY="872.4" effect="EVASION_ADD:0.4;ACCURACY_ADD:0.4" icon="paw">
 		<requires nodeId="30252" />
 		<requires nodeId="30254" />
 	</node>
-	<node id="30254" name="Hunter's Instinct" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1880.2" y="923.7" orbitX="-1788.6" orbitY="872.4" effect="EVASION_ADD:0.4;ACCURACY_ADD:0.4">
+	<node id="30254" name="Hunter's Instinct" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1880.2" y="923.7" orbitX="-1788.6" orbitY="872.4" effect="EVASION_ADD:0.4;ACCURACY_ADD:0.4" icon="paw">
 		<requires nodeId="30253" />
 		<requires nodeId="30255" />
 	</node>
-	<node id="30255" name="Predator's Focus" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-1771.7" y="976.0" orbitX="-1788.6" orbitY="872.4" effect="DEX:1;CRIT_RATE_ADD:12;EVASION_ADD:1.5" description="Hunter's Instinct mastery. Suits a Shadowblade/Deadeye hybrid.">
+	<node id="30255" name="Predator's Focus" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-1771.7" y="976.0" orbitX="-1788.6" orbitY="872.4" effect="DEX:1;CRIT_RATE_ADD:12;EVASION_ADD:1.5" icon="paw" description="Hunter's Instinct mastery. Suits a Shadowblade/Deadeye hybrid.">
 		<requires nodeId="30254" />
 	</node>
-	<node id="30257" name="Mana Well" sector="Stalker" type="SMALL" tier="0" cost="1" x="-742.4" y="440.6" orbitX="-644.5" orbitY="402.7" effect="MAXMP:16;MP_REGEN_PCT:0.6">
+	<node id="30257" name="Mana Well" sector="Stalker" type="SMALL" tier="0" cost="1" x="-742.4" y="440.6" orbitX="-644.5" orbitY="402.7" effect="MAXMP:16;MP_REGEN_PCT:0.6" icon="drop">
 		<requires nodeId="30256" />
 		<requires nodeId="30258" />
 	</node>
-	<node id="30258" name="Mana Well" sector="Stalker" type="SMALL" tier="0" cost="1" x="-713.6" y="323.7" orbitX="-644.5" orbitY="402.7" effect="MAXMP:16;MP_REGEN_PCT:0.6">
+	<node id="30258" name="Mana Well" sector="Stalker" type="SMALL" tier="0" cost="1" x="-713.6" y="323.7" orbitX="-644.5" orbitY="402.7" effect="MAXMP:16;MP_REGEN_PCT:0.6" icon="drop">
 		<requires nodeId="30257" />
 		<requires nodeId="30259" />
 	</node>
-	<node id="30259" name="Mana Well" sector="Stalker" type="SMALL" tier="0" cost="1" x="-593.9" y="310.8" orbitX="-644.5" orbitY="402.7" effect="MAXMP:16;MP_REGEN_PCT:0.6">
+	<node id="30259" name="Mana Well" sector="Stalker" type="SMALL" tier="0" cost="1" x="-593.9" y="310.8" orbitX="-644.5" orbitY="402.7" effect="MAXMP:16;MP_REGEN_PCT:0.6" icon="drop">
 		<requires nodeId="30258" />
 		<requires nodeId="30260" />
 	</node>
-	<node id="30260" name="Inner Spring" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-540.8" y="418.9" orbitX="-644.5" orbitY="402.7" effect="MEN:1;MAXMP:80;MP_REGEN_PCT:4" description="Mana Well mastery. Off-path: pays off only if you rebuild around it.">
+	<node id="30260" name="Inner Spring" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-540.8" y="418.9" orbitX="-644.5" orbitY="402.7" effect="MEN:1;MAXMP:80;MP_REGEN_PCT:4" icon="drop" description="Mana Well mastery. Off-path: pays off only if you rebuild around it.">
 		<requires nodeId="30259" />
 	</node>
 	<node id="33201" name="Lifeblood Trail" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2005.1" y="1527.1" effect="MAXHP:15">
@@ -206,53 +206,53 @@
 		<requires nodeId="30271" />
 		<requires nodeId="30275" />
 	</node>
-	<node id="30271" name="Stalker's Pulse" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3018.3" y="1902.3" orbitX="-3061.0" orbitY="1998.2" effect="MAXHP_PCT:1.2">
+	<node id="30271" name="Stalker's Pulse" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3018.3" y="1902.3" orbitX="-3061.0" orbitY="1998.2" effect="MAXHP_PCT:1.2" icon="heart">
 		<requires nodeId="30270" />
 		<requires nodeId="30272" />
 	</node>
-	<node id="30272" name="Stalker's Pulse" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3136.6" y="1925.3" orbitX="-3061.0" orbitY="1998.2" effect="MAXHP_PCT:1.2">
+	<node id="30272" name="Stalker's Pulse" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3136.6" y="1925.3" orbitX="-3061.0" orbitY="1998.2" effect="MAXHP_PCT:1.2" icon="heart">
 		<requires nodeId="30271" />
 		<requires nodeId="30273" />
 	</node>
-	<node id="30273" name="Stalker's Pulse" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3155.3" y="2044.3" orbitX="-3061.0" orbitY="1998.2" effect="MAXHP_PCT:1.2">
+	<node id="30273" name="Stalker's Pulse" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3155.3" y="2044.3" orbitX="-3061.0" orbitY="1998.2" effect="MAXHP_PCT:1.2" icon="heart">
 		<requires nodeId="30272" />
 		<requires nodeId="30274" />
 	</node>
-	<node id="30274" name="Lean Muscle" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-3050.0" y="2102.6" orbitX="-3061.0" orbitY="1998.2" effect="MAXHP_PCT:3;EVASION_ADD:1.5" description="Stalker's Pulse mastery. Light on your feet, hard to put down.">
+	<node id="30274" name="Lean Muscle" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-3050.0" y="2102.6" orbitX="-3061.0" orbitY="1998.2" effect="MAXHP_PCT:3;EVASION_ADD:1.5" icon="heart" description="Stalker's Pulse mastery. Light on your feet, hard to put down.">
 		<requires nodeId="30273" />
 	</node>
-	<node id="30275" name="Light Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3176.9" y="1689.0" orbitX="-3278.3" orbitY="1661.8" effect="EVASION_ADD@LIGHT:0.5">
+	<node id="30275" name="Light Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3176.9" y="1689.0" orbitX="-3278.3" orbitY="1661.8" effect="EVASION_ADD@LIGHT:0.5" icon="mask">
 		<requires nodeId="30270" />
 		<requires nodeId="30276" />
 	</node>
-	<node id="30276" name="Light Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3269.2" y="1766.4" orbitX="-3278.3" orbitY="1661.8" effect="EVASION_ADD@LIGHT:0.5">
+	<node id="30276" name="Light Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3269.2" y="1766.4" orbitX="-3278.3" orbitY="1661.8" effect="EVASION_ADD@LIGHT:0.5" icon="mask">
 		<requires nodeId="30275" />
 		<requires nodeId="30277" />
 	</node>
-	<node id="30277" name="Light Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3373.5" y="1706.2" orbitX="-3278.3" orbitY="1661.8" effect="EVASION_ADD@LIGHT:0.5">
+	<node id="30277" name="Light Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3373.5" y="1706.2" orbitX="-3278.3" orbitY="1661.8" effect="EVASION_ADD@LIGHT:0.5" icon="mask">
 		<requires nodeId="30276" />
 		<requires nodeId="30278" />
 	</node>
-	<node id="30278" name="Shadow Leathers" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-3352.6" y="1587.5" orbitX="-3278.3" orbitY="1661.8" effect="EVASION_ADD@LIGHT:2.5;CRIT_RATE_ADD@LIGHT:15" description="Light Step mastery. Light armour only.">
+	<node id="30278" name="Shadow Leathers" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-3352.6" y="1587.5" orbitX="-3278.3" orbitY="1661.8" effect="EVASION_ADD@LIGHT:2.5;CRIT_RATE_ADD@LIGHT:15" icon="mask" description="Light Step mastery. Light armour only.">
 		<requires nodeId="30277" />
 	</node>
 	<node id="30264" name="Heartstone" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1414.4" y="1145.4" effect="MAXHP:12">
 		<requires nodeId="22201" />
 		<requires nodeId="30265" />
 	</node>
-	<node id="30265" name="Ranger Hide" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1461.0" y="1212.6" orbitX="-1520.8" orbitY="1298.9" effect="MAXHP_PCT:1.5">
+	<node id="30265" name="Ranger Hide" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1461.0" y="1212.6" orbitX="-1520.8" orbitY="1298.9" effect="MAXHP_PCT:1.5" icon="heart-plus">
 		<requires nodeId="30264" />
 		<requires nodeId="30266" />
 	</node>
-	<node id="30266" name="Ranger Hide" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1419.3" y="1325.6" orbitX="-1520.8" orbitY="1298.9" effect="MAXHP_PCT:1.5">
+	<node id="30266" name="Ranger Hide" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1419.3" y="1325.6" orbitX="-1520.8" orbitY="1298.9" effect="MAXHP_PCT:1.5" icon="heart-plus">
 		<requires nodeId="30265" />
 		<requires nodeId="30267" />
 	</node>
-	<node id="30267" name="Ranger Hide" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1511.2" y="1403.5" orbitX="-1520.8" orbitY="1298.9" effect="MAXHP_PCT:1.5">
+	<node id="30267" name="Ranger Hide" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1511.2" y="1403.5" orbitX="-1520.8" orbitY="1298.9" effect="MAXHP_PCT:1.5" icon="heart-plus">
 		<requires nodeId="30266" />
 		<requires nodeId="30268" />
 	</node>
-	<node id="30268" name="Survivalist" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-1615.8" y="1343.7" orbitX="-1520.8" orbitY="1298.9" effect="MAXHP_PCT:4;EVASION_ADD@LIGHT:2" description="Ranger Hide mastery. The evasion needs light armour.">
+	<node id="30268" name="Survivalist" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-1615.8" y="1343.7" orbitX="-1520.8" orbitY="1298.9" effect="MAXHP_PCT:4;EVASION_ADD@LIGHT:2" icon="heart-plus" description="Ranger Hide mastery. The evasion needs light armour.">
 		<requires nodeId="30267" />
 	</node>
 </list>

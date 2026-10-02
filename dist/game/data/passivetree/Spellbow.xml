@@ -27,29 +27,29 @@
 		<requires nodeId="30307" />
 		<requires nodeId="30312" />
 	</node>
-	<node id="30306" name="Runed Arrow" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2469.7" y="-1011.4" orbitX="-2574.2" orbitY="-1001.3" effect="PATK_PCT:0.5;ACCURACY_ADD:0.5">
+	<node id="30306" name="Runed Arrow" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2469.7" y="-1011.4" orbitX="-2574.2" orbitY="-1001.3" effect="PATK_PCT:0.5;ACCURACY_ADD:0.5" icon="rune">
 		<requires nodeId="30303" />
 		<requires nodeId="30305" />
 		<requires nodeId="30310" />
 	</node>
-	<node id="30307" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2110.8" y="-1633.2" orbitX="-2154.2" orbitY="-1728.7" effect="MATK_PCT:0.6;MCRIT_RATE_ADD:5">
+	<node id="30307" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2110.8" y="-1633.2" orbitX="-2154.2" orbitY="-1728.7" effect="MATK_PCT:0.6;MCRIT_RATE_ADD:5" icon="comet">
 		<requires nodeId="30304" />
 		<requires nodeId="30305" />
 		<requires nodeId="30311" />
 	</node>
-	<node id="30308" name="Runed Arrow" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2660.8" y="-1060.7" orbitX="-2574.2" orbitY="-1001.3" effect="PATK_PCT:0.5;ACCURACY_ADD:0.5">
+	<node id="30308" name="Runed Arrow" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2660.8" y="-1060.7" orbitX="-2574.2" orbitY="-1001.3" effect="PATK_PCT:0.5;ACCURACY_ADD:0.5" icon="rune">
 		<requires nodeId="30310" />
 		<requires nodeId="30315" />
 	</node>
-	<node id="30309" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2249.0" y="-1774.0" orbitX="-2154.2" orbitY="-1728.7" effect="MATK_PCT:0.6;MCRIT_RATE_ADD:5">
+	<node id="30309" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2249.0" y="-1774.0" orbitX="-2154.2" orbitY="-1728.7" effect="MATK_PCT:0.6;MCRIT_RATE_ADD:5" icon="comet">
 		<requires nodeId="30311" />
 		<requires nodeId="30316" />
 	</node>
-	<node id="30310" name="Runed Arrow" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2548.0" y="-1102.9" orbitX="-2574.2" orbitY="-1001.3" effect="PATK_PCT:0.5;ACCURACY_ADD:0.5">
+	<node id="30310" name="Runed Arrow" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2548.0" y="-1102.9" orbitX="-2574.2" orbitY="-1001.3" effect="PATK_PCT:0.5;ACCURACY_ADD:0.5" icon="rune">
 		<requires nodeId="30306" />
 		<requires nodeId="30308" />
 	</node>
-	<node id="30311" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2229.2" y="-1655.2" orbitX="-2154.2" orbitY="-1728.7" effect="MATK_PCT:0.6;MCRIT_RATE_ADD:5">
+	<node id="30311" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2229.2" y="-1655.2" orbitX="-2154.2" orbitY="-1728.7" effect="MATK_PCT:0.6;MCRIT_RATE_ADD:5" icon="comet">
 		<requires nodeId="30307" />
 		<requires nodeId="30309" />
 	</node>
@@ -61,25 +61,25 @@
 		<requires nodeId="30327" />
 		<requires nodeId="30370" />
 	</node>
-	<node id="30315" name="Runic Fletching" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-2659.7" y="-940.2" orbitX="-2574.2" orbitY="-1001.3" effect="PVE_BOW_DMG_PCT:5;ACCURACY_ADD:2;MATK_PCT:2" description="Runed Arrow mastery. Enchanted shafts tear through monsters.">
+	<node id="30315" name="Runic Fletching" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-2659.7" y="-940.2" orbitX="-2574.2" orbitY="-1001.3" effect="PVE_BOW_DMG_PCT:5;ACCURACY_ADD:2;MATK_PCT:2" icon="rune" description="Runed Arrow mastery. Enchanted shafts tear through monsters.">
 		<requires nodeId="30308" />
 	</node>
-	<node id="30316" name="Seeker Spells" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-2144.1" y="-1833.2" orbitX="-2154.2" orbitY="-1728.7" effect="MCRIT_RATE_ADD:20;MATK_PCT:3;ACCURACY_ADD:1" description="Arcane Sight mastery. Spells find the weak point.">
+	<node id="30316" name="Seeker Spells" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-2144.1" y="-1833.2" orbitX="-2154.2" orbitY="-1728.7" effect="MCRIT_RATE_ADD:20;MATK_PCT:3;ACCURACY_ADD:1" icon="comet" description="Arcane Sight mastery. Spells find the weak point.">
 		<requires nodeId="30309" />
 	</node>
-	<node id="30317" name="Focus" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2856.3" y="-1354.7" orbitX="-2924.6" orbitY="-1434.5" effect="CRIT_DMG_PCT:0.6;MCRIT_DMG_PCT:1.2">
+	<node id="30317" name="Focus" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2856.3" y="-1354.7" orbitX="-2924.6" orbitY="-1434.5" effect="CRIT_DMG_PCT:0.6;MCRIT_DMG_PCT:1.2" icon="spark">
 		<requires nodeId="30312" />
 		<requires nodeId="30320" />
 		<requires nodeId="30325" />
 	</node>
-	<node id="30318" name="Focus" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3028.2" y="-1451.7" orbitX="-2924.6" orbitY="-1434.5" effect="CRIT_DMG_PCT:0.6;MCRIT_DMG_PCT:1.2">
+	<node id="30318" name="Focus" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3028.2" y="-1451.7" orbitX="-2924.6" orbitY="-1434.5" effect="CRIT_DMG_PCT:0.6;MCRIT_DMG_PCT:1.2" icon="spark">
 		<requires nodeId="30319" />
 		<requires nodeId="30320" />
 	</node>
-	<node id="30319" name="Twin Focus" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-2943.8" y="-1537.7" orbitX="-2924.6" orbitY="-1434.5" effect="CRIT_DMG_PCT:5;MCRIT_DMG_PCT:8" description="Focus mastery. Both arrow and spell critical hits strike harder.">
+	<node id="30319" name="Twin Focus" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-2943.8" y="-1537.7" orbitX="-2924.6" orbitY="-1434.5" effect="CRIT_DMG_PCT:5;MCRIT_DMG_PCT:8" icon="spark" description="Focus mastery. Both arrow and spell critical hits strike harder.">
 		<requires nodeId="30318" />
 	</node>
-	<node id="30320" name="Focus" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2976.2" y="-1343.0" orbitX="-2924.6" orbitY="-1434.5" effect="CRIT_DMG_PCT:0.6;MCRIT_DMG_PCT:1.2">
+	<node id="30320" name="Focus" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2976.2" y="-1343.0" orbitX="-2924.6" orbitY="-1434.5" effect="CRIT_DMG_PCT:0.6;MCRIT_DMG_PCT:1.2" icon="spark">
 		<requires nodeId="30317" />
 		<requires nodeId="30318" />
 	</node>
@@ -87,14 +87,14 @@
 		<requires nodeId="30322" />
 		<requires nodeId="30325" />
 	</node>
-	<node id="30322" name="Point Blank" sector="Spellbow" type="KEYSTONE" tier="0" cost="1" x="-3385.1" y="-1076.8" effect="KS_POINT_BLANK:30" description="KEYSTONE: Bow and spell damage is 30% higher at point-blank range, falling to 30% lower at 900+ range. Cannot be combined with Far Shot.">
+	<node id="30322" name="Point Blank" sector="Spellbow" type="KEYSTONE" tier="0" cost="1" x="-3385.1" y="-1076.8" effect="KS_POINT_BLANK:30" icon="bow" description="KEYSTONE: Bow and spell damage is 30% higher at point-blank range, falling to 30% lower at 900+ range. Cannot be combined with Far Shot.">
 		<requires nodeId="30321" />
 	</node>
 	<node id="30323" name="Approach" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2543.9" y="-2253.9" effect="MAXHP:6">
 		<requires nodeId="30324" />
 		<requires nodeId="30326" />
 	</node>
-	<node id="30324" name="Kiting Stance" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-2625.1" y="-2393.2" effect="MOVE_SPEED_ADD:3;SKILL_DODGE_PCT:2" description="Shoot, step, repeat.">
+	<node id="30324" name="Kiting Stance" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-2625.1" y="-2393.2" effect="MOVE_SPEED_ADD:3;SKILL_DODGE_PCT:2" icon="boot" description="Shoot, step, repeat.">
 		<requires nodeId="30323" />
 	</node>
 	<node id="30325" name="Fletcher's Path" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3008.0" y="-1090.0" effect="ACCURACY_ADD:0.3;PATK_PCT:0.3">
@@ -113,7 +113,7 @@
 		<requires nodeId="30312" />
 		<requires nodeId="30328" />
 	</node>
-	<node id="30328" name="Eldritch Battery" sector="Spellbow" type="KEYSTONE" tier="0" cost="1" x="-2736.5" y="-1880.2" effect="KS_ELDRITCH_BATTERY:100" description="KEYSTONE: Your maximum CP becomes 1, and all the CP you would have had is added to your maximum MP instead.">
+	<node id="30328" name="Eldritch Battery" sector="Spellbow" type="KEYSTONE" tier="0" cost="1" x="-2736.5" y="-1880.2" effect="KS_ELDRITCH_BATTERY:100" icon="bolt" description="KEYSTONE: Your maximum CP becomes 1, and all the CP you would have had is added to your maximum MP instead.">
 		<requires nodeId="30327" />
 	</node>
 	<node id="30329" name="Approach" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3234.6" y="-897.5" effect="MAXHP:6">
@@ -139,34 +139,34 @@
 		<requires nodeId="23103" />
 		<requires nodeId="30361" />
 	</node>
-	<node id="30352" name="Arcane Fletching" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1121.5" y="-647.5" orbitX="-1212.4" orbitY="-700.0" effect="ACCURACY_ADD:0.3;MATK_PCT:0.6">
+	<node id="30352" name="Arcane Fletching" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1121.5" y="-647.5" orbitX="-1212.4" orbitY="-700.0" effect="ACCURACY_ADD:0.3;MATK_PCT:0.6" icon="star">
 		<requires nodeId="30351" />
 		<requires nodeId="30353" />
 	</node>
-	<node id="30353" name="Arcane Fletching" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1230.7" y="-596.6" orbitX="-1212.4" orbitY="-700.0" effect="ACCURACY_ADD:0.3;MATK_PCT:0.6">
+	<node id="30353" name="Arcane Fletching" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1230.7" y="-596.6" orbitX="-1212.4" orbitY="-700.0" effect="ACCURACY_ADD:0.3;MATK_PCT:0.6" icon="star">
 		<requires nodeId="30352" />
 		<requires nodeId="30354" />
 	</node>
-	<node id="30354" name="Arcane Fletching" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1315.8" y="-681.8" orbitX="-1212.4" orbitY="-700.0" effect="ACCURACY_ADD:0.3;MATK_PCT:0.6">
+	<node id="30354" name="Arcane Fletching" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1315.8" y="-681.8" orbitX="-1212.4" orbitY="-700.0" effect="ACCURACY_ADD:0.3;MATK_PCT:0.6" icon="star">
 		<requires nodeId="30353" />
 		<requires nodeId="30355" />
 	</node>
-	<node id="30355" name="Starshot" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-1264.9" y="-790.9" orbitX="-1212.4" orbitY="-700.0" effect="WIT:1;CAST_SPD_PCT:3;PATK_PCT:3" description="Arcane Fletching mastery. Suits a Deadeye/Arcanist hybrid.">
+	<node id="30355" name="Starshot" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-1264.9" y="-790.9" orbitX="-1212.4" orbitY="-700.0" effect="WIT:1;CAST_SPD_PCT:3;PATK_PCT:3" icon="star" description="Arcane Fletching mastery. Suits a Deadeye/Arcanist hybrid.">
 		<requires nodeId="30354" />
 	</node>
-	<node id="30357" name="Iron Will" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1767.7" y="-697.9" orbitX="-1795.1" orbitY="-799.2" effect="LIFESTEAL_PCT:0.3;PDEF_PCT:0.4">
+	<node id="30357" name="Iron Will" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1767.7" y="-697.9" orbitX="-1795.1" orbitY="-799.2" effect="LIFESTEAL_PCT:0.3;PDEF_PCT:0.4" icon="fist">
 		<requires nodeId="30356" />
 		<requires nodeId="30358" />
 	</node>
-	<node id="30358" name="Iron Will" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1690.5" y="-790.3" orbitX="-1795.1" orbitY="-799.2" effect="LIFESTEAL_PCT:0.3;PDEF_PCT:0.4">
+	<node id="30358" name="Iron Will" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1690.5" y="-790.3" orbitX="-1795.1" orbitY="-799.2" effect="LIFESTEAL_PCT:0.3;PDEF_PCT:0.4" icon="fist">
 		<requires nodeId="30357" />
 		<requires nodeId="30359" />
 	</node>
-	<node id="30359" name="Iron Will" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1750.9" y="-894.5" orbitX="-1795.1" orbitY="-799.2" effect="LIFESTEAL_PCT:0.3;PDEF_PCT:0.4">
+	<node id="30359" name="Iron Will" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1750.9" y="-894.5" orbitX="-1795.1" orbitY="-799.2" effect="LIFESTEAL_PCT:0.3;PDEF_PCT:0.4" icon="fist">
 		<requires nodeId="30358" />
 		<requires nodeId="30360" />
 	</node>
-	<node id="30360" name="Brawler's Blood" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-1869.5" y="-873.3" orbitX="-1795.1" orbitY="-799.2" effect="CON:1;LIFESTEAL_PCT:2;PDEF_PCT:2" description="Iron Will mastery. Off-path: pays off only if you rebuild around it.">
+	<node id="30360" name="Brawler's Blood" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-1869.5" y="-873.3" orbitX="-1795.1" orbitY="-799.2" effect="CON:1;LIFESTEAL_PCT:2;PDEF_PCT:2" icon="fist" description="Iron Will mastery. Off-path: pays off only if you rebuild around it.">
 		<requires nodeId="30359" />
 	</node>
 	<node id="33301" name="Lifeblood Trail" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2325.1" y="-972.9" effect="MAXHP:15">
@@ -206,53 +206,53 @@
 		<requires nodeId="30371" />
 		<requires nodeId="30375" />
 	</node>
-	<node id="30371" name="Bowyer's Blood" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3018.3" y="-1902.3" orbitX="-3061.0" orbitY="-1998.2" effect="MAXHP_PCT:1.2">
+	<node id="30371" name="Bowyer's Blood" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3018.3" y="-1902.3" orbitX="-3061.0" orbitY="-1998.2" effect="MAXHP_PCT:1.2" icon="heart">
 		<requires nodeId="30370" />
 		<requires nodeId="30372" />
 	</node>
-	<node id="30372" name="Bowyer's Blood" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3136.6" y="-1925.3" orbitX="-3061.0" orbitY="-1998.2" effect="MAXHP_PCT:1.2">
+	<node id="30372" name="Bowyer's Blood" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3136.6" y="-1925.3" orbitX="-3061.0" orbitY="-1998.2" effect="MAXHP_PCT:1.2" icon="heart">
 		<requires nodeId="30371" />
 		<requires nodeId="30373" />
 	</node>
-	<node id="30373" name="Bowyer's Blood" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3155.3" y="-2044.3" orbitX="-3061.0" orbitY="-1998.2" effect="MAXHP_PCT:1.2">
+	<node id="30373" name="Bowyer's Blood" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3155.3" y="-2044.3" orbitX="-3061.0" orbitY="-1998.2" effect="MAXHP_PCT:1.2" icon="heart">
 		<requires nodeId="30372" />
 		<requires nodeId="30374" />
 	</node>
-	<node id="30374" name="Hunter's Stamina" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-3050.0" y="-2102.6" orbitX="-3061.0" orbitY="-1998.2" effect="MAXHP_PCT:4;MAXMP:40" description="Bowyer's Blood mastery. Stamina for the long hunt.">
+	<node id="30374" name="Hunter's Stamina" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-3050.0" y="-2102.6" orbitX="-3061.0" orbitY="-1998.2" effect="MAXHP_PCT:4;MAXMP:40" icon="heart" description="Bowyer's Blood mastery. Stamina for the long hunt.">
 		<requires nodeId="30373" />
 	</node>
-	<node id="30375" name="Runed Bowstring" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3176.9" y="-1689.0" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:1.5">
+	<node id="30375" name="Runed Bowstring" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3176.9" y="-1689.0" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:1.5" icon="bow">
 		<requires nodeId="30370" />
 		<requires nodeId="30376" />
 	</node>
-	<node id="30376" name="Runed Bowstring" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3269.2" y="-1766.4" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:1.5">
+	<node id="30376" name="Runed Bowstring" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3269.2" y="-1766.4" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:1.5" icon="bow">
 		<requires nodeId="30375" />
 		<requires nodeId="30377" />
 	</node>
-	<node id="30377" name="Runed Bowstring" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3373.5" y="-1706.2" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:1.5">
+	<node id="30377" name="Runed Bowstring" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3373.5" y="-1706.2" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:1.5" icon="bow">
 		<requires nodeId="30376" />
 		<requires nodeId="30378" />
 	</node>
-	<node id="30378" name="Spellstring" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-3352.6" y="-1587.5" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:6;CAST_SPD_PCT@BOW:4" description="Runed Bowstring mastery. Spells cast with a bow in hand.">
+	<node id="30378" name="Spellstring" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-3352.6" y="-1587.5" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:6;CAST_SPD_PCT@BOW:4" icon="bow" description="Runed Bowstring mastery. Spells cast with a bow in hand.">
 		<requires nodeId="30377" />
 	</node>
 	<node id="30364" name="Heartstone" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-757.7" y="-530.6" effect="MAXHP:12">
 		<requires nodeId="23302" />
 		<requires nodeId="30365" />
 	</node>
-	<node id="30365" name="Arcane Quiver" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-719.3" y="-470.8" orbitX="-662.5" orbitY="-382.5" effect="MATK_PCT@BOW:2">
+	<node id="30365" name="Arcane Quiver" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-719.3" y="-470.8" orbitX="-662.5" orbitY="-382.5" effect="MATK_PCT@BOW:2" icon="arrow">
 		<requires nodeId="30364" />
 		<requires nodeId="30366" />
 	</node>
-	<node id="30366" name="Arcane Quiver" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-764.9" y="-359.3" orbitX="-662.5" orbitY="-382.5" effect="MATK_PCT@BOW:2">
+	<node id="30366" name="Arcane Quiver" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-764.9" y="-359.3" orbitX="-662.5" orbitY="-382.5" effect="MATK_PCT@BOW:2" icon="arrow">
 		<requires nodeId="30365" />
 		<requires nodeId="30367" />
 	</node>
-	<node id="30367" name="Arcane Quiver" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-675.8" y="-278.3" orbitX="-662.5" orbitY="-382.5" effect="MATK_PCT@BOW:2">
+	<node id="30367" name="Arcane Quiver" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-675.8" y="-278.3" orbitX="-662.5" orbitY="-382.5" effect="MATK_PCT@BOW:2" icon="arrow">
 		<requires nodeId="30366" />
 		<requires nodeId="30368" />
 	</node>
-	<node id="30368" name="Enchanted Arrows" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-569.2" y="-334.4" orbitX="-662.5" orbitY="-382.5" effect="PATK_PCT@BOW:5;MATK_PCT:3" description="Arcane Quiver mastery. Bows only.">
+	<node id="30368" name="Enchanted Arrows" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-569.2" y="-334.4" orbitX="-662.5" orbitY="-382.5" effect="PATK_PCT@BOW:5;MATK_PCT:3" icon="arrow" description="Arcane Quiver mastery. Bows only.">
 		<requires nodeId="30367" />
 	</node>
 </list>

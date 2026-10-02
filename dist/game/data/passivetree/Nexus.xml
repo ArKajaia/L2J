@@ -67,25 +67,25 @@
 		<requires nodeId="9011" />
 		<requires nodeId="9035" />
 	</node>
-	<node id="9013" name="Pillar of Vitality" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="142.9" y="82.5" effect="CON:1;MAXHP:90">
+	<node id="9013" name="Pillar of Vitality" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="142.9" y="82.5" effect="CON:1;MAXHP:90" icon="heart">
 		<requires nodeId="9022" />
 	</node>
-	<node id="9014" name="Pillar of Force" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="0.0" y="165.0" effect="STR:1;PATK_PCT:4">
+	<node id="9014" name="Pillar of Force" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="0.0" y="165.0" effect="STR:1;PATK_PCT:4" icon="fist">
 		<requires nodeId="9025" />
 	</node>
-	<node id="9015" name="Pillar of Grace" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="-142.9" y="82.5" effect="DEX:1;MOVE_SPEED_ADD:2.4">
+	<node id="9015" name="Pillar of Grace" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="-142.9" y="82.5" effect="DEX:1;MOVE_SPEED_ADD:2.4" icon="feather">
 		<requires nodeId="9028" />
 	</node>
-	<node id="9016" name="Pillar of Intellect" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="-142.9" y="-82.5" effect="INT:1;MATK_PCT:4">
+	<node id="9016" name="Pillar of Intellect" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="-142.9" y="-82.5" effect="INT:1;MATK_PCT:4" icon="book">
 		<requires nodeId="9031" />
 	</node>
-	<node id="9017" name="Pillar of Wisdom" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="0.0" y="-165.0" effect="WIT:1;CAST_SPD_PCT:3">
+	<node id="9017" name="Pillar of Wisdom" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="0.0" y="-165.0" effect="WIT:1;CAST_SPD_PCT:3" icon="eye">
 		<requires nodeId="9034" />
 	</node>
-	<node id="9018" name="Pillar of Will" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="142.9" y="-82.5" effect="MEN:1;MDEF_PCT:4">
+	<node id="9018" name="Pillar of Will" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="142.9" y="-82.5" effect="MEN:1;MDEF_PCT:4" icon="sun">
 		<requires nodeId="9037" />
 	</node>
-	<node id="9019" name="Prismatic Attunement" sector="Nexus" type="MASTER" tier="0" cost="1" x="0.0" y="0.0" effect="STR:1;DEX:1;CON:1;INT:1;WIT:1;MEN:1" description="TRANSCENDENT: +1 to every base attribute.">
+	<node id="9019" name="Prismatic Attunement" sector="Nexus" type="MASTER" tier="0" cost="1" x="0.0" y="0.0" effect="STR:1;DEX:1;CON:1;INT:1;WIT:1;MEN:1" icon="crown" description="TRANSCENDENT: +1 to every base attribute.">
 		<requires nodeId="9039" />
 		<requires nodeId="9041" />
 		<requires nodeId="9043" />
@@ -93,75 +93,75 @@
 		<requires nodeId="9047" />
 		<requires nodeId="9049" />
 	</node>
-	<node id="9020" name="Vital Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="372.4" y="215.0" effect="MAXHP:12">
+	<node id="9020" name="Vital Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="372.4" y="215.0" effect="MAXHP:12" icon="heart">
 		<requires nodeId="9002" />
 		<requires nodeId="9021" />
 	</node>
-	<node id="9021" name="Vital Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="294.4" y="170.0" effect="MAXHP:12">
+	<node id="9021" name="Vital Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="294.4" y="170.0" effect="MAXHP:12" icon="heart">
 		<requires nodeId="9020" />
 		<requires nodeId="9022" />
 	</node>
-	<node id="9022" name="Vital Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="216.5" y="125.0" effect="MAXHP:12">
+	<node id="9022" name="Vital Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="216.5" y="125.0" effect="MAXHP:12" icon="heart">
 		<requires nodeId="9013" />
 		<requires nodeId="9021" />
 	</node>
-	<node id="9023" name="Force Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="430.0" effect="PATK_PCT:0.5">
+	<node id="9023" name="Force Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="430.0" effect="PATK_PCT:0.5" icon="fist">
 		<requires nodeId="9004" />
 		<requires nodeId="9024" />
 	</node>
-	<node id="9024" name="Force Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="340.0" effect="PATK_PCT:0.5">
+	<node id="9024" name="Force Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="340.0" effect="PATK_PCT:0.5" icon="fist">
 		<requires nodeId="9023" />
 		<requires nodeId="9025" />
 	</node>
-	<node id="9025" name="Force Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="250.0" effect="PATK_PCT:0.5">
+	<node id="9025" name="Force Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="250.0" effect="PATK_PCT:0.5" icon="fist">
 		<requires nodeId="9014" />
 		<requires nodeId="9024" />
 	</node>
-	<node id="9026" name="Grace Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-372.4" y="215.0" effect="MOVE_SPEED_ADD:1">
+	<node id="9026" name="Grace Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-372.4" y="215.0" effect="MOVE_SPEED_ADD:1" icon="feather">
 		<requires nodeId="9006" />
 		<requires nodeId="9027" />
 	</node>
-	<node id="9027" name="Grace Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-294.4" y="170.0" effect="MOVE_SPEED_ADD:1">
+	<node id="9027" name="Grace Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-294.4" y="170.0" effect="MOVE_SPEED_ADD:1" icon="feather">
 		<requires nodeId="9026" />
 		<requires nodeId="9028" />
 	</node>
-	<node id="9028" name="Grace Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-216.5" y="125.0" effect="MOVE_SPEED_ADD:1">
+	<node id="9028" name="Grace Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-216.5" y="125.0" effect="MOVE_SPEED_ADD:1" icon="feather">
 		<requires nodeId="9015" />
 		<requires nodeId="9027" />
 	</node>
-	<node id="9029" name="Intellect Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-372.4" y="-215.0" effect="MATK_PCT:0.5">
+	<node id="9029" name="Intellect Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-372.4" y="-215.0" effect="MATK_PCT:0.5" icon="book">
 		<requires nodeId="9008" />
 		<requires nodeId="9030" />
 	</node>
-	<node id="9030" name="Intellect Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-294.4" y="-170.0" effect="MATK_PCT:0.5">
+	<node id="9030" name="Intellect Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-294.4" y="-170.0" effect="MATK_PCT:0.5" icon="book">
 		<requires nodeId="9029" />
 		<requires nodeId="9031" />
 	</node>
-	<node id="9031" name="Intellect Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-216.5" y="-125.0" effect="MATK_PCT:0.5">
+	<node id="9031" name="Intellect Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-216.5" y="-125.0" effect="MATK_PCT:0.5" icon="book">
 		<requires nodeId="9016" />
 		<requires nodeId="9030" />
 	</node>
-	<node id="9032" name="Wisdom Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="-430.0" effect="CAST_SPD_PCT:0.5">
+	<node id="9032" name="Wisdom Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="-430.0" effect="CAST_SPD_PCT:0.5" icon="eye">
 		<requires nodeId="9010" />
 		<requires nodeId="9033" />
 	</node>
-	<node id="9033" name="Wisdom Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="-340.0" effect="CAST_SPD_PCT:0.5">
+	<node id="9033" name="Wisdom Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="-340.0" effect="CAST_SPD_PCT:0.5" icon="eye">
 		<requires nodeId="9032" />
 		<requires nodeId="9034" />
 	</node>
-	<node id="9034" name="Wisdom Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="-250.0" effect="CAST_SPD_PCT:0.5">
+	<node id="9034" name="Wisdom Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="-250.0" effect="CAST_SPD_PCT:0.5" icon="eye">
 		<requires nodeId="9017" />
 		<requires nodeId="9033" />
 	</node>
-	<node id="9035" name="Will Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="372.4" y="-215.0" effect="MDEF_PCT:0.5">
+	<node id="9035" name="Will Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="372.4" y="-215.0" effect="MDEF_PCT:0.5" icon="sun">
 		<requires nodeId="9012" />
 		<requires nodeId="9036" />
 	</node>
-	<node id="9036" name="Will Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="294.4" y="-170.0" effect="MDEF_PCT:0.5">
+	<node id="9036" name="Will Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="294.4" y="-170.0" effect="MDEF_PCT:0.5" icon="sun">
 		<requires nodeId="9035" />
 		<requires nodeId="9037" />
 	</node>
-	<node id="9037" name="Will Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="216.5" y="-125.0" effect="MDEF_PCT:0.5">
+	<node id="9037" name="Will Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="216.5" y="-125.0" effect="MDEF_PCT:0.5" icon="sun">
 		<requires nodeId="9018" />
 		<requires nodeId="9036" />
 	</node>
