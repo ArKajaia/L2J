@@ -9,7 +9,7 @@ Java paths are relative to `java/org/l2jmobius/gameserver/` unless stated otherw
 | Area | Location | What's missing |
 |---|---|---|
 | ~~Movement~~ ✅ | `network/clientpackets/MoveWithDelta.java` | Done: the delta is applied to the server-side position and goes through the same checks as `MoveToLocation` (`MoveToLocation.requestMove`) |
-| Movement / Z axis | `model/actor/Creature.java:4714, 4759`; `skill/effects/EnemyCharge.java:77`, `ThrowUp.java:81`; `instances/CrystalCaverns.java:683` | Poor Z-axis move/follow when dz is large: bad pathing on slopes and stairs, and broken knockback/charge |
+| ~~Movement / Z axis~~ ✅ | `model/actor/Creature.java`; `skill/effects/EnemyCharge.java`, `ThrowUp.java`; `instances/CrystalCaverns.java` | Done: approach offsets use the 3D-correct horizontal reach (`LocationUtil.calculateHorizontalReach`), ground movement in `updatePosition` uses horizontal distance like the client, the vertical-flight distance bug (`Math.pow(dz, 2)`) is fixed, and knockback distance no longer grows with height difference |
 | Pet item use | `clientpackets/RequestPetUseItem.java:42` | Packet only partly read (`readLong/readInt` commented out) |
 | Private store (sell) | `clientpackets/RequestPrivateStoreManageSell.java:34`; `RequestPrivateStoreSell.java:61-62`; `SetPrivateStoreListBuy.java:60` | Packet fields unread or not analysed. This can desync store setup |
 | Pet feeding | `actor/tasks/player/PetFeedTask.java:92` | Food is taken only from the player's inventory, not the pet's |
@@ -74,7 +74,7 @@ Java paths are relative to `java/org/l2jmobius/gameserver/` unless stated otherw
 ---
 
 ## Suggested order of work for "basic game features"
-1. **Movement**: ~~implement `MoveWithDelta`~~ (done), then improve Z-axis handling in `Creature.moveToLocation`.
+1. ~~**Movement**: implement `MoveWithDelta` and improve Z-axis handling~~ (done).
 2. **Pets**: fix `RequestPetUseItem` packet reading, let `PetFeedTask` take food from the pet's inventory, and correct the pet death penalty.
 3. **Private stores**: finish reading the `RequestPrivateStoreManageSell` and `SetPrivateStoreListBuy` packets.
 4. **Combat correctness**: Formulas.java items, `BUFF_IMMUNITY`, and the unimplemented NPC template fields from `NpcData`.

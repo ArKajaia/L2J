@@ -668,20 +668,16 @@ public class CrystalCaverns extends InstanceScript
 		// Get current position of the Creature
 		final int curX = effected.getX();
 		final int curY = effected.getY();
-		final int curZ = effected.getZ();
 		
 		// Calculate distance between effector and effected current position
 		final double dx = effector.getX() - curX;
 		final double dy = effector.getY() - curY;
-		final double dz = effector.getZ() - curZ;
 		final double distance = Math.sqrt((dx * dx) + (dy * dy));
 		int offset = Math.min((int) distance + 300, 1400);
 		double cos;
 		double sin;
 		
-		// approximation for moving futher when z coordinates are different
-		// TODO: handle Z axis movement better
-		offset += Math.abs(dz);
+		// The knockback distance is horizontal; the landing height is resolved by geodata below.
 		if (offset < 5)
 		{
 			offset = 5;
