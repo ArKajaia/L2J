@@ -283,6 +283,11 @@
 <div id="canvas-wrap">
 	<svg id="svg-root">
 		<defs>
+			<radialGradient id="similar-halo">
+				<stop offset="0%" stop-color="#ffe28a" stop-opacity="1" />
+				<stop offset="35%" stop-color="#ffd24a" stop-opacity="0.65" />
+				<stop offset="100%" stop-color="#ffd24a" stop-opacity="0" />
+			</radialGradient>
 			<filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
 				<feGaussianBlur stdDeviation="4" result="blur" />
 				<feMerge>
@@ -1133,10 +1138,10 @@ function render() {
 			g.appendChild(ring);
 		}
 		if (similarIds && similarIds.has(n.id)) {
+			// Radial-gradient halo rather than a blur filter, sized to stay about 30px on screen at any zoom.
 			const sg = document.createElementNS(SVG_NS, "circle");
-			sg.setAttribute("r", r + 9);
-			sg.setAttribute("fill", "#ffe28a");
-			sg.setAttribute("filter", "url(#glow)");
+			sg.setAttribute("r", Math.max(r + 18, 30 / scale));
+			sg.setAttribute("fill", "url(#similar-halo)");
 			sg.setAttribute("class", "similar-glow");
 			g.appendChild(sg);
 		}
