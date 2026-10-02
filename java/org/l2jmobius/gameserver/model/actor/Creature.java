@@ -4854,8 +4854,11 @@ public abstract class Creature extends WorldObject
 					move.geoPath = PathFinding.getInstance().findPath(curX, curY, curZ, originalX, originalY, originalZ, getInstanceId(), isPlayer());
 					boolean found = (move.geoPath != null) && (move.geoPath.size() > 1);
 					
+					// A single route point means the destination is reachable in a straight line (straight segments are merged into their end point).
+					boolean straightLine = (move.geoPath != null) && (move.geoPath.size() == 1);
+					
 					// If path not found and this is an Attackable, attempt to find closest path to destination.
-					if (!found && isAttackable())
+					if (!found && !straightLine && isAttackable())
 					{
 						int xMin = Math.min(curX, originalX);
 						int xMax = Math.max(curX, originalX);
@@ -4879,7 +4882,7 @@ public abstract class Creature extends WorldObject
 								if (tempDistance < shortDistance)
 								{
 									tempPath = PathFinding.getInstance().findPath(curX, curY, curZ, sX, sY, originalZ, getInstanceId(), false);
-									found = (tempPath != null) && (tempPath.size() > 1);
+									found = (tempPath != null) && !tempPath.isEmpty(); // Straight reachable points are valid too.
 									if (found)
 									{
 										shortDistance = tempDistance;
@@ -4891,12 +4894,14 @@ public abstract class Creature extends WorldObject
 							}
 						}
 						
-						found = (move.geoPath != null) && (move.geoPath.size() > 1);
-						if (found)
+						if ((move.geoPath != null) && !move.geoPath.isEmpty())
 						{
 							originalX = destinationX;
 							originalY = destinationY;
 						}
+						
+						found = (move.geoPath != null) && (move.geoPath.size() > 1);
+						straightLine = (move.geoPath != null) && (move.geoPath.size() == 1);
 					}
 					
 					if (found)
@@ -4916,7 +4921,7 @@ public abstract class Creature extends WorldObject
 						sin = dy / distance;
 						cos = dx / distance;
 					}
-					else // No path found.
+					else // No path with turns: move straight to the destination, which is reachable in a straight line or has no path at all.
 					{
 						// When no move path was found, use direct movement. Tested at retail on October 21st 2024.
 						// if (isPlayer() && !_isFlying && !isInWater)
@@ -4925,11 +4930,21 @@ public abstract class Creature extends WorldObject
 						// return;
 						// }
 						
-						move.disregardingGeodata = true;
+						move.disregardingGeodata = !straightLine;
 						x = originalX;
 						y = originalY;
 						z = originalZ;
-						distance = originalDistance;
+						
+						// The destination may be a fallback point instead of the requested one, so recalculate distance and direction from it.
+						dx = x - curX;
+						dy = y - curY;
+						dz = z - curZ;
+						distance = Math.hypot(dx, dy);
+						if (distance >= 1)
+						{
+							sin = dy / distance;
+							cos = dx / distance;
+						}
 					}
 				}
 				
