@@ -50,112 +50,112 @@
 		<requires nodeId="40050" />
 		<requires nodeId="40052" />
 	</node>
-	<node id="40052" name="Living Fortress" sector="Ironmarch" type="KEYSTONE" tier="0" cost="1" x="4356.1" y="2515.0" effect="MAXHP_PCT:30;MOVE_SPEED_ADD:-15;ATK_SPD_PCT:-8" description="KEYSTONE: +30% maximum HP, but you move 15 slower and attack 8% slower.">
+	<node id="40052" name="Living Fortress" sector="Ironmarch" type="KEYSTONE" tier="0" cost="1" x="4356.1" y="2515.0" effect="MAXHP_PCT:30;MOVE_SPEED_ADD:-15;ATK_SPD_PCT:-8" icon="castle" description="KEYSTONE: +30% maximum HP, but you move 15 slower and attack 8% slower.">
 		<requires nodeId="40051" />
 	</node>
-	<node id="40020" name="Iron Bloodline" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4281.8" y="992.2" orbitX="4337.2" orbitY="1081.4" effect="MAXHP_PCT:1.5">
+	<node id="40020" name="Iron Bloodline" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4281.8" y="992.2" orbitX="4337.2" orbitY="1081.4" effect="MAXHP_PCT:1.5" icon="heart">
 		<requires nodeId="40001" />
 		<requires nodeId="40021" />
 	</node>
-	<node id="40021" name="Iron Bloodline" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4234.5" y="1102.9" orbitX="4337.2" orbitY="1081.4" effect="MAXHP_PCT:1.5">
+	<node id="40021" name="Iron Bloodline" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4234.5" y="1102.9" orbitX="4337.2" orbitY="1081.4" effect="MAXHP_PCT:1.5" icon="heart">
 		<requires nodeId="40020" />
 		<requires nodeId="40022" />
 	</node>
-	<node id="40022" name="Iron Bloodline" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4322.3" y="1185.3" orbitX="4337.2" orbitY="1081.4" effect="MAXHP_PCT:1.5">
+	<node id="40022" name="Iron Bloodline" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4322.3" y="1185.3" orbitX="4337.2" orbitY="1081.4" effect="MAXHP_PCT:1.5" icon="heart">
 		<requires nodeId="40021" />
 		<requires nodeId="40023" />
 	</node>
-	<node id="40023" name="Heart of Iron" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="4429.8" y="1131.0" orbitX="4337.2" orbitY="1081.4" effect="MAXHP_PCT:5;CON:1" description="Iron Bloodline mastery. A wall of flesh.">
+	<node id="40023" name="Heart of Iron" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="4429.8" y="1131.0" orbitX="4337.2" orbitY="1081.4" effect="MAXHP_PCT:5;CON:1" icon="heart" description="Iron Bloodline mastery. A wall of flesh.">
 		<requires nodeId="40022" />
 	</node>
-	<node id="40024" name="Plate Discipline" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4147.3" y="1616.1" orbitX="4209.4" orbitY="1700.7" effect="PDEF_PCT@HEAVY:2">
+	<node id="40024" name="Plate Discipline" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4147.3" y="1616.1" orbitX="4209.4" orbitY="1700.7" effect="PDEF_PCT@HEAVY:2" icon="helmet">
 		<requires nodeId="40004" />
 		<requires nodeId="40025" />
 	</node>
-	<node id="40025" name="Plate Discipline" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4267.7" y="1613.4" orbitX="4209.4" orbitY="1700.7" effect="PDEF_PCT@HEAVY:2">
+	<node id="40025" name="Plate Discipline" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4267.7" y="1613.4" orbitX="4209.4" orbitY="1700.7" effect="PDEF_PCT@HEAVY:2" icon="helmet">
 		<requires nodeId="40024" />
 		<requires nodeId="40026" />
 	</node>
-	<node id="40026" name="Plate Discipline" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4311.4" y="1725.6" orbitX="4209.4" orbitY="1700.7" effect="PDEF_PCT@HEAVY:2">
+	<node id="40026" name="Plate Discipline" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4311.4" y="1725.6" orbitX="4209.4" orbitY="1700.7" effect="PDEF_PCT@HEAVY:2" icon="helmet">
 		<requires nodeId="40025" />
 		<requires nodeId="40027" />
 	</node>
-	<node id="40027" name="Juggernaut Plate" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="4220.9" y="1805.1" orbitX="4209.4" orbitY="1700.7" effect="PDEF_PCT@HEAVY:8;MAXHP_PCT:3" description="Plate Discipline mastery. Only pays off in heavy armour.">
+	<node id="40027" name="Juggernaut Plate" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="4220.9" y="1805.1" orbitX="4209.4" orbitY="1700.7" effect="PDEF_PCT@HEAVY:8;MAXHP_PCT:3" icon="helmet" description="Plate Discipline mastery. Only pays off in heavy armour.">
 		<requires nodeId="40026" />
 	</node>
-	<node id="40028" name="Shield Wall" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3473.2" y="2783.7" orbitX="3577.6" orbitY="2795.1" effect="SHIELD_DEF_PCT:4">
+	<node id="40028" name="Shield Wall" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3473.2" y="2783.7" orbitX="3577.6" orbitY="2795.1" effect="SHIELD_DEF_PCT:4" icon="shield">
 		<requires nodeId="40005" />
 		<requires nodeId="40029" />
 	</node>
-	<node id="40029" name="Shield Wall" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3531.1" y="2889.3" orbitX="3577.6" orbitY="2795.1" effect="SHIELD_DEF_PCT:4">
+	<node id="40029" name="Shield Wall" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3531.1" y="2889.3" orbitX="3577.6" orbitY="2795.1" effect="SHIELD_DEF_PCT:4" icon="shield">
 		<requires nodeId="40028" />
 		<requires nodeId="40030" />
 	</node>
-	<node id="40030" name="Shield Wall" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3650.2" y="2871.0" orbitX="3577.6" orbitY="2795.1" effect="SHIELD_DEF_PCT:4">
+	<node id="40030" name="Shield Wall" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3650.2" y="2871.0" orbitX="3577.6" orbitY="2795.1" effect="SHIELD_DEF_PCT:4" icon="shield">
 		<requires nodeId="40029" />
 		<requires nodeId="40031" />
 	</node>
-	<node id="40031" name="Phalanx Doctrine" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="3673.7" y="2752.8" orbitX="3577.6" orbitY="2795.1" effect="SHIELD_RATE_PCT:4;PDEF_PCT@SHIELD:6;MDEF_PCT@SHIELD:6" description="Shield Wall mastery. The defences only count with a shield raised.">
+	<node id="40031" name="Phalanx Doctrine" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="3673.7" y="2752.8" orbitX="3577.6" orbitY="2795.1" effect="SHIELD_RATE_PCT:4;PDEF_PCT@SHIELD:6;MDEF_PCT@SHIELD:6" icon="shield" description="Shield Wall mastery. The defences only count with a shield raised.">
 		<requires nodeId="40030" />
 	</node>
-	<node id="40032" name="Hammerfall" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3000.2" y="3212.1" orbitX="3105.1" orbitY="3215.4" effect="PATK_PCT@BLUNT:2">
+	<node id="40032" name="Hammerfall" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3000.2" y="3212.1" orbitX="3105.1" orbitY="3215.4" effect="PATK_PCT@BLUNT:2" icon="anvil">
 		<requires nodeId="40003" />
 		<requires nodeId="40033" />
 	</node>
-	<node id="40033" name="Hammerfall" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3072.4" y="3115.7" orbitX="3105.1" orbitY="3215.4" effect="PATK_PCT@BLUNT:2">
+	<node id="40033" name="Hammerfall" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3072.4" y="3115.7" orbitX="3105.1" orbitY="3215.4" effect="PATK_PCT@BLUNT:2" icon="anvil">
 		<requires nodeId="40032" />
 		<requires nodeId="40034" />
 	</node>
-	<node id="40034" name="Hammerfall" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3187.7" y="3150.6" orbitX="3105.1" orbitY="3215.4" effect="PATK_PCT@BLUNT:2">
+	<node id="40034" name="Hammerfall" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3187.7" y="3150.6" orbitX="3105.1" orbitY="3215.4" effect="PATK_PCT@BLUNT:2" icon="anvil">
 		<requires nodeId="40033" />
 		<requires nodeId="40035" />
 	</node>
-	<node id="40035" name="Anvil Breaker" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="3194.3" y="3270.8" orbitX="3105.1" orbitY="3215.4" effect="PATK_PCT@BLUNT:7;CRIT_DMG_PCT@BLUNT:6" description="Hammerfall mastery. Blunt weapons only.">
+	<node id="40035" name="Anvil Breaker" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="3194.3" y="3270.8" orbitX="3105.1" orbitY="3215.4" effect="PATK_PCT@BLUNT:7;CRIT_DMG_PCT@BLUNT:6" icon="anvil" description="Hammerfall mastery. Blunt weapons only.">
 		<requires nodeId="40034" />
 	</node>
-	<node id="40036" name="Bastion Drill" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4597.9" y="1769.2" orbitX="4679.7" orbitY="1703.3" effect="PDEF_PCT@SHIELD:2">
+	<node id="40036" name="Bastion Drill" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4597.9" y="1769.2" orbitX="4679.7" orbitY="1703.3" effect="PDEF_PCT@SHIELD:2" icon="tower-shield">
 		<requires nodeId="40007" />
 		<requires nodeId="40037" />
 	</node>
-	<node id="40037" name="Bastion Drill" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4589.8" y="1649.0" orbitX="4679.7" orbitY="1703.3" effect="PDEF_PCT@SHIELD:2">
+	<node id="40037" name="Bastion Drill" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4589.8" y="1649.0" orbitX="4679.7" orbitY="1703.3" effect="PDEF_PCT@SHIELD:2" icon="tower-shield">
 		<requires nodeId="40036" />
 		<requires nodeId="40038" />
 	</node>
-	<node id="40038" name="Bastion Drill" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4699.9" y="1600.2" orbitX="4679.7" orbitY="1703.3" effect="PDEF_PCT@SHIELD:2">
+	<node id="40038" name="Bastion Drill" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4699.9" y="1600.2" orbitX="4679.7" orbitY="1703.3" effect="PDEF_PCT@SHIELD:2" icon="tower-shield">
 		<requires nodeId="40037" />
 		<requires nodeId="40039" />
 	</node>
-	<node id="40039" name="Tower Shield" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="4783.4" y="1687.0" orbitX="4679.7" orbitY="1703.3" effect="PDEF_PCT@SHIELD:6;MAXHP_PCT:2" description="Bastion Drill mastery. Shield bearers only.">
+	<node id="40039" name="Tower Shield" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="4783.4" y="1687.0" orbitX="4679.7" orbitY="1703.3" effect="PDEF_PCT@SHIELD:6;MAXHP_PCT:2" icon="tower-shield" description="Bastion Drill mastery. Shield bearers only.">
 		<requires nodeId="40038" />
 	</node>
-	<node id="40040" name="Stalwart" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4383.3" y="383.5" effect="MAXHP:20">
+	<node id="40040" name="Stalwart" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4383.3" y="383.5" effect="MAXHP:20" icon="heart-plus">
 		<requires nodeId="40041" />
 		<requires nodeId="40062" />
 	</node>
-	<node id="40041" name="Stalwart" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4582.5" y="400.9" effect="MAXHP:20">
+	<node id="40041" name="Stalwart" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4582.5" y="400.9" effect="MAXHP:20" icon="heart-plus">
 		<requires nodeId="40040" />
 		<requires nodeId="40042" />
 	</node>
-	<node id="40042" name="Stalwart" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4781.7" y="418.3" effect="MAXHP:20">
+	<node id="40042" name="Stalwart" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4781.7" y="418.3" effect="MAXHP:20" icon="heart-plus">
 		<requires nodeId="40041" />
 		<requires nodeId="40043" />
 	</node>
-	<node id="40043" name="Unbowed" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="4981.0" y="435.8" effect="MAXHP:150;HP_REGEN_PCT:8" description="Stalwart mastery. Raw health, no strings attached.">
+	<node id="40043" name="Unbowed" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="4981.0" y="435.8" effect="MAXHP:150;HP_REGEN_PCT:8" icon="heart-plus" description="Stalwart mastery. Raw health, no strings attached.">
 		<requires nodeId="40042" />
 	</node>
-	<node id="40044" name="Siege Training" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3814.9" y="3201.1" orbitX="0.0" orbitY="0.0" effect="PVE_PDMG_PCT:1">
+	<node id="40044" name="Siege Training" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3814.9" y="3201.1" orbitX="0.0" orbitY="0.0" effect="PVE_PDMG_PCT:1" icon="hammer">
 		<requires nodeId="40045" />
 		<requires nodeId="40072" />
 	</node>
-	<node id="40045" name="Siege Training" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3582.3" y="3459.4" orbitX="0.0" orbitY="0.0" effect="PVE_PDMG_PCT:1">
+	<node id="40045" name="Siege Training" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3582.3" y="3459.4" orbitX="0.0" orbitY="0.0" effect="PVE_PDMG_PCT:1" icon="hammer">
 		<requires nodeId="40044" />
 		<requires nodeId="40046" />
 	</node>
-	<node id="40046" name="Siege Training" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3332.3" y="3700.9" orbitX="0.0" orbitY="0.0" effect="PVE_PDMG_PCT:1">
+	<node id="40046" name="Siege Training" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3332.3" y="3700.9" orbitX="0.0" orbitY="0.0" effect="PVE_PDMG_PCT:1" icon="hammer">
 		<requires nodeId="40045" />
 		<requires nodeId="40047" />
 	</node>
-	<node id="40047" name="Wallbreaker" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="3066.0" y="3924.3" orbitX="0.0" orbitY="0.0" effect="PVE_PDMG_PCT:5;PATK_PCT@HEAVY:4" description="Siege Training mastery. Hits harder in heavy armour.">
+	<node id="40047" name="Wallbreaker" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="3066.0" y="3924.3" orbitX="0.0" orbitY="0.0" effect="PVE_PDMG_PCT:5;PATK_PCT@HEAVY:4" icon="hammer" description="Siege Training mastery. Hits harder in heavy armour.">
 		<requires nodeId="40046" />
 	</node>
 	<node id="40060" name="Iron Road" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4091.3" y="973.9" effect="MAXHP:18">

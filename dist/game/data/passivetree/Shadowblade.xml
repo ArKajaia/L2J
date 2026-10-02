@@ -17,36 +17,36 @@
 		<requires nodeId="3001" />
 		<requires nodeId="3002" />
 	</node>
-	<node id="3004" name="Precision" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1390.1" y="2598.6" orbitX="-1362.9" orbitY="2700.0" effect="CRIT_RATE_ADD:6.6">
+	<node id="3004" name="Precision" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1390.1" y="2598.6" orbitX="-1362.9" orbitY="2700.0" effect="CRIT_RATE_ADD:6.6" icon="skull">
 		<requires nodeId="3001" />
 		<requires nodeId="3005" />
 		<requires nodeId="33108" />
 	</node>
-	<node id="3005" name="Precision" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1467.5" y="2690.8" orbitX="-1362.9" orbitY="2700.0" effect="CRIT_RATE_ADD:6.6">
+	<node id="3005" name="Precision" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1467.5" y="2690.8" orbitX="-1362.9" orbitY="2700.0" effect="CRIT_RATE_ADD:6.6" icon="skull">
 		<requires nodeId="3004" />
 		<requires nodeId="3007" />
 	</node>
-	<node id="3007" name="Precision" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1407.3" y="2795.2" orbitX="-1362.9" orbitY="2700.0" effect="CRIT_RATE_ADD:6.6">
+	<node id="3007" name="Precision" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1407.3" y="2795.2" orbitX="-1362.9" orbitY="2700.0" effect="CRIT_RATE_ADD:6.6" icon="skull">
 		<requires nodeId="3005" />
 		<requires nodeId="3008" />
 	</node>
-	<node id="3008" name="Lethality" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-1288.6" y="2774.2" orbitX="-1362.9" orbitY="2700.0" effect="CRIT_RATE_ADD:32;DEX:1" description="Precision mastery.">
+	<node id="3008" name="Lethality" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-1288.6" y="2774.2" orbitX="-1362.9" orbitY="2700.0" effect="CRIT_RATE_ADD:32;DEX:1" icon="skull" description="Precision mastery.">
 		<requires nodeId="3007" />
 	</node>
-	<node id="3009" name="Footwork" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1555.4" y="2503.1" orbitX="-1656.8" orbitY="2530.3" effect="EVASION_ADD:0.6">
+	<node id="3009" name="Footwork" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1555.4" y="2503.1" orbitX="-1656.8" orbitY="2530.3" effect="EVASION_ADD:0.6" icon="mask">
 		<requires nodeId="3001" />
 		<requires nodeId="3010" />
 		<requires nodeId="33206" />
 	</node>
-	<node id="3010" name="Footwork" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1596.6" y="2616.3" orbitX="-1656.8" orbitY="2530.3" effect="EVASION_ADD:0.6">
+	<node id="3010" name="Footwork" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1596.6" y="2616.3" orbitX="-1656.8" orbitY="2530.3" effect="EVASION_ADD:0.6" icon="mask">
 		<requires nodeId="3009" />
 		<requires nodeId="3011" />
 	</node>
-	<node id="3011" name="Footwork" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1717.0" y="2616.3" orbitX="-1656.8" orbitY="2530.3" effect="EVASION_ADD:0.6">
+	<node id="3011" name="Footwork" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1717.0" y="2616.3" orbitX="-1656.8" orbitY="2530.3" effect="EVASION_ADD:0.6" icon="mask">
 		<requires nodeId="3010" />
 		<requires nodeId="3013" />
 	</node>
-	<node id="3013" name="Shadow Dance" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-1758.2" y="2503.1" orbitX="-1656.8" orbitY="2530.3" effect="EVASION_ADD:4;MOVE_SPEED_ADD:1.8" description="Footwork mastery.">
+	<node id="3013" name="Shadow Dance" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-1758.2" y="2503.1" orbitX="-1656.8" orbitY="2530.3" effect="EVASION_ADD:4;MOVE_SPEED_ADD:1.8" icon="mask" description="Footwork mastery.">
 		<requires nodeId="3011" />
 	</node>
 	<node id="3014" name="Approach" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1456.1" y="2352.3" effect="EVASION_ADD:0.2">
@@ -74,58 +74,58 @@
 		<requires nodeId="3016" />
 		<requires nodeId="3017" />
 	</node>
-	<node id="3019" name="Deep Cuts" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1090.1" y="2079.0" orbitX="-1062.9" orbitY="2180.4" effect="CRIT_DMG_PCT:1.6">
+	<node id="3019" name="Deep Cuts" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1090.1" y="2079.0" orbitX="-1062.9" orbitY="2180.4" effect="CRIT_DMG_PCT:1.6" icon="blood">
 		<requires nodeId="3016" />
 		<requires nodeId="3020" />
 		<requires nodeId="33104" />
 	</node>
-	<node id="3020" name="Deep Cuts" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1167.5" y="2171.2" orbitX="-1062.9" orbitY="2180.4" effect="CRIT_DMG_PCT:1.6">
+	<node id="3020" name="Deep Cuts" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1167.5" y="2171.2" orbitX="-1062.9" orbitY="2180.4" effect="CRIT_DMG_PCT:1.6" icon="blood">
 		<requires nodeId="3019" />
 		<requires nodeId="3022" />
 	</node>
-	<node id="3022" name="Deep Cuts" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1107.3" y="2275.5" orbitX="-1062.9" orbitY="2180.4" effect="CRIT_DMG_PCT:1.6">
+	<node id="3022" name="Deep Cuts" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1107.3" y="2275.5" orbitX="-1062.9" orbitY="2180.4" effect="CRIT_DMG_PCT:1.6" icon="blood">
 		<requires nodeId="3020" />
 		<requires nodeId="3024" />
 	</node>
-	<node id="3024" name="Exsanguinate" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-988.6" y="2254.6" orbitX="-1062.9" orbitY="2180.4" effect="CRIT_DMG_PCT:8;DEX:1" description="Deep Cuts mastery.">
+	<node id="3024" name="Exsanguinate" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-988.6" y="2254.6" orbitX="-1062.9" orbitY="2180.4" effect="CRIT_DMG_PCT:8;DEX:1" icon="blood" description="Deep Cuts mastery.">
 		<requires nodeId="3022" />
 	</node>
-	<node id="3025" name="Swiftness" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1255.4" y="1983.5" orbitX="-1356.8" orbitY="2010.7" effect="ATK_SPD_PCT:1">
+	<node id="3025" name="Swiftness" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1255.4" y="1983.5" orbitX="-1356.8" orbitY="2010.7" effect="ATK_SPD_PCT:1" icon="twin-blades">
 		<requires nodeId="3016" />
 		<requires nodeId="3026" />
 		<requires nodeId="33203" />
 	</node>
-	<node id="3026" name="Swiftness" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1296.6" y="2096.7" orbitX="-1356.8" orbitY="2010.7" effect="ATK_SPD_PCT:1">
+	<node id="3026" name="Swiftness" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1296.6" y="2096.7" orbitX="-1356.8" orbitY="2010.7" effect="ATK_SPD_PCT:1" icon="twin-blades">
 		<requires nodeId="3025" />
 		<requires nodeId="3027" />
 	</node>
-	<node id="3027" name="Swiftness" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1417.0" y="2096.7" orbitX="-1356.8" orbitY="2010.7" effect="ATK_SPD_PCT:1">
+	<node id="3027" name="Swiftness" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1417.0" y="2096.7" orbitX="-1356.8" orbitY="2010.7" effect="ATK_SPD_PCT:1" icon="twin-blades">
 		<requires nodeId="3026" />
 		<requires nodeId="3030" />
 	</node>
-	<node id="3030" name="Flurry" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-1458.2" y="1983.5" orbitX="-1356.8" orbitY="2010.7" effect="ATK_SPD_PCT:4;DEX:1" description="Swiftness mastery.">
+	<node id="3030" name="Flurry" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-1458.2" y="1983.5" orbitX="-1356.8" orbitY="2010.7" effect="ATK_SPD_PCT:4;DEX:1" icon="twin-blades" description="Swiftness mastery.">
 		<requires nodeId="3027" />
 	</node>
-	<node id="3031" name="Stride" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-994.6" y="1913.6" orbitX="-893.2" orbitY="1886.4" effect="MOVE_SPEED_ADD:1.5">
+	<node id="3031" name="Stride" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-994.6" y="1913.6" orbitX="-893.2" orbitY="1886.4" effect="MOVE_SPEED_ADD:1.5" icon="boot">
 		<requires nodeId="3016" />
 		<requires nodeId="3032" />
 	</node>
-	<node id="3032" name="Stride" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-953.4" y="1800.4" orbitX="-893.2" orbitY="1886.4" effect="MOVE_SPEED_ADD:1.5">
+	<node id="3032" name="Stride" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-953.4" y="1800.4" orbitX="-893.2" orbitY="1886.4" effect="MOVE_SPEED_ADD:1.5" icon="boot">
 		<requires nodeId="3031" />
 		<requires nodeId="3033" />
 	</node>
-	<node id="3033" name="Stride" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-833.0" y="1800.4" orbitX="-893.2" orbitY="1886.4" effect="MOVE_SPEED_ADD:1.5">
+	<node id="3033" name="Stride" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-833.0" y="1800.4" orbitX="-893.2" orbitY="1886.4" effect="MOVE_SPEED_ADD:1.5" icon="boot">
 		<requires nodeId="3032" />
 		<requires nodeId="3036" />
 	</node>
-	<node id="3036" name="Silent Tread" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-791.8" y="1913.6" orbitX="-893.2" orbitY="1886.4" effect="MOVE_SPEED_ADD:5;EVASION_ADD:1" description="Stride mastery.">
+	<node id="3036" name="Silent Tread" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-791.8" y="1913.6" orbitX="-893.2" orbitY="1886.4" effect="MOVE_SPEED_ADD:5;EVASION_ADD:1" icon="boot" description="Stride mastery.">
 		<requires nodeId="3033" />
 	</node>
 	<node id="3037" name="Approach" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1156.1" y="1832.6" effect="EVASION_ADD:0.2">
 		<requires nodeId="3016" />
 		<requires nodeId="3038" />
 	</node>
-	<node id="3038" name="Thousand Cuts" sector="Shadowblade" type="KEYSTONE" tier="0" cost="1" x="-1187.1" y="1716.7" effect="KS_CRIT_CAP:750;CRIT_DMG_PCT:-30" description="KEYSTONE: Your critical rate cap rises from 500 to 750, but your critical hits deal 30% less damage.">
+	<node id="3038" name="Thousand Cuts" sector="Shadowblade" type="KEYSTONE" tier="0" cost="1" x="-1187.1" y="1716.7" effect="KS_CRIT_CAP:750;CRIT_DMG_PCT:-30" icon="claw" description="KEYSTONE: Your critical rate cap rises from 500 to 750, but your critical hits deal 30% less damage.">
 		<requires nodeId="3037" />
 	</node>
 	<node id="3039" name="Crossroads" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-825.0" y="1428.9" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.2;MAXHP_PCT:0.5" description="Junction.">
@@ -146,49 +146,49 @@
 		<requires nodeId="3039" />
 		<requires nodeId="3040" />
 	</node>
-	<node id="3042" name="Opportunism" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-797.8" y="1530.4" orbitX="-770.6" orbitY="1631.8" effect="PATK_PCT:1">
+	<node id="3042" name="Opportunism" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-797.8" y="1530.4" orbitX="-770.6" orbitY="1631.8" effect="PATK_PCT:1" icon="dagger">
 		<requires nodeId="3039" />
 		<requires nodeId="3043" />
 	</node>
-	<node id="3043" name="Opportunism" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-684.6" y="1571.6" orbitX="-770.6" orbitY="1631.8" effect="PATK_PCT:1">
+	<node id="3043" name="Opportunism" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-684.6" y="1571.6" orbitX="-770.6" orbitY="1631.8" effect="PATK_PCT:1" icon="dagger">
 		<requires nodeId="3042" />
 		<requires nodeId="3044" />
 	</node>
-	<node id="3044" name="Opportunism" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-684.6" y="1692.0" orbitX="-770.6" orbitY="1631.8" effect="PATK_PCT:1">
+	<node id="3044" name="Opportunism" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-684.6" y="1692.0" orbitX="-770.6" orbitY="1631.8" effect="PATK_PCT:1" icon="dagger">
 		<requires nodeId="3043" />
 		<requires nodeId="3047" />
 	</node>
-	<node id="3047" name="Backstabber" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-797.8" y="1733.2" orbitX="-770.6" orbitY="1631.8" effect="PATK_PCT:4;CRIT_DMG_PCT:3" description="Opportunism mastery.">
+	<node id="3047" name="Backstabber" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-797.8" y="1733.2" orbitX="-770.6" orbitY="1631.8" effect="PATK_PCT:4;CRIT_DMG_PCT:3" icon="dagger" description="Opportunism mastery.">
 		<requires nodeId="3044" />
 	</node>
-	<node id="3048" name="Precision" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-955.4" y="1463.9" orbitX="-1056.8" orbitY="1491.1" effect="CRIT_RATE_ADD:8.4">
+	<node id="3048" name="Precision" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-955.4" y="1463.9" orbitX="-1056.8" orbitY="1491.1" effect="CRIT_RATE_ADD:8.4" icon="skull">
 		<requires nodeId="3039" />
 		<requires nodeId="3049" />
 	</node>
-	<node id="3049" name="Precision" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-996.6" y="1577.1" orbitX="-1056.8" orbitY="1491.1" effect="CRIT_RATE_ADD:8.4">
+	<node id="3049" name="Precision" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-996.6" y="1577.1" orbitX="-1056.8" orbitY="1491.1" effect="CRIT_RATE_ADD:8.4" icon="skull">
 		<requires nodeId="3048" />
 		<requires nodeId="3050" />
 	</node>
-	<node id="3050" name="Precision" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1117.0" y="1577.1" orbitX="-1056.8" orbitY="1491.1" effect="CRIT_RATE_ADD:8.4">
+	<node id="3050" name="Precision" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1117.0" y="1577.1" orbitX="-1056.8" orbitY="1491.1" effect="CRIT_RATE_ADD:8.4" icon="skull">
 		<requires nodeId="3049" />
 		<requires nodeId="3053" />
 	</node>
-	<node id="3053" name="Lethality" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-1158.2" y="1463.9" orbitX="-1056.8" orbitY="1491.1" effect="CRIT_RATE_ADD:32;DEX:1" description="Precision mastery.">
+	<node id="3053" name="Lethality" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-1158.2" y="1463.9" orbitX="-1056.8" orbitY="1491.1" effect="CRIT_RATE_ADD:32;DEX:1" icon="skull" description="Precision mastery.">
 		<requires nodeId="3050" />
 	</node>
-	<node id="3054" name="Footwork" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-694.6" y="1394.0" orbitX="-593.2" orbitY="1366.8" effect="EVASION_ADD:0.9">
+	<node id="3054" name="Footwork" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-694.6" y="1394.0" orbitX="-593.2" orbitY="1366.8" effect="EVASION_ADD:0.9" icon="mask">
 		<requires nodeId="3039" />
 		<requires nodeId="3055" />
 	</node>
-	<node id="3055" name="Footwork" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-653.4" y="1280.8" orbitX="-593.2" orbitY="1366.8" effect="EVASION_ADD:0.9">
+	<node id="3055" name="Footwork" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-653.4" y="1280.8" orbitX="-593.2" orbitY="1366.8" effect="EVASION_ADD:0.9" icon="mask">
 		<requires nodeId="3054" />
 		<requires nodeId="3056" />
 	</node>
-	<node id="3056" name="Footwork" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-533.0" y="1280.8" orbitX="-593.2" orbitY="1366.8" effect="EVASION_ADD:0.9">
+	<node id="3056" name="Footwork" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-533.0" y="1280.8" orbitX="-593.2" orbitY="1366.8" effect="EVASION_ADD:0.9" icon="mask">
 		<requires nodeId="3055" />
 		<requires nodeId="3059" />
 	</node>
-	<node id="3059" name="Shadow Dance" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-491.8" y="1394.0" orbitX="-593.2" orbitY="1366.8" effect="EVASION_ADD:4;MOVE_SPEED_ADD:1.8" description="Footwork mastery.">
+	<node id="3059" name="Shadow Dance" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-491.8" y="1394.0" orbitX="-593.2" orbitY="1366.8" effect="EVASION_ADD:4;MOVE_SPEED_ADD:1.8" icon="mask" description="Footwork mastery.">
 		<requires nodeId="3056" />
 	</node>
 	<node id="3060" name="Approach" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-856.1" y="1313.0" effect="EVASION_ADD:0.2">
@@ -216,44 +216,44 @@
 		<requires nodeId="3062" />
 		<requires nodeId="3063" />
 	</node>
-	<node id="3065" name="Deep Cuts" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-497.8" y="1010.7" orbitX="-470.6" orbitY="1112.2" effect="CRIT_DMG_PCT:1.6">
+	<node id="3065" name="Deep Cuts" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-497.8" y="1010.7" orbitX="-470.6" orbitY="1112.2" effect="CRIT_DMG_PCT:1.6" icon="blood">
 		<requires nodeId="3062" />
 		<requires nodeId="3066" />
 	</node>
-	<node id="3066" name="Deep Cuts" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-384.6" y="1051.9" orbitX="-470.6" orbitY="1112.2" effect="CRIT_DMG_PCT:1.6">
+	<node id="3066" name="Deep Cuts" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-384.6" y="1051.9" orbitX="-470.6" orbitY="1112.2" effect="CRIT_DMG_PCT:1.6" icon="blood">
 		<requires nodeId="3065" />
 		<requires nodeId="3067" />
 	</node>
-	<node id="3067" name="Deep Cuts" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-384.6" y="1172.4" orbitX="-470.6" orbitY="1112.2" effect="CRIT_DMG_PCT:1.6">
+	<node id="3067" name="Deep Cuts" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-384.6" y="1172.4" orbitX="-470.6" orbitY="1112.2" effect="CRIT_DMG_PCT:1.6" icon="blood">
 		<requires nodeId="3066" />
 		<requires nodeId="3070" />
 	</node>
-	<node id="3070" name="Exsanguinate" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-497.8" y="1213.6" orbitX="-470.6" orbitY="1112.2" effect="CRIT_DMG_PCT:8;DEX:1" description="Deep Cuts mastery.">
+	<node id="3070" name="Exsanguinate" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-497.8" y="1213.6" orbitX="-470.6" orbitY="1112.2" effect="CRIT_DMG_PCT:8;DEX:1" icon="blood" description="Deep Cuts mastery.">
 		<requires nodeId="3067" />
 	</node>
-	<node id="3071" name="Swiftness" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-655.4" y="944.3" orbitX="-756.8" orbitY="971.4" effect="ATK_SPD_PCT:1">
+	<node id="3071" name="Swiftness" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-655.4" y="944.3" orbitX="-756.8" orbitY="971.4" effect="ATK_SPD_PCT:1" icon="twin-blades">
 		<requires nodeId="3062" />
 		<requires nodeId="3072" />
 	</node>
-	<node id="3072" name="Swiftness" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-696.6" y="1057.5" orbitX="-756.8" orbitY="971.4" effect="ATK_SPD_PCT:1">
+	<node id="3072" name="Swiftness" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-696.6" y="1057.5" orbitX="-756.8" orbitY="971.4" effect="ATK_SPD_PCT:1" icon="twin-blades">
 		<requires nodeId="3071" />
 		<requires nodeId="3073" />
 	</node>
-	<node id="3073" name="Swiftness" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-817.0" y="1057.5" orbitX="-756.8" orbitY="971.4" effect="ATK_SPD_PCT:1">
+	<node id="3073" name="Swiftness" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-817.0" y="1057.5" orbitX="-756.8" orbitY="971.4" effect="ATK_SPD_PCT:1" icon="twin-blades">
 		<requires nodeId="3072" />
 		<requires nodeId="3076" />
 	</node>
-	<node id="3076" name="Flurry" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-858.2" y="944.3" orbitX="-756.8" orbitY="971.4" effect="ATK_SPD_PCT:4;DEX:1" description="Swiftness mastery.">
+	<node id="3076" name="Flurry" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-858.2" y="944.3" orbitX="-756.8" orbitY="971.4" effect="ATK_SPD_PCT:4;DEX:1" icon="twin-blades" description="Swiftness mastery.">
 		<requires nodeId="3073" />
 	</node>
 	<node id="3077" name="Approach" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-409.1" y="878.3" effect="EVASION_ADD:0.2">
 		<requires nodeId="3062" />
 		<requires nodeId="3078" />
 	</node>
-	<node id="3078" name="Ghost Walker" sector="Shadowblade" type="KEYSTONE" tier="0" cost="1" x="-293.2" y="847.2" effect="EVASION_ADD:4;MOVE_SPEED_ADD:5;MAXHP:-140" description="Evasive and fast, but frail.">
+	<node id="3078" name="Ghost Walker" sector="Shadowblade" type="KEYSTONE" tier="0" cost="1" x="-293.2" y="847.2" effect="EVASION_ADD:4;MOVE_SPEED_ADD:5;MAXHP:-140" icon="moon" description="Evasive and fast, but frail.">
 		<requires nodeId="3077" />
 	</node>
-	<node id="3079" name="Executioner's Mark" sector="Shadowblade" type="MASTER" tier="0" cost="1" x="-360.0" y="623.5" effect="DEX:2;CRIT_RATE_ADD:18;CRIT_DMG_PCT:6" description="Archetype capstone.">
+	<node id="3079" name="Executioner's Mark" sector="Shadowblade" type="MASTER" tier="0" cost="1" x="-360.0" y="623.5" effect="DEX:2;CRIT_RATE_ADD:18;CRIT_DMG_PCT:6" icon="target" description="Archetype capstone.">
 		<requires nodeId="3080" />
 		<requires nodeId="9005" />
 	</node>

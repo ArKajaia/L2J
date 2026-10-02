@@ -39,6 +39,8 @@
 						<xs:attribute name="orbitY" type="xs:decimal" use="optional" />
 						<xs:attribute name="effect" type="xs:string" use="optional" />
 						<xs:attribute name="description" type="xs:string" use="optional" />
+						<!-- Themed glyph the web planner draws on the node (and in its ring's socket for a notable), e.g. "hammer"; none = picked by stat. -->
+						<xs:attribute name="icon" type="xs:string" use="optional" />
 						<xs:attribute name="skillId" type="xs:integer" use="optional" />
 						<!-- A level, or "auto": the highest level of the skill whose magicLevel the character has reached. -->
 						<xs:attribute name="skillLevel" use="optional">
