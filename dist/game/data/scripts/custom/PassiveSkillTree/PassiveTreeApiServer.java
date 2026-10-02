@@ -43,6 +43,7 @@ import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
  * <li>GET /api/passivetree/character?token=... - one player's LIVE allocation state</li>
  * <li>GET /api/passivetree/allocate?token=...&amp;nodeId=... - allocates one node</li>
  * <li>GET /api/passivetree/reset?token=... - clears the whole tree for the configured reset cost</li>
+ * <li>GET /api/passivetree/template?token=...&amp;id=... - switches to another template (peace zone only, with a wait between switches)</li>
  * </ul>
  */
 public class PassiveTreeApiServer
@@ -76,6 +77,7 @@ public class PassiveTreeApiServer
 			server.createContext("/api/passivetree/allocate", this::handleAllocate);
 			server.createContext("/api/passivetree/deallocate", this::handleDeallocate);
 			server.createContext("/api/passivetree/reset", this::handleReset);
+			server.createContext("/api/passivetree/template", this::handleTemplate);
 			server.createContext("/api/passivetree/config", this::handleConfig);
 			server.setExecutor(Executors.newFixedThreadPool(2));
 			server.start();
@@ -416,6 +418,55 @@ public class PassiveTreeApiServer
 		sendText(exchange, success ? 200 : 409, "application/json", json.toString());
 	}
 
+	/** Switches the active template. The peace-zone and wait rules live in PassiveTreeManager, so the Community Board and this page can never disagree. */
+	private void handleTemplate(HttpExchange exchange) throws IOException
+	{
+		final String query = exchange.getRequestURI().getQuery();
+		final String token = parseQueryParam(query, "token");
+		final String idStr = parseQueryParam(query, "id");
+
+		if ((token == null) || (idStr == null))
+		{
+			sendText(exchange, 400, "application/json", "{\"error\":\"missing token or id\"}");
+			return;
+		}
+
+		final int[] verified = verifyToken(token);
+		if (verified == null)
+		{
+			sendText(exchange, 401, "application/json", "{\"error\":\"invalid or expired token\"}");
+			return;
+		}
+
+		final Player player = resolvePlayer(verified);
+		if (player == null)
+		{
+			sendText(exchange, 404, "application/json", "{\"error\":\"character not online on this class\"}");
+			return;
+		}
+
+		int templateId;
+		try
+		{
+			templateId = Integer.parseInt(idStr);
+		}
+		catch (NumberFormatException e)
+		{
+			sendText(exchange, 400, "application/json", "{\"error\":\"bad id\"}");
+			return;
+		}
+
+		final PassiveTreeManager mgr = PassiveTreeManager.getInstance();
+		final PassiveTreeManager.SwitchResult result = mgr.switchTemplate(player, templateId);
+		final boolean success = result == PassiveTreeManager.SwitchResult.OK;
+		final String message = success ? "Template " + templateId + " is now active." : mgr.getSwitchFailureMessage(player, result);
+
+		final StringBuilder json = new StringBuilder();
+		json.append("{\"success\":").append(success).append(",").append("\"reason\":\"").append(result.name()).append("\",").append("\"message\":\"").append(escape(message)).append("\",").append("\"character\":").append(buildCharacterJson(player)).append("}");
+
+		sendText(exchange, success ? 200 : 409, "application/json", json.toString());
+	}
+
 	/** Exposes the respec and reset costs so the web page never has to hardcode them. */
 	private void handleConfig(HttpExchange exchange) throws IOException
 	{
@@ -443,10 +494,30 @@ public class PassiveTreeApiServer
 		final Set<Integer> allocated = mgr.getAllocatedNodes(player);
 		
 		final StringBuilder json = new StringBuilder();
-		json.append("{").append("\"name\":\"").append(escape(player.getName())).append("\",").append("\"level\":").append(player.getLevel()).append(",").append("\"earnedPoints\":").append(mgr.getEarnedPoints(player)).append(",").append("\"spentPoints\":").append(mgr.getSpentPoints(player)).append(",").append("\"availablePoints\":").append(mgr.getAvailablePoints(player)).append(",").append("\"allocatedNodeIds\":[").append(joinInts(new ArrayList<>(allocated))).append("]").append("}");
+		json.append("{").append("\"name\":\"").append(escape(player.getName())).append("\",").append("\"level\":").append(player.getLevel()).append(",").append("\"earnedPoints\":").append(mgr.getEarnedPoints(player)).append(",").append("\"spentPoints\":").append(mgr.getSpentPoints(player)).append(",").append("\"availablePoints\":").append(mgr.getAvailablePoints(player)).append(",").append("\"allocatedNodeIds\":[").append(joinInts(new ArrayList<>(allocated))).append("],").append("\"templates\":").append(buildTemplatesJson(player)).append("}");
 		return json.toString();
 	}
 	
+	/** Template list plus what the page needs to enable or grey out its switch buttons: peace zone, remaining wait, and the rules themselves. */
+	private String buildTemplatesJson(Player player)
+	{
+		final PassiveTreeManager mgr = PassiveTreeManager.getInstance();
+		final StringBuilder json = new StringBuilder();
+		json.append("{\"active\":").append(mgr.getActiveTemplate(player)).append(",").append("\"peaceOnly\":").append(PassiveTreeConfig.TEMPLATE_PEACE_ZONE_ONLY).append(",").append("\"inPeaceZone\":").append(mgr.canSwitchTemplateHere(player)).append(",").append("\"delaySeconds\":").append(PassiveTreeConfig.TEMPLATE_SWITCH_DELAY).append(",").append("\"cooldownMs\":").append(mgr.getTemplateCooldownRemaining(player)).append(",").append("\"list\":[");
+		boolean first = true;
+		for (PassiveTreeManager.TemplateInfo info : mgr.getTemplates(player))
+		{
+			if (!first)
+			{
+				json.append(",");
+			}
+			first = false;
+			json.append("{\"id\":").append(info.id()).append(",").append("\"active\":").append(info.active()).append(",").append("\"nodes\":").append(info.nodes()).append(",").append("\"points\":").append(info.points()).append("}");
+		}
+		json.append("]}");
+		return json.toString();
+	}
+
 	private void sendText(HttpExchange exchange, int status, String contentType, String body) throws IOException
 	{
 		exchange.getResponseHeaders().add("Content-Type", contentType);
