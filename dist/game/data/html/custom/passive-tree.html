@@ -42,7 +42,7 @@
 	.header .text .who b { color: #d9b64c; }
 
 	/*
-	 * Right-side stack: points badge, zoom controls, and the detail panel
+	 * Right-side stack: points badge, templates, search, the detail panel, and the zoom bar
 	 * used to each be independently position:fixed with hand-guessed pixel
 	 * offsets (96px, 190px margin-top, calc(100% - 206px) height...) to
 	 * avoid sitting on top of each other. That's exactly the kind of thing
@@ -56,7 +56,7 @@
 		position: fixed; top: 16px; right: 16px; bottom: 16px; width: 300px;
 		display: flex; flex-direction: column; gap: 12px;
 	}
-	.points-badge, .right-stack #controls, .right-stack #search-box, .right-stack .detail-panel {
+	.points-badge, .right-stack .templates, .right-stack #search-box, .right-stack .detail-panel, .right-stack .zoombar {
 		position: static; /* the wrapper above owns the fixed positioning now */
 	}
 	.points-badge {
@@ -79,22 +79,45 @@
 	#reset-tree-btn:hover { background: #3a1c18; }
 	#reset-tree-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-	#controls {
+	/* Zoom / fit bar: last item of the right-hand stack, so it sits on the bottom edge and can never land on the legend or totals. */
+	.zoombar {
 		flex: 0 0 auto;
+		display: flex; align-items: center; justify-content: center; gap: 6px;
 		background: rgba(12,12,16,0.9); border: 1px solid #444;
-		border-radius: 6px; padding: 10px 12px; color: #bbb; font-size: 12px;
-		text-align: center;
+		border-radius: 6px; padding: 8px 10px; color: #bbb; font-size: 12px;
 	}
-	#controls .zoomrow { display: flex; align-items: center; gap: 6px; justify-content: center; margin-bottom: 8px; }
-	#controls button {
+	.zoombar button {
 		background: #2a2a33; color: #e8dcb8; border: 1px solid #555;
-		border-radius: 4px; cursor: pointer; font-size: 15px;
-		width: 30px; height: 28px; line-height: 1;
+		border-radius: 4px; cursor: pointer; font-size: 15px; font-family: inherit;
+		width: 30px; height: 28px; line-height: 1; padding: 0;
 	}
-	#controls button:hover { background: #3a3a45; }
-	#controls .wide { width: auto; padding: 0 12px; font-size: 12px; height: 26px; }
-	#zoom-pct { min-width: 52px; color: #f0e0a0; font-size: 13px; }
-	#controls .keys { color: #777; font-size: 11px; line-height: 1.5; margin-top: 6px; }
+	.zoombar button:hover { background: #3a3a45; }
+	.zoombar .wide { width: auto; flex: 1; padding: 0 12px; font-size: 12px; margin-left: 4px; }
+	#zoom-pct { min-width: 48px; text-align: center; color: #f0e0a0; font-size: 13px; }
+
+	.templates {
+		flex: 0 0 auto;
+		background: linear-gradient(135deg, rgba(20,20,26,0.92), rgba(12,12,16,0.85));
+		border: 1px solid #7a5c1e; border-radius: 8px; padding: 10px 12px;
+		box-shadow: 0 0 20px rgba(0,0,0,0.6);
+	}
+	.templates .label { font-size: 10px; letter-spacing: 2px; color: #8a7a55; text-transform: uppercase; margin-bottom: 6px; }
+	.tpl-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+	.tpl-btn {
+		display: flex; flex-direction: column; align-items: center; gap: 2px;
+		padding: 6px 0 5px; background: #2a2a33; color: #e8dcb8;
+		border: 1px solid #555; border-radius: 4px; cursor: pointer; font-family: inherit;
+	}
+	.tpl-btn b { font-size: 15px; font-weight: normal; line-height: 1.1; }
+	.tpl-btn small { font-size: 10px; color: #8a8a92; line-height: 1.1; }
+	.tpl-btn:hover:not(:disabled):not(.active) { background: #3a3a45; border-color: #d9b64c; }
+	.tpl-btn.active { background: #16301c; border-color: #3ecf5b; color: #8fe39a; cursor: default; }
+	.tpl-btn.active small { color: #5fae70; }
+	.tpl-btn:disabled:not(.active) { opacity: 0.45; cursor: not-allowed; }
+	.tpl-status { margin-top: 7px; font-size: 11px; line-height: 1.4; min-height: 15px; color: #8a7a55; }
+	.tpl-status.warn { color: #ff9b90; }
+	.tpl-status.wait { color: #d9b64c; }
+	.tpl-status.ok { color: #8fe39a; }
 
 	#search-box {
 		flex: 0 0 auto;
@@ -161,6 +184,7 @@
 		flex: 1; display: flex; align-items: center; justify-content: center;
 		text-align: center; padding: 24px; color: #6b6b73; font-size: 13px; line-height: 1.6;
 	}
+	.detail-empty .keys { color: #55555c; font-size: 11px; line-height: 1.6; }
 	.detail-body { flex: 1; overflow-y: auto; padding: 20px; }
 	.detail-icon-row { display: flex; justify-content: center; margin-bottom: 14px; }
 	.detail-icon {
@@ -355,35 +379,34 @@
 		<div style="width:100%">
 			<div class="label">Skill Points</div>
 			<div class="row"><svg viewBox="0 0 24 24"><use href="#icon-star"/></svg><span class="value" id="points-value">-</span></div>
-			<button id="reset-tree-btn">Reset Tree
+			<button id="reset-tree-btn">Reset Tree</button>
 		</div>
+	</div>
+
+	<div class="templates" id="templates-panel">
+		<div class="label">Templates</div>
+		<div class="tpl-row" id="tpl-row"></div>
+		<div class="tpl-status" id="tpl-status"></div>
 	</div>
 
 	<div id="search-box">
 		<div class="search-row">
 			<input id="search-input" type="text" placeholder="Search name, stat, description..." autocomplete="off" spellcheck="false">
-			<button id="search-clear" title="Clear search (Esc)">&times;
+			<button id="search-clear" title="Clear search (Esc)">&times;</button>
 		</div>
 		<div id="search-count"></div>
 	</div>
 
-	<div id="controls">
-		<div class="zoomrow">
-			<button id="btn-out" title="Zoom out">&minus;
-			<span id="zoom-pct">100%</span>
-			<button id="btn-in" title="Zoom in">+
-		</div>
-		<button class="wide" id="btn-fit" title="Fit whole tree on screen">Fit to screen
-		<div class="keys">
-			drag / <b>WASD</b> or arrows to move<br>
-			wheel or <b>+ &minus;</b> to zoom &middot; <b>F</b> to fit<br>
-			<b>Ctrl+F</b> to search
-		</div>
+	<div class="detail-panel" id="detail-panel">
+		<div class="detail-empty" id="detail-empty"><div>Select a node to inspect it.<br><br><span id="detail-meta"></span><br><br><span class="keys">drag or <b>WASD</b> to move<br>wheel or <b>+ &minus;</b> to zoom<br><b>F</b> fit &middot; <b>Ctrl+F</b> search</span></div></div>
+		<div class="detail-body" id="detail-body" style="display:none"></div>
 	</div>
 
-	<div class="detail-panel" id="detail-panel">
-		<div class="detail-empty" id="detail-empty">Select a node to inspect it.<br><br><span id="detail-meta"></span></div>
-		<div class="detail-body" id="detail-body" style="display:none"></div>
+	<div class="zoombar" id="controls" title="Drag or WASD / arrows to move - wheel or + / - to zoom - F to fit - Ctrl+F to search">
+		<button type="button" id="btn-out" title="Zoom out">&minus;</button>
+		<span id="zoom-pct">100%</span>
+		<button type="button" id="btn-in" title="Zoom in">+</button>
+		<button type="button" class="wide" id="btn-fit" title="Fit whole tree on screen (F)">Fit to screen</button>
 	</div>
 </div>
 
@@ -414,7 +437,7 @@
 		<p>Click the link from <b>.treelink</b> in-game to open this page directly.<br>
 		If you have a 6-digit code instead, enter it below.</p>
 		<input id="pin-input" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autofocus>
-		<button id="pin-submit">View My Tree
+		<button id="pin-submit">View My Tree</button>
 		<div id="pin-error"></div>
 		<div id="pin-skip" onclick="document.getElementById('pin-overlay').style.display='none'">Just browse the tree without live data</div>
 	</div>
@@ -430,7 +453,9 @@ const CFG = {
 	ZOOM_STEP:      1.15,  // how much one wheel notch multiplies zoom (1.05 = fine, 1.3 = coarse)
 	ZOOM_MIN:       0.05,  // furthest you can zoom out (low enough to fit the whole tree)
 	ZOOM_MAX:       2.50,  // closest you can zoom in
-	FIT_PADDING:    80,    // px of breathing room left around the tree when fitting
+	FIT_PADDING:    24,    // px of breathing room between the tree and the window edges / panels when fitting
+	FIT_NODE_MARGIN: 36,   // extra world units around the outermost nodes (their circles stick out past the centre)
+	POLL_MS:        5000,  // how often a live page re-reads the character (peace zone, switch wait, points)
 	LABEL_ZOOM:     1.30,  // small-node names appear once zoom is at/above this
 };
 // ===========================================================================
@@ -470,6 +495,11 @@ let searchQuery = "";          // last query actually applied (input is debounce
 let scale = 1, tx = 0, ty = 0;
 let bounds = { minX:0, minY:0, maxX:1, maxY:1 };
 let lastLabelState = null;
+let viewTouched = false;   // true once the player has panned/zoomed by hand, so a window resize no longer re-fits over their view
+
+// template state
+let templateBusy = false;
+let templateTick = null;
 
 // ------------------------------------------------------------------ data
 async function loadNodes() {
@@ -1203,18 +1233,18 @@ function renderDetailPanel(n) {
 
 	let actionHtml;
 	if (has && (n.type === "START")) {
-		actionHtml = `<button class="detail-action" disabled>Starting Node`;
+		actionHtml = `<button class="detail-action" disabled>Starting Node</button>`;
 	} else if (has) {
 		const cost = configRespecPerPoint * n.cost;
-		actionHtml = `<button class="detail-action respec" id="detail-action-btn">Respec - ${cost.toLocaleString()} Adena`;
+		actionHtml = `<button class="detail-action respec" id="detail-action-btn">Respec - ${cost.toLocaleString()} Adena</button>`;
 	} else if (avail) {
-		actionHtml = `<button class="detail-action" id="detail-action-btn">Allocate - ${n.cost} point${n.cost === 1 ? "" : "s"}`;
+		actionHtml = `<button class="detail-action" id="detail-action-btn">Allocate - ${n.cost} point${n.cost === 1 ? "" : "s"}</button>`;
 	} else if (character && isRootNode(n) && hasStartNode()) {
-		actionHtml = `<button class="detail-action" disabled>Starting point already chosen`;
+		actionHtml = `<button class="detail-action" disabled>Starting point already chosen</button>`;
 	} else if (character && conflictingNode(n)) {
-		actionHtml = `<button class="detail-action" disabled>Can't be combined with ${conflictingNode(n).name}`;
+		actionHtml = `<button class="detail-action" disabled>Can't be combined with ${conflictingNode(n).name}</button>`;
 	} else {
-		actionHtml = `<button class="detail-action" disabled>Locked`;
+		actionHtml = `<button class="detail-action" disabled>Locked</button>`;
 	}
 
 	const themed = themeIcon(n);
@@ -1294,6 +1324,118 @@ function renderHud() {
 		pts.textContent = "-";
 	}
 	if (meta) meta.textContent = `${nodes.length} nodes \u00b7 ${edgeList.length} connections`;
+	renderTemplates();
+}
+
+// ------------------------------------------------------------ templates
+/** Client-clock time the switch wait ends. The server sends "ms left" per response; stamp it once per response. */
+function templateCooldownEnd() {
+	const t = character && character.templates;
+	if (!t) return 0;
+	if (character._cdBase === undefined) character._cdBase = Date.now();
+	return character._cdBase + (t.cooldownMs || 0);
+}
+
+/** Rebuilds the template buttons. Only called when the data changes - the 1s tick just updates their state, so a click is never lost to a rebuild. */
+function renderTemplates() {
+	const row = document.getElementById("tpl-row");
+	if (!row) return;
+	const t = character && character.templates;
+	const list = t ? t.list : Array.from({ length: 5 }, (_, i) => ({ id: i + 1, active: false, nodes: 0, points: 0 }));
+
+	// Same buttons as last time: leave them alone, so a click that lands during the 5s poll is not lost to a rebuild.
+	const signature = JSON.stringify(list) + (t ? "L" : "P");
+	if (row.dataset.sig === signature) { updateTemplateState(); return; }
+	row.dataset.sig = signature;
+
+	row.style.gridTemplateColumns = `repeat(${list.length}, 1fr)`;
+	row.innerHTML = "";
+	list.forEach(info => {
+		const b = document.createElement("button");
+		b.type = "button";
+		b.className = "tpl-btn" + (info.active ? " active" : "");
+		b.dataset.id = info.id;
+		b.title = info.active
+			? `Template ${info.id} is active - ${info.points} points in ${info.nodes} nodes`
+			: `Template ${info.id}: ${info.points} points in ${info.nodes} nodes`;
+		b.innerHTML = `<b>${info.id}</b><small>${t ? info.points + " pts" : "-"}</small>`;
+		b.addEventListener("click", () => switchTemplate(info.id));
+		row.appendChild(b);
+	});
+
+	updateTemplateState();
+	if (!templateTick) templateTick = setInterval(updateTemplateState, 1000);
+}
+
+/** Enables or greys out the buttons and explains why, from the last server response and the local clock. */
+function updateTemplateState() {
+	const t = character && character.templates;
+	const status = document.getElementById("tpl-status");
+	const buttons = document.querySelectorAll("#tpl-row .tpl-btn");
+	if (!status) return;
+
+	let msg = "", cls = "", canSwitch = false;
+	if (!t) {
+		msg = "Open this page with .treelink to use templates."; cls = "";
+	} else {
+		const wait = Math.max(0, Math.ceil((templateCooldownEnd() - Date.now()) / 1000));
+		if (t.peaceOnly && !t.inPeaceZone) { msg = "Go to a peace zone to switch templates."; cls = "warn"; }
+		else if (wait > 0)                  { msg = `You can switch again in ${wait}s.`; cls = "wait"; }
+		else {
+			canSwitch = true;
+			msg = "Switching is allowed" + (t.peaceOnly ? " here" : "") + "."
+			    + (t.delaySeconds ? ` Then ${t.delaySeconds}s wait.` : "");
+			cls = "ok";
+		}
+	}
+	status.textContent = msg;
+	status.className = "tpl-status " + cls;
+	buttons.forEach(b => { b.disabled = !canSwitch || templateBusy || b.classList.contains("active"); });
+}
+
+async function switchTemplate(id) {
+	if (!currentToken) { showToast("Open this page from .treelink to switch templates.", true); return; }
+	if (allocating || templateBusy) return;
+	const t = character && character.templates;
+	if (t && t.active === id) return;
+
+	const wait = t && t.delaySeconds ? ` You will not be able to switch again for ${t.delaySeconds} seconds.` : "";
+	if (!window.confirm(`Switch to template ${id}?\n\nIt takes effect immediately and replaces your current stats and skills.${wait}`)) return;
+
+	templateBusy = true; updateTemplateState();
+	try {
+		const res = await fetch(API_BASE + "/api/passivetree/template?token=" + encodeURIComponent(currentToken) + "&id=" + id);
+		const data = await res.json();
+		if (data.character) {
+			character = data.character;
+			allocated = new Set(character.allocatedNodeIds || []);
+		}
+		if (data.success) showToast("Template " + id + " is now active.");
+		else showToast(data.message || data.error || "Could not switch template.", true);
+	} catch (e) { showToast("Connection error.", true); }
+	finally {
+		templateBusy = false;
+		render(); renderHud(); renderTotals();
+		if (selectedNodeId !== null) refreshDetailPanelIfSelected(selectedNodeId);
+	}
+}
+
+/** Keeps points, peace-zone state and the switch wait current while the page stays open (the player walks in and out of town meanwhile). */
+async function pollCharacter() {
+	if (!currentToken || allocating || templateBusy || document.hidden) return;
+	try {
+		const res = await fetch(API_BASE + "/api/passivetree/character?token=" + encodeURIComponent(currentToken));
+		if (!res.ok || allocating || templateBusy) return;
+		const fresh = await res.json();
+		const changed = fresh.allocatedNodeIds.length !== allocated.size || fresh.allocatedNodeIds.some(id => !allocated.has(id));
+		character = fresh;
+		allocated = new Set(character.allocatedNodeIds || []);
+		if (changed) {
+			render(); renderTotals();
+			if (selectedNodeId !== null) refreshDetailPanelIfSelected(selectedNodeId);
+		}
+		renderHud();
+	} catch (e) { /* offline blip - the next poll retries */ }
 }
 
 // ------------------------------------------------------------ view maths
@@ -1336,6 +1478,7 @@ function applyTransform() {
 function zoomAt(screenX, screenY, factor) {
 	const next = Math.min(CFG.ZOOM_MAX, Math.max(CFG.ZOOM_MIN, scale * factor));
 	if (next === scale) return;
+	viewTouched = true;
 	tx = screenX - ((screenX - tx) / scale) * next;
 	ty = screenY - ((screenY - ty) / scale) * next;
 	scale = next;
@@ -1348,13 +1491,35 @@ function zoomCentre(factor) {
 	zoomAt(w / 2, h / 2, factor);
 }
 
-/** Scale and centre so the entire tree is visible. */
+/**
+ * The part of the window the tree can actually be seen in: everything except
+ * the right-hand stack (points, templates, search, node details, zoom bar),
+ * which floats over the canvas. Fitting to the whole
+ * window used to tuck the right edge of the tree under those panels.
+ */
+function visibleArea() {
+	const { w, h } = viewportSize();
+	const pad = CFG.FIT_PADDING;
+	let left = pad, top = pad, right = w - pad, bottom = h - pad;
+
+	const stack = document.querySelector(".right-stack");
+	if (stack) {
+		const r = stack.getBoundingClientRect();
+		if (r.width > 0 && r.left > w / 2) right = Math.min(right, r.left - 16);
+	}
+	// A tiny window leaves nothing over: fall back to the whole window.
+	if ((right - left < 120) || (bottom - top < 120)) { left = 0; top = 0; right = w; bottom = h; }
+	return { left, top, right, bottom };
+}
+
+/** Scale and centre so the entire tree is visible, clear of the panels. */
 function fitToScreen() {
-	const treeW = Math.max(1, bounds.maxX - bounds.minX);
-	const treeH = Math.max(1, bounds.maxY - bounds.minY);
-	const { w: vw, h: vh } = viewportSize();
-	const availW = Math.max(1, vw - CFG.FIT_PADDING * 2);
-	const availH = Math.max(1, vh - CFG.FIT_PADDING * 2);
+	const m = CFG.FIT_NODE_MARGIN;   // node circles and glow reach past their centre points
+	const treeW = Math.max(1, bounds.maxX - bounds.minX) + (m * 2);
+	const treeH = Math.max(1, bounds.maxY - bounds.minY) + (m * 2);
+	const area = visibleArea();
+	const availW = Math.max(1, area.right - area.left);
+	const availH = Math.max(1, area.bottom - area.top);
 
 	let next = Math.min(CFG.ZOOM_MAX, Math.max(CFG.ZOOM_MIN, Math.min(availW / treeW, availH / treeH)));
 	if (!isFinite(next) || (next <= 0)) next = 1; // last-resort floor, should never trigger now
@@ -1362,9 +1527,10 @@ function fitToScreen() {
 
 	const cx = (bounds.minX + bounds.maxX) / 2;
 	const cy = (bounds.minY + bounds.maxY) / 2;
-	tx = (vw / 2) - (cx * scale);
-	ty = (vh / 2) - (cy * scale);
+	tx = ((area.left + area.right) / 2) - (cx * scale);
+	ty = ((area.top + area.bottom) / 2) - (cy * scale);
 
+	viewTouched = false;
 	applyTransform();
 }
 
@@ -1388,6 +1554,7 @@ function setupZoomPan() {
 	});
 	window.addEventListener("mousemove", e => {
 		if (!dragging) return;
+		viewTouched = true;
 		tx += (e.clientX - lastX) * CFG.PAN_SPEED;
 		ty += (e.clientY - lastY) * CFG.PAN_SPEED;
 		lastX = e.clientX; lastY = e.clientY;
@@ -1433,14 +1600,14 @@ function setupZoomPan() {
 			}
 			default: handled = false;
 		}
-		if (handled) { e.preventDefault(); applyTransform(); }
+		if (handled) { viewTouched = true; e.preventDefault(); applyTransform(); }
 	});
 
 	// keep the view sensible if the window is resized
 	window.addEventListener("resize", () => {
 		const { w, h } = viewportSize();
 		document.getElementById("svg-root").setAttribute("viewBox", `0 0 ${w} ${h}`);
-		if (!isFinite(scale) || (scale <= 0)) fitToScreen();
+		if (!viewTouched || !isFinite(scale) || (scale <= 0)) fitToScreen();
 	});
 }
 
@@ -1494,6 +1661,7 @@ function setupZoomPan() {
 	document.getElementById("pin-submit").addEventListener("click", submitPin);
 	document.getElementById("pin-input").addEventListener("keydown", e => { if (e.key === "Enter") submitPin(); });
 	document.getElementById("reset-tree-btn").addEventListener("click", resetTree);
+	setInterval(pollCharacter, CFG.POLL_MS);
 
 	document.getElementById("totals-toggle").addEventListener("click", () => {
 		const body = document.getElementById("totals-body");
