@@ -5,10 +5,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,6 +33,7 @@ import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.model.stats.functions.FuncAdd;
 import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
+import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.network.serverpackets.ExStorageMaxCount;
 import org.l2jmobius.gameserver.network.serverpackets.SkillCoolTime;
 
@@ -733,6 +736,316 @@ public class PassiveTreeManager
 		return true;
 	}
 	
+	// ------------------------------------------------------------------
+	// Templates
+	// ------------------------------------------------------------------
+	// Every character has PassiveTreeConfig.TEMPLATE_COUNT templates, each its own allocation. The ACTIVE one is the plain allocation in
+	// character_passive_tree that all the code above already works with, so allocate/respec/reset/applyAll never need to know templates exist.
+	// The others are parked as snapshots in character_passive_tree_template, and switching swaps the two sets and rebuilds via applyAll().
+
+	/** Player-variable prefix holding the active template id of each class index. */
+	private static final String VAR_ACTIVE_TEMPLATE = "PT_TEMPLATE_ACTIVE_";
+
+	/** Player variable holding when the player last switched template (epoch ms). Stored, so relogging does not skip the wait. */
+	private static final String VAR_TEMPLATE_SWITCHED_AT = "PT_TEMPLATE_SWITCHED_AT";
+
+	public enum SwitchResult
+	{
+		OK,
+		DISABLED,
+		INVALID,
+		ALREADY_ACTIVE,
+		NOT_PEACE_ZONE,
+		COOLDOWN,
+		NOT_ENOUGH_POINTS,
+		ERROR
+	}
+
+	/**
+	 * @param id 1-based template number
+	 * @param active whether this is the template currently in use
+	 * @param nodes allocated nodes in the template
+	 * @param points points those nodes cost
+	 */
+	public record TemplateInfo(int id, boolean active, int nodes, int points)
+	{
+	}
+
+	private int treeClassIndex(Player player)
+	{
+		return PassiveTreeConfig.SEPARATE_SUBCLASS_POINTS ? player.getClassIndex() : 0;
+	}
+
+	/**
+	 * @param player
+	 * @return the 1-based id of the template this player is using on the current class slot
+	 */
+	public int getActiveTemplate(Player player)
+	{
+		return Math.max(1, player.getVariables().getInt(VAR_ACTIVE_TEMPLATE + treeClassIndex(player), 1));
+	}
+
+	/**
+	 * @param player
+	 * @return milliseconds until this player may switch template again, 0 if they may now
+	 */
+	public long getTemplateCooldownRemaining(Player player)
+	{
+		final long lastSwitch = player.getVariables().getLong(VAR_TEMPLATE_SWITCHED_AT, 0);
+		final long remaining = (lastSwitch + (PassiveTreeConfig.TEMPLATE_SWITCH_DELAY * 1000L)) - System.currentTimeMillis();
+		// A stored time in the future (clock moved back) must not lock the player out for longer than the delay.
+		return Math.max(0, Math.min(remaining, PassiveTreeConfig.TEMPLATE_SWITCH_DELAY * 1000L));
+	}
+
+	/**
+	 * @param player
+	 * @return {@code true} if the player stands where templates may be switched
+	 */
+	public boolean canSwitchTemplateHere(Player player)
+	{
+		return !PassiveTreeConfig.TEMPLATE_PEACE_ZONE_ONLY || player.isInsideZone(ZoneId.PEACE);
+	}
+
+	/**
+	 * @param player
+	 * @return every template of the player's current class slot, active one included
+	 */
+	public List<TemplateInfo> getTemplates(Player player)
+	{
+		final int active = getActiveTemplate(player);
+		final Map<Integer, Set<Integer>> parked = new HashMap<>();
+		try (Connection con = DatabaseFactory.getConnection();
+			PreparedStatement ps = con.prepareStatement("SELECT template_id, node_id FROM character_passive_tree_template WHERE char_id = ? AND class_index = ?"))
+		{
+			ps.setInt(1, player.getObjectId());
+			ps.setInt(2, treeClassIndex(player));
+			try (ResultSet rs = ps.executeQuery())
+			{
+				while (rs.next())
+				{
+					parked.computeIfAbsent(rs.getInt("template_id"), k -> new HashSet<>()).add(rs.getInt("node_id"));
+				}
+			}
+		}
+		catch (SQLException e)
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": Failed to load templates of player " + player.getObjectId() + " - " + e.getMessage());
+		}
+
+		final List<TemplateInfo> result = new ArrayList<>();
+		for (int id = 1; id <= PassiveTreeConfig.TEMPLATE_COUNT; id++)
+		{
+			final Set<Integer> nodeIds = (id == active) ? getAllocatedNodes(player) : parked.getOrDefault(id, Collections.emptySet());
+			int points = 0;
+			for (int nodeId : nodeIds)
+			{
+				final PassiveNode node = PassiveTreeData.getInstance().getNode(nodeId);
+				if (node != null)
+				{
+					points += node.getCost();
+				}
+			}
+			result.add(new TemplateInfo(id, id == active, nodeIds.size(), points));
+		}
+		return result;
+	}
+
+	/**
+	 * Makes {@code templateId} the active template. Only in a peace zone, and at most once per PassiveTreeConfig.TEMPLATE_SWITCH_DELAY seconds. The template being left is saved as it is, and the one being entered replaces the live allocation.
+	 * @param player
+	 * @param templateId 1-based
+	 * @return what happened; anything but OK changed nothing
+	 */
+	public SwitchResult switchTemplate(Player player, int templateId)
+	{
+		if (!PassiveTreeConfig.PASSIVE_TREE_ENABLED)
+		{
+			return SwitchResult.DISABLED;
+		}
+		if ((templateId < 1) || (templateId > PassiveTreeConfig.TEMPLATE_COUNT))
+		{
+			return SwitchResult.INVALID;
+		}
+
+		final int from = getActiveTemplate(player);
+		if (from == templateId)
+		{
+			return SwitchResult.ALREADY_ACTIVE;
+		}
+		if (!canSwitchTemplateHere(player))
+		{
+			return SwitchResult.NOT_PEACE_ZONE;
+		}
+		if (getTemplateCooldownRemaining(player) > 0)
+		{
+			return SwitchResult.COOLDOWN;
+		}
+
+		final int classIndex = treeClassIndex(player);
+		final int charId = player.getObjectId();
+
+		// Load the target. Drop what no longer connects (the layout can change between releases), like loadFromDb() does.
+		final Set<Integer> target = new HashSet<>();
+		try (Connection con = DatabaseFactory.getConnection();
+			PreparedStatement ps = con.prepareStatement("SELECT node_id FROM character_passive_tree_template WHERE char_id = ? AND class_index = ? AND template_id = ?"))
+		{
+			ps.setInt(1, charId);
+			ps.setInt(2, classIndex);
+			ps.setInt(3, templateId);
+			try (ResultSet rs = ps.executeQuery())
+			{
+				while (rs.next())
+				{
+					target.add(rs.getInt("node_id"));
+				}
+			}
+		}
+		catch (SQLException e)
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": Failed to read template " + templateId + " of player " + charId + " - " + e.getMessage());
+			return SwitchResult.ERROR;
+		}
+
+		final Set<Integer> valid = connectedSubset(target);
+		int cost = 0;
+		for (int nodeId : valid)
+		{
+			final PassiveNode node = PassiveTreeData.getInstance().getNode(nodeId);
+			if (node != null)
+			{
+				cost += node.getCost();
+			}
+		}
+		if (cost > getEarnedPoints(player))
+		{
+			return SwitchResult.NOT_ENOUGH_POINTS;
+		}
+
+		final Set<Integer> current = new HashSet<>(getAllocatedNodes(player));
+
+		// One transaction: a crash half way must never leave the old template's nodes lost.
+		try (Connection con = DatabaseFactory.getConnection())
+		{
+			con.setAutoCommit(false);
+			try
+			{
+				// Park the template being left.
+				replaceTemplateRows(con, charId, classIndex, from, current);
+				// The entered template becomes the live allocation, so it must not also stay parked.
+				replaceTemplateRows(con, charId, classIndex, templateId, Collections.emptySet());
+				try (PreparedStatement ps = con.prepareStatement("DELETE FROM character_passive_tree WHERE char_id = ? AND class_index = ?"))
+				{
+					ps.setInt(1, charId);
+					ps.setInt(2, classIndex);
+					ps.execute();
+				}
+				try (PreparedStatement ps = con.prepareStatement("INSERT INTO character_passive_tree (char_id, class_index, node_id) VALUES (?, ?, ?)"))
+				{
+					for (int nodeId : valid)
+					{
+						ps.setInt(1, charId);
+						ps.setInt(2, classIndex);
+						ps.setInt(3, nodeId);
+						ps.addBatch();
+					}
+					ps.executeBatch();
+				}
+				con.commit();
+			}
+			catch (SQLException e)
+			{
+				con.rollback();
+				throw e;
+			}
+			finally
+			{
+				con.setAutoCommit(true);
+			}
+		}
+		catch (SQLException e)
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": Failed to switch template of player " + charId + " - " + e.getMessage());
+			return SwitchResult.ERROR;
+		}
+
+		final Set<Integer> allocated = getAllocatedNodes(player);
+		allocated.clear();
+		allocated.addAll(valid);
+		player.getVariables().set(VAR_ACTIVE_TEMPLATE + classIndex, templateId);
+		player.getVariables().set(VAR_TEMPLATE_SWITCHED_AT, System.currentTimeMillis());
+
+		applyAll(player);
+		player.sendMessage("Passive tree template " + templateId + " is now active.");
+		return SwitchResult.OK;
+	}
+
+	private void replaceTemplateRows(Connection con, int charId, int classIndex, int templateId, Set<Integer> nodeIds) throws SQLException
+	{
+		try (PreparedStatement ps = con.prepareStatement("DELETE FROM character_passive_tree_template WHERE char_id = ? AND class_index = ? AND template_id = ?"))
+		{
+			ps.setInt(1, charId);
+			ps.setInt(2, classIndex);
+			ps.setInt(3, templateId);
+			ps.execute();
+		}
+		if (nodeIds.isEmpty())
+		{
+			return;
+		}
+		try (PreparedStatement ps = con.prepareStatement("INSERT INTO character_passive_tree_template (char_id, class_index, template_id, node_id) VALUES (?, ?, ?, ?)"))
+		{
+			for (int nodeId : nodeIds)
+			{
+				ps.setInt(1, charId);
+				ps.setInt(2, classIndex);
+				ps.setInt(3, templateId);
+				ps.setInt(4, nodeId);
+				ps.addBatch();
+			}
+			ps.executeBatch();
+		}
+	}
+
+	/**
+	 * @param player
+	 * @param result a non-OK result of {@link #switchTemplate}
+	 * @return the reason in words, as the player should read it
+	 */
+	public String getSwitchFailureMessage(Player player, SwitchResult result)
+	{
+		switch (result)
+		{
+			case DISABLED:
+			{
+				return "The passive tree is disabled.";
+			}
+			case INVALID:
+			{
+				return "There is no such template.";
+			}
+			case ALREADY_ACTIVE:
+			{
+				return "That template is already active.";
+			}
+			case NOT_PEACE_ZONE:
+			{
+				return "You can only switch passive tree templates in a peace zone.";
+			}
+			case COOLDOWN:
+			{
+				return "You can switch template again in " + ((getTemplateCooldownRemaining(player) + 999) / 1000) + " seconds.";
+			}
+			case NOT_ENOUGH_POINTS:
+			{
+				return "You don't have enough passive points for that template.";
+			}
+			default:
+			{
+				return "The template could not be switched. Try again.";
+			}
+		}
+	}
+
 	/**
 	 * @return the full-reset price as players should read it, e.g. "100,000 Adena", or "Free" when the configured cost is 0. Shared by the Community Board button and the web planner so both always quote the same price.
 	 */

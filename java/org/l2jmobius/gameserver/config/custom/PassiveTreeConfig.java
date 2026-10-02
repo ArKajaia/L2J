@@ -28,6 +28,15 @@ public class PassiveTreeConfig
 	 */
 	public static boolean SEPARATE_SUBCLASS_POINTS = false;
 
+	/** How many passive tree templates each player has (slot 1 is the one every character starts on). */
+	public static int TEMPLATE_COUNT = 5;
+
+	/** Templates can only be switched while standing in a peace zone. */
+	public static boolean TEMPLATE_PEACE_ZONE_ONLY = true;
+
+	/** Seconds a player must wait after switching template before switching again. */
+	public static int TEMPLATE_SWITCH_DELAY = 60;
+
 	public static int RESET_ITEM_ID = 57; // Adena
 	public static long RESET_ITEM_COUNT = 100000;
 
@@ -38,6 +47,9 @@ public class PassiveTreeConfig
 		PASSIVE_TREE_START_LEVEL = Math.max(1, config.getInt("PassiveTreeStartLevel", 2));
 		PASSIVE_TREE_MAX_POINTS = Math.max(0, config.getInt("PassiveTreeMaxPoints", 150));
 		SEPARATE_SUBCLASS_POINTS = config.getBoolean("PassiveTreeSeparateSubclassPoints", false);
+		TEMPLATE_COUNT = Math.max(1, Math.min(9, config.getInt("PassiveTreeTemplateCount", 5)));
+		TEMPLATE_PEACE_ZONE_ONLY = config.getBoolean("PassiveTreeTemplatePeaceZoneOnly", true);
+		TEMPLATE_SWITCH_DELAY = Math.max(0, config.getInt("PassiveTreeTemplateSwitchDelay", 60));
 		RESET_ITEM_ID = config.getInt("PassiveTreeResetItemId", 57);
 		RESET_ITEM_COUNT = Math.max(0, config.getLong("PassiveTreeResetItemCount", 100000));
 		RESPEC_ADENA_PER_POINT = Math.max(0, config.getLong("PassiveTreeRefundAdenaPerPoint", 1000));

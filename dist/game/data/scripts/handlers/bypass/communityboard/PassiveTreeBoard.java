@@ -38,7 +38,7 @@ import org.l2jmobius.gameserver.model.skill.Skill;
 import handlers.chat.commands.voiced.PassiveTreeLinkVoiced;
 
 /**
- * Community Board page for the passive tree, reached via Alt+B or .passives. A summary page: a button that opens the web planner for this character, the total stat bonuses, every skill granted by the allocated nodes, and a full-tree reset. Allocating and per-node respecs happen in the web planner.
+ * Community Board page for the passive tree, reached via Alt+B or .passives. A summary page: a button that opens the web planner for this character, the 5 template slots, the total stat bonuses, every skill granted by the allocated nodes, and a full-tree reset. Allocating and per-node respecs happen in the web planner.
  */
 public class PassiveTreeBoard implements IParseBoardHandler
 {
@@ -133,7 +133,8 @@ public class PassiveTreeBoard implements IParseBoardHandler
 	{
 		"_bbspassives",
 		"_bbspassives_weblink",
-		"_bbspassives_reset"
+		"_bbspassives_reset",
+		"_bbspassives_template"
 	};
 
 	@Override
@@ -152,9 +153,32 @@ public class PassiveTreeBoard implements IParseBoardHandler
 		{
 			PassiveTreeManager.getInstance().resetTree(player);
 		}
+		else if (command.startsWith("_bbspassives_template"))
+		{
+			switchTemplate(player, command);
+		}
 
 		showSummary(player);
 		return true;
+	}
+
+	/** Handles "_bbspassives_template N". The manager enforces peace zone and wait, and this tells the player why it said no. */
+	private void switchTemplate(Player player, String command)
+	{
+		final PassiveTreeManager manager = PassiveTreeManager.getInstance();
+		try
+		{
+			final int templateId = Integer.parseInt(command.substring("_bbspassives_template".length()).trim());
+			final PassiveTreeManager.SwitchResult result = manager.switchTemplate(player, templateId);
+			if (result != PassiveTreeManager.SwitchResult.OK)
+			{
+				player.sendMessage(manager.getSwitchFailureMessage(player, result));
+			}
+		}
+		catch (NumberFormatException e)
+		{
+			player.sendMessage("There is no such template.");
+		}
 	}
 
 	private void showSummary(Player player)
@@ -163,6 +187,10 @@ public class PassiveTreeBoard implements IParseBoardHandler
 		sb.append("<html><body><center>");
 		sb.append("<br><font color=\"LEVEL\" name=\"hs16\">Passive Skill Tree</font><br><br>");
 		sb.append("<button value=\"Open Passive Tree for ").append(player.getName()).append("\" action=\"bypass _bbspassives_weblink\" width=260 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"><br>");
+		sb.append("<img src=\"L2UI.SquareGray\" width=700 height=1><br><br>");
+
+		appendTemplatesSection(sb, player);
+
 		sb.append("<img src=\"L2UI.SquareGray\" width=700 height=1><br><br>");
 
 		appendTotalsSection(sb, player);
@@ -176,6 +204,40 @@ public class PassiveTreeBoard implements IParseBoardHandler
 		sb.append("</center></body></html>");
 
 		CommunityBoardHandler.separateAndSend(sb.toString(), player);
+	}
+
+	/** Appends the template picker: one button per template, the active one marked, plus why switching may currently be refused. */
+	private void appendTemplatesSection(StringBuilder sb, Player player)
+	{
+		final PassiveTreeManager manager = PassiveTreeManager.getInstance();
+
+		sb.append("<font color=\"LEVEL\">Templates</font><br1>");
+		sb.append("<table><tr>");
+		for (PassiveTreeManager.TemplateInfo info : manager.getTemplates(player))
+		{
+			sb.append("<td align=center>");
+			if (info.active())
+			{
+				sb.append("<font color=\"55FF55\">Template ").append(info.id()).append(" (active)</font>");
+			}
+			else
+			{
+				sb.append("<button value=\"Template ").append(info.id()).append("\" action=\"bypass _bbspassives_template ").append(info.id()).append("\" width=110 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
+			}
+			sb.append("<br1><font color=\"777777\">").append(info.points()).append(" pts, ").append(info.nodes()).append(" nodes</font></td>");
+		}
+		sb.append("</tr></table><br1>");
+
+		if (!manager.canSwitchTemplateHere(player))
+		{
+			sb.append("<font color=\"FF6060\">Templates can only be switched in a peace zone.</font><br1>");
+		}
+		final long wait = manager.getTemplateCooldownRemaining(player);
+		if (wait > 0)
+		{
+			sb.append("<font color=\"FFCC33\">You can switch again in ").append((wait + 999) / 1000).append(" seconds.</font><br1>");
+		}
+		sb.append("<br>");
 	}
 
 	/**
