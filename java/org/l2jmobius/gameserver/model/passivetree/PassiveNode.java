@@ -44,6 +44,9 @@ public class PassiveNode
 	private double orbitX = Double.NaN;
 	private double orbitY = Double.NaN;
 
+	/** Themed glyph the web planner draws for this node (icon="hammer" in the XML), empty for "pick by stat". */
+	private String icon = "";
+
 	public PassiveNode(int id, String name, String description, String sector, NodeType type, int tier, int cost,
 		double x, double y, String effectSpec, int skillId, int skillLevel)
 	{
@@ -80,6 +83,8 @@ public class PassiveNode
 	public double getOrbitX() { return orbitX; }
 	public double getOrbitY() { return orbitY; }
 	public void setOrbit(double centerX, double centerY) { orbitX = centerX; orbitY = centerY; }
+	public String getIcon() { return icon; }
+	public void setIcon(String name) { icon = name == null ? "" : name.trim(); }
 	public boolean grantsSkill() { return skillId > 0; }
 	/** skillLevel="auto" in the XML: the granted level follows the character level (see PassiveTreeManager.getScaledSkillLevel). */
 	public boolean isSkillLevelScaled() { return skillLevel <= 0; }

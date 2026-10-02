@@ -80,6 +80,10 @@ public class PassiveTreeData implements IXmlReader
 				{
 					node.setOrbit(Double.parseDouble(attrs.getNamedItem("orbitX").getNodeValue()), Double.parseDouble(attrs.getNamedItem("orbitY").getNodeValue()));
 				}
+				if (attrs.getNamedItem("icon") != null)
+				{
+					node.setIcon(parseString(attrs, "icon"));
+				}
 				
 				for (Node child = n.getFirstChild(); child != null; child = child.getNextSibling())
 				{

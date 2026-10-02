@@ -235,6 +235,10 @@ public class PassiveTreeApiServer
 			{
 				json.append(",\"ox\":").append(node.getOrbitX()).append(",\"oy\":").append(node.getOrbitY());
 			}
+			if (!node.getIcon().isEmpty())
+			{
+				json.append(",\"icon\":\"").append(escape(node.getIcon())).append("\"");
+			}
 			json.append("}");
 		}
 		json.append("]");

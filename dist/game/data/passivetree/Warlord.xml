@@ -27,29 +27,29 @@
 		<requires nodeId="30007" />
 		<requires nodeId="30012" />
 	</node>
-	<node id="30006" name="Battle-Hardened" sector="Warlord" type="SMALL" tier="0" cost="1" x="2469.7" y="1011.4" orbitX="2574.2" orbitY="1001.3" effect="PDEF_PCT:0.6;PATK_PCT:0.5">
+	<node id="30006" name="Battle-Hardened" sector="Warlord" type="SMALL" tier="0" cost="1" x="2469.7" y="1011.4" orbitX="2574.2" orbitY="1001.3" effect="PDEF_PCT:0.6;PATK_PCT:0.5" icon="anvil">
 		<requires nodeId="30003" />
 		<requires nodeId="30005" />
 		<requires nodeId="30010" />
 	</node>
-	<node id="30007" name="Warborn" sector="Warlord" type="SMALL" tier="0" cost="1" x="2110.8" y="1633.2" orbitX="2154.2" orbitY="1728.7" effect="PATK_PCT:0.6;MAXHP:14">
+	<node id="30007" name="Warborn" sector="Warlord" type="SMALL" tier="0" cost="1" x="2110.8" y="1633.2" orbitX="2154.2" orbitY="1728.7" effect="PATK_PCT:0.6;MAXHP:14" icon="sword">
 		<requires nodeId="30004" />
 		<requires nodeId="30005" />
 		<requires nodeId="30011" />
 	</node>
-	<node id="30008" name="Battle-Hardened" sector="Warlord" type="SMALL" tier="0" cost="1" x="2660.8" y="1060.7" orbitX="2574.2" orbitY="1001.3" effect="PDEF_PCT:0.6;PATK_PCT:0.5">
+	<node id="30008" name="Battle-Hardened" sector="Warlord" type="SMALL" tier="0" cost="1" x="2660.8" y="1060.7" orbitX="2574.2" orbitY="1001.3" effect="PDEF_PCT:0.6;PATK_PCT:0.5" icon="anvil">
 		<requires nodeId="30010" />
 		<requires nodeId="30015" />
 	</node>
-	<node id="30009" name="Warborn" sector="Warlord" type="SMALL" tier="0" cost="1" x="2249.0" y="1774.0" orbitX="2154.2" orbitY="1728.7" effect="PATK_PCT:0.6;MAXHP:14">
+	<node id="30009" name="Warborn" sector="Warlord" type="SMALL" tier="0" cost="1" x="2249.0" y="1774.0" orbitX="2154.2" orbitY="1728.7" effect="PATK_PCT:0.6;MAXHP:14" icon="sword">
 		<requires nodeId="30011" />
 		<requires nodeId="30016" />
 	</node>
-	<node id="30010" name="Battle-Hardened" sector="Warlord" type="SMALL" tier="0" cost="1" x="2548.0" y="1102.9" orbitX="2574.2" orbitY="1001.3" effect="PDEF_PCT:0.6;PATK_PCT:0.5">
+	<node id="30010" name="Battle-Hardened" sector="Warlord" type="SMALL" tier="0" cost="1" x="2548.0" y="1102.9" orbitX="2574.2" orbitY="1001.3" effect="PDEF_PCT:0.6;PATK_PCT:0.5" icon="anvil">
 		<requires nodeId="30006" />
 		<requires nodeId="30008" />
 	</node>
-	<node id="30011" name="Warborn" sector="Warlord" type="SMALL" tier="0" cost="1" x="2229.2" y="1655.2" orbitX="2154.2" orbitY="1728.7" effect="PATK_PCT:0.6;MAXHP:14">
+	<node id="30011" name="Warborn" sector="Warlord" type="SMALL" tier="0" cost="1" x="2229.2" y="1655.2" orbitX="2154.2" orbitY="1728.7" effect="PATK_PCT:0.6;MAXHP:14" icon="sword">
 		<requires nodeId="30007" />
 		<requires nodeId="30009" />
 	</node>
@@ -61,25 +61,25 @@
 		<requires nodeId="30027" />
 		<requires nodeId="30070" />
 	</node>
-	<node id="30015" name="Iron Resolve" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="2659.7" y="940.2" orbitX="2574.2" orbitY="1001.3" effect="PDEF_PCT:3;PATK_PCT:2;CRIT_DMG_TAKEN_RED_PCT:6" description="Battle-Hardened mastery. Critical hits against you land softer.">
+	<node id="30015" name="Iron Resolve" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="2659.7" y="940.2" orbitX="2574.2" orbitY="1001.3" effect="PDEF_PCT:3;PATK_PCT:2;CRIT_DMG_TAKEN_RED_PCT:6" icon="anvil" description="Battle-Hardened mastery. Critical hits against you land softer.">
 		<requires nodeId="30008" />
 	</node>
-	<node id="30016" name="Warlord's Presence" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="2144.1" y="1833.2" orbitX="2154.2" orbitY="1728.7" effect="PATK_PCT:3;MAXHP:60;SKILL_CDR_PCT:3" description="Warborn mastery. Physical skills recharge faster.">
+	<node id="30016" name="Warlord's Presence" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="2144.1" y="1833.2" orbitX="2154.2" orbitY="1728.7" effect="PATK_PCT:3;MAXHP:60;SKILL_CDR_PCT:3" icon="sword" description="Warborn mastery. Physical skills recharge faster.">
 		<requires nodeId="30009" />
 	</node>
-	<node id="30017" name="Crimson Vein" sector="Warlord" type="SMALL" tier="0" cost="1" x="2856.3" y="1354.7" orbitX="2924.6" orbitY="1434.5" effect="LIFESTEAL_PCT:0.4;MAXHP:7.5">
+	<node id="30017" name="Crimson Vein" sector="Warlord" type="SMALL" tier="0" cost="1" x="2856.3" y="1354.7" orbitX="2924.6" orbitY="1434.5" effect="LIFESTEAL_PCT:0.4;MAXHP:7.5" icon="blood">
 		<requires nodeId="30012" />
 		<requires nodeId="30020" />
 		<requires nodeId="30025" />
 	</node>
-	<node id="30018" name="Crimson Vein" sector="Warlord" type="SMALL" tier="0" cost="1" x="3028.2" y="1451.7" orbitX="2924.6" orbitY="1434.5" effect="LIFESTEAL_PCT:0.4;MAXHP:7.5">
+	<node id="30018" name="Crimson Vein" sector="Warlord" type="SMALL" tier="0" cost="1" x="3028.2" y="1451.7" orbitX="2924.6" orbitY="1434.5" effect="LIFESTEAL_PCT:0.4;MAXHP:7.5" icon="blood">
 		<requires nodeId="30019" />
 		<requires nodeId="30020" />
 	</node>
-	<node id="30019" name="Sanguine Carapace" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="2943.8" y="1537.7" orbitX="2924.6" orbitY="1434.5" effect="LIFESTEAL_PCT:2;PDEF_PCT:2" description="Crimson Vein mastery. Melee blows mend your wounds.">
+	<node id="30019" name="Sanguine Carapace" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="2943.8" y="1537.7" orbitX="2924.6" orbitY="1434.5" effect="LIFESTEAL_PCT:2;PDEF_PCT:2" icon="blood" description="Crimson Vein mastery. Melee blows mend your wounds.">
 		<requires nodeId="30018" />
 	</node>
-	<node id="30020" name="Crimson Vein" sector="Warlord" type="SMALL" tier="0" cost="1" x="2976.2" y="1343.0" orbitX="2924.6" orbitY="1434.5" effect="LIFESTEAL_PCT:0.4;MAXHP:7.5">
+	<node id="30020" name="Crimson Vein" sector="Warlord" type="SMALL" tier="0" cost="1" x="2976.2" y="1343.0" orbitX="2924.6" orbitY="1434.5" effect="LIFESTEAL_PCT:0.4;MAXHP:7.5" icon="blood">
 		<requires nodeId="30017" />
 		<requires nodeId="30018" />
 	</node>
@@ -87,14 +87,14 @@
 		<requires nodeId="30022" />
 		<requires nodeId="30025" />
 	</node>
-	<node id="30022" name="Unending Fury" sector="Warlord" type="KEYSTONE" tier="0" cost="1" x="3385.1" y="1076.8" effect="KS_RAMPAGE:40;HEALING_RECEIVED_PCT:-30" description="KEYSTONE: Your P.Atk rises as your HP falls, up to +40% near death, but healing you receive is 30% weaker.">
+	<node id="30022" name="Unending Fury" sector="Warlord" type="KEYSTONE" tier="0" cost="1" x="3385.1" y="1076.8" effect="KS_RAMPAGE:40;HEALING_RECEIVED_PCT:-30" icon="skull" description="KEYSTONE: Your P.Atk rises as your HP falls, up to +40% near death, but healing you receive is 30% weaker.">
 		<requires nodeId="30021" />
 	</node>
 	<node id="30023" name="Approach" sector="Warlord" type="SMALL" tier="0" cost="1" x="2543.9" y="2253.9" effect="MAXHP:6">
 		<requires nodeId="30024" />
 		<requires nodeId="30026" />
 	</node>
-	<node id="30024" name="Siegebreaker" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="2625.1" y="2393.2" effect="PHYS_SKILL_POWER_PCT:5;PVE_PDMG_PCT:3" description="Skills and steel honed for tearing through monsters.">
+	<node id="30024" name="Siegebreaker" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="2625.1" y="2393.2" effect="PHYS_SKILL_POWER_PCT:5;PVE_PDMG_PCT:3" icon="hammer" description="Skills and steel honed for tearing through monsters.">
 		<requires nodeId="30023" />
 	</node>
 	<node id="30025" name="Veteran's Path" sector="Warlord" type="SMALL" tier="0" cost="1" x="3008.0" y="1090.0" effect="MAXHP:10;PDEF_PCT:0.3">
@@ -113,7 +113,7 @@
 		<requires nodeId="30012" />
 		<requires nodeId="30028" />
 	</node>
-	<node id="30028" name="Warlord's Mandate" sector="Warlord" type="KEYSTONE" tier="0" cost="1" x="2736.5" y="1880.2" effect="PHYS_SKILL_POWER_PCT:10;SKILL_CDR_PCT:-12" description="Physical skills hit 10% harder but take 12% longer to recharge.">
+	<node id="30028" name="Warlord's Mandate" sector="Warlord" type="KEYSTONE" tier="0" cost="1" x="2736.5" y="1880.2" effect="PHYS_SKILL_POWER_PCT:10;SKILL_CDR_PCT:-12" icon="crown" description="Physical skills hit 10% harder but take 12% longer to recharge.">
 		<requires nodeId="30027" />
 	</node>
 	<node id="30029" name="Approach" sector="Warlord" type="SMALL" tier="0" cost="1" x="3234.6" y="897.5" effect="MAXHP:6">
@@ -139,34 +139,34 @@
 		<requires nodeId="20203" />
 		<requires nodeId="30061" />
 	</node>
-	<node id="30052" name="Steelhide Rage" sector="Warlord" type="SMALL" tier="0" cost="1" x="1737.3" y="852.7" orbitX="1836.2" orbitY="817.5" effect="PDEF_PCT:0.6;PATK_PCT:0.4">
+	<node id="30052" name="Steelhide Rage" sector="Warlord" type="SMALL" tier="0" cost="1" x="1737.3" y="852.7" orbitX="1836.2" orbitY="817.5" effect="PDEF_PCT:0.6;PATK_PCT:0.4" icon="shield">
 		<requires nodeId="30051" />
 		<requires nodeId="30053" />
 	</node>
-	<node id="30053" name="Steelhide Rage" sector="Warlord" type="SMALL" tier="0" cost="1" x="1769.3" y="736.6" orbitX="1836.2" orbitY="817.5" effect="PDEF_PCT:0.6;PATK_PCT:0.4">
+	<node id="30053" name="Steelhide Rage" sector="Warlord" type="SMALL" tier="0" cost="1" x="1769.3" y="736.6" orbitX="1836.2" orbitY="817.5" effect="PDEF_PCT:0.6;PATK_PCT:0.4" icon="shield">
 		<requires nodeId="30052" />
 		<requires nodeId="30054" />
 	</node>
-	<node id="30054" name="Steelhide Rage" sector="Warlord" type="SMALL" tier="0" cost="1" x="1889.4" y="727.0" orbitX="1836.2" orbitY="817.5" effect="PDEF_PCT:0.6;PATK_PCT:0.4">
+	<node id="30054" name="Steelhide Rage" sector="Warlord" type="SMALL" tier="0" cost="1" x="1889.4" y="727.0" orbitX="1836.2" orbitY="817.5" effect="PDEF_PCT:0.6;PATK_PCT:0.4" icon="shield">
 		<requires nodeId="30053" />
 		<requires nodeId="30055" />
 	</node>
-	<node id="30055" name="Warlord's Bulwark" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="1939.5" y="836.5" orbitX="1836.2" orbitY="817.5" effect="STR:1;CON:1;PDEF_PCT:2" description="Steelhide Rage mastery. Suits a Vanguard/Juggernaut hybrid.">
+	<node id="30055" name="Warlord's Bulwark" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="1939.5" y="836.5" orbitX="1836.2" orbitY="817.5" effect="STR:1;CON:1;PDEF_PCT:2" icon="shield" description="Steelhide Rage mastery. Suits a Vanguard/Juggernaut hybrid.">
 		<requires nodeId="30054" />
 	</node>
-	<node id="30057" name="Arcane Edge" sector="Warlord" type="SMALL" tier="0" cost="1" x="1191.4" y="537.2" orbitX="1238.5" orbitY="631.0" effect="MATK_PCT:0.8">
+	<node id="30057" name="Arcane Edge" sector="Warlord" type="SMALL" tier="0" cost="1" x="1191.4" y="537.2" orbitX="1238.5" orbitY="631.0" effect="MATK_PCT:0.8" icon="staff">
 		<requires nodeId="30056" />
 		<requires nodeId="30058" />
 	</node>
-	<node id="30058" name="Arcane Edge" sector="Warlord" type="SMALL" tier="0" cost="1" x="1134.2" y="643.3" orbitX="1238.5" orbitY="631.0" effect="MATK_PCT:0.8">
+	<node id="30058" name="Arcane Edge" sector="Warlord" type="SMALL" tier="0" cost="1" x="1134.2" y="643.3" orbitX="1238.5" orbitY="631.0" effect="MATK_PCT:0.8" icon="staff">
 		<requires nodeId="30057" />
 		<requires nodeId="30059" />
 	</node>
-	<node id="30059" name="Arcane Edge" sector="Warlord" type="SMALL" tier="0" cost="1" x="1214.3" y="733.2" orbitX="1238.5" orbitY="631.0" effect="MATK_PCT:0.8">
+	<node id="30059" name="Arcane Edge" sector="Warlord" type="SMALL" tier="0" cost="1" x="1214.3" y="733.2" orbitX="1238.5" orbitY="631.0" effect="MATK_PCT:0.8" icon="staff">
 		<requires nodeId="30058" />
 		<requires nodeId="30060" />
 	</node>
-	<node id="30060" name="Spellsword Oath" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="1326.2" y="688.7" orbitX="1238.5" orbitY="631.0" effect="INT:1;MATK_PCT:4;CAST_SPD_PCT:3" description="Arcane Edge mastery. Off-path: pays off only if you rebuild around it.">
+	<node id="30060" name="Spellsword Oath" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="1326.2" y="688.7" orbitX="1238.5" orbitY="631.0" effect="INT:1;MATK_PCT:4;CAST_SPD_PCT:3" icon="staff" description="Arcane Edge mastery. Off-path: pays off only if you rebuild around it.">
 		<requires nodeId="30059" />
 	</node>
 	<node id="33001" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="2325.1" y="972.9" effect="MAXHP:15">
@@ -206,53 +206,53 @@
 		<requires nodeId="30071" />
 		<requires nodeId="30075" />
 	</node>
-	<node id="30071" name="Warblood" sector="Warlord" type="SMALL" tier="0" cost="1" x="3156.6" y="1662.8" orbitX="3261.0" orbitY="1651.8" effect="MAXHP_PCT:1.2">
+	<node id="30071" name="Warblood" sector="Warlord" type="SMALL" tier="0" cost="1" x="3156.6" y="1662.8" orbitX="3261.0" orbitY="1651.8" effect="MAXHP_PCT:1.2" icon="heart">
 		<requires nodeId="30070" />
 		<requires nodeId="30072" />
 	</node>
-	<node id="30072" name="Warblood" sector="Warlord" type="SMALL" tier="0" cost="1" x="3235.6" y="1753.7" orbitX="3261.0" orbitY="1651.8" effect="MAXHP_PCT:1.2">
+	<node id="30072" name="Warblood" sector="Warlord" type="SMALL" tier="0" cost="1" x="3235.6" y="1753.7" orbitX="3261.0" orbitY="1651.8" effect="MAXHP_PCT:1.2" icon="heart">
 		<requires nodeId="30071" />
 		<requires nodeId="30073" />
 	</node>
-	<node id="30073" name="Warblood" sector="Warlord" type="SMALL" tier="0" cost="1" x="3348.1" y="1710.5" orbitX="3261.0" orbitY="1651.8" effect="MAXHP_PCT:1.2">
+	<node id="30073" name="Warblood" sector="Warlord" type="SMALL" tier="0" cost="1" x="3348.1" y="1710.5" orbitX="3261.0" orbitY="1651.8" effect="MAXHP_PCT:1.2" icon="heart">
 		<requires nodeId="30072" />
 		<requires nodeId="30074" />
 	</node>
-	<node id="30074" name="Iron Lungs" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="3345.9" y="1590.0" orbitX="3261.0" orbitY="1651.8" effect="MAXHP_PCT:4;HP_REGEN_PCT:6" description="Warblood mastery. Health for the long fight.">
+	<node id="30074" name="Iron Lungs" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="3345.9" y="1590.0" orbitX="3261.0" orbitY="1651.8" effect="MAXHP_PCT:4;HP_REGEN_PCT:6" icon="heart" description="Warblood mastery. Health for the long fight.">
 		<requires nodeId="30073" />
 	</node>
-	<node id="30075" name="Plated Fury" sector="Warlord" type="SMALL" tier="0" cost="1" x="3051.1" y="1906.8" orbitX="3078.3" orbitY="2008.2" effect="PATK_PCT@HEAVY:1.5">
+	<node id="30075" name="Plated Fury" sector="Warlord" type="SMALL" tier="0" cost="1" x="3051.1" y="1906.8" orbitX="3078.3" orbitY="2008.2" effect="PATK_PCT@HEAVY:1.5" icon="axe">
 		<requires nodeId="30070" />
 		<requires nodeId="30076" />
 	</node>
-	<node id="30076" name="Plated Fury" sector="Warlord" type="SMALL" tier="0" cost="1" x="3164.3" y="1948.0" orbitX="3078.3" orbitY="2008.2" effect="PATK_PCT@HEAVY:1.5">
+	<node id="30076" name="Plated Fury" sector="Warlord" type="SMALL" tier="0" cost="1" x="3164.3" y="1948.0" orbitX="3078.3" orbitY="2008.2" effect="PATK_PCT@HEAVY:1.5" icon="axe">
 		<requires nodeId="30075" />
 		<requires nodeId="30077" />
 	</node>
-	<node id="30077" name="Plated Fury" sector="Warlord" type="SMALL" tier="0" cost="1" x="3164.3" y="2068.4" orbitX="3078.3" orbitY="2008.2" effect="PATK_PCT@HEAVY:1.5">
+	<node id="30077" name="Plated Fury" sector="Warlord" type="SMALL" tier="0" cost="1" x="3164.3" y="2068.4" orbitX="3078.3" orbitY="2008.2" effect="PATK_PCT@HEAVY:1.5" icon="axe">
 		<requires nodeId="30076" />
 		<requires nodeId="30078" />
 	</node>
-	<node id="30078" name="Armoured Assault" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="3051.1" y="2109.6" orbitX="3078.3" orbitY="2008.2" effect="PATK_PCT@HEAVY:6;PDEF_PCT@HEAVY:4" description="Plated Fury mastery. Heavy armour only.">
+	<node id="30078" name="Armoured Assault" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="3051.1" y="2109.6" orbitX="3078.3" orbitY="2008.2" effect="PATK_PCT@HEAVY:6;PDEF_PCT@HEAVY:4" icon="axe" description="Plated Fury mastery. Heavy armour only.">
 		<requires nodeId="30077" />
 	</node>
 	<node id="30064" name="Heartstone" sector="Warlord" type="SMALL" tier="0" cost="1" x="757.7" y="530.6" effect="MAXHP:12">
 		<requires nodeId="20302" />
 		<requires nodeId="30065" />
 	</node>
-	<node id="30065" name="Bulwark Heart" sector="Warlord" type="SMALL" tier="0" cost="1" x="719.3" y="470.8" orbitX="662.5" orbitY="382.5" effect="MAXHP_PCT:1.5">
+	<node id="30065" name="Bulwark Heart" sector="Warlord" type="SMALL" tier="0" cost="1" x="719.3" y="470.8" orbitX="662.5" orbitY="382.5" effect="MAXHP_PCT:1.5" icon="castle">
 		<requires nodeId="30064" />
 		<requires nodeId="30066" />
 	</node>
-	<node id="30066" name="Bulwark Heart" sector="Warlord" type="SMALL" tier="0" cost="1" x="598.9" y="466.1" orbitX="662.5" orbitY="382.5" effect="MAXHP_PCT:1.5">
+	<node id="30066" name="Bulwark Heart" sector="Warlord" type="SMALL" tier="0" cost="1" x="598.9" y="466.1" orbitX="662.5" orbitY="382.5" effect="MAXHP_PCT:1.5" icon="castle">
 		<requires nodeId="30065" />
 		<requires nodeId="30067" />
 	</node>
-	<node id="30067" name="Bulwark Heart" sector="Warlord" type="SMALL" tier="0" cost="1" x="562.2" y="351.3" orbitX="662.5" orbitY="382.5" effect="MAXHP_PCT:1.5">
+	<node id="30067" name="Bulwark Heart" sector="Warlord" type="SMALL" tier="0" cost="1" x="562.2" y="351.3" orbitX="662.5" orbitY="382.5" effect="MAXHP_PCT:1.5" icon="castle">
 		<requires nodeId="30066" />
 		<requires nodeId="30068" />
 	</node>
-	<node id="30068" name="Unbreakable" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="657.5" y="277.6" orbitX="662.5" orbitY="382.5" effect="MAXHP_PCT:4;PDEF_PCT@SHIELD:4" description="Bulwark Heart mastery. The defence needs a shield.">
+	<node id="30068" name="Unbreakable" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="657.5" y="277.6" orbitX="662.5" orbitY="382.5" effect="MAXHP_PCT:4;PDEF_PCT@SHIELD:4" icon="castle" description="Bulwark Heart mastery. The defence needs a shield.">
 		<requires nodeId="30067" />
 	</node>
 </list>
