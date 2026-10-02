@@ -8,7 +8,7 @@ Java paths are relative to `java/org/l2jmobius/gameserver/` unless stated otherw
 
 | Area | Location | What's missing |
 |---|---|---|
-| Movement | `network/clientpackets/MoveWithDelta.java:43` | `runImpl()` is empty (`// TODO this`). The packet is ignored completely |
+| ~~Movement~~ ✅ | `network/clientpackets/MoveWithDelta.java` | Done: the delta is applied to the server-side position and goes through the same checks as `MoveToLocation` (`MoveToLocation.requestMove`) |
 | Movement / Z axis | `model/actor/Creature.java:4714, 4759`; `skill/effects/EnemyCharge.java:77`, `ThrowUp.java:81`; `instances/CrystalCaverns.java:683` | Poor Z-axis move/follow when dz is large: bad pathing on slopes and stairs, and broken knockback/charge |
 | Pet item use | `clientpackets/RequestPetUseItem.java:42` | Packet only partly read (`readLong/readInt` commented out) |
 | Private store (sell) | `clientpackets/RequestPrivateStoreManageSell.java:34`; `RequestPrivateStoreSell.java:61-62`; `SetPrivateStoreListBuy.java:60` | Packet fields unread or not analysed. This can desync store setup |
@@ -74,7 +74,7 @@ Java paths are relative to `java/org/l2jmobius/gameserver/` unless stated otherw
 ---
 
 ## Suggested order of work for "basic game features"
-1. **Movement**: implement `MoveWithDelta` and improve Z-axis handling in `Creature.moveToLocation`.
+1. **Movement**: ~~implement `MoveWithDelta`~~ (done), then improve Z-axis handling in `Creature.moveToLocation`.
 2. **Pets**: fix `RequestPetUseItem` packet reading, let `PetFeedTask` take food from the pet's inventory, and correct the pet death penalty.
 3. **Private stores**: finish reading the `RequestPrivateStoreManageSell` and `SetPrivateStoreListBuy` packets.
 4. **Combat correctness**: Formulas.java items, `BUFF_IMMUNITY`, and the unimplemented NPC template fields from `NpcData`.

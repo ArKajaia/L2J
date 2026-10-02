@@ -65,6 +65,21 @@ public class MoveToLocation extends ClientPacket
 			return;
 		}
 		
+		requestMove(player, _targetX, _targetY, _targetZ, (_targetX == _originX) && (_targetY == _originY) && (_targetZ == _originZ), _movementMode != 1);
+	}
+	
+	/**
+	 * Validates a player movement request and, when allowed, starts moving the player to the target location.<br>
+	 * Shared by all client movement packets so every movement path enforces the same restrictions.
+	 * @param player the player requesting to move
+	 * @param targetX the target X coordinate
+	 * @param targetY the target Y coordinate
+	 * @param targetZ the target Z coordinate
+	 * @param stopRequested {@code true} if the client asked to stop at its current position
+	 * @param cursorKeyMovement {@code true} if the request comes from keyboard (cursor keys) movement
+	 */
+	static void requestMove(Player player, int targetX, int targetY, int targetZ, boolean stopRequested, boolean cursorKeyMovement)
+	{
 		if (player.isOverloaded())
 		{
 			player.sendPacket(SystemMessageId.YOU_CANNOT_MOVE_YOU_ARE_TOO_ENCUMBERED);
@@ -79,7 +94,7 @@ public class MoveToLocation extends ClientPacket
 			return;
 		}
 		
-		if ((_targetX == _originX) && (_targetY == _originY) && (_targetZ == _originZ))
+		if (stopRequested)
 		{
 			player.stopMove(player.getLocation());
 			player.sendPacket(ActionFailed.STATIC_PACKET);
@@ -87,7 +102,7 @@ public class MoveToLocation extends ClientPacket
 		}
 		
 		// Check if target location is obstructed.
-		if (GeoEngine.getInstance().isCompletelyBlocked(GeoEngine.getGeoX(_targetX), GeoEngine.getGeoY(_targetY), _targetZ))
+		if (GeoEngine.getInstance().isCompletelyBlocked(GeoEngine.getGeoX(targetX), GeoEngine.getGeoY(targetY), targetZ))
 		{
 			player.sendPacket(ActionFailed.STATIC_PACKET);
 			return;
@@ -101,13 +116,13 @@ public class MoveToLocation extends ClientPacket
 			return;
 		}
 		
-		if (_movementMode == 1)
+		if (!cursorKeyMovement)
 		{
 			player.setCursorKeyMovement(false);
 			
 			if (EventDispatcher.getInstance().hasListener(EventType.ON_PLAYER_MOVE_REQUEST, player))
 			{
-				final TerminateReturn terminate = EventDispatcher.getInstance().notifyEvent(new OnPlayerMoveRequest(player, new Location(_targetX, _targetY, _targetZ)), player, TerminateReturn.class);
+				final TerminateReturn terminate = EventDispatcher.getInstance().notifyEvent(new OnPlayerMoveRequest(player, new Location(targetX, targetY, targetZ)), player, TerminateReturn.class);
 				if ((terminate != null) && terminate.terminate())
 				{
 					player.sendPacket(ActionFailed.STATIC_PACKET);
@@ -115,7 +130,7 @@ public class MoveToLocation extends ClientPacket
 				}
 			}
 		}
-		else // 0
+		else
 		{
 			if (!PlayerConfig.ENABLE_KEYBOARD_MOVEMENT)
 			{
@@ -131,7 +146,7 @@ public class MoveToLocation extends ClientPacket
 		{
 			if (teleMode == 3) // Admin zone build.
 			{
-				ZoneBuildManager.getInstance().addPoint(player, new Location(_targetX, _targetY, _targetZ));
+				ZoneBuildManager.getInstance().addPoint(player, new Location(targetX, targetY, targetZ));
 				player.sendPacket(ActionFailed.STATIC_PACKET);
 				return;
 			}
@@ -142,7 +157,7 @@ public class MoveToLocation extends ClientPacket
 			}
 			
 			player.sendPacket(ActionFailed.STATIC_PACKET);
-			player.teleToLocation(new Location(_targetX, _targetY, _targetZ));
+			player.teleToLocation(new Location(targetX, targetY, targetZ));
 			return;
 		}
 		
@@ -154,8 +169,8 @@ public class MoveToLocation extends ClientPacket
 		}
 		
 		// Can't move if character is trying to move a huge distance.
-		final double dx = _targetX - player.getX();
-		final double dy = _targetY - player.getY();
+		final double dx = targetX - player.getX();
+		final double dy = targetY - player.getY();
 		if (((dx * dx) + (dy * dy)) > 98010000) // 9900*9900
 		{
 			player.sendPacket(ActionFailed.STATIC_PACKET);
@@ -163,7 +178,7 @@ public class MoveToLocation extends ClientPacket
 		}
 		
 		// Finally move to the target location.
-		player.getAI().setIntention(Intention.MOVE_TO, new Location(_targetX, _targetY, _targetZ));
+		player.getAI().setIntention(Intention.MOVE_TO, new Location(targetX, targetY, targetZ));
 		
 		// Mobius: Check spawn protections.
 		player.onActionRequest();
