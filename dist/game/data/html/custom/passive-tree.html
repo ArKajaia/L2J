@@ -144,6 +144,9 @@
 	/* Search results: matches get a pulsing white ring, everything else fades. */
 	.search-ring { animation: search-pulse 1.4s ease-in-out infinite; }
 	@keyframes search-pulse { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.3; } }
+	/* Clicking a node briefly pulses a soft glow on every node with the same stat family. */
+	.similar-glow { animation: similar-pulse 2s ease-in-out 1 forwards; opacity: 0; pointer-events: none; }
+	@keyframes similar-pulse { 0%, 100% { opacity: 0; } 25%, 75% { opacity: 1; } 50% { opacity: 0.4; } }
 	#svg-root.searching #edges,
 	#svg-root.searching #sector-labels { opacity: 0.35; }
 
@@ -280,6 +283,15 @@
 <div id="canvas-wrap">
 	<svg id="svg-root">
 		<defs>
+			<radialGradient id="similar-halo">
+				<stop offset="0%" stop-color="#7fd1ff" stop-opacity="0.35" />
+				<stop offset="60%" stop-color="#3aa8ff" stop-opacity="0.55" />
+				<stop offset="100%" stop-color="#3aa8ff" stop-opacity="0" />
+			</radialGradient>
+			<filter id="neon-blur" x="-50%" y="-50%" width="200%" height="200%">
+				<feGaussianBlur stdDeviation="3" result="b" />
+				<feMerge><feMergeNode in="b" /><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+			</filter>
 			<filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
 				<feGaussianBlur stdDeviation="4" result="blur" />
 				<feMerge>
@@ -479,6 +491,9 @@ const NEVER_LABEL = new Set(["Pathway","Approach","Crossroads"]);
 let nodes = [], nodeById = {}, edgeList = [];
 let allocated = new Set();
 let character = null, currentToken = null, allocating = false;
+let similarIds = null;          // Set of ring keys whose centre emblem is glowing (2s after clicking an emblem)
+let ringList = [];              // cluster rings with a themed notable: {key, x, y, r, icon}, rebuilt by renderSockets()
+let similarTimer = null;
 let selectedNodeId = null;   // node currently shown in the detail panel
 let configResetCost = "";      // full-reset price text ("Free", "100,000 Adena"), fetched from the server too
 let configRespecPerPoint = 0;   // Adena per point, fetched from the server so the page never hardcodes it
@@ -708,6 +723,7 @@ function renderSockets() {
 		ring.r = Math.hypot(n.x - n.ox, n.y - n.oy);
 		if (n.type === "NOTABLE") ring.notable = n;
 	});
+	ringList = [];
 	Object.values(rings).forEach(ring => {
 		const disc = document.createElementNS(SVG_NS, "circle");
 		disc.setAttribute("cx", ring.x);
@@ -727,7 +743,31 @@ function renderSockets() {
 		g.appendChild(track);
 		const themed = ring.notable && themeIcon(ring.notable);
 		if (themed) {
+			const key = ring.x + "," + ring.y;
+			ringList.push({ key, x: ring.x, y: ring.y, r: ring.r, icon: themed });
 			const size = Math.max(10, ring.r - 26) * 1.3;
+			if (similarIds && similarIds.has(key)) {
+				// Neon: a soft blue radial halo plus a crisp ring with a blur-merge bloom. Both are sized in
+				// screen pixels (via 1/scale) so they stay readable when the tree is zoomed out.
+				const outer = Math.max(size * 0.9, size / 2 + 34 / scale);
+				const halo = document.createElementNS(SVG_NS, "circle");
+				halo.setAttribute("cx", ring.x);
+				halo.setAttribute("cy", ring.y);
+				halo.setAttribute("r", outer);
+				halo.setAttribute("fill", "url(#similar-halo)");
+				halo.setAttribute("class", "similar-glow");
+				g.appendChild(halo);
+				const neon = document.createElementNS(SVG_NS, "circle");
+				neon.setAttribute("cx", ring.x);
+				neon.setAttribute("cy", ring.y);
+				neon.setAttribute("r", Math.max(size / 2 + 6, size / 2 + 12 / scale));
+				neon.setAttribute("fill", "none");
+				neon.setAttribute("stroke", "#9fe0ff");
+				neon.setAttribute("stroke-width", 2.5 / scale);
+				neon.setAttribute("filter", "url(#neon-blur)");
+				neon.setAttribute("class", "similar-glow");
+				g.appendChild(neon);
+			}
 			const emblem = document.createElementNS(SVG_NS, "use");
 			emblem.setAttribute("href", "#icon-" + themed);
 			emblem.setAttribute("x", ring.x - (size / 2));
@@ -738,6 +778,10 @@ function renderSockets() {
 			emblem.setAttribute("opacity", allocated.has(ring.notable.id) ? 0.6 : 0.18);
 			emblem.style.color = themeTint(themed);
 			g.appendChild(emblem);
+			// Click target for the whole socket disc, so the emblem is easy to hit.
+			disc.style.cursor = "pointer";
+			disc.addEventListener("click", () => flashSimilar(key, themed));
+			emblem.style.pointerEvents = "none";
 		}
 	});
 }
@@ -1207,6 +1251,17 @@ function render() {
 // chosen node, and the side panel holds still until you pick another one -
 // no floating tooltip chasing the cursor, and no accidental spend from a
 // stray click while panning around a 565-node tree.
+/** Clicking a ring's big centre emblem pulses the centre emblem of every other ring with the same theme
+ *  glyph. The nodes themselves never trigger or take part in it. */
+function flashSimilar(ringKey, icon) {
+	clearTimeout(similarTimer);
+	const keys = new Set(ringList.filter(r => r.key !== ringKey && r.icon === icon).map(r => r.key));
+	keys.add(ringKey);   // the clicked one pulses too, as feedback for the click
+	similarIds = keys;
+	render();
+	similarTimer = setTimeout(() => { similarIds = null; render(); }, 2000);
+}
+
 function selectNode(n) {
 	selectedNodeId = n.id;
 	render();       // redraw so the selection ring appears
