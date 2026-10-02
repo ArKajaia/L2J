@@ -10,6 +10,7 @@ Java paths are relative to `java/org/l2jmobius/gameserver/` unless stated otherw
 |---|---|---|
 | ~~Movement~~ ✅ | `network/clientpackets/MoveWithDelta.java` | Done: the delta is applied to the server-side position and goes through the same checks as `MoveToLocation` (`MoveToLocation.requestMove`) |
 | ~~Movement / Z axis~~ ✅ | `model/actor/Creature.java`; `skill/effects/EnemyCharge.java`, `ThrowUp.java`; `instances/CrystalCaverns.java` | Done: approach offsets use the 3D-correct horizontal reach (`LocationUtil.calculateHorizontalReach`), ground movement in `updatePosition` uses horizontal distance like the client, the vertical-flight distance bug (`Math.pow(dz, 2)`) is fixed, and knockback distance no longer grows with height difference |
+| ~~Falling~~ ✅ | `model/actor/Player.java` (`isFalling`), `network/clientpackets/ValidatePosition.java` | Done: the landing height comes from geodata at the client position, so damage uses the real fall height. A client below the terrain is put back on the ground, and long falls no longer count twice |
 | Pet item use | `clientpackets/RequestPetUseItem.java:42` | Packet only partly read (`readLong/readInt` commented out) |
 | Private store (sell) | `clientpackets/RequestPrivateStoreManageSell.java:34`; `RequestPrivateStoreSell.java:61-62`; `SetPrivateStoreListBuy.java:60` | Packet fields unread or not analysed. This can desync store setup |
 | Pet feeding | `actor/tasks/player/PetFeedTask.java:92` | Food is taken only from the player's inventory, not the pet's |
