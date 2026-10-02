@@ -1220,16 +1220,13 @@ function render() {
 // chosen node, and the side panel holds still until you pick another one -
 // no floating tooltip chasing the cursor, and no accidental spend from a
 // stray click while panning around a 565-node tree.
-/** Nodes that share the clicked node's stat family (first effect key); nodes without stats match on type + name. */
-function similarKey(n) {
-	const fx = parseEffectSpec(n.effect);
-	return fx.length ? "fx:" + fx[0].key.split("@")[0] : "t:" + n.type + ":" + n.name;
-}
-
+/** Clicking a themed node (a ring's notable, a keystone or a master) pulses every other centre node that
+ *  carries the same theme glyph. The themed smalls inside the rings are left out - they would drown the
+ *  tree in glow. Nodes with no theme glyph have nothing to match, so they flash nothing. */
 function flashSimilar(n) {
 	clearTimeout(similarTimer);
-	const key = similarKey(n);
-	const ids = nodes.filter(o => o.id !== n.id && similarKey(o) === key).map(o => o.id);
+	const icon = themeIcon(n);
+	const ids = icon ? nodes.filter(o => o.id !== n.id && o.type !== "SMALL" && themeIcon(o) === icon).map(o => o.id) : [];
 	similarIds = ids.length ? new Set(ids) : null;
 	if (similarIds) similarTimer = setTimeout(() => { similarIds = null; render(); }, 2000);
 }
