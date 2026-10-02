@@ -4805,7 +4805,7 @@ public abstract class Creature extends WorldObject
 			{
 				int originalX = x;
 				int originalY = y;
-				final int originalZ = z;
+				int originalZ = z;
 				final double originalDistance = distance;
 				final int gtx = (originalX - World.WORLD_X_MIN) >> 4;
 				final int gty = (originalY - World.WORLD_Y_MIN) >> 4;
@@ -4857,51 +4857,19 @@ public abstract class Creature extends WorldObject
 					// A single route point means the destination is reachable in a straight line (straight segments are merged into their end point).
 					boolean straightLine = (move.geoPath != null) && (move.geoPath.size() == 1);
 					
-					// If path not found and this is an Attackable, attempt to find closest path to destination.
+					// If path not found and this is an Attackable, move to the closest reachable point around the destination instead.
 					if (!found && !straightLine && isAttackable())
 					{
-						int xMin = Math.min(curX, originalX);
-						int xMax = Math.max(curX, originalX);
-						int yMin = Math.min(curY, originalY);
-						int yMax = Math.max(curY, originalY);
-						final int maxDiff = Math.min(Math.max(xMax - xMin, yMax - yMin), 500);
-						xMin -= maxDiff;
-						xMax += maxDiff;
-						yMin -= maxDiff;
-						yMax += maxDiff;
-						int destinationX = 0;
-						int destinationY = 0;
-						double shortDistance = Double.MAX_VALUE;
-						double tempDistance;
-						List<GeoLocation> tempPath;
-						for (int sX = xMin; sX < xMax; sX += 500)
+						final FallbackRoute route = findFallbackRoute(curX, curY, curZ, originalX, originalY, originalZ, getInstanceId());
+						if (route != null)
 						{
-							for (int sY = yMin; sY < yMax; sY += 500)
-							{
-								tempDistance = Math.hypot(sX - originalX, sY - originalY);
-								if (tempDistance < shortDistance)
-								{
-									tempPath = PathFinding.getInstance().findPath(curX, curY, curZ, sX, sY, originalZ, getInstanceId(), false);
-									found = (tempPath != null) && !tempPath.isEmpty(); // Straight reachable points are valid too.
-									if (found)
-									{
-										shortDistance = tempDistance;
-										move.geoPath = tempPath;
-										destinationX = sX;
-										destinationY = sY;
-									}
-								}
-							}
+							originalX = route.x();
+							originalY = route.y();
+							originalZ = route.z();
+							move.geoPath = route.path();
+							found = (move.geoPath != null) && (move.geoPath.size() > 1);
+							straightLine = !found;
 						}
-						
-						if ((move.geoPath != null) && !move.geoPath.isEmpty())
-						{
-							originalX = destinationX;
-							originalY = destinationY;
-						}
-						
-						found = (move.geoPath != null) && (move.geoPath.size() > 1);
-						straightLine = (move.geoPath != null) && (move.geoPath.size() == 1);
 					}
 					
 					if (found)
@@ -5024,6 +4992,94 @@ public abstract class Creature extends WorldObject
 		}
 		
 		// the Event.ARRIVED will be sent when the character will actually arrive to destination by MovementTaskManager
+	}
+	
+	/** Distances from the destination, in ascending order, at which fallback points are looked for when the destination cannot be reached. */
+	private static final int[] FALLBACK_ROUTE_RADIUS =
+	{
+		100,
+		200,
+		300,
+		400,
+		500,
+		750,
+		1000
+	};
+	/** Number of fallback points per radius, evenly spread around the destination. */
+	private static final int FALLBACK_ROUTE_DIRECTIONS = 8;
+	/** Maximum number of path searches used to find a fallback point, a failed search is expensive. */
+	private static final int FALLBACK_ROUTE_MAX_SEARCHES = 6;
+	
+	/**
+	 * A reachable point near an unreachable destination.
+	 * @param x the X coordinate of the point
+	 * @param y the Y coordinate of the point
+	 * @param z the Z coordinate of the point
+	 * @param path the geodata path to the point, or {@code null} when it is reachable in a straight line
+	 */
+	public record FallbackRoute(int x, int y, int z, List<GeoLocation> path)
+	{
+	}
+	
+	/**
+	 * Finds the reachable point closest to a destination that has no path, so a creature gets as close as it can instead of running elsewhere.<br>
+	 * Points are checked on rings around the destination, nearest ring first, and within a ring starting from the side facing the creature.<br>
+	 * Points farther from the destination than the creature already is are skipped, so the creature never moves away from it.
+	 * @param curX the creature X coordinate
+	 * @param curY the creature Y coordinate
+	 * @param curZ the creature Z coordinate
+	 * @param targetX the destination X coordinate
+	 * @param targetY the destination Y coordinate
+	 * @param targetZ the destination Z coordinate
+	 * @param instanceId the instance id
+	 * @return the closest reachable point, or {@code null} if none was found
+	 */
+	public static FallbackRoute findFallbackRoute(int curX, int curY, int curZ, int targetX, int targetY, int targetZ, int instanceId)
+	{
+		final GeoEngine geoEngine = GeoEngine.getInstance();
+		final double currentDistance = Math.hypot(curX - targetX, curY - targetY);
+		final double towardsCreature = Math.atan2(curY - targetY, curX - targetX);
+		final double angleStep = (2 * Math.PI) / FALLBACK_ROUTE_DIRECTIONS;
+		int searches = 0;
+		for (int radius : FALLBACK_ROUTE_RADIUS)
+		{
+			if (radius >= currentDistance)
+			{
+				break; // Would not bring the creature any closer.
+			}
+			
+			// Directions ordered 0, +1, -1, +2, -2... steps away from the side facing the creature.
+			for (int i = 0; i < FALLBACK_ROUTE_DIRECTIONS; i++)
+			{
+				final int step = ((i + 1) / 2) * (((i % 2) == 0) ? -1 : 1);
+				final double angle = towardsCreature + (step * angleStep);
+				final int x = targetX + (int) (radius * Math.cos(angle));
+				final int y = targetY + (int) (radius * Math.sin(angle));
+				if (!geoEngine.hasGeo(x, y))
+				{
+					continue;
+				}
+				
+				final int z = geoEngine.getHeight(x, y, targetZ);
+				if (geoEngine.canMoveToTarget(curX, curY, curZ, x, y, z, instanceId))
+				{
+					return new FallbackRoute(x, y, z, null);
+				}
+				
+				if (searches++ >= FALLBACK_ROUTE_MAX_SEARCHES)
+				{
+					continue; // Out of path searches, only straight reachable points are still accepted.
+				}
+				
+				final List<GeoLocation> path = PathFinding.getInstance().findPath(curX, curY, curZ, x, y, z, instanceId, false);
+				if ((path != null) && !path.isEmpty())
+				{
+					return new FallbackRoute(x, y, z, path.size() > 1 ? path : null);
+				}
+			}
+		}
+		
+		return null;
 	}
 	
 	/**
