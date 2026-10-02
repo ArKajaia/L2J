@@ -4464,15 +4464,18 @@ public abstract class Creature extends WorldObject
 		}
 		
 		// Distance from destination.
+		// Ground movement speed is horizontal (Z follows the terrain), matching the client and the timing calculated in moveToLocation.
+		// Using 3D distance here made creatures fall behind their client position on slopes and stairs.
+		// Swimming and flying creatures move freely in 3D, so Z is included for them.
 		double delta = (dx * dx) + (dy * dy);
 		final boolean isFloating = _isFlying || (isInsideZone(ZoneId.WATER) && !isInsideZone(ZoneId.CASTLE));
-		if (!isFloating && (delta < 10000) && ((dz * dz) > 2500)) // Close enough, allows error between client and server geodata if it cannot be avoided.
+		if (isFloating)
 		{
-			delta = Math.sqrt(delta);
+			delta = Math.sqrt(delta + (dz * dz));
 		}
 		else
 		{
-			delta = Math.sqrt(delta + (dz * dz));
+			delta = Math.sqrt(delta);
 		}
 		
 		// Target collision should be subtracted from current distance.
@@ -4711,7 +4714,6 @@ public abstract class Creature extends WorldObject
 		final int curZ = getZ();
 		
 		// Calculate distance (dx,dy) between current position and destination
-		// TODO: improve Z axis move/follow support when dx,dy are small compared to dz
 		double dx = (x - curX);
 		double dy = (y - curY);
 		double dz = (z - curZ);
@@ -4755,13 +4757,8 @@ public abstract class Creature extends WorldObject
 		// Check if a movement offset is defined or no distance to go through
 		if ((offset > 0) || (distance < 1))
 		{
-			// approximation for moving closer when z coordinates are different
-			// TODO: handle Z axis movement better
-			offset -= Math.abs(dz);
-			if (offset < 5)
-			{
-				offset = 5;
-			}
+			// Stop at the horizontal distance that keeps the target within offset in 3D, so height differences are accounted for.
+			offset = LocationUtil.calculateHorizontalReach(offset, dz, 5);
 			
 			// If no distance to go through, the movement is canceled
 			if ((distance < 1) || ((distance - offset) <= 0))
@@ -4845,7 +4842,7 @@ public abstract class Creature extends WorldObject
 					dx = x - curX;
 					dy = y - curY;
 					dz = z - curZ;
-					distance = verticalMovementOnly ? Math.pow(dz, 2) : Math.hypot(dx, dy);
+					distance = verticalMovementOnly ? Math.abs(dz) : Math.hypot(dx, dy);
 				}
 				
 				// Pathfinding checks.
@@ -4857,8 +4854,11 @@ public abstract class Creature extends WorldObject
 					move.geoPath = PathFinding.getInstance().findPath(curX, curY, curZ, originalX, originalY, originalZ, getInstanceId(), isPlayer());
 					boolean found = (move.geoPath != null) && (move.geoPath.size() > 1);
 					
+					// A single route point means the destination is reachable in a straight line (straight segments are merged into their end point).
+					boolean straightLine = (move.geoPath != null) && (move.geoPath.size() == 1);
+					
 					// If path not found and this is an Attackable, attempt to find closest path to destination.
-					if (!found && isAttackable())
+					if (!found && !straightLine && isAttackable())
 					{
 						int xMin = Math.min(curX, originalX);
 						int xMax = Math.max(curX, originalX);
@@ -4882,7 +4882,7 @@ public abstract class Creature extends WorldObject
 								if (tempDistance < shortDistance)
 								{
 									tempPath = PathFinding.getInstance().findPath(curX, curY, curZ, sX, sY, originalZ, getInstanceId(), false);
-									found = (tempPath != null) && (tempPath.size() > 1);
+									found = (tempPath != null) && !tempPath.isEmpty(); // Straight reachable points are valid too.
 									if (found)
 									{
 										shortDistance = tempDistance;
@@ -4894,12 +4894,14 @@ public abstract class Creature extends WorldObject
 							}
 						}
 						
-						found = (move.geoPath != null) && (move.geoPath.size() > 1);
-						if (found)
+						if ((move.geoPath != null) && !move.geoPath.isEmpty())
 						{
 							originalX = destinationX;
 							originalY = destinationY;
 						}
+						
+						found = (move.geoPath != null) && (move.geoPath.size() > 1);
+						straightLine = (move.geoPath != null) && (move.geoPath.size() == 1);
 					}
 					
 					if (found)
@@ -4915,11 +4917,11 @@ public abstract class Creature extends WorldObject
 						dx = x - curX;
 						dy = y - curY;
 						dz = z - curZ;
-						distance = verticalMovementOnly ? Math.pow(dz, 2) : Math.hypot(dx, dy);
+						distance = verticalMovementOnly ? Math.abs(dz) : Math.hypot(dx, dy);
 						sin = dy / distance;
 						cos = dx / distance;
 					}
-					else // No path found.
+					else // No path with turns: move straight to the destination, which is reachable in a straight line or has no path at all.
 					{
 						// When no move path was found, use direct movement. Tested at retail on October 21st 2024.
 						// if (isPlayer() && !_isFlying && !isInWater)
@@ -4928,11 +4930,21 @@ public abstract class Creature extends WorldObject
 						// return;
 						// }
 						
-						move.disregardingGeodata = true;
+						move.disregardingGeodata = !straightLine;
 						x = originalX;
 						y = originalY;
 						z = originalZ;
-						distance = originalDistance;
+						
+						// The destination may be a fallback point instead of the requested one, so recalculate distance and direction from it.
+						dx = x - curX;
+						dy = y - curY;
+						dz = z - curZ;
+						distance = Math.hypot(dx, dy);
+						if (distance >= 1)
+						{
+							sin = dy / distance;
+							cos = dx / distance;
+						}
 					}
 				}
 				
@@ -4949,7 +4961,7 @@ public abstract class Creature extends WorldObject
 					dx = x - curX;
 					dy = y - curY;
 					dz = z - curZ;
-					distance = verticalMovementOnly ? Math.pow(dz, 2) : Math.hypot(dx, dy);
+					distance = verticalMovementOnly ? Math.abs(dz) : Math.hypot(dx, dy);
 				}
 			}
 			

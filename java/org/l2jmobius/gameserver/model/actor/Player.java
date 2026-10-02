@@ -90,6 +90,7 @@ import org.l2jmobius.gameserver.data.sql.OfflineTraderTable;
 import org.l2jmobius.gameserver.data.xml.AdminData;
 import org.l2jmobius.gameserver.data.xml.CategoryData;
 import org.l2jmobius.gameserver.data.xml.ClassListData;
+import org.l2jmobius.gameserver.data.xml.DoorData;
 import org.l2jmobius.gameserver.data.xml.EnchantSkillGroupsData;
 import org.l2jmobius.gameserver.data.xml.ExperienceData;
 import org.l2jmobius.gameserver.data.xml.ExperienceLossData;
@@ -875,7 +876,15 @@ public class Player extends Playable
 	
 	// during fall validations will be disabled for 1000 ms.
 	private static final int FALLING_VALIDATION_DELAY = 1000;
+	/** Height above the fall start at which ground layers are still considered, to absorb small geodata and client differences. */
+	private static final int FALLING_GROUND_OFFSET = 20;
+	/** How far the client may be below the ground before it is considered under the terrain. */
+	private static final int FALLING_UNDERGROUND_TOLERANCE = 64;
+	/** Longest time a fall keeps validations paused while the client is still above the landing ground. */
+	private static final int FALLING_MAX_DURATION = 5000;
 	private volatile long _fallingTimestamp = 0;
+	/** Landing height of the fall in progress, {@link Integer#MIN_VALUE} when the player is not falling. */
+	private volatile int _fallingGroundZ = Integer.MIN_VALUE;
 	private volatile int _fallingDamage = 0;
 	private Future<?> _fallingDamageTask = null;
 	
@@ -14144,38 +14153,97 @@ public class Player extends Playable
 	}
 	
 	/**
-	 * @param z
-	 * @return true if character falling now on the start of fall return false for correct coord sync!
+	 * Checks the client position for a fall and handles it.<br>
+	 * The landing height is resolved from geodata at the client position, so damage is based on the real fall height and the player cannot be left under the ground,<br>
+	 * even when the client reports a position below the terrain.
+	 * @param x the client X coordinate
+	 * @param y the client Y coordinate
+	 * @param z the client Z coordinate
+	 * @return {@code true} if the fall was handled here and the remaining position validation must be skipped, {@code false} otherwise
 	 */
-	public boolean isFalling(int z)
+	public boolean isFalling(int x, int y, int z)
 	{
 		if (isDead() || isFlying() || isFlyingMounted() || isInsideZone(ZoneId.WATER))
 		{
 			return false;
 		}
 		
+		// Fall in progress: skip validations, only pull the client back up if it went through the ground.
 		if ((_fallingTimestamp != 0) && (System.currentTimeMillis() < _fallingTimestamp))
 		{
+			if (GeoEngine.getInstance().hasGeo(x, y) && (z < (getFallGroundZ(x, y, getZ()) - FALLING_UNDERGROUND_TOLERANCE)))
+			{
+				sendPacket(new ValidateLocation(this));
+			}
+			
 			return true;
 		}
 		
-		final int deltaZ = getZ() - z;
-		if (deltaZ <= getBaseTemplate().getSafeFallHeight())
+		// Long fall: the client is still in the air above the landing ground, keep waiting so the server Z is not pulled back up.
+		final int fallingGroundZ = _fallingGroundZ;
+		if (fallingGroundZ != Integer.MIN_VALUE)
+		{
+			if ((z > (fallingGroundZ + FALLING_UNDERGROUND_TOLERANCE)) && (System.currentTimeMillis() < ((_fallingTimestamp - FALLING_VALIDATION_DELAY) + FALLING_MAX_DURATION)))
+			{
+				return true;
+			}
+			
+			// Landed.
+			_fallingGroundZ = Integer.MIN_VALUE;
+			
+			// Landed below the terrain, put the client back on the ground instead of accepting its Z.
+			if (z < (fallingGroundZ - FALLING_UNDERGROUND_TOLERANCE))
+			{
+				sendPacket(new ValidateLocation(this));
+				return true;
+			}
+		}
+		
+		final int startZ = getZ();
+		if ((startZ - z) <= getBaseTemplate().getSafeFallHeight())
 		{
 			_fallingTimestamp = 0;
 			return false;
 		}
 		
 		// If there is no geodata loaded for the place we are, client Z correction might cause falling damage.
-		if (!GeoEngine.getInstance().hasGeo(getX(), getY()))
+		if (!GeoEngine.getInstance().hasGeo(x, y))
 		{
 			_fallingTimestamp = 0;
 			return false;
 		}
 		
+		// Where the player actually lands. The client Z alone is not trusted, it can be mid-fall or below the terrain.
+		final int groundZ = getFallGroundZ(x, y, startZ);
+		final int fallHeight = startZ - groundZ;
+		
+		// Do not move the player through doors because of a fall.
+		if (DoorData.getInstance().checkIfDoorsBetween(getX(), getY(), startZ, x, y, groundZ, getInstanceId(), false))
+		{
+			sendPacket(new ValidateLocation(this));
+			setFalling();
+			return true;
+		}
+		
+		// Place the player on the landing ground and correct a client that went below the terrain.
+		setXYZ(x, y, groundZ);
+		if (z < (groundZ - FALLING_UNDERGROUND_TOLERANCE))
+		{
+			sendPacket(new ValidateLocation(this));
+		}
+		
+		setFalling();
+		_fallingGroundZ = groundZ;
+		
+		// Not a real fall (for example the client sank into the ground), no damage.
+		if (fallHeight <= getBaseTemplate().getSafeFallHeight())
+		{
+			return true;
+		}
+		
 		if (_fallingDamage == 0)
 		{
-			_fallingDamage = (int) Formulas.calcFallDam(this, deltaZ);
+			_fallingDamage = (int) Formulas.calcFallDam(this, fallHeight);
 		}
 		
 		if (_fallingDamageTask != null)
@@ -14197,11 +14265,18 @@ public class Player extends Playable
 			_fallingDamageTask = null;
 		}, 1500);
 		
-		// Prevent falling under ground.
-		sendPacket(new ValidateLocation(this));
-		setFalling();
-		
-		return false;
+		return true;
+	}
+	
+	/**
+	 * @param x the X coordinate
+	 * @param y the Y coordinate
+	 * @param fromZ the height the fall started from
+	 * @return the first geodata ground layer at or below the given height at the given position
+	 */
+	private int getFallGroundZ(int x, int y, int fromZ)
+	{
+		return GeoEngine.getInstance().getNextLowerZ(GeoEngine.getGeoX(x), GeoEngine.getGeoY(y), fromZ + FALLING_GROUND_OFFSET);
 	}
 	
 	/**
@@ -14210,6 +14285,7 @@ public class Player extends Playable
 	public void setFalling()
 	{
 		_fallingTimestamp = System.currentTimeMillis() + FALLING_VALIDATION_DELAY;
+		_fallingGroundZ = Integer.MIN_VALUE;
 	}
 	
 	public MovieHolder getMovieHolder()

@@ -16,17 +16,17 @@
  */
 package org.l2jmobius.gameserver.network.clientpackets;
 
+import org.l2jmobius.gameserver.model.actor.Player;
+
 /**
+ * Relative movement request: the player moves by the given offset from its current server position.<br>
  * Format: (c) ddd d: dx d: dy d: dz
  * @author -Wooden-
  */
 public class MoveWithDelta extends ClientPacket
 {
-	@SuppressWarnings("unused")
 	private int _dx;
-	@SuppressWarnings("unused")
 	private int _dy;
-	@SuppressWarnings("unused")
 	private int _dz;
 	
 	@Override
@@ -40,6 +40,16 @@ public class MoveWithDelta extends ClientPacket
 	@Override
 	protected void runImpl()
 	{
-		// TODO this
+		final Player player = getPlayer();
+		if (player == null)
+		{
+			return;
+		}
+		
+		// Resolve the offset against the server-side position, so the client cannot pick its own origin.
+		final int targetX = player.getX() + _dx;
+		final int targetY = player.getY() + _dy;
+		final int targetZ = player.getZ() + _dz;
+		MoveToLocation.requestMove(player, targetX, targetY, targetZ, (_dx == 0) && (_dy == 0) && (_dz == 0), false);
 	}
 }

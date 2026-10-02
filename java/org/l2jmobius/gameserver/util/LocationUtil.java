@@ -151,6 +151,25 @@ public class LocationUtil
 	}
 	
 	/**
+	 * Calculates how close, horizontally, a creature must get to a point at height difference {@code dz} so that the real (3D) distance is within {@code range}.<br>
+	 * When the height difference alone is larger than the range, the range cannot be reached by horizontal movement and {@code minimum} is returned.
+	 * @param range the desired 3D distance to the point
+	 * @param dz the height difference to the point
+	 * @param minimum the smallest horizontal distance to return
+	 * @return the horizontal distance to stop at, never lower than {@code minimum}
+	 */
+	public static int calculateHorizontalReach(int range, double dz, int minimum)
+	{
+		final double reachSquared = ((double) range * range) - (dz * dz);
+		if (reachSquared <= 0)
+		{
+			return minimum;
+		}
+		
+		return Math.max(minimum, (int) Math.sqrt(reachSquared));
+	}
+	
+	/**
 	 * Checks if two objects are within a specified range of each other, with options to include the Z-axis. Takes into account each object's collision radius if they are creatures.
 	 * @param range the maximum allowable distance between the two objects
 	 * @param obj1 the first object

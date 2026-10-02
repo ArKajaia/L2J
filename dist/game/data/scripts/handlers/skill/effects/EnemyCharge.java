@@ -30,6 +30,7 @@ import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.FlyType;
 import org.l2jmobius.gameserver.network.serverpackets.FlyToLocation;
 import org.l2jmobius.gameserver.network.serverpackets.ValidateLocation;
+import org.l2jmobius.gameserver.util.LocationUtil;
 
 /**
  * Enemy Charge effect implementation.
@@ -71,15 +72,8 @@ public class EnemyCharge extends AbstractEffect
 			return;
 		}
 		
-		int offset = Math.max(skill.getFlyRadius(), 30);
-		
-		// approximation for moving closer when z coordinates are different
-		// TODO: handle Z axis movement better
-		offset -= Math.abs(dz);
-		if (offset < 5)
-		{
-			offset = 5;
-		}
+		// Stop at the horizontal distance that keeps the target within fly radius in 3D, so height differences are accounted for.
+		final int offset = LocationUtil.calculateHorizontalReach(Math.max(skill.getFlyRadius(), 30), dz, 5);
 		
 		// If no distance
 		if ((distance < 1) || ((distance - offset) <= 0))

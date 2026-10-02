@@ -68,9 +68,9 @@ public class ValidatePosition extends ClientPacket
 			return;
 		}
 		
-		if (player.isFalling(_z))
+		if (player.isFalling(_x, _y, _z))
 		{
-			return; // Disable validations during fall to avoid "jumping".
+			return; // Fall handled (or in progress), skip validations to avoid "jumping".
 		}
 		
 		// Abnormal z read from client.
