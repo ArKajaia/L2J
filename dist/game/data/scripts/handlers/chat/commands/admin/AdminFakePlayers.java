@@ -35,6 +35,7 @@ import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
@@ -143,6 +144,7 @@ public class AdminFakePlayers implements IAdminCommandHandler
 				final FakePlayerPvpProfile targetProfile = target.getTemplate().getFakePlayerPvpProfile();
 				final long leaveIn = targetProfile.getLeaveTime() > 0 ? Math.max(0, (targetProfile.getLeaveTime() - System.currentTimeMillis()) / 1000) : -1;
 				activeChar.sendSysMessage("Blessed SoE " + (targetProfile.hasBlessedEscape() ? "yes" : "no") + ", hotzone " + (targetProfile.getHotzoneId() > 0 ? targetProfile.getHotzoneId() + (leaveIn >= 0 ? " (leaving in " + leaveIn + "s)" : "") : "none"));
+				activeChar.sendSysMessage("Passive tree: " + (targetProfile.getPassives() != null ? targetProfile.getPassives() : "none"));
 				activeChar.sendSysMessage("PvP taunt " + personality.getPokeChance(1) + "%-" + personality.getPokeChance(FakePlayerPvpConfig.POKE_MAX_CHANCE_LEVEL_DIFF) + "%, refuse to hit back " + personality.getRefuseChance(1) + "%-" + personality.getRefuseChance(FakePlayerPvpConfig.REFUSE_MAX_CHANCE_LEVEL_DIFF) + "% (1-" + FakePlayerPvpConfig.POKE_MAX_CHANCE_LEVEL_DIFF + "/" + FakePlayerPvpConfig.REFUSE_MAX_CHANCE_LEVEL_DIFF + " levels)");
 			}
 		}
@@ -200,6 +202,8 @@ public class AdminFakePlayers implements IAdminCommandHandler
 			
 			final FakePlayerPvpBuild usedBuild = fake.getTemplate().getFakePlayerPvpProfile().getBuild();
 			activeChar.sendSysMessage("Spawned " + fake.getName() + ": level " + level + " " + usedBuild.getName() + " (" + fake.getTemplate().getFakePlayerPvpProfile().getPlayerClass().name() + ") HP " + (int) fake.getMaxHp() + " P.Atk " + (int) fake.getPAtk(null) + " M.Atk " + (int) fake.getMAtk(null, null) + " P.Def " + (int) fake.getPDef(null) + " M.Def " + (int) fake.getMDef(null, null) + ".");
+			final FakePlayerPvpPassives passives = fake.getTemplate().getFakePlayerPvpProfile().getPassives();
+			activeChar.sendSysMessage("Passive tree: " + (passives != null ? passives : "none") + ".");
 		}
 		
 		return true;

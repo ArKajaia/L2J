@@ -44,6 +44,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpCombo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpGearTier;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpWeapon;
@@ -158,7 +159,7 @@ public class FakePlayerPvpFactory
 			men += armorSet.getMEN();
 		}
 		
-		// Extra points in the main stats (like dyes or passive tree points), growing with the level.
+		// Extra points in the main stats (like dyes), growing with the level.
 		if (FakePlayerPvpConfig.BONUS_STAT_MAX > 0)
 		{
 			final int maxBonus = Math.max(1, (int) Math.round((FakePlayerPvpConfig.BONUS_STAT_MAX * level) / 85.0));
@@ -261,6 +262,13 @@ public class FakePlayerPvpFactory
 		final double hp = classTemplate.getBaseHpMax(level) + (FakePlayerPvpConfig.INCLUDE_CP_IN_HP ? classTemplate.getBaseCpMax(level) : 0);
 		final double mp = classTemplate.getBaseMpMax(level) + sumStat(Stat.MAX_MP, weapon, shield, chest, legs, head, gloves, feet, earring, earring, necklace, ring, ring);
 		
+		// Its passive tree, like a player that spent its points (rolled from trees prepared at server start, see FakePlayerPvpPassiveTree). Max HP % bonuses only grow the HP part of an HP pool that holds the CP too.
+		final FakePlayerPvpPassives passives = FakePlayerPvpPassiveTree.isEnabled() ? FakePlayerPvpPassiveTree.getInstance().roll(build, playerClass, level) : null;
+		if ((passives != null) && (hp > 0))
+		{
+			passives.setHpShare(classTemplate.getBaseHpMax(level) / hp);
+		}
+		
 		// Looks. Kamael classes are male (Trooper, Berserker, Doombringer...) or female (Warder, Arbalester, Trickster...) from their base class on.
 		final PlayerClass baseClass = build.getPlayerClass(0);
 		final boolean female = (baseClass == PlayerClass.FEMALE_SOLDIER) || ((baseClass != PlayerClass.MALE_SOLDIER) && Rnd.nextBoolean());
@@ -271,7 +279,7 @@ public class FakePlayerPvpFactory
 		set.set("level", level);
 		set.set("type", "Monster");
 		set.set("name", name);
-		set.set("title", title != null ? title : "");
+		set.set("title", getTitle(title, passives));
 		set.set("race", playerClass.getRace().name());
 		set.set("sex", female ? Sex.FEMALE.name() : Sex.MALE.name());
 		set.set("baseSTR", str);
@@ -428,6 +436,8 @@ public class FakePlayerPvpFactory
 		
 		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), armorWornMask, chest != null ? chest.getItemMask() : 0, maxCharges, equipment, mainWeapon, bow, polearm, FakePlayerPvpPersonality.random());
 		
+		profile.setPassives(passives);
+		
 		// High levels sometimes carry Blessed Scrolls of Escape.
 		profile.setBlessedEscape((level >= FakePlayerPvpConfig.BLESSED_ESCAPE_MIN_LEVEL) && (Rnd.get(100) < FakePlayerPvpConfig.BLESSED_ESCAPE_CHANCE));
 		
@@ -480,6 +490,23 @@ public class FakePlayerPvpFactory
 		template.setSkills(skills);
 		template.setFakePlayerPvpProfile(profile);
 		return template;
+	}
+	
+	/**
+	 * @param title the title it was given, {@code null} for none
+	 * @param passives its passive tree, {@code null} for none
+	 * @return its title showing how many subclasses it has (FakePvpPassiveTreeTitle), after the title it was given if any
+	 */
+	private static String getTitle(String title, FakePlayerPvpPassives passives)
+	{
+		final String givenTitle = title != null ? title : "";
+		if ((passives == null) || FakePlayerPvpConfig.PASSIVE_TREE_TITLE.isEmpty())
+		{
+			return givenTitle;
+		}
+		
+		final String subclasses = FakePlayerPvpConfig.PASSIVE_TREE_TITLE.replace("%count%", String.valueOf(passives.getSubclasses()));
+		return givenTitle.isEmpty() ? subclasses : givenTitle + " [" + subclasses + "]";
 	}
 	
 	/**

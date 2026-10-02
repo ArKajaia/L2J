@@ -661,7 +661,10 @@ public class CreatureStat
 			}
 		}
 		
-		return Math.round(calcStat(Stat.POWER_ATTACK_SPEED, _creature.getTemplate().getBasePAtkSpd() * bonusAtk, null, null));
+		final double val = Math.round(calcStat(Stat.POWER_ATTACK_SPEED, _creature.getTemplate().getBasePAtkSpd() * bonusAtk, null, null));
+		
+		// A roaming fake player has the attack speed cap of the players it plays (its passive tree and buffs could take it past it).
+		return _creature.isPvpFakePlayer() ? Math.min(val, PlayerConfig.MAX_PATK_SPEED) : val;
 	}
 	
 	/**

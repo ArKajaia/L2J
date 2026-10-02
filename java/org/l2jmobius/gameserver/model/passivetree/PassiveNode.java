@@ -1,7 +1,10 @@
 package org.l2jmobius.gameserver.model.passivetree;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A single node in the passive tree.
@@ -32,6 +35,8 @@ public class PassiveNode
 
 	/** e.g. "STR:1", "PATK_PCT:0.5", "PDEF_PCT:1.5;MDEF_PCT:1.5". Empty for pure skill-grant nodes. */
 	private final String effectSpec;
+	/** effectSpec parsed once: key -> value, summed if a key repeats. Malformed parts are left out. */
+	private final Map<String, Double> effects;
 
 	/** 0 if this node grants no skill. */
 	private final int skillId;
@@ -60,6 +65,7 @@ public class PassiveNode
 		this.x = x;
 		this.y = y;
 		this.effectSpec = effectSpec == null ? "" : effectSpec;
+		this.effects = parseEffects(this.effectSpec);
 		this.skillId = skillId;
 		this.skillLevel = skillLevel;
 	}
@@ -74,6 +80,7 @@ public class PassiveNode
 	public double getX() { return x; }
 	public double getY() { return y; }
 	public String getEffectSpec() { return effectSpec; }
+	public Map<String, Double> getEffects() { return effects; }
 	public int getSkillId() { return skillId; }
 	public int getSkillLevel() { return skillLevel; }
 	public List<Integer> getParents() { return parents; }
@@ -88,4 +95,32 @@ public class PassiveNode
 	public boolean grantsSkill() { return skillId > 0; }
 	/** skillLevel="auto" in the XML: the granted level follows the character level (see PassiveTreeManager.getScaledSkillLevel). */
 	public boolean isSkillLevelScaled() { return skillLevel <= 0; }
+
+	private static Map<String, Double> parseEffects(String spec)
+	{
+		if (spec.isEmpty())
+		{
+			return Collections.emptyMap();
+		}
+
+		final Map<String, Double> result = new LinkedHashMap<>();
+		for (String part : spec.split(";"))
+		{
+			final String[] kv = part.split(":");
+			if (kv.length != 2)
+			{
+				continue;
+			}
+
+			try
+			{
+				result.merge(kv[0].trim(), Double.parseDouble(kv[1].trim()), Double::sum);
+			}
+			catch (NumberFormatException ignored)
+			{
+				// Malformed effect spec in the XML - skip rather than crash stat calc.
+			}
+		}
+		return Collections.unmodifiableMap(result);
+	}
 }
