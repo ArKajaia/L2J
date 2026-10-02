@@ -487,7 +487,8 @@ const NEVER_LABEL = new Set(["Pathway","Approach","Crossroads"]);
 let nodes = [], nodeById = {}, edgeList = [];
 let allocated = new Set();
 let character = null, currentToken = null, allocating = false;
-let similarIds = null;          // Set of node ids glowing as "similar to the selected node" (2s after a click)
+let similarIds = null;          // Set of ring keys whose centre emblem is glowing (2s after clicking an emblem)
+let ringList = [];              // cluster rings with a themed notable: {key, x, y, r, icon}, rebuilt by renderSockets()
 let similarTimer = null;
 let selectedNodeId = null;   // node currently shown in the detail panel
 let configResetCost = "";      // full-reset price text ("Free", "100,000 Adena"), fetched from the server too
@@ -718,6 +719,7 @@ function renderSockets() {
 		ring.r = Math.hypot(n.x - n.ox, n.y - n.oy);
 		if (n.type === "NOTABLE") ring.notable = n;
 	});
+	ringList = [];
 	Object.values(rings).forEach(ring => {
 		const disc = document.createElementNS(SVG_NS, "circle");
 		disc.setAttribute("cx", ring.x);
@@ -737,7 +739,19 @@ function renderSockets() {
 		g.appendChild(track);
 		const themed = ring.notable && themeIcon(ring.notable);
 		if (themed) {
+			const key = ring.x + "," + ring.y;
+			ringList.push({ key, x: ring.x, y: ring.y, r: ring.r, icon: themed });
 			const size = Math.max(10, ring.r - 26) * 1.3;
+			if (similarIds && similarIds.has(key)) {
+				// Radial-gradient halo rather than a blur filter, sized to stay about 30px past the emblem on screen at any zoom.
+				const halo = document.createElementNS(SVG_NS, "circle");
+				halo.setAttribute("cx", ring.x);
+				halo.setAttribute("cy", ring.y);
+				halo.setAttribute("r", Math.max(size * 0.9, size / 2 + 30 / scale));
+				halo.setAttribute("fill", "url(#similar-halo)");
+				halo.setAttribute("class", "similar-glow");
+				g.appendChild(halo);
+			}
 			const emblem = document.createElementNS(SVG_NS, "use");
 			emblem.setAttribute("href", "#icon-" + themed);
 			emblem.setAttribute("x", ring.x - (size / 2));
@@ -748,6 +762,10 @@ function renderSockets() {
 			emblem.setAttribute("opacity", allocated.has(ring.notable.id) ? 0.6 : 0.18);
 			emblem.style.color = themeTint(themed);
 			g.appendChild(emblem);
+			// Click target for the whole socket disc, so the emblem is easy to hit.
+			disc.style.cursor = "pointer";
+			disc.addEventListener("click", () => flashSimilar(key, themed));
+			emblem.style.pointerEvents = "none";
 		}
 	});
 }
@@ -1137,14 +1155,6 @@ function render() {
 			ring.style.pointerEvents = "none";
 			g.appendChild(ring);
 		}
-		if (similarIds && similarIds.has(n.id)) {
-			// Radial-gradient halo rather than a blur filter, sized to stay about 30px on screen at any zoom.
-			const sg = document.createElementNS(SVG_NS, "circle");
-			sg.setAttribute("r", Math.max(r + 18, 30 / scale));
-			sg.setAttribute("fill", "url(#similar-halo)");
-			sg.setAttribute("class", "similar-glow");
-			g.appendChild(sg);
-		}
 		const fillColor = has ? "#3ecf5b" : (TYPE_COLOR[n.type] || "#8a8a92");
 
 		// Soft glow behind allocated/available nodes - a blurred duplicate
@@ -1225,20 +1235,19 @@ function render() {
 // chosen node, and the side panel holds still until you pick another one -
 // no floating tooltip chasing the cursor, and no accidental spend from a
 // stray click while panning around a 565-node tree.
-/** Clicking a themed node (a ring's notable, a keystone or a master) pulses every other centre node that
- *  carries the same theme glyph. The themed smalls inside the rings are left out - they would drown the
- *  tree in glow. Nodes with no theme glyph have nothing to match, so they flash nothing. */
-function flashSimilar(n) {
+/** Clicking a ring's big centre emblem pulses the centre emblem of every other ring with the same theme
+ *  glyph. The nodes themselves never trigger or take part in it. */
+function flashSimilar(ringKey, icon) {
 	clearTimeout(similarTimer);
-	const icon = themeIcon(n);
-	const ids = icon ? nodes.filter(o => o.id !== n.id && o.type !== "SMALL" && themeIcon(o) === icon).map(o => o.id) : [];
-	similarIds = ids.length ? new Set(ids) : null;
-	if (similarIds) similarTimer = setTimeout(() => { similarIds = null; render(); }, 2000);
+	const keys = new Set(ringList.filter(r => r.key !== ringKey && r.icon === icon).map(r => r.key));
+	keys.add(ringKey);   // the clicked one pulses too, as feedback for the click
+	similarIds = keys;
+	render();
+	similarTimer = setTimeout(() => { similarIds = null; render(); }, 2000);
 }
 
 function selectNode(n) {
 	selectedNodeId = n.id;
-	flashSimilar(n);
 	render();       // redraw so the selection ring appears
 	renderDetailPanel(n);
 }
