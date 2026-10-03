@@ -36,6 +36,8 @@ import org.l2jmobius.gameserver.data.holders.FakePlayerChatHolder;
 import org.l2jmobius.gameserver.data.xml.FakePlayerData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.model.StatSet;
+import org.l2jmobius.gameserver.model.World;
+import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
@@ -52,6 +54,10 @@ public class FakePlayerChatManager implements IXmlReader
 	private static final List<FakePlayerChatHolder> MESSAGES = new ArrayList<>();
 	private static final int MIN_DELAY = 5000;
 	private static final int MAX_DELAY = 15000;
+	/** A fake player answers general chat a moment later (typing), and only players within the general chat range hear it. */
+	private static final int GENERAL_MIN_DELAY = 2000;
+	private static final int GENERAL_MAX_DELAY = 6000;
+	private static final int GENERAL_RANGE = 1250;
 	
 	protected FakePlayerChatManager()
 	{
@@ -96,7 +102,112 @@ public class FakePlayerChatManager implements IXmlReader
 		ThreadPool.schedule(() -> manageResponce(player, fpcName, message), Rnd.get(minDelay, maxDelay));
 	}
 	
+	/**
+	 * Called when a player says something in general chat: a talkable fake player it talks to answers in general chat, with the same answers as a whisper. A player talks to a fake player in hearing range by saying its name, or to the one it has targeted. Only
+	 * players' general chat comes here, so fake players never answer each other.
+	 * @param player the player
+	 * @param message what the player said
+	 */
+	public void onGeneralChat(Player player, String message)
+	{
+		if (!FakePlayersConfig.FAKE_PLAYERS_ENABLED || !FakePlayersConfig.FAKE_PLAYER_CHAT || (player == null) || MESSAGES.isEmpty())
+		{
+			return;
+		}
+		
+		final Npc npc = findAddressee(player, message.toLowerCase());
+		if (npc != null)
+		{
+			final String fpcName = npc.getName();
+			ThreadPool.schedule(() ->
+			{
+				if (!npc.isDead() && npc.isSpawned())
+				{
+					manageResponce(player, fpcName, message, npc);
+				}
+			}, Rnd.get(GENERAL_MIN_DELAY, GENERAL_MAX_DELAY));
+		}
+	}
+	
+	/**
+	 * @param player the player
+	 * @param text what it said, in lower case
+	 * @return the talkable fake player in hearing range whose name it said (the closest one), else the one it has targeted, {@code null} if none
+	 */
+	private static Npc findAddressee(Player player, String text)
+	{
+		Npc named = null;
+		double namedDistance = Double.MAX_VALUE;
+		for (Npc npc : World.getInstance().getVisibleObjectsInRange(player, Npc.class, GENERAL_RANGE))
+		{
+			if (!isTalkable(npc, player) || !mentions(text, npc.getName().toLowerCase()))
+			{
+				continue;
+			}
+			
+			final double distance = player.calculateDistance2D(npc);
+			if (distance < namedDistance)
+			{
+				named = npc;
+				namedDistance = distance;
+			}
+		}
+		if (named != null)
+		{
+			return named;
+		}
+		
+		final WorldObject target = player.getTarget();
+		if ((target instanceof Npc) && isTalkable((Npc) target, player) && (player.calculateDistance2D(target) <= GENERAL_RANGE))
+		{
+			return (Npc) target;
+		}
+		return null;
+	}
+	
+	/**
+	 * @param npc an npc
+	 * @param player the player talking
+	 * @return {@code true} if {@code npc} is a living, talkable fake player in the player's world
+	 */
+	private static boolean isTalkable(Npc npc, Player player)
+	{
+		return npc.isFakePlayer() && !npc.isDead() && npc.isSpawned() && (npc.getInstanceId() == player.getInstanceId()) && FakePlayerData.getInstance().isTalkable(npc.getName());
+	}
+	
+	/**
+	 * @param text what a player said, in lower case
+	 * @param name a name, in lower case
+	 * @return {@code true} if {@code name} is a word of {@code text} (not part of a longer word)
+	 */
+	private static boolean mentions(String text, String name)
+	{
+		int index = text.indexOf(name);
+		while (index >= 0)
+		{
+			final int end = index + name.length();
+			if (((index == 0) || !Character.isLetterOrDigit(text.charAt(index - 1))) && ((end == text.length()) || !Character.isLetterOrDigit(text.charAt(end))))
+			{
+				return true;
+			}
+			index = text.indexOf(name, index + 1);
+		}
+		return false;
+	}
+	
 	private void manageResponce(Player player, String fpcName, String message)
+	{
+		manageResponce(player, fpcName, message, null);
+	}
+	
+	/**
+	 * Answers what a player said to a fake player.
+	 * @param player the player
+	 * @param fpcName the fake player's name
+	 * @param message what the player said
+	 * @param speaker the fake player answering in general chat, {@code null} to answer with a whisper
+	 */
+	private void manageResponce(Player player, String fpcName, String message, Npc speaker)
 	{
 		if (player == null)
 		{
@@ -108,26 +219,26 @@ public class FakePlayerChatManager implements IXmlReader
 		// tricky question
 		if (text.contains("can you see me"))
 		{
-			final Spawn spawn = SpawnTable.getInstance().getAnySpawn(FakePlayerData.getInstance().getNpcIdByName(fpcName));
-			if (spawn != null)
+			final Spawn spawn = speaker != null ? null : SpawnTable.getInstance().getAnySpawn(FakePlayerData.getInstance().getNpcIdByName(fpcName));
+			if ((speaker != null) || (spawn != null))
 			{
-				final Npc npc = spawn.getLastSpawn();
+				final Npc npc = speaker != null ? speaker : spawn.getLastSpawn();
 				if (npc != null)
 				{
 					if (npc.calculateDistance2D(player) < 3000)
 					{
 						if (GeoEngine.getInstance().canSeeTarget(npc, player) && !player.isInvisible())
 						{
-							sendChat(player, fpcName, Rnd.nextBoolean() ? "i am not blind" : Rnd.nextBoolean() ? "of course i can" : "yes");
+							reply(player, fpcName, speaker, Rnd.nextBoolean() ? "i am not blind" : Rnd.nextBoolean() ? "of course i can" : "yes");
 						}
 						else
 						{
-							sendChat(player, fpcName, Rnd.nextBoolean() ? "i know you are around" : Rnd.nextBoolean() ? "not at the moment :P" : "no, where are you?");
+							reply(player, fpcName, speaker, Rnd.nextBoolean() ? "i know you are around" : Rnd.nextBoolean() ? "not at the moment :P" : "no, where are you?");
 						}
 					}
 					else
 					{
-						sendChat(player, fpcName, Rnd.nextBoolean() ? "nope, can't see you" : Rnd.nextBoolean() ? "nope" : "no");
+						reply(player, fpcName, speaker, Rnd.nextBoolean() ? "nope, can't see you" : Rnd.nextBoolean() ? "nope" : "no");
 					}
 					return;
 				}
@@ -182,14 +293,35 @@ public class FakePlayerChatManager implements IXmlReader
 
 			if (matches)
 			{
-				sendChat(player, fpcName, chatHolder.getAnswers().get(Rnd.get(chatHolder.getAnswers().size())));
+				reply(player, fpcName, speaker, chatHolder.getAnswers().get(Rnd.get(chatHolder.getAnswers().size())));
 				return;
 			}
 		}
 
 		if (fallback != null)
 		{
-			sendChat(player, fpcName, fallback.getAnswers().get(Rnd.get(fallback.getAnswers().size())));
+			reply(player, fpcName, speaker, fallback.getAnswers().get(Rnd.get(fallback.getAnswers().size())));
+		}
+	}
+	
+	/**
+	 * @param player the player it answers
+	 * @param fpcName the fake player's name
+	 * @param speaker the fake player answering in general chat, {@code null} to whisper
+	 * @param message the answer
+	 */
+	private void reply(Player player, String fpcName, Npc speaker, String message)
+	{
+		if (speaker == null)
+		{
+			sendChat(player, fpcName, message);
+			return;
+		}
+		
+		if (!speaker.isDead() && speaker.isSpawned())
+		{
+			final CreatureSay packet = new CreatureSay(speaker, ChatType.GENERAL, speaker.getName(), message);
+			World.getInstance().forEachVisibleObjectInRange(speaker, Player.class, GENERAL_RANGE, listener -> listener.sendPacket(packet));
 		}
 	}
 	
