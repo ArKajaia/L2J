@@ -174,6 +174,7 @@
 	.totals-body.collapsed { display: none; }
 	.totals-body .stat-up   { color: #8fe39a; }
 	.totals-body .stat-down { color: #ff9b90; }
+	.totals-body .stat-capped { color: #ff4a3d; font-weight: bold; }
 
 
 	.detail-panel {
@@ -975,9 +976,13 @@ function renderTotals() {
 	body.innerHTML = keys.map(key => {
 		const f = formatStat(key, totals[key]);
 		// The server only counts a capped stat up to its cap (a conditional key is capped like its base key).
-		const cap = configCaps[key.split("@")[0]];
-		const capped = (cap !== undefined) && (totals[key] > cap) ? ` (capped at +${cap}${key.split("@")[0].endsWith("_PCT") ? "%" : ""})` : "";
-		return `<div class="${f.good ? "stat-up" : "stat-down"}">${f.text}${capped}</div>`;
+		const base = key.split("@")[0];
+		const cap = configCaps[base];
+		if ((cap !== undefined) && (totals[key] >= cap)) {
+			// Reached its cap: more points here add nothing, so the line turns red. The hover tip names the cap.
+			return `<div class="stat-capped" title="Capped at +${cap}${base.endsWith("_PCT") ? "%" : ""}">${f.text} (Capped)</div>`;
+		}
+		return `<div class="${f.good ? "stat-up" : "stat-down"}">${f.text}</div>`;
 	}).join("");
 }
 
