@@ -497,6 +497,7 @@ let similarTimer = null;
 let selectedNodeId = null;   // node currently shown in the detail panel
 let configResetCost = "";      // full-reset price text ("Free", "100,000 Adena"), fetched from the server too
 let configRespecPerPoint = 0;   // Adena per point, fetched from the server so the page never hardcodes it
+let configCaps = {};            // most the tree adds to a stat ({DEX: 5, ...}), fetched from the server too
 
 // search state
 const SEARCH_LABEL_MAX = 40;    // force-label matched nodes only when there are this few, to avoid clutter
@@ -563,9 +564,11 @@ async function loadConfig() {
 		const data = await res.json();
 		configRespecPerPoint = data.respecAdenaPerPoint || 0;
 		configResetCost = data.resetCost || "";
+		configCaps = data.caps || {};
 	} catch (e) {
 		configRespecPerPoint = 0; // page still works, respec cost just won't be previewed
 		configResetCost = "";
+		configCaps = {};
 	}
 }
 
@@ -971,7 +974,10 @@ function renderTotals() {
 	}
 	body.innerHTML = keys.map(key => {
 		const f = formatStat(key, totals[key]);
-		return `<div class="${f.good ? "stat-up" : "stat-down"}">${f.text}</div>`;
+		// The server only counts a capped stat up to its cap (a conditional key is capped like its base key).
+		const cap = configCaps[key.split("@")[0]];
+		const capped = (cap !== undefined) && (totals[key] > cap) ? ` (capped at +${cap}${key.split("@")[0].endsWith("_PCT") ? "%" : ""})` : "";
+		return `<div class="${f.good ? "stat-up" : "stat-down"}">${f.text}${capped}</div>`;
 	}).join("");
 }
 

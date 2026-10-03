@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.l2jmobius.gameserver.config.custom.PassiveTreeConfig;
 import org.l2jmobius.gameserver.data.custom.PassiveTreeData;
 import org.l2jmobius.gameserver.managers.PassiveTreeManager;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -45,8 +46,11 @@ public class PassiveStatBonusCache
 		}
 	}
 	
-	/** Maximum the passive tree may contribute to any single stat. */
-	private static final Map<String, Double> CAPS = Map.ofEntries(Map.entry("STR", 5.0), Map.entry("DEX", 5.0), Map.entry("CON", 5.0), Map.entry("INT", 5.0), Map.entry("WIT", 5.0), Map.entry("MEN", 5.0),
+	/** Base stats the passive tree may contribute to, capped by {@link PassiveTreeConfig#BASE_STAT_CAP}. */
+	private static final Set<String> BASE_STATS = Set.of("STR", "DEX", "CON", "INT", "WIT", "MEN");
+	
+	/** Maximum the passive tree may contribute to any single non-base stat. */
+	private static final Map<String, Double> CAPS = Map.ofEntries( //
 		// keep the worst runaway offenders bounded too
 		Map.entry("CRIT_DMG_PCT", 60.0), Map.entry("CRIT_RATE_ADD", 150.0), // /1000 scale -> +15% crit
 		Map.entry("ACCURACY_ADD", 12.0), Map.entry("EVASION_ADD", 12.0), Map.entry("SHIELD_RATE_PCT", 25.0), Map.entry("REFLECT_PCT", 30.0),
@@ -62,6 +66,37 @@ public class PassiveStatBonusCache
 		Map.entry("INVENTORY_SLOTS_ADD", 40.0), Map.entry("WEIGHT_LIMIT_PCT", 100.0), Map.entry("EXP_RATE_PCT", 25.0), Map.entry("SP_RATE_PCT", 25.0));
 	
 	/**
+	 * @param key an effect key; a conditional key ({@code PDEF_PCT@HEAVY}) is capped like its base key
+	 * @return the most the tree may add to that key, or {@code null} if it is uncapped
+	 */
+	public static Double getCap(String key)
+	{
+		final int at = key.indexOf('@');
+		final String base = at > 0 ? key.substring(0, at) : key;
+		if (BASE_STATS.contains(base))
+		{
+			return PassiveTreeConfig.BASE_STAT_CAP < 0 ? null : (double) PassiveTreeConfig.BASE_STAT_CAP;
+		}
+		return CAPS.get(base);
+	}
+	
+	/**
+	 * @return every capped effect key and its cap, as {@link #getCap} applies them
+	 */
+	public static Map<String, Double> getCaps()
+	{
+		final Map<String, Double> caps = new HashMap<>(CAPS);
+		if (PassiveTreeConfig.BASE_STAT_CAP >= 0)
+		{
+			for (String stat : BASE_STATS)
+			{
+				caps.put(stat, (double) PassiveTreeConfig.BASE_STAT_CAP);
+			}
+		}
+		return caps;
+	}
+	
+	/**
 	 * @return every effect key the allocated nodes carry, including conditional ones such as {@code PDEF_PCT@HEAVY}
 	 */
 	public Set<String> keys()
@@ -72,9 +107,7 @@ public class PassiveStatBonusCache
 	public double get(String key)
 	{
 		final double raw = _totals.getOrDefault(key, 0.0);
-		// a conditional key (PDEF_PCT@HEAVY) is capped like its base key
-		final int at = key.indexOf('@');
-		final Double cap = CAPS.get(at > 0 ? key.substring(0, at) : key);
+		final Double cap = getCap(key);
 		if (cap == null)
 		{
 			return raw;
