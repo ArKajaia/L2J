@@ -542,35 +542,26 @@ public class NpcViewMod implements IBypassHandler
 			final PassiveGroup group = entry.getKey();
 			final List<Skill> skills = entry.getValue();
 			sb.append("<br1><table width=300 cellpadding=3 cellspacing=0 bgcolor=\"111111\"><tr><td><font color=\"").append(group.getColor()).append("\">").append(group.getTitle()).append("</font> <font color=\"707070\">(").append(skills.size()).append(")</font></td></tr></table>");
-			sb.append("<table width=300 cellpadding=1 cellspacing=0>");
-			for (int i = 0; i < skills.size(); i += 2)
+			// One skill per row, each in its own table: the client does not size nested tables in a shared row to the icon, so the rows overlapped.
+			boolean shade = false;
+			for (Skill skill : skills)
 			{
-				sb.append("<tr>");
-				for (int j = i; j < (i + 2); j++)
+				final boolean bonus = bonusIds.contains(skill.getId());
+				hasBonus |= bonus;
+				sb.append("<table width=300 cellpadding=1 cellspacing=0").append(shade ? " bgcolor=\"111111\"" : "").append("><tr>");
+				sb.append("<td width=36 height=36><img src=\"").append(skill.getIcon() != null ? skill.getIcon() : "icon.skill0000").append("\" width=32 height=32></td>");
+				sb.append("<td width=214><font color=\"").append(bonus ? "E6C35C" : "FFFFFF").append("\">");
+				if (group == PassiveGroup.NATURE)
 				{
-					if (j >= skills.size())
-					{
-						sb.append("<td width=150></td>");
-						continue;
-					}
-					
-					final Skill skill = skills.get(j);
-					final boolean bonus = bonusIds.contains(skill.getId());
-					hasBonus |= bonus;
-					sb.append("<td width=150><table cellpadding=0 cellspacing=0><tr><td width=34 height=34><img src=\"").append(skill.getIcon() != null ? skill.getIcon() : "icon.skill0000").append("\" width=32 height=32></td><td width=114><font color=\"").append(bonus ? "E6C35C" : "FFFFFF").append("\">");
-					if (group == PassiveGroup.NATURE)
-					{
-						sb.append(getNatureLabel(npc, skill)).append("</font>");
-					}
-					else
-					{
-						sb.append(skill.getName()).append("</font><br1><font color=\"808080\">Lv. ").append(skill.getLevel()).append("</font>");
-					}
-					sb.append("</td></tr></table></td>");
+					sb.append(getNatureLabel(npc, skill)).append("</font></td><td width=50></td>");
 				}
-				sb.append("</tr>");
+				else
+				{
+					sb.append(skill.getName()).append("</font></td><td width=50 align=right><font color=\"808080\">Lv. ").append(skill.getLevel()).append("</font></td>");
+				}
+				sb.append("</tr></table>");
+				shade = !shade;
 			}
-			sb.append("</table>");
 		}
 		
 		if (hasBonus)
