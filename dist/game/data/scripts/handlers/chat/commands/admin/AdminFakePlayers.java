@@ -31,6 +31,7 @@ import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
 import org.l2jmobius.gameserver.handler.IAdminCommandHandler;
 import org.l2jmobius.gameserver.managers.FakePlayerChatManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
+import org.l2jmobius.gameserver.managers.FakePlayerTownManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -51,7 +52,8 @@ public class AdminFakePlayers implements IAdminCommandHandler
 		"admin_fakechat",
 		"admin_fakepvp",
 		"admin_fakepvp_list",
-		"admin_fakepvp_clear"
+		"admin_fakepvp_clear",
+		"admin_faketown"
 	};
 	
 	@Override
@@ -73,6 +75,14 @@ public class AdminFakePlayers implements IAdminCommandHandler
 		if (command.startsWith("admin_fakeplayers"))
 		{
 			showMenu(activeChar);
+		}
+		else if (command.startsWith("admin_faketown"))
+		{
+			// The town fake players: how many per town, and what the targeted one is doing and plans to do.
+			for (String line : FakePlayerTownManager.getInstance().getInfo(activeChar.getTarget()))
+			{
+				activeChar.sendSysMessage(line);
+			}
 		}
 		else if (command.startsWith("admin_fakechat"))
 		{

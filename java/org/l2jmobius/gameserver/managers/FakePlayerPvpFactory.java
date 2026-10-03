@@ -79,6 +79,46 @@ public class FakePlayerPvpFactory
 {
 	/** Parameters that keep the AttackableAI archetype roll predictable (it only scales hate for these npcs). */
 	private static final StatSet PARAMETERS = new StatSet(Map.of("AIArchetype", "BALANCED"));
+	/** Chance (in %) a town fake player wears one of {@link #TOWN_HAIR_ACCESSORIES}. */
+	private static final int TOWN_HAIR_ACCESSORY_CHANCE = 22;
+	/** Hats, masks, ears and hairpins (hair slot) players wear in town. */
+	private static final int[] TOWN_HAIR_ACCESSORIES =
+	{
+		6843, // Cat Ears
+		6844, // Lady's Hair Pin
+		6845, // Pirate's Eye Patch
+		6846, // Monocle
+		7680, // Raccoon Ears
+		7681, // Outlaw's Eyepatch
+		7682, // Maiden's Hairpin
+		7683, // Rabbit Ears
+		7695, // Forget-me-not Hairpin
+		7696, // Daisy Hairpin
+		8184, // Party Hat
+		8185, // Feathered Hat
+		8186, // Artisan's Goggles
+		8187, // Demon Horns
+		8188, // Little Angel Wings
+		8189, // Fairy Antennae
+		8552, // Mask of Spirits
+		8557, // Blue Party Hat
+		8559, // Diadem
+		8560, // Teddy Bear Hat
+		8561, // Piggy Hat
+		8562, // Jester Hat
+		8563, // Wizard Hat
+		8564, // Dapper Cap
+		8565, // Romantic Chapeau
+		8569, // Half Face Mask
+		8910, // Black Feather Mask
+		8912, // Single Stem Flower
+		8913, // Butterfly Hairpin
+		8916, // Eye Patch
+		8918, // Leather Cap
+		8919, // First Mate's Hat
+		8920, // Angel Halo
+		8922, // Pirate Hat
+	};
 	
 	private FakePlayerPvpFactory()
 	{
@@ -494,15 +534,17 @@ public class FakePlayerPvpFactory
 	
 	/**
 	 * A peaceful fake player that walks around a town: it looks like a character of the build's class and level in the gear of that level, but it can't be attacked and doesn't fight (no {@link FakePlayerPvpProfile}).
-	 * @param build the build
+	 * @param build the build (its gear kits, and its class unless {@code forcedClass} is given)
 	 * @param level the level
 	 * @param npcId a free npc id for the template
 	 * @param name the character name
+	 * @param forcedClass the class it shows, {@code null} for the one of the build at this level (town buffers wear the gear of a build of the same kind)
+	 * @param sitting {@code true} if it sits when it appears
 	 * @return a new template, or {@code null} if the build can't be made at this level
 	 */
-	public static NpcTemplate createTownTemplate(FakePlayerPvpBuild build, int level, int npcId, String name)
+	public static NpcTemplate createTownTemplate(FakePlayerPvpBuild build, int level, int npcId, String name, PlayerClass forcedClass, boolean sitting)
 	{
-		final PlayerClass playerClass = build.getPlayerClass(level);
+		final PlayerClass playerClass = forcedClass != null ? forcedClass : build.getPlayerClass(level);
 		final PlayerTemplate classTemplate = PlayerTemplateData.getInstance().getTemplate(playerClass);
 		if (classTemplate == null)
 		{
@@ -517,7 +559,11 @@ public class FakePlayerPvpFactory
 		final ItemTemplate shieldItem = getItem(weapons != null ? weapons.getLHand() : 0);
 		final Armor shield = ((shieldItem instanceof Armor) && (shieldItem.getItemType() == ArmorType.SHIELD) && ((weapon == null) || (weapon.getBodyPart() != BodyPart.LR_HAND))) ? (Armor) shieldItem : null;
 
-		final PlayerClass baseClass = build.getPlayerClass(0);
+		PlayerClass baseClass = playerClass;
+		while (baseClass.getParent() != null)
+		{
+			baseClass = baseClass.getParent();
+		}
 		final boolean female = (baseClass == PlayerClass.FEMALE_SOLDIER) || ((baseClass != PlayerClass.MALE_SOLDIER) && Rnd.nextBoolean());
 
 		final StatSet set = new StatSet(new HashMap<>());
@@ -572,6 +618,13 @@ public class FakePlayerPvpFactory
 		set.set("armorEnchantLevel", FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.ARMOR_ENCHANT, level));
 		set.set("recommends", Rnd.get(0, 30));
 		set.set("fakePlayerTalkable", true);
+		set.set("sitting", sitting);
+
+		// Some wear a hat, a mask or ears from an event, like players in town.
+		if (Rnd.get(100) < TOWN_HAIR_ACCESSORY_CHANCE)
+		{
+			set.set("equipHair", getId(getItem(TOWN_HAIR_ACCESSORIES[Rnd.get(TOWN_HAIR_ACCESSORIES.length)])));
+		}
 
 		final NpcTemplate template = new NpcTemplate(set);
 		template.setParameters(PARAMETERS);
