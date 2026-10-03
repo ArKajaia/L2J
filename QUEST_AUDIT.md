@@ -16,8 +16,8 @@ The scan compared every HTML file name in each quest's Java code with the files 
 
 | Quest | Problem |
 |---|---|
-| Q10286_ReunionWithSirra | `32781-02.html` and `32781-03.html` are referenced (event handler, line ~151) but missing. `jinia_npc_q10286_10.htm` is missing too (`TODO`, line ~123). |
-| Q10287_StoryOfThoseLeft | `jinia_npc_q10287_06.htm` is missing (`TODO`, line ~105). |
+| ~~Q10286_ReunionWithSirra~~ ✅ fixed | `32781-02.html` and `32781-03.html` were referenced but missing. Both are added, using Q10285's Jinia wording. `jinia_npc_q10286_10.htm` was a retail file name; `32760-08.html` already shows that text, so the TODO is removed. |
+| ~~Q10287_StoryOfThoseLeft~~ ✅ fixed | `32760-06.html` (shown as Jinia sends the player out of the hideout) had no text, only "Jinia:". It now tells the player to meet Rafforty for the reward. The TODO naming the retail file `jinia_npc_q10287_06.htm` is removed. |
 | ~~Q00309_ForAGoodCause~~ ✅ fixed | The reward exchange returns `32646-15.htm`/`32646-16.htm` (lines 233/237). These names were copied from Q00308's NPC. The files that exist are `32647-15.html`/`32647-16.html`, so the player gets an empty window after every exchange. |
 | ~~Q00308_ReedFieldMaintenance~~ ✅ fixed | Line 161 looks up Q00238 with `.class.getName()` (`quests.Q00238_...`). Quest states are stored under `getSimpleName()`, so the lookup always returns `null`, and `claimreward` always shows `32646-12.html`, even to players who completed Q00238. |
 | Q10295_SevenSignsSolinasTomb *(extension)* | `32787-06.html` is missing (line ~551). |
@@ -75,8 +75,8 @@ Columns: **Lines** is the size of the Java code and **HTML** is the number of di
 | 14 | Q10283_RequestOfIceMerchant | 205 | 19 | | Rafforty | Needs Q00115 (outside the list) |
 | 15 | Q10284_AcquisitionOfDivineSword | 333 | 44 | | Rafforty | Needs Q10283 |
 | 16 | Q10285_MeetingSirra | 375 | 42 | | Rafforty | Needs Q10284 |
-| 17 | Q10286_ReunionWithSirra ⚠ | 263 | 22 | | Rafforty | Needs Q10285. 3 missing HTML files |
-| 18 | Q10287_StoryOfThoseLeft ⚠ | 243 | 20 | | Rafforty | Needs Q10286. 1 missing HTML file |
+| 17 | Q10286_ReunionWithSirra ✅ | 263 | 22 | | Rafforty | Needs Q10285. Missing HTML added |
+| 18 | Q10287_StoryOfThoseLeft ✅ | 243 | 20 | | Rafforty | Needs Q10286. Empty dialog filled in |
 | 19 | Q10288_SecretMission | 184 | 18 | | Aquilani, Dominic | No Q10287 check (verify) |
 | 20 | Q10289_FadeToBlack | 337 | 11 | | Greymore | Needs Q10288 |
 | 21 | Q00270_TheOneWhoEndsSilence | 460 | 12 | | Greymore (fake) | Needs Q10288 |
