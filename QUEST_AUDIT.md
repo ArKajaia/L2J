@@ -104,6 +104,38 @@ Bugs found and fixed:
 | Q00108_JumbleTumbleDiamondFuss | `giveItemRandomly` returns `true` only when the limit is reached, so gem drops made no sound, and the "item got" sound played on every kill once one gem type was full. The method now plays the sounds itself. |
 | Q00419_GetAPet | A player who left the pet test before finishing (closed the window or walked away) was told to meet the Animal Lovers again, but those visits could never bring the state back, so the quest could only be restarted from the beginning. An unfinished test now restarts from the first question. Talking to Metty, Elice or Bella during the test also changed the test's answer count; it no longer does. |
 
+## Levels 18–42: Kaneus, pets, Little Wing, Pailaka, soul crystals
+
+Mutated Kaneus Gludio/Dion/Heine (10276–10278), Blood Fiend (164), Dangerous Seduction (170), Help the Uncle/Sister/Son (42–44), Little Wing (420), Pailaka – Song of Ice and Fire (128) and Enhance Your Weapon (350) were compared with the reference datapack. Their level gates, races, NPCs, monsters, items, drop chances and rewards match it. The dialogs match too, except for Enhance Your Weapon, which this server reorganized: its soul crystal data is loaded by the server (`LevelUpCrystalData.xml`) and it has an extra under-level dialog.
+
+| Quest | Start | Reward |
+|---|---|---|
+| Q10276_MutatedKaneusGludio | Lv 18, Bathis (Gludio) | 8,500 adena (no EXP). Tissues from Tomlan Kamos and Ol Ariosh, the bosses of Kamaloka Hall of the Abyss lv 23 and 26 |
+| Q10277_MutatedKaneusDion | Lv 28, Lukas (Dion) | 20,000 adena. Crimson Hatu Otis and Seer Flouros (Kamaloka lv 33 and 36) |
+| Q10278_MutatedKaneusHeine | Lv 38, Gosta (Heine) | 50,000 adena. Blade Otis and Weird Bunei (Kamaloka lv 43 and 46) |
+| Q00164_BloodFiend | Lv 21, not Dark Elf | 42,130 adena, 35,637 EXP / 1,854 SP |
+| Q00170_DangerousSeduction | Lv 21, Dark Elf only | 102,680 adena, 38,607 EXP / 4,018 SP |
+| Q00044_HelpTheSon | Lv 24, Lundy | Pet Exchange Ticket: Kookaburra |
+| Q00042_HelpTheUncle | Lv 25, Waters | Pet Exchange Ticket: Buffalo |
+| Q00043_HelpTheSister | Lv 26, Cooper | Pet Exchange Ticket: Cougar |
+| Q00420_LittleWing | Lv 35, Cooper | Dragonflute of Wind, Star or Twilight (hatchling) |
+| Q00128_PailakaSongOfIceAndFire | Lv 36–42, Adler | 810,000 EXP / 50,000 SP, Pailaka Ring, Pailaka Earring, Scroll of Escape, +10,000 vitality points (half the maximum) |
+| Q00350_EnhanceYourWeapon | Lv 40, Jurek, Gideon or Winonin | A stage 0 soul crystal; needed for crystals to absorb souls |
+
+Any pet manager swaps the pet tickets for the baby pet (`PetManager` "exchange"). Pailaka was already fixed in earlier commits (7aea3ad1, ba86264d); nothing new was found there.
+
+Bugs found and fixed:
+
+| Quest | Problem |
+|---|---|
+| Q10276/Q10277/Q10278 Mutated Kaneus | If the player who landed the last hit on the Kamaloka boss did not have the quest, no party member got the tissue, and the boss does not come back until the next Kamaloka run. Now any party member on the quest can get it. Party members also had to be nowhere near the boss; they now have to be within party range. |
+| Q00420_LittleWing | If the Deluxe Fairy Stone broke on the way to Mimyu (cond 4), Byron sent the player to Cronos and Cronos sent them back to Byron, so the quest could not go on. Cronos now offers a new stone, as he already did at cond 5. |
+| Q00420_LittleWing | Mimyu's "give back the Fairy Dust" choice needed more than one Fairy Dust, but the quest gives exactly one, so that choice (Hatchling Food or the 5% Hatchling Armor) did nothing. |
+| Q00420_LittleWing | Maria's link moved the quest on even if the materials were gone by the time it was clicked, with no stone made. It now shows her "bring the materials" dialog instead. |
+| Q00420_LittleWing | Toad Skin and drake egg drops went to a random party member who might be on another step, have enough already, or hunt another drake, so the drop was lost. Only members who still need it are picked now. |
+| Q00420_LittleWing | When a new stone was made, Byron's lines depended on the old stone instead of the new one, so a new ordinary stone got the "pure white stone" warning. |
+| Q00350_EnhanceYourWeapon | The "do you have a crystal" check only covered stages 0–10. A player holding a stage 11 or higher crystal was offered a new stage 0 one. With two crystals in the inventory, neither absorbs souls. |
+
 ## Checklist for each quest
 
 1. **Start**: level gate, including any upper limit, plus race/class/prerequisite checks. The "too low" and "already done" dialogs must appear when they should.
