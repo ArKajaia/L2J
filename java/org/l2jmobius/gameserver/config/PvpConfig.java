@@ -47,6 +47,8 @@ public class PvpConfig
 	public static int ANTIFEED_INTERVAL;
 	public static int PVP_NORMAL_TIME;
 	public static int PVP_PVP_TIME;
+	public static double PVP_ADENA_DROP_BONUS_PER_POINT;
+	public static double PVP_ADENA_DROP_BONUS_MAX;
 	
 	public static void load()
 	{
@@ -76,5 +78,7 @@ public class PvpConfig
 		ANTIFEED_INTERVAL = config.getInt("AntiFeedInterval", 120) * 1000;
 		PVP_NORMAL_TIME = config.getInt("PvPVsNormalTime", 120000);
 		PVP_PVP_TIME = config.getInt("PvPVsPvPTime", 60000);
+		PVP_ADENA_DROP_BONUS_PER_POINT = config.getDouble("PvpAdenaDropBonusPerPoint", 0.1);
+		PVP_ADENA_DROP_BONUS_MAX = config.getDouble("PvpAdenaDropBonusMax", 0);
 	}
 }
