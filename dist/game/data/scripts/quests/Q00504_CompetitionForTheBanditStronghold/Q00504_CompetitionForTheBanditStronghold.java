@@ -23,6 +23,7 @@ package quests.Q00504_CompetitionForTheBanditStronghold;
 import org.l2jmobius.gameserver.managers.CHSiegeManager;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.clan.Clan;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.script.QuestSound;
 import org.l2jmobius.gameserver.model.script.QuestState;
@@ -73,11 +74,38 @@ public final class Q00504_CompetitionForTheBanditStronghold extends Quest
 			return htmltext;
 		}
 		
+		final Clan clan = player.getClan();
+		if (!BANDIT_STRONGHOLD.isWaitingBattle())
+		{
+			htmltext = getHtm(player, "35437-09.html");
+			htmltext = htmltext.replace("%nextSiege%", BANDIT_STRONGHOLD.getSiegeDate().getTime().toString());
+			return htmltext;
+		}
+		
+		if ((clan == null) || (clan.getLevel() < 4))
+		{
+			return "35437-04.html";
+		}
+		
+		if (!player.isClanLeader())
+		{
+			return "35437-05.html";
+		}
+		
+		if ((clan.getHideoutId() > 0) || (clan.getFortId() > 0) || (clan.getCastleId() > 0))
+		{
+			return "35437-10.html";
+		}
+		
 		switch (st.getState())
 		{
 			case State.CREATED:
 			{
-				if (BANDIT_STRONGHOLD.getSiege().getAttackers().size() >= 5)
+				if (hasQuestItems(player, TROPHY_OF_ALLIANCE))
+				{
+					htmltext = "35437-11.html";
+				}
+				else if (BANDIT_STRONGHOLD.getSiege().getAttackers().size() >= 5)
 				{
 					htmltext = "35437-00.htm";
 				}
