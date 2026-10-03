@@ -120,7 +120,7 @@ public class Q10286_ReunionWithSirra extends Quest
 				{
 					qs.setCond(5, true);
 					player.teleToLocation(EXIT_LOC, 0);
-					htmltext = event; // TODO: missing "jinia_npc_q10286_10.htm"
+					htmltext = event;
 				}
 				break;
 			}

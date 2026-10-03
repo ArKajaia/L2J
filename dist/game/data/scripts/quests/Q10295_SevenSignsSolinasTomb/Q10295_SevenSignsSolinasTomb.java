@@ -551,6 +551,11 @@ public class Q10295_SevenSignsSolinasTomb extends Quest
 								htmltext = "32787-06.html";
 								break;
 							}
+							case 6:
+							{
+								htmltext = "32787-07.html";
+								break;
+							}
 						}
 					}
 					break;

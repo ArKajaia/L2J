@@ -102,7 +102,7 @@ public class Q10287_StoryOfThoseLeft extends Quest
 				{
 					qs.setCond(5, true);
 					player.teleToLocation(EXIT_LOC, 0);
-					htmltext = event; // TODO: missing "jinia_npc_q10287_06.htm"
+					htmltext = event;
 				}
 				break;
 			}

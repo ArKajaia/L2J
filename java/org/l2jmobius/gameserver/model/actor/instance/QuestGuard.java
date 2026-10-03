@@ -66,7 +66,7 @@ public class QuestGuard extends Guard
 		}
 		
 		// Delayed notification
-		if (killer.isAttackable() && EventDispatcher.getInstance().hasListener(EventType.ON_ATTACKABLE_KILL, this))
+		if ((killer != null) && killer.isAttackable() && EventDispatcher.getInstance().hasListener(EventType.ON_ATTACKABLE_KILL, this))
 		{
 			EventDispatcher.getInstance().notifyEventAsyncDelayed(new OnAttackableKill(null, this, false), this, _onKillDelay);
 		}
