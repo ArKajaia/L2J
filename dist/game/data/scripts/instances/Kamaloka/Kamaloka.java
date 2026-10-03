@@ -100,6 +100,12 @@ public class Kamaloka extends InstanceScript
 	};
 	
 	/**
+	 * Remove buffs from player and pet on enter.<br>
+	 * On retail buffs are removed (except BUFFS_WHITELIST); disabled here so players keep their buffs.
+	 */
+	private static final boolean REMOVE_BUFFS_ON_ENTER = false;
+	
+	/**
 	 * List of buffs NOT removed on enter from player and pet<br>
 	 * On retail only newbie guide buffs not removed<br>
 	 * CAUTION: array must be sorted in ascension order!
@@ -529,6 +535,11 @@ public class Kamaloka extends InstanceScript
 	 */
 	private void removeBuffs(Creature creature)
 	{
+		if (!REMOVE_BUFFS_ON_ENTER)
+		{
+			return;
+		}
+		
 		final Function<BuffInfo, Boolean> removeBuffs = info ->
 		{
 			if ((info != null) && !info.getSkill().isStayAfterDeath() && (Arrays.binarySearch(BUFFS_WHITELIST, info.getSkill().getId()) < 0))
