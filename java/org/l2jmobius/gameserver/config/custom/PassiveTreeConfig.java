@@ -37,6 +37,9 @@ public class PassiveTreeConfig
 	/** Seconds a player must wait after switching template before switching again. */
 	public static int TEMPLATE_SWITCH_DELAY = 60;
 
+	/** Most the tree may add to each base stat (STR, DEX, CON, INT, WIT, MEN). Negative = no cap. */
+	public static int BASE_STAT_CAP = 5;
+
 	public static int RESET_ITEM_ID = 57; // Adena
 	public static long RESET_ITEM_COUNT = 100000;
 
@@ -50,6 +53,7 @@ public class PassiveTreeConfig
 		TEMPLATE_COUNT = Math.max(1, Math.min(9, config.getInt("PassiveTreeTemplateCount", 5)));
 		TEMPLATE_PEACE_ZONE_ONLY = config.getBoolean("PassiveTreeTemplatePeaceZoneOnly", true);
 		TEMPLATE_SWITCH_DELAY = Math.max(0, config.getInt("PassiveTreeTemplateSwitchDelay", 60));
+		BASE_STAT_CAP = config.getInt("PassiveTreeBaseStatCap", 5);
 		RESET_ITEM_ID = config.getInt("PassiveTreeResetItemId", 57);
 		RESET_ITEM_COUNT = Math.max(0, config.getLong("PassiveTreeResetItemCount", 100000));
 		RESPEC_ADENA_PER_POINT = Math.max(0, config.getLong("PassiveTreeRefundAdenaPerPoint", 1000));

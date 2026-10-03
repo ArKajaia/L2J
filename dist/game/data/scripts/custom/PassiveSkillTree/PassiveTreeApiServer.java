@@ -28,6 +28,7 @@ import org.l2jmobius.gameserver.managers.PassiveTreeManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
+import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
 
 /**
  * Minimal, dependency-free (JDK-only) HTTP API backing the web visual tree planner, plus static hosting for the planner page itself.
@@ -471,11 +472,22 @@ public class PassiveTreeApiServer
 		sendText(exchange, success ? 200 : 409, "application/json", json.toString());
 	}
 
-	/** Exposes the respec and reset costs so the web page never has to hardcode them. */
+	/** Exposes the respec and reset costs and the stat caps so the web page never has to hardcode them. */
 	private void handleConfig(HttpExchange exchange) throws IOException
 	{
 		final StringBuilder json = new StringBuilder();
-		json.append("{\"respecAdenaPerPoint\":").append(PassiveTreeConfig.RESPEC_ADENA_PER_POINT).append(",").append("\"resetCost\":\"").append(escape(PassiveTreeManager.getInstance().getResetCostText())).append("\"}");
+		json.append("{\"respecAdenaPerPoint\":").append(PassiveTreeConfig.RESPEC_ADENA_PER_POINT).append(",").append("\"resetCost\":\"").append(escape(PassiveTreeManager.getInstance().getResetCostText())).append("\",\"caps\":{");
+		boolean first = true;
+		for (Map.Entry<String, Double> cap : PassiveStatBonusCache.getCaps().entrySet())
+		{
+			if (!first)
+			{
+				json.append(",");
+			}
+			first = false;
+			json.append("\"").append(escape(cap.getKey())).append("\":").append(cap.getValue());
+		}
+		json.append("}}");
 		sendText(exchange, 200, "application/json", json.toString());
 	}
 	
