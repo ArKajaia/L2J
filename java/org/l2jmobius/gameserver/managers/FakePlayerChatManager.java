@@ -23,6 +23,8 @@ package org.l2jmobius.gameserver.managers;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import org.w3c.dom.Document;
@@ -58,6 +60,31 @@ public class FakePlayerChatManager implements IXmlReader
 	private static final int GENERAL_MIN_DELAY = 2000;
 	private static final int GENERAL_MAX_DELAY = 6000;
 	private static final int GENERAL_RANGE = 1250;
+	/** A question to nobody in particular: it ends with a question mark, or starts with one of these words. */
+	private static final String[] QUESTION_WORDS =
+	{
+		"who",
+		"what",
+		"where",
+		"when",
+		"why",
+		"how",
+		"which",
+		"anyone",
+		"any",
+		"is",
+		"are",
+		"can",
+		"does",
+		"do",
+		"did",
+		"should",
+		"wtb",
+		"wts"
+	};
+	
+	/** When a fake player may next answer a question a player asked nobody in particular, by player object id. */
+	private final Map<Integer, Long> _nextNearbyAnswer = new ConcurrentHashMap<>();
 	
 	protected FakePlayerChatManager()
 	{
@@ -115,18 +142,84 @@ public class FakePlayerChatManager implements IXmlReader
 			return;
 		}
 		
-		final Npc npc = findAddressee(player, message.toLowerCase());
+		final String text = message.toLowerCase().trim();
+		Npc npc = findAddressee(player, text);
+		final boolean addressed = npc != null;
+		
+		// A question to nobody in particular: now and then the closest fake player answers it, when it knows what to say.
+		if (!addressed && isQuestion(text) && (FakePlayersConfig.FAKE_PLAYER_CHAT_NEARBY_CHANCE > 0))
+		{
+			final long now = System.currentTimeMillis();
+			final Long next = _nextNearbyAnswer.get(player.getObjectId());
+			if (((next == null) || (now >= next)) && (Rnd.get(100) < FakePlayersConfig.FAKE_PLAYER_CHAT_NEARBY_CHANCE))
+			{
+				npc = findClosest(player);
+				if (npc != null)
+				{
+					_nextNearbyAnswer.put(player.getObjectId(), now + (FakePlayersConfig.FAKE_PLAYER_CHAT_NEARBY_COOLDOWN * 1000L));
+				}
+			}
+		}
+		
 		if (npc != null)
 		{
-			final String fpcName = npc.getName();
+			final Npc speaker = npc;
+			final String fpcName = speaker.getName();
 			ThreadPool.schedule(() ->
 			{
-				if (!npc.isDead() && npc.isSpawned())
+				if (!speaker.isDead() && speaker.isSpawned())
 				{
-					manageResponce(player, fpcName, message, npc);
+					manageResponce(player, fpcName, message, speaker, !addressed);
 				}
 			}, Rnd.get(GENERAL_MIN_DELAY, GENERAL_MAX_DELAY));
 		}
+	}
+	
+	/**
+	 * @param text what a player said, in lower case
+	 * @return {@code true} if it is a question: it ends with a question mark or starts with a question word
+	 */
+	private static boolean isQuestion(String text)
+	{
+		if (text.endsWith("?"))
+		{
+			return true;
+		}
+		
+		final String first = text.split("[^a-z0-9]+", 2)[0];
+		for (String word : QUESTION_WORDS)
+		{
+			if (first.equals(word))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * @param player the player
+	 * @return the closest talkable fake player within {@link FakePlayersConfig#FAKE_PLAYER_CHAT_NEARBY_RANGE} of {@code player}, {@code null} if none
+	 */
+	private static Npc findClosest(Player player)
+	{
+		Npc closest = null;
+		double closestDistance = Double.MAX_VALUE;
+		for (Npc npc : World.getInstance().getVisibleObjectsInRange(player, Npc.class, FakePlayersConfig.FAKE_PLAYER_CHAT_NEARBY_RANGE))
+		{
+			if (!isTalkable(npc, player))
+			{
+				continue;
+			}
+			
+			final double distance = player.calculateDistance2D(npc);
+			if (distance < closestDistance)
+			{
+				closest = npc;
+				closestDistance = distance;
+			}
+		}
+		return closest;
 	}
 	
 	/**
@@ -197,7 +290,7 @@ public class FakePlayerChatManager implements IXmlReader
 	
 	private void manageResponce(Player player, String fpcName, String message)
 	{
-		manageResponce(player, fpcName, message, null);
+		manageResponce(player, fpcName, message, null, false);
 	}
 	
 	/**
@@ -206,8 +299,9 @@ public class FakePlayerChatManager implements IXmlReader
 	 * @param fpcName the fake player's name
 	 * @param message what the player said
 	 * @param speaker the fake player answering in general chat, {@code null} to answer with a whisper
+	 * @param matchOnly {@code true} to answer only when a template matches (no DEFAULT answer), for a question it wasn't asked itself
 	 */
-	private void manageResponce(Player player, String fpcName, String message, Npc speaker)
+	private void manageResponce(Player player, String fpcName, String message, Npc speaker, boolean matchOnly)
 	{
 		if (player == null)
 		{
@@ -298,7 +392,7 @@ public class FakePlayerChatManager implements IXmlReader
 			}
 		}
 
-		if (fallback != null)
+		if ((fallback != null) && !matchOnly)
 		{
 			reply(player, fpcName, speaker, fallback.getAnswers().get(Rnd.get(fallback.getAnswers().size())));
 		}
