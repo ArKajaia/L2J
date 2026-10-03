@@ -94,7 +94,15 @@ public class Q00129_PailakaDevilsLegacy extends Quest
 			}
 			case "32498-05.htm":
 			{
-				if (!qs.isStarted())
+				if (player.getLevel() < MIN_LEVEL)
+				{
+					htmltext = "32498-11.htm";
+				}
+				else if (player.getLevel() > MAX_LEVEL)
+				{
+					htmltext = "32498-12.htm";
+				}
+				else if (qs.isCreated())
 				{
 					htmltext = event;
 					qs.startQuest();
@@ -229,28 +237,30 @@ public class Q00129_PailakaDevilsLegacy extends Quest
 			}
 			case ADVENTURER2:
 			{
-				if (player.hasSummon())
+				final Instance inst = InstanceManager.getInstance().getInstance(npc.getInstanceId());
+				if (qs.isCompleted())
+				{
+					htmltext = "32511-03.htm";
+				}
+				else if (!qs.isStarted() || !qs.isCond(4) || (inst == null) || !inst.containsPlayer(player.getObjectId()))
+				{
+					break;
+				}
+				else if (player.hasSummon())
 				{
 					htmltext = "32511-02.htm";
 				}
 				else
 				{
-					final Instance inst = InstanceManager.getInstance().getInstance(npc.getInstanceId());
 					qs.exitQuest(false, true);
 					inst.setDuration(EXIT_TIME * 60000);
 					inst.setEmptyDestroyTime(0);
-					if (inst.containsPlayer(player.getObjectId()))
-					{
-						npc.setTarget(player);
-						npc.doCast(VITALITY_REPLENISHING.getSkill());
-						addExpAndSp(player, 10800000, 950000);
-						rewardItems(player, BRACELET, 1);
-						giveItems(player, ESCAPE, 1);
-					}
-					else
-					{
-						htmltext = "32511-01.htm";
-					}
+					npc.setTarget(player);
+					npc.doCast(VITALITY_REPLENISHING.getSkill());
+					addExpAndSp(player, 10800000, 950000);
+					rewardItems(player, BRACELET, 1);
+					giveItems(player, ESCAPE, 1);
+					htmltext = "32511-01.htm";
 				}
 				break;
 			}

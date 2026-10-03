@@ -109,7 +109,15 @@ public class Q00128_PailakaSongOfIceAndFire extends Quest
 			}
 			case "32497-03.htm":
 			{
-				if (!qs.isStarted())
+				if (player.getLevel() < MIN_LEVEL)
+				{
+					htmltext = "32497-05.htm";
+				}
+				else if (player.getLevel() > MAX_LEVEL)
+				{
+					htmltext = "32497-06.htm";
+				}
+				else if (qs.isCreated())
 				{
 					qs.startQuest();
 					htmltext = event;
@@ -157,9 +165,14 @@ public class Q00128_PailakaSongOfIceAndFire extends Quest
 			}
 			case "32510-02.htm":
 			{
-				qs.exitQuest(false, true);
-				
+				// Only Adler inside the instance, and only once: the quest must be at its last step.
 				final Instance inst = InstanceManager.getInstance().getInstance(npc.getInstanceId());
+				if ((npc.getId() != ADLER2) || !qs.isStarted() || !qs.isCond(9) || (inst == null))
+				{
+					break;
+				}
+				
+				qs.exitQuest(false, true);
 				inst.setDuration(EXIT_TIME * 60000);
 				inst.setEmptyDestroyTime(0);
 				

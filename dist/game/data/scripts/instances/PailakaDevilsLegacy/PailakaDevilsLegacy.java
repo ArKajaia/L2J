@@ -105,7 +105,13 @@ public class PailakaDevilsLegacy extends InstanceScript
 		String htmltext = null;
 		if (event.equals("enter"))
 		{
+			// Only players on the quest may enter (the link is in the Survivor's quest dialogs).
 			final QuestState qs = player.getQuestState(Q00129_PailakaDevilsLegacy.class.getSimpleName());
+			if ((qs == null) || !qs.isStarted())
+			{
+				return null;
+			}
+			
 			enterInstance(player, TEMPLATE_ID);
 			if (qs.isCond(1))
 			{
@@ -138,6 +144,11 @@ public class PailakaDevilsLegacy extends InstanceScript
 				}
 				case "LEMATAN_TELEPORT":
 				{
+					if (npc.isDead())
+					{
+						break;
+					}
+					
 					npc.asAttackable().clearAggroList();
 					npc.disableCoreAI(false);
 					npc.teleToLocation(LEMATAN_PORT);
@@ -319,7 +330,8 @@ public class PailakaDevilsLegacy extends InstanceScript
 	@Override
 	public void onMoveFinished(Npc npc)
 	{
-		if (npc.getLocation() == LEMATAN_PORT_POINT)
+		// Lematan ran to the shore at half HP: teleport him to his ship once he gets there.
+		if (npc.isScriptValue(1) && (npc.getVariables().getInt("ON_SHIP", 0) == 0) && (npc.calculateDistance2D(LEMATAN_PORT_POINT) < 100))
 		{
 			npc.doCast(AV_TELEPORT.getSkill());
 			startQuestTimer("LEMATAN_TELEPORT", 2000, npc, null);

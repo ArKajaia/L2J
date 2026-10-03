@@ -158,7 +158,12 @@ public class PailakaInjuredDragon extends InstanceScript
 		{
 			case "enter":
 			{
-				enterInstance(player, INSTANCE_ID);
+				// Only players on the quest may enter (the quest calls this after its own checks).
+				final QuestState qs = player.getQuestState(Q00144_PailakaInjuredDragon.class.getSimpleName());
+				if ((qs != null) && qs.isStarted())
+				{
+					enterInstance(player, INSTANCE_ID);
+				}
 				break;
 			}
 			case "LATANA_500":

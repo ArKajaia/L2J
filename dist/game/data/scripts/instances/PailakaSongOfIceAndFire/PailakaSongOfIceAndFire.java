@@ -23,9 +23,12 @@ import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.instancezone.InstanceWorld;
 import org.l2jmobius.gameserver.model.script.InstanceScript;
+import org.l2jmobius.gameserver.model.script.QuestState;
 import org.l2jmobius.gameserver.model.zone.ZoneType;
 import org.l2jmobius.gameserver.network.NpcStringId;
 import org.l2jmobius.gameserver.network.enums.ChatType;
+
+import quests.Q00128_PailakaSongOfIceAndFire.Q00128_PailakaSongOfIceAndFire;
 
 /**
  * Pailaka Song of Ice and Fire Instance zone.
@@ -82,7 +85,12 @@ public class PailakaSongOfIceAndFire extends InstanceScript
 		{
 			case "enter":
 			{
-				enterInstance(player, TEMPLATE_ID);
+				// Only players on the quest may enter (the link is in Adler's quest dialogs).
+				final QuestState qs = player.getQuestState(Q00128_PailakaSongOfIceAndFire.class.getSimpleName());
+				if ((qs != null) && qs.isStarted())
+				{
+					enterInstance(player, TEMPLATE_ID);
+				}
 				break;
 			}
 			case "GARGOS_LAUGH":
@@ -105,11 +113,21 @@ public class PailakaSongOfIceAndFire extends InstanceScript
 			}
 			case "BLOOM_TIMER":
 			{
+				if (npc.isDead())
+				{
+					break;
+				}
+				
 				startQuestTimer("BLOOM_TIMER2", getRandom(2, 4) * 60 * 1000, npc, null);
 				break;
 			}
 			case "BLOOM_TIMER2":
 			{
+				if (npc.isDead())
+				{
+					break;
+				}
+				
 				npc.setInvisible(!npc.isInvisible());
 				startQuestTimer("BLOOM_TIMER", 5000, npc, null);
 				break;
