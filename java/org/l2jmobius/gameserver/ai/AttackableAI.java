@@ -2003,7 +2003,7 @@ public class AttackableAI extends CreatureAI
 	 * @param npc the Mage
 	 * @param target the target it is fighting
 	 * @param combinedCollision the Mage's plus the target's collision radius
-	 * @param canMove {@code false} while the Mage is held in place (cast only, no kiting or approaching)
+	 * @param canMove {@code false} while the Mage is held in place (cast only, no kiting or approaching; with every spell on cooldown it falls back to melee)
 	 * @return {@code true} if this tick was handled, {@code false} to fall back to the stock logic (out of mana, silenced, or nothing it can do from here)
 	 */
 	private boolean thinkMageAttack(Attackable npc, Creature target, int combinedCollision, boolean canMove)
@@ -2072,8 +2072,14 @@ public class AttackableAI extends CreatureAI
 			return true;
 		}
 		
-		// Every spell is on cooldown: stay in casting range, but don't close in to melee.
-		if (canMove && (npc.calculateDistance2D(target) > (shortestRange + combinedCollision)))
+		// Every spell is on cooldown. A Mage held in place can't keep its distance anyway, so let it melee (stock logic).
+		if (!canMove)
+		{
+			return false;
+		}
+
+		// Otherwise stay in casting range, but don't close in to melee.
+		if (npc.calculateDistance2D(target) > (shortestRange + combinedCollision))
 		{
 			moveToPawn(target, shortestRange);
 		}
@@ -2198,11 +2204,11 @@ public class AttackableAI extends CreatureAI
 				continue;
 			}
 			
-			if (!allowsParameterizedCast(npc, sk, target))
+			if (!(npc.canMove() ? allowsParameterizedCast(npc, sk, target) : allowsStationaryCast(npc, sk, target)))
 			{
 				continue;
 			}
-			
+
 			// Never aim a support skill at the enemy. tryCast() is only ever
 			// called with the attack target, so a non-offensive skill here
 			// would buff/heal whoever the monster is fighting.
@@ -3330,6 +3336,43 @@ public class AttackableAI extends CreatureAI
 		return passesParameterizedGates(slot, params, caster, target);
 	}
 	
+	/**
+	 * Like {@link #allowsParameterizedCast}, for monsters whose template can never move (mob walls, turrets).<br>
+	 * A skill slot declared without any cast gate (no probability, distance, HP or attack hint) is never cast by {@link #passesParameterizedGates}. A monster that can move still chases and melees, but one that can't move would have no way to reach a target outside melee range, so it may use such skills.
+	 * Slots that do declare gates are still checked as usual.
+	 * @param caster the stationary monster
+	 * @param skill the skill to check
+	 * @param target the target
+	 * @return {@code true} if the skill may be cast
+	 */
+	private boolean allowsStationaryCast(Attackable caster, Skill skill, Creature target)
+	{
+		final StatSet params = caster.getTemplate() != null ? caster.getTemplate().getParameters() : null;
+		if ((params == null) || params.isEmpty())
+		{
+			return true;
+		}
+
+		final int slot = findParameterizedSkillSlot(params, skill.getId());
+		if ((slot == 0) || !hasParameterizedGates(slot, params))
+		{
+			return true;
+		}
+
+		return passesParameterizedGates(slot, params, caster, target);
+	}
+
+	/**
+	 * @param slot the 1-based skill slot
+	 * @param params the NPC template parameters
+	 * @return {@code true} if the slot declares any cast gate (probability, distance check, HP threshold or attack hint)
+	 */
+	private static boolean hasParameterizedGates(int slot, StatSet params)
+	{
+		final String prefix = parameterizedSkillPrefix(slot);
+		return (params.getInt(prefix + "Probablity", 0) != 0) || (params.getInt(prefix + "Check_Dist", 0) == 1) || (params.getInt(prefix + "HighHP", 0) != 0) || (params.getInt(prefix + "AttackSplash", 0) == 1) || (params.getInt(prefix + "MainAttack", 0) == 1) || (params.getInt(prefix + "Target", 0) > 0);
+	}
+
 	/**
 	 * Builds the datapack parameter prefix for a skill slot.<br>
 	 * Slots 1-9 are zero padded ("Skill01_"), slot 10 is not ("Skill10_") - naive string concatenation produced "Skill010_" and silently matched nothing.
