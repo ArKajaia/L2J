@@ -43,6 +43,11 @@ public class FakePlayersConfig
 	public static boolean FAKE_PLAYER_AGGRO_FPC;
 	public static boolean FAKE_PLAYER_CAN_DROP_ITEMS;
 	public static boolean FAKE_PLAYER_CAN_PICKUP;
+	public static boolean FAKE_TOWN_PLAYERS_ENABLED;
+	public static int FAKE_TOWN_PLAYERS_PER_TOWN;
+	public static String FAKE_TOWN_PLAYERS_TOWNS;
+	public static int FAKE_TOWN_PLAYERS_WANDER_RANGE;
+	public static int FAKE_TOWN_PLAYERS_RACE_CHANCE;
 	
 	public static void load()
 	{
@@ -58,5 +63,10 @@ public class FakePlayersConfig
 		FAKE_PLAYER_AGGRO_FPC = config.getBoolean("FakePlayerAggroFPC", false);
 		FAKE_PLAYER_CAN_DROP_ITEMS = config.getBoolean("FakePlayerCanDropItems", false);
 		FAKE_PLAYER_CAN_PICKUP = config.getBoolean("FakePlayerCanPickup", false);
+		FAKE_TOWN_PLAYERS_ENABLED = config.getBoolean("FakeTownPlayersEnabled", false);
+		FAKE_TOWN_PLAYERS_PER_TOWN = config.getInt("FakeTownPlayersPerTown", 12);
+		FAKE_TOWN_PLAYERS_TOWNS = config.getString("FakeTownPlayersTowns", "");
+		FAKE_TOWN_PLAYERS_WANDER_RANGE = config.getInt("FakeTownPlayersWanderRange", 500);
+		FAKE_TOWN_PLAYERS_RACE_CHANCE = config.getInt("FakeTownPlayersRaceChance", 60);
 	}
 }

@@ -22,6 +22,7 @@ package org.l2jmobius.gameserver.data.xml;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -830,6 +831,22 @@ public class MapRegionData implements IXmlReader
 		return region.spawnLocs.get(0);
 	}
 	
+	/**
+	 * Retrieves every normal (not chaotic, other or banish) respawn point of the specified region.
+	 * @param regionName
+	 * @return the respawn points, empty if region not found or has no spawns.
+	 */
+	public List<Location> getSpawnLocsByRegionName(String regionName)
+	{
+		final RegionData region = _regions.get(regionName);
+		if ((region == null) || (region.spawnLocs == null))
+		{
+			return Collections.emptyList();
+		}
+
+		return Collections.unmodifiableList(region.spawnLocs);
+	}
+
 	/**
 	 * Retrieves the town name for the specified region.
 	 * @param regionName

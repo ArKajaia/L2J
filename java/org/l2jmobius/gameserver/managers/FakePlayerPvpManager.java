@@ -2569,9 +2569,18 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
-	 * @return a name no character or fake player uses
+	 * Frees a name taken with {@link #generateName()}.
+	 * @param name the name
 	 */
-	private String generateName()
+	void releaseName(String name)
+	{
+		_names.remove(name.toLowerCase());
+	}
+	
+	/**
+	 * @return a name no character or fake player uses (also used by {@link FakePlayerTownManager})
+	 */
+	String generateName()
 	{
 		for (int attempt = 0; attempt < 100; attempt++)
 		{

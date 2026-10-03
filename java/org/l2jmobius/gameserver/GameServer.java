@@ -130,6 +130,7 @@ import org.l2jmobius.gameserver.managers.DimensionalRiftManager;
 import org.l2jmobius.gameserver.managers.EventDropManager;
 import org.l2jmobius.gameserver.managers.FakePlayerChatManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
+import org.l2jmobius.gameserver.managers.FakePlayerTownManager;
 import org.l2jmobius.gameserver.managers.FishingChampionshipManager;
 import org.l2jmobius.gameserver.managers.FortManager;
 import org.l2jmobius.gameserver.managers.FortSiegeManager;
@@ -379,6 +380,7 @@ public class GameServer
 		DayNightSpawnManager.getInstance().trim().notifyChangeMode();
 		DimensionalRiftManager.getInstance();
 		RaidBossSpawnManager.getInstance();
+		FakePlayerTownManager.getInstance();
 		
 		printSection("Siege");
 		SiegeManager.getInstance().getSieges();
