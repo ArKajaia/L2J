@@ -141,7 +141,7 @@ Columns: **Lines** is the size of the Java code and **HTML** is the number of di
 |---|---|---|---|---|
 | 51 | Q10293_SevenSignsForbiddenBookOfTheElmoreAdenKingdom | 404 | 55 | Needs Q10292 |
 | 52 | Q10294_SevenSignsToTheMonasteryOfSilence | 451 | 76 | Needs Q10293. Instance (see the SSQMonasteryOfSilence TODOs in `TODO.md`) |
-| 53 | Q10295_SevenSignsSolinasTomb ✅ | 563 | 68 | Needs Q10294. Missing Elcadia dialog added |
+| 53 | Q10295_SevenSignsSolinasTomb ✅ | 568 | 69 | Needs Q10294. Missing Elcadia dialog added; Elcadia now points back to Eris after Solina's story |
 | 54 | Q10296_SevenSignsOneWhoSeeksThePowerOfTheSeal | 294 | 28 | Needs Q10295 |
 
 ## Suggested passes
