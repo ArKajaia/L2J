@@ -76,6 +76,34 @@ High Five revamped only two hunting zones: Dragon Valley (outdoor) and Antharas'
 - **Every NPC a quest talks to** is either spawned or spawned by a quest/instance script.
 - **Leftover monster names that no longer spawn** (the quests still work through their other monsters): Q00384's dialogs (`30182-05/06`, `30685-06`) no longer name Conjurer Bat and Nightmare Guide, which do not spawn; its code still lists them and Cadeine, Sanhidro, Connabi, Bartal, Luminun and Innersen (harmless). Q00296 counts Crimson Tarantula in code only. Hunter and Plunder Tarantulas spawn.
 
+## Starter quests (levels 2–15)
+
+Supply Check (174), Head for the Hills (281), the race quests for levels 10–15 (101–108 for each race, 175 for Kamael) and Get a Pet (419) were compared with the reference datapack. Their level gates, races, NPCs, monsters, items, drop chances, EXP/SP, adena and dialogs all match it, and every NPC and monster they use spawns.
+
+| Quest | Start | Adena | EXP / SP | Other rewards |
+|---|---|---|---|---|
+| Q00174_SupplyCheck | Lv 2, Marcela (Isle of Souls) | 2,466 | 5,672 / 446 | Wooden Breastplate, Helmet, Gaiters, Gloves, Leather Shoes |
+| Q00281_HeadForTheHills | Lv 6, Marcela | 23 per claw, +400 for 10 or more | – | 50 claws buy a random item; 6,000 NG soulshots or 3,000 NG spiritshots once, under level 25 |
+| Q00101_SwordOfSolidarity | Lv 9, Human | 10,981 | 25,747 / 2,171 | Sword of Solidarity |
+| Q00102_SeaOfSporesFever | Lv 12, Elf | 6,331 | 30,202 / 1,339 | Sword or Staff of Sentinel |
+| Q00103_SpiritOfCraftsman | Lv 10, Dark Elf | 19,799 | 46,663 / 3,999 | Blood Saber |
+| Q00104_SpiritOfMirrors | Lv 10, Human | 16,866 | 39,750 / 3,407 | Wand of Adept |
+| Q00105_SkirmishWithOrcs | Lv 10, Elf | 17,599 | 41,478 / 3,555 | Red Sunset Sword or Staff |
+| Q00106_ForgottenTruth | Lv 10, Dark Elf | 10,266 | 24,195 / 2,074 | Eldritch Dagger (Eldritch Staff for mages; the reference gives the dagger to everyone) |
+| Q00107_MercilessPunishment | Lv 10, Orc | 14,666 | 34,565 / 2,962 | Butcher's Sword |
+| Q00108_JumbleTumbleDiamondFuss | Lv 10, Dwarf | 14,666 | 34,565 / 2,962 | Silversmith Hammer |
+| Q00175_TheWayOfTheWarrior | Lv 10, Kamael | 8,799 | 20,739 / 1,777 | Warrior's Sword |
+| Q00419_GetAPet | Lv 15, Martin (Gludio) | – | – | Wolf Collar |
+
+Bugs found and fixed:
+
+| Quest | Problem |
+|---|---|
+| Q00103_SpiritOfCraftsman | A kill picks a random party member, but the drop was checked against the killer and given to the killer while the picked member's step was advanced. Party members could skip steps or lose drops. The picked member now gets the drop, and only members on the matching step (6 for Zombie Heads, 3 for Bone Fragments) are picked. The Blood Saber was given with `rewardItems`, so a quest reward rate above 1 gave several; it is now always one, like the other race weapons. |
+| Q00281_HeadForTheHills | Claws dropped for anyone who had opened Marcela's quest dialog, even without accepting the quest. Now only for players on the quest. |
+| Q00108_JumbleTumbleDiamondFuss | `giveItemRandomly` returns `true` only when the limit is reached, so gem drops made no sound, and the "item got" sound played on every kill once one gem type was full. The method now plays the sounds itself. |
+| Q00419_GetAPet | A player who left the pet test before finishing (closed the window or walked away) was told to meet the Animal Lovers again, but those visits could never bring the state back, so the quest could only be restarted from the beginning. An unfinished test now restarts from the first question. Talking to Metty, Elice or Bella during the test also changed the test's answer count; it no longer does. |
+
 ## Checklist for each quest
 
 1. **Start**: level gate, including any upper limit, plus race/class/prerequisite checks. The "too low" and "already done" dialogs must appear when they should.

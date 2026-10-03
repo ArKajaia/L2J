@@ -20,7 +20,6 @@
  */
 package quests.Q00103_SpiritOfCraftsman;
 
-import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.managers.ScriptManager;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -30,7 +29,6 @@ import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.script.QuestState;
 import org.l2jmobius.gameserver.network.NpcStringId;
 import org.l2jmobius.gameserver.network.serverpackets.SocialAction;
-import org.l2jmobius.gameserver.util.LocationUtil;
 
 import ai.others.NewbieGuide.NewbieGuide;
 
@@ -194,7 +192,7 @@ public class Q00103_SpiritOfCraftsman extends Quest
 						
 						addExpAndSp(talker, 46663, 3999);
 						giveAdena(talker, 19799, true);
-						rewardItems(talker, BLOODSABER, 1);
+						giveItems(talker, BLOODSABER, 1);
 						qs.exitQuest(false, true);
 						talker.sendPacket(new SocialAction(talker.getObjectId(), 3));
 						htmltext = "30307-07.html";
@@ -287,33 +285,22 @@ public class Q00103_SpiritOfCraftsman extends Quest
 	@Override
 	public void onKill(Npc npc, Player killer, boolean isSummon)
 	{
-		final QuestState qs = getRandomPartyMemberState(killer, -1, 3, npc);
-		if (qs == null)
+		if (npc.getId() == MARSH_ZOMBIE)
 		{
-			return;
-		}
-		
-		switch (npc.getId())
-		{
-			case MARSH_ZOMBIE:
+			final QuestState qs = getRandomPartyMemberState(killer, 6, 3, npc);
+			if ((qs != null) && hasQuestItems(qs.getPlayer(), PRESERVE_OIL) && (getRandom(10) < 5))
 			{
-				if (hasQuestItems(killer, PRESERVE_OIL) && (getRandom(10) < 5) && LocationUtil.checkIfInRange(PlayerConfig.ALT_PARTY_RANGE, npc, killer, true))
-				{
-					giveItems(killer, ZOMBIE_HEAD, 1);
-					takeItems(killer, PRESERVE_OIL, -1);
-					qs.setCond(7, true);
-				}
-				break;
+				giveItems(qs.getPlayer(), ZOMBIE_HEAD, 1);
+				takeItems(qs.getPlayer(), PRESERVE_OIL, -1);
+				qs.setCond(7, true);
 			}
-			case DOOM_SOLDIER:
-			case SKELETON_HUNTER:
-			case SKELETON_HUNTER_ARCHER:
+		}
+		else
+		{
+			final QuestState qs = getRandomPartyMemberState(killer, 3, 3, npc);
+			if ((qs != null) && hasQuestItems(qs.getPlayer(), CECKTINONS_VOUCHER2) && giveItemRandomly(qs.getPlayer(), npc, BONE_FRAGMENT, 1, 10, 1, true))
 			{
-				if (hasQuestItems(killer, CECKTINONS_VOUCHER2) && giveItemRandomly(qs.getPlayer(), npc, BONE_FRAGMENT, 1, 10, 1, true))
-				{
-					qs.setCond(4, true);
-				}
-				break;
+				qs.setCond(4, true);
 			}
 		}
 	}
