@@ -372,15 +372,11 @@ public class PailakaInjuredDragon extends InstanceScript
 			}
 			case "INJURED_DRAGON_CAMERA_1_9999":
 			{
-				final InstanceWorld world = InstanceManager.getInstance().getWorld(npc.getInstanceId());
-				if (world != null)
+				// The camera timers run on Latana herself.
+				if (!npc.isDead())
 				{
-					final Npc latana = world.getNpc(LATANA);
-					if (latana != null)
-					{
-						latana.setInvul(false);
-						latana.setParalyzed(false);
-					}
+					npc.setInvul(false);
+					npc.setParalyzed(false);
 				}
 				break;
 			}
@@ -583,6 +579,14 @@ public class PailakaInjuredDragon extends InstanceScript
 		{
 			case LATANA:
 			{
+				// Killed before the Supporter gave the spear: the quest can't count it, so Latana comes back.
+				final QuestState qs = killer.getQuestState(Q00144_PailakaInjuredDragon.class.getSimpleName());
+				if ((qs == null) || !qs.isStarted() || (qs.getCond() < 3))
+				{
+					addSpawn(LATANA, npc.getSpawn() != null ? npc.getSpawn() : npc.getLocation(), false, 0, false, npc.getInstanceId());
+					break;
+				}
+				
 				addSpawn(INJURED_DRAGON_CAMERA_2, 105974, -41794, -1784, 32768, false, 0, false, killer.getInstanceId());
 				addSpawn(KETRA_ORC_SUPPORTER_2, killer.getX() + 100, killer.getY() + 100, killer.getZ(), 0, false, 0, false, killer.getInstanceId());
 				break;

@@ -20,6 +20,7 @@ import org.l2jmobius.gameserver.managers.InstanceManager;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.instancezone.Instance;
+import org.l2jmobius.gameserver.model.interfaces.IPositionable;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.script.QuestSound;
 import org.l2jmobius.gameserver.model.script.QuestState;
@@ -306,6 +307,13 @@ public class Q00128_PailakaSongOfIceAndFire extends Quest
 		final QuestState qs = getQuestState(player, false);
 		if ((qs != null) && qs.isStarted())
 		{
+			// Killed before the player reached this step (e.g. before the Inspector enhanced the sword): bring the boss back, or the quest can't go on.
+			if (qs.getCond() < getRequiredCond(npc.getId()))
+			{
+				respawn(npc);
+				return;
+			}
+			
 			switch (npc.getId())
 			{
 				case HILLAS:
@@ -375,5 +383,44 @@ public class Q00128_PailakaSongOfIceAndFire extends Quest
 				}
 			}
 		}
+	}
+	
+	/**
+	 * @param npcId the boss
+	 * @return the quest step a player must be at for this boss to count
+	 */
+	private static int getRequiredCond(int npcId)
+	{
+		switch (npcId)
+		{
+			case HILLAS:
+			{
+				return 2; // Sword from Sinai
+			}
+			case PAPION:
+			{
+				return 4; // Sword enhanced with Water Essence
+			}
+			case KINSUS:
+			{
+				return 5;
+			}
+			case GARGOS:
+			{
+				return 7; // Sword enhanced with Fire Essence
+			}
+			case ADIANTUM:
+			{
+				return 8;
+			}
+		}
+		
+		return 0;
+	}
+	
+	private static void respawn(Npc npc)
+	{
+		final IPositionable loc = npc.getSpawn() != null ? npc.getSpawn() : npc.getLocation();
+		addSpawn(npc.getId(), loc, false, 0, false, npc.getInstanceId());
 	}
 }

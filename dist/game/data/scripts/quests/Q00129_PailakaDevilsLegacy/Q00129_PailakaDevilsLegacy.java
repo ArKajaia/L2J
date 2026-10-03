@@ -20,6 +20,7 @@ import org.l2jmobius.gameserver.managers.InstanceManager;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.instancezone.Instance;
+import org.l2jmobius.gameserver.model.interfaces.IPositionable;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.script.QuestSound;
 import org.l2jmobius.gameserver.model.script.QuestState;
@@ -269,6 +270,12 @@ public class Q00129_PailakaDevilsLegacy extends Quest
 		return htmltext;
 	}
 	
+	private static void respawn(Npc npc)
+	{
+		final IPositionable loc = npc.getSpawn() != null ? npc.getSpawn() : npc.getLocation();
+		addSpawn(npc.getId(), loc, false, 0, false, npc.getInstanceId());
+	}
+	
 	@Override
 	public void onKill(Npc npc, Player player, boolean isSummon)
 	{
@@ -284,6 +291,11 @@ public class Q00129_PailakaDevilsLegacy extends Quest
 						giveItems(player, SCROLL_1, 1);
 						playSound(player, QuestSound.ITEMSOUND_QUEST_ITEMGET);
 					}
+					else if (!hasAtLeastOneQuestItem(player, ENH_SWORD1, ENH_SWORD2))
+					{
+						// Killed before the Supporter gave the sword: no scroll, so bring Kams back.
+						respawn(npc);
+					}
 					break;
 				}
 				case ALKASO:
@@ -292,6 +304,11 @@ public class Q00129_PailakaDevilsLegacy extends Quest
 					{
 						giveItems(player, SCROLL_2, 1);
 						playSound(player, QuestSound.ITEMSOUND_QUEST_ITEMGET);
+					}
+					else if (!hasQuestItems(player, ENH_SWORD2))
+					{
+						// Killed before the sword's first enhancement: no scroll, so bring Alkaso back.
+						respawn(npc);
 					}
 					break;
 				}

@@ -278,6 +278,15 @@ public class PailakaDevilsLegacy extends InstanceScript
 			}
 			
 			world.getParameters().remove("followerslist");
+			
+			// Killed before the Supporter gave the sword: the quest can't count it, so Lematan comes back at his start point.
+			final QuestState qs = player.getQuestState(Q00129_PailakaDevilsLegacy.class.getSimpleName());
+			if ((qs == null) || !qs.isStarted() || (qs.getCond() < 3))
+			{
+				world.setParameter("lematanNpc", addSpawn(LEMATAN, LEMATAN_SPAWN, false, 0, false, world.getInstanceId()));
+				return;
+			}
+			
 			addSpawn(ADVENTURER2, ADVENTURER_LOC, false, 0, false, npc.getInstanceId());
 		}
 	}
