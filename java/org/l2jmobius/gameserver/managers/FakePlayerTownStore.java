@@ -37,7 +37,7 @@ import org.l2jmobius.gameserver.network.holders.RequestTrade;
 import org.l2jmobius.gameserver.network.holders.TradeItem;
 
 /**
- * The private store of a town fake player (see {@link FakePlayerTownVisitor}): 1 to 3 kinds of crafting materials, 1 to 50 of each, the better ones the higher its level, and now and then a rare find at a price that isn't cheap.<br>
+ * The private store of a town fake player (see {@link FakePlayerTownVisitor}): 1 to 3 kinds of crafting materials, 1 to 50 of each, the better ones the higher its level, and now and then a rare find, each at 1.5 to 5 times its reference price.<br>
  * Players buy from it like from a player's store; the items are created when bought. Used from the network threads (players buying) and the town manager's thread, so everything is synchronized.
  */
 final class FakePlayerTownStore
@@ -47,8 +47,8 @@ final class FakePlayerTownStore
 	{
 	}
 
-	/** A rare find: the levels of the sellers that have it, how many, its price range and how players call it. */
-	private record Rare(int itemId, int minLevel, int maxLevel, int minCount, int maxCount, long minPrice, long maxPrice, String label)
+	/** A rare find: the levels of the sellers that have it, how many and how players call it. */
+	private record Rare(int itemId, int minLevel, int maxLevel, int minCount, int maxCount, String label)
 	{
 	}
 
@@ -130,35 +130,35 @@ final class FakePlayerTownStore
 
 	private static final Rare[] RARE =
 	{
-		new Rare(955, 1, 39, 1, 3, 80_000, 150_000, "ewd"),
-		new Rare(6575, 15, 45, 1, 1, 1_200_000, 2_000_000, "bewd"),
-		new Rare(951, 20, 51, 1, 3, 180_000, 300_000, "ewc"),
-		new Rare(6573, 30, 60, 1, 1, 4_000_000, 6_000_000, "bewc"),
-		new Rare(947, 40, 75, 1, 2, 800_000, 1_200_000, "ewb"),
-		new Rare(6571, 45, 75, 1, 1, 9_000_000, 14_000_000, "bewb"),
-		new Rare(729, 55, 85, 1, 2, 2_500_000, 4_000_000, "ewa"),
-		new Rare(6569, 60, 85, 1, 1, 20_000_000, 30_000_000, "bewa"),
-		new Rare(959, 76, 85, 1, 2, 7_000_000, 10_000_000, "ews"),
-		new Rare(6577, 76, 85, 1, 1, 40_000_000, 60_000_000, "bews"),
-		new Rare(960, 76, 85, 1, 3, 700_000, 1_000_000, "eas"),
-		new Rare(6578, 76, 85, 1, 1, 6_000_000, 9_000_000, "beas"),
-		new Rare(8745, 45, 65, 1, 1, 400_000, 600_000, "high ls 52"),
-		new Rare(8758, 55, 75, 1, 1, 3_000_000, 4_500_000, "top ls 61"),
-		new Rare(8752, 70, 85, 1, 1, 1_300_000, 2_000_000, "high ls 76"),
-		new Rare(8762, 72, 85, 1, 1, 6_500_000, 9_000_000, "top ls 76"),
-		new Rare(9576, 78, 85, 1, 1, 8_000_000, 11_000_000, "top ls 80"),
-		new Rare(10486, 80, 85, 1, 1, 9_500_000, 13_000_000, "top ls 82"),
-		new Rare(9546, 76, 85, 1, 10, 50_000, 120_000, "fire stone"),
-		new Rare(9547, 76, 85, 1, 10, 50_000, 120_000, "water stone"),
-		new Rare(9548, 76, 85, 1, 10, 50_000, 120_000, "earth stone"),
-		new Rare(9549, 76, 85, 1, 10, 50_000, 120_000, "wind stone"),
-		new Rare(9550, 76, 85, 1, 10, 50_000, 120_000, "dark stone"),
-		new Rare(9551, 76, 85, 1, 10, 50_000, 120_000, "holy stone"),
-		new Rare(9552, 80, 85, 1, 2, 800_000, 1_500_000, "fire crystal"),
-		new Rare(9555, 80, 85, 1, 2, 800_000, 1_500_000, "wind crystal"),
-		new Rare(9556, 80, 85, 1, 2, 800_000, 1_500_000, "dark crystal"),
-		new Rare(6622, 70, 85, 1, 3, 2_000_000, 3_500_000, "codex"),
-		new Rare(9627, 76, 85, 1, 1, 9_000_000, 14_000_000, "codex mastery"),
+		new Rare(955, 1, 39, 1, 3, "ewd"),
+		new Rare(6575, 15, 45, 1, 1, "bewd"),
+		new Rare(951, 20, 51, 1, 3, "ewc"),
+		new Rare(6573, 30, 60, 1, 1, "bewc"),
+		new Rare(947, 40, 75, 1, 2, "ewb"),
+		new Rare(6571, 45, 75, 1, 1, "bewb"),
+		new Rare(729, 55, 85, 1, 2, "ewa"),
+		new Rare(6569, 60, 85, 1, 1, "bewa"),
+		new Rare(959, 76, 85, 1, 2, "ews"),
+		new Rare(6577, 76, 85, 1, 1, "bews"),
+		new Rare(960, 76, 85, 1, 3, "eas"),
+		new Rare(6578, 76, 85, 1, 1, "beas"),
+		new Rare(8745, 45, 65, 1, 1, "high ls 52"),
+		new Rare(8758, 55, 75, 1, 1, "top ls 61"),
+		new Rare(8752, 70, 85, 1, 1, "high ls 76"),
+		new Rare(8762, 72, 85, 1, 1, "top ls 76"),
+		new Rare(9576, 78, 85, 1, 1, "top ls 80"),
+		new Rare(10486, 80, 85, 1, 1, "top ls 82"),
+		new Rare(9546, 76, 85, 1, 10, "fire stone"),
+		new Rare(9547, 76, 85, 1, 10, "water stone"),
+		new Rare(9548, 76, 85, 1, 10, "earth stone"),
+		new Rare(9549, 76, 85, 1, 10, "wind stone"),
+		new Rare(9550, 76, 85, 1, 10, "dark stone"),
+		new Rare(9551, 76, 85, 1, 10, "holy stone"),
+		new Rare(9552, 80, 85, 1, 2, "fire crystal"),
+		new Rare(9555, 80, 85, 1, 2, "wind crystal"),
+		new Rare(9556, 80, 85, 1, 2, "dark crystal"),
+		new Rare(6622, 70, 85, 1, 3, "codex"),
+		new Rare(9627, 76, 85, 1, 1, "codex mastery"),
 	};
 	// @formatter:on
 
@@ -254,12 +254,12 @@ final class FakePlayerTownStore
 
 			// A few of the expensive ones, a stack of the cheap ones.
 			final int count = Math.max(1, Math.min(goods.maxCount(), (int) Math.round(Rnd.get(1, goods.maxCount()) * (0.4 + (Rnd.nextDouble() * 0.6)))));
-			final long price = roundPrice(Math.max(10, template.getReferencePrice()) * (0.7 + (Rnd.nextDouble() * 0.9)));
+			final long price = price(template);
 			items.add(newItem(template, count, price));
 			labels.add(goods.label());
 		}
 
-		// A rare find, at a price that isn't cheap.
+		// A rare find.
 		String rareLabel = null;
 		if (Rnd.get(100) < rareChance)
 		{
@@ -278,8 +278,7 @@ final class FakePlayerTownStore
 				final ItemTemplate template = ItemData.getInstance().getTemplate(rare.itemId());
 				if (template != null)
 				{
-					final long price = roundPrice(rare.minPrice() + (Rnd.nextDouble() * (rare.maxPrice() - rare.minPrice())));
-					items.add(Rnd.get(items.size() + 1), newItem(template, Rnd.get(rare.minCount(), rare.maxCount()), price));
+					items.add(Rnd.get(items.size() + 1), newItem(template, Rnd.get(rare.minCount(), rare.maxCount()), price(template)));
 					rareLabel = rare.label();
 				}
 			}
@@ -300,6 +299,15 @@ final class FakePlayerTownStore
 		return item;
 	}
 
+	/**
+	 * @param template an item
+	 * @return what a seller asks for it: 1.5 to 5 times its reference price
+	 */
+	private static long price(ItemTemplate template)
+	{
+		return roundPrice(Math.max(10, template.getReferencePrice()) * (1.5 + (Rnd.nextDouble() * 3.5)));
+	}
+	
 	/**
 	 * @param price a price
 	 * @return the price the way players set it: two significant digits (1.2k, 35k, 4.5kk...)
