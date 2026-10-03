@@ -74,7 +74,7 @@ High Five revamped only two hunting zones: Dragon Valley (outdoor) and Antharas'
 - **No other low-level quest is broken.** Wherever a quest monster no longer spawns, a same-named monster that does spawn is also counted, or the quest spawns it itself. Examples: Forgotten Village (Q00022/Q00024/Q00633), Zaken's Pikemen/Archers (Q00426/Q00710), Jackhammer Golems (Q00463/Q00647), Cannibalistic Stakato (Q00240/Q00310/Q00640), Pirate Zombie Captain (Q00365), Four Sepulchers (Q00619/Q00620, spawned by the zone's AI).
 - **Giant's Cave** became level 81–82 in an earlier update and isn't a High Five change. Q00376/Q00377 already use the new monsters and require level 79. Q00426 (fishing shot) still lists the old level 60–65 Giant's Cave IDs, same as the reference. The new level 81+ monsters are not added to it.
 - **Every NPC a quest talks to** is either spawned or spawned by a quest/instance script.
-- **Leftover monster names that no longer spawn** (the quests still work through their other monsters; dialogs left as retail): Q00384 still names Conjurer Bat and Nightmare Guide, and its code also lists Cadeine, Sanhidro, Connabi, Bartal, Luminun and Innersen. Q00296 counts Crimson Tarantula in code only. Hunter and Plunder Tarantulas spawn.
+- **Leftover monster names that no longer spawn** (the quests still work through their other monsters): Q00384's dialogs (`30182-05/06`, `30685-06`) no longer name Conjurer Bat and Nightmare Guide, which do not spawn; its code still lists them and Cadeine, Sanhidro, Connabi, Bartal, Luminun and Innersen (harmless). Q00296 counts Crimson Tarantula in code only. Hunter and Plunder Tarantulas spawn.
 
 ## Checklist for each quest
 
