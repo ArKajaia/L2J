@@ -251,6 +251,11 @@ public class Attackable extends Npc
 		{
 			FakePlayerPvpManager.getInstance().onMonsterAttacked(this, attacker);
 		}
+		// Another roaming fake player hitting it hears about it too.
+		else if ((attacker != null) && attacker.isPvpFakePlayer() && isMonster())
+		{
+			FakePlayerPvpManager.getInstance().onMonsterAttackedByFake(this, attacker.asAttackable());
+		}
 		
 		if (_isRaid && !isMinion() && (attacker != null) && (attacker.getParty() != null) && attacker.getParty().isInCommandChannel() && attacker.getParty().getCommandChannel().meetRaidWarCondition(this))
 		{
@@ -371,6 +376,11 @@ public class Attackable extends Npc
 			else if (isPvpFakePlayer() && killer.isPvpFakePlayer())
 			{
 				FakePlayerPvpManager.getInstance().onFakePlayerKilledByFake(this, killer);
+			}
+			// A roaming fake player that took the kill of another one.
+			else if (isMonster() && killer.isPvpFakePlayer())
+			{
+				FakePlayerPvpManager.getInstance().onMonsterKilledByFake(this, killer.asAttackable());
 			}
 		}
 		

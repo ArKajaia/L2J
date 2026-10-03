@@ -33,6 +33,7 @@ import java.util.logging.Logger;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.ai.FakePlayerPvpAI;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
@@ -55,6 +56,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.enums.player.Sex;
 import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
@@ -92,6 +94,7 @@ import org.l2jmobius.gameserver.model.zone.type.TownZone;
 import org.l2jmobius.gameserver.network.enums.ChatType;
 import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
+import org.l2jmobius.gameserver.network.serverpackets.SocialAction;
 
 /**
  * Roaming fake players (see {@link FakePlayerPvpConfig}): like a champion, a regular monster has a small chance every time it spawns or respawns to be replaced by a fake player of the same level ({@link #tryReplace}, called from {@code Spawn} right before the monster
@@ -99,7 +102,9 @@ import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
  * <ul>
  * <li>monsters can't push it below {@link FakePlayerPvpConfig#MONSTER_DAMAGE_FLOOR}% HP, only players can kill it ({@link #limitDamage}, called from {@code Attackable#reduceCurrentHp});</li>
  * <li>a player that kills the monster it is fighting becomes its target ({@link #onAttackableKilled}, called from {@code Attackable#doDie});</li>
- * <li>a player that attacks it becomes its target ({@link #onFakePlayerAttacked}, called from its AI).</li>
+ * <li>a player that attacks it becomes its target ({@link #onFakePlayerAttacked}, called from its AI);</li>
+ * <li>other fake players are met like players at a hunting ground: they say hello, walk over and talk ({@link #converse}), and some of them fight over the spot, steal each other's kills ({@link #onMonsterAttackedByFake}, {@link #onMonsterKilledByFake}) or join a fight
+ * of others ({@link #attackFakePlayer}).</li>
  * </ul>
  * The replaced monster stays counted by its spawn, outside the world, until the fake player dies or logs off ({@link #onFakePlayerDecay}, called from {@code Npc#onDecay}); then the monster respawns after its normal delay.
  */
@@ -886,6 +891,260 @@ public class FakePlayerPvpManager
 		"bored?"
 	};
 	
+	/** Said back to another fake player that said hello. */
+	private static final String[] TAUNTS_GREET_REPLY =
+	{
+		"hi",
+		"hey",
+		"yo",
+		"o/",
+		"sup",
+		"hey hey",
+		"hi :)",
+		"hello",
+		"gl",
+		"gl hf",
+		"hey, gl",
+		"yo, good hunting",
+		"hi, u too",
+		"heya",
+		"hey man",
+		"sup, exp is ok here",
+		"hi, mobs are fine here",
+		"hey, dont ks me lol",
+		"hello, plenty mobs for both",
+		"hi, ty gl to u too"
+	};
+	
+	/** Said when it joins a fight of two other fake players. */
+	private static final String[] TAUNTS_JOIN_FIGHT =
+	{
+		"free kill",
+		"mind if i join?",
+		"third party!",
+		"im in",
+		"lol thx for the hp",
+		"dont mind me",
+		"2v1 now",
+		"ffa",
+		"thats what u get for flagging",
+		"flagged = fair game",
+		"oh a fight, nice",
+		"saw purple, came running",
+		"u two done? my turn",
+		"cleaning up",
+		"one flagger less"
+	};
+	
+	/** A short talk of two fake players that met at a hunting ground, lines said by turns (the one that walked over first). */
+	private static final String[][] DIALOGUES_HUNTING =
+	{
+		{
+			"hey, hows the exp here?",
+			"not bad, bit slow",
+			"better than the last spot i was at"
+		},
+		{
+			"yo, any good drops?",
+			"nah, only mats so far",
+			"same lol",
+			"gl"
+		},
+		{
+			"hi, solo?",
+			"yeah, party left",
+			"same, everyone afk tonight"
+		},
+		{
+			"hey, u farming here long?",
+			"like an hour",
+			"ok ill take the other side",
+			"np gl"
+		},
+		{
+			"sup, want to party?",
+			"nah im fine solo, ty",
+			"ok gl"
+		},
+		{
+			"hi, is it always this empty here?",
+			"at night yeah",
+			"nice, more mobs for us"
+		},
+		{
+			"yo, u have ss to sell?",
+			"no, only for me sry",
+			"np"
+		},
+		{
+			"hey, this spot ok for my lvl?",
+			"yeah its fine",
+			"thx"
+		},
+		{
+			"hi, did u see any pk around?",
+			"one red guy before, he left",
+			"ok ty, ill watch out"
+		},
+		{
+			"yo, whats ur clan?",
+			"no clan atm",
+			"we recruit if u want",
+			"maybe later ty"
+		},
+		{
+			"hey, spoiler around?",
+			"didnt see one",
+			"ok"
+		},
+		{
+			"hi, server lagging for u too?",
+			"a bit yeah",
+			"thought it was my pc lol"
+		},
+		{
+			"how much exp per mob here?",
+			"dunno, decent",
+			"ok ill stay a bit"
+		},
+		{
+			"hey, lets split the spot?",
+			"ok u left me right",
+			"deal"
+		},
+		{
+			"yo, got any potions?",
+			"few, why",
+			"nvm i have some left",
+			"lol ok"
+		},
+		{
+			"hi, nice weapon",
+			"ty, took me ages",
+			"enchanted?",
+			"a little"
+		},
+		{
+			"hey, raid up today?",
+			"no idea",
+			"ok gl"
+		},
+		{
+			"hi, how long to next lvl?",
+			"like 2 hours",
+			"rip",
+			"lol yeah"
+		},
+		{
+			"yo",
+			"yo",
+			"mobs respawn fast here",
+			"yeah its good"
+		},
+		{
+			"hey, u see the mob with the chest?",
+			"no",
+			"must have been killed already",
+			"rip"
+		},
+		{
+			"hi, back from town?",
+			"yeah had to repot",
+			"same, prices are crazy",
+			"true"
+		},
+		{
+			"hey, this zone is hot today",
+			"yeah exp is good",
+			"lets make the most of it"
+		},
+		{
+			"hi, any buffer around?",
+			"no, i only have my own",
+			"ok ty"
+		},
+		{
+			"sup, going to farm long?",
+			"till i drop lol",
+			"same",
+			"gl then"
+		}
+	};
+	
+	/** A talk of two fake players that ends in a fight over the spot (the one that walked over first hits first). */
+	private static final String[][] DIALOGUES_RIVALRY =
+	{
+		{
+			"this is my spot",
+			"says who?",
+			"says me"
+		},
+		{
+			"hey, u ks me all the time",
+			"lol no",
+			"ok then lets settle it"
+		},
+		{
+			"move, i farm here",
+			"spot is free",
+			"not anymore"
+		},
+		{
+			"u again?",
+			"what",
+			"i told u this is my spot"
+		},
+		{
+			"go farm somewhere else",
+			"no",
+			"ok ur choice"
+		},
+		{
+			"how about a duel for the spot?",
+			"lol go away",
+			"wrong answer"
+		},
+		{
+			"ur stealing my mobs",
+			"they are not urs",
+			"we will see"
+		},
+		{
+			"hey, wanna pvp?",
+			"im farming",
+			"not anymore u are not"
+		},
+		{
+			"ur gear looks weak",
+			"come test it",
+			"ok"
+		},
+		{
+			"last time u ran away",
+			"didnt",
+			"lets see this time"
+		},
+		{
+			"too many people here",
+			"so leave",
+			"i was thinking u leave"
+		},
+		{
+			"ill give u 10 sec to leave",
+			"lol",
+			"time is up"
+		}
+	};
+	
+	/** Social actions: wave, bow. */
+	private static final int SOCIAL_GREETING = 2;
+	private static final int SOCIAL_BOW = 7;
+	/** Milliseconds a fake player takes to type one character, like a player chatting (min, max). */
+	private static final int TYPING_MIN = 60;
+	private static final int TYPING_MAX = 120;
+	/** A talk goes on this far at most: the partners walk off (or start fighting) if it took longer, like players busy with their hunt. */
+	private static final long TALK_MAX_TIME = 30000;
+	
 	private final AtomicInteger _nextNpcId = new AtomicInteger(FIRST_NPC_ID);
 	private final Set<Npc> _fakePlayers = ConcurrentHashMap.newKeySet();
 	private final Set<String> _names = ConcurrentHashMap.newKeySet();
@@ -1588,7 +1847,7 @@ public class FakePlayerPvpManager
 			// Flagged meanwhile (it attacked someone): no reason to hold back anymore.
 			profile.stopRefusing(enemy);
 		}
-		else if (unflagged && (enemy.getLevel() > fake.getLevel()) && (Rnd.get(100) < profile.getPersonality().getRefuseChance(enemy.getLevel() - fake.getLevel())))
+		else if (unflagged && (enemy.getLevel() > fake.getLevel()) && (Rnd.get(100) < getRefuseChance(profile, enemy, enemy.getLevel() - fake.getLevel())))
 		{
 			profile.refuse(enemy, now + REFUSE_MEMORY);
 			taunt(fake, TAUNTS_REFUSE, false);
@@ -1596,6 +1855,18 @@ public class FakePlayerPvpManager
 		}
 		
 		startFight(fake, enemy, TAUNTS_ATTACKED);
+	}
+	
+	/**
+	 * @param profile the profile of the fake player that is attacked
+	 * @param enemy who attacks it (a player, or another roaming fake player)
+	 * @param levelDiff how many levels {@code enemy} is above it
+	 * @return its chance (in %) not to hit {@code enemy} back, scaled by {@link FakePlayerPvpConfig#FAKE_REFUSE_SCALE} against another fake player
+	 */
+	private static int getRefuseChance(FakePlayerPvpProfile profile, Creature enemy, int levelDiff)
+	{
+		final int chance = profile.getPersonality().getRefuseChance(levelDiff);
+		return enemy.isPvpFakePlayer() ? (chance * FakePlayerPvpConfig.FAKE_REFUSE_SCALE) / 100 : chance;
 	}
 	
 	/**
@@ -1676,6 +1947,253 @@ public class FakePlayerPvpManager
 		{
 			startFight(fake, player, karma ? TAUNTS_KARMA : TAUNTS_FLAGGED);
 		}
+	}
+	
+	/**
+	 * Called by the fake player AI when it goes after another roaming fake player that is flagged (in a fight) or has karma: it joins the fight, like players that can't resist a purple name.
+	 * @param fake the fake player
+	 * @param other the other fake player
+	 * @param karma {@code true} if the other one is a PK
+	 */
+	public void attackFakePlayer(Attackable fake, Npc other, boolean karma)
+	{
+		if (!fake.isDead() && !isFighting(fake, other))
+		{
+			startFight(fake, other, karma ? TAUNTS_KARMA : TAUNTS_JOIN_FIGHT);
+		}
+	}
+	
+	/**
+	 * Called by the fake player AI the first time it sees another roaming fake player: maybe a hello in general chat, and the other one may say hello back (and wave).
+	 * @param fake the fake player
+	 * @param other the other fake player
+	 */
+	public void greetFake(Attackable fake, Npc other)
+	{
+		if (!taunt(fake, TAUNTS_GREET, false, FakePlayerPvpPersonality.of(fake).getGreetChance()))
+		{
+			return;
+		}
+		
+		// The chattier, the more likely it answers.
+		final FakePlayerPvpPersonality personality = FakePlayerPvpPersonality.of(other);
+		if (Rnd.get(100) >= (int) Math.round(50 + (40 * personality.getChattiness())))
+		{
+			return;
+		}
+		
+		final FakePlayerPvpProfile profile = other.getTemplate().getFakePlayerPvpProfile();
+		final long now = System.currentTimeMillis();
+		if ((profile == null) || (now < profile.getNextChatTime()) || isInPvp(other))
+		{
+			return;
+		}
+		profile.setNextChatTime(now + CHAT_INTERVAL);
+		
+		final String text = TAUNTS_GREET_REPLY[Rnd.get(TAUNTS_GREET_REPLY.length)];
+		ThreadPool.schedule(() ->
+		{
+			if (!other.isDead() && other.isSpawned() && !isInPvp(other))
+			{
+				social(other, Rnd.nextBoolean() ? SOCIAL_GREETING : SOCIAL_BOW);
+				other.broadcastPacket(new CreatureSay(other, ChatType.GENERAL, other.getName(), text));
+			}
+		}, Rnd.get(2500, 5000) + typingTime(text));
+	}
+	
+	/**
+	 * Two roaming fake players that met at their hunting ground talk a bit in general chat, standing there facing each other (see {@link FakePlayerPvpAI#holdForTalk}): the one that walked over waves and starts, the other one answers, and so on. With
+	 * {@code rivalry} the talk is about the spot and ends with the first one hitting the other ({@link FakePlayerPvpAI#startRivalry}), who may or may not hit back ({@link #onFakePlayerAttacked}). A monster, a player or anything else that starts a fight ends
+	 * the talk.
+	 * @param fake the fake player that walked over
+	 * @param other the one it talks to
+	 * @param rivalry {@code true} if it wants the spot
+	 */
+	public void converse(Attackable fake, Npc other, boolean rivalry)
+	{
+		if (!(fake.getAI() instanceof FakePlayerPvpAI) || !other.hasAI() || !(other.getAI() instanceof FakePlayerPvpAI))
+		{
+			return;
+		}
+		
+		final FakePlayerPvpAI fakeAI = (FakePlayerPvpAI) fake.getAI();
+		final FakePlayerPvpAI otherAI = (FakePlayerPvpAI) other.getAI();
+		final String[][] dialogues = rivalry ? DIALOGUES_RIVALRY : DIALOGUES_HUNTING;
+		final String[] lines = dialogues[Rnd.get(dialogues.length)];
+		
+		// When each line is said: it is typed, read by the other one, who types the answer...
+		final long[] times = new long[lines.length];
+		long time = Rnd.get(800, 1800);
+		for (int i = 0; i < lines.length; i++)
+		{
+			time += typingTime(lines[i]);
+			times[i] = Math.min(time, TALK_MAX_TIME);
+			time += Rnd.get(800, 2000);
+		}
+		final long end = times[lines.length - 1] + Rnd.get(1500, 3000);
+		
+		final long now = System.currentTimeMillis();
+		fakeAI.holdForTalk(other, now + end + 1000);
+		otherAI.holdForTalk(fake, now + end + 1000);
+		for (Npc speaker : new Npc[]
+		{
+			fake,
+			other
+		})
+		{
+			final FakePlayerPvpProfile profile = speaker.getTemplate().getFakePlayerPvpProfile();
+			if (profile != null)
+			{
+				profile.setNextChatTime(now + end + CHAT_INTERVAL);
+			}
+		}
+		
+		// A wave to start with, and one back.
+		ThreadPool.schedule(() -> social(fake, SOCIAL_GREETING), 300);
+		ThreadPool.schedule(() ->
+		{
+			if (otherAI.isTalkingWith(fake))
+			{
+				social(other, Rnd.nextBoolean() ? SOCIAL_GREETING : SOCIAL_BOW);
+			}
+		}, Math.min(times[0] + 800, end));
+		
+		for (int i = 0; i < lines.length; i++)
+		{
+			final boolean first = (i % 2) == 0;
+			final Npc speaker = first ? fake : other;
+			final Npc listener = first ? other : fake;
+			final FakePlayerPvpAI speakerAI = first ? fakeAI : otherAI;
+			final String text = lines[i];
+			ThreadPool.schedule(() ->
+			{
+				if (!speaker.isDead() && speaker.isSpawned() && speakerAI.isTalkingWith(listener))
+				{
+					speaker.broadcastPacket(new CreatureSay(speaker, ChatType.GENERAL, speaker.getName(), text));
+				}
+			}, times[i]);
+		}
+		
+		// The end: they go back to hunting (with a nod now and then), or the first one picks the fight.
+		ThreadPool.schedule(() ->
+		{
+			if (!fakeAI.isTalkingWith(other) || !otherAI.isTalkingWith(fake))
+			{
+				return;
+			}
+			
+			fakeAI.endTalk();
+			if (rivalry)
+			{
+				fakeAI.startRivalry(other);
+				return;
+			}
+			
+			if (Rnd.nextBoolean())
+			{
+				social(fake, SOCIAL_BOW);
+			}
+			if (Rnd.nextBoolean())
+			{
+				social(other, Rnd.nextBoolean() ? SOCIAL_BOW : SOCIAL_GREETING);
+			}
+		}, end);
+	}
+	
+	/**
+	 * @param text a chat line
+	 * @return how long a player takes to type it
+	 */
+	private static int typingTime(String text)
+	{
+		return text.length() * Rnd.get(TYPING_MIN, TYPING_MAX);
+	}
+	
+	/**
+	 * A social action (wave, bow...), when it stands.
+	 * @param fake the fake player
+	 * @param actionId the social action
+	 */
+	private static void social(Npc fake, int actionId)
+	{
+		if (fake.isDead() || !fake.isSpawned() || fake.isMoving() || fake.isCastingNow() || fake.isAttackingNow())
+		{
+			return;
+		}
+		
+		final FakePlayerHolder holder = fake.getTemplate().getFakePlayerInfo();
+		if ((holder != null) && holder.isSitting())
+		{
+			return;
+		}
+		
+		fake.broadcastPacket(new SocialAction(fake.getObjectId(), actionId));
+	}
+	
+	/**
+	 * Called when a roaming fake player hits a monster: another roaming fake player that is fighting that monster complains in general chat, like about a player (see {@link #onMonsterAttacked}).
+	 * @param monster the monster being hit
+	 * @param stealer the fake player hitting it
+	 */
+	public void onMonsterAttackedByFake(Attackable monster, Attackable stealer)
+	{
+		if ((_fakePlayers.size() < 2) || (FakePlayerPvpConfig.TAUNT_CHANCE <= 0))
+		{
+			return;
+		}
+		
+		for (Map.Entry<Creature, AggroInfo> entry : monster.getAggroList().entrySet())
+		{
+			final Creature creature = entry.getKey();
+			if ((creature == null) || (creature == stealer) || !creature.isPvpFakePlayer() || creature.isDead() || (entry.getValue().getDamage() <= 0) || (creature.getTarget() != monster))
+			{
+				continue;
+			}
+			
+			final Attackable fake = creature.asAttackable();
+			if (!isFighting(fake, stealer))
+			{
+				taunt(fake, TAUNTS_MOB_HUNT, false);
+			}
+		}
+	}
+	
+	/**
+	 * Called when a roaming fake player kills a monster: another roaming fake player that did more damage to it than the killer takes it as a stolen kill, like from a player (see {@link #onAttackableKilled}): it complains, or goes after the killer.
+	 * @param victim the monster
+	 * @param killer the fake player that killed it
+	 */
+	public void onMonsterKilledByFake(Attackable victim, Attackable killer)
+	{
+		if (!FakePlayerPvpConfig.REVENGE_ON_KILL_STEAL || !victim.isMonster() || (_fakePlayers.size() < 2) || killer.isInsideZone(ZoneId.PEACE))
+		{
+			return;
+		}
+		
+		final AggroInfo killerDamage = victim.getAggroList().get(killer);
+		final long stolenDamage = killerDamage != null ? killerDamage.getDamage() : 0;
+		World.getInstance().forEachVisibleObjectInRange(victim, Attackable.class, FakePlayerPvpConfig.REVENGE_RANGE, fake ->
+		{
+			if ((fake == killer) || !fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || fake.isTrialDuelist() || isFighting(fake, killer))
+			{
+				return;
+			}
+			
+			// Only its own monster counts: one it did most of the work on.
+			final AggroInfo damageDone = victim.getAggroList().get(fake);
+			if ((damageDone == null) || (damageDone.getDamage() <= 0) || (damageDone.getDamage() < stolenDamage))
+			{
+				return;
+			}
+			
+			if ((fake.getCurrentHp() < (fake.getMaxHp() * 0.5)) || (killer.getLevel() >= (fake.getLevel() + OUTLEVELED_DIFFERENCE)) || (Rnd.get(100) >= FakePlayerPvpPersonality.of(fake).getRevengeChance()))
+			{
+				taunt(fake, TAUNTS_KILL_STEAL_COMPLAIN, false);
+				return;
+			}
+			
+			startFight(fake, killer, TAUNTS_KILL_STEAL);
+		});
 	}
 	
 	/**
@@ -1902,19 +2420,20 @@ public class FakePlayerPvpManager
 	 * @param taunts what it may say
 	 * @param dead {@code true} if it is said by a dead fake player
 	 * @param chance the chance (in %) to say something
+	 * @return {@code true} if it says something
 	 */
-	private void taunt(Npc fake, String[] taunts, boolean dead, int chance)
+	private boolean taunt(Npc fake, String[] taunts, boolean dead, int chance)
 	{
 		if ((chance <= 0) || (Rnd.get(100) >= chance))
 		{
-			return;
+			return false;
 		}
 		
 		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
 		final long now = System.currentTimeMillis();
 		if ((profile == null) || (!dead && (now < profile.getNextChatTime())))
 		{
-			return;
+			return false;
 		}
 		profile.setNextChatTime(now + CHAT_INTERVAL);
 		
@@ -1926,6 +2445,7 @@ public class FakePlayerPvpManager
 				fake.broadcastPacket(new CreatureSay(fake, ChatType.GENERAL, fake.getName(), text));
 			}
 		}, Rnd.get(800, 2500));
+		return true;
 	}
 	
 	private void rewardKill(Attackable fake, Player killer)

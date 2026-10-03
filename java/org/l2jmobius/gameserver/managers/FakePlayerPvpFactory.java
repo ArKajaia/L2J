@@ -36,6 +36,7 @@ import org.l2jmobius.gameserver.data.xml.PlayerTemplateData;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.data.xml.SkillTreeData;
 import org.l2jmobius.gameserver.model.StatSet;
+import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
 import org.l2jmobius.gameserver.model.actor.enums.npc.AIType;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.enums.player.Sex;
@@ -120,6 +121,10 @@ public class FakePlayerPvpFactory
 		8922, // Pirate Hat
 	};
 	
+	/** The armor kits a Kamael wears when its build's kit holds heavy armor or a robe (see {@link #getArmorGear}). */
+	private static final String KAMAEL_MAGE_ARMOR_KIT = "LIGHT_MAGE";
+	private static final String KAMAEL_FIGHTER_ARMOR_KIT = "LIGHT_FIGHTER";
+	
 	private FakePlayerPvpFactory()
 	{
 	}
@@ -157,7 +162,7 @@ public class FakePlayerPvpFactory
 		// Like players, not everyone wears the best gear for their level: weapon, armor and jewels each lag behind on their own.
 		final FakePlayerPvpData data = FakePlayerPvpData.getInstance();
 		final FakePlayerPvpGearTier weapons = data.getGear(build.getWeaponKit(), rollGearLevel(level));
-		final FakePlayerPvpGearTier armors = data.getGear(build.getArmorKit(), rollGearLevel(level));
+		final FakePlayerPvpGearTier armors = getArmorGear(build, playerClass, rollGearLevel(level));
 		final FakePlayerPvpGearTier jewels = data.getGear(build.getJewelKit(), rollGearLevel(level));
 		
 		final ItemTemplate weaponItem = getItem(weapons != null ? weapons.getRHand() : 0);
@@ -553,7 +558,7 @@ public class FakePlayerPvpFactory
 
 		final FakePlayerPvpData data = FakePlayerPvpData.getInstance();
 		final FakePlayerPvpGearTier weapons = data.getGear(build.getWeaponKit(), rollGearLevel(level));
-		final FakePlayerPvpGearTier armors = data.getGear(build.getArmorKit(), rollGearLevel(level));
+		final FakePlayerPvpGearTier armors = getArmorGear(build, playerClass, rollGearLevel(level));
 		final ItemTemplate weaponItem = getItem(weapons != null ? weapons.getRHand() : 0);
 		final Weapon weapon = weaponItem instanceof Weapon ? (Weapon) weaponItem : null;
 		final ItemTemplate shieldItem = getItem(weapons != null ? weapons.getLHand() : 0);
@@ -650,6 +655,39 @@ public class FakePlayerPvpFactory
 		
 		final String subclasses = FakePlayerPvpConfig.PASSIVE_TREE_TITLE.replace("%count%", String.valueOf(passives.getSubclasses()));
 		return givenTitle.isEmpty() ? subclasses : givenTitle + " [" + subclasses + "]";
+	}
+	
+	/**
+	 * Kamael wear light armor only, like {@link org.l2jmobius.gameserver.network.clientpackets.UseItem} enforces for players: the client has no Kamael model of heavy armor and robes and shows them untextured. A Kamael whose armor kit holds such a piece wears
+	 * the light armor kit of its role instead.
+	 * @param build the build
+	 * @param playerClass the class it shows
+	 * @param gearLevel the level its armor is picked for
+	 * @return the armor it wears, {@code null} if none
+	 */
+	private static FakePlayerPvpGearTier getArmorGear(FakePlayerPvpBuild build, PlayerClass playerClass, int gearLevel)
+	{
+		final FakePlayerPvpData data = FakePlayerPvpData.getInstance();
+		final FakePlayerPvpGearTier armors = data.getGear(build.getArmorKit(), gearLevel);
+		if ((armors == null) || (playerClass.getRace() != Race.KAMAEL))
+		{
+			return armors;
+		}
+		
+		for (int itemId : new int[]
+		{
+			armors.getChest(),
+			armors.getLegs()
+		})
+		{
+			final ItemTemplate item = getItem(itemId);
+			if ((item != null) && ((item.getItemType() == ArmorType.HEAVY) || (item.getItemType() == ArmorType.MAGIC)))
+			{
+				final FakePlayerPvpGearTier light = data.getGear(build.getRole() == Role.MAGE ? KAMAEL_MAGE_ARMOR_KIT : KAMAEL_FIGHTER_ARMOR_KIT, gearLevel);
+				return light != null ? light : armors;
+			}
+		}
+		return armors;
 	}
 	
 	/**

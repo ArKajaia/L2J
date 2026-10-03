@@ -138,6 +138,16 @@ public class FakePlayerPvpConfig
 	public static int REFUSE_CHANCE_MAX;
 	public static int REFUSE_MAX_CHANCE_LEVEL_DIFF;
 	
+	// Fake players among themselves
+	public static int MEET_CHANCE;
+	public static int MEET_RANGE;
+	public static int RIVALRY_CHANCE;
+	public static int RIVALRY_MAX_LEVEL_ABOVE;
+	public static int FAKE_KILL_STEAL_CHANCE;
+	public static int JOIN_FIGHT_CHANCE;
+	public static int FAKE_POKE_SCALE;
+	public static int FAKE_REFUSE_SCALE;
+	
 	// Personality
 	public static int PERSONALITY_VARIANCE;
 	public static int PERSONALITY_RANGE_VARIANCE;
@@ -293,6 +303,15 @@ public class FakePlayerPvpConfig
 		REFUSE_CHANCE_MIN = Math.max(0, Math.min(100, config.getInt("FakePvpRefuseChanceMin", 5)));
 		REFUSE_CHANCE_MAX = Math.max(0, Math.min(100, config.getInt("FakePvpRefuseChanceMax", 40)));
 		REFUSE_MAX_CHANCE_LEVEL_DIFF = Math.max(1, config.getInt("FakePvpRefuseMaxChanceLevelDiff", 8));
+		
+		MEET_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpMeetChance", 20)));
+		MEET_RANGE = Math.max(0, config.getInt("FakePvpMeetRange", 2500));
+		RIVALRY_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpRivalryChance", 35)));
+		RIVALRY_MAX_LEVEL_ABOVE = Math.max(0, config.getInt("FakePvpRivalryMaxLevelAbove", 5));
+		FAKE_KILL_STEAL_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpFakeKillStealChance", 15)));
+		JOIN_FIGHT_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpJoinFightChance", 30)));
+		FAKE_POKE_SCALE = Math.max(0, config.getInt("FakePvpFakePokeScale", 200));
+		FAKE_REFUSE_SCALE = Math.max(0, config.getInt("FakePvpFakeRefuseScale", 50));
 		
 		PERSONALITY_VARIANCE = Math.max(0, Math.min(100, config.getInt("FakePvpPersonalityVariance", 30)));
 		PERSONALITY_RANGE_VARIANCE = Math.max(0, Math.min(90, config.getInt("FakePvpPersonalityRangeVariance", 20)));

@@ -542,7 +542,7 @@ Changes from 28–30 September 2026.
 - **Setup**: run `class_transfer_challenge_completion.sql`, and on an existing database the Kamael block at the end of `class_transfer_tree.sql` (it only adds missing rows). Settings are in `Custom/ClassTransferChallenge.ini`, trials in `data/ClassTransferChallenges/`.
 
 ### Fake Players
-- **New builds**: Dreadnought, Dominator, Soultaker, Hell Knight, and the Kamael classes (Doombringer, Male/Female Soul Hound, Trickster, Judicator). Every class also gets a second gear variant.
+- **New builds**: Dreadnought, Dominator, Soultaker, Hell Knight, and the Kamael classes (Doombringer, Male/Female Soul Hound, Trickster, Judicator). Every class also gets a second gear variant. Kamael wear light armor only, like players (heavy armor and robes showed untextured on them).
 - **Servitors**: Necromancers and Hell Knights summon their servitors. Necromancers link theirs with Transfer Pain and re-summon it during PvP.
 - **Kamael mechanics**: fake players use souls, Final Form, Soul Cleanse and Warp. Disarm now works on fake players.
 - **Personality**: each fake player rolls its own aggression, skill use, chattiness and roaming. The spread around the config values is set by `FakePvpPersonality*` options.
@@ -550,7 +550,7 @@ Changes from 28–30 September 2026.
   - They teleport and log off only when no player can see them.
   - They notice defensive buffs (UD, Guts, Zealot, mirrors, Angelic Icon) and wait them out.
   - Warriors switch to a polearm when many monsters surround them.
-  - They can taunt and fight each other.
+  - They can taunt and fight each other. At the hunting grounds they also meet like players: they say hello, walk over and talk in general chat with social actions, argue over the spot and fight for it, steal each other's monsters (and take revenge for it), and join the fights of others (`FakePvpMeet*`, `FakePvpRivalry*`, `FakePvpFakeKillStealChance`, `FakePvpJoinFightChance`, `FakePvpFake*Scale`).
   - Some carry a Blessed SoE, and they leave hotzones that have rotated out.
 - **Loot and exp**: fake player damage now counts toward drop ownership and the exp/sp split.
 - **Admin and UI**:
