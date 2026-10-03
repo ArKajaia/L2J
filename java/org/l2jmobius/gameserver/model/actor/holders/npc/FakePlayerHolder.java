@@ -60,8 +60,8 @@ public class FakePlayerHolder
 	private volatile boolean _isSitting;
 	// The transformation it shows (a roaming Kamael fake player in Final Form), 0 for none.
 	private volatile int _transformDisplayId;
-	private final int _privateStoreType;
-	private final String _privateStoreMessage;
+	private volatile int _privateStoreType;
+	private volatile String _privateStoreMessage;
 	private final boolean _talkable;
 	
 	public FakePlayerHolder(StatSet set)
@@ -295,6 +295,17 @@ public class FakePlayerHolder
 	public String getPrivateStoreMessage()
 	{
 		return _privateStoreMessage;
+	}
+	
+	/**
+	 * Opens or closes the private store of a fake player (town fake players open and close theirs like players do).
+	 * @param type the store type (0 = none, 1 = sell, 3 = buy, 5 = manufacture, 8 = package sell)
+	 * @param message the store message
+	 */
+	public void setPrivateStore(int type, String message)
+	{
+		_privateStoreMessage = message != null ? message : "";
+		_privateStoreType = type;
 	}
 	
 	public boolean isTalkable()

@@ -25,6 +25,7 @@ import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.handler.IActionClickHandler;
+import org.l2jmobius.gameserver.managers.FakePlayerTownManager;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -32,6 +33,7 @@ import org.l2jmobius.gameserver.model.actor.enums.creature.InstanceType;
 import org.l2jmobius.gameserver.model.events.EventDispatcher;
 import org.l2jmobius.gameserver.model.events.EventType;
 import org.l2jmobius.gameserver.model.events.holders.actor.npc.OnNpcFirstTalk;
+import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
 import org.l2jmobius.gameserver.network.serverpackets.MoveToPawn;
 
 public class NpcClick implements IActionClickHandler
@@ -102,6 +104,17 @@ public class NpcClick implements IActionClickHandler
 					
 					// Turn NPC to the player.
 					player.sendPacket(new MoveToPawn(player, npc, 100));
+					
+					// A town fake player sitting in its private store: its sell list, like a player's store.
+					if (npc.isFakePlayer() && FakePlayerTownManager.getInstance().showStore(player, npc))
+					{
+						if (player.isMoving())
+						{
+							player.stopMove(null);
+						}
+						player.sendPacket(ActionFailed.STATIC_PACKET);
+						return true;
+					}
 					if (npc.hasRandomAnimation())
 					{
 						npc.onRandomAnimation(Rnd.get(8));

@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -47,6 +48,7 @@ import org.l2jmobius.gameserver.managers.FakePlayerTownChat.Topic;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
+import org.l2jmobius.gameserver.model.WorldRegion;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
@@ -56,6 +58,9 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Skill
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
+import org.l2jmobius.gameserver.network.holders.RequestTrade;
+import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
+import org.l2jmobius.gameserver.network.serverpackets.FakePlayerPrivateStoreListSell;
 
 /**
  * Town fake players (FakeTownPlayers* in FakePlayers.ini): peaceful fake players that come and go in the towns like players do.<br>
@@ -258,6 +263,8 @@ public class FakePlayerTownManager
 	private final Map<Integer, FakePlayerTownVisitor> _visitors = new ConcurrentHashMap<>();
 	private final Deque<Integer> _freeNpcIds = new ArrayDeque<>();
 	private final Map<Integer, Long> _browsedStores = new HashMap<>();
+	/** Players a newbie asked for adena lately (object id, until when they are left alone). */
+	private final Map<Integer, Long> _begged = new HashMap<>();
 	private int _nextNpcId = FIRST_NPC_ID;
 	private long _order;
 	
@@ -437,6 +444,22 @@ public class FakePlayerTownManager
 			}
 		}
 		
+		// Sellers already sitting in their stores.
+		town.nextVendor = now + Rnd.get(60000, 240000);
+		final int vendors = FakePlayersConfig.FAKE_TOWN_PLAYERS_STORES;
+		for (int i = 0; i < vendors; i++)
+		{
+			final Location post = pickStorePost(town, null);
+			if (post != null)
+			{
+				final FakePlayerTownVisitor vendor = spawnVisitor(town, post, randomLevel(town, 1), null, true, true, true);
+				if (vendor != null)
+				{
+					vendor.startInStore();
+				}
+			}
+		}
+		
 		final List<FakePlayerTownVisitor> idle = new ArrayList<>();
 		for (int i = buffers; i < FakePlayersConfig.FAKE_TOWN_PLAYERS_PER_TOWN; i++)
 		{
@@ -463,16 +486,27 @@ public class FakePlayerTownManager
 				}
 			}
 			
-			if (roll < 85)
+			if (roll < 65)
 			{
 				// Standing or sitting around.
-				final boolean sitting = Rnd.get(100) < 30;
+				final boolean sitting = Rnd.get(100) < 20;
 				final Location location = jitter(roll < 70 ? town.getRandomHub() : town.getRandomPoint(), 120);
 				final FakePlayerTownVisitor visitor = spawnVisitor(town, location, randomLevel(town, 1), null, sitting, true);
 				if (visitor != null)
 				{
 					visitor.startIdle(sitting);
 					idle.add(visitor);
+				}
+				continue;
+			}
+			
+			// Out in the street, on its way somewhere.
+			if (roll < 85)
+			{
+				final FakePlayerTownVisitor visitor = spawnVisitor(town, jitter(town.getRandomHub(), 120), randomLevel(town, 1), null, false, true);
+				if (visitor != null)
+				{
+					visitor.delay(Rnd.get(200, 3000));
 				}
 				continue;
 			}
@@ -537,7 +571,8 @@ public class FakePlayerTownManager
 		}
 		
 		final int target = Math.max(1, (int) Math.round(FakePlayersConfig.FAKE_TOWN_PLAYERS_PER_TOWN * town.populationFactor));
-		final int count = town.visitors.size();
+		final int vendors = town.countVendors();
+		final int count = town.visitors.size() - vendors;
 		if ((count < target) && (now >= town.nextArrival))
 		{
 			arrive(town, now);
@@ -545,6 +580,24 @@ public class FakePlayerTownManager
 			// Far below: they come in faster, like after a server restart or a siege.
 			final double missing = (double) (target - count) / target;
 			town.nextArrival = now + (long) (Rnd.get(4000, 30000) * (1.2 - missing));
+		}
+		
+		// A seller comes to open its store a while after another one left.
+		if ((vendors < FakePlayersConfig.FAKE_TOWN_PLAYERS_STORES) && (now >= town.nextVendor))
+		{
+			town.nextVendor = now + Rnd.get(60000, 300000);
+			final Location location = arrivalPoint(town, Rnd.get(100) < 60 ? Arrival.LOGIN : Arrival.GATEKEEPER);
+			final FakePlayerTownVisitor vendor = location != null ? spawnVisitor(town, location, randomLevel(town, 1), null, false, false, true) : null;
+			if (vendor != null)
+			{
+				vendor.delay(Rnd.get(1500, 6000));
+			}
+		}
+		
+		if (now >= town.nextNotice)
+		{
+			town.nextNotice = now + Rnd.get(2500, 7000);
+			noticePlayers(town);
 		}
 		
 		for (FakePlayerTownVisitor visitor : town.visitors)
@@ -567,7 +620,7 @@ public class FakePlayerTownManager
 		if (now >= town.nextLoneChat)
 		{
 			final double rate = FakePlayersConfig.FAKE_TOWN_PLAYERS_CHAT_RATE / 100.0;
-			town.nextLoneChat = now + (rate > 0 ? (long) (Rnd.get(90000, 360000) / rate) : 3600000);
+			town.nextLoneChat = now + (rate > 0 ? (long) (Rnd.get(60000, 240000) / rate) : 3600000);
 			if (FakePlayerTownVisitor.isChatEnabled())
 			{
 				loneChat(town);
@@ -770,10 +823,27 @@ public class FakePlayerTownManager
 	 */
 	private FakePlayerTownVisitor spawnVisitor(FakePlayerTown town, Location location, int level, BufferLine bufferLine, boolean sitting, boolean midSession)
 	{
+		return spawnVisitor(town, location, level, bufferLine, sitting, midSession, false);
+	}
+	
+	/**
+	 * Creates a town fake player and puts it in the world.
+	 * @param town the town
+	 * @param location where it appears
+	 * @param level its level
+	 * @param bufferLine its buffer class line, {@code null} for a regular visitor
+	 * @param sitting {@code true} if it appears sitting
+	 * @param midSession {@code true} if it was already in town for a while (server start)
+	 * @param vendor {@code true} if it comes to sell in a private store
+	 * @return the fake player, {@code null} if it could not be created
+	 */
+	private FakePlayerTownVisitor spawnVisitor(FakePlayerTown town, Location location, int level, BufferLine bufferLine, boolean sitting, boolean midSession, boolean vendor)
+	{
 		if (location == null)
 		{
 			return null;
 		}
+
 		
 		final FakePlayerPvpBuild build = bufferLine != null ? bufferLine.getGearBuild() : getBuild(town.race);
 		if (build == null)
@@ -813,14 +883,16 @@ public class FakePlayerTownManager
 				return null;
 			}
 			
+			// Nothing to sell after all (should not happen): it comes as a regular visitor.
+			final FakePlayerTownStore store = vendor ? FakePlayerTownStore.create(level, FakePlayersConfig.FAKE_TOWN_PLAYERS_STORE_RARE_CHANCE) : null;
 			final PlayerClass playerClass = template.getFakePlayerInfo().getPlayerClass();
-			final FakePlayerTownVisitor visitor = new FakePlayerTownVisitor(this, town, spawn, npc, level, playerClass, bufferLine, selfBuffs(build, level, bufferLine));
+			final FakePlayerTownVisitor visitor = new FakePlayerTownVisitor(this, town, spawn, npc, level, playerClass, bufferLine, store, selfBuffs(build, level, bufferLine));
 			visitor.makePlan(midSession);
 			town.visitors.add(visitor);
 			_visitors.put(npc.getObjectId(), visitor);
 			
 			// Back from a hunt, it often still runs with Wind Walk on.
-			if (!midSession && (bufferLine == null) && (level >= 20) && (Rnd.get(100) < 40))
+			if (!midSession && (bufferLine == null) && (store == null) && (level >= 20) && (Rnd.get(100) < 40))
 			{
 				final Skill windWalk = SkillData.getInstance().getSkill(1204, 2);
 				if (windWalk != null)
@@ -1053,13 +1125,13 @@ public class FakePlayerTownManager
 	
 	/**
 	 * @param visitor the one who would look
-	 * @return a player selling or buying in a private store close by that no other fake player looks at right now, {@code null} if none
+	 * @return a player or fake player selling or buying in a private store close by that no other fake player looks at right now, {@code null} if none
 	 */
-	Player pickStore(FakePlayerTownVisitor visitor)
+	WorldObject pickStore(FakePlayerTownVisitor visitor)
 	{
 		final long now = System.currentTimeMillis();
 		_browsedStores.values().removeIf(until -> until < now);
-		final List<Player> stores = new ArrayList<>();
+		final List<WorldObject> stores = new ArrayList<>();
 		World.getInstance().forEachVisibleObjectInRange(visitor.npc, Player.class, STORE_RANGE, player ->
 		{
 			if (player.isInStoreMode() && !_browsedStores.containsKey(player.getObjectId()) && visitor.town.isInside(player.getX(), player.getY(), player.getZ()))
@@ -1067,15 +1139,233 @@ public class FakePlayerTownManager
 				stores.add(player);
 			}
 		});
+		for (FakePlayerTownVisitor other : visitor.town.visitors)
+		{
+			if ((other != visitor) && other.isStoreOpen() && !_browsedStores.containsKey(other.npc.getObjectId()) && (FakePlayerTown.distance2D(other.npc, visitor.npc) < STORE_RANGE))
+			{
+				stores.add(other.npc);
+			}
+		}
 		
 		if (stores.isEmpty())
 		{
 			return null;
 		}
 		
-		final Player store = stores.get(Rnd.get(stores.size()));
+		final WorldObject store = stores.get(Rnd.get(stores.size()));
 		_browsedStores.put(store.getObjectId(), now + 45000);
 		return store;
+	}
+	
+	/**
+	 * @param beggar a newbie that wants a little adena
+	 * @return someone close by to ask: a player (not one asked lately) or a fake player of a much higher level standing around, {@code null} if none
+	 */
+	WorldObject pickBegTarget(FakePlayerTownVisitor beggar)
+	{
+		final long now = System.currentTimeMillis();
+		_begged.values().removeIf(until -> until < now);
+		final List<WorldObject> players = new ArrayList<>();
+		World.getInstance().forEachVisibleObjectInRange(beggar.npc, Player.class, 1800, player ->
+		{
+			if (!player.isInStoreMode() && !player.isDead() && !player.isInvisible() && !_begged.containsKey(player.getObjectId()) && beggar.town.isInside(player.getX(), player.getY(), player.getZ()))
+			{
+				players.add(player);
+			}
+		});
+		
+		if (!players.isEmpty() && (Rnd.get(100) < 60))
+		{
+			final WorldObject player = players.get(Rnd.get(players.size()));
+			_begged.put(player.getObjectId(), now + (6 * 60000));
+			return player;
+		}
+		
+		final List<FakePlayerTownVisitor> rich = new ArrayList<>();
+		for (FakePlayerTownVisitor visitor : beggar.town.visitors)
+		{
+			if ((visitor != beggar) && !visitor.isBuffer() && (visitor.level >= Math.max(beggar.level + 12, 30)) && visitor.isAvailableForChat(now) && (FakePlayerTown.distance2D(visitor.npc, beggar.npc) < 1800))
+			{
+				rich.add(visitor);
+			}
+		}
+		return rich.isEmpty() ? null : rich.get(Rnd.get(rich.size())).npc;
+	}
+	
+	/**
+	 * Players walking by: a fake player standing close by turns to them, and may say hello or wave.
+	 */
+	private void noticePlayers(FakePlayerTown town)
+	{
+		final long now = System.currentTimeMillis();
+		for (FakePlayerTownVisitor visitor : town.visitors)
+		{
+			if (visitor.gone || visitor.isVendor() || !visitor.isAvailableForChat(now) || !FakePlayerTown.isWatched(visitor.npc) || (Rnd.get(100) < 50))
+			{
+				continue;
+			}
+			
+			final List<Player> close = new ArrayList<>();
+			World.getInstance().forEachVisibleObjectInRange(visitor.npc, Player.class, 220, player ->
+			{
+				if (!player.isInvisible() && !player.isInStoreMode())
+				{
+					close.add(player);
+				}
+			});
+			if (!close.isEmpty())
+			{
+				visitor.notice(close.get(Rnd.get(close.size())));
+			}
+		}
+	}
+	
+	/**
+	 * @param town the town
+	 * @param vendor a seller, {@code null} for one that isn't in the world yet
+	 * @return where it sits with its store: along a street close to a gatekeeper, a warehouse, a grocer or a respawn point, not in front of an npc and not on top of other stores, {@code null} if nowhere was found
+	 */
+	Location pickStorePost(FakePlayerTown town, FakePlayerTownVisitor vendor)
+	{
+		final GeoEngine geo = GeoEngine.getInstance();
+		final Role[] near =
+		{
+			Role.GATEKEEPER,
+			Role.WAREHOUSE,
+			Role.WAREHOUSE,
+			Role.GROCER,
+			Role.MERCHANT
+		};
+		for (int attempt = 0; attempt < 14; attempt++)
+		{
+			Location base = town.getRandomPoint();
+			if (Rnd.get(100) < 70)
+			{
+				final TownNpc townNpc = town.pickNpc(near[Rnd.get(near.length)], vendor != null ? vendor.npc : town.getRandomPoint());
+				final Npc npc = townNpc != null ? townNpc.getNpc() : null;
+				if (npc != null)
+				{
+					base = new Location(npc.getX(), npc.getY(), npc.getZ());
+				}
+			}
+			
+			final double angle = Rnd.nextDouble() * 2 * Math.PI;
+			final int distance = Rnd.get(160, 520);
+			final int x = base.getX() + (int) (Math.cos(angle) * distance);
+			final int y = base.getY() + (int) (Math.sin(angle) * distance);
+			final int z = geo.getHeight(x, y, base.getZ());
+			if ((Math.abs(z - base.getZ()) > 120) || !town.isInside(x, y, z) || !geo.canMoveToTarget(base.getX(), base.getY(), base.getZ(), x, y, z, 0))
+			{
+				continue;
+			}
+			
+			if (!isFreeForStore(town, vendor, x, y, z))
+			{
+				continue;
+			}
+			return new Location(x, y, z);
+		}
+		return null;
+	}
+	
+	private static boolean isFreeForStore(FakePlayerTown town, FakePlayerTownVisitor vendor, int x, int y, int z)
+	{
+		// Not in front of an npc.
+		for (List<TownNpc> list : town.npcs.values())
+		{
+			for (TownNpc townNpc : list)
+			{
+				if (Math.hypot(townNpc.spawn.getX() - x, townNpc.spawn.getY() - y) < 150)
+				{
+					return false;
+				}
+			}
+		}
+		
+		// Not on top of another store or a buffer.
+		for (FakePlayerTownVisitor other : town.visitors)
+		{
+			if ((other != vendor) && (other.isVendor() || other.isBuffer()) && (Math.hypot(other.npc.getX() - x, other.npc.getY() - y) < 110))
+			{
+				return false;
+			}
+		}
+		
+		// Nor on top of the store of a player.
+		final WorldRegion region = World.getInstance().getRegion(x, y, z);
+		if (region != null)
+		{
+			for (WorldRegion surrounding : region.getSurroundingRegions())
+			{
+				for (WorldObject object : surrounding.getVisibleObjects())
+				{
+					if (object.isPlayer() && object.asPlayer().isInStoreMode() && (Math.hypot(object.getX() - x, object.getY() - y) < 110))
+					{
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+	
+	// Private stores of the fake players, used by players (network threads).
+	
+	/**
+	 * A player opens the private store of a town fake player.
+	 * @param player the player
+	 * @param npc the fake player
+	 * @return {@code true} if it is a town fake player with its store open (the sell list was sent)
+	 */
+	public boolean showStore(Player player, Npc npc)
+	{
+		final FakePlayerTownVisitor visitor = _visitors.get(npc.getObjectId());
+		if ((visitor == null) || !visitor.isStoreOpen())
+		{
+			return false;
+		}
+		
+		player.sendPacket(new FakePlayerPrivateStoreListSell(player, npc.getObjectId(), visitor.store.getItems()));
+		return true;
+	}
+	
+	/**
+	 * A player buys in the private store of a town fake player.
+	 * @param player the buyer
+	 * @param objectId the object id of the seller
+	 * @param items what it buys
+	 * @return {@code false} if {@code objectId} isn't a town fake player
+	 */
+	public boolean buyFromStore(Player player, int objectId, Set<RequestTrade> items)
+	{
+		final FakePlayerTownVisitor visitor = _visitors.get(objectId);
+		if (visitor == null)
+		{
+			return false;
+		}
+		
+		if (!visitor.isStoreOpen() || player.isCursedWeaponEquipped() || !player.isInsideRadius3D(visitor.npc, Npc.INTERACTION_DISTANCE) || (player.getInstanceId() != visitor.npc.getInstanceId()))
+		{
+			player.sendPacket(ActionFailed.STATIC_PACKET);
+			return true;
+		}
+		
+		if (!player.getAccessLevel().allowTransaction())
+		{
+			player.sendMessage("Transactions are disabled for your Access Level.");
+			player.sendPacket(ActionFailed.STATIC_PACKET);
+			return true;
+		}
+		
+		if (visitor.store.buy(player, items, visitor.npc))
+		{
+			schedule(0, visitor::boughtByPlayer);
+		}
+		else
+		{
+			player.sendPacket(ActionFailed.STATIC_PACKET);
+		}
+		return true;
 	}
 	
 	/**
@@ -1475,14 +1765,16 @@ public class FakePlayerTownManager
 		{
 			int buffers = 0;
 			int talking = 0;
+			int stores = 0;
 			for (FakePlayerTownVisitor visitor : town.visitors)
 			{
 				buffers += visitor.isBuffer() ? 1 : 0;
 				talking += visitor.circle != null ? 1 : 0;
+				stores += visitor.isStoreOpen() ? 1 : 0;
 			}
 			
 			final int wanted = Math.max(1, (int) Math.round(FakePlayersConfig.FAKE_TOWN_PLAYERS_PER_TOWN * town.populationFactor));
-			lines.add(town.shortName + ": " + town.visitors.size() + "/" + wanted + (talking > 0 ? ", " + talking + " talking" : "") + (buffers > 0 ? ", " + buffers + " buffer" : "") + (town.isPrepared() ? "" : " (preparing)"));
+			lines.add(town.shortName + ": " + town.visitors.size() + "/" + wanted + (talking > 0 ? ", " + talking + " talking" : "") + (buffers > 0 ? ", " + buffers + " buffer" : "") + (stores > 0 ? ", " + stores + " store" : "") + (town.isPrepared() ? "" : " (preparing)"));
 		}
 		
 		final FakePlayerTownVisitor visitor = getVisitor(target);

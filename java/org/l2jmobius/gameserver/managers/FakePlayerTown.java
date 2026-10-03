@@ -156,6 +156,9 @@ final class FakePlayerTown
 	long nextLoneChat;
 	/** No new conversation starts before this (a town isn't a chat room). */
 	long nextCircle;
+	long nextVendor;
+	/** When the fake players next look around for players walking by. */
+	long nextNotice;
 	/** Its first fake players came (once it was prepared). */
 	boolean populated;
 	
@@ -804,6 +807,22 @@ final class FakePlayerTown
 		for (FakePlayerTownVisitor visitor : visitors)
 		{
 			if (visitor.isBuffer())
+			{
+				count++;
+			}
+		}
+		return count;
+	}
+	
+	/**
+	 * @return how many fake players came to sell in a private store
+	 */
+	int countVendors()
+	{
+		int count = 0;
+		for (FakePlayerTownVisitor visitor : visitors)
+		{
+			if (visitor.isVendor())
 			{
 				count++;
 			}

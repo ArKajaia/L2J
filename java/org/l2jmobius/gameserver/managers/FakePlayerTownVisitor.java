@@ -24,7 +24,9 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.ai.Intention;
@@ -55,7 +57,7 @@ import org.l2jmobius.gameserver.util.LocationUtil;
 /**
  * One town fake player (see {@link FakePlayerTownManager}) from the moment it arrives in town until it leaves.<br>
  * It comes with a plan, like a player that comes back from a hunt, logs in, or only drops by for buffs: errands (warehouse, grocer, blacksmith, shops, masters, a quest npc...), buffs before going out again, some time with others, sitting or standing around, and a way
- * out (a gatekeeper, the community board teleport, or logging off). The plan, the npc it picks, where it stands, how long everything takes and how it types all come from dice and from its own temper, so no two of them do the same thing the same way.
+ * out (a gatekeeper, the community board teleport, or logging off). Newbies sometimes walk up to someone to ask for a little adena, and a few come only to sit in a private store ({@link FakePlayerTownStore}) that players can buy from. The plan, the npc it picks, where it stands, how long everything takes and how it types all come from dice and from its own temper, so no two of them do the same thing the same way.
  */
 final class FakePlayerTownVisitor
 {
@@ -76,6 +78,12 @@ final class FakePlayerTownVisitor
 		SIT,
 		/** Walks somewhere close, for no reason. */
 		WANDER,
+		/** Walks across town to another street, sometimes on to one more. */
+		STROLL,
+		/** A newbie walks up to someone and asks for a little adena. */
+		BEG,
+		/** Sits in its private store. */
+		STORE,
 		/** Looks at a player's private store. */
 		BROWSE_STORE,
 		/** A buffer waiting for people to buff. */
@@ -113,7 +121,9 @@ final class FakePlayerTownVisitor
 		/** Learns skills, quests. */
 		TRAINING,
 		/** A low level running between the npcs of its village. */
-		NEWBIE
+		NEWBIE,
+		/** Sells in a private store. */
+		VENDOR
 	}
 	
 	static final class Errand
@@ -194,6 +204,10 @@ final class FakePlayerTownVisitor
 	final boolean mage;
 	/** The buff line of a resident buffer, {@code null} for everyone else. */
 	final FakePlayerTownManager.BufferLine bufferLine;
+	/** What a seller sells, {@code null} for everyone else. */
+	final FakePlayerTownStore store;
+	/** Its store is open (sitting at its spot). */
+	private volatile boolean _storeOpen;
 	private final List<Skill> _selfBuffs;
 	
 	// Temper.
@@ -235,11 +249,16 @@ final class FakePlayerTownVisitor
 	private boolean _held;
 	boolean gone;
 	
+	/** Players it said hello to (object ids), so it doesn't greet the same one twice. */
+	private final Set<Integer> _greeted = new HashSet<>();
+	/** How many walks across town it chained. */
+	private int _strolls;
+	
 	// Resident buffer.
 	private final Deque<FakePlayerTownVisitor> _requests = new ArrayDeque<>();
 	private boolean _serving;
 	
-	FakePlayerTownVisitor(FakePlayerTownManager manager, FakePlayerTown town, Spawn spawn, Npc npc, int level, PlayerClass playerClass, FakePlayerTownManager.BufferLine bufferLine, List<Skill> selfBuffs)
+	FakePlayerTownVisitor(FakePlayerTownManager manager, FakePlayerTown town, Spawn spawn, Npc npc, int level, PlayerClass playerClass, FakePlayerTownManager.BufferLine bufferLine, FakePlayerTownStore store, List<Skill> selfBuffs)
 	{
 		_manager = manager;
 		this.town = town;
@@ -249,12 +268,29 @@ final class FakePlayerTownVisitor
 		this.playerClass = playerClass;
 		mage = playerClass.isMage();
 		this.bufferLine = bufferLine;
+		this.store = store;
 		_selfBuffs = selfBuffs;
 	}
 	
 	boolean isBuffer()
 	{
 		return bufferLine != null;
+	}
+	
+	/**
+	 * @return {@code true} if it came to town to sell in a private store
+	 */
+	boolean isVendor()
+	{
+		return store != null;
+	}
+	
+	/**
+	 * @return {@code true} if its private store is open
+	 */
+	boolean isStoreOpen()
+	{
+		return _storeOpen && !gone;
 	}
 	
 	/**
@@ -272,6 +308,20 @@ final class FakePlayerTownVisitor
 			_plan.add(new Errand(Kind.BUFFER_POST, null));
 			_plan.add(leaveErrand(Rnd.get(100) < 70 ? Kind.LOGOUT : Kind.LEAVE_BOARD));
 			leaveBy = now + (long) (Rnd.get(25, 120) * 60000L * stayScale);
+			return;
+		}
+		
+		if (isVendor())
+		{
+			// Gets its things out of the warehouse first now and then, then sits down in its store until it is sold out or tired of it.
+			_visit = Visit.VENDOR;
+			if (!midSession && (Rnd.get(100) < 40))
+			{
+				_plan.add(npcErrand(Role.WAREHOUSE));
+			}
+			_plan.add(new Errand(Kind.STORE, null));
+			_plan.add(leaveErrand(Rnd.get(100) < 70 ? Kind.LOGOUT : null));
+			leaveBy = now + (long) (Rnd.get(20, 90) * 60000L * stayScale);
 			return;
 		}
 		
@@ -352,17 +402,29 @@ final class FakePlayerTownVisitor
 			{
 				errands.add(new Errand(Rnd.get(100) < (30 + (sitter * 50)) ? Kind.SIT : Kind.IDLE, null));
 				errands.add(new Errand(Kind.SOCIALIZE, null));
-				if (Rnd.get(100) < 50)
+				if (Rnd.get(100) < 60)
 				{
 					errands.add(new Errand(Kind.WANDER, null));
 				}
-				if (Rnd.get(100) < 40)
+				if (Rnd.get(100) < 45)
+				{
+					errands.add(new Errand(Kind.STROLL, null));
+				}
+				if (Rnd.get(100) < 50)
 				{
 					errands.add(npcErrand(randomRole()));
 				}
 				if (Rnd.get(100) < 45)
 				{
 					errands.add(new Errand(Kind.SOCIALIZE, null));
+				}
+				if (Rnd.get(100) < 35)
+				{
+					errands.add(new Errand(Kind.BROWSE_STORE, null));
+				}
+				if (canBeg() && (Rnd.get(100) < 20))
+				{
+					errands.add(Rnd.get(errands.size() + 1), new Errand(Kind.BEG, null));
 				}
 				if (Rnd.get(100) < 40)
 				{
@@ -378,6 +440,10 @@ final class FakePlayerTownVisitor
 			{
 				if (Rnd.get(100) < 50)
 				{
+					errands.add(new Errand(Kind.STROLL, null));
+				}
+				else if (Rnd.get(100) < 60)
+				{
 					errands.add(new Errand(Kind.WANDER, null));
 				}
 				final Errand afk = new Errand(Rnd.get(100) < (40 + (sitter * 60)) ? Kind.SIT : Kind.IDLE, null);
@@ -387,8 +453,12 @@ final class FakePlayerTownVisitor
 				{
 					errands.add(new Errand(Kind.SOCIALIZE, null));
 				}
+				if (Rnd.get(100) < 40)
+				{
+					errands.add(new Errand(Kind.WANDER, null));
+				}
 				errands.add(leaveErrand(Rnd.get(100) < 65 ? Kind.LOGOUT : null));
-				leaveBy = now + (long) (Rnd.get(20, 75) * 60000L * stayScale);
+				leaveBy = now + (long) (Rnd.get(15, 50) * 60000L * stayScale);
 				_lingering = true;
 				break;
 			}
@@ -427,9 +497,13 @@ final class FakePlayerTownVisitor
 				{
 					errands.add(npcErrand(Role.GROCER));
 				}
-				if (Rnd.get(100) < 30)
+				if (Rnd.get(100) < 40)
 				{
 					errands.add(new Errand(Kind.WANDER, null));
+				}
+				if (canBeg() && (Rnd.get(100) < 35))
+				{
+					errands.add(new Errand(Kind.BEG, null));
 				}
 				Collections.shuffle(errands);
 				addBuffStep(errands, 30);
@@ -449,15 +523,15 @@ final class FakePlayerTownVisitor
 			}
 			
 			final int roll = Rnd.get(100);
-			if (roll < 12)
+			if (roll < 7)
 			{
 				full.add(new Errand(Kind.IDLE, null));
 			}
-			else if (roll < (12 + (sitter * 8)))
+			else if (roll < (7 + (sitter * 5)))
 			{
 				full.add(new Errand(Kind.SIT, null));
 			}
-			else if ((roll < 30) && !loner && (Rnd.nextDouble() < (chatty * chatRate())))
+			else if ((roll < 26) && !loner && (Rnd.nextDouble() < (chatty * chatRate())))
 			{
 				full.add(new Errand(Kind.SOCIALIZE, null));
 			}
@@ -465,9 +539,17 @@ final class FakePlayerTownVisitor
 			{
 				full.add(new Errand(Kind.WANDER, null));
 			}
-			else if (roll < 39)
+			else if (roll < 43)
+			{
+				full.add(new Errand(Kind.STROLL, null));
+			}
+			else if (roll < 49)
 			{
 				full.add(new Errand(Kind.BROWSE_STORE, null));
+			}
+			else if ((roll < 52) && canBeg())
+			{
+				full.add(new Errand(Kind.BEG, null));
 			}
 		}
 		
@@ -507,15 +589,17 @@ final class FakePlayerTownVisitor
 		for (int i = 0; i < count; i++)
 		{
 			final double socialWeight = loner ? 4 : chatty * 35 * chatRate();
-			final double sitWeight = 8 + (sitter * 30) + (_visit == Visit.AFK ? 20 : 0);
+			final double sitWeight = 5 + (sitter * 20) + (_visit == Visit.AFK ? 15 : 0);
 			final double[] weights =
 			{
-				28, // Idle.
+				16, // Idle.
 				sitWeight,
 				socialWeight,
-				14, // Wander.
-				6, // An npc.
-				4 // A private store.
+				24, // Wander.
+				10, // An npc.
+				9, // A private store.
+				14, // Across town.
+				canBeg() ? 9 : 0 // Asking for adena.
 			};
 			double total = 0;
 			for (double weight : weights)
@@ -560,9 +644,19 @@ final class FakePlayerTownVisitor
 					filler = npcErrand(randomRole());
 					break;
 				}
-				default:
+				case 5:
 				{
 					filler = new Errand(Kind.BROWSE_STORE, null);
+					break;
+				}
+				case 6:
+				{
+					filler = new Errand(Kind.STROLL, null);
+					break;
+				}
+				default:
+				{
+					filler = new Errand(Kind.BEG, null);
 					break;
 				}
 			}
@@ -580,13 +674,13 @@ final class FakePlayerTownVisitor
 		final int roll = Rnd.get(100);
 		if (level < 20)
 		{
-			return roll < 42 ? Visit.NEWBIE : roll < 58 ? Visit.RESTOCK : roll < 66 ? Visit.QUICK_BUFF : roll < 80 ? Visit.SOCIAL : roll < 88 ? Visit.AFK : Visit.SHOPPING;
+			return roll < 45 ? Visit.NEWBIE : roll < 61 ? Visit.RESTOCK : roll < 69 ? Visit.QUICK_BUFF : roll < 85 ? Visit.SOCIAL : roll < 89 ? Visit.AFK : Visit.SHOPPING;
 		}
 		if (level < 76)
 		{
-			return roll < 28 ? Visit.RESTOCK : roll < 39 ? Visit.QUICK_BUFF : roll < 52 ? Visit.SHOPPING : roll < 70 ? Visit.SOCIAL : roll < 83 ? Visit.AFK : roll < 92 ? Visit.TRAINING : Visit.NEWBIE;
+			return roll < 29 ? Visit.RESTOCK : roll < 40 ? Visit.QUICK_BUFF : roll < 56 ? Visit.SHOPPING : roll < 76 ? Visit.SOCIAL : roll < 83 ? Visit.AFK : roll < 93 ? Visit.TRAINING : Visit.NEWBIE;
 		}
-		return roll < 30 ? Visit.RESTOCK : roll < 41 ? Visit.QUICK_BUFF : roll < 55 ? Visit.SHOPPING : roll < 75 ? Visit.SOCIAL : roll < 92 ? Visit.AFK : Visit.TRAINING;
+		return roll < 31 ? Visit.RESTOCK : roll < 42 ? Visit.QUICK_BUFF : roll < 59 ? Visit.SHOPPING : roll < 81 ? Visit.SOCIAL : roll < 90 ? Visit.AFK : Visit.TRAINING;
 	}
 	
 	private static Errand npcErrand(Role role)
@@ -607,6 +701,14 @@ final class FakePlayerTownVisitor
 			Role.OTHER
 		};
 		return roles[Rnd.get(roles.length)];
+	}
+	
+	/**
+	 * @return {@code true} if it is a newbie that may ask others for adena
+	 */
+	private boolean canBeg()
+	{
+		return FakePlayersConfig.FAKE_TOWN_PLAYERS_BEGGARS && isChatEnabled() && (level <= 25) && !isBuffer() && !isVendor();
 	}
 	
 	private static double chatRate()
@@ -944,14 +1046,14 @@ final class FakePlayerTownVisitor
 			case IDLE:
 			{
 				_phase = Phase.WORK;
-				_nextAction = now + (_errand.longVersion ? duration(400, 120, 1800) : duration(18, 4, 150));
+				_nextAction = now + (_errand.longVersion ? duration(240, 90, 1200) : duration(10, 3, 80));
 				return true;
 			}
 			case SIT:
 			{
 				sitDown();
 				_phase = Phase.WORK;
-				_nextAction = now + (_errand.longVersion ? duration(600, 180, 2400) : duration(60, 15, 400));
+				_nextAction = now + (_errand.longVersion ? duration(420, 150, 1800) : duration(40, 12, 240));
 				return true;
 			}
 			case WANDER:
@@ -959,9 +1061,63 @@ final class FakePlayerTownVisitor
 				final Location place = wanderPlace();
 				return (place != null) && travelTo(place, now);
 			}
+			case STROLL:
+			{
+				// Server start: the streets aren't worked out yet.
+				if (!town.isPrepared())
+				{
+					_errand = new Errand(Kind.WANDER, null);
+					return begin(now);
+				}
+				
+				final Location place = strollPlace();
+				return (place != null) && travelTo(place, now);
+			}
+			case BEG:
+			{
+				final WorldObject target = _manager.pickBegTarget(this);
+				if (target == null)
+				{
+					return false;
+				}
+				
+				final Location near = pointNear(target, 60, 110);
+				if ((near == null) || !travelTo(near, now))
+				{
+					return false;
+				}
+				
+				_other = target;
+				final FakePlayerTownVisitor other = _manager.getVisitor(target);
+				if (other != null)
+				{
+					other.hold(now, 60000); // It waits for this one to come over.
+				}
+				return true;
+			}
+			case STORE:
+			{
+				if (!town.isPrepared())
+				{
+					_plan.addFirst(_errand);
+					_errand = new Errand(Kind.IDLE, null);
+					_phase = Phase.WORK;
+					_nextAction = now + Rnd.get(5000, 20000);
+					return true;
+				}
+				
+				final Location post = _manager.pickStorePost(town, this);
+				if (post == null)
+				{
+					// Nowhere better: right where it stands.
+					openStore(now);
+					return true;
+				}
+				return travelTo(post, now);
+			}
 			case BROWSE_STORE:
 			{
-				final Player store = _manager.pickStore(this);
+				final WorldObject store = _manager.pickStore(this);
 				if (store == null)
 				{
 					return false;
@@ -1042,6 +1198,24 @@ final class FakePlayerTownVisitor
 			if ((FakePlayerTown.distance2D(loc, npc) > 80) && town.isInside(loc.getX(), loc.getY(), loc.getZ()))
 			{
 				return loc;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * @return a street point further away to walk to (another part of the town), {@code null} if none was found
+	 */
+	private Location strollPlace()
+	{
+		final List<Location> hubs = town.getRouteHubs();
+		for (int attempt = 0; attempt < 8; attempt++)
+		{
+			final Location hub = hubs.get(Rnd.get(hubs.size()));
+			final double distance = FakePlayerTown.distance2D(hub, npc);
+			if ((distance > 500) && (distance < 3500))
+			{
+				return jitter(hub, 90);
 			}
 		}
 		return null;
@@ -1227,7 +1401,17 @@ final class FakePlayerTownVisitor
 	private void abort(long now)
 	{
 		_aborts++;
-		if ((_errand != null) && (_errand.kind == Kind.SOCIALIZE) && (_other != null))
+		
+		// A seller that can't get to its spot opens its store where it stands.
+		if ((_errand != null) && (_errand.kind == Kind.STORE))
+		{
+			npc.stopMove(null);
+			npc.getAI().setIntention(Intention.IDLE);
+			openStore(now);
+			return;
+		}
+		
+		if ((_errand != null) && ((_errand.kind == Kind.SOCIALIZE) || (_errand.kind == Kind.BEG)) && (_other != null))
 		{
 			final FakePlayerTownVisitor partner = _manager.getVisitor(_other);
 			if ((partner != null) && (partner.circle == null))
@@ -1349,7 +1533,39 @@ final class FakePlayerTownVisitor
 					face(_other);
 				}
 				_phase = Phase.WORK;
-				_nextAction = now + duration(10, 4, 40);
+				final long browse = duration(10, 4, 40);
+				_nextAction = now + browse;
+				
+				// A fake player's store: now and then it buys something.
+				final FakePlayerTownVisitor seller = _manager.getVisitor(_other);
+				if ((seller != null) && seller.isStoreOpen() && (Rnd.get(100) < 30))
+				{
+					_manager.schedule(Math.max(1000, browse - 1500), () -> seller.soldToFake(this));
+				}
+				break;
+			}
+			case STROLL:
+			{
+				// Sometimes on to another street right away.
+				if ((++_strolls < 3) && (Rnd.get(100) < 35))
+				{
+					_plan.addFirst(new Errand(Kind.STROLL, null));
+				}
+				else
+				{
+					_strolls = 0;
+				}
+				finishErrand(now);
+				break;
+			}
+			case BEG:
+			{
+				beg(now);
+				break;
+			}
+			case STORE:
+			{
+				openStore(now);
 				break;
 			}
 			case BUFFER_POST:
@@ -1398,6 +1614,23 @@ final class FakePlayerTownVisitor
 				{
 					dutyStep(now);
 					return;
+				}
+				break;
+			}
+			case STORE:
+			{
+				// Still something to sell and not tired of it: it sits on, and now and then advertises in general chat.
+				if (isStoreOpen() && (now < leaveBy) && !store.isEmpty())
+				{
+					storeStep(now);
+					return;
+				}
+				
+				closeStore();
+				final Errand next = _plan.peekFirst();
+				if ((next == null) || (next.kind != Kind.LOGOUT))
+				{
+					standUp();
 				}
 				break;
 			}
@@ -1714,6 +1947,256 @@ final class FakePlayerTownVisitor
 		release(now, Rnd.get(1500, 5000));
 	}
 	
+	// Asking for adena.
+	
+	/**
+	 * Next to the one it walked up to: asks for a little adena. Another fake player gives some, says no or ignores it; a player is asked again once and then left alone.
+	 */
+	private void beg(long now)
+	{
+		_phase = Phase.WORK;
+		final WorldObject target = _other;
+		if ((target == null) || (FakePlayerTown.distance2D(npc, target) > 300))
+		{
+			final FakePlayerTownVisitor other = _manager.getVisitor(target);
+			if ((other != null) && other._held && (other.circle == null))
+			{
+				other.release(now, Rnd.get(500, 3000));
+			}
+			finishErrand(now);
+			return;
+		}
+		
+		face(target);
+		say(FakePlayerTownChat.begAsk(speaker(), town.shortName));
+		final Errand errand = _errand;
+		final FakePlayerTownVisitor giver = _manager.getVisitor(target);
+		if (giver != null)
+		{
+			giver.face(npc);
+			final long answer = giver.reactionMs + Rnd.get(1500, 5000);
+			final long after = answer + reactionMs + Rnd.get(500, 2500);
+			final int roll = Rnd.get(100);
+			if (roll < 40)
+			{
+				_manager.schedule(answer, () -> giver.say(FakePlayerTownChat.begGive(giver.style)));
+				_manager.schedule(after, () ->
+				{
+					say(FakePlayerTownChat.begThanks(style));
+					if (Rnd.nextDouble() < (0.2 + gestures))
+					{
+						social(Rnd.nextBoolean() ? SOCIAL_BOW : SOCIAL_VICTORY);
+					}
+				});
+			}
+			else if (roll < 82)
+			{
+				_manager.schedule(answer, () ->
+				{
+					giver.say(FakePlayerTownChat.begRefuse(giver.style));
+					if (Rnd.nextDouble() < (giver.gestures * 0.5))
+					{
+						giver.social(SOCIAL_NO);
+					}
+				});
+				if (Rnd.get(100) < 55)
+				{
+					_manager.schedule(after, () -> say(FakePlayerTownChat.begGiveUp(style)));
+				}
+			}
+			else
+			{
+				// Ignored.
+				if (Rnd.get(100) < 50)
+				{
+					_manager.schedule(answer + 4000, () -> say(FakePlayerTownChat.begAgain(speaker(), town.shortName)));
+				}
+				_manager.schedule(after + 8000, () -> say(FakePlayerTownChat.begGiveUp(style)));
+			}
+			
+			final long done = after + 9000;
+			_manager.schedule(done, () -> giver.release(System.currentTimeMillis(), Rnd.get(1000, 4000)));
+			_nextAction = now + done + Rnd.get(500, 2500);
+			return;
+		}
+		
+		// A player: it waits for an answer, asks once more, then gives up.
+		final long wait = Rnd.get(8000, 16000);
+		if (Rnd.get(100) < 50)
+		{
+			_manager.schedule(wait, () ->
+			{
+				if (_errand == errand)
+				{
+					say(FakePlayerTownChat.begAgain(speaker(), town.shortName));
+				}
+			});
+		}
+		_manager.schedule(wait * 2, () ->
+		{
+			if ((_errand == errand) && (Rnd.get(100) < 60))
+			{
+				say(FakePlayerTownChat.begGiveUp(style));
+			}
+		});
+		_nextAction = now + (wait * 2) + Rnd.get(1000, 3000);
+	}
+	
+	/**
+	 * @return how others see it, for the placeholders of what it says
+	 */
+	FakePlayerTownChat.Speaker speaker()
+	{
+		final FakePlayerHolder holder = npc.getTemplate().getFakePlayerInfo();
+		return new FakePlayerTownChat.Speaker(npc.getName(), level, FakePlayerTownManager.className(playerClass), holder.getEquipRHand(), holder.getWeaponEnchantLevel(), style);
+	}
+	
+	/**
+	 * A player walks by: it turns to look, and may say hello or wave (once per player).
+	 * @param player the player
+	 */
+	void notice(Player player)
+	{
+		if (gone || _held || (circle != null) || !_greeted.add(player.getObjectId()))
+		{
+			return;
+		}
+		
+		face(player);
+		if (isChatEnabled() && (Rnd.nextDouble() < (chatty * 0.45 * chatRate())))
+		{
+			_manager.schedule(reactionMs / 2, () -> say(FakePlayerTownChat.greetPlayer(style, player.getName())));
+		}
+		else if (Rnd.nextDouble() < (gestures * 0.7))
+		{
+			_manager.schedule(Rnd.get(300, 1500), () -> social(SOCIAL_GREETING));
+		}
+	}
+	
+	// Private store.
+	
+	/**
+	 * Starts sitting in its store (server start: it was already selling).
+	 */
+	void startInStore()
+	{
+		_plan.removeIf(errand -> (errand.kind == Kind.STORE) || (errand.kind == Kind.NPC));
+		_errand = new Errand(Kind.STORE, null);
+		openStore(System.currentTimeMillis());
+	}
+	
+	/**
+	 * At its spot: sits down and opens its private store.
+	 */
+	private void openStore(long now)
+	{
+		if ((_errand == null) || (_errand.kind != Kind.STORE))
+		{
+			_errand = new Errand(Kind.STORE, null);
+		}
+		_phase = Phase.WORK;
+		if ((store == null) || store.isEmpty())
+		{
+			_nextAction = now + 1000;
+			return;
+		}
+		
+		sitDown();
+		npc.getTemplate().getFakePlayerInfo().setPrivateStore(1, store.getMessage());
+		_storeOpen = true;
+		npc.broadcastInfo();
+		_nextAction = now + Rnd.get(30000, 120000);
+	}
+	
+	/**
+	 * Closes its private store (still sitting).
+	 */
+	void closeStore()
+	{
+		if (!_storeOpen)
+		{
+			return;
+		}
+		
+		_storeOpen = false;
+		npc.getTemplate().getFakePlayerInfo().setPrivateStore(0, "");
+		if (npc.isSpawned())
+		{
+			npc.broadcastInfo();
+		}
+	}
+	
+	/**
+	 * Sitting in its store: now and then it advertises it in general chat.
+	 */
+	private void storeStep(long now)
+	{
+		_nextAction = now + Rnd.get(40000, 160000);
+		if (isChatEnabled() && FakePlayerTown.isWatched(npc) && (Rnd.nextDouble() < (0.15 * chatRate())))
+		{
+			say(FakePlayerTownChat.storeShout(style, store.getHeadline(), town.shortName));
+		}
+	}
+	
+	/**
+	 * Another fake player bought something in its store.
+	 * @param buyer the buyer
+	 */
+	private void soldToFake(FakePlayerTownVisitor buyer)
+	{
+		if (!isStoreOpen() || buyer.gone || !store.sellToFake())
+		{
+			return;
+		}
+		
+		if (Rnd.get(100) < 30)
+		{
+			_manager.schedule(reactionMs, () -> say(FakePlayerTownChat.storeThanks(style)));
+		}
+		if (store.isEmpty())
+		{
+			soldOut();
+		}
+	}
+	
+	/**
+	 * A player bought something in its store (on the manager's thread).
+	 */
+	void boughtByPlayer()
+	{
+		if (gone)
+		{
+			return;
+		}
+		
+		if (Rnd.get(100) < 45)
+		{
+			_manager.schedule(reactionMs, () -> say(FakePlayerTownChat.storeThanks(style)));
+		}
+		if (store.isEmpty())
+		{
+			soldOut();
+		}
+	}
+	
+	private void soldOut()
+	{
+		if (!isStoreOpen())
+		{
+			return;
+		}
+		
+		closeStore();
+		if (Rnd.get(100) < 50)
+		{
+			_manager.schedule(reactionMs + Rnd.get(1000, 4000), () -> say(FakePlayerTownChat.storeSoldOut(style)));
+		}
+		if ((_errand != null) && (_errand.kind == Kind.STORE))
+		{
+			_nextAction = System.currentTimeMillis() + Rnd.get(4000, 15000);
+		}
+	}
+	
 	// Being driven by others.
 	
 	/**
@@ -1904,8 +2387,14 @@ final class FakePlayerTownVisitor
 	{
 		gone = true;
 		
-		// Someone was waiting for it to come over for a talk.
-		if ((_errand != null) && (_errand.kind == Kind.SOCIALIZE) && (_other != null))
+		closeStore();
+		if (store != null)
+		{
+			store.release();
+		}
+		
+		// Someone was waiting for it to come over for a talk (or to be asked for adena).
+		if ((_errand != null) && ((_errand.kind == Kind.SOCIALIZE) || (_errand.kind == Kind.BEG)) && (_other != null))
 		{
 			final FakePlayerTownVisitor partner = _manager.getVisitor(_other);
 			if ((partner != null) && partner._held && (partner.circle == null))
@@ -1937,6 +2426,10 @@ final class FakePlayerTownVisitor
 		if (_npcTarget != null)
 		{
 			sb.append(" at ").append(_npcTarget.name);
+		}
+		if (store != null)
+		{
+			sb.append(isStoreOpen() ? ", store open: " : ", store closed: ").append(store.describe());
 		}
 		sb.append(", then ").append(_plan);
 		if (_aborts > 0)

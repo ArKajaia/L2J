@@ -29,6 +29,7 @@ import org.l2jmobius.gameserver.config.GeneralConfig;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.OfflineTradeConfig;
 import org.l2jmobius.gameserver.data.sql.OfflineTraderTable;
+import org.l2jmobius.gameserver.managers.FakePlayerTownManager;
 import org.l2jmobius.gameserver.managers.PunishmentManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -96,6 +97,8 @@ public class RequestPrivateStoreBuy extends ClientPacket
 		final WorldObject object = World.getInstance().getPlayer(_storePlayerId);
 		if (object == null)
 		{
+			// The private store of a town fake player.
+			FakePlayerTownManager.getInstance().buyFromStore(player, _storePlayerId, _items);
 			return;
 		}
 		
