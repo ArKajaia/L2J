@@ -158,7 +158,7 @@ public class Q00308_ReedFieldMaintenance extends Quest
 			}
 			case "claimreward":
 			{
-				final QuestState q238 = player.getQuestState(Q00238_SuccessFailureOfBusiness.class.getName());
+				final QuestState q238 = player.getQuestState(Q00238_SuccessFailureOfBusiness.class.getSimpleName());
 				htmltext = ((q238 != null) && q238.isCompleted()) ? "32646-09.html" : "32646-12.html";
 				break;
 			}

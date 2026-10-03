@@ -230,11 +230,11 @@ public class Q00309_ForAGoodCause extends Quest
 			}
 			
 			playSound(player, QuestSound.ITEMSOUND_QUEST_FINISH);
-			htmltext = "32646-16.htm";
+			htmltext = "32647-16.html";
 		}
 		else
 		{
-			htmltext = "32646-15.htm";
+			htmltext = "32647-15.html";
 		}
 		
 		return htmltext;

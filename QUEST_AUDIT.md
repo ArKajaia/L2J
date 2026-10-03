@@ -18,8 +18,8 @@ The scan compared every HTML file name in each quest's Java code with the files 
 |---|---|
 | Q10286_ReunionWithSirra | `32781-02.html` and `32781-03.html` are referenced (event handler, line ~151) but missing. `jinia_npc_q10286_10.htm` is missing too (`TODO`, line ~123). |
 | Q10287_StoryOfThoseLeft | `jinia_npc_q10287_06.htm` is missing (`TODO`, line ~105). |
-| Q00309_ForAGoodCause | The reward exchange returns `32646-15.htm`/`32646-16.htm` (lines 233/237). These names were copied from Q00308's NPC. The files that exist are `32647-15.html`/`32647-16.html`, so the player gets an empty window after every exchange. |
-| Q00308_ReedFieldMaintenance | Line 161 looks up Q00238 with `.class.getName()` (`quests.Q00238_...`). Quest states are stored under `getSimpleName()`, so the lookup always returns `null`, and `claimreward` always shows `32646-12.html`, even to players who completed Q00238. |
+| ~~Q00309_ForAGoodCause~~ ✅ fixed | The reward exchange returns `32646-15.htm`/`32646-16.htm` (lines 233/237). These names were copied from Q00308's NPC. The files that exist are `32647-15.html`/`32647-16.html`, so the player gets an empty window after every exchange. |
+| ~~Q00308_ReedFieldMaintenance~~ ✅ fixed | Line 161 looks up Q00238 with `.class.getName()` (`quests.Q00238_...`). Quest states are stored under `getSimpleName()`, so the lookup always returns `null`, and `claimreward` always shows `32646-12.html`, even to players who completed Q00238. |
 | Q10295_SevenSignsSolinasTomb *(extension)* | `32787-06.html` is missing (line ~551). |
 
 Possible problems that need a closer look:
@@ -89,8 +89,8 @@ Columns: **Lines** is the size of the Java code and **HTML** is the number of di
 | 23 | Q00237_WindsOfChange | 336 | 46 | | Flauen | Leads to Q00238 or Q00239 |
 | 24 | Q00238_SuccessFailureOfBusiness | 220 | 11 | | Helvetica | Branch of Q00237 |
 | 25 | Q00239_WontYouJoinUs | 220 | 13 | | Athenia | Branch of Q00237 |
-| 26 | Q00308_ReedFieldMaintenance ⚠ | 280 | 16 | | Katensa | Needs Q00238. Cannot run together with Q00309. Q00238 lookup always fails |
-| 27 | Q00309_ForAGoodCause ⚠ | 287 | 18 | | Atra | Needs Q00239. Reward dialogs use the wrong file names |
+| 26 | Q00308_ReedFieldMaintenance ✅ | 280 | 16 | | Katensa | Needs Q00238. Cannot run together with Q00309. Q00238 lookup fixed |
+| 27 | Q00309_ForAGoodCause ✅ | 287 | 18 | | Atra | Needs Q00239. Reward dialog names fixed |
 
 **Mouen / Sally / Pinaps / Stan quests and their follow-ups**
 
