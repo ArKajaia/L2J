@@ -253,6 +253,32 @@ Columns: **Lines** is the size of the Java code and **HTML** is the number of di
 | 53 | Q10295_SevenSignsSolinasTomb ✅ | 568 | 69 | Needs Q10294. Missing Elcadia dialog added; Elcadia now points back to Eris after Solina's story |
 | 54 | Q10296_SevenSignsOneWhoSeeksThePowerOfTheSeal | 294 | 28 | Needs Q10295 |
 
+## Mid-level guide quests (levels 40–74)
+
+These quests come from the High Five walkthrough list (l2reborn.org). Each was compared with the L2J High Five reference datapack and with wiki pages that name the chronicle (lineage2.es, l2hub.info, l2j.ru/highfive, mw2.wiki), and its NPC and monster spawns were checked.
+
+| Quest | Problem | Status |
+|---|---|---|
+| Q00183/Q00184/Q00185 (Relic Exploration → Art of Persuasion / Nikola's Cooperation) | Retail: Nikola's two answers after Relic Exploration start Art of Persuasion or Nikola's Cooperation, and only one can be taken. Here both answers did nothing (the next quest had no state yet), and Nikola only offered the quests if the player had opened both of them before. All three now use `Q00183_RelicExploration.canStartNikolaQuest`: Relic Exploration is completed and neither quest is started or completed. Abandoning one lets the player choose again. | ✅ fixed |
+| Q00184/Q00185 | Under-level reply `30621-02.html` (file is `.htm`). Q00184's "no metallograph" reply `30673-10.htm` (file is `.html`). Both showed empty windows. | ✅ fixed |
+| Cruma Tower `Alarm` | When the alarm self-destructed, it set memo 5 on whichever of Q00184/Q00185 had any state, not on the one in progress (memo 3). | ✅ fixed |
+| Q00120_PavelsLastResearch | The stone pile at memo 1 returned `32046-09.html`. The file is `.htm` (same bug in the reference). | ✅ fixed |
+| Q10279_MutatedKaneusOren | The completed-quest reply used Heine's file name `30916-06.htm`, so an empty window showed. Now `30196-06.htm`. | ✅ fixed |
+| Q10279/Q10280/Q10281 (Kaneus Oren, Schuttgart, Rune) | If the party member who killed the Kaneus did not have the quest, nobody in the party got the tissue. The reward event also didn't check the quest state or tissues. Both now match the Gludio/Dion/Heine fix (any nearby party member on the quest, plus a range check). | ✅ fixed |
+| Q00619_RelicsOfTheOldEmpire | Relic parts went to the killer instead of the party member chosen by `getRandomPartyMemberState`. Room boss 18182 was missing (18183 was listed twice). | ✅ fixed |
+| Q00638_SeekersOfTheHolyGrail | Ritual Sacrifice 22195 was missing (22194 was listed twice). | ✅ fixed |
+| Q00421_LittleWingsBigAdventure | The tree's guardian souls were given the attack order on the dead tree, so they stood idle. The TODO about hatchling items is resolved: pet items are stored under the owner's ID, so they move to the strider. | ✅ fixed |
+
+Checked with no change needed: Q00013 (157,834 adena), Q00014 (136,928 adena), Q00129 and Q00144 (Pailaka quests and instances), Q00136, Q00186 (105,083 adena), Q00189 (121,527 adena), Q00373, Q00606, Q00612, Q00617, Q00636, Q00637, Q00647. Rewards match the reference and the retail pages.
+
+Kept differences and source conflicts:
+
+- **Guardians of the Holy Grail (Q00639)** was removed in Freya when the Monastery of Silence was rebuilt for level 83–84 (Freya patch notes; the reference has the same stub). It stays a stub. The level 73 High Five quest that gives S-grade enchant scrolls is **Seekers of the Holy Grail (Q00638)**.
+- **Pavel's Last Research** gives 783,720 adena plus a Sealed Phoenix Earring (same as the reference). The walkthrough says "1kk Adena".
+- **Mutated Kaneus** rewards (100k/210k/360k adena) match lineage2.es. l2scroll.com lists higher EXP/adena values from a later chronicle.
+- **Little Wing's Big Adventure**: this server needs 27/40/15/27 hits per tree and has a 6% leaf chance. Retail is 270/400/150/270 hits and 2%, as the code comments say. Kept as a server choice.
+- **Ketra/Varka wars (Q00606/Q00612)** give Buffalo Horns / Varka Molars. These are traded for Looted Goods pouches, as in retail.
+
 ## Suggested passes
 
 1. **Static pass, all 50 (fast)**: checklist items 1–3 by reading the code. Fix the ⚠ items first, since they are already confirmed.

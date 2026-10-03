@@ -181,7 +181,7 @@ public class Q00619_RelicsOfTheOldEmpire extends Quest
 		MOBS.put(18179, new DropInfo(0.99, 0, false)); // r43_roomboss_strong
 		MOBS.put(18180, new DropInfo(1.00, 22, false)); // r43_roomboss_weak
 		MOBS.put(18181, new DropInfo(0.93, 0, false)); // r43_roomboss_teleport
-		MOBS.put(18183, new DropInfo(1.00, 22, false)); // r44_roomboss_weak
+		MOBS.put(18182, new DropInfo(1.00, 22, false)); // r44_roomboss_weak
 		MOBS.put(18183, new DropInfo(0.99, 0, false)); // r44_roomboss_strong
 		MOBS.put(18184, new DropInfo(0.93, 0, false)); // r44_roomboss_teleport
 		MOBS.put(18185, new DropInfo(1.00, 23, false)); // r4_healer_srddmagic
@@ -275,11 +275,13 @@ public class Q00619_RelicsOfTheOldEmpire extends Quest
 		final QuestState qs = getRandomPartyMemberState(player, -1, 3, npc);
 		if (qs != null)
 		{
+			// The items go to the party member chosen above, who may not be the killer.
+			final Player member = qs.getPlayer();
 			final int npcId = npc.getId();
 			if (ArrayUtil.contains(ARCHON_OF_HALISHA, npcId))
 			{
 				final int itemCount = ((getRandom(100) < 79) ? 4 : 3);
-				giveItemRandomly(player, npc, BROKEN_RELIC_PART, itemCount, 0, 1, true);
+				giveItemRandomly(member, npc, BROKEN_RELIC_PART, itemCount, 0, 1, true);
 			}
 			else
 			{
@@ -294,10 +296,10 @@ public class Q00619_RelicsOfTheOldEmpire extends Quest
 					itemCount = 1;
 				}
 				
-				giveItemRandomly(player, npc, BROKEN_RELIC_PART, itemCount, 0, info.getDropChance(), true);
+				giveItemRandomly(member, npc, BROKEN_RELIC_PART, itemCount, 0, info.getDropChance(), true);
 				if (info.getDropEntrancePass())
 				{
-					giveItemRandomly(player, npc, ENTRANCE_PASS_TO_THE_SEPULCHER, 1, 0, 1.0 / 30, false);
+					giveItemRandomly(member, npc, ENTRANCE_PASS_TO_THE_SEPULCHER, 1, 0, 1.0 / 30, false);
 				}
 			}
 		}

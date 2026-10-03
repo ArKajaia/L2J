@@ -1142,7 +1142,7 @@ public class Q00120_PavelsLastResearch extends Quest
 					{
 						case 1:
 						{
-							html = "32046-09.html";
+							html = "32046-09.htm";
 							break;
 						}
 						case 2:

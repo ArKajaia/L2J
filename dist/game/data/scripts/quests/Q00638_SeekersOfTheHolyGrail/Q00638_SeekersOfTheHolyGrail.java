@@ -135,7 +135,7 @@ public class Q00638_SeekersOfTheHolyGrail extends Quest
 		MOBS_DROP_CHANCES.put(22192, new DropInfo(TOTEM, 0.03)); // Andreas' Royal Guards
 		MOBS_DROP_CHANCES.put(22193, new DropInfo(TOTEM, 0.03)); // Andreas' Royal Guards
 		MOBS_DROP_CHANCES.put(22194, new DropInfo(TOTEM, 0.03)); // Penance Guard
-		MOBS_DROP_CHANCES.put(22194, new DropInfo(TOTEM, 0.03)); // Ritual Sacrifice
+		MOBS_DROP_CHANCES.put(22195, new DropInfo(TOTEM, 0.03)); // Ritual Sacrifice
 	}
 	
 	public Q00638_SeekersOfTheHolyGrail()

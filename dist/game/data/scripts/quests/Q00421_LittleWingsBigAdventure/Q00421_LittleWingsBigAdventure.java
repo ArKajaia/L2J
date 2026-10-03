@@ -23,7 +23,6 @@ package quests.Q00421_LittleWingsBigAdventure;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -337,8 +336,7 @@ public class Q00421_LittleWingsBigAdventure extends Quest
 									final Item flute = getFlute(talker);
 									if (flute.getObjectId() == qs.getInt("fluteObjectId"))
 									{
-										// TODO what if the hatchling has items in his inventory?
-										// Should they be transfered to the strider or given to the player?
+										// Pet inventory items are stored under the player's ID (PetInventory.getOwnerId), so the hatchling's items carry over to the strider.
 										switch (flute.getId())
 										{
 											case DRAGONFLUTE_OF_WIND:
@@ -467,13 +465,15 @@ public class Q00421_LittleWingsBigAdventure extends Quest
 			{
 				final Npc guardian = addSpawn(SOUL_OF_TREE_GUARDIAN, npc);
 				startQuestTimer("DESPAWN_GUARDIAN", 300000, guardian, null);
+				
+				// The guardians attack the killer. The dead tree can no longer act.
 				if (i == 0)
 				{
-					npc.setTarget(killer);
-					npc.doCast(VICIOUS_POISON.getSkill());
+					guardian.setTarget(killer);
+					guardian.doCast(VICIOUS_POISON.getSkill());
 				}
 				
-				npc.getAI().setIntention(Intention.ATTACK, killer);
+				addAttackDesire(guardian, killer);
 			}
 		}
 	}

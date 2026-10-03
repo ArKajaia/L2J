@@ -106,37 +106,16 @@ public class Q00183_RelicExploration extends Quest
 				break;
 			}
 			case "Contract":
-			{
-				final QuestState qs184 = player.getQuestState(Q00184_ArtOfPersuasion.class.getSimpleName());
-				final QuestState qs185 = player.getQuestState(Q00185_NikolasCooperation.class.getSimpleName());
-				final Quest quest = ScriptManager.getInstance().getScript(Q00184_ArtOfPersuasion.class.getSimpleName());
-				if ((quest != null) && (qs184 == null) && (qs185 == null))
-				{
-					if (player.getLevel() >= MIN_LEVEL)
-					{
-						quest.notifyEvent("30621-03.htm", npc, player);
-					}
-					else
-					{
-						quest.notifyEvent("30621-03a.html", npc, player);
-					}
-				}
-				break;
-			}
 			case "Consideration":
 			{
-				final QuestState qs184 = player.getQuestState(Q00184_ArtOfPersuasion.class.getSimpleName());
-				final QuestState qs185 = player.getQuestState(Q00185_NikolasCooperation.class.getSimpleName());
-				final Quest quest = ScriptManager.getInstance().getScript(Q00185_NikolasCooperation.class.getSimpleName());
-				if ((quest != null) && (qs184 == null) && (qs185 == null))
+				// Nikola's two answers start Art of Persuasion or Nikola's Cooperation. Only one of them can be taken.
+				if (qs.isCompleted() && canStartNikolaQuest(player))
 				{
-					if (player.getLevel() >= MIN_LEVEL)
+					final String questName = event.equals("Contract") ? Q00184_ArtOfPersuasion.class.getSimpleName() : Q00185_NikolasCooperation.class.getSimpleName();
+					final Quest quest = ScriptManager.getInstance().getScript(questName);
+					if (quest != null)
 					{
 						quest.notifyEvent("30621-03.htm", npc, player);
-					}
-					else
-					{
-						quest.notifyEvent("30621-03a.html", npc, player);
 					}
 				}
 				break;
@@ -195,5 +174,23 @@ public class Q00183_RelicExploration extends Quest
 		}
 		
 		return htmltext;
+	}
+	
+	/**
+	 * Art of Persuasion (184) and Nikola's Cooperation (185) open after this quest is completed, and only one of them can be taken.
+	 * @param player the player
+	 * @return {@code true} if the player completed this quest and has neither started nor completed quest 184 or 185
+	 */
+	public static boolean canStartNikolaQuest(Player player)
+	{
+		final QuestState q183 = player.getQuestState(Q00183_RelicExploration.class.getSimpleName());
+		if ((q183 == null) || !q183.isCompleted())
+		{
+			return false;
+		}
+		
+		final QuestState q184 = player.getQuestState(Q00184_ArtOfPersuasion.class.getSimpleName());
+		final QuestState q185 = player.getQuestState(Q00185_NikolasCooperation.class.getSimpleName());
+		return ((q184 == null) || q184.isCreated()) && ((q185 == null) || q185.isCreated());
 	}
 }

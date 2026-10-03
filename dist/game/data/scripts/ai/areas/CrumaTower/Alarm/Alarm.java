@@ -82,11 +82,11 @@ public class Alarm extends Script
 					if (player0 != null)
 					{
 						npc.broadcastSay(ChatType.NPC_GENERAL, NpcStringId.RECORDER_CRUSHED);
-						if (verifyMemoState(player0, ART_OF_PERSUASION_ID, -1))
+						if (verifyMemoState(player0, ART_OF_PERSUASION_ID, 3))
 						{
 							setMemoState(player0, ART_OF_PERSUASION_ID, 5);
 						}
-						else if (verifyMemoState(player0, NIKOLAS_COOPERATION_ID, -1))
+						else if (verifyMemoState(player0, NIKOLAS_COOPERATION_ID, 3))
 						{
 							setMemoState(player0, NIKOLAS_COOPERATION_ID, 5);
 						}
