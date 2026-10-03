@@ -52,6 +52,21 @@ Bugs found (most are shared with the reference, so comparing alone would not cat
 
 Checks that found nothing: missing dialog files (beyond the ones above), quest lookups by `getName()`, empty dialogs, and dialog links to missing files.
 
+## High Five zone changes: Antharas' Lair and Dragon Valley (low-level quests)
+
+High Five rebuilt Antharas' Lair and Dragon Valley for level 80+ players. The patch notes say three quests were removed: Power of Darkness (55), Whisper of Dreams Part 1 (56) and Whisper of Dreams Part 2 (60). Every other quest monster from those zones moved to the Watcher's Tomb (or nearby: Death Pass for Drakes and Thunder Wyrms, and the area outside the Watcher's Tomb for Maluk Succubi). The moved monsters have new NPC IDs.
+
+- **Removed quests**: none of the three is in this datapack. Nothing to do.
+- **New High Five quests for these zones** (Q00026 Kitzka text, Q00254, Q00456, Q00903–Q00905, Q10290, Q10504): all present, and their dialogs already use the new monsters.
+- **Kill lists**: every quest that hunted the old monsters also counts the new IDs, same as the reference datapack. Old ID → new ID: Royal Cave Servant 20276 → 20240, Cave Keeper 20277 → 20246, Shackle 20279 → 20235, Headless Knight 20280 → 20146, Dustwind Gargoyle 20281 → 20242, Thunder Wyrm 20282 → 20243, Maluk Succubus 20283/20284 → 20244/20245, Drake 20285 → 20137, Hunter Gargoyle 20286 → 20241, Cave Maiden 20287 → 20134. This covers Q00214, Q00241, Q00336, Q00337, Q00344, Q00384, Q00426 and Q00503. Q00708's Headless Knight is spawned by the quest itself. The old IDs stay in the lists (as in the reference) but no longer spawn.
+- **Dialogs updated**:
+
+| Quest | Change |
+|---|---|
+| Q00337_AudienceWithTheLandDragon | Gilmore (`30754-02/03/04`) and Theodric (`30755-03`) now send the player to the Watcher's Tomb for the Cave Keepers and Cave Maidens that reveal the third Abyssal Jewel. Before, the dialogs only said "in this valley", and those monsters no longer live in the valley or the lair. |
+| Q00241_PossessorOfAPreciousSoul1 | Kantabilon (`31042-02/04`) now points to the Watcher's Tomb area for the Maluk Succubi, not "the Dragon Valley". |
+| Q00384_WarehouseKeepersPastime | Baxt's monster list (`30685-06`) no longer names the Dragon Bearer Chief/Warrior/Archer. They do not exist in High Five, and Cliff's list (`30182-05/06`) already left them out. |
+
 ## Checklist for each quest
 
 1. **Start**: level gate, including any upper limit, plus race/class/prerequisite checks. The "too low" and "already done" dialogs must appear when they should.
