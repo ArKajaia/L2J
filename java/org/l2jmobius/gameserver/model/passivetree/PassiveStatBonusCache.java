@@ -49,22 +49,6 @@ public class PassiveStatBonusCache
 	/** Base stats the passive tree may contribute to, capped by {@link PassiveTreeConfig#BASE_STAT_CAP}. */
 	private static final Set<String> BASE_STATS = Set.of("STR", "DEX", "CON", "INT", "WIT", "MEN");
 	
-	/** Maximum the passive tree may contribute to any single non-base stat. */
-	private static final Map<String, Double> CAPS = Map.ofEntries( //
-		// keep the worst runaway offenders bounded too
-		Map.entry("CRIT_DMG_PCT", 60.0), Map.entry("CRIT_RATE_ADD", 150.0), // /1000 scale -> +15% crit
-		Map.entry("ACCURACY_ADD", 12.0), Map.entry("EVASION_ADD", 12.0), Map.entry("SHIELD_RATE_PCT", 25.0), Map.entry("REFLECT_PCT", 30.0),
-		// hybrid-sector mechanics
-		Map.entry("LIFESTEAL_PCT", 8.0), Map.entry("MANA_LEECH_PCT", 6.0), Map.entry("SKILL_DODGE_PCT", 12.0), Map.entry("MAGIC_REFLECT_PCT", 10.0), Map.entry("SKILL_REFLECT_PCT", 10.0), //
-		Map.entry("PVE_PDMG_PCT", 25.0), Map.entry("PVE_MDMG_PCT", 25.0), Map.entry("PVE_BOW_DMG_PCT", 25.0), Map.entry("PHYS_SKILL_POWER_PCT", 20.0), //
-		Map.entry("MCRIT_DMG_PCT", 40.0), Map.entry("BLOW_RATE_PCT", 20.0), Map.entry("HEALING_RECEIVED_PCT", 40.0), //
-		Map.entry("SKILL_CDR_PCT", 20.0), Map.entry("SPELL_CDR_PCT", 20.0), Map.entry("SPELL_MP_COST_RED_PCT", 30.0), //
-		Map.entry("CRIT_DMG_TAKEN_RED_PCT", 30.0), Map.entry("INTERRUPT_RES_PCT", 50.0), Map.entry("DEBUFF_RES_PCT", 30.0), //
-		// keystones
-		Map.entry("SERVITOR_SHARE_PCT", 50.0), Map.entry("SHIELD_RATE_MUL_PCT", 50.0), Map.entry("MAXHP_PCT", 60.0), //
-		// utility unlocks
-		Map.entry("INVENTORY_SLOTS_ADD", 40.0), Map.entry("WEIGHT_LIMIT_PCT", 100.0), Map.entry("EXP_RATE_PCT", 25.0), Map.entry("SP_RATE_PCT", 25.0));
-	
 	/**
 	 * @param key an effect key; a conditional key ({@code PDEF_PCT@HEAVY}) is capped like its base key
 	 * @return the most the tree may add to that key, or {@code null} if it is uncapped
@@ -77,7 +61,7 @@ public class PassiveStatBonusCache
 		{
 			return PassiveTreeConfig.BASE_STAT_CAP < 0 ? null : (double) PassiveTreeConfig.BASE_STAT_CAP;
 		}
-		return CAPS.get(base);
+		return PassiveTreeConfig.STAT_CAPS.get(base);
 	}
 	
 	/**
@@ -85,7 +69,7 @@ public class PassiveStatBonusCache
 	 */
 	public static Map<String, Double> getCaps()
 	{
-		final Map<String, Double> caps = new HashMap<>(CAPS);
+		final Map<String, Double> caps = new HashMap<>(PassiveTreeConfig.STAT_CAPS);
 		if (PassiveTreeConfig.BASE_STAT_CAP >= 0)
 		{
 			for (String stat : BASE_STATS)

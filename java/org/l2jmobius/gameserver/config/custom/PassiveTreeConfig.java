@@ -1,5 +1,9 @@
 package org.l2jmobius.gameserver.config.custom;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.l2jmobius.commons.util.ConfigReader;
 
 /**
@@ -40,6 +44,51 @@ public class PassiveTreeConfig
 	/** Most the tree may add to each base stat (STR, DEX, CON, INT, WIT, MEN). Negative = no cap. */
 	public static int BASE_STAT_CAP = 5;
 
+	/** Prefix of the per-effect cap keys in the ini, e.g. {@code PassiveTreeCap.CRIT_DMG_PCT = 60}. */
+	private static final String STAT_CAP_PREFIX = "PassiveTreeCap.";
+	
+	/** Caps a missing {@code PassiveTreeCap.*} key falls back to, in the order the ini lists them. */
+	private static final Map<String, Double> DEFAULT_STAT_CAPS = new LinkedHashMap<>();
+	static
+	{
+		DEFAULT_STAT_CAPS.put("CRIT_DMG_PCT", 60.0);
+		DEFAULT_STAT_CAPS.put("CRIT_RATE_ADD", 150.0);
+		DEFAULT_STAT_CAPS.put("ACCURACY_ADD", 12.0);
+		DEFAULT_STAT_CAPS.put("EVASION_ADD", 12.0);
+		DEFAULT_STAT_CAPS.put("SHIELD_RATE_PCT", 25.0);
+		DEFAULT_STAT_CAPS.put("REFLECT_PCT", 30.0);
+		DEFAULT_STAT_CAPS.put("LIFESTEAL_PCT", 8.0);
+		DEFAULT_STAT_CAPS.put("MANA_LEECH_PCT", 6.0);
+		DEFAULT_STAT_CAPS.put("SKILL_DODGE_PCT", 12.0);
+		DEFAULT_STAT_CAPS.put("MAGIC_REFLECT_PCT", 10.0);
+		DEFAULT_STAT_CAPS.put("SKILL_REFLECT_PCT", 10.0);
+		DEFAULT_STAT_CAPS.put("PVE_PDMG_PCT", 25.0);
+		DEFAULT_STAT_CAPS.put("PVE_MDMG_PCT", 25.0);
+		DEFAULT_STAT_CAPS.put("PVE_BOW_DMG_PCT", 25.0);
+		DEFAULT_STAT_CAPS.put("PHYS_SKILL_POWER_PCT", 20.0);
+		DEFAULT_STAT_CAPS.put("MCRIT_DMG_PCT", 40.0);
+		DEFAULT_STAT_CAPS.put("BLOW_RATE_PCT", 20.0);
+		DEFAULT_STAT_CAPS.put("HEALING_RECEIVED_PCT", 40.0);
+		DEFAULT_STAT_CAPS.put("SKILL_CDR_PCT", 20.0);
+		DEFAULT_STAT_CAPS.put("SPELL_CDR_PCT", 20.0);
+		DEFAULT_STAT_CAPS.put("SPELL_MP_COST_RED_PCT", 30.0);
+		DEFAULT_STAT_CAPS.put("CRIT_DMG_TAKEN_RED_PCT", 30.0);
+		DEFAULT_STAT_CAPS.put("INTERRUPT_RES_PCT", 50.0);
+		DEFAULT_STAT_CAPS.put("DEBUFF_RES_PCT", 30.0);
+		DEFAULT_STAT_CAPS.put("SERVITOR_SHARE_PCT", 50.0);
+		DEFAULT_STAT_CAPS.put("SHIELD_RATE_MUL_PCT", 50.0);
+		DEFAULT_STAT_CAPS.put("MAXHP_PCT", 60.0);
+		DEFAULT_STAT_CAPS.put("INVENTORY_SLOTS_ADD", 40.0);
+		DEFAULT_STAT_CAPS.put("WEIGHT_LIMIT_PCT", 100.0);
+		DEFAULT_STAT_CAPS.put("EXP_RATE_PCT", 25.0);
+		DEFAULT_STAT_CAPS.put("SP_RATE_PCT", 25.0);
+	}
+	
+	/**
+	 * Most the tree may add to each non-base-stat effect key. A key that is absent is uncapped. Replaced as a whole on reload, never modified in place.
+	 */
+	public static Map<String, Double> STAT_CAPS = Collections.unmodifiableMap(new LinkedHashMap<>(DEFAULT_STAT_CAPS));
+	
 	public static int RESET_ITEM_ID = 57; // Adena
 	public static long RESET_ITEM_COUNT = 100000;
 
@@ -57,5 +106,22 @@ public class PassiveTreeConfig
 		RESET_ITEM_ID = config.getInt("PassiveTreeResetItemId", 57);
 		RESET_ITEM_COUNT = Math.max(0, config.getLong("PassiveTreeResetItemCount", 100000));
 		RESPEC_ADENA_PER_POINT = Math.max(0, config.getLong("PassiveTreeRefundAdenaPerPoint", 1000));
+		
+		// Every default cap can be changed, and any other effect key can be capped by adding its own PassiveTreeCap.<KEY> line. Negative = no cap.
+		final Map<String, Double> caps = new LinkedHashMap<>();
+		for (Map.Entry<String, Double> entry : DEFAULT_STAT_CAPS.entrySet())
+		{
+			caps.put(entry.getKey(), config.getDouble(STAT_CAP_PREFIX + entry.getKey(), entry.getValue()));
+		}
+		for (String name : config.getStringPropertyNames())
+		{
+			if (name.startsWith(STAT_CAP_PREFIX) && (name.length() > STAT_CAP_PREFIX.length()))
+			{
+				final String key = name.substring(STAT_CAP_PREFIX.length());
+				caps.putIfAbsent(key, config.getDouble(name, -1));
+			}
+		}
+		caps.values().removeIf(cap -> cap < 0);
+		STAT_CAPS = Collections.unmodifiableMap(caps);
 	}
 }
