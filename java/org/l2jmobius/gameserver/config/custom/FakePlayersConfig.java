@@ -48,6 +48,11 @@ public class FakePlayersConfig
 	public static String FAKE_TOWN_PLAYERS_TOWNS;
 	public static int FAKE_TOWN_PLAYERS_WANDER_RANGE;
 	public static int FAKE_TOWN_PLAYERS_RACE_CHANCE;
+	public static boolean FAKE_TOWN_PLAYERS_CHAT;
+	public static int FAKE_TOWN_PLAYERS_CHAT_RATE;
+	public static int FAKE_TOWN_PLAYERS_BUFFERS;
+	public static int FAKE_TOWN_PLAYERS_POPULATION_VARIATION;
+	public static int FAKE_TOWN_PLAYERS_STAY_SCALE;
 	
 	public static void load()
 	{
@@ -68,5 +73,10 @@ public class FakePlayersConfig
 		FAKE_TOWN_PLAYERS_TOWNS = config.getString("FakeTownPlayersTowns", "");
 		FAKE_TOWN_PLAYERS_WANDER_RANGE = config.getInt("FakeTownPlayersWanderRange", 500);
 		FAKE_TOWN_PLAYERS_RACE_CHANCE = config.getInt("FakeTownPlayersRaceChance", 60);
+		FAKE_TOWN_PLAYERS_CHAT = config.getBoolean("FakeTownPlayersChat", true);
+		FAKE_TOWN_PLAYERS_CHAT_RATE = Math.max(0, config.getInt("FakeTownPlayersChatRate", 100));
+		FAKE_TOWN_PLAYERS_BUFFERS = Math.max(0, config.getInt("FakeTownPlayersBuffers", 1));
+		FAKE_TOWN_PLAYERS_POPULATION_VARIATION = Math.max(0, Math.min(90, config.getInt("FakeTownPlayersPopulationVariation", 25)));
+		FAKE_TOWN_PLAYERS_STAY_SCALE = Math.max(10, config.getInt("FakeTownPlayersStayScale", 100));
 	}
 }
