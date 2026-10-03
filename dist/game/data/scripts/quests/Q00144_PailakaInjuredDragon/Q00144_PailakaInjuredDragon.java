@@ -113,13 +113,24 @@ public class Q00144_PailakaInjuredDragon extends Quest
 		{
 			case "start":
 			{
-				if (qs.isCreated() && (player.getLevel() >= MIN_LEVEL) && (player.getLevel() <= MAX_LEVEL))
+				if (player.getLevel() < MIN_LEVEL)
 				{
-					qs.startQuest();
-					qs.setMemoState(1);
+					htmltext = "32499-03.htm";
 				}
-				
-				htmltext = "32499-07.html";
+				else if (player.getLevel() > MAX_LEVEL)
+				{
+					htmltext = "32499-04z.htm";
+				}
+				else
+				{
+					if (qs.isCreated())
+					{
+						qs.startQuest();
+						qs.setMemoState(1);
+					}
+					
+					htmltext = "32499-07.html";
+				}
 				break;
 			}
 			case "1":

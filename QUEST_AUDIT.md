@@ -52,6 +52,30 @@ Bugs found (most are shared with the reference, so comparing alone would not cat
 
 Checks that found nothing: missing dialog files (beyond the ones above), quest lookups by `getName()`, empty dialogs, and dialog links to missing files.
 
+## High Five zone changes: Antharas' Lair and Dragon Valley (low-level quests)
+
+High Five rebuilt Antharas' Lair and Dragon Valley for level 80+ players. The patch notes say three quests were removed: Power of Darkness (55), Whisper of Dreams Part 1 (56) and Whisper of Dreams Part 2 (60). Every other quest monster from those zones moved to the Watcher's Tomb (or nearby: Death Pass for Drakes and Thunder Wyrms, and the area outside the Watcher's Tomb for Maluk Succubi). The moved monsters have new NPC IDs.
+
+- **Removed quests**: none of the three is in this datapack. Nothing to do.
+- **New High Five quests for these zones** (Q00026 Kitzka text, Q00254, Q00456, Q00903–Q00905, Q10290, Q10504): all present, and their dialogs already use the new monsters.
+- **Kill lists**: every quest that hunted the old monsters also counts the new IDs, same as the reference datapack. Old ID → new ID: Royal Cave Servant 20276 → 20240, Cave Keeper 20277 → 20246, Shackle 20279 → 20235, Headless Knight 20280 → 20146, Dustwind Gargoyle 20281 → 20242, Thunder Wyrm 20282 → 20243, Maluk Succubus 20283/20284 → 20244/20245, Drake 20285 → 20137, Hunter Gargoyle 20286 → 20241, Cave Maiden 20287 → 20134. This covers Q00214, Q00241, Q00336, Q00337, Q00344, Q00384, Q00426 and Q00503. Q00708's Headless Knight is spawned by the quest itself. The old IDs stay in the lists (as in the reference) but no longer spawn.
+- **Dialogs updated**:
+
+| Quest | Change |
+|---|---|
+| Q00337_AudienceWithTheLandDragon | Gilmore (`30754-02/03/04`) and Theodric (`30755-03`) now send the player to the Watcher's Tomb for the Cave Keepers and Cave Maidens that reveal the third Abyssal Jewel. Before, the dialogs only said "in this valley", and those monsters no longer live in the valley or the lair. |
+| Q00241_PossessorOfAPreciousSoul1 | Kantabilon (`31042-02/04`) now points to the Watcher's Tomb area for the Maluk Succubi, not "the Dragon Valley". |
+| Q00384_WarehouseKeepersPastime | Baxt's monster list (`30685-06`) no longer names the Dragon Bearer Chief/Warrior/Archer. They do not exist in High Five, and Cliff's list (`30182-05/06`) already left them out. |
+
+### Other zones
+
+High Five revamped only two hunting zones: Dragon Valley (outdoor) and Antharas' Lair (indoor). To catch anything else, every quest's kill and talk targets were checked against what actually spawns: zone spawn files, instance files, raid boss/fort/territory spawn lists, minions, zone AI scripts and the quest's own `addSpawn` calls.
+
+- **No other low-level quest is broken.** Wherever a quest monster no longer spawns, a same-named monster that does spawn is also counted, or the quest spawns it itself. Examples: Forgotten Village (Q00022/Q00024/Q00633), Zaken's Pikemen/Archers (Q00426/Q00710), Jackhammer Golems (Q00463/Q00647), Cannibalistic Stakato (Q00240/Q00310/Q00640), Pirate Zombie Captain (Q00365), Four Sepulchers (Q00619/Q00620, spawned by the zone's AI).
+- **Giant's Cave** became level 81–82 in an earlier update and isn't a High Five change. Q00376/Q00377 already use the new monsters and require level 79. Q00426 (fishing shot) still lists the old level 60–65 Giant's Cave IDs, same as the reference. The new level 81+ monsters are not added to it.
+- **Every NPC a quest talks to** is either spawned or spawned by a quest/instance script.
+- **Leftover monster names that no longer spawn** (the quests still work through their other monsters): Q00384's dialogs (`30182-05/06`, `30685-06`) no longer name Conjurer Bat and Nightmare Guide, which do not spawn; its code still lists them and Cadeine, Sanhidro, Connabi, Bartal, Luminun and Innersen (harmless). Q00296 counts Crimson Tarantula in code only. Hunter and Plunder Tarantulas spawn.
+
 ## Checklist for each quest
 
 1. **Start**: level gate, including any upper limit, plus race/class/prerequisite checks. The "too low" and "already done" dialogs must appear when they should.
