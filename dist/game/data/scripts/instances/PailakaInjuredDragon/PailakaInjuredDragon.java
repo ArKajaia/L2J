@@ -587,7 +587,7 @@ public class PailakaInjuredDragon extends InstanceScript
 			case GRAZING_FLAVA:
 			case GRAZING_ELDER_ANTELOPE:
 			{
-				npc.dropItem(killer, getRandomBoolean() ? PAILAKA_INSTANT_SHIELD : QUICK_HEALING_POTION, getRandom(1, 10));
+				dropPotions(npc, killer);
 				break;
 			}
 			case VARKA_SILENOS_FOOTMAN:
@@ -603,7 +603,7 @@ public class PailakaInjuredDragon extends InstanceScript
 				spawnMageBehind(npc, killer, VARKA_SILENOS_MEDIUM);
 				
 				// Check if all the first row have been killed. Despawn mages.
-				checkIfLastInWall(npc);
+				checkIfLastInWall(npc, killer);
 				break;
 			}
 			case VARKA_SILENOS_WARRIOR:
@@ -618,7 +618,7 @@ public class PailakaInjuredDragon extends InstanceScript
 				spawnMageBehind(npc, killer, VARKA_SILENOS_PRIEST);
 				
 				// Check if all the first row have been killed. Despawn mages.
-				checkIfLastInWall(npc);
+				checkIfLastInWall(npc, killer);
 				break;
 			}
 			case VARKA_ELITE_GUARD:
@@ -633,7 +633,7 @@ public class PailakaInjuredDragon extends InstanceScript
 				spawnMageBehind(npc, killer, VARKA_SILENOS_SHAMAN);
 				
 				// Check if all the first row have been killed. Despawn mages.
-				checkIfLastInWall(npc);
+				checkIfLastInWall(npc, killer);
 				break;
 			}
 			case VARKA_COMMANDER:
@@ -649,7 +649,7 @@ public class PailakaInjuredDragon extends InstanceScript
 				spawnMageBehind(npc, killer, VARKA_SILENOS_SEER);
 				
 				// Check if all the first row have been killed. Despawn mages.
-				checkIfLastInWall(npc);
+				checkIfLastInWall(npc, killer);
 				break;
 			}
 			case VARKA_SILENOS_GREAT_MAGUS:
@@ -665,7 +665,7 @@ public class PailakaInjuredDragon extends InstanceScript
 				spawnMageBehind(npc, killer, VARKA_SILENOS_MAGUS);
 				
 				// Check if all the first row have been killed. Despawn mages.
-				checkIfLastInWall(npc);
+				checkIfLastInWall(npc, killer);
 				break;
 			}
 			case VARKA_PROPHET:
@@ -680,7 +680,7 @@ public class PailakaInjuredDragon extends InstanceScript
 				spawnMageBehind(npc, killer, DISCIPLE_OF_PROPHET);
 				
 				// Check if all the first row have been killed. Despawn mages.
-				checkIfLastInWall(npc);
+				checkIfLastInWall(npc, killer);
 				break;
 			}
 			case VARKA_HEAD_GUARD:
@@ -695,7 +695,7 @@ public class PailakaInjuredDragon extends InstanceScript
 				spawnMageBehind(npc, killer, VARKA_HEAD_MAGUS);
 				
 				// Check if all the first row have been killed. Despawn mages.
-				checkIfLastInWall(npc);
+				checkIfLastInWall(npc, killer);
 				break;
 			}
 			case PROPHET_GUARD:
@@ -710,10 +710,16 @@ public class PailakaInjuredDragon extends InstanceScript
 				spawnMageBehind(npc, killer, VARKA_SILENOS_GREAT_SEER);
 				
 				// Check if all the first row have been killed. Despawn mages.
-				checkIfLastInWall(npc);
+				checkIfLastInWall(npc, killer);
 				break;
 			}
 		}
+	}
+	
+	// Grazing animals, and the mages that vanish when their wall falls, drop Pailaka potions.
+	private void dropPotions(Npc npc, Player player)
+	{
+		npc.dropItem(player, getRandomBoolean() ? PAILAKA_INSTANT_SHIELD : QUICK_HEALING_POTION, getRandom(1, 10));
 	}
 	
 	// Grazing animals roam near the mob walls but are not part of them.
@@ -733,7 +739,7 @@ public class PailakaInjuredDragon extends InstanceScript
 	}
 	
 	// This will check if there is other mob alive in this wall of mobs. If all mobs in the first row are dead then despawn the second row mobs, the mages.
-	private void checkIfLastInWall(Npc npc)
+	private void checkIfLastInWall(Npc npc, Player killer)
 	{
 		final Collection<Npc> knowns = World.getInstance().getVisibleObjectsInRange(npc, Npc.class, 700);
 		for (Npc npcs : knowns)
@@ -806,8 +812,8 @@ public class PailakaInjuredDragon extends InstanceScript
 			}
 		}
 		
-		// We did not find any mob on the first row alive, so despawn the second row mobs.
-		for (Creature npcs : knowns)
+		// We did not find any mob on the first row alive, so despawn the second row mobs. They drop potions as they go.
+		for (Npc npcs : knowns)
 		{
 			if (npcs.isDead())
 			{
@@ -826,6 +832,7 @@ public class PailakaInjuredDragon extends InstanceScript
 						case VARKA_SILENOS_PRIEST:
 						{
 							npcs.abortCast();
+							dropPotions(npcs, killer);
 							npcs.deleteMe();
 							break;
 						}
@@ -842,6 +849,7 @@ public class PailakaInjuredDragon extends InstanceScript
 						case VARKA_SILENOS_SEER:
 						{
 							npcs.abortCast();
+							dropPotions(npcs, killer);
 							npcs.deleteMe();
 							break;
 						}
@@ -858,6 +866,7 @@ public class PailakaInjuredDragon extends InstanceScript
 						case DISCIPLE_OF_PROPHET:
 						{
 							npcs.abortCast();
+							dropPotions(npcs, killer);
 							npcs.deleteMe();
 							break;
 						}
@@ -873,6 +882,7 @@ public class PailakaInjuredDragon extends InstanceScript
 						case VARKA_SILENOS_GREAT_SEER:
 						{
 							npcs.abortCast();
+							dropPotions(npcs, killer);
 							npcs.deleteMe();
 							break;
 						}
