@@ -5262,8 +5262,8 @@ public class Player extends Playable
 		// Lucky Loot: dying ends the kill streak.
 		org.l2jmobius.gameserver.managers.LuckyLootManager.getInstance().onPlayerDied(this);
 		
-		// MODERN TWEAK: The Nemesis System
-		if (RatesConfig.NEMESIS_SYSTEM_ENABLED && (killer != null) && killer.isAttackable())
+		// MODERN TWEAK: The Nemesis System (monsters only, not fake players or their servitors)
+		if (RatesConfig.NEMESIS_SYSTEM_ENABLED && (killer != null) && killer.isAttackable() && !killer.isFakePlayer() && !(killer instanceof org.l2jmobius.gameserver.model.actor.instance.FakePlayerPvpServitor))
 		{
 			final org.l2jmobius.gameserver.model.actor.Attackable nemesis = (org.l2jmobius.gameserver.model.actor.Attackable) killer;
 			
