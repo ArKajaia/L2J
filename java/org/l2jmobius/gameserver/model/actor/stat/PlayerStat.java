@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.l2jmobius.gameserver.config.GeneralConfig;
 import org.l2jmobius.gameserver.config.PlayerConfig;
+import org.l2jmobius.gameserver.config.PvpConfig;
 import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.data.holders.PetLevelData;
 import org.l2jmobius.gameserver.data.xml.ExperienceData;
@@ -1015,7 +1016,20 @@ public class PlayerStat extends PlayableStat
 	
 	public double getBonusDropAdenaMultiplier()
 	{
-		return 1 + (calcStat(Stat.BONUS_DROP_ADENA, 0, null, null) / 100);
+		double bonus = calcStat(Stat.BONUS_DROP_ADENA, 0, null, null);
+		
+		// PvP points adena bonus
+		if (PvpConfig.PVP_ADENA_DROP_BONUS_PER_POINT > 0)
+		{
+			double pvpBonus = getActiveChar().getPvpKills() * PvpConfig.PVP_ADENA_DROP_BONUS_PER_POINT;
+			if (PvpConfig.PVP_ADENA_DROP_BONUS_MAX > 0)
+			{
+				pvpBonus = Math.min(pvpBonus, PvpConfig.PVP_ADENA_DROP_BONUS_MAX);
+			}
+			bonus += pvpBonus;
+		}
+		
+		return 1 + (bonus / 100);
 	}
 	
 	public double getBonusDropAmountMultiplier()
