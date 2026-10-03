@@ -223,6 +223,11 @@ public class Q00727_HopeWithinTheDarkness extends Quest
 		else if (event.equalsIgnoreCase("suicide"))
 		{
 			final InstanceWorld tmpworld = InstanceManager.getInstance().getWorld(npc);
+			if (tmpworld == null)
+			{
+				return null;
+			}
+
 			tmpworld.setStatus(5);
 			final Instance inst = InstanceManager.getInstance().getInstance(npc.getInstanceId());
 			if (inst != null)
@@ -263,6 +268,17 @@ public class Q00727_HopeWithinTheDarkness extends Quest
 		}
 		else if (event.equalsIgnoreCase("check_for_foes"))
 		{
+			// The investigators can land the last hit, which does not notify onKill.
+			final InstanceWorld tmpworld = InstanceManager.getInstance().getWorld(npc);
+			if ((tmpworld instanceof CAUWorld) && (tmpworld.getStatus() == 3))
+			{
+				checkDungeonComplete((CAUWorld) tmpworld);
+				if (tmpworld.getStatus() != 3)
+				{
+					return null;
+				}
+			}
+
 			if (npc.getAI().getIntention() != Intention.ATTACK)
 			{
 				for (Creature foe : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, npc.getAggroRange()))
@@ -437,7 +453,7 @@ public class Q00727_HopeWithinTheDarkness extends Quest
 	{
 		if ((npc.getId() >= NPC_KNIGHT) && (npc.getId() <= NPC_WARRIOR))
 		{
-			npc.broadcastPacket(new NpcSay(npc.getObjectId(), ChatType.NPC_GENERAL, npc.getId(), STRINGID_DIE[npc.getId() - 36562]));
+			npc.broadcastPacket(new NpcSay(npc.getObjectId(), ChatType.NPC_GENERAL, npc.getId(), STRINGID_DIE[getRandom(STRINGID_DIE.length)]));
 			
 			// All other friendly NPCs do suicide - start timer
 			startQuestTimer("suicide", 1500, npc, null);
@@ -456,30 +472,37 @@ public class Q00727_HopeWithinTheDarkness extends Quest
 			
 			if ((tmpworld.getStatus() == 3) && (ArrayUtil.contains(BOSSES, npc.getId()) || ArrayUtil.contains(MONSTERS, npc.getId())))
 			{
-				world.allMonstersDead = true;
-				final Instance inst = InstanceManager.getInstance().getInstance(tmpworld.getInstanceId());
-				if (inst != null)
-				{
-					for (Npc _npc : inst.getNpcs())
-					{
-						if ((_npc != null) && !_npc.isDead() && (ArrayUtil.contains(BOSSES, _npc.getId()) || ArrayUtil.contains(MONSTERS, _npc.getId())))
-						{
-							world.allMonstersDead = false;
-							break;
-						}
-					}
-					
-					if (world.allMonstersDead)
-					{
-						tmpworld.setStatus(4);
-						
-						// Destroy instance after 5 minutes
-						inst.setDuration(5 * 60000);
-						inst.setEmptyDestroyTime(0);
-						ThreadPool.schedule(new completeDungeon(world, player), 1500);
-					}
-				}
+				checkDungeonComplete(world);
 			}
+		}
+	}
+
+	private synchronized void checkDungeonComplete(CAUWorld world)
+	{
+		final Instance inst = InstanceManager.getInstance().getInstance(world.getInstanceId());
+		if ((inst == null) || (world.getStatus() != 3))
+		{
+			return;
+		}
+
+		world.allMonstersDead = true;
+		for (Npc _npc : inst.getNpcs())
+		{
+			if ((_npc != null) && !_npc.isDead() && (ArrayUtil.contains(BOSSES, _npc.getId()) || ArrayUtil.contains(MONSTERS, _npc.getId())))
+			{
+				world.allMonstersDead = false;
+				break;
+			}
+		}
+
+		if (world.allMonstersDead)
+		{
+			world.setStatus(4);
+
+			// Destroy instance after 5 minutes
+			inst.setDuration(5 * 60000);
+			inst.setEmptyDestroyTime(0);
+			ThreadPool.schedule(new completeDungeon(world), 1500);
 		}
 	}
 	
@@ -576,7 +599,7 @@ public class Q00727_HopeWithinTheDarkness extends Quest
 				return getHtm(player, "CastleWarden-12.html").replace("%player%", partyMember.getName());
 			}
 			
-			final Clan clan = player.getClan();
+			final Clan clan = partyMember.getClan();
 			if ((clan == null) || (clan.getCastleId() != castle.getResidenceId()))
 			{
 				return getHtm(player, "CastleWarden-11.html").replace("%player%", partyMember.getName());
@@ -745,12 +768,10 @@ public class Q00727_HopeWithinTheDarkness extends Quest
 	private class completeDungeon implements Runnable
 	{
 		private final CAUWorld _world;
-		private final Player _player;
-		
-		public completeDungeon(CAUWorld world, Player player)
+
+		public completeDungeon(CAUWorld world)
 		{
 			_world = world;
-			_player = player;
 		}
 		
 		@Override
@@ -776,22 +797,11 @@ public class Q00727_HopeWithinTheDarkness extends Quest
 						}
 					}
 					
-					if (_player != null)
+					for (Player member : _world.getAllowed())
 					{
-						final Party party = _player.getParty();
-						if (party == null)
+						if ((member != null) && (member.getInstanceId() == _world.getInstanceId()))
 						{
-							rewardPlayer(_player);
-						}
-						else
-						{
-							for (Player partyMember : party.getMembers())
-							{
-								if ((partyMember != null) && (partyMember.getInstanceId() == _player.getInstanceId()))
-								{
-									rewardPlayer(partyMember);
-								}
-							}
+							rewardPlayer(member);
 						}
 					}
 				}

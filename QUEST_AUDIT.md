@@ -34,7 +34,7 @@ All 128 quests with a minimum level above 75 (88 with their own level check plus
 - **52 quests match exactly.** Most of the rest differ only in how drop chances are written (`36` percent vs `0.36` vs `360` per thousand), in party range (`1500` vs the config setting), in cutscene IDs written as constants, or in dialog links renamed for this server. All of those were checked and come out the same.
 - **Intentional differences kept**: Q10282 also gives the retail 212,182 adena; Q10502 also counts Freya's hard mode; Q00311 adds the Varangka altar fight; Q00238 fixes a start-condition bug and an NPC ID typo that the reference still has. Q00423 was rewritten in this fork with renumbered dialogs but plays the same.
 - **Shared Saga logic** (`AbstractSagaQuest`): same level gate (76) and rewards (2,299,404 EXP, 5,000,000 adena, item 6622).
-- **Not comparable**: Q00727_HopeWithinTheDarkness is not in the reference.
+- **Not comparable**: Q00727_HopeWithinTheDarkness is not in the reference, so it was reviewed by hand (see below).
 
 Bugs found (most are shared with the reference, so comparing alone would not catch them):
 
@@ -43,6 +43,12 @@ Bugs found (most are shared with the reference, so comparing alone would not cat
 | Q00901_HowLavasaurusesAreMade | Line 194 returned `32049-02.html`, but the file is `32049-02.htm`, so a player under level 76 got an empty window there. | ✅ fixed |
 | Q00309_ForAGoodCause | The "Back" link on both reward lists (`32647-10.html`, `32647-11.html`) went to Q00308's script, so it did nothing. | ✅ fixed |
 | Q10286_ReunionWithSirra | `32781-02.html`/`32781-03.html` now use the reference text instead of the wording written earlier. | ✅ updated |
+
+| Q00727_HopeWithinTheDarkness | The party check tested the leader's clan for every member, so players from other clans could enter. | ✅ fixed |
+| Q00727_HopeWithinTheDarkness | If an investigator NPC landed the last hit, `onKill` never ran (it only fires for player kills), so the dungeon never completed and nobody could finish the quest. Completion is now also checked on the investigators' 5-second timer, and everyone in the instance is credited, not just the killer's party. | ✅ fixed |
+| Q00727_HopeWithinTheDarkness | When an investigator died, the others were killed with `doDie(null)`, but `QuestGuard.doDie` read the killer without a null check and threw, so the failure cleanup never ran. Fixed in `QuestGuard`. | ✅ fixed |
+| Q00727_HopeWithinTheDarkness | The death-line array has 3 entries for 4 investigators, so the Seduced Warrior's death threw an exception. A random line is used now. | ✅ fixed |
+| Q00727_HopeWithinTheDarkness | `CastleWarden-07.html` said level 75; the quest requires 80. | ✅ fixed |
 
 Checks that found nothing: missing dialog files (beyond the ones above), quest lookups by `getName()`, empty dialogs, and dialog links to missing files.
 
