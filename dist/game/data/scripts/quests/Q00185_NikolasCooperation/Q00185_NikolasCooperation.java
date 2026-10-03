@@ -22,7 +22,6 @@ import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.script.QuestState;
 
 import quests.Q00183_RelicExploration.Q00183_RelicExploration;
-import quests.Q00184_ArtOfPersuasion.Q00184_ArtOfPersuasion;
 
 /**
  * Nikola's Cooperation (185)
@@ -59,7 +58,8 @@ public class Q00185_NikolasCooperation extends Quest
 	@Override
 	public String onEvent(String event, Npc npc, Player player)
 	{
-		final QuestState qs = getQuestState(player, false);
+		// The quest is offered from Relic Exploration's last dialog, before this quest has a state.
+		final QuestState qs = getQuestState(player, event.equals("30621-03.htm") && Q00183_RelicExploration.canStartNikolaQuest(player));
 		if (qs == null)
 		{
 			return null;
@@ -70,7 +70,7 @@ public class Q00185_NikolasCooperation extends Quest
 		{
 			case "30621-06.htm":
 			{
-				if (qs.isCreated())
+				if (qs.isCreated() && (player.getLevel() >= MIN_LEVEL) && Q00183_RelicExploration.canStartNikolaQuest(player))
 				{
 					qs.startQuest();
 					qs.setMemoState(1);
@@ -81,13 +81,19 @@ public class Q00185_NikolasCooperation extends Quest
 			}
 			case "30621-03.htm":
 			{
-				htmltext = player.getLevel() >= MIN_LEVEL ? event : "30621-03a.htm";
+				if (qs.isCreated() && Q00183_RelicExploration.canStartNikolaQuest(player))
+				{
+					htmltext = player.getLevel() >= MIN_LEVEL ? event : "30621-03a.htm";
+				}
 				break;
 			}
 			case "30621-04.htm":
 			case "30621-05.htm":
 			{
-				htmltext = event;
+				if (qs.isCreated() && Q00183_RelicExploration.canStartNikolaQuest(player))
+				{
+					htmltext = event;
+				}
 				break;
 			}
 			case "30673-02.html":
@@ -200,12 +206,9 @@ public class Q00185_NikolasCooperation extends Quest
 		{
 			if (npc.getId() == MAESTRO_NIKOLA)
 			{
-				final QuestState q183 = player.getQuestState(Q00183_RelicExploration.class.getSimpleName());
-				final QuestState q184 = player.getQuestState(Q00184_ArtOfPersuasion.class.getSimpleName());
-				final QuestState q185 = player.getQuestState(Q00185_NikolasCooperation.class.getSimpleName());
-				if ((q183 != null) && q183.isCompleted() && (q184 != null) && (q185 != null))
+				if (Q00183_RelicExploration.canStartNikolaQuest(player))
 				{
-					htmltext = (player.getLevel() >= MIN_LEVEL) ? "30621-01.htm" : "30621-02.html";
+					htmltext = (player.getLevel() >= MIN_LEVEL) ? "30621-01.htm" : "30621-02.htm";
 				}
 			}
 		}

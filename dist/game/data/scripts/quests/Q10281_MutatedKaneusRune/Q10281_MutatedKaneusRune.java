@@ -23,12 +23,14 @@ package quests.Q10281_MutatedKaneusRune;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.script.QuestSound;
 import org.l2jmobius.gameserver.model.script.QuestState;
 import org.l2jmobius.gameserver.model.script.State;
+import org.l2jmobius.gameserver.util.LocationUtil;
 
 /**
  * Mutated Kaneus - Rune (10281)<br>
@@ -72,6 +74,10 @@ public class Q10281_MutatedKaneusRune extends Quest
 			}
 			case "31335-03.htm":
 			{
+				if (!qs.isStarted() || !hasQuestItems(player, TISSUE_WA))
+				{
+					return getNoQuestMsg(player);
+				}
 				giveAdena(player, 360000, true);
 				qs.exitQuest(false, true);
 				break;
@@ -84,19 +90,14 @@ public class Q10281_MutatedKaneusRune extends Quest
 	@Override
 	public void onKill(Npc npc, Player killer, boolean isSummon)
 	{
-		QuestState qs = getQuestState(killer, false);
-		if (qs == null)
-		{
-			return;
-		}
-		
 		if (killer.getParty() != null)
 		{
+			// The killer does not need the quest: any party member on it, nearby and still missing the tissue, can get it.
 			final List<Player> partyMembers = new ArrayList<>();
 			for (Player member : killer.getParty().getMembers())
 			{
-				qs = getQuestState(member, false);
-				if ((qs != null) && qs.isStarted() && !hasQuestItems(member, TISSUE_WA))
+				final QuestState qs = getQuestState(member, false);
+				if ((qs != null) && qs.isStarted() && LocationUtil.checkIfInRange(PlayerConfig.ALT_PARTY_RANGE, npc, member, true) && !hasQuestItems(member, TISSUE_WA))
 				{
 					partyMembers.add(member);
 				}
@@ -107,9 +108,13 @@ public class Q10281_MutatedKaneusRune extends Quest
 				rewardItem(getRandomEntry(partyMembers));
 			}
 		}
-		else if (qs.isStarted() && !hasQuestItems(killer, TISSUE_WA))
+		else
 		{
-			rewardItem(killer);
+			final QuestState qs = getQuestState(killer, false);
+			if ((qs != null) && qs.isStarted() && !hasQuestItems(killer, TISSUE_WA))
+			{
+				rewardItem(killer);
+			}
 		}
 	}
 	

@@ -23,12 +23,14 @@ package quests.Q10280_MutatedKaneusSchuttgart;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.script.QuestSound;
 import org.l2jmobius.gameserver.model.script.QuestState;
 import org.l2jmobius.gameserver.model.script.State;
+import org.l2jmobius.gameserver.util.LocationUtil;
 
 /**
  * Mutated Kaneus - Schuttgart (10280)<br>
@@ -74,6 +76,10 @@ public class Q10280_MutatedKaneusSchuttgart extends Quest
 			}
 			case "31972-03.htm":
 			{
+				if (!qs.isStarted() || !hasQuestItems(player, TISSUE_VS) || !hasQuestItems(player, TISSUE_KB))
+				{
+					return getNoQuestMsg(player);
+				}
 				giveAdena(player, 210000, true);
 				qs.exitQuest(false, true);
 				break;
@@ -86,20 +92,15 @@ public class Q10280_MutatedKaneusSchuttgart extends Quest
 	@Override
 	public void onKill(Npc npc, Player killer, boolean isSummon)
 	{
-		QuestState qs = getQuestState(killer, false);
-		if (qs == null)
-		{
-			return;
-		}
-		
 		final int npcId = npc.getId();
 		if (killer.getParty() != null)
 		{
+			// The killer does not need the quest: any party member on it, nearby and still missing this tissue, can get it.
 			final List<Player> partyMembers = new ArrayList<>();
 			for (Player member : killer.getParty().getMembers())
 			{
-				qs = getQuestState(member, false);
-				if ((qs != null) && qs.isStarted() && (((npcId == VENOMOUS_STORACE) && !hasQuestItems(member, TISSUE_VS)) || ((npcId == KEL_BILETTE) && !hasQuestItems(member, TISSUE_KB))))
+				final QuestState qs = getQuestState(member, false);
+				if ((qs != null) && qs.isStarted() && LocationUtil.checkIfInRange(PlayerConfig.ALT_PARTY_RANGE, npc, member, true) && (((npcId == VENOMOUS_STORACE) && !hasQuestItems(member, TISSUE_VS)) || ((npcId == KEL_BILETTE) && !hasQuestItems(member, TISSUE_KB))))
 				{
 					partyMembers.add(member);
 				}
@@ -110,9 +111,13 @@ public class Q10280_MutatedKaneusSchuttgart extends Quest
 				rewardItem(npcId, getRandomEntry(partyMembers));
 			}
 		}
-		else if (qs.isStarted())
+		else
 		{
-			rewardItem(npcId, killer);
+			final QuestState qs = getQuestState(killer, false);
+			if ((qs != null) && qs.isStarted())
+			{
+				rewardItem(npcId, killer);
+			}
 		}
 	}
 	
