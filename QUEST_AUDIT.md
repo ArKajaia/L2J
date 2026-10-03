@@ -20,7 +20,7 @@ The scan compared every HTML file name in each quest's Java code with the files 
 | ~~Q10287_StoryOfThoseLeft~~ ✅ fixed | `32760-06.html` (shown as Jinia sends the player out of the hideout) had no text, only "Jinia:". It now tells the player to meet Rafforty for the reward. The TODO naming the retail file `jinia_npc_q10287_06.htm` is removed. |
 | ~~Q00309_ForAGoodCause~~ ✅ fixed | The reward exchange returns `32646-15.htm`/`32646-16.htm` (lines 233/237). These names were copied from Q00308's NPC. The files that exist are `32647-15.html`/`32647-16.html`, so the player gets an empty window after every exchange. |
 | ~~Q00308_ReedFieldMaintenance~~ ✅ fixed | Line 161 looks up Q00238 with `.class.getName()` (`quests.Q00238_...`). Quest states are stored under `getSimpleName()`, so the lookup always returns `null`, and `claimreward` always shows `32646-12.html`, even to players who completed Q00238. |
-| Q10295_SevenSignsSolinasTomb *(extension)* | `32787-06.html` is missing (line ~551). |
+| ~~Q10295_SevenSignsSolinasTomb~~ ✅ fixed *(extension)* | `32787-06.html` (Elcadia's line while Solina is partway through her story) was missing. Added. |
 
 Possible problems that need a closer look:
 
@@ -141,7 +141,7 @@ Columns: **Lines** is the size of the Java code and **HTML** is the number of di
 |---|---|---|---|---|
 | 51 | Q10293_SevenSignsForbiddenBookOfTheElmoreAdenKingdom | 404 | 55 | Needs Q10292 |
 | 52 | Q10294_SevenSignsToTheMonasteryOfSilence | 451 | 76 | Needs Q10293. Instance (see the SSQMonasteryOfSilence TODOs in `TODO.md`) |
-| 53 | Q10295_SevenSignsSolinasTomb ⚠ | 563 | 68 | Needs Q10294. `32787-06.html` missing |
+| 53 | Q10295_SevenSignsSolinasTomb ✅ | 563 | 68 | Needs Q10294. Missing Elcadia dialog added |
 | 54 | Q10296_SevenSignsOneWhoSeeksThePowerOfTheSeal | 294 | 28 | Needs Q10295 |
 
 ## Suggested passes
