@@ -143,6 +143,15 @@ public class FakePlayerPvpAI extends AttackableAI
 	private static final int POKE_WATCH_MIN = 4000;
 	private static final int POKE_WATCH_MAX = 8000;
 	private static final long POKE_TIMEOUT = 30000;
+	/** Meeting another fake player (see {@link #lookForMeeting}): how often it looks, how long it remembers whom it thought about, how close it stands to talk, and how long it may take to get there. */
+	private static final long MEET_SCAN_INTERVAL = 5000;
+	private static final long MEET_MEMORY = 600000;
+	private static final int MEET_TALK_DISTANCE = 80;
+	private static final long MEET_TIMEOUT = 40000;
+	/** How far apart two fake players may drift while they talk before the talk is over. */
+	private static final int TALK_MAX_DISTANCE = 600;
+	/** How long it sticks to its choice to take (or leave) a monster another fake player is fighting. */
+	private static final long STEAL_MEMORY = 60000;
 	/** A player chains the next skill a moment after the last one ends, not a whole AI tick later. */
 	private static final int SKILL_CHAIN_MIN_DELAY = 150;
 	private static final int SKILL_CHAIN_MAX_DELAY = 400;
@@ -256,6 +265,26 @@ public class FakePlayerPvpAI extends AttackableAI
 	private long _nextPokeScan = 0;
 	private final Map<Integer, Long> _pokeConsidered = new ConcurrentHashMap<>();
 	
+	// Whether the taunt follows a talk about the spot (see {@link #startRivalry}): then it may go for anyone up to a few levels above it.
+	private boolean _pokeRival = false;
+	
+	// Walking over to another fake player at the hunting ground: whom, since when, when it looks next and whom it already thought about (object id -> time).
+	private Npc _meetTarget = null;
+	private long _meetStart = 0;
+	private long _nextMeetScan = 0;
+	private final Map<Integer, Long> _meetConsidered = new ConcurrentHashMap<>();
+	
+	// Another fake player that walked over to talk and waits for it to finish its monster, and until when.
+	private volatile Npc _visitor = null;
+	private volatile long _visitorUntil = 0;
+	
+	// The fake player it talks with (see FakePlayerPvpManager#converse), and until when.
+	private volatile Npc _talkPartner = null;
+	private volatile long _talkUntil = 0;
+	
+	// Monsters other fake players fight that it decided to take (object id -> until when) or to leave alone (minus until when).
+	private final Map<Integer, Long> _stealDecisions = new ConcurrentHashMap<>();
+	
 	// The player it is fighting, to notice when that player goes down (the aggro list drops dead attackers by itself).
 	private Creature _pvpTarget = null;
 	
@@ -361,6 +390,12 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
+		// Talking with another fake player it met: it stands there facing them.
+		if (thinkTalk(npc, System.currentTimeMillis()))
+		{
+			return;
+		}
+		
 		// A necromancer keeps its servitor out: a new one once the fight is over.
 		if ((profile != null) && profile.needsServitor() && castOnSelf(npc, null, profile.getSkills(SkillCategory.SUMMON), true, false))
 		{
@@ -388,8 +423,14 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// Back from town for its killer, a flagged or karma player passing by, or a lower level to taunt.
-		if (lookForRevenge(npc, now) || lookForPvp(npc, now) || lookForPoke(npc, now))
+		// Walking over to another fake player to talk, or someone came over and waits for it.
+		if (thinkMeet(npc, now) || waitForVisitor(npc, now))
+		{
+			return;
+		}
+		
+		// Back from town for its killer, a flagged or karma player (or fake player) passing by, a lower level to taunt, or another fake player to talk to.
+		if (lookForRevenge(npc, now) || lookForPvp(npc, now) || lookForPoke(npc, now) || lookForMeeting(npc, now))
 		{
 			return;
 		}
@@ -472,8 +513,10 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// A real fight (they hit back, or a monster came) ends a taunt.
+		// A real fight (they hit back, or a monster came) ends a taunt, a walk over to someone and a talk.
 		endPoke(npc);
+		_meetTarget = null;
+		endTalk();
 		
 		// A sitting player stands up first.
 		if (standUp(npc))
@@ -796,6 +839,8 @@ public class FakePlayerPvpAI extends AttackableAI
 	protected void onActionDeath()
 	{
 		endPoke(getActiveChar());
+		_meetTarget = null;
+		endTalk();
 		_fleeing = false;
 		_resting = false;
 		_regrouping = false;
@@ -1522,6 +1567,22 @@ public class FakePlayerPvpAI extends AttackableAI
 				return;
 			}
 		}
+		
+		// Another fake player farming around: a hello, and it may say hello back (instead of greeting it on its own).
+		for (Npc other : World.getInstance().getVisibleObjectsInRange(npc, Npc.class, OPPORTUNITY_RANGE))
+		{
+			if (_seenPlayers.contains(other.getObjectId()) || !isFreeFakePlayer(npc, other) || !GeoEngine.getInstance().canSeeTarget(npc, other))
+			{
+				continue;
+			}
+			
+			if (_seenPlayers.add(other.getObjectId()))
+			{
+				((FakePlayerPvpAI) other.getAI())._seenPlayers.add(npc.getObjectId());
+				FakePlayerPvpManager.getInstance().greetFake(npc, other);
+				return;
+			}
+		}
 	}
 	
 	/**
@@ -1576,7 +1637,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	private boolean lookForPvp(Attackable npc, long now)
 	{
 		final FakePlayerPvpPersonality personality = FakePlayerPvpPersonality.of(npc);
-		if (((personality.getAttackFlaggedChance() <= 0) && (personality.getAttackKarmaChance() <= 0)) || (now < _nextOpportunityScan))
+		if (((personality.getAttackFlaggedChance() <= 0) && (personality.getAttackKarmaChance() <= 0) && (personality.getJoinFightChance() <= 0)) || (now < _nextOpportunityScan))
 		{
 			return false;
 		}
@@ -1613,6 +1674,32 @@ public class FakePlayerPvpAI extends AttackableAI
 			}
 		}
 		
+		// Other fake players in a fight (flagged) or with karma: it may join in.
+		for (Npc other : World.getInstance().getVisibleObjectsInRange(npc, Npc.class, OPPORTUNITY_RANGE))
+		{
+			if (!other.isPvpFakePlayer() || other.isAlikeDead() || other.isInvisible() || other.isTrialDuelist() || (other.getInstanceId() != npc.getInstanceId()))
+			{
+				continue;
+			}
+			
+			final boolean karma = other.getKarma() > 0;
+			if ((!karma && (other.getScriptValue() == 0)) || other.isInsideZone(ZoneId.PEACE) || other.isInsideZone(ZoneId.PVP) || other.isInsideZone(ZoneId.SIEGE))
+			{
+				continue;
+			}
+			
+			if ((other.getLevel() > (npc.getLevel() + OPPORTUNITY_MAX_LEVEL_ABOVE)) || hates(npc, other, FakePlayerPvpManager.PVP_HATE) || !GeoEngine.getInstance().canSeeTarget(npc, other))
+			{
+				continue;
+			}
+			
+			if ((_consideredPlayers.putIfAbsent(other.getObjectId(), now) == null) && (Rnd.get(100) < (karma ? personality.getAttackKarmaChance() : personality.getJoinFightChance())))
+			{
+				FakePlayerPvpManager.getInstance().attackFakePlayer(npc, other, karma);
+				return true;
+			}
+		}
+		
 		return false;
 	}
 	
@@ -1640,14 +1727,17 @@ public class FakePlayerPvpAI extends AttackableAI
 		final FakePlayerPvpPersonality personality = FakePlayerPvpPersonality.of(npc);
 		for (Creature creature : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, OPPORTUNITY_RANGE))
 		{
-			if (!canPoke(npc, creature, true))
+			if (!canPoke(npc, creature, true, false))
 			{
 				continue;
 			}
 			
-			if ((_pokeConsidered.putIfAbsent(creature.getObjectId(), now) == null) && (Rnd.get(100) < personality.getPokeChance(npc.getLevel() - creature.getLevel())))
+			// Other fake players are picked on more often (FakePvpFakePokeScale).
+			final int chance = personality.getPokeChance(npc.getLevel() - creature.getLevel());
+			if ((_pokeConsidered.putIfAbsent(creature.getObjectId(), now) == null) && (Rnd.get(100) < (creature.isPlayer() ? chance : ((chance * FakePlayerPvpConfig.FAKE_POKE_SCALE) / 100))))
 			{
 				_pokeTarget = creature;
+				_pokeRival = false;
 				_pokePhase = PokePhase.APPROACH;
 				_pokeStart = now;
 				_pokePhaseEnd = 0;
@@ -1662,11 +1752,17 @@ public class FakePlayerPvpAI extends AttackableAI
 	 * @param npc the fake player
 	 * @param target a creature it sees
 	 * @param starting {@code true} when it thinks about starting a taunt, {@code false} when it goes on with one
+	 * @param rival {@code true} for a fake player it argued with about the spot (see {@link #startRivalry}), which may be up to {@link FakePlayerPvpConfig#RIVALRY_MAX_LEVEL_ABOVE} levels above it
 	 * @return {@code true} if it may taunt {@code target}: a player or a roaming fake player of a lower level, out of town, arenas, sieges, the Olympiad and duels, and not in a PvP already (a flagged or karma player is fair game anyway, see {@link #lookForPvp})
 	 */
-	private static boolean canPoke(Attackable npc, Creature target, boolean starting)
+	private static boolean canPoke(Attackable npc, Creature target, boolean starting, boolean rival)
 	{
-		if ((target == null) || (target == npc) || target.isAlikeDead() || !target.isSpawned() || target.isInvisible() || (target.getInstanceId() != npc.getInstanceId()) || (target.getLevel() >= npc.getLevel()))
+		if ((target == null) || (target == npc) || target.isAlikeDead() || !target.isSpawned() || target.isInvisible() || (target.getInstanceId() != npc.getInstanceId()))
+		{
+			return false;
+		}
+		
+		if (rival ? (target.getLevel() > (npc.getLevel() + FakePlayerPvpConfig.RIVALRY_MAX_LEVEL_ABOVE)) : (target.getLevel() >= npc.getLevel()))
 		{
 			return false;
 		}
@@ -1684,7 +1780,7 @@ public class FakePlayerPvpAI extends AttackableAI
 				return false;
 			}
 		}
-		else if (!target.isPvpFakePlayer() || !FakePlayerPvpConfig.POKE_FAKE_PLAYERS || (starting && FakePlayerPvpManager.isInPvp(target.asNpc())))
+		else if (!target.isPvpFakePlayer() || target.asNpc().isTrialDuelist() || (!rival && !FakePlayerPvpConfig.POKE_FAKE_PLAYERS) || (starting && FakePlayerPvpManager.isInPvp(target.asNpc())))
 		{
 			return false;
 		}
@@ -1717,7 +1813,7 @@ public class FakePlayerPvpAI extends AttackableAI
 			return false;
 		}
 		
-		if (!canPoke(npc, target, false) || ((_pokePhase != PokePhase.WATCH) && ((now - _pokeStart) > POKE_TIMEOUT)))
+		if (!canPoke(npc, target, false, _pokeRival) || ((_pokePhase != PokePhase.WATCH) && ((now - _pokeStart) > POKE_TIMEOUT)))
 		{
 			endPoke(npc);
 			return false;
@@ -1826,10 +1922,250 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		_pokeTarget = null;
 		_pokePhase = null;
+		_pokeRival = false;
 		if ((npc.getTarget() == target) && (getIntention() != Intention.ATTACK))
 		{
 			npc.setTarget(null);
 		}
+	}
+	
+	/**
+	 * Like players at a hunting ground checking out who else farms there, a healthy fake player may walk over to another fake player it sees to talk (see {@link #thinkMeet}), more likely for a chatty one; each one is only considered once in a while.
+	 * @param npc the fake player
+	 * @param now the current time
+	 * @return {@code true} if it set off to meet someone
+	 */
+	private boolean lookForMeeting(Attackable npc, long now)
+	{
+		final FakePlayerPvpPersonality personality = FakePlayerPvpPersonality.of(npc);
+		if ((FakePlayerPvpConfig.MEET_RANGE <= 0) || (personality.getMeetChance() <= 0) || (now < _nextMeetScan))
+		{
+			return false;
+		}
+		
+		_nextMeetScan = now + MEET_SCAN_INTERVAL;
+		_meetConsidered.values().removeIf(time -> (now - time) > MEET_MEMORY);
+		if ((npc.getCurrentHp() < (npc.getMaxHp() * 0.7)) || npc.isInsideZone(ZoneId.PEACE) || npc.isTrialDuelist())
+		{
+			return false;
+		}
+		
+		final Spawn spawn = npc.getSpawn();
+		for (Npc other : World.getInstance().getVisibleObjectsInRange(npc, Npc.class, FakePlayerPvpConfig.MEET_RANGE))
+		{
+			if (_meetConsidered.containsKey(other.getObjectId()) || !isFreeFakePlayer(npc, other))
+			{
+				continue;
+			}
+			
+			// Not so far from its own hunting ground that it would turn back on the way.
+			if ((spawn != null) && (other.calculateDistance2D(spawn) > personality.getLeashRange()))
+			{
+				continue;
+			}
+			
+			_meetConsidered.put(other.getObjectId(), now);
+			if (Rnd.get(100) < personality.getMeetChance())
+			{
+				_meetTarget = other;
+				_meetStart = now;
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Goes on walking over to another fake player (see {@link #lookForMeeting}): once there it waits for them to finish their monster, then they talk ({@link FakePlayerPvpManager#converse}). Sometimes the talk is about the spot and ends in a fight (see
+	 * {@link FakePlayerPvpConfig#RIVALRY_CHANCE}).
+	 * @param npc the fake player
+	 * @param now the current time
+	 * @return {@code true} if it is busy with it this tick
+	 */
+	private boolean thinkMeet(Attackable npc, long now)
+	{
+		final Npc target = _meetTarget;
+		if (target == null)
+		{
+			return false;
+		}
+		
+		final FakePlayerPvpPersonality personality = FakePlayerPvpPersonality.of(npc);
+		final Spawn spawn = npc.getSpawn();
+		if (!isFreeFakePlayer(npc, target) || ((now - _meetStart) > MEET_TIMEOUT) || ((spawn != null) && (npc.calculateDistance2D(spawn) > personality.getLeashRange())))
+		{
+			_meetTarget = null;
+			return false;
+		}
+		
+		final int collision = npc.getTemplate().getCollisionRadius() + target.getTemplate().getCollisionRadius();
+		if ((npc.calculateDistance2D(target) - collision) > MEET_TALK_DISTANCE)
+		{
+			walkUpTo(npc, target, collision + (MEET_TALK_DISTANCE / 2));
+			return true;
+		}
+		
+		// There: it waits for them to finish their monster.
+		if (npc.isMoving())
+		{
+			clientStopMoving(null);
+		}
+		npc.setTarget(target);
+		final FakePlayerPvpAI targetAI = (FakePlayerPvpAI) target.getAI();
+		if ((targetAI.getIntention() == Intention.ATTACK) || target.isCastingNow())
+		{
+			// It doesn't pick its next monster meanwhile.
+			targetAI._visitor = npc;
+			targetAI._visitorUntil = now + 3000;
+			return true;
+		}
+		
+		_meetTarget = null;
+		targetAI._meetConsidered.put(npc.getObjectId(), now);
+		final boolean rivalry = (target.getLevel() <= (npc.getLevel() + FakePlayerPvpConfig.RIVALRY_MAX_LEVEL_ABOVE)) && (Rnd.get(100) < personality.getRivalryChance());
+		FakePlayerPvpManager.getInstance().converse(npc, target, rivalry);
+		return true;
+	}
+	
+	/**
+	 * Another fake player walked over to talk (see {@link #thinkMeet}) while it fought a monster: it doesn't pick its next one, so they can talk.
+	 * @param npc the fake player
+	 * @param now the current time
+	 * @return {@code true} if it waits for them
+	 */
+	private boolean waitForVisitor(Attackable npc, long now)
+	{
+		final Npc visitor = _visitor;
+		if (visitor == null)
+		{
+			return false;
+		}
+		
+		if ((now >= _visitorUntil) || visitor.isDead() || !visitor.isSpawned() || (npc.calculateDistance2D(visitor) > TALK_MAX_DISTANCE))
+		{
+			_visitor = null;
+			return false;
+		}
+		
+		if (npc.isMoving())
+		{
+			clientStopMoving(null);
+		}
+		return true;
+	}
+	
+	/**
+	 * While it talks with another fake player (see {@link #holdForTalk}) it stands there targeting them.
+	 * @param npc the fake player
+	 * @param now the current time
+	 * @return {@code true} if it is talking
+	 */
+	private boolean thinkTalk(Attackable npc, long now)
+	{
+		final Npc partner = _talkPartner;
+		if (partner == null)
+		{
+			return false;
+		}
+		
+		if ((now >= _talkUntil) || partner.isDead() || !partner.isSpawned() || (npc.calculateDistance2D(partner) > TALK_MAX_DISTANCE))
+		{
+			endTalk();
+			return false;
+		}
+		
+		if (npc.isMoving())
+		{
+			clientStopMoving(null);
+		}
+		if (npc.getTarget() != partner)
+		{
+			npc.setTarget(partner);
+		}
+		return true;
+	}
+	
+	/**
+	 * Makes it stand and talk with another fake player until {@code until} (see {@link FakePlayerPvpManager#converse}).
+	 * @param partner the one it talks with
+	 * @param until when the talk is over at the latest
+	 */
+	public void holdForTalk(Npc partner, long until)
+	{
+		_meetTarget = null;
+		_visitor = null;
+		endPoke(getActiveChar());
+		_talkPartner = partner;
+		_talkUntil = until;
+	}
+	
+	/**
+	 * @param partner a fake player
+	 * @return {@code true} if it is talking with {@code partner}
+	 */
+	public boolean isTalkingWith(Npc partner)
+	{
+		return (_talkPartner == partner) && (System.currentTimeMillis() < _talkUntil);
+	}
+	
+	/**
+	 * Ends a talk, if it is talking with someone, for both of them.
+	 */
+	public void endTalk()
+	{
+		final Npc partner = _talkPartner;
+		_talkPartner = null;
+		_talkUntil = 0;
+		if ((partner != null) && partner.hasAI() && (partner.getAI() instanceof FakePlayerPvpAI))
+		{
+			final FakePlayerPvpAI ai = (FakePlayerPvpAI) partner.getAI();
+			if (ai._talkPartner == _actor)
+			{
+				ai.endTalk();
+			}
+		}
+	}
+	
+	/**
+	 * At the end of a talk about the spot (see {@link FakePlayerPvpManager#converse}) it hits the other fake player once, like a taunt ({@link #thinkPoke}), whatever their level up to {@link FakePlayerPvpConfig#RIVALRY_MAX_LEVEL_ABOVE} levels above it.
+	 * @param rival the other fake player
+	 */
+	public void startRivalry(Npc rival)
+	{
+		final Attackable npc = getActiveChar();
+		if (npc.isDead() || !canPoke(npc, rival, false, true))
+		{
+			return;
+		}
+		
+		_pokeTarget = rival;
+		_pokeRival = true;
+		_pokePhase = PokePhase.HIT;
+		_pokeStart = System.currentTimeMillis();
+		_pokePhaseEnd = 0;
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param creature a creature it sees
+	 * @return {@code true} if {@code creature} is another roaming fake player free to talk: not a class transfer challenge opponent, not in town, not in a PvP, not resting, not already talking to, taunting or walking over to someone
+	 */
+	private static boolean isFreeFakePlayer(Attackable npc, Creature creature)
+	{
+		if ((creature == null) || (creature == npc) || !creature.isPvpFakePlayer() || creature.isAlikeDead() || !creature.isSpawned() || creature.isInvisible() || (creature.getInstanceId() != npc.getInstanceId()))
+		{
+			return false;
+		}
+		
+		final Npc other = creature.asNpc();
+		if (other.isTrialDuelist() || other.isInsideZone(ZoneId.PEACE) || FakePlayerPvpManager.isInPvp(other) || !other.hasAI() || !(other.getAI() instanceof FakePlayerPvpAI))
+		{
+			return false;
+		}
+		
+		final FakePlayerPvpAI ai = (FakePlayerPvpAI) other.getAI();
+		return !ai.isResting() && (ai._talkPartner == null) && (ai._pokeTarget == null) && (ai._meetTarget == null);
 	}
 	
 	/**
@@ -2090,7 +2426,9 @@ public class FakePlayerPvpAI extends AttackableAI
 			return null;
 		}
 
-		final Creature unreachable = System.currentTimeMillis() < _unreachableUntil ? _unreachable : null;
+		final long now = System.currentTimeMillis();
+		final Creature unreachable = now < _unreachableUntil ? _unreachable : null;
+		_stealDecisions.values().removeIf(until -> Math.abs(until) < now);
 		Monster prey = null;
 		double preyDistance = Double.MAX_VALUE;
 		for (Monster monster : World.getInstance().getVisibleObjectsInRange(npc, Monster.class, personality.getHuntRange()))
@@ -2116,8 +2454,8 @@ public class FakePlayerPvpAI extends AttackableAI
 				continue;
 			}
 			
-			// Don't take a monster someone else is already fighting.
-			if (FakePlayerPvpConfig.AVOID_PLAYER_MONSTERS && isFoughtByOthers(monster, npc))
+			// Don't take a monster someone else is already fighting, but some take the monsters of other fake players (FakePvpFakeKillStealChance).
+			if (FakePlayerPvpConfig.AVOID_PLAYER_MONSTERS && isFoughtByOthers(monster, npc) && !(isFoughtByFakePlayersOnly(monster, npc) && wantsToSteal(npc, monster, now)))
 			{
 				continue;
 			}
@@ -2132,6 +2470,54 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		return prey;
+	}
+	
+	/**
+	 * @param monster a monster
+	 * @param npc the fake player
+	 * @return {@code true} if the ones fighting {@code monster} (besides {@code npc}) are roaming fake players, no player nor summon
+	 */
+	private static boolean isFoughtByFakePlayersOnly(Monster monster, Attackable npc)
+	{
+		final WorldObject monsterTarget = monster.getTarget();
+		if ((monsterTarget != null) && monsterTarget.isPlayable())
+		{
+			return false;
+		}
+		
+		boolean fakePlayers = false;
+		for (Creature attacker : monster.getAggroList().keySet())
+		{
+			if ((attacker == npc) || !hates(monster, attacker, 1))
+			{
+				continue;
+			}
+			
+			if (!attacker.isPvpFakePlayer())
+			{
+				return false;
+			}
+			fakePlayers = true;
+		}
+		
+		return fakePlayers;
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param monster a monster another fake player fights
+	 * @param now the current time
+	 * @return {@code true} if it takes {@code monster} anyway, decided once for a while per monster (see {@link FakePlayerPvpPersonality#getFakeKillStealChance})
+	 */
+	private boolean wantsToSteal(Attackable npc, Monster monster, long now)
+	{
+		final int chance = FakePlayerPvpPersonality.of(npc).getFakeKillStealChance();
+		if ((chance <= 0) || npc.isTrialDuelist())
+		{
+			return false;
+		}
+		
+		return _stealDecisions.computeIfAbsent(monster.getObjectId(), id -> Rnd.get(100) < chance ? now + STEAL_MEMORY : -(now + STEAL_MEMORY)) > 0;
 	}
 	
 	private static boolean isFoughtByOthers(Monster monster, Attackable npc)

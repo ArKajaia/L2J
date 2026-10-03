@@ -65,6 +65,10 @@ public class FakePlayerPvpPersonality
 	private final double _greetChance;
 	private final double _pokeChance;
 	private final double _refuseChance;
+	private final double _meetChance;
+	private final double _rivalryChance;
+	private final double _fakeKillStealChance;
+	private final double _joinFightChance;
 
 	// Distances, times and thresholds, from -1 to 1 of FakePvpPersonalityRangeVariance.
 	private final double _huntRange;
@@ -117,6 +121,10 @@ public class FakePlayerPvpPersonality
 		_greetChance = follow(random, _chattiness);
 		_pokeChance = follow(random, _aggression);
 		_refuseChance = follow(random, -_aggression);
+		_meetChance = follow(random, _chattiness);
+		_rivalryChance = follow(random, _aggression);
+		_fakeKillStealChance = follow(random, _aggression);
+		_joinFightChance = follow(random, _aggression);
 
 		_huntRange = follow(random, _roaming);
 		_leashRange = follow(random, _roaming);
@@ -308,7 +316,39 @@ public class FakePlayerPvpPersonality
 	{
 		return chance(FakePlayerPvpConfig.levelDiffChance(FakePlayerPvpConfig.REFUSE_CHANCE_MIN, FakePlayerPvpConfig.REFUSE_CHANCE_MAX, FakePlayerPvpConfig.REFUSE_MAX_CHANCE_LEVEL_DIFF, levelDiff), _refuseChance);
 	}
-	
+
+	/**
+	 * @return its chance (in %) to walk over to another fake player it sees (see {@link FakePlayerPvpConfig#MEET_CHANCE}), higher for a chatty one
+	 */
+	public int getMeetChance()
+	{
+		return chance(FakePlayerPvpConfig.MEET_CHANCE, _meetChance);
+	}
+
+	/**
+	 * @return its chance (in %) that meeting another fake player turns into a fight over the spot (see {@link FakePlayerPvpConfig#RIVALRY_CHANCE})
+	 */
+	public int getRivalryChance()
+	{
+		return chance(FakePlayerPvpConfig.RIVALRY_CHANCE, _rivalryChance);
+	}
+
+	/**
+	 * @return its chance (in %) to take a monster another fake player is fighting (see {@link FakePlayerPvpConfig#FAKE_KILL_STEAL_CHANCE})
+	 */
+	public int getFakeKillStealChance()
+	{
+		return chance(FakePlayerPvpConfig.FAKE_KILL_STEAL_CHANCE, _fakeKillStealChance);
+	}
+
+	/**
+	 * @return its chance (in %) to join a fight of other fake players (see {@link FakePlayerPvpConfig#JOIN_FIGHT_CHANCE})
+	 */
+	public int getJoinFightChance()
+	{
+		return chance(FakePlayerPvpConfig.JOIN_FIGHT_CHANCE, _joinFightChance);
+	}
+
 	/**
 	 * @return its {@link FakePlayerPvpConfig#HUNT_RANGE}
 	 */

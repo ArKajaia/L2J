@@ -145,6 +145,16 @@
 		<tier minLevel="80" chest="9436" legs="9437" head="9438" gloves="9439" feet="9440" /> <!-- Dynasty Tunic - Wizard -->
 		<tier minLevel="84" chest="13434" legs="13444" head="13139" gloves="13445" feet="13446" /> <!-- Vesper Tunic -->
 	</kit>
+	<kit name="LIGHT_MAGE"> <!-- Kamael mages: Kamael wear light armor only (no heavy armor, no robes), and the client has no Kamael model for the others. -->
+		<tier minLevel="1" chest="23" legs="2386" head="44" gloves="51" feet="39" /> <!-- Wooden -->
+		<tier minLevel="20" chest="395" legs="417" head="2411" gloves="2450" feet="2424" /> <!-- Manticore Skin -->
+		<tier minLevel="40" chest="398" legs="418" head="2414" gloves="2455" feet="2431" /> <!-- Plated Leather -->
+		<tier minLevel="52" chest="2392" head="2417" gloves="5723" feet="5739" /> <!-- Leather of Doom -->
+		<tier minLevel="61" chest="2395" head="2419" gloves="5775" feet="5787" /> <!-- Majestic Leather -->
+		<tier minLevel="76" chest="6379" head="6382" gloves="6380" feet="6381" /> <!-- Draconic -->
+		<tier minLevel="80" chest="10168" legs="9428" head="9429" gloves="9430" feet="9431" /> <!-- Dynasty Leather - Enchanter -->
+		<tier minLevel="84" chest="13436" legs="13451" head="13141" gloves="13452" feet="13453" /> <!-- Vesper Noble Leather -->
+	</kit>
 
 	<!-- Weapons -->
 	<kit name="SWORD_SHIELD">
@@ -880,7 +890,7 @@
 		<variant name="Titan Light" weapon="BIGSWORD_ALT" armor="LIGHT_FIGHTER" weight="1" />
 	</build>
 	<!-- Kamael: the soul skills spend souls like a player's (a monster kill gives one, Soul Rage more). -->
-	<build name="Doombringer" classId="131" role="FIGHTER" weapon="ANCIENT_SWORD" armor="HEAVY" weight="2" skillFighter="true"> <!-- Kamael, male -->
+	<build name="Doombringer" classId="131" role="FIGHTER" weapon="ANCIENT_SWORD" armor="LIGHT_FIGHTER" weight="2" skillFighter="true"> <!-- Kamael, male. Kamael wear light armor only. -->
 		<attack>526,497,477,939,498,476,496,492,1434,468</attack>
 		<debuff>1435,485,501,1445,794</debuff>
 		<buff>1432,482,499,1514,20006,917,948</buff>
@@ -903,9 +913,9 @@
 			<step skill="497" /> <!-- Crush of Pain -->
 			<step skill="477" optional="true" /> <!-- Dark Smash -->
 		</combo>
-		<variant name="Doombringer Light" armor="LIGHT_FIGHTER" weight="1" />
+		<variant name="Doombringer Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Male Soul Hound" classId="132" role="MAGE" weapon="RAPIER" armor="ROBE" buffs="MAGE" weight="2"> <!-- Kamael, male -->
+	<build name="Male Soul Hound" classId="132" role="MAGE" weapon="RAPIER" armor="LIGHT_MAGE" buffs="MAGE" weight="2"> <!-- Kamael, male -->
 		<attack>1469,1512,1516,1436,1433,1439,1438,1434,1554,1431,939,505,504,478</attack>
 		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
 		<buff>1441,482,1532,1515</buff>
@@ -926,9 +936,9 @@
 			<step skill="1436" /> <!-- Soul of Pain -->
 			<step skill="1433" optional="true" /> <!-- Abyssal Blaze -->
 		</combo>
-		<variant name="Male Soul Hound Legacy" armor="ROBE_LEGACY" weight="1" />
+		<variant name="Male Soul Hound Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Female Soul Hound" classId="133" role="MAGE" weapon="RAPIER" armor="ROBE" buffs="MAGE" weight="2"> <!-- Kamael, female -->
+	<build name="Female Soul Hound" classId="133" role="MAGE" weapon="RAPIER" armor="LIGHT_MAGE" buffs="MAGE" weight="2"> <!-- Kamael, female -->
 		<attack>1469,1512,1516,1436,1433,1439,1438,1434,1554,1431,939,505,504,478</attack>
 		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
 		<buff>1441,482,1532,1515</buff>
@@ -949,7 +959,7 @@
 			<step skill="1436" /> <!-- Soul of Pain -->
 			<step skill="1433" optional="true" /> <!-- Abyssal Blaze -->
 		</combo>
-		<variant name="Female Soul Hound Legacy" armor="ROBE_LEGACY" weight="1" />
+		<variant name="Female Soul Hound Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
 	<build name="Judicator" classId="136" role="FIGHTER" weapon="RAPIER" armor="LIGHT_DAGGER" weight="2" skillFighter="true"> <!-- Kamael, female (Warder, Inspector) -->
 		<attack>505,504,939,478,492,1433,1434,468,1431</attack>
@@ -973,7 +983,7 @@
 			<step skill="504" /> <!-- Triple Thrust -->
 			<step skill="505" optional="true" /> <!-- Shining Edge -->
 		</combo>
-		<variant name="Judicator Heavy" armor="HEAVY_LEGACY" weight="1" />
+		<variant name="Judicator Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
 	<build name="Trickster" classId="134" role="ARCHER" weapon="CROSSBOW" armor="LIGHT_ARCHER" weight="2"> <!-- Kamael, female -->
 		<attack>790,990,987,507,509,508,487,939</attack>
