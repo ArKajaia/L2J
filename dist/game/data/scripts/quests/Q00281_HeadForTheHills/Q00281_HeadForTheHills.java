@@ -232,7 +232,7 @@ public class Q00281_HeadForTheHills extends Quest
 	public void onKill(Npc npc, Player killer, boolean isSummon)
 	{
 		final QuestState qs = getQuestState(killer, false);
-		if ((qs != null) && (getRandom(1000) <= MONSTERS.get(npc.getId())))
+		if ((qs != null) && qs.isStarted() && (getRandom(1000) <= MONSTERS.get(npc.getId())))
 		{
 			giveItems(killer, CLAWS, 1);
 			playSound(killer, QuestSound.ITEMSOUND_QUEST_ITEMGET);

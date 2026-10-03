@@ -76,6 +76,66 @@ High Five revamped only two hunting zones: Dragon Valley (outdoor) and Antharas'
 - **Every NPC a quest talks to** is either spawned or spawned by a quest/instance script.
 - **Leftover monster names that no longer spawn** (the quests still work through their other monsters): Q00384's dialogs (`30182-05/06`, `30685-06`) no longer name Conjurer Bat and Nightmare Guide, which do not spawn; its code still lists them and Cadeine, Sanhidro, Connabi, Bartal, Luminun and Innersen (harmless). Q00296 counts Crimson Tarantula in code only. Hunter and Plunder Tarantulas spawn.
 
+## Starter quests (levels 2–15)
+
+Supply Check (174), Head for the Hills (281), the race quests for levels 10–15 (101–108 for each race, 175 for Kamael) and Get a Pet (419) were compared with the reference datapack. Their level gates, races, NPCs, monsters, items, drop chances, EXP/SP, adena and dialogs all match it, and every NPC and monster they use spawns.
+
+| Quest | Start | Adena | EXP / SP | Other rewards |
+|---|---|---|---|---|
+| Q00174_SupplyCheck | Lv 2, Marcela (Isle of Souls) | 2,466 | 5,672 / 446 | Wooden Breastplate, Helmet, Gaiters, Gloves, Leather Shoes |
+| Q00281_HeadForTheHills | Lv 6, Marcela | 23 per claw, +400 for 10 or more | – | 50 claws buy a random item; 6,000 NG soulshots or 3,000 NG spiritshots once, under level 25 |
+| Q00101_SwordOfSolidarity | Lv 9, Human | 10,981 | 25,747 / 2,171 | Sword of Solidarity |
+| Q00102_SeaOfSporesFever | Lv 12, Elf | 6,331 | 30,202 / 1,339 | Sword or Staff of Sentinel |
+| Q00103_SpiritOfCraftsman | Lv 10, Dark Elf | 19,799 | 46,663 / 3,999 | Blood Saber |
+| Q00104_SpiritOfMirrors | Lv 10, Human | 16,866 | 39,750 / 3,407 | Wand of Adept |
+| Q00105_SkirmishWithOrcs | Lv 10, Elf | 17,599 | 41,478 / 3,555 | Red Sunset Sword or Staff |
+| Q00106_ForgottenTruth | Lv 10, Dark Elf | 10,266 | 24,195 / 2,074 | Eldritch Dagger (Eldritch Staff for mages; the reference gives the dagger to everyone) |
+| Q00107_MercilessPunishment | Lv 10, Orc | 14,666 | 34,565 / 2,962 | Butcher's Sword |
+| Q00108_JumbleTumbleDiamondFuss | Lv 10, Dwarf | 14,666 | 34,565 / 2,962 | Silversmith Hammer |
+| Q00175_TheWayOfTheWarrior | Lv 10, Kamael | 8,799 | 20,739 / 1,777 | Warrior's Sword |
+| Q00419_GetAPet | Lv 15, Martin (Gludio) | – | – | Wolf Collar |
+
+Bugs found and fixed:
+
+| Quest | Problem |
+|---|---|
+| Q00103_SpiritOfCraftsman | A kill picks a random party member, but the drop was checked against the killer and given to the killer while the picked member's step was advanced. Party members could skip steps or lose drops. The picked member now gets the drop, and only members on the matching step (6 for Zombie Heads, 3 for Bone Fragments) are picked. The Blood Saber was given with `rewardItems`, so a quest reward rate above 1 gave several; it is now always one, like the other race weapons. |
+| Q00281_HeadForTheHills | Claws dropped for anyone who had opened Marcela's quest dialog, even without accepting the quest. Now only for players on the quest. |
+| Q00108_JumbleTumbleDiamondFuss | `giveItemRandomly` returns `true` only when the limit is reached, so gem drops made no sound, and the "item got" sound played on every kill once one gem type was full. The method now plays the sounds itself. |
+| Q00419_GetAPet | A player who left the pet test before finishing (closed the window or walked away) was told to meet the Animal Lovers again, but those visits could never bring the state back, so the quest could only be restarted from the beginning. An unfinished test now restarts from the first question. Talking to Metty, Elice or Bella during the test also changed the test's answer count; it no longer does. |
+
+## Levels 18–42: Kaneus, pets, Little Wing, Pailaka, soul crystals
+
+Mutated Kaneus Gludio/Dion/Heine (10276–10278), Blood Fiend (164), Dangerous Seduction (170), Help the Uncle/Sister/Son (42–44), Little Wing (420), Pailaka – Song of Ice and Fire (128) and Enhance Your Weapon (350) were compared with the reference datapack. Their level gates, races, NPCs, monsters, items, drop chances and rewards match it. The dialogs match too, except for Enhance Your Weapon, which this server reorganized: its soul crystal data is loaded by the server (`LevelUpCrystalData.xml`) and it has an extra under-level dialog.
+
+| Quest | Start | Reward |
+|---|---|---|
+| Q10276_MutatedKaneusGludio | Lv 18, Bathis (Gludio) | 8,500 adena (no EXP). Tissues from Tomlan Kamos and Ol Ariosh, the bosses of Kamaloka Hall of the Abyss lv 23 and 26 |
+| Q10277_MutatedKaneusDion | Lv 28, Lukas (Dion) | 20,000 adena. Crimson Hatu Otis and Seer Flouros (Kamaloka lv 33 and 36) |
+| Q10278_MutatedKaneusHeine | Lv 38, Gosta (Heine) | 50,000 adena. Blade Otis and Weird Bunei (Kamaloka lv 43 and 46) |
+| Q00164_BloodFiend | Lv 21, not Dark Elf | 42,130 adena, 35,637 EXP / 1,854 SP |
+| Q00170_DangerousSeduction | Lv 21, Dark Elf only | 102,680 adena, 38,607 EXP / 4,018 SP |
+| Q00044_HelpTheSon | Lv 24, Lundy | Pet Exchange Ticket: Kookaburra |
+| Q00042_HelpTheUncle | Lv 25, Waters | Pet Exchange Ticket: Buffalo |
+| Q00043_HelpTheSister | Lv 26, Cooper | Pet Exchange Ticket: Cougar |
+| Q00420_LittleWing | Lv 35, Cooper | Dragonflute of Wind, Star or Twilight (hatchling) |
+| Q00128_PailakaSongOfIceAndFire | Lv 36–42, Adler | 810,000 EXP / 50,000 SP, Pailaka Ring, Pailaka Earring, Scroll of Escape, +10,000 vitality points (half the maximum) |
+| Q00350_EnhanceYourWeapon | Lv 40, Jurek, Gideon or Winonin | A stage 0 soul crystal; needed for crystals to absorb souls |
+
+Any pet manager swaps the pet tickets for the baby pet (`PetManager` "exchange"). Pailaka was already fixed in earlier commits (7aea3ad1, ba86264d); nothing new was found there.
+
+Bugs found and fixed:
+
+| Quest | Problem |
+|---|---|
+| Q10276/Q10277/Q10278 Mutated Kaneus | If the player who landed the last hit on the Kamaloka boss did not have the quest, no party member got the tissue, and the boss does not come back until the next Kamaloka run. Now any party member on the quest can get it. Party members also had to be nowhere near the boss; they now have to be within party range. |
+| Q00420_LittleWing | If the Deluxe Fairy Stone broke on the way to Mimyu (cond 4), Byron sent the player to Cronos and Cronos sent them back to Byron, so the quest could not go on. Cronos now offers a new stone, as he already did at cond 5. |
+| Q00420_LittleWing | Mimyu's "give back the Fairy Dust" choice needed more than one Fairy Dust, but the quest gives exactly one, so that choice (Hatchling Food or the 5% Hatchling Armor) did nothing. |
+| Q00420_LittleWing | Maria's link moved the quest on even if the materials were gone by the time it was clicked, with no stone made. It now shows her "bring the materials" dialog instead. |
+| Q00420_LittleWing | Toad Skin and drake egg drops went to a random party member who might be on another step, have enough already, or hunt another drake, so the drop was lost. Only members who still need it are picked now. |
+| Q00420_LittleWing | When a new stone was made, Byron's lines depended on the old stone instead of the new one, so a new ordinary stone got the "pure white stone" warning. |
+| Q00350_EnhanceYourWeapon | The "do you have a crystal" check only covered stages 0–10. A player holding a stage 11 or higher crystal was offered a new stage 0 one. With two crystals in the inventory, neither absorbs souls. |
+
 ## Checklist for each quest
 
 1. **Start**: level gate, including any upper limit, plus race/class/prerequisite checks. The "too low" and "already done" dialogs must appear when they should.

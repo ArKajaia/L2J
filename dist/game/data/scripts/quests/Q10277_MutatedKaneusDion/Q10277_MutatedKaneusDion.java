@@ -23,12 +23,14 @@ package quests.Q10277_MutatedKaneusDion;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.script.QuestSound;
 import org.l2jmobius.gameserver.model.script.QuestState;
 import org.l2jmobius.gameserver.model.script.State;
+import org.l2jmobius.gameserver.util.LocationUtil;
 
 /**
  * Mutated Kaneus - Dion (10277)<br>
@@ -86,20 +88,15 @@ public class Q10277_MutatedKaneusDion extends Quest
 	@Override
 	public void onKill(Npc npc, Player killer, boolean isSummon)
 	{
-		QuestState qs = getQuestState(killer, false);
-		if (qs == null)
-		{
-			return;
-		}
-		
 		final int npcId = npc.getId();
 		if (killer.getParty() != null)
 		{
+			// The killer does not need the quest: any party member on it, nearby and still missing this tissue, can get it.
 			final List<Player> partyMembers = new ArrayList<>();
 			for (Player member : killer.getParty().getMembers())
 			{
-				qs = getQuestState(member, false);
-				if ((qs != null) && qs.isStarted() && (((npcId == CRIMSON_HATU) && !hasQuestItems(member, TISSUE_CH)) || ((npcId == SEER_FLOUROS) && !hasQuestItems(member, TISSUE_SF))))
+				final QuestState qs = getQuestState(member, false);
+				if ((qs != null) && qs.isStarted() && LocationUtil.checkIfInRange(PlayerConfig.ALT_PARTY_RANGE, npc, member, true) && (((npcId == CRIMSON_HATU) && !hasQuestItems(member, TISSUE_CH)) || ((npcId == SEER_FLOUROS) && !hasQuestItems(member, TISSUE_SF))))
 				{
 					partyMembers.add(member);
 				}
@@ -110,9 +107,13 @@ public class Q10277_MutatedKaneusDion extends Quest
 				rewardItem(npcId, getRandomEntry(partyMembers));
 			}
 		}
-		else if (qs.isStarted())
+		else
 		{
-			rewardItem(npcId, killer);
+			final QuestState qs = getQuestState(killer, false);
+			if ((qs != null) && qs.isStarted())
+			{
+				rewardItem(npcId, killer);
+			}
 		}
 	}
 	

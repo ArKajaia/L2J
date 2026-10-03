@@ -30,7 +30,6 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
 import org.l2jmobius.gameserver.model.script.Quest;
-import org.l2jmobius.gameserver.model.script.QuestSound;
 import org.l2jmobius.gameserver.model.script.QuestState;
 import org.l2jmobius.gameserver.model.script.State;
 import org.l2jmobius.gameserver.network.NpcStringId;
@@ -567,32 +566,11 @@ public class Q00108_JumbleTumbleDiamondFuss extends Quest
 					if (qs.isCond(5) && hasQuestItems(killer, BRUNONS_CONTRACT))
 					{
 						final double dropChance = GOBLIN_DROP_CHANCES.get(npc.getId());
-						boolean playSound = false;
-						if (giveItemRandomly(killer, npc, AQUAMARINE, 1, MAX_GEM_COUNT, dropChance, false))
+						final boolean hasAllAquamarine = giveItemRandomly(killer, npc, AQUAMARINE, 1, MAX_GEM_COUNT, dropChance, true);
+						final boolean hasAllChrysoberyl = giveItemRandomly(killer, npc, CHRYSOBERYL, 1, MAX_GEM_COUNT, dropChance, true);
+						if (hasAllAquamarine && hasAllChrysoberyl)
 						{
-							if (getQuestItemsCount(killer, CHRYSOBERYL) >= MAX_GEM_COUNT)
-							{
-								qs.setCond(6, true);
-								break;
-							}
-							
-							playSound = true;
-						}
-						
-						if (giveItemRandomly(killer, npc, CHRYSOBERYL, 1, MAX_GEM_COUNT, dropChance, false))
-						{
-							if (getQuestItemsCount(killer, AQUAMARINE) >= MAX_GEM_COUNT)
-							{
-								qs.setCond(6, true);
-								break;
-							}
-							
-							playSound = true;
-						}
-						
-						if (playSound)
-						{
-							playSound(killer, QuestSound.ITEMSOUND_QUEST_ITEMGET);
+							qs.setCond(6, true);
 						}
 					}
 					break;

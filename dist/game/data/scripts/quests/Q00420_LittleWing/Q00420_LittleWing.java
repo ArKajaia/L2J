@@ -195,7 +195,7 @@ public class Q00420_LittleWing extends Quest
 			}
 			case "30610-12.html":
 			{
-				if (qs.isCond(5))
+				if ((qs.isCond(4) || qs.isCond(5)) && !hasAtLeastOneQuestItem(player, FAIRY_STONE, DELUXE_FAIRY_STONE))
 				{
 					qs.setCond(2, true);
 					qs.set("old_stone", qs.getInt("fairy_stone"));
@@ -207,7 +207,7 @@ public class Q00420_LittleWing extends Quest
 			}
 			case "30610-13.html":
 			{
-				if (qs.isCond(5))
+				if ((qs.isCond(4) || qs.isCond(5)) && !hasAtLeastOneQuestItem(player, FAIRY_STONE, DELUXE_FAIRY_STONE))
 				{
 					qs.setCond(2, true);
 					qs.set("old_stone", qs.getInt("fairy_stone"));
@@ -230,10 +230,13 @@ public class Q00420_LittleWing extends Quest
 						takeItems(player, SILVER_NUGGET, 3);
 						takeItems(player, TOAD_SKIN, -1);
 						giveItems(player, FAIRY_STONE, 1);
+						qs.setCond(3, true);
+						htmltext = event;
 					}
-					
-					qs.setCond(3, true);
-					htmltext = event;
+					else
+					{
+						htmltext = "30608-01.html";
+					}
 				}
 				break;
 			}
@@ -251,10 +254,13 @@ public class Q00420_LittleWing extends Quest
 						takeItems(player, SILVER_NUGGET, 5);
 						takeItems(player, TOAD_SKIN, -1);
 						giveItems(player, DELUXE_FAIRY_STONE, 1);
+						qs.setCond(3, true);
+						htmltext = event;
 					}
-					
-					qs.setCond(3, true);
-					htmltext = event;
+					else
+					{
+						htmltext = "30608-01.html";
+					}
 				}
 				break;
 			}
@@ -334,7 +340,7 @@ public class Q00420_LittleWing extends Quest
 			}
 			case "30747-15.html":
 			{
-				if (qs.isCond(8) && (getQuestItemsCount(player, FAIRY_DUST) > 1))
+				if (qs.isCond(8) && hasQuestItems(player, FAIRY_DUST))
 				{
 					if (getRandom(100) < 5)
 					{
@@ -493,7 +499,15 @@ public class Q00420_LittleWing extends Quest
 							}
 							case 4:
 							{
-								htmltext = "30610-09.html";
+								// The Deluxe Fairy Stone breaks if the player fights in Enchanted Valley: offer a new one.
+								if (!hasAtLeastOneQuestItem(talker, FAIRY_STONE, DELUXE_FAIRY_STONE))
+								{
+									htmltext = "30610-10.html";
+								}
+								else
+								{
+									htmltext = "30610-09.html";
+								}
 								break;
 							}
 							case 5:
@@ -554,7 +568,7 @@ public class Q00420_LittleWing extends Quest
 								{
 									htmltext = "30711-01.html";
 								}
-								else if (qs.getInt("old_stone") == 1)
+								else if (qs.getInt("fairy_stone") == 1) // Byron's lines for a remade stone depend on which stone it is.
 								{
 									qs.setCond(5, true);
 									htmltext = "30711-05.html";
@@ -825,6 +839,19 @@ public class Q00420_LittleWing extends Quest
 		}
 		
 		return htmltext;
+	}
+	
+	@Override
+	public boolean checkPartyMember(QuestState qs, Npc npc)
+	{
+		// Only party members who still need this kill: Toad Lords while collecting skins, drakes while hunting that drake.
+		final Player player = qs.getPlayer();
+		if (npc.getId() == TOAD_LORD)
+		{
+			return qs.isCond(2) && (getQuestItemsCount(player, TOAD_SKIN) < ((qs.getInt("fairy_stone") == 1) ? 10 : 20));
+		}
+		
+		return qs.isCond(6) && (npc.getId() == qs.getInt("drake_hunt")) && (getQuestItemsCount(player, EGG_DROPS.get(npc.getId())) < 20);
 	}
 	
 	@Override

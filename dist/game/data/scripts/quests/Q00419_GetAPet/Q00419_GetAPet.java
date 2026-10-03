@@ -77,6 +77,7 @@ public class Q00419_GetAPet extends Quest
 	
 	// Misc
 	private static final int MIN_LEVEL = 15;
+	private static final int TEST_STARTED = 1879048192;
 	
 	// Links
 	private static final Map<Integer, String> LINKS = new HashMap<>();
@@ -761,14 +762,15 @@ public class Q00419_GetAPet extends Quest
 					}
 					else if (hasQuestItems(player, ANIMAL_LOVERS_LIST))
 					{
-						if ((qs.getMemoState() != 14) && (qs.getMemoState() != 1879048192))
+						// A test left unfinished starts over from the first question.
+						if ((qs.getMemoState() == 14) || ((qs.getMemoState() & TEST_STARTED) == TEST_STARTED))
 						{
-							htmltext = "30731-16.html";
+							qs.setMemoState(TEST_STARTED);
+							htmltext = "30731-13.html";
 						}
 						else
 						{
-							qs.setMemoState(1879048192);
-							htmltext = "30731-13.html";
+							htmltext = "30731-16.html";
 						}
 					}
 					break;
@@ -777,7 +779,12 @@ public class Q00419_GetAPet extends Quest
 				{
 					if (hasQuestItems(player, ANIMAL_LOVERS_LIST))
 					{
-						qs.setMemoState(qs.getMemoState() | 4);
+						// Visits during the test must not change its answer count.
+						if ((qs.getMemoState() & TEST_STARTED) == 0)
+						{
+							qs.setMemoState(qs.getMemoState() | 4);
+						}
+						
 						htmltext = "30072-01.html";
 					}
 					break;
@@ -786,7 +793,11 @@ public class Q00419_GetAPet extends Quest
 				{
 					if (hasQuestItems(player, ANIMAL_LOVERS_LIST))
 					{
-						qs.setMemoState(qs.getMemoState() | 8);
+						if ((qs.getMemoState() & TEST_STARTED) == 0)
+						{
+							qs.setMemoState(qs.getMemoState() | 8);
+						}
+						
 						htmltext = "30091-01.html";
 					}
 					break;
@@ -795,7 +806,11 @@ public class Q00419_GetAPet extends Quest
 				{
 					if (hasQuestItems(player, ANIMAL_LOVERS_LIST))
 					{
-						qs.setMemoState(qs.getMemoState() | 2);
+						if ((qs.getMemoState() & TEST_STARTED) == 0)
+						{
+							qs.setMemoState(qs.getMemoState() | 2);
+						}
+						
 						htmltext = "30256-01.html";
 					}
 					break;

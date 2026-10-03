@@ -189,9 +189,19 @@ public class Q00350_EnhanceYourWeapon extends Quest
 	
 	private static boolean check(Player player)
 	{
+		// Soul crystals of stages 0-10 and the broken ones.
 		for (int i = 4629; i < 4665; i++)
 		{
 			if (hasQuestItems(player, i))
+			{
+				return true;
+			}
+		}
+		
+		// Stage 11 and above have other item IDs.
+		for (int itemId : LevelUpCrystalData.getInstance().getSoulCrystals().keySet())
+		{
+			if (hasQuestItems(player, itemId))
 			{
 				return true;
 			}
