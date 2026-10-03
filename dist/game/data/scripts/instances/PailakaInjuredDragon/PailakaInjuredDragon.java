@@ -131,7 +131,7 @@ public class PailakaInjuredDragon extends InstanceScript
 	
 	private PailakaInjuredDragon()
 	{
-		addSpawnId(LATANA, LATANA_SKILL_USE, INJURED_DRAGON_CAMERA_1, INJURED_DRAGON_CAMERA_2);
+		addSpawnId(LATANA, INJURED_DRAGON_CAMERA_1, INJURED_DRAGON_CAMERA_2);
 		addCreatureSeeId(LATANA, INJURED_DRAGON_CAMERA_1);
 		addAttackId(LATANA);
 		addKillId(LATANA);
@@ -222,9 +222,14 @@ public class PailakaInjuredDragon extends InstanceScript
 			}
 			case "LATANA_2000":
 			{
-				if (player == null)
+				if (npc.isDead() || !npc.isSpawned())
 				{
-					startQuestTimer("LATANA_2000", 3000, npc, null);
+					break;
+				}
+				
+				if ((player == null) || player.isDead() || (player.getInstanceId() != npc.getInstanceId()))
+				{
+					startQuestTimer("LATANA_2000", 3000, npc, player);
 				}
 				else
 				{
@@ -244,8 +249,9 @@ public class PailakaInjuredDragon extends InstanceScript
 					{
 						// TODO: Implement check.
 						// if (npc.inMyTerritory(player)) {
-						final Npc latanSkillUse = addSpawn(LATANA_SKILL_USE, player, false, 0, false, player.getInstanceId());
-						latanSkillUse.getVariables().set("param1", npc);
+						final Npc latanaSkillUse = addSpawn(LATANA_SKILL_USE, player, false, 0, false, player.getInstanceId());
+						latanaSkillUse.getVariables().set("param1", npc);
+						startQuestTimer("LATANA_SKILL_USE_1002", 10, latanaSkillUse, player);
 						// }
 					}
 					else
@@ -271,14 +277,19 @@ public class PailakaInjuredDragon extends InstanceScript
 			}
 			case "LATANA_SKILL_USE_1002":
 			{
-				startQuestTimer("SCE_BOSS_2ND_SKILL", 2000, npc, player);
+				// The helper marks the far-away player: Latana goes after them and stuns them 2 seconds later.
+				final Npc latana = npc.getVariables().getObject("param1", Npc.class);
+				if ((latana != null) && !latana.isDead() && (player != null))
+				{
+					addAttackDesire(latana, player, 10000000);
+					startQuestTimer("SCE_BOSS_2ND_SKILL", 2000, latana, player);
+				}
 				startQuestTimer("LATANA_SKILL_USE_2002", 5000, npc, player);
 				break;
 			}
 			case "LATANA_SKILL_USE_2002":
 			{
-				// TODO: Check if we should use npc.doDie(null) or npc.decayMe()
-				// npc.decayMe();
+				npc.deleteMe();
 				break;
 			}
 			// Cameras
@@ -327,8 +338,7 @@ public class PailakaInjuredDragon extends InstanceScript
 			case "INJURED_DRAGON_CAMERA_1_1007":
 			{
 				player.sendPacket(new SpecialCamera(npc, 300, -3, 5, 3500, 15000, 6000, 0, 6, 1, 0, 0));
-				
-				// startQuestTimer("INJURED_DRAGON_CAMERA_1_9999", 10000, npc, player);
+				startQuestTimer("INJURED_DRAGON_CAMERA_1_9999", 6000, npc, player);
 				break;
 			}
 			case "INJURED_DRAGON_CAMERA_1_2000":
@@ -400,7 +410,7 @@ public class PailakaInjuredDragon extends InstanceScript
 			case "SCE_BOSS_2ND_SKILL":
 			{
 				final WorldObject target = npc.getTarget();
-				if ((target != null) && (player != null) && (npc.calculateDistance2D(player) < 900))
+				if ((target != null) && !npc.isDead() && (player != null) && !player.isDead() && (npc.calculateDistance2D(player) < 900))
 				{
 					npc.setTarget(player);
 					npc.doCast(STUN.getSkill());
@@ -414,10 +424,12 @@ public class PailakaInjuredDragon extends InstanceScript
 					case 1:
 					{
 						startQuestTimer("INJURED_DRAGON_CAMERA_1_1000", 10, npc, player);
+						break;
 					}
 					case 2:
 					{
 						startQuestTimer("INJURED_DRAGON_CAMERA_1_2000", 10, npc, player);
+						break;
 					}
 				}
 				break;
@@ -519,7 +531,7 @@ public class PailakaInjuredDragon extends InstanceScript
 				{
 					for (Npc npc : World.getInstance().getVisibleObjectsInRange(creature, Npc.class, 700))
 					{
-						if (npc.isDead() || npc.isInvisible() || !npc.isMonster())
+						if (npc.isDead() || npc.isInvisible() || !npc.isMonster() || isGrazingAnimal(npc.getId()))
 						{
 							continue;
 						}
@@ -544,16 +556,6 @@ public class PailakaInjuredDragon extends InstanceScript
 				npc.setInvul(true);
 				npc.setParalyzed(true);
 				npc.setLethalable(false);
-				break;
-			}
-			case LATANA_SKILL_USE:
-			{
-				startQuestTimer("LATANA_SKILL_USE_1002", 10, npc, null);
-				final Npc latana = npc.getVariables().getObject("param1", Npc.class);
-				if (latana != null)
-				{
-					addAttackDesire(latana, (Creature) latana.getTarget(), 10000000);
-				}
 				break;
 			}
 			case INJURED_DRAGON_CAMERA_1:
@@ -714,6 +716,12 @@ public class PailakaInjuredDragon extends InstanceScript
 		}
 	}
 	
+	// Grazing animals roam near the mob walls but are not part of them.
+	private static boolean isGrazingAnimal(int npcId)
+	{
+		return (npcId == GRAZING_ANTELOPE) || (npcId == GRAZING_BANDERSNATCH) || (npcId == GRAZING_FLAVA) || (npcId == GRAZING_ELDER_ANTELOPE);
+	}
+	
 	// Spawns Mage Type silenos behind the one that was killed. Aggro against the player that kill the mob.
 	private void spawnMageBehind(Npc npc, Player player, int mageId)
 	{
@@ -846,7 +854,7 @@ public class PailakaInjuredDragon extends InstanceScript
 				{
 					switch (npcs.getId())
 					{
-						case VARKA_SILENOS_GREAT_MAGUS:
+						case VARKA_SILENOS_MAGUS:
 						case DISCIPLE_OF_PROPHET:
 						{
 							npcs.abortCast();
