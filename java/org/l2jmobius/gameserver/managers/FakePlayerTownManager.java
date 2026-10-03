@@ -20,50 +20,247 @@
  */
 package org.l2jmobius.gameserver.managers;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
-import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
 import org.l2jmobius.gameserver.data.SpawnTable;
+import org.l2jmobius.gameserver.data.xml.FakePlayerData;
 import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
 import org.l2jmobius.gameserver.data.xml.MapRegionData;
+import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.managers.FakePlayerTown.Role;
+import org.l2jmobius.gameserver.managers.FakePlayerTown.TownNpc;
+import org.l2jmobius.gameserver.managers.FakePlayerTownChat.Topic;
 import org.l2jmobius.gameserver.model.Location;
+import org.l2jmobius.gameserver.model.World;
+import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Npc;
+import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
-import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
+import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
-import org.l2jmobius.gameserver.model.zone.ZoneType;
-import org.l2jmobius.gameserver.model.zone.type.PeaceZone;
-import org.l2jmobius.gameserver.model.zone.type.TownZone;
-import org.l2jmobius.gameserver.network.serverpackets.ChangeWaitType;
 
 /**
- * Peaceful fake players that walk around the towns (FakeTownPlayers* in FakePlayers.ini).<br>
- * Each one strolls around where it stands, now and then walks over to another respawn point of its town, and stops or sits down for a while in between, like a player waiting in town.
+ * Town fake players (FakeTownPlayers* in FakePlayers.ini): peaceful fake players that come and go in the towns like players do.<br>
+ * They arrive by gatekeeper, by Scroll of Escape at a respawn point or by logging in, sometimes a whole party back from a hunt saying goodbye. Then each one follows a plan of its own ({@link FakePlayerTownVisitor}): warehouse, grocer, blacksmith, shops, masters,
+ * quest npcs, buffs from the Newbie or Adventurers' Guide or from a buffer of the town, a talk with others ({@link FakePlayerTownCircle}), sitting or standing around, and finally a gatekeeper, the community board teleport or logging off. Someone new arrives a while
+ * later, and the population of each town drifts up and down. Town npcs and walkable spots come from the town itself ({@link FakePlayerTown}), so it works in every town without coordinates.
  */
 public class FakePlayerTownManager
 {
 	private static final Logger LOGGER = Logger.getLogger(FakePlayerTownManager.class.getName());
-
+	
+	/** Npc ids of the town fake player templates (reused once they leave), far above any datapack id and below the roaming fake players. */
 	private static final int FIRST_NPC_ID = 9_400_000;
-	private static final int TICK = 1000;
-	private static final int RESPAWN_DELAY = 60;
-	private static final int TRAVEL_CHANCE = 25; // % of moves that go to another respawn point of the town.
-	private static final int RUN_CHANCE = 70; // % of moves done running.
-	private static final int SIT_CHANCE = 6; // % of decisions that sit down.
-	private static final int MOVE_CHANCE = 65; // % of decisions that move.
-
-	private final List<Walker> _walkers = new ArrayList<>();
+	private static final int LAST_NPC_ID = 9_499_999;
+	private static final int TICK = 250;
+	/** A town buffer needs a town where players are at least this level. */
+	private static final int BUFFER_MIN_LEVEL = 40;
+	/** How far a fake player looks for a private store to have a look at. */
+	private static final int STORE_RANGE = 1800;
+	
+	/** A buffer class line: the 2nd and 3rd class, the gear it wears (weapon kit of data/FakePlayerPvp.xml) and its buffs (data/stats/players/skillTrees). */
+	enum BufferLine
+	{
+		// @formatter:off
+		PROPHET(PlayerClass.PROPHET, PlayerClass.HIEROPHANT, "MAGE", false, 30,
+			new int[] {1204, 1068, 1040, 1086, 1077, 1242, 1240, 1045, 1062, 1388, 1243, 1499, 1501},
+			new int[] {1204, 1085, 1078, 1040, 1048, 1036, 1062, 1389, 1044},
+			new int[] {1352}),
+		ELDER(PlayerClass.ELDER, PlayerClass.EVA_SAINT, "MAGE", false, 14,
+			new int[] {1204, 1068, 1040, 1087, 1243, 1304, 1044},
+			new int[] {1204, 1078, 1040, 1303, 1397, 1044},
+			new int[] {1353, 1354, 1460}),
+		SHILLIEN_ELDER(PlayerClass.SHILLIEN_ELDER, PlayerClass.SHILLIEN_SAINT, "MAGE", false, 14,
+			new int[] {1204, 1068, 1040, 1077, 1240, 1242, 1268, 1502},
+			new int[] {1204, 1059, 1078, 1040, 1303, 1500},
+			new int[] {1354, 1460, 1507}),
+		WARCRYER(PlayerClass.WARCRYER, PlayerClass.DOOMCRYER, "MAGE_BLUNT", false, 16,
+			new int[] {1007, 1009, 1006, 1251, 1252, 1253, 1284, 1308, 1309, 1310, 1390, 1391, 1517, 1518, 1535},
+			new int[] {1009, 1002, 1006, 1252, 1284, 1391, 1535},
+			new int[] {1362, 1413, 1461, 1549}),
+		SWORDSINGER(PlayerClass.SWORDSINGER, PlayerClass.SWORD_MUSE, "SWORD_SHIELD", true, 13,
+			new int[] {264, 265, 267, 268, 269, 304, 305, 306, 308},
+			new int[] {264, 265, 266, 267, 268, 270, 304},
+			new int[] {349, 363, 364, 529, 914}),
+		BLADEDANCER(PlayerClass.BLADEDANCER, PlayerClass.SPECTRAL_DANCER, "DUAL", true, 13,
+			new int[] {271, 274, 275, 276, 277, 307, 309, 310, 311},
+			new int[] {273, 276, 277, 307, 309, 311},
+			new int[] {365, 530, 765, 915});
+		// @formatter:on
+		
+		private final PlayerClass _second;
+		private final PlayerClass _third;
+		private final String _weaponKit;
+		private final boolean _songsOrDances;
+		private final int _weight;
+		private final int[] _fighterBuffs;
+		private final int[] _mageBuffs;
+		private final int[] _thirdClassBuffs;
+		
+		BufferLine(PlayerClass second, PlayerClass third, String weaponKit, boolean songsOrDances, int weight, int[] fighterBuffs, int[] mageBuffs, int[] thirdClassBuffs)
+		{
+			_second = second;
+			_third = third;
+			_weaponKit = weaponKit;
+			_songsOrDances = songsOrDances;
+			_weight = weight;
+			_fighterBuffs = fighterBuffs;
+			_mageBuffs = mageBuffs;
+			_thirdClassBuffs = thirdClassBuffs;
+		}
+		
+		boolean songsOrDances()
+		{
+			return _songsOrDances;
+		}
+		
+		PlayerClass getPlayerClass(int level)
+		{
+			return level >= 76 ? _third : _second;
+		}
+		
+		/**
+		 * @return a build whose gear this buffer wears, {@code null} if there is none
+		 */
+		FakePlayerPvpBuild getGearBuild()
+		{
+			final List<FakePlayerPvpBuild> builds = new ArrayList<>();
+			for (FakePlayerPvpBuild build : FakePlayerPvpData.getInstance().getBuilds())
+			{
+				if (_weaponKit.equals(build.getWeaponKit()))
+				{
+					builds.add(build);
+				}
+			}
+			return builds.isEmpty() ? null : builds.get(Rnd.get(builds.size()));
+		}
+		
+		/**
+		 * @param mage {@code true} if the one asking is a mage
+		 * @param level the buffer's level
+		 * @return the buffs it casts this time, the main ones first, in the order a buffer goes through them
+		 */
+		List<Skill> pickBuffs(boolean mage, int level)
+		{
+			final int[] list = mage ? _mageBuffs : _fighterBuffs;
+			final List<Integer> ids = new ArrayList<>();
+			for (int id : list)
+			{
+				ids.add(id);
+			}
+			
+			// The first three always, then some of the others.
+			final List<Integer> rest = new ArrayList<>(ids.subList(Math.min(3, ids.size()), ids.size()));
+			Collections.shuffle(rest);
+			final List<Integer> picked = new ArrayList<>(ids.subList(0, Math.min(3, ids.size())));
+			final int extra = _songsOrDances ? Rnd.get(1, 4) : Rnd.get(2, 5);
+			picked.addAll(rest.subList(0, Math.min(rest.size(), extra)));
+			if (level >= 76)
+			{
+				final int[] third = _thirdClassBuffs;
+				final int count = Rnd.get(1, Math.min(2, third.length));
+				for (int i = 0; i < count; i++)
+				{
+					final int id = third[Rnd.get(third.length)];
+					if (!picked.contains(id))
+					{
+						picked.add(id);
+					}
+				}
+			}
+			
+			final List<Skill> skills = new ArrayList<>();
+			for (int id : picked)
+			{
+				final int skillLevel = SkillData.getInstance().getMaxLevel(id);
+				final Skill skill = skillLevel > 0 ? SkillData.getInstance().getSkill(id, skillLevel) : null;
+				if (skill != null)
+				{
+					skills.add(skill);
+				}
+			}
+			return skills;
+		}
+		
+		static BufferLine random()
+		{
+			int total = 0;
+			for (BufferLine line : values())
+			{
+				total += line._weight;
+			}
+			
+			int roll = Rnd.get(total);
+			for (BufferLine line : values())
+			{
+				roll -= line._weight;
+				if (roll < 0)
+				{
+					return line;
+				}
+			}
+			return PROPHET;
+		}
+	}
+	
+	/** How a fake player shows up in town. */
+	private enum Arrival
+	{
+		/** Teleported in: next to the gatekeeper. */
+		GATEKEEPER,
+		/** Scroll of Escape, or back from death: at a respawn point. */
+		RESPAWN,
+		/** Logged in where it logged off. */
+		LOGIN
+	}
+	
+	/** Something to do a bit later, on the manager's own thread. */
+	private static final class Timed implements Comparable<Timed>
+	{
+		final long time;
+		final long order;
+		final Runnable action;
+		
+		Timed(long time, long order, Runnable action)
+		{
+			this.time = time;
+			this.order = order;
+			this.action = action;
+		}
+		
+		@Override
+		public int compareTo(Timed other)
+		{
+			return time != other.time ? Long.compare(time, other.time) : Long.compare(order, other.order);
+		}
+	}
+	
+	private final List<FakePlayerTown> _towns = new ArrayList<>();
+	private final PriorityQueue<Timed> _timeline = new PriorityQueue<>();
+	private final Map<Integer, FakePlayerTownVisitor> _visitors = new ConcurrentHashMap<>();
+	private final Deque<Integer> _freeNpcIds = new ArrayDeque<>();
+	private final Map<Integer, Long> _browsedStores = new HashMap<>();
 	private int _nextNpcId = FIRST_NPC_ID;
-
+	private long _order;
+	
 	protected FakePlayerTownManager()
 	{
 		if (!FakePlayersConfig.FAKE_PLAYERS_ENABLED || !FakePlayersConfig.FAKE_TOWN_PLAYERS_ENABLED)
@@ -71,47 +268,75 @@ public class FakePlayerTownManager
 			LOGGER.info(getClass().getSimpleName() + ": Disabled.");
 			return;
 		}
-
+		
 		if (FakePlayerPvpData.getInstance().getBuilds().isEmpty())
 		{
 			LOGGER.warning(getClass().getSimpleName() + ": No builds in data/FakePlayerPvp.xml, no town fake players.");
 			return;
 		}
-
-		int towns = 0;
+		
 		for (String entry : FakePlayersConfig.FAKE_TOWN_PLAYERS_TOWNS.split(","))
 		{
-			final Town town = parseTown(entry.trim());
+			final FakePlayerTown town = parseTown(entry.trim());
 			if (town == null)
 			{
 				continue;
 			}
-
-			for (int i = 0; i < FakePlayersConfig.FAKE_TOWN_PLAYERS_PER_TOWN; i++)
+			
+			town.discover();
+			if (!town.isReady())
 			{
-				spawnWalker(town);
+				LOGGER.warning(getClass().getSimpleName() + ": No town zone or npcs found for " + town.region + ", its fake players only walk around.");
 			}
-			towns++;
+			_towns.add(town);
 		}
-
-		LOGGER.info(getClass().getSimpleName() + ": Spawned " + _walkers.size() + " fake players in " + towns + " towns.");
-		if (!_walkers.isEmpty())
+		
+		LOGGER.info(getClass().getSimpleName() + ": " + _towns.size() + " towns, their fake players arrive once the town is prepared.");
+		if (!_towns.isEmpty())
 		{
 			ThreadPool.scheduleAtFixedRate(this::tick, TICK, TICK);
+			
+			// The path finding work of every town, once, away from the server start (they only stand around until their town is done).
+			ThreadPool.execute(() ->
+			{
+				final long start = System.currentTimeMillis();
+				int routes = 0;
+				int spots = 0;
+				for (FakePlayerTown town : _towns)
+				{
+					try
+					{
+						town.prepare();
+						routes += town.getRouteHubs().size();
+						for (List<TownNpc> list : town.npcs.values())
+						{
+							for (TownNpc townNpc : list)
+							{
+								spots += town.getSpots(townNpc).size();
+							}
+						}
+					}
+					catch (Exception e)
+					{
+						LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not prepare " + town.region + ".", e);
+					}
+				}
+				LOGGER.info(getClass().getSimpleName() + ": Prepared " + _towns.size() + " towns (" + routes + " street points, " + spots + " npc spots) in " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
+			});
 		}
 	}
-
+	
 	/**
 	 * @param entry region:minLevel-maxLevel[:RACE]
 	 * @return the town, {@code null} if the entry is empty or invalid
 	 */
-	private Town parseTown(String entry)
+	private FakePlayerTown parseTown(String entry)
 	{
 		if (entry.isEmpty())
 		{
 			return null;
 		}
-
+		
 		try
 		{
 			final String[] parts = entry.split(":");
@@ -119,14 +344,15 @@ public class FakePlayerTownManager
 			final int minLevel = Math.max(1, Integer.parseInt(levels[0].trim()));
 			final int maxLevel = Math.min(85, Integer.parseInt(levels[levels.length - 1].trim()));
 			final Race race = parts.length > 2 ? Race.valueOf(parts[2].trim().toUpperCase()) : null;
-			final List<Location> points = MapRegionData.getInstance().getSpawnLocsByRegionName(parts[0].trim());
+			final String region = parts[0].trim();
+			final List<Location> points = MapRegionData.getInstance().getSpawnLocsByRegionName(region);
 			if (points.isEmpty() || (minLevel > maxLevel))
 			{
 				LOGGER.warning(getClass().getSimpleName() + ": Invalid town " + entry + " (unknown map region or levels).");
 				return null;
 			}
-
-			return new Town(parts[0].trim(), points, minLevel, maxLevel, race);
+			
+			return new FakePlayerTown(region, shortName(region), points, minLevel, maxLevel, race);
 		}
 		catch (Exception e)
 		{
@@ -134,52 +360,378 @@ public class FakePlayerTownManager
 			return null;
 		}
 	}
-
-	private void spawnWalker(Town town)
+	
+	/**
+	 * @param region a map region name
+	 * @return how players call that town
+	 */
+	private static String shortName(String region)
 	{
-		final FakePlayerPvpManager names = FakePlayerPvpManager.getInstance();
-		final int level = Rnd.get(town.minLevel, town.maxLevel);
-		final FakePlayerPvpBuild build = getBuild(town.race);
-		if (build == null)
+		switch (region)
+		{
+			case "talking_island_town":
+			{
+				return "ti";
+			}
+			case "elf_town":
+			{
+				return "elven village";
+			}
+			case "darkelf_town":
+			{
+				return "de village";
+			}
+			case "orc_town":
+			{
+				return "orc village";
+			}
+			case "dwarf_town":
+			{
+				return "dwarf village";
+			}
+			case "kamael_town":
+			{
+				return "kamael village";
+			}
+			case "heiness_town":
+			{
+				return "heine";
+			}
+			case "hunter_town":
+			{
+				return "hunters village";
+			}
+			case "godard_town":
+			{
+				return "goddard";
+			}
+			case "town_of_schuttgart":
+			{
+				return "schuttgart";
+			}
+			default:
+			{
+				return region.replace("_castle_town", "").replace("_town", "").replace('_', ' ');
+			}
+		}
+	}
+	
+	// Population.
+	
+	/**
+	 * Fills a town at server start: everyone is somewhere in the middle of their visit, at an npc, standing or sitting around, a few talking.
+	 */
+	private void populate(FakePlayerTown town, long now)
+	{
+		town.nextFactorChange = now + Rnd.get(300000, 900000);
+		town.nextArrival = now + Rnd.get(20000, 60000);
+		town.nextLoneChat = now + Rnd.get(60000, 240000);
+		
+		final int buffers = wantedBuffers(town);
+		for (int i = 0; i < buffers; i++)
+		{
+			final Location location = arrivalPoint(town, Arrival.GATEKEEPER);
+			if (location != null)
+			{
+				spawnVisitor(town, location, randomLevel(town, BUFFER_MIN_LEVEL), BufferLine.random(), false, false);
+			}
+		}
+		
+		final List<FakePlayerTownVisitor> idle = new ArrayList<>();
+		for (int i = buffers; i < FakePlayersConfig.FAKE_TOWN_PLAYERS_PER_TOWN; i++)
+		{
+			final int roll = Rnd.get(100);
+			if ((roll < 35) && town.isReady())
+			{
+				// At an npc, in the middle of an errand.
+				final Role role = Role.values()[Rnd.get(Role.values().length)];
+				final TownNpc townNpc = town.pickNpc(role, town.getRandomPoint());
+				final Location spot = townNpc != null ? town.takeSpot(townNpc, null) : null;
+				if (spot != null)
+				{
+					final FakePlayerTownVisitor visitor = spawnVisitor(town, spot, randomLevel(town, 1), null, false, true);
+					if (visitor != null)
+					{
+						townNpc.taken.put(spot, visitor);
+						visitor.startAtNpc(townNpc, spot);
+					}
+					else
+					{
+						FakePlayerTown.releaseSpot(townNpc, spot);
+					}
+					continue;
+				}
+			}
+			
+			if (roll < 85)
+			{
+				// Standing or sitting around.
+				final boolean sitting = Rnd.get(100) < 30;
+				final Location location = jitter(roll < 70 ? town.getRandomHub() : town.getRandomPoint(), 120);
+				final FakePlayerTownVisitor visitor = spawnVisitor(town, location, randomLevel(town, 1), null, sitting, true);
+				if (visitor != null)
+				{
+					visitor.startIdle(sitting);
+					idle.add(visitor);
+				}
+				continue;
+			}
+			
+			// Just arrived.
+			final Location location = arrivalPoint(town, Rnd.nextBoolean() ? Arrival.GATEKEEPER : Arrival.RESPAWN);
+			if (location != null)
+			{
+				final FakePlayerTownVisitor visitor = spawnVisitor(town, location, randomLevel(town, 1), null, false, false);
+				if (visitor != null)
+				{
+					visitor.delay(Rnd.get(1000, 20000));
+				}
+			}
+		}
+		
+		// A pair or two already talking, once the server runs.
+		Collections.shuffle(idle);
+		for (int i = 0; ((i + 1) < idle.size()) && (i < 4); i += 2)
+		{
+			final FakePlayerTownVisitor first = idle.get(i);
+			final FakePlayerTownVisitor second = idle.get(i + 1);
+			if (FakePlayerTownVisitor.isChatEnabled() && (FakePlayerTown.distance2D(first.npc, second.npc) < 2500))
+			{
+				schedule(Rnd.get(3000, 30000), () -> pairUp(town, first, second));
+			}
+		}
+	}
+	
+	/**
+	 * Server start: one walks over to the other for a talk, if both are still standing around.
+	 */
+	private void pairUp(FakePlayerTown town, FakePlayerTownVisitor first, FakePlayerTownVisitor second)
+	{
+		final long now = System.currentTimeMillis();
+		if (first.isAvailableForChat(now) && second.isAvailableForChat(now) && (FakePlayerTown.distance2D(first.npc, second.npc) < 150))
+		{
+			startCircle(town, List.of(first, second), Topic.CHAT, now);
+		}
+	}
+	
+	private void updateTown(FakePlayerTown town, long now)
+	{
+		// The path finding work isn't done yet: nobody shows up before, so nobody ends up somewhere walled off.
+		if (!town.isPrepared())
 		{
 			return;
 		}
-
-		final String name = names.generateName();
-		try
+		
+		if (!town.populated)
 		{
-			final NpcTemplate template = FakePlayerPvpFactory.createTownTemplate(build, level, _nextNpcId++, name);
-			if (template == null)
-			{
-				names.releaseName(name);
-				return;
-			}
-
-			final Location point = town.points.get(Rnd.get(town.points.size()));
-			final Location loc = GeoEngine.getInstance().getValidLocation(point.getX(), point.getY(), point.getZ(), (point.getX() + Rnd.get(-150, 150)), (point.getY() + Rnd.get(-150, 150)), point.getZ(), 0);
-			final Spawn spawn = new Spawn(template);
-			spawn.setXYZ(loc.getX(), loc.getY(), loc.getZ());
-			spawn.setHeading(-1);
-			spawn.setAmount(1);
-			spawn.setRespawnDelay(RESPAWN_DELAY);
-			SpawnTable.getInstance().addSpawn(spawn);
-			if (spawn.doSpawn(false) == null)
-			{
-				SpawnTable.getInstance().removeSpawn(spawn);
-				names.releaseName(name);
-				return;
-			}
-
-			spawn.startRespawn();
-			_walkers.add(new Walker(town, spawn));
+			town.populated = true;
+			populate(town, now);
 		}
-		catch (Exception e)
+		
+		// The number of people in town drifts up and down.
+		if (now >= town.nextFactorChange)
 		{
-			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn town fake player " + build.getName() + " level " + level + " in " + town.region + ".", e);
-			names.releaseName(name);
+			final double variation = FakePlayersConfig.FAKE_TOWN_PLAYERS_POPULATION_VARIATION / 100.0;
+			town.populationFactor = Math.max(1 - variation, Math.min(1 + (variation * 0.7), town.populationFactor + (Rnd.nextGaussian() * 0.5 * variation)));
+			town.nextFactorChange = now + Rnd.get(240000, 900000);
+		}
+		
+		final int target = Math.max(1, (int) Math.round(FakePlayersConfig.FAKE_TOWN_PLAYERS_PER_TOWN * town.populationFactor));
+		final int count = town.visitors.size();
+		if ((count < target) && (now >= town.nextArrival))
+		{
+			arrive(town, now);
+			
+			// Far below: they come in faster, like after a server restart or a siege.
+			final double missing = (double) (target - count) / target;
+			town.nextArrival = now + (long) (Rnd.get(4000, 30000) * (1.2 - missing));
+		}
+		
+		for (FakePlayerTownVisitor visitor : town.visitors)
+		{
+			try
+			{
+				visitor.update(now);
+			}
+			catch (Exception e)
+			{
+				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem with town fake player " + visitor.npc.getName() + ".", e);
+			}
+		}
+		
+		for (FakePlayerTownCircle circle : town.circles)
+		{
+			circle.update(now);
+		}
+		
+		if (now >= town.nextLoneChat)
+		{
+			final double rate = FakePlayersConfig.FAKE_TOWN_PLAYERS_CHAT_RATE / 100.0;
+			town.nextLoneChat = now + (rate > 0 ? (long) (Rnd.get(90000, 360000) / rate) : 3600000);
+			if (FakePlayerTownVisitor.isChatEnabled())
+			{
+				loneChat(town);
+			}
 		}
 	}
-
+	
+	/**
+	 * Someone comes to town: alone most of the time, sometimes a party back from a hunt, sometimes a buffer that settles down for a while.
+	 */
+	private void arrive(FakePlayerTown town, long now)
+	{
+		if ((town.countBuffers() < wantedBuffers(town)) && (Rnd.get(100) < 40))
+		{
+			final Location location = arrivalPoint(town, Rnd.nextBoolean() ? Arrival.GATEKEEPER : Arrival.LOGIN);
+			if (location != null)
+			{
+				final FakePlayerTownVisitor buffer = spawnVisitor(town, location, randomLevel(town, BUFFER_MIN_LEVEL), BufferLine.random(), false, false);
+				if (buffer != null)
+				{
+					buffer.delay(Rnd.get(1500, 6000));
+				}
+			}
+			return;
+		}
+		
+		final int roll = Rnd.get(100);
+		final Arrival arrival = (roll < 45) && hasGatekeeper(town) ? Arrival.GATEKEEPER : roll < 82 ? Arrival.RESPAWN : Arrival.LOGIN;
+		final Location location = arrivalPoint(town, arrival);
+		if (location == null)
+		{
+			return;
+		}
+		
+		final int level = randomLevel(town, 1);
+		final int partySize = (arrival != Arrival.LOGIN) && (level >= 15) && (Rnd.get(100) < 14) ? (Rnd.get(100) < 70 ? 2 : 3) : 1;
+		if (partySize == 1)
+		{
+			final FakePlayerTownVisitor visitor = spawnVisitor(town, location, level, null, false, false);
+			if (visitor != null)
+			{
+				visitor.delay(Rnd.get(800, 4000)); // The loading screen.
+			}
+			return;
+		}
+		
+		// A party back from hunting: they show up together and say goodbye before going their own ways.
+		final List<FakePlayerTownVisitor> party = new ArrayList<>();
+		for (int i = 0; i < partySize; i++)
+		{
+			final int memberLevel = Math.max(town.minLevel, Math.min(town.maxLevel, level + Rnd.get(-4, 4)));
+			final FakePlayerTownVisitor member = spawnVisitor(town, i == 0 ? location : jitter(location, 90), memberLevel, null, false, false);
+			if (member != null)
+			{
+				member.delay(15000);
+				party.add(member);
+			}
+		}
+		
+		if ((party.size() >= 2) && FakePlayerTownVisitor.isChatEnabled())
+		{
+			schedule(Rnd.get(2000, 5000), () ->
+			{
+				final List<FakePlayerTownVisitor> alive = new ArrayList<>();
+				for (FakePlayerTownVisitor member : party)
+				{
+					if (!member.gone && (member.circle == null) && !member.isHeld())
+					{
+						alive.add(member);
+					}
+				}
+				if (alive.size() >= 2)
+				{
+					startCircle(town, alive, Topic.PARTY_END, System.currentTimeMillis());
+				}
+			});
+		}
+	}
+	
+	private static int wantedBuffers(FakePlayerTown town)
+	{
+		return town.maxLevel >= BUFFER_MIN_LEVEL ? FakePlayersConfig.FAKE_TOWN_PLAYERS_BUFFERS : 0;
+	}
+	
+	private static int randomLevel(FakePlayerTown town, int min)
+	{
+		final int low = Math.max(town.minLevel, Math.min(town.maxLevel, min));
+		return Rnd.get(low, town.maxLevel);
+	}
+	
+	private static boolean hasGatekeeper(FakePlayerTown town)
+	{
+		for (TownNpc townNpc : town.getNpcs(Role.GATEKEEPER))
+		{
+			if ("Teleporter".equals(townNpc.spawn.getTemplate().getType()) && (townNpc.getNpc() != null))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * @param town the town
+	 * @param arrival how it arrives
+	 * @return where it appears, {@code null} if nowhere was found
+	 */
+	private Location arrivalPoint(FakePlayerTown town, Arrival arrival)
+	{
+		switch (arrival)
+		{
+			case GATEKEEPER:
+			{
+				// Teleporting to a town puts you right next to its gatekeeper.
+				final List<TownNpc> gatekeepers = new ArrayList<>();
+				for (TownNpc townNpc : town.getNpcs(Role.GATEKEEPER))
+				{
+					if ("Teleporter".equals(townNpc.spawn.getTemplate().getType()) && (townNpc.getNpc() != null))
+					{
+						gatekeepers.add(townNpc);
+					}
+				}
+				
+				if (!gatekeepers.isEmpty())
+				{
+					final List<Location> spots = town.getSpots(gatekeepers.get(Rnd.get(gatekeepers.size())));
+					if (!spots.isEmpty())
+					{
+						return jitter(spots.get(Rnd.get(spots.size())), 70);
+					}
+				}
+				return jitter(town.getRandomPoint(), 140);
+			}
+			case RESPAWN:
+			{
+				return jitter(town.getRandomPoint(), 140);
+			}
+			default:
+			{
+				// Where it logged off: out in the street, or next to an npc.
+				if (town.isReady() && (Rnd.get(100) < 40))
+				{
+					final TownNpc townNpc = town.pickNpc(Role.values()[Rnd.get(Role.values().length)], town.getRandomHub());
+					if (townNpc != null)
+					{
+						final List<Location> spots = town.getSpots(townNpc);
+						if (!spots.isEmpty())
+						{
+							return jitter(spots.get(Rnd.get(spots.size())), 60);
+						}
+					}
+				}
+				return jitter(town.getRandomHub(), 100);
+			}
+		}
+	}
+	
+	private static Location jitter(Location location, int range)
+	{
+		final int x = location.getX() + Rnd.get(-range, range);
+		final int y = location.getY() + Rnd.get(-range, range);
+		return GeoEngine.getInstance().getValidLocation(location.getX(), location.getY(), location.getZ(), x, y, location.getZ(), 0);
+	}
+	
 	/**
 	 * @param race the race most fake players of the town are, {@code null} for any
 	 * @return a random build, of {@code race} {@link FakePlayersConfig#FAKE_TOWN_PLAYERS_RACE_CHANCE} % of the time when there is one
@@ -197,7 +749,7 @@ public class FakePlayerTownManager
 					sameRace.add(build);
 				}
 			}
-
+			
 			if (!sameRace.isEmpty())
 			{
 				return sameRace.get(Rnd.get(sameRace.size()));
@@ -205,176 +757,747 @@ public class FakePlayerTownManager
 		}
 		return data.getRandomBuild();
 	}
-
-	private void tick()
+	
+	/**
+	 * Creates a town fake player and puts it in the world.
+	 * @param town the town
+	 * @param location where it appears
+	 * @param level its level
+	 * @param bufferLine its buffer class line, {@code null} for a regular visitor
+	 * @param sitting {@code true} if it appears sitting
+	 * @param midSession {@code true} if it was already in town for a while (server start)
+	 * @return the fake player, {@code null} if it could not be created
+	 */
+	private FakePlayerTownVisitor spawnVisitor(FakePlayerTown town, Location location, int level, BufferLine bufferLine, boolean sitting, boolean midSession)
 	{
+		if (location == null)
+		{
+			return null;
+		}
+		
+		final FakePlayerPvpBuild build = bufferLine != null ? bufferLine.getGearBuild() : getBuild(town.race);
+		if (build == null)
+		{
+			return null;
+		}
+		
+		final FakePlayerPvpManager names = FakePlayerPvpManager.getInstance();
+		final String name = names.generateName();
+		final int npcId = takeNpcId();
+		try
+		{
+			final PlayerClass forcedClass = bufferLine != null ? bufferLine.getPlayerClass(level) : null;
+			final NpcTemplate template = FakePlayerPvpFactory.createTownTemplate(build, level, npcId, name, forcedClass, sitting);
+			if (template == null)
+			{
+				FakePlayerData.getInstance().removeFakePlayer(name);
+				names.releaseName(name);
+				_freeNpcIds.addLast(npcId);
+				return null;
+			}
+			
+			final Spawn spawn = new Spawn(template);
+			spawn.setXYZ(location.getX(), location.getY(), location.getZ());
+			spawn.setHeading(-1);
+			spawn.setAmount(1);
+			spawn.setRespawnDelay(0);
+			spawn.stopRespawn();
+			SpawnTable.getInstance().addSpawn(spawn);
+			final Npc npc = spawn.doSpawn(false);
+			if (npc == null)
+			{
+				SpawnTable.getInstance().removeSpawn(spawn);
+				FakePlayerData.getInstance().removeFakePlayer(name);
+				names.releaseName(name);
+				_freeNpcIds.addLast(npcId);
+				return null;
+			}
+			
+			final PlayerClass playerClass = template.getFakePlayerInfo().getPlayerClass();
+			final FakePlayerTownVisitor visitor = new FakePlayerTownVisitor(this, town, spawn, npc, level, playerClass, bufferLine, selfBuffs(build, level, bufferLine));
+			visitor.makePlan(midSession);
+			town.visitors.add(visitor);
+			_visitors.put(npc.getObjectId(), visitor);
+			
+			// Back from a hunt, it often still runs with Wind Walk on.
+			if (!midSession && (bufferLine == null) && (level >= 20) && (Rnd.get(100) < 40))
+			{
+				final Skill windWalk = SkillData.getInstance().getSkill(1204, 2);
+				if (windWalk != null)
+				{
+					windWalk.applyEffects(npc, npc);
+				}
+			}
+			return visitor;
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn town fake player " + build.getName() + " level " + level + " in " + town.region + ".", e);
+			FakePlayerData.getInstance().removeFakePlayer(name);
+			names.releaseName(name);
+			_freeNpcIds.addLast(npcId);
+			return null;
+		}
+	}
+	
+	private int takeNpcId()
+	{
+		final Integer free = _freeNpcIds.pollFirst();
+		if (free != null)
+		{
+			return free;
+		}
+		return _nextNpcId < LAST_NPC_ID ? _nextNpcId++ : LAST_NPC_ID;
+	}
+	
+	/**
+	 * @return the class buffs a fighter or mage of that build casts on itself (from level 40, when classes have them), none for a buffer
+	 */
+	private static List<Skill> selfBuffs(FakePlayerPvpBuild build, int level, BufferLine bufferLine)
+	{
+		if ((bufferLine != null) || (level < 40))
+		{
+			return Collections.emptyList();
+		}
+		
+		final List<Skill> skills = new ArrayList<>();
+		for (int[] alternatives : build.getSkills(SkillCategory.BUFF))
+		{
+			for (int id : alternatives)
+			{
+				final int skillLevel = SkillData.getInstance().getMaxLevel(id);
+				final Skill skill = skillLevel > 0 ? SkillData.getInstance().getSkill(id, skillLevel) : null;
+				if ((skill != null) && !skill.isToggle() && !skill.isPassive())
+				{
+					skills.add(skill);
+					break;
+				}
+			}
+		}
+		return skills;
+	}
+	
+	/**
+	 * Takes a town fake player out of the world: it teleported away or logged off. Someone else comes later.
+	 * @param visitor the fake player
+	 */
+	void leave(FakePlayerTownVisitor visitor)
+	{
+		if (visitor.gone)
+		{
+			return;
+		}
+		
 		final long now = System.currentTimeMillis();
-		for (Walker walker : _walkers)
+		if (visitor.circle != null)
 		{
-			try
-			{
-				act(walker, now);
-			}
-			catch (Exception e)
-			{
-				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem while moving a town fake player.", e);
-			}
+			visitor.circle.leave(visitor, now);
 		}
+		visitor.onGone();
+		
+		final Npc npc = visitor.npc;
+		final String name = npc.getName();
+		final int npcId = npc.getId();
+		_visitors.remove(npc.getObjectId());
+		visitor.town.visitors.remove(visitor);
+		try
+		{
+			visitor.spawn.stopRespawn();
+			if (npc.isSpawned())
+			{
+				npc.deleteMe();
+			}
+			SpawnTable.getInstance().removeSpawn(visitor.spawn);
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem removing town fake player " + name + ".", e);
+		}
+		
+		FakePlayerData.getInstance().removeFakePlayer(name);
+		FakePlayerPvpManager.getInstance().releaseName(name);
+		_freeNpcIds.addLast(npcId);
 	}
-
-	private void act(Walker walker, long now)
+	
+	// Finding others.
+	
+	/**
+	 * @param object a world object
+	 * @return the town fake player it is, {@code null} if it isn't one
+	 */
+	FakePlayerTownVisitor getVisitor(WorldObject object)
 	{
-		final Npc npc = walker.spawn.getLastSpawn();
-		if ((npc == null) || !npc.isSpawned() || npc.isDead() || (now < walker.nextAction))
-		{
-			return;
-		}
-
-		// Walking somewhere: look again soon, then wait a bit once there.
-		if (npc.isMoving())
-		{
-			walker.moving = true;
-			walker.nextAction = now + TICK;
-			return;
-		}
-		if (walker.moving)
-		{
-			walker.moving = false;
-			walker.nextAction = now + Rnd.get(2000, 15000);
-			return;
-		}
-
-		final FakePlayerHolder holder = npc.getTemplate().getFakePlayerInfo();
-		if (holder.isSitting())
-		{
-			holder.setSitting(false);
-			npc.broadcastPacket(new ChangeWaitType(npc, ChangeWaitType.WT_STANDING));
-			walker.nextAction = now + Rnd.get(2000, 5000);
-			return;
-		}
-
-		final int roll = Rnd.get(100);
-		if (roll < SIT_CHANCE)
-		{
-			holder.setSitting(true);
-			npc.broadcastPacket(new ChangeWaitType(npc, ChangeWaitType.WT_SITTING));
-			walker.nextAction = now + Rnd.get(30000, 120000);
-			return;
-		}
-
-		if (roll < (SIT_CHANCE + MOVE_CHANCE))
-		{
-			final Location destination = getDestination(walker.town, npc);
-			if (destination != null)
-			{
-				if (Rnd.get(100) < RUN_CHANCE)
-				{
-					npc.setRunning();
-				}
-				else
-				{
-					npc.setWalking();
-				}
-				npc.getAI().setIntention(Intention.MOVE_TO, destination);
-				walker.nextAction = now + TICK;
-				return;
-			}
-		}
-
-		// Stands around.
-		walker.nextAction = now + Rnd.get(5000, 20000);
+		return object != null ? _visitors.get(object.getObjectId()) : null;
 	}
-
+	
 	/**
 	 * @param town the town
-	 * @param npc the fake player
-	 * @return a spot of the town to go to: another respawn point of the town now and then, else somewhere around, {@code null} if none was found
+	 * @param requester the one who wants buffs
+	 * @return a buffer at its post with not too many waiting, closer ones more likely, {@code null} if none
 	 */
-	private static Location getDestination(Town town, Npc npc)
+	FakePlayerTownVisitor pickBuffer(FakePlayerTown town, FakePlayerTownVisitor requester)
 	{
-		final GeoEngine geo = GeoEngine.getInstance();
-		if (Rnd.get(100) < TRAVEL_CHANCE)
+		FakePlayerTownVisitor best = null;
+		double bestScore = Double.MAX_VALUE;
+		for (FakePlayerTownVisitor visitor : town.visitors)
 		{
-			final Location point = town.points.get(Rnd.get(town.points.size()));
-			final int x = point.getX() + Rnd.get(-150, 150);
-			final int y = point.getY() + Rnd.get(-150, 150);
-			final int z = geo.getHeight(x, y, point.getZ());
-			if (isInTown(x, y, z) && (npc.calculateDistance2D(new Location(x, y, z)) > 50))
+			if ((visitor == requester) || !visitor.isOnDuty() || (visitor.getQueueSize() >= 2))
 			{
-				return new Location(x, y, z); // Path finding takes it there.
+				continue;
+			}
+			
+			final double distance = FakePlayerTown.distance2D(visitor.npc, requester.npc);
+			final double score = distance * (0.6 + Rnd.nextDouble());
+			if ((distance < 4000) && (score < bestScore))
+			{
+				best = visitor;
+				bestScore = score;
 			}
 		}
-
-		for (int attempt = 0; attempt < 3; attempt++)
+		return best;
+	}
+	
+	/**
+	 * @param town the town
+	 * @param initiator the one who wants to talk
+	 * @return someone standing around close enough to walk up to, {@code null} if none
+	 */
+	FakePlayerTownVisitor pickPartner(FakePlayerTown town, FakePlayerTownVisitor initiator)
+	{
+		final long now = System.currentTimeMillis();
+		final List<FakePlayerTownVisitor> candidates = new ArrayList<>();
+		final List<Double> weights = new ArrayList<>();
+		double total = 0;
+		for (FakePlayerTownVisitor visitor : town.visitors)
 		{
-			final double angle = Rnd.nextDouble() * 2 * Math.PI;
-			final int distance = Rnd.get(100, Math.max(101, FakePlayersConfig.FAKE_TOWN_PLAYERS_WANDER_RANGE));
-			final Location loc = geo.getValidLocation(npc.getX(), npc.getY(), npc.getZ(), npc.getX() + (int) (Math.cos(angle) * distance), npc.getY() + (int) (Math.sin(angle) * distance), npc.getZ(), npc.getInstanceId());
-			if ((npc.calculateDistance2D(loc) > 50) && isInTown(loc.getX(), loc.getY(), loc.getZ()))
+			if ((visitor == initiator) || !visitor.isAvailableForChat(now) || (visitor.loner && (Rnd.get(100) < 80)))
 			{
-				return loc;
+				continue;
+			}
+			
+			final double distance = FakePlayerTown.distance2D(visitor.npc, initiator.npc);
+			if (distance > 2200)
+			{
+				continue;
+			}
+			
+			final double weight = 1 / Math.max(250, distance);
+			candidates.add(visitor);
+			weights.add(weight);
+			total += weight;
+		}
+		
+		double roll = Rnd.nextDouble() * total;
+		for (int i = 0; i < candidates.size(); i++)
+		{
+			roll -= weights.get(i);
+			if (roll <= 0)
+			{
+				return candidates.get(i);
 			}
 		}
 		return null;
 	}
-
-	private static boolean isInTown(int x, int y, int z)
+	
+	/**
+	 * @param town the town
+	 * @param joiner the one who would join
+	 * @return a conversation close by that someone may still join, {@code null} if none
+	 */
+	FakePlayerTownCircle pickCircle(FakePlayerTown town, FakePlayerTownVisitor joiner)
 	{
-		for (ZoneType zone : ZoneManager.getInstance().getZones(x, y, z))
+		final List<FakePlayerTownCircle> open = new ArrayList<>();
+		for (FakePlayerTownCircle circle : town.circles)
 		{
-			if ((zone instanceof TownZone) || (zone instanceof PeaceZone))
+			if (circle.isOpen() && (FakePlayerTown.distance2D(circle.getCenter(), joiner.npc) < 2000))
 			{
-				return true;
+				open.add(circle);
 			}
 		}
-		return false;
+		return open.isEmpty() ? null : open.get(Rnd.get(open.size()));
 	}
-
+	
+	/**
+	 * @param town the town
+	 * @param now the current time
+	 * @return {@code true} if a new conversation may start: only a few at a time, and not one right after the other
+	 */
+	boolean canStartCircle(FakePlayerTown town, long now)
+	{
+		return (now >= town.nextCircle) && (town.circles.size() < Math.max(1, town.visitors.size() / 9));
+	}
+	
+	/**
+	 * Starts a conversation. Two of about the same level may also team up for a hunt and leave together.
+	 * @param town the town
+	 * @param members who talk
+	 * @param topic the kind of conversation
+	 * @param now the current time
+	 */
+	void startCircle(FakePlayerTown town, List<FakePlayerTownVisitor> members, Topic topic, long now)
+	{
+		Topic used = topic;
+		if ((used == Topic.CHAT) && (members.size() == 2))
+		{
+			final FakePlayerTownVisitor first = members.get(0);
+			final FakePlayerTownVisitor second = members.get(1);
+			if (!first.isBuffer() && !second.isBuffer() && (Math.min(first.level, second.level) >= 20) && (Math.abs(first.level - second.level) <= 8) && (Rnd.get(100) < 12))
+			{
+				used = Topic.TEAM_UP;
+			}
+		}
+		town.circles.add(new FakePlayerTownCircle(this, town, members, used, now));
+		final double rate = Math.max(0.1, FakePlayersConfig.FAKE_TOWN_PLAYERS_CHAT_RATE / 100.0);
+		town.nextCircle = now + (long) (Rnd.get(40000, 150000) / rate);
+	}
+	
+	/**
+	 * @param visitor the one who would look
+	 * @return a player selling or buying in a private store close by that no other fake player looks at right now, {@code null} if none
+	 */
+	Player pickStore(FakePlayerTownVisitor visitor)
+	{
+		final long now = System.currentTimeMillis();
+		_browsedStores.values().removeIf(until -> until < now);
+		final List<Player> stores = new ArrayList<>();
+		World.getInstance().forEachVisibleObjectInRange(visitor.npc, Player.class, STORE_RANGE, player ->
+		{
+			if (player.isInStoreMode() && !_browsedStores.containsKey(player.getObjectId()) && visitor.town.isInside(player.getX(), player.getY(), player.getZ()))
+			{
+				stores.add(player);
+			}
+		});
+		
+		if (stores.isEmpty())
+		{
+			return null;
+		}
+		
+		final Player store = stores.get(Rnd.get(stores.size()));
+		_browsedStores.put(store.getObjectId(), now + 45000);
+		return store;
+	}
+	
+	/**
+	 * @param town the town
+	 * @param buffer a buffer
+	 * @return where it waits for people to buff: in sight of a gatekeeper or a respawn point, away from other buffers, {@code null} if nowhere was found
+	 */
+	Location pickBufferPost(FakePlayerTown town, FakePlayerTownVisitor buffer)
+	{
+		final GeoEngine geo = GeoEngine.getInstance();
+		for (int attempt = 0; attempt < 10; attempt++)
+		{
+			Location base = town.getRandomPoint();
+			if (Rnd.get(100) < 60)
+			{
+				final TownNpc gatekeeper = town.pickNpc(Role.GATEKEEPER, buffer.npc);
+				final Npc npc = gatekeeper != null ? gatekeeper.getNpc() : null;
+				if (npc != null)
+				{
+					base = new Location(npc.getX(), npc.getY(), npc.getZ());
+				}
+			}
+			
+			final double angle = Rnd.nextDouble() * 2 * Math.PI;
+			final int distance = Rnd.get(180, 480);
+			final int x = base.getX() + (int) (Math.cos(angle) * distance);
+			final int y = base.getY() + (int) (Math.sin(angle) * distance);
+			final int z = geo.getHeight(x, y, base.getZ());
+			if ((Math.abs(z - base.getZ()) > 120) || !town.isInside(x, y, z) || !geo.canMoveToTarget(base.getX(), base.getY(), base.getZ(), x, y, z, 0))
+			{
+				continue;
+			}
+			
+			boolean crowded = false;
+			for (FakePlayerTownVisitor other : town.visitors)
+			{
+				if ((other != buffer) && other.isBuffer() && (Math.hypot(other.npc.getX() - x, other.npc.getY() - y) < 250))
+				{
+					crowded = true;
+					break;
+				}
+			}
+			if (!crowded)
+			{
+				return new Location(x, y, z);
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * Someone standing around says something in general chat, if a player is there to read it: looking for a party, buying, selling, asking.
+	 */
+	private void loneChat(FakePlayerTown town)
+	{
+		final List<FakePlayerTownVisitor> candidates = new ArrayList<>();
+		for (FakePlayerTownVisitor visitor : town.visitors)
+		{
+			if (!visitor.gone && !visitor.isHeld() && (visitor.circle == null) && FakePlayerTown.isWatched(visitor.npc))
+			{
+				candidates.add(visitor);
+			}
+		}
+		
+		if (candidates.isEmpty())
+		{
+			return;
+		}
+		
+		final FakePlayerTownVisitor speaker = candidates.get(Rnd.get(candidates.size()));
+		final FakePlayerTownChat.Speaker info = new FakePlayerTownChat.Speaker(speaker.npc.getName(), speaker.level, className(speaker.playerClass), speaker.npc.getTemplate().getFakePlayerInfo().getEquipRHand(), speaker.npc.getTemplate().getFakePlayerInfo().getWeaponEnchantLevel(), speaker.style);
+		for (int attempt = 0; attempt < 5; attempt++)
+		{
+			final String text = FakePlayerTownChat.lone(info, town.shortName);
+			if (!town.wasSaidLately(text))
+			{
+				speaker.say(text);
+				return;
+			}
+		}
+	}
+	
+	// Buffs.
+	
+	/**
+	 * Shows a caster buffing a target, one buff after another: the cast, then the effect when it lands. Speed buffs really apply, so a buffed fake player runs faster like a buffed player.
+	 * @param caster the caster (a guide npc, a buffer, or the fake player itself)
+	 * @param target the one buffed
+	 * @param skills the buffs
+	 * @param castFactor the cast time of each buff, from its hit time (casting speed)
+	 * @param onDone called when the last one landed, {@code null} for nothing
+	 * @return how long it takes, in milliseconds
+	 */
+	long castBuffs(Npc caster, Npc target, List<Skill> skills, double castFactor, Runnable onDone)
+	{
+		long time = 0;
+		for (Skill skill : skills)
+		{
+			final int hitTime = castTimeOf(skill, castFactor);
+			schedule(time, () ->
+			{
+				if (caster.isSpawned() && target.isSpawned())
+				{
+					FakePlayerTownVisitor.showCast(caster, target, skill, hitTime);
+				}
+			});
+			schedule(time + hitTime, () ->
+			{
+				if (caster.isSpawned() && target.isSpawned())
+				{
+					FakePlayerTownVisitor.showLaunch(caster, target, skill);
+					if (FakePlayerTownVisitor.isSpeedBuff(skill))
+					{
+						skill.applyEffects(caster, target);
+					}
+				}
+			});
+			time += hitTime + Rnd.get(120, 450);
+		}
+		
+		if (onDone != null)
+		{
+			schedule(time, onDone);
+		}
+		return time;
+	}
+	
+	/**
+	 * @param skills buffs
+	 * @param castFactor the cast time factor
+	 * @return about how long {@link #castBuffs} takes for them
+	 */
+	long castTime(List<Skill> skills, double castFactor)
+	{
+		long time = 0;
+		for (Skill skill : skills)
+		{
+			time += castTimeOf(skill, castFactor) + 285;
+		}
+		return time;
+	}
+	
+	private static int castTimeOf(Skill skill, double castFactor)
+	{
+		// The guide's adventurer buffs are instant (factor 1), a buffer's buffs take their hit time at its casting speed.
+		final int hitTime = skill.getHitTime() > 0 ? skill.getHitTime() : (castFactor < 1 ? 2500 : 0);
+		return (int) Math.max(200, hitTime * castFactor);
+	}
+	
+	/**
+	 * Runs something a bit later on the manager's thread (where everything about town fake players happens).
+	 * @param delay the delay in milliseconds
+	 * @param action what to do
+	 */
+	void schedule(long delay, Runnable action)
+	{
+		synchronized (_timeline)
+		{
+			_timeline.add(new Timed(System.currentTimeMillis() + Math.max(0, delay), _order++, action));
+		}
+	}
+	
+	private void tick()
+	{
+		final long now = System.currentTimeMillis();
+		while (true)
+		{
+			final Timed timed;
+			synchronized (_timeline)
+			{
+				timed = _timeline.peek();
+				if ((timed == null) || (timed.time > now))
+				{
+					break;
+				}
+				_timeline.poll();
+			}
+			
+			try
+			{
+				timed.action.run();
+			}
+			catch (Exception e)
+			{
+				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem with a timed action.", e);
+			}
+		}
+		
+		for (FakePlayerTown town : _towns)
+		{
+			try
+			{
+				updateTown(town, now);
+			}
+			catch (Exception e)
+			{
+				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem while running " + town.region + ".", e);
+			}
+		}
+	}
+	
+	/**
+	 * @param playerClass a class
+	 * @return how players call it in chat
+	 */
+	static String className(PlayerClass playerClass)
+	{
+		final String full = playerClass.name().toLowerCase().replace('_', ' ');
+		if (Rnd.nextBoolean())
+		{
+			return full;
+		}
+		
+		switch (playerClass.name())
+		{
+			case "PALADIN":
+			case "PHOENIX_KNIGHT":
+			{
+				return "pala";
+			}
+			case "DARK_AVENGER":
+			{
+				return "da";
+			}
+			case "HELL_KNIGHT":
+			{
+				return "hk";
+			}
+			case "TEMPLE_KNIGHT":
+			case "EVA_TEMPLAR":
+			{
+				return "tk";
+			}
+			case "SHILLIEN_KNIGHT":
+			case "SHILLIEN_TEMPLAR":
+			{
+				return "sk";
+			}
+			case "TREASURE_HUNTER":
+			{
+				return "th";
+			}
+			case "ADVENTURER":
+			{
+				return "adv";
+			}
+			case "PLAINS_WALKER":
+			case "PLAINSWALKER":
+			{
+				return "pw";
+			}
+			case "WIND_RIDER":
+			{
+				return "wr";
+			}
+			case "ABYSS_WALKER":
+			{
+				return "aw";
+			}
+			case "GHOST_HUNTER":
+			{
+				return "gh";
+			}
+			case "HAWKEYE":
+			{
+				return "he";
+			}
+			case "SAGITTARIUS":
+			{
+				return "sagi";
+			}
+			case "SILVER_RANGER":
+			{
+				return "sr";
+			}
+			case "MOONLIGHT_SENTINEL":
+			{
+				return "ms";
+			}
+			case "PHANTOM_RANGER":
+			{
+				return "pr";
+			}
+			case "GHOST_SENTINEL":
+			{
+				return "gs";
+			}
+			case "GLADIATOR":
+			{
+				return "glad";
+			}
+			case "DESTROYER":
+			{
+				return "destro";
+			}
+			case "WARLORD":
+			{
+				return "wl";
+			}
+			case "DREADNOUGHT":
+			{
+				return "dread";
+			}
+			case "SORCERER":
+			{
+				return "sorc";
+			}
+			case "ARCHMAGE":
+			{
+				return "am";
+			}
+			case "MYSTIC_MUSE":
+			{
+				return "mm";
+			}
+			case "STORM_SCREAMER":
+			{
+				return "storm";
+			}
+			case "NECROMANCER":
+			{
+				return "necro";
+			}
+			case "OVERLORD":
+			{
+				return "ol";
+			}
+			case "DOMINATOR":
+			{
+				return "dom";
+			}
+			case "BERSERKER":
+			{
+				return "zerk";
+			}
+			case "DOOMBRINGER":
+			{
+				return "doom";
+			}
+			case "PROPHET":
+			{
+				return "pp";
+			}
+			case "HIEROPHANT":
+			{
+				return "hiero";
+			}
+			case "ELDER":
+			case "EVA_SAINT":
+			{
+				return "ee";
+			}
+			case "SHILLIEN_ELDER":
+			case "SHILLIEN_SAINT":
+			{
+				return "se";
+			}
+			case "WARCRYER":
+			case "DOOMCRYER":
+			{
+				return "wc";
+			}
+			case "SWORDSINGER":
+			case "SWORD_MUSE":
+			{
+				return "sws";
+			}
+			case "BLADEDANCER":
+			case "SPECTRAL_DANCER":
+			{
+				return "bd";
+			}
+			default:
+			{
+				return full;
+			}
+		}
+	}
+	
 	/**
 	 * @return how many town fake players there are
 	 */
 	public int getCount()
 	{
-		return _walkers.size();
+		return _visitors.size();
 	}
-
-	private static class Town
+	
+	/**
+	 * @param target what a GM targets
+	 * @return a few lines about the towns, and about {@code target} if it is a town fake player (for //faketown)
+	 */
+	public List<String> getInfo(WorldObject target)
 	{
-		final String region;
-		final List<Location> points;
-		final int minLevel;
-		final int maxLevel;
-		final Race race;
-
-		Town(String region, List<Location> points, int minLevel, int maxLevel, Race race)
+		final List<String> lines = new ArrayList<>();
+		lines.add("Town fake players: " + _visitors.size() + " in " + _towns.size() + " towns.");
+		for (FakePlayerTown town : _towns)
 		{
-			this.region = region;
-			this.points = points;
-			this.minLevel = minLevel;
-			this.maxLevel = maxLevel;
-			this.race = race;
+			int buffers = 0;
+			int talking = 0;
+			for (FakePlayerTownVisitor visitor : town.visitors)
+			{
+				buffers += visitor.isBuffer() ? 1 : 0;
+				talking += visitor.circle != null ? 1 : 0;
+			}
+			
+			final int wanted = Math.max(1, (int) Math.round(FakePlayersConfig.FAKE_TOWN_PLAYERS_PER_TOWN * town.populationFactor));
+			lines.add(town.shortName + ": " + town.visitors.size() + "/" + wanted + (talking > 0 ? ", " + talking + " talking" : "") + (buffers > 0 ? ", " + buffers + " buffer" : "") + (town.isPrepared() ? "" : " (preparing)"));
 		}
-	}
-
-	private static class Walker
-	{
-		final Town town;
-		final Spawn spawn;
-		long nextAction = System.currentTimeMillis() + Rnd.get(1000, 20000); // Not everyone sets off at once.
-		boolean moving;
-
-		Walker(Town town, Spawn spawn)
+		
+		final FakePlayerTownVisitor visitor = getVisitor(target);
+		if (visitor != null)
 		{
-			this.town = town;
-			this.spawn = spawn;
+			lines.add(visitor.describe());
 		}
+		return lines;
 	}
-
+	
 	public static FakePlayerTownManager getInstance()
 	{
 		return SingletonHolder.INSTANCE;
 	}
-
+	
 	private static class SingletonHolder
 	{
 		protected static final FakePlayerTownManager INSTANCE = new FakePlayerTownManager();

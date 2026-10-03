@@ -4162,6 +4162,15 @@ public abstract class Creature extends WorldObject
 	}
 	
 	/**
+	 * @return {@code true} if the Creature moves straight to its destination without the geodata: nobody is around to see it, or no path was found (it goes through walls)
+	 */
+	public boolean isMovingWithoutGeodata()
+	{
+		final MoveData move = _move;
+		return (move != null) && move.disregardingGeodata;
+	}
+	
+	/**
 	 * This method returns a list of {@link GeoLocation} objects representing the movement path.<br>
 	 * If the move operation is defined (not null), it returns the path from the 'geoPath' field of the move.<br>
 	 * Otherwise, it returns null.
