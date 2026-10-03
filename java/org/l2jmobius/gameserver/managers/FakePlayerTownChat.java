@@ -24,13 +24,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 
 /**
- * What the town fake players say (see {@link FakePlayerTownManager}): short conversations between a few of them, asking a buffer for buffs, and now and then a line in general chat.<br>
+ * What the town fake players say (see {@link FakePlayerTownManager}): short conversations between a few of them, asking a buffer for buffs, newbies asking for a little adena, hello to players walking by, sellers advertising their store, and now and then a line in general chat.<br>
  * A conversation is put together from topics. Each topic line is {@code S:alternative|alternative|...}, where {@code S} is who says it ({@code A}, {@code B} or {@code C}, lowercase when the line may be left out) and the alternatives can hold placeholders: {@code {spotA}}
- * a hunting ground that fits the speaker's level, {@code {lvlA}}, {@code {clsA}}, {@code {weaponA}}, {@code {nameB}}, {@code {mat}}, {@code {price}}, {@code {town}}, {@code {bigTown}}, {@code {castle}}, {@code {ss}}, {@code {next}}. Each speaker types in a style of its own (case, typos,
+ * a hunting ground that fits the speaker's level, {@code {lvlA}}, {@code {clsA}}, {@code {weaponA}}, {@code {nameB}}, {@code {mat}}, {@code {price}}, {@code {town}}, {@code {bigTown}}, {@code {castle}}, {@code {ss}}, {@code {next}}, {@code {drop}} (a nice drop for the level), {@code {beg}} (a little adena). Each speaker types in a style of its own (case, typos,
  * smileys), so the same line never looks quite the same twice.
  */
 final class FakePlayerTownChat
@@ -305,6 +306,68 @@ final class FakePlayerTownChat
 		"AB:so tired=>same|so tired=>go sleep|work tomorrow ugh=>ugh same|gonna sleep soon=>gn|gonna sleep soon=>same|so laggy today=>lag here too|so laggy today=>not for me|my pc is dying lol=>lol",
 		"a:lol|ya|maybe"
 	};
+	private static final String[] DROP =
+	{
+		"A:omg {drop} dropped|finally got {drop}|look what dropped, {drop}|{drop} drop :D|got {drop} from a mob lol|lucky day, {drop}",
+		"B:gz|wow gz|lucky|nice|gratz|no way|lol nice",
+		"ba:selling it?=>maybe|selling it?=>no way|how much?=>{price}kk|how much?=>not selling lol|where?=>{spotA}|where?=>some mob at {spotA}",
+		"b:gz again|lucky u|i never get anything|share pls lol"
+	};
+	private static final String[] PK =
+	{
+		"A:got pked at {spotA}|some red guy killed me|lost exp to a pk|pk at {spotA} again|died to a pk lol",
+		"B:lol|rip|who?|flag him next time|again?|thats l2|ouch",
+		"ab:did u lose anything?=>only exp|did u lose anything?=>dropped my shots lol|know his name?=>some noob|know his name?=>no idea|gonna revenge?=>he's way higher|gonna revenge?=>maybe with clan",
+		"b:careful there|go another spot|pks everywhere|bring a party next time"
+	};
+	private static final String[] RAID =
+	{
+		"AB:any rb up?=>dunno|any rb up?=>check {spotA}|going raid?=>which one|going raid?=>need more ppl|killed any rb today?=>no|killed any rb today?=>one lol",
+		"ab:need a healer?=>always|drops good?=>meh|drops good?=>got a book once|how many ppl?=>like 5|how many ppl?=>full pt",
+		"a:k|lol|ok|maybe later|cool"
+	};
+	private static final String[] CRAFT =
+	{
+		"A:anyone can craft for me?|need a crafter|any dwarf around?|who crafts here?|need someone to craft {mat}",
+		"BA:my dwarf can, got mats?=>yea|my dwarf can, got mats?=>not yet|ask in trade=>k|what u need?=>{mat}|no dwarf sry=>np|got recipe?=>ya|got recipe?=>no lol",
+		"b:np|gl|ok|lmk"
+	};
+	private static final String[] SPOIL =
+	{
+		"A:spoil sucks today|my spoiler got nothing|sweep gave me only {mat} lol|spoiled {mat} all day|so many {mat} from spoil",
+		"B:lol|same|thats spoil|sell it|keep it for craft|nice",
+		"ab:where u spoil?=>{spotA}|where u spoil?=>near {town}|worth it?=>sometimes|worth it?=>adena is better"
+	};
+	private static final String[] PET =
+	{
+		"A:my wolf died again lol|anyone has a strider?|my pet ate all my food|leveling my pet ugh|pets are useless lol",
+		"B:lol|feed it|rip wolf|i love my pet|strider ftw|same",
+		"a:ya|lol|true"
+	};
+	private static final String[] OFFTOPIC =
+	{
+		"AB:u from where?=>eu|u from where?=>brazil|u from where?=>russia|u from where?=>usa|how long u play?=>since c1 lol|how long u play?=>like a month|how long u play?=>years|playing alone?=>with friends|playing alone?=>ya",
+		"aba:nice=>u?=>same|cool=>ya=>lol|old school=>yea=>xD",
+		"b:lol|nice|ok|cool"
+	};
+	private static final String[] STORES =
+	{
+		"A:stores are so expensive here|who sells {mat} so cheap lol|anyone checked the stores?|prices went crazy|{mat} price is a joke",
+		"B:lol|giran is cheaper|same everywhere|check again later|its always like that|buy from npc lol",
+		"ab:what u looking for?=>{mat}|what u looking for?=>{ss}|found it?=>no|found it?=>yea but expensive"
+	};
+	private static final String[] QUEST =
+	{
+		"AB:how do i finish this quest?=>which one|how do i finish this quest?=>read the text lol|anyone doing quests?=>sometimes|where is the quest npc?=>next to the gk|where is the quest npc?=>no idea|doing class quest?=>ya ugh|doing class quest?=>done already",
+		"ab:its so long=>yea|need help?=>maybe later|need help?=>im ok ty",
+		"a:k|ty|ok|ugh"
+	};
+	private static final String[] NEWBIE_GEAR =
+	{
+		"AB:what weapon should i get?=>whatever u can afford lol|what weapon should i get?=>craft one|what armor is good?=>buy the set at the shop|is my gear ok?=>its fine for now|where do u buy gear?=>shop or stores",
+		"a:ty|ok|thx|hmm ok",
+		"b:np|gl|yw"
+	};
 	private static final String[] PARTY_END =
 	{
 		"A:gg|gg all|ty for pt|thx for party|gg wp|ty all",
@@ -412,7 +475,25 @@ final class FakePlayerTownChat
 		"gm?",
 		"any buffer online?",
 		"which hotzone today?",
-		"zzz"
+		"zzz",
+		"anyone selling {ss}?",
+		"lol this server",
+		"gm pls",
+		"any clan recruiting?",
+		"bored",
+		"what time is siege?",
+		"lag?",
+		"who wants to duel?",
+		"anyone going {bigTown}?",
+		"wtb {mat}, pm me",
+		"o/",
+		"good morning",
+		"gn all",
+		"wb",
+		"anyone know a good spot for {lvlA}?",
+		"why so quiet today",
+		"where are all the stores?",
+		"is there a rb up?"
 	};
 	private static final String[] LONE_HUNT =
 	{
@@ -429,7 +510,54 @@ final class FakePlayerTownChat
 		"wtb {mat}",
 		"selling {mat}",
 		"wts {mat} cheap",
-		"anyone selling {mat}?"
+		"anyone selling {mat}?",
+		"lf healer {spotA}",
+		"lf 1 dd {spotA}",
+		"lfm {spotA}, need buffer",
+		"wts {mat} {price}k",
+		"wtb {mat} {price}k each",
+		"lf dwarf to craft",
+		"lf spoiler",
+		"lfp {lvlA} {clsA} pm",
+		"wts {drop}, pm offers",
+		"anyone have {drop}?",
+		"who sells {ss}?",
+		"party {spotA} pls",
+		"pt {spotA} need 2 more",
+		"wtb {drop}",
+		"clan lf members, pm"
+	};
+	private static final String[] LONE_HIGH =
+	{
+		"lf cc {spotA}",
+		"anyone for tiat?",
+		"lfm {spotA} 80+",
+		"lf 1 healer {spotA}",
+		"wtb bews",
+		"wts {drop}",
+		"clan lf active ppl for siege",
+		"anyone doing kamaloka?",
+		"lf pt soi",
+		"lf pt sod",
+		"oly today?",
+		"wtb attribute stones",
+		"lf bd/sws for pt",
+		"selling {drop}, offers?",
+		"who has {castle} castle now?",
+		"lfm {spotA} need ee"
+	};
+	private static final String[] LONE_BEG =
+	{
+		"can someone spare {beg} adena pls",
+		"anyone give {beg} adena for shots?",
+		"need {beg} adena pls :(",
+		"pls {beg} adena for a weapon",
+		"any rich guy here? need {beg} adena",
+		"im broke lol, {beg} adena pls?",
+		"can anyone lend me {beg}?",
+		"need adena for ss pls",
+		"{beg} adena and ill be happy lol",
+		"spare adena?"
 	};
 	private static final String[] LONE_NEWBIE =
 	{
@@ -440,7 +568,170 @@ final class FakePlayerTownChat
 		"where can i lvl at {lvlA}?",
 		"what do i do at lvl 20?",
 		"anyone lf party?",
-		"how do i use the gatekeeper?"
+		"how do i use the gatekeeper?",
+		"how do i make adena?",
+		"where do i buy armor?",
+		"whats a good class?",
+		"what are soulshots for?",
+		"is this game hard?",
+		"how do i get a pet?",
+		"any newbie clan?",
+		"anyone want to party? im {lvlA}",
+		"where is the warehouse?",
+		"how do i use the auction?",
+		"im new here, hi all"
+	};
+	
+	private static final String[] BEG_ASK =
+	{
+		"hey can u spare {beg} adena?",
+		"sry to bother, {beg} adena pls?",
+		"can i have {beg} adena?",
+		"spare {beg} adena pls",
+		"hi, can u give me {beg} adena for shots?",
+		"pls {beg} adena, im broke",
+		"could u help me with {beg} adena?",
+		"{beg} adena pls? :)",
+		"can u lend me {beg}?",
+		"need {beg} for a weapon, pls",
+		"pls help a newbie, {beg} adena",
+		"hi! any adena to spare?"
+	};
+	private static final String[] BEG_AGAIN =
+	{
+		"pls?",
+		"pls :(",
+		"just {beg}",
+		"even 500 is ok",
+		"??",
+		"hello?",
+		"pretty pls"
+	};
+	private static final String[] BEG_GIVE_UP =
+	{
+		"ok nvm",
+		"np ty anyway",
+		"ok :(",
+		"fine",
+		"k",
+		"ok sry",
+		"nvm"
+	};
+	private static final String[] BEG_GIVE =
+	{
+		"here",
+		"sent",
+		"k here",
+		"np here u go",
+		"take it",
+		"here, buy shots",
+		"ok just this once",
+		"gl with it"
+	};
+	private static final String[] BEG_REFUSE =
+	{
+		"no",
+		"farm it lol",
+		"lol no",
+		"go kill some mobs",
+		"im broke too",
+		"sry no",
+		"no adena sry",
+		"get a job lol",
+		"spoil some mobs",
+		"nope",
+		"do quests, they give adena"
+	};
+	private static final String[] BEG_THANKS =
+	{
+		"ty!!",
+		"omg thx",
+		"thank u so much",
+		"tyvm :)",
+		"ty <3",
+		"thx!",
+		"ur the best",
+		"ty ty"
+	};
+	private static final String[] GREET_PLAYER =
+	{
+		"hi",
+		"hey",
+		"yo",
+		"hi {name}",
+		"hey {name}",
+		"o/",
+		"sup",
+		"hello",
+		"heya",
+		"hi there"
+	};
+	private static final String[] STORE_SHOUT =
+	{
+		"wts {item}, check my store",
+		"selling {item}, cheap",
+		"{item} in my store",
+		"wts {item} in {place}",
+		"cheap {item} here",
+		"selling {item}, pm",
+		"store open, {item}",
+		"anyone need {item}?"
+	};
+	private static final String[] STORE_THANKS =
+	{
+		"ty",
+		"thx",
+		"ty for buying",
+		"thanks :)",
+		"ty gl",
+		"thx!"
+	};
+	private static final String[] STORE_SOLD_OUT =
+	{
+		"sold out ty",
+		"all sold",
+		"sold out, gn",
+		"done selling ty all",
+		"empty, ty"
+	};
+	private static final String[] DROPS_LOW =
+	{
+		"ewd",
+		"a d grade weapon",
+		"some recipe",
+		"a mid grade ls",
+		"gemstone d"
+	};
+	private static final String[] DROPS_MID =
+	{
+		"ewc",
+		"bewc",
+		"ewb",
+		"a recipe",
+		"high ls 52",
+		"some b grade piece",
+		"a c grade weapon"
+	};
+	private static final String[] DROPS_HIGH =
+	{
+		"ewa",
+		"bewa",
+		"top ls 76",
+		"codex",
+		"a fire stone",
+		"some a grade piece",
+		"a key mat"
+	};
+	private static final String[] DROPS_TOP =
+	{
+		"bews",
+		"ews",
+		"top ls 80",
+		"top ls 82",
+		"codex mastery",
+		"attribute crystals",
+		"some s80 piece",
+		"a forgotten scroll"
 	};
 	
 	private FakePlayerTownChat()
@@ -526,93 +817,68 @@ final class FakePlayerTownChat
 	private static String[] pickTopic(Speaker a, Speaker b)
 	{
 		final int level = Math.min(a.level, b.level);
+		final Object[] weighted;
 		if (level < 20)
 		{
-			switch (Rnd.get(10))
+			weighted = new Object[]
 			{
-				case 0:
-				case 1:
-				case 2:
-				case 3:
-				{
-					return NEWBIE;
-				}
-				case 4:
-				case 5:
-				{
-					return HUNT;
-				}
-				case 6:
-				{
-					return LEVEL;
-				}
-				case 7:
-				{
-					return PARTY_NO;
-				}
-				case 8:
-				{
-					return TIRED;
-				}
-				default:
-				{
-					return AFK;
-				}
-			}
+				NEWBIE, 26,
+				NEWBIE_GEAR, 12,
+				HUNT, 14,
+				LEVEL, 8,
+				PARTY_NO, 7,
+				QUEST, 9,
+				OFFTOPIC, 6,
+				PK, 4,
+				PET, 3,
+				TIRED, 5,
+				AFK, 6
+			};
+		}
+		else
+		{
+			weighted = new Object[]
+			{
+				HUNT, 16,
+				a.weaponId > 0 ? GEAR : MARKET, 8,
+				MARKET, 6,
+				TRADE, 5,
+				STORES, 5,
+				DROP, 6,
+				LEVEL, 5,
+				PARTY_NO, 4,
+				ENCHANT, 5,
+				BUFFS, 4,
+				SERVER, 4,
+				CLAN, 4,
+				level >= 76 ? OLYMPIAD : SIEGE, 4,
+				SIEGE, 3,
+				PK, 4,
+				RAID, 4,
+				CRAFT, 3,
+				SPOIL, 3,
+				QUEST, 2,
+				PET, 2,
+				OFFTOPIC, 4,
+				TIRED, 4,
+				AFK, 4
+			};
 		}
 		
-		final int roll = Rnd.get(100);
-		if (roll < 20)
+		int total = 0;
+		for (int i = 1; i < weighted.length; i += 2)
 		{
-			return HUNT;
+			total += (int) weighted[i];
 		}
-		if (roll < 30)
+		
+		int roll = Rnd.get(total);
+		for (int i = 0; i < weighted.length; i += 2)
 		{
-			return a.weaponId > 0 ? GEAR : MARKET;
-		}
-		if (roll < 38)
-		{
-			return MARKET;
-		}
-		if (roll < 44)
-		{
-			return TRADE;
-		}
-		if (roll < 51)
-		{
-			return LEVEL;
-		}
-		if (roll < 57)
-		{
-			return PARTY_NO;
-		}
-		if (roll < 62)
-		{
-			return ENCHANT;
-		}
-		if (roll < 67)
-		{
-			return BUFFS;
-		}
-		if (roll < 72)
-		{
-			return SERVER;
-		}
-		if (roll < 77)
-		{
-			return CLAN;
-		}
-		if (roll < 82)
-		{
-			return level >= 76 ? OLYMPIAD : SIEGE;
-		}
-		if (roll < 86)
-		{
-			return SIEGE;
-		}
-		if (roll < 92)
-		{
-			return TIRED;
+			roll -= (int) weighted[i + 1];
+			if (roll < 0)
+			{
+				return (String[]) weighted[i];
+			}
 		}
 		return AFK;
 	}
@@ -685,8 +951,87 @@ final class FakePlayerTownChat
 	 */
 	static String lone(Speaker speaker, String town)
 	{
-		final String[] lines = speaker.level < 20 ? (Rnd.get(100) < 60 ? LONE_NEWBIE : LONE_ANY) : (Rnd.get(100) < 65 ? LONE_HUNT : LONE_ANY);
+		final String[] lines;
+		final int roll = Rnd.get(100);
+		if (speaker.level < 20)
+		{
+			lines = roll < 55 ? LONE_NEWBIE : (roll < 70) && FakePlayersConfig.FAKE_TOWN_PLAYERS_BEGGARS ? LONE_BEG : LONE_ANY;
+		}
+		else if (speaker.level >= 76)
+		{
+			lines = roll < 40 ? LONE_HIGH : roll < 75 ? LONE_HUNT : LONE_ANY;
+		}
+		else
+		{
+			lines = roll < 65 ? LONE_HUNT : (roll < 70) && (speaker.level < 30) && FakePlayersConfig.FAKE_TOWN_PLAYERS_BEGGARS ? LONE_BEG : LONE_ANY;
+		}
 		return style(new Context(town, List.of(speaker, speaker)).fill(pick(lines)), speaker.style);
+	}
+	
+	/**
+	 * @param speaker the one asking
+	 * @param town the town short name
+	 * @return a newbie asking someone for a little adena
+	 */
+	static String begAsk(Speaker speaker, String town)
+	{
+		return style(new Context(town, List.of(speaker, speaker)).fill(pick(BEG_ASK)), speaker.style);
+	}
+	
+	static String begAgain(Speaker speaker, String town)
+	{
+		return style(new Context(town, List.of(speaker, speaker)).fill(pick(BEG_AGAIN)), speaker.style);
+	}
+	
+	static String begGiveUp(Style style)
+	{
+		return style(pick(BEG_GIVE_UP), style);
+	}
+	
+	static String begGive(Style style)
+	{
+		return style(pick(BEG_GIVE), style);
+	}
+	
+	static String begRefuse(Style style)
+	{
+		return style(pick(BEG_REFUSE), style);
+	}
+	
+	static String begThanks(Style style)
+	{
+		return style(pick(BEG_THANKS), style);
+	}
+	
+	/**
+	 * @param style how the one greeting types
+	 * @param name the name of the player greeted
+	 * @return a hello to a player walking by
+	 */
+	static String greetPlayer(Style style, String name)
+	{
+		return style(pick(GREET_PLAYER).replace("{name}", name.toLowerCase()), style);
+	}
+	
+	/**
+	 * @param style how the seller types
+	 * @param item what it sells, the way players call it
+	 * @param place where its store is (the town)
+	 * @return a seller advertising its store in general chat
+	 */
+	static String storeShout(Style style, String item, String place)
+	{
+		return style(pick(STORE_SHOUT).replace("{item}", item).replace("{place}", place), style);
+	}
+	
+	static String storeThanks(Style style)
+	{
+		return style(pick(STORE_THANKS), style);
+	}
+	
+	static String storeSoldOut(Style style)
+	{
+		return style(pick(STORE_SOLD_OUT), style);
 	}
 	
 	private static String pick(String[] lines)
@@ -725,7 +1070,9 @@ final class FakePlayerTownChat
 				{"{price}", String.valueOf(price(a.level))},
 				{"{town}", town},
 				{"{bigTown}", BIG_TOWNS[Rnd.get(BIG_TOWNS.length)]},
-				{"{castle}", CASTLES[Rnd.get(CASTLES.length)]}
+				{"{castle}", CASTLES[Rnd.get(CASTLES.length)]},
+				{"{drop}", drop(a.level)},
+				{"{beg}", begAmount()}
 				// @formatter:on
 			};
 		}
@@ -763,6 +1110,36 @@ final class FakePlayerTownChat
 		
 		final Spot spot = fitting.isEmpty() ? SPOTS[SPOTS.length - 1] : fitting.get(Rnd.get(fitting.size()));
 		return spot.names()[Rnd.get(spot.names().length)];
+	}
+	
+	/**
+	 * @param level a level
+	 * @return a nice drop for that level, the way players call it
+	 */
+	private static String drop(int level)
+	{
+		return pick(level < 30 ? DROPS_LOW : level < 55 ? DROPS_MID : level < 76 ? DROPS_HIGH : DROPS_TOP);
+	}
+	
+	/**
+	 * @return a small amount of adena, the way a newbie asks for it
+	 */
+	private static String begAmount()
+	{
+		final String[] amounts =
+		{
+			"1k",
+			"2k",
+			"500",
+			"5k",
+			"1000",
+			"3k",
+			"10k",
+			"a few k",
+			"2000",
+			"1-2k"
+		};
+		return pick(amounts);
 	}
 	
 	private static int nextGoal(int level)

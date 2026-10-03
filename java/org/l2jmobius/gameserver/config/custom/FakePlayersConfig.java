@@ -53,6 +53,9 @@ public class FakePlayersConfig
 	public static int FAKE_TOWN_PLAYERS_BUFFERS;
 	public static int FAKE_TOWN_PLAYERS_POPULATION_VARIATION;
 	public static int FAKE_TOWN_PLAYERS_STAY_SCALE;
+	public static int FAKE_TOWN_PLAYERS_STORES;
+	public static int FAKE_TOWN_PLAYERS_STORE_RARE_CHANCE;
+	public static boolean FAKE_TOWN_PLAYERS_BEGGARS;
 	
 	public static void load()
 	{
@@ -78,5 +81,8 @@ public class FakePlayersConfig
 		FAKE_TOWN_PLAYERS_BUFFERS = Math.max(0, config.getInt("FakeTownPlayersBuffers", 1));
 		FAKE_TOWN_PLAYERS_POPULATION_VARIATION = Math.max(0, Math.min(90, config.getInt("FakeTownPlayersPopulationVariation", 25)));
 		FAKE_TOWN_PLAYERS_STAY_SCALE = Math.max(10, config.getInt("FakeTownPlayersStayScale", 100));
+		FAKE_TOWN_PLAYERS_STORES = Math.max(0, config.getInt("FakeTownPlayersStores", 3));
+		FAKE_TOWN_PLAYERS_STORE_RARE_CHANCE = Math.max(0, Math.min(100, config.getInt("FakeTownPlayersStoreRareChance", 12)));
+		FAKE_TOWN_PLAYERS_BEGGARS = config.getBoolean("FakeTownPlayersBeggars", true);
 	}
 }
