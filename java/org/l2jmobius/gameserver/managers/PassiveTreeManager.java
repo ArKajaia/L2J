@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -64,6 +65,28 @@ public class PassiveTreeManager
 		ITEM_ERROR
 	}
 	
+	protected PassiveTreeManager()
+	{
+		createTables();
+	}
+
+	/**
+	 * The DB installer only runs passive_tree_schema.sql on a fresh install, so a database set up before a table was added never gets it (character_passive_tree_template came with templates, and without it every template read and switch fails). Same statements as that file, so running both is harmless.
+	 */
+	private void createTables()
+	{
+		try (Connection con = DatabaseFactory.getConnection();
+			Statement st = con.createStatement())
+		{
+			st.execute("CREATE TABLE IF NOT EXISTS `character_passive_tree` (`char_id` INT NOT NULL, `class_index` INT NOT NULL DEFAULT 0, `node_id` INT NOT NULL, `allocated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`char_id`, `class_index`, `node_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+			st.execute("CREATE TABLE IF NOT EXISTS `character_passive_tree_template` (`char_id` INT NOT NULL, `class_index` INT NOT NULL DEFAULT 0, `template_id` TINYINT NOT NULL, `node_id` INT NOT NULL, PRIMARY KEY (`char_id`, `class_index`, `template_id`, `node_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+		}
+		catch (SQLException e)
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": Failed to create passive tree tables - " + e.getMessage());
+		}
+	}
+
 	/** Lazily-built, cached full symmetric adjacency map. See neighborMap(). */
 	private volatile Map<Integer, Set<Integer>> _neighborCache = null;
 	
