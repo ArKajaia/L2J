@@ -68,6 +68,7 @@ Two independent systems that make monster encounters less uniform by granting ex
 NPCs built to look and act like real player characters, used to populate the world and add open-world PvP encounters.
 
 - Static fake players stand around town and respond to whispered chat with canned replies, to make the world feel populated.
+- Town fake players: 12 per town (configurable) walk around every major town and village, with a class, gear and level that fit the town, and stop or sit down now and then (`FakeTownPlayers*` in `config/Custom/FakePlayers.ini`).
 - Roaming PvP fake players are built with real class stats, gear, and skills, and fight players and monsters like a genuine character.
 - They engage in PvP for several reasons — retaliation, opportunistic attacks on flagged/karma players, revenge after being killed — using real skill combos.
 - Visually and mechanically indistinguishable from real players (same info packets, PvP-flag behavior, generated names), though still NPCs internally.

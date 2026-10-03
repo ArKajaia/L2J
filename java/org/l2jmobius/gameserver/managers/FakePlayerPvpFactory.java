@@ -493,6 +493,96 @@ public class FakePlayerPvpFactory
 	}
 	
 	/**
+	 * A peaceful fake player that walks around a town: it looks like a character of the build's class and level in the gear of that level, but it can't be attacked and doesn't fight (no {@link FakePlayerPvpProfile}).
+	 * @param build the build
+	 * @param level the level
+	 * @param npcId a free npc id for the template
+	 * @param name the character name
+	 * @return a new template, or {@code null} if the build can't be made at this level
+	 */
+	public static NpcTemplate createTownTemplate(FakePlayerPvpBuild build, int level, int npcId, String name)
+	{
+		final PlayerClass playerClass = build.getPlayerClass(level);
+		final PlayerTemplate classTemplate = PlayerTemplateData.getInstance().getTemplate(playerClass);
+		if (classTemplate == null)
+		{
+			return null;
+		}
+
+		final FakePlayerPvpData data = FakePlayerPvpData.getInstance();
+		final FakePlayerPvpGearTier weapons = data.getGear(build.getWeaponKit(), rollGearLevel(level));
+		final FakePlayerPvpGearTier armors = data.getGear(build.getArmorKit(), rollGearLevel(level));
+		final ItemTemplate weaponItem = getItem(weapons != null ? weapons.getRHand() : 0);
+		final Weapon weapon = weaponItem instanceof Weapon ? (Weapon) weaponItem : null;
+		final ItemTemplate shieldItem = getItem(weapons != null ? weapons.getLHand() : 0);
+		final Armor shield = ((shieldItem instanceof Armor) && (shieldItem.getItemType() == ArmorType.SHIELD) && ((weapon == null) || (weapon.getBodyPart() != BodyPart.LR_HAND))) ? (Armor) shieldItem : null;
+
+		final PlayerClass baseClass = build.getPlayerClass(0);
+		final boolean female = (baseClass == PlayerClass.FEMALE_SOLDIER) || ((baseClass != PlayerClass.MALE_SOLDIER) && Rnd.nextBoolean());
+
+		final StatSet set = new StatSet(new HashMap<>());
+		set.set("id", npcId);
+		set.set("level", level);
+		set.set("type", "Folk");
+		set.set("name", name);
+		set.set("title", "");
+		set.set("race", playerClass.getRace().name());
+		set.set("sex", female ? Sex.FEMALE.name() : Sex.MALE.name());
+		set.set("baseSTR", classTemplate.getBaseSTR());
+		set.set("baseDEX", classTemplate.getBaseDEX());
+		set.set("baseCON", classTemplate.getBaseCON());
+		set.set("baseINT", classTemplate.getBaseINT());
+		set.set("baseWIT", classTemplate.getBaseWIT());
+		set.set("baseMEN", classTemplate.getBaseMEN());
+		set.set("baseHpMax", classTemplate.getBaseHpMax(level) + classTemplate.getBaseCpMax(level));
+		set.set("baseMpMax", classTemplate.getBaseMpMax(level));
+		set.set("basePDef", classTemplate.getBasePDef());
+		set.set("baseMDef", classTemplate.getBaseMDef());
+		set.set("baseRunSpd", classTemplate.getBaseMoveSpeed(MoveType.RUN));
+		set.set("baseWalkSpd", classTemplate.getBaseMoveSpeed(MoveType.WALK));
+		set.set("baseSwimRunSpd", classTemplate.getBaseMoveSpeed(MoveType.FAST_SWIM));
+		set.set("baseSwimWalkSpd", classTemplate.getBaseMoveSpeed(MoveType.SLOW_SWIM));
+		set.set("collisionRadius", female ? classTemplate.getFCollisionRadiusFemale() : classTemplate.getFCollisionRadius());
+		set.set("collisionHeight", female ? classTemplate.getFCollisionHeightFemale() : classTemplate.getFCollisionHeight());
+		set.set("rhandId", weapon != null ? weapon.getId() : 0);
+		set.set("lhandId", shield != null ? shield.getId() : 0);
+		set.set("attackable", false);
+		set.set("targetable", true);
+		set.set("talkable", false);
+		set.set("undying", true);
+		set.set("randomWalk", false); // FakePlayerTownManager moves it.
+		set.set("randomAnimation", false);
+		set.set("isAggressive", false);
+		set.set("fakePlayerPvp", true); // Player stats, no npc stat multipliers.
+
+		// Fake player appearance.
+		set.set("fakePlayer", true);
+		set.set("classId", playerClass.getId());
+		set.set("hair", female ? Rnd.get(7) : Rnd.get(5));
+		set.set("hairColor", Rnd.get(4));
+		set.set("face", Rnd.get(3));
+		set.set("equipRHand", weapon != null ? weapon.getId() : 0);
+		set.set("equipLHand", shield != null ? shield.getId() : 0);
+		set.set("equipChest", getId(getItem(armors != null ? armors.getChest() : 0)));
+		set.set("equipLegs", getId(getItem(armors != null ? armors.getLegs() : 0)));
+		set.set("equipHead", getId(getItem(armors != null ? armors.getHead() : 0)));
+		set.set("equipGloves", getId(getItem(armors != null ? armors.getGloves() : 0)));
+		set.set("equipFeet", getId(getItem(armors != null ? armors.getFeet() : 0)));
+		set.set("weaponEnchantLevel", weapon != null ? FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.WEAPON_ENCHANT, level) : 0);
+		set.set("armorEnchantLevel", FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.ARMOR_ENCHANT, level));
+		set.set("recommends", Rnd.get(0, 30));
+		set.set("fakePlayerTalkable", true);
+
+		final NpcTemplate template = new NpcTemplate(set);
+		template.setParameters(PARAMETERS);
+		template.setClans(null);
+		template.setIgnoreClanNpcIds(null);
+		template.setAISkillLists(null);
+		template.setSkills(Collections.emptyMap());
+		return template;
+	}
+
+	/**
 	 * @param title the title it was given, {@code null} for none
 	 * @param passives its passive tree, {@code null} for none
 	 * @return its title showing how many subclasses it has (FakePvpPassiveTreeTitle), after the title it was given if any
