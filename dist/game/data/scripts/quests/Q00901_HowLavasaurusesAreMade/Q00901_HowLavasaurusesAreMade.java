@@ -191,7 +191,7 @@ public class Q00901_HowLavasaurusesAreMade extends Quest
 				if (qs.isNowAvailable())
 				{
 					qs.setState(State.CREATED);
-					htmltext = (qs.getPlayer().getLevel() >= 76) ? "32049-01.htm" : "32049-02.html";
+					htmltext = (qs.getPlayer().getLevel() >= 76) ? "32049-01.htm" : "32049-02.htm";
 				}
 				else
 				{

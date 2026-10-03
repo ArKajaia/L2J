@@ -16,7 +16,7 @@ The scan compared every HTML file name in each quest's Java code with the files 
 
 | Quest | Problem |
 |---|---|
-| ~~Q10286_ReunionWithSirra~~ ✅ fixed | `32781-02.html` and `32781-03.html` were referenced but missing. Both are added, using Q10285's Jinia wording. `jinia_npc_q10286_10.htm` was a retail file name; `32760-08.html` already shows that text, so the TODO is removed. |
+| ~~Q10286_ReunionWithSirra~~ ✅ fixed | `32781-02.html` and `32781-03.html` were referenced but missing. Both are added, using the reference datapack's Jinia text. `jinia_npc_q10286_10.htm` was a retail file name; `32760-08.html` already shows that text, so the TODO is removed. |
 | ~~Q10287_StoryOfThoseLeft~~ ✅ fixed | `32760-06.html` (shown as Jinia sends the player out of the hideout) had no text, only "Jinia:". It now tells the player to meet Rafforty for the reward. The TODO naming the retail file `jinia_npc_q10287_06.htm` is removed. |
 | ~~Q00309_ForAGoodCause~~ ✅ fixed | The reward exchange returns `32646-15.htm`/`32646-16.htm` (lines 233/237). These names were copied from Q00308's NPC. The files that exist are `32647-15.html`/`32647-16.html`, so the player gets an empty window after every exchange. |
 | ~~Q00308_ReedFieldMaintenance~~ ✅ fixed | Line 161 looks up Q00238 with `.class.getName()` (`quests.Q00238_...`). Quest states are stored under `getSimpleName()`, so the lookup always returns `null`, and `claimreward` always shows `32646-12.html`, even to players who completed Q00238. |
@@ -24,8 +24,27 @@ The scan compared every HTML file name in each quest's Java code with the files 
 
 Possible problems that need a closer look:
 
-- **Q10288_SecretMission** checks only level 82. It does not check that Q10287 is completed, even though it continues the Freya story and gates Q10289 and Q00270. Check this against retail.
+- ~~**Q10288_SecretMission**~~ ✅ checked: the reference datapack also gates it on level 82 only, with no Q10287 prerequisite. No change needed.
 - **Q00464_Oath** has no `addStartNpc`. It is started from an item, so test the item-use path.
+
+## Retail comparison: all quests above level 75
+
+All 128 quests with a minimum level above 75 (88 with their own level check plus the 40 Saga quests at level 76) were compared with the L2J High Five datapack (`bitbucket.org/l2jserver/l2j-server-datapack`), which is built from retail data. The comparison covered level gates, prerequisites, NPC/monster/item IDs, EXP/SP/adena/item rewards, drop chances, quest type and dialog text.
+
+- **52 quests match exactly.** Most of the rest differ only in how drop chances are written (`36` percent vs `0.36` vs `360` per thousand), in party range (`1500` vs the config setting), in cutscene IDs written as constants, or in dialog links renamed for this server. All of those were checked and come out the same.
+- **Intentional differences kept**: Q10282 also gives the retail 212,182 adena; Q10502 also counts Freya's hard mode; Q00311 adds the Varangka altar fight; Q00238 fixes a start-condition bug and an NPC ID typo that the reference still has. Q00423 was rewritten in this fork with renumbered dialogs but plays the same.
+- **Shared Saga logic** (`AbstractSagaQuest`): same level gate (76) and rewards (2,299,404 EXP, 5,000,000 adena, item 6622).
+- **Not comparable**: Q00727_HopeWithinTheDarkness is not in the reference.
+
+Bugs found (most are shared with the reference, so comparing alone would not catch them):
+
+| Quest | Problem | Status |
+|---|---|---|
+| Q00901_HowLavasaurusesAreMade | Line 194 returned `32049-02.html`, but the file is `32049-02.htm`, so a player under level 76 got an empty window there. | ✅ fixed |
+| Q00309_ForAGoodCause | The "Back" link on both reward lists (`32647-10.html`, `32647-11.html`) went to Q00308's script, so it did nothing. | ✅ fixed |
+| Q10286_ReunionWithSirra | `32781-02.html`/`32781-03.html` now use the reference text instead of the wording written earlier. | ✅ updated |
+
+Checks that found nothing: missing dialog files (beyond the ones above), quest lookups by `getName()`, empty dialogs, and dialog links to missing files.
 
 ## Checklist for each quest
 
