@@ -277,6 +277,59 @@ public abstract class Summon extends Playable
 	}
 	
 	/**
+	 * @param key a passive tree effect key (SUMMON_PATK_PCT...)
+	 * @return the owner's passive tree total for it, as a multiplier (1 + pct / 100)
+	 */
+	private double ownerTreeMultiplier(String key)
+	{
+		return (_owner == null) ? 1.0 : 1.0 + (_owner.getPassiveStatBonus().get(key) / 100.0);
+	}
+	
+	// The owner's passive tree SUMMON_* nodes scale the summon's own stats (pets and servitors alike). Servitor's
+	// Servitor Share overrides call these through super, so both bonuses apply.
+	@Override
+	public double getPAtk(Creature target)
+	{
+		return super.getPAtk(target) * ownerTreeMultiplier("SUMMON_PATK_PCT");
+	}
+	
+	@Override
+	public double getMAtk(Creature target, Skill skill)
+	{
+		return super.getMAtk(target, skill) * ownerTreeMultiplier("SUMMON_MATK_PCT");
+	}
+	
+	@Override
+	public double getPDef(Creature target)
+	{
+		return super.getPDef(target) * ownerTreeMultiplier("SUMMON_PDEF_PCT");
+	}
+	
+	@Override
+	public double getMDef(Creature target, Skill skill)
+	{
+		return super.getMDef(target, skill) * ownerTreeMultiplier("SUMMON_MDEF_PCT");
+	}
+	
+	@Override
+	public int getMaxHp()
+	{
+		return (int) (super.getMaxHp() * ownerTreeMultiplier("SUMMON_HP_PCT"));
+	}
+	
+	@Override
+	public double getPAtkSpd()
+	{
+		return super.getPAtkSpd() * ownerTreeMultiplier("SUMMON_ATK_SPD_PCT");
+	}
+	
+	@Override
+	public int getMAtkSpd()
+	{
+		return (int) (super.getMAtkSpd() * ownerTreeMultiplier("SUMMON_CAST_SPD_PCT"));
+	}
+	
+	/**
 	 * Gets the summon ID.
 	 * @return the summon ID
 	 */

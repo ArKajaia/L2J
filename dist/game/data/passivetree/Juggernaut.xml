@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Juggernaut: 81 nodes. x/y are authoritative layout coords. -->
+<!-- Juggernaut: 110 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="2000" name="Juggernaut Origin" sector="Juggernaut" type="START" tier="0" cost="0" x="1650.0" y="2857.9" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="2001" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1425.0" y="2468.2" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5" description="Junction.">
 		<requires nodeId="2003" />
-		<requires nodeId="2004" />
-		<requires nodeId="2009" />
 		<requires nodeId="2014" />
 		<requires nodeId="2017" />
+		<requires nodeId="2091" />
+		<requires nodeId="2093" />
+		<requires nodeId="2022" />
+		<requires nodeId="2028" />
 	</node>
 	<node id="2002" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1575.0" y="2728.0" effect="PATK_PCT:0.2;MAXHP:12">
 		<requires nodeId="2000" />
@@ -17,43 +19,61 @@
 		<requires nodeId="2001" />
 		<requires nodeId="2002" />
 	</node>
-	<node id="2004" name="Brute Force" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1555.4" y="2503.1" orbitX="1656.8" orbitY="2530.3" effect="PATK_PCT:1" icon="hammer">
+	<node id="2090" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1742.9" y="2688.8" effect="PATK_PCT:0.2;MAXHP:12">
+		<requires nodeId="2000" />
+		<requires nodeId="2004" />
+	</node>
+	<node id="2091" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1617.9" y="2472.3" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
+		<requires nodeId="2004" />
 		<requires nodeId="2001" />
-		<requires nodeId="2006" />
 		<requires nodeId="33008" />
 	</node>
-	<node id="2006" name="Brute Force" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1596.6" y="2616.3" orbitX="1656.8" orbitY="2530.3" effect="PATK_PCT:1" icon="hammer">
+	<node id="2092" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1457.1" y="2853.8" effect="PATK_PCT:0.2;MAXHP:12">
+		<requires nodeId="2000" />
+		<requires nodeId="2009" />
+	</node>
+	<node id="2093" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1332.1" y="2637.3" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
+		<requires nodeId="2009" />
+		<requires nodeId="2001" />
+		<requires nodeId="33106" />
+	</node>
+	<node id="2004" name="Brute Force" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1736.7" y="2548.0" orbitX="1838.1" orbitY="2575.2" effect="PATK_PCT:1" icon="hammer">
+		<requires nodeId="2006" />
+		<requires nodeId="2090" />
+		<requires nodeId="2091" />
+	</node>
+	<node id="2006" name="Brute Force" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1829.0" y="2470.6" orbitX="1838.1" orbitY="2575.2" effect="PATK_PCT:1" icon="hammer">
 		<requires nodeId="2004" />
 		<requires nodeId="2007" />
 	</node>
-	<node id="2007" name="Brute Force" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1717.0" y="2616.3" orbitX="1656.8" orbitY="2530.3" effect="PATK_PCT:1" icon="hammer">
+	<node id="2007" name="Brute Force" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1933.3" y="2530.8" orbitX="1838.1" orbitY="2575.2" effect="PATK_PCT:1" icon="hammer">
 		<requires nodeId="2006" />
 		<requires nodeId="2008" />
 	</node>
-	<node id="2008" name="Heavy Blows" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="1758.2" y="2503.1" orbitX="1656.8" orbitY="2530.3" effect="PATK_PCT:5;STR:1" icon="hammer" description="Brute Force mastery.">
+	<node id="2008" name="Heavy Blows" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="1912.4" y="2649.5" orbitX="1838.1" orbitY="2575.2" effect="PATK_PCT:5;STR:1" icon="hammer" description="Brute Force mastery.">
 		<requires nodeId="2007" />
 	</node>
-	<node id="2009" name="Battle Rhythm" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1390.1" y="2598.6" orbitX="1362.9" orbitY="2700.0" effect="ATK_SPD_PCT:0.9" icon="sword">
-		<requires nodeId="2001" />
+	<node id="2009" name="Battle Rhythm" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1338.3" y="2778.0" orbitX="1311.1" orbitY="2879.4" effect="ATK_SPD_PCT:0.9" icon="sword">
 		<requires nodeId="2010" />
-		<requires nodeId="33106" />
+		<requires nodeId="2092" />
+		<requires nodeId="2093" />
 	</node>
-	<node id="2010" name="Battle Rhythm" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1467.5" y="2690.8" orbitX="1362.9" orbitY="2700.0" effect="ATK_SPD_PCT:0.9" icon="sword">
+	<node id="2010" name="Battle Rhythm" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1225.1" y="2819.2" orbitX="1311.1" orbitY="2879.4" effect="ATK_SPD_PCT:0.9" icon="sword">
 		<requires nodeId="2009" />
 		<requires nodeId="2012" />
 	</node>
-	<node id="2012" name="Battle Rhythm" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1407.3" y="2795.2" orbitX="1362.9" orbitY="2700.0" effect="ATK_SPD_PCT:0.9" icon="sword">
+	<node id="2012" name="Battle Rhythm" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1225.1" y="2939.7" orbitX="1311.1" orbitY="2879.4" effect="ATK_SPD_PCT:0.9" icon="sword">
 		<requires nodeId="2010" />
 		<requires nodeId="2013" />
 	</node>
-	<node id="2013" name="Relentless Assault" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="1288.6" y="2774.2" orbitX="1362.9" orbitY="2700.0" effect="ATK_SPD_PCT:4;PATK_PCT:1.5" icon="sword" description="Battle Rhythm mastery.">
+	<node id="2013" name="Relentless Assault" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="1338.3" y="2980.9" orbitX="1311.1" orbitY="2879.4" effect="ATK_SPD_PCT:4;PATK_PCT:1.5" icon="sword" description="Battle Rhythm mastery.">
 		<requires nodeId="2012" />
 	</node>
-	<node id="2014" name="Approach" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1309.1" y="2437.1" effect="PATK_PCT:0.2">
+	<node id="2014" name="Approach" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1292.1" y="2417.9" effect="PATK_PCT:0.2">
 		<requires nodeId="2001" />
 		<requires nodeId="2015" />
 	</node>
-	<node id="2015" name="Battle Fervor" sector="Juggernaut" type="ACTIVE_SKILL" tier="0" cost="1" x="1193.2" y="2406.1" effect="MAXHP:15" skillId="27410" skillLevel="1" description="ACTIVE: +15% P.Atk and +10% Atk. Speed, but -5% P.Def, for 30s (60s cooldown).">
+	<node id="2015" name="Battle Fervor" sector="Juggernaut" type="ACTIVE_SKILL" tier="0" cost="1" x="1177.6" y="2339.7" effect="MAXHP:15" skillId="27410" skillLevel="1" description="ACTIVE: +15% P.Atk and +10% Atk. Speed, but -5% P.Def, for 30s (60s cooldown).">
 		<requires nodeId="2014" />
 	</node>
 	<node id="2016" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1125.0" y="1948.6" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP:12" description="Junction.">
@@ -61,10 +81,10 @@
 		<requires nodeId="2019" />
 		<requires nodeId="2025" />
 		<requires nodeId="2031" />
-		<requires nodeId="2037" />
 		<requires nodeId="2040" />
 		<requires nodeId="20107" />
 		<requires nodeId="21104" />
+		<requires nodeId="2049" />
 	</node>
 	<node id="2017" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1325.0" y="2295.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="2001" />
@@ -74,58 +94,62 @@
 		<requires nodeId="2016" />
 		<requires nodeId="2017" />
 	</node>
-	<node id="2019" name="Savagery" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1255.4" y="1983.5" orbitX="1356.8" orbitY="2010.7" effect="CRIT_DMG_PCT:1.6" icon="axe">
+	<node id="2019" name="Savagery" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1314.1" y="1893.0" orbitX="1299.8" orbitY="2194.0" effect="CRIT_DMG_PCT:1.6" icon="axe">
 		<requires nodeId="2016" />
 		<requires nodeId="2020" />
 		<requires nodeId="33004" />
 	</node>
-	<node id="2020" name="Savagery" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1296.6" y="2096.7" orbitX="1356.8" orbitY="2010.7" effect="CRIT_DMG_PCT:1.6" icon="axe">
+	<node id="2020" name="Savagery" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1497.2" y="1966.3" orbitX="1299.8" orbitY="2194.0" effect="CRIT_DMG_PCT:1.6" icon="axe">
 		<requires nodeId="2019" />
-		<requires nodeId="2022" />
-	</node>
-	<node id="2022" name="Savagery" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1417.0" y="2096.7" orbitX="1356.8" orbitY="2010.7" effect="CRIT_DMG_PCT:1.6" icon="axe">
-		<requires nodeId="2020" />
 		<requires nodeId="2024" />
 	</node>
-	<node id="2024" name="Executioner" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="1458.2" y="1983.5" orbitX="1356.8" orbitY="2010.7" effect="CRIT_DMG_PCT:8;STR:1" icon="axe" description="Savagery mastery.">
+	<node id="2022" name="Savagery" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1567.7" y="2332.1" orbitX="1299.8" orbitY="2194.0" effect="CRIT_DMG_PCT:1.6" icon="axe">
+		<requires nodeId="2024" />
+		<requires nodeId="2001" />
+	</node>
+	<node id="2024" name="Executioner" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="1595.7" y="2137.0" orbitX="1299.8" orbitY="2194.0" effect="CRIT_DMG_PCT:8;STR:1" icon="axe" description="Savagery mastery.">
+		<requires nodeId="2020" />
 		<requires nodeId="2022" />
 	</node>
-	<node id="2025" name="Conditioning" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1090.1" y="2079.0" orbitX="1062.9" orbitY="2180.4" effect="MAXHP:25" icon="fist">
+	<node id="2025" name="Conditioning" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="982.3" y="2084.6" orbitX="1250.2" orbitY="2222.7" effect="MAXHP:25" icon="fist">
 		<requires nodeId="2016" />
 		<requires nodeId="2026" />
 		<requires nodeId="33103" />
 	</node>
-	<node id="2026" name="Conditioning" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1167.5" y="2171.2" orbitX="1062.9" orbitY="2180.4" effect="MAXHP:25" icon="fist">
+	<node id="2026" name="Conditioning" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="954.3" y="2279.7" orbitX="1250.2" orbitY="2222.7" effect="MAXHP:25" icon="fist">
 		<requires nodeId="2025" />
-		<requires nodeId="2028" />
-	</node>
-	<node id="2028" name="Conditioning" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1107.3" y="2275.5" orbitX="1062.9" orbitY="2180.4" effect="MAXHP:25" icon="fist">
-		<requires nodeId="2026" />
 		<requires nodeId="2030" />
 	</node>
-	<node id="2030" name="Iron Brawn" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="988.6" y="2254.6" orbitX="1062.9" orbitY="2180.4" effect="MAXHP:80;STR:1" icon="fist" description="Conditioning mastery.">
+	<node id="2028" name="Conditioning" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1235.9" y="2523.7" orbitX="1250.2" orbitY="2222.7" effect="MAXHP:25" icon="fist">
+		<requires nodeId="2030" />
+		<requires nodeId="2001" />
+	</node>
+	<node id="2030" name="Iron Brawn" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="1052.8" y="2450.4" orbitX="1250.2" orbitY="2222.7" effect="MAXHP:80;STR:1" icon="fist" description="Conditioning mastery.">
+		<requires nodeId="2026" />
 		<requires nodeId="2028" />
 	</node>
-	<node id="2031" name="Weapon Training" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1159.9" y="1818.2" orbitX="1187.1" orbitY="1716.7" effect="ACCURACY_ADD:0.9" icon="star">
+	<node id="2031" name="Weapon Training" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1219.9" y="1812.9" orbitX="1104.9" orbitY="1613.7" effect="ACCURACY_ADD:0.9" icon="star">
 		<requires nodeId="2016" />
 		<requires nodeId="2032" />
 	</node>
-	<node id="2032" name="Weapon Training" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1082.5" y="1725.9" orbitX="1187.1" orbitY="1716.7" effect="ACCURACY_ADD:0.9" icon="star">
+	<node id="2032" name="Weapon Training" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1294.9" y="1743.3" orbitX="1104.9" orbitY="1613.7" effect="ACCURACY_ADD:0.9" icon="star">
 		<requires nodeId="2031" />
-		<requires nodeId="2033" />
-	</node>
-	<node id="2033" name="Weapon Training" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1142.7" y="1621.6" orbitX="1187.1" orbitY="1716.7" effect="ACCURACY_ADD:0.9" icon="star">
-		<requires nodeId="2032" />
 		<requires nodeId="2036" />
 	</node>
-	<node id="2036" name="Perfect Form" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="1261.4" y="1642.5" orbitX="1187.1" orbitY="1716.7" effect="ACCURACY_ADD:4;PATK_PCT:2" icon="star" description="Weapon Training mastery.">
+	<node id="2033" name="Weapon Training" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1324.7" y="1546.0" orbitX="1104.9" orbitY="1613.7" effect="ACCURACY_ADD:0.9" icon="star">
+		<requires nodeId="2036" />
+		<requires nodeId="2044" />
+	</node>
+	<node id="2036" name="Perfect Form" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="1332.3" y="1648.0" orbitX="1104.9" orbitY="1613.7" effect="ACCURACY_ADD:4;PATK_PCT:2" icon="star" description="Weapon Training mastery.">
 		<requires nodeId="2033" />
+		<requires nodeId="2032" />
 	</node>
-	<node id="2037" name="Approach" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1009.1" y="1917.5" effect="PATK_PCT:0.2">
-		<requires nodeId="2016" />
+	<node id="2037" name="Approach" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="896.1" y="1792.1" effect="PATK_PCT:0.2">
 		<requires nodeId="2038" />
+		<requires nodeId="2040" />
+		<requires nodeId="2050" />
 	</node>
-	<node id="2038" name="Resolute Technique" sector="Juggernaut" type="KEYSTONE" tier="0" cost="1" x="893.2" y="1886.4" effect="KS_RESOLUTE:1" icon="target" description="KEYSTONE: Your attacks and physical skills never miss, but you can never land a critical hit.">
+	<node id="2038" name="Resolute Technique" sector="Juggernaut" type="KEYSTONE" tier="0" cost="1" x="836.1" y="1688.1" effect="KS_RESOLUTE:1" icon="target" description="KEYSTONE: Your attacks and physical skills never miss, but you can never land a critical hit.">
 		<requires nodeId="2037" />
 	</node>
 	<node id="2039" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="825.0" y="1428.9" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5" description="Junction.">
@@ -133,69 +157,75 @@
 		<requires nodeId="2042" />
 		<requires nodeId="2048" />
 		<requires nodeId="2054" />
-		<requires nodeId="2060" />
 		<requires nodeId="2063" />
 		<requires nodeId="20205" />
 		<requires nodeId="21204" />
+		<requires nodeId="2072" />
 	</node>
 	<node id="2040" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1025.0" y="1775.4" effect="PATK_PCT:0.2;MAXHP:12">
 		<requires nodeId="2016" />
 		<requires nodeId="2041" />
+		<requires nodeId="2037" />
 	</node>
 	<node id="2041" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="925.0" y="1602.1" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="2039" />
 		<requires nodeId="2040" />
 	</node>
-	<node id="2042" name="Bulwark" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="926.4" y="1456.1" orbitX="1027.8" orbitY="1483.3" effect="PDEF_PCT:1" icon="helmet">
+	<node id="2042" name="Bulwark" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="989.9" y="1414.6" orbitX="1104.9" orbitY="1613.7" effect="PDEF_PCT:1" icon="helmet">
 		<requires nodeId="2039" />
 		<requires nodeId="2043" />
 	</node>
-	<node id="2043" name="Bulwark" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1018.7" y="1378.7" orbitX="1027.8" orbitY="1483.3" effect="PDEF_PCT:1" icon="helmet">
+	<node id="2043" name="Bulwark" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1087.7" y="1384.4" orbitX="1104.9" orbitY="1613.7" effect="PDEF_PCT:1" icon="helmet">
 		<requires nodeId="2042" />
-		<requires nodeId="2044" />
-	</node>
-	<node id="2044" name="Bulwark" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1123.0" y="1438.9" orbitX="1027.8" orbitY="1483.3" effect="PDEF_PCT:1" icon="helmet">
-		<requires nodeId="2043" />
 		<requires nodeId="2047" />
 	</node>
-	<node id="2047" name="Armoured Fury" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="1102.1" y="1557.5" orbitX="1027.8" orbitY="1483.3" effect="PDEF_PCT:4;MAXHP:40" icon="helmet" description="Bulwark mastery.">
+	<node id="2044" name="Bulwark" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1273.5" y="1457.3" orbitX="1104.9" orbitY="1613.7" effect="PDEF_PCT:1" icon="helmet">
+		<requires nodeId="2047" />
+		<requires nodeId="2033" />
+	</node>
+	<node id="2047" name="Armoured Fury" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="1188.9" y="1399.6" orbitX="1104.9" orbitY="1613.7" effect="PDEF_PCT:4;MAXHP:40" icon="helmet" description="Bulwark mastery.">
 		<requires nodeId="2044" />
+		<requires nodeId="2043" />
 	</node>
-	<node id="2048" name="Brute Force" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="790.1" y="1559.3" orbitX="762.9" orbitY="1660.8" effect="PATK_PCT:1.2" icon="hammer">
+	<node id="2048" name="Brute Force" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="641.1" y="1611.0" orbitX="927.4" orbitY="1716.2" effect="PATK_PCT:1.2" icon="hammer">
 		<requires nodeId="2039" />
-		<requires nodeId="2049" />
-	</node>
-	<node id="2049" name="Brute Force" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="867.5" y="1651.6" orbitX="762.9" orbitY="1660.8" effect="PATK_PCT:1.2" icon="hammer">
-		<requires nodeId="2048" />
-		<requires nodeId="2050" />
-	</node>
-	<node id="2050" name="Brute Force" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="807.3" y="1755.9" orbitX="762.9" orbitY="1660.8" effect="PATK_PCT:1.2" icon="hammer">
-		<requires nodeId="2049" />
 		<requires nodeId="2053" />
 	</node>
-	<node id="2053" name="Heavy Blows" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="688.6" y="1735.0" orbitX="762.9" orbitY="1660.8" effect="PATK_PCT:5;STR:1" icon="hammer" description="Brute Force mastery.">
-		<requires nodeId="2050" />
+	<node id="2049" name="Brute Force" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="875.4" y="2016.8" orbitX="927.4" orbitY="1716.2" effect="PATK_PCT:1.2" icon="hammer">
+		<requires nodeId="2053" />
+		<requires nodeId="2016" />
 	</node>
-	<node id="2054" name="Battle Rhythm" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="859.9" y="1298.5" orbitX="887.1" orbitY="1197.1" effect="ATK_SPD_PCT:1" icon="sword">
+	<node id="2050" name="Brute Force" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="775.8" y="1803.7" effect="PATK_PCT:1.2" icon="hammer">
+		<requires nodeId="2053" />
+		<requires nodeId="2037" />
+	</node>
+	<node id="2053" name="Heavy Blows" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="663.2" y="1868.7" orbitX="927.4" orbitY="1716.2" effect="PATK_PCT:5;STR:1" icon="hammer" description="Brute Force mastery.">
+		<requires nodeId="2050" />
+		<requires nodeId="2048" />
+		<requires nodeId="2049" />
+	</node>
+	<node id="2054" name="Battle Rhythm" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="878.9" y="1282.3" orbitX="778.9" orbitY="1109.1" effect="ATK_SPD_PCT:1" icon="sword">
 		<requires nodeId="2039" />
 		<requires nodeId="2055" />
 	</node>
-	<node id="2055" name="Battle Rhythm" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="782.5" y="1206.3" orbitX="887.1" orbitY="1197.1" effect="ATK_SPD_PCT:1" icon="sword">
+	<node id="2055" name="Battle Rhythm" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="944.2" y="1221.8" orbitX="778.9" orbitY="1109.1" effect="ATK_SPD_PCT:1" icon="sword">
 		<requires nodeId="2054" />
-		<requires nodeId="2056" />
-	</node>
-	<node id="2056" name="Battle Rhythm" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="842.7" y="1102.0" orbitX="887.1" orbitY="1197.1" effect="ATK_SPD_PCT:1" icon="sword">
-		<requires nodeId="2055" />
 		<requires nodeId="2059" />
 	</node>
-	<node id="2059" name="Relentless Assault" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="961.4" y="1122.9" orbitX="887.1" orbitY="1197.1" effect="ATK_SPD_PCT:4;PATK_PCT:1.5" icon="sword" description="Battle Rhythm mastery.">
+	<node id="2056" name="Battle Rhythm" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="970.0" y="1050.2" orbitX="778.9" orbitY="1109.1" effect="ATK_SPD_PCT:1" icon="sword">
+		<requires nodeId="2059" />
+		<requires nodeId="2067" />
+	</node>
+	<node id="2059" name="Relentless Assault" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="976.7" y="1138.9" orbitX="778.9" orbitY="1109.1" effect="ATK_SPD_PCT:4;PATK_PCT:1.5" icon="sword" description="Battle Rhythm mastery.">
 		<requires nodeId="2056" />
+		<requires nodeId="2055" />
 	</node>
-	<node id="2060" name="Approach" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="709.1" y="1397.9" effect="PATK_PCT:0.2">
-		<requires nodeId="2039" />
+	<node id="2060" name="Approach" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="596.1" y="1272.4" effect="PATK_PCT:0.2">
 		<requires nodeId="2061" />
+		<requires nodeId="2063" />
+		<requires nodeId="2073" />
 	</node>
-	<node id="2061" name="Earthshatter" sector="Juggernaut" type="ACTIVE_SKILL" tier="0" cost="1" x="593.2" y="1366.8" effect="MAXHP:15" skillId="27411" skillLevel="auto" description="ACTIVE: strike all enemies around you, with a chance to stun them for 2s (30s cooldown). Grows stronger with your level.">
+	<node id="2061" name="Earthshatter" sector="Juggernaut" type="ACTIVE_SKILL" tier="0" cost="1" x="536.1" y="1168.5" effect="MAXHP:15" skillId="27411" skillLevel="auto" description="ACTIVE: strike all enemies around you, with a chance to stun them for 2s (30s cooldown). Grows stronger with your level.">
 		<requires nodeId="2060" />
 	</node>
 	<node id="2062" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="525.0" y="909.3" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP:12" description="Junction.">
@@ -207,61 +237,107 @@
 		<requires nodeId="2081" />
 		<requires nodeId="20305" />
 		<requires nodeId="21304" />
+		<requires nodeId="2094" />
+		<requires nodeId="2099" />
 	</node>
 	<node id="2063" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="725.0" y="1255.7" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="2039" />
 		<requires nodeId="2064" />
+		<requires nodeId="2060" />
 	</node>
 	<node id="2064" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="625.0" y="1082.5" effect="PATK_PCT:0.2;MAXHP:12">
 		<requires nodeId="2062" />
 		<requires nodeId="2063" />
 	</node>
-	<node id="2065" name="Savagery" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="626.4" y="936.5" orbitX="727.8" orbitY="963.7" effect="CRIT_DMG_PCT:1.6" icon="axe">
+	<node id="2065" name="Savagery" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="678.9" y="935.9" orbitX="778.9" orbitY="1109.1" effect="CRIT_DMG_PCT:1.6" icon="axe">
 		<requires nodeId="2062" />
 		<requires nodeId="2066" />
 	</node>
-	<node id="2066" name="Savagery" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="718.7" y="859.1" orbitX="727.8" orbitY="963.7" effect="CRIT_DMG_PCT:1.6" icon="axe">
+	<node id="2066" name="Savagery" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="764.0" y="909.7" orbitX="778.9" orbitY="1109.1" effect="CRIT_DMG_PCT:1.6" icon="axe">
 		<requires nodeId="2065" />
-		<requires nodeId="2067" />
-	</node>
-	<node id="2067" name="Savagery" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="823.0" y="919.3" orbitX="727.8" orbitY="963.7" effect="CRIT_DMG_PCT:1.6" icon="axe">
-		<requires nodeId="2066" />
 		<requires nodeId="2070" />
 	</node>
-	<node id="2070" name="Executioner" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="802.1" y="1037.9" orbitX="727.8" orbitY="963.7" effect="CRIT_DMG_PCT:8;STR:1" icon="axe" description="Savagery mastery.">
+	<node id="2067" name="Savagery" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="925.5" y="973.1" orbitX="778.9" orbitY="1109.1" effect="CRIT_DMG_PCT:1.6" icon="axe">
+		<requires nodeId="2070" />
+		<requires nodeId="2056" />
+	</node>
+	<node id="2070" name="Executioner" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="852.0" y="923.0" orbitX="778.9" orbitY="1109.1" effect="CRIT_DMG_PCT:8;STR:1" icon="axe" description="Savagery mastery.">
 		<requires nodeId="2067" />
+		<requires nodeId="2066" />
 	</node>
-	<node id="2071" name="Conditioning" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="490.1" y="1039.7" orbitX="462.9" orbitY="1141.1" effect="MAXHP:25" icon="fist">
+	<node id="2071" name="Conditioning" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="370.5" y="1091.7" orbitX="658.2" orbitY="1178.8" effect="MAXHP:25" icon="fist">
 		<requires nodeId="2062" />
-		<requires nodeId="2072" />
-	</node>
-	<node id="2072" name="Conditioning" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="567.5" y="1132.0" orbitX="462.9" orbitY="1141.1" effect="MAXHP:25" icon="fist">
-		<requires nodeId="2071" />
-		<requires nodeId="2073" />
-	</node>
-	<node id="2073" name="Conditioning" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="507.3" y="1236.3" orbitX="462.9" orbitY="1141.1" effect="MAXHP:25" icon="fist">
-		<requires nodeId="2072" />
 		<requires nodeId="2076" />
 	</node>
-	<node id="2076" name="Iron Brawn" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="388.6" y="1215.4" orbitX="462.9" orbitY="1141.1" effect="MAXHP:80;STR:1" icon="fist" description="Conditioning mastery.">
-		<requires nodeId="2073" />
+	<node id="2072" name="Conditioning" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="589.8" y="1471.6" orbitX="658.2" orbitY="1178.8" effect="MAXHP:25" icon="fist">
+		<requires nodeId="2076" />
+		<requires nodeId="2039" />
 	</node>
-	<node id="2077" name="Approach" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="556.1" y="793.4" effect="PATK_PCT:0.2">
+	<node id="2073" name="Conditioning" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="510.5" y="1264.1" effect="MAXHP:25" icon="fist">
+		<requires nodeId="2076" />
+		<requires nodeId="2060" />
+	</node>
+	<node id="2076" name="Iron Brawn" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="397.9" y="1329.1" orbitX="658.2" orbitY="1178.8" effect="MAXHP:80;STR:1" icon="fist" description="Conditioning mastery.">
+		<requires nodeId="2073" />
+		<requires nodeId="2071" />
+		<requires nodeId="2072" />
+	</node>
+	<node id="2077" name="Approach" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="518.3" y="797.7" effect="PATK_PCT:0.2">
 		<requires nodeId="2062" />
 		<requires nodeId="2078" />
 	</node>
-	<node id="2078" name="Unwavering Stance" sector="Juggernaut" type="KEYSTONE" tier="0" cost="1" x="587.1" y="677.5" effect="KS_STUN_IMMUNE:1;PDEF_PCT:-15" icon="anvil" description="KEYSTONE: You cannot be stunned, but your P.Def is 15% lower.">
+	<node id="2078" name="Unwavering Stance" sector="Juggernaut" type="KEYSTONE" tier="0" cost="1" x="489.3" y="687.5" effect="KS_STUN_IMMUNE:1;PDEF_PCT:-15" icon="anvil" description="KEYSTONE: You cannot be stunned, but your P.Def is 15% lower.">
 		<requires nodeId="2077" />
 	</node>
 	<node id="2079" name="Titan's Apotheosis" sector="Juggernaut" type="MASTER" tier="0" cost="1" x="360.0" y="623.5" effect="STR:2;PATK_PCT:8;ATK_SPD_PCT:2" icon="fist" description="Archetype capstone.">
 		<requires nodeId="2080" />
 		<requires nodeId="9003" />
 	</node>
+	<node id="2094" name="Heartblood" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="581.6" y="809.0" orbitX="314.7" orbitY="724.7" effect="MAXHP:29">
+		<requires nodeId="2062" />
+		<requires nodeId="2095" />
+	</node>
+	<node id="2095" name="Heartblood" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="592.9" y="694.3" orbitX="314.7" orbitY="724.7" effect="MAXHP_PCT:1.5">
+		<requires nodeId="2094" />
+		<requires nodeId="2096" />
+	</node>
+	<node id="2096" name="Giant's Blood" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="557.0" y="584.8" orbitX="314.7" orbitY="724.7" effect="MAXHP:90;CON:1" icon="heart">
+		<requires nodeId="2095" />
+		<requires nodeId="2097" />
+	</node>
+	<node id="2097" name="Heartblood" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="480.1" y="499.1" orbitX="314.7" orbitY="724.7" effect="MAXHP_PCT:1.5">
+		<requires nodeId="2096" />
+		<requires nodeId="2098" />
+	</node>
+	<node id="2098" name="Heartblood" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="375.2" y="451.5" orbitX="314.7" orbitY="724.7" effect="MAXHP:29">
+		<requires nodeId="2097" />
+		<requires nodeId="9003" />
+	</node>
+	<node id="2099" name="Heartblood" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="409.8" y="908.1" orbitX="470.3" orbitY="634.9" effect="MAXHP:29">
+		<requires nodeId="2062" />
+		<requires nodeId="2100" />
+	</node>
+	<node id="2100" name="Heartblood" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="304.9" y="860.6" orbitX="470.3" orbitY="634.9" effect="MAXHP_PCT:1.5">
+		<requires nodeId="2099" />
+		<requires nodeId="2101" />
+	</node>
+	<node id="2101" name="Second Wind" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="228.0" y="774.8" orbitX="470.3" orbitY="634.9" effect="MAXHP:140;HP_REGEN_PCT:6" icon="heart-plus">
+		<requires nodeId="2100" />
+		<requires nodeId="2102" />
+	</node>
+	<node id="2102" name="Heartblood" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="192.1" y="665.3" orbitX="470.3" orbitY="634.9" effect="MAXHP_PCT:1.5">
+		<requires nodeId="2101" />
+		<requires nodeId="2103" />
+	</node>
+	<node id="2103" name="Heartblood" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="203.4" y="550.7" orbitX="470.3" orbitY="634.9" effect="MAXHP:29">
+		<requires nodeId="2102" />
+		<requires nodeId="9003" />
+	</node>
 	<node id="2080" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="442.5" y="766.4" effect="PATK_PCT:0.2;MAXHP:12">
 		<requires nodeId="2062" />
 		<requires nodeId="2079" />
 	</node>
-	<node id="2081" name="Dwarven Craft Mastery" sector="Juggernaut" type="FUNCTION" tier="0" cost="1" x="409.1" y="878.3" effect="MAXHP:15" skillId="1321" skillLevel="1" description="Unlock Dwarven Craft skill.">
+	<node id="2081" name="Dwarven Craft Mastery" sector="Juggernaut" type="FUNCTION" tier="0" cost="1" x="398.0" y="809.4" effect="MAXHP:15" skillId="1321" skillLevel="1" description="Unlock Dwarven Craft skill.">
 		<requires nodeId="2062" />
 	</node>
 	<node id="21101" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="582.3" y="2173.3" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
@@ -337,5 +413,65 @@
 	<node id="21305" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="-359.1" y="986.7" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="3062" />
 		<requires nodeId="21303" />
+	</node>
+	<node id="47101" name="Earth Fury" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2111.1" y="3495.4" orbitX="1955.1" orbitY="3836.4" effect="EARTH_ATK:5" icon="leaf">
+		<requires nodeId="39100" />
+		<requires nodeId="47102" />
+	</node>
+	<node id="47102" name="Earth Fury" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2207.5" y="3559.0" orbitX="1955.1" orbitY="3836.4" effect="EARTH_ATK:5" icon="leaf">
+		<requires nodeId="47101" />
+		<requires nodeId="47103" />
+	</node>
+	<node id="47103" name="Tectonic Fury" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="2279.9" y="3648.9" orbitX="1955.1" orbitY="3836.4" effect="EARTH_ATK:20;PATK_PCT:2" icon="leaf">
+		<requires nodeId="47102" />
+		<requires nodeId="47104" />
+	</node>
+	<node id="47104" name="Earth Fury" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2321.6" y="3756.6" orbitX="1955.1" orbitY="3836.4" effect="EARTH_ATK:5" icon="leaf">
+		<requires nodeId="47103" />
+		<requires nodeId="47105" />
+	</node>
+	<node id="47105" name="Earth Fury" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2328.5" y="3871.8" orbitX="1955.1" orbitY="3836.4" effect="EARTH_ATK:5" icon="leaf">
+		<requires nodeId="47104" />
+		<requires nodeId="47111" />
+	</node>
+	<node id="47106" name="Earth Ward" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1971.5" y="3576.0" orbitX="2344.9" orbitY="3611.4" effect="EARTH_RES:6" icon="ward">
+		<requires nodeId="39100" />
+		<requires nodeId="47107" />
+	</node>
+	<node id="47107" name="Earth Ward" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1978.4" y="3691.2" orbitX="2344.9" orbitY="3611.4" effect="EARTH_RES:6" icon="ward">
+		<requires nodeId="47106" />
+		<requires nodeId="47108" />
+	</node>
+	<node id="47108" name="Bedrock" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="2020.1" y="3798.9" orbitX="2344.9" orbitY="3611.4" effect="EARTH_RES:24;PDEF_PCT:2" icon="ward">
+		<requires nodeId="47107" />
+		<requires nodeId="47109" />
+	</node>
+	<node id="47109" name="Earth Ward" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2092.5" y="3888.8" orbitX="2344.9" orbitY="3611.4" effect="EARTH_RES:6" icon="ward">
+		<requires nodeId="47108" />
+		<requires nodeId="47110" />
+	</node>
+	<node id="47110" name="Earth Ward" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2188.9" y="3952.4" orbitX="2344.9" orbitY="3611.4" effect="EARTH_RES:6" icon="ward">
+		<requires nodeId="47109" />
+		<requires nodeId="47111" />
+	</node>
+	<node id="47111" name="Earth Shrine" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2300.0" y="3983.7" effect="EARTH_ATK:10" icon="leaf">
+		<requires nodeId="47105" />
+		<requires nodeId="47110" />
+		<requires nodeId="47112" />
+	</node>
+	<node id="47112" name="Earth Fury" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2355.0" y="4079.0" orbitX="2407.5" orbitY="4169.9" effect="EARTH_ATK:5" icon="leaf">
+		<requires nodeId="47111" />
+		<requires nodeId="47113" />
+	</node>
+	<node id="47113" name="Earth Fury" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2475.0" y="4089.5" orbitX="2407.5" orbitY="4169.9" effect="EARTH_ATK:5" icon="leaf">
+		<requires nodeId="47112" />
+		<requires nodeId="47114" />
+	</node>
+	<node id="47114" name="Earth Fury" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2506.2" y="4205.8" orbitX="2407.5" orbitY="4169.9" effect="EARTH_ATK:5" icon="leaf">
+		<requires nodeId="47113" />
+		<requires nodeId="47115" />
+	</node>
+	<node id="47115" name="Wrath of the Mountain" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="2407.5" y="4274.9" orbitX="2407.5" orbitY="4169.9" effect="EARTH_ATK:30;EARTH_RES:15" icon="leaf">
+		<requires nodeId="47114" />
 	</node>
 </list>

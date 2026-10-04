@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Rim: 90 nodes, the outer ring road: a spur from every Origin out to its gate, and an arc road between the gates. x/y are authoritative layout coords. -->
+<!-- Rim: 126 nodes, the outer ring road: three spurs from every Origin (to its gate and to the rim road either side of it), and an arc road between the gates. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="39000" name="Rim Gate" sector="Vanguard" type="SMALL" tier="0" cost="1" x="4000.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:25;MAXHP_PCT:0.5" description="Where the Outer Rim meets the road from the Origin.">
 		<requires nodeId="39003" />
 		<requires nodeId="39010" />
 		<requires nodeId="39520" />
+		<requires nodeId="47001" />
+		<requires nodeId="47006" />
 	</node>
 	<node id="39001" name="Outbound Road" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3475.0" y="0.0" effect="MAXHP:12">
 		<requires nodeId="1000" />
@@ -18,10 +20,36 @@
 		<requires nodeId="39000" />
 		<requires nodeId="39002" />
 	</node>
+	<node id="39004" name="Outbound Road" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3471.2" y="-87.2" effect="MAXHP:12">
+		<requires nodeId="1000" />
+		<requires nodeId="39005" />
+	</node>
+	<node id="39005" name="Outbound Road" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3642.4" y="-174.3" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39004" />
+		<requires nodeId="39006" />
+	</node>
+	<node id="39006" name="Outbound Road" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3813.6" y="-261.5" effect="MAXHP:12">
+		<requires nodeId="39005" />
+		<requires nodeId="39520" />
+	</node>
+	<node id="39007" name="Outbound Road" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3471.2" y="87.2" effect="MAXHP:12">
+		<requires nodeId="1000" />
+		<requires nodeId="39008" />
+	</node>
+	<node id="39008" name="Outbound Road" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3642.4" y="174.3" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39007" />
+		<requires nodeId="39009" />
+	</node>
+	<node id="39009" name="Outbound Road" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3813.6" y="261.5" effect="MAXHP:12">
+		<requires nodeId="39008" />
+		<requires nodeId="39010" />
+	</node>
 	<node id="39100" name="Rim Gate" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2000.0" y="3464.1" orbitX="0.0" orbitY="0.0" effect="MAXHP:25;MAXHP_PCT:0.5" description="Where the Outer Rim meets the road from the Origin.">
 		<requires nodeId="39020" />
 		<requires nodeId="39103" />
 		<requires nodeId="39110" />
+		<requires nodeId="47101" />
+		<requires nodeId="47106" />
 	</node>
 	<node id="39101" name="Outbound Road" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1737.5" y="3009.4" effect="MAXHP:12">
 		<requires nodeId="2000" />
@@ -35,10 +63,36 @@
 		<requires nodeId="39100" />
 		<requires nodeId="39102" />
 	</node>
+	<node id="39104" name="Outbound Road" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1811.1" y="2962.6" effect="MAXHP:12">
+		<requires nodeId="2000" />
+		<requires nodeId="39105" />
+	</node>
+	<node id="39105" name="Outbound Road" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1972.2" y="3067.2" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39104" />
+		<requires nodeId="39106" />
+	</node>
+	<node id="39106" name="Outbound Road" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2133.2" y="3171.9" effect="MAXHP:12">
+		<requires nodeId="39105" />
+		<requires nodeId="39020" />
+	</node>
+	<node id="39107" name="Outbound Road" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1660.1" y="3049.7" effect="MAXHP:12">
+		<requires nodeId="2000" />
+		<requires nodeId="39108" />
+	</node>
+	<node id="39108" name="Outbound Road" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1670.2" y="3241.6" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39107" />
+		<requires nodeId="39109" />
+	</node>
+	<node id="39109" name="Outbound Road" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1680.4" y="3433.4" effect="MAXHP:12">
+		<requires nodeId="39108" />
+		<requires nodeId="39110" />
+	</node>
 	<node id="39200" name="Rim Gate" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-2000.0" y="3464.1" orbitX="0.0" orbitY="0.0" effect="MAXHP:25;MAXHP_PCT:0.5" description="Where the Outer Rim meets the road from the Origin.">
 		<requires nodeId="39120" />
 		<requires nodeId="39203" />
 		<requires nodeId="39210" />
+		<requires nodeId="47201" />
+		<requires nodeId="47206" />
 	</node>
 	<node id="39201" name="Outbound Road" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1737.5" y="3009.4" effect="MAXHP:12">
 		<requires nodeId="3000" />
@@ -52,10 +106,36 @@
 		<requires nodeId="39200" />
 		<requires nodeId="39202" />
 	</node>
+	<node id="39204" name="Outbound Road" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1660.1" y="3049.7" effect="MAXHP:12">
+		<requires nodeId="3000" />
+		<requires nodeId="39205" />
+	</node>
+	<node id="39205" name="Outbound Road" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1670.2" y="3241.6" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39204" />
+		<requires nodeId="39206" />
+	</node>
+	<node id="39206" name="Outbound Road" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1680.4" y="3433.4" effect="MAXHP:12">
+		<requires nodeId="39205" />
+		<requires nodeId="39120" />
+	</node>
+	<node id="39207" name="Outbound Road" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1811.1" y="2962.6" effect="MAXHP:12">
+		<requires nodeId="3000" />
+		<requires nodeId="39208" />
+	</node>
+	<node id="39208" name="Outbound Road" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1972.2" y="3067.2" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39207" />
+		<requires nodeId="39209" />
+	</node>
+	<node id="39209" name="Outbound Road" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-2133.2" y="3171.9" effect="MAXHP:12">
+		<requires nodeId="39208" />
+		<requires nodeId="39210" />
+	</node>
 	<node id="39300" name="Rim Gate" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-4000.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:25;MAXHP_PCT:0.5" description="Where the Outer Rim meets the road from the Origin.">
 		<requires nodeId="39220" />
 		<requires nodeId="39303" />
 		<requires nodeId="39310" />
+		<requires nodeId="47301" />
+		<requires nodeId="47306" />
 	</node>
 	<node id="39301" name="Outbound Road" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3475.0" y="0.0" effect="MAXHP:12">
 		<requires nodeId="4000" />
@@ -69,10 +149,36 @@
 		<requires nodeId="39300" />
 		<requires nodeId="39302" />
 	</node>
+	<node id="39304" name="Outbound Road" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3471.2" y="87.2" effect="MAXHP:12">
+		<requires nodeId="4000" />
+		<requires nodeId="39305" />
+	</node>
+	<node id="39305" name="Outbound Road" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3642.4" y="174.3" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39304" />
+		<requires nodeId="39306" />
+	</node>
+	<node id="39306" name="Outbound Road" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3813.6" y="261.5" effect="MAXHP:12">
+		<requires nodeId="39305" />
+		<requires nodeId="39220" />
+	</node>
+	<node id="39307" name="Outbound Road" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3471.2" y="-87.2" effect="MAXHP:12">
+		<requires nodeId="4000" />
+		<requires nodeId="39308" />
+	</node>
+	<node id="39308" name="Outbound Road" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3642.4" y="-174.3" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39307" />
+		<requires nodeId="39309" />
+	</node>
+	<node id="39309" name="Outbound Road" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3813.6" y="-261.5" effect="MAXHP:12">
+		<requires nodeId="39308" />
+		<requires nodeId="39310" />
+	</node>
 	<node id="39400" name="Rim Gate" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2000.0" y="-3464.1" orbitX="0.0" orbitY="0.0" effect="MAXHP:25;MAXHP_PCT:0.5" description="Where the Outer Rim meets the road from the Origin.">
 		<requires nodeId="39320" />
 		<requires nodeId="39403" />
 		<requires nodeId="39410" />
+		<requires nodeId="47401" />
+		<requires nodeId="47406" />
 	</node>
 	<node id="39401" name="Outbound Road" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1737.5" y="-3009.4" effect="MAXHP:12">
 		<requires nodeId="5000" />
@@ -86,10 +192,36 @@
 		<requires nodeId="39400" />
 		<requires nodeId="39402" />
 	</node>
+	<node id="39404" name="Outbound Road" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1811.1" y="-2962.6" effect="MAXHP:12">
+		<requires nodeId="5000" />
+		<requires nodeId="39405" />
+	</node>
+	<node id="39405" name="Outbound Road" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1972.2" y="-3067.2" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39404" />
+		<requires nodeId="39406" />
+	</node>
+	<node id="39406" name="Outbound Road" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2133.2" y="-3171.9" effect="MAXHP:12">
+		<requires nodeId="39405" />
+		<requires nodeId="39320" />
+	</node>
+	<node id="39407" name="Outbound Road" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1660.1" y="-3049.7" effect="MAXHP:12">
+		<requires nodeId="5000" />
+		<requires nodeId="39408" />
+	</node>
+	<node id="39408" name="Outbound Road" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1670.2" y="-3241.6" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39407" />
+		<requires nodeId="39409" />
+	</node>
+	<node id="39409" name="Outbound Road" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1680.4" y="-3433.4" effect="MAXHP:12">
+		<requires nodeId="39408" />
+		<requires nodeId="39410" />
+	</node>
 	<node id="39500" name="Rim Gate" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2000.0" y="-3464.1" orbitX="0.0" orbitY="0.0" effect="MAXHP:25;MAXHP_PCT:0.5" description="Where the Outer Rim meets the road from the Origin.">
 		<requires nodeId="39420" />
 		<requires nodeId="39503" />
 		<requires nodeId="39510" />
+		<requires nodeId="47501" />
+		<requires nodeId="47506" />
 	</node>
 	<node id="39501" name="Outbound Road" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1737.5" y="-3009.4" effect="MAXHP:12">
 		<requires nodeId="6000" />
@@ -103,9 +235,34 @@
 		<requires nodeId="39500" />
 		<requires nodeId="39502" />
 	</node>
+	<node id="39504" name="Outbound Road" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1660.1" y="-3049.7" effect="MAXHP:12">
+		<requires nodeId="6000" />
+		<requires nodeId="39505" />
+	</node>
+	<node id="39505" name="Outbound Road" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1670.2" y="-3241.6" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39504" />
+		<requires nodeId="39506" />
+	</node>
+	<node id="39506" name="Outbound Road" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1680.4" y="-3433.4" effect="MAXHP:12">
+		<requires nodeId="39505" />
+		<requires nodeId="39420" />
+	</node>
+	<node id="39507" name="Outbound Road" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1811.1" y="-2962.6" effect="MAXHP:12">
+		<requires nodeId="6000" />
+		<requires nodeId="39508" />
+	</node>
+	<node id="39508" name="Outbound Road" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1972.2" y="-3067.2" effect="MAXHP_PCT:0.5">
+		<requires nodeId="39507" />
+		<requires nodeId="39509" />
+	</node>
+	<node id="39509" name="Outbound Road" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2133.2" y="-3171.9" effect="MAXHP:12">
+		<requires nodeId="39508" />
+		<requires nodeId="39510" />
+	</node>
 	<node id="39010" name="Outer Rim" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3984.8" y="348.6" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
 		<requires nodeId="39000" />
 		<requires nodeId="39011" />
+		<requires nodeId="39009" />
 	</node>
 	<node id="39011" name="Outer Rim" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3939.2" y="694.6" orbitX="0.0" orbitY="0.0" effect="STR:1">
 		<requires nodeId="39010" />
@@ -149,10 +306,12 @@
 	<node id="39020" name="Outer Rim" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="2294.3" y="3276.6" orbitX="0.0" orbitY="0.0" effect="CON:1">
 		<requires nodeId="39019" />
 		<requires nodeId="39100" />
+		<requires nodeId="39106" />
 	</node>
 	<node id="39110" name="Outer Rim" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="1690.5" y="3625.2" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
 		<requires nodeId="39100" />
 		<requires nodeId="39111" />
+		<requires nodeId="39109" />
 	</node>
 	<node id="39111" name="Outer Rim" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="1368.1" y="3758.8" orbitX="0.0" orbitY="0.0" effect="DEX:1">
 		<requires nodeId="39110" />
@@ -195,10 +354,12 @@
 	<node id="39120" name="Outer Rim" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="-1690.5" y="3625.2" orbitX="0.0" orbitY="0.0" effect="STR:1">
 		<requires nodeId="39119" />
 		<requires nodeId="39200" />
+		<requires nodeId="39206" />
 	</node>
 	<node id="39210" name="Outer Rim" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-2294.3" y="3276.6" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
 		<requires nodeId="39200" />
 		<requires nodeId="39211" />
+		<requires nodeId="39209" />
 	</node>
 	<node id="39211" name="Outer Rim" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-2571.2" y="3064.2" orbitX="0.0" orbitY="0.0" effect="WIT:1">
 		<requires nodeId="39210" />
@@ -241,10 +402,12 @@
 	<node id="39220" name="Outer Rim" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3984.8" y="348.6" orbitX="0.0" orbitY="0.0" effect="DEX:1">
 		<requires nodeId="39219" />
 		<requires nodeId="39300" />
+		<requires nodeId="39306" />
 	</node>
 	<node id="39310" name="Outer Rim" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3984.8" y="-348.6" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
 		<requires nodeId="39300" />
 		<requires nodeId="39311" />
+		<requires nodeId="39309" />
 	</node>
 	<node id="39311" name="Outer Rim" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3939.2" y="-694.6" orbitX="0.0" orbitY="0.0" effect="INT:1">
 		<requires nodeId="39310" />
@@ -287,10 +450,12 @@
 	<node id="39320" name="Outer Rim" sector="Starfall" type="SMALL" tier="0" cost="1" x="-2294.3" y="-3276.6" orbitX="0.0" orbitY="0.0" effect="WIT:1">
 		<requires nodeId="39319" />
 		<requires nodeId="39400" />
+		<requires nodeId="39406" />
 	</node>
 	<node id="39410" name="Outer Rim" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1690.5" y="-3625.2" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
 		<requires nodeId="39400" />
 		<requires nodeId="39411" />
+		<requires nodeId="39409" />
 	</node>
 	<node id="39411" name="Outer Rim" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1368.1" y="-3758.8" orbitX="0.0" orbitY="0.0" effect="MEN:1">
 		<requires nodeId="39410" />
@@ -334,10 +499,12 @@
 	<node id="39420" name="Outer Rim" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1690.5" y="-3625.2" orbitX="0.0" orbitY="0.0" effect="INT:1">
 		<requires nodeId="39419" />
 		<requires nodeId="39500" />
+		<requires nodeId="39506" />
 	</node>
 	<node id="39510" name="Outer Rim" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="2294.3" y="-3276.6" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
 		<requires nodeId="39500" />
 		<requires nodeId="39511" />
+		<requires nodeId="39509" />
 	</node>
 	<node id="39511" name="Outer Rim" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="2571.2" y="-3064.2" orbitX="0.0" orbitY="0.0" effect="CON:1">
 		<requires nodeId="39510" />
@@ -380,5 +547,6 @@
 	<node id="39520" name="Outer Rim" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3984.8" y="-348.6" orbitX="0.0" orbitY="0.0" effect="MEN:1">
 		<requires nodeId="39000" />
 		<requires nodeId="39519" />
+		<requires nodeId="39006" />
 	</node>
 </list>

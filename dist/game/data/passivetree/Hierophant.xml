@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Hierophant: 81 nodes. x/y are authoritative layout coords. -->
+<!-- Hierophant: 110 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="6000" name="Hierophant Origin" sector="Hierophant" type="START" tier="0" cost="0" x="1650.0" y="-2857.9" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="6001" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1425.0" y="-2468.2" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5" description="Junction.">
 		<requires nodeId="6003" />
-		<requires nodeId="6004" />
-		<requires nodeId="6009" />
 		<requires nodeId="6014" />
 		<requires nodeId="6017" />
+		<requires nodeId="6091" />
+		<requires nodeId="6093" />
+		<requires nodeId="6022" />
+		<requires nodeId="6027" />
 	</node>
 	<node id="6002" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1575.0" y="-2728.0" effect="MAXMP:6;MAXHP:12">
 		<requires nodeId="6000" />
@@ -17,43 +19,61 @@
 		<requires nodeId="6001" />
 		<requires nodeId="6002" />
 	</node>
-	<node id="6004" name="Devotion" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1390.1" y="-2598.6" orbitX="1362.9" orbitY="-2700.0" effect="MAXMP:24" icon="book">
+	<node id="6090" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1457.1" y="-2853.8" effect="MAXMP:6;MAXHP:12">
+		<requires nodeId="6000" />
+		<requires nodeId="6004" />
+	</node>
+	<node id="6091" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1332.1" y="-2637.3" effect="MAXMP:6;MAXHP_PCT:0.5">
+		<requires nodeId="6004" />
 		<requires nodeId="6001" />
-		<requires nodeId="6006" />
 		<requires nodeId="33408" />
 	</node>
-	<node id="6006" name="Devotion" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1467.5" y="-2690.8" orbitX="1362.9" orbitY="-2700.0" effect="MAXMP:24" icon="book">
+	<node id="6092" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1742.9" y="-2688.8" effect="MAXMP:6;MAXHP:12">
+		<requires nodeId="6000" />
+		<requires nodeId="6009" />
+	</node>
+	<node id="6093" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1617.9" y="-2472.3" effect="MAXMP:6;MAXHP_PCT:0.5">
+		<requires nodeId="6009" />
+		<requires nodeId="6001" />
+		<requires nodeId="33506" />
+	</node>
+	<node id="6004" name="Devotion" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1338.3" y="-2778.0" orbitX="1311.1" orbitY="-2879.4" effect="MAXMP:24" icon="book">
+		<requires nodeId="6006" />
+		<requires nodeId="6090" />
+		<requires nodeId="6091" />
+	</node>
+	<node id="6006" name="Devotion" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1225.1" y="-2819.2" orbitX="1311.1" orbitY="-2879.4" effect="MAXMP:24" icon="book">
 		<requires nodeId="6004" />
 		<requires nodeId="6007" />
 	</node>
-	<node id="6007" name="Devotion" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1407.3" y="-2795.2" orbitX="1362.9" orbitY="-2700.0" effect="MAXMP:24" icon="book">
+	<node id="6007" name="Devotion" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1225.1" y="-2939.7" orbitX="1311.1" orbitY="-2879.4" effect="MAXMP:24" icon="book">
 		<requires nodeId="6006" />
 		<requires nodeId="6008" />
 	</node>
-	<node id="6008" name="Devout Disciple" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="1288.6" y="-2774.2" orbitX="1362.9" orbitY="-2700.0" effect="MAXMP:120;MEN:1" icon="book" description="Devotion mastery.">
+	<node id="6008" name="Devout Disciple" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="1338.3" y="-2980.9" orbitX="1311.1" orbitY="-2879.4" effect="MAXMP:120;MEN:1" icon="book" description="Devotion mastery.">
 		<requires nodeId="6007" />
 	</node>
-	<node id="6009" name="Meditation" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1555.4" y="-2503.1" orbitX="1656.8" orbitY="-2530.3" effect="MP_REGEN_PCT:1.4" icon="drop">
-		<requires nodeId="6001" />
+	<node id="6009" name="Meditation" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1736.7" y="-2548.0" orbitX="1838.1" orbitY="-2575.2" effect="MP_REGEN_PCT:1.4" icon="drop">
 		<requires nodeId="6010" />
-		<requires nodeId="33506" />
+		<requires nodeId="6092" />
+		<requires nodeId="6093" />
 	</node>
-	<node id="6010" name="Meditation" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1596.6" y="-2616.3" orbitX="1656.8" orbitY="-2530.3" effect="MP_REGEN_PCT:1.4" icon="drop">
+	<node id="6010" name="Meditation" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1829.0" y="-2470.6" orbitX="1838.1" orbitY="-2575.2" effect="MP_REGEN_PCT:1.4" icon="drop">
 		<requires nodeId="6009" />
 		<requires nodeId="6012" />
 	</node>
-	<node id="6012" name="Meditation" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1717.0" y="-2616.3" orbitX="1656.8" orbitY="-2530.3" effect="MP_REGEN_PCT:1.4" icon="drop">
+	<node id="6012" name="Meditation" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1933.3" y="-2530.8" orbitX="1838.1" orbitY="-2575.2" effect="MP_REGEN_PCT:1.4" icon="drop">
 		<requires nodeId="6010" />
 		<requires nodeId="6013" />
 	</node>
-	<node id="6013" name="Font of Mana" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="1758.2" y="-2503.1" orbitX="1656.8" orbitY="-2530.3" effect="MP_REGEN_PCT:7;MEN:1" icon="drop" description="Meditation mastery.">
+	<node id="6013" name="Font of Mana" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="1912.4" y="-2649.5" orbitX="1838.1" orbitY="-2575.2" effect="MP_REGEN_PCT:7;MEN:1" icon="drop" description="Meditation mastery.">
 		<requires nodeId="6012" />
 	</node>
-	<node id="6014" name="Approach" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1456.1" y="-2352.3" effect="MAXMP:6">
+	<node id="6014" name="Approach" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1447.9" y="-2327.9" effect="MAXMP:6">
 		<requires nodeId="6001" />
 		<requires nodeId="6015" />
 	</node>
-	<node id="6015" name="Sacred Chorus" sector="Hierophant" type="ACTIVE_SKILL" tier="0" cost="1" x="1487.1" y="-2236.4" effect="MAXHP:15" skillId="27450" skillLevel="auto" description="ACTIVE: restore a large chunk of HP to your whole party (60s cooldown). Grows stronger with your level.">
+	<node id="6015" name="Sacred Chorus" sector="Hierophant" type="ACTIVE_SKILL" tier="0" cost="1" x="1437.4" y="-2189.7" effect="MAXHP:15" skillId="27450" skillLevel="auto" description="ACTIVE: restore a large chunk of HP to your whole party (60s cooldown). Grows stronger with your level.">
 		<requires nodeId="6014" />
 	</node>
 	<node id="6016" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1125.0" y="-1948.6" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP:12" description="Junction.">
@@ -61,10 +81,10 @@
 		<requires nodeId="6019" />
 		<requires nodeId="6025" />
 		<requires nodeId="6031" />
-		<requires nodeId="6037" />
 		<requires nodeId="6040" />
 		<requires nodeId="24107" />
 		<requires nodeId="25104" />
+		<requires nodeId="6049" />
 	</node>
 	<node id="6017" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1325.0" y="-2295.0" effect="MAXMP:6;MAXHP_PCT:0.5">
 		<requires nodeId="6001" />
@@ -74,58 +94,62 @@
 		<requires nodeId="6016" />
 		<requires nodeId="6017" />
 	</node>
-	<node id="6019" name="Sanctity" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1090.1" y="-2079.0" orbitX="1062.9" orbitY="-2180.4" effect="MDEF_PCT:1.2" icon="ward">
+	<node id="6019" name="Sanctity" sector="Hierophant" type="SMALL" tier="0" cost="1" x="982.3" y="-2084.6" orbitX="1250.2" orbitY="-2222.7" effect="MDEF_PCT:1.2" icon="ward">
 		<requires nodeId="6016" />
 		<requires nodeId="6020" />
 		<requires nodeId="33404" />
 	</node>
-	<node id="6020" name="Sanctity" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1167.5" y="-2171.2" orbitX="1062.9" orbitY="-2180.4" effect="MDEF_PCT:1.2" icon="ward">
+	<node id="6020" name="Sanctity" sector="Hierophant" type="SMALL" tier="0" cost="1" x="954.3" y="-2279.7" orbitX="1250.2" orbitY="-2222.7" effect="MDEF_PCT:1.2" icon="ward">
 		<requires nodeId="6019" />
-		<requires nodeId="6022" />
-	</node>
-	<node id="6022" name="Sanctity" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1107.3" y="-2275.5" orbitX="1062.9" orbitY="-2180.4" effect="MDEF_PCT:1.2" icon="ward">
-		<requires nodeId="6020" />
 		<requires nodeId="6024" />
 	</node>
-	<node id="6024" name="Spell Ward" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="988.6" y="-2254.6" orbitX="1062.9" orbitY="-2180.4" effect="MDEF_PCT:5;MEN:1" icon="ward" description="Sanctity mastery.">
+	<node id="6022" name="Sanctity" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1235.9" y="-2523.7" orbitX="1250.2" orbitY="-2222.7" effect="MDEF_PCT:1.2" icon="ward">
+		<requires nodeId="6024" />
+		<requires nodeId="6001" />
+	</node>
+	<node id="6024" name="Spell Ward" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="1052.8" y="-2450.4" orbitX="1250.2" orbitY="-2222.7" effect="MDEF_PCT:5;MEN:1" icon="ward" description="Sanctity mastery.">
+		<requires nodeId="6020" />
 		<requires nodeId="6022" />
 	</node>
-	<node id="6025" name="Litany" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1255.4" y="-1983.5" orbitX="1356.8" orbitY="-2010.7" effect="CAST_SPD_PCT:1" icon="chalice">
+	<node id="6025" name="Litany" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1314.1" y="-1893.0" orbitX="1299.8" orbitY="-2194.0" effect="CAST_SPD_PCT:1" icon="chalice">
 		<requires nodeId="6016" />
 		<requires nodeId="6026" />
 		<requires nodeId="33503" />
 	</node>
-	<node id="6026" name="Litany" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1296.6" y="-2096.7" orbitX="1356.8" orbitY="-2010.7" effect="CAST_SPD_PCT:1" icon="chalice">
+	<node id="6026" name="Litany" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1497.2" y="-1966.3" orbitX="1299.8" orbitY="-2194.0" effect="CAST_SPD_PCT:1" icon="chalice">
 		<requires nodeId="6025" />
-		<requires nodeId="6027" />
-	</node>
-	<node id="6027" name="Litany" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1417.0" y="-2096.7" orbitX="1356.8" orbitY="-2010.7" effect="CAST_SPD_PCT:1" icon="chalice">
-		<requires nodeId="6026" />
 		<requires nodeId="6030" />
 	</node>
-	<node id="6030" name="Blessed Rites" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="1458.2" y="-1983.5" orbitX="1356.8" orbitY="-2010.7" effect="CAST_SPD_PCT:4;WIT:1" icon="chalice" description="Litany mastery.">
+	<node id="6027" name="Litany" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1567.7" y="-2332.1" orbitX="1299.8" orbitY="-2194.0" effect="CAST_SPD_PCT:1" icon="chalice">
+		<requires nodeId="6030" />
+		<requires nodeId="6001" />
+	</node>
+	<node id="6030" name="Blessed Rites" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="1595.7" y="-2137.0" orbitX="1299.8" orbitY="-2194.0" effect="CAST_SPD_PCT:4;WIT:1" icon="chalice" description="Litany mastery.">
+		<requires nodeId="6026" />
 		<requires nodeId="6027" />
 	</node>
-	<node id="6031" name="Constitution" sector="Hierophant" type="SMALL" tier="0" cost="1" x="994.6" y="-1913.6" orbitX="893.2" orbitY="-1886.4" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
+	<node id="6031" name="Constitution" sector="Hierophant" type="SMALL" tier="0" cost="1" x="960.1" y="-1962.9" orbitX="845.1" orbitY="-1763.7" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
 		<requires nodeId="6016" />
 		<requires nodeId="6032" />
 	</node>
-	<node id="6032" name="Constitution" sector="Hierophant" type="SMALL" tier="0" cost="1" x="953.4" y="-1800.4" orbitX="893.2" orbitY="-1886.4" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
+	<node id="6032" name="Constitution" sector="Hierophant" type="SMALL" tier="0" cost="1" x="862.3" y="-1993.1" orbitX="845.1" orbitY="-1763.7" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
 		<requires nodeId="6031" />
-		<requires nodeId="6033" />
-	</node>
-	<node id="6033" name="Constitution" sector="Hierophant" type="SMALL" tier="0" cost="1" x="833.0" y="-1800.4" orbitX="893.2" orbitY="-1886.4" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
-		<requires nodeId="6032" />
 		<requires nodeId="6036" />
 	</node>
-	<node id="6036" name="Shepherd's Grace" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="791.8" y="-1913.6" orbitX="893.2" orbitY="-1886.4" effect="HP_REGEN_PCT:6;MAXHP:50" icon="heart-plus" description="Constitution mastery.">
+	<node id="6033" name="Constitution" sector="Hierophant" type="SMALL" tier="0" cost="1" x="676.5" y="-1920.2" orbitX="845.1" orbitY="-1763.7" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
+		<requires nodeId="6036" />
+		<requires nodeId="6044" />
+	</node>
+	<node id="6036" name="Shepherd's Grace" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="761.1" y="-1977.9" orbitX="845.1" orbitY="-1763.7" effect="HP_REGEN_PCT:6;MAXHP:50" icon="heart-plus" description="Constitution mastery.">
 		<requires nodeId="6033" />
+		<requires nodeId="6032" />
 	</node>
-	<node id="6037" name="Approach" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1156.1" y="-1832.6" effect="MAXMP:6">
-		<requires nodeId="6016" />
+	<node id="6037" name="Approach" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1103.9" y="-1672.1" effect="MAXMP:6">
 		<requires nodeId="6038" />
+		<requires nodeId="6040" />
+		<requires nodeId="6050" />
 	</node>
-	<node id="6038" name="Unshaken Mind" sector="Hierophant" type="KEYSTONE" tier="0" cost="1" x="1187.1" y="-1716.7" effect="KS_MEN_STUN:1" icon="crown" description="KEYSTONE: Stuns and other CON-resisted effects are resisted with your MEN instead of your CON.">
+	<node id="6038" name="Unshaken Mind" sector="Hierophant" type="KEYSTONE" tier="0" cost="1" x="1043.9" y="-1568.1" effect="KS_MEN_STUN:1" icon="crown" description="KEYSTONE: Stuns and other CON-resisted effects are resisted with your MEN instead of your CON.">
 		<requires nodeId="6037" />
 	</node>
 	<node id="6039" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="825.0" y="-1428.9" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5" description="Junction.">
@@ -133,69 +157,75 @@
 		<requires nodeId="6042" />
 		<requires nodeId="6048" />
 		<requires nodeId="6054" />
-		<requires nodeId="6060" />
 		<requires nodeId="6063" />
 		<requires nodeId="24205" />
 		<requires nodeId="25204" />
+		<requires nodeId="6072" />
 	</node>
 	<node id="6040" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1025.0" y="-1775.4" effect="MAXMP:6;MAXHP:12">
 		<requires nodeId="6016" />
 		<requires nodeId="6041" />
+		<requires nodeId="6037" />
 	</node>
 	<node id="6041" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="925.0" y="-1602.1" effect="MAXMP:6;MAXHP_PCT:0.5">
 		<requires nodeId="6039" />
 		<requires nodeId="6040" />
 	</node>
-	<node id="6042" name="Faith" sector="Hierophant" type="SMALL" tier="0" cost="1" x="797.8" y="-1530.4" orbitX="770.6" orbitY="-1631.8" effect="PDEF_PCT:1" icon="shield">
+	<node id="6042" name="Faith" sector="Hierophant" type="SMALL" tier="0" cost="1" x="730.1" y="-1564.6" orbitX="845.1" orbitY="-1763.7" effect="PDEF_PCT:1" icon="shield">
 		<requires nodeId="6039" />
 		<requires nodeId="6043" />
 	</node>
-	<node id="6043" name="Faith" sector="Hierophant" type="SMALL" tier="0" cost="1" x="684.6" y="-1571.6" orbitX="770.6" orbitY="-1631.8" effect="PDEF_PCT:1" icon="shield">
+	<node id="6043" name="Faith" sector="Hierophant" type="SMALL" tier="0" cost="1" x="655.1" y="-1634.2" orbitX="845.1" orbitY="-1763.7" effect="PDEF_PCT:1" icon="shield">
 		<requires nodeId="6042" />
-		<requires nodeId="6044" />
-	</node>
-	<node id="6044" name="Faith" sector="Hierophant" type="SMALL" tier="0" cost="1" x="684.6" y="-1692.0" orbitX="770.6" orbitY="-1631.8" effect="PDEF_PCT:1" icon="shield">
-		<requires nodeId="6043" />
 		<requires nodeId="6047" />
 	</node>
-	<node id="6047" name="Templar Training" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="797.8" y="-1733.2" orbitX="770.6" orbitY="-1631.8" effect="PDEF_PCT:4;CON:1" icon="shield" description="Faith mastery.">
+	<node id="6044" name="Faith" sector="Hierophant" type="SMALL" tier="0" cost="1" x="625.3" y="-1831.5" orbitX="845.1" orbitY="-1763.7" effect="PDEF_PCT:1" icon="shield">
+		<requires nodeId="6047" />
+		<requires nodeId="6033" />
+	</node>
+	<node id="6047" name="Templar Training" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="617.7" y="-1729.5" orbitX="845.1" orbitY="-1763.7" effect="PDEF_PCT:4;CON:1" icon="shield" description="Faith mastery.">
 		<requires nodeId="6044" />
+		<requires nodeId="6043" />
 	</node>
-	<node id="6048" name="Devotion" sector="Hierophant" type="SMALL" tier="0" cost="1" x="955.4" y="-1463.9" orbitX="1056.8" orbitY="-1491.1" effect="MAXMP:29" icon="book">
+	<node id="6048" name="Devotion" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1074.6" y="-1360.7" orbitX="1022.6" orbitY="-1661.2" effect="MAXMP:29" icon="book">
 		<requires nodeId="6039" />
-		<requires nodeId="6049" />
-	</node>
-	<node id="6049" name="Devotion" sector="Hierophant" type="SMALL" tier="0" cost="1" x="996.6" y="-1577.1" orbitX="1056.8" orbitY="-1491.1" effect="MAXMP:29" icon="book">
-		<requires nodeId="6048" />
-		<requires nodeId="6050" />
-	</node>
-	<node id="6050" name="Devotion" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1117.0" y="-1577.1" orbitX="1056.8" orbitY="-1491.1" effect="MAXMP:29" icon="book">
-		<requires nodeId="6049" />
 		<requires nodeId="6053" />
 	</node>
-	<node id="6053" name="Devout Disciple" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="1158.2" y="-1463.9" orbitX="1056.8" orbitY="-1491.1" effect="MAXMP:120;MEN:1" icon="book" description="Devotion mastery.">
-		<requires nodeId="6050" />
+	<node id="6049" name="Devotion" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1308.9" y="-1766.5" orbitX="1022.6" orbitY="-1661.2" effect="MAXMP:29" icon="book">
+		<requires nodeId="6053" />
+		<requires nodeId="6016" />
 	</node>
-	<node id="6054" name="Meditation" sector="Hierophant" type="SMALL" tier="0" cost="1" x="694.6" y="-1394.0" orbitX="593.2" orbitY="-1366.8" effect="MP_REGEN_PCT:1.6" icon="drop">
+	<node id="6050" name="Devotion" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1174.2" y="-1573.7" effect="MAXMP:29" icon="book">
+		<requires nodeId="6053" />
+		<requires nodeId="6037" />
+	</node>
+	<node id="6053" name="Devout Disciple" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="1286.8" y="-1508.7" orbitX="1022.6" orbitY="-1661.2" effect="MAXMP:120;MEN:1" icon="book" description="Devotion mastery.">
+		<requires nodeId="6050" />
+		<requires nodeId="6048" />
+		<requires nodeId="6049" />
+	</node>
+	<node id="6054" name="Meditation" sector="Hierophant" type="SMALL" tier="0" cost="1" x="671.1" y="-1402.3" orbitX="571.1" orbitY="-1229.1" effect="MP_REGEN_PCT:1.6" icon="drop">
 		<requires nodeId="6039" />
 		<requires nodeId="6055" />
 	</node>
-	<node id="6055" name="Meditation" sector="Hierophant" type="SMALL" tier="0" cost="1" x="653.4" y="-1280.8" orbitX="593.2" orbitY="-1366.8" effect="MP_REGEN_PCT:1.6" icon="drop">
+	<node id="6055" name="Meditation" sector="Hierophant" type="SMALL" tier="0" cost="1" x="586.0" y="-1428.6" orbitX="571.1" orbitY="-1229.1" effect="MP_REGEN_PCT:1.6" icon="drop">
 		<requires nodeId="6054" />
-		<requires nodeId="6056" />
-	</node>
-	<node id="6056" name="Meditation" sector="Hierophant" type="SMALL" tier="0" cost="1" x="533.0" y="-1280.8" orbitX="593.2" orbitY="-1366.8" effect="MP_REGEN_PCT:1.6" icon="drop">
-		<requires nodeId="6055" />
 		<requires nodeId="6059" />
 	</node>
-	<node id="6059" name="Font of Mana" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="491.8" y="-1394.0" orbitX="593.2" orbitY="-1366.8" effect="MP_REGEN_PCT:7;MEN:1" icon="drop" description="Meditation mastery.">
+	<node id="6056" name="Meditation" sector="Hierophant" type="SMALL" tier="0" cost="1" x="424.5" y="-1365.2" orbitX="571.1" orbitY="-1229.1" effect="MP_REGEN_PCT:1.6" icon="drop">
+		<requires nodeId="6059" />
+		<requires nodeId="6067" />
+	</node>
+	<node id="6059" name="Font of Mana" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="498.0" y="-1415.3" orbitX="571.1" orbitY="-1229.1" effect="MP_REGEN_PCT:7;MEN:1" icon="drop" description="Meditation mastery.">
 		<requires nodeId="6056" />
+		<requires nodeId="6055" />
 	</node>
-	<node id="6060" name="Approach" sector="Hierophant" type="SMALL" tier="0" cost="1" x="856.1" y="-1313.0" effect="MAXMP:6">
-		<requires nodeId="6039" />
+	<node id="6060" name="Approach" sector="Hierophant" type="SMALL" tier="0" cost="1" x="803.9" y="-1152.4" effect="MAXMP:6">
 		<requires nodeId="6061" />
+		<requires nodeId="6063" />
+		<requires nodeId="6073" />
 	</node>
-	<node id="6061" name="Hallowed Ward" sector="Hierophant" type="ACTIVE_SKILL" tier="0" cost="1" x="887.1" y="-1197.1" effect="MAXHP:15" skillId="27451" skillLevel="1" description="ACTIVE: party gains +10% P.Def and M.Def for 60s (180s cooldown).">
+	<node id="6061" name="Hallowed Ward" sector="Hierophant" type="ACTIVE_SKILL" tier="0" cost="1" x="743.9" y="-1048.5" effect="MAXHP:15" skillId="27451" skillLevel="1" description="ACTIVE: party gains +10% P.Def and M.Def for 60s (180s cooldown).">
 		<requires nodeId="6060" />
 	</node>
 	<node id="6062" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="525.0" y="-909.3" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP:12" description="Junction.">
@@ -207,61 +237,107 @@
 		<requires nodeId="6081" />
 		<requires nodeId="24305" />
 		<requires nodeId="25304" />
+		<requires nodeId="6094" />
+		<requires nodeId="6099" />
 	</node>
 	<node id="6063" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="725.0" y="-1255.7" effect="MAXMP:6;MAXHP_PCT:0.5">
 		<requires nodeId="6039" />
 		<requires nodeId="6064" />
+		<requires nodeId="6060" />
 	</node>
 	<node id="6064" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="625.0" y="-1082.5" effect="MAXMP:6;MAXHP:12">
 		<requires nodeId="6062" />
 		<requires nodeId="6063" />
 	</node>
-	<node id="6065" name="Sanctity" sector="Hierophant" type="SMALL" tier="0" cost="1" x="497.8" y="-1010.7" orbitX="470.6" orbitY="-1112.2" effect="MDEF_PCT:1.2" icon="ward">
+	<node id="6065" name="Sanctity" sector="Hierophant" type="SMALL" tier="0" cost="1" x="471.1" y="-1055.9" orbitX="571.1" orbitY="-1229.1" effect="MDEF_PCT:1.2" icon="ward">
 		<requires nodeId="6062" />
 		<requires nodeId="6066" />
 	</node>
-	<node id="6066" name="Sanctity" sector="Hierophant" type="SMALL" tier="0" cost="1" x="384.6" y="-1051.9" orbitX="470.6" orbitY="-1112.2" effect="MDEF_PCT:1.2" icon="ward">
+	<node id="6066" name="Sanctity" sector="Hierophant" type="SMALL" tier="0" cost="1" x="405.8" y="-1116.5" orbitX="571.1" orbitY="-1229.1" effect="MDEF_PCT:1.2" icon="ward">
 		<requires nodeId="6065" />
-		<requires nodeId="6067" />
-	</node>
-	<node id="6067" name="Sanctity" sector="Hierophant" type="SMALL" tier="0" cost="1" x="384.6" y="-1172.4" orbitX="470.6" orbitY="-1112.2" effect="MDEF_PCT:1.2" icon="ward">
-		<requires nodeId="6066" />
 		<requires nodeId="6070" />
 	</node>
-	<node id="6070" name="Spell Ward" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="497.8" y="-1213.6" orbitX="470.6" orbitY="-1112.2" effect="MDEF_PCT:5;MEN:1" icon="ward" description="Sanctity mastery.">
+	<node id="6067" name="Sanctity" sector="Hierophant" type="SMALL" tier="0" cost="1" x="380.0" y="-1288.1" orbitX="571.1" orbitY="-1229.1" effect="MDEF_PCT:1.2" icon="ward">
+		<requires nodeId="6070" />
+		<requires nodeId="6056" />
+	</node>
+	<node id="6070" name="Spell Ward" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="373.3" y="-1199.3" orbitX="571.1" orbitY="-1229.1" effect="MDEF_PCT:5;MEN:1" icon="ward" description="Sanctity mastery.">
 		<requires nodeId="6067" />
+		<requires nodeId="6066" />
 	</node>
-	<node id="6071" name="Litany" sector="Hierophant" type="SMALL" tier="0" cost="1" x="655.4" y="-944.3" orbitX="756.8" orbitY="-971.4" effect="CAST_SPD_PCT:1" icon="chalice">
+	<node id="6071" name="Litany" sector="Hierophant" type="SMALL" tier="0" cost="1" x="760.2" y="-866.7" orbitX="691.8" orbitY="-1159.4" effect="CAST_SPD_PCT:1" icon="chalice">
 		<requires nodeId="6062" />
-		<requires nodeId="6072" />
-	</node>
-	<node id="6072" name="Litany" sector="Hierophant" type="SMALL" tier="0" cost="1" x="696.6" y="-1057.5" orbitX="756.8" orbitY="-971.4" effect="CAST_SPD_PCT:1" icon="chalice">
-		<requires nodeId="6071" />
-		<requires nodeId="6073" />
-	</node>
-	<node id="6073" name="Litany" sector="Hierophant" type="SMALL" tier="0" cost="1" x="817.0" y="-1057.5" orbitX="756.8" orbitY="-971.4" effect="CAST_SPD_PCT:1" icon="chalice">
-		<requires nodeId="6072" />
 		<requires nodeId="6076" />
 	</node>
-	<node id="6076" name="Blessed Rites" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="858.2" y="-944.3" orbitX="756.8" orbitY="-971.4" effect="CAST_SPD_PCT:4;WIT:1" icon="chalice" description="Litany mastery.">
-		<requires nodeId="6073" />
+	<node id="6072" name="Litany" sector="Hierophant" type="SMALL" tier="0" cost="1" x="979.5" y="-1246.6" orbitX="691.8" orbitY="-1159.4" effect="CAST_SPD_PCT:1" icon="chalice">
+		<requires nodeId="6076" />
+		<requires nodeId="6039" />
 	</node>
-	<node id="6077" name="Approach" sector="Hierophant" type="SMALL" tier="0" cost="1" x="409.1" y="-878.3" effect="MAXMP:6">
+	<node id="6073" name="Litany" sector="Hierophant" type="SMALL" tier="0" cost="1" x="839.5" y="-1074.1" effect="CAST_SPD_PCT:1" icon="chalice">
+		<requires nodeId="6076" />
+		<requires nodeId="6060" />
+	</node>
+	<node id="6076" name="Blessed Rites" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="952.1" y="-1009.1" orbitX="691.8" orbitY="-1159.4" effect="CAST_SPD_PCT:4;WIT:1" icon="chalice" description="Litany mastery.">
+		<requires nodeId="6073" />
+		<requires nodeId="6071" />
+		<requires nodeId="6072" />
+	</node>
+	<node id="6077" name="Approach" sector="Hierophant" type="SMALL" tier="0" cost="1" x="431.7" y="-847.7" effect="MAXMP:6">
 		<requires nodeId="6062" />
 		<requires nodeId="6078" />
 	</node>
-	<node id="6078" name="Overflowing Grace" sector="Hierophant" type="KEYSTONE" tier="0" cost="1" x="293.2" y="-847.2" effect="KS_OVERHEAL_CP:100" icon="sun" description="KEYSTONE: Healing you cast beyond a player's maximum HP is granted to them as CP.">
+	<node id="6078" name="Overflowing Grace" sector="Hierophant" type="KEYSTONE" tier="0" cost="1" x="350.7" y="-767.5" effect="KS_OVERHEAL_CP:100" icon="sun" description="KEYSTONE: Healing you cast beyond a player's maximum HP is granted to them as CP.">
 		<requires nodeId="6077" />
 	</node>
 	<node id="6079" name="Avatar of Salvation" sector="Hierophant" type="MASTER" tier="0" cost="1" x="360.0" y="-623.5" effect="MEN:2;WIT:1;MP_REGEN_PCT:5;MDEF_PCT:5" icon="wings" description="Archetype capstone.">
 		<requires nodeId="6080" />
 		<requires nodeId="9011" />
 	</node>
+	<node id="6094" name="Mana Tide" sector="Hierophant" type="SMALL" tier="0" cost="1" x="409.8" y="-908.1" orbitX="470.3" orbitY="-634.9" effect="MAXMP:29">
+		<requires nodeId="6062" />
+		<requires nodeId="6095" />
+	</node>
+	<node id="6095" name="Mana Tide" sector="Hierophant" type="SMALL" tier="0" cost="1" x="304.9" y="-860.6" orbitX="470.3" orbitY="-634.9" effect="MAXMP:25">
+		<requires nodeId="6094" />
+		<requires nodeId="6096" />
+	</node>
+	<node id="6096" name="Sea of Faith" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="228.0" y="-774.8" orbitX="470.3" orbitY="-634.9" effect="MAXMP:120;MEN:1" icon="book">
+		<requires nodeId="6095" />
+		<requires nodeId="6097" />
+	</node>
+	<node id="6097" name="Mana Tide" sector="Hierophant" type="SMALL" tier="0" cost="1" x="192.1" y="-665.3" orbitX="470.3" orbitY="-634.9" effect="MAXMP:25">
+		<requires nodeId="6096" />
+		<requires nodeId="6098" />
+	</node>
+	<node id="6098" name="Mana Tide" sector="Hierophant" type="SMALL" tier="0" cost="1" x="203.4" y="-550.7" orbitX="470.3" orbitY="-634.9" effect="MAXMP:29">
+		<requires nodeId="6097" />
+		<requires nodeId="9011" />
+	</node>
+	<node id="6099" name="Mana Tide" sector="Hierophant" type="SMALL" tier="0" cost="1" x="581.6" y="-809.0" orbitX="314.7" orbitY="-724.7" effect="MAXMP:29">
+		<requires nodeId="6062" />
+		<requires nodeId="6100" />
+	</node>
+	<node id="6100" name="Mana Tide" sector="Hierophant" type="SMALL" tier="0" cost="1" x="592.9" y="-694.3" orbitX="314.7" orbitY="-724.7" effect="MAXMP:25">
+		<requires nodeId="6099" />
+		<requires nodeId="6101" />
+	</node>
+	<node id="6101" name="Brimming Chalice" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="557.0" y="-584.8" orbitX="314.7" orbitY="-724.7" effect="MAXMP:120;MP_REGEN_PCT@ROBE:8" icon="drop">
+		<requires nodeId="6100" />
+		<requires nodeId="6102" />
+	</node>
+	<node id="6102" name="Mana Tide" sector="Hierophant" type="SMALL" tier="0" cost="1" x="480.1" y="-499.1" orbitX="314.7" orbitY="-724.7" effect="MAXMP:25">
+		<requires nodeId="6101" />
+		<requires nodeId="6103" />
+	</node>
+	<node id="6103" name="Mana Tide" sector="Hierophant" type="SMALL" tier="0" cost="1" x="375.2" y="-451.5" orbitX="314.7" orbitY="-724.7" effect="MAXMP:29">
+		<requires nodeId="6102" />
+		<requires nodeId="9011" />
+	</node>
 	<node id="6080" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="442.5" y="-766.4" effect="MAXMP:6;MAXHP:12">
 		<requires nodeId="6062" />
 		<requires nodeId="6079" />
 	</node>
-	<node id="6081" name="Pilgrim's Provisions" sector="Hierophant" type="FUNCTION" tier="0" cost="1" x="556.1" y="-793.4" effect="INVENTORY_SLOTS_ADD:12;WEIGHT_LIMIT_PCT:30" description="Travel light: +12 inventory slots and +30% weight limit.">
+	<node id="6081" name="Pilgrim's Provisions" sector="Hierophant" type="FUNCTION" tier="0" cost="1" x="502.0" y="-749.4" effect="INVENTORY_SLOTS_ADD:12;WEIGHT_LIMIT_PCT:30" description="Travel light: +12 inventory slots and +30% weight limit.">
 		<requires nodeId="6062" />
 	</node>
 	<node id="25101" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1591.0" y="-1591.0" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5">
@@ -337,5 +413,65 @@
 	<node id="25305" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1034.0" y="-182.3" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5">
 		<requires nodeId="1062" />
 		<requires nodeId="25303" />
+	</node>
+	<node id="47501" name="Holy Fury" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1971.5" y="-3576.0" orbitX="2344.9" orbitY="-3611.4" effect="HOLY_ATK:5" icon="sun">
+		<requires nodeId="39500" />
+		<requires nodeId="47502" />
+	</node>
+	<node id="47502" name="Holy Fury" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1978.4" y="-3691.2" orbitX="2344.9" orbitY="-3611.4" effect="HOLY_ATK:5" icon="sun">
+		<requires nodeId="47501" />
+		<requires nodeId="47503" />
+	</node>
+	<node id="47503" name="Radiant Smite" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="2020.1" y="-3798.9" orbitX="2344.9" orbitY="-3611.4" effect="HOLY_ATK:20;MATK_PCT:2" icon="sun">
+		<requires nodeId="47502" />
+		<requires nodeId="47504" />
+	</node>
+	<node id="47504" name="Holy Fury" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2092.5" y="-3888.8" orbitX="2344.9" orbitY="-3611.4" effect="HOLY_ATK:5" icon="sun">
+		<requires nodeId="47503" />
+		<requires nodeId="47505" />
+	</node>
+	<node id="47505" name="Holy Fury" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2188.9" y="-3952.4" orbitX="2344.9" orbitY="-3611.4" effect="HOLY_ATK:5" icon="sun">
+		<requires nodeId="47504" />
+		<requires nodeId="47511" />
+	</node>
+	<node id="47506" name="Holy Ward" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2111.1" y="-3495.4" orbitX="1955.1" orbitY="-3836.4" effect="HOLY_RES:6" icon="ward">
+		<requires nodeId="39500" />
+		<requires nodeId="47507" />
+	</node>
+	<node id="47507" name="Holy Ward" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2207.5" y="-3559.0" orbitX="1955.1" orbitY="-3836.4" effect="HOLY_RES:6" icon="ward">
+		<requires nodeId="47506" />
+		<requires nodeId="47508" />
+	</node>
+	<node id="47508" name="Consecrated" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="2279.9" y="-3648.9" orbitX="1955.1" orbitY="-3836.4" effect="HOLY_RES:24;MDEF_PCT:2" icon="ward">
+		<requires nodeId="47507" />
+		<requires nodeId="47509" />
+	</node>
+	<node id="47509" name="Holy Ward" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2321.6" y="-3756.6" orbitX="1955.1" orbitY="-3836.4" effect="HOLY_RES:6" icon="ward">
+		<requires nodeId="47508" />
+		<requires nodeId="47510" />
+	</node>
+	<node id="47510" name="Holy Ward" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2328.5" y="-3871.8" orbitX="1955.1" orbitY="-3836.4" effect="HOLY_RES:6" icon="ward">
+		<requires nodeId="47509" />
+		<requires nodeId="47511" />
+	</node>
+	<node id="47511" name="Holy Shrine" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2300.0" y="-3983.7" effect="HOLY_ATK:10" icon="sun">
+		<requires nodeId="47505" />
+		<requires nodeId="47510" />
+		<requires nodeId="47512" />
+	</node>
+	<node id="47512" name="Holy Fury" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2355.0" y="-4079.0" orbitX="2407.5" orbitY="-4169.9" effect="HOLY_ATK:5" icon="sun">
+		<requires nodeId="47511" />
+		<requires nodeId="47513" />
+	</node>
+	<node id="47513" name="Holy Fury" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2304.1" y="-4188.1" orbitX="2407.5" orbitY="-4169.9" effect="HOLY_ATK:5" icon="sun">
+		<requires nodeId="47512" />
+		<requires nodeId="47514" />
+	</node>
+	<node id="47514" name="Holy Fury" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2389.3" y="-4273.3" orbitX="2407.5" orbitY="-4169.9" effect="HOLY_ATK:5" icon="sun">
+		<requires nodeId="47513" />
+		<requires nodeId="47515" />
+	</node>
+	<node id="47515" name="Light of Einhasad" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="2498.4" y="-4222.4" orbitX="2407.5" orbitY="-4169.9" effect="HOLY_ATK:30;HOLY_RES:15" icon="sun">
+		<requires nodeId="47514" />
 	</node>
 </list>

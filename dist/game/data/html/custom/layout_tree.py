@@ -3,10 +3,13 @@
 Lays out the passive tree in data/passivetree/*.xml, Path of Exile style:
  - every notable cluster is a ring: the path enters the ring at its first small and the three smalls
    curve around it to the notable (those links are drawn as arcs),
- - the six sector spines are straight roads from the START to the archetype MASTER,
+ - the six sector spines are straight roads from the START to the archetype MASTER, with more than one way along
+   every stretch (SECTOR_BRAID / place_sector_paths): three roads out of START, a wheel round the first stretch,
+   then on each of the next two a lane through a notable on one side and a loop joining two clusters on the other,
  - the bridges between neighbouring sectors are big circular roads around the tree centre,
  - the six hybrid sectors sit in the wedges between the arms, each built from one shared template,
- - the Outer Rim is one more circular road round the whole tree, reached by a spur from every START,
+ - the Outer Rim is one more circular road round the whole tree, reached by three spurs from every START (to the
+   gate, and to the rim road on either side of it),
    with six regions beyond it, each shaped differently.
 
 Only x/y and orbitX/orbitY are written; ids, links and stats are never touched, so it can be re-run
@@ -35,6 +38,8 @@ HYBRID_BASES = [30000, 30100, 30200, 30300, 30400, 30500]  # hybrid i sits betwe
 SPINE_DEG = 60  # sector i's spine points at i * 60 degrees (+y is down, as in the planner's SVG)
 
 R_NEXUS = 520
+R_PILLAR = 230  # the inner ring the six Nexus pillars sit on
+NEXUS_TWIST = 40 / R_NEXUS  # degrees per unit of radius the Nexus arms curl by on their way in
 R_MASTER = 720
 R_JUNCTION = {1: 2850, 16: 2250, 39: 1650, 62: 1050}  # local id -> radius: J0 (outer) .. J3 (inner)
 R_START = 3300
@@ -49,12 +54,29 @@ RING_RADIUS = 105  # radius of a notable cluster's ring
 RING_STEP = 70  # degrees between consecutive nodes on a ring
 
 # What hangs off each junction and where: (local id of the first node, outward(+1)/inward(-1), side(+1 = towards the next sector, -1 = towards the previous one))
+# (Everything else in a sector is laid out by place_sector_paths.)
 JUNCTION_SLOTS = {
-	1: [(4, 1, -1), (9, 1, 1), (14, -1, 1)],
-	16: [(19, 1, -1), (25, 1, 1), (31, -1, -1), (37, -1, 1)],
-	39: [(42, 1, -1), (48, 1, 1), (54, -1, -1), (60, -1, 1)],
-	62: [(65, 1, -1), (71, 1, 1), (77, -1, -1), (81, -1, 1)],
+	62: [(77, -1, -1), (81, -1, 1)],
 }
+# Sector paths, in the sector's own frame: (u, v) with u the distance from the tree centre along the spine and v
+# sideways, positive towards the next sector.
+# START road: the middle road (2, 3) and two side roads (90 > 4 > 91, 92 > 9 > 93) through a cluster's entry small.
+SECTOR_BRAID = {90: (3200, -165), 4: (3075, -230), 91: (2950, -165), 92: (3200, 165), 9: (3075, 230), 93: (2950, 165)}
+SECTOR_BRAID_RINGS = {4: (-1, 1), 9: (1, -1)}  # entry small -> (side, curl)
+# J0 > J1 wheel: the two clusters whose whole ring is a way round (entry small -> bulge), and the active skill pod
+# inside it (approach, skill) relative to J0.
+WHEEL_ARCS = {19: -330, 25: 330}
+WHEEL_POD = [(-110, 90), (-235, 150)]
+# J1 > J2 and J2 > J3: (from junction, lane entry small, lane bulge, loop's first ring, pod approach).
+# The lane's spare small sits under its notable; the pod (approach, then keystone / skill) between lane and road.
+# The loop is a pocket on the -1 side: a half circle (centre loop depth off the road, loop radius) opening towards it.
+# Last Crossroads > Nexus, in the sectors that have one (local ids 94..103): a large HP / MP cluster shaped as an eye,
+# two arcs (small > small > NOTABLE > small > small) either side of the road through the MASTER.
+EYE_FIRST, EYE_BULGE = 94, 190
+EYE_PODS = {77: (-100, -50), 78: (-210, -80), 81: (-150, 60)}  # where J3's pods sit inside the eye, relative to J3
+STRETCHES = [(16, 48, 360, 31, 150, 230, 37), (39, 71, 320, 54, 120, 200, 60)]
+LANE_SPARE_DROP = 130
+STRETCH_POD = [(-250, 120), (-370, 120)]
 # Spine roads: (from, to, radius of each in-between node)
 SPINE_ROADS = [(0, 1, [3150, 3000]), (1, 16, [2650, 2450]), (16, 39, [2050, 1850]), (39, 62, [1450, 1250]), (62, 79, [885])]
 
@@ -79,7 +101,7 @@ WEDGE_NODES = {
 	1: {51: (1790, 20), 56: (1180, 40), 61: (1190, 24), 62: (1340, 20), 63: (1500, 17)},
 	2: {51: (1800, 40), 56: (930, 30), 61: (1240, 19), 62: (1450, 17)},
 	3: {51: (1210, 30), 56: (1800, 17), 61: (1820, 44), 62: (2040, 43)},
-	4: {51: (1800, 33), 56: (930, 32), 61: (1240, 17), 62: (1380, 15), 63: (1520, 17)},
+	4: {51: (1800, 33), 56: (930, 32), 61: (1240, 19.5), 62: (1390, 18.5), 63: (1530, 19.5)},
 	5: {51: (1200, 42), 56: (1800, 27), 61: (1830, 45), 62: (2040, 47)},
 }
 for _hi, _p in {0: (925, 35), 1: (925, 25), 2: (1820, 21), 3: (925, 35), 4: (1820, 21), 5: (925, 25)}.items():
@@ -89,11 +111,17 @@ WEDGE_RINGS = {
 	1: {52: (1965, 29, 1), 57: (1370, 33, -1)},
 	2: {52: (1990, 34, -1), 57: (760, 28, 1)},
 	3: {52: (1400, 30, 1), 57: (1965, 24, -1)},
-	4: {52: (1985, 38, -1), 57: (765, 35, 1)},
+	4: {52: (1985, 38, -1), 57: (765, 30, 1)},
 	5: {52: (1385, 35, 1), 57: (1985, 22, 1)},
 }
 for _hi, _p in {0: (765, 30, 1), 1: (765, 30, -1), 2: (2000, 19.5, 1), 3: (765, 30, -1), 4: (2000, 19.5, -1), 5: (765, 30, 1)}.items():
 	WEDGE_RINGS[_hi][65] = _p  # the third structure: an HP wheel or a conditional mastery
+
+# Attribute shrines, straight out from each Rim Gate between the regions (ids SHRINE_BASE + sector * 100 + local):
+# an eye from the gate to the shrine (arcs 1-5 and 6-10), the shrine 11, its capstone ring 12-15. Arcanist's shrine
+# opens a second eye (16-20, 21-25) to the Summoner's Circle 26 and its ring 27-30 instead.
+SHRINE_BASE = 47000
+SHRINE_EYE_LENGTH, SHRINE_EYE_BULGE, SHRINE_RING_GAP = 600, 150, 215
 
 # BEGIN REGIONS
 # The six regions beyond the rim (region i between sectors i and i+1), each shaped differently: a fan, a winding
@@ -228,11 +256,36 @@ def frame(deg):
 	return (math.cos(t), math.sin(t)), (-math.sin(t), math.cos(t))
 
 
+def arc_orbit(a, b):
+	"""The circle a link is drawn along: the orbit both ends share, or the (non-centre) orbit of one end when the other
+	end sits exactly on that circle too (an arm of a wheel, eye or the Nexus running into its hub). None: straight."""
+	if a.orbit and (a.orbit == b.orbit) and (abs(dist(a.orbit, a.pos) - dist(b.orbit, b.pos)) < 1):
+		return a.orbit
+	for x, y in ((a, b), (b, a)):
+		if x.orbit and (x.orbit != (0.0, 0.0)) and (abs(dist(x.orbit, x.pos) - dist(x.orbit, y.pos)) < 1):
+			return x.orbit
+	return None
+
+
+def sweep_arc(start, end, through, n):
+	"""n points spread evenly along the circle arc from start to end that passes `through`, and the circle's centre."""
+	(ax, ay), (bx, by), (cx, cy) = start, through, end
+	d = 2 * ((ax * (by - cy)) + (bx * (cy - ay)) + (cx * (ay - by)))
+	ux = ((((ax * ax) + (ay * ay)) * (by - cy)) + (((bx * bx) + (by * by)) * (cy - ay)) + (((cx * cx) + (cy * cy)) * (ay - by))) / d
+	uy = ((((ax * ax) + (ay * ay)) * (cx - bx)) + (((bx * bx) + (by * by)) * (ax - cx)) + (((cx * cx) + (cy * cy)) * (bx - ax))) / d
+	r = math.hypot(ax - ux, ay - uy)
+	t0, tm, t1 = (math.atan2(p[1] - uy, p[0] - ux) for p in (start, through, end))
+	half = (tm - t0 + math.pi) % (2 * math.pi) - math.pi
+	full = (t1 - t0) % (2 * math.pi) if half > 0 else -((t0 - t1) % (2 * math.pi))
+	return [(ux + (r * math.cos(t0 + ((full * k) / (n + 1)))), uy + (r * math.sin(t0 + ((full * k) / (n + 1))))) for k in range(1, n + 1)], (ux, uy)
+
+
 def edge_points(a, b):
-	"""A link as a polyline: an arc when both ends sit on the same circle, else a straight segment."""
+	"""A link as a polyline: an arc along arc_orbit(), else a straight segment."""
 	pa, pb = a.pos, b.pos
-	if a.orbit and (a.orbit == b.orbit) and (abs(dist(a.orbit, pa) - dist(b.orbit, pb)) < 1):
-		c, r = a.orbit, dist(a.orbit, pa)
+	c = arc_orbit(a, b)
+	if c:
+		r = dist(c, pa)
 		a0 = math.atan2(pa[1] - c[1], pa[0] - c[0])
 		d = math.atan2(pb[1] - c[1], pb[0] - c[0]) - a0
 		d = (d + math.pi) % (2 * math.pi) - math.pi
@@ -339,13 +392,13 @@ def place_ring(nodes, chain, center, entry_point, curl):
 		nodes[i].orbit = center
 
 
-def walk(nodes, adj, start, group, first=None):
+def walk(nodes, adj, start, group, first=None, keep=lambda j: True):
 	"""The run of nodes of one id block leaving `start` (through `first` if given), in order, e.g. a bridge from its junction."""
 	path, prev = [], start
 	cur = first if first is not None else [j for j in adj[start] if group_of(j) == group][0]
 	while True:
 		path.append(cur)
-		nxt = [j for j in adj[cur] if (j != prev) and (group_of(j) == group) and (j not in path)]
+		nxt = [j for j in adj[cur] if (j != prev) and (group_of(j) == group) and (j not in path) and keep(j)]
 		if not nxt:
 			return path
 		prev, cur = cur, nxt[0]
@@ -397,16 +450,24 @@ def layout(nodes):
 		nodes[9001 + k].pos = polar(R_NEXUS, 30 * k)
 		nodes[9001 + k].orbit = centre
 	nodes[9019].pos = centre
-	for gate in range(9002, 9013, 2):
+	# Every arm inside the ring curls the same way, so the Nexus reads as a slow vortex: the angle of an arm grows by
+	# NEXUS_TWIST degrees per unit of radius it runs inward. Each arm is one circle arc (its nodes share that orbit).
+	twist = lambda r: NEXUS_TWIST * (R_NEXUS - r)
+	for gate in range(9002, 9013, 2):  # pillar conduits: three smalls, then the pillar on the inner ring
 		ang = 30 * (gate - 9001)
 		path = chain_from(nodes, adj, [j for j in adj[gate] if j >= 9020][0], gate)
-		for i, r in zip(path, (430, 340, 250, 165)):
-			nodes[i].pos = polar(r, ang)
-	for gate in range(9001, 9013, 2):
+		end = polar(R_PILLAR, ang + twist(R_PILLAR))
+		mid_r = (R_NEXUS + R_PILLAR) / 2
+		points, orbit = sweep_arc(nodes[gate].pos, end, polar(mid_r, ang + twist(mid_r)), len(path) - 1)
+		for i, p in zip(path, points + [end]):
+			nodes[i].pos, nodes[i].orbit = p, orbit
+	for gate in range(9001, 9013, 2):  # prismatic threads: two smalls, then the centre
 		ang = 30 * (gate - 9001)
 		spoke = [j for j in adj[gate] if j >= 9020][0]
-		for i, r in zip(chain_from(nodes, adj, spoke, gate)[:2], (360, 200)):
-			nodes[i].pos = polar(r, ang)
+		path = chain_from(nodes, adj, spoke, gate)[:2]
+		points, orbit = sweep_arc(nodes[gate].pos, centre, polar(R_NEXUS / 2, ang + twist(R_NEXUS / 2)), len(path))
+		for i, p in zip(path, points):
+			nodes[i].pos, nodes[i].orbit = p, orbit
 
 	# Sector spines, junctions and the bridges between them.
 	for si, base in enumerate(SECTOR_BASES):
@@ -428,21 +489,29 @@ def layout(nodes):
 				nodes[i].pos = polar(R_JUNCTION[local], ang + ((SPINE_DEG * k) / (len(path) + 1)))
 				nodes[i].orbit = centre
 
+	place_sector_paths(nodes, adj)
+
 	# The Outer Rim: a spur from each START to its gate, then an arc road to the next gate.
 	for si, base in enumerate(SECTOR_BASES):
 		ang = si * SPINE_DEG
 		gate = RIM_BASE + (si * 100)
 		nodes[gate].pos = polar(R_RIM, ang)
 		nodes[gate].orbit = centre
-		spur = walk(nodes, adj, base, gate // 100)
-		spur = spur[:spur.index(gate)]
-		assert len(spur) == len(R_RIM_SPUR), spur
-		for i, r in zip(spur, R_RIM_SPUR):
+		for i, r in zip(range(gate + 1, gate + 4), R_RIM_SPUR):
 			nodes[i].pos = polar(r, ang)
-		road = walk(nodes, adj, gate, gate // 100, min(j for j in adj[gate] if j >= gate + 10))
+		road = walk(nodes, adj, gate, gate // 100, gate + 10, lambda j: j >= gate + 10)
 		for k, i in enumerate(road, 1):
 			nodes[i].pos = polar(R_RIM, ang + ((SPINE_DEG * k) / (len(road) + 1)))
 			nodes[i].orbit = centre
+	# The two side spurs out of each START (gate + 4.. and gate + 7..), landing on the rim road either side of the gate.
+	for si, base in enumerate(SECTOR_BASES):
+		gate = RIM_BASE + (si * 100)
+		for first in (gate + 4, gate + 7):
+			chain = [first + k for k in range(3)]
+			land = [j for j in adj[chain[-1]] if j not in chain][0]
+			a, b = nodes[base].pos, nodes[land].pos
+			for k, i in enumerate(chain, 1):
+				nodes[i].pos = add(a, (b[0] - a[0], b[1] - a[1]), k / 4)
 
 	# The regions beyond the rim.
 	for ri in range(6):
@@ -454,6 +523,25 @@ def layout(nodes):
 			ring = ring_chain(nodes, adj, base + first)
 			entry = [nodes[j].pos for j in adj[base + first] if (nodes[j].pos is not None) and (j not in ring)]
 			place_ring(nodes, ring, polar(r, start + deg), (sum(p[0] for p in entry) / len(entry), sum(p[1] for p in entry) / len(entry)), curl)
+
+	# Attribute shrines beyond the rim.
+	for si in range(6):
+		base = SHRINE_BASE + (si * 100)
+		u, v = frame(si * SPINE_DEG)
+		at = lambda p: add((u[0] * p[0], u[1] * p[0]), v, p[1])
+		hub_r = R_RIM
+		for first_arc, hub_local, ring_local in ((1, 11, 12), (16, 26, 27)):
+			if (base + hub_local) not in nodes:
+				continue
+			for k, side in enumerate((-1, 1)):
+				points, orbit = arc_positions(hub_r, hub_r + SHRINE_EYE_LENGTH, side * SHRINE_EYE_BULGE, 5)
+				for i, p in zip(range(base + first_arc + (5 * k), base + first_arc + (5 * k) + 5), points):
+					nodes[i].pos, nodes[i].orbit = at(p), at(orbit)
+			hub_r += SHRINE_EYE_LENGTH
+			nodes[base + hub_local].pos = at((hub_r, 0))
+			if (base + ring_local) in nodes:
+				ring = [base + ring_local + j for j in range(4)]
+				place_ring(nodes, ring, at((hub_r + SHRINE_RING_GAP, 0)), nodes[base + hub_local].pos, 1)
 
 	# Hybrids: one template, rotated into each wedge.
 	for hi, base in enumerate(HYBRID_BASES):
@@ -508,9 +596,90 @@ def layout(nodes):
 				place_attachment(nodes, adj, base, junction, first, io, side, alpha, d, curl)
 			place_roads(nodes, adj)
 
+	# In the sectors with an eye, J3's pods sit inside it.
+	for si, base in enumerate(SECTOR_BASES):
+		if (base + EYE_FIRST) in nodes:
+			u, v = frame(si * SPINE_DEG)
+			r = math.hypot(*nodes[base + 62].pos)
+			for local, (du, dv) in EYE_PODS.items():
+				nodes[base + local].pos = add((u[0] * (r + du), u[1] * (r + du)), v, dv)
+				nodes[base + local].orbit = None
+
 	missing = [i for i, n in nodes.items() if n.pos is None]
 	assert not missing, f"nodes without a position: {missing}"
 	return adj
+
+
+def arc_positions(ua, ub, bulge, n):
+	"""n points spread evenly along the circle arc from (ua, 0) to (ub, 0) that swells `bulge` sideways at its middle, and the circle's centre."""
+	mid, h = (ua + ub) / 2, abs(ua - ub) / 2
+	c = ((bulge * bulge) - (h * h)) / (2 * bulge)
+	radius = abs(bulge - c)
+	ta = math.atan2(-c, ua - mid)
+	half = (math.atan2(bulge - c, 0) - ta + math.pi) % (2 * math.pi) - math.pi
+	return [(mid + (radius * math.cos(ta + ((2 * half * k) / (n + 1)))), c + (radius * math.sin(ta + ((2 * half * k) / (n + 1))))) for k in range(1, n + 1)], (mid, c)
+
+
+def ring_from(nodes, adj, entry, junction):
+	"""A cluster's nodes from its entry small (next to `junction`) along its own block: entry, second, notable, third..."""
+	path = chain_from(nodes, adj, entry, junction)
+	return [i for i in path if group_of(i) == group_of(entry) and nodes[i].a["name"] != "Crossroads"]
+
+
+def place_sector_paths(nodes, adj):
+	"""Everything that gives a sector its route choices (see SECTOR_BRAID, WHEEL_ARCS, STRETCHES and EYE_FIRST)."""
+	for si, base in enumerate(SECTOR_BASES):
+		u, v = frame(si * SPINE_DEG)
+		at = lambda p: add((u[0] * p[0], u[1] * p[0]), v, p[1])
+		radius_of = lambda local: math.hypot(*nodes[base + local].pos)
+
+		def put(ids, points, orbit):
+			for i, p in zip(ids, points):
+				nodes[i].pos = at(p)
+				nodes[i].orbit = None if orbit is None else at(orbit)
+
+		# START road
+		for local, p in SECTOR_BRAID.items():
+			put([base + local], [p], None)
+		for local, (side, curl) in SECTOR_BRAID_RINGS.items():
+			p = SECTOR_BRAID[local]
+			place_ring(nodes, ring_chain(nodes, adj, base + local), at((p[0] + (RING_RADIUS * 0.7071), p[1] + (side * RING_RADIUS * 0.7071))), at(p), curl)
+
+		# J0 > J1 wheel: each side arc runs entry (at J1) > second > notable > third (at J0)
+		j0, j1 = radius_of(1), radius_of(16)
+		for first, bulge in WHEEL_ARCS.items():
+			arc = [base + first] + chain_from(nodes, adj, base + first, base + 16)[1:4]
+			points, orbit = arc_positions(j1, j0, bulge, len(arc))
+			put(arc, points, orbit)
+		approach = [j for j in adj[base + 1] if nodes[j].a["name"] == "Approach"][0]
+		put([approach, [j for j in adj[approach] if j != base + 1][0]], [(j0 + du, dv) for du, dv in WHEEL_POD], None)
+
+		# J1 > J2 and J2 > J3: lane, its spare small, the pod between lane and road, and the loop on the other side
+		for (ja_local, lane_first, lane_bulge, loop_first, loop_depth, loop_radius, approach_local) in STRETCHES:
+			ja = radius_of(ja_local)
+			jb_id = [j for j in adj[base + lane_first] if nodes[j].a["name"] == "Crossroads"][0]
+			jb = math.hypot(*nodes[jb_id].pos)
+			entry = base + lane_first
+			notable = [j for j in adj[entry] if nodes[j].type == "NOTABLE"][0]
+			second = [j for j in adj[notable] if any(k == base + ja_local for k in adj[j])][0]
+			spare = [j for j in adj[notable] if j not in (entry, second)][0]
+			points, orbit = arc_positions(ja, jb, lane_bulge, 3)
+			put([second, notable, entry], points, orbit)
+			put([spare], [((ja + jb) / 2, lane_bulge - LANE_SPARE_DROP)], None)
+			approach = base + approach_local
+			put([approach, [j for j in adj[approach] if nodes[j].type in ("KEYSTONE", "ACTIVE_SKILL")][0]], [(ja + du, dv) for du, dv in STRETCH_POD], None)
+			loop = ring_from(nodes, adj, base + loop_first, base + ja_local)
+			assert len(loop) == 8, loop
+			mid = (ja + jb) / 2
+			put(loop, [(mid + (loop_radius * math.cos((math.pi * k) / 7)), -loop_depth - (loop_radius * math.sin((math.pi * k) / 7))) for k in range(8)], (mid, -loop_depth))
+
+		# the eye round the MASTER
+		if (base + EYE_FIRST) in nodes:
+			filament = [j for j in adj[base + 79] if 9000 <= j < 9100][0]
+			for k, side in enumerate((-1, 1)):
+				arc = [base + EYE_FIRST + (5 * k) + i for i in range(5)]
+				points, orbit = arc_positions(radius_of(62), math.hypot(*nodes[filament].pos), side * EYE_BULGE, len(arc))
+				put(arc, points, orbit)
 
 
 def chain_between(nodes, adj, a, b):
@@ -519,7 +688,7 @@ def chain_between(nodes, adj, a, b):
 		path, prev, cur = [], a, start
 		while (cur != b) and (nodes[cur].name == "Pathway") and (len(path) < 5):
 			path.append(cur)
-			nxt = [j for j in adj[cur] if (j != prev) and (j < 20000)]
+			nxt = [j for j in adj[cur] if (j != prev) and (j < 20000) and ((nodes[j].name == "Pathway") or (j == b))]
 			if len(nxt) != 1:
 				break
 			prev, cur = cur, nxt[0]

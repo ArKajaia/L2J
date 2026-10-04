@@ -181,29 +181,29 @@
 		<requires nodeId="30102" />
 		<requires nodeId="30104" />
 	</node>
-	<node id="33103" name="Lifeblood Trail" sector="Reaver" type="SMALL" tier="0" cost="1" x="865.0" y="2264.5" effect="MAXHP:15">
+	<node id="33103" name="Lifeblood Trail" sector="Reaver" type="SMALL" tier="0" cost="1" x="811.2" y="2267.3" effect="MAXHP:15">
 		<requires nodeId="2025" />
 		<requires nodeId="30103" />
 	</node>
-	<node id="33104" name="Lifeblood Trail" sector="Reaver" type="SMALL" tier="0" cost="1" x="-865.0" y="2264.5" effect="MAXHP_PCT:1">
+	<node id="33104" name="Lifeblood Trail" sector="Reaver" type="SMALL" tier="0" cost="1" x="-811.2" y="2267.3" effect="MAXHP_PCT:1">
 		<requires nodeId="3019" />
 		<requires nodeId="30104" />
 	</node>
-	<node id="33105" name="Lifeblood Trail" sector="Reaver" type="SMALL" tier="0" cost="1" x="836.7" y="2966.2" effect="MAXHP:15">
+	<node id="33105" name="Lifeblood Trail" sector="Reaver" type="SMALL" tier="0" cost="1" x="817.4" y="2979.1" effect="MAXHP:15">
 		<requires nodeId="30125" />
 		<requires nodeId="33106" />
 	</node>
-	<node id="33106" name="Lifeblood Trail" sector="Reaver" type="SMALL" tier="0" cost="1" x="1113.4" y="2782.4" effect="MAXHP_PCT:1">
-		<requires nodeId="2009" />
+	<node id="33106" name="Lifeblood Trail" sector="Reaver" type="SMALL" tier="0" cost="1" x="1074.7" y="2808.2" effect="MAXHP_PCT:1">
 		<requires nodeId="33105" />
+		<requires nodeId="2093" />
 	</node>
-	<node id="33107" name="Lifeblood Trail" sector="Reaver" type="SMALL" tier="0" cost="1" x="-836.7" y="2966.2" effect="MAXHP:15">
+	<node id="33107" name="Lifeblood Trail" sector="Reaver" type="SMALL" tier="0" cost="1" x="-817.4" y="2979.1" effect="MAXHP:15">
 		<requires nodeId="30126" />
 		<requires nodeId="33108" />
 	</node>
-	<node id="33108" name="Lifeblood Trail" sector="Reaver" type="SMALL" tier="0" cost="1" x="-1113.4" y="2782.4" effect="MAXHP_PCT:1">
-		<requires nodeId="3004" />
+	<node id="33108" name="Lifeblood Trail" sector="Reaver" type="SMALL" tier="0" cost="1" x="-1074.7" y="2808.2" effect="MAXHP_PCT:1">
 		<requires nodeId="33107" />
+		<requires nodeId="3091" />
 	</node>
 	<node id="30170" name="Lifeblood Trail" sector="Reaver" type="SMALL" tier="0" cost="1" x="-40.0" y="3430.0" effect="MAXHP:15">
 		<requires nodeId="30112" />

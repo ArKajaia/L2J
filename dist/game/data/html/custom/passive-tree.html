@@ -284,6 +284,11 @@
 <div id="canvas-wrap">
 	<svg id="svg-root">
 		<defs>
+			<radialGradient id="nexus-glow">
+				<stop offset="0%" stop-color="#8a6cc8" stop-opacity="0.28" />
+				<stop offset="45%" stop-color="#4a3878" stop-opacity="0.16" />
+				<stop offset="100%" stop-color="#1a1428" stop-opacity="0" />
+			</radialGradient>
 			<radialGradient id="similar-halo">
 				<stop offset="0%" stop-color="#7fd1ff" stop-opacity="0.35" />
 				<stop offset="60%" stop-color="#3aa8ff" stop-opacity="0.55" />
@@ -488,6 +493,7 @@ const TYPE_RADIUS = {
 const ALWAYS_LABEL = new Set(["START","KEYSTONE","MASTER","ACTIVE_SKILL","FUNCTION","NOTABLE"]);
 // "Pathway"/"Approach"/"Crossroads" are pure travel filler - never worth a label.
 const NEVER_LABEL = new Set(["Pathway","Approach","Crossroads"]);
+const MAX_SOCKET_RADIUS = 150;   // cluster rings are 105 wide; a wider shared circle is a lane bending round its road
 
 let nodes = [], nodeById = {}, edgeList = [];
 let allocated = new Set();
@@ -701,17 +707,87 @@ function showToast(msg, isError) {
 }
 
 // ---------------------------------------------------------------- render
-/** Two linked nodes on the same circle (same orbit centre and radius) are joined by an arc along it, PoE style. */
-function edgePath(na, nb) {
-	if ((na.ox !== undefined) && (na.ox === nb.ox) && (na.oy === nb.oy)) {
-		const ra = Math.hypot(na.x - na.ox, na.y - na.oy);
-		if (Math.abs(ra - Math.hypot(nb.x - nb.ox, nb.y - nb.oy)) < 1) {
-			let d = Math.atan2(nb.y - nb.oy, nb.x - nb.ox) - Math.atan2(na.y - na.oy, na.x - na.ox);
-			d = Math.atan2(Math.sin(d), Math.cos(d)); // shorter way round
-			return `M${na.x},${na.y}A${ra},${ra} 0 0 ${d > 0 ? 1 : 0} ${nb.x},${nb.y}`;
+/** The circle a link runs along: the orbit both ends share, or the (non-centre) orbit of one end when the other end
+ *  sits exactly on that circle too (a wheel, eye or Nexus arm running into its hub). Mirrors layout_tree.py's arc_orbit(). */
+function arcOrbit(na, nb) {
+	if ((na.ox !== undefined) && (na.ox === nb.ox) && (na.oy === nb.oy)
+		&& (Math.abs(Math.hypot(na.x - na.ox, na.y - na.oy) - Math.hypot(nb.x - nb.ox, nb.y - nb.oy)) < 1)) {
+		return [na.ox, na.oy];
+	}
+	for (const [x, y] of [[na, nb], [nb, na]]) {
+		if ((x.ox !== undefined) && ((x.ox !== 0) || (x.oy !== 0))
+			&& (Math.abs(Math.hypot(x.x - x.ox, x.y - x.oy) - Math.hypot(y.x - x.ox, y.y - x.oy)) < 1)) {
+			return [x.ox, x.oy];
 		}
 	}
+	return null;
+}
+
+/** Links along a circle (see arcOrbit) are drawn as an arc, PoE style; the rest are straight. */
+function edgePath(na, nb) {
+	const o = arcOrbit(na, nb);
+	if (o) {
+		const ra = Math.hypot(na.x - o[0], na.y - o[1]);
+		let d = Math.atan2(nb.y - o[1], nb.x - o[0]) - Math.atan2(na.y - o[1], na.x - o[0]);
+		d = Math.atan2(Math.sin(d), Math.cos(d)); // shorter way round
+		return `M${na.x},${na.y}A${ra},${ra} 0 0 ${d > 0 ? 1 : 0} ${nb.x},${nb.y}`;
+	}
 	return `M${na.x},${na.y}L${nb.x},${nb.y}`;
+}
+
+/** The astrolabe behind the Nexus: a violet glow, a slowly turning bezel ticked at every filament, a dashed ring
+ *  through the pillars turning the other way, and a faint star behind the centre. It brightens as Nexus nodes are taken. */
+function renderNexusBackdrop(g) {
+	const nexus = nodes.filter(n => n.sector === "Nexus");
+	if (!nexus.length) return;
+	const ring = Math.max(...nexus.map(n => Math.hypot(n.x, n.y)));           // the filament ring
+	const pillars = nexus.filter(n => n.type === "NOTABLE");
+	const pillarRing = pillars.length ? Math.hypot(pillars[0].x, pillars[0].y) : ring * 0.45;
+	const lit = nexus.filter(n => allocated.has(n.id)).length / nexus.length;
+	const still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+	const el = (tag, attrs, parent) => {
+		const e = document.createElementNS(SVG_NS, tag);
+		Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
+		(parent || g).appendChild(e);
+		return e;
+	};
+	const spin = (group, seconds, reverse) => {
+		if (still) return;
+		el("animateTransform", { attributeName: "transform", type: "rotate", from: reverse ? "360 0 0" : "0 0 0", to: reverse ? "0 0 0" : "360 0 0", dur: seconds + "s", repeatCount: "indefinite" }, group);
+	};
+
+	el("circle", { cx: 0, cy: 0, r: ring + 140, fill: "url(#nexus-glow)", opacity: 0.55 + (0.45 * lit) });
+
+	// bezel: two rings and 72 ticks, a long one at every filament (every 30 degrees)
+	const bezel = el("g", { opacity: 0.5 + (0.4 * lit) });
+	const r0 = ring + 62, r1 = ring + 88;
+	el("circle", { cx: 0, cy: 0, r: r0, fill: "none", stroke: "#4a3e26", "stroke-width": 3 }, bezel);
+	el("circle", { cx: 0, cy: 0, r: r1, fill: "none", stroke: "#3a3122", "stroke-width": 1.5 }, bezel);
+	let ticks = "";
+	for (let k = 0; k < 72; k++) {
+		const a = (k * Math.PI) / 36, inner = (k % 6 === 0) ? r0 - 14 : r0 + 4, outer = (k % 6 === 0) ? r1 + 10 : r1 - 6;
+		ticks += `M${inner * Math.cos(a)},${inner * Math.sin(a)}L${outer * Math.cos(a)},${outer * Math.sin(a)}`;
+	}
+	el("path", { d: ticks, stroke: "#6b5a34", "stroke-width": 2, fill: "none" }, bezel);
+	for (let k = 0; k < 12; k++) {  // a small diamond on the bezel at every filament
+		const a = ((k * 30) + 15) * Math.PI / 180, x = ((r0 + r1) / 2) * Math.cos(a), y = ((r0 + r1) / 2) * Math.sin(a);
+		el("rect", { x: x - 5, y: y - 5, width: 10, height: 10, fill: "#7a6638", transform: `rotate(${(k * 30) + 60} ${x} ${y})` }, bezel);
+	}
+	spin(bezel, 480, false);
+
+	// the pillar ring, dashed, turning the other way
+	const inner = el("g", { opacity: 0.45 + (0.45 * lit) });
+	el("circle", { cx: 0, cy: 0, r: pillarRing, fill: "none", stroke: "#5c4c7e", "stroke-width": 2, "stroke-dasharray": "4 14" }, inner);
+	el("circle", { cx: 0, cy: 0, r: pillarRing - 26, fill: "none", stroke: "#3b3150", "stroke-width": 1 }, inner);
+	spin(inner, 300, true);
+
+	// a twelve-point star behind the centre
+	let star = "";
+	for (let k = 0; k < 24; k++) {
+		const a = (k * Math.PI) / 12, r = (k % 2 === 0) ? 120 : 52;
+		star += `${k ? "L" : "M"}${r * Math.cos(a)},${r * Math.sin(a)}`;
+	}
+	el("path", { d: star + "Z", fill: "#c9a456", opacity: 0.07 + (0.18 * lit), stroke: "#c9a456", "stroke-opacity": 0.25, "stroke-width": 1.5 });
 }
 
 /** The dark round "socket" behind every cluster ring (any orbit centre other than the tree centre),
@@ -719,6 +795,7 @@ function edgePath(na, nb) {
 function renderSockets() {
 	const g = document.getElementById("sockets");
 	g.textContent = "";
+	renderNexusBackdrop(g);
 	const rings = {};
 	nodes.forEach(n => {
 		if ((n.ox === undefined) || ((n.ox === 0) && (n.oy === 0))) return;
@@ -729,6 +806,7 @@ function renderSockets() {
 	});
 	ringList = [];
 	Object.values(rings).forEach(ring => {
+		if (ring.r > MAX_SOCKET_RADIUS) return; // a lane: a road that only bends along a wide circle, not a cluster
 		const disc = document.createElementNS(SVG_NS, "circle");
 		disc.setAttribute("cx", ring.x);
 		disc.setAttribute("cy", ring.y);
@@ -817,6 +895,9 @@ const STAT_LABEL = {
 	SPELL_MP_COST_RED_PCT:"Spell MP Cost Reduction", CRIT_DMG_TAKEN_RED_PCT:"Critical Damage Taken Reduction",
 	INTERRUPT_RES_PCT:"Cast Interruption Resistance", DEBUFF_RES_PCT:"Debuff Resistance",
 	MAXHP_PCT:"Maximum HP", SERVITOR_SHARE_PCT:"Damage Taken Redirected to Servitor", SHIELD_RATE_MUL_PCT:"More Shield Blocks",
+	FIRE_ATK:"Fire Attack", WATER_ATK:"Water Attack", WIND_ATK:"Wind Attack", EARTH_ATK:"Earth Attack", HOLY_ATK:"Holy Attack", DARK_ATK:"Dark Attack",
+	FIRE_RES:"Fire Resistance", WATER_RES:"Water Resistance", WIND_RES:"Wind Resistance", EARTH_RES:"Earth Resistance", HOLY_RES:"Holy Resistance", DARK_RES:"Dark Resistance", ALL_ELEM_RES:"All Attribute Resistances",
+	SUMMON_PATK_PCT:"Summon P. Atk.", SUMMON_MATK_PCT:"Summon M. Atk.", SUMMON_PDEF_PCT:"Summon P. Def.", SUMMON_MDEF_PCT:"Summon M. Def.", SUMMON_HP_PCT:"Summon Max HP", SUMMON_ATK_SPD_PCT:"Summon Atk. Spd.", SUMMON_CAST_SPD_PCT:"Summon Casting Spd.",
 };
 
 // Keystone mechanics read as rules, not numbers. Mirrors KEYSTONE_TEXT in PassiveTreeBoard.java.
@@ -871,6 +952,9 @@ const STAT_ICON = {
 	MCRIT_DMG_PCT:"star", BLOW_RATE_PCT:"star",
 	SKILL_CDR_PCT:"wind", SPELL_CDR_PCT:"wind",
 	MAXHP_PCT:"heart", SERVITOR_SHARE_PCT:"shield", SHIELD_RATE_MUL_PCT:"shield",
+	FIRE_ATK:"flame", WATER_ATK:"drop", WIND_ATK:"wind", EARTH_ATK:"leaf", HOLY_ATK:"sun", DARK_ATK:"moon",
+	FIRE_RES:"ward", WATER_RES:"ward", WIND_RES:"ward", EARTH_RES:"ward", HOLY_RES:"ward", DARK_RES:"ward", ALL_ELEM_RES:"ward",
+	SUMMON_PATK_PCT:"paw", SUMMON_MATK_PCT:"paw", SUMMON_PDEF_PCT:"paw", SUMMON_MDEF_PCT:"paw", SUMMON_HP_PCT:"paw", SUMMON_ATK_SPD_PCT:"paw", SUMMON_CAST_SPD_PCT:"paw",
 };
 
 // Theme glyphs: a notable cluster (the notable and its three smalls), keystone or master carries
@@ -1117,8 +1201,8 @@ function render() {
 		});
 		const ang = Math.atan2(far.y - cy, far.x - cx);
 		const t = document.createElementNS(SVG_NS, "text");
-		t.setAttribute("x", cx + Math.cos(ang) * (farD + 130));
-		t.setAttribute("y", cy + Math.sin(ang) * (farD + 130));
+		t.setAttribute("x", cx + Math.cos(ang) * (farD + 230));
+		t.setAttribute("y", cy + Math.sin(ang) * (farD + 230));
 		t.setAttribute("class", "sector-label");
 		t.textContent = sector;
 		labelG.appendChild(t);

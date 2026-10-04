@@ -177,29 +177,29 @@
 		<requires nodeId="30002" />
 		<requires nodeId="30004" />
 	</node>
-	<node id="33003" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="2393.6" y="383.1" effect="MAXHP:15">
+	<node id="33003" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="2369.1" y="431.2" effect="MAXHP:15">
 		<requires nodeId="1025" />
 		<requires nodeId="30003" />
 	</node>
-	<node id="33004" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="1528.6" y="1881.4" effect="MAXHP_PCT:1">
+	<node id="33004" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="1558.0" y="1836.1" effect="MAXHP_PCT:1">
 		<requires nodeId="2019" />
 		<requires nodeId="30004" />
 	</node>
-	<node id="33005" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="2987.1" y="758.5" effect="MAXHP:15">
+	<node id="33005" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="2988.7" y="781.7" effect="MAXHP:15">
 		<requires nodeId="30025" />
 		<requires nodeId="33006" />
 	</node>
-	<node id="33006" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="2966.3" y="427.0" effect="MAXHP_PCT:1">
-		<requires nodeId="1009" />
+	<node id="33006" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="2969.3" y="473.3" effect="MAXHP_PCT:1">
 		<requires nodeId="33005" />
+		<requires nodeId="1093" />
 	</node>
-	<node id="33007" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="2150.5" y="2207.7" effect="MAXHP:15">
+	<node id="33007" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="2171.3" y="2197.4" effect="MAXHP:15">
 		<requires nodeId="30026" />
 		<requires nodeId="33008" />
 	</node>
-	<node id="33008" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="1852.9" y="2355.4" effect="MAXHP_PCT:1">
-		<requires nodeId="2004" />
+	<node id="33008" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="1894.6" y="2334.8" effect="MAXHP_PCT:1">
 		<requires nodeId="33007" />
+		<requires nodeId="2091" />
 	</node>
 	<node id="30070" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="2990.5" y="1680.4" effect="MAXHP:15">
 		<requires nodeId="30012" />
