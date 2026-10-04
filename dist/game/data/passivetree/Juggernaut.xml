@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Juggernaut: 95 nodes. x/y are authoritative layout coords. -->
+<!-- Juggernaut: 110 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="2000" name="Juggernaut Origin" sector="Juggernaut" type="START" tier="0" cost="0" x="1650.0" y="2857.9" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="2001" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1425.0" y="2468.2" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5" description="Junction.">
@@ -413,5 +413,65 @@
 	<node id="21305" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="-359.1" y="986.7" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="3062" />
 		<requires nodeId="21303" />
+	</node>
+	<node id="47101" name="Earth Fury" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2111.1" y="3495.4" orbitX="1955.1" orbitY="3836.4" effect="EARTH_ATK:5" icon="leaf">
+		<requires nodeId="39100" />
+		<requires nodeId="47102" />
+	</node>
+	<node id="47102" name="Earth Fury" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2207.5" y="3559.0" orbitX="1955.1" orbitY="3836.4" effect="EARTH_ATK:5" icon="leaf">
+		<requires nodeId="47101" />
+		<requires nodeId="47103" />
+	</node>
+	<node id="47103" name="Tectonic Fury" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="2279.9" y="3648.9" orbitX="1955.1" orbitY="3836.4" effect="EARTH_ATK:20;PATK_PCT:2" icon="leaf">
+		<requires nodeId="47102" />
+		<requires nodeId="47104" />
+	</node>
+	<node id="47104" name="Earth Fury" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2321.6" y="3756.6" orbitX="1955.1" orbitY="3836.4" effect="EARTH_ATK:5" icon="leaf">
+		<requires nodeId="47103" />
+		<requires nodeId="47105" />
+	</node>
+	<node id="47105" name="Earth Fury" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2328.5" y="3871.8" orbitX="1955.1" orbitY="3836.4" effect="EARTH_ATK:5" icon="leaf">
+		<requires nodeId="47104" />
+		<requires nodeId="47111" />
+	</node>
+	<node id="47106" name="Earth Ward" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1971.5" y="3576.0" orbitX="2344.9" orbitY="3611.4" effect="EARTH_RES:6" icon="ward">
+		<requires nodeId="39100" />
+		<requires nodeId="47107" />
+	</node>
+	<node id="47107" name="Earth Ward" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1978.4" y="3691.2" orbitX="2344.9" orbitY="3611.4" effect="EARTH_RES:6" icon="ward">
+		<requires nodeId="47106" />
+		<requires nodeId="47108" />
+	</node>
+	<node id="47108" name="Bedrock" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="2020.1" y="3798.9" orbitX="2344.9" orbitY="3611.4" effect="EARTH_RES:24;PDEF_PCT:2" icon="ward">
+		<requires nodeId="47107" />
+		<requires nodeId="47109" />
+	</node>
+	<node id="47109" name="Earth Ward" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2092.5" y="3888.8" orbitX="2344.9" orbitY="3611.4" effect="EARTH_RES:6" icon="ward">
+		<requires nodeId="47108" />
+		<requires nodeId="47110" />
+	</node>
+	<node id="47110" name="Earth Ward" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2188.9" y="3952.4" orbitX="2344.9" orbitY="3611.4" effect="EARTH_RES:6" icon="ward">
+		<requires nodeId="47109" />
+		<requires nodeId="47111" />
+	</node>
+	<node id="47111" name="Earth Shrine" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2300.0" y="3983.7" effect="EARTH_ATK:10" icon="leaf">
+		<requires nodeId="47105" />
+		<requires nodeId="47110" />
+		<requires nodeId="47112" />
+	</node>
+	<node id="47112" name="Earth Fury" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2355.0" y="4079.0" orbitX="2407.5" orbitY="4169.9" effect="EARTH_ATK:5" icon="leaf">
+		<requires nodeId="47111" />
+		<requires nodeId="47113" />
+	</node>
+	<node id="47113" name="Earth Fury" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2475.0" y="4089.5" orbitX="2407.5" orbitY="4169.9" effect="EARTH_ATK:5" icon="leaf">
+		<requires nodeId="47112" />
+		<requires nodeId="47114" />
+	</node>
+	<node id="47114" name="Earth Fury" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="2506.2" y="4205.8" orbitX="2407.5" orbitY="4169.9" effect="EARTH_ATK:5" icon="leaf">
+		<requires nodeId="47113" />
+		<requires nodeId="47115" />
+	</node>
+	<node id="47115" name="Wrath of the Mountain" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="2407.5" y="4274.9" orbitX="2407.5" orbitY="4169.9" effect="EARTH_ATK:30;EARTH_RES:15" icon="leaf">
+		<requires nodeId="47114" />
 	</node>
 </list>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Arcanist: 95 nodes. x/y are authoritative layout coords. -->
+<!-- Arcanist: 121 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="5000" name="Arcanist Origin" sector="Arcanist" type="START" tier="0" cost="0" x="-1650.0" y="-2857.9" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="5001" name="Crossroads" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1425.0" y="-2468.2" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2;MAXHP_PCT:0.5" description="Junction.">
@@ -413,5 +413,111 @@
 	<node id="24305" name="Pathway" sector="Arcanist" type="SMALL" tier="0" cost="1" x="359.1" y="-986.7" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="6062" />
 		<requires nodeId="24303" />
+	</node>
+	<node id="47401" name="Fire Fury" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2111.1" y="-3495.4" orbitX="-1955.1" orbitY="-3836.4" effect="FIRE_ATK:5" icon="flame">
+		<requires nodeId="39400" />
+		<requires nodeId="47402" />
+	</node>
+	<node id="47402" name="Fire Fury" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2207.5" y="-3559.0" orbitX="-1955.1" orbitY="-3836.4" effect="FIRE_ATK:5" icon="flame">
+		<requires nodeId="47401" />
+		<requires nodeId="47403" />
+	</node>
+	<node id="47403" name="Inferno" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-2279.9" y="-3648.9" orbitX="-1955.1" orbitY="-3836.4" effect="FIRE_ATK:20;MATK_PCT:2" icon="flame">
+		<requires nodeId="47402" />
+		<requires nodeId="47404" />
+	</node>
+	<node id="47404" name="Fire Fury" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2321.6" y="-3756.6" orbitX="-1955.1" orbitY="-3836.4" effect="FIRE_ATK:5" icon="flame">
+		<requires nodeId="47403" />
+		<requires nodeId="47405" />
+	</node>
+	<node id="47405" name="Fire Fury" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2328.5" y="-3871.8" orbitX="-1955.1" orbitY="-3836.4" effect="FIRE_ATK:5" icon="flame">
+		<requires nodeId="47404" />
+		<requires nodeId="47411" />
+	</node>
+	<node id="47406" name="Water Fury" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1971.5" y="-3576.0" orbitX="-2344.9" orbitY="-3611.4" effect="WATER_ATK:5" icon="drop">
+		<requires nodeId="39400" />
+		<requires nodeId="47407" />
+	</node>
+	<node id="47407" name="Water Fury" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1978.4" y="-3691.2" orbitX="-2344.9" orbitY="-3611.4" effect="WATER_ATK:5" icon="drop">
+		<requires nodeId="47406" />
+		<requires nodeId="47408" />
+	</node>
+	<node id="47408" name="Tidecaller" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-2020.1" y="-3798.9" orbitX="-2344.9" orbitY="-3611.4" effect="WATER_ATK:20;MATK_PCT:2" icon="drop">
+		<requires nodeId="47407" />
+		<requires nodeId="47409" />
+	</node>
+	<node id="47409" name="Water Fury" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2092.5" y="-3888.8" orbitX="-2344.9" orbitY="-3611.4" effect="WATER_ATK:5" icon="drop">
+		<requires nodeId="47408" />
+		<requires nodeId="47410" />
+	</node>
+	<node id="47410" name="Water Fury" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2188.9" y="-3952.4" orbitX="-2344.9" orbitY="-3611.4" effect="WATER_ATK:5" icon="drop">
+		<requires nodeId="47409" />
+		<requires nodeId="47411" />
+	</node>
+	<node id="47411" name="Elemental Shrine" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2300.0" y="-3983.7" effect="FIRE_ATK:8;WATER_ATK:8" icon="flame">
+		<requires nodeId="47405" />
+		<requires nodeId="47410" />
+		<requires nodeId="47416" />
+		<requires nodeId="47421" />
+	</node>
+	<node id="47416" name="Pact of Fangs" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2411.1" y="-4015.0" orbitX="-2255.1" orbitY="-4356.0" effect="SUMMON_PATK_PCT:2" icon="paw">
+		<requires nodeId="47411" />
+		<requires nodeId="47417" />
+	</node>
+	<node id="47417" name="Pact of Fangs" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2507.5" y="-4078.6" orbitX="-2255.1" orbitY="-4356.0" effect="SUMMON_PATK_PCT:2" icon="paw">
+		<requires nodeId="47416" />
+		<requires nodeId="47418" />
+	</node>
+	<node id="47418" name="Feral Pact" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-2579.9" y="-4168.5" orbitX="-2255.1" orbitY="-4356.0" effect="SUMMON_PATK_PCT:8;SUMMON_MATK_PCT:8;SUMMON_ATK_SPD_PCT:4" icon="paw">
+		<requires nodeId="47417" />
+		<requires nodeId="47419" />
+	</node>
+	<node id="47419" name="Pact of Fangs" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2621.6" y="-4276.2" orbitX="-2255.1" orbitY="-4356.0" effect="SUMMON_MATK_PCT:2" icon="paw">
+		<requires nodeId="47418" />
+		<requires nodeId="47420" />
+	</node>
+	<node id="47420" name="Pact of Fangs" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2628.5" y="-4391.4" orbitX="-2255.1" orbitY="-4356.0" effect="SUMMON_MATK_PCT:2" icon="paw">
+		<requires nodeId="47419" />
+		<requires nodeId="47426" />
+	</node>
+	<node id="47421" name="Pact of Stone" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2271.5" y="-4095.6" orbitX="-2644.9" orbitY="-4131.0" effect="SUMMON_HP_PCT:3" icon="paw">
+		<requires nodeId="47411" />
+		<requires nodeId="47422" />
+	</node>
+	<node id="47422" name="Pact of Stone" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2278.4" y="-4210.8" orbitX="-2644.9" orbitY="-4131.0" effect="SUMMON_HP_PCT:3" icon="paw">
+		<requires nodeId="47421" />
+		<requires nodeId="47423" />
+	</node>
+	<node id="47423" name="Stoneskin Pact" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-2320.1" y="-4318.5" orbitX="-2644.9" orbitY="-4131.0" effect="SUMMON_HP_PCT:10;SUMMON_PDEF_PCT:6;SUMMON_MDEF_PCT:6" icon="paw">
+		<requires nodeId="47422" />
+		<requires nodeId="47424" />
+	</node>
+	<node id="47424" name="Pact of Stone" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2392.5" y="-4408.4" orbitX="-2644.9" orbitY="-4131.0" effect="SUMMON_PDEF_PCT:3;SUMMON_MDEF_PCT:3" icon="paw">
+		<requires nodeId="47423" />
+		<requires nodeId="47425" />
+	</node>
+	<node id="47425" name="Pact of Stone" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2488.9" y="-4472.0" orbitX="-2644.9" orbitY="-4131.0" effect="SUMMON_PDEF_PCT:3;SUMMON_MDEF_PCT:3" icon="paw">
+		<requires nodeId="47424" />
+		<requires nodeId="47426" />
+	</node>
+	<node id="47426" name="Summoner's Circle" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2600.0" y="-4503.3" effect="SUMMON_ATK_SPD_PCT:4;SUMMON_CAST_SPD_PCT:4" icon="paw">
+		<requires nodeId="47420" />
+		<requires nodeId="47425" />
+		<requires nodeId="47427" />
+	</node>
+	<node id="47427" name="Soul Bond" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2655.0" y="-4598.6" orbitX="-2707.5" orbitY="-4689.5" effect="SUMMON_PATK_PCT:2;SUMMON_MATK_PCT:2" icon="paw">
+		<requires nodeId="47426" />
+		<requires nodeId="47428" />
+	</node>
+	<node id="47428" name="Soul Bond" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2775.0" y="-4609.1" orbitX="-2707.5" orbitY="-4689.5" effect="SUMMON_PATK_PCT:2;SUMMON_MATK_PCT:2" icon="paw">
+		<requires nodeId="47427" />
+		<requires nodeId="47429" />
+	</node>
+	<node id="47429" name="Soul Bond" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-2806.2" y="-4725.4" orbitX="-2707.5" orbitY="-4689.5" effect="SUMMON_PATK_PCT:2;SUMMON_MATK_PCT:2" icon="paw">
+		<requires nodeId="47428" />
+		<requires nodeId="47430" />
+	</node>
+	<node id="47430" name="Soulbound Pact" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-2707.5" y="-4794.5" orbitX="-2707.5" orbitY="-4689.5" effect="SUMMON_PATK_PCT:10;SUMMON_MATK_PCT:10;SUMMON_HP_PCT:10" icon="paw">
+		<requires nodeId="47429" />
 	</node>
 </list>

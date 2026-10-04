@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Vanguard: 95 nodes. x/y are authoritative layout coords. -->
+<!-- Vanguard: 110 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="1000" name="Vanguard Origin" sector="Vanguard" type="START" tier="0" cost="0" x="3300.0" y="0.0" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="1001" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2850.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5" description="Junction.">
@@ -413,5 +413,65 @@
 	<node id="20305" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="674.9" y="804.3" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
 		<requires nodeId="2062" />
 		<requires nodeId="20303" />
+	</node>
+	<node id="47001" name="Elemental Ward" sector="Vanguard" type="SMALL" tier="0" cost="1" x="4082.7" y="-80.6" orbitX="4300.0" orbitY="225.0" effect="FIRE_RES:6;WATER_RES:6" icon="ward">
+		<requires nodeId="39000" />
+		<requires nodeId="47002" />
+	</node>
+	<node id="47002" name="Elemental Ward" sector="Vanguard" type="SMALL" tier="0" cost="1" x="4185.9" y="-132.2" orbitX="4300.0" orbitY="225.0" effect="FIRE_RES:6;WATER_RES:6" icon="ward">
+		<requires nodeId="47001" />
+		<requires nodeId="47003" />
+	</node>
+	<node id="47003" name="Four Winds Aegis" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="4300.0" y="-150.0" orbitX="4300.0" orbitY="225.0" effect="FIRE_RES:15;WATER_RES:15;WIND_RES:15;EARTH_RES:15" icon="ward">
+		<requires nodeId="47002" />
+		<requires nodeId="47004" />
+	</node>
+	<node id="47004" name="Elemental Ward" sector="Vanguard" type="SMALL" tier="0" cost="1" x="4414.1" y="-132.2" orbitX="4300.0" orbitY="225.0" effect="WIND_RES:6;EARTH_RES:6" icon="ward">
+		<requires nodeId="47003" />
+		<requires nodeId="47005" />
+	</node>
+	<node id="47005" name="Elemental Ward" sector="Vanguard" type="SMALL" tier="0" cost="1" x="4517.3" y="-80.6" orbitX="4300.0" orbitY="225.0" effect="WIND_RES:6;EARTH_RES:6" icon="ward">
+		<requires nodeId="47004" />
+		<requires nodeId="47011" />
+	</node>
+	<node id="47006" name="Twilight Ward" sector="Vanguard" type="SMALL" tier="0" cost="1" x="4082.7" y="80.6" orbitX="4300.0" orbitY="-225.0" effect="HOLY_RES:8" icon="shield">
+		<requires nodeId="39000" />
+		<requires nodeId="47007" />
+	</node>
+	<node id="47007" name="Twilight Ward" sector="Vanguard" type="SMALL" tier="0" cost="1" x="4185.9" y="132.2" orbitX="4300.0" orbitY="-225.0" effect="HOLY_RES:8" icon="shield">
+		<requires nodeId="47006" />
+		<requires nodeId="47008" />
+	</node>
+	<node id="47008" name="Twilight Bulwark" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="4300.0" y="150.0" orbitX="4300.0" orbitY="-225.0" effect="HOLY_RES:25;DARK_RES:25" icon="shield">
+		<requires nodeId="47007" />
+		<requires nodeId="47009" />
+	</node>
+	<node id="47009" name="Twilight Ward" sector="Vanguard" type="SMALL" tier="0" cost="1" x="4414.1" y="132.2" orbitX="4300.0" orbitY="-225.0" effect="DARK_RES:8" icon="shield">
+		<requires nodeId="47008" />
+		<requires nodeId="47010" />
+	</node>
+	<node id="47010" name="Twilight Ward" sector="Vanguard" type="SMALL" tier="0" cost="1" x="4517.3" y="80.6" orbitX="4300.0" orbitY="-225.0" effect="DARK_RES:8" icon="shield">
+		<requires nodeId="47009" />
+		<requires nodeId="47011" />
+	</node>
+	<node id="47011" name="Ward Stone" sector="Vanguard" type="SMALL" tier="0" cost="1" x="4600.0" y="0.0" effect="ALL_ELEM_RES:5" icon="ward">
+		<requires nodeId="47005" />
+		<requires nodeId="47010" />
+		<requires nodeId="47012" />
+	</node>
+	<node id="47012" name="Prismatic Ward" sector="Vanguard" type="SMALL" tier="0" cost="1" x="4710.0" y="0.0" orbitX="4815.0" orbitY="0.0" effect="ALL_ELEM_RES:4" icon="ward">
+		<requires nodeId="47011" />
+		<requires nodeId="47013" />
+	</node>
+	<node id="47013" name="Prismatic Ward" sector="Vanguard" type="SMALL" tier="0" cost="1" x="4779.1" y="-98.7" orbitX="4815.0" orbitY="0.0" effect="ALL_ELEM_RES:4" icon="ward">
+		<requires nodeId="47012" />
+		<requires nodeId="47014" />
+	</node>
+	<node id="47014" name="Prismatic Ward" sector="Vanguard" type="SMALL" tier="0" cost="1" x="4895.4" y="-67.5" orbitX="4815.0" orbitY="0.0" effect="ALL_ELEM_RES:4" icon="ward">
+		<requires nodeId="47013" />
+		<requires nodeId="47015" />
+	</node>
+	<node id="47015" name="Prismatic Aegis" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="4905.9" y="52.5" orbitX="4815.0" orbitY="0.0" effect="ALL_ELEM_RES:20;MDEF_PCT:3" icon="ward">
+		<requires nodeId="47014" />
 	</node>
 </list>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Hierophant: 95 nodes. x/y are authoritative layout coords. -->
+<!-- Hierophant: 110 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="6000" name="Hierophant Origin" sector="Hierophant" type="START" tier="0" cost="0" x="1650.0" y="-2857.9" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="6001" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1425.0" y="-2468.2" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5" description="Junction.">
@@ -413,5 +413,65 @@
 	<node id="25305" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1034.0" y="-182.3" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5">
 		<requires nodeId="1062" />
 		<requires nodeId="25303" />
+	</node>
+	<node id="47501" name="Holy Fury" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1971.5" y="-3576.0" orbitX="2344.9" orbitY="-3611.4" effect="HOLY_ATK:5" icon="sun">
+		<requires nodeId="39500" />
+		<requires nodeId="47502" />
+	</node>
+	<node id="47502" name="Holy Fury" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1978.4" y="-3691.2" orbitX="2344.9" orbitY="-3611.4" effect="HOLY_ATK:5" icon="sun">
+		<requires nodeId="47501" />
+		<requires nodeId="47503" />
+	</node>
+	<node id="47503" name="Radiant Smite" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="2020.1" y="-3798.9" orbitX="2344.9" orbitY="-3611.4" effect="HOLY_ATK:20;MATK_PCT:2" icon="sun">
+		<requires nodeId="47502" />
+		<requires nodeId="47504" />
+	</node>
+	<node id="47504" name="Holy Fury" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2092.5" y="-3888.8" orbitX="2344.9" orbitY="-3611.4" effect="HOLY_ATK:5" icon="sun">
+		<requires nodeId="47503" />
+		<requires nodeId="47505" />
+	</node>
+	<node id="47505" name="Holy Fury" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2188.9" y="-3952.4" orbitX="2344.9" orbitY="-3611.4" effect="HOLY_ATK:5" icon="sun">
+		<requires nodeId="47504" />
+		<requires nodeId="47511" />
+	</node>
+	<node id="47506" name="Holy Ward" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2111.1" y="-3495.4" orbitX="1955.1" orbitY="-3836.4" effect="HOLY_RES:6" icon="ward">
+		<requires nodeId="39500" />
+		<requires nodeId="47507" />
+	</node>
+	<node id="47507" name="Holy Ward" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2207.5" y="-3559.0" orbitX="1955.1" orbitY="-3836.4" effect="HOLY_RES:6" icon="ward">
+		<requires nodeId="47506" />
+		<requires nodeId="47508" />
+	</node>
+	<node id="47508" name="Consecrated" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="2279.9" y="-3648.9" orbitX="1955.1" orbitY="-3836.4" effect="HOLY_RES:24;MDEF_PCT:2" icon="ward">
+		<requires nodeId="47507" />
+		<requires nodeId="47509" />
+	</node>
+	<node id="47509" name="Holy Ward" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2321.6" y="-3756.6" orbitX="1955.1" orbitY="-3836.4" effect="HOLY_RES:6" icon="ward">
+		<requires nodeId="47508" />
+		<requires nodeId="47510" />
+	</node>
+	<node id="47510" name="Holy Ward" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2328.5" y="-3871.8" orbitX="1955.1" orbitY="-3836.4" effect="HOLY_RES:6" icon="ward">
+		<requires nodeId="47509" />
+		<requires nodeId="47511" />
+	</node>
+	<node id="47511" name="Holy Shrine" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2300.0" y="-3983.7" effect="HOLY_ATK:10" icon="sun">
+		<requires nodeId="47505" />
+		<requires nodeId="47510" />
+		<requires nodeId="47512" />
+	</node>
+	<node id="47512" name="Holy Fury" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2355.0" y="-4079.0" orbitX="2407.5" orbitY="-4169.9" effect="HOLY_ATK:5" icon="sun">
+		<requires nodeId="47511" />
+		<requires nodeId="47513" />
+	</node>
+	<node id="47513" name="Holy Fury" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2304.1" y="-4188.1" orbitX="2407.5" orbitY="-4169.9" effect="HOLY_ATK:5" icon="sun">
+		<requires nodeId="47512" />
+		<requires nodeId="47514" />
+	</node>
+	<node id="47514" name="Holy Fury" sector="Hierophant" type="SMALL" tier="0" cost="1" x="2389.3" y="-4273.3" orbitX="2407.5" orbitY="-4169.9" effect="HOLY_ATK:5" icon="sun">
+		<requires nodeId="47513" />
+		<requires nodeId="47515" />
+	</node>
+	<node id="47515" name="Light of Einhasad" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="2498.4" y="-4222.4" orbitX="2407.5" orbitY="-4169.9" effect="HOLY_ATK:30;HOLY_RES:15" icon="sun">
+		<requires nodeId="47514" />
 	</node>
 </list>

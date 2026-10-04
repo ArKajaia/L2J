@@ -25,6 +25,7 @@ import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.Summon;
 import org.l2jmobius.gameserver.model.actor.holders.creature.TimeStamp;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
@@ -133,7 +134,16 @@ public class PassiveTreeManager
 		// Player.getInventoryLimit(): base slots + calcStat(INV_LIM, 0).
 		Map.entry("INVENTORY_SLOTS_ADD", Stat.INV_LIM),
 		// PlayerStatus.reduceHp: % of damage taken redirected to a servitor within 1000 range (Soul Link), init 0
-		Map.entry("SERVITOR_SHARE_PCT", Stat.TRANSFER_DAMAGE_PERCENT));
+		Map.entry("SERVITOR_SHARE_PCT", Stat.TRANSFER_DAMAGE_PERCENT),
+		// Attribute attack (CreatureStat.getAttackElementValue: weapon/skill element power, init = template base) and
+		// attribute defence (getDefenseElementValue), the same points an attribute stone adds to a weapon / armour.
+		Map.entry("FIRE_ATK", Stat.FIRE_POWER), Map.entry("WATER_ATK", Stat.WATER_POWER), Map.entry("WIND_ATK", Stat.WIND_POWER),
+		Map.entry("EARTH_ATK", Stat.EARTH_POWER), Map.entry("HOLY_ATK", Stat.HOLY_POWER), Map.entry("DARK_ATK", Stat.DARK_POWER),
+		Map.entry("FIRE_RES", Stat.FIRE_RES), Map.entry("WATER_RES", Stat.WATER_RES), Map.entry("WIND_RES", Stat.WIND_RES),
+		Map.entry("EARTH_RES", Stat.EARTH_RES), Map.entry("HOLY_RES", Stat.HOLY_RES), Map.entry("DARK_RES", Stat.DARK_RES));
+
+	/** ALL_ELEM_RES adds its value to every one of these attribute defences. */
+	private static final Stat[] ALL_ELEMENT_RES = { Stat.FIRE_RES, Stat.WATER_RES, Stat.WIND_RES, Stat.EARTH_RES, Stat.HOLY_RES, Stat.DARK_RES };
 
 	/**
 	 * Stats that are MULTIPLIERS - the value is a percent, applied as (1 + pct/100). Adding to these instead of multiplying is what caused the 200 -> 12,000 crit damage blowout.
@@ -561,6 +571,13 @@ public class PassiveTreeManager
 		player.sendPacket(new ExStorageMaxCount(player));
 		player.refreshOverloaded();
 		player.broadcastUserInfo();
+		
+		// The summon's SUMMON_* bonuses are read from its owner's totals (Summon getters): show the new values.
+		final Summon summon = player.getSummon();
+		if (summon != null)
+		{
+			summon.updateAndBroadcastStatus(1);
+		}
 	}
 	
 	/**
@@ -586,6 +603,15 @@ public class PassiveTreeManager
 			if (value != 0)
 			{
 				creature.addStatFunc(new FuncAdd(entry.getValue(), 0x30, PASSIVE_TREE_FUNC_OWNER, value, null));
+			}
+		}
+		
+		final double allElementRes = bonus.get("ALL_ELEM_RES");
+		if (allElementRes != 0)
+		{
+			for (Stat stat : ALL_ELEMENT_RES)
+			{
+				creature.addStatFunc(new FuncAdd(stat, 0x30, PASSIVE_TREE_FUNC_OWNER, allElementRes, null));
 			}
 		}
 		

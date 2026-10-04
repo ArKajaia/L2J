@@ -101,6 +101,26 @@ public class PassiveTreeBoard implements IParseBoardHandler
 		STAT_LABEL.put("MAXHP_PCT", "Maximum HP");
 		STAT_LABEL.put("SERVITOR_SHARE_PCT", "Damage Taken Redirected to Servitor");
 		STAT_LABEL.put("SHIELD_RATE_MUL_PCT", "More Shield Blocks");
+		STAT_LABEL.put("FIRE_ATK", "Fire Attack");
+		STAT_LABEL.put("WATER_ATK", "Water Attack");
+		STAT_LABEL.put("WIND_ATK", "Wind Attack");
+		STAT_LABEL.put("EARTH_ATK", "Earth Attack");
+		STAT_LABEL.put("HOLY_ATK", "Holy Attack");
+		STAT_LABEL.put("DARK_ATK", "Dark Attack");
+		STAT_LABEL.put("FIRE_RES", "Fire Resistance");
+		STAT_LABEL.put("WATER_RES", "Water Resistance");
+		STAT_LABEL.put("WIND_RES", "Wind Resistance");
+		STAT_LABEL.put("EARTH_RES", "Earth Resistance");
+		STAT_LABEL.put("HOLY_RES", "Holy Resistance");
+		STAT_LABEL.put("DARK_RES", "Dark Resistance");
+		STAT_LABEL.put("ALL_ELEM_RES", "All Attribute Resistances");
+		STAT_LABEL.put("SUMMON_PATK_PCT", "Summon P. Atk.");
+		STAT_LABEL.put("SUMMON_MATK_PCT", "Summon M. Atk.");
+		STAT_LABEL.put("SUMMON_PDEF_PCT", "Summon P. Def.");
+		STAT_LABEL.put("SUMMON_MDEF_PCT", "Summon M. Def.");
+		STAT_LABEL.put("SUMMON_HP_PCT", "Summon Max HP");
+		STAT_LABEL.put("SUMMON_ATK_SPD_PCT", "Summon Atk. Spd.");
+		STAT_LABEL.put("SUMMON_CAST_SPD_PCT", "Summon Casting Spd.");
 	}
 
 	// Keystone mechanics read as rules, not numbers ("%s" is the value). Mirrors KEYSTONE_TEXT in passive-tree.html.

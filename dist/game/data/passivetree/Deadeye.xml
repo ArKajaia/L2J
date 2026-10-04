@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Deadeye: 85 nodes. x/y are authoritative layout coords. -->
+<!-- Deadeye: 100 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="4000" name="Deadeye Origin" sector="Deadeye" type="START" tier="0" cost="0" x="-3300.0" y="0.0" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="4001" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2850.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5" description="Junction.">
@@ -371,5 +371,65 @@
 	<node id="23305" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-674.9" y="-804.3" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="5062" />
 		<requires nodeId="23303" />
+	</node>
+	<node id="47301" name="Wind Fury" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-4082.7" y="80.6" orbitX="-4300.0" orbitY="-225.0" effect="WIND_ATK:5" icon="wind">
+		<requires nodeId="39300" />
+		<requires nodeId="47302" />
+	</node>
+	<node id="47302" name="Wind Fury" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-4185.9" y="132.2" orbitX="-4300.0" orbitY="-225.0" effect="WIND_ATK:5" icon="wind">
+		<requires nodeId="47301" />
+		<requires nodeId="47303" />
+	</node>
+	<node id="47303" name="Gale Arrows" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-4300.0" y="150.0" orbitX="-4300.0" orbitY="-225.0" effect="WIND_ATK:20;ACCURACY_ADD:1" icon="wind">
+		<requires nodeId="47302" />
+		<requires nodeId="47304" />
+	</node>
+	<node id="47304" name="Wind Fury" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-4414.1" y="132.2" orbitX="-4300.0" orbitY="-225.0" effect="WIND_ATK:5" icon="wind">
+		<requires nodeId="47303" />
+		<requires nodeId="47305" />
+	</node>
+	<node id="47305" name="Wind Fury" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-4517.3" y="80.6" orbitX="-4300.0" orbitY="-225.0" effect="WIND_ATK:5" icon="wind">
+		<requires nodeId="47304" />
+		<requires nodeId="47311" />
+	</node>
+	<node id="47306" name="Wind Ward" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-4082.7" y="-80.6" orbitX="-4300.0" orbitY="225.0" effect="WIND_RES:6" icon="ward">
+		<requires nodeId="39300" />
+		<requires nodeId="47307" />
+	</node>
+	<node id="47307" name="Wind Ward" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-4185.9" y="-132.2" orbitX="-4300.0" orbitY="225.0" effect="WIND_RES:6" icon="ward">
+		<requires nodeId="47306" />
+		<requires nodeId="47308" />
+	</node>
+	<node id="47308" name="Windward" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-4300.0" y="-150.0" orbitX="-4300.0" orbitY="225.0" effect="WIND_RES:24;MOVE_SPEED_ADD:1.8" icon="ward">
+		<requires nodeId="47307" />
+		<requires nodeId="47309" />
+	</node>
+	<node id="47309" name="Wind Ward" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-4414.1" y="-132.2" orbitX="-4300.0" orbitY="225.0" effect="WIND_RES:6" icon="ward">
+		<requires nodeId="47308" />
+		<requires nodeId="47310" />
+	</node>
+	<node id="47310" name="Wind Ward" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-4517.3" y="-80.6" orbitX="-4300.0" orbitY="225.0" effect="WIND_RES:6" icon="ward">
+		<requires nodeId="47309" />
+		<requires nodeId="47311" />
+	</node>
+	<node id="47311" name="Wind Shrine" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-4600.0" y="0.0" effect="WIND_ATK:10" icon="wind">
+		<requires nodeId="47305" />
+		<requires nodeId="47310" />
+		<requires nodeId="47312" />
+	</node>
+	<node id="47312" name="Wind Fury" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-4710.0" y="0.0" orbitX="-4815.0" orbitY="0.0" effect="WIND_ATK:5" icon="wind">
+		<requires nodeId="47311" />
+		<requires nodeId="47313" />
+	</node>
+	<node id="47313" name="Wind Fury" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-4779.1" y="98.7" orbitX="-4815.0" orbitY="0.0" effect="WIND_ATK:5" icon="wind">
+		<requires nodeId="47312" />
+		<requires nodeId="47314" />
+	</node>
+	<node id="47314" name="Wind Fury" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-4895.4" y="67.5" orbitX="-4815.0" orbitY="0.0" effect="WIND_ATK:5" icon="wind">
+		<requires nodeId="47313" />
+		<requires nodeId="47315" />
+	</node>
+	<node id="47315" name="Eye of the Storm" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-4905.9" y="-52.5" orbitX="-4815.0" orbitY="0.0" effect="WIND_ATK:30;WIND_RES:15" icon="wind">
+		<requires nodeId="47314" />
 	</node>
 </list>

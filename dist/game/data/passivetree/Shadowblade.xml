@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Shadowblade: 86 nodes. x/y are authoritative layout coords. -->
+<!-- Shadowblade: 101 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="3000" name="Shadowblade Origin" sector="Shadowblade" type="START" tier="0" cost="0" x="-1650.0" y="2857.9" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="3001" name="Crossroads" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1425.0" y="2468.2" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.2;MAXHP_PCT:0.5" description="Junction.">
@@ -375,5 +375,65 @@
 	<node id="22305" name="Pathway" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1034.0" y="182.3" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="4062" />
 		<requires nodeId="22303" />
+	</node>
+	<node id="47201" name="Dark Fury" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1971.5" y="3576.0" orbitX="-2344.9" orbitY="3611.4" effect="DARK_ATK:5" icon="moon">
+		<requires nodeId="39200" />
+		<requires nodeId="47202" />
+	</node>
+	<node id="47202" name="Dark Fury" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1978.4" y="3691.2" orbitX="-2344.9" orbitY="3611.4" effect="DARK_ATK:5" icon="moon">
+		<requires nodeId="47201" />
+		<requires nodeId="47203" />
+	</node>
+	<node id="47203" name="Nightfall Edge" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-2020.1" y="3798.9" orbitX="-2344.9" orbitY="3611.4" effect="DARK_ATK:20;CRIT_DMG_PCT:3" icon="moon">
+		<requires nodeId="47202" />
+		<requires nodeId="47204" />
+	</node>
+	<node id="47204" name="Dark Fury" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-2092.5" y="3888.8" orbitX="-2344.9" orbitY="3611.4" effect="DARK_ATK:5" icon="moon">
+		<requires nodeId="47203" />
+		<requires nodeId="47205" />
+	</node>
+	<node id="47205" name="Dark Fury" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-2188.9" y="3952.4" orbitX="-2344.9" orbitY="3611.4" effect="DARK_ATK:5" icon="moon">
+		<requires nodeId="47204" />
+		<requires nodeId="47211" />
+	</node>
+	<node id="47206" name="Dark Ward" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-2111.1" y="3495.4" orbitX="-1955.1" orbitY="3836.4" effect="DARK_RES:6" icon="ward">
+		<requires nodeId="39200" />
+		<requires nodeId="47207" />
+	</node>
+	<node id="47207" name="Dark Ward" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-2207.5" y="3559.0" orbitX="-1955.1" orbitY="3836.4" effect="DARK_RES:6" icon="ward">
+		<requires nodeId="47206" />
+		<requires nodeId="47208" />
+	</node>
+	<node id="47208" name="Shroud of Dusk" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-2279.9" y="3648.9" orbitX="-1955.1" orbitY="3836.4" effect="DARK_RES:24;EVASION_ADD:1" icon="ward">
+		<requires nodeId="47207" />
+		<requires nodeId="47209" />
+	</node>
+	<node id="47209" name="Dark Ward" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-2321.6" y="3756.6" orbitX="-1955.1" orbitY="3836.4" effect="DARK_RES:6" icon="ward">
+		<requires nodeId="47208" />
+		<requires nodeId="47210" />
+	</node>
+	<node id="47210" name="Dark Ward" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-2328.5" y="3871.8" orbitX="-1955.1" orbitY="3836.4" effect="DARK_RES:6" icon="ward">
+		<requires nodeId="47209" />
+		<requires nodeId="47211" />
+	</node>
+	<node id="47211" name="Dark Shrine" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-2300.0" y="3983.7" effect="DARK_ATK:10" icon="moon">
+		<requires nodeId="47205" />
+		<requires nodeId="47210" />
+		<requires nodeId="47212" />
+	</node>
+	<node id="47212" name="Dark Fury" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-2355.0" y="4079.0" orbitX="-2407.5" orbitY="4169.9" effect="DARK_ATK:5" icon="moon">
+		<requires nodeId="47211" />
+		<requires nodeId="47213" />
+	</node>
+	<node id="47213" name="Dark Fury" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-2304.1" y="4188.1" orbitX="-2407.5" orbitY="4169.9" effect="DARK_ATK:5" icon="moon">
+		<requires nodeId="47212" />
+		<requires nodeId="47214" />
+	</node>
+	<node id="47214" name="Dark Fury" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-2389.3" y="4273.3" orbitX="-2407.5" orbitY="4169.9" effect="DARK_ATK:5" icon="moon">
+		<requires nodeId="47213" />
+		<requires nodeId="47215" />
+	</node>
+	<node id="47215" name="Heart of Darkness" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-2498.4" y="4222.4" orbitX="-2407.5" orbitY="4169.9" effect="DARK_ATK:30;DARK_RES:15" icon="moon">
+		<requires nodeId="47214" />
 	</node>
 </list>

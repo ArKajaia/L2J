@@ -117,6 +117,12 @@ WEDGE_RINGS = {
 for _hi, _p in {0: (765, 30, 1), 1: (765, 30, -1), 2: (2000, 19.5, 1), 3: (765, 30, -1), 4: (2000, 19.5, -1), 5: (765, 30, 1)}.items():
 	WEDGE_RINGS[_hi][65] = _p  # the third structure: an HP wheel or a conditional mastery
 
+# Attribute shrines, straight out from each Rim Gate between the regions (ids SHRINE_BASE + sector * 100 + local):
+# an eye from the gate to the shrine (arcs 1-5 and 6-10), the shrine 11, its capstone ring 12-15. Arcanist's shrine
+# opens a second eye (16-20, 21-25) to the Summoner's Circle 26 and its ring 27-30 instead.
+SHRINE_BASE = 47000
+SHRINE_EYE_LENGTH, SHRINE_EYE_BULGE, SHRINE_RING_GAP = 600, 150, 215
+
 # BEGIN REGIONS
 # The six regions beyond the rim (region i between sectors i and i+1), each shaped differently: a fan, a winding
 # road and a ladder, the other three mirrored. Positions are (radius, degrees past the region's first spine);
@@ -517,6 +523,25 @@ def layout(nodes):
 			ring = ring_chain(nodes, adj, base + first)
 			entry = [nodes[j].pos for j in adj[base + first] if (nodes[j].pos is not None) and (j not in ring)]
 			place_ring(nodes, ring, polar(r, start + deg), (sum(p[0] for p in entry) / len(entry), sum(p[1] for p in entry) / len(entry)), curl)
+
+	# Attribute shrines beyond the rim.
+	for si in range(6):
+		base = SHRINE_BASE + (si * 100)
+		u, v = frame(si * SPINE_DEG)
+		at = lambda p: add((u[0] * p[0], u[1] * p[0]), v, p[1])
+		hub_r = R_RIM
+		for first_arc, hub_local, ring_local in ((1, 11, 12), (16, 26, 27)):
+			if (base + hub_local) not in nodes:
+				continue
+			for k, side in enumerate((-1, 1)):
+				points, orbit = arc_positions(hub_r, hub_r + SHRINE_EYE_LENGTH, side * SHRINE_EYE_BULGE, 5)
+				for i, p in zip(range(base + first_arc + (5 * k), base + first_arc + (5 * k) + 5), points):
+					nodes[i].pos, nodes[i].orbit = at(p), at(orbit)
+			hub_r += SHRINE_EYE_LENGTH
+			nodes[base + hub_local].pos = at((hub_r, 0))
+			if (base + ring_local) in nodes:
+				ring = [base + ring_local + j for j in range(4)]
+				place_ring(nodes, ring, at((hub_r + SHRINE_RING_GAP, 0)), nodes[base + hub_local].pos, 1)
 
 	# Hybrids: one template, rotated into each wedge.
 	for hi, base in enumerate(HYBRID_BASES):

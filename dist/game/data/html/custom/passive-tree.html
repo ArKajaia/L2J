@@ -895,6 +895,9 @@ const STAT_LABEL = {
 	SPELL_MP_COST_RED_PCT:"Spell MP Cost Reduction", CRIT_DMG_TAKEN_RED_PCT:"Critical Damage Taken Reduction",
 	INTERRUPT_RES_PCT:"Cast Interruption Resistance", DEBUFF_RES_PCT:"Debuff Resistance",
 	MAXHP_PCT:"Maximum HP", SERVITOR_SHARE_PCT:"Damage Taken Redirected to Servitor", SHIELD_RATE_MUL_PCT:"More Shield Blocks",
+	FIRE_ATK:"Fire Attack", WATER_ATK:"Water Attack", WIND_ATK:"Wind Attack", EARTH_ATK:"Earth Attack", HOLY_ATK:"Holy Attack", DARK_ATK:"Dark Attack",
+	FIRE_RES:"Fire Resistance", WATER_RES:"Water Resistance", WIND_RES:"Wind Resistance", EARTH_RES:"Earth Resistance", HOLY_RES:"Holy Resistance", DARK_RES:"Dark Resistance", ALL_ELEM_RES:"All Attribute Resistances",
+	SUMMON_PATK_PCT:"Summon P. Atk.", SUMMON_MATK_PCT:"Summon M. Atk.", SUMMON_PDEF_PCT:"Summon P. Def.", SUMMON_MDEF_PCT:"Summon M. Def.", SUMMON_HP_PCT:"Summon Max HP", SUMMON_ATK_SPD_PCT:"Summon Atk. Spd.", SUMMON_CAST_SPD_PCT:"Summon Casting Spd.",
 };
 
 // Keystone mechanics read as rules, not numbers. Mirrors KEYSTONE_TEXT in PassiveTreeBoard.java.
@@ -949,6 +952,9 @@ const STAT_ICON = {
 	MCRIT_DMG_PCT:"star", BLOW_RATE_PCT:"star",
 	SKILL_CDR_PCT:"wind", SPELL_CDR_PCT:"wind",
 	MAXHP_PCT:"heart", SERVITOR_SHARE_PCT:"shield", SHIELD_RATE_MUL_PCT:"shield",
+	FIRE_ATK:"flame", WATER_ATK:"drop", WIND_ATK:"wind", EARTH_ATK:"leaf", HOLY_ATK:"sun", DARK_ATK:"moon",
+	FIRE_RES:"ward", WATER_RES:"ward", WIND_RES:"ward", EARTH_RES:"ward", HOLY_RES:"ward", DARK_RES:"ward", ALL_ELEM_RES:"ward",
+	SUMMON_PATK_PCT:"paw", SUMMON_MATK_PCT:"paw", SUMMON_PDEF_PCT:"paw", SUMMON_MDEF_PCT:"paw", SUMMON_HP_PCT:"paw", SUMMON_ATK_SPD_PCT:"paw", SUMMON_CAST_SPD_PCT:"paw",
 };
 
 // Theme glyphs: a notable cluster (the notable and its three smalls), keystone or master carries
@@ -1195,8 +1201,8 @@ function render() {
 		});
 		const ang = Math.atan2(far.y - cy, far.x - cx);
 		const t = document.createElementNS(SVG_NS, "text");
-		t.setAttribute("x", cx + Math.cos(ang) * (farD + 130));
-		t.setAttribute("y", cy + Math.sin(ang) * (farD + 130));
+		t.setAttribute("x", cx + Math.cos(ang) * (farD + 230));
+		t.setAttribute("y", cy + Math.sin(ang) * (farD + 230));
 		t.setAttribute("class", "sector-label");
 		t.textContent = sector;
 		labelG.appendChild(t);

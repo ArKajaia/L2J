@@ -5,6 +5,8 @@
 		<requires nodeId="39003" />
 		<requires nodeId="39010" />
 		<requires nodeId="39520" />
+		<requires nodeId="47001" />
+		<requires nodeId="47006" />
 	</node>
 	<node id="39001" name="Outbound Road" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3475.0" y="0.0" effect="MAXHP:12">
 		<requires nodeId="1000" />
@@ -46,6 +48,8 @@
 		<requires nodeId="39020" />
 		<requires nodeId="39103" />
 		<requires nodeId="39110" />
+		<requires nodeId="47101" />
+		<requires nodeId="47106" />
 	</node>
 	<node id="39101" name="Outbound Road" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1737.5" y="3009.4" effect="MAXHP:12">
 		<requires nodeId="2000" />
@@ -87,6 +91,8 @@
 		<requires nodeId="39120" />
 		<requires nodeId="39203" />
 		<requires nodeId="39210" />
+		<requires nodeId="47201" />
+		<requires nodeId="47206" />
 	</node>
 	<node id="39201" name="Outbound Road" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1737.5" y="3009.4" effect="MAXHP:12">
 		<requires nodeId="3000" />
@@ -128,6 +134,8 @@
 		<requires nodeId="39220" />
 		<requires nodeId="39303" />
 		<requires nodeId="39310" />
+		<requires nodeId="47301" />
+		<requires nodeId="47306" />
 	</node>
 	<node id="39301" name="Outbound Road" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3475.0" y="0.0" effect="MAXHP:12">
 		<requires nodeId="4000" />
@@ -169,6 +177,8 @@
 		<requires nodeId="39320" />
 		<requires nodeId="39403" />
 		<requires nodeId="39410" />
+		<requires nodeId="47401" />
+		<requires nodeId="47406" />
 	</node>
 	<node id="39401" name="Outbound Road" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1737.5" y="-3009.4" effect="MAXHP:12">
 		<requires nodeId="5000" />
@@ -210,6 +220,8 @@
 		<requires nodeId="39420" />
 		<requires nodeId="39503" />
 		<requires nodeId="39510" />
+		<requires nodeId="47501" />
+		<requires nodeId="47506" />
 	</node>
 	<node id="39501" name="Outbound Road" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1737.5" y="-3009.4" effect="MAXHP:12">
 		<requires nodeId="6000" />
