@@ -38,6 +38,8 @@ HYBRID_BASES = [30000, 30100, 30200, 30300, 30400, 30500]  # hybrid i sits betwe
 SPINE_DEG = 60  # sector i's spine points at i * 60 degrees (+y is down, as in the planner's SVG)
 
 R_NEXUS = 520
+R_PILLAR = 230  # the inner ring the six Nexus pillars sit on
+NEXUS_TWIST = 40 / R_NEXUS  # degrees per unit of radius the Nexus arms curl by on their way in
 R_MASTER = 720
 R_JUNCTION = {1: 2850, 16: 2250, 39: 1650, 62: 1050}  # local id -> radius: J0 (outer) .. J3 (inner)
 R_START = 3300
@@ -248,11 +250,36 @@ def frame(deg):
 	return (math.cos(t), math.sin(t)), (-math.sin(t), math.cos(t))
 
 
+def arc_orbit(a, b):
+	"""The circle a link is drawn along: the orbit both ends share, or the (non-centre) orbit of one end when the other
+	end sits exactly on that circle too (an arm of a wheel, eye or the Nexus running into its hub). None: straight."""
+	if a.orbit and (a.orbit == b.orbit) and (abs(dist(a.orbit, a.pos) - dist(b.orbit, b.pos)) < 1):
+		return a.orbit
+	for x, y in ((a, b), (b, a)):
+		if x.orbit and (x.orbit != (0.0, 0.0)) and (abs(dist(x.orbit, x.pos) - dist(x.orbit, y.pos)) < 1):
+			return x.orbit
+	return None
+
+
+def sweep_arc(start, end, through, n):
+	"""n points spread evenly along the circle arc from start to end that passes `through`, and the circle's centre."""
+	(ax, ay), (bx, by), (cx, cy) = start, through, end
+	d = 2 * ((ax * (by - cy)) + (bx * (cy - ay)) + (cx * (ay - by)))
+	ux = ((((ax * ax) + (ay * ay)) * (by - cy)) + (((bx * bx) + (by * by)) * (cy - ay)) + (((cx * cx) + (cy * cy)) * (ay - by))) / d
+	uy = ((((ax * ax) + (ay * ay)) * (cx - bx)) + (((bx * bx) + (by * by)) * (ax - cx)) + (((cx * cx) + (cy * cy)) * (bx - ax))) / d
+	r = math.hypot(ax - ux, ay - uy)
+	t0, tm, t1 = (math.atan2(p[1] - uy, p[0] - ux) for p in (start, through, end))
+	half = (tm - t0 + math.pi) % (2 * math.pi) - math.pi
+	full = (t1 - t0) % (2 * math.pi) if half > 0 else -((t0 - t1) % (2 * math.pi))
+	return [(ux + (r * math.cos(t0 + ((full * k) / (n + 1)))), uy + (r * math.sin(t0 + ((full * k) / (n + 1))))) for k in range(1, n + 1)], (ux, uy)
+
+
 def edge_points(a, b):
-	"""A link as a polyline: an arc when both ends sit on the same circle, else a straight segment."""
+	"""A link as a polyline: an arc along arc_orbit(), else a straight segment."""
 	pa, pb = a.pos, b.pos
-	if a.orbit and (a.orbit == b.orbit) and (abs(dist(a.orbit, pa) - dist(b.orbit, pb)) < 1):
-		c, r = a.orbit, dist(a.orbit, pa)
+	c = arc_orbit(a, b)
+	if c:
+		r = dist(c, pa)
 		a0 = math.atan2(pa[1] - c[1], pa[0] - c[0])
 		d = math.atan2(pb[1] - c[1], pb[0] - c[0]) - a0
 		d = (d + math.pi) % (2 * math.pi) - math.pi
@@ -417,16 +444,24 @@ def layout(nodes):
 		nodes[9001 + k].pos = polar(R_NEXUS, 30 * k)
 		nodes[9001 + k].orbit = centre
 	nodes[9019].pos = centre
-	for gate in range(9002, 9013, 2):
+	# Every arm inside the ring curls the same way, so the Nexus reads as a slow vortex: the angle of an arm grows by
+	# NEXUS_TWIST degrees per unit of radius it runs inward. Each arm is one circle arc (its nodes share that orbit).
+	twist = lambda r: NEXUS_TWIST * (R_NEXUS - r)
+	for gate in range(9002, 9013, 2):  # pillar conduits: three smalls, then the pillar on the inner ring
 		ang = 30 * (gate - 9001)
 		path = chain_from(nodes, adj, [j for j in adj[gate] if j >= 9020][0], gate)
-		for i, r in zip(path, (430, 340, 250, 165)):
-			nodes[i].pos = polar(r, ang)
-	for gate in range(9001, 9013, 2):
+		end = polar(R_PILLAR, ang + twist(R_PILLAR))
+		mid_r = (R_NEXUS + R_PILLAR) / 2
+		points, orbit = sweep_arc(nodes[gate].pos, end, polar(mid_r, ang + twist(mid_r)), len(path) - 1)
+		for i, p in zip(path, points + [end]):
+			nodes[i].pos, nodes[i].orbit = p, orbit
+	for gate in range(9001, 9013, 2):  # prismatic threads: two smalls, then the centre
 		ang = 30 * (gate - 9001)
 		spoke = [j for j in adj[gate] if j >= 9020][0]
-		for i, r in zip(chain_from(nodes, adj, spoke, gate)[:2], (360, 200)):
-			nodes[i].pos = polar(r, ang)
+		path = chain_from(nodes, adj, spoke, gate)[:2]
+		points, orbit = sweep_arc(nodes[gate].pos, centre, polar(R_NEXUS / 2, ang + twist(R_NEXUS / 2)), len(path))
+		for i, p in zip(path, points):
+			nodes[i].pos, nodes[i].orbit = p, orbit
 
 	# Sector spines, junctions and the bridges between them.
 	for si, base in enumerate(SECTOR_BASES):
