@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.l2jmobius.gameserver.handler.ITargetTypeHandler;
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -51,6 +52,12 @@ public class PartyMember implements ITargetTypeHandler
 			}
 			
 			if (creature.isInParty() && target.isInParty() && (creature.getParty().getLeaderObjectId() == target.getParty().getLeaderObjectId()))
+			{
+				return Collections.singletonList(target);
+			}
+			
+			// A fake player of the same party.
+			if (FakePartyManager.getInstance().isSameGroup(creature, target))
 			{
 				return Collections.singletonList(target);
 			}

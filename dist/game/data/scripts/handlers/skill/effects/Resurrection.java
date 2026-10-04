@@ -16,6 +16,7 @@
  */
 package handlers.skill.effects;
 
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -56,7 +57,7 @@ public class Resurrection extends AbstractEffect
 	@Override
 	public void onStart(Creature effector, Creature effected, Skill skill)
 	{
-		if (effector.isPlayer())
+		if (effector.isPlayer() && !effected.isFakePlayer())
 		{
 			final Player player = effected.asPlayer();
 			if (player != null)
@@ -66,8 +67,13 @@ public class Resurrection extends AbstractEffect
 		}
 		else
 		{
+			// An npc (a fake player of a party) resurrects at once, and a fake player gets up at once too.
 			DecayTaskManager.getInstance().cancel(effected);
 			effected.doRevive(Formulas.calculateSkillResurrectRestorePercent(_power, effector));
+			if (effected.isFakePlayer())
+			{
+				FakePartyManager.getInstance().onRevived(effected.asNpc());
+			}
 		}
 	}
 }

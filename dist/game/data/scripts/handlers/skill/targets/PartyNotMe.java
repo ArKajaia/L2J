@@ -21,9 +21,11 @@ import java.util.List;
 
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.handler.ITargetTypeHandler;
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 import org.l2jmobius.gameserver.util.LocationUtil;
@@ -49,6 +51,19 @@ public class PartyNotMe implements ITargetTypeHandler
 					{
 						targetList.add(partyMember.getSummon());
 					}
+				}
+			}
+		}
+		
+		// Fake players of the party, and for a fake player the players of its party.
+		final FakePlayerParty fakeParty = FakePartyManager.getInstance().getParty(creature);
+		if (fakeParty != null)
+		{
+			for (Creature member : fakeParty.getMembers())
+			{
+				if ((member != creature) && !member.isDead() && !targetList.contains(member) && LocationUtil.checkIfInRange(PlayerConfig.ALT_PARTY_RANGE, creature, member, true) && ((skill.getAffectRange() <= 0) || LocationUtil.checkIfInRange(skill.getAffectRange(), creature, member, true)))
+				{
+					targetList.add(member);
 				}
 			}
 		}

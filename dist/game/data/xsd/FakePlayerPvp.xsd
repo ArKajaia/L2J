@@ -55,6 +55,11 @@
 							<xs:element name="summon" type="xs:string" minOccurs="0" />
 							<xs:element name="link" type="xs:string" minOccurs="0" />
 							<xs:element name="transform" type="xs:string" minOccurs="0" />
+							<xs:element name="partyHeal" type="xs:string" minOccurs="0" />
+							<xs:element name="groupHeal" type="xs:string" minOccurs="0" />
+							<xs:element name="partyBuff" type="xs:string" minOccurs="0" />
+							<xs:element name="recharge" type="xs:string" minOccurs="0" />
+							<xs:element name="resurrect" type="xs:string" minOccurs="0" />
 							<xs:element name="combo" maxOccurs="unbounded" minOccurs="0">
 								<xs:complexType>
 									<xs:sequence>
@@ -107,6 +112,7 @@
 						<xs:attribute type="xs:string" name="buffs" />
 						<xs:attribute type="xs:int" name="weight" />
 						<xs:attribute type="xs:boolean" name="skillFighter" />
+						<xs:attribute type="xs:boolean" name="support" />
 					</xs:complexType>
 				</xs:element>
 			</xs:sequence>

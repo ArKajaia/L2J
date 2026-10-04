@@ -29,9 +29,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.GeneralConfig;
+import org.l2jmobius.gameserver.config.custom.FakePartyConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.model.Location;
@@ -46,6 +48,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpCombo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
@@ -313,6 +316,9 @@ public class FakePlayerPvpAI extends AttackableAI
 	/** The defensive buffs (Ultimate Defense, Guts, Zealot, Angelic Icon, magic mirror) it noticed on the players it fights. */
 	private final Set<BuffInfo> _noticedDefenses = ConcurrentHashMap.newKeySet();
 	
+	// In a party (see FakePartyManager): the support skills it cast lately on whom (skill id << 32 | object id -> time).
+	private final Map<Long, Long> _recentSupport = new ConcurrentHashMap<>();
+	
 	public FakePlayerPvpAI(Attackable creature)
 	{
 		super(creature);
@@ -362,6 +368,19 @@ public class FakePlayerPvpAI extends AttackableAI
 		if ((profile != null) && profile.isTrialDuelist())
 		{
 			FakePlayerPvpManager.getInstance().engageTrialTarget(npc);
+			return;
+		}
+		
+		// In a party: it looks after the party, follows its leader and fights what the party fights.
+		final FakePlayerParty party = profile != null ? profile.getParty() : null;
+		if ((party != null) && thinkParty(npc, profile, party))
+		{
+			return;
+		}
+		
+		// It answered a player looking for its class: it walks over and waits for the invite.
+		if ((profile != null) && (party == null) && thinkLf(npc, profile, System.currentTimeMillis()))
+		{
 			return;
 		}
 		
@@ -524,6 +543,14 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
+		// A healer or buffer looks after its party first, even in a fight.
+		final FakePlayerParty party = profile.getParty();
+		final boolean withPlayers = (party != null) && !party.isFakeOnly();
+		if ((party != null) && supportParty(npc, profile, party, true))
+		{
+			return;
+		}
+		
 		// Drop targets that are dead, gone or out of reach.
 		Creature target = npc.getMostHated();
 		checkPvpTarget(npc, target);
@@ -562,10 +589,21 @@ public class FakePlayerPvpAI extends AttackableAI
 			_pvpTarget = target;
 		}
 		
-		// Monsters are only hunted around the spawn point, players are chased further (and it runs away as far as it needs to).
-		final Spawn spawn = npc.getSpawn();
-		if ((spawn != null) && !_fleeing && !_regrouping && !_returning && (npc.calculateDistance2D(spawn) > (isPvpEnemy(target) ? profile.getPersonality().getChaseRange() : profile.getPersonality().getLeashRange())))
+		// In a party it stays with its leader: monsters are only fought around the leader.
+		final Creature partyLeader = party != null ? party.getLeader() : null;
+		if ((partyLeader != null) && (partyLeader != npc))
 		{
+			if (!isPvpEnemy(target) && ((partyLeader.getInstanceId() != npc.getInstanceId()) || (partyLeader.calculateDistance2D(target) > FakePartyConfig.LEASH_RANGE)))
+			{
+				npc.stopHating(target);
+				dropTarget(npc);
+				return;
+			}
+		}
+		// Monsters are only hunted around the spawn point, players are chased further (and it runs away as far as it needs to).
+		else if ((npc.getSpawn() != null) && !_fleeing && !_regrouping && !_returning && (npc.calculateDistance2D(npc.getSpawn()) > (isPvpEnemy(target) ? profile.getPersonality().getChaseRange() : profile.getPersonality().getLeashRange())))
+		{
+			final Spawn spawn = npc.getSpawn();
 			// Back to its hunting ground, staying ACTIVE: a MOVE_TO that finds no path never arrives, and the AI would stop thinking.
 			npc.stopHating(target);
 			dropTarget(npc);
@@ -591,12 +629,12 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// A flagged or karma player passing by is better game than a monster.
-		if (!isPvpEnemy(target))
+		// A flagged or karma player passing by is better game than a monster (not for one in a party with players: it plays with its party).
+		if (!isPvpEnemy(target) && !withPlayers)
 		{
 			lookForNewFaces(npc, now);
 		}
-		if (!isPvpEnemy(target) && (lookForRevenge(npc, now) || lookForPvp(npc, now)))
+		if (!isPvpEnemy(target) && !withPlayers && (lookForRevenge(npc, now) || lookForPvp(npc, now)))
 		{
 			return;
 		}
@@ -626,7 +664,7 @@ public class FakePlayerPvpAI extends AttackableAI
 			_regrouping = false;
 			_returning = false;
 		}
-		else if (thinkFlee(npc, profile, target, hpRatio, now) || thinkRegroup(npc, profile, target, hpRatio, now))
+		else if (!withPlayers && (thinkFlee(npc, profile, target, hpRatio, now) || thinkRegroup(npc, profile, target, hpRatio, now)))
 		{
 			return;
 		}
@@ -804,6 +842,12 @@ public class FakePlayerPvpAI extends AttackableAI
 	@Override
 	protected void onActionAttacked(Creature attacker)
 	{
+		// A party member's stray hit: no fight over it.
+		if (FakePartyManager.getInstance().isSameGroup(getActiveChar(), attacker))
+		{
+			return;
+		}
+		
 		FakePlayerPvpManager.getInstance().onFakePlayerAttacked(getActiveChar(), attacker);
 		
 		// It chose not to hit them back: it goes on with what it was doing.
@@ -848,6 +892,9 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		// Its servitor goes away with it.
 		FakePlayerPvpManager.getInstance().unsummonServitor(getActiveChar());
+		
+		// Its party hears about it.
+		FakePartyManager.getInstance().onFakeDeath(getActiveChar());
 		
 		// Whoever comes by later sees a body lying down, not sitting.
 		final FakePlayerHolder holder = getActiveChar().getTemplate().getFakePlayerInfo();
@@ -2164,6 +2211,13 @@ public class FakePlayerPvpAI extends AttackableAI
 			return false;
 		}
 		
+		// Busy with players: in their party, or on its way to join one.
+		final FakePlayerPvpProfile otherProfile = other.getTemplate().getFakePlayerPvpProfile();
+		if ((otherProfile != null) && ((otherProfile.getLfTarget(System.currentTimeMillis()) != 0) || FakePartyManager.getInstance().isInPlayerParty(other) || FakePartyManager.getInstance().isSameGroup(npc, other)))
+		{
+			return false;
+		}
+		
 		final FakePlayerPvpAI ai = (FakePlayerPvpAI) other.getAI();
 		return !ai.isResting() && (ai._talkPartner == null) && (ai._pokeTarget == null) && (ai._meetTarget == null);
 	}
@@ -2391,6 +2445,12 @@ public class FakePlayerPvpAI extends AttackableAI
 	private static boolean isValidTarget(Attackable npc, Creature target)
 	{
 		if (target.isAlikeDead() || !target.isSpawned() || target.isInvisible() || (target.getInstanceId() != npc.getInstanceId()))
+		{
+			return false;
+		}
+		
+		// Never a member of its own party.
+		if (FakePartyManager.getInstance().isSameGroup(npc, target))
 		{
 			return false;
 		}
@@ -3246,5 +3306,685 @@ public class FakePlayerPvpAI extends AttackableAI
 		_kiteEndTime = now + Math.min(3000, (long) ((step * 1000.0) / Math.max(1, npc.getMoveSpeed())));
 		_nextKiteTime = now + 3000 + Rnd.get(2000);
 		return true;
+	}
+	
+	// ---------------------------------------------------------------------------------------------
+	// Party (see FakePartyManager)
+	// ---------------------------------------------------------------------------------------------
+	
+	/** How close a fake player that answered a player's request stands to it while it waits for the invite. */
+	private static final int LF_STAND_DISTANCE = 120;
+	/** It gives up walking over to a player that got this far away. */
+	private static final int LF_MAX_DISTANCE = 6000;
+	/** Party members this far away are out of its care. */
+	private static final int SUPPORT_RANGE = 1500;
+	/** It doesn't cast the same support skill on the same member again within this time (when it didn't take). */
+	private static final long SUPPORT_RECAST_DELAY = 10000;
+	/** A buff it keeps up on the party is cast again when it has less than this many seconds left. */
+	private static final int BUFF_REFRESH_TIME = 60;
+	/** With {@link FakePartyConfig#HUNT_WHEN_IDLE}, it pulls the monsters this close to its idle party leader. */
+	private static final int IDLE_HUNT_RANGE = 700;
+	
+	/** Buffs only fighters want (P. Atk., attack speed, critical, accuracy, vampiric...). */
+	private static final Set<Integer> FIGHTER_BUFFS = Set.of(1068, 1086, 1077, 1242, 1240, 1268, 1388, 1499, 1502, 1007, 1251, 1253, 1308, 1309, 1310, 1390, 1517, 1518, 1519, 1363, 1003, 1249, 1563, 1536, 1537, 1364, 1414, 271, 275, 274, 310, 765, 272, 269, 364, 1356, 1357);
+	/** Buffs only mages want (M. Atk., casting speed, magic critical, MP...). */
+	private static final Set<Integer> MAGE_BUFFS = Set.of(1085, 1059, 1303, 1397, 1078, 1048, 1500, 1413, 1002, 1004, 1365, 273, 276, 365, 363, 1355);
+	
+	/**
+	 * Called when it joins a party: whatever it was up to on its own is over.
+	 */
+	public void onJoinParty()
+	{
+		final Attackable npc = getActiveChar();
+		endPoke(npc);
+		_meetTarget = null;
+		endTalk();
+		_visitor = null;
+		_fleeing = false;
+		_lastStand = false;
+		_regrouping = false;
+		_returning = false;
+		_recentSupport.clear();
+		npc.getTemplate().getFakePlayerPvpProfile().clearRevengeTarget();
+		if (!npc.isInCombat())
+		{
+			setIntention(Intention.ACTIVE);
+		}
+	}
+	
+	/**
+	 * Called when it leaves its party: it hunts on its own again.
+	 */
+	public void onLeaveParty()
+	{
+		_recentSupport.clear();
+		_resting = false;
+	}
+	
+	/**
+	 * Called when it answered a player looking for its class: it stops what it was doing (but a fight) and walks over.
+	 */
+	public void onAnswer()
+	{
+		final Attackable npc = getActiveChar();
+		endPoke(npc);
+		_meetTarget = null;
+		endTalk();
+		if (!npc.isInCombat() && (getIntention() != Intention.ATTACK))
+		{
+			setIntention(Intention.ACTIVE);
+		}
+	}
+	
+	/**
+	 * In a party: it looks after the party (healers and buffers), fights what the party fights and follows its leader. The leader of a party of fake players hunts like any fake player, the others go with it.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param party its party
+	 * @return {@code true} if it acted (or has nothing else to do), {@code false} to go on like a fake player on its own
+	 */
+	private boolean thinkParty(Attackable npc, FakePlayerPvpProfile profile, FakePlayerParty party)
+	{
+		if (supportParty(npc, profile, party, false))
+		{
+			return true;
+		}
+		
+		// A necromancer keeps its servitor out, duelists and tyrants their energy full, like on their own.
+		if ((profile.needsServitor() && castOnSelf(npc, null, profile.getSkills(SkillCategory.SUMMON), true, false)) || ((profile.getCharges() < profile.getMaxCharges()) && castOnSelf(npc, null, profile.getSkills(SkillCategory.CHARGE), true, false)))
+		{
+			return true;
+		}
+		
+		final Creature leader = party.getLeader();
+		if ((leader == null) || (leader == npc))
+		{
+			return false;
+		}
+		
+		// The party fights: the leader's target, or a monster that attacks a member.
+		final Creature target = findPartyTarget(npc, profile, party, leader);
+		if (target != null)
+		{
+			_resting = false;
+			if (standUp(npc))
+			{
+				return true;
+			}
+			
+			if (isPvpEnemy(target))
+			{
+				FakePlayerPvpManager.getInstance().assistFight(npc, target);
+				return true;
+			}
+			
+			npc.addDamageHate(target, 0, 1);
+			npc.setRunning();
+			setIntention(Intention.ATTACK, target);
+			return true;
+		}
+		
+		if (followLeader(npc, party, leader))
+		{
+			return true;
+		}
+		
+		// It rests when the party stands around (and sits down with its leader), like players.
+		final boolean leaderSits = leader.isPlayer() && leader.asPlayer().isSitting();
+		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
+		_resting = !leader.isMoving() && (leaderSits || (hpRatio < (_resting ? 0.9 : 0.5)));
+		if (_resting)
+		{
+			if (!npc.isMoving() && !npc.isMovementDisabled())
+			{
+				sitDown(npc);
+			}
+			return true;
+		}
+		
+		if (standUp(npc))
+		{
+			return true;
+		}
+		
+		// Pulls the monsters around while the leader stands there (FakePartyHuntWhenIdle).
+		if (FakePartyConfig.HUNT_WHEN_IDLE && !leader.isMoving() && !isPureHealer(profile) && !party.isFakeOnly())
+		{
+			final Creature prey = findIdlePrey(npc, leader);
+			if (prey != null)
+			{
+				npc.addDamageHate(prey, 0, 1);
+				npc.setRunning();
+				setIntention(Intention.ATTACK, prey);
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * Walks over to the player it answered in chat ("lf &lt;class&gt;") and waits there for the invite.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param now the current time
+	 * @return {@code true} if it is on its way, or waiting
+	 */
+	private boolean thinkLf(Attackable npc, FakePlayerPvpProfile profile, long now)
+	{
+		final int playerId = profile.getLfTarget(now);
+		if (playerId == 0)
+		{
+			return false;
+		}
+		
+		final Player player = World.getInstance().getPlayer(playerId);
+		if ((player == null) || !player.isOnline() || (player.getInstanceId() != npc.getInstanceId()) || (npc.calculateDistance2D(player) > LF_MAX_DISTANCE))
+		{
+			profile.setLfTarget(0, 0);
+			return false;
+		}
+		
+		if (standUp(npc))
+		{
+			return true;
+		}
+		
+		if (npc.calculateDistance2D(player) > LF_STAND_DISTANCE)
+		{
+			if (!npc.isMovementDisabled())
+			{
+				npc.setRunning();
+				moveToPawn(player, Rnd.get(60, LF_STAND_DISTANCE - 20));
+			}
+			return true;
+		}
+		
+		// There: it faces the player and waits.
+		if (!npc.isMoving())
+		{
+			npc.setHeading(LocationUtil.calculateHeadingFrom(npc, player));
+		}
+		return true;
+	}
+	
+	/**
+	 * Follows the party leader: runs (or walks) after it.
+	 * @param npc the fake player
+	 * @param party its party
+	 * @param leader its party leader
+	 * @return {@code true} if it is on its way to the leader
+	 */
+	private boolean followLeader(Attackable npc, FakePlayerParty party, Creature leader)
+	{
+		// Far away (it teleported): FakePartyManager brings it there a while later. Fake players hunting together just go their own way.
+		if (FakePartyManager.isFarFrom(npc, leader))
+		{
+			if (party.isFakeOnly())
+			{
+				FakePartyManager.getInstance().leave(npc, false, true);
+				return false;
+			}
+			return true;
+		}
+		
+		final double distance = npc.calculateDistance2D(leader);
+		final int followDistance = FakePartyConfig.FOLLOW_DISTANCE;
+		if (distance <= followDistance)
+		{
+			return false;
+		}
+		
+		if (standUp(npc) || npc.isMovementDisabled())
+		{
+			return true;
+		}
+		
+		if (leader.isRunning() || (distance > (followDistance * 3)))
+		{
+			npc.setRunning();
+		}
+		else
+		{
+			npc.setWalking();
+		}
+		
+		moveToPawn(leader, Rnd.get(Math.max(40, followDistance / 3), Math.max(60, (followDistance * 2) / 3)));
+		return true;
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param party its party
+	 * @param leader the party leader
+	 * @return what the party fights and it should join: the leader's target once the leader (or a member) fights it, else the closest monster attacking a member, {@code null} if none. A healer stays out of fights.
+	 */
+	private Creature findPartyTarget(Attackable npc, FakePlayerPvpProfile profile, FakePlayerParty party, Creature leader)
+	{
+		if (isPureHealer(profile))
+		{
+			return null;
+		}
+		
+		final WorldObject leaderTarget = leader.getTarget();
+		if ((leaderTarget instanceof Creature) && isPartyPrey(npc, party, (Creature) leaderTarget, leader))
+		{
+			return (Creature) leaderTarget;
+		}
+		
+		final Creature[] closest = new Creature[1];
+		final double[] closestDistance =
+		{
+			Double.MAX_VALUE
+		};
+		World.getInstance().forEachVisibleObjectInRange(leader, Monster.class, FakePartyConfig.LEASH_RANGE, monster ->
+		{
+			if (monster.isFakePlayer() || monster.isDead() || !monster.isSpawned() || (monster.getInstanceId() != npc.getInstanceId()) || !isAttackingParty(monster, party))
+			{
+				return;
+			}
+			
+			final double distance = npc.calculateDistance2D(monster);
+			if (distance < closestDistance[0])
+			{
+				closest[0] = monster;
+				closestDistance[0] = distance;
+			}
+		});
+		return closest[0];
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param party its party
+	 * @param target the leader's target
+	 * @param leader the party leader
+	 * @return {@code true} if the party fights {@code target} and it should help
+	 */
+	private static boolean isPartyPrey(Attackable npc, FakePlayerParty party, Creature target, Creature leader)
+	{
+		if ((target == npc) || target.isAlikeDead() || !target.isSpawned() || target.isInvisible() || (target.getInstanceId() != npc.getInstanceId()) || party.isMember(target) || (leader.calculateDistance2D(target) > FakePartyConfig.LEASH_RANGE))
+		{
+			return false;
+		}
+		
+		// The leader of fake players hunting together: what it fights.
+		if (leader.isAttackable())
+		{
+			return leader.asAttackable().getMostHated() == target;
+		}
+		
+		// A player: a monster once the party fights it.
+		if (target.isMonster() && !target.isFakePlayer())
+		{
+			return leader.isAttackingNow() || leader.isCastingNow() || isAttackingParty(target.asAttackable(), party);
+		}
+		
+		// A player or fake player the leader fights: only one that can be fought without becoming a PK (flagged, karma), or one that attacks the party.
+		if ((target.isPlayer() || target.isPvpFakePlayer()) && (leader.isAttackingNow() || leader.isCastingNow()))
+		{
+			final boolean flagged = target.isPlayer() ? ((target.asPlayer().getPvpFlag() > 0) || (target.getKarma() > 0)) : ((target.asNpc().getScriptValue() > 0) || (target.getKarma() > 0));
+			final WorldObject itsTarget = target.getTarget();
+			return flagged || ((itsTarget instanceof Creature) && party.isMember((Creature) itsTarget));
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * @param monster a monster
+	 * @param party a party
+	 * @return {@code true} if {@code monster} fights a member of {@code party} (it hates a member, or a member hit it)
+	 */
+	private static boolean isAttackingParty(Attackable monster, FakePlayerParty party)
+	{
+		for (Creature attacker : monster.getAggroList().keySet())
+		{
+			if (party.isMember(attacker) || (attacker.isSummon() && party.isMember(attacker.asPlayer())))
+			{
+				return true;
+			}
+		}
+		
+		final WorldObject target = monster.getTarget();
+		return monster.isInCombat() && (target instanceof Creature) && party.isMember((Creature) target);
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param leader the party leader
+	 * @return the closest monster around the leader nobody fights and worth hunting, {@code null} if none
+	 */
+	private static Creature findIdlePrey(Attackable npc, Creature leader)
+	{
+		final Creature[] closest = new Creature[1];
+		final double[] closestDistance =
+		{
+			Double.MAX_VALUE
+		};
+		World.getInstance().forEachVisibleObjectInRange(leader, Monster.class, IDLE_HUNT_RANGE, monster ->
+		{
+			if (monster.isFakePlayer() || monster.isDead() || !monster.isSpawned() || monster.isRaid() || monster.isInCombat() || !monster.getAggroList().isEmpty() || (monster.getInstanceId() != npc.getInstanceId()) || (Math.abs(monster.getLevel() - leader.getLevel()) > MAX_HUNT_LEVEL_DIFFERENCE))
+			{
+				return;
+			}
+			
+			if (!GeoEngine.getInstance().canSeeTarget(leader, monster))
+			{
+				return;
+			}
+			
+			final double distance = npc.calculateDistance2D(monster);
+			if (distance < closestDistance[0])
+			{
+				closest[0] = monster;
+				closestDistance[0] = distance;
+			}
+		});
+		return closest[0];
+	}
+	
+	/**
+	 * A healer or buffer looks after its party: heals (a group heal when several members are hurt), resurrection, recharge, then the buffs that are missing.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param party its party
+	 * @param inCombat {@code true} while it fights: only a support class keeps buffing then
+	 * @return {@code true} if it cast (or walks over to cast) something
+	 */
+	private boolean supportParty(Attackable npc, FakePlayerPvpProfile profile, FakePlayerParty party, boolean inCombat)
+	{
+		final List<Skill> partyHeals = profile.getSkills(SkillCategory.PARTY_HEAL);
+		final List<Skill> groupHeals = profile.getSkills(SkillCategory.GROUP_HEAL);
+		final List<Skill> buffs = profile.getSkills(SkillCategory.PARTY_BUFF);
+		final List<Skill> recharges = profile.getSkills(SkillCategory.RECHARGE);
+		final List<Skill> resurrects = profile.getSkills(SkillCategory.RESURRECT);
+		if ((partyHeals.isEmpty() && groupHeals.isEmpty() && buffs.isEmpty() && recharges.isEmpty() && resurrects.isEmpty()) || npc.isCastingNow() || npc.isDead())
+		{
+			return false;
+		}
+		
+		final long now = System.currentTimeMillis();
+		final List<Creature> members = new ArrayList<>();
+		for (Creature member : party.getMembers())
+		{
+			if ((member != null) && member.isSpawned() && !member.isInvisible() && (member.getInstanceId() == npc.getInstanceId()) && (npc.calculateDistance2D(member) <= SUPPORT_RANGE))
+			{
+				members.add(member);
+			}
+		}
+		
+		final boolean healer = isPureHealer(profile);
+		
+		// Heals: a group heal when several members are hurt, otherwise the one hurt most.
+		if (!partyHeals.isEmpty() || !groupHeals.isEmpty())
+		{
+			final double threshold = healer ? 0.75 : 0.5;
+			Creature lowest = null;
+			double lowestRatio = 1;
+			for (Creature member : members)
+			{
+				if (member.isDead())
+				{
+					continue;
+				}
+				
+				final double ratio = member.getCurrentHp() / member.getMaxHp();
+				if (ratio < lowestRatio)
+				{
+					lowest = member;
+					lowestRatio = ratio;
+				}
+			}
+			
+			for (Skill skill : groupHeals)
+			{
+				final int range = skill.getAffectRange() > 0 ? skill.getAffectRange() - 50 : 900;
+				int hurt = 0;
+				for (Creature member : members)
+				{
+					if (!member.isDead() && ((member.getCurrentHp() / member.getMaxHp()) < threshold) && (npc.calculateDistance2D(member) <= range))
+					{
+						hurt++;
+					}
+				}
+				
+				if (((hurt >= 2) || ((hurt == 1) && partyHeals.isEmpty())) && canCast(npc, skill, npc))
+				{
+					return castSupport(npc, npc, skill);
+				}
+			}
+			
+			if ((lowest != null) && (lowestRatio < threshold))
+			{
+				final Skill heal = pickHeal(npc, partyHeals, lowest, lowestRatio < 0.4);
+				if ((heal != null) && castSupport(npc, lowest, heal))
+				{
+					return true;
+				}
+			}
+		}
+		
+		// Resurrection: a healer at any time, the others once the fight is over.
+		if (!resurrects.isEmpty() && (healer || !inCombat))
+		{
+			for (Creature member : members)
+			{
+				if (!member.isDead() || (member.isPlayer() && (member.asPlayer().isReviveRequested() || member.isPendingRevive())) || wasRecentlyCast(member, resurrects.get(0), now))
+				{
+					continue;
+				}
+				
+				for (Skill skill : resurrects)
+				{
+					if (canCast(npc, skill, member) && castSupport(npc, member, skill))
+					{
+						return true;
+					}
+				}
+			}
+		}
+		
+		// Recharge: players running out of MP (fake players don't use any).
+		if (!recharges.isEmpty())
+		{
+			Creature lowest = null;
+			double lowestRatio = 0.5;
+			for (Creature member : members)
+			{
+				if (member.isPlayer() && !member.isDead() && (member.getMaxMp() > 0) && ((member.getCurrentMp() / member.getMaxMp()) < lowestRatio))
+				{
+					lowest = member;
+					lowestRatio = member.getCurrentMp() / member.getMaxMp();
+				}
+			}
+			
+			if (lowest != null)
+			{
+				for (Skill skill : recharges)
+				{
+					if (canCast(npc, skill, lowest) && castSupport(npc, lowest, skill))
+					{
+						return true;
+					}
+				}
+			}
+		}
+		
+		// Buffs: what a member is missing (or about to lose). A support class keeps at it in a fight, the others wait for it to be over.
+		if (!buffs.isEmpty() && (!inCombat || profile.getBuild().isSupport()))
+		{
+			for (Skill skill : buffs)
+			{
+				final TargetType targetType = skill.getTargetType();
+				final boolean selfCentered = (targetType == TargetType.PARTY) || (targetType == TargetType.PARTY_CLAN) || (targetType == TargetType.AURA) || (targetType == TargetType.SELF);
+				final int range = skill.getAffectRange() > 0 ? skill.getAffectRange() - 50 : 900;
+				for (Creature member : members)
+				{
+					if (member.isDead() || (selfCentered && (npc.calculateDistance2D(member) > range)) || !wantsBuff(member, skill) || !needsBuff(member, skill) || wasRecentlyCast(member, skill, now))
+					{
+						continue;
+					}
+					
+					if (!canCast(npc, skill, selfCentered ? npc : member))
+					{
+						break;
+					}
+					
+					// A party buff from where it stands, a buff on one member from up close.
+					if (castSupport(npc, selfCentered ? npc : member, skill))
+					{
+						_recentSupport.put(((long) skill.getId() << 32) | (member.getObjectId() & 0xFFFFFFFFL), now);
+						return true;
+					}
+					break;
+				}
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Casts a support skill on a party member (or itself), or walks into range first.
+	 * @param npc the fake player
+	 * @param target the member
+	 * @param skill the skill
+	 * @return {@code true} if it cast or walks over to cast
+	 */
+	private boolean castSupport(Attackable npc, Creature target, Skill skill)
+	{
+		if (target != npc)
+		{
+			final int range = skill.getCastRange() > 0 ? skill.getCastRange() : 600;
+			final int collision = npc.getTemplate().getCollisionRadius() + target.getTemplate().getCollisionRadius();
+			if (((npc.calculateDistance2D(target) - collision) > range) || !GeoEngine.getInstance().canSeeTarget(npc, target))
+			{
+				if (npc.isMovementDisabled())
+				{
+					return false;
+				}
+				
+				if (!standUp(npc))
+				{
+					npc.setRunning();
+					moveToPawn(target, Math.max(40, range - 60));
+				}
+				return true;
+			}
+		}
+		
+		if (standUp(npc))
+		{
+			return true;
+		}
+		
+		_recentSupport.put(((long) skill.getId() << 32) | (target.getObjectId() & 0xFFFFFFFFL), System.currentTimeMillis());
+		clientStopMoving(null);
+		npc.setTarget(target);
+		npc.doCast(skill);
+		return true;
+	}
+	
+	/**
+	 * @param target a party member
+	 * @param skill a support skill
+	 * @param now the current time
+	 * @return {@code true} if it cast {@code skill} on {@code target} a moment ago (it didn't take, or it is on its way)
+	 */
+	private boolean wasRecentlyCast(Creature target, Skill skill, long now)
+	{
+		final Long time = _recentSupport.get(((long) skill.getId() << 32) | (target.getObjectId() & 0xFFFFFFFFL));
+		return (time != null) && ((now - time) < SUPPORT_RECAST_DELAY);
+	}
+	
+	/**
+	 * @param npc the healer
+	 * @param heals its heals, biggest first
+	 * @param target who needs one
+	 * @param urgent {@code true} for a member in danger: the fastest one
+	 * @return the heal to cast, {@code null} if none is ready
+	 */
+	private static Skill pickHeal(Attackable npc, List<Skill> heals, Creature target, boolean urgent)
+	{
+		Skill picked = null;
+		for (Skill skill : heals)
+		{
+			if (!canCast(npc, skill, target))
+			{
+				continue;
+			}
+			
+			if (!urgent)
+			{
+				return skill;
+			}
+			
+			if ((picked == null) || (skill.getHitTime() < picked.getHitTime()))
+			{
+				picked = skill;
+			}
+		}
+		
+		return picked;
+	}
+	
+	/**
+	 * @param member a party member
+	 * @param skill a buff
+	 * @return {@code false} for a buff that doesn't help {@code member} (Might for a mage, Acumen for a fighter)
+	 */
+	private static boolean wantsBuff(Creature member, Skill skill)
+	{
+		if (FIGHTER_BUFFS.contains(skill.getId()))
+		{
+			return !isMage(member);
+		}
+		
+		if (MAGE_BUFFS.contains(skill.getId()))
+		{
+			return isMage(member);
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * @param member a party member
+	 * @param skill a buff
+	 * @return {@code true} if {@code member} doesn't have it (nor anything that stops it), or it runs out soon
+	 */
+	private static boolean needsBuff(Creature member, Skill skill)
+	{
+		if (!FakePlayerPvpManager.isBuffActive(member, skill))
+		{
+			return true;
+		}
+		
+		final BuffInfo info = member.getEffectList().getBuffInfoBySkillId(skill.getId());
+		return (info != null) && (info.getSkill().getLevel() <= skill.getLevel()) && (info.getTime() < BUFF_REFRESH_TIME);
+	}
+	
+	/**
+	 * @param creature a player or fake player
+	 * @return {@code true} for a mystic
+	 */
+	private static boolean isMage(Creature creature)
+	{
+		if (creature.isPlayer())
+		{
+			return creature.asPlayer().isMageClass();
+		}
+		
+		final FakePlayerPvpProfile profile = creature.isNpc() ? creature.asNpc().getTemplate().getFakePlayerPvpProfile() : null;
+		return (profile != null) && (profile.getRole() == Role.MAGE);
+	}
+	
+	/**
+	 * @param profile a fake player profile
+	 * @return {@code true} for a healer: it heals its party and stays out of the fights
+	 */
+	private static boolean isPureHealer(FakePlayerPvpProfile profile)
+	{
+		return profile.getBuild().isSupport() && !profile.getSkills(SkillCategory.PARTY_HEAL).isEmpty();
 	}
 }

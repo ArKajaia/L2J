@@ -20,10 +20,12 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.l2jmobius.gameserver.handler.ITargetTypeHandler;
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 
@@ -37,8 +39,22 @@ public class PartyClan implements ITargetTypeHandler
 	{
 		final List<WorldObject> targetList = new LinkedList<>();
 		final Player player = creature.asPlayer();
+		final int radius = skill.getAffectRange();
+		
+		// Fake players of the party (Overlord buffs), and for a fake player the players of its party.
+		final FakePlayerParty fakeParty = FakePartyManager.getInstance().getParty(creature);
 		if (player == null)
 		{
+			if (fakeParty == null)
+			{
+				return targetList;
+			}
+			
+			targetList.add(creature);
+			if (!onlyFirst)
+			{
+				addFakePartyMembers(creature, fakeParty, radius, targetList, false);
+			}
 			return targetList;
 		}
 		
@@ -49,7 +65,12 @@ public class PartyClan implements ITargetTypeHandler
 			return targetList;
 		}
 		
-		final int radius = skill.getAffectRange();
+		// The players of the party are added below.
+		if (fakeParty != null)
+		{
+			addFakePartyMembers(creature, fakeParty, radius, targetList, true);
+		}
+		
 		final boolean hasClan = player.getClan() != null;
 		final boolean hasParty = player.isInParty();
 		if (Skill.addSummon(creature, player, radius, false))
@@ -145,6 +166,21 @@ public class PartyClan implements ITargetTypeHandler
 		}
 		
 		return targetList;
+	}
+	
+	private static void addFakePartyMembers(Creature creature, FakePlayerParty fakeParty, int radius, List<WorldObject> targetList, boolean fakesOnly)
+	{
+		for (Creature member : fakesOnly ? fakeParty.getFakes() : fakeParty.getMembers())
+		{
+			if ((member != creature) && !targetList.contains(member) && Skill.addCharacter(creature, member, radius, false))
+			{
+				targetList.add(member);
+				if (member.isPlayer() && Skill.addSummon(creature, member.asPlayer(), radius, false) && !targetList.contains(member.asPlayer().getSummon()))
+				{
+					targetList.add(member.asPlayer().getSummon());
+				}
+			}
+		}
 	}
 	
 	@Override

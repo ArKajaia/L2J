@@ -57,6 +57,7 @@ import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.enums.player.Sex;
 import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
@@ -1277,6 +1278,9 @@ public class FakePlayerPvpManager
 		// Out of the world until the fake player is gone, see onFakePlayerDecay().
 		monster.setDead(true);
 		monster.setDecayed(true);
+		
+		// Sometimes it comes with friends.
+		FakePartyManager.getInstance().onRoamingSpawn(fake);
 		return true;
 	}
 	
@@ -1583,6 +1587,12 @@ public class FakePlayerPvpManager
 		
 		FakePlayerData.getInstance().removeFakePlayer(fake.getName());
 		
+		// Dead in a party with players: it comes back to its party from town, its name stays taken until then.
+		if (FakePartyManager.getInstance().onFakeDecay(fake))
+		{
+			return;
+		}
+		
 		// Killed by a player and walking back from town: its name stays taken until it comes back.
 		if (profile.isReturnPending() && isEnabled())
 		{
@@ -1742,6 +1752,9 @@ public class FakePlayerPvpManager
 				count++;
 			}
 		}
+		
+		// And the party fake players on their way back to their party.
+		count += FakePartyManager.getInstance().clearReturns();
 		return count;
 	}
 	
@@ -1755,6 +1768,12 @@ public class FakePlayerPvpManager
 	public double limitDamage(Attackable fake, double damage, Creature attacker)
 	{
 		if ((attacker != null) && isPvpEnemy(attacker))
+		{
+			return damage;
+		}
+		
+		// In a party with players, monsters can kill it like a player (see FakePartyConfig#CAN_DIE).
+		if (FakePartyManager.getInstance().canBeKilledByMonsters(fake))
 		{
 			return damage;
 		}
@@ -1789,7 +1808,7 @@ public class FakePlayerPvpManager
 		
 		World.getInstance().forEachVisibleObjectInRange(victim, Attackable.class, FakePlayerPvpConfig.REVENGE_RANGE, fake ->
 		{
-			if (!fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || isFighting(fake, killer))
+			if (!fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || isFighting(fake, killer) || FakePartyManager.getInstance().isSameGroup(fake, killer))
 			{
 				return;
 			}
@@ -1822,10 +1841,13 @@ public class FakePlayerPvpManager
 	public void onFakePlayerAttacked(Attackable fake, Creature attacker)
 	{
 		final Creature enemy = getPvpEnemy(attacker);
-		if ((enemy == null) || (enemy == fake) || fake.isDead() || isFighting(fake, enemy))
+		if ((enemy == null) || (enemy == fake) || fake.isDead() || isFighting(fake, enemy) || FakePartyManager.getInstance().isSameGroup(fake, enemy))
 		{
 			return;
 		}
+		
+		// Its party fights them too.
+		FakePartyManager.getInstance().onFakeAttacked(fake, enemy);
 		
 		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
 		if (profile == null)
@@ -2145,7 +2167,7 @@ public class FakePlayerPvpManager
 		for (Map.Entry<Creature, AggroInfo> entry : monster.getAggroList().entrySet())
 		{
 			final Creature creature = entry.getKey();
-			if ((creature == null) || (creature == stealer) || !creature.isPvpFakePlayer() || creature.isDead() || (entry.getValue().getDamage() <= 0) || (creature.getTarget() != monster))
+			if ((creature == null) || (creature == stealer) || !creature.isPvpFakePlayer() || creature.isDead() || (entry.getValue().getDamage() <= 0) || (creature.getTarget() != monster) || FakePartyManager.getInstance().isSameGroup(creature, stealer))
 			{
 				continue;
 			}
@@ -2174,7 +2196,7 @@ public class FakePlayerPvpManager
 		final long stolenDamage = killerDamage != null ? killerDamage.getDamage() : 0;
 		World.getInstance().forEachVisibleObjectInRange(victim, Attackable.class, FakePlayerPvpConfig.REVENGE_RANGE, fake ->
 		{
-			if ((fake == killer) || !fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || fake.isTrialDuelist() || isFighting(fake, killer))
+			if ((fake == killer) || !fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || fake.isTrialDuelist() || isFighting(fake, killer) || FakePartyManager.getInstance().isSameGroup(fake, killer))
 			{
 				return;
 			}
@@ -2226,7 +2248,7 @@ public class FakePlayerPvpManager
 		for (Map.Entry<Creature, AggroInfo> entry : monster.getAggroList().entrySet())
 		{
 			final Creature creature = entry.getKey();
-			if ((creature == null) || !creature.isAttackable() || !creature.asAttackable().isPvpFakePlayer() || creature.isDead() || (entry.getValue().getDamage() <= 0) || (creature.getTarget() != monster))
+			if ((creature == null) || !creature.isAttackable() || !creature.asAttackable().isPvpFakePlayer() || creature.isDead() || (entry.getValue().getDamage() <= 0) || (creature.getTarget() != monster) || FakePartyManager.getInstance().isSameGroup(creature, player))
 			{
 				continue;
 			}
@@ -2942,8 +2964,11 @@ public class FakePlayerPvpManager
 				
 				final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
 				
-				// A class transfer challenge opponent stays until its challenge removes it.
-				if (!profile.isTrialDuelist())
+				// A class transfer challenge opponent stays until its challenge removes it, and so does a fake player in a party with players, or on its way to one.
+				// In a party of fake players, the leader logs off for all of them (the others then go their own way).
+				final FakePlayerParty party = profile.getParty();
+				final boolean staysWithParty = (party != null) && (!party.isFakeOnly() || (party.getLeader() != fake));
+				if (!profile.isTrialDuelist() && !staysWithParty && (profile.getLfTarget(now) == 0))
 				{
 					checkHotzoneLeave(fake, profile, now);
 					
@@ -3049,7 +3074,8 @@ public class FakePlayerPvpManager
 			}
 			
 			final Monster monster = npc.asMonster();
-			if (spawnFakePlayer(FakePlayerPvpData.getInstance().getRandomBuild(), getFakeLevel(monster), monster.getX(), monster.getY(), monster.getZ(), monster.getInstanceId(), monster, spawn) == null)
+			final Npc fake = spawnFakePlayer(FakePlayerPvpData.getInstance().getRandomBuild(), getFakeLevel(monster), monster.getX(), monster.getY(), monster.getZ(), monster.getInstanceId(), monster, spawn);
+			if (fake == null)
 			{
 				continue;
 			}
@@ -3066,6 +3092,9 @@ public class FakePlayerPvpManager
 			
 			monster.setDead(true);
 			monster.setDecayed(true);
+			
+			// Sometimes it comes with friends.
+			FakePartyManager.getInstance().onRoamingSpawn(fake);
 		}
 	}
 	
@@ -3145,6 +3174,121 @@ public class FakePlayerPvpManager
 		final String name = "Player" + _nextNpcId.get();
 		_names.add(name.toLowerCase());
 		return name;
+	}
+	
+	/**
+	 * Called when a fake player joins a party with players (see {@link FakePartyManager}): it goes away with its party, so the monster it replaced spawns again, and it forgets its hotzone.
+	 * @param fake the fake player
+	 */
+	public void onJoinParty(Npc fake)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		final Npc monster = profile.takeReplacedMonster();
+		final Spawn replacedSpawn = profile.getReplacedSpawn();
+		if ((monster != null) && (replacedSpawn != null))
+		{
+			replacedSpawn.decreaseCount(monster);
+		}
+		profile.setReplacedMonster(null, null);
+		profile.setHotzoneId(0);
+		profile.setLeaveTime(0);
+	}
+	
+	/**
+	 * Called when a fake player leaves its party (or gives up waiting for an invite): it hunts where it is for a while, then logs off like the others.
+	 * @param fake the fake player
+	 */
+	public void onLeaveParty(Npc fake)
+	{
+		final Spawn spawn = fake.getSpawn();
+		if (spawn != null)
+		{
+			spawn.setXYZ(fake.getX(), fake.getY(), fake.getZ());
+		}
+		
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		if (FakePlayerPvpConfig.LIFETIME > 0)
+		{
+			// A quarter of its time left.
+			final long lifetime = (long) (FakePlayerPvpConfig.LIFETIME * 1000L * profile.getLifetimeScale());
+			profile.setSpawnTime(Math.min(profile.getSpawnTime(), System.currentTimeMillis() - ((lifetime * 3) / 4)));
+		}
+	}
+	
+	/**
+	 * Brings back a party fake player that died, from town (see {@link FakePartyManager}): same template, so same name, looks and gear.
+	 * @param template its template
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @param instanceId the instance
+	 * @return the fake player, {@code null} if it could not be spawned (its name is then free)
+	 */
+	public Npc respawnFromTemplate(NpcTemplate template, int x, int y, int z, int instanceId)
+	{
+		final String name = template.getName();
+		final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+		try
+		{
+			profile.setReplacedMonster(null, null);
+			profile.setSpawnTime(System.currentTimeMillis());
+			profile.setHotzoneId(0);
+			profile.setLeaveTime(0);
+			profile.onReturn(0); // Back for its party, not for revenge.
+			if (profile.getHeldWeapon() != profile.getMainWeapon())
+			{
+				setTemplateWeapon(template, profile, profile.getMainWeapon());
+			}
+			
+			final String lowercaseName = name.toLowerCase();
+			FakePlayerData.getInstance().addFakePlayerId(name, template.getId());
+			FakePlayerData.getInstance().addFakePlayerName(lowercaseName, name);
+			FakePlayerData.getInstance().addTalkableFakePlayerName(lowercaseName);
+			
+			final Npc fake = spawnFromTemplate(template, x, y, z, instanceId);
+			if (fake == null)
+			{
+				FakePlayerData.getInstance().removeFakePlayer(name);
+				_names.remove(lowercaseName);
+			}
+			return fake;
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not bring back party fake player " + name + ".", e);
+			FakePlayerData.getInstance().removeFakePlayer(name);
+			_names.remove(name.toLowerCase());
+			return null;
+		}
+	}
+	
+	/**
+	 * Called when a dead fake player is resurrected (a party fake player, see {@link FakePartyManager}): death took its buffs and toggles, it puts them back like the ones it comes back to life with (see {@link #maintain}).
+	 * @param fake the fake player
+	 */
+	public void onRevived(Npc fake)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		if (profile == null)
+		{
+			return;
+		}
+		
+		refreshToggles(fake, profile);
+		refreshBuffs(fake, profile);
+	}
+	
+	/**
+	 * A fake player joins the fight of a party member against {@code enemy} (see {@link FakePartyManager}).
+	 * @param fake the fake player
+	 * @param enemy the player (or fake player) its party fights
+	 */
+	public void assistFight(Attackable fake, Creature enemy)
+	{
+		if (!fake.isDead() && !isFighting(fake, enemy))
+		{
+			startFight(fake, enemy, TAUNTS_ATTACKED);
+		}
 	}
 	
 	/**

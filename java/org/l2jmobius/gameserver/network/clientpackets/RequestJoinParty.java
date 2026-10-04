@@ -21,6 +21,7 @@
 package org.l2jmobius.gameserver.network.clientpackets;
 
 import org.l2jmobius.gameserver.config.GeneralConfig;
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.player.BlockList;
@@ -59,6 +60,12 @@ public class RequestJoinParty extends ClientPacket
 		final Player target = World.getInstance().getPlayer(_name);
 		if (target == null)
 		{
+			// A fake player answers the invite itself.
+			if (FakePartyManager.getInstance().onInvite(requestor, _name, PartyDistributionType.findById(_partyDistributionTypeId)))
+			{
+				return;
+			}
+			
 			requestor.sendPacket(SystemMessageId.YOU_MUST_FIRST_SELECT_A_USER_TO_INVITE_TO_YOUR_PARTY);
 			return;
 		}
@@ -214,7 +221,7 @@ public class RequestJoinParty extends ClientPacket
 			return;
 		}
 		
-		if (party.getMemberCount() >= 9)
+		if ((party.getMemberCount() + FakePartyManager.getInstance().getFakeCount(requestor)) >= 9)
 		{
 			requestor.sendPacket(SystemMessageId.THE_PARTY_IS_FULL);
 			return;

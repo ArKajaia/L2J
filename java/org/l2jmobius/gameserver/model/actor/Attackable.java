@@ -22,6 +22,7 @@ package org.l2jmobius.gameserver.model.actor;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -49,6 +50,7 @@ import org.l2jmobius.gameserver.config.custom.PremiumSystemConfig;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
 import org.l2jmobius.gameserver.managers.EventDropManager;
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.PcCafePointsManager;
 import org.l2jmobius.gameserver.managers.WalkingManager;
@@ -340,7 +342,9 @@ public class Attackable extends Npc
 		// Delayed notification.
 		if (killer != null)
 		{
-			final Player player = killer.asPlayer();
+			// A kill of a fake player in a party with players counts for the party (quests, hotzones...), like a member's.
+			final Player partyPlayer = killer.asPlayer() == null ? FakePartyManager.getInstance().getRewardPlayer(killer, this) : null;
+			final Player player = partyPlayer != null ? partyPlayer : killer.asPlayer();
 			if ((player != null) && EventDispatcher.getInstance().hasListener(EventType.ON_ATTACKABLE_KILL, this))
 			{
 				EventDispatcher.getInstance().notifyEventAsyncDelayed(new OnAttackableKill(player, this, killer.isSummon()), this, _onKillDelay);
@@ -357,6 +361,11 @@ public class Attackable extends Npc
 				org.l2jmobius.gameserver.managers.LuckyLootManager.getInstance().onAttackableKilled(this, player);
 				org.l2jmobius.gameserver.managers.ThiefMonsterManager.getInstance().onAttackableKilled(this);
 				org.l2jmobius.gameserver.managers.MageMonsterManager.getInstance().onAttackableKilled(this, player);
+			}
+			if ((partyPlayer != null) && getMustRewardExpSP())
+			{
+				// A Kamael one still absorbs a soul.
+				FakePlayerPvpManager.getInstance().absorbSoul(killer.asNpc());
 			}
 			else if (killer.isPvpFakePlayer() && getMustRewardExpSP())
 			{
@@ -453,8 +462,12 @@ public class Attackable extends Npc
 					continue;
 				}
 				
-				// Get the Creature corresponding to this attacker
-				final Player attacker = info.getAttacker().asPlayer();
+				// Get the Creature corresponding to this attacker. A fake player in a party with players does its damage for the party, like a member.
+				Player attacker = info.getAttacker().asPlayer();
+				if (attacker == null)
+				{
+					attacker = FakePartyManager.getInstance().getRewardPlayer(info.getAttacker(), this);
+				}
 				if (attacker == null)
 				{
 					// Fake players can't be rewarded, but their damage still lowers the players' exp/sp share and counts when deciding who owns the drop.
@@ -656,6 +669,11 @@ public class Attackable extends Npc
 							
 							exp *= penalty;
 							
+							// Fake players of its party take their share.
+							final double fakeShare = FakePartyManager.getInstance().getExpShare(attacker, Collections.singletonList(attacker), this);
+							exp *= fakeShare;
+							sp *= fakeShare;
+							
 							// Check for an over-hit enabled strike
 							final Creature overhitAttacker = _overhitAttacker;
 							if (_overhit && (overhitAttacker != null))
@@ -806,6 +824,11 @@ public class Attackable extends Npc
 						
 						exp *= partyMul;
 						sp *= partyMul;
+						
+						// Fake players of the party take their share.
+						final double fakeShare = FakePartyManager.getInstance().getExpShare(attacker, rewardedMembers, this);
+						exp *= fakeShare;
+						sp *= fakeShare;
 						
 						// Check for an over-hit enabled strike
 						// (When in party, the over-hit exp bonus is given to the whole party and splitted proportionally through the party members)

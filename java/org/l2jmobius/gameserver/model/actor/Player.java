@@ -114,6 +114,7 @@ import org.l2jmobius.gameserver.managers.CoupleManager;
 import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
 import org.l2jmobius.gameserver.managers.DimensionalRiftManager;
 import org.l2jmobius.gameserver.managers.DuelManager;
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FortManager;
 import org.l2jmobius.gameserver.managers.FortSiegeManager;
 import org.l2jmobius.gameserver.managers.GrandBossManager;
@@ -9390,8 +9391,8 @@ public class Player extends Playable
 			}
 		}
 		
-		// Check if the skill is a good magic, target is a monster and if force attack is set, if not then we don't want to cast.
-		if ((skill.getEffectPoint() > 0) && target.isMonster() && !forceUse)
+		// Check if the skill is a good magic, target is a monster and if force attack is set, if not then we don't want to cast (a fake player of the party isn't one).
+		if ((skill.getEffectPoint() > 0) && target.isMonster() && !forceUse && !(target.isCreature() && FakePartyManager.getInstance().isSameGroup(this, target.asCreature())))
 		{
 			sendPacket(ActionFailed.STATIC_PACKET);
 			return false;

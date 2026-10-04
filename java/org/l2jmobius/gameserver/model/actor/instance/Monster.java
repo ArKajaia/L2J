@@ -22,6 +22,7 @@ import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData;
 import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData.CustomSkill;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.managers.ClassTransferChallengeManager;
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.HotzoneModifierManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -75,6 +76,12 @@ public class Monster extends Attackable
 	{
 		if (isFakePlayer())
 		{
+			// A member of the attacker's party.
+			if (FakePartyManager.getInstance().isSameGroup(this, attacker))
+			{
+				return false;
+			}
+			
 			// Like a player: attackable without Ctrl while fighting, while flagged, or with karma (a PK).
 			return FakePlayersConfig.FAKE_PLAYER_AUTO_ATTACKABLE || isInCombat() || attacker.isMonster() || (getScriptValue() > 0) || (getKarma() > 0);
 		}
