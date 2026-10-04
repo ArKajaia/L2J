@@ -488,6 +488,7 @@ const TYPE_RADIUS = {
 const ALWAYS_LABEL = new Set(["START","KEYSTONE","MASTER","ACTIVE_SKILL","FUNCTION","NOTABLE"]);
 // "Pathway"/"Approach"/"Crossroads" are pure travel filler - never worth a label.
 const NEVER_LABEL = new Set(["Pathway","Approach","Crossroads"]);
+const MAX_SOCKET_RADIUS = 150;   // cluster rings are 105 wide; a wider shared circle is a lane bending round its road
 
 let nodes = [], nodeById = {}, edgeList = [];
 let allocated = new Set();
@@ -729,6 +730,7 @@ function renderSockets() {
 	});
 	ringList = [];
 	Object.values(rings).forEach(ring => {
+		if (ring.r > MAX_SOCKET_RADIUS) return; // a lane: a road that only bends along a wide circle, not a cluster
 		const disc = document.createElementNS(SVG_NS, "circle");
 		disc.setAttribute("cx", ring.x);
 		disc.setAttribute("cy", ring.y);

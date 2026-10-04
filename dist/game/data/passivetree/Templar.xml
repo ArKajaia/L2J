@@ -177,29 +177,29 @@
 		<requires nodeId="30502" />
 		<requires nodeId="30504" />
 	</node>
-	<node id="33503" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="1528.6" y="-1881.4" effect="MAXHP:15">
-		<requires nodeId="6025" />
+	<node id="33503" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="1567.3" y="-1878.9" effect="MAXHP:15">
 		<requires nodeId="30503" />
+		<requires nodeId="6026" />
 	</node>
 	<node id="33504" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2393.6" y="-383.1" effect="MAXHP_PCT:1">
 		<requires nodeId="1019" />
 		<requires nodeId="30504" />
 	</node>
-	<node id="33505" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2150.5" y="-2207.7" effect="MAXHP:15">
+	<node id="33505" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2171.3" y="-2197.4" effect="MAXHP:15">
 		<requires nodeId="30525" />
 		<requires nodeId="33506" />
 	</node>
-	<node id="33506" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="1852.9" y="-2355.4" effect="MAXHP_PCT:1">
-		<requires nodeId="6009" />
+	<node id="33506" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="1894.6" y="-2334.8" effect="MAXHP_PCT:1">
 		<requires nodeId="33505" />
+		<requires nodeId="6093" />
 	</node>
-	<node id="33507" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2987.1" y="-758.5" effect="MAXHP:15">
+	<node id="33507" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2988.7" y="-781.7" effect="MAXHP:15">
 		<requires nodeId="30526" />
 		<requires nodeId="33508" />
 	</node>
-	<node id="33508" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2966.3" y="-427.0" effect="MAXHP_PCT:1">
-		<requires nodeId="1004" />
+	<node id="33508" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2969.3" y="-473.3" effect="MAXHP_PCT:1">
 		<requires nodeId="33507" />
+		<requires nodeId="1091" />
 	</node>
 	<node id="30570" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2990.5" y="-1680.4" effect="MAXHP:15">
 		<requires nodeId="30512" />

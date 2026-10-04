@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Vanguard: 81 nodes. x/y are authoritative layout coords. -->
+<!-- Vanguard: 85 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="1000" name="Vanguard Origin" sector="Vanguard" type="START" tier="0" cost="0" x="3300.0" y="0.0" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="1001" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2850.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5" description="Junction.">
 		<requires nodeId="1003" />
-		<requires nodeId="1004" />
-		<requires nodeId="1009" />
-		<requires nodeId="1014" />
 		<requires nodeId="1017" />
+		<requires nodeId="1091" />
+		<requires nodeId="1093" />
+		<requires nodeId="1025" />
 	</node>
 	<node id="1002" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3150.0" y="0.0" effect="MAXHP:18">
 		<requires nodeId="1000" />
@@ -17,54 +17,72 @@
 		<requires nodeId="1001" />
 		<requires nodeId="1002" />
 	</node>
-	<node id="1004" name="Iron Skin" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2945.5" y="-95.5" orbitX="3019.7" orbitY="-169.7" effect="PDEF_PCT:1" icon="helmet">
+	<node id="1090" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3200.0" y="-165.0" effect="MAXHP:18">
+		<requires nodeId="1000" />
+		<requires nodeId="1004" />
+	</node>
+	<node id="1091" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2950.0" y="-165.0" effect="MAXHP:6;MAXHP_PCT:0.5">
+		<requires nodeId="1004" />
 		<requires nodeId="1001" />
-		<requires nodeId="1006" />
 		<requires nodeId="33508" />
 	</node>
-	<node id="1006" name="Iron Skin" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3064.1" y="-74.5" orbitX="3019.7" orbitY="-169.7" effect="PDEF_PCT:1" icon="helmet">
+	<node id="1092" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3200.0" y="165.0" effect="MAXHP:18">
+		<requires nodeId="1000" />
+		<requires nodeId="1009" />
+	</node>
+	<node id="1093" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2950.0" y="165.0" effect="MAXHP:6;MAXHP_PCT:0.5">
+		<requires nodeId="1009" />
+		<requires nodeId="1001" />
+		<requires nodeId="33006" />
+	</node>
+	<node id="1004" name="Iron Skin" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3075.0" y="-230.0" orbitX="3149.2" orbitY="-304.2" effect="PDEF_PCT:1" icon="helmet">
+		<requires nodeId="1006" />
+		<requires nodeId="1090" />
+		<requires nodeId="1091" />
+	</node>
+	<node id="1006" name="Iron Skin" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3054.1" y="-348.6" orbitX="3149.2" orbitY="-304.2" effect="PDEF_PCT:1" icon="helmet">
 		<requires nodeId="1004" />
 		<requires nodeId="1007" />
 	</node>
-	<node id="1007" name="Iron Skin" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3124.3" y="-178.9" orbitX="3019.7" orbitY="-169.7" effect="PDEF_PCT:1" icon="helmet">
+	<node id="1007" name="Iron Skin" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3158.4" y="-408.8" orbitX="3149.2" orbitY="-304.2" effect="PDEF_PCT:1" icon="helmet">
 		<requires nodeId="1006" />
 		<requires nodeId="1008" />
 	</node>
-	<node id="1008" name="Ironhide" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="3046.9" y="-271.1" orbitX="3019.7" orbitY="-169.7" effect="PDEF_PCT:5;CON:1" icon="helmet" description="Iron Skin mastery.">
+	<node id="1008" name="Ironhide" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="3250.7" y="-331.4" orbitX="3149.2" orbitY="-304.2" effect="PDEF_PCT:5;CON:1" icon="helmet" description="Iron Skin mastery.">
 		<requires nodeId="1007" />
 	</node>
-	<node id="1009" name="Vitality" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2945.5" y="95.5" orbitX="3019.7" orbitY="169.7" effect="MAXHP:24" icon="heart">
-		<requires nodeId="1001" />
+	<node id="1009" name="Vitality" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3075.0" y="230.0" orbitX="3149.2" orbitY="304.2" effect="MAXHP:24" icon="heart">
 		<requires nodeId="1010" />
-		<requires nodeId="33006" />
+		<requires nodeId="1092" />
+		<requires nodeId="1093" />
 	</node>
-	<node id="1010" name="Vitality" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3064.1" y="74.5" orbitX="3019.7" orbitY="169.7" effect="MAXHP:24" icon="heart">
+	<node id="1010" name="Vitality" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3054.1" y="348.6" orbitX="3149.2" orbitY="304.2" effect="MAXHP:24" icon="heart">
 		<requires nodeId="1009" />
 		<requires nodeId="1012" />
 	</node>
-	<node id="1012" name="Vitality" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3124.3" y="178.9" orbitX="3019.7" orbitY="169.7" effect="MAXHP:24" icon="heart">
+	<node id="1012" name="Vitality" sector="Vanguard" type="SMALL" tier="0" cost="1" x="3158.4" y="408.8" orbitX="3149.2" orbitY="304.2" effect="MAXHP:24" icon="heart">
 		<requires nodeId="1010" />
 		<requires nodeId="1013" />
 	</node>
-	<node id="1013" name="Robust Frame" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="3046.9" y="271.1" orbitX="3019.7" orbitY="169.7" effect="MAXHP:90;CON:1" icon="heart" description="Vitality mastery.">
+	<node id="1013" name="Robust Frame" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="3250.7" y="331.4" orbitX="3149.2" orbitY="304.2" effect="MAXHP:90;CON:1" icon="heart" description="Vitality mastery.">
 		<requires nodeId="1012" />
 	</node>
-	<node id="1014" name="Approach" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2765.1" y="84.9" effect="MAXHP:6">
-		<requires nodeId="1001" />
+	<node id="1014" name="Approach" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2770.0" y="300.0" effect="MAXHP:6">
 		<requires nodeId="1015" />
+		<requires nodeId="1025" />
 	</node>
-	<node id="1015" name="Vanguard Aegis" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="1" x="2680.3" y="169.7" effect="MAXHP:15" skillId="27400" skillLevel="1" description="ACTIVE: +30% P.Def and M.Def, +20% shield block for 20s (90s cooldown).">
+	<node id="1015" name="Vanguard Aegis" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="1" x="2810.0" y="430.0" effect="MAXHP:15" skillId="27400" skillLevel="1" description="ACTIVE: +30% P.Def and M.Def, +20% shield block for 20s (90s cooldown).">
 		<requires nodeId="1014" />
 	</node>
 	<node id="1016" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2250.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:18" description="Junction.">
 		<requires nodeId="1018" />
 		<requires nodeId="1019" />
-		<requires nodeId="1025" />
 		<requires nodeId="1031" />
-		<requires nodeId="1037" />
 		<requires nodeId="1040" />
 		<requires nodeId="20104" />
 		<requires nodeId="25107" />
+		<requires nodeId="1026" />
+		<requires nodeId="1048" />
 	</node>
 	<node id="1017" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2650.0" y="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
 		<requires nodeId="1001" />
@@ -90,20 +108,22 @@
 	<node id="1024" name="Aegis Training" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="2446.9" y="-271.1" orbitX="2419.7" orbitY="-169.7" effect="SHIELD_RATE_PCT:5;PDEF_PCT:2" icon="tower-shield" description="Shield Work mastery.">
 		<requires nodeId="1022" />
 	</node>
-	<node id="1025" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2345.5" y="95.5" orbitX="2419.7" orbitY="169.7" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
+	<node id="1025" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2720.0" y="165.0" orbitX="2550.0" orbitY="-6.4" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
+		<requires nodeId="1001" />
+		<requires nodeId="1030" />
+		<requires nodeId="1014" />
+	</node>
+	<node id="1026" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2380.0" y="165.0" orbitX="2550.0" orbitY="-6.4" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
+		<requires nodeId="1030" />
 		<requires nodeId="1016" />
-		<requires nodeId="1026" />
 		<requires nodeId="33003" />
 	</node>
-	<node id="1026" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2464.1" y="74.5" orbitX="2419.7" orbitY="169.7" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
-		<requires nodeId="1025" />
-		<requires nodeId="1027" />
-	</node>
-	<node id="1027" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2524.3" y="178.9" orbitX="2419.7" orbitY="169.7" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
-		<requires nodeId="1026" />
+	<node id="1027" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2550.0" y="385.0" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
 		<requires nodeId="1030" />
 	</node>
-	<node id="1030" name="Wellspring" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="2446.9" y="271.1" orbitX="2419.7" orbitY="169.7" effect="HP_REGEN_PCT:6;MAXHP:40" icon="heart-plus" description="Recovery mastery.">
+	<node id="1030" name="Wellspring" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="2550.0" y="235.0" orbitX="2550.0" orbitY="-6.4" effect="HP_REGEN_PCT:6;MAXHP:40" icon="heart-plus" description="Recovery mastery.">
+		<requires nodeId="1025" />
+		<requires nodeId="1026" />
 		<requires nodeId="1027" />
 	</node>
 	<node id="1031" name="Warding" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2154.5" y="-95.5" orbitX="2080.3" orbitY="-169.7" effect="MDEF_PCT:1.2" icon="ward">
@@ -121,22 +141,22 @@
 	<node id="1036" name="Spellbreaker" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="2053.1" y="-271.1" orbitX="2080.3" orbitY="-169.7" effect="MDEF_PCT:5;MEN:1" icon="ward" description="Warding mastery.">
 		<requires nodeId="1033" />
 	</node>
-	<node id="1037" name="Approach" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2165.1" y="84.9" effect="MAXHP:6">
-		<requires nodeId="1016" />
+	<node id="1037" name="Approach" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2100.0" y="305.0" effect="MAXHP:6">
 		<requires nodeId="1038" />
+		<requires nodeId="1048" />
 	</node>
-	<node id="1038" name="Deflection" sector="Vanguard" type="KEYSTONE" tier="0" cost="1" x="2080.3" y="169.7" effect="SHIELD_RATE_MUL_PCT:50;SHIELD_DEF_PCT:-40" icon="shield" description="KEYSTONE: You block with your shield 50% more often, but your shield defence is 40% lower.">
+	<node id="1038" name="Deflection" sector="Vanguard" type="KEYSTONE" tier="0" cost="1" x="2075.0" y="440.0" effect="SHIELD_RATE_MUL_PCT:50;SHIELD_DEF_PCT:-40" icon="shield" description="KEYSTONE: You block with your shield 50% more often, but your shield defence is 40% lower.">
 		<requires nodeId="1037" />
 	</node>
 	<node id="1039" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1650.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5" description="Junction.">
 		<requires nodeId="1041" />
 		<requires nodeId="1042" />
-		<requires nodeId="1048" />
 		<requires nodeId="1054" />
-		<requires nodeId="1060" />
 		<requires nodeId="1063" />
 		<requires nodeId="20204" />
 		<requires nodeId="25205" />
+		<requires nodeId="1049" />
+		<requires nodeId="1071" />
 	</node>
 	<node id="1040" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2050.0" y="0.0" effect="MAXHP:18">
 		<requires nodeId="1016" />
@@ -161,19 +181,21 @@
 	<node id="1047" name="Spiked Bulwark" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="1899.9" y="-175.7" orbitX="1798.5" orbitY="-148.5" effect="REFLECT_PCT:7;PDEF_PCT:2" icon="castle" description="Thorns mastery.">
 		<requires nodeId="1044" />
 	</node>
-	<node id="1048" name="Iron Skin" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1745.5" y="95.5" orbitX="1819.7" orbitY="169.7" effect="PDEF_PCT:1.2" icon="helmet">
+	<node id="1048" name="Iron Skin" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2120.0" y="165.0" orbitX="1950.0" orbitY="-6.4" effect="PDEF_PCT:1.2" icon="helmet">
+		<requires nodeId="1016" />
+		<requires nodeId="1053" />
+		<requires nodeId="1037" />
+	</node>
+	<node id="1049" name="Iron Skin" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1780.0" y="165.0" orbitX="1950.0" orbitY="-6.4" effect="PDEF_PCT:1.2" icon="helmet">
+		<requires nodeId="1053" />
 		<requires nodeId="1039" />
-		<requires nodeId="1049" />
 	</node>
-	<node id="1049" name="Iron Skin" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1864.1" y="74.5" orbitX="1819.7" orbitY="169.7" effect="PDEF_PCT:1.2" icon="helmet">
-		<requires nodeId="1048" />
-		<requires nodeId="1050" />
-	</node>
-	<node id="1050" name="Iron Skin" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1924.3" y="178.9" orbitX="1819.7" orbitY="169.7" effect="PDEF_PCT:1.2" icon="helmet">
-		<requires nodeId="1049" />
+	<node id="1050" name="Iron Skin" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1950.0" y="385.0" effect="PDEF_PCT:1.2" icon="helmet">
 		<requires nodeId="1053" />
 	</node>
-	<node id="1053" name="Ironhide" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="1846.9" y="271.1" orbitX="1819.7" orbitY="169.7" effect="PDEF_PCT:5;CON:1" icon="helmet" description="Iron Skin mastery.">
+	<node id="1053" name="Ironhide" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="1950.0" y="235.0" orbitX="1950.0" orbitY="-6.4" effect="PDEF_PCT:5;CON:1" icon="helmet" description="Iron Skin mastery.">
+		<requires nodeId="1048" />
+		<requires nodeId="1049" />
 		<requires nodeId="1050" />
 	</node>
 	<node id="1054" name="Vitality" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1554.5" y="-95.5" orbitX="1480.3" orbitY="-169.7" effect="MAXHP:29" icon="heart">
@@ -191,22 +213,22 @@
 	<node id="1059" name="Robust Frame" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="1453.1" y="-271.1" orbitX="1480.3" orbitY="-169.7" effect="MAXHP:90;CON:1" icon="heart" description="Vitality mastery.">
 		<requires nodeId="1056" />
 	</node>
-	<node id="1060" name="Approach" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1565.1" y="84.9" effect="MAXHP:6">
-		<requires nodeId="1039" />
+	<node id="1060" name="Approach" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1530.0" y="280.0" effect="MAXHP:6">
 		<requires nodeId="1061" />
+		<requires nodeId="1071" />
 	</node>
-	<node id="1061" name="Rallying Shout" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="1" x="1480.3" y="169.7" effect="MAXHP:15" skillId="27401" skillLevel="1" description="ACTIVE: party gains +8% P.Atk, M.Atk, P.Def and M.Def for 60s (180s cooldown).">
+	<node id="1061" name="Rallying Shout" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="1" x="1510.0" y="400.0" effect="MAXHP:15" skillId="27401" skillLevel="1" description="ACTIVE: party gains +8% P.Atk, M.Atk, P.Def and M.Def for 60s (180s cooldown).">
 		<requires nodeId="1060" />
 	</node>
 	<node id="1062" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1050.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:18" description="Junction.">
 		<requires nodeId="1064" />
 		<requires nodeId="1065" />
-		<requires nodeId="1071" />
 		<requires nodeId="1077" />
 		<requires nodeId="1080" />
 		<requires nodeId="1081" />
 		<requires nodeId="20304" />
 		<requires nodeId="25305" />
+		<requires nodeId="1072" />
 	</node>
 	<node id="1063" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1450.0" y="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
 		<requires nodeId="1039" />
@@ -231,19 +253,21 @@
 	<node id="1070" name="Aegis Training" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="1299.9" y="-175.7" orbitX="1198.5" orbitY="-148.5" effect="SHIELD_RATE_PCT:5;PDEF_PCT:2" icon="tower-shield" description="Shield Work mastery.">
 		<requires nodeId="1067" />
 	</node>
-	<node id="1071" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1145.5" y="95.5" orbitX="1219.7" orbitY="169.7" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
+	<node id="1071" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1520.0" y="150.0" orbitX="1350.0" orbitY="-85.2" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
+		<requires nodeId="1039" />
+		<requires nodeId="1076" />
+		<requires nodeId="1060" />
+	</node>
+	<node id="1072" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1180.0" y="150.0" orbitX="1350.0" orbitY="-85.2" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
+		<requires nodeId="1076" />
 		<requires nodeId="1062" />
-		<requires nodeId="1072" />
 	</node>
-	<node id="1072" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1264.1" y="74.5" orbitX="1219.7" orbitY="169.7" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
-		<requires nodeId="1071" />
-		<requires nodeId="1073" />
-	</node>
-	<node id="1073" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1324.3" y="178.9" orbitX="1219.7" orbitY="169.7" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
-		<requires nodeId="1072" />
+	<node id="1073" name="Recovery" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1350.0" y="340.0" effect="HP_REGEN_PCT:1.6" icon="heart-plus">
 		<requires nodeId="1076" />
 	</node>
-	<node id="1076" name="Wellspring" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="1246.9" y="271.1" orbitX="1219.7" orbitY="169.7" effect="HP_REGEN_PCT:6;MAXHP:40" icon="heart-plus" description="Recovery mastery.">
+	<node id="1076" name="Wellspring" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="1350.0" y="205.0" orbitX="1350.0" orbitY="-85.2" effect="HP_REGEN_PCT:6;MAXHP:40" icon="heart-plus" description="Recovery mastery.">
+		<requires nodeId="1071" />
+		<requires nodeId="1072" />
 		<requires nodeId="1073" />
 	</node>
 	<node id="1077" name="Approach" sector="Vanguard" type="SMALL" tier="0" cost="1" x="965.1" y="-84.9" effect="MAXHP:6">

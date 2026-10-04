@@ -177,29 +177,29 @@
 		<requires nodeId="30302" />
 		<requires nodeId="30304" />
 	</node>
-	<node id="33303" name="Lifeblood Trail" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2393.6" y="-383.1" effect="MAXHP:15">
-		<requires nodeId="4025" />
+	<node id="33303" name="Lifeblood Trail" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2410.9" y="-417.9" effect="MAXHP:15">
 		<requires nodeId="30303" />
+		<requires nodeId="4026" />
 	</node>
 	<node id="33304" name="Lifeblood Trail" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1528.6" y="-1881.4" effect="MAXHP_PCT:1">
 		<requires nodeId="5019" />
 		<requires nodeId="30304" />
 	</node>
-	<node id="33305" name="Lifeblood Trail" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2987.1" y="-758.5" effect="MAXHP:15">
+	<node id="33305" name="Lifeblood Trail" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2988.7" y="-781.7" effect="MAXHP:15">
 		<requires nodeId="30325" />
 		<requires nodeId="33306" />
 	</node>
-	<node id="33306" name="Lifeblood Trail" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2966.3" y="-427.0" effect="MAXHP_PCT:1">
-		<requires nodeId="4009" />
+	<node id="33306" name="Lifeblood Trail" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2969.3" y="-473.3" effect="MAXHP_PCT:1">
 		<requires nodeId="33305" />
+		<requires nodeId="4093" />
 	</node>
-	<node id="33307" name="Lifeblood Trail" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2150.5" y="-2207.7" effect="MAXHP:15">
+	<node id="33307" name="Lifeblood Trail" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2171.3" y="-2197.4" effect="MAXHP:15">
 		<requires nodeId="30326" />
 		<requires nodeId="33308" />
 	</node>
-	<node id="33308" name="Lifeblood Trail" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1852.9" y="-2355.4" effect="MAXHP_PCT:1">
-		<requires nodeId="5004" />
+	<node id="33308" name="Lifeblood Trail" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1894.6" y="-2334.8" effect="MAXHP_PCT:1">
 		<requires nodeId="33307" />
+		<requires nodeId="5091" />
 	</node>
 	<node id="30370" name="Lifeblood Trail" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2950.5" y="-1749.6" effect="MAXHP:15">
 		<requires nodeId="30312" />

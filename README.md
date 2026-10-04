@@ -520,9 +520,14 @@ This program is free software, licensed under the **GNU General Public License, 
 
 ## Recent Updates
 
-Changes from 28–30 September 2026.
+Changes from 28 September – 4 October 2026.
 
 ### Passive Skill Tree
+- **Route choices**: each archetype now has several ways to the same place, and each way costs a different amount.
+  - **Start**: each Origin has three roads to its first Crossroads. The middle road costs 3 points. The two side roads cost 4 and pass the entry of that Crossroads' two clusters, which used to hang off the Crossroads.
+  - **Lanes**: beside each of the three middle stretches of the main road there is a pass-through cluster (small, notable, small, plus one side small). It costs 1 point more than the plain road and gives you the notable on the way. The keystone or active skill of that stretch now hangs off the lane's first small.
+  - **Outer Rim**: each Origin has two more roads to the rim, landing one node either side of the Rim Gate. They save 1 point towards the outer regions but skip the gate.
+  - Node stats are unchanged. The 60 new road nodes copy existing Pathway and Outbound Road values. Allocated nodes that no longer connect are dropped on login, and their points are returned.
 - **Active skills fixed**: Earthshatter, Volley and Arcane Nova now deal their intended damage (Arcane Nova did none), Earthshatter's stun can land, and Shadow Lunge's critical damage bonus applies.
 - **Scale with level**: the damage, heal and debuff actives have 9 levels. You get the level that matches your character level, it moves up as you level, and the cooldown carries over. Before, they failed against high-level targets.
 - **Hybrid actives**: each hybrid sector has an active skill node: Crimson Bulwark (Warlord), Reaving Strike (Reaver), Hunter's Mark (Stalker), Binding Rune (Spellbow), Temporal Flow (Mystic), Purifying Aegis (Templar).

@@ -3,10 +3,14 @@
 Lays out the passive tree in data/passivetree/*.xml, Path of Exile style:
  - every notable cluster is a ring: the path enters the ring at its first small and the three smalls
    curve around it to the notable (those links are drawn as arcs),
- - the six sector spines are straight roads from the START to the archetype MASTER,
+ - the six sector spines are straight roads from the START to the archetype MASTER; each START sends three roads
+   to the first junction (the middle one plain and shortest, the side ones a step longer through a cluster's entry),
+   and beside the spine's three middle stretches runs a lane: a pass-through cluster (small > NOTABLE > small, with
+   a spur) that costs one point more than the plain road but carries a notable (SECTOR_BRAID, SECTOR_LANES),
  - the bridges between neighbouring sectors are big circular roads around the tree centre,
  - the six hybrid sectors sit in the wedges between the arms, each built from one shared template,
- - the Outer Rim is one more circular road round the whole tree, reached by a spur from every START,
+ - the Outer Rim is one more circular road round the whole tree, reached by three spurs from every START (to the
+   gate, and to the rim road on either side of it),
    with six regions beyond it, each shaped differently.
 
 Only x/y and orbitX/orbitY are written; ids, links and stats are never touched, so it can be re-run
@@ -49,11 +53,26 @@ RING_RADIUS = 105  # radius of a notable cluster's ring
 RING_STEP = 70  # degrees between consecutive nodes on a ring
 
 # What hangs off each junction and where: (local id of the first node, outward(+1)/inward(-1), side(+1 = towards the next sector, -1 = towards the previous one))
+# (The START road and the +1 side of the three middle segments are laid out from SECTOR_BRAID and SECTOR_LANES instead.)
 JUNCTION_SLOTS = {
-	1: [(4, 1, -1), (9, 1, 1), (14, -1, 1)],
-	16: [(19, 1, -1), (25, 1, 1), (31, -1, -1), (37, -1, 1)],
-	39: [(42, 1, -1), (48, 1, 1), (54, -1, -1), (60, -1, 1)],
-	62: [(65, 1, -1), (71, 1, 1), (77, -1, -1), (81, -1, 1)],
+	16: [(19, 1, -1), (31, -1, -1)],
+	39: [(42, 1, -1), (54, -1, -1)],
+	62: [(65, 1, -1), (77, -1, -1), (81, -1, 1)],
+}
+# The roads that give a sector its route choices, in the sector's own frame: (u, v) with u the distance from the tree
+# centre along the spine and v sideways, positive towards the next sector.
+#  - START road: three roads from START to J0. The middle one (2, 3) is plain; the two side roads (90 > 4 > 91 and
+#    92 > 9 > 93) are a step longer and run through the entry small of a cluster, whose ring hangs outside the road.
+SECTOR_BRAID = {90: (3200, -165), 4: (3075, -230), 91: (2950, -165), 92: (3200, 165), 9: (3075, 230), 93: (2950, 165)}
+SECTOR_BRAID_RINGS = {4: (-1, 1), 9: (1, -1)}  # entry small -> (side, curl)
+#  - Lanes: a pass-through cluster beside the plain road of each of the three middle segments, on the +1 side:
+#    junction > first small > NOTABLE > second small > next junction, with a spur small off the notable and the
+#    segment's pod (approach > keystone / active skill) off the first small. Local positions are relative to the
+#    junction the lane leaves from, (first small, notable, second small, spur, approach, pod end).
+SECTOR_LANES = {
+	(1, 25): [(-130, 165), (-300, 235), (-470, 165), (-300, 385), (-80, 300), (-40, 430)],
+	(16, 48): [(-130, 165), (-300, 235), (-470, 165), (-300, 385), (-150, 305), (-175, 440)],
+	(39, 71): [(-130, 150), (-300, 205), (-470, 150), (-300, 340), (-120, 280), (-140, 400)],
 }
 # Spine roads: (from, to, radius of each in-between node)
 SPINE_ROADS = [(0, 1, [3150, 3000]), (1, 16, [2650, 2450]), (16, 39, [2050, 1850]), (39, 62, [1450, 1250]), (62, 79, [885])]
@@ -79,7 +98,7 @@ WEDGE_NODES = {
 	1: {51: (1790, 20), 56: (1180, 40), 61: (1190, 24), 62: (1340, 20), 63: (1500, 17)},
 	2: {51: (1800, 40), 56: (930, 30), 61: (1240, 19), 62: (1450, 17)},
 	3: {51: (1210, 30), 56: (1800, 17), 61: (1820, 44), 62: (2040, 43)},
-	4: {51: (1800, 33), 56: (930, 32), 61: (1240, 17), 62: (1380, 15), 63: (1520, 17)},
+	4: {51: (1800, 33), 56: (930, 32), 61: (1240, 19.5), 62: (1390, 18.5), 63: (1530, 19.5)},
 	5: {51: (1200, 42), 56: (1800, 27), 61: (1830, 45), 62: (2040, 47)},
 }
 for _hi, _p in {0: (925, 35), 1: (925, 25), 2: (1820, 21), 3: (925, 35), 4: (1820, 21), 5: (925, 25)}.items():
@@ -339,13 +358,13 @@ def place_ring(nodes, chain, center, entry_point, curl):
 		nodes[i].orbit = center
 
 
-def walk(nodes, adj, start, group, first=None):
+def walk(nodes, adj, start, group, first=None, keep=lambda j: True):
 	"""The run of nodes of one id block leaving `start` (through `first` if given), in order, e.g. a bridge from its junction."""
 	path, prev = [], start
 	cur = first if first is not None else [j for j in adj[start] if group_of(j) == group][0]
 	while True:
 		path.append(cur)
-		nxt = [j for j in adj[cur] if (j != prev) and (group_of(j) == group) and (j not in path)]
+		nxt = [j for j in adj[cur] if (j != prev) and (group_of(j) == group) and (j not in path) and keep(j)]
 		if not nxt:
 			return path
 		prev, cur = cur, nxt[0]
@@ -428,21 +447,29 @@ def layout(nodes):
 				nodes[i].pos = polar(R_JUNCTION[local], ang + ((SPINE_DEG * k) / (len(path) + 1)))
 				nodes[i].orbit = centre
 
+	place_sector_paths(nodes, adj)
+
 	# The Outer Rim: a spur from each START to its gate, then an arc road to the next gate.
 	for si, base in enumerate(SECTOR_BASES):
 		ang = si * SPINE_DEG
 		gate = RIM_BASE + (si * 100)
 		nodes[gate].pos = polar(R_RIM, ang)
 		nodes[gate].orbit = centre
-		spur = walk(nodes, adj, base, gate // 100)
-		spur = spur[:spur.index(gate)]
-		assert len(spur) == len(R_RIM_SPUR), spur
-		for i, r in zip(spur, R_RIM_SPUR):
+		for i, r in zip(range(gate + 1, gate + 4), R_RIM_SPUR):
 			nodes[i].pos = polar(r, ang)
-		road = walk(nodes, adj, gate, gate // 100, min(j for j in adj[gate] if j >= gate + 10))
+		road = walk(nodes, adj, gate, gate // 100, gate + 10, lambda j: j >= gate + 10)
 		for k, i in enumerate(road, 1):
 			nodes[i].pos = polar(R_RIM, ang + ((SPINE_DEG * k) / (len(road) + 1)))
 			nodes[i].orbit = centre
+	# The two side spurs out of each START (gate + 4.. and gate + 7..), landing on the rim road either side of the gate.
+	for si, base in enumerate(SECTOR_BASES):
+		gate = RIM_BASE + (si * 100)
+		for first in (gate + 4, gate + 7):
+			chain = [first + k for k in range(3)]
+			land = [j for j in adj[chain[-1]] if j not in chain][0]
+			a, b = nodes[base].pos, nodes[land].pos
+			for k, i in enumerate(chain, 1):
+				nodes[i].pos = add(a, (b[0] - a[0], b[1] - a[1]), k / 4)
 
 	# The regions beyond the rim.
 	for ri in range(6):
@@ -511,6 +538,44 @@ def layout(nodes):
 	missing = [i for i, n in nodes.items() if n.pos is None]
 	assert not missing, f"nodes without a position: {missing}"
 	return adj
+
+
+def place_sector_paths(nodes, adj):
+	"""The START road's three branches and the three lanes of every sector (see SECTOR_BRAID and SECTOR_LANES)."""
+	for si, base in enumerate(SECTOR_BASES):
+		u, v = frame(si * SPINE_DEG)
+		at = lambda p: add((u[0] * p[0], u[1] * p[0]), v, p[1])
+		for local, p in SECTOR_BRAID.items():
+			nodes[base + local].pos = at(p)
+			nodes[base + local].orbit = None
+		for local, (side, curl) in SECTOR_BRAID_RINGS.items():
+			entry = base + local
+			ring = ring_chain(nodes, adj, entry)
+			p = SECTOR_BRAID[local]
+			place_ring(nodes, ring, at((p[0] + (RING_RADIUS * 0.7071), p[1] + (side * RING_RADIUS * 0.7071))), at(p), curl)
+		for (junction, first), offsets in SECTOR_LANES.items():
+			ju = nodes[base + junction].pos
+			s1 = base + first
+			notable = [j for j in adj[s1] if nodes[j].type == "NOTABLE"][0]
+			s2 = [j for j in adj[notable] if (j != s1) and any(nodes[k].a["name"] == "Crossroads" for k in adj[j])][0]
+			spur = [j for j in adj[notable] if j not in (s1, s2)][0]
+			approach = [j for j in adj[s1] if nodes[j].a["name"] == "Approach"][0]
+			pod = [j for j in adj[approach] if j != s1][0]
+			r0 = math.hypot(ju[0], ju[1])
+			for i, (du, dv) in zip((s1, notable, s2, spur, approach, pod), offsets):
+				nodes[i].pos = at((r0 + du, dv))
+				nodes[i].orbit = None
+			# the lane itself curves round the plain road: its three nodes share one circle
+			centre = circumcentre(nodes[s1].pos, nodes[notable].pos, nodes[s2].pos)
+			for i in (s1, notable, s2):
+				nodes[i].orbit = centre
+
+
+def circumcentre(a, b, c):
+	d = 2 * ((a[0] * (b[1] - c[1])) + (b[0] * (c[1] - a[1])) + (c[0] * (a[1] - b[1])))
+	ux = (((a[0] ** 2) + (a[1] ** 2)) * (b[1] - c[1]) + ((b[0] ** 2) + (b[1] ** 2)) * (c[1] - a[1]) + ((c[0] ** 2) + (c[1] ** 2)) * (a[1] - b[1])) / d
+	uy = (((a[0] ** 2) + (a[1] ** 2)) * (c[0] - b[0]) + ((b[0] ** 2) + (b[1] ** 2)) * (a[0] - c[0]) + ((c[0] ** 2) + (c[1] ** 2)) * (b[0] - a[0])) / d
+	return (ux, uy)
 
 
 def chain_between(nodes, adj, a, b):
