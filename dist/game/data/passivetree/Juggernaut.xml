@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Juggernaut: 81 nodes. x/y are authoritative layout coords. -->
+<!-- Juggernaut: 95 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="2000" name="Juggernaut Origin" sector="Juggernaut" type="START" tier="0" cost="0" x="1650.0" y="2857.9" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="2001" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1425.0" y="2468.2" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5" description="Junction.">
@@ -237,6 +237,8 @@
 		<requires nodeId="2081" />
 		<requires nodeId="20305" />
 		<requires nodeId="21304" />
+		<requires nodeId="2094" />
+		<requires nodeId="2099" />
 	</node>
 	<node id="2063" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="725.0" y="1255.7" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="2039" />
@@ -280,22 +282,62 @@
 		<requires nodeId="2071" />
 		<requires nodeId="2072" />
 	</node>
-	<node id="2077" name="Approach" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="556.1" y="793.4" effect="PATK_PCT:0.2">
+	<node id="2077" name="Approach" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="518.3" y="797.7" effect="PATK_PCT:0.2">
 		<requires nodeId="2062" />
 		<requires nodeId="2078" />
 	</node>
-	<node id="2078" name="Unwavering Stance" sector="Juggernaut" type="KEYSTONE" tier="0" cost="1" x="587.1" y="677.5" effect="KS_STUN_IMMUNE:1;PDEF_PCT:-15" icon="anvil" description="KEYSTONE: You cannot be stunned, but your P.Def is 15% lower.">
+	<node id="2078" name="Unwavering Stance" sector="Juggernaut" type="KEYSTONE" tier="0" cost="1" x="489.3" y="687.5" effect="KS_STUN_IMMUNE:1;PDEF_PCT:-15" icon="anvil" description="KEYSTONE: You cannot be stunned, but your P.Def is 15% lower.">
 		<requires nodeId="2077" />
 	</node>
 	<node id="2079" name="Titan's Apotheosis" sector="Juggernaut" type="MASTER" tier="0" cost="1" x="360.0" y="623.5" effect="STR:2;PATK_PCT:8;ATK_SPD_PCT:2" icon="fist" description="Archetype capstone.">
 		<requires nodeId="2080" />
 		<requires nodeId="9003" />
 	</node>
+	<node id="2094" name="Heartblood" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="581.6" y="809.0" orbitX="314.7" orbitY="724.7" effect="MAXHP:29">
+		<requires nodeId="2062" />
+		<requires nodeId="2095" />
+	</node>
+	<node id="2095" name="Heartblood" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="592.9" y="694.3" orbitX="314.7" orbitY="724.7" effect="MAXHP_PCT:1.5">
+		<requires nodeId="2094" />
+		<requires nodeId="2096" />
+	</node>
+	<node id="2096" name="Giant's Blood" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="557.0" y="584.8" orbitX="314.7" orbitY="724.7" effect="MAXHP:90;CON:1" icon="heart">
+		<requires nodeId="2095" />
+		<requires nodeId="2097" />
+	</node>
+	<node id="2097" name="Heartblood" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="480.1" y="499.1" orbitX="314.7" orbitY="724.7" effect="MAXHP_PCT:1.5">
+		<requires nodeId="2096" />
+		<requires nodeId="2098" />
+	</node>
+	<node id="2098" name="Heartblood" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="375.2" y="451.5" orbitX="314.7" orbitY="724.7" effect="MAXHP:29">
+		<requires nodeId="2097" />
+		<requires nodeId="9003" />
+	</node>
+	<node id="2099" name="Heartblood" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="409.8" y="908.1" orbitX="470.3" orbitY="634.9" effect="MAXHP:29">
+		<requires nodeId="2062" />
+		<requires nodeId="2100" />
+	</node>
+	<node id="2100" name="Heartblood" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="304.9" y="860.6" orbitX="470.3" orbitY="634.9" effect="MAXHP_PCT:1.5">
+		<requires nodeId="2099" />
+		<requires nodeId="2101" />
+	</node>
+	<node id="2101" name="Second Wind" sector="Juggernaut" type="NOTABLE" tier="0" cost="1" x="228.0" y="774.8" orbitX="470.3" orbitY="634.9" effect="MAXHP:140;HP_REGEN_PCT:6" icon="heart-plus">
+		<requires nodeId="2100" />
+		<requires nodeId="2102" />
+	</node>
+	<node id="2102" name="Heartblood" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="192.1" y="665.3" orbitX="470.3" orbitY="634.9" effect="MAXHP_PCT:1.5">
+		<requires nodeId="2101" />
+		<requires nodeId="2103" />
+	</node>
+	<node id="2103" name="Heartblood" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="203.4" y="550.7" orbitX="470.3" orbitY="634.9" effect="MAXHP:29">
+		<requires nodeId="2102" />
+		<requires nodeId="9003" />
+	</node>
 	<node id="2080" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="442.5" y="766.4" effect="PATK_PCT:0.2;MAXHP:12">
 		<requires nodeId="2062" />
 		<requires nodeId="2079" />
 	</node>
-	<node id="2081" name="Dwarven Craft Mastery" sector="Juggernaut" type="FUNCTION" tier="0" cost="1" x="409.1" y="878.3" effect="MAXHP:15" skillId="1321" skillLevel="1" description="Unlock Dwarven Craft skill.">
+	<node id="2081" name="Dwarven Craft Mastery" sector="Juggernaut" type="FUNCTION" tier="0" cost="1" x="398.0" y="809.4" effect="MAXHP:15" skillId="1321" skillLevel="1" description="Unlock Dwarven Craft skill.">
 		<requires nodeId="2062" />
 	</node>
 	<node id="21101" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="582.3" y="2173.3" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">

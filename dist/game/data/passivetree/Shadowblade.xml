@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Shadowblade: 82 nodes. x/y are authoritative layout coords. -->
+<!-- Shadowblade: 86 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="3000" name="Shadowblade Origin" sector="Shadowblade" type="START" tier="0" cost="0" x="-1650.0" y="2857.9" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="3001" name="Crossroads" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1425.0" y="2468.2" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.2;MAXHP_PCT:0.5" description="Junction.">
@@ -280,11 +280,11 @@
 		<requires nodeId="3071" />
 		<requires nodeId="3072" />
 	</node>
-	<node id="3077" name="Approach" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-409.1" y="878.3" effect="EVASION_ADD:0.2">
+	<node id="3077" name="Approach" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-426.7" y="840.5" effect="EVASION_ADD:0.2">
 		<requires nodeId="3062" />
 		<requires nodeId="3078" />
 	</node>
-	<node id="3078" name="Ghost Walker" sector="Shadowblade" type="KEYSTONE" tier="0" cost="1" x="-293.2" y="847.2" effect="EVASION_ADD:4;MOVE_SPEED_ADD:5;MAXHP:-140" icon="moon" description="Evasive and fast, but frail.">
+	<node id="3078" name="Ghost Walker" sector="Shadowblade" type="KEYSTONE" tier="0" cost="1" x="-328.4" y="771.7" effect="EVASION_ADD:4;MOVE_SPEED_ADD:5;MAXHP:-140" icon="moon" description="Evasive and fast, but frail.">
 		<requires nodeId="3077" />
 	</node>
 	<node id="3079" name="Executioner's Mark" sector="Shadowblade" type="MASTER" tier="0" cost="1" x="-360.0" y="623.5" effect="DEX:2;CRIT_RATE_ADD:18;CRIT_DMG_PCT:6" icon="target" description="Archetype capstone.">
@@ -295,11 +295,11 @@
 		<requires nodeId="3062" />
 		<requires nodeId="3079" />
 	</node>
-	<node id="3081" name="Master Spoil" sector="Shadowblade" type="FUNCTION" tier="0" cost="1" x="-556.1" y="793.4" effect="MAXHP:15" skillId="254" skillLevel="11" description="Unlocks Spoil.">
+	<node id="3081" name="Master Spoil" sector="Shadowblade" type="FUNCTION" tier="0" cost="1" x="-538.1" y="759.9" effect="MAXHP:15" skillId="254" skillLevel="11" description="Unlocks Spoil.">
 		<requires nodeId="3062" />
 		<requires nodeId="3082" />
 	</node>
-	<node id="3082" name="Master Sweeper" sector="Shadowblade" type="FUNCTION" tier="0" cost="1" x="-587.1" y="677.5" effect="MAXHP:15" skillId="444" skillLevel="1" description="Unlocks Sweeper Festival: sweep every spoiled corpse around you.">
+	<node id="3082" name="Master Sweeper" sector="Shadowblade" type="FUNCTION" tier="0" cost="1" x="-548.5" y="640.4" effect="MAXHP:15" skillId="444" skillLevel="1" description="Unlocks Sweeper Festival: sweep every spoiled corpse around you.">
 		<requires nodeId="3081" />
 	</node>
 	<node id="22101" name="Pathway" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1591.0" y="1591.0" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.2;MAXHP_PCT:0.5">

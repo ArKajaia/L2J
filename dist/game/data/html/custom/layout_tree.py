@@ -68,6 +68,10 @@ WHEEL_POD = [(-110, 90), (-235, 150)]
 # J1 > J2 and J2 > J3: (from junction, lane entry small, lane bulge, loop's first ring, pod approach).
 # The lane's spare small sits under its notable; the pod (approach, then keystone / skill) between lane and road.
 # The loop is a pocket on the -1 side: a half circle (centre loop depth off the road, loop radius) opening towards it.
+# Last Crossroads > Nexus, in the sectors that have one (local ids 94..103): a large HP / MP cluster shaped as an eye,
+# two arcs (small > small > NOTABLE > small > small) either side of the road through the MASTER.
+EYE_FIRST, EYE_BULGE = 94, 190
+EYE_PODS = {77: (-100, -50), 78: (-210, -80), 81: (-150, 60)}  # where J3's pods sit inside the eye, relative to J3
 STRETCHES = [(16, 48, 360, 31, 150, 230, 37), (39, 71, 320, 54, 120, 200, 60)]
 LANE_SPARE_DROP = 130
 STRETCH_POD = [(-250, 120), (-370, 120)]
@@ -105,7 +109,7 @@ WEDGE_RINGS = {
 	1: {52: (1965, 29, 1), 57: (1370, 33, -1)},
 	2: {52: (1990, 34, -1), 57: (760, 28, 1)},
 	3: {52: (1400, 30, 1), 57: (1965, 24, -1)},
-	4: {52: (1985, 38, -1), 57: (765, 35, 1)},
+	4: {52: (1985, 38, -1), 57: (765, 30, 1)},
 	5: {52: (1385, 35, 1), 57: (1985, 22, 1)},
 }
 for _hi, _p in {0: (765, 30, 1), 1: (765, 30, -1), 2: (2000, 19.5, 1), 3: (765, 30, -1), 4: (2000, 19.5, -1), 5: (765, 30, 1)}.items():
@@ -532,6 +536,15 @@ def layout(nodes):
 				place_attachment(nodes, adj, base, junction, first, io, side, alpha, d, curl)
 			place_roads(nodes, adj)
 
+	# In the sectors with an eye, J3's pods sit inside it.
+	for si, base in enumerate(SECTOR_BASES):
+		if (base + EYE_FIRST) in nodes:
+			u, v = frame(si * SPINE_DEG)
+			r = math.hypot(*nodes[base + 62].pos)
+			for local, (du, dv) in EYE_PODS.items():
+				nodes[base + local].pos = add((u[0] * (r + du), u[1] * (r + du)), v, dv)
+				nodes[base + local].orbit = None
+
 	missing = [i for i, n in nodes.items() if n.pos is None]
 	assert not missing, f"nodes without a position: {missing}"
 	return adj
@@ -554,7 +567,7 @@ def ring_from(nodes, adj, entry, junction):
 
 
 def place_sector_paths(nodes, adj):
-	"""Everything that gives a sector its route choices (see SECTOR_BRAID, WHEEL_ARCS and STRETCHES)."""
+	"""Everything that gives a sector its route choices (see SECTOR_BRAID, WHEEL_ARCS, STRETCHES and EYE_FIRST)."""
 	for si, base in enumerate(SECTOR_BASES):
 		u, v = frame(si * SPINE_DEG)
 		at = lambda p: add((u[0] * p[0], u[1] * p[0]), v, p[1])
@@ -599,6 +612,14 @@ def place_sector_paths(nodes, adj):
 			assert len(loop) == 8, loop
 			mid = (ja + jb) / 2
 			put(loop, [(mid + (loop_radius * math.cos((math.pi * k) / 7)), -loop_depth - (loop_radius * math.sin((math.pi * k) / 7))) for k in range(8)], (mid, -loop_depth))
+
+		# the eye round the MASTER
+		if (base + EYE_FIRST) in nodes:
+			filament = [j for j in adj[base + 79] if 9000 <= j < 9100][0]
+			for k, side in enumerate((-1, 1)):
+				arc = [base + EYE_FIRST + (5 * k) + i for i in range(5)]
+				points, orbit = arc_positions(radius_of(62), math.hypot(*nodes[filament].pos), side * EYE_BULGE, len(arc))
+				put(arc, points, orbit)
 
 
 def chain_between(nodes, adj, a, b):

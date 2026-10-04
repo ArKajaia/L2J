@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Hierophant: 81 nodes. x/y are authoritative layout coords. -->
+<!-- Hierophant: 95 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="6000" name="Hierophant Origin" sector="Hierophant" type="START" tier="0" cost="0" x="1650.0" y="-2857.9" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="6001" name="Crossroads" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1425.0" y="-2468.2" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5" description="Junction.">
@@ -237,6 +237,8 @@
 		<requires nodeId="6081" />
 		<requires nodeId="24305" />
 		<requires nodeId="25304" />
+		<requires nodeId="6094" />
+		<requires nodeId="6099" />
 	</node>
 	<node id="6063" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="725.0" y="-1255.7" effect="MAXMP:6;MAXHP_PCT:0.5">
 		<requires nodeId="6039" />
@@ -280,22 +282,62 @@
 		<requires nodeId="6071" />
 		<requires nodeId="6072" />
 	</node>
-	<node id="6077" name="Approach" sector="Hierophant" type="SMALL" tier="0" cost="1" x="409.1" y="-878.3" effect="MAXMP:6">
+	<node id="6077" name="Approach" sector="Hierophant" type="SMALL" tier="0" cost="1" x="431.7" y="-847.7" effect="MAXMP:6">
 		<requires nodeId="6062" />
 		<requires nodeId="6078" />
 	</node>
-	<node id="6078" name="Overflowing Grace" sector="Hierophant" type="KEYSTONE" tier="0" cost="1" x="293.2" y="-847.2" effect="KS_OVERHEAL_CP:100" icon="sun" description="KEYSTONE: Healing you cast beyond a player's maximum HP is granted to them as CP.">
+	<node id="6078" name="Overflowing Grace" sector="Hierophant" type="KEYSTONE" tier="0" cost="1" x="350.7" y="-767.5" effect="KS_OVERHEAL_CP:100" icon="sun" description="KEYSTONE: Healing you cast beyond a player's maximum HP is granted to them as CP.">
 		<requires nodeId="6077" />
 	</node>
 	<node id="6079" name="Avatar of Salvation" sector="Hierophant" type="MASTER" tier="0" cost="1" x="360.0" y="-623.5" effect="MEN:2;WIT:1;MP_REGEN_PCT:5;MDEF_PCT:5" icon="wings" description="Archetype capstone.">
 		<requires nodeId="6080" />
 		<requires nodeId="9011" />
 	</node>
+	<node id="6094" name="Mana Tide" sector="Hierophant" type="SMALL" tier="0" cost="1" x="409.8" y="-908.1" orbitX="470.3" orbitY="-634.9" effect="MAXMP:29">
+		<requires nodeId="6062" />
+		<requires nodeId="6095" />
+	</node>
+	<node id="6095" name="Mana Tide" sector="Hierophant" type="SMALL" tier="0" cost="1" x="304.9" y="-860.6" orbitX="470.3" orbitY="-634.9" effect="MAXMP:25">
+		<requires nodeId="6094" />
+		<requires nodeId="6096" />
+	</node>
+	<node id="6096" name="Sea of Faith" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="228.0" y="-774.8" orbitX="470.3" orbitY="-634.9" effect="MAXMP:120;MEN:1" icon="book">
+		<requires nodeId="6095" />
+		<requires nodeId="6097" />
+	</node>
+	<node id="6097" name="Mana Tide" sector="Hierophant" type="SMALL" tier="0" cost="1" x="192.1" y="-665.3" orbitX="470.3" orbitY="-634.9" effect="MAXMP:25">
+		<requires nodeId="6096" />
+		<requires nodeId="6098" />
+	</node>
+	<node id="6098" name="Mana Tide" sector="Hierophant" type="SMALL" tier="0" cost="1" x="203.4" y="-550.7" orbitX="470.3" orbitY="-634.9" effect="MAXMP:29">
+		<requires nodeId="6097" />
+		<requires nodeId="9011" />
+	</node>
+	<node id="6099" name="Mana Tide" sector="Hierophant" type="SMALL" tier="0" cost="1" x="581.6" y="-809.0" orbitX="314.7" orbitY="-724.7" effect="MAXMP:29">
+		<requires nodeId="6062" />
+		<requires nodeId="6100" />
+	</node>
+	<node id="6100" name="Mana Tide" sector="Hierophant" type="SMALL" tier="0" cost="1" x="592.9" y="-694.3" orbitX="314.7" orbitY="-724.7" effect="MAXMP:25">
+		<requires nodeId="6099" />
+		<requires nodeId="6101" />
+	</node>
+	<node id="6101" name="Brimming Chalice" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="557.0" y="-584.8" orbitX="314.7" orbitY="-724.7" effect="MAXMP:120;MP_REGEN_PCT@ROBE:8" icon="drop">
+		<requires nodeId="6100" />
+		<requires nodeId="6102" />
+	</node>
+	<node id="6102" name="Mana Tide" sector="Hierophant" type="SMALL" tier="0" cost="1" x="480.1" y="-499.1" orbitX="314.7" orbitY="-724.7" effect="MAXMP:25">
+		<requires nodeId="6101" />
+		<requires nodeId="6103" />
+	</node>
+	<node id="6103" name="Mana Tide" sector="Hierophant" type="SMALL" tier="0" cost="1" x="375.2" y="-451.5" orbitX="314.7" orbitY="-724.7" effect="MAXMP:29">
+		<requires nodeId="6102" />
+		<requires nodeId="9011" />
+	</node>
 	<node id="6080" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="442.5" y="-766.4" effect="MAXMP:6;MAXHP:12">
 		<requires nodeId="6062" />
 		<requires nodeId="6079" />
 	</node>
-	<node id="6081" name="Pilgrim's Provisions" sector="Hierophant" type="FUNCTION" tier="0" cost="1" x="556.1" y="-793.4" effect="INVENTORY_SLOTS_ADD:12;WEIGHT_LIMIT_PCT:30" description="Travel light: +12 inventory slots and +30% weight limit.">
+	<node id="6081" name="Pilgrim's Provisions" sector="Hierophant" type="FUNCTION" tier="0" cost="1" x="502.0" y="-749.4" effect="INVENTORY_SLOTS_ADD:12;WEIGHT_LIMIT_PCT:30" description="Travel light: +12 inventory slots and +30% weight limit.">
 		<requires nodeId="6062" />
 	</node>
 	<node id="25101" name="Pathway" sector="Hierophant" type="SMALL" tier="0" cost="1" x="1591.0" y="-1591.0" orbitX="0.0" orbitY="0.0" effect="MAXMP:6;MAXHP_PCT:0.5">

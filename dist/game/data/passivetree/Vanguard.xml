@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Vanguard: 81 nodes. x/y are authoritative layout coords. -->
+<!-- Vanguard: 95 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="1000" name="Vanguard Origin" sector="Vanguard" type="START" tier="0" cost="0" x="3300.0" y="0.0" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="1001" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2850.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5" description="Junction.">
@@ -237,6 +237,8 @@
 		<requires nodeId="1081" />
 		<requires nodeId="20304" />
 		<requires nodeId="25305" />
+		<requires nodeId="1094" />
+		<requires nodeId="1099" />
 	</node>
 	<node id="1063" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1450.0" y="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">
 		<requires nodeId="1039" />
@@ -280,22 +282,62 @@
 		<requires nodeId="1071" />
 		<requires nodeId="1072" />
 	</node>
-	<node id="1077" name="Approach" sector="Vanguard" type="SMALL" tier="0" cost="1" x="965.1" y="-84.9" effect="MAXHP:6">
+	<node id="1077" name="Approach" sector="Vanguard" type="SMALL" tier="0" cost="1" x="950.0" y="-50.0" effect="MAXHP:6">
 		<requires nodeId="1062" />
 		<requires nodeId="1078" />
 	</node>
-	<node id="1078" name="Arcane Plating" sector="Vanguard" type="KEYSTONE" tier="0" cost="1" x="880.3" y="-169.7" effect="KS_PDEF_AS_MDEF:25" icon="rune" description="KEYSTONE: Your M.Def is replaced by your P.Def, reduced by 25%.">
+	<node id="1078" name="Arcane Plating" sector="Vanguard" type="KEYSTONE" tier="0" cost="1" x="840.0" y="-80.0" effect="KS_PDEF_AS_MDEF:25" icon="rune" description="KEYSTONE: Your M.Def is replaced by your P.Def, reduced by 25%.">
 		<requires nodeId="1077" />
 	</node>
 	<node id="1079" name="Avatar of the Phalanx" sector="Vanguard" type="MASTER" tier="0" cost="1" x="720.0" y="0.0" effect="CON:2;SHIELD_RATE_PCT:7;PDEF_PCT:5;MDEF_PCT:5" icon="tower-shield" description="Archetype capstone.">
 		<requires nodeId="1080" />
 		<requires nodeId="9001" />
 	</node>
+	<node id="1094" name="Heartblood" sector="Vanguard" type="SMALL" tier="0" cost="1" x="991.4" y="-99.2" orbitX="785.0" orbitY="89.8" effect="MAXHP:29">
+		<requires nodeId="1062" />
+		<requires nodeId="1095" />
+	</node>
+	<node id="1095" name="Heartblood" sector="Vanguard" type="SMALL" tier="0" cost="1" x="897.7" y="-166.3" orbitX="785.0" orbitY="89.8" effect="MAXHP_PCT:1.5">
+		<requires nodeId="1094" />
+		<requires nodeId="1096" />
+	</node>
+	<node id="1096" name="Heart of the Mountain" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="785.0" y="-190.0" orbitX="785.0" orbitY="89.8" effect="MAXHP_PCT:5;CON:1" icon="heart">
+		<requires nodeId="1095" />
+		<requires nodeId="1097" />
+	</node>
+	<node id="1097" name="Heartblood" sector="Vanguard" type="SMALL" tier="0" cost="1" x="672.3" y="-166.3" orbitX="785.0" orbitY="89.8" effect="MAXHP_PCT:1.5">
+		<requires nodeId="1096" />
+		<requires nodeId="1098" />
+	</node>
+	<node id="1098" name="Heartblood" sector="Vanguard" type="SMALL" tier="0" cost="1" x="578.6" y="-99.2" orbitX="785.0" orbitY="89.8" effect="MAXHP:29">
+		<requires nodeId="1097" />
+		<requires nodeId="9001" />
+	</node>
+	<node id="1099" name="Heartblood" sector="Vanguard" type="SMALL" tier="0" cost="1" x="991.4" y="99.2" orbitX="785.0" orbitY="-89.8" effect="MAXHP:29">
+		<requires nodeId="1062" />
+		<requires nodeId="1100" />
+	</node>
+	<node id="1100" name="Heartblood" sector="Vanguard" type="SMALL" tier="0" cost="1" x="897.7" y="166.3" orbitX="785.0" orbitY="-89.8" effect="MAXHP_PCT:1.5">
+		<requires nodeId="1099" />
+		<requires nodeId="1101" />
+	</node>
+	<node id="1101" name="Undying" sector="Vanguard" type="NOTABLE" tier="0" cost="1" x="785.0" y="190.0" orbitX="785.0" orbitY="-89.8" effect="MAXHP:150;HP_REGEN_PCT:8" icon="heart-plus">
+		<requires nodeId="1100" />
+		<requires nodeId="1102" />
+	</node>
+	<node id="1102" name="Heartblood" sector="Vanguard" type="SMALL" tier="0" cost="1" x="672.3" y="166.3" orbitX="785.0" orbitY="-89.8" effect="MAXHP_PCT:1.5">
+		<requires nodeId="1101" />
+		<requires nodeId="1103" />
+	</node>
+	<node id="1103" name="Heartblood" sector="Vanguard" type="SMALL" tier="0" cost="1" x="578.6" y="99.2" orbitX="785.0" orbitY="-89.8" effect="MAXHP:29">
+		<requires nodeId="1102" />
+		<requires nodeId="9001" />
+	</node>
 	<node id="1080" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="885.0" y="0.0" effect="MAXHP:18">
 		<requires nodeId="1062" />
 		<requires nodeId="1079" />
 	</node>
-	<node id="1081" name="Field Salvage" sector="Vanguard" type="FUNCTION" tier="0" cost="1" x="965.1" y="84.9" effect="MAXHP:15" skillId="248" skillLevel="5" description="Unlocks Crystallize: break equipment of any grade down into crystals.">
+	<node id="1081" name="Field Salvage" sector="Vanguard" type="FUNCTION" tier="0" cost="1" x="900.0" y="60.0" effect="MAXHP:15" skillId="248" skillLevel="5" description="Unlocks Crystallize: break equipment of any grade down into crystals.">
 		<requires nodeId="1062" />
 	</node>
 	<node id="20101" name="Pathway" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2173.3" y="582.3" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5">

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Arcanist: 81 nodes. x/y are authoritative layout coords. -->
+<!-- Arcanist: 95 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="5000" name="Arcanist Origin" sector="Arcanist" type="START" tier="0" cost="0" x="-1650.0" y="-2857.9" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="5001" name="Crossroads" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1425.0" y="-2468.2" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2;MAXHP_PCT:0.5" description="Junction.">
@@ -237,6 +237,8 @@
 		<requires nodeId="5081" />
 		<requires nodeId="23305" />
 		<requires nodeId="24304" />
+		<requires nodeId="5094" />
+		<requires nodeId="5099" />
 	</node>
 	<node id="5063" name="Pathway" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-725.0" y="-1255.7" effect="MATK_PCT:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="5039" />
@@ -280,22 +282,62 @@
 		<requires nodeId="5071" />
 		<requires nodeId="5072" />
 	</node>
-	<node id="5077" name="Approach" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-556.1" y="-793.4" effect="MATK_PCT:0.2">
+	<node id="5077" name="Approach" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-518.3" y="-797.7" effect="MATK_PCT:0.2">
 		<requires nodeId="5062" />
 		<requires nodeId="5078" />
 	</node>
-	<node id="5078" name="Mind Over Matter" sector="Arcanist" type="KEYSTONE" tier="0" cost="1" x="-587.1" y="-677.5" effect="KS_MIND_OVER_MATTER:30" icon="ward" description="KEYSTONE: 30% of the damage you take is drained from your MP instead of your HP, until your MP runs out.">
+	<node id="5078" name="Mind Over Matter" sector="Arcanist" type="KEYSTONE" tier="0" cost="1" x="-489.3" y="-687.5" effect="KS_MIND_OVER_MATTER:30" icon="ward" description="KEYSTONE: 30% of the damage you take is drained from your MP instead of your HP, until your MP runs out.">
 		<requires nodeId="5077" />
 	</node>
 	<node id="5079" name="Elemental Singularity" sector="Arcanist" type="MASTER" tier="0" cost="1" x="-360.0" y="-623.5" effect="INT:2;MATK_PCT:8;CAST_SPD_PCT:2" icon="vortex" description="Archetype capstone.">
 		<requires nodeId="5080" />
 		<requires nodeId="9009" />
 	</node>
+	<node id="5094" name="Mana Tide" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-581.6" y="-809.0" orbitX="-314.7" orbitY="-724.7" effect="MAXMP:29">
+		<requires nodeId="5062" />
+		<requires nodeId="5095" />
+	</node>
+	<node id="5095" name="Mana Tide" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-592.9" y="-694.3" orbitX="-314.7" orbitY="-724.7" effect="MAXMP:25">
+		<requires nodeId="5094" />
+		<requires nodeId="5096" />
+	</node>
+	<node id="5096" name="Boundless Mind" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-557.0" y="-584.8" orbitX="-314.7" orbitY="-724.7" effect="MAXMP:120;INT:1" icon="crystal">
+		<requires nodeId="5095" />
+		<requires nodeId="5097" />
+	</node>
+	<node id="5097" name="Mana Tide" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-480.1" y="-499.1" orbitX="-314.7" orbitY="-724.7" effect="MAXMP:25">
+		<requires nodeId="5096" />
+		<requires nodeId="5098" />
+	</node>
+	<node id="5098" name="Mana Tide" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-375.2" y="-451.5" orbitX="-314.7" orbitY="-724.7" effect="MAXMP:29">
+		<requires nodeId="5097" />
+		<requires nodeId="9009" />
+	</node>
+	<node id="5099" name="Mana Tide" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-409.8" y="-908.1" orbitX="-470.3" orbitY="-634.9" effect="MAXMP:29">
+		<requires nodeId="5062" />
+		<requires nodeId="5100" />
+	</node>
+	<node id="5100" name="Mana Tide" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-304.9" y="-860.6" orbitX="-470.3" orbitY="-634.9" effect="MAXMP:25">
+		<requires nodeId="5099" />
+		<requires nodeId="5101" />
+	</node>
+	<node id="5101" name="Inner Tide" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-228.0" y="-774.8" orbitX="-470.3" orbitY="-634.9" effect="MEN:1;MAXMP:80;MP_REGEN_PCT:4" icon="drop">
+		<requires nodeId="5100" />
+		<requires nodeId="5102" />
+	</node>
+	<node id="5102" name="Mana Tide" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-192.1" y="-665.3" orbitX="-470.3" orbitY="-634.9" effect="MAXMP:25">
+		<requires nodeId="5101" />
+		<requires nodeId="5103" />
+	</node>
+	<node id="5103" name="Mana Tide" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-203.4" y="-550.7" orbitX="-470.3" orbitY="-634.9" effect="MAXMP:29">
+		<requires nodeId="5102" />
+		<requires nodeId="9009" />
+	</node>
 	<node id="5080" name="Pathway" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-442.5" y="-766.4" effect="MATK_PCT:0.2;MAXHP:12">
 		<requires nodeId="5062" />
 		<requires nodeId="5079" />
 	</node>
-	<node id="5081" name="Scholar's Insight" sector="Arcanist" type="FUNCTION" tier="0" cost="1" x="-409.1" y="-878.3" effect="EXP_RATE_PCT:5;SP_RATE_PCT:5" description="Learn faster: +5% XP and +5% SP from hunting.">
+	<node id="5081" name="Scholar's Insight" sector="Arcanist" type="FUNCTION" tier="0" cost="1" x="-398.0" y="-809.4" effect="EXP_RATE_PCT:5;SP_RATE_PCT:5" description="Learn faster: +5% XP and +5% SP from hunting.">
 		<requires nodeId="5062" />
 	</node>
 	<node id="24101" name="Pathway" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-582.3" y="-2173.3" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2;MAXHP_PCT:0.5">

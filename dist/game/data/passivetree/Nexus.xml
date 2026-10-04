@@ -6,6 +6,8 @@
 		<requires nodeId="9002" />
 		<requires nodeId="9012" />
 		<requires nodeId="9038" />
+		<requires nodeId="1098" />
+		<requires nodeId="1103" />
 	</node>
 	<node id="9002" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="450.3" y="260.0" orbitX="0.0" orbitY="0.0" effect="MAXMP:8">
 		<requires nodeId="9001" />
@@ -17,6 +19,8 @@
 		<requires nodeId="9002" />
 		<requires nodeId="9004" />
 		<requires nodeId="9040" />
+		<requires nodeId="2098" />
+		<requires nodeId="2103" />
 	</node>
 	<node id="9004" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="520.0" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.3">
 		<requires nodeId="9003" />
@@ -50,6 +54,8 @@
 		<requires nodeId="9008" />
 		<requires nodeId="9010" />
 		<requires nodeId="9046" />
+		<requires nodeId="5098" />
+		<requires nodeId="5103" />
 	</node>
 	<node id="9010" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="-520.0" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.3">
 		<requires nodeId="9009" />
@@ -61,6 +67,8 @@
 		<requires nodeId="9010" />
 		<requires nodeId="9012" />
 		<requires nodeId="9048" />
+		<requires nodeId="6098" />
+		<requires nodeId="6103" />
 	</node>
 	<node id="9012" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="450.3" y="-260.0" orbitX="0.0" orbitY="0.0" effect="MDEF_PCT:0.3">
 		<requires nodeId="9001" />

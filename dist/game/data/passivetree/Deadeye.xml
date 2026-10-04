@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Deadeye: 81 nodes. x/y are authoritative layout coords. -->
+<!-- Deadeye: 85 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="4000" name="Deadeye Origin" sector="Deadeye" type="START" tier="0" cost="0" x="-3300.0" y="0.0" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="4001" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2850.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5" description="Junction.">
@@ -280,11 +280,11 @@
 		<requires nodeId="4071" />
 		<requires nodeId="4072" />
 	</node>
-	<node id="4077" name="Approach" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-965.1" y="84.9" effect="ACCURACY_ADD:0.2">
+	<node id="4077" name="Approach" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-941.2" y="50.7" effect="ACCURACY_ADD:0.2">
 		<requires nodeId="4062" />
 		<requires nodeId="4078" />
 	</node>
-	<node id="4078" name="Steady Aim" sector="Deadeye" type="KEYSTONE" tier="0" cost="1" x="-880.3" y="169.7" effect="ACCURACY_ADD:4;CRIT_DMG_PCT:6;MOVE_SPEED_ADD:-7" icon="eye" description="Superb accuracy, slow-footed.">
+	<node id="4078" name="Steady Aim" sector="Deadeye" type="KEYSTONE" tier="0" cost="1" x="-832.5" y="101.4" effect="ACCURACY_ADD:4;CRIT_DMG_PCT:6;MOVE_SPEED_ADD:-7" icon="eye" description="Superb accuracy, slow-footed.">
 		<requires nodeId="4077" />
 	</node>
 	<node id="4079" name="Rain of Needles" sector="Deadeye" type="MASTER" tier="0" cost="1" x="-720.0" y="0.0" effect="DEX:2;PATK_PCT:6;ACCURACY_ADD:2.8" icon="arrow" description="Archetype capstone.">
@@ -295,7 +295,7 @@
 		<requires nodeId="4062" />
 		<requires nodeId="4079" />
 	</node>
-	<node id="4081" name="Tracker's Guile" sector="Deadeye" type="FUNCTION" tier="0" cost="1" x="-965.1" y="-84.9" effect="MAXHP:15" skillId="221" skillLevel="1" description="Unlocks Silent Move: monsters won't attack you first while it is on (-40% Speed, drains MP).">
+	<node id="4081" name="Tracker's Guile" sector="Deadeye" type="FUNCTION" tier="0" cost="1" x="-927.1" y="-86.0" effect="MAXHP:15" skillId="221" skillLevel="1" description="Unlocks Silent Move: monsters won't attack you first while it is on (-40% Speed, drains MP).">
 		<requires nodeId="4062" />
 	</node>
 	<node id="23101" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2173.3" y="-582.3" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
