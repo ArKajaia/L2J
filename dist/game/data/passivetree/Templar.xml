@@ -177,11 +177,11 @@
 		<requires nodeId="30502" />
 		<requires nodeId="30504" />
 	</node>
-	<node id="33503" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="1567.3" y="-1878.9" effect="MAXHP:15">
+	<node id="33503" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="1558.0" y="-1836.1" effect="MAXHP:15">
+		<requires nodeId="6025" />
 		<requires nodeId="30503" />
-		<requires nodeId="6026" />
 	</node>
-	<node id="33504" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2393.6" y="-383.1" effect="MAXHP_PCT:1">
+	<node id="33504" name="Lifeblood Trail" sector="Templar" type="SMALL" tier="0" cost="1" x="2369.1" y="-431.2" effect="MAXHP_PCT:1">
 		<requires nodeId="1019" />
 		<requires nodeId="30504" />
 	</node>

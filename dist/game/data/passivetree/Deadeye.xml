@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Deadeye: 85 nodes. x/y are authoritative layout coords. -->
+<!-- Deadeye: 81 nodes. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="4000" name="Deadeye Origin" sector="Deadeye" type="START" tier="0" cost="0" x="-3300.0" y="0.0" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="4001" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2850.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5" description="Junction.">
 		<requires nodeId="4003" />
+		<requires nodeId="4014" />
 		<requires nodeId="4017" />
 		<requires nodeId="4091" />
 		<requires nodeId="4093" />
-		<requires nodeId="4025" />
+		<requires nodeId="4022" />
+		<requires nodeId="4027" />
 	</node>
 	<node id="4002" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-3150.0" y="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12">
 		<requires nodeId="4000" />
@@ -67,22 +69,22 @@
 	<node id="4013" name="Longshot" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-3250.7" y="-331.4" orbitX="-3149.2" orbitY="-304.2" effect="PATK_PCT:5;DEX:1" icon="bow" description="Draw Strength mastery.">
 		<requires nodeId="4011" />
 	</node>
-	<node id="4014" name="Approach" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2770.0" y="-300.0" effect="ACCURACY_ADD:0.2">
+	<node id="4014" name="Approach" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2740.0" y="-90.0" effect="ACCURACY_ADD:0.2">
+		<requires nodeId="4001" />
 		<requires nodeId="4015" />
-		<requires nodeId="4025" />
 	</node>
-	<node id="4015" name="Disengage" sector="Deadeye" type="ACTIVE_SKILL" tier="0" cost="1" x="-2810.0" y="-430.0" effect="MAXHP:15" skillId="27430" skillLevel="1" description="ACTIVE: burst of Speed and Evasion to break away for 6s (35s cooldown).">
+	<node id="4015" name="Disengage" sector="Deadeye" type="ACTIVE_SKILL" tier="0" cost="1" x="-2615.0" y="-150.0" effect="MAXHP:15" skillId="27430" skillLevel="1" description="ACTIVE: burst of Speed and Evasion to break away for 6s (35s cooldown).">
 		<requires nodeId="4014" />
 	</node>
 	<node id="4016" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2250.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12" description="Junction.">
 		<requires nodeId="4018" />
 		<requires nodeId="4019" />
+		<requires nodeId="4025" />
 		<requires nodeId="4031" />
 		<requires nodeId="4040" />
 		<requires nodeId="22107" />
 		<requires nodeId="23104" />
-		<requires nodeId="4026" />
-		<requires nodeId="4048" />
+		<requires nodeId="4049" />
 	</node>
 	<node id="4017" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2650.0" y="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="4001" />
@@ -92,183 +94,191 @@
 		<requires nodeId="4016" />
 		<requires nodeId="4017" />
 	</node>
-	<node id="4019" name="Ballistics" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2345.5" y="95.5" orbitX="-2419.7" orbitY="169.7" effect="CRIT_DMG_PCT:1.6" icon="arrow">
+	<node id="4019" name="Ballistics" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2296.5" y="191.6" orbitX="-2550.0" orbitY="28.6" effect="CRIT_DMG_PCT:1.6" icon="arrow">
 		<requires nodeId="4016" />
 		<requires nodeId="4020" />
 		<requires nodeId="33204" />
 	</node>
-	<node id="4020" name="Ballistics" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2464.1" y="74.5" orbitX="-2419.7" orbitY="169.7" effect="CRIT_DMG_PCT:1.6" icon="arrow">
+	<node id="4020" name="Ballistics" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2451.4" y="313.4" orbitX="-2550.0" orbitY="28.6" effect="CRIT_DMG_PCT:1.6" icon="arrow">
 		<requires nodeId="4019" />
-		<requires nodeId="4022" />
-	</node>
-	<node id="4022" name="Ballistics" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2524.3" y="178.9" orbitX="-2419.7" orbitY="169.7" effect="CRIT_DMG_PCT:1.6" icon="arrow">
-		<requires nodeId="4020" />
 		<requires nodeId="4024" />
 	</node>
-	<node id="4024" name="Broadhead" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-2446.9" y="271.1" orbitX="-2419.7" orbitY="169.7" effect="CRIT_DMG_PCT:8;ACCURACY_ADD:1" icon="arrow" description="Ballistics mastery.">
+	<node id="4022" name="Ballistics" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2803.5" y="191.6" orbitX="-2550.0" orbitY="28.6" effect="CRIT_DMG_PCT:1.6" icon="arrow">
+		<requires nodeId="4024" />
+		<requires nodeId="4001" />
+	</node>
+	<node id="4024" name="Broadhead" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-2648.6" y="313.4" orbitX="-2550.0" orbitY="28.6" effect="CRIT_DMG_PCT:8;ACCURACY_ADD:1" icon="arrow" description="Ballistics mastery.">
+		<requires nodeId="4020" />
 		<requires nodeId="4022" />
 	</node>
-	<node id="4025" name="Skirmish" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2720.0" y="-165.0" orbitX="-2550.0" orbitY="6.4" effect="EVASION_ADD:0.9" icon="feather">
-		<requires nodeId="4001" />
-		<requires nodeId="4030" />
-		<requires nodeId="4014" />
-	</node>
-	<node id="4026" name="Skirmish" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2380.0" y="-165.0" orbitX="-2550.0" orbitY="6.4" effect="EVASION_ADD:0.9" icon="feather">
-		<requires nodeId="4030" />
+	<node id="4025" name="Skirmish" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2296.5" y="-191.6" orbitX="-2550.0" orbitY="-28.6" effect="EVASION_ADD:0.9" icon="feather">
 		<requires nodeId="4016" />
+		<requires nodeId="4026" />
 		<requires nodeId="33303" />
 	</node>
-	<node id="4027" name="Skirmish" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2550.0" y="-385.0" effect="EVASION_ADD:0.9" icon="feather">
+	<node id="4026" name="Skirmish" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2451.4" y="-313.4" orbitX="-2550.0" orbitY="-28.6" effect="EVASION_ADD:0.9" icon="feather">
+		<requires nodeId="4025" />
 		<requires nodeId="4030" />
 	</node>
-	<node id="4030" name="Elusive Hunter" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-2550.0" y="-235.0" orbitX="-2550.0" orbitY="6.4" effect="EVASION_ADD:3;MOVE_SPEED_ADD:1.8" icon="feather" description="Skirmish mastery.">
-		<requires nodeId="4025" />
+	<node id="4027" name="Skirmish" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2803.5" y="-191.6" orbitX="-2550.0" orbitY="-28.6" effect="EVASION_ADD:0.9" icon="feather">
+		<requires nodeId="4030" />
+		<requires nodeId="4001" />
+	</node>
+	<node id="4030" name="Elusive Hunter" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-2648.6" y="-313.4" orbitX="-2550.0" orbitY="-28.6" effect="EVASION_ADD:3;MOVE_SPEED_ADD:1.8" icon="feather" description="Skirmish mastery.">
 		<requires nodeId="4026" />
 		<requires nodeId="4027" />
 	</node>
-	<node id="4031" name="Quickdraw" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2154.5" y="95.5" orbitX="-2080.3" orbitY="169.7" effect="ATK_SPD_PCT:1" icon="wind">
+	<node id="4031" name="Quickdraw" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2180.0" y="150.0" orbitX="-1950.0" orbitY="150.0" effect="ATK_SPD_PCT:1" icon="wind">
 		<requires nodeId="4016" />
 		<requires nodeId="4032" />
 	</node>
-	<node id="4032" name="Quickdraw" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2035.9" y="74.5" orbitX="-2080.3" orbitY="169.7" effect="ATK_SPD_PCT:1" icon="wind">
+	<node id="4032" name="Quickdraw" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2157.2" y="249.8" orbitX="-1950.0" orbitY="150.0" effect="ATK_SPD_PCT:1" icon="wind">
 		<requires nodeId="4031" />
-		<requires nodeId="4033" />
-	</node>
-	<node id="4033" name="Quickdraw" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1975.7" y="178.9" orbitX="-2080.3" orbitY="169.7" effect="ATK_SPD_PCT:1" icon="wind">
-		<requires nodeId="4032" />
 		<requires nodeId="4036" />
 	</node>
-	<node id="4036" name="Rapid Fire" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-2053.1" y="271.1" orbitX="-2080.3" orbitY="169.7" effect="ATK_SPD_PCT:4;DEX:1" icon="wind" description="Quickdraw mastery.">
+	<node id="4033" name="Quickdraw" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2001.2" y="374.2" orbitX="-1950.0" orbitY="150.0" effect="ATK_SPD_PCT:1" icon="wind">
+		<requires nodeId="4036" />
+		<requires nodeId="4044" />
+	</node>
+	<node id="4036" name="Rapid Fire" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-2093.4" y="329.8" orbitX="-1950.0" orbitY="150.0" effect="ATK_SPD_PCT:4;DEX:1" icon="wind" description="Quickdraw mastery.">
 		<requires nodeId="4033" />
+		<requires nodeId="4032" />
 	</node>
-	<node id="4037" name="Approach" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2100.0" y="-305.0" effect="ACCURACY_ADD:0.2">
+	<node id="4037" name="Approach" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2000.0" y="-120.0" effect="ACCURACY_ADD:0.2">
 		<requires nodeId="4038" />
-		<requires nodeId="4048" />
+		<requires nodeId="4040" />
+		<requires nodeId="4050" />
 	</node>
-	<node id="4038" name="Far Shot" sector="Deadeye" type="KEYSTONE" tier="0" cost="1" x="-2075.0" y="-440.0" effect="KS_FAR_SHOT:30" icon="bow" description="KEYSTONE: Bow and spell damage grows with distance, from -30% at point-blank range to +30% at 900+ range. Cannot be combined with Point Blank.">
+	<node id="4038" name="Far Shot" sector="Deadeye" type="KEYSTONE" tier="0" cost="1" x="-1880.0" y="-120.0" effect="KS_FAR_SHOT:30" icon="bow" description="KEYSTONE: Bow and spell damage grows with distance, from -30% at point-blank range to +30% at 900+ range. Cannot be combined with Point Blank.">
 		<requires nodeId="4037" />
 	</node>
 	<node id="4039" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1650.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5" description="Junction.">
 		<requires nodeId="4041" />
 		<requires nodeId="4042" />
+		<requires nodeId="4048" />
 		<requires nodeId="4054" />
 		<requires nodeId="4063" />
 		<requires nodeId="22205" />
 		<requires nodeId="23204" />
-		<requires nodeId="4049" />
-		<requires nodeId="4071" />
+		<requires nodeId="4072" />
 	</node>
 	<node id="4040" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2050.0" y="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12">
 		<requires nodeId="4016" />
 		<requires nodeId="4041" />
+		<requires nodeId="4037" />
 	</node>
 	<node id="4041" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1850.0" y="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="4039" />
 		<requires nodeId="4040" />
 	</node>
-	<node id="4042" name="Steady Hand" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1724.2" y="74.2" orbitX="-1798.5" orbitY="148.5" effect="CRIT_RATE_ADD:8.4" icon="target">
+	<node id="4042" name="Steady Hand" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1720.0" y="150.0" orbitX="-1950.0" orbitY="150.0" effect="CRIT_RATE_ADD:8.4" icon="target">
 		<requires nodeId="4039" />
 		<requires nodeId="4043" />
 	</node>
-	<node id="4043" name="Steady Hand" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1703.3" y="192.9" orbitX="-1798.5" orbitY="148.5" effect="CRIT_RATE_ADD:8.4" icon="target">
+	<node id="4043" name="Steady Hand" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1742.8" y="249.8" orbitX="-1950.0" orbitY="150.0" effect="CRIT_RATE_ADD:8.4" icon="target">
 		<requires nodeId="4042" />
-		<requires nodeId="4044" />
-	</node>
-	<node id="4044" name="Steady Hand" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1807.6" y="253.1" orbitX="-1798.5" orbitY="148.5" effect="CRIT_RATE_ADD:8.4" icon="target">
-		<requires nodeId="4043" />
 		<requires nodeId="4047" />
 	</node>
-	<node id="4047" name="Bullseye" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-1899.9" y="175.7" orbitX="-1798.5" orbitY="148.5" effect="CRIT_RATE_ADD:28;PATK_PCT:2" icon="target" description="Steady Hand mastery.">
-		<requires nodeId="4044" />
+	<node id="4044" name="Steady Hand" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1898.8" y="374.2" orbitX="-1950.0" orbitY="150.0" effect="CRIT_RATE_ADD:8.4" icon="target">
+		<requires nodeId="4047" />
+		<requires nodeId="4033" />
 	</node>
-	<node id="4048" name="Aim" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2120.0" y="-165.0" orbitX="-1950.0" orbitY="6.4" effect="ACCURACY_ADD:0.9" icon="eye">
+	<node id="4047" name="Bullseye" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-1806.6" y="329.8" orbitX="-1950.0" orbitY="150.0" effect="CRIT_RATE_ADD:28;PATK_PCT:2" icon="target" description="Steady Hand mastery.">
+		<requires nodeId="4044" />
+		<requires nodeId="4043" />
+	</node>
+	<node id="4048" name="Aim" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1715.7" y="-250.3" orbitX="-1950.0" orbitY="-55.0" effect="ACCURACY_ADD:0.9" icon="eye">
+		<requires nodeId="4039" />
+		<requires nodeId="4053" />
+	</node>
+	<node id="4049" name="Aim" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-2184.3" y="-250.3" orbitX="-1950.0" orbitY="-55.0" effect="ACCURACY_ADD:0.9" icon="eye">
+		<requires nodeId="4053" />
 		<requires nodeId="4016" />
+	</node>
+	<node id="4050" name="Aim" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1950.0" y="-230.0" effect="ACCURACY_ADD:0.9" icon="eye">
 		<requires nodeId="4053" />
 		<requires nodeId="4037" />
 	</node>
-	<node id="4049" name="Aim" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1780.0" y="-165.0" orbitX="-1950.0" orbitY="6.4" effect="ACCURACY_ADD:0.9" icon="eye">
-		<requires nodeId="4053" />
-		<requires nodeId="4039" />
-	</node>
-	<node id="4050" name="Aim" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1950.0" y="-385.0" effect="ACCURACY_ADD:0.9" icon="eye">
-		<requires nodeId="4053" />
-	</node>
-	<node id="4053" name="Keen Eyesight" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-1950.0" y="-235.0" orbitX="-1950.0" orbitY="6.4" effect="ACCURACY_ADD:4;DEX:1" icon="eye" description="Aim mastery.">
+	<node id="4053" name="Keen Eyesight" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-1950.0" y="-360.0" orbitX="-1950.0" orbitY="-55.0" effect="ACCURACY_ADD:4;DEX:1" icon="eye" description="Aim mastery.">
+		<requires nodeId="4050" />
 		<requires nodeId="4048" />
 		<requires nodeId="4049" />
-		<requires nodeId="4050" />
 	</node>
-	<node id="4054" name="Draw Strength" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1554.5" y="95.5" orbitX="-1480.3" orbitY="169.7" effect="PATK_PCT:1.2" icon="bow">
+	<node id="4054" name="Draw Strength" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1550.0" y="120.0" orbitX="-1350.0" orbitY="120.0" effect="PATK_PCT:1.2" icon="bow">
 		<requires nodeId="4039" />
 		<requires nodeId="4055" />
 	</node>
-	<node id="4055" name="Draw Strength" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1435.9" y="74.5" orbitX="-1480.3" orbitY="169.7" effect="PATK_PCT:1.2" icon="bow">
+	<node id="4055" name="Draw Strength" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1530.2" y="206.8" orbitX="-1350.0" orbitY="120.0" effect="PATK_PCT:1.2" icon="bow">
 		<requires nodeId="4054" />
-		<requires nodeId="4056" />
-	</node>
-	<node id="4056" name="Draw Strength" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1375.7" y="178.9" orbitX="-1480.3" orbitY="169.7" effect="PATK_PCT:1.2" icon="bow">
-		<requires nodeId="4055" />
 		<requires nodeId="4059" />
 	</node>
-	<node id="4059" name="Longshot" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-1453.1" y="271.1" orbitX="-1480.3" orbitY="169.7" effect="PATK_PCT:5;DEX:1" icon="bow" description="Draw Strength mastery.">
+	<node id="4056" name="Draw Strength" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1394.5" y="315.0" orbitX="-1350.0" orbitY="120.0" effect="PATK_PCT:1.2" icon="bow">
+		<requires nodeId="4059" />
+		<requires nodeId="4067" />
+	</node>
+	<node id="4059" name="Longshot" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-1474.7" y="276.4" orbitX="-1350.0" orbitY="120.0" effect="PATK_PCT:5;DEX:1" icon="bow" description="Draw Strength mastery.">
 		<requires nodeId="4056" />
+		<requires nodeId="4055" />
 	</node>
-	<node id="4060" name="Approach" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1530.0" y="-280.0" effect="ACCURACY_ADD:0.2">
+	<node id="4060" name="Approach" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1400.0" y="-120.0" effect="ACCURACY_ADD:0.2">
 		<requires nodeId="4061" />
-		<requires nodeId="4071" />
+		<requires nodeId="4063" />
+		<requires nodeId="4073" />
 	</node>
-	<node id="4061" name="Volley" sector="Deadeye" type="ACTIVE_SKILL" tier="0" cost="1" x="-1510.0" y="-400.0" effect="MAXHP:15" skillId="27431" skillLevel="auto" description="ACTIVE: loose a volley of arrows at all enemies around you (25s cooldown). Grows stronger with your level.">
+	<node id="4061" name="Volley" sector="Deadeye" type="ACTIVE_SKILL" tier="0" cost="1" x="-1280.0" y="-120.0" effect="MAXHP:15" skillId="27431" skillLevel="auto" description="ACTIVE: loose a volley of arrows at all enemies around you (25s cooldown). Grows stronger with your level.">
 		<requires nodeId="4060" />
 	</node>
 	<node id="4062" name="Crossroads" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1050.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12" description="Junction.">
 		<requires nodeId="4064" />
 		<requires nodeId="4065" />
+		<requires nodeId="4071" />
 		<requires nodeId="4077" />
 		<requires nodeId="4080" />
 		<requires nodeId="4081" />
 		<requires nodeId="22305" />
 		<requires nodeId="23304" />
-		<requires nodeId="4072" />
 	</node>
 	<node id="4063" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1450.0" y="0.0" effect="ACCURACY_ADD:0.2;MAXHP_PCT:0.5">
 		<requires nodeId="4039" />
 		<requires nodeId="4064" />
+		<requires nodeId="4060" />
 	</node>
 	<node id="4064" name="Pathway" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1250.0" y="0.0" effect="ACCURACY_ADD:0.2;MAXHP:12">
 		<requires nodeId="4062" />
 		<requires nodeId="4063" />
 	</node>
-	<node id="4065" name="Ballistics" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1124.2" y="74.2" orbitX="-1198.5" orbitY="148.5" effect="CRIT_DMG_PCT:1.6" icon="arrow">
+	<node id="4065" name="Ballistics" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1150.0" y="120.0" orbitX="-1350.0" orbitY="120.0" effect="CRIT_DMG_PCT:1.6" icon="arrow">
 		<requires nodeId="4062" />
 		<requires nodeId="4066" />
 	</node>
-	<node id="4066" name="Ballistics" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1103.3" y="192.9" orbitX="-1198.5" orbitY="148.5" effect="CRIT_DMG_PCT:1.6" icon="arrow">
+	<node id="4066" name="Ballistics" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1169.8" y="206.8" orbitX="-1350.0" orbitY="120.0" effect="CRIT_DMG_PCT:1.6" icon="arrow">
 		<requires nodeId="4065" />
-		<requires nodeId="4067" />
-	</node>
-	<node id="4067" name="Ballistics" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1207.6" y="253.1" orbitX="-1198.5" orbitY="148.5" effect="CRIT_DMG_PCT:1.6" icon="arrow">
-		<requires nodeId="4066" />
 		<requires nodeId="4070" />
 	</node>
-	<node id="4070" name="Broadhead" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-1299.9" y="175.7" orbitX="-1198.5" orbitY="148.5" effect="CRIT_DMG_PCT:8;ACCURACY_ADD:1" icon="arrow" description="Ballistics mastery.">
-		<requires nodeId="4067" />
+	<node id="4067" name="Ballistics" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1305.5" y="315.0" orbitX="-1350.0" orbitY="120.0" effect="CRIT_DMG_PCT:1.6" icon="arrow">
+		<requires nodeId="4070" />
+		<requires nodeId="4056" />
 	</node>
-	<node id="4071" name="Skirmish" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1520.0" y="-150.0" orbitX="-1350.0" orbitY="85.2" effect="EVASION_ADD:0.9" icon="feather">
+	<node id="4070" name="Broadhead" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-1225.3" y="276.4" orbitX="-1350.0" orbitY="120.0" effect="CRIT_DMG_PCT:8;ACCURACY_ADD:1" icon="arrow" description="Ballistics mastery.">
+		<requires nodeId="4067" />
+		<requires nodeId="4066" />
+	</node>
+	<node id="4071" name="Skirmish" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1130.7" y="-225.0" orbitX="-1350.0" orbitY="-19.4" effect="EVASION_ADD:0.9" icon="feather">
+		<requires nodeId="4062" />
+		<requires nodeId="4076" />
+	</node>
+	<node id="4072" name="Skirmish" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1569.3" y="-225.0" orbitX="-1350.0" orbitY="-19.4" effect="EVASION_ADD:0.9" icon="feather">
+		<requires nodeId="4076" />
 		<requires nodeId="4039" />
+	</node>
+	<node id="4073" name="Skirmish" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1350.0" y="-190.0" effect="EVASION_ADD:0.9" icon="feather">
 		<requires nodeId="4076" />
 		<requires nodeId="4060" />
 	</node>
-	<node id="4072" name="Skirmish" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1180.0" y="-150.0" orbitX="-1350.0" orbitY="85.2" effect="EVASION_ADD:0.9" icon="feather">
-		<requires nodeId="4076" />
-		<requires nodeId="4062" />
-	</node>
-	<node id="4073" name="Skirmish" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-1350.0" y="-340.0" effect="EVASION_ADD:0.9" icon="feather">
-		<requires nodeId="4076" />
-	</node>
-	<node id="4076" name="Elusive Hunter" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-1350.0" y="-205.0" orbitX="-1350.0" orbitY="85.2" effect="EVASION_ADD:3;MOVE_SPEED_ADD:1.8" icon="feather" description="Skirmish mastery.">
+	<node id="4076" name="Elusive Hunter" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-1350.0" y="-320.0" orbitX="-1350.0" orbitY="-19.4" effect="EVASION_ADD:3;MOVE_SPEED_ADD:1.8" icon="feather" description="Skirmish mastery.">
+		<requires nodeId="4073" />
 		<requires nodeId="4071" />
 		<requires nodeId="4072" />
-		<requires nodeId="4073" />
 	</node>
 	<node id="4077" name="Approach" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-965.1" y="84.9" effect="ACCURACY_ADD:0.2">
 		<requires nodeId="4062" />

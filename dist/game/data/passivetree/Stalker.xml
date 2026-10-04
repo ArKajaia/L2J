@@ -177,11 +177,11 @@
 		<requires nodeId="30202" />
 		<requires nodeId="30204" />
 	</node>
-	<node id="33203" name="Lifeblood Trail" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1567.3" y="1878.9" effect="MAXHP:15">
+	<node id="33203" name="Lifeblood Trail" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1558.0" y="1836.1" effect="MAXHP:15">
+		<requires nodeId="3025" />
 		<requires nodeId="30203" />
-		<requires nodeId="3026" />
 	</node>
-	<node id="33204" name="Lifeblood Trail" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2393.6" y="383.1" effect="MAXHP_PCT:1">
+	<node id="33204" name="Lifeblood Trail" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2369.1" y="431.2" effect="MAXHP_PCT:1">
 		<requires nodeId="4019" />
 		<requires nodeId="30204" />
 	</node>

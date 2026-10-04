@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Rim: 126 nodes, the outer ring road: three spurs from every Origin (to its gate and to the rim road either side of it), and an arc road between the gates. x/y are authoritative layout coords. -->
+<!-- Rim: 90 nodes, the outer ring road: a spur from every Origin out to its gate, and an arc road between the gates. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="39000" name="Rim Gate" sector="Vanguard" type="SMALL" tier="0" cost="1" x="4000.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:25;MAXHP_PCT:0.5" description="Where the Outer Rim meets the road from the Origin.">
 		<requires nodeId="39003" />

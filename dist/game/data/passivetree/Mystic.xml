@@ -181,11 +181,11 @@
 		<requires nodeId="30402" />
 		<requires nodeId="30404" />
 	</node>
-	<node id="33403" name="Lifeblood Trail" sector="Mystic" type="SMALL" tier="0" cost="1" x="-843.6" y="-2296.8" effect="MAXHP:15">
+	<node id="33403" name="Lifeblood Trail" sector="Mystic" type="SMALL" tier="0" cost="1" x="-811.2" y="-2267.3" effect="MAXHP:15">
+		<requires nodeId="5025" />
 		<requires nodeId="30403" />
-		<requires nodeId="5026" />
 	</node>
-	<node id="33404" name="Lifeblood Trail" sector="Mystic" type="SMALL" tier="0" cost="1" x="865.0" y="-2264.5" effect="MAXHP_PCT:1">
+	<node id="33404" name="Lifeblood Trail" sector="Mystic" type="SMALL" tier="0" cost="1" x="811.2" y="-2267.3" effect="MAXHP_PCT:1">
 		<requires nodeId="6019" />
 		<requires nodeId="30404" />
 	</node>

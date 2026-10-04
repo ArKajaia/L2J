@@ -177,11 +177,11 @@
 		<requires nodeId="30002" />
 		<requires nodeId="30004" />
 	</node>
-	<node id="33003" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="2410.9" y="417.9" effect="MAXHP:15">
+	<node id="33003" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="2369.1" y="431.2" effect="MAXHP:15">
+		<requires nodeId="1025" />
 		<requires nodeId="30003" />
-		<requires nodeId="1026" />
 	</node>
-	<node id="33004" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="1528.6" y="1881.4" effect="MAXHP_PCT:1">
+	<node id="33004" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="1558.0" y="1836.1" effect="MAXHP_PCT:1">
 		<requires nodeId="2019" />
 		<requires nodeId="30004" />
 	</node>
