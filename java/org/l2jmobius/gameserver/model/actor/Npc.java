@@ -56,6 +56,7 @@ import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.FortManager;
 import org.l2jmobius.gameserver.managers.ItemManager;
+import org.l2jmobius.gameserver.managers.PvpRankingManager;
 import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
 import org.l2jmobius.gameserver.managers.TownManager;
 import org.l2jmobius.gameserver.managers.WalkingManager;
@@ -1308,6 +1309,12 @@ public class Npc extends Creature
 					}
 				}
 			}
+		}
+		
+		// PvP ranking: a fake player (or its servitor) that killed this fake player.
+		if (_isFakePlayer && !isTrialDuelist())
+		{
+			PvpRankingManager.getInstance().onFakePlayerKill(killer, this);
 		}
 		
 		DecayTaskManager.getInstance().add(this);

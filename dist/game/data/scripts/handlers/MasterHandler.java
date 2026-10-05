@@ -77,6 +77,7 @@ import handlers.bypass.communityboard.HomepageBoard;
 import handlers.bypass.communityboard.MailBoard;
 import handlers.bypass.communityboard.MemoBoard;
 import handlers.bypass.communityboard.PassiveTreeBoard;
+import handlers.bypass.communityboard.PvpRankingBoard;
 import handlers.bypass.communityboard.RegionBoard;
 import handlers.bypass.npc.Augment;
 import handlers.bypass.npc.Buy;
@@ -513,6 +514,7 @@ public class MasterHandler
 			MemoBoard.class,
 			RegionBoard.class,
 			PassiveTreeBoard.class,
+			PvpRankingBoard.class,
 		},
 		{
 			// Item Handlers

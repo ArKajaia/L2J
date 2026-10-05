@@ -388,7 +388,7 @@ Beyond the core combat loop, the server implements a number of self-contained si
 
 ## Community Board
 
-The in-client Community Board (the ".bbs" interface) is backed by a lightweight forum/topic/post data model (with clan, memo, and mail-flavored forum types alongside normal ones) and a set of interactive board pages served as cached HTML and routed through the same bypass-handling pipeline used for NPC dialogs: clan management, regional teleport/info, a home page with favorites/bookmarks, a friends list, personal memos, in-client mail, an item drop-source search utility, personal buff templates (see [Custom Feature Set](#custom-non-retail-feature-set)), and management of the passive skill tree feature (see [Custom Feature Set](#custom-non-retail-feature-set)).
+The in-client Community Board (the ".bbs" interface) is backed by a lightweight forum/topic/post data model (with clan, memo, and mail-flavored forum types alongside normal ones) and a set of interactive board pages served as cached HTML and routed through the same bypass-handling pipeline used for NPC dialogs: clan management, regional teleport/info, a home page with favorites/bookmarks, a friends list, personal memos, in-client mail, an item drop-source search utility, personal buff templates (see [Custom Feature Set](#custom-non-retail-feature-set)), a PvP ranking of the top 20 players and fake players by PvP kills (fake players' kills are kept by name in `fake_player_pvp`: kills of flagged or karma targets, or of anyone in a PvP spot), and management of the passive skill tree feature (see [Custom Feature Set](#custom-non-retail-feature-set)).
 
 ---
 
@@ -412,7 +412,7 @@ The content pack compiled through this pipeline is large: on the order of **540 
 | Voiced commands | Player-typed `.command`s (banking, autoplay, offline shop, password change, premium status, wedding, DPS meter, PvP spot teleport) | ~25 |
 | Chat handlers | Delivery/range logic per chat channel (general, shout, trade, party, clan, alliance, whisper, hero, petition, battlefield) | 14 |
 | Bypass handlers | Server-side link commands from NPC/HTML dialogs (shops, multisell, warehouse, freight, Olympiad, augmenting, observation) | ~30 |
-| Community Board handlers | `.bbs` page logic (see [Community Board](#community-board)) | 10 |
+| Community Board handlers | `.bbs` page logic (see [Community Board](#community-board)) | 12 |
 | Item handlers | "What happens when this item is used" (shots, scrolls, dice, recipe books, teleport bookmarks, enchant items) | 30 |
 | Skill effects | The buff/debuff/damage/heal/CC/transform/summon vocabulary every skill is built from | ~165 |
 | Skill target types | Target-selection algorithms | ~34 |

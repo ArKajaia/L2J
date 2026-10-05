@@ -127,6 +127,7 @@ import org.l2jmobius.gameserver.managers.ItemManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.managers.PassiveTreeManager;
 import org.l2jmobius.gameserver.managers.PunishmentManager;
+import org.l2jmobius.gameserver.managers.PvpRankingManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
 import org.l2jmobius.gameserver.managers.RecipeManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
@@ -5387,6 +5388,9 @@ public class Player extends Playable
 				}
 			}
 		}
+		
+		// PvP ranking: a fake player (or its servitor) that killed this player.
+		PvpRankingManager.getInstance().onFakePlayerKill(killer, this);
 		
 		if (killer != null)
 		{
