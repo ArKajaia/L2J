@@ -60,8 +60,8 @@ public class RequestJoinPledge extends ClientPacket
 		final Player target = World.getInstance().getPlayer(_target);
 		if (target == null)
 		{
-			// A fake player that isn't in a clan answers the invite itself.
-			if (FakeClanManager.getInstance().onClanInvite(player, _target))
+			// A fake player that isn't in a clan answers the invite itself (into the main clan or the academy).
+			if (FakeClanManager.getInstance().onClanInvite(player, _target, _pledgeType))
 			{
 				return;
 			}
