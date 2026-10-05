@@ -22,22 +22,33 @@ package org.l2jmobius.gameserver.managers;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.PlayerConfig;
+import org.l2jmobius.gameserver.config.RatesConfig;
+import org.l2jmobius.gameserver.data.SpawnTable;
 import org.l2jmobius.gameserver.data.xml.ItemData;
+import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.enums.npc.DropType;
+import org.l2jmobius.gameserver.model.actor.holders.npc.DropGroupHolder;
+import org.l2jmobius.gameserver.model.actor.holders.npc.DropHolder;
+import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
+import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
+import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.network.SystemMessageId;
 import org.l2jmobius.gameserver.network.holders.RequestTrade;
 import org.l2jmobius.gameserver.network.holders.TradeItem;
 
 /**
- * The private store of a town fake player (see {@link FakePlayerTownVisitor}): 1 to 3 kinds of crafting materials, 1 to 50 of each, the better ones the higher its level, and now and then a rare find, each at 1.5 to 5 times its reference price (a rare find at least at its own price range, for the ones whose reference price is low).<br>
+ * The private store of a town fake player (see {@link FakePlayerTownVisitor}): either the loot of a hunt (the best of what a number of kills of normal monsters of its level dropped, rolled with their drop lists) or 1 to 3 kinds of crafting materials, 1 to 50 of each, the better ones the higher its level, and now and then a rare find, each at 1.5 to 5 times its reference price (a rare find at least at its own price range, for the ones whose reference price is low).<br>
  * Players buy from it like from a player's store; the items are created when bought. Used from the network threads (players buying) and the town manager's thread, so everything is synchronized.
  */
 final class FakePlayerTownStore
@@ -54,6 +65,8 @@ final class FakePlayerTownStore
 
 	/** Max length of a private store message (SetPrivateStoreMsgSell). */
 	private static final int MAX_MESSAGE = 29;
+	/** How far apart (spawn to spawn) the monsters of one hunting ground are at most. */
+	private static final int HUNTING_GROUND_RANGE = 6000;
 
 	// @formatter:off
 	private static final Goods[] GOODS =
@@ -194,6 +207,23 @@ final class FakePlayerTownStore
 		"{r} / {a}",
 		"--- {r} ---"
 	};
+	private static final String[] LOOT_MESSAGES =
+	{
+		"wts drops",
+		"drops",
+		"farm loot",
+		"selling my loot",
+		"after farm",
+		"{a}",
+		"S> {a}",
+		"wts {a}",
+		"{a} cheap",
+		"{a} / {b}",
+		"S> {a}, {b}",
+		"{m} drops",
+		"loot from {m}",
+		"{m} farm"
+	};
 
 	private final List<TradeItem> _items = new ArrayList<>();
 	private final String _message;
@@ -212,10 +242,32 @@ final class FakePlayerTownStore
 	/**
 	 * Puts a store together for a seller of that level.
 	 * @param level the seller's level
+	 * @param rareChance the chance (in %) a materials store also sells a rare find
+	 * @param lootChance the chance (in %) it sells the loot of a hunt instead of materials
+	 * @param kills how many monsters that hunt was
+	 * @return the store, {@code null} if nothing could be put in it
+	 */
+	static FakePlayerTownStore create(int level, int rareChance, int lootChance, int kills)
+	{
+		if (Rnd.get(100) < lootChance)
+		{
+			final FakePlayerTownStore loot = createLoot(level, kills);
+			if (loot != null)
+			{
+				return loot;
+			}
+		}
+		
+		return createMaterials(level, rareChance);
+	}
+	
+	/**
+	 * A store of materials, now and then with a rare find.
+	 * @param level the seller's level
 	 * @param rareChance the chance (in %) it also sells a rare find
 	 * @return the store, {@code null} if nothing could be put in it
 	 */
-	static FakePlayerTownStore create(int level, int rareChance)
+	private static FakePlayerTownStore createMaterials(int level, int rareChance)
 	{
 		// Materials of its own hunting grounds mostly, sometimes leftovers of the ones it outgrew.
 		final List<Goods> fitting = new ArrayList<>();
@@ -292,6 +344,197 @@ final class FakePlayerTownStore
 		return new FakePlayerTownStore(items, message(labels, rareLabel), headline, rareLabel != null);
 	}
 
+	/**
+	 * A store of the loot of a hunt: the seller killed that many normal monsters of its level, of 1 to 3 kinds that live close to each other, and puts up the best of what they dropped.
+	 * @param level the seller's level
+	 * @param kills how many monsters it killed
+	 * @return the store, {@code null} if there is no hunting ground for that level or nothing worth selling dropped
+	 */
+	private static FakePlayerTownStore createLoot(int level, int kills)
+	{
+		final List<NpcTemplate> ground = huntingGround(level);
+		if (ground.isEmpty())
+		{
+			return null;
+		}
+		
+		final Map<Integer, Long> loot = new HashMap<>();
+		for (int i = 0; i < kills; i++)
+		{
+			rollDrops(ground.get(Rnd.get(ground.size())), loot);
+		}
+		
+		// What is worth selling, the most valuable first.
+		final List<ItemTemplate> drops = new ArrayList<>();
+		for (int itemId : loot.keySet())
+		{
+			final ItemTemplate template = ItemData.getInstance().getTemplate(itemId);
+			if ((template != null) && (itemId != Inventory.ADENA_ID) && !template.hasExImmediateEffect() && !template.isQuestItem() && template.isTradeable() && (template.getReferencePrice() > 0))
+			{
+				drops.add(template);
+			}
+		}
+		if (drops.isEmpty())
+		{
+			return null;
+		}
+		drops.sort((a, b) -> Double.compare((double) b.getReferencePrice() * loot.get(b.getId()), (double) a.getReferencePrice() * loot.get(a.getId())));
+		
+		// The best few: a stack each, an entry each for what doesn't stack (like a player's store).
+		final int kinds = Rnd.get(2, 4);
+		final List<TradeItem> items = new ArrayList<>();
+		final List<String> labels = new ArrayList<>();
+		boolean rare = false;
+		for (ItemTemplate template : drops)
+		{
+			if (items.size() >= kinds)
+			{
+				break;
+			}
+			
+			final long count = loot.get(template.getId());
+			if (template.isStackable())
+			{
+				items.add(newItem(template, count, price(template)));
+			}
+			else
+			{
+				for (long i = Math.min(count, kinds - items.size()); i > 0; i--)
+				{
+					items.add(newItem(template, 1, price(template)));
+				}
+				rare = true;
+			}
+			labels.add(template.getName().toLowerCase());
+		}
+		
+		final String mob = ground.get(0).getName().toLowerCase();
+		return new FakePlayerTownStore(items, lootMessage(labels, mob), labels.get(0), rare);
+	}
+	
+	/**
+	 * @param level the seller's level
+	 * @return 1 to 3 kinds of normal monsters of about that level, with drops, spawned close to each other; empty if there are none
+	 */
+	private static List<NpcTemplate> huntingGround(int level)
+	{
+		List<NpcTemplate> monsters = Collections.emptyList();
+		for (int gap = 1; (gap <= 5) && monsters.isEmpty(); gap += 2)
+		{
+			final int range = gap;
+			monsters = NpcData.getInstance().getTemplates(template -> template.isType("Monster") && (Math.abs(template.getLevel() - level) <= range) && ((template.getDropGroups() != null) || (template.getDropList() != null)) && (SpawnTable.getInstance().getSpawnCount(template.getId()) > 0));
+		}
+		if (monsters.isEmpty())
+		{
+			return monsters;
+		}
+		
+		Collections.shuffle(monsters);
+		final List<NpcTemplate> ground = new ArrayList<>();
+		final NpcTemplate first = monsters.get(0);
+		ground.add(first);
+		
+		// Its neighbours (spawns in a territory have no fixed point: then it hunts that one alone).
+		final Spawn spawn = SpawnTable.getInstance().getAnySpawn(first.getId());
+		if ((spawn != null) && ((spawn.getX() != 0) || (spawn.getY() != 0)))
+		{
+			final int wanted = Rnd.get(1, 3);
+			for (int i = 1; (i < monsters.size()) && (ground.size() < wanted); i++)
+			{
+				final Spawn other = SpawnTable.getInstance().getAnySpawn(monsters.get(i).getId());
+				if ((other != null) && ((other.getX() != 0) || (other.getY() != 0)) && (Math.hypot(other.getX() - spawn.getX(), other.getY() - spawn.getY()) < HUNTING_GROUND_RANGE))
+				{
+					ground.add(monsters.get(i));
+				}
+			}
+		}
+		return ground;
+	}
+	
+	/**
+	 * Rolls one kill of that monster, the way {@link NpcTemplate#calculateDrops} does for a killer of its level (server drop rates, no champion, premium or other bonus).
+	 * @param template the monster
+	 * @param loot what dropped so far, by item id, added to
+	 */
+	private static void rollDrops(NpcTemplate template, Map<Integer, Long> loot)
+	{
+		final List<DropGroupHolder> groups = template.getDropGroups();
+		if (groups != null)
+		{
+			for (DropGroupHolder group : groups)
+			{
+				// On x1 one item at most per group (the chances add up to 100), with other rates each item on its own.
+				double totalChance = 0;
+				for (DropHolder drop : group.getDropList())
+				{
+					final double rate = chanceRate(drop.getItemId());
+					totalChance = rate == 1 ? totalChance + drop.getChance() : drop.getChance();
+					if ((Rnd.nextDouble() * 100) < (totalChance * (group.getChance() / 100) * rate))
+					{
+						addDrop(drop, loot);
+						if (rate == 1)
+						{
+							break;
+						}
+					}
+				}
+			}
+		}
+		
+		final List<DropHolder> drops = template.getDropList();
+		if (drops != null)
+		{
+			for (DropHolder drop : drops)
+			{
+				if ((drop.getDropType() == DropType.DROP) && ((Rnd.nextDouble() * 100) < (drop.getChance() * chanceRate(drop.getItemId()))))
+				{
+					addDrop(drop, loot);
+				}
+			}
+		}
+	}
+	
+	private static void addDrop(DropHolder drop, Map<Integer, Long> loot)
+	{
+		final long count = (long) (Rnd.get(drop.getMin(), drop.getMax()) * amountRate(drop.getItemId()));
+		if (count > 0)
+		{
+			loot.merge(drop.getItemId(), count, Long::sum);
+		}
+	}
+	
+	/**
+	 * @param itemId an item
+	 * @return the server's drop chance multiplier for it
+	 */
+	private static double chanceRate(int itemId)
+	{
+		final Float byId = RatesConfig.RATE_DROP_CHANCE_BY_ID.get(itemId);
+		if (byId != null)
+		{
+			return byId;
+		}
+		
+		final ItemTemplate template = ItemData.getInstance().getTemplate(itemId);
+		return (template != null) && template.hasExImmediateEffect() ? RatesConfig.RATE_HERB_DROP_CHANCE_MULTIPLIER : RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER;
+	}
+	
+	/**
+	 * @param itemId an item
+	 * @return the server's drop amount multiplier for it
+	 */
+	private static double amountRate(int itemId)
+	{
+		final Float byId = RatesConfig.RATE_DROP_AMOUNT_BY_ID.get(itemId);
+		if (byId != null)
+		{
+			return byId;
+		}
+		
+		final ItemTemplate template = ItemData.getInstance().getTemplate(itemId);
+		return (template != null) && template.hasExImmediateEffect() ? RatesConfig.RATE_HERB_DROP_AMOUNT_MULTIPLIER : RatesConfig.RATE_DEATH_DROP_AMOUNT_MULTIPLIER;
+	}
+
 	private static TradeItem newItem(ItemTemplate template, long count, long price)
 	{
 		final TradeItem item = new TradeItem(template, count, price);
@@ -355,6 +598,31 @@ final class FakePlayerTownStore
 			}
 		}
 		return rareLabel != null ? "rare stuff" : "mats";
+	}
+
+	private static String lootMessage(List<String> labels, String mob)
+	{
+		final String a = labels.get(0);
+		final String b = labels.size() > 1 ? labels.get(1) : a;
+		for (int attempt = 0; attempt < 6; attempt++)
+		{
+			String text = LOOT_MESSAGES[Rnd.get(LOOT_MESSAGES.length)];
+			if (text.contains("{b}") && (labels.size() < 2))
+			{
+				continue;
+			}
+			
+			text = text.replace("{a}", a).replace("{b}", b).replace("{m}", mob).trim();
+			if (Rnd.get(100) < 35)
+			{
+				text = text.toUpperCase();
+			}
+			if (text.length() <= MAX_MESSAGE)
+			{
+				return text;
+			}
+		}
+		return "drops";
 	}
 
 	/**
