@@ -203,6 +203,19 @@ public class FakePlayerPvpPassiveTree
 	 */
 	public FakePlayerPvpPassives roll(FakePlayerPvpBuild build, PlayerClass playerClass, int level)
 	{
+		return roll(build, playerClass, level, false);
+	}
+	
+	/**
+	 * Rolls the passive tree of a new fake player, like {@link #roll(FakePlayerPvpBuild, PlayerClass, int)}.
+	 * @param build the build
+	 * @param playerClass the class it has now (used when the build has no final class)
+	 * @param level its level
+	 * @param allSubclasses {@code true} for a player that took every subclass it could (from {@link FakePlayerPvpConfig#PASSIVE_TREE_SUBCLASS_MIN_LEVEL}), {@code false} to roll them
+	 * @return its passive tree, {@code null} if it can't have one
+	 */
+	public FakePlayerPvpPassives roll(FakePlayerPvpBuild build, PlayerClass playerClass, int level, boolean allSubclasses)
+	{
 		final PlayerClass sectorClass = build.getPlayerClass() != null ? build.getPlayerClass() : playerClass;
 		Integer origin = _origins.get(PassiveTreeArchetypes.sectorFor(sectorClass != null ? sectorClass.getId() : -1));
 		if (origin == null)
@@ -217,7 +230,7 @@ public class FakePlayerPvpPassiveTree
 
 		final Variant[] variants = pool[build.getRole().ordinal()];
 		final Variant variant = variants[Rnd.get(variants.length)];
-		final int subclasses = rollSubclasses(level);
+		final int subclasses = allSubclasses && (level >= FakePlayerPvpConfig.PASSIVE_TREE_SUBCLASS_MIN_LEVEL) ? FakePlayerPvpConfig.PASSIVE_TREE_MAX_SUBCLASSES : rollSubclasses(level);
 
 		// As many nodes as asked, as long as they fit in the points a player can have.
 		int count = Math.min((subclasses * FakePlayerPvpConfig.PASSIVE_TREE_NODES_PER_SUBCLASS) + level, variant.nodeIds().length);

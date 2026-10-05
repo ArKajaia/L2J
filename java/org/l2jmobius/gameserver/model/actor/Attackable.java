@@ -53,6 +53,7 @@ import org.l2jmobius.gameserver.managers.EventDropManager;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.PcCafePointsManager;
+import org.l2jmobius.gameserver.managers.PvpSpotManager;
 import org.l2jmobius.gameserver.managers.WalkingManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -390,6 +391,12 @@ public class Attackable extends Npc
 			else if (isMonster() && killer.isPvpFakePlayer())
 			{
 				FakePlayerPvpManager.getInstance().onMonsterKilledByFake(this, killer.asAttackable());
+			}
+			
+			// The PvP spot keeps the score of its fights (kill streaks, its leader).
+			if (isPvpFakePlayer())
+			{
+				PvpSpotManager.getInstance().onDeath(this, killer);
 			}
 		}
 		

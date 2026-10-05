@@ -76,6 +76,7 @@ import org.l2jmobius.gameserver.config.custom.PremiumSystemConfig;
 import org.l2jmobius.gameserver.config.custom.PrivateStoreRangeConfig;
 import org.l2jmobius.gameserver.config.custom.PvpAnnounceConfig;
 import org.l2jmobius.gameserver.config.custom.PvpRewardItemConfig;
+import org.l2jmobius.gameserver.config.custom.PvpSpotsConfig;
 import org.l2jmobius.gameserver.config.custom.PvpTitleColorConfig;
 import org.l2jmobius.gameserver.data.enums.CategoryType;
 import org.l2jmobius.gameserver.data.holders.AccessLevel;
@@ -126,6 +127,7 @@ import org.l2jmobius.gameserver.managers.ItemManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.managers.PassiveTreeManager;
 import org.l2jmobius.gameserver.managers.PunishmentManager;
+import org.l2jmobius.gameserver.managers.PvpSpotManager;
 import org.l2jmobius.gameserver.managers.RecipeManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
 import org.l2jmobius.gameserver.managers.SiegeManager;
@@ -294,6 +296,7 @@ import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.model.zone.ZoneRegion;
 import org.l2jmobius.gameserver.model.zone.ZoneType;
 import org.l2jmobius.gameserver.model.zone.type.BossZone;
+import org.l2jmobius.gameserver.model.zone.type.PvpSpotZone;
 import org.l2jmobius.gameserver.model.zone.type.WaterZone;
 import org.l2jmobius.gameserver.network.Disconnection;
 import org.l2jmobius.gameserver.network.GameClient;
@@ -1876,7 +1879,7 @@ public class Player extends Playable
 			_lastCompassZone = ExSetCompassZoneCode.SIEGEWARZONE2;
 			sendPacket(new ExSetCompassZoneCode(ExSetCompassZoneCode.SIEGEWARZONE2));
 		}
-		else if (isInsideZone(ZoneId.PVP))
+		else if (isInsideZone(ZoneId.PVP) || isInsideZone(ZoneId.PVP_SPOT))
 		{
 			if (_lastCompassZone == ExSetCompassZoneCode.PVPZONE)
 			{
@@ -5457,7 +5460,7 @@ public class Player extends Playable
 				
 				// A fake player at war with this player's clan (both declared it): no PK, and clan reputation moves.
 				final boolean fpcClanWar = fpcKill && FakeClanManager.getInstance().onWarKill(killer, this);
-				if (fpcKill && !fpcClanWar && FakePlayersConfig.FAKE_PLAYER_KILL_KARMA && (_pvpFlag == 0) && (getKarma() <= 0))
+				if (fpcKill && !fpcClanWar && FakePlayersConfig.FAKE_PLAYER_KILL_KARMA && (_pvpFlag == 0) && (getKarma() <= 0) && !isInsideZone(ZoneId.PVP_SPOT))
 				{
 					killer.setKarma(killer.getKarma() + 150);
 					killer.broadcastInfo();
@@ -5527,8 +5530,8 @@ public class Player extends Playable
 						}
 					}
 					
-					// Should not penalize player when lucky, in a non siege PvP zone, has advent blessing or is in an event.
-					if (PlayerConfig.PLAYER_DELEVEL && !isLucky() && (insideSiegeZone || !insidePvpZone) && !_nevitSystem.isAdventBlessingActive() && !isOnEvent())
+					// Should not penalize player when lucky, in a non siege PvP zone, in a PvP spot (PvpSpotNoDeathPenalty), has advent blessing or is in an event.
+					if (PlayerConfig.PLAYER_DELEVEL && !isLucky() && (insideSiegeZone || !insidePvpZone) && !isSparedByPvpSpot() && !_nevitSystem.isAdventBlessingActive() && !isOnEvent())
 					{
 						calculateDeathExpPenalty(killer, isAtWarWith(pk) || FakeClanManager.getInstance().isWarEnemy(killer, this));
 					}
@@ -5564,7 +5567,16 @@ public class Player extends Playable
 		}
 		
 		// calculate death penalty buff
-		calculateDeathPenaltyBuffLevel(killer);
+		if (!isSparedByPvpSpot())
+		{
+			calculateDeathPenaltyBuffLevel(killer);
+		}
+		
+		// The PvP spot keeps the score of its fights (kill streaks, its leader).
+		if (killer != null)
+		{
+			PvpSpotManager.getInstance().onDeath(this, killer);
+		}
 		
 		if (hasSummon())
 		{
@@ -5598,6 +5610,12 @@ public class Player extends Playable
 	private void onDieDropItem(Creature killer)
 	{
 		if (isOnEvent() || (killer == null))
+		{
+			return;
+		}
+		
+		// Nothing drops in a PvP spot, unless the player has karma.
+		if (isInsideZone(ZoneId.PVP_SPOT) && (getKarma() <= 0))
 		{
 			return;
 		}
@@ -5752,6 +5770,13 @@ public class Player extends Playable
 			return;
 		}
 		
+		// A PvP spot: every kill there is a PvP, never a PK.
+		if (target.isInsideZone(ZoneId.PVP_SPOT))
+		{
+			increasePvpKills(target);
+			return;
+		}
+		
 		// Check if it's pvp
 		if (checkIfPvP(target) && (killedPlayer.getPvpFlag() != 0))
 		{
@@ -5880,6 +5905,13 @@ public class Player extends Playable
 			return;
 		}
 		
+		// Inside a PvP spot the flag lasts until the player leaves it.
+		if (isInsideZone(ZoneId.PVP_SPOT))
+		{
+			PvpSpotZone.keepFlag(this);
+			return;
+		}
+		
 		setPvpFlagLasts(System.currentTimeMillis() + PvpConfig.PVP_NORMAL_TIME);
 		if (_pvpFlag == 0)
 		{
@@ -5910,6 +5942,13 @@ public class Player extends Playable
 			return;
 		}
 		
+		// Inside a PvP spot the flag lasts until the player leaves it.
+		if (isInsideZone(ZoneId.PVP_SPOT))
+		{
+			PvpSpotZone.keepFlag(this);
+			return;
+		}
+		
 		if ((!isInsideZone(ZoneId.PVP) || !target.isInsideZone(ZoneId.PVP)) && (targetPlayer.getKarma() == 0))
 		{
 			if (checkIfPvP(targetPlayer))
@@ -5926,6 +5965,14 @@ public class Player extends Playable
 				startPvPFlag();
 			}
 		}
+	}
+	
+	/**
+	 * @return {@code true} if dying here costs no exp nor death penalty: inside a PvP spot with PvpSpotNoDeathPenalty, see {@link PvpSpotZone}
+	 */
+	private boolean isSparedByPvpSpot()
+	{
+		return PvpSpotsConfig.NO_DEATH_PENALTY && isInsideZone(ZoneId.PVP_SPOT);
 	}
 	
 	/**

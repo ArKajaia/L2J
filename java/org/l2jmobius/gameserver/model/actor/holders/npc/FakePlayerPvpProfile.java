@@ -114,6 +114,16 @@ public class FakePlayerPvpProfile
 	/** The party it is in (with players, or with other fake players), {@code null} for none. */
 	private volatile FakePlayerParty _party;
 	
+	// The PvP spot it came to fight in (see PvpSpotManager), 0 for none; whether it is one of the stronger ones; until when it stays; who killed it there last and until when it looks for them.
+	private volatile int _pvpSpotId;
+	private volatile boolean _elite;
+	private volatile long _spotStayUntil;
+	private volatile int _grudgeObjectId;
+	private volatile long _grudgeUntil;
+	// The part of its HP pool that is CP (FakePvpIncludeCpInHp), and when it may drink its next CP potion.
+	private volatile double _cpShare;
+	private volatile long _nextCpPotionTime;
+	
 	/**
 	 * @param build the build
 	 * @param playerClass the class for this level
@@ -496,7 +506,7 @@ public class FakePlayerPvpProfile
 	 */
 	public boolean isRunner()
 	{
-		return _runner && (_trialDuelTarget == 0);
+		return _runner && (_trialDuelTarget == 0) && !_elite;
 	}
 	
 	/**
@@ -730,5 +740,101 @@ public class FakePlayerPvpProfile
 	public void setParty(FakePlayerParty party)
 	{
 		_party = party;
+	}
+	
+	/**
+	 * @return the zone id of the PvP spot it came to fight in (see {@link org.l2jmobius.gameserver.managers.PvpSpotManager}), 0 for none
+	 */
+	public int getPvpSpotId()
+	{
+		return _pvpSpotId;
+	}
+	
+	public void setPvpSpotId(int zoneId)
+	{
+		_pvpSpotId = zoneId;
+	}
+	
+	/**
+	 * @return {@code true} if it came to a PvP spot only to fight: it doesn't hunt, talk or taunt, and stays in the spot
+	 */
+	public boolean isSpotFighter()
+	{
+		return _pvpSpotId != 0;
+	}
+	
+	/**
+	 * @return {@code true} for one of the stronger fake players of the PvP spots: the best gear of its level, highly enchanted, all its subclasses, and it never runs away
+	 */
+	public boolean isElite()
+	{
+		return _elite;
+	}
+	
+	public void setElite(boolean elite)
+	{
+		_elite = elite;
+	}
+	
+	/**
+	 * @return when it leaves its PvP spot (once it isn't fighting)
+	 */
+	public long getSpotStayUntil()
+	{
+		return _spotStayUntil;
+	}
+	
+	public void setSpotStayUntil(long time)
+	{
+		_spotStayUntil = time;
+	}
+	
+	/**
+	 * Remembers who killed it in its PvP spot: back from town, it goes after them first.
+	 * @param objectId the killer (a player or a fake player)
+	 * @param until until when it looks for them
+	 */
+	public void setGrudge(int objectId, long until)
+	{
+		_grudgeObjectId = objectId;
+		_grudgeUntil = until;
+	}
+	
+	/**
+	 * @param now the current time
+	 * @return the object id of who killed it last in its PvP spot, 0 if none (or it gave up on them)
+	 */
+	public int getGrudge(long now)
+	{
+		return now < _grudgeUntil ? _grudgeObjectId : 0;
+	}
+	
+	public void clearGrudge()
+	{
+		_grudgeObjectId = 0;
+		_grudgeUntil = 0;
+	}
+	
+	/**
+	 * @return the part of its HP pool that is CP (0 when CP isn't counted in its HP, see FakePvpIncludeCpInHp)
+	 */
+	public double getCpShare()
+	{
+		return _cpShare;
+	}
+	
+	public void setCpShare(double cpShare)
+	{
+		_cpShare = cpShare;
+	}
+	
+	public long getNextCpPotionTime()
+	{
+		return _nextCpPotionTime;
+	}
+	
+	public void setNextCpPotionTime(long time)
+	{
+		_nextCpPotionTime = time;
 	}
 }

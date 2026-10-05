@@ -46,7 +46,9 @@ public enum ZoneId
 	NO_BOOKMARK,
 	NO_ITEM_DROP,
 	HOTZONE,
-	NO_RESTART;
+	NO_RESTART,
+	/** A PvP spot (see {@link org.l2jmobius.gameserver.model.zone.type.PvpSpotZone}): everyone inside is flagged, kills there are never a PK. */
+	PVP_SPOT;
 	
 	public static int getZoneCount()
 	{

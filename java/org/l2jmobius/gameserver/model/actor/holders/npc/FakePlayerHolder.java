@@ -60,6 +60,10 @@ public class FakePlayerHolder
 	private volatile String _title;
 	private final int _pledgeStatus;
 	private volatile boolean _isSitting;
+	// Shown instead of its own title, title color and hero aura while it leads a PvP spot (see PvpSpotManager), null when it doesn't.
+	private volatile String _leaderTitle;
+	private volatile int _leaderTitleColor;
+	private volatile boolean _leaderAura;
 	// The transformation it shows (a roaming Kamael fake player in Final Form), 0 for none.
 	private volatile int _transformDisplayId;
 	private volatile int _privateStoreType;
@@ -140,7 +144,7 @@ public class FakePlayerHolder
 	
 	public int getTitleColor()
 	{
-		return _titleColor;
+		return _leaderTitle != null ? _leaderTitleColor : _titleColor;
 	}
 	
 	public int getEquipHead()
@@ -253,7 +257,7 @@ public class FakePlayerHolder
 	
 	public boolean isHero()
 	{
-		return _hero;
+		return _hero || ((_leaderTitle != null) && _leaderAura);
 	}
 	
 	public int getClanId()
@@ -274,7 +278,29 @@ public class FakePlayerHolder
 	
 	public String getTitle()
 	{
-		return _title;
+		final String leaderTitle = _leaderTitle;
+		return leaderTitle != null ? leaderTitle : _title;
+	}
+	
+	/**
+	 * Shows it as the leader of a PvP spot (see {@link org.l2jmobius.gameserver.managers.PvpSpotManager}), or stops showing it.
+	 * @param title the title it shows meanwhile, {@code null} to show its own title again
+	 * @param titleColor the color of that title
+	 * @param heroAura {@code true} to show the hero aura meanwhile
+	 */
+	public void setLeader(String title, int titleColor, boolean heroAura)
+	{
+		_leaderTitleColor = titleColor;
+		_leaderAura = heroAura;
+		_leaderTitle = title;
+	}
+	
+	/**
+	 * @return {@code true} while it is shown as the leader of a PvP spot
+	 */
+	public boolean isShownAsLeader()
+	{
+		return _leaderTitle != null;
 	}
 	
 	public int getPledgeStatus()

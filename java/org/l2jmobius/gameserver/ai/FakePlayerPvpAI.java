@@ -32,12 +32,14 @@ import org.l2jmobius.gameserver.config.GeneralConfig;
 import org.l2jmobius.gameserver.config.custom.FakeClanConfig;
 import org.l2jmobius.gameserver.config.custom.FakePartyConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
+import org.l2jmobius.gameserver.config.custom.PvpSpotsConfig;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
+import org.l2jmobius.gameserver.managers.PvpSpotManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -66,6 +68,7 @@ import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
+import org.l2jmobius.gameserver.model.zone.type.PvpSpotZone;
 import org.l2jmobius.gameserver.network.serverpackets.ChangeWaitType;
 import org.l2jmobius.gameserver.util.LocationUtil;
 
@@ -374,6 +377,13 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
+		// A fake player of a PvP spot came only to fight: no hunting, poking, greeting or talks.
+		if ((profile != null) && profile.isSpotFighter())
+		{
+			thinkSpot(npc, profile, System.currentTimeMillis());
+			return;
+		}
+		
 		// In a party: it looks after the party, follows its leader and fights what the party fights.
 		final FakePlayerParty party = profile != null ? profile.getParty() : null;
 		if ((party != null) && thinkParty(npc, profile, party))
@@ -515,9 +525,13 @@ public class FakePlayerPvpAI extends AttackableAI
 				return;
 			}
 			
-			if (npc.getTemplate().getFakePlayerPvpProfile() != null)
+			if (castingProfile != null)
 			{
 				FakePlayerPvpManager.getInstance().tryPotion(npc);
+				if (castingProfile.isSpotFighter())
+				{
+					FakePlayerPvpManager.getInstance().tryCpPotion(npc);
+				}
 			}
 			return;
 		}
@@ -564,11 +578,15 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// Against several players, the one it can finish first.
+		// Against several players, the one it can finish first. In a PvP spot, also anyone around that is a better target (someone low, someone after it or its clan mates, its killer, the leader...).
 		final long now = System.currentTimeMillis();
 		if (isPvpEnemy(target))
 		{
 			target = chooseFocus(npc, target, now);
+			if (profile.isSpotFighter())
+			{
+				target = chooseSpotFocus(npc, profile, target, now);
+			}
 		}
 		
 		if (getAttackTarget() != target)
@@ -591,6 +609,16 @@ public class FakePlayerPvpAI extends AttackableAI
 		if ((partyLeader != null) && (partyLeader != npc))
 		{
 			if (!isPvpEnemy(target) && ((partyLeader.getInstanceId() != npc.getInstanceId()) || (partyLeader.calculateDistance2D(target) > FakePartyConfig.LEASH_RANGE)))
+			{
+				npc.stopHating(target);
+				dropTarget(npc);
+				return;
+			}
+		}
+		// A PvP spot fighter stays in its spot: it chases someone a little way out of it (PvpSpotChaseOutside), then turns back.
+		else if (profile.isSpotFighter())
+		{
+			if (!_fleeing && !_regrouping && !_returning && isBeyondSpot(profile, target))
 			{
 				npc.stopHating(target);
 				dropTarget(npc);
@@ -626,14 +654,24 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// A flagged or karma player passing by is better game than a monster (not for one in a party with players: it plays with its party).
-		if (!isPvpEnemy(target) && !withPlayers)
+		// A flagged or karma player passing by is better game than a monster (not for one in a party with players: it plays with its party). In a PvP spot, anyone to fight is.
+		if (profile.isSpotFighter())
 		{
-			lookForNewFaces(npc, now);
+			if (!isPvpEnemy(target) && engageSpotEnemy(npc, profile, now))
+			{
+				return;
+			}
 		}
-		if (!isPvpEnemy(target) && !withPlayers && (lookForRevenge(npc, now) || lookForPvp(npc, now)))
+		else
 		{
-			return;
+			if (!isPvpEnemy(target) && !withPlayers)
+			{
+				lookForNewFaces(npc, now);
+			}
+			if (!isPvpEnemy(target) && !withPlayers && (lookForRevenge(npc, now) || lookForPvp(npc, now)))
+			{
+				return;
+			}
 		}
 		
 		if (npc.isMoving() && (now < _kiteEndTime))
@@ -649,6 +687,12 @@ public class FakePlayerPvpAI extends AttackableAI
 		_autoAttacker = !mage && !profile.getBuild().isSkillFighter() && !profile.isTransformed();
 		final boolean pvp = isPvpEnemy(target);
 		final boolean canMove = !npc.isMovementDisabled();
+		
+		// In a PvP spot it drinks CP potions all fight long, like players.
+		if (pvp && profile.isSpotFighter())
+		{
+			FakePlayerPvpManager.getInstance().tryCpPotion(npc);
+		}
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
 		final double distance = npc.calculateDistance2D(target);
 		final int collision = npc.getTemplate().getCollisionRadius() + target.getTemplate().getCollisionRadius();
@@ -968,14 +1012,23 @@ public class FakePlayerPvpAI extends AttackableAI
 			return true;
 		}
 		
+		// In a PvP spot it doesn't leave: once it got away it gets its breath back (potions, then it rests if nobody is around) and comes back to the fight.
+		if (profile.isSpotFighter())
+		{
+			if (pursuerGap > ESCAPE_DISTANCE)
+			{
+				giveUpPvp(npc);
+				return true;
+			}
+		}
 		// A Blessed Scroll of Escape (0.2 seconds): read as soon as it has a little room, seen or not, like a player getting out of a fight.
-		if (FakePlayerPvpConfig.ESCAPE_SCROLL && profile.hasBlessedEscape() && (pursuerGap > FakePlayerPvpConfig.BLESSED_ESCAPE_DISTANCE) && (now >= _nextEscapeTime) && readEscapeScroll(npc, target, now, true, true))
+		else if (FakePlayerPvpConfig.ESCAPE_SCROLL && profile.hasBlessedEscape() && (pursuerGap > FakePlayerPvpConfig.BLESSED_ESCAPE_DISTANCE) && (now >= _nextEscapeTime) && readEscapeScroll(npc, target, now, true, true))
 		{
 			return true;
 		}
 		
 		// Got away.
-		if (pursuerGap > ESCAPE_DISTANCE)
+		if ((pursuerGap > ESCAPE_DISTANCE) && !profile.isSpotFighter())
 		{
 			// A Scroll of Escape: 20 seconds, a pursuer that catches up can still stun it or finish it. Never in front of a player: it runs on until nobody sees it.
 			if (FakePlayerPvpConfig.ESCAPE_SCROLL)
@@ -1181,18 +1234,29 @@ public class FakePlayerPvpAI extends AttackableAI
 	 */
 	private boolean runAway(Attackable npc, Creature pursuer)
 	{
+		// In a PvP spot it runs around inside it, not off into the wild.
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		final PvpSpotZone spot = (profile != null) && profile.isSpotFighter() ? PvpSpotManager.getZone(profile.getPvpSpotId()) : null;
 		final double away = Math.atan2(npc.getY() - pursuer.getY(), npc.getX() - pursuer.getX());
-		for (double turn : FLEE_TURNS)
+		for (int pass = spot != null ? 0 : 1; pass < 2; pass++)
 		{
-			final double angle = away + turn;
-			final int x = npc.getX() + (int) (Math.cos(angle) * FLEE_STEP);
-			final int y = npc.getY() + (int) (Math.sin(angle) * FLEE_STEP);
-			final Location destination = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, npc.getZ(), npc.getInstanceId());
-			if (npc.calculateDistance2D(destination) >= (FLEE_STEP / 3))
+			for (double turn : FLEE_TURNS)
 			{
-				npc.setRunning();
-				moveTo(destination.getX(), destination.getY(), destination.getZ());
-				return true;
+				final double angle = away + turn;
+				final int x = npc.getX() + (int) (Math.cos(angle) * FLEE_STEP);
+				final int y = npc.getY() + (int) (Math.sin(angle) * FLEE_STEP);
+				final Location destination = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, npc.getZ(), npc.getInstanceId());
+				if ((pass == 0) && !spot.isInsideZone(destination.getX(), destination.getY(), destination.getZ()) && (spot.getDistanceToZone(destination.getX(), destination.getY()) > SPOT_FLEE_OUTSIDE))
+				{
+					continue;
+				}
+				
+				if (npc.calculateDistance2D(destination) >= (FLEE_STEP / 3))
+				{
+					npc.setRunning();
+					moveTo(destination.getX(), destination.getY(), destination.getZ());
+					return true;
+				}
 			}
 		}
 		
@@ -3198,10 +3262,13 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		final int radius = skill.getAffectRange() > 0 ? skill.getAffectRange() : 150;
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		final boolean spot = (profile != null) && profile.isSpotFighter();
 		int enemies = center == target ? 1 : 0;
 		for (Creature creature : World.getInstance().getVisibleObjectsInRange(center, Creature.class, radius))
 		{
-			if ((creature != npc) && !creature.isDead() && ((creature == target) || hates(npc, creature, 1)))
+			// In a PvP spot everyone of another clan is flagged, so an area skill catches them all: a crowd is worth it.
+			if ((creature != npc) && !creature.isDead() && ((creature == target) || hates(npc, creature, 1) || (spot && isFairAreaEnemy(npc, creature))))
 			{
 				if (++enemies >= 2)
 				{
@@ -3351,6 +3418,500 @@ public class FakePlayerPvpAI extends AttackableAI
 		_kiteEndTime = now + Math.min(3000, (long) ((step * 1000.0) / Math.max(1, npc.getMoveSpeed())));
 		_nextKiteTime = now + 3000 + Rnd.get(2000);
 		return true;
+	}
+	
+	// ---------------------------------------------------------------------------------------------
+	// PvP spot (see PvpSpotManager)
+	// ---------------------------------------------------------------------------------------------
+	
+	/** Running away in a PvP spot, it keeps within this distance of it. */
+	private static final int SPOT_FLEE_OUTSIDE = 200;
+	/** How often it looks around for a better opponent in the middle of a fight. */
+	private static final long SPOT_RETARGET_INTERVAL = 1500;
+	/** How much better (lower) another opponent's score must be to switch to it, so it doesn't flip between two. */
+	private static final double SPOT_SWITCH_MARGIN = 0.6;
+	/** An opponent this low and this close is finished off, for the kill. */
+	private static final double SPOT_FINISH_HP = 0.2;
+	private static final int SPOT_FINISH_RANGE = 500;
+	/** Players and fake players this close that go for it (or anyone this close) keep it from resting. */
+	private static final int SPOT_THREAT_RANGE = 900;
+	private static final int SPOT_DANGER_RANGE = 400;
+	/** It walks over to the fights up to this far. */
+	private static final int SPOT_ACTION_RANGE = 3000;
+	/** How long it sticks to its choice to go for the leader of its spot, or to keep away from it. */
+	private static final long LEADER_DECISION_TIME = 60000;
+	
+	private long _nextSpotRetarget = 0;
+	// Whether it goes for the leader of its spot: object id -> until when (negative: it keeps away from it).
+	private final Map<Integer, Long> _leaderDecisions = new ConcurrentHashMap<>();
+	
+	/**
+	 * A fake player of a PvP spot between two fights, like a player in a PvP zone: it goes for its killer first when it comes back from town, otherwise for the best opponent it sees ({@link #findSpotEnemy}); with nobody around it walks over to the fights, and
+	 * back into the spot when a chase took it out. It only sits down to rest with nobody around to go for it, and leaves (reading a scroll) once its time is up.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param now the current time
+	 */
+	private void thinkSpot(Attackable npc, FakePlayerPvpProfile profile, long now)
+	{
+		final PvpSpotZone zone = PvpSpotManager.getZone(profile.getPvpSpotId());
+		
+		// The spot is gone (the zones were reloaded without it, the spots switched off): off to town.
+		if (((zone == null) || !PvpSpotsConfig.ENABLED) && (profile.getLeaveTime() == 0))
+		{
+			profile.setLeaveTime(now);
+		}
+		
+		// Its time is up: it reads its scroll and leaves.
+		if (thinkLeave(npc, profile, now) || (zone == null))
+		{
+			return;
+		}
+		
+		// Resting: only with nobody around to come for it, like a player in a PvP zone.
+		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
+		_resting = (hpRatio < (_resting ? 0.9 : 0.5)) && !isSpotThreatNear(npc, zone);
+		if (_resting)
+		{
+			FakePlayerPvpManager.getInstance().tryPotion(npc);
+			if (!npc.isMoving() && !npc.isMovementDisabled())
+			{
+				sitDown(npc);
+			}
+			return;
+		}
+		
+		if (standUp(npc))
+		{
+			return;
+		}
+		
+		// A necromancer keeps its servitor out, duelists and tyrants their energy full.
+		if ((profile.needsServitor() && castOnSelf(npc, null, profile.getSkills(SkillCategory.SUMMON), true, false)) || ((profile.getCharges() < profile.getMaxCharges()) && castOnSelf(npc, null, profile.getSkills(SkillCategory.CHARGE), true, false)))
+		{
+			return;
+		}
+		
+		FakePlayerPvpManager.getInstance().tryPotion(npc);
+		
+		// Back from town: its killer first, wherever it is in the spot.
+		final Creature grudge = findSpotGrudge(npc, profile, zone, now);
+		if (grudge != null)
+		{
+			profile.clearGrudge();
+			npc.setRunning();
+			FakePlayerPvpManager.getInstance().spotEngage(npc, grudge, PvpSpotManager.TAUNTS_RETURN);
+			return;
+		}
+		
+		// The next one.
+		if (engageSpotEnemy(npc, profile, now))
+		{
+			return;
+		}
+		
+		// Nobody in reach: back into the spot, or over to where the fighting is.
+		if (npc.isMoving() || npc.isMovementDisabled())
+		{
+			return;
+		}
+		
+		npc.setRunning();
+		if (!zone.isInsideZone(npc))
+		{
+			moveIntoSpot(npc, zone);
+			return;
+		}
+		
+		// Walking (pathfinding) over to the closest fight it can't see from here.
+		final Creature action = findSpotAction(npc, zone);
+		if (action != null)
+		{
+			moveTo(action.getX(), action.getY(), action.getZ());
+			return;
+		}
+		
+		if (Rnd.get(WANDER_CHANCE) == 0)
+		{
+			moveIntoSpot(npc, zone);
+		}
+	}
+	
+	/**
+	 * Picks the best opponent it sees in its spot and goes for it.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param now the current time
+	 * @return {@code true} if it went for someone
+	 */
+	private boolean engageSpotEnemy(Attackable npc, FakePlayerPvpProfile profile, long now)
+	{
+		final PvpSpotZone zone = PvpSpotManager.getZone(profile.getPvpSpotId());
+		final Creature enemy = zone != null ? findSpotEnemy(npc, profile, zone, now) : null;
+		if (enemy == null)
+		{
+			return false;
+		}
+		
+		npc.setRunning();
+		FakePlayerPvpManager.getInstance().spotEngage(npc, enemy, PvpSpotManager.TAUNTS_ENGAGE);
+		return true;
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param zone its spot
+	 * @param now the current time
+	 * @return the best opponent it sees within {@link PvpSpotsConfig#TARGET_RANGE} (see {@link #spotScore}), {@code null} if none
+	 */
+	private Creature findSpotEnemy(Attackable npc, FakePlayerPvpProfile profile, PvpSpotZone zone, long now)
+	{
+		final int leaderId = PvpSpotManager.getInstance().getLeaderId(zone.getId());
+		final int grudgeId = profile.getGrudge(now);
+		Creature best = null;
+		double bestScore = Double.MAX_VALUE;
+		for (Creature creature : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, PvpSpotsConfig.TARGET_RANGE))
+		{
+			if (!isSpotEnemy(npc, creature, zone, true))
+			{
+				continue;
+			}
+			
+			final double score = spotScore(npc, profile, creature, leaderId, grudgeId, now);
+			if (score < bestScore)
+			{
+				best = creature;
+				bestScore = score;
+			}
+		}
+		
+		return best;
+	}
+	
+	/**
+	 * Like a player in a PvP zone, it looks around in the middle of a fight for a better opponent than the one it fights: someone almost dead close by (for the kill), someone going for it or its clan mates, its killer, the leader... and switches when one is
+	 * clearly better.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param target the one it fights now
+	 * @param now the current time
+	 * @return the one to fight
+	 */
+	private Creature chooseSpotFocus(Attackable npc, FakePlayerPvpProfile profile, Creature target, long now)
+	{
+		if ((now < _nextSpotRetarget) || _fleeing || _regrouping || npc.isCastingNow())
+		{
+			return target;
+		}
+		_nextSpotRetarget = now + SPOT_RETARGET_INTERVAL;
+		
+		final PvpSpotZone zone = PvpSpotManager.getZone(profile.getPvpSpotId());
+		if (zone == null)
+		{
+			return target;
+		}
+		
+		final Creature better = findSpotEnemy(npc, profile, zone, now);
+		if ((better == null) || (better == target))
+		{
+			return target;
+		}
+		
+		final int leaderId = PvpSpotManager.getInstance().getLeaderId(zone.getId());
+		final int grudgeId = profile.getGrudge(now);
+		final double current = isSpotEnemy(npc, target, zone, false) ? spotScore(npc, profile, target, leaderId, grudgeId, now) : Double.MAX_VALUE;
+		if (spotScore(npc, profile, better, leaderId, grudgeId, now) > (current - SPOT_SWITCH_MARGIN))
+		{
+			return target;
+		}
+		
+		if (better.getObjectId() == grudgeId)
+		{
+			profile.clearGrudge();
+		}
+		
+		if (_combo != null)
+		{
+			endCombo(now);
+		}
+		
+		FakePlayerPvpManager.getInstance().spotEngage(npc, better, null);
+		_focus = better;
+		_focusUntil = now + FOCUS_TIME;
+		return better;
+	}
+	
+	/**
+	 * How good an opponent is, lower is better, the way a player picks one in a PvP zone: close, low, going for it or its clan mates, busy with someone else (a free hit), its killer, at war with its clan, about its level. Aggressive fake players go for the
+	 * leader of the spot (PvpSpotLeaderFocusChance), cautious ones keep away from it, and few pile on someone that several of them already fight.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param enemy the opponent
+	 * @param leaderId the leader of the spot, 0 for none
+	 * @param grudgeId the one that killed it last, 0 for none
+	 * @param now the current time
+	 * @return its score
+	 */
+	private double spotScore(Attackable npc, FakePlayerPvpProfile profile, Creature enemy, int leaderId, int grudgeId, long now)
+	{
+		final double distance = npc.calculateDistance2D(enemy);
+		final double hpRatio = getHpRatio(enemy);
+		double score = (distance / PvpSpotsConfig.TARGET_RANGE) + (hpRatio * 0.8);
+		
+		// For the kill.
+		if ((hpRatio < SPOT_FINISH_HP) && (distance < SPOT_FINISH_RANGE))
+		{
+			score -= 0.5;
+		}
+		
+		// Someone going for it, or for its clan mates.
+		final WorldObject itsTarget = enemy.getTarget();
+		if (itsTarget == npc)
+		{
+			score -= 1.2;
+		}
+		else if ((itsTarget instanceof Creature) && (itsTarget != enemy) && FakeClanManager.getInstance().isFriend(npc, (Creature) itsTarget))
+		{
+			score -= 0.8;
+		}
+		else if ((itsTarget instanceof Creature) && isPvpEnemy((Creature) itsTarget))
+		{
+			score -= 0.25; // Busy with someone else.
+		}
+		
+		if (enemy.getObjectId() == grudgeId)
+		{
+			score -= 2;
+		}
+		
+		if (FakeClanManager.getInstance().isWarEnemy(npc, enemy))
+		{
+			score -= 0.8;
+		}
+		
+		// Much higher: better left alone (unless it comes).
+		final int levelDiff = enemy.getLevel() - npc.getLevel();
+		if (levelDiff >= 6)
+		{
+			score += 0.15 * (levelDiff - 5);
+		}
+		
+		// The leader: the aggressive ones go for it, the cautious ones keep away.
+		if ((leaderId != 0) && (enemy.getObjectId() == leaderId))
+		{
+			if (wantsLeader(profile, leaderId, now))
+			{
+				score -= 1;
+			}
+			else if (profile.getPersonality().getAggression() < -0.3)
+			{
+				score += 1.5;
+			}
+		}
+		else
+		{
+			// Few pile on someone several of them already fight.
+			final int attackers = countSpotAttackers(npc, enemy);
+			if (attackers >= 3)
+			{
+				score += 0.3 * (attackers - 2);
+			}
+		}
+		
+		return score;
+	}
+	
+	/**
+	 * @param creature a player or fake player
+	 * @return how much of its health it has left: CP and HP together for a player (a fake player's CP is in its HP)
+	 */
+	private static double getHpRatio(Creature creature)
+	{
+		if (creature.isPlayer())
+		{
+			final double max = creature.getMaxHp() + creature.getMaxCp();
+			return max > 0 ? (creature.getCurrentHp() + creature.getCurrentCp()) / max : 1;
+		}
+		return creature.getCurrentHp() / Math.max(1, creature.getMaxHp());
+	}
+	
+	/**
+	 * @param profile its profile
+	 * @param leaderId the leader of its spot
+	 * @param now the current time
+	 * @return {@code true} if it goes for the leader: an aggressive one does with {@link PvpSpotsConfig#LEADER_FOCUS_CHANCE}, decided once for a while
+	 */
+	private boolean wantsLeader(FakePlayerPvpProfile profile, int leaderId, long now)
+	{
+		_leaderDecisions.values().removeIf(until -> Math.abs(until) < now);
+		if (profile.getPersonality().getAggression() <= 0)
+		{
+			return false;
+		}
+		
+		return _leaderDecisions.computeIfAbsent(leaderId, id -> Rnd.get(100) < PvpSpotsConfig.LEADER_FOCUS_CHANCE ? now + LEADER_DECISION_TIME : -(now + LEADER_DECISION_TIME)) > 0;
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param enemy an opponent
+	 * @return how many other fake players fight {@code enemy} close by
+	 */
+	private static int countSpotAttackers(Attackable npc, Creature enemy)
+	{
+		int count = 0;
+		for (Npc other : World.getInstance().getVisibleObjectsInRange(enemy, Npc.class, SPOT_THREAT_RANGE))
+		{
+			if ((other != npc) && other.isPvpFakePlayer() && !other.isDead() && (other.getTarget() == enemy))
+			{
+				count++;
+			}
+		}
+		return count;
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param creature a creature it sees
+	 * @param zone its spot
+	 * @param inSight {@code true} to also want it in sight
+	 * @return {@code true} if {@code creature} is someone to fight in the spot: a player or a fake player in it, not of its clan, alliance or party, not a GM, nor in the Olympiad, a duel or town
+	 */
+	private static boolean isSpotEnemy(Attackable npc, Creature creature, PvpSpotZone zone, boolean inSight)
+	{
+		if ((creature == null) || (creature == npc) || creature.isAlikeDead() || !creature.isSpawned() || creature.isInvisible() || (creature.getInstanceId() != npc.getInstanceId()) || creature.isInsideZone(ZoneId.PEACE))
+		{
+			return false;
+		}
+		
+		if (creature.isPlayer())
+		{
+			final Player player = creature.asPlayer();
+			if ((player.isGM() && !player.getAccessLevel().canTakeAggro()) || player.isInOlympiadMode() || player.isInDuel())
+			{
+				return false;
+			}
+		}
+		else if (!creature.isPvpFakePlayer() || creature.asNpc().isTrialDuelist())
+		{
+			return false;
+		}
+		
+		if (!zone.isInsideZone(creature) || FakeClanManager.getInstance().isFriend(npc, creature) || FakePartyManager.getInstance().isSameGroup(npc, creature))
+		{
+			return false;
+		}
+		
+		return !inSight || GeoEngine.getInstance().canSeeTarget(npc, creature);
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param creature a creature in the area of one of its skills
+	 * @return {@code true} if an area skill of it may hit {@code creature} in a PvP spot (see {@link FakePlayerPvpManager#isFairAreaTarget})
+	 */
+	private static boolean isFairAreaEnemy(Attackable npc, Creature creature)
+	{
+		if (creature.isPlayer())
+		{
+			return FakePlayerPvpManager.isFairAreaTarget(npc, creature.asPlayer());
+		}
+		return creature.isPvpFakePlayer() && FakePlayerPvpManager.isFairAreaTarget(npc, creature.asNpc());
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param zone its spot
+	 * @param now the current time
+	 * @return its killer, back from town for them, when they are in the spot and in sight; {@code null} otherwise
+	 */
+	private static Creature findSpotGrudge(Attackable npc, FakePlayerPvpProfile profile, PvpSpotZone zone, long now)
+	{
+		final int grudgeId = profile.getGrudge(now);
+		if (grudgeId == 0)
+		{
+			return null;
+		}
+		
+		final WorldObject object = World.getInstance().findObject(grudgeId);
+		if (!(object instanceof Creature) || !npc.isInsideRadius2D(object, SPOT_ACTION_RANGE))
+		{
+			return null;
+		}
+		
+		final Creature killer = (Creature) object;
+		return isSpotEnemy(npc, killer, zone, true) ? killer : null;
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param zone its spot
+	 * @return the closest one to fight in the spot, out of sight or reach, to walk over to; {@code null} if none
+	 */
+	private static Creature findSpotAction(Attackable npc, PvpSpotZone zone)
+	{
+		Creature closest = null;
+		double closestDistance = Double.MAX_VALUE;
+		for (Creature creature : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, SPOT_ACTION_RANGE))
+		{
+			if (!isSpotEnemy(npc, creature, zone, false))
+			{
+				continue;
+			}
+			
+			final double distance = npc.calculateDistance2D(creature);
+			if (distance < closestDistance)
+			{
+				closest = creature;
+				closestDistance = distance;
+			}
+		}
+		
+		return closest;
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param zone its spot
+	 * @return {@code true} if someone could come for it: an opponent close by going for it, or any opponent very close
+	 */
+	private static boolean isSpotThreatNear(Attackable npc, PvpSpotZone zone)
+	{
+		for (Creature creature : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, SPOT_THREAT_RANGE))
+		{
+			if (isSpotEnemy(npc, creature, zone, false) && ((creature.getTarget() == npc) || npc.isInsideRadius2D(creature, SPOT_DANGER_RANGE)))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * @param profile the profile of a fake player of a PvP spot
+	 * @param creature someone it chases
+	 * @return {@code true} if {@code creature} is farther out of the spot than it chases ({@link PvpSpotsConfig#CHASE_OUTSIDE})
+	 */
+	private static boolean isBeyondSpot(FakePlayerPvpProfile profile, Creature creature)
+	{
+		final PvpSpotZone zone = PvpSpotManager.getZone(profile.getPvpSpotId());
+		return (zone != null) && !zone.isInsideZone(creature) && (zone.getDistanceToZone(creature) > PvpSpotsConfig.CHASE_OUTSIDE);
+	}
+	
+	/**
+	 * Runs (pathfinding) to a point of its spot.
+	 * @param npc the fake player
+	 * @param zone its spot
+	 */
+	private void moveIntoSpot(Attackable npc, PvpSpotZone zone)
+	{
+		final Location point = zone.getZone().getRandomPoint();
+		if (zone.isInsideZone(point.getX(), point.getY(), point.getZ()))
+		{
+			moveTo(point.getX(), point.getY(), point.getZ());
+		}
 	}
 	
 	// ---------------------------------------------------------------------------------------------

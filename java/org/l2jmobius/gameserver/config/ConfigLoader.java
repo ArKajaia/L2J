@@ -62,6 +62,7 @@ import org.l2jmobius.gameserver.config.custom.PremiumSystemConfig;
 import org.l2jmobius.gameserver.config.custom.PrivateStoreRangeConfig;
 import org.l2jmobius.gameserver.config.custom.PvpAnnounceConfig;
 import org.l2jmobius.gameserver.config.custom.PvpRewardItemConfig;
+import org.l2jmobius.gameserver.config.custom.PvpSpotsConfig;
 import org.l2jmobius.gameserver.config.custom.PvpTitleColorConfig;
 import org.l2jmobius.gameserver.config.custom.RandomSpawnsConfig;
 import org.l2jmobius.gameserver.config.custom.SchemeBufferConfig;
@@ -129,6 +130,7 @@ public class ConfigLoader
 		FakePartyConfig.load();
 		FakeClanConfig.load();
 		FindPvpConfig.load();
+		PvpSpotsConfig.load();
 		FreeMountsConfig.load();
 		HellboundStatusConfig.load();
 		HotzoneCoinDropConfig.load();

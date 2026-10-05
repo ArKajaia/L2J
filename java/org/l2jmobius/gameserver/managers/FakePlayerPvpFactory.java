@@ -28,6 +28,7 @@ import java.util.Map;
 
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
+import org.l2jmobius.gameserver.config.custom.PvpSpotsConfig;
 import org.l2jmobius.gameserver.data.holders.ArmorSet;
 import org.l2jmobius.gameserver.data.xml.ArmorSetData;
 import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
@@ -178,6 +179,23 @@ public class FakePlayerPvpFactory
 	 */
 	public static NpcTemplate createTemplate(FakePlayerPvpBuild build, int level, int npcId, String name, PlayerClass forcedClass, String title, Looks looks)
 	{
+		return createTemplate(build, level, npcId, name, forcedClass, title, looks, false);
+	}
+	
+	/**
+	 * @param build the build
+	 * @param level the level
+	 * @param npcId a free npc id for the template
+	 * @param name the character name
+	 * @param forcedClass a class of the build's class line to use instead of the one its level gives ({@code null} for the level's class)
+	 * @param title the character title
+	 * @param looks how it looks, {@code null} for random looks
+	 * @param elite {@code true} for one of the stronger players of the PvP spots (see {@link PvpSpotManager}): the best gear of its level, enchanted above the usual roll (PvpSpotEliteEnchantBonus), the most dye points, every subclass in its passive tree and a
+	 *            skilled, aggressive temper; it never runs away
+	 * @return a new template with its {@link FakePlayerPvpProfile} attached, or {@code null} if the build can't be made at this level
+	 */
+	public static NpcTemplate createTemplate(FakePlayerPvpBuild build, int level, int npcId, String name, PlayerClass forcedClass, String title, Looks looks, boolean elite)
+	{
 		final PlayerClass playerClass = forcedClass != null ? forcedClass : build.getPlayerClass(level);
 		final PlayerTemplate classTemplate = PlayerTemplateData.getInstance().getTemplate(playerClass);
 		if (classTemplate == null)
@@ -187,9 +205,10 @@ public class FakePlayerPvpFactory
 		
 		// Like players, not everyone wears the best gear for their level: weapon, armor and jewels each lag behind on their own.
 		final FakePlayerPvpData data = FakePlayerPvpData.getInstance();
-		final FakePlayerPvpGearTier weapons = data.getGear(build.getWeaponKit(), rollGearLevel(level));
-		final FakePlayerPvpGearTier armors = getArmorGear(build, playerClass, rollGearLevel(level));
-		final FakePlayerPvpGearTier jewels = data.getGear(build.getJewelKit(), rollGearLevel(level));
+		// The strong ones wear the best of their level.
+		final FakePlayerPvpGearTier weapons = data.getGear(build.getWeaponKit(), elite ? level : rollGearLevel(level));
+		final FakePlayerPvpGearTier armors = getArmorGear(build, playerClass, elite ? level : rollGearLevel(level));
+		final FakePlayerPvpGearTier jewels = data.getGear(build.getJewelKit(), elite ? level : rollGearLevel(level));
 		
 		final ItemTemplate weaponItem = getItem(weapons != null ? weapons.getRHand() : 0);
 		final Weapon weapon = weaponItem instanceof Weapon ? (Weapon) weaponItem : null;
@@ -206,8 +225,8 @@ public class FakePlayerPvpFactory
 		final boolean fullArmor = (chest != null) && (chest.getBodyPart() == BodyPart.FULL_ARMOR);
 		
 		// Higher levels have better enchanted gear.
-		final int weaponEnchant = weapon != null ? FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.WEAPON_ENCHANT, level) : 0;
-		final int armorEnchant = FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.ARMOR_ENCHANT, level);
+		final int weaponEnchant = weapon != null ? (elite ? rollEliteEnchant(FakePlayerPvpConfig.WEAPON_ENCHANT, level) : FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.WEAPON_ENCHANT, level)) : 0;
+		final int armorEnchant = elite ? rollEliteEnchant(FakePlayerPvpConfig.ARMOR_ENCHANT, level) : FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.ARMOR_ENCHANT, level);
 		
 		// Armor set.
 		final ArmorSet armorSet = chest != null ? ArmorSetData.getInstance().getSet(chest.getId()) : null;
@@ -236,15 +255,15 @@ public class FakePlayerPvpFactory
 			final int maxBonus = Math.max(1, (int) Math.round((FakePlayerPvpConfig.BONUS_STAT_MAX * level) / 85.0));
 			if (playerClass.isMage())
 			{
-				intel += Rnd.get(1, maxBonus);
-				wit += Rnd.get(1, maxBonus);
-				men += Rnd.get(1, maxBonus);
+				intel += elite ? maxBonus : Rnd.get(1, maxBonus);
+				wit += elite ? maxBonus : Rnd.get(1, maxBonus);
+				men += elite ? maxBonus : Rnd.get(1, maxBonus);
 			}
 			else
 			{
-				str += Rnd.get(1, maxBonus);
-				dex += Rnd.get(1, maxBonus);
-				con += Rnd.get(1, maxBonus);
+				str += elite ? maxBonus : Rnd.get(1, maxBonus);
+				dex += elite ? maxBonus : Rnd.get(1, maxBonus);
+				con += elite ? maxBonus : Rnd.get(1, maxBonus);
 			}
 		}
 		
@@ -308,7 +327,7 @@ public class FakePlayerPvpFactory
 		FakePlayerPvpWeapon bow = null;
 		if (FakePlayerPvpConfig.WEAPON_SWAP_ENABLED && (build.getBowKit() != null) && (level >= FakePlayerPvpConfig.WEAPON_SWAP_MIN_LEVEL))
 		{
-			final FakePlayerPvpGearTier bows = data.getGear(build.getBowKit(), rollGearLevel(level));
+			final FakePlayerPvpGearTier bows = data.getGear(build.getBowKit(), elite ? level : rollGearLevel(level));
 			final ItemTemplate bowItem = getItem(bows != null ? bows.getRHand() : 0);
 			if ((bowItem instanceof Weapon) && ((Weapon) bowItem).isRange())
 			{
@@ -321,7 +340,7 @@ public class FakePlayerPvpFactory
 		FakePlayerPvpWeapon polearm = null;
 		if (FakePlayerPvpConfig.POLEARM_SWAP_ENABLED && (build.getPolearmKit() != null) && (level >= FakePlayerPvpConfig.POLEARM_SWAP_MIN_LEVEL))
 		{
-			final FakePlayerPvpGearTier polearms = data.getGear(build.getPolearmKit(), rollGearLevel(level));
+			final FakePlayerPvpGearTier polearms = data.getGear(build.getPolearmKit(), elite ? level : rollGearLevel(level));
 			final ItemTemplate polearmItem = getItem(polearms != null ? polearms.getRHand() : 0);
 			if ((polearmItem instanceof Weapon) && (polearmItem.getItemType() == WeaponType.POLE))
 			{
@@ -334,7 +353,7 @@ public class FakePlayerPvpFactory
 		final double mp = classTemplate.getBaseMpMax(level) + sumStat(Stat.MAX_MP, weapon, shield, chest, legs, head, gloves, feet, earring, earring, necklace, ring, ring);
 		
 		// Its passive tree, like a player that spent its points (rolled from trees prepared at server start, see FakePlayerPvpPassiveTree). Max HP % bonuses only grow the HP part of an HP pool that holds the CP too.
-		final FakePlayerPvpPassives passives = FakePlayerPvpPassiveTree.isEnabled() ? FakePlayerPvpPassiveTree.getInstance().roll(build, playerClass, level) : null;
+		final FakePlayerPvpPassives passives = FakePlayerPvpPassiveTree.isEnabled() ? FakePlayerPvpPassiveTree.getInstance().roll(build, playerClass, level, elite) : null;
 		if ((passives != null) && (hp > 0))
 		{
 			passives.setHpShare(classTemplate.getBaseHpMax(level) / hp);
@@ -505,9 +524,13 @@ public class FakePlayerPvpFactory
 			equipment.add(new ItemEnchantHolder(polearm.getWeaponId(), 1, polearm.getEnchant()));
 		}
 		
-		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), armorWornMask, chest != null ? chest.getItemMask() : 0, maxCharges, equipment, mainWeapon, bow, polearm, FakePlayerPvpPersonality.random());
+		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), armorWornMask, chest != null ? chest.getItemMask() : 0, maxCharges, equipment, mainWeapon, bow, polearm, elite ? FakePlayerPvpPersonality.elite() : FakePlayerPvpPersonality.random());
 		
 		profile.setPassives(passives);
+		profile.setElite(elite);
+		
+		// The top of its HP pool is its CP, which CP potions refill (see FakePlayerPvpManager#tryCpPotion).
+		profile.setCpShare(FakePlayerPvpConfig.INCLUDE_CP_IN_HP && (hp > 0) ? classTemplate.getBaseCpMax(level) / hp : 0);
 		
 		// High levels sometimes carry Blessed Scrolls of Escape.
 		profile.setBlessedEscape((level >= FakePlayerPvpConfig.BLESSED_ESCAPE_MIN_LEVEL) && (Rnd.get(100) < FakePlayerPvpConfig.BLESSED_ESCAPE_CHANCE));
@@ -697,6 +720,16 @@ public class FakePlayerPvpFactory
 			}
 		}
 		return armors;
+	}
+	
+	/**
+	 * @param tiers the enchant rows (FakePvpWeaponEnchant, FakePvpArmorEnchant)
+	 * @param level the character level
+	 * @return the enchant of a strong player's gear: the better of two rolls, plus PvpSpotEliteEnchantBonus (at most +20)
+	 */
+	private static int rollEliteEnchant(List<int[]> tiers, int level)
+	{
+		return Math.min(20, Math.max(FakePlayerPvpConfig.rollEnchant(tiers, level), FakePlayerPvpConfig.rollEnchant(tiers, level)) + PvpSpotsConfig.ELITE_ENCHANT_BONUS);
 	}
 	
 	/**

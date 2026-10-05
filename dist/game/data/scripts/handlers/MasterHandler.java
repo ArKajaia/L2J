@@ -33,6 +33,7 @@ import org.l2jmobius.gameserver.config.custom.OfflineTradeConfig;
 import org.l2jmobius.gameserver.config.custom.OnlineInfoConfig;
 import org.l2jmobius.gameserver.config.custom.PasswordChangeConfig;
 import org.l2jmobius.gameserver.config.custom.PremiumSystemConfig;
+import org.l2jmobius.gameserver.config.custom.PvpSpotsConfig;
 import org.l2jmobius.gameserver.config.custom.WeddingConfig;
 import org.l2jmobius.gameserver.handler.ActionClickHandler;
 import org.l2jmobius.gameserver.handler.ActionShiftHandler;
@@ -236,6 +237,7 @@ import handlers.chat.commands.voiced.PassiveTreeLinkVoiced;
 import handlers.chat.commands.voiced.PassiveTreeVoiced;
 //import handlers.chat.commands.voiced.PassivesCommand;
 import handlers.chat.commands.voiced.Premium;
+import handlers.chat.commands.voiced.PvpSpotVoiced;
 import handlers.chat.commands.voiced.SaveHotzoneVoiced;
 import handlers.chat.commands.voiced.SkillsCommand;
 import handlers.chat.commands.voiced.VoiceAutoLootFilter;
@@ -597,6 +599,7 @@ public class MasterHandler
 			OnlineInfoConfig.ENABLE_ONLINE_COMMAND ? Online.class : null,
 			PremiumSystemConfig.PREMIUM_SYSTEM_ENABLED ? Premium.class : null,
 			AutoPotionsConfig.AUTO_POTIONS_ENABLED ? AutoPotion.class : null,
+			PvpSpotsConfig.ENABLED && PvpSpotsConfig.TELEPORT_ENABLED ? PvpSpotVoiced.class : null,
 		},
 		{
 			// Target Handlers

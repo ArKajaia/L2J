@@ -51,6 +51,8 @@
 												<xs:enumeration value="spawnMinY" />
 												<xs:enumeration value="spawnMinZ" />
 												<xs:enumeration value="spawnZ" />
+												<xs:enumeration value="spotMaxLevel" />
+												<xs:enumeration value="spotMinLevel" />
 												<xs:enumeration value="targetClass" />
 												<xs:enumeration value="taxById" />
 												<xs:enumeration value="territoryId" />
@@ -138,6 +140,7 @@
 									<xs:enumeration value="NpcSpawnTerritory" />
 									<xs:enumeration value="OlympiadStadiumZone" />
 									<xs:enumeration value="PeaceZone" />
+									<xs:enumeration value="PvpSpotZone" />
 									<xs:enumeration value="ResidenceHallTeleportZone" />
 									<xs:enumeration value="ResidenceTeleportZone" />
 									<xs:enumeration value="RespawnZone" />
