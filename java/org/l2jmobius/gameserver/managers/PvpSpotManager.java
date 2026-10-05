@@ -440,7 +440,7 @@ public class PvpSpotManager
 				spot._nextDrift = now + Rnd.get(DRIFT_MIN, DRIFT_MAX);
 			}
 
-			// Newcomers, faster while the spot is still filling up. The ones on their way back count, but newcomers keep at least the minimum alive.
+			// Newcomers, faster while the spot is still filling up. The ones on their way back count, but below the minimum alive newcomers come quickly.
 			final int present = spot._fighters.size() + spot._returning.get();
 			final int room = Math.max(spot._wanted - present, PvpSpotsConfig.FIGHTERS_MIN - alive);
 			if ((room > 0) && (now >= spot._nextArrival))
