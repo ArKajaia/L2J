@@ -148,6 +148,7 @@ import org.l2jmobius.gameserver.managers.PetitionManager;
 import org.l2jmobius.gameserver.managers.PrecautionaryRestartManager;
 import org.l2jmobius.gameserver.managers.PremiumManager;
 import org.l2jmobius.gameserver.managers.PunishmentManager;
+import org.l2jmobius.gameserver.managers.PvpRankingManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
 import org.l2jmobius.gameserver.managers.RaidBossPointsManager;
 import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
@@ -339,6 +340,7 @@ public class GameServer
 		HtmCache.getInstance();
 		CrestTable.getInstance();
 		FakeClanManager.getInstance();
+		PvpRankingManager.getInstance();
 		TeleporterData.getInstance();
 		PartyMatchWaitingList.getInstance();
 		PartyMatchRoomList.getInstance();
