@@ -125,6 +125,17 @@ public class FakePlayerPvpFactory
 	private static final String KAMAEL_MAGE_ARMOR_KIT = "LIGHT_MAGE";
 	private static final String KAMAEL_FIGHTER_ARMOR_KIT = "LIGHT_FIGHTER";
 	
+	/**
+	 * How a fake player looks, kept for one that is made again and again (a member of a players' clan, see {@link FakeClanManager}).
+	 * @param female {@code true} for a female character
+	 * @param hair the hair style
+	 * @param hairColor the hair color
+	 * @param face the face
+	 */
+	public record Looks(boolean female, int hair, int hairColor, int face)
+	{
+	}
+	
 	private FakePlayerPvpFactory()
 	{
 	}
@@ -151,6 +162,21 @@ public class FakePlayerPvpFactory
 	 * @return a new template with its {@link FakePlayerPvpProfile} attached, or {@code null} if the build can't be made at this level
 	 */
 	public static NpcTemplate createTemplate(FakePlayerPvpBuild build, int level, int npcId, String name, PlayerClass forcedClass, String title)
+	{
+		return createTemplate(build, level, npcId, name, forcedClass, title, null);
+	}
+	
+	/**
+	 * @param build the build
+	 * @param level the level
+	 * @param npcId a free npc id for the template
+	 * @param name the character name
+	 * @param forcedClass a class of the build's class line to use instead of the one its level gives ({@code null} for the level's class)
+	 * @param title the character title
+	 * @param looks how it looks, {@code null} for random looks
+	 * @return a new template with its {@link FakePlayerPvpProfile} attached, or {@code null} if the build can't be made at this level
+	 */
+	public static NpcTemplate createTemplate(FakePlayerPvpBuild build, int level, int npcId, String name, PlayerClass forcedClass, String title, Looks looks)
 	{
 		final PlayerClass playerClass = forcedClass != null ? forcedClass : build.getPlayerClass(level);
 		final PlayerTemplate classTemplate = PlayerTemplateData.getInstance().getTemplate(playerClass);
@@ -316,7 +342,7 @@ public class FakePlayerPvpFactory
 		
 		// Looks. Kamael classes are male (Trooper, Berserker, Doombringer...) or female (Warder, Arbalester, Trickster...) from their base class on.
 		final PlayerClass baseClass = build.getPlayerClass(0);
-		final boolean female = (baseClass == PlayerClass.FEMALE_SOLDIER) || ((baseClass != PlayerClass.MALE_SOLDIER) && Rnd.nextBoolean());
+		final boolean female = (baseClass == PlayerClass.FEMALE_SOLDIER) || ((baseClass != PlayerClass.MALE_SOLDIER) && (looks != null ? looks.female() : Rnd.nextBoolean()));
 		final Role role = build.getRole();
 		
 		final StatSet set = new StatSet(new HashMap<>());
@@ -374,9 +400,9 @@ public class FakePlayerPvpFactory
 		// Fake player appearance.
 		set.set("fakePlayer", true);
 		set.set("classId", playerClass.getId());
-		set.set("hair", female ? Rnd.get(7) : Rnd.get(5));
-		set.set("hairColor", Rnd.get(4));
-		set.set("face", Rnd.get(3));
+		set.set("hair", looks != null ? looks.hair() : female ? Rnd.get(7) : Rnd.get(5));
+		set.set("hairColor", looks != null ? looks.hairColor() : Rnd.get(4));
+		set.set("face", looks != null ? looks.face() : Rnd.get(3));
 		set.set("equipRHand", weapon != null ? weapon.getId() : 0);
 		set.set("equipLHand", shield != null ? shield.getId() : 0);
 		set.set("equipChest", getId(chest));

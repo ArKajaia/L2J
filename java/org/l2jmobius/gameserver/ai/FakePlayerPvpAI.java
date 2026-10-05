@@ -381,12 +381,6 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// It answered a player looking for its class: it walks over and waits for the invite.
-		if ((profile != null) && (party == null) && thinkLf(npc, profile, System.currentTimeMillis()))
-		{
-			return;
-		}
-		
 		// Its hotzone rotated out a while ago: off to town, and it logs off.
 		if (thinkLeave(npc, profile, System.currentTimeMillis()))
 		{
@@ -2263,9 +2257,8 @@ public class FakePlayerPvpAI extends AttackableAI
 			return false;
 		}
 		
-		// Busy with players: in their party, or on its way to join one.
-		final FakePlayerPvpProfile otherProfile = other.getTemplate().getFakePlayerPvpProfile();
-		if ((otherProfile != null) && ((otherProfile.getLfTarget(System.currentTimeMillis()) != 0) || FakePartyManager.getInstance().isInPlayerParty(other) || FakePartyManager.getInstance().isSameGroup(npc, other)))
+		// Busy with players: in their party.
+		if (FakePartyManager.getInstance().isInPlayerParty(other) || FakePartyManager.getInstance().isSameGroup(npc, other))
 		{
 			return false;
 		}
@@ -3364,10 +3357,6 @@ public class FakePlayerPvpAI extends AttackableAI
 	// Party (see FakePartyManager)
 	// ---------------------------------------------------------------------------------------------
 	
-	/** How close a fake player that answered a player's request stands to it while it waits for the invite. */
-	private static final int LF_STAND_DISTANCE = 120;
-	/** It gives up walking over to a player that got this far away. */
-	private static final int LF_MAX_DISTANCE = 6000;
 	/** Party members this far away are out of its care. */
 	private static final int SUPPORT_RANGE = 1500;
 	/** It doesn't cast the same support skill on the same member again within this time (when it didn't take). */
@@ -3413,20 +3402,6 @@ public class FakePlayerPvpAI extends AttackableAI
 		_resting = false;
 	}
 	
-	/**
-	 * Called when it answered a player looking for its class: it stops what it was doing (but a fight) and walks over.
-	 */
-	public void onAnswer()
-	{
-		final Attackable npc = getActiveChar();
-		endPoke(npc);
-		_meetTarget = null;
-		endTalk();
-		if (!npc.isInCombat() && (getIntention() != Intention.ATTACK))
-		{
-			setIntention(Intention.ACTIVE);
-		}
-	}
 	
 	/**
 	 * In a party: it looks after the party (healers and buffers), fights what the party fights and follows its leader. The leader of a party of fake players hunts like any fake player, the others go with it.
@@ -3513,50 +3488,6 @@ public class FakePlayerPvpAI extends AttackableAI
 		return true;
 	}
 	
-	/**
-	 * Walks over to the player it answered in chat ("lf &lt;class&gt;") and waits there for the invite.
-	 * @param npc the fake player
-	 * @param profile its profile
-	 * @param now the current time
-	 * @return {@code true} if it is on its way, or waiting
-	 */
-	private boolean thinkLf(Attackable npc, FakePlayerPvpProfile profile, long now)
-	{
-		final int playerId = profile.getLfTarget(now);
-		if (playerId == 0)
-		{
-			return false;
-		}
-		
-		final Player player = World.getInstance().getPlayer(playerId);
-		if ((player == null) || !player.isOnline() || (player.getInstanceId() != npc.getInstanceId()) || (npc.calculateDistance2D(player) > LF_MAX_DISTANCE))
-		{
-			profile.setLfTarget(0, 0);
-			return false;
-		}
-		
-		if (standUp(npc))
-		{
-			return true;
-		}
-		
-		if (npc.calculateDistance2D(player) > LF_STAND_DISTANCE)
-		{
-			if (!npc.isMovementDisabled())
-			{
-				npc.setRunning();
-				moveToPawn(player, Rnd.get(60, LF_STAND_DISTANCE - 20));
-			}
-			return true;
-		}
-		
-		// There: it faces the player and waits.
-		if (!npc.isMoving())
-		{
-			npc.setHeading(LocationUtil.calculateHeadingFrom(npc, player));
-		}
-		return true;
-	}
 	
 	/**
 	 * Follows the party leader: runs (or walks) after it.

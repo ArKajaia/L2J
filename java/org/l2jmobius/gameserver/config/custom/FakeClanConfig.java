@@ -21,7 +21,9 @@
 package org.l2jmobius.gameserver.config.custom;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.util.ConfigReader;
@@ -58,6 +60,13 @@ public class FakeClanConfig
 	public static int ALLY_ACCEPT_CHANCE;
 	public static int INVITE_ACCEPT_CHANCE;
 	public static int MAX_RECRUITS;
+	public static int MEMBER_CYCLE_HOURS;
+	public static int MEMBER_LEAVE_CHANCE;
+	public static int MEMBER_LEVEL_UP_CHANCE;
+	public static Set<Integer> MEMBER_REROLL_LEVELS = new HashSet<>();
+	public static int MEMBER_OFFLINE_MIN;
+	public static int MEMBER_OFFLINE_MAX;
+	public static int MEMBER_LOGIN_LEVEL_RANGE;
 	
 	public static void load()
 	{
@@ -132,6 +141,31 @@ public class FakeClanConfig
 		WAR_GRUDGE_TIME = Math.max(1, config.getInt("FakeClanWarGrudgeTime", 60));
 		ALLY_ACCEPT_CHANCE = Math.max(0, Math.min(100, config.getInt("FakeClanAllyAcceptChance", 80)));
 		INVITE_ACCEPT_CHANCE = Math.max(0, Math.min(100, config.getInt("FakeClanInviteAcceptChance", 60)));
-		MAX_RECRUITS = Math.max(0, config.getInt("FakeClanMaxRecruits", 10));
+		MAX_RECRUITS = Math.max(0, config.getInt("FakeClanMaxRecruits", 0));
+		MEMBER_CYCLE_HOURS = Math.max(1, config.getInt("FakeClanMemberCycleHours", 24));
+		MEMBER_LEAVE_CHANCE = Math.max(0, Math.min(100, config.getInt("FakeClanMemberLeaveChance", 5)));
+		MEMBER_LEVEL_UP_CHANCE = Math.max(0, Math.min(100, config.getInt("FakeClanMemberLevelUpChance", 5)));
+		
+		MEMBER_REROLL_LEVELS = new HashSet<>();
+		for (String value : config.getString("FakeClanMemberRerollLevels", "20,40,52,61,76,80,82,84").split(","))
+		{
+			if (value.isBlank())
+			{
+				continue;
+			}
+			
+			try
+			{
+				MEMBER_REROLL_LEVELS.add(Integer.parseInt(value.trim()));
+			}
+			catch (NumberFormatException e)
+			{
+				LOGGER.warning(FakeClanConfig.class.getSimpleName() + ": FakeClanMemberRerollLevels entry " + value.trim() + " is not a level, skipped.");
+			}
+		}
+		
+		MEMBER_OFFLINE_MIN = Math.max(1, config.getInt("FakeClanMemberOfflineMin", 30));
+		MEMBER_OFFLINE_MAX = Math.max(MEMBER_OFFLINE_MIN, config.getInt("FakeClanMemberOfflineMax", 240));
+		MEMBER_LOGIN_LEVEL_RANGE = Math.max(0, config.getInt("FakeClanMemberLoginLevelRange", 5));
 	}
 }

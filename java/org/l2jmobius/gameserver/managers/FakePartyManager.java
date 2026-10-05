@@ -21,16 +21,12 @@
 package org.l2jmobius.gameserver.managers;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
-import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,11 +46,9 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
-import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
-import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.groups.Party;
@@ -74,9 +68,8 @@ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
 /**
  * Fake party members (see {@link FakePartyConfig}).
  * <ul>
- * <li>A player writes "lf &lt;class&gt;" in chat ({@link #onPlayerChat}): a fake player of that class and of the player's level answers in a whisper and walks over (a free one hunting close by, or one that comes from out of sight).</li>
- * <li>The player invites it ({@link #onInvite}, called from {@code RequestJoinParty}): it accepts and joins the party ({@link FakePlayerParty}). Fake players are npcs, so they are kept next to the player's {@link Party}, and the party window is sent with them
- * ({@link #refreshWindows}).</li>
+ * <li>A player who meets a roaming fake player invites it ({@link #onInvite}, called from {@code RequestJoinParty}). It may accept, more likely the closer their levels are ({@link #getAcceptChance}), and joins the party ({@link FakePlayerParty}). Fake players are npcs, so they
+ * are kept next to the player's {@link Party}, and the party window is sent with them ({@link #refreshWindows}).</li>
  * <li>In the party its AI ({@link FakePlayerPvpAI}) follows the leader, fights what the party fights and, for a healer or buffer, looks after the party. Its damage and kills count for the party ({@link #getRewardPlayer}, {@link #getExpShare}), party skills reach it
  * and its area skills spare the party ({@link #isSameGroup}).</li>
  * <li>Dismissed, or when the player leaves the party or logs off, it goes back to hunting where it is. Killed, it comes back to the party from town a while after its body is gone, unless someone resurrects it first.</li>
@@ -87,87 +80,22 @@ public class FakePartyManager
 {
 	private static final Logger LOGGER = Logger.getLogger(FakePartyManager.class.getName());
 	
-	/** Party window HP/MP of the fake players, and the waiting ones, are checked this often. */
+	/** Party window HP/MP of the fake players are checked this often. */
 	private static final long UPDATE_INTERVAL = 1000;
 	/** A party holds this many members, players and fake players. */
 	private static final int MAX_PARTY_SIZE = 9;
-	/** An answering fake player comes from out of sight, or from about this far when every spot around is in sight. */
+	/** A fake player coming back from town appears out of sight, or about this far when every spot around is in sight. */
 	private static final int ARRIVAL_DISTANCE = 1300;
 	/** The party leader got this far (or into another instance): its fake players get there after {@link FakePartyConfig#TELEPORT_DELAY}, like players taking the same gatekeeper. */
 	private static final int TELEPORT_FOLLOW_DISTANCE = 4000;
-	/** A fake player this far from the player it goes to (or its party leader), standing still, is sent over (see {@link #walkTo}). */
+	/** A fake player this far from its party leader, standing still, is sent over (see {@link #walkTo}). */
 	private static final int WALK_OVER_DISTANCE = 600;
-	/** A fake player that wasn't asked for only joins a player this close. */
+	/** A fake player only joins a player this close. */
 	private static final int INVITE_RANGE = 2000;
 	/** How long a fake player sticks to its answer to someone's invites. */
 	private static final long INVITE_MEMORY = 300000;
 	
-	/** Words that start a request: "lf ss", "lfm healer", "lf2 dd", "need bp", "looking for ee". */
-	private static final Set<String> TRIGGERS = Set.of("lf", "lfm", "lfp", "lfg", "need", "needs");
-	
-	/** Short names players use for the classes. */
-	private static final String[][] SHORT_NAMES =
-	{
-		// @formatter:off
-		{"SPELLSINGER", "ss", "sps", "singer"},
-		{"SPELLHOWLER", "sh", "howler"},
-		{"SORCERER", "sorc", "sorcer", "sorce"},
-		{"NECROMANCER", "necro"},
-		{"BISHOP", "bp", "bish", "bishy"},
-		{"PROPHET", "pp", "proph", "prof"},
-		{"ELDER", "ee", "elvenelder"},
-		{"SHILLIEN_ELDER", "se", "selder"},
-		{"WARCRYER", "wc", "warcry"},
-		{"OVERLORD", "ol"},
-		{"BLADEDANCER", "bd", "dancer"},
-		{"SWORDSINGER", "sws", "swordsinger"},
-		{"TREASURE_HUNTER", "th"},
-		{"PLAINS_WALKER", "pw", "plainswalker"},
-		{"ABYSS_WALKER", "aw"},
-		{"HAWKEYE", "he", "hawk"},
-		{"SILVER_RANGER", "sr"},
-		{"PHANTOM_RANGER", "pr"},
-		{"TEMPLE_KNIGHT", "tk"},
-		{"SHILLIEN_KNIGHT", "sk"},
-		{"DARK_AVENGER", "da"},
-		{"PALADIN", "pal", "pala", "pally"},
-		{"GLADIATOR", "glad", "gladi"},
-		{"WARLORD", "wl"},
-		{"DESTROYER", "destro"},
-		{"TYRANT", "tyr"},
-		{"MYSTIC_MUSE", "mm"},
-		{"CARDINAL", "cardi"},
-		{"HIEROPHANT", "hiero"},
-		{"EVA_SAINT", "evas", "evassaint"},
-		{"EVA_TEMPLAR", "evastemplar"},
-		{"SHILLIEN_SAINT", "ssaint"},
-		{"DOOMCRYER", "dc"},
-		{"SWORD_MUSE", "swm"},
-		{"SPECTRAL_DANCER", "sd"},
-		{"ARCHMAGE", "am"},
-		{"MALE_SOUL_HOUND", "soulhound", "hound"},
-		{"FEMALE_SOUL_HOUND", "soulhound", "hound"},
-		{"MALE_SOULBREAKER", "soulbreaker", "sb"},
-		{"FEMALE_SOULBREAKER", "soulbreaker", "sb"},
-		// @formatter:on
-	};
-	
-	/** The healers ("lf healer"). */
-	private static final Set<PlayerClass> HEALERS = EnumSet.of(PlayerClass.CARDINAL, PlayerClass.EVA_SAINT, PlayerClass.SHILLIEN_SAINT);
-	/** The buffers ("lf buffer"). */
-	private static final Set<PlayerClass> BUFFERS = EnumSet.of(PlayerClass.HIEROPHANT, PlayerClass.DOOMCRYER, PlayerClass.DOMINATOR, PlayerClass.SWORD_MUSE, PlayerClass.SPECTRAL_DANCER, PlayerClass.EVA_SAINT, PlayerClass.SHILLIEN_SAINT);
-	
 	// What fake players say.
-	private static final String[] ANSWERS =
-	{
-		"%c %l here, inv pls",
-		"me! %c %l",
-		"%l %c, can come",
-		"hey, %c %l free, omw",
-		"inv me, %c %l",
-		"%c %l, where r u?",
-		"i can come, %c %l",
-	};
 	private static final String[] JOIN =
 	{
 		"ty",
@@ -192,11 +120,19 @@ public class FakePartyManager
 		"nah",
 		"sry, already have a pt",
 	};
-	private static final String[] NEVERMIND =
+	private static final String[] DECLINE_LOW =
 	{
-		"nvm then",
-		"found a pt, gl",
-		"nvm, gl",
+		"ur too low for me sry",
+		"no ty, too low lvl",
+		"lvl gap too big",
+		"sry, i'd get no exp with u",
+	};
+	private static final String[] DECLINE_HIGH =
+	{
+		"ur way too high for me",
+		"lol no, i'd die here",
+		"too high lvl for me sry",
+		"cant keep up with u, sry",
 	};
 	private static final String[] DEATH =
 	{
@@ -236,10 +172,6 @@ public class FakePartyManager
 	private final Map<Integer, FakePlayerParty> _parties = new ConcurrentHashMap<>();
 	/** Parties of fake players only. */
 	private final Set<FakePlayerParty> _fakeParties = ConcurrentHashMap.newKeySet();
-	/** Fake players walking over to a player that asked for their class, and to whom (object id). */
-	private final Map<Npc, Integer> _responders = new ConcurrentHashMap<>();
-	/** When a player's next request gets an answer (object id -> time). */
-	private final Map<Integer, Long> _nextRequest = new ConcurrentHashMap<>();
 	/** The answer of a fake player to a player's invites: (fake object id &lt;&lt; 32 | player object id) -> until when, positive for yes, negative for no. */
 	private final Map<Long, Long> _decisions = new ConcurrentHashMap<>();
 	/** HP/MP of the party fake players last sent to the party window (object id -> HP &lt;&lt; 32 | MP). */
@@ -248,8 +180,6 @@ public class FakePartyManager
 	private final Map<Integer, Long> _farSince = new ConcurrentHashMap<>();
 	/** Dead party fake players on their way back from town, by name. */
 	private final Map<String, ScheduledFuture<?>> _returns = new ConcurrentHashMap<>();
-	/** Class names and short names players write, with the builds they ask for. */
-	private volatile Map<String, List<FakePlayerPvpBuild>> _names;
 	
 	protected FakePartyManager()
 	{
@@ -257,398 +187,11 @@ public class FakePartyManager
 	}
 	
 	/**
-	 * @return {@code true} if players can ask for fake party members
+	 * @return {@code true} if players can party with fake players
 	 */
 	public boolean isEnabled()
 	{
 		return FakePartyConfig.ENABLED && FakePlayersConfig.FAKE_PLAYERS_ENABLED && !FakePlayerPvpData.getInstance().getBuilds().isEmpty();
-	}
-	
-	// ---------------------------------------------------------------------------------------------
-	// Asking for a class in chat
-	// ---------------------------------------------------------------------------------------------
-	
-	/**
-	 * Called for every chat message of a player: "lf &lt;class&gt;" brings a fake player of that class (see {@link FakePartyConfig#LF_CHANNELS}).
-	 * @param player the player
-	 * @param type the chat channel
-	 * @param text the message
-	 */
-	public void onPlayerChat(Player player, ChatType type, String text)
-	{
-		if ((player == null) || (text == null) || !FakePartyConfig.LF_CHANNELS.contains(type) || !isEnabled())
-		{
-			return;
-		}
-		
-		final List<Request> requests = parse(text);
-		if (requests.isEmpty())
-		{
-			return;
-		}
-		
-		final long now = System.currentTimeMillis();
-		final Long next = _nextRequest.get(player.getObjectId());
-		if ((next != null) && (now < next))
-		{
-			return;
-		}
-		
-		if (!canHaveFakes(player))
-		{
-			return;
-		}
-		
-		_nextRequest.put(player.getObjectId(), now + (FakePartyConfig.LF_COOLDOWN * 1000L));
-		
-		// Typing takes a while, and they don't all answer at once.
-		long delay = Rnd.get(FakePartyConfig.LF_DELAY_MIN, FakePartyConfig.LF_DELAY_MAX) * 1000L;
-		for (Request request : requests)
-		{
-			ThreadPool.schedule(() -> answer(player, request), delay);
-			delay += Rnd.get(1000, 4000);
-		}
-	}
-	
-	/**
-	 * What a player asked for: the word used and the builds it means.
-	 */
-	private record Request(String word, List<FakePlayerPvpBuild> builds, boolean role)
-	{
-	}
-	
-	/**
-	 * @param text a chat message
-	 * @return the classes it asks for, none if it isn't a request ("lf ...")
-	 */
-	private List<Request> parse(String text)
-	{
-		final String[] words = text.toLowerCase().replace("'", "").replaceAll("[^a-z0-9]+", " ").trim().split(" ");
-		if ((words.length < 2) || words[0].isEmpty())
-		{
-			return Collections.emptyList();
-		}
-		
-		int start;
-		if (TRIGGERS.contains(words[0]) || words[0].matches("lf[mp]?\\d+"))
-		{
-			start = 1;
-		}
-		else if ((words.length > 2) && words[0].equals("looking") && words[1].equals("for"))
-		{
-			start = 2;
-		}
-		else
-		{
-			return Collections.emptyList();
-		}
-		
-		final Map<String, List<FakePlayerPvpBuild>> names = getNames();
-		final List<Request> requests = new ArrayList<>();
-		final Set<String> seen = new HashSet<>();
-		for (int i = start; (i < words.length) && (requests.size() < FakePartyConfig.LF_MAX_PER_MESSAGE);)
-		{
-			boolean found = false;
-			
-			// Class names of up to three words ("mystic muse", "eva s saint").
-			for (int count = Math.min(3, words.length - i); count > 0; count--)
-			{
-				final StringBuilder sb = new StringBuilder();
-				for (int j = i; j < (i + count); j++)
-				{
-					sb.append(words[j]);
-				}
-				
-				String key = sb.toString();
-				List<FakePlayerPvpBuild> builds = names.get(key);
-				if ((builds == null) && (key.length() > 3) && key.endsWith("s")) // "healers", "bishops"
-				{
-					key = key.substring(0, key.length() - 1);
-					builds = names.get(key);
-				}
-				
-				if (builds != null)
-				{
-					if (seen.add(key))
-					{
-						requests.add(new Request(key, builds, isRoleWord(key)));
-					}
-					i += count;
-					found = true;
-					break;
-				}
-			}
-			
-			if (!found)
-			{
-				i++;
-			}
-		}
-		
-		return requests;
-	}
-	
-	/**
-	 * @return the words players use for the classes, built once the builds are loaded
-	 */
-	private Map<String, List<FakePlayerPvpBuild>> getNames()
-	{
-		Map<String, List<FakePlayerPvpBuild>> names = _names;
-		if (names == null)
-		{
-			synchronized (this)
-			{
-				names = _names;
-				if (names == null)
-				{
-					names = createNames();
-					_names = names;
-				}
-			}
-		}
-		
-		return names;
-	}
-	
-	private static Map<String, List<FakePlayerPvpBuild>> createNames()
-	{
-		final Map<String, List<FakePlayerPvpBuild>> names = new HashMap<>();
-		final List<FakePlayerPvpBuild> builds = FakePlayerPvpData.getInstance().getBuilds();
-		
-		// Every class of a build's class line, from the 1st class on (base classes are shared by many lines): "lf spellsinger" brings a Mystic Muse build, which is a Spellsinger below 76.
-		for (FakePlayerPvpBuild build : builds)
-		{
-			for (PlayerClass playerClass = build.getPlayerClass(); (playerClass != null) && (playerClass.level() >= 1); playerClass = playerClass.getParent())
-			{
-				addName(names, normalize(playerClass.name()), build);
-			}
-		}
-		
-		// Short names.
-		for (String[] shortNames : SHORT_NAMES)
-		{
-			final List<FakePlayerPvpBuild> classBuilds = names.get(normalize(shortNames[0]));
-			if (classBuilds == null)
-			{
-				continue;
-			}
-			
-			for (int i = 1; i < shortNames.length; i++)
-			{
-				for (FakePlayerPvpBuild build : new ArrayList<>(classBuilds))
-				{
-					addName(names, shortNames[i], build);
-				}
-			}
-		}
-		
-		// Roles.
-		addRole(names, builds, b -> HEALERS.contains(b.getPlayerClass()), "healer", "heal", "heals", "healz", "heala", "healr");
-		addRole(names, builds, b -> BUFFERS.contains(b.getPlayerClass()), "buffer", "buff", "buffs", "buffz", "bufer");
-		addRole(names, builds, FakePlayerPvpBuild::isSupport, "support", "supp", "sup");
-		addRole(names, builds, b -> !b.isSupport() && (b.getRole() == Role.TANK), "tank", "tanker");
-		addRole(names, builds, b -> !b.isSupport() && (b.getRole() == Role.MAGE), "nuker", "nuke", "mage", "mystic", "caster");
-		addRole(names, builds, b -> !b.isSupport() && (b.getRole() == Role.ARCHER), "archer", "bow", "bowman", "ranger");
-		addRole(names, builds, b -> !b.isSupport() && (b.getRole() == Role.DAGGER), "dagger", "dag", "rogue");
-		addRole(names, builds, b -> !b.isSupport() && (b.getRole() == Role.FIGHTER), "warrior", "melee", "fighter");
-		addRole(names, builds, b -> !b.isSupport() && (b.getRole() != Role.TANK), "dd", "dps", "damage");
-		return names;
-	}
-	
-	private static void addName(Map<String, List<FakePlayerPvpBuild>> names, String name, FakePlayerPvpBuild build)
-	{
-		final List<FakePlayerPvpBuild> list = names.computeIfAbsent(name, _ -> new ArrayList<>());
-		if (!list.contains(build))
-		{
-			list.add(build);
-		}
-	}
-	
-	private static void addRole(Map<String, List<FakePlayerPvpBuild>> names, List<FakePlayerPvpBuild> builds, Predicate<FakePlayerPvpBuild> filter, String... words)
-	{
-		final List<FakePlayerPvpBuild> matching = new ArrayList<>();
-		for (FakePlayerPvpBuild build : builds)
-		{
-			if (filter.test(build))
-			{
-				matching.add(build);
-			}
-		}
-		
-		if (matching.isEmpty())
-		{
-			return;
-		}
-		
-		for (String word : words)
-		{
-			// A class name wins over a role ("ranger" isn't a class, "dagger" isn't either).
-			names.putIfAbsent(word, matching);
-		}
-	}
-	
-	private static boolean isRoleWord(String word)
-	{
-		return switch (word)
-		{
-			case "healer", "heal", "heals", "healz", "heala", "healr", "buffer", "buff", "buffs", "buffz", "bufer", "support", "supp", "sup", "tank", "tanker", "nuker", "nuke", "mage", "mystic", "caster", "archer", "bow", "bowman", "ranger", "dagger", "dag", "rogue", "warrior", "melee", "fighter", "dd", "dps", "damage" -> true;
-			default -> false;
-		};
-	}
-	
-	/**
-	 * @param name a class name (enum name, or what a player wrote)
-	 * @return the name in lower case, without spaces, underscores and quotes
-	 */
-	private static String normalize(String name)
-	{
-		return name.toLowerCase().replaceAll("[^a-z0-9]", "");
-	}
-	
-	/**
-	 * @param playerClass a class
-	 * @return its name as players write it ("Spellsinger", "Eva's Saint")
-	 */
-	public static String getClassName(PlayerClass playerClass)
-	{
-		switch (playerClass)
-		{
-			case ELDER:
-				return "Elven Elder";
-			case ORACLE:
-				return "Elven Oracle";
-			case EVA_SAINT:
-				return "Eva's Saint";
-			case EVA_TEMPLAR:
-				return "Eva's Templar";
-			case MALE_SOUL_HOUND:
-			case FEMALE_SOUL_HOUND:
-				return "Soul Hound";
-			case MALE_SOULBREAKER:
-			case FEMALE_SOULBREAKER:
-				return "Soul Breaker";
-			default:
-			{
-				final StringBuilder sb = new StringBuilder();
-				for (String word : playerClass.name().toLowerCase().split("_"))
-				{
-					if (!sb.isEmpty())
-					{
-						sb.append(' ');
-					}
-					sb.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
-				}
-				return sb.toString();
-			}
-		}
-	}
-	
-	/**
-	 * A fake player answers a player's request: a free one of the class hunting close by, or one that comes over from out of sight.
-	 * @param player the player that asked
-	 * @param request what it asked for
-	 */
-	private void answer(Player player, Request request)
-	{
-		try
-		{
-			if (!player.isOnline() || !canHaveFakes(player) || (getMemberCount(player) >= MAX_PARTY_SIZE) || (getFakeCount(player) >= FakePartyConfig.MAX_FAKES))
-			{
-				return;
-			}
-			
-			final long now = System.currentTimeMillis();
-			Npc fake = findNearbyFake(player, request.builds(), now);
-			if (fake == null)
-			{
-				final FakePlayerPvpBuild build = request.builds().get(Rnd.get(request.builds().size()));
-				final int spread = FakePartyConfig.LF_LEVEL_SPREAD;
-				final int level = Math.max(1, Math.min(85, player.getLevel() + Rnd.get(-spread, spread)));
-				final Location arrival = findArrival(player);
-				if (arrival == null)
-				{
-					return;
-				}
-				
-				fake = FakePlayerPvpManager.getInstance().spawnFakePlayer(build, level, arrival.getX(), arrival.getY(), arrival.getZ(), player.getInstanceId(), null, null);
-				if (fake == null)
-				{
-					return;
-				}
-				
-				// Not of a clan at war with the player's.
-				FakeClanManager.getInstance().avoidWar(fake, player);
-			}
-			
-			final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
-			profile.setLfTarget(player.getObjectId(), now + (FakePartyConfig.LF_WAIT_TIME * 1000L));
-			_responders.put(fake, player.getObjectId());
-			if (fake.hasAI() && (fake.getAI() instanceof FakePlayerPvpAI ai))
-			{
-				ai.onAnswer();
-			}
-			
-			// Its class the way the player wrote it, or its real name for a role ("lf healer").
-			final String className = request.role() ? getClassName(profile.getPlayerClass()) : (Rnd.nextBoolean() ? request.word() : getClassName(profile.getPlayerClass()));
-			whisper(fake, player, pick(ANSWERS).replace("%c", Rnd.get(3) == 0 ? className.toLowerCase() : className).replace("%l", String.valueOf(fake.getLevel())));
-		}
-		catch (Exception e)
-		{
-			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not answer " + player.getName() + ".", e);
-		}
-	}
-	
-	/**
-	 * @param player the player that asked
-	 * @param builds the builds it asked for
-	 * @param now the current time
-	 * @return the closest free fake player of one of those classes hunting close by, about the player's level, {@code null} if none
-	 */
-	private static Npc findNearbyFake(Player player, List<FakePlayerPvpBuild> builds, long now)
-	{
-		if (FakePartyConfig.LF_NEARBY_RANGE <= 0)
-		{
-			return null;
-		}
-		
-		final int levelDifference = Math.max(FakePartyConfig.LF_LEVEL_SPREAD, 2);
-		Npc closest = null;
-		double closestDistance = FakePartyConfig.LF_NEARBY_RANGE;
-		for (Npc fake : FakePlayerPvpManager.getInstance().getFakePlayers())
-		{
-			if (fake.isDead() || !fake.isSpawned() || fake.isTrialDuelist() || (fake.getInstanceId() != player.getInstanceId()) || (Math.abs(fake.getLevel() - player.getLevel()) > levelDifference))
-			{
-				continue;
-			}
-			
-			final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
-			if ((profile == null) || (profile.getParty() != null) || (profile.getLfTarget(now) != 0) || FakePlayerPvpManager.isInPvp(fake) || !isOfClass(profile, builds) || FakeClanManager.getInstance().isWarEnemy(fake, player))
-			{
-				continue;
-			}
-			
-			final double distance = fake.calculateDistance2D(player);
-			if (distance < closestDistance)
-			{
-				closest = fake;
-				closestDistance = distance;
-			}
-		}
-		
-		return closest;
-	}
-	
-	private static boolean isOfClass(FakePlayerPvpProfile profile, List<FakePlayerPvpBuild> builds)
-	{
-		for (FakePlayerPvpBuild build : builds)
-		{
-			if (build.getPlayerClass() == profile.getBuild().getPlayerClass())
-			{
-				return true;
-			}
-		}
-		
-		return false;
 	}
 	
 	/**
@@ -705,7 +248,7 @@ public class FakePartyManager
 	// ---------------------------------------------------------------------------------------------
 	
 	/**
-	 * Called from {@code RequestJoinParty} when no player has the invited name: an invited fake player answers like a player would. One that answered the inviter's request always accepts; another one may, if it hunts close by and isn't busy.
+	 * Called from {@code RequestJoinParty} when no player has the invited name: an invited fake player answers like a player would. It may accept if it hunts close by and isn't busy, see {@link #getAcceptChance}.
 	 * @param requestor the player that invites
 	 * @param name the name it invited
 	 * @param distributionType the loot rule the requestor chose for a new party, {@code null} for none
@@ -752,11 +295,7 @@ public class FakePartyManager
 			return true;
 		}
 		
-		// It answered the inviter, or a player of the inviter's party.
-		final long now = System.currentTimeMillis();
-		final int askedBy = profile.getLfTarget(now);
-		final boolean asked = (askedBy != 0) && ((askedBy == requestor.getObjectId()) || ((party != null) && party.getMembers().stream().anyMatch(member -> member.getObjectId() == askedBy)));
-		if (((getMemberCount(requestor) - (askedBy == requestor.getObjectId() ? 1 : 0)) >= MAX_PARTY_SIZE) || (getFakeCount(requestor) >= FakePartyConfig.MAX_FAKES))
+		if ((getMemberCount(requestor) >= MAX_PARTY_SIZE) || (getFakeCount(requestor) >= FakePartyConfig.MAX_FAKES))
 		{
 			requestor.sendPacket(SystemMessageId.THE_PARTY_IS_FULL);
 			return true;
@@ -772,13 +311,13 @@ public class FakePartyManager
 			requestor.setPartyDistributionType(distributionType);
 		}
 		
-		final boolean accept = asked || wantsToJoin(fake, requestor, now);
-		ThreadPool.schedule(() -> answerInvite(requestor, fake, accept), Rnd.get(800, asked ? 2500 : 5000));
+		final boolean accept = wantsToJoin(fake, requestor, System.currentTimeMillis());
+		ThreadPool.schedule(() -> answerInvite(requestor, fake, accept), Rnd.get(800, 5000));
 		return true;
 	}
 	
 	/**
-	 * @param fake a fake player that didn't ask to join
+	 * @param fake a fake player
 	 * @param requestor the player that invites it
 	 * @param now the current time
 	 * @return {@code true} if it accepts (it keeps to its answer for a while)
@@ -792,9 +331,32 @@ public class FakePartyManager
 			return decision > 0;
 		}
 		
-		final boolean accept = !FakePlayerPvpManager.isInPvp(fake) && !FakeClanManager.getInstance().isWarEnemy(fake, requestor) && (fake.calculateDistance2D(requestor) <= INVITE_RANGE) && (Math.abs(fake.getLevel() - requestor.getLevel()) <= FakePartyConfig.INVITE_MAX_LEVEL_DIFFERENCE) && (Rnd.get(100) < FakePartyConfig.INVITE_ACCEPT_CHANCE);
+		final boolean accept = !FakePlayerPvpManager.isInPvp(fake) && !FakeClanManager.getInstance().isWarEnemy(fake, requestor) && (fake.calculateDistance2D(requestor) <= INVITE_RANGE) && (Rnd.get(100) < getAcceptChance(fake, requestor));
 		_decisions.put(key, accept ? (now + INVITE_MEMORY) : -(now + INVITE_MEMORY));
 		return accept;
+	}
+	
+	/**
+	 * The chance (in %) a fake player accepts a party invite: {@link FakePartyConfig#INVITE_ACCEPT_CHANCE} at the same level, less for each level the inviter is below it ({@link FakePartyConfig#INVITE_CHANCE_PER_LEVEL_BELOW}, it would have to carry them) or above it
+	 * ({@link FakePartyConfig#INVITE_CHANCE_PER_LEVEL_ABOVE}, it can't keep up), none past {@link FakePartyConfig#INVITE_MAX_LEVEL_DIFFERENCE}. Members of the inviter's clan or alliance are keener ({@link FakePartyConfig#INVITE_CLAN_BONUS}).
+	 * @param fake the fake player
+	 * @param requestor the player that invites it
+	 * @return the chance, 0-100
+	 */
+	public static int getAcceptChance(Npc fake, Player requestor)
+	{
+		final int difference = requestor.getLevel() - fake.getLevel();
+		if (Math.abs(difference) > FakePartyConfig.INVITE_MAX_LEVEL_DIFFERENCE)
+		{
+			return 0;
+		}
+		
+		int chance = FakePartyConfig.INVITE_ACCEPT_CHANCE - (difference < 0 ? -difference * FakePartyConfig.INVITE_CHANCE_PER_LEVEL_BELOW : difference * FakePartyConfig.INVITE_CHANCE_PER_LEVEL_ABOVE);
+		if (FakeClanManager.getInstance().isFriend(fake, requestor))
+		{
+			chance += FakePartyConfig.INVITE_CLAN_BONUS;
+		}
+		return Math.max(0, Math.min(100, chance));
 	}
 	
 	private void answerInvite(Player requestor, Npc fake, boolean accept)
@@ -818,7 +380,9 @@ public class FakePartyManager
 		requestor.sendPacket(SystemMessageId.THE_PLAYER_DECLINED_TO_JOIN_YOUR_PARTY);
 		if (!accept && !fake.isDead() && (Rnd.get(100) < 60))
 		{
-			whisper(fake, requestor, pick(DECLINE));
+			// Says why when the levels are far apart.
+			final int difference = requestor.getLevel() - fake.getLevel();
+			whisper(fake, requestor, pick(difference <= -5 ? DECLINE_LOW : difference >= 5 ? DECLINE_HIGH : DECLINE));
 		}
 	}
 	
@@ -857,9 +421,7 @@ public class FakePartyManager
 		}
 		
 		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
-		profile.setLfTarget(0, 0);
 		profile.setParty(party);
-		_responders.remove(fake);
 		party.addFake(fake);
 		
 		FakePlayerPvpManager.getInstance().onJoinParty(fake);
@@ -1236,22 +798,12 @@ public class FakePartyManager
 	
 	/**
 	 * @param player a player
-	 * @return how many members its party has, with the fake players and the ones on their way to join it
+	 * @return how many members its party has, with the fake players
 	 */
 	private int getMemberCount(Player player)
 	{
 		final FakePlayerParty party = getParty(player);
-		int count = (party != null) && !party.isFakeOnly() ? party.size() : (player.isInParty() ? player.getParty().getMemberCount() : 1);
-		final long now = System.currentTimeMillis();
-		for (Map.Entry<Npc, Integer> entry : _responders.entrySet())
-		{
-			if ((entry.getValue() == player.getObjectId()) && (entry.getKey().getTemplate().getFakePlayerPvpProfile().getLfTarget(now) != 0))
-			{
-				count++;
-			}
-		}
-		
-		return count;
+		return (party != null) && !party.isFakeOnly() ? party.size() : (player.isInParty() ? player.getParty().getMemberCount() : 1);
 	}
 	
 	// ---------------------------------------------------------------------------------------------
@@ -1365,7 +917,6 @@ public class FakePartyManager
 	 */
 	public void onFakeDeath(Npc fake)
 	{
-		_responders.remove(fake);
 		final FakePlayerParty party = getParty(fake);
 		if ((party == null) || party.isFakeOnly())
 		{
@@ -1420,7 +971,6 @@ public class FakePartyManager
 	 */
 	public boolean onFakeDecay(Npc fake)
 	{
-		_responders.remove(fake);
 		final FakePlayerParty party = getParty(fake);
 		if (party == null)
 		{
@@ -1479,6 +1029,15 @@ public class FakePartyManager
 		{
 			ThreadPool.schedule(() -> partyChat(fake, pick(BACK)), Rnd.get(2000, 5000));
 		}
+	}
+	
+	/**
+	 * @param name a fake player name
+	 * @return {@code true} if that party fake player died and comes back to its party from town
+	 */
+	public boolean isComingBack(String name)
+	{
+		return _returns.containsKey(name);
 	}
 	
 	/**
@@ -1740,39 +1299,6 @@ public class FakePartyManager
 		{
 			final long now = System.currentTimeMillis();
 			
-			// Fake players that waited long enough for an invite go back to hunting.
-			for (Map.Entry<Npc, Integer> entry : _responders.entrySet())
-			{
-				final Npc fake = entry.getKey();
-				final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
-				if (fake.isDead() || !fake.isSpawned() || (profile.getParty() != null))
-				{
-					_responders.remove(fake);
-					continue;
-				}
-				
-				final int lfTarget = profile.getLfTarget(now);
-				if (lfTarget != 0)
-				{
-					// On its way: away from players its AI may not think yet, so it is sent over.
-					final Player player = World.getInstance().getPlayer(lfTarget);
-					if ((player != null) && (player.getInstanceId() == fake.getInstanceId()) && (fake.calculateDistance2D(player) > WALK_OVER_DISTANCE))
-					{
-						walkTo(fake, player);
-					}
-				}
-				else
-				{
-					_responders.remove(fake);
-					final Player player = World.getInstance().getPlayer(entry.getValue());
-					if ((player != null) && FakePartyConfig.CHAT && (profile.getLfUntil() <= now) && (Rnd.get(100) < 60))
-					{
-						whisper(fake, player, pick(NEVERMIND));
-					}
-					FakePlayerPvpManager.getInstance().onLeaveParty(fake);
-				}
-			}
-			
 			for (FakePlayerParty party : _parties.values())
 			{
 				// The player logged off: its fake players go on without it.
@@ -1841,7 +1367,6 @@ public class FakePartyManager
 			}
 			
 			_decisions.entrySet().removeIf(entry -> Math.abs(entry.getValue()) < now);
-			_nextRequest.entrySet().removeIf(entry -> entry.getValue() < now);
 		}
 		catch (Exception e)
 		{

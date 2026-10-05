@@ -20,7 +20,11 @@
  */
 package org.l2jmobius.commons.util;
 
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
+import java.util.random.RandomGenerator;
 
 /**
  * @author Mobius
@@ -31,12 +35,58 @@ public class Rnd
 	private static final long MINIMUM_POSITIVE_LONG = 1L;
 	private static final double MINIMUM_POSITIVE_DOUBLE = Double.longBitsToDouble(0x1L);
 	
+	/** The seeded generator a thread uses inside {@link #seeded}, none outside. */
+	private static final ThreadLocal<Random> SEEDED = new ThreadLocal<>();
+	/** How many threads are inside {@link #seeded}: while none is, nothing looks at {@link #SEEDED}. */
+	private static final AtomicInteger SEEDED_THREADS = new AtomicInteger();
+	
+	/**
+	 * Runs {@code supplier} with every value of this class on the calling thread drawn from a generator seeded with {@code seed}: the same seed gives the same values, for something that must come out the same each time it is made.
+	 * @param <T> the result type
+	 * @param seed the seed
+	 * @param supplier what to run
+	 * @return what {@code supplier} returned
+	 */
+	public static <T> T seeded(long seed, Supplier<T> supplier)
+	{
+		final Random previous = SEEDED.get();
+		SEEDED.set(new Random(seed));
+		SEEDED_THREADS.incrementAndGet();
+		try
+		{
+			return supplier.get();
+		}
+		finally
+		{
+			SEEDED_THREADS.decrementAndGet();
+			if (previous != null)
+			{
+				SEEDED.set(previous);
+			}
+			else
+			{
+				SEEDED.remove();
+			}
+		}
+	}
+	
+	private static RandomGenerator random()
+	{
+		if (SEEDED_THREADS.get() == 0)
+		{
+			return ThreadLocalRandom.current();
+		}
+		
+		final Random seeded = SEEDED.get();
+		return seeded != null ? seeded : ThreadLocalRandom.current();
+	}
+	
 	/**
 	 * @return a random boolean value.
 	 */
 	public static boolean nextBoolean()
 	{
-		return ThreadLocalRandom.current().nextBoolean();
+		return random().nextBoolean();
 	}
 	
 	/**
@@ -45,7 +95,7 @@ public class Rnd
 	 */
 	public static void nextBytes(byte[] bytes)
 	{
-		ThreadLocalRandom.current().nextBytes(bytes);
+		random().nextBytes(bytes);
 	}
 	
 	/**
@@ -54,7 +104,7 @@ public class Rnd
 	 */
 	public static int get(int bound)
 	{
-		return bound <= 0 ? 0 : ThreadLocalRandom.current().nextInt(bound);
+		return bound <= 0 ? 0 : random().nextInt(bound);
 	}
 	
 	/**
@@ -64,7 +114,7 @@ public class Rnd
 	 */
 	public static int get(int origin, int bound)
 	{
-		return origin >= bound ? origin : ThreadLocalRandom.current().nextInt(origin, bound == Integer.MAX_VALUE ? bound : bound + MINIMUM_POSITIVE_INT);
+		return origin >= bound ? origin : random().nextInt(origin, bound == Integer.MAX_VALUE ? bound : bound + MINIMUM_POSITIVE_INT);
 	}
 	
 	/**
@@ -72,7 +122,7 @@ public class Rnd
 	 */
 	public static int nextInt()
 	{
-		return ThreadLocalRandom.current().nextInt();
+		return random().nextInt();
 	}
 	
 	/**
@@ -81,7 +131,7 @@ public class Rnd
 	 */
 	public static long get(long bound)
 	{
-		return bound <= 0 ? 0 : ThreadLocalRandom.current().nextLong(bound);
+		return bound <= 0 ? 0 : random().nextLong(bound);
 	}
 	
 	/**
@@ -91,7 +141,7 @@ public class Rnd
 	 */
 	public static long get(long origin, long bound)
 	{
-		return origin >= bound ? origin : ThreadLocalRandom.current().nextLong(origin, bound == Long.MAX_VALUE ? bound : bound + MINIMUM_POSITIVE_LONG);
+		return origin >= bound ? origin : random().nextLong(origin, bound == Long.MAX_VALUE ? bound : bound + MINIMUM_POSITIVE_LONG);
 	}
 	
 	/**
@@ -99,7 +149,7 @@ public class Rnd
 	 */
 	public static long nextLong()
 	{
-		return ThreadLocalRandom.current().nextLong();
+		return random().nextLong();
 	}
 	
 	/**
@@ -108,7 +158,7 @@ public class Rnd
 	 */
 	public static double get(double bound)
 	{
-		return bound <= 0 ? 0 : ThreadLocalRandom.current().nextDouble(bound);
+		return bound <= 0 ? 0 : random().nextDouble(bound);
 	}
 	
 	/**
@@ -118,7 +168,7 @@ public class Rnd
 	 */
 	public static double get(double origin, double bound)
 	{
-		return origin >= bound ? origin : ThreadLocalRandom.current().nextDouble(origin, bound == Double.MAX_VALUE ? bound : bound + MINIMUM_POSITIVE_DOUBLE);
+		return origin >= bound ? origin : random().nextDouble(origin, bound == Double.MAX_VALUE ? bound : bound + MINIMUM_POSITIVE_DOUBLE);
 	}
 	
 	/**
@@ -126,7 +176,7 @@ public class Rnd
 	 */
 	public static double nextDouble()
 	{
-		return ThreadLocalRandom.current().nextDouble();
+		return random().nextDouble();
 	}
 	
 	/**
@@ -134,6 +184,6 @@ public class Rnd
 	 */
 	public static double nextGaussian()
 	{
-		return ThreadLocalRandom.current().nextGaussian();
+		return random().nextGaussian();
 	}
 }

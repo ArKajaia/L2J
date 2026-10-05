@@ -37,6 +37,7 @@ import org.l2jmobius.gameserver.data.xml.InitialShortcutData;
 import org.l2jmobius.gameserver.data.xml.PlayerTemplateData;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.data.xml.SkillTreeData;
+import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -116,7 +117,8 @@ public class CharacterCreate extends ClientPacket
 			}
 		}
 		
-		if (FakePlayerData.getInstance().getProperName(_name) != null)
+		// A fake player's name, or the name of a fake member of a players' clan (also while it is offline).
+		if ((FakePlayerData.getInstance().getProperName(_name) != null) || FakeClanManager.getInstance().isMemberName(_name))
 		{
 			client.sendPacket(new CharCreateFail(CharCreateFail.REASON_INCORRECT_NAME));
 			return;
