@@ -39,6 +39,7 @@ public class FakePlayersConfig
 	public static int FAKE_PLAYER_CHAT_NEARBY_COOLDOWN;
 	public static boolean FAKE_PLAYER_USE_SHOTS;
 	public static boolean FAKE_PLAYER_KILL_PVP;
+	public static int FAKE_PLAYER_KILL_PVP_LEVEL_GAP;
 	public static boolean FAKE_PLAYER_KILL_KARMA;
 	public static boolean FAKE_PLAYER_AUTO_ATTACKABLE;
 	public static boolean FAKE_PLAYER_AGGRO_MONSTERS;
@@ -70,6 +71,7 @@ public class FakePlayersConfig
 		FAKE_PLAYER_CHAT_NEARBY_COOLDOWN = Math.max(0, config.getInt("FakePlayerChatNearbyCooldown", 30));
 		FAKE_PLAYER_USE_SHOTS = config.getBoolean("FakePlayerUseShots", false);
 		FAKE_PLAYER_KILL_PVP = config.getBoolean("FakePlayerKillsRewardPvP", false);
+		FAKE_PLAYER_KILL_PVP_LEVEL_GAP = config.getInt("FakePlayerKillsRewardPvPLevelGap", 8);
 		FAKE_PLAYER_KILL_KARMA = config.getBoolean("FakePlayerUnflaggedKillsKarma", false);
 		FAKE_PLAYER_AUTO_ATTACKABLE = config.getBoolean("FakePlayerAutoAttackable", false);
 		FAKE_PLAYER_AGGRO_MONSTERS = config.getBoolean("FakePlayerAggroMonsters", false);

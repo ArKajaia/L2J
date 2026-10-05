@@ -1278,7 +1278,8 @@ public class Npc extends Creature
 					}
 				}
 			}
-			else if (FakePlayersConfig.FAKE_PLAYER_KILL_PVP)
+			// No PvP credit for killing a fake player far below the killer's level.
+			else if (FakePlayersConfig.FAKE_PLAYER_KILL_PVP && ((FakePlayersConfig.FAKE_PLAYER_KILL_PVP_LEVEL_GAP <= 0) || ((player.getLevel() - getLevel()) < FakePlayersConfig.FAKE_PLAYER_KILL_PVP_LEVEL_GAP)))
 			{
 				player.setPvpKills(player.getPvpKills() + 1);
 				player.broadcastUserInfo();
