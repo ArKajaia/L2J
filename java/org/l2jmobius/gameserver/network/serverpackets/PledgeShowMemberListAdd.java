@@ -53,19 +53,20 @@ public class PledgeShowMemberListAdd extends ServerPacket
 	}
 	
 	/**
-	 * A fake player that joined a players' clan (see {@link org.l2jmobius.gameserver.managers.FakeClanManager}): a member of the main clan.
+	 * A fake player that joined a players' clan (see {@link org.l2jmobius.gameserver.managers.FakeClanManager}): a member of the main clan or of its academy.
 	 * @param name its name
 	 * @param level its level
 	 * @param classId its class
 	 * @param objectId the object id of its fake player while it is online, 0 while it is offline
+	 * @param pledgeType 0 for the main clan, {@link org.l2jmobius.gameserver.model.clan.Clan#SUBUNIT_ACADEMY} for the academy
 	 */
-	public PledgeShowMemberListAdd(String name, int level, int classId, int objectId)
+	public PledgeShowMemberListAdd(String name, int level, int classId, int objectId, int pledgeType)
 	{
 		_name = name;
 		_level = level;
 		_classId = classId;
 		_isOnline = objectId;
-		_pledgeType = 0;
+		_pledgeType = pledgeType;
 	}
 	
 	@Override

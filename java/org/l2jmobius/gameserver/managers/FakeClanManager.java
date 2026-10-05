@@ -87,6 +87,7 @@ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
  * <li>An alliance leader invites one of them into the alliance by inviting one of its members.</li>
  * <li>A clan invite to a fake player that isn't in a clan brings it into the inviter's clan for good ({@link Member}, kept in the database): it keeps its name, class line and looks, logs off and on again (it shows offline in the clan window meanwhile), may leave or gain a
  * level every day cycle, and its gear and passive tree are rolled again only at some levels ({@link FakeClanConfig#MEMBER_REROLL_LEVELS}).</li>
+ * <li>One invited into the clan academy (level 40 or below, before its 2nd class) gains a level every day cycle and never leaves on its own; at its 2nd class (level 40) it graduates: it leaves the clan, which earns reputation like for a player graduate.</li>
  * </ul>
  */
 public class FakeClanManager
@@ -108,9 +109,12 @@ public class FakeClanManager
 	/** The highest level a clan member reaches. */
 	private static final int MAX_LEVEL = 85;
 	
-	private static final String CREATE_MEMBERS = "CREATE TABLE IF NOT EXISTS `fake_clan_members` (`name` VARCHAR(35) NOT NULL, `clan_id` INT UNSIGNED NOT NULL, `build` VARCHAR(64) NOT NULL, `class_id` SMALLINT UNSIGNED NOT NULL, `level` TINYINT UNSIGNED NOT NULL, `female` TINYINT UNSIGNED NOT NULL DEFAULT 0, `hair` TINYINT UNSIGNED NOT NULL DEFAULT 0, `hair_color` TINYINT UNSIGNED NOT NULL DEFAULT 0, `face` TINYINT UNSIGNED NOT NULL DEFAULT 0, `title` VARCHAR(16) NOT NULL DEFAULT '', `seed` BIGINT NOT NULL DEFAULT 0, `joined` BIGINT UNSIGNED NOT NULL DEFAULT 0, PRIMARY KEY (`name`), KEY `clan_id` (`clan_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+	private static final String CREATE_MEMBERS = "CREATE TABLE IF NOT EXISTS `fake_clan_members` (`name` VARCHAR(35) NOT NULL, `clan_id` INT UNSIGNED NOT NULL, `build` VARCHAR(64) NOT NULL, `class_id` SMALLINT UNSIGNED NOT NULL, `level` TINYINT UNSIGNED NOT NULL, `female` TINYINT UNSIGNED NOT NULL DEFAULT 0, `hair` TINYINT UNSIGNED NOT NULL DEFAULT 0, `hair_color` TINYINT UNSIGNED NOT NULL DEFAULT 0, `face` TINYINT UNSIGNED NOT NULL DEFAULT 0, `title` VARCHAR(16) NOT NULL DEFAULT '', `seed` BIGINT NOT NULL DEFAULT 0, `joined` BIGINT UNSIGNED NOT NULL DEFAULT 0, `academy_level` TINYINT UNSIGNED NOT NULL DEFAULT 0, PRIMARY KEY (`name`), KEY `clan_id` (`clan_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+	/** The academy column, missing in a table made before there were academy members. */
+	private static final String FIND_ACADEMY_COLUMN = "SHOW COLUMNS FROM fake_clan_members LIKE 'academy_level'";
+	private static final String ADD_ACADEMY_COLUMN = "ALTER TABLE fake_clan_members ADD COLUMN `academy_level` TINYINT UNSIGNED NOT NULL DEFAULT 0";
 	private static final String SELECT_MEMBERS = "SELECT * FROM fake_clan_members";
-	private static final String INSERT_MEMBER = "REPLACE INTO fake_clan_members (name, clan_id, build, class_id, level, female, hair, hair_color, face, title, seed, joined) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	private static final String INSERT_MEMBER = "REPLACE INTO fake_clan_members (name, clan_id, build, class_id, level, female, hair, hair_color, face, title, seed, joined, academy_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	private static final String UPDATE_MEMBER = "UPDATE fake_clan_members SET level=?, title=?, seed=? WHERE name=?";
 	private static final String DELETE_MEMBER = "DELETE FROM fake_clan_members WHERE name=?";
 	
@@ -147,6 +151,13 @@ public class FakeClanManager
 		"%l, time for new gear",
 		"ding %l, new grade!",
 		"%l finally, can wear new stuff",
+	};
+	private static final String[] GRADUATE =
+	{
+		"%l, graduated! ty all",
+		"ding %l, academy done :D",
+		"2nd class! thx for everything guys",
+		"graduated, cya around",
 	};
 	private static final String[] FAREWELL =
 	{
@@ -628,14 +639,31 @@ public class FakeClanManager
 	}
 	
 	/**
+	 * @param creature a player, a summon or a fake player
+	 * @return the clan whose wars it fights: its clan, {@code null} for a fake player in a players' clan academy (like a player there, see {@link #getClan})
+	 */
+	private Clan getWarClan(Creature creature)
+	{
+		final Clan clan = getClan(creature);
+		if ((clan == null) || isFakeClan(clan))
+		{
+			return clan;
+		}
+		
+		final Npc fake = creature instanceof FakePlayerPvpServitor ? ((FakePlayerPvpServitor) creature).getOwner() : creature.isFakePlayer() ? creature.asNpc() : null;
+		final Member member = fake != null ? _members.get(key(fake.getName())) : null;
+		return (member != null) && (member.clanId == clan.getId()) && member.isAcademy() ? null : clan;
+	}
+	
+	/**
 	 * @param creature a fake player, player or summon
 	 * @param other another one
 	 * @return {@code true} if their clans are at war, both having declared it
 	 */
 	public boolean isWarEnemy(Creature creature, Creature other)
 	{
-		final Clan clan = getClan(creature);
-		final Clan otherClan = getClan(other);
+		final Clan clan = getWarClan(creature);
+		final Clan otherClan = getWarClan(other);
 		return (clan != null) && (otherClan != null) && (clan != otherClan) && clan.isAtWarWith(otherClan.getId()) && otherClan.isAtWarWith(clan.getId());
 	}
 	
@@ -674,7 +702,7 @@ public class FakeClanManager
 		{
 			relation |= RelationChanged.RELATION_ALLY_MEMBER;
 		}
-		if (!player.isAcademyMember() && clan.isAtWarWith(fakeClan.getId()))
+		if (!player.isAcademyMember() && (getWarClan(fake) != null) && clan.isAtWarWith(fakeClan.getId()))
 		{
 			relation |= RelationChanged.RELATION_1SIDED_WAR;
 			if (fakeClan.isAtWarWith(clan.getId()))
@@ -774,8 +802,10 @@ public class FakeClanManager
 		volatile Npc npc;
 		/** When it may log in again. */
 		volatile long nextLogin;
+		/** The level it joined the clan academy at, 0 for a member of the main clan. */
+		final int academyLevel;
 		
-		Member(String name, int clanId, String buildName, int classId, Looks looks, long joined, int level, String title, long seed)
+		Member(String name, int clanId, String buildName, int classId, Looks looks, long joined, int level, String title, long seed, int academyLevel)
 		{
 			this.name = name;
 			this.clanId = clanId;
@@ -786,6 +816,7 @@ public class FakeClanManager
 			this.level = level;
 			this.title = title;
 			this.seed = seed;
+			this.academyLevel = academyLevel;
 		}
 		
 		/**
@@ -822,6 +853,22 @@ public class FakeClanManager
 				playerClass = playerClass.getParent();
 			}
 			return playerClass;
+		}
+		
+		/**
+		 * @return {@code true} if it is in the clan academy
+		 */
+		boolean isAcademy()
+		{
+			return academyLevel > 0;
+		}
+		
+		/**
+		 * @return its place in the clan: 0 for the main clan, {@link Clan#SUBUNIT_ACADEMY} for the academy
+		 */
+		int getPledgeType()
+		{
+			return isAcademy() ? Clan.SUBUNIT_ACADEMY : 0;
 		}
 		
 		/**
@@ -900,6 +947,16 @@ public class FakeClanManager
 			Statement statement = con.createStatement())
 		{
 			statement.execute(CREATE_MEMBERS);
+			boolean hasAcademyColumn;
+			try (ResultSet rs = statement.executeQuery(FIND_ACADEMY_COLUMN))
+			{
+				hasAcademyColumn = rs.next();
+			}
+			if (!hasAcademyColumn)
+			{
+				statement.execute(ADD_ACADEMY_COLUMN);
+			}
+			
 			try (ResultSet rs = statement.executeQuery(SELECT_MEMBERS))
 			{
 				while (rs.next())
@@ -913,7 +970,7 @@ public class FakeClanManager
 					}
 					
 					final Looks looks = new Looks(rs.getInt("female") == 1, rs.getInt("hair"), rs.getInt("hair_color"), rs.getInt("face"));
-					final Member member = new Member(name, clan.getId(), rs.getString("build"), rs.getInt("class_id"), looks, rs.getLong("joined"), rs.getInt("level"), rs.getString("title"), rs.getLong("seed"));
+					final Member member = new Member(name, clan.getId(), rs.getString("build"), rs.getInt("class_id"), looks, rs.getLong("joined"), rs.getInt("level"), rs.getString("title"), rs.getLong("seed"), rs.getInt("academy_level"));
 					
 					// They log in one after another, not all at once.
 					member.nextLogin = now + (Rnd.get(0, FakeClanConfig.MEMBER_OFFLINE_MAX) * 60000L);
@@ -955,6 +1012,7 @@ public class FakeClanManager
 			ps.setString(10, member.title);
 			ps.setLong(11, member.seed);
 			ps.setLong(12, member.joined);
+			ps.setInt(13, member.academyLevel);
 			ps.execute();
 		}
 		catch (Exception e)
@@ -1021,6 +1079,24 @@ public class FakeClanManager
 	}
 	
 	/**
+	 * @param clanId a clan id
+	 * @param pledgeType 0 for the main clan, {@link Clan#SUBUNIT_ACADEMY} for the academy
+	 * @return how many fake members that clan has there, online or not
+	 */
+	private int countClanMembers(int clanId, int pledgeType)
+	{
+		int count = 0;
+		for (Member member : _members.values())
+		{
+			if ((member.clanId == clanId) && (member.getPledgeType() == pledgeType))
+			{
+				count++;
+			}
+		}
+		return count;
+	}
+	
+	/**
 	 * Sends a player the fake members of its clan, online and offline, for its clan window.
 	 * @param clan a clan of players
 	 * @param player a player of that clan
@@ -1036,7 +1112,7 @@ public class FakeClanManager
 		{
 			if (member.clanId == clan.getId())
 			{
-				player.sendPacket(new PledgeShowMemberListAdd(member.name, member.level, member.getPlayerClass().getId(), member.getObjectId()));
+				player.sendPacket(new PledgeShowMemberListAdd(member.name, member.level, member.getPlayerClass().getId(), member.getObjectId(), member.getPledgeType()));
 			}
 		}
 	}
@@ -1048,7 +1124,7 @@ public class FakeClanManager
 	private static PledgeShowMemberListUpdate memberUpdate(Member member)
 	{
 		final PlayerClass playerClass = member.getPlayerClass();
-		return new PledgeShowMemberListUpdate(member.name, member.level, playerClass.getId(), member.looks.female(), playerClass.getRace().ordinal(), member.getObjectId());
+		return new PledgeShowMemberListUpdate(member.name, member.level, playerClass.getId(), member.looks.female(), playerClass.getRace().ordinal(), member.getObjectId(), member.getPledgeType());
 	}
 	
 	/**
@@ -1252,13 +1328,18 @@ public class FakeClanManager
 	}
 	
 	/**
-	 * A day cycle: every fake member of a players' clan may leave it ({@link FakeClanConfig#MEMBER_LEAVE_CHANCE}), and one that stays may gain a level ({@link FakeClanConfig#MEMBER_LEVEL_UP_CHANCE}).
+	 * A day cycle: every fake member of a players' clan may leave it ({@link FakeClanConfig#MEMBER_LEAVE_CHANCE}), and one that stays may gain a level ({@link FakeClanConfig#MEMBER_LEVEL_UP_CHANCE}). One in the academy stays and gains a level every
+	 * cycle, until it graduates.
 	 */
 	private void rollCycle()
 	{
 		for (Member member : _members.values())
 		{
-			if (Rnd.get(100) < FakeClanConfig.MEMBER_LEAVE_CHANCE)
+			if (member.isAcademy())
+			{
+				levelUp(member);
+			}
+			else if (Rnd.get(100) < FakeClanConfig.MEMBER_LEAVE_CHANCE)
 			{
 				removeMember(member, true);
 			}
@@ -1270,12 +1351,19 @@ public class FakeClanManager
 	}
 	
 	/**
-	 * A fake member gains a level. At the levels of {@link FakeClanConfig#MEMBER_REROLL_LEVELS} its gear and passive tree are rolled again. Its fake player in the world keeps its level until it logs in again.
+	 * A fake member gains a level. At the levels of {@link FakeClanConfig#MEMBER_REROLL_LEVELS} its gear and passive tree are rolled again. Its fake player in the world keeps its level until it logs in again. One in the academy that reaches its 2nd class
+	 * graduates ({@link #graduate}).
 	 * @param member the member
 	 */
 	private void levelUp(Member member)
 	{
 		member.level++;
+		if (member.isAcademy() && (member.getPlayerClass().level() >= 2))
+		{
+			graduate(member);
+			return;
+		}
+		
 		final boolean reroll = FakeClanConfig.MEMBER_REROLL_LEVELS.contains(member.level);
 		if (reroll)
 		{
@@ -1296,6 +1384,46 @@ public class FakeClanManager
 			final String text = (reroll && Rnd.nextBoolean() ? LEVEL_UP_REROLL[Rnd.get(LEVEL_UP_REROLL.length)] : LEVEL_UP[Rnd.get(LEVEL_UP.length)]).replace("%l", String.valueOf(member.level));
 			clanChat(fake, clan, text);
 		}
+	}
+	
+	/**
+	 * A fake member of the academy took its 2nd class: like a player, it graduates and leaves the clan, which earns reputation (the more, the lower the level it joined the academy at).
+	 * @param member the member
+	 */
+	private void graduate(Member member)
+	{
+		final Clan clan = ClanTable.getInstance().getClan(member.clanId);
+		if (clan == null)
+		{
+			removeMember(member, false);
+			return;
+		}
+		
+		// Like Player.setPlayerClass for a player graduate.
+		final int reputation;
+		if (member.academyLevel <= 16)
+		{
+			reputation = FeatureConfig.JOIN_ACADEMY_MAX_REP_SCORE;
+		}
+		else if (member.academyLevel >= 39)
+		{
+			reputation = FeatureConfig.JOIN_ACADEMY_MIN_REP_SCORE;
+		}
+		else
+		{
+			reputation = FeatureConfig.JOIN_ACADEMY_MAX_REP_SCORE - ((member.academyLevel - 16) * 20);
+		}
+		
+		final Npc fake = member.npc;
+		if ((fake != null) && fake.isSpawned() && !fake.isDead() && (Rnd.get(100) < 70))
+		{
+			clanChat(fake, clan, GRADUATE[Rnd.get(GRADUATE.length)].replace("%l", String.valueOf(member.level)));
+		}
+		
+		removeMember(member, false);
+		clan.addReputationScore(reputation);
+		clan.broadcastToOnlineMembers(new SystemMessage(SystemMessageId.CLAN_MEMBER_S1_HAS_BEEN_EXPELLED).addString(member.name));
+		clan.broadcastToOnlineMembers(new SystemMessage(SystemMessageId.SINCE_THE_CLAN_HAS_RECEIVED_A_GRADUATE_OF_THE_CLAN_ACADEMY_IT_HAS_EARNED_S1_POINTS_TOWARD_ITS_REPUTATION_SCORE).addInt(reputation));
 	}
 	
 	/**
@@ -1531,9 +1659,10 @@ public class FakeClanManager
 	 * Called from {@code RequestJoinPledge} when the invited one isn't a player: a fake player that isn't in a clan answers like a player would and, if it accepts, becomes a member of the inviter's clan for good (with a random title), see {@link Member}.
 	 * @param player the player that invites
 	 * @param objectId the invited object
+	 * @param pledgeType where it is invited: {@link Clan#SUBUNIT_ACADEMY} for the academy, the main clan otherwise
 	 * @return {@code true} if it is a fake player (the invite is handled)
 	 */
-	public boolean onClanInvite(Player player, int objectId)
+	public boolean onClanInvite(Player player, int objectId, int pledgeType)
 	{
 		final WorldObject object = World.getInstance().findObject(objectId);
 		if ((object == null) || !object.isNpc() || !object.asNpc().isFakePlayer())
@@ -1549,23 +1678,26 @@ public class FakeClanManager
 			return true;
 		}
 		
-		if (!canInvite(player, fake, true))
+		// Only the academy is told apart: other units keep it in the main clan.
+		final boolean academy = pledgeType == Clan.SUBUNIT_ACADEMY;
+		if (!canInvite(player, fake, academy, true))
 		{
 			return true;
 		}
 		
 		final boolean accept = decide("clan:" + fake.getObjectId() + ":" + clan.getId(), FakeClanConfig.INVITE_ACCEPT_CHANCE) && !FakePlayerPvpManager.isInPvp(fake);
-		ThreadPool.schedule(() -> answerClanInvite(player, fake, clan, accept), Rnd.get(1500, 5000));
+		ThreadPool.schedule(() -> answerClanInvite(player, fake, clan, academy, accept), Rnd.get(1500, 5000));
 		return true;
 	}
 	
 	/**
 	 * @param player the player that invites
 	 * @param fake the invited fake player
+	 * @param academy {@code true} for the clan academy, {@code false} for the main clan
 	 * @param tell {@code true} to tell the player why not
 	 * @return {@code true} if {@code fake} may join the clan of {@code player} (like {@link Clan#checkClanJoinCondition} for a player)
 	 */
-	private boolean canInvite(Player player, Npc fake, boolean tell)
+	private boolean canInvite(Player player, Npc fake, boolean academy, boolean tell)
 	{
 		final Clan clan = player.getClan();
 		final FakePlayerHolder info = getInfo(fake);
@@ -1599,7 +1731,32 @@ public class FakeClanManager
 			}
 			return false;
 		}
-		else if (((FakeClanConfig.MAX_RECRUITS > 0) && (countClanMembers(clan.getId()) >= FakeClanConfig.MAX_RECRUITS)) || ((clan.getSubPledgeMembersCount(0) + countClanMembers(clan.getId())) >= clan.getMaxNrOfMembers(0)))
+		else if (academy && (clan.getSubPledge(Clan.SUBUNIT_ACADEMY) == null))
+		{
+			message = SystemMessageId.YOU_HAVE_INVITED_THE_WRONG_TARGET;
+		}
+		else if (academy && ((fake.getLevel() > 40) || (info.getPlayerClass().level() >= 2)))
+		{
+			if (tell)
+			{
+				player.sendPacket(new SystemMessage(SystemMessageId.S1_DOES_NOT_MEET_THE_REQUIREMENTS_TO_JOIN_A_CLAN_ACADEMY).addString(fake.getName()));
+				player.sendPacket(SystemMessageId.TO_JOIN_A_CLAN_ACADEMY_CHARACTERS_MUST_BE_LEVEL_40_OR_BELOW_NOT_BELONG_ANOTHER_CLAN_AND_NOT_YET_COMPLETED_THEIR_2ND_CLASS_TRANSFER);
+			}
+			return false;
+		}
+		else if ((FakeClanConfig.MAX_RECRUITS > 0) && (countClanMembers(clan.getId()) >= FakeClanConfig.MAX_RECRUITS))
+		{
+			if (tell)
+			{
+				player.sendPacket(academy ? new SystemMessage(SystemMessageId.THE_ACADEMY_ROYAL_GUARD_ORDER_OF_KNIGHTS_IS_FULL_AND_CANNOT_ACCEPT_NEW_MEMBERS_AT_THIS_TIME) : new SystemMessage(SystemMessageId.S1_IS_FULL_AND_CANNOT_ACCEPT_ADDITIONAL_CLAN_MEMBERS_AT_THIS_TIME).addString(clan.getName()));
+			}
+			return false;
+		}
+		else if (academy && ((clan.getSubPledgeMembersCount(Clan.SUBUNIT_ACADEMY) + countClanMembers(clan.getId(), Clan.SUBUNIT_ACADEMY)) >= clan.getMaxNrOfMembers(Clan.SUBUNIT_ACADEMY)))
+		{
+			message = SystemMessageId.THE_ACADEMY_ROYAL_GUARD_ORDER_OF_KNIGHTS_IS_FULL_AND_CANNOT_ACCEPT_NEW_MEMBERS_AT_THIS_TIME;
+		}
+		else if (!academy && ((clan.getSubPledgeMembersCount(0) + countClanMembers(clan.getId(), 0)) >= clan.getMaxNrOfMembers(0)))
 		{
 			if (tell)
 			{
@@ -1619,14 +1776,14 @@ public class FakeClanManager
 		return false;
 	}
 	
-	private void answerClanInvite(Player player, Npc fake, Clan clan, boolean accept)
+	private void answerClanInvite(Player player, Npc fake, Clan clan, boolean academy, boolean accept)
 	{
 		if (!player.isOnline() || (player.getClan() != clan) || !fake.isSpawned() || fake.isDead())
 		{
 			return;
 		}
 		
-		if (!accept || !canInvite(player, fake, false))
+		if (!accept || !canInvite(player, fake, academy, false))
 		{
 			player.sendPacket(new SystemMessage(SystemMessageId.S1_DECLINED_YOUR_CLAN_INVITATION).addString(fake.getName()));
 			if (Rnd.get(100) < 60)
@@ -1641,7 +1798,7 @@ public class FakeClanManager
 		final FakePlayerHolder info = getInfo(fake);
 		final String title = randomTitle();
 		final Looks looks = new Looks(fake.getTemplate().getSex() == Sex.FEMALE, info.getHair(), info.getHairColor(), info.getFace());
-		final Member member = new Member(fake.getName(), clan.getId(), build.getName(), build.getPlayerClass().getId(), looks, System.currentTimeMillis(), fake.getLevel(), title, Rnd.nextLong());
+		final Member member = new Member(fake.getName(), clan.getId(), build.getName(), build.getPlayerClass().getId(), looks, System.currentTimeMillis(), fake.getLevel(), title, Rnd.nextLong(), academy ? fake.getLevel() : 0);
 		member.npc = fake;
 		if (_members.putIfAbsent(key(member.name), member) != null)
 		{
@@ -1653,7 +1810,7 @@ public class FakeClanManager
 		info.setClan(clan.getId(), title);
 		fake.broadcastInfo();
 		clan.broadcastToOnlineMembers(new SystemMessage(SystemMessageId.S1_HAS_JOINED_THE_CLAN).addString(fake.getName()));
-		clan.broadcastToOnlineMembers(new PledgeShowMemberListAdd(member.name, member.level, member.getPlayerClass().getId(), fake.getObjectId()));
+		clan.broadcastToOnlineMembers(new PledgeShowMemberListAdd(member.name, member.level, member.getPlayerClass().getId(), fake.getObjectId(), member.getPledgeType()));
 		if (Rnd.get(100) < 70)
 		{
 			clanChat(fake, clan, JOIN[Rnd.get(JOIN.length)]);
@@ -1871,7 +2028,8 @@ public class FakeClanManager
 		final List<String> lines = new ArrayList<>();
 		lines.add("Clans of fake players: " + _activeClans.size() + (isEnabled() ? "" : " (disabled)") + ".");
 		final long online = _members.values().stream().filter(member -> member.npc != null).count();
-		lines.add("Fake members of players' clans: " + _members.size() + ", " + online + " online.");
+		final long academy = _members.values().stream().filter(Member::isAcademy).count();
+		lines.add("Fake members of players' clans: " + _members.size() + " (" + academy + " in an academy), " + online + " online.");
 		for (Clan clan : _fakeClans.values())
 		{
 			final StringBuilder wars = new StringBuilder();
