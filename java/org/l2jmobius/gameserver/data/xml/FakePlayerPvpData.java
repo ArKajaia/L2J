@@ -158,7 +158,7 @@ public class FakePlayerPvpData implements IXmlReader
 					return;
 				}
 				
-				final FakePlayerPvpBuild build = new FakePlayerPvpBuild(name, playerClass, parseEnum(attrs, Role.class, "role"), parseString(attrs, "weapon"), parseString(attrs, "armor"), parseString(attrs, "jewels", "JEWELS"), parseString(attrs, "bow", null), parseString(attrs, "polearm", null), parseString(attrs, "buffs", playerClass.isMage() ? "MAGE" : "FIGHTER"), Math.max(0, parseInteger(attrs, "weight", 1)), parseBoolean(attrs, "skillFighter", false));
+				final FakePlayerPvpBuild build = new FakePlayerPvpBuild(name, playerClass, parseEnum(attrs, Role.class, "role"), parseString(attrs, "weapon"), parseString(attrs, "armor"), parseString(attrs, "jewels", "JEWELS"), parseString(attrs, "bow", null), parseString(attrs, "polearm", null), parseString(attrs, "buffs", playerClass.isMage() ? "MAGE" : "FIGHTER"), Math.max(0, parseInteger(attrs, "weight", 1)), parseBoolean(attrs, "skillFighter", false), parseBoolean(attrs, "support", false));
 				final List<NamedNodeMap> variants = new ArrayList<>();
 				for (Node skillsNode = buildNode.getFirstChild(); skillsNode != null; skillsNode = skillsNode.getNextSibling())
 				{
@@ -188,7 +188,7 @@ public class FakePlayerPvpData implements IXmlReader
 					final SkillCategory category;
 					try
 					{
-						category = SkillCategory.valueOf(skillsNode.getNodeName().toUpperCase());
+						category = SkillCategory.valueOf(skillsNode.getNodeName().replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase()); // partyHeal -> PARTY_HEAL
 					}
 					catch (IllegalArgumentException e)
 					{

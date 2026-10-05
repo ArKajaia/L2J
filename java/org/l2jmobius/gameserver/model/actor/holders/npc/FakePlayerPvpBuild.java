@@ -81,7 +81,17 @@ public class FakePlayerPvpBuild
 		/** Toggles that only make sense with its servitor out (Transfer Pain), switched on with the servitor and off when it dies. */
 		LINK,
 		/** Combat transformations used when a PvP gets serious (Kamael Final Form): it then fights with the transformation's skills. */
-		TRANSFORM
+		TRANSFORM,
+		/** Heals cast on one party member (Heal, Greater Heal, Major Heal...), see {@link org.l2jmobius.gameserver.managers.FakePartyManager}. */
+		PARTY_HEAL,
+		/** Heals for the whole party (Group Heal, Chain Heal, Balance Life, Chant of Life...). */
+		GROUP_HEAL,
+		/** Buffs it keeps up on its party (Might, Shield, chants, songs, dances...), on one member or the whole party. */
+		PARTY_BUFF,
+		/** MP restored to a party member (Recharge). */
+		RECHARGE,
+		/** Resurrection of a dead party member. */
+		RESURRECT
 	}
 	
 	private final String _name;
@@ -95,15 +105,16 @@ public class FakePlayerPvpBuild
 	private final String _buffList;
 	private final int _weight;
 	private final boolean _skillFighter;
+	private final boolean _support;
 	private final Map<SkillCategory, List<int[]>> _skills;
 	private final List<FakePlayerPvpCombo> _combos;
 	
-	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight, boolean skillFighter)
+	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight, boolean skillFighter, boolean support)
 	{
-		this(name, playerClass, role, weaponKit, armorKit, jewelKit, bowKit, polearmKit, buffList, weight, skillFighter, new EnumMap<>(SkillCategory.class), new ArrayList<>());
+		this(name, playerClass, role, weaponKit, armorKit, jewelKit, bowKit, polearmKit, buffList, weight, skillFighter, support, new EnumMap<>(SkillCategory.class), new ArrayList<>());
 	}
 	
-	private FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight, boolean skillFighter, Map<SkillCategory, List<int[]>> skills, List<FakePlayerPvpCombo> combos)
+	private FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight, boolean skillFighter, boolean support, Map<SkillCategory, List<int[]>> skills, List<FakePlayerPvpCombo> combos)
 	{
 		_name = name;
 		_playerClass = playerClass;
@@ -116,6 +127,7 @@ public class FakePlayerPvpBuild
 		_buffList = buffList;
 		_weight = weight;
 		_skillFighter = skillFighter;
+		_support = support;
 		_skills = skills;
 		_combos = combos;
 	}
@@ -134,7 +146,7 @@ public class FakePlayerPvpBuild
 	 */
 	public FakePlayerPvpBuild createVariant(String name, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight)
 	{
-		return new FakePlayerPvpBuild(name, _playerClass, _role, weaponKit != null ? weaponKit : _weaponKit, armorKit != null ? armorKit : _armorKit, jewelKit != null ? jewelKit : _jewelKit, bowKit != null ? bowKit : _bowKit, polearmKit != null ? polearmKit : _polearmKit, buffList != null ? buffList : _buffList, weight, _skillFighter, _skills, _combos);
+		return new FakePlayerPvpBuild(name, _playerClass, _role, weaponKit != null ? weaponKit : _weaponKit, armorKit != null ? armorKit : _armorKit, jewelKit != null ? jewelKit : _jewelKit, bowKit != null ? bowKit : _bowKit, polearmKit != null ? polearmKit : _polearmKit, buffList != null ? buffList : _buffList, weight, _skillFighter, _support, _skills, _combos);
 	}
 	
 	/**
@@ -252,5 +264,13 @@ public class FakePlayerPvpBuild
 	public boolean isSkillFighter()
 	{
 		return _skillFighter;
+	}
+	
+	/**
+	 * @return {@code true} for a class players invite to heal or buff (healers, buffers, songs and dances): in a party it looks after the other members before fighting, see {@link org.l2jmobius.gameserver.managers.FakePartyManager}
+	 */
+	public boolean isSupport()
+	{
+		return _support;
 	}
 }

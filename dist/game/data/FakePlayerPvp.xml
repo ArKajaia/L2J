@@ -492,6 +492,8 @@
 		<heal>1229</heal>
 		<toggle>337</toggle>
 		<peel>260,100,1208,1097,1092</peel> <!-- Hammer Crush / Stun Attack on a player that reached it -->
+		<groupHeal>1229</groupHeal> <!-- Chant of Life, in a party -->
+		<partyBuff>1414,1415,1365,1364,1003,1004,1005,1008,1249,1250,1260,1261,1282,1536,1537,1538,1563</partyBuff> <!-- In a party: Victory of Pa'agrio, Pa'agrio's Emblem, Soul/Eye of Pa'agrio, Gift, Wisdom, Blessings, Glory, Vision, Shield, Tact, Rage, Haste, Combat, Critical, Condition, Fury -->
 		<combo name="Silence and drain" pvp="true">
 			<step skill="1246" /> <!-- Seal of Silence -->
 			<step skill="1367" optional="true" /> <!-- Seal of Disease -->
@@ -1027,5 +1029,96 @@
 			<step skill="921" optional="true" /> <!-- Cursed Pierce -->
 		</combo>
 		<variant name="Dreadnought Legacy" weapon="POLEARM_ALT" armor="HEAVY_LEGACY" weight="1" />
+	</build>
+
+	<!-- Support: healers, buffers, songs and dances. weight="0": they don't roam on their own, they come when a player
+	     looks for one ("lf bishop" in chat) or travel with a fake party (see config/Custom/FakeParty.ini).
+	     support="true": in a party they look after the other members first (heals, resurrection, recharge, buffs)
+	     and only fight when there is nothing else to do.
+	     partyHeal - heals cast on one party member, biggest first (the fastest one is used on a member in danger).
+	     groupHeal - heals for the whole party, used when several members are hurt.
+	     partyBuff - buffs kept up on the party, most wanted first. Buffs that only help fighters (Might, Haste...)
+	                 or only mages (Acumen, Empower...) are only cast on members that need them.
+	     recharge  - MP given to a party member running low.
+	     resurrect - used on a dead party member. -->
+	<build name="Cardinal" classId="97" role="MAGE" weapon="MAGE" armor="ROBE" weight="0" support="true"> <!-- Bishop line -->
+		<attack>1028,1177,1184</attack> <!-- Might of Heaven, Wind Strike, Ice Bolt -->
+		<debuff>1394,1069</debuff> <!-- Trance, Sleep -->
+		<heal>1218|1015</heal>
+		<toggle>336</toggle> <!-- Arcane Wisdom -->
+		<peel>1201,1394,1069</peel> <!-- Dryad Root, Trance, Sleep -->
+		<cleanse>1018|1012</cleanse> <!-- Purify / Cure Poison -->
+		<partyHeal>1401|1217|1011,1218|1015</partyHeal> <!-- Major / Greater Heal / Heal, Greater Battle Heal / Battle Heal -->
+		<groupHeal>1402|1219|1027,1335</groupHeal> <!-- Major / Greater Group Heal / Group Heal, Balance Life -->
+		<partyBuff>1307</partyBuff> <!-- Prayer -->
+		<resurrect>1016</resurrect>
+		<variant name="Cardinal Legacy" armor="ROBE_LEGACY" weight="0" />
+	</build>
+	<build name="Hierophant" classId="98" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="0" support="true"> <!-- Prophet line -->
+		<attack>1177,1184</attack>
+		<debuff>1272</debuff> <!-- Word of Fear -->
+		<heal>1015</heal>
+		<toggle>336</toggle>
+		<peel>1201,1272</peel>
+		<partyHeal>1011,1015</partyHeal>
+		<groupHeal>1027</groupHeal>
+		<partyBuff>1356,1388|1068,1389|1040,1086,1204,1045,1048,1036,1035,1085,1077,1242,1240,1062,1078,1044,1243,1032,1033,1499,1501</partyBuff> <!-- Prophecy of Fire, Greater Might / Might, Greater Shield / Shield, Haste, Wind Walk, Bless the Body/Soul, Magic Barrier, Mental Shield, Acumen, Focus, Death Whisper, Guidance, Berserker Spirit, Concentration, Regeneration, Bless Shield, Invigor, Resist Poison, Improved Combat/Condition -->
+		<resurrect>1016</resurrect>
+		<variant name="Hierophant Tallum" armor="ROBE_TALLUM" weight="0" />
+	</build>
+	<build name="Eva's Saint" classId="105" role="MAGE" weapon="MAGE" armor="ROBE" weight="0" support="true"> <!-- Elven Elder line -->
+		<attack>1177,1184</attack>
+		<debuff>1206</debuff> <!-- Wind Shackle -->
+		<heal>1015</heal>
+		<toggle>336</toggle>
+		<peel>1201,1206</peel>
+		<cleanse>1012</cleanse>
+		<partyHeal>1401|1217|1011,1015</partyHeal>
+		<groupHeal>1219|1027</groupHeal>
+		<partyBuff>1355,1040,1068,1087,1204,1035,1078,1303,1397,1259,1504,1503,1243,1044,1033</partyBuff> <!-- Prophecy of Water, Shield, Might, Agility, Wind Walk, Mental Shield, Concentration, Wild Magic, Clarity, Resist Shock, Improve Movement/Shield Defense, Bless Shield, Regeneration, Resist Poison -->
+		<recharge>1013</recharge>
+		<resurrect>1016</resurrect>
+		<variant name="Eva's Saint Legacy" armor="ROBE_LEGACY" weight="0" />
+	</build>
+	<build name="Shillien Saint" classId="112" role="MAGE" weapon="MAGE" armor="ROBE" weight="0" support="true"> <!-- Shillien Elder line -->
+		<attack>1147,1177,1184</attack> <!-- Vampiric Touch, Wind Strike, Ice Bolt -->
+		<debuff>1206</debuff>
+		<heal>1015</heal>
+		<toggle>336</toggle>
+		<peel>1201,1206</peel>
+		<cleanse>1018|1012</cleanse>
+		<partyHeal>1217|1011,1015</partyHeal>
+		<groupHeal>1219|1027</groupHeal>
+		<partyBuff>1357,1068,1040,1059,1268,1077,1242,1240,1204,1035,1078,1303,1500,1502,1189,1392</partyBuff> <!-- Prophecy of Wind, Might, Shield, Empower, Vampiric Rage, Focus, Death Whisper, Guidance, Wind Walk, Mental Shield, Concentration, Wild Magic, Improve Magic/Critical, Resist Wind/Holy -->
+		<recharge>1013</recharge>
+		<resurrect>1016</resurrect>
+		<variant name="Shillien Saint Legacy" armor="ROBE_LEGACY" weight="0" />
+	</build>
+	<build name="Doomcryer" classId="116" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="0" support="true"> <!-- Warcryer line -->
+		<attack>1245,1244,1090,1100</attack> <!-- Steal Essence, Freezing Flame, Life Drain, Chill Flame -->
+		<debuff>1097,1092</debuff> <!-- Dreaming Spirit, Fear -->
+		<toggle>336</toggle>
+		<peel>260,100,1097,1092</peel> <!-- Hammer Crush / Stun Attack on a monster or player that reached it -->
+		<groupHeal>1229</groupHeal> <!-- Chant of Life -->
+		<partyBuff>1363,1413,1390|1007,1391|1009,1251,1002,1006,1253,1308,1309,1310,1252,1284,1461,1549,1362,1517,1518,1519,1535,1562</partyBuff> <!-- Chant of Victory, Magnus' Chant, War / Battle, Earth / Shielding, Fury, Flame, Fire, Rage, Predator, Eagle, Vampire, Evasion, Revenge, Protection, Elements, Spirit, Combat, Critical Attack, Blood Awakening, Movement, Berserker -->
+		<variant name="Doomcryer Tallum" armor="ROBE_TALLUM" weight="0" />
+	</build>
+	<build name="Sword Muse" classId="100" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" buffs="TANK" weight="0" support="true"> <!-- Swordsinger line -->
+		<attack>98,3</attack> <!-- Sword Symphony, Power Strike -->
+		<debuff>102,402,437</debuff> <!-- Entangle, Arrest, Song of Silence -->
+		<buff>112,123</buff> <!-- Deflect Arrow, Spirit Barrier -->
+		<heal>58</heal> <!-- Elemental Heal -->
+		<emergency>110</emergency> <!-- Ultimate Defense -->
+		<peel>102,402</peel>
+		<cleanse>21,61</cleanse> <!-- Poison Recovery, Cure Bleeding -->
+		<partyBuff>364,267,268,269,264,304,363,349,529,764,265,266,270,305,306,308,914</partyBuff> <!-- Champion, Warding, Wind, Hunter, Earth, Vitality, Meditation, Renewal, Elemental, Wind Storm, Life, Water, Invocation, Vengeance, Flame Guard, Storm Guard, Purification -->
+		<variant name="Sword Muse Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="0" />
+	</build>
+	<build name="Spectral Dancer" classId="107" role="FIGHTER" weapon="DUAL" armor="HEAVY" weight="0" support="true"> <!-- Bladedancer line -->
+		<attack>408,84,223,70,3</attack> <!-- Demonic Blade Dance, Poison Blade Dance, Sting, Drain Health, Power Strike -->
+		<debuff>122,115,105,402</debuff> <!-- Hex, Power Break, Freezing Strike, Arrest -->
+		<peel>402,105</peel>
+		<partyBuff>271,275,274,310,915,765,273,276,365,530,311,272,307,309,277</partyBuff> <!-- Warrior, Fury, Fire, Vampire, Berserker, Blade Storm, Mystic, Concentration, Siren, Alignment, Protection, Inspiration, Aqua/Earth Guard, Light -->
+		<variant name="Spectral Dancer Light" armor="LIGHT_FIGHTER" weight="0" />
 	</build>
 </list>

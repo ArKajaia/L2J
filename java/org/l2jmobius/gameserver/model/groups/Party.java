@@ -37,6 +37,7 @@ import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.ClassBalanceConfig;
 import org.l2jmobius.gameserver.config.custom.PremiumSystemConfig;
 import org.l2jmobius.gameserver.managers.DuelManager;
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.ItemManager;
 import org.l2jmobius.gameserver.managers.PcCafePointsManager;
 import org.l2jmobius.gameserver.model.actor.Attackable;
@@ -256,6 +257,9 @@ public class Party extends AbstractPlayerGroup
 				member.broadcastUserInfo();
 			}
 		}
+		
+		// Fake players of the party are sent again.
+		FakePartyManager.getInstance().onPartyChanged(this, getLeader(), true);
 	}
 	
 	/**
@@ -366,6 +370,9 @@ public class Party extends AbstractPlayerGroup
 			player.sendPacket(ExOpenMPCC.STATIC_PACKET);
 		}
 		
+		// Fake players of the party (or of the new member) are sent again.
+		FakePartyManager.getInstance().onPartyChanged(this, player, true);
+		
 		if (_positionBroadcastTask == null)
 		{
 			_positionBroadcastTask = ThreadPool.scheduleAtFixedRate(() ->
@@ -464,6 +471,9 @@ public class Party extends AbstractPlayerGroup
 			{
 				broadcastPacket(new ExPartyPetWindowDelete(player.getSummon()));
 			}
+			
+			// Fake players: the ones of the player go with it, the others stay.
+			FakePartyManager.getInstance().onPartyChanged(this, player, false);
 			
 			if (isInDimensionalRift())
 			{
@@ -973,6 +983,26 @@ public class Party extends AbstractPlayerGroup
 	}
 	
 	private double getBaseExpSpBonus(int membersCount)
+	{
+		int i = membersCount - 1;
+		if (i < 1)
+		{
+			return 1;
+		}
+		
+		if (i >= BONUS_EXP_SP.length)
+		{
+			i = BONUS_EXP_SP.length - 1;
+		}
+		
+		return BONUS_EXP_SP[i];
+	}
+	
+	/**
+	 * @param membersCount a number of party members
+	 * @return the party exp/sp bonus of that many members, without the party rates
+	 */
+	public static double getBaseExpSpBonusFor(int membersCount)
 	{
 		int i = membersCount - 1;
 		if (i < 1)

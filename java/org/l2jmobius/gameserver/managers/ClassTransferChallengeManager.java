@@ -774,7 +774,7 @@ public class ClassTransferChallengeManager
 				final List<FakePlayerPvpBuild> candidates = new ArrayList<>();
 				for (FakePlayerPvpBuild build : builds)
 				{
-					if ((build.getPlayerClass() != null) && build.getPlayerClass().equalsOrChildOf(target))
+					if ((build.getPlayerClass() != null) && build.getPlayerClass().equalsOrChildOf(target) && !build.isSupport())
 					{
 						candidates.add(build);
 					}
@@ -797,7 +797,7 @@ public class ClassTransferChallengeManager
 			final List<FakePlayerPvpBuild> sameRole = new ArrayList<>();
 			for (FakePlayerPvpBuild build : builds)
 			{
-				if ((build.getRole() == Role.MAGE) == mage)
+				if (((build.getRole() == Role.MAGE) == mage) && !build.isSupport())
 				{
 					sameRole.add(build);
 				}

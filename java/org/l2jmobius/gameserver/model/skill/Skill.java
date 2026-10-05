@@ -41,6 +41,7 @@ import org.l2jmobius.gameserver.data.xml.SkillTreeData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.handler.ITargetTypeHandler;
 import org.l2jmobius.gameserver.handler.TargetHandler;
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -1068,10 +1069,10 @@ public class Skill
 			{
 				final List<WorldObject> result = handler.getTargetList(this, creature, onlyFirst, target);
 				
-				// Prevent monsters buffing playables.
+				// Prevent monsters buffing playables (but a fake player its party).
 				if ((creature != null) && creature.isMonster() && !hasNegativeEffect() && (result instanceof LinkedList))
 				{
-					result.removeIf(wo -> wo.isPlayable());
+					result.removeIf(wo -> wo.isPlayable() && !FakePartyManager.getInstance().isSameGroup(creature, wo.asCreature()));
 				}
 				
 				return result;
@@ -1119,6 +1120,12 @@ public class Skill
 	public static boolean checkForAreaOffensiveSkills(Creature caster, Creature target, Skill skill, boolean sourceInArena)
 	{
 		if ((target == null) || target.isDead() || (target == caster))
+		{
+			return false;
+		}
+		
+		// Fake players and the players of their party spare each other.
+		if (FakePartyManager.getInstance().isSameGroup(caster, target))
 		{
 			return false;
 		}

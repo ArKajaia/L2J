@@ -20,6 +20,7 @@
  */
 package org.l2jmobius.gameserver.network.clientpackets;
 
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.groups.Party;
 import org.l2jmobius.gameserver.model.groups.PartyMessageType;
@@ -44,6 +45,12 @@ public class RequestWithDrawalParty extends ClientPacket
 	{
 		final Player player = getPlayer();
 		if (player == null)
+		{
+			return;
+		}
+		
+		// The fake players it invited go too.
+		if (FakePartyManager.getInstance().onWithdraw(player))
 		{
 			return;
 		}

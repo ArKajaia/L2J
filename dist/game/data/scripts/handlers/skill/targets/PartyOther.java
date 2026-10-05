@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.l2jmobius.gameserver.handler.ITargetTypeHandler;
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.skill.Skill;
@@ -34,7 +35,7 @@ public class PartyOther implements ITargetTypeHandler
 	@Override
 	public List<WorldObject> getTargetList(Skill skill, Creature creature, boolean onlyFirst, Creature target)
 	{
-		if ((target != null) && (target != creature) && creature.isInParty() && target.isInParty() && (creature.getParty().getLeaderObjectId() == target.getParty().getLeaderObjectId()))
+		if ((target != null) && (target != creature) && ((creature.isInParty() && target.isInParty() && (creature.getParty().getLeaderObjectId() == target.getParty().getLeaderObjectId())) || FakePartyManager.getInstance().isSameGroup(creature, target)))
 		{
 			if (!target.isDead())
 			{

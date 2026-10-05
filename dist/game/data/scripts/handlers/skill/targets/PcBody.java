@@ -20,6 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.l2jmobius.gameserver.handler.ITargetTypeHandler;
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -39,6 +40,17 @@ public class PcBody implements ITargetTypeHandler
 	public List<WorldObject> getTargetList(Skill skill, Creature creature, boolean onlyFirst, Creature target)
 	{
 		final List<WorldObject> targetList = new LinkedList<>();
+		
+		// A dead member of the party of a fake player: a party healer resurrects it, and a player its fake players.
+		if ((target != null) && target.isDead() && FakePartyManager.getInstance().isSameGroup(creature, target) && (target.isFakePlayer() || creature.isFakePlayer()))
+		{
+			if (!target.isPlayer() || !(target.isInsideZone(ZoneId.SIEGE) && !target.asPlayer().isInSiege()))
+			{
+				targetList.add(target);
+				return targetList;
+			}
+		}
+		
 		if ((target != null) && target.isDead())
 		{
 			final Player player;

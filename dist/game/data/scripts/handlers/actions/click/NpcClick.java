@@ -25,6 +25,7 @@ import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.handler.IActionClickHandler;
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerTownManager;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Npc;
@@ -104,6 +105,14 @@ public class NpcClick implements IActionClickHandler
 					
 					// Turn NPC to the player.
 					player.sendPacket(new MoveToPawn(player, npc, 100));
+					
+					// A fake player of the party: no chat window, the player follows it like a party member.
+					if (FakePartyManager.getInstance().isSameGroup(player, npc))
+					{
+						player.getAI().setIntention(Intention.FOLLOW, npc);
+						player.sendPacket(ActionFailed.STATIC_PACKET);
+						return true;
+					}
 					
 					// A town fake player sitting in its private store: its sell list, like a player's store.
 					if (npc.isFakePlayer() && FakePlayerTownManager.getInstance().showStore(player, npc))

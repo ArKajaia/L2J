@@ -20,6 +20,7 @@
  */
 package org.l2jmobius.gameserver.network.clientpackets;
 
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.groups.Party;
 import org.l2jmobius.gameserver.model.groups.PartyMessageType;
@@ -42,6 +43,12 @@ public class RequestOustPartyMember extends ClientPacket
 	{
 		final Player player = getPlayer();
 		if (player == null)
+		{
+			return;
+		}
+		
+		// A fake player of the party.
+		if (FakePartyManager.getInstance().onDismiss(player, _name))
 		{
 			return;
 		}

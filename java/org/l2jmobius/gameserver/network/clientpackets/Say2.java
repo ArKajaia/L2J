@@ -27,6 +27,7 @@ import org.l2jmobius.gameserver.config.ServerConfig;
 import org.l2jmobius.gameserver.config.custom.WalkerBotProtectionConfig;
 import org.l2jmobius.gameserver.handler.ChatHandler;
 import org.l2jmobius.gameserver.handler.IChatHandler;
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.PunishmentManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -224,6 +225,9 @@ public class Say2 extends ClientPacket
 		{
 			PacketLogger.info("No handler registered for ChatType: " + _type + " Player: " + player);
 		}
+		
+		// "lf <class>": a fake player of that class may answer.
+		FakePartyManager.getInstance().onPlayerChat(player, chatType, _text);
 	}
 	
 	private boolean checkBot(String text)

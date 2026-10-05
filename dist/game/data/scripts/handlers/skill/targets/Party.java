@@ -20,9 +20,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.l2jmobius.gameserver.handler.ITargetTypeHandler;
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 
@@ -76,6 +78,25 @@ public class Party implements ITargetTypeHandler
 				if (Skill.addSummon(creature, partyMember, radius, false))
 				{
 					targetList.add(partyMember.getSummon());
+				}
+			}
+		}
+		
+		// Fake players of the party, and for a fake player the players of its party.
+		final FakePlayerParty fakeParty = FakePartyManager.getInstance().getParty(creature);
+		if (fakeParty != null)
+		{
+			for (Creature member : fakeParty.getMembers())
+			{
+				if ((member == creature) || (member == player) || targetList.contains(member) || !Skill.addCharacter(creature, member, radius, false))
+				{
+					continue;
+				}
+				
+				targetList.add(member);
+				if (member.isPlayer() && Skill.addSummon(creature, member.asPlayer(), radius, false) && !targetList.contains(member.asPlayer().getSummon()))
+				{
+					targetList.add(member.asPlayer().getSummon());
 				}
 			}
 		}
