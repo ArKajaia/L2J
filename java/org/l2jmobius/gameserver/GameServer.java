@@ -129,6 +129,7 @@ import org.l2jmobius.gameserver.managers.DayNightSpawnManager;
 import org.l2jmobius.gameserver.managers.DimensionalRiftManager;
 import org.l2jmobius.gameserver.managers.EventDropManager;
 import org.l2jmobius.gameserver.managers.FakePlayerChatManager;
+import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.FakePlayerTownManager;
 import org.l2jmobius.gameserver.managers.FishingChampionshipManager;
@@ -336,6 +337,7 @@ public class GameServer
 		printSection("Cache");
 		HtmCache.getInstance();
 		CrestTable.getInstance();
+		FakeClanManager.getInstance();
 		TeleporterData.getInstance();
 		PartyMatchWaitingList.getInstance();
 		PartyMatchRoomList.getInstance();

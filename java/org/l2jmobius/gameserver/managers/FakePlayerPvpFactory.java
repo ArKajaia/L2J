@@ -324,7 +324,7 @@ public class FakePlayerPvpFactory
 		set.set("level", level);
 		set.set("type", "Monster");
 		set.set("name", name);
-		set.set("title", getTitle(title, passives));
+		set.set("title", title != null ? title : "");
 		set.set("race", playerClass.getRace().name());
 		set.set("sex", female ? Sex.FEMALE.name() : Sex.MALE.name());
 		set.set("baseSTR", str);
@@ -640,23 +640,6 @@ public class FakePlayerPvpFactory
 		return template;
 	}
 
-	/**
-	 * @param title the title it was given, {@code null} for none
-	 * @param passives its passive tree, {@code null} for none
-	 * @return its title showing how many subclasses it has (FakePvpPassiveTreeTitle), after the title it was given if any
-	 */
-	private static String getTitle(String title, FakePlayerPvpPassives passives)
-	{
-		final String givenTitle = title != null ? title : "";
-		if ((passives == null) || FakePlayerPvpConfig.PASSIVE_TREE_TITLE.isEmpty())
-		{
-			return givenTitle;
-		}
-		
-		final String subclasses = FakePlayerPvpConfig.PASSIVE_TREE_TITLE.replace("%count%", String.valueOf(passives.getSubclasses()));
-		return givenTitle.isEmpty() ? subclasses : givenTitle + " [" + subclasses + "]";
-	}
-	
 	/**
 	 * Kamael wear light armor only, like {@link org.l2jmobius.gameserver.network.clientpackets.UseItem} enforces for players: the client has no Kamael model of heavy armor and robes and shows them untextured. A Kamael whose armor kit holds such a piece wears
 	 * the light armor kit of its role instead.

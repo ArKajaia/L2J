@@ -137,7 +137,7 @@ public class FakePlayerInfo extends ServerPacket
 		buffer.writeInt(_fpcHolder.getHair());
 		buffer.writeInt(_fpcHolder.getHairColor());
 		buffer.writeInt(_fpcHolder.getFace());
-		buffer.writeString(_npc.getTemplate().getTitle());
+		buffer.writeString(_fpcHolder.getTitle());
 		if (_clan != null)
 		{
 			buffer.writeInt(_clan.getId());

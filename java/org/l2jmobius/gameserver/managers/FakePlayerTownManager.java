@@ -267,9 +267,13 @@ public class FakePlayerTownManager
 	private final Map<Integer, Long> _begged = new HashMap<>();
 	private int _nextNpcId = FIRST_NPC_ID;
 	private long _order;
+	/** Set once the server made this manager (others ask before using it, so they never make it out of the server start order). */
+	private static volatile boolean _started;
 	
 	protected FakePlayerTownManager()
 	{
+		_started = true;
+		
 		if (!FakePlayersConfig.FAKE_PLAYERS_ENABLED || !FakePlayersConfig.FAKE_TOWN_PLAYERS_ENABLED)
 		{
 			LOGGER.info(getClass().getSimpleName() + ": Disabled.");
@@ -680,6 +684,12 @@ public class FakePlayerTownManager
 			}
 		}
 		
+		// Friends that hunt together are often of the same clan.
+		for (int i = 1; i < party.size(); i++)
+		{
+			FakeClanManager.getInstance().shareClan(party.get(i).npc, party.get(0).npc);
+		}
+		
 		if ((party.size() >= 2) && FakePlayerTownVisitor.isChatEnabled())
 		{
 			schedule(Rnd.get(2000, 5000), () ->
@@ -865,6 +875,9 @@ public class FakePlayerTownManager
 				_freeNpcIds.addLast(npcId);
 				return null;
 			}
+			
+			// Sometimes a member of a clan of fake players.
+			FakeClanManager.getInstance().assignClan(template);
 			
 			final Spawn spawn = new Spawn(template);
 			spawn.setXYZ(location.getX(), location.getY(), location.getZ());
@@ -1751,6 +1764,27 @@ public class FakePlayerTownManager
 	public int getCount()
 	{
 		return _visitors.size();
+	}
+	
+	/**
+	 * @return the town fake players in the world
+	 */
+	public List<Npc> getVisitorNpcs()
+	{
+		final List<Npc> npcs = new ArrayList<>(_visitors.size());
+		for (FakePlayerTownVisitor visitor : _visitors.values())
+		{
+			npcs.add(visitor.npc);
+		}
+		return npcs;
+	}
+	
+	/**
+	 * @return {@code true} once the server made this manager
+	 */
+	static boolean isStarted()
+	{
+		return _started;
 	}
 	
 	/**

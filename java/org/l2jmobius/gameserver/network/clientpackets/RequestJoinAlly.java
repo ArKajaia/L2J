@@ -20,6 +20,7 @@
  */
 package org.l2jmobius.gameserver.network.clientpackets;
 
+import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.clan.Clan;
@@ -52,6 +53,12 @@ public class RequestJoinAlly extends ClientPacket
 		final Player ob = World.getInstance().getPlayer(_id);
 		if (ob == null)
 		{
+			// A member of a clan of fake players takes the invite to its leader.
+			if (FakeClanManager.getInstance().onAllyInvite(player, _id))
+			{
+				return;
+			}
+			
 			player.sendPacket(SystemMessageId.YOU_HAVE_INVITED_THE_WRONG_TARGET);
 			return;
 		}

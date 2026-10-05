@@ -55,7 +55,9 @@ public class FakePlayerHolder
 	private final int _recommends;
 	private final int _nobleLevel;
 	private final boolean _hero;
-	private final int _clanId;
+	// Its clan and title: a fake player may join a clan (see FakeClanManager).
+	private volatile int _clanId;
+	private volatile String _title;
 	private final int _pledgeStatus;
 	private volatile boolean _isSitting;
 	// The transformation it shows (a roaming Kamael fake player in Final Form), 0 for none.
@@ -93,6 +95,7 @@ public class FakePlayerHolder
 		_nobleLevel = set.getInt("nobleLevel", 0);
 		_hero = set.getBoolean("hero", false);
 		_clanId = set.getInt("clanId", 0);
+		_title = set.getString("title", "");
 		_pledgeStatus = set.getInt("pledgeStatus", 0);
 		_isSitting = set.getBoolean("sitting", false);
 		_privateStoreType = set.getInt("privateStoreType", 0);
@@ -256,6 +259,22 @@ public class FakePlayerHolder
 	public int getClanId()
 	{
 		return _clanId;
+	}
+	
+	/**
+	 * Joins or leaves a clan, for a fake player that is its own (see {@link org.l2jmobius.gameserver.managers.FakeClanManager}).
+	 * @param clanId the clan id, 0 for none
+	 * @param title the title it shows
+	 */
+	public void setClan(int clanId, String title)
+	{
+		_title = title != null ? title : "";
+		_clanId = clanId;
+	}
+	
+	public String getTitle()
+	{
+		return _title;
 	}
 	
 	public int getPledgeStatus()

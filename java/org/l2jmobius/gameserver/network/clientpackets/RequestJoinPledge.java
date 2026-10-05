@@ -20,6 +20,7 @@
  */
 package org.l2jmobius.gameserver.network.clientpackets;
 
+import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.clan.Clan;
@@ -59,6 +60,12 @@ public class RequestJoinPledge extends ClientPacket
 		final Player target = World.getInstance().getPlayer(_target);
 		if (target == null)
 		{
+			// A fake player that isn't in a clan answers the invite itself.
+			if (FakeClanManager.getInstance().onClanInvite(player, _target))
+			{
+				return;
+			}
+			
 			player.sendPacket(SystemMessageId.YOU_HAVE_INVITED_THE_WRONG_TARGET);
 			return;
 		}

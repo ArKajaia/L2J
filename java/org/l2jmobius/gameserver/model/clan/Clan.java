@@ -50,6 +50,7 @@ import org.l2jmobius.gameserver.data.sql.CrestTable;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.data.xml.SkillTreeData;
 import org.l2jmobius.gameserver.managers.CastleManager;
+import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FortManager;
 import org.l2jmobius.gameserver.managers.SiegeManager;
 import org.l2jmobius.gameserver.managers.TerritoryWarManager;
@@ -165,6 +166,9 @@ public class Clan
 	
 	private final AtomicInteger _siegeKills = new AtomicInteger();
 	private final AtomicInteger _siegeDeaths = new AtomicInteger();
+	
+	/** The members of a clan run by fake players (see {@link FakeClanManager}): they are no characters, so they are only counted. 0 for a clan of players. */
+	private int _fakeMemberCount;
 	
 	/**
 	 * Called if a clan is referenced only by id. In this case all other data needs to be fetched from db
@@ -562,7 +566,16 @@ public class Clan
 	
 	public int getMembersCount()
 	{
-		return _members.size();
+		return Math.max(_members.size(), _fakeMemberCount);
+	}
+	
+	/**
+	 * Makes this a clan run by fake players.
+	 * @param count how many members it has
+	 */
+	public void setFakeMemberCount(int count)
+	{
+		_fakeMemberCount = count;
 	}
 	
 	public int getSubPledgeMembersCount(int subpl)
@@ -698,6 +711,12 @@ public class Clan
 	 */
 	public int getOnlineMembersCount()
 	{
+		// Its fake players in the world.
+		if (_fakeMemberCount > 0)
+		{
+			return FakeClanManager.getInstance().getOnlineCount(this);
+		}
+		
 		int count = 0;
 		for (ClanMember temp : _members.values())
 		{
