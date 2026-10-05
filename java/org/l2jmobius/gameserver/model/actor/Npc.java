@@ -52,6 +52,7 @@ import org.l2jmobius.gameserver.handler.BypassHandler;
 import org.l2jmobius.gameserver.handler.IBypassHandler;
 import org.l2jmobius.gameserver.managers.CHSiegeManager;
 import org.l2jmobius.gameserver.managers.CastleManager;
+import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.FortManager;
 import org.l2jmobius.gameserver.managers.ItemManager;
@@ -1235,8 +1236,12 @@ public class Npc extends Creature
 		if (_isFakePlayer && (killer != null) && killer.isPlayable() && !isTrialDuelist())
 		{
 			final Player player = killer.asPlayer();
+			
+			// A kill in a clan war (both clans declared it) is no PK, and moves clan reputation.
+			final boolean clanWar = FakeClanManager.getInstance().onFakeKilled(this, player);
+			
 			// Not flagged and no karma: a PK. (Karma is positive here, "< 0" could never be true.)
-			if (isScriptValue(0) && (getKarma() <= 0))
+			if (!clanWar && isScriptValue(0) && (getKarma() <= 0))
 			{
 				if (FakePlayersConfig.FAKE_PLAYER_KILL_KARMA)
 				{
@@ -1540,6 +1545,9 @@ public class Npc extends Creature
 			if (_isFakePlayer)
 			{
 				player.sendPacket(new FakePlayerInfo(this));
+				
+				// Its clan as the player sees it: clan war icons, attackable without Ctrl.
+				FakeClanManager.getInstance().sendRelation(this, player);
 				
 				// Private store message support.
 				final org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder fakePlayerInfo = getTemplate().getFakePlayerInfo();

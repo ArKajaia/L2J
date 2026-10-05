@@ -72,6 +72,7 @@ NPCs built to look and act like real player characters, used to populate the wor
 - Roaming PvP fake players are built with real class stats, gear, and skills, and fight players and monsters like a genuine character.
 - They engage in PvP for several reasons — retaliation, opportunistic attacks on flagged/karma players, revenge after being killed — using real skill combos.
 - Fake party members: write "lf spellsinger" (or "lf bishop and ee", "lfm healer", "need wc"...) in general, shout or trade chat and a fake player of that class and of your level whispers back, walks over and joins when you invite it. In the party it shows in the party window, follows the leader, fights what the party fights, and healers and buffers heal, buff, recharge and resurrect the party. Roaming fake players also hunt in parties of 2-3 (`config/Custom/FakeParty.ini`).
+- Clans of fake players: 8 real clans (configurable) with their own crest, level, leader, reputation, wars and alliances. Town, farming and party fake players are sometimes members and show the clan name, crest and a random title. Two of them are at war and their members fight when they meet. Players can declare war on them (they declare back and attack the players of that clan on sight, with no karma for war kills), invite them into their alliance, or invite a fake player that isn't in a clan into their own clan (`config/Custom/FakeClans.ini`, `//fakeclans`).
 - Visually and mechanically indistinguishable from real players (same info packets, PvP-flag behavior, generated names), though still NPCs internally.
 
 ### Rotating Hot Zones
@@ -521,7 +522,7 @@ This program is free software, licensed under the **GNU General Public License, 
 
 ## Recent Updates
 
-Changes from 28 September – 4 October 2026.
+Changes from 28 September – 5 October 2026.
 
 ### Passive Skill Tree
 - **Route choices**: each archetype now has several ways to the same place, and each way costs a different amount.
@@ -568,8 +569,17 @@ Changes from 28 September – 4 October 2026.
   - New support builds (Cardinal, Hierophant, Eva's Saint, Shillien Saint, Doomcryer, Sword Muse, Spectral Dancer) heal, group heal, buff, recharge and resurrect; the Dominator keeps up its Pa'agrio buffs in a party. They don't roam on their own (`weight="0"`).
   - Monsters can kill a party fake player. A party healer or a player can resurrect it; otherwise it comes back from town a minute later. Dismiss it or leave the party to let it go; it goes back to hunting where it is.
   - Roaming fake players sometimes hunt in parties of 2-3, often with a healer or buffer, and fight together.
+- **Clans of fake players** (`Custom/FakeClans.ini`):
+  - 8 clans run by fake players (Valhalla, IronLegion, Nightshade, DragonGuard, SilverWolves, CrimsonDawn, Eclipse, Phoenix by default). They are real clans with a level, a leader, reputation and a crest of their own (drawn heraldic designs, or your own 16x12 picture in `data/fakeclans/<clan name>.bmp|.png|.dds`). A clan of fake players is marked by a leader id equal to its clan id, and the database cleanup at start keeps it.
+  - About a third of new fake players (town, farming and party ones) are members, and friends that arrive or hunt together are often in the same clan. Members show the clan name, crest and alliance, and a random title. Fake players no longer show their subclass count as a title (`FakePvpPassiveTreeTitle` is gone).
+  - IronLegion and CrimsonDawn are at war: their members fight when they meet on the hunting grounds.
+  - Players can declare war on a fake clan. It declares war back after a while, and its members then attack that clan's players on sight. Kills in a war both clans declared give no karma, move clan reputation and give the reduced death penalty, and players see the clan war icons over fake players. When the players stop their war, the fake clan stops too. A fake clan whose members a players' clan keeps killing declares war on it.
+  - An alliance leader can invite a fake clan by targeting one of its members (`/allyinvite`). The clan answers after a few seconds.
+  - A fake player that isn't in a clan can be invited into a player's clan. If it accepts, it wears that clan's crest with a random title, shows in the clan window as an online member while it is in the world, and can be dismissed from the clan window. Fake players don't count toward clan level requirements.
+  - Members never taunt or attack their own clan or alliance, and a fake player of a clan at war with yours won't answer your "lf" or join your party.
 - **Admin and UI**:
   - `//fakeplayers` opens an admin menu with all fake player commands.
+  - `//fakeclans` lists the clans of fake players: level, leader, members online, reputation, alliance and wars.
   - Shift-clicking a fake player shows its equipment and stats.
   - Shift-clicking a monster opens a redesigned NPC info window.
   - There are now 20 PvP taunt chat lines.

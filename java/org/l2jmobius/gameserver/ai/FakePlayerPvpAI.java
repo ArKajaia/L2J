@@ -29,10 +29,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.GeneralConfig;
+import org.l2jmobius.gameserver.config.custom.FakeClanConfig;
 import org.l2jmobius.gameserver.config.custom.FakePartyConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
@@ -54,6 +56,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.instance.Chest;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
+import org.l2jmobius.gameserver.model.clan.Clan;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
@@ -1602,7 +1605,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		_nextGreetScan = now + GREET_SCAN_INTERVAL;
 		for (Player player : World.getInstance().getVisibleObjectsInRange(npc, Player.class, OPPORTUNITY_RANGE))
 		{
-			if (_seenPlayers.contains(player.getObjectId()) || player.isAlikeDead() || player.isInvisible() || (player.getInstanceId() != npc.getInstanceId()) || hates(npc, player, FakePlayerPvpManager.PVP_HATE) || !GeoEngine.getInstance().canSeeTarget(npc, player))
+			if (_seenPlayers.contains(player.getObjectId()) || player.isAlikeDead() || player.isInvisible() || (player.getInstanceId() != npc.getInstanceId()) || hates(npc, player, FakePlayerPvpManager.PVP_HATE) || FakeClanManager.getInstance().isWarEnemy(npc, player) || !GeoEngine.getInstance().canSeeTarget(npc, player))
 			{
 				continue;
 			}
@@ -1684,7 +1687,8 @@ public class FakePlayerPvpAI extends AttackableAI
 	private boolean lookForPvp(Attackable npc, long now)
 	{
 		final FakePlayerPvpPersonality personality = FakePlayerPvpPersonality.of(npc);
-		if (((personality.getAttackFlaggedChance() <= 0) && (personality.getAttackKarmaChance() <= 0) && (personality.getJoinFightChance() <= 0)) || (now < _nextOpportunityScan))
+		final boolean atWar = (FakeClanConfig.WAR_ATTACK_CHANCE > 0) && isAtWar(npc);
+		if (((personality.getAttackFlaggedChance() <= 0) && (personality.getAttackKarmaChance() <= 0) && (personality.getJoinFightChance() <= 0) && !atWar) || (now < _nextOpportunityScan))
 		{
 			return false;
 		}
@@ -1698,8 +1702,10 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		for (Player player : World.getInstance().getVisibleObjectsInRange(npc, Player.class, OPPORTUNITY_RANGE))
 		{
+			// A player of a clan its clan is at war with (both declared it): it goes for them like a clan war enemy.
+			final boolean war = atWar && FakeClanManager.getInstance().isWarEnemy(npc, player);
 			final boolean karma = player.getKarma() > 0;
-			if ((!karma && (player.getPvpFlag() == 0)) || player.isAlikeDead() || player.isInvisible() || (player.isGM() && !player.getAccessLevel().canTakeAggro()))
+			if ((!karma && (player.getPvpFlag() == 0) && !war) || player.isAlikeDead() || player.isInvisible() || (player.isGM() && !player.getAccessLevel().canTakeAggro()))
 			{
 				continue;
 			}
@@ -1709,14 +1715,28 @@ public class FakePlayerPvpAI extends AttackableAI
 				continue;
 			}
 			
-			if ((player.getLevel() > (npc.getLevel() + OPPORTUNITY_MAX_LEVEL_ABOVE)) || hates(npc, player, FakePlayerPvpManager.PVP_HATE) || !GeoEngine.getInstance().canSeeTarget(npc, player))
+			if ((player.getLevel() > (npc.getLevel() + (war ? FakeClanConfig.WAR_MAX_LEVEL_ABOVE : OPPORTUNITY_MAX_LEVEL_ABOVE))) || hates(npc, player, FakePlayerPvpManager.PVP_HATE) || !GeoEngine.getInstance().canSeeTarget(npc, player))
 			{
 				continue;
 			}
 			
-			if ((_consideredPlayers.putIfAbsent(player.getObjectId(), now) == null) && (Rnd.get(100) < (karma ? personality.getAttackKarmaChance() : personality.getAttackFlaggedChance())))
+			// Not its own clan or alliance, flagged or not.
+			if (!war && !karma && FakeClanManager.getInstance().isFriend(npc, player))
 			{
-				FakePlayerPvpManager.getInstance().attackPlayer(npc, player, karma);
+				continue;
+			}
+			
+			final int chance = war ? FakeClanConfig.WAR_ATTACK_CHANCE : karma ? personality.getAttackKarmaChance() : personality.getAttackFlaggedChance();
+			if ((_consideredPlayers.putIfAbsent(player.getObjectId(), now) == null) && (Rnd.get(100) < chance))
+			{
+				if (war)
+				{
+					FakePlayerPvpManager.getInstance().attackWarEnemy(npc, player);
+				}
+				else
+				{
+					FakePlayerPvpManager.getInstance().attackPlayer(npc, player, karma);
+				}
 				return true;
 			}
 		}
@@ -1729,25 +1749,51 @@ public class FakePlayerPvpAI extends AttackableAI
 				continue;
 			}
 			
+			// A fake player of a clan its clan is at war with.
+			final boolean war = atWar && FakeClanManager.getInstance().isWarEnemy(npc, other);
 			final boolean karma = other.getKarma() > 0;
-			if ((!karma && (other.getScriptValue() == 0)) || other.isInsideZone(ZoneId.PEACE) || other.isInsideZone(ZoneId.PVP) || other.isInsideZone(ZoneId.SIEGE))
+			if ((!karma && (other.getScriptValue() == 0) && !war) || other.isInsideZone(ZoneId.PEACE) || other.isInsideZone(ZoneId.PVP) || other.isInsideZone(ZoneId.SIEGE))
 			{
 				continue;
 			}
 			
-			if ((other.getLevel() > (npc.getLevel() + OPPORTUNITY_MAX_LEVEL_ABOVE)) || hates(npc, other, FakePlayerPvpManager.PVP_HATE) || !GeoEngine.getInstance().canSeeTarget(npc, other))
+			if ((other.getLevel() > (npc.getLevel() + (war ? FakeClanConfig.WAR_MAX_LEVEL_ABOVE : OPPORTUNITY_MAX_LEVEL_ABOVE))) || hates(npc, other, FakePlayerPvpManager.PVP_HATE) || !GeoEngine.getInstance().canSeeTarget(npc, other))
 			{
 				continue;
 			}
 			
-			if ((_consideredPlayers.putIfAbsent(other.getObjectId(), now) == null) && (Rnd.get(100) < (karma ? personality.getAttackKarmaChance() : personality.getJoinFightChance())))
+			// Not its own clan or alliance.
+			if (!war && !karma && FakeClanManager.getInstance().isFriend(npc, other))
 			{
-				FakePlayerPvpManager.getInstance().attackFakePlayer(npc, other, karma);
+				continue;
+			}
+			
+			final int chance = war ? FakeClanConfig.WAR_ATTACK_CHANCE : karma ? personality.getAttackKarmaChance() : personality.getJoinFightChance();
+			if ((_consideredPlayers.putIfAbsent(other.getObjectId(), now) == null) && (Rnd.get(100) < chance))
+			{
+				if (war)
+				{
+					FakePlayerPvpManager.getInstance().attackWarEnemy(npc, other);
+				}
+				else
+				{
+					FakePlayerPvpManager.getInstance().attackFakePlayer(npc, other, karma);
+				}
 				return true;
 			}
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @return {@code true} if its clan is at war with another clan
+	 */
+	private static boolean isAtWar(Attackable npc)
+	{
+		final Clan clan = FakeClanManager.getClan(npc);
+		return (clan != null) && clan.isAtWar();
 	}
 	
 	/**
@@ -1833,6 +1879,12 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		if (hates(npc, target, FakePlayerPvpManager.PVP_HATE))
+		{
+			return false;
+		}
+		
+		// Never its own clan or alliance.
+		if (FakeClanManager.getInstance().isFriend(npc, target))
 		{
 			return false;
 		}
@@ -2206,7 +2258,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		final Npc other = creature.asNpc();
-		if (other.isTrialDuelist() || other.isInsideZone(ZoneId.PEACE) || FakePlayerPvpManager.isInPvp(other) || !other.hasAI() || !(other.getAI() instanceof FakePlayerPvpAI))
+		if (other.isTrialDuelist() || other.isInsideZone(ZoneId.PEACE) || FakePlayerPvpManager.isInPvp(other) || !other.hasAI() || !(other.getAI() instanceof FakePlayerPvpAI) || FakeClanManager.getInstance().isWarEnemy(npc, other))
 		{
 			return false;
 		}

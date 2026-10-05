@@ -29,6 +29,7 @@ import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.data.xml.FakePlayerData;
 import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
 import org.l2jmobius.gameserver.handler.IAdminCommandHandler;
+import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakePlayerChatManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.FakePlayerTownManager;
@@ -53,7 +54,8 @@ public class AdminFakePlayers implements IAdminCommandHandler
 		"admin_fakepvp",
 		"admin_fakepvp_list",
 		"admin_fakepvp_clear",
-		"admin_faketown"
+		"admin_faketown",
+		"admin_fakeclans"
 	};
 	
 	@Override
@@ -80,6 +82,14 @@ public class AdminFakePlayers implements IAdminCommandHandler
 		{
 			// The town fake players: how many per town, and what the targeted one is doing and plans to do.
 			for (String line : FakePlayerTownManager.getInstance().getInfo(activeChar.getTarget()))
+			{
+				activeChar.sendSysMessage(line);
+			}
+		}
+		else if (command.startsWith("admin_fakeclans"))
+		{
+			// The clans of fake players: level, leader, members online, reputation, alliance and wars.
+			for (String line : FakeClanManager.getInstance().getInfo())
 			{
 				activeChar.sendSysMessage(line);
 			}

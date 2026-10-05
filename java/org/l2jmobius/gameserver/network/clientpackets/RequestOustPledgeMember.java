@@ -23,6 +23,7 @@ package org.l2jmobius.gameserver.network.clientpackets;
 import java.util.concurrent.TimeUnit;
 
 import org.l2jmobius.gameserver.config.PlayerConfig;
+import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.clan.Clan;
 import org.l2jmobius.gameserver.model.clan.ClanAccess;
@@ -76,6 +77,12 @@ public class RequestOustPledgeMember extends ClientPacket
 		final ClanMember member = clan.getClanMember(_target);
 		if (member == null)
 		{
+			// A fake player that joined the clan.
+			if (FakeClanManager.getInstance().onDismiss(player, _target))
+			{
+				return;
+			}
+			
 			PacketLogger.warning("Target (" + _target + ") is not member of the clan");
 			return;
 		}

@@ -575,6 +575,9 @@ public class FakePartyManager
 				{
 					return;
 				}
+				
+				// Not of a clan at war with the player's.
+				FakeClanManager.getInstance().avoidWar(fake, player);
 			}
 			
 			final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
@@ -619,7 +622,7 @@ public class FakePartyManager
 			}
 			
 			final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
-			if ((profile == null) || (profile.getParty() != null) || (profile.getLfTarget(now) != 0) || FakePlayerPvpManager.isInPvp(fake) || !isOfClass(profile, builds))
+			if ((profile == null) || (profile.getParty() != null) || (profile.getLfTarget(now) != 0) || FakePlayerPvpManager.isInPvp(fake) || !isOfClass(profile, builds) || FakeClanManager.getInstance().isWarEnemy(fake, player))
 			{
 				continue;
 			}
@@ -789,7 +792,7 @@ public class FakePartyManager
 			return decision > 0;
 		}
 		
-		final boolean accept = !FakePlayerPvpManager.isInPvp(fake) && (fake.calculateDistance2D(requestor) <= INVITE_RANGE) && (Math.abs(fake.getLevel() - requestor.getLevel()) <= FakePartyConfig.INVITE_MAX_LEVEL_DIFFERENCE) && (Rnd.get(100) < FakePartyConfig.INVITE_ACCEPT_CHANCE);
+		final boolean accept = !FakePlayerPvpManager.isInPvp(fake) && !FakeClanManager.getInstance().isWarEnemy(fake, requestor) && (fake.calculateDistance2D(requestor) <= INVITE_RANGE) && (Math.abs(fake.getLevel() - requestor.getLevel()) <= FakePartyConfig.INVITE_MAX_LEVEL_DIFFERENCE) && (Rnd.get(100) < FakePartyConfig.INVITE_ACCEPT_CHANCE);
 		_decisions.put(key, accept ? (now + INVITE_MEMORY) : -(now + INVITE_MEMORY));
 		return accept;
 	}
@@ -1621,6 +1624,9 @@ public class FakePartyManager
 			
 			friend.getTemplate().getFakePlayerPvpProfile().setParty(party);
 			party.addFake(friend);
+			
+			// Friends that hunt together are often of the same clan.
+			FakeClanManager.getInstance().shareClan(friend, leader);
 		}
 		
 		checkFakeOnly(party);

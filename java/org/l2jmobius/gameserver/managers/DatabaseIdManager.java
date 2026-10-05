@@ -77,8 +77,9 @@ public class DatabaseIdManager
 		"DELETE FROM seven_signs WHERE seven_signs.charId NOT IN (SELECT charId FROM characters)",
 		"DELETE FROM merchant_lease WHERE merchant_lease.player_id NOT IN (SELECT charId FROM characters)",
 		"DELETE FROM character_reco_bonus WHERE character_reco_bonus.charId NOT IN (SELECT charId FROM characters)",
-		"DELETE FROM clan_data WHERE clan_data.leader_id NOT IN (SELECT charId FROM characters)",
-		"DELETE FROM clan_data WHERE clan_data.clan_id NOT IN (SELECT clanid FROM characters)",
+		// A clan led by its own id is run by fake players (FakeClanManager): it has no characters.
+		"DELETE FROM clan_data WHERE clan_data.leader_id NOT IN (SELECT charId FROM characters) AND clan_data.leader_id <> clan_data.clan_id",
+		"DELETE FROM clan_data WHERE clan_data.clan_id NOT IN (SELECT clanid FROM characters) AND clan_data.leader_id <> clan_data.clan_id",
 		"DELETE FROM olympiad_fights WHERE olympiad_fights.charOneId NOT IN (SELECT charId FROM characters)",
 		"DELETE FROM olympiad_fights WHERE olympiad_fights.charTwoId NOT IN (SELECT charId FROM characters)",
 		"DELETE FROM heroes_diary WHERE heroes_diary.charId NOT IN (SELECT charId FROM characters)",

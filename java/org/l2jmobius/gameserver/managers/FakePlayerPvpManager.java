@@ -938,6 +938,26 @@ public class FakePlayerPvpManager
 	};
 	
 	/** A short talk of two fake players that met at a hunting ground, lines said by turns (the one that walked over first). */
+	private static final String[] TAUNTS_WAR =
+	{
+		"war!",
+		"cw target",
+		"enemy clan here",
+		"found one",
+		"for the clan!",
+		"ur clan asked for it",
+		"wars on, nothing personal",
+		"gg ur clan",
+		"one of them",
+		"clan war, sry",
+		"die",
+		"there u are",
+		"tell ur leader hi",
+		"we see u",
+		"cw!!",
+		"they're here",
+	};
+	
 	private static final String[][] DIALOGUES_HUNTING =
 	{
 		{
@@ -1397,6 +1417,9 @@ public class FakePlayerPvpManager
 				_names.remove(name.toLowerCase());
 				return null;
 			}
+			
+			// Sometimes a member of a clan of fake players.
+			FakeClanManager.getInstance().assignClan(template);
 			
 			final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
 			profile.setReplacedMonster(replacedMonster, replacedSpawn);
@@ -1869,7 +1892,7 @@ public class FakePlayerPvpManager
 			// Flagged meanwhile (it attacked someone): no reason to hold back anymore.
 			profile.stopRefusing(enemy);
 		}
-		else if (unflagged && (enemy.getLevel() > fake.getLevel()) && (Rnd.get(100) < getRefuseChance(profile, enemy, enemy.getLevel() - fake.getLevel())))
+		else if (unflagged && (enemy.getLevel() > fake.getLevel()) && !FakeClanManager.getInstance().isWarEnemy(fake, enemy) && (Rnd.get(100) < getRefuseChance(profile, enemy, enemy.getLevel() - fake.getLevel())))
 		{
 			profile.refuse(enemy, now + REFUSE_MEMORY);
 			taunt(fake, TAUNTS_REFUSE, false);
@@ -1955,6 +1978,9 @@ public class FakePlayerPvpManager
 	public void onFakePlayerKilledByFake(Attackable victim, Creature killer)
 	{
 		taunt(victim, TAUNTS_DEATH, true);
+		
+		// Their clans at war: clan reputation moves.
+		FakeClanManager.getInstance().onWarKill(killer, victim);
 	}
 	
 	/**
@@ -1968,6 +1994,19 @@ public class FakePlayerPvpManager
 		if (!fake.isDead() && !isFighting(fake, player))
 		{
 			startFight(fake, player, karma ? TAUNTS_KARMA : TAUNTS_FLAGGED);
+		}
+	}
+	
+	/**
+	 * Called by the fake player AI when it sees a player or a fake player of a clan its clan is at war with (both clans declared it).
+	 * @param fake the fake player
+	 * @param enemy the war enemy
+	 */
+	public void attackWarEnemy(Attackable fake, Creature enemy)
+	{
+		if (!fake.isDead() && !isFighting(fake, enemy))
+		{
+			startFight(fake, enemy, TAUNTS_WAR);
 		}
 	}
 	
@@ -2367,7 +2406,16 @@ public class FakePlayerPvpManager
 			return false;
 		}
 		
-		return isFighting(fake, player) || (player.getPvpFlag() > 0) || (player.getKarma() > 0);
+		// Its clan and alliance only when it fights them, its clan's war enemies always.
+		if (isFighting(fake, player))
+		{
+			return true;
+		}
+		if (FakeClanManager.getInstance().isFriend(fake, player))
+		{
+			return false;
+		}
+		return (player.getPvpFlag() > 0) || (player.getKarma() > 0) || FakeClanManager.getInstance().isWarEnemy(fake, player);
 	}
 	
 	/**
@@ -2383,7 +2431,15 @@ public class FakePlayerPvpManager
 			return false;
 		}
 		
-		return isFighting(fake, other) || (other.getScriptValue() > 0) || (other.getKarma() > 0);
+		if (isFighting(fake, other))
+		{
+			return true;
+		}
+		if (FakeClanManager.getInstance().isFriend(fake, other))
+		{
+			return false;
+		}
+		return (other.getScriptValue() > 0) || (other.getKarma() > 0) || FakeClanManager.getInstance().isWarEnemy(fake, other);
 	}
 	
 	/**
@@ -3115,6 +3171,15 @@ public class FakePlayerPvpManager
 		}
 		
 		return !isSeenByPlayer(monster);
+	}
+	
+	/**
+	 * Takes a name no fake player may get anymore (the leader of a clan of fake players, see {@link FakeClanManager}).
+	 * @param name the name
+	 */
+	void reserveName(String name)
+	{
+		_names.add(name.toLowerCase());
 	}
 	
 	/**

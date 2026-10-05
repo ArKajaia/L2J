@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.l2jmobius.commons.network.WritableBuffer;
+import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Playable;
 import org.l2jmobius.gameserver.network.GameClient;
 import org.l2jmobius.gameserver.network.ServerPackets;
@@ -67,6 +68,22 @@ public class RelationChanged extends ServerPacket
 		_singled._autoAttackable = autoattackable;
 		_singled._karma = activeChar.getKarma();
 		_singled._pvpFlag = activeChar.getPvpFlag();
+	}
+	
+	/**
+	 * The relation of a fake player (clan war icons, attackable without Ctrl), like a player's.
+	 * @param fake the fake player
+	 * @param relation the relation
+	 * @param autoattackable {@code true} if it can be attacked without Ctrl
+	 */
+	public RelationChanged(Npc fake, int relation, boolean autoattackable)
+	{
+		_singled = new Relation();
+		_singled._objId = fake.getObjectId();
+		_singled._relation = relation;
+		_singled._autoAttackable = autoattackable;
+		_singled._karma = fake.getKarma();
+		_singled._pvpFlag = fake.getScriptValue();
 	}
 	
 	public RelationChanged()

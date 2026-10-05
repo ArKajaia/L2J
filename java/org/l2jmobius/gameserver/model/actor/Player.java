@@ -114,6 +114,7 @@ import org.l2jmobius.gameserver.managers.CoupleManager;
 import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
 import org.l2jmobius.gameserver.managers.DimensionalRiftManager;
 import org.l2jmobius.gameserver.managers.DuelManager;
+import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FortManager;
 import org.l2jmobius.gameserver.managers.FortSiegeManager;
@@ -5454,7 +5455,9 @@ public class Player extends Playable
 					}
 				}
 				
-				if (fpcKill && FakePlayersConfig.FAKE_PLAYER_KILL_KARMA && (_pvpFlag == 0) && (getKarma() <= 0))
+				// A fake player at war with this player's clan (both declared it): no PK, and clan reputation moves.
+				final boolean fpcClanWar = fpcKill && FakeClanManager.getInstance().onWarKill(killer, this);
+				if (fpcKill && !fpcClanWar && FakePlayersConfig.FAKE_PLAYER_KILL_KARMA && (_pvpFlag == 0) && (getKarma() <= 0))
 				{
 					killer.setKarma(killer.getKarma() + 150);
 					killer.broadcastInfo();
@@ -5527,7 +5530,7 @@ public class Player extends Playable
 					// Should not penalize player when lucky, in a non siege PvP zone, has advent blessing or is in an event.
 					if (PlayerConfig.PLAYER_DELEVEL && !isLucky() && (insideSiegeZone || !insidePvpZone) && !_nevitSystem.isAdventBlessingActive() && !isOnEvent())
 					{
-						calculateDeathExpPenalty(killer, isAtWarWith(pk));
+						calculateDeathExpPenalty(killer, isAtWarWith(pk) || FakeClanManager.getInstance().isWarEnemy(killer, this));
 					}
 				}
 			}

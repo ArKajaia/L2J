@@ -107,6 +107,35 @@ public class ClanMember
 	}
 	
 	/**
+	 * Creates a clan member that is no character: the leader of a clan run by fake players (see {@link org.l2jmobius.gameserver.managers.FakeClanManager}).
+	 * @param clan the clan
+	 * @param objectId its object id
+	 * @param name its name
+	 * @param level its level
+	 * @param classId its class id
+	 * @param female {@code true} if female
+	 * @param raceOrdinal its race
+	 */
+	public ClanMember(Clan clan, int objectId, String name, int level, int classId, boolean female, int raceOrdinal)
+	{
+		if (clan == null)
+		{
+			throw new IllegalArgumentException("Cannot create a Clan Member with a null clan.");
+		}
+		
+		_clan = clan;
+		_objectId = objectId;
+		_name = name;
+		_level = level;
+		_classId = classId;
+		_sex = female;
+		_raceOrdinal = raceOrdinal;
+		_title = "";
+		_pledgeType = 0;
+		_powerGrade = 1;
+	}
+	
+	/**
 	 * Sets the player instance.
 	 * @param player the new player instance
 	 */

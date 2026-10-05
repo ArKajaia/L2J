@@ -22,6 +22,7 @@ import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData;
 import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData.CustomSkill;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.managers.ClassTransferChallengeManager;
+import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.HotzoneModifierManager;
 import org.l2jmobius.gameserver.model.World;
@@ -78,6 +79,16 @@ public class Monster extends Attackable
 		{
 			// A member of the attacker's party.
 			if (FakePartyManager.getInstance().isSameGroup(this, attacker))
+			{
+				return false;
+			}
+			
+			// Like a player: at war with the attacker's clan (both clans declared it) it is, of its clan or alliance it isn't.
+			if (FakeClanManager.getInstance().isWarEnemy(this, attacker))
+			{
+				return true;
+			}
+			if (FakeClanManager.getInstance().isFriend(this, attacker) && (getKarma() <= 0))
 			{
 				return false;
 			}

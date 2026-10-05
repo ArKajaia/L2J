@@ -39,6 +39,7 @@ import org.l2jmobius.gameserver.communitybbs.Manager.ForumsBBSManager;
 import org.l2jmobius.gameserver.config.GeneralConfig;
 import org.l2jmobius.gameserver.managers.CHSiegeManager;
 import org.l2jmobius.gameserver.managers.ClanHallAuctionManager;
+import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FortManager;
 import org.l2jmobius.gameserver.managers.FortSiegeManager;
 import org.l2jmobius.gameserver.managers.IdManager;
@@ -140,6 +141,15 @@ public class ClanTable
 	public Clan getClan(int clanId)
 	{
 		return _clans.get(clanId);
+	}
+	
+	/**
+	 * Adds a clan made outside {@link #createClan} (a clan of fake players, see {@link FakeClanManager}).
+	 * @param clan the clan, already stored
+	 */
+	public void addClan(Clan clan)
+	{
+		_clans.put(clan.getId(), clan);
 	}
 	
 	public Clan getClanByName(String clanName)
@@ -438,6 +448,9 @@ public class ClanTable
 		msg = new SystemMessage(SystemMessageId.S1_HAS_DECLARED_A_CLAN_WAR);
 		msg.addString(clan1.getName());
 		clan2.broadcastToOnlineMembers(msg);
+		
+		// Fake players show it, and a clan of fake players answers.
+		FakeClanManager.getInstance().onWarStarted(clan1, clan2);
 	}
 	
 	public void deleteClanWars(int clanId1, int clanId2)
@@ -476,6 +489,9 @@ public class ClanTable
 		msg = new SystemMessage(SystemMessageId.THE_CLAN_S1_HAS_DECIDED_TO_STOP_THE_WAR);
 		msg.addString(clan1.getName());
 		clan2.broadcastToOnlineMembers(msg);
+		
+		// Fake players show it, and a clan of fake players answers.
+		FakeClanManager.getInstance().onWarStopped(clan1, clan2);
 	}
 	
 	public void checkSurrender(Clan clan1, Clan clan2)

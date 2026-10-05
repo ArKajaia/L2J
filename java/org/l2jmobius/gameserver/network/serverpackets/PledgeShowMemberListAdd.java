@@ -21,6 +21,7 @@
 package org.l2jmobius.gameserver.network.serverpackets;
 
 import org.l2jmobius.commons.network.WritableBuffer;
+import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.clan.ClanMember;
 import org.l2jmobius.gameserver.network.GameClient;
@@ -50,6 +51,19 @@ public class PledgeShowMemberListAdd extends ServerPacket
 		_classId = cm.getClassId();
 		_isOnline = (cm.isOnline() ? cm.getObjectId() : 0);
 		_pledgeType = cm.getPledgeType();
+	}
+	
+	/**
+	 * A fake player that joined a players' clan (see {@link org.l2jmobius.gameserver.managers.FakeClanManager}): an online member of the main clan.
+	 * @param fake the fake player
+	 */
+	public PledgeShowMemberListAdd(Npc fake)
+	{
+		_name = fake.getName();
+		_level = fake.getLevel();
+		_classId = fake.getTemplate().getFakePlayerInfo().getPlayerClass().getId();
+		_isOnline = fake.getObjectId();
+		_pledgeType = 0;
 	}
 	
 	@Override

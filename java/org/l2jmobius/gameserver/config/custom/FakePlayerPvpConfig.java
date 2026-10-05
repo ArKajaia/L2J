@@ -69,7 +69,6 @@ public class FakePlayerPvpConfig
 	public static int PASSIVE_TREE_SUBCLASS_CHANCE_MIN;
 	public static int PASSIVE_TREE_SUBCLASS_CHANCE_MAX;
 	public static int PASSIVE_TREE_VARIANTS;
-	public static String PASSIVE_TREE_TITLE;
 	public static boolean BUFFS_ENABLED;
 	public static int POTION_HP_PERCENT;
 	public static int POTION_HEAL_PERCENT;
@@ -204,7 +203,6 @@ public class FakePlayerPvpConfig
 		PASSIVE_TREE_SUBCLASS_CHANCE_MIN = Math.max(0, Math.min(100, config.getInt("FakePvpPassiveTreeSubclassChanceMin", 10)));
 		PASSIVE_TREE_SUBCLASS_CHANCE_MAX = Math.max(0, Math.min(100, config.getInt("FakePvpPassiveTreeSubclassChanceMax", 75)));
 		PASSIVE_TREE_VARIANTS = Math.max(1, Math.min(64, config.getInt("FakePvpPassiveTreeVariants", 8)));
-		PASSIVE_TREE_TITLE = config.getString("FakePvpPassiveTreeTitle", "Subclasses: %count%").trim();
 		BUFFS_ENABLED = config.getBoolean("FakePvpBuffsEnabled", true);
 		POTION_HP_PERCENT = Math.max(0, Math.min(100, config.getInt("FakePvpPotionHpPercent", 50)));
 		POTION_HEAL_PERCENT = Math.max(0, Math.min(100, config.getInt("FakePvpPotionHealPercent", 6)));
