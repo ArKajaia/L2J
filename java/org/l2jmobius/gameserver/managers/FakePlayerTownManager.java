@@ -897,7 +897,7 @@ public class FakePlayerTownManager
 			}
 			
 			// Nothing to sell after all (should not happen): it comes as a regular visitor.
-			final FakePlayerTownStore store = vendor ? FakePlayerTownStore.create(level, FakePlayersConfig.FAKE_TOWN_PLAYERS_STORE_RARE_CHANCE) : null;
+			final FakePlayerTownStore store = vendor ? FakePlayerTownStore.create(level, FakePlayersConfig.FAKE_TOWN_PLAYERS_STORE_RARE_CHANCE, FakePlayersConfig.FAKE_TOWN_PLAYERS_STORE_LOOT_CHANCE, FakePlayersConfig.FAKE_TOWN_PLAYERS_STORE_LOOT_KILLS) : null;
 			final PlayerClass playerClass = template.getFakePlayerInfo().getPlayerClass();
 			final FakePlayerTownVisitor visitor = new FakePlayerTownVisitor(this, town, spawn, npc, level, playerClass, bufferLine, store, selfBuffs(build, level, bufferLine));
 			visitor.makePlan(midSession);
