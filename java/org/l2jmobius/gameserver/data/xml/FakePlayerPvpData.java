@@ -27,6 +27,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 import org.w3c.dom.Document;
@@ -301,6 +302,46 @@ public class FakePlayerPvpData implements IXmlReader
 		}
 		
 		return _builds.get(_builds.size() - 1);
+	}
+	
+	/**
+	 * @param filter which builds may be picked
+	 * @return a build {@code filter} accepts, picked at random by weight (by chance alike when none of them has a weight), or {@code null} if there is none
+	 */
+	public FakePlayerPvpBuild getRandomBuild(Predicate<FakePlayerPvpBuild> filter)
+	{
+		final List<FakePlayerPvpBuild> builds = new ArrayList<>();
+		int totalWeight = 0;
+		for (FakePlayerPvpBuild build : _builds)
+		{
+			if (filter.test(build))
+			{
+				builds.add(build);
+				totalWeight += build.getWeight();
+			}
+		}
+		
+		if (builds.isEmpty())
+		{
+			return null;
+		}
+		
+		if (totalWeight <= 0)
+		{
+			return builds.get(Rnd.get(builds.size()));
+		}
+		
+		int roll = Rnd.get(totalWeight);
+		for (FakePlayerPvpBuild build : builds)
+		{
+			roll -= build.getWeight();
+			if (roll < 0)
+			{
+				return build;
+			}
+		}
+		
+		return builds.get(builds.size() - 1);
 	}
 	
 	/**

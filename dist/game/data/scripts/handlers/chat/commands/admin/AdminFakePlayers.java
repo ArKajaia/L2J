@@ -33,6 +33,8 @@ import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakePlayerChatManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.FakePlayerTownManager;
+import org.l2jmobius.gameserver.managers.PvpSpotManager;
+import org.l2jmobius.gameserver.managers.PvpSpotManager.SpotInfo;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -54,6 +56,8 @@ public class AdminFakePlayers implements IAdminCommandHandler
 		"admin_fakepvp",
 		"admin_fakepvp_list",
 		"admin_fakepvp_clear",
+		"admin_fakepvp_spots",
+		"admin_fakepvp_spots_clear",
 		"admin_faketown",
 		"admin_fakeclans"
 	};
@@ -166,6 +170,27 @@ public class AdminFakePlayers implements IAdminCommandHandler
 				activeChar.sendSysMessage("Blessed SoE " + (targetProfile.hasBlessedEscape() ? "yes" : "no") + ", hotzone " + (targetProfile.getHotzoneId() > 0 ? targetProfile.getHotzoneId() + (leaveIn >= 0 ? " (leaving in " + leaveIn + "s)" : "") : "none"));
 				activeChar.sendSysMessage("Passive tree: " + (targetProfile.getPassives() != null ? targetProfile.getPassives() : "none"));
 				activeChar.sendSysMessage("PvP taunt " + personality.getPokeChance(1) + "%-" + personality.getPokeChance(FakePlayerPvpConfig.POKE_MAX_CHANCE_LEVEL_DIFF) + "%, refuse to hit back " + personality.getRefuseChance(1) + "%-" + personality.getRefuseChance(FakePlayerPvpConfig.REFUSE_MAX_CHANCE_LEVEL_DIFF) + "% (1-" + FakePlayerPvpConfig.POKE_MAX_CHANCE_LEVEL_DIFF + "/" + FakePlayerPvpConfig.REFUSE_MAX_CHANCE_LEVEL_DIFF + " levels)");
+			}
+		}
+		else if (command.startsWith("admin_fakepvp_spots_clear"))
+		{
+			activeChar.sendSysMessage("Sent off " + PvpSpotManager.getInstance().clearFighters() + " PvP spot fake players (with the ones on their way back); new ones come.");
+		}
+		else if (command.startsWith("admin_fakepvp_spots"))
+		{
+			for (SpotInfo spot : PvpSpotManager.getInstance().getSpotInfos())
+			{
+				activeChar.sendSysMessage(spot.getName() + " (zone " + spot.getZoneId() + ", levels " + spot.getMinLevel() + "-" + spot.getMaxLevel() + "): " + spot.getFakePlayers() + "/" + spot.getWanted() + " fake players, " + spot.getPlayers() + " players, leader " + (spot.getLeader() != null ? spot.getLeader() + " (" + spot.getLeaderStreak() + " kills)" : "none") + ".");
+			}
+			
+			if ((activeChar.getTarget() instanceof Npc) && (((Npc) activeChar.getTarget()).getTemplate().getFakePlayerPvpProfile() != null))
+			{
+				final Npc target = (Npc) activeChar.getTarget();
+				final FakePlayerPvpProfile profile = target.getTemplate().getFakePlayerPvpProfile();
+				if (profile.isSpotFighter())
+				{
+					activeChar.sendSysMessage(target.getName() + ": spot " + profile.getPvpSpotId() + (profile.isElite() ? ", strong one" : "") + ", kill streak " + PvpSpotManager.getInstance().getStreak(profile.getPvpSpotId(), target.getObjectId()) + ", leaves in " + Math.max(0, (profile.getSpotStayUntil() - System.currentTimeMillis()) / 1000) + " s.");
+				}
 			}
 		}
 		else if (command.startsWith("admin_fakepvp_clear"))

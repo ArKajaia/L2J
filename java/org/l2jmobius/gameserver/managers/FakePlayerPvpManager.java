@@ -38,6 +38,7 @@ import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
+import org.l2jmobius.gameserver.config.custom.PvpSpotsConfig;
 import org.l2jmobius.gameserver.data.SpawnTable;
 import org.l2jmobius.gameserver.data.sql.CharInfoTable;
 import org.l2jmobius.gameserver.data.xml.FakePlayerData;
@@ -91,6 +92,7 @@ import org.l2jmobius.gameserver.model.zone.type.JailZone;
 import org.l2jmobius.gameserver.model.zone.type.NoPvPZone;
 import org.l2jmobius.gameserver.model.zone.type.OlympiadStadiumZone;
 import org.l2jmobius.gameserver.model.zone.type.PeaceZone;
+import org.l2jmobius.gameserver.model.zone.type.PvpSpotZone;
 import org.l2jmobius.gameserver.model.zone.type.SiegeZone;
 import org.l2jmobius.gameserver.model.zone.type.TownZone;
 import org.l2jmobius.gameserver.network.enums.ChatType;
@@ -120,6 +122,12 @@ public class FakePlayerPvpManager
 	public static final long PVP_HATE = 1_000_000;
 	/** Greater Healing Potion effect. */
 	private static final int POTION_SKILL_ID = 2037;
+	/** CP Gauge Potion effect: level 1 (CP Potion, 50 CP), level 2 (Greater CP Potion, 200 CP). */
+	private static final int CP_POTION_SKILL_ID = 2166;
+	private static final int CP_POTION_AMOUNT = 50;
+	private static final int GREATER_CP_POTION_AMOUNT = 200;
+	/** From this level players drink Greater CP Potions. */
+	private static final int GREATER_CP_POTION_LEVEL = 52;
 	/** Transfer Pain only works with the servitor this close, like a player's. */
 	private static final int SERVITOR_TRANSFER_RANGE = 1000;
 	/** Milliseconds between two {@link #maintain} runs. */
@@ -1393,13 +1401,13 @@ public class FakePlayerPvpManager
 	 * @param x the x
 	 * @param y the y
 	 * @param z the z
-	 * @return {@code true} if the point is not in town, a no PvP zone, a siege, an arena, a boss zone...
+	 * @return {@code true} if the point is not in town, a no PvP zone, a siege, an arena, a boss zone, a PvP spot (its own fake players come there, see {@link PvpSpotManager})...
 	 */
 	private static boolean isAllowedZone(int x, int y, int z)
 	{
 		for (ZoneType zone : ZoneManager.getInstance().getZones(x, y, z))
 		{
-			if ((zone instanceof PeaceZone) || (zone instanceof TownZone) || (zone instanceof NoPvPZone) || (zone instanceof SiegeZone) || (zone instanceof ArenaZone) || (zone instanceof OlympiadStadiumZone) || (zone instanceof JailZone) || (zone instanceof BossZone) || (zone instanceof CastleZone) || (zone instanceof FortZone) || (zone instanceof ClanHallZone))
+			if ((zone instanceof PeaceZone) || (zone instanceof TownZone) || (zone instanceof NoPvPZone) || (zone instanceof SiegeZone) || (zone instanceof ArenaZone) || (zone instanceof OlympiadStadiumZone) || (zone instanceof JailZone) || (zone instanceof BossZone) || (zone instanceof CastleZone) || (zone instanceof FortZone) || (zone instanceof ClanHallZone) || (zone instanceof PvpSpotZone))
 			{
 				return false;
 			}
@@ -1522,6 +1530,125 @@ public class FakePlayerPvpManager
 		profile.setSpawnTime(System.currentTimeMillis());
 		profile.setHotzoneId(getActiveHotzoneId(x, y, z)); // It leaves once that hotzone rotates out.
 		return spawnFromTemplate(template, x, y, z, instanceId);
+	}
+	
+	/**
+	 * Spawns a fake player that comes to a PvP spot only to fight (see {@link PvpSpotManager}): it arrives there like a player by teleport, flagged.
+	 * @param build its build
+	 * @param level its level
+	 * @param elite {@code true} for one of the stronger ones (see {@link FakePlayerPvpFactory#createTemplate(FakePlayerPvpBuild, int, int, String, PlayerClass, String, Looks, boolean)})
+	 * @param spotId the zone id of the spot
+	 * @param x where it arrives
+	 * @param y where it arrives
+	 * @param z where it arrives
+	 * @param friend a fake player it comes with (it joins its clan), {@code null} for none
+	 * @return the fake player, or {@code null} if it could not be created
+	 */
+	public Npc spawnSpotFighter(FakePlayerPvpBuild build, int level, boolean elite, int spotId, int x, int y, int z, Npc friend)
+	{
+		final String name = generateName();
+		try
+		{
+			final NpcTemplate template = FakePlayerPvpFactory.createTemplate(build, level, _nextNpcId.getAndIncrement(), name, null, "", null, elite);
+			if (template == null)
+			{
+				releaseName(name);
+				return null;
+			}
+			
+			// Alone, sometimes a member of a clan of fake players; with friends, the clan of the first one.
+			if (friend == null)
+			{
+				FakeClanManager.getInstance().assignClan(template);
+			}
+			
+			final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+			profile.setPvpSpotId(spotId);
+			profile.setSpawnTime(System.currentTimeMillis());
+			profile.setHotzoneId(0);
+			profile.setBlessedEscape(false);
+			final Npc fake = spawnFromTemplate(template, x, y, z, 0);
+			if (fake == null)
+			{
+				FakePlayerData.getInstance().removeFakePlayer(name);
+				releaseName(name);
+				return null;
+			}
+			
+			if (friend != null)
+			{
+				FakeClanManager.getInstance().shareClan(fake, friend, true);
+			}
+			
+			flagForSpot(fake);
+			return fake;
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn PvP spot fighter " + build.getName() + " level " + level + ".", e);
+			FakePlayerData.getInstance().removeFakePlayer(name);
+			releaseName(name);
+			return null;
+		}
+	}
+	
+	/**
+	 * Brings back a fake player that died in its PvP spot, like a player that restarted in town and teleported back: same template, so same name, looks and gear, fully buffed. Its name stayed taken meanwhile.
+	 * @param template its template
+	 * @param x where it arrives
+	 * @param y where it arrives
+	 * @param z where it arrives
+	 * @return the fake player, {@code null} if it could not be spawned (its name is then free)
+	 */
+	public Npc returnSpotFighter(NpcTemplate template, int x, int y, int z)
+	{
+		final String name = template.getName();
+		final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+		try
+		{
+			// It comes back with its weapon out, not the bow or polearm it may have died with.
+			if (profile.getHeldWeapon() != profile.getMainWeapon())
+			{
+				setTemplateWeapon(template, profile, profile.getMainWeapon());
+			}
+			
+			// The template was made once, so it is known again by name for whispers.
+			final String lowercaseName = name.toLowerCase();
+			FakePlayerData.getInstance().addFakePlayerId(name, template.getId());
+			FakePlayerData.getInstance().addFakePlayerName(lowercaseName, name);
+			FakePlayerData.getInstance().addTalkableFakePlayerName(lowercaseName);
+			
+			final Npc fake = spawnFromTemplate(template, x, y, z, 0);
+			if (fake == null)
+			{
+				FakePlayerData.getInstance().removeFakePlayer(name);
+				releaseName(name);
+				return null;
+			}
+			
+			flagForSpot(fake);
+			return fake;
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not bring back PvP spot fighter " + name + ".", e);
+			FakePlayerData.getInstance().removeFakePlayer(name);
+			releaseName(name);
+			return null;
+		}
+	}
+	
+	/**
+	 * A fake player in a PvP spot is flagged for as long as it stays, like a player there (no PvP flag timer is started for a script value set by hand).
+	 * @param fake the fake player
+	 */
+	public static void flagForSpot(Npc fake)
+	{
+		if (!fake.isScriptValue(1))
+		{
+			fake.setScriptValue(1);
+			fake.broadcastInfo();
+		}
 	}
 	
 	/**
@@ -1691,6 +1818,12 @@ public class FakePlayerPvpManager
 		
 		FakePlayerData.getInstance().removeFakePlayer(fake.getName());
 		
+		// A PvP spot fighter: it comes back to its spot from town, or its name is free.
+		if (PvpSpotManager.getInstance().onFighterDecay(fake))
+		{
+			return;
+		}
+		
 		// Dead in a party with players: it comes back to its party from town, its name stays taken until then.
 		if (FakePartyManager.getInstance().onFakeDecay(fake))
 		{
@@ -1857,8 +1990,9 @@ public class FakePlayerPvpManager
 			}
 		}
 		
-		// And the party fake players on their way back to their party.
+		// And the party fake players on their way back to their party, and the PvP spot fighters on their way back to their spot.
 		count += FakePartyManager.getInstance().clearReturns();
+		count += PvpSpotManager.getInstance().clearReturns();
 		return count;
 	}
 	
@@ -1980,7 +2114,7 @@ public class FakePlayerPvpManager
 			return;
 		}
 		
-		startFight(fake, enemy, TAUNTS_ATTACKED);
+		startFight(fake, enemy, profile.isSpotFighter() ? PvpSpotManager.TAUNTS_ATTACKED : TAUNTS_ATTACKED);
 	}
 	
 	/**
@@ -2058,7 +2192,7 @@ public class FakePlayerPvpManager
 	 */
 	public void onFakePlayerKilledByFake(Attackable victim, Creature killer)
 	{
-		taunt(victim, TAUNTS_DEATH, true);
+		taunt(victim, getDeathTaunts(victim), true);
 		
 		// Their clans at war: clan reputation moves.
 		FakeClanManager.getInstance().onWarKill(killer, victim);
@@ -2541,7 +2675,57 @@ public class FakePlayerPvpManager
 	 */
 	public void onPlayerDefeated(Attackable fake)
 	{
-		taunt(fake, TAUNTS_KILL, false);
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		taunt(fake, (profile != null) && profile.isSpotFighter() ? PvpSpotManager.TAUNTS_KILL : TAUNTS_KILL, false);
+	}
+	
+	/**
+	 * @param fake a fake player that died
+	 * @return what it may say from the ground
+	 */
+	private static String[] getDeathTaunts(Npc fake)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		return (profile != null) && profile.isSpotFighter() ? PvpSpotManager.TAUNTS_DEATH : TAUNTS_DEATH;
+	}
+	
+	/**
+	 * Makes a fake player of a PvP spot fight {@code enemy} (see {@link PvpSpotManager}), like {@link #attackPlayer}.
+	 * @param fake the fake player
+	 * @param enemy the player or fake player it goes for
+	 * @param taunts what it may say about it, {@code null} for nothing
+	 */
+	public void spotEngage(Attackable fake, Creature enemy, String[] taunts)
+	{
+		if (!fake.isDead() && !isFighting(fake, enemy))
+		{
+			startFight(fake, enemy, taunts != null ? taunts : NO_TAUNTS);
+		}
+	}
+	
+	/**
+	 * Maybe says {@code text} in general chat a moment later, at most once every {@link #CHAT_INTERVAL} ms like its other lines.
+	 * @param fake the fake player
+	 * @param text what it says
+	 * @param chance the chance (in %) to say it
+	 * @return {@code true} if it says it
+	 */
+	public boolean say(Npc fake, String text, int chance)
+	{
+		return taunt(fake, new String[]
+		{
+			text
+		}, false, chance);
+	}
+	
+	/**
+	 * @param fake a roaming fake player
+	 * @return {@code true} if it fights a player (or fake player) right now: one of them is the one it hates most. Unlike {@link #isInPvp}, a fake player that is only flagged (in a PvP spot it always is) isn't.
+	 */
+	public static boolean isFightingPvp(Npc fake)
+	{
+		final Creature hated = fake.isAttackable() ? fake.asAttackable().getMostHated() : null;
+		return isPvpEnemy(hated) && !hated.isAlikeDead();
 	}
 	
 	/**
@@ -2550,6 +2734,9 @@ public class FakePlayerPvpManager
 	 * @param player the player, or another roaming fake player
 	 * @param taunts what it may say about it
 	 */
+	/** Nothing to say. */
+	private static final String[] NO_TAUNTS = {};
+	
 	private void startFight(Attackable fake, Creature player, String[] taunts)
 	{
 		if (player.isDead() || player.isInvisible() || (player.isPlayer() && player.isGM() && !player.asPlayer().getAccessLevel().canTakeAggro()))
@@ -2583,7 +2770,7 @@ public class FakePlayerPvpManager
 	 */
 	private boolean taunt(Npc fake, String[] taunts, boolean dead, int chance)
 	{
-		if ((chance <= 0) || (Rnd.get(100) >= chance))
+		if ((taunts.length == 0) || (chance <= 0) || (Rnd.get(100) >= chance))
 		{
 			return false;
 		}
@@ -2612,7 +2799,7 @@ public class FakePlayerPvpManager
 		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
 		
 		// A few words from the ground.
-		taunt(fake, TAUNTS_DEATH, true);
+		taunt(fake, getDeathTaunts(fake), true);
 		
 		// A class transfer challenge opponent is part of the trial: no return trip, no gear, no loot.
 		if (profile.isTrialDuelist())
@@ -2620,8 +2807,8 @@ public class FakePlayerPvpManager
 			return;
 		}
 		
-		// Maybe it walks back from town for round two, unless it already did or its killer is far above it.
-		if (!profile.hasReturned() && ((FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE <= 0) || (killer.getLevel() < (fake.getLevel() + FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE))) && (Rnd.get(100) < profile.getPersonality().getReturnChance()))
+		// Maybe it walks back from town for round two, unless it already did or its killer is far above it. A PvP spot fighter comes back to its spot instead (see PvpSpotManager).
+		if (!profile.hasReturned() && !profile.isSpotFighter() && ((FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE <= 0) || (killer.getLevel() < (fake.getLevel() + FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE))) && (Rnd.get(100) < profile.getPersonality().getReturnChance()))
 		{
 			profile.setReturn(fake.getX(), fake.getY(), fake.getZ(), fake.getInstanceId(), killer.getObjectId());
 		}
@@ -2631,7 +2818,7 @@ public class FakePlayerPvpManager
 		
 		// Rarely, one piece of its gear, enchant included.
 		final List<ItemEnchantHolder> equipment = profile.getEquipment();
-		if (!outleveled && !equipment.isEmpty() && ((Rnd.nextDouble() * 100) < FakePlayerPvpConfig.EQUIPMENT_DROP_CHANCE))
+		if (!outleveled && !equipment.isEmpty() && ((Rnd.nextDouble() * 100) < (profile.isSpotFighter() ? PvpSpotsConfig.EQUIPMENT_DROP_CHANCE : FakePlayerPvpConfig.EQUIPMENT_DROP_CHANCE)))
 		{
 			final ItemEnchantHolder piece = equipment.get(Rnd.get(equipment.size()));
 			final Item item = fake.dropItem(killer, piece.getId(), 1);
@@ -2696,6 +2883,41 @@ public class FakePlayerPvpManager
 		profile.setNextPotionTime(now + FakePlayerPvpConfig.POTION_REUSE);
 		fake.setCurrentHp(Math.min(maxHp, fake.getCurrentHp() + ((maxHp * FakePlayerPvpConfig.POTION_HEAL_PERCENT) / 100.0)));
 		fake.broadcastPacket(new MagicSkillUse(fake, fake, POTION_SKILL_ID, 1, 0, 0));
+		return true;
+	}
+	
+	/**
+	 * A CP potion, like players drink them non stop in a PvP (see {@link PvpSpotsConfig#CP_POTIONS}): a Greater CP Potion (200 CP) from level {@link #GREATER_CP_POTION_LEVEL}, a CP Potion (50 CP) below, once every {@link PvpSpotsConfig#CP_POTION_REUSE} ms. Its CP is the top part of its
+	 * HP pool (FakePvpIncludeCpInHp), so a potion only refills that part: once its CP is gone, CP potions don't help anymore.
+	 * @param fake the fake player
+	 * @return {@code true} if it drank one
+	 */
+	public boolean tryCpPotion(Npc fake)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		if (!PvpSpotsConfig.CP_POTIONS || (profile == null) || (profile.getCpShare() <= 0) || fake.isDead())
+		{
+			return false;
+		}
+		
+		final long now = System.currentTimeMillis();
+		if (now < profile.getNextCpPotionTime())
+		{
+			return false;
+		}
+		
+		final double maxHp = fake.getMaxHp();
+		final double hp = fake.getCurrentHp();
+		final double hpPart = maxHp * (1 - profile.getCpShare());
+		if ((hp <= hpPart) || (hp >= (maxHp - 1)))
+		{
+			return false;
+		}
+		
+		final boolean greater = fake.getLevel() >= GREATER_CP_POTION_LEVEL;
+		profile.setNextCpPotionTime(now + PvpSpotsConfig.CP_POTION_REUSE);
+		fake.setCurrentHp(Math.min(maxHp, hp + (greater ? GREATER_CP_POTION_AMOUNT : CP_POTION_AMOUNT)));
+		fake.broadcastPacket(new MagicSkillUse(fake, fake, CP_POTION_SKILL_ID, greater ? 2 : 1, 0, 0));
 		return true;
 	}
 	
@@ -3094,18 +3316,21 @@ public class FakePlayerPvpManager
 					continue;
 				}
 				
-				if (fake.isCastingNow() || isInPvp(fake))
+				final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+				
+				// A fake player in a PvP spot is always flagged: only an actual fight holds it up.
+				if (fake.isCastingNow() || (profile.isSpotFighter() ? isFightingPvp(fake) : isInPvp(fake)))
 				{
 					continue;
 				}
 				
-				final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
 				
 				// A class transfer challenge opponent stays until its challenge removes it, and so does a fake player in a party with players.
 				// In a party of fake players, the leader logs off for all of them (the others then go their own way).
 				final FakePlayerParty party = profile.getParty();
 				final boolean staysWithParty = (party != null) && (!party.isFakeOnly() || (party.getLeader() != fake));
-				if (!profile.isTrialDuelist() && !staysWithParty)
+				// A PvP spot fighter leaves when its spot says so (see PvpSpotManager).
+				if (!profile.isTrialDuelist() && !staysWithParty && !profile.isSpotFighter())
 				{
 					checkHotzoneLeave(fake, profile, now);
 					
@@ -3308,7 +3533,7 @@ public class FakePlayerPvpManager
 	 */
 	boolean isComingBack(String name)
 	{
-		return _pendingReturns.containsKey(name) || FakePartyManager.getInstance().isComingBack(name);
+		return _pendingReturns.containsKey(name) || FakePartyManager.getInstance().isComingBack(name) || PvpSpotManager.getInstance().isComingBack(name);
 	}
 	
 	/**

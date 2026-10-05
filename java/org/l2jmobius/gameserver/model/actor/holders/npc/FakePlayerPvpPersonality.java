@@ -88,6 +88,14 @@ public class FakePlayerPvpPersonality
 	{
 		return new FakePlayerPvpPersonality(true);
 	}
+	
+	/**
+	 * @return the temper of a strong player (the stronger fake players of the PvP spots, see {@link org.l2jmobius.gameserver.managers.PvpSpotManager}): skilled and aggressive, the rest random
+	 */
+	public static FakePlayerPvpPersonality elite()
+	{
+		return new FakePlayerPvpPersonality(0.5 + (Rnd.nextDouble() * 0.5), 0.7 + (Rnd.nextDouble() * 0.3), roll(), roll());
+	}
 
 	/**
 	 * @param npc a roaming fake player
@@ -101,10 +109,23 @@ public class FakePlayerPvpPersonality
 	
 	private FakePlayerPvpPersonality(boolean random)
 	{
-		_aggression = random ? roll() : 0;
-		_skill = random ? roll() : 0;
-		_chattiness = random ? roll() : 0;
-		_roaming = random ? roll() : 0;
+		this(random, random ? roll() : 0, random ? roll() : 0, random ? roll() : 0, random ? roll() : 0);
+	}
+	
+	/**
+	 * A personality with the given traits (from -1 to 1), each value following its trait with a bit of its own randomness.
+	 */
+	private FakePlayerPvpPersonality(double aggression, double skill, double chattiness, double roaming)
+	{
+		this(true, aggression, skill, chattiness, roaming);
+	}
+	
+	private FakePlayerPvpPersonality(boolean random, double aggression, double skill, double chattiness, double roaming)
+	{
+		_aggression = aggression;
+		_skill = skill;
+		_chattiness = chattiness;
+		_roaming = roaming;
 
 		_skillChance = follow(random, _skill);
 		_pvpSkillChance = follow(random, _skill);

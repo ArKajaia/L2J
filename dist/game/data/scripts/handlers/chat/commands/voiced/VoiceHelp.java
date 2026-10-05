@@ -1,5 +1,6 @@
 package handlers.chat.commands.voiced;
 
+import org.l2jmobius.gameserver.config.custom.PvpSpotsConfig;
 import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
@@ -119,6 +120,17 @@ public class VoiceHelp implements IVoicedCommandHandler
 		sb.append("<td width=170><font color=\"B0B0B0\">Enables Offline Shop / Play (.offlineplay)</font></td>");
 		sb.append("</tr>");
 		sb.append("<tr><td colspan=2 height=1 bgcolor=222222></td></tr>");
+		
+		// PvP Spots
+		if (PvpSpotsConfig.ENABLED && PvpSpotsConfig.TELEPORT_ENABLED)
+		{
+			sb.append("<tr>");
+			sb.append("<td width=100><font color=\"00FFFF\">.pvp</font></td>");
+			sb.append("<td width=170><font color=\"B0B0B0\">The PvP spots: who fights there, and a teleport.</font></td>");
+			sb.append("</tr>");
+			sb.append("<tr><td colspan=2 align=right><button value=\"PvP Spots\" action=\"bypass voiced_pvp\" width=80 height=22 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr>");
+			sb.append("<tr><td colspan=2 height=1 bgcolor=222222></td></tr>");
+		}
 		
 		// Online Players Count
 		sb.append("<tr>");

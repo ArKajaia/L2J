@@ -485,15 +485,66 @@ public class FakeClanManager
 	 */
 	public void shareClan(Npc fake, Npc friend)
 	{
+		shareClan(fake, friend, false);
+	}
+	
+	/**
+	 * A fake player that comes with another one joins its clan.
+	 * @param fake the fake player
+	 * @param friend the one it comes with
+	 * @param always {@code true} for a group that came to fight together (see {@link PvpSpotManager}), {@code false} to join with {@link FakeClanConfig#SAME_CLAN_CHANCE}
+	 * @return {@code true} if they are in the same clan now
+	 */
+	public boolean shareClan(Npc fake, Npc friend, boolean always)
+	{
 		final FakePlayerHolder info = getInfo(fake);
 		final FakePlayerHolder friendInfo = getInfo(friend);
-		if ((info == null) || (friendInfo == null) || !isEnabled() || (friendInfo.getClanId() == 0) || (friendInfo.getClanId() == info.getClanId()) || !_fakeClans.containsKey(friendInfo.getClanId()) || (Rnd.get(100) >= FakeClanConfig.SAME_CLAN_CHANCE))
+		if ((info == null) || (friendInfo == null) || !isEnabled() || (friendInfo.getClanId() == 0) || !_fakeClans.containsKey(friendInfo.getClanId()))
 		{
-			return;
+			return false;
+		}
+		
+		if (friendInfo.getClanId() == info.getClanId())
+		{
+			return true;
+		}
+		
+		if (!always && (Rnd.get(100) >= FakeClanConfig.SAME_CLAN_CHANCE))
+		{
+			return false;
 		}
 		
 		info.setClan(friendInfo.getClanId(), randomTitle());
 		fake.broadcastInfo();
+		return true;
+	}
+	
+	/**
+	 * Makes a fake player that isn't in a clan a member of one of the clans, for a group that came to fight together (see {@link PvpSpotManager}).
+	 * @param fake the fake player
+	 * @return {@code true} if it is in a clan now
+	 */
+	public boolean joinAnyClan(Npc fake)
+	{
+		final FakePlayerHolder info = getInfo(fake);
+		if ((info == null) || !isEnabled())
+		{
+			return false;
+		}
+		
+		if (info.getClanId() != 0)
+		{
+			return true;
+		}
+		
+		if (_activeClans.isEmpty())
+		{
+			return false;
+		}
+		
+		info.setClan(_activeClans.get(Rnd.get(_activeClans.size())).getId(), randomTitle());
+		fake.broadcastInfo();
+		return true;
 	}
 	
 	/**

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list enabled="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/zones.xsd">
+	<!-- PvP spots (custom, see config/Custom/PvpSpots.ini): everyone inside is flagged, kills are PvP kills and never give karma. Players teleport there with .pvp, fake players of the spot's levels (spotMinLevel-spotMaxLevel) come only to fight. -->
+	<!-- Picked against the High Five spawn and geodata files: open ground (90%+ of the circle walkable and in sight of the center), no NPC within 1800 of the center, no more than two monsters within 2500, and no gatekeeper drop point inside, so hunters arriving by teleport are never flagged. -->
+	<!-- One spot per gear bracket: D-C grade, B-A grade and S grade. -->
+	<zone id="95001" name="Plains of Dion" type="PvpSpotZone" shape="Cylinder" minZ="-4300" maxZ="-2800" rad="1300"> <!-- 3200 west of the Plains of Dion gatekeeper drop point, ground -3712..-3344 -->
+		<stat name="spotMinLevel" val="20" />
+		<stat name="spotMaxLevel" val="51" />
+		<node X="-2370" Y="178184" />
+	</zone>
+	<zone id="95002" name="Ancient Battleground" type="PvpSpotZone" shape="Cylinder" minZ="-4100" maxZ="-2700" rad="1300"> <!-- 3000 west of the Ancient Battleground gatekeeper drop point, ground -3520..-3328 -->
+		<stat name="spotMinLevel" val="52" />
+		<stat name="spotMaxLevel" val="75" />
+		<node X="103517" Y="-2871" />
+	</zone>
+	<zone id="95003" name="Dragon Valley Entrance" type="PvpSpotZone" shape="Cylinder" minZ="-4300" maxZ="-2900" rad="1300"> <!-- 1800 south-west of the Dragon Valley gatekeeper drop point, away from the valley (the dragons are east of it), ground -3688..-3488 -->
+		<stat name="spotMinLevel" val="76" />
+		<stat name="spotMaxLevel" val="85" />
+		<node X="71524" Y="117485" />
+	</zone>
+</list>

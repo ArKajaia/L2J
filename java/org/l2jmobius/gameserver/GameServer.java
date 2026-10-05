@@ -148,6 +148,7 @@ import org.l2jmobius.gameserver.managers.PetitionManager;
 import org.l2jmobius.gameserver.managers.PrecautionaryRestartManager;
 import org.l2jmobius.gameserver.managers.PremiumManager;
 import org.l2jmobius.gameserver.managers.PunishmentManager;
+import org.l2jmobius.gameserver.managers.PvpSpotManager;
 import org.l2jmobius.gameserver.managers.RaidBossPointsManager;
 import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
@@ -383,6 +384,7 @@ public class GameServer
 		DimensionalRiftManager.getInstance();
 		RaidBossSpawnManager.getInstance();
 		FakePlayerTownManager.getInstance();
+		PvpSpotManager.getInstance();
 		
 		printSection("Siege");
 		SiegeManager.getInstance().getSieges();
