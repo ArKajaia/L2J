@@ -57,6 +57,8 @@ public class FakePlayerPvpPassiveTree
 	/** Highest fake player level. */
 	private static final int MAX_LEVEL = 85;
 
+	/** Seed the prepared trees are grown with. */
+	private static final long POOL_SEED = 0x4C324A50415353L;
 	/** Weight of a node with nothing the role uses, so it is still taken now and then as a bridge to better ones. */
 	private static final double FILLER_WEIGHT = 0.25;
 	/** Weight of an effect key every role uses (HP, defence...). */
@@ -157,22 +159,28 @@ public class FakePlayerPvpPassiveTree
 			}
 		}
 
+		// Grown the same at every start (same tree, same settings): a fake player made again from the same seed gets the same tree (the members of players' clans, see FakeClanManager).
 		final int maxNodes = (FakePlayerPvpConfig.PASSIVE_TREE_MAX_SUBCLASSES * FakePlayerPvpConfig.PASSIVE_TREE_NODES_PER_SUBCLASS) + MAX_LEVEL;
 		final int maxPoints = PassiveTreeConfig.PASSIVE_TREE_MAX_POINTS;
-		int variants = 0;
-		for (int origin : _origins.values())
+		final int variants = Rnd.seeded(POOL_SEED, () ->
 		{
-			final Variant[][] pool = new Variant[roles.length][FakePlayerPvpConfig.PASSIVE_TREE_VARIANTS];
-			for (Role role : roles)
+			int grown = 0;
+			for (String sector : _origins.keySet().stream().sorted().toList())
 			{
-				for (int v = 0; v < pool[role.ordinal()].length; v++)
+				final int origin = _origins.get(sector);
+				final Variant[][] pool = new Variant[roles.length][FakePlayerPvpConfig.PASSIVE_TREE_VARIANTS];
+				for (Role role : roles)
 				{
-					pool[role.ordinal()][v] = grow(origin, weights[role.ordinal()], maxNodes, maxPoints);
-					variants++;
+					for (int v = 0; v < pool[role.ordinal()].length; v++)
+					{
+						pool[role.ordinal()][v] = grow(origin, weights[role.ordinal()], maxNodes, maxPoints);
+						grown++;
+					}
 				}
+				_pools.put(origin, pool);
 			}
-			_pools.put(origin, pool);
-		}
+			return grown;
+		});
 
 		LOGGER.info(getClass().getSimpleName() + ": Prepared " + variants + " passive trees for " + _origins.size() + " starting points in " + (System.currentTimeMillis() - start) + " ms.");
 	}

@@ -45,6 +45,7 @@ import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.data.xml.TransformData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.managers.FakePlayerPvpFactory.Looks;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -1169,6 +1170,8 @@ public class FakePlayerPvpManager
 	private final AtomicInteger _nextNpcId = new AtomicInteger(FIRST_NPC_ID);
 	private final Set<Npc> _fakePlayers = ConcurrentHashMap.newKeySet();
 	private final Set<String> _names = ConcurrentHashMap.newKeySet();
+	/** Names kept for good, in lower case (see {@link #keepName}). */
+	private final Set<String> _keptNames = ConcurrentHashMap.newKeySet();
 	/** Fake players killed by a player that come back to where they died (see {@link #returnFakePlayer}), by name. */
 	private final Map<String, ScheduledFuture<?>> _pendingReturns = new ConcurrentHashMap<>();
 	
@@ -1287,7 +1290,7 @@ public class FakePlayerPvpManager
 			return false;
 		}
 		
-		final Npc fake = spawnFakePlayer(FakePlayerPvpData.getInstance().getRandomBuild(), getFakeLevel(monster), x, y, z, spawn.getInstanceId(), monster, spawn);
+		final Npc fake = spawnHunter(monster, x, y, z, spawn.getInstanceId(), spawn);
 		if (fake == null)
 		{
 			return false;
@@ -1302,6 +1305,23 @@ public class FakePlayerPvpManager
 		// Sometimes it comes with friends.
 		FakePartyManager.getInstance().onRoamingSpawn(fake);
 		return true;
+	}
+	
+	/**
+	 * A fake player takes the place of {@code monster}: a member of a players' clan of about its level that logs in (see {@link FakeClanManager#logIn}), otherwise a new one.
+	 * @param monster the monster
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @param instanceId the instance
+	 * @param spawn the spawn of {@code monster}
+	 * @return the fake player, {@code null} if none could be spawned
+	 */
+	private Npc spawnHunter(Monster monster, int x, int y, int z, int instanceId, Spawn spawn)
+	{
+		final int level = getFakeLevel(monster);
+		final Npc member = FakeClanManager.getInstance().logIn(level, x, y, z, instanceId, monster, spawn);
+		return member != null ? member : spawnFakePlayer(FakePlayerPvpData.getInstance().getRandomBuild(), level, x, y, z, instanceId, monster, spawn);
 	}
 	
 	/**
@@ -1414,23 +1434,18 @@ public class FakePlayerPvpManager
 			final NpcTemplate template = FakePlayerPvpFactory.createTemplate(usedBuild, level, _nextNpcId.getAndIncrement(), name);
 			if (template == null)
 			{
-				_names.remove(name.toLowerCase());
+				releaseName(name);
 				return null;
 			}
 			
 			// Sometimes a member of a clan of fake players.
 			FakeClanManager.getInstance().assignClan(template);
 			
-			final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
-			profile.setReplacedMonster(replacedMonster, replacedSpawn);
-			profile.setSpawnTime(System.currentTimeMillis());
-			profile.setHotzoneId(getActiveHotzoneId(x, y, z)); // It leaves once that hotzone rotates out.
-			
-			final Npc fake = spawnFromTemplate(template, x, y, z, instanceId);
+			final Npc fake = spawnNew(template, x, y, z, instanceId, replacedMonster, replacedSpawn);
 			if (fake == null)
 			{
 				FakePlayerData.getInstance().removeFakePlayer(name);
-				_names.remove(name.toLowerCase());
+				releaseName(name);
 			}
 			return fake;
 		}
@@ -1438,9 +1453,75 @@ public class FakePlayerPvpManager
 		{
 			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn fake player " + usedBuild.getName() + " level " + level + ".", e);
 			FakePlayerData.getInstance().removeFakePlayer(name);
-			_names.remove(name.toLowerCase());
+			releaseName(name);
 			return null;
 		}
+	}
+	
+	/**
+	 * Spawns a member of a players' clan that logs in (see {@link FakeClanManager}): always the same name, build and looks, and the same gear and passive tree for the same seed.
+	 * @param build its build
+	 * @param level its level
+	 * @param name its name (kept, see {@link #keepName})
+	 * @param looks how it looks
+	 * @param seed the seed of its gear, passive tree and personality
+	 * @param clanId its clan
+	 * @param title its title
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @param instanceId the instance
+	 * @param replacedMonster the monster it replaces, {@code null} for none
+	 * @param replacedSpawn the spawn of {@code replacedMonster}
+	 * @return the fake player, or {@code null} if it could not be created
+	 */
+	public Npc spawnClanMember(FakePlayerPvpBuild build, int level, String name, Looks looks, long seed, int clanId, String title, int x, int y, int z, int instanceId, Npc replacedMonster, Spawn replacedSpawn)
+	{
+		try
+		{
+			final int npcId = _nextNpcId.getAndIncrement();
+			final NpcTemplate template = Rnd.seeded(seed, () -> FakePlayerPvpFactory.createTemplate(build, level, npcId, name, null, title, looks));
+			if (template == null)
+			{
+				FakePlayerData.getInstance().removeFakePlayer(name);
+				return null;
+			}
+			
+			template.getFakePlayerInfo().setClan(clanId, title);
+			final Npc fake = spawnNew(template, x, y, z, instanceId, replacedMonster, replacedSpawn);
+			if (fake == null)
+			{
+				FakePlayerData.getInstance().removeFakePlayer(name);
+			}
+			return fake;
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn clan member " + name + " (" + build.getName() + " level " + level + ").", e);
+			FakePlayerData.getInstance().removeFakePlayer(name);
+			return null;
+		}
+	}
+	
+	/**
+	 * Spawns a new roaming fake player from its template, hunting where it appears.
+	 * @param template the template
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @param instanceId the instance
+	 * @param replacedMonster the monster it replaces, {@code null} for none
+	 * @param replacedSpawn the spawn of {@code replacedMonster}
+	 * @return the fake player, or {@code null} if it could not be spawned
+	 * @throws Exception if the spawn could not be created
+	 */
+	private Npc spawnNew(NpcTemplate template, int x, int y, int z, int instanceId, Npc replacedMonster, Spawn replacedSpawn) throws Exception
+	{
+		final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+		profile.setReplacedMonster(replacedMonster, replacedSpawn);
+		profile.setSpawnTime(System.currentTimeMillis());
+		profile.setHotzoneId(getActiveHotzoneId(x, y, z)); // It leaves once that hotzone rotates out.
+		return spawnFromTemplate(template, x, y, z, instanceId);
 	}
 	
 	/**
@@ -1470,7 +1551,7 @@ public class FakePlayerPvpManager
 			final NpcTemplate template = FakePlayerPvpFactory.createTemplate(build, level, _nextNpcId.getAndIncrement(), name, playerClass, title);
 			if (template == null)
 			{
-				_names.remove(name.toLowerCase());
+				releaseName(name);
 				return null;
 			}
 			
@@ -1485,7 +1566,7 @@ public class FakePlayerPvpManager
 			if (fake == null)
 			{
 				FakePlayerData.getInstance().removeFakePlayer(name);
-				_names.remove(name.toLowerCase());
+				releaseName(name);
 				return null;
 			}
 			
@@ -1499,7 +1580,7 @@ public class FakePlayerPvpManager
 		{
 			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn trial duelist " + build.getName() + " level " + level + ".", e);
 			FakePlayerData.getInstance().removeFakePlayer(name);
-			_names.remove(name.toLowerCase());
+			releaseName(name);
 			return null;
 		}
 	}
@@ -1625,7 +1706,7 @@ public class FakePlayerPvpManager
 			return;
 		}
 		
-		_names.remove(fake.getName().toLowerCase());
+		releaseName(fake.getName());
 	}
 	
 	/**
@@ -1651,7 +1732,7 @@ public class FakePlayerPvpManager
 		final int instanceId = profile.getDeathInstanceId();
 		if (!isEnabled() || ((FakePlayerPvpConfig.MAX_ALIVE > 0) && (_fakePlayers.size() >= FakePlayerPvpConfig.MAX_ALIVE)) || !isAllowedZone(x, y, z) || ((instanceId != 0) && (InstanceManager.getInstance().getInstance(instanceId) == null)))
 		{
-			_names.remove(name.toLowerCase());
+			releaseName(name);
 			return;
 		}
 		
@@ -1664,7 +1745,7 @@ public class FakePlayerPvpManager
 			}
 			else
 			{
-				_names.remove(name.toLowerCase());
+				releaseName(name);
 			}
 			return;
 		}
@@ -1691,7 +1772,7 @@ public class FakePlayerPvpManager
 			if (fake == null)
 			{
 				FakePlayerData.getInstance().removeFakePlayer(name);
-				_names.remove(lowercaseName);
+				releaseName(name);
 			}
 			else if (fake.getSpawn() != null)
 			{
@@ -1703,7 +1784,7 @@ public class FakePlayerPvpManager
 		{
 			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not bring back fake player " + name + ".", e);
 			FakePlayerData.getInstance().removeFakePlayer(name);
-			_names.remove(name.toLowerCase());
+			releaseName(name);
 		}
 	}
 	
@@ -1771,7 +1852,7 @@ public class FakePlayerPvpManager
 			if (_pendingReturns.remove(entry.getKey(), entry.getValue()))
 			{
 				entry.getValue().cancel(false);
-				_names.remove(entry.getKey().toLowerCase());
+				releaseName(entry.getKey());
 				count++;
 			}
 		}
@@ -3020,11 +3101,11 @@ public class FakePlayerPvpManager
 				
 				final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
 				
-				// A class transfer challenge opponent stays until its challenge removes it, and so does a fake player in a party with players, or on its way to one.
+				// A class transfer challenge opponent stays until its challenge removes it, and so does a fake player in a party with players.
 				// In a party of fake players, the leader logs off for all of them (the others then go their own way).
 				final FakePlayerParty party = profile.getParty();
 				final boolean staysWithParty = (party != null) && (!party.isFakeOnly() || (party.getLeader() != fake));
-				if (!profile.isTrialDuelist() && !staysWithParty && (profile.getLfTarget(now) == 0))
+				if (!profile.isTrialDuelist() && !staysWithParty)
 				{
 					checkHotzoneLeave(fake, profile, now);
 					
@@ -3130,7 +3211,7 @@ public class FakePlayerPvpManager
 			}
 			
 			final Monster monster = npc.asMonster();
-			final Npc fake = spawnFakePlayer(FakePlayerPvpData.getInstance().getRandomBuild(), getFakeLevel(monster), monster.getX(), monster.getY(), monster.getZ(), monster.getInstanceId(), monster, spawn);
+			final Npc fake = spawnHunter(monster, monster.getX(), monster.getY(), monster.getZ(), monster.getInstanceId(), spawn);
 			if (fake == null)
 			{
 				continue;
@@ -3183,12 +3264,51 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
-	 * Frees a name taken with {@link #generateName()}.
+	 * Frees a name taken with {@link #generateName()}, unless it is kept for good (see {@link #keepName}).
 	 * @param name the name
 	 */
 	void releaseName(String name)
 	{
-		_names.remove(name.toLowerCase());
+		final String lowercaseName = name.toLowerCase();
+		if (!_keptNames.contains(lowercaseName))
+		{
+			_names.remove(lowercaseName);
+		}
+	}
+	
+	/**
+	 * Keeps a name for good: no other fake player gets it, and it stays taken while its fake player is away (a member of a players' clan, see {@link FakeClanManager}).
+	 * @param name the name
+	 */
+	void keepName(String name)
+	{
+		final String lowercaseName = name.toLowerCase();
+		_keptNames.add(lowercaseName);
+		_names.add(lowercaseName);
+	}
+	
+	/**
+	 * Stops keeping a name for good. It stays taken while a fake player wears it, and is free once that one is gone.
+	 * @param name the name
+	 * @param inUse {@code true} if a fake player wears it now (or is coming back with it)
+	 */
+	void unkeepName(String name, boolean inUse)
+	{
+		final String lowercaseName = name.toLowerCase();
+		_keptNames.remove(lowercaseName);
+		if (!inUse)
+		{
+			_names.remove(lowercaseName);
+		}
+	}
+	
+	/**
+	 * @param name a fake player name
+	 * @return {@code true} if the fake player of that name died and comes back (to where it died, or to its party)
+	 */
+	boolean isComingBack(String name)
+	{
+		return _pendingReturns.containsKey(name) || FakePartyManager.getInstance().isComingBack(name);
 	}
 	
 	/**
@@ -3314,7 +3434,7 @@ public class FakePlayerPvpManager
 			if (fake == null)
 			{
 				FakePlayerData.getInstance().removeFakePlayer(name);
-				_names.remove(lowercaseName);
+				releaseName(name);
 			}
 			return fake;
 		}
@@ -3322,7 +3442,7 @@ public class FakePlayerPvpManager
 		{
 			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not bring back party fake player " + name + ".", e);
 			FakePlayerData.getInstance().removeFakePlayer(name);
-			_names.remove(name.toLowerCase());
+			releaseName(name);
 			return null;
 		}
 	}

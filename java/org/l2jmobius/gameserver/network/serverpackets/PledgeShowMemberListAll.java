@@ -24,7 +24,6 @@ import java.util.Collection;
 
 import org.l2jmobius.commons.network.WritableBuffer;
 import org.l2jmobius.gameserver.managers.FakeClanManager;
-import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.clan.Clan;
 import org.l2jmobius.gameserver.model.clan.Clan.SubPledge;
@@ -68,11 +67,8 @@ public class PledgeShowMemberListAll extends ServerPacket
 			_player.sendPacket(new PledgeShowMemberListAdd(m));
 		}
 		
-		// Fake players that joined the clan.
-		for (Npc fake : FakeClanManager.getInstance().getRecruits(_clan))
-		{
-			_player.sendPacket(new PledgeShowMemberListAdd(fake));
-		}
+		// Fake players that joined the clan, online or not.
+		FakeClanManager.getInstance().sendMembers(_clan, _player);
 		
 		// unless this is sent sometimes, the client doesn't recognise the player as the leader
 		_player.updateUserInfo();

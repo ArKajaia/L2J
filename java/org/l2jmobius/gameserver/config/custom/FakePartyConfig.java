@@ -20,34 +20,22 @@
  */
 package org.l2jmobius.gameserver.config.custom;
 
-import java.util.EnumSet;
-import java.util.Set;
-import java.util.logging.Logger;
-
 import org.l2jmobius.commons.util.ConfigReader;
-import org.l2jmobius.gameserver.network.enums.ChatType;
 
 /**
- * Loads the fake party member configuration: a player asks for a class in chat ("lf spellsinger"), a fake player of that class answers, comes over and joins the party when invited (see {@link org.l2jmobius.gameserver.managers.FakePartyManager}).
+ * Loads the fake party member configuration: a player invites a roaming fake player it meets, which may join the party depending on their levels (see {@link org.l2jmobius.gameserver.managers.FakePartyManager}).
  */
 public class FakePartyConfig
 {
-	private static final Logger LOGGER = Logger.getLogger(FakePartyConfig.class.getName());
-	
 	// File
 	private static final String FAKE_PARTY_CONFIG_FILE = "./config/Custom/FakeParty.ini";
 	
 	public static boolean ENABLED;
-	public static Set<ChatType> LF_CHANNELS = EnumSet.noneOf(ChatType.class);
-	public static int LF_DELAY_MIN;
-	public static int LF_DELAY_MAX;
-	public static int LF_COOLDOWN;
-	public static int LF_MAX_PER_MESSAGE;
-	public static int LF_WAIT_TIME;
-	public static int LF_LEVEL_SPREAD;
-	public static int LF_NEARBY_RANGE;
 	public static int INVITE_ACCEPT_CHANCE;
+	public static int INVITE_CHANCE_PER_LEVEL_BELOW;
+	public static int INVITE_CHANCE_PER_LEVEL_ABOVE;
 	public static int INVITE_MAX_LEVEL_DIFFERENCE;
+	public static int INVITE_CLAN_BONUS;
 	public static int MAX_FAKES;
 	public static boolean CAN_DIE;
 	public static int RETURN_DELAY;
@@ -66,34 +54,11 @@ public class FakePartyConfig
 		final ConfigReader config = new ConfigReader(FAKE_PARTY_CONFIG_FILE);
 		ENABLED = config.getBoolean("FakePartyEnabled", true);
 		
-		LF_CHANNELS = EnumSet.noneOf(ChatType.class);
-		for (String channel : config.getString("FakePartyLfChannels", "GENERAL,SHOUT,TRADE").split(","))
-		{
-			final String name = channel.trim().toUpperCase();
-			if (name.isEmpty())
-			{
-				continue;
-			}
-			
-			try
-			{
-				LF_CHANNELS.add(ChatType.valueOf(name));
-			}
-			catch (IllegalArgumentException e)
-			{
-				LOGGER.warning(FakePartyConfig.class.getSimpleName() + ": Unknown chat channel " + name + " in FakePartyLfChannels.");
-			}
-		}
-		
-		LF_DELAY_MIN = Math.max(0, config.getInt("FakePartyLfDelayMin", 3));
-		LF_DELAY_MAX = Math.max(LF_DELAY_MIN, config.getInt("FakePartyLfDelayMax", 8));
-		LF_COOLDOWN = Math.max(0, config.getInt("FakePartyLfCooldown", 10));
-		LF_MAX_PER_MESSAGE = Math.max(1, config.getInt("FakePartyLfMaxPerMessage", 3));
-		LF_WAIT_TIME = Math.max(10, config.getInt("FakePartyLfWaitTime", 180));
-		LF_LEVEL_SPREAD = Math.max(0, config.getInt("FakePartyLfLevelSpread", 0));
-		LF_NEARBY_RANGE = Math.max(0, config.getInt("FakePartyLfNearbyRange", 1500));
-		INVITE_ACCEPT_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePartyInviteAcceptChance", 50)));
-		INVITE_MAX_LEVEL_DIFFERENCE = Math.max(0, config.getInt("FakePartyInviteMaxLevelDifference", 5));
+		INVITE_ACCEPT_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePartyInviteAcceptChance", 80)));
+		INVITE_CHANCE_PER_LEVEL_BELOW = Math.max(0, config.getInt("FakePartyInviteChancePerLevelBelow", 10));
+		INVITE_CHANCE_PER_LEVEL_ABOVE = Math.max(0, config.getInt("FakePartyInviteChancePerLevelAbove", 6));
+		INVITE_MAX_LEVEL_DIFFERENCE = Math.max(0, config.getInt("FakePartyInviteMaxLevelDifference", 10));
+		INVITE_CLAN_BONUS = Math.max(0, Math.min(100, config.getInt("FakePartyInviteClanBonus", 20)));
 		MAX_FAKES = Math.max(1, Math.min(8, config.getInt("FakePartyMaxFakes", 8)));
 		CAN_DIE = config.getBoolean("FakePartyCanDie", true);
 		RETURN_DELAY = Math.max(0, config.getInt("FakePartyReturnDelay", 60));

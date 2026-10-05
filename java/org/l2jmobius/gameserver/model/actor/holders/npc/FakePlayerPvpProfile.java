@@ -114,10 +114,6 @@ public class FakePlayerPvpProfile
 	/** The party it is in (with players, or with other fake players), {@code null} for none. */
 	private volatile FakePlayerParty _party;
 	
-	// The player it answered in chat ("lf <class>") and walks over to (object id, 0 for none), and until when it waits for the invite.
-	private volatile int _lfTarget;
-	private volatile long _lfUntil;
-	
 	/**
 	 * @param build the build
 	 * @param playerClass the class for this level
@@ -734,32 +730,5 @@ public class FakePlayerPvpProfile
 	public void setParty(FakePlayerParty party)
 	{
 		_party = party;
-	}
-	
-	/**
-	 * @param now the current time
-	 * @return the object id of the player it answered in chat and walks over to, 0 if none (or it waited long enough for the invite)
-	 */
-	public int getLfTarget(long now)
-	{
-		return now < _lfUntil ? _lfTarget : 0;
-	}
-	
-	/**
-	 * @param objectId the player it answered in chat ("lf <class>"), 0 to forget it
-	 * @param until until when it waits for the invite
-	 */
-	public void setLfTarget(int objectId, long until)
-	{
-		_lfTarget = objectId;
-		_lfUntil = until;
-	}
-	
-	/**
-	 * @return until when it waits for the invite of the player it answered in chat
-	 */
-	public long getLfUntil()
-	{
-		return _lfUntil;
 	}
 }

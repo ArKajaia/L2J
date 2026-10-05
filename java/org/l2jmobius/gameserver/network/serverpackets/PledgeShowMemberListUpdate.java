@@ -79,6 +79,28 @@ public class PledgeShowMemberListUpdate extends ServerPacket
 		}
 	}
 	
+	/**
+	 * A fake player that joined a players' clan (see {@link org.l2jmobius.gameserver.managers.FakeClanManager}): a member of the main clan.
+	 * @param name its name
+	 * @param level its level
+	 * @param classId its class
+	 * @param female {@code true} for a female character
+	 * @param race the race ordinal
+	 * @param objectId the object id of its fake player while it is online, 0 while it is offline
+	 */
+	public PledgeShowMemberListUpdate(String name, int level, int classId, boolean female, int race, int objectId)
+	{
+		_name = name;
+		_level = level;
+		_classId = classId;
+		_female = female;
+		_race = race;
+		_objectId = objectId;
+		_isOnline = objectId != 0;
+		_pledgeType = 0;
+		_hasSponsor = false;
+	}
+	
 	@Override
 	public void writeImpl(GameClient client, WritableBuffer buffer)
 	{

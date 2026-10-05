@@ -21,6 +21,7 @@
 package org.l2jmobius.gameserver.managers;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayDeque;
@@ -47,13 +48,18 @@ import org.l2jmobius.gameserver.config.custom.FakeClanConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
 import org.l2jmobius.gameserver.data.sql.ClanTable;
 import org.l2jmobius.gameserver.data.sql.CrestTable;
+import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
+import org.l2jmobius.gameserver.managers.FakePlayerPvpFactory.Looks;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
+import org.l2jmobius.gameserver.model.actor.enums.player.Sex;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.instance.FakePlayerPvpServitor;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.clan.Clan;
@@ -61,11 +67,13 @@ import org.l2jmobius.gameserver.model.clan.ClanAccess;
 import org.l2jmobius.gameserver.model.clan.ClanMember;
 import org.l2jmobius.gameserver.model.clan.Crest;
 import org.l2jmobius.gameserver.model.clan.enums.CrestType;
+import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.network.SystemMessageId;
 import org.l2jmobius.gameserver.network.enums.ChatType;
 import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
 import org.l2jmobius.gameserver.network.serverpackets.PledgeShowMemberListAdd;
 import org.l2jmobius.gameserver.network.serverpackets.PledgeShowMemberListDelete;
+import org.l2jmobius.gameserver.network.serverpackets.PledgeShowMemberListUpdate;
 import org.l2jmobius.gameserver.network.serverpackets.RelationChanged;
 import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
 
@@ -76,7 +84,9 @@ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
  * <li>A new fake player (town, farming or party) is sometimes a member of one of them, with a random title; the friends it comes with are often of the same clan.</li>
  * <li>Members attack the players (and fake players) of the clans their clan is at war with, both sides having declared. Kills in such a war give no karma and move clan reputation, like a war between players.</li>
  * <li>A clan that a players' clan declares war on declares war back after a while, and stops when the players stop. Killing its members often enough makes it declare war on the killers' clan.</li>
- * <li>An alliance leader invites one of them into the alliance by inviting one of its members; a clan invite to a fake player that isn't in a clan brings it into the inviter's clan.</li>
+ * <li>An alliance leader invites one of them into the alliance by inviting one of its members.</li>
+ * <li>A clan invite to a fake player that isn't in a clan brings it into the inviter's clan for good ({@link Member}, kept in the database): it keeps its name, class line and looks, logs off and on again (it shows offline in the clan window meanwhile), may leave or gain a
+ * level every day cycle, and its gear and passive tree are rolled again only at some levels ({@link FakeClanConfig#MEMBER_REROLL_LEVELS}).</li>
  * </ul>
  */
 public class FakeClanManager
@@ -89,6 +99,20 @@ public class FakeClanManager
 	private static final long REFRESH_INTERVAL = 5000;
 	/** How long a fake player keeps to its answer to a clan or alliance invite. */
 	private static final long DECISION_MEMORY = 600000;
+	/** Global variable with the start of the current day cycle of the clan members (see {@link #checkCycle}). */
+	private static final String CYCLE_VARIABLE = "FAKE_CLAN_MEMBER_CYCLE";
+	/** The most day cycles rolled at once, after the server was down for a long time. */
+	private static final int MAX_MISSED_CYCLES = 30;
+	/** How often the day cycle is checked. */
+	private static final long CYCLE_CHECK_INTERVAL = 60000;
+	/** The highest level a clan member reaches. */
+	private static final int MAX_LEVEL = 85;
+	
+	private static final String CREATE_MEMBERS = "CREATE TABLE IF NOT EXISTS `fake_clan_members` (`name` VARCHAR(35) NOT NULL, `clan_id` INT UNSIGNED NOT NULL, `build` VARCHAR(64) NOT NULL, `class_id` SMALLINT UNSIGNED NOT NULL, `level` TINYINT UNSIGNED NOT NULL, `female` TINYINT UNSIGNED NOT NULL DEFAULT 0, `hair` TINYINT UNSIGNED NOT NULL DEFAULT 0, `hair_color` TINYINT UNSIGNED NOT NULL DEFAULT 0, `face` TINYINT UNSIGNED NOT NULL DEFAULT 0, `title` VARCHAR(16) NOT NULL DEFAULT '', `seed` BIGINT NOT NULL DEFAULT 0, `joined` BIGINT UNSIGNED NOT NULL DEFAULT 0, PRIMARY KEY (`name`), KEY `clan_id` (`clan_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+	private static final String SELECT_MEMBERS = "SELECT * FROM fake_clan_members";
+	private static final String INSERT_MEMBER = "REPLACE INTO fake_clan_members (name, clan_id, build, class_id, level, female, hair, hair_color, face, title, seed, joined) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	private static final String UPDATE_MEMBER = "UPDATE fake_clan_members SET level=?, title=?, seed=? WHERE name=?";
+	private static final String DELETE_MEMBER = "DELETE FROM fake_clan_members WHERE name=?";
 	
 	private static final String[] JOIN =
 	{
@@ -109,6 +133,27 @@ public class FakeClanManager
 		"maybe later",
 		"i like it solo, ty",
 		"no ty",
+	};
+	private static final String[] LEVEL_UP =
+	{
+		"ding %l",
+		"%l!! :D",
+		"finally %l",
+		"lvl %l, gratz me",
+		"ding! %l",
+	};
+	private static final String[] LEVEL_UP_REROLL =
+	{
+		"%l, time for new gear",
+		"ding %l, new grade!",
+		"%l finally, can wear new stuff",
+	};
+	private static final String[] FAREWELL =
+	{
+		"gl all, im out",
+		"sry guys, leaving the clan",
+		"cya all, it was fun",
+		"bye, joining my friends' clan",
 	};
 	private static final String[] ALLY_ACCEPT =
 	{
@@ -137,20 +182,18 @@ public class FakeClanManager
 	private final Map<Long, Deque<Long>> _grudges = new ConcurrentHashMap<>();
 	/** War replies on their way (fake clan id and other clan id). */
 	private final Set<Long> _pendingWars = ConcurrentHashMap.newKeySet();
-	/** Fake players in clans of players, by object id, to keep the clan windows up to date. */
-	private final Map<Integer, Recruit> _recruits = new ConcurrentHashMap<>();
-	
-	private record Recruit(int clanId, String name)
-	{
-	}
+	/** Fake members of players' clans, by name in lower case. */
+	private final Map<String, Member> _members = new ConcurrentHashMap<>();
 	
 	protected FakeClanManager()
 	{
 		load();
+		loadMembers();
 		
 		// Declaring a war calls back here, so not before this manager is made.
 		ThreadPool.execute(this::startWars);
 		ThreadPool.scheduleAtFixedRate(this::refreshLooks, REFRESH_INTERVAL, REFRESH_INTERVAL);
+		ThreadPool.scheduleAtFixedRate(this::checkCycle, CYCLE_CHECK_INTERVAL, CYCLE_CHECK_INTERVAL);
 	}
 	
 	/**
@@ -454,21 +497,6 @@ public class FakeClanManager
 	}
 	
 	/**
-	 * A fake player coming over to a player (who asked for its class) isn't of a clan at war with the player's clan: it leaves it.
-	 * @param fake the fake player
-	 * @param player the player
-	 */
-	public void avoidWar(Npc fake, Player player)
-	{
-		final FakePlayerHolder info = getInfo(fake);
-		if ((info != null) && isWarEnemy(fake, player))
-		{
-			info.setClan(0, "");
-			fake.broadcastInfo();
-		}
-	}
-	
-	/**
 	 * @return a title from FakeClanTitles (FakeClanTitleChance), empty for none
 	 */
 	private static String randomTitle()
@@ -520,29 +548,6 @@ public class FakeClanManager
 	public int getOnlineCount(Clan clan)
 	{
 		return Math.min(countMembers(clan.getId()), clan.getMembersCount());
-	}
-	
-	/**
-	 * @param clan a clan of players
-	 * @return the fake players that joined it and are in the world (they show in its clan window)
-	 */
-	public List<Npc> getRecruits(Clan clan)
-	{
-		final List<Npc> recruits = new ArrayList<>();
-		if ((clan == null) || isFakeClan(clan))
-		{
-			return recruits;
-		}
-		
-		for (Npc fake : getFakes())
-		{
-			final FakePlayerHolder info = getInfo(fake);
-			if ((info != null) && (info.getClanId() == clan.getId()) && fake.isSpawned())
-			{
-				recruits.add(fake);
-			}
-		}
-		return recruits;
 	}
 	
 	/**
@@ -646,15 +651,15 @@ public class FakeClanManager
 	}
 	
 	/**
-	 * Every {@link #REFRESH_INTERVAL} ms: members of a clan whose crest or alliance changed are shown again, those of a clan that is gone leave it, and the clan windows of players show the fake players that joined their clan and are in the world.
+	 * Every {@link #REFRESH_INTERVAL} ms: members of a clan whose crest or alliance changed are shown again, those of a clan that is gone leave it, and the fake members of players' clans are online or not (see {@link #updateMembers}).
 	 */
 	private void refreshLooks()
 	{
 		try
 		{
+			final List<Npc> fakes = getFakes();
 			final Map<Integer, Integer> looks = new HashMap<>();
-			final Map<Integer, Npc> recruits = new HashMap<>();
-			for (Npc fake : getFakes())
+			for (Npc fake : fakes)
 			{
 				final FakePlayerHolder info = getInfo(fake);
 				if ((info == null) || (info.getClanId() == 0))
@@ -674,30 +679,9 @@ public class FakeClanManager
 				}
 				
 				looks.put(clan.getId(), Objects.hash(clan.getCrestId(), clan.getAllyId(), clan.getAllyCrestId(), clan.getAllyName()));
-				if (!isFakeClan(clan) && fake.isSpawned())
-				{
-					recruits.put(fake.getObjectId(), fake);
-				}
 			}
 			
-			// Gone (logged off, left, dismissed) or back.
-			for (Map.Entry<Integer, Recruit> entry : _recruits.entrySet())
-			{
-				final FakePlayerHolder info = getInfo(recruits.get(entry.getKey()));
-				if ((info == null) || (info.getClanId() != entry.getValue().clanId()))
-				{
-					_recruits.remove(entry.getKey());
-					final Clan clan = ClanTable.getInstance().getClan(entry.getValue().clanId());
-					if (clan != null)
-					{
-						clan.broadcastToOnlineMembers(new PledgeShowMemberListDelete(entry.getValue().name()));
-					}
-				}
-			}
-			for (Npc fake : recruits.values())
-			{
-				addRecruit(fake);
-			}
+			updateMembers(fakes);
 			
 			for (Map.Entry<Integer, Integer> entry : looks.entrySet())
 			{
@@ -715,18 +699,614 @@ public class FakeClanManager
 		}
 	}
 	
+	// ---------------------------------------------------------------------------------------------
+	// Members of players' clans
+	// ---------------------------------------------------------------------------------------------
+	
 	/**
-	 * Shows a fake player that joined a players' clan in the clan window of its online members.
-	 * @param fake the fake player
+	 * A fake player that joined a players' clan, kept in the database ({@code fake_clan_members}). Its name, class line and looks never change; it logs off and on again, gains levels and may leave (see {@link #rollCycle}).
 	 */
-	private void addRecruit(Npc fake)
+	private static class Member
 	{
-		final FakePlayerHolder info = getInfo(fake);
-		final Clan clan = info != null ? ClanTable.getInstance().getClan(info.getClanId()) : null;
-		if ((clan != null) && (_recruits.putIfAbsent(fake.getObjectId(), new Recruit(clan.getId(), fake.getName())) == null))
+		final String name;
+		final int clanId;
+		final String buildName;
+		/** The last class of its class line (the one of its build), to find a build again if its own is gone. */
+		final int classId;
+		final Looks looks;
+		final long joined;
+		volatile int level;
+		volatile String title;
+		/** The seed its gear, passive tree and personality are made from: they stay the same until it is rolled again (see {@link FakeClanConfig#MEMBER_REROLL_LEVELS}). */
+		volatile long seed;
+		/** Its fake player while it is online (or dead and coming back), {@code null} while it is offline. */
+		volatile Npc npc;
+		/** When it may log in again. */
+		volatile long nextLogin;
+		
+		Member(String name, int clanId, String buildName, int classId, Looks looks, long joined, int level, String title, long seed)
 		{
-			clan.broadcastToOnlineMembers(new PledgeShowMemberListAdd(fake));
+			this.name = name;
+			this.clanId = clanId;
+			this.buildName = buildName;
+			this.classId = classId;
+			this.looks = looks;
+			this.joined = joined;
+			this.level = level;
+			this.title = title;
+			this.seed = seed;
 		}
+		
+		/**
+		 * @return its build, or one of its class line if its own was removed from the data, {@code null} if there is none
+		 */
+		FakePlayerPvpBuild getBuild()
+		{
+			final FakePlayerPvpBuild build = FakePlayerPvpData.getInstance().getBuild(buildName);
+			if (build != null)
+			{
+				return build;
+			}
+			
+			final PlayerClass lastClass = PlayerClass.getPlayerClass(classId);
+			return lastClass != null ? findBuild(lastClass, 85) : null;
+		}
+		
+		/**
+		 * @return its class at its level
+		 */
+		PlayerClass getPlayerClass()
+		{
+			final FakePlayerPvpBuild build = getBuild();
+			if (build != null)
+			{
+				return build.getPlayerClass(level);
+			}
+			
+			// Like FakePlayerPvpBuild.getPlayerClass(int).
+			final int classLevel = level >= 76 ? 3 : level >= 40 ? 2 : level >= 20 ? 1 : 0;
+			PlayerClass playerClass = PlayerClass.getPlayerClass(classId);
+			while ((playerClass.level() > classLevel) && (playerClass.getParent() != null))
+			{
+				playerClass = playerClass.getParent();
+			}
+			return playerClass;
+		}
+		
+		/**
+		 * @return the object id it shows in the clan window: its fake player's while it is online, 0 while it is offline
+		 */
+		int getObjectId()
+		{
+			final Npc fake = npc;
+			return fake != null ? fake.getObjectId() : 0;
+		}
+	}
+	
+	/**
+	 * @param name a character name
+	 * @return the key of its member in {@link #_members}
+	 */
+	private static String key(String name)
+	{
+		return name.toLowerCase();
+	}
+	
+	/**
+	 * @param playerClass a class
+	 * @param level a level
+	 * @return a build that has {@code playerClass} at {@code level}, else one whose class line has it, {@code null} if none
+	 */
+	private static FakePlayerPvpBuild findBuild(PlayerClass playerClass, int level)
+	{
+		final List<FakePlayerPvpBuild> exact = new ArrayList<>();
+		final List<FakePlayerPvpBuild> line = new ArrayList<>();
+		for (FakePlayerPvpBuild build : FakePlayerPvpData.getInstance().getBuilds())
+		{
+			if (build.getPlayerClass(level) == playerClass)
+			{
+				exact.add(build);
+			}
+			
+			for (PlayerClass lineClass = build.getPlayerClass(); lineClass != null; lineClass = lineClass.getParent())
+			{
+				if (lineClass == playerClass)
+				{
+					line.add(build);
+					break;
+				}
+			}
+		}
+		
+		final List<FakePlayerPvpBuild> builds = !exact.isEmpty() ? exact : line;
+		return builds.isEmpty() ? null : builds.get(Rnd.get(builds.size()));
+	}
+	
+	/**
+	 * @param fake a fake player
+	 * @return the build it becomes a clan member with: its own (a roaming one), or one of its class (a town one), {@code null} if there is none
+	 */
+	private static FakePlayerPvpBuild findBuild(Npc fake)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		if (profile != null)
+		{
+			return profile.getBuild();
+		}
+		
+		final FakePlayerHolder info = getInfo(fake);
+		return info != null ? findBuild(info.getPlayerClass(), fake.getLevel()) : null;
+	}
+	
+	/**
+	 * Loads the fake members of players' clans. Those of a clan that is gone are deleted.
+	 */
+	private void loadMembers()
+	{
+		final long now = System.currentTimeMillis();
+		final List<String> gone = new ArrayList<>();
+		try (Connection con = DatabaseFactory.getConnection();
+			Statement statement = con.createStatement())
+		{
+			statement.execute(CREATE_MEMBERS);
+			try (ResultSet rs = statement.executeQuery(SELECT_MEMBERS))
+			{
+				while (rs.next())
+				{
+					final String name = rs.getString("name");
+					final Clan clan = ClanTable.getInstance().getClan(rs.getInt("clan_id"));
+					if ((clan == null) || _fakeClans.containsKey(clan.getId()) || (PlayerClass.getPlayerClass(rs.getInt("class_id")) == null))
+					{
+						gone.add(name);
+						continue;
+					}
+					
+					final Looks looks = new Looks(rs.getInt("female") == 1, rs.getInt("hair"), rs.getInt("hair_color"), rs.getInt("face"));
+					final Member member = new Member(name, clan.getId(), rs.getString("build"), rs.getInt("class_id"), looks, rs.getLong("joined"), rs.getInt("level"), rs.getString("title"), rs.getLong("seed"));
+					
+					// They log in one after another, not all at once.
+					member.nextLogin = now + (Rnd.get(0, FakeClanConfig.MEMBER_OFFLINE_MAX) * 60000L);
+					_members.put(key(name), member);
+					FakePlayerPvpManager.getInstance().keepName(name);
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not load the fake members of players' clans.", e);
+		}
+		
+		for (String name : gone)
+		{
+			deleteMember(name);
+		}
+		
+		if (!_members.isEmpty())
+		{
+			LOGGER.info(getClass().getSimpleName() + ": " + _members.size() + " fake members of players' clans.");
+		}
+	}
+	
+	private static void storeMember(Member member)
+	{
+		try (Connection con = DatabaseFactory.getConnection();
+			PreparedStatement ps = con.prepareStatement(INSERT_MEMBER))
+		{
+			ps.setString(1, member.name);
+			ps.setInt(2, member.clanId);
+			ps.setString(3, member.buildName);
+			ps.setInt(4, member.classId);
+			ps.setInt(5, member.level);
+			ps.setInt(6, member.looks.female() ? 1 : 0);
+			ps.setInt(7, member.looks.hair());
+			ps.setInt(8, member.looks.hairColor());
+			ps.setInt(9, member.looks.face());
+			ps.setString(10, member.title);
+			ps.setLong(11, member.seed);
+			ps.setLong(12, member.joined);
+			ps.execute();
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, FakeClanManager.class.getSimpleName() + ": Could not store clan member " + member.name + ".", e);
+		}
+	}
+	
+	private static void updateMember(Member member)
+	{
+		try (Connection con = DatabaseFactory.getConnection();
+			PreparedStatement ps = con.prepareStatement(UPDATE_MEMBER))
+		{
+			ps.setInt(1, member.level);
+			ps.setString(2, member.title);
+			ps.setLong(3, member.seed);
+			ps.setString(4, member.name);
+			ps.execute();
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, FakeClanManager.class.getSimpleName() + ": Could not update clan member " + member.name + ".", e);
+		}
+	}
+	
+	private static void deleteMember(String name)
+	{
+		try (Connection con = DatabaseFactory.getConnection();
+			PreparedStatement ps = con.prepareStatement(DELETE_MEMBER))
+		{
+			ps.setString(1, name);
+			ps.execute();
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, FakeClanManager.class.getSimpleName() + ": Could not delete clan member " + name + ".", e);
+		}
+	}
+	
+	/**
+	 * @param name a character name
+	 * @return {@code true} if it is the name of a fake member of a players' clan (online or not)
+	 */
+	public boolean isMemberName(String name)
+	{
+		return (name != null) && _members.containsKey(key(name));
+	}
+	
+	/**
+	 * @param clanId a clan id
+	 * @return how many fake members that clan has, online or not
+	 */
+	private int countClanMembers(int clanId)
+	{
+		int count = 0;
+		for (Member member : _members.values())
+		{
+			if (member.clanId == clanId)
+			{
+				count++;
+			}
+		}
+		return count;
+	}
+	
+	/**
+	 * Sends a player the fake members of its clan, online and offline, for its clan window.
+	 * @param clan a clan of players
+	 * @param player a player of that clan
+	 */
+	public void sendMembers(Clan clan, Player player)
+	{
+		if ((clan == null) || isFakeClan(clan))
+		{
+			return;
+		}
+		
+		for (Member member : _members.values())
+		{
+			if (member.clanId == clan.getId())
+			{
+				player.sendPacket(new PledgeShowMemberListAdd(member.name, member.level, member.getPlayerClass().getId(), member.getObjectId()));
+			}
+		}
+	}
+	
+	/**
+	 * @param member a member
+	 * @return its line in the clan window, as it is now
+	 */
+	private static PledgeShowMemberListUpdate memberUpdate(Member member)
+	{
+		final PlayerClass playerClass = member.getPlayerClass();
+		return new PledgeShowMemberListUpdate(member.name, member.level, playerClass.getId(), member.looks.female(), playerClass.getRace().ordinal(), member.getObjectId());
+	}
+	
+	/**
+	 * Called with a fake player that takes a monster's place (see {@link FakePlayerPvpManager}): a fake member of a players' clan of about that level, offline long enough, logs in there instead of a new fake player.
+	 * @param level the level of the fake player that would come
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @param instanceId the instance
+	 * @param monster the monster it replaces
+	 * @param spawn the spawn of {@code monster}
+	 * @return the member that logged in, {@code null} if none did
+	 */
+	public Npc logIn(int level, int x, int y, int z, int instanceId, Npc monster, Spawn spawn)
+	{
+		if (_members.isEmpty() || !isEnabled())
+		{
+			return null;
+		}
+		
+		final long now = System.currentTimeMillis();
+		final List<Member> ready = new ArrayList<>();
+		for (Member member : _members.values())
+		{
+			if ((member.npc == null) && (now >= member.nextLogin) && (Math.abs(member.level - level) <= FakeClanConfig.MEMBER_LOGIN_LEVEL_RANGE))
+			{
+				ready.add(member);
+			}
+		}
+		
+		if (ready.isEmpty())
+		{
+			return null;
+		}
+		
+		final Member member = ready.get(Rnd.get(ready.size()));
+		final FakePlayerPvpBuild build = member.getBuild();
+		final Clan clan = ClanTable.getInstance().getClan(member.clanId);
+		synchronized (member)
+		{
+			if ((member.npc != null) || (now < member.nextLogin) || !_members.containsKey(key(member.name)) || FakePlayerPvpManager.getInstance().isComingBack(member.name))
+			{
+				return null;
+			}
+			
+			if ((build == null) || (clan == null))
+			{
+				member.nextLogin = now + (FakeClanConfig.MEMBER_OFFLINE_MAX * 60000L);
+				return null;
+			}
+			
+			final Npc fake = FakePlayerPvpManager.getInstance().spawnClanMember(build, member.level, member.name, member.looks, member.seed, member.clanId, member.title, x, y, z, instanceId, monster, spawn);
+			if (fake == null)
+			{
+				member.nextLogin = now + (FakeClanConfig.MEMBER_OFFLINE_MIN * 60000L);
+				return null;
+			}
+			
+			setOnline(member, fake);
+			return fake;
+		}
+	}
+	
+	/**
+	 * Its fake player is (still) in the world: the clan sees it log in if it was offline.
+	 * @param member the member
+	 * @param fake its fake player
+	 */
+	private static void setOnline(Member member, Npc fake)
+	{
+		final boolean wasOffline = member.npc == null;
+		member.npc = fake;
+		if (!wasOffline)
+		{
+			return;
+		}
+		
+		final Clan clan = ClanTable.getInstance().getClan(member.clanId);
+		if (clan != null)
+		{
+			clan.broadcastToOnlineMembers(new SystemMessage(SystemMessageId.CLAN_MEMBER_S1_HAS_LOGGED_INTO_GAME).addString(member.name));
+			clan.broadcastToOnlineMembers(memberUpdate(member));
+		}
+	}
+	
+	/**
+	 * Its fake player left the world: it is offline for a while.
+	 * @param member the member
+	 * @param now the current time
+	 */
+	private static void setOffline(Member member, long now)
+	{
+		member.npc = null;
+		member.nextLogin = now + (Rnd.get(FakeClanConfig.MEMBER_OFFLINE_MIN, FakeClanConfig.MEMBER_OFFLINE_MAX) * 60000L);
+		final Clan clan = ClanTable.getInstance().getClan(member.clanId);
+		if (clan != null)
+		{
+			clan.broadcastToOnlineMembers(memberUpdate(member));
+		}
+	}
+	
+	/**
+	 * Every {@link #REFRESH_INTERVAL} ms: which fake members of players' clans are online (their fake player in the world, or dead and coming back). A fake player that wears a players' clan it is no member of anymore (it left while it was dead) takes it off.
+	 * @param fakes the fake players in the world
+	 */
+	private void updateMembers(List<Npc> fakes)
+	{
+		final Map<Member, Npc> online = new HashMap<>();
+		for (Npc fake : fakes)
+		{
+			final FakePlayerHolder info = getInfo(fake);
+			if ((info == null) || (info.getClanId() == 0) || _fakeClans.containsKey(info.getClanId()))
+			{
+				continue;
+			}
+			
+			final Member member = _members.get(key(fake.getName()));
+			if ((member == null) || (member.clanId != info.getClanId()))
+			{
+				info.setClan(0, "");
+				if (fake.isSpawned())
+				{
+					fake.broadcastInfo();
+				}
+				continue;
+			}
+			
+			if (fake.isSpawned())
+			{
+				online.put(member, fake);
+			}
+		}
+		
+		final long now = System.currentTimeMillis();
+		for (Member member : _members.values())
+		{
+			// Its clan was dissolved.
+			if (ClanTable.getInstance().getClan(member.clanId) == null)
+			{
+				removeMember(member, false);
+				continue;
+			}
+			
+			final Npc fake = online.get(member);
+			synchronized (member)
+			{
+				if (fake != null)
+				{
+					if (member.npc != fake)
+					{
+						setOnline(member, fake);
+					}
+				}
+				else if ((member.npc != null) && !member.npc.isSpawned() && !FakePlayerPvpManager.getInstance().isComingBack(member.name))
+				{
+					setOffline(member, now);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Every minute: once a day cycle ({@link FakeClanConfig#MEMBER_CYCLE_HOURS}) went by, the fake members of players' clans roll to leave and to level up ({@link #rollCycle}). The cycles missed while the server was down are rolled too, up to
+	 * {@link #MAX_MISSED_CYCLES}.
+	 */
+	private void checkCycle()
+	{
+		try
+		{
+			final long now = System.currentTimeMillis();
+			final long period = FakeClanConfig.MEMBER_CYCLE_HOURS * 3600000L;
+			final long last = GlobalVariablesManager.getInstance().getLong(CYCLE_VARIABLE, 0);
+			if ((last <= 0) || (last > now))
+			{
+				GlobalVariablesManager.getInstance().set(CYCLE_VARIABLE, now);
+				GlobalVariablesManager.getInstance().storeMe();
+				return;
+			}
+			
+			final long cycles = (now - last) / period;
+			if (cycles <= 0)
+			{
+				return;
+			}
+			
+			// Moved on first: a cycle is never rolled twice.
+			GlobalVariablesManager.getInstance().set(CYCLE_VARIABLE, last + (cycles * period));
+			GlobalVariablesManager.getInstance().storeMe();
+			if (isEnabled())
+			{
+				for (long i = Math.min(cycles, MAX_MISSED_CYCLES); i > 0; i--)
+				{
+					rollCycle();
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not roll the day cycle of the clan members.", e);
+		}
+	}
+	
+	/**
+	 * A day cycle: every fake member of a players' clan may leave it ({@link FakeClanConfig#MEMBER_LEAVE_CHANCE}), and one that stays may gain a level ({@link FakeClanConfig#MEMBER_LEVEL_UP_CHANCE}).
+	 */
+	private void rollCycle()
+	{
+		for (Member member : _members.values())
+		{
+			if (Rnd.get(100) < FakeClanConfig.MEMBER_LEAVE_CHANCE)
+			{
+				removeMember(member, true);
+			}
+			else if ((member.level < MAX_LEVEL) && (Rnd.get(100) < FakeClanConfig.MEMBER_LEVEL_UP_CHANCE))
+			{
+				levelUp(member);
+			}
+		}
+	}
+	
+	/**
+	 * A fake member gains a level. At the levels of {@link FakeClanConfig#MEMBER_REROLL_LEVELS} its gear and passive tree are rolled again. Its fake player in the world keeps its level until it logs in again.
+	 * @param member the member
+	 */
+	private void levelUp(Member member)
+	{
+		member.level++;
+		final boolean reroll = FakeClanConfig.MEMBER_REROLL_LEVELS.contains(member.level);
+		if (reroll)
+		{
+			member.seed = Rnd.nextLong();
+		}
+		updateMember(member);
+		
+		final Clan clan = ClanTable.getInstance().getClan(member.clanId);
+		if (clan == null)
+		{
+			return;
+		}
+		
+		clan.broadcastToOnlineMembers(memberUpdate(member));
+		final Npc fake = member.npc;
+		if ((fake != null) && fake.isSpawned() && !fake.isDead() && (Rnd.get(100) < 60))
+		{
+			final String text = (reroll && Rnd.nextBoolean() ? LEVEL_UP_REROLL[Rnd.get(LEVEL_UP_REROLL.length)] : LEVEL_UP[Rnd.get(LEVEL_UP.length)]).replace("%l", String.valueOf(member.level));
+			clanChat(fake, clan, text);
+		}
+	}
+	
+	/**
+	 * A fake member leaves its clan (it left, it was dismissed, or the clan is gone): it is deleted, and its fake player in the world takes the clan off.
+	 * @param member the member
+	 * @param withdrew {@code true} if it left on its own (the clan is told, and it says goodbye if it is online)
+	 */
+	private void removeMember(Member member, boolean withdrew)
+	{
+		if (!_members.remove(key(member.name), member))
+		{
+			return;
+		}
+		
+		deleteMember(member.name);
+		
+		final Npc fake;
+		synchronized (member)
+		{
+			fake = member.npc;
+			member.npc = null;
+		}
+		
+		final boolean inWorld = (fake != null) && fake.isSpawned();
+		FakePlayerPvpManager.getInstance().unkeepName(member.name, inWorld || FakePlayerPvpManager.getInstance().isComingBack(member.name));
+		
+		final Clan clan = ClanTable.getInstance().getClan(member.clanId);
+		if (withdrew && (clan != null) && inWorld && !fake.isDead() && (Rnd.get(100) < 60))
+		{
+			clanChat(fake, clan, FAREWELL[Rnd.get(FAREWELL.length)]);
+		}
+		
+		// The dead one coming back shares this template: it comes back without the clan too.
+		final FakePlayerHolder info = getInfo(fake);
+		if ((info != null) && (info.getClanId() == member.clanId))
+		{
+			info.setClan(0, "");
+			if (inWorld)
+			{
+				fake.broadcastInfo();
+			}
+		}
+		
+		if (clan != null)
+		{
+			if (withdrew)
+			{
+				clan.broadcastToOnlineMembers(new SystemMessage(SystemMessageId.S1_HAS_WITHDRAWN_FROM_THE_CLAN).addString(member.name));
+			}
+			clan.broadcastToOnlineMembers(new PledgeShowMemberListDelete(member.name));
+		}
+	}
+	
+	private static void clanChat(Npc fake, Clan clan, String text)
+	{
+		ThreadPool.schedule(() ->
+		{
+			if (fake.isSpawned() && !fake.isDead())
+			{
+				clan.broadcastToOnlineMembers(new CreatureSay(fake, ChatType.CLAN, fake.getName(), text));
+			}
+		}, Rnd.get(1500, 4000));
 	}
 	
 	// ---------------------------------------------------------------------------------------------
@@ -897,7 +1477,7 @@ public class FakeClanManager
 	}
 	
 	/**
-	 * Called from {@code RequestJoinPledge} when the invited one isn't a player: a fake player that isn't in a clan answers like a player would and, if it accepts, wears the inviter's clan (with a random title) while it is in the world.
+	 * Called from {@code RequestJoinPledge} when the invited one isn't a player: a fake player that isn't in a clan answers like a player would and, if it accepts, becomes a member of the inviter's clan for good (with a random title), see {@link Member}.
 	 * @param player the player that invites
 	 * @param objectId the invited object
 	 * @return {@code true} if it is a fake player (the invite is handled)
@@ -959,7 +1539,16 @@ public class FakeClanManager
 			}
 			return false;
 		}
-		else if ((FakeClanConfig.MAX_RECRUITS > 0) && (countMembers(clan.getId()) >= FakeClanConfig.MAX_RECRUITS))
+		else if (isMemberName(fake.getName()) || (findBuild(fake) == null))
+		{
+			// Still the member of a clan it left a moment ago, or a class it can't come back as.
+			if (tell)
+			{
+				player.sendPacket(new SystemMessage(SystemMessageId.S1_DECLINED_YOUR_CLAN_INVITATION).addString(fake.getName()));
+			}
+			return false;
+		}
+		else if (((FakeClanConfig.MAX_RECRUITS > 0) && (countClanMembers(clan.getId()) >= FakeClanConfig.MAX_RECRUITS)) || ((clan.getSubPledgeMembersCount(0) + countClanMembers(clan.getId())) >= clan.getMaxNrOfMembers(0)))
 		{
 			if (tell)
 			{
@@ -996,28 +1585,35 @@ public class FakeClanManager
 			return;
 		}
 		
-		getInfo(fake).setClan(clan.getId(), randomTitle());
+		// A member for good: its name, class line and looks are kept.
+		final FakePlayerPvpBuild build = findBuild(fake);
+		final FakePlayerHolder info = getInfo(fake);
+		final String title = randomTitle();
+		final Looks looks = new Looks(fake.getTemplate().getSex() == Sex.FEMALE, info.getHair(), info.getHairColor(), info.getFace());
+		final Member member = new Member(fake.getName(), clan.getId(), build.getName(), build.getPlayerClass().getId(), looks, System.currentTimeMillis(), fake.getLevel(), title, Rnd.nextLong());
+		member.npc = fake;
+		if (_members.putIfAbsent(key(member.name), member) != null)
+		{
+			return;
+		}
+		FakePlayerPvpManager.getInstance().keepName(member.name);
+		storeMember(member);
+		
+		info.setClan(clan.getId(), title);
 		fake.broadcastInfo();
 		clan.broadcastToOnlineMembers(new SystemMessage(SystemMessageId.S1_HAS_JOINED_THE_CLAN).addString(fake.getName()));
-		addRecruit(fake);
+		clan.broadcastToOnlineMembers(new PledgeShowMemberListAdd(member.name, member.level, member.getPlayerClass().getId(), fake.getObjectId()));
 		if (Rnd.get(100) < 70)
 		{
-			final String text = JOIN[Rnd.get(JOIN.length)];
-			ThreadPool.schedule(() ->
-			{
-				if (fake.isSpawned() && !fake.isDead())
-				{
-					clan.broadcastToOnlineMembers(new CreatureSay(fake, ChatType.CLAN, fake.getName(), text));
-				}
-			}, Rnd.get(1500, 4000));
+			clanChat(fake, clan, JOIN[Rnd.get(JOIN.length)]);
 		}
 	}
 	
 	/**
-	 * Called from {@code RequestOustPledgeMember}: a fake player that joined the clan of {@code player} is dismissed.
+	 * Called from {@code RequestOustPledgeMember}: a fake member of the clan of {@code player} is dismissed, online or not.
 	 * @param player the player that dismisses
 	 * @param name the name to dismiss
-	 * @return {@code true} if {@code name} is a fake player of the clan (it is handled)
+	 * @return {@code true} if {@code name} is a fake member of the clan (it is handled)
 	 */
 	public boolean onDismiss(Player player, String name)
 	{
@@ -1027,35 +1623,29 @@ public class FakeClanManager
 			return false;
 		}
 		
-		for (Npc fake : getFakes())
+		final Member member = _members.get(key(name));
+		if ((member == null) || (member.clanId != clan.getId()))
 		{
-			final FakePlayerHolder info = getInfo(fake);
-			if ((info == null) || (info.getClanId() != clan.getId()) || !fake.getName().equalsIgnoreCase(name))
-			{
-				continue;
-			}
-			
-			if (!player.hasAccess(ClanAccess.REMOVE_MEMBER))
-			{
-				player.sendPacket(SystemMessageId.YOU_ARE_NOT_AUTHORIZED_TO_DO_THAT);
-				return true;
-			}
-			
-			if (fake.isInCombat())
-			{
-				player.sendPacket(SystemMessageId.A_CLAN_MEMBER_MAY_NOT_BE_DISMISSED_DURING_COMBAT);
-				return true;
-			}
-			
-			info.setClan(0, "");
-			fake.broadcastInfo();
-			_recruits.remove(fake.getObjectId());
-			clan.broadcastToOnlineMembers(new SystemMessage(SystemMessageId.CLAN_MEMBER_S1_HAS_BEEN_EXPELLED).addString(fake.getName()));
-			clan.broadcastToOnlineMembers(new PledgeShowMemberListDelete(fake.getName()));
-			player.sendPacket(SystemMessageId.YOU_HAVE_SUCCEEDED_IN_EXPELLING_THE_CLAN_MEMBER);
+			return false;
+		}
+		
+		if (!player.hasAccess(ClanAccess.REMOVE_MEMBER))
+		{
+			player.sendPacket(SystemMessageId.YOU_ARE_NOT_AUTHORIZED_TO_DO_THAT);
 			return true;
 		}
-		return false;
+		
+		final Npc fake = member.npc;
+		if ((fake != null) && fake.isSpawned() && fake.isInCombat())
+		{
+			player.sendPacket(SystemMessageId.A_CLAN_MEMBER_MAY_NOT_BE_DISMISSED_DURING_COMBAT);
+			return true;
+		}
+		
+		removeMember(member, false);
+		clan.broadcastToOnlineMembers(new SystemMessage(SystemMessageId.CLAN_MEMBER_S1_HAS_BEEN_EXPELLED).addString(member.name));
+		player.sendPacket(SystemMessageId.YOU_HAVE_SUCCEEDED_IN_EXPELLING_THE_CLAN_MEMBER);
+		return true;
 	}
 	
 	/**
@@ -1229,6 +1819,8 @@ public class FakeClanManager
 	{
 		final List<String> lines = new ArrayList<>();
 		lines.add("Clans of fake players: " + _activeClans.size() + (isEnabled() ? "" : " (disabled)") + ".");
+		final long online = _members.values().stream().filter(member -> member.npc != null).count();
+		lines.add("Fake members of players' clans: " + _members.size() + ", " + online + " online.");
 		for (Clan clan : _fakeClans.values())
 		{
 			final StringBuilder wars = new StringBuilder();
