@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.database.DatabaseFactory;
+import org.l2jmobius.gameserver.config.custom.FakeClanConfig;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.siege.Castle;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
@@ -151,7 +152,7 @@ public class SiegeGuardManager
 		{
 			int hiredCount = 0;
 			final int hiredMax = MercTicketManager.getInstance().getMaxAllowedMerc(_castle.getResidenceId());
-			final boolean isHired = _castle.getOwnerId() > 0;
+			final boolean isHired = isHiredGuards();
 			loadSiegeGuard();
 			for (Spawn spawn : _siegeGuardSpawn)
 			{
@@ -197,6 +198,14 @@ public class SiegeGuardManager
 	}
 	
 	/**
+	 * @return {@code true} for the mercenaries the lord placed, {@code false} for the npc guards of the castle: a castle without a lord, or held by a fake clan (FakeClanCastleNpcGuards)
+	 */
+	private boolean isHiredGuards()
+	{
+		return (_castle.getOwnerId() > 0) && !(FakeClanConfig.CASTLE_NPC_GUARDS && FakeCastleManager.isFakeCastle(_castle));
+	}
+	
+	/**
 	 * Load guards.
 	 */
 	private void loadSiegeGuard()
@@ -205,7 +214,7 @@ public class SiegeGuardManager
 			PreparedStatement ps = con.prepareStatement("SELECT * FROM castle_siege_guards Where castleId = ? And isHired = ?"))
 		{
 			ps.setInt(1, _castle.getResidenceId());
-			ps.setInt(2, _castle.getOwnerId() > 0 ? 1 : 0);
+			ps.setInt(2, isHiredGuards() ? 1 : 0);
 			try (ResultSet rs = ps.executeQuery())
 			{
 				while (rs.next())
