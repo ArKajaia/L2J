@@ -23,7 +23,7 @@ package org.l2jmobius.gameserver.model.hiddenquest;
 /**
  * The secret conditions that make a hidden quest messenger come to a player.
  * <ul>
- * <li>State conditions are read from the character itself (PK count, PvP count, fame, adena, towns visited).</li>
+ * <li>State conditions are read from the character itself (PK count, PvP count, fame, adena, towns visited, quests completed).</li>
  * <li>Counter conditions are counted by the Hidden Quest manager in player variables from the day the feature is enabled.</li>
  * </ul>
  * @author Mobius
@@ -55,7 +55,27 @@ public enum HiddenTriggerType
 	/** Raid bosses killed (the killing blow, or the party member the kill is credited to). */
 	KILL_RAID(true),
 	/** Players with karma killed. */
-	KILL_KARMA_PLAYER(true);
+	KILL_KARMA_PLAYER(true),
+	/** Monsters killed by the player's own hand while at or below 10% HP. */
+	KILL_LOW_HEALTH(true),
+	/** Monsters killed by the player's own hand with no weapon equipped. */
+	KILL_UNARMED(true),
+	/** Monsters killed by the player's own hand while swimming. */
+	KILL_IN_WATER(true),
+	/** Times murdered: killed by another player while neither flagged nor carrying karma (clan war enemies don't count). */
+	KILLED_BY_PK(true),
+	/** Olympiad matches won. */
+	OLYMPIAD_WINS(true),
+	/** Failed enchantments that destroyed the item or reset it to +0 (safe enchant failures don't count). */
+	ENCHANT_FAILS(true),
+	/** Fish caught. */
+	FISH_CAUGHT(true),
+	/** Seconds spent sitting outside towns and peace zones (private stores don't count). */
+	MEDITATION(true),
+	/** Distance walked or run on foot, in game units. Teleports, boats, mounts and flying don't count. */
+	DISTANCE(true),
+	/** The character's completed (non-repeatable) quests. */
+	QUESTS_COMPLETED(false);
 
 	private final boolean _counter;
 

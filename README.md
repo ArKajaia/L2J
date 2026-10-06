@@ -171,10 +171,10 @@ A short, solo, instanced trial at the Class Master NPC that stands in for the lo
 
 Quests no player can look up. When a character quietly meets a secret condition, a messenger NPC walks up to them with a quest mark and offers a one-off quest. Only the server knows what caused the visit.
 
-- **Secret conditions**: some are read from the character (PK count, PvP kills, fame, adena carried, towns visited) and some are counted by the server from the day the feature is turned on (deaths, levels gained in a row without dying, orcs, undead, night kills, solo kills, raid bosses and karma players killed). Nothing is shown when a condition is met, and the messenger comes a few minutes later so the visit doesn't point at the cause.
+- **Secret conditions**: some are read from the character (PK count, PvP kills, fame, adena carried, towns visited, quests completed) and some are counted by the server from the day the feature is turned on (deaths, levels gained in a row without dying, orcs, undead, night kills, solo kills, raid bosses and karma players killed, kills at 10% HP or less, kills with no weapon, kills while swimming, times murdered by a PK, Olympiad wins, failed enchantments, fish caught, hours spent sitting in the wild and distance travelled on foot). Nothing is shown when a condition is met, and the messenger comes a few minutes later so the visit doesn't point at the cause.
 - **The visit**: the messenger only comes when the player is safe (not fighting, flagged, in an instance, Olympiad, siege, arena or store). It appears nearby, walks up and talks. Only that player can see it. The H5 client has no quest icon the server can put over an NPC's head, so the mark is a `[ ! ]` title, a visual effect on the NPC and the blinking tutorial question mark on screen (clicking it opens the offer). The player can accept, ask the messenger to come back later, or refuse the quest forever.
 - **One task per quest (about 15-30 minutes)**, from seven kinds: a pilgrimage to shrines in the wild (pray by sitting, sometimes under vows), a gauntlet of "echo" duelists with their own tricks (wards, blinking, regenerating, splitting), being hunted by ambushes and then their leader (who may flee to a lair), chasing wisps or couriers on the radar, escorting an NPC between stops, holding a vigil at a totem, and riddles that point to famous places. Enemies come from retail monster sets that fit the player's level.
-- **Thirteen quests** ship in `data/HiddenQuests.xml`, which holds the conditions, tasks, dialog and rewards and is the place to add more. Rewards depend on the quest: enchant scrolls, life stones and adena for the player's grade, titles, title and name colours, a wolf pet, or clearing karma and a PK.
+- **Twenty-three quests** ship in `data/HiddenQuests.xml`, which holds the conditions, tasks, dialog and rewards and is the place to add more. Rewards depend on the quest: enchant scrolls (blessed ones from the ghost smith), life stones, adena and SP for the player's grade, titles, title and name colours, a wolf pet, or clearing karma and a PK.
 - Failing, dying (for most tasks), logging out or running out of time costs nothing: the messenger comes back later. Each quest can be completed once per character.
 - GMs have `//hiddenquest` (every quest, its condition and a player's progress), `//hiddenquest_trigger`, `//hiddenquest_send`, `//hiddenquest_complete`, `//hiddenquest_abort` and `//hiddenquest_reset`. Settings are in `config/Custom/HiddenQuests.ini`.
 
@@ -562,6 +562,22 @@ Changes from 28 September – 6 October 2026.
 - **New system**: secret conditions send a messenger NPC (ids 900300-900312) to the player with a one-off quest. The conditions stay on the server.
 - **13 quests** with 7 task types (pilgrimage, echo gauntlet, hunted, chase, escort, vigil, riddle) and rewards from enchant scrolls to titles, name colours and karma cleansing. All of it is data in `data/HiddenQuests.xml`.
 - GM commands `//hiddenquest*` to see progress and to trigger, send, complete, abort or reset a quest.
+- **10 more quests** (ids 14-23, messengers 900330-900339), each with a new kind of condition:
+
+  | Quest | Condition | Task |
+  |---|---|---|
+  | The Laurel of Ash | 30 Olympiad wins | Echoes of four old Heroes |
+  | The Smith's Lament | 20 failed enchantments (item lost or reset to +0) | Guard a ghost smith's anvil from Rustborn golems; pays blessed enchant scrolls |
+  | The One That Got Away | 200 fish caught | Catch five silver shadows before they fade, while poachers interfere |
+  | The Still Mountain | 3 hours sitting outside towns | Meditate at three Stones of Stillness under a vow of peace; pays SP |
+  | Dance on the Edge | 100 kills at 10% HP or less | Four "partners" sent by Death |
+  | The Empty Hand | 300 kills with no weapon equipped | Hunted by the Iron Fist school, then its grandmaster |
+  | The Drowned Choir | 200 kills while swimming | Guard a water spirit's Tide Stone from the drowned |
+  | The Wronged | Murdered 10 times by PKs | Catch three Red Hand couriers |
+  | The Archivist's Burden | 30 quests completed | Escort an archivist to four hidden vaults |
+  | The Road Goes Ever On | 2,500,000 units travelled on foot | Riddles about ten far-apart places |
+
+  Kills by a summon don't count for the HP, weapon and water conditions. Clan war and siege kills don't count as murder, and teleports, boats, mounts and flying don't count as distance. Enchant failures and fish are counted by hooks in the enchant packet and in fishing.
 
 ### Master Blacksmith
 - **New NPC** in Giran (id 900010, by the Arena Master) with every blacksmith service in one window: SAs, dualswords, Mammon's weapon upgrades and swaps, seals, Foundation items, augments, Life Stones, attribute removal and crafting.

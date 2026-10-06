@@ -46,6 +46,7 @@ import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.clan.Clan;
 import org.l2jmobius.gameserver.model.events.Containers;
 import org.l2jmobius.gameserver.model.events.EventType;
 import org.l2jmobius.gameserver.model.events.holders.actor.creature.OnCreatureDeath;
@@ -57,6 +58,7 @@ import org.l2jmobius.gameserver.model.events.holders.actor.player.OnPlayerLogin;
 import org.l2jmobius.gameserver.model.events.holders.actor.player.OnPlayerLogout;
 import org.l2jmobius.gameserver.model.events.holders.actor.player.OnPlayerPKChanged;
 import org.l2jmobius.gameserver.model.events.holders.actor.player.OnPlayerPressTutorialMark;
+import org.l2jmobius.gameserver.model.events.holders.olympiad.OnOlympiadMatchResult;
 import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
 import org.l2jmobius.gameserver.model.events.listeners.FunctionEventListener;
 import org.l2jmobius.gameserver.model.events.returns.TerminateReturn;
@@ -91,7 +93,7 @@ import org.l2jmobius.gameserver.util.LocationUtil;
 /**
  * Hidden Quests: secret conditions that send a messenger NPC to the player with a one-off quest.
  * <ol>
- * <li><b>Conditions</b> - listeners keep hidden counters in player variables ({@code HQ_C_*}); a periodic check reads the state conditions (PK, PvP, fame, adena, towns). A met condition only queues the quest ({@code HQ_PENDING}); nothing is shown.</li>
+ * <li><b>Conditions</b> - listeners and core hooks (enchant, fishing) keep hidden counters in player variables ({@code HQ_C_*}); a periodic check reads the state conditions (PK, PvP, fame, adena, towns, quests) and counts time sitting and distance travelled. A met condition only queues the quest ({@code HQ_PENDING}); nothing is shown.</li>
  * <li><b>Visit</b> - when the player is safe and idle, the quest's messenger spawns nearby (visible to that player only), walks up, greets them and raises the tutorial question mark.</li>
  * <li><b>Task</b> - accepting starts a timed {@link HiddenQuestSession}. Failing, dying (by default), logging out or running out of time ends it; the messenger comes back later.</li>
  * <li><b>Reward</b> - completion pays the quest's rewards for the player's level and records it ({@code HQ_DONE_<id>}); each quest happens once per character.</li>
@@ -115,6 +117,11 @@ public class HiddenQuestManager
 	private static final String VAR_MAX_LEVEL = "HQ_MAX_LEVEL";
 	private static final String VAR_NAME_COLOR = "HQ_NAME_COLOR";
 
+	// Conditions.
+	private static final double LOW_HEALTH_RATIO = 0.1;
+	/** Farther than this per second between two checks is a teleport, not travel. */
+	private static final int MAX_TRAVEL_SPEED = 450;
+
 	// Messenger approach.
 	private static final int APPROACH_STOP = 100;
 	private static final int FOLLOW_DISTANCE = 300;
@@ -123,6 +130,7 @@ public class HiddenQuestManager
 	private final Map<Integer, HiddenQuestSession> _sessions = new ConcurrentHashMap<>();
 	private final Map<Integer, MessengerVisit> _visits = new ConcurrentHashMap<>();
 	private final Map<Integer, Integer> _messengerOwners = new ConcurrentHashMap<>();
+	private final Map<Integer, Location> _lastPositions = new ConcurrentHashMap<>();
 
 	/** A messenger on its way to (or waiting next to) a player. */
 	private static class MessengerVisit
@@ -159,6 +167,7 @@ public class HiddenQuestManager
 		Containers.Players().addListener(new ConsumerEventListener(Containers.Players(), EventType.ON_CREATURE_DEATH, (OnCreatureDeath event) -> onPlayerDeath(event), this));
 		Containers.Players().addListener(new ConsumerEventListener(Containers.Players(), EventType.ON_PLAYER_PRESS_TUTORIAL_MARK, (OnPlayerPressTutorialMark event) -> onQuestionMark(event.getPlayer(), event.getMarkId()), this));
 		Containers.Monsters().addListener(new ConsumerEventListener(Containers.Monsters(), EventType.ON_ATTACKABLE_KILL, (OnAttackableKill event) -> onMonsterKill(event), this));
+		Containers.Global().addListener(new ConsumerEventListener(Containers.Global(), EventType.ON_OLYMPIAD_MATCH_RESULT, (OnOlympiadMatchResult event) -> onOlympiadResult(event), this));
 
 		// Messengers are seen only by the player they came for (and GMs).
 		final Set<Integer> messengerIds = new HashSet<>();
@@ -197,6 +206,7 @@ public class HiddenQuestManager
 
 	private void onLogout(Player player)
 	{
+		_lastPositions.remove(player.getObjectId());
 		final HiddenQuestSession session = _sessions.get(player.getObjectId());
 		if (session != null)
 		{
@@ -259,13 +269,30 @@ public class HiddenQuestManager
 			player.getVariables().set(streakKey, 0L);
 		}
 
-		// Bounty: the killer of a player with karma.
 		final Creature killer = event.getAttacker();
 		final Player killerPlayer = killer != null ? killer.asPlayer() : null;
-		if ((killerPlayer != null) && (killerPlayer != player) && (player.getKarma() > 0))
+		if ((killerPlayer == null) || (killerPlayer == player))
+		{
+			return;
+		}
+
+		// Bounty: the killer of a player with karma.
+		if (player.getKarma() > 0)
 		{
 			addToCounters(killerPlayer, HiddenTriggerType.KILL_KARMA_PLAYER, null, 1);
 		}
+		// Murdered: neither flagged nor carrying karma, and not a clan war enemy or a siege.
+		else if ((player.getPvpFlag() == 0) && !player.isInsideZone(ZoneId.SIEGE) && !isClanWarKill(player, killerPlayer))
+		{
+			addToCounters(player, HiddenTriggerType.KILLED_BY_PK, null, 1);
+		}
+	}
+
+	private static boolean isClanWarKill(Player victim, Player killer)
+	{
+		final Clan victimClan = victim.getClan();
+		final Clan killerClan = killer.getClan();
+		return (victimClan != null) && (killerClan != null) && victimClan.isAtWarWith(killerClan) && killerClan.isAtWarWith(victimClan);
 	}
 
 	private void onMonsterKill(OnAttackableKill event)
@@ -300,6 +327,88 @@ public class HiddenQuestManager
 			addToCounters(player, HiddenTriggerType.KILL_SOLO, null, 1);
 		}
 		addToCounters(player, HiddenTriggerType.KILL_NAMED, monster.getName(), 1);
+
+		// The player's own hand: kills by a summon don't count.
+		if (!event.isSummon())
+		{
+			if (player.getCurrentHp() <= (player.getMaxHp() * LOW_HEALTH_RATIO))
+			{
+				addToCounters(player, HiddenTriggerType.KILL_LOW_HEALTH, null, 1);
+			}
+			if (player.getActiveWeaponInstance() == null)
+			{
+				addToCounters(player, HiddenTriggerType.KILL_UNARMED, null, 1);
+			}
+			if (player.isInsideZone(ZoneId.WATER))
+			{
+				addToCounters(player, HiddenTriggerType.KILL_IN_WATER, null, 1);
+			}
+		}
+	}
+
+	private void onOlympiadResult(OnOlympiadMatchResult event)
+	{
+		// A tie has no winner.
+		final Player winner = event.getWinner() != null ? event.getWinner().getPlayer() : null;
+		if (winner != null)
+		{
+			addToCounters(winner, HiddenTriggerType.OLYMPIAD_WINS, null, 1);
+		}
+	}
+
+	/**
+	 * Called by the enchant packet when an enchantment fails and destroys the item or resets it to +0.
+	 * @param player the player
+	 */
+	public void onEnchantFailed(Player player)
+	{
+		if (HiddenQuestConfig.ENABLED && (player != null))
+		{
+			addToCounters(player, HiddenTriggerType.ENCHANT_FAILS, null, 1);
+		}
+	}
+
+	/**
+	 * Called by fishing when the player lands a fish.
+	 * @param player the player
+	 */
+	public void onFishCaught(Player player)
+	{
+		if (HiddenQuestConfig.ENABLED && (player != null))
+		{
+			addToCounters(player, HiddenTriggerType.FISH_CAUGHT, null, 1);
+		}
+	}
+
+	/**
+	 * Counts the time the player spends sitting in the wild and the distance they travel on foot since the last check.
+	 * @param player the player
+	 */
+	private void countTimeAndDistance(Player player)
+	{
+		if (player.isSitting() && !player.isInStoreMode() && !player.isFakeDeath() && !player.isInsideZone(ZoneId.PEACE) && !player.isInsideZone(ZoneId.TOWN))
+		{
+			addToCounters(player, HiddenTriggerType.MEDITATION, null, HiddenQuestConfig.CHECK_INTERVAL);
+		}
+
+		if (player.isDead() || player.isTeleporting() || player.isInBoat() || player.isInAirShip() || player.isMounted() || player.isFlying() || player.inObserverMode())
+		{
+			_lastPositions.remove(player.getObjectId());
+			return;
+		}
+
+		final Location position = new Location(player.getX(), player.getY(), player.getZ());
+		final Location last = _lastPositions.put(player.getObjectId(), position);
+		if (last == null)
+		{
+			return;
+		}
+
+		final double distance = LocationUtil.calculateDistance(last, position, false, false);
+		if ((distance >= 1) && (distance <= (MAX_TRAVEL_SPEED * HiddenQuestConfig.CHECK_INTERVAL)))
+		{
+			addToCounters(player, HiddenTriggerType.DISTANCE, null, (long) distance);
+		}
 	}
 
 	/**
@@ -362,6 +471,10 @@ public class HiddenQuestManager
 			{
 				return player.getAdena();
 			}
+			case QUESTS_COMPLETED:
+			{
+				return player.getCompletedQuestCount();
+			}
 			case TOWNS_VISITED:
 			{
 				final long visited = player.getVariables().getLong(VAR_TOWNS, 0);
@@ -421,6 +534,7 @@ public class HiddenQuestManager
 					}
 				}
 
+				countTimeAndDistance(player);
 				checkStateTriggers(player);
 				trySendMessenger(player);
 			}

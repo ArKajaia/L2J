@@ -1568,7 +1568,33 @@ public class Player extends Playable
 		
 		return quests;
 	}
-	
+
+	/**
+	 * @return the number of completed quests (repeatable quests leave no completed state behind)
+	 */
+	public int getCompletedQuestCount()
+	{
+		int count = 0;
+		for (QuestState qs : _quests.values())
+		{
+			if ((qs == null) || (qs.getQuest() == null) || !qs.isCompleted())
+			{
+				continue;
+			}
+
+			// Ignore other scripts.
+			final int questId = qs.getQuest().getId();
+			if ((questId > 19999) || (questId < 1))
+			{
+				continue;
+			}
+
+			count++;
+		}
+
+		return count;
+	}
+
 	public void processScriptEvent(String scriptName, String event)
 	{
 		final Quest quest = ScriptManager.getInstance().getScript(scriptName);

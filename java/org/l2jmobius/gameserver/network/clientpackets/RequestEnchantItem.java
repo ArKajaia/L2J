@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 import org.l2jmobius.gameserver.config.GeneralConfig;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.data.xml.EnchantItemData;
+import org.l2jmobius.gameserver.managers.HiddenQuestManager;
 import org.l2jmobius.gameserver.managers.PunishmentManager;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
@@ -296,6 +297,8 @@ public class RequestEnchantItem extends ClientPacket
 					}
 					else
 					{
+						HiddenQuestManager.getInstance().onEnchantFailed(player);
+						
 						// Unequip item on enchant failure to avoid item skills stack.
 						if (item.isEquipped())
 						{
