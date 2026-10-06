@@ -312,7 +312,19 @@ public class MultisellData implements IXmlReader
 	 */
 	public void separateAndSend(ListContainer template, Player player, Npc npc)
 	{
-		sendPrepared(new PreparedListContainer(template, false, player, npc), player);
+		separateAndSend(template, player, npc, false);
+	}
+
+	/**
+	 * Same as {@link #separateAndSend(ListContainer, Player, Npc)}, but with {@code inventoryOnly} the list only shows the entries whose first ingredient the player carries (unequipped), which is what keeps the enchant level of that item when the list maintains enchantment.
+	 * @param template the runtime list; its id must not collide with a real list the player could also have open
+	 * @param player
+	 * @param npc
+	 * @param inventoryOnly
+	 */
+	public void separateAndSend(ListContainer template, Player player, Npc npc, boolean inventoryOnly)
+	{
+		sendPrepared(new PreparedListContainer(template, inventoryOnly, player, npc), player);
 	}
 
 	private void sendPrepared(PreparedListContainer list, Player player)

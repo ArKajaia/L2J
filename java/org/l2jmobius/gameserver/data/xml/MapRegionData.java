@@ -404,6 +404,18 @@ public class MapRegionData implements IXmlReader
 		final RegionData region = getMapRegion(creature);
 		return region == null ? DEFAULT_TOWN : region.town;
 	}
+
+	/**
+	 * Retrieves the closest town name of a world position.
+	 * @param x
+	 * @param y
+	 * @return the town name or default town if no region found.
+	 */
+	public String getClosestTownName(int x, int y)
+	{
+		final RegionData region = getMapRegion(x, y);
+		return region == null ? DEFAULT_TOWN : region.town;
+	}
 	
 	/**
 	 * Retrieves the castle ID associated with the area where the creature is located.

@@ -167,6 +167,17 @@ A short, solo, instanced trial at the Class Master NPCs that stands in for the l
 - Falling doesn't kill: the player is knocked out and returns to the entrance with progress kept (or, if configured, the trial fails). A disconnect keeps the trial for a grace period; a relog after it, or after a restart, lands the player back where they entered.
 - The requirement is enforced right where the Class Master changes the class, and a clear only counts for the class and class slot that earned it; the transfer uses it up. GMs have `//challenge_status`, `//challenge_start`, `//challenge_complete`, `//challenge_abort` and `//challenge_reset`; players have `.trial`.
 
+### Master Blacksmith
+
+One NPC in Giran (next to the Arena and Class Masters) that does the work of every blacksmith and explains soul crystals and special abilities (SA).
+
+- **Every blacksmith service**: bestow an SA (C/B, A and S grade), remove an SA, craft dualswords (D/C, B, A, S), upgrade a weapon or swap its type, unseal/reseal armor and accessories, finish Foundation items, craft ingredients, augment and remove augments, Accessory Life Stones and remove attributes. It opens the same lists as the town blacksmiths and the Blacksmith of Mammon, at the same prices.
+- **SA search**: type an ability or a weapon ("rsk haste", "focus", "dragon slayer", or initials like "sod") to see which weapons get it, which crystal color and stage each needs, the fee and the exact effect on that weapon (from the retail item descriptions).
+- **Weapon and SA pages**: a weapon shows its three abilities side by side; an ability shows what it does and every weapon that gets it. The detail page checks what you carry (weapon unequipped, crystal, gemstones, adena) and bestows the SA in one click, keeping the enchant level.
+- **Leveling plan**: from your current crystal to the stage the weapon needs, step by step. Each step lists the monsters and raid bosses that raise it, with level, chance (server rate included), how the soul is shared (last hit, whole party, one random member), raid alive/dead, where they are and a radar mark.
+- **My Weapons / My Soul Crystals**: what your weapons can get, what your crystal can make, warnings when the quest isn't taken or you carry more than one crystal, and where to get a free Stage 0 crystal.
+- The data comes from the server's own files (SA multisells, `LevelUpCrystalData.xml`, `custom/MasterBlacksmith/sa_effects.xml`), so it matches what the server really does.
+
 ### Other Custom Features at a Glance
 
 | Area | Features |
@@ -534,7 +545,13 @@ This program is free software, licensed under the **GNU General Public License, 
 
 ## Recent Updates
 
-Changes from 28 September – 5 October 2026.
+Changes from 28 September – 6 October 2026.
+
+### Master Blacksmith
+- **New NPC** in Giran (id 900010, by the Arena Master) with every blacksmith service in one window: SAs, dualswords, Mammon's weapon upgrades and swaps, seals, Foundation items, augments, Life Stones, attribute removal and crafting.
+- **Soul crystal and SA guide**: search an ability or weapon ("rsk haste"), compare a weapon's three SAs with their exact effect, see the crystal color and stage it needs, and bestow it in one click (the enchant level is kept).
+- **Leveling plan**: each crystal stage lists the monsters and raid bosses that raise it, with chance, party rule, raid status, location and a radar mark, sorted by chance and your level.
+- The window is 470x760. The custom NPC is added to the blacksmith and Mammon multisells it opens.
 
 ### Passive Skill Tree
 - **Route choices**: each archetype now has several ways to the same place, and each way costs a different amount.

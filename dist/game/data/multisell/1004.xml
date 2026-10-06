@@ -22,6 +22,7 @@
 		<npc>31960</npc> <!-- Buryun -->
 		<npc>31990</npc> <!-- Siger -->
 		<npc>32159</npc> <!-- Kincaid -->
+		<npc>900010</npc> <!-- Master Blacksmith (custom) -->
 	</npcs>
 	<item>
 		<!-- Recipe: Braided Hemp -->

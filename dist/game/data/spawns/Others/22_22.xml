@@ -116,5 +116,6 @@
 		<npc id="900002" x="82231" y="148462" z="-3493" heading="694" respawnDelay="60" /> <!-- Class Master 2 -->
 		<npc id="900003" x="82224" y="148416" z="-3493" heading="60246" respawnDelay="60" /> <!-- Class Master 3 -->
 		<npc id="900004" x="82215" y="148721" z="-3493" heading="64668" respawnDelay="60" /> <!-- Hotzone Teleporter -->
+		<npc id="900010" x="82222" y="148664" z="-3493" heading="64000" respawnDelay="60" /> <!-- Master Blacksmith -->
 	</spawn>
 </list>
