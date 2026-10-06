@@ -167,6 +167,17 @@ A short, solo, instanced trial at the Class Master NPC that stands in for the lo
 - Falling doesn't kill: the player is knocked out and returns to the entrance with progress kept (or, if configured, the trial fails). A disconnect keeps the trial for a grace period; a relog after it, or after a restart, lands the player back where they entered.
 - The requirement is enforced right where the Class Master changes the class, and a clear only counts for the class and class slot that earned it; the transfer uses it up. GMs have `//challenge_status`, `//challenge_start`, `//challenge_complete`, `//challenge_abort` and `//challenge_reset`; players have `.trial`.
 
+### Hidden Quests
+
+Quests no player can look up. When a character quietly meets a secret condition, a messenger NPC walks up to them with a quest mark and offers a one-off quest. Only the server knows what caused the visit.
+
+- **Secret conditions**: some are read from the character (PK count, PvP kills, fame, adena carried, towns visited) and some are counted by the server from the day the feature is turned on (deaths, levels gained in a row without dying, orcs, undead, night kills, solo kills, raid bosses and karma players killed). Nothing is shown when a condition is met, and the messenger comes a few minutes later so the visit doesn't point at the cause.
+- **The visit**: the messenger only comes when the player is safe (not fighting, flagged, in an instance, Olympiad, siege, arena or store). It appears nearby, walks up and talks. Only that player can see it. The H5 client has no quest icon the server can put over an NPC's head, so the mark is a `[ ! ]` title, a visual effect on the NPC and the blinking tutorial question mark on screen (clicking it opens the offer). The player can accept, ask the messenger to come back later, or refuse the quest forever.
+- **One task per quest (about 15-30 minutes)**, from seven kinds: a pilgrimage to shrines in the wild (pray by sitting, sometimes under vows), a gauntlet of "echo" duelists with their own tricks (wards, blinking, regenerating, splitting), being hunted by ambushes and then their leader (who may flee to a lair), chasing wisps or couriers on the radar, escorting an NPC between stops, holding a vigil at a totem, and riddles that point to famous places. Enemies come from retail monster sets that fit the player's level.
+- **Thirteen quests** ship in `data/HiddenQuests.xml`, which holds the conditions, tasks, dialog and rewards and is the place to add more. Rewards depend on the quest: enchant scrolls, life stones and adena for the player's grade, titles, title and name colours, a wolf pet, or clearing karma and a PK.
+- Failing, dying (for most tasks), logging out or running out of time costs nothing: the messenger comes back later. Each quest can be completed once per character.
+- GMs have `//hiddenquest` (every quest, its condition and a player's progress), `//hiddenquest_trigger`, `//hiddenquest_send`, `//hiddenquest_complete`, `//hiddenquest_abort` and `//hiddenquest_reset`. Settings are in `config/Custom/HiddenQuests.ini`.
+
 ### Master Blacksmith
 
 One NPC in Giran (next to the Arena and the Class Master) that does the work of every blacksmith and explains soul crystals and special abilities (SA).
@@ -546,6 +557,11 @@ This program is free software, licensed under the **GNU General Public License, 
 ## Recent Updates
 
 Changes from 28 September – 6 October 2026.
+
+### Hidden Quests
+- **New system**: secret conditions send a messenger NPC (ids 900300-900312) to the player with a one-off quest. The conditions stay on the server.
+- **13 quests** with 7 task types (pilgrimage, echo gauntlet, hunted, chase, escort, vigil, riddle) and rewards from enchant scrolls to titles, name colours and karma cleansing. All of it is data in `data/HiddenQuests.xml`.
+- GM commands `//hiddenquest*` to see progress and to trigger, send, complete, abort or reset a quest.
 
 ### Master Blacksmith
 - **New NPC** in Giran (id 900010, by the Arena Master) with every blacksmith service in one window: SAs, dualswords, Mammon's weapon upgrades and swaps, seals, Foundation items, augments, Life Stones, attribute removal and crafting.

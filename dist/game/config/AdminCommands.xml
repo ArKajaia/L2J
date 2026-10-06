@@ -394,6 +394,12 @@
 	<admin command="challenge_complete" description="Complete a running trial (or its current objective), or grant a stage: //challenge_complete [objective] [name] | //challenge_complete grant 1|2|3 [name]." accessLevel="100" />
 	<admin command="challenge_abort" description="Fail a player's running class transfer trial and send them back: //challenge_abort [name]." accessLevel="100" />
 	<admin command="challenge_reset" description="Clear a stage's trial completion, failed attempts and cooldown: //challenge_reset 1|2|3 [name]." accessLevel="100" />
+	<admin command="hiddenquest" description="Show every hidden quest with its secret condition, a player's progress and state: //hiddenquest [name]." accessLevel="100" />
+	<admin command="hiddenquest_trigger" description="Queue a hidden quest as if its condition were met: //hiddenquest_trigger id [name]." accessLevel="100" />
+	<admin command="hiddenquest_send" description="Send a hidden quest's messenger to a player right now: //hiddenquest_send id [name]." accessLevel="100" />
+	<admin command="hiddenquest_complete" description="Complete a player's running hidden quest task: //hiddenquest_complete [name]." accessLevel="100" />
+	<admin command="hiddenquest_abort" description="Fail a player's running hidden quest task: //hiddenquest_abort [name]." accessLevel="100" />
+	<admin command="hiddenquest_reset" description="Forget a hidden quest (or all) for a player - completion, queue and counter: //hiddenquest_reset id|all [name]." accessLevel="100" />
 
 	<!-- ADMIN ONLINE -->
 	<admin command="online" description="Display a list of all currently online players." accessLevel="100" />

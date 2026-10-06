@@ -1,0 +1,149 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:simpleType name="triggerType">
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="PK_COUNT" />
+			<xs:enumeration value="PVP_COUNT" />
+			<xs:enumeration value="FAME" />
+			<xs:enumeration value="ADENA" />
+			<xs:enumeration value="TOWNS_VISITED" />
+			<xs:enumeration value="DEATHS" />
+			<xs:enumeration value="LEVEL_STREAK" />
+			<xs:enumeration value="KILL_NAMED" />
+			<xs:enumeration value="KILL_UNDEAD" />
+			<xs:enumeration value="KILL_NIGHT" />
+			<xs:enumeration value="KILL_SOLO" />
+			<xs:enumeration value="KILL_RAID" />
+			<xs:enumeration value="KILL_KARMA_PLAYER" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="taskType">
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="PILGRIMAGE" />
+			<xs:enumeration value="ECHO_GAUNTLET" />
+			<xs:enumeration value="HUNTED" />
+			<xs:enumeration value="CHASE" />
+			<xs:enumeration value="ESCORT" />
+			<xs:enumeration value="VIGIL" />
+			<xs:enumeration value="RIDDLE" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="gimmickType">
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="NONE" />
+			<xs:enumeration value="REGEN" />
+			<xs:enumeration value="BLINK" />
+			<xs:enumeration value="SPLIT" />
+			<xs:enumeration value="WARDS" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="rewardType">
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="ITEM" />
+			<xs:enumeration value="EXP" />
+			<xs:enumeration value="SP" />
+			<xs:enumeration value="TITLE" />
+			<xs:enumeration value="TITLE_COLOR" />
+			<xs:enumeration value="NAME_COLOR" />
+			<xs:enumeration value="CLEAR_KARMA" />
+			<xs:enumeration value="REDUCE_PK" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="rewardList">
+		<xs:sequence>
+			<xs:element name="reward" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:attribute name="type" type="rewardType" use="required" />
+					<xs:attribute name="id" type="xs:positiveInteger" />
+					<xs:attribute name="count" type="xs:long" />
+					<xs:attribute name="value" type="xs:string" />
+					<xs:attribute name="minLevel" type="xs:positiveInteger" />
+					<xs:attribute name="maxLevel" type="xs:positiveInteger" />
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+		<xs:attribute name="name" type="xs:token" />
+		<xs:attribute name="set" type="xs:token" />
+	</xs:complexType>
+	<xs:element name="list">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="monsterSet" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="band" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:attribute name="minLevel" type="xs:positiveInteger" use="required" />
+									<xs:attribute name="npcId" type="xs:positiveInteger" use="required" />
+									<xs:attribute name="tier" type="xs:nonNegativeInteger" />
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+						<xs:attribute name="name" type="xs:token" use="required" />
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="rewardSet" type="rewardList" minOccurs="0" maxOccurs="unbounded" />
+				<xs:element name="quest" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="trigger">
+								<xs:complexType>
+									<xs:attribute name="type" type="triggerType" use="required" />
+									<xs:attribute name="count" type="xs:positiveInteger" />
+									<xs:attribute name="word" type="xs:string" />
+									<xs:attribute name="towns" type="xs:string" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="task">
+								<xs:complexType>
+									<xs:attribute name="type" type="taskType" use="required" />
+									<xs:anyAttribute processContents="skip" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="role" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:attribute name="name" type="xs:token" use="required" />
+									<xs:attribute name="set" type="xs:token" use="required" />
+									<xs:attribute name="count" type="xs:positiveInteger" />
+									<xs:attribute name="tierBonus" type="xs:integer" />
+									<xs:attribute name="title" type="xs:string" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="echo" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:attribute name="name" type="xs:string" use="required" />
+									<xs:attribute name="gimmick" type="gimmickType" />
+									<xs:attribute name="tier" type="xs:integer" />
+									<xs:attribute name="line" type="xs:string" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="landmark" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:attribute name="name" type="xs:string" use="required" />
+									<xs:attribute name="x" type="xs:integer" use="required" />
+									<xs:attribute name="y" type="xs:integer" use="required" />
+									<xs:attribute name="z" type="xs:integer" use="required" />
+									<xs:attribute name="riddle" type="xs:string" use="required" />
+									<xs:attribute name="hint" type="xs:string" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="text" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:simpleContent>
+										<xs:extension base="xs:string">
+											<xs:attribute name="key" type="xs:token" use="required" />
+										</xs:extension>
+									</xs:simpleContent>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="rewards" type="rewardList" minOccurs="0" />
+						</xs:sequence>
+						<xs:attribute name="id" type="xs:positiveInteger" use="required" />
+						<xs:attribute name="name" type="xs:string" use="required" />
+						<xs:attribute name="messenger" type="xs:positiveInteger" use="required" />
+						<xs:attribute name="enabled" type="xs:boolean" />
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

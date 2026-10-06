@@ -160,6 +160,7 @@ import handlers.chat.commands.admin.AdminGraciaSeeds;
 import handlers.chat.commands.admin.AdminGrandBoss;
 import handlers.chat.commands.admin.AdminHeal;
 import handlers.chat.commands.admin.AdminHelp;
+import handlers.chat.commands.admin.AdminHiddenQuests;
 import handlers.chat.commands.admin.AdminHide;
 import handlers.chat.commands.admin.AdminHtml;
 import handlers.chat.commands.admin.AdminHwid;
@@ -401,6 +402,7 @@ public class MasterHandler
 			AdminGrandBoss.class,
 			AdminHeal.class,
 			AdminHelp.class,
+			AdminHiddenQuests.class,
 			AdminHide.class,
 			AdminHtml.class,
 			AdminHwid.class,
