@@ -23,7 +23,7 @@ package org.l2jmobius.gameserver.config.custom;
 import org.l2jmobius.commons.util.ConfigReader;
 
 /**
- * Loads the Alternative Class Transfer Challenge configuration: a solo, instanced trial offered by the Class Master NPCs (900001/900002/900003) whose completion unlocks the Class Master transfer for that tier. The challenges themselves live in {@code data/ClassTransferChallenges/*.xml}.
+ * Loads the Alternative Class Transfer Challenge configuration: a solo, instanced trial offered by the Class Master NPC (900001) whose completion unlocks the Class Master transfer for that tier. The challenges themselves live in {@code data/ClassTransferChallenges/*.xml}.
  * @author Mobius
  */
 public class ClassTransferChallengeConfig

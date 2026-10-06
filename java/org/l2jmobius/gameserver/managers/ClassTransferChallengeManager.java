@@ -169,7 +169,7 @@ public class ClassTransferChallengeManager
 
 	/**
 	 * @param tier a Class Master tier
-	 * @return the level the Class Masters require for it
+	 * @return the level the Class Master requires for it
 	 */
 	public static int getTierMinLevel(int tier)
 	{
@@ -196,23 +196,16 @@ public class ClassTransferChallengeManager
 
 	/**
 	 * @param npcId an NPC id
-	 * @return the stage of that Class Master NPC, {@code null} if it is none
+	 * @param player the player talking to it
+	 * @return the stage the Class Master offers that player (it follows the player's current class), {@code null} if the NPC is no Class Master or the class has no transfer left
 	 */
-	public static TransferStage getClassMasterStage(int npcId)
+	public static TransferStage getClassMasterStage(int npcId, Player player)
 	{
-		if (npcId == ClassTransferConfig.CLASS_MASTER_TIER1_NPC_ID)
+		if ((npcId != ClassTransferConfig.CLASS_MASTER_NPC_ID) || (player == null))
 		{
-			return TransferStage.FIRST_TRANSFER;
+			return null;
 		}
-		if (npcId == ClassTransferConfig.CLASS_MASTER_TIER2_NPC_ID)
-		{
-			return TransferStage.SECOND_TRANSFER;
-		}
-		if (npcId == ClassTransferConfig.CLASS_MASTER_TIER3_NPC_ID)
-		{
-			return TransferStage.THIRD_TRANSFER;
-		}
-		return null;
+		return TransferStage.fromTier(ClassTransferData.getInstance().getNextTier(player.getPlayerClass().getId()));
 	}
 
 	/**
@@ -1302,7 +1295,7 @@ public class ClassTransferChallengeManager
 			session.setOffline(true);
 			if (session.getStatus() == Status.COMPLETED)
 			{
-				// Cleared already: the completion is saved, the relog lands back at the Class Masters.
+				// Cleared already: the completion is saved, the relog lands back at the Class Master.
 				endSession(session, false);
 				return;
 			}

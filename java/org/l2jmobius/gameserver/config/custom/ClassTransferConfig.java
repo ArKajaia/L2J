@@ -21,7 +21,7 @@
 package org.l2jmobius.gameserver.config.custom;
 
 /**
- * Configuration for the class transfer NPCs (900001/900002/900003 - 1st/2nd/3rd class), gated by
+ * Configuration for the Class Master NPC (900001), which handles the 1st, 2nd and 3rd class transfers, gated by
  * level only per design, with the class tree itself defined in the {@code class_transfer_tree} table.
  * @author Zoey76
  */
@@ -30,11 +30,10 @@ public class ClassTransferConfig
 	/** Master on/off switch. */
 	public static boolean CLASS_TRANSFER_ENABLED = true;
 	
-	public static int CLASS_MASTER_TIER1_NPC_ID = 900001;
-	public static int CLASS_MASTER_TIER2_NPC_ID = 900002;
-	public static int CLASS_MASTER_TIER3_NPC_ID = 900003;
+	/** The one Class Master: the tier it offers follows the player's current class. */
+	public static int CLASS_MASTER_NPC_ID = 900001;
 	
-	/** Minimum character level required at each NPC. TODO: adjust to your intended progression. */
+	/** Minimum character level required for each tier. TODO: adjust to your intended progression. */
 	public static int TIER1_MIN_LEVEL = 20;
 	public static int TIER2_MIN_LEVEL = 40;
 	public static int TIER3_MIN_LEVEL = 76;

@@ -19,7 +19,7 @@ import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.network.serverpackets.PlaySound;
 
 /**
- * Class transfer NPC, handling all three tiers (900001/900002/900003) through one script. Gated by level only, per design - the class tree itself (which current class unlocks which target class(es) at which tier) lives in the class_transfer_tree table, so this script never needs to know
+ * Class transfer NPC (900001), handling all three tiers: the tier it offers follows the player's current class. Gated by level only, per design - the class tree itself (which current class unlocks which target class(es) at which tier) lives in the class_transfer_tree table, so this script never needs to know
  * PlayerClass's internal tree-navigation methods.
  */
 public class ClassTransferMaster extends Quest
@@ -30,21 +30,11 @@ public class ClassTransferMaster extends Quest
 	{
 		super(-1);
 		
-		final int[] npcIds =
-		{
-			ClassTransferConfig.CLASS_MASTER_TIER1_NPC_ID,
-			ClassTransferConfig.CLASS_MASTER_TIER2_NPC_ID,
-			ClassTransferConfig.CLASS_MASTER_TIER3_NPC_ID
-		};
+		addStartNpc(ClassTransferConfig.CLASS_MASTER_NPC_ID);
+		addFirstTalkId(ClassTransferConfig.CLASS_MASTER_NPC_ID);
+		addTalkId(ClassTransferConfig.CLASS_MASTER_NPC_ID);
 		
-		for (int npcId : npcIds)
-		{
-			addStartNpc(npcId);
-			addFirstTalkId(npcId);
-			addTalkId(npcId);
-		}
-		
-		LOGGER.info("ClassTransferMaster: Registered tier 1/2/3 NPCs: " + npcIds[0] + ", " + npcIds[1] + ", " + npcIds[2]);
+		LOGGER.info("ClassTransferMaster: Registered Class Master NPC: " + ClassTransferConfig.CLASS_MASTER_NPC_ID);
 	}
 	
 	@Override
@@ -100,8 +90,8 @@ public class ClassTransferMaster extends Quest
 			return;
 		}
 		
-		// The tier is the one of the Class Master the player talks to, whatever the link says.
-		if ((npc == null) || (getTier(npc.getId()) != tier))
+		// The tier is the one the player's current class is at, whatever the link says.
+		if ((npc == null) || (npc.getId() != ClassTransferConfig.CLASS_MASTER_NPC_ID) || (getTier(player) != tier))
 		{
 			player.sendMessage("That class transfer is not available here.");
 			return;
@@ -205,11 +195,16 @@ public class ClassTransferMaster extends Quest
 	
 	private String buildHtml(Npc npc, Player player)
 	{
-		final int tier = getTier(npc.getId());
+		final int tier = getTier(player);
+		final TransferStage stage = TransferStage.fromTier(tier);
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<html><body>");
 		sb.append("<table width=270 cellpadding=0 cellspacing=0><tr><td align=center>");
-		sb.append("<br><font color=\"LEVEL\">- Class Master (Tier ").append(tier).append(") -</font><br1>");
+		sb.append("<br><font color=\"LEVEL\">- Class Master -</font><br1>");
+		if (stage != null)
+		{
+			sb.append("<font color=\"999999\">").append(stage.getDisplayName()).append("</font><br1>");
+		}
 		sb.append("<img src=\"L2UI.SquareGray\" width=270 height=1><br>");
 		
 		if (!ClassTransferConfig.CLASS_TRANSFER_ENABLED)
@@ -225,8 +220,7 @@ public class ClassTransferMaster extends Quest
 		if (options.isEmpty())
 		{
 			sb.append("<font color=\"999999\">You have no class transfer available here.<br1>");
-			sb.append("(Your current class may not lead to a Tier ").append(tier).append(" transfer here,<br1>");
-			sb.append("or you have already transferred.)</font>");
+			sb.append("(You may have already completed all your class transfers.)</font>");
 			sb.append("</td></tr></table></body></html>");
 			return sb.toString();
 		}
@@ -241,7 +235,6 @@ public class ClassTransferMaster extends Quest
 		}
 		
 		// Alternative Class Transfer Challenge: a trial must be cleared before the transfer is offered.
-		final TransferStage stage = TransferStage.fromTier(tier);
 		if (ClassTransferChallengeConfig.ENABLED && (stage != null))
 		{
 			if (!ClassTransferChallengeManager.getInstance().isTransferUnlocked(player, stage))
@@ -295,21 +288,13 @@ public class ClassTransferMaster extends Quest
 		}
 	}
 	
-	private int getTier(int npcId)
+	/**
+	 * @param player the player
+	 * @return the tier (1, 2 or 3) of the player's next class transfer, 0 if the current class has none
+	 */
+	private int getTier(Player player)
 	{
-		if (npcId == ClassTransferConfig.CLASS_MASTER_TIER1_NPC_ID)
-		{
-			return 1;
-		}
-		if (npcId == ClassTransferConfig.CLASS_MASTER_TIER2_NPC_ID)
-		{
-			return 2;
-		}
-		if (npcId == ClassTransferConfig.CLASS_MASTER_TIER3_NPC_ID)
-		{
-			return 3;
-		}
-		return 0;
+		return ClassTransferData.getInstance().getNextTier(player.getPlayerClass().getId());
 	}
 	
 	private int getTierMinLevel(int tier)

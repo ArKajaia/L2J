@@ -152,7 +152,7 @@ Two unrelated loot systems that both involve opening something for a reward.
 
 ### Alternative Class Transfer Challenges
 
-A short, solo, instanced trial at the Class Master NPCs that stands in for the long class transfer quest chains: clearing it unlocks that tier's Class Master transfer.
+A short, solo, instanced trial at the Class Master NPC that stands in for the long class transfer quest chains: clearing it unlocks that tier's Class Master transfer.
 
 - Each tier (1st, 2nd, 3rd class) has a fighter trial and a mage trial, picked by a fallback chain (class, parent class, race, fighter/mage, generic), so more can be added per class without touching code.
 - Every race can use it, Kamael included. Kamael take the fighter trials, except Soul Breakers, who are about to become Soul Hounds and take the Archmage trial.
@@ -169,7 +169,7 @@ A short, solo, instanced trial at the Class Master NPCs that stands in for the l
 
 ### Master Blacksmith
 
-One NPC in Giran (next to the Arena and Class Masters) that does the work of every blacksmith and explains soul crystals and special abilities (SA).
+One NPC in Giran (next to the Arena and the Class Master) that does the work of every blacksmith and explains soul crystals and special abilities (SA).
 
 - **Every blacksmith service**: bestow an SA (C/B, A and S grade), remove an SA, craft dualswords (D/C, B, A, S), upgrade a weapon or swap its type, unseal/reseal armor and accessories, finish Foundation items, craft ingredients, augment and remove augments, Accessory Life Stones and remove attributes. It opens the same lists as the town blacksmiths and the Blacksmith of Mammon, at the same prices.
 - **SA search**: type an ability or a weapon ("rsk haste", "focus", "dragon slayer", or initials like "sod") to see which weapons get it, which crystal color and stage each needs, the fee and the exact effect on that weapon (from the retail item descriptions).
@@ -571,6 +571,7 @@ Changes from 28 September – 6 October 2026.
 - **Client**: the custom skills need Skillname-e.dat / Skillgrp.dat entries to show their names and icons.
 
 ### Alternative Class Transfer Challenges
+- **One Class Master**: the three Class Masters in Giran (900001/900002/900003) are now a single Class Master (900001) that offers the 1st, 2nd or 3rd class transfer (and its trial) based on your current class.
 - **New**: the Class Masters now offer a short solo trial for each class transfer. Clearing it unlocks the transfer at that Class Master; the village-master quests are unchanged.
 - **Six trials**: a fighter and a mage trial per tier, each 4-6 objectives in a private hall reached by teleport — no walking across the world.
 - **Built from existing systems**: a rolled Hot Zone Omen per attempt, multi-phase Wave/Arena Champion bosses, the Mark Thief, Mage skirmishers, champion elites, a fake-player Rival Shade of your future class, and occasional fake-player Invaders.

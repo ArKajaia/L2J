@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/ClassTransferChallenges.xsd">
-	<!-- Alternative Class Transfer Challenges - Second Class Transfer (Class Master 900002). See FirstTransfer.xml for the format. -->
+	<!-- Alternative Class Transfer Challenges - Second Class Transfer (Class Master 900001). See FirstTransfer.xml for the format. -->
 	<challenge id="second_steel" name="Trial of Steel" stage="SECOND_TRANSFER" difficulty="Hard" duration="1500" parTime="750">
 		<description>Break the Timak orc line and its champion, win back the Trial Marks from under the Mark Thief's nose, shield the Trial Ward, and face the Shade of the path you seek.</description>
 		<entry x="-88429" y="-220629" z="-7903" heading="24740" />

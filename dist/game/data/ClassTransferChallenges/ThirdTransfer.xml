@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/ClassTransferChallenges.xsd">
-	<!-- Alternative Class Transfer Challenges - Third Class Transfer (Class Master 900003). See FirstTransfer.xml for the format. -->
+	<!-- Alternative Class Transfer Challenges - Third Class Transfer (Class Master 900001). See FirstTransfer.xml for the format. -->
 	<challenge id="third_champion" name="Trial of the Champion" stage="THIRD_TRANSFER" difficulty="Very Hard" duration="1800" parTime="900">
 		<description>Survive the Ketra onslaught and its elites, reclaim the Trial Marks from the Mark Thief, topple the Arena Champion through all three of its lives before it enrages, and face the Shade of the path you seek.</description>
 		<entry x="-88429" y="-220629" z="-7903" heading="24740" />

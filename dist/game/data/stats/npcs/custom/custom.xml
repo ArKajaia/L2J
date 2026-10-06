@@ -6,31 +6,7 @@
 			<height normal="23" />
 		</collision>
 	</npc>
-		<npc id="900001" displayId="32365" name="Class Master 1" level="1" type="Folk">
-		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
-			<vitals hp="40" hpRegen="3" mp="36" mpRegen="1" />
-			<attack physical="8" magical="7" />
-			<defence physical="25" magical="40" />
-		</stats>
-		<status undying="true" />
-		<collision>
-			<radius normal="5" />
-			<height normal="4.5" />
-		</collision>
-	</npc>
-			<npc id="900002" displayId="32365" name="Class Master 2" level="1" type="Folk">
-		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
-			<vitals hp="40" hpRegen="3" mp="36" mpRegen="1" />
-			<attack physical="8" magical="7" />
-			<defence physical="25" magical="40" />
-		</stats>
-		<status undying="true" />
-		<collision>
-			<radius normal="5" />
-			<height normal="4.5" />
-		</collision>
-	</npc>
-	<npc id="900003" displayId="32365" name="Class Master 3" level="1" type="Folk">
+	<npc id="900001" displayId="32365" name="Class Master" level="1" type="Folk">
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
 			<vitals hp="40" hpRegen="3" mp="36" mpRegen="1" />
 			<attack physical="8" magical="7" />
@@ -94,4 +70,4 @@
 			<height normal="12.5" />
 		</collision>
 	</npc>
-</list>
+</list>

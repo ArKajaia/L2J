@@ -40,8 +40,8 @@ import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.script.Quest;
 
 /**
- * Dialogs of the Alternative Class Transfer Challenges: the challenge details offered by the Class Masters (their HTML links here), and the NPCs inside a trial (Trial Guide, Trial Master, Trial Seals, Trial Circle). Every decision is made - and validated - by the core
- * {@link ClassTransferChallengeManager}; this script only renders pages and forwards requests. The Class Masters' own first-talk stays with {@code custom.ClassTransferMaster}.
+ * Dialogs of the Alternative Class Transfer Challenges: the challenge details offered by the Class Master (its HTML links here), and the NPCs inside a trial (Trial Guide, Trial Master, Trial Seals, Trial Circle). Every decision is made - and validated - by the core
+ * {@link ClassTransferChallengeManager}; this script only renders pages and forwards requests. The Class Master's own first-talk stays with {@code custom.ClassTransferMaster}.
  * @author Mobius
  */
 public class ClassTransferChallenge extends Quest
@@ -72,15 +72,15 @@ public class ClassTransferChallenge extends Quest
 		final ClassTransferChallengeManager manager = ClassTransferChallengeManager.getInstance();
 		switch (event)
 		{
-			// From a Class Master: the stage always comes from the NPC the player stands at, never from the link.
+			// From the Class Master: the stage always comes from the NPC and the player's current class, never from the link.
 			case "info":
 			{
-				final TransferStage stage = ClassTransferChallengeManager.getClassMasterStage(npc.getId());
+				final TransferStage stage = ClassTransferChallengeManager.getClassMasterStage(npc.getId(), player);
 				return stage == null ? null : showDetails(player, stage);
 			}
 			case "enter":
 			{
-				final TransferStage stage = ClassTransferChallengeManager.getClassMasterStage(npc.getId());
+				final TransferStage stage = ClassTransferChallengeManager.getClassMasterStage(npc.getId(), player);
 				if (stage == null)
 				{
 					return null;
