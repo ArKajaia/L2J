@@ -16,6 +16,11 @@
 			<omen name="ARCANE_SURGE" />
 			<omen name="BLOODY_HARVEST" />
 			<omen name="RESTLESS_DEAD" />
+			<omen name="LUCKY_STARS" />
+			<omen name="LAST_STAND" />
+			<omen name="METAMORPHOSIS" />
+			<omen name="HAIR_TRIGGER" />
+			<omen name="SPLITTING_GROUND" />
 		</omens>
 		<objectives>
 			<objective type="KILL" text="Break the Timak line" count="12">
@@ -55,6 +60,11 @@
 			<omen name="ARCANE_SURGE" />
 			<omen name="BLOODY_HARVEST" />
 			<omen name="RESTLESS_DEAD" />
+			<omen name="LUCKY_STARS" />
+			<omen name="LAST_STAND" />
+			<omen name="METAMORPHOSIS" />
+			<omen name="HAIR_TRIGGER" />
+			<omen name="SPLITTING_GROUND" />
 		</omens>
 		<objectives>
 			<objective type="KILL" text="Defeat the Arcane Skirmishers" count="10">

@@ -18,6 +18,12 @@
 			<omen name="RESTLESS_DEAD" />
 			<omen name="UNBREAKABLE" />
 			<omen name="ARCHETYPE_HUNTER" />
+			<omen name="LUCKY_STARS" />
+			<omen name="LAST_STAND" />
+			<omen name="METAMORPHOSIS" />
+			<omen name="HAIR_TRIGGER" />
+			<omen name="SPLITTING_GROUND" />
+			<omen name="HORNETS_NEST" />
 		</omens>
 		<objectives>
 			<objective type="WAVES" text="Survive the Ketra onslaught" waveSeconds="75" delay="5">
@@ -68,6 +74,12 @@
 			<omen name="RESTLESS_DEAD" />
 			<omen name="UNBREAKABLE" />
 			<omen name="ARCHETYPE_HUNTER" />
+			<omen name="LUCKY_STARS" />
+			<omen name="LAST_STAND" />
+			<omen name="METAMORPHOSIS" />
+			<omen name="HAIR_TRIGGER" />
+			<omen name="SPLITTING_GROUND" />
+			<omen name="HORNETS_NEST" />
 		</omens>
 		<objectives>
 			<objective type="KILL" text="Overpower the Ketra seers" count="12">

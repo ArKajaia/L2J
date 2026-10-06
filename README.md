@@ -158,7 +158,7 @@ A short, solo, instanced trial at the Class Master NPCs that stands in for the l
 - Entering is an instant teleport from the Class Master into a private copy of a small hall; clearing it sends the player straight back. No one else can enter or affect the trial.
 - Objectives run in order and show on screen with a countdown: kill, collect (only marks won inside the trial count), reach a spot, talk, activate seals, protect a ward, survive, defeat a boss, use an item, clear waves, and duel.
 - Built from the server's own systems:
-  - **Omens** — every attempt rolls a Hot Zone modifier that applies to the whole trial (Kill Streak, Glass Cannon, Restless Dead, Fragile Ground...), shown before entering.
+  - **Omens** — every attempt rolls a Hot Zone modifier that applies to the whole trial (Kill Streak, Glass Cannon, Restless Dead, Fragile Ground, Last Stand, Metamorphosis, Splitting Ground...), shown before entering.
   - **Wave/Arena Champions** — bosses come back stronger each phase through the Wave Challenge engine; the toughest also get the Survival Arena buffs and enrage.
   - **Mark Thief and Arcane Skirmishers** — forced Thief and Mage monsters: the Thief pockets marks won near it and pays them back (with a bonus for a full bag) when killed; Mage monsters kite and cast.
   - **Rival Shade and Invaders** — the duel is against a fake player built as one of the classes the player is about to become, at their level; a rival may also invade mid-trial.
