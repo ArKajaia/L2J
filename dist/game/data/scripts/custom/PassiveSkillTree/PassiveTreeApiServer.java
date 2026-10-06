@@ -144,8 +144,26 @@ public class PassiveTreeApiServer
 	 * @param json the build
 	 * @param expiry when it stops being viewable
 	 */
-	private record Inspect(String json, long expiry)
+	private static final class Inspect
 	{
+		private final String _json;
+		private final long _expiry;
+		
+		Inspect(String json, long expiry)
+		{
+			_json = json;
+			_expiry = expiry;
+		}
+		
+		String json()
+		{
+			return _json;
+		}
+		
+		long expiry()
+		{
+			return _expiry;
+		}
 	}
 	
 	/**
