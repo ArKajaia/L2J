@@ -20,6 +20,8 @@
  */
 package org.l2jmobius.gameserver.model.actor.holders.npc;
 
+import java.util.List;
+
 import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
 
 /**
@@ -31,6 +33,7 @@ public class FakePlayerPvpPassives
 	private final int _nodeCount;
 	private final int _points;
 	private final String _sector;
+	private final List<Integer> _nodeIds;
 	private final PassiveStatBonusCache _bonus;
 	private double _hpShare = 1;
 	
@@ -39,14 +42,16 @@ public class FakePlayerPvpPassives
 	 * @param nodeCount the nodes it allocated
 	 * @param points the points those nodes cost
 	 * @param sector the sector of its starting point
+	 * @param nodeIds its nodes, in the order they were taken (the START node first)
 	 * @param bonus the summed effects of its nodes
 	 */
-	public FakePlayerPvpPassives(int subclasses, int nodeCount, int points, String sector, PassiveStatBonusCache bonus)
+	public FakePlayerPvpPassives(int subclasses, int nodeCount, int points, String sector, List<Integer> nodeIds, PassiveStatBonusCache bonus)
 	{
 		_subclasses = subclasses;
 		_nodeCount = nodeCount;
 		_points = points;
 		_sector = sector;
+		_nodeIds = List.copyOf(nodeIds);
 		_bonus = bonus;
 	}
 	
@@ -68,6 +73,14 @@ public class FakePlayerPvpPassives
 	public String getSector()
 	{
 		return _sector;
+	}
+	
+	/**
+	 * @return its nodes, in the order they were taken (the START node first), so a player copying them gets the same nodes first
+	 */
+	public List<Integer> getNodeIds()
+	{
+		return _nodeIds;
 	}
 	
 	public PassiveStatBonusCache getBonus()
