@@ -5,6 +5,7 @@ import org.l2jmobius.gameserver.config.custom.LuckyLootConfig;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
@@ -67,6 +68,20 @@ public class LuckyLootManager
 			return;
 		}
 
+		// LUCKY_STARS-style hotzone modifiers only take half.
+		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(player);
+		if ((modifier != null) && modifier.isLuckDeathKeepsHalf())
+		{
+			final int kept = player.getLuckStacks() / 2;
+			player.setLuckStacks(kept);
+			if (LuckyLootConfig.LUCK_ENABLED)
+			{
+				player.sendMessage(kept > 0 ? "Lucky stars watch over you: you keep " + kept + " Luck." : "Your luck has run out.");
+			}
+			refreshTitle(player);
+			return;
+		}
+
 		player.setLuckStacks(0);
 		if (LuckyLootConfig.LUCK_ENABLED)
 		{
@@ -108,7 +123,9 @@ public class LuckyLootManager
 			return false;
 		}
 
-		if ((Rnd.nextDouble() * 100) >= getJackpotChance(player))
+		// LUCKY_STARS-style hotzone modifiers make jackpots likelier.
+		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(victim);
+		if ((Rnd.nextDouble() * 100) >= (getJackpotChance(player) * (modifier != null ? modifier.getJackpotMult() : 1.0)))
 		{
 			return false;
 		}
@@ -193,12 +210,35 @@ public class LuckyLootManager
 			return;
 		}
 
-		if ((Rnd.nextDouble() * 100) >= getLuckGainChance(stacks))
+		// LUCKY_STARS-style hotzone modifiers make stacks easier to get.
+		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(victim);
+		final double chance = Math.min(100, getLuckGainChance(stacks) * (modifier != null ? modifier.getLuckGainMult() : 1.0));
+		if ((Rnd.nextDouble() * 100) >= chance)
 		{
 			return;
 		}
 
-		final int newStacks = stacks + 1;
+		addStack(killer);
+	}
+
+	/**
+	 * Adds one Luck stack with no chance roll (a HAIR_TRIGGER hotzone kill of a raging monster), still capped at {@link LuckyLootConfig#LUCK_MAX_STACKS}. A kill that just paid out a jackpot gives none, as with the normal roll.
+	 * @param victim the attackable that just died
+	 * @param player the player
+	 */
+	public void grantLuckStack(Attackable victim, Player player)
+	{
+		if (!LuckyLootConfig.LUCK_ENABLED || (victim == null) || (player == null) || (player.getLuckStacks() >= LuckyLootConfig.LUCK_MAX_STACKS) || victim.getVariables().getBoolean(JACKPOT_VARIABLE, false))
+		{
+			return;
+		}
+
+		addStack(player);
+	}
+
+	private void addStack(Player killer)
+	{
+		final int newStacks = Math.min(killer.getLuckStacks() + 1, LuckyLootConfig.LUCK_MAX_STACKS);
 		killer.setLuckStacks(newStacks);
 		refreshTitle(killer);
 

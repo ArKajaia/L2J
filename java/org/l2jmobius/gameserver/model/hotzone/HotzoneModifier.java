@@ -3,8 +3,9 @@ package org.l2jmobius.gameserver.model.hotzone;
 /**
  * A rotating hotzone modifier: one of these is rolled fresh for each hotzone every time {@code custom.RotatingHotZones} rotates (see {@link org.l2jmobius.gameserver.managers.HotzoneModifierManager}), and stays active for that zone until the next rotation.
  * <p>
- * Every field defaults to "no effect" (1.0 for a multiplier, 0/false otherwise), so a modifier only needs to set the handful of fields it actually cares about. Adding a new modifier is just adding a new enum constant - every read site (Monster's stat/reward overrides, the champion spawn
- * roll in Spawn, the archetype skill grant in AttackableAI, the stun-immunity check in the Stun effect, the kill hook in HotzoneModifierManager, the modifier buffs in RotatingHotZones) already knows how to consult these generic knobs, so nothing else needs to change.
+ * Every field defaults to "no effect" (1.0 for a multiplier, 0/false otherwise, -1 for an override), so a modifier only needs to set the handful of fields it actually cares about. Adding a new modifier is just adding a new enum constant - every read site (Monster's stat/reward/aggro
+ * overrides, the champion spawn roll in Spawn, the Thief/Mage/wave challenge/fake player spawn rolls, the rage threshold in MonsterRageManager, the Luck rolls in LuckyLootManager, the party XP in Attackable, the archetype skill grant in AttackableAI, the stun-immunity check in the Stun
+ * effect, the kill hook and the bounty/Heat tracking in HotzoneModifierManager, the modifier buffs in RotatingHotZones) already knows how to consult these generic knobs, so nothing else needs to change.
  * <p>
  * Deliberately a mix of purely positive, purely negative, and risk/reward modifiers, matching how the base game's own hotzone system already trades a combat bonus for being flagged PvP-able.
  */
@@ -115,6 +116,96 @@ public enum HotzoneModifier
 			minibossKillsMult = 0.5;
 			minibossCoinMult = 2.0;
 		}
+	},
+	THIEVES_DEN("Thieves are 5x as common and fill their bag twice as fast. A full Thief flees!")
+	{
+		{
+			thiefSpawnMult = 5.0;
+			thiefKillWeight = 2;
+			thiefFlees = true;
+		}
+	},
+	PROVING_GROUNDS("Wave challenges are 5x as common, with one more wave and 50% more coins.")
+	{
+		{
+			waveSpawnMult = 5.0;
+			extraWaves = 1;
+			waveCoinMult = 1.5;
+		}
+	},
+	METAMORPHOSIS("Wounded monsters may evolve into champions. Evolved ones give double XP/SP.")
+	{
+		{
+			metamorphChancePct = 20;
+		}
+	},
+	HAIR_TRIGGER("Monsters may rage from the first stun. A raging kill drops double and adds Luck.")
+	{
+		{
+			rageDisablesOverride = 0;
+			rageKillDropMult = 2.0;
+			rageKillLuckStack = true;
+		}
+	},
+	LUCKY_STARS("Luck builds twice as fast, dying costs only half of it, jackpots +50%.")
+	{
+		{
+			luckGainMult = 2.0;
+			luckDeathKeepsHalf = true;
+			jackpotMult = 1.5;
+		}
+	},
+	CONTESTED_GROUND("Rival adventurers swarm here. Each one slain pays 5x coins and a Sealed Cache.")
+	{
+		{
+			fakePvpSpawnMult = 3.0;
+			fakePlayerCoinMult = 5.0;
+			fakePlayerCache = true;
+		}
+	},
+	BOUNTY_HUNT("Every 5 minutes a monster is marked [Bounty]: 20x coins and a Sealed Cache.")
+	{
+		{
+			bounty = true;
+		}
+	},
+	RISING_HEAT("Every 100 kills raise the Heat (max 5): monsters +4% Atk, you +6% XP and drops.")
+	{
+		{
+			heat = true;
+		}
+	},
+	HORNETS_NEST("Every monster is aggressive, with double aggro range. XP/SP +25%.")
+	{
+		{
+			forceAggressive = true;
+			aggroRangeMult = 2.0;
+			xpSpMult = 1.25;
+		}
+	},
+	COVEN("Mage monsters are 5x as common. Bring M.Def.")
+	{
+		{
+			mageSpawnMult = 5.0;
+		}
+	},
+	KINSHIP("XP/SP +5% per party member also here (max +40%). Solo hunters -10%.")
+	{
+		{
+			kinship = true;
+		}
+	},
+	LAST_STAND("Below 30% HP: P.Atk/M.Atk +30% and 10% of the damage you deal heals you.")
+	{
+		{
+			playerBuffSkillId = LAST_STAND_SKILL_ID;
+		}
+	},
+	SPLITTING_GROUND("Slain monsters may split (15%) into two weaker copies worth half rewards.")
+	{
+		{
+			splitChancePct = 15;
+		}
 	};
 
 	/** Stacking XP/SP buff (levels 1-{@link #KILL_STREAK_MAX_LEVEL}) re-applied one level higher on every kill under {@link #KILL_STREAK}; its 15s abnormal time is the chain window. */
@@ -124,6 +215,16 @@ public enum HotzoneModifier
 	public static final int GLASS_CANNON_SKILL_ID = 27003;
 	/** Player buff held while inside an {@link #ARCANE_SURGE} zone. */
 	public static final int ARCANE_SURGE_SKILL_ID = 27004;
+	/** Player buff held while inside a {@link #LAST_STAND} zone: its bonuses only apply below 30% HP. */
+	public static final int LAST_STAND_SKILL_ID = 27005;
+	/** Most Heat stacks a {@link #RISING_HEAT} zone can build. */
+	public static final int HEAT_MAX_STACKS = 5;
+	/** Kills a {@link #RISING_HEAT} zone needs for each Heat stack. */
+	public static final int HEAT_KILLS_PER_STACK = 100;
+	/** Monster P.Atk/M.Atk bonus (%) per Heat stack. */
+	public static final int HEAT_ATTACK_PCT_PER_STACK = 4;
+	/** Player XP/SP and drop bonus (%) per Heat stack. */
+	public static final int HEAT_REWARD_PCT_PER_STACK = 6;
 
 	private final String description;
 
@@ -159,6 +260,52 @@ public enum HotzoneModifier
 	protected boolean killStreak = false;
 	/** Buff skill every player inside holds while this modifier is active. 0 = none. */
 	protected int playerBuffSkillId = 0;
+	/** Multiplier on the Thief spawn chance (see ThiefMonsterManager). */
+	protected double thiefSpawnMult = 1.0;
+	/** How much one nearby kill fills a Thief's bag (in kills). */
+	protected int thiefKillWeight = 1;
+	/** Whether a Thief with a full bag runs away, and escapes with its loot if nobody catches it. */
+	protected boolean thiefFlees = false;
+	/** Multiplier on the open-world wave challenge spawn chance (see WaveChallengeManager). */
+	protected double waveSpawnMult = 1.0;
+	/** Waves added to every wave challenge that starts inside. */
+	protected int extraWaves = 0;
+	/** Multiplier on the coins a wave challenge pays out. */
+	protected double waveCoinMult = 1.0;
+	/** Percent chance a monster evolves (one champion tier up, full heal) the first time it drops below half HP. 0 = never. */
+	protected int metamorphChancePct = 0;
+	/** Stuns/holds a monster must take before the next ones can make it rage, in place of RageDisablesRequired. -1 = use the config value. */
+	protected int rageDisablesOverride = -1;
+	/** Drop multiplier for a monster killed while raging. */
+	protected double rageKillDropMult = 1.0;
+	/** Whether killing a raging monster grants a Luck stack. */
+	protected boolean rageKillLuckStack = false;
+	/** Multiplier on the chance that a kill adds a Luck stack (see LuckyLootManager). */
+	protected double luckGainMult = 1.0;
+	/** Whether dying inside only costs half the Luck stacks instead of all of them. */
+	protected boolean luckDeathKeepsHalf = false;
+	/** Multiplier on the jackpot chance. */
+	protected double jackpotMult = 1.0;
+	/** Multiplier on the roaming fake player spawn chance (see FakePlayerPvpManager). */
+	protected double fakePvpSpawnMult = 1.0;
+	/** When above 1.0, a roaming fake player killed inside always pays coins, this many times the normal amount. */
+	protected double fakePlayerCoinMult = 1.0;
+	/** Whether a roaming fake player killed inside drops a Sealed Cache. */
+	protected boolean fakePlayerCache = false;
+	/** Whether a monster inside is marked as a bounty every few minutes (see HotzoneModifierManager). */
+	protected boolean bounty = false;
+	/** Whether kills inside build Heat stacks (see HotzoneModifierManager). */
+	protected boolean heat = false;
+	/** Whether every monster inside is aggressive. */
+	protected boolean forceAggressive = false;
+	/** Multiplier on the aggro range of monsters inside. */
+	protected double aggroRangeMult = 1.0;
+	/** Multiplier on the Mage monster spawn chance (see MageMonsterManager). */
+	protected double mageSpawnMult = 1.0;
+	/** Whether the XP/SP of a kill depends on how many party members hunt inside together. */
+	protected boolean kinship = false;
+	/** Percent chance a slain monster splits into two weaker copies. 0 = never. */
+	protected int splitChancePct = 0;
 
 	HotzoneModifier(String description)
 	{
@@ -273,5 +420,120 @@ public enum HotzoneModifier
 	public int getPlayerBuffSkillId()
 	{
 		return playerBuffSkillId;
+	}
+
+	public double getThiefSpawnMult()
+	{
+		return thiefSpawnMult;
+	}
+
+	public int getThiefKillWeight()
+	{
+		return thiefKillWeight;
+	}
+
+	public boolean isThiefFlees()
+	{
+		return thiefFlees;
+	}
+
+	public double getWaveSpawnMult()
+	{
+		return waveSpawnMult;
+	}
+
+	public int getExtraWaves()
+	{
+		return extraWaves;
+	}
+
+	public double getWaveCoinMult()
+	{
+		return waveCoinMult;
+	}
+
+	public int getMetamorphChancePct()
+	{
+		return metamorphChancePct;
+	}
+
+	public int getRageDisablesOverride()
+	{
+		return rageDisablesOverride;
+	}
+
+	public double getRageKillDropMult()
+	{
+		return rageKillDropMult;
+	}
+
+	public boolean isRageKillLuckStack()
+	{
+		return rageKillLuckStack;
+	}
+
+	public double getLuckGainMult()
+	{
+		return luckGainMult;
+	}
+
+	public boolean isLuckDeathKeepsHalf()
+	{
+		return luckDeathKeepsHalf;
+	}
+
+	public double getJackpotMult()
+	{
+		return jackpotMult;
+	}
+
+	public double getFakePvpSpawnMult()
+	{
+		return fakePvpSpawnMult;
+	}
+
+	public double getFakePlayerCoinMult()
+	{
+		return fakePlayerCoinMult;
+	}
+
+	public boolean isFakePlayerCache()
+	{
+		return fakePlayerCache;
+	}
+
+	public boolean isBounty()
+	{
+		return bounty;
+	}
+
+	public boolean isHeat()
+	{
+		return heat;
+	}
+
+	public boolean isForceAggressive()
+	{
+		return forceAggressive;
+	}
+
+	public double getAggroRangeMult()
+	{
+		return aggroRangeMult;
+	}
+
+	public double getMageSpawnMult()
+	{
+		return mageSpawnMult;
+	}
+
+	public boolean isKinship()
+	{
+		return kinship;
+	}
+
+	public int getSplitChancePct()
+	{
+		return splitChancePct;
 	}
 }

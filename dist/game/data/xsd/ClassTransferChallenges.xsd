@@ -39,6 +39,19 @@
 			<xs:enumeration value="BLOOD_MOON" />
 			<xs:enumeration value="RESTLESS_DEAD" />
 			<xs:enumeration value="MINIBOSS_FRENZY" />
+			<xs:enumeration value="THIEVES_DEN" />
+			<xs:enumeration value="PROVING_GROUNDS" />
+			<xs:enumeration value="METAMORPHOSIS" />
+			<xs:enumeration value="HAIR_TRIGGER" />
+			<xs:enumeration value="LUCKY_STARS" />
+			<xs:enumeration value="CONTESTED_GROUND" />
+			<xs:enumeration value="BOUNTY_HUNT" />
+			<xs:enumeration value="RISING_HEAT" />
+			<xs:enumeration value="HORNETS_NEST" />
+			<xs:enumeration value="COVEN" />
+			<xs:enumeration value="KINSHIP" />
+			<xs:enumeration value="LAST_STAND" />
+			<xs:enumeration value="SPLITTING_GROUND" />
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:complexType name="locationType">

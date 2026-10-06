@@ -5,10 +5,10 @@ import xml.etree.ElementTree as ET
 ROOT=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SKILL_FILES=['/dist/game/data/stats/skills/PassiveTreeActives.xml','/dist/game/data/stats/skills/custom/hotzone_skills.xml']
 skills=[sk for f in SKILL_FILES for sk in ET.parse(ROOT+f).getroot().findall('skill')]
-ICON={27000:3123,27001:3123,27002:3123,27003:3123,27004:3123,
+ICON={27000:3123,27001:3123,27002:3123,27003:3123,27004:3123,27005:3123,
       27400:110,27401:121,27410:78,27411:347,27420:821,27421:922,27430:4,27431:772,27440:1417,27441:1157,
       27450:1027,27451:1010,27460:1268,27461:96,27462:101,27463:1201,27464:1085,27465:1409}
-OPER={27000:2,27001:2,27002:2,27003:2,27004:2,
+OPER={27000:2,27001:2,27002:2,27003:2,27004:2,27005:2,
       27400:2,27401:2,27410:2,27411:0,27420:0,27421:2,27430:2,27431:0,27440:1,27441:1,27450:1,27451:2,
       27460:2,27461:0,27462:3,27463:3,27464:2,27465:2}
 DESC={
@@ -17,6 +17,7 @@ DESC={
  27002:"Hot zone kill streak: XP and SP +{bonus}%. Kill again within 15 seconds to raise it.",
  27003:"Hot zone omen: P. Atk. and M. Atk. +25%, but P. Def. and M. Def. -20%.",
  27004:"Hot zone omen: skill reuse time -20% and MP consumption -30%.",
+ 27005:"Hot zone omen: while your HP is at 30% or less, P. Atk. and M. Atk. +30% and 10% of the damage you deal is restored as HP.",
  27400:"Increases P. Def. and M. Def. by 30% and Shield Block Rate by 20% for 20 seconds. Reuse time is 90 seconds.",
  27401:"Increases the P. Atk., M. Atk., P. Def. and M. Def. of all party members by 8% for 60 seconds. Reuse time is 180 seconds.",
  27410:"Increases P. Atk. by 15% and Atk. Spd. by 10%, but decreases P. Def. by 5% for 30 seconds. Reuse time is 60 seconds.",
@@ -76,7 +77,7 @@ for sk in skills:
         assert '{' not in d and 'None' not in d, (sid,d)
         names.append('\t'.join([str(sid),str(lvl),'a,%s\\0'%name,'a,%s\\0'%d,'a,none\\0','a,none\\0']))
     icons_used[sid]=ICON[sid]
-assert len(grp)==96 and len(names)==96, (len(grp),len(names))
+assert len(grp)==97 and len(names)==97, (len(grp),len(names))
 out=ROOT+'/client/PassiveTree'; os.makedirs(out,exist_ok=True)
 # Column headers of the L2ClientDat export, for reference (not written to the files).
 H1='skill_id\tskill_level\toper_type\tmp_consume\tcast_range\tcast_style\tUNK_0\thit_time\tis_magic\tani_char\tdesc\ticon_name\ticon_name2\tis_ench\tench_skill_id\thp_consume\tnonetext1\tUNK_1\tUNK_2\tUNK_3\tUNK_4\tnonetext2'

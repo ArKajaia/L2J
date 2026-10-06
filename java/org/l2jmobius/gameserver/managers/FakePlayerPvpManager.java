@@ -70,6 +70,7 @@ import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.actor.transform.Transform;
 import org.l2jmobius.gameserver.model.actor.transform.TransformTemplate;
+import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.item.holders.ItemEnchantHolder;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.skill.AbnormalType;
@@ -1222,11 +1223,25 @@ public class FakePlayerPvpManager
 	 * @param x the x
 	 * @param y the y
 	 * @param z the z
-	 * @return {@code true} if the point is inside a hotzone the rotation currently has active
+	 * @return the spawn chance multiplier at that point: {@link FakePlayerPvpConfig#HOTZONE_SPAWN_MULTIPLIER} (times the fake player multiplier of its modifier, see CONTESTED_GROUND) inside an active hotzone, 1.0 elsewhere
 	 */
-	private static boolean isInHotzone(int x, int y, int z)
+	private static double getSpawnMultiplier(int x, int y, int z)
 	{
-		return getActiveHotzoneId(x, y, z) != 0;
+		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierAt(x, y, z);
+		return modifier != null ? FakePlayerPvpConfig.HOTZONE_SPAWN_MULTIPLIER * modifier.getFakePvpSpawnMult() : 1.0;
+	}
+	
+	/**
+	 * @return the highest {@link #getSpawnMultiplier} any point can have
+	 */
+	private static double getMaxSpawnMultiplier()
+	{
+		double maxModifierMultiplier = 1.0;
+		for (HotzoneModifier modifier : HotzoneModifier.values())
+		{
+			maxModifierMultiplier = Math.max(maxModifierMultiplier, modifier.getFakePvpSpawnMult());
+		}
+		return Math.max(1.0, FakePlayerPvpConfig.HOTZONE_SPAWN_MULTIPLIER * maxModifierMultiplier);
 	}
 	
 	/**
@@ -1250,7 +1265,7 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
-	 * Rolls {@link FakePlayerPvpConfig#SPAWN_CHANCE} (times {@link FakePlayerPvpConfig#HOTZONE_SPAWN_MULTIPLIER} inside a hotzone) for a monster that is about to enter the world and, if it hits, spawns a roaming fake player in its place. The monster is then kept out of the world, still counted by {@code spawn}, until the fake player is gone.
+	 * Rolls {@link FakePlayerPvpConfig#SPAWN_CHANCE} (times {@link #getSpawnMultiplier} inside a hotzone) for a monster that is about to enter the world and, if it hits, spawns a roaming fake player in its place. The monster is then kept out of the world, still counted by {@code spawn}, until the fake player is gone.
 	 * @param npc the monster that is spawning
 	 * @param spawn its spawn point
 	 * @param x the spawn x
@@ -1276,7 +1291,7 @@ public class FakePlayerPvpManager
 		}
 		
 		// Hotzones draw more of them.
-		final double chance = isInHotzone(x, y, z) ? FakePlayerPvpConfig.SPAWN_CHANCE * FakePlayerPvpConfig.HOTZONE_SPAWN_MULTIPLIER : FakePlayerPvpConfig.SPAWN_CHANCE;
+		final double chance = FakePlayerPvpConfig.SPAWN_CHANCE * getSpawnMultiplier(x, y, z);
 		if ((Rnd.nextDouble() * 100) >= chance)
 		{
 			return false;
@@ -3401,8 +3416,7 @@ public class FakePlayerPvpManager
 	private void keepPopulation()
 	{
 		final double chance = (FakePlayerPvpConfig.SPAWN_CHANCE * MAINTAIN_INTERVAL) / (FakePlayerPvpConfig.LIFETIME * 1000.0);
-		final double hotzoneChance = chance * FakePlayerPvpConfig.HOTZONE_SPAWN_MULTIPLIER;
-		final double maxChance = Math.max(chance, hotzoneChance);
+		final double maxChance = chance * getMaxSpawnMultiplier();
 		
 		// Picked first and replaced after, the fake players' own spawns join the spawn table.
 		final List<Npc> picked = new ArrayList<>();
@@ -3414,7 +3428,7 @@ public class FakePlayerPvpManager
 				{
 					// The zone lookup only for the few that pass the higher of both chances.
 					final double roll = Rnd.nextDouble() * 100;
-					if ((roll < maxChance) && npc.isSpawned() && !npc.isDead() && (roll < (isInHotzone(npc.getX(), npc.getY(), npc.getZ()) ? hotzoneChance : chance)))
+					if ((roll < maxChance) && npc.isSpawned() && !npc.isDead() && (roll < (chance * getSpawnMultiplier(npc.getX(), npc.getY(), npc.getZ()))))
 					{
 						picked.add(npc);
 					}
