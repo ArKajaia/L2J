@@ -21,7 +21,7 @@
 package org.l2jmobius.gameserver.model.classtransfer;
 
 /**
- * The three class transfer stages a challenge can unlock. The tier matches the Class Master NPC tier and the {@code tier} column of {@code class_transfer_tree}.
+ * The three class transfer stages a challenge can unlock. The tier matches the Class Master tier and the {@code tier} column of {@code class_transfer_tree}.
  * @author Mobius
  */
 public enum TransferStage

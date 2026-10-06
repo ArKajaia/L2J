@@ -87,6 +87,24 @@ public class ClassTransferData
 		return result;
 	}
 	
+	/**
+	 * The single Class Master works out the tier from the player's class: it is the lowest tier the class has a transfer at.
+	 * @param fromClassId the player's current PlayerClass ID
+	 * @return the tier (1, 2 or 3) of the next transfer of that class, or 0 if it has none
+	 */
+	public int getNextTier(int fromClassId)
+	{
+		int tier = 0;
+		for (ClassTransferHolder holder : _transfers)
+		{
+			if ((holder.getFromClassId() == fromClassId) && ((tier == 0) || (holder.getTier() < tier)))
+			{
+				tier = holder.getTier();
+			}
+		}
+		return tier;
+	}
+	
 	public static ClassTransferData getInstance()
 	{
 		return SingletonHolder.INSTANCE;
