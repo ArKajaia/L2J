@@ -92,6 +92,8 @@ public class FakePartyManager
 	private static final int WALK_OVER_DISTANCE = 600;
 	/** A fake player only joins a player this close. */
 	private static final int INVITE_RANGE = 2000;
+	/** A fake player outside the roaming ones (a town fake player) is found by name this close, like the players a player sees. */
+	private static final int INVITE_SEARCH_RANGE = 3000;
 	/** How long a fake player sticks to its answer to someone's invites. */
 	private static final long INVITE_MEMORY = 300000;
 	
@@ -119,6 +121,14 @@ public class FakePartyManager
 		"sry, solo",
 		"nah",
 		"sry, already have a pt",
+	};
+	private static final String[] DECLINE_TOWN =
+	{
+		"no thx, not hunting atm",
+		"sry, just shopping",
+		"logging off soon, sry",
+		"afk in town, sry",
+		"nah, busy here",
 	};
 	private static final String[] DECLINE_LOW =
 	{
@@ -248,23 +258,34 @@ public class FakePartyManager
 	// ---------------------------------------------------------------------------------------------
 	
 	/**
-	 * Called from {@code RequestJoinParty} when no player has the invited name: an invited fake player answers like a player would. It may accept if it hunts close by and isn't busy, see {@link #getAcceptChance}.
+	 * Called from {@code RequestJoinParty} when no player has the invited name: an invited fake player answers like a player would. A roaming one may accept if it hunts close by and isn't busy, see {@link #getAcceptChance}; a town fake player always declines.
 	 * @param requestor the player that invites
 	 * @param name the name it invited
 	 * @param distributionType the loot rule the requestor chose for a new party, {@code null} for none
-	 * @return {@code true} if {@code name} is a fake player (the invite is handled)
+	 * @return {@code true} if {@code name} (or, for an invite without a name, the target) is a fake player (the invite is handled)
 	 */
 	public boolean onInvite(Player requestor, String name, PartyDistributionType distributionType)
 	{
-		if ((name == null) || !isEnabled())
+		final Npc fake = findFake(requestor, name);
+		if (fake == null)
 		{
 			return false;
 		}
 		
-		final Npc fake = findFake(name);
-		if (fake == null)
+		// Town fake players (and roaming ones while fake parties are off) can't fight along: they turn it down like a player would.
+		if (!isEnabled() || !FakePlayerPvpManager.getInstance().getFakePlayers().contains(fake))
 		{
-			return false;
+			if (fake.isDead())
+			{
+				requestor.sendPacket(SystemMessageId.THAT_IS_AN_INCORRECT_TARGET);
+				return true;
+			}
+			
+			final SystemMessage sm = new SystemMessage(SystemMessageId.C1_HAS_BEEN_INVITED_TO_THE_PARTY);
+			sm.addString(fake.getName());
+			requestor.sendPacket(sm);
+			ThreadPool.schedule(() -> declineInvite(requestor, fake), Rnd.get(1500, 6000));
+			return true;
 		}
 		
 		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
@@ -387,14 +408,54 @@ public class FakePartyManager
 	}
 	
 	/**
-	 * @param name a character name
-	 * @return the roaming fake player of that name, {@code null} if none
+	 * A fake player that can't join a party (a town fake player) turns the invite down.
+	 * @param requestor the player that invited it
+	 * @param fake the fake player
 	 */
-	private static Npc findFake(String name)
+	private static void declineInvite(Player requestor, Npc fake)
 	{
+		if (!requestor.isOnline())
+		{
+			return;
+		}
+		
+		requestor.sendPacket(new JoinParty(0));
+		requestor.sendPacket(SystemMessageId.THE_PLAYER_DECLINED_TO_JOIN_YOUR_PARTY);
+		if (!fake.isDead() && fake.isSpawned() && (Rnd.get(100) < 60))
+		{
+			whisper(fake, requestor, pick(DECLINE_TOWN));
+		}
+	}
+	
+	/**
+	 * @param requestor the player that invites
+	 * @param name the invited name, empty for an invite without a name (the target is invited)
+	 * @return the fake player of that name (a roaming one, else one {@code requestor} sees, such as a town fake player), {@code null} if none
+	 */
+	private static Npc findFake(Player requestor, String name)
+	{
+		final String invited = name != null ? name.trim() : "";
+		if ((requestor.getTarget() instanceof Npc target) && target.isFakePlayer() && target.isSpawned() && (invited.isEmpty() || target.getName().equalsIgnoreCase(invited)))
+		{
+			return target;
+		}
+		
+		if (invited.isEmpty())
+		{
+			return null;
+		}
+		
 		for (Npc fake : FakePlayerPvpManager.getInstance().getFakePlayers())
 		{
-			if (fake.getName().equalsIgnoreCase(name) && fake.isSpawned())
+			if (fake.getName().equalsIgnoreCase(invited) && fake.isSpawned())
+			{
+				return fake;
+			}
+		}
+		
+		for (Npc fake : World.getInstance().getVisibleObjectsInRange(requestor, Npc.class, INVITE_SEARCH_RANGE))
+		{
+			if (fake.isFakePlayer() && fake.getName().equalsIgnoreCase(invited) && fake.isSpawned())
 			{
 				return fake;
 			}
