@@ -67,6 +67,20 @@ public class FakeClanConfig
 	public static int MEMBER_OFFLINE_MIN;
 	public static int MEMBER_OFFLINE_MAX;
 	public static int MEMBER_LOGIN_LEVEL_RANGE;
+	public static boolean CASTLES_ENABLED;
+	public static Set<Integer> CASTLE_IDS = new HashSet<>();
+	public static int CASTLE_TAKE_DELAY;
+	public static int CASTLE_TAX_PERCENT;
+	public static boolean CASTLE_NPC_GUARDS;
+	public static int CASTLE_DEFENDER_ACCEPT_CHANCE;
+	public static int MANOR_SEED_AMOUNT;
+	public static int MANOR_SEED_PRICE_MIN;
+	public static int MANOR_SEED_PRICE_MAX;
+	public static int MANOR_CROP_AMOUNT;
+	public static int MANOR_CROP_PRICE_MIN;
+	public static int MANOR_CROP_PRICE_MAX;
+	public static int MANOR_CROP_REWARD;
+	public static int MANOR_REFILL_MINUTES;
 	
 	public static void load()
 	{
@@ -74,7 +88,7 @@ public class FakeClanConfig
 		ENABLED = config.getBoolean("FakeClansEnabled", true);
 		
 		NAMES = new ArrayList<>();
-		for (String value : config.getString("FakeClanNames", "Valhalla,IronLegion,Nightshade,DragonGuard,SilverWolves,CrimsonDawn,Eclipse,Phoenix").split(","))
+		for (String value : config.getString("FakeClanNames", "Valhalla,IronLegion,Nightshade,DragonGuard,SilverWolves,CrimsonDawn,Eclipse,Phoenix,Sovereign").split(","))
 		{
 			final String name = value.trim();
 			if (name.isEmpty())
@@ -167,5 +181,37 @@ public class FakeClanConfig
 		MEMBER_OFFLINE_MIN = Math.max(1, config.getInt("FakeClanMemberOfflineMin", 30));
 		MEMBER_OFFLINE_MAX = Math.max(MEMBER_OFFLINE_MIN, config.getInt("FakeClanMemberOfflineMax", 240));
 		MEMBER_LOGIN_LEVEL_RANGE = Math.max(0, config.getInt("FakeClanMemberLoginLevelRange", 5));
+		
+		CASTLES_ENABLED = config.getBoolean("FakeClanCastles", true);
+		CASTLE_IDS = new HashSet<>();
+		for (String value : config.getString("FakeClanCastleIds", "1,2,3,4,5,6,7,8,9").split(","))
+		{
+			if (value.isBlank())
+			{
+				continue;
+			}
+			
+			try
+			{
+				CASTLE_IDS.add(Integer.parseInt(value.trim()));
+			}
+			catch (NumberFormatException e)
+			{
+				LOGGER.warning(FakeClanConfig.class.getSimpleName() + ": FakeClanCastleIds entry " + value.trim() + " is not a castle id, skipped.");
+			}
+		}
+		
+		CASTLE_TAKE_DELAY = Math.max(0, config.getInt("FakeClanCastleTakeDelay", 30));
+		CASTLE_TAX_PERCENT = Math.max(0, Math.min(25, config.getInt("FakeClanCastleTaxPercent", 10)));
+		CASTLE_NPC_GUARDS = config.getBoolean("FakeClanCastleNpcGuards", true);
+		CASTLE_DEFENDER_ACCEPT_CHANCE = Math.max(0, Math.min(100, config.getInt("FakeClanCastleDefenderAcceptChance", 80)));
+		MANOR_SEED_AMOUNT = Math.max(0, Math.min(100, config.getInt("FakeClanManorSeedAmount", 100)));
+		MANOR_SEED_PRICE_MIN = Math.max(60, Math.min(1000, config.getInt("FakeClanManorSeedPriceMin", 100)));
+		MANOR_SEED_PRICE_MAX = Math.max(MANOR_SEED_PRICE_MIN, Math.min(1000, config.getInt("FakeClanManorSeedPriceMax", 130)));
+		MANOR_CROP_AMOUNT = Math.max(0, Math.min(100, config.getInt("FakeClanManorCropAmount", 100)));
+		MANOR_CROP_PRICE_MIN = Math.max(60, Math.min(1000, config.getInt("FakeClanManorCropPriceMin", 100)));
+		MANOR_CROP_PRICE_MAX = Math.max(MANOR_CROP_PRICE_MIN, Math.min(1000, config.getInt("FakeClanManorCropPriceMax", 150)));
+		MANOR_CROP_REWARD = Math.max(0, Math.min(2, config.getInt("FakeClanManorCropReward", 0)));
+		MANOR_REFILL_MINUTES = Math.max(0, config.getInt("FakeClanManorRefillMinutes", 60));
 	}
 }

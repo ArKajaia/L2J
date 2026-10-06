@@ -27,6 +27,7 @@ import java.sql.Statement;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -464,6 +465,14 @@ public class FakeClanManager
 	// ---------------------------------------------------------------------------------------------
 	// Members
 	// ---------------------------------------------------------------------------------------------
+	
+	/**
+	 * @return the clans new fake players join (FakeClanNames), in their order
+	 */
+	public List<Clan> getActiveClans()
+	{
+		return Collections.unmodifiableList(_activeClans);
+	}
 	
 	/**
 	 * @param clan a clan

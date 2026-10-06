@@ -29,6 +29,7 @@ import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.data.xml.FakePlayerData;
 import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
 import org.l2jmobius.gameserver.handler.IAdminCommandHandler;
+import org.l2jmobius.gameserver.managers.FakeCastleManager;
 import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakePlayerChatManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
@@ -92,8 +93,12 @@ public class AdminFakePlayers implements IAdminCommandHandler
 		}
 		else if (command.startsWith("admin_fakeclans"))
 		{
-			// The clans of fake players: level, leader, members online, reputation, alliance and wars.
+			// The clans of fake players: level, leader, members online, reputation, alliance and wars; then the castles: lord, tax rate, manor and next siege.
 			for (String line : FakeClanManager.getInstance().getInfo())
+			{
+				activeChar.sendSysMessage(line);
+			}
+			for (String line : FakeCastleManager.getInstance().getInfo())
 			{
 				activeChar.sendSysMessage(line);
 			}

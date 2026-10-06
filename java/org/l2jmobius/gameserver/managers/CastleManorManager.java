@@ -356,13 +356,16 @@ public class CastleManorManager implements IXmlReader
 					final int castleId = castle.getResidenceId();
 					final ItemContainer cwh = owner.getWarehouse();
 					
+					// A castle of a fake clan: its lord uses up the crops it bought and pays nothing for its manor (see FakeCastleManager).
+					final boolean fakeLord = FakeCastleManager.isFakeCastle(castle);
+					
 					// Process crop procurement and treasury updates.
 					for (CropProcure crop : _procure.get(castleId))
 					{
 						if (crop.getStartAmount() > 0)
 						{
 							// Adding bought crops to clan warehouse.
-							if (crop.getStartAmount() != crop.getAmount())
+							if (!fakeLord && (crop.getStartAmount() != crop.getAmount()))
 							{
 								long harvestedAmount = (long) ((crop.getStartAmount() - crop.getAmount()) * 0.9);
 								if ((harvestedAmount < 1) && (Rnd.get(99) < 90))
@@ -390,7 +393,7 @@ public class CastleManorManager implements IXmlReader
 					_procure.put(castleId, _procureNext.get(castleId));
 					
 					// Prepare data for the upcoming period, depending on treasury funds.
-					if (castle.getTreasury() < getManorCost(castleId, false))
+					if (!fakeLord && (castle.getTreasury() < getManorCost(castleId, false)))
 					{
 						_productionNext.put(castleId, Collections.emptyList());
 						_procureNext.put(castleId, Collections.emptyList());
@@ -449,7 +452,7 @@ public class CastleManorManager implements IXmlReader
 				for (Castle castle : CastleManager.getInstance().getCastles())
 				{
 					final Clan owner = castle.getOwner();
-					if (owner == null)
+					if ((owner == null) || FakeCastleManager.isFakeCastle(castle))
 					{
 						continue;
 					}
@@ -510,16 +513,32 @@ public class CastleManorManager implements IXmlReader
 	public void setNextSeedProduction(List<SeedProduction> list, int castleId)
 	{
 		_productionNext.put(castleId, list);
-		
+		storeSeedProduction(list, castleId, true);
+	}
+	
+	/**
+	 * Replaces the seeds on sale in the current period (a lord that came in the middle of it, see {@link FakeCastleManager}).
+	 * @param list the seeds
+	 * @param castleId the castle id
+	 */
+	public void setCurrentSeedProduction(List<SeedProduction> list, int castleId)
+	{
+		_production.put(castleId, list);
+		storeSeedProduction(list, castleId, false);
+	}
+	
+	private void storeSeedProduction(List<SeedProduction> list, int castleId, boolean nextPeriod)
+	{
 		// Save actions to the database if configured to do so.
 		if (GeneralConfig.ALT_MANOR_SAVE_ALL_ACTIONS)
 		{
 			try (Connection con = DatabaseFactory.getConnection();
-				PreparedStatement deleteStmt = con.prepareStatement("DELETE FROM castle_manor_production WHERE castle_id = ? AND next_period = 1");
+				PreparedStatement deleteStmt = con.prepareStatement("DELETE FROM castle_manor_production WHERE castle_id = ? AND next_period = ?");
 				PreparedStatement insertStmt = con.prepareStatement(INSERT_PRODUCT))
 			{
-				// Delete existing production data for the next period.
+				// Delete existing production data for the period.
 				deleteStmt.setInt(1, castleId);
+				deleteStmt.setBoolean(2, nextPeriod);
 				deleteStmt.executeUpdate();
 				
 				// Insert new production data if list is not empty.
@@ -530,7 +549,7 @@ public class CastleManorManager implements IXmlReader
 					insertStmt.setLong(3, sp.getAmount());
 					insertStmt.setLong(4, sp.getStartAmount());
 					insertStmt.setLong(5, sp.getPrice());
-					insertStmt.setBoolean(6, true);
+					insertStmt.setBoolean(6, nextPeriod);
 					insertStmt.addBatch();
 				}
 				
@@ -550,16 +569,32 @@ public class CastleManorManager implements IXmlReader
 	public void setNextCropProcure(List<CropProcure> list, int castleId)
 	{
 		_procureNext.put(castleId, list);
-		
+		storeCropProcure(list, castleId, true);
+	}
+	
+	/**
+	 * Replaces the crops bought in the current period (a lord that came in the middle of it, see {@link FakeCastleManager}).
+	 * @param list the crops
+	 * @param castleId the castle id
+	 */
+	public void setCurrentCropProcure(List<CropProcure> list, int castleId)
+	{
+		_procure.put(castleId, list);
+		storeCropProcure(list, castleId, false);
+	}
+	
+	private void storeCropProcure(List<CropProcure> list, int castleId, boolean nextPeriod)
+	{
 		// Save actions to the database if configured to do so.
 		if (GeneralConfig.ALT_MANOR_SAVE_ALL_ACTIONS)
 		{
 			try (Connection con = DatabaseFactory.getConnection();
-				PreparedStatement deleteStmt = con.prepareStatement("DELETE FROM castle_manor_procure WHERE castle_id = ? AND next_period = 1");
+				PreparedStatement deleteStmt = con.prepareStatement("DELETE FROM castle_manor_procure WHERE castle_id = ? AND next_period = ?");
 				PreparedStatement insertStmt = con.prepareStatement(INSERT_CROP))
 			{
-				// Delete existing procure data for the next period.
+				// Delete existing procure data for the period.
 				deleteStmt.setInt(1, castleId);
+				deleteStmt.setBoolean(2, nextPeriod);
 				deleteStmt.executeUpdate();
 				
 				// Insert new procure data if list is not empty.
@@ -571,7 +606,7 @@ public class CastleManorManager implements IXmlReader
 					insertStmt.setLong(4, cp.getStartAmount());
 					insertStmt.setLong(5, cp.getPrice());
 					insertStmt.setInt(6, cp.getReward());
-					insertStmt.setBoolean(7, true);
+					insertStmt.setBoolean(7, nextPeriod);
 					insertStmt.addBatch();
 				}
 				

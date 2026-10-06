@@ -128,6 +128,7 @@ import org.l2jmobius.gameserver.managers.DailyResetManager;
 import org.l2jmobius.gameserver.managers.DayNightSpawnManager;
 import org.l2jmobius.gameserver.managers.DimensionalRiftManager;
 import org.l2jmobius.gameserver.managers.EventDropManager;
+import org.l2jmobius.gameserver.managers.FakeCastleManager;
 import org.l2jmobius.gameserver.managers.FakePlayerChatManager;
 import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
@@ -399,6 +400,7 @@ public class GameServer
 		TerritoryWarManager.getInstance();
 		CastleManorManager.getInstance();
 		MercTicketManager.getInstance();
+		FakeCastleManager.getInstance();
 		ScriptManager.getInstance().report();
 		
 		if (GeneralConfig.SAVE_DROPPED_ITEM)
