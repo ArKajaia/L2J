@@ -11,9 +11,14 @@
 
 	quest
 	  trigger  type = PK_COUNT | PVP_COUNT | FAME | ADENA        - read from the character (count)
+	                  QUESTS_COMPLETED                           - completed (non-repeatable) quests, read from the character
 	                  TOWNS_VISITED                              - every town id in towns="..." entered (TownZone townId)
 	                  DEATHS | LEVEL_STREAK                      - counted from the day the feature is enabled
 	                  KILL_NAMED (word) | KILL_UNDEAD | KILL_NIGHT | KILL_SOLO | KILL_RAID | KILL_KARMA_PLAYER
+	                  KILL_LOW_HEALTH (at 10% HP or less) | KILL_UNARMED (no weapon) | KILL_IN_WATER - kills by the player, not by a summon
+	                  KILLED_BY_PK (murdered while neither flagged nor carrying karma; clan wars and sieges don't count)
+	                  OLYMPIAD_WINS | ENCHANT_FAILS (item destroyed or reset to +0) | FISH_CAUGHT
+	                  MEDITATION (seconds sitting outside towns) | DISTANCE (game units travelled on foot)
 	           Kills of monsters more than HiddenQuestKillLevelGap levels below the player and of hidden quest monsters don't count.
 	  task     type + the task's own attributes (see the task classes in model/hiddenquest/task). timeLimit (seconds) overrides the default.
 	  role     a group of monsters the task spawns (name, set, count, tierBonus, title).
@@ -83,6 +88,17 @@
 		<band minLevel="70" npcId="21183" /> <!-- Lilim Knight Commander (72) -->
 		<band minLevel="76" npcId="21186" /> <!-- Lilim Guard Knight (78) -->
 		<band minLevel="80" npcId="22685" /> <!-- Servitor of Darkness (82) -->
+	</monsterSet>
+	<monsterSet name="golem">
+		<band minLevel="1" npcId="21131" /> <!-- Enchanted Spine Golem (25) -->
+		<band minLevel="30" npcId="20083" /> <!-- Granite Golem (33) -->
+		<band minLevel="40" npcId="20566" /> <!-- Enchanted Iron Golem (43) -->
+		<band minLevel="52" npcId="20559" tier="2" /> <!-- Rotting Golem (44) -->
+		<band minLevel="56" npcId="22091" /> <!-- Lost Iron Golem (58) -->
+		<band minLevel="61" npcId="22092" tier="1" /> <!-- Frost Iron Golem (59) -->
+		<band minLevel="70" npcId="22809" /> <!-- Guard Golem (73) -->
+		<band minLevel="76" npcId="21385" /> <!-- Lavastone Golem (78) -->
+		<band minLevel="80" npcId="21386" tier="1" /> <!-- Magma Golem (78) -->
 	</monsterSet>
 
 	<!-- Reward sets, by the grade a player of that level uses. -->
@@ -511,6 +527,316 @@
 		<text key="farewell">Regiment! Salute!</text>
 		<rewards set="moderate">
 			<reward type="TITLE" value="Banner-bearer" />
+		</rewards>
+	</quest>
+
+	<!-- 14. The ghost of a forgotten Hero wants to know if the Olympiad still makes champions. -->
+	<quest id="14" name="The Laurel of Ash" messenger="900330">
+		<trigger type="OLYMPIAD_WINS" count="30" />
+		<task type="ECHO_GAUNTLET" arenaRadius="1500" pause="10" timeLimit="1800" />
+		<role name="echo" set="knight" count="1" />
+		<echo name="Echo of Theron, First Laurel" gimmick="NONE" tier="2" line="The first Hero of Aden salutes you. Now defend yourself." />
+		<echo name="Echo of Lysa the Untouched" gimmick="BLINK" tier="2" line="Nobody ever landed a blow on me in the Coliseum. Try." />
+		<echo name="Echo of Brother Kass" gimmick="WARDS" tier="2" line="Patience wins more matches than strength." />
+		<echo name="Echo of the Nameless Champion" gimmick="REGEN" tier="3" line="They chiselled my name off the monument. Let us see if yours deserves to stay." />
+		<text key="greeting">Thirty times the crowd has roared for you. I counted.</text>
+		<text key="offer">Once my name was carved on the Hero monument in Aden. Then a new season came, and a new Hero, and the stonemason took his chisel to me. That is the Olympiad: glory, then ash. Still, I watch every match, and you fight like the old champions did. Face the echoes of the Heroes who came before you - four of them, here and now, with no manager to stop the match. Win, and I will give you the laurel they took from me.</text>
+		<text key="briefing">No stadium, no crowd, one rule: stay in the circle. They come one after another.</text>
+		<text key="start">The old Heroes step out of the ash.</text>
+		<text key="wardsUp">Brother Kass raises his wards. Break them!</text>
+		<text key="regenLine">The ash always settles back on me.</text>
+		<text key="failFled">You left the circle. In the Coliseum, that is a forfeit.</text>
+		<text key="failDeath">The match is over. The laurel stays in the ash.</text>
+		<text key="accepted">Begin the match.</text>
+		<text key="postponed">The season is long. I will wait.</text>
+		<text key="ignored">Even Heroes need rest. Another day.</text>
+		<text key="forfeited">Then the laurel crumbles with me.</text>
+		<text key="success">Four Heroes, and you stand over all of them. Take the laurel. They may chisel your name off the stone someday - but not this.</text>
+		<text key="farewell">May the crowd always remember your name.</text>
+		<rewards set="strong">
+			<reward type="TITLE" value="Laurel of Ash" />
+			<reward type="TITLE_COLOR" value="FFCC66" />
+		</rewards>
+	</quest>
+
+	<!-- 15. A dwarven smith's ghost hears every enchantment that shatters. -->
+	<quest id="15" name="The Smith's Lament" messenger="900331">
+		<trigger type="ENCHANT_FAILS" count="20" />
+		<task type="VIGIL" totemId="900340" duration="900" waveInterval="55" bossAt="120" meter="100" drain="1" timeLimit="1800" />
+		<role name="wave" set="golem" count="2" title="Rustborn" />
+		<role name="boss" set="golem" count="1" tierBonus="3" title="The Slag King" />
+		<text key="greeting">Ah. There you are. I heard you from across the kingdom.</text>
+		<text key="offer">Borin Ashforge, master of the Black Anvil, dead these hundred years. Every time a blade breaks under a scroll, I hear it - a little scream in the metal. And I have heard YOU, friend, over and over. Broken steel does not rest. The shards gather, the rust wakes, and it all crawls back looking for whoever broke it. Let me set up my old anvil here. I will reforge the souls of what you lost, and you keep the rust off me until the work is done.</text>
+		<text key="briefing">The anvil is down. Stand by it. Whatever crawls out of the rust wants to smash it - every blow they land is a blow I lose.</text>
+		<text key="start">Guard the anvil until Borin finishes the reforging.</text>
+		<text key="meterName">Forge</text>
+		<text key="totemLine">*Clang. Clang. Clang.* The anvil rings with every lost blade.</text>
+		<text key="wave">Rustborn crawl out of the scrap!</text>
+		<text key="boss">The Slag King rises from the broken steel!</text>
+		<text key="bossLine">Everything you broke... is ME.</text>
+		<text key="leave">The anvil is unguarded! Back to the forge!</text>
+		<text key="failMeter">The Rustborn smashed the anvil. The reforging is ruined.</text>
+		<text key="failDeath">You fell, and the rust buried the anvil.</text>
+		<text key="accepted">Bellows! Hammer! Let's work.</text>
+		<text key="postponed">I'll keep the coals warm.</text>
+		<text key="ignored">Hmph. I'll listen for the next one breaking, then.</text>
+		<text key="forfeited">Then your broken steel can haunt you instead of me.</text>
+		<text key="success">Done! Every broken blade, reforged into something better - luck. Smith's luck. Take these; they won't fail you the way the others did. Well. Not as badly.</text>
+		<text key="farewell">Strike true, and pray to the anvil.</text>
+		<rewards set="moderate">
+			<reward type="ITEM" id="6575" count="1" minLevel="1" maxLevel="39" /> <!-- Blessed Scroll: Enchant Weapon (D-Grade) -->
+			<reward type="ITEM" id="6576" count="2" minLevel="1" maxLevel="39" /> <!-- Blessed Scroll: Enchant Armor (D-Grade) -->
+			<reward type="ITEM" id="6573" count="1" minLevel="40" maxLevel="51" /> <!-- Blessed Scroll: Enchant Weapon (C-Grade) -->
+			<reward type="ITEM" id="6574" count="2" minLevel="40" maxLevel="51" /> <!-- Blessed Scroll: Enchant Armor (C-Grade) -->
+			<reward type="ITEM" id="6571" count="1" minLevel="52" maxLevel="60" /> <!-- Blessed Scroll: Enchant Weapon (B-Grade) -->
+			<reward type="ITEM" id="6572" count="2" minLevel="52" maxLevel="60" /> <!-- Blessed Scroll: Enchant Armor (B-Grade) -->
+			<reward type="ITEM" id="6569" count="1" minLevel="61" maxLevel="75" /> <!-- Blessed Scroll: Enchant Weapon (A-Grade) -->
+			<reward type="ITEM" id="6570" count="2" minLevel="61" maxLevel="75" /> <!-- Blessed Scroll: Enchant Armor (A-Grade) -->
+			<reward type="ITEM" id="6577" count="1" minLevel="76" /> <!-- Blessed Scroll: Enchant Weapon (S-Grade) -->
+			<reward type="ITEM" id="6578" count="1" minLevel="76" /> <!-- Blessed Scroll: Enchant Armor (S-Grade) -->
+			<reward type="TITLE" value="Ashforged" />
+		</rewards>
+	</quest>
+
+	<!-- 16. An old fisherman finally finds someone patient enough to help him catch his legend. -->
+	<quest id="16" name="The One That Got Away" messenger="900332">
+		<trigger type="FISH_CAUGHT" count="200" />
+		<task type="CHASE" mode="WISP" count="5" npcId="900341" spawnMin="900" spawnMax="1500" fadeTime="240" maxMisses="1" catchRange="120" fleeRange="500" timeLimit="2400" />
+		<role name="catch" set="bandit" count="2" title="Lake Poacher" />
+		<text key="greeting">You there! You've got the smell of the lake on you. Good.</text>
+		<text key="offer">Pell's the name. Fished every lake in the kingdom for sixty years, and there's one I never landed: the Silver Shadow. Not a fish, exactly - more the spirit of every fish that ever slipped the hook. Today it's come up out of the water, swimming through the air like it owns the place and splitting into silver shadows. You've landed more fish than anyone I know. Help an old man catch his legend before it dives back down - five shadows, quick, before they fade.</text>
+		<text key="briefing">Your radar shows where a shadow glints. They dart off when you come close, so cut them off. And mind the poachers - they want my legend for themselves.</text>
+		<text key="start">Find the silver shadows. Your radar will show them.</text>
+		<text key="appears">A silver shadow glints nearby. Your radar marks it.</text>
+		<text key="caught">*The shadow wriggles, flashes silver, and is caught.*</text>
+		<text key="catchAmbush">Poachers! They want the catch!</text>
+		<text key="faded">*splash*</text>
+		<text key="missed">A shadow dove back into the deep. Another will surface.</text>
+		<text key="failMissed">Too many got away. The Silver Shadow sinks back to the bottom.</text>
+		<text key="failDeath">You fell. The Silver Shadow swims off, laughing in bubbles.</text>
+		<text key="accepted">Easy now. Patience and a quick hand.</text>
+		<text key="postponed">The lake will still be there. So will I.</text>
+		<text key="ignored">Huh. The ones that walk away are always the biggest.</text>
+		<text key="forfeited">Then I'll just tell the story. Nobody believes it anyway.</text>
+		<text key="success">Five shadows! Look at it - the Silver Shadow, at last! Sixty years. Here, take this. And when people ask you about the one that got away, you tell them: not this time.</text>
+		<text key="farewell">Tight lines, friend.</text>
+		<rewards set="moderate">
+			<reward type="TITLE" value="Master Angler" />
+			<reward type="TITLE_COLOR" value="66CCFF" />
+		</rewards>
+	</quest>
+
+	<!-- 17. A hermit has noticed someone who knows how to be still in the wild. -->
+	<quest id="17" name="The Still Mountain" messenger="900333">
+		<trigger type="MEDITATION" count="10800" />
+		<task type="PILGRIMAGE" sites="3" siteNpcId="900342" siteMin="1200" siteMax="2000" prayTime="60" vowNoPvp="true" timeLimit="2700" />
+		<role name="site" set="dark" count="2" title="Restless Thought" />
+		<text key="greeting">Hm. You sit well. Most people do not know how.</text>
+		<text key="offer">I am Oru. I have lived on the mountain longer than I remember, and I have watched you: resting in the open among the beasts, as calm as a stone in a stream. Few adventurers can be still. Three Stones of Stillness stand in the wild; at each, sit and empty your mind until the stone answers. Your restless thoughts will try to stop you - quiet them first. And take a vow: until the last stone, you raise your hand against no one.</text>
+		<text key="briefing">The first stone is on your radar. When your thoughts rise, settle them. Then sit, and wait. Do not hurry; the stone knows.</text>
+		<text key="start">Seek the first Stone of Stillness. Your radar shows the way.</text>
+		<text key="siteGuarded">Your restless thoughts take shape around the stone...</text>
+		<text key="siteBusy">The stone cannot hear you over your own thoughts. Quiet them.</text>
+		<text key="sitDown">Sit before the stone, and be still.</text>
+		<text key="praying">You breathe out, and let the world go quiet...</text>
+		<text key="prayerBroken">The stillness breaks. Sit, and begin again.</text>
+		<text key="siteDone">The stone hums, low and deep. Something in you settles.</text>
+		<text key="next">Another stone waits. Follow your radar.</text>
+		<text key="failVow">You raised your hand. The stillness is gone.</text>
+		<text key="failDeath">You fell. Even the mountain cannot be still forever.</text>
+		<text key="accepted">Go slowly.</text>
+		<text key="postponed">The mountain is patient. So am I.</text>
+		<text key="ignored">Ah. Not yet still enough.</text>
+		<text key="forfeited">Then I will sit alone. I usually do.</text>
+		<text key="success">Three stones answered you. You carry the mountain inside you now - when the world shakes, you will not. A hermit has little to give, but this little is true.</text>
+		<text key="farewell">Be still, and know.</text>
+		<rewards set="small">
+			<reward type="SP" count="50000" minLevel="1" maxLevel="39" />
+			<reward type="SP" count="200000" minLevel="40" maxLevel="51" />
+			<reward type="SP" count="500000" minLevel="52" maxLevel="60" />
+			<reward type="SP" count="1000000" minLevel="61" maxLevel="75" />
+			<reward type="SP" count="2000000" minLevel="76" />
+			<reward type="TITLE" value="the Still" />
+			<reward type="TITLE_COLOR" value="AADDCC" />
+		</rewards>
+	</quest>
+
+	<!-- 18. A duelist who lives for the last heartbeat recognises a kindred spirit. -->
+	<quest id="18" name="Dance on the Edge" messenger="900334">
+		<trigger type="KILL_LOW_HEALTH" count="100" />
+		<task type="ECHO_GAUNTLET" arenaRadius="1500" pause="8" timeLimit="1800" />
+		<role name="echo" set="knight" count="1" />
+		<echo name="Last Breath" gimmick="NONE" tier="1" line="One breath left. That is all anyone ever has." />
+		<echo name="Racing Heart" gimmick="BLINK" tier="2" line="Faster now. Faster." />
+		<echo name="Last Light" gimmick="SPLIT" tier="2" line="The world gets very bright at the very end, doesn't it?" />
+		<echo name="Death's Partner" gimmick="REGEN" tier="3" line="Shall we dance?" />
+		<text key="greeting">There you are. Still a little blood left in you, I see.</text>
+		<text key="offer">They call me Sable. I dance with Death. Most fighters run when their blood runs low - but not you. A hundred times you have stood on the edge with one breath left and struck the killing blow anyway. Death has noticed. She would like a dance, and I have offered to arrange it. Four partners, one after another, here and now. Keep your feet, don't leave the floor, and don't fall.</text>
+		<text key="briefing">The floor is right here. They come one by one. You'll find you fight best when you have the least to lose. You always have.</text>
+		<text key="start">The music starts. Your first partner steps forward.</text>
+		<text key="regenLine">I never tire. Do you?</text>
+		<text key="failFled">You left the floor. Death does not forgive a partner who walks out.</text>
+		<text key="failDeath">You stepped over the edge. Get up. She will ask again.</text>
+		<text key="accepted">Then dance.</text>
+		<text key="postponed">The music never really stops.</text>
+		<text key="ignored">Shy? You don't look shy when you're bleeding.</text>
+		<text key="forfeited">A pity. You would have danced beautifully.</text>
+		<text key="success">You danced with Death and she let go of your hand. She is smiling, you know - she likes you. Take this, and keep dancing on the edge. Just not over it.</text>
+		<text key="farewell">Until the next dance.</text>
+		<rewards set="strong">
+			<reward type="TITLE" value="Edgedancer" />
+			<reward type="TITLE_COLOR" value="FF7744" />
+		</rewards>
+	</quest>
+
+	<!-- 19. A master of the open hand warns a fighter who needs no weapon about a jealous school. -->
+	<quest id="19" name="The Empty Hand" messenger="900335">
+		<trigger type="KILL_UNARMED" count="300" />
+		<task type="HUNTED" ambushes="3" ambushMin="140" ambushMax="240" timeLimit="2400" />
+		<role name="ambush" set="orc" count="3" title="Iron Fist Disciple" />
+		<role name="leader" set="orcLeader" count="1" tierBonus="1" title="Grandmaster Korvash" />
+		<text key="greeting">Your hands. Show me your hands. Yes... I thought so.</text>
+		<text key="offer">I am Tavik of the Open Palm. My school teaches that the hand is the oldest weapon and the only one you can never lose. Three hundred times you have killed with nothing in your hands, and word of that travels. It has reached the Iron Fist school, whose grandmaster, Korvash, believes there is only one way of the hand: his. His disciples will test you. When they fail, he will come himself. Beat him, and the Open Palm will call you one of its own.</text>
+		<text key="briefing">Go on with your day. The disciples will find you - three times. In towns they will wait; they keep a code, of sorts. Then Korvash.</text>
+		<text key="start">The Iron Fist school is looking for you.</text>
+		<text key="warning">Bare feet on stone, somewhere close. Disciples.</text>
+		<text key="ambush">Iron Fist disciples attack!</text>
+		<text key="ambushBeaten">The disciples bow, bloodied, and limp away.</text>
+		<text key="leaderWarning">A deep voice counts the beats of a kata. Korvash is coming.</text>
+		<text key="leaderLine">An empty hand? Mine is iron.</text>
+		<text key="leaderArrives">Grandmaster Korvash has found you!</text>
+		<text key="leaderFollows">A disciple runs. A grandmaster follows.</text>
+		<text key="accepted">Breathe. Open the hand.</text>
+		<text key="postponed">The hand is patient.</text>
+		<text key="ignored">The Iron Fist will not be as polite as I am.</text>
+		<text key="forfeited">Then the Iron Fist may knock on your door uninvited.</text>
+		<text key="success">Korvash is beaten. Perhaps now he will learn what his disciples could not. Welcome to the Open Palm.</text>
+		<text key="farewell">The hand remembers.</text>
+		<rewards set="moderate">
+			<reward type="TITLE" value="Open Palm" />
+			<reward type="TITLE_COLOR" value="FFEEAA" />
+		</rewards>
+	</quest>
+
+	<!-- 20. A water spirit asks someone who fights beneath the waves to guard her song. -->
+	<quest id="20" name="The Drowned Choir" messenger="900336">
+		<trigger type="KILL_IN_WATER" count="200" />
+		<task type="VIGIL" totemId="900343" duration="900" waveInterval="55" bossAt="120" meter="100" drain="1" timeLimit="1800" />
+		<role name="wave" set="undead" count="2" title="Drowned Chorister" />
+		<role name="boss" set="undead" count="1" tierBonus="3" title="The Bell Beneath the Sea" />
+		<text key="greeting">You taste of salt and deep water. Hello, swimmer.</text>
+		<text key="offer">I am Nerissa, of the water. I have watched you fight where others only drown, and all that splashing has woken the drowned dead. Now they have formed a choir, and they sing a song that pulls ships down. I can sing against them with my Tide Stone, but my song is fragile. Guard the stone while I sing, and the drowned will finally rest.</text>
+		<text key="briefing">The Tide Stone sings. Do not let them touch it; every drowned hand on it is a note I lose.</text>
+		<text key="start">Guard the Tide Stone until Nerissa's song is finished.</text>
+		<text key="meterName">Song</text>
+		<text key="totemLine">The stone hums like a shell held to the ear.</text>
+		<text key="wave">The drowned choir walks out of the mist, singing!</text>
+		<text key="boss">A great sunken bell tolls - something answers it!</text>
+		<text key="bossLine">Down... down... down to the quiet...</text>
+		<text key="leave">The Tide Stone is alone! Return to it!</text>
+		<text key="failMeter">The drowned silenced the Tide Stone.</text>
+		<text key="failDeath">You sank, and the choir sang on.</text>
+		<text key="accepted">Then I sing.</text>
+		<text key="postponed">The tide always comes back.</text>
+		<text key="ignored">The sea will remember you anyway.</text>
+		<text key="forfeited">Then I will sing alone, as I always have.</text>
+		<text key="success">The choir is silent. The drowned sleep at last, and ships will sail safely for a while. The sea gives you its thanks - and a little of its voice.</text>
+		<text key="farewell">Swim deep, and come back up.</text>
+		<rewards set="moderate">
+			<reward type="TITLE" value="Tidecaller" />
+			<reward type="TITLE_COLOR" value="3399FF" />
+		</rewards>
+	</quest>
+
+	<!-- 21. The ghost of a murdered page offers the often-murdered a chance to strike back. -->
+	<quest id="21" name="The Wronged" messenger="900337">
+		<trigger type="KILLED_BY_PK" count="10" />
+		<task type="CHASE" mode="COURIER" count="3" spawnMin="1200" spawnMax="1800" escapeMin="3000" escapeMax="4000" maxMisses="1" timeLimit="2400" />
+		<role name="courier" set="bandit" count="1" tierBonus="1" title="Red Hand Courier" />
+		<role name="guard" set="bandit" count="2" title="Red Hand Cutthroat" />
+		<text key="greeting">Don't be scared. I'm one of you. One of the... unlucky ones.</text>
+		<text key="offer">My name was Tam. I was a page carrying letters when someone killed me for the fun of it. You know how that feels - they've done it to you again and again, haven't they? The murderers on the roads aren't all lone wolves. Many are paid by the Red Hand, a guild that sells killings and buys silence. Today three of their couriers carry the list of who to kill next. Catch them before they reach their hideout. Let's take something from them for once.</text>
+		<text key="briefing">Your radar follows each courier. They walk, you run. Let no more than one get away.</text>
+		<text key="start">Watch your radar for the first Red Hand courier.</text>
+		<text key="appears">A Red Hand courier is on the road! Your radar marks him.</text>
+		<text key="escaped">The courier reached the hideout. Don't let the next one through!</text>
+		<text key="courierCaught">The courier falls. A bloody list spills from his satchel.</text>
+		<text key="failEscaped">Too many couriers got through. The Red Hand's lists go out.</text>
+		<text key="failDeath">They got you again. I'm sorry. I know how it feels.</text>
+		<text key="accepted">Thank you. Truly.</text>
+		<text key="postponed">I'm not going anywhere. I can't.</text>
+		<text key="ignored">I understand. It's hard to be brave when it keeps happening.</text>
+		<text key="forfeited">Then I'll keep waiting for someone else.</text>
+		<text key="success">Three lists, three couriers. Every name on those pages will live a little longer because of you. Mine was on one, once. Take this - and walk the roads with your head high.</text>
+		<text key="farewell">They can't take this from you.</text>
+		<rewards set="moderate">
+			<reward type="ITEM" id="3936" count="2" /> <!-- Blessed Scroll of Resurrection -->
+			<reward type="TITLE" value="Unbowed" />
+		</rewards>
+	</quest>
+
+	<!-- 22. An archivist needs a famous quester to guard the chronicle of great deeds. -->
+	<quest id="22" name="The Archivist's Burden" messenger="900338">
+		<trigger type="QUESTS_COMPLETED" count="30" />
+		<task type="ESCORT" escorteeId="900344" stopId="900345" stops="4" stopMin="900" stopMax="1400" workTime="55" meter="100" drain="1" abandonRange="2500" lostTime="30" timeLimit="2400" />
+		<role name="ambush" set="dark" count="3" title="Shade of Oblivion" />
+		<text key="greeting">You! Yes, you - I have read about you. Thirty times, in fact.</text>
+		<text key="offer">Archivist Baulden, of the Hall of Records. Every deed of note in this kingdom ends up in my books, and lately a great many of them have your name in them. But the books are hunted: the Shades of Oblivion devour whatever is written down, and they have found my archive. I must move the chronicles to four hidden vaults in the wild. Who better to guard the record of great deeds than the one who did them? Walk with me, and keep the shades off while I seal each vault.</text>
+		<text key="briefing">I will follow you. Lead me to each vault on your radar and keep the shades off me while I seal it. They eat ink, but they don't mind a bit of archivist either.</text>
+		<text key="start">Lead Baulden to the first hidden vault on your radar.</text>
+		<text key="escorteeStart">Lead on. Mind the satchel, it's heavier than it looks.</text>
+		<text key="work">Here! Hold them off while I write the seal...</text>
+		<text key="ambush">Shades of Oblivion swarm toward the chronicles!</text>
+		<text key="clear">Shades still lurking! I can't open the satchel with them about!</text>
+		<text key="stopDone">Sealed. Not even Oblivion will find that one. Onward!</text>
+		<text key="stopDoneTitle">Vault Sealed</text>
+		<text key="next">Lead Baulden to the next vault.</text>
+		<text key="meterName">Chronicle</text>
+		<text key="lost">Baulden calls out for you, clutching his satchel!</text>
+		<text key="failMeter">The shades devoured the chronicles. A hundred years of deeds, forgotten.</text>
+		<text key="failAbandoned">You left Baulden and the chronicles alone.</text>
+		<text key="accepted">Splendid! I shall take notes.</text>
+		<text key="postponed">I will make an appointment in my ledger.</text>
+		<text key="ignored">Hmph. Not every deed is worth recording, I suppose.</text>
+		<text key="forfeited">Then I shall write that you declined. In small letters.</text>
+		<text key="success">Four vaults, sealed. The chronicles are safe - and the last page now records how you saved them. A loremaster deserves a loremaster's reward.</text>
+		<text key="farewell">I'll be reading about you, I'm sure.</text>
+		<rewards set="moderate">
+			<reward type="TITLE" value="Loremaster" />
+			<reward type="TITLE_COLOR" value="DDBB77" />
+		</rewards>
+	</quest>
+
+	<!-- 23. A dwarf who has walked every road meets someone who walked even farther. Landmark coordinates come from the teleporter data. -->
+	<quest id="23" name="The Road Goes Ever On" messenger="900339">
+		<trigger type="DISTANCE" count="2500000" />
+		<task type="RIDDLE" riddles="4" radius="700" hintAfter="600" apparitionId="900346" failOnDeath="false" timeLimit="3600" />
+		<landmark name="Ruins of Agony" x="-41248" y="122848" z="-2904" riddle="Where old stones still cry out in pain, a day's walk from the walls of Gludio." hint="West of Gludio." />
+		<landmark name="Dragon Valley" x="73024" y="118485" z="-3696" riddle="A valley where the bones of dragons lie, and some of the bones still breathe." hint="North of Giran." />
+		<landmark name="Execution Grounds" x="50568" y="152408" z="-2656" riddle="Where the condemned walked their last road, halfway between the town of Dion and the richest town of all." hint="Between Dion and Giran." />
+		<landmark name="Sea of Spores" x="64328" y="26803" z="-3768" riddle="A sea with no water, where mushrooms taller than men breathe clouds into the air." hint="West of the Ivory Tower." />
+		<landmark name="Fields of Massacre" x="183543" y="-14974" z="-2776" riddle="A field where two armies met and none walked home, beyond the capital toward the rising sun." hint="North-east of Aden." />
+		<landmark name="Hot Springs" x="144880" y="-113468" z="-2560" riddle="Where the earth is warm enough to bathe in, though the beasts there do not like to share." hint="North of Goddard." />
+		<landmark name="Imperial Tomb" x="186699" y="-75915" z="-2826" riddle="An emperor sleeps behind sealed doors, east of the town that watches the mountain passes." hint="East of Goddard." />
+		<landmark name="Den of Evil" x="68693" y="-110438" z="-1904" riddle="A den in the snow where evil things gather to keep warm." hint="South-west of Schuttgart." />
+		<landmark name="Frost Lake" x="107577" y="-122392" z="-3632" riddle="A lake so cold that it forgot how to move." hint="South-east of Schuttgart." />
+		<landmark name="Isle of Prayer" x="149518" y="195280" z="-3736" riddle="An island where the faithful once went to be heard, across the water from the town of the water goddess." hint="East of Heine." />
+		<text key="greeting">Well met on the road! And what a road it's been for you, eh?</text>
+		<text key="offer">Dorrin Farstride. I've worn out more boots than most dwarves have worn out beards, and I thought nobody walked farther than me. Then I saw your tracks. Everywhere. So here's a game for two wanderers: I give you riddles about places I've stood, and you go and stand there too. No hurry - teleport, walk, swim, however you like. Four riddles, and we'll know which of us is the true Far-Strider.</text>
+		<text key="briefing">Here's the first riddle. Click the question mark to read it again. If a riddle stumps you for long, my old map will start to help. Dying won't stop the game.</text>
+		<text key="solved">Ha! You found it. I left my mark on that stone myself, see?</text>
+		<text key="next">Dorrin scribbles another riddle.</text>
+		<text key="hint">A faint line appears on Dorrin's map...</text>
+		<text key="accepted">Lace your boots!</text>
+		<text key="postponed">The road will wait. It always does.</text>
+		<text key="ignored">Off you go, then. Somewhere, I'm sure.</text>
+		<text key="forfeited">Then I'll keep the title. Ha!</text>
+		<text key="success">Four for four! I bow to you, Far-Strider. The road goes ever on - and so, it seems, do you.</text>
+		<text key="farewell">See you at the end of the road. If there is one.</text>
+		<rewards set="moderate">
+			<reward type="ITEM" id="1538" count="5" /> <!-- Blessed Scroll of Escape -->
+			<reward type="TITLE" value="Far-Strider" />
+			<reward type="TITLE_COLOR" value="BBDD88" />
 		</rewards>
 	</quest>
 </list>

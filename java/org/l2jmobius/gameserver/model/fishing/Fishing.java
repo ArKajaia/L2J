@@ -26,6 +26,7 @@ import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.data.xml.FishingMonstersData;
 import org.l2jmobius.gameserver.managers.FishingChampionshipManager;
+import org.l2jmobius.gameserver.managers.HiddenQuestManager;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
@@ -167,6 +168,7 @@ public class Fishing implements Runnable
 					_fisher.sendPacket(SystemMessageId.YOU_CAUGHT_SOMETHING);
 					_fisher.addItem(ItemProcessType.PICKUP, _fishId, 1, null, true);
 					FishingChampionshipManager.getInstance().newFish(_fisher, _lureId);
+					HiddenQuestManager.getInstance().onFishCaught(_fisher);
 				}
 			}
 		}

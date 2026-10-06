@@ -14,6 +14,16 @@
 			<xs:enumeration value="KILL_SOLO" />
 			<xs:enumeration value="KILL_RAID" />
 			<xs:enumeration value="KILL_KARMA_PLAYER" />
+			<xs:enumeration value="KILL_LOW_HEALTH" />
+			<xs:enumeration value="KILL_UNARMED" />
+			<xs:enumeration value="KILL_IN_WATER" />
+			<xs:enumeration value="KILLED_BY_PK" />
+			<xs:enumeration value="OLYMPIAD_WINS" />
+			<xs:enumeration value="ENCHANT_FAILS" />
+			<xs:enumeration value="FISH_CAUGHT" />
+			<xs:enumeration value="MEDITATION" />
+			<xs:enumeration value="DISTANCE" />
+			<xs:enumeration value="QUESTS_COMPLETED" />
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:simpleType name="taskType">
