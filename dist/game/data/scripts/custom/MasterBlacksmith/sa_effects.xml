@@ -1,0 +1,1126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Special ability effect of every weapon the blacksmiths can enhance, taken from the retail item descriptions (stats/items). Generated; used by MasterBlacksmith.java. -->
+<list>
+	<effect itemId="4681" text="Decreases player&#x27;s HP by 12 while increasing P. Atk. by 248 on a critical attack." /> <!-- Stormbringer - Critical Anger -->
+	<effect itemId="4682" text="Increases Critical Rate by 86." /> <!-- Stormbringer - Focus -->
+	<effect itemId="4683" text="Increases weight gauge by 20%." /> <!-- Stormbringer - Light -->
+	<effect itemId="4684" text="Increases Accuracy by 6." /> <!-- Shamshir - Guidance -->
+	<effect itemId="4685" text="Increases Critical Rate by 67 when attacking the enemy from behind." /> <!-- Shamshir - Back Blow -->
+	<effect itemId="4686" text="Increases Evasion by 7 when HP drops to 60% or lower." /> <!-- Shamshir - Rsk. Evasion -->
+	<effect itemId="4687" text="Increases Critical Rate by 82." /> <!-- Katana - Focus -->
+	<effect itemId="4688" text="Increases P. Atk. by 194 on a critical attack." /> <!-- Katana - Critical Damage -->
+	<effect itemId="4689" text="Increases Atk. Spd. by about 7%." /> <!-- Katana - Haste -->
+	<effect itemId="4690" text="Increases P. Atk. by 194 on a critical attack." /> <!-- Spirit Sword - Critical Damage -->
+	<effect itemId="4691" text="Poisons the target with a 15% chance during a general critical attack." /> <!-- Spirit Sword - Critical Poison -->
+	<effect itemId="4692" text="Increases Atk. Spd. by about 7%." /> <!-- Spirit Sword - Haste -->
+	<effect itemId="4693" text="Increases Critical Rate by 82." /> <!-- Raid Sword - Focus -->
+	<effect itemId="4694" text="Absorbs 9 HP from target during a critical attack." /> <!-- Raid Sword - Critical Drain -->
+	<effect itemId="4695" text="Poisons the target with a 15% chance during a general critical attack." /> <!-- Raid Sword - Critical Poison -->
+	<effect itemId="4696" text="Increases Accuracy by 5." /> <!-- Caliburs - Guidance -->
+	<effect itemId="4697" text="Increases Critical Rate by 77." /> <!-- Caliburs - Focus -->
+	<effect itemId="4698" text="Increases P. Atk. by 213 on a critical attack." /> <!-- Caliburs - Critical Damage -->
+	<effect itemId="4699" text="Increases Critical Rate by 77." /> <!-- Sword of Delusion - Focus -->
+	<effect itemId="4700" text="Increases Max HP by 25%." /> <!-- Sword of Delusion - Health -->
+	<effect itemId="4701" text="Increases Atk. Spd. by 12% when HP drops to 60% or lower." /> <!-- Sword of Delusion - Rsk. Haste -->
+	<effect itemId="4702" text="Increases Critical Rate by 77." /> <!-- Tsurugi - Focus -->
+	<effect itemId="4703" text="Increases P. Atk. by 213 on a critical attack." /> <!-- Tsurugi - Critical Damage -->
+	<effect itemId="4704" text="Increases Atk. Spd. by about 7%." /> <!-- Tsurugi - Haste -->
+	<effect itemId="4705" text="Increases Max HP by 25%." /> <!-- Sword of Nightmare - Health -->
+	<effect itemId="4706" text="Increases Critical Rate by 77." /> <!-- Sword of Nightmare - Focus -->
+	<effect itemId="4707" text="Increases weight gauge by 20%." /> <!-- Sword of Nightmare - Light -->
+	<effect itemId="4708" text="Increases Critical Rate by 73." /> <!-- Samurai Longsword - Focus -->
+	<effect itemId="4709" text="Increases P. Atk. by 231 on a critical attack." /> <!-- Samurai Longsword - Critical Damage -->
+	<effect itemId="4710" text="Increases Atk. Spd. by about 7%." /> <!-- Samurai Longsword - Haste -->
+	<effect itemId="4711" text="Increases P. Atk. by 174 on a critical attack." /> <!-- Flamberge - Critical Damage -->
+	<effect itemId="4712" text="Increases Critical Rate by 86." /> <!-- Flamberge - Focus -->
+	<effect itemId="4713" text="Increases weight gauge by 20%." /> <!-- Flamberge - Light -->
+	<effect itemId="4714" text="Increases Accuracy by 5." /> <!-- Keshanberk - Guidance -->
+	<effect itemId="4715" text="Increases Critical Rate by 68." /> <!-- Keshanberk - Focus -->
+	<effect itemId="4716" text="Increases Critical Rate by 56 when attacking the enemy from behind." /> <!-- Keshanberk - Back Blow -->
+	<effect itemId="4717" text="Increases Critical Rate by 64." /> <!-- Sword of Damascus - Focus -->
+	<effect itemId="4718" text="Increases P. Atk. by 262 on a critical attack." /> <!-- Sword of Damascus - Critical Damage -->
+	<effect itemId="4719" text="Increases Atk. Spd. by about 6%." /> <!-- Sword of Damascus - Haste -->
+	<effect itemId="4723" text="Increases Max HP by 25%." /> <!-- Great Sword - Health -->
+	<effect itemId="4724" text="Increases P. Atk. by 247 on a critical attack." /> <!-- Great Sword - Critical Damage -->
+	<effect itemId="4725" text="Increases Critical Rate by 68." /> <!-- Great Sword - Focus -->
+	<effect itemId="4726" text="Increases Max HP by 25%." /> <!-- Big Hammer - Health -->
+	<effect itemId="4727" text="Increases Critical Rate by 138 when HP drops to 60% or lower." /> <!-- Big Hammer - Rsk. Focus -->
+	<effect itemId="4728" text="Increases Atk. Spd. by about 8%." /> <!-- Big Hammer - Haste -->
+	<effect itemId="4729" text="Increases P. Atk. by 20 while reducing Max HP by 15%." /> <!-- Battle Axe - Anger -->
+	<effect itemId="4730" text="Increases Critical Rate by 138 when HP drops to 60% or lower." /> <!-- Battle Axe - Rsk. Focus -->
+	<effect itemId="4731" text="Increases Atk. Spd. by about 8%." /> <!-- Battle Axe - Haste -->
+	<effect itemId="4732" text="Increases P. Atk. by 20 while reducing Max HP by 15%." /> <!-- Silver Axe - Anger -->
+	<effect itemId="4733" text="Increases Critical Rate by 138 when HP drops to 60% or lower." /> <!-- Silver Axe - Rsk. Focus -->
+	<effect itemId="4734" text="Increases Atk. Spd. by about 8%." /> <!-- Silver Axe - Haste -->
+	<effect itemId="4735" text="Increases P. Atk. by 20 while reducing Max HP by 15%." /> <!-- Skull Graver - Anger -->
+	<effect itemId="4736" text="Increases Max HP by 25%." /> <!-- Skull Graver - Health -->
+	<effect itemId="4737" text="Increases Critical Rate by 138 when HP drops to 60% or lower." /> <!-- Skull Graver - Rsk. Focus -->
+	<effect itemId="4738" text="Increases P. Atk. by 22 while reducing Max HP by 15%." /> <!-- Dwarven War Hammer - Anger -->
+	<effect itemId="4739" text="Increases Max HP by 25%." /> <!-- Dwarven War Hammer - Health -->
+	<effect itemId="4740" text="Increases Atk. Spd. by about 7%." /> <!-- Dwarven War Hammer - Haste -->
+	<effect itemId="4741" text="Increases P. Atk. by 24 while reducing Max HP by 15%." /> <!-- War Axe - Anger -->
+	<effect itemId="4742" text="Increases Max HP by 25%." /> <!-- War Axe - Health -->
+	<effect itemId="4743" text="Increases Atk. Spd. by about 7%." /> <!-- War Axe - Haste -->
+	<effect itemId="4744" text="Increases P. Atk. by 26 while reducing Max HP by 15%." /> <!-- Yaksa Mace - Anger -->
+	<effect itemId="4745" text="Increases Max HP by 25%." /> <!-- Yaksa Mace - Health -->
+	<effect itemId="4746" text="Increases Critical Rate by 115 when HP drops to 60% or lower." /> <!-- Yaksa Mace - Rsk. Focus -->
+	<effect itemId="4747" text="Increases P. Atk. by 28 while reducing Max HP by 15%." /> <!-- Heavy War Axe - Anger -->
+	<effect itemId="4748" text="Increases Max HP by 25%." /> <!-- Heavy War Axe - Health -->
+	<effect itemId="4749" text="Increases Critical Rate by 107 when HP drops to 60% or lower." /> <!-- Heavy War Axe - Rsk. Focus -->
+	<effect itemId="4750" text="Increases P. Atk. by 30 while reducing Max HP by 15%." /> <!-- Deadman's Glory - Anger -->
+	<effect itemId="4751" text="Increases Max HP by 25%." /> <!-- Deadman's Glory - Health -->
+	<effect itemId="4752" text="Increases Atk. Spd. by about 6%." /> <!-- Deadman's Glory - Haste -->
+	<effect itemId="4753" text="Increases Max HP by 25%." /> <!-- Art of Battle Axe - Health -->
+	<effect itemId="4754" text="Increases Critical Rate by 99 when HP drops to 60% or lower." /> <!-- Art of Battle Axe - Rsk. Focus -->
+	<effect itemId="4755" text="Increases Atk. Spd. by about 6%." /> <!-- Art of Battle Axe - Haste -->
+	<effect itemId="4759" text="Inflicts Bleed on the target with a 17% chance during a general critical attack." /> <!-- Cursed Dagger - Critical Bleed -->
+	<effect itemId="4760" text="Poisons the target with a 9% chance during a general critical attack." /> <!-- Cursed Dagger - Critical Poison -->
+	<effect itemId="4761" text="Increases Atk. Spd. by 13% when HP drops to 60% or lower." /> <!-- Cursed Dagger - Rsk. Haste -->
+	<effect itemId="4762" text="Increases Critical Rate by 90." /> <!-- Dark Elven Dagger - Focus -->
+	<effect itemId="4763" text="Increases Critical Rate by 109 when attacking the enemy from behind." /> <!-- Dark Elven Dagger - Back Blow -->
+	<effect itemId="4765" text="Inflicts Bleed on the target with a 17% chance during a general critical attack." /> <!-- Stiletto - Critical Bleed -->
+	<effect itemId="4766" text="Poisons the target with a 9% chance during a general critical attack." /> <!-- Stiletto - Critical Poison -->
+	<effect itemId="4768" text="Increases Evasion by 2." /> <!-- Grace Dagger - Evasion -->
+	<effect itemId="4769" text="Increases Critical Rate by 81." /> <!-- Grace Dagger - Focus -->
+	<effect itemId="4770" text="Increases Critical Rate by 97 when attacking the enemy from behind." /> <!-- Grace Dagger - Back Blow -->
+	<effect itemId="4771" text="Increases Evasion by 2." /> <!-- Dark Screamer - Evasion -->
+	<effect itemId="4772" text="Increases Critical Rate by 81." /> <!-- Dark Screamer - Focus -->
+	<effect itemId="4773" text="Inflicts Bleed on the target with a 14% chance during a general critical attack." /> <!-- Dark Screamer - Critical Bleed -->
+	<effect itemId="4774" text="Inflicts Bleed on the target with a 14% chance during a general critical attack." /> <!-- Crystal Dagger - Critical Bleed -->
+	<effect itemId="4775" text="Poisons the target with a 7% chance during a general critical attack." /> <!-- Crystal Dagger - Critical Poison -->
+	<effect itemId="4777" text="Increases Evasion by 2." /> <!-- Kris - Evasion -->
+	<effect itemId="4778" text="Increases Critical Rate by 71." /> <!-- Kris - Focus -->
+	<effect itemId="4779" text="Increases Critical Rate by 86 when attacking the enemy from behind." /> <!-- Kris - Back Blow -->
+	<effect itemId="4780" text="Inflicts Bleed on the target with a 12% chance during a general critical attack." /> <!-- Demon's Dagger - Critical Bleed -->
+	<effect itemId="4781" text="Poisons the target with a 6% chance during a general critical attack." /> <!-- Demon's Dagger - Critical Poison -->
+	<effect itemId="4789" text="Absorbs 6 HP from target during a critical attack." /> <!-- Chakram - Critical Drain -->
+	<effect itemId="4790" text="Poisons the target with a 17% chance during a general critical attack." /> <!-- Chakram - Critical Poison -->
+	<effect itemId="4791" text="Increases Atk. Spd. by 13% when HP drops to 60% or lower." /> <!-- Chakram - Rsk. Haste -->
+	<effect itemId="4792" text="Increases Evasion by 6 when HP drops to 60% or lower." /> <!-- Fisted Blade - Rsk. Evasion -->
+	<effect itemId="4793" text="Increases Atk. Spd. by 12% when HP drops to 60% or lower." /> <!-- Fisted Blade - Rsk. Haste -->
+	<effect itemId="4794" text="Increases Atk. Spd. by about 7%." /> <!-- Fisted Blade - Haste -->
+	<effect itemId="4795" text="Absorbs 10 HP from target during a critical attack." /> <!-- Great Pata - Critical Drain -->
+	<effect itemId="4796" text="Poisons the target with a 14% chance during a general critical attack." /> <!-- Great Pata - Critical Poison -->
+	<effect itemId="4797" text="Increases Atk. Spd. by 11% when HP drops to 60% or lower." /> <!-- Great Pata - Rsk. Haste -->
+	<effect itemId="4798" text="Increases Evasion by 7 when HP drops to 60% or lower." /> <!-- Knuckle Duster - Rsk. Evasion -->
+	<effect itemId="4799" text="Increases Atk. Spd. by 12% when HP drops to 60% or lower." /> <!-- Knuckle Duster - Rsk. Haste -->
+	<effect itemId="4800" text="Increases Atk. Spd. by about 7%." /> <!-- Knuckle Duster - Haste -->
+	<effect itemId="4801" text="Poisons the target with a 14% chance during a general critical attack." /> <!-- Arthro Nail - Critical Poison -->
+	<effect itemId="4802" text="Increases Evasion by 6 when HP drops to 60% or lower." /> <!-- Arthro Nail - Rsk. Evasion -->
+	<effect itemId="4803" text="Increases Atk. Spd. by 10% when HP drops to 60% or lower." /> <!-- Arthro Nail - Rsk. Haste -->
+	<effect itemId="4804" text="Absorbs 14 HP from target during a critical attack." /> <!-- Bellion Cestus - Critical Drain -->
+	<effect itemId="4805" text="Poisons the target with a 12% chance during a general critical attack." /> <!-- Bellion Cestus - Critical Poison -->
+	<effect itemId="4806" text="Increases Atk. Spd. by 9% when HP drops to 60% or lower." /> <!-- Bellion Cestus - Rsk. Haste -->
+	<effect itemId="4810" text="Increases Accuracy by 5." /> <!-- Crystallized Ice Bow - Guidance -->
+	<effect itemId="4811" text="Increases Evasion by 2." /> <!-- Crystallized Ice Bow - Evasion -->
+	<effect itemId="4812" text="Decreases re-use delay by about 17%." /> <!-- Crystallized Ice Bow - Quick Recovery -->
+	<effect itemId="4813" text="Increases Accuracy by 5." /> <!-- Elemental Bow - Guidance -->
+	<effect itemId="4814" text="Has a 30% chance of reducing the number of soulshots consumed to 7." /> <!-- Elemental Bow - Miser -->
+	<effect itemId="4815" text="Decreases re-use delay by about 20%." /> <!-- Elemental Bow - Quick Recovery -->
+	<effect itemId="4816" text="Increases Evasion by 2." /> <!-- Noble Elven Bow - Evasion -->
+	<effect itemId="4817" text="Has a 30% chance of reducing the number of soulshots consumed to 7." /> <!-- Noble Elven Bow - Miser -->
+	<effect itemId="4818" text="Has a 46% chance of decreasing MP Consumption to 2 when launching a general attack." /> <!-- Noble Elven Bow - Cheap Shot -->
+	<effect itemId="4819" text="Increases Accuracy by 4." /> <!-- Akat Long Bow - Guidance -->
+	<effect itemId="4820" text="Increases Evasion by 2." /> <!-- Akat Long Bow - Evasion -->
+	<effect itemId="4821" text="Has a 30% chance of reducing the number of soulshots consumed to 8." /> <!-- Akat Long Bow - Miser -->
+	<effect itemId="4822" text="Increases Accuracy by 4." /> <!-- Eminence Bow - Guidance -->
+	<effect itemId="4823" text="Has a 30% chance of reducing the number of soulshots consumed to 9." /> <!-- Eminence Bow - Miser -->
+	<effect itemId="4824" text="Has a 34% chance of decreasing MP Consumption to 1 when launching a general attack." /> <!-- Eminence Bow - Cheap Shot -->
+	<effect itemId="4825" text="Increases Evasion by 2." /> <!-- Dark Elven Long Bow - Evasion -->
+	<effect itemId="4826" text="Inflicts Bleed on the target with a 41% chance during a general critical attack." /> <!-- Dark Elven Long Bow - Critical Bleed -->
+	<effect itemId="4827" text="Has a 19% chance of reducing the number of soulshots consumed to 2." /> <!-- Dark Elven Long Bow - Miser -->
+	<effect itemId="4828" text="Increases Accuracy by 3." /> <!-- Bow of Peril - Guidance -->
+	<effect itemId="4829" text="Decreases re-use delay by about 13%." /> <!-- Bow of Peril - Quick Recovery -->
+	<effect itemId="4830" text="When launching a general attack, there is a 42% chance that MP consumption will be decreased to 1." /> <!-- Bow of Peril - Cheap Shot -->
+	<effect itemId="4834" text="Increases P. Atk. by 20 while reducing Max HP by 15%." /> <!-- Scythe - Anger -->
+	<effect itemId="4835" text="Has an 18% chance of stun effect during a critical attack." /> <!-- Scythe - Critical Stun -->
+	<effect itemId="4836" text="Increases weight gauge by 20%." /> <!-- Scythe - Light -->
+	<effect itemId="4837" text="Increases P. Atk. by 20 while reducing Max HP by 15%." /> <!-- Orcish Glaive - Anger -->
+	<effect itemId="4838" text="Has an 18% chance of stun effect during a critical attack." /> <!-- Orcish Glaive - Critical Stun -->
+	<effect itemId="4839" text="Increases the attack range." /> <!-- Orcish Glaive - Towering Blow -->
+	<effect itemId="4840" text="Has an 18% chance of stun effect during a critical attack." /> <!-- Body Slasher - Critical Stun -->
+	<effect itemId="4841" text="Increases the attack range." /> <!-- Body Slasher - Towering Blow -->
+	<effect itemId="4842" text="Broadens angle of attack." /> <!-- Body Slasher - Wide Blow -->
+	<effect itemId="4843" text="Has a 17% chance of stun effect on a critical attack." /> <!-- Bec de Corbin - Critical Stun -->
+	<effect itemId="4844" text="Increases the attack range." /> <!-- Bec de Corbin - Towering Blow -->
+	<effect itemId="4845" text="Increases weight gauge by 20%." /> <!-- Bec de Corbin - Light -->
+	<effect itemId="4846" text="Increases P. Atk. by 24 while reducing Max HP by 15%." /> <!-- Scorpion - Anger -->
+	<effect itemId="4847" text="Has a 16% chance of stun effect during a critical attack." /> <!-- Scorpion - Critical Stun -->
+	<effect itemId="4848" text="Increases the attack range." /> <!-- Scorpion - Towering Blow -->
+	<effect itemId="4849" text="Has a 16% chance of stun effect during a critical attack." /> <!-- Widow Maker - Critical Stun -->
+	<effect itemId="4850" text="Increases the attack range." /> <!-- Widow Maker - Towering Blow -->
+	<effect itemId="4851" text="Broadens angle of attack." /> <!-- Widow Maker - Wide Blow -->
+	<effect itemId="4852" text="Has a 15% chance of stun effect during a critical attack." /> <!-- Orcish Poleaxe - Critical Stun -->
+	<effect itemId="4853" text="Increases the attack range." /> <!-- Orcish Poleaxe - Towering Blow -->
+	<effect itemId="4854" text="Broadens angle of attack." /> <!-- Orcish Poleaxe - Wide Blow -->
+	<effect itemId="4855" text="Increases P. Atk. by 28 while reducing Max HP by 15%." /> <!-- Great Axe - Anger -->
+	<effect itemId="4856" text="Has a 14% chance of stun effect during a critical attack." /> <!-- Great Axe - Critical Stun -->
+	<effect itemId="4857" text="Increases weight gauge by 20%." /> <!-- Great Axe - Light -->
+	<effect itemId="4858" text="Increases P. Atk. by 30 while reducing Max HP by 15%." /> <!-- Lance - Anger -->
+	<effect itemId="4859" text="Has a 13% chance of stun effect during a critical attack." /> <!-- Lance - Critical Stun -->
+	<effect itemId="4860" text="Increases the attack range." /> <!-- Lance - Towering Blow -->
+	<effect itemId="4864" text="Casts Regeneration on a target with a 30% chance when using a magic skill on the target." /> <!-- Heavy Doom Hammer - Magic Regeneration -->
+	<effect itemId="4865" text="Has a 50% chance of casting Mental Shield when using a magic skill on the target." /> <!-- Heavy Doom Hammer - Mental Shield -->
+	<effect itemId="4866" text="Has a 10% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Heavy Doom Hammer - Magic Hold -->
+	<effect itemId="4867" text="Increases Evasion by 7 when HP drops to 60% or lower." /> <!-- Crystal Staff - Rsk. Evasion -->
+	<effect itemId="4868" text="Increases base MP by 30%. This bonus does not apply to MP gained through passive skills." /> <!-- Crystal Staff - Mana Up -->
+	<effect itemId="4869" text="Has a 20% chance of casting Blessed Body when using a magic skill on the target." /> <!-- Crystal Staff - Blessed Body -->
+	<effect itemId="4870" text="Has a 8% chance of casting Curse: Poison when using a magic skill on the target." /> <!-- Heavy Doom Axe - Magic Poison -->
+	<effect itemId="4871" text="Has a 8% chance of casting Curse: Weakness when using a magic skill on the target." /> <!-- Heavy Doom Axe - Magic Weakness -->
+	<effect itemId="4872" text="Has a 8% chance of casting Curse Chaos when using a magic skill on the target." /> <!-- Heavy Doom Axe - Magic Chaos -->
+	<effect itemId="4873" text="Has a 10% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Cursed Staff - Magic Hold -->
+	<effect itemId="4874" text="Has a 8% chance of casting Curse: Poison when using a magic skill on the target." /> <!-- Cursed Staff - Magic Poison -->
+	<effect itemId="4875" text="Has a 8% chance of casting Curse: Weakness when using a magic skill on the target." /> <!-- Cursed Staff - Magic Weakness -->
+	<effect itemId="4876" text="Casts Regeneration on a target with a 30% chance when using a magic skill on the target." /> <!-- Paradia Staff - Magic Regeneration -->
+	<effect itemId="4877" text="Has a 50% chance of casting Mental Shield when using a magic skill on the target." /> <!-- Paradia Staff - Mental Shield -->
+	<effect itemId="4878" text="Has a 10% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Paradia Staff - Magic Hold -->
+	<effect itemId="4879" text="Increases Evasion by 6 when HP drops to 60% or lower." /> <!-- Pa'agrian Hammer - Rsk. Evasion -->
+	<effect itemId="4880" text="Has a 7% chance of casting Curse: Poison when using a magic skill on the target." /> <!-- Pa'agrian Hammer - Magic Poison -->
+	<effect itemId="4881" text="Has a 7% chance of casting Curse: Weakness when using a magic skill on the target." /> <!-- Pa'agrian Hammer - Magic Weakness -->
+	<effect itemId="4882" text="Has a 10% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Sage's Staff - Magic Hold -->
+	<effect itemId="4883" text="Has a 7% chance of casting Curse: Poison when using a magic skill on the target." /> <!-- Sage's Staff - Magic Poison -->
+	<effect itemId="4884" text="Has a 7% chance of casting Curse: Weakness when using a magic skill on the target." /> <!-- Sage's Staff - Magic Weakness -->
+	<effect itemId="4885" text="Increases Max MP by 30%." /> <!-- Pa'agrian Axe - Mana Up -->
+	<effect itemId="4886" text="Has a 7% chance of casting Curse: Weakness when using a magic skill on the target." /> <!-- Pa'agrian Axe - Magic Weakness -->
+	<effect itemId="4887" text="Has a 7% chance of casting Curse Chaos when using a magic skill on the target." /> <!-- Pa'agrian Axe - Magic Chaos -->
+	<effect itemId="4888" text="Casts Regeneration on a target with a 30% chance when using a magic skill on the target." /> <!-- Deadman's Staff - Magic Regeneration -->
+	<effect itemId="4889" text="Has a 50% chance of casting Mental Shield when using a magic skill on the target." /> <!-- Deadman's Staff - Mental Shield -->
+	<effect itemId="4890" text="Has a 10% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Deadman's Staff - Magic Hold -->
+	<effect itemId="4891" text="Increases Evasion by 6 when HP drops to 60% or lower." /> <!-- Ghoul's Staff - Rsk. Evasion -->
+	<effect itemId="4892" text="Increases Max MP by 30%." /> <!-- Ghoul's Staff - Mana Up -->
+	<effect itemId="4893" text="Has a 20% chance of casting Blessed Body when using a magic skill on the target." /> <!-- Ghoul's Staff - Blessed Body -->
+	<effect itemId="4894" text="Has a 7% chance of casting Curse: Poison when using a magic skill on the target." /> <!-- Demon's Staff - Magic Poison -->
+	<effect itemId="4895" text="Has a 7% chance of casting Curse: Weakness when using a magic skill on the target." /> <!-- Demon's Staff - Magic Weakness -->
+	<effect itemId="4896" text="Has a 7% chance of casting Curse Chaos when using a magic skill on the target." /> <!-- Demon's Staff - Magic Chaos -->
+	<effect itemId="4897" text="Casts Regeneration on a target with a 30% chance when using a magic skill on the target." /> <!-- Sprite's Staff - Magic Regeneration -->
+	<effect itemId="4898" text="Has a 50% chance of casting Mental Shield when using a magic skill on the target." /> <!-- Sprite's Staff - Mental Shield -->
+	<effect itemId="4899" text="Has a 10% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Sprite's Staff - Magic Hold -->
+	<effect itemId="4900" text="Has a 20% chance of casting Focus when using a magic skill on the target." /> <!-- Staff of Evil Spirits - Magic Focus -->
+	<effect itemId="4901" text="Has a 20% chance of casting Blessed Body when using a magic skill on the target." /> <!-- Staff of Evil Spirits - Blessed Body -->
+	<effect itemId="4902" text="Has a 6% chance of casting Curse: Poison when using a magic skill on the target." /> <!-- Staff of Evil Spirits - Magic Poison -->
+	<effect itemId="5596" text="Increases Max MP by 30%." /> <!-- Dasparion's Staff - Mana Up -->
+	<effect itemId="5597" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Dasparion's Staff - Conversion -->
+	<effect itemId="5598" text="Increases Casting Spd. by 15%." /> <!-- Dasparion's Staff - Acumen -->
+	<effect itemId="5599" text="Increases Critical Rate by 61." /> <!-- Meteor Shower - Focus -->
+	<effect itemId="5600" text="Has a 42% chance of inflicting Bleed on the target during a general critical attack." /> <!-- Meteor Shower - Critical Bleed -->
+	<effect itemId="5601" text="Increases Atk. Spd. by 11% when HP drops to 60% or lower." /> <!-- Meteor Shower - Rsk. Haste -->
+	<effect itemId="5602" text="Increases Max HP by 25%." /> <!-- Elysian - Health -->
+	<effect itemId="5603" text="Decreases Max HP by 15% and increases P. Atk. by 32." /> <!-- Elysian - Anger -->
+	<effect itemId="5604" text="During a critical attack, absorbs 19 HP from target." /> <!-- Elysian - Critical Drain -->
+	<effect itemId="5605" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Branch of the Mother Tree - Conversion -->
+	<effect itemId="5606" text="Has a 30% chance of inflicting an additional power 8 of magical damage when using a magic skill on the target." /> <!-- Branch of the Mother Tree - Magic Damage -->
+	<effect itemId="5607" text="Increases Casting Spd. by 15%." /> <!-- Branch of the Mother Tree - Acumen -->
+	<effect itemId="5608" text="Increases weight gauge by 20%." /> <!-- Carnage Bow - Light -->
+	<effect itemId="5609" text="Has a 35% chance of inflicting Bleed on the target during a general critical attack." /> <!-- Carnage Bow - Critical Bleed -->
+	<effect itemId="5610" text="Increases Max MP by 30%." /> <!-- Carnage Bow - Mana Up -->
+	<effect itemId="5611" text="During a general attack, decreases MP consumption to 1 with a 38% chance." /> <!-- Soul Bow - Cheap Shot -->
+	<effect itemId="5612" text="Decreases re-use delay by about 15%." /> <!-- Soul Bow - Quick Recovery -->
+	<effect itemId="5613" text="Has a 18% chance of inflicting poison on the target during a general critical attack." /> <!-- Soul Bow - Critical Poison -->
+	<effect itemId="5614" text="Increases Critical Rate by 67." /> <!-- Bloody Orchid - Focus -->
+	<effect itemId="5615" text="Increases Critical Rate by 37% when attacking a target from behind." /> <!-- Bloody Orchid - Back Blow -->
+	<effect itemId="5616" text="Has a 12% chance of inflicting Bleed on the target during a general critical attack." /> <!-- Bloody Orchid - Critical Bleed -->
+	<effect itemId="5617" text="Increases Accuracy by 4." /> <!-- Soul Separator - Guidance -->
+	<effect itemId="5618" text="During a critical attack, increases P. Atk. by 200." /> <!-- Soul Separator - Critical Damage -->
+	<effect itemId="5619" text="Increases Atk. Spd. by 11% when HP drops to 60% or lower." /> <!-- Soul Separator - Rsk. Haste -->
+	<effect itemId="5620" text="Increases Atk. Spd. by about 6%." /> <!-- Blood Tornado - Haste -->
+	<effect itemId="5621" text="Increases Critical Rate by 61." /> <!-- Blood Tornado - Focus -->
+	<effect itemId="5622" text="Decreases Max HP by 15% and increases P. Atk. by 38." /> <!-- Blood Tornado - Anger -->
+	<effect itemId="5623" text="When HP drops to 60% or below, increases Evasion by 6." /> <!-- Dragon Grinder - Rsk. Evasion -->
+	<effect itemId="5624" text="Increases Accuracy by 5." /> <!-- Dragon Grinder - Guidance -->
+	<effect itemId="5625" text="Increases Max HP by 25%." /> <!-- Dragon Grinder - Health -->
+	<effect itemId="5626" text="Increases Atk. Spd. by about 6%." /> <!-- Halberd - Haste -->
+	<effect itemId="5627" text="Has a 25% chance of stunning a target during a critical attack." /> <!-- Halberd - Critical Stun -->
+	<effect itemId="5628" text="Broadens the attack angle." /> <!-- Halberd - Wide Blow -->
+	<effect itemId="5632" text="Increases Accuracy by 4." /> <!-- Tallum Glaive - Guidance -->
+	<effect itemId="5633" text="Increases Max HP by 25%." /> <!-- Tallum Glaive - Health -->
+	<effect itemId="5634" text="Broadens the angle of attack." /> <!-- Tallum Glaive - Wide Blow -->
+	<effect itemId="5635" text="Has a 10% chance of inflicting poison on the target during a general critical attack." /> <!-- Tallum Blade - Critical Poison -->
+	<effect itemId="5636" text="Increases Atk. Spd. by about 6%." /> <!-- Tallum Blade - Haste -->
+	<effect itemId="5637" text="Decreases Max HP by 15% and increases P. Atk. by 31." /> <!-- Tallum Blade - Anger -->
+	<effect itemId="5638" text="When using magic, increases MP Consumption by 15% and M. Atk. increases by 153." /> <!-- Elemental Sword - M. Atk. -->
+	<effect itemId="5639" text="Has a 5% chance of casting Paralysis when using a magic skill on the target." /> <!-- Elemental Sword - Magic Paralyze -->
+	<effect itemId="5640" text="Increases M. Atk. by 30." /> <!-- Elemental Sword - Empower -->
+	<effect itemId="5641" text="When using magic, increases MP Consumption by 15% and increases M. Atk. by 167." /> <!-- Sword of Miracles - M. Atk. -->
+	<effect itemId="5642" text="Has a 10% chance of casting Silence when using a magic skill on the target." /> <!-- Sword of Miracles - Magic Silence -->
+	<effect itemId="5643" text="Increases Casting Spd. by 15%." /> <!-- Sword of Miracles - Acumen -->
+	<effect itemId="5644" text="Increases Max HP by 25%." /> <!-- Dragon Slayer - Health -->
+	<effect itemId="5645" text="Has a 24% chance of inflicting Bleed on the target during a general critical attack." /> <!-- Dragon Slayer - Critical Bleed -->
+	<effect itemId="5646" text="During a critical attack, absorbs 11 HP from target." /> <!-- Dragon Slayer - Critical Drain -->
+	<effect itemId="5647" text="During a critical attack, increases P. Atk. by 326." /> <!-- Dark Legion's Edge - Critical Damage -->
+	<effect itemId="5648" text="Increases Max HP by 25%." /> <!-- Dark Legion's Edge - Health -->
+	<effect itemId="5649" text="When HP drops to 60% or below, increases Critical Attack by 130." /> <!-- Dark Legion's Edge - Rsk. Focus -->
+	<effect itemId="6307" text="Increases Accuracy to 5." /> <!-- Sword of Limit - Guidance -->
+	<effect itemId="6308" text="Absorbs 9 HP from target on a critical attack." /> <!-- Sword of Limit - Critical Drain -->
+	<effect itemId="6309" text="Increases Max HP by 25%." /> <!-- Sword of Limit - Health -->
+	<effect itemId="6310" text="Increases M. Atk. by 24." /> <!-- Sword of Whispering Death - Empower -->
+	<effect itemId="6311" text="Increases MP consumption by 15% and increases M. Atk. by 99 during magic use." /> <!-- Sword of Whispering Death - M. Atk. -->
+	<effect itemId="6312" text="Has a 10% chance of casting Silence when using a magic skill on the target." /> <!-- Sword of Whispering Death - Magic Silence -->
+	<effect itemId="6313" text="Increases Casting Spd. by 15%." /> <!-- Homunkulus's Sword - Acumen -->
+	<effect itemId="6314" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Homunkulus's Sword - Conversion -->
+	<effect itemId="6315" text="Has a 5% chance of casting Paralysis when using a magic skill on the target." /> <!-- Homunkulus's Sword - Magic Paralyze -->
+	<effect itemId="6347" text="Increases Critical Rate by 73." /> <!-- Berserker Blade - Focus -->
+	<effect itemId="6348" text="Increases P. Atk. by 270 on a critical attack." /> <!-- Berserker Blade - Critical Damage -->
+	<effect itemId="6349" text="Increases Atk. Spd. by about 7%." /> <!-- Berserker Blade - Haste -->
+	<effect itemId="6356" text="Increases Atk. Spd. by 13% when HP drops to 60% or lower." /> <!-- Dark Elven Dagger - Rsk. Haste -->
+	<effect itemId="6357" text="Increases Atk. Spd. by 12% when HP drops to 60% or lower." /> <!-- Stiletto - Rsk. Haste -->
+	<effect itemId="6358" text="Increases P. Atk. by 140 on a critical attack." /> <!-- Crystal Dagger - Critical Damage -->
+	<effect itemId="6359" text="Increases P. Atk. by 160 on a critical attack." /> <!-- Demon's Dagger - Critical Damage -->
+	<effect itemId="6581" text="Increases Atk. Spd. by about 7%." /> <!-- Forgotten Blade - Haste -->
+	<effect itemId="6582" text="Increases Max HP by 25%." /> <!-- Forgotten Blade - Health -->
+	<effect itemId="6583" text="Increases Critical Rate by 84." /> <!-- Forgotten Blade - Focus -->
+	<effect itemId="6584" text="Restores 3% of melee damage inflicted upon the enemy to your own HP." /> <!-- Basalt Battlehammer - HP Drain -->
+	<effect itemId="6585" text="Increases Max HP by 25%." /> <!-- Basalt Battlehammer - Health -->
+	<effect itemId="6586" text="Increases HP Recovery Rate." /> <!-- Basalt Battlehammer - HP Regeneration -->
+	<effect itemId="6587" text="Increases M. Atk. by 60." /> <!-- Imperial Staff - Empower -->
+	<effect itemId="6588" text="Increases MP Recovery Rate." /> <!-- Imperial Staff - MP Regeneration -->
+	<effect itemId="6589" text="Has a 20% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Imperial Staff - Magic Hold -->
+	<effect itemId="6590" text="Increases P. Atk. by 265 on a critical attack." /> <!-- Angel Slayer - Critical Damage -->
+	<effect itemId="6591" text="Restores 3% of melee damage inflicted upon the enemy to your own HP." /> <!-- Angel Slayer - HP Drain -->
+	<effect itemId="6592" text="Increases Atk. Spd. by about 7%." /> <!-- Angel Slayer - Haste -->
+	<effect itemId="6596" text="Increases HP Recovery Rate." /> <!-- Dragon Hunter Axe - HP Regeneration -->
+	<effect itemId="6597" text="Increases Max HP by 25%." /> <!-- Dragon Hunter Axe - Health -->
+	<effect itemId="6598" text="Restores 3% of melee damage inflicted upon the enemy to your own HP." /> <!-- Dragon Hunter Axe - HP Drain -->
+	<effect itemId="6599" text="Increases Max HP by 25%." /> <!-- Saint Spear - Health -->
+	<effect itemId="6600" text="Increases Accuracy by 5." /> <!-- Saint Spear - Guidance -->
+	<effect itemId="6601" text="Increases Atk. Spd. by about 7%." /> <!-- Saint Spear - Haste -->
+	<effect itemId="6602" text="Increases critical chance by 80." /> <!-- Demon Splinter - Focus -->
+	<effect itemId="6603" text="Increases Max HP by 25%." /> <!-- Demon Splinter - Health -->
+	<effect itemId="6604" text="Has a 27% chance of casting Stun on a critical attack." /> <!-- Demon Splinter - Critical Stun -->
+	<effect itemId="6605" text="Increases Atk. Spd. by about 7%." /> <!-- Heavens Divider - Haste -->
+	<effect itemId="6606" text="Increases Max HP by 25%." /> <!-- Heavens Divider - Health -->
+	<effect itemId="6607" text="Increases critical chance by 84." /> <!-- Heavens Divider - Focus -->
+	<effect itemId="6608" text="Increases Casting Spd. by 15%." /> <!-- Arcana Mace - Acumen -->
+	<effect itemId="6609" text="Increases MP Recovery Rate." /> <!-- Arcana Mace - MP Regeneration -->
+	<effect itemId="6610" text="Increases Max MP by 30%." /> <!-- Arcana Mace - Mana Up -->
+	<effect itemId="7576" text="Has a 26% chance of decreasing MP consumption to 1 on a general attack." /> <!-- Draconic Bow - Cheap Shot -->
+	<effect itemId="7577" text="Increases Critical Rate by 88." /> <!-- Draconic Bow - Focus -->
+	<effect itemId="7578" text="Has a chance of casting Slow on a critical attack." /> <!-- Draconic Bow - Critical Slow -->
+	<effect itemId="7701" text="Increases Max MP by 30%." /> <!-- Stick of Faith - Mana Up -->
+	<effect itemId="7702" text="Has a 10% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Stick of Faith - Magic Hold -->
+	<effect itemId="7703" text="Has a 50% chance of casting Mental Shield when using a magic skill on the target." /> <!-- Stick of Faith - Magic Shield -->
+	<effect itemId="7704" text="Increases M. Atk. by 24." /> <!-- Stick of Eternity - Empower -->
+	<effect itemId="7705" text="Increases Evasion by 7 when HP drops to 60% or lower." /> <!-- Stick of Eternity - Rsk. Evasion -->
+	<effect itemId="7706" text="Has a 20% chance of casting Blessed Body when using a magic skill on the target." /> <!-- Stick of Eternity - Blessed Body -->
+	<effect itemId="7707" text="When using magic, increases MP consumption by 15% and M. Atk. also increases by 99." /> <!-- Nirvana Axe - M. Atk. -->
+	<effect itemId="7708" text="Has a 7% chance of casting Curse: Poison when using a magic skill on the target." /> <!-- Nirvana Axe - Magic Poison -->
+	<effect itemId="7709" text="Has a 7% chance of casting Curse: Weakness when using a magic skill on the target." /> <!-- Nirvana Axe - Magic Weakness -->
+	<effect itemId="7710" text="Increases Casting Spd. by 15%." /> <!-- Club of Nature - Acumen -->
+	<effect itemId="7711" text="Has a 50% chance of casting Mental Shield when using a magic skill on the target." /> <!-- Club of Nature - Mental Shield -->
+	<effect itemId="7712" text="Has a 10% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Club of Nature - Magic Hold -->
+	<effect itemId="7713" text="Increases Max MP by 30%." /> <!-- Mace of Underworld - Mana Up -->
+	<effect itemId="7714" text="Has a 10% chance of casting Silence when using a magic skill on the target." /> <!-- Mace of Underworld - Magic Silence -->
+	<effect itemId="7715" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Mace of Underworld - Conversion -->
+	<effect itemId="7716" text="Increases Casting Spd. by 15%." /> <!-- Inferno Staff - Acumen -->
+	<effect itemId="7717" text="Has a 10% chance of casting Silence when using a magic skill on the target." /> <!-- Inferno Staff - Magic Silence -->
+	<effect itemId="7718" text="Has a 5% chance of casting Paralysis when using a magic skill on the target." /> <!-- Inferno Staff - Magic Paralyze -->
+	<effect itemId="7719" text="During a critical attack, produces a stun effect at the rate of about 25%." /> <!-- Poleaxe - Critical Stun -->
+	<effect itemId="7720" text="Increases the attack range." /> <!-- Poleaxe - Towering Blow -->
+	<effect itemId="7721" text="Broadens angle of attack." /> <!-- Poleaxe - Wide Blow -->
+	<effect itemId="7722" text="Increases Casting Spd. by 15%." /> <!-- Sword of Valhalla - Acumen -->
+	<effect itemId="7723" text="Has a 7% chance of casting Curse: Weakness when using a magic skill on the target." /> <!-- Sword of Valhalla - Magic Weakness -->
+	<effect itemId="7724" text="Casts Regeneration on a target with a 30% chance when using a magic skill on the target." /> <!-- Sword of Valhalla - Magic Regeneration -->
+	<effect itemId="7810" text="Increases Max MP by 30%." /> <!-- Soulfire Dirk - Mana Up -->
+	<effect itemId="7811" text="Has a 10% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Soulfire Dirk - Magic Hold -->
+	<effect itemId="7812" text="Has a 10% chance of casting Silence when using a magic skill on the target." /> <!-- Soulfire Dirk - Magic Silence -->
+	<effect itemId="7813" text="Casts Regeneration on a target with a 30% chance when using a magic skill on the target." /> <!-- Hell Knife - Magic Regeneration -->
+	<effect itemId="7814" text="Has a 50% chance of casting Mental Shield when using a magic skill on the target." /> <!-- Hell Knife - Mental Shield -->
+	<effect itemId="7815" text="Has a 7% chance of casting Curse: Weakness when using a magic skill on the target." /> <!-- Hell Knife - Magic Weakness -->
+	<effect itemId="8102" text="Increases Critical Rate by 77." /> <!-- Pa'agrian Sword - Focus -->
+	<effect itemId="8103" text="Increases Max HP by 25%." /> <!-- Pa'agrian Sword - Health -->
+	<effect itemId="8104" text="Absorbs 9 HP from a target when one makes a critical attack." /> <!-- Pa'agrian Sword - Critical Drain -->
+	<effect itemId="8105" text="Absorbs 8 HP from a target on a critical attack." /> <!-- Guardian Sword - Critical Drain -->
+	<effect itemId="8106" text="Increases Max HP by 25%." /> <!-- Guardian Sword - Health -->
+	<effect itemId="8107" text="Inflicts Bleed on the target with a 24% chance during a general critical attack." /> <!-- Guardian Sword - Critical Bleed -->
+	<effect itemId="8108" text="Increases Atk. Spd. by about 6%." /> <!-- Infernal Master - Haste -->
+	<effect itemId="8109" text="Inflicts additional damage on a critical attack by 297." /> <!-- Infernal Master - Critical Damage -->
+	<effect itemId="8110" text="Increases Critical Rate by 61." /> <!-- Infernal Master - Focus -->
+	<effect itemId="8111" text="Increases Casting Spd. by 15%." /> <!-- Mysterious Sword - Acumen -->
+	<effect itemId="8112" text="When using magic, increases MP Consumption by 15% and M. Atk. by 75." /> <!-- Mysterious Sword - M. Atk. -->
+	<effect itemId="8113" text="Has a 8% chance of casting Curse: Weakness when using a magic skill on the target." /> <!-- Mysterious Sword - Magic Weakness -->
+	<effect itemId="8114" text="Increases M. Atk. by 26." /> <!-- Ecliptic Sword - Empower -->
+	<effect itemId="8115" text="When using magic, increases MP Consumption by 15% and M. Atk. by 112." /> <!-- Ecliptic Sword - M. Atk. -->
+	<effect itemId="8116" text="Has a 10% chance of casting Silence when using a magic skill on the target." /> <!-- Ecliptic Sword - Magic Silence -->
+	<effect itemId="8117" text="Increases Casting Spd. by 15%." /> <!-- Wizard's Tear - Acumen -->
+	<effect itemId="8118" text="When using magic, increases MP Consumption by 15% and M. Atk. by 139." /> <!-- Wizard's Tear - M. Atk. -->
+	<effect itemId="8119" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Wizard's Tear - Conversion -->
+	<effect itemId="8120" text="Increases Max HP by 25%." /> <!-- Dwarven Hammer - Health -->
+	<effect itemId="8121" text="Decreases Max HP by 15% and increases P. Atk. by 26." /> <!-- Dwarven Hammer - Anger -->
+	<effect itemId="8122" text="Inflicts Bleed on the target with a 42% chance during a general critical attack." /> <!-- Dwarven Hammer - Critical Bleed -->
+	<effect itemId="8123" text="Increases Critical Rate by 77." /> <!-- Karik Horn - Focus -->
+	<effect itemId="8124" text="Increases Atk. Spd. by about 7%." /> <!-- Karik Horn - Haste -->
+	<effect itemId="8125" text="Absorbs 9 HP from a target when one makes a critical attack." /> <!-- Karik Horn - Critical Drain -->
+	<effect itemId="8126" text="Increases Max HP by 25%." /> <!-- Destroyer Hammer - Health -->
+	<effect itemId="8127" text="Increases Atk. Spd. by 6%." /> <!-- Destroyer Hammer - Haste -->
+	<effect itemId="8128" text="Absorbs 18 HP from a target on a critical attack." /> <!-- Destroyer Hammer - Critical Drain -->
+	<effect itemId="8129" text="Increases Critical Rate by 68." /> <!-- Ice Storm Hammer - Focus -->
+	<effect itemId="8130" text="Decreases Max HP 15% and increases P. Atk. by 28." /> <!-- Ice Storm Hammer - Anger -->
+	<effect itemId="8131" text="Inflicts Bleed on the target with a 41% chance during a general critical attack." /> <!-- Ice Storm Hammer - Critical Bleed -->
+	<effect itemId="8132" text="Increases Max HP by 25%." /> <!-- Star Buster - Health -->
+	<effect itemId="8133" text="Increases Atk. Spd. by about 6%." /> <!-- Star Buster - Haste -->
+	<effect itemId="8134" text="Increases Critical Rate by 99 when the character&#x27;s HP falls to 60% or below." /> <!-- Star Buster - Rsk. Focus -->
+	<effect itemId="8135" text="Increases Max HP by 25%." /> <!-- Doom Crusher - Health -->
+	<effect itemId="8136" text="Decreases Max HP by 15% and increases P. Atk. by 11%." /> <!-- Doom Crusher - Anger -->
+	<effect itemId="8137" text="Increases Atk. Spd. by 11% when HP drops to 60% or lower." /> <!-- Doom Crusher - Rsk. Haste -->
+	<effect itemId="8138" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Ecliptic Axe - Conversion -->
+	<effect itemId="8139" text="When using magic, increases MP Consumption by 15%, and M. Atk. by 112." /> <!-- Ecliptic Axe - M. Atk. -->
+	<effect itemId="8140" text="Has a 10% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Ecliptic Axe - Magic Hold -->
+	<effect itemId="8141" text="Increases Casting Spd. by 15%." /> <!-- Spell Breaker - Acumen -->
+	<effect itemId="8142" text="Has a 50% chance of casting Mental Shield when using a magic skill on the target." /> <!-- Spell Breaker - Mental Shield -->
+	<effect itemId="8143" text="Has a 10% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Spell Breaker - Magic Hold -->
+	<effect itemId="8144" text="Increases Max MP by 30%." /> <!-- Kaim Vanul's Bones - Mana Up -->
+	<effect itemId="8145" text="Has a 10% chance of casting Silence when using a magic skill on the target." /> <!-- Kaim Vanul's Bones - Magic Silence -->
+	<effect itemId="8146" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Kaim Vanul's Bones - Conversion -->
+	<effect itemId="8147" text="Increases Max MP by 30%." /> <!-- Spiritual Eye - Mana Up -->
+	<effect itemId="8148" text="Has a 8% chance of casting Curse: Poison when using a magic skill on the target." /> <!-- Spiritual Eye - Magic Poison -->
+	<effect itemId="8149" text="Increases Casting Spd. by 15%." /> <!-- Spiritual Eye - Acumen -->
+	<effect itemId="8150" text="Increases Casting Spd. by 15%." /> <!-- Flaming Dragon Skull - Acumen -->
+	<effect itemId="8151" text="Increases MP Consumption by 15%, M. Atk. by 167." /> <!-- Flaming Dragon Skull - M. Atk. -->
+	<effect itemId="8152" text="Has a 10% chance of casting Silence when using a magic skill on the target." /> <!-- Flaming Dragon Skull - Magic Silence -->
+	<effect itemId="8788" text="Increases Atk. Spd. by about 6%." /> <!-- Sirra's Blade - Haste -->
+	<effect itemId="8789" text="Increases Max HP by 25%." /> <!-- Sirra's Blade - Health -->
+	<effect itemId="8790" text="Increases the possibility that the target will be poisoned by 15% during a regular critical attack." /> <!-- Sirra's Blade - Critical Poison -->
+	<effect itemId="8791" text="Increases Critical Rate by 61." /> <!-- Sword of Ipos - Focus -->
+	<effect itemId="8792" text="Increases Atk. Spd. by about 6%." /> <!-- Sword of Ipos - Haste -->
+	<effect itemId="8793" text="Increases Max HP by 25%." /> <!-- Sword of Ipos - Health -->
+	<effect itemId="8794" text="Increases Max HP by 25%." /> <!-- Barakiel's Axe - Health -->
+	<effect itemId="8795" text="Increases Atk. Spd. by about 6%." /> <!-- Barakiel's Axe - Haste -->
+	<effect itemId="8796" text="Increases Critical Rate by 61." /> <!-- Barakiel's Axe - Focus -->
+	<effect itemId="8797" text="Increases Critical Rate by 61." /> <!-- Behemoth's Tuning Fork - Focus -->
+	<effect itemId="8798" text="Increases Max HP by 25%." /> <!-- Behemoth's Tuning Fork - Health -->
+	<effect itemId="8799" text="Decreases Max HP by 15% and increases P. Atk. by 32." /> <!-- Behemoth's Tuning Fork - Anger -->
+	<effect itemId="8800" text="Increases Critical Rate by 67." /> <!-- Naga Storm - Focus -->
+	<effect itemId="8801" text="Increases P. Atk. by 200 on a critical attack." /> <!-- Naga Storm - Critical Damage -->
+	<effect itemId="8802" text="Increases Critical Rate by 37 when attacking a target from behind." /> <!-- Naga Storm - Back Blow -->
+	<effect itemId="8803" text="Has a 25% chance of stunning a target during a critical attack." /> <!-- Tiphon's Spear - Critical Stun -->
+	<effect itemId="8804" text="Increases the attack range." /> <!-- Tiphon's Spear - Towering Blow -->
+	<effect itemId="8805" text="Increases the possibility of broadening the angle of attack." /> <!-- Tiphon's Spear - Wild Blow -->
+	<effect itemId="8806" text="Adds a 30% chance of decreasing MP consumption by 1 on a general attack." /> <!-- Shyeed's Bow - Cheap Shot -->
+	<effect itemId="8807" text="Increases Critical Rate by 61." /> <!-- Shyeed's Bow - Focus -->
+	<effect itemId="8808" text="Decreases re-use delay by about 17%." /> <!-- Shyeed's Bow - Quick Recovery -->
+	<effect itemId="8809" text="Increases Atk. Spd. by 11% when HP drops to 60% or lower." /> <!-- Sobekk's Hurricane - Rsk. Haste -->
+	<effect itemId="8810" text="Increases Atk. Spd. by about 6%." /> <!-- Sobekk's Hurricane - Haste -->
+	<effect itemId="8811" text="Increases the possibility of absorbing 14 HP on a critical attack." /> <!-- Sobekk's Hurricane - Critical Drain -->
+	<effect itemId="8812" text="Increases Max MP by 30%." /> <!-- Themis' Tongue - Mana Up -->
+	<effect itemId="8813" text="Has a 50% chance of casting Mental Shield when using a magic skill on the target." /> <!-- Themis' Tongue - Mental Shield -->
+	<effect itemId="8814" text="Has a 20% chance of casting Focus when using a magic skill on the target." /> <!-- Themis' Tongue - Magic Focus -->
+	<effect itemId="8815" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Cabrio's Hand - Conversion -->
+	<effect itemId="8816" text="Increases Max MP by 30%." /> <!-- Cabrio's Hand - Mana Up -->
+	<effect itemId="8817" text="Has a 10% chance of casting Silence when using a magic skill on the target." /> <!-- Cabrio's Hand - Magic Silence -->
+	<effect itemId="8818" text="Increases Max MP by 30%." /> <!-- Daimon Crystal - Mana Up -->
+	<effect itemId="8819" text="Increases Casting Spd. by 15%." /> <!-- Daimon Crystal - Acumen -->
+	<effect itemId="8820" text="Has a 50% chance of casting Mental Shield when using a magic skill on the target." /> <!-- Daimon Crystal - Mental Shield -->
+	<effect itemId="9229" text="Decreases HP by 12 and increases P. Atk. by 248 on a critical attack." /> <!-- Soldat Estoc - Critical Anger -->
+	<effect itemId="9230" text="Increases Critical Rate by 86." /> <!-- Soldat Estoc - Focus -->
+	<effect itemId="9231" text="Increases weight gauge by 20%." /> <!-- Soldat Estoc - Light -->
+	<effect itemId="9233" text="Increases P. Atk. by 174 on a critical attack." /> <!-- Schlager - Critical Damage -->
+	<effect itemId="9234" text="Increases Critical Rate by 86." /> <!-- Schlager - Focus -->
+	<effect itemId="9235" text="Increases weight gauge by 20%." /> <!-- Schlager - Light -->
+	<effect itemId="9237" text="Increases Accuracy by 5." /> <!-- Arbalest - Guidance -->
+	<effect itemId="9238" text="Increases Evasion by 2." /> <!-- Arbalest - Evasion -->
+	<effect itemId="9239" text="Decreases re-use delay by about 17%." /> <!-- Arbalest - Quick Recovery -->
+	<effect itemId="9241" text="Increases Accuracy by 6." /> <!-- Chevalier Rapier - Guidance -->
+	<effect itemId="9242" text="Increases Critical Rate by 56 when attacking a target from behind." /> <!-- Chevalier Rapier - Back Blow -->
+	<effect itemId="9243" text="Increases Evasion by 7 when HP falls to 60% or lower." /> <!-- Chevalier Rapier - Rsk. Evasion -->
+	<effect itemId="9245" text="Increases Critical Rate by 82." /> <!-- Chevalier Rapier - Focus -->
+	<effect itemId="9246" text="Increases P. Atk. by 194 on a critical attack." /> <!-- Chevalier Rapier - Critical Damage -->
+	<effect itemId="9247" text="Increases Atk. Spd. by about 7%." /> <!-- Chevalier Rapier - Haste -->
+	<effect itemId="9249" text="Increases P. Atk. by 194 on a critical attack." /> <!-- Chevalier Rapier - Critical Damage -->
+	<effect itemId="9250" text="Inflicts Poison on the target with a 15% chance during an ordinary critical attack." /> <!-- Chevalier Rapier - Critical Poison -->
+	<effect itemId="9251" text="Increases Atk. Spd. by about 7%." /> <!-- Chevalier Rapier - Haste -->
+	<effect itemId="9253" text="Increases Critical Rate by 82." /> <!-- Chevalier Rapier - Focus -->
+	<effect itemId="9254" text="Absorbs the target&#x27;s HP by 9 on a critical attack." /> <!-- Chevalier Rapier - Critical Drain -->
+	<effect itemId="9255" text="Inflicts Poison on the target with a 15% chance during an ordinary critical attack." /> <!-- Chevalier Rapier - Critical Poison -->
+	<effect itemId="9257" text="Increases Accuracy by 5." /> <!-- Ballista - Guidance -->
+	<effect itemId="9258" text="There is a 40% rate of chance that the number of soulshots consumed is reduced to 4." /> <!-- Ballista - Miser -->
+	<effect itemId="9259" text="Decreases re-use delay by about 20%." /> <!-- Ballista - Quick Recovery -->
+	<effect itemId="9261" text="Increases Evasion by 2." /> <!-- Ballista - Evasion -->
+	<effect itemId="9262" text="There is a 40% rate of chance that the number of soulshots consumed is reduced to 4." /> <!-- Ballista - Miser -->
+	<effect itemId="9263" text="Decreased MP consumption by 12% during use of skill." /> <!-- Ballista - Cheap Shot -->
+	<effect itemId="9265" text="Increases Accuracy by 5." /> <!-- Blinzlasher - Guidance -->
+	<effect itemId="9266" text="Increases Critical Rate by 77." /> <!-- Blinzlasher - Focus -->
+	<effect itemId="9267" text="Increases P. Atk. by 213 on a critical attack." /> <!-- Blinzlasher - Critical Damage -->
+	<effect itemId="9269" text="Increases Critical Rate by 77." /> <!-- Blinzlasher - Focus -->
+	<effect itemId="9270" text="Increases Max HP by 25%." /> <!-- Blinzlasher - Health -->
+	<effect itemId="9271" text="Increases Atk. Spd. by 12% when HP falls to 60% or lower." /> <!-- Blinzlasher - Rsk. Haste -->
+	<effect itemId="9273" text="Increases Critical Rate by 77." /> <!-- Blinzlasher - Focus -->
+	<effect itemId="9274" text="Increases P. Atk. by 213 on a critical attack." /> <!-- Blinzlasher - Critical Damage -->
+	<effect itemId="9275" text="Increases Atk. Spd. by about 7%." /> <!-- Blinzlasher - Haste -->
+	<effect itemId="9277" text="Increases Max HP by 25%." /> <!-- Blinzlasher - Health -->
+	<effect itemId="9278" text="Increases Critical Rate by 77." /> <!-- Blinzlasher - Focus -->
+	<effect itemId="9279" text="Increases weight gauge by 20%." /> <!-- Blinzlasher - Light -->
+	<effect itemId="9281" text="Increases Accuracy by 5." /> <!-- Blinzlasher - Guidance -->
+	<effect itemId="9282" text="Absorbs the target&#x27;s HP by 9 on a critical attack." /> <!-- Blinzlasher - Critical Drain -->
+	<effect itemId="9283" text="Increases Max HP by 25%." /> <!-- Blinzlasher - Health -->
+	<effect itemId="9285" text="Increases Critical Rate by 77." /> <!-- Immortal Edge - Focus -->
+	<effect itemId="9286" text="Increases Max HP by 25%." /> <!-- Immortal Edge - Health -->
+	<effect itemId="9287" text="User absorbs 9 HP from target during a critical attack." /> <!-- Immortal Edge - Critical Drain -->
+	<effect itemId="9289" text="Increases Accuracy by 4." /> <!-- Tathlum - Guidance -->
+	<effect itemId="9290" text="Increases Evasion by 2." /> <!-- Tathlum - Evasion -->
+	<effect itemId="9291" text="There is a 32% rate of chance that the number of soulshots consumed is reduced to 4." /> <!-- Tathlum - Miser -->
+	<effect itemId="9293" text="Increases Critical Rate by 73." /> <!-- Admiral's Estoc - Focus -->
+	<effect itemId="9294" text="Increases P. Atk. by 231 on a critical attack." /> <!-- Admiral's Estoc - Critical Damage -->
+	<effect itemId="9295" text="Increases Atk. Spd. by about 7%." /> <!-- Admiral's Estoc - Haste -->
+	<effect itemId="9297" text="Increases Critical Rate by 73." /> <!-- Saber Tooth - Focus -->
+	<effect itemId="9298" text="Increases P. Atk. by 270 on a critical attack." /> <!-- Saber Tooth - Critical Damage -->
+	<effect itemId="9299" text="Increases Atk. Spd. by about 7%." /> <!-- Saber Tooth - Haste -->
+	<effect itemId="9301" text="Increases Accuracy by 4." /> <!-- Sharpshooter - Guidance -->
+	<effect itemId="9302" text="There is a 37% rate of chance that the number of soulshots consumed is reduced to 5." /> <!-- Sharpshooter - Miser -->
+	<effect itemId="9303" text="Decreased MP consumption by 12% during use of skill." /> <!-- Sharpshooter - Cheap Shot -->
+	<effect itemId="9305" text="Increases Accuracy by 5." /> <!-- Military Fleuret - Guidance -->
+	<effect itemId="9306" text="Increases Critical Rate by 68." /> <!-- Military Fleuret - Focus -->
+	<effect itemId="9307" text="Increases Critical Rate by 56 when attacking a target from behind." /> <!-- Military Fleuret - Back Blow -->
+	<effect itemId="9309" text="Increases Max HP by 25%." /> <!-- Innominate Victory - Health -->
+	<effect itemId="9310" text="Increases P. Atk. by 247 on a critical attack." /> <!-- Innominate Victory - Critical Damage -->
+	<effect itemId="9311" text="Increases Critical Rate by 68." /> <!-- Innominate Victory - Focus -->
+	<effect itemId="9313" text="Increases Evasion by 2." /> <!-- Peacemaker - Evasion -->
+	<effect itemId="9314" text="Inflicts Bleed on the target with a 41% chance during a general critical attack." /> <!-- Peacemaker - Critical Bleed -->
+	<effect itemId="9315" text="There is a 19% rate of chance that the number of soulshots consumed is reduced to 1." /> <!-- Peacemaker - Miser -->
+	<effect itemId="9317" text="Increases Critical Rate by 64." /> <!-- Colichemarde - Focus -->
+	<effect itemId="9318" text="Increases P. Atk. by 262 on a critical attack." /> <!-- Colichemarde - Critical Damage -->
+	<effect itemId="9319" text="Increases Atk. Spd. by about 6%." /> <!-- Colichemarde - Haste -->
+	<effect itemId="9321" text="The user absorbs 8 HP from target on a critical attack." /> <!-- Dismantler - Critical Drain -->
+	<effect itemId="9322" text="Increases Max HP by 25%." /> <!-- Dismantler - Health -->
+	<effect itemId="9323" text="Inflicts Bleed on the target with a 41% chance during a general critical attack." /> <!-- Dismantler - Critical Bleed -->
+	<effect itemId="9325" text="Increases Accuracy by 3." /> <!-- Hell Hound - Guidance -->
+	<effect itemId="9326" text="Decreases re-use delay by about 13%." /> <!-- Hell Hound - Quick Recovery -->
+	<effect itemId="9327" text="Decreased MP consumption by 12% during use of skill." /> <!-- Hell Hound - Cheap Shot -->
+	<effect itemId="9329" text="Poisons the target with a 10% chance during a general critical attack." /> <!-- White Lightning - Critical Poison -->
+	<effect itemId="9330" text="Increases Atk. Spd. by about 6%." /> <!-- White Lightning - Haste -->
+	<effect itemId="9331" text="Decreases Max HP by 15% and increases P. Atk. by 31." /> <!-- White Lightning - Anger -->
+	<effect itemId="9333" text="Increases Atk. Spd. by about 6%." /> <!-- Divine Pain - Haste -->
+	<effect itemId="9334" text="Increases P. Atk. by 297 on a critical attack." /> <!-- Divine Pain - Critical Damage -->
+	<effect itemId="9335" text="Increases Critical Rate by 61." /> <!-- Divine Pain - Focus -->
+	<effect itemId="9337" text="Weight gauge increase by 20%." /> <!-- Doomchanter - Light -->
+	<effect itemId="9338" text="Has a 35% chance of inflicting Bleed on the target during a general critical attack." /> <!-- Doomchanter - Critical Bleed -->
+	<effect itemId="9339" text="Increases Max MP by 30%." /> <!-- Doomchanter - Mana Up -->
+	<effect itemId="9341" text="Increases P. Atk. by 326 on a critical attack." /> <!-- Lacerator - Critical Damage -->
+	<effect itemId="9342" text="Increases Max HP by 25%." /> <!-- Lacerator - Health -->
+	<effect itemId="9343" text="Increases Critical Rate by 130 when HP falls to 60% or below." /> <!-- Lacerator - Rsk. Focus -->
+	<effect itemId="9345" text="Increases Max HP by 25%." /> <!-- Undertaker - Health -->
+	<effect itemId="9346" text="Has a 24% chance of inflicting Bleed on the target during a general critical attack." /> <!-- Undertaker - Critical Bleed -->
+	<effect itemId="9347" text="User absorbs 11 HP from a target on a critical attack." /> <!-- Undertaker - Critical Drain -->
+	<effect itemId="9349" text="Decreased MP consumption by 12% during use of skill." /> <!-- Reaper - Cheap Shot -->
+	<effect itemId="9350" text="Decreases re-use delay by about 15%." /> <!-- Reaper - Quick Recovery -->
+	<effect itemId="9351" text="Has a 18% chance of inflicting Poison on the target during a general critical attack." /> <!-- Reaper - Critical Poison -->
+	<effect itemId="9353" text="Increases Atk. Spd. by about 6%." /> <!-- Éclair Bijou - Haste -->
+	<effect itemId="9354" text="Increases Max HP by 25%." /> <!-- Éclair Bijou - Health -->
+	<effect itemId="9355" text="Poisons the target with a 15% chance during a general critical attack." /> <!-- Éclair Bijou - Critical Poison -->
+	<effect itemId="9357" text="Increases Critical Rate by 61." /> <!-- Durendal - Focus -->
+	<effect itemId="9358" text="Increases Atk. Spd. by about 6%." /> <!-- Durendal - Haste -->
+	<effect itemId="9359" text="Increases Max HP by 25%." /> <!-- Durendal - Health -->
+	<effect itemId="9361" text="Decreased MP consumption by 12% during use of skill." /> <!-- Screaming Vengeance - Cheap Shot -->
+	<effect itemId="9362" text="Increases Critical Rate by 61." /> <!-- Screaming Vengeance - Focus -->
+	<effect itemId="9363" text="Decreases re-use delay by about 17%." /> <!-- Screaming Vengeance - Quick Recovery -->
+	<effect itemId="9365" text="Increases Atk. Spd. by about 7%." /> <!-- Laevateinn - Haste -->
+	<effect itemId="9366" text="Increases Max HP by 25%." /> <!-- Laevateinn - Health -->
+	<effect itemId="9367" text="Increases Critical Rate by 84." /> <!-- Laevateinn - Focus -->
+	<effect itemId="9369" text="Increases Atk. Spd. by about 7%." /> <!-- Gram - Haste -->
+	<effect itemId="9370" text="Increases Max HP by 25%." /> <!-- Gram - Health -->
+	<effect itemId="9371" text="Increases Critical Rate by 84." /> <!-- Gram - Focus -->
+	<effect itemId="9373" text="Decreased MP consumption by 12% during use of skill." /> <!-- Sarunga - Cheap Shot -->
+	<effect itemId="9374" text="Increases Critical Rate by 88." /> <!-- Sarunga - Focus -->
+	<effect itemId="9375" text="Has a chance of casting Slow on a critical attack." /> <!-- Sarunga - Critical Slow -->
+	<effect itemId="9377" text="Increases critical attack by 111." /> <!-- Dynasty Rapier - Focus -->
+	<effect itemId="9378" text="Increases Max HP by 25%." /> <!-- Dynasty Rapier - Health -->
+	<effect itemId="9379" text="Increases weight gauge by 20%." /> <!-- Dynasty Rapier - Light -->
+	<effect itemId="9381" text="Increases critical attack by 111." /> <!-- Dynasty Ancient Sword - Focus -->
+	<effect itemId="9382" text="Increases Max HP by 25%." /> <!-- Dynasty Ancient Sword - Health -->
+	<effect itemId="9383" text="Increases weight gauge by 20%." /> <!-- Dynasty Ancient Sword - Light -->
+	<effect itemId="9385" text="Decreased MP consumption by 12% during use of skill." /> <!-- Dynasty Crossbow - Cheap Shot -->
+	<effect itemId="9386" text="Increases Accuracy by 5.32." /> <!-- Dynasty Crossbow - Guidance -->
+	<effect itemId="9387" text="Increases critical attack by 116." /> <!-- Dynasty Crossbow - Focus -->
+	<effect itemId="9854" text="Increases Critical Rate by 111." /> <!-- Dynasty Sword - Focus -->
+	<effect itemId="9855" text="Increases Max HP by 25%." /> <!-- Dynasty Sword - Health -->
+	<effect itemId="9856" text="Increases weight gauge by 20%." /> <!-- Dynasty Sword - Light -->
+	<effect itemId="9857" text="Increases Critical Rate by 111." /> <!-- Dynasty Blade - Focus -->
+	<effect itemId="9858" text="Increases Max HP by 25%." /> <!-- Dynasty Blade - Health -->
+	<effect itemId="9859" text="Increases weight gauge by 20%." /> <!-- Dynasty Blade - Light -->
+	<effect itemId="9860" text="Increases Casting Spd. by 15%." /> <!-- Dynasty Phantom - Acumen -->
+	<effect itemId="9861" text="Increases Max MP by 30%." /> <!-- Dynasty Phantom - Mana Up -->
+	<effect itemId="9862" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Dynasty Phantom - Conversion -->
+	<effect itemId="9863" text="Decreases MP Consumption 4% during a skill attack." /> <!-- Dynasty Bow - Cheap Shot -->
+	<effect itemId="9864" text="Increases Accuracy by 5.32." /> <!-- Dynasty Bow - Guidance -->
+	<effect itemId="9865" text="Increases Critical Rate by 116." /> <!-- Dynasty Bow - Focus -->
+	<effect itemId="9866" text="Increases Critical Rate by 116." /> <!-- Dynasty Knife - Focus -->
+	<effect itemId="9867" text="Increases Evasion by 5." /> <!-- Dynasty Knife - Evasion -->
+	<effect itemId="9868" text="Increases P. Atk. by 559 on a critical attack." /> <!-- Dynasty Knife - Critical Damage -->
+	<effect itemId="9869" text="Decreases your HP by 15% and increases P. Atk. by 78." /> <!-- Dynasty Halberd - Anger -->
+	<effect itemId="9870" text="There is a 48% chance that Stun effect is applied on a critical attack." /> <!-- Dynasty Halberd - Critical Stun -->
+	<effect itemId="9871" text="Increases weight gauge by 20%." /> <!-- Dynasty Halberd - Light -->
+	<effect itemId="9872" text="Decreases your HP by 15% and increases P. Atk. by 78." /> <!-- Dynasty Cudgel - Anger -->
+	<effect itemId="9873" text="Increases Max HP by 25%." /> <!-- Dynasty Cudgel - Health -->
+	<effect itemId="9874" text="Increases Critical Rate by 164 when HP drops to 60% or lower." /> <!-- Dynasty Cudgel - Rsk. Focus -->
+	<effect itemId="9875" text="Increases Max MP by 30%." /> <!-- Dynasty Mace - Mana Up -->
+	<effect itemId="9876" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Dynasty Mace - Conversion -->
+	<effect itemId="9877" text="Increases Casting Spd. by 15%." /> <!-- Dynasty Mace - Acumen -->
+	<effect itemId="9878" text="Increases Evasion by 6.8 when HP drops to 60% or lower." /> <!-- Dynasty Bagh-Nakh - Rsk. Evasion -->
+	<effect itemId="9879" text="Increases critical attack by 106." /> <!-- Dynasty Bagh-Nakh - Focus -->
+	<effect itemId="9880" text="Increases Atk. Spd. by 10%." /> <!-- Dynasty Bagh-Nakh - Haste -->
+	<effect itemId="10434" text="Increases Critical Rate by 111." /> <!-- Icarus Sawsword - Focus -->
+	<effect itemId="10435" text="Increases Max HP by 25%." /> <!-- Icarus Sawsword - Health -->
+	<effect itemId="10436" text="Increases weight gauge by 20%." /> <!-- Icarus Sawsword - Light -->
+	<effect itemId="10437" text="Increases Critical Rate by 111." /> <!-- Icarus Heavy Arms - Focus -->
+	<effect itemId="10438" text="Increases Max HP by 25%." /> <!-- Icarus Heavy Arms - Health -->
+	<effect itemId="10439" text="Increases weight gauge by 20%." /> <!-- Icarus Heavy Arms - Light -->
+	<effect itemId="10440" text="Increases Casting Spd. by 15%." /> <!-- Icarus Spirit - Acumen -->
+	<effect itemId="10441" text="Increases Max MP by 30%." /> <!-- Icarus Spirit - Mana Up -->
+	<effect itemId="10442" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Icarus Spirit - Conversion -->
+	<effect itemId="10443" text="Decreases MP Consumption 4% during a skill attack." /> <!-- Icarus Spitter - Cheap Shot -->
+	<effect itemId="10444" text="Increases Accuracy by 5.32." /> <!-- Icarus Spitter - Guidance -->
+	<effect itemId="10445" text="Increases Critical Rate by 116." /> <!-- Icarus Spitter - Focus -->
+	<effect itemId="10446" text="Increases Critical Rate by 116." /> <!-- Icarus Disperser - Focus -->
+	<effect itemId="10447" text="Increases Evasion by 5." /> <!-- Icarus Disperser - Evasion -->
+	<effect itemId="10448" text="Increases P. Atk. by 559 on a critical attack." /> <!-- Icarus Disperser - Critical Damage -->
+	<effect itemId="10449" text="Decreases HP by 15% while increasing P. Atk. by 78 during a critical attack." /> <!-- Icarus Trident - Anger -->
+	<effect itemId="10450" text="There is a 48% chance that Stun effect is applied on a critical attack." /> <!-- Icarus Trident - Critical Stun -->
+	<effect itemId="10451" text="Increases weight gauge by 20%." /> <!-- Icarus Trident - Light -->
+	<effect itemId="10452" text="Decreases HP by 15% while increasing P. Atk. by 78 during a critical attack." /> <!-- Icarus Hammer - Anger -->
+	<effect itemId="10453" text="Increases Max HP by 25%." /> <!-- Icarus Hammer - Health -->
+	<effect itemId="10454" text="Increases Critical Rate by 164 when HP drops to 60% or lower." /> <!-- Icarus Hammer - Rsk. Focus -->
+	<effect itemId="10455" text="Increases Max MP by 30%." /> <!-- Icarus Hall - Mana Up -->
+	<effect itemId="10456" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Icarus Hall - Conversion -->
+	<effect itemId="10457" text="Increases Casting Spd. by 15%." /> <!-- Icarus Hall - Acumen -->
+	<effect itemId="10458" text="Increases Evasion by 6.8 when HP drops to 60% or lower." /> <!-- Icarus Hand - Rsk. Evasion -->
+	<effect itemId="10459" text="Increases critical attack by 106." /> <!-- Icarus Hand - Focus -->
+	<effect itemId="10460" text="Increases Atk. Spd. by 10%." /> <!-- Icarus Hand - Haste -->
+	<effect itemId="10461" text="Critical Attack is increased by 111." /> <!-- Icarus Stinger - Focus -->
+	<effect itemId="10462" text="Increases Max HP by 25%." /> <!-- Icarus Stinger - Health -->
+	<effect itemId="10463" text="Increases weight gauge by 20%." /> <!-- Icarus Stinger - Light -->
+	<effect itemId="10464" text="Critical Attack is increased by 111." /> <!-- Icarus Wingblade - Focus -->
+	<effect itemId="10465" text="Increases Max HP by 25%." /> <!-- Icarus Wingblade - Health -->
+	<effect itemId="10466" text="Increases weight gauge by 20%." /> <!-- Icarus Wingblade - Light -->
+	<effect itemId="10467" text="Decreased MP consumption by 12% when a skill is used." /> <!-- Icarus Shooter - Cheap Shot -->
+	<effect itemId="10468" text="The Accuracy is increased by 5.32." /> <!-- Icarus Shooter - Guidance -->
+	<effect itemId="10469" text="Critical Attack is increased by 116." /> <!-- Icarus Shooter - Focus -->
+	<effect itemId="10527" text="Increases Max MP by 30%." /> <!-- Dynasty Staff - Mana Up -->
+	<effect itemId="10528" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Dynasty Staff - Conversion -->
+	<effect itemId="10529" text="Increases Casting Spd. by 15%." /> <!-- Dynasty Staff - Acumen -->
+	<effect itemId="10530" text="Decreases HP by 15% while increasing P. Atk. by 78 during a critical attack." /> <!-- Dynasty Crusher - Anger -->
+	<effect itemId="10531" text="Increases Max HP by 25%." /> <!-- Dynasty Crusher - Health -->
+	<effect itemId="10532" text="Increases Critical Rate by 164 when HP drops to 60% or lower." /> <!-- Dynasty Crusher - Rsk. Focus -->
+	<effect itemId="10871" text="Increases Max HP by 25%." /> <!-- Great Sword - Lightning - Health -->
+	<effect itemId="10872" text="Increases P. Atk. by 247 on a critical attack." /> <!-- Great Sword - Lightning - Critical Damage -->
+	<effect itemId="10873" text="Increases Critical Rate by 68." /> <!-- Great Sword - Lightning - Focus -->
+	<effect itemId="10875" text="Decreases Max HP by 15%, and increases P. Atk. by 28." /> <!-- Great Axe - Thunder - Anger -->
+	<effect itemId="10876" text="Has a 27% chance of casting Stun on a critical attack." /> <!-- Great Axe - Thunder - Critical Stun -->
+	<effect itemId="10877" text="Increases weight gauge by 20%." /> <!-- Great Axe - Thunder - Light -->
+	<effect itemId="10883" text="Increases Max HP by 25%." /> <!-- Innominate Victory - Lightning - Health -->
+	<effect itemId="10884" text="Increases P. Atk. by 247 on a critical attack." /> <!-- Innominate Victory - Lightning - Critical Damage -->
+	<effect itemId="10885" text="Increases Critical Rate by 68." /> <!-- Innominate Victory - Lightning - Focus -->
+	<effect itemId="10887" text="Increases Evasion by 2." /> <!-- Dark Elven Long Bow - Concentration - Evasion -->
+	<effect itemId="10888" text="Inflicts Bleed on the target with a 41% rate of chance during a general critical attack." /> <!-- Dark Elven Long Bow - Concentration - Critical Bleed -->
+	<effect itemId="10889" text="Has a 19% chance of reducing the number of soulshots consumed to 2." /> <!-- Dark Elven Long Bow - Concentration - Miser -->
+	<effect itemId="10894" text="Increases Casting Spd. by 15%." /> <!-- Sword of Valhalla - Nature - Acumen -->
+	<effect itemId="10895" text="Has a 7% chance of casting Curse Weakness when using a magic skill on the target." /> <!-- Sword of Valhalla - Nature - Magic Weakness -->
+	<effect itemId="10896" text="Has a 30% chance of casting Regeneration when using a magic skill on the target." /> <!-- Sword of Valhalla - Nature - Magic Regeneration -->
+	<effect itemId="10899" text="Increases Casting Spd. by 15%." /> <!-- Spell Breaker - Hail - Acumen -->
+	<effect itemId="10900" text="Has a 50% chance of casting Mental Shield when using a magic skill on the target." /> <!-- Spell Breaker - Hail - Mental Shield -->
+	<effect itemId="10901" text="Has a 10% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Spell Breaker - Hail - Magic Hold -->
+	<effect itemId="10903" text="Inflicts Poison on the target with a 14% rate of chance during a general critical attack." /> <!-- Arthro Nail - Destruction - Critical Poison -->
+	<effect itemId="10904" text="Increases Evasion by 6 when HP drops to 60% or lower." /> <!-- Arthro Nail - Destruction - Rsk. Evasion -->
+	<effect itemId="10905" text="Increases Atk. Spd. by 6 when HP drops to 60% or lower." /> <!-- Arthro Nail - Destruction - Rsk. Haste -->
+	<effect itemId="10907" text="Increases Critical Rate by 68." /> <!-- Ice Storm Hammer - Lightning - Focus -->
+	<effect itemId="10908" text="Decreases Max HP by 15%, and increases P. Atk. by 28." /> <!-- Ice Storm Hammer - Lightning - Anger -->
+	<effect itemId="10909" text="Inflicts Bleed on the target with a 41% rate of chance during a general critical attack." /> <!-- Ice Storm Hammer - Lightning - Critical Bleed -->
+	<effect itemId="10913" text="Increases Accuracy by 5." /> <!-- Military Fleuret - Destruction - Guidance -->
+	<effect itemId="10914" text="Increases Critical Rate by 68." /> <!-- Military Fleuret - Destruction - Focus -->
+	<effect itemId="10915" text="Increases Critical Rate by 56 when attacking a target from behind." /> <!-- Military Fleuret - Destruction - Back Blow -->
+	<effect itemId="10917" text="Has a 30% chance of casting Regeneration when using a magic skill on the target." /> <!-- Sprite's Staff - Hail - Magic Regeneration -->
+	<effect itemId="10918" text="Has a 50% chance of casting Mental Shield when using a magic skill on the target." /> <!-- Sprite's Staff - Hail - Mental Shield -->
+	<effect itemId="10919" text="Has a 10% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Sprite's Staff - Hail - Magic Hold -->
+	<effect itemId="10927" text="Increases Evasion by 2." /> <!-- Kris - Confusion - Evasion -->
+	<effect itemId="10928" text="Increases Critical Rate by 71." /> <!-- Kris - Confusion - Focus -->
+	<effect itemId="10929" text="Increases Critical Rate by 40% when attacking the target from behind." /> <!-- Kris - Confusion - Back Blow -->
+	<effect itemId="10931" text="Increases Accuracy by 5." /> <!-- Keshanberk - Destruction - Guidance -->
+	<effect itemId="10932" text="Increases Critical Rate by 68." /> <!-- Keshanberk - Destruction - Focus -->
+	<effect itemId="10933" text="Increases Critical Rate by 56 when attacking a target from behind." /> <!-- Keshanberk - Destruction - Back Blow -->
+	<effect itemId="10935" text="Increases Evasion by 2." /> <!-- Peacemaker - Concentration - Evasion -->
+	<effect itemId="10936" text="Inflicts Bleed on the target with a 41% chance during a general critical attack." /> <!-- Peacemaker - Concentration - Critical Bleed -->
+	<effect itemId="10937" text="Has a 19% chance of reducing the number of soulshots consumed to 2." /> <!-- Peacemaker - Concentration - Miser -->
+	<effect itemId="10939" text="Decreases Max HP by 15%, and increases P. Atk. by 28." /> <!-- Heavy War Axe - Earth - Anger -->
+	<effect itemId="10940" text="Increases Max HP by 25%." /> <!-- Heavy War Axe - Earth - Health -->
+	<effect itemId="10941" text="Increases Critical Rate by 107 when HP is 60% or below." /> <!-- Heavy War Axe - Earth - Rsk. Focus -->
+	<effect itemId="10943" text="Has a 30% chance of casting Regeneration when using a magic skill on the target." /> <!-- Hell Knife - Confusion - Magic Regeneration -->
+	<effect itemId="10944" text="Has a 50% chance of casting Mental Shield when using a magic skill on the target." /> <!-- Hell Knife - Confusion - Mental Shield -->
+	<effect itemId="10945" text="Has a 7% chance of casting Curse Weakness when using a magic skill on the target." /> <!-- Hell Knife - Confusion - Magic Weakness -->
+	<effect itemId="10956" text="Absorbs 8 HP from a target on a critical attack." /> <!-- Guardian Sword - Great Gale - Critical Drain -->
+	<effect itemId="10957" text="Increases Max HP by 25%." /> <!-- Guardian Sword - Great Gale - Health -->
+	<effect itemId="10958" text="Inflicts Bleed on the target with a 24% rate of chance during a general critical attack." /> <!-- Guardian Sword - Great Gale - Critical Bleed -->
+	<effect itemId="10960" text="Increases Critical Rate by 64." /> <!-- Sword of Damascus - Earth - Focus -->
+	<effect itemId="10961" text="Increases P. Atk. by 262 on a critical attack." /> <!-- Sword of Damascus - Earth - Critical Damage -->
+	<effect itemId="10962" text="Increases Atk. Spd. by about 6%." /> <!-- Sword of Damascus - Earth - Haste -->
+	<effect itemId="10964" text="Absorbs 8 HP from a target on a critical attack." /> <!-- Dismantler - Great Gale - Critical Drain -->
+	<effect itemId="10965" text="Increases Max HP by 25%." /> <!-- Dismantler - Great Gale - Health -->
+	<effect itemId="10966" text="Inflicts Bleed on the target with a 41% chance during a general critical attack." /> <!-- Dismantler - Great Gale - Critical Bleed -->
+	<effect itemId="10968" text="Decreases Max HP by 15%, and increases P. Atk. by 30." /> <!-- Lance - Earth - Anger -->
+	<effect itemId="10969" text="Has a 25% chance of stunning a target during a critical attack." /> <!-- Lance - Earth - Critical Stun -->
+	<effect itemId="10970" text="Increases the attack range." /> <!-- Lance - Earth - Towering Blow -->
+	<effect itemId="10972" text="Absorbs 14 HP from a target on a critical attack." /> <!-- Bellion Cestus - Great Gale - Critical Drain -->
+	<effect itemId="10973" text="Inflicts Poison on the target with a 12% rate of chance during a general critical attack." /> <!-- Bellion Cestus - Great Gale - Critical Poison -->
+	<effect itemId="10974" text="Increases Atk. Spd. by 9% when HP drops to 60% or lower." /> <!-- Bellion Cestus - Great Gale - Rsk. Haste -->
+	<effect itemId="10976" text="Has a 20% chance of casting Focus when using a magic skill on the target." /> <!-- Staff of Evil Spirits - Holy Spirit - Magic Focus -->
+	<effect itemId="10977" text="Has a 20% chance of casting Blessed Body when using a magic skill on the target." /> <!-- Staff of Evil Spirits - Holy Spirit - Blessed Body -->
+	<effect itemId="10978" text="Has a 6% chance of casting Curse Poison when using a magic skill on the target." /> <!-- Staff of Evil Spirits - Holy Spirit - Magic Poison -->
+	<effect itemId="10980" text="Decreases Max HP by 15%, and increases P. Atk. by 30." /> <!-- Deadman's Glory - Landslide - Anger -->
+	<effect itemId="10981" text="Increases Max HP by 25%." /> <!-- Deadman's Glory - Landslide - Health -->
+	<effect itemId="10982" text="Increases Atk. Spd. by about 6%." /> <!-- Deadman's Glory - Landslide - Haste -->
+	<effect itemId="10984" text="Increases Max HP by 25%." /> <!-- Star Buster - Great Gale - Health -->
+	<effect itemId="10985" text="Increases Atk. Spd. by about 6%." /> <!-- Star Buster - Great Gale - Haste -->
+	<effect itemId="10986" text="Increases Critical Rate by 99 when HP is 60% or below." /> <!-- Star Buster - Great Gale - Rsk. Focus -->
+	<effect itemId="10989" text="Increases Max HP by 25%." /> <!-- Art of Battle Axe - Landslide - Health -->
+	<effect itemId="10990" text="Increases Critical Rate by 99 when HP is 60% or below." /> <!-- Art of Battle Axe - Landslide - Rsk. Focus -->
+	<effect itemId="10991" text="Increases Atk. Spd. by about 6%." /> <!-- Art of Battle Axe - Landslide - Haste -->
+	<effect itemId="10993" text="Inflicts Bleed on the target with a 12% rate of chance during a general critical attack." /> <!-- Demon's Dagger - Great Gale - Critical Bleed -->
+	<effect itemId="10994" text="Inflicts Poison on the target with a 6% rate of chance during a general critical attack." /> <!-- Demon's Dagger - Great Gale - Critical Poison -->
+	<effect itemId="10996" text="Increases P. Atk. by 160 on a critical attack." /> <!-- Demon's Dagger - Great Gale - Critical Damage -->
+	<effect itemId="10998" text="Increases Max MP by 30%." /> <!-- Kaim Vanul's Bones - Earth - Mana Up -->
+	<effect itemId="10999" text="Has a 10% chance of casting Silence when using a magic skill on the target." /> <!-- Kaim Vanul's Bones - Earth - Magic Silence -->
+	<effect itemId="11000" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Kaim Vanul's Bones - Earth - Conversion -->
+	<effect itemId="11002" text="Increases Critical Rate by 64." /> <!-- Colichemarde - Earth - Focus -->
+	<effect itemId="11003" text="Increases P. Atk. by 262 on a critical attack." /> <!-- Colichemarde - Earth - Critical Damage -->
+	<effect itemId="11004" text="Increases Atk. Spd. by about 6%." /> <!-- Colichemarde - Earth - Haste -->
+	<effect itemId="11006" text="Increases Casting Spd. by 15%." /> <!-- Wizard's Tear - Cleverness - Acumen -->
+	<effect itemId="11007" text="Increases MP consumption by 15% and M. Atk. by 139 when using magic." /> <!-- Wizard's Tear - Cleverness - M. Atk. -->
+	<effect itemId="11008" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Wizard's Tear - Cleverness - Conversion -->
+	<effect itemId="11010" text="Increases Accuracy by 3." /> <!-- Bow of Peril - Earth - Guidance -->
+	<effect itemId="11011" text="Decreases re-use delay by 13%." /> <!-- Bow of Peril - Earth - Quick Recovery -->
+	<effect itemId="11012" text="Has a 42% chance of decreasing MP consumption by 1 on a general attack." /> <!-- Bow of Peril - Earth - Cheap Shot -->
+	<effect itemId="11014" text="Accuracy +3." /> <!-- Hell Hound - Earth - Guidance -->
+	<effect itemId="11015" text="Re-use delay decreases by 13%." /> <!-- Hell Hound - Earth - Quick Recovery -->
+	<effect itemId="11016" text="When using a skill, MP consumption decreases by 12%." /> <!-- Hell Hound - Earth - Cheap Shot -->
+	<effect itemId="11018" text="Increases Max MP by 30%." /> <!-- Dasparion's Staff - Hail - Mana Up -->
+	<effect itemId="11019" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Dasparion's Staff - Hail - Conversion -->
+	<effect itemId="11020" text="Increases Casting Spd. by 15%." /> <!-- Dasparion's Staff - Hail - Acumen -->
+	<effect itemId="11022" text="Weight gauge increase by 20%." /> <!-- Doomchanter - Concentration - Light -->
+	<effect itemId="11023" text="Has a 35% chance of inflicting Bleed on the target during a general critical attack." /> <!-- Doomchanter - Concentration - Critical Bleed -->
+	<effect itemId="11024" text="Increases Max MP by 30%." /> <!-- Doomchanter - Concentration - Mana Up -->
+	<effect itemId="11026" text="Poisons the target with a 10% chance during a general critical attack." /> <!-- White Lightning - Destruction - Critical Poison -->
+	<effect itemId="11027" text="Increases Atk. Spd. by about 6%." /> <!-- White Lightning - Destruction - Haste -->
+	<effect itemId="11028" text="Decreases Max HP by 15% and increases P. Atk. by 31." /> <!-- White Lightning - Destruction - Anger -->
+	<effect itemId="11030" text="Increases Critical Rate by 61." /> <!-- Meteor Shower - Earth - Focus -->
+	<effect itemId="11031" text="Inflicts Bleed on the target with a 42% rate of chance during a general critical attack." /> <!-- Meteor Shower - Earth - Critical Bleed -->
+	<effect itemId="11032" text="Increases Atk. Spd. by 11% when HP drops to 60% or lower." /> <!-- Meteor Shower - Earth - Rsk. Haste -->
+	<effect itemId="11034" text="Increases Atk. Spd. by about 6%." /> <!-- Blood Tornado - Destruction - Haste -->
+	<effect itemId="11035" text="Increases Critical Rate by 61." /> <!-- Blood Tornado - Destruction - Focus -->
+	<effect itemId="11036" text="Decreases Max HP by 15% and increases P. Atk. by 38." /> <!-- Blood Tornado - Destruction - Anger -->
+	<effect itemId="11038" text="Increases Critical Rate by 67." /> <!-- Bloody Orchid - Confusion - Focus -->
+	<effect itemId="11039" text="Increases Critical Rate by 37% when attacking the target from behind." /> <!-- Bloody Orchid - Confusion - Back Blow -->
+	<effect itemId="11040" text="Inflicts Bleed on the target with a 12% rate of chance during a general critical attack." /> <!-- Bloody Orchid - Confusion - Critical Bleed -->
+	<effect itemId="11042" text="Increases MP consumption by 15% and M. Atk. by 153 when using magic." /> <!-- Elemental Sword - Hail - M. Atk. -->
+	<effect itemId="11043" text="Has a 5% chance of casting Paralysis when using a magic skill on the target." /> <!-- Elemental Sword - Hail - Magic Paralyze -->
+	<effect itemId="11044" text="Increases M. Atk. by 30%." /> <!-- Elemental Sword - Hail - Empower -->
+	<effect itemId="11046" text="Increases Max MP by 30%." /> <!-- Spiritual Eye - Hail - Mana Up -->
+	<effect itemId="11047" text="Has a 8% chance of casting Curse Poison when using a magic skill on the target." /> <!-- Spiritual Eye - Hail - Magic Poison -->
+	<effect itemId="11048" text="Increases Casting Spd. by 15%." /> <!-- Spiritual Eye - Hail - Acumen -->
+	<effect itemId="11050" text="Increases Atk. Spd. by about 6%." /> <!-- Infernal Master - Concentration - Haste -->
+	<effect itemId="11051" text="Increases P. Atk. by 297 on a critical attack." /> <!-- Infernal Master - Concentration - Critical Damage -->
+	<effect itemId="11052" text="Increases Critical Rate by 61." /> <!-- Infernal Master - Concentration - Focus -->
+	<effect itemId="11054" text="Increases weight gauge by 20%." /> <!-- Carnage Bow - Concentration - Light -->
+	<effect itemId="11055" text="Inflicts Bleed on the target with a 35% rate of chance during a general critical attack." /> <!-- Carnage Bow - Concentration - Critical Bleed -->
+	<effect itemId="11056" text="Increases Max MP by 30%." /> <!-- Carnage Bow - Concentration - Mana Up -->
+	<effect itemId="11059" text="Inflicts Poison on the target with a 10% rate of chance during a general critical attack." /> <!-- Tallum Blade - Destruction - Critical Poison -->
+	<effect itemId="11060" text="Increases Atk. Spd. by about 6%." /> <!-- Tallum Blade - Destruction - Haste -->
+	<effect itemId="11061" text="Decreases Max HP by 15% and increases P. Atk. by 31." /> <!-- Tallum Blade - Destruction - Anger -->
+	<effect itemId="11063" text="Increases Max HP by 25%." /> <!-- Destroyer Hammer - Lightning - Health -->
+	<effect itemId="11064" text="Increases Atk. Spd. by about 6%." /> <!-- Destroyer Hammer - Lightning - Haste -->
+	<effect itemId="11065" text="Absorbs 18 HP from a target on a critical attack." /> <!-- Destroyer Hammer - Lightning - Critical Drain -->
+	<effect itemId="11067" text="Increases Atk. Spd. by about 6%." /> <!-- Divine Pain - Concentration - Haste -->
+	<effect itemId="11068" text="Increases P. Atk. by 297 on a critical attack." /> <!-- Divine Pain - Concentration - Critical Damage -->
+	<effect itemId="11069" text="Increases Critical Attack by 61." /> <!-- Divine Pain - Concentration - Focus -->
+	<effect itemId="11071" text="Increases Atk. Spd. by about 6%." /> <!-- Halberd - Lightning - Haste -->
+	<effect itemId="11072" text="Has a 25% chance of stunning a target during a critical attack." /> <!-- Halberd - Lightning - Critical Stun -->
+	<effect itemId="11073" text="Attack angle widens." /> <!-- Halberd - Lightning - Wide Blow -->
+	<effect itemId="11076" text="Increases P. Atk. by 326 on a critical attack." /> <!-- Lacerator - Thunder - Critical Damage -->
+	<effect itemId="11077" text="Increases Max HP by 25%." /> <!-- Lacerator - Thunder - Health -->
+	<effect itemId="11078" text="Increases Critical Rate by 130 when HP is 60% or below." /> <!-- Lacerator - Thunder - Rsk. Focus -->
+	<effect itemId="11081" text="Increases P. Atk. by 326 on a critical attack." /> <!-- Dark Legion's Edge - Thunder - Critical Damage -->
+	<effect itemId="11082" text="Increases Max HP by 25%." /> <!-- Dark Legion's Edge - Thunder - Health -->
+	<effect itemId="11083" text="Increases Critical Rate by 130 when HP is 60% or below." /> <!-- Dark Legion's Edge - Thunder - Rsk. Focus -->
+	<effect itemId="11085" text="Increases Max HP by 25%." /> <!-- Undertaker - Evil Spirit - Health -->
+	<effect itemId="11086" text="Inflicts Bleed on the target with a 24% chance during general critical attack." /> <!-- Undertaker - Evil Spirit - Critical Bleed -->
+	<effect itemId="11087" text="Absorbs 11 HP from a target on a critical attack." /> <!-- Undertaker - Evil Spirit - Critical Drain -->
+	<effect itemId="11089" text="Increases Max HP by 25%." /> <!-- Doom Crusher - Thunder - Health -->
+	<effect itemId="11090" text="Decreases Max HP by 15% and increases P. Atk. by 32." /> <!-- Doom Crusher - Thunder - Anger -->
+	<effect itemId="11091" text="Increases Atk. Spd. by 11% when HP drops to 60% or lower." /> <!-- Doom Crusher - Thunder - Rsk. Haste -->
+	<effect itemId="11093" text="Increases Evasion by 6 when HP drops to 60% or lower." /> <!-- Dragon Grinder - Earth - Rsk. Evasion -->
+	<effect itemId="11094" text="Increases Accuracy by 5." /> <!-- Dragon Grinder - Earth - Guidance -->
+	<effect itemId="11095" text="Increases Max HP by 25%." /> <!-- Dragon Grinder - Earth - Health -->
+	<effect itemId="11097" text="Increases Max HP by 25%." /> <!-- Dragon Slayer - Evil Spirit - Health -->
+	<effect itemId="11098" text="Inflicts Bleed on the target with a 24% rate of chance during a general critical attack." /> <!-- Dragon Slayer - Evil Spirit - Critical Bleed -->
+	<effect itemId="11099" text="Absorbs 11 HP from a target on a critical attack." /> <!-- Dragon Slayer - Evil Spirit - Critical Drain -->
+	<effect itemId="11101" text="Increases Casting Spd. by 15%." /> <!-- Flaming Dragon Skull - Wisdom - Acumen -->
+	<effect itemId="11102" text="Increases MP consumption by 15% and increases M. Atk. by 167 when using magic." /> <!-- Flaming Dragon Skull - Wisdom - M. Atk. -->
+	<effect itemId="11103" text="Has a 10% chance of casting Silence when using a magic skill on the target." /> <!-- Flaming Dragon Skull - Wisdom - Magic Silence -->
+	<effect itemId="11105" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Branch of the Mother Tree - Nature - Conversion -->
+	<effect itemId="11106" text="Has a 30% chance of inflicting an additional power 8 magic damage when using a magic skill on the target." /> <!-- Branch of the Mother Tree - Nature - Magic Damage -->
+	<effect itemId="11107" text="Increases Casting Spd. by 15%." /> <!-- Branch of the Mother Tree - Nature - Acumen -->
+	<effect itemId="11109" text="Increases MP consumption by 15% and increases M. Atk. by 167 when using magic." /> <!-- Sword of Miracles - Holy Spirit - M. Atk. -->
+	<effect itemId="11110" text="Has a 10% chance of casting Silence when using a magic skill on the target." /> <!-- Sword of Miracles - Holy Spirit - Magic Silence -->
+	<effect itemId="11111" text="Increases Casting Spd. by 15%." /> <!-- Sword of Miracles - Holy Spirit - Acumen -->
+	<effect itemId="11113" text="Decreases MP consumption by 12% when using skills." /> <!-- Reaper - Clairvoyance - Cheap Shot -->
+	<effect itemId="11114" text="Decreases re-use delay by 15%." /> <!-- Reaper - Clairvoyance - Quick Recovery -->
+	<effect itemId="11115" text="Poisons the target with a 18% chance during a general critical attack." /> <!-- Reaper - Clairvoyance - Critical Poison -->
+	<effect itemId="11117" text="Increases Accuracy by 4." /> <!-- Soul Separator - On Fire - Guidance -->
+	<effect itemId="11118" text="Increases P. Atk. by 200 on a critical attack." /> <!-- Soul Separator - On Fire - Critical Damage -->
+	<effect itemId="11119" text="Increases Atk. Spd. by 11% when HP drops to 60% or lower." /> <!-- Soul Separator - On Fire - Rsk. Haste -->
+	<effect itemId="11121" text="Increases Max HP by 25%." /> <!-- Elysian - Great Gale - Health -->
+	<effect itemId="11122" text="Decreases Max HP by 15% and increases P. Atk. by 32." /> <!-- Elysian - Great Gale - Anger -->
+	<effect itemId="11123" text="Absorbs 19 HP from a target on a critical attack." /> <!-- Elysian - Great Gale - Critical Drain -->
+	<effect itemId="11125" text="Has a 38% chance of decreasing MP consumption to 1 on a general attack." /> <!-- Soul Bow - Clairvoyance - Cheap Shot -->
+	<effect itemId="11126" text="Decreases re-use delay by 15%." /> <!-- Soul Bow - Clairvoyance - Quick Recovery -->
+	<effect itemId="11127" text="Poisons the target at the chance of 18% during the general attack critical." /> <!-- Soul Bow - Clairvoyance - Critical Poison -->
+	<effect itemId="11129" text="Increases Accuracy by 4." /> <!-- Tallum Glaive - On Fire - Guidance -->
+	<effect itemId="11130" text="Increases Max HP by 25%." /> <!-- Tallum Glaive - On Fire - Health -->
+	<effect itemId="11131" text="Attack angle widens." /> <!-- Tallum Glaive - On Fire - Wide Blow -->
+	<effect itemId="11134" text="Increases Critical Rate by 67." /> <!-- Naga Storm - Molar - Focus -->
+	<effect itemId="11135" text="Increases P. Atk. by 200 on a critical attack." /> <!-- Naga Storm - Molar - Critical Damage -->
+	<effect itemId="11136" text="Increases Critical Rate by 37 when attacking a target from behind." /> <!-- Naga Storm - Molar - Back Blow -->
+	<effect itemId="11138" text="Increases Max MP by 30%." /> <!-- Daimon Crystal - Wisdom - Mana Up -->
+	<effect itemId="11139" text="Increases Casting Spd. by 15%." /> <!-- Daimon Crystal - Wisdom - Acumen -->
+	<effect itemId="11140" text="Has a 50% chance of casting Mental Shield when using a magic skill on the target." /> <!-- Daimon Crystal - Wisdom - Mental Shield -->
+	<effect itemId="11142" text="Increases Max HP by 25%." /> <!-- Barakiel's Axe - On Fire - Health -->
+	<effect itemId="11143" text="Increases Atk. Spd. by about 6%." /> <!-- Barakiel's Axe - On Fire - Haste -->
+	<effect itemId="11144" text="Increases Critical Rate by 61." /> <!-- Barakiel's Axe - On Fire - Focus -->
+	<effect itemId="11146" text="Decreases MP consumption by 12% when using skills." /> <!-- Screaming Vengeance - Concentration - Cheap Shot -->
+	<effect itemId="11147" text="Increases Critical Rate by 61." /> <!-- Screaming Vengeance - Concentration - Focus -->
+	<effect itemId="11148" text="Decreases re-use delay by 17%." /> <!-- Screaming Vengeance - Concentration - Quick Recovery -->
+	<effect itemId="11150" text="Increases Critical Rate by 61." /> <!-- Behemoth's Tuning Fork - Destruction - Focus -->
+	<effect itemId="11151" text="Increases Max HP by 25%." /> <!-- Behemoth's Tuning Fork - Destruction - Health -->
+	<effect itemId="11152" text="Decreases Max HP by 15% and increases P. Atk. by 32." /> <!-- Behemoth's Tuning Fork - Destruction - Anger -->
+	<effect itemId="11154" text="Increases Critical Attack by 61." /> <!-- Bultgang - Earth - Focus -->
+	<effect itemId="11155" text="Increases Atk. Spd. by about 6%." /> <!-- Bultgang - Earth - Haste -->
+	<effect itemId="11156" text="Increases Max HP by 25%." /> <!-- Bultgang - Earth - Health -->
+	<effect itemId="11158" text="Has a 30% chance of decreasing MP consumption to 1 on a general attack." /> <!-- Shyeed's Bow - Concentration - Cheap Shot -->
+	<effect itemId="11159" text="Increases Critical Rate by 61." /> <!-- Shyeed's Bow - Concentration - Focus -->
+	<effect itemId="11160" text="Decreases re-use delay by 17%." /> <!-- Shyeed's Bow - Concentration - Quick Recovery -->
+	<effect itemId="11162" text="Increases Critical Rate by 61." /> <!-- Sword of Ipos - Earth - Focus -->
+	<effect itemId="11163" text="Increases Atk. Spd. by about 6%." /> <!-- Sword of Ipos - Earth - Haste -->
+	<effect itemId="11164" text="Increases Max HP by 25%." /> <!-- Sword of Ipos - Earth - Health -->
+	<effect itemId="11166" text="Increases Atk. Spd. by 11% when HP drops to 60% or lower." /> <!-- Sobekk's Hurricane - Landslide - Rsk. Haste -->
+	<effect itemId="11167" text="Increases Atk. Spd. by about 6%." /> <!-- Sobekk's Hurricane - Landslide - Haste -->
+	<effect itemId="11168" text="Has a chance to absorb 14 HP from a target on a critical attack." /> <!-- Sobekk's Hurricane - Landslide - Critical Drain -->
+	<effect itemId="11170" text="Increases Atk. Spd. by about 6%." /> <!-- Sirra's Blade - Landslide - Haste -->
+	<effect itemId="11171" text="Increases Max HP by 25%." /> <!-- Sirra's Blade - Landslide - Health -->
+	<effect itemId="11172" text="Has a 6% chance to poison a target on a critical attack." /> <!-- Sirra's Blade - Landslide - Critical Poison -->
+	<effect itemId="11174" text="Increases Atk. Spd. by about 6%." /> <!-- Éclair Bijou - Landslide - Haste -->
+	<effect itemId="11175" text="Increases Max HP by 25%." /> <!-- Éclair Bijou - Landslide - Health -->
+	<effect itemId="11176" text="Has a 6% chance to poison a target on a critical attack." /> <!-- Éclair Bijou - Landslide - Critical Poison -->
+	<effect itemId="11178" text="Has a 25% chance of stunning a target during a critical attack." /> <!-- Tiphon's Spear - Landslide - Critical Stun -->
+	<effect itemId="11179" text="Increases the attack range." /> <!-- Tiphon's Spear - Landslide - Towering Blow -->
+	<effect itemId="11180" text="The attack angle widens." /> <!-- Tiphon's Spear - Landslide - Wild Blow -->
+	<effect itemId="11183" text="Increases Max MP by 30%." /> <!-- Themis' Tongue - Cleverness - Mana Up -->
+	<effect itemId="11184" text="Has a 50% chance of casting Mental Shield when using a magic skill on the target." /> <!-- Themis' Tongue - Cleverness - Mental Shield -->
+	<effect itemId="11185" text="Has a 20% chance of casting Focus when using a magic skill on the target." /> <!-- Themis' Tongue - Cleverness - Magic Focus -->
+	<effect itemId="11187" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Cabrio's Hand - Cleverness - Conversion -->
+	<effect itemId="11188" text="Increases Max MP by 30%." /> <!-- Cabrio's Hand - Cleverness - Mana Up -->
+	<effect itemId="11189" text="Has a 10% chance of casting Silence when using a magic skill on the target." /> <!-- Cabrio's Hand - Cleverness - Magic Silence -->
+	<effect itemId="11191" text="Increases Atk. Spd. by about 7%." /> <!-- Gram - Thunder - Haste -->
+	<effect itemId="11192" text="Increases Max HP by 25%." /> <!-- Gram - Thunder - Health -->
+	<effect itemId="11193" text="Increases Critical Rate by 84." /> <!-- Gram - Thunder - Focus -->
+	<effect itemId="11195" text="Increases Critical Rate by 80." /> <!-- Demon Splinter - Thunder - Focus -->
+	<effect itemId="11196" text="Increases Max HP by 25%." /> <!-- Demon Splinter - Thunder - Health -->
+	<effect itemId="11197" text="Has a 27% chance of casting Stun on a critical attack." /> <!-- Demon Splinter - Thunder - Critical Stun -->
+	<effect itemId="11199" text="Has a 26% chance of decreasing MP consumption to 1 on a general attack." /> <!-- Draconic Bow - Earth - Cheap Shot -->
+	<effect itemId="11200" text="Increases Critical Rate by 88." /> <!-- Draconic Bow - Earth - Focus -->
+	<effect itemId="11201" text="Has a chance of casting Slow on a critical attack." /> <!-- Draconic Bow - Earth - Critical Slow -->
+	<effect itemId="11203" text="Increases HP Recovery Rate." /> <!-- Dragon Hunter Axe - Thunder - HP Regeneration -->
+	<effect itemId="11204" text="Increases Max HP by 25%." /> <!-- Dragon Hunter Axe - Thunder - Health -->
+	<effect itemId="11205" text="Restores 3% of melee damage inflicted upon the enemy to your own HP." /> <!-- Dragon Hunter Axe - Thunder - HP Drain -->
+	<effect itemId="11207" text="Increases Atk. Spd. by about 7%." /> <!-- Laevateinn - Lightning - Haste -->
+	<effect itemId="11208" text="Increases Max HP by 25%." /> <!-- Laevateinn - Lightning - Health -->
+	<effect itemId="11209" text="Increases Critical Rate by 84." /> <!-- Laevateinn - Lightning - Focus -->
+	<effect itemId="11211" text="Restores 3% of melee damage inflicted upon the enemy to your own HP." /> <!-- Basalt Battlehammer - Concentration - HP Drain -->
+	<effect itemId="11212" text="Increases Max HP by 25%." /> <!-- Basalt Battlehammer - Concentration - Health -->
+	<effect itemId="11213" text="Increases HP Recovery Rate." /> <!-- Basalt Battlehammer - Concentration - HP Regeneration -->
+	<effect itemId="11215" text="Decreases MP consumption by 12% when using skills." /> <!-- Sarunga - Earth - Cheap Shot -->
+	<effect itemId="11216" text="Increases Critical Rate by 88." /> <!-- Sarunga - Earth - Focus -->
+	<effect itemId="11217" text="Has a chance of casting Slow on a critical attack." /> <!-- Sarunga - Earth - Critical Slow -->
+	<effect itemId="11219" text="Increases Max HP by 25%." /> <!-- Saint Spear - Destruction - Health -->
+	<effect itemId="11220" text="Increases Accuracy by 5." /> <!-- Saint Spear - Destruction - Guidance -->
+	<effect itemId="11221" text="Increases Atk. Spd. by about 7%." /> <!-- Saint Spear - Destruction - Haste -->
+	<effect itemId="11223" text="Increases Casting Spd. by 15%." /> <!-- Arcana Mace - Nature - Acumen -->
+	<effect itemId="11224" text="Increases MP Recovery Rate." /> <!-- Arcana Mace - Nature - MP Regeneration -->
+	<effect itemId="11225" text="Increases Max MP by 30%." /> <!-- Arcana Mace - Nature - Mana Up -->
+	<effect itemId="11227" text="Increases P. Atk. by 265 on a critical attack." /> <!-- Angel Slayer - Concentration - Critical Damage -->
+	<effect itemId="11228" text="Restores 3% of melee damage inflicted upon the enemy to your own HP." /> <!-- Angel Slayer - Concentration - HP Drain -->
+	<effect itemId="11229" text="Atk. Spd. increases by 7%." /> <!-- Angel Slayer - Concentration - Haste -->
+	<effect itemId="11231" text="Increases M. Atk. by 60." /> <!-- Imperial Staff - Nature - Empower -->
+	<effect itemId="11232" text="Increases MP Recovery Rate." /> <!-- Imperial Staff - Nature - MP Regeneration -->
+	<effect itemId="11233" text="Has a 20% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Imperial Staff - Nature - Magic Hold -->
+	<effect itemId="11236" text="Atk. Spd. increases by 7%." /> <!-- Forgotten Blade - Lightning - Haste -->
+	<effect itemId="11237" text="Increases Max HP by 25%." /> <!-- Forgotten Blade - Lightning - Health -->
+	<effect itemId="11238" text="Increases Critical Rate by 84." /> <!-- Forgotten Blade - Lightning - Focus -->
+	<effect itemId="11240" text="Atk. Spd. increases by 7%." /> <!-- Heaven's Divider - Thunder - Haste -->
+	<effect itemId="11241" text="Increases Max HP by 25%." /> <!-- Heaven's Divider - Thunder - Health -->
+	<effect itemId="11242" text="Increases Critical Rate by 84." /> <!-- Heaven's Divider - Thunder - Focus -->
+	<effect itemId="11244" text="Increases Critical Rate by 111." /> <!-- Dynasty Ancient Sword - Great Gale - Focus -->
+	<effect itemId="11245" text="Increases Max HP by 25%." /> <!-- Dynasty Ancient Sword - Great Gale - Health -->
+	<effect itemId="11246" text="Increases weight gauge by 20%." /> <!-- Dynasty Ancient Sword - Great Gale - Light -->
+	<effect itemId="11248" text="Increases Critical Rate by 116." /> <!-- Dynasty Knife - Great Gale - Focus -->
+	<effect itemId="11249" text="Increases Evasion by 5." /> <!-- Dynasty Knife - Great Gale - Evasion -->
+	<effect itemId="11250" text="Increases P. Atk. by 559 on a critical attack." /> <!-- Dynasty Knife - Great Gale - Critical Damage -->
+	<effect itemId="11253" text="Increases Critical Rate by 111." /> <!-- Dynasty Rapier - Earth - Focus -->
+	<effect itemId="11254" text="Increases Max HP by 25%." /> <!-- Dynasty Rapier - Earth - Health -->
+	<effect itemId="11255" text="Increases weight gauge by 20%." /> <!-- Dynasty Rapier - Earth - Light -->
+	<effect itemId="11257" text="Increases Max MP by 30%." /> <!-- Dynasty Mace - Earth - Mana Up -->
+	<effect itemId="11258" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Dynasty Mace - Earth - Conversion -->
+	<effect itemId="11259" text="Increases Casting Spd. by 15%." /> <!-- Dynasty Mace - Earth - Acumen -->
+	<effect itemId="11261" text="Increases Evasion by 6.8 when HP is 60% or below." /> <!-- Dynasty Bagh-Nakh - Great Gale - Rsk. Evasion -->
+	<effect itemId="11262" text="Increases Critical Rate by 106." /> <!-- Dynasty Bagh-Nakh - Great Gale - Focus -->
+	<effect itemId="11263" text="Atk. Spd. increases by about 10%." /> <!-- Dynasty Bagh-Nakh - Great Gale - Haste -->
+	<effect itemId="11265" text="Decreases MP Consumption 4% during a skill attack." /> <!-- Dynasty Bow - Great Gale - Cheap Shot -->
+	<effect itemId="11266" text="Increases Accuracy by 5.32." /> <!-- Dynasty Bow - Great Gale - Guidance -->
+	<effect itemId="11267" text="Increases Critical Rate by 116." /> <!-- Dynasty Bow - Great Gale - Focus -->
+	<effect itemId="11269" text="Increases Critical Rate by 111." /> <!-- Dynasty Blade - Great Gale - Focus -->
+	<effect itemId="11270" text="Increases Max HP by 25%." /> <!-- Dynasty Blade - Great Gale - Health -->
+	<effect itemId="11271" text="Increases weight gauge by 20%." /> <!-- Dynasty Blade - Great Gale - Light -->
+	<effect itemId="11273" text="Increases Critical Rate by 111." /> <!-- Dynasty Sword - Earth - Focus -->
+	<effect itemId="11274" text="Increases Max HP by 25%." /> <!-- Dynasty Sword - Earth - Health -->
+	<effect itemId="11275" text="Increases weight gauge by 20%." /> <!-- Dynasty Sword - Earth - Light -->
+	<effect itemId="11277" text="Increases Max MP by 30%." /> <!-- Dynasty Staff - Holy Spirit - Mana Up -->
+	<effect itemId="11278" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Dynasty Staff - Holy Spirit - Conversion -->
+	<effect itemId="11279" text="Increases Casting Spd. by 15%." /> <!-- Dynasty Staff - Holy Spirit - Acumen -->
+	<effect itemId="11281" text="One&#x27;s own HP decreases by 15% and P. Atk. +78." /> <!-- Dynasty Cudgel - Landslide - Anger -->
+	<effect itemId="11282" text="Increases Max HP by 25%." /> <!-- Dynasty Cudgel - Landslide - Health -->
+	<effect itemId="11283" text="Increases Critical Rate by 164 when HP is 60% or below." /> <!-- Dynasty Cudgel - Landslide - Rsk. Focus -->
+	<effect itemId="11285" text="One&#x27;s own HP decreases by 15% and P. Atk. +78." /> <!-- Dynasty Crusher - Great Gale - Anger -->
+	<effect itemId="11286" text="Increases Max HP by 25%." /> <!-- Dynasty Crusher - Great Gale - Health -->
+	<effect itemId="11287" text="Increases Critical Rate by 164 when HP is 60% or below." /> <!-- Dynasty Crusher - Great Gale - Rsk. Focus -->
+	<effect itemId="11289" text="Decreases MP consumption by 12% when using skills." /> <!-- Dynasty Crossbow - Great Gale - Cheap Shot -->
+	<effect itemId="11290" text="Increases Accuracy by 5.32." /> <!-- Dynasty Crossbow - Great Gale - Guidance -->
+	<effect itemId="11291" text="Increases Critical Rate by 116." /> <!-- Dynasty Crossbow - Great Gale - Focus -->
+	<effect itemId="11293" text="Increases Casting Spd. by 15%." /> <!-- Dynasty Phantom - Nature - Acumen -->
+	<effect itemId="11294" text="Increases Max MP by 30%." /> <!-- Dynasty Phantom - Nature - Mana Up -->
+	<effect itemId="11295" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Dynasty Phantom - Nature - Conversion -->
+	<effect itemId="11297" text="Decreases Max HP by 15% and increases P. Atk. by 78." /> <!-- Dynasty Halberd - Earth - Anger -->
+	<effect itemId="11298" text="Has a 48% chance of stunning a target during a critical attack." /> <!-- Dynasty Halberd - Earth - Critical Stun -->
+	<effect itemId="11299" text="Increases weight gauge by 20%." /> <!-- Dynasty Halberd - Earth - Light -->
+	<effect itemId="11302" text="Increases Critical Rate by 116." /> <!-- Icarus Disperser - Confusion - Focus -->
+	<effect itemId="11303" text="Increases Evasion by 5." /> <!-- Icarus Disperser - Confusion - Evasion -->
+	<effect itemId="11304" text="Increases P. Atk. by 559 on a critical attack." /> <!-- Icarus Disperser - Confusion - Critical Damage -->
+	<effect itemId="11306" text="Increases Critical Rate by 111." /> <!-- Icarus Sawsword - Destruction - Focus -->
+	<effect itemId="11307" text="Increases Max HP by 25%." /> <!-- Icarus Sawsword - Destruction - Health -->
+	<effect itemId="11308" text="Increases weight gauge by 20%." /> <!-- Icarus Sawsword - Destruction - Light -->
+	<effect itemId="11310" text="Decreases MP consumption by 12% when using skills." /> <!-- Icarus Shooter - Concentration - Cheap Shot -->
+	<effect itemId="11311" text="Increases Accuracy by 5.32." /> <!-- Icarus Shooter - Concentration - Guidance -->
+	<effect itemId="11312" text="Increases Critical Rate by 116." /> <!-- Icarus Shooter - Concentration - Focus -->
+	<effect itemId="11314" text="Increases Critical Rate by 111." /> <!-- Icarus Stinger - Destruction - Focus -->
+	<effect itemId="11315" text="Increases Max HP by 25%." /> <!-- Icarus Stinger - Destruction - Health -->
+	<effect itemId="11316" text="Increases weight gauge by 20%." /> <!-- Icarus Stinger - Destruction - Light -->
+	<effect itemId="11318" text="Increases Casting Spd. by 15%." /> <!-- Icarus Spirit - Nature - Acumen -->
+	<effect itemId="11319" text="Increases Max MP by 30%." /> <!-- Icarus Spirit - Nature - Mana Up -->
+	<effect itemId="11320" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Icarus Spirit - Nature - Conversion -->
+	<effect itemId="11322" text="Decreases MP Consumption 4% during a skill attack." /> <!-- Icarus Spitter - Concentration - Cheap Shot -->
+	<effect itemId="11323" text="Increases Accuracy by 5.32 on a critical attack." /> <!-- Icarus Spitter - Concentration - Guidance -->
+	<effect itemId="11324" text="Increases Critical Rate by 116 on a critical attack." /> <!-- Icarus Spitter - Concentration - Focus -->
+	<effect itemId="11326" text="Increases Critical Rate by 111." /> <!-- Icarus Wingblade - Lightning - Focus -->
+	<effect itemId="11327" text="Increases Max HP by 25%." /> <!-- Icarus Wingblade - Lightning - Health -->
+	<effect itemId="11328" text="Increases weight gauge by 20%." /> <!-- Icarus Wingblade - Lightning - Light -->
+	<effect itemId="11330" text="One&#x27;s own HP decreases by 15% and P. Atk. +78." /> <!-- Icarus Trident - Thunder - Anger -->
+	<effect itemId="11331" text="Has a 48% chance of stunning a target during a critical attack." /> <!-- Icarus Trident - Thunder - Critical Stun -->
+	<effect itemId="11332" text="Increases weight gauge by 20%." /> <!-- Icarus Trident - Thunder - Light -->
+	<effect itemId="11334" text="Your own HP decreases by 15% and P. Atk. +78 during a critical attack." /> <!-- Icarus Hammer - Earth - Anger -->
+	<effect itemId="11335" text="Increases Max HP by 25%." /> <!-- Icarus Hammer - Earth - Health -->
+	<effect itemId="11336" text="Increases Critical Rate by 164 when HP is 60% or below." /> <!-- Icarus Hammer - Earth - Rsk. Focus -->
+	<effect itemId="11338" text="Increases Evasion by 6.8 when HP is 60% or below." /> <!-- Icarus Hand - Destruction - Rsk. Evasion -->
+	<effect itemId="11339" text="Increases Critical Rate by 106." /> <!-- Icarus Hand - Destruction - Focus -->
+	<effect itemId="11340" text="Atk. Spd. increases by about 10%." /> <!-- Icarus Hand - Destruction - Haste -->
+	<effect itemId="11342" text="Increases Critical Rate by 111." /> <!-- Icarus Heavy Arms - Lightning - Focus -->
+	<effect itemId="11343" text="Increases Max HP by 25%." /> <!-- Icarus Heavy Arms - Lightning - Health -->
+	<effect itemId="11344" text="Increases weight gauge by 20%." /> <!-- Icarus Heavy Arms - Lightning - Light -->
+	<effect itemId="11346" text="Increases Max MP by 30%." /> <!-- Icarus Hall - Hail - Mana Up -->
+	<effect itemId="11347" text="Increases Max MP by 60% and decreases Max HP by 40%." /> <!-- Icarus Hall - Hail - Conversion -->
+	<effect itemId="11348" text="Increases Casting Spd. by 15%." /> <!-- Icarus Hall - Hail - Acumen -->
+	<effect itemId="14118" text="Increases Atk. Spd. by 11%." /> <!-- Vesper Cutter - Haste -->
+	<effect itemId="14119" text="Increases Max HP by 25%." /> <!-- Vesper Cutter - Health -->
+	<effect itemId="14120" text="Increases Critical Rate by 131." /> <!-- Vesper Cutter - Focus -->
+	<effect itemId="14121" text="Atk. Spd. increases by 11%." /> <!-- Vesper Slasher - Haste -->
+	<effect itemId="14122" text="Increases Max HP by 25%." /> <!-- Vesper Slasher - Health -->
+	<effect itemId="14123" text="Increases Critical Rate by 131." /> <!-- Vesper Slasher - Focus -->
+	<effect itemId="14124" text="Increases Max MP by 30%." /> <!-- Vesper Buster - Mana Up -->
+	<effect itemId="14125" text="Increases Casting Spd. by 15%." /> <!-- Vesper Buster - Acumen -->
+	<effect itemId="14126" text="Root is given a 20% chance when using a magic skill on the target." /> <!-- Vesper Buster - Magic Hold -->
+	<effect itemId="14127" text="Increases P. Atk. by 906 during a critical attack." /> <!-- Vesper Shaper - Critical Damage -->
+	<effect itemId="14128" text="Restores 4% of melee damage inflicted upon the enemy to your own HP." /> <!-- Vesper Shaper - HP Drain -->
+	<effect itemId="14129" text="Atk. Spd. increases by 11%." /> <!-- Vesper Shaper - Haste -->
+	<effect itemId="14130" text="Increases Critical Rate by 123." /> <!-- Vesper Fighter - Focus -->
+	<effect itemId="14131" text="Increases Max HP by 25%." /> <!-- Vesper Fighter - Health -->
+	<effect itemId="14132" text="Has a 43% chance of stunning the enemy during a critical attack." /> <!-- Vesper Fighter - Critical Stun -->
+	<effect itemId="14133" text="Increases Max HP by 25%." /> <!-- Vesper Stormer - Health -->
+	<effect itemId="14134" text="Increases Accuracy by 7.5." /> <!-- Vesper Stormer - Guidance -->
+	<effect itemId="14135" text="Atk. Spd. increases by 11%." /> <!-- Vesper Stormer - Haste -->
+	<effect itemId="14136" text="Restores 4% of melee damage inflicted upon the enemy to your own HP." /> <!-- Vesper Avenger - HP Drain -->
+	<effect itemId="14137" text="Increases Max HP by 25%." /> <!-- Vesper Avenger - Health -->
+	<effect itemId="14138" text="Increases HP Recovery Rate." /> <!-- Vesper Avenger - HP Regeneration -->
+	<effect itemId="14139" text="Increases HP Recovery Rate." /> <!-- Vesper Retributer - HP Regeneration -->
+	<effect itemId="14140" text="Increases Max HP by 25%." /> <!-- Vesper Retributer - Health -->
+	<effect itemId="14141" text="Restores 4% of melee damage inflicted upon the enemy to your own HP." /> <!-- Vesper Retributer - HP Drain -->
+	<effect itemId="14142" text="Increases Casting Spd. by 15%." /> <!-- Vesper Caster - Acumen -->
+	<effect itemId="14143" text="Improves MP Recovery Rate." /> <!-- Vesper Caster - MP Regeneration -->
+	<effect itemId="14144" text="Increases Max MP by 30%." /> <!-- Vesper Caster - Mana Up -->
+	<effect itemId="14145" text="Increases M. Atk. by 151." /> <!-- Vesper Singer - Empower -->
+	<effect itemId="14146" text="Improves MP Recovery Rate." /> <!-- Vesper Singer - MP Regeneration -->
+	<effect itemId="14147" text="Root is given a 20% chance when using a magic skill on the target." /> <!-- Vesper Singer - Magic Hold -->
+	<effect itemId="14148" text="Decreases MP Consumption 8% during skill attack." /> <!-- Vesper Thrower - Cheap Shot -->
+	<effect itemId="14149" text="Increases Critical Rate by 133." /> <!-- Vesper Thrower - Focus -->
+	<effect itemId="14150" text="Has a 33% chance of slowing the enemy during a critical attack." /> <!-- Vesper Thrower - Critical Slow -->
+	<effect itemId="14151" text="Increases Atk. Spd. by about 11%." /> <!-- Vesper Pincer - Haste -->
+	<effect itemId="14152" text="Max HP increased by 25%." /> <!-- Vesper Pincer - Health -->
+	<effect itemId="14153" text="Increases Critical Rate by 131." /> <!-- Vesper Pincer - Focus -->
+	<effect itemId="14154" text="MP consumption decreases 12%." /> <!-- Vesper Shooter - Cheap Shot -->
+	<effect itemId="14155" text="Increases Critical Rate by 133." /> <!-- Vesper Shooter - Focus -->
+	<effect itemId="14156" text="Casts Slow at a 24% rate during a critical attack." /> <!-- Vesper Shooter - Critical Slow -->
+	<effect itemId="14157" text="Increases Atk. Spd. by about 11%." /> <!-- Vesper Nagan - Haste -->
+	<effect itemId="14158" text="Max HP increased by 25%." /> <!-- Vesper Nagan - Health -->
+	<effect itemId="14159" text="Increases Critical Rate by 131." /> <!-- Vesper Nagan - Focus -->
+	<effect itemId="15829" text="Increases Max HP by 25%." /> <!-- Periel Sword - Health -->
+	<effect itemId="15830" text="Increases Critical Rate by 134." /> <!-- Periel Sword - Focus -->
+	<effect itemId="15831" text="Increases Atk. Spd. by about 11%." /> <!-- Periel Sword - Haste -->
+	<effect itemId="15832" text="Restores 4% of melee damage inflicted upon the enemy to your own HP." /> <!-- Skull Edge - HP Drain -->
+	<effect itemId="15833" text="Increases Atk. Spd. by about 11%." /> <!-- Skull Edge - Haste -->
+	<effect itemId="15834" text="Increases P. Atk. by 1000 during a critical attack." /> <!-- Skull Edge - Critical Damage -->
+	<effect itemId="15835" text="Increases Max HP by 25%." /> <!-- Vigwik Axe - Health -->
+	<effect itemId="15836" text="Increases HP Recovery Rate." /> <!-- Vigwik Axe - HP Regeneration -->
+	<effect itemId="15837" text="Restores 4% of melee damage inflicted upon the enemy to your own HP." /> <!-- Vigwik Axe - HP Drain -->
+	<effect itemId="15838" text="Increases Max HP by 25%." /> <!-- Devilish Maul - Health -->
+	<effect itemId="15839" text="Restores 4% of melee damage inflicted upon the enemy to your own HP." /> <!-- Devilish Maul - HP Drain -->
+	<effect itemId="15840" text="Increases HP Recovery Rate." /> <!-- Devilish Maul - HP Regeneration -->
+	<effect itemId="15841" text="Increases Max HP by 25%." /> <!-- Feather Eye Blade - Health -->
+	<effect itemId="15842" text="Increases Critical Rate by 134." /> <!-- Feather Eye Blade - Focus -->
+	<effect itemId="15843" text="Increases Atk. Spd. by about 11%." /> <!-- Feather Eye Blade - Haste -->
+	<effect itemId="15844" text="Increases Max HP by 25%." /> <!-- Octo Claw - Health -->
+	<effect itemId="15845" text="Has a 43% chance of stunning a target during a critical attack." /> <!-- Octo Claw - Critical Stun -->
+	<effect itemId="15846" text="Increases Critical Rate by 129." /> <!-- Octo Claw - Focus -->
+	<effect itemId="15847" text="Increases Accuracy by 8." /> <!-- Doubletop Spear - Guidance -->
+	<effect itemId="15848" text="Increases Atk. Spd. by about 11%." /> <!-- Doubletop Spear - Haste -->
+	<effect itemId="15849" text="Increases Max HP by 25%." /> <!-- Doubletop Spear - Health -->
+	<effect itemId="15850" text="Increases MP Recovery Rate." /> <!-- Rising Star - MP Regeneration -->
+	<effect itemId="15851" text="Increases Max MP by 30%." /> <!-- Rising Star - Mana Up -->
+	<effect itemId="15852" text="Increases Casting Spd. by 15%." /> <!-- Rising Star - Acumen -->
+	<effect itemId="15853" text="Increases MP Recovery Rate." /> <!-- Black Visage - MP Regeneration -->
+	<effect itemId="15854" text="Root is given a 20% chance when using a magic skill on the target." /> <!-- Black Visage - Magic Hold -->
+	<effect itemId="15855" text="Increases M. Atk. by 167." /> <!-- Black Visage - Empower -->
+	<effect itemId="15856" text="Increases Casting Spd. by 15%." /> <!-- Veniplant Sword - Acumen -->
+	<effect itemId="15857" text="Root is given a 20% chance when using a magic skill on the target." /> <!-- Veniplant Sword - Magic Hold -->
+	<effect itemId="15858" text="Increases Max MP by 30%." /> <!-- Veniplant Sword - Mana Up -->
+	<effect itemId="15859" text="Increases Critical Rate by 139." /> <!-- Skull Carnium Bow - Focus -->
+	<effect itemId="15860" text="Has a 33% chance of inflicting Slow during a critical attack." /> <!-- Skull Carnium Bow - Critical Slow -->
+	<effect itemId="15861" text="Launching a general attack, there is a 8% chance that MP consumption will be decreased to 1." /> <!-- Skull Carnium Bow - Cheap Shot -->
+	<effect itemId="15862" text="Increases Max HP by 25%." /> <!-- Gemtail Rapier - Health -->
+	<effect itemId="15863" text="Increases Critical Rate by 134." /> <!-- Gemtail Rapier - Focus -->
+	<effect itemId="15864" text="Increases Atk. Spd. by about 11%." /> <!-- Gemtail Rapier - Haste -->
+	<effect itemId="15865" text="Increases Max HP by 25%." /> <!-- Finale Blade - Health -->
+	<effect itemId="15866" text="Increases Critical Rate by 134." /> <!-- Finale Blade - Focus -->
+	<effect itemId="15867" text="Increases Atk. Spd. by about 11%." /> <!-- Finale Blade - Haste -->
+	<effect itemId="15868" text="Increases Critical Rate by 139." /> <!-- Dominion Crossbow - Focus -->
+	<effect itemId="15869" text="Inflicts Slow at a 24% rate during a critical attack." /> <!-- Dominion Crossbow - Critical Slow -->
+	<effect itemId="15870" text="MP consumption decreases to 1 with a 12% chance during a regular attack." /> <!-- Dominion Crossbow - Cheap Shot -->
+	<effect itemId="15871" text="Increases Critical Rate by 134." /> <!-- Eternal Core Sword - Focus -->
+	<effect itemId="15872" text="Increases Atk. Spd. by about 11%." /> <!-- Eternal Core Sword - Haste -->
+	<effect itemId="15873" text="Increases Max HP by 25%." /> <!-- Eternal Core Sword - Health -->
+	<effect itemId="15874" text="Increases Atk. Spd. by about 11%." /> <!-- Mamba Edge - Haste -->
+	<effect itemId="15875" text="Increases P. Atk. by 1060 during a critical attack." /> <!-- Mamba Edge - Critical Damage -->
+	<effect itemId="15876" text="Restores 4% of melee damage inflicted upon the enemy to your own HP." /> <!-- Mamba Edge - HP Drain -->
+	<effect itemId="15877" text="Increases HP Recovery Rate." /> <!-- Eversor Mace - HP Regeneration -->
+	<effect itemId="15878" text="Restores 4% of melee damage inflicted upon the enemy to your own HP." /> <!-- Eversor Mace - HP Drain -->
+	<effect itemId="15879" text="Increases Max HP by 25%." /> <!-- Eversor Mace - Health -->
+	<effect itemId="15880" text="Restores 4% of melee damage inflicted upon the enemy to your own HP." /> <!-- Contristo Hammer - HP Drain -->
+	<effect itemId="15881" text="Increases HP Recovery Rate." /> <!-- Contristo Hammer - HP Regeneration -->
+	<effect itemId="15882" text="Increases Max HP by 25%." /> <!-- Contristo Hammer - Health -->
+	<effect itemId="15883" text="Increases Critical Rate by 134." /> <!-- Lava Saw - Focus -->
+	<effect itemId="15884" text="Increases Atk. Spd. by about 11%." /> <!-- Lava Saw - Haste -->
+	<effect itemId="15885" text="Increases Max HP by 25%." /> <!-- Lava Saw - Health -->
+	<effect itemId="15886" text="Has a 43% chance of stunning a target during a critical attack." /> <!-- Jade Claw - Critical Stun -->
+	<effect itemId="15887" text="Increases Critical Rate by 129." /> <!-- Jade Claw - Focus -->
+	<effect itemId="15888" text="Increases Max HP by 25%." /> <!-- Jade Claw - Health -->
+	<effect itemId="15889" text="Increases Atk. Spd. by about 11%." /> <!-- Demitelum - Haste -->
+	<effect itemId="15890" text="Increases Max HP by 25%." /> <!-- Demitelum - Health -->
+	<effect itemId="15891" text="Increases Accuracy by 8." /> <!-- Demitelum - Guidance -->
+	<effect itemId="15892" text="Increases Max MP by 30%." /> <!-- Sacredium - Mana Up -->
+	<effect itemId="15893" text="Increases Casting Spd. by 15%." /> <!-- Sacredium - Acumen -->
+	<effect itemId="15894" text="Increases MP Recovery Rate." /> <!-- Sacredium - MP Regeneration -->
+	<effect itemId="15895" text="Root is given a 20% chance when using a magic skill on the target." /> <!-- Cyclic Cane - Magic Hold -->
+	<effect itemId="15896" text="Increases M. Atk. by 177." /> <!-- Cyclic Cane - Empower -->
+	<effect itemId="15897" text="Increases MP Recovery Rate." /> <!-- Cyclic Cane - MP Regeneration -->
+	<effect itemId="15898" text="Root is given a 20% chance when using a magic skill on the target." /> <!-- Archangel Sword - Magic Hold -->
+	<effect itemId="15899" text="Increases Max MP by 30%." /> <!-- Archangel Sword - Mana Up -->
+	<effect itemId="15900" text="Increases Casting Spd. by 15%." /> <!-- Archangel Sword - Acumen -->
+	<effect itemId="15901" text="Slow effect with 44% chance during a critical attack." /> <!-- Recurve Thorne Bow - Critical Slow -->
+	<effect itemId="15902" text="Launching a general attack, there is a 8% chance that MP consumption will be decreased to 1." /> <!-- Recurve Thorne Bow - Cheap Shot -->
+	<effect itemId="15903" text="Increases Critical Rate by 139." /> <!-- Recurve Thorne Bow - Focus -->
+	<effect itemId="15904" text="Increases Critical Rate by 134." /> <!-- Heavenstare Rapier - Focus -->
+	<effect itemId="15905" text="Increases Atk. Spd. by about 11%." /> <!-- Heavenstare Rapier - Haste -->
+	<effect itemId="15906" text="Increases Max HP by 25%." /> <!-- Heavenstare Rapier - Health -->
+	<effect itemId="15907" text="Increases Critical Rate by 134." /> <!-- Pyseal Blade - Focus -->
+	<effect itemId="15908" text="Increases Atk. Spd. by about 11%." /> <!-- Pyseal Blade - Haste -->
+	<effect itemId="15909" text="Increases Max HP by 25%." /> <!-- Pyseal Blade - Health -->
+	<effect itemId="15910" text="Inflicts Slow at a 24% rate during a critical attack." /> <!-- Thorne Crossbow - Critical Slow -->
+	<effect itemId="15911" text="MP consumption decreases to 1 with a 12% chance during a regular attack." /> <!-- Thorne Crossbow - Cheap Shot -->
+	<effect itemId="15912" text="Increases Critical Rate by 139." /> <!-- Thorne Crossbow - Focus -->
+	<effect itemId="16056" text="Increases Atk. Spd. by about 11%." /> <!-- Vesper Cutter - Thunder - Haste -->
+	<effect itemId="16057" text="Max HP increases by 25%." /> <!-- Vesper Cutter - Thunder - Health -->
+	<effect itemId="16058" text="Increases Critical Rate by 131." /> <!-- Vesper Cutter - Thunder - Focus -->
+	<effect itemId="16059" text="Increases Atk. Spd. by about 11%." /> <!-- Vesper Slasher - Gale - Haste -->
+	<effect itemId="16060" text="Max HP increases by 25%." /> <!-- Vesper Slasher - Gale - Health -->
+	<effect itemId="16061" text="Increases Critical Rate by 131." /> <!-- Vesper Slasher - Gale - Focus -->
+	<effect itemId="16062" text="Max MP increases by 30%." /> <!-- Vesper Buster - Cleverness - Mana Up -->
+	<effect itemId="16063" text="Increases Casting Spd. by 15%." /> <!-- Vesper Buster - Cleverness - Acumen -->
+	<effect itemId="16064" text="Has a 20% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Vesper Buster - Cleverness - Magic Hold -->
+	<effect itemId="16065" text="Increases P. Atk. by 906 during a critical attack." /> <!-- Vesper Shaper - Gale - Critical Damage -->
+	<effect itemId="16066" text="HP recovers by 4% of the damage inflicted on the enemy during a short-range ordinary physical attack." /> <!-- Vesper Shaper - Gale - HP Drain -->
+	<effect itemId="16067" text="Increases Atk. Spd. by about 11%." /> <!-- Vesper Shaper - Gale - Haste -->
+	<effect itemId="16068" text="Increases Critical Rate by 123." /> <!-- Vesper Fighter - Gale - Focus -->
+	<effect itemId="16069" text="Max HP increases by 25%." /> <!-- Vesper Fighter - Gale - Health -->
+	<effect itemId="16070" text="Inflicts Stun with a 43% chance during a critical attack." /> <!-- Vesper Fighter - Gale - Critical Stun -->
+	<effect itemId="16071" text="Max HP increases by 25%." /> <!-- Vesper Stormer - Thunder - Health -->
+	<effect itemId="16072" text="Increases Accuracy by 7.5." /> <!-- Vesper Stormer - Thunder - Guidance -->
+	<effect itemId="16073" text="Increases Atk. Spd. by about 11%." /> <!-- Vesper Stormer - Thunder - Haste -->
+	<effect itemId="16074" text="HP recovers by 4% of the damage inflicted on the enemy during a short-range ordinary physical attack." /> <!-- Vesper Avenger - Landslide - HP Drain -->
+	<effect itemId="16075" text="Max HP increases by 25%." /> <!-- Vesper Avenger - Landslide - Health -->
+	<effect itemId="16076" text="Increases HP Recovery Rate." /> <!-- Vesper Avenger - Landslide - HP Regeneration -->
+	<effect itemId="16077" text="HP&#x27;s recovery rate increases." /> <!-- Vesper Retributer - Gale - HP Regeneration -->
+	<effect itemId="16078" text="Max HP increases by 25%." /> <!-- Vesper Retributer - Gale - Health -->
+	<effect itemId="16079" text="HP recovers by 4% of the damage inflicted on the enemy during a short-range ordinary physical attack." /> <!-- Vesper Retributer - Gale - HP Drain -->
+	<effect itemId="16080" text="Increases Casting Spd. by 15%." /> <!-- Vesper Caster - Cleverness - Acumen -->
+	<effect itemId="16081" text="Increases MP Recovery Rate." /> <!-- Vesper Caster - Cleverness - MP Regeneration -->
+	<effect itemId="16082" text="Max MP increases by 30%." /> <!-- Vesper Caster - Cleverness - Mana Up -->
+	<effect itemId="16083" text="Increases M. Atk. by 151." /> <!-- Vesper Singer - Hail - Empower -->
+	<effect itemId="16084" text="Increases MP Recovery Rate." /> <!-- Vesper Singer - Hail - MP Regeneration -->
+	<effect itemId="16085" text="Has a 20% chance of casting Dryad Root when using a magic skill on the target." /> <!-- Vesper Singer - Hail - Magic Hold -->
+	<effect itemId="16086" text="MP consumption decreases by 8% during a skill attack." /> <!-- Vesper Thrower - Clairvoyance - Cheap Shot -->
+	<effect itemId="16087" text="Increases Critical Rate by 133." /> <!-- Vesper Thrower - Clairvoyance - Focus -->
+	<effect itemId="16088" text="Inflicts slow with 33% chance during a critical attack." /> <!-- Vesper Thrower - Clairvoyance - Critical Slow -->
+	<effect itemId="16089" text="Increases Atk. Spd. by about 11%." /> <!-- Vesper Pincer - Thunder - Haste -->
+	<effect itemId="16090" text="Max HP increases by 25%." /> <!-- Vesper Pincer - Thunder - Health -->
+	<effect itemId="16091" text="Increases Critical Rate by 131." /> <!-- Vesper Pincer - Thunder - Focus -->
+	<effect itemId="16092" text="MP consumption decreases by 12% during skill use." /> <!-- Vesper Shooter - Clairvoyance - Cheap Shot -->
+	<effect itemId="16093" text="Increases Critical Rate by 133." /> <!-- Vesper Shooter - Clairvoyance - Focus -->
+	<effect itemId="16094" text="Casts Slow at a 24% rate during a critical attack." /> <!-- Vesper Shooter - Clairvoyance - Critical Slow -->
+	<effect itemId="16095" text="Increases Atk. Spd. by about 11%." /> <!-- Vesper Nagan - Gale - Haste -->
+	<effect itemId="16096" text="Max HP increases by 25%." /> <!-- Vesper Nagan - Gale - Health -->
+	<effect itemId="16097" text="Increases Critical Rate by 131." /> <!-- Vesper Nagan - Gale - Focus -->
+	<effect itemId="21920" text="Increases Atk. Spd. by about 11%." /> <!-- Hellblade - Haste -->
+	<effect itemId="21921" text="Increases Max HP by 25%." /> <!-- Hellblade - Health -->
+	<effect itemId="21922" text="Increases Critical Rate by 131." /> <!-- Hellblade - Focus -->
+	<effect itemId="21928" text="Increases Atk. Spd. by about 11%." /> <!-- Hellblade - Lightning - Haste -->
+	<effect itemId="21929" text="Increases Max HP by 25%." /> <!-- Hellblade - Lightning - Health -->
+	<effect itemId="21930" text="Increases Critical Rate by 131." /> <!-- Hellblade - Lightning - Focus -->
+	<effect itemId="21940" text="Recovers 4% of melee damage inflicted upon the enemy to your own HP." /> <!-- Claw of Destruction - HP Drain -->
+	<effect itemId="21941" text="Increases Max HP by 25%." /> <!-- Claw of Destruction - Health -->
+	<effect itemId="21942" text="Increases HP recovery rate." /> <!-- Claw of Destruction - HP Regeneration -->
+	<effect itemId="21948" text="Recovers 4% of melee damage inflicted upon the enemy to your own HP." /> <!-- Claw of Destruction - Landslide - HP Drain -->
+	<effect itemId="21949" text="Increases Max HP by 25%." /> <!-- Claw of Destruction - Landslide - Health -->
+	<effect itemId="21950" text="Increases HP recovery rate." /> <!-- Claw of Destruction - Landslide - HP Regeneration -->
+	<effect itemId="21960" text="Increases Critical Rate by 111." /> <!-- Blood Brother - Focus -->
+	<effect itemId="21961" text="Increases Max HP by 25%." /> <!-- Blood Brother - Health -->
+	<effect itemId="21962" text="Increases weight gauge by 20%." /> <!-- Blood Brother - Light -->
+	<effect itemId="21967" text="Increases Critical Rate by 111." /> <!-- Blood Brother - Great Gale - Focus -->
+	<effect itemId="21968" text="Increases Max HP by 25%." /> <!-- Blood Brother - Great Gale - Health -->
+	<effect itemId="21969" text="Increases weight gauge by 20%." /> <!-- Blood Brother - Great Gale - Light -->
+	<effect itemId="21974" text="When using magic, increases MP Consumption by 15% and increases M. Atk. by 167." /> <!-- Mardil's Fan - M. Atk. -->
+	<effect itemId="21975" text="Inflicts silence on a target with a 10% chance when using a magic skill." /> <!-- Mardil's Fan - Magic Silence -->
+	<effect itemId="21976" text="Increases Casting Spd. by 15%." /> <!-- Mardil's Fan - Acumen -->
+	<effect itemId="21978" text="When using magic, increases MP Consumption by 15% and increases M. Atk. by 167." /> <!-- Mardil's Fan - Holy Spirit - M. Atk. -->
+	<effect itemId="21979" text="Inflicts silence on a target with a 10% chance when using a magic skill." /> <!-- Mardil's Fan - Holy Spirit - Magic Silence -->
+	<effect itemId="21980" text="Increases Casting Spd. by 15%." /> <!-- Mardil's Fan - Holy Spirit - Acumen -->
+</list>

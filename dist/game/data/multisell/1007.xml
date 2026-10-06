@@ -5,6 +5,7 @@
 		<npc>31271</npc> <!-- Hilda -->
 		<npc>31316</npc> <!-- Vincenz -->
 		<npc>31960</npc> <!-- Buryun -->
+		<npc>900010</npc> <!-- Master Blacksmith (custom) -->
 	</npcs>
 	<item>
 		<!-- Shamshir -->

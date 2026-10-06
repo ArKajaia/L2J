@@ -17,6 +17,7 @@
 		<npc>31583</npc> <!-- Feynn -->
 		<npc>31990</npc> <!-- Siger -->
 		<npc>32159</npc> <!-- Kincaid -->
+		<npc>900010</npc> <!-- Master Blacksmith (custom) -->
 	</npcs>
 	<item>
 		<!-- Saber -->

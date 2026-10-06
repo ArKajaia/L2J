@@ -2,6 +2,7 @@
 <list maintainEnchantment="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/multisell.xsd">
 	<npcs>
 		<npc>31126</npc> <!-- Blacksmith of Mammon -->
+		<npc>900010</npc> <!-- Master Blacksmith (custom) -->
 	</npcs>
 	<item>
 		<!-- Spiritual Eye -->
