@@ -2,7 +2,7 @@ Custom skills - client additions (High Five)
 ============================================
 
 Rows for the server's custom skills:
-  27000-27004  Hot Zone buffs        (data/stats/skills/custom/hotzone_skills.xml)
+  27000-27005  Hot Zone buffs        (data/stats/skills/custom/hotzone_skills.xml)
   27400-27465  Passive tree actives  (data/stats/skills/PassiveTreeActives.xml)
 
 Without these rows the client shows the skills with no name and no icon.
@@ -11,7 +11,7 @@ Without these rows the client shows the skills with no name and no icon.
   skillname-e_additions.txt   -> Skillname-e.dat
 
 Both are tab-separated in the same column layout as the L2ClientDat text
-export (no header line). 96 rows each: the Hot Zone buffs (Kill Streak has
+export (no header line). 97 rows each: the Hot Zone buffs (Kill Streak has
 10 levels), 10 single-level tree skills and 8 tree skills with 9 levels
 (Earthshatter, Volley, Arcane Nova, Mana Rift, Sacred Chorus, Reaving
 Strike, Hunter's Mark, Binding Rune), whose level follows the character

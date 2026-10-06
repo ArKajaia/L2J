@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/skills.xsd">
-	<!-- Ids 27000-27004 (were 90000-90004): the H5 client does not resolve skill ids in the 90000s, so they showed a black buff icon. Keep custom skill ids below 32768. -->
+	<!-- Ids 27000-27005 (27000-27004 were 90000-90004): the H5 client does not resolve skill ids in the 90000s, so they showed a black buff icon. Keep custom skill ids below 32768. -->
 	
 <!-- Monster Buff: +50% Run Speed, +50% Max HP, +30% Atk/Cast Speed -->
 	<skill id="27000" levels="1" name="Hot Zone: Frenzy">
@@ -78,6 +78,30 @@
 				<mul stat="pReuse">0.8</mul>
 				<mul stat="mReuse">0.8</mul>
 				<mul stat="mpConsume">0.7</mul>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- Hotzone modifier LAST_STAND: below 30% HP, +30% P.Atk/M.Atk and 10% of the damage dealt is absorbed as HP -->
+	<skill id="27005" levels="1" name="Hot Zone: Last Stand">
+		<icon>icon.skill4001</icon>
+		<operateType>A2</operateType>
+		<abnormalTime>-1</abnormalTime>
+		<isMagic>4</isMagic>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pAtk">
+					<value>1.3</value>
+					<player hp="30" />
+				</mul>
+				<mul stat="mAtk">
+					<value>1.3</value>
+					<player hp="30" />
+				</mul>
+				<add stat="absorbDam">
+					<value>10</value>
+					<player hp="30" />
+				</add>
 			</effect>
 		</effects>
 	</skill>

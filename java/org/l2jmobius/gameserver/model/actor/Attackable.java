@@ -381,6 +381,12 @@ public class Attackable extends Npc
 			if (player != null)
 			{
 				FakePlayerPvpManager.getInstance().onAttackableKilled(this, player);
+				
+				// CONTESTED_GROUND-style hotzone modifiers pay for them too.
+				if (isPvpFakePlayer())
+				{
+					org.l2jmobius.gameserver.managers.HotzoneModifierManager.getInstance().onFakePlayerKilled(this, player);
+				}
 			}
 			// One roaming fake player killed by another.
 			else if (isPvpFakePlayer() && killer.isPvpFakePlayer())
@@ -681,6 +687,11 @@ public class Attackable extends Npc
 							exp *= fakeShare;
 							sp *= fakeShare;
 							
+							// KINSHIP-style hotzone modifiers cost a lone hunter some of it.
+							final double kinship = org.l2jmobius.gameserver.managers.HotzoneModifierManager.getInstance().getKinshipMultiplier(this, attacker);
+							exp *= kinship;
+							sp *= kinship;
+							
 							// Check for an over-hit enabled strike
 							final Creature overhitAttacker = _overhitAttacker;
 							if (_overhit && (overhitAttacker != null))
@@ -836,6 +847,11 @@ public class Attackable extends Npc
 						final double fakeShare = FakePartyManager.getInstance().getExpShare(attacker, rewardedMembers, this);
 						exp *= fakeShare;
 						sp *= fakeShare;
+						
+						// KINSHIP-style hotzone modifiers reward a party hunting together.
+						final double kinship = org.l2jmobius.gameserver.managers.HotzoneModifierManager.getInstance().getKinshipMultiplier(this, attacker);
+						exp *= kinship;
+						sp *= kinship;
 						
 						// Check for an over-hit enabled strike
 						// (When in party, the over-hit exp bonus is given to the whole party and splitted proportionally through the party members)

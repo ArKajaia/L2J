@@ -4,6 +4,7 @@ import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.custom.MonsterRageConfig;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
+import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.skill.Skill;
 
 /**
@@ -41,8 +42,11 @@ public class MonsterRageManager
 			return;
 		}
 
+		// HAIR_TRIGGER-style hotzone modifiers lower the threshold.
+		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(monster);
+		final int disablesRequired = (modifier != null) && (modifier.getRageDisablesOverride() >= 0) ? modifier.getRageDisablesOverride() : MonsterRageConfig.DISABLES_REQUIRED;
 		final int disables = monster.addRageDisable();
-		if ((disables <= MonsterRageConfig.DISABLES_REQUIRED) || monster.isRaging())
+		if ((disables <= disablesRequired) || monster.isRaging())
 		{
 			return;
 		}

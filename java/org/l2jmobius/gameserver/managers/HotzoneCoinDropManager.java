@@ -42,12 +42,22 @@ public class HotzoneCoinDropManager
 			return;
 		}
 
-		// GOLD_RUSH multiplies every payout; MINIBOSS_FRENZY makes a miniboss always pay, and pay more.
+		// GOLD_RUSH multiplies every payout; MINIBOSS_FRENZY makes a miniboss always pay, and pay more - as do a BOUNTY_HUNT bounty and a CONTESTED_GROUND fake player.
 		double multiplier = modifier.getCoinMult();
 		final boolean frenzyMiniboss = (modifier.getMinibossCoinMult() > 1.0) && victim.isMonster() && victim.asMonster().isHotzoneMiniboss();
+		final boolean bounty = victim.isMonster() && victim.asMonster().isHotzoneBounty();
+		final boolean contestedFake = (modifier.getFakePlayerCoinMult() > 1.0) && victim.isPvpFakePlayer();
 		if (frenzyMiniboss)
 		{
 			multiplier *= modifier.getMinibossCoinMult();
+		}
+		else if (bounty)
+		{
+			multiplier *= HotzoneModifierManager.BOUNTY_COIN_MULT;
+		}
+		else if (contestedFake)
+		{
+			multiplier *= modifier.getFakePlayerCoinMult();
 		}
 		else if ((Rnd.nextDouble() * 100) >= HotzoneCoinDropConfig.DROP_CHANCE)
 		{

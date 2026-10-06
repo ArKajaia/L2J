@@ -15,6 +15,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
 import org.l2jmobius.gameserver.model.actor.instance.Chest;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
+import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 
 /**
@@ -69,12 +70,22 @@ public class WaveChallengeManager
 			return;
 		}
 
-		if ((Rnd.nextDouble() * 100) >= WaveChallengeConfig.SPAWN_CHANCE)
+		// A PROVING_GROUNDS-style hotzone modifier draws more of them, with extra waves.
+		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(monster);
+		final double chance = WaveChallengeConfig.SPAWN_CHANCE * (modifier != null ? modifier.getWaveSpawnMult() : 1.0);
+		if ((Rnd.nextDouble() * 100) >= chance)
 		{
 			return;
 		}
 
-		monster.startWaveChallenge();
+		if ((modifier != null) && (modifier.getExtraWaves() > 0))
+		{
+			monster.startWaveChallenge(WaveChallengeConfig.WAVE_COUNT + modifier.getExtraWaves());
+		}
+		else
+		{
+			monster.startWaveChallenge();
+		}
 	}
 
 	/**
@@ -97,7 +108,8 @@ public class WaveChallengeManager
 
 		final int finalLevel = monster.getLevel();
 		final int arenaWave = Math.max(WaveChallengeConfig.MIN_ARENA_WAVE, (finalLevel - WaveChallengeConfig.COIN_LEVEL_OFFSET) / WaveChallengeConfig.COIN_LEVEL_DIVISOR);
-		final long totalCoins = Monster.calculateArenaReward(arenaWave);
+		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(monster);
+		final long totalCoins = Math.round(Monster.calculateArenaReward(arenaWave) * (modifier != null ? modifier.getWaveCoinMult() : 1.0));
 		if (totalCoins <= 0)
 		{
 			return;

@@ -7,6 +7,7 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.instance.Chest;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
+import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
 
 /**
@@ -70,7 +71,10 @@ public class ThiefMonsterManager
 			return;
 		}
 
-		if ((Rnd.nextDouble() * 100) >= ThiefMonsterConfig.SPAWN_CHANCE)
+		// A THIEVES_DEN-style hotzone modifier draws more of them.
+		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(monster);
+		final double chance = ThiefMonsterConfig.SPAWN_CHANCE * (modifier != null ? modifier.getThiefSpawnMult() : 1.0);
+		if ((Rnd.nextDouble() * 100) >= chance)
 		{
 			return;
 		}

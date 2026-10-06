@@ -94,3 +94,4 @@
 27002	10	a,Hot Zone: Kill Streak\0	a,Hot zone kill streak: XP and SP +30%. Kill again within 15 seconds to raise it.\0	a,none\0	a,none\0
 27003	1	a,Hot Zone: Glass Cannon\0	a,Hot zone omen: P. Atk. and M. Atk. +25%, but P. Def. and M. Def. -20%.\0	a,none\0	a,none\0
 27004	1	a,Hot Zone: Arcane Surge\0	a,Hot zone omen: skill reuse time -20% and MP consumption -30%.\0	a,none\0	a,none\0
+27005	1	a,Hot Zone: Last Stand\0	a,Hot zone omen: while your HP is at 30% or less, P. Atk. and M. Atk. +30% and 10% of the damage you deal is restored as HP.\0	a,none\0	a,none\0

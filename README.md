@@ -82,6 +82,16 @@ A rotating set of bonus hunting zones that periodically change location and gran
 
 - A fixed pool of hand-placed zones, grouped by level bracket, with one zone per bracket "active" at a time on a schedule.
 - Active zones buff both players and monsters, plus apply a randomly-rolled modifier each rotation (bonus loot, tougher monsters, drain effects, etc.).
+- Many modifiers drive the server's other systems instead of plain stats. They can:
+  - flood a zone with Thieves (who flee once their bag is full), wave challenges, Mages or rival fake players;
+  - make monsters evolve into champions or rage from the first stun;
+  - speed up Luck stacks;
+  - mark a roaming bounty target;
+  - build zone-wide Heat as the kill count climbs;
+  - make every monster aggressive;
+  - split slain monsters in two;
+  - reward parties that hunt together;
+  - give a "last stand" buff at low HP.
 - Kills inside a hot zone can drop bonus currency and, once enough accumulate, spawn an empowered miniboss.
 - Players are notified via announcements and a dedicated teleporter NPC.
 
@@ -605,6 +615,13 @@ Changes from 28 September – 5 October 2026.
 - The level 71+ brackets are split into 71-79, 80+, 81+, 82+, 83+ and 84+. The Stakato Nest and Antharas' Lair locations are fixed.
 - The teleporter windows are redesigned with a card layout and a larger window.
 - Minibosses, coin drops, champion boosts and the spawn multiplier now apply only to zones that are active in the current rotation.
+- 13 new rotation modifiers:
+  - Thieves' Den, Proving Grounds, Metamorphosis, Hair Trigger, Lucky Stars, Contested Ground and Coven reuse the Thief, Wave Challenge, Champion, Rage, Luck, roaming fake player and Mage systems.
+  - Bounty Hunt and Rising Heat are timed and kill-count zone events.
+  - Hornet's Nest makes every monster aggressive.
+  - Kinship rewards parties hunting together.
+  - Last Stand is a new buff: skill 27005, with client rows in `client/PassiveTree`.
+  - Splitting Ground splits slain monsters into two weaker copies.
 
 ### Augmentation
 - **Life Stones**: using one opens a list of equipment it can augment and a cost confirmation page. It can replace an existing augment, and no Blacksmith is needed.

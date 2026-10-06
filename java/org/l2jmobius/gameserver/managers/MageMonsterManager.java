@@ -10,6 +10,7 @@ import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.effects.EffectType;
+import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
 
@@ -117,7 +118,10 @@ public class MageMonsterManager
 			return;
 		}
 
-		if ((Rnd.nextDouble() * 100) >= MageMonsterConfig.SPAWN_CHANCE)
+		// A COVEN-style hotzone modifier draws more of them.
+		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(monster);
+		final double chance = MageMonsterConfig.SPAWN_CHANCE * (modifier != null ? modifier.getMageSpawnMult() : 1.0);
+		if ((Rnd.nextDouble() * 100) >= chance)
 		{
 			return;
 		}

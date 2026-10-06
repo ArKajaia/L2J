@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.ai.AttackableAI;
+import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.NpcConfig;
 import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
@@ -21,10 +22,12 @@ import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
 import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData;
 import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData.CustomSkill;
 import org.l2jmobius.gameserver.data.xml.SkillData;
+import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.ClassTransferChallengeManager;
 import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.HotzoneModifierManager;
+import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Attackable;
@@ -42,7 +45,10 @@ import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.model.stats.functions.AbstractFunction;
 import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
+import org.l2jmobius.gameserver.network.NpcStringId;
+import org.l2jmobius.gameserver.network.enums.ChatType;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
+import org.l2jmobius.gameserver.util.LocationUtil;
 
 public class Monster extends Attackable
 {
@@ -59,6 +65,42 @@ public class Monster extends Attackable
 	private final AtomicInteger _rageDisables = new AtomicInteger();
 	private volatile boolean _raging = false;
 	private ScheduledFuture<?> _rageTask = null;
+
+	// THIEVES_DEN hotzone modifier: a Thief with a full bag runs away, and escapes with its loot if nobody catches it in time.
+	private static final int THIEF_ESCAPE_TIME_MS = 60000;
+	private static final int THIEF_ESCAPE_STEP_MS = 3000;
+	private static final int THIEF_ESCAPE_DISTANCE = 600;
+	private static final int THIEF_ESCAPE_SCAN_RANGE = 1500;
+	private volatile ScheduledFuture<?> _thiefEscapeTask = null;
+	private volatile long _thiefEscapeEndsAt;
+
+	// METAMORPHOSIS hotzone modifier: the retail polymorph shouts (see ai.others.PolymorphingOnAttack), one row per champion tier reached.
+	private static final NpcStringId[][] METAMORPHOSIS_TEXTS =
+	{
+		{
+			NpcStringId.ENOUGH_FOOLING_AROUND_GET_READY_TO_DIE,
+			NpcStringId.YOU_IDIOT_I_VE_JUST_BEEN_TOYING_WITH_YOU,
+			NpcStringId.NOW_THE_FUN_STARTS
+		},
+		{
+			NpcStringId.I_MUST_ADMIT_NO_ONE_MAKES_MY_BLOOD_BOIL_QUITE_LIKE_YOU_DO,
+			NpcStringId.NOW_THE_BATTLE_BEGINS,
+			NpcStringId.WITNESS_MY_TRUE_POWER
+		},
+		{
+			NpcStringId.PREPARE_TO_DIE,
+			NpcStringId.I_LL_DOUBLE_MY_STRENGTH,
+			NpcStringId.YOU_HAVE_MORE_SKILL_THAN_I_THOUGHT
+		}
+	};
+	/** Set once a monster rolled its METAMORPHOSIS chance, so it only ever rolls once per life. */
+	private static final String METAMORPH_ROLLED_VAR = "HOTZONE_METAMORPH_ROLLED";
+	/** Set on a monster that evolved under METAMORPHOSIS: it is worth double XP/SP. */
+	private static final String EVOLVED_VAR = "HOTZONE_EVOLVED";
+	/** Set on the monster a BOUNTY_HUNT zone currently has marked. */
+	private static final String BOUNTY_VAR = "HOTZONE_BOUNTY";
+	/** Aggro range given to a monster with none of its own, before a HORNETS_NEST-style multiplier. */
+	private static final int FORCED_AGGRO_RANGE = 300;
 
 	// Random passives (and their visual) granted to this object. Kept outside getVariables() because Spawn.initializeNpc() wipes the variables before a
 	// respawn's onSpawn() runs - the ids stored there were lost, so clearRandomPassiveSkills() couldn't remove the previous life's passives and they piled up.
@@ -118,7 +160,38 @@ public class Monster extends Attackable
 	@Override
 	public boolean isAggressive()
 	{
-		return getTemplate().isAggressive() && !isAffected(EffectFlag.PASSIVE);
+		if (isAffected(EffectFlag.PASSIVE))
+		{
+			return false;
+		}
+
+		if (getTemplate().isAggressive())
+		{
+			return true;
+		}
+
+		// HORNETS_NEST-style hotzone modifiers make every regular monster aggressive.
+		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
+		return (hotzoneModifier != null) && hotzoneModifier.isForceAggressive() && !isFakePlayer() && !isQuestMonster() && !(this instanceof Chest);
+	}
+
+	@Override
+	public int getAggroRange()
+	{
+		final int aggroRange = super.getAggroRange();
+		if (hasAIValue("aggroRange"))
+		{
+			return aggroRange;
+		}
+
+		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
+		if ((hotzoneModifier == null) || (!hotzoneModifier.isForceAggressive() && (hotzoneModifier.getAggroRangeMult() == 1.0)))
+		{
+			return aggroRange;
+		}
+
+		final int baseRange = (aggroRange <= 0) && hotzoneModifier.isForceAggressive() ? FORCED_AGGRO_RANGE : aggroRange;
+		return (int) (baseRange * hotzoneModifier.getAggroRangeMult());
 	}
 	
 	public double getCustomPassiveDropMultiplier()
@@ -134,7 +207,18 @@ public class Monster extends Attackable
 		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
 		if (hotzoneModifier != null)
 		{
-			passiveMultiplier *= hotzoneModifier.getDropRateMult();
+			passiveMultiplier *= hotzoneModifier.getDropRateMult() * getHotzoneHeatRewardMultiplier(hotzoneModifier);
+
+			// HAIR_TRIGGER: finishing a monster off while it rages pays more. The rage only ends after the drops (see doDie()).
+			if (isRaging())
+			{
+				passiveMultiplier *= hotzoneModifier.getRageKillDropMult();
+			}
+		}
+
+		if (isHotzoneSplit())
+		{
+			passiveMultiplier *= 0.5;
 		}
 
 		return passiveMultiplier;
@@ -437,6 +521,10 @@ public class Monster extends Attackable
 		{
 			sb.append(HotzoneMinibossConfig.TITLE_TAG).append(' ');
 		}
+		if (isHotzoneBounty())
+		{
+			sb.append("[Bounty]").append(' ');
+		}
 		if (!championTag.isEmpty())
 		{
 			sb.append(championTag).append(' ');
@@ -483,7 +571,120 @@ public class Monster extends Attackable
 	 */
 	public boolean canHotzoneRise()
 	{
-		return !isRaid() && !isMinion() && !isHotzoneMiniboss() && !isHotzoneRisen() && !isWaveChallenge() && !isArenaChallenger() && !isThief();
+		return !isRaid() && !isMinion() && !isHotzoneMiniboss() && !isHotzoneRisen() && !isHotzoneSplit() && !isWaveChallenge() && !isArenaChallenger() && !isThief();
+	}
+
+	/** Set on the two copies a SPLITTING_GROUND hotzone modifier splits a slain monster into (see {@link HotzoneModifierManager#onAttackableKilled}). */
+	public static final String HOTZONE_SPLIT_VAR = "IS_HOTZONE_SPLIT";
+
+	/**
+	 * @return {@code true} if this monster is one of the copies a SPLITTING_GROUND hotzone modifier split a slain monster into - it is worth half the XP/SP and drops, and never rises or splits again.
+	 */
+	public boolean isHotzoneSplit()
+	{
+		return getVariables().getBoolean(HOTZONE_SPLIT_VAR, false);
+	}
+
+	/**
+	 * @return {@code true} if this monster evolved under a METAMORPHOSIS hotzone modifier - it is worth double XP/SP.
+	 */
+	public boolean isHotzoneEvolved()
+	{
+		return getVariables().getBoolean(EVOLVED_VAR, false);
+	}
+
+	/**
+	 * @return {@code true} while a BOUNTY_HUNT hotzone has this monster marked: its kill pays the bounty (see {@link HotzoneModifierManager}).
+	 */
+	public boolean isHotzoneBounty()
+	{
+		return getVariables().getBoolean(BOUNTY_VAR, false);
+	}
+
+	/**
+	 * Marks or unmarks this monster as a BOUNTY_HUNT bounty, and shows it in its name plate.
+	 * @param bounty {@code true} to mark it
+	 */
+	public void setHotzoneBounty(boolean bounty)
+	{
+		if (bounty)
+		{
+			getVariables().set(BOUNTY_VAR, true);
+		}
+		else
+		{
+			getVariables().remove(BOUNTY_VAR);
+		}
+		rebuildFullTitle();
+		broadcastInfo();
+	}
+
+	/**
+	 * RISING_HEAT: players earn more as the zone heats up.
+	 * @param hotzoneModifier the modifier active where this monster stands
+	 * @return the XP/SP and drop multiplier of the zone's Heat, 1.0 if the modifier builds none
+	 */
+	private double getHotzoneHeatRewardMultiplier(HotzoneModifier hotzoneModifier)
+	{
+		if (!hotzoneModifier.isHeat())
+		{
+			return 1.0;
+		}
+		return 1.0 + ((HotzoneModifierManager.getInstance().getHeatStacks(this) * HotzoneModifier.HEAT_REWARD_PCT_PER_STACK) / 100.0);
+	}
+
+	/**
+	 * RISING_HEAT: monsters hit harder as the zone heats up.
+	 * @param hotzoneModifier the modifier active where this monster stands, or {@code null}
+	 * @return the P.Atk/M.Atk multiplier of the zone's Heat, 1.0 if there is none
+	 */
+	private double getHotzoneHeatAttackMultiplier(HotzoneModifier hotzoneModifier)
+	{
+		if ((hotzoneModifier == null) || !hotzoneModifier.isHeat())
+		{
+			return 1.0;
+		}
+		return 1.0 + ((HotzoneModifierManager.getInstance().getHeatStacks(this) * HotzoneModifier.HEAT_ATTACK_PCT_PER_STACK) / 100.0);
+	}
+
+	/**
+	 * METAMORPHOSIS: the first time this monster drops below half HP, it may evolve one champion tier up and heal to full, with a retail polymorph shout.
+	 */
+	private void tryMetamorphosis()
+	{
+		if (isDead() || !ChampionMonstersConfig.CHAMPION_ENABLE || (getCurrentHp() >= (getMaxHp() * 0.5)) || getVariables().getBoolean(METAMORPH_ROLLED_VAR, false))
+		{
+			return;
+		}
+
+		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
+		if ((hotzoneModifier == null) || (hotzoneModifier.getMetamorphChancePct() <= 0))
+		{
+			return;
+		}
+
+		// Only plain monsters - the special kinds already have their own rules, and a tier 3 champion has nowhere left to go.
+		if (isRaid() || isMinion() || isFakePlayer() || isQuestMonster() || (this instanceof Chest) || isHotzoneMiniboss() || isWaveChallenge() || isArenaChallenger() || isThief() || isMageMonster() || (getChampionTier() >= 3))
+		{
+			return;
+		}
+
+		getVariables().set(METAMORPH_ROLLED_VAR, true);
+		if (Rnd.get(100) >= hotzoneModifier.getMetamorphChancePct())
+		{
+			return;
+		}
+
+		final int tier = getChampionTier() + 1;
+		setChampionTier(tier);
+		getVariables().set(EVOLVED_VAR, true);
+		rebuildFullTitle();
+		setCurrentHp(getMaxHp());
+		setCurrentMp(getMaxMp());
+		broadcastInfo();
+
+		final NpcStringId[] texts = METAMORPHOSIS_TEXTS[tier - 1];
+		broadcastSay(ChatType.NPC_GENERAL, texts[Rnd.get(texts.length)]);
 	}
 
 	/**
@@ -508,10 +709,11 @@ public class Monster extends Attackable
 		{
 			multiplier *= WaveChallengeConfig.XP_MULTIPLIER;
 		}
+		multiplier *= getHotzoneVariantRewardMultiplier();
 		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
 		if (hotzoneModifier != null)
 		{
-			multiplier *= hotzoneModifier.getXpSpMult();
+			multiplier *= hotzoneModifier.getXpSpMult() * getHotzoneHeatRewardMultiplier(hotzoneModifier);
 		}
 		return (long) (super.getExpReward(level) * multiplier);
 	}
@@ -528,12 +730,26 @@ public class Monster extends Attackable
 		{
 			multiplier *= WaveChallengeConfig.SP_MULTIPLIER;
 		}
+		multiplier *= getHotzoneVariantRewardMultiplier();
 		final HotzoneModifier hotzoneModifier = getActiveHotzoneModifier();
 		if (hotzoneModifier != null)
 		{
-			multiplier *= hotzoneModifier.getXpSpMult();
+			multiplier *= hotzoneModifier.getXpSpMult() * getHotzoneHeatRewardMultiplier(hotzoneModifier);
 		}
 		return (int) (super.getSpReward(level) * multiplier);
+	}
+
+	/**
+	 * @return the XP/SP multiplier of a monster a hotzone modifier changed: x2 if it evolved (METAMORPHOSIS), x0.5 if it is a split copy (SPLITTING_GROUND)
+	 */
+	private double getHotzoneVariantRewardMultiplier()
+	{
+		double multiplier = isHotzoneEvolved() ? 2.0 : 1.0;
+		if (isHotzoneSplit())
+		{
+			multiplier *= 0.5;
+		}
+		return multiplier;
 	}
 
 	// =======================================================================
@@ -790,9 +1006,84 @@ public class Monster extends Attackable
 			return;
 		}
 
-		getVariables().set("THIEF_KILLS", kills + 1);
+		// THIEVES_DEN-style hotzone modifiers fill the bag faster, and make a full Thief run for it.
+		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
+		final int weight = hotzoneModifier != null ? Math.max(1, hotzoneModifier.getThiefKillWeight()) : 1;
+		final int newKills = Math.min(ThiefMonsterConfig.KILLS_FOR_MAX, kills + weight);
+		getVariables().set("THIEF_KILLS", newKills);
 		rebuildFullTitle();
 		broadcastInfo();
+
+		if ((newKills >= ThiefMonsterConfig.KILLS_FOR_MAX) && (hotzoneModifier != null) && hotzoneModifier.isThiefFlees())
+		{
+			startThiefEscape();
+		}
+	}
+
+	/**
+	 * THIEVES_DEN: the Thief's bag is full, so it runs away from the nearest player (the retail ai.others.FleeMonsters move) and, if it is still alive after {@link #THIEF_ESCAPE_TIME_MS}, gets away with its loot. Its spawn then respawns it as usual.
+	 */
+	private void startThiefEscape()
+	{
+		if ((_thiefEscapeTask != null) || isDead())
+		{
+			return;
+		}
+
+		_thiefEscapeEndsAt = System.currentTimeMillis() + THIEF_ESCAPE_TIME_MS;
+		broadcastSay(ChatType.NPC_GENERAL, "My bag is full - so long, suckers!");
+		disableCoreAI(true);
+		setRunning();
+		_thiefEscapeTask = ThreadPool.scheduleAtFixedRate(this::thiefEscapeStep, 0, THIEF_ESCAPE_STEP_MS);
+	}
+
+	private void thiefEscapeStep()
+	{
+		if (isDead() || !isSpawned())
+		{
+			stopThiefEscape();
+			return;
+		}
+
+		if (System.currentTimeMillis() >= _thiefEscapeEndsAt)
+		{
+			stopThiefEscape();
+			broadcastSay(ChatType.NPC_GENERAL, "Ha! You'll never see this loot again!");
+			deleteMe(); // Npc.onDecay() hands the spawn back, which respawns it after its normal delay.
+			return;
+		}
+
+		// Away from the nearest player, or any direction if nobody is chasing it.
+		Player nearest = null;
+		double nearestDistance = Double.MAX_VALUE;
+		for (Player player : World.getInstance().getVisibleObjectsInRange(this, Player.class, THIEF_ESCAPE_SCAN_RANGE))
+		{
+			final double distance = calculateDistance2D(player);
+			if (distance < nearestDistance)
+			{
+				nearestDistance = distance;
+				nearest = player;
+			}
+		}
+
+		final double radians = nearest != null ? Math.toRadians(LocationUtil.calculateAngleFrom(nearest, this)) : Rnd.nextDouble() * 2 * Math.PI;
+		final int x = (int) (getX() + (THIEF_ESCAPE_DISTANCE * Math.cos(radians)));
+		final int y = (int) (getY() + (THIEF_ESCAPE_DISTANCE * Math.sin(radians)));
+		final Location destination = GeoEngine.getInstance().getValidLocation(getX(), getY(), getZ(), x, y, getZ(), getInstanceId());
+		getAI().setIntention(Intention.MOVE_TO, destination);
+	}
+
+	private void stopThiefEscape()
+	{
+		final ScheduledFuture<?> task = _thiefEscapeTask;
+		if (task == null)
+		{
+			return;
+		}
+
+		_thiefEscapeTask = null;
+		task.cancel(false);
+		disableCoreAI(false);
 	}
 
 	// =======================================================================
@@ -983,6 +1274,8 @@ public class Monster extends Attackable
 		}
 		
 		super.reduceCurrentHp(amount, attacker, awake, isDOT, skill);
+		
+		tryMetamorphosis();
 	}
 	
 	/**
@@ -1102,7 +1395,7 @@ public class Monster extends Attackable
 		final double basePAtk = super.getPAtk(target);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return basePAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() : 1.0);
+		return basePAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier);
 	}
 
 	@Override
@@ -1111,7 +1404,7 @@ public class Monster extends Attackable
 		final double baseMAtk = super.getMAtk(target, skill);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return baseMAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getMonsterMAtkMult() : 1.0);
+		return baseMAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getMonsterMAtkMult() : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier);
 	}
 
 	@Override
@@ -1311,7 +1604,16 @@ public class Monster extends Attackable
 		}
 		
 		endRage(true);
+		stopThiefEscape();
 		return true;
+	}
+	
+	@Override
+	public void onDecay()
+	{
+		// A Thief that escaped (deleteMe()) or died: the respawn reuses this object, so it must not keep running.
+		stopThiefEscape();
+		super.onDecay();
 	}
 	
 	private void startEnrageTimer()
