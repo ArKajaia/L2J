@@ -16,6 +16,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpWeapon;
+import org.l2jmobius.gameserver.model.actor.holders.player.ClassInfoHolder;
 import org.l2jmobius.gameserver.model.actor.holders.player.SubClassHolder;
 import org.l2jmobius.gameserver.model.clan.Clan;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
@@ -436,7 +437,7 @@ public final class BuildSnapshot
 		{
 			return "";
 		}
-		final var info = ClassListData.getInstance().getClass(playerClass);
+		final ClassInfoHolder info = ClassListData.getInstance().getClass(playerClass);
 		return info != null ? info.getClassName() : capitalize(playerClass.name());
 	}
 
