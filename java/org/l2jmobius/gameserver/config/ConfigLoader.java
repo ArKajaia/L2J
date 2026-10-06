@@ -44,6 +44,7 @@ import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
 import org.l2jmobius.gameserver.config.custom.FindPvpConfig;
 import org.l2jmobius.gameserver.config.custom.FreeMountsConfig;
 import org.l2jmobius.gameserver.config.custom.HellboundStatusConfig;
+import org.l2jmobius.gameserver.config.custom.HiddenQuestConfig;
 import org.l2jmobius.gameserver.config.custom.HotzoneCoinDropConfig;
 import org.l2jmobius.gameserver.config.custom.HotzoneMinibossConfig;
 import org.l2jmobius.gameserver.config.custom.LuckyLootConfig;
@@ -133,6 +134,7 @@ public class ConfigLoader
 		PvpSpotsConfig.load();
 		FreeMountsConfig.load();
 		HellboundStatusConfig.load();
+		HiddenQuestConfig.load();
 		HotzoneCoinDropConfig.load();
 		HotzoneMinibossConfig.load();
 		LuckyLootConfig.load();

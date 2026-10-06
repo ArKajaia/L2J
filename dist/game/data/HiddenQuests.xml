@@ -1,0 +1,516 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="xsd/HiddenQuests.xsd">
+	<!--
+	Hidden Quests (config/Custom/HiddenQuests.ini).
+	When a character meets a quest's <trigger>, its messenger NPC walks up to the player with a quest mark and offers the quest.
+	The triggers are never shown to players. Each quest happens once per character.
+
+	monsterSet: retail monsters by level band. A task spawns the band with the highest minLevel the player reaches.
+	  tier = champion tier (0-3) of that band. Champion stats only apply while the champion system is enabled.
+	rewardSet: reusable reward lists. Each reward applies when the player's level is within minLevel-maxLevel.
+
+	quest
+	  trigger  type = PK_COUNT | PVP_COUNT | FAME | ADENA        - read from the character (count)
+	                  TOWNS_VISITED                              - every town id in towns="..." entered (TownZone townId)
+	                  DEATHS | LEVEL_STREAK                      - counted from the day the feature is enabled
+	                  KILL_NAMED (word) | KILL_UNDEAD | KILL_NIGHT | KILL_SOLO | KILL_RAID | KILL_KARMA_PLAYER
+	           Kills of monsters more than HiddenQuestKillLevelGap levels below the player and of hidden quest monsters don't count.
+	  task     type + the task's own attributes (see the task classes in model/hiddenquest/task). timeLimit (seconds) overrides the default.
+	  role     a group of monsters the task spawns (name, set, count, tierBonus, title).
+	  echo     ECHO_GAUNTLET opponents (gimmick: NONE, REGEN, BLINK, SPLIT, WARDS; tier -1 = the set's tier).
+	  landmark RIDDLE places.
+	  text     lines and dialog. Common keys: greeting, offer, briefing, accepted, postponed, ignored, forfeited, success, farewell, failDeath, failTime.
+	  rewards  set="..." plus extra reward lines. Types: ITEM (id, count), EXP, SP (count), TITLE, TITLE_COLOR, NAME_COLOR (value RRGGBB), CLEAR_KARMA, REDUCE_PK (count).
+	-->
+
+	<!-- Monster sets (all plain field monsters with no AI script). -->
+	<monsterSet name="orc">
+		<band minLevel="1" npcId="20291" /> <!-- Enku Orc Champion (21) -->
+		<band minLevel="30" npcId="20271" /> <!-- Breka Orc Warrior (33) -->
+		<band minLevel="40" npcId="20586" /> <!-- Timak Orc Warrior (43) -->
+		<band minLevel="52" npcId="21017" /> <!-- Fallen Orc (55) -->
+		<band minLevel="61" npcId="21109" /> <!-- Hames Orc Scout (68) -->
+		<band minLevel="70" npcId="21113" /> <!-- Hames Orc Sniper (72) -->
+		<band minLevel="76" npcId="22696" /> <!-- Ragna Orc Shaman (81) -->
+		<band minLevel="80" npcId="22692" /> <!-- Ragna Orc Warrior (82) -->
+	</monsterSet>
+	<monsterSet name="orcLeader">
+		<band minLevel="1" npcId="20291" tier="3" /> <!-- Enku Orc Champion (21) -->
+		<band minLevel="30" npcId="20270" tier="2" /> <!-- Breka Orc Overlord (35) -->
+		<band minLevel="40" npcId="20588" tier="2" /> <!-- Timak Orc Overlord (45) -->
+		<band minLevel="52" npcId="21260" tier="3" /> <!-- Betrayer Orc Hero (50) -->
+		<band minLevel="61" npcId="21109" tier="3" /> <!-- Hames Orc Scout (68) -->
+		<band minLevel="70" npcId="21116" tier="2" /> <!-- Hames Orc Overlord (75) -->
+		<band minLevel="76" npcId="22692" tier="1" /> <!-- Ragna Orc Warrior (82) -->
+		<band minLevel="80" npcId="22692" tier="2" /> <!-- Ragna Orc Warrior (82) -->
+	</monsterSet>
+	<monsterSet name="undead">
+		<band minLevel="1" npcId="20169" /> <!-- Skeleton Royal Guard (26) -->
+		<band minLevel="30" npcId="20513" /> <!-- Skeleton Knight (32) -->
+		<band minLevel="40" npcId="20836" /> <!-- Pirate Zombie (44) -->
+		<band minLevel="52" npcId="20347" /> <!-- Doom Wraith (55) -->
+		<band minLevel="61" npcId="20955" /> <!-- Ghostly Warrior (62) -->
+		<band minLevel="70" npcId="21571" /> <!-- Ghost of Rebellion Soldier (69) -->
+		<band minLevel="76" npcId="21382" /> <!-- Mercenary of Destruction (78) -->
+		<band minLevel="80" npcId="21382" tier="1" /> <!-- Mercenary of Destruction (78) -->
+	</monsterSet>
+	<monsterSet name="bandit">
+		<band minLevel="1" npcId="20208" /> <!-- Ol Mahum Raider (27) -->
+		<band minLevel="30" npcId="22019" /> <!-- Bandit Watchman (32) -->
+		<band minLevel="40" npcId="22026" /> <!-- Bandit Captain (40) -->
+		<band minLevel="52" npcId="20575" /> <!-- Oel Mahum Warrior (54) -->
+		<band minLevel="61" npcId="21443" /> <!-- Raider of Pastureland (63) -->
+		<band minLevel="70" npcId="21449" /> <!-- Raider of Pastureland (68) -->
+		<band minLevel="76" npcId="22741" /> <!-- Grave Robber Warrior (81) -->
+		<band minLevel="80" npcId="22680" /> <!-- Grave Robber Worker (81) -->
+	</monsterSet>
+	<monsterSet name="dark">
+		<band minLevel="1" npcId="20048" /> <!-- Lesser Succubus (20) -->
+		<band minLevel="30" npcId="21144" /> <!-- Catacomb Shadow (34) -->
+		<band minLevel="40" npcId="20942" /> <!-- Nightmare Guide (43) -->
+		<band minLevel="52" npcId="21177" /> <!-- Lilim Knight-Errant (54) -->
+		<band minLevel="61" npcId="21180" /> <!-- Lilim Knight (63) -->
+		<band minLevel="70" npcId="21183" /> <!-- Lilim Knight Commander (72) -->
+		<band minLevel="76" npcId="21186" /> <!-- Lilim Guard Knight (78) -->
+		<band minLevel="80" npcId="22686" /> <!-- Servitor of Darkness (82) -->
+	</monsterSet>
+	<monsterSet name="knight">
+		<band minLevel="1" npcId="20073" /> <!-- Ol Mahum Legionnaire (28) -->
+		<band minLevel="30" npcId="20513" /> <!-- Skeleton Knight (32) -->
+		<band minLevel="40" npcId="20993" /> <!-- Swamp Warrior (44) -->
+		<band minLevel="52" npcId="21177" /> <!-- Lilim Knight-Errant (54) -->
+		<band minLevel="61" npcId="20674" /> <!-- Doom Knight (65) -->
+		<band minLevel="70" npcId="21183" /> <!-- Lilim Knight Commander (72) -->
+		<band minLevel="76" npcId="21186" /> <!-- Lilim Guard Knight (78) -->
+		<band minLevel="80" npcId="22685" /> <!-- Servitor of Darkness (82) -->
+	</monsterSet>
+
+	<!-- Reward sets, by the grade a player of that level uses. -->
+	<rewardSet name="small">
+		<reward type="ITEM" id="57" count="200000" minLevel="1" maxLevel="39" />
+		<reward type="ITEM" id="57" count="500000" minLevel="40" maxLevel="51" />
+		<reward type="ITEM" id="57" count="1000000" minLevel="52" maxLevel="60" />
+		<reward type="ITEM" id="57" count="2000000" minLevel="61" maxLevel="75" />
+		<reward type="ITEM" id="57" count="3000000" minLevel="76" />
+		<reward type="ITEM" id="3936" count="1" /> <!-- Blessed Scroll of Resurrection -->
+	</rewardSet>
+	<rewardSet name="moderate">
+		<reward type="ITEM" id="57" count="300000" minLevel="1" maxLevel="39" />
+		<reward type="ITEM" id="955" count="1" minLevel="1" maxLevel="39" /> <!-- Scroll: Enchant Weapon (D-Grade) -->
+		<reward type="ITEM" id="956" count="3" minLevel="1" maxLevel="39" /> <!-- Scroll: Enchant Armor (D-Grade) -->
+		<reward type="ITEM" id="57" count="800000" minLevel="40" maxLevel="51" />
+		<reward type="ITEM" id="951" count="1" minLevel="40" maxLevel="51" /> <!-- Scroll: Enchant Weapon (C-Grade) -->
+		<reward type="ITEM" id="952" count="3" minLevel="40" maxLevel="51" /> <!-- Scroll: Enchant Armor (C-Grade) -->
+		<reward type="ITEM" id="8743" count="1" minLevel="46" maxLevel="51" /> <!-- High-Grade Life Stone - Level 46 -->
+		<reward type="ITEM" id="57" count="1500000" minLevel="52" maxLevel="60" />
+		<reward type="ITEM" id="947" count="1" minLevel="52" maxLevel="60" /> <!-- Scroll: Enchant Weapon (B-Grade) -->
+		<reward type="ITEM" id="948" count="3" minLevel="52" maxLevel="60" /> <!-- Scroll: Enchant Armor (B-Grade) -->
+		<reward type="ITEM" id="8746" count="1" minLevel="55" maxLevel="60" /> <!-- High-Grade Life Stone - Level 55 -->
+		<reward type="ITEM" id="57" count="3000000" minLevel="61" maxLevel="75" />
+		<reward type="ITEM" id="729" count="1" minLevel="61" maxLevel="75" /> <!-- Scroll: Enchant Weapon (A-Grade) -->
+		<reward type="ITEM" id="730" count="3" minLevel="61" maxLevel="75" /> <!-- Scroll: Enchant Armor (A-Grade) -->
+		<reward type="ITEM" id="8749" count="1" minLevel="64" maxLevel="75" /> <!-- High-Grade Life Stone - Level 64 -->
+		<reward type="ITEM" id="57" count="5000000" minLevel="76" />
+		<reward type="ITEM" id="959" count="1" minLevel="76" /> <!-- Scroll: Enchant Weapon (S-Grade) -->
+		<reward type="ITEM" id="960" count="2" minLevel="76" /> <!-- Scroll: Enchant Armor (S-Grade) -->
+		<reward type="ITEM" id="8752" count="1" minLevel="76" /> <!-- High-Grade Life Stone - Level 76 -->
+		<reward type="ITEM" id="6622" count="1" minLevel="76" /> <!-- Giant's Codex -->
+	</rewardSet>
+	<rewardSet name="strong">
+		<reward type="ITEM" id="57" count="1000000" minLevel="1" maxLevel="39" />
+		<reward type="ITEM" id="955" count="3" minLevel="1" maxLevel="39" /> <!-- Scroll: Enchant Weapon (D-Grade) -->
+		<reward type="ITEM" id="956" count="5" minLevel="1" maxLevel="39" /> <!-- Scroll: Enchant Armor (D-Grade) -->
+		<reward type="ITEM" id="3936" count="2" minLevel="1" maxLevel="39" /> <!-- Blessed Scroll of Resurrection -->
+		<reward type="ITEM" id="57" count="2000000" minLevel="40" maxLevel="51" />
+		<reward type="ITEM" id="951" count="3" minLevel="40" maxLevel="51" /> <!-- Scroll: Enchant Weapon (C-Grade) -->
+		<reward type="ITEM" id="952" count="5" minLevel="40" maxLevel="51" /> <!-- Scroll: Enchant Armor (C-Grade) -->
+		<reward type="ITEM" id="8753" count="1" minLevel="46" maxLevel="51" /> <!-- Top-Grade Life Stone - Level 46 -->
+		<reward type="ITEM" id="57" count="4000000" minLevel="52" maxLevel="60" />
+		<reward type="ITEM" id="6571" count="1" minLevel="52" maxLevel="60" /> <!-- Blessed Scroll: Enchant Weapon (B-Grade) -->
+		<reward type="ITEM" id="947" count="2" minLevel="52" maxLevel="60" /> <!-- Scroll: Enchant Weapon (B-Grade) -->
+		<reward type="ITEM" id="8757" count="1" minLevel="58" maxLevel="60" /> <!-- Top-Grade Life Stone - Level 58 -->
+		<reward type="ITEM" id="57" count="8000000" minLevel="61" maxLevel="75" />
+		<reward type="ITEM" id="6569" count="1" minLevel="61" maxLevel="75" /> <!-- Blessed Scroll: Enchant Weapon (A-Grade) -->
+		<reward type="ITEM" id="729" count="2" minLevel="61" maxLevel="75" /> <!-- Scroll: Enchant Weapon (A-Grade) -->
+		<reward type="ITEM" id="8760" count="1" minLevel="67" maxLevel="75" /> <!-- Top-Grade Life Stone - Level 67 -->
+		<reward type="ITEM" id="57" count="15000000" minLevel="76" />
+		<reward type="ITEM" id="6577" count="1" minLevel="76" /> <!-- Blessed Scroll: Enchant Weapon (S-Grade) -->
+		<reward type="ITEM" id="6578" count="2" minLevel="76" /> <!-- Blessed Scroll: Enchant Armor (S-Grade) -->
+		<reward type="ITEM" id="8762" count="1" minLevel="76" /> <!-- Top-Grade Life Stone - Level 76 -->
+		<reward type="ITEM" id="9552" count="1" minLevel="76" /> <!-- Fire Crystal -->
+		<reward type="ITEM" id="6622" count="2" minLevel="76" /> <!-- Giant's Codex -->
+	</rewardSet>
+
+	<!-- 1. A murderer is offered a road back. -->
+	<quest id="1" name="The Ashen Penitent" messenger="900300">
+		<trigger type="PK_COUNT" count="10" />
+		<task type="PILGRIMAGE" sites="4" siteNpcId="900322" siteMin="1200" siteMax="2200" prayTime="30" vowNoPvp="true" timeLimit="2700" />
+		<role name="site" set="dark" count="2" title="Phantom of the Slain" />
+		<text key="greeting">Peace, wanderer. Peace... though you have known little of it.</text>
+		<text key="offer">I am Brother Ashen. I keep the candles for souls that were cut short - and lately, too many of them carry your name. I do not judge you. I only ask: will you walk the Ashen Road? Four candles burn for the slain in the wild places. Kneel at each and pray, and their weight may lift from you. But hear the vow: until the last candle is lit, you will raise your hand against no one, and you will not fall.</text>
+		<text key="briefing">The first candle burns not far from here; your radar will guide you. When you reach it, sit and pray. The slain may come to test you - lay them to rest first. And remember the vow.</text>
+		<text key="start">Walk the Ashen Road. Your radar shows the first candle.</text>
+		<text key="siteGuarded">The faces of the slain gather around the flame...</text>
+		<text key="siteBusy">The slain will not hear your prayer while they walk. Lay them to rest.</text>
+		<text key="siteDone">The candle flares. One name grows quiet.</text>
+		<text key="next">Another candle calls. Follow your radar.</text>
+		<text key="failVow">You raised your hand again. The candles gutter out.</text>
+		<text key="failDeath">You fell on the Ashen Road. The candles gutter out.</text>
+		<text key="accepted">Go gently.</text>
+		<text key="postponed">The candles will wait. So will I.</text>
+		<text key="ignored">I will light a candle for you anyway.</text>
+		<text key="forfeited">Then I will pray for them alone.</text>
+		<text key="success">Four candles burn steady. The names are quieter now - not forgotten, but quieter. Your stain is washed away. Go, and carry less than you did.</text>
+		<text key="farewell">Walk lighter, friend.</text>
+		<rewards set="small">
+			<reward type="CLEAR_KARMA" />
+			<reward type="REDUCE_PK" count="1" />
+			<reward type="TITLE" value="the Penitent" />
+			<reward type="TITLE_COLOR" value="BBBBBB" />
+		</rewards>
+	</quest>
+
+	<!-- 2. A legendary duelist wants to know if the player is worthy. -->
+	<quest id="2" name="Crown of Blood" messenger="900301">
+		<trigger type="PVP_COUNT" count="1000" />
+		<task type="ECHO_GAUNTLET" arenaRadius="1500" pause="10" timeLimit="1800" />
+		<role name="echo" set="knight" count="1" />
+		<echo name="Echo of Sir Aldric the Unyielding" gimmick="WARDS" tier="2" line="A thousand duels, and you still think steel is enough?" />
+		<echo name="Echo of Mirra Quickblade" gimmick="BLINK" tier="2" line="Keep up, if you can." />
+		<echo name="Echo of Grond the Twice-Born" gimmick="SPLIT" tier="2" line="Cut me down. I dare you." />
+		<echo name="Echo of Valdis, the Last Duelist" gimmick="REGEN" tier="3" line="And now... me." />
+		<text key="greeting">So. The one whose name is whispered in every arena.</text>
+		<text key="offer">I am Valdis - or what is left of him. Once I was the last duelist standing in Aden, and the blood of a thousand rivals crowned me. You have walked that same road. The dead duelists remember you, as they remember me, and they want to know if you are worthy of the crown. Face their echoes - four of them, one after another, here and now. Leave the circle and you forfeit.</text>
+		<text key="briefing">Stand where you are. They will come to you, one by one. Each fought in their own way. Learn it, or fall.</text>
+		<text key="wardsUp">Sir Aldric cannot be harmed while his wards stand!</text>
+		<text key="regenLine">Every breath you hold, I take back.</text>
+		<text key="failFled">You fled the circle. The crown waits for someone braver.</text>
+		<text key="accepted">Then begin.</text>
+		<text key="postponed">The dead are patient.</text>
+		<text key="ignored">Another time, champion.</text>
+		<text key="forfeited">Then the crown stays with the dead.</text>
+		<text key="success">The echoes bow. The Crown of Blood is yours - and its weight, too. Wear it well.</text>
+		<text key="farewell">Until we meet in the arena beyond.</text>
+		<rewards set="strong">
+			<reward type="TITLE" value="Bloodcrowned" />
+			<reward type="TITLE_COLOR" value="FF4040" />
+		</rewards>
+	</quest>
+
+	<!-- 3. An orc warlord swears a blood-grudge against a slayer of orcs. -->
+	<quest id="3" name="Grudge of the Horde" messenger="900302">
+		<trigger type="KILL_NAMED" word="Orc" count="100" />
+		<task type="HUNTED" ambushes="3" ambushMin="150" ambushMax="270" timeLimit="2400" />
+		<role name="ambush" set="orc" count="3" title="Grukk's Avenger" />
+		<role name="leader" set="orcLeader" count="1" title="Warlord Grukk" />
+		<text key="greeting">Hrr. You. You smell of orc blood.</text>
+		<text key="offer">I am Ugrash, cast out of my tribe for speaking against the Warlord. Listen, man-thing - no, listen. You have killed many of my kin. I do not weep for them; they followed Grukk. But Grukk has noticed you. He swore a blood-grudge, and his avengers are already on your trail. You cannot hide from it. But you can end it. Let them come. Break them. And when Grukk himself comes for you - and he will - put him in the ground.</text>
+		<text key="briefing">Go about your hunt. They will find you - three times. Then he comes. In towns they will not dare; outside, they will.</text>
+		<text key="start">The hunt is on - and you are the prey.</text>
+		<text key="warning">War drums, somewhere close...</text>
+		<text key="ambush">Grukk's avengers!</text>
+		<text key="ambushBeaten">The avengers fall. The drums go quiet... for now.</text>
+		<text key="leaderWarning">The ground shakes. Grukk is coming.</text>
+		<text key="leaderLine">You! The one who wears my warriors' blood!</text>
+		<text key="leaderArrives">Warlord Grukk has found you!</text>
+		<text key="leaderFollows">Run all you like. Grukk always finds his prey!</text>
+		<text key="accepted">Go. Be strong.</text>
+		<text key="postponed">Hrr. The grudge will not wait forever.</text>
+		<text key="ignored">Hrr. Deaf, like Grukk.</text>
+		<text key="forfeited">Then Grukk will find you anyway. Ha.</text>
+		<text key="success">Grukk is dead? Then the grudge dies with him, and my tribe can choose a new path. My people owe you, man-thing. Take this.</text>
+		<text key="farewell">Strong. Very strong. Ha!</text>
+		<rewards set="moderate" />
+	</quest>
+
+	<!-- 4. The Reaper's clerk wants a too-frequent visitor's account balanced. -->
+	<quest id="4" name="Death's Ledger" messenger="900303">
+		<trigger type="DEATHS" count="50" />
+		<task type="CHASE" mode="WISP" count="5" npcId="900324" spawnMin="900" spawnMax="1600" fadeTime="300" maxMisses="1" catchRange="120" fleeRange="450" timeLimit="2400" />
+		<role name="catch" set="undead" count="2" title="Reaper's Hound" />
+		<text key="greeting">Ah. There you are. Again.</text>
+		<text key="offer">Mortis, clerk of the Reaper, at your service. Do you know how many times I have written your name in the Ledger? Too many. And every time, you slipped back out. Each return tore off a sliver of your soul, and those slivers drift through the world as wisps - lonely, lost and frankly cluttering my books. Gather five of them before they fade and I shall balance your account. Be warned: the Reaper's hounds do not like to see a soul taken back.</text>
+		<text key="briefing">The wisps drift away from those who chase them, so be quick and cut them off. Your radar shows where they flicker. Two may fade; no more.</text>
+		<text key="start">Find the wisps of your soul. Your radar will show them.</text>
+		<text key="appears">A pale wisp flickers nearby. Your radar marks it.</text>
+		<text key="caught">...warm... I remember being warm...</text>
+		<text key="catchAmbush">The Reaper's hounds come to claim it back!</text>
+		<text key="faded">...too late...</text>
+		<text key="missed">A wisp faded away. Another will surface.</text>
+		<text key="failMissed">Too many slivers lost. The Ledger stays unbalanced.</text>
+		<text key="failDeath">You died. Again. The Ledger notes it.</text>
+		<text key="accepted">Do hurry. Wisps are terribly unpunctual.</text>
+		<text key="postponed">I will pencil you in.</text>
+		<text key="ignored">I will make a note of that.</text>
+		<text key="forfeited">Very well. I shall keep the account open. Indefinitely.</text>
+		<text key="success">Five slivers, returned. The account balances - for now. Do try not to die so often; my quill is wearing thin.</text>
+		<text key="farewell">Until our next... appointment.</text>
+		<rewards set="moderate">
+			<reward type="ITEM" id="3936" count="3" /> <!-- Blessed Scroll of Resurrection -->
+			<reward type="TITLE" value="Deathless" />
+		</rewards>
+	</quest>
+
+	<!-- 5. A spirit wolf asks a lone hunter to guard her den. -->
+	<quest id="5" name="The Lone Wolf" messenger="900304">
+		<trigger type="KILL_SOLO" count="2000" />
+		<task type="VIGIL" totemId="900327" duration="900" waveInterval="60" bossAt="120" meter="100" drain="1" timeLimit="1800" />
+		<role name="wave" set="bandit" count="2" title="Moon Hunter" />
+		<role name="boss" set="bandit" count="1" tierBonus="2" title="Huntmaster Vrell" />
+		<text key="greeting">You walk alone. Like us.</text>
+		<text key="offer">I am Silverfang, mother of the last free pack. I have watched you hunt - always alone, always enough. Tonight is the Hunt of the Moon: men with nets and spears come for my den and my cubs. My pack is gone. I have no one... but perhaps a lone wolf would stand with a lone wolf. Guard the den stone until the moon sets. When their Huntmaster shows himself, end him.</text>
+		<text key="briefing">Here is the den stone. Stay by it. Every hand they lay on it weakens the den - drive them off.</text>
+		<text key="start">Guard the den stone until the moon sets.</text>
+		<text key="meterName">Den</text>
+		<text key="totemLine">The cubs whimper beneath the stone.</text>
+		<text key="wave">Moon Hunters close in on the den!</text>
+		<text key="boss">Huntmaster Vrell steps out of the dark!</text>
+		<text key="bossLine">Step aside. That pelt is worth a fortune.</text>
+		<text key="leave">The den is undefended! Go back!</text>
+		<text key="failMeter">The hunters broke into the den.</text>
+		<text key="failDeath">You fell, and the hunters walked over you to the den.</text>
+		<text key="accepted">Run with me.</text>
+		<text key="postponed">The moon will rise again.</text>
+		<text key="ignored">*The wolf slips back into the trees.*</text>
+		<text key="forfeited">*The wolf turns away and does not look back.*</text>
+		<text key="success">The moon sets, and the cubs sleep. You are no longer a lone wolf - you are pack. Take one of my cubs' cousins; he will follow you anywhere.</text>
+		<text key="farewell">Run with us, someday.</text>
+		<rewards set="small">
+			<reward type="ITEM" id="2375" count="1" /> <!-- Wolf Collar -->
+			<reward type="TITLE" value="Packfriend" />
+			<reward type="TITLE_COLOR" value="CCCCFF" />
+		</rewards>
+	</quest>
+
+	<!-- 6. An old lamplighter needs a night hunter to walk his round. -->
+	<quest id="6" name="Nightwatch" messenger="900305">
+		<trigger type="KILL_NIGHT" count="500" />
+		<task type="ESCORT" escorteeId="900320" stopId="900325" stops="5" stopMin="900" stopMax="1400" workTime="60" meter="100" drain="1" abandonRange="2500" lostTime="30" timeLimit="2400" />
+		<role name="ambush" set="dark" count="3" title="Lightless Shade" />
+		<text key="greeting">Oi! You there - a night-walker, aren't you? I can always tell.</text>
+		<text key="offer">Ivo's the name. Lamplighter, thirty years. The shades have been getting bolder - they snuff my lamps faster than I can light them, and tonight they're out in force. You hunt in the dark like it's nothing, so maybe you'll walk with an old man? Five lamps on my round. I light them, you keep the shades off me while the flame catches. If they swarm me, the flame goes out - and so does the road.</text>
+		<text key="briefing">I'll follow you. Get me to each lamp on your radar and I'll do the rest. Keep them off me while I work!</text>
+		<text key="start">Lead Ivo to the first lamp on your radar.</text>
+		<text key="escorteeStart">Right behind you, friend. Mind the dark.</text>
+		<text key="work">Here's one! Hold them off while I coax the flame...</text>
+		<text key="ambush">The shades swarm toward Ivo!</text>
+		<text key="clear">Shades still about! Clear them before we move!</text>
+		<text key="stopDone">There - she's burning bright. On to the next!</text>
+		<text key="stopDoneTitle">Burning Bright</text>
+		<text key="next">Lead Ivo to the next lamp.</text>
+		<text key="meterName">Flame</text>
+		<text key="lost">Ivo calls out for you in the dark!</text>
+		<text key="failMeter">The shades snuffed Ivo's flame.</text>
+		<text key="failAbandoned">You left Ivo alone in the dark.</text>
+		<text key="accepted">Lead on, then. I'll catch up.</text>
+		<text key="postponed">I'll be out every night. Find me.</text>
+		<text key="ignored">Suit yourself. Mind the dark.</text>
+		<text key="forfeited">Fine, fine. I'll manage. I always do.</text>
+		<text key="success">Five lamps, burning bright. The road's safe tonight, thanks to you. Here - a lamplighter's thanks, and a name for the night.</text>
+		<text key="farewell">Mind the dark, Nightwatch.</text>
+		<rewards set="small">
+			<reward type="TITLE" value="Nightwatch" />
+			<reward type="NAME_COLOR" value="AACCFF" />
+		</rewards>
+	</quest>
+
+	<!-- 7. A king without a crown takes offence at a slayer of great lords. -->
+	<quest id="7" name="The Crownless King" messenger="900306">
+		<trigger type="KILL_RAID" count="5" />
+		<task type="HUNTED" ambushes="2" ambushMin="120" ambushMax="200" leaderFlee="true" fleeAt="50" lairMin="1800" lairMax="2800" timeLimit="2700" />
+		<role name="ambush" set="knight" count="3" title="Royal Remnant" />
+		<role name="leader" set="knight" count="1" tierBonus="3" title="The Crownless King" />
+		<role name="guard" set="knight" count="3" title="Last Loyal Guard" />
+		<text key="greeting">Hear me, kingslayer.</text>
+		<text key="offer">I am the herald of a king who has no crown and no kingdom - only pride. My liege has watched you topple his kind: great lords of the land, one after another. He calls it insolence. He calls it a challenge. His remnants will test you first. Then he will come himself, and he will not die easily. If you defeat him, his hoard is yours.</text>
+		<text key="briefing">Do not seek him. He will seek you. Survive his remnants, then face the King - and if he runs, follow him to his hall.</text>
+		<text key="start">The Crownless King's remnants are coming for you.</text>
+		<text key="warning">Banners on the horizon...</text>
+		<text key="ambush">The King's remnants attack!</text>
+		<text key="ambushBeaten">The remnants fall. Their king will not be pleased.</text>
+		<text key="leaderWarning">A herald's horn sounds. The King is coming.</text>
+		<text key="leaderLine">Kneel, and I may let you keep your head.</text>
+		<text key="leaderArrives">The Crownless King has come!</text>
+		<text key="leaderFollows">A king does not let his quarry walk away.</text>
+		<text key="fleeLine">Enough! To my hall!</text>
+		<text key="flee">The King retreats to his hall! Follow your radar before his wounds close.</text>
+		<text key="lairLine">Here, in my hall, I am still king!</text>
+		<text key="accepted">The King will be... delighted.</text>
+		<text key="postponed">His Majesty is not accustomed to waiting.</text>
+		<text key="ignored">I shall tell His Majesty you were busy.</text>
+		<text key="forfeited">His Majesty will consider that a surrender.</text>
+		<text key="success">The Crownless King has fallen at last. As promised, his hoard is yours, kingslayer.</text>
+		<text key="farewell">Long live... no one.</text>
+		<rewards set="strong">
+			<reward type="TITLE" value="Kingslayer" />
+		</rewards>
+	</quest>
+
+	<!-- 8. A retired bounty hunter recruits a hunter of murderers. -->
+	<quest id="8" name="Bounty of the Lawless" messenger="900307">
+		<trigger type="KILL_KARMA_PLAYER" count="25" />
+		<task type="CHASE" mode="COURIER" count="3" spawnMin="1200" spawnMax="1800" escapeMin="3000" escapeMax="4000" maxMisses="1" timeLimit="2400" />
+		<role name="courier" set="bandit" count="1" tierBonus="1" title="Lawless Courier" />
+		<role name="guard" set="bandit" count="2" title="Courier Guard" />
+		<text key="greeting">Ha. I know that look. You hunt the hunters.</text>
+		<text key="offer">Name's Garrick. I chased murderers for forty years before my knees gave out. You've been doing my old job - putting down the ones with blood on their names. Here's what you don't know: those killers are supplied by a bandit lord who moves his coin and orders through couriers. Three of them are on the road today. Catch them before they reach the hideout, and we cut his network at the knees.</text>
+		<text key="briefing">Your radar follows each courier. They walk; you run. Don't let more than one slip through.</text>
+		<text key="start">Watch your radar for the first courier.</text>
+		<text key="appears">A courier is on the road! Your radar marks him.</text>
+		<text key="escaped">The courier made it to the hideout! Don't let the next one through.</text>
+		<text key="courierCaught">Courier down.</text>
+		<text key="failEscaped">Too many couriers got through. The network holds.</text>
+		<text key="accepted">Good hunting.</text>
+		<text key="postponed">They'll be back on the road. They always are.</text>
+		<text key="ignored">Kids these days.</text>
+		<text key="forfeited">Your call. Bandits'll thank you.</text>
+		<text key="success">Three couriers, three satchels of letters. With these, the bandit lord's whole network unravels. You'd have made a fine bounty hunter. Here - that's yours now.</text>
+		<text key="farewell">Good hunting, Bounty Hunter.</text>
+		<rewards set="moderate">
+			<reward type="TITLE" value="Bounty Hunter" />
+		</rewards>
+	</quest>
+
+	<!-- 9. A cartographer's last map, for someone who has walked every road. Town ids: Gludin, Gludio, Dion, Giran, Oren, Hunter Village, Aden, Goddard, Rune, Heine, Schuttgart. -->
+	<quest id="9" name="The Cartographer's Last Map" messenger="900308">
+		<trigger type="TOWNS_VISITED" towns="5,7,8,9,10,11,12,13,14,15,17" />
+		<task type="RIDDLE" riddles="3" radius="700" hintAfter="600" apparitionId="900329" failOnDeath="false" timeLimit="3600" />
+		<landmark name="Ivory Tower" x="85391" y="16228" z="-3672" riddle="Where wizards climb toward the stars but never leave their pale home, stand at its foot." hint="The tower of the magi, between Oren and Aden." />
+		<landmark name="Cruma Tower" x="17225" y="114173" z="-3440" riddle="An old tower sinks into the marsh; in its halls the machines still remember their makers. Stand at its door." hint="The marshlands south of Dion." />
+		<landmark name="Giran Harbor" x="47938" y="186864" z="-3480" riddle="Where ships unload the riches of the world for the richest town of the kingdom." hint="The harbour of Giran." />
+		<landmark name="Singing Waterfall" x="-111728" y="244330" z="-3448" riddle="On the island where every journey begins, the water sings as it falls." hint="Talking Island." />
+		<landmark name="Valley of Saints" x="65307" y="-71445" z="-3688" riddle="Holy men were laid to rest in a valley where stone angels still keep watch, not far from the town of the wind." hint="Near the town of Rune." />
+		<landmark name="Forest of Mirrors" x="142065" y="81300" z="-3000" riddle="A forest where every tree shows you a stranger wearing your face." hint="East of Aden." />
+		<landmark name="Frozen Waterfall" x="8652" y="-139941" z="-1144" riddle="A river that stopped in the middle of its fall, in the frozen north." hint="Near Schuttgart." />
+		<landmark name="Garden of Eva" x="84413" y="234334" z="-3656" riddle="The water goddess keeps a garden under the sea. Stand at its gate." hint="Near Heine." />
+		<landmark name="Anghel Waterfall" x="166182" y="91560" z="-3168" riddle="A waterfall named for the angels, far east of the capital." hint="East of Aden, past the Forest of Mirrors." />
+		<landmark name="Altar of Rites" x="-44566" y="77508" z="-3736" riddle="An old altar in the elves' woods where the young once proved themselves." hint="North of Gludio, in the Windawood." />
+		<text key="greeting">Ah... a traveller. A real one. I can tell by your boots.</text>
+		<text key="offer">I am Ysolde, and I drew the maps your merchants still sell. My last map was never finished: three places I could never find again, written only as riddles in my old hand. My eyes are too weak now. You have walked every road in this kingdom - you might know the places I mean. Stand where each riddle points, and my map will be whole.</text>
+		<text key="briefing">Here is the first riddle. Read it again any time with the question mark. If a riddle stumps you for long, my map will begin to show you the way. Teleport, walk, swim - however you like. Dying will not stop you.</text>
+		<text key="solved">Yes... yes! Just as I drew it, long ago.</text>
+		<text key="next">The map shifts. Another riddle appears.</text>
+		<text key="hint">A faint mark appears on your map...</text>
+		<text key="accepted">Bring my map home.</text>
+		<text key="postponed">The map has waited forty years. It can wait a little more.</text>
+		<text key="ignored">Perhaps another traveller, then.</text>
+		<text key="forfeited">Then my map dies with me.</text>
+		<text key="success">My map is whole again. I can rest. Take this - and the title of a fellow cartographer.</text>
+		<text key="farewell">May every road you take lead somewhere worth going.</text>
+		<rewards set="moderate">
+			<reward type="TITLE" value="Cartographer" />
+			<reward type="TITLE_COLOR" value="99DDAA" />
+		</rewards>
+	</quest>
+
+	<!-- 10. A greedy ghost recognises a kindred spirit. -->
+	<quest id="10" name="The Gilded Curse" messenger="900309">
+		<trigger type="ADENA" count="500000000" />
+		<task type="ESCORT" escorteeId="900321" stopId="900326" stops="5" stopMin="900" stopMax="1400" workTime="50" meter="100" drain="1" abandonRange="2500" lostTime="30" timeLimit="2400" />
+		<role name="ambush" set="bandit" count="3" title="Gold-Mad Bandit" />
+		<text key="greeting">Gold. I smell so much gold on you.</text>
+		<text key="offer">Do not be afraid. I am only a ghost - a merchant who loved gold more than life, and kept it after. Now I cannot spend it, cannot carry it, cannot let it go. You carry a fortune too; you understand. My mule is loaded with my last treasure. Lead her to the five waystones where I made my offerings, and stand guard while she rests - every bandit for leagues can smell that gold. If they rob her, my curse stays. If not... well, a little gold rubs off on whoever helps.</text>
+		<text key="briefing">She'll follow you. Get her to each waystone on your radar and keep the bandits' hands off her packs.</text>
+		<text key="start">Lead the mule to the first waystone on your radar.</text>
+		<text key="escorteeStart">*The mule snorts and falls in behind you, packs jingling.*</text>
+		<text key="work">*The mule stops by the waystone to rest. Bandits converge!*</text>
+		<text key="ambush">Bandits go for the gold!</text>
+		<text key="clear">Bandits still lurking! Drive them off!</text>
+		<text key="stopDone">*The mule shakes her packs, ready to go.*</text>
+		<text key="stopDoneTitle">Offering Made</text>
+		<text key="next">Lead the mule to the next waystone.</text>
+		<text key="meterName">Gold</text>
+		<text key="lost">The mule is alone with the gold!</text>
+		<text key="failMeter">The bandits stripped the mule's packs bare.</text>
+		<text key="failAbandoned">You left the mule - and the gold - behind.</text>
+		<text key="accepted">Mind the packs. Every coin.</text>
+		<text key="postponed">Gold can wait. Gold always waits.</text>
+		<text key="ignored">You will regret walking away from gold. I did.</text>
+		<text key="forfeited">Then may your gold weigh on you as mine did.</text>
+		<text key="success">Every coin offered at last. The curse is lifted... and look: the gold has left its mark on you. It suits you.</text>
+		<text key="farewell">Spend it. Spend it all. Trust me.</text>
+		<rewards set="small">
+			<reward type="NAME_COLOR" value="FFD700" />
+			<reward type="TITLE" value="Gilded" />
+		</rewards>
+	</quest>
+
+	<!-- 11. A deathless climber meets who they might become. -->
+	<quest id="11" name="The Unbroken" messenger="900310">
+		<trigger type="LEVEL_STREAK" count="15" />
+		<task type="ECHO_GAUNTLET" arenaRadius="1500" pause="8" timeLimit="1800" />
+		<role name="echo" set="knight" count="1" />
+		<echo name="You, Who Never Fell" gimmick="NONE" tier="1" line="I am what you would be, if you never had to try." />
+		<echo name="You, Who Never Doubted" gimmick="BLINK" tier="2" line="Doubt is a door. I walked through it." />
+		<echo name="You, Who Never Rested" gimmick="REGEN" tier="2" line="I never stop. Can you?" />
+		<echo name="You, Who Never Broke" gimmick="SPLIT" tier="3" line="Break me, then. Try." />
+		<text key="greeting">Do you recognise me? You will.</text>
+		<text key="offer">I am you - the you of some tomorrow. You have climbed so far without falling once. Do you know how rare that is? It has made you something the world did not expect, and the world will test it. Better I test it first. Face four shadows of who you might become. Beat them, and you stay unbroken.</text>
+		<text key="briefing">They come one at a time, right here. Do not leave this place. Do not fall.</text>
+		<text key="regenLine">Every breath you take to rest, I take too.</text>
+		<text key="failFled">You ran from yourself. That never works.</text>
+		<text key="failDeath">So you can break after all. Get up. Try again another day.</text>
+		<text key="accepted">Show me.</text>
+		<text key="postponed">I know where you will be. I always do.</text>
+		<text key="ignored">Funny. I remember walking away, too.</text>
+		<text key="forfeited">Then I will become someone else.</text>
+		<text key="success">You beat every version of yourself. Good. Stay unbroken - for both of us.</text>
+		<text key="farewell">See you tomorrow.</text>
+		<rewards set="strong">
+			<reward type="TITLE" value="Unbroken" />
+			<reward type="TITLE_COLOR" value="FFFFFF" />
+		</rewards>
+	</quest>
+
+	<!-- 12. A gravedigger needs graves that won't stay shut sealed. -->
+	<quest id="12" name="The Gravedigger's Debt" messenger="900311">
+		<trigger type="KILL_UNDEAD" count="500" />
+		<task type="PILGRIMAGE" sites="4" siteNpcId="900323" siteMin="1200" siteMax="2200" prayTime="20" timeLimit="2700" />
+		<role name="site" set="undead" count="3" title="Restless Dead" />
+		<text key="greeting">You've a grave-smell on you, friend. Don't take it wrong.</text>
+		<text key="offer">Hollis. I dig the graves round these parts, and I've dug more this year than in the twenty before. You've been sending the walking dead back where they belong - I've noticed; they come in quieter. But four old graves won't stay shut. Something keeps pulling the dead back up. Go to each grave, put down whatever climbs out, and say the old words over it. Sit and pray, quiet-like. That seals it.</text>
+		<text key="briefing">First grave's on your radar. They'll climb out when you get close. Put them down, then kneel and pray.</text>
+		<text key="start">Find the first restless grave on your radar.</text>
+		<text key="siteGuarded">The earth heaves. The dead climb out!</text>
+		<text key="siteBusy">The grave won't settle while its dead still walk. Put them down.</text>
+		<text key="siteDone">The grave settles. Silence.</text>
+		<text key="next">Another grave stirs. Follow your radar.</text>
+		<text key="accepted">Mind your step out there.</text>
+		<text key="postponed">The dead aren't going anywhere. Well. They are. That's the problem.</text>
+		<text key="ignored">Busy, eh? So are the dead.</text>
+		<text key="forfeited">I'll fetch a bigger shovel, then.</text>
+		<text key="success">Four graves, sealed. I'll sleep tonight for the first time in a month. Here - I owe you.</text>
+		<text key="farewell">Rest easy. You've earned it.</text>
+		<rewards set="moderate">
+			<reward type="TITLE" value="Gravewarden" />
+		</rewards>
+	</quest>
+
+	<!-- 13. The last officer of a forgotten regiment needs one more soldier. -->
+	<quest id="13" name="The Old Banner" messenger="900312">
+		<trigger type="FAME" count="5000" />
+		<task type="VIGIL" totemId="900328" duration="900" waveInterval="50" bossAt="120" meter="100" drain="1" timeLimit="1800" />
+		<role name="wave" set="undead" count="3" title="Phantom Soldier" />
+		<role name="boss" set="undead" count="1" tierBonus="3" title="Phantom Siege Lord" />
+		<text key="greeting">Soldier. Stand easy.</text>
+		<text key="offer">Commander Brenna, of a regiment no one remembers. You have won glory on the fields where we bled - I can see it on you. Every year on this day the phantom army of the old war rises to take our banner. Every year there are fewer of us to hold it. This year there is only me... and maybe you. Plant the banner with me and hold it until the phantoms break.</text>
+		<text key="briefing">The banner stands. Hold this ground. If the phantoms touch it, it weakens - don't let them.</text>
+		<text key="start">Hold the banner until the phantom army breaks.</text>
+		<text key="meterName">Banner</text>
+		<text key="totemLine">The old banner snaps in a wind that isn't there.</text>
+		<text key="wave">Phantom soldiers advance on the banner!</text>
+		<text key="boss">The Phantom Siege Lord takes the field!</text>
+		<text key="bossLine">That rag has flown long enough.</text>
+		<text key="leave">The banner stands alone! Back to it!</text>
+		<text key="failMeter">The phantoms tore the banner down.</text>
+		<text key="accepted">Regiment, form up!</text>
+		<text key="postponed">The phantoms rise every year. I'll find you before the next.</text>
+		<text key="ignored">Dismissed, then.</text>
+		<text key="forfeited">Then the regiment ends with me.</text>
+		<text key="success">The banner holds - one more year. The regiment lives as long as someone remembers. Carry it with you, banner-bearer.</text>
+		<text key="farewell">Regiment! Salute!</text>
+		<rewards set="moderate">
+			<reward type="TITLE" value="Banner-bearer" />
+		</rewards>
+	</quest>
+</list>
