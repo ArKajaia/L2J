@@ -277,6 +277,83 @@
 	#pin-submit:hover { background: #96742a; }
 	#pin-error { color: #ff8a80; font-size: 12px; margin-top: 8px; min-height: 14px; }
 	#pin-skip { margin-top: 14px; font-size: 12px; color: #777; cursor: pointer; text-decoration: underline; }
+
+	/* Build code buttons under Reset Tree: copy the shown tree as a code, or paste one. */
+	.code-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+	.code-row button {
+		padding: 6px 0; background: #2a2a33; border: 1px solid #555; color: #e8dcb8;
+		font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+		border-radius: 4px; cursor: pointer; font-family: inherit;
+	}
+	.code-row button:hover { background: #3a3a45; border-color: #d9b64c; }
+
+	/* Build panel (.gear or a pasted code): who it is, its gear and stats, and what to do with its tree. Top left, under the header. */
+	#build-panel {
+		position: fixed; top: 96px; left: 16px; bottom: 210px; width: 256px;
+		display: none; flex-direction: column; overflow: hidden;
+		background: linear-gradient(180deg, rgba(18,18,23,0.95), rgba(10,10,13,0.95));
+		border: 1px solid #7a5c1e; border-radius: 8px; box-shadow: 0 0 24px rgba(0,0,0,0.6);
+		color: #e8dcb8;
+	}
+	#build-panel.open { display: flex; }
+	.build-head { flex: 0 0 auto; padding: 10px 12px 8px; border-bottom: 1px solid #333; }
+	.build-name { font-size: 16px; color: #f0e6c8; }
+	.build-name .tag { font-size: 10px; letter-spacing: 1px; color: #d9b64c; text-transform: uppercase; margin-left: 6px; }
+	.build-sub { margin-top: 2px; font-size: 12px; color: #9fa8b0; }
+	.build-sub2 { margin-top: 2px; font-size: 11px; color: #777; }
+	.build-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 2px 12px 8px; font-size: 12px; user-select: text; }
+	.build-section { font-size: 10px; letter-spacing: 2px; color: #8a7a55; text-transform: uppercase; margin: 10px 0 4px; }
+	.build-empty { color: #666; font-style: italic; }
+	.gear-row { display: flex; gap: 8px; padding: 3px 0; border-bottom: 1px solid #1d1d23; line-height: 1.35; }
+	.gear-slot { flex: 0 0 66px; color: #777; font-size: 11px; }
+	.gear-item { flex: 1; min-width: 0; }
+	.gear-name { color: #e8dcb8; }
+	.gear-ench { color: #7fd1ff; }
+	.gear-grade { color: #d9b64c; font-size: 10px; margin-left: 3px; }
+	.gear-aug { color: #c39bf0; font-size: 11px; }
+	.gear-elem { color: #ffab73; font-size: 11px; }
+	.stat-grid { display: grid; grid-template-columns: 1fr auto 1fr auto; gap: 1px 8px; }
+	.stat-grid .k { color: #888; }
+	.stat-grid .v { color: #f0e6c8; text-align: right; }
+	.build-actions { flex: 0 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 10px 12px; border-top: 1px solid #333; }
+	.build-actions button {
+		padding: 7px 4px; background: #2a2a33; border: 1px solid #555; color: #e8dcb8;
+		font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+		border-radius: 4px; cursor: pointer; font-family: inherit;
+	}
+	.build-actions button:hover:not(:disabled) { background: #3a3a45; border-color: #d9b64c; }
+	.build-actions button.primary { grid-column: 1 / -1; background: linear-gradient(135deg, #7a5c1e, #5c4416); border-color: #d9b64c; color: #fff2d0; }
+	.build-actions button.primary:hover:not(:disabled) { background: linear-gradient(135deg, #96742a, #7a5c1e); }
+	.build-actions button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+	/* Build code dialog: shows a code to copy, or takes one to paste. */
+	#code-overlay {
+		position: fixed; inset: 0; background: rgba(6,6,8,0.8);
+		display: none; align-items: center; justify-content: center; z-index: 150;
+	}
+	#code-overlay.open { display: flex; }
+	#code-box {
+		width: min(520px, calc(100% - 32px)); background: #16161c; border: 1px solid #7a5c1e; border-radius: 8px;
+		padding: 20px 22px; color: #e8dcb8; box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+	}
+	#code-box h2 { margin: 0 0 6px; color: #d9b64c; font-size: 17px; font-weight: normal; letter-spacing: 1px; }
+	#code-box p { margin: 0 0 10px; color: #aaa; font-size: 12px; line-height: 1.5; }
+	#code-text {
+		width: 100%; height: 120px; resize: vertical; padding: 8px;
+		background: #0d0d10; border: 1px solid #555; border-radius: 4px;
+		color: #f0e0a0; font-family: Consolas, 'Courier New', monospace; font-size: 12px;
+		word-break: break-all; user-select: text;
+	}
+	#code-text:focus { outline: none; border-color: #d9b64c; }
+	#code-error { color: #ff8a80; font-size: 12px; min-height: 16px; margin-top: 6px; }
+	.code-buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+	.code-buttons button {
+		padding: 8px 14px; background: #2a2a33; border: 1px solid #555; color: #e8dcb8;
+		border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 12px;
+	}
+	.code-buttons button:hover { background: #3a3a45; border-color: #d9b64c; }
+	.code-buttons button.primary { background: #7a5c1e; border-color: #d9b64c; color: #fff; }
+	.code-buttons button.primary:hover { background: #96742a; }
 </style>
 </head>
 <body>
@@ -398,6 +475,10 @@
 			<div class="label">Skill Points</div>
 			<div class="row"><svg viewBox="0 0 24 24"><use href="#icon-star"/></svg><span class="value" id="points-value">-</span></div>
 			<button id="reset-tree-btn">Reset Tree</button>
+			<div class="code-row">
+				<button type="button" id="export-code-btn" title="Copy the tree shown as a build code">Copy Code</button>
+				<button type="button" id="import-code-btn" title="Paste a build code to view it or import it into your tree">Paste Code</button>
+			</div>
 		</div>
 	</div>
 
@@ -440,10 +521,31 @@
 
 <div class="totals" id="totals-panel">
 	<div class="totals-head" id="totals-toggle">
-		<h1>Total Bonuses</h1>
+		<h1 id="totals-title">Total Bonuses</h1>
 		<span id="totals-caret">&#9662;</span>
 	</div>
 	<div class="totals-body" id="totals-body">Loading...</div>
+</div>
+
+<div id="build-panel">
+	<div class="build-head" id="build-head"></div>
+	<div class="build-body" id="build-body"></div>
+	<div class="build-actions" id="build-actions"></div>
+</div>
+
+<div id="code-overlay">
+	<div id="code-box">
+		<h2 id="code-title">Build Code</h2>
+		<p id="code-hint"></p>
+		<textarea id="code-text" spellcheck="false"></textarea>
+		<div id="code-error"></div>
+		<div class="code-buttons">
+			<button type="button" id="code-copy" class="primary">Copy</button>
+			<button type="button" id="code-preview">View on Tree</button>
+			<button type="button" id="code-import" class="primary">Import into My Tree</button>
+			<button type="button" id="code-close">Close</button>
+		</div>
+	</div>
 </div>
 
 <div id="hover-tip"></div>
@@ -452,7 +554,7 @@
 <div id="pin-overlay">
 	<div id="pin-box">
 		<h2>Not Connected</h2>
-		<p>Click the link from <b>.treelink</b> in-game to open this page directly.<br>
+		<p>Click the link from <b>.treelink</b> (or <b>.gear</b>) in-game to open this page directly.<br>
 		If you have a 6-digit code instead, enter it below.</p>
 		<input id="pin-input" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autofocus>
 		<button id="pin-submit">View My Tree</button>
@@ -524,6 +626,13 @@ let viewTouched = false;   // true once the player has panned/zoomed by hand, so
 let templateBusy = false;
 let templateTick = null;
 
+// build view state (.gear, or a pasted build code)
+let neighborsOf = {};           // node id -> ids of the nodes linked to it, both directions
+let myAllocated = new Set();    // the logged-in character's own nodes, even while another build is shown
+let viewed = null;              // the build from .gear or a pasted code ({name, level, className, stats, gear, tree:{allocatedNodeIds}, ...}), null for none
+let showingViewed = false;      // the tree shows `viewed` (true) or your own nodes (false)
+let codeMode = null;            // what the build code dialog is open for: "export", "import", or null when closed
+
 // ------------------------------------------------------------------ data
 async function loadNodes() {
 	const res = await fetch(API_BASE + "/api/passivetree/nodes");
@@ -553,6 +662,11 @@ async function loadNodes() {
 		seen.add(key);
 		edgeList.push([Math.min(n.id,p), Math.max(n.id,p)]);
 	}));
+	neighborsOf = {};
+	edgeList.forEach(([a, b]) => {
+		(neighborsOf[a] = neighborsOf[a] || []).push(b);
+		(neighborsOf[b] = neighborsOf[b] || []).push(a);
+	});
 
 	// real extent of the tree, used by fitToScreen()
 	if (nodes.length) {
@@ -584,10 +698,16 @@ async function loadCharacterWithToken(token) {
 	try {
 		const res = await fetch(API_BASE + "/api/passivetree/character?token=" + encodeURIComponent(token));
 		if (!res.ok) { showToast("That code has expired - use .treelink again.", true); currentToken = null; return false; }
-		character = await res.json();
-		allocated = new Set(character.allocatedNodeIds || []);
+		setCharacter(await res.json());
 		return true;
 	} catch (e) { return false; }
+}
+
+/** Takes a character response from the server: your own nodes, which the tree shows unless another build is being viewed. */
+function setCharacter(c) {
+	character = c;
+	myAllocated = new Set((c && c.allocatedNodeIds) || []);
+	if (!inspecting()) allocated = myAllocated;
 }
 
 async function submitPin() {
@@ -614,8 +734,7 @@ async function allocateNode(node) {
 		const res = await fetch(API_BASE + "/api/passivetree/allocate?token=" + encodeURIComponent(currentToken) + "&nodeId=" + node.id);
 		const data = await res.json();
 		if (data.success) {
-			character = data.character;
-			allocated = new Set(character.allocatedNodeIds || []);
+			setCharacter(data.character);
 			showToast("Allocated: " + node.name);
 			render(); renderHud(); renderTotals(); refreshDetailPanelIfSelected(node.id);
 		} else {
@@ -628,7 +747,7 @@ async function allocateNode(node) {
 async function resetTree() {
 	if (!currentToken) { showToast("Enter your .treelink code to reset.", true); return; }
 	if (allocating) return;
-	if (!allocated.size) { showToast("Nothing allocated to reset.", true); return; }
+	if (!myAllocated.size) { showToast("Nothing allocated to reset.", true); return; }
 
 	const confirmed = window.confirm(
 		`Reset your WHOLE passive tree, including your starting node?
@@ -648,8 +767,7 @@ async function resetTree() {
 		const res = await fetch(API_BASE + "/api/passivetree/reset?token=" + encodeURIComponent(currentToken));
 		const data = await res.json();
 		if (data.character) {
-			character = data.character;
-			allocated = new Set(character.allocatedNodeIds || []);
+			setCharacter(data.character);
 		}
 		if (data.success) showToast("Passive tree reset.");
 		else showToast("Could not reset - check you can pay the reset cost.", true);
@@ -678,8 +796,7 @@ async function respecNode(node) {
 		const res = await fetch(API_BASE + "/api/passivetree/deallocate?token=" + encodeURIComponent(currentToken) + "&nodeId=" + node.id);
 		const data = await res.json();
 		if (data.success) {
-			character = data.character;
-			allocated = new Set(character.allocatedNodeIds || []);
+			setCharacter(data.character);
 			showToast("Refunded: " + node.name);
 			render(); renderHud(); renderTotals(); refreshDetailPanelIfSelected(node.id);
 		} else {
@@ -1051,6 +1168,8 @@ function aggregateTotals() {
 function renderTotals() {
 	const body = document.getElementById("totals-body");
 	if (!body) return;
+	const title = document.getElementById("totals-title");
+	if (title) title.textContent = inspecting() ? "Build Bonuses" : "Total Bonuses";
 	const totals = aggregateTotals();
 	const keys = Object.keys(totals).sort((a, b) => (STAT_LABEL[a] || a).localeCompare(STAT_LABEL[b] || b));
 	if (!keys.length) {
@@ -1151,6 +1270,7 @@ function setupSearch() {
 
 function isAvailable(n) {
 	if (allocated.has(n.id)) return false;
+	if (inspecting()) return false;   // someone else's build: nothing to allocate here
 	if (!character) return true;
 	// Only one starting point per character: once one is taken the others lock.
 	if (isRootNode(n)) return !hasStartNode();
@@ -1249,7 +1369,7 @@ function render() {
 
 		// Locked nodes are faded; during a search, non-matches fade further and
 		// matches are lifted back up so locked hits are still easy to spot.
-		let opacity = (character && !has && !avail) ? 0.3 : 1;
+		let opacity = ((character || inspecting()) && !has && !avail) ? 0.3 : 1;
 		if (searching) opacity = hit ? Math.max(opacity, 0.85) : opacity * 0.35;
 		if (opacity < 1) g.style.opacity = opacity;
 
@@ -1382,7 +1502,10 @@ function renderDetailPanel(n) {
 		: "";
 
 	let actionHtml;
-	if (has && (n.type === "START")) {
+	if (inspecting()) {
+		const mine = character ? (myAllocated.has(n.id) ? " &middot; you have it" : " &middot; you don't have it") : "";
+		actionHtml = `<button class="detail-action" disabled>${has ? "In this build" : "Not in this build"}${mine}</button>`;
+	} else if (has && (n.type === "START")) {
 		actionHtml = `<button class="detail-action" disabled>Starting Node</button>`;
 	} else if (has) {
 		const cost = configRespecPerPoint * n.cost;
@@ -1434,7 +1557,7 @@ function refreshDetailPanelIfSelected(nodeId) {
 
 function showHoverTip(e, n, has, avail) {
 	const tip = document.getElementById("hover-tip");
-	const status = has ? "Allocated" : (character ? (avail ? "Available" : "Locked") : "");
+	const status = inspecting() ? (has ? "In this build" : "") : (has ? "Allocated" : (character ? (avail ? "Available" : "Locked") : ""));
 	const fx = formatEffects(n.effect);
 	const statsHtml = fx.length
 		? `<div class="t-stats">` + fx.map(f =>
@@ -1464,9 +1587,13 @@ function renderHud() {
 	const pts = document.getElementById("points-value");
 	const meta = document.getElementById("detail-meta");
 
-	if (character) {
+	if (inspecting()) {
+		sub.textContent = "Viewing Build";
+		who.innerHTML = `<b>${esc(viewed.name)}</b>` + (viewed.level ? ` &middot; Lv ${viewed.level}` : "") + (viewed.className ? ` ${esc(viewed.className)}` : "");
+		pts.textContent = character ? character.availablePoints : "-";
+	} else if (character) {
 		sub.textContent = "Live Character";
-		who.innerHTML = `<b>${character.name}</b> &middot; Lv ${character.level}`;
+		who.innerHTML = `<b>${esc(character.name)}</b> &middot; Lv ${character.level}`;
 		pts.textContent = character.availablePoints;
 	} else {
 		sub.textContent = "Planner Mode";
@@ -1557,8 +1684,7 @@ async function switchTemplate(id) {
 		const res = await fetch(API_BASE + "/api/passivetree/template?token=" + encodeURIComponent(currentToken) + "&id=" + id);
 		const data = await res.json();
 		if (data.character) {
-			character = data.character;
-			allocated = new Set(character.allocatedNodeIds || []);
+			setCharacter(data.character);
 		}
 		if (data.success) showToast("Template " + id + " is now active.");
 		else showToast(data.message || data.error || "Could not switch template.", true);
@@ -1577,15 +1703,320 @@ async function pollCharacter() {
 		const res = await fetch(API_BASE + "/api/passivetree/character?token=" + encodeURIComponent(currentToken));
 		if (!res.ok || allocating || templateBusy) return;
 		const fresh = await res.json();
-		const changed = fresh.allocatedNodeIds.length !== allocated.size || fresh.allocatedNodeIds.some(id => !allocated.has(id));
-		character = fresh;
-		allocated = new Set(character.allocatedNodeIds || []);
-		if (changed) {
+		const changed = fresh.allocatedNodeIds.length !== myAllocated.size || fresh.allocatedNodeIds.some(id => !myAllocated.has(id));
+		setCharacter(fresh);
+		if (changed && !inspecting()) {
 			render(); renderTotals();
 			if (selectedNodeId !== null) refreshDetailPanelIfSelected(selectedNodeId);
 		}
 		renderHud();
 	} catch (e) { /* offline blip - the next poll retries */ }
+}
+
+// ------------------------------------------------------------ build view
+// .gear opens this page on someone's build (gear, stats and passive tree) besides your own token. The tree
+// then shows their nodes, read-only, until you switch back to yours; you can copy their tree as a build code
+// or import it into your own. A pasted build code is shown the same way, without gear.
+
+/** True while the tree shows the viewed build instead of your own nodes. */
+function inspecting() {
+	return viewed !== null && showingViewed;
+}
+
+function esc(text) {
+	return String(text === undefined || text === null ? "" : text)
+		.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/** The viewed build's node ids, in the order they were taken. */
+function viewedIds() {
+	return (viewed && viewed.tree && viewed.tree.allocatedNodeIds) ? viewed.tree.allocatedNodeIds.filter(id => nodeById[id]) : [];
+}
+
+function pointsOf(ids) {
+	return ids.reduce((sum, id) => sum + (nodeById[id] ? nodeById[id].cost : 0), 0);
+}
+
+/** Redraws everything after the shown build changes. */
+function refreshView() {
+	allocated = inspecting() ? new Set(viewedIds()) : myAllocated;
+	render(); renderHud(); renderTotals(); renderBuildPanel();
+	if (selectedNodeId !== null) refreshDetailPanelIfSelected(selectedNodeId);
+}
+
+async function loadInspect(id) {
+	try {
+		const res = await fetch(API_BASE + "/api/passivetree/inspect?id=" + encodeURIComponent(id));
+		const data = await res.json();
+		if (!res.ok) { showToast(data.error || "That build link has expired - use .gear again.", true); return false; }
+		showBuild(data);
+		return true;
+	} catch (e) { showToast("Could not load that build.", true); return false; }
+}
+
+/** Shows a build on the tree and in the build panel, and centres the view on it. */
+function showBuild(data) {
+	viewed = data;
+	showingViewed = true;
+	refreshView();
+	focusOn(viewedIds());
+}
+
+/** Zooms to a set of nodes (the whole tree when empty). */
+function focusOn(ids) {
+	const list = ids.map(id => nodeById[id]).filter(Boolean);
+	if (!list.length) { fitToScreen(); return; }
+	fitToBounds({
+		minX: Math.min(...list.map(n => n.x)), maxX: Math.max(...list.map(n => n.x)),
+		minY: Math.min(...list.map(n => n.y)), maxY: Math.max(...list.map(n => n.y)),
+	}, 1);
+}
+
+function toggleShownTree() {
+	if (!viewed) return;
+	showingViewed = !showingViewed;
+	refreshView();
+}
+
+function closeBuild() {
+	viewed = null;
+	showingViewed = false;
+	refreshView();
+	fitToScreen();
+}
+
+function renderBuildPanel() {
+	const panel = document.getElementById("build-panel");
+	if (!viewed) { panel.classList.remove("open"); return; }
+	panel.classList.add("open");
+
+	const v = viewed;
+	const ids = viewedIds();
+	const isCode = !v.stats;
+	const tags = (v.hero ? `<span class="tag">Hero</span>` : "") + (v.noble ? `<span class="tag">Noble</span>` : "");
+	const sub2 = [v.title, v.clan ? "Clan " + v.clan : ""].filter(Boolean).map(esc).join(" &middot; ");
+	document.getElementById("build-head").innerHTML =
+		`<div class="build-name">${esc(v.name)}${tags}</div>` +
+		(isCode ? `<div class="build-sub">Pasted build code</div>`
+			: `<div class="build-sub">Lv ${v.level} ${esc(v.className)}${v.race ? " &middot; " + esc(v.race) : ""}</div>`) +
+		(sub2 ? `<div class="build-sub2">${sub2}</div>` : "") +
+		(v.takenAt ? `<div class="build-sub2">As of ${new Date(v.takenAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>` : "");
+
+	let html = `<div class="build-section">Passive Tree</div>`;
+	if (ids.length) {
+		html += `<div>${ids.length} node${ids.length === 1 ? "" : "s"} &middot; ${pointsOf(ids)} point${pointsOf(ids) === 1 ? "" : "s"}` +
+			(v.tree.template ? ` &middot; template ${v.tree.template}` : "") + `</div>`;
+		const start = ids.map(id => nodeById[id]).find(n => isRootNode(n));
+		if (start) html += `<div style="color:#888">Starts at ${esc(start.name)} (${esc(start.sector)})</div>`;
+	} else {
+		html += `<div class="build-empty">No passive tree.</div>`;
+	}
+
+	if (v.subclasses && v.subclasses.length) {
+		html += `<div class="build-section">Classes</div>`;
+		if (v.baseClass) html += `<div>${esc(v.baseClass)} <span style="color:#777">(base)</span></div>`;
+		html += v.subclasses.map(sc => `<div>${esc(sc.name)} <span style="color:#777">Lv ${sc.level}</span></div>`).join("");
+	}
+
+	if (!isCode) {
+		html += `<div class="build-section">Equipment</div>`;
+		if (v.gear && v.gear.length) {
+			html += v.gear.map(g =>
+				`<div class="gear-row"><div class="gear-slot">${esc(g.slot)}</div><div class="gear-item">` +
+				(g.enchant > 0 ? `<span class="gear-ench">+${g.enchant} </span>` : "") +
+				`<span class="gear-name">${esc(g.name)}</span>` +
+				(g.grade ? `<span class="gear-grade">${esc(g.grade)}</span>` : "") +
+				(g.augment ? `<div class="gear-aug">${esc(g.augment)}</div>` : "") +
+				(g.elements ? `<div class="gear-elem">${esc(g.elements)}</div>` : "") +
+				`</div></div>`).join("");
+		} else {
+			html += `<div class="build-empty">Nothing equipped.</div>`;
+		}
+
+		const st = v.stats;
+		const pairs = [
+			["HP", st.hp], ["MP", st.mp], ["CP", st.cp], ["Speed", st.speed],
+			["P. Atk.", st.pAtk], ["M. Atk.", st.mAtk], ["P. Def.", st.pDef], ["M. Def.", st.mDef],
+			["Atk. Spd.", st.atkSpd], ["Cast Spd.", st.castSpd], ["Accuracy", st.accuracy], ["Evasion", st.evasion],
+			["Critical", st.crit], ["M. Critical", st.mCrit],
+			["STR", st.str], ["DEX", st.dex], ["CON", st.con], ["INT", st.int], ["WIT", st.wit], ["MEN", st.men],
+		];
+		html += `<div class="build-section">Stats</div><div class="stat-grid">` +
+			pairs.map(([k, val]) => `<span class="k">${k}</span><span class="v">${(val || 0).toLocaleString()}</span>`).join("") + `</div>`;
+	}
+	document.getElementById("build-body").innerHTML = html;
+
+	const actions = document.getElementById("build-actions");
+	actions.innerHTML =
+		`<button type="button" class="primary" id="build-import"${ids.length ? "" : " disabled"}>Import into My Tree</button>` +
+		`<button type="button" id="build-copy"${ids.length ? "" : " disabled"}>Copy Code</button>` +
+		`<button type="button" id="build-toggle">${showingViewed ? "Show My Tree" : "Show This Build"}</button>` +
+		`<button type="button" id="build-focus">Find on Tree</button>` +
+		`<button type="button" id="build-close">Close</button>`;
+	document.getElementById("build-import").addEventListener("click", () => importBuild(viewedIds(), isCode ? "this build code" : `${v.name}'s build`));
+	document.getElementById("build-copy").addEventListener("click", () => openCodeDialog("export", encodeBuildCode(viewedIds()), isCode ? "Build Code" : `${v.name}'s Build Code`));
+	document.getElementById("build-toggle").addEventListener("click", toggleShownTree);
+	document.getElementById("build-focus").addEventListener("click", () => { if (!showingViewed) toggleShownTree(); focusOn(viewedIds()); });
+	document.getElementById("build-close").addEventListener("click", closeBuild);
+}
+
+// ------------------------------------------------------------ build codes
+// A build code is "PT1:" and the node ids in base 36, separated by dots, in the order they are taken: an
+// import with too few points takes the nodes listed first, the ones nearest the starting point.
+
+function encodeBuildCode(ids) {
+	return "PT1:" + ids.map(id => id.toString(36)).join(".");
+}
+
+/** @return {ids, unknown} - the code's node ids that exist in this tree (in order, no repeats) and how many did not; throws on a malformed code */
+function decodeBuildCode(text) {
+	const code = text.replace(/\s+/g, "");
+	if (!/^PT1:/i.test(code)) throw new Error("A build code starts with PT1:");
+	const ids = [], seen = new Set();
+	let unknown = 0;
+	for (const part of code.slice(4).split(".").filter(Boolean)) {
+		if (!/^[0-9a-z]+$/i.test(part)) throw new Error("This build code is damaged - copy it again.");
+		const id = parseInt(part, 36);
+		if (seen.has(id)) continue;
+		seen.add(id);
+		if (nodeById[id]) ids.push(id); else unknown++;
+	}
+	if (!ids.length) throw new Error("This build code has no nodes of this tree.");
+	return { ids, unknown };
+}
+
+/** The nodes of a set in the order they can be taken: out from the starting point, nearest first. */
+function growthOrder(set) {
+	const order = [], seen = new Set();
+	const queue = [...set].filter(id => nodeById[id] && isRootNode(nodeById[id])).sort((a, b) => a - b);
+	queue.forEach(id => { seen.add(id); order.push(id); });
+	while (queue.length) {
+		const id = queue.shift();
+		(neighborsOf[id] || []).slice().sort((a, b) => a - b).forEach(next => {
+			if (set.has(next) && !seen.has(next)) { seen.add(next); order.push(next); queue.push(next); }
+		});
+	}
+	[...set].filter(id => !seen.has(id)).sort((a, b) => a - b).forEach(id => order.push(id));
+	return order;
+}
+
+/** "Copy Code": the build being viewed, or your own tree. */
+function exportShownTree() {
+	if (inspecting()) {
+		openCodeDialog("export", encodeBuildCode(viewedIds()), viewed.stats ? `${viewed.name}'s Build Code` : "Build Code");
+		return;
+	}
+	if (!allocated.size) { showToast("Nothing allocated to copy.", true); return; }
+	openCodeDialog("export", encodeBuildCode(growthOrder(allocated)), character ? `${character.name}'s Build Code` : "Build Code");
+}
+
+function openCodeDialog(mode, code, title) {
+	codeMode = mode;
+	const text = document.getElementById("code-text");
+	document.getElementById("code-error").textContent = "";
+	document.getElementById("code-title").textContent = title || (mode === "export" ? "Build Code" : "Paste a Build Code");
+	document.getElementById("code-hint").textContent = mode === "export"
+		? "Copy this code to share the tree or import it later with Paste Code."
+		: "Paste a build code (PT1:...) to view it on the tree, or import it straight into your own tree.";
+	text.value = code || "";
+	text.readOnly = mode === "export";
+	text.placeholder = mode === "export" ? "" : "PT1:...";
+	document.getElementById("code-copy").style.display = mode === "export" ? "" : "none";
+	document.getElementById("code-preview").style.display = mode === "import" ? "" : "none";
+	document.getElementById("code-import").style.display = mode === "import" ? "" : "none";
+	document.getElementById("code-overlay").classList.add("open");
+	hideHoverTip();
+	text.focus();
+	if (mode === "export") text.select();
+}
+
+function closeCodeDialog() {
+	codeMode = null;
+	document.getElementById("code-overlay").classList.remove("open");
+}
+
+/** The page is served over plain http, where the async clipboard API is often missing: fall back to copying the selected text. */
+async function copyCodeText() {
+	const text = document.getElementById("code-text");
+	text.focus();
+	text.select();
+	let copied = false;
+	try {
+		if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text.value); copied = true; }
+	} catch (e) { /* fall through to execCommand */ }
+	if (!copied) {
+		try { copied = document.execCommand("copy"); } catch (e) { copied = false; }
+	}
+	if (copied) { showToast("Build code copied."); closeCodeDialog(); }
+	else document.getElementById("code-error").textContent = "Your browser blocked copying: the code is selected, press Ctrl+C.";
+}
+
+function readPastedCode() {
+	try {
+		const result = decodeBuildCode(document.getElementById("code-text").value);
+		if (result.unknown) showToast(`${result.unknown} node(s) of this code are not in this tree and were left out.`, true);
+		return result.ids;
+	} catch (e) {
+		document.getElementById("code-error").textContent = e.message;
+		return null;
+	}
+}
+
+function previewPastedCode() {
+	const ids = readPastedCode();
+	if (!ids) return;
+	closeCodeDialog();
+	showBuild({ name: "Build Code", tree: { allocatedNodeIds: ids } });
+}
+
+async function importPastedCode() {
+	const ids = readPastedCode();
+	if (!ids) return;
+	closeCodeDialog();
+	await importBuild(ids, "this build code");
+}
+
+/**
+ * Copies a build into your own tree (the active template): the server takes its nodes in order, with the same
+ * rules as clicking them one by one, until your points run out. Nothing you already have is removed.
+ */
+async function importBuild(ids, label) {
+	if (!currentToken) { showToast("Open this page from .treelink or .gear to import into your tree.", true); return; }
+	if (allocating) return;
+	const wanted = ids.filter(id => !myAllocated.has(id));
+	if (!wanted.length) { showToast("You already have every node of " + label + ".", true); return; }
+
+	const cost = pointsOf(wanted);
+	const have = character ? character.availablePoints : 0;
+	const myStart = nodes.find(n => myAllocated.has(n.id) && isRootNode(n));
+	const theirStart = ids.map(id => nodeById[id]).find(n => n && isRootNode(n));
+	let msg = `Import ${label} into your passive tree?\n\n${wanted.length} new node${wanted.length === 1 ? "" : "s"} for ${cost} point${cost === 1 ? "" : "s"} - you have ${have}.`;
+	if (cost > have) msg += `\n\nYou don't have the points for all of it: the nodes nearest its starting point are taken first.`;
+	if (myStart && theirStart && (myStart.id !== theirStart.id)) {
+		msg += `\n\nYour tree starts at ${myStart.name} but this build starts at ${theirStart.name}: only the nodes that connect to your tree can be taken. Reset your tree or switch to an empty template first to copy it whole.`;
+	} else if (myAllocated.size) {
+		msg += `\n\nYour current nodes stay and the build is added on top. Switch to an empty template or reset first for an exact copy.`;
+	}
+	if (!window.confirm(msg)) return;
+
+	allocating = true;
+	try {
+		const res = await fetch(API_BASE + "/api/passivetree/import?token=" + encodeURIComponent(currentToken) + "&nodes=" + ids.join(","));
+		const data = await res.json();
+		if (data.character) setCharacter(data.character);
+		if (data.success) {
+			showToast(`Imported ${data.added} node${data.added === 1 ? "" : "s"} for ${data.points} point${data.points === 1 ? "" : "s"}` + (data.skipped ? ` - ${data.skipped} could not be taken.` : "."));
+			showingViewed = false;   // show the result on your own tree
+		} else if (res.status === 401) {
+			showToast("Your link has expired - use .gear or .treelink again.", true);
+		} else {
+			showToast(data.error || "Nothing could be imported: no points left, or the build doesn't connect to your tree.", true);
+		}
+	} catch (e) { showToast("Connection error.", true); }
+	finally {
+		allocating = false;
+		refreshView();
+	}
 }
 
 // ------------------------------------------------------------ view maths
@@ -1657,6 +2088,11 @@ function visibleArea() {
 		const r = stack.getBoundingClientRect();
 		if (r.width > 0 && r.left > w / 2) right = Math.min(right, r.left - 16);
 	}
+	const panel = document.getElementById("build-panel");
+	if (panel && panel.classList.contains("open")) {
+		const r = panel.getBoundingClientRect();
+		if (r.width > 0 && r.right < w / 2) left = Math.max(left, r.right + 16);
+	}
 	// A tiny window leaves nothing over: fall back to the whole window.
 	if ((right - left < 120) || (bottom - top < 120)) { left = 0; top = 0; right = w; bottom = h; }
 	return { left, top, right, bottom };
@@ -1664,19 +2100,24 @@ function visibleArea() {
 
 /** Scale and centre so the entire tree is visible, clear of the panels. */
 function fitToScreen() {
+	fitToBounds(bounds, CFG.ZOOM_MAX);
+}
+
+/** Scale and centre so the box b ({minX, minY, maxX, maxY} in tree units) is visible, clear of the panels, zooming in no closer than maxZoom. */
+function fitToBounds(b, maxZoom) {
 	const m = CFG.FIT_NODE_MARGIN;   // node circles and glow reach past their centre points
-	const treeW = Math.max(1, bounds.maxX - bounds.minX) + (m * 2);
-	const treeH = Math.max(1, bounds.maxY - bounds.minY) + (m * 2);
+	const treeW = Math.max(1, b.maxX - b.minX) + (m * 2);
+	const treeH = Math.max(1, b.maxY - b.minY) + (m * 2);
 	const area = visibleArea();
 	const availW = Math.max(1, area.right - area.left);
 	const availH = Math.max(1, area.bottom - area.top);
 
-	let next = Math.min(CFG.ZOOM_MAX, Math.max(CFG.ZOOM_MIN, Math.min(availW / treeW, availH / treeH)));
+	let next = Math.min(maxZoom, Math.max(CFG.ZOOM_MIN, Math.min(availW / treeW, availH / treeH)));
 	if (!isFinite(next) || (next <= 0)) next = 1; // last-resort floor, should never trigger now
 	scale = next;
 
-	const cx = (bounds.minX + bounds.maxX) / 2;
-	const cy = (bounds.minY + bounds.maxY) / 2;
+	const cx = (b.minX + b.maxX) / 2;
+	const cy = (b.minY + b.maxY) / 2;
 	tx = ((area.left + area.right) / 2) - (cx * scale);
 	ty = ((area.top + area.bottom) / 2) - (cy * scale);
 
@@ -1726,7 +2167,8 @@ function setupZoomPan() {
 			input.select();
 			return;
 		}
-		if (document.activeElement && document.activeElement.tagName === "INPUT") return;
+		if (codeMode) { if (e.key === "Escape") closeCodeDialog(); return; }
+		if (document.activeElement && ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
 		const step = CFG.KEY_PAN_STEP;
 		let handled = true;
 		switch (e.key) {
@@ -1797,7 +2239,8 @@ function setupZoomPan() {
 	// PIN. The PIN flow stays in place underneath as a fallback: if the
 	// page is opened with no token (or an expired one), it falls through
 	// to the same overlay as before instead of just failing silently.
-	const urlToken = new URLSearchParams(window.location.search).get("token");
+	const params = new URLSearchParams(window.location.search);
+	const urlToken = params.get("token");
 	if (urlToken) {
 		const ok = await loadCharacterWithToken(urlToken);
 		if (ok) {
@@ -1807,6 +2250,21 @@ function setupZoomPan() {
 			document.getElementById("pin-error").textContent = "That link has expired - use .treelink again.";
 		}
 	}
+
+	// .gear links carry the build to show besides your own token.
+	const inspectId = params.get("inspect");
+	if (inspectId && await loadInspect(inspectId)) {
+		document.getElementById("pin-overlay").style.display = "none";
+		if (!currentToken) showToast("Your own part of this link expired: you can view this build, but use .gear again to import it.", true);
+	}
+
+	document.getElementById("export-code-btn").addEventListener("click", exportShownTree);
+	document.getElementById("import-code-btn").addEventListener("click", () => openCodeDialog("import"));
+	document.getElementById("code-copy").addEventListener("click", copyCodeText);
+	document.getElementById("code-preview").addEventListener("click", previewPastedCode);
+	document.getElementById("code-import").addEventListener("click", importPastedCode);
+	document.getElementById("code-close").addEventListener("click", closeCodeDialog);
+	document.getElementById("code-overlay").addEventListener("click", e => { if (e.target.id === "code-overlay") closeCodeDialog(); });
 
 	document.getElementById("pin-submit").addEventListener("click", submitPin);
 	document.getElementById("pin-input").addEventListener("keydown", e => { if (e.key === "Enter") submitPin(); });

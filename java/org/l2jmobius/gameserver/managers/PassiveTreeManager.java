@@ -7,10 +7,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -456,6 +459,117 @@ public class PassiveTreeManager
 		{
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * What {@link #importNodes} did.
+	 * @param added nodes it allocated
+	 * @param owned nodes of the build the player already had
+	 * @param skipped nodes of the build it could not allocate: no points left, no connection to the player's tree, another starting point, or a keystone that can't be combined with one the player has
+	 * @param points points the added nodes cost
+	 */
+	public record ImportResult(int added, int owned, int skipped, int points)
+	{
+	}
+	
+	/**
+	 * Allocates the nodes of a copied build (the web planner's import, see .gear), keeping everything already allocated. Every node goes through {@link #canAllocate} like a click would. Each step takes the first node of the list that can be allocated now, so when the points run out the nodes
+	 * listed first are the ones taken; it stops when none of the rest can be. Skills and stats are rebuilt once at the end.
+	 * @param player the player
+	 * @param nodeIds the build's nodes, the ones to take first first (see {@link #getGrowthOrder})
+	 * @return what was allocated
+	 */
+	public ImportResult importNodes(Player player, List<Integer> nodeIds)
+	{
+		final Set<Integer> allocated = getAllocatedNodes(player);
+		final List<Integer> pending = new ArrayList<>(new LinkedHashSet<>(nodeIds));
+		final int before = pending.size();
+		pending.removeIf(allocated::contains);
+		final int owned = before - pending.size();
+		
+		final List<Integer> added = new ArrayList<>();
+		int points = 0;
+		boolean progress = true;
+		while (progress)
+		{
+			progress = false;
+			for (Iterator<Integer> it = pending.iterator(); it.hasNext();)
+			{
+				final int nodeId = it.next();
+				if (canAllocate(player, nodeId))
+				{
+					allocated.add(nodeId);
+					added.add(nodeId);
+					points += PassiveTreeData.getInstance().getNode(nodeId).getCost();
+					it.remove();
+					progress = true;
+					break; // Back to the top of the list, which may have just been connected.
+				}
+			}
+		}
+		
+		if (!added.isEmpty())
+		{
+			persistInsertAll(player, added);
+			applyAll(player);
+		}
+		return new ImportResult(added.size(), owned, pending.size(), points);
+	}
+	
+	private void persistInsertAll(Player player, List<Integer> nodeIds)
+	{
+		try (Connection con = DatabaseFactory.getConnection();
+			PreparedStatement ps = con.prepareStatement("INSERT INTO character_passive_tree (char_id, class_index, node_id) VALUES (?, ?, ?)"))
+		{
+			for (int nodeId : nodeIds)
+			{
+				ps.setInt(1, player.getObjectId());
+				ps.setInt(2, treeClassIndex(player));
+				ps.setInt(3, nodeId);
+				ps.addBatch();
+			}
+			ps.executeBatch();
+		}
+		catch (SQLException e)
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": Failed to save imported passive nodes for player " + player.getObjectId() + " - " + e.getMessage());
+		}
+	}
+	
+	/**
+	 * @param nodeIds an allocation (a player's, or a fake player's)
+	 * @return the same nodes in the order they can be allocated: out from the START node, nearest first, then whatever doesn't connect to it. Copying a build in this order with fewer points takes the part nearest the start.
+	 */
+	public List<Integer> getGrowthOrder(Collection<Integer> nodeIds)
+	{
+		final Set<Integer> remaining = new HashSet<>(nodeIds);
+		final List<Integer> order = new ArrayList<>(remaining.size());
+		final Deque<Integer> queue = new ArrayDeque<>();
+		for (int id : nodeIds.stream().sorted().toList())
+		{
+			final PassiveNode node = PassiveTreeData.getInstance().getNode(id);
+			if ((node != null) && node.isRoot() && remaining.remove(id))
+			{
+				order.add(id);
+				queue.add(id);
+			}
+		}
+		
+		final Map<Integer, Set<Integer>> neighbors = neighborMap();
+		while (!queue.isEmpty())
+		{
+			for (int next : neighbors.getOrDefault(queue.poll(), Collections.emptySet()).stream().sorted().toList())
+			{
+				if (remaining.remove(next))
+				{
+					order.add(next);
+					queue.add(next);
+				}
+			}
+		}
+		
+		remaining.stream().sorted().forEach(order::add);
+		return order;
 	}
 	
 	/**

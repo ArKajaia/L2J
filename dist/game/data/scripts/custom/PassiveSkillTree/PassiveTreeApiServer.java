@@ -45,6 +45,8 @@ import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
  * <li>GET /api/passivetree/allocate?token=...&amp;nodeId=... - allocates one node</li>
  * <li>GET /api/passivetree/reset?token=... - clears the whole tree for the configured reset cost</li>
  * <li>GET /api/passivetree/template?token=...&amp;id=... - switches to another template (peace zone only, with a wait between switches)</li>
+ * <li>GET /api/passivetree/inspect?id=... - the build (gear, stats, passive tree) of the player or fake player someone used ".gear" on</li>
+ * <li>GET /api/passivetree/import?token=...&amp;nodes=... - allocates a copied build's nodes (comma-separated ids, the ones to take first first) on top of the current tree</li>
  * </ul>
  */
 public class PassiveTreeApiServer
@@ -58,10 +60,14 @@ public class PassiveTreeApiServer
 	private static final int PORT = 8788;
 	private static final long TOKEN_VALID_MS = 15 * 60 * 1000L; // 15 minutes, per resolved session
 	private static final long PIN_VALID_MS = 10 * 60 * 1000L; // 10 minutes to actually type the PIN in
+	private static final long INSPECT_VALID_MS = 30 * 60 * 1000L; // how long a ".gear" snapshot stays viewable
+	private static final int MAX_INSPECTS = 2000; // snapshots kept at once, so a flood of ".gear" can't eat the memory
+	private static final int MAX_IMPORT_NODES = 2000; // more ids than the tree has nodes in one import is never a real build
 	
 	private static final Path HTML_FILE = Path.of("data/html/custom/passive-tree.html");
 	
 	private final Map<String, long[]> pins = new ConcurrentHashMap<>(); // pin -> {charId, classIndex, expiry}
+	private final Map<String, Inspect> inspects = new ConcurrentHashMap<>(); // random id -> ".gear" snapshot
 	private final SecureRandom random = new SecureRandom();
 	
 	private HttpServer server;
@@ -80,6 +86,8 @@ public class PassiveTreeApiServer
 			server.createContext("/api/passivetree/reset", this::handleReset);
 			server.createContext("/api/passivetree/template", this::handleTemplate);
 			server.createContext("/api/passivetree/config", this::handleConfig);
+			server.createContext("/api/passivetree/inspect", this::handleInspect);
+			server.createContext("/api/passivetree/import", this::handleImport);
 			server.setExecutor(Executors.newFixedThreadPool(2));
 			server.start();
 			LOGGER.info("PassiveTreeApiServer: listening on port " + PORT);
@@ -126,6 +134,39 @@ public class PassiveTreeApiServer
 	{
 		final long now = System.currentTimeMillis();
 		pins.entrySet().removeIf(e -> e.getValue()[2] < now);
+	}
+	
+	// ------------------------------------------------------------------
+	// ".gear" snapshots
+	// ------------------------------------------------------------------
+	/**
+	 * A build as it was when ".gear" was used (see {@link BuildSnapshot}).
+	 * @param json the build
+	 * @param expiry when it stops being viewable
+	 */
+	private record Inspect(String json, long expiry)
+	{
+	}
+	
+	/**
+	 * Keeps a build for INSPECT_VALID_MS. The id is random and long, so it can't be guessed: only who used ".gear" (and whoever they share the link with) can see it.
+	 * @param json the build, from {@link BuildSnapshot}
+	 * @return the id the page reads it back with
+	 */
+	public String registerInspect(String json)
+	{
+		final long now = System.currentTimeMillis();
+		inspects.values().removeIf(inspect -> inspect.expiry() < now);
+		while (inspects.size() >= MAX_INSPECTS)
+		{
+			inspects.entrySet().stream().min((a, b) -> Long.compare(a.getValue().expiry(), b.getValue().expiry())).ifPresent(oldest -> inspects.remove(oldest.getKey()));
+		}
+		
+		final byte[] raw = new byte[18];
+		random.nextBytes(raw);
+		final String id = Base64.getUrlEncoder().withoutPadding().encodeToString(raw);
+		inspects.put(id, new Inspect(json, now + INSPECT_VALID_MS));
+		return id;
 	}
 	
 	// ------------------------------------------------------------------
@@ -489,6 +530,79 @@ public class PassiveTreeApiServer
 		}
 		json.append("}}");
 		sendText(exchange, 200, "application/json", json.toString());
+	}
+	
+	/** The build a ".gear" link points at. Public like /nodes: the random id is what keeps it private. */
+	private void handleInspect(HttpExchange exchange) throws IOException
+	{
+		final String id = parseQueryParam(exchange.getRequestURI().getQuery(), "id");
+		final Inspect inspect = id != null ? inspects.get(id) : null;
+		if ((inspect == null) || (inspect.expiry() < System.currentTimeMillis()))
+		{
+			sendText(exchange, 404, "application/json", "{\"error\":\"this build link has expired - use .gear again\"}");
+			return;
+		}
+		sendText(exchange, 200, "application/json", inspect.json());
+	}
+	
+	/** Copies a build into the player's tree. The rules are PassiveTreeManager.importNodes(): the same checks as allocating each node by hand. */
+	private void handleImport(HttpExchange exchange) throws IOException
+	{
+		final String query = exchange.getRequestURI().getQuery();
+		final String token = parseQueryParam(query, "token");
+		final String nodesParam = parseQueryParam(query, "nodes");
+		if ((token == null) || (nodesParam == null))
+		{
+			sendText(exchange, 400, "application/json", "{\"error\":\"missing token or nodes\"}");
+			return;
+		}
+		
+		final int[] verified = verifyToken(token);
+		if (verified == null)
+		{
+			sendText(exchange, 401, "application/json", "{\"error\":\"invalid or expired token\"}");
+			return;
+		}
+		
+		final Player player = resolvePlayer(verified);
+		if (player == null)
+		{
+			sendText(exchange, 404, "application/json", "{\"error\":\"character not online on this class\"}");
+			return;
+		}
+		
+		final List<Integer> nodeIds = new ArrayList<>();
+		for (String part : nodesParam.split(","))
+		{
+			if (part.isEmpty())
+			{
+				continue;
+			}
+			try
+			{
+				nodeIds.add(Integer.parseInt(part));
+			}
+			catch (NumberFormatException e)
+			{
+				sendText(exchange, 400, "application/json", "{\"error\":\"bad node id\"}");
+				return;
+			}
+		}
+		if (nodeIds.isEmpty() || (nodeIds.size() > MAX_IMPORT_NODES))
+		{
+			sendText(exchange, 400, "application/json", "{\"error\":\"no nodes to import\"}");
+			return;
+		}
+		
+		final PassiveTreeManager.ImportResult result = PassiveTreeManager.getInstance().importNodes(player, nodeIds);
+		if (result.added() > 0)
+		{
+			player.sendMessage("Passive tree: imported " + result.added() + " node(s) for " + result.points() + " point(s)" + (result.skipped() > 0 ? ", " + result.skipped() + " could not be taken." : "."));
+		}
+		
+		final StringBuilder json = new StringBuilder();
+		json.append("{\"success\":").append(result.added() > 0).append(",\"added\":").append(result.added()).append(",\"owned\":").append(result.owned()).append(",\"skipped\":").append(result.skipped()).append(",\"points\":").append(result.points()).append(",\"character\":").append(buildCharacterJson(player)).append("}");
+		sendText(exchange, result.added() > 0 ? 200 : 409, "application/json", json.toString());
 	}
 	
 	private Player resolvePlayer(int[] verifiedTokenParts)

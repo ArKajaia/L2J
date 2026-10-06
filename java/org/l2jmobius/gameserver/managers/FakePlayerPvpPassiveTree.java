@@ -246,7 +246,7 @@ public class FakePlayerPvpPassiveTree
 		}
 		final PassiveStatBonusCache bonus = new PassiveStatBonusCache();
 		bonus.recompute(nodeIds);
-		return new FakePlayerPvpPassives(subclasses, count, count > 0 ? variant.cumulativeCost()[count - 1] : 0, variant.sector(), bonus);
+		return new FakePlayerPvpPassives(subclasses, count, count > 0 ? variant.cumulativeCost()[count - 1] : 0, variant.sector(), nodeIds, bonus);
 	}
 
 	/**
