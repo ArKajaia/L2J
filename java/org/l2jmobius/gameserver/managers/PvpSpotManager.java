@@ -85,8 +85,8 @@ public class PvpSpotManager
 	private static final int DRIFT_MAX = 240000;
 	/** A fake player that should have left this long ago, and still couldn't read its scroll, logs off. */
 	private static final long LEAVE_GRACE = 60000;
-	/** A player this far from a spot (or in it) wakes its fake players up. */
-	private static final int WATCH_RANGE = 2500;
+	/** The world regions this far around a spot never go to sleep: its fake players fight there, and chase a bit outside it, whether a player is around or not. */
+	private static final int KEEP_ACTIVE_RANGE = PvpSpotsConfig.CHASE_OUTSIDE + 1000;
 	/** A killer this far from a spot it isn't in still gets the kill (an archer shooting in from the edge). */
 	private static final int KILL_CREDIT_RANGE = 1500;
 	/** Kill streaks the players of the spot are told about. */
@@ -344,6 +344,8 @@ public class PvpSpotManager
 	private final Map<Integer, Spot> _spots = new ConcurrentHashMap<>();
 	/** Fake players of the spots on their way back from town, by name. */
 	private final Map<String, ScheduledFuture<?>> _returns = new ConcurrentHashMap<>();
+	/** Whether the world regions of the spots are kept active yet (see {@link #keepActive}). */
+	private volatile boolean _keptActive;
 
 	protected PvpSpotManager()
 	{
@@ -366,6 +368,15 @@ public class PvpSpotManager
 	 */
 	private void tick()
 	{
+		if (!_keptActive)
+		{
+			_keptActive = true;
+			for (PvpSpotZone zone : ZoneManager.getInstance().getAllZones(PvpSpotZone.class))
+			{
+				keepActive(zone);
+			}
+		}
+		
 		final long now = System.currentTimeMillis();
 		for (PvpSpotZone zone : ZoneManager.getInstance().getAllZones(PvpSpotZone.class))
 		{
@@ -394,9 +405,6 @@ public class PvpSpotManager
 			}
 		}
 
-		// Like monsters around a player, its fake players fight while a player is there to see it, and stand by meanwhile. The ones that came while nobody was around (their AI asleep in an empty region) are woken up.
-		final boolean watched = isWatched(zone);
-		
 		// Its fake players stay flagged, and leave once their time is up (reading a scroll, see FakePlayerPvpAI#thinkLeave). A strong one lying dead or on its way back keeps its place.
 		int elites = spot._returningElites.get();
 		int alive = 0;
@@ -414,10 +422,8 @@ public class PvpSpotManager
 			}
 			alive++;
 
-			if (watched)
-			{
-				wake(fake);
-			}
+			// The fights go on whether a player is around or not: the regions of the spot never sleep (see keepActive), and an AI that went idle thinks again.
+			wake(fake);
 			
 			FakePlayerPvpManager.flagForSpot(fake);
 			final boolean fighting = FakePlayerPvpManager.isFightingPvp(fake);
@@ -454,29 +460,42 @@ public class PvpSpotManager
 	}
 
 	/**
+	 * Keeps the world regions of a spot (and a bit around it) active for good, like regions with a player in them: its fake players keep fighting each other, and earning PvP kills, while nobody is there.
 	 * @param zone a spot
-	 * @return {@code true} if a player is in it or close enough to see it
 	 */
-	private static boolean isWatched(PvpSpotZone zone)
+	private static void keepActive(PvpSpotZone zone)
 	{
-		final Location center = zone.getZone().getCenterPoint();
-		final WorldRegion region = World.getInstance().getRegion(center.getX(), center.getY(), center.getZ());
-		if (region == null)
+		final ZoneForm form = zone.getZone();
+		final int lowZ = Math.max(World.WORLD_Z_MIN, Math.min(form.getLowZ(), form.getHighZ()) - KEEP_ACTIVE_RANGE);
+		final int highZ = Math.min(World.WORLD_Z_MAX, Math.max(form.getLowZ(), form.getHighZ()) + KEEP_ACTIVE_RANGE);
+		final int regionSize = 1 << World.SHIFT_BY;
+		final WorldRegion[][][] regions = World.getInstance().getWorldRegions();
+		int kept = 0;
+		for (int rx = 0; rx < regions.length; rx++)
 		{
-			return false;
-		}
-		
-		for (WorldRegion surrounding : region.getSurroundingRegions())
-		{
-			for (WorldObject object : surrounding.getVisibleObjects())
+			final int x1 = (rx - World.OFFSET_X) << World.SHIFT_BY;
+			for (int ry = 0; ry < regions[rx].length; ry++)
 			{
-				if (object.isPlayer() && (object.getInstanceId() == 0) && !object.asPlayer().isInvisible() && (zone.isInsideZone(object) || (zone.getDistanceToZone(object) < WATCH_RANGE)))
+				final int y1 = (ry - World.OFFSET_Y) << World.SHIFT_BY;
+				if (!form.intersectsRectangle(x1 - KEEP_ACTIVE_RANGE, x1 + regionSize + KEEP_ACTIVE_RANGE, y1 - KEEP_ACTIVE_RANGE, y1 + regionSize + KEEP_ACTIVE_RANGE))
 				{
-					return true;
+					continue;
+				}
+				
+				final int centerX = x1 + (regionSize / 2);
+				final int centerY = y1 + (regionSize / 2);
+				for (int z = lowZ; z < (highZ + World.Z_REGION_SIZE); z += World.Z_REGION_SIZE)
+				{
+					final WorldRegion region = World.getInstance().getRegion(centerX, centerY, Math.min(z, highZ));
+					if ((region != null) && !region.isKeptActive())
+					{
+						region.keepActive();
+						kept++;
+					}
 				}
 			}
 		}
-		return false;
+		LOGGER.info(PvpSpotManager.class.getSimpleName() + ": " + zone.getName() + " keeps " + kept + " world regions active.");
 	}
 	
 	/**

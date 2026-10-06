@@ -51,6 +51,8 @@ public class WorldRegion
 	private final int _regionY;
 	private final int _regionZ;
 	private boolean _active = GeneralConfig.GRIDS_ALWAYS_ON;
+	/** Kept active even with no player around (see {@link #keepActive()}). */
+	private volatile boolean _keptActive;
 	private ScheduledFuture<?> _neighborsTask = null;
 	private final AtomicInteger _activeNeighbors = new AtomicInteger();
 	
@@ -183,7 +185,7 @@ public class WorldRegion
 	 */
 	public synchronized void setActive(boolean value)
 	{
-		if (_active == value)
+		if ((_active == value) || (!value && _keptActive))
 		{
 			return;
 		}
@@ -207,6 +209,23 @@ public class WorldRegion
 		
 		// Turn the AI on or off to match the region's activation.
 		switchAI(value);
+	}
+	
+	/**
+	 * Turns this region's AI on for good: it no longer goes to sleep when no player is around, so what happens in it (like the fights of a PvP spot) goes on unwatched.
+	 */
+	public void keepActive()
+	{
+		_keptActive = true;
+		setActive(true);
+	}
+	
+	/**
+	 * @return {@code true} if this region stays active even with no player around (see {@link #keepActive()})
+	 */
+	public boolean isKeptActive()
+	{
+		return _keptActive;
 	}
 	
 	/**
