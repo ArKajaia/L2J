@@ -434,13 +434,38 @@ public class FakePlayerPvpPassiveTree
 		}
 	}
 
+	/** Made on first use, and made again by {@link #reload()} once the tree has been edited. */
+	private static volatile FakePlayerPvpPassiveTree _instance;
+
 	public static FakePlayerPvpPassiveTree getInstance()
 	{
-		return SingletonHolder.INSTANCE;
+		FakePlayerPvpPassiveTree instance = _instance;
+		if (instance == null)
+		{
+			synchronized (FakePlayerPvpPassiveTree.class)
+			{
+				instance = _instance;
+				if (instance == null)
+				{
+					instance = new FakePlayerPvpPassiveTree();
+					_instance = instance;
+				}
+			}
+		}
+		return instance;
 	}
 
-	private static class SingletonHolder
+	/**
+	 * Grows the prepared trees again from the current {@link PassiveTreeData}, after the tree was edited. Fake players already out keep the tree they rolled. Does nothing if the trees were never prepared.
+	 */
+	public static void reload()
 	{
-		protected static final FakePlayerPvpPassiveTree INSTANCE = new FakePlayerPvpPassiveTree();
+		synchronized (FakePlayerPvpPassiveTree.class)
+		{
+			if (_instance != null)
+			{
+				_instance = new FakePlayerPvpPassiveTree();
+			}
+		}
 	}
 }

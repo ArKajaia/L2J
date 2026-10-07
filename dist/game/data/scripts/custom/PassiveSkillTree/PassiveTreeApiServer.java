@@ -28,14 +28,20 @@ import javax.crypto.spec.SecretKeySpec;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
+import org.l2jmobius.commons.util.SimpleJson;
 import org.l2jmobius.gameserver.config.custom.PassiveTreeConfig;
 import org.l2jmobius.gameserver.data.custom.PassiveTreeData;
+import org.l2jmobius.gameserver.data.custom.PassiveTreeEditor;
+import org.l2jmobius.gameserver.data.xml.AdminData;
+import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.managers.PassiveTreeManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
 import org.l2jmobius.gameserver.model.passivetree.WebRateLimiter;
+import org.l2jmobius.gameserver.model.skill.Skill;
 
 /**
  * Minimal, dependency-free (JDK-only) HTTP API backing the web visual tree planner, plus static hosting for the planner page itself.
@@ -57,6 +63,14 @@ import org.l2jmobius.gameserver.model.passivetree.WebRateLimiter;
  * <li>GET /api/passivetree/inspect?id=... - the build (gear, stats, passive tree) of the player or fake player someone used ".gear" on</li>
  * <li>POST /api/passivetree/import (nodes=...) - allocates a copied build's nodes (comma-separated ids, the ones to take first first) on top of the current tree</li>
  * </ul>
+ * The tree editor for GMs (opened with //passivetree) has its own page and endpoints. Its token is made by {@link #generateAdminToken}, can't be mistaken for a player's, and only works while that GM is online and still allowed to use //passivetree:
+ * <ul>
+ * <li>GET /passive-tree-admin.html - the editor page</li>
+ * <li>GET /api/passivetree/admin/tree - every node as the files hold it, the files' version, and how many characters have each node</li>
+ * <li>GET /api/passivetree/admin/skill?id=...&amp;level=... - a skill's name and highest level</li>
+ * <li>POST /api/passivetree/admin/save (JSON: version, dryRun, nodes) - checks the tree, and unless dryRun, writes the files (after a backup) and makes the tree live</li>
+ * <li>POST /api/passivetree/admin/reload - loads the files again, after they were edited by hand</li>
+ * </ul>
  */
 public class PassiveTreeApiServer
 {
@@ -76,6 +90,13 @@ public class PassiveTreeApiServer
 	private static final int MAX_IMPORT_NODES = 2000; // more ids than the tree has nodes in one import is never a real build
 	
 	private static final Path HTML_FILE = Path.of("data/html/custom/passive-tree.html");
+	private static final Path ADMIN_HTML_FILE = Path.of("data/html/custom/passive-tree-admin.html");
+	private static final String ADMIN_PAGE = "passive-tree-admin.html";
+	
+	/** What a GM's access level must allow for the tree editor to work: the command that opens it. */
+	private static final String ADMIN_COMMAND = "admin_passivetree";
+	private static final String ADMIN_TOKEN_PREFIX = "A";
+	private static final int MAX_ADMIN_BODY_BYTES = 8 * 1024 * 1024; // the whole tree as JSON is ~400 KB
 	
 	private final Map<String, long[]> pins = new ConcurrentHashMap<>(); // pin -> {charId, classIndex, expiry}
 	private final Map<String, Inspect> inspects = new ConcurrentHashMap<>(); // random id -> ".gear" snapshot
@@ -108,6 +129,11 @@ public class PassiveTreeApiServer
 			route("/api/passivetree/reset", "POST", true, this::handleReset);
 			route("/api/passivetree/template", "POST", true, this::handleTemplate);
 			route("/api/passivetree/import", "POST", true, this::handleImport);
+			route("/" + ADMIN_PAGE, "GET", false, this::handleAdminPage);
+			route("/api/passivetree/admin/tree", "GET", false, this::handleAdminTree);
+			route("/api/passivetree/admin/skill", "GET", false, this::handleAdminSkill);
+			route("/api/passivetree/admin/save", "POST", true, this::handleAdminSave);
+			route("/api/passivetree/admin/reload", "POST", true, this::handleAdminReload);
 			server.setExecutor(Executors.newFixedThreadPool(2));
 			server.start();
 			LOGGER.info("PassiveTreeApiServer: listening on port " + PassiveTreeConfig.WEB_PORT);
@@ -380,8 +406,38 @@ public class PassiveTreeApiServer
 		}
 	}
 	
-	/** @return {@code [charId, classIndex]} if valid and unexpired, otherwise {@code null}. */
-	private int[] verifyToken(String token)
+	/**
+	 * A link to the tree editor for a GM, the same kind of signed token as a player's but marked as an admin one, so neither can be used as the other.
+	 * @param charId the GM's character
+	 * @return the token, valid for PassiveTreeWebAdminTokenLifetime seconds
+	 */
+	public String generateAdminToken(int charId)
+	{
+		final long expiry = System.currentTimeMillis() + (PassiveTreeConfig.WEB_ADMIN_TOKEN_LIFETIME * 1000L);
+		final String payload = ADMIN_TOKEN_PREFIX + "." + charId + "." + expiry;
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes(StandardCharsets.UTF_8)) + "." + sign(payload);
+	}
+	
+	/**
+	 * @param token an admin token
+	 * @return the tree editor's address with the token, next to the planner page (PassiveTreeWebBaseUrl)
+	 */
+	public String getAdminUrl(String token)
+	{
+		String base;
+		try
+		{
+			base = URI.create(PassiveTreeConfig.WEB_BASE_URL).resolve(ADMIN_PAGE).toString();
+		}
+		catch (IllegalArgumentException e)
+		{
+			base = "http://127.0.0.1:" + PassiveTreeConfig.WEB_PORT + "/" + ADMIN_PAGE;
+		}
+		return base + "?admin=" + token;
+	}
+	
+	/** @return the payload of a token whose signature is right, otherwise {@code null} */
+	private String verifiedPayload(String token)
 	{
 		try
 		{
@@ -389,8 +445,44 @@ public class PassiveTreeApiServer
 			final String encodedPayload = token.substring(0, lastDot);
 			final String signature = token.substring(lastDot + 1);
 			final String payload = new String(Base64.getUrlDecoder().decode(encodedPayload), StandardCharsets.UTF_8);
-			
-			if (!MessageDigest.isEqual(sign(payload).getBytes(StandardCharsets.UTF_8), signature.getBytes(StandardCharsets.UTF_8)))
+			return MessageDigest.isEqual(sign(payload).getBytes(StandardCharsets.UTF_8), signature.getBytes(StandardCharsets.UTF_8)) ? payload : null;
+		}
+		catch (Exception e)
+		{
+			return null;
+		}
+	}
+	
+	/** @return the GM's character id if this is a valid, unexpired admin token, otherwise -1 */
+	private int verifyAdminToken(String token)
+	{
+		final String payload = verifiedPayload(token);
+		if (payload == null)
+		{
+			return -1;
+		}
+		try
+		{
+			final String[] parts = payload.split("\\.");
+			if ((parts.length != 3) || !parts[0].equals(ADMIN_TOKEN_PREFIX) || (System.currentTimeMillis() > Long.parseLong(parts[2])))
+			{
+				return -1;
+			}
+			return Integer.parseInt(parts[1]);
+		}
+		catch (NumberFormatException e)
+		{
+			return -1;
+		}
+	}
+	
+	/** @return {@code [charId, classIndex]} if valid and unexpired, otherwise {@code null}. */
+	private int[] verifyToken(String token)
+	{
+		try
+		{
+			final String payload = verifiedPayload(token);
+			if (payload == null)
 			{
 				return null;
 			}
@@ -422,13 +514,18 @@ public class PassiveTreeApiServer
 	// ------------------------------------------------------------------
 	private void handleStaticPage(HttpExchange exchange) throws IOException
 	{
-		if (!Files.exists(HTML_FILE))
+		sendPage(exchange, HTML_FILE);
+	}
+	
+	private void sendPage(HttpExchange exchange, Path file) throws IOException
+	{
+		if (!Files.exists(file))
 		{
-			sendText(exchange, 404, "text/plain", "passive-tree.html not found at " + HTML_FILE.toAbsolutePath());
+			sendText(exchange, 404, "text/plain", file.getFileName() + " not found at " + file.toAbsolutePath());
 			return;
 		}
 		
-		final byte[] bytes = Files.readAllBytes(HTML_FILE);
+		final byte[] bytes = Files.readAllBytes(file);
 		exchange.getResponseHeaders().add("Content-Type", "text/html; charset=UTF-8");
 		addSecurityHeaders(exchange);
 		exchange.sendResponseHeaders(200, bytes.length);
@@ -709,6 +806,220 @@ public class PassiveTreeApiServer
 		final StringBuilder json = new StringBuilder();
 		json.append("{\"success\":").append(result.added() > 0).append(",\"added\":").append(result.added()).append(",\"owned\":").append(result.owned()).append(",\"skipped\":").append(result.skipped()).append(",\"points\":").append(result.points()).append(",\"character\":").append(buildCharacterJson(player)).append("}");
 		sendText(exchange, result.added() > 0 ? 200 : 409, "application/json", json.toString());
+	}
+	
+	// ------------------------------------------------------------------
+	// Tree editor (GMs)
+	// ------------------------------------------------------------------
+	private void handleAdminPage(HttpExchange exchange) throws IOException
+	{
+		sendPage(exchange, ADMIN_HTML_FILE);
+	}
+	
+	/**
+	 * @return the GM the admin token names, or {@code null} after the error answer was sent. The GM has to be online and still allowed to use //passivetree, so a link stops working when its GM logs off or loses the right.
+	 */
+	private Player authenticateAdmin(HttpExchange exchange) throws IOException
+	{
+		final String header = exchange.getRequestHeaders().getFirst("Authorization");
+		final int charId = (header != null) && header.regionMatches(true, 0, "Bearer ", 0, 7) ? verifyAdminToken(header.substring(7).trim()) : -1;
+		if (charId < 0)
+		{
+			sendText(exchange, 401, "application/json", "{\"error\":\"this editor link is invalid or has expired - use //passivetree again\"}");
+			return null;
+		}
+		
+		final Player gm = World.getInstance().getPlayer(charId);
+		if (gm == null)
+		{
+			sendText(exchange, 403, "application/json", "{\"error\":\"the GM who opened this editor is not online - log in and use //passivetree again\"}");
+			return null;
+		}
+		if (!AdminData.getInstance().hasAccess(ADMIN_COMMAND, gm.getAccessLevel()))
+		{
+			sendText(exchange, 403, "application/json", "{\"error\":\"your access level can't use //passivetree\"}");
+			return null;
+		}
+		return gm;
+	}
+	
+	private void handleAdminTree(HttpExchange exchange) throws IOException
+	{
+		final Player gm = authenticateAdmin(exchange);
+		if (gm == null)
+		{
+			return;
+		}
+		
+		final PassiveTreeEditor.Snapshot snapshot;
+		try
+		{
+			snapshot = PassiveTreeEditor.read();
+		}
+		catch (IOException e)
+		{
+			fileError(exchange, "read", e);
+			return;
+		}
+		
+		final StringBuilder json = new StringBuilder(snapshot.nodes().size() * 300);
+		json.append("{\"version\":").append(SimpleJson.quote(snapshot.version()));
+		json.append(",\"admin\":").append(SimpleJson.quote(gm.getName()));
+		json.append(",\"types\":[");
+		final PassiveNode.NodeType[] types = PassiveNode.NodeType.values();
+		for (int i = 0; i < types.length; i++)
+		{
+			json.append(i > 0 ? "," : "").append(SimpleJson.quote(types[i].name()));
+		}
+		json.append("],\"conditions\":[");
+		for (int i = 0; i < PassiveMechanics.CONDITION_TOKENS.size(); i++)
+		{
+			json.append(i > 0 ? "," : "").append(SimpleJson.quote(PassiveMechanics.CONDITION_TOKENS.get(i)));
+		}
+		json.append("],\"allocations\":{");
+		boolean first = true;
+		for (Map.Entry<Integer, Integer> entry : PassiveTreeEditor.allocationCounts().entrySet())
+		{
+			json.append(first ? "" : ",").append('"').append(entry.getKey()).append("\":").append(entry.getValue());
+			first = false;
+		}
+		json.append("},\"nodes\":[");
+		first = true;
+		for (PassiveTreeEditor.EditNode node : snapshot.nodes())
+		{
+			json.append(first ? "" : ",").append(PassiveTreeEditor.toJson(node));
+			first = false;
+		}
+		json.append("]}");
+		sendText(exchange, 200, "application/json", json.toString());
+	}
+	
+	private void handleAdminSkill(HttpExchange exchange) throws IOException
+	{
+		if (authenticateAdmin(exchange) == null)
+		{
+			return;
+		}
+		
+		final Map<String, String> params = readParams(exchange);
+		final Integer id = parseIntParam(params.get("id"));
+		final Integer level = parseIntParam(params.get("level"));
+		final int maxLevel = (id != null) && (id > 0) ? SkillData.getInstance().getMaxLevel(id) : 0;
+		if (maxLevel <= 0)
+		{
+			sendText(exchange, 404, "application/json", "{\"error\":\"no such skill\"}");
+			return;
+		}
+		
+		final Skill skill = SkillData.getInstance().getSkill(id, (level != null) && (level >= 1) && (level <= maxLevel) ? level : 1);
+		final StringBuilder json = new StringBuilder();
+		json.append("{\"id\":").append(id).append(",\"maxLevel\":").append(maxLevel);
+		json.append(",\"name\":").append(SimpleJson.quote(skill != null ? skill.getName() : ""));
+		json.append(",\"passive\":").append((skill != null) && skill.isPassive()).append("}");
+		sendText(exchange, 200, "application/json", json.toString());
+	}
+	
+	private void handleAdminSave(HttpExchange exchange) throws IOException
+	{
+		final Player gm = authenticateAdmin(exchange);
+		if (gm == null)
+		{
+			return;
+		}
+		
+		final String body;
+		try (InputStream in = exchange.getRequestBody())
+		{
+			final byte[] bytes = in.readNBytes(MAX_ADMIN_BODY_BYTES + 1);
+			if (bytes.length > MAX_ADMIN_BODY_BYTES)
+			{
+				sendText(exchange, 413, "application/json", "{\"error\":\"the tree is too large to send\"}");
+				return;
+			}
+			body = new String(bytes, StandardCharsets.UTF_8);
+		}
+		
+		final String version;
+		final boolean dryRun;
+		final List<PassiveTreeEditor.EditNode> nodes;
+		try
+		{
+			if (!(SimpleJson.parse(body) instanceof Map<?, ?> request))
+			{
+				throw new IllegalArgumentException("expected a JSON object");
+			}
+			version = String.valueOf(request.get("version"));
+			dryRun = Boolean.TRUE.equals(request.get("dryRun"));
+			nodes = PassiveTreeEditor.fromJson(request.get("nodes"));
+		}
+		catch (IllegalArgumentException e)
+		{
+			sendText(exchange, 400, "application/json", "{\"error\":" + SimpleJson.quote(e.getMessage()) + "}");
+			return;
+		}
+		
+		final PassiveTreeEditor.SaveResult result;
+		try
+		{
+			result = PassiveTreeEditor.save(nodes, version, dryRun);
+		}
+		catch (IOException e)
+		{
+			fileError(exchange, "save", e);
+			return;
+		}
+		if (result.saved())
+		{
+			LOGGER.info("PassiveTreeApiServer: " + gm.getName() + " saved the passive tree: " + String.join(", ", result.changedFiles()) + ".");
+			gm.sendMessage("Passive tree saved and live: " + result.changedFiles().size() + " file(s) changed.");
+		}
+		
+		final StringBuilder json = new StringBuilder();
+		json.append("{\"saved\":").append(result.saved()).append(",\"dryRun\":").append(dryRun);
+		json.append(",\"version\":").append(SimpleJson.quote(result.version()));
+		json.append(",\"errors\":").append(jsonStrings(result.errors()));
+		json.append(",\"warnings\":").append(jsonStrings(result.warnings()));
+		json.append(",\"changedFiles\":").append(jsonStrings(result.changedFiles()));
+		json.append("}");
+		sendText(exchange, result.errors().isEmpty() ? 200 : 409, "application/json", json.toString());
+	}
+	
+	/** Loads the tree files again: for files edited by hand while the server runs. */
+	private void handleAdminReload(HttpExchange exchange) throws IOException
+	{
+		final Player gm = authenticateAdmin(exchange);
+		if (gm == null)
+		{
+			return;
+		}
+		
+		PassiveTreeEditor.reload();
+		LOGGER.info("PassiveTreeApiServer: " + gm.getName() + " reloaded the passive tree from its files.");
+		try
+		{
+			sendText(exchange, 200, "application/json", "{\"reloaded\":true,\"nodes\":" + PassiveTreeData.getInstance().getAllNodes().size() + ",\"version\":" + SimpleJson.quote(PassiveTreeEditor.version()) + "}");
+		}
+		catch (IOException e)
+		{
+			fileError(exchange, "read", e);
+		}
+	}
+	
+	/** A tree file could not be read or written: say so to the page instead of dropping the connection. */
+	private void fileError(HttpExchange exchange, String action, IOException e) throws IOException
+	{
+		LOGGER.warning("PassiveTreeApiServer: could not " + action + " the passive tree files - " + e.getMessage());
+		sendText(exchange, 500, "application/json", "{\"error\":" + SimpleJson.quote("Could not " + action + " the tree files: " + e.getMessage()) + "}");
+	}
+	
+	private String jsonStrings(List<String> values)
+	{
+		final StringBuilder json = new StringBuilder("[");
+		for (int i = 0; i < values.size(); i++)
+		{
+			json.append(i > 0 ? "," : "").append(SimpleJson.quote(values.get(i)));
+		}
+		return json.append("]").toString();
 	}
 	
 	private Player resolvePlayer(int[] verifiedTokenParts)
