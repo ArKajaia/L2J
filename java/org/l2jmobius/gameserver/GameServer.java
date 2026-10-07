@@ -394,7 +394,7 @@ public class GameServer
 		FakePlayerTownManager.getInstance();
 		PvpSpotManager.getInstance();
 		NightCycleManager.getInstance();
-
+		
 		printSection("Siege");
 		SiegeManager.getInstance().getSieges();
 		CastleManager.getInstance().activateInstances();
