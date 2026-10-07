@@ -830,6 +830,22 @@ final class FakePlayerTown
 		return count;
 	}
 	
+	/**
+	 * @return how many of its visitors came to sell in a black market store
+	 */
+	int countBlackMarkets()
+	{
+		int count = 0;
+		for (FakePlayerTownVisitor visitor : visitors)
+		{
+			if (visitor.isVendor() && visitor.store.isBlackMarket())
+			{
+				count++;
+			}
+		}
+		return count;
+	}
+	
 	@Override
 	public String toString()
 	{

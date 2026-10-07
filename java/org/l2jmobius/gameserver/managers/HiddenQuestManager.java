@@ -36,6 +36,7 @@ import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.cache.HtmCache;
 import org.l2jmobius.gameserver.config.custom.HiddenQuestConfig;
+import org.l2jmobius.gameserver.config.custom.NightCycleConfig;
 import org.l2jmobius.gameserver.data.xml.HiddenQuestData;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
@@ -68,6 +69,7 @@ import org.l2jmobius.gameserver.model.hiddenquest.HiddenReward;
 import org.l2jmobius.gameserver.model.hiddenquest.HiddenTrigger;
 import org.l2jmobius.gameserver.model.hiddenquest.HiddenTriggerType;
 import org.l2jmobius.gameserver.model.hiddenquest.task.AbstractHiddenTask;
+import org.l2jmobius.gameserver.model.hiddenquest.task.BeforeDawnTask;
 import org.l2jmobius.gameserver.model.hiddenquest.task.ChaseTask;
 import org.l2jmobius.gameserver.model.hiddenquest.task.EchoGauntletTask;
 import org.l2jmobius.gameserver.model.hiddenquest.task.EscortTask;
@@ -77,6 +79,8 @@ import org.l2jmobius.gameserver.model.hiddenquest.task.RiddleTask;
 import org.l2jmobius.gameserver.model.hiddenquest.task.VigilTask;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
+import org.l2jmobius.gameserver.model.item.instance.Item;
+import org.l2jmobius.gameserver.model.nightcycle.NightPhase;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
 import org.l2jmobius.gameserver.model.variables.PlayerVariables;
@@ -322,6 +326,10 @@ public class HiddenQuestManager
 		{
 			addToCounters(player, HiddenTriggerType.KILL_NIGHT, null, 1);
 		}
+		if (NightCycleManager.getInstance().getPhase() == NightPhase.WITCHING_HOUR)
+		{
+			addToCounters(player, HiddenTriggerType.WITCHING_KILLS, null, 1);
+		}
 		if (!player.isInParty())
 		{
 			addToCounters(player, HiddenTriggerType.KILL_SOLO, null, 1);
@@ -378,6 +386,67 @@ public class HiddenQuestManager
 		{
 			addToCounters(player, HiddenTriggerType.FISH_CAUGHT, null, 1);
 		}
+	}
+
+	/**
+	 * Called by fishing when the player lands a fish.
+	 * @param player the player
+	 * @param lureId the lure it bit on
+	 */
+	public void onFishCaught(Player player, int lureId)
+	{
+		onFishCaught(player);
+		if (HiddenQuestConfig.ENABLED && (player != null) && Item.isNightLure(lureId) && GameTimeTaskManager.getInstance().isNight())
+		{
+			addToCounters(player, HiddenTriggerType.MOONLIT_FISH, null, 1);
+		}
+	}
+
+	/**
+	 * Called at dawn for a player who survived the night (see {@link NightCycleManager}).
+	 * @param player the player
+	 */
+	public void onNightSurvived(Player player)
+	{
+		if (HiddenQuestConfig.ENABLED && (player != null))
+		{
+			addToCounters(player, HiddenTriggerType.NIGHTS_SURVIVED, null, 1);
+		}
+	}
+
+	/**
+	 * Called for everyone who fought a Nightlord when it fell (see {@link NightlordManager}).
+	 * @param player the player
+	 */
+	public void onNightlordSlain(Player player)
+	{
+		if (HiddenQuestConfig.ENABLED && (player != null))
+		{
+			addToCounters(player, HiddenTriggerType.NIGHTLORDS_SLAIN, null, 1);
+		}
+	}
+
+	/**
+	 * @return the real seconds left of the night, 0 by day: from the Night Cycle (a GM-forced night too), else from the game clock
+	 */
+	public static int getNightSecondsLeft()
+	{
+		if (NightCycleConfig.ENABLED)
+		{
+			return NightCycleManager.getInstance().getRealSecondsToDawn();
+		}
+
+		final GameTimeTaskManager clock = GameTimeTaskManager.getInstance();
+		return clock.isNight() ? Math.max(1, NightPhase.NIGHT_END - clock.getGameTime()) * 10 : 0;
+	}
+
+	/**
+	 * @param quest a quest
+	 * @return {@code true} if its messenger can come now: always, except a Midnight quest, which needs enough of the night left
+	 */
+	private static boolean canComeNow(HiddenQuestDefinition quest)
+	{
+		return !quest.isNightOnly() || (getNightSecondsLeft() >= (HiddenQuestConfig.NIGHT_ONLY_MIN_MINUTES * 60));
 	}
 
 	/**
@@ -670,12 +739,14 @@ public class HiddenQuestManager
 			return;
 		}
 
+		// The oldest one whose messenger can come now: a Midnight quest waits for the night.
 		HiddenQuestDefinition quest = null;
 		for (int id : pending)
 		{
-			quest = HiddenQuestData.getInstance().getQuest(id);
-			if (quest != null)
+			final HiddenQuestDefinition candidate = HiddenQuestData.getInstance().getQuest(id);
+			if ((candidate != null) && canComeNow(candidate))
 			{
+				quest = candidate;
 				break;
 			}
 		}
@@ -931,6 +1002,14 @@ public class HiddenQuestManager
 		}
 
 		final MessengerVisit visit = getVisit(player, npc);
+		if (quest.isNightOnly() && (getNightSecondsLeft() < 60))
+		{
+			if (visit != null)
+			{
+				dismiss(visit, quest.getText("tooLate", "The night is nearly over. Find me another night."), HiddenQuestConfig.MESSENGER_RETRY_DELAY);
+			}
+			return "The night is nearly over.";
+		}
 		if (needsOpenGround(quest) && (player.isInsideZone(ZoneId.PEACE) || player.isInsideZone(ZoneId.TOWN)))
 		{
 			// The messenger follows the player out of town.
@@ -962,7 +1041,7 @@ public class HiddenQuestManager
 		html.replace("%name%", messenger.getName());
 		html.replace("%quest%", quest.getName());
 		html.replace("%text%", quest.getText("briefing", ""));
-		html.replace("%time%", String.valueOf(getTimeLimit(quest) / 60));
+		html.replace("%time%", String.valueOf(Math.max(1, (quest.isNightOnly() ? Math.min(getTimeLimit(quest), getNightSecondsLeft()) : getTimeLimit(quest)) / 60)));
 		player.sendPacket(html);
 		return null;
 	}
@@ -1044,6 +1123,7 @@ public class HiddenQuestManager
 			case ECHO_GAUNTLET:
 			case ESCORT:
 			case VIGIL:
+			case BEFORE_DAWN:
 			{
 				return true;
 			}
@@ -1090,6 +1170,10 @@ public class HiddenQuestManager
 			case RIDDLE:
 			{
 				return new RiddleTask(session);
+			}
+			case BEFORE_DAWN:
+			{
+				return new BeforeDawnTask(session);
 			}
 		}
 		return null;
@@ -1150,6 +1234,16 @@ public class HiddenQuestManager
 			{
 				failTask(session, session.getDefinition().getText("failTime", "Time has run out."));
 				return;
+			}
+
+			// A Midnight quest's task ends at dawn (most fail, a vigil until dawn is won by then).
+			if (session.getDefinition().isNightOnly() && (getNightSecondsLeft() <= 0) && session.handleDawn())
+			{
+				session.getTask().handleDawn(player);
+				if (session.isFinished())
+				{
+					return;
+				}
 			}
 
 			final int second = session.nextTick();

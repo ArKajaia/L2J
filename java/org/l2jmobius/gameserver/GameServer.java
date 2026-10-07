@@ -146,6 +146,7 @@ import org.l2jmobius.gameserver.managers.ItemAuctionManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.managers.MailManager;
 import org.l2jmobius.gameserver.managers.MercTicketManager;
+import org.l2jmobius.gameserver.managers.NightCycleManager;
 import org.l2jmobius.gameserver.managers.PcCafePointsManager;
 import org.l2jmobius.gameserver.managers.PetitionManager;
 import org.l2jmobius.gameserver.managers.PrecautionaryRestartManager;
@@ -392,6 +393,7 @@ public class GameServer
 		RaidBossSpawnManager.getInstance();
 		FakePlayerTownManager.getInstance();
 		PvpSpotManager.getInstance();
+		NightCycleManager.getInstance();
 		
 		printSection("Siege");
 		SiegeManager.getInstance().getSieges();

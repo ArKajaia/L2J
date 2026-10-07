@@ -96,6 +96,22 @@ A rotating set of bonus hunting zones that periodically change location and gran
 - Kills inside a hot zone can drop bonus currency and, once enough accumulate, spawn an empowered miniboss.
 - Players are notified via announcements and a dedicated teleporter NPC.
 
+### Night Cycle
+
+The retail clock is kept (night is game hours 0:00-5:59, about one real hour in four), but the night now runs through announced phases with its own events, built on the systems above.
+
+- **Phases**: Dusk (the last 10 real minutes of the day) tells tonight's Omen, then Night, the Witching Hour (the last 10 minutes of the night) and Dawn. Each phase is shown on screen and in the announcement chat, and the sky is set with the sunset/sunrise packets.
+- **Night Omens**: each night rolls one Hot Zone modifier (Blood Moon, Restless Dead, Hornet's Nest, Coven, Thieves' Den, Metamorphosis, Lucky Stars, Splitting Ground, Champion Surge) or a night-only one (New Moon: monsters notice you from half as far; Full Moon: beasts and animals hit harder and monsters rage from the first stun; Starfall: Luck and jackpots). It covers the open world: not towns, instances, sieges, arenas, PvP spots, jail or raid bosses, and an active hot zone keeps its own modifier. Hot zone coins, minibosses and the flat hot zone champion bonus stay in hot zones. A Blood Moon turns the sky red outside towns.
+- **Nightlords**: soon after nightfall one monster in each level bracket rises as a Nightlord in a hot zone the rotation hasn't made active: a tier 3 champion with the Rager archetype that must be beaten in 4 Wave Challenge waves. Everyone who fought it gets a Sealed Cache on top of the wave coins, and its killer is announced. At dawn the Nightlords still alive flee once their fight is over, and the monster comes back as an ordinary one.
+- **The Witching Hour**: the Omen gives way to the dead: slain monsters may rise again (20%), undead hit 30% harder, wave challenges are three times as common, XP/SP +20% and the sky turns red. A kill may call a wave challenger nearby. At dawn the sun burns the undead still fighting.
+- **Night Watch**: kills in the open world at night (and Nightlords) earn points. At dawn the best 3 online players with enough points are announced and get hot zone coins and Sealed Caches.
+- **The Night Market**: at nightfall Varro the Moonmonger (NPC 900360) opens his stalls in Giran next to the Master Blacksmith, and packs up at dawn. He sells Sealed Caches, Blessed Scrolls of Resurrection and the low and high grade luminous (night) lures that fishermen don't stock, for Gold Dragons (hot zone coins), and changes Gold Dragons into Ancient Adena at 22 per coin - a little less than the standard way (a coin sells to a shop for 100 Adena, and the Black Marketeer of Mammon sells Ancient Adena at 4 Adena each, 25 per coin), but with no daily limit, level or hour requirement.
+- **Black markets in town**: towns keep half their fake players at night (the ones who leave aren't replaced), and two more fake player stores open in each town. Their sellers fence goods for adena - a rare find well below its usual price, Sealed Caches, night lures - and pack up at dawn.
+- **Thieves' Night**: in the open world at night Thief monsters are twice as common, and a Thief with a full bag runs off into the dark; players nearby see it on their radar until it is caught or gone.
+- **Midnight hidden quests**: four hidden quests whose messenger only comes at night (see [Hidden Quests](#hidden-quests)).
+- Players see all of it with `.night` or on the Community Board (`_bbsnight`, with a radar button for each Nightlord). GMs step through the phases with `//night day|dusk|night|witching|dawn` (until the clock reaches its next phase, or `//night auto`), set the Omen with `//night omen <name>` and raise the Nightlords with `//night nightlord`. Scripts can listen to `ON_NIGHT_PHASE_CHANGE`. Settings are in `config/Custom/NightCycle.ini`.
+- The night raid boss Eilhalder von Hellmann now also appears when the server boots during the night.
+
 ### Arena Challenges & Arena Shop
 
 A solo PvE endurance mode and a matching reward shop, linked through a shared currency.
@@ -171,10 +187,11 @@ A short, solo, instanced trial at the Class Master NPC that stands in for the lo
 
 Quests no player can look up. When a character quietly meets a secret condition, a messenger NPC walks up to them with a quest mark and offers a one-off quest. Only the server knows what caused the visit.
 
-- **Secret conditions**: some are read from the character (PK count, PvP kills, fame, adena carried, towns visited, quests completed) and some are counted by the server from the day the feature is turned on (deaths, levels gained in a row without dying, orcs, undead, night kills, solo kills, raid bosses and karma players killed, kills at 10% HP or less, kills with no weapon, kills while swimming, times murdered by a PK, Olympiad wins, failed enchantments, fish caught, hours spent sitting in the wild and distance travelled on foot). Nothing is shown when a condition is met, and the messenger comes a few minutes later so the visit doesn't point at the cause.
+- **Secret conditions**: some are read from the character (PK count, PvP kills, fame, adena carried, towns visited, quests completed) and some are counted by the server from the day the feature is turned on (deaths, levels gained in a row without dying, orcs, undead, night kills, solo kills, raid bosses and karma players killed, kills at 10% HP or less, kills with no weapon, kills while swimming, times murdered by a PK, Olympiad wins, failed enchantments, fish caught, hours spent sitting in the wild and distance travelled on foot). Nothing is shown when a condition is met, and the messenger comes a few minutes later so the visit doesn't point at the cause. The Night Cycle adds four more: nights survived (hunting outside towns through the night without dying), Nightlords slain, fish caught at night with a night lure, and kills in the Witching Hour.
 - **The visit**: the messenger only comes when the player is safe (not fighting, flagged, in an instance, Olympiad, siege, arena or store). It appears nearby, walks up and talks. Only that player can see it. The H5 client has no quest icon the server can put over an NPC's head, so the mark is a `[ ! ]` title, a visual effect on the NPC and the blinking tutorial question mark on screen (clicking it opens the offer). The player can accept, ask the messenger to come back later, or refuse the quest forever.
-- **One task per quest (about 15-30 minutes)**, from seven kinds: a pilgrimage to shrines in the wild (pray by sitting, sometimes under vows), a gauntlet of "echo" duelists with their own tricks (wards, blinking, regenerating, splitting), being hunted by ambushes and then their leader (who may flee to a lair), chasing wisps or couriers on the radar, escorting an NPC between stops, holding a vigil at a totem, and riddles that point to famous places. Enemies come from retail monster sets that fit the player's level.
-- **Twenty-three quests** ship in `data/HiddenQuests.xml`, which holds the conditions, tasks, dialog and rewards and is the place to add more. Rewards depend on the quest: enchant scrolls (blessed ones from the ghost smith), life stones, adena and SP for the player's grade, titles, title and name colours, a wolf pet, or clearing karma and a PK.
+- **One task per quest (about 15-30 minutes)**, from eight kinds: a pilgrimage to shrines in the wild (pray by sitting, sometimes under vows), a gauntlet of "echo" duelists with their own tricks (wards, blinking, regenerating, splitting), being hunted by ambushes and then their leader (who may flee to a lair), chasing wisps or couriers on the radar, escorting an NPC between stops, holding a vigil at a totem, riddles that point to famous places, and following a will-o'-the-wisp before dawn to a cache its guardians keep. Enemies come from retail monster sets that fit the player's level.
+- **Midnight quests** (`nightOnly="true"`): their messenger only comes at night, with at least 15 minutes of it left, and their task ends at dawn - most fail, but a vigil until dawn is won once its boss falls. Four ship: The Long Night (keep the Last Fire burning until dawn), Crown of the Night (the echoes of four Nightlords), Moonlit Waters and The Witching Bell (follow a wisp to the Sunken Cache or the Witch's Grave). They pay hot zone coins, Sealed Caches, night lures and a title.
+- **Twenty-seven quests** ship in `data/HiddenQuests.xml`, which holds the conditions, tasks, dialog and rewards and is the place to add more. Rewards depend on the quest: enchant scrolls (blessed ones from the ghost smith), life stones, adena and SP for the player's grade, titles, title and name colours, a wolf pet, or clearing karma and a PK.
 - Failing, dying (for most tasks), logging out or running out of time costs nothing: the messenger comes back later. Each quest can be completed once per character.
 - GMs have `//hiddenquest` (every quest, its condition and a player's progress), `//hiddenquest_trigger`, `//hiddenquest_send`, `//hiddenquest_complete`, `//hiddenquest_abort` and `//hiddenquest_reset`. Settings are in `config/Custom/HiddenQuests.ini`.
 
@@ -556,7 +573,14 @@ This program is free software, licensed under the **GNU General Public License, 
 
 ## Recent Updates
 
-Changes from 28 September – 6 October 2026.
+Changes from 28 September – 7 October 2026.
+
+### Night Cycle
+- **New system**: the night runs through announced phases (dusk, night, the Witching Hour, dawn) with a world-wide Omen, Nightlords in every level bracket, the Witching Hour and the Night Watch rewards. See [Night Cycle](#night-cycle).
+- `.night`, the Community Board page `_bbsnight` and the GM command `//night`. Settings in `config/Custom/NightCycle.ini`.
+- Hot zone modifiers gained three night-only Omens (New Moon, Full Moon, Starfall) and the Witching Hour modifier, which the hot zone rotation never rolls.
+- **Night Market**: Varro the Moonmonger (NPC 900360, multisells 900360-900362) sells in Giran from nightfall to dawn and changes hot zone coins into Ancient Adena (22 per coin); black market fake player stores open in the towns, which empty out at night; Thieves are more common at night and run off into the dark with a radar ping.
+- **Midnight hidden quests** (ids 24-27, messengers 900350-900353): night-only messengers, four new secret conditions (nights survived, Nightlords slain, moonlit fish, Witching Hour kills), the new BEFORE_DAWN wisp trail task and VIGIL `untilDawn`.
 
 ### Hidden Quests
 - **New system**: secret conditions send a messenger NPC (ids 900300-900312) to the player with a one-off quest. The conditions stay on the server.

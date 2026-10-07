@@ -761,4 +761,157 @@
 			<height normal="17" />
 		</collision>
 	</npc>
+	<!-- Midnight quests: their messengers only come at night. -->
+	<npc id="900350" displayId="31616" level="70" type="Folk" name="Old Bram" usingServerSideName="true" title="[ ! ]" usingServerSideTitle="true"> <!-- The Long Night -->
+		<race>HUMAN</race>
+		<sex>MALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="50" />
+				<run ground="120" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="8" />
+			<height normal="23" />
+		</collision>
+	</npc>
+	<npc id="900351" displayId="30654" level="70" type="Folk" name="The Dusk Herald" usingServerSideName="true" title="[ ! ]" usingServerSideTitle="true"> <!-- Crown of the Night -->
+		<race>DARK_ELF</race>
+		<sex>MALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="50" />
+				<run ground="120" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="8" />
+			<height normal="23" />
+		</collision>
+	</npc>
+	<npc id="900352" displayId="31618" level="70" type="Folk" name="Lunne of the Moon Voice" usingServerSideName="true" title="[ ! ]" usingServerSideTitle="true"> <!-- Moonlit Waters -->
+		<race>ELF</race>
+		<sex>FEMALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="50" />
+				<run ground="120" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="7" />
+			<height normal="25.5" />
+		</collision>
+	</npc>
+	<npc id="900353" displayId="32725" level="70" type="Folk" name="Sister Vespera" usingServerSideName="true" title="[ ! ]" usingServerSideTitle="true"> <!-- The Witching Bell -->
+		<race>HUMAN</race>
+		<sex>FEMALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="50" />
+				<run ground="120" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="13" />
+			<height normal="26.5" />
+		</collision>
+	</npc>
+	<npc id="900354" displayId="20449" level="70" type="Folk" name="Will-o'-the-Wisp" usingServerSideName="true" title="Follow Me" usingServerSideTitle="true"> <!-- Moonlit Waters / The Witching Bell wisp -->
+		<race>CONSTRUCT</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="80" />
+				<run ground="160" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="13" />
+			<height normal="22" />
+		</collision>
+	</npc>
+	<npc id="900355" displayId="18265" level="70" type="Folk" name="Sunken Cache" usingServerSideName="true" title="Moonlit" usingServerSideTitle="true"> <!-- Moonlit Waters cache -->
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="8.5" />
+			<height normal="8.5" />
+		</collision>
+	</npc>
+	<npc id="900356" displayId="32343" level="70" type="Folk" name="The Witch's Grave" usingServerSideName="true" title="Her Hoard" usingServerSideTitle="true"> <!-- The Witching Bell cache -->
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="11" />
+			<height normal="45" />
+		</collision>
+	</npc>
+	<npc id="900357" displayId="148" level="70" type="QuestGuard" name="The Last Fire" usingServerSideName="true" title="Keep It Burning" usingServerSideTitle="true"> <!-- The Long Night vigil -->
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="500000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="false" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="29" />
+			<height normal="31" />
+		</collision>
+	</npc>
 </list>

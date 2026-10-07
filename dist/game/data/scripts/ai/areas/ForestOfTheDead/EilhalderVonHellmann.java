@@ -29,6 +29,7 @@ import org.l2jmobius.gameserver.model.events.annotations.RegisterEvent;
 import org.l2jmobius.gameserver.model.events.annotations.RegisterType;
 import org.l2jmobius.gameserver.model.events.holders.OnDayNightChange;
 import org.l2jmobius.gameserver.model.script.Script;
+import org.l2jmobius.gameserver.taskmanagers.GameTimeTaskManager;
 
 /**
  * @author Mobius
@@ -41,6 +42,11 @@ public class EilhalderVonHellmann extends Script
 	
 	private EilhalderVonHellmann()
 	{
+		// The day/night change that starts a night is missed when the server boots during it, as it comes before the scripts load.
+		if (GameTimeTaskManager.getInstance().isNight() && (_npcInstance == null))
+		{
+			_npcInstance = addSpawn(EILHALDER_VON_HELLMANN, SPAWN_LOCATION);
+		}
 	}
 	
 	@Override

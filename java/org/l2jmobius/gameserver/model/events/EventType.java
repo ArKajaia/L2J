@@ -23,6 +23,7 @@ package org.l2jmobius.gameserver.model.events;
 import org.l2jmobius.gameserver.model.events.holders.IBaseEvent;
 import org.l2jmobius.gameserver.model.events.holders.OnDailyReset;
 import org.l2jmobius.gameserver.model.events.holders.OnDayNightChange;
+import org.l2jmobius.gameserver.model.events.holders.OnNightPhaseChange;
 import org.l2jmobius.gameserver.model.events.holders.OnServerStart;
 import org.l2jmobius.gameserver.model.events.holders.actor.creature.OnCreatureAttack;
 import org.l2jmobius.gameserver.model.events.holders.actor.creature.OnCreatureAttackAvoid;
@@ -238,6 +239,7 @@ public enum EventType
 	// Server events
 	ON_SERVER_START(OnServerStart.class, void.class),
 	ON_DAY_NIGHT_CHANGE(OnDayNightChange.class, void.class),
+	ON_NIGHT_PHASE_CHANGE(OnNightPhaseChange.class, void.class),
 	ON_DAILY_RESET(OnDailyReset.class, void.class);
 	
 	private final Class<? extends IBaseEvent> _eventClass;

@@ -23,6 +23,10 @@
 			<xs:enumeration value="FISH_CAUGHT" />
 			<xs:enumeration value="MEDITATION" />
 			<xs:enumeration value="DISTANCE" />
+			<xs:enumeration value="NIGHTS_SURVIVED" />
+			<xs:enumeration value="NIGHTLORDS_SLAIN" />
+			<xs:enumeration value="MOONLIT_FISH" />
+			<xs:enumeration value="WITCHING_KILLS" />
 			<xs:enumeration value="QUESTS_COMPLETED" />
 		</xs:restriction>
 	</xs:simpleType>
@@ -35,6 +39,7 @@
 			<xs:enumeration value="ESCORT" />
 			<xs:enumeration value="VIGIL" />
 			<xs:enumeration value="RIDDLE" />
+			<xs:enumeration value="BEFORE_DAWN" />
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:simpleType name="gimmickType">
@@ -150,6 +155,7 @@
 						<xs:attribute name="id" type="xs:positiveInteger" use="required" />
 						<xs:attribute name="name" type="xs:string" use="required" />
 						<xs:attribute name="messenger" type="xs:positiveInteger" use="required" />
+						<xs:attribute name="nightOnly" type="xs:boolean" />
 						<xs:attribute name="enabled" type="xs:boolean" />
 					</xs:complexType>
 				</xs:element>

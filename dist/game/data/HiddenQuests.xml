@@ -19,8 +19,15 @@
 	                  KILLED_BY_PK (murdered while neither flagged nor carrying karma; clan wars and sieges don't count)
 	                  OLYMPIAD_WINS | ENCHANT_FAILS (item destroyed or reset to +0) | FISH_CAUGHT
 	                  MEDITATION (seconds sitting outside towns) | DISTANCE (game units travelled on foot)
+	                  NIGHTS_SURVIVED (hunted outside towns all night without dying, see NightCycle.ini) | NIGHTLORDS_SLAIN
+	                  MOONLIT_FISH (fish caught at night with a night lure) | WITCHING_KILLS (kills in the Witching Hour)
 	           Kills of monsters more than HiddenQuestKillLevelGap levels below the player and of hidden quest monsters don't count.
 	  task     type + the task's own attributes (see the task classes in model/hiddenquest/task). timeLimit (seconds) overrides the default.
+	           BEFORE_DAWN: follow a wisp (wispId) for legs stops to a cache (cacheId) guarded by role guardian; role ambush jumps the player every ambushEvery stops.
+	           VIGIL untilDawn="true": the vigil lasts until dawn (Midnight quests only).
+	  nightOnly="true" on the quest: a Midnight quest. Its messenger only comes at night (HiddenQuestNightOnlyMinMinutes left at least),
+	           and its task ends at dawn: most fail (text failDawn), a vigil until dawn is won once its boss falls (text dawnBoss while it stands).
+	           Text tooLate: what the messenger says when the night is nearly over.
 	  role     a group of monsters the task spawns (name, set, count, tierBonus, title).
 	  echo     ECHO_GAUNTLET opponents (gimmick: NONE, REGEN, BLINK, SPLIT, WARDS; tier -1 = the set's tier).
 	  landmark RIDDLE places.
@@ -837,6 +844,148 @@
 			<reward type="ITEM" id="1538" count="5" /> <!-- Blessed Scroll of Escape -->
 			<reward type="TITLE" value="Far-Strider" />
 			<reward type="TITLE_COLOR" value="BBDD88" />
+		</rewards>
+	</quest>
+
+	<!-- ============================ Midnight quests ============================ -->
+	<!-- Their messengers only come at night, and their tasks end at dawn (see config/Custom/NightCycle.ini). -->
+
+	<!-- 24. The keeper of the Last Fire looks for someone who knows how to outlast the night. -->
+	<quest id="24" name="The Long Night" messenger="900350" nightOnly="true">
+		<trigger type="NIGHTS_SURVIVED" count="5" />
+		<task type="VIGIL" totemId="900357" untilDawn="true" waveInterval="60" bossAt="180" meter="100" drain="1" timeLimit="3600" />
+		<role name="wave" set="dark" count="2" title="Night Prowler" />
+		<role name="boss" set="dark" count="1" tierBonus="2" title="The Last Shadow" />
+		<text key="greeting">Still standing, are you? Most don't last the night out here.</text>
+		<text key="offer">Bram. I keep the Last Fire. For forty years I've lit it on the darkest nights, so the shadows remember they don't own the dark. You've walked through five nights out here and walked out again at dawn - I've seen you. My legs are done. Sit with my fire tonight. Keep the shadows off it until the sun comes up, and you'll know what I know.</text>
+		<text key="briefing">There she is - the Last Fire. Shadows will come for her all night, more of them the darker it gets. Keep them off her until dawn. And when the last of them comes - it always does - put it out before it puts her out.</text>
+		<text key="start">Keep the Last Fire burning until dawn.</text>
+		<text key="meterName">Fire</text>
+		<text key="totemLine">*The fire crackles and pushes back the dark.*</text>
+		<text key="wave">Night Prowlers creep toward the fire!</text>
+		<text key="boss">The Last Shadow rises against the fire!</text>
+		<text key="bossLine">Every fire goes out. Yours is next.</text>
+		<text key="dawnBoss">The sun is coming! Finish the Last Shadow!</text>
+		<text key="leave">The fire is alone! Go back!</text>
+		<text key="failMeter">The shadows smothered the Last Fire.</text>
+		<text key="failDeath">You fell, and the fire guttered out in the dark.</text>
+		<text key="tooLate">Too close to dawn for a vigil. Find me tomorrow night.</text>
+		<text key="accepted">Sit close. It'll be a long one.</text>
+		<text key="postponed">The nights are long. I'll find you.</text>
+		<text key="ignored">Hm. Another night, then.</text>
+		<text key="forfeited">Then I'll keep her myself. Somehow.</text>
+		<text key="success">Dawn - and she's still burning. You kept the Last Fire through the long night. That makes you one of us now: the ones who keep the dark honest. Take this, and the name that goes with it.</text>
+		<text key="farewell">Keep a fire in you, Dawnkeeper.</text>
+		<rewards set="moderate">
+			<reward type="ITEM" id="3481" count="1500" /> <!-- Gold Dragon (hot zone coins) -->
+			<reward type="TITLE" value="Dawnkeeper" />
+			<reward type="TITLE_COLOR" value="FFCC66" />
+		</rewards>
+	</quest>
+
+	<!-- 25. The herald of the night's lords wants to know who took their crown. -->
+	<quest id="25" name="Crown of the Night" messenger="900351" nightOnly="true">
+		<trigger type="NIGHTLORDS_SLAIN" count="10" />
+		<task type="ECHO_GAUNTLET" arenaRadius="1500" pause="10" timeLimit="1800" />
+		<role name="echo" set="dark" count="1" />
+		<echo name="Echo of the Ashen Nightlord" gimmick="REGEN" tier="2" line="I ruled the night you stole from me." />
+		<echo name="Echo of the Howling Nightlord" gimmick="BLINK" tier="2" line="Catch me in the dark, if you can." />
+		<echo name="Echo of the Hollow Nightlord" gimmick="SPLIT" tier="2" line="Cut me down. There is always more night." />
+		<echo name="Echo of the First Nightlord" gimmick="WARDS" tier="3" line="Every crown you took was mine. Kneel." />
+		<text key="greeting">You. The one the Nightlords whisper about.</text>
+		<text key="offer">I am the Herald of Dusk, and I serve whoever wears the Crown of the Night. Ten of its lords have fallen to you, and the dead lords will not rest until one of the living proves the crown has a new master. Their echoes will face you one by one, here, under the moon. Leave the circle, and the crown stays with the dead.</text>
+		<text key="briefing">Stand your ground. They come one at a time, each as they ruled. Learn their ways, or fall before the dawn.</text>
+		<text key="start">Stand your ground. The Nightlords' echoes are coming.</text>
+		<text key="wardsUp">The First Nightlord cannot be harmed while his wards stand!</text>
+		<text key="regenLine">The night heals me. Does it heal you?</text>
+		<text key="failFled">You fled the circle. The night has no master tonight.</text>
+		<text key="failDawn">The sun rises, and the echoes fade with the dark. The crown waits for another night.</text>
+		<text key="tooLate">The night is nearly over. The crown is only won in the dark.</text>
+		<text key="accepted">Then let the night watch.</text>
+		<text key="postponed">The crown waits for the dark.</text>
+		<text key="ignored">Another night, then.</text>
+		<text key="forfeited">Then the crown sleeps.</text>
+		<text key="success">The last echo kneels. The Crown of the Night is yours. Wear it when the sun goes down, and let every Nightlord that rises know who rules the dark.</text>
+		<text key="farewell">Rule the dark well, Nightcrowned.</text>
+		<rewards set="strong">
+			<reward type="ITEM" id="3481" count="3000" /> <!-- Gold Dragon (hot zone coins) -->
+			<reward type="TITLE" value="Nightcrowned" />
+			<reward type="TITLE_COLOR" value="9966FF" />
+		</rewards>
+	</quest>
+
+	<!-- 26. A moon-singer asks a night angler to follow the moon's reflection to what the lakes keep. -->
+	<quest id="26" name="Moonlit Waters" messenger="900352" nightOnly="true">
+		<trigger type="MOONLIT_FISH" count="100" />
+		<task type="BEFORE_DAWN" wispId="900354" cacheId="900355" legs="5" legMin="700" legMax="1100" followRange="350" lostRange="2500" lostTime="40" ambushEvery="2" openRange="150" timeLimit="3600" />
+		<role name="ambush" set="undead" count="2" title="Drowned Thief" />
+		<role name="guardian" set="undead" count="3" tierBonus="1" title="Keeper of the Deep" />
+		<text key="greeting">The moon is in the water tonight. So are you, it seems.</text>
+		<text key="offer">I am Lunne. I sing to the moon, and on the right nights it sings back. You have fished by moonlight a hundred times; the lakes know your lures by now. Tonight the moon's reflection has slipped out of the water as a little light - a wisp - and it wants to lead someone to the Sunken Cache, where the drowned keep what the lakes took. Follow it before the sun rises. When the sun comes up, the wisp goes back into the water, and the cache with it.</text>
+		<text key="briefing">There it is - see it bobbing? Stay close; it waits for you at every stop. The drowned want the cache too, and they will try to take the wisp from you.</text>
+		<text key="start">Follow the wisp before the sun rises. Your radar shows it.</text>
+		<text key="wispLine">*The wisp bobs, and drifts off like moonlight on water.*</text>
+		<text key="next">The wisp drifts on across the dark. Follow it!</text>
+		<text key="ambush">Drowned thieves rise to snatch the wisp!</text>
+		<text key="ambushBeaten">The wisp brightens again.</text>
+		<text key="lost">The wisp's light is fading in the distance! Follow your radar.</text>
+		<text key="wispEnd">*The wisp sinks into the ground with a soft splash.*</text>
+		<text key="guardians">The Keepers of the Deep rise around the Sunken Cache!</text>
+		<text key="openCache">The keepers are gone. Go to the Sunken Cache.</text>
+		<text key="cacheLine">*The lid lifts with a sigh of old water.*</text>
+		<text key="failLost">You lost the wisp, and it slipped back into the water.</text>
+		<text key="failDawn">The sun rises, and the wisp slips back into the water.</text>
+		<text key="failDeath">You fell, and the drowned claimed the wisp.</text>
+		<text key="tooLate">The moon is nearly down. Find me another night.</text>
+		<text key="accepted">Quietly now - wisps are shy.</text>
+		<text key="postponed">The moon comes back every night. So will I.</text>
+		<text key="ignored">*She hums, and turns back to the water.*</text>
+		<text key="forfeited">Then the cache sleeps on.</text>
+		<text key="success">You found it - the Sunken Cache, and all the lakes kept. Take it; the moon wants it to go to someone who listens. And take these too. They shine brightest when the moon is up.</text>
+		<text key="farewell">Fish by moonlight, friend.</text>
+		<rewards set="moderate">
+			<reward type="ITEM" id="8510" count="50" /> <!-- Purple Luminous Lure (High Grade) -->
+			<reward type="ITEM" id="8513" count="50" /> <!-- Yellow Luminous Lure (High Grade) -->
+			<reward type="ITEM" id="6499" count="1" /> <!-- Sealed Cache (Rare) -->
+			<reward type="TITLE" value="Moonangler" />
+			<reward type="TITLE_COLOR" value="99CCFF" />
+		</rewards>
+	</quest>
+
+	<!-- 27. A witch-hunter has noticed who silences the dead at the Witching Hour. -->
+	<quest id="27" name="The Witching Bell" messenger="900353" nightOnly="true">
+		<trigger type="WITCHING_KILLS" count="300" />
+		<task type="BEFORE_DAWN" wispId="900354" cacheId="900356" legs="6" legMin="700" legMax="1100" followRange="350" lostRange="2500" lostTime="40" ambushEvery="2" openRange="150" timeLimit="3600" />
+		<role name="ambush" set="dark" count="3" title="Witch's Familiar" />
+		<role name="guardian" set="dark" count="3" tierBonus="2" title="Bellringer" />
+		<text key="greeting">You smell of grave-dirt and midnight. Good.</text>
+		<text key="offer">Sister Vespera. I hunt witches - one witch, really. Every Witching Hour, when the dead rise, a bell tolls that only the dead can hear. It is hers. You have cut down three hundred of the things it called, and the bell is angry with you. That means it is listening: tonight her will-o'-the-wisp will lead whoever it hates most to her grave. Follow the wisp, break her bellringers, and open the grave before dawn - and the bell goes silent.</text>
+		<text key="briefing">The wisp is hers. It leads you to her grave because it wants you dead there. Let it. Her familiars will come at you on the way.</text>
+		<text key="start">Follow the witch's wisp before the sun rises. Your radar shows it.</text>
+		<text key="wispLine">*The wisp giggles and floats away.*</text>
+		<text key="next">The wisp floats deeper into the dark. Follow it!</text>
+		<text key="ambush">The witch's familiars swarm out of the dark!</text>
+		<text key="ambushBeaten">The wisp giggles and drifts on.</text>
+		<text key="lost">The wisp's giggle fades in the distance! Follow your radar.</text>
+		<text key="wispEnd">*Somewhere, a bell tolls.*</text>
+		<text key="guardians">The bellringers rise from the grave!</text>
+		<text key="openCache">The bellringers are silent. Open the grave.</text>
+		<text key="cacheLine">*The bell inside cracks, and is still.*</text>
+		<text key="failLost">The wisp giggled and vanished.</text>
+		<text key="failDawn">The sun rises, and the grave sinks back into the earth until the next Witching Hour.</text>
+		<text key="failDeath">You fell, and the bell tolled for you.</text>
+		<text key="tooLate">Not enough night left. The bell waits for the next one.</text>
+		<text key="accepted">Bless you. Bring a good weapon.</text>
+		<text key="postponed">The bell will toll again tomorrow night.</text>
+		<text key="ignored">Then I will hunt her alone.</text>
+		<text key="forfeited">So be it. May you never hear the bell.</text>
+		<text key="success">The bell is cracked - I heard it stop. Whatever she left in that grave is yours; you have earned it more than I. And a name, for those who will hear of this.</text>
+		<text key="farewell">Sleep soundly. You can, now.</text>
+		<rewards set="strong">
+			<reward type="ITEM" id="6509" count="1" /> <!-- Sealed Cache (Epic) -->
+			<reward type="ITEM" id="3481" count="2000" /> <!-- Gold Dragon (hot zone coins) -->
+			<reward type="TITLE" value="Bellbreaker" />
+			<reward type="TITLE_COLOR" value="CC66FF" />
 		</rewards>
 	</quest>
 </list>

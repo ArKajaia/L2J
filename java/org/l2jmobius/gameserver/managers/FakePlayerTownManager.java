@@ -574,7 +574,8 @@ public class FakePlayerTownManager
 			town.nextFactorChange = now + Rnd.get(240000, 900000);
 		}
 		
-		final int target = Math.max(1, (int) Math.round(FakePlayersConfig.FAKE_TOWN_PLAYERS_PER_TOWN * town.populationFactor));
+		// Fewer people in town at night (Night Market): the ones who leave aren't replaced until the town is down to it.
+		final int target = Math.max(1, (int) Math.round(FakePlayersConfig.FAKE_TOWN_PLAYERS_PER_TOWN * town.populationFactor * NightCycleManager.getInstance().getTownPopulationFactor()));
 		final int vendors = town.countVendors();
 		final int count = town.visitors.size() - vendors;
 		if ((count < target) && (now >= town.nextArrival))
@@ -586,8 +587,9 @@ public class FakePlayerTownManager
 			town.nextArrival = now + (long) (Rnd.get(4000, 30000) * (1.2 - missing));
 		}
 		
-		// A seller comes to open its store a while after another one left.
-		if ((vendors < FakePlayersConfig.FAKE_TOWN_PLAYERS_STORES) && (now >= town.nextVendor))
+		// A seller comes to open its store a while after another one left. At night the black market sellers come on top (Night Market).
+		final int blackMarkets = NightCycleManager.getInstance().getBlackMarketStores();
+		if ((vendors < (FakePlayersConfig.FAKE_TOWN_PLAYERS_STORES + blackMarkets)) && (now >= town.nextVendor))
 		{
 			town.nextVendor = now + Rnd.get(60000, 300000);
 			final Location location = arrivalPoint(town, Rnd.get(100) < 60 ? Arrival.LOGIN : Arrival.GATEKEEPER);
@@ -897,7 +899,7 @@ public class FakePlayerTownManager
 			}
 			
 			// Nothing to sell after all (should not happen): it comes as a regular visitor.
-			final FakePlayerTownStore store = vendor ? FakePlayerTownStore.create(level, FakePlayersConfig.FAKE_TOWN_PLAYERS_STORE_RARE_CHANCE, FakePlayersConfig.FAKE_TOWN_PLAYERS_STORE_LOOT_CHANCE, FakePlayersConfig.FAKE_TOWN_PLAYERS_STORE_LOOT_KILLS) : null;
+			final FakePlayerTownStore store = vendor ? createStore(town, level) : null;
 			final PlayerClass playerClass = template.getFakePlayerInfo().getPlayerClass();
 			final FakePlayerTownVisitor visitor = new FakePlayerTownVisitor(this, town, spawn, npc, level, playerClass, bufferLine, store, selfBuffs(build, level, bufferLine));
 			visitor.makePlan(midSession);
@@ -923,6 +925,44 @@ public class FakePlayerTownManager
 			_freeNpcIds.addLast(npcId);
 			return null;
 		}
+	}
+	
+	/**
+	 * @param town the town the seller comes to
+	 * @param level the seller's level
+	 * @return its store: a black market one while the town has fewer than the night calls for, else the usual one
+	 */
+	private static FakePlayerTownStore createStore(FakePlayerTown town, int level)
+	{
+		if (town.countBlackMarkets() < NightCycleManager.getInstance().getBlackMarketStores())
+		{
+			final FakePlayerTownStore blackMarket = FakePlayerTownStore.createBlackMarket(level);
+			if (blackMarket != null)
+			{
+				return blackMarket;
+			}
+		}
+		return FakePlayerTownStore.create(level, FakePlayersConfig.FAKE_TOWN_PLAYERS_STORE_RARE_CHANCE, FakePlayersConfig.FAKE_TOWN_PLAYERS_STORE_LOOT_CHANCE, FakePlayersConfig.FAKE_TOWN_PLAYERS_STORE_LOOT_KILLS);
+	}
+	
+	/**
+	 * Dawn: the black market sellers pack up and leave. Runs on the town thread, like everything else the visitors do.
+	 */
+	public void onDawn()
+	{
+		schedule(0, () ->
+		{
+			for (FakePlayerTown town : _towns)
+			{
+				for (FakePlayerTownVisitor visitor : town.visitors)
+				{
+					if (visitor.isVendor() && visitor.store.isBlackMarket())
+					{
+						visitor.packUp();
+					}
+				}
+			}
+		});
 	}
 	
 	private int takeNpcId()

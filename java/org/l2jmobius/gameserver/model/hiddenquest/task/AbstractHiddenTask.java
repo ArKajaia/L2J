@@ -117,6 +117,15 @@ public abstract class AbstractHiddenTask
 	}
 
 	/**
+	 * Called once when dawn breaks during a Midnight quest's task. By default the task fails: its chance was the night.
+	 * @param player the player
+	 */
+	protected void onDawn(Player player)
+	{
+		fail(text("failDawn", "The sun rises, and the night's chance is gone."));
+	}
+
+	/**
 	 * Called when the player clicks the question mark during the task. By default shows the progress.
 	 * @param player the player
 	 */
@@ -145,6 +154,14 @@ public abstract class AbstractHiddenTask
 		if (!_session.isFinished())
 		{
 			onPlayerDeath(player);
+		}
+	}
+
+	public synchronized void handleDawn(Player player)
+	{
+		if (!_session.isFinished())
+		{
+			onDawn(player);
 		}
 	}
 

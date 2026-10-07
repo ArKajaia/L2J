@@ -594,7 +594,11 @@ public class Spawn extends Location
 			final org.l2jmobius.gameserver.model.hotzone.HotzoneModifier hotzoneModifier = org.l2jmobius.gameserver.managers.HotzoneModifierManager.getInstance().getModifierFor(npc);
 			if (hotzoneModifier != null)
 			{
-				freqMultiplier = ChampionMonstersConfig.CHAMPION_HOTZONE_MULTIPLIER; // e.g., 2.0 (Double chance)
+				// The flat bonus is a hotzone's own - the night's Omen only brings its multiplier.
+				if (org.l2jmobius.gameserver.managers.HotzoneModifierManager.getInstance().getZoneModifierFor(npc) != null)
+				{
+					freqMultiplier = ChampionMonstersConfig.CHAMPION_HOTZONE_MULTIPLIER; // e.g., 2.0 (Double chance)
+				}
 
 				// A rolled modifier like CHAMPION_SURGE stacks on top of the flat hotzone bonus above.
 				freqMultiplier *= hotzoneModifier.getChampionSpawnMult();

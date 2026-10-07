@@ -23,6 +23,7 @@ package org.l2jmobius.gameserver.model.hiddenquest.task;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.l2jmobius.gameserver.managers.HiddenQuestManager;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.instance.QuestGuard;
@@ -31,6 +32,9 @@ import org.l2jmobius.gameserver.model.hiddenquest.SpawnRole;
 
 /**
  * VIGIL: guard a totem ({@code totemId}, a QuestGuard) for {@code duration} seconds while role {@code wave} comes every {@code waveInterval} seconds, a little bigger every other wave. Role {@code boss}, if present, comes {@code bossAt} seconds before the end and must fall too.
+ * <p>
+ * With {@code untilDawn="true"} (a Midnight quest) the vigil lasts until dawn instead of {@code duration}; dawn doesn't fail it, the boss must still fall.
+ * </p>
  * <p>
  * Like the escort, the totem can't die but its meter ({@code meter}) drains for each attacker touching it, and faster while the player is more than {@code leaveRange} away.
  * </p>
@@ -46,6 +50,7 @@ public class VigilTask extends AbstractHiddenTask
 	private int _elapsed;
 	private int _waves;
 	private double _meter;
+	private int _untilDawn;
 
 	public VigilTask(HiddenQuestSession session)
 	{
@@ -54,7 +59,7 @@ public class VigilTask extends AbstractHiddenTask
 
 	private int getDuration()
 	{
-		return Math.max(60, _params.getInt("duration", 600));
+		return _untilDawn > 0 ? _untilDawn : Math.max(60, _params.getInt("duration", 600));
 	}
 
 	@Override
@@ -74,6 +79,14 @@ public class VigilTask extends AbstractHiddenTask
 			((QuestGuard) _totem).setPassive(true);
 		}
 		_meter = _params.getInt("meter", 100);
+		if (_params.getBoolean("untilDawn", false))
+		{
+			_untilDawn = HiddenQuestManager.getNightSecondsLeft();
+			if (_untilDawn < 60)
+			{
+				return "the night is nearly over";
+			}
+		}
 		say(_totem, text("totemLine", null));
 		announce(player, text("start", "Guard it until the vigil ends."));
 		return null;
@@ -151,6 +164,24 @@ public class VigilTask extends AbstractHiddenTask
 		if ((_elapsed >= duration) && ((_definition.getRole("boss") == null) || ((_boss != null) && !isAlive(_boss))))
 		{
 			complete();
+		}
+	}
+
+	@Override
+	protected void onDawn(Player player)
+	{
+		// The vigil was until dawn: it is won once their champion falls too.
+		if (_untilDawn <= 0)
+		{
+			super.onDawn(player);
+		}
+		else if ((_definition.getRole("boss") == null) || ((_boss != null) && !isAlive(_boss)))
+		{
+			complete();
+		}
+		else
+		{
+			announce(player, text("dawnBoss", "The sun rises! Finish their champion!"));
 		}
 	}
 

@@ -168,7 +168,7 @@ public class Fishing implements Runnable
 					_fisher.sendPacket(SystemMessageId.YOU_CAUGHT_SOMETHING);
 					_fisher.addItem(ItemProcessType.PICKUP, _fishId, 1, null, true);
 					FishingChampionshipManager.getInstance().newFish(_fisher, _lureId);
-					HiddenQuestManager.getInstance().onFishCaught(_fisher);
+					HiddenQuestManager.getInstance().onFishCaught(_fisher, _lureId);
 				}
 			}
 		}

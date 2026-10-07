@@ -294,6 +294,19 @@ final class FakePlayerTownVisitor
 	}
 	
 	/**
+	 * Dawn: a black market seller closes its store within the minute and leaves.
+	 */
+	void packUp()
+	{
+		final long now = System.currentTimeMillis();
+		leaveBy = Math.min(leaveBy, now);
+		if ((_errand != null) && (_errand.kind == Kind.STORE))
+		{
+			_nextAction = Math.min(_nextAction, now + Rnd.get(5000, 60000));
+		}
+	}
+	
+	/**
 	 * Makes its plan for this visit.
 	 * @param midSession {@code true} if it was already in town (server start): it is somewhere in the middle of its plan
 	 */

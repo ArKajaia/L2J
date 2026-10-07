@@ -41,6 +41,7 @@ public class HiddenQuestSession
 	private ScheduledFuture<?> _tickTask;
 	private volatile boolean _finished;
 	private int _elapsed;
+	private boolean _dawnHandled;
 
 	public HiddenQuestSession(Player player, HiddenQuestDefinition definition, int timeLimit)
 	{
@@ -124,6 +125,20 @@ public class HiddenQuestSession
 	public boolean isFinished()
 	{
 		return _finished;
+	}
+
+	/**
+	 * Marks the dawn as seen by a Midnight quest's task.
+	 * @return {@code true} the first time
+	 */
+	public boolean handleDawn()
+	{
+		if (_dawnHandled)
+		{
+			return false;
+		}
+		_dawnHandled = true;
+		return true;
 	}
 
 	/**

@@ -195,6 +195,36 @@ final class FakePlayerTownStore
 		"wh cleaning",
 		"everything must go"
 	};
+	/** What a black market seller fences at night (see {@link #createBlackMarket(int)}): Sealed Caches and the night lures fishermen don't sell. */
+	private static final Rare[] FENCED =
+	{
+		new Rare(6492, 20, 85, 1, 5, 120_000, 250_000, "sealed cache"),
+		new Rare(6499, 30, 85, 1, 3, 450_000, 800_000, "rare cache"),
+		new Rare(6509, 52, 85, 1, 1, 1_500_000, 3_000_000, "epic cache"),
+		new Rare(8505, 1, 85, 20, 100, 300, 600, "night lure"),
+		new Rare(8508, 1, 85, 20, 100, 300, 600, "night lure"),
+		new Rare(8511, 1, 85, 20, 100, 300, 600, "night lure"),
+		new Rare(8507, 20, 85, 10, 50, 900, 1_600, "hg night lure"),
+		new Rare(8510, 20, 85, 10, 50, 1_000, 1_800, "hg night lure"),
+		new Rare(8513, 20, 85, 10, 50, 1_000, 1_800, "hg night lure"),
+	};
+
+	private static final String[] BLACK_MARKET_MESSAGES =
+	{
+		"psst.. {r}",
+		"{r} no questions",
+		"{r} - dont ask",
+		"night deals",
+		"{r} cheap tonight",
+		"fell off a cart",
+		"before dawn: {r}",
+		"shh.. {r}",
+		"{r} / {f}",
+		"black market",
+		"{f}, {r}",
+		"moonlight sale"
+	};
+
 	private static final String[] RARE_MESSAGES =
 	{
 		"!!! {r} !!!",
@@ -229,14 +259,21 @@ final class FakePlayerTownStore
 	private final String _message;
 	private final String _headline;
 	private final boolean _rare;
+	private final boolean _blackMarket;
 	private boolean _released;
 
 	private FakePlayerTownStore(List<TradeItem> items, String message, String headline, boolean rare)
+	{
+		this(items, message, headline, rare, false);
+	}
+
+	private FakePlayerTownStore(List<TradeItem> items, String message, String headline, boolean rare, boolean blackMarket)
 	{
 		_items.addAll(items);
 		_message = message;
 		_headline = headline;
 		_rare = rare;
+		_blackMarket = blackMarket;
 	}
 
 	/**
@@ -261,6 +298,71 @@ final class FakePlayerTownStore
 		return createMaterials(level, rareChance);
 	}
 	
+	/**
+	 * A black market store, open at night only (see {@link NightCycleManager#getBlackMarketStores()}): a rare find of the seller's level well below its usual price - nobody asks where it came from - and fenced goods (Sealed Caches, night lures).
+	 * @param level the seller's level
+	 * @return the store, {@code null} if nothing could be put in it
+	 */
+	static FakePlayerTownStore createBlackMarket(int level)
+	{
+		final List<TradeItem> items = new ArrayList<>();
+
+		// The rare find, at 55-85% of the least it usually goes for.
+		String rareLabel = null;
+		final List<Rare> rares = new ArrayList<>();
+		for (Rare rare : RARE)
+		{
+			if ((level >= rare.minLevel()) && (level <= rare.maxLevel()))
+			{
+				rares.add(rare);
+			}
+		}
+		if (!rares.isEmpty())
+		{
+			final Rare rare = rares.get(Rnd.get(rares.size()));
+			final ItemTemplate template = ItemData.getInstance().getTemplate(rare.itemId());
+			if (template != null)
+			{
+				items.add(newItem(template, Rnd.get(rare.minCount(), rare.maxCount()), roundPrice(rare.minPrice() * (0.55 + (Rnd.nextDouble() * 0.3)))));
+				rareLabel = rare.label();
+			}
+		}
+
+		// One or two kinds of fenced goods.
+		final List<Rare> fenced = new ArrayList<>();
+		for (Rare goods : FENCED)
+		{
+			if ((level >= goods.minLevel()) && (level <= goods.maxLevel()))
+			{
+				fenced.add(goods);
+			}
+		}
+		Collections.shuffle(fenced);
+		String fencedLabel = null;
+		final int kinds = Rnd.get(100) < 60 ? 1 : 2;
+		for (int i = 0; (i < kinds) && (i < fenced.size()); i++)
+		{
+			final Rare goods = fenced.get(i);
+			final ItemTemplate template = ItemData.getInstance().getTemplate(goods.itemId());
+			if (template != null)
+			{
+				items.add(newItem(template, Rnd.get(goods.minCount(), goods.maxCount()), roundPrice(goods.minPrice() + (Rnd.nextDouble() * (goods.maxPrice() - goods.minPrice())))));
+				if (fencedLabel == null)
+				{
+					fencedLabel = goods.label();
+				}
+			}
+		}
+
+		if (items.isEmpty())
+		{
+			return null;
+		}
+
+		final String headline = rareLabel != null ? rareLabel : fencedLabel;
+		return new FakePlayerTownStore(items, blackMarketMessage(rareLabel != null ? rareLabel : fencedLabel, fencedLabel != null ? fencedLabel : rareLabel), headline, rareLabel != null, true);
+	}
+
 	/**
 	 * A store of materials, now and then with a rare find.
 	 * @param level the seller's level
@@ -600,6 +702,23 @@ final class FakePlayerTownStore
 		return rareLabel != null ? "rare stuff" : "mats";
 	}
 
+	private static String blackMarketMessage(String rareLabel, String fencedLabel)
+	{
+		for (int attempt = 0; attempt < 6; attempt++)
+		{
+			String text = BLACK_MARKET_MESSAGES[Rnd.get(BLACK_MARKET_MESSAGES.length)].replace("{r}", rareLabel).replace("{f}", fencedLabel).trim();
+			if (Rnd.get(100) < 25)
+			{
+				text = text.toUpperCase();
+			}
+			if (text.length() <= MAX_MESSAGE)
+			{
+				return text;
+			}
+		}
+		return "night deals";
+	}
+
 	private static String lootMessage(List<String> labels, String mob)
 	{
 		final String a = labels.get(0);
@@ -647,6 +766,14 @@ final class FakePlayerTownStore
 	boolean hasRare()
 	{
 		return _rare;
+	}
+
+	/**
+	 * @return {@code true} for a black market store, which packs up at dawn
+	 */
+	boolean isBlackMarket()
+	{
+		return _blackMarket;
 	}
 
 	/**

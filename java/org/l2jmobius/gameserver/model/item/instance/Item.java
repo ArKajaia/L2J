@@ -1803,7 +1803,16 @@ public class Item extends WorldObject
 	
 	public boolean isNightLure()
 	{
-		return (((_itemId >= 8505) && (_itemId <= 8513)) || (_itemId == 8485));
+		return isNightLure(_itemId);
+	}
+	
+	/**
+	 * @param itemId an item id
+	 * @return {@code true} if it is a night (luminous) fishing lure
+	 */
+	public static boolean isNightLure(int itemId)
+	{
+		return (((itemId >= 8505) && (itemId <= 8513)) || (itemId == 8485));
 	}
 	
 	public void setCountDecrease(boolean decrease)
