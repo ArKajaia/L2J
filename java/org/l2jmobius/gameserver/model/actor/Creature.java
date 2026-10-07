@@ -6551,11 +6551,38 @@ public abstract class Creature extends WorldObject
 					}
 				}
 			}
+			
+			// Like a player, a roaming fake player that casts a non offensive skill (a heal, a buff) on a player or fake player with pvp flag set or with karma is flagged too.
+			// Inside a PvP spot, a PvP zone or a trial it is flagged for good already (or never).
+			if (isPvpFakePlayer() && !skill.hasNegativeEffect() && !asNpc().isTrialDuelist() && !isInsideZone(ZoneId.PVP) && !isInsideZone(ZoneId.PVP_SPOT))
+			{
+				for (WorldObject target : targets)
+				{
+					if ((target != this) && target.isCreature() && target.asCreature().isFlaggedOrKarma())
+					{
+						ScriptManager.getInstance().getScript("PvpFlaggingStopTask").notifyEvent("FLAG_HELP", asNpc(), null);
+						break;
+					}
+				}
+			}
 		}
 		catch (Exception e)
 		{
 			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": callSkill() failed.", e);
 		}
+	}
+	
+	/**
+	 * @return {@code true} if this is a player with the PvP flag set or with karma, or a fake player that shows the flag or has karma
+	 */
+	private boolean isFlaggedOrKarma()
+	{
+		if (isPlayer())
+		{
+			return (asPlayer().getPvpFlag() > 0) || (getKarma() > 0);
+		}
+		
+		return isFakePlayer() && ((asNpc().getScriptValue() > 0) || (getKarma() > 0));
 	}
 	
 	/**

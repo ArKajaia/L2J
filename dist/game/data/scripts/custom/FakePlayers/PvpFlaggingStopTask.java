@@ -64,6 +64,18 @@ public class PvpFlaggingStopTask extends Script
 				startQuestTimer("FLAG_CHECK", 5000, npc, null);
 			}
 		}
+		else if (event.equals("FLAG_HELP"))
+		{
+			// Helped a flagged player: flagged for the usual time, which every new help renews.
+			if (!npc.isScriptValue(1))
+			{
+				npc.setScriptValue(1); // in combat
+				npc.broadcastInfo(); // update flag status
+			}
+			cancelQuestTimer("FINISH_FLAG", npc, null);
+			cancelQuestTimer("REMOVE_FLAG", npc, null);
+			startQuestTimer("FINISH_FLAG", PvpConfig.PVP_NORMAL_TIME - 20000, npc, null);
+		}
 		else if (event.equals("FINISH_FLAG"))
 		{
 			if (npc.isScriptValue(1))
