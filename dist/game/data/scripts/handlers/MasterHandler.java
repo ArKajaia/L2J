@@ -180,6 +180,7 @@ import handlers.chat.commands.admin.AdminMessages;
 import handlers.chat.commands.admin.AdminNight;
 import handlers.chat.commands.admin.AdminOnline;
 import handlers.chat.commands.admin.AdminPForge;
+import handlers.chat.commands.admin.AdminPassiveTree;
 import handlers.chat.commands.admin.AdminPathNode;
 import handlers.chat.commands.admin.AdminPcCafePoints;
 import handlers.chat.commands.admin.AdminPetition;
@@ -423,6 +424,7 @@ public class MasterHandler
 			AdminMenu.class,
 			AdminMessages.class,
 			AdminOnline.class,
+			AdminPassiveTree.class,
 			AdminPathNode.class,
 			AdminPcCafePoints.class,
 			AdminPetition.class,

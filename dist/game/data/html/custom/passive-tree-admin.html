@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Passive Tree Editor</title>
+<style>
+	:root {
+		--bg: #0b0b0f;
+		--panel: #15151b;
+		--panel-2: #1c1c24;
+		--field: #101015;
+		--line: #2e2e38;
+		--text: #e6e1d3;
+		--muted: #8f8b80;
+		--gold: #d9b64c;
+		--gold-dim: #7a5c1e;
+		--danger: #e0645a;
+		--ok: #6fcf7f;
+		--warn: #e3b341;
+		--accent: #5fa8ff;
+		--changed: #f0a040;
+		--added: #6fcf7f;
+	}
+	* { box-sizing: border-box; }
+	html, body {
+		margin: 0; height: 100%; overflow: hidden;
+		background: var(--bg); color: var(--text);
+		font: 13px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+	}
+	button, input, select, textarea { font: inherit; color: inherit; }
+	#app { display: grid; grid-template-columns: 1fr 360px; grid-template-rows: auto 1fr; height: 100%; }
+
+	/* ---------------------------------------------------------- toolbar */
+	#toolbar {
+		grid-column: 1 / 3; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+		padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--gold-dim);
+	}
+	#toolbar h1 { margin: 0 6px 0 0; font: normal 15px Georgia, serif; letter-spacing: 2px; text-transform: uppercase; color: #f0e6c8; }
+	#toolbar .who { color: var(--muted); font-size: 12px; margin-right: 6px; }
+	.group { display: flex; align-items: center; gap: 4px; }
+	.sep { width: 1px; align-self: stretch; background: var(--line); margin: 0 2px; }
+	.btn {
+		background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px;
+		padding: 5px 10px; cursor: pointer; white-space: nowrap; color: var(--text); text-decoration: none;
+	}
+	.btn:hover:not(:disabled) { border-color: var(--gold); }
+	.btn:disabled { opacity: 0.4; cursor: default; }
+	.btn.on { background: #2b2412; border-color: var(--gold); color: #f5dc8a; }
+	.btn.primary { background: #3a2e10; border-color: var(--gold); color: #ffe39a; }
+	.btn.danger { border-color: #6d2a25; color: #ff9b90; }
+	.btn.danger:hover:not(:disabled) { border-color: var(--danger); }
+	.btn.small { padding: 2px 7px; font-size: 12px; }
+	.btn kbd { opacity: 0.55; font: 11px ui-monospace, monospace; margin-left: 4px; }
+	#search { width: 190px; }
+	#search-count { color: var(--muted); font-size: 12px; min-width: 52px; }
+	#changes { font-size: 12px; color: var(--muted); }
+	#changes.dirty { color: var(--changed); }
+	label.toggle { display: flex; align-items: center; gap: 4px; color: var(--muted); cursor: pointer; }
+	.spacer { flex: 1; }
+
+	/* ---------------------------------------------------------- stage */
+	#stage { position: relative; overflow: hidden; background: radial-gradient(circle at center, #14141a 0%, #08080b 100%); }
+	#svg { width: 100%; height: 100%; display: block; cursor: default; touch-action: none; }
+	#stage.panning #svg { cursor: grabbing; }
+	#stage.tool-link #svg { cursor: crosshair; }
+	#stage.tool-add #svg { cursor: copy; }
+	#stage.dragging #rings { opacity: 0; }
+
+	.ring-disc { fill: #141419; stroke: #3a3326; stroke-width: 2px; vector-effect: non-scaling-stroke; cursor: pointer; }
+	.ring-disc:hover { stroke: var(--gold-dim); }
+	.ring-track { fill: none; stroke: #24242c; stroke-width: 1.5px; vector-effect: non-scaling-stroke; pointer-events: none; }
+	.ring-centre { fill: #3a3326; pointer-events: none; }
+
+	.edge { fill: none; stroke: #4a4a55; stroke-width: 2px; vector-effect: non-scaling-stroke; pointer-events: none; }
+	.edge.sel { stroke: var(--gold); stroke-width: 4px; }
+	.edge.start { stroke: #8a7a55; }
+	.edge-hit { fill: none; stroke: transparent; stroke-width: 12px; vector-effect: non-scaling-stroke; cursor: pointer; }
+	#stage.tool-add .edge-hit, #stage.tool-link .edge-hit { pointer-events: none; }
+
+	.node { cursor: pointer; }
+	.node .hit { fill: transparent; }
+	.node .body { stroke: #0a0a0d; stroke-width: 1.5px; vector-effect: non-scaling-stroke; }
+	.node .glyph { pointer-events: none; color: #101014; fill: #101014; }
+	.node .halo { fill: none; stroke: none; stroke-width: 2.5px; vector-effect: non-scaling-stroke; pointer-events: none; }
+	.node.changed .halo { stroke: var(--changed); stroke-dasharray: 4 3; }
+	.node.added .halo { stroke: var(--added); stroke-dasharray: none; }
+	.node.unreachable .body { stroke: var(--danger); stroke-width: 2px; }
+	.node.match .halo { stroke: var(--accent); stroke-dasharray: none; stroke-width: 3px; }
+	.node.sel .halo { stroke: #fff; stroke-dasharray: none; stroke-width: 3px; }
+	.node.src .halo { stroke: var(--accent); stroke-width: 4px; stroke-dasharray: none; }
+	.lbl, .idl {
+		pointer-events: none; text-anchor: middle; fill: #cfc8b4;
+		font-family: Georgia, serif; font-size: calc(var(--k, 1) * 11px);
+		paint-order: stroke; stroke: #08080b; stroke-width: calc(var(--k, 1) * 3px); stroke-linejoin: round;
+	}
+	.idl { fill: #7fb5ff; font-family: ui-monospace, monospace; font-size: calc(var(--k, 1) * 10px); display: none; }
+	#svg.show-ids .idl { display: inline; }
+	#svg.z1 .lbl, #svg.z1 .idl { display: none; }
+	#svg.z2 .lbl.minor { display: none; }
+	#svg.z2 .idl { display: none; }
+	.node.sel .lbl, .node.match .lbl { fill: #fff; display: inline !important; }
+
+	#link-preview { stroke: var(--accent); stroke-width: 2px; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; pointer-events: none; }
+	#box { position: absolute; border: 1px dashed var(--accent); background: rgba(95,168,255,0.08); pointer-events: none; display: none; }
+
+	#statusbar {
+		position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 16px;
+		padding: 4px 10px; font-size: 12px; color: var(--muted);
+		background: rgba(10,10,14,0.85); border-top: 1px solid var(--line); pointer-events: none;
+	}
+	#statusbar .hint { color: #b9b29c; }
+	#legend {
+		position: absolute; left: 10px; top: 10px; padding: 8px 10px; font-size: 11px; color: var(--muted);
+		background: rgba(14,14,18,0.85); border: 1px solid var(--line); border-radius: 6px; pointer-events: none;
+	}
+	#legend div { display: flex; align-items: center; gap: 6px; }
+	#legend i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
+
+	/* ---------------------------------------------------------- inspector */
+	#inspector { background: var(--panel); border-left: 1px solid var(--gold-dim); overflow-y: auto; padding: 12px 14px 40px; }
+	#inspector h2 { margin: 0 0 2px; font: normal 16px Georgia, serif; color: #f0e6c8; }
+	#inspector h3 { margin: 16px 0 6px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); font-weight: 600; }
+	#inspector .sub { color: var(--muted); font-size: 12px; }
+	.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; }
+	.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px 8px; }
+	.field { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }
+	.field > span { font-size: 11px; color: var(--muted); }
+	.field.wide { grid-column: 1 / -1; }
+	input[type=text], input[type=number], input:not([type]), select, textarea {
+		width: 100%; background: var(--field); border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px;
+	}
+	input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold); }
+	input:disabled { opacity: 0.6; }
+	textarea { resize: vertical; min-height: 54px; }
+	.fx-row { display: grid; grid-template-columns: 1fr 74px 26px; gap: 4px; margin-bottom: 4px; }
+	.fx-row.bad input { border-color: var(--danger); }
+	.note { font-size: 12px; color: var(--muted); margin: 4px 0; }
+	.note.warn { color: var(--warn); }
+	.note.err { color: var(--danger); }
+	.note.ok { color: var(--ok); }
+	.links { list-style: none; margin: 0; padding: 0; }
+	.links li { display: flex; align-items: center; gap: 6px; padding: 3px 0; border-bottom: 1px solid #202028; }
+	.links li a { flex: 1; color: var(--text); cursor: pointer; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.links li a:hover { color: var(--gold); }
+	.links li small { color: var(--muted); }
+	.pill { display: inline-block; padding: 0 6px; border-radius: 9px; font-size: 11px; background: #23232c; color: var(--muted); }
+	.row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+	.issues { list-style: none; margin: 0; padding: 0; max-height: 260px; overflow-y: auto; }
+	.issues li { padding: 3px 0; cursor: pointer; border-bottom: 1px solid #202028; }
+	.issues li:hover { color: var(--gold); }
+	.icon-preview { width: 22px; height: 22px; fill: var(--gold); color: var(--gold); vertical-align: middle; }
+	table.keys { border-collapse: collapse; width: 100%; font-size: 12px; }
+	table.keys td { padding: 2px 4px; border-bottom: 1px solid #202028; vertical-align: top; }
+	table.keys td:first-child { white-space: nowrap; color: var(--gold); font-family: ui-monospace, monospace; font-size: 11px; }
+
+	/* ---------------------------------------------------------- dialogs */
+	#modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 20; }
+	#modal.open { display: flex; }
+	#modal .box {
+		width: min(640px, calc(100% - 32px)); max-height: calc(100% - 64px); overflow-y: auto;
+		background: var(--panel); border: 1px solid var(--gold-dim); border-radius: 8px; padding: 16px 18px;
+		box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+	}
+	#modal h2 { margin: 0 0 10px; font: normal 17px Georgia, serif; color: #f0e6c8; }
+	#modal ul { margin: 4px 0 10px; padding-left: 18px; }
+	#modal li { margin: 3px 0; }
+	#modal .errors li { color: #ff9b90; }
+	#modal .warnings li { color: #f2d48a; }
+	#modal .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+	#toast {
+		position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%); z-index: 30; display: none;
+		background: #1f2a1f; border: 1px solid var(--ok); color: #c8f0cc; padding: 8px 16px; border-radius: 6px;
+	}
+	#toast.error { background: #2a1512; border-color: var(--danger); color: #ffb3aa; }
+	#banner { grid-column: 1 / 3; display: none; padding: 8px 12px; background: #3a1512; color: #ffb3aa; border-bottom: 1px solid var(--danger); }
+	#banner.open { display: block; }
+	#loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 15px; }
+</style>
+</head>
+<body>
+<div id="app">
+	<header id="toolbar">
+		<h1>Passive Tree Editor</h1>
+		<span class="who" id="who"></span>
+		<div class="group" role="group" aria-label="Tool">
+			<button class="btn on" data-tool="select" title="Select and move nodes. Shift+click or Shift+drag adds to the selection. Alt+click a node links it to the selected one.">Select<kbd>V</kbd></button>
+			<button class="btn" data-tool="link" title="Click a node, then click others to link or unlink them to it. Hold Shift to keep linking to the same node.">Link<kbd>L</kbd></button>
+			<button class="btn" data-tool="add" title="Click empty space to add a node. It copies the selected node and links to it.">Add node<kbd>N</kbd></button>
+		</div>
+		<div class="sep"></div>
+		<div class="group">
+			<button class="btn" id="undo" title="Undo (Ctrl+Z)">Undo</button>
+			<button class="btn" id="redo" title="Redo (Ctrl+Y)">Redo</button>
+		</div>
+		<div class="sep"></div>
+		<div class="group">
+			<input id="search" type="text" placeholder="Search name, id, effect, sector..." autocomplete="off">
+			<span id="search-count"></span>
+			<button class="btn small" id="search-select" title="Select every match">Select all</button>
+		</div>
+		<div class="sep"></div>
+		<label class="toggle" title="Show node ids on the map"><input type="checkbox" id="show-ids"> IDs</label>
+		<label class="toggle" title="Snap dragged and added nodes to a 10-unit grid"><input type="checkbox" id="snap"> Snap</label>
+		<button class="btn small" id="fit" title="Fit the tree to the screen (F)">Fit</button>
+		<div class="spacer"></div>
+		<span id="changes">No changes</span>
+		<button class="btn" id="check" title="Check the tree on the server without saving">Check</button>
+		<button class="btn primary" id="save" title="Check, then save to the tree files and make it live (Ctrl+S)">Save...</button>
+	</header>
+	<div id="banner"></div>
+	<main id="stage" class="tool-select">
+		<svg id="svg" aria-label="Passive tree map">
+			<defs id="defs"></defs>
+			<g id="viewport">
+				<g id="rings"></g>
+				<g id="edges"></g>
+				<g id="edge-hits"></g>
+				<g id="nodes"></g>
+				<line id="link-preview" x1="0" y1="0" x2="0" y2="0" visibility="hidden" />
+			</g>
+		</svg>
+		<div id="box"></div>
+		<div id="legend"></div>
+		<div id="statusbar"><span id="st-pos">-</span><span id="st-sel"></span><span class="hint" id="st-hint"></span><span id="st-zoom"></span></div>
+		<div id="loading">Loading the tree...</div>
+	</main>
+	<aside id="inspector" aria-label="Inspector"></aside>
+</div>
+<div id="modal"><div class="box" id="modal-box"></div></div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+// ===========================================================================
+//  Passive tree editor for GMs (opened in-game with //passivetree).
+//  Loads the tree exactly as data/passivetree/*.xml holds it, lets you move,
+//  link, add, remove and edit nodes, and saves the whole tree back. The server
+//  checks it, backs up the old files, writes the new ones and makes them live.
+// ===========================================================================
+const API = "/api/passivetree/admin/";
+const SVG_NS = "http://www.w3.org/2000/svg";
+const DRAFT_KEY = "passiveTreeEditorDraft";
+const TOKEN_KEY = "passiveTreeAdminToken";
+const UNDO_LIMIT = 300;
+const MAX_RING_RADIUS = 150;   // wider shared circles are roads bending round the centre, not clusters
+const SNAP = 10;
+const DUPLICATE_OFFSET = 60;
+const ZOOM_MIN = 0.03, ZOOM_MAX = 4, ZOOM_STEP = 1.15;
+
+const TYPE_COLOR = {
+	START: "#e8dcb8", SMALL: "#8a8a92", NOTABLE: "#d9b64c",
+	KEYSTONE: "#c0392b", MASTER: "#8e44ad", ACTIVE_SKILL: "#2f8fd1", FUNCTION: "#2f8fd1"
+};
+const TYPE_RADIUS = { START: 20, SMALL: 8, NOTABLE: 16, KEYSTONE: 22, MASTER: 24, ACTIVE_SKILL: 17, FUNCTION: 17 };
+const TYPE_GLYPH = { START: "flag", ACTIVE_SKILL: "bolt", FUNCTION: "gear", KEYSTONE: "star", MASTER: "star" };
+const MAJOR_TYPES = new Set(["START", "NOTABLE", "KEYSTONE", "MASTER", "ACTIVE_SKILL", "FUNCTION"]);
+const DEFAULT_COST = { START: 0, SMALL: 1, NOTABLE: 2, ACTIVE_SKILL: 2, FUNCTION: 2, KEYSTONE: 3, MASTER: 3 };
+const EFFECT_KEY_RE = /^[A-Z][A-Z0-9_]*(@[A-Z]+)?$/;
+
+// ------------------------------------------------------------------ state
+let token = null;
+let version = null;             // version of the files this editor is based on
+let adminName = "";
+let nodes = [];                 // in file order: the order matters for the saved files
+let byId = new Map(), indexById = new Map();
+let adj = new Map();            // id -> Set of linked ids, both directions
+let original = new Map();       // id -> canonical text, as the files hold it
+let types = [], conditions = [], allocations = {}, capKeys = [];
+let files = [], sectors = [], effectKeyUse = new Map(), glyphs = [];
+let selection = new Set();      // insertion order = the order nodes were picked
+let selectedEdge = null;        // [a, b]
+let tool = "select";
+let linkSource = null;
+let undoStack = [], redoStack = [];
+let view = { s: 0.2, tx: 0, ty: 0 };
+let showIds = false, snapOn = false;
+let unreachable = new Set();
+let issues = [];
+let dirty = { changed: new Set(), added: new Set(), removed: [] };
+let search = { q: "", matches: [], set: new Set(), cursor: -1 };
+let skillCache = new Map();
+let nodeEls = new Map();        // id -> <g>
+let edgeEls = new Map();        // "a-b" -> {path, hit}
+let drag = null;                // what the pointer is doing
+let draftTimer = null;
+
+const $ = id => document.getElementById(id);
+const svg = $("svg"), viewport = $("viewport");
+
+// ------------------------------------------------------------------ helpers
+function esc(text) {
+	return String(text ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function round1(v) { return Math.round(v * 10) / 10; }
+function edgeKey(a, b) { return a < b ? a + "-" + b : b + "-" + a; }
+function clone(n) { return JSON.parse(JSON.stringify(n)); }
+function canon(n) {
+	return JSON.stringify([n.id, n.file, n.name, n.sector, n.type, n.tier, n.cost, round1(n.x), round1(n.y),
+		n.ox === null ? null : round1(n.ox), n.oy === null ? null : round1(n.oy), n.effect, n.skillId,
+		n.skillId > 0 ? n.skillLevel : "", n.icon, n.description, n.requires]);
+}
+function svgEl(tag, attrs, parent) {
+	const e = document.createElementNS(SVG_NS, tag);
+	for (const k in attrs) e.setAttribute(k, attrs[k]);
+	if (parent) parent.appendChild(e);
+	return e;
+}
+function showToast(msg, isError) {
+	const t = $("toast");
+	t.textContent = msg; t.className = isError ? "error" : ""; t.style.display = "block";
+	clearTimeout(showToast.timer);
+	showToast.timer = setTimeout(() => { t.style.display = "none"; }, isError ? 4500 : 2500);
+}
+function showBanner(msg) {
+	const b = $("banner");
+	b.textContent = msg; b.classList.add("open");
+}
+function typing() {
+	const a = document.activeElement;
+	return a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.tagName === "SELECT");
+}
+function nodeLabel(n) { return n ? `${n.id} ${n.name}` : "?"; }
+
+// ------------------------------------------------------------------ server
+async function api(path, json) {
+	const opts = { headers: { "Authorization": "Bearer " + token } };
+	if (json !== undefined) {
+		opts.method = "POST";
+		opts.headers["Content-Type"] = "application/json";
+		opts.body = JSON.stringify(json);
+	}
+	let res;
+	try { res = await fetch(API + path, opts); }
+	catch (e) { showToast("Connection error - is the game server running?", true); return { ok: false, status: 0, data: null }; }
+	let data = null;
+	try { data = await res.json(); } catch (e) { /* no body */ }
+	if (res.status === 401 || res.status === 403) {
+		showBanner((data && data.error ? data.error : "Not allowed.") + " Your unsaved changes are kept in this browser and offered again when you reopen the editor.");
+	}
+	return { ok: res.ok, status: res.status, data };
+}
+
+/** The planner page holds the icon glyphs: take its <symbol>s, so both pages always draw the same ones. */
+async function loadGlyphs() {
+	try {
+		const res = await fetch("/passive-tree.html");
+		const doc = new DOMParser().parseFromString(await res.text(), "text/html");
+		const defs = $("defs");
+		doc.querySelectorAll("svg defs symbol").forEach(sym => {
+			defs.appendChild(document.importNode(sym, true));
+			if (sym.id.startsWith("icon-")) glyphs.push(sym.id.slice(5));
+		});
+		glyphs.sort();
+	} catch (e) {
+		glyphs = []; // nodes are drawn without glyphs
+	}
+}
+
+async function loadCaps() {
+	try {
+		const res = await fetch("/api/passivetree/config");
+		const data = await res.json();
+		capKeys = Object.keys(data.caps || {});
+	} catch (e) { capKeys = []; }
+}
+
+/** Loads the tree from the files. Keeps the view, and the selection where the nodes still exist. */
+async function loadTree() {
+	const res = await api("tree");
+	if (!res.ok || !res.data) {
+		$("loading").textContent = (res.data && res.data.error) || "Could not load the tree.";
+		return false;
+	}
+	const d = res.data;
+	version = d.version;
+	adminName = d.admin;
+	types = d.types || [];
+	conditions = d.conditions || [];
+	allocations = d.allocations || {};
+	nodes = d.nodes.map(fromWire);
+	original = new Map(nodes.map(n => [n.id, canon(n)]));
+	undoStack = []; redoStack = [];
+	selection = new Set([...selection].filter(id => nodes.some(n => n.id === id)));
+	selectedEdge = null; linkSource = null;
+	$("who").textContent = "GM " + adminName;
+	$("loading").style.display = "none";
+	afterChange(false);
+	return true;
+}
+
+function fromWire(n) {
+	return {
+		id: n.id, file: n.file, name: n.name, sector: n.sector, type: n.type, tier: n.tier, cost: n.cost,
+		x: n.x, y: n.y, ox: n.ox === undefined ? null : n.ox, oy: n.oy === undefined ? null : n.oy,
+		effect: n.effect || "", skillId: n.skillId || 0, skillLevel: n.skillLevel || "",
+		icon: n.icon || "", description: n.description || "", requires: (n.requires || []).slice()
+	};
+}
+function toWire(n) {
+	const w = {
+		id: n.id, file: n.file, name: n.name, sector: n.sector, type: n.type, tier: n.tier, cost: n.cost,
+		x: round1(n.x), y: round1(n.y), effect: n.effect, skillId: n.skillId, skillLevel: n.skillId > 0 ? n.skillLevel : "",
+		icon: n.icon, description: n.description, requires: n.requires
+	};
+	if (n.ox !== null && n.oy !== null) { w.ox = round1(n.ox); w.oy = round1(n.oy); }
+	return w;
+}
+
+// ------------------------------------------------------------------ model
+function reindex() {
+	byId = new Map(); indexById = new Map(); adj = new Map();
+	nodes.forEach((n, i) => { byId.set(n.id, n); indexById.set(n.id, i); adj.set(n.id, new Set()); });
+	nodes.forEach(n => n.requires.forEach(p => {
+		if (p === n.id || !byId.has(p)) return;
+		adj.get(n.id).add(p);
+		adj.get(p).add(n.id);
+	}));
+	files = [...new Set(nodes.map(n => n.file))].sort();
+	sectors = [...new Set(nodes.map(n => n.sector))].sort();
+	effectKeyUse = new Map();
+	nodes.forEach(n => parseEffect(n.effect).rows.forEach(r => {
+		const base = r.key.split("@")[0];
+		effectKeyUse.set(base, (effectKeyUse.get(base) || 0) + 1);
+	}));
+	capKeys.forEach(k => { if (!effectKeyUse.has(k)) effectKeyUse.set(k, 0); });
+}
+
+function computeDirty() {
+	dirty = { changed: new Set(), added: new Set(), removed: [] };
+	nodes.forEach(n => {
+		if (!original.has(n.id)) dirty.added.add(n.id);
+		else if (original.get(n.id) !== canon(n)) dirty.changed.add(n.id);
+	});
+	original.forEach((_, id) => { if (!byId.has(id)) dirty.removed.push(id); });
+}
+function hasChanges() { return dirty.changed.size + dirty.added.size + dirty.removed.length > 0; }
+
+/** What the server will refuse or warn about, found here first so the map can show it. */
+function computeIssues() {
+	issues = [];
+	const reached = new Set(), queue = [];
+	nodes.forEach(n => { if (n.type === "START") { reached.add(n.id); queue.push(n.id); } });
+	while (queue.length) {
+		for (const next of adj.get(queue.shift()) || []) {
+			if (!reached.has(next)) { reached.add(next); queue.push(next); }
+		}
+	}
+	unreachable = new Set(nodes.filter(n => !reached.has(n.id)).map(n => n.id));
+	if (!nodes.some(n => n.type === "START")) issues.push({ level: "err", text: "The tree has no START node." });
+	nodes.forEach(n => {
+		if (!n.name.trim()) issues.push({ id: n.id, level: "err", text: `${n.id}: no name` });
+		if (!n.sector.trim()) issues.push({ id: n.id, level: "err", text: `${n.id} ${n.name}: no sector` });
+		const fx = parseEffect(n.effect);
+		if (fx.errors.length) issues.push({ id: n.id, level: "err", text: `${n.id} ${n.name}: ${fx.errors[0]}` });
+		if (unreachable.has(n.id)) issues.push({ id: n.id, level: "warn", text: `${n.id} ${n.name}: no starting point leads here` });
+	});
+}
+
+function parseEffect(spec) {
+	const rows = [], errors = [];
+	if (!spec) return { rows, errors };
+	spec.split(";").forEach(part => {
+		const bits = part.split(":");
+		const key = (bits[0] || "").trim(), val = (bits[1] || "").trim();
+		rows.push({ key, val });
+		if (bits.length !== 2 || !EFFECT_KEY_RE.test(key)) { errors.push(`"${part}" is not like PATK_PCT:1.5`); return; }
+		if (val === "" || !isFinite(Number(val))) { errors.push(`${key}: the value must be a number`); return; }
+		const at = key.indexOf("@");
+		if (at > 0) {
+			const base = key.slice(0, at), cond = key.slice(at + 1);
+			if (!conditions.includes(cond)) errors.push(`${key}: unknown condition ${cond}`);
+			else if (/^(MAXHP|MAXMP|MAXCP|KS_)/.test(base)) errors.push(`${key}: HP, MP, CP and keystone keys can't be conditional`);
+		}
+	});
+	return { rows, errors };
+}
+function effectSpec(rows) {
+	return rows.filter(r => r.key.trim() !== "").map(r => r.key.trim() + ":" + r.val.trim()).join(";");
+}
+function autoDescription(spec) { return spec ? spec.replace(/;/g, ", ").replace(/:/g, " ") : ""; }
+
+function linked(a, b) { return adj.has(a) && adj.get(a).has(b); }
+
+/** Links two nodes both ways. A START node lists no links: its neighbours list it. */
+function addLink(a, b) {
+	const na = byId.get(a), nb = byId.get(b);
+	if (!na || !nb || a === b) return false;
+	if (na.type === "START" && nb.type === "START") { showToast("Two starting points can't be linked.", true); return false; }
+	if (na.type !== "START" && !na.requires.includes(b)) na.requires.push(b);
+	if (nb.type !== "START" && !nb.requires.includes(a)) nb.requires.push(a);
+	adj.get(a).add(b); adj.get(b).add(a);
+	return true;
+}
+function removeLink(a, b) {
+	const na = byId.get(a), nb = byId.get(b);
+	if (na) na.requires = na.requires.filter(x => x !== b);
+	if (nb) nb.requires = nb.requires.filter(x => x !== a);
+	if (adj.has(a)) adj.get(a).delete(b);
+	if (adj.has(b)) adj.get(b).delete(a);
+}
+/** Changing to or from START moves the node's links between its own list and its neighbours' lists. */
+function setType(n, type) {
+	if (type === n.type) return true;
+	const neighbours = [...(adj.get(n.id) || [])];
+	if (type === "START") {
+		const other = neighbours.map(id => byId.get(id)).find(m => m.type === "START");
+		if (other) { showToast(`It is linked to the starting point ${nodeLabel(other)}: two starting points can't be linked.`, true); return false; }
+		neighbours.forEach(id => { const m = byId.get(id); if (!m.requires.includes(n.id)) m.requires.push(n.id); });
+		n.requires = [];
+	} else if (n.type === "START") {
+		n.requires = neighbours.slice().sort((a, b) => a - b);
+	}
+	if (n.cost === DEFAULT_COST[n.type]) n.cost = DEFAULT_COST[type];
+	n.type = type;
+	return true;
+}
+
+/** A free id: after the highest one of the file, never one the files had (a removed node's players would get the new node). */
+function nextFreeId(file, taken) {
+	let max = 0;
+	nodes.forEach(n => { if (n.file === file && n.id > max) max = n.id; });
+	if (!max) nodes.forEach(n => { if (n.id > max) max = n.id; });
+	let id = max + 1;
+	while (byId.has(id) || original.has(id) || (taken && taken.has(id))) id++;
+	return id;
+}
+
+// ------------------------------------------------------------------ undo
+function capture(ids) {
+	return ids.map(id => ({ id, index: indexById.has(id) ? indexById.get(id) : -1, data: byId.has(id) ? clone(byId.get(id)) : null }));
+}
+function applyStates(states) {
+	const removed = new Set(states.filter(s => !s.data).map(s => s.id));
+	nodes = nodes.filter(n => !removed.has(n.id));
+	const pos = new Map(nodes.map((n, i) => [n.id, i]));
+	const inserts = [];
+	states.forEach(s => {
+		if (!s.data) return;
+		if (pos.has(s.id)) nodes[pos.get(s.id)] = clone(s.data);
+		else inserts.push(s);
+	});
+	inserts.sort((a, b) => a.index - b.index).forEach(s => nodes.splice(s.index < 0 ? nodes.length : Math.min(s.index, nodes.length), 0, clone(s.data)));
+}
+/**
+ * One undoable change. {@code ids} are the nodes it may change; {@code fn} makes the change and returns the ids of nodes it
+ * created, or false if it changed nothing.
+ */
+function edit(label, ids, fn) {
+	const list = [...new Set(ids)];
+	const before = capture(list);
+	const created = fn();
+	if (created === false) { afterChange(true); return false; }
+	const extra = Array.isArray(created) ? created.filter(id => !list.includes(id)) : [];
+	const all = list.concat(extra);
+	reindex();
+	const after = capture(all);
+	const beforeAll = before.concat(extra.map(id => ({ id, index: -1, data: null })));
+	if (JSON.stringify(beforeAll.map(s => s.data)) === JSON.stringify(after.map(s => s.data))) { afterChange(true); return false; }
+	undoStack.push({ label, before: beforeAll, after });
+	if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+	redoStack = [];
+	afterChange(true);
+	return true;
+}
+function undo() {
+	const step = undoStack.pop();
+	if (!step) return;
+	applyStates(step.before);
+	redoStack.push(step);
+	afterChange(true);
+	showToast("Undid: " + step.label);
+}
+function redo() {
+	const step = redoStack.pop();
+	if (!step) return;
+	applyStates(step.after);
+	undoStack.push(step);
+	afterChange(true);
+	showToast("Redid: " + step.label);
+}
+
+function afterChange(saveDraft) {
+	reindex();
+	computeDirty();
+	computeIssues();
+	selection = new Set([...selection].filter(id => byId.has(id)));
+	if (selectedEdge && !linked(selectedEdge[0], selectedEdge[1])) selectedEdge = null;
+	if (linkSource !== null && !byId.has(linkSource)) linkSource = null;
+	renderSearch();
+	render();
+	renderInspector();
+	renderToolbar();
+	if (saveDraft) scheduleDraft();
+}
+
+/** After nodes only moved: redraw them, their links and the rings, without rebuilding the whole map. */
+function afterMove(ids) {
+	computeDirty();
+	renderRings();
+	movedOnMap(ids);
+	refreshClasses();
+	renderInspector();
+	renderToolbar();
+	scheduleDraft();
+}
+function pushUndo(label, before, after) {
+	undoStack.push({ label, before, after });
+	if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+	redoStack = [];
+}
+
+// ------------------------------------------------------------------ draft
+function scheduleDraft() {
+	clearTimeout(draftTimer);
+	draftTimer = setTimeout(() => {
+		try {
+			if (hasChanges()) localStorage.setItem(DRAFT_KEY, JSON.stringify({ version, savedAt: Date.now(), nodes: nodes.map(toWire) }));
+			else localStorage.removeItem(DRAFT_KEY);
+		} catch (e) { /* storage blocked or full: the draft is only a convenience */ }
+	}, 700);
+}
+function readDraft() {
+	try { return JSON.parse(localStorage.getItem(DRAFT_KEY) || "null"); } catch (e) { return null; }
+}
+function dropDraft() {
+	try { localStorage.removeItem(DRAFT_KEY); } catch (e) { /* nothing to drop */ }
+}
+function offerDraft() {
+	const draft = readDraft();
+	if (!draft || !Array.isArray(draft.nodes)) return;
+	const sameBase = draft.version === version;
+	openModal(`<h2>Restore unsaved changes?</h2>
+		<p>This browser kept unsaved editor changes from ${esc(new Date(draft.savedAt).toLocaleString())}.</p>
+		${sameBase ? "" : `<p class="note warn">The tree files have changed since then (another save or a hand edit). Restoring puts your draft over them: saving it would undo those changes.</p>`}
+		<div class="actions"><button class="btn danger" id="draft-drop">Throw away</button><button class="btn" id="draft-later">Not now</button><button class="btn primary" id="draft-restore">Restore</button></div>`);
+	$("draft-drop").onclick = () => { dropDraft(); closeModal(); };
+	$("draft-later").onclick = closeModal;
+	$("draft-restore").onclick = () => {
+		closeModal();
+		const ids = new Set(nodes.map(n => n.id).concat(draft.nodes.map(n => n.id)));
+		edit("restore draft", [...ids], () => { nodes = draft.nodes.map(fromWire); });
+		showToast("Draft restored.");
+	};
+}
+
+// ------------------------------------------------------------------ render
+function arcOrbit(na, nb) {
+	if (na.ox !== null && na.ox === nb.ox && na.oy === nb.oy
+		&& Math.abs(Math.hypot(na.x - na.ox, na.y - na.oy) - Math.hypot(nb.x - nb.ox, nb.y - nb.oy)) < 1) return [na.ox, na.oy];
+	for (const [x, y] of [[na, nb], [nb, na]]) {
+		if (x.ox !== null && (x.ox !== 0 || x.oy !== 0)
+			&& Math.abs(Math.hypot(x.x - x.ox, x.y - x.oy) - Math.hypot(y.x - x.ox, y.y - x.oy)) < 1) return [x.ox, x.oy];
+	}
+	return null;
+}
+/** Same drawing as the planner: a link along a circle is an arc, the rest are straight. */
+function edgePath(na, nb) {
+	const o = arcOrbit(na, nb);
+	if (o) {
+		const r = Math.hypot(na.x - o[0], na.y - o[1]);
+		let d = Math.atan2(nb.y - o[1], nb.x - o[0]) - Math.atan2(na.y - o[1], na.x - o[0]);
+		d = Math.atan2(Math.sin(d), Math.cos(d));
+		return `M${na.x},${na.y}A${r},${r} 0 0 ${d > 0 ? 1 : 0} ${nb.x},${nb.y}`;
+	}
+	return `M${na.x},${na.y}L${nb.x},${nb.y}`;
+}
+function glyphFor(n) {
+	if (n.icon && glyphs.includes(n.icon)) return n.icon;
+	const g = TYPE_GLYPH[n.type];
+	return g && glyphs.includes(g) ? g : null;
+}
+/** Cluster rings: every orbit centre other than the tree centre whose circle is small enough to be a cluster. */
+function ringsOf() {
+	const rings = new Map();
+	nodes.forEach(n => {
+		if (n.ox === null || (n.ox === 0 && n.oy === 0)) return;
+		const key = n.ox + "," + n.oy;
+		const ring = rings.get(key) || { key, x: n.ox, y: n.oy, r: 0, ids: [] };
+		ring.r = Math.max(ring.r, Math.hypot(n.x - n.ox, n.y - n.oy));
+		ring.ids.push(n.id);
+		rings.set(key, ring);
+	});
+	return [...rings.values()].filter(r => r.r > 0 && r.r <= MAX_RING_RADIUS);
+}
+
+function render() {
+	const edges = $("edges"), hits = $("edge-hits"), nodeLayer = $("nodes");
+	edges.textContent = ""; hits.textContent = ""; nodeLayer.textContent = "";
+	nodeEls = new Map(); edgeEls = new Map();
+	renderRings();
+
+	adj.forEach((set, a) => set.forEach(b => {
+		if (a > b) return;
+		const na = byId.get(a), nb = byId.get(b);
+		const d = edgePath(na, nb);
+		const isSel = selectedEdge && edgeKey(selectedEdge[0], selectedEdge[1]) === edgeKey(a, b);
+		const path = svgEl("path", { d, class: "edge" + (isSel ? " sel" : "") + (na.type === "START" || nb.type === "START" ? " start" : "") }, edges);
+		const hit = svgEl("path", { d, class: "edge-hit", "data-a": a, "data-b": b }, hits);
+		edgeEls.set(edgeKey(a, b), { path, hit });
+	}));
+
+	nodes.forEach(n => {
+		const r = TYPE_RADIUS[n.type] || 8;
+		const g = svgEl("g", { class: "node", "data-id": n.id, transform: `translate(${n.x},${n.y})` }, nodeLayer);
+		svgEl("circle", { class: "hit", r: Math.max(r, 9 / view.s) }, g);
+		svgEl("circle", { class: "halo", r: r + 5 }, g);
+		svgEl("circle", { class: "body", r, fill: TYPE_COLOR[n.type] || "#888" }, g);
+		const glyph = glyphFor(n);
+		if (glyph && r >= 12) svgEl("use", { class: "glyph", href: "#icon-" + glyph, x: -r * 0.62, y: -r * 0.62, width: r * 1.24, height: r * 1.24 }, g);
+		const label = svgEl("text", { class: "lbl" + (MAJOR_TYPES.has(n.type) ? "" : " minor"), y: r + 4, dy: "1em" }, g);
+		label.textContent = n.name;
+		const idLabel = svgEl("text", { class: "idl", y: -r - 4 }, g);
+		idLabel.textContent = n.id;
+		nodeEls.set(n.id, g);
+	});
+	refreshClasses();
+	applyView();
+}
+
+function renderRings() {
+	const rings = $("rings");
+	rings.textContent = "";
+	ringsOf().forEach(ring => {
+		svgEl("circle", { class: "ring-disc", cx: ring.x, cy: ring.y, r: Math.max(8, ring.r - 24), "data-ring": ring.key }, rings);
+		svgEl("circle", { class: "ring-track", cx: ring.x, cy: ring.y, r: ring.r }, rings);
+	});
+}
+
+/** Selection, search, link source and change markers: classes only, no rebuild. */
+function refreshClasses() {
+	nodeEls.forEach((g, id) => {
+		const c = g.classList;
+		c.toggle("sel", selection.has(id));
+		c.toggle("match", search.set.has(id));
+		c.toggle("src", id === linkSource);
+		c.toggle("changed", dirty.changed.has(id));
+		c.toggle("added", dirty.added.has(id));
+		c.toggle("unreachable", unreachable.has(id));
+	});
+	edgeEls.forEach(({ path }, key) => path.classList.toggle("sel", !!selectedEdge && edgeKey(selectedEdge[0], selectedEdge[1]) === key));
+	$("st-sel").textContent = selection.size ? selection.size + " selected" : (selectedEdge ? "link " + selectedEdge.join(" - ") : "");
+}
+
+/** Moves the drawn nodes and their links during a drag, without rebuilding the map. */
+function movedOnMap(ids) {
+	const touched = new Set();
+	ids.forEach(id => {
+		const n = byId.get(id), g = nodeEls.get(id);
+		if (g) g.setAttribute("transform", `translate(${n.x},${n.y})`);
+		(adj.get(id) || []).forEach(o => touched.add(edgeKey(id, o)));
+	});
+	touched.forEach(key => {
+		const el = edgeEls.get(key);
+		if (!el) return;
+		const [a, b] = key.split("-").map(Number);
+		const d = edgePath(byId.get(a), byId.get(b));
+		el.path.setAttribute("d", d); el.hit.setAttribute("d", d);
+	});
+}
+
+function applyView() {
+	viewport.setAttribute("transform", `translate(${view.tx},${view.ty}) scale(${view.s})`);
+	viewport.style.setProperty("--k", 1 / view.s);
+	svg.classList.toggle("z1", view.s < 0.22);
+	svg.classList.toggle("z2", view.s >= 0.22 && view.s < 0.9);
+	svg.classList.toggle("show-ids", showIds);
+	$("st-zoom").textContent = Math.round(view.s * 100) + "%";
+	clearTimeout(applyView.timer);
+	applyView.timer = setTimeout(() => {
+		// a node stays easy to hit when zoomed far out
+		nodeEls.forEach((g, id) => {
+			const n = byId.get(id);
+			if (n) g.firstChild.setAttribute("r", Math.max(TYPE_RADIUS[n.type] || 8, 9 / view.s));
+		});
+	}, 120);
+}
+
+function renderToolbar() {
+	const c = $("changes");
+	const parts = [];
+	if (dirty.changed.size) parts.push(dirty.changed.size + " changed");
+	if (dirty.added.size) parts.push(dirty.added.size + " new");
+	if (dirty.removed.length) parts.push(dirty.removed.length + " removed");
+	c.textContent = parts.length ? parts.join(" · ") : "No changes";
+	c.classList.toggle("dirty", parts.length > 0);
+	$("undo").disabled = !undoStack.length;
+	$("redo").disabled = !redoStack.length;
+	$("undo").title = undoStack.length ? "Undo " + undoStack[undoStack.length - 1].label + " (Ctrl+Z)" : "Undo (Ctrl+Z)";
+	$("redo").title = redoStack.length ? "Redo " + redoStack[redoStack.length - 1].label + " (Ctrl+Y)" : "Redo (Ctrl+Y)";
+	document.querySelectorAll("[data-tool]").forEach(b => b.classList.toggle("on", b.dataset.tool === tool));
+	const stage = $("stage");
+	stage.classList.toggle("tool-select", tool === "select");
+	stage.classList.toggle("tool-link", tool === "link");
+	stage.classList.toggle("tool-add", tool === "add");
+	$("st-hint").textContent = {
+		select: "Drag nodes or a ring to move them · Shift+drag to box-select · Alt+click to link to the selected node · Del removes",
+		link: linkSource === null ? "Click the node to link from" : "Click nodes to link or unlink them to " + nodeLabel(byId.get(linkSource)) + " · Shift keeps this node · Esc stops",
+		add: selection.size === 1 ? "Click empty space: a copy of " + nodeLabel(byId.get([...selection][0])) + ", linked to it" : "Click empty space to add a node (select one first to copy it and link to it)",
+	}[tool];
+}
+
+function renderLegend() {
+	$("legend").innerHTML = Object.keys(TYPE_COLOR).map(t => `<div><i style="background:${TYPE_COLOR[t]}"></i>${t}</div>`).join("")
+		+ `<div><i style="border:2px dashed var(--changed)"></i>changed</div><div><i style="border:2px solid var(--added)"></i>new</div><div><i style="border:2px solid var(--danger)"></i>unreachable</div>`;
+}
+
+// ------------------------------------------------------------------ view
+function screenToWorld(sx, sy) { return { x: (sx - view.tx) / view.s, y: (sy - view.ty) / view.s }; }
+function pointer(e) {
+	const r = svg.getBoundingClientRect();
+	return { sx: e.clientX - r.left, sy: e.clientY - r.top };
+}
+function zoomAt(sx, sy, factor) {
+	const s = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, view.s * factor));
+	const w = screenToWorld(sx, sy);
+	view.s = s; view.tx = sx - w.x * s; view.ty = sy - w.y * s;
+	applyView();
+}
+function fitTo(list, maxZoom) {
+	if (!list.length) return;
+	const r = svg.getBoundingClientRect();
+	const xs = list.map(n => n.x), ys = list.map(n => n.y);
+	const minX = Math.min(...xs) - 60, maxX = Math.max(...xs) + 60, minY = Math.min(...ys) - 60, maxY = Math.max(...ys) + 60;
+	const s = Math.min(maxZoom || ZOOM_MAX, (r.width - 40) / Math.max(1, maxX - minX), (r.height - 60) / Math.max(1, maxY - minY));
+	view.s = Math.max(ZOOM_MIN, s);
+	view.tx = r.width / 2 - ((minX + maxX) / 2) * view.s;
+	view.ty = (r.height - 24) / 2 - ((minY + maxY) / 2) * view.s;
+	applyView();
+}
+function centreOn(n) {
+	const r = svg.getBoundingClientRect();
+	if (view.s < 0.6) view.s = 0.9;
+	view.tx = r.width / 2 - n.x * view.s;
+	view.ty = r.height / 2 - n.y * view.s;
+	applyView();
+}
+
+// ------------------------------------------------------------------ pointer
+function nodeIdOf(target) {
+	const g = target.closest && target.closest(".node");
+	return g ? Number(g.dataset.id) : null;
+}
+function snapped(v) { return snapOn ? Math.round(v / SNAP) * SNAP : v; }
+
+svg.addEventListener("wheel", e => {
+	e.preventDefault();
+	const p = pointer(e);
+	zoomAt(p.sx, p.sy, e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP);
+}, { passive: false });
+
+svg.addEventListener("pointerdown", e => {
+	if (e.button !== 0 && e.button !== 1) return;
+	const p = pointer(e), w = screenToWorld(p.sx, p.sy);
+	const id = nodeIdOf(e.target);
+	const ring = e.target.dataset && e.target.dataset.ring;
+	const edgeA = e.target.dataset && e.target.dataset.a;
+	svg.setPointerCapture(e.pointerId);
+
+	if (e.button === 1) { startPan(p); return; }
+
+	if (id !== null) {
+		if (tool === "link") { linkClick(id, e.shiftKey); drag = { kind: "none" }; return; }
+		if (tool === "select" && e.altKey && selection.size === 1 && !selection.has(id)) {
+			toggleLink([...selection][0], id); drag = { kind: "none" }; return;
+		}
+		if (e.shiftKey) {
+			if (selection.has(id)) selection.delete(id); else selection.add(id);
+			selectedEdge = null; selectionChanged(); drag = { kind: "none" }; return;
+		}
+		if (!selection.has(id)) { selection = new Set([id]); selectedEdge = null; selectionChanged(); }
+		if (tool === "add") { drag = { kind: "none" }; return; }
+		startMove([...selection], w);
+		drag.clicked = id;
+		return;
+	}
+	if (ring && tool === "select") {
+		const ids = ringsOf().find(r => r.key === ring)?.ids || [];
+		if (e.shiftKey) ids.forEach(i => selection.add(i)); else selection = new Set(ids);
+		selectedEdge = null; selectionChanged();
+		startMove([...selection], w);
+		return;
+	}
+	if (edgeA !== undefined && tool === "select") {
+		selectedEdge = [Number(e.target.dataset.a), Number(e.target.dataset.b)];
+		selection.clear(); selectionChanged(); drag = { kind: "none" }; return;
+	}
+	if (tool === "add") { addNodeAt(w); drag = { kind: "none" }; return; }
+	if (tool === "select" && e.shiftKey) { drag = { kind: "box", x0: p.sx, y0: p.sy, x1: p.sx, y1: p.sy }; return; }
+	startPan(p);
+});
+
+function startPan(p) {
+	drag = { kind: "pan", sx: p.sx, sy: p.sy, tx: view.tx, ty: view.ty, moved: false };
+	$("stage").classList.add("panning");
+}
+
+/** Dragging nodes also moves a ring's centre when the whole ring moves, so its links stay arcs. */
+function startMove(ids, w) {
+	const moving = new Set(ids);
+	const ringCentres = new Set();
+	const byCentre = new Map();
+	nodes.forEach(n => { if (n.ox !== null) { const k = n.ox + "," + n.oy; (byCentre.get(k) || byCentre.set(k, []).get(k)).push(n.id); } });
+	byCentre.forEach((members, k) => { if (members.every(m => moving.has(m)) && members.some(m => moving.has(m))) ringCentres.add(k); });
+	drag = {
+		kind: "move", ids, start: w, moved: false,
+		from: new Map(ids.map(id => { const n = byId.get(id); return [id, { x: n.x, y: n.y, ox: n.ox, oy: n.oy, ring: n.ox !== null && ringCentres.has(n.ox + "," + n.oy) }]; })),
+		before: capture(ids),
+	};
+}
+
+svg.addEventListener("pointermove", e => {
+	const p = pointer(e), w = screenToWorld(p.sx, p.sy);
+	$("st-pos").textContent = `x ${Math.round(w.x)}  y ${Math.round(w.y)}`;
+	if (tool === "link" && linkSource !== null && byId.has(linkSource)) {
+		const s = byId.get(linkSource), line = $("link-preview");
+		line.setAttribute("x1", s.x); line.setAttribute("y1", s.y); line.setAttribute("x2", w.x); line.setAttribute("y2", w.y);
+		line.setAttribute("visibility", "visible");
+	}
+	if (!drag) return;
+	if (drag.kind === "pan") {
+		if (Math.abs(p.sx - drag.sx) + Math.abs(p.sy - drag.sy) > 3) drag.moved = true;
+		view.tx = drag.tx + (p.sx - drag.sx); view.ty = drag.ty + (p.sy - drag.sy);
+		applyView();
+	} else if (drag.kind === "move") {
+		let dx = w.x - drag.start.x, dy = w.y - drag.start.y;
+		if (!drag.moved && Math.hypot(dx, dy) * view.s < 3) return;
+		if (!drag.moved) { drag.moved = true; $("stage").classList.add("dragging"); }
+		if (snapOn) {
+			const first = drag.from.get(drag.ids[0]);
+			dx = snapped(first.x + dx) - first.x; dy = snapped(first.y + dy) - first.y;
+		}
+		drag.ids.forEach(id => {
+			const n = byId.get(id), f = drag.from.get(id);
+			n.x = round1(f.x + dx); n.y = round1(f.y + dy);
+			if (f.ring) { n.ox = round1(f.ox + dx); n.oy = round1(f.oy + dy); }
+		});
+		movedOnMap(drag.ids);
+	} else if (drag.kind === "box") {
+		drag.x1 = p.sx; drag.y1 = p.sy;
+		const b = $("box");
+		b.style.display = "block";
+		b.style.left = Math.min(drag.x0, drag.x1) + "px"; b.style.top = Math.min(drag.y0, drag.y1) + "px";
+		b.style.width = Math.abs(drag.x1 - drag.x0) + "px"; b.style.height = Math.abs(drag.y1 - drag.y0) + "px";
+	}
+});
+
+svg.addEventListener("pointerup", e => {
+	const d = drag;
+	drag = null;
+	$("stage").classList.remove("panning", "dragging");
+	if (!d) return;
+	if (d.kind === "pan" && !d.moved && tool !== "add") {
+		// a click on empty space
+		if (tool === "link") linkSource = null;
+		selection.clear(); selectedEdge = null; selectionChanged();
+	} else if (d.kind === "move" && d.moved) {
+		pushUndo(d.ids.length === 1 ? "move " + nodeLabel(byId.get(d.ids[0])) : "move " + d.ids.length + " nodes", d.before, capture(d.ids));
+		afterMove(d.ids);
+	} else if (d.kind === "move" && d.clicked !== undefined && selection.size > 1) {
+		selection = new Set([d.clicked]); selectedEdge = null; selectionChanged();
+	} else if (d.kind === "box") {
+		$("box").style.display = "none";
+		const a = screenToWorld(Math.min(d.x0, d.x1), Math.min(d.y0, d.y1)), b = screenToWorld(Math.max(d.x0, d.x1), Math.max(d.y0, d.y1));
+		nodes.forEach(n => { if (n.x >= a.x && n.x <= b.x && n.y >= a.y && n.y <= b.y) selection.add(n.id); });
+		selectedEdge = null; selectionChanged();
+	}
+});
+svg.addEventListener("pointerleave", () => { $("link-preview").setAttribute("visibility", "hidden"); });
+
+function selectionChanged() {
+	refreshClasses();
+	renderInspector();
+	renderToolbar();
+}
+
+// ------------------------------------------------------------------ actions
+function toggleLink(a, b) {
+	const na = byId.get(a), nb = byId.get(b);
+	if (!na || !nb || a === b) return false;
+	if (linked(a, b)) return edit(`unlink ${a} - ${b}`, [a, b], () => removeLink(a, b));
+	return edit(`link ${a} - ${b}`, [a, b], () => addLink(a, b));
+}
+function linkClick(id, keepSource) {
+	if (linkSource === null || !byId.has(linkSource)) {
+		linkSource = id;
+		refreshClasses(); renderToolbar();
+		return;
+	}
+	if (id === linkSource) { linkSource = null; $("link-preview").setAttribute("visibility", "hidden"); refreshClasses(); renderToolbar(); return; }
+	const source = linkSource;
+	toggleLink(source, id);
+	linkSource = keepSource ? source : id;
+	selection = new Set([id]);
+	refreshClasses(); renderInspector(); renderToolbar();
+}
+
+function addNodeAt(w) {
+	const template = selection.size === 1 ? byId.get([...selection][0]) : null;
+	let near = template;
+	if (!near) {
+		let best = Infinity;
+		nodes.forEach(n => { const d = Math.hypot(n.x - w.x, n.y - w.y); if (d < best) { best = d; near = n; } });
+	}
+	const file = near ? near.file : "Custom.xml";
+	const id = nextFreeId(file);
+	const node = {
+		id, file, name: template ? template.name : "New Node", sector: near ? near.sector : "Custom",
+		type: template && template.type !== "START" ? template.type : "SMALL", tier: template ? template.tier : 0,
+		cost: template && template.type !== "START" ? template.cost : 1,
+		x: round1(snapped(w.x)), y: round1(snapped(w.y)), ox: null, oy: null,
+		effect: template ? template.effect : "", skillId: 0, skillLevel: "", icon: template ? template.icon : "",
+		description: template && !template.skillId ? template.description : "", requires: []
+	};
+	const ids = template ? [template.id] : [];
+	edit("add " + id, ids, () => {
+		nodes.push(node);
+		byId.set(id, node); adj.set(id, new Set());
+		if (template) addLink(template.id, id);
+		return [id];
+	});
+	selection = new Set([id]);
+	selectionChanged();
+}
+
+function deleteSelection() {
+	if (selectedEdge && !selection.size) {
+		const [a, b] = selectedEdge;
+		edit(`unlink ${a} - ${b}`, [a, b], () => removeLink(a, b));
+		selectedEdge = null; selectionChanged();
+		return;
+	}
+	if (!selection.size) return;
+	const ids = [...selection];
+	const owners = ids.reduce((sum, id) => sum + (allocations[id] || 0), 0);
+	if (owners && !confirm(`${owners} character slot(s) have ${ids.length === 1 ? "this node" : "these nodes"} allocated. When you save, they lose ${ids.length === 1 ? "it" : "them"} (and anything that only connects through ${ids.length === 1 ? "it" : "them"}) and get the points back.\n\nRemove anyway?`)) return;
+	const touched = new Set(ids);
+	ids.forEach(id => (adj.get(id) || []).forEach(o => touched.add(o)));
+	edit(ids.length === 1 ? "remove " + nodeLabel(byId.get(ids[0])) : "remove " + ids.length + " nodes", [...touched], () => {
+		const gone = new Set(ids);
+		nodes = nodes.filter(n => !gone.has(n.id));
+		nodes.forEach(n => { n.requires = n.requires.filter(r => !gone.has(r)); });
+	});
+	selection.clear();
+	selectionChanged();
+}
+
+function duplicateSelection() {
+	if (!selection.size) return;
+	const ids = [...selection];
+	const map = new Map(), taken = new Set();
+	ids.forEach(id => { const nid = nextFreeId(byId.get(id).file, taken); taken.add(nid); map.set(id, nid); });
+	edit("duplicate " + ids.length + " node(s)", [], () => {
+		ids.forEach(id => {
+			const src = byId.get(id), copy = clone(src);
+			copy.id = map.get(id);
+			copy.x = round1(src.x + DUPLICATE_OFFSET); copy.y = round1(src.y + DUPLICATE_OFFSET);
+			if (copy.ox !== null) { copy.ox = round1(copy.ox + DUPLICATE_OFFSET); copy.oy = round1(copy.oy + DUPLICATE_OFFSET); }
+			copy.requires = src.requires.filter(r => map.has(r)).map(r => map.get(r)); // links inside the copied group only
+			nodes.push(copy);
+		});
+		return [...map.values()];
+	});
+	selection = new Set(map.values());
+	selectionChanged();
+	showToast("Duplicated " + ids.length + " node(s). Drag them where they belong.");
+}
+
+function nudge(dx, dy) {
+	if (!selection.size) return;
+	const ids = [...selection];
+	const moving = new Set(ids);
+	const whole = new Set();
+	const byCentre = new Map();
+	nodes.forEach(n => { if (n.ox !== null) { const k = n.ox + "," + n.oy; (byCentre.get(k) || byCentre.set(k, []).get(k)).push(n.id); } });
+	byCentre.forEach((members, k) => { if (members.every(m => moving.has(m))) whole.add(k); });
+	const before = capture(ids);
+	ids.forEach(id => {
+		const n = byId.get(id);
+		const ring = n.ox !== null && whole.has(n.ox + "," + n.oy);
+		n.x = round1(n.x + dx); n.y = round1(n.y + dy);
+		if (ring) { n.ox = round1(n.ox + dx); n.oy = round1(n.oy + dy); }
+	});
+	pushUndo("nudge", before, capture(ids));
+	afterMove(ids);
+}
+
+// ------------------------------------------------------------------ search
+function nodeText(n) {
+	return (n.id + " " + n.name + " " + n.sector + " " + n.effect + " " + n.icon + " " + n.type + " " + n.file + " " + n.description).toLowerCase();
+}
+function applySearch(q) {
+	search.q = q.trim().toLowerCase();
+	renderSearch();
+	refreshClasses();
+	if (search.matches.length && search.matches.length <= 3) centreOn(byId.get(search.matches[0]));
+}
+function renderSearch() {
+	search.matches = [];
+	if (search.q) {
+		const terms = search.q.split(/\s+/);
+		nodes.forEach(n => { const t = nodeText(n); if (terms.every(term => t.includes(term))) search.matches.push(n.id); });
+	}
+	search.set = new Set(search.matches);
+	search.cursor = -1;
+	$("search-count").textContent = search.q ? search.matches.length + " found" : "";
+	$("search-select").disabled = !search.matches.length;
+}
+
+// ------------------------------------------------------------------ inspector
+function focusKey(el) {
+	if (!el || !el.closest || !el.closest("#inspector")) return null;
+	if (el.dataset.f) return `[data-f="${el.dataset.f}"]`;
+	if (el.dataset.fxKey !== undefined) return `[data-fx-key="${el.dataset.fxKey}"]`;
+	if (el.dataset.fxVal !== undefined) return `[data-fx-val="${el.dataset.fxVal}"]`;
+	return el.id ? "#" + el.id : null;
+}
+function renderInspector() {
+	const box = $("inspector");
+	const focused = focusKey(document.activeElement);
+	const scroll = box.scrollTop;
+	if (selection.size === 1) box.innerHTML = nodePane(byId.get([...selection][0]));
+	else if (selection.size > 1) box.innerHTML = multiPane();
+	else if (selectedEdge) box.innerHTML = edgePane();
+	else box.innerHTML = overviewPane();
+	box.scrollTop = scroll;
+	if (focused) {
+		const el = box.querySelector(focused);
+		if (el && !el.disabled) el.focus();
+	}
+	if (selection.size === 1) lookupSkill(byId.get([...selection][0]));
+}
+
+function options(list, current, blankLabel) {
+	return (blankLabel !== undefined ? `<option value="">${esc(blankLabel)}</option>` : "")
+		+ list.map(v => `<option value="${esc(v)}"${v === current ? " selected" : ""}>${esc(v)}</option>`).join("");
+}
+function datalists() {
+	return `<datalist id="dl-sectors">${sectors.map(s => `<option value="${esc(s)}">`).join("")}</datalist>`
+		+ `<datalist id="dl-keys">${[...effectKeyUse.entries()].sort().map(([k, c]) => `<option value="${esc(k)}">${c} node(s)</option>`).join("")}</datalist>`;
+}
+
+function nodePane(n) {
+	const isNew = !original.has(n.id);
+	const fx = parseEffect(n.effect);
+	const owners = allocations[n.id] || 0;
+	const links = [...(adj.get(n.id) || [])].sort((a, b) => a - b);
+	const unknownKeys = fx.rows.map(r => r.key.split("@")[0]).filter(k => k && (effectKeyUse.get(k) || 0) <= 1 && !capKeys.includes(k));
+	const glyph = glyphFor(n);
+	return `${datalists()}
+	<h2>${esc(n.name || "(no name)")}</h2>
+	<div class="sub">Node ${n.id} · ${esc(n.type)} · ${esc(n.file)}
+		${isNew ? '<span class="pill" style="color:var(--added)">new</span>' : dirty.changed.has(n.id) ? '<span class="pill" style="color:var(--changed)">changed</span>' : ""}</div>
+	<div class="note">${owners ? `Allocated on ${owners} character slot(s).` : "Nobody has allocated it."}${unreachable.has(n.id) ? ' <span class="note err">No starting point leads here.</span>' : ""}</div>
+
+	<h3>Node</h3>
+	<div class="grid2">
+		<label class="field"><span>Id${isNew ? "" : " (fixed: players' allocations use it)"}</span><input type="number" data-f="id" value="${n.id}" ${isNew ? "" : "disabled"}></label>
+		<label class="field"><span>Type</span><select data-f="type">${options(types, n.type)}</select></label>
+		<label class="field wide"><span>Name</span><input type="text" data-f="name" value="${esc(n.name)}" maxlength="80"></label>
+		<label class="field"><span>Sector</span><input type="text" data-f="sector" value="${esc(n.sector)}" list="dl-sectors" maxlength="40"></label>
+		<label class="field"><span>File</span><select data-f="file">${options(files, n.file)}<option value="__new">New file...</option></select></label>
+		<label class="field"><span>Cost (points)</span><input type="number" data-f="cost" value="${n.cost}" min="0" max="100"></label>
+		<label class="field"><span>Tier</span><input type="number" data-f="tier" value="${n.tier}" min="0"></label>
+	</div>
+
+	<h3>Effects</h3>
+	<div id="fx-rows">${fx.rows.map((r, i) => `<div class="fx-row"><input type="text" data-fx-key="${i}" value="${esc(r.key)}" list="dl-keys" placeholder="PATK_PCT"><input type="text" data-fx-val="${i}" value="${esc(r.val)}" placeholder="1.5"><button class="btn small" data-fx-del="${i}" title="Remove this effect">&times;</button></div>`).join("")}</div>
+	<div class="row"><button class="btn small" data-act="fx-add">+ Add effect</button></div>
+	<label class="field" style="margin-top:6px"><span>As text (KEY:value;KEY:value)</span><input type="text" data-f="effect" value="${esc(n.effect)}"></label>
+	${fx.errors.map(e => `<div class="note err">${esc(e)}</div>`).join("")}
+	${unknownKeys.length ? `<div class="note warn">Only this node uses ${esc([...new Set(unknownKeys)].join(", "))}: make sure the server knows the key, or it does nothing.</div>` : ""}
+	<div class="note">Conditional: KEY@CONDITION, e.g. PDEF_PCT@HEAVY. Conditions: ${esc(conditions.join(", "))}.</div>
+
+	<h3>Skill</h3>
+	<div class="grid2">
+		<label class="field"><span>Skill id (0 = none)</span><input type="number" data-f="skillId" value="${n.skillId}" min="0"></label>
+		<label class="field"><span>Level (number or auto)</span><input type="text" data-f="skillLevel" value="${esc(n.skillId > 0 ? (n.skillLevel || "1") : "")}" ${n.skillId > 0 ? "" : "disabled"} placeholder="1 or auto"></label>
+	</div>
+	<div class="note" id="skill-info">${n.skillId > 0 ? "Looking up skill..." : "This node grants no skill."}</div>
+
+	<h3>Look</h3>
+	<div class="grid2">
+		<label class="field"><span>Icon ${glyph ? `<svg class="icon-preview" viewBox="0 0 24 24"><use href="#icon-${esc(glyph)}"/></svg>` : ""}</span>
+			<select data-f="icon">${options(glyphs, n.icon, "(by type / stat)")}${n.icon && !glyphs.includes(n.icon) ? `<option value="${esc(n.icon)}" selected>${esc(n.icon)} (unknown)</option>` : ""}</select></label>
+		<div></div>
+		<label class="field wide"><span>Description (blank = made from the effects: "${esc(autoDescription(n.effect))}")</span><textarea data-f="description" maxlength="600">${esc(n.description)}</textarea></label>
+	</div>
+
+	<h3>Position</h3>
+	<div class="grid2">
+		<label class="field"><span>X</span><input type="number" step="0.1" data-f="x" value="${n.x}"></label>
+		<label class="field"><span>Y</span><input type="number" step="0.1" data-f="y" value="${n.y}"></label>
+		<label class="field"><span>Orbit centre X</span><input type="number" step="0.1" data-f="ox" value="${n.ox ?? ""}" placeholder="none"></label>
+		<label class="field"><span>Orbit centre Y</span><input type="number" step="0.1" data-f="oy" value="${n.oy ?? ""}" placeholder="none"></label>
+	</div>
+	<div class="note">Links between nodes on the same circle (same orbit centre and distance) are drawn as arcs. Dragging a whole ring moves its centre too.</div>
+	<div class="row">
+		${n.ox !== null ? '<button class="btn small" data-act="snap-ring" title="Move this node onto its ring, at the distance of the other nodes on it">Snap onto ring</button><button class="btn small" data-act="select-ring">Select ring</button><button class="btn small" data-act="clear-orbit">Clear orbit</button>' : ""}
+	</div>
+
+	<h3>Links (${links.length})</h3>
+	<ul class="links">${links.map(id => { const m = byId.get(id); return `<li><a data-goto="${id}">${id} · ${esc(m.name)}</a><small>${esc(m.type)}</small><button class="btn small" data-unlink="${id}" title="Remove this link">&times;</button></li>`; }).join("") || '<li class="note">No links.</li>'}</ul>
+	<div class="row" style="margin-top:6px"><input type="number" id="link-to" placeholder="Link to node id" style="flex:1"><button class="btn small" data-act="link-to">Link</button></div>
+	${n.type === "START" ? '<div class="note">A START node is a starting point: its neighbours list it, it lists none.</div>' : ""}
+
+	<h3>Actions</h3>
+	<div class="row">
+		<button class="btn small" data-act="centre">Centre</button>
+		<button class="btn small" data-act="select-linked">Select linked</button>
+		<button class="btn small" data-act="duplicate">Duplicate</button>
+		<button class="btn small danger" data-act="delete">Remove node</button>
+	</div>`;
+}
+
+function multiPane() {
+	const list = [...selection].map(id => byId.get(id));
+	const count = (key) => { const m = new Map(); list.forEach(n => m.set(n[key], (m.get(n[key]) || 0) + 1)); return [...m.entries()].map(([k, c]) => `${esc(k)} ×${c}`).join(", "); };
+	const owners = list.reduce((s, n) => s + (allocations[n.id] || 0), 0);
+	return `${datalists()}
+	<h2>${list.length} nodes selected</h2>
+	<div class="note">Types: ${count("type")}</div>
+	<div class="note">Sectors: ${count("sector")}</div>
+	<div class="note">Files: ${count("file")}</div>
+	<div class="note">${owners ? owners + " allocation(s) by players." : "Nobody has allocated them."}</div>
+
+	<h3>Set on all of them</h3>
+	<div class="note">Leave a field empty to keep each node's own value.</div>
+	<div class="grid2">
+		<label class="field wide"><span>Name</span><input type="text" id="m-name" maxlength="80"></label>
+		<label class="field"><span>Type</span><select id="m-type">${options(types, null, "(keep)")}</select></label>
+		<label class="field"><span>Cost</span><input type="number" id="m-cost" min="0" max="100"></label>
+		<label class="field"><span>Sector</span><input type="text" id="m-sector" list="dl-sectors"></label>
+		<label class="field"><span>File</span><select id="m-file">${options(files, null, "(keep)")}</select></label>
+		<label class="field"><span>Icon</span><select id="m-icon">${options(glyphs, null, "(keep)")}<option value="__none">(none: by type / stat)</option></select></label>
+		<label class="field"><span>Tier</span><input type="number" id="m-tier" min="0"></label>
+		<label class="field wide"><span>Effects (replace, KEY:value;KEY:value)</span><input type="text" id="m-effect" list="dl-keys"></label>
+		<label class="field wide"><span>Multiply every effect value by (e.g. 1.5 = +50%, keystone values too)</span><input type="number" step="0.05" id="m-scale"></label>
+	</div>
+	<div class="row"><button class="btn primary" data-act="multi-apply">Apply to ${list.length} nodes</button></div>
+
+	<h3>Actions</h3>
+	<div class="row">
+		<button class="btn small" data-act="fit-sel">Zoom to them</button>
+		<button class="btn small" data-act="select-linked">Add linked nodes</button>
+		<button class="btn small" data-act="chain" title="Link them one after another, in the order you picked them">Link as a chain</button>
+		<button class="btn small" data-act="unlink-among" title="Remove every link between two selected nodes">Unlink among them</button>
+		<button class="btn small" data-act="duplicate">Duplicate</button>
+		<button class="btn small danger" data-act="delete">Remove ${list.length} nodes</button>
+	</div>`;
+}
+
+function edgePane() {
+	const [a, b] = selectedEdge, na = byId.get(a), nb = byId.get(b);
+	return `<h2>Link</h2>
+	<ul class="links">
+		<li><a data-goto="${a}">${a} · ${esc(na.name)}</a><small>${esc(na.type)}</small></li>
+		<li><a data-goto="${b}">${b} · ${esc(nb.name)}</a><small>${esc(nb.type)}</small></li>
+	</ul>
+	<div class="row" style="margin-top:10px"><button class="btn danger" data-act="unlink-edge">Remove link <kbd>Del</kbd></button></div>`;
+}
+
+function overviewPane() {
+	const linkCount = [...adj.values()].reduce((s, set) => s + set.size, 0) / 2;
+	const errs = issues.filter(i => i.level === "err"), warns = issues.filter(i => i.level === "warn");
+	const changedList = [...dirty.added].map(id => ({ id, t: "new" })).concat([...dirty.changed].map(id => ({ id, t: "changed" })));
+	return `<h2>Passive tree</h2>
+	<div class="sub">${nodes.length} nodes · ${linkCount} links · ${files.length} files · ${sectors.length} sectors</div>
+
+	<h3>Changes</h3>
+	${hasChanges() ? `<ul class="issues">${changedList.slice(0, 200).map(c => `<li data-goto="${c.id}">${esc(nodeLabel(byId.get(c.id)))} <span class="pill">${c.t}</span></li>`).join("")}${dirty.removed.map(id => `<li>${id} <span class="pill">removed</span></li>`).join("")}</ul>
+		<div class="row" style="margin-top:6px"><button class="btn small danger" data-act="discard">Throw away all changes</button></div>` : '<div class="note">None yet. Changes stay in this browser until you save.</div>'}
+
+	<h3>Problems</h3>
+	${errs.length || warns.length ? `<ul class="issues">${errs.concat(warns).slice(0, 300).map(i => `<li ${i.id !== undefined ? `data-goto="${i.id}"` : ""} class="note ${i.level === "err" ? "err" : "warn"}">${esc(i.text)}</li>`).join("")}</ul>` : '<div class="note ok">None found.</div>'}
+
+	<h3>Files</h3>
+	<div class="row"><button class="btn small" data-act="reload-files" title="Load the tree files again, after editing them by hand">Load files again</button><a class="btn small" href="/passive-tree.html" target="_blank" rel="noopener">Open the planner</a></div>
+	<div class="note">Saving checks the tree, copies the old files to data/passivetree_backup, writes data/passivetree/*.xml and makes the tree live: online players' trees are rebuilt at once.</div>
+
+	<h3>How to</h3>
+	<table class="keys">
+		<tr><td>Click</td><td>Select a node, a link or a ring</td></tr>
+		<tr><td>Shift+click / Shift+drag</td><td>Add to the selection / box-select</td></tr>
+		<tr><td>Drag</td><td>Move the selected nodes (a whole ring moves with its centre); drag empty space to pan</td></tr>
+		<tr><td>Alt+click</td><td>Link or unlink a node to the selected one</td></tr>
+		<tr><td>L, then clicks</td><td>Link tool: link a path node by node (Shift keeps the first node)</td></tr>
+		<tr><td>N, then click</td><td>Add tool: a copy of the selected node, linked to it</td></tr>
+		<tr><td>Arrows</td><td>Nudge the selection (Shift: 10)</td></tr>
+		<tr><td>Del</td><td>Remove the selected nodes or link</td></tr>
+		<tr><td>Ctrl+D</td><td>Duplicate the selection</td></tr>
+		<tr><td>Ctrl+Z / Ctrl+Y</td><td>Undo / redo</td></tr>
+		<tr><td>Ctrl+S</td><td>Save</td></tr>
+		<tr><td>F / Esc</td><td>Fit the tree / clear the selection</td></tr>
+	</table>`;
+}
+
+async function lookupSkill(n) {
+	const info = $("skill-info");
+	if (!info || !n || n.skillId <= 0) return;
+	const id = n.skillId;
+	if (!skillCache.has(id)) {
+		const res = await api("skill?id=" + encodeURIComponent(id));
+		skillCache.set(id, res.ok ? res.data : null);
+	}
+	const data = skillCache.get(id);
+	const el = $("skill-info");
+	if (!el || !selection.has(n.id)) return;
+	if (!data) { el.className = "note err"; el.textContent = `Skill ${id} doesn't exist.`; return; }
+	const level = n.skillLevel === "auto" ? "auto" : Number(n.skillLevel || 1);
+	const bad = level !== "auto" && (!(level >= 1) || level > data.maxLevel);
+	el.className = "note " + (bad ? "err" : "ok");
+	el.textContent = `${data.name} (levels 1-${data.maxLevel}${data.passive ? ", passive" : ""})` + (bad ? ` - level ${n.skillLevel} doesn't exist` : level === "auto" ? " - the level follows the character level" : "");
+}
+
+/** Every field of the node pane: the change is one undo step. */
+function onNodeField(n, field, raw) {
+	const value = typeof raw === "string" ? raw.trim() : raw;
+	switch (field) {
+		case "id": {
+			const id = Number(value);
+			if (!Number.isInteger(id) || id <= 0) { showToast("The id must be a whole number above 0.", true); return renderInspector(); }
+			if (id === n.id) return;
+			if (byId.has(id)) { showToast(`Node ${id} already exists.`, true); return renderInspector(); }
+			if (original.has(id)) { showToast(`Id ${id} belonged to a node you removed: players who had it would get this one. Pick another.`, true); return renderInspector(); }
+			const old = n.id, neighbours = [...(adj.get(old) || [])];
+			edit(`change id ${old} to ${id}`, [old, ...neighbours], () => {
+				n.id = id;
+				nodes.forEach(m => { m.requires = m.requires.map(r => r === old ? id : r); });
+				return [id];
+			});
+			selection = new Set([id]);
+			return selectionChanged();
+		}
+		case "type": {
+			const neighbours = [...(adj.get(n.id) || [])];
+			edit(`type of ${n.id}`, [n.id, ...neighbours], () => setType(n, value) ? undefined : false);
+			return;
+		}
+		case "file":
+			if (value === "__new") {
+				const name = prompt("New file name (letters, digits, - and _), e.g. MySector.xml:", n.sector.replace(/[^A-Za-z0-9_-]/g, "") + ".xml");
+				if (!name) return renderInspector();
+				const fileName = /\.xml$/i.test(name) ? name : name + ".xml";
+				if (!/^[A-Za-z0-9_-]{1,64}\.xml$/i.test(fileName)) { showToast("Use letters, digits, - and _ only.", true); return renderInspector(); }
+				edit(`file of ${n.id}`, [n.id], () => { n.file = fileName; });
+				return;
+			}
+			edit(`file of ${n.id}`, [n.id], () => { n.file = value; });
+			return;
+		case "cost": case "tier": case "skillId": {
+			const v = value === "" ? 0 : Number(value);
+			if (!Number.isInteger(v) || v < 0) { showToast(`The ${field} must be a whole number, 0 or more.`, true); return renderInspector(); }
+			edit(`${field} of ${n.id}`, [n.id], () => {
+				n[field] = v;
+				if (field === "skillId") n.skillLevel = v > 0 ? (n.skillLevel || "1") : "";
+			});
+			return;
+		}
+		case "skillLevel": {
+			const v = value.toLowerCase();
+			if (v !== "auto" && !(Number.isInteger(Number(v)) && Number(v) >= 1)) { showToast('The level must be a number from 1, or "auto".', true); return renderInspector(); }
+			edit(`skill level of ${n.id}`, [n.id], () => { n.skillLevel = v; });
+			return;
+		}
+		case "x": case "y": {
+			const v = Number(value);
+			if (!isFinite(v) || value === "") { showToast("The position must be a number.", true); return renderInspector(); }
+			edit(`move ${n.id}`, [n.id], () => { n[field] = round1(v); });
+			return;
+		}
+		case "ox": case "oy": {
+			if (value === "") { edit(`orbit of ${n.id}`, [n.id], () => { n.ox = null; n.oy = null; }); return; }
+			const v = Number(value);
+			if (!isFinite(v)) { showToast("The orbit centre must be a number.", true); return renderInspector(); }
+			edit(`orbit of ${n.id}`, [n.id], () => {
+				n[field] = round1(v);
+				if (n.ox === null) n.ox = round1(n.x); // a centre needs both coordinates
+				if (n.oy === null) n.oy = round1(n.y);
+			});
+			return;
+		}
+		default:
+			edit(`${field} of ${n.id}`, [n.id], () => { n[field] = value; });
+	}
+}
+
+function readEffectRows() {
+	const rows = [];
+	document.querySelectorAll("[data-fx-key]").forEach(input => {
+		const i = input.dataset.fxKey;
+		rows.push({ key: input.value.trim().toUpperCase(), val: document.querySelector(`[data-fx-val="${i}"]`).value.trim() });
+	});
+	return rows;
+}
+
+$("inspector").addEventListener("change", e => {
+	const t = e.target;
+	const n = selection.size === 1 ? byId.get([...selection][0]) : null;
+	if (!n) return;
+	// Applied once the focus has moved on (Tab), so the redrawn pane can put it back where it went.
+	if (t.dataset.f) {
+		const field = t.dataset.f, value = t.value;
+		setTimeout(() => { if (byId.get(n.id) === n) onNodeField(n, field, value); }, 0);
+	} else if (t.dataset.fxKey !== undefined || t.dataset.fxVal !== undefined) {
+		const spec = effectSpec(readEffectRows());
+		setTimeout(() => { if (byId.get(n.id) === n) edit(`effects of ${n.id}`, [n.id], () => { n.effect = spec; }); }, 0);
+	}
+});
+
+$("inspector").addEventListener("click", e => {
+	const t = e.target.closest("[data-act],[data-goto],[data-unlink],[data-fx-del]");
+	if (!t) return;
+	const n = selection.size === 1 ? byId.get([...selection][0]) : null;
+	if (t.dataset.goto !== undefined) {
+		const id = Number(t.dataset.goto);
+		if (!byId.has(id)) return;
+		selection = new Set([id]); selectedEdge = null;
+		centreOn(byId.get(id)); selectionChanged();
+		return;
+	}
+	if (t.dataset.unlink !== undefined && n) { toggleLink(n.id, Number(t.dataset.unlink)); return; }
+	if (t.dataset.fxDel !== undefined && n) {
+		const rows = readEffectRows();
+		rows.splice(Number(t.dataset.fxDel), 1);
+		edit(`effects of ${n.id}`, [n.id], () => { n.effect = effectSpec(rows); });
+		return;
+	}
+	switch (t.dataset.act) {
+		case "fx-add": {
+			const box = $("fx-rows"), i = box.children.length;
+			box.insertAdjacentHTML("beforeend", `<div class="fx-row"><input type="text" data-fx-key="${i}" list="dl-keys" placeholder="PATK_PCT"><input type="text" data-fx-val="${i}" placeholder="1.5"><button class="btn small" data-fx-del="${i}">&times;</button></div>`);
+			box.querySelector(`[data-fx-key="${i}"]`).focus();
+			return;
+		}
+		case "link-to": {
+			const id = Number($("link-to").value);
+			if (!byId.has(id)) { showToast(`There is no node ${$("link-to").value}.`, true); return; }
+			if (linked(n.id, id)) { showToast("Already linked."); return; }
+			edit(`link ${n.id} - ${id}`, [n.id, id], () => addLink(n.id, id) ? undefined : false);
+			return;
+		}
+		case "snap-ring": {
+			const mates = nodes.filter(m => m !== n && m.ox === n.ox && m.oy === n.oy).map(m => Math.hypot(m.x - m.ox, m.y - m.oy)).sort((a, b) => a - b);
+			const r = mates.length ? mates[Math.floor(mates.length / 2)] : Math.hypot(n.x - n.ox, n.y - n.oy);
+			const a = Math.atan2(n.y - n.oy, n.x - n.ox);
+			edit(`snap ${n.id} onto its ring`, [n.id], () => { n.x = round1(n.ox + r * Math.cos(a)); n.y = round1(n.oy + r * Math.sin(a)); });
+			return;
+		}
+		case "select-ring":
+			selection = new Set(nodes.filter(m => m.ox === n.ox && m.oy === n.oy).map(m => m.id));
+			selectionChanged();
+			return;
+		case "clear-orbit":
+			edit(`orbit of ${n.id}`, [n.id], () => { n.ox = null; n.oy = null; });
+			return;
+		case "centre": centreOn(n); return;
+		case "select-linked":
+			[...selection].forEach(id => (adj.get(id) || []).forEach(o => selection.add(o)));
+			selectionChanged();
+			return;
+		case "duplicate": duplicateSelection(); return;
+		case "delete": deleteSelection(); return;
+		case "unlink-edge": deleteSelection(); return;
+		case "fit-sel": fitTo([...selection].map(id => byId.get(id)), 2); return;
+		case "multi-apply": multiApply(); return;
+		case "chain": {
+			const ids = [...selection];
+			const touched = ids.slice();
+			edit(`link ${ids.length} nodes as a chain`, touched, () => {
+				let any = false;
+				for (let i = 1; i < ids.length; i++) if (!linked(ids[i - 1], ids[i]) && addLink(ids[i - 1], ids[i])) any = true;
+				return any ? undefined : false;
+			});
+			return;
+		}
+		case "unlink-among": {
+			const ids = [...selection], set = new Set(ids);
+			edit(`unlink ${ids.length} nodes`, ids, () => {
+				let any = false;
+				ids.forEach(a => [...(adj.get(a) || [])].forEach(b => { if (set.has(b) && a < b) { removeLink(a, b); any = true; } }));
+				return any ? undefined : false;
+			});
+			return;
+		}
+		case "discard":
+			if (!confirm("Throw away every unsaved change and load the files again?")) return;
+			dropDraft();
+			loadTree();
+			return;
+		case "reload-files": reloadFiles(); return;
+	}
+});
+
+function multiApply() {
+	const ids = [...selection];
+	const name = $("m-name").value.trim(), type = $("m-type").value, cost = $("m-cost").value.trim(), sector = $("m-sector").value.trim();
+	const file = $("m-file").value, icon = $("m-icon").value, tier = $("m-tier").value.trim(), effect = $("m-effect").value.trim(), scale = $("m-scale").value.trim();
+	if (effect && parseEffect(effect).errors.length) { showToast(parseEffect(effect).errors[0], true); return; }
+	if (cost && !(Number.isInteger(Number(cost)) && Number(cost) >= 0)) { showToast("The cost must be a whole number, 0 or more.", true); return; }
+	if (tier && !(Number.isInteger(Number(tier)) && Number(tier) >= 0)) { showToast("The tier must be a whole number, 0 or more.", true); return; }
+	if (scale && !(Number(scale) > 0)) { showToast("The scale must be above 0.", true); return; }
+	const touched = new Set(ids);
+	if (type) ids.forEach(id => (adj.get(id) || []).forEach(o => touched.add(o)));
+	edit(`edit ${ids.length} nodes`, [...touched], () => {
+		let failed = 0;
+		ids.forEach(id => {
+			const n = byId.get(id);
+			if (type && !setType(n, type)) failed++;
+			if (name) n.name = name;
+			if (cost) n.cost = Number(cost);
+			if (tier) n.tier = Number(tier);
+			if (sector) n.sector = sector;
+			if (file) n.file = file;
+			if (icon) n.icon = icon === "__none" ? "" : icon;
+			if (effect) n.effect = effect;
+			if (scale && n.effect && !parseEffect(n.effect).errors.length) {
+				const f = Number(scale);
+				n.effect = parseEffect(n.effect).rows.map(r => r.key + ":" + (Math.round(Number(r.val) * f * 1000) / 1000)).join(";");
+			}
+		});
+		if (failed) showToast(`${failed} node(s) could not become ${type}.`, true);
+	});
+}
+
+// ------------------------------------------------------------------ save
+function openModal(html) { $("modal-box").innerHTML = html; $("modal").classList.add("open"); }
+function closeModal() { $("modal").classList.remove("open"); }
+$("modal").addEventListener("click", e => { if (e.target.id === "modal") closeModal(); });
+
+function resultHtml(d) {
+	return (d.errors.length ? `<h3 style="color:var(--danger)">Must be fixed</h3><ul class="errors">${d.errors.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "")
+		+ (d.warnings.length ? `<h3 style="color:var(--warn)">Good to know</h3><ul class="warnings">${d.warnings.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "")
+		+ (d.changedFiles.length ? `<h3>Files</h3><ul>${d.changedFiles.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "");
+}
+
+async function check(thenSave) {
+	if (!hasChanges() && thenSave) { showToast("Nothing to save."); return; }
+	if (issues.some(i => i.level === "err") && thenSave) {
+		openModal(`<h2>Fix these first</h2><ul class="errors">${issues.filter(i => i.level === "err").slice(0, 30).map(i => `<li>${esc(i.text)}</li>`).join("")}</ul><div class="actions"><button class="btn" id="m-close">Close</button></div>`);
+		$("m-close").onclick = closeModal;
+		return;
+	}
+	openModal("<h2>Checking...</h2>");
+	const res = await api("save", { version, dryRun: true, nodes: nodes.map(toWire) });
+	const d = res.data;
+	if (!d || !d.errors) { openModal(`<h2>Could not check</h2><p>${esc((d && d.error) || "No answer from the server.")}</p><div class="actions"><button class="btn" id="m-close">Close</button></div>`); $("m-close").onclick = closeModal; return; }
+	const ok = !d.errors.length && d.changedFiles.length;
+	openModal(`<h2>${d.errors.length ? "The server refuses this tree" : ok ? (thenSave ? "Save these changes?" : "The tree is fine") : "Nothing to save"}</h2>
+		${resultHtml(d)}
+		${ok && thenSave ? '<p class="note">The old files are backed up first. Online players get the new tree at once.</p>' : ""}
+		<div class="actions"><button class="btn" id="m-close">${ok && thenSave ? "Cancel" : "Close"}</button>${ok && thenSave ? '<button class="btn primary" id="m-save">Save and make live</button>' : ""}</div>`);
+	$("m-close").onclick = closeModal;
+	if (ok && thenSave) $("m-save").onclick = doSave;
+}
+
+async function doSave() {
+	openModal("<h2>Saving...</h2>");
+	const res = await api("save", { version, dryRun: false, nodes: nodes.map(toWire) });
+	const d = res.data;
+	if (!d || !d.saved) {
+		openModal(`<h2>Not saved</h2>${d && d.errors ? resultHtml(d) : `<p>${esc((d && d.error) || "No answer from the server.")}</p>`}<div class="actions"><button class="btn" id="m-close">Close</button></div>`);
+		$("m-close").onclick = closeModal;
+		return;
+	}
+	dropDraft();
+	await loadTree();
+	openModal(`<h2>Saved - the new tree is live</h2>${resultHtml({ errors: [], warnings: d.warnings, changedFiles: d.changedFiles })}<div class="actions"><button class="btn primary" id="m-close">OK</button></div>`);
+	$("m-close").onclick = closeModal;
+}
+
+async function reloadFiles() {
+	if (hasChanges() && !confirm("You have unsaved changes. Load the files again anyway? (Your changes stay in the browser draft until you save or throw them away.)")) return;
+	const res = await api("reload", {});
+	if (!res.ok) { showToast((res.data && res.data.error) || "Could not reload.", true); return; }
+	await loadTree();
+	showToast(`Loaded ${res.data.nodes} nodes from the files. The live tree uses them now.`);
+}
+
+// ------------------------------------------------------------------ keys
+document.addEventListener("keydown", e => {
+	if ($("modal").classList.contains("open")) { if (e.key === "Escape") closeModal(); return; }
+	const ctrl = e.ctrlKey || e.metaKey;
+	if (ctrl && e.key.toLowerCase() === "s") {
+		e.preventDefault();
+		if (typing()) document.activeElement.blur(); // its change lands first
+		setTimeout(() => check(true), 20);
+		return;
+	}
+	if (typing()) {
+		if (e.key === "Enter" && document.activeElement.id === "search") {
+			if (!search.matches.length) return;
+			search.cursor = (search.cursor + (e.shiftKey ? -1 : 1) + search.matches.length) % search.matches.length;
+			const n = byId.get(search.matches[search.cursor]);
+			selection = new Set([n.id]); centreOn(n); selectionChanged();
+		}
+		if (e.key === "Escape") document.activeElement.blur();
+		return;
+	}
+	if (ctrl && e.key.toLowerCase() === "z" && !e.shiftKey) { e.preventDefault(); undo(); return; }
+	if (ctrl && (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey))) { e.preventDefault(); redo(); return; }
+	if (ctrl && e.key.toLowerCase() === "d") { e.preventDefault(); duplicateSelection(); return; }
+	if (ctrl) return;
+	const step = e.shiftKey ? 10 : 1;
+	switch (e.key) {
+		case "v": case "V": setTool("select"); break;
+		case "l": case "L": setTool("link"); break;
+		case "n": case "N": setTool("add"); break;
+		case "f": case "F": fitTo(nodes); break;
+		case "Delete": case "Backspace": e.preventDefault(); deleteSelection(); break;
+		case "Escape":
+			if (linkSource !== null) { linkSource = null; $("link-preview").setAttribute("visibility", "hidden"); }
+			else { selection.clear(); selectedEdge = null; }
+			selectionChanged();
+			break;
+		case "ArrowLeft": e.preventDefault(); nudge(-step, 0); break;
+		case "ArrowRight": e.preventDefault(); nudge(step, 0); break;
+		case "ArrowUp": e.preventDefault(); nudge(0, -step); break;
+		case "ArrowDown": e.preventDefault(); nudge(0, step); break;
+		case "+": case "=": { const r = svg.getBoundingClientRect(); zoomAt(r.width / 2, r.height / 2, ZOOM_STEP); break; }
+		case "-": { const r = svg.getBoundingClientRect(); zoomAt(r.width / 2, r.height / 2, 1 / ZOOM_STEP); break; }
+	}
+});
+
+function setTool(t) {
+	tool = t;
+	linkSource = null;
+	$("link-preview").setAttribute("visibility", "hidden");
+	refreshClasses();
+	renderToolbar();
+}
+
+window.addEventListener("beforeunload", e => {
+	if (hasChanges()) { e.preventDefault(); e.returnValue = ""; }
+});
+
+// ------------------------------------------------------------------ start
+(async function init() {
+	const params = new URLSearchParams(window.location.search);
+	try {
+		if (params.has("admin")) sessionStorage.setItem(TOKEN_KEY, params.get("admin"));
+		token = sessionStorage.getItem(TOKEN_KEY);
+	} catch (e) { token = params.get("admin"); }
+	if (params.has("admin")) {
+		// keep the token out of the address bar, history and copied links
+		params.delete("admin");
+		const rest = params.toString();
+		try { history.replaceState(null, "", window.location.pathname + (rest ? "?" + rest : "")); } catch (e) { /* not essential */ }
+	}
+	if (!token) {
+		$("loading").textContent = "Open this editor in-game with //passivetree.";
+		return;
+	}
+
+	document.querySelectorAll("[data-tool]").forEach(b => b.addEventListener("click", () => setTool(b.dataset.tool)));
+	$("undo").addEventListener("click", undo);
+	$("redo").addEventListener("click", redo);
+	$("fit").addEventListener("click", () => fitTo(nodes));
+	$("check").addEventListener("click", () => check(false));
+	$("save").addEventListener("click", () => check(true));
+	$("show-ids").addEventListener("change", e => { showIds = e.target.checked; applyView(); });
+	$("snap").addEventListener("change", e => { snapOn = e.target.checked; });
+	let searchTimer = null;
+	$("search").addEventListener("input", e => { clearTimeout(searchTimer); searchTimer = setTimeout(() => applySearch(e.target.value), 150); });
+	$("search-select").addEventListener("click", () => {
+		selection = new Set(search.matches); selectedEdge = null;
+		selectionChanged();
+		fitTo(search.matches.map(id => byId.get(id)), 2);
+	});
+	renderLegend();
+
+	await Promise.all([loadGlyphs(), loadCaps()]);
+	if (await loadTree()) {
+		fitTo(nodes);
+		offerDraft();
+	}
+})();
+</script>
+</body>
+</html>

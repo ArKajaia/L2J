@@ -124,6 +124,9 @@ public class PassiveTreeConfig
 	/** Seconds a link (token) stays valid. */
 	public static int WEB_TOKEN_LIFETIME = 900;
 
+	/** Seconds a //passivetree admin editor link stays valid. */
+	public static int WEB_ADMIN_TOKEN_LIFETIME = 7200;
+
 	/** Seconds a typed PIN stays valid. */
 	public static int WEB_PIN_LIFETIME = 600;
 
@@ -157,6 +160,7 @@ public class PassiveTreeConfig
 		WEB_SECRET = config.getString("PassiveTreeWebSecret", "").trim();
 		WEB_BASE_URL = config.getString("PassiveTreeWebBaseUrl", "http://127.0.0.1:8788/passive-tree.html").trim();
 		WEB_TOKEN_LIFETIME = Math.max(30, config.getInt("PassiveTreeWebTokenLifetime", 900));
+		WEB_ADMIN_TOKEN_LIFETIME = Math.max(60, config.getInt("PassiveTreeWebAdminTokenLifetime", 7200));
 		WEB_PIN_LIFETIME = Math.max(30, config.getInt("PassiveTreeWebPinLifetime", 600));
 		WEB_RATE_LIMIT_PER_MINUTE = Math.max(1, config.getInt("PassiveTreeWebRateLimitPerMinute", 120));
 		WEB_PIN_RATE_LIMIT_PER_MINUTE = Math.max(1, config.getInt("PassiveTreeWebPinRateLimitPerMinute", 10));

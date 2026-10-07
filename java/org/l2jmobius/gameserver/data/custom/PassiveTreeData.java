@@ -1,8 +1,11 @@
 package org.l2jmobius.gameserver.data.custom;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import org.w3c.dom.Document;
@@ -21,7 +24,10 @@ public class PassiveTreeData implements IXmlReader
 {
 	private static final Logger LOGGER = Logger.getLogger(PassiveTreeData.class.getName());
 	
-	private final Map<Integer, PassiveNode> _nodes = new HashMap<>();
+	/** The live tree. Replaced as a whole by {@link #load()}, never changed in place, so a reload while players use the tree never shows them a half-read one. */
+	private volatile Map<Integer, PassiveNode> _nodes = Collections.emptyMap();
+	/** The tree being read by {@link #load()}. Files can be parsed on several threads at once. */
+	private Map<Integer, PassiveNode> _loading;
 	
 	protected PassiveTreeData()
 	{
@@ -30,11 +36,17 @@ public class PassiveTreeData implements IXmlReader
 	}
 	
 	@Override
-	public void load()
+	public synchronized void load()
 	{
-		_nodes.clear();
+		_loading = new ConcurrentHashMap<>();
 		parseDatapackDirectory("data/passivetree", false);
-		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _nodes.size() + " passive tree nodes.");
+		
+		// Filled in id order, so the map iterates the same way whatever order the files were read in.
+		final Map<Integer, PassiveNode> nodes = new HashMap<>();
+		nodes.putAll(new TreeMap<>(_loading));
+		_nodes = Collections.unmodifiableMap(nodes);
+		_loading = null;
+		LOGGER.info(getClass().getSimpleName() + ": Loaded " + nodes.size() + " passive tree nodes.");
 	}
 	
 	@Override
@@ -69,12 +81,6 @@ public class PassiveTreeData implements IXmlReader
 				final double y = attrs.getNamedItem("y") != null ? Double.parseDouble(attrs.getNamedItem("y").getNodeValue()) : 0;
 				final String description = attrs.getNamedItem("description") != null ? parseString(attrs, "description") : autoDescribe(effect);
 				
-				if (_nodes.containsKey(id))
-				{
-					LOGGER.warning(getClass().getSimpleName() + ": Duplicate node id " + id + " in " + file.getName() + " - ignoring the duplicate.");
-					continue;
-				}
-				
 				final PassiveNode node = new PassiveNode(id, name, description, sector, type, tier, cost, x, y, effect, skillId, skillLevel);
 				if ((attrs.getNamedItem("orbitX") != null) && (attrs.getNamedItem("orbitY") != null))
 				{
@@ -93,7 +99,10 @@ public class PassiveTreeData implements IXmlReader
 					}
 				}
 				
-				_nodes.put(id, node);
+				if (_loading.putIfAbsent(id, node) != null)
+				{
+					LOGGER.warning(getClass().getSimpleName() + ": Duplicate node id " + id + " in " + file.getName() + " - ignoring the duplicate.");
+				}
 			}
 		}
 	}
@@ -131,12 +140,13 @@ public class PassiveTreeData implements IXmlReader
 	 */
 	public void validate()
 	{
+		final Map<Integer, PassiveNode> nodes = _nodes;
 		int refErrors = 0;
-		for (PassiveNode node : _nodes.values())
+		for (PassiveNode node : nodes.values())
 		{
 			for (int parentId : node.getParents())
 			{
-				if (!_nodes.containsKey(parentId))
+				if (!nodes.containsKey(parentId))
 				{
 					LOGGER.warning(getClass().getSimpleName() + ": Node " + node.getId() + " (\"" + node.getName() + "\") references missing parent id " + parentId + ".");
 					refErrors++;
@@ -145,7 +155,7 @@ public class PassiveTreeData implements IXmlReader
 		}
 		
 		// Conditional effect keys (PDEF_PCT@HEAVY) must name a known condition, or they would silently do nothing.
-		for (PassiveNode node : _nodes.values())
+		for (PassiveNode node : nodes.values())
 		{
 			for (String part : node.getEffectSpec().split(";"))
 			{
@@ -161,7 +171,7 @@ public class PassiveTreeData implements IXmlReader
 		
 		// Reachability sweep from every START node.
 		final Map<Integer, java.util.List<Integer>> adjacency = new HashMap<>();
-		for (PassiveNode node : _nodes.values())
+		for (PassiveNode node : nodes.values())
 		{
 			for (int parentId : node.getParents())
 			{
@@ -171,7 +181,7 @@ public class PassiveTreeData implements IXmlReader
 		
 		final java.util.Set<Integer> seen = new java.util.HashSet<>();
 		final java.util.Deque<Integer> queue = new java.util.ArrayDeque<>();
-		for (PassiveNode node : _nodes.values())
+		for (PassiveNode node : nodes.values())
 		{
 			if (node.getType() == NodeType.START)
 			{
@@ -191,10 +201,10 @@ public class PassiveTreeData implements IXmlReader
 			}
 		}
 		
-		final int unreachable = _nodes.size() - seen.size();
+		final int unreachable = nodes.size() - seen.size();
 		if ((refErrors == 0) && (unreachable == 0))
 		{
-			LOGGER.info(getClass().getSimpleName() + ": Validation passed - all references resolve, all " + _nodes.size() + " nodes reachable from a START node.");
+			LOGGER.info(getClass().getSimpleName() + ": Validation passed - all references resolve, all " + nodes.size() + " nodes reachable from a START node.");
 		}
 		else
 		{
@@ -207,6 +217,9 @@ public class PassiveTreeData implements IXmlReader
 		return _nodes.get(id);
 	}
 	
+	/**
+	 * @return every node by id, read-only. A reload replaces the map rather than changing it, so a caller that needs one consistent tree for a whole calculation keeps the map it got.
+	 */
 	public Map<Integer, PassiveNode> getAllNodes()
 	{
 		return _nodes;

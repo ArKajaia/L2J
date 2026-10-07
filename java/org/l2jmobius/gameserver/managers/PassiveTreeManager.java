@@ -20,11 +20,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.l2jmobius.commons.database.DatabaseFactory;
+import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.config.custom.PassiveTreeConfig;
 import org.l2jmobius.gameserver.data.custom.PassiveTreeData;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.SkillData;
+import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -1308,6 +1310,24 @@ public class PassiveTreeManager
 	private static class SingletonHolder
 	{
 		protected static final PassiveTreeManager INSTANCE = new PassiveTreeManager();
+	}
+	
+	/**
+	 * Call after {@link PassiveTreeData} was loaded again (the admin tree editor, or //passivetree_reload). Forgets everything worked out from the old tree, then rebuilds every online player's tree from the database: nodes that were removed or no longer connect to the player's START are
+	 * dropped and refunded (as at login), and the stats and skills of what is left are applied again.
+	 */
+	public void onTreeReloaded()
+	{
+		synchronized (this)
+		{
+			_neighborCache = null;
+		}
+		_cache.clear();
+		
+		for (Player player : World.getInstance().getPlayers())
+		{
+			ThreadPool.execute(() -> applyAll(player));
+		}
 	}
 	
 	/**

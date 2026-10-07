@@ -487,6 +487,9 @@ public final class PassiveMechanics
 	{
 	}
 	
+	/** Every condition token {@link #parseConditional} knows, for the admin tree editor. */
+	public static final List<String> CONDITION_TOKENS = List.of("HEAVY", "LIGHT", "ROBE", "NOARMOR", "SHIELD", "BOW", "DAGGER", "DUAL", "SWORD", "BLUNT", "POLE", "FIST", "LOWHP", "FULLHP", "NIGHT", "DAY");
+	
 	/**
 	 * @param key an effect key, possibly with an {@code @CONDITION} suffix
 	 * @return the parsed key, or {@code null} if it has no condition, the condition is unknown, or the base key can't be conditional (max HP/MP/CP and keystone keys)
