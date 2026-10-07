@@ -25,6 +25,9 @@ import org.l2jmobius.gameserver.managers.HotzoneModifierManager;
 import org.l2jmobius.gameserver.managers.NightCycleManager;
 import org.l2jmobius.gameserver.managers.NightlordManager;
 import org.l2jmobius.gameserver.managers.NightlordManager.Nightlord;
+import org.l2jmobius.gameserver.managers.ShadowRaidManager;
+import org.l2jmobius.gameserver.managers.ShadowRaidManager.Raid;
+import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.nightcycle.NightPhase;
@@ -38,6 +41,7 @@ import org.l2jmobius.gameserver.taskmanagers.GameTimeTaskManager;
  * <li>{@code //night auto} - follows the clock again.</li>
  * <li>{@code //night omen <name>} - sets tonight's Omen (a hot zone modifier name).</li>
  * <li>{@code //night nightlord} - raises the missing Nightlords now.</li>
+ * <li>{@code //night raid} - starts a Shadow Raid near the targeted player, or near a random player hunting in the open world (or the GM, if nobody is).</li>
  * </ul>
  */
 public class AdminNight implements IAdminCommandHandler
@@ -114,9 +118,20 @@ public class AdminNight implements IAdminCommandHandler
 				activeChar.sendSysMessage(risen > 0 ? risen + " Nightlord(s) rose." : "No Nightlord rose: every bracket has one, or no monster fits (see the server log).");
 				return true;
 			}
+			case "raid":
+			{
+				final Player anchor = (activeChar.getTarget() != null) && activeChar.getTarget().isPlayer() && (activeChar.getTarget() != activeChar) ? activeChar.getTarget().asPlayer() : null;
+				String problem = ShadowRaidManager.getInstance().startRaid(anchor);
+				if ((problem != null) && (anchor == null) && ShadowRaidManager.NO_PLAYER.equals(problem))
+				{
+					problem = ShadowRaidManager.getInstance().startRaid(activeChar); // Nobody else out there: the raid comes for the GM.
+				}
+				activeChar.sendSysMessage(problem == null ? "A Shadow Raid started (//night status shows where)." : "No raid: " + problem + ".");
+				return problem == null;
+			}
 			default:
 			{
-				activeChar.sendSysMessage("Usage: //night [status|day|dusk|night|witching|dawn|auto|omen <name>|nightlord]");
+				activeChar.sendSysMessage("Usage: //night [status|day|dusk|night|witching|dawn|auto|omen <name>|nightlord|raid]");
 				return false;
 			}
 		}
@@ -135,6 +150,16 @@ public class AdminNight implements IAdminCommandHandler
 		for (Nightlord nightlord : NightlordManager.getInstance().getNightlords())
 		{
 			activeChar.sendSysMessage("Nightlord " + nightlord.getMonster().getName() + " (" + nightlord.getBracket() + ", " + nightlord.getZoneName() + ") at " + nightlord.getMonster().getX() + " " + nightlord.getMonster().getY() + " " + nightlord.getMonster().getZ() + ", wave " + nightlord.getMonster().getWaveChallengeWave() + "/" + nightlord.getMonster().getWaveChallengeTotal() + ".");
+		}
+
+		for (Raid raid : ShadowRaidManager.getInstance().getRaids())
+		{
+			final StringBuilder sb = new StringBuilder("Shadow Raid #").append(raid.getId()).append(": ").append(raid.getClanName()).append(" near ").append(raid.getPlace()).append(", raiders");
+			for (Npc raider : raid.getAliveRaiders())
+			{
+				sb.append(' ').append(raider.getName()).append(" (").append(raider.getX()).append(' ').append(raider.getY()).append(' ').append(raider.getZ()).append(')');
+			}
+			activeChar.sendSysMessage(sb.append('.').toString());
 		}
 	}
 

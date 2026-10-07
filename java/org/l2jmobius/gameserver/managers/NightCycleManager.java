@@ -14,7 +14,9 @@ import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.NightCycleConfig;
+import org.l2jmobius.gameserver.config.custom.PvpSpotsConfig;
 import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
+import org.l2jmobius.gameserver.managers.PvpSpotManager.SpotInfo;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
@@ -31,6 +33,7 @@ import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.nightcycle.NightPhase;
+import org.l2jmobius.gameserver.model.nightcycle.NightTraits;
 import org.l2jmobius.gameserver.network.enums.ChatType;
 import org.l2jmobius.gameserver.network.serverpackets.ExRedSky;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
@@ -45,8 +48,9 @@ import org.l2jmobius.gameserver.util.Broadcast;
  * <li><b>Dusk</b>: tonight's Omen is told.</li>
  * <li><b>Night</b>: the Omen, a {@link HotzoneModifier}, lies over the whole open world (see {@link HotzoneModifierManager#getModifierFor}), and soon after nightfall the {@link NightlordManager Nightlords} rise.</li>
  * <li><b>Witching Hour</b>: the last minutes of the night. The Omen gives way to {@link HotzoneModifier#WITCHING_HOUR}, and kills may call a wave challenger nearby.</li>
- * <li><b>Dawn</b>: the Omen lifts, the Nightlords flee, the sun burns the undead still fighting, and the best of the Night Watch (the players with the most night kills) are rewarded.</li>
+ * <li><b>Dawn</b>: the Omen lifts, the Nightlords and Shadow Raiders flee, the sun burns the undead still fighting, the best of the Night Watch (the players with the most night kills) are rewarded, and the leader of each PvP spot is crowned its Night King.</li>
  * </ul>
+ * At night {@link ShadowRaidManager Shadow Raids} strike the open world, the PvP spots draw more fighters (Moonlit Melee, see {@link PvpSpotManager}), and each race feels the night ({@link NightTraits}).
  * A red Omen and the Witching Hour turn the sky red for players outside towns. GMs can force a phase with {@code //night}; the forced phase lasts until the clock reaches its next phase.
  */
 public class NightCycleManager
@@ -61,6 +65,9 @@ public class NightCycleManager
 	private static final int RED_SKY_SECONDS = 70;
 	/** How far (game units) around each player the dawn looks for undead to burn. */
 	private static final int DAWN_BURN_RADIUS = 2000;
+
+	/** Set once the manager runs: before that (data loading at boot) the night is the game clock's. */
+	private static volatile boolean _started;
 
 	private volatile NightPhase _phase = NightPhase.DAY;
 	/** A phase a GM forced, kept until the clock reaches another phase. */
@@ -82,6 +89,7 @@ public class NightCycleManager
 		private volatile String _name;
 		private final AtomicInteger _kills = new AtomicInteger();
 		private final AtomicInteger _nightlords = new AtomicInteger();
+		private final AtomicInteger _raiders = new AtomicInteger();
 		private volatile boolean _died;
 
 		NightRecord(Player player)
@@ -110,9 +118,14 @@ public class NightCycleManager
 			return _nightlords.get();
 		}
 
+		public int getRaiders()
+		{
+			return _raiders.get();
+		}
+
 		public int getPoints()
 		{
-			return (_kills.get() * NightCycleConfig.NIGHT_WATCH_KILL_POINTS) + (_nightlords.get() * NightCycleConfig.NIGHT_WATCH_NIGHTLORD_POINTS);
+			return (_kills.get() * NightCycleConfig.NIGHT_WATCH_KILL_POINTS) + (_nightlords.get() * NightCycleConfig.NIGHT_WATCH_NIGHTLORD_POINTS) + (_raiders.get() * NightCycleConfig.NIGHT_WATCH_RAIDER_POINTS);
 		}
 
 		/**
@@ -150,6 +163,7 @@ public class NightCycleManager
 		Containers.Players().addListener(new ConsumerEventListener(Containers.Players(), EventType.ON_PLAYER_LOGIN, (OnPlayerLogin event) -> onLogin(event.getPlayer()), this));
 		Containers.Players().addListener(new ConsumerEventListener(Containers.Players(), EventType.ON_CREATURE_DEATH, (OnCreatureDeath event) -> onPlayerDeath(event), this));
 		ThreadPool.scheduleAtFixedRate(this::tick, TICK_MS, TICK_MS);
+		_started = true;
 		LOGGER.info(getClass().getSimpleName() + ": Started at " + _phase.getDisplayName() + (_omen != null ? ", tonight's Omen " + getOmenName(_omen) : "") + ".");
 	}
 
@@ -266,6 +280,7 @@ public class NightCycleManager
 		HotzoneModifierManager.getInstance().setNightModifier(NightCycleConfig.OMENS_ENABLED ? _omen : null);
 		_nightWatch.clear();
 		NightlordManager.getInstance().onNightfall();
+		ShadowRaidManager.getInstance().onNightfall();
 
 		if (announce)
 		{
@@ -273,6 +288,10 @@ public class NightCycleManager
 			Broadcast.toAllOnlinePlayers(SunSet.STATIC_PACKET);
 			announce(_omen != null ? "Night has fallen. " + getOmenName(_omen) + ": " + _omen.getDescription() : "Night has fallen.");
 			sendRedSky();
+			for (Player player : World.getInstance().getPlayers())
+			{
+				NightTraits.onPhaseChange(player, true);
+			}
 		}
 	}
 
@@ -303,9 +322,14 @@ public class NightCycleManager
 	{
 		HotzoneModifierManager.getInstance().setNightModifier(null);
 		NightlordManager.getInstance().onDawn();
+		ShadowRaidManager.getInstance().onDawn();
 
 		Broadcast.toAllOnlinePlayers(SunRise.STATIC_PACKET);
 		announce("Dawn breaks. The night is over.");
+		for (Player player : World.getInstance().getPlayers())
+		{
+			NightTraits.onPhaseChange(player, false);
+		}
 
 		if (fromWitchingHour && NightCycleConfig.WITCHING_HOUR_ENABLED)
 		{
@@ -314,11 +338,43 @@ public class NightCycleManager
 
 		rewardNightWatch();
 		rewardSurvivors();
+		crownNightKings();
 
 		// The black market sellers pack up before the sun finds them.
 		if (NightCycleConfig.NIGHT_MARKET_ENABLED)
 		{
 			FakePlayerTownManager.getInstance().onDawn();
+		}
+	}
+
+	/**
+	 * Moonlit Melee: the leader of each PvP spot (the longest kill streak) is its Night King. A player Night King is rewarded.
+	 */
+	private void crownNightKings()
+	{
+		if (!PvpSpotsConfig.ENABLED)
+		{
+			return;
+		}
+
+		final PvpSpotManager spots = PvpSpotManager.getInstance();
+		for (SpotInfo info : spots.getSpotInfos())
+		{
+			if ((info.getLeader() == null) || (info.getLeaderStreak() <= 0))
+			{
+				continue;
+			}
+
+			announce(info.getLeader() + " is the Night King of " + info.getName() + " (" + info.getLeaderStreak() + " kills in a row)!");
+			final Player king = World.getInstance().getPlayer(spots.getLeaderId(info.getZoneId()));
+			if ((king != null) && king.isOnline())
+			{
+				if (NightCycleConfig.NIGHT_KING_COINS > 0)
+				{
+					king.addItem(ItemProcessType.REWARD, RatesConfig.ARENA_CURRENCY_ITEM_ID, NightCycleConfig.NIGHT_KING_COINS, null, true);
+				}
+				LuckyLootManager.getInstance().giveGuaranteedCache(king, king.getLevel());
+			}
 		}
 	}
 
@@ -535,6 +591,18 @@ public class NightCycleManager
 		}
 	}
 
+	/**
+	 * A player killed a Shadow Raider.
+	 * @param player the player
+	 */
+	public void addRaiderCredit(Player player)
+	{
+		if (NightCycleConfig.NIGHT_WATCH_ENABLED && (player != null))
+		{
+			getRecord(player)._raiders.incrementAndGet();
+		}
+	}
+
 	private NightRecord getRecord(Player player)
 	{
 		final NightRecord record = _nightWatch.computeIfAbsent(player.getObjectId(), id -> new NightRecord(player));
@@ -575,6 +643,8 @@ public class NightCycleManager
 	 */
 	private void onLogin(Player player)
 	{
+		NightTraits.apply(player);
+
 		final NightPhase phase = _phase;
 		if (phase.isNight())
 		{
@@ -653,6 +723,14 @@ public class NightCycleManager
 	public NightPhase getPhase()
 	{
 		return _phase;
+	}
+
+	/**
+	 * @return {@code true} once the manager runs, so {@link #isNight()} can be asked without starting it (see {@link org.l2jmobius.gameserver.model.conditions.ConditionGameTime})
+	 */
+	public static boolean isStarted()
+	{
+		return _started;
 	}
 
 	/**

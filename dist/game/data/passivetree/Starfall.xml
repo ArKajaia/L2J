@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Starfall: 44 nodes, an outer region beyond the rim between Deadeye and Arcanist. x/y are authoritative layout coords. -->
+<!-- Starfall: 47 nodes, an outer region beyond the rim between Deadeye and Arcanist. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="43001" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-2680.4" y="-3194.4" effect="CRIT_DMG_PCT:1">
 		<requires nodeId="39319" />
@@ -164,6 +164,7 @@
 	</node>
 	<node id="43047" name="Constellation" sector="Starfall" type="NOTABLE" tier="0" cost="1" x="-4837.3" y="-1183.7" effect="MCRIT_RATE_ADD:25;CAST_SPD_PCT@FULLHP:5" icon="spark" description="Star Chart mastery. Casts faster above 90% HP.">
 		<requires nodeId="43046" />
+		<requires nodeId="43070" />
 	</node>
 	<node id="43060" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4064.5" y="-2300.5" effect="MAXHP:18">
 		<requires nodeId="43006" />
@@ -176,5 +177,16 @@
 	<node id="43062" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4049.2" y="-1887.3" effect="CRIT_DMG_PCT:1">
 		<requires nodeId="43009" />
 		<requires nodeId="43010" />
+	</node>
+	<node id="43070" name="Moonward Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-5031.6" y="-1231.2" effect="MATK_PCT@NIGHT:2" icon="moon">
+		<requires nodeId="43047" />
+		<requires nodeId="43071" />
+	</node>
+	<node id="43071" name="Moonward Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-5225.8" y="-1278.8" effect="PATK_PCT@NIGHT:2" icon="moon">
+		<requires nodeId="43070" />
+		<requires nodeId="43072" />
+	</node>
+	<node id="43072" name="Nocturne" sector="Starfall" type="KEYSTONE" tier="0" cost="1" x="-5420.1" y="-1326.3" effect="PATK_PCT@NIGHT:12;MATK_PCT@NIGHT:12;EVASION_ADD@NIGHT:4;PDEF_PCT@DAY:-12;MDEF_PCT@DAY:-12" icon="moon" description="KEYSTONE: At night: +12% P.Atk and M.Atk, +4 Evasion. During the day: -12% P.Def and M.Def.">
+		<requires nodeId="43071" />
 	</node>
 </list>

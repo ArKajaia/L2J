@@ -16,9 +16,14 @@
  */
 package handlers.chat.commands.voiced;
 
+import java.util.List;
+
 import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
 import org.l2jmobius.gameserver.managers.NightlordManager;
 import org.l2jmobius.gameserver.managers.NightlordManager.Nightlord;
+import org.l2jmobius.gameserver.managers.ShadowRaidManager;
+import org.l2jmobius.gameserver.managers.ShadowRaidManager.Raid;
+import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
@@ -27,7 +32,7 @@ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 import handlers.bypass.communityboard.NightBoard;
 
 /**
- * ".night": the phase of the day, tonight's Omen, the Nightlords and the Night Watch (see {@link org.l2jmobius.gameserver.managers.NightCycleManager}). ".night radar &lt;id&gt;" marks a Nightlord on the radar.
+ * ".night": the phase of the day, tonight's Omen, the Nightlords and the Night Watch (see {@link org.l2jmobius.gameserver.managers.NightCycleManager}). .night radar &lt;id&gt;" marks a Nightlord on the radar, ".night raid &lt;id&gt;" a Shadow Raid.
  */
 public class NightVoiced implements IVoicedCommandHandler
 {
@@ -58,6 +63,19 @@ public class NightVoiced implements IVoicedCommandHandler
 			return true;
 		}
 
+		if ((args.length >= 2) && args[0].equalsIgnoreCase("raid"))
+		{
+			try
+			{
+				showRaid(player, Integer.parseInt(args[1]));
+			}
+			catch (NumberFormatException e)
+			{
+				player.sendMessage("Usage: .night raid <id>");
+			}
+			return true;
+		}
+
 		final NpcHtmlMessage html = new NpcHtmlMessage(0);
 		html.setHtml("<html><title>Night</title><body><center>" + NightBoard.buildContent(player, 280, "voiced_night") + "</center></body></html>");
 		player.sendPacket(html);
@@ -83,6 +101,27 @@ public class NightVoiced implements IVoicedCommandHandler
 		player.getRadar().removeAllMarkers();
 		player.getRadar().addMarker(monster.getX(), monster.getY(), monster.getZ());
 		player.sendMessage("The Nightlord " + monster.getName() + " is marked on your radar (" + nightlord.getZoneName() + ").");
+	}
+
+	/**
+	 * Marks a raider of a Shadow Raid on the player's radar.
+	 * @param player the player
+	 * @param raidId the raid's id
+	 */
+	private void showRaid(Player player, int raidId)
+	{
+		final Raid raid = ShadowRaidManager.getInstance().getRaid(raidId);
+		final List<Npc> raiders = raid != null ? raid.getAliveRaiders() : null;
+		if ((raiders == null) || raiders.isEmpty())
+		{
+			player.sendMessage("That raid is over.");
+			return;
+		}
+
+		final Npc raider = raiders.get(0);
+		player.getRadar().removeAllMarkers();
+		player.getRadar().addMarker(raider.getX(), raider.getY(), raider.getZ());
+		player.sendMessage("The " + raid.getClanName() + " raid near " + raid.getPlace() + " is marked on your radar.");
 	}
 
 	@Override
