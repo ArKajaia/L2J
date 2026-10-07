@@ -9901,7 +9901,15 @@ public class Player extends Playable
 	@Override
 	public void rechargeShots(boolean physical, boolean magic)
 	{
-		
+		if (physical)
+		{
+			broadcastPacket(new MagicSkillUse(this, this, 2154, 1, 0, 0));
+		}
+
+		if (magic)
+		{
+			broadcastPacket(new MagicSkillUse(this, this, 2159, 1, 0, 0));
+		}
 	}
 	
 	/**
