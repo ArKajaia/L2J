@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+	<!-- Night Market: Moonlit Wares, for Gold Dragons (hot zone coins). -->
+	<npcs>
+		<npc>900360</npc> <!-- Varro the Moonmonger -->
+	</npcs>
+	<item>
+		<ingredient count="2000" id="3481" /> <!-- Gold Dragon -->
+		<production count="1" id="6492" /> <!-- Sealed Cache (Common) -->
+	</item>
+	<item>
+		<ingredient count="6000" id="3481" /> <!-- Gold Dragon -->
+		<production count="1" id="6499" /> <!-- Sealed Cache (Rare) -->
+	</item>
+	<item>
+		<ingredient count="18000" id="3481" /> <!-- Gold Dragon -->
+		<production count="1" id="6509" /> <!-- Sealed Cache (Epic) -->
+	</item>
+	<item>
+		<ingredient count="3000" id="3481" /> <!-- Gold Dragon -->
+		<production count="1" id="3936" /> <!-- Blessed Scroll of Resurrection -->
+	</item>
+</list>

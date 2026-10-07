@@ -2,6 +2,8 @@ package org.l2jmobius.gameserver.model.actor.instance;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -17,6 +19,7 @@ import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
 import org.l2jmobius.gameserver.config.custom.HotzoneMinibossConfig;
 import org.l2jmobius.gameserver.config.custom.MageMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.MonsterRageConfig;
+import org.l2jmobius.gameserver.config.custom.NightCycleConfig;
 import org.l2jmobius.gameserver.config.custom.ThiefMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
 import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData;
@@ -27,6 +30,7 @@ import org.l2jmobius.gameserver.managers.ClassTransferChallengeManager;
 import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.HotzoneModifierManager;
+import org.l2jmobius.gameserver.managers.NightCycleManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -47,6 +51,7 @@ import org.l2jmobius.gameserver.model.stats.functions.AbstractFunction;
 import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
 import org.l2jmobius.gameserver.network.NpcStringId;
 import org.l2jmobius.gameserver.network.enums.ChatType;
+import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
 import org.l2jmobius.gameserver.util.LocationUtil;
 
@@ -73,6 +78,9 @@ public class Monster extends Attackable
 	private static final int THIEF_ESCAPE_SCAN_RANGE = 1500;
 	private volatile ScheduledFuture<?> _thiefEscapeTask = null;
 	private volatile long _thiefEscapeEndsAt;
+	/** Thieves' Night: the players who see the fleeing Thief on their radar (object id -> the marker shown). */
+	private final Map<Integer, Location> _thiefRadarMarkers = new ConcurrentHashMap<>();
+	private volatile boolean _thiefRadar;
 
 	// METAMORPHOSIS hotzone modifier: the retail polymorph shouts (see ai.others.PolymorphingOnAttack), one row per champion tier reached.
 	private static final NpcStringId[][] METAMORPHOSIS_TEXTS =
@@ -1040,8 +1048,11 @@ public class Monster extends Attackable
 		rebuildFullTitle();
 		broadcastInfo();
 
-		if ((newKills >= ThiefMonsterConfig.KILLS_FOR_MAX) && (hotzoneModifier != null) && hotzoneModifier.isThiefFlees())
+		// Thieves' Night: in the open world at night it runs off into the dark too.
+		final boolean thievesNight = NightCycleManager.getInstance().isThievesNight(this);
+		if ((newKills >= ThiefMonsterConfig.KILLS_FOR_MAX) && (((hotzoneModifier != null) && hotzoneModifier.isThiefFlees()) || thievesNight))
 		{
+			_thiefRadar = thievesNight;
 			startThiefEscape();
 		}
 	}
@@ -1057,7 +1068,7 @@ public class Monster extends Attackable
 		}
 
 		_thiefEscapeEndsAt = System.currentTimeMillis() + THIEF_ESCAPE_TIME_MS;
-		broadcastSay(ChatType.NPC_GENERAL, "My bag is full - so long, suckers!");
+		broadcastSay(ChatType.NPC_GENERAL, _thiefRadar ? "My bag is full - the night will hide me!" : "My bag is full - so long, suckers!");
 		disableCoreAI(true);
 		setRunning();
 		_thiefEscapeTask = ThreadPool.scheduleAtFixedRate(this::thiefEscapeStep, 0, THIEF_ESCAPE_STEP_MS);
@@ -1097,6 +1108,57 @@ public class Monster extends Attackable
 		final int y = (int) (getY() + (THIEF_ESCAPE_DISTANCE * Math.sin(radians)));
 		final Location destination = GeoEngine.getInstance().getValidLocation(getX(), getY(), getZ(), x, y, getZ(), getInstanceId());
 		getAI().setIntention(Intention.MOVE_TO, destination);
+
+		if (_thiefRadar)
+		{
+			updateThiefRadar();
+		}
+	}
+
+	/**
+	 * Thieves' Night: the players near a fleeing Thief see where it runs on their radar.
+	 */
+	private void updateThiefRadar()
+	{
+		final int range = NightCycleConfig.NIGHT_THIEF_RADAR_RANGE;
+		final List<Player> nearby = range > 0 ? World.getInstance().getVisibleObjectsInRange(this, Player.class, range) : List.of();
+		final Location here = new Location(getX(), getY(), getZ());
+		for (Player player : nearby)
+		{
+			final Location previous = _thiefRadarMarkers.put(player.getObjectId(), here);
+			if (previous != null)
+			{
+				player.getRadar().removeMarker(previous.getX(), previous.getY(), previous.getZ());
+			}
+			else
+			{
+				player.sendPacket(new ExShowScreenMessage("A Thief runs off into the dark with its bag! It is on your radar.", ExShowScreenMessage.TOP_CENTER, 4000));
+			}
+			player.getRadar().addMarker(here.getX(), here.getY(), here.getZ());
+		}
+
+		// Those it left behind lose it.
+		for (Map.Entry<Integer, Location> entry : _thiefRadarMarkers.entrySet())
+		{
+			if (entry.getValue() != here)
+			{
+				removeThiefMarker(entry.getKey(), entry.getValue());
+			}
+		}
+	}
+
+	private void removeThiefMarker(int objectId, Location marker)
+	{
+		if (!_thiefRadarMarkers.remove(objectId, marker))
+		{
+			return;
+		}
+
+		final Player player = World.getInstance().getPlayer(objectId);
+		if (player != null)
+		{
+			player.getRadar().removeMarker(marker.getX(), marker.getY(), marker.getZ());
+		}
 	}
 
 	private void stopThiefEscape()
@@ -1110,6 +1172,12 @@ public class Monster extends Attackable
 		_thiefEscapeTask = null;
 		task.cancel(false);
 		disableCoreAI(false);
+
+		_thiefRadar = false;
+		for (Map.Entry<Integer, Location> entry : _thiefRadarMarkers.entrySet())
+		{
+			removeThiefMarker(entry.getKey(), entry.getValue());
+		}
 	}
 
 	// =======================================================================

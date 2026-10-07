@@ -46,6 +46,7 @@ public class HiddenQuestConfig
 	public static int MESSENGER_RETRY_DELAY;
 	public static int FAIL_RETRY_DELAY;
 	public static int TASK_TIME_LIMIT;
+	public static int NIGHT_ONLY_MIN_MINUTES;
 	public static int KILL_LEVEL_GAP;
 	public static AbnormalVisualEffect MESSENGER_VISUAL_EFFECT;
 	public static boolean ALLOW_FORFEIT;
@@ -63,6 +64,7 @@ public class HiddenQuestConfig
 		MESSENGER_RETRY_DELAY = Math.max(60, config.getInt("HiddenQuestMessengerRetryDelay", 1800));
 		FAIL_RETRY_DELAY = Math.max(60, config.getInt("HiddenQuestFailRetryDelay", 1800));
 		TASK_TIME_LIMIT = Math.max(300, config.getInt("HiddenQuestTaskTimeLimit", 2700));
+		NIGHT_ONLY_MIN_MINUTES = Math.max(1, config.getInt("HiddenQuestNightOnlyMinMinutes", 15));
 		KILL_LEVEL_GAP = Math.max(0, config.getInt("HiddenQuestKillLevelGap", 9));
 		ALLOW_FORFEIT = config.getBoolean("HiddenQuestAllowForfeit", true);
 		LOGGING = config.getBoolean("HiddenQuestLogging", true);

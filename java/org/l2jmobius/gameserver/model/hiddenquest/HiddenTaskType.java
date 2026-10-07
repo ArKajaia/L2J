@@ -39,5 +39,7 @@ public enum HiddenTaskType
 	/** Guard a totem against waves until the vigil ends. */
 	VIGIL,
 	/** Solve riddles that point to famous places and go there. */
-	RIDDLE
+	RIDDLE,
+	/** Follow a will-o'-the-wisp from place to place to what it guards, before dawn. */
+	BEFORE_DAWN
 }

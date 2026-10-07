@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+	<!-- Night Market: Night Fishing, for Gold Dragons (hot zone coins). Fishermen sell only the normal grade luminous lures. -->
+	<npcs>
+		<npc>900360</npc> <!-- Varro the Moonmonger -->
+	</npcs>
+	<item>
+		<ingredient count="5" id="3481" /> <!-- Gold Dragon -->
+		<production count="10" id="8505" /> <!-- Green Luminous Lure - Low Grade -->
+	</item>
+	<item>
+		<ingredient count="5" id="3481" /> <!-- Gold Dragon -->
+		<production count="10" id="8508" /> <!-- Purple Luminous Lure - Low Grade -->
+	</item>
+	<item>
+		<ingredient count="5" id="3481" /> <!-- Gold Dragon -->
+		<production count="10" id="8511" /> <!-- Yellow Luminous Lure - Low Grade -->
+	</item>
+	<item>
+		<ingredient count="15" id="3481" /> <!-- Gold Dragon -->
+		<production count="10" id="8507" /> <!-- Green Colored Lure (High Grade) -->
+	</item>
+	<item>
+		<ingredient count="15" id="3481" /> <!-- Gold Dragon -->
+		<production count="10" id="8510" /> <!-- Purple Luminous Lure (High Grade) -->
+	</item>
+	<item>
+		<ingredient count="15" id="3481" /> <!-- Gold Dragon -->
+		<production count="10" id="8513" /> <!-- Yellow Luminous Lure (High Grade) -->
+	</item>
+</list>

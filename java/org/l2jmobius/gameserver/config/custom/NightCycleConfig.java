@@ -75,6 +75,15 @@ public class NightCycleConfig
 	public static int NIGHT_WATCH_MIN_POINTS;
 	public static int[] NIGHT_WATCH_COIN_REWARDS;
 	public static int[] NIGHT_WATCH_CACHE_REWARDS;
+	public static int NIGHT_WATCH_SURVIVOR_MIN_KILLS;
+
+	// Night Market and Thieves' Night
+	public static boolean NIGHT_MARKET_ENABLED;
+	public static int NIGHT_MARKET_TOWN_POPULATION;
+	public static int NIGHT_MARKET_BLACK_MARKET_STORES;
+	public static double NIGHT_THIEF_SPAWN_MULTIPLIER;
+	public static boolean NIGHT_THIEVES_FLEE;
+	public static int NIGHT_THIEF_RADAR_RANGE;
 
 	public static void load()
 	{
@@ -123,6 +132,14 @@ public class NightCycleConfig
 		NIGHT_WATCH_MIN_POINTS = config.getInt("NightWatchMinPoints", 50);
 		NIGHT_WATCH_COIN_REWARDS = config.getIntArray("NightWatchCoinRewards", ",", "500,250,100");
 		NIGHT_WATCH_CACHE_REWARDS = config.getIntArray("NightWatchCacheRewards", ",", "2,1,1");
+		NIGHT_WATCH_SURVIVOR_MIN_KILLS = Math.max(0, config.getInt("NightWatchSurvivorMinKills", 20));
+
+		NIGHT_MARKET_ENABLED = config.getBoolean("NightMarketEnabled", true);
+		NIGHT_MARKET_TOWN_POPULATION = Math.max(10, Math.min(100, config.getInt("NightMarketTownPopulation", 50)));
+		NIGHT_MARKET_BLACK_MARKET_STORES = Math.max(0, config.getInt("NightMarketBlackMarketStores", 2));
+		NIGHT_THIEF_SPAWN_MULTIPLIER = Math.max(0, config.getDouble("NightThiefSpawnMultiplier", 2.0));
+		NIGHT_THIEVES_FLEE = config.getBoolean("NightThievesFlee", true);
+		NIGHT_THIEF_RADAR_RANGE = Math.max(0, config.getInt("NightThiefRadarRange", 3000));
 	}
 
 	/**

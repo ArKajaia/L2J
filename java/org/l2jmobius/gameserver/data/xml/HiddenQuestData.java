@@ -102,7 +102,9 @@ public class HiddenQuestData implements IXmlReader
 				"escorteeId",
 				"stopId",
 				"totemId",
-				"apparitionId"
+				"apparitionId",
+				"wispId",
+				"cacheId"
 			})
 			{
 				final int npcId = quest.getTaskParams().getInt(key, 0);
@@ -197,6 +199,7 @@ public class HiddenQuestData implements IXmlReader
 		final int id = parseInteger(attrs, "id");
 		final String name = parseString(attrs, "name");
 		final int messenger = parseInteger(attrs, "messenger");
+		final boolean nightOnly = parseBoolean(attrs, "nightOnly", false);
 		if (!parseBoolean(attrs, "enabled", true))
 		{
 			return null;
@@ -293,7 +296,7 @@ public class HiddenQuestData implements IXmlReader
 		{
 			throw new IllegalArgumentException("quest " + id + " needs a trigger and a task");
 		}
-		return new HiddenQuestDefinition(id, name, messenger, trigger, taskType, taskParams, roles, echoes, landmarks, texts, rewards);
+		return new HiddenQuestDefinition(id, name, messenger, nightOnly, trigger, taskType, taskParams, roles, echoes, landmarks, texts, rewards);
 	}
 
 	private List<HiddenReward> parseRewards(Node node)

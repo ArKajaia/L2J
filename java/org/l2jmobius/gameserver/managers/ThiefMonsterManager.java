@@ -73,7 +73,8 @@ public class ThiefMonsterManager
 
 		// A THIEVES_DEN-style hotzone modifier draws more of them.
 		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(monster);
-		final double chance = ThiefMonsterConfig.SPAWN_CHANCE * (modifier != null ? modifier.getThiefSpawnMult() : 1.0);
+		// Thieves' Night draws more of them in the open world.
+		final double chance = ThiefMonsterConfig.SPAWN_CHANCE * (modifier != null ? modifier.getThiefSpawnMult() : 1.0) * NightCycleManager.getInstance().getThiefSpawnMultiplier(monster);
 		if ((Rnd.nextDouble() * 100) >= chance)
 		{
 			return;

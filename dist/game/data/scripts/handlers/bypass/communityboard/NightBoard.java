@@ -172,6 +172,21 @@ public class NightBoard implements IParseBoardHandler
 			sb.append("<br>");
 		}
 
+		// Night Market.
+		if (NightCycleConfig.NIGHT_MARKET_ENABLED)
+		{
+			sb.append("<table width=").append(width).append("><tr><td><font color=\"").append(COLOR_TITLE).append("\">Night Market</font></td></tr><tr><td><font color=\"").append(COLOR_TEXT).append("\">");
+			if (phase.isNight())
+			{
+				sb.append("Varro the Moonmonger sells his wares in Giran until dawn, for Gold Dragons. Black market stores are open in the towns, and full Thieves run off into the dark.");
+			}
+			else
+			{
+				sb.append("At nightfall Varro the Moonmonger opens his stalls in Giran, and black market stores open in the towns.");
+			}
+			sb.append("</font></td></tr></table><br>");
+		}
+		
 		// Night Watch.
 		if (NightCycleConfig.NIGHT_WATCH_ENABLED)
 		{

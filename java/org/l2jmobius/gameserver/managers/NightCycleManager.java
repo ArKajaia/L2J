@@ -17,6 +17,7 @@ import org.l2jmobius.gameserver.config.custom.NightCycleConfig;
 import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Attackable;
+import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.instance.Chest;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
@@ -24,6 +25,7 @@ import org.l2jmobius.gameserver.model.events.Containers;
 import org.l2jmobius.gameserver.model.events.EventDispatcher;
 import org.l2jmobius.gameserver.model.events.EventType;
 import org.l2jmobius.gameserver.model.events.holders.OnNightPhaseChange;
+import org.l2jmobius.gameserver.model.events.holders.actor.creature.OnCreatureDeath;
 import org.l2jmobius.gameserver.model.events.holders.actor.player.OnPlayerLogin;
 import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
@@ -80,6 +82,7 @@ public class NightCycleManager
 		private volatile String _name;
 		private final AtomicInteger _kills = new AtomicInteger();
 		private final AtomicInteger _nightlords = new AtomicInteger();
+		private volatile boolean _died;
 
 		NightRecord(Player player)
 		{
@@ -111,6 +114,14 @@ public class NightCycleManager
 		{
 			return (_kills.get() * NightCycleConfig.NIGHT_WATCH_KILL_POINTS) + (_nightlords.get() * NightCycleConfig.NIGHT_WATCH_NIGHTLORD_POINTS);
 		}
+
+		/**
+		 * @return {@code true} if the player died tonight
+		 */
+		public boolean hasDied()
+		{
+			return _died;
+		}
 	}
 
 	protected NightCycleManager()
@@ -137,6 +148,7 @@ public class NightCycleManager
 		}
 
 		Containers.Players().addListener(new ConsumerEventListener(Containers.Players(), EventType.ON_PLAYER_LOGIN, (OnPlayerLogin event) -> onLogin(event.getPlayer()), this));
+		Containers.Players().addListener(new ConsumerEventListener(Containers.Players(), EventType.ON_CREATURE_DEATH, (OnCreatureDeath event) -> onPlayerDeath(event), this));
 		ThreadPool.scheduleAtFixedRate(this::tick, TICK_MS, TICK_MS);
 		LOGGER.info(getClass().getSimpleName() + ": Started at " + _phase.getDisplayName() + (_omen != null ? ", tonight's Omen " + getOmenName(_omen) : "") + ".");
 	}
@@ -301,6 +313,46 @@ public class NightCycleManager
 		}
 
 		rewardNightWatch();
+		rewardSurvivors();
+
+		// The black market sellers pack up before the sun finds them.
+		if (NightCycleConfig.NIGHT_MARKET_ENABLED)
+		{
+			FakePlayerTownManager.getInstance().onDawn();
+		}
+	}
+
+	/**
+	 * The players who hunted the night through outside towns without dying and are still out there at dawn have survived the night (a hidden quest condition).
+	 */
+	private void rewardSurvivors()
+	{
+		for (NightRecord record : _nightWatch.values())
+		{
+			if (record._died || (record.getKills() < NightCycleConfig.NIGHT_WATCH_SURVIVOR_MIN_KILLS))
+			{
+				continue;
+			}
+
+			final Player player = World.getInstance().getPlayer(record.getObjectId());
+			if ((player != null) && player.isOnline() && !player.isDead() && HotzoneModifierManager.isOpenWorld(player))
+			{
+				player.sendPacket(new ExShowScreenMessage("You survived the night.", ExShowScreenMessage.TOP_CENTER, 5000));
+				HiddenQuestManager.getInstance().onNightSurvived(player);
+			}
+		}
+	}
+
+	/**
+	 * A player died: at night it no longer survives this night.
+	 * @param event the death
+	 */
+	private void onPlayerDeath(OnCreatureDeath event)
+	{
+		if (_phase.isNight() && event.getTarget().isPlayer())
+		{
+			getRecord(event.getTarget().asPlayer())._died = true;
+		}
 	}
 
 	/**
@@ -435,7 +487,8 @@ public class NightCycleManager
 			return;
 		}
 
-		if (NightCycleConfig.NIGHT_WATCH_ENABLED && (monster.getLevel() >= (killer.getLevel() - NightCycleConfig.NIGHT_WATCH_KILL_LEVEL_GAP)))
+		// Counted even with the Night Watch rewards off: surviving the night needs them.
+		if (monster.getLevel() >= (killer.getLevel() - NightCycleConfig.NIGHT_WATCH_KILL_LEVEL_GAP))
 		{
 			getRecord(killer)._kills.incrementAndGet();
 		}
@@ -600,6 +653,63 @@ public class NightCycleManager
 	public NightPhase getPhase()
 	{
 		return _phase;
+	}
+
+	/**
+	 * @return {@code true} while the Night Cycle runs a phase of the night (a GM-forced one too)
+	 */
+	public boolean isNight()
+	{
+		return NightCycleConfig.ENABLED && _phase.isNight();
+	}
+
+	/**
+	 * @return the real seconds until dawn, 0 by day. A GM-forced night lasts until the clock reaches its next phase.
+	 */
+	public int getRealSecondsToDawn()
+	{
+		if (!isNight())
+		{
+			return 0;
+		}
+
+		final int gameTime = GameTimeTaskManager.getInstance().getGameTime();
+		final int gameMinutes = isForced() ? NightPhase.minutesLeft(gameTime) : Math.max(1, NightPhase.NIGHT_END - Math.floorMod(gameTime, NightPhase.MINUTES_PER_DAY));
+		return gameMinutes * 10;
+	}
+
+	/**
+	 * @return the share of the town fake players that stay in town: lower at night with the Night Market on
+	 */
+	public double getTownPopulationFactor()
+	{
+		return isNight() && NightCycleConfig.NIGHT_MARKET_ENABLED ? NightCycleConfig.NIGHT_MARKET_TOWN_POPULATION / 100.0 : 1.0;
+	}
+
+	/**
+	 * @return how many black market stores each town has on top of its usual stores: some at night with the Night Market on
+	 */
+	public int getBlackMarketStores()
+	{
+		return isNight() && NightCycleConfig.NIGHT_MARKET_ENABLED ? NightCycleConfig.NIGHT_MARKET_BLACK_MARKET_STORES : 0;
+	}
+
+	/**
+	 * @param monster a monster about to be rolled as a Thief
+	 * @return the Thieves' Night multiplier on its Thief chance: {@link NightCycleConfig#NIGHT_THIEF_SPAWN_MULTIPLIER} in the open world at night
+	 */
+	public double getThiefSpawnMultiplier(Creature monster)
+	{
+		return isNight() && NightCycleConfig.NIGHT_MARKET_ENABLED && HotzoneModifierManager.isOpenWorld(monster) ? NightCycleConfig.NIGHT_THIEF_SPAWN_MULTIPLIER : 1.0;
+	}
+
+	/**
+	 * @param thief a Thief whose bag is full
+	 * @return {@code true} if it runs off into the dark: Thieves' Night in the open world
+	 */
+	public boolean isThievesNight(Creature thief)
+	{
+		return isNight() && NightCycleConfig.NIGHT_MARKET_ENABLED && NightCycleConfig.NIGHT_THIEVES_FLEE && HotzoneModifierManager.isOpenWorld(thief);
 	}
 
 	/**

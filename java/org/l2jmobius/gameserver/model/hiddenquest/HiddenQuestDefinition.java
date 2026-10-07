@@ -43,12 +43,14 @@ public class HiddenQuestDefinition
 	private final List<Landmark> _landmarks;
 	private final Map<String, String> _texts;
 	private final List<HiddenReward> _rewards;
+	private final boolean _nightOnly;
 
-	public HiddenQuestDefinition(int id, String name, int messengerNpcId, HiddenTrigger trigger, HiddenTaskType taskType, StatSet taskParams, Map<String, SpawnRole> roles, List<EchoDefinition> echoes, List<Landmark> landmarks, Map<String, String> texts, List<HiddenReward> rewards)
+	public HiddenQuestDefinition(int id, String name, int messengerNpcId, boolean nightOnly, HiddenTrigger trigger, HiddenTaskType taskType, StatSet taskParams, Map<String, SpawnRole> roles, List<EchoDefinition> echoes, List<Landmark> landmarks, Map<String, String> texts, List<HiddenReward> rewards)
 	{
 		_id = id;
 		_name = name;
 		_messengerNpcId = messengerNpcId;
+		_nightOnly = nightOnly;
 		_trigger = trigger;
 		_taskType = taskType;
 		_taskParams = taskParams;
@@ -72,6 +74,14 @@ public class HiddenQuestDefinition
 	public int getMessengerNpcId()
 	{
 		return _messengerNpcId;
+	}
+
+	/**
+	 * @return {@code true} for a Midnight quest: its messenger only comes at night, and its task ends at dawn
+	 */
+	public boolean isNightOnly()
+	{
+		return _nightOnly;
 	}
 
 	public HiddenTrigger getTrigger()

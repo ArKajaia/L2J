@@ -74,6 +74,14 @@ public enum HiddenTriggerType
 	MEDITATION(true),
 	/** Distance walked or run on foot, in game units. Teleports, boats, mounts and flying don't count. */
 	DISTANCE(true),
+	/** Nights survived: hunted outside towns through the night without dying (see NightWatchSurvivorMinKills in NightCycle.ini) and still out there at dawn. */
+	NIGHTS_SURVIVED(true),
+	/** Nightlords the player helped slay (everyone who fought one when it fell). */
+	NIGHTLORDS_SLAIN(true),
+	/** Fish caught at night with a night (luminous) lure. */
+	MOONLIT_FISH(true),
+	/** Monsters killed during the Witching Hour, the last minutes of the night. */
+	WITCHING_KILLS(true),
 	/** The character's completed (non-repeatable) quests. */
 	QUESTS_COMPLETED(false);
 

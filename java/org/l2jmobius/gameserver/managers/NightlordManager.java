@@ -306,6 +306,7 @@ public class NightlordManager
 		{
 			LuckyLootManager.getInstance().giveGuaranteedCache(player, monster.getLevel());
 			NightCycleManager.getInstance().addNightlordCredit(player);
+			HiddenQuestManager.getInstance().onNightlordSlain(player);
 		}
 
 		NightCycleManager.announce(killer.getName() + (helpers.size() > 1 ? " and " + (helpers.size() - 1) + " more" : "") + " slew the Nightlord " + monster.getName() + " (" + nightlord._bracket + ")!");
