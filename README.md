@@ -53,7 +53,7 @@ A Path-of-Exile-style node graph layered on top of normal class progression, giv
 - Node tiers range from small stat bonuses up to rare "keystone" nodes that grant a powerful bonus alongside a deliberate drawback; some nodes grant a real, permanent skill.
 - Points can be refunded node-by-node or via a full tree reset.
 - Allocation happens on a secure web page linked from in-game, not an in-client window — the Community Board page only shows a read-only summary.
-- GMs edit the tree itself in a web editor opened with `//passivetree`: node positions, links, effects, costs, types, skills and icons, plus adding and removing nodes. Saving rewrites `data/passivetree/*.xml` and the new tree is live at once.
+- GMs edit the tree itself in a web editor opened with `//passivetree`: node positions, links, effects, costs, types, skills and icons, plus adding and removing nodes. Saving rewrites `data/passivetree/*.xml` and the new tree is live at once. The same editor also works without the game server, on the tree files of a folder on your computer.
 
 ### Archetype & Random Monster Skills
 
@@ -634,6 +634,7 @@ Changes from 28 September – 7 October 2026.
   - **Saving** first checks the tree on the server and lists what is wrong, what you should know and which files change: unreachable nodes, unknown effect keys and conditions, missing skills, and how many characters lose allocated nodes. Those nodes are refunded, at once for online players and at the next login for the rest. The old files are copied to `data/passivetree_backup/<time>/` (the last 30 saves are kept). Then online players' trees are rebuilt and fake players' prepared trees are grown again. A save is refused if the files changed since the editor loaded them.
   - `//passivetree_reload` loads the files again after editing them by hand. Re-running the layout generator overwrites edits made in the editor.
   - The editor link lasts `PassiveTreeWebAdminTokenLifetime` seconds (2 hours by default).
+  - **Without the game server**: open `dist/game/data/html/custom/passive-tree-admin.html` straight from disk in Chrome or Edge, click **Open the tree folder...** and pick `dist/game/data` (or `dist/game`, `dist` or the repository folder). The editor works the same, and saving writes `data/passivetree/*.xml` in that folder, exactly as the server would, after a backup in `data/passivetree_backup/`. It checks skills against `data/stats/skills`, but players' allocations are unknown, so it only says how many nodes and links a save removes. A running server picks the files up after a restart or `//passivetree_reload`. Picking `data/passivetree` itself also works, without the backup, the planner's icons or the skill check. Browsers that can't write to a folder (Firefox, Safari) download the changed files instead.
 - **Client**: the custom skills need Skillname-e.dat / Skillgrp.dat entries to show their names and icons.
 
 ### Alternative Class Transfer Challenges
