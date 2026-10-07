@@ -163,6 +163,7 @@ import org.l2jmobius.gameserver.managers.SellBuffsManager;
 import org.l2jmobius.gameserver.managers.ServerRestartManager;
 import org.l2jmobius.gameserver.managers.SiegeManager;
 import org.l2jmobius.gameserver.managers.TerritoryWarManager;
+import org.l2jmobius.gameserver.managers.TownLifeManager;
 import org.l2jmobius.gameserver.managers.WalkingManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.managers.games.KrateisCubeManager;
@@ -394,6 +395,7 @@ public class GameServer
 		FakePlayerTownManager.getInstance();
 		PvpSpotManager.getInstance();
 		NightCycleManager.getInstance();
+		TownLifeManager.getInstance();
 		
 		printSection("Siege");
 		SiegeManager.getInstance().getSieges();
