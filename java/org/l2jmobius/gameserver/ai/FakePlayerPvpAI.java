@@ -124,6 +124,8 @@ public class FakePlayerPvpAI extends AttackableAI
 	private static final int ESCAPE_DISTANCE = 900;
 	/** A pursuer this close is shaken off (root, stun...) before running on. */
 	private static final int PEEL_DISTANCE = 300;
+	/** It doesn't sit down to rest with a player it fights (or that comes for it) this close: a little farther than it runs before it stops running from them ({@link #ESCAPE_DISTANCE}). */
+	private static final int THREAT_RANGE = 1200;
 	/** After running this long with a pursuer on its heels, it turns around and fights to the end. */
 	private static final long FLEE_TIMEOUT = 45000;
 	/** A necromancer summons its new servitor (15 seconds) once the players it fights are this far, and runs on when one comes this close. */
@@ -399,16 +401,29 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		// After a hard fight, sit down and rest like a player until HP is back before doing anything else. They don't use MP.
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
-		_resting = hpRatio < (_resting ? 0.9 : 0.5);
-		if (_resting)
+		if (hpRatio < (_resting ? 0.9 : 0.5))
 		{
 			endPoke(npc);
+			
+			// Not with a fight still going on around it (someone hitting it, one it chose not to hit back, a pursuer...): it stays on its feet and drinks a potion.
+			if (isPvpThreatNear(npc))
+			{
+				_resting = false;
+				if (!standUp(npc))
+				{
+					FakePlayerPvpManager.getInstance().tryPotion(npc);
+				}
+				return;
+			}
+			
+			_resting = true;
 			if (!npc.isMoving() && !npc.isMovementDisabled())
 			{
 				sitDown(npc);
 			}
 			return;
 		}
+		_resting = false;
 		
 		// Rested: up again (that takes a moment, like for a player).
 		if (standUp(npc))
@@ -548,7 +563,8 @@ public class FakePlayerPvpAI extends AttackableAI
 		_meetTarget = null;
 		endTalk();
 		
-		// A sitting player stands up first.
+		// A sitting player stands up first (and no longer regenerates like one).
+		_resting = false;
 		if (standUp(npc))
 		{
 			return;
@@ -1189,6 +1205,52 @@ public class FakePlayerPvpAI extends AttackableAI
 	{
 		final Creature enemy = getClosestPvpEnemy(npc);
 		return (enemy != null) && ((npc.calculateDistance2D(enemy) - npc.getTemplate().getCollisionRadius() - enemy.getTemplate().getCollisionRadius()) < range);
+	}
+	
+	/**
+	 * A player doesn't sit down to rest in the middle of a fight. Its target isn't all there is to it: one it chose not to hit back (see {@link FakePlayerPvpManager#onFakePlayerAttacked}), one it lost (out of chase range, couldn't hit for a while) or a pursuer it
+	 * stopped running from still fights it.
+	 * @param npc the fake player
+	 * @return {@code true} if a player (or summon, or fake player) within {@link #THREAT_RANGE} fights it: it hates them (they hit it, or it fights them), or they have it as target in a fight
+	 */
+	private static boolean isPvpThreatNear(Attackable npc)
+	{
+		if (npc.isInsideZone(ZoneId.PEACE))
+		{
+			return false;
+		}
+		
+		for (AggroInfo info : npc.getAggroList().values())
+		{
+			if ((info.getHate() > 0) && isThreat(npc, info.getAttacker()))
+			{
+				return true;
+			}
+		}
+		
+		for (Creature creature : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, THREAT_RANGE))
+		{
+			if ((creature.getTarget() == npc) && creature.isInCombat() && isThreat(npc, creature))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param creature a creature that fights it
+	 * @return {@code true} if {@code creature} is a player (or summon, or fake player) within {@link #THREAT_RANGE} of it that can still get at it: alive, visible, in its instance, out of town, and neither of its party nor of its clan
+	 */
+	private static boolean isThreat(Attackable npc, Creature creature)
+	{
+		if ((creature == null) || (creature == npc) || !isPvpEnemy(creature) || creature.isAlikeDead() || !creature.isSpawned() || creature.isInvisible() || (creature.getInstanceId() != npc.getInstanceId()) || creature.isInsideZone(ZoneId.PEACE))
+		{
+			return false;
+		}
+		
+		return npc.isInsideRadius2D(creature, THREAT_RANGE) && !FakePartyManager.getInstance().isSameGroup(npc, creature) && !FakeClanManager.getInstance().isFriend(npc, creature);
 	}
 	
 	/**
@@ -3468,9 +3530,9 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// Resting: only with nobody around to come for it, like a player in a PvP zone.
+		// Resting: only with nobody around to come for it, like a player in a PvP zone (a pursuer it just got away from is still coming).
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
-		_resting = (hpRatio < (_resting ? 0.9 : 0.5)) && !isSpotThreatNear(npc, zone);
+		_resting = (hpRatio < (_resting ? 0.9 : 0.5)) && !isSpotThreatNear(npc, zone) && !isPvpThreatNear(npc);
 		if (_resting)
 		{
 			FakePlayerPvpManager.getInstance().tryPotion(npc);
@@ -4017,10 +4079,19 @@ public class FakePlayerPvpAI extends AttackableAI
 			return true;
 		}
 		
-		// It rests when the party stands around (and sits down with its leader), like players.
+		// It rests when the party stands around (and sits down with its leader), like players. Not with a fight still going on around it: it stays on its feet and drinks a potion.
 		final boolean leaderSits = leader.isPlayer() && leader.asPlayer().isSitting();
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
 		_resting = !leader.isMoving() && (leaderSits || (hpRatio < (_resting ? 0.9 : 0.5)));
+		if (_resting && isPvpThreatNear(npc))
+		{
+			_resting = false;
+			if (!standUp(npc))
+			{
+				FakePlayerPvpManager.getInstance().tryPotion(npc);
+			}
+			return true;
+		}
 		if (_resting)
 		{
 			if (!npc.isMoving() && !npc.isMovementDisabled())
