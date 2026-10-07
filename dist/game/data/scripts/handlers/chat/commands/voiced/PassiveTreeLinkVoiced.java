@@ -1,5 +1,6 @@
 package handlers.chat.commands.voiced;
 
+import org.l2jmobius.gameserver.config.custom.PassiveTreeConfig;
 import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
 import org.l2jmobius.gameserver.model.actor.Player;
 
@@ -18,9 +19,6 @@ public class PassiveTreeLinkVoiced implements IVoicedCommandHandler
 		"treelink"
 	};
 	
-	// Point this at wherever your server is reachable from.
-	public static final String WEB_BASE_URL = "http://10.8.0.6:8788/passive-tree.html";
-
 	@Override
 	public boolean useVoicedCommand(String command, Player player, String params)
 	{
@@ -35,7 +33,7 @@ public class PassiveTreeLinkVoiced implements IVoicedCommandHandler
 	public static void sendPassiveTreeLink(Player player)
 	{
 		final String token = PassiveTreeApiServer.getInstance().generateToken(player.getObjectId(), player.getClassIndex());
-		final String url = WEB_BASE_URL + "?token=" + token;
+		final String url = PassiveTreeConfig.WEB_BASE_URL + "?token=" + token;
 
 		player.sendMessage("Your passive tree link (click to open, valid 15 minutes):");
 		player.sendMessage(url);

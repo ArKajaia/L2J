@@ -3,6 +3,7 @@ package handlers.chat.commands.voiced;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.l2jmobius.gameserver.config.custom.PassiveTreeConfig;
 import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Npc;
@@ -70,7 +71,7 @@ public class GearVoiced implements IVoicedCommandHandler
 		LAST_USE.put(player.getObjectId(), now);
 
 		final PassiveTreeApiServer server = PassiveTreeApiServer.getInstance();
-		final String url = PassiveTreeLinkVoiced.WEB_BASE_URL + "?token=" + server.generateToken(player.getObjectId(), player.getClassIndex()) + "&inspect=" + server.registerInspect(json);
+		final String url = PassiveTreeConfig.WEB_BASE_URL + "?token=" + server.generateToken(player.getObjectId(), player.getClassIndex()) + "&inspect=" + server.registerInspect(json);
 
 		player.sendMessage("Link to " + name + " build (click to open, valid 30 minutes):");
 		player.sendMessage(url);

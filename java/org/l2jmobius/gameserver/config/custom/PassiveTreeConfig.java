@@ -112,6 +112,33 @@ public class PassiveTreeConfig
 	public static int RESET_ITEM_ID = 57; // Adena
 	public static long RESET_ITEM_COUNT = 100000;
 
+	/** Port the web planner listens on. */
+	public static int WEB_PORT = 8788;
+
+	/** Secret the web tokens are signed with. Empty (or the old placeholder) = a random one is made at every start. */
+	public static String WEB_SECRET = "";
+
+	/** Address of the planner page as players reach it, without the query string. */
+	public static String WEB_BASE_URL = "http://127.0.0.1:8788/passive-tree.html";
+
+	/** Seconds a link (token) stays valid. */
+	public static int WEB_TOKEN_LIFETIME = 900;
+
+	/** Seconds a typed PIN stays valid. */
+	public static int WEB_PIN_LIFETIME = 600;
+
+	/** Most /api requests one address may make per minute. */
+	public static int WEB_RATE_LIMIT_PER_MINUTE = 120;
+
+	/** Most PIN attempts one address may make per minute. */
+	public static int WEB_PIN_RATE_LIMIT_PER_MINUTE = 10;
+
+	/** Wrong PIN guesses an address may make before it is locked out for WEB_PIN_LOCKOUT seconds. */
+	public static int WEB_PIN_MAX_FAILURES = 5;
+
+	/** Seconds an address stays locked out of PIN entry. */
+	public static int WEB_PIN_LOCKOUT = 600;
+
 	public static void load()
 	{
 		final ConfigReader config = new ConfigReader(PASSIVE_TREE_CONFIG_FILE);
@@ -126,7 +153,16 @@ public class PassiveTreeConfig
 		RESET_ITEM_ID = config.getInt("PassiveTreeResetItemId", 57);
 		RESET_ITEM_COUNT = Math.max(0, config.getLong("PassiveTreeResetItemCount", 100000));
 		RESPEC_ADENA_PER_POINT = Math.max(0, config.getLong("PassiveTreeRefundAdenaPerPoint", 1000));
-		
+		WEB_PORT = Math.max(1, Math.min(65535, config.getInt("PassiveTreeWebPort", 8788)));
+		WEB_SECRET = config.getString("PassiveTreeWebSecret", "").trim();
+		WEB_BASE_URL = config.getString("PassiveTreeWebBaseUrl", "http://127.0.0.1:8788/passive-tree.html").trim();
+		WEB_TOKEN_LIFETIME = Math.max(30, config.getInt("PassiveTreeWebTokenLifetime", 900));
+		WEB_PIN_LIFETIME = Math.max(30, config.getInt("PassiveTreeWebPinLifetime", 600));
+		WEB_RATE_LIMIT_PER_MINUTE = Math.max(1, config.getInt("PassiveTreeWebRateLimitPerMinute", 120));
+		WEB_PIN_RATE_LIMIT_PER_MINUTE = Math.max(1, config.getInt("PassiveTreeWebPinRateLimitPerMinute", 10));
+		WEB_PIN_MAX_FAILURES = Math.max(1, config.getInt("PassiveTreeWebPinMaxFailures", 5));
+		WEB_PIN_LOCKOUT = Math.max(1, config.getInt("PassiveTreeWebPinLockout", 600));
+
 		// Every default cap can be changed, and any other effect key can be capped by adding its own PassiveTreeCap.<KEY> line. Negative = no cap.
 		final Map<String, Double> caps = new LinkedHashMap<>();
 		for (Map.Entry<String, Double> entry : DEFAULT_STAT_CAPS.entrySet())
