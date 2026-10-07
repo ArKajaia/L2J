@@ -112,6 +112,18 @@ The retail clock is kept (night is game hours 0:00-5:59, about one real hour in 
 - Players see all of it with `.night` or on the Community Board (`_bbsnight`, with a radar button for each Nightlord). GMs step through the phases with `//night day|dusk|night|witching|dawn` (until the clock reaches its next phase, or `//night auto`), set the Omen with `//night omen <name>` and raise the Nightlords with `//night nightlord`. Scripts can listen to `ON_NIGHT_PHASE_CHANGE`. Settings are in `config/Custom/NightCycle.ini`.
 - The night raid boss Eilhalder von Hellmann now also appears when the server boots during the night.
 
+### Town Life
+
+The towns follow the day and the night. Town life npcs (templates 900400-900446) go about their business and only think while a player is around, so an empty town costs nothing. Each town's streets, shops and squares are worked out once from the geodata and spawns, the same way the town fake players find theirs, so a town needs no coordinates.
+
+- **By day**: townsfolk stroll the streets, look at the shops and stop to talk to each other. Porters and errand runners carry between the warehouse and the shops, a sweeper keeps the streets clean, and guards walk patrols in pairs. Children play tag in the square: whoever is "it" chases the nearest child and tags them, and the rest run away. A town crier shouts the news of the server: raid bosses that rose or fell, the next siege, tonight's Omen, the heroes, the festival. Fishermen stand on the shore at the five harbors facing the water, and dock workers carry along the quay.
+- **Dusk**: the children are called home first, then everyone else walks into a house and is gone for the night. A house is a spot in front of a town npc that is walled in on nearly every side. Some retail npcs with nothing to sell, teach or give a quest for go home too: the Schuttgart children Adolph, Linda and old Edwin, the dwarven carrier and deliveryman, the elven bard, Agnes' followers in Goddard, and a few others. The ones on a walking route take it up again in the morning. The lamplighter makes his round.
+- **Night**: night watchmen walk the streets calling the hour ("Two o'clock, and all's well in Giran!"), or warning people to stay inside during the Witching Hour. A crowd gathers outside the tavern (Valentine the Brewer in Goddard, otherwise the grocer) and goes home at the Witching Hour.
+- **Dawn**: everyone comes back out of their house, each at their own time, and gets on with their day.
+- **Players**: townsfolk greet players who walk by. Now and then a child runs up to a player and asks for a sweet. Once a day a character can give a child a sweet (500 adena) and gets a Firework, a Large Firework or Star Shards as thanks. Talking to the crier shows the news of the day.
+- **Festival day** (Saturday by default): banners around the square, a bonfire at the tavern, half again as many townsfolk and children, and fireworks over the square at dusk.
+- The towns, their size, which ones have children, an optional square or tavern, the retail npcs that go home and the harbors are listed in `data/TownLife.xml`. Every part can be turned off or scaled in `config/Custom/TownLife.ini`. GMs see what each town is doing with `//townlife` (or what the targeted npc is doing), set festival day with `//townlife festival on|off|auto`, and step through the phases with `//night`.
+
 ### Arena Challenges & Arena Shop
 
 A solo PvE endurance mode and a matching reward shop, linked through a shared currency.
@@ -574,6 +586,10 @@ This program is free software, licensed under the **GNU General Public License, 
 ## Recent Updates
 
 Changes from 28 September – 7 October 2026.
+
+### Town Life
+- **New system**: npcs walk the town streets by day, go into their houses at dusk and come back at dawn. It covers townsfolk, workers, patrols, children playing tag, a town crier, harbor fishermen and dock workers, the lamplighter, the night watch, a tavern crowd at night, sweets for the children and a weekly festival day. See [Town Life](#town-life).
+- Settings in `config/Custom/TownLife.ini`, towns and harbors in `data/TownLife.xml`, npc templates 900400-900446, the dialogs in `custom/TownLife` and the GM command `//townlife`.
 
 ### Night Cycle
 - **New system**: the night runs through announced phases (dusk, night, the Witching Hour, dawn) with a world-wide Omen, Nightlords in every level bracket, the Witching Hour and the Night Watch rewards. See [Night Cycle](#night-cycle).

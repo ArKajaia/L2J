@@ -121,12 +121,13 @@ final class FakePlayerTown
 		}
 		
 		/**
-		 * @return the npc, {@code null} if it isn't in the world right now
+		 * @return the npc, {@code null} if it isn't in the world right now (or is at home for the night, see {@link TownLifeManager})
 		 */
 		Npc getNpc()
 		{
 			final Npc npc = spawn.getLastSpawn();
-			return (npc != null) && npc.isSpawned() && !npc.isDead() ? npc : null;
+			// An invisible one is a town life npc gone home for the night.
+			return (npc != null) && npc.isSpawned() && !npc.isDead() && !npc.isInvisible() ? npc : null;
 		}
 	}
 	

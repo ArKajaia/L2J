@@ -208,6 +208,7 @@ import handlers.chat.commands.admin.AdminTargetSay;
 import handlers.chat.commands.admin.AdminTeleport;
 import handlers.chat.commands.admin.AdminTerritoryWar;
 import handlers.chat.commands.admin.AdminTest;
+import handlers.chat.commands.admin.AdminTownLife;
 import handlers.chat.commands.admin.AdminTransform;
 import handlers.chat.commands.admin.AdminVitality;
 import handlers.chat.commands.admin.AdminZone;
@@ -452,6 +453,7 @@ public class MasterHandler
 			AdminTeleport.class,
 			AdminTerritoryWar.class,
 			AdminTest.class,
+			AdminTownLife.class,
 			AdminTransform.class,
 			AdminVitality.class,
 			AdminZone.class,

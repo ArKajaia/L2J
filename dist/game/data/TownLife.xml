@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Town Life (TownLifeManager, config/Custom/TownLife.ini): the towns whose npcs go about their day, and the harbors.
+
+	<town region="..."> a map region (data/mapregion): the town is found from its respawn points and town zone, its streets and npcs from the geodata,
+	                    so nothing else is needed. Optional:
+	  name="..."        the name the townsfolk use (default: the map region's town name).
+	  size="small|medium|large"  half, the same or half again as many townsfolk, workers and night watchmen as TownLife.ini says.
+	  children="true"   children play tag in the square.
+	  <square x y z>    where the children play and the crier stands (default: the most open street point near the town center).
+	                    A fountain or statue in the middle is fine: the children run around it.
+	  <tavern npc="id"> or <tavern x y z>: where the crowd gathers at night (default: the grocer nearest the center).
+	  <homebound npc="id"> a retail npc of the town that goes home at dusk and comes back at dawn. Only npcs with nothing to sell, teach or give
+	                    a quest for: they are gone all night. Npcs on a walking route (data/Routes.xml) take the route up again in the morning.
+
+	<harbor name="..." wharf="id"> fishermen and dock workers around the wharf manager (npc id) of a harbor.
+-->
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="xsd/TownLife.xsd">
+	<!-- Villages -->
+	<town region="talking_island_town" name="Talking Island" size="small" children="true">
+		<homebound npc="30049" /> <!-- Bonnie -->
+		<homebound npc="31356" /> <!-- Porter Remy (walking route) -->
+		<homebound npc="31357" /> <!-- Secretary Leandro (walking route) -->
+	</town>
+	<town region="elf_town" name="the Elven Village" size="small">
+		<homebound npc="31358" /> <!-- Bard Kasiel (walking route) -->
+	</town>
+	<town region="darkelf_town" name="the Dark Elven Village" size="small">
+		<homebound npc="30352" /> <!-- Karna -->
+		<homebound npc="30353" /> <!-- Jughead -->
+		<homebound npc="30354" /> <!-- Jewel -->
+	</town>
+	<town region="orc_town" name="the Orc Village" size="small" />
+	<town region="dwarf_town" name="the Dwarven Village" size="small">
+		<homebound npc="31362" /> <!-- Carrier Tate (walking route) -->
+		<homebound npc="31363" /> <!-- Deliveryman Rogin (walking route) -->
+	</town>
+	<town region="kamael_town" name="the Kamael Village" size="small" />
+	<town region="gludin_town" name="Gludin" size="small" children="true" />
+	<!-- floran_town is left out: its map region uses the respawn points of Dion. -->
+	<!-- Towns -->
+	<town region="gludio_castle_town" name="Gludio" size="medium" />
+	<town region="dion_castle_town" name="Dion" size="medium" children="true" />
+	<town region="giran_castle_town" name="Giran" size="large" children="true" />
+	<town region="heiness_town" name="Heine" size="medium" children="true" />
+	<town region="oren_castle_town" name="Oren" size="medium" children="true" />
+	<town region="hunter_town" name="Hunters Village" size="small" />
+	<town region="aden_town" name="Aden" size="large" children="true" />
+	<town region="godard_town" name="Goddard" size="large" children="true">
+		<tavern npc="31584" /> <!-- Valentine, Brewer -->
+		<homebound npc="31700" /> <!-- Agnes' Follower -->
+		<homebound npc="31701" /> <!-- Agnes' Follower -->
+		<homebound npc="31702" /> <!-- Agnes' Follower -->
+	</town>
+	<town region="rune_town" name="Rune" size="large" children="true" />
+	<town region="town_of_schuttgart" name="Schuttgart" size="medium" children="true">
+		<homebound npc="32070" /> <!-- Adolph (walking route, chased by Edwin) -->
+		<homebound npc="32071" /> <!-- Linda -->
+		<homebound npc="32072" /> <!-- Edwin (walking route) -->
+	</town>
+	<!-- Harbors -->
+	<harbor name="Talking Island Harbor" wharf="30047" /> <!-- Firon -->
+	<harbor name="Gludin Harbor" wharf="30387" /> <!-- Clancy -->
+	<harbor name="Giran Harbor" wharf="30879" /> <!-- Felton -->
+	<harbor name="Heine Harbor" wharf="30924" /> <!-- Nedy -->
+	<harbor name="Rune Harbor" wharf="31351" /> <!-- Volker -->
+</list>
