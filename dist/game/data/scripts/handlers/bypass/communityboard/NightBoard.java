@@ -27,12 +27,15 @@ import org.l2jmobius.gameserver.managers.NightCycleManager;
 import org.l2jmobius.gameserver.managers.NightCycleManager.NightRecord;
 import org.l2jmobius.gameserver.managers.NightlordManager;
 import org.l2jmobius.gameserver.managers.NightlordManager.Nightlord;
+import org.l2jmobius.gameserver.managers.ShadowRaidManager;
+import org.l2jmobius.gameserver.managers.ShadowRaidManager.Raid;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.nightcycle.NightPhase;
+import org.l2jmobius.gameserver.model.nightcycle.NightTraits;
 
 /**
- * The night board: the phase of the day, tonight's Omen, the Nightlords (with a radar button) and the Night Watch (see {@link NightCycleManager}). {@code .night} shows the same in a window.
+ * The night board: the phase of the day, tonight's Omen, the Nightlords and Shadow Raids (with radar buttons), the player's night trait and the Night Watch (see {@link NightCycleManager}). {@code .night} shows the same in a window.
  */
 public class NightBoard implements IParseBoardHandler
 {
@@ -172,6 +175,44 @@ public class NightBoard implements IParseBoardHandler
 			sb.append("<br>");
 		}
 
+		// Shadow Raids.
+		if (NightCycleConfig.NIGHT_RAID_ENABLED)
+		{
+			sb.append("<table width=").append(width).append("><tr><td><font color=\"").append(COLOR_TITLE).append("\">Shadow Raids</font></td></tr></table>");
+			final List<Raid> raids = ShadowRaidManager.getInstance().getRaids();
+			if (raids.isEmpty())
+			{
+				sb.append("<table width=").append(width).append("><tr><td><font color=\"").append(COLOR_TEXT).append("\">");
+				sb.append("At night warbands of the clans raid the open world and attack everyone they meet. Killing a raider is never a PK and pays ").append(NightCycleConfig.NIGHT_RAID_KILL_COINS).append(" Gold Dragons and a Sealed Cache.");
+				sb.append("</font></td></tr></table>");
+			}
+			else
+			{
+				int row = 0;
+				for (Raid raid : raids)
+				{
+					sb.append("<table width=").append(width).append(" height=24").append((row++ % 2) == 0 ? " bgcolor=111111" : "").append("><tr>");
+					sb.append("<td width=").append(width - 70).append("><font color=\"").append(COLOR_RED).append("\">").append(raid.getClanName()).append("</font> <font color=\"").append(COLOR_TEXT).append("\">near ").append(raid.getPlace()).append(" - ").append(raid.getAliveRaiders().size()).append(" left</font></td>");
+					sb.append("<td width=70 align=right><button value=\"Radar\" action=\"bypass voiced_night raid ").append(raid.getId()).append("\" width=60 height=20 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td>");
+					sb.append("</tr></table>");
+				}
+			}
+			sb.append("<br>");
+		}
+
+		// Children of the Night.
+		final String trait = NightTraits.describe(player);
+		if (trait != null)
+		{
+			sb.append("<table width=").append(width).append("><tr><td><font color=\"").append(COLOR_TITLE).append("\">Your Night Trait</font></td></tr><tr><td><font color=\"").append(COLOR_TEXT).append("\">");
+			sb.append(trait);
+			if (!phase.isNight())
+			{
+				sb.append(" <font color=\"").append(COLOR_MUTED).append("\">(at night)</font>");
+			}
+			sb.append("</font></td></tr></table><br>");
+		}
+
 		// Night Market.
 		if (NightCycleConfig.NIGHT_MARKET_ENABLED)
 		{
@@ -186,7 +227,7 @@ public class NightBoard implements IParseBoardHandler
 			}
 			sb.append("</font></td></tr></table><br>");
 		}
-		
+
 		// Night Watch.
 		if (NightCycleConfig.NIGHT_WATCH_ENABLED)
 		{
@@ -194,7 +235,7 @@ public class NightBoard implements IParseBoardHandler
 			final NightRecord record = manager.getNightRecord(player);
 			if (record != null)
 			{
-				sb.append("Tonight: ").append(record.getKills()).append(" kills, ").append(record.getNightlords()).append(" Nightlords - <font color=\"").append(COLOR_VALUE).append("\">").append(record.getPoints()).append(" points</font>.");
+				sb.append("Tonight: ").append(record.getKills()).append(" kills, ").append(record.getNightlords()).append(" Nightlords, ").append(record.getRaiders()).append(" raiders - <font color=\"").append(COLOR_VALUE).append("\">").append(record.getPoints()).append(" points</font>.");
 			}
 			else
 			{

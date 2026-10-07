@@ -16,6 +16,8 @@
  */
 package org.l2jmobius.gameserver.model.conditions;
 
+import org.l2jmobius.gameserver.config.custom.NightCycleConfig;
+import org.l2jmobius.gameserver.managers.NightCycleManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.skill.Skill;
@@ -39,12 +41,16 @@ public class ConditionGameTime extends Condition
 	}
 	
 	/**
-	 * Test impl.
+	 * Test impl. With the Night Cycle on, the night is its night: the same hours as the game clock, but a GM can force it (see {@link NightCycleManager}).
 	 * @return true, if successful
 	 */
 	@Override
 	public boolean testImpl(Creature effector, Creature effected, Skill skill, ItemTemplate item)
 	{
+		if (NightCycleConfig.ENABLED && NightCycleManager.isStarted())
+		{
+			return NightCycleManager.getInstance().isNight() == _required;
+		}
 		return GameTimeTaskManager.getInstance().isNight() == _required;
 	}
 }

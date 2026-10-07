@@ -54,6 +54,7 @@ import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.PcCafePointsManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
+import org.l2jmobius.gameserver.managers.ShadowRaidManager;
 import org.l2jmobius.gameserver.managers.WalkingManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -387,6 +388,9 @@ public class Attackable extends Npc
 				if (isPvpFakePlayer())
 				{
 					org.l2jmobius.gameserver.managers.HotzoneModifierManager.getInstance().onFakePlayerKilled(this, player);
+					
+					// Shadow Raiders pay hot zone coins and a Sealed Cache.
+					ShadowRaidManager.getInstance().onRaiderKilled(this, player);
 				}
 			}
 			// One roaming fake player killed by another.

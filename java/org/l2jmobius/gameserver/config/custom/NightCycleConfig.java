@@ -85,6 +85,33 @@ public class NightCycleConfig
 	public static boolean NIGHT_THIEVES_FLEE;
 	public static int NIGHT_THIEF_RADAR_RANGE;
 
+	// Shadow Raids
+	public static boolean NIGHT_RAID_ENABLED;
+	public static int NIGHT_RAID_COUNT;
+	public static int NIGHT_RAID_SIZE_MIN;
+	public static int NIGHT_RAID_SIZE_MAX;
+	public static int NIGHT_RAID_DURATION;
+	public static int NIGHT_RAID_AGGRO_RANGE;
+	public static int NIGHT_RAID_LEVELS_ABOVE;
+	public static int NIGHT_RAID_LEVELS_BELOW;
+	public static int NIGHT_RAID_KILL_COINS;
+	public static int NIGHT_WATCH_RAIDER_POINTS;
+
+	// Moonlit Melee
+	public static double NIGHT_PVP_SPOT_FIGHTER_MULTIPLIER;
+	public static int NIGHT_KING_COINS;
+
+	// Children of the Night
+	public static boolean NIGHT_RACE_TRAITS_ENABLED;
+	public static double NIGHT_TRAIT_HUMAN_HP_REGEN;
+	public static double NIGHT_TRAIT_HUMAN_ACCURACY;
+	public static double NIGHT_TRAIT_ELF_MP_REGEN;
+	public static double NIGHT_TRAIT_ELF_CAST_SPEED;
+	public static double NIGHT_TRAIT_ORC_PATK;
+	public static double NIGHT_TRAIT_DWARF_PDEF;
+	public static double NIGHT_TRAIT_DWARF_ACCURACY;
+	public static double NIGHT_TRAIT_KAMAEL_SPEED;
+
 	public static void load()
 	{
 		final ConfigReader config = new ConfigReader(NIGHT_CYCLE_CONFIG_FILE);
@@ -140,6 +167,30 @@ public class NightCycleConfig
 		NIGHT_THIEF_SPAWN_MULTIPLIER = Math.max(0, config.getDouble("NightThiefSpawnMultiplier", 2.0));
 		NIGHT_THIEVES_FLEE = config.getBoolean("NightThievesFlee", true);
 		NIGHT_THIEF_RADAR_RANGE = Math.max(0, config.getInt("NightThiefRadarRange", 3000));
+
+		NIGHT_RAID_ENABLED = config.getBoolean("NightRaidEnabled", true);
+		NIGHT_RAID_COUNT = Math.max(0, config.getInt("NightRaidCount", 2));
+		NIGHT_RAID_SIZE_MIN = Math.max(1, config.getInt("NightRaidSizeMin", 4));
+		NIGHT_RAID_SIZE_MAX = Math.max(NIGHT_RAID_SIZE_MIN, config.getInt("NightRaidSizeMax", 8));
+		NIGHT_RAID_DURATION = Math.max(1, config.getInt("NightRaidDuration", 20));
+		NIGHT_RAID_AGGRO_RANGE = Math.max(100, config.getInt("NightRaidAggroRange", 900));
+		NIGHT_RAID_LEVELS_ABOVE = Math.max(0, config.getInt("NightRaidLevelsAbove", 8));
+		NIGHT_RAID_LEVELS_BELOW = Math.max(0, config.getInt("NightRaidLevelsBelow", 10));
+		NIGHT_RAID_KILL_COINS = Math.max(0, config.getInt("NightRaidKillCoins", 300));
+		NIGHT_WATCH_RAIDER_POINTS = config.getInt("NightWatchRaiderPoints", 20);
+
+		NIGHT_PVP_SPOT_FIGHTER_MULTIPLIER = Math.max(0.1, config.getDouble("NightPvpSpotFighterMultiplier", 1.5));
+		NIGHT_KING_COINS = Math.max(0, config.getInt("NightKingCoins", 1000));
+
+		NIGHT_RACE_TRAITS_ENABLED = config.getBoolean("NightRaceTraitsEnabled", true);
+		NIGHT_TRAIT_HUMAN_HP_REGEN = config.getDouble("NightTraitHumanHpRegen", 20);
+		NIGHT_TRAIT_HUMAN_ACCURACY = config.getDouble("NightTraitHumanAccuracy", 3);
+		NIGHT_TRAIT_ELF_MP_REGEN = config.getDouble("NightTraitElfMpRegen", 25);
+		NIGHT_TRAIT_ELF_CAST_SPEED = config.getDouble("NightTraitElfCastSpeed", 5);
+		NIGHT_TRAIT_ORC_PATK = config.getDouble("NightTraitOrcPAtk", 6);
+		NIGHT_TRAIT_DWARF_PDEF = config.getDouble("NightTraitDwarfPDef", 8);
+		NIGHT_TRAIT_DWARF_ACCURACY = config.getDouble("NightTraitDwarfAccuracy", 3);
+		NIGHT_TRAIT_KAMAEL_SPEED = config.getDouble("NightTraitKamaelSpeed", 8);
 	}
 
 	/**
