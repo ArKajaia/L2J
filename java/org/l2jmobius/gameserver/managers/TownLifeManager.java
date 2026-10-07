@@ -700,7 +700,7 @@ public class TownLifeManager implements IXmlReader
 	public String describe(Npc npc)
 	{
 		final TownLifeResident resident = find(npc);
-		return resident != null ? resident.town.name + " " + resident.describe() : null;
+		return resident != null ? resident.town.name + " " + resident.describe() + " (npc " + npc.getId() + ", model " + npc.getTemplate().getDisplayId() + ")" : null;
 	}
 	
 	// ------------------------------------------------------------------

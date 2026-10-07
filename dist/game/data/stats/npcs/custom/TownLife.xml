@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/npcs.xsd">
-	<!-- Town Life residents (TownLifeManager, config/Custom/TownLife.ini): townsfolk, workers, children, patrols, night watch, lamplighters, criers, harbor folk and festival decorations. They look like retail npcs (displayId) and cannot be attacked. -->
+	<!-- Town Life residents (TownLifeManager, config/Custom/TownLife.ini): townsfolk, workers, children, patrols, night watch, lamplighters, criers, harbor folk and festival decorations. They look like retail npcs (displayId) and cannot be attacked. Npcs that walk use the models of retail npcs that walk a route (data/Routes.xml): the models of shopkeepers and other npcs that never move have no walking animation. -->
 	<!-- Townsfolk -->
-	<npc id="900400" displayId="30078" level="70" type="Folk" name="Townsman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Pano model -->
+	<npc id="900400" displayId="31356" level="70" type="Folk" name="Townsman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Remy model -->
 		<race>HUMAN</race>
 		<sex>MALE</sex>
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
@@ -18,11 +18,11 @@
 		<ai aggroRange="0" isAggressive="false" />
 		<collision>
 			<radius normal="8" />
-			<height normal="21.5" />
+			<height normal="25" />
 		</collision>
 	</npc>
-	<npc id="900401" displayId="30004" level="70" type="Folk" name="Townswoman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Katerina model -->
-		<race>HUMAN</race>
+	<npc id="900401" displayId="31360" level="70" type="Folk" name="Townswoman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Alhena model -->
+		<race>DARK_ELF</race>
 		<sex>FEMALE</sex>
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
 			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
@@ -37,10 +37,10 @@
 		<ai aggroRange="0" isAggressive="false" />
 		<collision>
 			<radius normal="8" />
-			<height normal="24.5" />
+			<height normal="23" />
 		</collision>
 	</npc>
-	<npc id="900402" displayId="30840" level="70" type="Folk" name="Townsman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Lorenzo model -->
+	<npc id="900402" displayId="31357" level="70" type="Folk" name="Townsman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Leandro model -->
 		<race>HUMAN</race>
 		<sex>MALE</sex>
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
@@ -59,8 +59,8 @@
 			<height normal="22" />
 		</collision>
 	</npc>
-	<npc id="900403" displayId="31263" level="70" type="Folk" name="Townswoman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Liesel model -->
-		<race>HUMAN</race>
+	<npc id="900403" displayId="31360" level="70" type="Folk" name="Townswoman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Alhena model -->
+		<race>DARK_ELF</race>
 		<sex>FEMALE</sex>
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
 			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
@@ -75,12 +75,13 @@
 		<ai aggroRange="0" isAggressive="false" />
 		<collision>
 			<radius normal="8" />
-			<height normal="22.5" />
+			<height normal="23" />
 		</collision>
 	</npc>
-	<npc id="900404" displayId="30150" level="70" type="Folk" name="Townsman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Herbiel model -->
+	<npc id="900404" displayId="31358" level="70" type="Folk" name="Townsman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Kasiel model -->
 		<race>ELF</race>
 		<sex>MALE</sex>
+		<equipment rhand="4202" />
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
 			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
 			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
@@ -97,9 +98,9 @@
 			<height normal="24.5" />
 		</collision>
 	</npc>
-	<npc id="900405" displayId="30893" level="70" type="Folk" name="Townswoman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Payel model -->
+	<npc id="900405" displayId="31359" level="70" type="Folk" name="Townsman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Jaradine model -->
 		<race>ELF</race>
-		<sex>FEMALE</sex>
+		<sex>MALE</sex>
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
 			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
 			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
@@ -113,10 +114,10 @@
 		<ai aggroRange="0" isAggressive="false" />
 		<collision>
 			<radius normal="8" />
-			<height normal="24" />
+			<height normal="22.5" />
 		</collision>
 	</npc>
-	<npc id="900406" displayId="30137" level="70" type="Folk" name="Townsman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Vollodos model -->
+	<npc id="900406" displayId="31361" level="70" type="Folk" name="Townsman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Kreed model -->
 		<race>DARK_ELF</race>
 		<sex>MALE</sex>
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
@@ -135,7 +136,7 @@
 			<height normal="22.5" />
 		</collision>
 	</npc>
-	<npc id="900407" displayId="30561" level="70" type="Folk" name="Townsman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Papuma model -->
+	<npc id="900407" displayId="31364" level="70" type="Folk" name="Townsman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Rokar model -->
 		<race>ORC</race>
 		<sex>MALE</sex>
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
@@ -151,87 +152,10 @@
 		<ai aggroRange="0" isAggressive="false" />
 		<collision>
 			<radius normal="8" />
-			<height normal="23.5" />
+			<height normal="27" />
 		</collision>
 	</npc>
-	<npc id="900408" displayId="30519" level="70" type="Folk" name="Townswoman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Mion model -->
-		<race>DWARF</race>
-		<sex>FEMALE</sex>
-		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
-			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
-			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
-			<defence physical="295" magical="216" />
-			<speed>
-				<walk ground="50" />
-				<run ground="120" />
-			</speed>
-		</stats>
-		<status attackable="false" />
-		<ai aggroRange="0" isAggressive="false" />
-		<collision>
-			<radius normal="7" />
-			<height normal="18" />
-		</collision>
-	</npc>
-	<npc id="900409" displayId="30437" level="70" type="Folk" name="Townsman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Rolento model -->
-		<race>DWARF</race>
-		<sex>MALE</sex>
-		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
-			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
-			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
-			<defence physical="295" magical="216" />
-			<speed>
-				<walk ground="50" />
-				<run ground="120" />
-			</speed>
-		</stats>
-		<status attackable="false" />
-		<ai aggroRange="0" isAggressive="false" />
-		<collision>
-			<radius normal="8" />
-			<height normal="17.5" />
-		</collision>
-	</npc>
-	<npc id="900410" displayId="32167" level="70" type="Folk" name="Townswoman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Nika model -->
-		<race>KAMAEL</race>
-		<sex>FEMALE</sex>
-		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
-			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
-			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
-			<defence physical="295" magical="216" />
-			<speed>
-				<walk ground="50" />
-				<run ground="120" />
-			</speed>
-		</stats>
-		<status attackable="false" />
-		<ai aggroRange="0" isAggressive="false" />
-		<collision>
-			<radius normal="11" />
-			<height normal="22.5" />
-		</collision>
-	</npc>
-	<npc id="900411" displayId="31952" level="70" type="Folk" name="Townswoman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Pele model -->
-		<race>HUMAN</race>
-		<sex>FEMALE</sex>
-		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
-			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
-			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
-			<defence physical="295" magical="216" />
-			<speed>
-				<walk ground="50" />
-				<run ground="120" />
-			</speed>
-		</stats>
-		<status attackable="false" />
-		<ai aggroRange="0" isAggressive="false" />
-		<collision>
-			<radius normal="8" />
-			<height normal="22.5" />
-		</collision>
-	</npc>
-	<!-- Workers -->
-	<npc id="900415" displayId="30005" level="70" type="Folk" name="Porter" usingServerSideName="true" title="Warehouse Porter" usingServerSideTitle="true"> <!-- Wilford model -->
+	<npc id="900408" displayId="31363" level="70" type="Folk" name="Townsman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Rogin model -->
 		<race>DWARF</race>
 		<sex>MALE</sex>
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
@@ -250,7 +174,7 @@
 			<height normal="17" />
 		</collision>
 	</npc>
-	<npc id="900416" displayId="31268" level="70" type="Folk" name="Porter" usingServerSideName="true" title="Warehouse Porter" usingServerSideTitle="true"> <!-- Hakon model -->
+	<npc id="900409" displayId="31362" level="70" type="Folk" name="Townsman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Tate model -->
 		<race>DWARF</race>
 		<sex>MALE</sex>
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
@@ -266,12 +190,12 @@
 		<ai aggroRange="0" isAggressive="false" />
 		<collision>
 			<radius normal="8" />
-			<height normal="17.5" />
+			<height normal="17" />
 		</collision>
 	</npc>
-	<npc id="900417" displayId="30522" level="70" type="Folk" name="Apprentice" usingServerSideName="true" title="Errand Runner" usingServerSideTitle="true"> <!-- Airy model -->
-		<race>DWARF</race>
-		<sex>FEMALE</sex>
+	<npc id="900410" displayId="35659" level="70" type="Folk" name="Townsman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Suspicious Merchant model -->
+		<race>ORC</race>
+		<sex>MALE</sex>
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
 			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
 			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
@@ -284,11 +208,11 @@
 		<status attackable="false" />
 		<ai aggroRange="0" isAggressive="false" />
 		<collision>
-			<radius normal="7" />
-			<height normal="18" />
+			<radius normal="8" />
+			<height normal="27" />
 		</collision>
 	</npc>
-	<npc id="900418" displayId="31307" level="70" type="Folk" name="Sweeper" usingServerSideName="true" title="Street Sweeper" usingServerSideTitle="true"> <!-- Weber model -->
+	<npc id="900411" displayId="31356" level="70" type="Folk" name="Townsman" usingServerSideName="true" title="Citizen" usingServerSideTitle="true"> <!-- Remy model -->
 		<race>HUMAN</race>
 		<sex>MALE</sex>
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
@@ -304,7 +228,84 @@
 		<ai aggroRange="0" isAggressive="false" />
 		<collision>
 			<radius normal="8" />
-			<height normal="21.5" />
+			<height normal="25" />
+		</collision>
+	</npc>
+	<!-- Workers -->
+	<npc id="900415" displayId="31362" level="70" type="Folk" name="Porter" usingServerSideName="true" title="Warehouse Porter" usingServerSideTitle="true"> <!-- Tate model -->
+		<race>DWARF</race>
+		<sex>MALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
+			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
+			<defence physical="295" magical="216" />
+			<speed>
+				<walk ground="50" />
+				<run ground="120" />
+			</speed>
+		</stats>
+		<status attackable="false" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="8" />
+			<height normal="17" />
+		</collision>
+	</npc>
+	<npc id="900416" displayId="31363" level="70" type="Folk" name="Porter" usingServerSideName="true" title="Warehouse Porter" usingServerSideTitle="true"> <!-- Rogin model -->
+		<race>DWARF</race>
+		<sex>MALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
+			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
+			<defence physical="295" magical="216" />
+			<speed>
+				<walk ground="50" />
+				<run ground="120" />
+			</speed>
+		</stats>
+		<status attackable="false" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="8" />
+			<height normal="17" />
+		</collision>
+	</npc>
+	<npc id="900417" displayId="31356" level="70" type="Folk" name="Apprentice" usingServerSideName="true" title="Errand Runner" usingServerSideTitle="true"> <!-- Remy model -->
+		<race>HUMAN</race>
+		<sex>MALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
+			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
+			<defence physical="295" magical="216" />
+			<speed>
+				<walk ground="50" />
+				<run ground="120" />
+			</speed>
+		</stats>
+		<status attackable="false" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="8" />
+			<height normal="25" />
+		</collision>
+	</npc>
+	<npc id="900418" displayId="31357" level="70" type="Folk" name="Sweeper" usingServerSideName="true" title="Street Sweeper" usingServerSideTitle="true"> <!-- Leandro model -->
+		<race>HUMAN</race>
+		<sex>MALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
+			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
+			<defence physical="295" magical="216" />
+			<speed>
+				<walk ground="50" />
+				<run ground="120" />
+			</speed>
+		</stats>
+		<status attackable="false" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="8" />
+			<height normal="22" />
 		</collision>
 	</npc>
 	<!-- Children -->
@@ -404,10 +405,10 @@
 		</collision>
 	</npc>
 	<!-- Patrols and night watch -->
-	<npc id="900426" displayId="30040" level="70" type="Folk" name="Town Patrol" usingServerSideName="true" title="Town Guard" usingServerSideTitle="true"> <!-- Leon model -->
+	<npc id="900426" displayId="32628" level="70" type="Folk" name="Town Patrol" usingServerSideName="true" title="Town Guard" usingServerSideTitle="true"> <!-- Wharf Patrol model -->
 		<race>HUMAN</race>
 		<sex>MALE</sex>
-		<equipment rhand="275" />
+		<equipment rhand="94" />
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
 			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
 			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
@@ -424,10 +425,10 @@
 			<height normal="24" />
 		</collision>
 	</npc>
-	<npc id="900427" displayId="30042" level="70" type="Folk" name="Town Patrol" usingServerSideName="true" title="Town Guard" usingServerSideTitle="true"> <!-- Abellos model -->
+	<npc id="900427" displayId="32629" level="70" type="Folk" name="Town Patrol" usingServerSideName="true" title="Town Guard" usingServerSideTitle="true"> <!-- Wharf Patrol model -->
 		<race>HUMAN</race>
 		<sex>MALE</sex>
-		<equipment rhand="2" lhand="20" />
+		<equipment rhand="94" />
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
 			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
 			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
@@ -444,10 +445,10 @@
 			<height normal="24" />
 		</collision>
 	</npc>
-	<npc id="900428" displayId="30044" level="70" type="Folk" name="Night Watchman" usingServerSideName="true" title="Night Watch" usingServerSideTitle="true"> <!-- Chiperan model -->
+	<npc id="900428" displayId="32628" level="70" type="Folk" name="Night Watchman" usingServerSideName="true" title="Night Watch" usingServerSideTitle="true"> <!-- Wharf Patrol model -->
 		<race>HUMAN</race>
 		<sex>MALE</sex>
-		<equipment rhand="275" />
+		<equipment rhand="94" />
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
 			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
 			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
@@ -464,10 +465,10 @@
 			<height normal="24" />
 		</collision>
 	</npc>
-	<npc id="900429" displayId="30874" level="70" type="Folk" name="Night Watchman" usingServerSideName="true" title="Night Watch" usingServerSideTitle="true"> <!-- Aldis model -->
+	<npc id="900429" displayId="32629" level="70" type="Folk" name="Night Watchman" usingServerSideName="true" title="Night Watch" usingServerSideTitle="true"> <!-- Wharf Patrol model -->
 		<race>HUMAN</race>
 		<sex>MALE</sex>
-		<equipment rhand="2" lhand="102" />
+		<equipment rhand="94" />
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
 			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
 			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
@@ -485,29 +486,9 @@
 		</collision>
 	</npc>
 	<!-- Lamplighter and town crier -->
-	<npc id="900431" displayId="30436" level="70" type="Folk" name="Lamplighter" usingServerSideName="true"> <!-- Sarien model -->
+	<npc id="900431" displayId="31357" level="70" type="Folk" name="Lamplighter" usingServerSideName="true"> <!-- Leandro model -->
 		<race>HUMAN</race>
 		<sex>MALE</sex>
-		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
-			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
-			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
-			<defence physical="295" magical="216" />
-			<speed>
-				<walk ground="50" />
-				<run ground="120" />
-			</speed>
-		</stats>
-		<status attackable="false" />
-		<ai aggroRange="0" isAggressive="false" />
-		<collision>
-			<radius normal="10" />
-			<height normal="24" />
-		</collision>
-	</npc>
-	<npc id="900433" displayId="35146" level="70" type="Folk" name="Town Crier" usingServerSideName="true"> <!-- Gibbson model -->
-		<race>HUMAN</race>
-		<sex>MALE</sex>
-		<equipment rhand="74" />
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
 			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
 			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
@@ -521,11 +502,31 @@
 		<ai aggroRange="0" isAggressive="false" />
 		<collision>
 			<radius normal="8" />
-			<height normal="24" />
+			<height normal="22" />
+		</collision>
+	</npc>
+	<npc id="900433" displayId="31358" level="70" type="Folk" name="Town Crier" usingServerSideName="true"> <!-- Kasiel model -->
+		<race>ELF</race>
+		<sex>MALE</sex>
+		<equipment rhand="4202" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
+			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
+			<defence physical="295" magical="216" />
+			<speed>
+				<walk ground="50" />
+				<run ground="120" />
+			</speed>
+		</stats>
+		<status attackable="false" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="6" />
+			<height normal="24.5" />
 		</collision>
 	</npc>
 	<!-- Harbor folk -->
-	<npc id="900435" displayId="31562" level="70" type="Folk" name="Fisherman" usingServerSideName="true"> <!-- Klufe model -->
+	<npc id="900435" displayId="31356" level="70" type="Folk" name="Fisherman" usingServerSideName="true"> <!-- Remy model -->
 		<race>HUMAN</race>
 		<sex>MALE</sex>
 		<equipment rhand="6529" />
@@ -542,11 +543,11 @@
 		<ai aggroRange="0" isAggressive="false" />
 		<collision>
 			<radius normal="8" />
-			<height normal="23" />
+			<height normal="25" />
 		</collision>
 	</npc>
-	<npc id="900436" displayId="31565" level="70" type="Folk" name="Fisherman" usingServerSideName="true"> <!-- Ogord model -->
-		<race>HUMAN</race>
+	<npc id="900436" displayId="31362" level="70" type="Folk" name="Fisherman" usingServerSideName="true"> <!-- Tate model -->
+		<race>DWARF</race>
 		<sex>MALE</sex>
 		<equipment rhand="6529" />
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
@@ -562,32 +563,13 @@
 		<ai aggroRange="0" isAggressive="false" />
 		<collision>
 			<radius normal="8" />
-			<height normal="23" />
+			<height normal="17" />
 		</collision>
 	</npc>
-	<npc id="900437" displayId="31570" level="70" type="Folk" name="Fisherman" usingServerSideName="true"> <!-- Lanosco model -->
-		<race>HUMAN</race>
-		<sex>MALE</sex>
-		<equipment rhand="6529" />
-		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
-			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
-			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
-			<defence physical="295" magical="216" />
-			<speed>
-				<walk ground="50" />
-				<run ground="120" />
-			</speed>
-		</stats>
-		<status attackable="false" />
-		<ai aggroRange="0" isAggressive="false" />
-		<collision>
-			<radius normal="8" />
-			<height normal="23" />
-		</collision>
-	</npc>
-	<npc id="900438" displayId="30562" level="70" type="Folk" name="Dock Worker" usingServerSideName="true"> <!-- Grookin model -->
+	<npc id="900437" displayId="31364" level="70" type="Folk" name="Fisherman" usingServerSideName="true"> <!-- Rokar model -->
 		<race>ORC</race>
 		<sex>MALE</sex>
+		<equipment rhand="6529" />
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
 			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
 			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
@@ -601,10 +583,10 @@
 		<ai aggroRange="0" isAggressive="false" />
 		<collision>
 			<radius normal="8" />
-			<height normal="23.5" />
+			<height normal="27" />
 		</collision>
 	</npc>
-	<npc id="900439" displayId="30055" level="70" type="Folk" name="Dock Worker" usingServerSideName="true"> <!-- Rolfe model -->
+	<npc id="900438" displayId="31362" level="70" type="Folk" name="Dock Worker" usingServerSideName="true"> <!-- Tate model -->
 		<race>DWARF</race>
 		<sex>MALE</sex>
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
@@ -621,6 +603,25 @@
 		<collision>
 			<radius normal="8" />
 			<height normal="17" />
+		</collision>
+	</npc>
+	<npc id="900439" displayId="35659" level="70" type="Folk" name="Dock Worker" usingServerSideName="true"> <!-- Suspicious Merchant model -->
+		<race>ORC</race>
+		<sex>MALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
+			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
+			<defence physical="295" magical="216" />
+			<speed>
+				<walk ground="50" />
+				<run ground="120" />
+			</speed>
+		</stats>
+		<status attackable="false" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="8" />
+			<height normal="27" />
 		</collision>
 	</npc>
 	<!-- Festival decorations -->
