@@ -2,18 +2,24 @@ package custom.PassiveSkillTree;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 import javax.crypto.Mac;
@@ -29,6 +35,7 @@ import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
+import org.l2jmobius.gameserver.model.passivetree.WebRateLimiter;
 
 /**
  * Minimal, dependency-free (JDK-only) HTTP API backing the web visual tree planner, plus static hosting for the planner page itself.
@@ -36,30 +43,34 @@ import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
  * ".treelink" hands out a direct clickable link with a signed token baked into the URL - the client can open web pages in-game, so there's no need for the player to type anything. A short-PIN fallback (/resolve) is still here underneath for anyone whose client can't do that: the same token this
  * class mints for a direct link is what a PIN eventually resolves to as well, so both paths lead to the exact same signed credential.
  * <p>
- * Endpoints:
+ * Endpoints (everything that changes something is POST; the token travels in an "Authorization: Bearer" header, never in a URL, and a POST from another site is refused):
  * <ul>
  * <li>GET /passive-tree.html - the visual tree page itself (static file on disk)</li>
  * <li>GET /api/passivetree/nodes - full node list, public, no auth needed</li>
- * <li>GET /api/passivetree/resolve?pin=... - PIN fallback: exchanges a short PIN for a real token</li>
- * <li>GET /api/passivetree/character?token=... - one player's LIVE allocation state</li>
- * <li>GET /api/passivetree/allocate?token=...&amp;nodeId=... - allocates one node</li>
- * <li>GET /api/passivetree/reset?token=... - clears the whole tree for the configured reset cost</li>
- * <li>GET /api/passivetree/template?token=...&amp;id=... - switches to another template (peace zone only, with a wait between switches)</li>
+ * <li>GET /api/passivetree/config - respec and reset costs and the stat caps, public</li>
+ * <li>POST /api/passivetree/resolve (pin=...) - PIN fallback: exchanges a short PIN for a real token, with a lockout after wrong guesses</li>
+ * <li>GET /api/passivetree/character - one player's LIVE allocation state</li>
+ * <li>POST /api/passivetree/allocate (nodeId=...) - allocates one node</li>
+ * <li>POST /api/passivetree/deallocate (nodeId=...) - refunds one node for the configured Adena per point</li>
+ * <li>POST /api/passivetree/reset - clears the whole tree for the configured reset cost</li>
+ * <li>POST /api/passivetree/template (id=...) - switches to another template (peace zone only, with a wait between switches)</li>
  * <li>GET /api/passivetree/inspect?id=... - the build (gear, stats, passive tree) of the player or fake player someone used ".gear" on</li>
- * <li>GET /api/passivetree/import?token=...&amp;nodes=... - allocates a copied build's nodes (comma-separated ids, the ones to take first first) on top of the current tree</li>
+ * <li>POST /api/passivetree/import (nodes=...) - allocates a copied build's nodes (comma-separated ids, the ones to take first first) on top of the current tree</li>
  * </ul>
  */
 public class PassiveTreeApiServer
 {
 	private static final Logger LOGGER = Logger.getLogger(PassiveTreeApiServer.class.getName());
 	
-	// CHANGE THIS to a long random secret unique to your server before going
-	// live - anyone who has it can mint valid tokens for any character id.
-	private static final String SECRET = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET_STRING";
+	/** The placeholder that used to be committed here. It is treated as "no secret set", since anyone can read it. */
+	private static final String OLD_PLACEHOLDER_SECRET = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET_STRING";
 	
-	private static final int PORT = 8788;
-	private static final long TOKEN_VALID_MS = 15 * 60 * 1000L; // 15 minutes, per resolved session
-	private static final long PIN_VALID_MS = 10 * 60 * 1000L; // 10 minutes to actually type the PIN in
+	private static final int MAX_BODY_BYTES = 32 * 1024; // a full import is ~2000 ids, so this is generous
+	private static final long RATE_WINDOW_MS = 60 * 1000L;
+	private static final long CLEANUP_INTERVAL_MS = 60 * 1000L;
+	
+	private static final String CSP = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+	
 	private static final long INSPECT_VALID_MS = 30 * 60 * 1000L; // how long a ".gear" snapshot stays viewable
 	private static final int MAX_INSPECTS = 2000; // snapshots kept at once, so a flood of ".gear" can't eat the memory
 	private static final int MAX_IMPORT_NODES = 2000; // more ids than the tree has nodes in one import is never a real build
@@ -69,6 +80,11 @@ public class PassiveTreeApiServer
 	private final Map<String, long[]> pins = new ConcurrentHashMap<>(); // pin -> {charId, classIndex, expiry}
 	private final Map<String, Inspect> inspects = new ConcurrentHashMap<>(); // random id -> ".gear" snapshot
 	private final SecureRandom random = new SecureRandom();
+	private final AtomicLong lastCleanup = new AtomicLong();
+	
+	private volatile byte[] secret;
+	private WebRateLimiter apiLimiter;
+	private WebRateLimiter pinLimiter;
 	
 	private HttpServer server;
 	
@@ -76,26 +92,136 @@ public class PassiveTreeApiServer
 	{
 		try
 		{
-			server = HttpServer.create(new InetSocketAddress(PORT), 0);
-			server.createContext("/passive-tree.html", this::handleStaticPage);
-			server.createContext("/api/passivetree/nodes", this::handleNodes);
-			server.createContext("/api/passivetree/resolve", this::handleResolve);
-			server.createContext("/api/passivetree/character", this::handleCharacter);
-			server.createContext("/api/passivetree/allocate", this::handleAllocate);
-			server.createContext("/api/passivetree/deallocate", this::handleDeallocate);
-			server.createContext("/api/passivetree/reset", this::handleReset);
-			server.createContext("/api/passivetree/template", this::handleTemplate);
-			server.createContext("/api/passivetree/config", this::handleConfig);
-			server.createContext("/api/passivetree/inspect", this::handleInspect);
-			server.createContext("/api/passivetree/import", this::handleImport);
+			apiLimiter = new WebRateLimiter(PassiveTreeConfig.WEB_RATE_LIMIT_PER_MINUTE, RATE_WINDOW_MS);
+			pinLimiter = new WebRateLimiter(PassiveTreeConfig.WEB_PIN_RATE_LIMIT_PER_MINUTE, RATE_WINDOW_MS);
+			getSecret(); // log the warning at start, not at the first link
+			
+			server = HttpServer.create(new InetSocketAddress(PassiveTreeConfig.WEB_PORT), 0);
+			route("/passive-tree.html", "GET", false, this::handleStaticPage);
+			route("/api/passivetree/nodes", "GET", false, this::handleNodes);
+			route("/api/passivetree/config", "GET", false, this::handleConfig);
+			route("/api/passivetree/inspect", "GET", false, this::handleInspect);
+			route("/api/passivetree/character", "GET", false, this::handleCharacter);
+			route("/api/passivetree/resolve", "POST", true, this::handleResolve);
+			route("/api/passivetree/allocate", "POST", true, this::handleAllocate);
+			route("/api/passivetree/deallocate", "POST", true, this::handleDeallocate);
+			route("/api/passivetree/reset", "POST", true, this::handleReset);
+			route("/api/passivetree/template", "POST", true, this::handleTemplate);
+			route("/api/passivetree/import", "POST", true, this::handleImport);
 			server.setExecutor(Executors.newFixedThreadPool(2));
 			server.start();
-			LOGGER.info("PassiveTreeApiServer: listening on port " + PORT);
+			LOGGER.info("PassiveTreeApiServer: listening on port " + PassiveTreeConfig.WEB_PORT);
 		}
 		catch (IOException e)
 		{
 			LOGGER.warning("PassiveTreeApiServer: failed to start - " + e.getMessage());
 		}
+	}
+	
+	@FunctionalInterface
+	private interface Handler
+	{
+		void handle(HttpExchange exchange) throws IOException;
+	}
+	
+	/**
+	 * Registers a path with the checks every request goes through: the method, the rate limit, and for anything that changes state, that it comes from this page and not from another site.
+	 */
+	private void route(String path, String method, boolean stateChanging, Handler handler)
+	{
+		server.createContext(path, exchange ->
+		{
+			try
+			{
+				if (!method.equals(exchange.getRequestMethod()))
+				{
+					exchange.getResponseHeaders().add("Allow", method);
+					sendText(exchange, 405, "application/json", "{\"error\":\"use " + method + "\"}");
+					return;
+				}
+				
+				final long now = System.currentTimeMillis();
+				cleanupLimitersIfDue(now);
+				final String ip = remoteAddress(exchange);
+				if (path.startsWith("/api/") && !apiLimiter.tryAcquire(ip, now))
+				{
+					tooManyRequests(exchange, apiLimiter.retryAfterSeconds(ip, now));
+					return;
+				}
+				
+				if (stateChanging && !isSameOrigin(exchange))
+				{
+					sendText(exchange, 403, "application/json", "{\"error\":\"cross-site request refused\"}");
+					return;
+				}
+				
+				handler.handle(exchange);
+			}
+			catch (RuntimeException e)
+			{
+				LOGGER.warning("PassiveTreeApiServer: " + path + " failed - " + e);
+				sendText(exchange, 500, "application/json", "{\"error\":\"server error\"}");
+			}
+			finally
+			{
+				exchange.close();
+			}
+		});
+	}
+	
+	private void cleanupLimitersIfDue(long now)
+	{
+		final long last = lastCleanup.get();
+		if (((now - last) >= CLEANUP_INTERVAL_MS) && lastCleanup.compareAndSet(last, now))
+		{
+			apiLimiter.cleanup(now);
+			pinLimiter.cleanup(now);
+		}
+	}
+	
+	private String remoteAddress(HttpExchange exchange)
+	{
+		// Deliberately the socket address: X-Forwarded-For is whatever the client says it is. Behind a reverse proxy every request shares the proxy's address, so raise the limits (see PassiveTree.ini).
+		return exchange.getRemoteAddress().getAddress().getHostAddress();
+	}
+	
+	/**
+	 * A browser on another site can send a POST here (it just can't read the answer), so a request that names an Origin is only accepted when that origin is this server's own page.
+	 * Requests with no Origin at all (curl, other tools) can't be forged by a web page, and still have to carry the token in a header.
+	 */
+	private boolean isSameOrigin(HttpExchange exchange)
+	{
+		final String origin = exchange.getRequestHeaders().getFirst("Origin");
+		if (origin == null)
+		{
+			return true;
+		}
+		
+		try
+		{
+			final String authority = new URI(origin).getRawAuthority();
+			if (authority == null)
+			{
+				return false;
+			}
+			final String host = exchange.getRequestHeaders().getFirst("Host");
+			if (authority.equalsIgnoreCase(host))
+			{
+				return true;
+			}
+			final String configured = new URI(PassiveTreeConfig.WEB_BASE_URL).getRawAuthority();
+			return authority.equalsIgnoreCase(configured);
+		}
+		catch (Exception e)
+		{
+			return false;
+		}
+	}
+	
+	private void tooManyRequests(HttpExchange exchange, long retryAfterSeconds) throws IOException
+	{
+		exchange.getResponseHeaders().add("Retry-After", String.valueOf(retryAfterSeconds));
+		sendText(exchange, 429, "application/json", "{\"error\":\"too many requests, try again in " + retryAfterSeconds + "s\"}");
 	}
 	
 	public void stop()
@@ -109,7 +235,7 @@ public class PassiveTreeApiServer
 	// ------------------------------------------------------------------
 	// PIN generation (called by the .treelink voiced command)
 	// ------------------------------------------------------------------
-	/** @return a fresh 6-digit PIN, valid for PIN_VALID_MS, tied to this character+class. */
+	/** @return a fresh 6-digit PIN, valid for the configured PIN lifetime, tied to this character+class. */
 	public String generatePin(int charId, int classIndex)
 	{
 		cleanupExpiredPins();
@@ -125,7 +251,7 @@ public class PassiveTreeApiServer
 		{
 			charId,
 			classIndex,
-			System.currentTimeMillis() + PIN_VALID_MS
+			System.currentTimeMillis() + (PassiveTreeConfig.WEB_PIN_LIFETIME * 1000L)
 		});
 		return pin;
 	}
@@ -194,11 +320,44 @@ public class PassiveTreeApiServer
 	// link, rather than only being reachable indirectly through a PIN.
 	public String generateToken(int charId, int classIndex)
 	{
-		final long expiry = System.currentTimeMillis() + TOKEN_VALID_MS;
+		final long expiry = System.currentTimeMillis() + (PassiveTreeConfig.WEB_TOKEN_LIFETIME * 1000L);
 		final String payload = charId + "." + classIndex + "." + expiry;
 		final String signature = sign(payload);
 		final String encodedPayload = Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes(StandardCharsets.UTF_8));
 		return encodedPayload + "." + signature;
+	}
+	
+	/** The signing secret: the configured one, or a random one for this run when none was set (or the old committed placeholder was left in). */
+	private byte[] getSecret()
+	{
+		byte[] value = secret;
+		if (value == null)
+		{
+			synchronized (this)
+			{
+				value = secret;
+				if (value == null)
+				{
+					final String configured = PassiveTreeConfig.WEB_SECRET;
+					if (configured.isEmpty() || configured.equals(OLD_PLACEHOLDER_SECRET))
+					{
+						value = new byte[32];
+						random.nextBytes(value);
+						LOGGER.warning("PassiveTreeApiServer: PassiveTreeWebSecret is not set in PassiveTree.ini - using a random secret for this run, so links stop working at a restart. Set a long random one.");
+					}
+					else
+					{
+						if (configured.length() < 16)
+						{
+							LOGGER.warning("PassiveTreeApiServer: PassiveTreeWebSecret is short - use at least 32 random characters.");
+						}
+						value = configured.getBytes(StandardCharsets.UTF_8);
+					}
+					secret = value;
+				}
+			}
+		}
+		return value;
 	}
 	
 	private String sign(String payload)
@@ -206,7 +365,7 @@ public class PassiveTreeApiServer
 		try
 		{
 			final Mac mac = Mac.getInstance("HmacSHA256");
-			mac.init(new SecretKeySpec(SECRET.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+			mac.init(new SecretKeySpec(getSecret(), "HmacSHA256"));
 			final byte[] raw = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
 			final StringBuilder hex = new StringBuilder();
 			for (byte b : raw)
@@ -231,7 +390,7 @@ public class PassiveTreeApiServer
 			final String signature = token.substring(lastDot + 1);
 			final String payload = new String(Base64.getUrlDecoder().decode(encodedPayload), StandardCharsets.UTF_8);
 			
-			if (!sign(payload).equals(signature))
+			if (!MessageDigest.isEqual(sign(payload).getBytes(StandardCharsets.UTF_8), signature.getBytes(StandardCharsets.UTF_8)))
 			{
 				return null;
 			}
@@ -271,6 +430,7 @@ public class PassiveTreeApiServer
 		
 		final byte[] bytes = Files.readAllBytes(HTML_FILE);
 		exchange.getResponseHeaders().add("Content-Type", "text/html; charset=UTF-8");
+		addSecurityHeaders(exchange);
 		exchange.sendResponseHeaders(200, bytes.length);
 		try (OutputStream os = exchange.getResponseBody())
 		{
@@ -307,9 +467,22 @@ public class PassiveTreeApiServer
 	
 	private void handleResolve(HttpExchange exchange) throws IOException
 	{
-		final String query = exchange.getRequestURI().getQuery();
-		final String pin = parseQueryParam(query, "pin");
+		final long now = System.currentTimeMillis();
+		final String ip = remoteAddress(exchange);
 		
+		if (pinLimiter.isLockedOut(ip, now) || pinLimiter.isLockedOut("*", now))
+		{
+			final long wait = Math.max(pinLimiter.lockoutSeconds(ip, now), pinLimiter.lockoutSeconds("*", now));
+			tooManyRequests(exchange, wait);
+			return;
+		}
+		if (!pinLimiter.tryAcquire(ip, now))
+		{
+			tooManyRequests(exchange, pinLimiter.retryAfterSeconds(ip, now));
+			return;
+		}
+		
+		final String pin = readParams(exchange).get("pin");
 		if (pin == null)
 		{
 			sendText(exchange, 400, "application/json", "{\"error\":\"missing pin\"}");
@@ -320,74 +493,63 @@ public class PassiveTreeApiServer
 		final long[] entry = pins.get(pin);
 		if (entry == null)
 		{
+			final long lockoutMs = PassiveTreeConfig.WEB_PIN_LOCKOUT * 1000L;
+			pinLimiter.recordFailure(ip, now, PassiveTreeConfig.WEB_PIN_MAX_FAILURES, lockoutMs);
+			// Guessing from many addresses at once: when the whole server sees far more wrong PINs than players ever type, stop taking PINs for a while.
+			pinLimiter.recordFailure("*", now, PassiveTreeConfig.WEB_PIN_MAX_FAILURES * 20, lockoutMs);
 			sendText(exchange, 401, "application/json", "{\"error\":\"invalid or expired code\"}");
 			return;
 		}
 		
+		pinLimiter.clearFailures(ip);
 		final String token = generateToken((int) entry[0], (int) entry[1]);
 		sendText(exchange, 200, "application/json", "{\"token\":\"" + token + "\"}");
 	}
 	
-	private void handleCharacter(HttpExchange exchange) throws IOException
+	/** @return the player the Bearer token names, or {@code null} after the error answer was sent. */
+	private Player authenticate(HttpExchange exchange) throws IOException
 	{
-		final String query = exchange.getRequestURI().getQuery();
-		final String token = parseQueryParam(query, "token");
-		
-		if (token == null)
+		final String header = exchange.getRequestHeaders().getFirst("Authorization");
+		if ((header == null) || !header.regionMatches(true, 0, "Bearer ", 0, 7))
 		{
-			sendText(exchange, 400, "application/json", "{\"error\":\"missing token\"}");
-			return;
+			sendText(exchange, 401, "application/json", "{\"error\":\"missing token\"}");
+			return null;
 		}
 		
-		final int[] verified = verifyToken(token);
+		final int[] verified = verifyToken(header.substring(7).trim());
 		if (verified == null)
 		{
 			sendText(exchange, 401, "application/json", "{\"error\":\"invalid or expired token\"}");
-			return;
+			return null;
 		}
 		
 		final Player player = resolvePlayer(verified);
 		if (player == null)
 		{
 			sendText(exchange, 404, "application/json", "{\"error\":\"character not online on this class\"}");
-			return;
 		}
-		
-		sendText(exchange, 200, "application/json", buildCharacterJson(player));
+		return player;
+	}
+	
+	private void handleCharacter(HttpExchange exchange) throws IOException
+	{
+		final Player player = authenticate(exchange);
+		if (player != null)
+		{
+			sendText(exchange, 200, "application/json", buildCharacterJson(player));
+		}
 	}
 	
 	private void handleAllocate(HttpExchange exchange) throws IOException
 	{
-		final String query = exchange.getRequestURI().getQuery();
-		final String token = parseQueryParam(query, "token");
-		final String nodeIdStr = parseQueryParam(query, "nodeId");
-		
-		if ((token == null) || (nodeIdStr == null))
-		{
-			sendText(exchange, 400, "application/json", "{\"error\":\"missing token or nodeId\"}");
-			return;
-		}
-		
-		final int[] verified = verifyToken(token);
-		if (verified == null)
-		{
-			sendText(exchange, 401, "application/json", "{\"error\":\"invalid or expired token\"}");
-			return;
-		}
-		
-		final Player player = resolvePlayer(verified);
+		final Player player = authenticate(exchange);
 		if (player == null)
 		{
-			sendText(exchange, 404, "application/json", "{\"error\":\"character not online on this class\"}");
 			return;
 		}
 		
-		int nodeId;
-		try
-		{
-			nodeId = Integer.parseInt(nodeIdStr);
-		}
-		catch (NumberFormatException e)
+		final Integer nodeId = parseIntParam(readParams(exchange).get("nodeId"));
+		if (nodeId == null)
 		{
 			sendText(exchange, 400, "application/json", "{\"error\":\"bad nodeId\"}");
 			return;
@@ -401,41 +563,16 @@ public class PassiveTreeApiServer
 		sendText(exchange, success ? 200 : 409, "application/json", json.toString());
 	}
 	
-	// ------------------------------------------------------------------
-	// Helpers
-	// ------------------------------------------------------------------
 	private void handleDeallocate(HttpExchange exchange) throws IOException
 	{
-		final String query = exchange.getRequestURI().getQuery();
-		final String token = parseQueryParam(query, "token");
-		final String nodeIdStr = parseQueryParam(query, "nodeId");
-		
-		if ((token == null) || (nodeIdStr == null))
-		{
-			sendText(exchange, 400, "application/json", "{\"error\":\"missing token or nodeId\"}");
-			return;
-		}
-		
-		final int[] verified = verifyToken(token);
-		if (verified == null)
-		{
-			sendText(exchange, 401, "application/json", "{\"error\":\"invalid or expired token\"}");
-			return;
-		}
-		
-		final Player player = resolvePlayer(verified);
+		final Player player = authenticate(exchange);
 		if (player == null)
 		{
-			sendText(exchange, 404, "application/json", "{\"error\":\"character not online on this class\"}");
 			return;
 		}
 		
-		int nodeId;
-		try
-		{
-			nodeId = Integer.parseInt(nodeIdStr);
-		}
-		catch (NumberFormatException e)
+		final Integer nodeId = parseIntParam(readParams(exchange).get("nodeId"));
+		if (nodeId == null)
 		{
 			sendText(exchange, 400, "application/json", "{\"error\":\"bad nodeId\"}");
 			return;
@@ -449,88 +586,51 @@ public class PassiveTreeApiServer
 		
 		sendText(exchange, success ? 200 : 409, "application/json", json.toString());
 	}
-
+	
 	/** Full-tree reset - the same PassiveTreeManager.resetTree() the Community Board button calls, so both charge the same cost and clear the same rows. */
 	private void handleReset(HttpExchange exchange) throws IOException
 	{
-		final String token = parseQueryParam(exchange.getRequestURI().getQuery(), "token");
-		if (token == null)
-		{
-			sendText(exchange, 400, "application/json", "{\"error\":\"missing token\"}");
-			return;
-		}
-
-		final int[] verified = verifyToken(token);
-		if (verified == null)
-		{
-			sendText(exchange, 401, "application/json", "{\"error\":\"invalid or expired token\"}");
-			return;
-		}
-
-		final Player player = resolvePlayer(verified);
+		final Player player = authenticate(exchange);
 		if (player == null)
 		{
-			sendText(exchange, 404, "application/json", "{\"error\":\"character not online on this class\"}");
 			return;
 		}
-
+		
 		final boolean success = PassiveTreeManager.getInstance().resetTree(player);
-
+		
 		final StringBuilder json = new StringBuilder();
 		json.append("{\"success\":").append(success).append(",").append("\"character\":").append(buildCharacterJson(player)).append("}");
-
+		
 		sendText(exchange, success ? 200 : 409, "application/json", json.toString());
 	}
-
+	
 	/** Switches the active template. The peace-zone and wait rules live in PassiveTreeManager, so the Community Board and this page can never disagree. */
 	private void handleTemplate(HttpExchange exchange) throws IOException
 	{
-		final String query = exchange.getRequestURI().getQuery();
-		final String token = parseQueryParam(query, "token");
-		final String idStr = parseQueryParam(query, "id");
-
-		if ((token == null) || (idStr == null))
-		{
-			sendText(exchange, 400, "application/json", "{\"error\":\"missing token or id\"}");
-			return;
-		}
-
-		final int[] verified = verifyToken(token);
-		if (verified == null)
-		{
-			sendText(exchange, 401, "application/json", "{\"error\":\"invalid or expired token\"}");
-			return;
-		}
-
-		final Player player = resolvePlayer(verified);
+		final Player player = authenticate(exchange);
 		if (player == null)
 		{
-			sendText(exchange, 404, "application/json", "{\"error\":\"character not online on this class\"}");
 			return;
 		}
-
-		int templateId;
-		try
-		{
-			templateId = Integer.parseInt(idStr);
-		}
-		catch (NumberFormatException e)
+		
+		final Integer templateId = parseIntParam(readParams(exchange).get("id"));
+		if (templateId == null)
 		{
 			sendText(exchange, 400, "application/json", "{\"error\":\"bad id\"}");
 			return;
 		}
-
+		
 		final PassiveTreeManager mgr = PassiveTreeManager.getInstance();
 		final PassiveTreeManager.SwitchResult result = mgr.switchTemplate(player, templateId);
 		final boolean success = result == PassiveTreeManager.SwitchResult.OK;
 		final String message = success ? "Template " + templateId + " is now active." : mgr.getSwitchFailureMessage(player, result);
-
+		
 		final StringBuilder json = new StringBuilder();
 		json.append("{\"success\":").append(success).append(",").append("\"reason\":\"").append(result.name()).append("\",").append("\"message\":\"").append(escape(message)).append("\",").append("\"character\":").append(buildCharacterJson(player)).append("}");
-
+		
 		sendText(exchange, success ? 200 : 409, "application/json", json.toString());
 	}
-
+	
 	/** Exposes the respec and reset costs and the stat caps so the web page never has to hardcode them. */
 	private void handleConfig(HttpExchange exchange) throws IOException
 	{
@@ -553,7 +653,7 @@ public class PassiveTreeApiServer
 	/** The build a ".gear" link points at. Public like /nodes: the random id is what keeps it private. */
 	private void handleInspect(HttpExchange exchange) throws IOException
 	{
-		final String id = parseQueryParam(exchange.getRequestURI().getQuery(), "id");
+		final String id = readParams(exchange).get("id");
 		final Inspect inspect = id != null ? inspects.get(id) : null;
 		if ((inspect == null) || (inspect.expiry() < System.currentTimeMillis()))
 		{
@@ -566,26 +666,16 @@ public class PassiveTreeApiServer
 	/** Copies a build into the player's tree. The rules are PassiveTreeManager.importNodes(): the same checks as allocating each node by hand. */
 	private void handleImport(HttpExchange exchange) throws IOException
 	{
-		final String query = exchange.getRequestURI().getQuery();
-		final String token = parseQueryParam(query, "token");
-		final String nodesParam = parseQueryParam(query, "nodes");
-		if ((token == null) || (nodesParam == null))
-		{
-			sendText(exchange, 400, "application/json", "{\"error\":\"missing token or nodes\"}");
-			return;
-		}
-		
-		final int[] verified = verifyToken(token);
-		if (verified == null)
-		{
-			sendText(exchange, 401, "application/json", "{\"error\":\"invalid or expired token\"}");
-			return;
-		}
-		
-		final Player player = resolvePlayer(verified);
+		final Player player = authenticate(exchange);
 		if (player == null)
 		{
-			sendText(exchange, 404, "application/json", "{\"error\":\"character not online on this class\"}");
+			return;
+		}
+		
+		final String nodesParam = readParams(exchange).get("nodes");
+		if (nodesParam == null)
+		{
+			sendText(exchange, 400, "application/json", "{\"error\":\"missing nodes\"}");
 			return;
 		}
 		
@@ -596,15 +686,13 @@ public class PassiveTreeApiServer
 			{
 				continue;
 			}
-			try
-			{
-				nodeIds.add(Integer.parseInt(part));
-			}
-			catch (NumberFormatException e)
+			final Integer id = parseIntParam(part);
+			if (id == null)
 			{
 				sendText(exchange, 400, "application/json", "{\"error\":\"bad node id\"}");
 				return;
 			}
+			nodeIds.add(id);
 		}
 		if (nodeIds.isEmpty() || (nodeIds.size() > MAX_IMPORT_NODES))
 		{
@@ -666,10 +754,20 @@ public class PassiveTreeApiServer
 		return json.toString();
 	}
 
+	/** Headers every answer carries. No Access-Control-Allow-Origin: only this server's own page is meant to call the API, and the token must not leak through a Referer. */
+	private void addSecurityHeaders(HttpExchange exchange)
+	{
+		exchange.getResponseHeaders().add("X-Content-Type-Options", "nosniff");
+		exchange.getResponseHeaders().add("Referrer-Policy", "no-referrer");
+		exchange.getResponseHeaders().add("Cache-Control", "no-store");
+		exchange.getResponseHeaders().add("Content-Security-Policy", CSP);
+		exchange.getResponseHeaders().add("X-Frame-Options", "DENY");
+	}
+	
 	private void sendText(HttpExchange exchange, int status, String contentType, String body) throws IOException
 	{
 		exchange.getResponseHeaders().add("Content-Type", contentType);
-		exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+		addSecurityHeaders(exchange);
 		final byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
 		exchange.sendResponseHeaders(status, bytes.length);
 		try (OutputStream os = exchange.getResponseBody())
@@ -678,21 +776,62 @@ public class PassiveTreeApiServer
 		}
 	}
 	
-	private String parseQueryParam(String query, String key)
+	/** The query string plus, for a POST, the form-encoded body (name=value&name=value). Never the token: that only travels in the Authorization header. */
+	private Map<String, String> readParams(HttpExchange exchange) throws IOException
 	{
-		if (query == null)
+		final Map<String, String> params = new HashMap<>();
+		addParams(params, exchange.getRequestURI().getRawQuery());
+		if ("POST".equals(exchange.getRequestMethod()))
+		{
+			try (InputStream in = exchange.getRequestBody())
+			{
+				final byte[] body = in.readNBytes(MAX_BODY_BYTES + 1);
+				if (body.length <= MAX_BODY_BYTES)
+				{
+					addParams(params, new String(body, StandardCharsets.UTF_8));
+				}
+			}
+		}
+		return params;
+	}
+	
+	private void addParams(Map<String, String> params, String encoded)
+	{
+		if ((encoded == null) || encoded.isEmpty())
+		{
+			return;
+		}
+		for (String part : encoded.split("&"))
+		{
+			final String[] kv = part.split("=", 2);
+			if (kv.length == 2)
+			{
+				try
+				{
+					params.put(URLDecoder.decode(kv[0], StandardCharsets.UTF_8), URLDecoder.decode(kv[1], StandardCharsets.UTF_8));
+				}
+				catch (IllegalArgumentException e)
+				{
+					// malformed escape: skip this pair
+				}
+			}
+		}
+	}
+	
+	private Integer parseIntParam(String value)
+	{
+		if (value == null)
 		{
 			return null;
 		}
-		for (String part : query.split("&"))
+		try
 		{
-			final String[] kv = part.split("=", 2);
-			if ((kv.length == 2) && kv[0].equals(key))
-			{
-				return kv[1];
-			}
+			return Integer.valueOf(value.trim());
 		}
-		return null;
+		catch (NumberFormatException e)
+		{
+			return null;
+		}
 	}
 	
 	private String joinInts(List<Integer> ids)

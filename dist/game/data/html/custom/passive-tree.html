@@ -581,6 +581,26 @@ const CFG = {
 // ===========================================================================
 
 const API_BASE = "";
+
+/** Calls the API. The token only ever travels in the Authorization header (never in a URL), and anything that changes state is a POST with its values in the body. */
+function apiFetch(path, token, body) {
+	const opts = { headers: {} };
+	if (token) opts.headers["Authorization"] = "Bearer " + token;
+	if (body !== undefined) {
+		opts.method = "POST";
+		opts.headers["Content-Type"] = "application/x-www-form-urlencoded";
+		opts.body = new URLSearchParams(body).toString();
+	}
+	return fetch(API_BASE + "/api/passivetree/" + path, opts);
+}
+
+/** Keeps the token for a reload of this tab only (the URL no longer carries it). Storage can be blocked, so every access is guarded. */
+function rememberToken(token) {
+	try { if (token) sessionStorage.setItem("passiveTreeToken", token); else sessionStorage.removeItem("passiveTreeToken"); } catch (e) { /* storage blocked: a reload just asks for a link again */ }
+}
+function recalledToken() {
+	try { return sessionStorage.getItem("passiveTreeToken"); } catch (e) { return null; }
+}
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 const TYPE_COLOR = {
@@ -696,9 +716,10 @@ async function loadConfig() {
 async function loadCharacterWithToken(token) {
 	currentToken = token;
 	try {
-		const res = await fetch(API_BASE + "/api/passivetree/character?token=" + encodeURIComponent(token));
-		if (!res.ok) { showToast("That code has expired - use .treelink again.", true); currentToken = null; return false; }
+		const res = await apiFetch("character", token);
+		if (!res.ok) { showToast("That code has expired - use .treelink again.", true); currentToken = null; rememberToken(null); return false; }
 		setCharacter(await res.json());
+		rememberToken(token);
 		return true;
 	} catch (e) { return false; }
 }
@@ -714,7 +735,7 @@ async function submitPin() {
 	const pin = document.getElementById("pin-input").value.trim();
 	if (pin.length !== 6) { document.getElementById("pin-error").textContent = "Enter the 6-digit code shown in-game."; return; }
 	try {
-		const res = await fetch(API_BASE + "/api/passivetree/resolve?pin=" + encodeURIComponent(pin));
+		const res = await apiFetch("resolve", null, { pin });
 		const data = await res.json();
 		if (!res.ok || !data.token) { document.getElementById("pin-error").textContent = "That code is invalid or has expired."; return; }
 		if (await loadCharacterWithToken(data.token)) {
@@ -731,7 +752,7 @@ async function allocateNode(node) {
 	if (allocating) return;
 	allocating = true;
 	try {
-		const res = await fetch(API_BASE + "/api/passivetree/allocate?token=" + encodeURIComponent(currentToken) + "&nodeId=" + node.id);
+		const res = await apiFetch("allocate", currentToken, { nodeId: node.id });
 		const data = await res.json();
 		if (data.success) {
 			setCharacter(data.character);
@@ -764,7 +785,7 @@ async function resetTree() {
 	const btn = document.getElementById("reset-tree-btn");
 	if (btn) btn.disabled = true;
 	try {
-		const res = await fetch(API_BASE + "/api/passivetree/reset?token=" + encodeURIComponent(currentToken));
+		const res = await apiFetch("reset", currentToken, {});
 		const data = await res.json();
 		if (data.character) {
 			setCharacter(data.character);
@@ -793,7 +814,7 @@ async function respecNode(node) {
 
 	allocating = true;
 	try {
-		const res = await fetch(API_BASE + "/api/passivetree/deallocate?token=" + encodeURIComponent(currentToken) + "&nodeId=" + node.id);
+		const res = await apiFetch("deallocate", currentToken, { nodeId: node.id });
 		const data = await res.json();
 		if (data.success) {
 			setCharacter(data.character);
@@ -1681,7 +1702,7 @@ async function switchTemplate(id) {
 
 	templateBusy = true; updateTemplateState();
 	try {
-		const res = await fetch(API_BASE + "/api/passivetree/template?token=" + encodeURIComponent(currentToken) + "&id=" + id);
+		const res = await apiFetch("template", currentToken, { id });
 		const data = await res.json();
 		if (data.character) {
 			setCharacter(data.character);
@@ -1700,7 +1721,7 @@ async function switchTemplate(id) {
 async function pollCharacter() {
 	if (!currentToken || allocating || templateBusy || document.hidden) return;
 	try {
-		const res = await fetch(API_BASE + "/api/passivetree/character?token=" + encodeURIComponent(currentToken));
+		const res = await apiFetch("character", currentToken);
 		if (!res.ok || allocating || templateBusy) return;
 		const fresh = await res.json();
 		const changed = fresh.allocatedNodeIds.length !== myAllocated.size || fresh.allocatedNodeIds.some(id => !myAllocated.has(id));
@@ -2001,7 +2022,7 @@ async function importBuild(ids, label) {
 
 	allocating = true;
 	try {
-		const res = await fetch(API_BASE + "/api/passivetree/import?token=" + encodeURIComponent(currentToken) + "&nodes=" + ids.join(","));
+		const res = await apiFetch("import", currentToken, { nodes: ids.join(",") });
 		const data = await res.json();
 		if (data.character) setCharacter(data.character);
 		if (data.success) {
@@ -2240,7 +2261,13 @@ function setupZoomPan() {
 	// page is opened with no token (or an expired one), it falls through
 	// to the same overlay as before instead of just failing silently.
 	const params = new URLSearchParams(window.location.search);
-	const urlToken = params.get("token");
+	const urlToken = params.get("token") || recalledToken();
+	if (params.has("token")) {
+		// Take the token out of the address bar so it doesn't end up in history, bookmarks or a copied link.
+		params.delete("token");
+		const rest = params.toString();
+		try { history.replaceState(null, "", window.location.pathname + (rest ? "?" + rest : "")); } catch (e) { /* not essential */ }
+	}
 	if (urlToken) {
 		const ok = await loadCharacterWithToken(urlToken);
 		if (ok) {
