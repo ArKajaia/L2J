@@ -1,19 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
-	<!-- Night Market: Moonlit Wares, for Gold Dragons (hot zone coins). -->
+	<!--
+	Night Market: Moonlit Wares.
+	Sealed Caches are only traded up, never sold: every cache holds Gold Dragons (hot zone coins), so selling one for coins - or for
+	anything coins buy, like Adena or Ancient Adena - lets players buy caches with their own contents. The caches handed in hold more
+	Gold Dragons on average than the one they get (5 Common = 15,000 vs Rare 9,000; 4 Rare = 36,000 vs Epic 27,500), so a trade-up
+	can't make coins; it is for the better materials of the higher tier.
+	-->
 	<npcs>
 		<npc>900360</npc> <!-- Varro the Moonmonger -->
 	</npcs>
 	<item>
-		<ingredient count="2000" id="3481" /> <!-- Gold Dragon -->
-		<production count="1" id="6492" /> <!-- Sealed Cache (Common) -->
-	</item>
-	<item>
-		<ingredient count="6000" id="3481" /> <!-- Gold Dragon -->
+		<ingredient count="5" id="6492" /> <!-- Sealed Cache (Common) -->
 		<production count="1" id="6499" /> <!-- Sealed Cache (Rare) -->
 	</item>
 	<item>
-		<ingredient count="18000" id="3481" /> <!-- Gold Dragon -->
+		<ingredient count="4" id="6499" /> <!-- Sealed Cache (Rare) -->
 		<production count="1" id="6509" /> <!-- Sealed Cache (Epic) -->
 	</item>
 	<item>
