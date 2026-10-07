@@ -28,6 +28,7 @@ import org.l2jmobius.gameserver.config.custom.AutoPotionsConfig;
 import org.l2jmobius.gameserver.config.custom.BankingConfig;
 import org.l2jmobius.gameserver.config.custom.ChatModerationConfig;
 import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
+import org.l2jmobius.gameserver.config.custom.NightCycleConfig;
 import org.l2jmobius.gameserver.config.custom.OfflinePlayConfig;
 import org.l2jmobius.gameserver.config.custom.OfflineTradeConfig;
 import org.l2jmobius.gameserver.config.custom.OnlineInfoConfig;
@@ -76,6 +77,7 @@ import handlers.bypass.communityboard.HomeBoard;
 import handlers.bypass.communityboard.HomepageBoard;
 import handlers.bypass.communityboard.MailBoard;
 import handlers.bypass.communityboard.MemoBoard;
+import handlers.bypass.communityboard.NightBoard;
 import handlers.bypass.communityboard.PassiveTreeBoard;
 import handlers.bypass.communityboard.PvpRankingBoard;
 import handlers.bypass.communityboard.RegionBoard;
@@ -175,6 +177,7 @@ import handlers.chat.commands.admin.AdminMammon;
 import handlers.chat.commands.admin.AdminManor;
 import handlers.chat.commands.admin.AdminMenu;
 import handlers.chat.commands.admin.AdminMessages;
+import handlers.chat.commands.admin.AdminNight;
 import handlers.chat.commands.admin.AdminOnline;
 import handlers.chat.commands.admin.AdminPForge;
 import handlers.chat.commands.admin.AdminPathNode;
@@ -233,6 +236,7 @@ import handlers.chat.commands.voiced.ClassTransferChallengeVoiced;
 import handlers.chat.commands.voiced.ExperienceGain;
 import handlers.chat.commands.voiced.GearVoiced;
 import handlers.chat.commands.voiced.Lang;
+import handlers.chat.commands.voiced.NightVoiced;
 import handlers.chat.commands.voiced.Offline;
 import handlers.chat.commands.voiced.OfflinePlay;
 import handlers.chat.commands.voiced.Online;
@@ -389,6 +393,7 @@ public class MasterHandler
 			AdminEvents.class,
 			AdminExpSp.class,
 			AdminFakePlayers.class,
+			AdminNight.class,
 			AdminFence.class,
 			AdminFightCalculator.class,
 			AdminFortSiege.class,
@@ -518,6 +523,7 @@ public class MasterHandler
 			RegionBoard.class,
 			PassiveTreeBoard.class,
 			PvpRankingBoard.class,
+			NightBoard.class,
 		},
 		{
 			// Item Handlers
@@ -606,6 +612,7 @@ public class MasterHandler
 			PremiumSystemConfig.PREMIUM_SYSTEM_ENABLED ? Premium.class : null,
 			AutoPotionsConfig.AUTO_POTIONS_ENABLED ? AutoPotion.class : null,
 			PvpSpotsConfig.ENABLED && PvpSpotsConfig.TELEPORT_ENABLED ? PvpSpotVoiced.class : null,
+			NightCycleConfig.ENABLED ? NightVoiced.class : null,
 		},
 		{
 			// Target Handlers

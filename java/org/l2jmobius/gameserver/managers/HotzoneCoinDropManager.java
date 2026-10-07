@@ -35,8 +35,8 @@ public class HotzoneCoinDropManager
 			return;
 		}
 
-		// Only a hotzone the rotation currently has active pays out - every hotzone stays flagged HOTZONE, but only active ones have a modifier rolled.
-		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getModifierFor(victim);
+		// Only a hotzone the rotation currently has active pays out - every hotzone stays flagged HOTZONE, but only active ones have a modifier rolled. The night's Omen is no hotzone.
+		final HotzoneModifier modifier = HotzoneModifierManager.getInstance().getZoneModifierFor(victim);
 		if (modifier == null)
 		{
 			return;

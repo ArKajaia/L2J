@@ -1,5 +1,11 @@
 package org.l2jmobius.gameserver.model.hotzone;
 
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
+
+import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
+
 /**
  * A rotating hotzone modifier: one of these is rolled fresh for each hotzone every time {@code custom.RotatingHotZones} rotates (see {@link org.l2jmobius.gameserver.managers.HotzoneModifierManager}), and stays active for that zone until the next rotation.
  * <p>
@@ -8,6 +14,9 @@ package org.l2jmobius.gameserver.model.hotzone;
  * effect, the kill hook and the bounty/Heat tracking in HotzoneModifierManager, the modifier buffs in RotatingHotZones) already knows how to consult these generic knobs, so nothing else needs to change.
  * <p>
  * Deliberately a mix of purely positive, purely negative, and risk/reward modifiers, matching how the base game's own hotzone system already trades a combat bonus for being flagged PvP-able.
+ * <p>
+ * The same modifiers are also a night's Omen: {@link org.l2jmobius.gameserver.managers.NightCycleManager} sets one for the whole open world while it is night (see {@link org.l2jmobius.gameserver.managers.HotzoneModifierManager#getModifierFor}). The {@link #isNightOnly()} ones are only
+ * ever used that way.
  */
 public enum HotzoneModifier
 {
@@ -206,6 +215,44 @@ public enum HotzoneModifier
 		{
 			splitChancePct = 15;
 		}
+	},
+	// Night-only omens (see NightCycleManager): never rolled for a hotzone.
+	NEW_MOON("A moonless night: monsters notice you from half as far. XP/SP +10%.")
+	{
+		{
+			nightOnly = true;
+			aggroRangeMult = 0.5;
+			xpSpMult = 1.10;
+		}
+	},
+	FULL_MOON("The full moon maddens beasts and animals: they hit 25% harder. Monsters may rage from the first stun. Drop rate +20%.")
+	{
+		{
+			nightOnly = true;
+			favoredRaces = EnumSet.of(Race.BEAST, Race.ANIMAL);
+			favoredRaceAtkMult = 1.25;
+			rageDisablesOverride = 0;
+			dropRateMult = 1.20;
+		}
+	},
+	STARFALL("Stars fall all night: Luck builds 50% faster and jackpots are twice as likely.")
+	{
+		{
+			nightOnly = true;
+			luckGainMult = 1.5;
+			jackpotMult = 2.0;
+		}
+	},
+	WITCHING_HOUR("The dead walk: slain monsters may rise again (20%), undead hit 30% harder, wave challenges are 3x as common. XP/SP +20%.")
+	{
+		{
+			nightOnly = true;
+			riseChancePct = 20;
+			favoredRaces = EnumSet.of(Race.UNDEAD);
+			favoredRaceAtkMult = 1.30;
+			waveSpawnMult = 3.0;
+			xpSpMult = 1.20;
+		}
 	};
 
 	/** Stacking XP/SP buff (levels 1-{@link #KILL_STREAK_MAX_LEVEL}) re-applied one level higher on every kill under {@link #KILL_STREAK}; its 15s abnormal time is the chain window. */
@@ -306,6 +353,12 @@ public enum HotzoneModifier
 	protected boolean kinship = false;
 	/** Percent chance a slain monster splits into two weaker copies. 0 = never. */
 	protected int splitChancePct = 0;
+	/** Monster races that hit harder, by {@link #favoredRaceAtkMult}. Empty = none. */
+	protected Set<Race> favoredRaces = Collections.emptySet();
+	/** P.Atk/M.Atk multiplier of monsters of a {@link #favoredRaces} race, on top of {@link #monsterAtkMult}. */
+	protected double favoredRaceAtkMult = 1.0;
+	/** Whether this is a night omen (see {@code NightCycleManager}) that the hotzone rotation never rolls. */
+	protected boolean nightOnly = false;
 
 	HotzoneModifier(String description)
 	{
@@ -535,5 +588,19 @@ public enum HotzoneModifier
 	public int getSplitChancePct()
 	{
 		return splitChancePct;
+	}
+
+	/**
+	 * @param race the monster's race
+	 * @return the attack multiplier of a monster of {@code race}: {@link #favoredRaceAtkMult} for a favored race, 1.0 otherwise
+	 */
+	public double getRaceAtkMult(Race race)
+	{
+		return favoredRaces.contains(race) ? favoredRaceAtkMult : 1.0;
+	}
+
+	public boolean isNightOnly()
+	{
+		return nightOnly;
 	}
 }

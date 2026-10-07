@@ -52,6 +52,7 @@ import org.l2jmobius.gameserver.config.custom.MageMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.MerchantZeroSellPriceConfig;
 import org.l2jmobius.gameserver.config.custom.MonsterRageConfig;
 import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
+import org.l2jmobius.gameserver.config.custom.NightCycleConfig;
 import org.l2jmobius.gameserver.config.custom.NoblessMasterConfig;
 import org.l2jmobius.gameserver.config.custom.NpcStatMultipliersConfig;
 import org.l2jmobius.gameserver.config.custom.OfflinePlayConfig;
@@ -143,6 +144,7 @@ public class ConfigLoader
 		MonsterRageConfig.load();
 		MultilingualSupportConfig.load();
 		NoblessMasterConfig.load();
+		NightCycleConfig.load();
 		NpcStatMultipliersConfig.load();
 		OfflinePlayConfig.load();
 		OfflineTradeConfig.load();

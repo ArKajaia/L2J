@@ -1,6 +1,7 @@
 package org.l2jmobius.gameserver.managers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,6 +63,12 @@ public class HotzoneModifierManager
 	/** How far (game units) the two copies land from the victim. */
 	private static final int SPLIT_OFFSET = 60;
 
+	/** The modifiers a hotzone rotation may roll: every one but the night-only omens. */
+	private static final List<HotzoneModifier> HOTZONE_POOL = Arrays.stream(HotzoneModifier.values()).filter(modifier -> !modifier.isNightOnly()).toList();
+
+	/** The modifier the night lays over the open world (see {@link NightCycleManager}), or {@code null} by day. */
+	private volatile HotzoneModifier _nightModifier;
+
 	/** zone id -> the modifier currently active there, if any. Absent = no modifier (vanilla hotzone). */
 	private final Map<Integer, HotzoneModifier> _activeModifiers = new ConcurrentHashMap<>();
 
@@ -101,8 +108,7 @@ public class HotzoneModifierManager
 	{
 		clearModifier(zoneId);
 
-		final HotzoneModifier[] pool = HotzoneModifier.values();
-		final HotzoneModifier chosen = pool[Rnd.get(pool.length)];
+		final HotzoneModifier chosen = HOTZONE_POOL.get(Rnd.get(HOTZONE_POOL.size()));
 		_activeModifiers.put(zoneId, chosen);
 
 		if (chosen.getPlayerHpDrainPctPerTick() > 0)
@@ -208,11 +214,63 @@ public class HotzoneModifierManager
 	}
 
 	/**
-	 * Resolves whichever hotzone {@code creature} is currently standing in and returns its active modifier.
+	 * Resolves whichever hotzone {@code creature} is currently standing in and returns its active modifier, or else the night's Omen if {@code creature} is in the open world at night.
 	 * @param creature the creature to check
-	 * @return the active modifier for that creature's current hotzone, or {@code null} if it isn't in one, or its hotzone has no modifier active
+	 * @return the active modifier for that creature's current hotzone or instance, else the night's Omen (see {@link #getNightModifierFor}), or {@code null} if neither applies
 	 */
 	public HotzoneModifier getModifierFor(Creature creature)
+	{
+		final HotzoneModifier modifier = getZoneModifierFor(creature);
+		return modifier != null ? modifier : getNightModifierFor(creature);
+	}
+
+	/**
+	 * Lays {@code modifier} over the whole open world, or lifts it. Called by {@link NightCycleManager} as night falls, as the Witching Hour begins and at dawn.
+	 * @param modifier the night's modifier, or {@code null} to lift it
+	 */
+	public void setNightModifier(HotzoneModifier modifier)
+	{
+		_nightModifier = modifier;
+	}
+
+	/**
+	 * @return the modifier the night lays over the open world, or {@code null} if none
+	 */
+	public HotzoneModifier getNightModifier()
+	{
+		return _nightModifier;
+	}
+
+	/**
+	 * The night's Omen reaches every creature in the open world, but not raids, which keep their own fights, nor towns, instances, sieges, arenas, PvP spots or jail.
+	 * @param creature the creature to check
+	 * @return the night's modifier if it reaches {@code creature}, otherwise {@code null}
+	 */
+	public HotzoneModifier getNightModifierFor(Creature creature)
+	{
+		final HotzoneModifier modifier = _nightModifier;
+		if ((modifier == null) || (creature == null) || creature.isRaid() || creature.isRaidMinion() || !isOpenWorld(creature))
+		{
+			return null;
+		}
+		return modifier;
+	}
+
+	/**
+	 * @param creature the creature to check
+	 * @return {@code true} if {@code creature} is outside every instance, town, siege, arena, PvP spot and jail
+	 */
+	public static boolean isOpenWorld(Creature creature)
+	{
+		return (creature.getInstanceId() == 0) && !creature.isInsideZone(ZoneId.PEACE) && !creature.isInsideZone(ZoneId.TOWN) && !creature.isInsideZone(ZoneId.SIEGE) && !creature.isInsideZone(ZoneId.PVP) && !creature.isInsideZone(ZoneId.PVP_SPOT) && !creature.isInsideZone(ZoneId.JAIL);
+	}
+
+	/**
+	 * Like {@link #getModifierFor(Creature)}, but without the night's Omen: what belongs to hotzones alone (the coin drops, the flat champion bonus) reads this.
+	 * @param creature the creature to check
+	 * @return the active modifier for that creature's current hotzone or instance, or {@code null} if it isn't in one, or its hotzone has no modifier active
+	 */
+	public HotzoneModifier getZoneModifierFor(Creature creature)
 	{
 		if (creature == null)
 		{

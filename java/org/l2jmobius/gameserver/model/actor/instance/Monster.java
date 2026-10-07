@@ -486,6 +486,27 @@ public class Monster extends Attackable
 		rebuildFullTitle();
 	}
 	
+	/** A tag an event puts first in the name plate (a Nightlord's, see {@link org.l2jmobius.gameserver.managers.NightlordManager}). */
+	private static final String EVENT_TITLE_TAG_VAR = "EVENT_TITLE_TAG";
+
+	/**
+	 * Puts {@code tag} first in this monster's name plate, or removes it. Set it after {@link #setChampionTier(int)}, whose own title rebuild doesn't know the tag.
+	 * @param tag the tag, or {@code null} to remove it
+	 */
+	public void setEventTitleTag(String tag)
+	{
+		if ((tag == null) || tag.isEmpty())
+		{
+			getVariables().remove(EVENT_TITLE_TAG_VAR);
+		}
+		else
+		{
+			getVariables().set(EVENT_TITLE_TAG_VAR, tag);
+		}
+		rebuildFullTitle();
+		broadcastInfo();
+	}
+
 	private void rebuildFullTitle()
 	{
 		final String championTag = getVariables().getString("CHAMPION_TITLE_TAG", "");
@@ -493,6 +514,11 @@ public class Monster extends Attackable
 		final String baseTitle = getTemplate().getTitle() == null ? "" : getTemplate().getTitle();
 
 		final StringBuilder sb = new StringBuilder();
+		final String eventTag = getVariables().getString(EVENT_TITLE_TAG_VAR, "");
+		if (!eventTag.isEmpty())
+		{
+			sb.append(eventTag).append(' ');
+		}
 		if (isArenaChallenger())
 		{
 			final int arenaWave = getVariables().getInt("ARENA_WAVE", 0);
@@ -1395,7 +1421,7 @@ public class Monster extends Attackable
 		final double basePAtk = super.getPAtk(target);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return basePAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier);
+		return basePAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier);
 	}
 
 	@Override
@@ -1404,7 +1430,7 @@ public class Monster extends Attackable
 		final double baseMAtk = super.getMAtk(target, skill);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return baseMAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getMonsterMAtkMult() : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier);
+		return baseMAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getMonsterMAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier);
 	}
 
 	@Override
