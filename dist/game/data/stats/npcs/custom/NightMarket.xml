@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/npcs.xsd">
-	<!-- The Night Market merchant (custom.NightMarket): in Giran from nightfall to dawn, sells for hot zone coins (multisells 900360 and 900361). -->
+	<!-- The Night Market merchant (custom.NightMarket): in Giran from nightfall to dawn, trades Sealed Caches up and sells for hot zone coins (multisells 900360 and 900361). -->
 	<npc id="900360" displayId="31092" level="70" type="Folk" name="Varro the Moonmonger" usingServerSideName="true" title="Night Market" usingServerSideTitle="true"> <!-- Black Marketeer of Mammon model -->
 		<race>DWARF</race>
 		<sex>MALE</sex>
