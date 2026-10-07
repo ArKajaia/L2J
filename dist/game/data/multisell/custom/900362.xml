@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+	<!--
+	Night Market: Gold Dragons (hot zone coins) for Ancient Adena, 22 Ancient Adena per Gold Dragon.
+	Slightly worse than the standard way: a Gold Dragon sells to any shop for 100 Adena, and the Black Marketeer of Mammon
+	sells Ancient Adena at 4 Adena each (2,000,000 Adena for 500,000), which makes 25 Ancient Adena per Gold Dragon.
+	In exchange the Night Market has no daily limit and no level or hour requirement, other than being open at night.
+	-->
+	<npcs>
+		<npc>900360</npc> <!-- Varro the Moonmonger -->
+	</npcs>
+	<item>
+		<ingredient count="10" id="3481" /> <!-- Gold Dragon -->
+		<production count="220" id="5575" /> <!-- Ancient Adena -->
+	</item>
+	<item>
+		<ingredient count="100" id="3481" /> <!-- Gold Dragon -->
+		<production count="2200" id="5575" /> <!-- Ancient Adena -->
+	</item>
+	<item>
+		<ingredient count="1000" id="3481" /> <!-- Gold Dragon -->
+		<production count="22000" id="5575" /> <!-- Ancient Adena -->
+	</item>
+</list>

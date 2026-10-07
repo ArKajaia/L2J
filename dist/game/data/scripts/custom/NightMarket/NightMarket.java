@@ -35,7 +35,8 @@ import org.l2jmobius.gameserver.model.script.Script;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
 
 /**
- * The Night Market: Varro the Moonmonger opens his stalls in Giran at nightfall and packs up at dawn (see {@link NightCycleManager}). He sells Sealed Caches, the low and high grade luminous lures fishermen don't stock, and other night wares for hot zone coins (multisells 900360 and 900361).
+ * The Night Market: Varro the Moonmonger opens his stalls in Giran at nightfall and packs up at dawn (see {@link NightCycleManager}). He sells Sealed Caches, the low and high grade luminous lures fishermen don't stock, and other night wares for hot zone coins (multisells 900360 and 900361), and changes
+ * hot zone coins into Ancient Adena (multisell 900362) at a little less than the standard way gives.
  * <p>
  * His spawn is kept in the spawn table, so a reload of this script during the night finds him instead of bringing a second Varro.
  */
@@ -50,7 +51,8 @@ public class NightMarket extends Script
 	private static final int[] LISTS =
 	{
 		900360,
-		900361
+		900361,
+		900362
 	};
 
 	private NightMarket()
