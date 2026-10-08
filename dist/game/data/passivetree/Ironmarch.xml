@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Ironmarch: 53 nodes, an outer region beyond the rim between Vanguard and Juggernaut. x/y are authoritative layout coords. -->
+<!-- Ironmarch: 56 nodes, an outer region beyond the rim between Vanguard and Juggernaut. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="40001" name="Iron Road" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4116.5" y="725.8" effect="PDEF_PCT:0.8">
 		<requires nodeId="39011" />
@@ -157,6 +157,7 @@
 	</node>
 	<node id="40047" name="Wallbreaker" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="3066.0" y="3924.3" orbitX="0.0" orbitY="0.0" effect="PVE_PDMG_PCT:5;PATK_PCT@HEAVY:4" icon="hammer" description="Siege Training mastery. Hits harder in heavy armour.">
 		<requires nodeId="40046" />
+		<requires nodeId="40080" />
 	</node>
 	<node id="40060" name="Iron Road" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4091.3" y="973.9" effect="MAXHP:18">
 		<requires nodeId="40001" />
@@ -213,5 +214,16 @@
 	<node id="40073" name="Iron Road" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3946.6" y="2567.9" effect="MAXHP_PCT:0.8">
 		<requires nodeId="40008" />
 		<requires nodeId="40050" />
+	</node>
+	<node id="40080" name="Whirlwind Road" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3189.1" y="4081.9" effect="ATK_SPD_PCT:1.5" icon="axe">
+		<requires nodeId="40047" />
+		<requires nodeId="40081" />
+	</node>
+	<node id="40081" name="Whirlwind Road" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3312.3" y="4239.5" effect="PATK_PCT:1.5" icon="axe">
+		<requires nodeId="40080" />
+		<requires nodeId="40082" />
+	</node>
+	<node id="40082" name="Whirling Steel" sector="Ironmarch" type="KEYSTONE" tier="0" cost="1" x="3435.4" y="4397.1" effect="KS_WHIRLING_STEEL:50;ATK_SPD_PCT:-15" icon="axe" description="KEYSTONE: Your normal attacks with any melee weapon also hit up to 2 more enemies in front of you for 50% damage (a polearm hits 2 more enemies than it would). -15% Attack Speed.">
+		<requires nodeId="40081" />
 	</node>
 </list>

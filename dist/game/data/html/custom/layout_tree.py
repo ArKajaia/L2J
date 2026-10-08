@@ -47,6 +47,7 @@ R_START = 3300
 R_RIM = 4000  # the Outer Rim road
 R_RIM_SPUR = [3475, 3650, 3825]  # the spur from each START out to its rim gate
 RIM_BASE = 39000  # rim ids: 39000 + sector * 100 (+0 gate, +1.. spur, +10.. arc road towards the next sector)
+BRANCH_STEP = 200  # spacing of the nodes on a branch off the outer edge (see place_branches)
 REGION_BASE = 40000  # region ids: 40000 + region * 1000 + local id, region i sitting beyond the rim between sectors i and i+1
 ROAD_IDS = range(33000, 34000)  # "Lifeblood Trail" nodes lengthening a hybrid's long links: spaced evenly along the link they split
 
@@ -376,11 +377,11 @@ def chain_from(nodes, adj, first, came_from):
 
 
 def ring_chain(nodes, adj, first):
-	"""The ring that starts at `first`: first > s2 > s3 > notable, found whichever neighbour leads there."""
+	"""The ring that starts at `first`: first > s2 > s3 > notable, found whichever neighbour leads there (a keystone branch may go on past the notable)."""
 	for start in adj[first]:
 		path = [first] + chain_from(nodes, adj, start, first)
-		if (len(path) == 4) and (nodes[path[-1]].type == "NOTABLE"):
-			return path
+		if (len(path) >= 4) and (nodes[path[3]].type == "NOTABLE"):
+			return path[:4]
 	raise AssertionError(f"no ring from {first}")
 
 
@@ -605,9 +606,31 @@ def layout(nodes):
 				nodes[base + local].pos = add((u[0] * (r + du), u[1] * (r + du)), v, dv)
 				nodes[base + local].orbit = None
 
+	place_branches(nodes, adj)
+	
 	missing = [i for i, n in nodes.items() if n.pos is None]
 	assert not missing, f"nodes without a position: {missing}"
 	return adj
+
+
+def place_branches(nodes, adj):
+	"""Branches hung off the outer edge (the outer keystones: Nocturne, Riposte...): a run of nodes from a placed node, laid straight out from the tree centre, one every BRANCH_STEP."""
+	placed = True
+	while placed:
+		placed = False
+		for i in sorted(nodes):
+			anchor = [j for j in adj[i] if nodes[j].pos is not None]
+			if (nodes[i].pos is not None) or not anchor:
+				continue
+			a = nodes[anchor[0]].pos
+			u, r = norm(a), math.hypot(*a)
+			prev, cur, k = anchor[0], i, 1
+			while cur is not None:
+				nodes[cur].pos = (u[0] * (r + (BRANCH_STEP * k)), u[1] * (r + (BRANCH_STEP * k)))
+				nodes[cur].orbit = None
+				nxt = [j for j in adj[cur] if (j != prev) and (nodes[j].pos is None)]
+				prev, cur, k = cur, (nxt[0] if nxt else None), k + 1
+			placed = True
 
 
 def arc_positions(ua, ub, bulge, n):

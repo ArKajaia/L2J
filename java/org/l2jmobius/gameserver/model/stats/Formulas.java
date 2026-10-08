@@ -1064,7 +1064,7 @@ public class Formulas
 			damage *= attacker.calcStat(stat, 1, null, null);
 		}
 		
-		// Passive tree Arcane Overload and Point Blank / Far Shot.
+		// Passive tree Arcane Overload, Point Blank / Far Shot and Chaos Weave.
 		damage *= PassiveMechanics.spellDamageMultiplier(attacker, target, skill);
 		
 		damage *= calcAttributeBonus(attacker, target, skill);
@@ -1210,6 +1210,12 @@ public class Formulas
 			return false;
 		}
 		
+		// Passive tree Riposte: the counter-attack after a block or a dodge is a critical hit.
+		if (PassiveMechanics.consumeRiposte(attacker))
+		{
+			return true;
+		}
+		
 		double rate;
 		if (skill != null)
 		{
@@ -1219,6 +1225,7 @@ public class Formulas
 		{
 			rate = attacker.getStat().calcStat(Stat.CRITICAL_RATE_POS, attacker.getStat().getCriticalHit(target, null), target, skill);
 		}
+		rate *= PassiveMechanics.critRateMultiplier(attacker);
 		
 		final boolean isPvP = attacker.isPlayable() && target.isPlayable();
 		if (skill == null)
@@ -1358,7 +1365,12 @@ public class Formulas
 		chance = Math.max(chance, 200);
 		chance = Math.min(chance, 980);
 		
-		return chance < Rnd.get(1000);
+		final boolean miss = chance < Rnd.get(1000);
+		if (miss)
+		{
+			PassiveMechanics.onAttackAvoided(target); // Passive tree Riposte.
+		}
+		return miss;
 	}
 	
 	/**
@@ -1415,6 +1427,11 @@ public class Formulas
 		else if (shldRate > Rnd.get(100))
 		{
 			shldSuccess = SHIELD_DEFENSE_SUCCEED;
+		}
+		
+		if (shldSuccess != SHIELD_DEFENSE_FAILED)
+		{
+			PassiveMechanics.onAttackAvoided(target); // Passive tree Riposte.
 		}
 		
 		if (sendSysMsg && target.isPlayer())
@@ -1795,6 +1812,7 @@ public class Formulas
 				target.asPlayer().sendPacket(sm);
 			}
 			
+			PassiveMechanics.onAttackAvoided(target); // Passive tree Riposte.
 			return true;
 		}
 		
@@ -1953,6 +1971,12 @@ public class Formulas
 	
 	public static boolean calcBlowSuccess(Creature creature, Creature target, Skill skill)
 	{
+		// Passive tree Riposte: the counter-attack after a block or a dodge lands.
+		if (PassiveMechanics.consumeRiposte(creature))
+		{
+			return true;
+		}
+		
 		final double dexMod = BaseStat.DEX.calcBonus(creature);
 		
 		// Apply DEX Mod.

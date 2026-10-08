@@ -1057,6 +1057,13 @@ const KEYSTONE_TEXT = {
 	KS_ELDRITCH_BATTERY: v => `Max CP is 1; ${v}% of it becomes max MP`,
 	KS_PURITY: () => "Immune to poison and bleeding",
 	KS_OVERHEAL_CP: v => `${v}% of overhealing you cast becomes CP`,
+	KS_WHIRLING_STEEL: v => `Melee attacks also hit 2 more enemies in front of you for ${v}% damage (polearms: 2 more enemies)`,
+	KS_RIPOSTE: () => "After a shield block or a dodge, your next attack or physical skill within 5s is a critical hit (a blow lands); half critical rate otherwise",
+	KS_GUARDIAN: v => `You take ${v}% of the damage dealt to party members within 900 range`,
+	KS_ARC_CONDUIT: v => `Single-target damage spells jump to 2 more enemies for ${v}%, then ${v / 2}% damage`,
+	KS_BATTLEMAGE: v => `${v}% of M.Atk is added to P.Atk`,
+	KS_CHAOS_WEAVE: v => `Damage spells: ${v}% chance to Surge for 2.5x damage, ${v / 2}% chance to Fizzle; no magic critical hits`,
+	KS_PHOENIX: v => `Once every 5 minutes, a killing blow leaves you alive with ${v}% HP`,
 };
 
 // Conditional bonuses ("PDEF_PCT@HEAVY") only apply in that situation. Mirrors COND_TEXT in PassiveTreeBoard.java.
@@ -1065,6 +1072,7 @@ const COND_TEXT = {
 	SHIELD: "with a shield", BOW: "with a bow", DAGGER: "with a dagger", DUAL: "with dual swords",
 	SWORD: "with a sword", BLUNT: "with a blunt weapon", POLE: "with a polearm", FIST: "with fist weapons",
 	LOWHP: "below 50% HP", FULLHP: "above 90% HP", NIGHT: "at night", DAY: "during the day",
+	STILL: "after standing still for 2s", MOBILE: "until you have stood still for 2s",
 };
 
 // Keystones that cancel each other out: only one of each group per character. Mirrors PassiveMechanics.EXCLUSIVE_GROUPS.

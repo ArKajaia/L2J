@@ -631,6 +631,16 @@ Changes from 28 September – 8 October 2026.
 - The window is 470x760. The custom NPC is added to the blacksmith and Mammon multisells it opens.
 
 ### Passive Skill Tree
+- **Eight new keystones on the outer edge**, each at the end of a two-node branch running straight out from a notable of an outer region:
+  - **Whirling Steel** (Ironmarch, 40080-40082, past Wallbreaker): normal attacks with any melee weapon also hit up to 2 more enemies in front of you for 50% damage, and a polearm hits 2 more enemies than it would. -15% Attack Speed.
+  - **Riposte** (Duskwood, 42070-42072, past Unseen): after you block with a shield or dodge an attack or physical skill, your next normal attack or physical skill within 5 seconds is a critical hit, and a blow skill lands. Your critical rate is halved otherwise.
+  - **Guardian's Oath** (Hallowmere, 45080-45082, past Lamplight): you take 25% of the damage dealt to party members within 900 range in their place, never enough to kill you. +20% P.Def and M.Def, -20% P.Atk and M.Atk.
+  - **Arc Conduit** (Starfall, 43080-43082, past Calm Before): single-target damage spells jump to the nearest enemy within 300 of the target for 50% of the damage, then to one more for 25%. Spells cost 30% more MP.
+  - **Chaos Weave** (Starfall, 43090-43092, past Starfire): each damage spell has a 20% chance to Surge for 2.5x damage and a 10% chance to Fizzle and deal none. No magic critical hits.
+  - **Ley Anchor** (Ley Expanse, 44080-44082, past Overflowing Well): once you have stood still for 2 seconds, +25% M.Atk, +20% Casting Speed and +15% M.Def; until then -15% M.Atk. Node effects can use the new `STILL` and `MOBILE` conditions (`MATK_PCT@STILL`).
+  - **Battlemage** (Ley Expanse, 44090-44092, past Living Conduit): 40% of your M.Atk is added to your P.Atk, and 5% of your melee damage restores MP. -25% Casting Speed.
+  - **Phoenix Heart** (Red Wastes, 41070-41072, past Scarred Veteran): once every 5 minutes, a blow that would kill you leaves you alive with 40% of your HP. -15% max HP and -20% healing received.
+  - `layout_tree.py` lays out these branches, and Nocturne's and Dawnbringer's, instead of stopping on them.
 - **Route choices**: each archetype now has several ways to the same place, and each way costs a different amount.
   - **Start**: each Origin has three roads to its first Crossroads. The middle road costs 3 points. The two side roads cost 4 and pass the entry of that Crossroads' two clusters, which used to hang off the Crossroads.
   - **First stretch (a wheel)**: between the first and second Crossroads there are three ways through: the plain road (3 points), or round either side through a whole cluster (5 points, its notable on the way). The active skill sits inside the wheel.

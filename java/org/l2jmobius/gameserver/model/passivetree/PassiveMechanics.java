@@ -1,17 +1,24 @@
 package org.l2jmobius.gameserver.model.passivetree;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.conditions.Condition;
 import org.l2jmobius.gameserver.model.conditions.ConditionGameTime;
 import org.l2jmobius.gameserver.model.conditions.ConditionLogicNot;
 import org.l2jmobius.gameserver.model.conditions.ConditionPlayerHp;
+import org.l2jmobius.gameserver.model.conditions.ConditionStandingStill;
 import org.l2jmobius.gameserver.model.conditions.ConditionUsingItemType;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.groups.Party;
 import org.l2jmobius.gameserver.model.effects.EffectType;
 import org.l2jmobius.gameserver.model.item.Weapon;
 import org.l2jmobius.gameserver.model.item.type.ArmorType;
@@ -19,10 +26,14 @@ import org.l2jmobius.gameserver.model.item.type.WeaponType;
 import org.l2jmobius.gameserver.model.skill.AbnormalType;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
 import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 import org.l2jmobius.gameserver.model.stats.BaseStat;
 import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.network.SystemMessageId;
+import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
+import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
 import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
+import org.l2jmobius.gameserver.util.LocationUtil;
 
 /**
  * Build-defining passive tree keystones: rules that change how a mechanic works rather than adding a stat. Every value is read from the allocated nodes' effect strings (see {@link PassiveStatBonusCache}), so balancing stays in data/passivetree/*.xml.
@@ -65,6 +76,20 @@ public final class PassiveMechanics
 	public static final String PURITY = "KS_PURITY";
 	/** % of healing you cast beyond a player's max HP granted to them as CP. */
 	public static final String OVERHEAL_CP = "KS_OVERHEAL_CP";
+	/** Normal attacks with any melee weapon also hit up to CLEAVE_TARGETS more enemies in front of you, for this % of the damage; a polearm hits CLEAVE_TARGETS more than it would. */
+	public static final String WHIRLING_STEEL = "KS_WHIRLING_STEEL";
+	/** Flag: a shield block or a dodge makes your next normal attack or physical skill within RIPOSTE_WINDOW a critical hit (a blow skill lands); your critical rate is halved otherwise. */
+	public static final String RIPOSTE = "KS_RIPOSTE";
+	/** % of the damage party members within GUARDIAN_RANGE take that you take instead. */
+	public static final String GUARDIAN = "KS_GUARDIAN";
+	/** Single-target damage spells arc to ARC_TARGETS more enemies near the target, the first for this % of the damage, each next one for half the one before. */
+	public static final String ARC_CONDUIT = "KS_ARC_CONDUIT";
+	/** % of M.Atk added to P.Atk. */
+	public static final String BATTLEMAGE = "KS_BATTLEMAGE";
+	/** % chance for a damage spell to Surge (CHAOS_SURGE times the damage), half this % to Fizzle (no damage); no magic critical hits. */
+	public static final String CHAOS_WEAVE = "KS_CHAOS_WEAVE";
+	/** Once every PHOENIX_COOLDOWN, a killing blow leaves you alive with this % of max HP. */
+	public static final String PHOENIX = "KS_PHOENIX";
 	
 	/** Keys that cancel each other out; a node carrying one can't be allocated next to a node carrying another key of the same group. */
 	private static final List<Set<String>> EXCLUSIVE_GROUPS = List.of(Set.of(POINT_BLANK, FAR_SHOT));
@@ -72,6 +97,42 @@ public final class PassiveMechanics
 	/** Point Blank / Far Shot: full bonus at or below this range, full penalty at or above LONG_RANGE. */
 	private static final double POINT_BLANK_RANGE = 150;
 	private static final double LONG_RANGE = 900;
+	
+	/** Whirling Steel: how many more enemies a normal attack hits, within what range and angle of your heading (a polearm's). */
+	public static final int CLEAVE_TARGETS = 2;
+	public static final int CLEAVE_RANGE = 80;
+	public static final int CLEAVE_ANGLE = 120;
+	
+	/** Riposte: how long a block or a dodge keeps the riposte ready, and the critical rate multiplier the rest of the time. */
+	private static final long RIPOSTE_WINDOW = 5000;
+	private static final double RIPOSTE_CRIT_RATE = 0.5;
+	/** objectId -> time the readied riposte runs out. */
+	private static final Map<Integer, Long> RIPOSTE_READY = new ConcurrentHashMap<>();
+	
+	/** Guardian's Oath: range to the party member being hit. */
+	private static final int GUARDIAN_RANGE = 900;
+	/** Set while a guardian takes a share, so the share isn't passed on again (to another guardian). */
+	private static final ThreadLocal<Boolean> GUARDING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+	
+	/** Arc Conduit: how many times a spell jumps, and how far from the creature it jumps from. */
+	private static final int ARC_TARGETS = 2;
+	private static final int ARC_RANGE = 300;
+	/** Target types of the spells that arc: single-target ones. */
+	private static final Set<TargetType> SINGLE_TARGET = EnumSet.of(TargetType.ONE, TargetType.UNDEAD, TargetType.ENEMY_SUMMON);
+	/** Set while arcs are dealt, so an arc doesn't arc again. */
+	private static final ThreadLocal<Boolean> ARCING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+	
+	/** Chaos Weave: damage multiplier of a Surge. */
+	private static final double CHAOS_SURGE = 2.5;
+	
+	/** Ley Anchor: how long you must stand still for the STILL condition. */
+	public static final long STILL_TIME = 2000;
+	
+	/** Phoenix Heart: cooldown, and the skill whose animation plays (Soul of the Phoenix). */
+	private static final long PHOENIX_COOLDOWN = 300000;
+	private static final int PHOENIX_VISUAL_SKILL = 438;
+	/** objectId -> time Phoenix Heart can save the player again. */
+	private static final Map<Integer, Long> PHOENIX_READY_AT = new ConcurrentHashMap<>();
 	
 	/** Force charge skills: Sonic Focus, Focused Force, Sonic Mastery, Force Mastery. Their level is the most charges the class can hold. */
 	private static final int[] CHARGE_SKILLS =
@@ -258,7 +319,43 @@ public final class PassiveMechanics
 			final double missingMp = 1 - Math.min(1, attacker.getCurrentMp() / Math.max(1, attacker.getMaxMp()));
 			multiplier *= 1 + ((overload / 100) * missingMp);
 		}
-		return multiplier;
+		return multiplier * chaosWeaveMultiplier(attacker);
+	}
+	
+	/**
+	 * Chaos Weave: a damage spell may Surge or Fizzle.
+	 * @param attacker the caster
+	 * @return the damage multiplier of this cast: CHAOS_SURGE, 0 or 1
+	 */
+	private static double chaosWeaveMultiplier(Creature attacker)
+	{
+		final double chance = value(attacker, CHAOS_WEAVE);
+		if (chance <= 0)
+		{
+			return 1;
+		}
+		
+		final double roll = Rnd.get(1000) / 10.0;
+		if (roll < chance)
+		{
+			attacker.sendPacket(new ExShowScreenMessage("Chaos Weave: your spell surges!", ExShowScreenMessage.BOTTOM_CENTER, 1500));
+			return CHAOS_SURGE;
+		}
+		if (roll < (chance * 1.5))
+		{
+			attacker.sendPacket(new ExShowScreenMessage("Chaos Weave: your spell fizzles.", ExShowScreenMessage.BOTTOM_CENTER, 1500));
+			return 0;
+		}
+		return 1;
+	}
+	
+	/**
+	 * @param creature the caster
+	 * @return {@code true} if the creature can't land magic critical hits (Chaos Weave)
+	 */
+	public static boolean cannotMagicCrit(Creature creature)
+	{
+		return has(creature, CHAOS_WEAVE);
 	}
 	
 	/**
@@ -313,13 +410,14 @@ public final class PassiveMechanics
 	}
 	
 	/**
-	 * Vampiric Sorcery: direct spell damage heals the caster.
+	 * Vampiric Sorcery: direct spell damage heals the caster. Arc Conduit: it jumps to more enemies.
 	 * @param attacker the caster
+	 * @param target the creature that took the damage
 	 * @param skill the damaging skill
 	 * @param damage the damage dealt
 	 * @param damageOverTime whether it was a damage-over-time tick
 	 */
-	public static void onDamageDealt(Creature attacker, Skill skill, double damage, boolean damageOverTime)
+	public static void onDamageDealt(Creature attacker, Creature target, Skill skill, double damage, boolean damageOverTime)
 	{
 		if (damageOverTime || (damage <= 0) || (skill == null) || !skill.isMagic() || attacker.isDead())
 		{
@@ -327,16 +425,166 @@ public final class PassiveMechanics
 		}
 		
 		final double leech = value(attacker, SPELL_LEECH);
-		if (leech <= 0)
+		if (leech > 0)
+		{
+			final double heal = Math.min((damage * leech) / 100, attacker.getMaxRecoverableHp() - attacker.getCurrentHp());
+			if (heal > 0)
+			{
+				attacker.setCurrentHp(attacker.getCurrentHp() + heal);
+			}
+		}
+		
+		arc(attacker, target, skill, damage);
+	}
+	
+	/**
+	 * Arc Conduit: a single-target damage spell jumps from its target to the nearest enemy, and from there to the next.
+	 * @param attacker the caster
+	 * @param target the spell's target
+	 * @param skill the spell
+	 * @param damage the damage the target took
+	 */
+	private static void arc(Creature attacker, Creature target, Skill skill, double damage)
+	{
+		final double pct = value(attacker, ARC_CONDUIT);
+		if ((pct <= 0) || (target == null) || (target == attacker) || !SINGLE_TARGET.contains(skill.getTargetType()) || ARCING.get())
 		{
 			return;
 		}
 		
-		final double heal = Math.min((damage * leech) / 100, attacker.getMaxRecoverableHp() - attacker.getCurrentHp());
-		if (heal > 0)
+		final Player player = attacker.asPlayer();
+		final Set<Creature> struck = new HashSet<>();
+		struck.add(target);
+		Creature from = target;
+		double arcDamage = (damage * pct) / 100;
+		ARCING.set(Boolean.TRUE);
+		try
 		{
-			attacker.setCurrentHp(attacker.getCurrentHp() + heal);
+			for (int i = 0; (i < ARC_TARGETS) && (arcDamage >= 1); i++)
+			{
+				final Creature next = nearestArcTarget(player, from, struck);
+				if (next == null)
+				{
+					break;
+				}
+				
+				struck.add(next);
+				if (next.isPlayable())
+				{
+					player.updatePvPStatus(next);
+				}
+				next.reduceCurrentHp(arcDamage, player, skill);
+				next.notifyDamageReceived(arcDamage, player, skill, false, false);
+				player.sendDamageMessage(next, (int) arcDamage, false, false, false);
+				from = next;
+				arcDamage /= 2;
+			}
 		}
+		finally
+		{
+			ARCING.set(Boolean.FALSE);
+		}
+	}
+	
+	private static Creature nearestArcTarget(Player player, Creature from, Set<Creature> struck)
+	{
+		Creature nearest = null;
+		double nearestDistance = Double.MAX_VALUE;
+		for (Creature creature : World.getInstance().getVisibleObjectsInRange(from, Creature.class, ARC_RANGE))
+		{
+			if ((creature == player) || struck.contains(creature) || creature.isAlikeDead() || !creature.isAutoAttackable(player) || (creature == player.getSummon()) || player.isInsidePeaceZone(player, creature))
+			{
+				continue;
+			}
+			
+			final double distance = from.calculateDistance3D(creature);
+			if ((distance < nearestDistance) && GeoEngine.getInstance().canSeeTarget(from, creature))
+			{
+				nearest = creature;
+				nearestDistance = distance;
+			}
+		}
+		return nearest;
+	}
+	
+	/**
+	 * Guardian's Oath: a share of the damage a party member takes goes to a guardian nearby. The share never kills the guardian.
+	 * @param player the party member being hit
+	 * @param attacker the attacker
+	 * @param amount damage about to be applied
+	 * @return the damage left for the party member
+	 */
+	public static double redirectToGuardian(Player player, Creature attacker, double amount)
+	{
+		final Party party = player.getParty();
+		if ((amount <= 0) || (party == null) || GUARDING.get())
+		{
+			return amount;
+		}
+		
+		Player guardian = null;
+		double pct = 0;
+		for (Player member : party.getMembers())
+		{
+			if ((member == player) || (member == attacker) || member.isDead() || member.isInDuel() || !LocationUtil.checkIfInRange(GUARDIAN_RANGE, player, member, true))
+			{
+				continue;
+			}
+			
+			final double value = value(member, GUARDIAN);
+			if (value > pct)
+			{
+				guardian = member;
+				pct = value;
+			}
+		}
+		if (guardian == null)
+		{
+			return amount;
+		}
+		
+		final double share = Math.min((amount * Math.min(pct, 100)) / 100, guardian.getCurrentHp() - 1);
+		if (share < 1)
+		{
+			return amount;
+		}
+		
+		GUARDING.set(Boolean.TRUE);
+		try
+		{
+			guardian.reduceCurrentHp(share, attacker, null);
+		}
+		finally
+		{
+			GUARDING.set(Boolean.FALSE);
+		}
+		return amount - share;
+	}
+	
+	/**
+	 * Phoenix Heart: once every PHOENIX_COOLDOWN, a killing blow leaves the player alive.
+	 * @param player the player about to die
+	 * @return the HP to leave the player with, 0 to let them die
+	 */
+	public static double phoenixRebirth(Player player)
+	{
+		final double pct = value(player, PHOENIX);
+		if (pct <= 0)
+		{
+			return 0;
+		}
+		
+		final long now = System.currentTimeMillis();
+		final Long readyAt = PHOENIX_READY_AT.get(player.getObjectId());
+		if ((readyAt != null) && (readyAt > now))
+		{
+			return 0;
+		}
+		
+		PHOENIX_READY_AT.put(player.getObjectId(), now + PHOENIX_COOLDOWN);
+		player.broadcastPacket(new MagicSkillUse(player, player, PHOENIX_VISUAL_SKILL, 1, 0, 0));
+		player.sendPacket(new ExShowScreenMessage("Phoenix Heart: you rise from the ashes! It is ready again in " + (PHOENIX_COOLDOWN / 60000) + " minutes.", ExShowScreenMessage.TOP_CENTER, 4000));
+		return Math.max(1, (player.getMaxHp() * Math.min(pct, 100)) / 100);
 	}
 	
 	// ---------------------------------------------------------------- hit / crit
@@ -357,6 +605,42 @@ public final class PassiveMechanics
 	public static boolean cannotCrit(Creature attacker)
 	{
 		return has(attacker, RESOLUTE);
+	}
+	
+	/**
+	 * Riposte: a shield block or a dodge readies a critical counter-attack.
+	 * @param target the creature that blocked or dodged
+	 */
+	public static void onAttackAvoided(Creature target)
+	{
+		if (has(target, RIPOSTE))
+		{
+			RIPOSTE_READY.put(target.getObjectId(), System.currentTimeMillis() + RIPOSTE_WINDOW);
+		}
+	}
+	
+	/**
+	 * @param attacker the attacker
+	 * @return {@code true} if the attacker had a riposte ready: this hit is a critical one (or a blow that lands), and the riposte is spent
+	 */
+	public static boolean consumeRiposte(Creature attacker)
+	{
+		if ((attacker == null) || !attacker.isPlayer())
+		{
+			return false;
+		}
+		
+		final Long until = RIPOSTE_READY.remove(attacker.getObjectId());
+		return (until != null) && (until >= System.currentTimeMillis());
+	}
+	
+	/**
+	 * @param attacker the attacker
+	 * @return the multiplier on the attacker's critical rate (Riposte halves it)
+	 */
+	public static double critRateMultiplier(Creature attacker)
+	{
+		return has(attacker, RIPOSTE) ? RIPOSTE_CRIT_RATE : 1;
 	}
 	
 	/**
@@ -488,7 +772,7 @@ public final class PassiveMechanics
 	}
 	
 	/** Every condition token {@link #parseConditional} knows, for the admin tree editor. */
-	public static final List<String> CONDITION_TOKENS = List.of("HEAVY", "LIGHT", "ROBE", "NOARMOR", "SHIELD", "BOW", "DAGGER", "DUAL", "SWORD", "BLUNT", "POLE", "FIST", "LOWHP", "FULLHP", "NIGHT", "DAY");
+	public static final List<String> CONDITION_TOKENS = List.of("HEAVY", "LIGHT", "ROBE", "NOARMOR", "SHIELD", "BOW", "DAGGER", "DUAL", "SWORD", "BLUNT", "POLE", "FIST", "LOWHP", "FULLHP", "NIGHT", "DAY", "STILL", "MOBILE");
 	
 	/**
 	 * @param key an effect key, possibly with an {@code @CONDITION} suffix
@@ -553,6 +837,10 @@ public final class PassiveMechanics
 				return new ConditionGameTime(true);
 			case "DAY":
 				return new ConditionGameTime(false);
+			case "STILL":
+				return new ConditionStandingStill(STILL_TIME, true);
+			case "MOBILE":
+				return new ConditionStandingStill(STILL_TIME, false);
 			default:
 				return null;
 		}

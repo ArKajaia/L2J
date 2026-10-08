@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Starfall: 47 nodes, an outer region beyond the rim between Deadeye and Arcanist. x/y are authoritative layout coords. -->
+<!-- Starfall: 53 nodes, an outer region beyond the rim between Deadeye and Arcanist. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="43001" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-2680.4" y="-3194.4" effect="CRIT_DMG_PCT:1">
 		<requires nodeId="39319" />
@@ -104,6 +104,7 @@
 	</node>
 	<node id="43031" name="Starfire" sector="Starfall" type="NOTABLE" tier="0" cost="1" x="-3780.6" y="-3220.3" orbitX="-3689.6" orbitY="-3167.9" effect="CRIT_DMG_PCT:8;MCRIT_DMG_PCT:8" icon="star" description="Meteor Strike mastery. Physical and magic crits alike.">
 		<requires nodeId="43030" />
+		<requires nodeId="43090" />
 	</node>
 	<node id="43032" name="Crossbow Drill" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3713.4" y="-2604.9" orbitX="-3652.3" orbitY="-2519.5" effect="ATK_SPD_PCT@BOW:2" icon="arrow">
 		<requires nodeId="43005" />
@@ -134,6 +135,7 @@
 	</node>
 	<node id="43039" name="Calm Before" sector="Starfall" type="NOTABLE" tier="0" cost="1" x="-4327.1" y="-2804.4" orbitX="-4230.6" orbitY="-2763.1" effect="ACCURACY_ADD@FULLHP:3;CRIT_RATE_ADD@FULLHP:20" icon="target" description="Steady Hands mastery. Only above 90% HP.">
 		<requires nodeId="43038" />
+		<requires nodeId="43080" />
 	</node>
 	<node id="43040" name="Comet Trail" sector="Starfall" type="SMALL" tier="0" cost="1" x="-2542.6" y="-3467.7" effect="MAXHP:20" icon="comet">
 		<requires nodeId="43001" />
@@ -188,5 +190,27 @@
 	</node>
 	<node id="43072" name="Nocturne" sector="Starfall" type="KEYSTONE" tier="0" cost="1" x="-5420.1" y="-1326.3" effect="PATK_PCT@NIGHT:12;MATK_PCT@NIGHT:12;EVASION_ADD@NIGHT:4;PDEF_PCT@DAY:-12;MDEF_PCT@DAY:-12" icon="moon" description="KEYSTONE: At night: +12% P.Atk and M.Atk, +4 Evasion. During the day: -12% P.Def and M.Def.">
 		<requires nodeId="43071" />
+	</node>
+	<node id="43080" name="Stormward Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4495.0" y="-2913.2" effect="MATK_PCT:1.5" icon="bolt">
+		<requires nodeId="43039" />
+		<requires nodeId="43081" />
+	</node>
+	<node id="43081" name="Stormward Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4662.8" y="-3022.0" effect="CAST_SPD_PCT:1.5" icon="bolt">
+		<requires nodeId="43080" />
+		<requires nodeId="43082" />
+	</node>
+	<node id="43082" name="Arc Conduit" sector="Starfall" type="KEYSTONE" tier="0" cost="1" x="-4830.6" y="-3130.8" effect="KS_ARC_CONDUIT:50;SPELL_MP_COST_RED_PCT:-30" icon="bolt" description="KEYSTONE: Your single-target damage spells jump to the nearest enemy within 300 of the target for 50% of the damage, then to one more for 25%. Spells cost 30% more MP.">
+		<requires nodeId="43081" />
+	</node>
+	<node id="43090" name="Wild Starfire" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3932.8" y="-3350.0" effect="MATK_PCT:1.5" icon="vortex">
+		<requires nodeId="43031" />
+		<requires nodeId="43091" />
+	</node>
+	<node id="43091" name="Wild Starfire" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4085.1" y="-3479.7" effect="PVE_MDMG_PCT:2" icon="vortex">
+		<requires nodeId="43090" />
+		<requires nodeId="43092" />
+	</node>
+	<node id="43092" name="Chaos Weave" sector="Starfall" type="KEYSTONE" tier="0" cost="1" x="-4237.3" y="-3609.4" effect="KS_CHAOS_WEAVE:20" icon="vortex" description="KEYSTONE: Each damage spell has a 20% chance to Surge for 2.5x damage and a 10% chance to Fizzle and deal none. You can no longer land magic critical hits.">
+		<requires nodeId="43091" />
 	</node>
 </list>

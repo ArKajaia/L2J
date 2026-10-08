@@ -378,6 +378,12 @@ public class CreatureStat
 	 */
 	public int getMCriticalHit(Creature target, Skill skill)
 	{
+		// Passive tree Chaos Weave: no magic critical hits.
+		if (PassiveMechanics.cannotMagicCrit(_creature))
+		{
+			return 0;
+		}
+		
 		int val = (int) calcStat(Stat.MCRITICAL_RATE, 1, target, skill) * 10;
 		
 		if ((skill != null) && (target != null) && _creature.isPlayable())
