@@ -790,8 +790,11 @@ public class Formulas
 		// Add soulshot boost.
 		final int ssBoost = ss ? 2 : 1;
 		damage = (skill != null) ? ((damage * ssBoost) + skill.getPower(attacker, target, isPvP, isPvE)) : (damage * ssBoost);
+		double critRatio = 1; // Passive tree Bloodletter: how many times the non-critical damage this critical hit deals.
 		if (crit)
 		{
+			final double nonCritical = (76 * damage * proximityBonus) / defence;
+			
 			// H5 Damage Formula
 			damage = 2 * attacker.calcStat(Stat.CRITICAL_DAMAGE, 1, target, skill) * attacker.calcStat(Stat.CRITICAL_DAMAGE_POS, 1, target, skill) * target.calcStat(Stat.DEFENCE_CRITICAL_DAMAGE, 1, target, null) * ((76 * damage * proximityBonus) / defence);
 			damage += ((attacker.calcStat(Stat.CRITICAL_DAMAGE_ADD, 0, target, skill) * 77) / defence);
@@ -818,6 +821,11 @@ public class Formulas
 				{
 					damage *= ClassBalanceConfig.PVE_PHYSICAL_SKILL_CRITICAL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
 				}
+			}
+			
+			if ((nonCritical > 0) && PassiveMechanics.bleedsCriticalBonus(attacker))
+			{
+				critRatio = Math.max(1, damage / nonCritical);
 			}
 		}
 		else
@@ -949,6 +957,14 @@ public class Formulas
 					}
 				}
 			}
+		}
+		
+		// Passive tree Bloodletter: the critical bonus bleeds over time instead of landing now.
+		if (critRatio > 1)
+		{
+			final double upFront = damage / critRatio;
+			PassiveMechanics.startBleed(attacker, target, damage - upFront);
+			damage = upFront;
 		}
 		
 		return damage;

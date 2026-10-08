@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
@@ -25,6 +26,7 @@ import org.l2jmobius.gameserver.model.item.Weapon;
 import org.l2jmobius.gameserver.model.item.type.ArmorType;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
 import org.l2jmobius.gameserver.model.skill.AbnormalType;
+import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.targets.TargetType;
@@ -92,6 +94,12 @@ public final class PassiveMechanics
 	public static final String CHAOS_WEAVE = "KS_CHAOS_WEAVE";
 	/** Once every PHOENIX_COOLDOWN, a killing blow leaves you alive with this % of max HP. */
 	public static final String PHOENIX = "KS_PHOENIX";
+	/** Each normal hit landed on your target adds this % Atk. Spd, up to RELENTLESS_MAX_STACKS hits; switching target or RELENTLESS_WINDOW without a hit resets it. */
+	public static final String RELENTLESS = "KS_RELENTLESS";
+	/** Physical critical hits deal no critical bonus up front; the target bleeds for this % of it over BLEED_TICKS seconds instead. */
+	public static final String BLOODLETTER = "KS_BLOODLETTER";
+	/** % chance for a single-target damage spell to hit its target again ECHO_DELAY later, free, for ECHO_DAMAGE of the damage. */
+	public static final String SPELL_ECHO = "KS_SPELL_ECHO";
 	
 	/** Keys that cancel each other out; a node carrying one can't be allocated next to a node carrying another key of the same group. */
 	private static final List<Set<String>> EXCLUSIVE_GROUPS = List.of(Set.of(POINT_BLANK, FAR_SHOT));
@@ -137,6 +145,25 @@ public final class PassiveMechanics
 	private static final int PHOENIX_VISUAL_SKILL = 438;
 	/** objectId -> time Phoenix Heart can save the player again. */
 	private static final Map<Integer, Long> PHOENIX_READY_AT = new ConcurrentHashMap<>();
+	
+	/** Relentless Assault: most hits that count, and how long a streak lasts without a hit. */
+	private static final int RELENTLESS_MAX_STACKS = 10;
+	private static final long RELENTLESS_WINDOW = 3000;
+	/** objectId -> the player's current Relentless Assault streak. */
+	private static final Map<Integer, Relentless> RELENTLESS_STREAKS = new ConcurrentHashMap<>();
+	
+	/** Bloodletter: how many ticks a bleed lasts, one a second; a new critical hit adds to it and starts the count again. */
+	private static final int BLEED_TICKS = 6;
+	private static final long BLEED_PERIOD = 1000;
+	/** attacker objectId << 32 | target objectId -> the bleed that attacker keeps on that target. */
+	private static final Map<Long, Bleed> BLEEDS = new ConcurrentHashMap<>();
+	
+	/** Spell Echo: delay and damage of the echo, and how far the target may have gone. */
+	private static final long ECHO_DELAY = 500;
+	private static final double ECHO_DAMAGE = 0.6;
+	private static final int ECHO_RANGE = 1500;
+	/** Set while an echo is dealt, so an echo doesn't echo again. */
+	private static final ThreadLocal<Boolean> ECHOING = ThreadLocal.withInitial(() -> Boolean.FALSE);
 	
 	/** Force charge skills: Sonic Focus, Focused Force, Sonic Mastery, Force Mastery. Their level is the most charges the class can hold. */
 	private static final int[] CHARGE_SKILLS =
@@ -439,6 +466,53 @@ public final class PassiveMechanics
 		}
 		
 		arc(attacker, target, skill, damage);
+		echo(attacker, target, skill, damage);
+	}
+	
+	/**
+	 * Spell Echo: a single-target damage spell may hit its target again a moment later.
+	 * @param attacker the caster
+	 * @param target the spell's target
+	 * @param skill the spell
+	 * @param damage the damage the target took
+	 */
+	private static void echo(Creature attacker, Creature target, Skill skill, double damage)
+	{
+		final double chance = value(attacker, SPELL_ECHO);
+		if ((chance <= 0) || (target == null) || (target == attacker) || !SINGLE_TARGET.contains(skill.getTargetType()) || ARCING.get() || ECHOING.get() || (Rnd.get(100) >= chance))
+		{
+			return;
+		}
+		
+		final Player player = attacker.asPlayer();
+		ThreadPool.schedule(() -> echoHit(player, target, skill, damage * ECHO_DAMAGE), ECHO_DELAY);
+	}
+	
+	private static void echoHit(Player player, Creature target, Skill skill, double damage)
+	{
+		if ((damage < 1) || player.isDead() || !player.isSpawned() || target.isAlikeDead() || !target.isSpawned() || !target.isAutoAttackable(player) || player.isInsidePeaceZone(player, target) || (player.calculateDistance3D(target) > ECHO_RANGE))
+		{
+			return;
+		}
+		
+		player.broadcastPacket(new MagicSkillUse(player, target, skill.getDisplayId(), skill.getDisplayLevel(), 0, 0));
+		player.broadcastPacket(new MagicSkillLaunched(player, skill.getDisplayId(), skill.getDisplayLevel(), target));
+		if (target.isPlayable())
+		{
+			player.updatePvPStatus(target);
+		}
+		
+		ECHOING.set(Boolean.TRUE);
+		try
+		{
+			target.reduceCurrentHp(damage, player, skill);
+			target.notifyDamageReceived(damage, player, skill, false, false);
+			player.sendDamageMessage(target, (int) damage, false, false, false);
+		}
+		finally
+		{
+			ECHOING.set(Boolean.FALSE);
+		}
 	}
 	
 	/**
@@ -679,10 +753,21 @@ public final class PassiveMechanics
 	}
 	
 	/**
+	 * A normal hit landed: Soul Harvest and Relentless Assault.
+	 * @param attacker the attacker
+	 * @param target the creature it hit
+	 */
+	public static void onNormalHitLanded(Creature attacker, Creature target)
+	{
+		harvestSoul(attacker);
+		addRelentlessHit(attacker, target);
+	}
+	
+	/**
 	 * Soul Harvest: a landed normal hit may grant a Force charge and a soul.
 	 * @param attacker the attacker
 	 */
-	public static void onNormalHitLanded(Creature attacker)
+	private static void harvestSoul(Creature attacker)
 	{
 		final double chance = value(attacker, SOUL_HARVEST);
 		if ((chance <= 0) || (Rnd.get(100) >= chance))
@@ -701,6 +786,221 @@ public final class PassiveMechanics
 		if (player.getChargedSouls() < maxSouls)
 		{
 			player.increaseSouls(1);
+		}
+	}
+	
+	/** A Relentless Assault streak: the target, how many hits on it count, and when the last one landed. */
+	private static final class Relentless
+	{
+		int targetId;
+		int hits;
+		long lastHit;
+		boolean expiryScheduled;
+	}
+	
+	/**
+	 * Relentless Assault: a normal hit on your target (not one a sweep lands on another enemy) adds to the streak; a hit on another target starts a new one.
+	 * @param attacker the attacker
+	 * @param target the creature it hit
+	 */
+	private static void addRelentlessHit(Creature attacker, Creature target)
+	{
+		if ((target == null) || (target != attacker.getTarget()) || !has(attacker, RELENTLESS))
+		{
+			return;
+		}
+		
+		final Player player = attacker.asPlayer();
+		final Relentless streak = RELENTLESS_STREAKS.computeIfAbsent(player.getObjectId(), id -> new Relentless());
+		final boolean changed;
+		final boolean scheduleExpiry;
+		synchronized (streak)
+		{
+			final long now = System.currentTimeMillis();
+			final int before = streak.hits;
+			if ((streak.targetId != target.getObjectId()) || ((now - streak.lastHit) > RELENTLESS_WINDOW))
+			{
+				streak.targetId = target.getObjectId();
+				streak.hits = 1;
+			}
+			else
+			{
+				streak.hits = Math.min(RELENTLESS_MAX_STACKS, streak.hits + 1);
+			}
+			streak.lastHit = now;
+			changed = streak.hits != before;
+			scheduleExpiry = !streak.expiryScheduled;
+			streak.expiryScheduled = true;
+		}
+		
+		if (scheduleExpiry)
+		{
+			ThreadPool.schedule(() -> expireRelentless(player, streak), RELENTLESS_WINDOW);
+		}
+		if (changed)
+		{
+			player.broadcastUserInfo(); // the client animates attacks at the speed it was last told
+		}
+	}
+	
+	/**
+	 * Ends a streak once RELENTLESS_WINDOW has passed without a hit, so the client shows the plain attack speed again.
+	 * @param player the player
+	 * @param streak the player's streak
+	 */
+	private static void expireRelentless(Player player, Relentless streak)
+	{
+		final long left;
+		final boolean ended;
+		synchronized (streak)
+		{
+			left = (streak.lastHit + RELENTLESS_WINDOW) - System.currentTimeMillis();
+			ended = (left <= 0) && (streak.hits > 0);
+			if (left <= 0)
+			{
+				streak.hits = 0;
+				streak.expiryScheduled = false;
+			}
+		}
+		
+		if (left > 0)
+		{
+			ThreadPool.schedule(() -> expireRelentless(player, streak), left);
+		}
+		else if (ended && player.isOnline())
+		{
+			player.broadcastUserInfo();
+		}
+	}
+	
+	/**
+	 * @param player the player
+	 * @return the Atk. Spd multiplier of the player's Relentless Assault streak
+	 */
+	public static double relentlessMultiplier(Player player)
+	{
+		final double pct = value(player, RELENTLESS);
+		final Relentless streak = pct > 0 ? RELENTLESS_STREAKS.get(player.getObjectId()) : null;
+		if (streak == null)
+		{
+			return 1;
+		}
+		
+		synchronized (streak)
+		{
+			return (System.currentTimeMillis() - streak.lastHit) > RELENTLESS_WINDOW ? 1 : 1 + ((streak.hits * pct) / 100);
+		}
+	}
+	
+	// ---------------------------------------------------------------- bleeding
+	
+	/** A Bloodletter bleed one attacker keeps on one target: the damage still to come and the ticks left to deal it in. */
+	private static final class Bleed
+	{
+		final Creature attacker;
+		final Creature target;
+		double remaining;
+		int ticksLeft;
+		boolean ended;
+		ScheduledFuture<?> task;
+		
+		Bleed(Creature attacker, Creature target)
+		{
+			this.attacker = attacker;
+			this.target = target;
+		}
+	}
+	
+	/**
+	 * @param attacker the attacker
+	 * @return {@code true} if the attacker's critical bonus bleeds instead of landing up front (Bloodletter)
+	 */
+	public static boolean bleedsCriticalBonus(Creature attacker)
+	{
+		return has(attacker, BLOODLETTER);
+	}
+	
+	/**
+	 * Bloodletter: the critical bonus held back from a hit bleeds over BLEED_TICKS seconds. A new one adds to the bleed already running and starts its count again.
+	 * @param attacker the attacker
+	 * @param target the creature hit
+	 * @param critBonus the critical bonus held back
+	 */
+	public static void startBleed(Creature attacker, Creature target, double critBonus)
+	{
+		final double pct = value(attacker, BLOODLETTER);
+		if ((pct <= 0) || (critBonus <= 0) || target.isDead() || has(target, PURITY))
+		{
+			return;
+		}
+		
+		final double amount = (critBonus * pct) / 100;
+		final long key = (((long) attacker.getObjectId()) << 32) | (target.getObjectId() & 0xFFFFFFFFL);
+		while (true)
+		{
+			final Bleed bleed = BLEEDS.computeIfAbsent(key, k -> new Bleed(attacker, target));
+			synchronized (bleed)
+			{
+				if (bleed.ended)
+				{
+					BLEEDS.remove(key, bleed);
+					continue;
+				}
+				
+				bleed.remaining += amount;
+				bleed.ticksLeft = BLEED_TICKS;
+				if (bleed.task == null)
+				{
+					if (!target.hasAbnormalVisualEffect(AbnormalVisualEffect.DOT_BLEEDING))
+					{
+						target.startAbnormalVisualEffect(true, AbnormalVisualEffect.DOT_BLEEDING);
+					}
+					bleed.task = ThreadPool.scheduleAtFixedRate(() -> bleedTick(key, bleed), BLEED_PERIOD, BLEED_PERIOD);
+				}
+				return;
+			}
+		}
+	}
+	
+	private static void bleedTick(long key, Bleed bleed)
+	{
+		final double tick;
+		synchronized (bleed)
+		{
+			final Creature target = bleed.target;
+			if (bleed.ended || (bleed.ticksLeft <= 0) || target.isDead() || !target.isSpawned() || !bleed.attacker.isSpawned() || has(target, PURITY))
+			{
+				endBleed(key, bleed);
+				return;
+			}
+			
+			tick = bleed.remaining / bleed.ticksLeft;
+			bleed.remaining -= tick;
+			bleed.ticksLeft--;
+		}
+		
+		if (tick >= 1)
+		{
+			bleed.target.reduceCurrentHp(tick, bleed.attacker, true, true, null);
+			bleed.target.notifyDamageReceived(tick, bleed.attacker, null, false, true);
+		}
+	}
+	
+	/** Called holding the bleed's lock. */
+	private static void endBleed(long key, Bleed bleed)
+	{
+		bleed.ended = true;
+		if (bleed.task != null)
+		{
+			bleed.task.cancel(false);
+		}
+		BLEEDS.remove(key, bleed);
+		
+		// Clear the bleeding look once no Bloodletter bleed and no bleed effect is left on the target.
+		final Creature target = bleed.target;
+		if (target.hasAbnormalVisualEffect(AbnormalVisualEffect.DOT_BLEEDING) && (target.getEffectList().getBuffInfoByAbnormalType(AbnormalType.BLEEDING) == null) && BLEEDS.values().stream().noneMatch(other -> other.target == target))
+		{
+			target.stopAbnormalVisualEffect(true, AbnormalVisualEffect.DOT_BLEEDING);
 		}
 	}
 	

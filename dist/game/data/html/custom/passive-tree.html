@@ -1064,6 +1064,9 @@ const KEYSTONE_TEXT = {
 	KS_BATTLEMAGE: v => `${v}% of M.Atk is added to P.Atk`,
 	KS_CHAOS_WEAVE: v => `Damage spells: ${v}% chance to Surge for 2.5x damage, ${v / 2}% chance to Fizzle; no magic critical hits`,
 	KS_PHOENIX: v => `Once every 5 minutes, a killing blow leaves you alive with ${v}% HP`,
+	KS_RELENTLESS: v => `+${v}% Attack Speed per normal hit on your target, up to 10 hits; resets on switching target or 3s without a hit`,
+	KS_BLOODLETTER: v => `Physical critical hits deal no extra damage up front; the target bleeds for ${v}% of the critical bonus over 6s`,
+	KS_SPELL_ECHO: v => `${v}% chance for a single-target damage spell to hit again 0.5s later for 60% damage`,
 };
 
 // Conditional bonuses ("PDEF_PCT@HEAVY") only apply in that situation. Mirrors COND_TEXT in PassiveTreeBoard.java.

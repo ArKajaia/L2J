@@ -5524,8 +5524,8 @@ public abstract class Creature extends WorldObject
 				}
 			}
 			
-			// Passive tree Soul Harvest.
-			PassiveMechanics.onNormalHitLanded(this);
+			// Passive tree Soul Harvest and Relentless Assault.
+			PassiveMechanics.onNormalHitLanded(this, target);
 			
 			// Notify AI with ATTACKED
 			if (target.hasAI())

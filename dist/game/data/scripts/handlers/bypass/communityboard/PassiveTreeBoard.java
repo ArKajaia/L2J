@@ -151,6 +151,9 @@ public class PassiveTreeBoard implements IParseBoardHandler
 		KEYSTONE_TEXT.put("KS_BATTLEMAGE", "%s%% of M.Atk is added to P.Atk");
 		KEYSTONE_TEXT.put("KS_CHAOS_WEAVE", "Damage spells: %s%% chance to Surge for 2.5x damage, half that to Fizzle; no magic critical hits");
 		KEYSTONE_TEXT.put("KS_PHOENIX", "Once every 5 minutes, a killing blow leaves you alive with %s%% HP");
+		KEYSTONE_TEXT.put("KS_RELENTLESS", "+%s%% Attack Speed per normal hit on your target, up to 10 hits; resets on switching target or 3s without a hit");
+		KEYSTONE_TEXT.put("KS_BLOODLETTER", "Physical critical hits deal no extra damage up front; the target bleeds for %s%% of the critical bonus over 6s");
+		KEYSTONE_TEXT.put("KS_SPELL_ECHO", "%s%% chance for a single-target damage spell to hit again 0.5s later for 60%% damage");
 	}
 
 	// Conditional bonuses ("PDEF_PCT@HEAVY") only apply in that situation. Mirrors COND_TEXT in passive-tree.html.
