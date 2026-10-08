@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.model.World;
@@ -31,6 +32,7 @@ import org.l2jmobius.gameserver.model.stats.BaseStat;
 import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.network.SystemMessageId;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
+import org.l2jmobius.gameserver.network.serverpackets.MagicSkillLaunched;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
 import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
 import org.l2jmobius.gameserver.util.LocationUtil;
@@ -82,7 +84,7 @@ public final class PassiveMechanics
 	public static final String RIPOSTE = "KS_RIPOSTE";
 	/** % of the damage party members within GUARDIAN_RANGE take that you take instead. */
 	public static final String GUARDIAN = "KS_GUARDIAN";
-	/** Single-target damage spells arc to ARC_TARGETS more enemies near the target, the first for this % of the damage, each next one for half the one before. */
+	/** Single-target damage spells arc to ARC_TARGETS more enemies near the target, one after the other with the spell's animation, the first for this % of the damage, each next one for half the one before. */
 	public static final String ARC_CONDUIT = "KS_ARC_CONDUIT";
 	/** % of M.Atk added to P.Atk. */
 	public static final String BATTLEMAGE = "KS_BATTLEMAGE";
@@ -117,6 +119,8 @@ public final class PassiveMechanics
 	/** Arc Conduit: how many times a spell jumps, and how far from the creature it jumps from. */
 	private static final int ARC_TARGETS = 2;
 	private static final int ARC_RANGE = 300;
+	/** Arc Conduit: time between the hit and the first jump, and between jumps, so the chain is seen jump by jump. */
+	private static final long ARC_DELAY = 200;
 	/** Target types of the spells that arc: single-target ones. */
 	private static final Set<TargetType> SINGLE_TARGET = EnumSet.of(TargetType.ONE, TargetType.UNDEAD, TargetType.ENEMY_SUMMON);
 	/** Set while arcs are dealt, so an arc doesn't arc again. */
@@ -453,36 +457,56 @@ public final class PassiveMechanics
 		}
 		
 		final Player player = attacker.asPlayer();
-		final Set<Creature> struck = new HashSet<>();
+		final Set<Creature> struck = ConcurrentHashMap.newKeySet();
 		struck.add(target);
-		Creature from = target;
-		double arcDamage = (damage * pct) / 100;
+		ThreadPool.schedule(() -> arcJump(player, target, skill, (damage * pct) / 100, 1, struck), ARC_DELAY);
+	}
+	
+	/**
+	 * One jump of an Arc Conduit chain: the spell's animation flies from the creature it jumps from to the nearest enemy, which takes the damage. The next jump follows ARC_DELAY later, for half the damage.
+	 * @param player the caster
+	 * @param from the creature the spell jumps from
+	 * @param skill the spell
+	 * @param arcDamage the damage of this jump
+	 * @param jump which jump this is, from 1
+	 * @param struck the creatures the spell already hit
+	 */
+	private static void arcJump(Player player, Creature from, Skill skill, double arcDamage, int jump, Set<Creature> struck)
+	{
+		if ((arcDamage < 1) || player.isDead() || !player.isSpawned() || !from.isSpawned())
+		{
+			return;
+		}
+		
+		final Creature next = nearestArcTarget(player, from, struck);
+		if (next == null)
+		{
+			return;
+		}
+		
+		struck.add(next);
+		from.broadcastPacket(new MagicSkillUse(from, next, skill.getDisplayId(), skill.getDisplayLevel(), 0, 0));
+		from.broadcastPacket(new MagicSkillLaunched(from, skill.getDisplayId(), skill.getDisplayLevel(), next));
+		if (next.isPlayable())
+		{
+			player.updatePvPStatus(next);
+		}
+		
 		ARCING.set(Boolean.TRUE);
 		try
 		{
-			for (int i = 0; (i < ARC_TARGETS) && (arcDamage >= 1); i++)
-			{
-				final Creature next = nearestArcTarget(player, from, struck);
-				if (next == null)
-				{
-					break;
-				}
-				
-				struck.add(next);
-				if (next.isPlayable())
-				{
-					player.updatePvPStatus(next);
-				}
-				next.reduceCurrentHp(arcDamage, player, skill);
-				next.notifyDamageReceived(arcDamage, player, skill, false, false);
-				player.sendDamageMessage(next, (int) arcDamage, false, false, false);
-				from = next;
-				arcDamage /= 2;
-			}
+			next.reduceCurrentHp(arcDamage, player, skill);
+			next.notifyDamageReceived(arcDamage, player, skill, false, false);
+			player.sendDamageMessage(next, (int) arcDamage, false, false, false);
 		}
 		finally
 		{
 			ARCING.set(Boolean.FALSE);
+		}
+		
+		if (jump < ARC_TARGETS)
+		{
+			ThreadPool.schedule(() -> arcJump(player, next, skill, arcDamage / 2, jump + 1, struck), ARC_DELAY);
 		}
 	}
 	

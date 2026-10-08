@@ -199,7 +199,7 @@
 		<requires nodeId="43080" />
 		<requires nodeId="43082" />
 	</node>
-	<node id="43082" name="Arc Conduit" sector="Starfall" type="KEYSTONE" tier="0" cost="1" x="-4830.6" y="-3130.8" effect="KS_ARC_CONDUIT:50;SPELL_MP_COST_RED_PCT:-30" icon="bolt" description="KEYSTONE: Your single-target damage spells jump to the nearest enemy within 300 of the target for 50% of the damage, then to one more for 25%. Spells cost 30% more MP.">
+	<node id="43082" name="Arc Conduit" sector="Starfall" type="KEYSTONE" tier="0" cost="1" x="-4830.6" y="-3130.8" effect="KS_ARC_CONDUIT:50;SPELL_MP_COST_RED_PCT:-30" icon="bolt" description="KEYSTONE: Your single-target damage spells jump to the nearest enemy within 300 of the target for 50% of the damage, then to one more for 25%, flying from one to the next. Spells cost 30% more MP.">
 		<requires nodeId="43081" />
 	</node>
 	<node id="43090" name="Wild Starfire" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3932.8" y="-3350.0" effect="MATK_PCT:1.5" icon="vortex">
