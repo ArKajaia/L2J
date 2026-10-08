@@ -35,6 +35,7 @@ import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.ai.AttackableAI;
 import org.l2jmobius.gameserver.ai.CreatureAI;
 import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.config.custom.NightCycleConfig;
 import org.l2jmobius.gameserver.config.custom.PvpSpotsConfig;
 import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
@@ -442,17 +443,17 @@ public class PvpSpotManager
 			// How many it wants drifts, like the crowd of a real spot.
 			if (now >= spot._nextDrift)
 			{
-				spot._wanted = spot._wanted == 0 ? Rnd.get(PvpSpotsConfig.FIGHTERS_MIN, PvpSpotsConfig.FIGHTERS_MAX) : Math.max(PvpSpotsConfig.FIGHTERS_MIN, Math.min(PvpSpotsConfig.FIGHTERS_MAX, spot._wanted + Rnd.get(-2, 2)));
+				spot._wanted = spot._wanted == 0 ? Rnd.get(getFightersMin(), getFightersMax()) : Math.max(getFightersMin(), Math.min(getFightersMax(), spot._wanted + Rnd.get(-2, 2)));
 				spot._nextDrift = now + Rnd.get(DRIFT_MIN, DRIFT_MAX);
 			}
 
 			// Newcomers, faster while the spot is still filling up. The ones on their way back count, but below the minimum alive newcomers come quickly.
 			final int present = spot._fighters.size() + spot._returning.get();
-			final int room = Math.max(spot._wanted - present, PvpSpotsConfig.FIGHTERS_MIN - alive);
+			final int room = Math.max(spot._wanted - present, getFightersMin() - alive);
 			if ((room > 0) && (now >= spot._nextArrival))
 			{
 				arrive(zone, spot, room, elites, now);
-				spot._nextArrival = now + ((present < (spot._wanted / 2)) || (alive < PvpSpotsConfig.FIGHTERS_MIN) ? Rnd.get(1000, 3000) : (Rnd.get(PvpSpotsConfig.ARRIVAL_DELAY_MIN, PvpSpotsConfig.ARRIVAL_DELAY_MAX) * 1000L));
+				spot._nextArrival = now + ((present < (spot._wanted / 2)) || (alive < getFightersMin()) ? Rnd.get(1000, 3000) : (Rnd.get(PvpSpotsConfig.ARRIVAL_DELAY_MIN, PvpSpotsConfig.ARRIVAL_DELAY_MAX) * 1000L));
 			}
 		}
 
@@ -958,7 +959,7 @@ public class PvpSpotManager
 		}
 
 		final PvpSpotZone zone = ZoneManager.getInstance().getZoneById(spotId, PvpSpotZone.class);
-		if ((spot == null) || (zone == null) || !PvpSpotsConfig.ENABLED || !PvpSpotsConfig.FAKE_PLAYERS || !FakePlayerPvpManager.getInstance().isEnabled() || (spot._fighters.size() >= PvpSpotsConfig.FIGHTERS_MAX))
+		if ((spot == null) || (zone == null) || !PvpSpotsConfig.ENABLED || !PvpSpotsConfig.FAKE_PLAYERS || !FakePlayerPvpManager.getInstance().isEnabled() || (spot._fighters.size() >= getFightersMax()))
 		{
 			FakePlayerPvpManager.getInstance().releaseName(name);
 			return;
@@ -1068,6 +1069,27 @@ public class PvpSpotManager
 	{
 		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
 		return (profile != null) && profile.isSpotFighter();
+	}
+
+	/**
+	 * @return the fewest fighters a spot wants: more at night (Moonlit Melee, see {@link NightCycleManager})
+	 */
+	private static int getFightersMin()
+	{
+		return (int) Math.round(PvpSpotsConfig.FIGHTERS_MIN * getNightMultiplier());
+	}
+
+	/**
+	 * @return the most fighters a spot wants: more at night (Moonlit Melee, see {@link NightCycleManager})
+	 */
+	private static int getFightersMax()
+	{
+		return (int) Math.round(PvpSpotsConfig.FIGHTERS_MAX * getNightMultiplier());
+	}
+
+	private static double getNightMultiplier()
+	{
+		return NightCycleManager.getInstance().isNight() ? Math.max(0, NightCycleConfig.NIGHT_PVP_SPOT_FIGHTER_MULTIPLIER) : 1.0;
 	}
 
 	/**

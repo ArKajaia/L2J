@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Hallowmere: 43 nodes, an outer region beyond the rim between Hierophant and Vanguard. x/y are authoritative layout coords. -->
+<!-- Hallowmere: 46 nodes, an outer region beyond the rim between Hierophant and Vanguard. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="45001" name="Pilgrim's Road" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4027.9" y="-1079.3" effect="HP_REGEN_PCT:2">
 		<requires nodeId="39518" />
@@ -149,6 +149,7 @@
 	</node>
 	<node id="45043" name="Steadfast Vigil" sector="Hallowmere" type="NOTABLE" tier="0" cost="1" x="5014.6" y="-929.4" effect="MAXHP:140;HP_REGEN_PCT:6" icon="heart" description="Vigil mastery. Raw health.">
 		<requires nodeId="45042" />
+		<requires nodeId="45070" />
 	</node>
 	<node id="45044" name="Lantern" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3178.1" y="-3408.1" effect="MP_REGEN_PCT:1.5" icon="lantern">
 		<requires nodeId="45009" />
@@ -172,5 +173,16 @@
 	<node id="45061" name="Pilgrim's Road" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4365.3" y="-2293.8" effect="MAXHP_PCT:0.8">
 		<requires nodeId="45010" />
 		<requires nodeId="45051" />
+	</node>
+	<node id="45070" name="Sunward Path" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="5211.3" y="-965.8" effect="HP_REGEN_PCT@DAY:5" icon="sun">
+		<requires nodeId="45043" />
+		<requires nodeId="45071" />
+	</node>
+	<node id="45071" name="Sunward Path" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="5407.9" y="-1002.3" effect="PDEF_PCT@DAY:2" icon="sun">
+		<requires nodeId="45070" />
+		<requires nodeId="45072" />
+	</node>
+	<node id="45072" name="Dawnbringer" sector="Hallowmere" type="KEYSTONE" tier="0" cost="1" x="5604.6" y="-1038.7" effect="PATK_PCT@DAY:12;MATK_PCT@DAY:12;HP_REGEN_PCT@DAY:30;PATK_PCT@NIGHT:-12;MATK_PCT@NIGHT:-12" icon="sun" description="KEYSTONE: During the day: +12% P.Atk and M.Atk, 30% faster HP regeneration. At night: -12% P.Atk and M.Atk.">
+		<requires nodeId="45071" />
 	</node>
 </list>
