@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Red Wastes: 44 nodes, an outer region beyond the rim between Juggernaut and Shadowblade. x/y are authoritative layout coords. -->
+<!-- Red Wastes: 50 nodes, an outer region beyond the rim between Juggernaut and Shadowblade. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="41001" name="Ashen Trail" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="1426.2" y="3918.5" effect="PATK_PCT:0.6">
 		<requires nodeId="39111" />
@@ -134,6 +134,7 @@
 	</node>
 	<node id="41039" name="Frenzied" sector="Red Wastes" type="NOTABLE" tier="0" cost="1" x="265.2" y="5149.6" orbitX="277.7" orbitY="5045.4" effect="ATK_SPD_PCT@LOWHP:6;LIFESTEAL_PCT:1" icon="claw" description="Rage Stoked mastery. Faster below 50% HP.">
 		<requires nodeId="41038" />
+		<requires nodeId="41080" />
 	</node>
 	<node id="41040" name="Scar Tissue" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="1731.8" y="3935.8" effect="MAXHP:20" icon="shield">
 		<requires nodeId="41001" />
@@ -149,6 +150,7 @@
 	</node>
 	<node id="41043" name="Scarred Veteran" sector="Red Wastes" type="NOTABLE" tier="0" cost="1" x="2117.2" y="4419.0" effect="MAXHP:120;CRIT_DMG_TAKEN_RED_PCT:6" icon="shield" description="Scar Tissue mastery. Critical hits land softer.">
 		<requires nodeId="41042" />
+		<requires nodeId="41070" />
 	</node>
 	<node id="41044" name="Fist of Ruin" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="-1041.1" y="4254.5" effect="PATK_PCT@FIST:2" icon="fist">
 		<requires nodeId="41045" />
@@ -176,5 +178,27 @@
 	<node id="41062" name="Ashen Trail" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="-390.1" y="4450.3" effect="PATK_PCT:0.6">
 		<requires nodeId="41009" />
 		<requires nodeId="41010" />
+	</node>
+	<node id="41070" name="Ember Trail" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="2203.6" y="4599.3" effect="MAXHP_PCT:1" icon="wings">
+		<requires nodeId="41043" />
+		<requires nodeId="41071" />
+	</node>
+	<node id="41071" name="Ember Trail" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="2290.1" y="4779.7" effect="HP_REGEN_PCT:4" icon="wings">
+		<requires nodeId="41070" />
+		<requires nodeId="41072" />
+	</node>
+	<node id="41072" name="Phoenix Heart" sector="Red Wastes" type="KEYSTONE" tier="0" cost="1" x="2376.5" y="4960.1" effect="KS_PHOENIX:40;MAXHP_PCT:-15;HEALING_RECEIVED_PCT:-20" icon="wings" description="KEYSTONE: Once every 5 minutes, a blow that would kill you leaves you alive with 40% of your HP. -15% maximum HP and -20% healing received.">
+		<requires nodeId="41071" />
+	</node>
+	<node id="41080" name="Onslaught Path" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="275.4" y="5349.4" effect="ATK_SPD_PCT:1.5" icon="claw">
+		<requires nodeId="41039" />
+		<requires nodeId="41081" />
+	</node>
+	<node id="41081" name="Onslaught Path" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="285.7" y="5549.1" effect="PATK_PCT:1.5" icon="claw">
+		<requires nodeId="41080" />
+		<requires nodeId="41082" />
+	</node>
+	<node id="41082" name="Relentless Assault" sector="Red Wastes" type="KEYSTONE" tier="0" cost="1" x="296.0" y="5748.8" effect="KS_RELENTLESS:3;ATK_SPD_PCT:-10" icon="claw" description="KEYSTONE: Each normal hit you land on your target gives +3% Attack Speed, up to +30% after 10 hits. Switching target or 3 seconds without a hit starts over. -10% Attack Speed.">
+		<requires nodeId="41081" />
 	</node>
 </list>

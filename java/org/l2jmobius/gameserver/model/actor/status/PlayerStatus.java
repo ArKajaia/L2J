@@ -219,6 +219,17 @@ public class PlayerStatus extends PlayableStatus
 				}
 			}
 			
+			// Passive tree Guardian's Oath: a guardian in the party takes a share.
+			if (!isHPConsumption)
+			{
+				final double guarded = PassiveMechanics.redirectToGuardian(player, attacker, amount);
+				if (guarded < amount)
+				{
+					amount = guarded;
+					fullValue = (int) amount;
+				}
+			}
+			
 			if (!ignoreCP && (attacker.isPlayable() || attacker.isFakePlayer()))
 			{
 				if (_currentCp >= amount)
@@ -290,7 +301,8 @@ public class PlayerStatus extends PlayableStatus
 				}
 				else
 				{
-					amount = 0;
+					// Passive tree Phoenix Heart: now and then a killing blow leaves you alive.
+					amount = isHPConsumption ? 0 : PassiveMechanics.phoenixRebirth(player);
 				}
 			}
 			

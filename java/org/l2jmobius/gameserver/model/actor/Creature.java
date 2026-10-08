@@ -278,6 +278,8 @@ public abstract class Creature extends WorldObject
 	
 	/** Movement data of this Creature */
 	protected MoveData _move;
+	/** When the creature last moved a step (passive tree Ley Anchor). */
+	private volatile long _lastMoveTime;
 	private boolean _cursorKeyMovement = false;
 	
 	/** This creature's target. */
@@ -1257,6 +1259,17 @@ public abstract class Creature extends WorldObject
 				}
 			}
 			
+			// Passive tree Whirling Steel: every melee weapon sweeps the enemies in front, like a polearm (which hits more of them instead, see doAttackHitByPole).
+			final WeaponType attackType = getAttackType();
+			if ((attackType != WeaponType.BOW) && (attackType != WeaponType.CROSSBOW) && (attackType != WeaponType.POLE))
+			{
+				final double cleave = PassiveMechanics.value(this, PassiveMechanics.WHIRLING_STEEL);
+				if (cleave > 0)
+				{
+					hitted |= doAttackHitAround(attack, target, timeToHit, PassiveMechanics.CLEAVE_TARGETS, cleave, 1, Math.max(_stat.getPhysicalAttackRange(), PassiveMechanics.CLEAVE_RANGE), PassiveMechanics.CLEAVE_ANGLE);
+				}
+			}
+			
 			// Precaution. It has happened in the past. Probably impossible to happen now, but will not risk it.
 			if (_attackEndTime < currentTime)
 			{
@@ -1580,66 +1593,92 @@ public abstract class Creature extends WorldObject
 		{
 			// Without Polearm Mastery (skill 216) max simultaneous attacks is 3 (1 by default + 2 in skill 3599).
 			int attackCountMax = (int) _stat.calcStat(Stat.ATTACK_COUNT_MAX, 1, null, null);
+			
+			// Passive tree Whirling Steel: a polearm sweeps more enemies.
+			if (PassiveMechanics.has(this, PassiveMechanics.WHIRLING_STEEL))
+			{
+				attackCountMax += PassiveMechanics.CLEAVE_TARGETS;
+			}
+			
 			if (attackCountMax > 1)
 			{
-				final double headingAngle = LocationUtil.convertHeadingToDegree(getHeading());
-				final int maxRadius = _stat.getPhysicalAttackRange();
-				final int physicalAttackAngle = _stat.getPhysicalAttackAngle();
-				double attackpercent = 85;
-				for (Creature obj : World.getInstance().getVisibleObjectsInRange(this, Creature.class, maxRadius))
-				{
-					// Skip main target.
-					if (obj == target)
-					{
-						continue;
-					}
-					
-					// Skip dead or fake dead target.
-					if (obj.isAlikeDead())
-					{
-						continue;
-					}
-					
-					// Check if target is auto attackable.
-					if (!obj.isAutoAttackable(this))
-					{
-						continue;
-					}
-					
-					// Check if target is within attack angle.
-					if (Math.abs(calculateDirectionTo(obj) - headingAngle) > physicalAttackAngle)
-					{
-						continue;
-					}
-					
-					if (obj.isPet() && isPlayer() && (obj.asPet().getOwner() == asPlayer()))
-					{
-						continue;
-					}
-					
-					if (isAttackable() && obj.isPlayer() && _target.isAttackable())
-					{
-						continue;
-					}
-					
-					// A roaming fake player's polearm also sweeps the monsters fighting it, like a player's.
-					if (isAttackable() && obj.isAttackable() && !asAttackable().isChaos() && !(isPvpFakePlayer() && obj.isMonster() && !obj.isFakePlayer() && obj.asAttackable().getAggroList().containsKey(this)))
-					{
-						continue;
-					}
-
-					// Launch a simple attack against the additional target.
-					hitted |= doAttackHitSimple(attack, obj, attackpercent, sAtk, false);
-					attackpercent /= 1.15;
-					if (--attackCountMax <= 0)
-					{
-						break;
-					}
-				}
+				hitted |= doAttackHitAround(attack, target, sAtk, attackCountMax, 85, 1.15, _stat.getPhysicalAttackRange(), _stat.getPhysicalAttackAngle());
 			}
 		}
 		
 		// Return true if one hit isn't missed
+		return hitted;
+	}
+	
+	/**
+	 * Hits the enemies around the main target that are in front of the attacker (a polearm's sweep).
+	 * @param attack Server->Client packet Attack in which the hits will be added
+	 * @param target the main target, which is skipped
+	 * @param sAtk
+	 * @param maxTargets how many more enemies are hit at most
+	 * @param attackpercent % of the damage the first of them takes
+	 * @param falloff the next one takes the % of the one before divided by this
+	 * @param maxRadius how far from the attacker they may be
+	 * @param attackAngle how far from the attacker's heading they may be, in degrees
+	 * @return True if one hit isn't missed
+	 */
+	private boolean doAttackHitAround(Attack attack, Creature target, int sAtk, int maxTargets, double attackpercent, double falloff, int maxRadius, int attackAngle)
+	{
+		boolean hitted = false;
+		int attackCountMax = maxTargets;
+		double percent = attackpercent;
+		final double headingAngle = LocationUtil.convertHeadingToDegree(getHeading());
+		for (Creature obj : World.getInstance().getVisibleObjectsInRange(this, Creature.class, maxRadius))
+		{
+			// Skip main target.
+			if (obj == target)
+			{
+				continue;
+			}
+			
+			// Skip dead or fake dead target.
+			if (obj.isAlikeDead())
+			{
+				continue;
+			}
+			
+			// Check if target is auto attackable.
+			if (!obj.isAutoAttackable(this))
+			{
+				continue;
+			}
+			
+			// Check if target is within attack angle.
+			if (Math.abs(calculateDirectionTo(obj) - headingAngle) > attackAngle)
+			{
+				continue;
+			}
+			
+			if (obj.isPet() && isPlayer() && (obj.asPet().getOwner() == asPlayer()))
+			{
+				continue;
+			}
+			
+			if (isAttackable() && obj.isPlayer() && _target.isAttackable())
+			{
+				continue;
+			}
+			
+			// A roaming fake player's polearm also sweeps the monsters fighting it, like a player's.
+			if (isAttackable() && obj.isAttackable() && !asAttackable().isChaos() && !(isPvpFakePlayer() && obj.isMonster() && !obj.isFakePlayer() && obj.asAttackable().getAggroList().containsKey(this)))
+			{
+				continue;
+			}
+			
+			// Launch a simple attack against the additional target.
+			hitted |= doAttackHitSimple(attack, obj, percent, sAtk, false);
+			percent /= falloff;
+			if (--attackCountMax <= 0)
+			{
+				break;
+			}
+		}
+		
 		return hitted;
 	}
 	
@@ -4129,6 +4168,14 @@ public abstract class Creature extends WorldObject
 	}
 	
 	/**
+	 * @return when the creature last moved a step, in milliseconds (0 if never)
+	 */
+	public long getLastMoveTime()
+	{
+		return _lastMoveTime;
+	}
+	
+	/**
 	 * @return True if the Creature is traveling a calculated path.
 	 */
 	public boolean isOnGeodataPath()
@@ -4339,6 +4386,8 @@ public abstract class Creature extends WorldObject
 		{
 			return true;
 		}
+		
+		_lastMoveTime = System.currentTimeMillis();
 		
 		// Check if this is the first update
 		if (move.moveTimestamp == 0)
@@ -5475,8 +5524,8 @@ public abstract class Creature extends WorldObject
 				}
 			}
 			
-			// Passive tree Soul Harvest.
-			PassiveMechanics.onNormalHitLanded(this);
+			// Passive tree Soul Harvest and Relentless Assault.
+			PassiveMechanics.onNormalHitLanded(this, target);
 			
 			// Notify AI with ATTACKED
 			if (target.hasAI())
@@ -7249,10 +7298,10 @@ public abstract class Creature extends WorldObject
 	 */
 	public void notifyDamageReceived(double damage, Creature attacker, Skill skill, boolean critical, boolean damageOverTime)
 	{
-		// Passive tree Vampiric Sorcery.
+		// Passive tree Vampiric Sorcery and Arc Conduit.
 		if (attacker != null)
 		{
-			PassiveMechanics.onDamageDealt(attacker, skill, damage, damageOverTime);
+			PassiveMechanics.onDamageDealt(attacker, this, skill, damage, damageOverTime);
 		}
 		
 		// Auto attacks make you stand up.

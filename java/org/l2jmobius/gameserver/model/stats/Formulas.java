@@ -790,8 +790,11 @@ public class Formulas
 		// Add soulshot boost.
 		final int ssBoost = ss ? 2 : 1;
 		damage = (skill != null) ? ((damage * ssBoost) + skill.getPower(attacker, target, isPvP, isPvE)) : (damage * ssBoost);
+		double critRatio = 1; // Passive tree Bloodletter: how many times the non-critical damage this critical hit deals.
 		if (crit)
 		{
+			final double nonCritical = (76 * damage * proximityBonus) / defence;
+			
 			// H5 Damage Formula
 			damage = 2 * attacker.calcStat(Stat.CRITICAL_DAMAGE, 1, target, skill) * attacker.calcStat(Stat.CRITICAL_DAMAGE_POS, 1, target, skill) * target.calcStat(Stat.DEFENCE_CRITICAL_DAMAGE, 1, target, null) * ((76 * damage * proximityBonus) / defence);
 			damage += ((attacker.calcStat(Stat.CRITICAL_DAMAGE_ADD, 0, target, skill) * 77) / defence);
@@ -818,6 +821,11 @@ public class Formulas
 				{
 					damage *= ClassBalanceConfig.PVE_PHYSICAL_SKILL_CRITICAL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
 				}
+			}
+			
+			if ((nonCritical > 0) && PassiveMechanics.bleedsCriticalBonus(attacker))
+			{
+				critRatio = Math.max(1, damage / nonCritical);
 			}
 		}
 		else
@@ -951,6 +959,14 @@ public class Formulas
 			}
 		}
 		
+		// Passive tree Bloodletter: the critical bonus bleeds over time instead of landing now.
+		if (critRatio > 1)
+		{
+			final double upFront = damage / critRatio;
+			PassiveMechanics.startBleed(attacker, target, damage - upFront);
+			damage = upFront;
+		}
+		
 		return damage;
 	}
 	
@@ -1064,7 +1080,7 @@ public class Formulas
 			damage *= attacker.calcStat(stat, 1, null, null);
 		}
 		
-		// Passive tree Arcane Overload and Point Blank / Far Shot.
+		// Passive tree Arcane Overload, Point Blank / Far Shot and Chaos Weave.
 		damage *= PassiveMechanics.spellDamageMultiplier(attacker, target, skill);
 		
 		damage *= calcAttributeBonus(attacker, target, skill);
@@ -1210,6 +1226,12 @@ public class Formulas
 			return false;
 		}
 		
+		// Passive tree Riposte: the counter-attack after a block or a dodge is a critical hit.
+		if (PassiveMechanics.consumeRiposte(attacker))
+		{
+			return true;
+		}
+		
 		double rate;
 		if (skill != null)
 		{
@@ -1219,6 +1241,7 @@ public class Formulas
 		{
 			rate = attacker.getStat().calcStat(Stat.CRITICAL_RATE_POS, attacker.getStat().getCriticalHit(target, null), target, skill);
 		}
+		rate *= PassiveMechanics.critRateMultiplier(attacker);
 		
 		final boolean isPvP = attacker.isPlayable() && target.isPlayable();
 		if (skill == null)
@@ -1358,7 +1381,12 @@ public class Formulas
 		chance = Math.max(chance, 200);
 		chance = Math.min(chance, 980);
 		
-		return chance < Rnd.get(1000);
+		final boolean miss = chance < Rnd.get(1000);
+		if (miss)
+		{
+			PassiveMechanics.onAttackAvoided(target); // Passive tree Riposte.
+		}
+		return miss;
 	}
 	
 	/**
@@ -1415,6 +1443,11 @@ public class Formulas
 		else if (shldRate > Rnd.get(100))
 		{
 			shldSuccess = SHIELD_DEFENSE_SUCCEED;
+		}
+		
+		if (shldSuccess != SHIELD_DEFENSE_FAILED)
+		{
+			PassiveMechanics.onAttackAvoided(target); // Passive tree Riposte.
 		}
 		
 		if (sendSysMsg && target.isPlayer())
@@ -1795,6 +1828,7 @@ public class Formulas
 				target.asPlayer().sendPacket(sm);
 			}
 			
+			PassiveMechanics.onAttackAvoided(target); // Passive tree Riposte.
 			return true;
 		}
 		
@@ -1953,6 +1987,12 @@ public class Formulas
 	
 	public static boolean calcBlowSuccess(Creature creature, Creature target, Skill skill)
 	{
+		// Passive tree Riposte: the counter-attack after a block or a dodge lands.
+		if (PassiveMechanics.consumeRiposte(creature))
+		{
+			return true;
+		}
+		
 		final double dexMod = BaseStat.DEX.calcBonus(creature);
 		
 		// Apply DEX Mod.

@@ -15611,7 +15611,15 @@ public class Player extends Playable
 	{
 		final double base = super.getPAtk(target);
 		final double pct = getPassiveStatBonus().get("PATK_PCT");
-		return base * (1.0 + (pct / 100.0)) * PassiveMechanics.rampageMultiplier(this);
+		double result = base * (1.0 + (pct / 100.0)) * PassiveMechanics.rampageMultiplier(this);
+		
+		// Battlemage: part of M.Atk is added to P.Atk.
+		final double battlemage = getPassiveStatBonus().get(PassiveMechanics.BATTLEMAGE);
+		if (battlemage > 0)
+		{
+			result += (getMAtk(target, null) * battlemage) / 100.0;
+		}
+		return result;
 	}
 	
 	@Override
@@ -15686,7 +15694,7 @@ public class Player extends Playable
 	{
 		final double base = super.getPAtkSpd();
 		final double pct = getPassiveStatBonus().get("ATK_SPD_PCT");
-		final double val = base * (1.0 + (pct / 100.0));
+		final double val = base * (1.0 + (pct / 100.0)) * PassiveMechanics.relentlessMultiplier(this);
 		// This value drives real attack timings, so keep the passive bonus within the configured cap.
 		return isGM() ? val : Math.min(val, PlayerConfig.MAX_PATK_SPEED);
 	}

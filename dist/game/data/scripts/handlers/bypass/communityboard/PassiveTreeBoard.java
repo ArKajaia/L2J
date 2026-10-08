@@ -144,10 +144,20 @@ public class PassiveTreeBoard implements IParseBoardHandler
 		KEYSTONE_TEXT.put("KS_ELDRITCH_BATTERY", "Max CP is 1; %s%% of it becomes max MP");
 		KEYSTONE_TEXT.put("KS_PURITY", "Immune to poison and bleeding");
 		KEYSTONE_TEXT.put("KS_OVERHEAL_CP", "%s%% of overhealing you cast becomes CP");
+		KEYSTONE_TEXT.put("KS_WHIRLING_STEEL", "Melee attacks also hit 2 more enemies in front of you for %s%% damage (polearms: 2 more enemies)");
+		KEYSTONE_TEXT.put("KS_RIPOSTE", "After a shield block or a dodge, your next attack or physical skill within 5s is a critical hit (a blow lands); half critical rate otherwise");
+		KEYSTONE_TEXT.put("KS_GUARDIAN", "You take %s%% of the damage dealt to party members within 900 range");
+		KEYSTONE_TEXT.put("KS_ARC_CONDUIT", "Single-target damage spells jump to 2 more enemies for %s%% damage, then half of that");
+		KEYSTONE_TEXT.put("KS_BATTLEMAGE", "%s%% of M.Atk is added to P.Atk");
+		KEYSTONE_TEXT.put("KS_CHAOS_WEAVE", "Damage spells: %s%% chance to Surge for 2.5x damage, half that to Fizzle; no magic critical hits");
+		KEYSTONE_TEXT.put("KS_PHOENIX", "Once every 5 minutes, a killing blow leaves you alive with %s%% HP");
+		KEYSTONE_TEXT.put("KS_RELENTLESS", "+%s%% Attack Speed per normal hit on your target, up to 10 hits; resets on switching target or 3s without a hit");
+		KEYSTONE_TEXT.put("KS_BLOODLETTER", "Physical critical hits deal no extra damage up front; the target bleeds for %s%% of the critical bonus over 6s");
+		KEYSTONE_TEXT.put("KS_SPELL_ECHO", "%s%% chance for a single-target damage spell to hit again 0.5s later for 60%% damage");
 	}
 
 	// Conditional bonuses ("PDEF_PCT@HEAVY") only apply in that situation. Mirrors COND_TEXT in passive-tree.html.
-	private static final Map<String, String> COND_TEXT = Map.ofEntries(Map.entry("HEAVY", "in heavy armour"), Map.entry("LIGHT", "in light armour"), Map.entry("ROBE", "in a robe"), Map.entry("NOARMOR", "wearing no armour"), Map.entry("SHIELD", "with a shield"), Map.entry("BOW", "with a bow"), Map.entry("DAGGER", "with a dagger"), Map.entry("DUAL", "with dual swords"), Map.entry("SWORD", "with a sword"), Map.entry("BLUNT", "with a blunt weapon"), Map.entry("POLE", "with a polearm"), Map.entry("FIST", "with fist weapons"), Map.entry("LOWHP", "below 50% HP"), Map.entry("FULLHP", "above 90% HP"), Map.entry("NIGHT", "at night"), Map.entry("DAY", "during the day"));
+	private static final Map<String, String> COND_TEXT = Map.ofEntries(Map.entry("HEAVY", "in heavy armour"), Map.entry("LIGHT", "in light armour"), Map.entry("ROBE", "in a robe"), Map.entry("NOARMOR", "wearing no armour"), Map.entry("SHIELD", "with a shield"), Map.entry("BOW", "with a bow"), Map.entry("DAGGER", "with a dagger"), Map.entry("DUAL", "with dual swords"), Map.entry("SWORD", "with a sword"), Map.entry("BLUNT", "with a blunt weapon"), Map.entry("POLE", "with a polearm"), Map.entry("FIST", "with fist weapons"), Map.entry("LOWHP", "below 50% HP"), Map.entry("FULLHP", "above 90% HP"), Map.entry("NIGHT", "at night"), Map.entry("DAY", "during the day"), Map.entry("STILL", "after standing still for 2s"), Map.entry("MOBILE", "until you have stood still for 2s"));
 
 	private static final String[] COMMAND =
 	{
