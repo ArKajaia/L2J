@@ -43,6 +43,7 @@ import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
 import org.l2jmobius.gameserver.model.skill.PassiveTreeArchetypes;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.functions.AbstractFunction;
 import org.l2jmobius.gameserver.model.stats.functions.FuncAdd;
 import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
@@ -854,6 +855,55 @@ public class PassiveTreeManager
 		if (maxMp != 0)
 		{
 			npc.addStatFunc(new FuncAdd(Stat.MAX_MP, FAKE_GETTER_ORDER, PASSIVE_TREE_FUNC_OWNER, maxMp, null));
+		}
+		
+		// The keystones Player works into its getters, worked out each time the stat is read since they follow the fight.
+		if (bonus.get(PassiveMechanics.RAMPAGE) > 0)
+		{
+			npc.addStatFunc(new KeystoneFunc(Stat.POWER_ATTACK, FAKE_GETTER_ORDER + 1, (creature, target, value) -> value * PassiveMechanics.rampageMultiplier(creature)));
+		}
+		if (bonus.get(PassiveMechanics.RELENTLESS) > 0)
+		{
+			npc.addStatFunc(new KeystoneFunc(Stat.POWER_ATTACK_SPEED, FAKE_GETTER_ORDER + 1, (creature, target, value) -> value * PassiveMechanics.relentlessMultiplier(creature)));
+		}
+		final double pdefAsMdef = bonus.get(PassiveMechanics.PDEF_AS_MDEF);
+		if (pdefAsMdef > 0)
+		{
+			// Arcane Plating: M.Def is replaced by P.Def, reduced by the keystone's %, like Player#getMDef.
+			npc.addStatFunc(new KeystoneFunc(Stat.MAGIC_DEFENCE, FAKE_GETTER_ORDER + 2, (creature, target, value) -> creature.getPDef(target) * Math.max(0, 1.0 - (pdefAsMdef / 100.0))));
+		}
+	}
+	
+	/** How a {@link KeystoneFunc} changes a stat. */
+	@FunctionalInterface
+	private interface KeystoneFormula
+	{
+		/**
+		 * @param creature the creature whose stat it is
+		 * @param target the creature it is read against, may be {@code null}
+		 * @param value the stat so far
+		 * @return the stat after the keystone
+		 */
+		double apply(Creature creature, Creature target, double value);
+	}
+	
+	/**
+	 * A roaming fake player's keystone that Player works into a getter override (Unending Fury, Relentless Assault, Arcane Plating), worked out each time the stat is read.
+	 */
+	private static class KeystoneFunc extends AbstractFunction
+	{
+		private final KeystoneFormula _formula;
+		
+		KeystoneFunc(Stat stat, int order, KeystoneFormula formula)
+		{
+			super(stat, order, PASSIVE_TREE_FUNC_OWNER, 0, null);
+			_formula = formula;
+		}
+		
+		@Override
+		public double calc(Creature effector, Creature effected, Skill skill, double initVal)
+		{
+			return _formula.apply(effector, effected, initVal);
 		}
 	}
 	

@@ -20,6 +20,7 @@ import org.l2jmobius.gameserver.model.conditions.ConditionStandingStill;
 import org.l2jmobius.gameserver.model.conditions.ConditionUsingItemType;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
 import org.l2jmobius.gameserver.model.groups.Party;
 import org.l2jmobius.gameserver.model.effects.EffectType;
 import org.l2jmobius.gameserver.model.item.Weapon;
@@ -42,7 +43,8 @@ import org.l2jmobius.gameserver.util.LocationUtil;
 /**
  * Build-defining passive tree keystones: rules that change how a mechanic works rather than adding a stat. Every value is read from the allocated nodes' effect strings (see {@link PassiveStatBonusCache}), so balancing stays in data/passivetree/*.xml.
  * <p>
- * Only players own a passive tree. Every helper is a no-op for anything else (summons, NPCs, roaming fake players), so the hooks in the combat code can call them unconditionally.
+ * Players and roaming fake players own a passive tree (a fake player's is rolled by {@link org.l2jmobius.gameserver.managers.FakePlayerPvpPassiveTree}). Every helper is a no-op for anything else (summons, NPCs), so the hooks in the combat code can call them unconditionally. Fake
+ * players only take the keystones that work for them (FakePvpKeystones.* in FakePlayerPvp.ini); the ones built on MP, CP, servitors or parties stay player-only.
  */
 public final class PassiveMechanics
 {
@@ -185,13 +187,32 @@ public final class PassiveMechanics
 	 */
 	public static double value(Creature creature, String key)
 	{
-		if ((creature == null) || !creature.isPlayer())
+		final PassiveStatBonusCache bonus = bonusOf(creature);
+		return bonus == null ? 0 : bonus.get(key);
+	}
+	
+	/**
+	 * @param creature any creature
+	 * @return the passive tree totals of a player or a roaming fake player, {@code null} for anything else
+	 */
+	private static PassiveStatBonusCache bonusOf(Creature creature)
+	{
+		if (creature == null)
 		{
-			return 0;
+			return null;
 		}
 		
-		final PassiveStatBonusCache bonus = creature.asPlayer().getPassiveStatBonus();
-		return bonus == null ? 0 : bonus.get(key);
+		if (creature.isPlayer())
+		{
+			return creature.asPlayer().getPassiveStatBonus();
+		}
+		
+		if (creature.isPvpFakePlayer())
+		{
+			final FakePlayerPvpPassives passives = creature.asNpc().getTemplate().getFakePlayerPvpProfile().getPassives();
+			return passives == null ? null : passives.getBonus();
+		}
+		return null;
 	}
 	
 	public static boolean has(Creature creature, String key)
@@ -338,7 +359,7 @@ public final class PassiveMechanics
 	 */
 	public static double spellDamageMultiplier(Creature attacker, Creature target, Skill skill)
 	{
-		if (!attacker.isPlayer() || (skill == null) || !skill.isMagic())
+		if ((skill == null) || !skill.isMagic())
 		{
 			return 1;
 		}
@@ -396,13 +417,18 @@ public final class PassiveMechanics
 	 */
 	public static double bowDamageMultiplier(Creature attacker, Creature target)
 	{
-		if (!attacker.isPlayer())
+		final WeaponType type;
+		if (attacker.isPlayer())
 		{
-			return 1;
+			final Weapon weapon = attacker.getActiveWeaponItem();
+			type = weapon != null ? weapon.getItemType() : null;
+		}
+		else
+		{
+			type = attacker.isPvpFakePlayer() ? attacker.getAttackType() : null; // the weapon it holds now (it may have its bow out)
 		}
 		
-		final Weapon weapon = attacker.getActiveWeaponItem();
-		if ((weapon == null) || ((weapon.getItemType() != WeaponType.BOW) && (weapon.getItemType() != WeaponType.CROSSBOW)))
+		if ((type != WeaponType.BOW) && (type != WeaponType.CROSSBOW))
 		{
 			return 1;
 		}
@@ -425,18 +451,18 @@ public final class PassiveMechanics
 	
 	/**
 	 * Unending Fury (Rampage): P.Atk rises as HP falls.
-	 * @param player the player
+	 * @param creature the player or roaming fake player
 	 * @return the P.Atk multiplier
 	 */
-	public static double rampageMultiplier(Player player)
+	public static double rampageMultiplier(Creature creature)
 	{
-		final double rampage = value(player, RAMPAGE);
+		final double rampage = value(creature, RAMPAGE);
 		if (rampage <= 0)
 		{
 			return 1;
 		}
 		
-		final double missingHp = 1 - Math.min(1, player.getCurrentHp() / Math.max(1, player.getMaxHp()));
+		final double missingHp = 1 - Math.min(1, creature.getCurrentHp() / Math.max(1, creature.getMaxHp()));
 		return 1 + ((rampage / 100) * missingHp);
 	}
 	
@@ -484,30 +510,29 @@ public final class PassiveMechanics
 			return;
 		}
 		
-		final Player player = attacker.asPlayer();
-		ThreadPool.schedule(() -> echoHit(player, target, skill, damage * ECHO_DAMAGE), ECHO_DELAY);
+		ThreadPool.schedule(() -> echoHit(attacker, target, skill, damage * ECHO_DAMAGE), ECHO_DELAY);
 	}
 	
-	private static void echoHit(Player player, Creature target, Skill skill, double damage)
+	private static void echoHit(Creature caster, Creature target, Skill skill, double damage)
 	{
-		if ((damage < 1) || player.isDead() || !player.isSpawned() || target.isAlikeDead() || !target.isSpawned() || !target.isAutoAttackable(player) || player.isInsidePeaceZone(player, target) || (player.calculateDistance3D(target) > ECHO_RANGE))
+		if ((damage < 1) || caster.isDead() || !caster.isSpawned() || target.isAlikeDead() || !target.isSpawned() || !target.isAutoAttackable(caster) || caster.isInsidePeaceZone(caster, target) || (caster.calculateDistance3D(target) > ECHO_RANGE))
 		{
 			return;
 		}
 		
-		player.broadcastPacket(new MagicSkillUse(player, target, skill.getDisplayId(), skill.getDisplayLevel(), 0, 0));
-		player.broadcastPacket(new MagicSkillLaunched(player, skill.getDisplayId(), skill.getDisplayLevel(), target));
-		if (target.isPlayable())
+		caster.broadcastPacket(new MagicSkillUse(caster, target, skill.getDisplayId(), skill.getDisplayLevel(), 0, 0));
+		caster.broadcastPacket(new MagicSkillLaunched(caster, skill.getDisplayId(), skill.getDisplayLevel(), target));
+		if (caster.isPlayer() && target.isPlayable())
 		{
-			player.updatePvPStatus(target);
+			caster.asPlayer().updatePvPStatus(target);
 		}
 		
 		ECHOING.set(Boolean.TRUE);
 		try
 		{
-			target.reduceCurrentHp(damage, player, skill);
-			target.notifyDamageReceived(damage, player, skill, false, false);
-			player.sendDamageMessage(target, (int) damage, false, false, false);
+			target.reduceCurrentHp(damage, caster, skill);
+			target.notifyDamageReceived(damage, caster, skill, false, false);
+			caster.sendDamageMessage(target, (int) damage, false, false, false);
 		}
 		finally
 		{
@@ -530,29 +555,28 @@ public final class PassiveMechanics
 			return;
 		}
 		
-		final Player player = attacker.asPlayer();
 		final Set<Creature> struck = ConcurrentHashMap.newKeySet();
 		struck.add(target);
-		ThreadPool.schedule(() -> arcJump(player, target, skill, (damage * pct) / 100, 1, struck), ARC_DELAY);
+		ThreadPool.schedule(() -> arcJump(attacker, target, skill, (damage * pct) / 100, 1, struck), ARC_DELAY);
 	}
 	
 	/**
 	 * One jump of an Arc Conduit chain: the spell's animation flies from the creature it jumps from to the nearest enemy, which takes the damage. The next jump follows ARC_DELAY later, for half the damage.
-	 * @param player the caster
+	 * @param caster the caster
 	 * @param from the creature the spell jumps from
 	 * @param skill the spell
 	 * @param arcDamage the damage of this jump
 	 * @param jump which jump this is, from 1
 	 * @param struck the creatures the spell already hit
 	 */
-	private static void arcJump(Player player, Creature from, Skill skill, double arcDamage, int jump, Set<Creature> struck)
+	private static void arcJump(Creature caster, Creature from, Skill skill, double arcDamage, int jump, Set<Creature> struck)
 	{
-		if ((arcDamage < 1) || player.isDead() || !player.isSpawned() || !from.isSpawned())
+		if ((arcDamage < 1) || caster.isDead() || !caster.isSpawned() || !from.isSpawned())
 		{
 			return;
 		}
 		
-		final Creature next = nearestArcTarget(player, from, struck);
+		final Creature next = nearestArcTarget(caster, from, struck);
 		if (next == null)
 		{
 			return;
@@ -561,17 +585,17 @@ public final class PassiveMechanics
 		struck.add(next);
 		from.broadcastPacket(new MagicSkillUse(from, next, skill.getDisplayId(), skill.getDisplayLevel(), 0, 0));
 		from.broadcastPacket(new MagicSkillLaunched(from, skill.getDisplayId(), skill.getDisplayLevel(), next));
-		if (next.isPlayable())
+		if (caster.isPlayer() && next.isPlayable())
 		{
-			player.updatePvPStatus(next);
+			caster.asPlayer().updatePvPStatus(next);
 		}
 		
 		ARCING.set(Boolean.TRUE);
 		try
 		{
-			next.reduceCurrentHp(arcDamage, player, skill);
-			next.notifyDamageReceived(arcDamage, player, skill, false, false);
-			player.sendDamageMessage(next, (int) arcDamage, false, false, false);
+			next.reduceCurrentHp(arcDamage, caster, skill);
+			next.notifyDamageReceived(arcDamage, caster, skill, false, false);
+			caster.sendDamageMessage(next, (int) arcDamage, false, false, false);
 		}
 		finally
 		{
@@ -580,17 +604,18 @@ public final class PassiveMechanics
 		
 		if (jump < ARC_TARGETS)
 		{
-			ThreadPool.schedule(() -> arcJump(player, next, skill, arcDamage / 2, jump + 1, struck), ARC_DELAY);
+			ThreadPool.schedule(() -> arcJump(caster, next, skill, arcDamage / 2, jump + 1, struck), ARC_DELAY);
 		}
 	}
 	
-	private static Creature nearestArcTarget(Player player, Creature from, Set<Creature> struck)
+	private static Creature nearestArcTarget(Creature caster, Creature from, Set<Creature> struck)
 	{
+		final Creature summon = caster.isPlayer() ? caster.asPlayer().getSummon() : null;
 		Creature nearest = null;
 		double nearestDistance = Double.MAX_VALUE;
 		for (Creature creature : World.getInstance().getVisibleObjectsInRange(from, Creature.class, ARC_RANGE))
 		{
-			if ((creature == player) || struck.contains(creature) || creature.isAlikeDead() || !creature.isAutoAttackable(player) || (creature == player.getSummon()) || player.isInsidePeaceZone(player, creature))
+			if ((creature == caster) || struck.contains(creature) || creature.isAlikeDead() || !creature.isAutoAttackable(caster) || (creature == summon) || caster.isInsidePeaceZone(caster, creature))
 			{
 				continue;
 			}
@@ -723,7 +748,7 @@ public final class PassiveMechanics
 	 */
 	public static boolean consumeRiposte(Creature attacker)
 	{
-		if ((attacker == null) || !attacker.isPlayer())
+		if ((attacker == null) || RIPOSTE_READY.isEmpty())
 		{
 			return false;
 		}
@@ -770,7 +795,7 @@ public final class PassiveMechanics
 	private static void harvestSoul(Creature attacker)
 	{
 		final double chance = value(attacker, SOUL_HARVEST);
-		if ((chance <= 0) || (Rnd.get(100) >= chance))
+		if ((chance <= 0) || !attacker.isPlayer() || (Rnd.get(100) >= chance))
 		{
 			return;
 		}
@@ -796,6 +821,8 @@ public final class PassiveMechanics
 		int hits;
 		long lastHit;
 		boolean expiryScheduled;
+		/** Set once the streak has ended and left RELENTLESS_STREAKS (a fake player comes back with a new object id, so ended streaks don't stay behind). */
+		boolean removed;
 	}
 	
 	/**
@@ -810,45 +837,70 @@ public final class PassiveMechanics
 			return;
 		}
 		
-		final Player player = attacker.asPlayer();
-		final Relentless streak = RELENTLESS_STREAKS.computeIfAbsent(player.getObjectId(), id -> new Relentless());
-		final boolean changed;
-		final boolean scheduleExpiry;
-		synchronized (streak)
+		Relentless streak;
+		boolean changed;
+		boolean scheduleExpiry;
+		while (true)
 		{
-			final long now = System.currentTimeMillis();
-			final int before = streak.hits;
-			if ((streak.targetId != target.getObjectId()) || ((now - streak.lastHit) > RELENTLESS_WINDOW))
+			streak = RELENTLESS_STREAKS.computeIfAbsent(attacker.getObjectId(), id -> new Relentless());
+			synchronized (streak)
 			{
-				streak.targetId = target.getObjectId();
-				streak.hits = 1;
+				if (streak.removed)
+				{
+					continue; // ended while this hit was on its way: start a new one
+				}
+				
+				final long now = System.currentTimeMillis();
+				final int before = streak.hits;
+				if ((streak.targetId != target.getObjectId()) || ((now - streak.lastHit) > RELENTLESS_WINDOW))
+				{
+					streak.targetId = target.getObjectId();
+					streak.hits = 1;
+				}
+				else
+				{
+					streak.hits = Math.min(RELENTLESS_MAX_STACKS, streak.hits + 1);
+				}
+				streak.lastHit = now;
+				changed = streak.hits != before;
+				scheduleExpiry = !streak.expiryScheduled;
+				streak.expiryScheduled = true;
+				break;
 			}
-			else
-			{
-				streak.hits = Math.min(RELENTLESS_MAX_STACKS, streak.hits + 1);
-			}
-			streak.lastHit = now;
-			changed = streak.hits != before;
-			scheduleExpiry = !streak.expiryScheduled;
-			streak.expiryScheduled = true;
 		}
 		
 		if (scheduleExpiry)
 		{
-			ThreadPool.schedule(() -> expireRelentless(player, streak), RELENTLESS_WINDOW);
+			final Relentless scheduled = streak;
+			ThreadPool.schedule(() -> expireRelentless(attacker, scheduled), RELENTLESS_WINDOW);
 		}
 		if (changed)
 		{
-			player.broadcastUserInfo(); // the client animates attacks at the speed it was last told
+			broadcastAttackSpeed(attacker); // the client animates attacks at the speed it was last told
+		}
+	}
+	
+	/**
+	 * @param creature a player or roaming fake player whose attack speed changed
+	 */
+	private static void broadcastAttackSpeed(Creature creature)
+	{
+		if (creature.isPlayer())
+		{
+			creature.asPlayer().broadcastUserInfo();
+		}
+		else
+		{
+			creature.broadcastInfo();
 		}
 	}
 	
 	/**
 	 * Ends a streak once RELENTLESS_WINDOW has passed without a hit, so the client shows the plain attack speed again.
-	 * @param player the player
-	 * @param streak the player's streak
+	 * @param creature the player or roaming fake player
+	 * @param streak its streak
 	 */
-	private static void expireRelentless(Player player, Relentless streak)
+	private static void expireRelentless(Creature creature, Relentless streak)
 	{
 		final long left;
 		final boolean ended;
@@ -860,27 +912,29 @@ public final class PassiveMechanics
 			{
 				streak.hits = 0;
 				streak.expiryScheduled = false;
+				streak.removed = true;
+				RELENTLESS_STREAKS.remove(creature.getObjectId(), streak);
 			}
 		}
 		
 		if (left > 0)
 		{
-			ThreadPool.schedule(() -> expireRelentless(player, streak), left);
+			ThreadPool.schedule(() -> expireRelentless(creature, streak), left);
 		}
-		else if (ended && player.isOnline())
+		else if (ended && creature.isSpawned() && (!creature.isPlayer() || creature.asPlayer().isOnline()))
 		{
-			player.broadcastUserInfo();
+			broadcastAttackSpeed(creature);
 		}
 	}
 	
 	/**
-	 * @param player the player
-	 * @return the Atk. Spd multiplier of the player's Relentless Assault streak
+	 * @param creature the player or roaming fake player
+	 * @return the Atk. Spd multiplier of its Relentless Assault streak
 	 */
-	public static double relentlessMultiplier(Player player)
+	public static double relentlessMultiplier(Creature creature)
 	{
-		final double pct = value(player, RELENTLESS);
-		final Relentless streak = pct > 0 ? RELENTLESS_STREAKS.get(player.getObjectId()) : null;
+		final double pct = value(creature, RELENTLESS);
+		final Relentless streak = pct > 0 ? RELENTLESS_STREAKS.get(creature.getObjectId()) : null;
 		if (streak == null)
 		{
 			return 1;
@@ -1028,7 +1082,7 @@ public final class PassiveMechanics
 	 */
 	public static boolean isAbnormalBlocked(Creature owner, BuffInfo info)
 	{
-		if (!owner.isPlayer() || (info.getEffector() == owner))
+		if ((!owner.isPlayer() && !owner.isPvpFakePlayer()) || (info.getEffector() == owner))
 		{
 			return false;
 		}
@@ -1127,32 +1181,14 @@ public final class PassiveMechanics
 	 */
 	private static Condition conditionFor(String token)
 	{
+		final int gearMask = gearMask(token);
+		if (gearMask != 0)
+		{
+			return new ConditionUsingItemType(gearMask);
+		}
+		
 		switch (token)
 		{
-			case "HEAVY":
-				return new ConditionUsingItemType(ArmorType.HEAVY.mask());
-			case "LIGHT":
-				return new ConditionUsingItemType(ArmorType.LIGHT.mask());
-			case "ROBE":
-				return new ConditionUsingItemType(ArmorType.MAGIC.mask());
-			case "NOARMOR":
-				return new ConditionUsingItemType(ArmorType.NONE.mask());
-			case "SHIELD":
-				return new ConditionUsingItemType(ArmorType.SHIELD.mask());
-			case "BOW":
-				return new ConditionUsingItemType(WeaponType.BOW.mask() | WeaponType.CROSSBOW.mask());
-			case "DAGGER":
-				return new ConditionUsingItemType(WeaponType.DAGGER.mask() | WeaponType.DUALDAGGER.mask());
-			case "DUAL":
-				return new ConditionUsingItemType(WeaponType.DUAL.mask());
-			case "SWORD":
-				return new ConditionUsingItemType(WeaponType.SWORD.mask() | WeaponType.ANCIENTSWORD.mask() | WeaponType.RAPIER.mask());
-			case "BLUNT":
-				return new ConditionUsingItemType(WeaponType.BLUNT.mask());
-			case "POLE":
-				return new ConditionUsingItemType(WeaponType.POLE.mask());
-			case "FIST":
-				return new ConditionUsingItemType(WeaponType.FIST.mask() | WeaponType.DUALFIST.mask());
 			case "LOWHP":
 				return new ConditionPlayerHp(50);
 			case "FULLHP":
@@ -1167,6 +1203,43 @@ public final class PassiveMechanics
 				return new ConditionStandingStill(STILL_TIME, false);
 			default:
 				return null;
+		}
+	}
+	
+	/**
+	 * @param token a condition token
+	 * @return the item type mask an armour or weapon token tests (see {@link ConditionUsingItemType}), 0 for any other token
+	 */
+	public static int gearMask(String token)
+	{
+		switch (token)
+		{
+			case "HEAVY":
+				return ArmorType.HEAVY.mask();
+			case "LIGHT":
+				return ArmorType.LIGHT.mask();
+			case "ROBE":
+				return ArmorType.MAGIC.mask();
+			case "NOARMOR":
+				return ArmorType.NONE.mask();
+			case "SHIELD":
+				return ArmorType.SHIELD.mask();
+			case "BOW":
+				return WeaponType.BOW.mask() | WeaponType.CROSSBOW.mask();
+			case "DAGGER":
+				return WeaponType.DAGGER.mask() | WeaponType.DUALDAGGER.mask();
+			case "DUAL":
+				return WeaponType.DUAL.mask();
+			case "SWORD":
+				return WeaponType.SWORD.mask() | WeaponType.ANCIENTSWORD.mask() | WeaponType.RAPIER.mask();
+			case "BLUNT":
+				return WeaponType.BLUNT.mask();
+			case "POLE":
+				return WeaponType.POLE.mask();
+			case "FIST":
+				return WeaponType.FIST.mask() | WeaponType.DUALFIST.mask();
+			default:
+				return 0;
 		}
 	}
 	

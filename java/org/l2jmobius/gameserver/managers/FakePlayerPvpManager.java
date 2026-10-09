@@ -1203,7 +1203,7 @@ public class FakePlayerPvpManager
 		
 		FakePlayerPvpData.getInstance();
 		
-		// The passive trees are grown here, once, so a spawn only adds up a prepared one.
+		// The passive tree graph is read here, once; the trees of each class, role and gear are grown the first time one is needed.
 		if (FakePlayerPvpPassiveTree.isEnabled())
 		{
 			FakePlayerPvpPassiveTree.getInstance();

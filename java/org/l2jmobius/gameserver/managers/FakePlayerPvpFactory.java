@@ -352,8 +352,25 @@ public class FakePlayerPvpFactory
 		final double hp = classTemplate.getBaseHpMax(level) + (FakePlayerPvpConfig.INCLUDE_CP_IN_HP ? classTemplate.getBaseCpMax(level) : 0);
 		final double mp = classTemplate.getBaseMpMax(level) + sumStat(Stat.MAX_MP, weapon, shield, chest, legs, head, gloves, feet, earring, earring, necklace, ring, ring);
 		
-		// Its passive tree, like a player that spent its points (rolled from trees prepared at server start, see FakePlayerPvpPassiveTree). Max HP % bonuses only grow the HP part of an HP pool that holds the CP too.
-		final FakePlayerPvpPassives passives = FakePlayerPvpPassiveTree.isEnabled() ? FakePlayerPvpPassiveTree.getInstance().roll(build, playerClass, level, elite) : null;
+		int armorWornMask = 0;
+		for (ItemTemplate item : new ItemTemplate[]
+		{
+			chest,
+			legs,
+			head,
+			gloves,
+			feet
+		})
+		{
+			if (item != null)
+			{
+				armorWornMask |= item.getItemMask();
+			}
+		}
+		
+		// Its passive tree, like a player that spent its points (see FakePlayerPvpPassiveTree), grown for its gear: a bonus that needs heavy armour or a shield only counts if it wears one. Max HP % bonuses only grow the HP part of an HP pool that holds the CP too.
+		final int treeWornMask = armorWornMask | (weapon != null ? weapon.getItemMask() : 0) | (shield != null ? shield.getItemMask() : 0);
+		final FakePlayerPvpPassives passives = FakePlayerPvpPassiveTree.isEnabled() ? FakePlayerPvpPassiveTree.getInstance().roll(build, playerClass, level, elite, chest != null ? chest.getItemMask() : 0, treeWornMask) : null;
 		if ((passives != null) && (hp > 0))
 		{
 			passives.setHpShare(classTemplate.getBaseHpMax(level) / hp);
@@ -472,22 +489,6 @@ public class FakePlayerPvpFactory
 		
 		// How many energy charges the class can hold: the Sonic Focus/Focused Force level, or Sonic/Force Mastery for 3rd classes.
 		final int maxCharges = Math.max(Math.max(learned.getOrDefault(8, 0), learned.getOrDefault(50, 0)), Math.max(learned.getOrDefault(992, 0), learned.getOrDefault(993, 0)));
-		
-		int armorWornMask = 0;
-		for (ItemTemplate item : new ItemTemplate[]
-		{
-			chest,
-			legs,
-			head,
-			gloves,
-			feet
-		})
-		{
-			if (item != null)
-			{
-				armorWornMask |= item.getItemMask();
-			}
-		}
 		
 		// What it wears, for the equipment drop.
 		final List<ItemEnchantHolder> equipment = new ArrayList<>();

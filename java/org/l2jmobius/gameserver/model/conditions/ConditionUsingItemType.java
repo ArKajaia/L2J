@@ -48,6 +48,23 @@ public class ConditionUsingItemType extends Condition
 		_armor = (_mask & (ArmorType.MAGIC.mask() | ArmorType.LIGHT.mask() | ArmorType.HEAVY.mask())) != 0;
 	}
 	
+	/**
+	 * How the condition tests a roaming fake player, which "wears" its items without an inventory.
+	 * @param mask the item type mask the condition asks for
+	 * @param armorMask the item mask of its body armor, 0 if it wears none
+	 * @param wornMask the item mask of everything it wears and holds
+	 * @return {@code true} if the condition holds
+	 */
+	public static boolean matchesFakeGear(int mask, int armorMask, int wornMask)
+	{
+		if ((mask & (ArmorType.MAGIC.mask() | ArmorType.LIGHT.mask() | ArmorType.HEAVY.mask())) != 0)
+		{
+			return armorMask == 0 ? (ArmorType.NONE.mask() & mask) == ArmorType.NONE.mask() : (mask & armorMask) != 0;
+		}
+		
+		return (mask & wornMask) != 0;
+	}
+	
 	@Override
 	public boolean testImpl(Creature effector, Creature effected, Skill skill, ItemTemplate item)
 	{
@@ -62,12 +79,7 @@ public class ConditionUsingItemType extends Condition
 			if (effector.isPvpFakePlayer())
 			{
 				final FakePlayerPvpProfile profile = effector.asNpc().getTemplate().getFakePlayerPvpProfile();
-				if (_armor)
-				{
-					return profile.getArmorMask() == 0 ? (ArmorType.NONE.mask() & _mask) == ArmorType.NONE.mask() : (_mask & profile.getArmorMask()) != 0;
-				}
-				
-				return (_mask & profile.getWornMask()) != 0;
+				return matchesFakeGear(_mask, profile.getArmorMask(), profile.getWornMask());
 			}
 			
 			return !_armor && ((_mask & effector.getAttackType().mask()) != 0);
