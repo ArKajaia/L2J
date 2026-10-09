@@ -370,28 +370,25 @@ public class DwarvenTrades
 		}
 		else
 		{
-			// A fake player's armour pieces (and shield) are all enchanted alike. A full body armour has no legs piece.
+			// A fake player's armour pieces (and shield), each with its own enchant. A full body armour has no legs piece.
 			final FakePlayerHolder fake = creature.asNpc().getTemplate().getFakePlayerInfo();
-			int pieces = 0;
-			for (int itemId : new int[]
+			for (int[] piece : new int[][]
 			{
-				fake.getEquipHead(),
-				fake.getEquipChest(),
-				fake.getEquipLegs(),
-				fake.getEquipGloves(),
-				fake.getEquipFeet()
+				// @formatter:off
+				{Inventory.PAPERDOLL_HEAD, fake.getEquipHead()},
+				{Inventory.PAPERDOLL_CHEST, fake.getEquipChest()},
+				{Inventory.PAPERDOLL_LEGS, fake.getEquipLegs()},
+				{Inventory.PAPERDOLL_GLOVES, fake.getEquipGloves()},
+				{Inventory.PAPERDOLL_FEET, fake.getEquipFeet()},
+				{Inventory.PAPERDOLL_LHAND, ItemData.getInstance().getTemplate(fake.getEquipLHand()) instanceof Armor ? fake.getEquipLHand() : 0}
+				// @formatter:on
 			})
 			{
-				if (itemId > 0)
+				if (piece[1] > 0)
 				{
-					pieces++;
+					levels += enchantAboveSafe(fake.getEnchantLevel(piece[0]));
 				}
 			}
-			if ((fake.getEquipLHand() > 0) && (ItemData.getInstance().getTemplate(fake.getEquipLHand()) instanceof Armor))
-			{
-				pieces++;
-			}
-			levels = pieces * enchantAboveSafe(fake.getArmorEnchantLevel());
 		}
 		return 1 + (Math.min(DwarvenTradesConfig.FORGED_MAX_BONUS, levels * tier(DwarvenTradesConfig.FORGED_ARMOR_BONUS, tier, 0)) / 100);
 	}

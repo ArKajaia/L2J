@@ -20,14 +20,18 @@
  */
 package org.l2jmobius.gameserver.model.actor.holders.npc;
 
+import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.model.StatSet;
 
 /**
- * One level tier of a roaming fake player gear kit (see data/FakePlayerPvp.xml). Unused slots are 0.
+ * One level tier of a roaming fake player gear kit (see data/FakePlayerPvp.xml). Unused slots are 0. Tiers of a kit with the same minimum level are alternatives, picked by their weight.
  */
 public class FakePlayerPvpGearTier
 {
+	private static final int[] NONE = new int[0];
+	
 	private final int _minLevel;
+	private final int _weight;
 	private final int _rHand;
 	private final int _lHand;
 	private final int _chest;
@@ -38,10 +42,14 @@ public class FakePlayerPvpGearTier
 	private final int _earring;
 	private final int _necklace;
 	private final int _ring;
+	/** Shirts and belts, one of them picked for each fake player ("a|b"). */
+	private final int[] _shirts;
+	private final int[] _belts;
 	
 	public FakePlayerPvpGearTier(StatSet set)
 	{
 		_minLevel = set.getInt("minLevel");
+		_weight = Math.max(0, set.getInt("weight", 1));
 		_rHand = set.getInt("rhand", 0);
 		_lHand = set.getInt("lhand", 0);
 		_chest = set.getInt("chest", 0);
@@ -52,11 +60,38 @@ public class FakePlayerPvpGearTier
 		_earring = set.getInt("earring", 0);
 		_necklace = set.getInt("necklace", 0);
 		_ring = set.getInt("ring", 0);
+		_shirts = parseIds(set.getString("shirt", ""));
+		_belts = parseIds(set.getString("belt", ""));
+	}
+	
+	private static int[] parseIds(String value)
+	{
+		if (value.isBlank())
+		{
+			return NONE;
+		}
+		
+		final String[] ids = value.split("\\|");
+		final int[] result = new int[ids.length];
+		for (int i = 0; i < ids.length; i++)
+		{
+			result[i] = Integer.parseInt(ids[i].trim());
+		}
+		
+		return result;
 	}
 	
 	public int getMinLevel()
 	{
 		return _minLevel;
+	}
+	
+	/**
+	 * @return the relative chance to pick this tier among the tiers of its kit with the same minimum level
+	 */
+	public int getWeight()
+	{
+		return _weight;
 	}
 	
 	public int getRHand()
@@ -107,5 +142,21 @@ public class FakePlayerPvpGearTier
 	public int getRing()
 	{
 		return _ring;
+	}
+	
+	/**
+	 * @return one of the shirts of this tier, picked at random, 0 if it has none
+	 */
+	public int rollShirt()
+	{
+		return _shirts.length > 0 ? _shirts[Rnd.get(_shirts.length)] : 0;
+	}
+	
+	/**
+	 * @return one of the belts of this tier, picked at random, 0 if it has none
+	 */
+	public int rollBelt()
+	{
+		return _belts.length > 0 ? _belts[Rnd.get(_belts.length)] : 0;
 	}
 }

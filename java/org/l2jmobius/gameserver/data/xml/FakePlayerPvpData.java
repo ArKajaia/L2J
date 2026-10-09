@@ -53,6 +53,8 @@ public class FakePlayerPvpData implements IXmlReader
 	private static final Logger LOGGER = Logger.getLogger(FakePlayerPvpData.class.getName());
 	
 	private final Map<String, List<FakePlayerPvpGearTier>> _kits = new HashMap<>();
+	/** The cloaks fake players wear once their armor set opens the cloak slot. */
+	private final List<Cloak> _cloaks = new ArrayList<>();
 	private final List<FakePlayerPvpBuild> _builds = new ArrayList<>();
 	/** Buff list name -> (tier min level -> buffs), tiers sorted by level. */
 	private final Map<String, List<Map.Entry<Integer, List<SkillHolder>>>> _buffs = new HashMap<>();
@@ -67,6 +69,7 @@ public class FakePlayerPvpData implements IXmlReader
 	public synchronized void load()
 	{
 		_kits.clear();
+		_cloaks.clear();
 		_builds.clear();
 		_buffs.clear();
 		_totalWeight = 0;
@@ -108,7 +111,7 @@ public class FakePlayerPvpData implements IXmlReader
 			_totalWeight += build.getWeight();
 		}
 		
-		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _kits.size() + " gear kits, " + _buffs.size() + " buff lists and " + _builds.size() + " builds.");
+		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _kits.size() + " gear kits, " + _cloaks.size() + " cloaks, " + _buffs.size() + " buff lists and " + _builds.size() + " builds.");
 	}
 	
 	@Override
@@ -123,6 +126,18 @@ public class FakePlayerPvpData implements IXmlReader
 				forEach(kitNode, "tier", tierNode -> tiers.add(new FakePlayerPvpGearTier(new StatSet(parseAttributes(tierNode)))));
 				tiers.sort(Comparator.comparingInt(FakePlayerPvpGearTier::getMinLevel));
 				_kits.put(name, tiers);
+			});
+			
+			forEach(listNode, "cloak", cloakNode ->
+			{
+				final NamedNodeMap attrs = cloakNode.getAttributes();
+				final Cloak cloak = new Cloak(parseInteger(attrs, "id"), parseInteger(attrs, "minLevel", 1), Math.max(0, parseInteger(attrs, "weight", 1)));
+				if (ItemData.getInstance().getTemplate(cloak.itemId()) == null)
+				{
+					LOGGER.warning(getClass().getSimpleName() + ": Unknown cloak item " + cloak.itemId() + ".");
+					return;
+				}
+				_cloaks.add(cloak);
 			});
 			
 			forEach(listNode, "buffs", buffsNode ->
@@ -238,9 +253,20 @@ public class FakePlayerPvpData implements IXmlReader
 	/**
 	 * @param kit the kit name
 	 * @param level a character level
-	 * @return the highest tier of {@code kit} usable at {@code level}, or {@code null} if there is none
+	 * @return the highest tier of {@code kit} usable at {@code level} (one of them picked by weight when the kit has alternatives for that level), or {@code null} if there is none
 	 */
 	public FakePlayerPvpGearTier getGear(String kit, int level)
+	{
+		return getGear(kit, level, false);
+	}
+	
+	/**
+	 * @param kit the kit name
+	 * @param level a character level
+	 * @param best {@code true} for the best of the alternatives (the last one listed), {@code false} for one picked by weight
+	 * @return the highest tier of {@code kit} usable at {@code level}, or {@code null} if there is none
+	 */
+	public FakePlayerPvpGearTier getGear(String kit, int level, boolean best)
 	{
 		final List<FakePlayerPvpGearTier> tiers = _kits.get(kit);
 		if (tiers == null)
@@ -248,17 +274,84 @@ public class FakePlayerPvpData implements IXmlReader
 			return null;
 		}
 		
-		FakePlayerPvpGearTier result = null;
+		// The tiers of the highest level reached: alternatives when there are several.
+		final List<FakePlayerPvpGearTier> alternatives = new ArrayList<>(2);
 		for (FakePlayerPvpGearTier tier : tiers)
 		{
 			if (tier.getMinLevel() > level)
 			{
 				break;
 			}
-			result = tier;
+			if (!alternatives.isEmpty() && (alternatives.get(0).getMinLevel() != tier.getMinLevel()))
+			{
+				alternatives.clear();
+			}
+			alternatives.add(tier);
 		}
 		
-		return result;
+		if (alternatives.size() <= 1)
+		{
+			return alternatives.isEmpty() ? null : alternatives.get(0);
+		}
+		
+		if (best)
+		{
+			return alternatives.get(alternatives.size() - 1);
+		}
+		
+		int totalWeight = 0;
+		for (FakePlayerPvpGearTier tier : alternatives)
+		{
+			totalWeight += tier.getWeight();
+		}
+		
+		int roll = Rnd.get(totalWeight);
+		for (FakePlayerPvpGearTier tier : alternatives)
+		{
+			roll -= tier.getWeight();
+			if (roll < 0)
+			{
+				return tier;
+			}
+		}
+		
+		return alternatives.get(alternatives.size() - 1);
+	}
+	
+	/**
+	 * @param level a character level
+	 * @return a cloak a character of {@code level} may wear, picked at random by weight, 0 if there is none
+	 */
+	public int getRandomCloak(int level)
+	{
+		int totalWeight = 0;
+		for (Cloak cloak : _cloaks)
+		{
+			if (cloak.minLevel() <= level)
+			{
+				totalWeight += cloak.weight();
+			}
+		}
+		
+		if (totalWeight <= 0)
+		{
+			return 0;
+		}
+		
+		int roll = Rnd.get(totalWeight);
+		for (Cloak cloak : _cloaks)
+		{
+			if (cloak.minLevel() <= level)
+			{
+				roll -= cloak.weight();
+				if (roll < 0)
+				{
+					return cloak.itemId();
+				}
+			}
+		}
+		
+		return 0;
 	}
 	
 	/**
@@ -365,6 +458,16 @@ public class FakePlayerPvpData implements IXmlReader
 	public List<FakePlayerPvpBuild> getBuilds()
 	{
 		return Collections.unmodifiableList(_builds);
+	}
+	
+	/**
+	 * A cloak fake players wear (see data/FakePlayerPvp.xml).
+	 * @param itemId the cloak
+	 * @param minLevel the lowest level that wears it
+	 * @param weight the relative chance to pick it
+	 */
+	private record Cloak(int itemId, int minLevel, int weight)
+	{
 	}
 	
 	public static FakePlayerPvpData getInstance()

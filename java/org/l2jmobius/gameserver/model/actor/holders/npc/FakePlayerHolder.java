@@ -20,9 +20,13 @@
  */
 package org.l2jmobius.gameserver.model.actor.holders.npc;
 
+import java.util.Collections;
+import java.util.Map;
+
 import org.l2jmobius.gameserver.data.xml.FakePlayerData;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
+import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
 
 /**
  * @author Mobius
@@ -43,11 +47,15 @@ public class FakePlayerHolder
 	private final int _equipLegs;
 	private final int _equipFeet;
 	private final int _equipCloak;
+	private final int _equipShirt;
+	private final int _equipBelt;
 	private final int _equipHair;
 	private final int _equipHair2;
 	private final int _agathionId;
 	private int _weaponEnchantLevel;
 	private final int _armorEnchantLevel;
+	// The enchant of each armor piece, shield, shirt and belt by paperdoll slot, for a fake player made by FakePlayerPvpFactory (it enchants every piece on its own). Without one, a piece has the armor enchant level.
+	private final Map<Integer, Integer> _slotEnchantLevels;
 	private final boolean _fishing;
 	private final int _baitLocationX;
 	private final int _baitLocationY;
@@ -86,11 +94,15 @@ public class FakePlayerHolder
 		_equipLegs = set.getInt("equipLegs", 0);
 		_equipFeet = set.getInt("equipFeet", 0);
 		_equipCloak = set.getInt("equipCloak", 0);
+		_equipShirt = set.getInt("equipShirt", 0);
+		_equipBelt = set.getInt("equipBelt", 0);
 		_equipHair = set.getInt("equipHair", 0);
 		_equipHair2 = set.getInt("equipHair2", 0);
 		_agathionId = set.getInt("agathionId", 0);
 		_weaponEnchantLevel = set.getInt("weaponEnchantLevel", 0);
 		_armorEnchantLevel = set.getInt("armorEnchantLevel", 0);
+		final Map<Integer, Integer> slotEnchantLevels = set.getMap("slotEnchantLevels", Integer.class, Integer.class);
+		_slotEnchantLevels = slotEnchantLevels != null ? slotEnchantLevels : Collections.emptyMap();
 		_fishing = set.getBoolean("fishing", false);
 		_baitLocationX = set.getInt("baitLocationX", 0);
 		_baitLocationY = set.getInt("baitLocationY", 0);
@@ -187,6 +199,16 @@ public class FakePlayerHolder
 		return _equipCloak;
 	}
 	
+	public int getEquipShirt()
+	{
+		return _equipShirt;
+	}
+	
+	public int getEquipBelt()
+	{
+		return _equipBelt;
+	}
+	
 	public int getEquipHair()
 	{
 		return _equipHair;
@@ -223,6 +245,34 @@ public class FakePlayerHolder
 	public int getArmorEnchantLevel()
 	{
 		return _armorEnchantLevel;
+	}
+	
+	/**
+	 * @param paperdollSlot a paperdoll slot ({@link Inventory#PAPERDOLL_HEAD}, {@link Inventory#PAPERDOLL_LHAND}...)
+	 * @return the enchant level of what it wears there: the weapon enchant level for the weapon, the armor enchant level for an armor piece or shield that has none of its own, 0 for a cloak or hair accessory
+	 */
+	public int getEnchantLevel(int paperdollSlot)
+	{
+		switch (paperdollSlot)
+		{
+			case Inventory.PAPERDOLL_RHAND:
+			{
+				return _weaponEnchantLevel;
+			}
+			case Inventory.PAPERDOLL_LHAND:
+			case Inventory.PAPERDOLL_HEAD:
+			case Inventory.PAPERDOLL_CHEST:
+			case Inventory.PAPERDOLL_LEGS:
+			case Inventory.PAPERDOLL_GLOVES:
+			case Inventory.PAPERDOLL_FEET:
+			{
+				return _slotEnchantLevels.getOrDefault(paperdollSlot, _armorEnchantLevel);
+			}
+			default:
+			{
+				return _slotEnchantLevels.getOrDefault(paperdollSlot, 0);
+			}
+		}
 	}
 	
 	public boolean isFishing()

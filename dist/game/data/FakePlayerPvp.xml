@@ -5,6 +5,12 @@
 	kit: gear worn by a fake player. Each tier is used from its minLevel until the next tier
 	     (1 = no grade, 20 = D, 40 = C, 52 = B, 61 = A, 76 = S, 80 = S80, 84 = S84).
 	     Stats are read from the item data, so any item id can be used.
+	     Tiers with the same minLevel are alternatives: each fake player gets one of them, picked by their
+	     weight (default 1), like players of a level that don't all wear the same set. List the best one
+	     last: the strong fake players of the PvP spots always wear it.
+	     The ACCESSORIES kit holds the shirts and belts of every build, and the cloak elements the cloaks
+	     (see below). The enchant of every piece is rolled on its own (FakePvp*EnchantOdds in
+	     config/Custom/FakePlayerPvp.ini).
 
 	buffs: buffs a fake player keeps on itself, like a player coming from the buffer.
 	     Tiers add up: a level 76 fighter gets the 1, 40, 61 and 76 lists. Format: id,level;id,level
@@ -90,6 +96,15 @@
 		<tier minLevel="84" earring="14163" necklace="14164" ring="14165" /> <!-- Vesper -->
 	</kit>
 
+	<!-- Shirts and belts, for every build (FakePvpShirtChance, FakePvpBeltChance in config/Custom/FakePlayerPvp.ini). "a|b": one of them. -->
+	<kit name="ACCESSORIES">
+		<tier minLevel="20" shirt="9578|9584" /> <!-- Linen Shirt / Stripe Linen Shirt -->
+		<tier minLevel="40" shirt="9579|9585" belt="13894" /> <!-- Silk Shirt / Striped Silk Shirt, Cloth Belt -->
+		<tier minLevel="52" shirt="9580|9586" belt="13895" /> <!-- Thin Leather Shirt / Thin Striped Leather Shirt, Leather Belt -->
+		<tier minLevel="61" shirt="9581|9587" belt="13896" /> <!-- Scale Shirt / Striped Scale Shirt, Iron Belt -->
+		<tier minLevel="76" shirt="9582|9588" belt="13897" /> <!-- Mithril Shirt / Striped Mithril Shirt, Mithril Belt -->
+	</kit>
+
 	<!-- Armor -->
 	<kit name="HEAVY">
 		<tier minLevel="1" chest="23" legs="2386" head="43" gloves="51" feet="39" /> <!-- Wooden -->
@@ -99,7 +114,8 @@
 		<tier minLevel="61" chest="2383" head="2419" gloves="5774" feet="5786" /> <!-- Majestic -->
 		<tier minLevel="76" chest="6373" legs="6374" head="6378" gloves="6375" feet="6376" /> <!-- Imperial Crusader -->
 		<tier minLevel="80" chest="9418" legs="9421" head="9422" gloves="9423" feet="9424" /> <!-- Dynasty - Weapon Master -->
-		<tier minLevel="84" chest="13432" legs="13438" head="13137" gloves="13439" feet="13440" /> <!-- Vesper -->
+		<tier minLevel="84" chest="13432" legs="13438" head="13137" gloves="13439" feet="13440" weight="3" /> <!-- Vesper -->
+		<tier minLevel="84" chest="13435" legs="13448" head="13140" gloves="13449" feet="13450" weight="2" /> <!-- Vesper Noble, opens the cloak slot -->
 	</kit>
 	<kit name="HEAVY_FORCE">
 		<tier minLevel="1" chest="23" legs="2386" head="43" gloves="51" feet="39" /> <!-- Wooden -->
@@ -109,7 +125,8 @@
 		<tier minLevel="61" chest="2383" head="2419" gloves="5774" feet="5786" /> <!-- Majestic -->
 		<tier minLevel="76" chest="6373" legs="6374" head="6378" gloves="6375" feet="6376" /> <!-- Imperial Crusader -->
 		<tier minLevel="80" chest="9419" legs="9421" head="9422" gloves="9423" feet="9424" /> <!-- Dynasty - Force Master -->
-		<tier minLevel="84" chest="13432" legs="13438" head="13137" gloves="13439" feet="13440" /> <!-- Vesper -->
+		<tier minLevel="84" chest="13432" legs="13438" head="13137" gloves="13439" feet="13440" weight="3" /> <!-- Vesper -->
+		<tier minLevel="84" chest="13435" legs="13448" head="13140" gloves="13449" feet="13450" weight="2" /> <!-- Vesper Noble, opens the cloak slot -->
 	</kit>
 	<kit name="HEAVY_TANK">
 		<tier minLevel="1" chest="23" legs="2386" head="43" gloves="51" feet="39" /> <!-- Wooden -->
@@ -119,7 +136,8 @@
 		<tier minLevel="61" chest="374" head="2418" gloves="5771" feet="5783" /> <!-- Nightmare -->
 		<tier minLevel="76" chest="6373" legs="6374" head="6378" gloves="6375" feet="6376" /> <!-- Imperial Crusader -->
 		<tier minLevel="80" chest="9417" legs="9421" head="9422" gloves="9423" feet="9424" /> <!-- Dynasty - Shield Master -->
-		<tier minLevel="84" chest="13432" legs="13438" head="13137" gloves="13439" feet="13440" /> <!-- Vesper -->
+		<tier minLevel="84" chest="13432" legs="13438" head="13137" gloves="13439" feet="13440" weight="3" /> <!-- Vesper -->
+		<tier minLevel="84" chest="13435" legs="13448" head="13140" gloves="13449" feet="13450" weight="2" /> <!-- Vesper Noble, opens the cloak slot -->
 	</kit>
 	<kit name="LIGHT_DAGGER">
 		<tier minLevel="1" chest="23" legs="2386" head="43" gloves="51" feet="39" /> <!-- Wooden -->
@@ -129,7 +147,8 @@
 		<tier minLevel="61" chest="2394" head="2418" gloves="5772" feet="5784" /> <!-- Leather of Nightmare -->
 		<tier minLevel="76" chest="6379" head="6382" gloves="6380" feet="6381" /> <!-- Draconic -->
 		<tier minLevel="80" chest="9426" legs="9428" head="9429" gloves="9430" feet="9431" /> <!-- Dynasty Leather - Dagger Master -->
-		<tier minLevel="84" chest="13433" legs="13441" head="13138" gloves="13442" feet="13443" /> <!-- Vesper Leather -->
+		<tier minLevel="84" chest="13433" legs="13441" head="13138" gloves="13442" feet="13443" weight="3" /> <!-- Vesper Leather -->
+		<tier minLevel="84" chest="13436" legs="13451" head="13141" gloves="13452" feet="13453" weight="2" /> <!-- Vesper Noble Leather, opens the cloak slot -->
 	</kit>
 	<kit name="LIGHT_ARCHER">
 		<tier minLevel="1" chest="23" legs="2386" head="43" gloves="51" feet="39" /> <!-- Wooden -->
@@ -139,7 +158,8 @@
 		<tier minLevel="61" chest="2395" head="2419" gloves="5775" feet="5787" /> <!-- Majestic Leather -->
 		<tier minLevel="76" chest="6379" head="6382" gloves="6380" feet="6381" /> <!-- Draconic -->
 		<tier minLevel="80" chest="9427" legs="9428" head="9429" gloves="9430" feet="9431" /> <!-- Dynasty Leather - Bow Master -->
-		<tier minLevel="84" chest="13433" legs="13441" head="13138" gloves="13442" feet="13443" /> <!-- Vesper Leather -->
+		<tier minLevel="84" chest="13433" legs="13441" head="13138" gloves="13442" feet="13443" weight="3" /> <!-- Vesper Leather -->
+		<tier minLevel="84" chest="13436" legs="13451" head="13141" gloves="13452" feet="13453" weight="2" /> <!-- Vesper Noble Leather, opens the cloak slot -->
 	</kit>
 	<kit name="ROBE">
 		<tier minLevel="1" chest="1101" legs="1104" head="44" gloves="51" feet="39" /> <!-- Devotion -->
@@ -149,7 +169,8 @@
 		<tier minLevel="61" chest="2409" head="2419" gloves="5776" feet="5788" /> <!-- Majestic Robe -->
 		<tier minLevel="76" chest="6383" head="6386" gloves="6384" feet="6385" /> <!-- Major Arcana -->
 		<tier minLevel="80" chest="9436" legs="9437" head="9438" gloves="9439" feet="9440" /> <!-- Dynasty Tunic - Wizard -->
-		<tier minLevel="84" chest="13434" legs="13444" head="13139" gloves="13445" feet="13446" /> <!-- Vesper Tunic -->
+		<tier minLevel="84" chest="13434" legs="13444" head="13139" gloves="13445" feet="13446" weight="3" /> <!-- Vesper Tunic -->
+		<tier minLevel="84" chest="13437" legs="13454" head="13142" gloves="13455" feet="13456" weight="2" /> <!-- Vesper Noble Tunic, opens the cloak slot -->
 	</kit>
 	<kit name="LIGHT_MAGE"> <!-- Kamael mages: Kamael wear light armor only (no heavy armor, no robes), and the client has no Kamael model for the others. -->
 		<tier minLevel="1" chest="23" legs="2386" head="44" gloves="51" feet="39" /> <!-- Wooden -->
@@ -341,7 +362,8 @@
 		<tier minLevel="52" chest="357" legs="383" head="503" gloves="5710" feet="5726" /> <!-- Zubei's -->
 		<tier minLevel="61" chest="2382" head="547" gloves="5768" feet="5780" /> <!-- Tallum Plate Armor, kept at S grade -->
 		<tier minLevel="80" chest="9416" legs="9421" head="9422" gloves="9423" feet="9424" /> <!-- Dynasty Breast Plate -->
-		<tier minLevel="84" chest="13432" legs="13438" head="13137" gloves="13439" feet="13440" /> <!-- Vesper -->
+		<tier minLevel="84" chest="13432" legs="13438" head="13137" gloves="13439" feet="13440" weight="3" /> <!-- Vesper -->
+		<tier minLevel="84" chest="13435" legs="13448" head="13140" gloves="13449" feet="13450" weight="2" /> <!-- Vesper Noble, opens the cloak slot -->
 	</kit>
 	<kit name="LIGHT_LEGACY">
 		<tier minLevel="1" chest="23" legs="2386" head="43" gloves="51" feet="39" /> <!-- Wooden -->
@@ -360,7 +382,8 @@
 		<tier minLevel="61" chest="2395" head="2419" gloves="5775" feet="5787" /> <!-- Majestic Leather -->
 		<tier minLevel="76" chest="6379" head="6382" gloves="6380" feet="6381" /> <!-- Draconic -->
 		<tier minLevel="80" chest="10127" legs="9428" head="9429" gloves="9430" feet="9431" /> <!-- Dynasty Leather - Weapon Master -->
-		<tier minLevel="84" chest="13433" legs="13441" head="13138" gloves="13442" feet="13443" /> <!-- Vesper Leather -->
+		<tier minLevel="84" chest="13433" legs="13441" head="13138" gloves="13442" feet="13443" weight="3" /> <!-- Vesper Leather -->
+		<tier minLevel="84" chest="13436" legs="13451" head="13141" gloves="13452" feet="13453" weight="2" /> <!-- Vesper Noble Leather, opens the cloak slot -->
 	</kit>
 	<kit name="SWORD_SHIELD_ALT"> <!-- Shields of the HEAVY_LEGACY sets. -->
 		<tier minLevel="1" rhand="68" lhand="102" /> <!-- Falchion / Round Shield -->
@@ -418,6 +441,23 @@
 		<tier minLevel="80" rhand="9447" /> <!-- Dynasty Halberd -->
 		<tier minLevel="84" rhand="10219" /> <!-- Icarus Trident -->
 	</kit>
+
+	<!-- Cloaks: a full armor set whose set skill opens the cloak slot (Dynasty, Moirai, Vesper Noble..., not the plain Vesper sets) lets a fake
+	     player wear one, FakePvpCloakChance % of them (config/Custom/FakePlayerPvp.ini). The High Five sources, all unsealed by the
+	     Weavers Olf Kanore and Olf Adams (multisell 326100002): Holy Spirit's Cloak from Antharas, Valakas, Beleth, Frintezza's Scarlet
+	     van Halisha, Tiat and Ekimus (and rarely from the Dragon Valley monsters), the Ancient Cloak from Territory Wars, the Zaken,
+	     Frintezza and Freya cloaks from those bosses, their soul cloaks from quests 10501-10503 (levels 78, 80, 82).
+	     The Knight's Cloak is left out: only the knights of a clan that holds a castle wear it. The Weavers only unseal the plain looks,
+	     not the light armor, robe and Kamael ones.
+	     minLevel - the lowest level that wears it. weight - relative chance to pick it. -->
+	<cloak id="14609" weight="30" /> <!-- Ancient Cloak -->
+	<cloak id="13890" weight="25" /> <!-- Holy Spirit's Cloak -->
+	<cloak id="21716" minLevel="80" weight="12" /> <!-- Cloak of Zaken -->
+	<cloak id="21718" minLevel="80" weight="8" /> <!-- Cloak of Frintezza -->
+	<cloak id="21717" minLevel="82" weight="8" /> <!-- Cloak of Freya -->
+	<cloak id="21719" minLevel="78" weight="5" /> <!-- Soul Cloak of Zaken -->
+	<cloak id="21721" minLevel="80" weight="4" /> <!-- Soul Cloak of Frintezza -->
+	<cloak id="21720" minLevel="82" weight="3" /> <!-- Soul Cloak of Freya -->
 
 	<!-- Buffs -->
 	<buffs name="FIGHTER">
