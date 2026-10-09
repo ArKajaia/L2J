@@ -36,6 +36,7 @@ import org.l2jmobius.gameserver.config.custom.CustomBuffConfig;
 import org.l2jmobius.gameserver.config.custom.CustomMailManagerConfig;
 import org.l2jmobius.gameserver.config.custom.DelevelManagerConfig;
 import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
+import org.l2jmobius.gameserver.config.custom.DwarvenTradesConfig;
 import org.l2jmobius.gameserver.config.custom.FactionSystemConfig;
 import org.l2jmobius.gameserver.config.custom.FakeClanConfig;
 import org.l2jmobius.gameserver.config.custom.FakePartyConfig;
@@ -127,6 +128,7 @@ public class ConfigLoader
 		CustomMailManagerConfig.load();
 		DelevelManagerConfig.load();
 		DualboxCheckConfig.load();
+		DwarvenTradesConfig.load();
 		FactionSystemConfig.load();
 		FakePlayersConfig.load();
 		FakePlayerPvpConfig.load();

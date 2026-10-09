@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.l2jmobius.commons.database.DatabaseFactory;
 import org.l2jmobius.commons.threads.ThreadPool;
+import org.l2jmobius.gameserver.config.custom.DwarvenTradesConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.config.custom.PassiveTreeConfig;
 import org.l2jmobius.gameserver.data.custom.PassiveTreeData;
@@ -40,6 +41,7 @@ import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics.ConditionalKey;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
+import org.l2jmobius.gameserver.model.skill.CommonSkill;
 import org.l2jmobius.gameserver.model.skill.PassiveTreeArchetypes;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.stats.Stat;
@@ -613,6 +615,12 @@ public class PassiveTreeManager
 			wanted.merge(node.getSkillId(), getNodeSkillLevel(player, node), Math::max);
 		}
 		
+		// Dwarven Craft only opens the recipe book; Create Item decides what can be made.
+		if (wanted.containsKey(CommonSkill.DWARVEN_CRAFT.getId()))
+		{
+			wanted.put(CommonSkill.CREATE_DWARVEN.getId(), getTreeCreateItemLevel(player));
+		}
+		
 		// 2) Remove ONLY what the tree added and no longer grants at that level -
 		// and only if it's still our copy. The level check matters: if the
 		// character has since gained their own version of the skill, the levels
@@ -946,6 +954,22 @@ public class PassiveTreeManager
 				}
 			}
 		}
+		
+		final Integer createItem = granted.get(CommonSkill.CREATE_DWARVEN.getId());
+		if ((createItem != null) && (createItem != getTreeCreateItemLevel(player)))
+		{
+			applyAll(player);
+		}
+	}
+	
+	/**
+	 * The passive tree's Dwarven Craft comes with Create Item at the character's level, like a dwarf learns it, but never past {@link DwarvenTradesConfig#TREE_CREATE_ITEM_MAX_LEVEL} (level 5 by default: D and most C grade recipes): the higher grades stay with the Warsmith and the Maestro.
+	 * @param player the player
+	 * @return the Create Item level the tree's Dwarven Craft gives this character
+	 */
+	private static int getTreeCreateItemLevel(Player player)
+	{
+		return Math.min(getScaledSkillLevel(CommonSkill.CREATE_DWARVEN.getId(), player.getLevel()), DwarvenTradesConfig.TREE_CREATE_ITEM_MAX_LEVEL);
 	}
 	
 	/**

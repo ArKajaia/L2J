@@ -26,6 +26,7 @@ import org.l2jmobius.gameserver.managers.PunishmentManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
+import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.item.type.CrystalType;
@@ -209,7 +210,7 @@ public class RequestCrystallizeItem extends ClientPacket
 		
 		// add crystals
 		final int crystalId = itemToRemove.getTemplate().getCrystalItemId();
-		final int crystalAmount = itemToRemove.getCrystalCount();
+		final int crystalAmount = (int) (itemToRemove.getCrystalCount() * (1 + (DwarvenTrades.getCrystallizeBonus(player) / 100)));
 		final Item createditem = player.getInventory().addItem(ItemProcessType.COMPENSATE, crystalId, crystalAmount, player, player);
 		sm = new SystemMessage(SystemMessageId.S1_HAS_BEEN_CRYSTALLIZED);
 		sm.addItemName(removedItem);

@@ -222,6 +222,16 @@ One NPC in Giran (next to the Arena and the Class Master) that does the work of 
 - **My Weapons / My Soul Crystals**: what your weapons can get, what your crystal can make, warnings when the quest isn't taken or you carry more than one crystal, and where to get a free Stage 0 crystal.
 - The data comes from the server's own files (SA multisells, `LevelUpCrystalData.xml`, `custom/MasterBlacksmith/sa_effects.xml`), so it matches what the server really does.
 
+### Dwarven Trades
+
+The passive tree lets any character take Spoil, Sweeper Festival, Crystallize and Dwarven Craft, so the dwarven classes get what the tree doesn't give. Spoiling and crafting stay a dwarf's trade.
+
+- **Spoilers** (Scavenger, Bounty Hunter, Fortune Seeker): their Spoil, Spoil Festival, Spoil Crush and Spoil Bomb never miss (Spoil from the tree can). A monster they spoiled gives more when swept, whoever kills it: each sweep item's chance is multiplied by 1.25 / 1.5 / 1.75, and its amount by 1 / 1.2 / 1.4 (1st / 2nd / 3rd class).
+- **Crafters** (Artisan, Warsmith, Maestro): +5 / +10 / +15 success rate on recipes below 100% (a 60% recipe works 75% of the time for a Maestro), the masterwork chance ×1.25 / ×1.5 / ×2, and a 5 / 10 / 15% chance to make twice as many of a stackable item (shots, arrows, potions, materials). This works in their private workshops too, so customers come to dwarves.
+- **Crystallize**: every dwarven class gets 20% more crystals, and crafters another 10 / 20 / 30% (a Maestro gets 50% more).
+- **The tree's Dwarven Craft now works, up to C grade**: before, it gave the recipe book but no Create Item, so it could make nothing. Now it also gives Create Item at your level, like a dwarf learns it, but no higher than level 5 (D and most C grade recipes). B grade and up can only be crafted by dwarves.
+- Everything follows the active class: a dwarven subclass counts, a dwarf playing a non-dwarven subclass doesn't. Settings in `config/Custom/DwarvenTrades.ini`.
+
 ### Other Custom Features at a Glance
 
 | Area | Features |
@@ -589,7 +599,15 @@ This program is free software, licensed under the **GNU General Public License, 
 
 ## Recent Updates
 
-Changes from 28 September – 8 October 2026.
+Changes from 28 September – 9 October 2026.
+
+### Dwarven Trades
+- **Dwarven classes reworked**: Spoil, Sweeper Festival, Crystallize and Dwarven Craft on the passive tree had made them pointless, so the dwarves now do these trades better than anyone with the tree. See [Dwarven Trades](#dwarven-trades).
+- **Spoilers** (Scavenger, Bounty Hunter, Fortune Seeker): Spoil never misses, and what they spoil gives more when swept (chance up to ×1.75 and amount up to ×1.4 for a Fortune Seeker).
+- **Crafters** (Artisan, Warsmith, Maestro): a higher success rate (up to +15), more masterworks (up to ×2) and a chance to make twice as many stackable items (up to 15%), in their workshops too.
+- **Crystallize**: dwarves get 20% more crystals, and crafters up to another 30%.
+- **Tree's Dwarven Craft fixed**: it now gives Create Item at your level, up to level 5 (D and most C grade). Before, it could make nothing.
+- Settings in `config/Custom/DwarvenTrades.ini`.
 
 ### Town Life
 - **New system**: npcs walk the town streets by day, go into their houses at dusk and come back at dawn. It covers townsfolk, workers, patrols, children playing tag, a town crier, harbor fishermen and dock workers, the lamplighter, the night watch, a tavern crowd at night, sweets for the children and a weekly festival day. See [Town Life](#town-life).
