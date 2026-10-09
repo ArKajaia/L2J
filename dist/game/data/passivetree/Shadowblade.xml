@@ -73,7 +73,7 @@
 		<requires nodeId="3001" />
 		<requires nodeId="3015" />
 	</node>
-	<node id="3015" name="Shadow Lunge" sector="Shadowblade" type="ACTIVE_SKILL" tier="0" cost="1" x="-1437.4" y="2189.7" effect="MAXHP:15" skillId="27420" skillLevel="1" description="ACTIVE: appear behind a target up to 600 away, then +20% critical damage for 5s (30s cooldown).">
+	<node id="3015" name="Shadow Lunge" sector="Shadowblade" type="ACTIVE_SKILL" tier="0" cost="1" x="-1437.4" y="2189.7" effect="MAXHP:15" skillId="27420" skillLevel="1" icon="skill-shadow-lunge" description="ACTIVE: appear behind a target up to 600 away, then +20% critical damage for 5s (30s cooldown).">
 		<requires nodeId="3014" />
 	</node>
 	<node id="3016" name="Crossroads" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-1125.0" y="1948.6" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.2;MAXHP:12" description="Junction.">
@@ -149,7 +149,7 @@
 		<requires nodeId="3040" />
 		<requires nodeId="3050" />
 	</node>
-	<node id="3038" name="Thousand Cuts" sector="Shadowblade" type="KEYSTONE" tier="0" cost="1" x="-1043.9" y="1568.1" effect="KS_CRIT_CAP:750;CRIT_DMG_PCT:-30" icon="claw" description="KEYSTONE: Your critical rate cap rises from 500 to 750, but your critical hits deal 30% less damage.">
+	<node id="3038" name="Thousand Cuts" sector="Shadowblade" type="KEYSTONE" tier="0" cost="1" x="-1043.9" y="1568.1" effect="KS_CRIT_CAP:750;CRIT_DMG_PCT:-30" icon="ks-thousand-cuts" description="KEYSTONE: Your critical rate cap rises from 500 to 750, but your critical hits deal 30% less damage.">
 		<requires nodeId="3037" />
 	</node>
 	<node id="3039" name="Crossroads" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-825.0" y="1428.9" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.2;MAXHP_PCT:0.5" description="Junction.">
@@ -225,7 +225,7 @@
 		<requires nodeId="3063" />
 		<requires nodeId="3073" />
 	</node>
-	<node id="3061" name="Smoke Veil" sector="Shadowblade" type="ACTIVE_SKILL" tier="0" cost="1" x="-743.9" y="1048.5" effect="MAXHP:15" skillId="27421" skillLevel="1" description="ACTIVE: burst of Evasion and Speed to slip out of melee range for 8s (40s cooldown).">
+	<node id="3061" name="Smoke Veil" sector="Shadowblade" type="ACTIVE_SKILL" tier="0" cost="1" x="-743.9" y="1048.5" effect="MAXHP:15" skillId="27421" skillLevel="1" icon="skill-smoke-veil" description="ACTIVE: burst of Evasion and Speed to slip out of melee range for 8s (40s cooldown).">
 		<requires nodeId="3060" />
 	</node>
 	<node id="3062" name="Crossroads" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-525.0" y="909.3" orbitX="0.0" orbitY="0.0" effect="EVASION_ADD:0.2;MAXHP:12" description="Junction.">
@@ -284,7 +284,7 @@
 		<requires nodeId="3062" />
 		<requires nodeId="3078" />
 	</node>
-	<node id="3078" name="Ghost Walker" sector="Shadowblade" type="KEYSTONE" tier="0" cost="1" x="-328.4" y="771.7" effect="EVASION_ADD:4;MOVE_SPEED_ADD:5;MAXHP:-140" icon="moon" description="Evasive and fast, but frail.">
+	<node id="3078" name="Ghost Walker" sector="Shadowblade" type="KEYSTONE" tier="0" cost="1" x="-328.4" y="771.7" effect="EVASION_ADD:4;MOVE_SPEED_ADD:5;MAXHP:-140" icon="ks-ghost-walker" description="Evasive and fast, but frail.">
 		<requires nodeId="3077" />
 	</node>
 	<node id="3079" name="Executioner's Mark" sector="Shadowblade" type="MASTER" tier="0" cost="1" x="-360.0" y="623.5" effect="DEX:2;CRIT_RATE_ADD:18;CRIT_DMG_PCT:6" icon="target" description="Archetype capstone.">

@@ -87,7 +87,7 @@
 		<requires nodeId="30222" />
 		<requires nodeId="30225" />
 	</node>
-	<node id="30222" name="Ghost in the Grass" sector="Stalker" type="KEYSTONE" tier="0" cost="1" x="-2625.1" y="2393.2" effect="SKILL_DODGE_PCT:8;EVASION_ADD:2;PDEF_PCT:-12" icon="leaf" description="Dodge physical skills outright - but when something does connect, it hurts.">
+	<node id="30222" name="Ghost in the Grass" sector="Stalker" type="KEYSTONE" tier="0" cost="1" x="-2625.1" y="2393.2" effect="SKILL_DODGE_PCT:8;EVASION_ADD:2;PDEF_PCT:-12" icon="ks-ghost-in-the-grass" description="Dodge physical skills outright - but when something does connect, it hurts.">
 		<requires nodeId="30221" />
 	</node>
 	<node id="30223" name="Approach" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3223.9" y="1076.1" effect="MAXHP:6">
@@ -113,14 +113,14 @@
 		<requires nodeId="30212" />
 		<requires nodeId="30228" />
 	</node>
-	<node id="30228" name="Scavenger's Creed" sector="Stalker" type="KEYSTONE" tier="0" cost="1" x="-2996.5" y="1429.8" effect="DROP_RATE_PCT:12;SPOIL_RATE_PCT:12;ADENA_RATE_PCT:12;PATK_PCT:-8;MATK_PCT:-8" icon="coin" description="Richer hunts at the cost of weaker hits.">
+	<node id="30228" name="Scavenger's Creed" sector="Stalker" type="KEYSTONE" tier="0" cost="1" x="-2996.5" y="1429.8" effect="DROP_RATE_PCT:12;SPOIL_RATE_PCT:12;ADENA_RATE_PCT:12;PATK_PCT:-8;MATK_PCT:-8" icon="ks-scavengers-creed" description="Richer hunts at the cost of weaker hits.">
 		<requires nodeId="30227" />
 	</node>
 	<node id="30229" name="Approach" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2394.6" y="2352.5" effect="MAXHP:6">
 		<requires nodeId="30225" />
 		<requires nodeId="30230" />
 	</node>
-	<node id="30230" name="Hunter's Mark" sector="Stalker" type="ACTIVE_SKILL" tier="0" cost="1" x="-2362.9" y="2507.4" effect="MAXHP:15" skillId="27462" skillLevel="auto" description="ACTIVE: mark a target up to 900 away: -6 Evasion and -10% P.Def for 20s (30s cooldown).">
+	<node id="30230" name="Hunter's Mark" sector="Stalker" type="ACTIVE_SKILL" tier="0" cost="1" x="-2362.9" y="2507.4" effect="MAXHP:15" skillId="27462" skillLevel="auto" icon="skill-hunters-mark" description="ACTIVE: mark a target up to 900 away: -6 Evasion and -10% P.Def for 20s (30s cooldown).">
 		<requires nodeId="30229" />
 	</node>
 	<node id="30251" name="Waystone" sector="Stalker" type="SMALL" tier="0" cost="1" x="-1691.4" y="615.6" effect="EVASION_ADD:0.4">

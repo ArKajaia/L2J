@@ -50,7 +50,7 @@
 		<requires nodeId="40050" />
 		<requires nodeId="40052" />
 	</node>
-	<node id="40052" name="Living Fortress" sector="Ironmarch" type="KEYSTONE" tier="0" cost="1" x="4356.1" y="2515.0" effect="MAXHP_PCT:30;MOVE_SPEED_ADD:-15;ATK_SPD_PCT:-8" icon="castle" description="KEYSTONE: +30% maximum HP, but you move 15 slower and attack 8% slower.">
+	<node id="40052" name="Living Fortress" sector="Ironmarch" type="KEYSTONE" tier="0" cost="1" x="4356.1" y="2515.0" effect="MAXHP_PCT:30;MOVE_SPEED_ADD:-15;ATK_SPD_PCT:-8" icon="ks-living-fortress" description="KEYSTONE: +30% maximum HP, but you move 15 slower and attack 8% slower.">
 		<requires nodeId="40051" />
 	</node>
 	<node id="40020" name="Iron Bloodline" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4281.8" y="992.2" orbitX="4337.2" orbitY="1081.4" effect="MAXHP_PCT:1.5" icon="heart">
@@ -223,7 +223,7 @@
 		<requires nodeId="40080" />
 		<requires nodeId="40082" />
 	</node>
-	<node id="40082" name="Whirling Steel" sector="Ironmarch" type="KEYSTONE" tier="0" cost="1" x="3435.4" y="4397.1" effect="KS_WHIRLING_STEEL:50;ATK_SPD_PCT:-15" icon="axe" description="KEYSTONE: Your normal attacks with any melee weapon also hit up to 2 more enemies in front of you for 50% damage (a polearm hits 2 more enemies than it would). -15% Attack Speed.">
+	<node id="40082" name="Whirling Steel" sector="Ironmarch" type="KEYSTONE" tier="0" cost="1" x="3435.4" y="4397.1" effect="KS_WHIRLING_STEEL:50;ATK_SPD_PCT:-15" icon="ks-whirling-steel" description="KEYSTONE: Your normal attacks with any melee weapon also hit up to 2 more enemies in front of you for 50% damage (a polearm hits 2 more enemies than it would). -15% Attack Speed.">
 		<requires nodeId="40081" />
 	</node>
 </list>

@@ -57,7 +57,7 @@
 		<requires nodeId="41050" />
 		<requires nodeId="41052" />
 	</node>
-	<node id="41052" name="Berserk Pact" sector="Red Wastes" type="KEYSTONE" tier="0" cost="1" x="-991.1" y="4982.4" effect="PATK_PCT@LOWHP:30;PDEF_PCT@LOWHP:-20;HP_REGEN_PCT:-30" icon="skull" description="KEYSTONE: Below 50% HP you deal 30% more P.Atk but have 20% less P.Def. HP regeneration is 30% slower.">
+	<node id="41052" name="Berserk Pact" sector="Red Wastes" type="KEYSTONE" tier="0" cost="1" x="-991.1" y="4982.4" effect="PATK_PCT@LOWHP:30;PDEF_PCT@LOWHP:-20;HP_REGEN_PCT:-30" icon="ks-berserk-pact" description="KEYSTONE: Below 50% HP you deal 30% more P.Atk but have 20% less P.Def. HP regeneration is 30% slower.">
 		<requires nodeId="41051" />
 	</node>
 	<node id="41020" name="Bloodboil" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="1341.2" y="4289.0" orbitX="1404.1" orbitY="4373.1" effect="MAXHP_PCT:1.5" icon="heart">
@@ -187,7 +187,7 @@
 		<requires nodeId="41070" />
 		<requires nodeId="41072" />
 	</node>
-	<node id="41072" name="Phoenix Heart" sector="Red Wastes" type="KEYSTONE" tier="0" cost="1" x="2376.5" y="4960.1" effect="KS_PHOENIX:40;MAXHP_PCT:-15;HEALING_RECEIVED_PCT:-20" icon="wings" description="KEYSTONE: Once every 5 minutes, a blow that would kill you leaves you alive with 40% of your HP. -15% maximum HP and -20% healing received.">
+	<node id="41072" name="Phoenix Heart" sector="Red Wastes" type="KEYSTONE" tier="0" cost="1" x="2376.5" y="4960.1" effect="KS_PHOENIX:40;MAXHP_PCT:-15;HEALING_RECEIVED_PCT:-20" icon="ks-phoenix-heart" description="KEYSTONE: Once every 5 minutes, a blow that would kill you leaves you alive with 40% of your HP. -15% maximum HP and -20% healing received.">
 		<requires nodeId="41071" />
 	</node>
 	<node id="41080" name="Onslaught Path" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="275.4" y="5349.4" effect="ATK_SPD_PCT:1.5" icon="claw">
@@ -198,7 +198,7 @@
 		<requires nodeId="41080" />
 		<requires nodeId="41082" />
 	</node>
-	<node id="41082" name="Relentless Assault" sector="Red Wastes" type="KEYSTONE" tier="0" cost="1" x="296.0" y="5748.8" effect="KS_RELENTLESS:3;ATK_SPD_PCT:-10" icon="claw" description="KEYSTONE: Each normal hit you land on your target gives +3% Attack Speed, up to +30% after 10 hits. Switching target or 3 seconds without a hit starts over. -10% Attack Speed.">
+	<node id="41082" name="Relentless Assault" sector="Red Wastes" type="KEYSTONE" tier="0" cost="1" x="296.0" y="5748.8" effect="KS_RELENTLESS:3;ATK_SPD_PCT:-10" icon="ks-relentless-assault" description="KEYSTONE: Each normal hit you land on your target gives +3% Attack Speed, up to +30% after 10 hits. Switching target or 3 seconds without a hit starts over. -10% Attack Speed.">
 		<requires nodeId="41081" />
 	</node>
 </list>

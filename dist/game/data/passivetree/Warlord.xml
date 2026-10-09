@@ -87,7 +87,7 @@
 		<requires nodeId="30022" />
 		<requires nodeId="30025" />
 	</node>
-	<node id="30022" name="Unending Fury" sector="Warlord" type="KEYSTONE" tier="0" cost="1" x="3385.1" y="1076.8" effect="KS_RAMPAGE:40;HEALING_RECEIVED_PCT:-30" icon="skull" description="KEYSTONE: Your P.Atk rises as your HP falls, up to +40% near death, but healing you receive is 30% weaker.">
+	<node id="30022" name="Unending Fury" sector="Warlord" type="KEYSTONE" tier="0" cost="1" x="3385.1" y="1076.8" effect="KS_RAMPAGE:40;HEALING_RECEIVED_PCT:-30" icon="ks-unending-fury" description="KEYSTONE: Your P.Atk rises as your HP falls, up to +40% near death, but healing you receive is 30% weaker.">
 		<requires nodeId="30021" />
 	</node>
 	<node id="30023" name="Approach" sector="Warlord" type="SMALL" tier="0" cost="1" x="2543.9" y="2253.9" effect="MAXHP:6">
@@ -113,14 +113,14 @@
 		<requires nodeId="30012" />
 		<requires nodeId="30028" />
 	</node>
-	<node id="30028" name="Warlord's Mandate" sector="Warlord" type="KEYSTONE" tier="0" cost="1" x="2736.5" y="1880.2" effect="PHYS_SKILL_POWER_PCT:10;SKILL_CDR_PCT:-12" icon="crown" description="Physical skills hit 10% harder but take 12% longer to recharge.">
+	<node id="30028" name="Warlord's Mandate" sector="Warlord" type="KEYSTONE" tier="0" cost="1" x="2736.5" y="1880.2" effect="PHYS_SKILL_POWER_PCT:10;SKILL_CDR_PCT:-12" icon="ks-warlords-mandate" description="Physical skills hit 10% harder but take 12% longer to recharge.">
 		<requires nodeId="30027" />
 	</node>
 	<node id="30029" name="Approach" sector="Warlord" type="SMALL" tier="0" cost="1" x="3234.6" y="897.5" effect="MAXHP:6">
 		<requires nodeId="30025" />
 		<requires nodeId="30030" />
 	</node>
-	<node id="30030" name="Crimson Bulwark" sector="Warlord" type="ACTIVE_SKILL" tier="0" cost="1" x="3352.9" y="792.6" effect="MAXHP:15" skillId="27460" skillLevel="1" description="ACTIVE: 6% of your melee damage heals you and +15% P.Def for 20s (120s cooldown).">
+	<node id="30030" name="Crimson Bulwark" sector="Warlord" type="ACTIVE_SKILL" tier="0" cost="1" x="3352.9" y="792.6" effect="MAXHP:15" skillId="27460" skillLevel="1" icon="skill-crimson-bulwark" description="ACTIVE: 6% of your melee damage heals you and +15% P.Def for 20s (120s cooldown).">
 		<requires nodeId="30029" />
 	</node>
 	<node id="30051" name="Waystone" sector="Warlord" type="SMALL" tier="0" cost="1" x="1576.2" y="910.0" effect="MAXHP:10">
