@@ -1,0 +1,54 @@
+27500	1	a,Ballad of the Bulwark\0	a,Performance: while on, all party members within 900 get Ballad of the Bulwark (P. Def. and M. Def. +8%). Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27500	2	a,Ballad of the Bulwark\0	a,Performance: while on, all party members within 900 get Ballad of the Bulwark (P. Def. and M. Def. +10%). Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27500	3	a,Ballad of the Bulwark\0	a,Performance: while on, all party members within 900 get Ballad of the Bulwark (P. Def. and M. Def. +12%). Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27501	1	a,Ballad of the Bulwark\0	a,P. Def. and M. Def. +8% while near the performer.\0	a,none\0	a,none\0
+27501	2	a,Ballad of the Bulwark\0	a,P. Def. and M. Def. +10% while near the performer.\0	a,none\0	a,none\0
+27501	3	a,Ballad of the Bulwark\0	a,P. Def. and M. Def. +12% while near the performer.\0	a,none\0	a,none\0
+27502	1	a,Hymn of Renewal\0	a,Performance: while on, all party members within 900 get Hymn of Renewal (HP Recovery Bonus +20%, MP Recovery Bonus +10%, HP recovered from healing +5%). Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27502	2	a,Hymn of Renewal\0	a,Performance: while on, all party members within 900 get Hymn of Renewal (HP Recovery Bonus +30%, MP Recovery Bonus +15%, HP recovered from healing +8%). Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27502	3	a,Hymn of Renewal\0	a,Performance: while on, all party members within 900 get Hymn of Renewal (HP Recovery Bonus +40%, MP Recovery Bonus +20%, HP recovered from healing +10%). Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27503	1	a,Hymn of Renewal\0	a,HP Recovery Bonus +20%, MP Recovery Bonus +10%, HP recovered from healing +5% while near the performer.\0	a,none\0	a,none\0
+27503	2	a,Hymn of Renewal\0	a,HP Recovery Bonus +30%, MP Recovery Bonus +15%, HP recovered from healing +8% while near the performer.\0	a,none\0	a,none\0
+27503	3	a,Hymn of Renewal\0	a,HP Recovery Bonus +40%, MP Recovery Bonus +20%, HP recovered from healing +10% while near the performer.\0	a,none\0	a,none\0
+27504	1	a,Anthem of Valor\0	a,Performance: while on, all party members within 900 get Anthem of Valor (P. Atk. and M. Atk. +6%). Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27504	2	a,Anthem of Valor\0	a,Performance: while on, all party members within 900 get Anthem of Valor (P. Atk. and M. Atk. +8%). Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27504	3	a,Anthem of Valor\0	a,Performance: while on, all party members within 900 get Anthem of Valor (P. Atk. and M. Atk. +10%). Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27505	1	a,Anthem of Valor\0	a,P. Atk. and M. Atk. +6% while near the performer.\0	a,none\0	a,none\0
+27505	2	a,Anthem of Valor\0	a,P. Atk. and M. Atk. +8% while near the performer.\0	a,none\0	a,none\0
+27505	3	a,Anthem of Valor\0	a,P. Atk. and M. Atk. +10% while near the performer.\0	a,none\0	a,none\0
+27506	1	a,Battle Hymn\0	a,Stance: P. Def. +5%. Each attack has a 15% chance to sing Healing Verse, recovering 120 HP of all party members within 600. Only one stance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27506	2	a,Battle Hymn\0	a,Stance: P. Def. +5%. Each attack has a 15% chance to sing Healing Verse, recovering 200 HP of all party members within 600. Only one stance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27506	3	a,Battle Hymn\0	a,Stance: P. Def. +5%. Each attack has a 15% chance to sing Healing Verse, recovering 280 HP of all party members within 600. Only one stance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27506	4	a,Battle Hymn\0	a,Stance: P. Def. +5%. Each attack has a 15% chance to sing Healing Verse, recovering 360 HP of all party members within 600. Only one stance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27507	1	a,Healing Verse\0	a,Recovers 120 HP of all party members within 600.\0	a,none\0	a,none\0
+27507	2	a,Healing Verse\0	a,Recovers 200 HP of all party members within 600.\0	a,none\0	a,none\0
+27507	3	a,Healing Verse\0	a,Recovers 280 HP of all party members within 600.\0	a,none\0	a,none\0
+27507	4	a,Healing Verse\0	a,Recovers 360 HP of all party members within 600.\0	a,none\0	a,none\0
+27508	1	a,Sanctuary Chorus\0	a,Recovers 20% of the HP of all party members within 1000 and increases their P. Def. and M. Def. by 30% for 15 seconds. Reuse time is 5 minutes.\0	a,none\0	a,none\0
+27520	1	a,Dance of Ruin\0	a,Performance: while on, enemies within 400 get Dance of Ruin (P. Def. and M. Def. -8%) while they stay near. Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27520	2	a,Dance of Ruin\0	a,Performance: while on, enemies within 400 get Dance of Ruin (P. Def. and M. Def. -10%) while they stay near. Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27520	3	a,Dance of Ruin\0	a,Performance: while on, enemies within 400 get Dance of Ruin (P. Def. and M. Def. -12%) while they stay near. Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27521	1	a,Dance of Ruin\0	a,P. Def. and M. Def. -8% while near the dancer.\0	a,none\0	a,none\0
+27521	2	a,Dance of Ruin\0	a,P. Def. and M. Def. -10% while near the dancer.\0	a,none\0	a,none\0
+27521	3	a,Dance of Ruin\0	a,P. Def. and M. Def. -12% while near the dancer.\0	a,none\0	a,none\0
+27522	1	a,Dance of Torment\0	a,Performance: while on, enemies within 400 get Dance of Torment (Atk. Spd. and Casting Spd. -8%, Speed -10%) while they stay near. Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27522	2	a,Dance of Torment\0	a,Performance: while on, enemies within 400 get Dance of Torment (Atk. Spd. and Casting Spd. -10%, Speed -15%) while they stay near. Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27522	3	a,Dance of Torment\0	a,Performance: while on, enemies within 400 get Dance of Torment (Atk. Spd. and Casting Spd. -12%, Speed -20%) while they stay near. Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27523	1	a,Dance of Torment\0	a,Atk. Spd. and Casting Spd. -8%, Speed -10% while near the dancer.\0	a,none\0	a,none\0
+27523	2	a,Dance of Torment\0	a,Atk. Spd. and Casting Spd. -10%, Speed -15% while near the dancer.\0	a,none\0	a,none\0
+27523	3	a,Dance of Torment\0	a,Atk. Spd. and Casting Spd. -12%, Speed -20% while near the dancer.\0	a,none\0	a,none\0
+27524	1	a,Dance of Frenzy\0	a,Performance: while on, all party members within 900 get Dance of Frenzy (Atk. Spd. and Casting Spd. +6%). Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27524	2	a,Dance of Frenzy\0	a,Performance: while on, all party members within 900 get Dance of Frenzy (Atk. Spd. and Casting Spd. +8%). Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27524	3	a,Dance of Frenzy\0	a,Performance: while on, all party members within 900 get Dance of Frenzy (Atk. Spd. and Casting Spd. +10%). Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27525	1	a,Dance of Frenzy\0	a,Atk. Spd. and Casting Spd. +6% while near the dancer.\0	a,none\0	a,none\0
+27525	2	a,Dance of Frenzy\0	a,Atk. Spd. and Casting Spd. +8% while near the dancer.\0	a,none\0	a,none\0
+27525	3	a,Dance of Frenzy\0	a,Atk. Spd. and Casting Spd. +10% while near the dancer.\0	a,none\0	a,none\0
+27526	1	a,Blade Waltz\0	a,Stance: Atk. Spd. +8%, Evasion +3. Each attack with dual swords has a 20% chance to unleash Whirling Edge, striking all enemies within 200 with 300 Power added to P. Atk. Only one stance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27526	2	a,Blade Waltz\0	a,Stance: Atk. Spd. +8%, Evasion +3. Each attack with dual swords has a 20% chance to unleash Whirling Edge, striking all enemies within 200 with 550 Power added to P. Atk. Only one stance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27526	3	a,Blade Waltz\0	a,Stance: Atk. Spd. +8%, Evasion +3. Each attack with dual swords has a 20% chance to unleash Whirling Edge, striking all enemies within 200 with 850 Power added to P. Atk. Only one stance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27526	4	a,Blade Waltz\0	a,Stance: Atk. Spd. +8%, Evasion +3. Each attack with dual swords has a 20% chance to unleash Whirling Edge, striking all enemies within 200 with 1150 Power added to P. Atk. Only one stance can be on at a time. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27527	1	a,Whirling Edge\0	a,Strikes all enemies within 200 with 300 Power added to P. Atk.\0	a,none\0	a,none\0
+27527	2	a,Whirling Edge\0	a,Strikes all enemies within 200 with 550 Power added to P. Atk.\0	a,none\0	a,none\0
+27527	3	a,Whirling Edge\0	a,Strikes all enemies within 200 with 850 Power added to P. Atk.\0	a,none\0	a,none\0
+27527	4	a,Whirling Edge\0	a,Strikes all enemies within 200 with 1150 Power added to P. Atk.\0	a,none\0	a,none\0
+27528	1	a,Danse Macabre\0	a,Strikes up to 15 enemies within 300 with 3500 Power added to P. Atk. They may also get P. Def. -20% and Speed -30% for 10 seconds. Reuse time is 2 minutes.\0	a,none\0	a,none\0

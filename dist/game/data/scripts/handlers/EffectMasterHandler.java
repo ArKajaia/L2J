@@ -137,6 +137,7 @@ public class EffectMasterHandler
 		OutpostDestroy.class,
 		Paralyze.class,
 		Passive.class,
+		PerformanceAura.class,
 		Petrification.class,
 		PhysicalDamage.class,
 		PhysicalDamageHpLink.class,

@@ -43,6 +43,7 @@ import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
+import org.l2jmobius.gameserver.model.actor.holders.player.Performers;
 import org.l2jmobius.gameserver.model.actor.instance.Cubic;
 import org.l2jmobius.gameserver.model.actor.instance.SiegeFlag;
 import org.l2jmobius.gameserver.model.actor.instance.StaticObject;
@@ -2102,6 +2103,12 @@ public class Formulas
 		if (calcSkillMastery(caster, skill))
 		{
 			time *= 2;
+		}
+		
+		// Performers' Virtuoso: their songs and dances last longer.
+		if (time > 0)
+		{
+			time = (int) (time * Performers.getDanceDurationMultiplier(caster, skill));
 		}
 		
 		// Debuffs Duration Affected by Resistances.

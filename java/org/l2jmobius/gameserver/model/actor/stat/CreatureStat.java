@@ -27,6 +27,7 @@ import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.config.custom.ClassBalanceConfig;
 import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.holders.player.Performers;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.transform.Transform;
 import org.l2jmobius.gameserver.model.item.holders.Elementals;
@@ -761,7 +762,7 @@ public class CreatureStat
 		
 		double mpConsume = skill.getMpConsume();
 		final double nextDanceMpCost = Math.ceil(skill.getMpConsume() / 2.);
-		if (skill.isDance() && PlayerConfig.DANCE_CONSUME_ADDITIONAL_MP && (_creature != null) && (_creature.getDanceCount() > 0))
+		if (skill.isDance() && PlayerConfig.DANCE_CONSUME_ADDITIONAL_MP && (_creature != null) && (_creature.getDanceCount() > 0) && !Performers.ignoresDanceStackingCost(_creature))
 		{
 			mpConsume += _creature.getDanceCount() * nextDanceMpCost;
 		}
@@ -972,4 +973,4 @@ public class CreatureStat
 	{
 		_maxBuffCount = buffCount;
 	}
-}
+}
