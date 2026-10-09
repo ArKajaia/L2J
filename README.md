@@ -701,6 +701,7 @@ Changes from 28 September – 8 October 2026.
 - **New builds**: Dreadnought, Dominator, Soultaker, Hell Knight, and the Kamael classes (Doombringer, Male/Female Soul Hound, Trickster, Judicator). Every class also gets a second gear variant. Kamael wear light armor only, like players (heavy armor and robes showed untextured on them).
 - **Servitors**: Necromancers and Hell Knights summon their servitors. Necromancers link theirs with Transfer Pain and re-summon it during PvP.
 - **Kamael mechanics**: fake players use souls, Final Form, Soul Cleanse and Warp. Disarm now works on fake players.
+- **Passive tree keystones**: fake players now take keystones: one from about 30 spent points, a second from about 90, from level 40 (`FakePvpKeystonePoints`, `FakePvpKeystoneMinLevel`). Each role picks from its own list (`FakePvpKeystones.<ROLE>`), only ones that work for a fake player and its gear (Riposte and Deflection need a shield, Far Shot a bow). The keystone mechanics now work for fake players, including Unending Fury, Relentless Assault and Arcane Plating. Trees are grown for the fake player's gear, so a `@HEAVY` or `@SHIELD` bonus only counts if it wears one, and a stat that has reached its `PassiveTreeCap` stops pulling more points.
 - **Personality**: each fake player rolls its own aggression, skill use, chattiness and roaming. The spread around the config values is set by `FakePvpPersonality*` options.
 - **Smarter play**:
   - They teleport and log off only when no player can see them.

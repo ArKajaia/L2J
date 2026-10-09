@@ -22,8 +22,10 @@ package org.l2jmobius.gameserver.config.custom;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -69,6 +71,11 @@ public class FakePlayerPvpConfig
 	public static int PASSIVE_TREE_SUBCLASS_CHANCE_MIN;
 	public static int PASSIVE_TREE_SUBCLASS_CHANCE_MAX;
 	public static int PASSIVE_TREE_VARIANTS;
+	/** Points spent at which a fake player heads for its next keystone, one entry per keystone. */
+	public static int[] PASSIVE_TREE_KEYSTONE_POINTS;
+	public static int PASSIVE_TREE_KEYSTONE_MIN_LEVEL;
+	/** Role name -> the keystones (node names, optionally {@code Name@TOKEN} for a gear condition) a fake player of that role may take. */
+	public static Map<String, List<String>> PASSIVE_TREE_KEYSTONES;
 	public static boolean BUFFS_ENABLED;
 	public static int POTION_HP_PERCENT;
 	public static int POTION_HEAL_PERCENT;
@@ -156,6 +163,31 @@ public class FakePlayerPvpConfig
 	public static boolean REWARD_DROPS;
 	public static double EQUIPMENT_DROP_CHANCE;
 	
+	/** Role name and its default FakePvpKeystones.* list. */
+	private static final String[][] DEFAULT_KEYSTONES =
+	{
+		{
+			"FIGHTER",
+			"Unending Fury;Relentless Assault;Whirling Steel;Berserk Pact;Bloodletter;Glass Cannon"
+		},
+		{
+			"TANK",
+			"Unwavering Stance;Deflection@SHIELD;Arcane Plating;Riposte@SHIELD;Living Fortress;Purity of Flesh"
+		},
+		{
+			"DAGGER",
+			"Unwavering Stance;Purity of Flesh;Nocturne;Child of Night"
+		},
+		{
+			"ARCHER",
+			"Far Shot@BOW;Relentless Assault;Glass Cannon"
+		},
+		{
+			"MAGE",
+			"Chaos Weave;Spell Echo;Arc Conduit;Vampiric Sorcery;Ley Anchor;Unshaken Mind"
+		}
+	};
+	
 	public static void load()
 	{
 		final ConfigReader config = new ConfigReader(FAKE_PLAYER_PVP_CONFIG_FILE);
@@ -203,6 +235,39 @@ public class FakePlayerPvpConfig
 		PASSIVE_TREE_SUBCLASS_CHANCE_MIN = Math.max(0, Math.min(100, config.getInt("FakePvpPassiveTreeSubclassChanceMin", 10)));
 		PASSIVE_TREE_SUBCLASS_CHANCE_MAX = Math.max(0, Math.min(100, config.getInt("FakePvpPassiveTreeSubclassChanceMax", 75)));
 		PASSIVE_TREE_VARIANTS = Math.max(1, Math.min(64, config.getInt("FakePvpPassiveTreeVariants", 8)));
+		final List<Integer> keystonePoints = new ArrayList<>();
+		for (String entry : config.getString("FakePvpKeystonePoints", "30,90").split(","))
+		{
+			entry = entry.trim();
+			if (!entry.isEmpty())
+			{
+				try
+				{
+					keystonePoints.add(Math.max(0, Integer.parseInt(entry)));
+				}
+				catch (NumberFormatException e)
+				{
+					LOGGER.warning("FakePlayerPvpConfig: Invalid FakePvpKeystonePoints entry: " + entry);
+				}
+			}
+		}
+		PASSIVE_TREE_KEYSTONE_POINTS = keystonePoints.stream().sorted().mapToInt(Integer::intValue).toArray();
+		PASSIVE_TREE_KEYSTONE_MIN_LEVEL = Math.max(1, config.getInt("FakePvpKeystoneMinLevel", 40));
+		final Map<String, List<String>> keystones = new HashMap<>();
+		for (String[] role : DEFAULT_KEYSTONES)
+		{
+			final List<String> names = new ArrayList<>();
+			for (String name : config.getString("FakePvpKeystones." + role[0], role[1]).split(";"))
+			{
+				name = name.trim();
+				if (!name.isEmpty())
+				{
+					names.add(name);
+				}
+			}
+			keystones.put(role[0], List.copyOf(names));
+		}
+		PASSIVE_TREE_KEYSTONES = keystones;
 		BUFFS_ENABLED = config.getBoolean("FakePvpBuffsEnabled", true);
 		POTION_HP_PERCENT = Math.max(0, Math.min(100, config.getInt("FakePvpPotionHpPercent", 50)));
 		POTION_HEAL_PERCENT = Math.max(0, Math.min(100, config.getInt("FakePvpPotionHealPercent", 6)));
