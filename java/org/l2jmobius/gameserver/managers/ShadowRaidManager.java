@@ -119,8 +119,9 @@ public class ShadowRaidManager
 
 	/**
 	 * Night fell: the night's raids are set for random times before the Witching Hour.
+	 * @param secondsToDawn the real seconds until dawn; passed in because {@link NightCycleManager} calls this from its constructor at a night boot, before {@link NightCycleManager#getInstance()} can return it
 	 */
-	public synchronized void onNightfall()
+	public synchronized void onNightfall(int secondsToDawn)
 	{
 		cancelScheduled();
 		if (!isEnabled() || (NightCycleConfig.NIGHT_RAID_COUNT <= 0))
@@ -129,7 +130,7 @@ public class ShadowRaidManager
 		}
 
 		// Before the Witching Hour, which has its own dead to deal with.
-		final int nightSeconds = NightCycleManager.getInstance().getRealSecondsToDawn() - (NightCycleConfig.WITCHING_HOUR_MINUTES * 10);
+		final int nightSeconds = secondsToDawn - (NightCycleConfig.WITCHING_HOUR_MINUTES * 10);
 		final int last = Math.max(FIRST_RAID_MAX, nightSeconds - 300);
 		for (int i = 0; i < NightCycleConfig.NIGHT_RAID_COUNT; i++)
 		{

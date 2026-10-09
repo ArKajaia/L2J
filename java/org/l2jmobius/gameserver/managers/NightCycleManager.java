@@ -280,7 +280,7 @@ public class NightCycleManager
 		HotzoneModifierManager.getInstance().setNightModifier(NightCycleConfig.OMENS_ENABLED ? _omen : null);
 		_nightWatch.clear();
 		NightlordManager.getInstance().onNightfall();
-		ShadowRaidManager.getInstance().onNightfall();
+		ShadowRaidManager.getInstance().onNightfall(getRealSecondsToDawn());
 
 		if (announce)
 		{
