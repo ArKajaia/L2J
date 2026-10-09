@@ -944,10 +944,12 @@ public class PassiveTreeApiServer
 		final List<PassiveTreeEditor.EditNode> nodes;
 		try
 		{
-			if (!(SimpleJson.parse(body) instanceof Map<?, ?> request))
+			final Object parsed = SimpleJson.parse(body);
+			if (!(parsed instanceof Map))
 			{
 				throw new IllegalArgumentException("expected a JSON object");
 			}
+			final Map<?, ?> request = (Map<?, ?>) parsed;
 			version = String.valueOf(request.get("version"));
 			dryRun = Boolean.TRUE.equals(request.get("dryRun"));
 			nodes = PassiveTreeEditor.fromJson(request.get("nodes"));

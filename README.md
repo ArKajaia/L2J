@@ -831,6 +831,7 @@ Changes from 28 September – 9 October 2026.
 
 ### Fixes & Misc
 - `AdminFakePlayers` failed to compile under the script engine's Java 8 source level, which disabled all handlers. This is fixed.
+- `PassiveTreeApiServer` (the passive tree web editor, started by `MasterHandler`) used Java 16 pattern matching, which fails under the same Java 8 source level and takes the handlers down with it. This is fixed; every script now compiles at `-source 1.8`.
 - The passive tree XSD validation errors and the missing skill 90302 are fixed. The passive skill tree page now has a search box.
 - Attribute stones no longer open an empty window when no item can take the attribute.
 - The champion buff medal now follows auto-loot rules.
