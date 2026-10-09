@@ -26,11 +26,12 @@ import java.util.List;
 import org.l2jmobius.gameserver.config.custom.PerformersConfig;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
-import org.l2jmobius.gameserver.model.actor.Summon;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 import org.l2jmobius.gameserver.model.conditions.Condition;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
@@ -46,6 +47,7 @@ import org.l2jmobius.gameserver.util.LocationUtil;
  * <li>{@code affects} ENEMY: monsters and players the performer could attack (a debuff, rolled once with the echo's own land chance, then held while they stay in range).</li>
  * </ul>
  * The echo is extended rather than cast again, so nobody gets an "effect can be felt" message every tick. The same echo from two performers doesn't stack: the higher level holds the slot, and on a tie whoever got there first.<br>
+ * A roaming fake player performs too: its party is the one it hunts with (fake players and players, see {@link FakePartyManager}), and its hexes reach what its area skills reach.<br>
  * A stunned, sleeping or paralyzed performer stops performing until it ends. Turning the toggle off takes its echoes away at once, so switching performances can't keep two going.
  * @author Mobius
  */
@@ -127,7 +129,7 @@ public class PerformanceAura extends AbstractEffect
 
 			for (Creature target : World.getInstance().getVisibleObjectsInRange(performer, Creature.class, _range))
 			{
-				if (isHexTarget(performer, target))
+				if (isHexTarget(performer, target, echo))
 				{
 					keepEcho(performer, target, echo);
 				}
@@ -180,31 +182,39 @@ public class PerformanceAura extends AbstractEffect
 
 	/**
 	 * @param performer the performer
-	 * @return the performer, the party members and every summon among them
+	 * @return the performer, the party members (players and fake players) and every summon among them
 	 */
 	private static List<Creature> getParty(Creature performer)
 	{
-		final List<Creature> result = new ArrayList<>();
+		final List<? extends Creature> members;
+		final FakePlayerParty fakeParty = FakePartyManager.getInstance().getParty(performer);
 		final Player player = performer.asPlayer();
-		if ((player != null) && player.isInParty())
+		if (fakeParty != null)
 		{
-			for (Player member : player.getParty().getMembers())
-			{
-				result.add(member);
-				if (member.hasSummon())
-				{
-					result.add(member.getSummon());
-				}
-			}
+			members = fakeParty.getMembers(); // The players of the party and its fake players.
+		}
+		else if ((player != null) && player.isInParty())
+		{
+			members = player.getParty().getMembers();
 		}
 		else
 		{
-			result.add(performer);
-			if (performer.isPlayer() && performer.asPlayer().hasSummon())
+			members = List.of(performer);
+		}
+
+		final List<Creature> result = new ArrayList<>(members.size() + 2);
+		for (Creature member : members)
+		{
+			result.add(member);
+			if (member.isPlayer() && member.asPlayer().hasSummon())
 			{
-				final Summon summon = performer.asPlayer().getSummon();
-				result.add(summon);
+				result.add(member.asPlayer().getSummon());
 			}
+		}
+
+		if (!result.contains(performer))
+		{
+			result.add(performer);
 		}
 
 		return result;
@@ -213,22 +223,30 @@ public class PerformanceAura extends AbstractEffect
 	/**
 	 * @param performer the performer
 	 * @param target a character in range
+	 * @param echo the hex
 	 * @return {@code true} if a hex can reach the target: an enemy the performer could attack without forcing it, in sight, outside a peace zone
 	 */
-	private static boolean isHexTarget(Creature performer, Creature target)
+	private static boolean isHexTarget(Creature performer, Creature target, Skill echo)
 	{
 		if ((target == performer) || target.isAlikeDead() || target.isInvul() || !(target.isAttackable() || target.isPlayable()) || target.isInsideZone(ZoneId.PEACE))
 		{
 			return false;
 		}
 
+		// Fake players count as players.
+		if (!PerformersConfig.HEX_AFFECTS_PLAYERS && (target.isPlayable() || target.isFakePlayer()))
+		{
+			return false;
+		}
+
+		// A fake performer: like its area skills, monsters, and the players (and fake players) it fights or that are flagged, never its party, clan or alliance.
+		if (performer.isPvpFakePlayer())
+		{
+			return Skill.checkForAreaOffensiveSkills(performer, target, echo, false);
+		}
+
 		if (target.isPlayable())
 		{
-			if (!PerformersConfig.HEX_AFFECTS_PLAYERS)
-			{
-				return false;
-			}
-
 			// Never the performer's own party, clan or alliance (or their summons), whatever the zone.
 			final Player player = performer.asPlayer();
 			final Player other = target.asPlayer();

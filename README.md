@@ -237,6 +237,7 @@ The passive tree lets any character take Spoil, Sweeper Festival, Crystallize an
   - **Golem Engineering** (crafters): their golems and cannons get +10 / 20 / 30% P.Atk, M.Atk, P.Def, M.Def and max HP, on top of the tree's summon nodes.
   - **Forged Gear** (crafters): every enchant level above +3 on their weapon gives +0.5 / 0.75 / 1% P.Atk, and on each armour piece (shield too) +0.1 / 0.15 / 0.2% P.Def, up to +15% each. It shows in the character window.
 - Everything follows the active class: a dwarven subclass counts, a dwarf playing a non-dwarven subclass doesn't. Settings in `config/Custom/DwarvenTrades.ini`.
+- **Fake players**: the Fortune Seeker and Maestro fake players get the combat perks of their class too (Skullcrusher, a Spoil that never misses, Plunderer's Mark, Golem Engineering on their golem, Forged Gear on their gear). A Fortune Seeker spoils the monster it fights first, and the players of its party can sweep it, with its spoiler bonus.
 
 ### Performers
 
@@ -261,6 +262,7 @@ Glittering Medals from champions teach every class the songs and dances, so the 
 - **Virtuoso**: songs and dances a performer casts last ×1.5 (Swordsinger, Bladedancer) or ×2 (Sword Muse, Spectral Dancer), and singing one more doesn't cost them the extra MP everyone else pays, so a performer's songs outlast anyone's medal songs.
 - Performances drain MP for as long as they are on (about 3 MP per second at 76, a stance about 2), proportionate to the level like Vicious Stance.
 - The skills are learned from the Grand Masters like any class skill (data/stats/skills/custom/performer_skills.xml). Everything follows the active class. The client needs the rows in `client/Performers` to show their names and icons. Settings in `config/Custom/Performers.ini`.
+- **Fake players**: Battle Bards and War Dancers (fake players of the two lines) hunt with their stance on and a performance going, switch performance when they fight a player (a War Dancer from Dance of Ruin to Dance of Torment, a Battle Bard from Anthem of Valor to Ballad of the Bulwark) and save their finale for players. The Sword Muse and Spectral Dancer that join parties play for the party. A fake performer's auras reach its party, players and fake players alike, and its hexes reach what its area skills reach; a player's auras reach the fake players of its party. Virtuoso counts for them.
 
 ### Other Custom Features at a Glance
 
@@ -631,6 +633,15 @@ This program is free software, licensed under the **GNU General Public License, 
 
 Changes from 28 September – 9 October 2026.
 
+### Fake Players: dwarves and performers
+- **Dwarven builds**: Fortune Seeker and Maestro roam, hunt, fight in the PvP spots and live in the towns (the Dwarven Village had no dwarves), with one-handed blunts and shields, or two-handed blunts (`Fortune Seeker Crusher`, `Maestro Crusher`), and a polearm for monster packs. They are also the Rival Shades of the dwarven class transfers.
+  - Fortune Seekers spoil the monster they fight first (Spoil, Spoil Crush at 76), stun with Hammer Crush and Armor Crush and hit with Crushing Strike, Fatal Strike and, from 83, Lucky Strike on packs.
+  - Maestros fight next to their Mechanic Golem, open with Rush or Rush Impact, heal with Battle Cry and put on Golem Armor when a PvP gets serious.
+  - The Dwarven Trades work for them like for players: Skullcrusher, a Spoil that never misses, Plunderer's Mark, Golem Engineering on their golem and Forged Gear on their enchanted gear. A fake player's spoil can be swept by the players of its party, and its spoiler bonus counts.
+- **Performer builds**: Battle Bard (Sword Muse line) and War Dancer (Spectral Dancer line) hunt and fight on their own. Their stance is always on (Battle Hymn, Blade Waltz), they play a hunting performance and switch to another one against players, and they save their finale for players. The party-only Sword Muse and Spectral Dancer now keep up their own performance and stance too, and the Sword Muse heals the party with Sanctuary Chorus.
+- **Performances with fake players**: a fake performer's party auras reach its party (players and fake players), and its hexes reach what its area skills reach. A player's performance now reaches the fake players of its party too. Virtuoso counts for fake performers. `HexAffectsPlayers = False` now spares fake players as well.
+- New `perform` and `spoil` skill lists in `data/FakePlayerPvp.xml`.
+
 ### Performers
 - **Swordsinger and Bladedancer lines reworked**: Glittering Medals teach everyone the songs and dances, so the performers now get toggle auras nobody else has, a combat stance, a level 79 finale and longer-lasting songs and dances. See [Performers](#performers).
 - **Performances** (one at a time): Ballad of the Bulwark, Hymn of Renewal and Anthem of Valor (Swordsinger line, party auras), Dance of Ruin and Dance of Torment (Bladedancer line, enemy hexes) and Dance of Frenzy (Bladedancer line, party aura). They stack with every buff and medal song.
@@ -756,7 +767,8 @@ Changes from 28 September – 9 October 2026.
 
 ### Fake Players
 - **New builds**: Dreadnought, Dominator, Soultaker, Hell Knight, and the Kamael classes (Doombringer, Male/Female Soul Hound, Trickster, Judicator). Every class also gets a second gear variant. Kamael wear light armor only, like players (heavy armor and robes showed untextured on them).
-- **Servitors**: Necromancers and Hell Knights summon their servitors. Necromancers link theirs with Transfer Pain and re-summon it during PvP.
+- **Dwarves and performers**: Fortune Seeker and Maestro builds (blunts, stuns, Spoil, the Mechanic Golem and Golem Armor, with their Dwarven Trades perks), and Battle Bard and War Dancer, a Sword Muse and a Spectral Dancer that hunt on their own with their performances, stances and finales. See [Dwarven Trades](#dwarven-trades) and [Performers](#performers).
+- **Servitors**: Necromancers, Hell Knights and Maestros summon their servitors. Necromancers link theirs with Transfer Pain and re-summon it during PvP.
 - **Kamael mechanics**: fake players use souls, Final Form, Soul Cleanse and Warp. Disarm now works on fake players.
 - **Passive tree keystones**: fake players now take keystones: one from about 30 spent points, a second from about 90, from level 40 (`FakePvpKeystonePoints`, `FakePvpKeystoneMinLevel`). Each role picks from its own list (`FakePvpKeystones.<ROLE>`), only ones that work for a fake player and its gear (Riposte and Deflection need a shield, Far Shot a bow). The keystone mechanics now work for fake players, including Unending Fury, Relentless Assault and Arcane Plating. Trees are grown for the fake player's gear, so a `@HEAVY` or `@SHIELD` bonus only counts if it wears one, and a stat that has reached its `PassiveTreeCap` stops pulling more points.
 - **Personality**: each fake player rolls its own aggression, skill use, chattiness and roaming. The spread around the config values is set by `FakePvpPersonality*` options.

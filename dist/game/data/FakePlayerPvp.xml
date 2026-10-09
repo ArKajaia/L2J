@@ -38,10 +38,16 @@
 	     "a|b|c" means only the first learned one is used (e.g. exclusive totems).
 	     attack    - damage skills, most preferred first.
 	     debuff    - stuns, roots and debuffs (mostly used against players).
+	     spoil     - Spoil skills (Spoil, Spoil Crush): a spoiler spoils the monster it fights first, if it has
+	                 something to sweep (never a player), so its party can sweep it and Plunderer's Mark counts.
 	     buff      - self buffs kept up while fighting.
 	     heal      - self heals.
 	     emergency - used below 30% HP.
 	     toggle    - toggles switched on at spawn.
+	     perform   - performances of the Swordsinger and Bladedancer lines (one at a time, see config/Custom/Performers.ini):
+	                 the first one is kept on while it hunts, the second one while it fights a player (the first one
+	                 when there is no second). Performances it hasn't learned yet are left out, so list them in the
+	                 order they are learned, e.g. "27504|27500" for Anthem of Valor, or Ballad of the Bulwark before 52.
 	     charge    - skills that build Sonic/Force energy (Duelist, Tyrant). Energy is spent by the energy
 	                 skills like a player's, so they charge up between and during fights.
 	     move      - short speed buffs used to catch a player that gets away, or to run away (Dash, Sonic Move).
@@ -277,6 +283,27 @@
 		<tier minLevel="76" rhand="6579" /> <!-- Arcana Mace -->
 		<tier minLevel="80" rhand="10222" /> <!-- Icarus Hall -->
 		<tier minLevel="84" rhand="13465" /> <!-- Vesper Caster -->
+	</kit>
+	<!-- Dwarves: fighter blunts for Stun Attack, Hammer Crush, Crushing Strike and Spoil Crush (see README "Dwarven Trades"). -->
+	<kit name="BLUNT_SHIELD">
+		<tier minLevel="1" rhand="87" lhand="102" /> <!-- Iron Hammer / Round Shield -->
+		<tier minLevel="20" rhand="159" lhand="2493" /> <!-- Bonebreaker / Brigandine Shield -->
+		<tier minLevel="40" rhand="2503" lhand="2497" /> <!-- Yaksa Mace / Full Plate Shield -->
+		<tier minLevel="52" rhand="175" lhand="110" /> <!-- Art of Battle Axe / Doom Shield -->
+		<tier minLevel="61" rhand="8680" lhand="2498" /> <!-- Barakiel's Axe / Shield of Nightmare -->
+		<tier minLevel="76" rhand="6365" lhand="6377" /> <!-- Basalt Battlehammer / Imperial Crusader Shield -->
+		<tier minLevel="80" rhand="10220" lhand="9441" /> <!-- Icarus Hammer / Dynasty Shield -->
+		<tier minLevel="84" rhand="13463" lhand="13471" /> <!-- Vesper Avenger / Vesper Shield -->
+	</kit>
+	<kit name="BIGBLUNT">
+		<tier minLevel="1" rhand="87" /> <!-- Iron Hammer (no two-handed blunt below D grade) -->
+		<tier minLevel="20" rhand="7896" /> <!-- Titan Hammer -->
+		<tier minLevel="40" rhand="7897" /> <!-- Dwarven Hammer -->
+		<tier minLevel="52" rhand="7901" /> <!-- Star Buster -->
+		<tier minLevel="61" rhand="8681" /> <!-- Behemoth's Tuning Fork -->
+		<tier minLevel="76" rhand="6369" /> <!-- Dragon Hunter Axe -->
+		<tier minLevel="80" rhand="10253" /> <!-- Dynasty Crusher -->
+		<tier minLevel="84" rhand="13464" /> <!-- Vesper Retributer -->
 	</kit>
 
 	<!-- Second builds (see <variant>): other sets of the same grades, and "legacy" kits that keep their A grade gear through the S grade (76) tier and only move on at S80. -->
@@ -1031,6 +1058,85 @@
 		<variant name="Dreadnought Legacy" weapon="POLEARM_ALT" armor="HEAVY_LEGACY" weight="1" />
 	</build>
 
+	<!-- Dwarves: blunts, stuns, Spoil and golems, with the Dwarven Trades perks of their class (config/Custom/DwarvenTrades.ini):
+	     Skullcrusher, a Spoil that never misses and Plunderer's Mark for spoilers, Golem Engineering and Forged Gear for crafters.
+	     They carry a polearm for monster packs (Whirlwind, Earthquake). -->
+	<build name="Fortune Seeker" classId="117" role="FIGHTER" weapon="BLUNT_SHIELD" armor="HEAVY" polearm="POLEARM" weight="2"> <!-- Bounty Hunter line -->
+		<attack>947,997,190,36|245,347</attack> <!-- Lucky Strike, Crushing Strike, Fatal Strike, Whirlwind / Wild Sweep, Earthquake -->
+		<debuff>260|100,362</debuff> <!-- Hammer Crush / Stun Attack, Armor Crush -->
+		<spoil>348|254</spoil> <!-- Spoil Crush / Spoil -->
+		<buff>917</buff> <!-- Final Secret -->
+		<toggle>424</toggle> <!-- War Frenzy -->
+		<peel>260|100,362</peel>
+		<combo name="Crush the armor" pvp="true">
+			<step skill="917" self="true" optional="true" /> <!-- Final Secret -->
+			<step skill="362" /> <!-- Armor Crush: shock, P. Def. and M. Def. down -->
+			<step skill="997" /> <!-- Crushing Strike -->
+			<step skill="190" optional="true" /> <!-- Fatal Strike -->
+		</combo>
+		<combo name="Stun and crush" pvp="true">
+			<step skill="260|100" /> <!-- Hammer Crush / Stun Attack -->
+			<step skill="997" disabledTarget="true" optional="true" /> <!-- Crushing Strike, while it is stunned -->
+			<step skill="190" /> <!-- Fatal Strike -->
+		</combo>
+		<variant name="Fortune Seeker Crusher" weapon="BIGBLUNT" weight="1" />
+	</build>
+	<build name="Maestro" classId="118" role="FIGHTER" weapon="BLUNT_SHIELD" armor="HEAVY" polearm="POLEARM" weight="2"> <!-- Warsmith line -->
+		<attack>190,36|245,347</attack> <!-- Fatal Strike, Whirlwind / Wild Sweep, Earthquake -->
+		<debuff>260|100,362</debuff> <!-- Hammer Crush / Stun Attack, Armor Crush -->
+		<buff>917</buff> <!-- Final Secret -->
+		<emergency>1561</emergency> <!-- Battle Cry: heals 15% and raises max HP -->
+		<toggle>424</toggle> <!-- War Frenzy -->
+		<rush>995,994</rush> <!-- Rush Impact, Rush -->
+		<peel>260|100,362</peel>
+		<summon>25</summon> <!-- Summon Mechanic Golem -->
+		<transform>778</transform> <!-- Golem Armor -->
+		<combo name="Stun and strike" pvp="true">
+			<step skill="260|100" /> <!-- Hammer Crush / Stun Attack -->
+			<step skill="362" optional="true" /> <!-- Armor Crush -->
+			<step skill="190" /> <!-- Fatal Strike -->
+		</combo>
+		<variant name="Maestro Crusher" weapon="BIGBLUNT" weight="1" />
+	</build>
+
+	<!-- Performers who hunt on their own (the Sword Muse and Spectral Dancer below are their party buffers): a performance
+	     and a stance always on, the finale saved for players (see config/Custom/Performers.ini). -->
+	<build name="Battle Bard" classId="100" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2"> <!-- Swordsinger line -->
+		<attack>98,3</attack> <!-- Sword Symphony, Power Strike -->
+		<debuff>102,402,437</debuff> <!-- Entangle, Arrest, Song of Silence -->
+		<buff>112,123</buff> <!-- Deflect Arrow, Spirit Barrier -->
+		<heal>58</heal> <!-- Elemental Heal -->
+		<emergency>27508,110</emergency> <!-- Sanctuary Chorus, Ultimate Defense -->
+		<toggle>27506</toggle> <!-- Battle Hymn: its attacks may heal it and its party -->
+		<perform>27504|27502|27500,27500</perform> <!-- Hunting: Anthem of Valor / Hymn of Renewal / Ballad of the Bulwark. PvP: Ballad of the Bulwark -->
+		<peel>102,402</peel>
+		<cleanse>21,61</cleanse> <!-- Poison Recovery, Cure Bleeding -->
+		<combo name="Song of Silence" pvp="true" chance="50">
+			<step skill="437" /> <!-- Song of Silence -->
+			<step skill="98" optional="true" /> <!-- Sword Symphony -->
+			<step skill="3" /> <!-- Power Strike -->
+		</combo>
+		<variant name="Battle Bard Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
+	</build>
+	<build name="War Dancer" classId="107" role="FIGHTER" weapon="DUAL" armor="HEAVY" weight="2"> <!-- Bladedancer line -->
+		<attack>27528,408,84,223,70</attack> <!-- Danse Macabre, Demonic Blade Dance, Poison Blade Dance, Sting, Drain Health -->
+		<debuff>122,115,105,402</debuff> <!-- Hex, Power Break, Freezing Strike, Arrest -->
+		<toggle>27526</toggle> <!-- Blade Waltz: its dual sword attacks may slash every enemy around -->
+		<perform>27520,27522|27520</perform> <!-- Hunting: Dance of Ruin. PvP: Dance of Torment / Dance of Ruin -->
+		<peel>402,105</peel>
+		<combo name="Hex and blade dance" pvp="true">
+			<step skill="122" /> <!-- Hex -->
+			<step skill="408" /> <!-- Demonic Blade Dance -->
+			<step skill="223" optional="true" /> <!-- Sting -->
+		</combo>
+		<combo name="Danse Macabre" pvp="true" chance="50">
+			<step skill="402" optional="true" /> <!-- Arrest -->
+			<step skill="27528" /> <!-- Danse Macabre -->
+			<step skill="408" optional="true" /> <!-- Demonic Blade Dance -->
+		</combo>
+		<variant name="War Dancer Light" armor="LIGHT_FIGHTER" weight="1" />
+	</build>
+
 	<!-- Support: healers, buffers, songs and dances. weight="0": they don't roam on their own, they come when a player
 	     looks for one ("lf bishop" in chat) or travel with a fake party (see config/Custom/FakeParty.ini).
 	     support="true": in a party they look after the other members first (heals, resurrection, recharge, buffs)
@@ -1108,15 +1214,20 @@
 		<debuff>102,402,437</debuff> <!-- Entangle, Arrest, Song of Silence -->
 		<buff>112,123</buff> <!-- Deflect Arrow, Spirit Barrier -->
 		<heal>58</heal> <!-- Elemental Heal -->
-		<emergency>110</emergency> <!-- Ultimate Defense -->
+		<emergency>27508,110</emergency> <!-- Sanctuary Chorus, Ultimate Defense -->
+		<toggle>27506</toggle> <!-- Battle Hymn: its attacks may heal the party -->
+		<perform>27504|27500,27500</perform> <!-- Hunting: Anthem of Valor / Ballad of the Bulwark. PvP: Ballad of the Bulwark -->
 		<peel>102,402</peel>
 		<cleanse>21,61</cleanse> <!-- Poison Recovery, Cure Bleeding -->
+		<groupHeal>27508</groupHeal> <!-- Sanctuary Chorus -->
 		<partyBuff>364,267,268,269,264,304,363,349,529,764,265,266,270,305,306,308,914</partyBuff> <!-- Champion, Warding, Wind, Hunter, Earth, Vitality, Meditation, Renewal, Elemental, Wind Storm, Life, Water, Invocation, Vengeance, Flame Guard, Storm Guard, Purification -->
 		<variant name="Sword Muse Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="0" />
 	</build>
 	<build name="Spectral Dancer" classId="107" role="FIGHTER" weapon="DUAL" armor="HEAVY" weight="0" support="true"> <!-- Bladedancer line -->
-		<attack>408,84,223,70,3</attack> <!-- Demonic Blade Dance, Poison Blade Dance, Sting, Drain Health, Power Strike -->
+		<attack>27528,408,84,223,70</attack> <!-- Danse Macabre, Demonic Blade Dance, Poison Blade Dance, Sting, Drain Health -->
 		<debuff>122,115,105,402</debuff> <!-- Hex, Power Break, Freezing Strike, Arrest -->
+		<toggle>27526</toggle> <!-- Blade Waltz -->
+		<perform>27524|27520,27520</perform> <!-- Hunting: Dance of Frenzy / Dance of Ruin. PvP: Dance of Ruin -->
 		<peel>402,105</peel>
 		<partyBuff>271,275,274,310,915,765,273,276,365,530,311,272,307,309,277</partyBuff> <!-- Warrior, Fury, Fire, Vampire, Berserker, Blade Storm, Mystic, Concentration, Siren, Alignment, Protection, Inspiration, Aqua/Earth Guard, Light -->
 		<variant name="Spectral Dancer Light" armor="LIGHT_FIGHTER" weight="0" />

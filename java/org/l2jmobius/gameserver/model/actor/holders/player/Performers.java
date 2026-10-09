@@ -32,7 +32,7 @@ import org.l2jmobius.gameserver.model.skill.Skill;
  * <li>Performances, Stances and the 3rd class finales: their own skills (data/stats/skills/custom/performer_skills.xml, in their class skill trees), see the PerformanceAura effect.</li>
  * <li>Virtuoso: songs and dances they cast last longer, and singing one more doesn't cost them extra MP.</li>
  * </ul>
- * Everything follows the active class, so a performer subclass counts and a performer playing another subclass doesn't.
+ * Everything follows the active class, so a performer subclass counts and a performer playing another subclass doesn't. A roaming fake player of a performer class counts too.
  * @author Mobius
  */
 public class Performers
@@ -47,12 +47,20 @@ public class Performers
 	 */
 	public static int getPerformerTier(Player player)
 	{
-		if (!PerformersConfig.PERFORMERS_ENABLED || (player == null))
+		return player != null ? getPerformerTier(player.getPlayerClass()) : 0;
+	}
+
+	/**
+	 * @param playerClass the active class
+	 * @return 1 for a Swordsinger or Bladedancer, 2 for a Sword Muse or Spectral Dancer, 0 otherwise
+	 */
+	private static int getPerformerTier(PlayerClass playerClass)
+	{
+		if (!PerformersConfig.PERFORMERS_ENABLED || (playerClass == null))
 		{
 			return 0;
 		}
 
-		final PlayerClass playerClass = player.getPlayerClass();
 		if (playerClass.equalsOrChildOf(PlayerClass.SWORDSINGER) || playerClass.equalsOrChildOf(PlayerClass.BLADEDANCER))
 		{
 			return playerClass.level() - 1;
@@ -63,7 +71,17 @@ public class Performers
 
 	private static int getPerformerTier(Creature creature)
 	{
-		return (creature != null) && creature.isPlayer() ? getPerformerTier(creature.asPlayer()) : 0;
+		if (creature == null)
+		{
+			return 0;
+		}
+
+		if (creature.isPlayer())
+		{
+			return getPerformerTier(creature.asPlayer());
+		}
+
+		return creature.isPvpFakePlayer() ? getPerformerTier(creature.asNpc().getTemplate().getFakePlayerPvpProfile().getPlayerClass()) : 0;
 	}
 
 	/**

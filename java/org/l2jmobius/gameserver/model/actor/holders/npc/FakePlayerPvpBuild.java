@@ -62,10 +62,14 @@ public class FakePlayerPvpBuild
 	{
 		ATTACK,
 		DEBUFF,
+		/** Spoil skills (Spoil, Spoil Crush): a spoiler spoils the monster it fights first, never a player. */
+		SPOIL,
 		BUFF,
 		HEAL,
 		EMERGENCY,
 		TOGGLE,
+		/** Performances of the Swordsinger and Bladedancer lines (one at a time): the first is kept on while it hunts, the second while it fights a player. */
+		PERFORM,
 		/** Skills that build Sonic/Force energy (Sonic Focus, Maximum Focus Sonic...). */
 		CHARGE,
 		/** Speed buffs used to catch a player that runs away, or to run away (Dash, Sprint, Sonic Move). */

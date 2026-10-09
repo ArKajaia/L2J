@@ -43,10 +43,12 @@
 						<xs:sequence>
 							<xs:element name="attack" type="xs:string" minOccurs="0" />
 							<xs:element name="debuff" type="xs:string" minOccurs="0" />
+							<xs:element name="spoil" type="xs:string" minOccurs="0" />
 							<xs:element name="buff" type="xs:string" minOccurs="0" />
 							<xs:element name="heal" type="xs:string" minOccurs="0" />
 							<xs:element name="emergency" type="xs:string" minOccurs="0" />
 							<xs:element name="toggle" type="xs:string" minOccurs="0" />
+							<xs:element name="perform" type="xs:string" minOccurs="0" />
 							<xs:element name="charge" type="xs:string" minOccurs="0" />
 							<xs:element name="move" type="xs:string" minOccurs="0" />
 							<xs:element name="rush" type="xs:string" minOccurs="0" />

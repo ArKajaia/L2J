@@ -1544,11 +1544,17 @@ public class Attackable extends Npc
 	/**
 	 * @param sweeper the player to validate.
 	 * @param sendMessage sendMessage if {@code true} will send a message of sweep not allowed.
-	 * @return {@code true} if is the spoiler or is in the spoiler party.
+	 * @return {@code true} if is the spoiler or is in the spoiler party (a fake player that spoiled it counts, see {@link FakePartyManager}).
 	 */
 	public boolean checkSpoilOwner(Player sweeper, boolean sendMessage)
 	{
 		if ((sweeper.getObjectId() == _spoilerObjectId) || sweeper.isInLooterParty(_spoilerObjectId))
+		{
+			return true;
+		}
+		
+		final WorldObject spoiler = _spoilerObjectId != 0 ? World.getInstance().findObject(_spoilerObjectId) : null;
+		if ((spoiler != null) && spoiler.isFakePlayer() && FakePartyManager.getInstance().isSameGroup(sweeper, spoiler.asCreature()))
 		{
 			return true;
 		}

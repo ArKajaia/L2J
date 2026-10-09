@@ -49,6 +49,7 @@ import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
+import org.l2jmobius.gameserver.model.actor.holders.npc.DropHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
@@ -750,6 +751,12 @@ public class FakePlayerPvpAI extends AttackableAI
 			_autoAttacker = true;
 		}
 		
+		// A performer plays its PvP performance while it fights a player, its hunting one otherwise. Switching is instant, like a player's toggle.
+		if (!profile.getSkills(SkillCategory.PERFORM).isEmpty())
+		{
+			FakePlayerPvpManager.getInstance().keepPerformance(npc, profile, pvp || FakePlayerPvpManager.isInPvp(npc));
+		}
+		
 		// Take care of itself first: emergency skills, cleansing, heals, buffs.
 		if ((hpRatio < 0.3) && castOnSelf(npc, target, profile.getSkills(SkillCategory.EMERGENCY), true, true))
 		{
@@ -840,6 +847,12 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		// Duelists and tyrants recharge their energy when they are running low (big energy skills need 2-4 charges).
 		if ((profile.getMaxCharges() > 0) && (profile.getCharges() < profile.getMaxCharges()) && ((profile.getCharges() < Math.min(4, profile.getMaxCharges())) || (Rnd.get(100) < 20)) && castOnSelf(npc, target, profile.getSkills(SkillCategory.CHARGE), true, pvp))
+		{
+			return;
+		}
+		
+		// A spoiler spoils the monster it fights first (Spoil, Spoil Crush), so it can be swept.
+		if (!pvp && isSpoilable(target) && useSkill(npc, target, pickSkill(npc, target, profile.getSkills(SkillCategory.SPOIL), false, -1, false, 0), distance, collision, canMove))
 		{
 			return;
 		}
@@ -3429,6 +3442,21 @@ public class FakePlayerPvpAI extends AttackableAI
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * @param target the creature it fights
+	 * @return {@code true} for a monster that isn't spoiled yet and has something to sweep
+	 */
+	private static boolean isSpoilable(Creature target)
+	{
+		if (!target.isMonster() || target.isFakePlayer() || target.isAlikeDead() || target.asMonster().isSpoiled())
+		{
+			return false;
+		}
+		
+		final List<DropHolder> spoils = target.asMonster().getTemplate().getSpoilList();
+		return (spoils != null) && !spoils.isEmpty();
 	}
 	
 	/**
