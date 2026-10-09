@@ -34,5 +34,11 @@
 		<skill skillName="Deadly Strike" skillId="986" skillLevel="23" getLevel="83" levelUpSp="26000000" learnedByNpc="true" />
 		<skill skillName="Deadly Strike" skillId="986" skillLevel="24" getLevel="84" levelUpSp="27000000" learnedByNpc="true" />
 		<skill skillName="Deadly Strike" skillId="986" skillLevel="25" getLevel="85" levelUpSp="28000000" learnedByNpc="true" />
+		<!-- Performers (custom, data/stats/skills/custom/performer_skills.xml) -->
+		<skill skillName="Dance of Ruin" skillId="27520" skillLevel="3" getLevel="76" levelUpSp="2000000" learnedByNpc="true" />
+		<skill skillName="Dance of Torment" skillId="27522" skillLevel="3" getLevel="78" levelUpSp="5000000" learnedByNpc="true" />
+		<skill skillName="Blade Waltz" skillId="27526" skillLevel="4" getLevel="78" levelUpSp="5000000" learnedByNpc="true" />
+		<skill skillName="Danse Macabre" skillId="27528" skillLevel="1" getLevel="79" levelUpSp="8000000" learnedByNpc="true" />
+		<skill skillName="Dance of Frenzy" skillId="27524" skillLevel="3" getLevel="80" levelUpSp="10000000" learnedByNpc="true" />
 	</skillTree>
 </list>

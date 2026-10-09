@@ -1,0 +1,514 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Performers: the Swordsinger and Bladedancer lines (Swordsinger, Sword Muse, Bladedancer,
+	Spectral Dancer). Glittering Medals (CustomBuffBook) teach every class the songs and
+	dances, so these are what a medal can't give. They are in the class skill trees and are
+	learned from the Grand Masters like any class skill. See README "Performers" and
+	config/Custom/Performers.ini (Virtuoso: their songs and dances last longer, and stacking
+	them doesn't cost them extra MP).
+
+	27500-27508  Swordsinger line: the battle bard, who keeps the party standing.
+	27520-27528  Bladedancer line: the war dancer, who tears the enemy down.
+
+	PERFORMANCES (toggles, one at a time: they share abnormalType PERFORMANCE, abnormalLevel 1,
+	so turning one on replaces the other whatever their levels). While on, the PerformanceAura
+	effect keeps an "echo" on everyone in range every tick (5 ticks = about 3.3 seconds):
+	  * affects PARTY: the performer, the party and their summons within 900. A buff, in the
+	    triggered-buff bar (isTriggeredSkill), so it never pushes out a buff or a dance.
+	  * affects ENEMY: monsters (and players the performer could attack without forcing it)
+	    within 400 and in sight. A debuff, rolled once with its own activateRate, then held.
+	  The echo lasts 10 seconds and is extended while the target stays in range, so it fades a
+	  few seconds after leaving it, and turning the performance off takes it away at once.
+	  Echoes have their own abnormalType: they stack with every retail buff and medal song,
+	  and the same echo from two performers doesn't (the higher level holds it).
+	  A stunned, sleeping or paralyzed performer stops performing until it ends.
+	  Levels: 1 at the 2nd class, 2 later in it, 3 at the 3rd class.
+
+	STANCES (toggles, one at a time: abnormalType PERFORMER_STANCE). A self stance with an
+	on-hit trigger (TriggerSkillByDamageDealt, normal attacks only). A stance and a performance
+	can be on together. Levels 1-3 at the 2nd class, 4 at the 3rd class.
+
+	FINALES: one big 3rd class skill each, on a long reuse.
+
+	MP: performances drain 0.3 and stances 0.2 x (level - 1) / 7.5 MP per second
+	(MpConsumePerLevel, like 312 Vicious Stance at 0.8), about 3 and 2 MP per second at 76.
+
+	Keep custom skill ids below 32768. The client needs Skillname-e.dat / Skillgrp.dat rows for
+	every id here (client/Performers), or it shows the skill without a name or icon. The icons
+	are retail icons of performer skills the medals don't teach, so an echo is never mistaken
+	for a medal song in the buff bar.
+-->
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/skills.xsd">
+
+	<!-- =====================================================================
+	     SWORDSINGER / SWORD MUSE
+	     ===================================================================== -->
+
+	<!-- 27500 BALLAD OF THE BULWARK (performance): party P. Def. and M. Def. +8/10/12%. -->
+	<skill id="27500" levels="3" name="Ballad of the Bulwark">
+		<table name="#lvl">1 2 3</table>
+		<table name="#magicLevel">40 58 76</table>
+		<table name="#mpInitialConsume">20 30 40</table>
+		<icon>icon.skill0123</icon>
+		<operateType>T</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalType>PERFORMANCE</abnormalType>
+		<abnormalVisualEffect>MAGIC_SQUARE</abnormalVisualEffect>
+		<isMagic>0</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
+		<effects>
+			<effect name="MpConsumePerLevel" ticks="5">
+				<power>0.3</power>
+			</effect>
+			<effect name="PerformanceAura" ticks="5">
+				<skillId>27501</skillId>
+				<skillLevel>#lvl</skillLevel>
+				<range>900</range>
+				<affects>PARTY</affects>
+			</effect>
+		</effects>
+	</skill>
+	<skill id="27501" levels="3" name="Ballad of the Bulwark">
+		<table name="#lvl">1 2 3</table>
+		<table name="#magicLevel">40 58 76</table>
+		<table name="#def">1.08 1.10 1.12</table>
+		<icon>icon.skill0123</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>#lvl</abnormalLevel>
+		<abnormalTime>10</abnormalTime>
+		<abnormalType>PERFORMANCE_BULWARK</abnormalType>
+		<isMagic>4</isMagic>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<magicLevel>#magicLevel</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pDef">#def</mul>
+				<mul stat="mDef">#def</mul>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 27502 HYMN OF RENEWAL (performance): party HP regen +20/30/40%, MP regen
+	     +10/15/20%, HP recovered from heals +5/8/10%. -->
+	<skill id="27502" levels="3" name="Hymn of Renewal">
+		<table name="#lvl">1 2 3</table>
+		<table name="#magicLevel">46 62 78</table>
+		<table name="#mpInitialConsume">22 32 40</table>
+		<icon>icon.skill0914</icon>
+		<operateType>T</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalType>PERFORMANCE</abnormalType>
+		<abnormalVisualEffect>MAGIC_SQUARE</abnormalVisualEffect>
+		<isMagic>0</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
+		<effects>
+			<effect name="MpConsumePerLevel" ticks="5">
+				<power>0.3</power>
+			</effect>
+			<effect name="PerformanceAura" ticks="5">
+				<skillId>27503</skillId>
+				<skillLevel>#lvl</skillLevel>
+				<range>900</range>
+				<affects>PARTY</affects>
+			</effect>
+		</effects>
+	</skill>
+	<skill id="27503" levels="3" name="Hymn of Renewal">
+		<table name="#lvl">1 2 3</table>
+		<table name="#magicLevel">46 62 78</table>
+		<table name="#regHp">1.20 1.30 1.40</table>
+		<table name="#regMp">1.10 1.15 1.20</table>
+		<table name="#heal">1.05 1.08 1.10</table>
+		<icon>icon.skill0914</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>#lvl</abnormalLevel>
+		<abnormalTime>10</abnormalTime>
+		<abnormalType>PERFORMANCE_RENEWAL</abnormalType>
+		<isMagic>4</isMagic>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<magicLevel>#magicLevel</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="regHp">#regHp</mul>
+				<mul stat="regMp">#regMp</mul>
+				<mul stat="healEffect">#heal</mul>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 27504 ANTHEM OF VALOR (performance): party P. Atk. and M. Atk. +6/8/10%. -->
+	<skill id="27504" levels="3" name="Anthem of Valor">
+		<table name="#lvl">1 2 3</table>
+		<table name="#magicLevel">52 66 80</table>
+		<table name="#mpInitialConsume">25 35 42</table>
+		<icon>icon.skill0988</icon>
+		<operateType>T</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalType>PERFORMANCE</abnormalType>
+		<abnormalVisualEffect>MAGIC_SQUARE</abnormalVisualEffect>
+		<isMagic>0</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
+		<effects>
+			<effect name="MpConsumePerLevel" ticks="5">
+				<power>0.3</power>
+			</effect>
+			<effect name="PerformanceAura" ticks="5">
+				<skillId>27505</skillId>
+				<skillLevel>#lvl</skillLevel>
+				<range>900</range>
+				<affects>PARTY</affects>
+			</effect>
+		</effects>
+	</skill>
+	<skill id="27505" levels="3" name="Anthem of Valor">
+		<table name="#lvl">1 2 3</table>
+		<table name="#magicLevel">52 66 80</table>
+		<table name="#atk">1.06 1.08 1.10</table>
+		<icon>icon.skill0988</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>#lvl</abnormalLevel>
+		<abnormalTime>10</abnormalTime>
+		<abnormalType>PERFORMANCE_VALOR</abnormalType>
+		<isMagic>4</isMagic>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<magicLevel>#magicLevel</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pAtk">#atk</mul>
+				<mul stat="mAtk">#atk</mul>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 27506 BATTLE HYMN (stance): P. Def. +5%. Each normal attack has a 15% chance to sing
+	     Healing Verse, a heal on the party within 600 (3 second reuse). -->
+	<skill id="27506" levels="4" name="Battle Hymn">
+		<table name="#lvl">1 2 3 4</table>
+		<table name="#magicLevel">43 55 67 78</table>
+		<table name="#mpInitialConsume">15 20 25 30</table>
+		<icon>icon.skill0098</icon>
+		<operateType>T</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalType>PERFORMER_STANCE</abnormalType>
+		<isMagic>0</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
+		<effects>
+			<effect name="MpConsumePerLevel" ticks="5">
+				<power>0.2</power>
+				<mul stat="pDef">1.05</mul>
+			</effect>
+			<effect name="TriggerSkillByDamageDealt">
+				<attackerType>Creature</attackerType>
+				<minDamage>1</minDamage>
+				<chance>15</chance>
+				<skillId>27507</skillId>
+				<skillLevel>#lvl</skillLevel>
+				<targetType>SELF</targetType>
+				<allowWeapons>ALL</allowWeapons>
+			</effect>
+		</effects>
+	</skill>
+	<skill id="27507" levels="4" name="Healing Verse">
+		<table name="#magicLevel">43 55 67 78</table>
+		<table name="#power">120 200 280 360</table>
+		<icon>icon.skill0058</icon>
+		<operateType>A1</operateType>
+		<targetType>PARTY</targetType>
+		<affectRange>600</affectRange>
+		<effectPoint>100</effectPoint>
+		<isMagic>0</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<reuseDelay>3000</reuseDelay>
+		<effects>
+			<effect name="Heal">
+				<power>#power</power>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 27508 SANCTUARY CHORUS (Sword Muse finale): the party within 1000 recovers 20% of
+	     its HP and gets P. Def. and M. Def. +30% for 15 seconds. 5 minute reuse. -->
+	<skill id="27508" levels="1" name="Sanctuary Chorus">
+		<icon>icon.skill0764</icon>
+		<operateType>A2</operateType>
+		<targetType>PARTY</targetType>
+		<affectRange>1000</affectRange>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>15</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<abnormalVisualEffect>ULTIMATE_DEFENCE</abnormalVisualEffect>
+		<effectPoint>600</effectPoint>
+		<hitTime>1500</hitTime>
+		<isMagic>0</isMagic>
+		<magicLevel>79</magicLevel>
+		<mpConsume>120</mpConsume>
+		<reuseDelay>300000</reuseDelay>
+		<effects>
+			<effect name="HealPercent">
+				<power>20</power>
+			</effect>
+			<effect name="Buff">
+				<mul stat="pDef">1.30</mul>
+				<mul stat="mDef">1.30</mul>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- =====================================================================
+	     BLADEDANCER / SPECTRAL DANCER
+	     ===================================================================== -->
+
+	<!-- 27520 DANCE OF RUIN (performance, hex): enemies within 400 lose 8/10/12% P. Def. and
+	     M. Def. Lands like a retail dance debuff (MEN), then holds while they stay close. -->
+	<skill id="27520" levels="3" name="Dance of Ruin">
+		<table name="#lvl">1 2 3</table>
+		<table name="#magicLevel">40 58 76</table>
+		<table name="#mpInitialConsume">20 30 40</table>
+		<icon>icon.skill0122</icon>
+		<operateType>T</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalType>PERFORMANCE</abnormalType>
+		<abnormalVisualEffect>MAGIC_SQUARE</abnormalVisualEffect>
+		<isMagic>0</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
+		<effects>
+			<effect name="MpConsumePerLevel" ticks="5">
+				<power>0.3</power>
+			</effect>
+			<effect name="PerformanceAura" ticks="5">
+				<skillId>27521</skillId>
+				<skillLevel>#lvl</skillLevel>
+				<range>400</range>
+				<affects>ENEMY</affects>
+			</effect>
+		</effects>
+	</skill>
+	<skill id="27521" levels="3" name="Dance of Ruin">
+		<table name="#lvl">1 2 3</table>
+		<table name="#magicLevel">40 58 76</table>
+		<table name="#def">0.92 0.90 0.88</table>
+		<icon>icon.skill0122</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>#lvl</abnormalLevel>
+		<abnormalTime>10</abnormalTime>
+		<abnormalType>PERFORMANCE_RUIN</abnormalType>
+		<activateRate>80</activateRate>
+		<basicProperty>MEN</basicProperty>
+		<lvlBonusRate>1</lvlBonusRate>
+		<isDebuff>true</isDebuff>
+		<effectPoint>-100</effectPoint>
+		<isMagic>0</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<effects>
+			<effect name="Debuff">
+				<mul stat="pDef">#def</mul>
+				<mul stat="mDef">#def</mul>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 27522 DANCE OF TORMENT (performance, hex): enemies within 400 lose 8/10/12% Atk. Spd.
+	     and Casting Spd., and 10/15/20% Speed. -->
+	<skill id="27522" levels="3" name="Dance of Torment">
+		<table name="#lvl">1 2 3</table>
+		<table name="#magicLevel">46 62 78</table>
+		<table name="#mpInitialConsume">22 32 40</table>
+		<icon>icon.skill0105</icon>
+		<operateType>T</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalType>PERFORMANCE</abnormalType>
+		<abnormalVisualEffect>MAGIC_SQUARE</abnormalVisualEffect>
+		<isMagic>0</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
+		<effects>
+			<effect name="MpConsumePerLevel" ticks="5">
+				<power>0.3</power>
+			</effect>
+			<effect name="PerformanceAura" ticks="5">
+				<skillId>27523</skillId>
+				<skillLevel>#lvl</skillLevel>
+				<range>400</range>
+				<affects>ENEMY</affects>
+			</effect>
+		</effects>
+	</skill>
+	<skill id="27523" levels="3" name="Dance of Torment">
+		<table name="#lvl">1 2 3</table>
+		<table name="#magicLevel">46 62 78</table>
+		<table name="#spd">0.92 0.90 0.88</table>
+		<table name="#run">0.90 0.85 0.80</table>
+		<icon>icon.skill0105</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>#lvl</abnormalLevel>
+		<abnormalTime>10</abnormalTime>
+		<abnormalType>PERFORMANCE_TORMENT</abnormalType>
+		<abnormalVisualEffect>SPEED_DOWN</abnormalVisualEffect>
+		<activateRate>70</activateRate>
+		<basicProperty>MEN</basicProperty>
+		<lvlBonusRate>1</lvlBonusRate>
+		<isDebuff>true</isDebuff>
+		<effectPoint>-100</effectPoint>
+		<isMagic>0</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<effects>
+			<effect name="Debuff">
+				<mul stat="pAtkSpd">#spd</mul>
+				<mul stat="mAtkSpd">#spd</mul>
+				<mul stat="runSpd">#run</mul>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 27524 DANCE OF FRENZY (performance): party Atk. Spd. and Casting Spd. +6/8/10%. -->
+	<skill id="27524" levels="3" name="Dance of Frenzy">
+		<table name="#lvl">1 2 3</table>
+		<table name="#magicLevel">52 66 80</table>
+		<table name="#mpInitialConsume">25 35 42</table>
+		<icon>icon.skill0915</icon>
+		<operateType>T</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalType>PERFORMANCE</abnormalType>
+		<abnormalVisualEffect>MAGIC_SQUARE</abnormalVisualEffect>
+		<isMagic>0</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
+		<effects>
+			<effect name="MpConsumePerLevel" ticks="5">
+				<power>0.3</power>
+			</effect>
+			<effect name="PerformanceAura" ticks="5">
+				<skillId>27525</skillId>
+				<skillLevel>#lvl</skillLevel>
+				<range>900</range>
+				<affects>PARTY</affects>
+			</effect>
+		</effects>
+	</skill>
+	<skill id="27525" levels="3" name="Dance of Frenzy">
+		<table name="#lvl">1 2 3</table>
+		<table name="#magicLevel">52 66 80</table>
+		<table name="#spd">1.06 1.08 1.10</table>
+		<icon>icon.skill0915</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>#lvl</abnormalLevel>
+		<abnormalTime>10</abnormalTime>
+		<abnormalType>PERFORMANCE_FRENZY</abnormalType>
+		<isMagic>4</isMagic>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<magicLevel>#magicLevel</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pAtkSpd">#spd</mul>
+				<mul stat="mAtkSpd">#spd</mul>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 27526 BLADE WALTZ (stance): Atk. Spd. +8%, Evasion +3. Each normal attack with dual
+	     swords has a 20% chance to unleash Whirling Edge on the enemies around the dancer
+	     (1.5 second reuse). -->
+	<skill id="27526" levels="4" name="Blade Waltz">
+		<table name="#lvl">1 2 3 4</table>
+		<table name="#magicLevel">43 55 67 78</table>
+		<table name="#mpInitialConsume">15 20 25 30</table>
+		<icon>icon.skill0408</icon>
+		<operateType>T</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalType>PERFORMER_STANCE</abnormalType>
+		<isMagic>0</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
+		<effects>
+			<effect name="MpConsumePerLevel" ticks="5">
+				<power>0.2</power>
+				<mul stat="pAtkSpd">1.08</mul>
+				<add stat="rEvas">3</add>
+			</effect>
+			<effect name="TriggerSkillByDamageDealt">
+				<attackerType>Creature</attackerType>
+				<minDamage>1</minDamage>
+				<chance>20</chance>
+				<skillId>27527</skillId>
+				<skillLevel>#lvl</skillLevel>
+				<targetType>SELF</targetType>
+				<allowWeapons>DUAL</allowWeapons>
+			</effect>
+		</effects>
+	</skill>
+	<!-- AURA around the dancer: 200 reaches the melee target and the pack around it (AREA
+	     would complain "incorrect target" when the proc comes on the killing blow). Retail 36
+	     Whirlwind is 2740 power on a 4 second reuse at 74; this fires on its own. -->
+	<skill id="27527" levels="4" name="Whirling Edge">
+		<table name="#magicLevel">43 55 67 78</table>
+		<table name="#power">300 550 850 1150</table>
+		<icon>icon.skill0765</icon>
+		<operateType>A1</operateType>
+		<targetType>AURA</targetType>
+		<affectRange>200</affectRange>
+		<affectLimit>5-8</affectLimit>
+		<effectPoint>-200</effectPoint>
+		<isMagic>0</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<power>#power</power>
+		<reuseDelay>1500</reuseDelay>
+		<effects>
+			<effect name="PhysicalDamage" />
+		</effects>
+	</skill>
+
+	<!-- 27528 DANSE MACABRE (Spectral Dancer finale): a blade storm around the dancer,
+	     3500 power on up to 15 enemies within 300, which may also take P. Def. -20% and
+	     Speed -30% for 10 seconds. 2 minute reuse. Shaped like 27411 Earthshatter. -->
+	<skill id="27528" levels="1" name="Danse Macabre">
+		<icon>icon.skill0367</icon>
+		<operateType>A2</operateType>
+		<targetType>AURA</targetType>
+		<affectRange>300</affectRange>
+		<affectLimit>10-15</affectLimit>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>10</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<activateRate>60</activateRate>
+		<basicProperty>MEN</basicProperty>
+		<lvlBonusRate>1</lvlBonusRate>
+		<isDebuff>true</isDebuff>
+		<baseCritRate>15</baseCritRate>
+		<effectPoint>-600</effectPoint>
+		<hitTime>1500</hitTime>
+		<coolTime>300</coolTime>
+		<isMagic>0</isMagic>
+		<magicLevel>79</magicLevel>
+		<mpConsume>110</mpConsume>
+		<power>3500</power>
+		<overHit>true</overHit>
+		<reuseDelay>120000</reuseDelay>
+		<nextActionAttack>true</nextActionAttack>
+		<effects>
+			<effect name="PhysicalDamage" />
+			<effect name="Debuff">
+				<mul stat="pDef">0.80</mul>
+				<mul stat="runSpd">0.70</mul>
+			</effect>
+		</effects>
+	</skill>
+</list>

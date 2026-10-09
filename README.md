@@ -238,6 +238,30 @@ The passive tree lets any character take Spoil, Sweeper Festival, Crystallize an
   - **Forged Gear** (crafters): every enchant level above +3 on their weapon gives +0.5 / 0.75 / 1% P.Atk, and on each armour piece (shield too) +0.1 / 0.15 / 0.2% P.Def, up to +15% each. It shows in the character window.
 - Everything follows the active class: a dwarven subclass counts, a dwarf playing a non-dwarven subclass doesn't. Settings in `config/Custom/DwarvenTrades.ini`.
 
+### Performers
+
+Glittering Medals from champions teach every class the songs and dances, so the Swordsinger and Bladedancer lines get what a medal can't give: auras that only a performer can keep up, a combat stance each, a 3rd class finale, and better songs and dances of their own. The Swordsinger line keeps the party standing; the Bladedancer line tears the enemy down.
+
+- **Performances** (toggles, one at a time; switching replaces the old one). While on, everyone in range gets an "echo" every few seconds, and it fades a few seconds after they walk away. Echoes have their own buff slots (the triggered-buff bar), so they stack with every retail buff and medal song and never push one out. The same echo from two performers doesn't stack. Level 1 and 2 at the 2nd class, 3 at the 3rd.
+
+  | Performance | Class line | Who | Effect (level 1 / 2 / 3) |
+  |---|---|---|---|
+  | Ballad of the Bulwark | Swordsinger | Party within 900 | P. Def. and M. Def. +8 / 10 / 12% |
+  | Hymn of Renewal | Swordsinger | Party within 900 | HP regen +20 / 30 / 40%, MP regen +10 / 15 / 20%, heals received +5 / 8 / 10% |
+  | Anthem of Valor | Swordsinger | Party within 900 | P. Atk. and M. Atk. +6 / 8 / 10% |
+  | Dance of Ruin | Bladedancer | Enemies within 400 | P. Def. and M. Def. −8 / 10 / 12% |
+  | Dance of Torment | Bladedancer | Enemies within 400 | Atk. Spd. and Casting Spd. −8 / 10 / 12%, Speed −10 / 15 / 20% |
+  | Dance of Frenzy | Bladedancer | Party within 900 | Atk. Spd. and Casting Spd. +6 / 8 / 10% |
+
+  The enemy dances (hexes) land like a dance debuff, then hold while the enemy stays close; they reach monsters and the players the performer could attack without forcing it, never the performer's own party, clan or alliance. A stunned, sleeping or paralyzed performer stops performing until it ends.
+- **Stances** (toggles, one at a time, alongside a performance):
+  - **Battle Hymn** (Swordsinger line): P. Def. +5%, and each attack has a 15% chance to sing Healing Verse, healing the party within 600 for 120 / 200 / 280 / 360 HP.
+  - **Blade Waltz** (Bladedancer line): Atk. Spd. +8%, Evasion +3, and each dual sword attack has a 20% chance to unleash Whirling Edge on every enemy within 200 (300 / 550 / 850 / 1150 power), which turns a Bladedancer into a pack farmer.
+- **Finales** (level 79): **Sanctuary Chorus** (Sword Muse) heals the party within 1000 for 20% of its HP and gives P. Def. and M. Def. +30% for 15 seconds (5 minute reuse). **Danse Macabre** (Spectral Dancer) strikes up to 15 enemies within 300 with 3500 power and may cut their P. Def. by 20% and Speed by 30% for 10 seconds (2 minute reuse).
+- **Virtuoso**: songs and dances a performer casts last ×1.5 (Swordsinger, Bladedancer) or ×2 (Sword Muse, Spectral Dancer), and singing one more doesn't cost them the extra MP everyone else pays, so a performer's songs outlast anyone's medal songs.
+- Performances drain MP for as long as they are on (about 3 MP per second at 76, a stance about 2), proportionate to the level like Vicious Stance.
+- The skills are learned from the Grand Masters like any class skill (data/stats/skills/custom/performer_skills.xml). Everything follows the active class. The client needs the rows in `client/Performers` to show their names and icons. Settings in `config/Custom/Performers.ini`.
+
 ### Other Custom Features at a Glance
 
 | Area | Features |
@@ -606,6 +630,14 @@ This program is free software, licensed under the **GNU General Public License, 
 ## Recent Updates
 
 Changes from 28 September – 9 October 2026.
+
+### Performers
+- **Swordsinger and Bladedancer lines reworked**: Glittering Medals teach everyone the songs and dances, so the performers now get toggle auras nobody else has, a combat stance, a level 79 finale and longer-lasting songs and dances. See [Performers](#performers).
+- **Performances** (one at a time): Ballad of the Bulwark, Hymn of Renewal and Anthem of Valor (Swordsinger line, party auras), Dance of Ruin and Dance of Torment (Bladedancer line, enemy hexes) and Dance of Frenzy (Bladedancer line, party aura). They stack with every buff and medal song.
+- **Stances**: Battle Hymn (attacks may heal the party) and Blade Waltz (dual sword attacks may slash every enemy around the dancer).
+- **Finales**: Sanctuary Chorus (Sword Muse) and Danse Macabre (Spectral Dancer).
+- **Virtuoso**: a performer's songs and dances last ×1.5 / ×2 and stacking them costs no extra MP.
+- New skills 27500-27528 in the class skill trees; client rows in `client/Performers`. Settings in `config/Custom/Performers.ini`.
 
 ### Dwarven Trades
 - **Dwarven classes reworked**: Spoil, Sweeper Festival, Crystallize and Dwarven Craft on the passive tree had made them pointless, so the dwarves now do these trades better than anyone with the tree, and fight in their own way. See [Dwarven Trades](#dwarven-trades).
