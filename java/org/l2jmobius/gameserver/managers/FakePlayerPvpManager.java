@@ -65,6 +65,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Skill
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpWeapon;
+import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
 import org.l2jmobius.gameserver.model.actor.instance.FakePlayerPvpServitor;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
@@ -1787,6 +1788,7 @@ public class FakePlayerPvpManager
 		
 		final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
 		PassiveTreeManager.getInstance().applyToFakePlayer(fake, profile.getPassives()); // Before the HP is filled up: the tree raises max HP.
+		DwarvenTrades.applyToFakePlayer(fake); // A dwarven crafter's Forged Gear.
 		profile.setTransform(0, null);
 		profile.setDisarmedWeapon(null);
 		template.getFakePlayerInfo().setTransformDisplayId(0);
@@ -3127,6 +3129,7 @@ public class FakePlayerPvpManager
 		servitor.setTitle(fake.getName());
 		servitor.setInstanceId(fake.getInstanceId());
 		servitor.setHeading(fake.getHeading());
+		DwarvenTrades.applyToServitor(servitor, fake); // A dwarven crafter's golem is stronger (Golem Engineering), before its HP is filled up.
 		servitor.setCurrentHpMp(servitor.getMaxHp(), servitor.getMaxMp());
 		profile.setServitor(servitor);
 		
@@ -3290,6 +3293,30 @@ public class FakePlayerPvpManager
 			{
 				toggle.applyEffects(fake, fake);
 			}
+		}
+		
+		// Once the PvP is over (no longer flagged), a performer goes back to its hunting performance.
+		keepPerformance(fake, profile, isInPvp(fake));
+	}
+	
+	/**
+	 * Keeps the performance a Swordsinger or Bladedancer fake player plays now on (see {@link SkillCategory#PERFORM}): the first one while it hunts, the second one while it fights a player. Turning one on takes the other off, like a player switching performances.
+	 * @param fake the fake player
+	 * @param profile its profile
+	 * @param pvp {@code true} while it fights a player
+	 */
+	public void keepPerformance(Npc fake, FakePlayerPvpProfile profile, boolean pvp)
+	{
+		final List<Skill> performances = profile.getSkills(SkillCategory.PERFORM);
+		if (performances.isEmpty() || fake.isDead())
+		{
+			return;
+		}
+		
+		final Skill performance = performances.get(pvp && (performances.size() > 1) ? 1 : 0);
+		if (!fake.isAffectedBySkill(performance.getId()))
+		{
+			performance.applyEffects(fake, fake);
 		}
 	}
 	

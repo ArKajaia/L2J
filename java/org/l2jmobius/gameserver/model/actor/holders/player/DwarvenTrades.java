@@ -20,19 +20,29 @@
  */
 package org.l2jmobius.gameserver.model.actor.holders.player;
 
+import java.util.function.ToDoubleFunction;
+
 import org.l2jmobius.gameserver.config.custom.DwarvenTradesConfig;
+import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.model.World;
+import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.Summon;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.effects.EffectType;
+import org.l2jmobius.gameserver.model.item.Armor;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.model.skill.AbnormalType;
 import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.functions.AbstractFunction;
+import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
 
 /**
  * The trades only a dwarf masters. The passive tree lets any character take Spoil, Sweeper Festival, Crystallize and Dwarven Craft, so the dwarven classes get what the tree doesn't give:
@@ -47,11 +57,25 @@ import org.l2jmobius.gameserver.model.skill.Skill;
  * <li>Plunderer's Mark (spoilers): more damage to the monsters they spoiled. Spoils of War: every corpse they sweep restores some of their HP and MP.</li>
  * <li>Golem Engineering (crafters): their golems and cannons are stronger. Forged Gear: enchant levels above the safe enchant on their weapon and armour give extra P.Atk and P.Def.</li>
  * </ul>
- * Everything follows the active class, so a dwarven subclass counts and a dwarf on a non-dwarven subclass doesn't.
+ * Everything follows the active class, so a dwarven subclass counts and a dwarf on a non-dwarven subclass doesn't. A roaming fake player of a dwarven class fights the same way (its stuns, Spoil, Plunderer's Mark, golem and Forged Gear), see {@link #applyToFakePlayer}.
  * @author Mobius
  */
 public class DwarvenTrades
 {
+	/** Owner of the stat functions a fake player or its servitor gets from here. */
+	private static final Object FUNC_OWNER = new Object();
+	/** Applied on top of the stat like the Player and Summon getter overrides (after the fake player's passive tree, see PassiveTreeManager#applyToFakePlayer). */
+	private static final int FAKE_GETTER_ORDER = 0x51;
+	/** The stats Golem Engineering raises. */
+	private static final Stat[] GOLEM_STATS =
+	{
+		Stat.POWER_ATTACK,
+		Stat.MAGIC_ATTACK,
+		Stat.POWER_DEFENCE,
+		Stat.MAGIC_DEFENCE,
+		Stat.MAX_HP
+	};
+	
 	/** The equipment slots Forged Gear counts for P.Def. */
 	private static final int[] ARMOR_SLOTS =
 	{
@@ -68,30 +92,60 @@ public class DwarvenTrades
 	}
 	
 	/**
-	 * @param player the player
+	 * @param creature a player or a roaming fake player
+	 * @return its active class, {@code null} for anything else
+	 */
+	private static PlayerClass getPlayerClass(Creature creature)
+	{
+		if (creature == null)
+		{
+			return null;
+		}
+		
+		if (creature.isPlayer())
+		{
+			return creature.asPlayer().getPlayerClass();
+		}
+		
+		return creature.isPvpFakePlayer() ? creature.asNpc().getTemplate().getFakePlayerPvpProfile().getPlayerClass() : null;
+	}
+	
+	/**
+	 * @param playerClass a class, can be {@code null}
+	 * @return {@code true} if it is a dwarven class
+	 */
+	private static boolean isDwarvenClass(PlayerClass playerClass)
+	{
+		return DwarvenTradesConfig.DWARVEN_TRADES_ENABLED && (playerClass != null) && (playerClass.getRace() == Race.DWARF);
+	}
+	
+	/**
+	 * @param creature a player or a roaming fake player
 	 * @return {@code true} if the active class is a dwarven class
 	 */
-	public static boolean isDwarvenClass(Player player)
+	public static boolean isDwarvenClass(Creature creature)
 	{
-		return DwarvenTradesConfig.DWARVEN_TRADES_ENABLED && (player != null) && (player.getPlayerClass().getRace() == Race.DWARF);
+		return isDwarvenClass(getPlayerClass(creature));
 	}
 	
 	/**
-	 * @param player the player
+	 * @param creature a player or a roaming fake player
 	 * @return 1-3 for a Scavenger, Bounty Hunter or Fortune Seeker, 0 otherwise
 	 */
-	public static int getSpoilerTier(Player player)
+	public static int getSpoilerTier(Creature creature)
 	{
-		return isDwarvenClass(player) && player.getPlayerClass().equalsOrChildOf(PlayerClass.SCAVENGER) ? player.getPlayerClass().level() : 0;
+		final PlayerClass playerClass = getPlayerClass(creature);
+		return isDwarvenClass(playerClass) && playerClass.equalsOrChildOf(PlayerClass.SCAVENGER) ? playerClass.level() : 0;
 	}
 	
 	/**
-	 * @param player the player
+	 * @param creature a player or a roaming fake player
 	 * @return 1-3 for an Artisan, Warsmith or Maestro, 0 otherwise
 	 */
-	public static int getCrafterTier(Player player)
+	public static int getCrafterTier(Creature creature)
 	{
-		return isDwarvenClass(player) && player.getPlayerClass().equalsOrChildOf(PlayerClass.ARTISAN) ? player.getPlayerClass().level() : 0;
+		final PlayerClass playerClass = getPlayerClass(creature);
+		return isDwarvenClass(playerClass) && playerClass.equalsOrChildOf(PlayerClass.ARTISAN) ? playerClass.level() : 0;
 	}
 	
 	private static double tier(double[] values, int tier, double none)
@@ -105,21 +159,22 @@ public class DwarvenTrades
 	 */
 	public static boolean isSpoilCertain(Creature effector)
 	{
-		return DwarvenTradesConfig.SPOIL_ALWAYS_LANDS && effector.isPlayer() && (getSpoilerTier(effector.asPlayer()) > 0);
+		return DwarvenTradesConfig.SPOIL_ALWAYS_LANDS && (getSpoilerTier(effector) > 0);
 	}
 	
 	/**
 	 * @param monster a spoiled monster
-	 * @return the player who spoiled it, if online
+	 * @return the player (or roaming fake player) who spoiled it, if still in the world
 	 */
-	private static Player getSpoiler(Monster monster)
+	private static Creature getSpoiler(Monster monster)
 	{
-		return monster.isSpoiled() ? World.getInstance().getPlayer(monster.getSpoilerObjectId()) : null;
+		final WorldObject spoiler = monster.isSpoiled() ? World.getInstance().findObject(monster.getSpoilerObjectId()) : null;
+		return (spoiler != null) && spoiler.isCreature() ? spoiler.asCreature() : null;
 	}
 	
 	/**
 	 * @param monster a spoiled monster
-	 * @return how much the chance of each sweep item is multiplied, from the class of the player who spoiled it
+	 * @return how much the chance of each sweep item is multiplied, from the class of the player (or fake player) who spoiled it
 	 */
 	public static double getSpoilChanceMultiplier(Monster monster)
 	{
@@ -128,7 +183,7 @@ public class DwarvenTrades
 	
 	/**
 	 * @param monster a spoiled monster
-	 * @return how much the amount of each sweep item is multiplied, from the class of the player who spoiled it
+	 * @return how much the amount of each sweep item is multiplied, from the class of the player (or fake player) who spoiled it
 	 */
 	public static double getSpoilAmountMultiplier(Monster monster)
 	{
@@ -173,12 +228,13 @@ public class DwarvenTrades
 	}
 	
 	/**
-	 * @param player the player
+	 * @param creature a player or a roaming fake player
 	 * @return 1-3 for any 1st, 2nd or 3rd class dwarf, 0 otherwise (the Dwarven Fighter too)
 	 */
-	public static int getDwarvenTier(Player player)
+	public static int getDwarvenTier(Creature creature)
 	{
-		return isDwarvenClass(player) ? player.getPlayerClass().level() : 0;
+		final PlayerClass playerClass = getPlayerClass(creature);
+		return isDwarvenClass(playerClass) ? playerClass.level() : 0;
 	}
 	
 	/**
@@ -189,11 +245,11 @@ public class DwarvenTrades
 	 */
 	public static double getEffectChanceMultiplier(Creature attacker, Skill skill)
 	{
-		if (!attacker.isPlayer() || ((skill.getAbnormalType() != AbnormalType.STUN) && !skill.hasEffectType(EffectType.STUN)))
+		if ((skill.getAbnormalType() != AbnormalType.STUN) && !skill.hasEffectType(EffectType.STUN))
 		{
 			return 1;
 		}
-		return tier(DwarvenTradesConfig.SKULLCRUSHER_CHANCE_MULTIPLIER, getDwarvenTier(attacker.asPlayer()), 1);
+		return tier(DwarvenTradesConfig.SKULLCRUSHER_CHANCE_MULTIPLIER, getDwarvenTier(attacker), 1);
 	}
 	
 	/**
@@ -204,11 +260,11 @@ public class DwarvenTrades
 	 */
 	public static double getPlunderMultiplier(Creature attacker, Creature target)
 	{
-		if (!attacker.isPlayer() || !target.isMonster() || (target.asMonster().getSpoilerObjectId() != attacker.getObjectId()))
+		if (!target.isMonster() || (target.asMonster().getSpoilerObjectId() != attacker.getObjectId()))
 		{
 			return 1;
 		}
-		return 1 + (tier(DwarvenTradesConfig.PLUNDER_DAMAGE_BONUS, getSpoilerTier(attacker.asPlayer()), 0) / 100);
+		return 1 + (tier(DwarvenTradesConfig.PLUNDER_DAMAGE_BONUS, getSpoilerTier(attacker), 0) / 100);
 	}
 	
 	/**
@@ -234,60 +290,170 @@ public class DwarvenTrades
 	 */
 	public static double getGolemMultiplier(Summon summon)
 	{
-		if (!summon.isServitor())
-		{
-			return 1;
-		}
-		return 1 + (tier(DwarvenTradesConfig.GOLEM_BONUS, getCrafterTier(summon.getOwner()), 0) / 100);
+		return summon.isServitor() ? getServitorMultiplier(summon.getOwner()) : 1;
+	}
+	
+	/**
+	 * Golem Engineering for the servitor of {@code owner}.
+	 * @param owner a player or a roaming fake player
+	 * @return how much the P.Atk, M.Atk, P.Def, M.Def and max HP of its servitor are multiplied
+	 */
+	private static double getServitorMultiplier(Creature owner)
+	{
+		return 1 + (tier(DwarvenTradesConfig.GOLEM_BONUS, getCrafterTier(owner), 0) / 100);
 	}
 	
 	/**
 	 * Forged Gear: each enchant level above the safe enchant on a dwarven crafter's weapon adds P.Atk.
-	 * @param player the player
+	 * @param creature a player or a roaming fake player
 	 * @return how much P.Atk is multiplied
 	 */
-	public static double getForgedWeaponMultiplier(Player player)
+	public static double getForgedWeaponMultiplier(Creature creature)
 	{
-		final int tier = getCrafterTier(player);
-		if ((tier == 0) || (player.getInventory() == null))
+		final int tier = getCrafterTier(creature);
+		if (tier == 0)
 		{
 			return 1;
 		}
 		
-		final int levels = enchantAboveSafe(player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND));
+		final int levels;
+		if (creature.isPlayer())
+		{
+			final Inventory inventory = creature.asPlayer().getInventory();
+			if (inventory == null)
+			{
+				return 1;
+			}
+			levels = enchantAboveSafe(inventory.getPaperdollItem(Inventory.PAPERDOLL_RHAND));
+		}
+		else
+		{
+			// The weapon a fake player holds now (none while disarmed).
+			final FakePlayerHolder fake = creature.asNpc().getTemplate().getFakePlayerInfo();
+			levels = fake.getEquipRHand() > 0 ? enchantAboveSafe(fake.getWeaponEnchantLevel()) : 0;
+		}
 		return 1 + (Math.min(DwarvenTradesConfig.FORGED_MAX_BONUS, levels * tier(DwarvenTradesConfig.FORGED_WEAPON_BONUS, tier, 0)) / 100);
 	}
 	
 	/**
 	 * Forged Gear: each enchant level above the safe enchant on each piece of a dwarven crafter's armour (and shield) adds P.Def.
-	 * @param player the player
+	 * @param creature a player or a roaming fake player
 	 * @return how much P.Def is multiplied
 	 */
-	public static double getForgedArmorMultiplier(Player player)
+	public static double getForgedArmorMultiplier(Creature creature)
 	{
-		final int tier = getCrafterTier(player);
-		if ((tier == 0) || (player.getInventory() == null))
+		final int tier = getCrafterTier(creature);
+		if (tier == 0)
 		{
 			return 1;
 		}
 		
-		final Inventory inventory = player.getInventory();
 		int levels = 0;
-		int lastObjectId = 0;
-		for (int slot : ARMOR_SLOTS)
+		if (creature.isPlayer())
 		{
-			final Item item = inventory.getPaperdollItem(slot);
-			if ((item != null) && item.isArmor() && (item.getObjectId() != lastObjectId)) // A full body armour can show in two slots.
+			final Inventory inventory = creature.asPlayer().getInventory();
+			if (inventory == null)
 			{
-				levels += enchantAboveSafe(item);
-				lastObjectId = item.getObjectId();
+				return 1;
 			}
+			
+			int lastObjectId = 0;
+			for (int slot : ARMOR_SLOTS)
+			{
+				final Item item = inventory.getPaperdollItem(slot);
+				if ((item != null) && item.isArmor() && (item.getObjectId() != lastObjectId)) // A full body armour can show in two slots.
+				{
+					levels += enchantAboveSafe(item);
+					lastObjectId = item.getObjectId();
+				}
+			}
+		}
+		else
+		{
+			// A fake player's armour pieces (and shield) are all enchanted alike. A full body armour has no legs piece.
+			final FakePlayerHolder fake = creature.asNpc().getTemplate().getFakePlayerInfo();
+			int pieces = 0;
+			for (int itemId : new int[]
+			{
+				fake.getEquipHead(),
+				fake.getEquipChest(),
+				fake.getEquipLegs(),
+				fake.getEquipGloves(),
+				fake.getEquipFeet()
+			})
+			{
+				if (itemId > 0)
+				{
+					pieces++;
+				}
+			}
+			if ((fake.getEquipLHand() > 0) && (ItemData.getInstance().getTemplate(fake.getEquipLHand()) instanceof Armor))
+			{
+				pieces++;
+			}
+			levels = pieces * enchantAboveSafe(fake.getArmorEnchantLevel());
 		}
 		return 1 + (Math.min(DwarvenTradesConfig.FORGED_MAX_BONUS, levels * tier(DwarvenTradesConfig.FORGED_ARMOR_BONUS, tier, 0)) / 100);
 	}
 	
 	private static int enchantAboveSafe(Item item)
 	{
-		return item == null ? 0 : Math.max(0, item.getEnchantLevel() - DwarvenTradesConfig.FORGED_SAFE_ENCHANT);
+		return item == null ? 0 : enchantAboveSafe(item.getEnchantLevel());
+	}
+	
+	private static int enchantAboveSafe(int enchantLevel)
+	{
+		return Math.max(0, enchantLevel - DwarvenTradesConfig.FORGED_SAFE_ENCHANT);
+	}
+	
+	/**
+	 * A roaming fake player of a crafter class gets Forged Gear like a player, whose Player getters apply it: P.Atk and P.Def functions that follow the weapon it holds. Call when it enters the world.
+	 * @param fake the fake player
+	 */
+	public static void applyToFakePlayer(Npc fake)
+	{
+		fake.removeStatsOwner(FUNC_OWNER);
+		if (getCrafterTier(fake) > 0)
+		{
+			fake.addStatFunc(new FakePlayerFunc(Stat.POWER_ATTACK, DwarvenTrades::getForgedWeaponMultiplier));
+			fake.addStatFunc(new FakePlayerFunc(Stat.POWER_DEFENCE, DwarvenTrades::getForgedArmorMultiplier));
+		}
+	}
+	
+	/**
+	 * Golem Engineering for the servitor of a roaming fake player (an npc, not a {@link Summon}): its P.Atk, M.Atk, P.Def, M.Def and max HP, like a player's golem. Call before its HP is filled up.
+	 * @param servitor the servitor
+	 * @param owner the fake player it belongs to
+	 */
+	public static void applyToServitor(Npc servitor, Creature owner)
+	{
+		final double multiplier = getServitorMultiplier(owner);
+		if (multiplier > 1)
+		{
+			for (Stat stat : GOLEM_STATS)
+			{
+				servitor.addStatFunc(new FuncMul(stat, FAKE_GETTER_ORDER, FUNC_OWNER, multiplier, null));
+			}
+		}
+	}
+	
+	/**
+	 * A stat of a roaming fake player multiplied by one of the methods above, worked out each time it is read.
+	 */
+	private static class FakePlayerFunc extends AbstractFunction
+	{
+		private final ToDoubleFunction<Creature> _multiplier;
+		
+		FakePlayerFunc(Stat stat, ToDoubleFunction<Creature> multiplier)
+		{
+			super(stat, FAKE_GETTER_ORDER, FUNC_OWNER, 0, null);
+			_multiplier = multiplier;
+		}
+		
+		@Override
+		public double calc(Creature effector, Creature effected, Skill skill, double initVal)
+		{
+			return initVal * _multiplier.applyAsDouble(effector);
+		}
 	}
 }
