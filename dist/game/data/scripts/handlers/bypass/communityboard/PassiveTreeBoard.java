@@ -145,7 +145,7 @@ public class PassiveTreeBoard implements IParseBoardHandler
 		KEYSTONE_TEXT.put("KS_PURITY", "Immune to poison and bleeding");
 		KEYSTONE_TEXT.put("KS_OVERHEAL_CP", "%s%% of overhealing you cast becomes CP");
 		KEYSTONE_TEXT.put("KS_WHIRLING_STEEL", "Melee attacks also hit 2 more enemies in front of you for %s%% damage (polearms: 2 more enemies)");
-		KEYSTONE_TEXT.put("KS_RIPOSTE", "After a shield block or a dodge, your next attack or physical skill within 5s is a critical hit (a blow lands); half critical rate otherwise");
+		KEYSTONE_TEXT.put("KS_RIPOSTE", "After a shield block, your next attack or physical skill within 5s is a critical hit (a blow lands); half critical rate otherwise");
 		KEYSTONE_TEXT.put("KS_GUARDIAN", "You take %s%% of the damage dealt to party members within 900 range");
 		KEYSTONE_TEXT.put("KS_ARC_CONDUIT", "Single-target damage spells jump to 2 more enemies for %s%% damage, then half of that");
 		KEYSTONE_TEXT.put("KS_BATTLEMAGE", "%s%% of M.Atk is added to P.Atk");

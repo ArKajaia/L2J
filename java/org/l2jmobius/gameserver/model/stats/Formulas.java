@@ -1226,7 +1226,7 @@ public class Formulas
 			return false;
 		}
 		
-		// Passive tree Riposte: the counter-attack after a block or a dodge is a critical hit.
+		// Passive tree Riposte: the counter-attack after a shield block is a critical hit.
 		if (PassiveMechanics.consumeRiposte(attacker))
 		{
 			return true;
@@ -1381,12 +1381,7 @@ public class Formulas
 		chance = Math.max(chance, 200);
 		chance = Math.min(chance, 980);
 		
-		final boolean miss = chance < Rnd.get(1000);
-		if (miss)
-		{
-			PassiveMechanics.onAttackAvoided(target); // Passive tree Riposte.
-		}
-		return miss;
+		return chance < Rnd.get(1000);
 	}
 	
 	/**
@@ -1447,7 +1442,7 @@ public class Formulas
 		
 		if (shldSuccess != SHIELD_DEFENSE_FAILED)
 		{
-			PassiveMechanics.onAttackAvoided(target); // Passive tree Riposte.
+			PassiveMechanics.onShieldBlock(target); // Passive tree Riposte.
 		}
 		
 		if (sendSysMsg && target.isPlayer())
@@ -1828,7 +1823,6 @@ public class Formulas
 				target.asPlayer().sendPacket(sm);
 			}
 			
-			PassiveMechanics.onAttackAvoided(target); // Passive tree Riposte.
 			return true;
 		}
 		
@@ -1987,7 +1981,7 @@ public class Formulas
 	
 	public static boolean calcBlowSuccess(Creature creature, Creature target, Skill skill)
 	{
-		// Passive tree Riposte: the counter-attack after a block or a dodge lands.
+		// Passive tree Riposte: the counter-attack after a shield block lands.
 		if (PassiveMechanics.consumeRiposte(creature))
 		{
 			return true;

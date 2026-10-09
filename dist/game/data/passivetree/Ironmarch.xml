@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Ironmarch: 56 nodes, an outer region beyond the rim between Vanguard and Juggernaut. x/y are authoritative layout coords. -->
+<!-- Ironmarch: 59 nodes, an outer region beyond the rim between Vanguard and Juggernaut. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="40001" name="Iron Road" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4116.5" y="725.8" effect="PDEF_PCT:0.8">
 		<requires nodeId="39011" />
@@ -127,6 +127,7 @@
 	</node>
 	<node id="40039" name="Tower Shield" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="4783.4" y="1687.0" orbitX="4679.7" orbitY="1703.3" effect="PDEF_PCT@SHIELD:6;MAXHP_PCT:2" icon="tower-shield" description="Bastion Drill mastery. Shield bearers only.">
 		<requires nodeId="40038" />
+		<requires nodeId="44100" />
 	</node>
 	<node id="40040" name="Stalwart" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4383.3" y="383.5" effect="MAXHP:20" icon="heart-plus">
 		<requires nodeId="40041" />
@@ -225,5 +226,16 @@
 	</node>
 	<node id="40082" name="Whirling Steel" sector="Ironmarch" type="KEYSTONE" tier="0" cost="1" x="3435.4" y="4397.1" effect="KS_WHIRLING_STEEL:50;ATK_SPD_PCT:-15" icon="ks-whirling-steel" description="KEYSTONE: Your normal attacks with any melee weapon also hit up to 2 more enemies in front of you for 50% damage (a polearm hits 2 more enemies than it would). -15% Attack Speed.">
 		<requires nodeId="40081" />
+	</node>
+	<node id="44100" name="Echoing Path" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4981.0" y="1655.9" effect="MATK_PCT:1.5" icon="hourglass">
+		<requires nodeId="40039" />
+		<requires nodeId="44101" />
+	</node>
+	<node id="44101" name="Echoing Path" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="5178.5" y="1624.9" effect="CAST_SPD_PCT:1.5" icon="hourglass">
+		<requires nodeId="44100" />
+		<requires nodeId="44102" />
+	</node>
+	<node id="44102" name="Spell Echo" sector="Ironmarch" type="KEYSTONE" tier="0" cost="1" x="5376.1" y="1593.8" effect="KS_SPELL_ECHO:25;CAST_SPD_PCT:-15" icon="ks-spell-echo" description="KEYSTONE: Your single-target damage spells have a 25% chance to hit their target again 0.5 seconds later, free, for 60% of the damage. -15% Casting Speed.">
+		<requires nodeId="44101" />
 	</node>
 </list>

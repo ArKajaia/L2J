@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Ley Expanse: 62 nodes, an outer region beyond the rim between Arcanist and Hierophant. x/y are authoritative layout coords. -->
+<!-- Ley Expanse: 59 nodes, an outer region beyond the rim between Arcanist and Hierophant. x/y are authoritative layout coords. -->
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<node id="44001" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1429.6" y="-3927.9" effect="MATK_PCT:0.8">
 		<requires nodeId="39419" />
@@ -159,7 +159,6 @@
 	</node>
 	<node id="44047" name="Endless Mind" sector="Ley Expanse" type="NOTABLE" tier="0" cost="1" x="-1865.5" y="-4617.4" orbitX="0.0" orbitY="0.0" effect="MAXMP:120;SPELL_MP_COST_RED_PCT:5" icon="book" description="Scholar's Path mastery. Spells cost less.">
 		<requires nodeId="44046" />
-		<requires nodeId="44100" />
 	</node>
 	<node id="44060" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1202.2" y="-4030.1" effect="MAXHP:18">
 		<requires nodeId="44001" />
@@ -238,16 +237,5 @@
 	</node>
 	<node id="44092" name="Battlemage" sector="Ley Expanse" type="KEYSTONE" tier="0" cost="1" x="2366.7" y="-5075.3" effect="KS_BATTLEMAGE:40;MANA_LEECH_PCT:5;CAST_SPD_PCT:-25;MOVE_SPEED_ADD@HEAVY:-20" icon="ks-battlemage" description="KEYSTONE: 40% of your M.Atk is added to your P.Atk, and 5% of your melee damage restores MP. -25% Casting Speed, and -20 Speed in heavy armour.">
 		<requires nodeId="44091" />
-	</node>
-	<node id="44100" name="Echoing Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1940.5" y="-4802.8" effect="MATK_PCT:1.5" icon="hourglass">
-		<requires nodeId="44047" />
-		<requires nodeId="44101" />
-	</node>
-	<node id="44101" name="Echoing Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-2015.4" y="-4988.2" effect="CAST_SPD_PCT:1.5" icon="hourglass">
-		<requires nodeId="44100" />
-		<requires nodeId="44102" />
-	</node>
-	<node id="44102" name="Spell Echo" sector="Ley Expanse" type="KEYSTONE" tier="0" cost="1" x="-2090.3" y="-5173.7" effect="KS_SPELL_ECHO:25;CAST_SPD_PCT:-15" icon="ks-spell-echo" description="KEYSTONE: Your single-target damage spells have a 25% chance to hit their target again 0.5 seconds later, free, for 60% of the damage. -15% Casting Speed.">
-		<requires nodeId="44101" />
 	</node>
 </list>
