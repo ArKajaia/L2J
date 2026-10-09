@@ -57,7 +57,7 @@
 		<requires nodeId="45052" />
 		<requires nodeId="45061" />
 	</node>
-	<node id="45052" name="Undying Vigil" sector="Hallowmere" type="KEYSTONE" tier="0" cost="1" x="4399.4" y="-2540.0" effect="MAXHP_PCT:15;HP_REGEN_PCT:60;PATK_PCT:-10;MATK_PCT:-10" icon="ankh" description="KEYSTONE: +15% maximum HP and 60% faster HP regeneration, but 10% less P.Atk and M.Atk.">
+	<node id="45052" name="Undying Vigil" sector="Hallowmere" type="KEYSTONE" tier="0" cost="1" x="4399.4" y="-2540.0" effect="MAXHP_PCT:15;HP_REGEN_PCT:60;PATK_PCT:-10;MATK_PCT:-10" icon="ks-undying-vigil" description="KEYSTONE: +15% maximum HP and 60% faster HP regeneration, but 10% less P.Atk and M.Atk.">
 		<requires nodeId="45051" />
 	</node>
 	<node id="45020" name="Hallowed Blood" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3987.4" y="-1722.8" orbitX="3882.6" orbitY="-1728.6" effect="MAXHP_PCT:1.5" icon="heart-plus">
@@ -183,7 +183,7 @@
 		<requires nodeId="45070" />
 		<requires nodeId="45072" />
 	</node>
-	<node id="45072" name="Dawnbringer" sector="Hallowmere" type="KEYSTONE" tier="0" cost="1" x="5604.6" y="-1038.7" effect="PATK_PCT@DAY:12;MATK_PCT@DAY:12;HP_REGEN_PCT@DAY:30;PATK_PCT@NIGHT:-12;MATK_PCT@NIGHT:-12" icon="sun" description="KEYSTONE: During the day: +12% P.Atk and M.Atk, 30% faster HP regeneration. At night: -12% P.Atk and M.Atk.">
+	<node id="45072" name="Dawnbringer" sector="Hallowmere" type="KEYSTONE" tier="0" cost="1" x="5604.6" y="-1038.7" effect="PATK_PCT@DAY:12;MATK_PCT@DAY:12;HP_REGEN_PCT@DAY:30;PATK_PCT@NIGHT:-12;MATK_PCT@NIGHT:-12" icon="ks-dawnbringer" description="KEYSTONE: During the day: +12% P.Atk and M.Atk, 30% faster HP regeneration. At night: -12% P.Atk and M.Atk.">
 		<requires nodeId="45071" />
 	</node>
 	<node id="45080" name="Warden's Road" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3442.1" y="-4030.2" effect="PDEF_PCT:1.5" icon="tower-shield">
@@ -194,7 +194,7 @@
 		<requires nodeId="45080" />
 		<requires nodeId="45082" />
 	</node>
-	<node id="45082" name="Guardian's Oath" sector="Hallowmere" type="KEYSTONE" tier="0" cost="1" x="3701.9" y="-4334.3" effect="KS_GUARDIAN:25;PDEF_PCT:20;MDEF_PCT:20;PATK_PCT:-20;MATK_PCT:-20" icon="tower-shield" description="KEYSTONE: You take 25% of the damage dealt to party members within 900 range in their place (never enough to kill you). +20% P.Def and M.Def, but -20% P.Atk and M.Atk.">
+	<node id="45082" name="Guardian's Oath" sector="Hallowmere" type="KEYSTONE" tier="0" cost="1" x="3701.9" y="-4334.3" effect="KS_GUARDIAN:25;PDEF_PCT:20;MDEF_PCT:20;PATK_PCT:-20;MATK_PCT:-20" icon="ks-guardians-oath" description="KEYSTONE: You take 25% of the damage dealt to party members within 900 range in their place (never enough to kill you). +20% P.Def and M.Def, but -20% P.Atk and M.Atk.">
 		<requires nodeId="45081" />
 	</node>
 </list>

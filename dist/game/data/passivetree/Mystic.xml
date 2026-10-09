@@ -87,7 +87,7 @@
 		<requires nodeId="30422" />
 		<requires nodeId="30425" />
 	</node>
-	<node id="30422" name="Soul Link" sector="Mystic" type="KEYSTONE" tier="0" cost="1" x="-760.0" y="-3470.0" effect="SERVITOR_SHARE_PCT:30;PATK_PCT:-10;MATK_PCT:-10" icon="paw" description="KEYSTONE: 30% of the damage you take is redirected to your nearby servitor, but you deal 10% less damage.">
+	<node id="30422" name="Soul Link" sector="Mystic" type="KEYSTONE" tier="0" cost="1" x="-760.0" y="-3470.0" effect="SERVITOR_SHARE_PCT:30;PATK_PCT:-10;MATK_PCT:-10" icon="ks-soul-link" description="KEYSTONE: 30% of the damage you take is redirected to your nearby servitor, but you deal 10% less damage.">
 		<requires nodeId="30421" />
 	</node>
 	<node id="30423" name="Approach" sector="Mystic" type="SMALL" tier="0" cost="1" x="680.0" y="-3330.0" effect="MAXHP:6">
@@ -113,14 +113,14 @@
 		<requires nodeId="30412" />
 		<requires nodeId="30428" />
 	</node>
-	<node id="30428" name="Vampiric Sorcery" sector="Mystic" type="KEYSTONE" tier="0" cost="1" x="260.0" y="-3310.0" effect="KS_SPELL_LEECH:8;HP_REGEN_PCT:-50" icon="blood" description="KEYSTONE: Your direct spell damage heals you for 8% of the damage dealt, but your natural HP regeneration is halved.">
+	<node id="30428" name="Vampiric Sorcery" sector="Mystic" type="KEYSTONE" tier="0" cost="1" x="260.0" y="-3310.0" effect="KS_SPELL_LEECH:8;HP_REGEN_PCT:-50" icon="ks-vampiric-sorcery" description="KEYSTONE: Your direct spell damage heals you for 8% of the damage dealt, but your natural HP regeneration is halved.">
 		<requires nodeId="30427" />
 	</node>
 	<node id="30429" name="Approach" sector="Mystic" type="SMALL" tier="0" cost="1" x="840.0" y="-3250.0" effect="MAXHP:6">
 		<requires nodeId="30426" />
 		<requires nodeId="30430" />
 	</node>
-	<node id="30430" name="Temporal Flow" sector="Mystic" type="ACTIVE_SKILL" tier="0" cost="1" x="990.0" y="-3300.0" effect="MAXHP:15" skillId="27464" skillLevel="1" description="ACTIVE: magic skills recharge 25% faster and cast 10% faster for 15s (180s cooldown).">
+	<node id="30430" name="Temporal Flow" sector="Mystic" type="ACTIVE_SKILL" tier="0" cost="1" x="990.0" y="-3300.0" effect="MAXHP:15" skillId="27464" skillLevel="1" icon="skill-temporal-flow" description="ACTIVE: magic skills recharge 25% faster and cast 10% faster for 15s (180s cooldown).">
 		<requires nodeId="30429" />
 	</node>
 	<node id="30451" name="Waystone" sector="Mystic" type="SMALL" tier="0" cost="1" x="94.2" y="-1797.5" effect="MATK_PCT:0.4">

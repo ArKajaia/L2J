@@ -57,7 +57,7 @@
 		<requires nodeId="42052" />
 		<requires nodeId="42061" />
 	</node>
-	<node id="42052" name="Child of Night" sector="Duskwood" type="KEYSTONE" tier="0" cost="1" x="-4399.4" y="2540.0" effect="EVASION_ADD@NIGHT:6;CRIT_RATE_ADD@NIGHT:60;PATK_PCT@DAY:-12;MATK_PCT@DAY:-12" icon="moon" description="KEYSTONE: At night: +6 Evasion and +60 Critical Rate. During the day: -12% P.Atk and M.Atk.">
+	<node id="42052" name="Child of Night" sector="Duskwood" type="KEYSTONE" tier="0" cost="1" x="-4399.4" y="2540.0" effect="EVASION_ADD@NIGHT:6;CRIT_RATE_ADD@NIGHT:60;PATK_PCT@DAY:-12;MATK_PCT@DAY:-12" icon="ks-child-of-night" description="KEYSTONE: At night: +6 Evasion and +60 Critical Rate. During the day: -12% P.Atk and M.Atk.">
 		<requires nodeId="42051" />
 	</node>
 	<node id="42020" name="Moonblood" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3485.7" y="2591.8" orbitX="-3438.3" orbitY="2498.1" effect="MAXHP_PCT:1.5" icon="moon">
@@ -183,7 +183,7 @@
 		<requires nodeId="42070" />
 		<requires nodeId="42072" />
 	</node>
-	<node id="42072" name="Riposte" sector="Duskwood" type="KEYSTONE" tier="0" cost="1" x="-4344.9" y="3699.8" effect="KS_RIPOSTE:1" icon="dagger" description="KEYSTONE: After you block with a shield or dodge an attack, your next normal attack or physical skill within 5 seconds is a critical hit (a blow skill always lands). Your critical rate is halved otherwise.">
+	<node id="42072" name="Riposte" sector="Duskwood" type="KEYSTONE" tier="0" cost="1" x="-4344.9" y="3699.8" effect="KS_RIPOSTE:1" icon="ks-riposte" description="KEYSTONE: After you block with a shield or dodge an attack, your next normal attack or physical skill within 5 seconds is a critical hit (a blow skill always lands). Your critical rate is halved otherwise.">
 		<requires nodeId="42071" />
 	</node>
 	<node id="42080" name="Bleeding Edge" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-5211.3" y="965.8" effect="CRIT_RATE_ADD:10" icon="blood">
@@ -194,7 +194,7 @@
 		<requires nodeId="42080" />
 		<requires nodeId="42082" />
 	</node>
-	<node id="42082" name="Bloodletter" sector="Duskwood" type="KEYSTONE" tier="0" cost="1" x="-5604.6" y="1038.7" effect="KS_BLOODLETTER:150" icon="blood" description="KEYSTONE: Your physical critical hits (normal attacks and physical skills, not blows) deal no extra damage up front. Instead the target bleeds for 150% of the critical bonus over 6 seconds; more critical hits add to the bleed.">
+	<node id="42082" name="Bloodletter" sector="Duskwood" type="KEYSTONE" tier="0" cost="1" x="-5604.6" y="1038.7" effect="KS_BLOODLETTER:150" icon="ks-bloodletter" description="KEYSTONE: Your physical critical hits (normal attacks and physical skills, not blows) deal no extra damage up front. Instead the target bleeds for 150% of the critical bonus over 6 seconds; more critical hits add to the bleed.">
 		<requires nodeId="42081" />
 	</node>
 </list>
