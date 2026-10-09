@@ -73,7 +73,7 @@
 		<requires nodeId="5001" />
 		<requires nodeId="5015" />
 	</node>
-	<node id="5015" name="Arcane Nova" sector="Arcanist" type="ACTIVE_SKILL" tier="0" cost="1" x="-1177.6" y="-2339.7" effect="MAXHP:15" skillId="27440" skillLevel="auto" description="ACTIVE: blast all enemies around you with a magic nova (30s cooldown). Grows stronger with your level.">
+	<node id="5015" name="Arcane Nova" sector="Arcanist" type="ACTIVE_SKILL" tier="0" cost="1" x="-1177.6" y="-2339.7" effect="MAXHP:15" skillId="27440" skillLevel="auto" icon="skill-arcane-nova" description="ACTIVE: blast all enemies around you with a magic nova (30s cooldown). Grows stronger with your level.">
 		<requires nodeId="5014" />
 	</node>
 	<node id="5016" name="Crossroads" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1125.0" y="-1948.6" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2;MAXHP:12" description="Junction.">
@@ -149,7 +149,7 @@
 		<requires nodeId="5040" />
 		<requires nodeId="5050" />
 	</node>
-	<node id="5038" name="Arcane Overload" sector="Arcanist" type="KEYSTONE" tier="0" cost="1" x="-836.1" y="-1688.1" effect="KS_ARCANE_OVERLOAD:40" icon="spark" description="KEYSTONE: Your spells deal up to 40% more damage the emptier your MP is (full bonus at 0% MP).">
+	<node id="5038" name="Arcane Overload" sector="Arcanist" type="KEYSTONE" tier="0" cost="1" x="-836.1" y="-1688.1" effect="KS_ARCANE_OVERLOAD:40" icon="ks-arcane-overload" description="KEYSTONE: Your spells deal up to 40% more damage the emptier your MP is (full bonus at 0% MP).">
 		<requires nodeId="5037" />
 	</node>
 	<node id="5039" name="Crossroads" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-825.0" y="-1428.9" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2;MAXHP_PCT:0.5" description="Junction.">
@@ -225,7 +225,7 @@
 		<requires nodeId="5063" />
 		<requires nodeId="5073" />
 	</node>
-	<node id="5061" name="Mana Rift" sector="Arcanist" type="ACTIVE_SKILL" tier="0" cost="1" x="-536.1" y="-1168.5" effect="MAXHP:15" skillId="27441" skillLevel="auto" description="ACTIVE: sacrifice HP to instantly restore MP (60s cooldown). Grows stronger with your level.">
+	<node id="5061" name="Mana Rift" sector="Arcanist" type="ACTIVE_SKILL" tier="0" cost="1" x="-536.1" y="-1168.5" effect="MAXHP:15" skillId="27441" skillLevel="auto" icon="skill-mana-rift" description="ACTIVE: sacrifice HP to instantly restore MP (60s cooldown). Grows stronger with your level.">
 		<requires nodeId="5060" />
 	</node>
 	<node id="5062" name="Crossroads" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-525.0" y="-909.3" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2;MAXHP:12" description="Junction.">
@@ -286,7 +286,7 @@
 		<requires nodeId="5062" />
 		<requires nodeId="5078" />
 	</node>
-	<node id="5078" name="Mind Over Matter" sector="Arcanist" type="KEYSTONE" tier="0" cost="1" x="-489.3" y="-687.5" effect="KS_MIND_OVER_MATTER:30" icon="ward" description="KEYSTONE: 30% of the damage you take is drained from your MP instead of your HP, until your MP runs out.">
+	<node id="5078" name="Mind Over Matter" sector="Arcanist" type="KEYSTONE" tier="0" cost="1" x="-489.3" y="-687.5" effect="KS_MIND_OVER_MATTER:30" icon="ks-mind-over-matter" description="KEYSTONE: 30% of the damage you take is drained from your MP instead of your HP, until your MP runs out.">
 		<requires nodeId="5077" />
 	</node>
 	<node id="5079" name="Elemental Singularity" sector="Arcanist" type="MASTER" tier="0" cost="1" x="-360.0" y="-623.5" effect="INT:2;MATK_PCT:8;CAST_SPD_PCT:2" icon="vortex" description="Archetype capstone.">

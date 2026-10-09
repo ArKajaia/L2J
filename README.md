@@ -222,6 +222,48 @@ One NPC in Giran (next to the Arena and the Class Master) that does the work of 
 - **My Weapons / My Soul Crystals**: what your weapons can get, what your crystal can make, warnings when the quest isn't taken or you carry more than one crystal, and where to get a free Stage 0 crystal.
 - The data comes from the server's own files (SA multisells, `LevelUpCrystalData.xml`, `custom/MasterBlacksmith/sa_effects.xml`), so it matches what the server really does.
 
+### Dwarven Trades
+
+The passive tree lets any character take Spoil, Sweeper Festival, Crystallize and Dwarven Craft, so the dwarven classes get what the tree doesn't give. Spoiling and crafting stay a dwarf's trade.
+
+- **Spoilers** (Scavenger, Bounty Hunter, Fortune Seeker): their Spoil, Spoil Festival, Spoil Crush and Spoil Bomb never miss (Spoil from the tree can). A monster they spoiled gives more when swept, whoever kills it: each sweep item's chance is multiplied by 1.25 / 1.5 / 1.75, and its amount by 1 / 1.2 / 1.4 (1st / 2nd / 3rd class).
+- **Crafters** (Artisan, Warsmith, Maestro): +5 / +10 / +15 success rate on recipes below 100% (a 60% recipe works 75% of the time for a Maestro), the masterwork chance ×1.25 / ×1.5 / ×2, and a 5 / 10 / 15% chance to make twice as many of a stackable item (shots, arrows, potions, materials). This works in their private workshops too, so customers come to dwarves.
+- **Crystallize**: every dwarven class gets 20% more crystals, and crafters another 10 / 20 / 30% (a Maestro gets 50% more).
+- **The tree's Dwarven Craft is the only way to craft for everyone but Artisans, Warsmiths and Maestros**: Create Item is no longer in the other classes' skill trees (the Scavenger line keeps the Dwarven Fighter's level 1, as in retail). The node gives the recipe book and Create Item at your level, like a dwarf learns it, but no higher than level 5 (D and most C grade recipes); it raises a lower Create Item of your own and gives it back when the node goes. B grade and up can only be crafted by the Artisan line. Dwarven crafting needs both Dwarven Craft and Create Item, so refunding the node ends it, but the recipe book is kept and comes back with the node.
+- **Combat**: dwarves fight with blunts, polearms, stuns and golems, and the fighting ties into the trade.
+  - **Skullcrusher** (both lines): their stun skills (Stun Attack, Hammer Crush, Rush Impact...) land ×1.1 / ×1.2 / ×1.3 as often, still capped by the skill's own highest chance.
+  - **Plunderer's Mark** (spoilers): +8 / 12 / 16% damage from their attacks and physical skills (Backstab and Lucky Blow too) on a monster they spoiled themselves.
+  - **Spoils of War** (spoilers): every corpse they sweep with loot on it restores 2 / 3 / 4% of their max HP and MP, so a Sweeper Festival over a pack is a breather.
+  - **Golem Engineering** (crafters): their golems and cannons get +10 / 20 / 30% P.Atk, M.Atk, P.Def, M.Def and max HP, on top of the tree's summon nodes.
+  - **Forged Gear** (crafters): every enchant level above +3 on their weapon gives +0.5 / 0.75 / 1% P.Atk, and on each armour piece (shield too) +0.1 / 0.15 / 0.2% P.Def, up to +15% each. It shows in the character window.
+- Everything follows the active class: a dwarven subclass counts, a dwarf playing a non-dwarven subclass doesn't. Settings in `config/Custom/DwarvenTrades.ini`.
+- **Fake players**: the Fortune Seeker and Maestro fake players get the combat perks of their class too (Skullcrusher, a Spoil that never misses, Plunderer's Mark, Golem Engineering on their golem, Forged Gear on their gear). A Fortune Seeker spoils the monster it fights first, and the players of its party can sweep it, with its spoiler bonus.
+
+### Performers
+
+Glittering Medals from champions teach every class the songs and dances, so the Swordsinger and Bladedancer lines get what a medal can't give: auras that only a performer can keep up, a combat stance each, a 3rd class finale, and better songs and dances of their own. The Swordsinger line keeps the party standing; the Bladedancer line tears the enemy down.
+
+- **Performances** (toggles, one at a time; switching replaces the old one). While on, everyone in range gets an "echo" every few seconds, and it fades a few seconds after they walk away. Echoes have their own buff slots (the triggered-buff bar), so they stack with every retail buff and medal song and never push one out. The same echo from two performers doesn't stack. Level 1 and 2 at the 2nd class, 3 at the 3rd.
+
+  | Performance | Class line | Who | Effect (level 1 / 2 / 3) |
+  |---|---|---|---|
+  | Ballad of the Bulwark | Swordsinger | Party within 900 | P. Def. and M. Def. +8 / 10 / 12% |
+  | Hymn of Renewal | Swordsinger | Party within 900 | HP regen +20 / 30 / 40%, MP regen +10 / 15 / 20%, heals received +5 / 8 / 10% |
+  | Anthem of Valor | Swordsinger | Party within 900 | P. Atk. and M. Atk. +6 / 8 / 10% |
+  | Dance of Ruin | Bladedancer | Enemies within 400 | P. Def. and M. Def. −8 / 10 / 12% |
+  | Dance of Torment | Bladedancer | Enemies within 400 | Atk. Spd. and Casting Spd. −8 / 10 / 12%, Speed −10 / 15 / 20% |
+  | Dance of Frenzy | Bladedancer | Party within 900 | Atk. Spd. and Casting Spd. +6 / 8 / 10% |
+
+  The enemy dances (hexes) land like a dance debuff, then hold while the enemy stays close; they reach monsters and the players the performer could attack without forcing it, never the performer's own party, clan or alliance. A stunned, sleeping or paralyzed performer stops performing until it ends.
+- **Stances** (toggles, one at a time, alongside a performance):
+  - **Battle Hymn** (Swordsinger line): P. Def. +5%, and each attack has a 15% chance to sing Healing Verse, healing the party within 600 for 120 / 200 / 280 / 360 HP.
+  - **Blade Waltz** (Bladedancer line): Atk. Spd. +8%, Evasion +3, and each dual sword attack has a 20% chance to unleash Whirling Edge on every enemy within 200 (300 / 550 / 850 / 1150 power), which turns a Bladedancer into a pack farmer.
+- **Finales** (level 79): **Sanctuary Chorus** (Sword Muse) heals the party within 1000 for 20% of its HP and gives P. Def. and M. Def. +30% for 15 seconds (5 minute reuse). **Danse Macabre** (Spectral Dancer) strikes up to 15 enemies within 300 with 3500 power and may cut their P. Def. by 20% and Speed by 30% for 10 seconds (2 minute reuse).
+- **Virtuoso**: songs and dances a performer casts last ×1.5 (Swordsinger, Bladedancer) or ×2 (Sword Muse, Spectral Dancer), and singing one more doesn't cost them the extra MP everyone else pays, so a performer's songs outlast anyone's medal songs.
+- Performances drain MP for as long as they are on (about 3 MP per second at 76, a stance about 2), proportionate to the level like Vicious Stance.
+- The skills are learned from the Grand Masters like any class skill (data/stats/skills/custom/performer_skills.xml). Everything follows the active class. The client needs the rows in `client/Performers` to show their names and icons. Settings in `config/Custom/Performers.ini`.
+- **Fake players**: Battle Bards and War Dancers (fake players of the two lines) hunt with their stance on and a performance going, switch performance when they fight a player (a War Dancer from Dance of Ruin to Dance of Torment, a Battle Bard from Anthem of Valor to Ballad of the Bulwark) and save their finale for players. The Sword Muse and Spectral Dancer that join parties play for the party. A fake performer's auras reach its party, players and fake players alike, and its hexes reach what its area skills reach; a player's auras reach the fake players of its party. Virtuoso counts for them.
+
 ### Other Custom Features at a Glance
 
 | Area | Features |
@@ -589,7 +631,40 @@ This program is free software, licensed under the **GNU General Public License, 
 
 ## Recent Updates
 
-Changes from 28 September – 8 October 2026.
+Changes from 28 September – 9 October 2026.
+
+### Fake Players: gear
+- **Every piece is enchanted on its own**: the weapon, shield, each armor piece, each earring and ring, the necklace, shirt and belt get their own enchant, so a +7 weapon can come with +0 boots and a +3 helmet. Before, all armor and jewels shared one roll. A piece was enchanted at all, or is +0; an enchanted one is at its safe level (+3, +4 for a full body armor, read from `data/EnchantItemGroups.xml`), now and then below it, and each step past it is rarer than the one before. Weapons are pushed furthest, jewels next and armor least. At level 85 about 11% of weapons are +0, 26% +3, 30% +4 or +5 and 5% +10 or more. Each fake player has its own wealth, so some enchant nearly everything and others very little, and some went for a full +6 armor set (about a quarter at 84-85, for the set's +6 bonus). New settings in `config/Custom/FakePlayerPvp.ini`: `FakePvpWeaponEnchantOdds`, `FakePvpArmorEnchantOdds`, `FakePvpJewelEnchantOdds`, `FakePvpArmorSetEnchantChance`, `FakePvpGearWealthMin`/`Max`. `FakePvpWeaponEnchant`/`FakePvpArmorEnchant` now only bound the result (no-grade gear and cloaks are never enchanted).
+- **Cloaks**: a fake player whose full armor set opens the cloak slot (Dynasty, Moirai, Vesper Noble, like players; plain Vesper doesn't) wears a cloak `FakePvpCloakChance` % of the time: the Ancient, Holy Spirit's, Zaken, Frintezza and Freya cloaks and their soul cloaks, the ones the Weavers unseal in High Five (the `cloak` list in `data/FakePlayerPvp.xml`). Its P. Def. and attribute resistances count. Town fake players wear them too.
+- **Shirts and belts**: from level 20 (shirts) and 40 (belts), D to S grade (`ACCESSORIES` kit, `FakePvpShirtChance`, `FakePvpBeltChance`).
+- **Vesper Noble**: level 84+ builds now wear Vesper or Vesper Noble (2 in 5), so they can have a cloak. Kit tiers with the same `minLevel` are alternatives picked by `weight`. The strong fake players of the PvP spots wear the last one listed.
+- The inspect window shows the cloak, shirt and belt with the enchant of each piece, a cloak a player couldn't drop never drops from a fake player, and Forged Gear counts each armor piece's own enchant. Fake clan members get their gear rolled again from their saved seed under the new rules, once.
+
+### Fake Players: dwarves and performers
+- **Dwarven builds**: Fortune Seeker and Maestro roam, hunt, fight in the PvP spots and live in the towns (the Dwarven Village had no dwarves), with one-handed blunts and shields, or two-handed blunts (`Fortune Seeker Crusher`, `Maestro Crusher`), and a polearm for monster packs. They are also the Rival Shades of the dwarven class transfers.
+  - Fortune Seekers spoil the monster they fight first (Spoil, Spoil Crush at 76), stun with Hammer Crush and Armor Crush and hit with Crushing Strike, Fatal Strike and, from 83, Lucky Strike on packs.
+  - Maestros fight next to their Mechanic Golem, open with Rush or Rush Impact, heal with Battle Cry and put on Golem Armor when a PvP gets serious.
+  - The Dwarven Trades work for them like for players: Skullcrusher, a Spoil that never misses, Plunderer's Mark, Golem Engineering on their golem and Forged Gear on their enchanted gear. A fake player's spoil can be swept by the players of its party, and its spoiler bonus counts.
+- **Performer builds**: Battle Bard (Sword Muse line) and War Dancer (Spectral Dancer line) hunt and fight on their own. Their stance is always on (Battle Hymn, Blade Waltz), they play a hunting performance and switch to another one against players, and they save their finale for players. The party-only Sword Muse and Spectral Dancer now keep up their own performance and stance too, and the Sword Muse heals the party with Sanctuary Chorus.
+- **Performances with fake players**: a fake performer's party auras reach its party (players and fake players), and its hexes reach what its area skills reach. A player's performance now reaches the fake players of its party too. Virtuoso counts for fake performers. `HexAffectsPlayers = False` now spares fake players as well.
+- New `perform` and `spoil` skill lists in `data/FakePlayerPvp.xml`.
+
+### Performers
+- **Swordsinger and Bladedancer lines reworked**: Glittering Medals teach everyone the songs and dances, so the performers now get toggle auras nobody else has, a combat stance, a level 79 finale and longer-lasting songs and dances. See [Performers](#performers).
+- **Performances** (one at a time): Ballad of the Bulwark, Hymn of Renewal and Anthem of Valor (Swordsinger line, party auras), Dance of Ruin and Dance of Torment (Bladedancer line, enemy hexes) and Dance of Frenzy (Bladedancer line, party aura). They stack with every buff and medal song.
+- **Stances**: Battle Hymn (attacks may heal the party) and Blade Waltz (dual sword attacks may slash every enemy around the dancer).
+- **Finales**: Sanctuary Chorus (Sword Muse) and Danse Macabre (Spectral Dancer).
+- **Virtuoso**: a performer's songs and dances last ×1.5 / ×2 and stacking them costs no extra MP.
+- New skills 27500-27528 in the class skill trees; client rows in `client/Performers`. Settings in `config/Custom/Performers.ini`.
+
+### Dwarven Trades
+- **Dwarven classes reworked**: Spoil, Sweeper Festival, Crystallize and Dwarven Craft on the passive tree had made them pointless, so the dwarves now do these trades better than anyone with the tree, and fight in their own way. See [Dwarven Trades](#dwarven-trades).
+- **Spoilers** (Scavenger, Bounty Hunter, Fortune Seeker): Spoil never misses, and what they spoil gives more when swept (chance up to ×1.75 and amount up to ×1.4 for a Fortune Seeker).
+- **Crafters** (Artisan, Warsmith, Maestro): a higher success rate (up to +15), more masterworks (up to ×2) and a chance to make twice as many stackable items (up to 15%), in their workshops too.
+- **Crystallize**: dwarves get 20% more crystals, and crafters up to another 30%.
+- **Combat**: stun skills of every dwarven class land more often (Skullcrusher). Spoilers hit the monsters they spoiled harder (Plunderer's Mark) and restore HP and MP for every corpse they sweep (Spoils of War). Crafters' golems and cannons are up to 30% stronger (Golem Engineering), and enchant levels above +3 on their gear add P.Atk and P.Def (Forged Gear).
+- **Tree's Dwarven Craft is the only source of crafting outside the Artisan line**: it gives Create Item at your level, up to level 5 (D and most C grade). Create Item was taken out of the non-dwarven and Scavenger skill trees, and dwarven crafting now needs Dwarven Craft as well, so refunding the node ends it (recipes are kept). On an existing database run `dist/db_installer/sql/game/updates/2026-10-09_create_item_from_tree.sql` once with the server stopped, or `SkillCheckRemove` strips the old Create Item at login and reports each character.
+- Settings in `config/Custom/DwarvenTrades.ini`.
 
 ### Town Life
 - **New system**: npcs walk the town streets by day, go into their houses at dusk and come back at dawn. It covers townsfolk, workers, patrols, children playing tag, a town crier, harbor fishermen and dock workers, the lamplighter, the night watch, a tavern crowd at night, sweets for the children and a weekly festival day. See [Town Life](#town-life).
@@ -631,6 +706,19 @@ Changes from 28 September – 8 October 2026.
 - The window is 470x760. The custom NPC is added to the blacksmith and Mammon multisells it opens.
 
 ### Passive Skill Tree
+- **Eleven new keystones on the outer edge**, each at the end of a two-node branch running straight out from a notable of an outer region:
+  - **Whirling Steel** (Ironmarch, 40080-40082, past Wallbreaker): normal attacks with any melee weapon also hit up to 2 more enemies in front of you for 50% damage, and a polearm hits 2 more enemies than it would. -15% Attack Speed.
+  - **Riposte** (Duskwood, 42070-42072, past Unseen): after you block an attack or skill with a shield, your next normal attack or physical skill within 5 seconds is a critical hit, and a blow skill lands. Your critical rate is halved otherwise.
+  - **Guardian's Oath** (Hallowmere, 45080-45082, past Lamplight): you take 25% of the damage dealt to party members within 900 range in their place, never enough to kill you. +20% P.Def and M.Def, -20% P.Atk and M.Atk.
+  - **Arc Conduit** (Starfall, 43080-43082, past Calm Before): single-target damage spells jump to the nearest enemy within 300 of the target for 50% of the damage, then to one more for 25%. Each jump comes 0.2 seconds after the one before and shows the spell's own animation flying from one enemy to the next. Spells cost 30% more MP.
+  - **Chaos Weave** (Starfall, 43090-43092, past Starfire): each damage spell has a 20% chance to Surge for 2.5x damage and a 10% chance to Fizzle and deal none. No magic critical hits.
+  - **Ley Anchor** (Ley Expanse, 44080-44082, past Overflowing Well): once you have stood still for 2 seconds, +25% M.Atk, +20% Casting Speed and +15% M.Def; until then -15% M.Atk. Node effects can use the new `STILL` and `MOBILE` conditions (`MATK_PCT@STILL`).
+  - **Battlemage** (Ley Expanse, 44090-44092, past Living Conduit): 40% of your M.Atk is added to your P.Atk, and 5% of your melee damage restores MP. -25% Casting Speed, and -20 Speed in heavy armour.
+  - **Phoenix Heart** (Red Wastes, 41070-41072, past Scarred Veteran): once every 5 minutes, a blow that would kill you leaves you alive with 40% of your HP. -15% max HP and -20% healing received.
+  - **Relentless Assault** (Red Wastes, 41080-41082, past Frenzied): each normal hit you land on your target gives +3% Attack Speed, up to +30% after 10 hits. Switching target or 3 seconds without a hit starts over. -10% Attack Speed.
+  - **Bloodletter** (Duskwood, 42080-42082, past Midnight Sight): physical critical hits (normal attacks and physical skills, not blows) deal no extra damage up front. Instead the target bleeds for 150% of the critical bonus over 6 seconds, and more critical hits add to the bleed. Purity of Flesh stops it.
+  - **Spell Echo** (Ironmarch, 44100-44102, past Tower Shield, on the far side of the tree from Chaos Weave so one build rarely takes both): single-target damage spells have a 25% chance to hit their target again 0.5 seconds later, free, for 60% of the damage, with the spell's animation. -15% Casting Speed.
+  - `layout_tree.py` lays out these branches, and Nocturne's and Dawnbringer's, instead of stopping on them.
 - **Route choices**: each archetype now has several ways to the same place, and each way costs a different amount.
   - **Start**: each Origin has three roads to its first Crossroads. The middle road costs 3 points. The two side roads cost 4 and pass the entry of that Crossroads' two clusters, which used to hang off the Crossroads.
   - **First stretch (a wheel)**: between the first and second Crossroads there are three ways through: the plain road (3 points), or round either side through a whole cluster (5 points, its notable on the way). The active skill sits inside the wheel.
@@ -686,8 +774,10 @@ Changes from 28 September – 8 October 2026.
 
 ### Fake Players
 - **New builds**: Dreadnought, Dominator, Soultaker, Hell Knight, and the Kamael classes (Doombringer, Male/Female Soul Hound, Trickster, Judicator). Every class also gets a second gear variant. Kamael wear light armor only, like players (heavy armor and robes showed untextured on them).
-- **Servitors**: Necromancers and Hell Knights summon their servitors. Necromancers link theirs with Transfer Pain and re-summon it during PvP.
+- **Dwarves and performers**: Fortune Seeker and Maestro builds (blunts, stuns, Spoil, the Mechanic Golem and Golem Armor, with their Dwarven Trades perks), and Battle Bard and War Dancer, a Sword Muse and a Spectral Dancer that hunt on their own with their performances, stances and finales. See [Dwarven Trades](#dwarven-trades) and [Performers](#performers).
+- **Servitors**: Necromancers, Hell Knights and Maestros summon their servitors. Necromancers link theirs with Transfer Pain and re-summon it during PvP.
 - **Kamael mechanics**: fake players use souls, Final Form, Soul Cleanse and Warp. Disarm now works on fake players.
+- **Passive tree keystones**: fake players now take keystones: one from about 30 spent points, a second from about 90, from level 40 (`FakePvpKeystonePoints`, `FakePvpKeystoneMinLevel`). Each role picks from its own list (`FakePvpKeystones.<ROLE>`), only ones that work for a fake player and its gear (Riposte and Deflection need a shield, Far Shot a bow). The keystone mechanics now work for fake players, including Unending Fury, Relentless Assault and Arcane Plating. Trees are grown for the fake player's gear, so a `@HEAVY` or `@SHIELD` bonus only counts if it wears one, and a stat that has reached its `PassiveTreeCap` stops pulling more points.
 - **Personality**: each fake player rolls its own aggression, skill use, chattiness and roaming. The spread around the config values is set by `FakePvpPersonality*` options.
 - **Smarter play**:
   - They teleport and log off only when no player can see them.
@@ -748,6 +838,7 @@ Changes from 28 September – 8 October 2026.
 
 ### Fixes & Misc
 - `AdminFakePlayers` failed to compile under the script engine's Java 8 source level, which disabled all handlers. This is fixed.
+- `PassiveTreeApiServer` (the passive tree web editor, started by `MasterHandler`) used Java 16 pattern matching, which fails under the same Java 8 source level and takes the handlers down with it. This is fixed; every script now compiles at `-source 1.8`.
 - The passive tree XSD validation errors and the missing skill 90302 are fixed. The passive skill tree page now has a search box.
 - Attribute stones no longer open an empty window when no item can take the attribute.
 - The champion buff medal now follows auto-loot rules.

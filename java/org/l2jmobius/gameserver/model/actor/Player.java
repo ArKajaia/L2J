@@ -156,6 +156,7 @@ import org.l2jmobius.gameserver.model.actor.holders.player.AutoUseSettingsHolder
 import org.l2jmobius.gameserver.model.actor.holders.player.BlockList;
 import org.l2jmobius.gameserver.model.actor.holders.player.ContactList;
 import org.l2jmobius.gameserver.model.actor.holders.player.Duel;
+import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
 import org.l2jmobius.gameserver.model.actor.holders.player.Macro;
 import org.l2jmobius.gameserver.model.actor.holders.player.MacroList;
 import org.l2jmobius.gameserver.model.actor.holders.player.MovieHolder;
@@ -1964,16 +1965,20 @@ public class Player extends Playable
 	}
 	
 	/**
+	 * Dwarven crafting needs both the recipe book (Dwarven Craft) and Create Item. Every dwarf has both from the class; anyone else only from the passive tree's Dwarven Craft node, so refunding that node ends their crafting.
 	 * @return True if the Player can Craft Dwarven Recipes.
 	 */
 	public boolean hasDwarvenCraft()
 	{
-		return getSkillLevel(CommonSkill.CREATE_DWARVEN.getId()) >= 1;
+		return (getSkillLevel(CommonSkill.DWARVEN_CRAFT.getId()) >= 1) && (getSkillLevel(CommonSkill.CREATE_DWARVEN.getId()) >= 1);
 	}
 	
+	/**
+	 * @return the Create Item level the Player crafts dwarven recipes with, 0 without Dwarven Craft
+	 */
 	public int getDwarvenCraft()
 	{
-		return getSkillLevel(CommonSkill.CREATE_DWARVEN.getId());
+		return hasDwarvenCraft() ? getSkillLevel(CommonSkill.CREATE_DWARVEN.getId()) : 0;
 	}
 	
 	/**
@@ -15611,7 +15616,15 @@ public class Player extends Playable
 	{
 		final double base = super.getPAtk(target);
 		final double pct = getPassiveStatBonus().get("PATK_PCT");
-		return base * (1.0 + (pct / 100.0)) * PassiveMechanics.rampageMultiplier(this);
+		double result = base * (1.0 + (pct / 100.0)) * PassiveMechanics.rampageMultiplier(this) * DwarvenTrades.getForgedWeaponMultiplier(this);
+		
+		// Battlemage: part of M.Atk is added to P.Atk.
+		final double battlemage = getPassiveStatBonus().get(PassiveMechanics.BATTLEMAGE);
+		if (battlemage > 0)
+		{
+			result += (getMAtk(target, null) * battlemage) / 100.0;
+		}
+		return result;
 	}
 	
 	@Override
@@ -15655,7 +15668,7 @@ public class Player extends Playable
 	{
 		final double base = super.getPDef(target);
 		final double pct = getPassiveStatBonus().get("PDEF_PCT");
-		return base * (1.0 + (pct / 100.0));
+		return base * (1.0 + (pct / 100.0)) * DwarvenTrades.getForgedArmorMultiplier(this);
 	}
 	
 	@Override
@@ -15686,7 +15699,7 @@ public class Player extends Playable
 	{
 		final double base = super.getPAtkSpd();
 		final double pct = getPassiveStatBonus().get("ATK_SPD_PCT");
-		final double val = base * (1.0 + (pct / 100.0));
+		final double val = base * (1.0 + (pct / 100.0)) * PassiveMechanics.relentlessMultiplier(this);
 		// This value drives real attack timings, so keep the passive bonus within the configured cap.
 		return isGM() ? val : Math.min(val, PlayerConfig.MAX_PATK_SPEED);
 	}

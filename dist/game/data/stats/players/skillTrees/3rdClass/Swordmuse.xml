@@ -35,5 +35,11 @@
 		<skill skillName="Deadly Strike" skillId="986" skillLevel="23" getLevel="83" levelUpSp="26000000" learnedByNpc="true" />
 		<skill skillName="Deadly Strike" skillId="986" skillLevel="24" getLevel="84" levelUpSp="27000000" learnedByNpc="true" />
 		<skill skillName="Deadly Strike" skillId="986" skillLevel="25" getLevel="85" levelUpSp="28000000" learnedByNpc="true" />
+		<!-- Performers (custom, data/stats/skills/custom/performer_skills.xml) -->
+		<skill skillName="Ballad of the Bulwark" skillId="27500" skillLevel="3" getLevel="76" levelUpSp="2000000" learnedByNpc="true" />
+		<skill skillName="Hymn of Renewal" skillId="27502" skillLevel="3" getLevel="78" levelUpSp="5000000" learnedByNpc="true" />
+		<skill skillName="Battle Hymn" skillId="27506" skillLevel="4" getLevel="78" levelUpSp="5000000" learnedByNpc="true" />
+		<skill skillName="Sanctuary Chorus" skillId="27508" skillLevel="1" getLevel="79" levelUpSp="8000000" learnedByNpc="true" />
+		<skill skillName="Anthem of Valor" skillId="27504" skillLevel="3" getLevel="80" levelUpSp="10000000" learnedByNpc="true" />
 	</skillTree>
 </list>

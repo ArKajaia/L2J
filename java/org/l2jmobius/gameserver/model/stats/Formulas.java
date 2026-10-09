@@ -42,6 +42,8 @@ import org.l2jmobius.gameserver.managers.SiegeManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
+import org.l2jmobius.gameserver.model.actor.holders.player.Performers;
 import org.l2jmobius.gameserver.model.actor.instance.Cubic;
 import org.l2jmobius.gameserver.model.actor.instance.SiegeFlag;
 import org.l2jmobius.gameserver.model.actor.instance.StaticObject;
@@ -663,6 +665,7 @@ public class Formulas
 		damage *= attributeMod;
 		damage *= weaponMod;
 		damage *= penaltyMod;
+		damage *= DwarvenTrades.getPlunderMultiplier(attacker, target); // Plunderer's Mark
 		
 		return Math.max(damage, 1);
 	}
@@ -742,6 +745,7 @@ public class Formulas
 		damage *= attributeMod;
 		damage *= weaponMod;
 		damage *= penaltyMod;
+		damage *= DwarvenTrades.getPlunderMultiplier(attacker, target); // Plunderer's Mark
 		
 		return Math.max(damage, 1);
 	}
@@ -790,8 +794,11 @@ public class Formulas
 		// Add soulshot boost.
 		final int ssBoost = ss ? 2 : 1;
 		damage = (skill != null) ? ((damage * ssBoost) + skill.getPower(attacker, target, isPvP, isPvE)) : (damage * ssBoost);
+		double critRatio = 1; // Passive tree Bloodletter: how many times the non-critical damage this critical hit deals.
 		if (crit)
 		{
+			final double nonCritical = (76 * damage * proximityBonus) / defence;
+			
 			// H5 Damage Formula
 			damage = 2 * attacker.calcStat(Stat.CRITICAL_DAMAGE, 1, target, skill) * attacker.calcStat(Stat.CRITICAL_DAMAGE_POS, 1, target, skill) * target.calcStat(Stat.DEFENCE_CRITICAL_DAMAGE, 1, target, null) * ((76 * damage * proximityBonus) / defence);
 			damage += ((attacker.calcStat(Stat.CRITICAL_DAMAGE_ADD, 0, target, skill) * 77) / defence);
@@ -818,6 +825,11 @@ public class Formulas
 				{
 					damage *= ClassBalanceConfig.PVE_PHYSICAL_SKILL_CRITICAL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
 				}
+			}
+			
+			if ((nonCritical > 0) && PassiveMechanics.bleedsCriticalBonus(attacker))
+			{
+				critRatio = Math.max(1, damage / nonCritical);
 			}
 		}
 		else
@@ -879,6 +891,8 @@ public class Formulas
 		damage *= calcAttributeBonus(attacker, target, skill);
 		if (target.isAttackable())
 		{
+			damage *= DwarvenTrades.getPlunderMultiplier(attacker, target); // Plunderer's Mark
+			
 			final Weapon weapon = attacker.getActiveWeaponItem();
 			if ((weapon != null) && ((weapon.getItemType() == WeaponType.BOW) || (weapon.getItemType() == WeaponType.CROSSBOW)))
 			{
@@ -949,6 +963,14 @@ public class Formulas
 					}
 				}
 			}
+		}
+		
+		// Passive tree Bloodletter: the critical bonus bleeds over time instead of landing now.
+		if (critRatio > 1)
+		{
+			final double upFront = damage / critRatio;
+			PassiveMechanics.startBleed(attacker, target, damage - upFront);
+			damage = upFront;
 		}
 		
 		return damage;
@@ -1064,7 +1086,7 @@ public class Formulas
 			damage *= attacker.calcStat(stat, 1, null, null);
 		}
 		
-		// Passive tree Arcane Overload and Point Blank / Far Shot.
+		// Passive tree Arcane Overload, Point Blank / Far Shot and Chaos Weave.
 		damage *= PassiveMechanics.spellDamageMultiplier(attacker, target, skill);
 		
 		damage *= calcAttributeBonus(attacker, target, skill);
@@ -1210,6 +1232,12 @@ public class Formulas
 			return false;
 		}
 		
+		// Passive tree Riposte: the counter-attack after a shield block is a critical hit.
+		if (PassiveMechanics.consumeRiposte(attacker))
+		{
+			return true;
+		}
+		
 		double rate;
 		if (skill != null)
 		{
@@ -1219,6 +1247,7 @@ public class Formulas
 		{
 			rate = attacker.getStat().calcStat(Stat.CRITICAL_RATE_POS, attacker.getStat().getCriticalHit(target, null), target, skill);
 		}
+		rate *= PassiveMechanics.critRateMultiplier(attacker);
 		
 		final boolean isPvP = attacker.isPlayable() && target.isPlayable();
 		if (skill == null)
@@ -1417,6 +1446,11 @@ public class Formulas
 			shldSuccess = SHIELD_DEFENSE_SUCCEED;
 		}
 		
+		if (shldSuccess != SHIELD_DEFENSE_FAILED)
+		{
+			PassiveMechanics.onShieldBlock(target); // Passive tree Riposte.
+		}
+		
 		if (sendSysMsg && target.isPlayer())
 		{
 			final Player enemy = target.asPlayer();
@@ -1572,7 +1606,7 @@ public class Formulas
 			mAtkMod = val;
 		}
 		
-		final double rate = baseMod * elementMod * traitMod * mAtkMod * buffDebuffMod;
+		final double rate = baseMod * elementMod * traitMod * mAtkMod * buffDebuffMod * DwarvenTrades.getEffectChanceMultiplier(attacker, skill);
 		final double finalRate = traitMod > 0 ? MathUtil.clamp(rate, skill.getMinChance(), skill.getMaxChance()) : 0;
 		
 		if (finalRate <= Rnd.get(100))
@@ -1953,6 +1987,12 @@ public class Formulas
 	
 	public static boolean calcBlowSuccess(Creature creature, Creature target, Skill skill)
 	{
+		// Passive tree Riposte: the counter-attack after a shield block lands.
+		if (PassiveMechanics.consumeRiposte(creature))
+		{
+			return true;
+		}
+		
 		final double dexMod = BaseStat.DEX.calcBonus(creature);
 		
 		// Apply DEX Mod.
@@ -2063,6 +2103,12 @@ public class Formulas
 		if (calcSkillMastery(caster, skill))
 		{
 			time *= 2;
+		}
+		
+		// Performers' Virtuoso: their songs and dances last longer.
+		if (time > 0)
+		{
+			time = (int) (time * Performers.getDanceDurationMultiplier(caster, skill));
 		}
 		
 		// Debuffs Duration Affected by Resistances.

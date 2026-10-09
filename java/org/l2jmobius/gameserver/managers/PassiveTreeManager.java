@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.l2jmobius.commons.database.DatabaseFactory;
 import org.l2jmobius.commons.threads.ThreadPool;
+import org.l2jmobius.gameserver.config.custom.DwarvenTradesConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.config.custom.PassiveTreeConfig;
 import org.l2jmobius.gameserver.data.custom.PassiveTreeData;
@@ -40,9 +41,11 @@ import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics.ConditionalKey;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
+import org.l2jmobius.gameserver.model.skill.CommonSkill;
 import org.l2jmobius.gameserver.model.skill.PassiveTreeArchetypes;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.functions.AbstractFunction;
 import org.l2jmobius.gameserver.model.stats.functions.FuncAdd;
 import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
@@ -100,6 +103,11 @@ public class PassiveTreeManager
 	 * objectId -> (skillId -> level) for skills the TREE added this session. applyAll() only ever removes what's recorded here, so class-owned skills (a dwarf's own Spoil, Crystallize, Create Item...) are never touched.
 	 */
 	private final Map<Integer, Map<Integer, Integer>> _treeGranted = new ConcurrentHashMap<>();
+	
+	/**
+	 * objectId -> the character's own Create Item level that the tree's higher one replaced (a Bounty Hunter's level 1, an Artisan's level 4 at 43). Given back when the tree's copy goes, so the class skill never disappears.
+	 */
+	private final Map<Integer, Integer> _replacedCreateItem = new ConcurrentHashMap<>();
 	
 	/** Player-variable prefix used to remember each class index's level. */
 	private static final String VAR_CLASS_LEVEL = "PT_CLASS_LEVEL_";
@@ -612,6 +620,12 @@ public class PassiveTreeManager
 			wanted.merge(node.getSkillId(), getNodeSkillLevel(player, node), Math::max);
 		}
 		
+		// Dwarven Craft only opens the recipe book; Create Item decides what can be made.
+		if (wanted.containsKey(CommonSkill.DWARVEN_CRAFT.getId()))
+		{
+			wanted.put(CommonSkill.CREATE_DWARVEN.getId(), getTreeCreateItemLevel(player));
+		}
+		
 		// 2) Remove ONLY what the tree added and no longer grants at that level -
 		// and only if it's still our copy. The level check matters: if the
 		// character has since gained their own version of the skill, the levels
@@ -640,6 +654,19 @@ public class PassiveTreeManager
 				{
 					player.sendMessage("Passive tree: you lost " + known.getName() + ".");
 				}
+				
+				// Give back the character's own Create Item the tree's copy stood in for.
+				final Integer ownLevel = _replacedCreateItem.get(player.getObjectId());
+				if ((known.getId() == CommonSkill.CREATE_DWARVEN.getId()) && (ownLevel != null) && !wanted.containsKey(known.getId()))
+				{
+					_replacedCreateItem.remove(player.getObjectId());
+					player.addSkill(SkillData.getInstance().getSkill(known.getId(), ownLevel), false);
+				}
+			}
+			else if (entry.getKey() == CommonSkill.CREATE_DWARVEN.getId())
+			{
+				// The character learned a higher Create Item of their own since: the tree's copy is gone already.
+				_replacedCreateItem.remove(player.getObjectId());
 			}
 		}
 		granted.keySet().retainAll(wanted.keySet());
@@ -649,10 +676,18 @@ public class PassiveTreeManager
 		for (Map.Entry<Integer, Integer> entry : wanted.entrySet())
 		{
 			// Already ours at this level, or owned by the class. Keep what's there
-			// and don't record a class-owned skill as ours.
-			if (player.getKnownSkill(entry.getKey()) != null)
+			// and don't record a class-owned skill as ours. The one exception is
+			// Create Item: the tree is where crafting comes from, so it raises a
+			// lower level of the class's own (a Bounty Hunter's level 1) and
+			// remembers that level to give it back.
+			final Skill own = player.getKnownSkill(entry.getKey());
+			if (own != null)
 			{
-				continue;
+				if ((entry.getKey() != CommonSkill.CREATE_DWARVEN.getId()) || (own.getLevel() >= entry.getValue()) || granted.containsKey(entry.getKey()))
+				{
+					continue;
+				}
+				_replacedCreateItem.put(player.getObjectId(), own.getLevel());
 			}
 			
 			final Skill skill = SkillData.getInstance().getSkill(entry.getKey(), entry.getValue());
@@ -855,6 +890,55 @@ public class PassiveTreeManager
 		{
 			npc.addStatFunc(new FuncAdd(Stat.MAX_MP, FAKE_GETTER_ORDER, PASSIVE_TREE_FUNC_OWNER, maxMp, null));
 		}
+		
+		// The keystones Player works into its getters, worked out each time the stat is read since they follow the fight.
+		if (bonus.get(PassiveMechanics.RAMPAGE) > 0)
+		{
+			npc.addStatFunc(new KeystoneFunc(Stat.POWER_ATTACK, FAKE_GETTER_ORDER + 1, (creature, target, value) -> value * PassiveMechanics.rampageMultiplier(creature)));
+		}
+		if (bonus.get(PassiveMechanics.RELENTLESS) > 0)
+		{
+			npc.addStatFunc(new KeystoneFunc(Stat.POWER_ATTACK_SPEED, FAKE_GETTER_ORDER + 1, (creature, target, value) -> value * PassiveMechanics.relentlessMultiplier(creature)));
+		}
+		final double pdefAsMdef = bonus.get(PassiveMechanics.PDEF_AS_MDEF);
+		if (pdefAsMdef > 0)
+		{
+			// Arcane Plating: M.Def is replaced by P.Def, reduced by the keystone's %, like Player#getMDef.
+			npc.addStatFunc(new KeystoneFunc(Stat.MAGIC_DEFENCE, FAKE_GETTER_ORDER + 2, (creature, target, value) -> creature.getPDef(target) * Math.max(0, 1.0 - (pdefAsMdef / 100.0))));
+		}
+	}
+	
+	/** How a {@link KeystoneFunc} changes a stat. */
+	@FunctionalInterface
+	private interface KeystoneFormula
+	{
+		/**
+		 * @param creature the creature whose stat it is
+		 * @param target the creature it is read against, may be {@code null}
+		 * @param value the stat so far
+		 * @return the stat after the keystone
+		 */
+		double apply(Creature creature, Creature target, double value);
+	}
+	
+	/**
+	 * A roaming fake player's keystone that Player works into a getter override (Unending Fury, Relentless Assault, Arcane Plating), worked out each time the stat is read.
+	 */
+	private static class KeystoneFunc extends AbstractFunction
+	{
+		private final KeystoneFormula _formula;
+		
+		KeystoneFunc(Stat stat, int order, KeystoneFormula formula)
+		{
+			super(stat, order, PASSIVE_TREE_FUNC_OWNER, 0, null);
+			_formula = formula;
+		}
+		
+		@Override
+		public double calc(Creature effector, Creature effected, Skill skill, double initVal)
+		{
+			return _formula.apply(effector, effected, initVal);
+		}
 	}
 	
 	/**
@@ -864,6 +948,7 @@ public class PassiveTreeManager
 	public void onClassContextChanged(Player player)
 	{
 		_treeGranted.remove(player.getObjectId());
+		_replacedCreateItem.remove(player.getObjectId());
 		applyAll(player, false);
 		
 		// The login and subclass paths send SkillCoolTime before the tree skills
@@ -896,6 +981,46 @@ public class PassiveTreeManager
 				}
 			}
 		}
+		
+		// The tree's Create Item follows the character level too: move ours, or
+		// raise the character's own lower level once the tree's passes it.
+		if (allocatesSkill(player, CommonSkill.DWARVEN_CRAFT.getId()))
+		{
+			final Integer createItem = granted.get(CommonSkill.CREATE_DWARVEN.getId());
+			final int treeLevel = getTreeCreateItemLevel(player);
+			if ((createItem != null) ? (createItem != treeLevel) : (player.getSkillLevel(CommonSkill.CREATE_DWARVEN.getId()) < treeLevel))
+			{
+				applyAll(player);
+			}
+		}
+	}
+	
+	/**
+	 * @param player the player
+	 * @param skillId a skill id
+	 * @return {@code true} if one of the player's allocated nodes grants that skill
+	 */
+	private boolean allocatesSkill(Player player, int skillId)
+	{
+		for (int nodeId : getAllocatedNodes(player))
+		{
+			final PassiveNode node = PassiveTreeData.getInstance().getNode(nodeId);
+			if ((node != null) && node.grantsSkill() && (node.getSkillId() == skillId))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * The passive tree's Dwarven Craft comes with Create Item at the character's level, like a dwarf learns it, but never past {@link DwarvenTradesConfig#TREE_CREATE_ITEM_MAX_LEVEL} (level 5 by default: D and most C grade recipes): the higher grades stay with the Warsmith and the Maestro.
+	 * @param player the player
+	 * @return the Create Item level the tree's Dwarven Craft gives this character
+	 */
+	private static int getTreeCreateItemLevel(Player player)
+	{
+		return Math.min(getScaledSkillLevel(CommonSkill.CREATE_DWARVEN.getId(), player.getLevel()), DwarvenTradesConfig.TREE_CREATE_ITEM_MAX_LEVEL);
 	}
 	
 	/**

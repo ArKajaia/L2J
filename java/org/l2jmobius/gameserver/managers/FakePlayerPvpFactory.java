@@ -28,7 +28,6 @@ import java.util.Map;
 
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
-import org.l2jmobius.gameserver.config.custom.PvpSpotsConfig;
 import org.l2jmobius.gameserver.data.holders.ArmorSet;
 import org.l2jmobius.gameserver.data.xml.ArmorSetData;
 import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
@@ -36,6 +35,7 @@ import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.PlayerTemplateData;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.data.xml.SkillTreeData;
+import org.l2jmobius.gameserver.managers.FakePlayerPvpEnchant.Kind;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
 import org.l2jmobius.gameserver.model.actor.enums.npc.AIType;
@@ -52,6 +52,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpWeapon;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.actor.templates.PlayerTemplate;
+import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.item.Armor;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.Weapon;
@@ -60,6 +61,7 @@ import org.l2jmobius.gameserver.model.item.holders.ItemEnchantHolder;
 import org.l2jmobius.gameserver.model.item.type.ArmorType;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
 import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
+import org.l2jmobius.gameserver.model.skill.EffectScope;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.model.skill.holders.SkillLearn;
@@ -72,7 +74,8 @@ import org.l2jmobius.gameserver.model.stats.functions.FuncTemplate;
  * <ul>
  * <li>base STR/DEX/CON/INT/WIT/MEN, HP/MP/CP tables, regeneration, speed and collision come from the class {@link PlayerTemplate} (plus armor set bonuses);</li>
  * <li>P. Atk., M. Atk., attack speed, critical rate and range are the weapon's (like the weapon "set" functions of a real character), P. Def./M. Def. are the class base values with the default of every worn slot replaced by the item (like
- * {@code FuncPDefMod}/{@code FuncMDefMod}), with enchant bonuses like {@code FuncEnchant};</li>
+ * {@code FuncPDefMod}/{@code FuncMDefMod}), with the enchant bonus of every piece like {@code FuncEnchant} (each piece is enchanted on its own, see {@link FakePlayerPvpEnchant});</li>
+ * <li>a shirt and a belt from some level on, and a cloak once its armor set opens the cloak slot, like players wear them;</li>
  * <li>all class passive skills learned up to the level, armor set skills and the build's active skills at the level of the class skill tree.</li>
  * </ul>
  * NPCs already get the same STR/CON/DEX/INT/WIT/MEN and level multipliers as players ({@code Formulas#getStdNPCCalculators()}), so nothing else needs to be special cased.
@@ -121,6 +124,11 @@ public class FakePlayerPvpFactory
 		8920, // Angel Halo
 		8922, // Pirate Hat
 	};
+	
+	/** The kit of the shirts and belts every fake player may wear (data/FakePlayerPvp.xml). */
+	private static final String ACCESSORY_KIT = "ACCESSORIES";
+	/** The effect of the armor set skills that open the cloak slot (Dynasty, Moirai, Vesper Noble...). */
+	private static final String CLOAK_SLOT_EFFECT = "EnableCloak";
 	
 	/** The armor kits a Kamael wears when its build's kit holds heavy armor or a robe (see {@link #getArmorGear}). */
 	private static final String KAMAEL_MAGE_ARMOR_KIT = "LIGHT_MAGE";
@@ -206,9 +214,10 @@ public class FakePlayerPvpFactory
 		// Like players, not everyone wears the best gear for their level: weapon, armor and jewels each lag behind on their own.
 		final FakePlayerPvpData data = FakePlayerPvpData.getInstance();
 		// The strong ones wear the best of their level.
-		final FakePlayerPvpGearTier weapons = data.getGear(build.getWeaponKit(), elite ? level : rollGearLevel(level));
-		final FakePlayerPvpGearTier armors = getArmorGear(build, playerClass, elite ? level : rollGearLevel(level));
-		final FakePlayerPvpGearTier jewels = data.getGear(build.getJewelKit(), elite ? level : rollGearLevel(level));
+		final FakePlayerPvpGearTier weapons = data.getGear(build.getWeaponKit(), elite ? level : rollGearLevel(level), elite);
+		final FakePlayerPvpGearTier armors = getArmorGear(build, playerClass, elite ? level : rollGearLevel(level), elite);
+		final FakePlayerPvpGearTier jewels = data.getGear(build.getJewelKit(), elite ? level : rollGearLevel(level), elite);
+		final FakePlayerPvpGearTier accessories = data.getGear(ACCESSORY_KIT, elite ? level : rollGearLevel(level), elite);
 		
 		final ItemTemplate weaponItem = getItem(weapons != null ? weapons.getRHand() : 0);
 		final Weapon weapon = weaponItem instanceof Weapon ? (Weapon) weaponItem : null;
@@ -224,13 +233,31 @@ public class FakePlayerPvpFactory
 		final ItemTemplate ring = getItem(jewels != null ? jewels.getRing() : 0);
 		final boolean fullArmor = (chest != null) && (chest.getBodyPart() == BodyPart.FULL_ARMOR);
 		
-		// Higher levels have better enchanted gear.
-		final int weaponEnchant = weapon != null ? (elite ? rollEliteEnchant(FakePlayerPvpConfig.WEAPON_ENCHANT, level) : FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.WEAPON_ENCHANT, level)) : 0;
-		final int armorEnchant = elite ? rollEliteEnchant(FakePlayerPvpConfig.ARMOR_ENCHANT, level) : FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.ARMOR_ENCHANT, level);
-		
 		// Armor set.
 		final ArmorSet armorSet = chest != null ? ArmorSetData.getInstance().getSet(chest.getId()) : null;
 		final boolean fullSet = (armorSet != null) && armorSet.containAll(getId(chest), getId(legs), getId(head), getId(gloves), getId(feet));
+		
+		// Like players, its wealth decides how much it enchanted and what else it wears: a shirt and a belt, and a cloak once its armor set opens the cloak slot.
+		final FakePlayerPvpEnchant enchanter = new FakePlayerPvpEnchant(level, elite);
+		final ItemTemplate shirt = (accessories != null) && enchanter.roll(FakePlayerPvpConfig.SHIRT_CHANCE) ? getItem(accessories.rollShirt()) : null;
+		final ItemTemplate belt = (accessories != null) && enchanter.roll(FakePlayerPvpConfig.BELT_CHANCE) ? getItem(accessories.rollBelt()) : null;
+		final ItemTemplate cloak = fullSet && opensCloakSlot(armorSet) && enchanter.roll(FakePlayerPvpConfig.CLOAK_CHANCE) ? getItem(data.getRandomCloak(level)) : null;
+		
+		// Every piece is enchanted on its own, higher levels further.
+		final int weaponEnchant = enchanter.roll(weapon, Kind.WEAPON);
+		final int shieldEnchant = enchanter.roll(shield, Kind.ARMOR);
+		final int chestEnchant = enchanter.roll(chest, Kind.ARMOR, fullSet);
+		final int legsEnchant = enchanter.roll(legs, Kind.ARMOR, fullSet);
+		final int headEnchant = enchanter.roll(head, Kind.ARMOR, fullSet);
+		final int glovesEnchant = enchanter.roll(gloves, Kind.ARMOR, fullSet);
+		final int feetEnchant = enchanter.roll(feet, Kind.ARMOR, fullSet);
+		final int shirtEnchant = enchanter.roll(shirt, Kind.ARMOR);
+		final int beltEnchant = enchanter.roll(belt, Kind.ARMOR);
+		final int leftEarringEnchant = enchanter.roll(earring, Kind.JEWEL);
+		final int rightEarringEnchant = enchanter.roll(earring, Kind.JEWEL);
+		final int necklaceEnchant = enchanter.roll(necklace, Kind.JEWEL);
+		final int leftRingEnchant = enchanter.roll(ring, Kind.JEWEL);
+		final int rightRingEnchant = enchanter.roll(ring, Kind.JEWEL);
 		
 		// Base stats.
 		int str = classTemplate.getBaseSTR();
@@ -267,58 +294,56 @@ public class FakePlayerPvpFactory
 			}
 		}
 		
-		// P. Def.: the class default of every covered slot is replaced by the item (FuncPDefMod).
+		// P. Def.: the class default of every covered slot is replaced by the item (FuncPDefMod). A belt has no default.
 		double pDef = classTemplate.getBasePDef();
-		int armorPieces = 0;
 		if (chest != null)
 		{
 			pDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_CHEST);
-			armorPieces++;
 		}
 		if ((legs != null) || fullArmor)
 		{
 			pDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_LEGS);
-			armorPieces += legs != null ? 1 : 0;
 		}
 		if (head != null)
 		{
 			pDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_HEAD);
-			armorPieces++;
 		}
 		if (gloves != null)
 		{
 			pDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_GLOVES);
-			armorPieces++;
 		}
 		if (feet != null)
 		{
 			pDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_FEET);
-			armorPieces++;
 		}
-		pDef += sumStat(Stat.POWER_DEFENCE, chest, legs, head, gloves, feet) + (defenceEnchantBonus(armorEnchant) * armorPieces);
+		if (shirt != null)
+		{
+			pDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_UNDER);
+		}
+		if (cloak != null)
+		{
+			pDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_CLOAK);
+		}
+		pDef += sumStat(Stat.POWER_DEFENCE, chest, legs, head, gloves, feet, shirt, belt, cloak);
+		pDef += defenceEnchantBonus(chestEnchant) + defenceEnchantBonus(legsEnchant) + defenceEnchantBonus(headEnchant) + defenceEnchantBonus(glovesEnchant) + defenceEnchantBonus(feetEnchant) + defenceEnchantBonus(shirtEnchant) + defenceEnchantBonus(beltEnchant);
 		
 		// M. Def.: same for jewels (FuncMDefMod).
 		double mDef = classTemplate.getBaseMDef();
-		int jewelPieces = 0;
 		if (earring != null)
 		{
 			mDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_REAR) + classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_LEAR);
-			mDef += 2 * getStat(earring, Stat.MAGIC_DEFENCE);
-			jewelPieces += 2;
+			mDef += (2 * getStat(earring, Stat.MAGIC_DEFENCE)) + defenceEnchantBonus(leftEarringEnchant) + defenceEnchantBonus(rightEarringEnchant);
 		}
 		if (necklace != null)
 		{
 			mDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_NECK);
-			mDef += getStat(necklace, Stat.MAGIC_DEFENCE);
-			jewelPieces++;
+			mDef += getStat(necklace, Stat.MAGIC_DEFENCE) + defenceEnchantBonus(necklaceEnchant);
 		}
 		if (ring != null)
 		{
 			mDef -= classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_RFINGER) + classTemplate.getBaseDefBySlot(Inventory.PAPERDOLL_LFINGER);
-			mDef += 2 * getStat(ring, Stat.MAGIC_DEFENCE);
-			jewelPieces += 2;
+			mDef += (2 * getStat(ring, Stat.MAGIC_DEFENCE)) + defenceEnchantBonus(leftRingEnchant) + defenceEnchantBonus(rightRingEnchant);
 		}
-		mDef += defenceEnchantBonus(armorEnchant) * jewelPieces;
 		
 		// Weapon: its stats replace the unarmed ones (weapon "set" functions). A polearm (Dreadnoughts) also gives its Polearm Multi-attack while it holds it.
 		final FakePlayerPvpWeapon mainWeapon = createWeapon(classTemplate, weapon, shield, weaponEnchant, (weapon != null) && (weapon.getItemType() == WeaponType.POLE) ? getPassiveSkills(weapon) : Collections.emptyList());
@@ -327,12 +352,12 @@ public class FakePlayerPvpFactory
 		FakePlayerPvpWeapon bow = null;
 		if (FakePlayerPvpConfig.WEAPON_SWAP_ENABLED && (build.getBowKit() != null) && (level >= FakePlayerPvpConfig.WEAPON_SWAP_MIN_LEVEL))
 		{
-			final FakePlayerPvpGearTier bows = data.getGear(build.getBowKit(), elite ? level : rollGearLevel(level));
+			final FakePlayerPvpGearTier bows = data.getGear(build.getBowKit(), elite ? level : rollGearLevel(level), elite);
 			final ItemTemplate bowItem = getItem(bows != null ? bows.getRHand() : 0);
 			if ((bowItem instanceof Weapon) && ((Weapon) bowItem).isRange())
 			{
 				// A spare weapon is rarely enchanted as high as the main one.
-				bow = createWeapon(classTemplate, (Weapon) bowItem, null, FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.WEAPON_ENCHANT, level) / 2);
+				bow = createWeapon(classTemplate, (Weapon) bowItem, null, enchanter.roll(bowItem, Kind.WEAPON) / 2);
 			}
 		}
 		
@@ -340,20 +365,37 @@ public class FakePlayerPvpFactory
 		FakePlayerPvpWeapon polearm = null;
 		if (FakePlayerPvpConfig.POLEARM_SWAP_ENABLED && (build.getPolearmKit() != null) && (level >= FakePlayerPvpConfig.POLEARM_SWAP_MIN_LEVEL))
 		{
-			final FakePlayerPvpGearTier polearms = data.getGear(build.getPolearmKit(), elite ? level : rollGearLevel(level));
+			final FakePlayerPvpGearTier polearms = data.getGear(build.getPolearmKit(), elite ? level : rollGearLevel(level), elite);
 			final ItemTemplate polearmItem = getItem(polearms != null ? polearms.getRHand() : 0);
 			if ((polearmItem instanceof Weapon) && (polearmItem.getItemType() == WeaponType.POLE))
 			{
-				polearm = createWeapon(classTemplate, (Weapon) polearmItem, null, FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.WEAPON_ENCHANT, level) / 2, getPassiveSkills(polearmItem));
+				polearm = createWeapon(classTemplate, (Weapon) polearmItem, null, enchanter.roll(polearmItem, Kind.WEAPON) / 2, getPassiveSkills(polearmItem));
 			}
 		}
 		
 		// HP/MP (a real character also has CP on top of HP).
 		final double hp = classTemplate.getBaseHpMax(level) + (FakePlayerPvpConfig.INCLUDE_CP_IN_HP ? classTemplate.getBaseCpMax(level) : 0);
-		final double mp = classTemplate.getBaseMpMax(level) + sumStat(Stat.MAX_MP, weapon, shield, chest, legs, head, gloves, feet, earring, earring, necklace, ring, ring);
+		final double mp = classTemplate.getBaseMpMax(level) + sumStat(Stat.MAX_MP, weapon, shield, chest, legs, head, gloves, feet, earring, earring, necklace, ring, ring, shirt, belt, cloak);
 		
-		// Its passive tree, like a player that spent its points (rolled from trees prepared at server start, see FakePlayerPvpPassiveTree). Max HP % bonuses only grow the HP part of an HP pool that holds the CP too.
-		final FakePlayerPvpPassives passives = FakePlayerPvpPassiveTree.isEnabled() ? FakePlayerPvpPassiveTree.getInstance().roll(build, playerClass, level, elite) : null;
+		int armorWornMask = 0;
+		for (ItemTemplate item : new ItemTemplate[]
+		{
+			chest,
+			legs,
+			head,
+			gloves,
+			feet
+		})
+		{
+			if (item != null)
+			{
+				armorWornMask |= item.getItemMask();
+			}
+		}
+		
+		// Its passive tree, like a player that spent its points (see FakePlayerPvpPassiveTree), grown for its gear: a bonus that needs heavy armour or a shield only counts if it wears one. Max HP % bonuses only grow the HP part of an HP pool that holds the CP too.
+		final int treeWornMask = armorWornMask | (weapon != null ? weapon.getItemMask() : 0) | (shield != null ? shield.getItemMask() : 0);
+		final FakePlayerPvpPassives passives = FakePlayerPvpPassiveTree.isEnabled() ? FakePlayerPvpPassiveTree.getInstance().roll(build, playerClass, level, elite, chest != null ? chest.getItemMask() : 0, treeWornMask) : null;
 		if ((passives != null) && (hp > 0))
 		{
 			passives.setHpShare(classTemplate.getBaseHpMax(level) / hp);
@@ -386,6 +428,30 @@ public class FakePlayerPvpFactory
 		set.set("baseMAtk", mainWeapon.getMAtk());
 		set.set("basePDef", Math.max(1, (int) Math.round(pDef)));
 		set.set("baseMDef", Math.max(1, (int) Math.round(mDef)));
+		// Attribute resistances of its gear (a cloak's).
+		final ItemTemplate[] worn =
+		{
+			shield,
+			chest,
+			legs,
+			head,
+			gloves,
+			feet,
+			earring,
+			earring,
+			necklace,
+			ring,
+			ring,
+			shirt,
+			belt,
+			cloak
+		};
+		set.set("baseFireRes", (int) sumStat(Stat.FIRE_RES, worn));
+		set.set("baseWaterRes", (int) sumStat(Stat.WATER_RES, worn));
+		set.set("baseWindRes", (int) sumStat(Stat.WIND_RES, worn));
+		set.set("baseEarthRes", (int) sumStat(Stat.EARTH_RES, worn));
+		set.set("baseHolyRes", (int) sumStat(Stat.HOLY_RES, worn));
+		set.set("baseDarkRes", (int) sumStat(Stat.DARK_RES, worn));
 		set.set("basePAtkSpd", mainWeapon.getPAtkSpd());
 		set.set("baseMAtkSpd", classTemplate.getBaseMAtkSpd());
 		set.set("baseCritRate", mainWeapon.getCritRate());
@@ -429,8 +495,12 @@ public class FakePlayerPvpFactory
 		set.set("equipHead", getId(head));
 		set.set("equipGloves", getId(gloves));
 		set.set("equipFeet", getId(feet));
+		set.set("equipCloak", getId(cloak));
+		set.set("equipShirt", getId(shirt));
+		set.set("equipBelt", getId(belt));
 		set.set("weaponEnchantLevel", weaponEnchant);
-		set.set("armorEnchantLevel", armorEnchant);
+		set.set("armorEnchantLevel", chestEnchant);
+		set.set("slotEnchantLevels", slotEnchantLevels(shieldEnchant, headEnchant, chestEnchant, legsEnchant, glovesEnchant, feetEnchant, shirtEnchant, beltEnchant));
 		set.set("recommends", Rnd.get(0, 30));
 		set.set("fakePlayerTalkable", true);
 		
@@ -464,7 +534,8 @@ public class FakePlayerPvpFactory
 			{
 				addSkills(skills, armorSet.getShieldSkillId());
 			}
-			if (armorEnchant >= 6)
+			// Every piece of the set at +6 or more (a full body armor has no legs).
+			if ((chestEnchant >= 6) && ((legs == null) || (legsEnchant >= 6)) && ((head == null) || (headEnchant >= 6)) && ((gloves == null) || (glovesEnchant >= 6)) && ((feet == null) || (feetEnchant >= 6)))
 			{
 				addSkills(skills, armorSet.getEnchant6skillId());
 			}
@@ -473,48 +544,23 @@ public class FakePlayerPvpFactory
 		// How many energy charges the class can hold: the Sonic Focus/Focused Force level, or Sonic/Force Mastery for 3rd classes.
 		final int maxCharges = Math.max(Math.max(learned.getOrDefault(8, 0), learned.getOrDefault(50, 0)), Math.max(learned.getOrDefault(992, 0), learned.getOrDefault(993, 0)));
 		
-		int armorWornMask = 0;
-		for (ItemTemplate item : new ItemTemplate[]
-		{
-			chest,
-			legs,
-			head,
-			gloves,
-			feet
-		})
-		{
-			if (item != null)
-			{
-				armorWornMask |= item.getItemMask();
-			}
-		}
-		
 		// What it wears, for the equipment drop.
 		final List<ItemEnchantHolder> equipment = new ArrayList<>();
-		if (weapon != null)
-		{
-			equipment.add(new ItemEnchantHolder(weapon.getId(), 1, weaponEnchant));
-		}
-		for (ItemTemplate item : new ItemTemplate[]
-		{
-			shield,
-			chest,
-			legs,
-			head,
-			gloves,
-			feet,
-			earring,
-			earring,
-			necklace,
-			ring,
-			ring
-		})
-		{
-			if (item != null)
-			{
-				equipment.add(new ItemEnchantHolder(item.getId(), 1, armorEnchant));
-			}
-		}
+		addEquipment(equipment, weapon, weaponEnchant);
+		addEquipment(equipment, shield, shieldEnchant);
+		addEquipment(equipment, chest, chestEnchant);
+		addEquipment(equipment, legs, legsEnchant);
+		addEquipment(equipment, head, headEnchant);
+		addEquipment(equipment, gloves, glovesEnchant);
+		addEquipment(equipment, feet, feetEnchant);
+		addEquipment(equipment, earring, leftEarringEnchant);
+		addEquipment(equipment, earring, rightEarringEnchant);
+		addEquipment(equipment, necklace, necklaceEnchant);
+		addEquipment(equipment, ring, leftRingEnchant);
+		addEquipment(equipment, ring, rightRingEnchant);
+		addEquipment(equipment, shirt, shirtEnchant);
+		addEquipment(equipment, belt, beltEnchant);
+		addEquipment(equipment, cloak, 0);
 		if (bow != null)
 		{
 			equipment.add(new ItemEnchantHolder(bow.getWeaponId(), 1, bow.getEnchant()));
@@ -607,11 +653,26 @@ public class FakePlayerPvpFactory
 
 		final FakePlayerPvpData data = FakePlayerPvpData.getInstance();
 		final FakePlayerPvpGearTier weapons = data.getGear(build.getWeaponKit(), rollGearLevel(level));
-		final FakePlayerPvpGearTier armors = getArmorGear(build, playerClass, rollGearLevel(level));
+		final FakePlayerPvpGearTier armors = getArmorGear(build, playerClass, rollGearLevel(level), false);
+		final FakePlayerPvpGearTier accessories = data.getGear(ACCESSORY_KIT, rollGearLevel(level));
 		final ItemTemplate weaponItem = getItem(weapons != null ? weapons.getRHand() : 0);
 		final Weapon weapon = weaponItem instanceof Weapon ? (Weapon) weaponItem : null;
 		final ItemTemplate shieldItem = getItem(weapons != null ? weapons.getLHand() : 0);
 		final Armor shield = ((shieldItem instanceof Armor) && (shieldItem.getItemType() == ArmorType.SHIELD) && ((weapon == null) || (weapon.getBodyPart() != BodyPart.LR_HAND))) ? (Armor) shieldItem : null;
+		final ItemTemplate chest = getItem(armors != null ? armors.getChest() : 0);
+		final ItemTemplate legs = getItem(armors != null ? armors.getLegs() : 0);
+		final ItemTemplate head = getItem(armors != null ? armors.getHead() : 0);
+		final ItemTemplate gloves = getItem(armors != null ? armors.getGloves() : 0);
+		final ItemTemplate feet = getItem(armors != null ? armors.getFeet() : 0);
+		final ArmorSet armorSet = chest != null ? ArmorSetData.getInstance().getSet(chest.getId()) : null;
+		final boolean fullSet = (armorSet != null) && armorSet.containAll(getId(chest), getId(legs), getId(head), getId(gloves), getId(feet));
+		
+		// Dressed and enchanted like a roaming fake player of its level (see createTemplate).
+		final FakePlayerPvpEnchant enchanter = new FakePlayerPvpEnchant(level, false);
+		final ItemTemplate shirt = (accessories != null) && enchanter.roll(FakePlayerPvpConfig.SHIRT_CHANCE) ? getItem(accessories.rollShirt()) : null;
+		final ItemTemplate belt = (accessories != null) && enchanter.roll(FakePlayerPvpConfig.BELT_CHANCE) ? getItem(accessories.rollBelt()) : null;
+		final ItemTemplate cloak = fullSet && opensCloakSlot(armorSet) && enchanter.roll(FakePlayerPvpConfig.CLOAK_CHANCE) ? getItem(data.getRandomCloak(level)) : null;
+		final int chestEnchant = enchanter.roll(chest, Kind.ARMOR, fullSet);
 
 		PlayerClass baseClass = playerClass;
 		while (baseClass.getParent() != null)
@@ -663,13 +724,17 @@ public class FakePlayerPvpFactory
 		set.set("face", Rnd.get(3));
 		set.set("equipRHand", weapon != null ? weapon.getId() : 0);
 		set.set("equipLHand", shield != null ? shield.getId() : 0);
-		set.set("equipChest", getId(getItem(armors != null ? armors.getChest() : 0)));
-		set.set("equipLegs", getId(getItem(armors != null ? armors.getLegs() : 0)));
-		set.set("equipHead", getId(getItem(armors != null ? armors.getHead() : 0)));
-		set.set("equipGloves", getId(getItem(armors != null ? armors.getGloves() : 0)));
-		set.set("equipFeet", getId(getItem(armors != null ? armors.getFeet() : 0)));
-		set.set("weaponEnchantLevel", weapon != null ? FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.WEAPON_ENCHANT, level) : 0);
-		set.set("armorEnchantLevel", FakePlayerPvpConfig.rollEnchant(FakePlayerPvpConfig.ARMOR_ENCHANT, level));
+		set.set("equipChest", getId(chest));
+		set.set("equipLegs", getId(legs));
+		set.set("equipHead", getId(head));
+		set.set("equipGloves", getId(gloves));
+		set.set("equipFeet", getId(feet));
+		set.set("equipCloak", getId(cloak));
+		set.set("equipShirt", getId(shirt));
+		set.set("equipBelt", getId(belt));
+		set.set("weaponEnchantLevel", enchanter.roll(weapon, Kind.WEAPON));
+		set.set("armorEnchantLevel", chestEnchant);
+		set.set("slotEnchantLevels", slotEnchantLevels(enchanter.roll(shield, Kind.ARMOR), enchanter.roll(head, Kind.ARMOR, fullSet), chestEnchant, enchanter.roll(legs, Kind.ARMOR, fullSet), enchanter.roll(gloves, Kind.ARMOR, fullSet), enchanter.roll(feet, Kind.ARMOR, fullSet), enchanter.roll(shirt, Kind.ARMOR), enchanter.roll(belt, Kind.ARMOR)));
 		set.set("recommends", Rnd.get(0, 30));
 		set.set("fakePlayerTalkable", true);
 		set.set("sitting", sitting);
@@ -695,12 +760,13 @@ public class FakePlayerPvpFactory
 	 * @param build the build
 	 * @param playerClass the class it shows
 	 * @param gearLevel the level its armor is picked for
+	 * @param best {@code true} for the best armor of that level, {@code false} for one of them picked by weight
 	 * @return the armor it wears, {@code null} if none
 	 */
-	private static FakePlayerPvpGearTier getArmorGear(FakePlayerPvpBuild build, PlayerClass playerClass, int gearLevel)
+	private static FakePlayerPvpGearTier getArmorGear(FakePlayerPvpBuild build, PlayerClass playerClass, int gearLevel, boolean best)
 	{
 		final FakePlayerPvpData data = FakePlayerPvpData.getInstance();
-		final FakePlayerPvpGearTier armors = data.getGear(build.getArmorKit(), gearLevel);
+		final FakePlayerPvpGearTier armors = data.getGear(build.getArmorKit(), gearLevel, best);
 		if ((armors == null) || (playerClass.getRace() != Race.KAMAEL))
 		{
 			return armors;
@@ -715,7 +781,7 @@ public class FakePlayerPvpFactory
 			final ItemTemplate item = getItem(itemId);
 			if ((item != null) && ((item.getItemType() == ArmorType.HEAVY) || (item.getItemType() == ArmorType.MAGIC)))
 			{
-				final FakePlayerPvpGearTier light = data.getGear(build.getRole() == Role.MAGE ? KAMAEL_MAGE_ARMOR_KIT : KAMAEL_FIGHTER_ARMOR_KIT, gearLevel);
+				final FakePlayerPvpGearTier light = data.getGear(build.getRole() == Role.MAGE ? KAMAEL_MAGE_ARMOR_KIT : KAMAEL_FIGHTER_ARMOR_KIT, gearLevel, best);
 				return light != null ? light : armors;
 			}
 		}
@@ -723,13 +789,62 @@ public class FakePlayerPvpFactory
 	}
 	
 	/**
-	 * @param tiers the enchant rows (FakePvpWeaponEnchant, FakePvpArmorEnchant)
-	 * @param level the character level
-	 * @return the enchant of a strong player's gear: the better of two rolls, plus PvpSpotEliteEnchantBonus (at most +20)
+	 * @param armorSet an armor set
+	 * @return {@code true} if wearing all of it opens the cloak slot: one of its skills has the {@value #CLOAK_SLOT_EFFECT} effect (Dynasty, Moirai, Vesper Noble..., not the plain Vesper sets)
 	 */
-	private static int rollEliteEnchant(List<int[]> tiers, int level)
+	private static boolean opensCloakSlot(ArmorSet armorSet)
 	{
-		return Math.min(20, Math.max(FakePlayerPvpConfig.rollEnchant(tiers, level), FakePlayerPvpConfig.rollEnchant(tiers, level)) + PvpSpotsConfig.ELITE_ENCHANT_BONUS);
+		for (SkillHolder holder : armorSet.getSkills())
+		{
+			final Skill skill = holder.getSkill();
+			if (skill == null)
+			{
+				continue;
+			}
+			
+			// A set skill is passive: its effects are in the passive scope.
+			for (EffectScope scope : EffectScope.values())
+			{
+				final List<AbstractEffect> effects = skill.getEffects(scope);
+				if (effects != null)
+				{
+					for (AbstractEffect effect : effects)
+					{
+						if (CLOAK_SLOT_EFFECT.equals(effect.getClass().getSimpleName()))
+						{
+							return true;
+						}
+					}
+				}
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * @return the enchant of the shield, armor pieces, shirt and belt by paperdoll slot, for its {@link org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder}
+	 */
+	private static Map<Integer, Integer> slotEnchantLevels(int shield, int head, int chest, int legs, int gloves, int feet, int shirt, int belt)
+	{
+		final Map<Integer, Integer> result = new HashMap<>();
+		result.put(Inventory.PAPERDOLL_LHAND, shield);
+		result.put(Inventory.PAPERDOLL_HEAD, head);
+		result.put(Inventory.PAPERDOLL_CHEST, chest);
+		result.put(Inventory.PAPERDOLL_LEGS, legs);
+		result.put(Inventory.PAPERDOLL_GLOVES, gloves);
+		result.put(Inventory.PAPERDOLL_FEET, feet);
+		result.put(Inventory.PAPERDOLL_UNDER, shirt);
+		result.put(Inventory.PAPERDOLL_BELT, belt);
+		return result;
+	}
+	
+	private static void addEquipment(List<ItemEnchantHolder> equipment, ItemTemplate item, int enchant)
+	{
+		if (item != null)
+		{
+			equipment.add(new ItemEnchantHolder(item.getId(), 1, enchant));
+		}
 	}
 	
 	/**

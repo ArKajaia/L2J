@@ -89,7 +89,7 @@ public class FakePlayerInfo extends ServerPacket
 		buffer.writeInt(_npc.getRace().ordinal());
 		buffer.writeInt(_npc.getTemplate().getSex() == Sex.FEMALE);
 		buffer.writeInt(_fpcHolder.getPlayerClass().getId());
-		buffer.writeInt(0); // Inventory.PAPERDOLL_UNDER
+		buffer.writeInt(_fpcHolder.getEquipShirt()); // Inventory.PAPERDOLL_UNDER
 		buffer.writeInt(_fpcHolder.getEquipHead());
 		buffer.writeInt(_fpcHolder.getEquipRHand());
 		buffer.writeInt(_fpcHolder.getEquipLHand());
@@ -109,7 +109,7 @@ public class FakePlayerInfo extends ServerPacket
 		buffer.writeInt(0); // Inventory.PAPERDOLL_DECO4
 		buffer.writeInt(0); // Inventory.PAPERDOLL_DECO5
 		buffer.writeInt(0); // Inventory.PAPERDOLL_DECO6
-		buffer.writeInt(0); // Inventory.PAPERDOLL_BELT
+		buffer.writeInt(_fpcHolder.getEquipBelt()); // Inventory.PAPERDOLL_BELT
 		for (int i = 0; i < 21; i++)
 		{
 			buffer.writeInt(0);

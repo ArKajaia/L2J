@@ -73,7 +73,7 @@
 		<requires nodeId="2001" />
 		<requires nodeId="2015" />
 	</node>
-	<node id="2015" name="Battle Fervor" sector="Juggernaut" type="ACTIVE_SKILL" tier="0" cost="1" x="1177.6" y="2339.7" effect="MAXHP:15" skillId="27410" skillLevel="1" description="ACTIVE: +15% P.Atk and +10% Atk. Speed, but -5% P.Def, for 30s (60s cooldown).">
+	<node id="2015" name="Battle Fervor" sector="Juggernaut" type="ACTIVE_SKILL" tier="0" cost="1" x="1177.6" y="2339.7" effect="MAXHP:15" skillId="27410" skillLevel="1" icon="skill-battle-fervor" description="ACTIVE: +15% P.Atk and +10% Atk. Speed, but -5% P.Def, for 30s (60s cooldown).">
 		<requires nodeId="2014" />
 	</node>
 	<node id="2016" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="1125.0" y="1948.6" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP:12" description="Junction.">
@@ -149,7 +149,7 @@
 		<requires nodeId="2040" />
 		<requires nodeId="2050" />
 	</node>
-	<node id="2038" name="Resolute Technique" sector="Juggernaut" type="KEYSTONE" tier="0" cost="1" x="836.1" y="1688.1" effect="KS_RESOLUTE:1" icon="target" description="KEYSTONE: Your attacks and physical skills never miss, but you can never land a critical hit.">
+	<node id="2038" name="Resolute Technique" sector="Juggernaut" type="KEYSTONE" tier="0" cost="1" x="836.1" y="1688.1" effect="KS_RESOLUTE:1" icon="ks-resolute-technique" description="KEYSTONE: Your attacks and physical skills never miss, but you can never land a critical hit.">
 		<requires nodeId="2037" />
 	</node>
 	<node id="2039" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="825.0" y="1428.9" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5" description="Junction.">
@@ -225,7 +225,7 @@
 		<requires nodeId="2063" />
 		<requires nodeId="2073" />
 	</node>
-	<node id="2061" name="Earthshatter" sector="Juggernaut" type="ACTIVE_SKILL" tier="0" cost="1" x="536.1" y="1168.5" effect="MAXHP:15" skillId="27411" skillLevel="auto" description="ACTIVE: strike all enemies around you, with a chance to stun them for 2s (30s cooldown). Grows stronger with your level.">
+	<node id="2061" name="Earthshatter" sector="Juggernaut" type="ACTIVE_SKILL" tier="0" cost="1" x="536.1" y="1168.5" effect="MAXHP:15" skillId="27411" skillLevel="auto" icon="skill-earthshatter" description="ACTIVE: strike all enemies around you, with a chance to stun them for 2s (30s cooldown). Grows stronger with your level.">
 		<requires nodeId="2060" />
 	</node>
 	<node id="2062" name="Crossroads" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="525.0" y="909.3" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP:12" description="Junction.">
@@ -286,7 +286,7 @@
 		<requires nodeId="2062" />
 		<requires nodeId="2078" />
 	</node>
-	<node id="2078" name="Unwavering Stance" sector="Juggernaut" type="KEYSTONE" tier="0" cost="1" x="489.3" y="687.5" effect="KS_STUN_IMMUNE:1;PDEF_PCT:-15" icon="anvil" description="KEYSTONE: You cannot be stunned, but your P.Def is 15% lower.">
+	<node id="2078" name="Unwavering Stance" sector="Juggernaut" type="KEYSTONE" tier="0" cost="1" x="489.3" y="687.5" effect="KS_STUN_IMMUNE:1;PDEF_PCT:-15" icon="ks-unwavering-stance" description="KEYSTONE: You cannot be stunned, but your P.Def is 15% lower.">
 		<requires nodeId="2077" />
 	</node>
 	<node id="2079" name="Titan's Apotheosis" sector="Juggernaut" type="MASTER" tier="0" cost="1" x="360.0" y="623.5" effect="STR:2;PATK_PCT:8;ATK_SPD_PCT:2" icon="fist" description="Archetype capstone.">
@@ -337,7 +337,7 @@
 		<requires nodeId="2062" />
 		<requires nodeId="2079" />
 	</node>
-	<node id="2081" name="Dwarven Craft Mastery" sector="Juggernaut" type="FUNCTION" tier="0" cost="1" x="398.0" y="809.4" effect="MAXHP:15" skillId="1321" skillLevel="1" description="Unlock Dwarven Craft skill.">
+	<node id="2081" name="Dwarven Craft Mastery" sector="Juggernaut" type="FUNCTION" tier="0" cost="1" x="398.0" y="809.4" effect="MAXHP:15" skillId="1321" skillLevel="1" description="Unlocks Dwarven Craft: the dwarven recipe book, and Create Item at your level up to level 5 (D and most C grade recipes). The only way to craft dwarven recipes unless you are an Artisan, Warsmith or Maestro. Higher grades stay with them.">
 		<requires nodeId="2062" />
 	</node>
 	<node id="21101" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="582.3" y="2173.3" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">

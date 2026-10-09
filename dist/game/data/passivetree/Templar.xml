@@ -87,7 +87,7 @@
 		<requires nodeId="30522" />
 		<requires nodeId="30525" />
 	</node>
-	<node id="30522" name="Martyr's Vow" sector="Templar" type="KEYSTONE" tier="0" cost="1" x="2625.1" y="-2393.2" effect="KS_BLOOD_MAGIC:50" icon="blood" description="KEYSTONE: Your skills cost HP instead of MP (they cannot kill you), and you gain maximum HP equal to 50% of your maximum MP.">
+	<node id="30522" name="Martyr's Vow" sector="Templar" type="KEYSTONE" tier="0" cost="1" x="2625.1" y="-2393.2" effect="KS_BLOOD_MAGIC:50" icon="ks-martyrs-vow" description="KEYSTONE: Your skills cost HP instead of MP (they cannot kill you), and you gain maximum HP equal to 50% of your maximum MP.">
 		<requires nodeId="30521" />
 	</node>
 	<node id="30523" name="Approach" sector="Templar" type="SMALL" tier="0" cost="1" x="3223.9" y="-1076.1" effect="MAXHP:6">
@@ -113,14 +113,14 @@
 		<requires nodeId="30512" />
 		<requires nodeId="30528" />
 	</node>
-	<node id="30528" name="Purity of Flesh" sector="Templar" type="KEYSTONE" tier="0" cost="1" x="2996.5" y="-1429.8" effect="KS_PURITY:1;MAXHP_PCT:-15" icon="wings" description="KEYSTONE: You are immune to poison and bleeding, but your maximum HP is 15% lower.">
+	<node id="30528" name="Purity of Flesh" sector="Templar" type="KEYSTONE" tier="0" cost="1" x="2996.5" y="-1429.8" effect="KS_PURITY:1;MAXHP_PCT:-15" icon="ks-purity-of-flesh" description="KEYSTONE: You are immune to poison and bleeding, but your maximum HP is 15% lower.">
 		<requires nodeId="30527" />
 	</node>
 	<node id="30529" name="Approach" sector="Templar" type="SMALL" tier="0" cost="1" x="3234.6" y="-897.5" effect="MAXHP:6">
 		<requires nodeId="30526" />
 		<requires nodeId="30530" />
 	</node>
-	<node id="30530" name="Purifying Aegis" sector="Templar" type="ACTIVE_SKILL" tier="0" cost="1" x="3352.9" y="-792.6" effect="MAXHP:15" skillId="27465" skillLevel="1" description="ACTIVE: remove up to 3 debuffs from yourself, then +20% healing received for 15s (150s cooldown).">
+	<node id="30530" name="Purifying Aegis" sector="Templar" type="ACTIVE_SKILL" tier="0" cost="1" x="3352.9" y="-792.6" effect="MAXHP:15" skillId="27465" skillLevel="1" icon="skill-purifying-aegis" description="ACTIVE: remove up to 3 debuffs from yourself, then +20% healing received for 15s (150s cooldown).">
 		<requires nodeId="30529" />
 	</node>
 	<node id="30551" name="Waystone" sector="Templar" type="SMALL" tier="0" cost="1" x="1141.3" y="-370.8" effect="MDEF_PCT:0.4">

@@ -53,6 +53,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.DropGroupHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.DropHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
+import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.stat.PlayerStat;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
@@ -1387,7 +1388,11 @@ public class NpcTemplate extends CreatureTemplate
 				// chance
 				final double passiveMultiplier = victim.isMonster() ? ((Monster) victim).getCustomPassiveDropMultiplier() : 1.0;
 				final double spoilMultiplier = victim.isMonster() ? ((Monster) victim).getCustomSpoilMultiplier() : 1.0;
-				double rateChance = RatesConfig.RATE_SPOIL_DROP_CHANCE_MULTIPLIER * passiveMultiplier * spoilMultiplier;
+				
+				// A dwarven spoiler finds more, however killed the monster.
+				final double dwarvenChance = victim.isMonster() ? DwarvenTrades.getSpoilChanceMultiplier((Monster) victim) : 1.0;
+				final double dwarvenAmount = victim.isMonster() ? DwarvenTrades.getSpoilAmountMultiplier((Monster) victim) : 1.0;
+				double rateChance = RatesConfig.RATE_SPOIL_DROP_CHANCE_MULTIPLIER * passiveMultiplier * spoilMultiplier * dwarvenChance;
 				
 				// premium chance
 				final Player player = killer.asPlayer();
@@ -1406,7 +1411,7 @@ public class NpcTemplate extends CreatureTemplate
 				if ((Rnd.nextDouble() * 100) < (dropItem.getChance() * rateChance))
 				{
 					// amount is calculated after chance returned success
-					double rateAmount = RatesConfig.RATE_SPOIL_DROP_AMOUNT_MULTIPLIER;
+					double rateAmount = RatesConfig.RATE_SPOIL_DROP_AMOUNT_MULTIPLIER * dwarvenAmount;
 					
 					// premium amount
 					if (PremiumSystemConfig.PREMIUM_SYSTEM_ENABLED && (player != null) && player.hasPremiumStatus())

@@ -945,7 +945,7 @@ public class PassiveTreeApiServer
 		try
 		{
 			final Object parsed = SimpleJson.parse(body);
-			if (!(parsed instanceof Map<?, ?>))
+			if (!(parsed instanceof Map))
 			{
 				throw new IllegalArgumentException("expected a JSON object");
 			}

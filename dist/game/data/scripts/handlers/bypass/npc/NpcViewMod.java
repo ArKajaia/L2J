@@ -153,7 +153,7 @@ public class NpcViewMod implements IBypassHandler
 		{
 			Inventory.PAPERDOLL_CLOAK,
 			Inventory.PAPERDOLL_LEGS,
-			-1
+			Inventory.PAPERDOLL_UNDER
 		},
 		{
 			Inventory.PAPERDOLL_RHAND,
@@ -168,7 +168,7 @@ public class NpcViewMod implements IBypassHandler
 		{
 			Inventory.PAPERDOLL_LFINGER,
 			Inventory.PAPERDOLL_RFINGER,
-			-1
+			Inventory.PAPERDOLL_BELT
 		}
 	};
 	/** The order equipment is listed in under the paperdoll. */
@@ -182,6 +182,8 @@ public class NpcViewMod implements IBypassHandler
 		Inventory.PAPERDOLL_GLOVES,
 		Inventory.PAPERDOLL_FEET,
 		Inventory.PAPERDOLL_CLOAK,
+		Inventory.PAPERDOLL_UNDER,
+		Inventory.PAPERDOLL_BELT,
 		Inventory.PAPERDOLL_HAIR,
 		Inventory.PAPERDOLL_HAIR2,
 		Inventory.PAPERDOLL_LEAR,
@@ -765,14 +767,15 @@ public class NpcViewMod implements IBypassHandler
 		else if (holder != null)
 		{
 			playerClass = holder.getPlayerClass();
-			final int armorEnchant = holder.getArmorEnchantLevel();
-			setSlot(paperdoll, Inventory.PAPERDOLL_RHAND, holder.getEquipRHand(), holder.getWeaponEnchantLevel());
-			setSlot(paperdoll, Inventory.PAPERDOLL_LHAND, holder.getEquipLHand(), armorEnchant);
-			setSlot(paperdoll, Inventory.PAPERDOLL_HEAD, holder.getEquipHead(), armorEnchant);
-			setSlot(paperdoll, Inventory.PAPERDOLL_CHEST, holder.getEquipChest(), armorEnchant);
-			setSlot(paperdoll, Inventory.PAPERDOLL_LEGS, holder.getEquipLegs(), armorEnchant);
-			setSlot(paperdoll, Inventory.PAPERDOLL_GLOVES, holder.getEquipGloves(), armorEnchant);
-			setSlot(paperdoll, Inventory.PAPERDOLL_FEET, holder.getEquipFeet(), armorEnchant);
+			setSlot(paperdoll, Inventory.PAPERDOLL_RHAND, holder.getEquipRHand(), holder.getEnchantLevel(Inventory.PAPERDOLL_RHAND));
+			setSlot(paperdoll, Inventory.PAPERDOLL_LHAND, holder.getEquipLHand(), holder.getEnchantLevel(Inventory.PAPERDOLL_LHAND));
+			setSlot(paperdoll, Inventory.PAPERDOLL_HEAD, holder.getEquipHead(), holder.getEnchantLevel(Inventory.PAPERDOLL_HEAD));
+			setSlot(paperdoll, Inventory.PAPERDOLL_CHEST, holder.getEquipChest(), holder.getEnchantLevel(Inventory.PAPERDOLL_CHEST));
+			setSlot(paperdoll, Inventory.PAPERDOLL_LEGS, holder.getEquipLegs(), holder.getEnchantLevel(Inventory.PAPERDOLL_LEGS));
+			setSlot(paperdoll, Inventory.PAPERDOLL_GLOVES, holder.getEquipGloves(), holder.getEnchantLevel(Inventory.PAPERDOLL_GLOVES));
+			setSlot(paperdoll, Inventory.PAPERDOLL_FEET, holder.getEquipFeet(), holder.getEnchantLevel(Inventory.PAPERDOLL_FEET));
+			setSlot(paperdoll, Inventory.PAPERDOLL_UNDER, holder.getEquipShirt(), holder.getEnchantLevel(Inventory.PAPERDOLL_UNDER));
+			setSlot(paperdoll, Inventory.PAPERDOLL_BELT, holder.getEquipBelt(), holder.getEnchantLevel(Inventory.PAPERDOLL_BELT));
 			setSlot(paperdoll, Inventory.PAPERDOLL_CLOAK, holder.getEquipCloak(), 0);
 			setSlot(paperdoll, Inventory.PAPERDOLL_HAIR, holder.getEquipHair(), 0);
 			setSlot(paperdoll, Inventory.PAPERDOLL_HAIR2, holder.getEquipHair2(), 0);

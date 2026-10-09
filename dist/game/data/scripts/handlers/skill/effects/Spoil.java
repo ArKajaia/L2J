@@ -19,6 +19,7 @@ package handlers.skill.effects;
 import org.l2jmobius.gameserver.ai.Action;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.conditions.Condition;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
@@ -40,7 +41,8 @@ public class Spoil extends AbstractEffect
 	@Override
 	public boolean calcSuccess(Creature effector, Creature effected, Skill skill)
 	{
-		return Formulas.calcMagicSuccess(effector, effected, skill);
+		// A dwarven spoiler's Spoil never misses; Spoil learned from the passive tree can.
+		return DwarvenTrades.isSpoilCertain(effector) || Formulas.calcMagicSuccess(effector, effected, skill);
 	}
 	
 	@Override

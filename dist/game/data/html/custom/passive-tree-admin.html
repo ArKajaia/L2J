@@ -270,7 +270,7 @@ const TYPE_COLOR = {
 	START: "#e8dcb8", SMALL: "#8a8a92", NOTABLE: "#d9b64c",
 	KEYSTONE: "#c0392b", MASTER: "#8e44ad", ACTIVE_SKILL: "#2f8fd1", FUNCTION: "#2f8fd1"
 };
-const TYPE_RADIUS = { START: 20, SMALL: 8, NOTABLE: 16, KEYSTONE: 22, MASTER: 24, ACTIVE_SKILL: 17, FUNCTION: 17 };
+const TYPE_RADIUS = { START: 20, SMALL: 8, NOTABLE: 16, KEYSTONE: 34, MASTER: 24, ACTIVE_SKILL: 30, FUNCTION: 17 };
 const TYPE_GLYPH = { START: "flag", ACTIVE_SKILL: "bolt", FUNCTION: "gear", KEYSTONE: "star", MASTER: "star" };
 const MAJOR_TYPES = new Set(["START", "NOTABLE", "KEYSTONE", "MASTER", "ACTIVE_SKILL", "FUNCTION"]);
 const DEFAULT_COST = { START: 0, SMALL: 1, NOTABLE: 2, ACTIVE_SKILL: 2, FUNCTION: 2, KEYSTONE: 3, MASTER: 3 };
@@ -488,7 +488,7 @@ let backend = serverBackend;
 // ------------------------------------------------------------------ offline: tree files on this computer
 // The same reading, checks and writing as PassiveTreeEditor.java, so a save here writes exactly what the server would.
 const NODE_TYPES = ["START", "SMALL", "NOTABLE", "KEYSTONE", "MASTER", "FUNCTION", "ACTIVE_SKILL"];
-const CONDITION_TOKENS = ["HEAVY", "LIGHT", "ROBE", "NOARMOR", "SHIELD", "BOW", "DAGGER", "DUAL", "SWORD", "BLUNT", "POLE", "FIST", "LOWHP", "FULLHP", "NIGHT", "DAY"];
+const CONDITION_TOKENS = ["HEAVY", "LIGHT", "ROBE", "NOARMOR", "SHIELD", "BOW", "DAGGER", "DUAL", "SWORD", "BLUNT", "POLE", "FIST", "LOWHP", "FULLHP", "NIGHT", "DAY", "STILL", "MOBILE"];
 const LIST_LINE = '<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">';
 const FILE_NAME_RE = /^[A-Za-z0-9_-]{1,64}\.xml$/i;
 const ICON_RE = /^[a-z0-9-]{0,40}$/;

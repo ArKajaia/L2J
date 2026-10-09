@@ -43,6 +43,7 @@ import org.l2jmobius.gameserver.data.SpawnTable;
 import org.l2jmobius.gameserver.data.sql.CharInfoTable;
 import org.l2jmobius.gameserver.data.xml.FakePlayerData;
 import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
+import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.data.xml.TransformData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
@@ -65,12 +66,14 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Skill
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpWeapon;
+import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
 import org.l2jmobius.gameserver.model.actor.instance.FakePlayerPvpServitor;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.actor.transform.Transform;
 import org.l2jmobius.gameserver.model.actor.transform.TransformTemplate;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
+import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.holders.ItemEnchantHolder;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.skill.AbnormalType;
@@ -1203,7 +1206,7 @@ public class FakePlayerPvpManager
 		
 		FakePlayerPvpData.getInstance();
 		
-		// The passive trees are grown here, once, so a spawn only adds up a prepared one.
+		// The passive tree graph is read here, once; the trees of each class, role and gear are grown the first time one is needed.
 		if (FakePlayerPvpPassiveTree.isEnabled())
 		{
 			FakePlayerPvpPassiveTree.getInstance();
@@ -1787,6 +1790,7 @@ public class FakePlayerPvpManager
 		
 		final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
 		PassiveTreeManager.getInstance().applyToFakePlayer(fake, profile.getPassives()); // Before the HP is filled up: the tree raises max HP.
+		DwarvenTrades.applyToFakePlayer(fake); // A dwarven crafter's Forged Gear.
 		profile.setTransform(0, null);
 		profile.setDisarmedWeapon(null);
 		template.getFakePlayerInfo().setTransformDisplayId(0);
@@ -2831,8 +2835,13 @@ public class FakePlayerPvpManager
 		// Nothing to loot for a player far above its level.
 		final boolean outleveled = (FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE > 0) && (killer.getLevel() >= (fake.getLevel() + FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE));
 		
-		// Rarely, one piece of its gear, enchant included.
-		final List<ItemEnchantHolder> equipment = profile.getEquipment();
+		// Rarely, one piece of its gear, enchant included (not a cloak a player couldn't drop either).
+		final List<ItemEnchantHolder> equipment = new ArrayList<>(profile.getEquipment());
+		equipment.removeIf(piece ->
+		{
+			final ItemTemplate template = ItemData.getInstance().getTemplate(piece.getId());
+			return (template == null) || !template.isDropable();
+		});
 		if (!outleveled && !equipment.isEmpty() && ((Rnd.nextDouble() * 100) < (profile.isSpotFighter() ? PvpSpotsConfig.EQUIPMENT_DROP_CHANCE : FakePlayerPvpConfig.EQUIPMENT_DROP_CHANCE)))
 		{
 			final ItemEnchantHolder piece = equipment.get(Rnd.get(equipment.size()));
@@ -3127,6 +3136,7 @@ public class FakePlayerPvpManager
 		servitor.setTitle(fake.getName());
 		servitor.setInstanceId(fake.getInstanceId());
 		servitor.setHeading(fake.getHeading());
+		DwarvenTrades.applyToServitor(servitor, fake); // A dwarven crafter's golem is stronger (Golem Engineering), before its HP is filled up.
 		servitor.setCurrentHpMp(servitor.getMaxHp(), servitor.getMaxMp());
 		profile.setServitor(servitor);
 		
@@ -3290,6 +3300,30 @@ public class FakePlayerPvpManager
 			{
 				toggle.applyEffects(fake, fake);
 			}
+		}
+		
+		// Once the PvP is over (no longer flagged), a performer goes back to its hunting performance.
+		keepPerformance(fake, profile, isInPvp(fake));
+	}
+	
+	/**
+	 * Keeps the performance a Swordsinger or Bladedancer fake player plays now on (see {@link SkillCategory#PERFORM}): the first one while it hunts, the second one while it fights a player. Turning one on takes the other off, like a player switching performances.
+	 * @param fake the fake player
+	 * @param profile its profile
+	 * @param pvp {@code true} while it fights a player
+	 */
+	public void keepPerformance(Npc fake, FakePlayerPvpProfile profile, boolean pvp)
+	{
+		final List<Skill> performances = profile.getSkills(SkillCategory.PERFORM);
+		if (performances.isEmpty() || fake.isDead())
+		{
+			return;
+		}
+		
+		final Skill performance = performances.get(pvp && (performances.size() > 1) ? 1 : 0);
+		if (!fake.isAffectedBySkill(performance.getId()))
+		{
+			performance.applyEffects(fake, fake);
 		}
 	}
 	

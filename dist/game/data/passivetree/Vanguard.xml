@@ -73,7 +73,7 @@
 		<requires nodeId="1001" />
 		<requires nodeId="1015" />
 	</node>
-	<node id="1015" name="Vanguard Aegis" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="1" x="2615.0" y="150.0" effect="MAXHP:15" skillId="27400" skillLevel="1" description="ACTIVE: +30% P.Def and M.Def, +20% shield block for 20s (90s cooldown).">
+	<node id="1015" name="Vanguard Aegis" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="1" x="2615.0" y="150.0" effect="MAXHP:15" skillId="27400" skillLevel="1" icon="skill-vanguard-aegis" description="ACTIVE: +30% P.Def and M.Def, +20% shield block for 20s (90s cooldown).">
 		<requires nodeId="1014" />
 	</node>
 	<node id="1016" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="2250.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:18" description="Junction.">
@@ -149,7 +149,7 @@
 		<requires nodeId="1040" />
 		<requires nodeId="1050" />
 	</node>
-	<node id="1038" name="Deflection" sector="Vanguard" type="KEYSTONE" tier="0" cost="1" x="1880.0" y="120.0" effect="SHIELD_RATE_MUL_PCT:50;SHIELD_DEF_PCT:-40" icon="shield" description="KEYSTONE: You block with your shield 50% more often, but your shield defence is 40% lower.">
+	<node id="1038" name="Deflection" sector="Vanguard" type="KEYSTONE" tier="0" cost="1" x="1880.0" y="120.0" effect="SHIELD_RATE_MUL_PCT:50;SHIELD_DEF_PCT:-40" icon="ks-deflection" description="KEYSTONE: You block with your shield 50% more often, but your shield defence is 40% lower.">
 		<requires nodeId="1037" />
 	</node>
 	<node id="1039" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1650.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:6;MAXHP_PCT:0.5" description="Junction.">
@@ -225,7 +225,7 @@
 		<requires nodeId="1063" />
 		<requires nodeId="1073" />
 	</node>
-	<node id="1061" name="Rallying Shout" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="1" x="1280.0" y="120.0" effect="MAXHP:15" skillId="27401" skillLevel="1" description="ACTIVE: party gains +8% P.Atk, M.Atk, P.Def and M.Def for 60s (180s cooldown).">
+	<node id="1061" name="Rallying Shout" sector="Vanguard" type="ACTIVE_SKILL" tier="0" cost="1" x="1280.0" y="120.0" effect="MAXHP:15" skillId="27401" skillLevel="1" icon="skill-rallying-shout" description="ACTIVE: party gains +8% P.Atk, M.Atk, P.Def and M.Def for 60s (180s cooldown).">
 		<requires nodeId="1060" />
 	</node>
 	<node id="1062" name="Crossroads" sector="Vanguard" type="SMALL" tier="0" cost="1" x="1050.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:18" description="Junction.">
@@ -286,7 +286,7 @@
 		<requires nodeId="1062" />
 		<requires nodeId="1078" />
 	</node>
-	<node id="1078" name="Arcane Plating" sector="Vanguard" type="KEYSTONE" tier="0" cost="1" x="840.0" y="-80.0" effect="KS_PDEF_AS_MDEF:25" icon="rune" description="KEYSTONE: Your M.Def is replaced by your P.Def, reduced by 25%.">
+	<node id="1078" name="Arcane Plating" sector="Vanguard" type="KEYSTONE" tier="0" cost="1" x="840.0" y="-80.0" effect="KS_PDEF_AS_MDEF:25" icon="ks-arcane-plating" description="KEYSTONE: Your M.Def is replaced by your P.Def, reduced by 25%.">
 		<requires nodeId="1077" />
 	</node>
 	<node id="1079" name="Avatar of the Phalanx" sector="Vanguard" type="MASTER" tier="0" cost="1" x="720.0" y="0.0" effect="CON:2;SHIELD_RATE_PCT:7;PDEF_PCT:5;MDEF_PCT:5" icon="tower-shield" description="Archetype capstone.">

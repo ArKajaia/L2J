@@ -236,6 +236,14 @@ public enum AbnormalType
 	PD_UP,
 	PD_UP_BOW,
 	PD_UP_SPECIAL,
+	PERFORMANCE, // Custom: Swordsinger and Bladedancer performances (one at a time).
+	PERFORMANCE_BULWARK, // Custom: performance echoes on party members or enemies.
+	PERFORMANCE_FRENZY,
+	PERFORMANCE_RENEWAL,
+	PERFORMANCE_RUIN,
+	PERFORMANCE_TORMENT,
+	PERFORMANCE_VALOR,
+	PERFORMER_STANCE, // Custom: Swordsinger and Bladedancer stances (one at a time).
 	PHYSICAL_STANCE,
 	PINCH,
 	PK_PROTECT,
