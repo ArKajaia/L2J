@@ -203,46 +203,20 @@ public final class BuildSnapshot
 		{
 			final int[][] worn =
 			{
-				{
-					info.getEquipRHand(),
-					info.getWeaponEnchantLevel()
-				},
-				{
-					info.getEquipLHand(),
-					info.getArmorEnchantLevel()
-				},
-				{
-					info.getEquipHead(),
-					info.getArmorEnchantLevel()
-				},
-				{
-					info.getEquipChest(),
-					info.getArmorEnchantLevel()
-				},
-				{
-					info.getEquipLegs(),
-					info.getArmorEnchantLevel()
-				},
-				{
-					info.getEquipGloves(),
-					info.getArmorEnchantLevel()
-				},
-				{
-					info.getEquipFeet(),
-					info.getArmorEnchantLevel()
-				},
-				{
-					info.getEquipCloak(),
-					0
-				},
-				{
-					info.getEquipHair(),
-					0
-				},
-				{
-					info.getEquipHair2(),
-					0
-				}
+				// @formatter:off
+				{info.getEquipRHand(), info.getEnchantLevel(Inventory.PAPERDOLL_RHAND)},
+				{info.getEquipLHand(), info.getEnchantLevel(Inventory.PAPERDOLL_LHAND)},
+				{info.getEquipHead(), info.getEnchantLevel(Inventory.PAPERDOLL_HEAD)},
+				{info.getEquipChest(), info.getEnchantLevel(Inventory.PAPERDOLL_CHEST)},
+				{info.getEquipLegs(), info.getEnchantLevel(Inventory.PAPERDOLL_LEGS)},
+				{info.getEquipGloves(), info.getEnchantLevel(Inventory.PAPERDOLL_GLOVES)},
+				{info.getEquipFeet(), info.getEnchantLevel(Inventory.PAPERDOLL_FEET)},
+				{info.getEquipCloak(), 0},
+				{info.getEquipShirt(), info.getEnchantLevel(Inventory.PAPERDOLL_UNDER)},
+				{info.getEquipBelt(), info.getEnchantLevel(Inventory.PAPERDOLL_BELT)},
+				{info.getEquipHair(), 0},
+				{info.getEquipHair2(), 0}
+				// @formatter:on
 			};
 			boolean first = true;
 			for (int[] entry : worn)

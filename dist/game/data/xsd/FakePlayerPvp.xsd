@@ -11,6 +11,9 @@
 		<xs:attribute type="xs:int" name="earring" />
 		<xs:attribute type="xs:int" name="necklace" />
 		<xs:attribute type="xs:int" name="ring" />
+		<xs:attribute type="xs:string" name="shirt" />
+		<xs:attribute type="xs:string" name="belt" />
+		<xs:attribute type="xs:nonNegativeInteger" name="weight" />
 	</xs:complexType>
 	<xs:complexType name="gearKit">
 		<xs:sequence>
@@ -22,6 +25,13 @@
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element name="kit" type="gearKit" maxOccurs="unbounded" minOccurs="0" />
+				<xs:element name="cloak" maxOccurs="unbounded" minOccurs="0">
+					<xs:complexType>
+						<xs:attribute type="xs:int" name="id" use="required" />
+						<xs:attribute type="xs:int" name="minLevel" />
+						<xs:attribute type="xs:nonNegativeInteger" name="weight" />
+					</xs:complexType>
+				</xs:element>
 				<xs:element name="buffs" maxOccurs="unbounded" minOccurs="0">
 					<xs:complexType>
 						<xs:sequence>

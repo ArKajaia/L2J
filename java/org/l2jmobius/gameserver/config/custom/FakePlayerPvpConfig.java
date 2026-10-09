@@ -30,7 +30,6 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.util.ConfigReader;
-import org.l2jmobius.commons.util.Rnd;
 
 /**
  * Loads the roaming fake player configuration: a regular monster has {@link #SPAWN_CHANCE}% chance on every spawn to be replaced by a fake player of the same level that hunts nearby monsters and fights back against real players (see
@@ -60,9 +59,22 @@ public class FakePlayerPvpConfig
 	
 	// Strength
 	public static boolean INCLUDE_CP_IN_HP;
-	/** {minLevel, minEnchant, maxEnchant} rows sorted by level. */
+	/** {minLevel, minEnchant, maxEnchant} rows sorted by level: the bounds of the enchant of a weapon, and of an armor piece, shield, jewel, shirt or belt. */
 	public static List<int[]> WEAPON_ENCHANT = new ArrayList<>();
 	public static List<int[]> ARMOR_ENCHANT = new ArrayList<>();
+	/** {minLevel, enchantChance, stepChance} rows sorted by level: how players enchant their weapons, armor (shields, shirts and belts too) and jewels (see {@link org.l2jmobius.gameserver.managers.FakePlayerPvpEnchant}). */
+	public static List<int[]> WEAPON_ENCHANT_ODDS = new ArrayList<>();
+	public static List<int[]> ARMOR_ENCHANT_ODDS = new ArrayList<>();
+	public static List<int[]> JEWEL_ENCHANT_ODDS = new ArrayList<>();
+	/** {minLevel, chance} rows sorted by level: the chance (in %) a fake player went for a +6 armor set. */
+	public static List<int[]> ARMOR_SET_ENCHANT_CHANCE = new ArrayList<>();
+	/** The range of the wealth of a fake player, a multiplier of its enchant odds and of its chances to wear a shirt, a belt and a cloak. */
+	public static double GEAR_WEALTH_MIN;
+	public static double GEAR_WEALTH_MAX;
+	/** {minLevel, chance} rows sorted by level: the chance (in %) a fake player wears a shirt, a belt, and a cloak when its armor set opens the cloak slot. */
+	public static List<int[]> SHIRT_CHANCE = new ArrayList<>();
+	public static List<int[]> BELT_CHANCE = new ArrayList<>();
+	public static List<int[]> CLOAK_CHANCE = new ArrayList<>();
 	public static int BONUS_STAT_MAX;
 	public static boolean PASSIVE_TREE_ENABLED;
 	public static int PASSIVE_TREE_MAX_SUBCLASSES;
@@ -225,8 +237,17 @@ public class FakePlayerPvpConfig
 		KEEP_POPULATION = config.getBoolean("FakePvpKeepPopulation", true);
 		
 		INCLUDE_CP_IN_HP = config.getBoolean("FakePvpIncludeCpInHp", true);
-		WEAPON_ENCHANT = parseEnchantTiers(config.getString("FakePvpWeaponEnchant", "1:0-3;20:0-4;40:1-5;52:2-6;61:3-8;76:4-10;80:5-12;84:6-16"), "FakePvpWeaponEnchant");
-		ARMOR_ENCHANT = parseEnchantTiers(config.getString("FakePvpArmorEnchant", "1:0-2;20:0-3;40:1-4;52:2-4;61:3-5;76:3-6;80:4-7;84:4-8"), "FakePvpArmorEnchant");
+		WEAPON_ENCHANT = parseEnchantTiers(config.getString("FakePvpWeaponEnchant", "1:0-0;20:0-8;40:0-10;52:0-12;61:0-14;76:0-16"), "FakePvpWeaponEnchant");
+		ARMOR_ENCHANT = parseEnchantTiers(config.getString("FakePvpArmorEnchant", "1:0-0;20:0-6;40:0-8;52:0-10;61:0-10;76:0-12"), "FakePvpArmorEnchant");
+		WEAPON_ENCHANT_ODDS = parseTiers(config.getString("FakePvpWeaponEnchantOdds", "1:0-0;20:40-35;40:55-40;52:65-45;61:75-50;76:85-55;80:85-60;84:90-65"), "FakePvpWeaponEnchantOdds", 2);
+		ARMOR_ENCHANT_ODDS = parseTiers(config.getString("FakePvpArmorEnchantOdds", "1:0-0;20:25-10;40:40-10;52:50-15;61:60-15;76:70-20;80:80-20;84:85-25"), "FakePvpArmorEnchantOdds", 2);
+		JEWEL_ENCHANT_ODDS = parseTiers(config.getString("FakePvpJewelEnchantOdds", "1:0-0;20:25-20;40:40-25;52:50-30;61:60-35;76:70-40;80:80-45;84:85-50"), "FakePvpJewelEnchantOdds", 2);
+		ARMOR_SET_ENCHANT_CHANCE = parseTiers(config.getString("FakePvpArmorSetEnchantChance", "1:0;61:3;76:8;80:15;84:25"), "FakePvpArmorSetEnchantChance", 1);
+		GEAR_WEALTH_MIN = Math.max(0, config.getDouble("FakePvpGearWealthMin", 0.6));
+		GEAR_WEALTH_MAX = Math.max(GEAR_WEALTH_MIN, config.getDouble("FakePvpGearWealthMax", 1.4));
+		SHIRT_CHANCE = parseTiers(config.getString("FakePvpShirtChance", "1:0;20:10;40:25;52:35;61:50;76:65;80:75;84:80"), "FakePvpShirtChance", 1);
+		BELT_CHANCE = parseTiers(config.getString("FakePvpBeltChance", "1:0;40:10;52:25;61:40;76:55;80:70;84:80"), "FakePvpBeltChance", 1);
+		CLOAK_CHANCE = parseTiers(config.getString("FakePvpCloakChance", "1:0;80:50;82:60;84:70"), "FakePvpCloakChance", 1);
 		BONUS_STAT_MAX = Math.max(0, config.getInt("FakePvpBonusStatMax", 10));
 		PASSIVE_TREE_ENABLED = config.getBoolean("FakePvpPassiveTreeEnabled", true);
 		PASSIVE_TREE_MAX_SUBCLASSES = Math.max(0, config.getInt("FakePvpPassiveTreeMaxSubclasses", 3));
@@ -407,23 +428,34 @@ public class FakePlayerPvpConfig
 	}
 	
 	/**
-	 * @param tiers {minLevel, minEnchant, maxEnchant} rows sorted by level
+	 * @param tiers {minLevel, ...} rows sorted by level
 	 * @param level a fake player level
-	 * @return a random enchant level from the highest row usable at {@code level}
+	 * @return the highest row usable at {@code level}, or {@code null} if there is none
 	 */
-	public static int rollEnchant(List<int[]> tiers, int level)
+	public static int[] getTier(List<int[]> tiers, int level)
 	{
-		int[] range = null;
+		int[] result = null;
 		for (int[] tier : tiers)
 		{
 			if (tier[0] > level)
 			{
 				break;
 			}
-			range = tier;
+			result = tier;
 		}
 		
-		return range == null ? 0 : Rnd.get(range[1], range[2]);
+		return result;
+	}
+	
+	/**
+	 * @param tiers {minLevel, chance} rows sorted by level
+	 * @param level a fake player level
+	 * @return the chance (in %) of the highest row usable at {@code level}, 0 if there is none
+	 */
+	public static int getTierChance(List<int[]> tiers, int level)
+	{
+		final int[] tier = getTier(tiers, level);
+		return tier != null ? tier[1] : 0;
 	}
 	
 	/**
@@ -433,6 +465,24 @@ public class FakePlayerPvpConfig
 	 * @return the rows sorted by level
 	 */
 	private static List<int[]> parseEnchantTiers(String value, String key)
+	{
+		final List<int[]> result = parseTiers(value, key, 2);
+		for (int[] tier : result)
+		{
+			tier[2] = Math.max(tier[1], tier[2]);
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Parses "minLevel:a-b;minLevel:a-b..." (or "minLevel:a;..." for one value).
+	 * @param value the config value
+	 * @param key the config key, for warnings
+	 * @param values how many values each row has after its level
+	 * @return {minLevel, values...} rows sorted by level, the values at least 0
+	 */
+	private static List<int[]> parseTiers(String value, String key, int values)
 	{
 		final List<int[]> result = new ArrayList<>();
 		for (String entry : value.split(";"))
@@ -445,16 +495,15 @@ public class FakePlayerPvpConfig
 			
 			try
 			{
-				final String[] levelAndRange = entry.split(":");
-				final String[] range = levelAndRange[1].split("-");
-				final int min = Math.max(0, Integer.parseInt(range[0].trim()));
-				final int max = Math.max(min, Integer.parseInt(range[range.length - 1].trim()));
-				result.add(new int[]
+				final String[] levelAndValues = entry.split(":");
+				final String[] parts = levelAndValues[1].split("-");
+				final int[] tier = new int[values + 1];
+				tier[0] = Integer.parseInt(levelAndValues[0].trim());
+				for (int i = 0; i < values; i++)
 				{
-					Integer.parseInt(levelAndRange[0].trim()),
-					min,
-					max
-				});
+					tier[i + 1] = Math.max(0, Integer.parseInt(parts[Math.min(i, parts.length - 1)].trim()));
+				}
+				result.add(tier);
 			}
 			catch (Exception e)
 			{

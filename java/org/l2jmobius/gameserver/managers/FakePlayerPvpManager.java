@@ -43,6 +43,7 @@ import org.l2jmobius.gameserver.data.SpawnTable;
 import org.l2jmobius.gameserver.data.sql.CharInfoTable;
 import org.l2jmobius.gameserver.data.xml.FakePlayerData;
 import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
+import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.data.xml.TransformData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
@@ -72,6 +73,7 @@ import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.actor.transform.Transform;
 import org.l2jmobius.gameserver.model.actor.transform.TransformTemplate;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
+import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.holders.ItemEnchantHolder;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.skill.AbnormalType;
@@ -2833,8 +2835,13 @@ public class FakePlayerPvpManager
 		// Nothing to loot for a player far above its level.
 		final boolean outleveled = (FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE > 0) && (killer.getLevel() >= (fake.getLevel() + FakePlayerPvpConfig.OUTLEVELED_DIFFERENCE));
 		
-		// Rarely, one piece of its gear, enchant included.
-		final List<ItemEnchantHolder> equipment = profile.getEquipment();
+		// Rarely, one piece of its gear, enchant included (not a cloak a player couldn't drop either).
+		final List<ItemEnchantHolder> equipment = new ArrayList<>(profile.getEquipment());
+		equipment.removeIf(piece ->
+		{
+			final ItemTemplate template = ItemData.getInstance().getTemplate(piece.getId());
+			return (template == null) || !template.isDropable();
+		});
 		if (!outleveled && !equipment.isEmpty() && ((Rnd.nextDouble() * 100) < (profile.isSpotFighter() ? PvpSpotsConfig.EQUIPMENT_DROP_CHANCE : FakePlayerPvpConfig.EQUIPMENT_DROP_CHANCE)))
 		{
 			final ItemEnchantHolder piece = equipment.get(Rnd.get(equipment.size()));
