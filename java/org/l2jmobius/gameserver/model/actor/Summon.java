@@ -45,6 +45,7 @@ import org.l2jmobius.gameserver.model.actor.enums.creature.InstanceType;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
 import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
+import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
 import org.l2jmobius.gameserver.model.actor.stat.SummonStat;
 import org.l2jmobius.gameserver.model.actor.status.SummonStatus;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
@@ -286,35 +287,36 @@ public abstract class Summon extends Playable
 	}
 	
 	// The owner's passive tree SUMMON_* nodes scale the summon's own stats (pets and servitors alike). Servitor's
-	// Servitor Share overrides call these through super, so both bonuses apply.
+	// Servitor Share overrides call these through super, so both bonuses apply. A dwarven crafter's golems and
+	// cannons get Golem Engineering on top.
 	@Override
 	public double getPAtk(Creature target)
 	{
-		return super.getPAtk(target) * ownerTreeMultiplier("SUMMON_PATK_PCT");
+		return super.getPAtk(target) * ownerTreeMultiplier("SUMMON_PATK_PCT") * DwarvenTrades.getGolemMultiplier(this);
 	}
 	
 	@Override
 	public double getMAtk(Creature target, Skill skill)
 	{
-		return super.getMAtk(target, skill) * ownerTreeMultiplier("SUMMON_MATK_PCT");
+		return super.getMAtk(target, skill) * ownerTreeMultiplier("SUMMON_MATK_PCT") * DwarvenTrades.getGolemMultiplier(this);
 	}
 	
 	@Override
 	public double getPDef(Creature target)
 	{
-		return super.getPDef(target) * ownerTreeMultiplier("SUMMON_PDEF_PCT");
+		return super.getPDef(target) * ownerTreeMultiplier("SUMMON_PDEF_PCT") * DwarvenTrades.getGolemMultiplier(this);
 	}
 	
 	@Override
 	public double getMDef(Creature target, Skill skill)
 	{
-		return super.getMDef(target, skill) * ownerTreeMultiplier("SUMMON_MDEF_PCT");
+		return super.getMDef(target, skill) * ownerTreeMultiplier("SUMMON_MDEF_PCT") * DwarvenTrades.getGolemMultiplier(this);
 	}
 	
 	@Override
 	public int getMaxHp()
 	{
-		return (int) (super.getMaxHp() * ownerTreeMultiplier("SUMMON_HP_PCT"));
+		return (int) (super.getMaxHp() * ownerTreeMultiplier("SUMMON_HP_PCT") * DwarvenTrades.getGolemMultiplier(this));
 	}
 	
 	@Override

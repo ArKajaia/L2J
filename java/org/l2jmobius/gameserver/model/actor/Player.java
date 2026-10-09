@@ -156,6 +156,7 @@ import org.l2jmobius.gameserver.model.actor.holders.player.AutoUseSettingsHolder
 import org.l2jmobius.gameserver.model.actor.holders.player.BlockList;
 import org.l2jmobius.gameserver.model.actor.holders.player.ContactList;
 import org.l2jmobius.gameserver.model.actor.holders.player.Duel;
+import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
 import org.l2jmobius.gameserver.model.actor.holders.player.Macro;
 import org.l2jmobius.gameserver.model.actor.holders.player.MacroList;
 import org.l2jmobius.gameserver.model.actor.holders.player.MovieHolder;
@@ -15611,7 +15612,7 @@ public class Player extends Playable
 	{
 		final double base = super.getPAtk(target);
 		final double pct = getPassiveStatBonus().get("PATK_PCT");
-		double result = base * (1.0 + (pct / 100.0)) * PassiveMechanics.rampageMultiplier(this);
+		double result = base * (1.0 + (pct / 100.0)) * PassiveMechanics.rampageMultiplier(this) * DwarvenTrades.getForgedWeaponMultiplier(this);
 		
 		// Battlemage: part of M.Atk is added to P.Atk.
 		final double battlemage = getPassiveStatBonus().get(PassiveMechanics.BATTLEMAGE);
@@ -15663,7 +15664,7 @@ public class Player extends Playable
 	{
 		final double base = super.getPDef(target);
 		final double pct = getPassiveStatBonus().get("PDEF_PCT");
-		return base * (1.0 + (pct / 100.0));
+		return base * (1.0 + (pct / 100.0)) * DwarvenTrades.getForgedArmorMultiplier(this);
 	}
 	
 	@Override

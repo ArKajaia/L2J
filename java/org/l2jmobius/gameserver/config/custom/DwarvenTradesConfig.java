@@ -50,6 +50,16 @@ public class DwarvenTradesConfig
 	// Passive tree
 	public static int TREE_CREATE_ITEM_MAX_LEVEL;
 	
+	// Combat: index 0 = 1st class, 1 = 2nd class, 2 = 3rd class.
+	public static double[] SKULLCRUSHER_CHANCE_MULTIPLIER;
+	public static double[] PLUNDER_DAMAGE_BONUS;
+	public static double[] SPOILS_OF_WAR_RESTORE;
+	public static double[] GOLEM_BONUS;
+	public static double[] FORGED_WEAPON_BONUS;
+	public static double[] FORGED_ARMOR_BONUS;
+	public static int FORGED_SAFE_ENCHANT;
+	public static double FORGED_MAX_BONUS;
+	
 	public static void load()
 	{
 		final ConfigReader config = new ConfigReader(DWARVEN_TRADES_CONFIG_FILE);
@@ -67,6 +77,15 @@ public class DwarvenTradesConfig
 		CRAFTER_CRYSTALLIZE_BONUS = getTiers(config, "CrafterCrystallizeBonus", "10,20,30", 0);
 		
 		TREE_CREATE_ITEM_MAX_LEVEL = Math.max(1, config.getInt("TreeCreateItemMaxLevel", 5));
+		
+		SKULLCRUSHER_CHANCE_MULTIPLIER = getTiers(config, "SkullcrusherChanceMultiplier", "1.1,1.2,1.3", 0);
+		PLUNDER_DAMAGE_BONUS = getTiers(config, "PlunderDamageBonus", "8,12,16", 0);
+		SPOILS_OF_WAR_RESTORE = getTiers(config, "SpoilsOfWarRestore", "2,3,4", 0);
+		GOLEM_BONUS = getTiers(config, "GolemBonus", "10,20,30", 0);
+		FORGED_WEAPON_BONUS = getTiers(config, "ForgedWeaponBonus", "0.5,0.75,1.0", 0);
+		FORGED_ARMOR_BONUS = getTiers(config, "ForgedArmorBonus", "0.1,0.15,0.2", 0);
+		FORGED_SAFE_ENCHANT = Math.max(0, config.getInt("ForgedSafeEnchant", 3));
+		FORGED_MAX_BONUS = Math.max(0, config.getDouble("ForgedMaxBonus", 15));
 	}
 	
 	/**

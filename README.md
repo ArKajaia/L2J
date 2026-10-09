@@ -230,6 +230,12 @@ The passive tree lets any character take Spoil, Sweeper Festival, Crystallize an
 - **Crafters** (Artisan, Warsmith, Maestro): +5 / +10 / +15 success rate on recipes below 100% (a 60% recipe works 75% of the time for a Maestro), the masterwork chance ×1.25 / ×1.5 / ×2, and a 5 / 10 / 15% chance to make twice as many of a stackable item (shots, arrows, potions, materials). This works in their private workshops too, so customers come to dwarves.
 - **Crystallize**: every dwarven class gets 20% more crystals, and crafters another 10 / 20 / 30% (a Maestro gets 50% more).
 - **The tree's Dwarven Craft now works, up to C grade**: before, it gave the recipe book but no Create Item, so it could make nothing. Now it also gives Create Item at your level, like a dwarf learns it, but no higher than level 5 (D and most C grade recipes). B grade and up can only be crafted by dwarves.
+- **Combat**: dwarves fight with blunts, polearms, stuns and golems, and the fighting ties into the trade.
+  - **Skullcrusher** (both lines): their stun skills (Stun Attack, Hammer Crush, Rush Impact...) land ×1.1 / ×1.2 / ×1.3 as often, still capped by the skill's own highest chance.
+  - **Plunderer's Mark** (spoilers): +8 / 12 / 16% damage from their attacks and physical skills (Backstab and Lucky Blow too) on a monster they spoiled themselves.
+  - **Spoils of War** (spoilers): every corpse they sweep with loot on it restores 2 / 3 / 4% of their max HP and MP, so a Sweeper Festival over a pack is a breather.
+  - **Golem Engineering** (crafters): their golems and cannons get +10 / 20 / 30% P.Atk, M.Atk, P.Def, M.Def and max HP, on top of the tree's summon nodes.
+  - **Forged Gear** (crafters): every enchant level above +3 on their weapon gives +0.5 / 0.75 / 1% P.Atk, and on each armour piece (shield too) +0.1 / 0.15 / 0.2% P.Def, up to +15% each. It shows in the character window.
 - Everything follows the active class: a dwarven subclass counts, a dwarf playing a non-dwarven subclass doesn't. Settings in `config/Custom/DwarvenTrades.ini`.
 
 ### Other Custom Features at a Glance
@@ -602,10 +608,11 @@ This program is free software, licensed under the **GNU General Public License, 
 Changes from 28 September – 9 October 2026.
 
 ### Dwarven Trades
-- **Dwarven classes reworked**: Spoil, Sweeper Festival, Crystallize and Dwarven Craft on the passive tree had made them pointless, so the dwarves now do these trades better than anyone with the tree. See [Dwarven Trades](#dwarven-trades).
+- **Dwarven classes reworked**: Spoil, Sweeper Festival, Crystallize and Dwarven Craft on the passive tree had made them pointless, so the dwarves now do these trades better than anyone with the tree, and fight in their own way. See [Dwarven Trades](#dwarven-trades).
 - **Spoilers** (Scavenger, Bounty Hunter, Fortune Seeker): Spoil never misses, and what they spoil gives more when swept (chance up to ×1.75 and amount up to ×1.4 for a Fortune Seeker).
 - **Crafters** (Artisan, Warsmith, Maestro): a higher success rate (up to +15), more masterworks (up to ×2) and a chance to make twice as many stackable items (up to 15%), in their workshops too.
 - **Crystallize**: dwarves get 20% more crystals, and crafters up to another 30%.
+- **Combat**: stun skills of every dwarven class land more often (Skullcrusher). Spoilers hit the monsters they spoiled harder (Plunderer's Mark) and restore HP and MP for every corpse they sweep (Spoils of War). Crafters' golems and cannons are up to 30% stronger (Golem Engineering), and enchant levels above +3 on their gear add P.Atk and P.Def (Forged Gear).
 - **Tree's Dwarven Craft fixed**: it now gives Create Item at your level, up to level 5 (D and most C grade). Before, it could make nothing.
 - Settings in `config/Custom/DwarvenTrades.ini`.
 

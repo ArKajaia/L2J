@@ -42,6 +42,7 @@ import org.l2jmobius.gameserver.managers.SiegeManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
 import org.l2jmobius.gameserver.model.actor.instance.Cubic;
 import org.l2jmobius.gameserver.model.actor.instance.SiegeFlag;
 import org.l2jmobius.gameserver.model.actor.instance.StaticObject;
@@ -663,6 +664,7 @@ public class Formulas
 		damage *= attributeMod;
 		damage *= weaponMod;
 		damage *= penaltyMod;
+		damage *= DwarvenTrades.getPlunderMultiplier(attacker, target); // Plunderer's Mark
 		
 		return Math.max(damage, 1);
 	}
@@ -742,6 +744,7 @@ public class Formulas
 		damage *= attributeMod;
 		damage *= weaponMod;
 		damage *= penaltyMod;
+		damage *= DwarvenTrades.getPlunderMultiplier(attacker, target); // Plunderer's Mark
 		
 		return Math.max(damage, 1);
 	}
@@ -887,6 +890,8 @@ public class Formulas
 		damage *= calcAttributeBonus(attacker, target, skill);
 		if (target.isAttackable())
 		{
+			damage *= DwarvenTrades.getPlunderMultiplier(attacker, target); // Plunderer's Mark
+			
 			final Weapon weapon = attacker.getActiveWeaponItem();
 			if ((weapon != null) && ((weapon.getItemType() == WeaponType.BOW) || (weapon.getItemType() == WeaponType.CROSSBOW)))
 			{
@@ -1600,7 +1605,7 @@ public class Formulas
 			mAtkMod = val;
 		}
 		
-		final double rate = baseMod * elementMod * traitMod * mAtkMod * buffDebuffMod;
+		final double rate = baseMod * elementMod * traitMod * mAtkMod * buffDebuffMod * DwarvenTrades.getEffectChanceMultiplier(attacker, skill);
 		final double finalRate = traitMod > 0 ? MathUtil.clamp(rate, skill.getMinChance(), skill.getMaxChance()) : 0;
 		
 		if (finalRate <= Rnd.get(100))
