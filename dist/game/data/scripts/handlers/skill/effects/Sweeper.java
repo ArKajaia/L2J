@@ -22,6 +22,7 @@ import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
 import org.l2jmobius.gameserver.model.conditions.Condition;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
@@ -68,6 +69,8 @@ public class Sweeper extends AbstractEffect
 		final Collection<ItemHolder> items = monster.takeSweep();
 		if (items != null)
 		{
+			DwarvenTrades.onSweep(player); // Spoils of War
+			
 			for (ItemHolder item : items)
 			{
 				if (player.isInParty())

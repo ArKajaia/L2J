@@ -36,6 +36,7 @@ import org.l2jmobius.gameserver.data.holders.RecipeStatHolder;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.RecipeData;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.item.instance.Item;
@@ -69,6 +70,11 @@ public class RecipeManager
 	public void requestBookOpen(Player player, boolean isDwarvenCraft)
 	{
 		// Check if player is trying to alter recipe book while engaged in manufacturing.
+		if (isDwarvenCraft && !player.hasDwarvenCraft())
+		{
+			return;
+		}
+		
 		if (!_activeMakers.containsKey(player.getObjectId()))
 		{
 			final RecipeBookItemList response = new RecipeBookItemList(isDwarvenCraft, player.getMaxMp());
@@ -193,7 +199,7 @@ public class RecipeManager
 			_recipeList = pRecipeList;
 			_isValid = false;
 			_skillId = _recipeList.isDwarvenRecipe() ? CommonSkill.CREATE_DWARVEN.getId() : CommonSkill.CREATE_COMMON.getId();
-			_skillLevel = _player.getSkillLevel(_skillId);
+			_skillLevel = _recipeList.isDwarvenRecipe() ? _player.getDwarvenCraft() : _player.getSkillLevel(_skillId);
 			_skill = _player.getKnownSkill(_skillId);
 			_player.setCrafting(true);
 			
@@ -395,7 +401,7 @@ public class RecipeManager
 			_items = listItems(true); // this line actually takes materials from inventory
 			if (_items != null)
 			{
-				if (Rnd.get(100) < _recipeList.getSuccessRate())
+				if ((Rnd.nextDouble() * 100) < DwarvenTrades.getCraftSuccessRate(_player, _recipeList.getSuccessRate()))
 				{
 					rewardPlayer();
 					updateMakeInfo(true);
@@ -655,10 +661,22 @@ public class RecipeManager
 			// check that the current recipe has a rare production or not
 			if ((rareProdId != -1) && ((rareProdId == itemId) || PlayerConfig.CRAFT_MASTERWORK))
 			{
-				if (Rnd.get(100) < (_recipeList.getRarity() * PlayerConfig.CRAFT_MASTERWORK_CHANCE_RATE))
+				if ((Rnd.nextDouble() * 100) < (_recipeList.getRarity() * PlayerConfig.CRAFT_MASTERWORK_CHANCE_RATE * DwarvenTrades.getMasterworkMultiplier(_player)))
 				{
 					itemId = rareProdId;
 					itemCount = _recipeList.getRareCount();
+				}
+			}
+			
+			// A dwarven crafter sometimes makes twice as many shots, arrows, potions or materials.
+			final ItemTemplate product = ItemData.getInstance().getTemplate(itemId);
+			if ((product != null) && product.isStackable() && ((Rnd.nextDouble() * 100) < DwarvenTrades.getDoubleCraftChance(_player)))
+			{
+				itemCount *= 2;
+				_player.sendMessage("Master's Touch: you made twice as many.");
+				if (_target != _player)
+				{
+					_target.sendMessage("Master's Touch: " + _player.getName() + " made twice as many.");
 				}
 			}
 			

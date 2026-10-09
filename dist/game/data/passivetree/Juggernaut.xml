@@ -337,7 +337,7 @@
 		<requires nodeId="2062" />
 		<requires nodeId="2079" />
 	</node>
-	<node id="2081" name="Dwarven Craft Mastery" sector="Juggernaut" type="FUNCTION" tier="0" cost="1" x="398.0" y="809.4" effect="MAXHP:15" skillId="1321" skillLevel="1" description="Unlock Dwarven Craft skill.">
+	<node id="2081" name="Dwarven Craft Mastery" sector="Juggernaut" type="FUNCTION" tier="0" cost="1" x="398.0" y="809.4" effect="MAXHP:15" skillId="1321" skillLevel="1" description="Unlocks Dwarven Craft: the dwarven recipe book, and Create Item at your level up to level 5 (D and most C grade recipes). The only way to craft dwarven recipes unless you are an Artisan, Warsmith or Maestro. Higher grades stay with them.">
 		<requires nodeId="2062" />
 	</node>
 	<node id="21101" name="Pathway" sector="Juggernaut" type="SMALL" tier="0" cost="1" x="582.3" y="2173.3" orbitX="0.0" orbitY="0.0" effect="PATK_PCT:0.2;MAXHP_PCT:0.5">
