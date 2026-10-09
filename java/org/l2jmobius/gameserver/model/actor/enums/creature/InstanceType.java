@@ -36,6 +36,7 @@ public enum InstanceType
 	Door(Creature),
 	TerrainObject(Npc),
 	EffectPoint(Npc),
+	Totem(Npc),
 	
 	// Summons, Pets, Decoys and Traps
 	Servitor(Summon),

@@ -1,0 +1,68 @@
+27530	1	a,Prophecy of Doom\0	a,Prophecy: after 5 seconds, the target is struck by holy magic with 70 Power (105 Power if it is still within 300 of where it stood). Cancelled if the target dies first. A prophecy that comes true gives a Foresight.\0	a,none\0	a,none\0
+27530	2	a,Prophecy of Doom\0	a,Prophecy: after 5 seconds, the target is struck by holy magic with 85 Power (127 Power if it is still within 300 of where it stood). Cancelled if the target dies first. A prophecy that comes true gives a Foresight.\0	a,none\0	a,none\0
+27530	3	a,Prophecy of Doom\0	a,Prophecy: after 5 seconds, the target is struck by holy magic with 100 Power (150 Power if it is still within 300 of where it stood). Cancelled if the target dies first. A prophecy that comes true gives a Foresight.\0	a,none\0	a,none\0
+27530	4	a,Prophecy of Doom\0	a,Prophecy: after 5 seconds, the target is struck by holy magic with 115 Power (172 Power if it is still within 300 of where it stood). Cancelled if the target dies first. A prophecy that comes true gives a Foresight.\0	a,none\0	a,none\0
+27530	5	a,Prophecy of Doom\0	a,Prophecy: after 5 seconds, the target is struck by holy magic with 140 Power (210 Power if it is still within 300 of where it stood). Cancelled if the target dies first. A prophecy that comes true gives a Foresight.\0	a,none\0	a,none\0
+27531	1	a,Doom Strike\0	a,The damage of a Prophecy of Doom that came true: 70 Power.\0	a,none\0	a,none\0
+27531	2	a,Doom Strike\0	a,The damage of a Prophecy of Doom that came true: 85 Power.\0	a,none\0	a,none\0
+27531	3	a,Doom Strike\0	a,The damage of a Prophecy of Doom that came true: 100 Power.\0	a,none\0	a,none\0
+27531	4	a,Doom Strike\0	a,The damage of a Prophecy of Doom that came true: 115 Power.\0	a,none\0	a,none\0
+27531	5	a,Doom Strike\0	a,The damage of a Prophecy of Doom that came true: 140 Power.\0	a,none\0	a,none\0
+27532	1	a,Prophecy of Salvation\0	a,Prophecy: after 6 seconds, the target recovers all the HP it lost while the prophecy was on. A prophecy that comes true gives a Foresight.\0	a,none\0	a,none\0
+27532	2	a,Prophecy of Salvation\0	a,Prophecy: after 6 seconds, the target recovers all the HP it lost while the prophecy was on. A prophecy that comes true gives a Foresight.\0	a,none\0	a,none\0
+27532	3	a,Prophecy of Salvation\0	a,Prophecy: after 6 seconds, the target recovers all the HP it lost while the prophecy was on. A prophecy that comes true gives a Foresight.\0	a,none\0	a,none\0
+27532	4	a,Prophecy of Salvation\0	a,Prophecy: after 6 seconds, the target recovers all the HP it lost while the prophecy was on. A prophecy that comes true gives a Foresight.\0	a,none\0	a,none\0
+27533	1	a,Prophecy of Ruin\0	a,Prophecy: after 5 seconds, the target is stunned for 3 seconds if it cast a skill while the prophecy was on, or silenced for 3 seconds if it didn't. A prophecy that comes true gives a Foresight.\0	a,none\0	a,none\0
+27533	2	a,Prophecy of Ruin\0	a,Prophecy: after 5 seconds, the target is stunned for 3 seconds if it cast a skill while the prophecy was on, or silenced for 4 seconds if it didn't. A prophecy that comes true gives a Foresight.\0	a,none\0	a,none\0
+27533	3	a,Prophecy of Ruin\0	a,Prophecy: after 5 seconds, the target is stunned for 4 seconds if it cast a skill while the prophecy was on, or silenced for 5 seconds if it didn't. A prophecy that comes true gives a Foresight.\0	a,none\0	a,none\0
+27534	1	a,Ruin: Shatter Will\0	a,Stunned by a Prophecy of Ruin.\0	a,none\0	a,none\0
+27534	2	a,Ruin: Shatter Will\0	a,Stunned by a Prophecy of Ruin.\0	a,none\0	a,none\0
+27534	3	a,Ruin: Shatter Will\0	a,Stunned by a Prophecy of Ruin.\0	a,none\0	a,none\0
+27535	1	a,Ruin: Sealed Lips\0	a,Silenced by a Prophecy of Ruin.\0	a,none\0	a,none\0
+27535	2	a,Ruin: Sealed Lips\0	a,Silenced by a Prophecy of Ruin.\0	a,none\0	a,none\0
+27535	3	a,Ruin: Sealed Lips\0	a,Silenced by a Prophecy of Ruin.\0	a,none\0	a,none\0
+27536	1	a,Prophecy of Reversal\0	a,Prophecy: the target's HP, MP, CP and place are written down. After 6 seconds it comes back to them (never lower than it is). Reuse time is 90 seconds.\0	a,none\0	a,none\0
+27536	2	a,Prophecy of Reversal\0	a,Prophecy: the target's HP, MP, CP and place are written down. After 6 seconds it comes back to them (never lower than it is). Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27537	1	a,Foresight\0	a,A prophecy came true. M. Atk. +3%. 5 Foresights allow Fulfilment.\0	a,none\0	a,none\0
+27537	2	a,Foresight\0	a,A prophecy came true. M. Atk. +6%. 5 Foresights allow Fulfilment.\0	a,none\0	a,none\0
+27537	3	a,Foresight\0	a,A prophecy came true. M. Atk. +9%. 5 Foresights allow Fulfilment.\0	a,none\0	a,none\0
+27537	4	a,Foresight\0	a,A prophecy came true. M. Atk. +12%. 5 Foresights allow Fulfilment.\0	a,none\0	a,none\0
+27537	5	a,Foresight\0	a,A prophecy came true. M. Atk. +15%. 5 Foresights allow Fulfilment.\0	a,none\0	a,none\0
+27538	1	a,Fulfilment\0	a,Spends 5 Foresights: every prophecy you cast comes true at once, 50% stronger.\0	a,none\0	a,none\0
+27539	1	a,Glimpse\0	a,Sees the next blow coming: Evasion +4. A single hit taking 30% of your HP makes you step back 300, once a minute. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27540	1	a,Unwritten\0	a,Puts a Prophecy of Doom on every enemy and a Prophecy of Salvation on every party member within 600. Reuse time is 5 minutes.\0	a,none\0	a,none\0
+27545	1	a,Totem of Blood\0	a,Plants a Totem of Blood: party members near it recover 4% of the damage they deal as HP. A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27545	2	a,Totem of Blood\0	a,Plants a Totem of Blood: party members near it recover 5% of the damage they deal as HP. A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27545	3	a,Totem of Blood\0	a,Plants a Totem of Blood: party members near it recover 6% of the damage they deal as HP. A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27545	4	a,Totem of Blood\0	a,Plants a Totem of Blood: party members near it recover 8% of the damage they deal as HP. A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27546	1	a,Totem of Blood\0	a,Recovers 4% of the damage dealt as HP while near the Totem of Blood.\0	a,none\0	a,none\0
+27546	2	a,Totem of Blood\0	a,Recovers 5% of the damage dealt as HP while near the Totem of Blood.\0	a,none\0	a,none\0
+27546	3	a,Totem of Blood\0	a,Recovers 6% of the damage dealt as HP while near the Totem of Blood.\0	a,none\0	a,none\0
+27546	4	a,Totem of Blood\0	a,Recovers 8% of the damage dealt as HP while near the Totem of Blood.\0	a,none\0	a,none\0
+27547	1	a,Totem of the Horde\0	a,Plants a Totem of the Horde: monsters near it that fight your party turn on the totem. A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27547	2	a,Totem of the Horde\0	a,Plants a Totem of the Horde: monsters near it that fight your party turn on the totem. A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27547	3	a,Totem of the Horde\0	a,Plants a Totem of the Horde: monsters near it that fight your party turn on the totem. A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27548	1	a,Totem of Frost-Teeth\0	a,Plants a Totem of Frost-Teeth: enemies near it get Speed -15% and Atk. Spd. -7%. A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27548	2	a,Totem of Frost-Teeth\0	a,Plants a Totem of Frost-Teeth: enemies near it get Speed -18% and Atk. Spd. -9%. A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27548	3	a,Totem of Frost-Teeth\0	a,Plants a Totem of Frost-Teeth: enemies near it get Speed -20% and Atk. Spd. -10%. A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27548	4	a,Totem of Frost-Teeth\0	a,Plants a Totem of Frost-Teeth: enemies near it get Speed -22% and Atk. Spd. -12%. A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27549	1	a,Totem of Frost-Teeth\0	a,Speed -15%, Atk. Spd. -7% while near the Totem of Frost-Teeth.\0	a,none\0	a,none\0
+27549	2	a,Totem of Frost-Teeth\0	a,Speed -18%, Atk. Spd. -9% while near the Totem of Frost-Teeth.\0	a,none\0	a,none\0
+27549	3	a,Totem of Frost-Teeth\0	a,Speed -20%, Atk. Spd. -10% while near the Totem of Frost-Teeth.\0	a,none\0	a,none\0
+27549	4	a,Totem of Frost-Teeth\0	a,Speed -22%, Atk. Spd. -12% while near the Totem of Frost-Teeth.\0	a,none\0	a,none\0
+27550	1	a,Totem of Ancestors\0	a,Plants a Totem of Ancestors: the first party member who lies dead near it gets up with 30% HP, and the totem is spent. A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27551	1	a,War Drums\0	a,Stance: P. Atk. +5%. Each hit takes 1 second off the reuse of your totem skills. Continuously consumes MP proportionately to the user's level.\0	a,none\0	a,none\0
+27552	1	a,Drumbeat\0	a,Takes 1 second off the reuse of your totem skills.\0	a,none\0	a,none\0
+27553	1	a,Shatter\0	a,Needs 3 totems up. Each of your totems pulses once more and explodes, striking up to 10 enemies within 300 with 60 Power.\0	a,none\0	a,none\0
+27553	2	a,Shatter\0	a,Needs 3 totems up. Each of your totems pulses once more and explodes, striking up to 10 enemies within 300 with 75 Power.\0	a,none\0	a,none\0
+27553	3	a,Shatter\0	a,Needs 3 totems up. Each of your totems pulses once more and explodes, striking up to 10 enemies within 300 with 90 Power.\0	a,none\0	a,none\0
+27553	4	a,Shatter\0	a,Needs 3 totems up. Each of your totems pulses once more and explodes, striking up to 10 enemies within 300 with 110 Power.\0	a,none\0	a,none\0
+27554	1	a,Spirit Walk\0	a,Needs a totem up. You swap places with your targeted totem, or the nearest one.\0	a,none\0	a,none\0
+27555	1	a,Ancestral Bond\0	a,Max HP +200. Near your own totem: P. Def. and M. Def. +8%.\0	a,none\0	a,none\0
+27556	1	a,Ancestral Bond\0	a,P. Def. and M. Def. +8% while near your own totem.\0	a,none\0	a,none\0
+27557	1	a,Totem Circle\0	a,Totems up: 1. Shatter needs 3.\0	a,none\0	a,none\0
+27557	2	a,Totem Circle\0	a,Totems up: 2. Shatter needs 3.\0	a,none\0	a,none\0
+27557	3	a,Totem Circle\0	a,Totems up: 3. Shatter needs 3.\0	a,none\0	a,none\0
+27557	4	a,Totem Circle\0	a,Totems up: 4. Shatter needs 3.\0	a,none\0	a,none\0
+27557	5	a,Totem Circle\0	a,Totems up: 5. Shatter needs 3.\0	a,none\0	a,none\0
+27558	1	a,Great Totem of the Horde-Father\0	a,Plants the Great Totem of the Horde-Father for 20 seconds: Totem of Blood, Totem of the Horde and Totem of Frost-Teeth at once, within 900. It can't be targeted. Reuse time is 5 minutes.\0	a,none\0	a,none\0

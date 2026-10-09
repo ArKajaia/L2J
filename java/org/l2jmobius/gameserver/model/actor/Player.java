@@ -65,6 +65,7 @@ import org.l2jmobius.gameserver.config.PvpConfig;
 import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
 import org.l2jmobius.gameserver.config.custom.CustomBuffConfig;
+import org.l2jmobius.gameserver.config.custom.OraclesWarchiefsConfig;
 import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
 import org.l2jmobius.gameserver.config.custom.FactionSystemConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
@@ -8402,6 +8403,32 @@ public class Player extends Playable
 					if (skill == null)
 					{
 						LOGGER.warning("Skipped null skill Id: " + id + " Level: " + level + " while restoring player skills for playerObjId: " + getObjectId());
+						continue;
+					}
+					
+					// A buff the Prophet and Warcryer lines no longer learn (they became Oracles and Totem Warchiefs) goes quietly, unless a buff book could have taught it:
+					// back to the highest level the 1st class still teaches (Might 2 from the Cleric), or gone.
+					if (OraclesWarchiefsConfig.RETIRED_SKILLS_REMOVE && OraclesWarchiefsConfig.RETIRED_SKILLS.contains(id) && !CustomBuffConfig.SKILLS.contains(id) && !SkillTreeData.getInstance().isSkillAllowed(this, skill))
+					{
+						Skill allowed = null;
+						for (int lowerLevel = Math.min(level, SkillData.getInstance().getMaxLevel(id)) - 1; (lowerLevel > 0) && (allowed == null); lowerLevel--)
+						{
+							final Skill lower = SkillData.getInstance().getSkill(id, lowerLevel);
+							if ((lower != null) && SkillTreeData.getInstance().isSkillAllowed(this, lower))
+							{
+								allowed = lower;
+							}
+						}
+						
+						if (allowed != null)
+						{
+							addSkill(allowed, true);
+						}
+						else
+						{
+							addSkill(skill);
+							removeSkill(skill); // From the database and the shortcuts too.
+						}
 						continue;
 					}
 					

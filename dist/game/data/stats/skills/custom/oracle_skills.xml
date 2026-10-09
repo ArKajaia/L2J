@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Oracles: the Prophet line (Prophet, Hierophant). Buff templates, buff shops, the scheme
+	buffer and the buff books teach every buff, so the Prophet line no longer buffs: it fights
+	in the future tense. See README "Oracles and Totem Warchiefs" and
+	config/Custom/OraclesWarchiefs.ini. The retail buffs are out of their class trees.
+
+	27530-27540  Oracle skills, learned from the Grand Masters like any class skill.
+
+	PROPHECIES (the Prophecy effect, model/actor/holders/player/Prophecies.java): a prophecy does
+	nothing when it lands. When its time runs out it comes true; if it is cancelled or its
+	target dies first, it fizzles. A prophecy that comes true gives the Oracle a Foresight
+	(27537, up to 5). The prophecies on enemies are debuffs that roll to land like any debuff.
+	  27530 Prophecy of Doom       enemy, 5 s: 27531 Doom Strike (holy magic damage), x1.5 if
+	                               the target is still within 300 of where it stood.
+	  27532 Prophecy of Salvation  ally, 6 s: heals back the damage taken while it was on.
+	  27533 Prophecy of Ruin       enemy, 5 s: 27534 stun if the target cast a skill meanwhile,
+	                               else 27535 silence.
+	  27536 Prophecy of Reversal   ally, 6 s: HP, MP, CP and place are written down when it
+	                               lands; the ally comes back to them (never lower than it is).
+	  27538 Fulfilment             Hierophant, needs 5 Foresight: every prophecy of the Oracle
+	                               comes true now, x1.5 (no Foresight from these).
+	  27539 Glimpse                Hierophant toggle: Evasion +4, a hit taking 30% of the
+	                               Oracle's HP makes it step back 300 (once a minute).
+	  27540 Unwritten              Hierophant finale: Doom on every enemy and Salvation on every
+	                               party member within 600 (5 minute reuse).
+
+	Keep custom skill ids below 32768. The client needs Skillname-e.dat / Skillgrp.dat rows for
+	every id here (client/OraclesWarchiefs). The icons are those of the retired buffs.
+-->
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/skills.xsd">
+
+	<!-- 27530 PROPHECY OF DOOM: comes true as Doom Strike after 5 seconds. -->
+	<skill id="27530" levels="5" name="Prophecy of Doom">
+		<table name="#magicLevel">40 48 58 68 78</table>
+		<table name="#mpConsume">30 38 46 55 64</table>
+		<table name="#effectPoints">-250 -330 -420 -520 -620</table>
+		<icon>icon.skill1356</icon>
+		<operateType>A2</operateType>
+		<targetType>ONE</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>5</abnormalTime>
+		<abnormalType>PROPHECY_DOOM</abnormalType>
+		<abnormalVisualEffect>TIME_BOMB</abnormalVisualEffect>
+		<activateRate>90</activateRate>
+		<basicProperty>MEN</basicProperty>
+		<lvlBonusRate>1</lvlBonusRate>
+		<castRange>900</castRange>
+		<effectRange>1400</effectRange>
+		<effectPoint>#effectPoints</effectPoint>
+		<hitTime>1500</hitTime>
+		<isDebuff>true</isDebuff>
+		<isMagic>1</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpConsume>#mpConsume</mpConsume>
+		<reuseDelay>4000</reuseDelay>
+		<effects>
+			<effect name="Prophecy">
+				<kind>DOOM</kind>
+				<skillId>27531</skillId>
+			</effect>
+		</effects>
+	</skill>
+	<!-- 27531 DOOM STRIKE: the damage of a Prophecy of Doom (cast by the prophecy, not learned). -->
+	<skill id="27531" levels="5" name="Doom Strike">
+		<table name="#magicLevel">40 48 58 68 78</table>
+		<table name="#power">70 85 100 115 140</table>
+		<icon>icon.skill1356</icon>
+		<operateType>A1</operateType>
+		<targetType>ONE</targetType>
+		<isMagic>1</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<power>#power</power>
+		<element>4</element> <!-- Holy -->
+		<elementPower>20</elementPower>
+	</skill>
+
+	<!-- 27532 PROPHECY OF SALVATION: heals back the damage taken in the next 6 seconds. -->
+	<skill id="27532" levels="4" name="Prophecy of Salvation">
+		<table name="#magicLevel">44 56 68 78</table>
+		<table name="#mpConsume">35 48 60 72</table>
+		<table name="#effectPoints">250 350 450 550</table>
+		<icon>icon.skill1405</icon>
+		<operateType>A2</operateType>
+		<targetType>ONE</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>6</abnormalTime>
+		<abnormalType>PROPHECY_SALVATION</abnormalType>
+		<abnormalVisualEffect>VP_UP</abnormalVisualEffect>
+		<castRange>900</castRange>
+		<effectRange>1400</effectRange>
+		<effectPoint>#effectPoints</effectPoint>
+		<hitTime>1000</hitTime>
+		<isMagic>1</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpConsume>#mpConsume</mpConsume>
+		<reuseDelay>6000</reuseDelay>
+		<effects>
+			<effect name="Prophecy">
+				<kind>SALVATION</kind>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 27533 PROPHECY OF RUIN: after 5 seconds, stun if the target cast a skill meanwhile, else
+	     silence. -->
+	<skill id="27533" levels="3" name="Prophecy of Ruin">
+		<table name="#magicLevel">46 62 78</table>
+		<table name="#mpConsume">40 55 70</table>
+		<table name="#effectPoints">-300 -450 -600</table>
+		<icon>icon.skill1358</icon>
+		<operateType>A2</operateType>
+		<targetType>ONE</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>5</abnormalTime>
+		<abnormalType>PROPHECY_RUIN</abnormalType>
+		<abnormalVisualEffect>DEATH_MARK</abnormalVisualEffect>
+		<activateRate>70</activateRate>
+		<basicProperty>MEN</basicProperty>
+		<lvlBonusRate>1</lvlBonusRate>
+		<castRange>900</castRange>
+		<effectRange>1400</effectRange>
+		<effectPoint>#effectPoints</effectPoint>
+		<hitTime>1500</hitTime>
+		<isDebuff>true</isDebuff>
+		<isMagic>1</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpConsume>#mpConsume</mpConsume>
+		<reuseDelay>15000</reuseDelay>
+		<effects>
+			<effect name="Prophecy">
+				<kind>RUIN</kind>
+				<skillId>27534</skillId>
+				<altSkillId>27535</altSkillId>
+			</effect>
+		</effects>
+	</skill>
+	<skill id="27534" levels="3" name="Ruin: Shatter Will">
+		<table name="#abnormalTime">3 3 4</table>
+		<table name="#magicLevel">46 62 78</table>
+		<icon>icon.skill1358</icon>
+		<operateType>A2</operateType>
+		<targetType>ONE</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>#abnormalTime</abnormalTime>
+		<abnormalType>STUN</abnormalType>
+		<abnormalVisualEffect>STUN</abnormalVisualEffect>
+		<isDebuff>true</isDebuff>
+		<isMagic>1</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<trait>SHOCK</trait>
+		<effects>
+			<effect name="Stun" />
+		</effects>
+	</skill>
+	<skill id="27535" levels="3" name="Ruin: Sealed Lips">
+		<table name="#abnormalTime">3 4 5</table>
+		<table name="#magicLevel">46 62 78</table>
+		<icon>icon.skill1064</icon>
+		<operateType>A2</operateType>
+		<targetType>ONE</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>#abnormalTime</abnormalTime>
+		<abnormalType>SILENCE</abnormalType>
+		<isDebuff>true</isDebuff>
+		<isMagic>1</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<trait>DERANGEMENT</trait>
+		<effects>
+			<effect name="Mute" />
+		</effects>
+	</skill>
+
+	<!-- 27536 PROPHECY OF REVERSAL: a save point. After 6 seconds the ally comes back to the HP,
+	     MP, CP and place it had when the prophecy landed (never lower than it is). -->
+	<skill id="27536" levels="2" name="Prophecy of Reversal">
+		<table name="#magicLevel">58 78</table>
+		<table name="#mpConsume">60 80</table>
+		<table name="#reuseDelay">90000 60000</table>
+		<icon>icon.skill1359</icon>
+		<operateType>A2</operateType>
+		<targetType>ONE</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>6</abnormalTime>
+		<abnormalType>PROPHECY_REVERSAL</abnormalType>
+		<abnormalVisualEffect>MAGIC_SQUARE</abnormalVisualEffect>
+		<castRange>900</castRange>
+		<effectRange>1400</effectRange>
+		<effectPoint>500</effectPoint>
+		<hitTime>1000</hitTime>
+		<isMagic>1</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpConsume>#mpConsume</mpConsume>
+		<reuseDelay>#reuseDelay</reuseDelay>
+		<effects>
+			<effect name="Prophecy">
+				<kind>REVERSAL</kind>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 27537 FORESIGHT: one level per prophecy that came true (30 seconds), M. Atk. +3% each. -->
+	<skill id="27537" levels="5" name="Foresight">
+		<table name="#lvl">1 2 3 4 5</table>
+		<table name="#mAtk">1.03 1.06 1.09 1.12 1.15</table>
+		<icon>icon.skill1352</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>#lvl</abnormalLevel>
+		<abnormalTime>30</abnormalTime>
+		<abnormalType>FORESIGHT</abnormalType>
+		<isMagic>4</isMagic>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<magicLevel>40</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="mAtk">#mAtk</mul>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 27538 FULFILMENT: spends 5 Foresight, every prophecy of the Oracle comes true now x1.5. -->
+	<skill id="27538" levels="1" name="Fulfilment">
+		<icon>icon.skill1542</icon>
+		<operateType>A1</operateType>
+		<targetType>SELF</targetType>
+		<hitTime>500</hitTime>
+		<isMagic>1</isMagic>
+		<magicLevel>77</magicLevel>
+		<mpConsume>50</mpConsume>
+		<reuseDelay>20000</reuseDelay>
+		<conditions msgId="113" addName="1">
+			<player active_effect_id_lvl="27537,5" />
+		</conditions>
+		<effects>
+			<effect name="Fulfilment" />
+		</effects>
+	</skill>
+
+	<!-- 27539 GLIMPSE (toggle): Evasion +4, a single hit taking 30% of the Oracle's HP makes it
+	     step back, once a minute. -->
+	<skill id="27539" levels="1" name="Glimpse">
+		<icon>icon.skill1501</icon>
+		<operateType>T</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalType>GLIMPSE</abnormalType>
+		<isMagic>0</isMagic>
+		<magicLevel>76</magicLevel>
+		<mpInitialConsume>30</mpInitialConsume>
+		<effects>
+			<effect name="MpConsumePerLevel" ticks="5">
+				<power>0.2</power>
+				<add stat="rEvas">4</add>
+			</effect>
+			<effect name="Glimpse" />
+		</effects>
+	</skill>
+
+	<!-- 27540 UNWRITTEN (Hierophant finale): Doom on every enemy, Salvation on every party
+	     member within 600. -->
+	<skill id="27540" levels="1" name="Unwritten">
+		<icon>icon.skill1499</icon>
+		<operateType>A1</operateType>
+		<targetType>SELF</targetType>
+		<effectPoint>-600</effectPoint>
+		<hitTime>2000</hitTime>
+		<coolTime>300</coolTime>
+		<isMagic>1</isMagic>
+		<magicLevel>79</magicLevel>
+		<mpConsume>150</mpConsume>
+		<reuseDelay>300000</reuseDelay>
+		<effects>
+			<effect name="Unwritten">
+				<enemySkillId>27530</enemySkillId>
+				<partySkillId>27532</partySkillId>
+				<range>600</range>
+			</effect>
+		</effects>
+	</skill>
+</list>
