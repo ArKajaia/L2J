@@ -38,7 +38,7 @@ import org.l2jmobius.gameserver.model.skill.Skill;
  * The trades only a dwarf masters. The passive tree lets any character take Spoil, Sweeper Festival, Crystallize and Dwarven Craft, so the dwarven classes get what the tree doesn't give:
  * <ul>
  * <li>Spoilers (Scavenger, Bounty Hunter, Fortune Seeker): their Spoil always lands, and what they sweep has a better chance and bigger amounts, more with each class transfer.</li>
- * <li>Crafters (Artisan, Warsmith, Maestro): a better success rate, more masterworks and a chance to make twice as many stackable items, for themselves and in their workshops. The tree's Create Item stops at level 5 by default.</li>
+ * <li>Crafters (Artisan, Warsmith, Maestro): a better success rate, more masterworks and a chance to make twice as many stackable items, for themselves and in their workshops. Everyone else crafts only through the tree's Dwarven Craft, whose Create Item stops at level 5 by default.</li>
  * <li>Every dwarven class gets more crystals from Crystallize, crafters more still.</li>
  * </ul>
  * And they fight like dwarves, with blunts, stuns and golems:

@@ -104,6 +104,11 @@ public class PassiveTreeManager
 	 */
 	private final Map<Integer, Map<Integer, Integer>> _treeGranted = new ConcurrentHashMap<>();
 	
+	/**
+	 * objectId -> the character's own Create Item level that the tree's higher one replaced (a Bounty Hunter's level 1, an Artisan's level 4 at 43). Given back when the tree's copy goes, so the class skill never disappears.
+	 */
+	private final Map<Integer, Integer> _replacedCreateItem = new ConcurrentHashMap<>();
+	
 	/** Player-variable prefix used to remember each class index's level. */
 	private static final String VAR_CLASS_LEVEL = "PT_CLASS_LEVEL_";
 	
@@ -649,6 +654,19 @@ public class PassiveTreeManager
 				{
 					player.sendMessage("Passive tree: you lost " + known.getName() + ".");
 				}
+				
+				// Give back the character's own Create Item the tree's copy stood in for.
+				final Integer ownLevel = _replacedCreateItem.get(player.getObjectId());
+				if ((known.getId() == CommonSkill.CREATE_DWARVEN.getId()) && (ownLevel != null) && !wanted.containsKey(known.getId()))
+				{
+					_replacedCreateItem.remove(player.getObjectId());
+					player.addSkill(SkillData.getInstance().getSkill(known.getId(), ownLevel), false);
+				}
+			}
+			else if (entry.getKey() == CommonSkill.CREATE_DWARVEN.getId())
+			{
+				// The character learned a higher Create Item of their own since: the tree's copy is gone already.
+				_replacedCreateItem.remove(player.getObjectId());
 			}
 		}
 		granted.keySet().retainAll(wanted.keySet());
@@ -658,10 +676,18 @@ public class PassiveTreeManager
 		for (Map.Entry<Integer, Integer> entry : wanted.entrySet())
 		{
 			// Already ours at this level, or owned by the class. Keep what's there
-			// and don't record a class-owned skill as ours.
-			if (player.getKnownSkill(entry.getKey()) != null)
+			// and don't record a class-owned skill as ours. The one exception is
+			// Create Item: the tree is where crafting comes from, so it raises a
+			// lower level of the class's own (a Bounty Hunter's level 1) and
+			// remembers that level to give it back.
+			final Skill own = player.getKnownSkill(entry.getKey());
+			if (own != null)
 			{
-				continue;
+				if ((entry.getKey() != CommonSkill.CREATE_DWARVEN.getId()) || (own.getLevel() >= entry.getValue()) || granted.containsKey(entry.getKey()))
+				{
+					continue;
+				}
+				_replacedCreateItem.put(player.getObjectId(), own.getLevel());
 			}
 			
 			final Skill skill = SkillData.getInstance().getSkill(entry.getKey(), entry.getValue());
@@ -922,6 +948,7 @@ public class PassiveTreeManager
 	public void onClassContextChanged(Player player)
 	{
 		_treeGranted.remove(player.getObjectId());
+		_replacedCreateItem.remove(player.getObjectId());
 		applyAll(player, false);
 		
 		// The login and subclass paths send SkillCoolTime before the tree skills
@@ -955,11 +982,35 @@ public class PassiveTreeManager
 			}
 		}
 		
-		final Integer createItem = granted.get(CommonSkill.CREATE_DWARVEN.getId());
-		if ((createItem != null) && (createItem != getTreeCreateItemLevel(player)))
+		// The tree's Create Item follows the character level too: move ours, or
+		// raise the character's own lower level once the tree's passes it.
+		if (allocatesSkill(player, CommonSkill.DWARVEN_CRAFT.getId()))
 		{
-			applyAll(player);
+			final Integer createItem = granted.get(CommonSkill.CREATE_DWARVEN.getId());
+			final int treeLevel = getTreeCreateItemLevel(player);
+			if ((createItem != null) ? (createItem != treeLevel) : (player.getSkillLevel(CommonSkill.CREATE_DWARVEN.getId()) < treeLevel))
+			{
+				applyAll(player);
+			}
 		}
+	}
+	
+	/**
+	 * @param player the player
+	 * @param skillId a skill id
+	 * @return {@code true} if one of the player's allocated nodes grants that skill
+	 */
+	private boolean allocatesSkill(Player player, int skillId)
+	{
+		for (int nodeId : getAllocatedNodes(player))
+		{
+			final PassiveNode node = PassiveTreeData.getInstance().getNode(nodeId);
+			if ((node != null) && node.grantsSkill() && (node.getSkillId() == skillId))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	/**

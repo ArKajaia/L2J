@@ -70,6 +70,11 @@ public class RecipeManager
 	public void requestBookOpen(Player player, boolean isDwarvenCraft)
 	{
 		// Check if player is trying to alter recipe book while engaged in manufacturing.
+		if (isDwarvenCraft && !player.hasDwarvenCraft())
+		{
+			return;
+		}
+		
 		if (!_activeMakers.containsKey(player.getObjectId()))
 		{
 			final RecipeBookItemList response = new RecipeBookItemList(isDwarvenCraft, player.getMaxMp());
@@ -194,7 +199,7 @@ public class RecipeManager
 			_recipeList = pRecipeList;
 			_isValid = false;
 			_skillId = _recipeList.isDwarvenRecipe() ? CommonSkill.CREATE_DWARVEN.getId() : CommonSkill.CREATE_COMMON.getId();
-			_skillLevel = _player.getSkillLevel(_skillId);
+			_skillLevel = _recipeList.isDwarvenRecipe() ? _player.getDwarvenCraft() : _player.getSkillLevel(_skillId);
 			_skill = _player.getKnownSkill(_skillId);
 			_player.setCrafting(true);
 			
