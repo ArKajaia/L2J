@@ -17,6 +17,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 public class PassiveStatBonusCache
 {
 	private final Map<String, Double> _totals = new HashMap<>();
+	private volatile double _scale = 1.0;
 	
 	public void recompute(Player player)
 	{
@@ -88,15 +89,28 @@ public class PassiveStatBonusCache
 		return _totals.keySet();
 	}
 	
+	/**
+	 * @param scale share of the positive totals {@link #get} returns, e.g. lowered while in a combat transformation; survives {@link #recompute}
+	 */
+	public void setScale(double scale)
+	{
+		_scale = scale;
+	}
+
 	public double get(String key)
 	{
-		final double raw = _totals.getOrDefault(key, 0.0);
+		double raw = _totals.getOrDefault(key, 0.0);
+		if (raw > 0)
+		{
+			raw *= _scale;
+		}
+
 		final Double cap = getCap(key);
 		if (cap == null)
 		{
 			return raw;
 		}
-		// only cap the positive side - keystone drawbacks must stay fully applied
+		// only scale and cap the positive side - keystone drawbacks must stay fully applied
 		return raw > 0 ? Math.min(raw, cap) : raw;
 	}
 }

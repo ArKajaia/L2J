@@ -44,6 +44,9 @@ public class PassiveTreeConfig
 	/** Most the tree may add to each base stat (STR, DEX, CON, INT, WIT, MEN). Negative = no cap. */
 	public static int BASE_STAT_CAP = 5;
 
+	/** Share of the tree's positive bonuses kept while in a combat transformation, 0..1. */
+	public static double TRANSFORM_RATE = 0.5;
+
 	/** Prefix of the per-effect cap keys in the ini, e.g. {@code PassiveTreeCap.CRIT_DMG_PCT = 60}. */
 	private static final String STAT_CAP_PREFIX = "PassiveTreeCap.";
 	
@@ -153,6 +156,7 @@ public class PassiveTreeConfig
 		TEMPLATE_PEACE_ZONE_ONLY = config.getBoolean("PassiveTreeTemplatePeaceZoneOnly", true);
 		TEMPLATE_SWITCH_DELAY = Math.max(0, config.getInt("PassiveTreeTemplateSwitchDelay", 60));
 		BASE_STAT_CAP = config.getInt("PassiveTreeBaseStatCap", 5);
+		TRANSFORM_RATE = Math.max(0, Math.min(1, config.getDouble("PassiveTreeTransformRate", 0.5)));
 		RESET_ITEM_ID = config.getInt("PassiveTreeResetItemId", 57);
 		RESET_ITEM_COUNT = Math.max(0, config.getLong("PassiveTreeResetItemCount", 100000));
 		RESPEC_ADENA_PER_POINT = Math.max(0, config.getLong("PassiveTreeRefundAdenaPerPoint", 1000));
