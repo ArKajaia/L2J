@@ -4933,6 +4933,7 @@ public class Player extends Playable
 		_transformation = transformation;
 		getEffectList().stopAllToggles();
 		transformation.onTransform(this);
+		PassiveTreeManager.getInstance().onTransformChanged(this);
 		sendSkillList();
 		sendPacket(new SkillCoolTime(this));
 		broadcastUserInfo();
@@ -4955,6 +4956,7 @@ public class Player extends Playable
 		setQueuedSkill(null, false, false);
 		_transformation.onUntransform(this);
 		_transformation = null;
+		PassiveTreeManager.getInstance().onTransformChanged(this);
 		getEffectList().stopSkillEffects(SkillFinishType.NORMAL, AbnormalType.TRANSFORM);
 		sendSkillList();
 		sendPacket(new SkillCoolTime(this));

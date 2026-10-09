@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.Summon;
 import org.l2jmobius.gameserver.model.actor.holders.creature.TimeStamp;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
+import org.l2jmobius.gameserver.model.actor.transform.Transform;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
@@ -731,6 +732,24 @@ public class PassiveTreeManager
 		}
 	}
 	
+	/**
+	 * Scales the tree's bonuses down while the player is in a combat transformation (scrolls and sealbooks), by {@link PassiveTreeConfig#TRANSFORM_RATE}, and back up once it ends. Class passives are left alone, as in retail.
+	 * @param player the player who just transformed or untransformed
+	 */
+	public void onTransformChanged(Player player)
+	{
+		final Transform transform = player.getTransformation();
+		player.getPassiveStatBonus().setScale(((transform != null) && transform.isCombat()) ? PassiveTreeConfig.TRANSFORM_RATE : 1.0);
+		syncPassiveTreeStatFuncs(player);
+
+		// The summon's SUMMON_* bonuses are read from its owner's totals (Summon getters): show the new values.
+		final Summon summon = player.getSummon();
+		if (summon != null)
+		{
+			summon.updateAndBroadcastStatus(1);
+		}
+	}
+
 	/**
 	 * Strips every Func this system previously added (across ALL FUNC_BACKED_EFFECTS stats at once, via the shared owner tag), then reapplies exactly the current totals. Same rebuild-whole principle as applyAll() itself - never add/remove one of these incrementally.
 	 * @param player
