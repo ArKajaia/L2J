@@ -3710,7 +3710,8 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		final int leaderId = PvpSpotManager.getInstance().getLeaderId(zone.getId());
 		final int grudgeId = profile.getGrudge(now);
-		final double current = isSpotEnemy(npc, target, zone, false) ? spotScore(npc, profile, target, leaderId, grudgeId, now) : Double.MAX_VALUE;
+		// One it chases a little way out of the spot (PvpSpotChaseOutside) is still its opponent, not someone to drop for anyone left inside.
+		final double current = isSpotEnemy(npc, target, zone, false, PvpSpotsConfig.CHASE_OUTSIDE) ? spotScore(npc, profile, target, leaderId, grudgeId, now) : Double.MAX_VALUE;
 		if (spotScore(npc, profile, better, leaderId, grudgeId, now) > (current - SPOT_SWITCH_MARGIN))
 		{
 			return target;
@@ -3870,6 +3871,19 @@ public class FakePlayerPvpAI extends AttackableAI
 	 */
 	private static boolean isSpotEnemy(Attackable npc, Creature creature, PvpSpotZone zone, boolean inSight)
 	{
+		return isSpotEnemy(npc, creature, zone, inSight, 0);
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param creature a creature it sees
+	 * @param zone its spot
+	 * @param inSight {@code true} to also want it in sight
+	 * @param outside how far out of the spot {@code creature} may be
+	 * @return {@code true} if {@code creature} is someone to fight in the spot, or at most {@code outside} out of it (see {@link #isSpotEnemy(Attackable, Creature, PvpSpotZone, boolean)})
+	 */
+	private static boolean isSpotEnemy(Attackable npc, Creature creature, PvpSpotZone zone, boolean inSight, int outside)
+	{
 		if ((creature == null) || (creature == npc) || creature.isAlikeDead() || !creature.isSpawned() || creature.isInvisible() || (creature.getInstanceId() != npc.getInstanceId()) || creature.isInsideZone(ZoneId.PEACE))
 		{
 			return false;
@@ -3888,7 +3902,7 @@ public class FakePlayerPvpAI extends AttackableAI
 			return false;
 		}
 		
-		if (!zone.isInsideZone(creature) || FakeClanManager.getInstance().isFriend(npc, creature) || FakePartyManager.getInstance().isSameGroup(npc, creature))
+		if ((!zone.isInsideZone(creature) && ((outside <= 0) || (zone.getDistanceToZone(creature) > outside))) || FakeClanManager.getInstance().isFriend(npc, creature) || FakePartyManager.getInstance().isSameGroup(npc, creature))
 		{
 			return false;
 		}
