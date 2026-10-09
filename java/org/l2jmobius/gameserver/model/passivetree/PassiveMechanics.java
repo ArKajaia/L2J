@@ -82,7 +82,7 @@ public final class PassiveMechanics
 	public static final String OVERHEAL_CP = "KS_OVERHEAL_CP";
 	/** Normal attacks with any melee weapon also hit up to CLEAVE_TARGETS more enemies in front of you, for this % of the damage; a polearm hits CLEAVE_TARGETS more than it would. */
 	public static final String WHIRLING_STEEL = "KS_WHIRLING_STEEL";
-	/** Flag: a shield block or a dodge makes your next normal attack or physical skill within RIPOSTE_WINDOW a critical hit (a blow skill lands); your critical rate is halved otherwise. */
+	/** Flag: a shield block makes your next normal attack or physical skill within RIPOSTE_WINDOW a critical hit (a blow skill lands); your critical rate is halved otherwise. */
 	public static final String RIPOSTE = "KS_RIPOSTE";
 	/** % of the damage party members within GUARDIAN_RANGE take that you take instead. */
 	public static final String GUARDIAN = "KS_GUARDIAN";
@@ -113,7 +113,7 @@ public final class PassiveMechanics
 	public static final int CLEAVE_RANGE = 80;
 	public static final int CLEAVE_ANGLE = 120;
 	
-	/** Riposte: how long a block or a dodge keeps the riposte ready, and the critical rate multiplier the rest of the time. */
+	/** Riposte: how long a shield block keeps the riposte ready, and the critical rate multiplier the rest of the time. */
 	private static final long RIPOSTE_WINDOW = 5000;
 	private static final double RIPOSTE_CRIT_RATE = 0.5;
 	/** objectId -> time the readied riposte runs out. */
@@ -706,10 +706,10 @@ public final class PassiveMechanics
 	}
 	
 	/**
-	 * Riposte: a shield block or a dodge readies a critical counter-attack.
-	 * @param target the creature that blocked or dodged
+	 * Riposte: a shield block readies a critical counter-attack. A dodge doesn't.
+	 * @param target the creature that blocked
 	 */
-	public static void onAttackAvoided(Creature target)
+	public static void onShieldBlock(Creature target)
 	{
 		if (has(target, RIPOSTE))
 		{

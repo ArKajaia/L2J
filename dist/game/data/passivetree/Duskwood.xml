@@ -183,7 +183,7 @@
 		<requires nodeId="42070" />
 		<requires nodeId="42072" />
 	</node>
-	<node id="42072" name="Riposte" sector="Duskwood" type="KEYSTONE" tier="0" cost="1" x="-4344.9" y="3699.8" effect="KS_RIPOSTE:1" icon="ks-riposte" description="KEYSTONE: After you block with a shield or dodge an attack, your next normal attack or physical skill within 5 seconds is a critical hit (a blow skill always lands). Your critical rate is halved otherwise.">
+	<node id="42072" name="Riposte" sector="Duskwood" type="KEYSTONE" tier="0" cost="1" x="-4344.9" y="3699.8" effect="KS_RIPOSTE:1" icon="ks-riposte" description="KEYSTONE: After you block an attack with a shield, your next normal attack or physical skill within 5 seconds is a critical hit (a blow skill always lands). Your critical rate is halved otherwise.">
 		<requires nodeId="42071" />
 	</node>
 	<node id="42080" name="Bleeding Edge" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-5211.3" y="965.8" effect="CRIT_RATE_ADD:10" icon="blood">
