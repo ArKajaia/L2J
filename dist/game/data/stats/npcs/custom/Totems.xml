@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Totems of the Totem Warchiefs (the Warcryer line, data/stats/skills/custom/warchief_skills.xml).
+	They are planted by the PlantTotem effect, never spawned on their own: what they do is in
+	model/actor/holders/player/Totems.java. They use the models of the Totems of Body, Spirit,
+	Bravery and Fortitude, and the Great Totem the Iron Giant Totem's.
+-->
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/npcs.xsd">
+	<npc id="1002101" displayId="145" level="80" type="EffectPoint" name="Totem of Blood" usingServerSideName="true" title="Totem" usingServerSideTitle="true">
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="3500" hpRegen="0" mp="100" mpRegen="0" />
+			<attack physical="10" magical="10" attackSpeed="253" range="40" />
+			<defence physical="600" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status talkable="false" canMove="false" canBeSown="false" />
+		<collision>
+			<radius normal="9" />
+			<height normal="20" />
+		</collision>
+	</npc>
+	<npc id="1002102" displayId="146" level="80" type="EffectPoint" name="Totem of the Horde" usingServerSideName="true" title="Totem" usingServerSideTitle="true">
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="0" mp="100" mpRegen="0" />
+			<attack physical="10" magical="10" attackSpeed="253" range="40" />
+			<defence physical="900" magical="700" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status talkable="false" canMove="false" canBeSown="false" />
+		<collision>
+			<radius normal="9" />
+			<height normal="20" />
+		</collision>
+	</npc>
+	<npc id="1002103" displayId="144" level="80" type="EffectPoint" name="Totem of Frost-Teeth" usingServerSideName="true" title="Totem" usingServerSideTitle="true">
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="3500" hpRegen="0" mp="100" mpRegen="0" />
+			<attack physical="10" magical="10" attackSpeed="253" range="40" />
+			<defence physical="600" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status talkable="false" canMove="false" canBeSown="false" />
+		<collision>
+			<radius normal="9" />
+			<height normal="20" />
+		</collision>
+	</npc>
+	<npc id="1002104" displayId="143" level="80" type="EffectPoint" name="Totem of Ancestors" usingServerSideName="true" title="Totem" usingServerSideTitle="true">
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="3500" hpRegen="0" mp="100" mpRegen="0" />
+			<attack physical="10" magical="10" attackSpeed="253" range="40" />
+			<defence physical="600" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status talkable="false" canMove="false" canBeSown="false" />
+		<collision>
+			<radius normal="9" />
+			<height normal="20" />
+		</collision>
+	</npc>
+	<npc id="1002105" displayId="25260" level="80" type="EffectPoint" name="Great Totem of the Horde-Father" usingServerSideName="true" title="Totem" usingServerSideTitle="true">
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="10000" hpRegen="0" mp="100" mpRegen="0" />
+			<attack physical="10" magical="10" attackSpeed="253" range="40" />
+			<defence physical="900" magical="700" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status targetable="false" talkable="false" canMove="false" canBeSown="false" />
+		<collision>
+			<radius normal="30" />
+			<height normal="90" />
+		</collision>
+	</npc>
+</list>

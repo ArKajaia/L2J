@@ -6,13 +6,9 @@
 		<skill skillName="Wisdom" skillId="328" skillLevel="1" getLevel="76" levelUpSp="6250000" learnedByNpc="true" />
 		<skill skillName="Health" skillId="329" skillLevel="1" getLevel="76" levelUpSp="6250000" learnedByNpc="true" />
 		<skill skillName="Sigil Mastery" skillId="935" skillLevel="1" getLevel="76" levelUpSp="6250000" learnedByNpc="true" />
-		<skill skillName="Elemental Protection" skillId="1352" skillLevel="1" getLevel="76" levelUpSp="8340000" learnedByNpc="true" />
 		<skill skillName="Skill Mastery" skillId="331" skillLevel="1" getLevel="77" levelUpSp="11000000" learnedByNpc="true" />
-		<skill skillName="Block Shield" skillId="1358" skillLevel="1" getLevel="77" levelUpSp="11000000" learnedByNpc="true" />
-		<skill skillName="Block Wind Walk" skillId="1359" skillLevel="1" getLevel="77" levelUpSp="11000000" learnedByNpc="true" />
 		<skill skillName="Arcane Wisdom" skillId="336" skillLevel="1" getLevel="78" levelUpSp="21340000" learnedByNpc="true" />
 		<skill skillName="Divine Lore" skillId="436" skillLevel="1" getLevel="78" levelUpSp="21340000" learnedByNpc="true" />
-		<skill skillName="Prophecy of Fire" skillId="1356" skillLevel="1" getLevel="78" levelUpSp="21340000" learnedByNpc="true" />
 		<skill skillName="Mystic Immunity" skillId="1411" skillLevel="1" getLevel="79" levelUpSp="60000000" learnedByNpc="true" />
 		<skill skillName="Spell Turning" skillId="1412" skillLevel="1" getLevel="79" levelUpSp="60000000" learnedByNpc="true" />
 
@@ -23,9 +19,16 @@
 		<skill skillName="Protection of Rune" skillId="755" skillLevel="1" getLevel="82" learnedByFS="true" />
 		<skill skillName="Protection of Elemental" skillId="756" skillLevel="1" getLevel="82" learnedByFS="true" />
 		<skill skillName="Protection of Alignment" skillId="757" skillLevel="1" getLevel="82" learnedByFS="true" />
-		<skill skillName="Counter Critical" skillId="1542" skillLevel="1" getLevel="83" learnedByFS="true" />
 
 		<!-- HighFive new -->
 		<skill skillName="Piercing Attack" skillId="1564" skillLevel="1" getLevel="80" levelUpSp="90000000" learnedByNpc="true" />
+		<!-- Oracles (custom, data/stats/skills/custom/oracle_skills.xml): the retail buffs are retired, see config/Custom/OraclesWarchiefs.ini -->
+		<skill skillName="Glimpse" skillId="27539" skillLevel="1" getLevel="76" levelUpSp="2000000" learnedByNpc="true" />
+		<skill skillName="Fulfilment" skillId="27538" skillLevel="1" getLevel="77" levelUpSp="3000000" learnedByNpc="true" />
+		<skill skillName="Prophecy of Doom" skillId="27530" skillLevel="5" getLevel="78" levelUpSp="5000000" learnedByNpc="true" />
+		<skill skillName="Prophecy of Salvation" skillId="27532" skillLevel="4" getLevel="78" levelUpSp="5000000" learnedByNpc="true" />
+		<skill skillName="Prophecy of Ruin" skillId="27533" skillLevel="3" getLevel="78" levelUpSp="5000000" learnedByNpc="true" />
+		<skill skillName="Prophecy of Reversal" skillId="27536" skillLevel="2" getLevel="78" levelUpSp="5000000" learnedByNpc="true" />
+		<skill skillName="Unwritten" skillId="27540" skillLevel="1" getLevel="79" levelUpSp="8000000" learnedByNpc="true" />
 	</skillTree>
 </list>

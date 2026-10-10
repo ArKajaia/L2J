@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Totem Warchiefs: the Warcryer line (Warcryer, Doomcryer). Buff templates, buff shops, the
+	scheme buffer and the buff books teach every chant, so the Warcryer line no longer chants:
+	it plants totems and smashes them. See README "Oracles and Totem Warchiefs" and
+	config/Custom/OraclesWarchiefs.ini. The retail chants are out of their class trees.
+
+	27545-27558  Totem Warchief skills, learned from the Grand Masters like any class skill.
+
+	TOTEMS (the PlantTotem effect, model/actor/holders/player/Totems.java): a totem NPC planted
+	at the Warchief's feet. It pulses every 2 seconds to everyone within 600 and stands 30
+	seconds. Monsters and the Warchief's enemies can break it. One of each kind, 3 at most: a
+	4th replaces the oldest. It falls when its Warchief dies, leaves or goes 2500 away.
+	  27545 Totem of Blood        party in range: 27546 echo, part of the damage dealt comes
+	                              back as HP.
+	  27547 Totem of the Horde    monsters in range fighting the party turn on the totem.
+	  27548 Totem of Frost-Teeth  enemies in range: 27549 hex, Speed and Atk. Spd. down.
+	  27550 Totem of Ancestors    (Doomcryer) the first party member lying dead in range gets
+	                              up with 30% HP; the totem is spent.
+	  27558 Great Totem of the Horde-Father (Doomcryer finale): Blood, Horde and Frost-Teeth at
+	                              once, within 900, for 20 seconds, can't be targeted.
+	27551 War Drums (stance)      P. Atk. +5%; each hit (27552 Drumbeat) takes 1 second off the
+	                              reuse of every totem skill.
+	27553 Shatter                 needs 3 totems up (27557 Totem Circle shows how many): each
+	                              totem pulses once more and explodes on the enemies within 300.
+	27554 Spirit Walk             (Doomcryer) swaps places with a totem (the targeted one, or
+	                              the nearest), needs 1 totem up.
+	27555 Ancestral Bond          (Doomcryer, passive) near its own totem: 27556 echo, P. Def.
+	                              and M. Def. +8%.
+
+	Echoes are in the triggered-buff bar and have their own abnormal types, so they stack with
+	every buff. Keep custom skill ids below 32768. The client needs Skillname-e.dat /
+	Skillgrp.dat rows for every id here (client/OraclesWarchiefs). The icons are those of the
+	retired chants.
+-->
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/skills.xsd">
+
+	<!-- 27545 TOTEM OF BLOOD: the party around it gets 27546 (vampiric echo). -->
+	<skill id="27545" levels="4" name="Totem of Blood">
+		<table name="#magicLevel">40 52 64 76</table>
+		<table name="#mpConsume">35 48 60 72</table>
+		<icon>icon.skill1310</icon>
+		<operateType>A1</operateType>
+		<targetType>SELF</targetType>
+		<effectPoint>200</effectPoint>
+		<hitTime>1000</hitTime>
+		<isMagic>1</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpConsume>#mpConsume</mpConsume>
+		<reuseDelay>20000</reuseDelay>
+		<effects>
+			<effect name="PlantTotem">
+				<npcId>1002101</npcId>
+				<kinds>BLOOD</kinds>
+			</effect>
+		</effects>
+	</skill>
+	<skill id="27546" levels="4" name="Totem of Blood">
+		<table name="#lvl">1 2 3 4</table>
+		<table name="#magicLevel">40 52 64 76</table>
+		<table name="#absorb">4 5 6 8</table>
+		<icon>icon.skill1310</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>#lvl</abnormalLevel>
+		<abnormalTime>6</abnormalTime>
+		<abnormalType>TOTEM_BLOOD</abnormalType>
+		<isMagic>4</isMagic>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<magicLevel>#magicLevel</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<add stat="absorbDam">#absorb</add>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 27547 TOTEM OF THE HORDE: monsters around it that fight the party turn on it. -->
+	<skill id="27547" levels="3" name="Totem of the Horde">
+		<table name="#magicLevel">43 58 76</table>
+		<table name="#mpConsume">40 55 70</table>
+		<table name="#reuseDelay">40000 35000 30000</table>
+		<icon>icon.skill1562</icon>
+		<operateType>A1</operateType>
+		<targetType>SELF</targetType>
+		<effectPoint>200</effectPoint>
+		<hitTime>1000</hitTime>
+		<isMagic>1</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpConsume>#mpConsume</mpConsume>
+		<reuseDelay>#reuseDelay</reuseDelay>
+		<effects>
+			<effect name="PlantTotem">
+				<npcId>1002102</npcId>
+				<kinds>HORDE</kinds>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 27548 TOTEM OF FROST-TEETH: enemies around it get 27549 (slow hex). -->
+	<skill id="27548" levels="4" name="Totem of Frost-Teeth">
+		<table name="#magicLevel">46 60 70 78</table>
+		<table name="#mpConsume">38 52 62 72</table>
+		<icon>icon.skill1535</icon>
+		<operateType>A1</operateType>
+		<targetType>SELF</targetType>
+		<effectPoint>-200</effectPoint>
+		<hitTime>1000</hitTime>
+		<isMagic>1</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpConsume>#mpConsume</mpConsume>
+		<reuseDelay>25000</reuseDelay>
+		<effects>
+			<effect name="PlantTotem">
+				<npcId>1002103</npcId>
+				<kinds>FROST</kinds>
+			</effect>
+		</effects>
+	</skill>
+	<skill id="27549" levels="4" name="Totem of Frost-Teeth">
+		<table name="#lvl">1 2 3 4</table>
+		<table name="#magicLevel">46 60 70 78</table>
+		<table name="#speed">0.85 0.82 0.80 0.78</table>
+		<table name="#atkSpd">0.93 0.91 0.90 0.88</table>
+		<icon>icon.skill1535</icon>
+		<operateType>A2</operateType>
+		<targetType>ONE</targetType>
+		<abnormalLevel>#lvl</abnormalLevel>
+		<abnormalTime>6</abnormalTime>
+		<abnormalType>TOTEM_FROST</abnormalType>
+		<abnormalVisualEffect>SPEED_DOWN</abnormalVisualEffect>
+		<activateRate>80</activateRate>
+		<basicProperty>MEN</basicProperty>
+		<lvlBonusRate>1</lvlBonusRate>
+		<isDebuff>true</isDebuff>
+		<isMagic>4</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<effects>
+			<effect name="Debuff">
+				<mul stat="runSpd">#speed</mul>
+				<mul stat="pAtkSpd">#atkSpd</mul>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 27550 TOTEM OF ANCESTORS (Doomcryer): brings back the first party member lying dead
+	     around it with 30% HP, then it is spent. -->
+	<skill id="27550" levels="1" name="Totem of Ancestors">
+		<icon>icon.skill1229</icon>
+		<operateType>A1</operateType>
+		<targetType>SELF</targetType>
+		<effectPoint>300</effectPoint>
+		<hitTime>2000</hitTime>
+		<isMagic>1</isMagic>
+		<magicLevel>77</magicLevel>
+		<mpConsume>90</mpConsume>
+		<reuseDelay>120000</reuseDelay>
+		<effects>
+			<effect name="PlantTotem">
+				<npcId>1002104</npcId>
+				<kinds>ANCESTORS</kinds>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 27551 WAR DRUMS (stance): P. Atk. +5%, every hit takes time off the totem skills' reuse. -->
+	<skill id="27551" levels="1" name="War Drums">
+		<icon>icon.skill1390</icon>
+		<operateType>T</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalType>WAR_DRUMS</abnormalType>
+		<isMagic>0</isMagic>
+		<magicLevel>44</magicLevel>
+		<mpInitialConsume>20</mpInitialConsume>
+		<effects>
+			<effect name="MpConsumePerLevel" ticks="5">
+				<power>0.2</power>
+				<mul stat="pAtk">1.05</mul>
+			</effect>
+			<effect name="TriggerSkillByDamageDealt">
+				<attackerType>Creature</attackerType>
+				<minDamage>1</minDamage>
+				<chance>100</chance>
+				<skillId>27552</skillId>
+				<skillLevel>1</skillLevel>
+				<targetType>SELF</targetType>
+			</effect>
+		</effects>
+	</skill>
+	<skill id="27552" levels="1" name="Drumbeat">
+		<icon>icon.skill1390</icon>
+		<operateType>A1</operateType>
+		<targetType>SELF</targetType>
+		<isMagic>4</isMagic>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<magicLevel>44</magicLevel>
+		<reuseDelay>300</reuseDelay>
+		<effects>
+			<effect name="TotemDrumbeat" />
+		</effects>
+	</skill>
+
+	<!-- 27553 SHATTER: with 3 totems up, each one pulses once more and explodes on the enemies
+	     within 300 (up to 10 each). -->
+	<skill id="27553" levels="4" name="Shatter">
+		<table name="#magicLevel">48 60 70 78</table>
+		<table name="#mpConsume">45 60 72 85</table>
+		<table name="#power">60 75 90 110</table>
+		<icon>icon.skill1543</icon>
+		<operateType>A1</operateType>
+		<targetType>SELF</targetType>
+		<effectPoint>-400</effectPoint>
+		<hitTime>1500</hitTime>
+		<isMagic>1</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpConsume>#mpConsume</mpConsume>
+		<power>#power</power>
+		<reuseDelay>15000</reuseDelay>
+		<conditions msgId="113" addName="1">
+			<player active_effect_id_lvl="27557,3" />
+		</conditions>
+		<effects>
+			<effect name="ShatterTotems" />
+		</effects>
+	</skill>
+
+	<!-- 27554 SPIRIT WALK (Doomcryer): swap places with a totem. -->
+	<skill id="27554" levels="1" name="Spirit Walk">
+		<icon>icon.skill1308</icon>
+		<operateType>A1</operateType>
+		<targetType>SELF</targetType>
+		<hitTime>500</hitTime>
+		<isMagic>1</isMagic>
+		<magicLevel>78</magicLevel>
+		<mpConsume>40</mpConsume>
+		<reuseDelay>30000</reuseDelay>
+		<conditions msgId="113" addName="1">
+			<player active_effect_id_lvl="27557,1" />
+		</conditions>
+		<effects>
+			<effect name="SpiritWalk" />
+		</effects>
+	</skill>
+
+	<!-- 27555 ANCESTRAL BOND (Doomcryer, passive): near its own totem, 27556 echo. -->
+	<skill id="27555" levels="1" name="Ancestral Bond">
+		<icon>icon.skill1461</icon>
+		<operateType>P</operateType>
+		<targetType>SELF</targetType>
+		<magicLevel>76</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<add stat="maxHp">200</add>
+			</effect>
+		</effects>
+	</skill>
+	<skill id="27556" levels="1" name="Ancestral Bond">
+		<icon>icon.skill1461</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>6</abnormalTime>
+		<abnormalType>ANCESTRAL_BOND</abnormalType>
+		<isMagic>4</isMagic>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<magicLevel>76</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pDef">1.08</mul>
+				<mul stat="mDef">1.08</mul>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- 27557 TOTEM CIRCLE: its level is how many totems the Warchief has up (not learned). -->
+	<skill id="27557" levels="5" name="Totem Circle">
+		<table name="#lvl">1 2 3 4 5</table>
+		<icon>icon.skill1363</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>#lvl</abnormalLevel>
+		<abnormalTime>3600</abnormalTime>
+		<abnormalType>TOTEM_CIRCLE</abnormalType>
+		<isMagic>4</isMagic>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<magicLevel>40</magicLevel>
+		<effects>
+			<effect name="Buff" />
+		</effects>
+	</skill>
+
+	<!-- 27558 GREAT TOTEM OF THE HORDE-FATHER (Doomcryer finale): Blood, Horde and Frost-Teeth
+	     within 900 for 20 seconds; it can't be targeted or broken. -->
+	<skill id="27558" levels="1" name="Great Totem of the Horde-Father">
+		<icon>icon.skill1413</icon>
+		<operateType>A1</operateType>
+		<targetType>SELF</targetType>
+		<effectPoint>-600</effectPoint>
+		<hitTime>2500</hitTime>
+		<coolTime>300</coolTime>
+		<isMagic>1</isMagic>
+		<magicLevel>79</magicLevel>
+		<mpConsume>150</mpConsume>
+		<reuseDelay>300000</reuseDelay>
+		<effects>
+			<effect name="PlantTotem">
+				<npcId>1002105</npcId>
+				<kinds>BLOOD,HORDE,FROST</kinds>
+				<great>true</great>
+				<skillLevel>4</skillLevel>
+			</effect>
+		</effects>
+	</skill>
+</list>

@@ -33,6 +33,7 @@ public enum AbnormalType
 	ALL_ATTACK_DOWN,
 	ALL_REGEN_UP,
 	ALL_SPEED_DOWN,
+	ANCESTRAL_BOND, // Custom: a Doomcryer near its own totem.
 	ANESTHESIA,
 	ANTARAS_DEBUFF,
 	APELLA,
@@ -148,8 +149,10 @@ public enum AbnormalType
 	FOCUS_DAGGER,
 	FORCE_MEDITATION,
 	FORCE_OF_DESTRUCTION,
+	FORESIGHT, // Custom: Oracle (Prophet line) stacks, one per prophecy that came true.
 	FREEZING,
 	GHOST_PIERCING,
+	GLIMPSE, // Custom: Oracle toggle.
 	HEAL_EFFECT_DOWN,
 	HEAL_EFFECT_UP,
 	HEAL_POWER_UP,
@@ -253,6 +256,10 @@ public enum AbnormalType
 	POSSESSION_SPECIAL, // Used in High Five skills.
 	POTION_OF_GENESIS,
 	PRESERVE_ABNORMAL,
+	PROPHECY_DOOM, // Custom: Oracle prophecies, they come true when their time runs out.
+	PROPHECY_REVERSAL,
+	PROPHECY_RUIN,
+	PROPHECY_SALVATION,
 	PROTECTION,
 	PUBLIC_SLOT,
 	PVP_DMG_DOWN,
@@ -342,6 +349,9 @@ public enum AbnormalType
 	THIN_SKIN,
 	THRILL_FIGHT,
 	TIME_CHECK,
+	TOTEM_BLOOD, // Custom: Totem Warchief (Warcryer line) totem echoes.
+	TOTEM_CIRCLE, // Custom: how many totems a Totem Warchief has up.
+	TOTEM_FROST,
 	TOUCH_OF_DEATH,
 	TOUCH_OF_LIFE,
 	TRANSFER_DAMAGE,
@@ -364,6 +374,7 @@ public enum AbnormalType
 	VOTE,
 	VP_KEEP,
 	VP_UP,
+	WAR_DRUMS, // Custom: Totem Warchief stance.
 	WATCHER_GAZE,
 	WATER_DOT,
 	WEAK_CONSTITUTION,

@@ -1200,15 +1200,16 @@
 		<resurrect>1016</resurrect>
 		<variant name="Cardinal Legacy" armor="ROBE_LEGACY" weight="0" />
 	</build>
-	<build name="Hierophant" classId="98" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="0" support="true"> <!-- Prophet line -->
-		<attack>1177,1184</attack>
-		<debuff>1272</debuff> <!-- Word of Fear -->
+	<build name="Hierophant" classId="98" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="0" support="true"> <!-- Prophet line: an Oracle, it casts prophecies instead of buffs (config/Custom/OraclesWarchiefs.ini) -->
+		<attack>27530,1177,1184</attack> <!-- Prophecy of Doom, Wind Strike, Ice Bolt -->
+		<debuff>27533,1272</debuff> <!-- Prophecy of Ruin, Word of Fear -->
+		<buff>27538</buff> <!-- Fulfilment, once 5 prophecies came true -->
 		<heal>1015</heal>
-		<toggle>336</toggle>
+		<emergency>27540,27536</emergency> <!-- Unwritten, Prophecy of Reversal -->
+		<toggle>336,27539</toggle> <!-- Arcane Wisdom, Glimpse -->
 		<peel>1201,1272</peel>
-		<partyHeal>1011,1015</partyHeal>
+		<partyHeal>27532,1011,1015</partyHeal> <!-- Prophecy of Salvation, Heal, Battle Heal -->
 		<groupHeal>1027</groupHeal>
-		<partyBuff>1356,1388|1068,1389|1040,1086,1204,1045,1048,1036,1035,1085,1077,1242,1240,1062,1078,1044,1243,1032,1033,1499,1501</partyBuff> <!-- Prophecy of Fire, Greater Might / Might, Greater Shield / Shield, Haste, Wind Walk, Bless the Body/Soul, Magic Barrier, Mental Shield, Acumen, Focus, Death Whisper, Guidance, Berserker Spirit, Concentration, Regeneration, Bless Shield, Invigor, Resist Poison, Improved Combat/Condition -->
 		<resurrect>1016</resurrect>
 		<variant name="Hierophant Tallum" armor="ROBE_TALLUM" weight="0" />
 	</build>
@@ -1240,13 +1241,13 @@
 		<resurrect>1016</resurrect>
 		<variant name="Shillien Saint Legacy" armor="ROBE_LEGACY" weight="0" />
 	</build>
-	<build name="Doomcryer" classId="116" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="0" support="true"> <!-- Warcryer line -->
+	<build name="Doomcryer" classId="116" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="0" support="true"> <!-- Warcryer line: a Totem Warchief, it plants totems instead of chanting (config/Custom/OraclesWarchiefs.ini) -->
 		<attack>1245,1244,1090,1100</attack> <!-- Steal Essence, Freezing Flame, Life Drain, Chill Flame -->
 		<debuff>1097,1092</debuff> <!-- Dreaming Spirit, Fear -->
-		<toggle>336</toggle>
+		<buff>27548,27545,27547,27550,27553</buff> <!-- Totems of Frost-Teeth, Blood, the Horde and Ancestors while it fights, Shatter once 3 are up -->
+		<emergency>27558,27554</emergency> <!-- Great Totem of the Horde-Father, Spirit Walk -->
+		<toggle>336,27551</toggle> <!-- Arcane Wisdom, War Drums -->
 		<peel>260,100,1097,1092</peel> <!-- Hammer Crush / Stun Attack on a monster or player that reached it -->
-		<groupHeal>1229</groupHeal> <!-- Chant of Life -->
-		<partyBuff>1363,1413,1390|1007,1391|1009,1251,1002,1006,1253,1308,1309,1310,1252,1284,1461,1549,1362,1517,1518,1519,1535,1562</partyBuff> <!-- Chant of Victory, Magnus' Chant, War / Battle, Earth / Shielding, Fury, Flame, Fire, Rage, Predator, Eagle, Vampire, Evasion, Revenge, Protection, Elements, Spirit, Combat, Critical Attack, Blood Awakening, Movement, Berserker -->
 		<variant name="Doomcryer Tallum" armor="ROBE_TALLUM" weight="0" />
 	</build>
 	<build name="Sword Muse" classId="100" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" buffs="TANK" weight="0" support="true"> <!-- Swordsinger line -->

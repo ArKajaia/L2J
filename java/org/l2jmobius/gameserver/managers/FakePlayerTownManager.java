@@ -81,14 +81,10 @@ public class FakePlayerTownManager
 	/** How far a fake player looks for a private store to have a look at. */
 	private static final int STORE_RANGE = 1800;
 	
-	/** A buffer class line: the 2nd and 3rd class, the gear it wears (weapon kit of data/FakePlayerPvp.xml) and its buffs (data/stats/players/skillTrees). */
+	/** A buffer class line: the 2nd and 3rd class, the gear it wears (weapon kit of data/FakePlayerPvp.xml) and its buffs (data/stats/players/skillTrees). The Prophet and Warcryer lines aren't buffers any more (config/Custom/OraclesWarchiefs.ini). */
 	enum BufferLine
 	{
 		// @formatter:off
-		PROPHET(PlayerClass.PROPHET, PlayerClass.HIEROPHANT, "MAGE", false, 30,
-			new int[] {1204, 1068, 1040, 1086, 1077, 1242, 1240, 1045, 1062, 1388, 1243, 1499, 1501},
-			new int[] {1204, 1085, 1078, 1040, 1048, 1036, 1062, 1389, 1044},
-			new int[] {1352}),
 		ELDER(PlayerClass.ELDER, PlayerClass.EVA_SAINT, "MAGE", false, 14,
 			new int[] {1204, 1068, 1040, 1087, 1243, 1304, 1044},
 			new int[] {1204, 1078, 1040, 1303, 1397, 1044},
@@ -97,10 +93,6 @@ public class FakePlayerTownManager
 			new int[] {1204, 1068, 1040, 1077, 1240, 1242, 1268, 1502},
 			new int[] {1204, 1059, 1078, 1040, 1303, 1500},
 			new int[] {1354, 1460, 1507}),
-		WARCRYER(PlayerClass.WARCRYER, PlayerClass.DOOMCRYER, "MAGE_BLUNT", false, 16,
-			new int[] {1007, 1009, 1006, 1251, 1252, 1253, 1284, 1308, 1309, 1310, 1390, 1391, 1517, 1518, 1535},
-			new int[] {1009, 1002, 1006, 1252, 1284, 1391, 1535},
-			new int[] {1362, 1413, 1461, 1549}),
 		SWORDSINGER(PlayerClass.SWORDSINGER, PlayerClass.SWORD_MUSE, "SWORD_SHIELD", true, 13,
 			new int[] {264, 265, 267, 268, 269, 304, 305, 306, 308},
 			new int[] {264, 265, 266, 267, 268, 270, 304},
@@ -222,7 +214,7 @@ public class FakePlayerTownManager
 					return line;
 				}
 			}
-			return PROPHET;
+			return ELDER;
 		}
 	}
 	

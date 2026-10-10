@@ -264,6 +264,41 @@ Glittering Medals from champions teach every class the songs and dances, so the 
 - The skills are learned from the Grand Masters like any class skill (data/stats/skills/custom/performer_skills.xml). Everything follows the active class. The client needs the rows in `client/Performers` to show their names and icons. Settings in `config/Custom/Performers.ini`.
 - **Fake players**: Battle Bards and War Dancers (fake players of the two lines) hunt with their stance on and a performance going, switch performance when they fight a player (a War Dancer from Dance of Ruin to Dance of Torment, a Battle Bard from Anthem of Valor to Ballad of the Bulwark) and save their finale for players. The Sword Muse and Spectral Dancer that join parties play for the party. A fake performer's auras reach its party, players and fake players alike, and its hexes reach what its area skills reach; a player's auras reach the fake players of its party. Virtuoso counts for them.
 
+### Oracles and Totem Warchiefs
+
+Buff templates, buff shops, the scheme buffer and the books that teach every buff left the buffer classes with nothing of their own, so two buffer lines are no longer buffers. Their party buffs and chants are out of their class skill trees (the 1st class Cleric and Orc Shaman buffs stay), and they got a new way to play. The Dominator line is unchanged.
+
+**Oracles** (Prophet, Hierophant) fight in the future tense: their spells are **prophecies** that do nothing when they land and come true when their time runs out. A prophecy fizzles if it is cancelled or its target dies first. Each one that comes true gives the Oracle a **Foresight** (up to 5, M. Atk. +3% each).
+
+| Skill | Class | Effect |
+|---|---|---|
+| Prophecy of Doom | Prophet | Enemy, 5 s: holy magic damage, ×1.5 if the target is still within 300 of where it stood |
+| Prophecy of Salvation | Prophet | Ally, 6 s: heals back all the damage it took while the prophecy was on |
+| Prophecy of Ruin | Prophet | Enemy, 5 s: stun if the target cast a skill meanwhile, otherwise silence |
+| Prophecy of Reversal | Prophet (58) | Ally, 6 s: its HP, MP, CP and place are written down, and it comes back to them (never lower than it is): a save point before a nuke lands |
+| Fulfilment | Hierophant | Spends 5 Foresight: every prophecy of the Oracle comes true now, ×1.5 |
+| Glimpse | Hierophant | Toggle: Evasion +4; a single hit taking 30% of its HP makes the Oracle step back 300 (once a minute) |
+| Unwritten | Hierophant (79) | Doom on every enemy and Salvation on every party member within 600 (5 minute reuse) |
+
+**Totem Warchiefs** (Warcryer, Doomcryer) plant **totems** at their feet that pulse every 2 seconds to everyone within 600 and stand 30 seconds. Monsters and the Warchief's enemies can break them. One of each kind and 3 at most: another one replaces the oldest. A totem falls when its Warchief dies, leaves or goes too far.
+
+| Skill | Class | Effect |
+|---|---|---|
+| Totem of Blood | Warcryer | Party near it: 4 / 5 / 6 / 8% of the damage dealt comes back as HP |
+| Totem of the Horde | Warcryer | Monsters near it that fight the party turn on the totem (raid bosses don't) |
+| Totem of Frost-Teeth | Warcryer | Enemies near it: Speed −15 to −22%, Atk. Spd. −7 to −12% |
+| War Drums | Warcryer | Stance: P. Atk. +5%, each hit takes 1 second off the reuse of every totem skill |
+| Shatter | Warcryer | With 3 totems up: each pulses once more and explodes on up to 10 enemies within 300 |
+| Totem of Ancestors | Doomcryer | The first party member lying dead near it gets up with 30% HP; the totem is spent |
+| Ancestral Bond | Doomcryer | Passive: Max HP +200, P. Def. and M. Def. +8% near its own totem |
+| Spirit Walk | Doomcryer | Swaps places with its targeted totem, or the nearest one |
+| Great Totem of the Horde-Father | Doomcryer (79) | Blood, Horde and Frost-Teeth at once within 900 for 20 seconds; it can't be targeted (5 minute reuse) |
+
+- Echoes and hexes of the totems have their own buff slots (the triggered-buff bar for the echoes), so they stack with every buff. The "Totem Circle" icon shows how many totems are up.
+- A character who learned one of the retired buffs from its class tree loses it quietly when it logs in, or keeps the level its 1st class still teaches; a buff the Glittering Medals or buff books also teach is kept, since it may have been learned from one (`RetiredSkills` in the config).
+- The skills are learned from the Grand Masters like any class skill (`data/stats/skills/custom/oracle_skills.xml`, `warchief_skills.xml`). The client needs the rows in `client/OraclesWarchiefs`. Settings in `config/Custom/OraclesWarchiefs.ini`.
+- **Fake players**: the Hierophants and Doomcryers that join parties use the new kits (Salvation on a hurt member, Doom and Ruin on the target, Fulfilment at 5 Foresight; totems while fighting, Shatter once 3 are up). The town buffers are no longer Prophets or Warcryers.
+
 ### Other Custom Features at a Glance
 
 | Area | Features |
@@ -632,6 +667,11 @@ This program is free software, licensed under the **GNU General Public License, 
 ## Recent Updates
 
 Changes from 28 September – 9 October 2026.
+
+### Oracles and Totem Warchiefs
+- **Prophet and Warcryer lines reworked**: they no longer buff. The Prophet line became **Oracles**, who cast prophecies that come true a few seconds later (Doom, Salvation, Ruin, Reversal, Fulfilment, Glimpse, Unwritten), and the Warcryer line **Totem Warchiefs**, who plant pulsing totems and smash them (Blood, Horde, Frost-Teeth, Ancestors, War Drums, Shatter, Spirit Walk, the Great Totem). See [Oracles and Totem Warchiefs](#oracles-and-totem-warchiefs).
+- Their party buffs and chants left their 2nd and 3rd class skill trees, Divine Inspiration too; characters that learned them lose them quietly at login unless a buff book teaches them.
+- New skills 27530-27558, totem NPCs 1002101-1002105 (`data/stats/npcs/custom/Totems.xml`), client rows in `client/OraclesWarchiefs`, settings in `config/Custom/OraclesWarchiefs.ini`. Fake Hierophants and Doomcryers use the new kits; the town buffers are now Elven and Shillien Elders, Swordsingers and Bladedancers.
 
 ### Fake Players: gear
 - **Every piece is enchanted on its own**: the weapon, shield, each armor piece, each earring and ring, the necklace, shirt and belt get their own enchant, so a +7 weapon can come with +0 boots and a +3 helmet. Before, all armor and jewels shared one roll. A piece was enchanted at all, or is +0; an enchanted one is at its safe level (+3, +4 for a full body armor, read from `data/EnchantItemGroups.xml`), now and then below it, and each step past it is rarer than the one before. Weapons are pushed furthest, jewels next and armor least. At level 85 about 11% of weapons are +0, 26% +3, 30% +4 or +5 and 5% +10 or more. Each fake player has its own wealth, so some enchant nearly everything and others very little, and some went for a full +6 armor set (about a quarter at 84-85, for the set's +6 bonus). New settings in `config/Custom/FakePlayerPvp.ini`: `FakePvpWeaponEnchantOdds`, `FakePvpArmorEnchantOdds`, `FakePvpJewelEnchantOdds`, `FakePvpArmorSetEnchantChance`, `FakePvpGearWealthMin`/`Max`. `FakePvpWeaponEnchant`/`FakePvpArmorEnchant` now only bound the result (no-grade gear and cloaks are never enchanted).
