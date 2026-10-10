@@ -58,7 +58,7 @@ import org.l2jmobius.gameserver.model.skill.PassiveTreeArchetypes;
  * Each path is a step of the order. A spawn ({@link #roll}) only picks one of the orders and takes its steps while they fit in its points, so it never stops halfway to a notable; a step that no longer fits is left out and a later, smaller one that still hangs from its tree is
  * taken instead. What it takes is always connected to its START node, so it is an allocation a player could have made.
  * <p>
- * Keystones are only taken from the role's list, since the ones built on MP, CP, servitors or parties don't work for fake players; a fake player below {@link FakePlayerPvpConfig#PASSIVE_TREE_KEYSTONE_MIN_LEVEL} leaves out the steps that lead to them. Skill nodes are never
+ * Keystones are only taken from the role's list (or the build's own, see {@link FakePlayerPvpBuild#getKeystones()}), since the ones built on MP, CP, servitors or parties don't work for fake players; a fake player below {@link FakePlayerPvpConfig#PASSIVE_TREE_KEYSTONE_MIN_LEVEL} leaves out the steps that lead to them. Skill nodes are never
  * taken: node skills only work for players.
  */
 public class FakePlayerPvpPassiveTree
@@ -232,8 +232,10 @@ public class FakePlayerPvpPassiveTree
 	 * @param origin index of the START node
 	 * @param role the role
 	 * @param gear the gear key, see {@link #gearKey}
+	 * @param keystones the build's own keystone list (see {@link FakePlayerPvpBuild#getKeystones()}), {@code null} for its role's
+	 * @param hybrid {@code true} for a melee build whose M. Atk. counts too (see {@link FakePlayerPvpBuild#isHybrid()})
 	 */
-	private record PoolKey(int origin, Role role, int gear)
+	private record PoolKey(int origin, Role role, int gear, String keystones, boolean hybrid)
 	{
 	}
 
@@ -268,6 +270,10 @@ public class FakePlayerPvpPassiveTree
 	private final Map<String, Integer> _origins = new HashMap<>();
 	/** Role -> the keystones it may head for, in the order FakePvpKeystones.* lists them. */
 	private final Map<Role, List<Keystone>> _keystones = new HashMap<>();
+	/** Name -> node index of every keystone that isn't a skill node. */
+	private final Map<String, Integer> _keystoneIndexes = new HashMap<>();
+	/** A build's own keystone list (its keystones attribute) -> its keystones. */
+	private final Map<String, List<Keystone>> _buildKeystones = new ConcurrentHashMap<>();
 	/** The growth orders made so far. */
 	private final Map<PoolKey, Variant[]> _pools = new ConcurrentHashMap<>();
 
@@ -389,40 +395,74 @@ public class FakePlayerPvpPassiveTree
 		}
 
 		// The keystones each role may head for, by name.
-		final Map<String, Integer> keystoneIndexes = new HashMap<>();
 		for (int i = 0; i < count; i++)
 		{
 			if ((_nodes[i].getType() == NodeType.KEYSTONE) && !_nodes[i].grantsSkill())
 			{
-				keystoneIndexes.putIfAbsent(_nodes[i].getName().toLowerCase(), i);
+				_keystoneIndexes.putIfAbsent(_nodes[i].getName().toLowerCase(), i);
 			}
 		}
 		for (Role role : Role.values())
 		{
-			final List<Keystone> keystones = new ArrayList<>();
-			for (String entry : FakePlayerPvpConfig.PASSIVE_TREE_KEYSTONES.getOrDefault(role.name(), List.of()))
-			{
-				final int at = entry.indexOf('@');
-				final String name = (at > 0 ? entry.substring(0, at) : entry).trim();
-				final String token = at > 0 ? entry.substring(at + 1).trim().toUpperCase() : null;
-				final Integer keystone = keystoneIndexes.get(name.toLowerCase());
-				if (keystone == null)
-				{
-					LOGGER.warning(getClass().getSimpleName() + ": FakePvpKeystones." + role + " lists \"" + name + "\", which is no keystone of the passive tree.");
-				}
-				else if ((token != null) && (PassiveMechanics.gearMask(token) == 0))
-				{
-					LOGGER.warning(getClass().getSimpleName() + ": FakePvpKeystones." + role + " gives \"" + name + "\" the condition @" + token + ", which is no armour or weapon condition.");
-				}
-				else
-				{
-					keystones.add(new Keystone(keystone, token));
-				}
-			}
-			_keystones.put(role, List.copyOf(keystones));
+			_keystones.put(role, parseKeystones(FakePlayerPvpConfig.PASSIVE_TREE_KEYSTONES.getOrDefault(role.name(), List.of()), "FakePvpKeystones." + role));
 		}
 
 		LOGGER.info(getClass().getSimpleName() + ": Read the passive tree for " + _origins.size() + " starting points; fake player trees are grown on first use.");
+	}
+
+	/**
+	 * @param entries keystone names, each one with an optional @TOKEN armour or weapon condition (Riposte@SHIELD)
+	 * @param source where the list comes from, for the warnings
+	 * @return the keystones, in that order
+	 */
+	private List<Keystone> parseKeystones(List<String> entries, String source)
+	{
+		final List<Keystone> keystones = new ArrayList<>();
+		for (String entry : entries)
+		{
+			final int at = entry.indexOf('@');
+			final String name = (at > 0 ? entry.substring(0, at) : entry).trim();
+			final String token = at > 0 ? entry.substring(at + 1).trim().toUpperCase() : null;
+			final Integer keystone = _keystoneIndexes.get(name.toLowerCase());
+			if (keystone == null)
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": " + source + " lists \"" + name + "\", which is no keystone of the passive tree.");
+			}
+			else if ((token != null) && (PassiveMechanics.gearMask(token) == 0))
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": " + source + " gives \"" + name + "\" the condition @" + token + ", which is no armour or weapon condition.");
+			}
+			else
+			{
+				keystones.add(new Keystone(keystone, token));
+			}
+		}
+		return List.copyOf(keystones);
+	}
+
+	/**
+	 * @param key a pool
+	 * @return the keystones its orders may head for: the build's own list, or its role's
+	 */
+	private List<Keystone> getKeystones(PoolKey key)
+	{
+		if (key.keystones() == null)
+		{
+			return _keystones.getOrDefault(key.role(), List.of());
+		}
+
+		return _buildKeystones.computeIfAbsent(key.keystones(), list ->
+		{
+			final List<String> entries = new ArrayList<>();
+			for (String entry : list.split(";"))
+			{
+				if (!entry.isBlank())
+				{
+					entries.add(entry.trim());
+				}
+			}
+			return parseKeystones(entries, "The keystones of a build in FakePlayerPvp.xml");
+		});
 	}
 
 	/**
@@ -458,7 +498,7 @@ public class FakePlayerPvpPassiveTree
 			return null;
 		}
 
-		final Variant[] variants = _pools.computeIfAbsent(new PoolKey(origin, build.getRole(), gearKey(armorMask, wornMask)), this::growPool);
+		final Variant[] variants = _pools.computeIfAbsent(new PoolKey(origin, build.getRole(), gearKey(armorMask, wornMask), build.getKeystones(), build.isHybrid()), this::growPool);
 		final Variant variant = variants[Rnd.get(variants.length)];
 		final boolean allSubclasses = (level >= FakePlayerPvpConfig.PASSIVE_TREE_SUBCLASS_MIN_LEVEL) && (elite || (pvpSpot && (level >= FakePlayerPvpConfig.PASSIVE_TREE_SPOT_SUBCLASS_LEVEL) && (Rnd.get(100) < FakePlayerPvpConfig.PASSIVE_TREE_SPOT_SUBCLASS_CHANCE)));
 		final int subclasses = allSubclasses ? FakePlayerPvpConfig.PASSIVE_TREE_MAX_SUBCLASSES : rollSubclasses(level);
@@ -591,12 +631,17 @@ public class FakePlayerPvpPassiveTree
 	private Variant[] growPool(PoolKey key)
 	{
 		final String sector = _nodes[key.origin()].getSector();
-		final long seed = (((POOL_SEED * 31) + sector.hashCode()) * 31 * 31) + (key.role().ordinal() * 31L) + key.gear();
+		long seed = (((POOL_SEED * 31) + sector.hashCode()) * 31 * 31) + (key.role().ordinal() * 31L) + key.gear();
+		// A build with its own keystones or weights grows its own trees (the role's keep their seed).
+		if ((key.keystones() != null) || key.hybrid())
+		{
+			seed = (seed * 31) + (key.keystones() != null ? key.keystones().hashCode() : 0) + (key.hybrid() ? 1 : 0);
+		}
 		return Rnd.seeded(seed, () ->
 		{
-			// The keystones of the role that are of use with this gear.
+			// The keystones of the role (or build) that are of use with this gear.
 			final List<Integer> keystones = new ArrayList<>();
-			for (Keystone keystone : _keystones.getOrDefault(key.role(), List.of()))
+			for (Keystone keystone : getKeystones(key))
 			{
 				if (conditionWeight(keystone.gearToken(), key.gear()) > 0)
 				{
@@ -620,7 +665,7 @@ public class FakePlayerPvpPassiveTree
 				final double[] keyWeights = new double[_keys.length];
 				for (int k = 0; k < _keys.length; k++)
 				{
-					keyWeights[k] = (keyWeight(key.role(), _keys[k]) * groupFactor(_keys[k], groups) * jitter(KEY_JITTER)) / _units[k];
+					keyWeights[k] = (keyWeight(key.role(), key.hybrid(), _keys[k]) * groupFactor(_keys[k], groups) * jitter(KEY_JITTER)) / _units[k];
 				}
 
 				// How much this order wants each effect of each node with this gear, by its size, before caps.
@@ -634,7 +679,7 @@ public class FakePlayerPvpPassiveTree
 					}
 				}
 
-				pool[v] = new Growth(key.origin(), effectWeights, keystones, style, PassiveTreeConfig.PASSIVE_TREE_MAX_POINTS).grow();
+				pool[v] = new Growth(key.origin(), effectWeights, keystones, key.keystones() != null, style, PassiveTreeConfig.PASSIVE_TREE_MAX_POINTS).grow();
 			}
 			return pool;
 		});
@@ -703,6 +748,8 @@ public class FakePlayerPvpPassiveTree
 	{
 		private final double[][] _effectWeights;
 		private final List<Integer> _keystoneChoices;
+		/** A build's own keystones are headed for in its order (the first one in reach first), a role's by chance. */
+		private final boolean _orderedKeystones;
 		private final boolean[] _isKeystoneChoice;
 		private final Style _style;
 		private final int _maxPoints;
@@ -722,10 +769,11 @@ public class FakePlayerPvpPassiveTree
 		private final double[] _pathWorth;
 		private final int[] _previous;
 
-		Growth(int origin, double[][] effectWeights, List<Integer> keystones, Style style, int maxPoints)
+		Growth(int origin, double[][] effectWeights, List<Integer> keystones, boolean ordered, Style style, int maxPoints)
 		{
 			_effectWeights = effectWeights;
 			_keystoneChoices = keystones;
+			_orderedKeystones = ordered;
 			_isKeystoneChoice = new boolean[_nodes.length];
 			for (int keystone : keystones)
 			{
@@ -922,11 +970,23 @@ public class FakePlayerPvpPassiveTree
 		}
 
 		/**
-		 * Picks one of the role's keystones not taken yet, that can be combined with the ones taken and that the last search reached (the nearer, the likelier).
+		 * Picks one of the role's keystones not taken yet, that can be combined with the ones taken and that the last search reached (the nearer, the likelier). A build's own list is followed in its order: the first one in reach.
 		 * @return the nodes to take, the keystone last; {@code null} if none can be reached
 		 */
 		private List<Integer> pathToKeystone()
 		{
+			if (_orderedKeystones)
+			{
+				for (int keystone : _keystoneChoices)
+				{
+					if (!_taken[keystone] && (_distance[keystone] != Long.MAX_VALUE) && !conflictsWithChosen(keystone))
+					{
+						return path(keystone);
+					}
+				}
+				return null;
+			}
+
 			final List<Integer> reachable = new ArrayList<>();
 			final List<Double> chances = new ArrayList<>();
 			double total = 0;
@@ -1011,14 +1071,20 @@ public class FakePlayerPvpPassiveTree
 
 	/**
 	 * @param role the fake player role
+	 * @param hybrid {@code true} for a melee build whose M. Atk. counts too (Battlemage adds part of it to its P. Atk.): it wants the magic keys as much as the physical ones
 	 * @param key an effect key without its condition
 	 * @return how much the role wants it; 0 for what does nothing for a fake player (MP, it never runs out of it) or for this role
 	 */
-	private static double keyWeight(Role role, String key)
+	private static double keyWeight(Role role, boolean hybrid, String key)
 	{
 		if (COMMON_KEYS.contains(key))
 		{
 			return COMMON_WEIGHT;
+		}
+
+		if (hybrid && MAGIC_KEYS.contains(key))
+		{
+			return ROLE_WEIGHT;
 		}
 
 		switch (role)

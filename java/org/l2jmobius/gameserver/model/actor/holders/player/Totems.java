@@ -83,6 +83,13 @@ public class Totems
 	public static final int BOND_ECHO_ID = 27556;
 	/** Totem Circle: shows how many totems the Warchief has up (Shatter needs 3). */
 	public static final int CIRCLE_SKILL_ID = 27557;
+	/** The Totem Warchief skills, for the fake players that play them (see FakePlayerPvpAI). */
+	public static final int SHATTER_SKILL_ID = 27553;
+	public static final int SPIRIT_WALK_SKILL_ID = 27554;
+	public static final int GREAT_TOTEM_SKILL_ID = 27558;
+	public static final int SPIRIT_TRANCE_SKILL_ID = 27561;
+	/** The skills that plant a small totem, and what it pulses. */
+	private static final Map<Integer, Kind> PLANT_SKILLS = Map.of(27545, Kind.BLOOD, 27547, Kind.HORDE, 27548, Kind.FROST, 27550, Kind.ANCESTORS, 27559, Kind.FLAME);
 	/** Skills whose reuse War Drums shortens. */
 	private static final int[] TOTEM_SKILL_IDS =
 	{
@@ -173,7 +180,38 @@ public class Totems
 		return totem;
 	}
 
-	private static List<Totem> getSmallTotems(Creature owner)
+	/**
+	 * @param skillId a skill id
+	 * @return what the small totem it plants pulses, {@code null} for a skill that plants none (the Great Totem included)
+	 */
+	public static Kind getPlantedKind(int skillId)
+	{
+		return PLANT_SKILLS.get(skillId);
+	}
+
+	/**
+	 * @param owner the Warchief
+	 * @param kind a kind of small totem
+	 * @return its totem of that kind, {@code null} if it has none up
+	 */
+	public static Totem getTotem(Creature owner, Kind kind)
+	{
+		for (Totem totem : getTotems(owner))
+		{
+			if (!totem.isGreat() && totem.isSpawned() && totem.getKinds().contains(kind))
+			{
+				return totem;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param owner the Warchief
+	 * @return its small totems (the Great Totem aside), oldest first
+	 */
+	public static List<Totem> getSmallTotems(Creature owner)
 	{
 		final List<Totem> result = new ArrayList<>();
 		for (Totem totem : getTotems(owner))

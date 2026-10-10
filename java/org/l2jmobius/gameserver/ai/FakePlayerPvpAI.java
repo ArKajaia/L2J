@@ -57,8 +57,10 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpCombo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
+import org.l2jmobius.gameserver.model.actor.holders.player.Totems;
 import org.l2jmobius.gameserver.model.actor.instance.Chest;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
+import org.l2jmobius.gameserver.model.actor.instance.Totem;
 import org.l2jmobius.gameserver.model.clan.Clan;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.item.instance.Item;
@@ -89,6 +91,8 @@ public class FakePlayerPvpAI extends AttackableAI
 	private static final int MAX_HUNT_LEVEL_DIFFERENCE = 10;
 	/** The range a mage tries to fight from. */
 	private static final int MAGE_RANGE = 600;
+	/** A Totem Warchief stepping back around its totem stops this far beyond it. */
+	private static final int TOTEM_KITE_OFFSET = 150;
 	
 	/** How long a combo waits for a required step (cooldown, casting range...) before giving up. */
 	private static final long COMBO_STEP_TIMEOUT = 3000;
@@ -757,8 +761,8 @@ public class FakePlayerPvpAI extends AttackableAI
 			FakePlayerPvpManager.getInstance().keepPerformance(npc, profile, pvp || FakePlayerPvpManager.isInPvp(npc));
 		}
 		
-		// Take care of itself first: emergency skills, cleansing, heals, buffs.
-		if ((hpRatio < 0.3) && castOnSelf(npc, target, profile.getSkills(SkillCategory.EMERGENCY), true, true))
+		// Take care of itself first: emergency skills, cleansing, heals, buffs. A Totem Warchief with an enemy on it swaps places with a totem away from it first.
+		if ((hpRatio < 0.3) && ((pvp && trySpiritWalk(npc, profile, target)) || castOnSelf(npc, target, profile.getSkills(SkillCategory.EMERGENCY), true, true)))
 		{
 			return;
 		}
@@ -773,9 +777,16 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// Long cooldown buffs (Frenzy, Zealot, Focus Power...) are saved for players.
+		// Long cooldown buffs (Frenzy, Zealot, Focus Power...) are saved for players. Prophecies on itself and totems only where they pay off (see FakePlayerPvpOraclesWarchiefs).
 		if (castOnSelf(npc, target, profile.getSkills(SkillCategory.BUFF), false, pvp))
 		{
+			return;
+		}
+		
+		// A Totem Warchief fights where its Totem of Flames burns: with it ready, it walks up to plant it by its target.
+		if (canMove && !npc.isAttackingNow() && FakePlayerPvpOraclesWarchiefs.wantsCloserForFlames(npc, profile, target, distance - collision, hpRatio))
+		{
+			moveToPawn(target, FakePlayerPvpOraclesWarchiefs.getFlamePlantGap() - 50);
 			return;
 		}
 		
@@ -821,6 +832,12 @@ public class FakePlayerPvpAI extends AttackableAI
 		if (canMove && role.isRanged() && (_combo == null) && !npc.isAttackingNow() && ((distance - collision) < profile.getPersonality().getKiteDistance()) && (now >= _nextKiteTime))
 		{
 			if (pvp && !isDisabled(target) && useSkill(npc, target, pickPeel(npc, target, profile, defenses, distance - collision), distance, collision, false))
+			{
+				return;
+			}
+			
+			// A Totem Warchief swaps places with a totem away from a player on it, or steps back around its totem so the enemy chases it through the pulses.
+			if (((pvp || (hpRatio < 0.5)) && trySpiritWalk(npc, profile, target)) || kiteAroundTotem(npc, target, now))
 			{
 				return;
 			}
@@ -1667,7 +1684,7 @@ public class FakePlayerPvpAI extends AttackableAI
 		
 		for (Skill skill : profile.getSkills(SkillCategory.RUSH))
 		{
-			if ((skill.getCastRange() >= gap) && (pvp || !isPvpOnly(skill)) && canCast(npc, skill, target) && (castOrApproach(npc, target, skill, distance, collision, false) == CastResult.CAST))
+			if ((skill.getCastRange() >= gap) && (pvp || !isPvpOnly(skill)) && !isAlreadyOn(skill, target) && canCast(npc, skill, target) && (castOrApproach(npc, target, skill, distance, collision, false) == CastResult.CAST))
 			{
 				return true;
 			}
@@ -3164,7 +3181,7 @@ public class FakePlayerPvpAI extends AttackableAI
 				return true;
 			}
 			
-			if (!canCast(npc, skill, target))
+			if (!canCast(npc, skill, target) || !FakePlayerPvpOraclesWarchiefs.isWorthCasting(npc, target, skill))
 			{
 				if (step.isOptional())
 				{
@@ -3232,7 +3249,7 @@ public class FakePlayerPvpAI extends AttackableAI
 			if (!firstChecked)
 			{
 				firstChecked = true;
-				if (!step.isSelf() && ((step.needsDisabledTarget() && !isDisabled(target)) || !canCast(npc, skill, target)))
+				if (!step.isSelf() && ((step.needsDisabledTarget() && !isDisabled(target)) || !canCast(npc, skill, target) || !FakePlayerPvpOraclesWarchiefs.isWorthCasting(npc, target, skill)))
 				{
 					return false;
 				}
@@ -3308,6 +3325,12 @@ public class FakePlayerPvpAI extends AttackableAI
 	 */
 	private static boolean isWorthCasting(Attackable npc, Creature target, Skill skill, boolean pvp)
 	{
+		// A Prophecy of Doom that would start over, Spell Turning on a target that doesn't cast.
+		if (!FakePlayerPvpOraclesWarchiefs.isWorthCasting(npc, target, skill))
+		{
+			return false;
+		}
+		
 		final WorldObject center;
 		switch (skill.getTargetType())
 		{
@@ -3368,7 +3391,7 @@ public class FakePlayerPvpAI extends AttackableAI
 	{
 		for (Skill skill : skills)
 		{
-			if ((!recast && FakePlayerPvpManager.isBuffActive(npc, skill)) || (!pvp && isPvpOnly(skill)))
+			if ((!recast && FakePlayerPvpManager.isBuffActive(npc, skill)) || (!pvp && isPvpOnly(skill) && !FakePlayerPvpOraclesWarchiefs.ignoresPvpOnly(skill)))
 			{
 				continue;
 			}
@@ -3379,7 +3402,7 @@ public class FakePlayerPvpAI extends AttackableAI
 				continue;
 			}
 			
-			if (!canCast(npc, skill, npc))
+			if (!canCast(npc, skill, npc) || !FakePlayerPvpOraclesWarchiefs.isWorthSelfCast(npc, target, skill))
 			{
 				continue;
 			}
@@ -3506,6 +3529,71 @@ public class FakePlayerPvpAI extends AttackableAI
 		npc.setRunning();
 		moveTo(destination.getX(), destination.getY(), destination.getZ());
 		_kiteEndTime = now + Math.min(3000, (long) ((step * 1000.0) / Math.max(1, npc.getMoveSpeed())));
+		_nextKiteTime = now + 3000 + Rnd.get(2000);
+		return true;
+	}
+	
+	/**
+	 * Spirit Walk (Doomcryer): swaps places with its totem farthest from {@code enemy}, which is left by the totem, in its pulses.
+	 * @return {@code true} if it cast it
+	 */
+	private boolean trySpiritWalk(Attackable npc, FakePlayerPvpProfile profile, Creature enemy)
+	{
+		final Skill walk = profile.getListedSkill(Totems.SPIRIT_WALK_SKILL_ID);
+		if ((walk == null) || npc.isMovementDisabled() || !canCast(npc, walk, npc) || (npc.calculateDistance2D(enemy) > 400))
+		{
+			return false;
+		}
+		
+		final Totem totem = FakePlayerPvpOraclesWarchiefs.getSpiritWalkTotem(npc, enemy);
+		if (totem == null)
+		{
+			return false;
+		}
+		
+		// It swaps with what it targets when the spell lands; the next tick targets the enemy again.
+		clientStopMoving(null);
+		npc.setTarget(totem);
+		npc.doCast(walk);
+		return true;
+	}
+	
+	/**
+	 * Steps back from {@code target} around its Totem of Flames (or Frost-Teeth), to the far side of it, so the target chases it through the pulses. Only away from the target, never past it.
+	 * @return {@code true} if it started moving
+	 */
+	private boolean kiteAroundTotem(Attackable npc, Creature target, long now)
+	{
+		final Totem anchor = FakePlayerPvpOraclesWarchiefs.getKiteAnchor(npc, target);
+		if (anchor == null)
+		{
+			return false;
+		}
+		
+		final double dx = anchor.getX() - target.getX();
+		final double dy = anchor.getY() - target.getY();
+		final double length = Math.hypot(dx, dy);
+		if (length < 1)
+		{
+			return false;
+		}
+		
+		final int x = anchor.getX() + (int) ((dx / length) * TOTEM_KITE_OFFSET);
+		final int y = anchor.getY() + (int) ((dy / length) * TOTEM_KITE_OFFSET);
+		if ((((x - npc.getX()) * (double) (target.getX() - npc.getX())) + ((y - npc.getY()) * (double) (target.getY() - npc.getY()))) >= 0)
+		{
+			return false; // The target stands between it and the totem.
+		}
+		
+		final Location destination = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, anchor.getZ() + 30, npc.getInstanceId());
+		if ((npc.calculateDistance2D(destination) < 50) || !GeoEngine.getInstance().canMoveToTarget(npc.getX(), npc.getY(), npc.getZ(), destination.getX(), destination.getY(), destination.getZ(), npc.getInstanceId()))
+		{
+			return false;
+		}
+		
+		npc.setRunning();
+		moveTo(destination.getX(), destination.getY(), destination.getZ());
+		_kiteEndTime = now + Math.min(3000, (long) ((npc.calculateDistance2D(destination) * 1000.0) / Math.max(1, npc.getMoveSpeed())));
 		_nextKiteTime = now + 3000 + Rnd.get(2000);
 		return true;
 	}
