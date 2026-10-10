@@ -107,6 +107,18 @@ public class AreaTargets
 	 */
 	public static boolean isEnemy(Creature caster, Creature target, Skill skill)
 	{
+		return isEnemy(caster, target, skill, caster);
+	}
+
+	/**
+	 * @param caster the caster (a player or a fake player)
+	 * @param target a character near it
+	 * @param skill the skill that would reach it
+	 * @param origin where the area is (a totem, the caster...): the target must be in its sight, not the caster's
+	 * @return {@code true} for an enemy the caster could hit without forcing it, see {@link #isEnemy(Creature, Creature, Skill)}
+	 */
+	public static boolean isEnemy(Creature caster, Creature target, Skill skill, WorldObject origin)
+	{
 		if ((target == null) || (target == caster) || target.isAlikeDead() || target.isInvul() || !(target.isAttackable() || target.isPlayable()) || target.isInsideZone(ZoneId.PEACE) || caster.isInsideZone(ZoneId.PEACE))
 		{
 			return false;
@@ -115,7 +127,7 @@ public class AreaTargets
 		// A fake player: like its area skills.
 		if (caster.isPvpFakePlayer())
 		{
-			return Skill.checkForAreaOffensiveSkills(caster, target, skill, false);
+			return Skill.checkForAreaOffensiveSkills(caster, target, skill, false, origin);
 		}
 
 		if (target.isPlayable())
@@ -149,7 +161,7 @@ public class AreaTargets
 			}
 		}
 
-		return target.isAutoAttackable(caster) && GeoEngine.getInstance().canSeeTarget(caster, target);
+		return target.isAutoAttackable(caster) && GeoEngine.getInstance().canSeeTarget(origin, target);
 	}
 
 	/**
@@ -157,14 +169,14 @@ public class AreaTargets
 	 * @param center where the area is
 	 * @param range how far it reaches around the center
 	 * @param skill the skill that would reach them
-	 * @return the caster's enemies around the center, see {@link #isEnemy}
+	 * @return the caster's enemies around the center and in its sight, see {@link #isEnemy}
 	 */
 	public static List<Creature> getEnemies(Creature caster, WorldObject center, int range, Skill skill)
 	{
 		final List<Creature> result = new ArrayList<>();
 		for (Creature target : World.getInstance().getVisibleObjectsInRange(center, Creature.class, range))
 		{
-			if (isEnemy(caster, target, skill))
+			if (isEnemy(caster, target, skill, center))
 			{
 				result.add(target);
 			}

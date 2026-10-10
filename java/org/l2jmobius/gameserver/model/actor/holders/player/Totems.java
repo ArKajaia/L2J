@@ -76,7 +76,7 @@ public class Totems
 	public static final int FROST_ECHO_ID = 27549;
 	/** The burn of the Totem of Flames (its power is the damage of a pulse). */
 	public static final int FLAME_BURN_ID = 27560;
-	/** Flame Strike: what a pulse of the Totem of Flames looks like. */
+	/** Flame Strike: what a pulse of the Totem of Flames looks like on each enemy it burns. */
 	private static final int FLAME_VISUAL_ID = 1181;
 	/** Ancestral Bond: a Doomcryer near its own totem gets {@link #BOND_ECHO_ID}. */
 	public static final int BOND_SKILL_ID = 27555;
@@ -383,10 +383,11 @@ public class Totems
 		}
 
 		enemies.sort((a, b) -> Double.compare(totem.calculateDistance3D(a), totem.calculateDistance3D(b)));
-		totem.broadcastPacket(new MagicSkillUse(totem, totem, FLAME_VISUAL_ID, 1, 0, 0));
 		int hits = 0;
 		for (Creature enemy : enemies)
 		{
+			// The flames strike each enemy, not the totem.
+			enemy.broadcastPacket(new MagicSkillUse(totem, enemy, FLAME_VISUAL_ID, 1, 0, 0));
 			final boolean mcrit = Formulas.calcMCrit(owner.getMCriticalHit(enemy, burn));
 			final byte shld = Formulas.calcShldUse(owner, enemy, burn);
 			final int damage = (int) Formulas.calcMagicDam(owner, enemy, burn, shld, false, false, mcrit);

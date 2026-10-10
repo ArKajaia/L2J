@@ -684,6 +684,7 @@ Changes from 28 September – 10 October 2026.
 - **Totem Warchiefs fight at their totems**: they walk up to plant the Totem of Flames by their target, step back from melee around it, and Spirit Walk away from a player on them.
 - **Battlemage path**: a build can list its own passive tree keystones, headed for in order (`keystones`), and weigh magic stats on a melee build (`hybrid`), in `data/FakePlayerPvp.xml`. The **Battlemage** keystone now works for fake players (part of M. Atk. added to P. Atk.); it had no effect on them before.
 - New `BATTLEMAGE` buff list (fighter buffs with Empower and Dance of the Mystic).
+- **Totem of Flames hits the monsters around it**: a pulse looked for enemies in the Warchief's line of sight instead of the totem's, so a totem burned nothing while its Warchief stood behind a slope or a wall, kited away or Spirit Walked off. Totem pulses, Shatter and the spread of Prophecy of Doom now check the line of sight from where they go off. The flames also strike each monster they burn instead of flaring on the totem.
 
 ### Totem Warchiefs, Oracles and performers
 - **Warcryer line**: new **Totem of Flames** from level 40 (each pulse burns up to 10 enemies near it with the Warchief's fire magic) and **Spirit Trance** from 52 (5 seconds turned to ice: paralyzed, P. Def. and M. Def. +300%, a lot of HP back every second, while the totems fight). The totems come back sooner: Blood 20 → 12 s, Horde 40/35/30 → 25/22/20 s, Frost-Teeth 25 → 15 s, Ancestors 120 → 80 s, Great Totem 5 → 3 min.
