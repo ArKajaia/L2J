@@ -625,7 +625,8 @@
 		</collision>
 	</npc>
 	<!-- Festival decorations -->
-	<npc id="900441" displayId="35423" level="70" type="Folk" name="Festival Banner" usingServerSideName="true"> <!-- Red Flag model -->
+	<!-- The banner uses the siege Headquarters flag model. The Bandit Stronghold team flags (35423-35427) crashed the client when teleporting into a town that had them up (General protection fault in UGameEngine::L2CollectGarbage on a ShadowBitmapMaterial). -->
+	<npc id="900441" displayId="35062" level="70" type="Folk" name="Festival Banner" usingServerSideName="true"> <!-- Headquarters model -->
 		<race>ETC</race>
 		<sex>ETC</sex>
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
@@ -640,84 +641,8 @@
 		<status attackable="false" canMove="false" talkable="false" targetable="false" />
 		<ai aggroRange="0" isAggressive="false" />
 		<collision>
-			<radius normal="75" />
-			<height normal="55" />
-		</collision>
-	</npc>
-	<npc id="900442" displayId="35424" level="70" type="Folk" name="Festival Banner" usingServerSideName="true"> <!-- Yellow Flag model -->
-		<race>ETC</race>
-		<sex>ETC</sex>
-		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
-			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
-			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
-			<defence physical="295" magical="216" />
-			<speed>
-				<walk ground="50" />
-				<run ground="120" />
-			</speed>
-		</stats>
-		<status attackable="false" canMove="false" talkable="false" targetable="false" />
-		<ai aggroRange="0" isAggressive="false" />
-		<collision>
-			<radius normal="75" />
-			<height normal="55" />
-		</collision>
-	</npc>
-	<npc id="900443" displayId="35425" level="70" type="Folk" name="Festival Banner" usingServerSideName="true"> <!-- Green Flag model -->
-		<race>ETC</race>
-		<sex>ETC</sex>
-		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
-			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
-			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
-			<defence physical="295" magical="216" />
-			<speed>
-				<walk ground="50" />
-				<run ground="120" />
-			</speed>
-		</stats>
-		<status attackable="false" canMove="false" talkable="false" targetable="false" />
-		<ai aggroRange="0" isAggressive="false" />
-		<collision>
-			<radius normal="75" />
-			<height normal="55" />
-		</collision>
-	</npc>
-	<npc id="900444" displayId="35426" level="70" type="Folk" name="Festival Banner" usingServerSideName="true"> <!-- Blue Flag model -->
-		<race>ETC</race>
-		<sex>ETC</sex>
-		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
-			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
-			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
-			<defence physical="295" magical="216" />
-			<speed>
-				<walk ground="50" />
-				<run ground="120" />
-			</speed>
-		</stats>
-		<status attackable="false" canMove="false" talkable="false" targetable="false" />
-		<ai aggroRange="0" isAggressive="false" />
-		<collision>
-			<radius normal="75" />
-			<height normal="55" />
-		</collision>
-	</npc>
-	<npc id="900445" displayId="35427" level="70" type="Folk" name="Festival Banner" usingServerSideName="true"> <!-- Purple Flag model -->
-		<race>ETC</race>
-		<sex>ETC</sex>
-		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
-			<vitals hp="2444" hpRegen="7.5" mp="1345" mpRegen="2.7" />
-			<attack physical="688" magical="470" random="30" critical="4" accuracy="5" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
-			<defence physical="295" magical="216" />
-			<speed>
-				<walk ground="50" />
-				<run ground="120" />
-			</speed>
-		</stats>
-		<status attackable="false" canMove="false" talkable="false" targetable="false" />
-		<ai aggroRange="0" isAggressive="false" />
-		<collision>
-			<radius normal="75" />
-			<height normal="55" />
+			<radius normal="10" />
+			<height normal="80" />
 		</collision>
 	</npc>
 	<npc id="900446" displayId="148" level="70" type="Folk" name="Festival Bonfire" usingServerSideName="true"> <!-- Campfire model -->
