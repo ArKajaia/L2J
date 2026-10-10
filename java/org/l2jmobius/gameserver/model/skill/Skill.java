@@ -1119,6 +1119,20 @@ public class Skill
 	 */
 	public static boolean checkForAreaOffensiveSkills(Creature caster, Creature target, Skill skill, boolean sourceInArena)
 	{
+		return checkForAreaOffensiveSkills(caster, target, skill, sourceInArena, caster);
+	}
+	
+	/**
+	 * Same as {@link #checkForAreaOffensiveSkills(Creature, Creature, Skill, boolean)}, the line of sight checked from where the area is (a totem, an effect point) instead of the caster.
+	 * @param caster
+	 * @param target
+	 * @param skill
+	 * @param sourceInArena
+	 * @param origin where the line of sight is checked from
+	 * @return
+	 */
+	public static boolean checkForAreaOffensiveSkills(Creature caster, Creature target, Skill skill, boolean sourceInArena, WorldObject origin)
+	{
 		if ((target == null) || target.isDead() || (target == caster))
 		{
 			return false;
@@ -1248,7 +1262,7 @@ public class Skill
 			}
 		}
 		
-		if (!GeoEngine.getInstance().canSeeTarget(caster, target))
+		if (!GeoEngine.getInstance().canSeeTarget(origin, target))
 		{
 			return false;
 		}
