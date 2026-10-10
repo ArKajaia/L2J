@@ -105,14 +105,7 @@ final class TownLifeTown
 		900438,
 		900439
 	};
-	private static final int[] BANNERS =
-	{
-		900441,
-		900442,
-		900443,
-		900444,
-		900445
-	};
+	private static final int BANNER = 900441;
 	private static final int BONFIRE = 900446;
 	
 	/** Fireworks over the square at dusk on festival day: Firework and Large Firework. */
@@ -880,7 +873,7 @@ final class TownLifeTown
 		{
 			for (int i = 0; i < bannerSpots.size(); i++)
 			{
-				final TownLifeResident banner = add(Kind.DECORATION, BANNERS[i % BANNERS.length], false);
+				final TownLifeResident banner = add(Kind.DECORATION, BANNER, false);
 				banner.workA = bannerSpots.get(i);
 				banner.workHeading = bannerSpots.get(i).getHeading();
 			}
