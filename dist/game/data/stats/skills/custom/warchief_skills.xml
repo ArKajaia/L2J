@@ -12,7 +12,8 @@
 	seconds. Monsters and the Warchief's enemies can break it. One of each kind, 3 at most: a
 	4th replaces the oldest. Totems of Flames don't count: up to 3 of them on top. It falls
 	when its Warchief dies, leaves or goes 2500 away. A player's totem planted without Ctrl
-	only hits monsters; with Ctrl it also hits players and fake players and flags the Warchief.
+	hits monsters and the players and fake players with PvP status; with Ctrl it also hits
+	white ones. A hit on a player or fake player flags the Warchief.
 	  27545 Totem of Blood        party in range: 27546 echo, part of the damage dealt comes
 	                              back as HP.
 	  27547 Totem of the Horde    monsters in range fighting the party turn on the totem.

@@ -57,7 +57,7 @@ import org.l2jmobius.gameserver.network.serverpackets.SkillCoolTime;
  * </ul>
  * One totem of each kind, up to {@link OraclesWarchiefsConfig#TOTEM_MAX_COUNT}: another one replaces the oldest. Totems of Flames don't count: up to {@link OraclesWarchiefsConfig#FLAME_TOTEM_MAX_COUNT} of them, another one replaces the oldest of them. The Great Totem of the
  * Horde-Father (the Doomcryer finale) pulses Blood, Horde and Frost-Teeth farther, and doesn't count.<br>
- * A player's totem planted without Ctrl only hits monsters; planted with Ctrl it also hits the players and fake players around, and flags its Warchief (see {@link AreaTargets#isTotemEnemy}).<br>
+ * A player's totem planted without Ctrl hits monsters and the players and fake players with PvP status; planted with Ctrl it also hits the white ones. A hit on a player or fake player flags its Warchief (see {@link AreaTargets#isTotemEnemy}).<br>
  * A totem falls when its time is up, when it is broken, or when its Warchief dies, leaves or goes too far.
  * @author Mobius
  */
@@ -128,7 +128,7 @@ public class Totems
 	 * @param npcId its NPC template
 	 * @param skillLevel the level of the skill that planted it
 	 * @param great {@code true} for the Great Totem of the Horde-Father
-	 * @param forced {@code true} if planted with Ctrl held: it also hits the players and fake players around
+	 * @param forced {@code true} if planted with Ctrl held: it also hits the white players and fake players around
 	 * @return the totem, {@code null} if it couldn't be planted
 	 */
 	public static Totem plant(Creature owner, Set<Kind> kinds, int npcId, int skillLevel, boolean great, boolean forced)
@@ -466,7 +466,7 @@ public class Totems
 	}
 
 	/**
-	 * Shatter: every totem of the Warchief pulses one last time and explodes. The explosions hit the players and fake players around only if Shatter is cast with Ctrl held, or the totem was planted so.
+	 * Shatter: every totem of the Warchief pulses one last time and explodes. The explosions hit white players and fake players only if Shatter is cast with Ctrl held, or the totem was planted so.
 	 * @param owner the Warchief
 	 * @param skill Shatter (its power is the explosion's)
 	 * @param forced {@code true} if Shatter is cast with Ctrl held

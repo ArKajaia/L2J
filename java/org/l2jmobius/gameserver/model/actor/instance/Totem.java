@@ -62,7 +62,7 @@ public class Totem extends Npc
 	 * @param lifetime how long it stands, in milliseconds
 	 * @param great {@code true} for the Great Totem of the Horde-Father
 	 * @param skillLevel the level of the skill that planted it (the level of its echoes)
-	 * @param forced {@code true} if it was planted with Ctrl held: its pulses also reach the players and fake players around, see {@link Totems}
+	 * @param forced {@code true} if it was planted with Ctrl held: its pulses also reach the white players and fake players around, see {@link Totems}
 	 */
 	public Totem(NpcTemplate template, Creature owner, Set<Totems.Kind> kinds, int range, long lifetime, boolean great, int skillLevel, boolean forced)
 	{
@@ -218,7 +218,7 @@ public class Totem extends Npc
 	}
 
 	/**
-	 * @return {@code true} if it was planted with Ctrl held (its pulses also reach players and fake players)
+	 * @return {@code true} if it was planted with Ctrl held (its pulses also reach white players and fake players)
 	 */
 	public boolean isForced()
 	{
