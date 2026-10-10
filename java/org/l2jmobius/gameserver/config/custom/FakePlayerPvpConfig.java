@@ -82,6 +82,9 @@ public class FakePlayerPvpConfig
 	public static int PASSIVE_TREE_SUBCLASS_MIN_LEVEL;
 	public static int PASSIVE_TREE_SUBCLASS_CHANCE_MIN;
 	public static int PASSIVE_TREE_SUBCLASS_CHANCE_MAX;
+	/** From this level a fake player that came to a PvP spot took every subclass with {@link #PASSIVE_TREE_SPOT_SUBCLASS_CHANCE} % chance. */
+	public static int PASSIVE_TREE_SPOT_SUBCLASS_LEVEL;
+	public static int PASSIVE_TREE_SPOT_SUBCLASS_CHANCE;
 	public static int PASSIVE_TREE_VARIANTS;
 	/** Points spent at which a fake player heads for its next keystone, one entry per keystone. */
 	public static int[] PASSIVE_TREE_KEYSTONE_POINTS;
@@ -255,7 +258,9 @@ public class FakePlayerPvpConfig
 		PASSIVE_TREE_SUBCLASS_MIN_LEVEL = Math.max(1, config.getInt("FakePvpPassiveTreeSubclassMinLevel", 40));
 		PASSIVE_TREE_SUBCLASS_CHANCE_MIN = Math.max(0, Math.min(100, config.getInt("FakePvpPassiveTreeSubclassChanceMin", 10)));
 		PASSIVE_TREE_SUBCLASS_CHANCE_MAX = Math.max(0, Math.min(100, config.getInt("FakePvpPassiveTreeSubclassChanceMax", 75)));
-		PASSIVE_TREE_VARIANTS = Math.max(1, Math.min(64, config.getInt("FakePvpPassiveTreeVariants", 8)));
+		PASSIVE_TREE_SPOT_SUBCLASS_LEVEL = Math.max(1, config.getInt("FakePvpPassiveTreeSpotSubclassLevel", 76));
+		PASSIVE_TREE_SPOT_SUBCLASS_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpPassiveTreeSpotSubclassChance", 80)));
+		PASSIVE_TREE_VARIANTS = Math.max(1, Math.min(64, config.getInt("FakePvpPassiveTreeVariants", 16)));
 		final List<Integer> keystonePoints = new ArrayList<>();
 		for (String entry : config.getString("FakePvpKeystonePoints", "30,90").split(","))
 		{

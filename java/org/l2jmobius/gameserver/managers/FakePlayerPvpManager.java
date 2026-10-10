@@ -1567,7 +1567,7 @@ public class FakePlayerPvpManager
 		final String name = generateName();
 		try
 		{
-			final NpcTemplate template = FakePlayerPvpFactory.createTemplate(build, level, _nextNpcId.getAndIncrement(), name, null, "", null, elite);
+			final NpcTemplate template = FakePlayerPvpFactory.createTemplate(build, level, _nextNpcId.getAndIncrement(), name, null, "", null, elite, true);
 			if (template == null)
 			{
 				releaseName(name);

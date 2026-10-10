@@ -33,6 +33,7 @@ public class FakePlayerPvpPassives
 	private final int _nodeCount;
 	private final int _points;
 	private final String _sector;
+	private final String _style;
 	private final List<Integer> _nodeIds;
 	private final PassiveStatBonusCache _bonus;
 	private double _hpShare = 1;
@@ -42,15 +43,17 @@ public class FakePlayerPvpPassives
 	 * @param nodeCount the nodes it allocated
 	 * @param points the points those nodes cost
 	 * @param sector the sector of its starting point
+	 * @param style what its tree leans on (crit, tempo, bruiser...)
 	 * @param nodeIds its nodes, in the order they were taken (the START node first)
 	 * @param bonus the summed effects of its nodes
 	 */
-	public FakePlayerPvpPassives(int subclasses, int nodeCount, int points, String sector, List<Integer> nodeIds, PassiveStatBonusCache bonus)
+	public FakePlayerPvpPassives(int subclasses, int nodeCount, int points, String sector, String style, List<Integer> nodeIds, PassiveStatBonusCache bonus)
 	{
 		_subclasses = subclasses;
 		_nodeCount = nodeCount;
 		_points = points;
 		_sector = sector;
+		_style = style;
 		_nodeIds = List.copyOf(nodeIds);
 		_bonus = bonus;
 	}
@@ -73,6 +76,11 @@ public class FakePlayerPvpPassives
 	public String getSector()
 	{
 		return _sector;
+	}
+	
+	public String getStyle()
+	{
+		return _style;
 	}
 	
 	/**
@@ -104,6 +112,6 @@ public class FakePlayerPvpPassives
 	@Override
 	public String toString()
 	{
-		return _nodeCount + " nodes / " + _points + " points (" + _subclasses + " subclasses, " + _sector + ")";
+		return _nodeCount + " nodes / " + _points + " points (" + _subclasses + " subclasses, " + _sector + ", " + _style + ")";
 	}
 }

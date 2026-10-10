@@ -204,6 +204,24 @@ public class FakePlayerPvpFactory
 	 */
 	public static NpcTemplate createTemplate(FakePlayerPvpBuild build, int level, int npcId, String name, PlayerClass forcedClass, String title, Looks looks, boolean elite)
 	{
+		return createTemplate(build, level, npcId, name, forcedClass, title, looks, elite, elite);
+	}
+	
+	/**
+	 * @param build the build
+	 * @param level the level
+	 * @param npcId a free npc id for the template
+	 * @param name the character name
+	 * @param forcedClass a class of the build's class line to use instead of the one its level gives ({@code null} for the level's class)
+	 * @param title the character title
+	 * @param looks how it looks, {@code null} for random looks
+	 * @param elite {@code true} for one of the stronger players of the PvP spots (see {@link PvpSpotManager}): the best gear of its level, enchanted above the usual roll (PvpSpotEliteEnchantBonus), the most dye points, every subclass in its passive tree and a
+	 *            skilled, aggressive temper; it never runs away
+	 * @param pvpSpot {@code true} for one that comes to a PvP spot to fight: at a high level it most often took every subclass (FakePvpPassiveTreeSpotSubclass* in FakePlayerPvp.ini)
+	 * @return a new template with its {@link FakePlayerPvpProfile} attached, or {@code null} if the build can't be made at this level
+	 */
+	public static NpcTemplate createTemplate(FakePlayerPvpBuild build, int level, int npcId, String name, PlayerClass forcedClass, String title, Looks looks, boolean elite, boolean pvpSpot)
+	{
 		final PlayerClass playerClass = forcedClass != null ? forcedClass : build.getPlayerClass(level);
 		final PlayerTemplate classTemplate = PlayerTemplateData.getInstance().getTemplate(playerClass);
 		if (classTemplate == null)
@@ -395,7 +413,7 @@ public class FakePlayerPvpFactory
 		
 		// Its passive tree, like a player that spent its points (see FakePlayerPvpPassiveTree), grown for its gear: a bonus that needs heavy armour or a shield only counts if it wears one. Max HP % bonuses only grow the HP part of an HP pool that holds the CP too.
 		final int treeWornMask = armorWornMask | (weapon != null ? weapon.getItemMask() : 0) | (shield != null ? shield.getItemMask() : 0);
-		final FakePlayerPvpPassives passives = FakePlayerPvpPassiveTree.isEnabled() ? FakePlayerPvpPassiveTree.getInstance().roll(build, playerClass, level, elite, chest != null ? chest.getItemMask() : 0, treeWornMask) : null;
+		final FakePlayerPvpPassives passives = FakePlayerPvpPassiveTree.isEnabled() ? FakePlayerPvpPassiveTree.getInstance().roll(build, playerClass, level, elite, pvpSpot, chest != null ? chest.getItemMask() : 0, treeWornMask) : null;
 		if ((passives != null) && (hp > 0))
 		{
 			passives.setHpShare(classTemplate.getBaseHpMax(level) / hp);
