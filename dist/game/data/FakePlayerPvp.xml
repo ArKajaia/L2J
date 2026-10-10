@@ -35,6 +35,10 @@
                polearm/buffs replace the build's (the others are kept) and weight is its own chance to be picked.
      Each fake player's weapon, armor and jewels are also picked for a level a bit below its own (each on
      its own, see FakePvpGearLevelDrop* in config/Custom/FakePlayerPvp.ini), like players behind on gear.
+	     keystones - the passive tree keystones it heads for, in order (the first one in reach first), instead of the
+	               FakePvpKeystones.* list of its role (config/Custom/FakePlayerPvp.ini), e.g. "Battlemage;Unending Fury".
+	     hybrid  - true for a melee build whose M. Atk. counts too (the Battlemage keystone adds part of it to its P. Atk.):
+	               its passive tree wants the magic stats as much as the physical ones.
 	     skillFighter - true for a class that deals its damage with skills (Gladiator/Duelist, Tyrant,
 	               daggers): it uses a skill most of the time (FakePvpSkillChance). The others (tanks,
 	               archers, most warriors) fight with their normal attack and use a skill now and then
@@ -172,7 +176,7 @@
 		<tier minLevel="84" chest="13434" legs="13444" head="13139" gloves="13445" feet="13446" weight="3" /> <!-- Vesper Tunic -->
 		<tier minLevel="84" chest="13437" legs="13454" head="13142" gloves="13455" feet="13456" weight="2" /> <!-- Vesper Noble Tunic, opens the cloak slot -->
 	</kit>
-	<kit name="LIGHT_MAGE"> <!-- Kamael mages: Kamael wear light armor only (no heavy armor, no robes), and the client has no Kamael model for the others. -->
+	<kit name="LIGHT_MAGE"> <!-- Mages in light armor: Kamael mages (Kamael wear light armor only, and the client has no Kamael model for the others) and the Battle Oracle. -->
 		<tier minLevel="1" chest="23" legs="2386" head="44" gloves="51" feet="39" /> <!-- Wooden -->
 		<tier minLevel="20" chest="395" legs="417" head="2411" gloves="2450" feet="2424" /> <!-- Manticore Skin -->
 		<tier minLevel="40" chest="398" legs="418" head="2414" gloves="2455" feet="2431" /> <!-- Plated Leather -->
@@ -473,6 +477,13 @@
 		<tier minLevel="61">1388,3;310,1;269,1;267,1;1259,4;1461,1</tier>
 		<tier minLevel="76">1363,1;364,1;915,1;764,1;1542,1</tier>
 		<tier minLevel="80">1499,1;1501,1;1502,1;1519,1;1504,1</tier>
+	</buffs>
+	<buffs name="BATTLEMAGE"> <!-- A mage that fights with its weapon (Battlemage keystone): the fighter buffs, with Empower and Dance of the Mystic for the M. Atk. that goes into its P. Atk. -->
+		<tier minLevel="1">1068,3;1040,3;1204,2;1086,2;1059,3;1045,6;1048,6;1035,4;1036,2</tier> <!-- Might, Shield, Wind Walk, Haste, Empower, Bless the Body/Soul, Mental Shield, Magic Barrier -->
+		<tier minLevel="40">1077,3;1242,3;1240,3;1268,4;1062,2;271,1;273,1;264,1;268,1;304,1</tier> <!-- Focus, Death Whisper, Guidance, Vampiric Rage, Berserker Spirit, Dance of the Warrior/Mystic, Song of Earth/Wind/Vitality -->
+		<tier minLevel="61">1388,3;310,1;269,1;267,1;1259,4;1461,1</tier> <!-- Greater Might, Dance of the Vampire, Song of Hunter/Warding, Resist Shock, Chant of Protection -->
+		<tier minLevel="76">1363,1;364,1;915,1;764,1;1542,1</tier> <!-- Chant of Victory, Song of Champion, Dance of Berserker, Song of Wind Storm, Counter Critical -->
+		<tier minLevel="80">1499,1;1501,1;1502,1;1504,1</tier> <!-- Improved Combat/Condition/Critical Attack/Movement -->
 	</buffs>
 	<buffs name="MAGE">
 		<tier minLevel="1">1040,3;1204,2;1045,6;1048,6;1035,4;1036,2;1059,3;1085,3;1078,6</tier> <!-- Shield, Wind Walk, Bless the Body/Soul, Mental Shield, Magic Barrier, Empower, Acumen, Concentration -->
@@ -1177,6 +1188,74 @@
 		<variant name="War Dancer Light" armor="LIGHT_FIGHTER" weight="1" />
 	</build>
 
+	<!-- Oracles and Totem Warchiefs who hunt and fight on their own (see README "Oracles and Totem Warchiefs" and
+	     config/Custom/OraclesWarchiefs.ini; the Hierophant and Doomcryer below are their party supports).
+	     Their prophecies, totems and cash-ins are only cast when they pay off (ai/FakePlayerPvpOraclesWarchiefs.java):
+	     - Prophecy of Doom is never cast again on a target before it comes true (it would start over), unless Inevitable
+	       Doom stacks it (up to DoomMaxStacks); Spell Turning only on a target that is casting.
+	     - Prophecy of Salvation on itself while it takes damage, Prophecy of Reversal while it is still healthy in a PvP
+	       (a save point, never once it is low), Fulfilment on a Doom of 3 stacks or more, a target to finish, a Ruin on a
+	       player or a Foresight about to run out, Unwritten and the Great Totem on two enemies or more (or when hurt).
+	     - Totems where they work: Flames by its target (it walks up to plant it), Frost-Teeth on an enemy coming close,
+	       Blood while it is hurt or has a party around, the Horde on a pack of monsters, Ancestors on a dead party member.
+	       With every slot taken a new kind waits for Shatter, which goes off when the totems are about to fall, are being
+	       broken, the target is low or the explosions catch a crowd. Stepping back from melee it runs around its Totem of
+	       Flames (or Frost-Teeth), and against a player on it it swaps places with its farthest totem (Spirit Walk).
+	     keystones - the keystones its passive tree may head for (like FakePvpKeystones.* in config/Custom/FakePlayerPvp.ini),
+	                 instead of its role's.
+	     hybrid    - a melee build whose M. Atk. counts too (Battlemage adds part of it to its P. Atk.): its passive tree
+	                 wants the magic stats as much as the physical ones. -->
+	<build name="Doom Oracle" classId="98" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="1"> <!-- Prophet line: Prophecy of Doom is its damage -->
+		<attack>27530,1398,1177,1184</attack> <!-- Prophecy of Doom (stacked and spread by Inevitable Doom), Mana Burn, Wind Strike, Ice Bolt -->
+		<debuff>27533,1201</debuff> <!-- Prophecy of Ruin, Dryad Root (a Doom on a target that stays put deals x1.5) -->
+		<buff>27538,27536,27532,27540</buff> <!-- Fulfilment, Prophecy of Reversal and Salvation on itself, Unwritten -->
+		<heal>27532,1015</heal> <!-- Prophecy of Salvation, Battle Heal -->
+		<emergency>27540,27532,1015</emergency> <!-- Unwritten, Prophecy of Salvation, Battle Heal -->
+		<toggle>27539</toggle> <!-- Glimpse -->
+		<peel>1201,1272</peel> <!-- Dryad Root, Word of Fear -->
+		<combo name="Ruin and doom" pvp="true">
+			<step skill="27533" /> <!-- Prophecy of Ruin: a stun if the player casts meanwhile, a silence if not -->
+			<step skill="27530" /> <!-- Prophecy of Doom -->
+		</combo>
+		<combo name="Rooted doom" pvp="true" chance="50">
+			<step skill="1201" /> <!-- Dryad Root: the player can't run from where the Doom finds it -->
+			<step skill="27530" /> <!-- Prophecy of Doom, x1.5 -->
+		</combo>
+		<variant name="Doom Oracle Tallum" armor="ROBE_TALLUM" weight="1" />
+	</build>
+	<build name="Battle Oracle" classId="98" role="FIGHTER" weapon="MAGE_BLUNT" armor="LIGHT_MAGE" buffs="BATTLEMAGE" keystones="Battlemage;Unending Fury;Relentless Assault" hybrid="true" weight="1"> <!-- Prophet line, the battlemage path: Battlemage adds 40% of its M. Atk. to its P. Atk., it fights with its mace and its prophecies hold the target down -->
+		<attack>27530</attack> <!-- Prophecy of Doom: in melee the target stays put, x1.5 -->
+		<debuff>27533,1412</debuff> <!-- Prophecy of Ruin, Spell Turning (on a player that is casting) -->
+		<buff>27538,27536,27532,27540</buff> <!-- Fulfilment, Prophecy of Reversal and Salvation on itself, Unwritten -->
+		<heal>27532,1015</heal> <!-- Prophecy of Salvation, Battle Heal -->
+		<emergency>27540,27532,1015</emergency> <!-- Unwritten, Prophecy of Salvation, Battle Heal -->
+		<toggle>27539</toggle> <!-- Glimpse -->
+		<rush>1201</rush> <!-- Dryad Root on a player that runs from its mace -->
+		<combo name="Ruin" pvp="true">
+			<step skill="27533" /> <!-- Prophecy of Ruin: a stun if the player casts meanwhile, a silence if not -->
+			<step skill="27530" optional="true" /> <!-- Prophecy of Doom -->
+		</combo>
+		<combo name="Turn the spell" pvp="true">
+			<step skill="1412" /> <!-- Spell Turning, while the player casts -->
+			<step skill="27533" optional="true" /> <!-- Prophecy of Ruin: it will cast again, and be stunned -->
+		</combo>
+		<variant name="Battle Oracle Legacy" armor="LIGHT_LEGACY" weight="1" />
+	</build>
+	<build name="Flame Warchief" classId="116" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="2"> <!-- Warcryer line: the Totem of Flames and Steal Essence are its damage -->
+		<attack>1245,1090,1107</attack> <!-- Steal Essence, Life Drain, Frost Flame (Orc Shaman) -->
+		<debuff>1244|1100</debuff> <!-- Freezing Flame / Chill Flame -->
+		<buff>27559,27548,27545,27547,27550,27553,27558</buff> <!-- Totems of Flames, Frost-Teeth, Blood, the Horde and Ancestors where they work, Shatter, Great Totem of the Horde-Father -->
+		<emergency>27554,27561,27558</emergency> <!-- Spirit Walk away from a player on it, Spirit Trance, Great Totem -->
+		<toggle>27551</toggle> <!-- War Drums: its hits bring the totems back sooner -->
+		<peel>260|100,1097</peel> <!-- Hammer Crush / Stun Attack on what reached it, Dreaming Spirit -->
+		<combo name="Burn them down" pvp="true">
+			<step skill="1244|1100" optional="true" /> <!-- Freezing Flame / Chill Flame -->
+			<step skill="1245" /> <!-- Steal Essence -->
+			<step skill="1245" />
+		</combo>
+		<variant name="Flame Warchief Tallum" armor="ROBE_TALLUM" weight="1" />
+	</build>
+
 	<!-- Support: healers, buffers, songs and dances. weight="0": they don't roam on their own, they come when a player
 	     looks for one ("lf bishop" in chat) or travel with a fake party (see config/Custom/FakeParty.ini).
 	     support="true": in a party they look after the other members first (heals, resurrection, recharge, buffs)
@@ -1203,9 +1282,9 @@
 	<build name="Hierophant" classId="98" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="0" support="true"> <!-- Prophet line: an Oracle, it casts prophecies instead of buffs (config/Custom/OraclesWarchiefs.ini) -->
 		<attack>27530,1177,1184</attack> <!-- Prophecy of Doom, Wind Strike, Ice Bolt -->
 		<debuff>27533,1272</debuff> <!-- Prophecy of Ruin, Word of Fear -->
-		<buff>27538</buff> <!-- Fulfilment, once 5 prophecies came true -->
-		<heal>1015</heal>
-		<emergency>27540,27536</emergency> <!-- Unwritten, Prophecy of Reversal -->
+		<buff>27538,27536,27532</buff> <!-- Fulfilment, Prophecy of Reversal and Salvation on itself (only when they pay off, see the Oracles above) -->
+		<heal>27532,1015</heal> <!-- Prophecy of Salvation, Battle Heal -->
+		<emergency>27540,1015</emergency> <!-- Unwritten, Battle Heal -->
 		<toggle>336,27539</toggle> <!-- Arcane Wisdom, Glimpse -->
 		<peel>1201,1272</peel>
 		<partyHeal>27532,1011,1015</partyHeal> <!-- Prophecy of Salvation, Heal, Battle Heal -->
@@ -1244,7 +1323,7 @@
 	<build name="Doomcryer" classId="116" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="0" support="true"> <!-- Warcryer line: a Totem Warchief, it plants totems instead of chanting (config/Custom/OraclesWarchiefs.ini) -->
 		<attack>1245,1244,1090,1100</attack> <!-- Steal Essence, Freezing Flame, Life Drain, Chill Flame -->
 		<debuff>1097,1092</debuff> <!-- Dreaming Spirit, Fear -->
-		<buff>27559,27548,27545,27547,27550,27553</buff> <!-- Totems of Flames, Frost-Teeth, Blood, the Horde and Ancestors while it fights, Shatter once 3 are up -->
+		<buff>27559,27548,27545,27547,27550,27553</buff> <!-- Totems of Flames, Frost-Teeth, Blood, the Horde and Ancestors where they work, Shatter (see the Warchief above) -->
 		<emergency>27558,27561,27554</emergency> <!-- Great Totem of the Horde-Father, Spirit Trance, Spirit Walk -->
 		<toggle>336,27551</toggle> <!-- Arcane Wisdom, War Drums -->
 		<peel>260,100,1097,1092</peel> <!-- Hammer Crush / Stun Attack on a monster or player that reached it -->

@@ -65,6 +65,12 @@ public class Prophecies
 	/** Prophecy of Doom, and the Hierophant passive that makes it stack and spread. */
 	public static final int DOOM_SKILL_ID = 27530;
 	public static final int INEVITABLE_DOOM_SKILL_ID = 27562;
+	/** The other Oracle skills, for the fake players that play them (see FakePlayerPvpAI). */
+	public static final int SALVATION_SKILL_ID = 27532;
+	public static final int RUIN_SKILL_ID = 27533;
+	public static final int REVERSAL_SKILL_ID = 27536;
+	public static final int FULFILMENT_SKILL_ID = 27538;
+	public static final int UNWRITTEN_SKILL_ID = 27540;
 
 	public enum Kind
 	{
@@ -143,7 +149,12 @@ public class Prophecies
 
 	private static long key(Creature target, Skill skill)
 	{
-		return (((long) target.getObjectId()) << 32) | skill.getId();
+		return key(target, skill.getId());
+	}
+
+	private static long key(Creature target, int skillId)
+	{
+		return (((long) target.getObjectId()) << 32) | skillId;
 	}
 
 	/**
@@ -305,7 +316,7 @@ public class Prophecies
 	 * @param oracle the caster
 	 * @return {@code true} if it knows Inevitable Doom (Hierophant)
 	 */
-	private static boolean knowsInevitableDoom(Creature oracle)
+	public static boolean knowsInevitableDoom(Creature oracle)
 	{
 		return (oracle != null) && (oracle.getKnownSkill(INEVITABLE_DOOM_SKILL_ID) != null);
 	}
@@ -401,6 +412,56 @@ public class Prophecies
 		}
 
 		return mine.size();
+	}
+
+	/**
+	 * @param oracle the Oracle
+	 * @param target a character
+	 * @return how many times the Oracle's Prophecy of Doom is stacked on {@code target}, 0 if none of its Dooms is on it
+	 */
+	public static int getDoomStacks(Creature oracle, Creature target)
+	{
+		final Prophecy prophecy = PROPHECIES.get(key(target, DOOM_SKILL_ID));
+		return (prophecy != null) && (prophecy.oracle == oracle) ? prophecy.stacks : 0;
+	}
+
+	/**
+	 * @param oracle the Oracle
+	 * @param target a character
+	 * @return {@code true} if a Prophecy of Doom cast on {@code target} now does something: none of its Dooms is on it yet, or it knows Inevitable Doom and the Doom has room for a stack. Cast again without Inevitable Doom, a Doom starts over and never comes true.
+	 */
+	public static boolean canStackDoom(Creature oracle, Creature target)
+	{
+		final int stacks = getDoomStacks(oracle, target);
+		return (stacks == 0) || (knowsInevitableDoom(oracle) && (stacks < OraclesWarchiefsConfig.DOOM_MAX_STACKS));
+	}
+
+	/**
+	 * @param oracle the Oracle
+	 * @return how many of its prophecies haven't come true yet, on anyone
+	 */
+	public static int countPending(Creature oracle)
+	{
+		int count = 0;
+		for (Prophecy prophecy : PROPHECIES.values())
+		{
+			if (prophecy.oracle == oracle)
+			{
+				count++;
+			}
+		}
+
+		return count;
+	}
+
+	/**
+	 * @param oracle the Oracle
+	 * @return seconds its Foresight still lasts, 0 for none
+	 */
+	public static int getForesightTime(Creature oracle)
+	{
+		final BuffInfo info = oracle.getEffectList().getBuffInfoBySkillId(FORESIGHT_SKILL_ID);
+		return info == null ? 0 : info.getTime();
 	}
 
 	/**

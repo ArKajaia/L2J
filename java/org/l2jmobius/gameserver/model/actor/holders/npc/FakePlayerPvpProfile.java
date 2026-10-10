@@ -177,6 +177,26 @@ public class FakePlayerPvpProfile
 	}
 	
 	/**
+	 * @param skillId a skill id
+	 * @return the skill of that id in any of its lists, {@code null} if it doesn't use it (or hasn't learned it yet)
+	 */
+	public Skill getListedSkill(int skillId)
+	{
+		for (List<Skill> skills : _skills.values())
+		{
+			for (Skill skill : skills)
+			{
+				if (skill.getId() == skillId)
+				{
+					return skill;
+				}
+			}
+		}
+		
+		return null;
+	}
+	
+	/**
 	 * @return {@code true} while it is in a combat transformation (Final Form)
 	 */
 	public boolean isTransformed()

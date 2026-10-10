@@ -919,6 +919,12 @@ public class PassiveTreeManager
 		{
 			npc.addStatFunc(new KeystoneFunc(Stat.POWER_ATTACK_SPEED, FAKE_GETTER_ORDER + 1, (creature, target, value) -> value * PassiveMechanics.relentlessMultiplier(creature)));
 		}
+		final double battlemage = bonus.get(PassiveMechanics.BATTLEMAGE);
+		if (battlemage > 0)
+		{
+			// Battlemage: part of M.Atk is added to P.Atk, after the multipliers, like Player#getPAtk.
+			npc.addStatFunc(new KeystoneFunc(Stat.POWER_ATTACK, FAKE_GETTER_ORDER + 2, (creature, target, value) -> value + ((creature.getMAtk(target, null) * battlemage) / 100.0)));
+		}
 		final double pdefAsMdef = bonus.get(PassiveMechanics.PDEF_AS_MDEF);
 		if (pdefAsMdef > 0)
 		{
@@ -941,7 +947,7 @@ public class PassiveTreeManager
 	}
 	
 	/**
-	 * A roaming fake player's keystone that Player works into a getter override (Unending Fury, Relentless Assault, Arcane Plating), worked out each time the stat is read.
+	 * A roaming fake player's keystone that Player works into a getter override (Unending Fury, Relentless Assault, Arcane Plating, Battlemage), worked out each time the stat is read.
 	 */
 	private static class KeystoneFunc extends AbstractFunction
 	{

@@ -125,6 +125,8 @@
 						<xs:attribute type="xs:int" name="weight" />
 						<xs:attribute type="xs:boolean" name="skillFighter" />
 						<xs:attribute type="xs:boolean" name="support" />
+						<xs:attribute type="xs:string" name="keystones" />
+						<xs:attribute type="xs:boolean" name="hybrid" />
 					</xs:complexType>
 				</xs:element>
 			</xs:sequence>
