@@ -53,9 +53,11 @@ import org.l2jmobius.gameserver.network.serverpackets.SkillCoolTime;
  * <li>Horde: monsters around that fight the party turn on the totem.</li>
  * <li>Frost-Teeth: enemies around get a hex that slows their runs and attacks.</li>
  * <li>Ancestors: the first party member that lies dead around it gets up, and the totem is spent.</li>
- * <li>Flames: every pulse burns the enemies close to it with magic damage.</li>
+ * <li>Flames: every pulse (every {@link OraclesWarchiefsConfig#FLAME_TOTEM_PULSE} milliseconds) burns the enemies close to it with magic damage.</li>
  * </ul>
- * One totem of each kind, up to {@link OraclesWarchiefsConfig#TOTEM_MAX_COUNT}: another one replaces the oldest. The Great Totem of the Horde-Father (the Doomcryer finale) pulses Blood, Horde and Frost-Teeth farther, and doesn't count.<br>
+ * One totem of each kind, up to {@link OraclesWarchiefsConfig#TOTEM_MAX_COUNT}: another one replaces the oldest. Totems of Flames don't count: up to {@link OraclesWarchiefsConfig#FLAME_TOTEM_MAX_COUNT} of them, another one replaces the oldest of them. The Great Totem of the
+ * Horde-Father (the Doomcryer finale) pulses Blood, Horde and Frost-Teeth farther, and doesn't count.<br>
+ * A player's totem planted without Ctrl hits monsters and the players and fake players with PvP status; planted with Ctrl it also hits the white ones. A hit on a player or fake player flags its Warchief (see {@link AreaTargets#isTotemEnemy}).<br>
  * A totem falls when its time is up, when it is broken, or when its Warchief dies, leaves or goes too far.
  * @author Mobius
  */
@@ -126,9 +128,10 @@ public class Totems
 	 * @param npcId its NPC template
 	 * @param skillLevel the level of the skill that planted it
 	 * @param great {@code true} for the Great Totem of the Horde-Father
+	 * @param forced {@code true} if planted with Ctrl held: it also hits the white players and fake players around
 	 * @return the totem, {@code null} if it couldn't be planted
 	 */
-	public static Totem plant(Creature owner, Set<Kind> kinds, int npcId, int skillLevel, boolean great)
+	public static Totem plant(Creature owner, Set<Kind> kinds, int npcId, int skillLevel, boolean great, boolean forced)
 	{
 		final NpcTemplate template = NpcData.getInstance().getTemplate(npcId);
 		if ((template == null) || owner.isDead())
@@ -147,6 +150,16 @@ public class Totems
 				}
 			}
 		}
+		else if (isFlames(kinds))
+		{
+			// Several Totems of Flames, besides the other totems: the oldest falls.
+			List<Totem> flames = getFlameTotems(owner);
+			while (flames.size() >= OraclesWarchiefsConfig.FLAME_TOTEM_MAX_COUNT)
+			{
+				flames.get(0).unsummon();
+				flames = getFlameTotems(owner);
+			}
+		}
 		else
 		{
 			// One of each kind.
@@ -158,23 +171,23 @@ public class Totems
 				}
 			}
 
-			// Up to the most a Warchief can have: the oldest falls.
-			List<Totem> small = getSmallTotems(owner);
+			// Up to the most a Warchief can have (the Totems of Flames aside): the oldest falls.
+			List<Totem> small = getCountedTotems(owner);
 			while (small.size() >= OraclesWarchiefsConfig.TOTEM_MAX_COUNT)
 			{
 				small.get(0).unsummon();
-				small = getSmallTotems(owner);
+				small = getCountedTotems(owner);
 			}
 		}
 
 		final int range = great ? OraclesWarchiefsConfig.GREAT_TOTEM_RANGE : OraclesWarchiefsConfig.TOTEM_RANGE;
 		final int lifetime = great ? OraclesWarchiefsConfig.GREAT_TOTEM_LIFETIME : OraclesWarchiefsConfig.TOTEM_LIFETIME;
-		final Totem totem = new Totem(template, owner, kinds, range, lifetime, great, skillLevel);
+		final Totem totem = new Totem(template, owner, kinds, range, lifetime, great, skillLevel, forced);
 		totem.setHeading(owner.getHeading());
 		totem.fullRestore();
 		totem.spawnMe(owner.getX(), owner.getY(), owner.getZ());
 		TOTEMS.computeIfAbsent(owner.getObjectId(), id -> new CopyOnWriteArrayList<>()).add(totem);
-		totem.startPulse(OraclesWarchiefsConfig.TOTEM_PULSE);
+		totem.startPulse(!great && isFlames(kinds) ? OraclesWarchiefsConfig.FLAME_TOTEM_PULSE : OraclesWarchiefsConfig.TOTEM_PULSE);
 		updateCircle(owner);
 		ThreadPool.execute(() -> pulse(totem));
 		return totem;
@@ -223,6 +236,51 @@ public class Totems
 		}
 
 		return result;
+	}
+
+	/**
+	 * @param owner the Warchief
+	 * @return its Totems of Flames, oldest first
+	 */
+	public static List<Totem> getFlameTotems(Creature owner)
+	{
+		final List<Totem> result = new ArrayList<>();
+		for (Totem totem : getTotems(owner))
+		{
+			if (!totem.isGreat() && isFlames(totem.getKinds()))
+			{
+				result.add(totem);
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * @param owner the Warchief
+	 * @return its small totems that count towards {@link OraclesWarchiefsConfig#TOTEM_MAX_COUNT} (the Great Totem and the Totems of Flames aside), oldest first
+	 */
+	public static List<Totem> getCountedTotems(Creature owner)
+	{
+		final List<Totem> result = new ArrayList<>();
+		for (Totem totem : getTotems(owner))
+		{
+			if (!totem.isGreat() && !isFlames(totem.getKinds()))
+			{
+				result.add(totem);
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * @param kinds what a totem pulses
+	 * @return {@code true} for a Totem of Flames
+	 */
+	public static boolean isFlames(Set<Kind> kinds)
+	{
+		return (kinds.size() == 1) && kinds.contains(Kind.FLAME);
 	}
 
 	/**
@@ -299,8 +357,9 @@ public class Totems
 			final Skill hex = SkillData.getInstance().getSkill(FROST_ECHO_ID, totem.getSkillLevel());
 			if (hex != null)
 			{
-				for (Creature enemy : AreaTargets.getEnemies(owner, totem, range, hex))
+				for (Creature enemy : AreaTargets.getTotemEnemies(owner, totem, range, hex, totem.isForced()))
 				{
+					AreaTargets.flagFor(owner, enemy);
 					AreaTargets.keepEcho(owner, enemy, hex);
 				}
 			}
@@ -376,7 +435,7 @@ public class Totems
 	 */
 	private static void burn(Creature owner, Totem totem, Skill burn)
 	{
-		final List<Creature> enemies = AreaTargets.getEnemies(owner, totem, OraclesWarchiefsConfig.FLAME_TOTEM_RANGE, burn);
+		final List<Creature> enemies = AreaTargets.getTotemEnemies(owner, totem, OraclesWarchiefsConfig.FLAME_TOTEM_RANGE, burn, totem.isForced());
 		if (enemies.isEmpty())
 		{
 			return;
@@ -388,6 +447,7 @@ public class Totems
 		{
 			// The flames strike each enemy, not the totem.
 			enemy.broadcastPacket(new MagicSkillUse(totem, enemy, FLAME_VISUAL_ID, 1, 0, 0));
+			AreaTargets.flagFor(owner, enemy);
 			final boolean mcrit = Formulas.calcMCrit(owner.getMCriticalHit(enemy, burn));
 			final byte shld = Formulas.calcShldUse(owner, enemy, burn);
 			final int damage = (int) Formulas.calcMagicDam(owner, enemy, burn, shld, false, false, mcrit);
@@ -406,12 +466,13 @@ public class Totems
 	}
 
 	/**
-	 * Shatter: every totem of the Warchief pulses one last time and explodes.
+	 * Shatter: every totem of the Warchief pulses one last time and explodes. The explosions hit white players and fake players only if Shatter is cast with Ctrl held, or the totem was planted so.
 	 * @param owner the Warchief
 	 * @param skill Shatter (its power is the explosion's)
+	 * @param forced {@code true} if Shatter is cast with Ctrl held
 	 * @return how many exploded
 	 */
-	public static int shatter(Creature owner, Skill skill)
+	public static int shatter(Creature owner, Skill skill, boolean forced)
 	{
 		final List<Totem> small = getSmallTotems(owner);
 		for (Totem totem : small)
@@ -424,8 +485,9 @@ public class Totems
 
 			totem.broadcastPacket(new MagicSkillUse(totem, totem, skill.getDisplayId(), 1, 0, 0));
 			int hits = 0;
-			for (Creature enemy : AreaTargets.getEnemies(owner, totem, OraclesWarchiefsConfig.SHATTER_RANGE, skill))
+			for (Creature enemy : AreaTargets.getTotemEnemies(owner, totem, OraclesWarchiefsConfig.SHATTER_RANGE, skill, forced || totem.isForced()))
 			{
+				AreaTargets.flagFor(owner, enemy);
 				final boolean mcrit = Formulas.calcMCrit(owner.getMCriticalHit(enemy, skill));
 				final byte shld = Formulas.calcShldUse(owner, enemy, skill);
 				final int damage = (int) Formulas.calcMagicDam(owner, enemy, skill, shld, false, false, mcrit);
@@ -449,7 +511,7 @@ public class Totems
 	}
 
 	/**
-	 * Spirit Walk: the Warchief and one of its totems (the one it targets, or the nearest) swap places.
+	 * Spirit Walk: the Warchief and one of its totems (the one it targets, or the nearest) swap places: the Warchief stands where the totem stood, and the totem where the Warchief stood.
 	 * @param owner the Warchief
 	 * @param target what it targets
 	 * @return {@code true} if they swapped
@@ -483,7 +545,7 @@ public class Totems
 		final Location from = owner.getLocation();
 		final Location to = totem.getLocation();
 		AreaTargets.flyTo(owner, to.getX(), to.getY(), to.getZ());
-		totem.teleToLocation(from);
+		totem.relocate(from.getX(), from.getY(), from.getZ(), from.getHeading());
 		return true;
 	}
 

@@ -10,7 +10,10 @@
 	TOTEMS (the PlantTotem effect, model/actor/holders/player/Totems.java): a totem NPC planted
 	at the Warchief's feet. It pulses every 2 seconds to everyone within 600 and stands 30
 	seconds. Monsters and the Warchief's enemies can break it. One of each kind, 3 at most: a
-	4th replaces the oldest. It falls when its Warchief dies, leaves or goes 2500 away.
+	4th replaces the oldest. Totems of Flames don't count: up to 3 of them on top. It falls
+	when its Warchief dies, leaves or goes 2500 away. A player's totem planted without Ctrl
+	hits monsters and the players and fake players with PvP status; with Ctrl it also hits
+	white ones. A hit on a player or fake player flags the Warchief.
 	  27545 Totem of Blood        party in range: 27546 echo, part of the damage dealt comes
 	                              back as HP.
 	  27547 Totem of the Horde    monsters in range fighting the party turn on the totem.
@@ -19,8 +22,8 @@
 	                              up with 30% HP; the totem is spent.
 	  27558 Great Totem of the Horde-Father (Doomcryer finale): Blood, Horde and Frost-Teeth at
 	                              once, within 900, for 20 seconds, can't be targeted.
-	  27559 Totem of Flames       every pulse burns up to 10 enemies within 400 with 27560's
-	                              magic damage (fire), the nearest first.
+	  27559 Totem of Flames       pulses every 1.67 seconds: burns up to 10 enemies within 400
+	                              with 27560's magic damage (fire), the nearest first.
 	27551 War Drums (stance)      P. Atk. +5%; each hit (27552 Drumbeat) takes 1 second off the
 	                              reuse of every totem skill.
 	27553 Shatter                 needs 3 totems up (27557 Totem Circle shows how many): each

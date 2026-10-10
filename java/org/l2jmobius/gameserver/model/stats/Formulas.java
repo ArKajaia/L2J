@@ -44,6 +44,7 @@ import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
 import org.l2jmobius.gameserver.model.actor.holders.player.Performers;
+import org.l2jmobius.gameserver.model.actor.holders.player.Prophecies;
 import org.l2jmobius.gameserver.model.actor.instance.Cubic;
 import org.l2jmobius.gameserver.model.actor.instance.SiegeFlag;
 import org.l2jmobius.gameserver.model.actor.instance.StaticObject;
@@ -1537,6 +1538,12 @@ public class Formulas
 			sm.addSkillName(skill);
 			attacker.sendPacket(sm);
 			return false;
+		}
+		
+		// Prophecy of Doom always lands on the target it is cast on; only its spread can be resisted.
+		if (Prophecies.isUnresistedDoom(skill))
+		{
+			return true;
 		}
 		
 		final int activateRate = skill.getActivateRate();

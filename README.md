@@ -273,21 +273,23 @@ Buff templates, buff shops, the scheme buffer and the books that teach every buf
 
 | Skill | Class | Effect |
 |---|---|---|
-| Prophecy of Doom | Prophet | Enemy, 5 s: holy magic damage, ×1.5 if the target is still within 300 of where it stood |
+| Prophecy of Doom | Prophet | Enemy, 5 s: holy magic damage, ×1.5 if the target is still within 300 of where it stood. It can't be resisted |
 | Prophecy of Salvation | Prophet | Ally, 6 s: heals back all the damage it took while the prophecy was on |
 | Prophecy of Ruin | Prophet | Enemy, 5 s: stun if the target cast a skill meanwhile, otherwise silence |
 | Prophecy of Reversal | Prophet (58) | Ally, 6 s: its HP, MP, CP and place are written down, and it comes back to them (never lower than it is): a save point before a nuke lands |
 | Fulfilment | Hierophant | Spends 5 Foresight: every prophecy of the Oracle comes true now, ×1.5 |
 | Glimpse | Hierophant | Toggle: Evasion +4; a single hit taking 30% of its HP makes the Oracle step back 300 (once a minute) |
-| Inevitable Doom | Hierophant | Passive: Prophecy of Doom's reuse is halved (4 → 2 seconds); cast again on the same target before it comes true it gains a stack (up to 5, each adds the damage once more, and the time starts again until it's full); every Doom also spreads, with its stacks and time, to the enemies within 200 of its target, who can't resist it |
+| Inevitable Doom | Hierophant | Passive: Prophecy of Doom's reuse is halved (4 → 2 seconds); cast again on the same target before it comes true it gains a stack (up to 5, each adds the damage once more, and the time starts again until it's full); every Doom also spreads, with its stacks and time, to the enemies within 400 of its target, who can resist the spread like any debuff (MEN) |
 | Unwritten | Hierophant (79) | Doom on every enemy and Salvation on every party member within 600 (5 minute reuse) |
 
-**Totem Warchiefs** (Warcryer, Doomcryer) plant **totems** at their feet that pulse every 2 seconds to everyone within 600 and stand 30 seconds. Monsters and the Warchief's enemies can break them. One of each kind and 3 at most: another one replaces the oldest. A totem falls when its Warchief dies, leaves or goes too far.
+**Totem Warchiefs** (Warcryer, Doomcryer) plant **totems** at their feet that pulse every 2 seconds to everyone within 600 and stand 30 seconds. Monsters and the Warchief's enemies can break them. One of each kind and 3 at most: another one replaces the oldest. Totems of Flames don't count: up to 3 of them on top, a 4th replaces the oldest of them. A totem falls when its Warchief dies, leaves or goes too far.
+
+A totem planted without Ctrl hits monsters and the players and fake players with PvP status (flagged, PK, clan war). Planted with Ctrl held (and Shatter cast with Ctrl), it also hits the white players and fake players around that the Warchief could force-attack. A hit on a player or fake player flags the Warchief as if it had hit them itself.
 
 | Skill | Class | Effect |
 |---|---|---|
 | Totem of Blood | Warcryer | Party near it: 4 / 5 / 6 / 8% of the damage dealt comes back as HP (12 second reuse) |
-| Totem of Flames | Warcryer (40) | Every pulse burns up to 10 enemies within 400 of it with the Warchief's fire magic, 32 / 40 / 48 / 58 power, the nearest first (18 second reuse) |
+| Totem of Flames | Warcryer (40) | Pulses every 1.67 seconds; every pulse burns up to 10 enemies within 400 of it with the Warchief's fire magic, 32 / 40 / 48 / 58 power, the nearest first. Up to 3 at once (18 second reuse) |
 | Totem of the Horde | Warcryer | Monsters near it that fight the party turn on the totem (raid bosses don't; 25 / 22 / 20 second reuse) |
 | Totem of Frost-Teeth | Warcryer | Enemies near it: Speed −15 to −22%, Atk. Spd. −7 to −12% (15 second reuse) |
 | Spirit Trance | Warcryer (52) | The Warchief turns to ice for 5 seconds while its totems fight: paralyzed, P. Def. and M. Def. +300%, 150 / 250 / 400 HP back every second (1 minute reuse) |
@@ -295,7 +297,7 @@ Buff templates, buff shops, the scheme buffer and the books that teach every buf
 | Shatter | Warcryer | With 3 totems up: each pulses once more and explodes on up to 10 enemies within 300 |
 | Totem of Ancestors | Doomcryer | The first party member lying dead near it gets up with 30% HP; the totem is spent (80 second reuse) |
 | Ancestral Bond | Doomcryer | Passive: Max HP +200, P. Def. and M. Def. +8% near its own totem |
-| Spirit Walk | Doomcryer | Swaps places with its targeted totem, or the nearest one |
+| Spirit Walk | Doomcryer | Swaps places with its targeted totem, or the nearest one: the Warchief stands where the totem stood, the totem where the Warchief stood |
 | Great Totem of the Horde-Father | Doomcryer (79) | Blood, Horde and Frost-Teeth at once within 900 for 20 seconds; it can't be targeted (3 minute reuse) |
 
 - Echoes and hexes of the totems have their own buff slots (the triggered-buff bar for the echoes), so they stack with every buff. The "Totem Circle" icon shows how many totems are up.
@@ -677,6 +679,12 @@ This program is free software, licensed under the **GNU General Public License, 
 ## Recent Updates
 
 Changes from 28 September – 10 October 2026.
+
+### Totem Warchiefs and Hierophants: fixes
+- **Totems spare white fake players without Ctrl**: a player's totem planted without Ctrl (Totem of Flames, Frost-Teeth, the Great Totem) and Shatter cast without Ctrl hit monsters and the players and fake players with PvP status (flagged, PK, clan war); before, they also hit white fake players that were fighting monsters. With Ctrl held they hit white players and fake players too. A totem hit on a player or fake player now **flags the Warchief** like a hit of its own (it didn't).
+- **Totem of Flames**: burns 20% more often (a pulse every 1.67 seconds instead of 2, `FlameTotemPulse`), and up to **3 Totems of Flames** stand at once, besides the other totems (`FlameTotemMaxCount`): a second or third one no longer knocks down the first.
+- **Spirit Walk swaps places**: the totem now shows up where the Warchief stood. It was moved there with a teleport the client didn't show, so the Warchief seemed to teleport to the totem.
+- **Prophecy of Doom always lands** on the target it is cast on; only its spread (Inevitable Doom) can be resisted, the other way round from before. The spread reaches 400 instead of 200 (`DoomSpreadRange`), so it catches the monsters of a pack.
 
 ### Fake Players: Oracles and Totem Warchiefs
 - **New roaming builds**: Doom Oracle and Battle Oracle (Hierophant line) and Flame Warchief (Doomcryer line) hunt, fight in the PvP spots, live in the towns and are the Rival Shades of the Prophet and Warcryer class transfers. See [Oracles and Totem Warchiefs](#oracles-and-totem-warchiefs).

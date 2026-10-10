@@ -35,6 +35,7 @@ import org.l2jmobius.gameserver.model.actor.enums.creature.InstanceType;
 import org.l2jmobius.gameserver.model.actor.holders.player.Totems;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
+import org.l2jmobius.gameserver.network.serverpackets.DeleteObject;
 
 /**
  * A totem planted by a Totem Warchief (Warcryer line): it stands where it was planted and pulses to everyone around every few seconds, see {@link Totems}.<br>
@@ -50,6 +51,7 @@ public class Totem extends Npc
 	private final long _expiresAt;
 	private final boolean _great;
 	private final int _skillLevel;
+	private final boolean _forced;
 	private ScheduledFuture<?> _pulseTask;
 
 	/**
@@ -60,8 +62,9 @@ public class Totem extends Npc
 	 * @param lifetime how long it stands, in milliseconds
 	 * @param great {@code true} for the Great Totem of the Horde-Father
 	 * @param skillLevel the level of the skill that planted it (the level of its echoes)
+	 * @param forced {@code true} if it was planted with Ctrl held: its pulses also reach the white players and fake players around, see {@link Totems}
 	 */
-	public Totem(NpcTemplate template, Creature owner, Set<Totems.Kind> kinds, int range, long lifetime, boolean great, int skillLevel)
+	public Totem(NpcTemplate template, Creature owner, Set<Totems.Kind> kinds, int range, long lifetime, boolean great, int skillLevel, boolean forced)
 	{
 		super(template);
 		setInstanceType(InstanceType.Totem);
@@ -70,6 +73,7 @@ public class Totem extends Npc
 		_range = range;
 		_great = great;
 		_skillLevel = skillLevel;
+		_forced = forced;
 		_plantedAt = System.currentTimeMillis();
 		_expiresAt = _plantedAt + lifetime;
 		setInstanceId(owner.getInstanceId());
@@ -211,6 +215,35 @@ public class Totem extends Npc
 	public int getSkillLevel()
 	{
 		return _skillLevel;
+	}
+
+	/**
+	 * @return {@code true} if it was planted with Ctrl held (its pulses also reach white players and fake players)
+	 */
+	public boolean isForced()
+	{
+		return _forced;
+	}
+
+	/**
+	 * Moves it at once (Spirit Walk). It is drawn again where it stands now for everyone around, since a client can keep showing a standing npc where it was.
+	 * @param x where to
+	 * @param y where to
+	 * @param z where to
+	 * @param heading its new heading
+	 */
+	public void relocate(int x, int y, int z, int heading)
+	{
+		World.getInstance().forEachVisibleObject(this, Player.class, player -> player.sendPacket(new DeleteObject(this)));
+		setXYZ(x, y, z);
+		setHeading(heading);
+		World.getInstance().forEachVisibleObject(this, Player.class, player ->
+		{
+			if (isVisibleFor(player))
+			{
+				sendInfo(player);
+			}
+		});
 	}
 	
 	@Override
