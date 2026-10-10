@@ -301,28 +301,16 @@ final class FakePlayerPvpOraclesWarchiefs
 	 */
 	private static boolean hasRoomFor(Attackable npc, Kind kind)
 	{
-		final List<Totem> small;
-		if (kind == Kind.FLAME)
+		// It takes the place of its own kind (several Totems of Flames, up to their most).
+		if ((kind == Kind.FLAME) ? (Totems.getFlameTotems(npc).size() >= OraclesWarchiefsConfig.FLAME_TOTEM_MAX_COUNT) : (Totems.getTotem(npc, kind) != null))
 		{
-			// Several Totems of Flames, apart from the other totems.
-			small = Totems.getFlameTotems(npc);
-			if (small.size() < OraclesWarchiefsConfig.FLAME_TOTEM_MAX_COUNT)
-			{
-				return true;
-			}
+			return true;
 		}
-		else
+		
+		final List<Totem> small = Totems.getSmallTotems(npc);
+		if (small.size() < OraclesWarchiefsConfig.TOTEM_MAX_COUNT)
 		{
-			if (Totems.getTotem(npc, kind) != null)
-			{
-				return true; // It takes the place of its own kind.
-			}
-			
-			small = Totems.getCountedTotems(npc);
-			if (small.size() < OraclesWarchiefsConfig.TOTEM_MAX_COUNT)
-			{
-				return true;
-			}
+			return true;
 		}
 		
 		final Skill shatter = npc.getKnownSkill(Totems.SHATTER_SKILL_ID);
