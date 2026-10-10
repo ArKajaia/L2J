@@ -85,7 +85,7 @@ A rotating set of bonus hunting zones that periodically change location and gran
 - A fixed pool of hand-placed zones, grouped by level bracket, with one zone per bracket "active" at a time on a schedule.
 - Active zones buff both players and monsters, plus apply a randomly-rolled modifier each rotation (bonus loot, tougher monsters, drain effects, etc.).
 - Many modifiers drive the server's other systems instead of plain stats. They can:
-  - flood a zone with Thieves (who flee once their bag is full), wave challenges, Mages or rival fake players;
+  - flood a zone with Thieves (who flee once their bag is full), wave challenges, Mages, Infused or Resonant monsters, or rival fake players;
   - make monsters evolve into champions or rage from the first stun;
   - speed up Luck stacks;
   - mark a roaming bounty target;
@@ -172,6 +172,21 @@ Two special monster variants that change how an ordinary monster plays out in co
 - **Mage** monsters fight as genuine spellcasters — kiting at range and casting instead of meleeing, switching to melee only once their mana runs low.
 - Mage monsters drop more loot on death and always yield a bonus Sealed Cache.
 - Both are rolled independently on spawn and are mutually exclusive with each other and with the Champion/Hot Zone Miniboss/Wave Challenge states.
+
+### Infused & Resonant Monster Variants
+
+Two more monster variants, each paying a reward no other one gives: attribute stones, and soul crystal stages. They are rolled on spawn after the Thief and Mage rolls, never on champions, Thieves, Mages, wave or arena challengers, hot zone minibosses, raids, minions or in instances (all configurable), and a spawn point that produced one skips its next roll.
+
+- **Infused** (levels 61+, `config/Custom/InfusedMonsters.ini`): the monster is infused with Fire, Water, Wind, Earth, Holy or Dark, shown as `[Fire]` and so on with a glow of the element. A monster that already attacks with an element usually keeps it.
+  - It attacks with its element, resists it and is weak to the opposite one (Fire/Water, Wind/Earth, Holy/Dark). Damage compares an attack element with the same element's resistance, so a weapon of the opposite element hits it hard and one of its own element barely scratches it; armor with the right attribute protects against it as usual.
+  - Twice the HP and +20% P.Atk/M.Atk, and every 12 seconds, while an enemy stands close, it casts its element's nova (the retail area spells Prominence, Hydro Blast, Hurricane, Stone, Solar Flare, Shadow Flare): a 5 second cast that hits everyone around it, so players can step away.
+  - It drops attribute stones of its element: 1 at levels 61-75, 1-2 at 76-79, 2-3 from 80, and from level 80 a 3% chance (6% from 84) of an attribute crystal. Its normal drops stay the same. Nothing drops for a killer more than 8 levels above it.
+- **Resonant** (levels 40-85, `config/Custom/ResonantMonsters.ini`): its soul hums with power, shown as `[Resonant]` with the Arcane Shield aura.
+  - Killing it raises the soul crystal of the killer and of every party member nearby by one stage, without using the crystal on it first. The rules of the quest Enhance Your Weapon still apply: the quest started and exactly one crystal carried (two or more resonate and fail, with the retail message).
+  - A crystal only grows if the regular monsters of its level could raise it, read from `data/LevelUpCrystalData.xml`: up to stage 1 at level 40, 4 at 50, 7 at 60 and 9 from 63 on (stage 9 grows to stage 10). Higher stages stay with the raid bosses, as in retail. The quest's own roll doesn't happen on top.
+  - Twice the HP, and the first time it drops to 25% HP its soul flees: it runs from the players for 20 seconds and vanishes if it is still alive by then. Root, slow or stun it to catch it.
+- Two hot zone modifiers go with them: **Elemental Storm** (Infused monsters 5 times as common, one more stone each) and **Soul Tide** (Resonant monsters 5 times as common). Neither variant becomes a Nightlord, a Witching Hour challenger or a roaming fake player, and neither evolves under Metamorphosis.
+- GMs turn the targeted monster into either with `//monstermod infused [element]`, `//monstermod resonant` and back with `//monstermod clear`.
 
 ### Treasure Chests & Sealed Caches
 
@@ -679,6 +694,12 @@ This program is free software, licensed under the **GNU General Public License, 
 ## Recent Updates
 
 Changes from 28 September – 10 October 2026.
+
+### Infused and Resonant monsters
+- **Infused monsters** (1.5% of the monsters of level 61+): infused with one of the six elements, they attack with it, resist it, are weak to the opposite one, pulse an elemental nova players can step away from, and drop attribute stones of their element (and from level 80 a chance of an attribute crystal). See [Infused & Resonant Monster Variants](#infused--resonant-monster-variants).
+- **Resonant monsters** (1% of the monsters of level 40-85): killing one raises the soul crystal of the killer and of the party nearby by one stage, up to the stage the regular monsters of its level could give (stage 10 at most), with the retail rules and messages of Enhance Your Weapon. Low on HP its soul flees for 20 seconds.
+- New hot zone modifiers **Elemental Storm** and **Soul Tide**, and the GM command `//monstermod`.
+- The Thief's escape is now shared: a Resonant soul flees the same way.
 
 ### Totem Warchiefs and Hierophants: fixes
 - **Totems spare white fake players without Ctrl**: a player's totem planted without Ctrl (Totem of Flames, Frost-Teeth, the Great Totem) and Shatter cast without Ctrl hit monsters and the players and fake players with PvP status (flagged, PK, clan war); before, they also hit white fake players that were fighting monsters. With Ctrl held they hit white players and fake players too. A totem hit on a player or fake player now **flags the Warchief** like a hit of its own (it didn't).

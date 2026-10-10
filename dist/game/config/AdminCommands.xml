@@ -404,6 +404,7 @@
 	<admin command="hiddenquest_reset" description="Forget a hidden quest (or all) for a player - completion, queue and counter: //hiddenquest_reset id|all [name]." accessLevel="100" />
 
 	<!-- ADMIN NIGHT CYCLE -->
+	<admin command="monstermod" description="Infused and Resonant monsters: //monstermod [status|infused [fire|water|wind|earth|holy|dark]|resonant|clear] on the targeted monster, skipping the spawn chance (for testing)." accessLevel="100" />
 	<admin command="night" description="Night Cycle: //night [status|day|dusk|night|witching|dawn|auto|omen name|nightlord|raid]. A forced phase lasts until the clock reaches its next one. //night raid starts a Shadow Raid near the targeted player, or a random one." accessLevel="100" />
 
 	<!-- ADMIN ONLINE -->

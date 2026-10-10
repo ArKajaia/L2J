@@ -90,6 +90,10 @@ public class Spawn extends Location
 	private int _thiefCooldown = 0;
 	/** How many upcoming spawns of this spawn point may not roll a Mage (see MageMonsterManager). */
 	private int _mageCooldown = 0;
+	/** How many upcoming spawns of this spawn point may not roll an Infused monster (see InfusedMonsterManager). */
+	private int _infusedCooldown = 0;
+	/** How many upcoming spawns of this spawn point may not roll a Resonant monster (see ResonantMonsterManager). */
+	private int _resonantCooldown = 0;
 	/** How many upcoming spawns of this spawn point may not be replaced by a roaming fake player (see FakePlayerPvpManager). */
 	private int _fakePlayerCooldown = 0;
 	
@@ -321,6 +325,38 @@ public class Spawn extends Location
 	public void setMageCooldown(int mageCooldown)
 	{
 		_mageCooldown = Math.max(0, mageCooldown);
+	}
+	
+	/**
+	 * @return how many upcoming spawns of this spawn point may not roll an Infused monster
+	 */
+	public int getInfusedCooldown()
+	{
+		return _infusedCooldown;
+	}
+	
+	/**
+	 * @param infusedCooldown how many upcoming spawns of this spawn point may not roll an Infused monster
+	 */
+	public void setInfusedCooldown(int infusedCooldown)
+	{
+		_infusedCooldown = Math.max(0, infusedCooldown);
+	}
+	
+	/**
+	 * @return how many upcoming spawns of this spawn point may not roll a Resonant monster
+	 */
+	public int getResonantCooldown()
+	{
+		return _resonantCooldown;
+	}
+	
+	/**
+	 * @param resonantCooldown how many upcoming spawns of this spawn point may not roll a Resonant monster
+	 */
+	public void setResonantCooldown(int resonantCooldown)
+	{
+		_resonantCooldown = Math.max(0, resonantCooldown);
 	}
 	
 	/**
@@ -652,6 +688,12 @@ public class Spawn extends Location
 			
 			// Mage roll - after the Thief roll so a Thief never becomes a Mage too. The HP/MP refill below fills the boosted MP.
 			org.l2jmobius.gameserver.managers.MageMonsterManager.getInstance().tryConvert(npc, this);
+			
+			// Infused roll - after the Mage roll so no other special monster becomes Infused too. The HP refill below fills the boosted HP.
+			org.l2jmobius.gameserver.managers.InfusedMonsterManager.getInstance().tryConvert(npc, this);
+			
+			// Resonant roll - last, so a monster is never Infused and Resonant at once.
+			org.l2jmobius.gameserver.managers.ResonantMonsterManager.getInstance().tryConvert(npc, this);
 		}
 		
 		npc.setCurrentHp(npc.getMaxHp());

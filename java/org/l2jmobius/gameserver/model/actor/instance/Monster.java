@@ -17,9 +17,11 @@ import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
 import org.l2jmobius.gameserver.config.custom.HotzoneMinibossConfig;
+import org.l2jmobius.gameserver.config.custom.InfusedMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.MageMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.MonsterRageConfig;
 import org.l2jmobius.gameserver.config.custom.NightCycleConfig;
+import org.l2jmobius.gameserver.config.custom.ResonantMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.ThiefMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
 import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData;
@@ -43,11 +45,13 @@ import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.effects.EffectFlag;
 import org.l2jmobius.gameserver.model.effects.EffectType;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
+import org.l2jmobius.gameserver.model.item.holders.Elementals;
 import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.model.stats.functions.AbstractFunction;
+import org.l2jmobius.gameserver.model.stats.functions.FuncAdd;
 import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
 import org.l2jmobius.gameserver.network.NpcStringId;
 import org.l2jmobius.gameserver.network.enums.ChatType;
@@ -71,13 +75,15 @@ public class Monster extends Attackable
 	private volatile boolean _raging = false;
 	private ScheduledFuture<?> _rageTask = null;
 
-	// THIEVES_DEN hotzone modifier: a Thief with a full bag runs away, and escapes with its loot if nobody catches it in time.
+	// A fleeing monster runs away from the nearest player and gets away if nobody catches it in time: a THIEVES_DEN Thief with a full bag, or the soul of a Resonant monster.
 	private static final int THIEF_ESCAPE_TIME_MS = 60000;
-	private static final int THIEF_ESCAPE_STEP_MS = 3000;
-	private static final int THIEF_ESCAPE_DISTANCE = 600;
-	private static final int THIEF_ESCAPE_SCAN_RANGE = 1500;
-	private volatile ScheduledFuture<?> _thiefEscapeTask = null;
-	private volatile long _thiefEscapeEndsAt;
+	private static final int ESCAPE_STEP_MS = 3000;
+	private static final int ESCAPE_DISTANCE = 600;
+	private static final int ESCAPE_SCAN_RANGE = 1500;
+	private volatile ScheduledFuture<?> _escapeTask = null;
+	private volatile long _escapeEndsAt;
+	/** What the fleeing monster shouts when it gets away. */
+	private volatile String _escapeGoneText;
 	/** Thieves' Night: the players who see the fleeing Thief on their radar (object id -> the marker shown). */
 	private final Map<Integer, Location> _thiefRadarMarkers = new ConcurrentHashMap<>();
 	private volatile boolean _thiefRadar;
@@ -114,6 +120,20 @@ public class Monster extends Attackable
 	// respawn's onSpawn() runs - the ids stored there were lost, so clearRandomPassiveSkills() couldn't remove the previous life's passives and they piled up.
 	private final List<Integer> _randomPassiveSkillIds = new ArrayList<>();
 	private AbnormalVisualEffect _randomPassiveAve = null;
+
+	// Infused and Resonant monsters (see InfusedMonsterManager, ResonantMonsterManager). Kept outside getVariables() for the same reason as the random passives: onSpawn() must strip the
+	// previous life's stat Funcs and visuals before the spawn rolls run again.
+	private static final Object INFUSED_FUNC_OWNER = new Object();
+	private volatile byte _infusedElement = Elementals.NONE;
+	private AbnormalVisualEffect _infusedAve = null;
+	private volatile ScheduledFuture<?> _infusedNovaTask = null;
+	/** When the next nova may start (an attackable can't start a cast while it moves, so the task checks often and casts once this time has come). */
+	private volatile long _infusedNextNovaAt;
+	private static final int INFUSED_NOVA_CHECK_MS = 2000;
+	private volatile boolean _resonant = false;
+	/** Set once a Resonant monster's soul tried to flee, so it only ever flees once per life. */
+	private volatile boolean _resonantFled = false;
+	private AbnormalVisualEffect _resonantAve = null;
 
 	public Monster(NpcTemplate template)
 	{
@@ -273,6 +293,10 @@ public class Monster extends Attackable
 		// Every spawn starts calm with a clean stun/hold count.
 		endRage(false);
 		_rageDisables.set(0);
+
+		// The respawn reuses this object: drop what the last life was infused or resonant with before the spawn rolls run again.
+		clearInfused(false);
+		clearResonant(false);
 
 		// Raid bosses and grand bosses are already hand-tuned; skip the random passive pool for
 		// them. isRaid() is checked here (before the arena branch below sets it for unrelated
@@ -547,6 +571,14 @@ public class Monster extends Attackable
 		{
 			sb.append(MageMonsterConfig.TITLE_TAG).append(' ');
 		}
+		if (isInfused())
+		{
+			sb.append(String.format(InfusedMonsterConfig.TITLE_TAG, Elementals.getElementName(_infusedElement))).append(' ');
+		}
+		if (isResonant())
+		{
+			sb.append(ResonantMonsterConfig.TITLE_TAG).append(' ');
+		}
 		if (isWaveChallenge())
 		{
 			sb.append(String.format(WaveChallengeConfig.TITLE_TAG, getWaveChallengeWave(), getWaveChallengeTotal())).append(' ');
@@ -698,7 +730,7 @@ public class Monster extends Attackable
 		}
 
 		// Only plain monsters - the special kinds already have their own rules, and a tier 3 champion has nowhere left to go.
-		if (isRaid() || isMinion() || isFakePlayer() || isQuestMonster() || (this instanceof Chest) || isHotzoneMiniboss() || isWaveChallenge() || isArenaChallenger() || isThief() || isMageMonster() || (getChampionTier() >= 3))
+		if (isRaid() || isMinion() || isFakePlayer() || isQuestMonster() || (this instanceof Chest) || isHotzoneMiniboss() || isWaveChallenge() || isArenaChallenger() || isThief() || isMageMonster() || isInfused() || isResonant() || (getChampionTier() >= 3))
 		{
 			return;
 		}
@@ -1058,34 +1090,46 @@ public class Monster extends Attackable
 	}
 
 	/**
-	 * THIEVES_DEN: the Thief's bag is full, so it runs away from the nearest player (the retail ai.others.FleeMonsters move) and, if it is still alive after {@link #THIEF_ESCAPE_TIME_MS}, gets away with its loot. Its spawn then respawns it as usual.
+	 * THIEVES_DEN: the Thief's bag is full, so it runs away from the nearest player and, if it is still alive after {@link #THIEF_ESCAPE_TIME_MS}, gets away with its loot.
 	 */
 	private void startThiefEscape()
 	{
-		if ((_thiefEscapeTask != null) || isDead())
+		startEscape(THIEF_ESCAPE_TIME_MS, _thiefRadar ? "My bag is full - the night will hide me!" : "My bag is full - so long, suckers!", "Ha! You'll never see this loot again!");
+	}
+
+	/**
+	 * Makes this monster run away from the nearest player (the retail ai.others.FleeMonsters move) and, if it is still alive after {@code durationMs}, get away: it is removed, and its spawn respawns it as usual. Does nothing if it is already fleeing.
+	 * @param durationMs how long it runs before it gets away
+	 * @param startText what it shouts when it starts running
+	 * @param goneText what it shouts when it gets away
+	 */
+	private synchronized void startEscape(long durationMs, String startText, String goneText)
+	{
+		if ((_escapeTask != null) || isDead())
 		{
 			return;
 		}
 
-		_thiefEscapeEndsAt = System.currentTimeMillis() + THIEF_ESCAPE_TIME_MS;
-		broadcastSay(ChatType.NPC_GENERAL, _thiefRadar ? "My bag is full - the night will hide me!" : "My bag is full - so long, suckers!");
+		_escapeEndsAt = System.currentTimeMillis() + durationMs;
+		_escapeGoneText = goneText;
+		broadcastSay(ChatType.NPC_GENERAL, startText);
 		disableCoreAI(true);
 		setRunning();
-		_thiefEscapeTask = ThreadPool.scheduleAtFixedRate(this::thiefEscapeStep, 0, THIEF_ESCAPE_STEP_MS);
+		_escapeTask = ThreadPool.scheduleAtFixedRate(this::escapeStep, 0, ESCAPE_STEP_MS);
 	}
 
-	private void thiefEscapeStep()
+	private void escapeStep()
 	{
 		if (isDead() || !isSpawned())
 		{
-			stopThiefEscape();
+			stopEscape();
 			return;
 		}
 
-		if (System.currentTimeMillis() >= _thiefEscapeEndsAt)
+		if (System.currentTimeMillis() >= _escapeEndsAt)
 		{
-			stopThiefEscape();
-			broadcastSay(ChatType.NPC_GENERAL, "Ha! You'll never see this loot again!");
+			stopEscape();
+			broadcastSay(ChatType.NPC_GENERAL, _escapeGoneText);
 			deleteMe(); // Npc.onDecay() hands the spawn back, which respawns it after its normal delay.
 			return;
 		}
@@ -1093,7 +1137,7 @@ public class Monster extends Attackable
 		// Away from the nearest player, or any direction if nobody is chasing it.
 		Player nearest = null;
 		double nearestDistance = Double.MAX_VALUE;
-		for (Player player : World.getInstance().getVisibleObjectsInRange(this, Player.class, THIEF_ESCAPE_SCAN_RANGE))
+		for (Player player : World.getInstance().getVisibleObjectsInRange(this, Player.class, ESCAPE_SCAN_RANGE))
 		{
 			final double distance = calculateDistance2D(player);
 			if (distance < nearestDistance)
@@ -1104,8 +1148,8 @@ public class Monster extends Attackable
 		}
 
 		final double radians = nearest != null ? Math.toRadians(LocationUtil.calculateAngleFrom(nearest, this)) : Rnd.nextDouble() * 2 * Math.PI;
-		final int x = (int) (getX() + (THIEF_ESCAPE_DISTANCE * Math.cos(radians)));
-		final int y = (int) (getY() + (THIEF_ESCAPE_DISTANCE * Math.sin(radians)));
+		final int x = (int) (getX() + (ESCAPE_DISTANCE * Math.cos(radians)));
+		final int y = (int) (getY() + (ESCAPE_DISTANCE * Math.sin(radians)));
 		final Location destination = GeoEngine.getInstance().getValidLocation(getX(), getY(), getZ(), x, y, getZ(), getInstanceId());
 		getAI().setIntention(Intention.MOVE_TO, destination);
 
@@ -1161,15 +1205,15 @@ public class Monster extends Attackable
 		}
 	}
 
-	private void stopThiefEscape()
+	private void stopEscape()
 	{
-		final ScheduledFuture<?> task = _thiefEscapeTask;
+		final ScheduledFuture<?> task = _escapeTask;
 		if (task == null)
 		{
 			return;
 		}
 
-		_thiefEscapeTask = null;
+		_escapeTask = null;
 		task.cancel(false);
 		disableCoreAI(false);
 
@@ -1200,6 +1244,355 @@ public class Monster extends Attackable
 		getVariables().set("IS_MAGE", true);
 		rebuildFullTitle();
 		broadcastInfo();
+	}
+
+	// =======================================================================
+	// Infused Monster System
+	// =======================================================================
+
+	/**
+	 * @return {@code true} if {@link org.l2jmobius.gameserver.managers.InfusedMonsterManager} infused this spawn with an element.
+	 */
+	public boolean isInfused()
+	{
+		return InfusedMonsterConfig.ENABLED && (_infusedElement != Elementals.NONE);
+	}
+
+	/**
+	 * @return the element this monster is infused with ({@link Elementals#FIRE} ... {@link Elementals#DARK}), or {@link Elementals#NONE}
+	 */
+	public byte getInfusedElement()
+	{
+		return _infusedElement;
+	}
+
+	/**
+	 * Infuses this monster with {@code element}: it attacks with that element (it becomes its strongest one), resists it and is weak to the opposite one, shows the element's visual and pulses the element's nova in combat. Called by
+	 * {@link org.l2jmobius.gameserver.managers.InfusedMonsterManager}. An earlier infusion is replaced.
+	 * @param element the element ({@link Elementals#FIRE} ... {@link Elementals#DARK})
+	 */
+	public synchronized void startInfused(byte element)
+	{
+		if ((element < 0) || (element >= InfusedMonsterConfig.ELEMENT_COUNT) || isDead())
+		{
+			return;
+		}
+
+		clearInfused(false);
+
+		// Damage only compares an attack element with the same element's resistance (Formulas.calcAttributeBonus), and an npc attacks with its strongest element - so the infused element is
+		// raised above every element the template already has, and "weak to the opposite element" is a low resistance to it.
+		int strongestOther = 0;
+		for (byte other = 0; other < InfusedMonsterConfig.ELEMENT_COUNT; other++)
+		{
+			if (other != element)
+			{
+				strongestOther = Math.max(strongestOther, getStat().getAttackElementValue(other));
+			}
+		}
+		final int power = InfusedMonsterConfig.ATTACK_POWER + Math.max(0, strongestOther - getStat().getAttackElementValue(element));
+
+		final List<AbstractFunction> functions = new ArrayList<>(3);
+		functions.add(new FuncAdd(getElementPowerStat(element), 0x40, INFUSED_FUNC_OWNER, power, null));
+		functions.add(new FuncAdd(getElementResStat(element), 0x40, INFUSED_FUNC_OWNER, InfusedMonsterConfig.OWN_RESIST, null));
+		functions.add(new FuncAdd(getElementResStat(Elementals.getOppositeElement(element)), 0x40, INFUSED_FUNC_OWNER, InfusedMonsterConfig.OPPOSITE_RESIST, null));
+		addStatFuncs(functions);
+		_infusedElement = element;
+
+		final AbnormalVisualEffect ave = InfusedMonsterConfig.VISUAL_EFFECTS[element];
+		if ((ave != null) && (ave != AbnormalVisualEffect.NONE))
+		{
+			_infusedAve = ave;
+			startAbnormalVisualEffect(false, ave);
+		}
+
+		startInfusedNova();
+		rebuildFullTitle();
+		broadcastInfo();
+	}
+
+	/**
+	 * Takes the infusion away again (used by GMs).
+	 */
+	public void stopInfused()
+	{
+		clearInfused(true);
+	}
+
+	/**
+	 * Removes the infusion's stat Funcs, visual, nova and title tag, if any.
+	 * @param broadcast {@code true} to refresh the monster for nearby players
+	 */
+	private synchronized void clearInfused(boolean broadcast)
+	{
+		stopInfusedNova();
+		if ((_infusedElement == Elementals.NONE) && (_infusedAve == null))
+		{
+			return;
+		}
+
+		_infusedElement = Elementals.NONE;
+		removeStatsOwner(INFUSED_FUNC_OWNER);
+		if (_infusedAve != null)
+		{
+			stopAbnormalVisualEffect(false, _infusedAve);
+			_infusedAve = null;
+		}
+
+		rebuildFullTitle();
+		if (broadcast)
+		{
+			broadcastInfo();
+		}
+	}
+
+	/**
+	 * @return the P.Atk/M.Atk multiplier of an Infused monster, 1.0 otherwise
+	 */
+	private double getInfusedAttackMultiplier()
+	{
+		return isInfused() ? InfusedMonsterConfig.ATTACK_MULTIPLIER : 1.0;
+	}
+
+	private void startInfusedNova()
+	{
+		if ((InfusedMonsterConfig.NOVA_INTERVAL <= 0) || (_infusedNovaTask != null))
+		{
+			return;
+		}
+
+		_infusedNextNovaAt = 0;
+		_infusedNovaTask = ThreadPool.scheduleAtFixedRate(this::infusedNovaTick, INFUSED_NOVA_CHECK_MS, INFUSED_NOVA_CHECK_MS);
+	}
+
+	private void stopInfusedNova()
+	{
+		final ScheduledFuture<?> task = _infusedNovaTask;
+		if (task != null)
+		{
+			_infusedNovaTask = null;
+			task.cancel(false);
+		}
+	}
+
+	/**
+	 * Casts the element's nova (a slow, area-around-the-caster spell players can step away from) at most once every {@link InfusedMonsterConfig#NOVA_INTERVAL} ms, when an enemy it fights is close enough to be hit.
+	 */
+	private void infusedNovaTick()
+	{
+		if ((System.currentTimeMillis() < _infusedNextNovaAt) || isDead() || !isSpawned() || !isInfused() || !isInCombat() || isCastingNow() || isAllSkillsDisabled() || isMuted() || isCoreAIDisabled() || isMoving())
+		{
+			return;
+		}
+
+		final Skill nova = getInfusedNovaSkill();
+		if ((nova == null) || isSkillDisabled(nova))
+		{
+			return;
+		}
+
+		final int range = Math.max(100, nova.getAffectRange());
+		for (Creature attacker : getAggroList().keySet())
+		{
+			if ((attacker != null) && !attacker.isDead() && isInsideRadius3D(attacker, range))
+			{
+				doCast(nova);
+				if (isCastingNow())
+				{
+					_infusedNextNovaAt = System.currentTimeMillis() + InfusedMonsterConfig.NOVA_INTERVAL;
+				}
+				return;
+			}
+		}
+	}
+
+	/**
+	 * @return the highest level of the element's nova whose magic level isn't above this monster's level (level 1 for a lower monster), or {@code null} if the element has none
+	 */
+	private Skill getInfusedNovaSkill()
+	{
+		final byte element = _infusedElement;
+		if ((element < 0) || (element >= InfusedMonsterConfig.ELEMENT_COUNT))
+		{
+			return null;
+		}
+
+		final int skillId = InfusedMonsterConfig.NOVA_SKILLS[element];
+		if (skillId <= 0)
+		{
+			return null;
+		}
+
+		Skill best = null;
+		final int maxLevel = SkillData.getInstance().getMaxLevel(skillId);
+		for (int level = 1; level <= maxLevel; level++)
+		{
+			final Skill skill = SkillData.getInstance().getSkill(skillId, level);
+			if ((skill != null) && ((best == null) || (skill.getMagicLevel() <= getLevel())))
+			{
+				best = skill;
+			}
+		}
+		return best;
+	}
+
+	/**
+	 * @param element the element
+	 * @return the attack power stat of {@code element}
+	 */
+	private static Stat getElementPowerStat(byte element)
+	{
+		switch (element)
+		{
+			case Elementals.WATER:
+			{
+				return Stat.WATER_POWER;
+			}
+			case Elementals.WIND:
+			{
+				return Stat.WIND_POWER;
+			}
+			case Elementals.EARTH:
+			{
+				return Stat.EARTH_POWER;
+			}
+			case Elementals.HOLY:
+			{
+				return Stat.HOLY_POWER;
+			}
+			case Elementals.DARK:
+			{
+				return Stat.DARK_POWER;
+			}
+			default:
+			{
+				return Stat.FIRE_POWER;
+			}
+		}
+	}
+
+	/**
+	 * @param element the element
+	 * @return the resistance stat of {@code element}
+	 */
+	private static Stat getElementResStat(byte element)
+	{
+		switch (element)
+		{
+			case Elementals.WATER:
+			{
+				return Stat.WATER_RES;
+			}
+			case Elementals.WIND:
+			{
+				return Stat.WIND_RES;
+			}
+			case Elementals.EARTH:
+			{
+				return Stat.EARTH_RES;
+			}
+			case Elementals.HOLY:
+			{
+				return Stat.HOLY_RES;
+			}
+			case Elementals.DARK:
+			{
+				return Stat.DARK_RES;
+			}
+			default:
+			{
+				return Stat.FIRE_RES;
+			}
+		}
+	}
+
+	// =======================================================================
+	// Resonant Monster System
+	// =======================================================================
+
+	/**
+	 * @return {@code true} if {@link org.l2jmobius.gameserver.managers.ResonantMonsterManager} made this spawn Resonant: killing it raises the soul crystals of the killer's party.
+	 */
+	public boolean isResonant()
+	{
+		return ResonantMonsterConfig.ENABLED && _resonant;
+	}
+
+	/**
+	 * Makes this monster Resonant. Called by {@link org.l2jmobius.gameserver.managers.ResonantMonsterManager}.
+	 */
+	public synchronized void startResonant()
+	{
+		if (isDead())
+		{
+			return;
+		}
+
+		clearResonant(false);
+		_resonant = true;
+
+		final AbnormalVisualEffect ave = ResonantMonsterConfig.VISUAL_EFFECT;
+		if ((ave != null) && (ave != AbnormalVisualEffect.NONE))
+		{
+			_resonantAve = ave;
+			startAbnormalVisualEffect(false, ave);
+		}
+
+		rebuildFullTitle();
+		broadcastInfo();
+	}
+
+	/**
+	 * Makes this monster an ordinary one again (used by GMs). A soul that is fleeing stops running.
+	 */
+	public void stopResonant()
+	{
+		if (_resonant)
+		{
+			stopEscape();
+		}
+		clearResonant(true);
+	}
+
+	/**
+	 * Removes the Resonant visual and title tag, if any.
+	 * @param broadcast {@code true} to refresh the monster for nearby players
+	 */
+	private synchronized void clearResonant(boolean broadcast)
+	{
+		_resonantFled = false;
+		if (!_resonant && (_resonantAve == null))
+		{
+			return;
+		}
+
+		_resonant = false;
+		if (_resonantAve != null)
+		{
+			stopAbnormalVisualEffect(false, _resonantAve);
+			_resonantAve = null;
+		}
+
+		rebuildFullTitle();
+		if (broadcast)
+		{
+			broadcastInfo();
+		}
+	}
+
+	/**
+	 * The first time a Resonant monster drops to {@link ResonantMonsterConfig#FLEE_AT_HP_PERCENT}% HP, its soul runs from the players for {@link ResonantMonsterConfig#FLEE_TIME} seconds and vanishes if it is still alive by then.
+	 */
+	private synchronized void tryResonantFlight()
+	{
+		if (_resonantFled || !isResonant() || isDead() || (ResonantMonsterConfig.FLEE_AT_HP_PERCENT <= 0) || (getCurrentHp() > ((getMaxHp() * ResonantMonsterConfig.FLEE_AT_HP_PERCENT) / 100.0)))
+		{
+			return;
+		}
+
+		_resonantFled = true;
+		sendMessageToAttackers(null, "The soul of " + getName() + " is fleeing! Catch it within " + ResonantMonsterConfig.FLEE_TIME + " seconds or the resonance fades.");
+		startEscape(ResonantMonsterConfig.FLEE_TIME * 1000L, "My soul will not be caught!", "The resonance fades...");
 	}
 
 	// =======================================================================
@@ -1370,6 +1763,7 @@ public class Monster extends Attackable
 		super.reduceCurrentHp(amount, attacker, awake, isDOT, skill);
 		
 		tryMetamorphosis();
+		tryResonantFlight();
 	}
 	
 	/**
@@ -1462,7 +1856,9 @@ public class Monster extends Attackable
 		final HotzoneModifier hotzoneModifierHp = getHotzoneStatModifier();
 		final double hotzoneHpMultiplier = hotzoneModifierHp != null ? hotzoneModifierHp.getMonsterHpMult() : 1.0;
 
-		return (int) (baseMaxHp * hpMultiplier * arenaMultiplier * championHpMult * getHotzoneMinibossMultiplier() * hotzoneHpMultiplier * getWaveChallengeStatMultiplier());
+		final double variantHpMultiplier = (isInfused() ? InfusedMonsterConfig.HP_MULTIPLIER : 1.0) * (isResonant() ? ResonantMonsterConfig.HP_MULTIPLIER : 1.0);
+
+		return (int) (baseMaxHp * hpMultiplier * arenaMultiplier * championHpMult * getHotzoneMinibossMultiplier() * hotzoneHpMultiplier * getWaveChallengeStatMultiplier() * variantHpMultiplier);
 
 	}
 
@@ -1489,7 +1885,7 @@ public class Monster extends Attackable
 		final double basePAtk = super.getPAtk(target);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return basePAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier);
+		return basePAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier) * getInfusedAttackMultiplier();
 	}
 
 	@Override
@@ -1498,7 +1894,7 @@ public class Monster extends Attackable
 		final double baseMAtk = super.getMAtk(target, skill);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return baseMAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getMonsterMAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier);
+		return baseMAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getMonsterMAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier) * getInfusedAttackMultiplier();
 	}
 
 	@Override
@@ -1578,6 +1974,7 @@ public class Monster extends Attackable
 		cancelEnrageTimer();
 		endRage(false);
 		stopArenaWaveReminderTask();
+		stopInfusedNova();
 		
 		if (hasMinions())
 		{
@@ -1698,15 +2095,17 @@ public class Monster extends Attackable
 		}
 		
 		endRage(true);
-		stopThiefEscape();
+		stopEscape();
+		stopInfusedNova();
 		return true;
 	}
 	
 	@Override
 	public void onDecay()
 	{
-		// A Thief that escaped (deleteMe()) or died: the respawn reuses this object, so it must not keep running.
-		stopThiefEscape();
+		// A Thief or Resonant soul that escaped (deleteMe()) or died: the respawn reuses this object, so it must not keep running or casting.
+		stopEscape();
+		stopInfusedNova();
 		super.onDecay();
 	}
 	

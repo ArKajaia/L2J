@@ -576,7 +576,7 @@ public class NightCycleManager
 
 	private static boolean isChallengerCandidate(Monster monster)
 	{
-		return !monster.isDead() && (monster.getChampionTier() == 0) && !monster.isRaid() && !monster.isRaidMinion() && !monster.isMinion() && !monster.isInCombat() && !monster.isHotzoneMiniboss() && !monster.isWaveChallenge() && !monster.getVariables().getBoolean("IS_ARENA_CHALLENGER", false) && !monster.isThief() && !monster.isMageMonster() && !monster.isHotzoneBounty() && !monster.isFakePlayer() && !monster.isPvpFakePlayer() && !monster.isQuestMonster() && !(monster instanceof Chest) && !NightlordManager.isNightlord(monster) && HotzoneModifierManager.isOpenWorld(monster);
+		return !monster.isDead() && (monster.getChampionTier() == 0) && !monster.isRaid() && !monster.isRaidMinion() && !monster.isMinion() && !monster.isInCombat() && !monster.isHotzoneMiniboss() && !monster.isWaveChallenge() && !monster.getVariables().getBoolean("IS_ARENA_CHALLENGER", false) && !monster.isThief() && !monster.isMageMonster() && !monster.isInfused() && !monster.isResonant() && !monster.isHotzoneBounty() && !monster.isFakePlayer() && !monster.isPvpFakePlayer() && !monster.isQuestMonster() && !(monster instanceof Chest) && !NightlordManager.isNightlord(monster) && HotzoneModifierManager.isOpenWorld(monster);
 	}
 
 	/**

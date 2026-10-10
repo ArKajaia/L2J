@@ -363,6 +363,8 @@ public class Attackable extends Npc
 				org.l2jmobius.gameserver.managers.LuckyLootManager.getInstance().onAttackableKilled(this, player);
 				org.l2jmobius.gameserver.managers.ThiefMonsterManager.getInstance().onAttackableKilled(this);
 				org.l2jmobius.gameserver.managers.MageMonsterManager.getInstance().onAttackableKilled(this, player);
+				org.l2jmobius.gameserver.managers.InfusedMonsterManager.getInstance().onAttackableKilled(this, player);
+				org.l2jmobius.gameserver.managers.ResonantMonsterManager.getInstance().onAttackableKilled(this, player);
 				org.l2jmobius.gameserver.managers.NightCycleManager.getInstance().onAttackableKilled(this, player);
 			}
 			if ((partyPlayer != null) && getMustRewardExpSP())
