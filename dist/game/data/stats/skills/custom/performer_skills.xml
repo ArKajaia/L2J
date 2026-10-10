@@ -54,7 +54,7 @@
 		<targetType>SELF</targetType>
 		<abnormalLevel>1</abnormalLevel>
 		<abnormalType>PERFORMANCE</abnormalType>
-		<abnormalVisualEffect>MAGIC_SQUARE</abnormalVisualEffect>
+		<abnormalVisualEffect>VP_UP</abnormalVisualEffect>
 		<isMagic>0</isMagic>
 		<magicLevel>#magicLevel</magicLevel>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
@@ -102,7 +102,7 @@
 		<targetType>SELF</targetType>
 		<abnormalLevel>1</abnormalLevel>
 		<abnormalType>PERFORMANCE</abnormalType>
-		<abnormalVisualEffect>MAGIC_SQUARE</abnormalVisualEffect>
+		<abnormalVisualEffect>VP_UP</abnormalVisualEffect>
 		<isMagic>0</isMagic>
 		<magicLevel>#magicLevel</magicLevel>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
@@ -152,7 +152,7 @@
 		<targetType>SELF</targetType>
 		<abnormalLevel>1</abnormalLevel>
 		<abnormalType>PERFORMANCE</abnormalType>
-		<abnormalVisualEffect>MAGIC_SQUARE</abnormalVisualEffect>
+		<abnormalVisualEffect>VP_UP</abnormalVisualEffect>
 		<isMagic>0</isMagic>
 		<magicLevel>#magicLevel</magicLevel>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
@@ -280,7 +280,7 @@
 		<targetType>SELF</targetType>
 		<abnormalLevel>1</abnormalLevel>
 		<abnormalType>PERFORMANCE</abnormalType>
-		<abnormalVisualEffect>MAGIC_SQUARE</abnormalVisualEffect>
+		<abnormalVisualEffect>VP_UP</abnormalVisualEffect>
 		<isMagic>0</isMagic>
 		<magicLevel>#magicLevel</magicLevel>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
@@ -332,7 +332,7 @@
 		<targetType>SELF</targetType>
 		<abnormalLevel>1</abnormalLevel>
 		<abnormalType>PERFORMANCE</abnormalType>
-		<abnormalVisualEffect>MAGIC_SQUARE</abnormalVisualEffect>
+		<abnormalVisualEffect>VP_UP</abnormalVisualEffect>
 		<isMagic>0</isMagic>
 		<magicLevel>#magicLevel</magicLevel>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>
@@ -386,7 +386,7 @@
 		<targetType>SELF</targetType>
 		<abnormalLevel>1</abnormalLevel>
 		<abnormalType>PERFORMANCE</abnormalType>
-		<abnormalVisualEffect>MAGIC_SQUARE</abnormalVisualEffect>
+		<abnormalVisualEffect>VP_UP</abnormalVisualEffect>
 		<isMagic>0</isMagic>
 		<magicLevel>#magicLevel</magicLevel>
 		<mpInitialConsume>#mpInitialConsume</mpInitialConsume>

@@ -5,7 +5,9 @@ import xml.etree.ElementTree as ET
 # Same column layout as client/PassiveTree (L2ClientDat text export, no header line).
 ROOT=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 skills=ET.parse(ROOT+'/dist/game/data/stats/skills/custom/performer_skills.xml').getroot().findall('skill')
-# oper_type, following client/PassiveTree: 0 physical attack, 1 heal, 2 buff (toggles too), 3 debuff.
+# operate_type (4th column), from the server's operateType: 0 A1, 1 A2, 2 P (the client lists it with the passives), 3 T.
+OPERATE={'A1':0,'A2':1,'P':2,'T':3}
+# icon_type (3rd column), following client/PassiveTree: 0 physical attack, 1 heal, 2 buff (toggles too), 3 debuff.
 OPER={27500:2,27501:2,27502:2,27503:2,27504:2,27505:2,27506:2,27507:1,27508:2,
       27520:2,27521:3,27522:2,27523:3,27524:2,27525:2,27526:2,27527:0,27528:0}
 TOGGLE=" Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level."
@@ -52,8 +54,9 @@ for sk in skills:
         ismagic=int(g('isMagic',lvl,'0')); ismagic=ismagic if ismagic in (0,1) else 0
         hit=hit if hit>0 else 1.0
         attack = OPER[sid] in (0,3)
-        tpl = ('0','3','S','9','11') if attack else ('1','1','X','8','10')
-        row=[str(sid),str(lvl),str(OPER[sid]),tpl[0],str(mp),str(rng & 0xFFFFFFFF),tpl[1],f32(hit),str(ismagic),tpl[2],str(sid),icon,'','0','0',str(hp),'a,none\\0','0',tpl[3],tpl[4],'0','a,none\\0']
+        tpl = ('3','S','9','11') if attack else ('1','X','8','10')
+        operate=str(OPERATE[sk.find('operateType').text.strip()])
+        row=[str(sid),str(lvl),str(OPER[sid]),operate,str(mp),str(rng & 0xFFFFFFFF),tpl[0],f32(hit),str(ismagic),tpl[1],str(sid),icon,'','0','0',str(hp),'a,none\\0','0',tpl[2],tpl[3],'0','a,none\\0']
         assert len(row)==22
         grp.append('\t'.join(row))
         down = sk.find('isDebuff') is not None

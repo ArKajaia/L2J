@@ -36,6 +36,7 @@ import org.l2jmobius.gameserver.model.events.holders.actor.creature.OnCreatureDa
 import org.l2jmobius.gameserver.model.events.holders.actor.creature.OnCreatureSkillUse;
 import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
+import org.l2jmobius.gameserver.model.skill.EffectScope;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.stats.Formulas;
@@ -48,7 +49,8 @@ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
  * A prophecy does nothing when it lands: it comes true when its time runs out (the Prophecy effect), and it fizzles if it is cancelled or its target dies first. Each one that comes true gives its Oracle a Foresight (up to 5), and Fulfilment spends 5 to make every prophecy
  * of the Oracle come true at once, stronger.
  * <ul>
- * <li>Doom: magic damage, more if the target is still near where it stood when the prophecy landed.</li>
+ * <li>Doom: magic damage, more if the target is still near where it stood when the prophecy landed. With Inevitable Doom (Hierophant) it is cast faster, stacks up to {@link OraclesWarchiefsConfig#DOOM_MAX_STACKS} times on its target (each stack adds the damage once more) and spreads to the
+ * enemies close to its target, who can't resist it.</li>
  * <li>Salvation: heals back the damage the ally took while the prophecy was on.</li>
  * <li>Ruin: stuns a target that cast a skill while the prophecy was on, silences one that didn't.</li>
  * <li>Reversal: the ally's HP, MP, CP and place are written down when it lands, and it comes back to them (never lower than it is).</li>
@@ -60,6 +62,9 @@ public class Prophecies
 	/** Foresight: one level per prophecy that came true, up to {@link #FORESIGHT_MAX}. */
 	public static final int FORESIGHT_SKILL_ID = 27537;
 	public static final int FORESIGHT_MAX = 5;
+	/** Prophecy of Doom, and the Hierophant passive that makes it stack and spread. */
+	public static final int DOOM_SKILL_ID = 27530;
+	public static final int INEVITABLE_DOOM_SKILL_ID = 27562;
 
 	public enum Kind
 	{
@@ -86,6 +91,7 @@ public class Prophecies
 		final double cp;
 		volatile double damageTaken;
 		volatile boolean castSkill;
+		int stacks = 1;
 		ScheduledFuture<?> task;
 
 		Prophecy(Creature oracle, Creature target, Skill skill, BuffInfo info, Kind kind, int resolveSkillId, int resolveSkillLevel, int altSkillId)
@@ -105,8 +111,31 @@ public class Prophecies
 		}
 	}
 
+	/** How many times a Doom is stacked on its target, and when it comes true. */
+	private static class DoomStack
+	{
+		final Creature oracle;
+		final int stacks;
+		final long resolveAt;
+
+		DoomStack(Creature oracle, int stacks, long resolveAt)
+		{
+			this.oracle = oracle;
+			this.stacks = stacks;
+			this.resolveAt = resolveAt;
+		}
+	}
+
 	/** The prophecies that haven't come true, by target and prophecy skill. */
 	private static final Map<Long, Prophecy> PROPHECIES = new ConcurrentHashMap<>();
+
+	/**
+	 * The Doom stacks, by target and prophecy skill. Kept apart from the prophecy: when a Doom is cast again, the old one ends before the new one lands.
+	 */
+	private static final Map<Long, DoomStack> DOOM_STACKS = new ConcurrentHashMap<>();
+
+	/** While a Doom spreads: the stacks and the milliseconds left of the Doom it spreads from. */
+	private static final ThreadLocal<long[]> SPREADING = new ThreadLocal<>();
 
 	private Prophecies()
 	{
@@ -131,11 +160,16 @@ public class Prophecies
 	{
 		final BuffInfo info = target.getEffectList().getBuffInfoBySkillId(skill.getId());
 		final Prophecy prophecy = new Prophecy(oracle, target, skill, info, kind, resolveSkillId, resolveSkillLevel, altSkillId);
-		final Prophecy old = PROPHECIES.put(key(target, skill), prophecy);
+		final long key = key(target, skill);
+		final Prophecy old = PROPHECIES.put(key, prophecy);
 		if (old != null)
 		{
 			stop(old);
 		}
+
+		// Comes true just before the buff would wear off (it is checked once a second).
+		final int seconds = info != null ? info.getAbnormalTime() : skill.getAbnormalTime();
+		long delay = Math.max(500, (seconds * 1000L) - 250);
 
 		switch (kind)
 		{
@@ -161,9 +195,136 @@ public class Prophecies
 			}
 		}
 
-		// Comes true just before the buff would wear off (it is checked once a second).
-		final int seconds = info != null ? info.getAbnormalTime() : skill.getAbnormalTime();
-		prophecy.task = ThreadPool.schedule(() -> resolve(prophecy, 1), Math.max(500, (seconds * 1000L) - 250));
+		if (kind == Kind.DOOM)
+		{
+			delay = stackDoom(prophecy, key, delay);
+		}
+
+		prophecy.task = ThreadPool.schedule(() -> resolve(prophecy, 1), delay);
+	}
+
+	/**
+	 * Inevitable Doom (Hierophant): a Doom cast again on its target by the same Oracle adds a stack, up to {@link OraclesWarchiefsConfig#DOOM_MAX_STACKS}, and comes true later; once full it keeps the time it had. It also spreads to the enemies close to its target.
+	 * @param prophecy the Doom that landed
+	 * @param key its key
+	 * @param delay milliseconds before a fresh Doom comes true
+	 * @return milliseconds before this one comes true
+	 */
+	private static long stackDoom(Prophecy prophecy, long key, long delay)
+	{
+		final Creature oracle = prophecy.oracle;
+		final long now = System.currentTimeMillis();
+		final DoomStack previous = DOOM_STACKS.get(key);
+		final int before = (previous != null) && (previous.oracle == oracle) && (previous.resolveAt > now) ? previous.stacks : 0;
+		final long[] spreading = SPREADING.get();
+		final boolean spread = spreading == null;
+		long result = delay;
+		if (spreading != null)
+		{
+			// Spread from another target: as many stacks as there, as much time left.
+			prophecy.stacks = (int) Math.max(spreading[0], before);
+			result = spreading[1];
+		}
+		else if (!knowsInevitableDoom(oracle) || (before == 0))
+		{
+			prophecy.stacks = 1;
+		}
+		else if (before >= OraclesWarchiefsConfig.DOOM_MAX_STACKS)
+		{
+			prophecy.stacks = OraclesWarchiefsConfig.DOOM_MAX_STACKS;
+			result = Math.max(500, previous.resolveAt - now);
+		}
+		else
+		{
+			prophecy.stacks = before + 1;
+		}
+
+		DOOM_STACKS.put(key, new DoomStack(oracle, prophecy.stacks, now + result));
+		if ((result != delay) && (prophecy.info != null))
+		{
+			// The icon shows the time left.
+			prophecy.info.setAbnormalTime((int) Math.max(1, (result + 999) / 1000));
+			prophecy.target.getEffectList().updateEffectIcons(false);
+		}
+
+		if (spread && knowsInevitableDoom(oracle))
+		{
+			if ((prophecy.stacks > 1) && oracle.isPlayer())
+			{
+				oracle.asPlayer().sendMessage(prophecy.skill.getName() + " x" + prophecy.stacks + ": " + prophecy.target.getName() + ".");
+			}
+
+			spreadDoom(prophecy, result);
+		}
+
+		return result;
+	}
+
+	/**
+	 * The Doom spreads to the Oracle's enemies close to its target. They can't resist it.
+	 * @param prophecy the Doom it spreads from
+	 * @param delay milliseconds before it comes true
+	 */
+	private static void spreadDoom(Prophecy prophecy, long delay)
+	{
+		if (OraclesWarchiefsConfig.DOOM_SPREAD_RANGE <= 0)
+		{
+			return;
+		}
+
+		final Creature oracle = prophecy.oracle;
+		final Skill skill = prophecy.skill;
+		SPREADING.set(new long[]
+		{
+			prophecy.stacks,
+			delay
+		});
+		try
+		{
+			for (Creature enemy : AreaTargets.getEnemies(oracle, prophecy.target, OraclesWarchiefsConfig.DOOM_SPREAD_RANGE, skill))
+			{
+				if ((enemy == prophecy.target) || enemy.isInvulAgainst(skill.getId(), skill.getLevel()))
+				{
+					continue;
+				}
+
+				// Lands like Skill#applyEffects, without the roll to resist.
+				final BuffInfo info = new BuffInfo(oracle, enemy, skill);
+				skill.applyEffectScope(EffectScope.GENERAL, info, true, true);
+				skill.applyEffectScope(oracle.isPlayable() && enemy.isAttackable() ? EffectScope.PVE : oracle.isPlayable() && enemy.isPlayable() ? EffectScope.PVP : null, info, true, true);
+				enemy.getEffectList().add(info);
+			}
+		}
+		finally
+		{
+			SPREADING.remove();
+		}
+	}
+
+	/**
+	 * @param oracle the caster
+	 * @return {@code true} if it knows Inevitable Doom (Hierophant)
+	 */
+	private static boolean knowsInevitableDoom(Creature oracle)
+	{
+		return (oracle != null) && (oracle.getKnownSkill(INEVITABLE_DOOM_SKILL_ID) != null);
+	}
+
+	/**
+	 * Inevitable Doom (Hierophant): Prophecy of Doom comes back sooner.
+	 * @param caster the caster
+	 * @param skill the skill cast
+	 * @param reuseDelay its reuse, milliseconds
+	 * @return the reuse
+	 */
+	public static int getReuseDelay(Creature caster, Skill skill, int reuseDelay)
+	{
+		if ((skill.getId() == DOOM_SKILL_ID) && knowsInevitableDoom(caster))
+		{
+			return (int) (reuseDelay * OraclesWarchiefsConfig.DOOM_HIEROPHANT_REUSE);
+		}
+
+		return reuseDelay;
 	}
 
 	/**
@@ -189,6 +350,20 @@ public class Prophecies
 		if (PROPHECIES.remove(key, prophecy))
 		{
 			stop(prophecy);
+		}
+
+		// The stacks go with it, unless it is being cast again right now (the new one takes them).
+		final DoomStack stack = DOOM_STACKS.get(key);
+		if (stack != null)
+		{
+			if (target.isDead())
+			{
+				DOOM_STACKS.remove(key, stack);
+			}
+			else
+			{
+				ThreadPool.schedule(() -> DOOM_STACKS.remove(key, stack), 1000);
+			}
 		}
 	}
 
@@ -245,10 +420,13 @@ public class Prophecies
 
 	private static void resolve(Prophecy prophecy, double multiplier, boolean foresight)
 	{
-		if (!PROPHECIES.remove(key(prophecy.target, prophecy.skill), prophecy))
+		final long key = key(prophecy.target, prophecy.skill);
+		if (!PROPHECIES.remove(key, prophecy))
 		{
 			return;
 		}
+
+		DOOM_STACKS.remove(key);
 
 		stop(prophecy);
 
@@ -278,7 +456,7 @@ public class Prophecies
 				final boolean still = target.calculateDistance2D(prophecy.start) < OraclesWarchiefsConfig.DOOM_STILL_RANGE;
 				final boolean mcrit = Formulas.calcMCrit(oracle.getMCriticalHit(target, resolveSkill));
 				final byte shld = Formulas.calcShldUse(oracle, target, resolveSkill);
-				final int damage = (int) (Formulas.calcMagicDam(oracle, target, resolveSkill, shld, false, false, mcrit) * multiplier * (still ? OraclesWarchiefsConfig.DOOM_STILL_BONUS : 1));
+				final int damage = (int) (Formulas.calcMagicDam(oracle, target, resolveSkill, shld, false, false, mcrit) * multiplier * (still ? OraclesWarchiefsConfig.DOOM_STILL_BONUS : 1) * prophecy.stacks);
 				if (damage > 0)
 				{
 					target.reduceCurrentHp(damage, oracle, resolveSkill);

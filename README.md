@@ -259,6 +259,7 @@ Glittering Medals from champions teach every class the songs and dances, so the 
   - **Battle Hymn** (Swordsinger line): P. Def. +5%, and each attack has a 15% chance to sing Healing Verse, healing the party within 600 for 120 / 200 / 280 / 360 HP.
   - **Blade Waltz** (Bladedancer line): Atk. Spd. +8%, Evasion +3, and each dual sword attack has a 20% chance to unleash Whirling Edge on every enemy within 200 (300 / 550 / 850 / 1150 power), which turns a Bladedancer into a pack farmer.
 - **Finales** (level 79): **Sanctuary Chorus** (Sword Muse) heals the party within 1000 for 20% of its HP and gives P. Def. and M. Def. +30% for 15 seconds (5 minute reuse). **Danse Macabre** (Spectral Dancer) strikes up to 15 enemies within 300 with 3500 power and may cut their P. Def. by 20% and Speed by 30% for 10 seconds (2 minute reuse).
+- **Fury Fists**: both lines learn the Tyrant toggle at 43 (Atk. Spd. +25%, costs HP while on).
 - **Virtuoso**: songs and dances a performer casts last ×1.5 (Swordsinger, Bladedancer) or ×2 (Sword Muse, Spectral Dancer), and singing one more doesn't cost them the extra MP everyone else pays, so a performer's songs outlast anyone's medal songs.
 - Performances drain MP for as long as they are on (about 3 MP per second at 76, a stance about 2), proportionate to the level like Vicious Stance.
 - The skills are learned from the Grand Masters like any class skill (data/stats/skills/custom/performer_skills.xml). Everything follows the active class. The client needs the rows in `client/Performers` to show their names and icons. Settings in `config/Custom/Performers.ini`.
@@ -278,26 +279,30 @@ Buff templates, buff shops, the scheme buffer and the books that teach every buf
 | Prophecy of Reversal | Prophet (58) | Ally, 6 s: its HP, MP, CP and place are written down, and it comes back to them (never lower than it is): a save point before a nuke lands |
 | Fulfilment | Hierophant | Spends 5 Foresight: every prophecy of the Oracle comes true now, ×1.5 |
 | Glimpse | Hierophant | Toggle: Evasion +4; a single hit taking 30% of its HP makes the Oracle step back 300 (once a minute) |
+| Inevitable Doom | Hierophant | Passive: Prophecy of Doom's reuse is halved (4 → 2 seconds); cast again on the same target before it comes true it gains a stack (up to 5, each adds the damage once more, and the time starts again until it's full); every Doom also spreads, with its stacks and time, to the enemies within 200 of its target, who can't resist it |
 | Unwritten | Hierophant (79) | Doom on every enemy and Salvation on every party member within 600 (5 minute reuse) |
 
 **Totem Warchiefs** (Warcryer, Doomcryer) plant **totems** at their feet that pulse every 2 seconds to everyone within 600 and stand 30 seconds. Monsters and the Warchief's enemies can break them. One of each kind and 3 at most: another one replaces the oldest. A totem falls when its Warchief dies, leaves or goes too far.
 
 | Skill | Class | Effect |
 |---|---|---|
-| Totem of Blood | Warcryer | Party near it: 4 / 5 / 6 / 8% of the damage dealt comes back as HP |
-| Totem of the Horde | Warcryer | Monsters near it that fight the party turn on the totem (raid bosses don't) |
-| Totem of Frost-Teeth | Warcryer | Enemies near it: Speed −15 to −22%, Atk. Spd. −7 to −12% |
+| Totem of Blood | Warcryer | Party near it: 4 / 5 / 6 / 8% of the damage dealt comes back as HP (12 second reuse) |
+| Totem of Flames | Warcryer (40) | Every pulse burns up to 10 enemies within 400 of it with the Warchief's fire magic, 32 / 40 / 48 / 58 power, the nearest first (18 second reuse) |
+| Totem of the Horde | Warcryer | Monsters near it that fight the party turn on the totem (raid bosses don't; 25 / 22 / 20 second reuse) |
+| Totem of Frost-Teeth | Warcryer | Enemies near it: Speed −15 to −22%, Atk. Spd. −7 to −12% (15 second reuse) |
+| Spirit Trance | Warcryer (52) | The Warchief turns to ice for 5 seconds while its totems fight: paralyzed, P. Def. and M. Def. +300%, 150 / 250 / 400 HP back every second (1 minute reuse) |
 | War Drums | Warcryer | Stance: P. Atk. +5%, each hit takes 1 second off the reuse of every totem skill |
 | Shatter | Warcryer | With 3 totems up: each pulses once more and explodes on up to 10 enemies within 300 |
-| Totem of Ancestors | Doomcryer | The first party member lying dead near it gets up with 30% HP; the totem is spent |
+| Totem of Ancestors | Doomcryer | The first party member lying dead near it gets up with 30% HP; the totem is spent (80 second reuse) |
 | Ancestral Bond | Doomcryer | Passive: Max HP +200, P. Def. and M. Def. +8% near its own totem |
 | Spirit Walk | Doomcryer | Swaps places with its targeted totem, or the nearest one |
-| Great Totem of the Horde-Father | Doomcryer (79) | Blood, Horde and Frost-Teeth at once within 900 for 20 seconds; it can't be targeted (5 minute reuse) |
+| Great Totem of the Horde-Father | Doomcryer (79) | Blood, Horde and Frost-Teeth at once within 900 for 20 seconds; it can't be targeted (3 minute reuse) |
 
 - Echoes and hexes of the totems have their own buff slots (the triggered-buff bar for the echoes), so they stack with every buff. The "Totem Circle" icon shows how many totems are up.
 - A character who learned one of the retired buffs from its class tree loses it quietly when it logs in, or keeps the level its 1st class still teaches; a buff the Glittering Medals or buff books also teach is kept, since it may have been learned from one (`RetiredSkills` in the config).
 - The skills are learned from the Grand Masters like any class skill (`data/stats/skills/custom/oracle_skills.xml`, `warchief_skills.xml`). The client needs the rows in `client/OraclesWarchiefs`. Settings in `config/Custom/OraclesWarchiefs.ini`.
-- **Fake players**: the Hierophants and Doomcryers that join parties use the new kits (Salvation on a hurt member, Doom and Ruin on the target, Fulfilment at 5 Foresight; totems while fighting, Shatter once 3 are up). The town buffers are no longer Prophets or Warcryers.
+- The client rows mark each skill active, passive or toggle (`operate_type`), so Ancestral Bond and Inevitable Doom are listed with the passives.
+- **Fake players**: the Hierophants and Doomcryers that join parties use the new kits (Salvation on a hurt member, Doom and Ruin on the target, Fulfilment at 5 Foresight; totems while fighting, Shatter once 3 are up, Spirit Trance when in danger). The town buffers are no longer Prophets or Warcryers.
 
 ### Other Custom Features at a Glance
 
@@ -666,7 +671,16 @@ This program is free software, licensed under the **GNU General Public License, 
 
 ## Recent Updates
 
-Changes from 28 September – 9 October 2026.
+Changes from 28 September – 10 October 2026.
+
+### Totem Warchiefs, Oracles and performers
+- **Warcryer line**: new **Totem of Flames** from level 40 (each pulse burns up to 10 enemies near it with the Warchief's fire magic) and **Spirit Trance** from 52 (5 seconds turned to ice: paralyzed, P. Def. and M. Def. +300%, a lot of HP back every second, while the totems fight). The totems come back sooner: Blood 20 → 12 s, Horde 40/35/30 → 25/22/20 s, Frost-Teeth 25 → 15 s, Ancestors 120 → 80 s, Great Totem 5 → 3 min.
+- **Hierophant**: new passive **Inevitable Doom** (76): Prophecy of Doom's reuse is halved, it stacks up to 5 times on its target and spreads to the enemies within 200 of it, who can't resist it (`DoomMaxStacks`, `DoomSpreadRange`, `DoomHierophantReuse`).
+- **Swordsinger and Bladedancer lines** learn **Fury Fists** (the Tyrant toggle) at 43.
+- **Client rows**: the `operate_type` column of the Skillgrp.dat rows in `client/OraclesWarchiefs` and `client/Performers` held the wrong value, so the client showed Ancestral Bond as an active skill and the toggles as plain actives. It now follows each skill's server type. Paste the new rows in again.
+- New skills 27559-27562, totem NPC 1002106.
+- **Totems falling**: when a totem is shattered, broken, spent or its time runs out, the monsters that were fighting it drop it and attack the one they hate most, or the Warchief if they hate no one else. Before, monsters drawn by the Totem of the Horde could stand idle once the totem was gone.
+- **Performances**: the songs and dances of the Swordsinger and Bladedancer lines show the vitality glow on the performer, which follows it, instead of the magic square, which stayed where the performance began.
 
 ### Oracles and Totem Warchiefs
 - **Prophet and Warcryer lines reworked**: they no longer buff. The Prophet line became **Oracles**, who cast prophecies that come true a few seconds later (Doom, Salvation, Ruin, Reversal, Fulfilment, Glimpse, Unwritten), and the Warcryer line **Totem Warchiefs**, who plant pulsing totems and smash them (Blood, Horde, Frost-Teeth, Ancestors, War Drums, Shatter, Spirit Walk, the Great Totem). See [Oracles and Totem Warchiefs](#oracles-and-totem-warchiefs).

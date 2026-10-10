@@ -5,7 +5,7 @@
 	it plants totems and smashes them. See README "Oracles and Totem Warchiefs" and
 	config/Custom/OraclesWarchiefs.ini. The retail chants are out of their class trees.
 
-	27545-27558  Totem Warchief skills, learned from the Grand Masters like any class skill.
+	27545-27561  Totem Warchief skills, learned from the Grand Masters like any class skill.
 
 	TOTEMS (the PlantTotem effect, model/actor/holders/player/Totems.java): a totem NPC planted
 	at the Warchief's feet. It pulses every 2 seconds to everyone within 600 and stands 30
@@ -19,6 +19,8 @@
 	                              up with 30% HP; the totem is spent.
 	  27558 Great Totem of the Horde-Father (Doomcryer finale): Blood, Horde and Frost-Teeth at
 	                              once, within 900, for 20 seconds, can't be targeted.
+	  27559 Totem of Flames       every pulse burns up to 10 enemies within 400 with 27560's
+	                              magic damage (fire), the nearest first.
 	27551 War Drums (stance)      P. Atk. +5%; each hit (27552 Drumbeat) takes 1 second off the
 	                              reuse of every totem skill.
 	27553 Shatter                 needs 3 totems up (27557 Totem Circle shows how many): each
@@ -27,6 +29,8 @@
 	                              the nearest), needs 1 totem up.
 	27555 Ancestral Bond          (Doomcryer, passive) near its own totem: 27556 echo, P. Def.
 	                              and M. Def. +8%.
+	27561 Spirit Trance           the Warchief turns to ice for 5 seconds while its totems fight:
+	                              paralyzed, P. Def. and M. Def. +300%, HP recovered every second.
 
 	Echoes are in the triggered-buff bar and have their own abnormal types, so they stack with
 	every buff. Keep custom skill ids below 32768. The client needs Skillname-e.dat /
@@ -47,7 +51,7 @@
 		<isMagic>1</isMagic>
 		<magicLevel>#magicLevel</magicLevel>
 		<mpConsume>#mpConsume</mpConsume>
-		<reuseDelay>20000</reuseDelay>
+		<reuseDelay>12000</reuseDelay>
 		<effects>
 			<effect name="PlantTotem">
 				<npcId>1002101</npcId>
@@ -79,7 +83,7 @@
 	<skill id="27547" levels="3" name="Totem of the Horde">
 		<table name="#magicLevel">43 58 76</table>
 		<table name="#mpConsume">40 55 70</table>
-		<table name="#reuseDelay">40000 35000 30000</table>
+		<table name="#reuseDelay">25000 22000 20000</table>
 		<icon>icon.skill1562</icon>
 		<operateType>A1</operateType>
 		<targetType>SELF</targetType>
@@ -109,7 +113,7 @@
 		<isMagic>1</isMagic>
 		<magicLevel>#magicLevel</magicLevel>
 		<mpConsume>#mpConsume</mpConsume>
-		<reuseDelay>25000</reuseDelay>
+		<reuseDelay>15000</reuseDelay>
 		<effects>
 			<effect name="PlantTotem">
 				<npcId>1002103</npcId>
@@ -154,7 +158,7 @@
 		<isMagic>1</isMagic>
 		<magicLevel>77</magicLevel>
 		<mpConsume>90</mpConsume>
-		<reuseDelay>120000</reuseDelay>
+		<reuseDelay>80000</reuseDelay>
 		<effects>
 			<effect name="PlantTotem">
 				<npcId>1002104</npcId>
@@ -302,7 +306,7 @@
 		<isMagic>1</isMagic>
 		<magicLevel>79</magicLevel>
 		<mpConsume>150</mpConsume>
-		<reuseDelay>300000</reuseDelay>
+		<reuseDelay>180000</reuseDelay>
 		<effects>
 			<effect name="PlantTotem">
 				<npcId>1002105</npcId>
@@ -310,6 +314,71 @@
 				<great>true</great>
 				<skillLevel>4</skillLevel>
 			</effect>
+		</effects>
+	</skill>
+
+	<!-- 27559 TOTEM OF FLAMES: every pulse burns the enemies close to it with 27560. -->
+	<skill id="27559" levels="4" name="Totem of Flames">
+		<table name="#magicLevel">40 52 64 76</table>
+		<table name="#mpConsume">40 55 68 80</table>
+		<icon>icon.skill1002</icon>
+		<operateType>A1</operateType>
+		<targetType>SELF</targetType>
+		<effectPoint>-300</effectPoint>
+		<hitTime>1000</hitTime>
+		<isMagic>1</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpConsume>#mpConsume</mpConsume>
+		<reuseDelay>18000</reuseDelay>
+		<effects>
+			<effect name="PlantTotem">
+				<npcId>1002106</npcId>
+				<kinds>FLAME</kinds>
+			</effect>
+		</effects>
+	</skill>
+	<!-- 27560 TOTEM OF FLAMES: the burn of a pulse, the Warchief's magic (cast by the totem, not
+	     learned). -->
+	<skill id="27560" levels="4" name="Totem of Flames">
+		<table name="#magicLevel">40 52 64 76</table>
+		<table name="#power">32 40 48 58</table>
+		<icon>icon.skill1002</icon>
+		<operateType>A1</operateType>
+		<targetType>ONE</targetType>
+		<isMagic>1</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<power>#power</power>
+		<element>0</element> <!-- Fire -->
+		<elementPower>20</elementPower>
+	</skill>
+
+	<!-- 27561 SPIRIT TRANCE: the Warchief turns to ice for 5 seconds while its totems fight. -->
+	<skill id="27561" levels="3" name="Spirit Trance">
+		<table name="#magicLevel">52 64 76</table>
+		<table name="#mpConsume">55 70 85</table>
+		<table name="#heal">150 250 400</table>
+		<icon>icon.skill1391</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>5</abnormalTime>
+		<abnormalType>TOTEM_TRANCE</abnormalType>
+		<abnormalVisualEffect>FREEZING</abnormalVisualEffect>
+		<effectPoint>300</effectPoint>
+		<hitTime>500</hitTime>
+		<isMagic>1</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<mpConsume>#mpConsume</mpConsume>
+		<reuseDelay>60000</reuseDelay>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pDef">4</mul>
+				<mul stat="mDef">4</mul>
+			</effect>
+			<effect name="HealOverTime" ticks="1">
+				<power>#heal</power>
+			</effect>
+			<effect name="Paralyze" />
 		</effects>
 	</skill>
 </list>

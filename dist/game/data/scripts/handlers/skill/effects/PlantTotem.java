@@ -34,7 +34,7 @@ import org.l2jmobius.gameserver.model.skill.Skill;
  * Plant Totem (Totem Warchiefs, the Warcryer line): plants a totem at the Warchief's feet, see {@link Totems}.
  * <ul>
  * <li>{@code npcId}: the totem NPC.</li>
- * <li>{@code kinds}: what it pulses, comma separated (BLOOD, HORDE, FROST, ANCESTORS).</li>
+ * <li>{@code kinds}: what it pulses, comma separated (BLOOD, HORDE, FROST, ANCESTORS, FLAME).</li>
  * <li>{@code great}: true for the Great Totem of the Horde-Father (doesn't count, can't be targeted).</li>
  * <li>{@code skillLevel}: the level of its echoes, the skill's level by default.</li>
  * </ul>

@@ -7,9 +7,12 @@ ROOT=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SKILLS=ROOT+'/dist/game/data/stats/skills/custom/'
 skills=ET.parse(SKILLS+'oracle_skills.xml').getroot().findall('skill')+ET.parse(SKILLS+'warchief_skills.xml').getroot().findall('skill')
 BY_ID={int(s.get('id')):s for s in skills}
-# oper_type, following client/PassiveTree: 0 attack, 1 heal, 2 buff (toggles too), 3 debuff.
+# operate_type (4th column), from the server's operateType: 0 A1, 1 A2, 2 P (the client lists it with the passives), 3 T.
+OPERATE={'A1':0,'A2':1,'P':2,'T':3}
+# icon_type (3rd column), following client/PassiveTree: 0 attack, 1 heal, 2 buff (toggles too), 3 debuff.
 OPER={27530:3,27531:0,27532:1,27533:3,27534:3,27535:3,27536:2,27537:2,27538:2,27539:2,27540:3,
-      27545:2,27546:2,27547:2,27548:3,27549:3,27550:2,27551:2,27552:2,27553:0,27554:2,27555:2,27556:2,27557:2,27558:2}
+      27545:2,27546:2,27547:2,27548:3,27549:3,27550:2,27551:2,27552:2,27553:0,27554:2,27555:2,27556:2,27557:2,27558:2,
+      27559:0,27560:0,27561:2,27562:2}
 TOGGLE=" Continuously consumes MP proportionately to the user's level."
 TOTEM=" A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most."
 DESC={
@@ -37,7 +40,11 @@ DESC={
  27555:"Max HP +200. Near your own totem: P. Def. and M. Def. +8%.",
  27556:"P. Def. and M. Def. +8% while near your own totem.",
  27557:"Totems up: {lvl}. Shatter needs 3.",
- 27558:"Plants the Great Totem of the Horde-Father for 20 seconds: Totem of Blood, Totem of the Horde and Totem of Frost-Teeth at once, within 900. It can't be targeted. Reuse time is 5 minutes.",
+ 27558:"Plants the Great Totem of the Horde-Father for 20 seconds: Totem of Blood, Totem of the Horde and Totem of Frost-Teeth at once, within 900. It can't be targeted. Reuse time is {reuse_min} minutes.",
+ 27559:"Plants a Totem of Flames: every 2 seconds it burns up to 10 enemies within 400 with {power} Power (fire)."+TOTEM,
+ 27560:"Burned by a Totem of Flames: {power} Power.",
+ 27561:"Turns you to ice for 5 seconds while your totems fight: you can't move or act, P. Def. and M. Def. +300%, and you recover {heal} HP every second. Reuse time is 1 minute.",
+ 27562:"Prophecy of Doom: reuse time halved; cast again on the same target before it comes true, it gains a stack (up to 5, each adds its damage once more); it also spreads to the enemies within 200 of its target, who can't resist it.",
 }
 def f32(x): return '%.8f' % struct.unpack('f', struct.pack('f', x))[0]
 def table(sk, name, lvl):
@@ -60,8 +67,9 @@ for sk in skills:
         ismagic=int(g(sk,'isMagic','0')); ismagic=ismagic if ismagic in (0,1) else 0
         hit=hit if hit>0 else 1.0
         attack = OPER[sid] in (0,3)
-        tpl = ('0','3','S','9','11') if attack else ('1','1','X','8','10')
-        row=[str(sid),str(lvl),str(OPER[sid]),tpl[0],str(mp),str(rng & 0xFFFFFFFF),tpl[1],f32(hit),str(ismagic),tpl[2],str(sid),icon,'','0','0','0','a,none\\0','0',tpl[3],tpl[4],'0','a,none\\0']
+        tpl = ('3','S','9','11') if attack else ('1','X','8','10')
+        operate=str(OPERATE[sk.find('operateType').text.strip()])
+        row=[str(sid),str(lvl),str(OPER[sid]),operate,str(mp),str(rng & 0xFFFFFFFF),tpl[0],f32(hit),str(ismagic),tpl[1],str(sid),icon,'','0','0','0','a,none\\0','0',tpl[2],tpl[3],'0','a,none\\0']
         assert len(row)==22
         grp.append('\t'.join(row))
         args=dict(lvl=lvl)
@@ -74,9 +82,15 @@ for sk in skills:
         if sid in (27545,27546): args['absorb']=table(BY_ID[27546],'#absorb',lvl)
         if sid in (27548,27549): args.update(speed=pct(table(BY_ID[27549],'#speed',lvl),True), atkspd=pct(table(BY_ID[27549],'#atkSpd',lvl),True))
         if sid==27553: args['power']=table(sk,'#power',lvl)
+        if sid==27558: args['reuse_min']=int(val(sk,sk.find('reuseDelay').text.strip(),lvl))//60000
+        if sid in (27559,27560): args['power']=table(BY_ID[27560],'#power',lvl)
+        if sid==27561: args['heal']=table(sk,'#heal',lvl)
         d=DESC[sid].format(**args)
         assert '{' not in d and 'None' not in d, (sid,lvl,d)
         names.append('\t'.join([str(sid),str(lvl),'a,%s\\0'%name,'a,%s\\0'%d,'a,none\\0','a,none\\0']))
+# Sorted by skill id and level, like the .dat files.
+key=lambda row: tuple(int(x) for x in row.split('\t')[:2])
+grp.sort(key=key); names.sort(key=key)
 out=ROOT+'/client/OraclesWarchiefs'
 open(out+'/skillgrp_additions.txt','w',encoding='utf-8',newline='\r\n').write('\n'.join(grp)+'\n')
 open(out+'/skillname-e_additions.txt','w',encoding='utf-8',newline='\r\n').write('\n'.join(names)+'\n')

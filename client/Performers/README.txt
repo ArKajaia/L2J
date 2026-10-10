@@ -29,7 +29,9 @@ Symphony, Hex, Freezing Strike, Dance of Berserker, Demonic Blade Dance,
 Dance of Blade Storm, Dance of Medusa...), so no texture files are needed
 and an echo is never mistaken for a medal song in the buff bar.
 
-oper_type follows client/PassiveTree (2 buff, 3 debuff, 0 physical attack,
-1 heal); toggles use 2. MP cost, cast range and cast time match the server
+Skillgrp.dat columns 3 and 4 are icon_type and operate_type. icon_type
+follows client/PassiveTree (2 buff, 3 debuff, 0 physical attack, 1 magic).
+operate_type is the server's operateType: 0 A1, 1 A2, 2 P, 3 T (the
+performances and stances are 3, toggles; rows made before had 1). MP cost, cast range and cast time match the server
 data; if the server skills change, regenerate the rows with
 generate_client_rows.py rather than editing them by hand.

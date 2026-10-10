@@ -332,5 +332,10 @@
 		<skill skillName="Totem of Blood" skillId="27545" skillLevel="3" getLevel="64" levelUpSp="300000" learnedByNpc="true" />
 		<skill skillName="Totem of Frost-Teeth" skillId="27548" skillLevel="3" getLevel="70" levelUpSp="500000" learnedByNpc="true" />
 		<skill skillName="Shatter" skillId="27553" skillLevel="3" getLevel="70" levelUpSp="500000" learnedByNpc="true" />
+		<skill skillName="Totem of Flames" skillId="27559" skillLevel="1" getLevel="40" levelUpSp="20000" learnedByNpc="true" />
+		<skill skillName="Totem of Flames" skillId="27559" skillLevel="2" getLevel="52" levelUpSp="70000" learnedByNpc="true" />
+		<skill skillName="Spirit Trance" skillId="27561" skillLevel="1" getLevel="52" levelUpSp="70000" learnedByNpc="true" />
+		<skill skillName="Totem of Flames" skillId="27559" skillLevel="3" getLevel="64" levelUpSp="300000" learnedByNpc="true" />
+		<skill skillName="Spirit Trance" skillId="27561" skillLevel="2" getLevel="64" levelUpSp="300000" learnedByNpc="true" />
 	</skillTree>
 </list>

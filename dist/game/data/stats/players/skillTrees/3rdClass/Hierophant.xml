@@ -30,5 +30,6 @@
 		<skill skillName="Prophecy of Ruin" skillId="27533" skillLevel="3" getLevel="78" levelUpSp="5000000" learnedByNpc="true" />
 		<skill skillName="Prophecy of Reversal" skillId="27536" skillLevel="2" getLevel="78" levelUpSp="5000000" learnedByNpc="true" />
 		<skill skillName="Unwritten" skillId="27540" skillLevel="1" getLevel="79" levelUpSp="8000000" learnedByNpc="true" />
+		<skill skillName="Inevitable Doom" skillId="27562" skillLevel="1" getLevel="76" levelUpSp="2000000" learnedByNpc="true" />
 	</skillTree>
 </list>

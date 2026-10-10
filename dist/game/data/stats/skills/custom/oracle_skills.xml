@@ -6,6 +6,7 @@
 	config/Custom/OraclesWarchiefs.ini. The retail buffs are out of their class trees.
 
 	27530-27540  Oracle skills, learned from the Grand Masters like any class skill.
+	27562        Inevitable Doom (Hierophant passive).
 
 	PROPHECIES (the Prophecy effect, model/actor/holders/player/Prophecies.java): a prophecy does
 	nothing when it lands. When its time runs out it comes true; if it is cancelled or its
@@ -22,6 +23,11 @@
 	                               comes true now, x1.5 (no Foresight from these).
 	  27539 Glimpse                Hierophant toggle: Evasion +4, a hit taking 30% of the
 	                               Oracle's HP makes it step back 300 (once a minute).
+	  27562 Inevitable Doom        Hierophant passive: Prophecy of Doom comes back twice as fast
+	                               (DoomHierophantReuse), stacks up to 5 times on its target (cast
+	                               again before it comes true: one more stack, each adds the damage
+	                               once more) and spreads to the enemies within 200 of its target,
+	                               who can't resist it (Prophecies.java).
 	  27540 Unwritten              Hierophant finale: Doom on every enemy and Salvation on every
 	                               party member within 600 (5 minute reuse).
 
@@ -277,5 +283,14 @@
 				<range>600</range>
 			</effect>
 		</effects>
+	</skill>
+
+	<!-- 27562 INEVITABLE DOOM (Hierophant, passive): Prophecy of Doom comes back sooner, stacks and
+	     spreads, see Prophecies.java. -->
+	<skill id="27562" levels="1" name="Inevitable Doom">
+		<icon>icon.skill1356</icon>
+		<operateType>P</operateType>
+		<targetType>SELF</targetType>
+		<magicLevel>76</magicLevel>
 	</skill>
 </list>

@@ -53,6 +53,7 @@ import org.l2jmobius.gameserver.network.serverpackets.SkillCoolTime;
  * <li>Horde: monsters around that fight the party turn on the totem.</li>
  * <li>Frost-Teeth: enemies around get a hex that slows their runs and attacks.</li>
  * <li>Ancestors: the first party member that lies dead around it gets up, and the totem is spent.</li>
+ * <li>Flames: every pulse burns the enemies close to it with magic damage.</li>
  * </ul>
  * One totem of each kind, up to {@link OraclesWarchiefsConfig#TOTEM_MAX_COUNT}: another one replaces the oldest. The Great Totem of the Horde-Father (the Doomcryer finale) pulses Blood, Horde and Frost-Teeth farther, and doesn't count.<br>
  * A totem falls when its time is up, when it is broken, or when its Warchief dies, leaves or goes too far.
@@ -65,13 +66,18 @@ public class Totems
 		BLOOD,
 		HORDE,
 		FROST,
-		ANCESTORS
+		ANCESTORS,
+		FLAME
 	}
 
 	/** Echo of the Totem of Blood (a buff on the party). */
 	public static final int BLOOD_ECHO_ID = 27546;
 	/** Echo of the Totem of Frost-Teeth (a hex on enemies). */
 	public static final int FROST_ECHO_ID = 27549;
+	/** The burn of the Totem of Flames (its power is the damage of a pulse). */
+	public static final int FLAME_BURN_ID = 27560;
+	/** Flame Strike: what a pulse of the Totem of Flames looks like. */
+	private static final int FLAME_VISUAL_ID = 1181;
 	/** Ancestral Bond: a Doomcryer near its own totem gets {@link #BOND_ECHO_ID}. */
 	public static final int BOND_SKILL_ID = 27555;
 	public static final int BOND_ECHO_ID = 27556;
@@ -84,6 +90,7 @@ public class Totems
 		27547, // Totem of the Horde
 		27548, // Totem of Frost-Teeth
 		27550, // Totem of Ancestors
+		27559, // Totem of Flames
 		27553, // Shatter
 		27554, // Spirit Walk
 	};
@@ -261,6 +268,15 @@ public class Totems
 			}
 		}
 
+		if (kinds.contains(Kind.FLAME))
+		{
+			final Skill burn = SkillData.getInstance().getSkill(FLAME_BURN_ID, totem.getSkillLevel());
+			if (burn != null)
+			{
+				burn(owner, totem, burn);
+			}
+		}
+
 		if (kinds.contains(Kind.HORDE))
 		{
 			for (Attackable monster : World.getInstance().getVisibleObjectsInRange(totem, Attackable.class, range))
@@ -310,6 +326,42 @@ public class Totems
 			if (bond != null)
 			{
 				AreaTargets.keepEcho(owner, owner, bond);
+			}
+		}
+	}
+
+	/**
+	 * Totem of Flames: a pulse burns up to {@link OraclesWarchiefsConfig#FLAME_TOTEM_MAX_TARGETS} enemies within {@link OraclesWarchiefsConfig#FLAME_TOTEM_RANGE} of the totem, the nearest first.
+	 * @param owner the Warchief (the damage is its magic)
+	 * @param totem the totem
+	 * @param burn the burn (its power is the damage)
+	 */
+	private static void burn(Creature owner, Totem totem, Skill burn)
+	{
+		final List<Creature> enemies = AreaTargets.getEnemies(owner, totem, OraclesWarchiefsConfig.FLAME_TOTEM_RANGE, burn);
+		if (enemies.isEmpty())
+		{
+			return;
+		}
+
+		enemies.sort((a, b) -> Double.compare(totem.calculateDistance3D(a), totem.calculateDistance3D(b)));
+		totem.broadcastPacket(new MagicSkillUse(totem, totem, FLAME_VISUAL_ID, 1, 0, 0));
+		int hits = 0;
+		for (Creature enemy : enemies)
+		{
+			final boolean mcrit = Formulas.calcMCrit(owner.getMCriticalHit(enemy, burn));
+			final byte shld = Formulas.calcShldUse(owner, enemy, burn);
+			final int damage = (int) Formulas.calcMagicDam(owner, enemy, burn, shld, false, false, mcrit);
+			if (damage > 0)
+			{
+				enemy.reduceCurrentHp(damage, owner, burn);
+				enemy.notifyDamageReceived(damage, owner, burn, mcrit, false);
+				owner.sendDamageMessage(enemy, damage, mcrit, false, false);
+			}
+
+			if (++hits >= OraclesWarchiefsConfig.FLAME_TOTEM_MAX_TARGETS)
+			{
+				break;
 			}
 		}
 	}

@@ -29,5 +29,7 @@
 		<skill skillName="Shatter" skillId="27553" skillLevel="4" getLevel="78" levelUpSp="5000000" learnedByNpc="true" />
 		<skill skillName="Spirit Walk" skillId="27554" skillLevel="1" getLevel="78" levelUpSp="5000000" learnedByNpc="true" />
 		<skill skillName="Great Totem of the Horde-Father" skillId="27558" skillLevel="1" getLevel="79" levelUpSp="8000000" learnedByNpc="true" />
+		<skill skillName="Totem of Flames" skillId="27559" skillLevel="4" getLevel="76" levelUpSp="2000000" learnedByNpc="true" />
+		<skill skillName="Spirit Trance" skillId="27561" skillLevel="3" getLevel="76" levelUpSp="2000000" learnedByNpc="true" />
 	</skillTree>
 </list>

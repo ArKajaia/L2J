@@ -248,6 +248,8 @@
 		<skill skillName="Battle Whisper" skillId="988" skillLevel="1" getLevel="46" levelUpSp="75000" learnedByNpc="true" />
 		<skill skillName="Battle Whisper" skillId="988" skillLevel="2" getLevel="52" levelUpSp="190000" learnedByNpc="true" />
 		<skill skillName="Battle Whisper" skillId="988" skillLevel="3" getLevel="60" levelUpSp="260000" learnedByNpc="true" />
+		<!-- Fury Fists: the Tyrant toggle (retail skill 222), custom for the performers -->
+		<skill skillName="Fury Fists" skillId="222" skillLevel="1" getLevel="43" levelUpSp="51000" learnedByNpc="true" />
 		<!-- Performers (custom, data/stats/skills/custom/performer_skills.xml) -->
 		<skill skillName="Ballad of the Bulwark" skillId="27500" skillLevel="1" getLevel="40" levelUpSp="20000" learnedByNpc="true" />
 		<skill skillName="Battle Hymn" skillId="27506" skillLevel="1" getLevel="43" levelUpSp="20000" learnedByNpc="true" />
