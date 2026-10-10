@@ -20,10 +20,14 @@
  */
 package org.l2jmobius.gameserver.model.actor.instance;
 
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
 import org.l2jmobius.commons.threads.ThreadPool;
+import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.model.World;
+import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -84,7 +88,7 @@ public class Totem extends Npc
 	}
 
 	/**
-	 * Stops pulsing and removes the totem from the world.
+	 * Stops pulsing and removes the totem from the world. The monsters that were fighting it go back to the fight, see {@link #releaseAggro}.
 	 */
 	public void unsummon()
 	{
@@ -97,7 +101,47 @@ public class Totem extends Npc
 		Totems.forget(this);
 		if (isSpawned())
 		{
+			final List<Attackable> monsters = World.getInstance().getVisibleObjects(this, Attackable.class);
 			deleteMe();
+			releaseAggro(monsters);
+		}
+	}
+
+	/**
+	 * The totem is gone (broken, shattered, spent or its time is up): the monsters that hated it forget it and attack the one they hate most now. One that hated nobody else turns on the Warchief, like a summon's aggro going to its owner. Otherwise a monster drawn by the Totem
+	 * of the Horde could stand idle once the totem was gone.
+	 * @param monsters the monsters that could see it
+	 */
+	private void releaseAggro(List<Attackable> monsters)
+	{
+		for (Attackable monster : monsters)
+		{
+			if (monster.isDead() || (monster.getAggroList().remove(this) == null))
+			{
+				continue;
+			}
+
+			if (monster.getTarget() == this)
+			{
+				monster.setTarget(null);
+			}
+
+			if (monster.isFakePlayer() || monster.isCoreAIDisabled() || !monster.hasAI())
+			{
+				continue;
+			}
+
+			Creature next = monster.getMostHated();
+			if ((next == null) && !_owner.isDead() && _owner.isSpawned() && (_owner.getInstanceId() == monster.getInstanceId()) && _owner.isAutoAttackable(monster))
+			{
+				monster.addDamageHate(_owner, 0, 1);
+				next = monster.getMostHated();
+			}
+
+			if (next != null)
+			{
+				monster.getAI().setIntention(Intention.ATTACK, next);
+			}
 		}
 	}
 

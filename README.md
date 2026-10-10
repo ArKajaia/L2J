@@ -679,6 +679,8 @@ Changes from 28 September – 10 October 2026.
 - **Swordsinger and Bladedancer lines** learn **Fury Fists** (the Tyrant toggle) at 43.
 - **Client rows**: the `operate_type` column of the Skillgrp.dat rows in `client/OraclesWarchiefs` and `client/Performers` held the wrong value, so the client showed Ancestral Bond as an active skill and the toggles as plain actives. It now follows each skill's server type. Paste the new rows in again.
 - New skills 27559-27562, totem NPC 1002106.
+- **Totems falling**: when a totem is shattered, broken, spent or its time runs out, the monsters that were fighting it drop it and attack the one they hate most, or the Warchief if they hate no one else. Before, monsters drawn by the Totem of the Horde could stand idle once the totem was gone.
+- **Performances**: the songs and dances of the Swordsinger and Bladedancer lines show the vitality glow on the performer, which follows it, instead of the magic square, which stayed where the performance began.
 
 ### Oracles and Totem Warchiefs
 - **Prophet and Warcryer lines reworked**: they no longer buff. The Prophet line became **Oracles**, who cast prophecies that come true a few seconds later (Doom, Salvation, Ruin, Reversal, Fulfilment, Glimpse, Unwritten), and the Warcryer line **Totem Warchiefs**, who plant pulsing totems and smash them (Blood, Horde, Frost-Teeth, Ancestors, War Drums, Shatter, Spirit Walk, the Great Totem). See [Oracles and Totem Warchiefs](#oracles-and-totem-warchiefs).
