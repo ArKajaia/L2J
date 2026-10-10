@@ -9,8 +9,8 @@
 
 	TOTEMS (the PlantTotem effect, model/actor/holders/player/Totems.java): a totem NPC planted
 	at the Warchief's feet. It pulses every 2 seconds to everyone within 600 and stands 30
-	seconds. Monsters and the Warchief's enemies can break it. One of each kind, 3 at most: a
-	4th replaces the oldest. Totems of Flames don't count: up to 3 of them on top. It falls
+	seconds. Monsters and the Warchief's enemies can break it. One of each kind (but up to 3
+	Totems of Flames), 3 at most: a 4th replaces the oldest. It falls
 	when its Warchief dies, leaves or goes 2500 away. A player's totem planted without Ctrl
 	hits monsters and the players and fake players with PvP status; with Ctrl it also hits
 	white ones. A hit on a player or fake player flags the Warchief.

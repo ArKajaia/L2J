@@ -282,7 +282,7 @@ Buff templates, buff shops, the scheme buffer and the books that teach every buf
 | Inevitable Doom | Hierophant | Passive: Prophecy of Doom's reuse is halved (4 → 2 seconds); cast again on the same target before it comes true it gains a stack (up to 5, each adds the damage once more, and the time starts again until it's full); every Doom also spreads, with its stacks and time, to the enemies within 400 of its target, who can resist the spread like any debuff (MEN) |
 | Unwritten | Hierophant (79) | Doom on every enemy and Salvation on every party member within 600 (5 minute reuse) |
 
-**Totem Warchiefs** (Warcryer, Doomcryer) plant **totems** at their feet that pulse every 2 seconds to everyone within 600 and stand 30 seconds. Monsters and the Warchief's enemies can break them. One of each kind and 3 at most: another one replaces the oldest. Totems of Flames don't count: up to 3 of them on top, a 4th replaces the oldest of them. A totem falls when its Warchief dies, leaves or goes too far.
+**Totem Warchiefs** (Warcryer, Doomcryer) plant **totems** at their feet that pulse every 2 seconds to everyone within 600 and stand 30 seconds. Monsters and the Warchief's enemies can break them. 3 at most: another one replaces the oldest. One of each kind, but up to 3 Totems of Flames. A totem falls when its Warchief dies, leaves or goes too far.
 
 A totem planted without Ctrl hits monsters and the players and fake players with PvP status (flagged, PK, clan war). Planted with Ctrl held (and Shatter cast with Ctrl), it also hits the white players and fake players around that the Warchief could force-attack. A hit on a player or fake player flags the Warchief as if it had hit them itself.
 
@@ -682,7 +682,7 @@ Changes from 28 September – 10 October 2026.
 
 ### Totem Warchiefs and Hierophants: fixes
 - **Totems spare white fake players without Ctrl**: a player's totem planted without Ctrl (Totem of Flames, Frost-Teeth, the Great Totem) and Shatter cast without Ctrl hit monsters and the players and fake players with PvP status (flagged, PK, clan war); before, they also hit white fake players that were fighting monsters. With Ctrl held they hit white players and fake players too. A totem hit on a player or fake player now **flags the Warchief** like a hit of its own (it didn't).
-- **Totem of Flames**: burns 20% more often (a pulse every 1.67 seconds instead of 2, `FlameTotemPulse`), and up to **3 Totems of Flames** stand at once, besides the other totems (`FlameTotemMaxCount`): a second or third one no longer knocks down the first.
+- **Totem of Flames**: burns 20% more often (a pulse every 1.67 seconds instead of 2, `FlameTotemPulse`), and up to **3 Totems of Flames** stand at once (`FlameTotemMaxCount`): a second or third one no longer knocks down the first. They count towards the 3 totems a Warchief can have up, so a new one still replaces the oldest totem when 3 are up.
 - **Spirit Walk swaps places**: the totem now shows up where the Warchief stood. It was moved there with a teleport the client didn't show, so the Warchief seemed to teleport to the totem.
 - **Prophecy of Doom always lands** on the target it is cast on; only its spread (Inevitable Doom) can be resisted, the other way round from before. The spread reaches 400 instead of 200 (`DoomSpreadRange`), so it catches the monsters of a pack.
 

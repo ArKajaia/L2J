@@ -55,7 +55,7 @@ import org.l2jmobius.gameserver.network.serverpackets.SkillCoolTime;
  * <li>Ancestors: the first party member that lies dead around it gets up, and the totem is spent.</li>
  * <li>Flames: every pulse (every {@link OraclesWarchiefsConfig#FLAME_TOTEM_PULSE} milliseconds) burns the enemies close to it with magic damage.</li>
  * </ul>
- * One totem of each kind, up to {@link OraclesWarchiefsConfig#TOTEM_MAX_COUNT}: another one replaces the oldest. Totems of Flames don't count: up to {@link OraclesWarchiefsConfig#FLAME_TOTEM_MAX_COUNT} of them, another one replaces the oldest of them. The Great Totem of the
+ * Up to {@link OraclesWarchiefsConfig#TOTEM_MAX_COUNT} totems: another one replaces the oldest. One of each kind, but up to {@link OraclesWarchiefsConfig#FLAME_TOTEM_MAX_COUNT} Totems of Flames (another one replaces the oldest of them). The Great Totem of the
  * Horde-Father (the Doomcryer finale) pulses Blood, Horde and Frost-Teeth farther, and doesn't count.<br>
  * A player's totem planted without Ctrl hits monsters and the players and fake players with PvP status; planted with Ctrl it also hits the white ones. A hit on a player or fake player flags its Warchief (see {@link AreaTargets#isTotemEnemy}).<br>
  * A totem falls when its time is up, when it is broken, or when its Warchief dies, leaves or goes too far.
@@ -150,33 +150,36 @@ public class Totems
 				}
 			}
 		}
-		else if (isFlames(kinds))
-		{
-			// Several Totems of Flames, besides the other totems: the oldest falls.
-			List<Totem> flames = getFlameTotems(owner);
-			while (flames.size() >= OraclesWarchiefsConfig.FLAME_TOTEM_MAX_COUNT)
-			{
-				flames.get(0).unsummon();
-				flames = getFlameTotems(owner);
-			}
-		}
 		else
 		{
-			// One of each kind.
-			for (Totem totem : totems)
+			if (isFlames(kinds))
 			{
-				if (!totem.isGreat() && totem.getKinds().equals(kinds))
+				// Several Totems of Flames: the oldest of them falls.
+				List<Totem> flames = getFlameTotems(owner);
+				while (flames.size() >= OraclesWarchiefsConfig.FLAME_TOTEM_MAX_COUNT)
 				{
-					totem.unsummon();
+					flames.get(0).unsummon();
+					flames = getFlameTotems(owner);
+				}
+			}
+			else
+			{
+				// One of each other kind.
+				for (Totem totem : totems)
+				{
+					if (!totem.isGreat() && totem.getKinds().equals(kinds))
+					{
+						totem.unsummon();
+					}
 				}
 			}
 
-			// Up to the most a Warchief can have (the Totems of Flames aside): the oldest falls.
-			List<Totem> small = getCountedTotems(owner);
+			// Up to the most a Warchief can have, the Totems of Flames included: the oldest falls.
+			List<Totem> small = getSmallTotems(owner);
 			while (small.size() >= OraclesWarchiefsConfig.TOTEM_MAX_COUNT)
 			{
 				small.get(0).unsummon();
-				small = getCountedTotems(owner);
+				small = getSmallTotems(owner);
 			}
 		}
 
@@ -248,24 +251,6 @@ public class Totems
 		for (Totem totem : getTotems(owner))
 		{
 			if (!totem.isGreat() && isFlames(totem.getKinds()))
-			{
-				result.add(totem);
-			}
-		}
-
-		return result;
-	}
-
-	/**
-	 * @param owner the Warchief
-	 * @return its small totems that count towards {@link OraclesWarchiefsConfig#TOTEM_MAX_COUNT} (the Great Totem and the Totems of Flames aside), oldest first
-	 */
-	public static List<Totem> getCountedTotems(Creature owner)
-	{
-		final List<Totem> result = new ArrayList<>();
-		for (Totem totem : getTotems(owner))
-		{
-			if (!totem.isGreat() && !isFlames(totem.getKinds()))
 			{
 				result.add(totem);
 			}
