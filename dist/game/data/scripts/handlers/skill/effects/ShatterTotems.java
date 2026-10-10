@@ -22,6 +22,7 @@ package handlers.skill.effects;
 
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.holders.player.AreaTargets;
 import org.l2jmobius.gameserver.model.actor.holders.player.Totems;
 import org.l2jmobius.gameserver.model.conditions.Condition;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
@@ -47,6 +48,6 @@ public class ShatterTotems extends AbstractEffect
 	@Override
 	public void onStart(Creature effector, Creature effected, Skill skill)
 	{
-		Totems.shatter(effector, skill);
+		Totems.shatter(effector, skill, AreaTargets.isCtrlCast(effector, skill));
 	}
 }

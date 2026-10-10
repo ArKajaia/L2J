@@ -49,8 +49,8 @@ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
  * A prophecy does nothing when it lands: it comes true when its time runs out (the Prophecy effect), and it fizzles if it is cancelled or its target dies first. Each one that comes true gives its Oracle a Foresight (up to 5), and Fulfilment spends 5 to make every prophecy
  * of the Oracle come true at once, stronger.
  * <ul>
- * <li>Doom: magic damage, more if the target is still near where it stood when the prophecy landed. With Inevitable Doom (Hierophant) it is cast faster, stacks up to {@link OraclesWarchiefsConfig#DOOM_MAX_STACKS} times on its target (each stack adds the damage once more) and spreads to the
- * enemies close to its target, who can't resist it.</li>
+ * <li>Doom: magic damage, more if the target is still near where it stood when the prophecy landed. It can't be resisted by the target it is cast on. With Inevitable Doom (Hierophant) it is cast faster, stacks up to {@link OraclesWarchiefsConfig#DOOM_MAX_STACKS} times on its
+ * target (each stack adds the damage once more) and spreads to the enemies close to its target, who can resist the spread like any debuff.</li>
  * <li>Salvation: heals back the damage the ally took while the prophecy was on.</li>
  * <li>Ruin: stuns a target that cast a skill while the prophecy was on, silences one that didn't.</li>
  * <li>Reversal: the ally's HP, MP, CP and place are written down when it lands, and it comes back to them (never lower than it is).</li>
@@ -272,7 +272,16 @@ public class Prophecies
 	}
 
 	/**
-	 * The Doom spreads to the Oracle's enemies close to its target. They can't resist it.
+	 * @param skill a skill landing on its target
+	 * @return {@code true} for a Prophecy of Doom cast on its target, which always lands (its spread rolls to resist, see {@link #spreadDoom})
+	 */
+	public static boolean isUnresistedDoom(Skill skill)
+	{
+		return (skill.getId() == DOOM_SKILL_ID) && (SPREADING.get() == null);
+	}
+
+	/**
+	 * The Doom spreads to the Oracle's enemies close to its target. Each of them can resist it like any debuff.
 	 * @param prophecy the Doom it spreads from
 	 * @param delay milliseconds before it comes true
 	 */
@@ -299,7 +308,12 @@ public class Prophecies
 					continue;
 				}
 
-				// Lands like Skill#applyEffects, without the roll to resist.
+				// Lands like Skill#applyEffects: the spread can be resisted.
+				if (!Formulas.calcEffectSuccess(oracle, enemy, skill))
+				{
+					continue;
+				}
+
 				final BuffInfo info = new BuffInfo(oracle, enemy, skill);
 				skill.applyEffectScope(EffectScope.GENERAL, info, true, true);
 				skill.applyEffectScope(oracle.isPlayable() && enemy.isAttackable() ? EffectScope.PVE : oracle.isPlayable() && enemy.isPlayable() ? EffectScope.PVP : null, info, true, true);

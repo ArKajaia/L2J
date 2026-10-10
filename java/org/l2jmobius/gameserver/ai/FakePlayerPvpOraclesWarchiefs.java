@@ -267,7 +267,7 @@ final class FakePlayerPvpOraclesWarchiefs
 			case FLAME:
 			{
 				// It burns what stands within FlameTotemRange of it, and it stands at its feet: planted by the target, unless one already burns there.
-				return (gap <= getFlamePlantGap()) && (replace || !current.isInsideRadius2D(target, OraclesWarchiefsConfig.FLAME_TOTEM_RANGE - 50));
+				return (gap <= getFlamePlantGap()) && !isBurning(npc, target);
 			}
 			case FROST:
 			{
@@ -301,15 +301,28 @@ final class FakePlayerPvpOraclesWarchiefs
 	 */
 	private static boolean hasRoomFor(Attackable npc, Kind kind)
 	{
-		if (Totems.getTotem(npc, kind) != null)
+		final List<Totem> small;
+		if (kind == Kind.FLAME)
 		{
-			return true; // It takes the place of its own kind.
+			// Several Totems of Flames, apart from the other totems.
+			small = Totems.getFlameTotems(npc);
+			if (small.size() < OraclesWarchiefsConfig.FLAME_TOTEM_MAX_COUNT)
+			{
+				return true;
+			}
 		}
-		
-		final List<Totem> small = Totems.getSmallTotems(npc);
-		if (small.size() < OraclesWarchiefsConfig.TOTEM_MAX_COUNT)
+		else
 		{
-			return true;
+			if (Totems.getTotem(npc, kind) != null)
+			{
+				return true; // It takes the place of its own kind.
+			}
+			
+			small = Totems.getCountedTotems(npc);
+			if (small.size() < OraclesWarchiefsConfig.TOTEM_MAX_COUNT)
+			{
+				return true;
+			}
 		}
 		
 		final Skill shatter = npc.getKnownSkill(Totems.SHATTER_SKILL_ID);
@@ -344,8 +357,26 @@ final class FakePlayerPvpOraclesWarchiefs
 			return false;
 		}
 		
-		final Totem current = Totems.getTotem(npc, Kind.FLAME);
-		return (current == null) || ((current.getExpiresAt() - System.currentTimeMillis()) < TOTEM_EXPIRING) || !current.isInsideRadius2D(target, OraclesWarchiefsConfig.FLAME_TOTEM_RANGE - 50);
+		return !isBurning(npc, target);
+	}
+	
+	/**
+	 * @param npc the fake player
+	 * @param target the creature it fights
+	 * @return {@code true} if one of its Totems of Flames, not about to fall, already burns {@code target}
+	 */
+	private static boolean isBurning(Attackable npc, Creature target)
+	{
+		final long now = System.currentTimeMillis();
+		for (Totem flames : Totems.getFlameTotems(npc))
+		{
+			if (flames.isSpawned() && ((flames.getExpiresAt() - now) >= TOTEM_EXPIRING) && flames.isInsideRadius2D(target, OraclesWarchiefsConfig.FLAME_TOTEM_RANGE - 50))
+			{
+				return true;
+			}
+		}
+		
+		return false;
 	}
 	
 	/**
@@ -384,10 +415,12 @@ final class FakePlayerPvpOraclesWarchiefs
 	 */
 	static Totem getKiteAnchor(Attackable npc, Creature enemy)
 	{
-		final Totem flames = Totems.getTotem(npc, Kind.FLAME);
-		if ((flames != null) && npc.isInsideRadius2D(flames, KITE_ANCHOR_RANGE) && flames.isInsideRadius2D(enemy, OraclesWarchiefsConfig.FLAME_TOTEM_RANGE + 150))
+		for (Totem flames : Totems.getFlameTotems(npc))
 		{
-			return flames;
+			if (flames.isSpawned() && npc.isInsideRadius2D(flames, KITE_ANCHOR_RANGE) && flames.isInsideRadius2D(enemy, OraclesWarchiefsConfig.FLAME_TOTEM_RANGE + 150))
+			{
+				return flames;
+			}
 		}
 		
 		final Totem frost = Totems.getTotem(npc, Kind.FROST);

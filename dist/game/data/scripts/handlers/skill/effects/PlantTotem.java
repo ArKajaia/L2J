@@ -25,13 +25,14 @@ import java.util.Set;
 
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.holders.player.AreaTargets;
 import org.l2jmobius.gameserver.model.actor.holders.player.Totems;
 import org.l2jmobius.gameserver.model.conditions.Condition;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.skill.Skill;
 
 /**
- * Plant Totem (Totem Warchiefs, the Warcryer line): plants a totem at the Warchief's feet, see {@link Totems}.
+ * Plant Totem (Totem Warchiefs, the Warcryer line): plants a totem at the Warchief's feet, see {@link Totems}. Planted with Ctrl held, it also hits the players and fake players around.
  * <ul>
  * <li>{@code npcId}: the totem NPC.</li>
  * <li>{@code kinds}: what it pulses, comma separated (BLOOD, HORDE, FROST, ANCESTORS, FLAME).</li>
@@ -69,6 +70,7 @@ public class PlantTotem extends AbstractEffect
 	@Override
 	public void onStart(Creature effector, Creature effected, Skill skill)
 	{
-		Totems.plant(effector, EnumSet.copyOf(_kinds), _npcId, _skillLevel > 0 ? _skillLevel : skill.getLevel(), _great);
+		// Planted with Ctrl held, it also hits the players and fake players around.
+		Totems.plant(effector, EnumSet.copyOf(_kinds), _npcId, _skillLevel > 0 ? _skillLevel : skill.getLevel(), _great, AreaTargets.isCtrlCast(effector, skill));
 	}
 }
