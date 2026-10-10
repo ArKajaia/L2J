@@ -352,6 +352,7 @@ public enum AbnormalType
 	TOTEM_BLOOD, // Custom: Totem Warchief (Warcryer line) totem echoes.
 	TOTEM_CIRCLE, // Custom: how many totems a Totem Warchief has up.
 	TOTEM_FROST,
+	TOTEM_TRANCE, // Custom: Spirit Trance, a Totem Warchief turned to ice while its totems fight.
 	TOUCH_OF_DEATH,
 	TOUCH_OF_LIFE,
 	TRANSFER_DAMAGE,

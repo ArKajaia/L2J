@@ -65,4 +65,16 @@
 27557	3	a,Totem Circle\0	a,Totems up: 3. Shatter needs 3.\0	a,none\0	a,none\0
 27557	4	a,Totem Circle\0	a,Totems up: 4. Shatter needs 3.\0	a,none\0	a,none\0
 27557	5	a,Totem Circle\0	a,Totems up: 5. Shatter needs 3.\0	a,none\0	a,none\0
-27558	1	a,Great Totem of the Horde-Father\0	a,Plants the Great Totem of the Horde-Father for 20 seconds: Totem of Blood, Totem of the Horde and Totem of Frost-Teeth at once, within 900. It can't be targeted. Reuse time is 5 minutes.\0	a,none\0	a,none\0
+27558	1	a,Great Totem of the Horde-Father\0	a,Plants the Great Totem of the Horde-Father for 20 seconds: Totem of Blood, Totem of the Horde and Totem of Frost-Teeth at once, within 900. It can't be targeted. Reuse time is 3 minutes.\0	a,none\0	a,none\0
+27559	1	a,Totem of Flames\0	a,Plants a Totem of Flames: every 2 seconds it burns up to 10 enemies within 400 with 32 Power (fire). A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27559	2	a,Totem of Flames\0	a,Plants a Totem of Flames: every 2 seconds it burns up to 10 enemies within 400 with 40 Power (fire). A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27559	3	a,Totem of Flames\0	a,Plants a Totem of Flames: every 2 seconds it burns up to 10 enemies within 400 with 48 Power (fire). A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27559	4	a,Totem of Flames\0	a,Plants a Totem of Flames: every 2 seconds it burns up to 10 enemies within 400 with 58 Power (fire). A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27560	1	a,Totem of Flames\0	a,Burned by a Totem of Flames: 32 Power.\0	a,none\0	a,none\0
+27560	2	a,Totem of Flames\0	a,Burned by a Totem of Flames: 40 Power.\0	a,none\0	a,none\0
+27560	3	a,Totem of Flames\0	a,Burned by a Totem of Flames: 48 Power.\0	a,none\0	a,none\0
+27560	4	a,Totem of Flames\0	a,Burned by a Totem of Flames: 58 Power.\0	a,none\0	a,none\0
+27561	1	a,Spirit Trance\0	a,Turns you to ice for 5 seconds while your totems fight: you can't move or act, P. Def. and M. Def. +300%, and you recover 150 HP every second. Reuse time is 1 minute.\0	a,none\0	a,none\0
+27561	2	a,Spirit Trance\0	a,Turns you to ice for 5 seconds while your totems fight: you can't move or act, P. Def. and M. Def. +300%, and you recover 250 HP every second. Reuse time is 1 minute.\0	a,none\0	a,none\0
+27561	3	a,Spirit Trance\0	a,Turns you to ice for 5 seconds while your totems fight: you can't move or act, P. Def. and M. Def. +300%, and you recover 400 HP every second. Reuse time is 1 minute.\0	a,none\0	a,none\0
+27562	1	a,Inevitable Doom\0	a,Prophecy of Doom: reuse time halved; cast again on the same target before it comes true, it gains a stack (up to 5, each adds its damage once more); it also spreads to the enemies within 200 of its target, who can't resist it.\0	a,none\0	a,none\0

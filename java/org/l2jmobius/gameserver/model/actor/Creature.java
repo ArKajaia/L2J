@@ -80,6 +80,7 @@ import org.l2jmobius.gameserver.model.actor.enums.player.TeleportWhereType;
 import org.l2jmobius.gameserver.model.actor.holders.creature.EffectList;
 import org.l2jmobius.gameserver.model.actor.holders.creature.InvulSkillHolder;
 import org.l2jmobius.gameserver.model.actor.holders.creature.TimeStamp;
+import org.l2jmobius.gameserver.model.actor.holders.player.Prophecies;
 import org.l2jmobius.gameserver.model.actor.instance.GrandBoss;
 import org.l2jmobius.gameserver.model.actor.instance.QuestGuard;
 import org.l2jmobius.gameserver.model.actor.stat.CreatureStat;
@@ -2069,6 +2070,9 @@ public abstract class Creature extends WorldObject
 		{
 			reuseDelay = (int) (reuseDelay * ClassBalanceConfig.SKILL_REUSE_MULTIPLIERS[asPlayer().getPlayerClass().getId()]);
 		}
+		
+		// Custom: Inevitable Doom (Hierophant) shortens Prophecy of Doom.
+		reuseDelay = Prophecies.getReuseDelay(this, skill, reuseDelay);
 		
 		// Check if this skill consume mp on start casting
 		final int initmpcons = isPvpFakePlayer() ? 0 : _stat.getMpInitialConsume(skill); // Roaming fake players don't use MP.

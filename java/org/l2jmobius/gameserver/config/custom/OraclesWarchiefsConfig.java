@@ -24,6 +24,9 @@ public class OraclesWarchiefsConfig
 	public static double GLIMPSE_HP_THRESHOLD;
 	public static int GLIMPSE_COOLDOWN;
 	public static int GLIMPSE_DISTANCE;
+	public static int DOOM_MAX_STACKS;
+	public static int DOOM_SPREAD_RANGE;
+	public static double DOOM_HIEROPHANT_REUSE;
 
 	// Totem Warchiefs
 	public static int TOTEM_MAX_COUNT;
@@ -36,6 +39,8 @@ public class OraclesWarchiefsConfig
 	public static double ANCESTORS_REVIVE_HP;
 	public static int SHATTER_RANGE;
 	public static int WAR_DRUMS_REUSE_CUT;
+	public static int FLAME_TOTEM_RANGE;
+	public static int FLAME_TOTEM_MAX_TARGETS;
 
 	// Retired buffs
 	public static boolean RETIRED_SKILLS_REMOVE;
@@ -53,6 +58,9 @@ public class OraclesWarchiefsConfig
 		GLIMPSE_HP_THRESHOLD = Math.min(1, Math.max(0.01, config.getDouble("GlimpseHpThreshold", 0.3)));
 		GLIMPSE_COOLDOWN = Math.max(0, config.getInt("GlimpseCooldown", 60)) * 1000;
 		GLIMPSE_DISTANCE = Math.max(50, config.getInt("GlimpseDistance", 300));
+		DOOM_MAX_STACKS = Math.max(1, config.getInt("DoomMaxStacks", 5));
+		DOOM_SPREAD_RANGE = Math.max(0, config.getInt("DoomSpreadRange", 200));
+		DOOM_HIEROPHANT_REUSE = Math.min(1, Math.max(0, config.getDouble("DoomHierophantReuse", 0.5)));
 
 		TOTEM_MAX_COUNT = Math.max(1, config.getInt("TotemMaxCount", 3));
 		TOTEM_LIFETIME = Math.max(5, config.getInt("TotemLifetime", 30)) * 1000;
@@ -64,6 +72,8 @@ public class OraclesWarchiefsConfig
 		ANCESTORS_REVIVE_HP = Math.min(1, Math.max(0.01, config.getDouble("AncestorsReviveHp", 0.3)));
 		SHATTER_RANGE = Math.max(50, config.getInt("ShatterRange", 300));
 		WAR_DRUMS_REUSE_CUT = Math.max(0, config.getInt("WarDrumsReuseCut", 1000));
+		FLAME_TOTEM_RANGE = Math.max(50, config.getInt("FlameTotemRange", 400));
+		FLAME_TOTEM_MAX_TARGETS = Math.max(1, config.getInt("FlameTotemMaxTargets", 10));
 
 		RETIRED_SKILLS_REMOVE = config.getBoolean("RetiredSkillsRemove", true);
 		RETIRED_SKILLS.clear();

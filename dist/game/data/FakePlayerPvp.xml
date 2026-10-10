@@ -1244,8 +1244,8 @@
 	<build name="Doomcryer" classId="116" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="0" support="true"> <!-- Warcryer line: a Totem Warchief, it plants totems instead of chanting (config/Custom/OraclesWarchiefs.ini) -->
 		<attack>1245,1244,1090,1100</attack> <!-- Steal Essence, Freezing Flame, Life Drain, Chill Flame -->
 		<debuff>1097,1092</debuff> <!-- Dreaming Spirit, Fear -->
-		<buff>27548,27545,27547,27550,27553</buff> <!-- Totems of Frost-Teeth, Blood, the Horde and Ancestors while it fights, Shatter once 3 are up -->
-		<emergency>27558,27554</emergency> <!-- Great Totem of the Horde-Father, Spirit Walk -->
+		<buff>27559,27548,27545,27547,27550,27553</buff> <!-- Totems of Flames, Frost-Teeth, Blood, the Horde and Ancestors while it fights, Shatter once 3 are up -->
+		<emergency>27558,27561,27554</emergency> <!-- Great Totem of the Horde-Father, Spirit Trance, Spirit Walk -->
 		<toggle>336,27551</toggle> <!-- Arcane Wisdom, War Drums -->
 		<peel>260,100,1097,1092</peel> <!-- Hammer Crush / Stun Attack on a monster or player that reached it -->
 		<variant name="Doomcryer Tallum" armor="ROBE_TALLUM" weight="0" />
