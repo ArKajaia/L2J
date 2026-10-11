@@ -21,6 +21,7 @@
 package org.l2jmobius.gameserver.model.actor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -248,6 +249,8 @@ public abstract class Creature extends WorldObject
 	private boolean _allSkillsDisabled;
 	
 	private final byte[] _zones = new byte[ZoneId.getZoneCount()];
+	private static final int[] NO_HOT_ZONES = new int[0];
+	private volatile int[] _hotZoneIds = NO_HOT_ZONES;
 	protected final Location _lastZoneValidateLocation = new Location(getX(), getY(), getZ());
 	
 	private final StampedLock _attackLock = new StampedLock();
@@ -432,11 +435,12 @@ public abstract class Creature extends WorldObject
 	@Override
 	public boolean isInsideZone(ZoneId zone)
 	{
-		final Instance instance = InstanceManager.getInstance().getInstance(getInstanceId());
+		// Only PvP and peace depend on the instance, so other zones skip the instance lookup.
 		switch (zone)
 		{
 			case PVP:
 			{
+				final Instance instance = InstanceManager.getInstance().getInstance(getInstanceId());
 				if ((instance != null) && instance.isPvP())
 				{
 					return true;
@@ -446,6 +450,7 @@ public abstract class Creature extends WorldObject
 			}
 			case PEACE:
 			{
+				final Instance instance = InstanceManager.getInstance().getInstance(getInstanceId());
 				if ((instance != null) && instance.isPvP())
 				{
 					return false;
@@ -454,6 +459,59 @@ public abstract class Creature extends WorldObject
 		}
 		
 		return _zones[zone.ordinal()] > 0;
+	}
+	
+	/**
+	 * @return the ids of the hotzones this creature stands in, kept by {@link org.l2jmobius.gameserver.model.zone.type.HotZone} as it enters and leaves them, so hotzone lookups need no scan of the zones around it
+	 */
+	public int[] getHotZoneIds()
+	{
+		return _hotZoneIds;
+	}
+	
+	/**
+	 * @param zoneId the id of the hotzone this creature entered
+	 */
+	public void addHotZoneId(int zoneId)
+	{
+		synchronized (_zones)
+		{
+			for (int id : _hotZoneIds)
+			{
+				if (id == zoneId)
+				{
+					return;
+				}
+			}
+			
+			final int[] ids = Arrays.copyOf(_hotZoneIds, _hotZoneIds.length + 1);
+			ids[_hotZoneIds.length] = zoneId;
+			_hotZoneIds = ids;
+		}
+	}
+	
+	/**
+	 * @param zoneId the id of the hotzone this creature left
+	 */
+	public void removeHotZoneId(int zoneId)
+	{
+		synchronized (_zones)
+		{
+			final int[] ids = new int[_hotZoneIds.length];
+			int count = 0;
+			for (int id : _hotZoneIds)
+			{
+				if (id != zoneId)
+				{
+					ids[count++] = id;
+				}
+			}
+			
+			if (count != _hotZoneIds.length)
+			{
+				_hotZoneIds = count == 0 ? NO_HOT_ZONES : Arrays.copyOf(ids, count);
+			}
+		}
 	}
 	
 	/**

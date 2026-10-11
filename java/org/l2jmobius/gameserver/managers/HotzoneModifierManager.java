@@ -330,20 +330,13 @@ public class HotzoneModifierManager
 			}
 		}
 
-		if (!creature.isInsideZone(ZoneId.HOTZONE))
+		// The creature keeps the ids of the hotzones it stands in (see HotZone), so this runs on every stat read without scanning the zones around it.
+		for (int zoneId : creature.getHotZoneIds())
 		{
-			return null;
-		}
-
-		for (ZoneType zone : ZoneManager.getInstance().getZones(creature))
-		{
-			if (zone instanceof HotZone)
+			final HotzoneModifier modifier = _activeModifiers.get(zoneId);
+			if (modifier != null)
 			{
-				final HotzoneModifier modifier = _activeModifiers.get(zone.getId());
-				if (modifier != null)
-				{
-					return modifier;
-				}
+				return modifier;
 			}
 		}
 
@@ -357,16 +350,16 @@ public class HotzoneModifierManager
 	 */
 	public int getActiveZoneId(Creature creature)
 	{
-		if ((creature == null) || !creature.isInsideZone(ZoneId.HOTZONE))
+		if (creature == null)
 		{
 			return 0;
 		}
 
-		for (ZoneType zone : ZoneManager.getInstance().getZones(creature))
+		for (int zoneId : creature.getHotZoneIds())
 		{
-			if ((zone instanceof HotZone) && _activeModifiers.containsKey(zone.getId()))
+			if (_activeModifiers.containsKey(zoneId))
 			{
-				return zone.getId();
+				return zoneId;
 			}
 		}
 

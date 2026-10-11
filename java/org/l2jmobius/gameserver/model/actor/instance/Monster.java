@@ -729,13 +729,19 @@ public class Monster extends Attackable
 	 */
 	private void tryMetamorphosis()
 	{
-		if (isDead() || !ChampionMonstersConfig.CHAMPION_ENABLE || (getCurrentHp() >= (getMaxHp() * 0.5)) || getVariables().getBoolean(METAMORPH_ROLLED_VAR, false))
+		if (isDead() || !ChampionMonstersConfig.CHAMPION_ENABLE)
 		{
 			return;
 		}
 
+		// Runs on every hit, so the hotzone check (a cached lookup) comes before computing max HP.
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
 		if ((hotzoneModifier == null) || (hotzoneModifier.getMetamorphChancePct() <= 0))
+		{
+			return;
+		}
+
+		if ((getCurrentHp() >= (getMaxHp() * 0.5)) || getVariables().getBoolean(METAMORPH_ROLLED_VAR, false))
 		{
 			return;
 		}
