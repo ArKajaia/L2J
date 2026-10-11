@@ -20,8 +20,12 @@
  */
 package org.l2jmobius.gameserver.config.custom;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.util.ConfigReader;
@@ -29,7 +33,8 @@ import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
 
 /**
  * Loads the Resonant monster configuration: a regular monster has {@link #SPAWN_CHANCE}% chance on spawn to become Resonant. Killing it raises the soul crystal of the killer and of every party member nearby by one stage, up to the stage the regular monsters of its level can
- * raise (see {@link org.l2jmobius.gameserver.managers.ResonantMonsterManager}). Low on HP, its soul tries to flee.
+ * raise, or up to the {@link #RAID_STAGES} of the high levels, where it is a raid boss strength fight (see {@link org.l2jmobius.gameserver.managers.ResonantMonsterManager}). Low on HP, its soul tries to flee, and fake players join the fight at
+ * {@link #FAKE_JOIN_HP_PERCENTS}.
  * @author Mobius
  */
 public class ResonantMonsterConfig
@@ -56,6 +61,19 @@ public class ResonantMonsterConfig
 	public static boolean HINT;
 	public static AbnormalVisualEffect VISUAL_EFFECT;
 	public static String TITLE_TAG;
+	/** From this monster level on: the highest crystal stage that still grows, above what the regular monsters of that level raise. */
+	public static TreeMap<Integer, Integer> RAID_STAGES = new TreeMap<>();
+	public static int RAID_STAGE_CHANCE;
+	public static int RAID_STRENGTH_PERCENT;
+	public static int RAID_FLEE_TIME;
+	public static String RAID_TITLE_TAG;
+	/** HP percents at which a fake player joins the fight, highest first. */
+	public static int[] FAKE_JOIN_HP_PERCENTS = new int[0];
+	public static int FAKE_HELPER_CHANCE;
+	public static int RIVAL_ATTACK_PLAYER_CHANCE;
+	public static long RIVAL_KILL_COINS;
+	public static boolean RIVAL_KILL_CACHE;
+	public static int FAKE_LEAVE_DELAY;
 
 	public static void load()
 	{
@@ -87,7 +105,7 @@ public class ResonantMonsterConfig
 
 		HP_MULTIPLIER = Math.max(0.1, config.getDouble("ResonantHpMultiplier", 2.0));
 		CHANCE = Math.max(0, Math.min(100, config.getInt("ResonantChance", 100)));
-		MAX_CRYSTAL_STAGE = Math.max(0, config.getInt("ResonantMaxCrystalStage", 9));
+		MAX_CRYSTAL_STAGE = Math.max(0, config.getInt("ResonantMaxCrystalStage", 11));
 		FLEE_AT_HP_PERCENT = Math.max(0, Math.min(99, config.getInt("ResonantFleeAtHpPercent", 25)));
 		FLEE_TIME = Math.max(1, config.getInt("ResonantFleeTime", 20));
 		HINT = config.getBoolean("ResonantHint", true);
@@ -104,5 +122,64 @@ public class ResonantMonsterConfig
 		}
 
 		TITLE_TAG = config.getString("ResonantTitleTag", "[Resonant]");
+
+		RAID_STAGES = new TreeMap<>();
+		for (String part : config.getString("ResonantRaidStages", "76:10,80:11").split(","))
+		{
+			final String[] pair = part.trim().split(":");
+			if (pair.length != 2)
+			{
+				if (!part.isBlank())
+				{
+					LOGGER.warning("Invalid ResonantRaidStages entry: " + part);
+				}
+				continue;
+			}
+
+			try
+			{
+				RAID_STAGES.put(Integer.parseInt(pair[0].trim()), Math.max(0, Integer.parseInt(pair[1].trim())));
+			}
+			catch (NumberFormatException e)
+			{
+				LOGGER.warning("Invalid ResonantRaidStages entry: " + part);
+			}
+		}
+
+		RAID_STAGE_CHANCE = Math.max(0, Math.min(100, config.getInt("ResonantRaidStageChance", 100)));
+		RAID_STRENGTH_PERCENT = Math.max(0, config.getInt("ResonantRaidStrengthPercent", 50));
+		RAID_FLEE_TIME = Math.max(1, config.getInt("ResonantRaidFleeTime", 40));
+		RAID_TITLE_TAG = config.getString("ResonantRaidTitleTag", "[Resonant Boss]");
+
+		final List<Integer> percents = new ArrayList<>();
+		for (String part : config.getString("ResonantFakeJoinAtHpPercent", "70,30").split(","))
+		{
+			part = part.trim();
+			if (part.isEmpty())
+			{
+				continue;
+			}
+
+			try
+			{
+				final int percent = Integer.parseInt(part);
+				if ((percent > 0) && (percent < 100))
+				{
+					percents.add(percent);
+				}
+			}
+			catch (NumberFormatException e)
+			{
+				LOGGER.warning("Invalid ResonantFakeJoinAtHpPercent entry: " + part);
+			}
+		}
+		percents.sort(Comparator.reverseOrder());
+		FAKE_JOIN_HP_PERCENTS = percents.stream().limit(30).mapToInt(Integer::intValue).toArray();
+
+		FAKE_HELPER_CHANCE = Math.max(0, Math.min(100, config.getInt("ResonantFakeHelperChance", 50)));
+		RIVAL_ATTACK_PLAYER_CHANCE = Math.max(0, Math.min(100, config.getInt("ResonantRivalAttackPlayerChance", 30)));
+		RIVAL_KILL_COINS = Math.max(0, config.getLong("ResonantRivalKillCoins", 300));
+		RIVAL_KILL_CACHE = config.getBoolean("ResonantRivalKillCache", true);
+		FAKE_LEAVE_DELAY = Math.max(0, config.getInt("ResonantFakeLeaveDelay", 30));
 	}
 }

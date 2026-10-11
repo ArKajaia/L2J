@@ -33,6 +33,7 @@ import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.HotzoneModifierManager;
 import org.l2jmobius.gameserver.managers.NightCycleManager;
+import org.l2jmobius.gameserver.managers.ResonantMonsterManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -134,6 +135,10 @@ public class Monster extends Attackable
 	/** Set once a Resonant monster's soul tried to flee, so it only ever flees once per life. */
 	private volatile boolean _resonantFled = false;
 	private AbnormalVisualEffect _resonantAve = null;
+	/** Raid tier only (see {@link org.l2jmobius.gameserver.managers.ResonantMonsterManager#isRaidTier(int)}): its stat multipliers, indexed like the raid reference; {@code null} otherwise. */
+	private volatile double[] _resonantRaidMults = null;
+	/** The fake player thresholds (ResonantFakeJoinAtHpPercent) this fight already passed, one bit each. */
+	private int _resonantJoinsPassed = 0;
 
 	public Monster(NpcTemplate template)
 	{
@@ -581,7 +586,7 @@ public class Monster extends Attackable
 		}
 		if (isResonant())
 		{
-			sb.append(ResonantMonsterConfig.TITLE_TAG).append(' ');
+			sb.append(isResonantRaid() ? ResonantMonsterConfig.RAID_TITLE_TAG : ResonantMonsterConfig.TITLE_TAG).append(' ');
 		}
 		if (isWaveChallenge())
 		{
@@ -1524,7 +1529,26 @@ public class Monster extends Attackable
 	}
 
 	/**
-	 * Makes this monster Resonant. Called by {@link org.l2jmobius.gameserver.managers.ResonantMonsterManager}.
+	 * @return {@code true} if this Resonant monster raises the stages retail only gives on raid bosses, and is as strong as part of a raid boss of its level
+	 */
+	public boolean isResonantRaid()
+	{
+		return isResonant() && (_resonantRaidMults != null);
+	}
+
+	/**
+	 * @param stat a stat index of {@link org.l2jmobius.gameserver.managers.ResonantMonsterManager#getRaidReference(int)}
+	 * @return the raid tier multiplier of that stat, 1.0 if this isn't a raid tier Resonant monster
+	 */
+	public double getResonantRaidMultiplier(int stat)
+	{
+		final double[] multipliers = _resonantRaidMults;
+		return (multipliers != null) && isResonant() ? multipliers[stat] : 1.0;
+	}
+
+	/**
+	 * Makes this monster Resonant. Called by {@link org.l2jmobius.gameserver.managers.ResonantMonsterManager}. At the raid tier levels its stats are raised to {@link ResonantMonsterConfig#RAID_STRENGTH_PERCENT}% of a raid boss of its level (never
+	 * lowered), measured on its own stats before it turns Resonant.
 	 */
 	public synchronized void startResonant()
 	{
@@ -1534,6 +1558,28 @@ public class Monster extends Attackable
 		}
 
 		clearResonant(false);
+		if ((ResonantMonsterConfig.RAID_STRENGTH_PERCENT > 0) && ResonantMonsterManager.isRaidTier(getLevel()))
+		{
+			final double[] reference = ResonantMonsterManager.getRaidReference(getLevel());
+			if (reference != null)
+			{
+				// The stat layer's values, like the raid reference: hot zone, night and champion multipliers keep applying on top, as they do to any monster.
+				final double[] own = new double[ResonantMonsterManager.STAT_COUNT];
+				own[ResonantMonsterManager.STAT_HP] = getStat().getMaxHp();
+				own[ResonantMonsterManager.STAT_PATK] = getStat().getPAtk(null);
+				own[ResonantMonsterManager.STAT_MATK] = getStat().getMAtk(null, null);
+				own[ResonantMonsterManager.STAT_PDEF] = getStat().getPDef(null);
+				own[ResonantMonsterManager.STAT_MDEF] = getStat().getMDef(null, null);
+
+				final double share = ResonantMonsterConfig.RAID_STRENGTH_PERCENT / 100.0;
+				final double[] multipliers = new double[ResonantMonsterManager.STAT_COUNT];
+				for (int stat = 0; stat < ResonantMonsterManager.STAT_COUNT; stat++)
+				{
+					multipliers[stat] = own[stat] > 0 ? Math.max(1.0, (share * reference[stat]) / own[stat]) : 1.0;
+				}
+				_resonantRaidMults = multipliers;
+			}
+		}
 		_resonant = true;
 
 		final AbnormalVisualEffect ave = ResonantMonsterConfig.VISUAL_EFFECT;
@@ -1566,6 +1612,8 @@ public class Monster extends Attackable
 	private synchronized void clearResonant(boolean broadcast)
 	{
 		_resonantFled = false;
+		_resonantJoinsPassed = 0;
+		_resonantRaidMults = null;
 		if (!_resonant && (_resonantAve == null))
 		{
 			return;
@@ -1597,8 +1645,35 @@ public class Monster extends Attackable
 		}
 
 		_resonantFled = true;
-		sendMessageToAttackers(null, "The soul of " + getName() + " is fleeing! Catch it within " + ResonantMonsterConfig.FLEE_TIME + " seconds or the resonance fades.");
-		startEscape(ResonantMonsterConfig.FLEE_TIME * 1000L, "My soul will not be caught!", "The resonance fades...");
+		final int fleeTime = isResonantRaid() ? ResonantMonsterConfig.RAID_FLEE_TIME : ResonantMonsterConfig.FLEE_TIME;
+		sendMessageToAttackers(null, "The soul of " + getName() + " is fleeing! Catch it within " + fleeTime + " seconds or the resonance fades.");
+		startEscape(fleeTime * 1000L, "My soul will not be caught!", "The resonance fades...");
+	}
+
+	/**
+	 * Each time a Resonant monster's HP drops past one of {@link ResonantMonsterConfig#FAKE_JOIN_HP_PERCENTS} (once per threshold and life, a big hit may pass two), a fake player turns up and joins the fight
+	 * ({@link ResonantMonsterManager#onFakeJoinThreshold(Monster)}).
+	 */
+	private void tryResonantFakeJoin()
+	{
+		final int[] thresholds = ResonantMonsterConfig.FAKE_JOIN_HP_PERCENTS;
+		if ((thresholds.length == 0) || !isResonant() || isDead())
+		{
+			return;
+		}
+
+		final int newlyPassed;
+		synchronized (this)
+		{
+			final int passed = ResonantMonsterManager.passThresholds(_resonantJoinsPassed, (getCurrentHp() * 100.0) / getMaxHp(), thresholds);
+			newlyPassed = Integer.bitCount(passed & ~_resonantJoinsPassed);
+			_resonantJoinsPassed = passed;
+		}
+
+		for (int i = 0; i < newlyPassed; i++)
+		{
+			ResonantMonsterManager.getInstance().onFakeJoinThreshold(this);
+		}
 	}
 
 	/**
@@ -1795,6 +1870,7 @@ public class Monster extends Attackable
 		
 		tryMetamorphosis();
 		tryResonantFlight();
+		tryResonantFakeJoin();
 	}
 	
 	/**
@@ -1887,7 +1963,7 @@ public class Monster extends Attackable
 		final HotzoneModifier hotzoneModifierHp = getHotzoneStatModifier();
 		final double hotzoneHpMultiplier = hotzoneModifierHp != null ? hotzoneModifierHp.getMonsterHpMult() : 1.0;
 
-		final double variantHpMultiplier = (isInfused() ? InfusedMonsterConfig.HP_MULTIPLIER : 1.0) * (isResonant() ? ResonantMonsterConfig.HP_MULTIPLIER : 1.0);
+		final double variantHpMultiplier = (isInfused() ? InfusedMonsterConfig.HP_MULTIPLIER : 1.0) * (isResonant() ? Math.max(ResonantMonsterConfig.HP_MULTIPLIER, getResonantRaidMultiplier(ResonantMonsterManager.STAT_HP)) : 1.0);
 
 		return (int) (baseMaxHp * hpMultiplier * arenaMultiplier * championHpMult * getHotzoneMinibossMultiplier() * hotzoneHpMultiplier * getWaveChallengeStatMultiplier() * variantHpMultiplier);
 
@@ -1916,7 +1992,7 @@ public class Monster extends Attackable
 		final double basePAtk = super.getPAtk(target);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return basePAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier) * getInfusedAttackMultiplier();
+		return basePAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier) * getInfusedAttackMultiplier() * getResonantRaidMultiplier(ResonantMonsterManager.STAT_PATK);
 	}
 
 	@Override
@@ -1925,7 +2001,7 @@ public class Monster extends Attackable
 		final double baseMAtk = super.getMAtk(target, skill);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return baseMAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getMonsterMAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier) * getInfusedAttackMultiplier();
+		return baseMAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getMonsterMAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier) * getInfusedAttackMultiplier() * getResonantRaidMultiplier(ResonantMonsterManager.STAT_MATK);
 	}
 
 	@Override
@@ -1934,7 +2010,7 @@ public class Monster extends Attackable
 		final double basePDef = super.getPDef(target);
 		final double multiplier = isArenaChallenger() ? getArenaDefenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return basePDef * multiplier * getWaveChallengeDefenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0);
+		return basePDef * multiplier * getWaveChallengeDefenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0) * getResonantRaidMultiplier(ResonantMonsterManager.STAT_PDEF);
 	}
 
 	@Override
@@ -1943,7 +2019,7 @@ public class Monster extends Attackable
 		final double baseMDef = super.getMDef(target, skill);
 		final double multiplier = isArenaChallenger() ? getArenaDefenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return baseMDef * multiplier * getWaveChallengeDefenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0);
+		return baseMDef * multiplier * getWaveChallengeDefenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0) * getResonantRaidMultiplier(ResonantMonsterManager.STAT_MDEF);
 	}
 
 	@Override
@@ -2006,6 +2082,10 @@ public class Monster extends Attackable
 		endRage(false);
 		stopArenaWaveReminderTask();
 		stopInfusedNova();
+		if (isResonant())
+		{
+			ResonantMonsterManager.getInstance().onResonantGone(this);
+		}
 		
 		if (hasMinions())
 		{
@@ -2120,6 +2200,8 @@ public class Monster extends Attackable
 			return false;
 		}
 		
+		// A rival fake player took the Resonant soul: the reward hooks don't run for its kill, so tell the players here (before the aggro list goes).
+		final List<Player> robbed = isResonant() && ResonantMonsterManager.isRival(killer) ? ResonantMonsterManager.getAttackingPlayers(this) : null;
 		if (!super.doDie(killer))
 		{
 			return false;
@@ -2128,6 +2210,17 @@ public class Monster extends Attackable
 		endRage(true);
 		stopEscape();
 		stopInfusedNova();
+		if (robbed != null)
+		{
+			for (Player player : robbed)
+			{
+				player.sendMessage(killer.getName() + " stole the soul of " + getName() + "!");
+			}
+		}
+		if (isResonant())
+		{
+			ResonantMonsterManager.getInstance().onResonantGone(this);
+		}
 		return true;
 	}
 	
@@ -2137,6 +2230,10 @@ public class Monster extends Attackable
 		// A Thief or Resonant soul that escaped (deleteMe()) or died: the respawn reuses this object, so it must not keep running or casting.
 		stopEscape();
 		stopInfusedNova();
+		if (isResonant())
+		{
+			ResonantMonsterManager.getInstance().onResonantGone(this);
+		}
 		super.onDecay();
 	}
 	

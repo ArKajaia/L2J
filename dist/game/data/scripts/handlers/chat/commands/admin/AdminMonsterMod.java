@@ -24,6 +24,7 @@ import org.l2jmobius.gameserver.handler.IAdminCommandHandler;
 import org.l2jmobius.gameserver.managers.InfusedMonsterManager;
 import org.l2jmobius.gameserver.managers.ResonantMonsterManager;
 import org.l2jmobius.gameserver.model.WorldObject;
+import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.item.holders.Elementals;
@@ -33,7 +34,8 @@ import org.l2jmobius.gameserver.model.item.holders.Elementals;
  * <ul>
  * <li>{@code //monstermod} - what the targeted monster is.</li>
  * <li>{@code //monstermod infused [fire|water|wind|earth|holy|dark]} - infuses it, with a random element if none is given.</li>
- * <li>{@code //monstermod resonant} - makes it Resonant.</li>
+ * <li>{@code //monstermod resonant} - makes it Resonant (a raid strength one at the raid tier levels).</li>
+ * <li>{@code //monstermod join [helper|rival]} - a fake player joins the fight against the targeted Resonant monster now (somebody must be on its aggro list), as a helper, a rival or rolled.</li>
  * <li>{@code //monstermod clear} - makes it an ordinary monster again.</li>
  * </ul>
  */
@@ -119,8 +121,27 @@ public class AdminMonsterMod implements IAdminCommandHandler
 				monster.startResonant();
 				monster.setCurrentHp(monster.getMaxHp());
 				monster.broadcastInfo();
-				final int cap = ResonantMonsterManager.getStageCap(monster.getLevel());
-				activeChar.sendSysMessage(monster.getName() + " is Resonant: " + (cap >= 0 ? "soul crystals of stage " + cap + " or lower grow." : "no soul crystal grows at its level."));
+				showStatus(activeChar, monster);
+				return true;
+			}
+			case "join":
+			{
+				if (!monster.isResonant())
+				{
+					activeChar.sendSysMessage(monster.getName() + " isn't Resonant (//monstermod resonant first).");
+					return false;
+				}
+
+				final String side = st.hasMoreTokens() ? st.nextToken().toLowerCase() : "";
+				final Boolean helper = side.equals("helper") ? Boolean.TRUE : side.equals("rival") ? Boolean.FALSE : null;
+				final Npc fake = ResonantMonsterManager.getInstance().spawnJoiner(monster, helper);
+				if (fake == null)
+				{
+					activeChar.sendSysMessage("No fake player came: fake players off or at their limit, nobody on " + monster.getName() + "'s aggro list (hit it first), or no place to stand.");
+					return false;
+				}
+
+				activeChar.sendSysMessage(fake.getName() + " (level " + fake.getLevel() + ") joins the fight as a " + (ResonantMonsterManager.isRival(fake) ? "rival" : "helper") + ".");
 				return true;
 			}
 			case "clear":
@@ -134,7 +155,7 @@ public class AdminMonsterMod implements IAdminCommandHandler
 			}
 			default:
 			{
-				activeChar.sendSysMessage("Usage: //monstermod [status|infused [fire|water|wind|earth|holy|dark]|resonant|clear]");
+				activeChar.sendSysMessage("Usage: //monstermod [status|infused [fire|water|wind|earth|holy|dark]|resonant|join [helper|rival]|clear]");
 				return false;
 			}
 		}
@@ -151,6 +172,10 @@ public class AdminMonsterMod implements IAdminCommandHandler
 		{
 			final int cap = ResonantMonsterManager.getStageCap(monster.getLevel());
 			sb.append(cap >= 0 ? " Resonant, soul crystals of stage " + cap + " or lower grow." : " Resonant, but no soul crystal grows at its level.");
+			if (monster.isResonantRaid())
+			{
+				sb.append(String.format(" Raid tier: HP x%.1f, P.Atk x%.2f, M.Atk x%.2f, P.Def x%.2f, M.Def x%.2f (%d HP).", Math.max(ResonantMonsterConfig.HP_MULTIPLIER, monster.getResonantRaidMultiplier(ResonantMonsterManager.STAT_HP)), monster.getResonantRaidMultiplier(ResonantMonsterManager.STAT_PATK), monster.getResonantRaidMultiplier(ResonantMonsterManager.STAT_MATK), monster.getResonantRaidMultiplier(ResonantMonsterManager.STAT_PDEF), monster.getResonantRaidMultiplier(ResonantMonsterManager.STAT_MDEF), monster.getMaxHp()));
+			}
 		}
 		if (!monster.isInfused() && !monster.isResonant())
 		{

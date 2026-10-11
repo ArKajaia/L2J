@@ -508,6 +508,37 @@ public class FakePartyManager
 	}
 	
 	/**
+	 * A fake player that came to help joins {@code host}'s party without being invited (a Resonant monster's helper, see {@link ResonantMonsterManager}), with the same room rules as an accepted invite: the party isn't full and has room for one
+	 * more fake player. It joins the party leader's group.
+	 * @param host a player the fake player came to help
+	 * @param fake the fake player
+	 * @return {@code true} if it joined
+	 */
+	public boolean joinAsHelper(Player host, Npc fake)
+	{
+		if (!isEnabled() || (host == null) || (fake == null) || fake.isDead() || !fake.isSpawned() || fake.isTrialDuelist())
+		{
+			return false;
+		}
+		
+		final Party realParty = host.getParty();
+		final Player leader = (realParty != null) ? realParty.getLeader() : host;
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		if ((leader == null) || (profile == null) || (profile.getParty() != null) || !canHaveFakes(leader) || (fake.getInstanceId() != leader.getInstanceId()))
+		{
+			return false;
+		}
+		
+		if ((getMemberCount(leader) >= MAX_PARTY_SIZE) || (getFakeCount(leader) >= FakePartyConfig.MAX_FAKES))
+		{
+			return false;
+		}
+		
+		join(leader, fake);
+		return true;
+	}
+	
+	/**
 	 * {@code fake} leaves its party and goes back to hunting where it is.
 	 * @param fake the fake player
 	 * @param expelled {@code true} if the party leader dismissed it
