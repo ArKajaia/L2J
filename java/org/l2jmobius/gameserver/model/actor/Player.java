@@ -8871,15 +8871,9 @@ public class Player extends Playable
 	
 	public void autoSave()
 	{
+		// storeMe also updates the inventory, warehouse and freight.
 		storeMe();
 		storeRecommendations(false);
-		
-		if (GeneralConfig.UPDATE_ITEMS_ON_CHAR_STORE)
-		{
-			getInventory().updateDatabase();
-			getWarehouse().updateDatabase();
-			getFreight().updateDatabase();
-		}
 	}
 	
 	public boolean canLogout()
