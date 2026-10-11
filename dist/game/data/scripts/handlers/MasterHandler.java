@@ -177,6 +177,7 @@ import handlers.chat.commands.admin.AdminMammon;
 import handlers.chat.commands.admin.AdminManor;
 import handlers.chat.commands.admin.AdminMenu;
 import handlers.chat.commands.admin.AdminMessages;
+import handlers.chat.commands.admin.AdminMonsterMod;
 import handlers.chat.commands.admin.AdminNight;
 import handlers.chat.commands.admin.AdminOnline;
 import handlers.chat.commands.admin.AdminPForge;
@@ -423,6 +424,7 @@ public class MasterHandler
 			AdminMammon.class,
 			AdminManor.class,
 			AdminMenu.class,
+			AdminMonsterMod.class,
 			AdminMessages.class,
 			AdminOnline.class,
 			AdminPassiveTree.class,

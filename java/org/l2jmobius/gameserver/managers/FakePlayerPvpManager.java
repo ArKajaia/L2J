@@ -2065,7 +2065,8 @@ public class FakePlayerPvpManager
 		
 		World.getInstance().forEachVisibleObjectInRange(victim, Attackable.class, FakePlayerPvpConfig.REVENGE_RANGE, fake ->
 		{
-			if (!fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || isFighting(fake, killer) || FakePartyManager.getInstance().isSameGroup(fake, killer))
+			// A Resonant monster's helper came to help the players, during that fight and after it.
+			if (!fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || isFighting(fake, killer) || FakePartyManager.getInstance().isSameGroup(fake, killer) || ResonantMonsterManager.isHelper(fake))
 			{
 				return;
 			}
@@ -3510,7 +3511,7 @@ public class FakePlayerPvpManager
 	
 	/**
 	 * @param monster the monster
-	 * @return {@code true} if {@code monster} is a plain monster (no champion, thief, mage or other special one) that isn't fighting and that no player sees, so nobody sees it turn into a fake player
+	 * @return {@code true} if {@code monster} is a plain monster (no champion, thief, mage, infused, resonant or other special one) that isn't fighting and that no player sees, so nobody sees it turn into a fake player
 	 */
 	private static boolean isIdle(Monster monster)
 	{
@@ -3519,7 +3520,7 @@ public class FakePlayerPvpManager
 			return false;
 		}
 		
-		if ((monster.getChampionTier() > 0) || monster.isMageMonster() || !monster.canHotzoneRise())
+		if ((monster.getChampionTier() > 0) || monster.isMageMonster() || monster.isInfused() || monster.isResonant() || !monster.canHotzoneRise())
 		{
 			return false;
 		}

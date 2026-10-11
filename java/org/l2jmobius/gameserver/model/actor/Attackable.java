@@ -363,6 +363,8 @@ public class Attackable extends Npc
 				org.l2jmobius.gameserver.managers.LuckyLootManager.getInstance().onAttackableKilled(this, player);
 				org.l2jmobius.gameserver.managers.ThiefMonsterManager.getInstance().onAttackableKilled(this);
 				org.l2jmobius.gameserver.managers.MageMonsterManager.getInstance().onAttackableKilled(this, player);
+				org.l2jmobius.gameserver.managers.InfusedMonsterManager.getInstance().onAttackableKilled(this, player);
+				org.l2jmobius.gameserver.managers.ResonantMonsterManager.getInstance().onAttackableKilled(this, player);
 				org.l2jmobius.gameserver.managers.NightCycleManager.getInstance().onAttackableKilled(this, player);
 			}
 			if ((partyPlayer != null) && getMustRewardExpSP())
@@ -389,8 +391,9 @@ public class Attackable extends Npc
 				{
 					org.l2jmobius.gameserver.managers.HotzoneModifierManager.getInstance().onFakePlayerKilled(this, player);
 					
-					// Shadow Raiders pay hot zone coins and a Sealed Cache.
+					// Shadow Raiders pay hot zone coins and a Sealed Cache, and so do the rivals after a Resonant monster's soul.
 					ShadowRaidManager.getInstance().onRaiderKilled(this, player);
+					org.l2jmobius.gameserver.managers.ResonantMonsterManager.getInstance().onRivalKilled(this, player);
 				}
 			}
 			// One roaming fake player killed by another.

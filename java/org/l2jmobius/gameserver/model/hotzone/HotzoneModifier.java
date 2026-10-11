@@ -10,7 +10,7 @@ import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
  * A rotating hotzone modifier: one of these is rolled fresh for each hotzone every time {@code custom.RotatingHotZones} rotates (see {@link org.l2jmobius.gameserver.managers.HotzoneModifierManager}), and stays active for that zone until the next rotation.
  * <p>
  * Every field defaults to "no effect" (1.0 for a multiplier, 0/false otherwise, -1 for an override), so a modifier only needs to set the handful of fields it actually cares about. Adding a new modifier is just adding a new enum constant - every read site (Monster's stat/reward/aggro
- * overrides, the champion spawn roll in Spawn, the Thief/Mage/wave challenge/fake player spawn rolls, the rage threshold in MonsterRageManager, the Luck rolls in LuckyLootManager, the party XP in Attackable, the archetype skill grant in AttackableAI, the stun-immunity check in the Stun
+ * overrides, the champion spawn roll in Spawn, the Thief/Mage/Infused/Resonant/wave challenge/fake player spawn rolls, the Infused stone drop, the rage threshold in MonsterRageManager, the Luck rolls in LuckyLootManager, the party XP in Attackable, the archetype skill grant in AttackableAI, the stun-immunity check in the Stun
  * effect, the kill hook and the bounty/Heat tracking in HotzoneModifierManager, the modifier buffs in RotatingHotZones) already knows how to consult these generic knobs, so nothing else needs to change.
  * <p>
  * Deliberately a mix of purely positive, purely negative, and risk/reward modifiers, matching how the base game's own hotzone system already trades a combat bonus for being flagged PvP-able.
@@ -216,6 +216,19 @@ public enum HotzoneModifier
 			splitChancePct = 15;
 		}
 	},
+	ELEMENTAL_STORM("Infused monsters are 5x as common and drop one more attribute stone.")
+	{
+		{
+			infusedSpawnMult = 5.0;
+			infusedExtraStones = 1;
+		}
+	},
+	SOUL_TIDE("Resonant monsters are 5x as common. Bring a soul crystal.")
+	{
+		{
+			resonantSpawnMult = 5.0;
+		}
+	},
 	// Night-only omens (see NightCycleManager): never rolled for a hotzone.
 	NEW_MOON("A moonless night: monsters notice you from half as far. XP/SP +10%.")
 	{
@@ -357,6 +370,12 @@ public enum HotzoneModifier
 	protected Set<Race> favoredRaces = Collections.emptySet();
 	/** P.Atk/M.Atk multiplier of monsters of a {@link #favoredRaces} race, on top of {@link #monsterAtkMult}. */
 	protected double favoredRaceAtkMult = 1.0;
+	/** Multiplier on the Infused monster spawn chance (see InfusedMonsterManager). */
+	protected double infusedSpawnMult = 1.0;
+	/** Attribute stones added to every Infused monster's drop. */
+	protected int infusedExtraStones = 0;
+	/** Multiplier on the Resonant monster spawn chance (see ResonantMonsterManager). */
+	protected double resonantSpawnMult = 1.0;
 	/** Whether this is a night omen (see {@code NightCycleManager}) that the hotzone rotation never rolls. */
 	protected boolean nightOnly = false;
 
@@ -597,6 +616,21 @@ public enum HotzoneModifier
 	public double getRaceAtkMult(Race race)
 	{
 		return favoredRaces.contains(race) ? favoredRaceAtkMult : 1.0;
+	}
+
+	public double getInfusedSpawnMult()
+	{
+		return infusedSpawnMult;
+	}
+
+	public int getInfusedExtraStones()
+	{
+		return infusedExtraStones;
+	}
+
+	public double getResonantSpawnMult()
+	{
+		return resonantSpawnMult;
 	}
 
 	public boolean isNightOnly()

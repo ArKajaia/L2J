@@ -95,6 +95,11 @@ public class RotatingHotZones extends Quest
 			return zoneIds;
 		}
 		
+		public int getMaxLevel()
+		{
+			return maxLevel;
+		}
+		
 		public boolean isInRange(int level)
 		{
 			return (level >= minLevel) && (level <= maxLevel);
@@ -259,7 +264,8 @@ public class RotatingHotZones extends Quest
 			int chosenZoneId = bracket.getZoneIds()[Rnd.get(bracket.getZoneIds().length)];
 			newZones.add(new BracketZone(bracket, chosenZoneId));
 			newZoneSet.add(chosenZoneId);
-			HotzoneModifierManager.getInstance().rollModifier(chosenZoneId);
+			// Only a modifier whose special monsters can appear at the bracket's levels (no Thieves' Den below the Thief level, no Elemental Storm below the Infused level...).
+			HotzoneModifierManager.getInstance().rollModifier(chosenZoneId, bracket.getMaxLevel());
 		}
 		_activeZones = List.copyOf(newZones);
 		_activeZoneSet = Set.copyOf(newZoneSet);

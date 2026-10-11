@@ -110,6 +110,23 @@ public class ElementalAttributeData implements IXmlReader
 		return ELEMENTAL_ITEMS.getOrDefault(itemId, null);
 	}
 	
+	/**
+	 * @param elementId the element ({@link Elementals#FIRE} ... {@link Elementals#DARK})
+	 * @param type the kind of attribute item
+	 * @return the {@code type} attribute item of that element (for example the Fire Stone), or {@code null} if there is none
+	 */
+	public ElementalItemHolder getElementalItem(byte elementId, ElementalItemType type)
+	{
+		for (ElementalItemHolder holder : ELEMENTAL_ITEMS.values())
+		{
+			if ((holder.getElementId() == elementId) && (holder.getType() == type))
+			{
+				return holder;
+			}
+		}
+		return null;
+	}
+	
 	public static ElementalAttributeData getInstance()
 	{
 		return SingletonHolder.INSTANCE;

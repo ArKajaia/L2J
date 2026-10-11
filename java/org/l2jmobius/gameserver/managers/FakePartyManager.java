@@ -50,6 +50,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
+import org.l2jmobius.gameserver.model.actor.instance.FakePlayerPvpServitor;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.groups.Party;
 import org.l2jmobius.gameserver.model.groups.PartyDistributionType;
@@ -508,6 +509,43 @@ public class FakePartyManager
 	}
 	
 	/**
+	 * A fake player that came to help joins {@code host}'s party without being invited (a Resonant monster's helper, see {@link ResonantMonsterManager}), with the same room rules as an accepted invite: the party isn't full and has room for one
+	 * more fake player. It joins the party leader's group, so the leader must be at the fight (within {@link FakePartyConfig#LEASH_RANGE}), or the party code would make it follow the leader away.
+	 * @param host a player the fake player came to help
+	 * @param fake the fake player
+	 * @param fight what it came to fight
+	 * @return {@code true} if it joined
+	 */
+	public boolean joinAsHelper(Player host, Npc fake, Creature fight)
+	{
+		if (!isEnabled() || (host == null) || (fake == null) || fake.isDead() || !fake.isSpawned() || fake.isTrialDuelist())
+		{
+			return false;
+		}
+		
+		final Party realParty = host.getParty();
+		final Player leader = (realParty != null) ? realParty.getLeader() : host;
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		if ((leader == null) || (profile == null) || (profile.getParty() != null) || !canHaveFakes(leader) || (fake.getInstanceId() != leader.getInstanceId()))
+		{
+			return false;
+		}
+		
+		if ((fight != null) && ((fight.getInstanceId() != leader.getInstanceId()) || (leader.calculateDistance3D(fight) > FakePartyConfig.LEASH_RANGE)))
+		{
+			return false;
+		}
+		
+		if ((getMemberCount(leader) >= MAX_PARTY_SIZE) || (getFakeCount(leader) >= FakePartyConfig.MAX_FAKES))
+		{
+			return false;
+		}
+		
+		join(leader, fake);
+		return true;
+	}
+	
+	/**
 	 * {@code fake} leaves its party and goes back to hunting where it is.
 	 * @param fake the fake player
 	 * @param expelled {@code true} if the party leader dismissed it
@@ -879,12 +917,14 @@ public class FakePartyManager
 	 */
 	public Player getRewardPlayer(Creature creature, Attackable target)
 	{
-		if ((creature == null) || !creature.isFakePlayer() || _parties.isEmpty())
+		// A kill by a fake player's servitor (a necromancer's) counts as its owner's.
+		final Creature fake = creature instanceof FakePlayerPvpServitor servitor ? servitor.getOwner() : creature;
+		if ((fake == null) || !fake.isFakePlayer() || _parties.isEmpty())
 		{
 			return null;
 		}
 		
-		final FakePlayerParty party = getParty(creature);
+		final FakePlayerParty party = getParty(fake);
 		if ((party == null) || party.isFakeOnly())
 		{
 			return null;
@@ -1041,7 +1081,9 @@ public class FakePartyManager
 		final boolean died = fake.isDead();
 		removeFromParty(fake, party, null);
 		final Player host = party.getHost();
-		if (!died || party.isFakeOnly() || (host == null) || !host.isOnline() || !isEnabled())
+		
+		// A Resonant monster's helper only came for that fight: it doesn't come back to the party from town.
+		if (!died || party.isFakeOnly() || (host == null) || !host.isOnline() || !isEnabled() || ResonantMonsterManager.isHelper(fake))
 		{
 			return false;
 		}

@@ -123,6 +123,13 @@ public class Q00350_EnhanceYourWeapon extends Quest
 	@Override
 	public void onKill(Npc npc, Player killer, boolean isSummon)
 	{
+		// A Resonant monster raises the crystals of the killer's party itself (ResonantMonsterManager), so a crystal never grows twice from one kill.
+		if (npc.isMonster() && npc.asMonster().isResonant())
+		{
+			npc.asAttackable().resetAbsorbList();
+			return;
+		}
+		
 		if (npc.isAttackable() && LevelUpCrystalData.getInstance().getNpcsSoulInfo().containsKey(npc.getId()))
 		{
 			levelSoulCrystals(npc.asAttackable(), killer);

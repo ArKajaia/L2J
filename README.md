@@ -85,7 +85,7 @@ A rotating set of bonus hunting zones that periodically change location and gran
 - A fixed pool of hand-placed zones, grouped by level bracket, with one zone per bracket "active" at a time on a schedule.
 - Active zones buff both players and monsters, plus apply a randomly-rolled modifier each rotation (bonus loot, tougher monsters, drain effects, etc.).
 - Many modifiers drive the server's other systems instead of plain stats. They can:
-  - flood a zone with Thieves (who flee once their bag is full), wave challenges, Mages or rival fake players;
+  - flood a zone with Thieves (who flee once their bag is full), wave challenges, Mages, Infused or Resonant monsters (only rolled where the zone's levels reach that monster's minimum level), or rival fake players;
   - make monsters evolve into champions or rage from the first stun;
   - speed up Luck stacks;
   - mark a roaming bounty target;
@@ -172,6 +172,23 @@ Two special monster variants that change how an ordinary monster plays out in co
 - **Mage** monsters fight as genuine spellcasters — kiting at range and casting instead of meleeing, switching to melee only once their mana runs low.
 - Mage monsters drop more loot on death and always yield a bonus Sealed Cache.
 - Both are rolled independently on spawn and are mutually exclusive with each other and with the Champion/Hot Zone Miniboss/Wave Challenge states.
+
+### Infused & Resonant Monster Variants
+
+Two more monster variants, each paying a reward no other one gives: attribute stones, and soul crystal stages. They are rolled on spawn after the Thief and Mage rolls, never on Thieves, Mages, wave or arena challengers, hot zone minibosses, raids, minions or scripted spawns that never respawn (boss guards, quest monsters), nor on champions or in instances (both configurable, like a list of excluded monster ids). A spawn point that produced one skips its next roll, and a teleport (back to its spawn, for example) doesn't take the variant away.
+
+- **Infused** (levels 61+, `config/Custom/InfusedMonsters.ini`): the monster is infused with Fire, Water, Wind, Earth, Holy or Dark, shown as `[Fire]` and so on with a glow of the element. A monster that already attacks with an element usually keeps it.
+  - It attacks with its element, resists it and is weak to the opposite one (Fire/Water, Wind/Earth, Holy/Dark). Damage compares an attack element with the same element's resistance, so a weapon of the opposite element hits it hard and one of its own element barely scratches it; armor with the right attribute protects against it as usual.
+  - Twice the HP and +20% P.Atk/M.Atk, and every 12 seconds, while an enemy stands close, it casts its element's nova (the retail area spells Prominence, Hydro Blast, Hurricane, Stone, Solar Flare, Shadow Flare): a 5 second cast that hits everyone around it, so players can step away.
+  - It drops attribute stones of its element: 1 at levels 61-75, 1-2 at 76-79, 2-3 from 80, and from level 80 a 3% chance (6% from 84) of an attribute crystal. Its normal drops stay the same. Nothing drops for a killer more than 8 levels above it.
+- **Resonant** (levels 40-85, `config/Custom/ResonantMonsters.ini`): its soul hums with power, shown as `[Resonant]` with the Arcane Shield aura.
+  - Killing it raises the soul crystal of the killer and of every party member nearby by one stage, without using the crystal on it first. The rules of the quest Enhance Your Weapon still apply: the quest started and exactly one crystal carried (two or more resonate and fail, with the retail message).
+  - A crystal grows up to the stage its level allows: what the regular monsters of that level could raise, read from `data/LevelUpCrystalData.xml` (up to stage 1 at level 40, 4 at 50, 7 at 60 and 9 from 63 on), and above that the raid stages: stage 10 from level 76 and stage 11 from level 80, so a crystal can be raised to **stage 12** (`ResonantRaidStages`). The quest's own roll doesn't happen on top, so a monster that raises stages above the cap of its level never becomes Resonant (from level 80 the Tyrannosaurus' stages 10 and 11 are covered, for the whole party).
+  - Twice the HP, and the first time it drops to 25% HP its soul flees: it runs from the players for 20 seconds and vanishes if it is still alive by then. Root, slow or stun it to catch it.
+  - **Raid tier** (levels 76-85, the ones that raise the stages retail only gives on raid bosses): shown as `[Resonant Boss]`, it is a raid boss strength fight. Its HP, P.Atk, M.Atk, P.Def and M.Def are raised to 50% of the median raid boss within 2 levels of it, measured on the real raid bosses with this server's stat multipliers, never lowered (a level 82 Spiked Stakato gets about 7.5 times its HP and 3.7 times its M.Atk). Its soul flees for 40 seconds.
+  - **Fake players join the fight**: at 70% and at 30% HP a fake player of about its level turns up nearby and runs in, and nobody is told whose side it is on. A helper joins the party of the player who has hurt the monster most, fights with the party (its kills count for it) and leaves the party after the fight. A rival wants the soul for itself: it fights the monster and the players in its way, and if it lands the killing blow the soul is gone. Killing a rival is never a PK and pays 300 hot zone coins and a Sealed Cache. A helper becomes a rival if the party has no room or its leader is not at the fight. A helper's servitor kills count for the party; a helper that dies doesn't come back from town, and it never takes kill-steal revenge. If the players give up, the joiners go their way after a while, and the next attempt gets new joiners at the HP percents still ahead. Joiners need room under `FakePvpMaxAlive` (0 = no limit).
+- Two hot zone modifiers go with them: **Elemental Storm** (Infused monsters 5 times as common, one more stone each) and **Soul Tide** (Resonant monsters 5 times as common), only rolled by hot zones whose levels reach the variant's. The glow stays when a buff or debuff with the same visual ends. Neither variant becomes a Nightlord, a Witching Hour challenger or a roaming fake player, and neither evolves under Metamorphosis.
+- GMs turn the targeted monster into either with `//monstermod infused [element]`, `//monstermod resonant` and back with `//monstermod clear`, and bring a fake player into a Resonant fight with `//monstermod join [helper|rival]`.
 
 ### Treasure Chests & Sealed Caches
 
@@ -678,7 +695,22 @@ This program is free software, licensed under the **GNU General Public License, 
 
 ## Recent Updates
 
-Changes from 28 September – 10 October 2026.
+Changes from 28 September – 11 October 2026.
+
+### Resonant monsters: stage 12, raid tier and fake players
+- **Soul crystals to stage 12**: level 76-79 Resonant monsters also raise stage 10 crystals (to 11), level 80-85 ones stage 11 crystals (to 12), for the whole party (`ResonantRaidStages`, `ResonantRaidStageChance`).
+- **Raid tier**: those levels are `[Resonant Boss]` fights at 50% of the median raid boss of their level (`ResonantRaidStrengthPercent`), and their soul flees for 40 seconds.
+- **Fake players join at 70% and 30% HP**, each a helper that joins the party or a rival after the soul (`ResonantFakeJoinAtHpPercent`, `ResonantFakeHelperChance`). Killing a rival is never a PK and pays hot zone coins and a Sealed Cache. `//monstermod join [helper|rival]` for GMs.
+- Joiner fixes: a helper that dies no longer comes back to the party from town, a helper never takes kill-steal revenge on the party after it leaves, and joiners also leave when the players give up the fight. A helper only joins when the party leader is at the fight (else it comes as a rival). Joiners now work with `FakePvpMaxAlive = 0` (no limit).
+- A fake player's servitor kill now counts for the fake player's party (soul crystals, quest kills), in every fake party.
+- The Tyrannosaurus may now be Resonant: from level 80 its own stages 10 and 11 are covered.
+
+### Infused and Resonant monsters
+- **Infused monsters** (1.5% of the monsters of level 61+): infused with one of the six elements, they attack with it, resist it, are weak to the opposite one, pulse an elemental nova players can step away from, and drop attribute stones of their element (and from level 80 a chance of an attribute crystal). See [Infused & Resonant Monster Variants](#infused--resonant-monster-variants).
+- **Resonant monsters** (1% of the monsters of level 40-85): killing one raises the soul crystal of the killer and of the party nearby by one stage, up to the stage the regular monsters of its level could give (stage 10 at most at first, stage 12 since the raid tier above), with the retail rules and messages of Enhance Your Weapon. Low on HP its soul flees for 20 seconds.
+- New hot zone modifiers **Elemental Storm** and **Soul Tide**, and the GM command `//monstermod`.
+- The Thief's escape is now shared: a Resonant soul flees the same way.
+- **Hot zones only roll modifiers that can work at their levels**: a modifier that makes Thieves, Mages, wave challenges, Infused or Resonant monsters more common is left out of a level bracket below that monster's minimum level (no more Thieves' Den in a Lv 11-20 zone).
 
 ### Totem Warchiefs and Hierophants: fixes
 - **Totems spare white fake players without Ctrl**: a player's totem planted without Ctrl (Totem of Flames, Frost-Teeth, the Great Totem) and Shatter cast without Ctrl hit monsters and the players and fake players with PvP status (flagged, PK, clan war); before, they also hit white fake players that were fighting monsters. With Ctrl held they hit white players and fake players too. A totem hit on a player or fake player now **flags the Warchief** like a hit of its own (it didn't).
