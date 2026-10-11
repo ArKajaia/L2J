@@ -3267,6 +3267,7 @@ public abstract class Creature extends WorldObject
 		}
 		else if (isNpc())
 		{
+			final FakePlayerInfo fakePlayerInfo = createBroadcastFakePlayerInfo();
 			World.getInstance().forEachVisibleObject(this, Player.class, player ->
 			{
 				if (!isVisibleFor(player))
@@ -3274,9 +3275,9 @@ public abstract class Creature extends WorldObject
 					return;
 				}
 				
-				if (isFakePlayer())
+				if (fakePlayerInfo != null)
 				{
-					player.sendPacket(new FakePlayerInfo(asNpc()));
+					player.sendPacket(fakePlayerInfo);
 				}
 				else if (_stat.getRunSpeed() == 0)
 				{
@@ -3288,6 +3289,21 @@ public abstract class Creature extends WorldObject
 				}
 			});
 		}
+	}
+	
+	/**
+	 * @return for a fake player, its info built once to send copies to every viewer (it is the same for all of them), otherwise {@code null}
+	 */
+	private FakePlayerInfo createBroadcastFakePlayerInfo()
+	{
+		if (!isFakePlayer())
+		{
+			return null;
+		}
+		
+		final FakePlayerInfo fakePlayerInfo = new FakePlayerInfo(asNpc());
+		fakePlayerInfo.sendInBroadcast();
+		return fakePlayerInfo;
 	}
 	
 	/** Set the Creature movement type to run and send Server->Client packet ChangeMoveType to all others Player. */
@@ -4138,6 +4154,7 @@ public abstract class Creature extends WorldObject
 			{
 				if (broadcastFull)
 				{
+					final FakePlayerInfo fakePlayerInfo = createBroadcastFakePlayerInfo();
 					World.getInstance().forEachVisibleObject(this, Player.class, player ->
 					{
 						if (!isVisibleFor(player))
@@ -4145,9 +4162,9 @@ public abstract class Creature extends WorldObject
 							return;
 						}
 						
-						if (isFakePlayer())
+						if (fakePlayerInfo != null)
 						{
-							player.sendPacket(new FakePlayerInfo(asNpc()));
+							player.sendPacket(fakePlayerInfo);
 						}
 						else if (_stat.getRunSpeed() == 0)
 						{
