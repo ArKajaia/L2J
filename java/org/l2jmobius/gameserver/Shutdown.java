@@ -46,6 +46,7 @@ import org.l2jmobius.gameserver.managers.GrandBossManager;
 import org.l2jmobius.gameserver.managers.ItemAuctionManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.managers.PrecautionaryRestartManager;
+import org.l2jmobius.gameserver.managers.PvpRankingManager;
 import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
 import org.l2jmobius.gameserver.model.World;
@@ -516,6 +517,9 @@ public class Shutdown extends Thread
 		
 		// Save all global variables data
 		GlobalVariablesManager.getInstance().storeMe();
+		
+		// Save the PvP kills of fake players not written yet.
+		PvpRankingManager.getInstance().storeChanged();
 		LOGGER.info("Global Variables Manager: Variables saved(" + tc.getEstimatedTimeAndRestartCounter() + "ms).");
 		
 		// Save Fishing tournament data.
