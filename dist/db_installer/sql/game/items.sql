@@ -18,9 +18,6 @@ CREATE TABLE IF NOT EXISTS `items` (
   KEY `time_of_use` (`time_of_use`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE INDEX idx_item_id ON items (item_id);
-CREATE INDEX idx_object_id ON items (object_id);
-CREATE INDEX idx_owner_id ON items (owner_id);
 CREATE INDEX idx_owner_id_loc ON items (owner_id, loc);
 CREATE INDEX idx_owner_id_item_id ON items (owner_id, item_id);
 CREATE INDEX idx_owner_id_loc_locdata ON items (owner_id, loc, loc_data);

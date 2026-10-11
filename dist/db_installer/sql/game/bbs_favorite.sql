@@ -5,5 +5,6 @@ CREATE TABLE IF NOT EXISTS `bbs_favorites` (
 	`favBypass` VARCHAR(127) NOT NULL,
 	`favAddDate` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY (`favId`),
-	UNIQUE INDEX `favId_playerId` (`favId`, `playerId`)
+	UNIQUE INDEX `favId_playerId` (`favId`, `playerId`),
+	KEY `playerId` (`playerId`)
 ) DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
