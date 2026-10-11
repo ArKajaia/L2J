@@ -40,7 +40,7 @@ import org.l2jmobius.gameserver.model.skill.Skill;
  * How a roaming fake player plays the Oracle (Prophet line) and Totem Warchief (Warcryer line) skills (see README "Oracles and Totem Warchiefs"), like a player who knows what each one is for: a skill listed in its build is only cast when it pays off.
  * <ul>
  * <li>Prophecy of Doom: never cast again on a target that has its Doom on (it would start over and never come true), unless it knows Inevitable Doom and the Doom has room for another stack.</li>
- * <li>Prophecy of Salvation on itself while it takes damage, Prophecy of Reversal as a save point while it is still healthy in a PvP (never once it is low: it would only write down a low HP).</li>
+ * <li>Prophecy of Salvation on itself while it takes damage. Prophecy of Reckoning on a target that isn't under one yet and is fighting (it gives back the damage the target deals).</li>
  * <li>Fulfilment when it brings on a big Doom, finishes a target or before its Foresight runs out; Unwritten on two enemies or more.</li>
  * <li>Totems where they work: Flames and Frost-Teeth by its target, Blood while it is hurt (or for its party), the Horde against a pack of monsters, Ancestors on a dead party member. Shatter when the totems are about to fall or the explosions catch a crowd. Spirit Walk to get
  * out of melee.</li>
@@ -61,9 +61,6 @@ final class FakePlayerPvpOraclesWarchiefs
 	private static final double FULFIL_FINISH_HP = 0.35;
 	/** Fulfilment spends a Foresight about to run out (seconds left) on whatever prophecy is on. */
 	private static final int FULFIL_FORESIGHT_ENDING = 5;
-	/** Prophecy of Reversal: written down between these shares of HP in a PvP. */
-	private static final double REVERSAL_MIN_HP = 0.4;
-	private static final double REVERSAL_MAX_HP = 0.85;
 	/** Prophecy of Salvation on itself below this share of HP (against players, against monsters). */
 	private static final double SALVATION_PVP_HP = 0.85;
 	private static final double SALVATION_PVE_HP = 0.6;
@@ -88,7 +85,7 @@ final class FakePlayerPvpOraclesWarchiefs
 	 * @param npc the fake player
 	 * @param target the target of a skill cast on an enemy
 	 * @param skill the skill
-	 * @return {@code false} if casting it on {@code target} now would be wasted (a Doom that would start over, Spell Turning on a target that doesn't cast)
+	 * @return {@code false} if casting it on {@code target} now would be wasted (a Doom that would start over, a second Reckoning, Spell Turning on a target that doesn't cast)
 	 */
 	static boolean isWorthCasting(Attackable npc, Creature target, Skill skill)
 	{
@@ -97,6 +94,11 @@ final class FakePlayerPvpOraclesWarchiefs
 			case Prophecies.DOOM_SKILL_ID:
 			{
 				return Prophecies.canStackDoom(npc, target);
+			}
+			case Prophecies.RECKONING_SKILL_ID:
+			{
+				// It gives back the damage the target deals: only on one that fights, once.
+				return !target.isAffectedBySkill(Prophecies.RECKONING_SKILL_ID) && (target.isAttackingNow() || target.isCastingNow() || target.isInCombat());
 			}
 			case SPELL_TURNING_SKILL_ID:
 			{
@@ -131,7 +133,6 @@ final class FakePlayerPvpOraclesWarchiefs
 		switch (skillId)
 		{
 			case Prophecies.SALVATION_SKILL_ID:
-			case Prophecies.REVERSAL_SKILL_ID:
 			case Prophecies.FULFILMENT_SKILL_ID:
 			case Prophecies.UNWRITTEN_SKILL_ID:
 			case Totems.SHATTER_SKILL_ID:
@@ -160,11 +161,6 @@ final class FakePlayerPvpOraclesWarchiefs
 			{
 				// It heals back the damage taken while it is on: worth it while the hits come in.
 				return fighting && !npc.isAffectedBySkill(skillId) && (hpRatio < (pvp ? SALVATION_PVP_HP : SALVATION_PVE_HP));
-			}
-			case Prophecies.REVERSAL_SKILL_ID:
-			{
-				// A save point: written down while it still has HP to come back to.
-				return pvp && (hpRatio >= REVERSAL_MIN_HP) && (hpRatio < REVERSAL_MAX_HP) && !npc.isAffectedBySkill(skillId);
 			}
 			case Prophecies.FULFILMENT_SKILL_ID:
 			{

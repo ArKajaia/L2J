@@ -413,7 +413,7 @@ public class Totems
 	}
 
 	/**
-	 * Totem of Flames: a pulse burns up to {@link OraclesWarchiefsConfig#FLAME_TOTEM_MAX_TARGETS} enemies within {@link OraclesWarchiefsConfig#FLAME_TOTEM_RANGE} of the totem, the nearest first.
+	 * Totem of Flames: a pulse burns up to as many enemies as the burn's level allows (its affect limit), never more than {@link OraclesWarchiefsConfig#FLAME_TOTEM_MAX_TARGETS}, within {@link OraclesWarchiefsConfig#FLAME_TOTEM_RANGE} of the totem, the nearest first.
 	 * @param owner the Warchief (the damage is its magic)
 	 * @param totem the totem
 	 * @param burn the burn (its power is the damage)
@@ -425,6 +425,9 @@ public class Totems
 		{
 			return;
 		}
+
+		final int limit = burn.getAffectLimit();
+		final int maxTargets = (limit > 0) ? Math.min(limit, OraclesWarchiefsConfig.FLAME_TOTEM_MAX_TARGETS) : OraclesWarchiefsConfig.FLAME_TOTEM_MAX_TARGETS;
 
 		enemies.sort((a, b) -> Double.compare(totem.calculateDistance3D(a), totem.calculateDistance3D(b)));
 		int hits = 0;
@@ -443,7 +446,7 @@ public class Totems
 				owner.sendDamageMessage(enemy, damage, mcrit, false, false);
 			}
 
-			if (++hits >= OraclesWarchiefsConfig.FLAME_TOTEM_MAX_TARGETS)
+			if (++hits >= maxTargets)
 			{
 				break;
 			}

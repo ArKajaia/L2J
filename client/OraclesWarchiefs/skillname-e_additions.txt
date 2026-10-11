@@ -21,8 +21,8 @@
 27535	1	a,Ruin: Sealed Lips\0	a,Silenced by a Prophecy of Ruin.\0	a,none\0	a,none\0
 27535	2	a,Ruin: Sealed Lips\0	a,Silenced by a Prophecy of Ruin.\0	a,none\0	a,none\0
 27535	3	a,Ruin: Sealed Lips\0	a,Silenced by a Prophecy of Ruin.\0	a,none\0	a,none\0
-27536	1	a,Prophecy of Reversal\0	a,Prophecy: the target's HP, MP, CP and place are written down. After 6 seconds it comes back to them (never lower than it is). Reuse time is 90 seconds.\0	a,none\0	a,none\0
-27536	2	a,Prophecy of Reversal\0	a,Prophecy: the target's HP, MP, CP and place are written down. After 6 seconds it comes back to them (never lower than it is). Reuse time is 60 seconds.\0	a,none\0	a,none\0
+27536	1	a,Prophecy of Reckoning\0	a,Prophecy: after 5 seconds, the target takes 30% of the damage it dealt while the prophecy was on as holy magic damage (at most a quarter of its max HP). Reuse time is 20 seconds. A prophecy that comes true gives a Foresight.\0	a,none\0	a,none\0
+27536	2	a,Prophecy of Reckoning\0	a,Prophecy: after 5 seconds, the target takes 40% of the damage it dealt while the prophecy was on as holy magic damage (at most a quarter of its max HP). Reuse time is 15 seconds. A prophecy that comes true gives a Foresight.\0	a,none\0	a,none\0
 27537	1	a,Foresight\0	a,A prophecy came true. M. Atk. +3%. 5 Foresights allow Fulfilment.\0	a,none\0	a,none\0
 27537	2	a,Foresight\0	a,A prophecy came true. M. Atk. +6%. 5 Foresights allow Fulfilment.\0	a,none\0	a,none\0
 27537	3	a,Foresight\0	a,A prophecy came true. M. Atk. +9%. 5 Foresights allow Fulfilment.\0	a,none\0	a,none\0
@@ -66,15 +66,26 @@
 27557	4	a,Totem Circle\0	a,Totems up: 4. Shatter needs 3.\0	a,none\0	a,none\0
 27557	5	a,Totem Circle\0	a,Totems up: 5. Shatter needs 3.\0	a,none\0	a,none\0
 27558	1	a,Great Totem of the Horde-Father\0	a,Plants the Great Totem of the Horde-Father for 20 seconds: Totem of Blood, Totem of the Horde and Totem of Frost-Teeth at once, within 900. It can't be targeted. Reuse time is 3 minutes.\0	a,none\0	a,none\0
-27559	1	a,Totem of Flames\0	a,Plants a Totem of Flames: every 2 seconds it burns up to 10 enemies within 400 with 32 Power (fire). A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
-27559	2	a,Totem of Flames\0	a,Plants a Totem of Flames: every 2 seconds it burns up to 10 enemies within 400 with 40 Power (fire). A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
-27559	3	a,Totem of Flames\0	a,Plants a Totem of Flames: every 2 seconds it burns up to 10 enemies within 400 with 48 Power (fire). A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
-27559	4	a,Totem of Flames\0	a,Plants a Totem of Flames: every 2 seconds it burns up to 10 enemies within 400 with 58 Power (fire). A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
-27560	1	a,Totem of Flames\0	a,Burned by a Totem of Flames: 32 Power.\0	a,none\0	a,none\0
-27560	2	a,Totem of Flames\0	a,Burned by a Totem of Flames: 40 Power.\0	a,none\0	a,none\0
-27560	3	a,Totem of Flames\0	a,Burned by a Totem of Flames: 48 Power.\0	a,none\0	a,none\0
-27560	4	a,Totem of Flames\0	a,Burned by a Totem of Flames: 58 Power.\0	a,none\0	a,none\0
+27559	1	a,Totem of Flames\0	a,Plants a Totem of Flames: every 1.67 seconds it burns up to 4 enemies within 400 with 16 Power (fire). A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27559	2	a,Totem of Flames\0	a,Plants a Totem of Flames: every 1.67 seconds it burns up to 5 enemies within 400 with 20 Power (fire). A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27559	3	a,Totem of Flames\0	a,Plants a Totem of Flames: every 1.67 seconds it burns up to 6 enemies within 400 with 24 Power (fire). A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27559	4	a,Totem of Flames\0	a,Plants a Totem of Flames: every 1.67 seconds it burns up to 7 enemies within 400 with 28 Power (fire). A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27559	5	a,Totem of Flames\0	a,Plants a Totem of Flames: every 1.67 seconds it burns up to 8 enemies within 400 with 34 Power (fire). A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27559	6	a,Totem of Flames\0	a,Plants a Totem of Flames: every 1.67 seconds it burns up to 9 enemies within 400 with 40 Power (fire). A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27559	7	a,Totem of Flames\0	a,Plants a Totem of Flames: every 1.67 seconds it burns up to 10 enemies within 400 with 48 Power (fire). A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27559	8	a,Totem of Flames\0	a,Plants a Totem of Flames: every 1.67 seconds it burns up to 10 enemies within 400 with 58 Power (fire). A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most.\0	a,none\0	a,none\0
+27560	1	a,Totem of Flames\0	a,Burned by a Totem of Flames: 16 Power.\0	a,none\0	a,none\0
+27560	2	a,Totem of Flames\0	a,Burned by a Totem of Flames: 20 Power.\0	a,none\0	a,none\0
+27560	3	a,Totem of Flames\0	a,Burned by a Totem of Flames: 24 Power.\0	a,none\0	a,none\0
+27560	4	a,Totem of Flames\0	a,Burned by a Totem of Flames: 28 Power.\0	a,none\0	a,none\0
+27560	5	a,Totem of Flames\0	a,Burned by a Totem of Flames: 34 Power.\0	a,none\0	a,none\0
+27560	6	a,Totem of Flames\0	a,Burned by a Totem of Flames: 40 Power.\0	a,none\0	a,none\0
+27560	7	a,Totem of Flames\0	a,Burned by a Totem of Flames: 48 Power.\0	a,none\0	a,none\0
+27560	8	a,Totem of Flames\0	a,Burned by a Totem of Flames: 58 Power.\0	a,none\0	a,none\0
 27561	1	a,Spirit Trance\0	a,Turns you to ice for 5 seconds while your totems fight: you can't move or act, P. Def. and M. Def. +300%, and you recover 150 HP every second. Reuse time is 1 minute.\0	a,none\0	a,none\0
 27561	2	a,Spirit Trance\0	a,Turns you to ice for 5 seconds while your totems fight: you can't move or act, P. Def. and M. Def. +300%, and you recover 250 HP every second. Reuse time is 1 minute.\0	a,none\0	a,none\0
 27561	3	a,Spirit Trance\0	a,Turns you to ice for 5 seconds while your totems fight: you can't move or act, P. Def. and M. Def. +300%, and you recover 400 HP every second. Reuse time is 1 minute.\0	a,none\0	a,none\0
 27562	1	a,Inevitable Doom\0	a,Prophecy of Doom: reuse time halved; cast again on the same target before it comes true, it gains a stack (up to 5, each adds its damage once more); it also spreads to the enemies within 200 of its target, who can't resist it.\0	a,none\0	a,none\0
+27563	1	a,Reckoning\0	a,The damage of a Prophecy of Reckoning that came true: 30% of the damage the target dealt.\0	a,none\0	a,none\0
+27563	2	a,Reckoning\0	a,The damage of a Prophecy of Reckoning that came true: 40% of the damage the target dealt.\0	a,none\0	a,none\0
+27564	1	a,Warchief's Restraint\0	a,Steal Essence absorbs half as much HP: 40% of the damage instead of 80%.\0	a,none\0	a,none\0

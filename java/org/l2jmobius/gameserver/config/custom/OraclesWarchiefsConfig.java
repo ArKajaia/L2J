@@ -20,7 +20,7 @@ public class OraclesWarchiefsConfig
 	public static int DOOM_STILL_RANGE;
 	public static double SALVATION_RETURN;
 	public static double FULFILMENT_MULTIPLIER;
-	public static int REVERSAL_MAX_DISTANCE;
+	public static double RECKONING_MAX_SHARE;
 	public static double GLIMPSE_HP_THRESHOLD;
 	public static int GLIMPSE_COOLDOWN;
 	public static int GLIMPSE_DISTANCE;
@@ -56,7 +56,7 @@ public class OraclesWarchiefsConfig
 		DOOM_STILL_RANGE = Math.max(0, config.getInt("DoomStillRange", 300));
 		SALVATION_RETURN = Math.max(0, config.getDouble("SalvationReturn", 1.0));
 		FULFILMENT_MULTIPLIER = Math.max(1, config.getDouble("FulfilmentMultiplier", 1.5));
-		REVERSAL_MAX_DISTANCE = Math.max(0, config.getInt("ReversalMaxDistance", 3000));
+		RECKONING_MAX_SHARE = Math.min(1, Math.max(0, config.getDouble("ReckoningMaxShare", 0.25)));
 		GLIMPSE_HP_THRESHOLD = Math.min(1, Math.max(0.01, config.getDouble("GlimpseHpThreshold", 0.3)));
 		GLIMPSE_COOLDOWN = Math.max(0, config.getInt("GlimpseCooldown", 60)) * 1000;
 		GLIMPSE_DISTANCE = Math.max(50, config.getInt("GlimpseDistance", 300));

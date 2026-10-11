@@ -4,7 +4,9 @@ Oracle and Totem Warchief skills - client additions (High Five)
 Rows for the reworked Prophet and Warcryer lines:
   27530-27540  Oracles, the Prophet line          (data/stats/skills/custom/oracle_skills.xml)
   27562        Inevitable Doom (Hierophant)       (data/stats/skills/custom/oracle_skills.xml)
+  27563        Reckoning (Prophecy of Reckoning)  (data/stats/skills/custom/oracle_skills.xml)
   27545-27561  Totem Warchiefs, the Warcryer line (data/stats/skills/custom/warchief_skills.xml)
+  27564        Warchief's Restraint (Warcryer)    (data/stats/skills/custom/warchief_skills.xml)
 
 Without these rows the client shows the skills with no name and no icon.
 
@@ -12,7 +14,7 @@ Without these rows the client shows the skills with no name and no icon.
   skillname-e_additions.txt   -> Skillname-e.dat
 
 Both are tab-separated in the same column layout as the L2ClientDat text
-export (no header line), like client/Performers. 80 rows each: every level
+export (no header line), like client/Performers. 91 rows each: every level
 of the prophecies and what they come true with, Foresight, Inevitable Doom,
 the totems and their echoes, the stance, Spirit Trance, Totem Circle and the
 two finales.
@@ -21,8 +23,9 @@ Applying them
 -------------
 1. Paste the new rows into both files, keeping them sorted by skill id:
    they go after the 27528 rows of client/Performers. If an older version of
-   these rows is in, replace all of them (27530-27562): the 4th column of
-   Skillgrp.dat changed.
+   these rows is in, replace all of them (27530-27564): the 4th column of
+   Skillgrp.dat changed, Totem of Flames has 8 levels and Prophecy of
+   Reversal is now Prophecy of Reckoning.
 2. Save & Encrypt, copy both .dat files into the client's system folder and
    restart the client.
 

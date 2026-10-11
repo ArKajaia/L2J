@@ -7,6 +7,7 @@
 
 	27530-27540  Oracle skills, learned from the Grand Masters like any class skill.
 	27562        Inevitable Doom (Hierophant passive).
+	27563        Reckoning (the damage of a Prophecy of Reckoning, not learned).
 
 	PROPHECIES (the Prophecy effect, model/actor/holders/player/Prophecies.java): a prophecy does
 	nothing when it lands. When its time runs out it comes true; if it is cancelled or its
@@ -17,8 +18,9 @@
 	  27532 Prophecy of Salvation  ally, 6 s: heals back the damage taken while it was on.
 	  27533 Prophecy of Ruin       enemy, 5 s: 27534 stun if the target cast a skill meanwhile,
 	                               else 27535 silence.
-	  27536 Prophecy of Reversal   ally, 6 s: HP, MP, CP and place are written down when it
-	                               lands; the ally comes back to them (never lower than it is).
+	  27536 Prophecy of Reckoning  enemy, 5 s: the damage it deals meanwhile is counted; 27563
+	                               Reckoning gives it back part of it as holy magic damage (30%,
+	                               40% at level 2, at most ReckoningMaxShare of its max HP).
 	  27538 Fulfilment             Hierophant, needs 5 Foresight: every prophecy of the Oracle
 	                               comes true now, x1.5 (no Foresight from these).
 	  27539 Glimpse                Hierophant toggle: Evasion +4, a hit taking 30% of the
@@ -177,32 +179,52 @@
 		</effects>
 	</skill>
 
-	<!-- 27536 PROPHECY OF REVERSAL: a save point. After 6 seconds the ally comes back to the HP,
-	     MP, CP and place it had when the prophecy landed (never lower than it is). -->
-	<skill id="27536" levels="2" name="Prophecy of Reversal">
+	<!-- 27536 PROPHECY OF RECKONING: the damage the enemy deals in the next 5 seconds is counted;
+	     when it comes true, 27563 gives part of it back to the enemy. -->
+	<skill id="27536" levels="2" name="Prophecy of Reckoning">
 		<table name="#magicLevel">58 78</table>
-		<table name="#mpConsume">60 80</table>
-		<table name="#reuseDelay">90000 60000</table>
+		<table name="#mpConsume">55 72</table>
+		<table name="#effectPoints">-450 -600</table>
+		<table name="#reuseDelay">20000 15000</table>
 		<icon>icon.skill1359</icon>
 		<operateType>A2</operateType>
 		<targetType>ONE</targetType>
 		<abnormalLevel>1</abnormalLevel>
-		<abnormalTime>6</abnormalTime>
-		<abnormalType>PROPHECY_REVERSAL</abnormalType>
-		<abnormalVisualEffect>MAGIC_SQUARE</abnormalVisualEffect>
+		<abnormalTime>5</abnormalTime>
+		<abnormalType>PROPHECY_RECKONING</abnormalType>
+		<abnormalVisualEffect>REAL_TARGET</abnormalVisualEffect>
+		<activateRate>80</activateRate>
+		<basicProperty>MEN</basicProperty>
+		<lvlBonusRate>1</lvlBonusRate>
 		<castRange>900</castRange>
 		<effectRange>1400</effectRange>
-		<effectPoint>500</effectPoint>
-		<hitTime>1000</hitTime>
+		<effectPoint>#effectPoints</effectPoint>
+		<hitTime>1500</hitTime>
+		<isDebuff>true</isDebuff>
 		<isMagic>1</isMagic>
 		<magicLevel>#magicLevel</magicLevel>
 		<mpConsume>#mpConsume</mpConsume>
 		<reuseDelay>#reuseDelay</reuseDelay>
 		<effects>
 			<effect name="Prophecy">
-				<kind>REVERSAL</kind>
+				<kind>RECKONING</kind>
+				<skillId>27563</skillId>
 			</effect>
 		</effects>
+	</skill>
+	<!-- 27563 RECKONING: the damage of a Prophecy of Reckoning (cast by the prophecy, not learned). Its
+	     power is the part of the damage dealt that comes back, in percent (Prophecies.java). -->
+	<skill id="27563" levels="2" name="Reckoning">
+		<table name="#magicLevel">58 78</table>
+		<table name="#power">30 40</table>
+		<icon>icon.skill1359</icon>
+		<operateType>A1</operateType>
+		<targetType>ONE</targetType>
+		<isMagic>1</isMagic>
+		<magicLevel>#magicLevel</magicLevel>
+		<power>#power</power>
+		<element>4</element> <!-- Holy -->
+		<elementPower>20</elementPower>
 	</skill>
 
 	<!-- 27537 FORESIGHT: one level per prophecy that came true (30 seconds), M. Atk. +3% each. -->

@@ -257,7 +257,7 @@ public enum AbnormalType
 	POTION_OF_GENESIS,
 	PRESERVE_ABNORMAL,
 	PROPHECY_DOOM, // Custom: Oracle prophecies, they come true when their time runs out.
-	PROPHECY_REVERSAL,
+	PROPHECY_RECKONING,
 	PROPHECY_RUIN,
 	PROPHECY_SALVATION,
 	PROTECTION,

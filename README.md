@@ -293,7 +293,7 @@ Buff templates, buff shops, the scheme buffer and the books that teach every buf
 | Prophecy of Doom | Prophet | Enemy, 5 s: holy magic damage, ×1.5 if the target is still within 300 of where it stood. It can't be resisted |
 | Prophecy of Salvation | Prophet | Ally, 6 s: heals back all the damage it took while the prophecy was on |
 | Prophecy of Ruin | Prophet | Enemy, 5 s: stun if the target cast a skill meanwhile, otherwise silence |
-| Prophecy of Reversal | Prophet (58) | Ally, 6 s: its HP, MP, CP and place are written down, and it comes back to them (never lower than it is): a save point before a nuke lands |
+| Prophecy of Reckoning | Prophet (58) | Enemy, 5 s: the damage it deals meanwhile is counted, and 30% (40% at level 2) of it comes back to it as holy magic damage, at most a quarter of its max HP (`ReckoningMaxShare`). Rolls to land like any debuff (MEN) |
 | Fulfilment | Hierophant | Spends 5 Foresight: every prophecy of the Oracle comes true now, ×1.5 |
 | Glimpse | Hierophant | Toggle: Evasion +4; a single hit taking 30% of its HP makes the Oracle step back 300 (once a minute) |
 | Inevitable Doom | Hierophant | Passive: Prophecy of Doom's reuse is halved (4 → 2 seconds); cast again on the same target before it comes true it gains a stack (up to 5, each adds the damage once more, and the time starts again until it's full); every Doom also spreads, with its stacks and time, to the enemies within 400 of its target, who can resist the spread like any debuff (MEN) |
@@ -306,7 +306,7 @@ A totem planted without Ctrl hits monsters and the players and fake players with
 | Skill | Class | Effect |
 |---|---|---|
 | Totem of Blood | Warcryer | Party near it: 4 / 5 / 6 / 8% of the damage dealt comes back as HP (12 second reuse) |
-| Totem of Flames | Warcryer (40) | Pulses every 1.67 seconds; every pulse burns up to 10 enemies within 400 of it with the Warchief's fire magic, 32 / 40 / 48 / 58 power, the nearest first. Up to 3 at once (18 second reuse) |
+| Totem of Flames | Warcryer (40) | Pulses every 1.67 seconds; every pulse burns the enemies within 400 of it with the Warchief's fire magic, the nearest first. 8 levels (40, 44, 48, 52, 58, 64, 70, Doomcryer 76): 16 / 20 / 24 / 28 / 34 / 40 / 48 / 58 power, 4 / 5 / 6 / 7 / 8 / 9 / 10 / 10 enemies a pulse. Up to 3 at once (18 second reuse) |
 | Totem of the Horde | Warcryer | Monsters near it that fight the party turn on the totem (raid bosses don't; 25 / 22 / 20 second reuse) |
 | Totem of Frost-Teeth | Warcryer | Enemies near it: Speed −15 to −22%, Atk. Spd. −7 to −12% (15 second reuse) |
 | Spirit Trance | Warcryer (52) | The Warchief turns to ice for 5 seconds while its totems fight: paralyzed, P. Def. and M. Def. +300%, 150 / 250 / 400 HP back every second (1 minute reuse) |
@@ -315,6 +315,7 @@ A totem planted without Ctrl hits monsters and the players and fake players with
 | Totem of Ancestors | Doomcryer | The first party member lying dead near it gets up with 30% HP; the totem is spent (80 second reuse) |
 | Ancestral Bond | Doomcryer | Passive: Max HP +200, P. Def. and M. Def. +8% near its own totem |
 | Spirit Walk | Doomcryer | Swaps places with its targeted totem, or the nearest one: the Warchief stands where the totem stood, the totem where the Warchief stood |
+| Warchief's Restraint | Warcryer (40) | Passive, given with the class: Steal Essence absorbs 40% of the damage as HP instead of 80%. The Overlord line keeps the retail 80% |
 | Great Totem of the Horde-Father | Doomcryer (79) | Blood, Horde and Frost-Teeth at once within 900 for 20 seconds; it can't be targeted (3 minute reuse) |
 
 - Echoes and hexes of the totems have their own buff slots (the triggered-buff bar for the echoes), so they stack with every buff. The "Totem Circle" icon shows how many totems are up.
@@ -325,7 +326,7 @@ A totem planted without Ctrl hits monsters and the players and fake players with
   - **Doom Oracle** (Hierophant line): Prophecy of Doom is its damage. It stacks it to 5 and spreads it with Inevitable Doom, never casts a Doom again before it comes true without the passive (it would start over), opens on players with Prophecy of Ruin or Dryad Root (a rooted target takes the ×1.5), and cashes in with Fulfilment.
   - **Battle Oracle** (Hierophant line): the battlemage path. It fights with its mace in light armour, its passive tree always heads for **Battlemage** first (from level 60; 40% of M. Atk. added to P. Atk.) and weighs M. Atk. like P. Atk., and its prophecies are for control: Ruin on players (Spell Turning first on one that casts), Dryad Root on one that runs, Doom kept on its target.
   - **Flame Warchief** (Doomcryer line): the Totem of Flames and Steal Essence are its damage. It walks up to plant the Totem of Flames by its target, plants Frost-Teeth on an enemy coming close, Blood while it is hurt, the Horde against a pack of monsters, and steps back from melee around its Totem of Flames, so the enemy chases it through the flames. Against a player on it, it swaps places with its farthest totem (Spirit Walk).
-  - Every fake Oracle and Warchief (the party Hierophants and Doomcryers too) only casts these skills when they pay off: Salvation on itself while it takes damage, Reversal while it is still healthy in a PvP (never once it is low), Fulfilment on a Doom of 3 stacks, a target to finish, a Ruin on a player or a Foresight about to run out, Unwritten and the Great Totem on two enemies or more, Shatter when the totems are about to fall, are being broken, the target is low or the explosions catch a crowd. With every totem slot taken it doesn't knock down a fresh totem while Shatter is ready.
+  - Every fake Oracle and Warchief (the party Hierophants and Doomcryers too) only casts these skills when they pay off: Salvation on itself while it takes damage, Reckoning once on a target that fights, Fulfilment on a Doom of 3 stacks, a target to finish, a Ruin on a player or a Foresight about to run out, Unwritten and the Great Totem on two enemies or more, Shatter when the totems are about to fall, are being broken, the target is low or the explosions catch a crowd. With every totem slot taken it doesn't knock down a fresh totem while Shatter is ready.
 - The town buffers are no longer Prophets or Warcryers.
 
 ### Other Custom Features at a Glance
@@ -696,6 +697,11 @@ This program is free software, licensed under the **GNU General Public License, 
 ## Recent Updates
 
 Changes from 28 September – 11 October 2026.
+
+### Warchief and Oracle balance
+- **Totem of Flames scales with level**: 8 levels instead of 4 (40, 44, 48, 52, 58, 64, 70 Warcryer, 76 Doomcryer), Power 16 → 58 instead of 32 → 58, and a pulse burns 4 enemies at level 1 up to 10 at level 7 (the `affectLimit` of skill 27560, `FlameTotemMaxTargets` still caps it). A character keeps the level it learned (its old level 2-4 is now a lower step) and learns the rest at the Grand Master.
+- **Steal Essence drains less for the Warcryer line**: the new passive **Warchief's Restraint** (27564, given with the Warcryer class at 40) halves the HP Steal Essence absorbs, 80% → 40% of the damage. The stat (`hpDrainRate`) only counts for Steal Essence; the Overlord and Dominator keep the retail 80%.
+- **Prophecy of Reversal is now Prophecy of Reckoning** (27536, same levels): an enemy prophecy instead of a second Salvation. It counts the damage the enemy deals for 5 seconds and gives 30% / 40% of it back as holy magic damage (new skill 27563), at most a quarter of its max HP (`ReckoningMaxShare` replaces `ReversalMaxDistance`). Fake Oracles cast it on a target that fights. Paste the new client rows in again.
 
 ### Performance for a full server
 Work towards a thousand players with as many fake players online. Nothing changes in play, except where noted.

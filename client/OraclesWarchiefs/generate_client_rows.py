@@ -10,9 +10,9 @@ BY_ID={int(s.get('id')):s for s in skills}
 # operate_type (4th column), from the server's operateType: 0 A1, 1 A2, 2 P (the client lists it with the passives), 3 T.
 OPERATE={'A1':0,'A2':1,'P':2,'T':3}
 # icon_type (3rd column), following client/PassiveTree: 0 attack, 1 heal, 2 buff (toggles too), 3 debuff.
-OPER={27530:3,27531:0,27532:1,27533:3,27534:3,27535:3,27536:2,27537:2,27538:2,27539:2,27540:3,
+OPER={27530:3,27531:0,27532:1,27533:3,27534:3,27535:3,27536:3,27537:2,27538:2,27539:2,27540:3,
       27545:2,27546:2,27547:2,27548:3,27549:3,27550:2,27551:2,27552:2,27553:0,27554:2,27555:2,27556:2,27557:2,27558:2,
-      27559:0,27560:0,27561:2,27562:2}
+      27559:0,27560:0,27561:2,27562:2,27563:0,27564:2}
 TOGGLE=" Continuously consumes MP proportionately to the user's level."
 TOTEM=" A totem pulses every 2 seconds to everyone within 600 and stands 30 seconds; it can be broken. One of each kind, 3 at most."
 DESC={
@@ -22,7 +22,7 @@ DESC={
  27533:"Prophecy: after 5 seconds, the target is stunned for {stun} seconds if it cast a skill while the prophecy was on, or silenced for {silence} seconds if it didn't. A prophecy that comes true gives a Foresight.",
  27534:"Stunned by a Prophecy of Ruin.",
  27535:"Silenced by a Prophecy of Ruin.",
- 27536:"Prophecy: the target's HP, MP, CP and place are written down. After 6 seconds it comes back to them (never lower than it is). Reuse time is {reuse} seconds.",
+ 27536:"Prophecy: after 5 seconds, the target takes {share}% of the damage it dealt while the prophecy was on as holy magic damage (at most a quarter of its max HP). Reuse time is {reuse} seconds. A prophecy that comes true gives a Foresight.",
  27537:"A prophecy came true. M. Atk. +{matk}%. 5 Foresights allow Fulfilment.",
  27538:"Spends 5 Foresights: every prophecy you cast comes true at once, 50% stronger.",
  27539:"Sees the next blow coming: Evasion +4. A single hit taking 30% of your HP makes you step back 300, once a minute."+TOGGLE,
@@ -41,9 +41,11 @@ DESC={
  27556:"P. Def. and M. Def. +8% while near your own totem.",
  27557:"Totems up: {lvl}. Shatter needs 3.",
  27558:"Plants the Great Totem of the Horde-Father for 20 seconds: Totem of Blood, Totem of the Horde and Totem of Frost-Teeth at once, within 900. It can't be targeted. Reuse time is {reuse_min} minutes.",
- 27559:"Plants a Totem of Flames: every 2 seconds it burns up to 10 enemies within 400 with {power} Power (fire)."+TOTEM,
+ 27559:"Plants a Totem of Flames: every 1.67 seconds it burns up to {targets} enemies within 400 with {power} Power (fire)."+TOTEM,
  27560:"Burned by a Totem of Flames: {power} Power.",
  27561:"Turns you to ice for 5 seconds while your totems fight: you can't move or act, P. Def. and M. Def. +300%, and you recover {heal} HP every second. Reuse time is 1 minute.",
+ 27563:"The damage of a Prophecy of Reckoning that came true: {share}% of the damage the target dealt.",
+ 27564:"Steal Essence absorbs half as much HP: 40% of the damage instead of 80%.",
  27562:"Prophecy of Doom: reuse time halved; cast again on the same target before it comes true, it gains a stack (up to 5, each adds its damage once more); it also spreads to the enemies within 200 of its target, who can't resist it.",
 }
 def f32(x): return '%.8f' % struct.unpack('f', struct.pack('f', x))[0]
@@ -78,12 +80,13 @@ for sk in skills:
         if sid==27533:
             args.update(stun=table(BY_ID[27534],'#abnormalTime',lvl), silence=table(BY_ID[27535],'#abnormalTime',lvl))
         if sid==27536: args['reuse']=int(table(sk,'#reuseDelay',lvl))//1000
+        if sid in (27536,27563): args['share']=table(BY_ID[27563],'#power',lvl)
         if sid==27537: args['matk']=pct(table(sk,'#mAtk',lvl))
         if sid in (27545,27546): args['absorb']=table(BY_ID[27546],'#absorb',lvl)
         if sid in (27548,27549): args.update(speed=pct(table(BY_ID[27549],'#speed',lvl),True), atkspd=pct(table(BY_ID[27549],'#atkSpd',lvl),True))
         if sid==27553: args['power']=table(sk,'#power',lvl)
         if sid==27558: args['reuse_min']=int(val(sk,sk.find('reuseDelay').text.strip(),lvl))//60000
-        if sid in (27559,27560): args['power']=table(BY_ID[27560],'#power',lvl)
+        if sid in (27559,27560): args.update(power=table(BY_ID[27560],'#power',lvl), targets=table(BY_ID[27560],'#targets',lvl).split('-')[0])
         if sid==27561: args['heal']=table(sk,'#heal',lvl)
         d=DESC[sid].format(**args)
         assert '{' not in d and 'None' not in d, (sid,lvl,d)

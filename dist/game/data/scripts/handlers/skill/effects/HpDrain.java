@@ -25,6 +25,7 @@ import org.l2jmobius.gameserver.model.item.enums.ShotType;
 import org.l2jmobius.gameserver.model.skill.AbnormalType;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.stats.Formulas;
+import org.l2jmobius.gameserver.model.stats.Stat;
 
 /**
  * HP Drain effect implementation.
@@ -82,7 +83,8 @@ public class HpDrain extends AbstractEffect
 			drain = damage;
 		}
 		
-		final double hpAdd = (_power * drain);
+		// HP_DRAIN_RATE: 0.5 for the Totem Warchiefs (Warchief's Restraint), 1 for everyone else.
+		final double hpAdd = (_power * effector.calcStat(Stat.HP_DRAIN_RATE, 1, effected, skill) * drain);
 		final double hpFinal = ((effector.getCurrentHp() + hpAdd) > effector.getMaxHp() ? effector.getMaxHp() : (effector.getCurrentHp() + hpAdd));
 		effector.setCurrentHp(hpFinal);
 		
