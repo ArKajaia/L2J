@@ -3267,6 +3267,25 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
+	 * A region woke up because a player came near: its fake players lost their buffs and toggles when it went to sleep, so they get them back right away instead of at the next maintain.
+	 * @param npc an npc of the region
+	 */
+	public void onRegionWake(Npc npc)
+	{
+		if (!_fakePlayers.contains(npc) || npc.isDead())
+		{
+			return;
+		}
+		
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		if (profile != null)
+		{
+			refreshToggles(npc, profile);
+			refreshBuffs(npc, profile);
+		}
+	}
+	
+	/**
 	 * Puts back the buffs (from other players) that ran out.
 	 * @param fake the fake player
 	 * @param profile its profile
@@ -3392,8 +3411,14 @@ public class FakePlayerPvpManager
 					}
 				}
 				
-				refreshToggles(fake, profile);
-				refreshBuffs(fake, profile);
+				// Nobody around: the region's sleep took its buffs, and they come back when it wakes (see onRegionWake). Putting them back now would only keep their tasks running unseen.
+				final WorldRegion region = fake.getWorldRegion();
+				if ((region != null) && region.areNeighborsActive())
+				{
+					refreshToggles(fake, profile);
+					refreshBuffs(fake, profile);
+				}
+				
 				if (profile.getServitor() != null)
 				{
 					switchLink(fake, profile, !profile.needsServitor());
