@@ -21,10 +21,12 @@
 package org.l2jmobius.gameserver.taskmanagers;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.l2jmobius.commons.threads.ThreadPool;
+import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.ai.CreatureAI;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 
@@ -34,7 +36,10 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 public class AttackableThinkTaskManager
 {
 	private static final Set<Set<Attackable>> POOLS = ConcurrentHashMap.newKeySet();
-	private static final int POOL_SIZE = 1000;
+	// The pool each attackable thinks in, so adding an attackable that already thinks needs no lock or scan of all pools.
+	private static final Map<Attackable, Set<Attackable>> ASSIGNED = new ConcurrentHashMap<>();
+	// Each pool thinks on one thread, one attackable after another. Small pools spread the thinking of many attackables over more threads.
+	private static final int POOL_SIZE = 150;
 	private static final int TASK_DELAY = 1000;
 	
 	protected AttackableThinkTaskManager()
@@ -74,48 +79,64 @@ public class AttackableThinkTaskManager
 					else
 					{
 						iterator.remove();
+						ASSIGNED.remove(attackable, _attackables);
 					}
 				}
 				else
 				{
 					iterator.remove();
+					ASSIGNED.remove(attackable, _attackables);
 				}
 			}
 		}
 	}
 	
-	public synchronized void add(Attackable attackable)
+	public void add(Attackable attackable)
 	{
-		for (Set<Attackable> pool : POOLS)
+		if (ASSIGNED.containsKey(attackable))
 		{
-			if (pool.contains(attackable))
+			return;
+		}
+		
+		synchronized (this)
+		{
+			if (ASSIGNED.containsKey(attackable))
 			{
 				return;
 			}
-		}
-		
-		for (Set<Attackable> pool : POOLS)
-		{
-			if (pool.size() < POOL_SIZE)
+			
+			for (Set<Attackable> pool : POOLS)
 			{
-				pool.add(attackable);
-				return;
+				if (pool.size() < POOL_SIZE)
+				{
+					ASSIGNED.put(attackable, pool);
+					pool.add(attackable);
+					return;
+				}
 			}
+			
+			final Set<Attackable> pool = ConcurrentHashMap.newKeySet(POOL_SIZE);
+			ASSIGNED.put(attackable, pool);
+			pool.add(attackable);
+			// A random start spreads the pools over the second instead of all of them thinking at once.
+			ThreadPool.schedulePriorityTaskAtFixedRate(new AttackableThink(pool), TASK_DELAY + Rnd.get(TASK_DELAY), TASK_DELAY);
+			POOLS.add(pool);
 		}
-		
-		final Set<Attackable> pool = ConcurrentHashMap.newKeySet(POOL_SIZE);
-		pool.add(attackable);
-		ThreadPool.schedulePriorityTaskAtFixedRate(new AttackableThink(pool), TASK_DELAY, TASK_DELAY);
-		POOLS.add(pool);
 	}
 	
 	public void remove(Attackable attackable)
 	{
-		for (Set<Attackable> pool : POOLS)
+		if (!ASSIGNED.containsKey(attackable))
 		{
-			if (pool.remove(attackable))
+			return;
+		}
+
+		synchronized (this)
+		{
+			final Set<Attackable> pool = ASSIGNED.remove(attackable);
+			if (pool != null)
 			{
-				return;
+				pool.remove(attackable);
 			}
 		}
 	}
