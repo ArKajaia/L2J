@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
@@ -145,8 +146,8 @@ public class AttackableAI extends CreatureAI
 	private int _attackTimeout;
 	/** The Attackable aggro counter. */
 	private int _globalAggro;
-	/** The flag used to indicate that a thinking action is in progress, to prevent recursive thinking. */
-	private boolean _thinking;
+	/** The flag used to indicate that a thinking action is in progress, to prevent recursive thinking and two threads thinking at once (the think pool and an extra think scheduled after a cast). */
+	private final AtomicBoolean _thinking = new AtomicBoolean();
 	private int _chaosTime = 0;
 	
 	// Fear parameters
@@ -515,22 +516,16 @@ public class AttackableAI extends CreatureAI
 		final Attackable npc = getActiveChar();
 		final AIProfile profile = getProfile();
 		
-		if ((npc.getCurrentHp() < (npc.getMaxHp() * profile.fleeHpThreshold)) && !npc.isRaid() && !npc.isRaidMinion())
+		// Archetype-scaled chance to trigger the existing FearTask for 5 seconds.
+		// Stock chance was a flat 15%; Coward scales it up, Rager/Aggressive scale it toward zero.
+		// The cheap checks come first so an idle monster with no target never computes its max HP here.
+		final int fleeChance = (int) (15 * profile.fleeChanceScale);
+		if ((fleeChance > 0) && (_fearTask == null) && (getTarget() instanceof Creature) && !npc.isRaid() && !npc.isRaidMinion() && (npc.getCurrentHp() < (npc.getMaxHp() * profile.fleeHpThreshold)) && (Rnd.get(100) < fleeChance))
 		{
-			// Archetype-scaled chance to trigger the existing FearTask for 5 seconds.
-			// Stock chance was a flat 15%; Coward scales it up, Rager/Aggressive scale it toward zero.
-			final int fleeChance = (int) (15 * profile.fleeChanceScale);
-			if ((fleeChance > 0) && (Rnd.get(100) < fleeChance) && (_fearTask == null))
-			{
-				// Only flee from something real. Passing the NPC itself made it
-				// try to path away from its own position, which is undefined.
-				final Creature scaryTarget = (getTarget() instanceof Creature) ? (Creature) getTarget() : null;
-				if (scaryTarget != null)
-				{
-					onActionAfraid(scaryTarget, true);
-					return; // Skip the rest of the thinking this tick
-				}
-			}
+			// Only flee from something real. Passing the NPC itself made it
+			// try to path away from its own position, which is undefined.
+			onActionAfraid((Creature) getTarget(), true);
+			return; // Skip the rest of the thinking this tick
 		}
 		
 		// Update every 1s the _globalAggro counter to come close to 0
@@ -2594,7 +2589,7 @@ public class AttackableAI extends CreatureAI
 	public void onActionThink()
 	{
 		// Check if a thinking action is already in progress.
-		if (_thinking)
+		if (_thinking.get())
 		{
 			return;
 		}
@@ -2613,7 +2608,10 @@ public class AttackableAI extends CreatureAI
 		}
 		
 		// Start thinking action
-		_thinking = true;
+		if (!_thinking.compareAndSet(false, true))
+		{
+			return;
+		}
 		
 		try
 		{
@@ -2644,7 +2642,7 @@ public class AttackableAI extends CreatureAI
 		finally
 		{
 			// Stop thinking action
-			_thinking = false;
+			_thinking.set(false);
 		}
 	}
 	
