@@ -3760,13 +3760,14 @@ public class FakePlayerPvpAI extends AttackableAI
 		double bestScore = Double.MAX_VALUE;
 		for (Creature creature : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, PvpSpotsConfig.TARGET_RANGE))
 		{
-			if (!isSpotEnemy(npc, creature, zone, true))
+			if (!isSpotEnemy(npc, creature, zone, false))
 			{
 				continue;
 			}
 			
+			// The line of sight (the costly check) only for one that would be the best so far.
 			final double score = spotScore(npc, profile, creature, leaderId, grudgeId, now);
-			if (score < bestScore)
+			if ((score < bestScore) && GeoEngine.getInstance().canSeeTarget(npc, creature))
 			{
 				best = creature;
 				bestScore = score;
@@ -4422,13 +4423,9 @@ public class FakePlayerPvpAI extends AttackableAI
 				return;
 			}
 			
-			if (!GeoEngine.getInstance().canSeeTarget(leader, monster))
-			{
-				return;
-			}
-			
+			// The line of sight (the costly check) only for one closer than the closest so far.
 			final double distance = npc.calculateDistance2D(monster);
-			if (distance < closestDistance[0])
+			if ((distance < closestDistance[0]) && GeoEngine.getInstance().canSeeTarget(leader, monster))
 			{
 				closest[0] = monster;
 				closestDistance[0] = distance;
