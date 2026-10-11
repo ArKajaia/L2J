@@ -697,6 +697,17 @@ This program is free software, licensed under the **GNU General Public License, 
 
 Changes from 28 September – 11 October 2026.
 
+### Performance for a full server
+Work towards a thousand players with as many fake players online. Nothing changes in play, except where noted.
+- **NPC thinking on more threads**: attackables think in groups of 150 per thread (1000 before), started at different moments, and joining a group no longer locks and scans all groups. NPC movement and following/chasing are spread the same way.
+- **Pathfinding about 2.4 times faster**, with exactly the same paths: an indexed heap and flags replace the list scans of the A* search, and only the cells a search used are reset. An NPC with a clear straight line to where it goes walks it without a path search at all.
+- **Hot zone and night modifiers without zone scans**: monster stats (HP, attack, defence, speed, aggression) no longer search the zones of the area on every read.
+- **World scans** skip the regions out of range and build no linked lists; "is a player around" checks stop at the first player.
+- **Fake players**: their look on screen is built once for everyone who sees it, not once per viewer; they look for monsters to hunt every 2 seconds after finding none; they are re-buffed only when a player is around (and as soon as one comes); their general chat reaches 1250 like a player's (it reached the whole area around); town fake players in a town with no player near update once a second; spot fighters and party fakes check the line of sight last when picking a target.
+- **Saving**: autosave keeps up with any number of players (it saved one per second, so above 900 players saves fell behind); the database settings batch writes (`Database.ini`); fake player PvP kills are written once a minute; `UpdateItemsOnCharStore` is gone (items are always saved with the character).
+- **Heap** up to 10 GB (`java.cfg`) and `HtmCache = True`.
+- **Fixes along the way**: two thinks of the same NPC could run at once on different threads; the pathfinding buffer pool could fail when used from two threads at once; the passive tree bonuses could be read half rebuilt.
+
 ### Resonant monsters: stage 12, raid tier and fake players
 - **Soul crystals to stage 12**: level 76-79 Resonant monsters also raise stage 10 crystals (to 11), level 80-85 ones stage 11 crystals (to 12), for the whole party (`ResonantRaidStages`, `ResonantRaidStageChance`).
 - **Raid tier**: those levels are `[Resonant Boss]` fights at 50% of the median raid boss of their level (`ResonantRaidStrengthPercent`), and their soul flees for 40 seconds.
