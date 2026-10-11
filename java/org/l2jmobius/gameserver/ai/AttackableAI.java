@@ -400,7 +400,7 @@ public class AttackableAI extends CreatureAI
 			if (!npc.isAlikeDead())
 			{
 				// If its _knownPlayer isn't empty set the Intention to ACTIVE
-				if (!World.getInstance().getVisibleObjects(npc, Player.class).isEmpty())
+				if (World.getInstance().hasVisibleObject(npc, Player.class))
 				{
 					intention = Intention.ACTIVE;
 				}
@@ -969,7 +969,7 @@ public class AttackableAI extends CreatureAI
 			}
 			
 			// Monster teleport to spawn
-			if (npc.isMonster() && (npc.getSpawn() != null) && (npc.getInstanceId() == 0) && (npc.isInCombat() || World.getInstance().getVisibleObjects(npc, Player.class).isEmpty()))
+			if (npc.isMonster() && (npc.getSpawn() != null) && (npc.getInstanceId() == 0) && (npc.isInCombat() || !World.getInstance().hasVisibleObject(npc, Player.class)))
 			{
 				npc.teleToLocation(npc.getSpawn(), false);
 			}

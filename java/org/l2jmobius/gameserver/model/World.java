@@ -22,7 +22,6 @@ package org.l2jmobius.gameserver.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,6 +59,9 @@ public class World
 	
 	/** Bit shift, defines number of regions note, shifting by 15 will result in regions corresponding to map tiles shifting by 11 divides one tile to 16x16 regions. */
 	public static final int SHIFT_BY = 11;
+	/** The width of a region on the x/y plane, and how far beyond it a range scan still looks, for objects about to switch region. */
+	private static final int REGION_SIZE = 1 << SHIFT_BY;
+	private static final int REGION_MARGIN = 256;
 	
 	public static final int TILE_SIZE = 32768;
 	
@@ -630,14 +632,14 @@ public class World
 	
 	public <T extends WorldObject> List<T> getVisibleObjects(WorldObject object, Class<T> clazz)
 	{
-		final List<T> result = new LinkedList<>();
+		final List<T> result = new ArrayList<>();
 		forEachVisibleObject(object, clazz, result::add);
 		return result;
 	}
 	
 	public <T extends WorldObject> List<T> getVisibleObjects(WorldObject object, Class<T> clazz, Predicate<T> predicate)
 	{
-		final List<T> result = new LinkedList<>();
+		final List<T> result = new ArrayList<>();
 		forEachVisibleObject(object, clazz, o ->
 		{
 			if (predicate.test(o))
@@ -647,6 +649,41 @@ public class World
 		});
 		
 		return result;
+	}
+	
+	/**
+	 * Like {@code !getVisibleObjects(object, clazz).isEmpty()}, but stops at the first one found and builds no list.
+	 * @param <T> the type of objects to look for
+	 * @param object the object to look around
+	 * @param clazz the type of objects to look for
+	 * @return {@code true} if an object of {@code clazz} other than {@code object} is visible from {@code object}
+	 */
+	public <T extends WorldObject> boolean hasVisibleObject(WorldObject object, Class<T> clazz)
+	{
+		if (object == null)
+		{
+			return false;
+		}
+		
+		final WorldRegion worldRegion = getRegion(object);
+		if (worldRegion == null)
+		{
+			return false;
+		}
+		
+		final WorldRegion[] surroundingRegions = worldRegion.getSurroundingRegions();
+		for (int i = 0; i < surroundingRegions.length; i++)
+		{
+			for (WorldObject wo : surroundingRegions[i].getVisibleObjects())
+			{
+				if ((wo != object) && clazz.isInstance(wo) && (wo.getInstanceId() == object.getInstanceId()))
+				{
+					return true;
+				}
+			}
+		}
+		
+		return false;
 	}
 	
 	public <T extends WorldObject> void forEachVisibleObject(WorldObject object, Class<T> clazz, Consumer<T> c)
@@ -690,14 +727,14 @@ public class World
 	
 	public <T extends WorldObject> List<T> getVisibleObjectsInRange(WorldObject object, Class<T> clazz, int range)
 	{
-		final List<T> result = new LinkedList<>();
+		final List<T> result = new ArrayList<>();
 		forEachVisibleObjectInRange(object, clazz, range, result::add);
 		return result;
 	}
 	
 	public <T extends WorldObject> List<T> getVisibleObjectsInRange(WorldObject object, Class<T> clazz, int range, Predicate<T> predicate)
 	{
-		final List<T> result = new LinkedList<>();
+		final List<T> result = new ArrayList<>();
 		forEachVisibleObjectInRange(object, clazz, range, o ->
 		{
 			if (predicate.test(o))
@@ -711,7 +748,7 @@ public class World
 	
 	public <T extends WorldObject> void forEachVisibleObjectInRange(WorldObject object, Class<T> clazz, int range, Consumer<T> c)
 	{
-		if (object == null)
+		if ((object == null) || (range < 0))
 		{
 			return;
 		}
@@ -722,10 +759,22 @@ public class World
 			return;
 		}
 		
+		final int x = object.getX();
+		final int y = object.getY();
+		final int z = object.getZ();
+		final double rangeSq = (double) range * range;
 		final WorldRegion[] surroundingRegions = worldRegion.getSurroundingRegions();
 		for (int i = 0; i < surroundingRegions.length; i++)
 		{
-			final Collection<WorldObject> visibleObjects = surroundingRegions[i].getVisibleObjects();
+			final WorldRegion region = surroundingRegions[i];
+			
+			// Most ranges are much smaller than the 3 x 3 regions around: skip the regions too far away to hold anything in range.
+			if (!isRegionInRange(region, x, y, range))
+			{
+				continue;
+			}
+			
+			final Collection<WorldObject> visibleObjects = region.getVisibleObjects();
 			if (visibleObjects.isEmpty())
 			{
 				continue;
@@ -743,12 +792,35 @@ public class World
 					continue;
 				}
 				
-				if (wo.calculateDistance3D(object) <= range)
+				// Squared distances spare a square root per object.
+				final double dx = wo.getX() - x;
+				final double dy = wo.getY() - y;
+				final double dz = wo.getZ() - z;
+				if (((dx * dx) + (dy * dy) + (dz * dz)) <= rangeSq)
 				{
 					c.accept(clazz.cast(wo));
 				}
 			}
 		}
+	}
+	
+	/**
+	 * @param region a world region
+	 * @param x the x coordinate of the center
+	 * @param y the y coordinate of the center
+	 * @param range the range around the center
+	 * @return {@code true} if part of {@code region} (with a margin for objects about to switch region) lies within {@code range} of the center on the x/y plane
+	 */
+	private static boolean isRegionInRange(WorldRegion region, int x, int y, int range)
+	{
+		// The region's box, widened by the margin, and the distance from the center to it.
+		final int minX = ((region.getRegionX() - OFFSET_X) << SHIFT_BY) - REGION_MARGIN;
+		final int minY = ((region.getRegionY() - OFFSET_Y) << SHIFT_BY) - REGION_MARGIN;
+		final int maxX = minX + REGION_SIZE + (2 * REGION_MARGIN);
+		final int maxY = minY + REGION_SIZE + (2 * REGION_MARGIN);
+		final double dx = Math.max(0, Math.max(minX - x, x - maxX));
+		final double dy = Math.max(0, Math.max(minY - y, y - maxY));
+		return ((dx * dx) + (dy * dy)) <= ((double) range * range);
 	}
 	
 	/**

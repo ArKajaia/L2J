@@ -184,7 +184,7 @@ public class FortSiegeGuardAI extends CreatureAI implements Runnable
 				final Attackable npc = _actor.asAttackable();
 				
 				// If its _knownPlayer isn't empty set the Intention to ACTIVE
-				if (!World.getInstance().getVisibleObjects(npc, Player.class).isEmpty())
+				if (World.getInstance().hasVisibleObject(npc, Player.class))
 				{
 					intention = Intention.ACTIVE;
 				}
