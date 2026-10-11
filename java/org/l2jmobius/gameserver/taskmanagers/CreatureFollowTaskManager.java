@@ -38,60 +38,48 @@ public class CreatureFollowTaskManager
 {
 	protected static final Map<Creature, Integer> NORMAL_FOLLOW_CREATURES = new ConcurrentHashMap<>();
 	protected static final Map<Creature, Integer> ATTACK_FOLLOW_CREATURES = new ConcurrentHashMap<>();
-	protected static boolean _workingNormal = false;
-	protected static boolean _workingAttack = false;
+	
+	// Following can search for a path, so the followers are split in stripes (by object id), each on its own task, instead of all of them on one thread.
+	private static final int STRIPES = 4;
+	private static final int NORMAL_DELAY = 1000;
+	private static final int ATTACK_DELAY = 500;
 	
 	protected CreatureFollowTaskManager()
 	{
-		ThreadPool.schedulePriorityTaskAtFixedRate(new CreatureFollowNormalTask(), 1000, 1000);
-		ThreadPool.schedulePriorityTaskAtFixedRate(new CreatureFollowAttackTask(), 500, 500);
-	}
-	
-	protected class CreatureFollowNormalTask implements Runnable
-	{
-		@Override
-		public void run()
+		for (int stripe = 0; stripe < STRIPES; stripe++)
 		{
-			if (_workingNormal)
-			{
-				return;
-			}
-			
-			_workingNormal = true;
-			
-			if (!NORMAL_FOLLOW_CREATURES.isEmpty())
-			{
-				for (Entry<Creature, Integer> entry : NORMAL_FOLLOW_CREATURES.entrySet())
-				{
-					follow(entry.getKey(), entry.getValue());
-				}
-			}
-			
-			_workingNormal = false;
+			ThreadPool.schedulePriorityTaskAtFixedRate(new CreatureFollowTask(NORMAL_FOLLOW_CREATURES, stripe), NORMAL_DELAY + ((stripe * NORMAL_DELAY) / STRIPES), NORMAL_DELAY);
+			ThreadPool.schedulePriorityTaskAtFixedRate(new CreatureFollowTask(ATTACK_FOLLOW_CREATURES, stripe), ATTACK_DELAY + ((stripe * ATTACK_DELAY) / STRIPES), ATTACK_DELAY);
 		}
 	}
 	
-	protected class CreatureFollowAttackTask implements Runnable
+	protected class CreatureFollowTask implements Runnable
 	{
+		private final Map<Creature, Integer> _creatures;
+		private final int _stripe;
+		
+		public CreatureFollowTask(Map<Creature, Integer> creatures, int stripe)
+		{
+			_creatures = creatures;
+			_stripe = stripe;
+		}
+		
 		@Override
 		public void run()
 		{
-			if (_workingAttack)
+			if (_creatures.isEmpty())
 			{
 				return;
 			}
 			
-			_workingAttack = true;
-			
-			if (!ATTACK_FOLLOW_CREATURES.isEmpty())
+			for (Entry<Creature, Integer> entry : _creatures.entrySet())
 			{
-				for (Entry<Creature, Integer> entry : ATTACK_FOLLOW_CREATURES.entrySet())
+				final Creature creature = entry.getKey();
+				if (((creature.getObjectId() & Integer.MAX_VALUE) % STRIPES) == _stripe)
 				{
-					follow(entry.getKey(), entry.getValue());
+					follow(creature, entry.getValue());
 				}
 			}
-			
-			_workingAttack = false;
 		}
 	}
 	
