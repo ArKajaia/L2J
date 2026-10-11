@@ -162,6 +162,8 @@ final class FakePlayerTown
 	long nextNotice;
 	/** Its first fake players came (once it was prepared). */
 	boolean populated;
+	/** While no player is near, the town is next updated at this time. */
+	long nextUnwatchedUpdate;
 	
 	FakePlayerTown(String region, String shortName, List<Location> points, int minLevel, int maxLevel, Race race)
 	{
@@ -776,6 +778,22 @@ final class FakePlayerTown
 	{
 		final WorldRegion region = npc.getWorldRegion();
 		return (region != null) && region.areNeighborsActive();
+	}
+	
+	/**
+	 * @return {@code true} if a player is near one of its fake players
+	 */
+	boolean isWatched()
+	{
+		for (FakePlayerTownVisitor visitor : visitors)
+		{
+			if (isWatched(visitor.npc))
+			{
+				return true;
+			}
+		}
+		
+		return false;
 	}
 	
 	/**
