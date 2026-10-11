@@ -16,7 +16,8 @@ import org.l2jmobius.gameserver.model.actor.Player;
  */
 public class PassiveStatBonusCache
 {
-	private final Map<String, Double> _totals = new HashMap<>();
+	// Rebuilt into a new map and then swapped in, so the combat threads reading it never see one half built (it is never changed once published).
+	private volatile Map<String, Double> _totals = new HashMap<>();
 	private volatile double _scale = 1.0;
 	
 	public void recompute(Player player)
@@ -30,8 +31,7 @@ public class PassiveStatBonusCache
 	 */
 	public void recompute(Collection<Integer> nodeIds)
 	{
-		_totals.clear();
-		
+		final Map<String, Double> totals = new HashMap<>();
 		for (int nodeId : nodeIds)
 		{
 			final PassiveNode node = PassiveTreeData.getInstance().getNode(nodeId);
@@ -42,9 +42,11 @@ public class PassiveStatBonusCache
 			
 			for (Map.Entry<String, Double> effect : node.getEffects().entrySet())
 			{
-				_totals.merge(effect.getKey(), effect.getValue(), Double::sum);
+				totals.merge(effect.getKey(), effect.getValue(), Double::sum);
 			}
 		}
+		
+		_totals = totals;
 	}
 	
 	/** Base stats the passive tree may contribute to, capped by {@link PassiveTreeConfig#BASE_STAT_CAP}. */
