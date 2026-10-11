@@ -150,7 +150,7 @@ public class AdminMonsterMod implements IAdminCommandHandler
 		if (monster.isResonant())
 		{
 			final int cap = ResonantMonsterManager.getStageCap(monster.getLevel());
-			sb.append(" Resonant, soul crystals of stage ").append(cap).append(" or lower grow.");
+			sb.append(cap >= 0 ? " Resonant, soul crystals of stage " + cap + " or lower grow." : " Resonant, but no soul crystal grows at its level.");
 		}
 		if (!monster.isInfused() && !monster.isResonant())
 		{

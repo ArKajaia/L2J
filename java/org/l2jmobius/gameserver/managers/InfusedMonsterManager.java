@@ -19,7 +19,7 @@ import org.l2jmobius.gameserver.model.spawns.Spawn;
 
 /**
  * Infused monsters (see {@link InfusedMonsterConfig}): like a champion, a regular monster has a small chance every time it spawns or respawns to be infused with an element ({@link #tryConvert(Npc, Spawn)}, called from {@code Spawn} right after the Mage roll). A spawn point that just
- * produced one skips the roll for its next {@link InfusedMonsterConfig#RESPAWN_COOLDOWN} spawns.
+ * produced one skips the roll for its next {@link InfusedMonsterConfig#RESPAWN_COOLDOWN} spawns, and scripted spawns that never respawn don't roll.
  * <ul>
  * <li>Combat: it attacks with its element, resists it and is weak to the opposite one (stat Funcs added in {@code Monster#startInfused(byte)}), has more HP and attack, and pulses its element's nova.</li>
  * <li>Loot: {@link #onAttackableKilled(Attackable, Player)} (called from {@code Attackable#doDie()} alongside the other post-kill hooks) drops attribute stones of its element, and at high levels a chance of an attribute crystal.</li>
@@ -39,6 +39,12 @@ public class InfusedMonsterManager
 	public void tryConvert(Npc npc, Spawn spawn)
 	{
 		if (!InfusedMonsterConfig.ENABLED || (npc == null) || !npc.isMonster() || (spawn == null))
+		{
+			return;
+		}
+
+		// Scripted spawns (boss guards, quest and hidden quest monsters) never respawn: their fights are made by hand.
+		if (!spawn.isRespawnEnabled() || (spawn.getRespawnMinDelay() <= 0))
 		{
 			return;
 		}
@@ -108,14 +114,15 @@ public class InfusedMonsterManager
 	}
 
 	/**
-	 * A monster whose template already attacks with an element keeps it {@link InfusedMonsterConfig#KEEP_TEMPLATE_ELEMENT_CHANCE}% of the time; otherwise the element is picked by {@link InfusedMonsterConfig#ELEMENT_WEIGHTS}.
+	 * A monster whose template already attacks with an element keeps it {@link InfusedMonsterConfig#KEEP_TEMPLATE_ELEMENT_CHANCE}% of the time (unless that element's weight is 0); otherwise the element is picked by
+	 * {@link InfusedMonsterConfig#ELEMENT_WEIGHTS}.
 	 * @param monster the monster
 	 * @return the element, or {@link Elementals#NONE} if every weight is 0
 	 */
 	public static byte pickElement(Monster monster)
 	{
 		final byte templateElement = monster.getStat().getAttackElement();
-		if ((templateElement >= 0) && (templateElement < InfusedMonsterConfig.ELEMENT_COUNT) && (Rnd.get(100) < InfusedMonsterConfig.KEEP_TEMPLATE_ELEMENT_CHANCE))
+		if ((templateElement >= 0) && (templateElement < InfusedMonsterConfig.ELEMENT_COUNT) && (InfusedMonsterConfig.ELEMENT_WEIGHTS[templateElement] > 0) && (Rnd.get(100) < InfusedMonsterConfig.KEEP_TEMPLATE_ELEMENT_CHANCE))
 		{
 			return templateElement;
 		}

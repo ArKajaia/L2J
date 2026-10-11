@@ -30,7 +30,8 @@ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
 
 /**
  * Resonant monsters (see {@link ResonantMonsterConfig}): like a champion, a regular monster has a small chance every time it spawns or respawns to become Resonant ({@link #tryConvert(Npc, Spawn)}, called from {@code Spawn} right after the Infused roll). A spawn point that just
- * produced one skips the roll for its next {@link ResonantMonsterConfig#RESPAWN_COOLDOWN} spawns.
+ * produced one skips the roll for its next {@link ResonantMonsterConfig#RESPAWN_COOLDOWN} spawns. Scripted spawns that never respawn don't roll, and neither does a monster with soul crystal rules of its own
+ * ({@link #hasOwnSoulCrystalRules(int, int)}).
  * <ul>
  * <li>Combat: it has more HP, and the first time it drops low its soul flees ({@code Monster#tryResonantFlight()}).</li>
  * <li>Reward: {@link #onAttackableKilled(Attackable, Player)} (called from {@code Attackable#doDie()} alongside the other post-kill hooks) raises the soul crystal of the killer and of every party member nearby by one stage, with the retail rules of quest 350 Enhance Your Weapon (the
@@ -42,6 +43,9 @@ public class ResonantMonsterManager
 {
 	/** The quest whose rules a soul crystal follows. */
 	private static final String SOUL_CRYSTAL_QUEST = "Q00350_EnhanceYourWeapon";
+
+	/** See {@link #getCapTable()}. */
+	private static volatile TreeMap<Integer, Integer> _capTable = null;
 
 	protected ResonantMonsterManager()
 	{
@@ -55,6 +59,12 @@ public class ResonantMonsterManager
 	public void tryConvert(Npc npc, Spawn spawn)
 	{
 		if (!ResonantMonsterConfig.ENABLED || (npc == null) || !npc.isMonster() || (spawn == null))
+		{
+			return;
+		}
+
+		// Scripted spawns (boss guards, quest and hidden quest monsters) never respawn: a soul that fled would be gone for good, and their fights are made by hand.
+		if (!spawn.isRespawnEnabled() || (spawn.getRespawnMinDelay() <= 0))
 		{
 			return;
 		}
@@ -114,7 +124,38 @@ public class ResonantMonsterManager
 		}
 
 		final int level = monster.getLevel();
-		return (level >= ResonantMonsterConfig.MIN_LEVEL) && (level <= ResonantMonsterConfig.MAX_LEVEL) && (getStageCap(level) >= 0);
+		if ((level < ResonantMonsterConfig.MIN_LEVEL) || (level > ResonantMonsterConfig.MAX_LEVEL))
+		{
+			return false;
+		}
+
+		final int cap = getStageCap(level);
+		return (cap >= 0) && !hasOwnSoulCrystalRules(monster.getId(), cap);
+	}
+
+	/**
+	 * A monster that raises soul crystals in a way a Resonant one doesn't (for the party, or stages above the cap - the Tyrannosaurus raises stages 10 and 11 for a random party member) keeps its own
+	 * quest 350 roll instead: quest 350 skips Resonant monsters, so as one it would give those crystals nothing.
+	 * @param npcId the monster's npc id
+	 * @param cap the Resonant stage cap at its level
+	 * @return {@code true} if its own soul crystal data has anything the Resonant reward doesn't cover
+	 */
+	private static boolean hasOwnSoulCrystalRules(int npcId, int cap)
+	{
+		final Map<Integer, LevelingSoulCrystalInfo> own = LevelUpCrystalData.getInstance().getNpcSoulInfo(npcId);
+		if (own == null)
+		{
+			return false;
+		}
+
+		for (Map.Entry<Integer, LevelingSoulCrystalInfo> stage : own.entrySet())
+		{
+			if ((stage.getValue().getAbsorbCrystalType() != AbsorbCrystalType.LAST_HIT) || (stage.getKey() > cap))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -125,6 +166,21 @@ public class ResonantMonsterManager
 	 */
 	public static int getStageCap(int level)
 	{
+		final Map.Entry<Integer, Integer> entry = getCapTable().floorEntry(level);
+		return entry != null ? Math.min(entry.getValue(), ResonantMonsterConfig.MAX_CRYSTAL_STAGE) : -1;
+	}
+
+	/**
+	 * @return level -&gt; the highest stage a regular (non-raid, last hit) monster of that level or lower raises, built once from {@code data/LevelUpCrystalData.xml} the first time it is needed
+	 */
+	private static TreeMap<Integer, Integer> getCapTable()
+	{
+		TreeMap<Integer, Integer> table = _capTable;
+		if (table != null)
+		{
+			return table;
+		}
+
 		final TreeMap<Integer, Integer> capByLevel = new TreeMap<>();
 		for (Map.Entry<Integer, Map<Integer, LevelingSoulCrystalInfo>> entry : LevelUpCrystalData.getInstance().getNpcsSoulInfo().entrySet())
 		{
@@ -143,12 +199,16 @@ public class ResonantMonsterManager
 			}
 		}
 
+		// Running maximum: a level raises everything the levels below it raise.
+		table = new TreeMap<>();
 		int cap = -1;
-		for (Map.Entry<Integer, Integer> entry : capByLevel.headMap(level, true).entrySet())
+		for (Map.Entry<Integer, Integer> entry : capByLevel.entrySet())
 		{
 			cap = Math.max(cap, entry.getValue());
+			table.put(entry.getKey(), cap);
 		}
-		return Math.min(cap, ResonantMonsterConfig.MAX_CRYSTAL_STAGE);
+		_capTable = table;
+		return table;
 	}
 
 	/**

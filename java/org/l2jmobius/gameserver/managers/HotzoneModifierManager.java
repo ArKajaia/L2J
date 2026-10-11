@@ -10,6 +10,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.config.custom.InfusedMonsterConfig;
+import org.l2jmobius.gameserver.config.custom.MageMonsterConfig;
+import org.l2jmobius.gameserver.config.custom.ResonantMonsterConfig;
+import org.l2jmobius.gameserver.config.custom.ThiefMonsterConfig;
+import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
@@ -26,7 +31,7 @@ import org.l2jmobius.gameserver.model.zone.type.HotZone;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 
 /**
- * Owns which {@link HotzoneModifier} (if any) is currently active for each hotzone, the ticking tasks for whichever modifiers drain player HP or post bounties, and the Heat of RISING_HEAT zones. {@code custom.RotatingHotZones} (the only caller) rolls a fresh modifier per zone on every rotation via {@link #rollModifier(int)} and
+ * Owns which {@link HotzoneModifier} (if any) is currently active for each hotzone, the ticking tasks for whichever modifiers drain player HP or post bounties, and the Heat of RISING_HEAT zones. {@code custom.RotatingHotZones} (the only caller) rolls a fresh modifier per zone on every rotation via {@link #rollModifier(int, int)} and
  * clears it via {@link #clearModifier(int)} right before a zone stops being that rotation's active pick.
  * <p>
  * Lives in core - rather than in the script itself - purely so {@link org.l2jmobius.gameserver.model.actor.instance.Monster}, {@code Spawn}, {@code AttackableAI} and the {@code Stun} effect can all query the active modifier directly: core code can never reference a datapack script class,
@@ -100,15 +105,29 @@ public class HotzoneModifierManager
 	}
 
 	/**
-	 * Rolls a fresh random modifier for {@code zoneId} and starts whatever ticking it needs. Safe to call on a zone that already has one active - the old one (and its task, if any) is cleared first.
+	 * Rolls a fresh random modifier for {@code zoneId}, whatever its level (see {@link #rollModifier(int, int)}).
 	 * @param zoneId the hotzone's zone id
 	 * @return the modifier that was rolled
 	 */
 	public HotzoneModifier rollModifier(int zoneId)
 	{
+		return rollModifier(zoneId, Integer.MAX_VALUE);
+	}
+
+	/**
+	 * Rolls a fresh random modifier for {@code zoneId} and starts whatever ticking it needs. Safe to call on a zone that already has one active - the old one (and its task, if any) is cleared first. A modifier that draws
+	 * a special monster which can't appear in the zone ({@link #canApplyAt(HotzoneModifier, int)}) isn't rolled.
+	 * @param zoneId the hotzone's zone id
+	 * @param maxMonsterLevel the highest level of the zone's monsters (its level bracket's top)
+	 * @return the modifier that was rolled
+	 */
+	public HotzoneModifier rollModifier(int zoneId, int maxMonsterLevel)
+	{
 		clearModifier(zoneId);
 
-		final HotzoneModifier chosen = HOTZONE_POOL.get(Rnd.get(HOTZONE_POOL.size()));
+		final List<HotzoneModifier> pool = HOTZONE_POOL.stream().filter(modifier -> canApplyAt(modifier, maxMonsterLevel)).toList();
+		final List<HotzoneModifier> rollFrom = pool.isEmpty() ? HOTZONE_POOL : pool;
+		final HotzoneModifier chosen = rollFrom.get(Rnd.get(rollFrom.size()));
 		_activeModifiers.put(zoneId, chosen);
 
 		if (chosen.getPlayerHpDrainPctPerTick() > 0)
@@ -130,6 +149,30 @@ public class HotzoneModifierManager
 		}
 
 		return chosen;
+	}
+
+	/**
+	 * A modifier that makes a special monster (Thief, Mage, wave challenge, Infused, Resonant) more common does nothing in a zone where that monster can't appear: the feature is off, or the zone's monsters are below
+	 * its minimum level.
+	 * @param modifier the modifier
+	 * @param maxMonsterLevel the highest level of the zone's monsters
+	 * @return {@code false} if {@code modifier} draws a special monster that can't appear at {@code maxMonsterLevel}
+	 */
+	public static boolean canApplyAt(HotzoneModifier modifier, int maxMonsterLevel)
+	{
+		return isDrawable(modifier.getThiefSpawnMult(), ThiefMonsterConfig.ENABLED, ThiefMonsterConfig.MIN_LEVEL, maxMonsterLevel) && isDrawable(modifier.getMageSpawnMult(), MageMonsterConfig.ENABLED, MageMonsterConfig.MIN_LEVEL, maxMonsterLevel) && isDrawable(modifier.getWaveSpawnMult(), WaveChallengeConfig.ENABLED, WaveChallengeConfig.MIN_LEVEL, maxMonsterLevel) && isDrawable(modifier.getInfusedSpawnMult(), InfusedMonsterConfig.ENABLED, InfusedMonsterConfig.MIN_LEVEL, maxMonsterLevel) && isDrawable(modifier.getResonantSpawnMult(), ResonantMonsterConfig.ENABLED, ResonantMonsterConfig.MIN_LEVEL, maxMonsterLevel);
+	}
+
+	/**
+	 * @param spawnMult the modifier's spawn multiplier for a special monster
+	 * @param enabled whether that special monster is enabled
+	 * @param minLevel its minimum level
+	 * @param maxMonsterLevel the highest level of the zone's monsters
+	 * @return {@code true} unless the modifier draws the monster ({@code spawnMult} above 1) and it can't appear
+	 */
+	private static boolean isDrawable(double spawnMult, boolean enabled, int minLevel, int maxMonsterLevel)
+	{
+		return (spawnMult <= 1.0) || (enabled && (minLevel <= maxMonsterLevel));
 	}
 
 	/**

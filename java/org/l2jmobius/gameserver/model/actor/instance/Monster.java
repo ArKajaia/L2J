@@ -295,8 +295,12 @@ public class Monster extends Attackable
 		_rageDisables.set(0);
 
 		// The respawn reuses this object: drop what the last life was infused or resonant with before the spawn rolls run again.
-		clearInfused(false);
-		clearResonant(false);
+		// A teleport runs onSpawn() too (Creature.onTeleported() -> spawnMe()), and must keep them.
+		if (!isTeleporting())
+		{
+			clearInfused(false);
+			clearResonant(false);
+		}
 
 		// Raid bosses and grand bosses are already hand-tuned; skip the random passive pool for
 		// them. isRaid() is checked here (before the arena branch below sets it for unrelated
@@ -1333,10 +1337,11 @@ public class Monster extends Attackable
 
 		_infusedElement = Elementals.NONE;
 		removeStatsOwner(INFUSED_FUNC_OWNER);
-		if (_infusedAve != null)
+		final AbnormalVisualEffect ave = _infusedAve;
+		if (ave != null)
 		{
-			stopAbnormalVisualEffect(false, _infusedAve);
-			_infusedAve = null;
+			_infusedAve = null; // First, so stopAbnormalVisualEffect() doesn't put it back.
+			stopAbnormalVisualEffect(false, ave);
 		}
 
 		rebuildFullTitle();
@@ -1567,10 +1572,11 @@ public class Monster extends Attackable
 		}
 
 		_resonant = false;
-		if (_resonantAve != null)
+		final AbnormalVisualEffect ave = _resonantAve;
+		if (ave != null)
 		{
-			stopAbnormalVisualEffect(false, _resonantAve);
-			_resonantAve = null;
+			_resonantAve = null; // First, so stopAbnormalVisualEffect() doesn't put it back.
+			stopAbnormalVisualEffect(false, ave);
 		}
 
 		rebuildFullTitle();
@@ -1593,6 +1599,31 @@ public class Monster extends Attackable
 		_resonantFled = true;
 		sendMessageToAttackers(null, "The soul of " + getName() + " is fleeing! Catch it within " + ResonantMonsterConfig.FLEE_TIME + " seconds or the resonance fades.");
 		startEscape(ResonantMonsterConfig.FLEE_TIME * 1000L, "My soul will not be caught!", "The resonance fades...");
+	}
+
+	/**
+	 * Visual effects are one bit each, so a buff or debuff showing the same visual as the Infused or Resonant glow (Ultimate Defense, Stigma of Shilien...) would clear the glow when it ends. Keeps the glow
+	 * while the monster still is Infused or Resonant.
+	 */
+	@Override
+	public void stopAbnormalVisualEffect(boolean update, AbnormalVisualEffect... aves)
+	{
+		super.stopAbnormalVisualEffect(update, aves);
+
+		final AbnormalVisualEffect infusedAve = _infusedAve;
+		final AbnormalVisualEffect resonantAve = _resonantAve;
+		if ((infusedAve == null) && (resonantAve == null))
+		{
+			return;
+		}
+
+		for (AbnormalVisualEffect ave : aves)
+		{
+			if ((ave != null) && ((ave == infusedAve) || (ave == resonantAve)))
+			{
+				super.startAbnormalVisualEffect(update, ave);
+			}
+		}
 	}
 
 	// =======================================================================

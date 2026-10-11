@@ -104,9 +104,11 @@ public class InfusedMonsterConfig
 			}
 		}
 
+		// An element left out never comes up; an empty value makes them all equal.
+		final Map<Byte, String> weights = parseElementMap(config.getString("InfusedElementWeights", "FIRE:1,WATER:1,WIND:1,EARTH:1,HOLY:1,DARK:1"), "InfusedElementWeights");
 		ELEMENT_WEIGHTS = new double[ELEMENT_COUNT];
-		Arrays.fill(ELEMENT_WEIGHTS, 1);
-		for (Map.Entry<Byte, String> entry : parseElementMap(config.getString("InfusedElementWeights", "FIRE:1,WATER:1,WIND:1,EARTH:1,HOLY:1,DARK:1"), "InfusedElementWeights").entrySet())
+		Arrays.fill(ELEMENT_WEIGHTS, weights.isEmpty() ? 1 : 0);
+		for (Map.Entry<Byte, String> entry : weights.entrySet())
 		{
 			try
 			{
