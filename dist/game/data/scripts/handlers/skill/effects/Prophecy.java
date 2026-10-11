@@ -30,8 +30,8 @@ import org.l2jmobius.gameserver.model.skill.Skill;
 /**
  * Prophecy (Oracles, the Prophet line): does nothing when it lands, and comes true when its time runs out, see {@link Prophecies}. It fizzles if it is cancelled or its target dies first.
  * <ul>
- * <li>{@code kind}: DOOM, SALVATION, RUIN or REVERSAL.</li>
- * <li>{@code skillId}, {@code skillLevel}: the skill it comes true with (Doom: the damage, Ruin: the stun); the level defaults to the prophecy's.</li>
+ * <li>{@code kind}: DOOM, SALVATION, RUIN or RECKONING.</li>
+ * <li>{@code skillId}, {@code skillLevel}: the skill it comes true with (Doom and Reckoning: the damage, Ruin: the stun); the level defaults to the prophecy's.</li>
  * <li>{@code altSkillId}: Ruin, the silence for a target that didn't cast.</li>
  * </ul>
  * @author Mobius

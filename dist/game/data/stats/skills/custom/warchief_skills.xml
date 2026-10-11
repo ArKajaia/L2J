@@ -6,6 +6,7 @@
 	config/Custom/OraclesWarchiefs.ini. The retail chants are out of their class trees.
 
 	27545-27561  Totem Warchief skills, learned from the Grand Masters like any class skill.
+	27564        Warchief's Restraint (Warcryer passive, given at 40).
 
 	TOTEMS (the PlantTotem effect, model/actor/holders/player/Totems.java): a totem NPC planted
 	at the Warchief's feet. It pulses every 2 seconds to everyone within 600 and stands 30
@@ -22,8 +23,9 @@
 	                              up with 30% HP; the totem is spent.
 	  27558 Great Totem of the Horde-Father (Doomcryer finale): Blood, Horde and Frost-Teeth at
 	                              once, within 900, for 20 seconds, can't be targeted.
-	  27559 Totem of Flames       pulses every 1.67 seconds: burns up to 10 enemies within 400
-	                              with 27560's magic damage (fire), the nearest first.
+	  27559 Totem of Flames       pulses every 1.67 seconds: burns up to 4 (level 1) to 10 (level
+	                              7+) enemies within 400 with 27560's magic damage (fire), the
+	                              nearest first. 8 levels, learned from 40 to 76.
 	27551 War Drums (stance)      P. Atk. +5%; each hit (27552 Drumbeat) takes 1 second off the
 	                              reuse of every totem skill.
 	27553 Shatter                 needs 3 totems up (27557 Totem Circle shows how many): each
@@ -34,6 +36,9 @@
 	                              and M. Def. +8%.
 	27561 Spirit Trance           the Warchief turns to ice for 5 seconds while its totems fight:
 	                              paralyzed, P. Def. and M. Def. +300%, HP recovered every second.
+	27564 Warchief's Restraint    (passive, given with the class) Steal Essence absorbs half as
+	                              much HP: 40% of the damage instead of 80%. The Overlord line
+	                              keeps the retail 80%.
 
 	Echoes are in the triggered-buff bar and have their own abnormal types, so they stack with
 	every buff. Keep custom skill ids below 32768. The client needs Skillname-e.dat /
@@ -321,9 +326,9 @@
 	</skill>
 
 	<!-- 27559 TOTEM OF FLAMES: every pulse burns the enemies close to it with 27560. -->
-	<skill id="27559" levels="4" name="Totem of Flames">
-		<table name="#magicLevel">40 52 64 76</table>
-		<table name="#mpConsume">40 55 68 80</table>
+	<skill id="27559" levels="8" name="Totem of Flames">
+		<table name="#magicLevel">40 44 48 52 58 64 70 76</table>
+		<table name="#mpConsume">36 40 45 50 57 64 72 80</table>
 		<icon>icon.skill1002</icon>
 		<operateType>A1</operateType>
 		<targetType>SELF</targetType>
@@ -341,13 +346,16 @@
 		</effects>
 	</skill>
 	<!-- 27560 TOTEM OF FLAMES: the burn of a pulse, the Warchief's magic (cast by the totem, not
-	     learned). -->
-	<skill id="27560" levels="4" name="Totem of Flames">
-		<table name="#magicLevel">40 52 64 76</table>
-		<table name="#power">32 40 48 58</table>
+	     learned). Weak at the low levels: Power 16 and 4 enemies at level 1, up to Power 58 and 10
+	     enemies at level 8. -->
+	<skill id="27560" levels="8" name="Totem of Flames">
+		<table name="#magicLevel">40 44 48 52 58 64 70 76</table>
+		<table name="#power">16 20 24 28 34 40 48 58</table>
+		<table name="#targets">4-0 5-0 6-0 7-0 8-0 9-0 10-0 10-0</table>
 		<icon>icon.skill1002</icon>
 		<operateType>A1</operateType>
 		<targetType>ONE</targetType>
+		<affectLimit>#targets</affectLimit> <!-- enemies a pulse burns at most (FlameTotemMaxTargets caps it too) -->
 		<isMagic>1</isMagic>
 		<magicLevel>#magicLevel</magicLevel>
 		<power>#power</power>
@@ -382,6 +390,24 @@
 				<power>#heal</power>
 			</effect>
 			<effect name="Paralyze" />
+		</effects>
+	</skill>
+
+	<!-- 27564 WARCHIEF'S RESTRAINT (Warcryer line, passive, autoGet at 40): Steal Essence (1245, shared
+	     with the Overlord line) absorbs half as much HP for a Totem Warchief. The stat is read by the
+	     HpDrain effect and only counts for Steal Essence. -->
+	<skill id="27564" levels="1" name="Warchief's Restraint">
+		<icon>icon.skill1245</icon>
+		<operateType>P</operateType>
+		<targetType>SELF</targetType>
+		<magicLevel>40</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="hpDrainRate">
+					<value>0.5</value>
+					<using skill="1245" /> <!-- Steal Essence -->
+				</mul>
+			</effect>
 		</effects>
 	</skill>
 </list>

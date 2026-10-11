@@ -153,6 +153,7 @@ public enum Stat
 	VENGEANCE_SKILL_MAGIC_DAMAGE("vengeanceMdam"),
 	VENGEANCE_SKILL_PHYSICAL_DAMAGE("vengeancePdam"),
 	ABSORB_DAMAGE_PERCENT("absorbDam"),
+	HP_DRAIN_RATE("hpDrainRate"), // Multiplies the HP a drain skill (HpDrain) absorbs, 1 by default.
 	TRANSFER_DAMAGE_PERCENT("transDam"),
 	MANA_SHIELD_PERCENT("manaShield"),
 	TRANSFER_DAMAGE_TO_PLAYER("transDamToPlayer"),

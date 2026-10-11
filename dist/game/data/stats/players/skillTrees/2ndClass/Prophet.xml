@@ -267,7 +267,7 @@
 		<skill skillName="Prophecy of Doom" skillId="27530" skillLevel="2" getLevel="48" levelUpSp="40000" learnedByNpc="true" />
 		<skill skillName="Prophecy of Salvation" skillId="27532" skillLevel="2" getLevel="56" levelUpSp="90000" learnedByNpc="true" />
 		<skill skillName="Prophecy of Doom" skillId="27530" skillLevel="3" getLevel="58" levelUpSp="90000" learnedByNpc="true" />
-		<skill skillName="Prophecy of Reversal" skillId="27536" skillLevel="1" getLevel="58" levelUpSp="90000" learnedByNpc="true" />
+		<skill skillName="Prophecy of Reckoning" skillId="27536" skillLevel="1" getLevel="58" levelUpSp="90000" learnedByNpc="true" />
 		<skill skillName="Prophecy of Ruin" skillId="27533" skillLevel="2" getLevel="62" levelUpSp="200000" learnedByNpc="true" />
 		<skill skillName="Prophecy of Doom" skillId="27530" skillLevel="4" getLevel="68" levelUpSp="400000" learnedByNpc="true" />
 		<skill skillName="Prophecy of Salvation" skillId="27532" skillLevel="3" getLevel="68" levelUpSp="400000" learnedByNpc="true" />

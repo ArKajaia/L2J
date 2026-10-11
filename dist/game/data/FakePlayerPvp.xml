@@ -1193,8 +1193,8 @@
 	     Their prophecies, totems and cash-ins are only cast when they pay off (ai/FakePlayerPvpOraclesWarchiefs.java):
 	     - Prophecy of Doom is never cast again on a target before it comes true (it would start over), unless Inevitable
 	       Doom stacks it (up to DoomMaxStacks); Spell Turning only on a target that is casting.
-	     - Prophecy of Salvation on itself while it takes damage, Prophecy of Reversal while it is still healthy in a PvP
-	       (a save point, never once it is low), Fulfilment on a Doom of 3 stacks or more, a target to finish, a Ruin on a
+	     - Prophecy of Salvation on itself while it takes damage, Prophecy of Reckoning once on a target that fights
+	       (it gives back part of the damage the target deals), Fulfilment on a Doom of 3 stacks or more, a target to finish, a Ruin on a
 	       player or a Foresight about to run out, Unwritten and the Great Totem on two enemies or more (or when hurt).
 	     - Totems where they work: Flames by its target (it walks up to plant it), Frost-Teeth on an enemy coming close,
 	       Blood while it is hurt or has a party around, the Horde on a pack of monsters, Ancestors on a dead party member.
@@ -1207,8 +1207,8 @@
 	                 wants the magic stats as much as the physical ones. -->
 	<build name="Doom Oracle" classId="98" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="1"> <!-- Prophet line: Prophecy of Doom is its damage -->
 		<attack>27530,1398,1177,1184</attack> <!-- Prophecy of Doom (stacked and spread by Inevitable Doom), Mana Burn, Wind Strike, Ice Bolt -->
-		<debuff>27533,1201</debuff> <!-- Prophecy of Ruin, Dryad Root (a Doom on a target that stays put deals x1.5) -->
-		<buff>27538,27536,27532,27540</buff> <!-- Fulfilment, Prophecy of Reversal and Salvation on itself, Unwritten -->
+		<debuff>27533,27536,1201</debuff> <!-- Prophecy of Ruin, Prophecy of Reckoning, Dryad Root (a Doom on a target that stays put deals x1.5) -->
+		<buff>27538,27532,27540</buff> <!-- Fulfilment, Prophecy of Salvation on itself, Unwritten -->
 		<heal>27532,1015</heal> <!-- Prophecy of Salvation, Battle Heal -->
 		<emergency>27540,27532,1015</emergency> <!-- Unwritten, Prophecy of Salvation, Battle Heal -->
 		<toggle>27539</toggle> <!-- Glimpse -->
@@ -1225,8 +1225,8 @@
 	</build>
 	<build name="Battle Oracle" classId="98" role="FIGHTER" weapon="MAGE_BLUNT" armor="LIGHT_MAGE" buffs="BATTLEMAGE" keystones="Battlemage;Unending Fury;Relentless Assault" hybrid="true" weight="1"> <!-- Prophet line, the battlemage path: Battlemage adds 40% of its M. Atk. to its P. Atk., it fights with its mace and its prophecies hold the target down -->
 		<attack>27530</attack> <!-- Prophecy of Doom: in melee the target stays put, x1.5 -->
-		<debuff>27533,1412</debuff> <!-- Prophecy of Ruin, Spell Turning (on a player that is casting) -->
-		<buff>27538,27536,27532,27540</buff> <!-- Fulfilment, Prophecy of Reversal and Salvation on itself, Unwritten -->
+		<debuff>27533,27536,1412</debuff> <!-- Prophecy of Ruin, Prophecy of Reckoning, Spell Turning (on a player that is casting) -->
+		<buff>27538,27532,27540</buff> <!-- Fulfilment, Prophecy of Salvation on itself, Unwritten -->
 		<heal>27532,1015</heal> <!-- Prophecy of Salvation, Battle Heal -->
 		<emergency>27540,27532,1015</emergency> <!-- Unwritten, Prophecy of Salvation, Battle Heal -->
 		<toggle>27539</toggle> <!-- Glimpse -->
@@ -1281,8 +1281,8 @@
 	</build>
 	<build name="Hierophant" classId="98" role="MAGE" weapon="MAGE_BLUNT" armor="ROBE" weight="0" support="true"> <!-- Prophet line: an Oracle, it casts prophecies instead of buffs (config/Custom/OraclesWarchiefs.ini) -->
 		<attack>27530,1177,1184</attack> <!-- Prophecy of Doom, Wind Strike, Ice Bolt -->
-		<debuff>27533,1272</debuff> <!-- Prophecy of Ruin, Word of Fear -->
-		<buff>27538,27536,27532</buff> <!-- Fulfilment, Prophecy of Reversal and Salvation on itself (only when they pay off, see the Oracles above) -->
+		<debuff>27533,27536,1272</debuff> <!-- Prophecy of Ruin, Prophecy of Reckoning, Word of Fear -->
+		<buff>27538,27532</buff> <!-- Fulfilment, Prophecy of Salvation on itself (only when they pay off, see the Oracles above) -->
 		<heal>27532,1015</heal> <!-- Prophecy of Salvation, Battle Heal -->
 		<emergency>27540,1015</emergency> <!-- Unwritten, Battle Heal -->
 		<toggle>336,27539</toggle> <!-- Arcane Wisdom, Glimpse -->

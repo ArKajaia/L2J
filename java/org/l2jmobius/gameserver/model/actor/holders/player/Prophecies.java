@@ -32,6 +32,7 @@ import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.events.EventType;
+import org.l2jmobius.gameserver.model.events.holders.actor.creature.OnCreatureDamageDealt;
 import org.l2jmobius.gameserver.model.events.holders.actor.creature.OnCreatureDamageReceived;
 import org.l2jmobius.gameserver.model.events.holders.actor.creature.OnCreatureSkillUse;
 import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
@@ -53,7 +54,7 @@ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
  * target (each stack adds the damage once more) and spreads to the enemies close to its target, who can resist the spread like any debuff.</li>
  * <li>Salvation: heals back the damage the ally took while the prophecy was on.</li>
  * <li>Ruin: stuns a target that cast a skill while the prophecy was on, silences one that didn't.</li>
- * <li>Reversal: the ally's HP, MP, CP and place are written down when it lands, and it comes back to them (never lower than it is).</li>
+ * <li>Reckoning: the enemy takes back part of the damage it dealt while the prophecy was on, as holy magic damage (at most {@link OraclesWarchiefsConfig#RECKONING_MAX_SHARE} of its max HP).</li>
  * </ul>
  * @author Mobius
  */
@@ -68,7 +69,7 @@ public class Prophecies
 	/** The other Oracle skills, for the fake players that play them (see FakePlayerPvpAI). */
 	public static final int SALVATION_SKILL_ID = 27532;
 	public static final int RUIN_SKILL_ID = 27533;
-	public static final int REVERSAL_SKILL_ID = 27536;
+	public static final int RECKONING_SKILL_ID = 27536;
 	public static final int FULFILMENT_SKILL_ID = 27538;
 	public static final int UNWRITTEN_SKILL_ID = 27540;
 
@@ -77,7 +78,7 @@ public class Prophecies
 		DOOM,
 		SALVATION,
 		RUIN,
-		REVERSAL
+		RECKONING
 	}
 
 	/** A prophecy that hasn't come true yet. */
@@ -92,10 +93,8 @@ public class Prophecies
 		final int resolveSkillLevel;
 		final int altSkillId;
 		final Location start;
-		final double hp;
-		final double mp;
-		final double cp;
 		volatile double damageTaken;
+		volatile double damageDealt;
 		volatile boolean castSkill;
 		int stacks = 1;
 		ScheduledFuture<?> task;
@@ -111,9 +110,6 @@ public class Prophecies
 			this.resolveSkillLevel = resolveSkillLevel;
 			this.altSkillId = altSkillId;
 			start = target.getLocation();
-			hp = target.getCurrentHp();
-			mp = target.getCurrentMp();
-			cp = target.getCurrentCp();
 		}
 	}
 
@@ -187,6 +183,17 @@ public class Prophecies
 			case SALVATION:
 			{
 				target.addListener(new ConsumerEventListener(target, EventType.ON_CREATURE_DAMAGE_RECEIVED, (OnCreatureDamageReceived event) -> prophecy.damageTaken += event.getDamage(), prophecy));
+				break;
+			}
+			case RECKONING:
+			{
+				target.addListener(new ConsumerEventListener(target, EventType.ON_CREATURE_DAMAGE_DEALT, (OnCreatureDamageDealt event) ->
+				{
+					if (event.getTarget() != target)
+					{
+						prophecy.damageDealt += event.getDamage();
+					}
+				}, prophecy));
 				break;
 			}
 			case RUIN:
@@ -561,18 +568,21 @@ public class Prophecies
 				}
 				break;
 			}
-			case REVERSAL:
+			case RECKONING:
 			{
-				if ((OraclesWarchiefsConfig.REVERSAL_MAX_DISTANCE > 0) && (target.calculateDistance3D(prophecy.start) > 30) && (target.calculateDistance3D(prophecy.start) <= OraclesWarchiefsConfig.REVERSAL_MAX_DISTANCE) && !target.isMovementDisabled())
+				if ((resolveSkill == null) || target.isInvul() || (prophecy.damageDealt <= 0))
 				{
-					AreaTargets.flyTo(target, prophecy.start.getX(), prophecy.start.getY(), prophecy.start.getZ());
+					break;
 				}
 
-				target.setCurrentHp(Math.max(target.getCurrentHp(), Math.min(prophecy.hp, target.getMaxHp())));
-				target.setCurrentMp(Math.max(target.getCurrentMp(), Math.min(prophecy.mp, target.getMaxMp())));
-				if (target.isPlayer())
+				// Its power is the part of the damage dealt that comes back (30 = 30%).
+				final double share = (prophecy.damageDealt * resolveSkill.getPower()) / 100;
+				final int damage = (int) Math.min(share * multiplier, target.getMaxHp() * OraclesWarchiefsConfig.RECKONING_MAX_SHARE);
+				if (damage > 0)
 				{
-					target.setCurrentCp(Math.max(target.getCurrentCp(), Math.min(prophecy.cp, target.getMaxCp())));
+					target.reduceCurrentHp(damage, oracle, resolveSkill);
+					target.notifyDamageReceived(damage, oracle, resolveSkill, false, false);
+					oracle.sendDamageMessage(target, damage, false, false, false);
 				}
 				break;
 			}

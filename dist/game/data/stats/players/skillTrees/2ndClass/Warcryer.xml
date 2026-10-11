@@ -332,10 +332,15 @@
 		<skill skillName="Totem of Blood" skillId="27545" skillLevel="3" getLevel="64" levelUpSp="300000" learnedByNpc="true" />
 		<skill skillName="Totem of Frost-Teeth" skillId="27548" skillLevel="3" getLevel="70" levelUpSp="500000" learnedByNpc="true" />
 		<skill skillName="Shatter" skillId="27553" skillLevel="3" getLevel="70" levelUpSp="500000" learnedByNpc="true" />
-		<skill skillName="Totem of Flames" skillId="27559" skillLevel="1" getLevel="40" levelUpSp="20000" learnedByNpc="true" />
-		<skill skillName="Totem of Flames" skillId="27559" skillLevel="2" getLevel="52" levelUpSp="70000" learnedByNpc="true" />
 		<skill skillName="Spirit Trance" skillId="27561" skillLevel="1" getLevel="52" levelUpSp="70000" learnedByNpc="true" />
-		<skill skillName="Totem of Flames" skillId="27559" skillLevel="3" getLevel="64" levelUpSp="300000" learnedByNpc="true" />
 		<skill skillName="Spirit Trance" skillId="27561" skillLevel="2" getLevel="64" levelUpSp="300000" learnedByNpc="true" />
+		<skill skillName="Totem of Flames" skillId="27559" skillLevel="1" getLevel="40" levelUpSp="20000" learnedByNpc="true" />
+		<skill skillName="Totem of Flames" skillId="27559" skillLevel="2" getLevel="44" levelUpSp="30000" learnedByNpc="true" />
+		<skill skillName="Totem of Flames" skillId="27559" skillLevel="3" getLevel="48" levelUpSp="40000" learnedByNpc="true" />
+		<skill skillName="Totem of Flames" skillId="27559" skillLevel="4" getLevel="52" levelUpSp="70000" learnedByNpc="true" />
+		<skill skillName="Totem of Flames" skillId="27559" skillLevel="5" getLevel="58" levelUpSp="90000" learnedByNpc="true" />
+		<skill skillName="Totem of Flames" skillId="27559" skillLevel="6" getLevel="64" levelUpSp="300000" learnedByNpc="true" />
+		<skill skillName="Totem of Flames" skillId="27559" skillLevel="7" getLevel="70" levelUpSp="500000" learnedByNpc="true" />
+		<skill skillName="Warchief's Restraint" skillId="27564" skillLevel="1" getLevel="40" autoGet="true" /> <!-- Steal Essence absorbs half as much HP (Warcryer line only) -->
 	</skillTree>
 </list>
