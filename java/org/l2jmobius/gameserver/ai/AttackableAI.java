@@ -496,6 +496,69 @@ public class AttackableAI extends CreatureAI
 	}
 	
 	/**
+	 * A classic aggressive fake player (see FakePlayers.ini) takes on every creature in its aggro range it may fight and doesn't hate yet, or picks up what it dropped.
+	 * @param npc the fake player
+	 */
+	private void thinkFakePlayerAggro(Attackable npc)
+	{
+		final List<Item> droppedItems = npc.getFakePlayerDrops();
+		if (droppedItems.isEmpty())
+		{
+			World.getInstance().forEachVisibleObjectInRange(npc, Creature.class, npc.getAggroRange(), t ->
+			{
+				if (t.isDead() || (npc.getHating(t) != 0))
+				{
+					return;
+				}
+				
+				if ((FakePlayersConfig.FAKE_PLAYER_AGGRO_FPC && t.isFakePlayer()) //
+					|| (FakePlayersConfig.FAKE_PLAYER_AGGRO_MONSTERS && t.isMonster() && !t.isFakePlayer()) //
+					|| (FakePlayersConfig.FAKE_PLAYER_AGGRO_PLAYERS && t.isPlayer()))
+				{
+					npc.addDamageHate(t, 0, 1);
+				}
+			});
+		}
+		else if (!npc.isInCombat()) // must pickup items
+		{
+			final int itemIndex = npc.getFakePlayerDrops().size() - 1; // last item dropped - can also use 0 for first item dropped
+			final Item droppedItem = npc.getFakePlayerDrops().get(itemIndex);
+			if ((droppedItem != null) && droppedItem.isSpawned())
+			{
+				if (npc.calculateDistance2D(droppedItem) > 50)
+				{
+					moveTo(droppedItem);
+				}
+				else
+				{
+					npc.getFakePlayerDrops().remove(itemIndex);
+					droppedItem.pickupMe(npc);
+					if (GeneralConfig.SAVE_DROPPED_ITEM)
+					{
+						ItemsOnGroundManager.getInstance().removeObject(droppedItem);
+					}
+					
+					if (droppedItem.getTemplate().hasExImmediateEffect())
+					{
+						for (SkillHolder skillHolder : droppedItem.getTemplate().getSkills())
+						{
+							npc.doSimultaneousCast(skillHolder.getSkill());
+						}
+						
+						npc.broadcastInfo(); // ? check if this is necessary
+					}
+				}
+			}
+			else
+			{
+				npc.getFakePlayerDrops().remove(itemIndex);
+			}
+			
+			npc.setRunning();
+		}
+	}
+	
+	/**
 	 * Manage AI standard thinks of a Attackable (called by onActionThink). <b><u>Actions</u>:</b>
 	 * <ul>
 	 * <li>Update every 1s the _globalAggro counter to come close to 0</li>
@@ -545,6 +608,7 @@ public class AttackableAI extends CreatureAI
 		// A Attackable isn't aggressive during 10s after its spawn because _globalAggro is set to -10
 		if (_globalAggro >= 0)
 		{
+			final boolean[] fakePlayerLooked = new boolean[1];
 			World.getInstance().forEachVisibleObject(npc, Creature.class, target ->
 			{
 				if ((target instanceof StaticObject))
@@ -552,75 +616,13 @@ public class AttackableAI extends CreatureAI
 					return;
 				}
 				
+				// A classic aggressive fake player looks around for itself, once per think (it did it again for every creature in view).
 				if (npc.isFakePlayer() && npc.isAggressive())
 				{
-					final List<Item> droppedItems = npc.getFakePlayerDrops();
-					if (droppedItems.isEmpty())
+					if (!fakePlayerLooked[0])
 					{
-						Creature nearestTarget = null;
-						double closestDistance = Double.MAX_VALUE;
-						for (Creature t : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, npc.getAggroRange()))
-						{
-							if ((t == _actor) || (t == null) || t.isDead())
-							{
-								continue;
-							}
-							
-							if ((FakePlayersConfig.FAKE_PLAYER_AGGRO_FPC && t.isFakePlayer()) //
-								|| (FakePlayersConfig.FAKE_PLAYER_AGGRO_MONSTERS && t.isMonster() && !t.isFakePlayer()) //
-								|| (FakePlayersConfig.FAKE_PLAYER_AGGRO_PLAYERS && t.isPlayer()))
-							{
-								final long hating = npc.getHating(t);
-								final double distance = npc.calculateDistance2D(t);
-								if ((hating == 0) && (closestDistance > distance))
-								{
-									nearestTarget = t;
-									closestDistance = distance;
-								}
-							}
-						}
-						
-						if (nearestTarget != null)
-						{
-							npc.addDamageHate(nearestTarget, 0, 1);
-						}
-					}
-					else if (!npc.isInCombat()) // must pickup items
-					{
-						final int itemIndex = npc.getFakePlayerDrops().size() - 1; // last item dropped - can also use 0 for first item dropped
-						final Item droppedItem = npc.getFakePlayerDrops().get(itemIndex);
-						if ((droppedItem != null) && droppedItem.isSpawned())
-						{
-							if (npc.calculateDistance2D(droppedItem) > 50)
-							{
-								moveTo(droppedItem);
-							}
-							else
-							{
-								npc.getFakePlayerDrops().remove(itemIndex);
-								droppedItem.pickupMe(npc);
-								if (GeneralConfig.SAVE_DROPPED_ITEM)
-								{
-									ItemsOnGroundManager.getInstance().removeObject(droppedItem);
-								}
-								
-								if (droppedItem.getTemplate().hasExImmediateEffect())
-								{
-									for (SkillHolder skillHolder : droppedItem.getTemplate().getSkills())
-									{
-										npc.doSimultaneousCast(skillHolder.getSkill());
-									}
-									
-									npc.broadcastInfo(); // ? check if this is necessary
-								}
-							}
-						}
-						else
-						{
-							npc.getFakePlayerDrops().remove(itemIndex);
-						}
-						
-						npc.setRunning();
+						fakePlayerLooked[0] = true;
+						thinkFakePlayerAggro(npc);
 					}
 					return;
 				}
