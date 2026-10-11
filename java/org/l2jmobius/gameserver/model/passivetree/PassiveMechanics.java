@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
+import java.util.function.DoubleSupplier;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
@@ -242,13 +243,13 @@ public final class PassiveMechanics
 	 * @param statMaxCp max CP from the stat system, which Eldritch Battery converts into MP
 	 * @return max MP after the tree's flat bonus and Eldritch Battery
 	 */
-	public static double maxMp(Player player, double statMaxMp, double statMaxCp)
+	public static double maxMp(Player player, double statMaxMp, DoubleSupplier statMaxCp)
 	{
 		double result = statMaxMp + value(player, "MAXMP");
 		final double battery = value(player, ELDRITCH_BATTERY);
 		if (battery > 0)
 		{
-			result += ((statMaxCp + value(player, "MAXCP")) * battery) / 100;
+			result += ((statMaxCp.getAsDouble() + value(player, "MAXCP")) * battery) / 100;
 		}
 		return Math.max(1, result);
 	}

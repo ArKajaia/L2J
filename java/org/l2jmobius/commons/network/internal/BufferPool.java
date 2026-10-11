@@ -144,7 +144,8 @@ public class BufferPool
 	 */
 	public boolean isFull()
 	{
-		return _buffers.size() >= _maxSize.get();
+		// The counter, not the queue size: ConcurrentLinkedQueue.size() walks the whole queue, and this runs for every buffer requested.
+		return _estimateSize.get() >= _maxSize.get();
 	}
 	
 	/**

@@ -21,6 +21,7 @@
 package org.l2jmobius.gameserver.taskmanagers;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -40,7 +41,9 @@ public class MovementTaskManager
 	
 	private static final Set<Set<Creature>> POOLS_CREATURE = ConcurrentHashMap.newKeySet();
 	private static final Set<Set<Creature>> POOLS_PLAYER = ConcurrentHashMap.newKeySet();
-	private static final int POOL_SIZE_CREATURE = 1000;
+	// The pool each moving creature is in, so registering a creature that already moves needs no lock or scan of all pools.
+	private static final Map<Creature, Set<Creature>> ASSIGNED = new ConcurrentHashMap<>();
+	private static final int POOL_SIZE_CREATURE = 500;
 	private static final int POOL_SIZE_PLAYER = 500;
 	private static final int TASK_DELAY_CREATURE = 100;
 	private static final int TASK_DELAY_PLAYER = 50;
@@ -76,12 +79,14 @@ public class MovementTaskManager
 					if (creature.updatePosition())
 					{
 						iterator.remove();
+						ASSIGNED.remove(creature, _creatures);
 						creature.getAI().notifyAction(Action.ARRIVED);
 					}
 				}
 				catch (Exception e)
 				{
 					iterator.remove();
+					ASSIGNED.remove(creature, _creatures);
 					LOGGER.warning("MovementTaskManager: Problem updating position of " + creature);
 					LOGGER.warning(TraceUtil.getStackTrace(e));
 				}
@@ -93,55 +98,45 @@ public class MovementTaskManager
 	 * Add a Creature to moving objects of MovementTaskManager.
 	 * @param creature The Creature to add to moving objects of MovementTaskManager.
 	 */
-	public synchronized void registerMovingObject(Creature creature)
+	public void registerMovingObject(Creature creature)
 	{
-		if (creature.isPlayer())
+		if (ASSIGNED.containsKey(creature))
 		{
-			for (Set<Creature> pool : POOLS_PLAYER)
-			{
-				if (pool.contains(creature))
-				{
-					return;
-				}
-			}
-			
-			for (Set<Creature> pool : POOLS_PLAYER)
-			{
-				if (pool.size() < POOL_SIZE_PLAYER)
-				{
-					pool.add(creature);
-					return;
-				}
-			}
-			
-			final Set<Creature> pool = ConcurrentHashMap.newKeySet(POOL_SIZE_PLAYER);
-			pool.add(creature);
-			ThreadPool.schedulePriorityTaskAtFixedRate(new Movement(pool), TASK_DELAY_PLAYER, TASK_DELAY_PLAYER);
-			POOLS_PLAYER.add(pool);
+			return;
 		}
-		else
+		
+		synchronized (this)
 		{
-			for (Set<Creature> pool : POOLS_CREATURE)
+			if (ASSIGNED.containsKey(creature))
 			{
-				if (pool.contains(creature))
-				{
-					return;
-				}
+				return;
 			}
 			
-			for (Set<Creature> pool : POOLS_CREATURE)
+			final boolean isPlayer = creature.isPlayer();
+			final Set<Set<Creature>> pools = isPlayer ? POOLS_PLAYER : POOLS_CREATURE;
+			final int poolSize = isPlayer ? POOL_SIZE_PLAYER : POOL_SIZE_CREATURE;
+			for (Set<Creature> pool : pools)
 			{
-				if (pool.size() < POOL_SIZE_CREATURE)
+				if (pool.size() < poolSize)
 				{
+					ASSIGNED.put(creature, pool);
 					pool.add(creature);
 					return;
 				}
 			}
 			
-			final Set<Creature> pool = ConcurrentHashMap.newKeySet(POOL_SIZE_CREATURE);
+			final Set<Creature> pool = ConcurrentHashMap.newKeySet(poolSize);
+			ASSIGNED.put(creature, pool);
 			pool.add(creature);
-			ThreadPool.scheduleAtFixedRate(new Movement(pool), TASK_DELAY_CREATURE, TASK_DELAY_CREATURE);
-			POOLS_CREATURE.add(pool);
+			if (isPlayer)
+			{
+				ThreadPool.schedulePriorityTaskAtFixedRate(new Movement(pool), TASK_DELAY_PLAYER, TASK_DELAY_PLAYER);
+			}
+			else
+			{
+				ThreadPool.scheduleAtFixedRate(new Movement(pool), TASK_DELAY_CREATURE, TASK_DELAY_CREATURE);
+			}
+			pools.add(pool);
 		}
 	}
 	

@@ -1178,6 +1178,8 @@ public class FakePlayerPvpManager
 	private static final int TYPING_MAX = 120;
 	/** A talk goes on this far at most: the partners walk off (or start fighting) if it took longer, like players busy with their hunt. */
 	private static final long TALK_MAX_TIME = 30000;
+	/** How far general chat is heard, as for players (see ChatGeneral). */
+	private static final int GENERAL_CHAT_RANGE = 1250;
 	
 	private final AtomicInteger _nextNpcId = new AtomicInteger(FIRST_NPC_ID);
 	private final Set<Npc> _fakePlayers = ConcurrentHashMap.newKeySet();
@@ -2292,7 +2294,7 @@ public class FakePlayerPvpManager
 			if (!other.isDead() && other.isSpawned() && !isInPvp(other))
 			{
 				social(other, Rnd.nextBoolean() ? SOCIAL_GREETING : SOCIAL_BOW);
-				other.broadcastPacket(new CreatureSay(other, ChatType.GENERAL, other.getName(), text));
+				sayGeneral(other, text);
 			}
 		}, Rnd.get(2500, 5000) + typingTime(text));
 	}
@@ -2365,7 +2367,7 @@ public class FakePlayerPvpManager
 			{
 				if (!speaker.isDead() && speaker.isSpawned() && speakerAI.isTalkingWith(listener))
 				{
-					speaker.broadcastPacket(new CreatureSay(speaker, ChatType.GENERAL, speaker.getName(), text));
+					sayGeneral(speaker, text);
 				}
 			}, times[i]);
 		}
@@ -2808,7 +2810,7 @@ public class FakePlayerPvpManager
 		{
 			if ((dead || !fake.isDead()) && fake.isSpawned())
 			{
-				fake.broadcastPacket(new CreatureSay(fake, ChatType.GENERAL, fake.getName(), text));
+				sayGeneral(fake, text);
 			}
 		}, Rnd.get(800, 2500));
 		return true;
@@ -3267,6 +3269,37 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
+	 * Says {@code text} in general chat, heard as far as a player's general chat is (see ChatGeneral), not by everyone in the regions around.
+	 * @param fake the fake player that speaks
+	 * @param text what it says
+	 */
+	private static void sayGeneral(Npc fake, String text)
+	{
+		final CreatureSay packet = new CreatureSay(fake, ChatType.GENERAL, fake.getName(), text);
+		packet.sendInBroadcast();
+		World.getInstance().forEachVisibleObjectInRange(fake, Player.class, GENERAL_CHAT_RANGE, player -> player.sendPacket(packet));
+	}
+	
+	/**
+	 * A region woke up because a player came near: its fake players lost their buffs and toggles when it went to sleep, so they get them back right away instead of at the next maintain.
+	 * @param npc an npc of the region
+	 */
+	public void onRegionWake(Npc npc)
+	{
+		if (!_fakePlayers.contains(npc) || npc.isDead())
+		{
+			return;
+		}
+		
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		if (profile != null)
+		{
+			refreshToggles(npc, profile);
+			refreshBuffs(npc, profile);
+		}
+	}
+	
+	/**
 	 * Puts back the buffs (from other players) that ran out.
 	 * @param fake the fake player
 	 * @param profile its profile
@@ -3392,8 +3425,14 @@ public class FakePlayerPvpManager
 					}
 				}
 				
-				refreshToggles(fake, profile);
-				refreshBuffs(fake, profile);
+				// Nobody around: the region's sleep took its buffs, and they come back when it wakes (see onRegionWake). Putting them back now would only keep their tasks running unseen.
+				final WorldRegion region = fake.getWorldRegion();
+				if ((region != null) && region.areNeighborsActive())
+				{
+					refreshToggles(fake, profile);
+					refreshBuffs(fake, profile);
+				}
+				
 				if (profile.getServitor() != null)
 				{
 					switchLink(fake, profile, !profile.needsServitor());

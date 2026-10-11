@@ -76,6 +76,8 @@ public class FakePlayerTownManager
 	private static final int FIRST_NPC_ID = 9_400_000;
 	private static final int LAST_NPC_ID = 9_499_999;
 	private static final int TICK = 250;
+	/** How often a town no player is near is updated. */
+	private static final int UNWATCHED_TICK = 1000;
 	/** A town buffer needs a town where players are at least this level. */
 	private static final int BUFFER_MIN_LEVEL = 40;
 	/** How far a fake player looks for a private store to have a look at. */
@@ -1601,6 +1603,13 @@ public class FakePlayerTownManager
 		
 		for (FakePlayerTown town : _towns)
 		{
+			// A town no player is near goes on at a slower pace: its fake players' steps come a moment later, with nobody there to see it.
+			if ((now < town.nextUnwatchedUpdate) && !town.isWatched())
+			{
+				continue;
+			}
+			town.nextUnwatchedUpdate = now + UNWATCHED_TICK;
+			
 			try
 			{
 				updateTown(town, now);

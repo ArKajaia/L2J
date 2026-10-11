@@ -16,6 +16,7 @@ public class HotZone extends ZoneType
 	{
 		// Tells the game this creature is currently in a hotzone
 		creature.setInsideZone(ZoneId.HOTZONE, true);
+		creature.addHotZoneId(getId());
 	}
 	
 	@Override
@@ -23,5 +24,6 @@ public class HotZone extends ZoneType
 	{
 		// Tells the game this creature left the hotzone
 		creature.setInsideZone(ZoneId.HOTZONE, false);
+		creature.removeHotZoneId(getId());
 	}
 }

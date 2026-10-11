@@ -21,6 +21,7 @@
 package org.l2jmobius.gameserver.model.actor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -248,6 +249,8 @@ public abstract class Creature extends WorldObject
 	private boolean _allSkillsDisabled;
 	
 	private final byte[] _zones = new byte[ZoneId.getZoneCount()];
+	private static final int[] NO_HOT_ZONES = new int[0];
+	private volatile int[] _hotZoneIds = NO_HOT_ZONES;
 	protected final Location _lastZoneValidateLocation = new Location(getX(), getY(), getZ());
 	
 	private final StampedLock _attackLock = new StampedLock();
@@ -432,11 +435,12 @@ public abstract class Creature extends WorldObject
 	@Override
 	public boolean isInsideZone(ZoneId zone)
 	{
-		final Instance instance = InstanceManager.getInstance().getInstance(getInstanceId());
+		// Only PvP and peace depend on the instance, so other zones skip the instance lookup.
 		switch (zone)
 		{
 			case PVP:
 			{
+				final Instance instance = InstanceManager.getInstance().getInstance(getInstanceId());
 				if ((instance != null) && instance.isPvP())
 				{
 					return true;
@@ -446,6 +450,7 @@ public abstract class Creature extends WorldObject
 			}
 			case PEACE:
 			{
+				final Instance instance = InstanceManager.getInstance().getInstance(getInstanceId());
 				if ((instance != null) && instance.isPvP())
 				{
 					return false;
@@ -454,6 +459,59 @@ public abstract class Creature extends WorldObject
 		}
 		
 		return _zones[zone.ordinal()] > 0;
+	}
+	
+	/**
+	 * @return the ids of the hotzones this creature stands in, kept by {@link org.l2jmobius.gameserver.model.zone.type.HotZone} as it enters and leaves them, so hotzone lookups need no scan of the zones around it
+	 */
+	public int[] getHotZoneIds()
+	{
+		return _hotZoneIds;
+	}
+	
+	/**
+	 * @param zoneId the id of the hotzone this creature entered
+	 */
+	public void addHotZoneId(int zoneId)
+	{
+		synchronized (_zones)
+		{
+			for (int id : _hotZoneIds)
+			{
+				if (id == zoneId)
+				{
+					return;
+				}
+			}
+			
+			final int[] ids = Arrays.copyOf(_hotZoneIds, _hotZoneIds.length + 1);
+			ids[_hotZoneIds.length] = zoneId;
+			_hotZoneIds = ids;
+		}
+	}
+	
+	/**
+	 * @param zoneId the id of the hotzone this creature left
+	 */
+	public void removeHotZoneId(int zoneId)
+	{
+		synchronized (_zones)
+		{
+			final int[] ids = new int[_hotZoneIds.length];
+			int count = 0;
+			for (int id : _hotZoneIds)
+			{
+				if (id != zoneId)
+				{
+					ids[count++] = id;
+				}
+			}
+			
+			if (count != _hotZoneIds.length)
+			{
+				_hotZoneIds = count == 0 ? NO_HOT_ZONES : Arrays.copyOf(ids, count);
+			}
+		}
 	}
 	
 	/**
@@ -3209,6 +3267,7 @@ public abstract class Creature extends WorldObject
 		}
 		else if (isNpc())
 		{
+			final FakePlayerInfo fakePlayerInfo = createBroadcastFakePlayerInfo();
 			World.getInstance().forEachVisibleObject(this, Player.class, player ->
 			{
 				if (!isVisibleFor(player))
@@ -3216,9 +3275,9 @@ public abstract class Creature extends WorldObject
 					return;
 				}
 				
-				if (isFakePlayer())
+				if (fakePlayerInfo != null)
 				{
-					player.sendPacket(new FakePlayerInfo(asNpc()));
+					player.sendPacket(fakePlayerInfo);
 				}
 				else if (_stat.getRunSpeed() == 0)
 				{
@@ -3230,6 +3289,21 @@ public abstract class Creature extends WorldObject
 				}
 			});
 		}
+	}
+	
+	/**
+	 * @return for a fake player, its info built once to send copies to every viewer (it is the same for all of them), otherwise {@code null}
+	 */
+	private FakePlayerInfo createBroadcastFakePlayerInfo()
+	{
+		if (!isFakePlayer())
+		{
+			return null;
+		}
+		
+		final FakePlayerInfo fakePlayerInfo = new FakePlayerInfo(asNpc());
+		fakePlayerInfo.sendInBroadcast();
+		return fakePlayerInfo;
 	}
 	
 	/** Set the Creature movement type to run and send Server->Client packet ChangeMoveType to all others Player. */
@@ -4080,6 +4154,7 @@ public abstract class Creature extends WorldObject
 			{
 				if (broadcastFull)
 				{
+					final FakePlayerInfo fakePlayerInfo = createBroadcastFakePlayerInfo();
 					World.getInstance().forEachVisibleObject(this, Player.class, player ->
 					{
 						if (!isVisibleFor(player))
@@ -4087,9 +4162,9 @@ public abstract class Creature extends WorldObject
 							return;
 						}
 						
-						if (isFakePlayer())
+						if (fakePlayerInfo != null)
 						{
-							player.sendPacket(new FakePlayerInfo(asNpc()));
+							player.sendPacket(fakePlayerInfo);
 						}
 						else if (_stat.getRunSpeed() == 0)
 						{
@@ -4912,12 +4987,15 @@ public abstract class Creature extends WorldObject
 				final boolean dangerousFall = isMonster() && (Math.abs(dz) > 100) && (distance < 500);
 				if (!directMove && (!isPlayer() || ((originalDistance - distance) > pathfindingThreshold) || dangerousFall) && !isAfraid() && !isInVehicle)
 				{
+					// An NPC that can walk straight to its destination does: the line check costs a fraction of a path search, which NPCs would otherwise run on every move.
+					final boolean clearLine = !isPlayer() && !dangerousFall && GeoEngine.getInstance().canMoveToTarget(curX, curY, curZ, originalX, originalY, originalZ, getInstanceId());
+					
 					// Path calculation -- overrides previous movement check.
-					move.geoPath = PathFinding.getInstance().findPath(curX, curY, curZ, originalX, originalY, originalZ, getInstanceId(), isPlayer());
+					move.geoPath = clearLine ? null : PathFinding.getInstance().findPath(curX, curY, curZ, originalX, originalY, originalZ, getInstanceId(), isPlayer());
 					boolean found = (move.geoPath != null) && (move.geoPath.size() > 1);
 					
 					// A single route point means the destination is reachable in a straight line (straight segments are merged into their end point).
-					boolean straightLine = (move.geoPath != null) && (move.geoPath.size() == 1);
+					boolean straightLine = clearLine || ((move.geoPath != null) && (move.geoPath.size() == 1));
 					
 					// If path not found and this is an Attackable, move to the closest reachable point around the destination instead.
 					if (!found && !straightLine && isAttackable())

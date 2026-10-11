@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
@@ -145,8 +146,8 @@ public class AttackableAI extends CreatureAI
 	private int _attackTimeout;
 	/** The Attackable aggro counter. */
 	private int _globalAggro;
-	/** The flag used to indicate that a thinking action is in progress, to prevent recursive thinking. */
-	private boolean _thinking;
+	/** The flag used to indicate that a thinking action is in progress, to prevent recursive thinking and two threads thinking at once (the think pool and an extra think scheduled after a cast). */
+	private final AtomicBoolean _thinking = new AtomicBoolean();
 	private int _chaosTime = 0;
 	
 	// Fear parameters
@@ -399,7 +400,7 @@ public class AttackableAI extends CreatureAI
 			if (!npc.isAlikeDead())
 			{
 				// If its _knownPlayer isn't empty set the Intention to ACTIVE
-				if (!World.getInstance().getVisibleObjects(npc, Player.class).isEmpty())
+				if (World.getInstance().hasVisibleObject(npc, Player.class))
 				{
 					intention = Intention.ACTIVE;
 				}
@@ -495,6 +496,69 @@ public class AttackableAI extends CreatureAI
 	}
 	
 	/**
+	 * A classic aggressive fake player (see FakePlayers.ini) takes on every creature in its aggro range it may fight and doesn't hate yet, or picks up what it dropped.
+	 * @param npc the fake player
+	 */
+	private void thinkFakePlayerAggro(Attackable npc)
+	{
+		final List<Item> droppedItems = npc.getFakePlayerDrops();
+		if (droppedItems.isEmpty())
+		{
+			World.getInstance().forEachVisibleObjectInRange(npc, Creature.class, npc.getAggroRange(), t ->
+			{
+				if (t.isDead() || (npc.getHating(t) != 0))
+				{
+					return;
+				}
+				
+				if ((FakePlayersConfig.FAKE_PLAYER_AGGRO_FPC && t.isFakePlayer()) //
+					|| (FakePlayersConfig.FAKE_PLAYER_AGGRO_MONSTERS && t.isMonster() && !t.isFakePlayer()) //
+					|| (FakePlayersConfig.FAKE_PLAYER_AGGRO_PLAYERS && t.isPlayer()))
+				{
+					npc.addDamageHate(t, 0, 1);
+				}
+			});
+		}
+		else if (!npc.isInCombat()) // must pickup items
+		{
+			final int itemIndex = npc.getFakePlayerDrops().size() - 1; // last item dropped - can also use 0 for first item dropped
+			final Item droppedItem = npc.getFakePlayerDrops().get(itemIndex);
+			if ((droppedItem != null) && droppedItem.isSpawned())
+			{
+				if (npc.calculateDistance2D(droppedItem) > 50)
+				{
+					moveTo(droppedItem);
+				}
+				else
+				{
+					npc.getFakePlayerDrops().remove(itemIndex);
+					droppedItem.pickupMe(npc);
+					if (GeneralConfig.SAVE_DROPPED_ITEM)
+					{
+						ItemsOnGroundManager.getInstance().removeObject(droppedItem);
+					}
+					
+					if (droppedItem.getTemplate().hasExImmediateEffect())
+					{
+						for (SkillHolder skillHolder : droppedItem.getTemplate().getSkills())
+						{
+							npc.doSimultaneousCast(skillHolder.getSkill());
+						}
+						
+						npc.broadcastInfo(); // ? check if this is necessary
+					}
+				}
+			}
+			else
+			{
+				npc.getFakePlayerDrops().remove(itemIndex);
+			}
+			
+			npc.setRunning();
+		}
+	}
+	
+	/**
 	 * Manage AI standard thinks of a Attackable (called by onActionThink). <b><u>Actions</u>:</b>
 	 * <ul>
 	 * <li>Update every 1s the _globalAggro counter to come close to 0</li>
@@ -515,22 +579,16 @@ public class AttackableAI extends CreatureAI
 		final Attackable npc = getActiveChar();
 		final AIProfile profile = getProfile();
 		
-		if ((npc.getCurrentHp() < (npc.getMaxHp() * profile.fleeHpThreshold)) && !npc.isRaid() && !npc.isRaidMinion())
+		// Archetype-scaled chance to trigger the existing FearTask for 5 seconds.
+		// Stock chance was a flat 15%; Coward scales it up, Rager/Aggressive scale it toward zero.
+		// The cheap checks come first so an idle monster with no target never computes its max HP here.
+		final int fleeChance = (int) (15 * profile.fleeChanceScale);
+		if ((fleeChance > 0) && (_fearTask == null) && (getTarget() instanceof Creature) && !npc.isRaid() && !npc.isRaidMinion() && (npc.getCurrentHp() < (npc.getMaxHp() * profile.fleeHpThreshold)) && (Rnd.get(100) < fleeChance))
 		{
-			// Archetype-scaled chance to trigger the existing FearTask for 5 seconds.
-			// Stock chance was a flat 15%; Coward scales it up, Rager/Aggressive scale it toward zero.
-			final int fleeChance = (int) (15 * profile.fleeChanceScale);
-			if ((fleeChance > 0) && (Rnd.get(100) < fleeChance) && (_fearTask == null))
-			{
-				// Only flee from something real. Passing the NPC itself made it
-				// try to path away from its own position, which is undefined.
-				final Creature scaryTarget = (getTarget() instanceof Creature) ? (Creature) getTarget() : null;
-				if (scaryTarget != null)
-				{
-					onActionAfraid(scaryTarget, true);
-					return; // Skip the rest of the thinking this tick
-				}
-			}
+			// Only flee from something real. Passing the NPC itself made it
+			// try to path away from its own position, which is undefined.
+			onActionAfraid((Creature) getTarget(), true);
+			return; // Skip the rest of the thinking this tick
 		}
 		
 		// Update every 1s the _globalAggro counter to come close to 0
@@ -550,6 +608,7 @@ public class AttackableAI extends CreatureAI
 		// A Attackable isn't aggressive during 10s after its spawn because _globalAggro is set to -10
 		if (_globalAggro >= 0)
 		{
+			final boolean[] fakePlayerLooked = new boolean[1];
 			World.getInstance().forEachVisibleObject(npc, Creature.class, target ->
 			{
 				if ((target instanceof StaticObject))
@@ -557,75 +616,13 @@ public class AttackableAI extends CreatureAI
 					return;
 				}
 				
+				// A classic aggressive fake player looks around for itself, once per think (it did it again for every creature in view).
 				if (npc.isFakePlayer() && npc.isAggressive())
 				{
-					final List<Item> droppedItems = npc.getFakePlayerDrops();
-					if (droppedItems.isEmpty())
+					if (!fakePlayerLooked[0])
 					{
-						Creature nearestTarget = null;
-						double closestDistance = Double.MAX_VALUE;
-						for (Creature t : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, npc.getAggroRange()))
-						{
-							if ((t == _actor) || (t == null) || t.isDead())
-							{
-								continue;
-							}
-							
-							if ((FakePlayersConfig.FAKE_PLAYER_AGGRO_FPC && t.isFakePlayer()) //
-								|| (FakePlayersConfig.FAKE_PLAYER_AGGRO_MONSTERS && t.isMonster() && !t.isFakePlayer()) //
-								|| (FakePlayersConfig.FAKE_PLAYER_AGGRO_PLAYERS && t.isPlayer()))
-							{
-								final long hating = npc.getHating(t);
-								final double distance = npc.calculateDistance2D(t);
-								if ((hating == 0) && (closestDistance > distance))
-								{
-									nearestTarget = t;
-									closestDistance = distance;
-								}
-							}
-						}
-						
-						if (nearestTarget != null)
-						{
-							npc.addDamageHate(nearestTarget, 0, 1);
-						}
-					}
-					else if (!npc.isInCombat()) // must pickup items
-					{
-						final int itemIndex = npc.getFakePlayerDrops().size() - 1; // last item dropped - can also use 0 for first item dropped
-						final Item droppedItem = npc.getFakePlayerDrops().get(itemIndex);
-						if ((droppedItem != null) && droppedItem.isSpawned())
-						{
-							if (npc.calculateDistance2D(droppedItem) > 50)
-							{
-								moveTo(droppedItem);
-							}
-							else
-							{
-								npc.getFakePlayerDrops().remove(itemIndex);
-								droppedItem.pickupMe(npc);
-								if (GeneralConfig.SAVE_DROPPED_ITEM)
-								{
-									ItemsOnGroundManager.getInstance().removeObject(droppedItem);
-								}
-								
-								if (droppedItem.getTemplate().hasExImmediateEffect())
-								{
-									for (SkillHolder skillHolder : droppedItem.getTemplate().getSkills())
-									{
-										npc.doSimultaneousCast(skillHolder.getSkill());
-									}
-									
-									npc.broadcastInfo(); // ? check if this is necessary
-								}
-							}
-						}
-						else
-						{
-							npc.getFakePlayerDrops().remove(itemIndex);
-						}
-						
-						npc.setRunning();
+						fakePlayerLooked[0] = true;
+						thinkFakePlayerAggro(npc);
 					}
 					return;
 				}
@@ -974,7 +971,7 @@ public class AttackableAI extends CreatureAI
 			}
 			
 			// Monster teleport to spawn
-			if (npc.isMonster() && (npc.getSpawn() != null) && (npc.getInstanceId() == 0) && (npc.isInCombat() || World.getInstance().getVisibleObjects(npc, Player.class).isEmpty()))
+			if (npc.isMonster() && (npc.getSpawn() != null) && (npc.getInstanceId() == 0) && (npc.isInCombat() || !World.getInstance().hasVisibleObject(npc, Player.class)))
 			{
 				npc.teleToLocation(npc.getSpawn(), false);
 			}
@@ -2594,7 +2591,7 @@ public class AttackableAI extends CreatureAI
 	public void onActionThink()
 	{
 		// Check if a thinking action is already in progress.
-		if (_thinking)
+		if (_thinking.get())
 		{
 			return;
 		}
@@ -2613,7 +2610,10 @@ public class AttackableAI extends CreatureAI
 		}
 		
 		// Start thinking action
-		_thinking = true;
+		if (!_thinking.compareAndSet(false, true))
+		{
+			return;
+		}
 		
 		try
 		{
@@ -2644,7 +2644,7 @@ public class AttackableAI extends CreatureAI
 		finally
 		{
 			// Stop thinking action
-			_thinking = false;
+			_thinking.set(false);
 		}
 	}
 	

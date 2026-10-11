@@ -168,6 +168,8 @@ public class FakePlayerPvpAI extends AttackableAI
 	private static final int TALK_MAX_DISTANCE = 600;
 	/** How long it sticks to its choice to take (or leave) a monster another fake player is fighting. */
 	private static final long STEAL_MEMORY = 60000;
+	/** Milliseconds between two looks for monsters to hunt while the last look found none. */
+	private static final long PREY_SCAN_INTERVAL = 2000;
 	/** A player chains the next skill a moment after the last one ends, not a whole AI tick later. */
 	private static final int SKILL_CHAIN_MIN_DELAY = 150;
 	private static final int SKILL_CHAIN_MAX_DELAY = 400;
@@ -261,6 +263,8 @@ public class FakePlayerPvpAI extends AttackableAI
 	/** Players it has already seen (and maybe said hello to), so it doesn't greet anyone twice. */
 	private final Set<Integer> _seenPlayers = ConcurrentHashMap.newKeySet();
 	private long _nextGreetScan;
+	// When it looks for monsters to hunt next, after a look that found none.
+	private long _nextPreyScanTime;
 	
 	/**
 	 * The steps of a taunt: walk up to them, stand there a moment, hit them once, then see whether they hit back.
@@ -481,14 +485,19 @@ public class FakePlayerPvpAI extends AttackableAI
 			return;
 		}
 		
-		// Hunt the monsters around.
-		final Creature prey = findPrey(npc);
-		if (prey != null)
+		// Hunt the monsters around. After a look that found nothing it waits a little before looking again, instead of scanning every think.
+		if (now >= _nextPreyScanTime)
 		{
-			npc.addDamageHate(prey, 0, 1);
-			npc.setRunning();
-			setIntention(Intention.ATTACK, prey);
-			return;
+			final Creature prey = findPrey(npc);
+			if (prey != null)
+			{
+				npc.addDamageHate(prey, 0, 1);
+				npc.setRunning();
+				setIntention(Intention.ATTACK, prey);
+				return;
+			}
+			
+			_nextPreyScanTime = now + PREY_SCAN_INTERVAL;
 		}
 		
 		// Nothing to hunt: go back to the hunting ground or look around it.
@@ -3751,13 +3760,14 @@ public class FakePlayerPvpAI extends AttackableAI
 		double bestScore = Double.MAX_VALUE;
 		for (Creature creature : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, PvpSpotsConfig.TARGET_RANGE))
 		{
-			if (!isSpotEnemy(npc, creature, zone, true))
+			if (!isSpotEnemy(npc, creature, zone, false))
 			{
 				continue;
 			}
 			
+			// The line of sight (the costly check) only for one that would be the best so far.
 			final double score = spotScore(npc, profile, creature, leaderId, grudgeId, now);
-			if (score < bestScore)
+			if ((score < bestScore) && GeoEngine.getInstance().canSeeTarget(npc, creature))
 			{
 				best = creature;
 				bestScore = score;
@@ -4413,13 +4423,9 @@ public class FakePlayerPvpAI extends AttackableAI
 				return;
 			}
 			
-			if (!GeoEngine.getInstance().canSeeTarget(leader, monster))
-			{
-				return;
-			}
-			
+			// The line of sight (the costly check) only for one closer than the closest so far.
 			final double distance = npc.calculateDistance2D(monster);
-			if (distance < closestDistance[0])
+			if ((distance < closestDistance[0]) && GeoEngine.getInstance().canSeeTarget(leader, monster))
 			{
 				closest[0] = monster;
 				closestDistance[0] = distance;

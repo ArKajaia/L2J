@@ -581,7 +581,7 @@ public class PlayerStat extends PlayableStat
 	{
 		// Get the Max MP (base+modifier) of the Player
 		final Player player = getActiveChar();
-		final int val = (player == null) ? 1 : (int) PassiveMechanics.maxMp(player, calcStat(Stat.MAX_MP, player.getTemplate().getBaseMpMax(player.getLevel())), calcStat(Stat.MAX_CP, player.getTemplate().getBaseCpMax(player.getLevel())));
+		final int val = (player == null) ? 1 : (int) PassiveMechanics.maxMp(player, calcStat(Stat.MAX_MP, player.getTemplate().getBaseMpMax(player.getLevel())), () -> calcStat(Stat.MAX_CP, player.getTemplate().getBaseCpMax(player.getLevel())));
 		if (val != _oldMaxMp)
 		{
 			_oldMaxMp = val;

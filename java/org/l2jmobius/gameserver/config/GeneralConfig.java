@@ -78,7 +78,6 @@ public class GeneralConfig
 	public static Set<Integer> LIST_PROTECTED_ITEMS;
 	public static int CHAR_DATA_STORE_INTERVAL;
 	public static boolean LAZY_ITEMS_UPDATE;
-	public static boolean UPDATE_ITEMS_ON_CHAR_STORE;
 	public static boolean DESTROY_DROPPED_PLAYER_ITEM;
 	public static boolean DESTROY_EQUIPABLE_PLAYER_ITEM;
 	public static boolean DESTROY_ALL_ITEMS;
@@ -245,7 +244,6 @@ public class GeneralConfig
 		}
 		CHAR_DATA_STORE_INTERVAL = config.getInt("CharacterDataStoreInterval", 15) * 60 * 1000;
 		LAZY_ITEMS_UPDATE = config.getBoolean("LazyItemsUpdate", false);
-		UPDATE_ITEMS_ON_CHAR_STORE = config.getBoolean("UpdateItemsOnCharStore", false);
 		DESTROY_DROPPED_PLAYER_ITEM = config.getBoolean("DestroyPlayerDroppedItem", false);
 		DESTROY_EQUIPABLE_PLAYER_ITEM = config.getBoolean("DestroyEquipableItem", false);
 		DESTROY_ALL_ITEMS = config.getBoolean("DestroyAllItems", false);

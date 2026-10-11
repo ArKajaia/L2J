@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -60,8 +61,13 @@ public class PvpRankingManager
 	private static final String UPDATE_FAKE = "INSERT INTO fake_player_pvp (name, pvp_kills) VALUES (?, ?) ON DUPLICATE KEY UPDATE pvp_kills=VALUES(pvp_kills)";
 	private static final String SELECT_PLAYERS = "SELECT char_name, pvpkills FROM characters WHERE pvpkills > 0 AND accesslevel = 0 ORDER BY pvpkills DESC LIMIT " + RANKING_SIZE;
 
+	/** How often the PvP kills that changed are written to the database. */
+	private static final long STORE_INTERVAL = 60000;
+
 	/** PvP kills of fake players, by name. */
 	private final Map<String, Integer> _fakeKills = new ConcurrentHashMap<>();
+	/** The fake players whose PvP kills changed since they were last stored. */
+	private final Set<String> _changed = ConcurrentHashMap.newKeySet();
 
 	private volatile List<Entry> _ranking = Collections.emptyList();
 	private volatile long _rankingTime;
@@ -111,6 +117,7 @@ public class PvpRankingManager
 		}
 
 		LOGGER.info(getClass().getSimpleName() + ": Loaded PvP kills of " + _fakeKills.size() + " fake players.");
+		ThreadPool.scheduleAtFixedRate(this::storeChanged, STORE_INTERVAL, STORE_INTERVAL);
 	}
 
 	/**
@@ -126,9 +133,10 @@ public class PvpRankingManager
 			return;
 		}
 
+		// Written with the others that changed, once a minute (PvP spots make many kills) and at shutdown.
 		final String name = fake.getName();
-		final int kills = _fakeKills.merge(name, 1, Integer::sum);
-		ThreadPool.execute(() -> store(name, kills));
+		_fakeKills.merge(name, 1, Integer::sum);
+		_changed.add(name);
 	}
 
 	/**
@@ -187,18 +195,34 @@ public class PvpRankingManager
 		return false;
 	}
 
-	private void store(String name, int kills)
+	/**
+	 * Writes the PvP kills that changed since the last time, in one batch. Also called at shutdown.
+	 */
+	public synchronized void storeChanged()
 	{
+		if (_changed.isEmpty())
+		{
+			return;
+		}
+
+		final List<String> names = new ArrayList<>(_changed);
+		_changed.removeAll(names);
 		try (Connection con = DatabaseFactory.getConnection();
 			PreparedStatement ps = con.prepareStatement(UPDATE_FAKE))
 		{
-			ps.setString(1, name);
-			ps.setInt(2, kills);
-			ps.execute();
+			for (String name : names)
+			{
+				ps.setString(1, name);
+				ps.setInt(2, _fakeKills.getOrDefault(name, 0));
+				ps.addBatch();
+			}
+			ps.executeBatch();
 		}
 		catch (Exception e)
 		{
-			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not store PvP kills of fake player " + name + ".", e);
+			// Try again next time.
+			_changed.addAll(names);
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not store PvP kills of fake players.", e);
 		}
 	}
 

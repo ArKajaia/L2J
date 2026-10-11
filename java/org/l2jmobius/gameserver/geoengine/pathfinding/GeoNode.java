@@ -36,6 +36,10 @@ public class GeoNode
 	private double _hCost = 0; // Heuristic cost to target.
 	private double _fCost = 0; // Total cost (G + H).
 	
+	// Position in the open list heap of the node buffer (-1 when not in it), and whether the node is in the closed list.
+	private int _heapIndex = -1;
+	private boolean _closed = false;
+	
 	public GeoNode(GeoLocation location)
 	{
 		_location = location;
@@ -147,6 +151,26 @@ public class GeoNode
 	/**
 	 * Resets all A* costs to initial values.
 	 */
+	public int getHeapIndex()
+	{
+		return _heapIndex;
+	}
+	
+	public void setHeapIndex(int heapIndex)
+	{
+		_heapIndex = heapIndex;
+	}
+	
+	public boolean isClosed()
+	{
+		return _closed;
+	}
+	
+	public void setClosed()
+	{
+		_closed = true;
+	}
+	
 	public void resetCosts()
 	{
 		_gCost = -1;
@@ -161,8 +185,10 @@ public class GeoNode
 		_isInUse = false;
 		_next = null;
 		
-		// Reset A* costs when freeing the node.
+		// Reset A* costs and list membership when freeing the node.
 		resetCosts();
+		_heapIndex = -1;
+		_closed = false;
 	}
 	
 	@Override

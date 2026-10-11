@@ -30,6 +30,7 @@ import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.GeneralConfig;
 import org.l2jmobius.gameserver.config.NpcConfig;
+import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.instance.Door;
 import org.l2jmobius.gameserver.model.actor.instance.Fence;
@@ -124,6 +125,12 @@ public class WorldRegion
 					// Start HP/MP/CP regeneration task.
 					wo.asAttackable().getStatus().startHpMpRegeneration();
 					RandomAnimationTaskManager.getInstance().add(wo.asNpc());
+					
+					// Roaming fake players get back the buffs the region's sleep took.
+					if (wo.isFakePlayer())
+					{
+						FakePlayerPvpManager.getInstance().onRegionWake(wo.asNpc());
+					}
 				}
 				else if (wo.isNpc())
 				{

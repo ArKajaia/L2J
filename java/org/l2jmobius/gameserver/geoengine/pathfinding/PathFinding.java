@@ -21,8 +21,8 @@
 package org.l2jmobius.gameserver.geoengine.pathfinding;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -328,8 +328,7 @@ public class PathFinding
 	 */
 	private NodeBuffer alloc(int size)
 	{
-		NodeBuffer current = null;
-		
+		// The smallest size that fits first (a bigger buffer lets the search wander further): a free buffer of its pool, or a new one while the pool has room.
 		for (BufferInfo info : _allBuffers)
 		{
 			if (info.mapSize >= size)
@@ -338,28 +337,35 @@ public class PathFinding
 				{
 					if (buffer.lock())
 					{
-						current = buffer;
-						break;
+						return buffer;
 					}
 				}
 				
-				if (current != null)
+				synchronized (info)
 				{
-					break;
-				}
-				
-				// Not found, allocate temporary buffer.
-				current = new NodeBuffer(info.mapSize);
-				current.lock();
-				if (info.buffers.size() < info.count)
-				{
-					info.buffers.add(current);
-					break;
+					if (info.buffers.size() < info.count)
+					{
+						final NodeBuffer buffer = new NodeBuffer(info.mapSize);
+						buffer.lock();
+						info.buffers.add(buffer);
+						return buffer;
+					}
 				}
 			}
 		}
 		
-		return current;
+		// Every pool that fits is full and busy: a temporary buffer of the smallest size that fits.
+		for (BufferInfo info : _allBuffers)
+		{
+			if (info.mapSize >= size)
+			{
+				final NodeBuffer buffer = new NodeBuffer(info.mapSize);
+				buffer.lock();
+				return buffer;
+			}
+		}
+		
+		return null;
 	}
 	
 	/**
@@ -375,7 +381,8 @@ public class PathFinding
 		{
 			mapSize = size;
 			count = cnt;
-			buffers = Collections.synchronizedList(new ArrayList<>(count));
+			// Copy on write: alloc() goes through it without a lock while another thread may add a buffer.
+			buffers = new CopyOnWriteArrayList<>();
 		}
 	}
 	

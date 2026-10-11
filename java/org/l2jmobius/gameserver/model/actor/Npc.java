@@ -421,16 +421,28 @@ public class Npc extends Creature
 	@Override
 	public void updateAbnormalEffect()
 	{
+		// A fake player's info is the same for every viewer: build it once and send copies.
+		final FakePlayerInfo fakePlayerInfo;
+		if (_isFakePlayer)
+		{
+			fakePlayerInfo = new FakePlayerInfo(this);
+			fakePlayerInfo.sendInBroadcast();
+		}
+		else
+		{
+			fakePlayerInfo = null;
+		}
+
 		World.getInstance().forEachVisibleObject(this, Player.class, player ->
 		{
 			if (!isVisibleFor(player))
 			{
 				return;
 			}
-			
+
 			if (_isFakePlayer)
 			{
-				player.sendPacket(new FakePlayerInfo(this));
+				player.sendPacket(fakePlayerInfo);
 			}
 			else if (getRunSpeed() == 0)
 			{

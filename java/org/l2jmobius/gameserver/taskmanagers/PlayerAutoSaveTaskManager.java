@@ -60,7 +60,9 @@ public class PlayerAutoSaveTaskManager implements Runnable
 			Player player;
 			Long time;
 			
-			while (iterator.hasNext())
+			// Spread the saves to prevent an SQL flood, but enough per second for everyone online to be saved once per interval.
+			int saves = (PLAYER_TIMES.size() / Math.max(1, GeneralConfig.CHAR_DATA_STORE_INTERVAL / 1000)) + 1;
+			while (iterator.hasNext() && (saves > 0))
 			{
 				entry = iterator.next();
 				player = entry.getKey();
@@ -70,9 +72,13 @@ public class PlayerAutoSaveTaskManager implements Runnable
 				{
 					if ((player != null) && player.isOnline())
 					{
-						player.autoSave();
 						PLAYER_TIMES.put(player, currentTime + GeneralConfig.CHAR_DATA_STORE_INTERVAL);
-						break; // Prevent SQL flood.
+						
+						// The database work runs on the instant pool, not on this scheduled thread.
+						final Player saved = player;
+						ThreadPool.execute(saved::autoSave);
+						saves--;
+						continue;
 					}
 					
 					iterator.remove();
