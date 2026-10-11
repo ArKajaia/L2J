@@ -7,9 +7,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.NpcConfig;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.RatesConfig;
@@ -27,6 +29,7 @@ import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
 import org.l2jmobius.gameserver.model.actor.instance.Chest;
+import org.l2jmobius.gameserver.model.actor.instance.FakePlayerPvpServitor;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.hiddenquest.task.AbstractHiddenTask;
@@ -78,12 +81,26 @@ public class ResonantMonsterManager
 
 	/** Set on a rival fake player, to the object id of the Resonant monster it came for. */
 	private static final String RIVAL_VAR = "RESONANT_RIVAL";
+	/** Set for good on a fake player that came to help a party against a Resonant monster: it never comes back to the party from town and never takes kill-steal revenge. */
+	private static final String HELPER_VAR = "RESONANT_HELPER";
 	/** How far from the Resonant monster a fake player turns up, so it runs into the fight. */
 	private static final int JOIN_MIN_DISTANCE = 600;
 	private static final int JOIN_MAX_DISTANCE = 900;
+	/** How often a fight with joiners is checked for being given up ({@link #checkFight(Monster, Watch)}). */
+	private static final int WATCH_INTERVAL_MS = 15000;
+	/** A fight is given up once no living player of the monster's aggro list is this close to it, twice in a row. */
+	private static final int ABANDON_RANGE = 2000;
 
 	/** Resonant monster object id -&gt; the fake players that joined its fight. */
 	private final Map<Integer, Set<Npc>> _joiners = new ConcurrentHashMap<>();
+	/** Resonant monster object id -&gt; the check of its fight while it has joiners. */
+	private final Map<Integer, Watch> _watches = new ConcurrentHashMap<>();
+
+	private static final class Watch
+	{
+		private volatile ScheduledFuture<?> _task;
+		private int _idleChecks;
+	}
 
 	protected ResonantMonsterManager()
 	{
@@ -497,7 +514,7 @@ public class ResonantMonsterManager
 		}
 
 		final FakePlayerPvpManager fakes = FakePlayerPvpManager.getInstance();
-		if (!fakes.isEnabled() || (fakes.getFakePlayers().size() >= FakePlayerPvpConfig.MAX_ALIVE))
+		if (!fakes.isEnabled() || ((FakePlayerPvpConfig.MAX_ALIVE > 0) && (fakes.getFakePlayers().size() >= FakePlayerPvpConfig.MAX_ALIVE)))
 		{
 			return null;
 		}
@@ -522,11 +539,13 @@ public class ResonantMonsterManager
 		}
 
 		_joiners.computeIfAbsent(monster.getObjectId(), _ -> ConcurrentHashMap.newKeySet()).add(fake);
+		watch(monster);
 		sendToAttackers(monster, fake.getName() + " joins the fight against " + monster.getName() + "!");
 
 		final boolean wantsToHelp = helper != null ? helper : (Rnd.get(100) < ResonantMonsterConfig.FAKE_HELPER_CHANCE);
-		if (wantsToHelp && FakePartyManager.getInstance().joinAsHelper(host, fake))
+		if (wantsToHelp && FakePartyManager.getInstance().joinAsHelper(host, fake, monster))
 		{
+			fake.getVariables().set(HELPER_VAR, true);
 			fakes.assistFight(fake.asAttackable(), monster);
 		}
 		else
@@ -549,6 +568,12 @@ public class ResonantMonsterManager
 	 */
 	public void onResonantGone(Monster monster)
 	{
+		final Watch watch = _watches.remove(monster.getObjectId());
+		if ((watch != null) && (watch._task != null))
+		{
+			watch._task.cancel(false);
+		}
+
 		final Set<Npc> joiners = _joiners.remove(monster.getObjectId());
 		if ((joiners == null) || joiners.isEmpty())
 		{
@@ -565,8 +590,53 @@ public class ResonantMonsterManager
 	}
 
 	/**
+	 * Starts checking a Resonant monster's fight for being given up, once, when its first joiner comes.
+	 * @param monster the Resonant monster
+	 */
+	private void watch(Monster monster)
+	{
+		_watches.computeIfAbsent(monster.getObjectId(), _ ->
+		{
+			final Watch watch = new Watch();
+			watch._task = ThreadPool.scheduleAtFixedRate(() -> checkFight(monster, watch), WATCH_INTERVAL_MS, WATCH_INTERVAL_MS);
+			return watch;
+		});
+	}
+
+	/**
+	 * A fight with joiners ends without a death too: when the monster is gone, or when no living player of its aggro list has been within {@link #ABANDON_RANGE} of it twice in a row (the party gave up). Then the joiners go their way, and the
+	 * monster's fake player thresholds are armed again for the next attempt ({@code Monster#resetResonantJoins()}).
+	 * @param monster the Resonant monster
+	 * @param watch its check
+	 */
+	private void checkFight(Monster monster, Watch watch)
+	{
+		if (monster.isDead() || !monster.isSpawned() || !monster.isResonant())
+		{
+			onResonantGone(monster);
+			return;
+		}
+
+		for (Player player : getAttackingPlayers(monster))
+		{
+			if (player.isOnline() && !player.isDead() && monster.isInsideRadius3D(player, ABANDON_RANGE))
+			{
+				watch._idleChecks = 0;
+				return;
+			}
+		}
+
+		if (++watch._idleChecks >= 2)
+		{
+			onResonantGone(monster);
+			monster.resetResonantJoins();
+		}
+	}
+
+	/**
 	 * A joiner is done with the fight: a helper leaves the party, a rival is no longer one, and both hunt where they are for a while and then log off like the other fake players ({@code FakePlayerPvpManager#onLeaveParty}). One still fighting
-	 * a player finishes that first.
+	 * (a player, or the party's next monster) finishes that first; one that keeps fighting drops its fight when it goes, so it doesn't stay in the party's fight as an outsider. A helper that died leaves the party where it lies (it doesn't come back
+	 * from town, see {@code FakePartyManager#onFakeDecay}).
 	 * @param fake the fake player
 	 * @param attempts how many times it was already put off
 	 */
@@ -575,16 +645,29 @@ public class ResonantMonsterManager
 		if (fake.isDead() || !fake.isSpawned())
 		{
 			clearRival(fake);
+			if (FakePartyManager.getInstance().isInPlayerParty(fake))
+			{
+				FakePartyManager.getInstance().leave(fake, false, true);
+			}
 			return;
 		}
 
-		if (FakePlayerPvpManager.isFightingPvp(fake) && (attempts < 10))
+		if ((FakePlayerPvpManager.isFightingPvp(fake) || fake.isInCombat()) && (attempts < 10))
 		{
 			ThreadPool.schedule(() -> release(fake, attempts + 1), Math.max(10, ResonantMonsterConfig.FAKE_LEAVE_DELAY) * 1000L);
 			return;
 		}
 
 		clearRival(fake);
+		if (fake.isAttackable())
+		{
+			fake.asAttackable().clearAggroList();
+		}
+		if (fake.hasAI())
+		{
+			fake.getAI().setIntention(Intention.ACTIVE);
+		}
+
 		if (FakePartyManager.getInstance().isInPlayerParty(fake))
 		{
 			FakePartyManager.getInstance().leave(fake, false, false);
@@ -609,7 +692,27 @@ public class ResonantMonsterManager
 	 */
 	public static boolean isRival(Creature creature)
 	{
-		return (creature != null) && creature.isNpc() && creature.asNpc().hasVariables() && (creature.asNpc().getVariables().getInt(RIVAL_VAR, 0) != 0);
+		final Creature fake = ownerOf(creature);
+		return (fake != null) && fake.isNpc() && fake.asNpc().hasVariables() && (fake.asNpc().getVariables().getInt(RIVAL_VAR, 0) != 0);
+	}
+
+	/**
+	 * @param creature a creature
+	 * @return {@code true} if {@code creature} (or the fake player whose servitor it is) came to help a party against a Resonant monster: it never comes back to the party from town and never takes kill-steal revenge
+	 */
+	public static boolean isHelper(Creature creature)
+	{
+		final Creature fake = ownerOf(creature);
+		return (fake != null) && fake.isNpc() && fake.asNpc().hasVariables() && fake.asNpc().getVariables().getBoolean(HELPER_VAR, false);
+	}
+
+	/**
+	 * @param creature a creature
+	 * @return the fake player a fake player's servitor belongs to, else {@code creature} itself
+	 */
+	public static Creature ownerOf(Creature creature)
+	{
+		return creature instanceof FakePlayerPvpServitor servitor ? servitor.getOwner() : creature;
 	}
 
 	/**

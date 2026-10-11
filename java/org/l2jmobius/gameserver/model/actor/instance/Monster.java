@@ -139,6 +139,8 @@ public class Monster extends Attackable
 	private volatile double[] _resonantRaidMults = null;
 	/** The fake player thresholds (ResonantFakeJoinAtHpPercent) this fight already passed, one bit each. */
 	private int _resonantJoinsPassed = 0;
+	/** Set when a given-up fight's joiners were sent away: the next hit counts the thresholds above the monster's HP as passed and arms the others again. */
+	private boolean _resonantJoinsRearm = false;
 
 	public Monster(NpcTemplate template)
 	{
@@ -1613,6 +1615,7 @@ public class Monster extends Attackable
 	{
 		_resonantFled = false;
 		_resonantJoinsPassed = 0;
+		_resonantJoinsRearm = false;
 		_resonantRaidMults = null;
 		if (!_resonant && (_resonantAve == null))
 		{
@@ -1665,7 +1668,16 @@ public class Monster extends Attackable
 		final int newlyPassed;
 		synchronized (this)
 		{
-			final int passed = ResonantMonsterManager.passThresholds(_resonantJoinsPassed, (getCurrentHp() * 100.0) / getMaxHp(), thresholds);
+			final double hpPercent = (getCurrentHp() * 100.0) / getMaxHp();
+			if (_resonantJoinsRearm)
+			{
+				// A new attempt after a given-up fight: the thresholds it is already below don't call anybody now.
+				_resonantJoinsRearm = false;
+				_resonantJoinsPassed = ResonantMonsterManager.passThresholds(0, hpPercent, thresholds);
+				return;
+			}
+
+			final int passed = ResonantMonsterManager.passThresholds(_resonantJoinsPassed, hpPercent, thresholds);
 			newlyPassed = Integer.bitCount(passed & ~_resonantJoinsPassed);
 			_resonantJoinsPassed = passed;
 		}
@@ -1674,6 +1686,15 @@ public class Monster extends Attackable
 		{
 			ResonantMonsterManager.getInstance().onFakeJoinThreshold(this);
 		}
+	}
+
+	/**
+	 * The players gave up the fight and its joiners were sent away ({@link ResonantMonsterManager}): the fake player thresholds are armed again for the next attempt, from wherever the monster's HP is then.
+	 */
+	public synchronized void resetResonantJoins()
+	{
+		_resonantJoinsPassed = 0;
+		_resonantJoinsRearm = true;
 	}
 
 	/**
@@ -2214,7 +2235,7 @@ public class Monster extends Attackable
 		{
 			for (Player player : robbed)
 			{
-				player.sendMessage(killer.getName() + " stole the soul of " + getName() + "!");
+				player.sendMessage(ResonantMonsterManager.ownerOf(killer).getName() + " stole the soul of " + getName() + "!");
 			}
 		}
 		if (isResonant())
