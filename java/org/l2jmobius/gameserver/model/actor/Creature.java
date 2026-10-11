@@ -4987,12 +4987,15 @@ public abstract class Creature extends WorldObject
 				final boolean dangerousFall = isMonster() && (Math.abs(dz) > 100) && (distance < 500);
 				if (!directMove && (!isPlayer() || ((originalDistance - distance) > pathfindingThreshold) || dangerousFall) && !isAfraid() && !isInVehicle)
 				{
+					// An NPC that can walk straight to its destination does: the line check costs a fraction of a path search, which NPCs would otherwise run on every move.
+					final boolean clearLine = !isPlayer() && !dangerousFall && GeoEngine.getInstance().canMoveToTarget(curX, curY, curZ, originalX, originalY, originalZ, getInstanceId());
+					
 					// Path calculation -- overrides previous movement check.
-					move.geoPath = PathFinding.getInstance().findPath(curX, curY, curZ, originalX, originalY, originalZ, getInstanceId(), isPlayer());
+					move.geoPath = clearLine ? null : PathFinding.getInstance().findPath(curX, curY, curZ, originalX, originalY, originalZ, getInstanceId(), isPlayer());
 					boolean found = (move.geoPath != null) && (move.geoPath.size() > 1);
 					
 					// A single route point means the destination is reachable in a straight line (straight segments are merged into their end point).
-					boolean straightLine = (move.geoPath != null) && (move.geoPath.size() == 1);
+					boolean straightLine = clearLine || ((move.geoPath != null) && (move.geoPath.size() == 1));
 					
 					// If path not found and this is an Attackable, move to the closest reachable point around the destination instead.
 					if (!found && !straightLine && isAttackable())
