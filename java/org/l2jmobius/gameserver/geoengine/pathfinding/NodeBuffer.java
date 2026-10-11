@@ -20,9 +20,9 @@
  */
 package org.l2jmobius.gameserver.geoengine.pathfinding;
 
-import java.util.HashSet;
-import java.util.PriorityQueue;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.l2jmobius.gameserver.config.GeoEngineConfig;
@@ -38,9 +38,13 @@ public class NodeBuffer
 	private final int _mapSize;
 	private final GeoNode[][] _buffer;
 	
-	// A* specific data structures.
-	private final PriorityQueue<GeoNode> _openList;
-	private final Set<GeoNode> _closedList;
+	// A* open list: a binary min-heap ordered by F cost, then H cost. Each node keeps its heap index, so finding and removing it need no scan of the list (see GeoNode).
+	// The closed list is a flag on the node.
+	private GeoNode[] _openList = new GeoNode[256];
+	private int _openSize = 0;
+	
+	// The nodes this search put in use, so free() resets only those instead of the whole buffer.
+	private final List<GeoNode> _usedNodes = new ArrayList<>();
 	
 	private int _baseX = 0;
 	private int _baseY = 0;
@@ -55,16 +59,6 @@ public class NodeBuffer
 	{
 		_mapSize = size;
 		_buffer = new GeoNode[_mapSize][_mapSize];
-		_openList = new PriorityQueue<>((a, b) ->
-		{
-			if (a.getFCost() != b.getFCost())
-			{
-				return Double.compare(a.getFCost(), b.getFCost());
-			}
-			
-			return Double.compare(a.getHCost(), b.getHCost());
-		});
-		_closedList = new HashSet<>();
 	}
 	
 	public final boolean lock()
@@ -101,16 +95,16 @@ public class NodeBuffer
 		_current.setHCost(getCost(x, y, z));
 		_current.calculateFCost();
 		
-		_openList.add(_current);
+		openListAdd(_current);
 		
 		for (int count = 0; count < MAX_ITERATIONS; count++)
 		{
-			if (_openList.isEmpty())
+			if (_openSize == 0)
 			{
 				return null; // No path found.
 			}
 			
-			_current = _openList.poll();
+			_current = openListPoll();
 			
 			// Check if we reached the target.
 			if ((_current.getLocation().getNodeX() == _targetX) && (_current.getLocation().getNodeY() == _targetY) && (Math.abs(_current.getLocation().getZ() - _targetZ) < 64))
@@ -118,7 +112,7 @@ public class NodeBuffer
 				return _current; // Found target.
 			}
 			
-			_closedList.add(_current);
+			_current.setClosed();
 			
 			// Get and process neighbors.
 			getNeighbors();
@@ -130,21 +124,14 @@ public class NodeBuffer
 	public void free()
 	{
 		_current = null;
-		_openList.clear();
-		_closedList.clear();
+		Arrays.fill(_openList, 0, _openSize, null);
+		_openSize = 0;
 		
-		GeoNode node;
-		for (int i = 0; i < _mapSize; i++)
+		for (int i = 0; i < _usedNodes.size(); i++)
 		{
-			for (int j = 0; j < _mapSize; j++)
-			{
-				node = _buffer[i][j];
-				if (node != null)
-				{
-					node.free();
-				}
-			}
+			_usedNodes.get(i).free();
 		}
+		_usedNodes.clear();
 		
 		_lock.unlock();
 	}
@@ -242,10 +229,12 @@ public class NodeBuffer
 		{
 			result = new GeoNode(new GeoLocation(x, y, z));
 			_buffer[aX][aY] = result;
+			_usedNodes.add(result);
 		}
 		else if (!result.isInUse())
 		{
 			result.setInUse();
+			_usedNodes.add(result);
 			
 			// Re-init node if needed.
 			if (result.getLocation() != null)
@@ -282,7 +271,7 @@ public class NodeBuffer
 		}
 		
 		// Skip if already in closed list.
-		if (_closedList.contains(newNode))
+		if (newNode.isClosed())
 		{
 			return newNode;
 		}
@@ -305,7 +294,7 @@ public class NodeBuffer
 		final double newGCost = _current.getGCost() + weight;
 		
 		// Check if this node is already in open list.
-		final boolean inOpenList = _openList.contains(newNode);
+		final boolean inOpenList = newNode.getHeapIndex() >= 0;
 		
 		// If not in open list or we found a better path.
 		if (!inOpenList || (newGCost < newNode.getGCost()))
@@ -318,17 +307,134 @@ public class NodeBuffer
 			
 			if (!inOpenList)
 			{
-				_openList.add(newNode);
+				openListAdd(newNode);
 			}
 			else
 			{
-				// Update position in priority queue.
-				_openList.remove(newNode);
-				_openList.add(newNode);
+				// Its cost went down: take it out and put it back, which keeps the order of equal cost nodes (and so the paths) as with the PriorityQueue used before.
+				openListRemove(newNode);
+				openListAdd(newNode);
 			}
 		}
 		
 		return newNode;
+	}
+	
+	private void openListAdd(GeoNode node)
+	{
+		if (_openSize == _openList.length)
+		{
+			_openList = Arrays.copyOf(_openList, _openSize * 2);
+		}
+		
+		_openList[_openSize] = node;
+		node.setHeapIndex(_openSize);
+		siftUp(_openSize++);
+	}
+	
+	private GeoNode openListPoll()
+	{
+		final GeoNode first = _openList[0];
+		first.setHeapIndex(-1);
+		final GeoNode last = _openList[--_openSize];
+		_openList[_openSize] = null;
+		if (_openSize > 0)
+		{
+			_openList[0] = last;
+			last.setHeapIndex(0);
+			siftDown(0);
+		}
+		
+		return first;
+	}
+	
+	private void openListRemove(GeoNode node)
+	{
+		final int index = node.getHeapIndex();
+		node.setHeapIndex(-1);
+		final int lastIndex = --_openSize;
+		if (lastIndex == index)
+		{
+			_openList[index] = null;
+			return;
+		}
+		
+		final GeoNode moved = _openList[lastIndex];
+		_openList[lastIndex] = null;
+		_openList[index] = moved;
+		moved.setHeapIndex(index);
+		siftDown(index);
+		if (_openList[index] == moved)
+		{
+			siftUp(index);
+		}
+	}
+	
+	private void siftUp(int index)
+	{
+		final GeoNode node = _openList[index];
+		int i = index;
+		while (i > 0)
+		{
+			final int parentIndex = (i - 1) >>> 1;
+			final GeoNode parent = _openList[parentIndex];
+			if (!isCheaper(node, parent))
+			{
+				break;
+			}
+			
+			_openList[i] = parent;
+			parent.setHeapIndex(i);
+			i = parentIndex;
+		}
+		
+		_openList[i] = node;
+		node.setHeapIndex(i);
+	}
+	
+	private void siftDown(int index)
+	{
+		final GeoNode node = _openList[index];
+		int i = index;
+		final int half = _openSize >>> 1;
+		while (i < half)
+		{
+			int childIndex = (i << 1) + 1;
+			GeoNode child = _openList[childIndex];
+			final int rightIndex = childIndex + 1;
+			if ((rightIndex < _openSize) && isCheaper(_openList[rightIndex], child))
+			{
+				childIndex = rightIndex;
+				child = _openList[childIndex];
+			}
+			
+			if (!isCheaper(child, node))
+			{
+				break;
+			}
+			
+			_openList[i] = child;
+			child.setHeapIndex(i);
+			i = childIndex;
+		}
+		
+		_openList[i] = node;
+		node.setHeapIndex(i);
+	}
+	
+	/**
+	 * @param a a node
+	 * @param b another node
+	 * @return {@code true} if {@code a} comes first in the open list: lower F cost, or the same F cost and a lower H cost
+	 */
+	private static boolean isCheaper(GeoNode a, GeoNode b)
+	{
+		if (a.getFCost() != b.getFCost())
+		{
+			return a.getFCost() < b.getFCost();
+		}
+		
+		return a.getHCost() < b.getHCost();
 	}
 	
 	private boolean isHighWeight(int x, int y, int z)
