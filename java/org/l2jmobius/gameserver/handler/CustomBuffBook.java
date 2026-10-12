@@ -96,7 +96,7 @@ public class CustomBuffBook implements IItemHandler
 		
 		if (item != null)
 		{
-			sb.append("<font color=\"LEVEL\">Coins Available:</font> <font color=\"00FFFF\"><b>").append(item.getCount()).append("</b></font><br>");
+			sb.append("<font color=\"LEVEL\">Medals Available:</font> <font color=\"00FFFF\"><b>").append(item.getCount()).append("</b></font><br>");
 		}
 		
 		if (totalSkills == 0)

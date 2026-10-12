@@ -2,9 +2,9 @@
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
 	<!--
 	Night Market: Moonlit Wares.
-	Sealed Caches are only traded up, never sold: every cache holds Gold Dragons (hot zone coins), so selling one for coins - or for
+	Sealed Caches are only traded up, never sold: every cache holds Dragon Coins (hot zone coins), so selling one for coins - or for
 	anything coins buy, like Adena or Ancient Adena - lets players buy caches with their own contents. The caches handed in hold more
-	Gold Dragons on average than the one they get (5 Common = 15,000 vs Rare 9,000; 4 Rare = 36,000 vs Epic 27,500), so a trade-up
+	Dragon Coins on average than the one they get (5 Common = 15,000 vs Rare 9,000; 4 Rare = 36,000 vs Epic 27,500), so a trade-up
 	can't make coins; it is for the better materials of the higher tier.
 	-->
 	<npcs>
@@ -19,7 +19,7 @@
 		<production count="1" id="6509" /> <!-- Sealed Cache (Epic) -->
 	</item>
 	<item>
-		<ingredient count="3000" id="3481" /> <!-- Gold Dragon -->
+		<ingredient count="3000" id="3481" /> <!-- Dragon Coin -->
 		<production count="1" id="3936" /> <!-- Blessed Scroll of Resurrection -->
 	</item>
 </list>

@@ -197,7 +197,7 @@ final class FakePlayerTownStore
 	};
 	/**
 	 * What a black market seller fences at night (see {@link #createBlackMarket(int)}): Sealed Caches and the night lures fishermen don't sell.<br>
-	 * A cache always costs more than what is inside sells to a shop for on average (Common about 306,000, Rare 977,000, Epic 3,150,000 Adena: its Gold Dragons at 100 each plus its materials), so buying caches to sell their contents never pays.
+	 * A cache always costs more than what is inside sells to a shop for on average (Common about 306,000, Rare 977,000, Epic 3,150,000 Adena: its Dragon Coins at 100 each plus its materials), so buying caches to sell their contents never pays.
 	 */
 	private static final Rare[] FENCED =
 	{
