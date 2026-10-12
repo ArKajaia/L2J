@@ -26,6 +26,7 @@ public class OraclesWarchiefsConfig
 	public static int GLIMPSE_DISTANCE;
 	public static int DOOM_MAX_STACKS;
 	public static int DOOM_SPREAD_RANGE;
+	public static int DOOM_SPREAD_MAX_TARGETS;
 	public static double DOOM_HIEROPHANT_REUSE;
 
 	// Totem Warchiefs
@@ -43,6 +44,10 @@ public class OraclesWarchiefsConfig
 	public static int FLAME_TOTEM_MAX_TARGETS;
 	public static int FLAME_TOTEM_PULSE;
 	public static int FLAME_TOTEM_MAX_COUNT;
+	public static double FLAME_TOTEM_OVERLAP_DAMAGE;
+	public static double TOTEM_HP_SHARE;
+	public static double HORDE_TOTEM_HP_SHARE;
+	public static double GREAT_TOTEM_HP_SHARE;
 
 	// Retired buffs
 	public static boolean RETIRED_SKILLS_REMOVE;
@@ -54,7 +59,7 @@ public class OraclesWarchiefsConfig
 
 		DOOM_STILL_BONUS = Math.max(1, config.getDouble("DoomStillBonus", 1.5));
 		DOOM_STILL_RANGE = Math.max(0, config.getInt("DoomStillRange", 300));
-		SALVATION_RETURN = Math.max(0, config.getDouble("SalvationReturn", 1.0));
+		SALVATION_RETURN = Math.max(0, config.getDouble("SalvationReturn", 0.6));
 		FULFILMENT_MULTIPLIER = Math.max(1, config.getDouble("FulfilmentMultiplier", 1.5));
 		RECKONING_MAX_SHARE = Math.min(1, Math.max(0, config.getDouble("ReckoningMaxShare", 0.25)));
 		GLIMPSE_HP_THRESHOLD = Math.min(1, Math.max(0.01, config.getDouble("GlimpseHpThreshold", 0.3)));
@@ -62,6 +67,7 @@ public class OraclesWarchiefsConfig
 		GLIMPSE_DISTANCE = Math.max(50, config.getInt("GlimpseDistance", 300));
 		DOOM_MAX_STACKS = Math.max(1, config.getInt("DoomMaxStacks", 5));
 		DOOM_SPREAD_RANGE = Math.max(0, config.getInt("DoomSpreadRange", 400));
+		DOOM_SPREAD_MAX_TARGETS = Math.max(0, config.getInt("DoomSpreadMaxTargets", 4));
 		DOOM_HIEROPHANT_REUSE = Math.min(1, Math.max(0, config.getDouble("DoomHierophantReuse", 0.5)));
 
 		TOTEM_MAX_COUNT = Math.max(1, config.getInt("TotemMaxCount", 3));
@@ -78,6 +84,10 @@ public class OraclesWarchiefsConfig
 		FLAME_TOTEM_MAX_TARGETS = Math.max(1, config.getInt("FlameTotemMaxTargets", 10));
 		FLAME_TOTEM_PULSE = Math.max(500, config.getInt("FlameTotemPulse", 1667));
 		FLAME_TOTEM_MAX_COUNT = Math.max(1, config.getInt("FlameTotemMaxCount", 3));
+		FLAME_TOTEM_OVERLAP_DAMAGE = Math.min(1, Math.max(0, config.getDouble("FlameTotemOverlapDamage", 0.5)));
+		TOTEM_HP_SHARE = Math.max(0.05, config.getDouble("TotemHpShare", 0.75));
+		HORDE_TOTEM_HP_SHARE = Math.max(0.05, config.getDouble("HordeTotemHpShare", 1.1));
+		GREAT_TOTEM_HP_SHARE = Math.max(0.05, config.getDouble("GreatTotemHpShare", 2.0));
 
 		RETIRED_SKILLS_REMOVE = config.getBoolean("RetiredSkillsRemove", true);
 		RETIRED_SKILLS.clear();

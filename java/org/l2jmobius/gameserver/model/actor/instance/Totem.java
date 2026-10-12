@@ -33,13 +33,15 @@ import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.InstanceType;
 import org.l2jmobius.gameserver.model.actor.holders.player.Totems;
+import org.l2jmobius.gameserver.model.actor.stat.NpcStat;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
 import org.l2jmobius.gameserver.network.serverpackets.DeleteObject;
 
 /**
  * A totem planted by a Totem Warchief (Warcryer line): it stands where it was planted and pulses to everyone around every few seconds, see {@link Totems}.<br>
- * Monsters and the Warchief's enemies can break it; the Great Totem can't be targeted or hurt.
+ * Monsters and the Warchief's enemies can break it; the Great Totem can't be targeted or hurt. It is as high level as its Warchief, its max HP is a part of the Warchief's (when planted), and its P. Def. and M. Def. are those of its NPC template scaled to its level.
  * @author Mobius
  */
 public class Totem extends Npc
@@ -52,6 +54,7 @@ public class Totem extends Npc
 	private final boolean _great;
 	private final int _skillLevel;
 	private final boolean _forced;
+	private final int _maxHp;
 	private ScheduledFuture<?> _pulseTask;
 
 	/**
@@ -63,8 +66,9 @@ public class Totem extends Npc
 	 * @param great {@code true} for the Great Totem of the Horde-Father
 	 * @param skillLevel the level of the skill that planted it (the level of its echoes)
 	 * @param forced {@code true} if it was planted with Ctrl held: its pulses also reach the white players and fake players around, see {@link Totems}
+	 * @param maxHp its max HP
 	 */
-	public Totem(NpcTemplate template, Creature owner, Set<Totems.Kind> kinds, int range, long lifetime, boolean great, int skillLevel, boolean forced)
+	public Totem(NpcTemplate template, Creature owner, Set<Totems.Kind> kinds, int range, long lifetime, boolean great, int skillLevel, boolean forced, int maxHp)
 	{
 		super(template);
 		setInstanceType(InstanceType.Totem);
@@ -74,6 +78,7 @@ public class Totem extends Npc
 		_great = great;
 		_skillLevel = skillLevel;
 		_forced = forced;
+		_maxHp = maxHp;
 		_plantedAt = System.currentTimeMillis();
 		_expiresAt = _plantedAt + lifetime;
 		setInstanceId(owner.getInstanceId());
@@ -246,6 +251,72 @@ public class Totem extends Npc
 		});
 	}
 	
+	/**
+	 * @return as high level as its Warchief
+	 */
+	@Override
+	public int getLevel()
+	{
+		return _owner != null ? _owner.getLevel() : super.getLevel();
+	}
+
+	@Override
+	public void initCharStat()
+	{
+		setStat(new TotemStat(this));
+	}
+
+	/**
+	 * A totem's level, max HP and defences follow its Warchief (see {@link Totem}).
+	 */
+	private static class TotemStat extends NpcStat
+	{
+		TotemStat(Totem totem)
+		{
+			super(totem);
+		}
+
+		private Totem getTotem()
+		{
+			return (Totem) getActiveChar();
+		}
+
+		/**
+		 * @return its level over that of its NPC template, by which its defences scale
+		 */
+		private double getLevelScale()
+		{
+			final int templateLevel = getTotem().getTemplate().getLevel();
+			return templateLevel > 0 ? (double) getTotem().getLevel() / templateLevel : 1;
+		}
+
+		@Override
+		public byte getLevel()
+		{
+			return (byte) getTotem().getLevel();
+		}
+
+		@Override
+		public int getMaxHp()
+		{
+			// Not yet known while the totem is being made.
+			final int maxHp = getTotem()._maxHp;
+			return maxHp > 0 ? maxHp : super.getMaxHp();
+		}
+
+		@Override
+		public double getPDef(Creature target)
+		{
+			return super.getPDef(target) * getLevelScale();
+		}
+
+		@Override
+		public double getMDef(Creature target, Skill skill)
+		{
+			return super.getMDef(target, skill) * getLevelScale();
+		}
+	}
+
 	@Override
 	public boolean isAutoAttackable(Creature attacker)
 	{

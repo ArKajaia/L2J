@@ -15,7 +15,8 @@
 	(27537, up to 5). The prophecies on enemies are debuffs that roll to land like any debuff.
 	  27530 Prophecy of Doom       enemy, 5 s: 27531 Doom Strike (holy magic damage), x1.5 if
 	                               the target is still within 300 of where it stood.
-	  27532 Prophecy of Salvation  ally, 6 s: heals back the damage taken while it was on.
+	  27532 Prophecy of Salvation  ally, 6 s: heals back 60% of the damage taken while it was on
+	                               (SalvationReturn).
 	  27533 Prophecy of Ruin       enemy, 5 s: 27534 stun if the target cast a skill meanwhile,
 	                               else 27535 silence.
 	  27536 Prophecy of Reckoning  enemy, 5 s: the damage it deals meanwhile is counted; 27563
@@ -28,10 +29,13 @@
 	  27562 Inevitable Doom        Hierophant passive: Prophecy of Doom comes back twice as fast
 	                               (DoomHierophantReuse), stacks up to 5 times on its target (cast
 	                               again before it comes true: one more stack, each adds the damage
-	                               once more) and spreads to the enemies within 200 of its target,
-	                               who can't resist it (Prophecies.java).
-	  27540 Unwritten              Hierophant finale: Doom on every enemy and Salvation on every
-	                               party member within 600 (5 minute reuse).
+	                               once more; once full its time runs on) and spreads with 1 stack
+	                               to up to 4 enemies within 400 of its target that have no Doom,
+	                               who can resist it. A spread Doom doesn't spread again and gives
+	                               no Foresight (Prophecies.java).
+	  27540 Unwritten              Hierophant finale: Doom on every enemy (a stack more on one that
+	                               has a Doom; they don't spread) and Salvation on every party
+	                               member within 600 (5 minute reuse).
 
 	Keep custom skill ids below 32768. The client needs Skillname-e.dat / Skillgrp.dat rows for
 	every id here (client/OraclesWarchiefs). The icons are those of the retired buffs.
@@ -83,7 +87,7 @@
 		<elementPower>20</elementPower>
 	</skill>
 
-	<!-- 27532 PROPHECY OF SALVATION: heals back the damage taken in the next 6 seconds. -->
+	<!-- 27532 PROPHECY OF SALVATION: heals back 60% of the damage taken in the next 6 seconds. -->
 	<skill id="27532" levels="4" name="Prophecy of Salvation">
 		<table name="#magicLevel">44 56 68 78</table>
 		<table name="#mpConsume">35 48 60 72</table>

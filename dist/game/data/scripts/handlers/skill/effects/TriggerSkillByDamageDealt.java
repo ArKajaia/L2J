@@ -48,6 +48,7 @@ public class TriggerSkillByDamageDealt extends AbstractEffect
 	private final InstanceType _attackerType;
 	private int _allowWeapons;
 	private final boolean _isCritical;
+	private final boolean _anyCritical;
 	private final boolean _allowNormalAttack;
 	private final boolean _allowSkillAttack;
 	
@@ -69,7 +70,9 @@ public class TriggerSkillByDamageDealt extends AbstractEffect
 		_skill = new SkillHolder(params.getInt("skillId"), params.getInt("skillLevel", 1));
 		_targetType = params.getEnum("targetType", TargetType.class, TargetType.SELF);
 		_attackerType = params.getEnum("attackerType", InstanceType.class, InstanceType.Creature);
-		_isCritical = params.getBoolean("isCritical", false);
+		// "any": critical hits or not.
+		_anyCritical = params.getString("isCritical", "false").equalsIgnoreCase("any");
+		_isCritical = !_anyCritical && params.getBoolean("isCritical", false);
 		_allowNormalAttack = params.getBoolean("allowNormalAttack", true);
 		_allowSkillAttack = params.getBoolean("allowSkillAttack", false);
 		
@@ -94,7 +97,7 @@ public class TriggerSkillByDamageDealt extends AbstractEffect
 		}
 		
 		// Check if there is dependancy on critical.
-		if (_isCritical != event.isCritical())
+		if (!_anyCritical && (_isCritical != event.isCritical()))
 		{
 			return;
 		}

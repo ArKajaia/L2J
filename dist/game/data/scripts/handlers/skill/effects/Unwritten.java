@@ -24,12 +24,13 @@ import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.holders.player.AreaTargets;
+import org.l2jmobius.gameserver.model.actor.holders.player.Prophecies;
 import org.l2jmobius.gameserver.model.conditions.Condition;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.skill.Skill;
 
 /**
- * Unwritten (Hierophant finale): a prophecy for everyone around. Every enemy in range gets the {@code enemySkillId} prophecy (Doom) and every party member in range the {@code partySkillId} one (Salvation), at the level the Oracle knows them (1 if it doesn't).
+ * Unwritten (Hierophant finale): a prophecy for everyone around. Every enemy in range gets the {@code enemySkillId} prophecy (Doom) and every party member in range the {@code partySkillId} one (Salvation), at the level the Oracle knows them (1 if it doesn't). Its Dooms don't spread; an enemy that has a Doom of the Oracle already gets a stack.
  * @author Mobius
  */
 public class Unwritten extends AbstractEffect
@@ -65,10 +66,14 @@ public class Unwritten extends AbstractEffect
 		final Skill doom = getProphecy(effector, _enemySkillId);
 		if (doom != null)
 		{
-			for (Creature enemy : AreaTargets.getEnemies(effector, effector, _range, doom))
+			// Its Dooms reach every enemy around, so they don't spread (Inevitable Doom) as well.
+			Prophecies.castWithoutSpread(() ->
 			{
-				doom.applyEffects(effector, enemy);
-			}
+				for (Creature enemy : AreaTargets.getEnemies(effector, effector, _range, doom))
+				{
+					doom.applyEffects(effector, enemy);
+				}
+			});
 		}
 		
 		final Skill salvation = getProphecy(effector, _partySkillId);

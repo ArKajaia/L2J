@@ -34,12 +34,14 @@ import org.l2jmobius.gameserver.network.serverpackets.ExRegenMax;
 public class HealOverTime extends AbstractEffect
 {
 	private final double _power;
+	private final boolean _percent;
 	
 	public HealOverTime(Condition attachCond, Condition applyCond, StatSet set, StatSet params)
 	{
 		super(attachCond, applyCond, set, params);
 		
 		_power = params.getDouble("power", 0);
+		_percent = params.getBoolean("percent", false);
 	}
 	
 	@Override
@@ -59,7 +61,7 @@ public class HealOverTime extends AbstractEffect
 			return false;
 		}
 		
-		hp += _power * getTicksMultiplier();
+		hp += (_percent ? (effected.getMaxHp() * _power) / 100 : _power) * getTicksMultiplier();
 		hp = Math.min(hp, maxhp);
 		effected.setCurrentHp(hp);
 		return skill.isToggle();

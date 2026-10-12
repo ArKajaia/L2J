@@ -9,8 +9,9 @@
 	27564        Warchief's Restraint (Warcryer passive, given at 40).
 
 	TOTEMS (the PlantTotem effect, model/actor/holders/player/Totems.java): a totem NPC planted
-	at the Warchief's feet. It pulses every 2 seconds to everyone within 600 and stands 30
-	seconds. Monsters and the Warchief's enemies can break it. One of each kind (but up to 3
+	at the Warchief's feet, as high level as the Warchief, with 75% of its max HP (the Horde
+	110%). It pulses every 2 seconds to everyone within 600 and stands 30 seconds. Monsters and
+	the Warchief's enemies can break it. One of each kind (but up to 3
 	Totems of Flames), 3 at most: a 4th replaces the oldest. It falls
 	when its Warchief dies, leaves or goes 2500 away. A player's totem planted without Ctrl
 	hits monsters and the players and fake players with PvP status; with Ctrl it also hits
@@ -25,17 +26,20 @@
 	                              once, within 900, for 20 seconds, can't be targeted.
 	  27559 Totem of Flames       pulses every 1.67 seconds: burns up to 4 (level 1) to 10 (level
 	                              7+) enemies within 400 with 27560's magic damage (fire), the
-	                              nearest first. 8 levels, learned from 40 to 76.
-	27551 War Drums (stance)      P. Atk. +5%; each hit (27552 Drumbeat) takes 1 second off the
-	                              reuse of every totem skill.
+	                              nearest first; an enemy another of its Totems of Flames burns
+	                              too takes half from it. 8 levels, learned from 40 to 76.
+	27551 War Drums (stance)      P. Atk. +5%; each hit, critical or not (27552 Drumbeat), takes
+	                              1 second off the reuse of the skills that plant a totem (not
+	                              Ancestors, Shatter or Spirit Walk).
 	27553 Shatter                 needs 3 totems up (27557 Totem Circle shows how many): each
 	                              totem pulses once more and explodes on the enemies within 300.
 	27554 Spirit Walk             (Doomcryer) swaps places with a totem (the targeted one, or
 	                              the nearest), needs 1 totem up.
-	27555 Ancestral Bond          (Doomcryer, passive) near its own totem: 27556 echo, P. Def.
-	                              and M. Def. +8%.
+	27555 Ancestral Bond          (Doomcryer, passive) Max HP +6%; near its own totem: 27556
+	                              echo, P. Def. and M. Def. +8%.
 	27561 Spirit Trance           the Warchief turns to ice for 5 seconds while its totems fight:
-	                              paralyzed, P. Def. and M. Def. +300%, HP recovered every second.
+	                              paralyzed, P. Def. and M. Def. +300%, 5 / 6 / 7% of its max HP
+	                              recovered every second.
 	27564 Warchief's Restraint    (passive, given with the class) Steal Essence absorbs half as
 	                              much HP: 40% of the damage instead of 80%. The Overlord line
 	                              keeps the retail 80%.
@@ -192,6 +196,7 @@
 			</effect>
 			<effect name="TriggerSkillByDamageDealt">
 				<attackerType>Creature</attackerType>
+				<isCritical>any</isCritical> <!-- critical hits drum too -->
 				<minDamage>1</minDamage>
 				<chance>100</chance>
 				<skillId>27552</skillId>
@@ -255,7 +260,7 @@
 		</effects>
 	</skill>
 
-	<!-- 27555 ANCESTRAL BOND (Doomcryer, passive): near its own totem, 27556 echo. -->
+	<!-- 27555 ANCESTRAL BOND (Doomcryer, passive): Max HP +6%; near its own totem, 27556 echo. -->
 	<skill id="27555" levels="1" name="Ancestral Bond">
 		<icon>icon.skill1461</icon>
 		<operateType>P</operateType>
@@ -263,7 +268,7 @@
 		<magicLevel>76</magicLevel>
 		<effects>
 			<effect name="Buff">
-				<add stat="maxHp">200</add>
+				<mul stat="maxHp">1.06</mul>
 			</effect>
 		</effects>
 	</skill>
@@ -367,7 +372,7 @@
 	<skill id="27561" levels="3" name="Spirit Trance">
 		<table name="#magicLevel">52 64 76</table>
 		<table name="#mpConsume">55 70 85</table>
-		<table name="#heal">150 250 400</table>
+		<table name="#heal">5 6 7</table> <!-- % of max HP every second -->
 		<icon>icon.skill1391</icon>
 		<operateType>A2</operateType>
 		<targetType>SELF</targetType>
@@ -388,6 +393,7 @@
 			</effect>
 			<effect name="HealOverTime" ticks="1">
 				<power>#heal</power>
+				<percent>true</percent>
 			</effect>
 			<effect name="Paralyze" />
 		</effects>
