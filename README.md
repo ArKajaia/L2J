@@ -700,6 +700,7 @@ Changes from 28 September – 12 October 2026.
 
 ### Client rows
 - **New file format**: the `skillgrp_additions.txt` and `skillname-e_additions.txt` files under `client/` are in the L2ClientDat `skill_begin … skill_end` key=value format. Paste them in again.
+- **Currency and cache rows**: `client/Currencies` has ItemName-e.dat rows that describe what the Gold Dragon (hot zone and arena coin), the Glittering Medal and the three Sealed Caches do on this server, plus a new Gold Dragon icon for EtcItemgrp.dat. The server names match: Glittering Medal (no "Event -") and Sealed Cache (Common/Rare/Epic).
 - **Toggles look like toggles**: the performances, the performer stances, Glimpse and War Drums have `icon_type=6` in Skillgrp.dat instead of 2 (buff), so the client lists them under Toggle and lights their icon while they are on.
 
 ### Warchief and Oracle balance

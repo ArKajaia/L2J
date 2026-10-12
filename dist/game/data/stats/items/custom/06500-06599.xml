@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/items.xsd">
-	<item id="6509" type="EtcItem" name="Big Purple Treasure Chest">
+	<item id="6509" type="EtcItem" name="Sealed Cache (Epic)">
 		<!-- Lucky Loot: Epic Sealed Cache (see config/Custom/LuckyLoot.ini). Always gives Gold Dragons, plus at least 4 random crafting materials: every material rolls on its own (rarer materials have a lower chance), and if too few hit, the table is rolled again until the minimum is reached. -->
 		<set name="icon" val="icon.etc_treasure_box_i04" />
 		<set name="default_action" val="PEEL" />

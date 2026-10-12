@@ -31,7 +31,7 @@ public class ArenaMaster extends Quest
 	private static final int NOBLESSE_BLESSING_SKILL_ID = 1323;
 	
 	/** Entry fee of a run, which is also the price of a quick run. */
-	private static final int ENTRY_FEE_ID = 6393; // Event - Glittering Medal
+	private static final int ENTRY_FEE_ID = 6393; // Glittering Medal
 	private static final long ENTRY_FEE_AMOUNT = 1; // Change this to charge more than 1
 	
 	// Window size and palette (same card style as the hotzone teleporter).
