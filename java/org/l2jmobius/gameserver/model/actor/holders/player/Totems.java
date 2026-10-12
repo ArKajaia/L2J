@@ -92,20 +92,20 @@ public class Totems
 	public static final int SPIRIT_TRANCE_SKILL_ID = 27561;
 	/** The skills that plant a small totem, and what it pulses. */
 	private static final Map<Integer, Kind> PLANT_SKILLS = Map.of(27545, Kind.BLOOD, 27547, Kind.HORDE, 27548, Kind.FROST, 27550, Kind.ANCESTORS, 27559, Kind.FLAME);
-	/** Skills whose reuse War Drums shortens. */
+	/** Skills whose reuse War Drums shortens: the ones that plant a totem, not Totem of Ancestors (a resurrection), Shatter or Spirit Walk. */
 	private static final int[] TOTEM_SKILL_IDS =
 	{
 		27545, // Totem of Blood
 		27547, // Totem of the Horde
 		27548, // Totem of Frost-Teeth
-		27550, // Totem of Ancestors
 		27559, // Totem of Flames
-		27553, // Shatter
-		27554, // Spirit Walk
 	};
 
 	/** The totems of each Warchief, oldest first, by object id. */
 	private static final Map<Integer, List<Totem>> TOTEMS = new ConcurrentHashMap<>();
+
+	/** Totem of Flames: by Warchief and enemy object id, the totem that burns that enemy in full and when it last did; the Warchief's other Totems of Flames burn it for less, see {@link OraclesWarchiefsConfig#FLAME_TOTEM_OVERLAP_DAMAGE}. */
+	private static final Map<Integer, Map<Integer, long[]>> FLAME_BURNS = new ConcurrentHashMap<>();
 
 	private Totems()
 	{
@@ -185,7 +185,8 @@ public class Totems
 
 		final int range = great ? OraclesWarchiefsConfig.GREAT_TOTEM_RANGE : OraclesWarchiefsConfig.TOTEM_RANGE;
 		final int lifetime = great ? OraclesWarchiefsConfig.GREAT_TOTEM_LIFETIME : OraclesWarchiefsConfig.TOTEM_LIFETIME;
-		final Totem totem = new Totem(template, owner, kinds, range, lifetime, great, skillLevel, forced);
+		final double hpShare = great ? OraclesWarchiefsConfig.GREAT_TOTEM_HP_SHARE : kinds.contains(Kind.HORDE) ? OraclesWarchiefsConfig.HORDE_TOTEM_HP_SHARE : OraclesWarchiefsConfig.TOTEM_HP_SHARE;
+		final Totem totem = new Totem(template, owner, kinds, range, lifetime, great, skillLevel, forced, (int) Math.max(1, owner.getMaxHp() * hpShare));
 		totem.setHeading(owner.getHeading());
 		totem.fullRestore();
 		totem.spawnMe(owner.getX(), owner.getY(), owner.getZ());
@@ -281,6 +282,11 @@ public class Totems
 			if (totems.isEmpty())
 			{
 				TOTEMS.remove(owner.getObjectId(), totems);
+			}
+
+			if (getFlameTotems(owner).isEmpty())
+			{
+				FLAME_BURNS.remove(owner.getObjectId());
 			}
 
 			updateCircle(owner);
@@ -413,7 +419,8 @@ public class Totems
 	}
 
 	/**
-	 * Totem of Flames: a pulse burns up to as many enemies as the burn's level allows (its affect limit), never more than {@link OraclesWarchiefsConfig#FLAME_TOTEM_MAX_TARGETS}, within {@link OraclesWarchiefsConfig#FLAME_TOTEM_RANGE} of the totem, the nearest first.
+	 * Totem of Flames: a pulse burns up to as many enemies as the burn's level allows (its affect limit), never more than {@link OraclesWarchiefsConfig#FLAME_TOTEM_MAX_TARGETS}, within {@link OraclesWarchiefsConfig#FLAME_TOTEM_RANGE} of the totem, the nearest first. An enemy that
+	 * another of the Warchief's Totems of Flames burns in full takes {@link OraclesWarchiefsConfig#FLAME_TOTEM_OVERLAP_DAMAGE} of the burn.
 	 * @param owner the Warchief (the damage is its magic)
 	 * @param totem the totem
 	 * @param burn the burn (its power is the damage)
@@ -430,15 +437,34 @@ public class Totems
 		final int maxTargets = (limit > 0) ? Math.min(limit, OraclesWarchiefsConfig.FLAME_TOTEM_MAX_TARGETS) : OraclesWarchiefsConfig.FLAME_TOTEM_MAX_TARGETS;
 
 		enemies.sort((a, b) -> Double.compare(totem.calculateDistance3D(a), totem.calculateDistance3D(b)));
+		final Map<Integer, long[]> burns = FLAME_BURNS.computeIfAbsent(owner.getObjectId(), id -> new ConcurrentHashMap<>());
+		final long now = System.currentTimeMillis();
+		if (burns.size() > 100)
+		{
+			burns.values().removeIf(last -> (now - last[1]) > 10000);
+		}
+
 		int hits = 0;
 		for (Creature enemy : enemies)
 		{
+			// The totem that burns it in full, as long as it keeps burning it; the Warchief's other Totems of Flames burn it for less.
+			final long[] last = burns.get(enemy.getObjectId());
+			final boolean overlap = (last != null) && (last[0] != totem.getObjectId()) && ((now - last[1]) <= (OraclesWarchiefsConfig.FLAME_TOTEM_PULSE + 250));
+			if (!overlap)
+			{
+				burns.put(enemy.getObjectId(), new long[]
+				{
+					totem.getObjectId(),
+					now
+				});
+			}
+
 			// The flames strike each enemy, not the totem.
 			enemy.broadcastPacket(new MagicSkillUse(totem, enemy, FLAME_VISUAL_ID, 1, 0, 0));
 			AreaTargets.flagFor(owner, enemy);
 			final boolean mcrit = Formulas.calcMCrit(owner.getMCriticalHit(enemy, burn));
 			final byte shld = Formulas.calcShldUse(owner, enemy, burn);
-			final int damage = (int) Formulas.calcMagicDam(owner, enemy, burn, shld, false, false, mcrit);
+			final int damage = (int) (Formulas.calcMagicDam(owner, enemy, burn, shld, false, false, mcrit) * (overlap ? OraclesWarchiefsConfig.FLAME_TOTEM_OVERLAP_DAMAGE : 1));
 			if (damage > 0)
 			{
 				enemy.reduceCurrentHp(damage, owner, burn);
@@ -538,7 +564,7 @@ public class Totems
 	}
 
 	/**
-	 * War Drums: each hit of the Warchief takes some time off the reuse of its totem skills.
+	 * War Drums: each hit of the Warchief takes some time off the reuse of the skills that plant a totem.
 	 * @param owner the Warchief
 	 * @param millis how much
 	 */

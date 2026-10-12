@@ -51,7 +51,7 @@ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
  * of the Oracle come true at once, stronger.
  * <ul>
  * <li>Doom: magic damage, more if the target is still near where it stood when the prophecy landed. It can't be resisted by the target it is cast on. With Inevitable Doom (Hierophant) it is cast faster, stacks up to {@link OraclesWarchiefsConfig#DOOM_MAX_STACKS} times on its
- * target (each stack adds the damage once more) and spreads to the enemies close to its target, who can resist the spread like any debuff.</li>
+ * target (each stack adds the damage once more) and spreads with 1 stack to a few enemies close to its target, who can resist the spread like any debuff. A spread Doom gives no Foresight.</li>
  * <li>Salvation: heals back the damage the ally took while the prophecy was on.</li>
  * <li>Ruin: stuns a target that cast a skill while the prophecy was on, silences one that didn't.</li>
  * <li>Reckoning: the enemy takes back part of the damage it dealt while the prophecy was on, as holy magic damage (at most {@link OraclesWarchiefsConfig#RECKONING_MAX_SHARE} of its max HP).</li>
@@ -97,6 +97,8 @@ public class Prophecies
 		volatile double damageDealt;
 		volatile boolean castSkill;
 		int stacks = 1;
+		/** Spread from another target by Inevitable Doom: it gives no Foresight when it comes true. */
+		boolean spread;
 		ScheduledFuture<?> task;
 
 		Prophecy(Creature oracle, Creature target, Skill skill, BuffInfo info, Kind kind, int resolveSkillId, int resolveSkillLevel, int altSkillId)
@@ -139,6 +141,9 @@ public class Prophecies
 	/** While a Doom spreads: the stacks and the milliseconds left of the Doom it spreads from. */
 	private static final ThreadLocal<long[]> SPREADING = new ThreadLocal<>();
 
+	/** While Unwritten casts its Dooms: they don't spread. */
+	private static final ThreadLocal<Boolean> NO_SPREAD = new ThreadLocal<>();
+
 	private Prophecies()
 	{
 	}
@@ -167,6 +172,7 @@ public class Prophecies
 	{
 		final BuffInfo info = target.getEffectList().getBuffInfoBySkillId(skill.getId());
 		final Prophecy prophecy = new Prophecy(oracle, target, skill, info, kind, resolveSkillId, resolveSkillLevel, altSkillId);
+		prophecy.spread = SPREADING.get() != null;
 		final long key = key(target, skill);
 		final Prophecy old = PROPHECIES.put(key, prophecy);
 		if (old != null)
@@ -222,7 +228,8 @@ public class Prophecies
 	}
 
 	/**
-	 * Inevitable Doom (Hierophant): a Doom cast again on its target by the same Oracle adds a stack, up to {@link OraclesWarchiefsConfig#DOOM_MAX_STACKS}, and comes true later; once full it keeps the time it had. It also spreads to the enemies close to its target.
+	 * Inevitable Doom (Hierophant): a Doom cast again on its target by the same Oracle adds a stack, up to {@link OraclesWarchiefsConfig#DOOM_MAX_STACKS}, and comes true later; once full it keeps the time it had. It also spreads to a few enemies close to its target
+	 * (not a Doom of Unwritten, see {@link #castWithoutSpread}).
 	 * @param prophecy the Doom that landed
 	 * @param key its key
 	 * @param delay milliseconds before a fresh Doom comes true
@@ -239,8 +246,8 @@ public class Prophecies
 		long result = delay;
 		if (spreading != null)
 		{
-			// Spread from another target: as many stacks as there, as much time left.
-			prophecy.stacks = (int) Math.max(spreading[0], before);
+			// Spread from another target: 1 stack, as much time left.
+			prophecy.stacks = (int) Math.max(spreading[0], 1);
 			result = spreading[1];
 		}
 		else if (!knowsInevitableDoom(oracle) || (before == 0))
@@ -265,7 +272,7 @@ public class Prophecies
 			prophecy.target.getEffectList().updateEffectIcons(false);
 		}
 
-		if (spread && knowsInevitableDoom(oracle))
+		if (spread && knowsInevitableDoom(oracle) && (NO_SPREAD.get() == null))
 		{
 			if ((prophecy.stacks > 1) && oracle.isPlayer())
 			{
@@ -288,29 +295,50 @@ public class Prophecies
 	}
 
 	/**
-	 * The Doom spreads to the Oracle's enemies close to its target. Each of them can resist it like any debuff.
+	 * Casts prophecies that don't spread: the Dooms of Unwritten, which reach every enemy around anyway. An enemy that already has a Doom of the Oracle on it gets a stack.
+	 * @param action what casts them
+	 */
+	public static void castWithoutSpread(Runnable action)
+	{
+		NO_SPREAD.set(Boolean.TRUE);
+		try
+		{
+			action.run();
+		}
+		finally
+		{
+			NO_SPREAD.remove();
+		}
+	}
+
+	/**
+	 * The Doom spreads with 1 stack to up to {@link OraclesWarchiefsConfig#DOOM_SPREAD_MAX_TARGETS} of the Oracle's enemies close to its target, the nearest first. Each of them can resist it like any debuff. An enemy that already has a Doom on it keeps its own (its stacks and
+	 * its time).
 	 * @param prophecy the Doom it spreads from
 	 * @param delay milliseconds before it comes true
 	 */
 	private static void spreadDoom(Prophecy prophecy, long delay)
 	{
-		if (OraclesWarchiefsConfig.DOOM_SPREAD_RANGE <= 0)
+		if ((OraclesWarchiefsConfig.DOOM_SPREAD_RANGE <= 0) || (OraclesWarchiefsConfig.DOOM_SPREAD_MAX_TARGETS <= 0))
 		{
 			return;
 		}
 
 		final Creature oracle = prophecy.oracle;
 		final Skill skill = prophecy.skill;
+		final List<Creature> enemies = AreaTargets.getEnemies(oracle, prophecy.target, OraclesWarchiefsConfig.DOOM_SPREAD_RANGE, skill);
+		enemies.sort((a, b) -> Double.compare(prophecy.target.calculateDistance3D(a), prophecy.target.calculateDistance3D(b)));
 		SPREADING.set(new long[]
 		{
-			prophecy.stacks,
+			1,
 			delay
 		});
 		try
 		{
-			for (Creature enemy : AreaTargets.getEnemies(oracle, prophecy.target, OraclesWarchiefsConfig.DOOM_SPREAD_RANGE, skill))
+			int landed = 0;
+			for (Creature enemy : enemies)
 			{
-				if ((enemy == prophecy.target) || enemy.isInvulAgainst(skill.getId(), skill.getLevel()))
+				if ((enemy == prophecy.target) || enemy.isInvulAgainst(skill.getId(), skill.getLevel()) || PROPHECIES.containsKey(key(enemy, skill)))
 				{
 					continue;
 				}
@@ -325,6 +353,10 @@ public class Prophecies
 				skill.applyEffectScope(EffectScope.GENERAL, info, true, true);
 				skill.applyEffectScope(oracle.isPlayable() && enemy.isAttackable() ? EffectScope.PVE : oracle.isPlayable() && enemy.isPlayable() ? EffectScope.PVP : null, info, true, true);
 				enemy.getEffectList().add(info);
+				if (++landed >= OraclesWarchiefsConfig.DOOM_SPREAD_MAX_TARGETS)
+				{
+					break;
+				}
 			}
 		}
 		finally
@@ -588,7 +620,7 @@ public class Prophecies
 			}
 		}
 
-		if (foresight)
+		if (foresight && !prophecy.spread)
 		{
 			addForesight(oracle);
 		}
