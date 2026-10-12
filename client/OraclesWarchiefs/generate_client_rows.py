@@ -2,15 +2,15 @@ import struct, os
 import xml.etree.ElementTree as ET
 # Regenerates skillgrp_additions.txt and skillname-e_additions.txt for the Oracle and Totem Warchief
 # skills from the server skill data. Run: python3 client/OraclesWarchiefs/generate_client_rows.py
-# Same layout as client/Performers: Skillgrp.dat in the L2ClientDat text export's columns, Skillname-e.dat
-# in its skill_begin ... skill_end key=value format (no header line).
+# Same layout as client/Performers: both files in the L2ClientDat skill_begin ... skill_end key=value
+# format, tab-separated (no header line).
 ROOT=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SKILLS=ROOT+'/dist/game/data/stats/skills/custom/'
 skills=ET.parse(SKILLS+'oracle_skills.xml').getroot().findall('skill')+ET.parse(SKILLS+'warchief_skills.xml').getroot().findall('skill')
 BY_ID={int(s.get('id')):s for s in skills}
-# operate_type (4th column), from the server's operateType: 0 A1, 1 A2, 2 P (the client lists it with the passives), 3 T.
+# operate_type, from the server's operateType: 0 A1, 1 A2, 2 P (the client lists it with the passives), 3 T.
 OPERATE={'A1':0,'A2':1,'P':2,'T':3}
-# icon_type (3rd column), following client/PassiveTree: 0 attack, 1 heal, 2 buff (toggles too), 3 debuff.
+# icon_type, following client/PassiveTree: 0 attack, 1 heal, 2 buff, 3 debuff (grp_line makes toggles 6).
 OPER={27530:3,27531:0,27532:1,27533:3,27534:3,27535:3,27536:3,27537:2,27538:2,27539:2,27540:3,
       27545:2,27546:2,27547:2,27548:3,27549:3,27550:2,27551:2,27552:2,27553:0,27554:2,27555:2,27556:2,27557:2,27558:2,
       27559:0,27560:0,27561:2,27562:2,27563:0,27564:2}
@@ -50,6 +50,23 @@ DESC={
  27562:"Prophecy of Doom: reuse time halved; cast again on the same target before it comes true, it gains a stack and its time starts again (up to 5, each adds its damage once more; once full its time runs on); it also spreads with 1 stack to up to 4 enemies within 400 of its target that have no Doom, who can resist it. A spread Doom gives no Foresight.",
 }
 def f32(x): return '%.8f' % struct.unpack('f', struct.pack('f', x))[0]
+
+# A row in the L2ClientDat Skillgrp.dat key=value format, from the 22 values above (column order of the
+# old tab-separated export). A toggle (operate_type 3) gets icon_type 6: the client only shows a skill
+# as a toggle (Toggle tab of the skill window, lit while on) by its icon_type, not its operate_type.
+def grp_line(r):
+    (sid,lvl,icon_type,operate,mp,rng,cast_style,hit,ismagic,anim,effect,icon,panel,
+     debuff,enchanted,hp,ench_icon,ench_lvl,rumble_self,rumble_target,gauge,tag)=r
+    if operate=='3': icon_type='6'
+    rng=int(rng); rng=rng-(1<<32) if rng>=(1<<31) else rng
+    num=lambda x: (lambda s: s if '.' in s else s+'.0')('%.6g' % float(x))
+    txt=lambda x: x[2:-2] if x.startswith('a,') and x.endswith('\\0') else x
+    return '\t'.join(['skill_begin','skill_id='+sid,'skill_level='+lvl,'icon=[%s]'%icon,'icon_panel=[%s]'%panel,
+        'icon_type='+icon_type,'operate_type='+operate,'is_magic='+ismagic,'mp_consume='+mp,'cast_range=%d'%rng,
+        'hit_time='+num(hit),'animation=[%s]'%anim,'cast_style='+cast_style,'skill_visual_effect=[%s]'%effect,
+        'debuff='+debuff,'enchanted='+enchanted,'enchant_skill_level='+ench_lvl,'enchant_icon=[%s]'%txt(ench_icon),
+        'hp_consume='+hp,'rumble_self='+rumble_self,'rumble_target='+rumble_target,'GaugeTime='+num(gauge),
+        'AdditionalTag=[%s]'%txt(tag),'skill_end'])
 def table(sk, name, lvl):
     for t in sk.findall('table'):
         if t.get('name')==name: return t.text.split()[lvl-1]
@@ -74,7 +91,7 @@ for sk in skills:
         operate=str(OPERATE[sk.find('operateType').text.strip()])
         row=[str(sid),str(lvl),str(OPER[sid]),operate,str(mp),str(rng & 0xFFFFFFFF),tpl[0],f32(hit),str(ismagic),tpl[1],str(sid),icon,'','0','0','0','a,none\\0','0',tpl[2],tpl[3],'0','a,none\\0']
         assert len(row)==22
-        grp.append('\t'.join(row))
+        grp.append(grp_line(row))
         args=dict(lvl=lvl)
         if sid in (27530,27531):
             power=float(table(BY_ID[27531],'#power',lvl)); args.update(power=int(power), still=int(power*1.5))

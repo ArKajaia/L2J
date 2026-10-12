@@ -38,6 +38,23 @@ DESC={
  27465:"Removes up to 3 debuffs and increases HP recovered from healing by 20% for 15 seconds. Reuse time is 150 seconds.",
 }
 def f32(x): return '%.8f' % struct.unpack('f', struct.pack('f', x))[0]
+
+# A row in the L2ClientDat Skillgrp.dat key=value format, from the 22 values above (column order of the
+# old tab-separated export). A toggle (operate_type 3) gets icon_type 6: the client only shows a skill
+# as a toggle (Toggle tab of the skill window, lit while on) by its icon_type, not its operate_type.
+def grp_line(r):
+    (sid,lvl,icon_type,operate,mp,rng,cast_style,hit,ismagic,anim,effect,icon,panel,
+     debuff,enchanted,hp,ench_icon,ench_lvl,rumble_self,rumble_target,gauge,tag)=r
+    if operate=='3': icon_type='6'
+    rng=int(rng); rng=rng-(1<<32) if rng>=(1<<31) else rng
+    num=lambda x: (lambda s: s if '.' in s else s+'.0')('%.6g' % float(x))
+    txt=lambda x: x[2:-2] if x.startswith('a,') and x.endswith('\\0') else x
+    return '\t'.join(['skill_begin','skill_id='+sid,'skill_level='+lvl,'icon=[%s]'%icon,'icon_panel=[%s]'%panel,
+        'icon_type='+icon_type,'operate_type='+operate,'is_magic='+ismagic,'mp_consume='+mp,'cast_range=%d'%rng,
+        'hit_time='+num(hit),'animation=[%s]'%anim,'cast_style='+cast_style,'skill_visual_effect=[%s]'%effect,
+        'debuff='+debuff,'enchanted='+enchanted,'enchant_skill_level='+ench_lvl,'enchant_icon=[%s]'%txt(ench_icon),
+        'hp_consume='+hp,'rumble_self='+rumble_self,'rumble_target='+rumble_target,'GaugeTime='+num(gauge),
+        'AdditionalTag=[%s]'%txt(tag),'skill_end'])
 def val(sk, text, lvl):
     if text.startswith('#'):
         for t in sk.findall('table'):
@@ -62,7 +79,7 @@ for sk in skills:
         icon='icon.skill%04d'%ICON[sid]
         row=[str(sid),str(lvl),str(OPER[sid]),tpl[0],str(mp),str(rng & 0xFFFFFFFF),tpl[1],f32(hit),str(ismagic),tpl[2],str(sid),icon,'','0','0',str(hp),'a,none\\0','0',tpl[3],tpl[4],'0','a,none\\0']
         assert len(row)==22
-        grp.append('\t'.join(row))
+        grp.append(grp_line(row))
         # power/amount/dot per level for descriptions
         power=g('power',lvl)
         amount=dot=None
@@ -79,10 +96,8 @@ for sk in skills:
     icons_used[sid]=ICON[sid]
 assert len(grp)==97 and len(names)==97, (len(grp),len(names))
 out=ROOT+'/client/PassiveTree'; os.makedirs(out,exist_ok=True)
-# Column headers of the L2ClientDat Skillgrp.dat export, for reference (not written to the file).
-# Skillname-e.dat rows are key=value fields instead: skill_begin, skill_id, skill_level, name=[..],
-# desc=[..], enchant_name=[..], enchant_desc=[..], skill_end.
-H1='skill_id\tskill_level\toper_type\tmp_consume\tcast_range\tcast_style\tUNK_0\thit_time\tis_magic\tani_char\tdesc\ticon_name\ticon_name2\tis_ench\tench_skill_id\thp_consume\tnonetext1\tUNK_1\tUNK_2\tUNK_3\tUNK_4\tnonetext2'
+# Both files are in the L2ClientDat skill_begin ... skill_end key=value format (see grp_line for
+# Skillgrp.dat; Skillname-e.dat: skill_id, skill_level, name, desc, enchant_name, enchant_desc).
 open(out+'/skillgrp_additions.txt','w',encoding='utf-8',newline='\r\n').write('\n'.join(grp)+'\n')
 open(out+'/skillname-e_additions.txt','w',encoding='utf-8',newline='\r\n').write('\n'.join(names)+'\n')
 print('wrote %d skillgrp and %d skillname rows' % (len(grp), len(names)))
