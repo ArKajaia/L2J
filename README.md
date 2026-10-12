@@ -698,6 +698,10 @@ This program is free software, licensed under the **GNU General Public License, 
 
 Changes from 28 September – 12 October 2026.
 
+### Client rows
+- **New file format**: the `skillgrp_additions.txt` and `skillname-e_additions.txt` files under `client/` are in the L2ClientDat `skill_begin … skill_end` key=value format. Paste them in again.
+- **Toggles look like toggles**: the performances, the performer stances, Glimpse and War Drums have `icon_type=6` in Skillgrp.dat instead of 2 (buff), so the client lists them under Toggle and lights their icon while they are on.
+
 ### Warchief and Oracle balance
 - **Inevitable Doom spreads less**: a spread Doom gets 1 stack instead of the target's full stacks, and goes to at most 4 enemies within 400, nearest first (`DoomSpreadMaxTargets`). It skips an enemy that already has a Doom, so it doesn't overwrite that Doom's stacks or restart its timer. Before, each new cast, even at 5 stacks, put a 5-stack Doom on every enemy around. A Doom at 5 stacks still keeps its time when cast again.
 - **Unwritten**: its Dooms don't spread. An enemy that already has a Doom gets one more stack. Before, the Dooms spread onto each other and stacked up through a dense pack.

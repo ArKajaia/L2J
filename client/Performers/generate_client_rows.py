@@ -2,12 +2,13 @@ import struct, os
 import xml.etree.ElementTree as ET
 # Regenerates skillgrp_additions.txt and skillname-e_additions.txt for the performer skills
 # from the server skill data. Run: python3 client/Performers/generate_client_rows.py
-# Same column layout as client/PassiveTree (L2ClientDat text export, no header line).
+# Same layout as client/PassiveTree: both files in the L2ClientDat skill_begin ... skill_end key=value
+# format, tab-separated (no header line).
 ROOT=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 skills=ET.parse(ROOT+'/dist/game/data/stats/skills/custom/performer_skills.xml').getroot().findall('skill')
-# operate_type (4th column), from the server's operateType: 0 A1, 1 A2, 2 P (the client lists it with the passives), 3 T.
+# operate_type, from the server's operateType: 0 A1, 1 A2, 2 P (the client lists it with the passives), 3 T.
 OPERATE={'A1':0,'A2':1,'P':2,'T':3}
-# icon_type (3rd column), following client/PassiveTree: 0 physical attack, 1 heal, 2 buff (toggles too), 3 debuff.
+# icon_type, following client/PassiveTree: 0 physical attack, 1 heal, 2 buff, 3 debuff (grp_line makes toggles 6).
 OPER={27500:2,27501:2,27502:2,27503:2,27504:2,27505:2,27506:2,27507:1,27508:2,
       27520:2,27521:3,27522:2,27523:3,27524:2,27525:2,27526:2,27527:0,27528:0}
 TOGGLE=" Only one performance can be on at a time. Continuously consumes MP proportionately to the user's level."
@@ -33,6 +34,23 @@ DESC={
  27528:"Strikes up to 15 enemies within 300 with 3500 Power added to P. Atk. They may also get P. Def. -20% and Speed -30% for 10 seconds. Reuse time is 2 minutes.",
 }
 def f32(x): return '%.8f' % struct.unpack('f', struct.pack('f', x))[0]
+
+# A row in the L2ClientDat Skillgrp.dat key=value format, from the 22 values above (column order of the
+# old tab-separated export). A toggle (operate_type 3) gets icon_type 6: the client only shows a skill
+# as a toggle (Toggle tab of the skill window, lit while on) by its icon_type, not its operate_type.
+def grp_line(r):
+    (sid,lvl,icon_type,operate,mp,rng,cast_style,hit,ismagic,anim,effect,icon,panel,
+     debuff,enchanted,hp,ench_icon,ench_lvl,rumble_self,rumble_target,gauge,tag)=r
+    if operate=='3': icon_type='6'
+    rng=int(rng); rng=rng-(1<<32) if rng>=(1<<31) else rng
+    num=lambda x: (lambda s: s if '.' in s else s+'.0')('%.6g' % float(x))
+    txt=lambda x: x[2:-2] if x.startswith('a,') and x.endswith('\\0') else x
+    return '\t'.join(['skill_begin','skill_id='+sid,'skill_level='+lvl,'icon=[%s]'%icon,'icon_panel=[%s]'%panel,
+        'icon_type='+icon_type,'operate_type='+operate,'is_magic='+ismagic,'mp_consume='+mp,'cast_range=%d'%rng,
+        'hit_time='+num(hit),'animation=[%s]'%anim,'cast_style='+cast_style,'skill_visual_effect=[%s]'%effect,
+        'debuff='+debuff,'enchanted='+enchanted,'enchant_skill_level='+ench_lvl,'enchant_icon=[%s]'%txt(ench_icon),
+        'hp_consume='+hp,'rumble_self='+rumble_self,'rumble_target='+rumble_target,'GaugeTime='+num(gauge),
+        'AdditionalTag=[%s]'%txt(tag),'skill_end'])
 def table(sk, name, lvl):
     for t in sk.findall('table'):
         if t.get('name')==name: return t.text.split()[lvl-1]
@@ -58,7 +76,7 @@ for sk in skills:
         operate=str(OPERATE[sk.find('operateType').text.strip()])
         row=[str(sid),str(lvl),str(OPER[sid]),operate,str(mp),str(rng & 0xFFFFFFFF),tpl[0],f32(hit),str(ismagic),tpl[1],str(sid),icon,'','0','0',str(hp),'a,none\\0','0',tpl[2],tpl[3],'0','a,none\\0']
         assert len(row)==22
-        grp.append('\t'.join(row))
+        grp.append(grp_line(row))
         down = sk.find('isDebuff') is not None
         p=None
         for key in ('#def','#atk','#spd'):
@@ -81,7 +99,7 @@ for sk in skills:
         elif table(sk,'#power',lvl): args['power']=table(sk,'#power',lvl)
         d=DESC[sid].format(**args)
         assert '{' not in d and 'None' not in d, (sid,lvl,d)
-        names.append('\t'.join([str(sid),str(lvl),'a,%s\\0'%name,'a,%s\\0'%d,'a,none\\0','a,none\\0']))
+        names.append('\t'.join(['skill_begin','skill_id=%d'%sid,'skill_level=%d'%lvl,'name=[%s]'%name,'desc=[%s]'%d,'enchant_name=[none]','enchant_desc=[none]','skill_end']))
 out=ROOT+'/client/Performers'
 open(out+'/skillgrp_additions.txt','w',encoding='utf-8',newline='\r\n').write('\n'.join(grp)+'\n')
 open(out+'/skillname-e_additions.txt','w',encoding='utf-8',newline='\r\n').write('\n'.join(names)+'\n')
