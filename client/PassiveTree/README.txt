@@ -10,8 +10,13 @@ Without these rows the client shows the skills with no name and no icon.
   skillgrp_additions.txt      -> Skillgrp.dat
   skillname-e_additions.txt   -> Skillname-e.dat
 
-Both are tab-separated in the same column layout as the L2ClientDat text
-export (no header line). 97 rows each: the Hot Zone buffs (Kill Streak has
+Both are tab-separated, no header line. Skillgrp.dat rows are in the column
+layout of the L2ClientDat text export; Skillname-e.dat rows in its key=value
+format, one skill level per line:
+  skill_begin  skill_id=..  skill_level=..  name=[..]  desc=[..]
+  enchant_name=[none]  enchant_desc=[none]  skill_end
+
+97 rows each: the Hot Zone buffs (Kill Streak has
 10 levels), 10 single-level tree skills and 8 tree skills with 9 levels
 (Earthshatter, Volley, Arcane Nova, Mana Rift, Sacred Chorus, Reaving
 Strike, Hunter's Mark, Binding Rune), whose level follows the character

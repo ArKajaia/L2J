@@ -2,7 +2,8 @@ import struct, os
 import xml.etree.ElementTree as ET
 # Regenerates skillgrp_additions.txt and skillname-e_additions.txt for the performer skills
 # from the server skill data. Run: python3 client/Performers/generate_client_rows.py
-# Same column layout as client/PassiveTree (L2ClientDat text export, no header line).
+# Same layout as client/PassiveTree: Skillgrp.dat in the L2ClientDat text export's columns, Skillname-e.dat
+# in its skill_begin ... skill_end key=value format (no header line).
 ROOT=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 skills=ET.parse(ROOT+'/dist/game/data/stats/skills/custom/performer_skills.xml').getroot().findall('skill')
 # operate_type (4th column), from the server's operateType: 0 A1, 1 A2, 2 P (the client lists it with the passives), 3 T.
@@ -81,7 +82,7 @@ for sk in skills:
         elif table(sk,'#power',lvl): args['power']=table(sk,'#power',lvl)
         d=DESC[sid].format(**args)
         assert '{' not in d and 'None' not in d, (sid,lvl,d)
-        names.append('\t'.join([str(sid),str(lvl),'a,%s\\0'%name,'a,%s\\0'%d,'a,none\\0','a,none\\0']))
+        names.append('\t'.join(['skill_begin','skill_id=%d'%sid,'skill_level=%d'%lvl,'name=[%s]'%name,'desc=[%s]'%d,'enchant_name=[none]','enchant_desc=[none]','skill_end']))
 out=ROOT+'/client/Performers'
 open(out+'/skillgrp_additions.txt','w',encoding='utf-8',newline='\r\n').write('\n'.join(grp)+'\n')
 open(out+'/skillname-e_additions.txt','w',encoding='utf-8',newline='\r\n').write('\n'.join(names)+'\n')

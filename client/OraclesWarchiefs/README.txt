@@ -13,11 +13,15 @@ Without these rows the client shows the skills with no name and no icon.
   skillgrp_additions.txt      -> Skillgrp.dat
   skillname-e_additions.txt   -> Skillname-e.dat
 
-Both are tab-separated in the same column layout as the L2ClientDat text
-export (no header line), like client/Performers. 91 rows each: every level
-of the prophecies and what they come true with, Foresight, Inevitable Doom,
-the totems and their echoes, the stance, Spirit Trance, Totem Circle and the
-two finales.
+Both are tab-separated, no header line. Skillgrp.dat rows are in the column
+layout of the L2ClientDat text export; Skillname-e.dat rows in its key=value
+format, one skill level per line:
+  skill_begin  skill_id=..  skill_level=..  name=[..]  desc=[..]
+  enchant_name=[none]  enchant_desc=[none]  skill_end
+
+Like client/Performers, 91 rows each: every level of the prophecies and
+what they come true with, Foresight, Inevitable Doom, the totems and their
+echoes, the stance, Spirit Trance, Totem Circle and the two finales.
 
 Applying them
 -------------

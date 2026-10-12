@@ -75,13 +75,14 @@ for sk in skills:
         bonus=val(sk,'#bonus',lvl) if sk.find("table[@name='#bonus']") is not None else None
         d=DESC[sid].format(power=power,amount=amount,hp=hp,dot=dot,bonus=bonus)
         assert '{' not in d and 'None' not in d, (sid,d)
-        names.append('\t'.join([str(sid),str(lvl),'a,%s\\0'%name,'a,%s\\0'%d,'a,none\\0','a,none\\0']))
+        names.append('\t'.join(['skill_begin','skill_id=%d'%sid,'skill_level=%d'%lvl,'name=[%s]'%name,'desc=[%s]'%d,'enchant_name=[none]','enchant_desc=[none]','skill_end']))
     icons_used[sid]=ICON[sid]
 assert len(grp)==97 and len(names)==97, (len(grp),len(names))
 out=ROOT+'/client/PassiveTree'; os.makedirs(out,exist_ok=True)
-# Column headers of the L2ClientDat export, for reference (not written to the files).
+# Column headers of the L2ClientDat Skillgrp.dat export, for reference (not written to the file).
+# Skillname-e.dat rows are key=value fields instead: skill_begin, skill_id, skill_level, name=[..],
+# desc=[..], enchant_name=[..], enchant_desc=[..], skill_end.
 H1='skill_id\tskill_level\toper_type\tmp_consume\tcast_range\tcast_style\tUNK_0\thit_time\tis_magic\tani_char\tdesc\ticon_name\ticon_name2\tis_ench\tench_skill_id\thp_consume\tnonetext1\tUNK_1\tUNK_2\tUNK_3\tUNK_4\tnonetext2'
-H2='id\tlevel\tname\tdescription\tdesc_add1\tdesc_add2'
 open(out+'/skillgrp_additions.txt','w',encoding='utf-8',newline='\r\n').write('\n'.join(grp)+'\n')
 open(out+'/skillname-e_additions.txt','w',encoding='utf-8',newline='\r\n').write('\n'.join(names)+'\n')
 print('wrote %d skillgrp and %d skillname rows' % (len(grp), len(names)))

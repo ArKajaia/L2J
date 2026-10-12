@@ -10,8 +10,13 @@ Without these rows the client shows the skills with no name and no icon.
   skillgrp_additions.txt      -> Skillgrp.dat
   skillname-e_additions.txt   -> Skillname-e.dat
 
-Both are tab-separated in the same column layout as the L2ClientDat text
-export (no header line), like client/PassiveTree. 54 rows each: every level
+Both are tab-separated, no header line. Skillgrp.dat rows are in the column
+layout of the L2ClientDat text export; Skillname-e.dat rows in its key=value
+format, one skill level per line:
+  skill_begin  skill_id=..  skill_level=..  name=[..]  desc=[..]
+  enchant_name=[none]  enchant_desc=[none]  skill_end
+
+Like client/PassiveTree, 54 rows each: every level
 of the performances, their echoes (the buff or debuff people near the
 performer get), the stances and their triggered skills, and the two
 finales.
