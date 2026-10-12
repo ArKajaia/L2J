@@ -18,6 +18,7 @@ package handlers.skill.effects;
 
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.holders.player.Totems;
 import org.l2jmobius.gameserver.model.conditions.Condition;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.effects.EffectType;
@@ -83,8 +84,8 @@ public class HpDrain extends AbstractEffect
 			drain = damage;
 		}
 		
-		// HP_DRAIN_RATE: 0.5 for the Totem Warchiefs (Warchief's Restraint), 1 for everyone else.
-		final double hpAdd = (_power * effector.calcStat(Stat.HP_DRAIN_RATE, 1, effected, skill) * drain);
+		// HP_DRAIN_RATE: 0.5 for the Totem Warchiefs (Warchief's Restraint), 1 for everyone else. Less from a totem (TotemLeechRate).
+		final double hpAdd = (_power * effector.calcStat(Stat.HP_DRAIN_RATE, 1, effected, skill) * drain * Totems.getLeechRate(effected));
 		final double hpFinal = ((effector.getCurrentHp() + hpAdd) > effector.getMaxHp() ? effector.getMaxHp() : (effector.getCurrentHp() + hpAdd));
 		effector.setCurrentHp(hpFinal);
 		

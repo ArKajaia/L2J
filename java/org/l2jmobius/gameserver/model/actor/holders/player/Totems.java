@@ -198,6 +198,16 @@ public class Totems
 	}
 
 	/**
+	 * Life taken from a totem (vampiric hits, drain skills, Spell Leech) is cut to {@link OraclesWarchiefsConfig#TOTEM_LEECH_RATE}: breaking a totem is no safe way to heal.
+	 * @param target what was hit
+	 * @return the part of the usual HP or MP its attacker absorbs, 1 for anything but a totem
+	 */
+	public static double getLeechRate(WorldObject target)
+	{
+		return target instanceof Totem ? OraclesWarchiefsConfig.TOTEM_LEECH_RATE : 1;
+	}
+
+	/**
 	 * @param skillId a skill id
 	 * @return what the small totem it plants pulses, {@code null} for a skill that plants none (the Great Totem included)
 	 */
