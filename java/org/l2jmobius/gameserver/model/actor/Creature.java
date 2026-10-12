@@ -82,6 +82,7 @@ import org.l2jmobius.gameserver.model.actor.holders.creature.EffectList;
 import org.l2jmobius.gameserver.model.actor.holders.creature.InvulSkillHolder;
 import org.l2jmobius.gameserver.model.actor.holders.creature.TimeStamp;
 import org.l2jmobius.gameserver.model.actor.holders.player.Prophecies;
+import org.l2jmobius.gameserver.model.actor.holders.player.Totems;
 import org.l2jmobius.gameserver.model.actor.instance.GrandBoss;
 import org.l2jmobius.gameserver.model.actor.instance.QuestGuard;
 import org.l2jmobius.gameserver.model.actor.stat.CreatureStat;
@@ -5576,7 +5577,7 @@ public abstract class Creature extends WorldObject
 				if (absorbPercent > 0)
 				{
 					final int maxCanAbsorb = (int) (_stat.getMaxRecoverableHp() - _status.getCurrentHp());
-					int absorbDamage = (int) ((absorbPercent / 100.) * damage);
+					int absorbDamage = (int) ((absorbPercent / 100.) * damage * Totems.getLeechRate(target));
 					if (absorbDamage > maxCanAbsorb)
 					{
 						absorbDamage = maxCanAbsorb; // Can't absord more than max hp
@@ -5593,7 +5594,7 @@ public abstract class Creature extends WorldObject
 				if (absorbPercent > 0)
 				{
 					final int maxCanAbsorb = (int) (_stat.getMaxRecoverableMp() - _status.getCurrentMp());
-					int absorbDamage = (int) ((absorbPercent / 100.) * damage);
+					int absorbDamage = (int) ((absorbPercent / 100.) * damage * Totems.getLeechRate(target));
 					if (absorbDamage > maxCanAbsorb)
 					{
 						absorbDamage = maxCanAbsorb; // Can't absord more than max hp

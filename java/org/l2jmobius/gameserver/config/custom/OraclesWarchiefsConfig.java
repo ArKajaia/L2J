@@ -48,6 +48,7 @@ public class OraclesWarchiefsConfig
 	public static double TOTEM_HP_SHARE;
 	public static double HORDE_TOTEM_HP_SHARE;
 	public static double GREAT_TOTEM_HP_SHARE;
+	public static double TOTEM_LEECH_RATE;
 
 	// Retired buffs
 	public static boolean RETIRED_SKILLS_REMOVE;
@@ -88,6 +89,7 @@ public class OraclesWarchiefsConfig
 		TOTEM_HP_SHARE = Math.max(0.05, config.getDouble("TotemHpShare", 0.75));
 		HORDE_TOTEM_HP_SHARE = Math.max(0.05, config.getDouble("HordeTotemHpShare", 1.1));
 		GREAT_TOTEM_HP_SHARE = Math.max(0.05, config.getDouble("GreatTotemHpShare", 2.0));
+		TOTEM_LEECH_RATE = Math.min(1, Math.max(0, config.getDouble("TotemLeechRate", 0.25)));
 
 		RETIRED_SKILLS_REMOVE = config.getBoolean("RetiredSkillsRemove", true);
 		RETIRED_SKILLS.clear();

@@ -37,6 +37,7 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.Summon;
+import org.l2jmobius.gameserver.model.actor.holders.player.Totems;
 import org.l2jmobius.gameserver.model.actor.tasks.cubics.CubicAction;
 import org.l2jmobius.gameserver.model.actor.tasks.cubics.CubicDisappear;
 import org.l2jmobius.gameserver.model.actor.tasks.cubics.CubicHeal;
@@ -585,7 +586,7 @@ public class Cubic
 			final int damage = (int) Formulas.calcMagicDam(this, target, skill, mcrit, shld);
 			
 			// TODO: Unhardcode fixed value
-			final double hpAdd = (0.4 * damage);
+			final double hpAdd = (0.4 * damage * Totems.getLeechRate(target));
 			final Player owner = _owner;
 			final double hp = ((owner.getCurrentHp() + hpAdd) > owner.getMaxHp() ? owner.getMaxHp() : (owner.getCurrentHp() + hpAdd));
 			owner.setCurrentHp(hp);

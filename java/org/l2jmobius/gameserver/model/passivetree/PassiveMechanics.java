@@ -22,6 +22,7 @@ import org.l2jmobius.gameserver.model.conditions.ConditionUsingItemType;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
+import org.l2jmobius.gameserver.model.actor.holders.player.Totems;
 import org.l2jmobius.gameserver.model.groups.Party;
 import org.l2jmobius.gameserver.model.effects.EffectType;
 import org.l2jmobius.gameserver.model.item.Weapon;
@@ -485,7 +486,7 @@ public final class PassiveMechanics
 		final double leech = value(attacker, SPELL_LEECH);
 		if (leech > 0)
 		{
-			final double heal = Math.min((damage * leech) / 100, attacker.getMaxRecoverableHp() - attacker.getCurrentHp());
+			final double heal = Math.min(((damage * leech) / 100) * Totems.getLeechRate(target), attacker.getMaxRecoverableHp() - attacker.getCurrentHp());
 			if (heal > 0)
 			{
 				attacker.setCurrentHp(attacker.getCurrentHp() + heal);
