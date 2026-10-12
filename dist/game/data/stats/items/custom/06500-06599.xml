@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/items.xsd">
 	<item id="6509" type="EtcItem" name="Sealed Cache (Epic)">
-		<!-- Lucky Loot: Epic Sealed Cache (see config/Custom/LuckyLoot.ini). Always gives Gold Dragons, plus at least 4 random crafting materials: every material rolls on its own (rarer materials have a lower chance), and if too few hit, the table is rolled again until the minimum is reached. -->
+		<!-- Lucky Loot: Epic Sealed Cache (see config/Custom/LuckyLoot.ini). Always gives Dragon Coins, plus at least 4 random crafting materials: every material rolls on its own (rarer materials have a lower chance), and if too few hit, the table is rolled again until the minimum is reached. -->
 		<set name="icon" val="icon.etc_treasure_box_i04" />
 		<set name="default_action" val="PEEL" />
 		<set name="immediate_effect" val="true" />
@@ -11,11 +11,11 @@
 		<set name="is_stackable" val="true" />
 		<set name="is_oly_restricted" val="true" />
 		<set name="handler" val="ExtractableItems" />
-		<!-- extractableCountMin/Max count distinct items, Gold Dragons included. Max is kept well above the expected roll count so the table order doesn't bias which materials drop. -->
+		<!-- extractableCountMin/Max count distinct items, Dragon Coins included. Max is kept well above the expected roll count so the table order doesn't bias which materials drop. -->
 		<set name="extractableCountMin" val="5" />
 		<set name="extractableCountMax" val="18" />
 		<capsuled_items>
-			<item id="3481" min="5000" max="50000" chance="100" /> <!-- Gold Dragon (always) -->
+			<item id="3481" min="5000" max="50000" chance="100" /> <!-- Dragon Coin (always) -->
 			<!-- Ores -->
 			<item id="1874" min="10" max="30" chance="25" /> <!-- Oriharukon Ore -->
 			<item id="1875" min="10" max="30" chance="25" /> <!-- Stone of Purity -->

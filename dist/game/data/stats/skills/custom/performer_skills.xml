@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 	Performers: the Swordsinger and Bladedancer lines (Swordsinger, Sword Muse, Bladedancer,
-	Spectral Dancer). Glittering Medals (CustomBuffBook) teach every class the songs and
+	Spectral Dancer). Champion Medals (CustomBuffBook) teach every class the songs and
 	dances, so these are what a medal can't give. They are in the class skill trees and are
 	learned from the Grand Masters like any class skill. See README "Performers" and
 	config/Custom/Performers.ini (Virtuoso: their songs and dances last longer, and stacking

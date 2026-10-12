@@ -834,7 +834,7 @@
 		<set name="price" val="100" />
 		<set name="is_stackable" val="true" />
 	</item>
-	<item id="3481" type="EtcItem" name="Gold Dragon">
+	<item id="3481" type="EtcItem" name="Dragon Coin">
 		<!-- High-grade coin -->
 		<set name="icon" val="icon.etc_coins_gold_i00" />
 		<set name="immediate_effect" val="true" />

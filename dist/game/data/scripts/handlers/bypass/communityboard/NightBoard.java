@@ -183,7 +183,7 @@ public class NightBoard implements IParseBoardHandler
 			if (raids.isEmpty())
 			{
 				sb.append("<table width=").append(width).append("><tr><td><font color=\"").append(COLOR_TEXT).append("\">");
-				sb.append("At night warbands of the clans raid the open world and attack everyone they meet. Killing a raider is never a PK and pays ").append(NightCycleConfig.NIGHT_RAID_KILL_COINS).append(" Gold Dragons and a Sealed Cache.");
+				sb.append("At night warbands of the clans raid the open world and attack everyone they meet. Killing a raider is never a PK and pays ").append(NightCycleConfig.NIGHT_RAID_KILL_COINS).append(" Dragon Coins and a Sealed Cache.");
 				sb.append("</font></td></tr></table>");
 			}
 			else
@@ -219,7 +219,7 @@ public class NightBoard implements IParseBoardHandler
 			sb.append("<table width=").append(width).append("><tr><td><font color=\"").append(COLOR_TITLE).append("\">Night Market</font></td></tr><tr><td><font color=\"").append(COLOR_TEXT).append("\">");
 			if (phase.isNight())
 			{
-				sb.append("Varro the Moonmonger sells his wares in Giran until dawn, for Gold Dragons. Black market stores are open in the towns, and full Thieves run off into the dark.");
+				sb.append("Varro the Moonmonger sells his wares in Giran until dawn, for Dragon Coins. Black market stores are open in the towns, and full Thieves run off into the dark.");
 			}
 			else
 			{

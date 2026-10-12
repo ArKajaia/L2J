@@ -1623,7 +1623,7 @@
 		<set name="material" val="STEEL" />
 		<set name="is_stackable" val="true" />
 	</item>
-	<item id="6393" type="EtcItem" name="Glittering Medal">
+	<item id="6393" type="EtcItem" name="Champion Medal">
 	    <set name="icon" val="icon.etc_event_glitter_medal_i00" />
 	    <set name="material" val="STEEL" />
 	    <set name="is_stackable" val="true" />

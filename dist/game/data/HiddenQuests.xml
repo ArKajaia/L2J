@@ -877,7 +877,7 @@
 		<text key="success">Dawn - and she's still burning. You kept the Last Fire through the long night. That makes you one of us now: the ones who keep the dark honest. Take this, and the name that goes with it.</text>
 		<text key="farewell">Keep a fire in you, Dawnkeeper.</text>
 		<rewards set="moderate">
-			<reward type="ITEM" id="3481" count="1500" /> <!-- Gold Dragon (hot zone coins) -->
+			<reward type="ITEM" id="3481" count="1500" /> <!-- Dragon Coin (hot zone coins) -->
 			<reward type="TITLE" value="Dawnkeeper" />
 			<reward type="TITLE_COLOR" value="FFCC66" />
 		</rewards>
@@ -908,7 +908,7 @@
 		<text key="success">The last echo kneels. The Crown of the Night is yours. Wear it when the sun goes down, and let every Nightlord that rises know who rules the dark.</text>
 		<text key="farewell">Rule the dark well, Nightcrowned.</text>
 		<rewards set="strong">
-			<reward type="ITEM" id="3481" count="3000" /> <!-- Gold Dragon (hot zone coins) -->
+			<reward type="ITEM" id="3481" count="3000" /> <!-- Dragon Coin (hot zone coins) -->
 			<reward type="TITLE" value="Nightcrowned" />
 			<reward type="TITLE_COLOR" value="9966FF" />
 		</rewards>
@@ -983,7 +983,7 @@
 		<text key="farewell">Sleep soundly. You can, now.</text>
 		<rewards set="strong">
 			<reward type="ITEM" id="6509" count="1" /> <!-- Sealed Cache (Epic) -->
-			<reward type="ITEM" id="3481" count="2000" /> <!-- Gold Dragon (hot zone coins) -->
+			<reward type="ITEM" id="3481" count="2000" /> <!-- Dragon Coin (hot zone coins) -->
 			<reward type="TITLE" value="Bellbreaker" />
 			<reward type="TITLE_COLOR" value="CC66FF" />
 		</rewards>

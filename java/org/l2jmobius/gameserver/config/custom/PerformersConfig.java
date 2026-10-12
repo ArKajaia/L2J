@@ -3,7 +3,7 @@ package org.l2jmobius.gameserver.config.custom;
 import org.l2jmobius.commons.util.ConfigReader;
 
 /**
- * Loads the performers configuration: what the Swordsinger and Bladedancer lines (Swordsinger, Sword Muse, Bladedancer, Spectral Dancer) do with their own songs and dances that a character who learned them with Glittering Medals doesn't (see {@link org.l2jmobius.gameserver.model.actor.holders.player.Performers}).
+ * Loads the performers configuration: what the Swordsinger and Bladedancer lines (Swordsinger, Sword Muse, Bladedancer, Spectral Dancer) do with their own songs and dances that a character who learned them with Champion Medals doesn't (see {@link org.l2jmobius.gameserver.model.actor.holders.player.Performers}).
  * @author Mobius
  */
 public class PerformersConfig

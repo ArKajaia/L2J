@@ -27,7 +27,7 @@ import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.skill.Skill;
 
 /**
- * The Swordsinger and Bladedancer lines. Glittering Medals (CustomBuffBook) teach every class the songs and dances, so the performers get what a medal doesn't:
+ * The Swordsinger and Bladedancer lines. Champion Medals (CustomBuffBook) teach every class the songs and dances, so the performers get what a medal doesn't:
  * <ul>
  * <li>Performances, Stances and the 3rd class finales: their own skills (data/stats/skills/custom/performer_skills.xml, in their class skill trees), see the PerformanceAura effect.</li>
  * <li>Virtuoso: songs and dances they cast last longer, and singing one more doesn't cost them extra MP.</li>

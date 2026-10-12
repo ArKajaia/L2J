@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/items.xsd">
 	<item id="6492" type="EtcItem" name="Sealed Cache (Common)">
-		<!-- Lucky Loot: Common Sealed Cache (see config/Custom/LuckyLoot.ini). Always gives Gold Dragons, plus at least 2 random crafting materials: every material rolls on its own (rarer materials have a lower chance), and if too few hit, the table is rolled again until the minimum is reached. -->
+		<!-- Lucky Loot: Common Sealed Cache (see config/Custom/LuckyLoot.ini). Always gives Dragon Coins, plus at least 2 random crafting materials: every material rolls on its own (rarer materials have a lower chance), and if too few hit, the table is rolled again until the minimum is reached. -->
 		<set name="icon" val="icon.etc_treasure_box_i07" />
 		<set name="default_action" val="PEEL" />
 		<set name="immediate_effect" val="true" />
@@ -11,11 +11,11 @@
 		<set name="is_stackable" val="true" />
 		<set name="is_oly_restricted" val="true" />
 		<set name="handler" val="ExtractableItems" />
-		<!-- extractableCountMin/Max count distinct items, Gold Dragons included. Max is kept well above the expected roll count so the table order doesn't bias which materials drop. -->
+		<!-- extractableCountMin/Max count distinct items, Dragon Coins included. Max is kept well above the expected roll count so the table order doesn't bias which materials drop. -->
 		<set name="extractableCountMin" val="3" />
 		<set name="extractableCountMax" val="10" />
 		<capsuled_items>
-			<item id="3481" min="1000" max="5000" chance="100" /> <!-- Gold Dragon (always) -->
+			<item id="3481" min="1000" max="5000" chance="100" /> <!-- Dragon Coin (always) -->
 			<!-- Basic materials -->
 			<item id="1864" min="10" max="30" chance="25" /> <!-- Stem -->
 			<item id="1865" min="10" max="30" chance="25" /> <!-- Varnish -->
@@ -40,7 +40,7 @@
 		</capsuled_items>
 	</item>
 	<item id="6499" type="EtcItem" name="Sealed Cache (Rare)">
-		<!-- Lucky Loot: Rare Sealed Cache (see config/Custom/LuckyLoot.ini). Always gives Gold Dragons, plus at least 3 random crafting materials: every material rolls on its own (rarer materials have a lower chance), and if too few hit, the table is rolled again until the minimum is reached. -->
+		<!-- Lucky Loot: Rare Sealed Cache (see config/Custom/LuckyLoot.ini). Always gives Dragon Coins, plus at least 3 random crafting materials: every material rolls on its own (rarer materials have a lower chance), and if too few hit, the table is rolled again until the minimum is reached. -->
 		<set name="icon" val="icon.etc_treasure_box_i01" />
 		<set name="default_action" val="PEEL" />
 		<set name="immediate_effect" val="true" />
@@ -50,11 +50,11 @@
 		<set name="is_stackable" val="true" />
 		<set name="is_oly_restricted" val="true" />
 		<set name="handler" val="ExtractableItems" />
-		<!-- extractableCountMin/Max count distinct items, Gold Dragons included. Max is kept well above the expected roll count so the table order doesn't bias which materials drop. -->
+		<!-- extractableCountMin/Max count distinct items, Dragon Coins included. Max is kept well above the expected roll count so the table order doesn't bias which materials drop. -->
 		<set name="extractableCountMin" val="4" />
 		<set name="extractableCountMax" val="14" />
 		<capsuled_items>
-			<item id="3481" min="3000" max="15000" chance="100" /> <!-- Gold Dragon (always) -->
+			<item id="3481" min="3000" max="15000" chance="100" /> <!-- Dragon Coin (always) -->
 			<!-- Basic materials -->
 			<item id="1864" min="30" max="80" chance="15" /> <!-- Stem -->
 			<item id="1865" min="30" max="80" chance="15" /> <!-- Varnish -->

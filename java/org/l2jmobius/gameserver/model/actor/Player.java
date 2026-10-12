@@ -5364,7 +5364,7 @@ public class Player extends Playable
 			getVariables().set("ARENA_RUNS", getVariables().getInt("ARENA_RUNS", 0) + 1);
 			getVariables().set("ARENA_TOTAL_REWARD", getVariables().getLong("ARENA_TOTAL_REWARD", 0) + reward);
 
-			sendMessage("Your Arena Challenge has ended at Wave " + finalWave + ". You earned " + reward + " Arena Coins.");
+			sendMessage("Your Arena Challenge has ended at Wave " + finalWave + ". You earned " + reward + " Dragon Coins.");
 
 			ThreadPool.schedule(() ->
 			{
@@ -8435,7 +8435,7 @@ public class Player extends Playable
 					// Add the Skill object to the Creature _skills and its Func objects to the calculator set of the Creature
 					addSkill(skill);
 					
-					// Buffs learned with Glittering Medals (CustomBuffBook) are not in the class tree on purpose - don't treat them as illegal.
+					// Buffs learned with Champion Medals (CustomBuffBook) are not in the class tree on purpose - don't treat them as illegal.
 					if (GeneralConfig.SKILL_CHECK_ENABLE && (!isGM() || GeneralConfig.SKILL_CHECK_GM) && !SkillTreeData.getInstance().isSkillAllowed(this, skill) && !CustomBuffConfig.SKILLS.contains(skill.getId()))
 					{
 						PunishmentManager.handleIllegalPlayerAction(this, "Player " + getName() + " has invalid skill " + skill.getName() + " (" + skill.getId() + "/" + skill.getLevel() + "), class:" + ClassListData.getInstance().getClass(getPlayerClass()).getClassName(), IllegalActionPunishmentType.BROADCAST);

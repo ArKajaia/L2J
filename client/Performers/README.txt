@@ -34,7 +34,7 @@ Applying them
 2. Save & Encrypt, copy both .dat files into the client's system folder and
    restart the client.
 
-Icons are retail icons of performer skills the Glittering Medals don't
+Icons are retail icons of performer skills the Champion Medals don't
 teach (Spirit Barrier, Song of Purification, Battle Whisper, Sword
 Symphony, Hex, Freezing Strike, Dance of Berserker, Demonic Blade Dance,
 Dance of Blade Storm, Dance of Medusa...), so no texture files are needed

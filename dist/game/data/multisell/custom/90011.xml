@@ -4,7 +4,7 @@
         <npc>90000</npc> <!-- Mina -->
     </npcs>
     
-    <!-- Tier 1: Basic Raw Materials (250 Arena Coins) -->
+    <!-- Tier 1: Basic Raw Materials (250 Dragon Coins) -->
     <item>
         <!-- Required Ingredient -->
         <ingredient count="250" id="3481" />
@@ -66,7 +66,7 @@
         <production count="1" id="1873" />
     </item>
 
-    <!-- Tier 2: Intermediate & Refined Materials (750 Arena Coins) -->
+    <!-- Tier 2: Intermediate & Refined Materials (750 Dragon Coins) -->
     <item>
         <!-- Required Ingredient -->
         <ingredient count="750" id="3481" />
@@ -128,7 +128,7 @@
         <production count="1" id="1884" />
     </item>
 
-    <!-- Tier 3: Advanced Processed Materials (2,000 Arena Coins) -->
+    <!-- Tier 3: Advanced Processed Materials (2,000 Dragon Coins) -->
     <item>
         <!-- Required Ingredient -->
         <ingredient count="2000" id="3481" />
@@ -214,7 +214,7 @@
         <production count="1" id="5550" />
     </item>
 
-    <!-- Tier 4: Rare Craft Reagents & Molds (5,000 Arena Coins) -->
+    <!-- Tier 4: Rare Craft Reagents & Molds (5,000 Dragon Coins) -->
     <item>
         <!-- Required Ingredient -->
         <ingredient count="5000" id="3481" />
@@ -300,7 +300,7 @@
         <production count="1" id="5554" />
     </item>
 
-    <!-- Tier 5: S80 High-Grade Materials (12,500 Arena Coins) -->
+    <!-- Tier 5: S80 High-Grade Materials (12,500 Dragon Coins) -->
     <item>
         <!-- Required Ingredient -->
         <ingredient count="12500" id="3481" />
