@@ -29,6 +29,7 @@ import org.l2jmobius.gameserver.managers.HiddenQuestManager;
 import org.l2jmobius.gameserver.managers.PunishmentManager;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
+import org.l2jmobius.gameserver.model.item.enchant.EnchantFailBehavior;
 import org.l2jmobius.gameserver.model.item.enchant.EnchantResultType;
 import org.l2jmobius.gameserver.model.item.enchant.EnchantScroll;
 import org.l2jmobius.gameserver.model.item.enchant.EnchantSupportItem;
@@ -266,190 +267,109 @@ public class RequestEnchantItem extends ClientPacket
 				}
 				case FAILURE:
 				{
-					if (scrollTemplate.isSafe())
+					final EnchantFailBehavior behavior = getFailBehavior(scrollTemplate);
+					if (behavior == EnchantFailBehavior.KEEP)
 					{
 						// Safe enchant: Remain old value.
 						player.sendPacket(SystemMessageId.ENCHANT_FAILED_THE_ENCHANT_LEVEL_FOR_THE_CORRESPONDING_ITEM_WILL_BE_EXACTLY_RETAINED);
 						player.sendPacket(new EnchantResult(5, 0, 0));
-						if (GeneralConfig.LOG_ITEM_ENCHANTS)
-						{
-							final StringBuilder sb = new StringBuilder();
-							if (item.isEnchanted())
-							{
-								if (support == null)
-								{
-									LOGGER_ENCHANT.info(sb.append("Safe Fail, Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", +").append(item.getEnchantLevel()).append(" ").append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("]").toString());
-								}
-								else
-								{
-									LOGGER_ENCHANT.info(sb.append("Safe Fail, Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", +").append(item.getEnchantLevel()).append(" ").append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("], ").append(support.getName()).append("(").append(support.getCount()).append(") [").append(support.getObjectId()).append("]").toString());
-								}
-							}
-							else if (support == null)
-							{
-								LOGGER_ENCHANT.info(sb.append("Safe Fail, Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", ").append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("]").toString());
-							}
-							else
-							{
-								LOGGER_ENCHANT.info(sb.append("Safe Fail, Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", ").append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("], ").append(support.getName()).append("(").append(support.getCount()).append(") [").append(support.getObjectId()).append("]").toString());
-							}
-						}
+						logEnchant("Safe Fail", player, item, scroll, support);
+						break;
 					}
-					else
+					
+					HiddenQuestManager.getInstance().onEnchantFailed(player);
+					
+					// Unequip item on enchant failure to avoid item skills stack.
+					if (item.isEquipped())
 					{
-						HiddenQuestManager.getInstance().onEnchantFailed(player);
-						
-						// Unequip item on enchant failure to avoid item skills stack.
-						if (item.isEquipped())
+						if (item.isEnchanted())
 						{
-							if (item.isEnchanted())
-							{
-								final SystemMessage sm = new SystemMessage(SystemMessageId.THE_EQUIPMENT_S1_S2_HAS_BEEN_REMOVED);
-								sm.addInt(item.getEnchantLevel());
-								sm.addItemName(item);
-								player.sendPacket(sm);
-							}
-							else
-							{
-								final SystemMessage sm = new SystemMessage(SystemMessageId.S1_HAS_BEEN_DISARMED);
-								sm.addItemName(item);
-								player.sendPacket(sm);
-							}
-							
-							for (Item itm : player.getInventory().unEquipItemInSlotAndRecord(item.getLocationSlot()))
-							{
-								iu.addModifiedItem(itm);
-							}
-						}
-						
-						if (scrollTemplate.isBlessed())
-						{
-							// Blessed enchant: Clear enchant value.
-							player.sendPacket(SystemMessageId.THE_BLESSED_ENCHANT_FAILED_THE_ENCHANT_VALUE_OF_THE_ITEM_BECAME_0);
-							
-							item.setEnchantLevel(0);
-							
-							iu.addModifiedItem(item);
-							item.updateDatabase();
-							player.sendPacket(new EnchantResult(3, 0, 0));
-							
-							if (GeneralConfig.LOG_ITEM_ENCHANTS)
-							{
-								final StringBuilder sb = new StringBuilder();
-								if (item.isEnchanted())
-								{
-									if (support == null)
-									{
-										LOGGER_ENCHANT.info(sb.append("Blessed Fail, Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", +").append(item.getEnchantLevel()).append(" ").append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("]").toString());
-									}
-									else
-									{
-										LOGGER_ENCHANT.info(sb.append("Blessed Fail, Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", +").append(item.getEnchantLevel()).append(" ").append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("], ").append(support.getName()).append("(").append(support.getCount()).append(") [").append(support.getObjectId()).append("]").toString());
-									}
-								}
-								else if (support == null)
-								{
-									LOGGER_ENCHANT.info(sb.append("Blessed Fail, Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", ").append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("]").toString());
-								}
-								else
-								{
-									LOGGER_ENCHANT.info(sb.append("Blessed Fail, Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", ").append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("], ").append(support.getName()).append("(").append(support.getCount()).append(") [").append(support.getObjectId()).append("]").toString());
-								}
-							}
+							final SystemMessage sm = new SystemMessage(SystemMessageId.THE_EQUIPMENT_S1_S2_HAS_BEEN_REMOVED);
+							sm.addInt(item.getEnchantLevel());
+							sm.addItemName(item);
+							player.sendPacket(sm);
 						}
 						else
 						{
-							// Enchant failed, destroy item.
-							final Item destroyedItem = player.getInventory().destroyItem(ItemProcessType.DESTROY, item, player, null);
-							if (destroyedItem == null)
-							{
-								// Unable to destroy item, cheater?
-								PunishmentManager.handleIllegalPlayerAction(player, "Unable to delete item on enchant failure from " + player + ", possible cheater !", GeneralConfig.DEFAULT_PUNISH);
-								player.setActiveEnchantItemId(Player.ID_NONE);
-								player.sendPacket(new EnchantResult(2, 0, 0));
-								if (GeneralConfig.LOG_ITEM_ENCHANTS)
-								{
-									final StringBuilder sb = new StringBuilder();
-									if (item.isEnchanted())
-									{
-										if (support == null)
-										{
-											LOGGER_ENCHANT.info(sb.append("Unable to destroy, Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", +").append(item.getEnchantLevel()).append(" ").append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("]").toString());
-										}
-										else
-										{
-											LOGGER_ENCHANT.info(sb.append("Unable to destroy, Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", +").append(item.getEnchantLevel()).append(" ").append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("], ").append(support.getName()).append("(").append(support.getCount()).append(") [").append(support.getObjectId()).append("]").toString());
-										}
-									}
-									else if (support == null)
-									{
-										LOGGER_ENCHANT.info(sb.append("Unable to destroy, Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", ").append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("]").toString());
-									}
-									else
-									{
-										LOGGER_ENCHANT.info(sb.append("Unable to destroy, Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", ").append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("], ").append(support.getName()).append("(").append(support.getCount()).append(") [").append(support.getObjectId()).append("]").toString());
-									}
-								}
-								return;
-							}
-							
-							iu.addRemovedItem(destroyedItem); // Item is gone, always tell the client to remove it.
-							
-							final int crystalId = item.getTemplate().getCrystalItemId();
-							if ((crystalId != 0) && item.getTemplate().isCrystallizable())
-							{
-								int count = item.getCrystalCount() - ((item.getTemplate().getCrystalCount() + 1) / 2);
-								count = count < 1 ? 1 : count;
-								final Item crystals = player.getInventory().addItem(ItemProcessType.COMPENSATE, crystalId, count, player, item);
-								
-								final SystemMessage sm = new SystemMessage(SystemMessageId.YOU_HAVE_EARNED_S2_S1_S);
-								sm.addItemName(crystalId);
-								sm.addLong(count);
-								player.sendPacket(sm);
-								
-								// Add the crystals gained, not the destroyed item.
-								// Report as modified if stacked onto an existing crystal stack, otherwise as a new item.
-								if (crystals.getLastChange() == Item.MODIFIED)
-								{
-									iu.addModifiedItem(crystals);
-								}
-								else
-								{
-									iu.addNewItem(crystals);
-								}
-								
-								player.sendPacket(new EnchantResult(1, crystalId, count));
-							}
-							else
-							{
-								player.sendPacket(new EnchantResult(4, 0, 0));
-							}
-							
-							if (GeneralConfig.LOG_ITEM_ENCHANTS)
-							{
-								final StringBuilder sb = new StringBuilder();
-								if (item.isEnchanted())
-								{
-									if (support == null)
-									{
-										LOGGER_ENCHANT.info(sb.append("Fail, Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", +").append(item.getEnchantLevel()).append(" ").append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("]").toString());
-									}
-									else
-									{
-										LOGGER_ENCHANT.info(sb.append("Fail, Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", +").append(item.getEnchantLevel()).append(" ").append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("], ").append(support.getName()).append("(").append(support.getCount()).append(") [").append(support.getObjectId()).append("]").toString());
-									}
-								}
-								else if (support == null)
-								{
-									LOGGER_ENCHANT.info(sb.append("Fail, Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", ").append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("]").toString());
-								}
-								else
-								{
-									LOGGER_ENCHANT.info(sb.append("Fail, Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", ").append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("], ").append(support.getName()).append("(").append(support.getCount()).append(") [").append(support.getObjectId()).append("]").toString());
-								}
-							}
+							final SystemMessage sm = new SystemMessage(SystemMessageId.S1_HAS_BEEN_DISARMED);
+							sm.addItemName(item);
+							player.sendPacket(sm);
+						}
+						
+						for (Item itm : player.getInventory().unEquipItemInSlotAndRecord(item.getLocationSlot()))
+						{
+							iu.addModifiedItem(itm);
 						}
 					}
+					
+					if (behavior != EnchantFailBehavior.DESTROY)
+					{
+						// The item survives: reset or lower its enchant value.
+						logEnchant(scrollTemplate.isBlessed() ? "Blessed Fail" : "Fail", player, item, scroll, support);
+						
+						final int newLevel = (behavior == EnchantFailBehavior.DECREASE) ? Math.max(0, item.getEnchantLevel() - 1) : 0;
+						item.setEnchantLevel(newLevel);
+						
+						iu.addModifiedItem(item);
+						item.updateDatabase();
+						if ((newLevel == 0) && scrollTemplate.isBlessed())
+						{
+							player.sendPacket(SystemMessageId.THE_BLESSED_ENCHANT_FAILED_THE_ENCHANT_VALUE_OF_THE_ITEM_BECAME_0);
+						}
+						else
+						{
+							player.sendMessage("Enchant failed. The enchant value of the item became " + newLevel + ".");
+						}
+						
+						player.sendPacket(new EnchantResult(3, 0, 0));
+						break;
+					}
+					
+					// Enchant failed, destroy item.
+					final Item destroyedItem = player.getInventory().destroyItem(ItemProcessType.DESTROY, item, player, null);
+					if (destroyedItem == null)
+					{
+						// Unable to destroy item, cheater?
+						PunishmentManager.handleIllegalPlayerAction(player, "Unable to delete item on enchant failure from " + player + ", possible cheater !", GeneralConfig.DEFAULT_PUNISH);
+						player.setActiveEnchantItemId(Player.ID_NONE);
+						player.sendPacket(new EnchantResult(2, 0, 0));
+						logEnchant("Unable to destroy", player, item, scroll, support);
+						return;
+					}
+					
+					iu.addRemovedItem(destroyedItem); // Item is gone, always tell the client to remove it.
+					
+					final int crystalId = item.getTemplate().getCrystalItemId();
+					if ((crystalId != 0) && item.getTemplate().isCrystallizable())
+					{
+						int count = item.getCrystalCount() - ((item.getTemplate().getCrystalCount() + 1) / 2);
+						count = count < 1 ? 1 : count;
+						final Item crystals = player.getInventory().addItem(ItemProcessType.COMPENSATE, crystalId, count, player, item);
+						
+						final SystemMessage sm = new SystemMessage(SystemMessageId.YOU_HAVE_EARNED_S2_S1_S);
+						sm.addItemName(crystalId);
+						sm.addLong(count);
+						player.sendPacket(sm);
+						
+						// Add the crystals gained, not the destroyed item.
+						// Report as modified if stacked onto an existing crystal stack, otherwise as a new item.
+						if (crystals.getLastChange() == Item.MODIFIED)
+						{
+							iu.addModifiedItem(crystals);
+						}
+						else
+						{
+							iu.addNewItem(crystals);
+						}
+						
+						player.sendPacket(new EnchantResult(1, crystalId, count));
+					}
+					else
+					{
+						player.sendPacket(new EnchantResult(4, 0, 0));
+					}
+					
+					logEnchant("Fail", player, item, scroll, support);
 					break;
 				}
 			}
@@ -458,5 +378,38 @@ public class RequestEnchantItem extends ClientPacket
 			player.broadcastUserInfo();
 			player.setActiveEnchantItemId(Player.ID_NONE);
 		}
+	}
+	
+	private static EnchantFailBehavior getFailBehavior(EnchantScroll scroll)
+	{
+		if (scroll.isSafe())
+		{
+			return PlayerConfig.ENCHANT_FAIL_CRYSTAL;
+		}
+		
+		return scroll.isBlessed() ? PlayerConfig.ENCHANT_FAIL_BLESSED : PlayerConfig.ENCHANT_FAIL_NORMAL;
+	}
+	
+	private static void logEnchant(String result, Player player, Item item, Item scroll, Item support)
+	{
+		if (!GeneralConfig.LOG_ITEM_ENCHANTS)
+		{
+			return;
+		}
+		
+		final StringBuilder sb = new StringBuilder();
+		sb.append(result).append(", Character:").append(player.getName()).append(" [").append(player.getObjectId()).append("] Account:").append(player.getAccountName()).append(" IP:").append(player.getIPAddress()).append(", ");
+		if (item.isEnchanted())
+		{
+			sb.append("+").append(item.getEnchantLevel()).append(" ");
+		}
+		
+		sb.append(item.getName()).append("(").append(item.getCount()).append(") [").append(item.getObjectId()).append("], ").append(scroll.getName()).append("(").append(scroll.getCount()).append(") [").append(scroll.getObjectId()).append("]");
+		if (support != null)
+		{
+			sb.append(", ").append(support.getName()).append("(").append(support.getCount()).append(") [").append(support.getObjectId()).append("]");
+		}
+		
+		LOGGER_ENCHANT.info(sb.toString());
 	}
 }

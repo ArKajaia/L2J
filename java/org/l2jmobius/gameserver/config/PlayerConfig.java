@@ -31,6 +31,7 @@ import org.l2jmobius.commons.util.ConfigReader;
 import org.l2jmobius.commons.util.StringUtil;
 import org.l2jmobius.gameserver.model.actor.enums.player.IllegalActionPunishmentType;
 import org.l2jmobius.gameserver.model.groups.PartyExpType;
+import org.l2jmobius.gameserver.model.item.enchant.EnchantFailBehavior;
 
 /**
  * This class loads all the player related configurations.
@@ -138,6 +139,9 @@ public class PlayerConfig
 	public static double ENCHANT_CHANCE_ELEMENT_ENERGY;
 	public static int[] ENCHANT_BLACKLIST;
 	public static boolean DISABLE_OVER_ENCHANTING;
+	public static EnchantFailBehavior ENCHANT_FAIL_NORMAL;
+	public static EnchantFailBehavior ENCHANT_FAIL_BLESSED;
+	public static EnchantFailBehavior ENCHANT_FAIL_CRYSTAL;
 	public static boolean OVER_ENCHANT_PROTECTION;
 	public static IllegalActionPunishmentType OVER_ENCHANT_PUNISHMENT;
 	public static int AUGMENTATION_NG_SKILL_CHANCE;
@@ -402,6 +406,9 @@ public class PlayerConfig
 		}
 		Arrays.sort(ENCHANT_BLACKLIST);
 		DISABLE_OVER_ENCHANTING = config.getBoolean("DisableOverEnchanting", true);
+		ENCHANT_FAIL_NORMAL = config.getEnum("EnchantFailNormal", EnchantFailBehavior.class, EnchantFailBehavior.RESET);
+		ENCHANT_FAIL_BLESSED = config.getEnum("EnchantFailBlessed", EnchantFailBehavior.class, EnchantFailBehavior.DECREASE);
+		ENCHANT_FAIL_CRYSTAL = config.getEnum("EnchantFailCrystal", EnchantFailBehavior.class, EnchantFailBehavior.KEEP);
 		OVER_ENCHANT_PROTECTION = config.getBoolean("OverEnchantProtection", true);
 		OVER_ENCHANT_PUNISHMENT = IllegalActionPunishmentType.findByName(config.getString("OverEnchantPunishment", "JAIL"));
 		AUGMENTATION_NG_SKILL_CHANCE = config.getInt("AugmentationNGSkillChance", 15);
