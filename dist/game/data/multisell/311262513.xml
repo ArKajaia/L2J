@@ -3,6 +3,7 @@
 	<npcs>
 		<npc>31126</npc> <!-- Blacksmith of Mammon -->
 		<npc>900010</npc> <!-- Master Blacksmith (custom) -->
+		<npc>900370</npc> <!-- Gorm the Moonsmith (custom, Night Market) -->
 	</npcs>
 	<item>
 		<!-- Foundation Great Sword -->
