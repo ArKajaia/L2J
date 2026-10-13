@@ -48,9 +48,23 @@ public class NightMarket extends Script
 	private static final int MERCHANT = 900360;
 	private static final int SMITH = 900370;
 
-	/** Where a night npc stands. */
-	private record Stall(int npcId, int x, int y, int z, int heading)
+	/** Where a night npc stands. (Scripts compile at Java 8 level, so no records.) */
+	private static final class Stall
 	{
+		final int npcId;
+		final int x;
+		final int y;
+		final int z;
+		final int heading;
+
+		Stall(int npcId, int x, int y, int z, int heading)
+		{
+			this.npcId = npcId;
+			this.x = x;
+			this.y = y;
+			this.z = z;
+			this.heading = heading;
+		}
 	}
 
 	// In Giran, at the end of the row of custom npcs (Class Master, Arena Master, Arena Merchant, Master Blacksmith, Hotzone Teleporter): Varro first, Gorm one step on.
@@ -79,9 +93,9 @@ public class NightMarket extends Script
 	{
 		for (Stall stall : STALLS)
 		{
-			addStartNpc(stall.npcId());
-			addFirstTalkId(stall.npcId());
-			addTalkId(stall.npcId());
+			addStartNpc(stall.npcId);
+			addFirstTalkId(stall.npcId);
+			addTalkId(stall.npcId);
 		}
 
 		// The night-phase event that opens the market is missed when the server starts (or this script reloads) during the night.
@@ -122,16 +136,16 @@ public class NightMarket extends Script
 		boolean opened = false;
 		for (Stall stall : STALLS)
 		{
-			if (isUp(stall.npcId()))
+			if (isUp(stall.npcId))
 			{
 				continue;
 			}
 
 			try
 			{
-				final Spawn spawn = new Spawn(stall.npcId());
-				spawn.setXYZ(stall.x(), stall.y(), stall.z());
-				spawn.setHeading(stall.heading());
+				final Spawn spawn = new Spawn(stall.npcId);
+				spawn.setXYZ(stall.x, stall.y, stall.z);
+				spawn.setHeading(stall.heading);
 				spawn.setAmount(1);
 				spawn.stopRespawn();
 				SpawnTable.getInstance().addSpawn(spawn);
@@ -144,7 +158,7 @@ public class NightMarket extends Script
 			}
 			catch (Exception e)
 			{
-				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn the Night Market npc " + stall.npcId() + ".", e);
+				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn the Night Market npc " + stall.npcId + ".", e);
 			}
 		}
 
@@ -174,7 +188,7 @@ public class NightMarket extends Script
 	{
 		for (Stall stall : STALLS)
 		{
-			for (Spawn spawn : new ArrayList<>(SpawnTable.getInstance().getSpawns(stall.npcId())))
+			for (Spawn spawn : new ArrayList<>(SpawnTable.getInstance().getSpawns(stall.npcId)))
 			{
 				spawn.stopRespawn();
 				final Npc npc = spawn.getLastSpawn();
