@@ -18,6 +18,7 @@ package custom.NightMarket;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 import org.l2jmobius.gameserver.config.custom.NightCycleConfig;
@@ -35,31 +36,53 @@ import org.l2jmobius.gameserver.model.script.Script;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
 
 /**
- * The Night Market: Varro the Moonmonger opens his stalls in Giran at nightfall and packs up at dawn (see {@link NightCycleManager}). He trades Sealed Caches up a tier (never sells them: they hold hot zone coins), and sells the low and high grade luminous lures fishermen don't stock and other night wares for hot zone coins (multisells 900360 and 900361), and changes
- * hot zone coins into Ancient Adena (multisell 900362) at a little less than the standard way gives.
- * <p>
- * His spawn is kept in the spawn table, so a reload of this script during the night finds him instead of bringing a second Varro.
+ * The Night Market: Varro the Moonmonger and Gorm the Moonsmith open their stalls in Giran at nightfall and pack up at dawn (see {@link NightCycleManager}).
+ * <ul>
+ * <li>Varro trades Sealed Caches up a tier (never sells them: they hold hot zone coins), sells the low and high grade luminous lures fishermen don't stock and other night wares for hot zone coins (multisells 900360 and 900361), and changes hot zone coins into Ancient Adena (multisell 900362) at a little less than the standard way gives.</li>
+ * <li>Gorm is the Night Forge: he sells Mammon's Varnish Enhancer for Adena (multisell 900370), finishes Foundation items with it (retail list 311262513) and unseals masterwork items (multisell 900371, the masterwork entries of the retail unseal lists, at their prices).</li>
+ * </ul>
+ * Their spawns are kept in the spawn table, so a reload of this script during the night finds them instead of bringing a second Varro or Gorm.
  */
 public class NightMarket extends Script
 {
 	private static final int MERCHANT = 900360;
-	// In Giran, at the end of the row of custom npcs (Class Master, Arena Master, Arena Merchant, Master Blacksmith, Hotzone Teleporter).
-	private static final int X = 82208;
-	private static final int Y = 148778;
-	private static final int Z = -3493;
-	private static final int HEADING = 64000;
-	private static final int[] LISTS =
+	private static final int SMITH = 900370;
+
+	/** Where a night npc stands. */
+	private record Stall(int npcId, int x, int y, int z, int heading)
 	{
-		900360,
-		900361,
-		900362
-	};
+	}
+
+	// In Giran, at the end of the row of custom npcs (Class Master, Arena Master, Arena Merchant, Master Blacksmith, Hotzone Teleporter): Varro first, Gorm one step on.
+	private static final List<Stall> STALLS = List.of( //
+		new Stall(MERCHANT, 82208, 148778, -3493, 64000), //
+		new Stall(SMITH, 82200, 148835, -3493, 64000));
+
+	/** The multisells each npc may open. */
+	private static final Map<Integer, int[]> LISTS = Map.of( //
+		MERCHANT, new int[]
+		{
+			900360,
+			900361,
+			900362
+		}, //
+		SMITH, new int[]
+		{
+			900370, // Mammon's Varnish Enhancer
+			900371, // Unseal masterwork items
+			311262513 // Finish a Foundation item (retail list, Gorm is on its npc list)
+		});
+	/** Unsealing opens inventory-only, so the list shows just the sealed pieces the player carries and the unsealed item keeps its enchant level (like the Master Blacksmith's unseal services). */
+	private static final int UNSEAL_LIST = 900371;
 
 	private NightMarket()
 	{
-		addStartNpc(MERCHANT);
-		addFirstTalkId(MERCHANT);
-		addTalkId(MERCHANT);
+		for (Stall stall : STALLS)
+		{
+			addStartNpc(stall.npcId());
+			addFirstTalkId(stall.npcId());
+			addTalkId(stall.npcId());
+		}
 
 		// The night-phase event that opens the market is missed when the server starts (or this script reloads) during the night.
 		if (isNightMarketTime())
@@ -91,67 +114,89 @@ public class NightMarket extends Script
 	}
 
 	/**
-	 * Varro sets up his stalls, unless he is already there.
+	 * Varro and Gorm set up their stalls, unless they are already there.
 	 * @param announce {@code true} to tell everyone
 	 */
 	private void open(boolean announce)
 	{
-		for (Spawn spawn : SpawnTable.getInstance().getSpawns(MERCHANT))
+		boolean opened = false;
+		for (Stall stall : STALLS)
 		{
-			final Npc npc = spawn.getLastSpawn();
-			if ((npc != null) && npc.isSpawned())
+			if (isUp(stall.npcId()))
 			{
-				return;
+				continue;
+			}
+
+			try
+			{
+				final Spawn spawn = new Spawn(stall.npcId());
+				spawn.setXYZ(stall.x(), stall.y(), stall.z());
+				spawn.setHeading(stall.heading());
+				spawn.setAmount(1);
+				spawn.stopRespawn();
+				SpawnTable.getInstance().addSpawn(spawn);
+				if (spawn.doSpawn(false) == null)
+				{
+					SpawnTable.getInstance().removeSpawn(spawn);
+					continue;
+				}
+				opened = true;
+			}
+			catch (Exception e)
+			{
+				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn the Night Market npc " + stall.npcId() + ".", e);
 			}
 		}
 
-		try
+		if (opened && announce)
 		{
-			final Spawn spawn = new Spawn(MERCHANT);
-			spawn.setXYZ(X, Y, Z);
-			spawn.setHeading(HEADING);
-			spawn.setAmount(1);
-			spawn.stopRespawn();
-			SpawnTable.getInstance().addSpawn(spawn);
-			if (spawn.doSpawn(false) == null)
-			{
-				SpawnTable.getInstance().removeSpawn(spawn);
-				return;
-			}
-		}
-		catch (Exception e)
-		{
-			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn the Night Market merchant.", e);
-			return;
-		}
-
-		if (announce)
-		{
-			NightCycleManager.announce("The Night Market has opened in Giran. Varro the Moonmonger sells his wares until dawn.");
+			NightCycleManager.announce("The Night Market has opened in Giran. Varro the Moonmonger sells his wares and Gorm the Moonsmith has lit the Night Forge until dawn.");
 		}
 	}
 
-	/**
-	 * Dawn: Varro packs up.
-	 */
-	private void close()
+	private boolean isUp(int npcId)
 	{
-		for (Spawn spawn : new ArrayList<>(SpawnTable.getInstance().getSpawns(MERCHANT)))
+		for (Spawn spawn : SpawnTable.getInstance().getSpawns(npcId))
 		{
-			spawn.stopRespawn();
 			final Npc npc = spawn.getLastSpawn();
 			if ((npc != null) && npc.isSpawned())
 			{
-				npc.deleteMe();
+				return true;
 			}
-			SpawnTable.getInstance().removeSpawn(spawn);
+		}
+		return false;
+	}
+
+	/**
+	 * Dawn: Varro and Gorm pack up.
+	 */
+	private void close()
+	{
+		for (Stall stall : STALLS)
+		{
+			for (Spawn spawn : new ArrayList<>(SpawnTable.getInstance().getSpawns(stall.npcId())))
+			{
+				spawn.stopRespawn();
+				final Npc npc = spawn.getLastSpawn();
+				if ((npc != null) && npc.isSpawned())
+				{
+					npc.deleteMe();
+				}
+				SpawnTable.getInstance().removeSpawn(spawn);
+			}
 		}
 	}
 
 	@Override
 	public String onEvent(String event, Npc npc, Player player)
 	{
-		if ((npc == null) || (player == null) || (npc.getId() != MERCHANT))
+		if ((npc == null) || (player == null))
+		{
+			return null;
+		}
+
+		final int[] lists = LISTS.get(npc.getId());
+		if (lists == null)
 		{
 			return null;
 		}
@@ -161,11 +206,11 @@ public class NightMarket extends Script
 			try
 			{
 				final int listId = Integer.parseInt(event.substring("multisell ".length()).trim());
-				for (int allowed : LISTS)
+				for (int allowed : lists)
 				{
 					if (allowed == listId)
 					{
-						MultisellData.getInstance().separateAndSend(listId, player, npc, false);
+						MultisellData.getInstance().separateAndSend(listId, player, npc, listId == UNSEAL_LIST);
 						break;
 					}
 				}
@@ -177,14 +222,13 @@ public class NightMarket extends Script
 			return null;
 		}
 
-		final List<String> pages = List.of("900360.htm", "900360-1.htm");
-		return pages.contains(event) ? event : null;
+		return (event.equals(npc.getId() + ".htm") || event.equals(npc.getId() + "-1.htm")) ? event : null;
 	}
 
 	@Override
 	public String onFirstTalk(Npc npc, Player player)
 	{
-		return "900360.htm";
+		return npc.getId() + ".htm";
 	}
 
 	public static void main(String[] args)

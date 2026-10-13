@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+	<!--
+	Night Market: Mammon's Varnish Enhancer (Gorm the Moonsmith).
+	The Merchant of Mammon's price (list 311132501): 100,000 Adena each, Adena rather than Ancient Adena. A Foundation item takes
+	1 to 16 of them to finish (list 311262513).
+	-->
+	<npcs>
+		<npc>900370</npc> <!-- Gorm the Moonsmith -->
+	</npcs>
+	<item>
+		<ingredient count="100000" id="57" /> <!-- Adena -->
+		<production count="1" id="12374" /> <!-- Mammon's Varnish Enhancer -->
+	</item>
+</list>
