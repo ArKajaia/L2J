@@ -18,6 +18,7 @@ package org.l2jmobius.gameserver.data.xml;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -217,6 +218,14 @@ public class RecipeData implements IXmlReader
 	public RecipeList getRecipeList(int listId)
 	{
 		return _recipes.get(listId);
+	}
+	
+	/**
+	 * @return every recipe
+	 */
+	public Collection<RecipeList> getRecipes()
+	{
+		return _recipes.values();
 	}
 	
 	/**

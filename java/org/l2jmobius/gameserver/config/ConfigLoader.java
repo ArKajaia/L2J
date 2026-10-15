@@ -33,6 +33,7 @@ import org.l2jmobius.gameserver.config.custom.ClassBalanceConfig;
 import org.l2jmobius.gameserver.config.custom.ClassTransferChallengeConfig;
 import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
 import org.l2jmobius.gameserver.config.custom.CustomBuffConfig;
+import org.l2jmobius.gameserver.config.custom.CraftingGoalsConfig;
 import org.l2jmobius.gameserver.config.custom.CustomMailManagerConfig;
 import org.l2jmobius.gameserver.config.custom.DelevelManagerConfig;
 import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
@@ -129,6 +130,7 @@ public class ConfigLoader
 		ClassBalanceConfig.load();
 		ClassTransferChallengeConfig.load();
 		CommunityBoardConfig.load();
+		CraftingGoalsConfig.load();
 		CustomMailManagerConfig.load();
 		DelevelManagerConfig.load();
 		DualboxCheckConfig.load();

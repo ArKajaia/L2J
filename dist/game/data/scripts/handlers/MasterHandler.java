@@ -27,6 +27,7 @@ import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPotionsConfig;
 import org.l2jmobius.gameserver.config.custom.BankingConfig;
 import org.l2jmobius.gameserver.config.custom.ChatModerationConfig;
+import org.l2jmobius.gameserver.config.custom.CraftingGoalsConfig;
 import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
 import org.l2jmobius.gameserver.config.custom.NightCycleConfig;
 import org.l2jmobius.gameserver.config.custom.OfflinePlayConfig;
@@ -77,6 +78,7 @@ import handlers.bypass.communityboard.HomeBoard;
 import handlers.bypass.communityboard.HomepageBoard;
 import handlers.bypass.communityboard.MailBoard;
 import handlers.bypass.communityboard.MemoBoard;
+import handlers.bypass.communityboard.CraftingGoalBoard;
 import handlers.bypass.communityboard.NightBoard;
 import handlers.bypass.communityboard.PassiveTreeBoard;
 import handlers.bypass.communityboard.PvpRankingBoard;
@@ -239,6 +241,7 @@ import handlers.chat.commands.voiced.ClassTransferChallengeVoiced;
 import handlers.chat.commands.voiced.ExperienceGain;
 import handlers.chat.commands.voiced.GearVoiced;
 import handlers.chat.commands.voiced.Lang;
+import handlers.chat.commands.voiced.CraftingGoalVoiced;
 import handlers.chat.commands.voiced.NightVoiced;
 import handlers.chat.commands.voiced.Offline;
 import handlers.chat.commands.voiced.OfflinePlay;
@@ -530,6 +533,7 @@ public class MasterHandler
 			PassiveTreeBoard.class,
 			PvpRankingBoard.class,
 			NightBoard.class,
+			CraftingGoalBoard.class,
 		},
 		{
 			// Item Handlers
@@ -619,6 +623,7 @@ public class MasterHandler
 			AutoPotionsConfig.AUTO_POTIONS_ENABLED ? AutoPotion.class : null,
 			PvpSpotsConfig.ENABLED && PvpSpotsConfig.TELEPORT_ENABLED ? PvpSpotVoiced.class : null,
 			NightCycleConfig.ENABLED ? NightVoiced.class : null,
+			CraftingGoalsConfig.ENABLED ? CraftingGoalVoiced.class : null,
 		},
 		{
 			// Target Handlers
