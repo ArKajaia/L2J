@@ -36,6 +36,7 @@ public class CraftingGoalVoiced implements IVoicedCommandHandler
 	private static final String[] ACTIONS =
 	{
 		"goal",
+		"parts",
 		"find",
 		"book",
 		"view",

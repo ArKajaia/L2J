@@ -39,6 +39,7 @@ import org.l2jmobius.gameserver.model.item.recipe.RecipeList;
  * <ul>
  * <li>(none) - the goals</li>
  * <li>{@code goal <recipe>} - the resources of a goal</li>
+ * <li>{@code parts <recipe> <page>} - the materials of a goal's missing parts</li>
  * <li>{@code find <page> <words>} - recipes whose item name holds the words</li>
  * <li>{@code book <page>} - the recipes the player knows</li>
  * <li>{@code view <recipe>} - a recipe, and how many items to aim for</li>
@@ -70,10 +71,8 @@ public class CraftingGoalBoard implements IParseBoardHandler
 	private static final int BOARD_WIDTH = 540;
 	private static final int BOARD_RESULTS = 12;
 	private static final int WINDOW_RESULTS = 7;
-	/** A window holds 17,200 characters of html, the buttons below take about 1,000: past this the remaining materials are left to the board. */
-	private static final int WINDOW_HTML_BUDGET = 16100;
-	/** About how long the html of one resource line is. */
-	private static final int LINE_HTML_SIZE = 700;
+	/** Materials on a page of the window: 14 lines of about 650 characters stay well under the window's 17,200. */
+	private static final int WINDOW_MATERIALS = 14;
 	/** The height of a row with an icon, a bit more than the 32x32 icon. */
 	private static final int ROW_HEIGHT = 40;
 	private static final int ICON_CELL = 40;
@@ -126,6 +125,10 @@ public class CraftingGoalBoard implements IParseBoardHandler
 				case "goal":
 				{
 					return buildGoal(player, Integer.parseInt(args[1]), width, bypass);
+				}
+				case "parts":
+				{
+					return buildMaterials(player, Integer.parseInt(args[1]), args.length > 2 ? Integer.parseInt(args[2]) : 1, width, bypass);
 				}
 				case "find":
 				{
@@ -276,30 +279,26 @@ public class CraftingGoalBoard implements IParseBoardHandler
 			}
 		}
 
-		// The materials of the components still missing.
-		boolean header = false;
-		int hidden = 0;
+		// The materials of the components still missing are on their own page.
+		int materials = 0;
+		int materialsDone = 0;
 		for (CraftingGoalLine line : lines)
 		{
-			if (!line.isMaterial())
+			if (line.isMaterial())
 			{
-				continue;
+				materials++;
+				if (line.isComplete())
+				{
+					materialsDone++;
+				}
 			}
-			if (bypass.equals(WINDOW_BYPASS) && ((sb.length() + LINE_HTML_SIZE) > WINDOW_HTML_BUDGET))
-			{
-				hidden++;
-				continue;
-			}
-			if (!header)
-			{
-				header = true;
-				sb.append("<br><table width=").append(width).append("><tr><td><font color=\"").append(COLOR_TITLE).append("\">To craft the missing parts</font><br1><font color=\"").append(COLOR_MUTED).append("\">Counts what you carry beyond the resources above.</font></td></tr></table>");
-			}
-			appendLine(sb, line, width);
 		}
-		if (hidden > 0)
+		if (materials > 0)
 		{
-			sb.append("<table width=").append(width).append("><tr><td align=center><font color=\"").append(COLOR_MUTED).append("\">").append(hidden).append(" more on the Community Board.</font></td></tr></table>");
+			sb.append("<br><table width=").append(width).append("><tr>");
+			sb.append("<td width=").append(width - 110).append("><font color=\"").append(COLOR_TITLE).append("\">Materials for the missing parts</font><br1><font color=\"").append(COLOR_MUTED).append("\">").append(materialsDone).append(" of ").append(materials).append(" collected</font></td>");
+			sb.append("<td width=110 align=right>").append(button("Materials", bypass + " parts " + recipeListId + " 1", 100)).append("</td>");
+			sb.append("</tr></table>");
 		}
 
 		sb.append("<br><table width=").append(width).append("><tr>");
@@ -307,6 +306,70 @@ public class CraftingGoalBoard implements IParseBoardHandler
 		sb.append("<td align=center>").append(button("Refresh", bypass + " goal " + recipeListId, 80)).append("</td>");
 		sb.append("<td align=center>").append(button("Recipe", bypass + " view " + recipeListId, 80)).append("</td>");
 		sb.append("<td align=center>").append(button("Abandon", bypass + " abandon " + recipeListId, 80)).append("</td>");
+		sb.append("</tr></table>");
+		return sb.toString();
+	}
+
+	/**
+	 * The materials of a goal: what the components still missing are crafted from. A page of the window holds {@link #WINDOW_MATERIALS}; the board shows them all.
+	 */
+	private static String buildMaterials(Player player, int recipeListId, int page, int width, String bypass)
+	{
+		final CraftingGoalManager manager = CraftingGoalManager.getInstance();
+		final CraftingGoal goal = manager.getGoal(player, recipeListId);
+		if (goal == null)
+		{
+			return buildGoals(player, width, bypass);
+		}
+
+		final List<CraftingGoalLine> materials = new ArrayList<>();
+		int done = 0;
+		for (CraftingGoalLine line : manager.computeLines(player, goal))
+		{
+			if (line.isMaterial())
+			{
+				materials.add(line);
+				if (line.isComplete())
+				{
+					done++;
+				}
+			}
+		}
+
+		final StringBuilder sb = new StringBuilder();
+		rowStart(sb, width, goal.getProductId(), ROW_HEIGHT);
+		sb.append("<td width=").append(width - ICON_CELL).append("><font color=\"").append(COLOR_VALUE).append("\">").append(CraftingGoalManager.describe(goal)).append("</font><br1>");
+		sb.append("<font color=\"").append(COLOR_TITLE).append("\">Materials for the missing parts</font></td>");
+		rowEnd(sb, width);
+		sb.append("<table width=").append(width).append("><tr><td>").append(bar(width, done, materials.size(), !materials.isEmpty() && (done >= materials.size()))).append("</td></tr>");
+		sb.append("<tr><td align=center><font color=\"").append(COLOR_TEXT).append("\">").append(done).append(" of ").append(materials.size()).append(" collected</font><br1>");
+		sb.append("<font color=\"").append(COLOR_MUTED).append("\">Counts what you carry beyond the resources of the recipe.</font></td></tr></table><br>");
+
+		final int perPage = bypass.equals(WINDOW_BYPASS) ? WINDOW_MATERIALS : Math.max(1, materials.size());
+		final int pages = Math.max(1, (materials.size() + perPage - 1) / perPage);
+		final int current = Math.max(1, Math.min(page, pages));
+		if (materials.isEmpty())
+		{
+			sb.append("<table width=").append(width).append("><tr><td align=center><font color=\"").append(COLOR_TEXT).append("\">Every part is in your bag: nothing left to craft them from.</font></td></tr></table>");
+		}
+		for (int i = (current - 1) * perPage; i < Math.min(materials.size(), current * perPage); i++)
+		{
+			appendLine(sb, materials.get(i), width);
+		}
+
+		sb.append("<br><table width=").append(width).append("><tr>");
+		sb.append("<td width=100 align=left>").append(current > 1 ? button("Previous", bypass + " parts " + recipeListId + " " + (current - 1), 80) : "").append("</td>");
+		sb.append("<td width=").append(width - 200).append(" align=center>");
+		if (pages > 1)
+		{
+			sb.append("<font color=\"").append(COLOR_MUTED).append("\">Page ").append(current).append(" of ").append(pages).append("</font>");
+		}
+		sb.append("</td><td width=100 align=right>").append(current < pages ? button("Next", bypass + " parts " + recipeListId + " " + (current + 1), 80) : "").append("</td>");
+		sb.append("</tr></table>");
+		sb.append("<table width=").append(width).append("><tr>");
+		sb.append("<td align=center>").append(button("Resources", bypass + " goal " + recipeListId, 90)).append("</td>");
+		sb.append("<td align=center>").append(button("Refresh", bypass + " parts " + recipeListId + " " + current, 90)).append("</td>");
+		sb.append("<td align=center>").append(button("Goals", bypass, 90)).append("</td>");
 		sb.append("</tr></table>");
 		return sb.toString();
 	}
