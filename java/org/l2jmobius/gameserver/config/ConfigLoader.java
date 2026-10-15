@@ -77,6 +77,7 @@ import org.l2jmobius.gameserver.config.custom.SchemeBufferConfig;
 import org.l2jmobius.gameserver.config.custom.ScreenWelcomeMessageConfig;
 import org.l2jmobius.gameserver.config.custom.SellBuffsConfig;
 import org.l2jmobius.gameserver.config.custom.ServerTimeConfig;
+import org.l2jmobius.gameserver.config.custom.SessionStatsConfig;
 import org.l2jmobius.gameserver.config.custom.StartingLocationConfig;
 import org.l2jmobius.gameserver.config.custom.StartingTitleConfig;
 import org.l2jmobius.gameserver.config.custom.ThiefMonsterConfig;
@@ -174,6 +175,7 @@ public class ConfigLoader
 		ScreenWelcomeMessageConfig.load();
 		SellBuffsConfig.load();
 		ServerTimeConfig.load();
+		SessionStatsConfig.load();
 		StartingLocationConfig.load();
 		StartingTitleConfig.load();
 		ThiefMonsterConfig.load();

@@ -132,6 +132,7 @@ import org.l2jmobius.gameserver.managers.PvpRankingManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
 import org.l2jmobius.gameserver.managers.RecipeManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
+import org.l2jmobius.gameserver.managers.SessionStatsManager;
 import org.l2jmobius.gameserver.managers.SiegeManager;
 import org.l2jmobius.gameserver.managers.TerritoryWarManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
@@ -274,6 +275,8 @@ import org.l2jmobius.gameserver.model.script.QuestTimer;
 import org.l2jmobius.gameserver.model.script.timers.TimerHolder;
 import org.l2jmobius.gameserver.model.sevensigns.SevenSigns;
 import org.l2jmobius.gameserver.model.sevensigns.SevenSignsFestival;
+import org.l2jmobius.gameserver.model.sessionstats.SessionStat;
+import org.l2jmobius.gameserver.model.sessionstats.SessionStats;
 import org.l2jmobius.gameserver.model.siege.Castle;
 import org.l2jmobius.gameserver.model.siege.Fort;
 import org.l2jmobius.gameserver.model.siege.Siege;
@@ -486,6 +489,7 @@ public class Player extends Playable
 	private boolean _enteredWorld = false;
 	private long _onlineTime;
 	private long _onlineBeginTime;
+	private volatile SessionStats _sessionStats;
 	private long _lastAccess;
 	private long _uptime;
 	
@@ -5301,6 +5305,8 @@ public class Player extends Playable
 		
 		// Lucky Loot: dying ends the kill streak.
 		org.l2jmobius.gameserver.managers.LuckyLootManager.getInstance().onPlayerDied(this);
+		
+		SessionStatsManager.add(this, SessionStat.DEATHS, 1);
 		
 		// MODERN TWEAK: The Nemesis System (monsters only, not fake players or their servitors)
 		if (RatesConfig.NEMESIS_SYSTEM_ENABLED && (killer != null) && killer.isAttackable() && !killer.isFakePlayer() && !(killer instanceof org.l2jmobius.gameserver.model.actor.instance.FakePlayerPvpServitor))
@@ -11065,6 +11071,7 @@ public class Player extends Playable
 			}
 			
 			PassiveTreeManager.getInstance().onClassContextChanged(this);
+			SessionStatsManager.onClassChanged(this);
 			
 			refreshOverloaded();
 			refreshExpertisePenalty();
@@ -11254,6 +11261,8 @@ public class Player extends Playable
 		{
 			LOGGER.log(Level.SEVERE, "", e);
 		}
+		
+		SessionStatsManager.getInstance().onEnter(this);
 		
 		if (EventDispatcher.getInstance().hasListener(EventType.ON_PLAYER_LOGIN, this))
 		{
@@ -15148,6 +15157,19 @@ public class Player extends Playable
 	public boolean hasVariables()
 	{
 		return getScript(PlayerVariables.class) != null;
+	}
+	
+	/**
+	 * @return the session in progress (see {@link SessionStatsManager}), or {@code null}
+	 */
+	public SessionStats getSessionStats()
+	{
+		return _sessionStats;
+	}
+	
+	public void setSessionStats(SessionStats sessionStats)
+	{
+		_sessionStats = sessionStats;
 	}
 	
 	/**

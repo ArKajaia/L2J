@@ -30,6 +30,7 @@ import org.l2jmobius.gameserver.data.holders.PetLevelData;
 import org.l2jmobius.gameserver.data.xml.ExperienceData;
 import org.l2jmobius.gameserver.data.xml.PetDataTable;
 import org.l2jmobius.gameserver.managers.PassiveTreeManager;
+import org.l2jmobius.gameserver.managers.SessionStatsManager;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.player.SubClassHolder;
 import org.l2jmobius.gameserver.model.actor.instance.Pet;
@@ -42,6 +43,7 @@ import org.l2jmobius.gameserver.model.events.EventType;
 import org.l2jmobius.gameserver.model.events.holders.actor.player.OnPlayerLevelChanged;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.script.QuestState;
+import org.l2jmobius.gameserver.model.sessionstats.SessionStat;
 import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.model.stats.MoveType;
 import org.l2jmobius.gameserver.model.stats.Stat;
@@ -101,6 +103,8 @@ public class PlayerStat extends PlayableStat
 		{
 			return false;
 		}
+		
+		SessionStatsManager.add(player, SessionStat.EXP_GAINED, value);
 		
 		// Set new karma
 		if (!player.isCursedWeaponEquipped() && (player.getKarma() > 0) && !player.isInsideZone(ZoneId.PVP))
@@ -241,6 +245,8 @@ public class PlayerStat extends PlayableStat
 			return false;
 		}
 		
+		SessionStatsManager.add(getActiveChar(), SessionStat.EXP_LOST, addToExp);
+		
 		if (sendMessage)
 		{
 			// Send a Server->Client System Message to the Player
@@ -366,6 +372,7 @@ public class PlayerStat extends PlayableStat
 		}
 		
 		final Player player = getActiveChar();
+		SessionStatsManager.add(player, SessionStat.SP_GAINED, value);
 		final StatusUpdate su = new StatusUpdate(player);
 		su.addAttribute(StatusUpdate.SP, (int) getSp());
 		player.sendPacket(su);

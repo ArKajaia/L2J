@@ -54,6 +54,7 @@ import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.PcCafePointsManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
+import org.l2jmobius.gameserver.managers.SessionStatsManager;
 import org.l2jmobius.gameserver.managers.ShadowRaidManager;
 import org.l2jmobius.gameserver.managers.WalkingManager;
 import org.l2jmobius.gameserver.model.World;
@@ -366,6 +367,7 @@ public class Attackable extends Npc
 				org.l2jmobius.gameserver.managers.InfusedMonsterManager.getInstance().onAttackableKilled(this, player);
 				org.l2jmobius.gameserver.managers.ResonantMonsterManager.getInstance().onAttackableKilled(this, player);
 				org.l2jmobius.gameserver.managers.NightCycleManager.getInstance().onAttackableKilled(this, player);
+				SessionStatsManager.onMonsterKilled(this, killer, player);
 			}
 			if ((partyPlayer != null) && getMustRewardExpSP())
 			{
