@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
 import org.l2jmobius.commons.threads.ThreadPool;
+import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Creature;
@@ -306,6 +307,8 @@ public class Trap extends Npc
 	@Override
 	public void sendDamageMessage(Creature target, int damage, boolean mcrit, boolean pcrit, boolean miss)
 	{
+		CombatLogManager.onDamageMessage(this, target, mcrit || pcrit, miss);
+		
 		if (miss || (_owner == null))
 		{
 			return;

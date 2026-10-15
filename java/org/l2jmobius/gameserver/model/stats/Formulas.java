@@ -36,6 +36,7 @@ import org.l2jmobius.gameserver.data.xml.HitConditionBonusData;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.KarmaLossData;
 import org.l2jmobius.gameserver.managers.CastleManager;
+import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.managers.FortManager;
 import org.l2jmobius.gameserver.managers.MonsterRageManager;
 import org.l2jmobius.gameserver.managers.SiegeManager;
@@ -1533,6 +1534,7 @@ public class Formulas
 		
 		if ((skill.isDebuff() && (target.calcStat(Stat.DEBUFF_IMMUNITY, 0, attacker, skill) > 0)) || MonsterRageManager.getInstance().resistsNegativeEffect(attacker, target, skill))
 		{
+			CombatLogManager.onResisted(attacker, target, skill);
 			final SystemMessage sm = new SystemMessage(SystemMessageId.C1_HAS_RESISTED_YOUR_S2);
 			sm.addString(target.getName());
 			sm.addSkillName(skill);
@@ -1618,6 +1620,7 @@ public class Formulas
 		
 		if (finalRate <= Rnd.get(100))
 		{
+			CombatLogManager.onResisted(attacker, target, skill);
 			final SystemMessage sm = new SystemMessage(SystemMessageId.C1_HAS_RESISTED_YOUR_S2);
 			sm.addString(target.getName());
 			sm.addSkillName(skill);
@@ -2077,6 +2080,7 @@ public class Formulas
 			}
 		}
 		
+		CombatLogManager.onCancelled(creature, target, skill, canceled);
 		return canceled;
 	}
 	

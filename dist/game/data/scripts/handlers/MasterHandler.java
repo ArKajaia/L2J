@@ -27,6 +27,7 @@ import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPotionsConfig;
 import org.l2jmobius.gameserver.config.custom.BankingConfig;
 import org.l2jmobius.gameserver.config.custom.ChatModerationConfig;
+import org.l2jmobius.gameserver.config.custom.CombatLogConfig;
 import org.l2jmobius.gameserver.config.custom.CraftingGoalsConfig;
 import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
 import org.l2jmobius.gameserver.config.custom.NightCycleConfig;
@@ -239,6 +240,7 @@ import handlers.chat.commands.voiced.Banking;
 import handlers.chat.commands.voiced.ChangePassword;
 import handlers.chat.commands.voiced.ChatAdmin;
 import handlers.chat.commands.voiced.ClassTransferChallengeVoiced;
+import handlers.chat.commands.voiced.CombatLogVoiced;
 import handlers.chat.commands.voiced.ExperienceGain;
 import handlers.chat.commands.voiced.GearVoiced;
 import handlers.chat.commands.voiced.Lang;
@@ -252,6 +254,7 @@ import handlers.chat.commands.voiced.PassiveTreeVoiced;
 //import handlers.chat.commands.voiced.PassivesCommand;
 import handlers.chat.commands.voiced.Premium;
 import handlers.chat.commands.voiced.PvpSpotVoiced;
+import handlers.chat.commands.voiced.RaidLogVoiced;
 import handlers.chat.commands.voiced.SaveHotzoneVoiced;
 import handlers.chat.commands.voiced.SkillsCommand;
 import handlers.chat.commands.voiced.VoiceAutoLootFilter;
@@ -626,6 +629,8 @@ public class MasterHandler
 			PvpSpotsConfig.ENABLED && PvpSpotsConfig.TELEPORT_ENABLED ? PvpSpotVoiced.class : null,
 			NightCycleConfig.ENABLED ? NightVoiced.class : null,
 			CraftingGoalsConfig.ENABLED ? CraftingGoalVoiced.class : null,
+			CombatLogConfig.ENABLED ? CombatLogVoiced.class : null,
+			CombatLogConfig.RAID_ENABLED ? RaidLogVoiced.class : null,
 		},
 		{
 			// Target Handlers

@@ -54,6 +54,7 @@ import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.PcCafePointsManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
+import org.l2jmobius.gameserver.managers.RaidLogManager;
 import org.l2jmobius.gameserver.managers.SessionStatsManager;
 import org.l2jmobius.gameserver.managers.ShadowRaidManager;
 import org.l2jmobius.gameserver.managers.WalkingManager;
@@ -65,6 +66,7 @@ import org.l2jmobius.gameserver.model.actor.enums.npc.DropType;
 import org.l2jmobius.gameserver.model.actor.holders.npc.AbsorberInfo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.DamageDoneInfo;
+import org.l2jmobius.gameserver.model.actor.holders.npc.RaidLog;
 import org.l2jmobius.gameserver.model.actor.instance.GrandBoss;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.status.AttackableStatus;
@@ -95,6 +97,7 @@ public class Attackable extends Npc
 	// Raid
 	private boolean _isRaid = false;
 	private boolean _isRaidMinion = false;
+	private volatile RaidLog _raidLog;
 	
 	//
 	private int _championTier;
@@ -287,6 +290,12 @@ public class Attackable extends Npc
 			}
 		}
 		
+		// Raid log, before the boss can die of it.
+		if (_isRaid && (attacker != null))
+		{
+			RaidLogManager.onRaidDamaged(this, attacker, damage, isDOT, skill);
+		}
+		
 		// Add damage and hate to the attacker AggroInfo of the Attackable _aggroList
 		if (attacker != null)
 		{
@@ -340,6 +349,12 @@ public class Attackable extends Npc
 		if (!super.doDie(killer))
 		{
 			return false;
+		}
+		
+		// The raid log of a boss (its minions are part of its fight).
+		if (_isRaid && !_isRaidMinion)
+		{
+			RaidLogManager.onRaidDied(this, killer);
 		}
 		
 		// Delayed notification.
@@ -2102,6 +2117,19 @@ public class Attackable extends Npc
 	public boolean isRaidMinion()
 	{
 		return _isRaidMinion;
+	}
+	
+	/**
+	 * @return the fight against this raid boss (see {@link RaidLogManager}), {@code null} if none
+	 */
+	public RaidLog getRaidLog()
+	{
+		return _raidLog;
+	}
+	
+	public void setRaidLog(RaidLog raidLog)
+	{
+		_raidLog = raidLog;
 	}
 	
 	@Override

@@ -65,6 +65,7 @@ import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.geoengine.pathfinding.GeoLocation;
 import org.l2jmobius.gameserver.geoengine.pathfinding.PathFinding;
 import org.l2jmobius.gameserver.managers.CaptchaManager;
+import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.managers.IdManager;
 import org.l2jmobius.gameserver.managers.InstanceManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
@@ -7138,6 +7139,8 @@ public abstract class Creature extends WorldObject
 	 */
 	public void sendDamageMessage(Creature target, int damage, boolean mcrit, boolean pcrit, boolean miss)
 	{
+		CombatLogManager.onDamageMessage(this, target, mcrit || pcrit, miss);
+		
 		if (miss && target.isPlayer())
 		{
 			final SystemMessage sm = new SystemMessage(SystemMessageId.C1_HAS_EVADED_C2_S_ATTACK);
@@ -7385,6 +7388,9 @@ public abstract class Creature extends WorldObject
 		if (attacker != null)
 		{
 			PassiveMechanics.onDamageDealt(attacker, this, skill, damage, damageOverTime);
+			
+			// PvP combat log of the attacker.
+			CombatLogManager.onDamageDealt(this, attacker, skill, damage, critical, damageOverTime);
 		}
 		
 		// Auto attacks make you stand up.

@@ -16,6 +16,7 @@
  */
 package handlers.skill.effects;
 
+import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.conditions.Condition;
@@ -68,6 +69,8 @@ public class CpHeal extends AbstractEffect
 		{
 			effected.setCurrentCp(amount + effected.getCurrentCp());
 		}
+		
+		CombatLogManager.onHealed(effector, effected, skill, 0, amount);
 		
 		if ((effector != null) && (effector != effected))
 		{

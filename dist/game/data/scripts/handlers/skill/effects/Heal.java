@@ -17,6 +17,7 @@
 package handlers.skill.effects;
 
 import org.l2jmobius.gameserver.config.custom.ClassBalanceConfig;
+import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.conditions.Condition;
@@ -123,6 +124,8 @@ public class Heal extends AbstractEffect
 		{
 			effected.setCurrentHp(amount + effected.getCurrentHp());
 		}
+		
+		CombatLogManager.onHealed(effector, effected, skill, amount, 0);
 		
 		if (effected.isPlayer())
 		{

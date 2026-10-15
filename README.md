@@ -281,6 +281,30 @@ Every login is a session, and the Community Board's "Session Log" page (`_bbsses
 - **Login summary**: on login a line in chat recalls the last session ("Your last session (2h 14m): +2 levels, 12.35M XP, 340 monsters, 1.20M adena earned.").
 - A session ends when you log out, go back to character selection, or leave a private store behind (offline trade), and is saved with the character (`SESSION_HISTORY` player variable). A short relog in which nothing happened isn't saved, so it doesn't push a real session out of the history. Settings in `config/Custom/SessionStats.ini`.
 
+### PvP Combat Log
+
+When you die in a PvP fight, a window shows how you died. A fight starts with the first hit from or against a player, a summon, a trap or a fake player, and ends after 30 seconds without PvP.
+
+- **Killed by**: the killer (and their summon if that did it), class, level, clan, weapon with its enchant, the CP and HP they had left, the killing blow (skill, damage, crit) and the distance.
+- **The fight**: how long it lasted, damage taken (CP and HP), damage per second, your max CP and HP, heals and CP potions you got, debuffs that landed or were resisted, buffs cancelled, and the damage you dealt (hits, crits, misses, per second).
+- **Attackers**: each one's damage, share, hits and crits, biggest hit and skill, attacks you evaded, debuffs, resists and cancels. Also your own targets, and the debuffs you had when you died (time left and who cast them).
+- **Skills**: what hurt you most, per skill and attacker: damage, share, hits, crits, biggest and average hit.
+- **Timeline**: the last 60 events, newest first, with the time before death: hits with the CP and HP lost and what was left, crits, evades, resists, debuffs, cancels, heals, and your own hits and misses.
+- A line in chat sums it up, and `.combatlog` (or `.deathlog`) opens the last one again.
+- Built for a full server: nothing is kept for players who aren't in a PvP fight, a hit only updates a fixed-size ring and a few totals, and the window is only built on death or when asked for. Settings in `config/Custom/CombatLog.ini`.
+
+### Raid Log
+
+When a raid boss or grand boss dies, everyone who took part (hit it or its minions, healed someone fighting it, or was hit by it) gets a log of the fight, in a window and in chat ("You: 1.21M damage (12%, rank 3/24). Top: ...").
+
+- **Summary**: the boss, how long it took, how many fought, total damage and damage per second, damage by guards or monsters, damage to minions, healing, deaths, the killing blow, your rank and share, the top 10, and the highlights (biggest hit, top healer, most debuffs, who took the most damage).
+- **Damage**: everyone ranked by damage to the boss (their summons' included): class and level, share, damage per second, hits, crits, biggest hit, summon and minion damage, misses. 15 per page.
+- **Support**: heals done, debuffs landed and tried, damage taken and deaths, best healers first.
+- **Parties**: damage, share and healing of each party.
+- **Mine**: your own fight (damage per second over the fight and while you fought, crits, damage over time, misses, biggest hit, summon and minion damage) and your skills by damage, with hits, crits, biggest and average hit.
+- `.raidlog` (or `.rblog`) opens the last one again. A fight is forgotten after 5 minutes without anything happening to the boss.
+- Each player has their own entry in the fight with its own lock, so a big raid doesn't make players wait on each other, and the windows are built after the kill, away from the combat threads. Settings in `config/Custom/CombatLog.ini`.
+
 ### Performers
 
 Champion Medals from champions teach every class the songs and dances, so the Swordsinger and Bladedancer lines get what a medal can't give: auras that only a performer can keep up, a combat stance each, a 3rd class finale, and better songs and dances of their own. The Swordsinger line keeps the party standing; the Bladedancer line tears the enemy down.
@@ -722,6 +746,12 @@ This program is free software, licensed under the **GNU General Public License, 
 ## Recent Updates
 
 Changes from 28 September – 15 October 2026.
+
+### Raid Log
+- **New**: when a raid boss dies, everyone who fought it gets a log: damage ranking with shares and damage per second, healers and tanks, parties, and their own skills. `.raidlog` opens it again. See [Raid Log](#raid-log).
+
+### PvP Combat Log
+- **New**: when you die in a PvP fight, a window shows who killed you and how, the attackers, the skills that hurt you, the debuffs you had and a timeline of the last events. `.combatlog` opens it again. See [PvP Combat Log](#pvp-combat-log).
 
 ### Great Totem of the Horde-Father
 - **Fix**: the Doomcryer finale now raises what its description says: a **Totem of Blood, a Totem of the Horde and a Totem of Frost-Teeth** stand around the Great Totem for 20 seconds, reaching 900. They can't be broken and don't count towards the 3 totems (Shatter and Spirit Walk leave them alone). Before, the Great Totem stood alone and its Horde pulse never worked: monsters can't turn on a totem that can't be targeted.
