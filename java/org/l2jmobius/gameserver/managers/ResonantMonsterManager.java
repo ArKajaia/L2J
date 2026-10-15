@@ -4,35 +4,24 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
 
-import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
-import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.NpcConfig;
 import org.l2jmobius.gameserver.config.PlayerConfig;
-import org.l2jmobius.gameserver.config.RatesConfig;
-import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.config.custom.ResonantMonsterConfig;
 import org.l2jmobius.gameserver.data.enums.AbsorbCrystalType;
 import org.l2jmobius.gameserver.data.holders.LevelingSoulCrystalInfo;
 import org.l2jmobius.gameserver.data.holders.SoulCrystal;
 import org.l2jmobius.gameserver.data.xml.LevelUpCrystalData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
-import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.actor.Attackable;
-import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
-import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
 import org.l2jmobius.gameserver.model.actor.instance.Chest;
-import org.l2jmobius.gameserver.model.actor.instance.FakePlayerPvpServitor;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
-import org.l2jmobius.gameserver.model.hiddenquest.task.AbstractHiddenTask;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.item.instance.Item;
@@ -49,7 +38,8 @@ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
  * <ul>
  * <li>Combat: it has more HP, and the first time it drops low its soul flees ({@code Monster#tryResonantFlight()}). From {@link ResonantMonsterConfig#RAID_STAGES} on it raises the stages retail only gives on raid bosses, and is as strong as
  * {@link ResonantMonsterConfig#RAID_STRENGTH_PERCENT}% of a raid boss of its level ({@link #isRaidTier(int)}, {@link #getRaidReference(int)}).</li>
- * <li>Joiners: at {@link ResonantMonsterConfig#FAKE_JOIN_HP_PERCENTS} a fake player turns up ({@link #onFakeJoinThreshold(Monster)}): a helper joins the party of the player fighting it, a rival fights for the soul itself and is fair game ({@link #isRival(Creature)}).</li>
+ * <li>Joiners: around {@link ResonantMonsterConfig#FAKE_JOIN_HP_PERCENTS} a fake player may turn up ({@link FakeJoinerManager}): a helper fights on the side of the players fighting it (they may invite it to their party), a rival fights for the soul
+ * itself and is fair game.</li>
  * <li>Reward: {@link #onAttackableKilled(Attackable, Player)} (called from {@code Attackable#doDie()} alongside the other post-kill hooks) raises the soul crystal of the killer and of every party member nearby by one stage, with the retail rules of quest 350 Enhance Your Weapon (the
  * quest started, exactly one soul crystal carried) and the retail messages. No crystal use on the monster is needed. A crystal only grows up to {@link #getStageCap(int)}: what the regular monsters of the Resonant monster's level could raise, or the
  * {@link ResonantMonsterConfig#RAID_STAGES} of its level. Quest 350 itself skips Resonant monsters, so a crystal never grows twice from one kill.</li>
@@ -78,29 +68,6 @@ public class ResonantMonsterManager
 	private static final Map<Integer, double[]> RAID_TEMPLATE_STATS = new ConcurrentHashMap<>();
 	/** Level -&gt; the median raid boss stats around that level (see {@link #getRaidReference(int)}). */
 	private static final Map<Integer, double[]> RAID_REFERENCE = new ConcurrentHashMap<>();
-
-	/** Set on a rival fake player, to the object id of the Resonant monster it came for. */
-	private static final String RIVAL_VAR = "RESONANT_RIVAL";
-	/** Set for good on a fake player that came to help a party against a Resonant monster: it never comes back to the party from town and never takes kill-steal revenge. */
-	private static final String HELPER_VAR = "RESONANT_HELPER";
-	/** How far from the Resonant monster a fake player turns up, so it runs into the fight. */
-	private static final int JOIN_MIN_DISTANCE = 600;
-	private static final int JOIN_MAX_DISTANCE = 900;
-	/** How often a fight with joiners is checked for being given up ({@link #checkFight(Monster, Watch)}). */
-	private static final int WATCH_INTERVAL_MS = 15000;
-	/** A fight is given up once no living player of the monster's aggro list is this close to it, twice in a row. */
-	private static final int ABANDON_RANGE = 2000;
-
-	/** Resonant monster object id -&gt; the fake players that joined its fight. */
-	private final Map<Integer, Set<Npc>> _joiners = new ConcurrentHashMap<>();
-	/** Resonant monster object id -&gt; the check of its fight while it has joiners. */
-	private final Map<Integer, Watch> _watches = new ConcurrentHashMap<>();
-
-	private static final class Watch
-	{
-		private volatile ScheduledFuture<?> _task;
-		private int _idleChecks;
-	}
 
 	protected ResonantMonsterManager()
 	{
@@ -464,325 +431,6 @@ public class ResonantMonsterManager
 		final SystemMessage sm = new SystemMessage(SystemMessageId.YOU_HAVE_EARNED_S1);
 		sm.addItemName(crystal.getLeveledItemId());
 		player.sendPacket(sm);
-	}
-
-	// ---------------------------------------------------------------------------------------------
-	// Fake players joining the fight
-	// ---------------------------------------------------------------------------------------------
-
-	/**
-	 * @param passed the thresholds of {@code thresholds} already passed this life, one bit each
-	 * @param hpPercent the monster's HP now, in percent
-	 * @param thresholds the HP percents ({@link ResonantMonsterConfig#FAKE_JOIN_HP_PERCENTS})
-	 * @return {@code passed} with the bit of every threshold {@code hpPercent} is at or below
-	 */
-	public static int passThresholds(int passed, double hpPercent, int[] thresholds)
-	{
-		int result = passed;
-		for (int i = 0; (i < thresholds.length) && (i < 31); i++)
-		{
-			if (hpPercent <= thresholds[i])
-			{
-				result |= 1 << i;
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * A Resonant monster dropped to one of {@link ResonantMonsterConfig#FAKE_JOIN_HP_PERCENTS}: a fake player turns up near the fight (spawned off the combat thread).
-	 * @param monster the Resonant monster
-	 */
-	public void onFakeJoinThreshold(Monster monster)
-	{
-		ThreadPool.execute(() -> spawnJoiner(monster, null));
-	}
-
-	/**
-	 * Spawns a fake player near a Resonant monster, of about its level, that joins the fight. A helper ({@link ResonantMonsterConfig#FAKE_HELPER_CHANCE}%) joins the party of the player who has hurt the monster most - the party code then credits
-	 * its kills to the party and keeps it friendly. Otherwise, or if that party has no room, it is a rival: it wants the soul for itself, may open on that player ({@link ResonantMonsterConfig#RIVAL_ATTACK_PLAYER_CHANCE}%), and killing it is
-	 * never a PK. The side isn't told.
-	 * @param monster the Resonant monster
-	 * @param helper {@code true} for a helper, {@code false} for a rival, {@code null} to roll
-	 * @return the fake player, or {@code null} if none could come (fake players off or at their limit, nobody fighting the monster, no place to stand)
-	 */
-	public Npc spawnJoiner(Monster monster, Boolean helper)
-	{
-		if ((monster == null) || !monster.isResonant() || monster.isDead() || !monster.isSpawned())
-		{
-			return null;
-		}
-
-		final FakePlayerPvpManager fakes = FakePlayerPvpManager.getInstance();
-		if (!fakes.isEnabled() || ((FakePlayerPvpConfig.MAX_ALIVE > 0) && (fakes.getFakePlayers().size() >= FakePlayerPvpConfig.MAX_ALIVE)))
-		{
-			return null;
-		}
-
-		final Player host = getTopAttacker(monster);
-		if (host == null)
-		{
-			return null;
-		}
-
-		final Location spot = AbstractHiddenTask.findPoint(monster, JOIN_MIN_DISTANCE, JOIN_MAX_DISTANCE, false, monster.getInstanceId());
-		if (spot == null)
-		{
-			return null;
-		}
-
-		final int level = Math.max(Math.max(1, FakePlayerPvpConfig.MIN_LEVEL), Math.min(FakePlayerPvpConfig.MAX_LEVEL, monster.getLevel() + Rnd.get(-2, 2)));
-		final Npc fake = fakes.spawnFakePlayer(null, level, spot.getX(), spot.getY(), spot.getZ(), monster.getInstanceId(), null, null);
-		if (fake == null)
-		{
-			return null;
-		}
-
-		_joiners.computeIfAbsent(monster.getObjectId(), _ -> ConcurrentHashMap.newKeySet()).add(fake);
-		watch(monster);
-		sendToAttackers(monster, fake.getName() + " joins the fight against " + monster.getName() + "!");
-
-		final boolean wantsToHelp = helper != null ? helper : (Rnd.get(100) < ResonantMonsterConfig.FAKE_HELPER_CHANCE);
-		if (wantsToHelp && FakePartyManager.getInstance().joinAsHelper(host, fake, monster))
-		{
-			fake.getVariables().set(HELPER_VAR, true);
-			fakes.assistFight(fake.asAttackable(), monster);
-		}
-		else
-		{
-			fake.getVariables().set(RIVAL_VAR, monster.getObjectId());
-			fakes.assistFight(fake.asAttackable(), Rnd.get(100) < ResonantMonsterConfig.RIVAL_ATTACK_PLAYER_CHANCE ? host : monster);
-		}
-
-		// The fight may have ended while it was on its way.
-		if (monster.isDead() || !monster.isSpawned())
-		{
-			onResonantGone(monster);
-		}
-		return fake;
-	}
-
-	/**
-	 * The Resonant monster died, fled or was removed: the fake players that joined its fight go their way {@link ResonantMonsterConfig#FAKE_LEAVE_DELAY} seconds later (see {@link #release(Npc, int)}).
-	 * @param monster the Resonant monster
-	 */
-	public void onResonantGone(Monster monster)
-	{
-		final Watch watch = _watches.remove(monster.getObjectId());
-		if ((watch != null) && (watch._task != null))
-		{
-			watch._task.cancel(false);
-		}
-
-		final Set<Npc> joiners = _joiners.remove(monster.getObjectId());
-		if ((joiners == null) || joiners.isEmpty())
-		{
-			return;
-		}
-
-		ThreadPool.schedule(() ->
-		{
-			for (Npc fake : joiners)
-			{
-				release(fake, 0);
-			}
-		}, ResonantMonsterConfig.FAKE_LEAVE_DELAY * 1000L);
-	}
-
-	/**
-	 * Starts checking a Resonant monster's fight for being given up, once, when its first joiner comes.
-	 * @param monster the Resonant monster
-	 */
-	private void watch(Monster monster)
-	{
-		_watches.computeIfAbsent(monster.getObjectId(), _ ->
-		{
-			final Watch watch = new Watch();
-			watch._task = ThreadPool.scheduleAtFixedRate(() -> checkFight(monster, watch), WATCH_INTERVAL_MS, WATCH_INTERVAL_MS);
-			return watch;
-		});
-	}
-
-	/**
-	 * A fight with joiners ends without a death too: when the monster is gone, or when no living player of its aggro list has been within {@link #ABANDON_RANGE} of it twice in a row (the party gave up). Then the joiners go their way, and the
-	 * monster's fake player thresholds are armed again for the next attempt ({@code Monster#resetResonantJoins()}).
-	 * @param monster the Resonant monster
-	 * @param watch its check
-	 */
-	private void checkFight(Monster monster, Watch watch)
-	{
-		if (monster.isDead() || !monster.isSpawned() || !monster.isResonant())
-		{
-			onResonantGone(monster);
-			return;
-		}
-
-		for (Player player : getAttackingPlayers(monster))
-		{
-			if (player.isOnline() && !player.isDead() && monster.isInsideRadius3D(player, ABANDON_RANGE))
-			{
-				watch._idleChecks = 0;
-				return;
-			}
-		}
-
-		if (++watch._idleChecks >= 2)
-		{
-			onResonantGone(monster);
-			monster.resetResonantJoins();
-		}
-	}
-
-	/**
-	 * A joiner is done with the fight: a helper leaves the party, a rival is no longer one, and both hunt where they are for a while and then log off like the other fake players ({@code FakePlayerPvpManager#onLeaveParty}). One still fighting
-	 * (a player, or the party's next monster) finishes that first; one that keeps fighting drops its fight when it goes, so it doesn't stay in the party's fight as an outsider. A helper that died leaves the party where it lies (it doesn't come back
-	 * from town, see {@code FakePartyManager#onFakeDecay}).
-	 * @param fake the fake player
-	 * @param attempts how many times it was already put off
-	 */
-	private void release(Npc fake, int attempts)
-	{
-		if (fake.isDead() || !fake.isSpawned())
-		{
-			clearRival(fake);
-			if (FakePartyManager.getInstance().isInPlayerParty(fake))
-			{
-				FakePartyManager.getInstance().leave(fake, false, true);
-			}
-			return;
-		}
-
-		if ((FakePlayerPvpManager.isFightingPvp(fake) || fake.isInCombat()) && (attempts < 10))
-		{
-			ThreadPool.schedule(() -> release(fake, attempts + 1), Math.max(10, ResonantMonsterConfig.FAKE_LEAVE_DELAY) * 1000L);
-			return;
-		}
-
-		clearRival(fake);
-		if (fake.isAttackable())
-		{
-			fake.asAttackable().clearAggroList();
-		}
-		if (fake.hasAI())
-		{
-			fake.getAI().setIntention(Intention.ACTIVE);
-		}
-
-		if (FakePartyManager.getInstance().isInPlayerParty(fake))
-		{
-			FakePartyManager.getInstance().leave(fake, false, false);
-		}
-		else
-		{
-			FakePlayerPvpManager.getInstance().onLeaveParty(fake);
-		}
-	}
-
-	private static void clearRival(Npc fake)
-	{
-		if (fake.hasVariables())
-		{
-			fake.getVariables().remove(RIVAL_VAR);
-		}
-	}
-
-	/**
-	 * @param creature a creature
-	 * @return {@code true} if {@code creature} is a rival fake player that came for a Resonant monster's soul: killing it is never a PK, and pays ({@link #onRivalKilled(Attackable, Player)})
-	 */
-	public static boolean isRival(Creature creature)
-	{
-		final Creature fake = ownerOf(creature);
-		return (fake != null) && fake.isNpc() && fake.asNpc().hasVariables() && (fake.asNpc().getVariables().getInt(RIVAL_VAR, 0) != 0);
-	}
-
-	/**
-	 * @param creature a creature
-	 * @return {@code true} if {@code creature} (or the fake player whose servitor it is) came to help a party against a Resonant monster: it never comes back to the party from town and never takes kill-steal revenge
-	 */
-	public static boolean isHelper(Creature creature)
-	{
-		final Creature fake = ownerOf(creature);
-		return (fake != null) && fake.isNpc() && fake.asNpc().hasVariables() && fake.asNpc().getVariables().getBoolean(HELPER_VAR, false);
-	}
-
-	/**
-	 * @param creature a creature
-	 * @return the fake player a fake player's servitor belongs to, else {@code creature} itself
-	 */
-	public static Creature ownerOf(Creature creature)
-	{
-		return creature instanceof FakePlayerPvpServitor servitor ? servitor.getOwner() : creature;
-	}
-
-	/**
-	 * A player killed a rival: {@link ResonantMonsterConfig#RIVAL_KILL_COINS} hot zone coins and a Sealed Cache, once. Called from {@code Attackable#doDie()} next to the Shadow Raider reward.
-	 * @param victim the fake player killed
-	 * @param killer the player credited with the kill
-	 */
-	public void onRivalKilled(Attackable victim, Player killer)
-	{
-		if ((victim == null) || (killer == null) || !isRival(victim))
-		{
-			return;
-		}
-
-		clearRival(victim);
-		if (ResonantMonsterConfig.RIVAL_KILL_COINS > 0)
-		{
-			killer.addItem(ItemProcessType.REWARD, RatesConfig.ARENA_CURRENCY_ITEM_ID, ResonantMonsterConfig.RIVAL_KILL_COINS, victim, true);
-		}
-		if (ResonantMonsterConfig.RIVAL_KILL_CACHE)
-		{
-			LuckyLootManager.getInstance().dropGuaranteedCache(victim, killer);
-		}
-	}
-
-	/**
-	 * @param monster a monster
-	 * @return the players on its aggro list (a summon counts for its owner), each once
-	 */
-	public static List<Player> getAttackingPlayers(Monster monster)
-	{
-		final List<Player> players = new ArrayList<>();
-		for (Creature attacker : monster.getAggroList().keySet())
-		{
-			final Player player = attacker != null ? attacker.asPlayer() : null;
-			if ((player != null) && !players.contains(player))
-			{
-				players.add(player);
-			}
-		}
-		return players;
-	}
-
-	/**
-	 * @param monster a monster
-	 * @return the online, living player (a summon counts for its owner) who has hurt it most, or {@code null}
-	 */
-	private static Player getTopAttacker(Monster monster)
-	{
-		Player top = null;
-		long topDamage = -1;
-		for (AggroInfo info : monster.getAggroList().values())
-		{
-			final Creature attacker = info.getAttacker();
-			final Player player = attacker != null ? attacker.asPlayer() : null;
-			if ((player != null) && player.isOnline() && !player.isDead() && (info.getDamage() > topDamage))
-			{
-				top = player;
-				topDamage = info.getDamage();
-			}
-		}
-		return top;
-	}
-
-	private static void sendToAttackers(Monster monster, String message)
-	{
-		for (Player player : getAttackingPlayers(monster))
-		{
-			player.sendMessage(message);
-		}
 	}
 
 	public static ResonantMonsterManager getInstance()

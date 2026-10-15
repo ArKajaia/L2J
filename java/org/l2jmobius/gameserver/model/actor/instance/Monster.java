@@ -30,6 +30,7 @@ import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.ClassTransferChallengeManager;
 import org.l2jmobius.gameserver.managers.FakeClanManager;
+import org.l2jmobius.gameserver.managers.FakeJoinerManager;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.HotzoneModifierManager;
 import org.l2jmobius.gameserver.managers.NightCycleManager;
@@ -137,10 +138,12 @@ public class Monster extends Attackable
 	private AbnormalVisualEffect _resonantAve = null;
 	/** Raid tier only (see {@link org.l2jmobius.gameserver.managers.ResonantMonsterManager#isRaidTier(int)}): its stat multipliers, indexed like the raid reference; {@code null} otherwise. */
 	private volatile double[] _resonantRaidMults = null;
-	/** The fake player thresholds (ResonantFakeJoinAtHpPercent) this fight already passed, one bit each. */
-	private int _resonantJoinsPassed = 0;
-	/** Set when a given-up fight's joiners were sent away: the next hit counts the thresholds above the monster's HP as passed and arms the others again. */
-	private boolean _resonantJoinsRearm = false;
+	/** The fake player thresholds of this life's (or attempt's) big fight (see FakeJoinerManager), rolled on its first hit; {@code null} until then. */
+	private int[] _fakeJoinThresholds = null;
+	/** The fake player thresholds this fight already passed, one bit each. */
+	private int _fakeJoinsPassed = 0;
+	/** Set when a given-up fight's joiners were sent away: the next hit rolls the thresholds again and counts the ones above the fight's HP as passed. */
+	private boolean _fakeJoinsRearm = false;
 
 	public Monster(NpcTemplate template)
 	{
@@ -307,6 +310,7 @@ public class Monster extends Attackable
 		{
 			clearInfused(false);
 			clearResonant(false);
+			clearFakeJoins();
 		}
 
 		// Raid bosses and grand bosses are already hand-tuned; skip the random passive pool for
@@ -1620,8 +1624,7 @@ public class Monster extends Attackable
 	private synchronized void clearResonant(boolean broadcast)
 	{
 		_resonantFled = false;
-		_resonantJoinsPassed = 0;
-		_resonantJoinsRearm = false;
+		clearFakeJoins();
 		_resonantRaidMults = null;
 		if (!_resonant && (_resonantAve == null))
 		{
@@ -1660,13 +1663,13 @@ public class Monster extends Attackable
 	}
 
 	/**
-	 * Each time a Resonant monster's HP drops past one of {@link ResonantMonsterConfig#FAKE_JOIN_HP_PERCENTS} (once per threshold and life, a big hit may pass two), a fake player turns up and joins the fight
-	 * ({@link ResonantMonsterManager#onFakeJoinThreshold(Monster)}).
+	 * Each time a big fight (a Resonant monster, a Nightlord, see {@link FakeJoinerManager#getFight(Monster)}) drops past one of its HP percents (rolled for each life, once per threshold, a big hit may pass two), a fake player
+	 * turns up and joins the fight ({@link FakeJoinerManager#onThreshold(Monster, FakeJoinerManager.Fight)}).
 	 */
-	private void tryResonantFakeJoin()
+	private void tryFakeJoin()
 	{
-		final int[] thresholds = ResonantMonsterConfig.FAKE_JOIN_HP_PERCENTS;
-		if ((thresholds.length == 0) || !isResonant() || isDead())
+		final FakeJoinerManager.Fight fight = FakeJoinerManager.getFight(this);
+		if ((fight == null) || isDead())
 		{
 			return;
 		}
@@ -1674,33 +1677,49 @@ public class Monster extends Attackable
 		final int newlyPassed;
 		synchronized (this)
 		{
-			final double hpPercent = (getCurrentHp() * 100.0) / getMaxHp();
-			if (_resonantJoinsRearm)
+			final double hpPercent = FakeJoinerManager.getFightHpPercent(this, fight);
+			if (_fakeJoinThresholds == null)
 			{
-				// A new attempt after a given-up fight: the thresholds it is already below don't call anybody now.
-				_resonantJoinsRearm = false;
-				_resonantJoinsPassed = ResonantMonsterManager.passThresholds(0, hpPercent, thresholds);
-				return;
+				_fakeJoinThresholds = FakeJoinerManager.rollThresholds(fight);
+				_fakeJoinsPassed = 0;
+				if (_fakeJoinsRearm)
+				{
+					// A new attempt after a given-up fight: the thresholds it is already below don't call anybody now.
+					_fakeJoinsRearm = false;
+					_fakeJoinsPassed = FakeJoinerManager.passThresholds(0, hpPercent, _fakeJoinThresholds);
+					return;
+				}
 			}
 
-			final int passed = ResonantMonsterManager.passThresholds(_resonantJoinsPassed, hpPercent, thresholds);
-			newlyPassed = Integer.bitCount(passed & ~_resonantJoinsPassed);
-			_resonantJoinsPassed = passed;
+			final int passed = FakeJoinerManager.passThresholds(_fakeJoinsPassed, hpPercent, _fakeJoinThresholds);
+			newlyPassed = Integer.bitCount(passed & ~_fakeJoinsPassed);
+			_fakeJoinsPassed = passed;
 		}
 
 		for (int i = 0; i < newlyPassed; i++)
 		{
-			ResonantMonsterManager.getInstance().onFakeJoinThreshold(this);
+			FakeJoinerManager.getInstance().onThreshold(this, fight);
 		}
 	}
 
 	/**
-	 * The players gave up the fight and its joiners were sent away ({@link ResonantMonsterManager}): the fake player thresholds are armed again for the next attempt, from wherever the monster's HP is then.
+	 * The players gave up the fight and its joiners were sent away ({@link FakeJoinerManager}): the fake player thresholds are rolled again for the next attempt, from wherever the fight's HP is then.
 	 */
-	public synchronized void resetResonantJoins()
+	public synchronized void resetFakeJoins()
 	{
-		_resonantJoinsPassed = 0;
-		_resonantJoinsRearm = true;
+		_fakeJoinThresholds = null;
+		_fakeJoinsPassed = 0;
+		_fakeJoinsRearm = true;
+	}
+
+	/**
+	 * A new life, or a new big fight (a monster crowned Nightlord): the fake player thresholds are rolled on its next hit.
+	 */
+	public synchronized void clearFakeJoins()
+	{
+		_fakeJoinThresholds = null;
+		_fakeJoinsPassed = 0;
+		_fakeJoinsRearm = false;
 	}
 
 	/**
@@ -1897,7 +1916,7 @@ public class Monster extends Attackable
 		
 		tryMetamorphosis();
 		tryResonantFlight();
-		tryResonantFakeJoin();
+		tryFakeJoin();
 	}
 	
 	/**
@@ -2109,10 +2128,7 @@ public class Monster extends Attackable
 		endRage(false);
 		stopArenaWaveReminderTask();
 		stopInfusedNova();
-		if (isResonant())
-		{
-			ResonantMonsterManager.getInstance().onResonantGone(this);
-		}
+		FakeJoinerManager.getInstance().onFightGone(this);
 		
 		if (hasMinions())
 		{
@@ -2227,8 +2243,9 @@ public class Monster extends Attackable
 			return false;
 		}
 		
-		// A rival fake player took the Resonant soul: the reward hooks don't run for its kill, so tell the players here (before the aggro list goes).
-		final List<Player> robbed = isResonant() && ResonantMonsterManager.isRival(killer) ? ResonantMonsterManager.getAttackingPlayers(this) : null;
+		// A rival fake player took the kill of a big fight (a Resonant monster's soul, a Nightlord): the reward hooks don't run for its kill, so tell the players here (before the aggro list goes).
+		final FakeJoinerManager.Fight fight = FakeJoinerManager.getFight(this);
+		final List<Player> robbed = (fight != null) && FakeJoinerManager.getInstance().isRival(killer) ? FakeJoinerManager.getAttackingPlayers(this) : null;
 		if (!super.doDie(killer))
 		{
 			return false;
@@ -2241,13 +2258,10 @@ public class Monster extends Attackable
 		{
 			for (Player player : robbed)
 			{
-				player.sendMessage(ResonantMonsterManager.ownerOf(killer).getName() + " stole the soul of " + getName() + "!");
+				player.sendMessage(fight.getStolenMessage(FakeJoinerManager.ownerOf(killer).getName(), getName()));
 			}
 		}
-		if (isResonant())
-		{
-			ResonantMonsterManager.getInstance().onResonantGone(this);
-		}
+		FakeJoinerManager.getInstance().onFightGone(this);
 		return true;
 	}
 	
@@ -2257,10 +2271,7 @@ public class Monster extends Attackable
 		// A Thief or Resonant soul that escaped (deleteMe()) or died: the respawn reuses this object, so it must not keep running or casting.
 		stopEscape();
 		stopInfusedNova();
-		if (isResonant())
-		{
-			ResonantMonsterManager.getInstance().onResonantGone(this);
-		}
+		FakeJoinerManager.getInstance().onFightGone(this);
 		super.onDecay();
 	}
 	
