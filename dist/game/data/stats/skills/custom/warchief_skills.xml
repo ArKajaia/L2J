@@ -22,8 +22,10 @@
 	  27548 Totem of Frost-Teeth  enemies in range: 27549 hex, Speed and Atk. Spd. down.
 	  27550 Totem of Ancestors    (Doomcryer) the first party member lying dead in range gets
 	                              up with 30% HP; the totem is spent.
-	  27558 Great Totem of the Horde-Father (Doomcryer finale): Blood, Horde and Frost-Teeth at
-	                              once, within 900, for 20 seconds, can't be targeted.
+	  27558 Great Totem of the Horde-Father (Doomcryer finale): raises a Totem of Blood, of the
+	                              Horde and of Frost-Teeth around it, within 900, for 20 seconds.
+	                              They can't be broken and don't count; the Great Totem itself
+	                              can't be targeted.
 	  27559 Totem of Flames       pulses every 1.67 seconds: burns up to 4 (level 1) to 10 (level
 	                              7+) enemies within 400 with 27560's magic damage (fire), the
 	                              nearest first; an enemy another of its Totems of Flames burns
@@ -307,8 +309,9 @@
 		</effects>
 	</skill>
 
-	<!-- 27558 GREAT TOTEM OF THE HORDE-FATHER (Doomcryer finale): Blood, Horde and Frost-Teeth
-	     within 900 for 20 seconds; it can't be targeted or broken. -->
+	<!-- 27558 GREAT TOTEM OF THE HORDE-FATHER (Doomcryer finale): raises a Totem of Blood, of the
+	     Horde and of Frost-Teeth (the kinds) around it, within 900 for 20 seconds; none of them can
+	     be broken, and the Great Totem itself can't be targeted. -->
 	<skill id="27558" levels="1" name="Great Totem of the Horde-Father">
 		<icon>icon.skill1413</icon>
 		<operateType>A1</operateType>

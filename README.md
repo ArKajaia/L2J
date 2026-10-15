@@ -341,7 +341,7 @@ A totem planted without Ctrl hits monsters and the players and fake players with
 | Ancestral Bond | Doomcryer | Passive: Max HP +6%, P. Def. and M. Def. +8% near its own totem |
 | Spirit Walk | Doomcryer | Swaps places with its targeted totem, or the nearest one: the Warchief stands where the totem stood, the totem where the Warchief stood |
 | Warchief's Restraint | Warcryer (40) | Passive, given with the class: Steal Essence absorbs 40% of the damage as HP instead of 80%. The Overlord line keeps the retail 80% |
-| Great Totem of the Horde-Father | Doomcryer (79) | Blood, Horde and Frost-Teeth at once within 900 for 20 seconds; it can't be targeted (3 minute reuse) |
+| Great Totem of the Horde-Father | Doomcryer (79) | Raises a Totem of Blood, of the Horde and of Frost-Teeth around it, within 900 for 20 seconds; they can't be broken and don't count, the Great Totem can't be targeted (3 minute reuse) |
 
 - Echoes and hexes of the totems have their own buff slots (the triggered-buff bar for the echoes), so they stack with every buff. The "Totem Circle" icon shows how many totems are up.
 - A character who learned one of the retired buffs from its class tree loses it quietly when it logs in, or keeps the level its 1st class still teaches; a buff the Champion Medals or buff books also teach is kept, since it may have been learned from one (`RetiredSkills` in the config).
@@ -722,6 +722,9 @@ This program is free software, licensed under the **GNU General Public License, 
 ## Recent Updates
 
 Changes from 28 September – 15 October 2026.
+
+### Great Totem of the Horde-Father
+- **Fix**: the Doomcryer finale now raises what its description says: a **Totem of Blood, a Totem of the Horde and a Totem of Frost-Teeth** stand around the Great Totem for 20 seconds, reaching 900. They can't be broken and don't count towards the 3 totems (Shatter and Spirit Walk leave them alone). Before, the Great Totem stood alone and its Horde pulse never worked: monsters can't turn on a totem that can't be targeted.
 
 ### Session Log
 - **New**: the Community Board's "Session Log" page shows what a character achieved since logging in (levels, experience, monsters, adena, quests, loot...) next to the previous session, and a history of the last sessions. A line in chat recalls the last session on login. See [Session Log](#session-log).

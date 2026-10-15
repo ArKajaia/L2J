@@ -22,6 +22,7 @@ package org.l2jmobius.gameserver.model.actor.holders.player;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +33,7 @@ import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.config.custom.OraclesWarchiefsConfig;
 import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.data.xml.SkillData;
+import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -45,6 +47,7 @@ import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
 import org.l2jmobius.gameserver.network.serverpackets.SkillCoolTime;
+import org.l2jmobius.gameserver.util.LocationUtil;
 
 /**
  * The Totem Warchiefs: the Warcryer line (Warcryer, Doomcryer). They don't chant any more, they plant totems (data/stats/skills/custom/warchief_skills.xml) that pulse every few seconds (see config/Custom/OraclesWarchiefs.ini):
@@ -56,7 +59,7 @@ import org.l2jmobius.gameserver.network.serverpackets.SkillCoolTime;
  * <li>Flames: every pulse (every {@link OraclesWarchiefsConfig#FLAME_TOTEM_PULSE} milliseconds) burns the enemies close to it with magic damage.</li>
  * </ul>
  * Up to {@link OraclesWarchiefsConfig#TOTEM_MAX_COUNT} totems: another one replaces the oldest. One of each kind, but up to {@link OraclesWarchiefsConfig#FLAME_TOTEM_MAX_COUNT} Totems of Flames (another one replaces the oldest of them). The Great Totem of the
- * Horde-Father (the Doomcryer finale) pulses Blood, Horde and Frost-Teeth farther, and doesn't count.<br>
+ * Horde-Father (the Doomcryer finale) raises a Totem of Blood, of the Horde and of Frost-Teeth around it that reach farther, can't be broken and don't count.<br>
  * A player's totem planted without Ctrl hits monsters and the players and fake players with PvP status; planted with Ctrl it also hits the white ones. A hit on a player or fake player flags its Warchief (see {@link AreaTargets#isTotemEnemy}).<br>
  * A totem falls when its time is up, when it is broken, or when its Warchief dies, leaves or goes too far.
  * @author Mobius
@@ -101,6 +104,11 @@ public class Totems
 		27559, // Totem of Flames
 	};
 
+	/** The totems the Great Totem of the Horde-Father raises around it, by what they pulse. */
+	private static final Map<Kind, Integer> GREAT_TOTEM_PARTS = Map.of(Kind.BLOOD, 1002101, Kind.HORDE, 1002102, Kind.FROST, 1002103);
+	/** How far from the Great Totem the totems it raises stand. */
+	private static final int GREAT_TOTEM_SPREAD = 80;
+
 	/** The totems of each Warchief, oldest first, by object id. */
 	private static final Map<Integer, List<Totem>> TOTEMS = new ConcurrentHashMap<>();
 
@@ -127,9 +135,9 @@ public class Totems
 	 * @param kinds what it pulses
 	 * @param npcId its NPC template
 	 * @param skillLevel the level of the skill that planted it
-	 * @param great {@code true} for the Great Totem of the Horde-Father
+	 * @param great {@code true} for the Great Totem of the Horde-Father: it raises a totem of each of the kinds around it
 	 * @param forced {@code true} if planted with Ctrl held: it also hits the white players and fake players around
-	 * @return the totem, {@code null} if it couldn't be planted
+	 * @return the totem (the Great Totem itself), {@code null} if it couldn't be planted
 	 */
 	public static Totem plant(Creature owner, Set<Kind> kinds, int npcId, int skillLevel, boolean great, boolean forced)
 	{
@@ -183,13 +191,50 @@ public class Totems
 			}
 		}
 
+		if (great)
+		{
+			// The Great Totem itself only marks the spot: around it stand the totems it raises, one of each kind it pulses.
+			final Totem center = spawn(template, owner, EnumSet.noneOf(Kind.class), skillLevel, true, forced, owner.getX(), owner.getY(), owner.getZ());
+			int index = 0;
+			for (Kind kind : kinds)
+			{
+				final Integer partId = GREAT_TOTEM_PARTS.get(kind);
+				final NpcTemplate partTemplate = partId != null ? NpcData.getInstance().getTemplate(partId) : null;
+				if (partTemplate != null)
+				{
+					final double angle = Math.toRadians(LocationUtil.convertHeadingToDegree(owner.getHeading()) + ((360.0 * index++) / kinds.size()));
+					final Location at = GeoEngine.getInstance().getValidLocation(owner.getX(), owner.getY(), owner.getZ(), owner.getX() + (int) (GREAT_TOTEM_SPREAD * Math.cos(angle)), owner.getY() + (int) (GREAT_TOTEM_SPREAD * Math.sin(angle)), owner.getZ(), owner.getInstanceId());
+					spawn(partTemplate, owner, EnumSet.of(kind), skillLevel, true, forced, at.getX(), at.getY(), at.getZ());
+				}
+			}
+			return center;
+		}
+
+		return spawn(template, owner, kinds, skillLevel, false, forced, owner.getX(), owner.getY(), owner.getZ());
+	}
+
+	/**
+	 * Plants one totem and starts its pulse.
+	 * @param template its NPC template
+	 * @param owner the Warchief
+	 * @param kinds what it pulses
+	 * @param skillLevel the level of its echoes
+	 * @param great {@code true} for the Great Totem of the Horde-Father and the totems it raises
+	 * @param forced {@code true} if planted with Ctrl held
+	 * @param x where
+	 * @param y where
+	 * @param z where
+	 * @return the totem
+	 */
+	private static Totem spawn(NpcTemplate template, Creature owner, Set<Kind> kinds, int skillLevel, boolean great, boolean forced, int x, int y, int z)
+	{
 		final int range = great ? OraclesWarchiefsConfig.GREAT_TOTEM_RANGE : OraclesWarchiefsConfig.TOTEM_RANGE;
 		final int lifetime = great ? OraclesWarchiefsConfig.GREAT_TOTEM_LIFETIME : OraclesWarchiefsConfig.TOTEM_LIFETIME;
 		final double hpShare = great ? OraclesWarchiefsConfig.GREAT_TOTEM_HP_SHARE : kinds.contains(Kind.HORDE) ? OraclesWarchiefsConfig.HORDE_TOTEM_HP_SHARE : OraclesWarchiefsConfig.TOTEM_HP_SHARE;
 		final Totem totem = new Totem(template, owner, kinds, range, lifetime, great, skillLevel, forced, (int) Math.max(1, owner.getMaxHp() * hpShare));
 		totem.setHeading(owner.getHeading());
 		totem.fullRestore();
-		totem.spawnMe(owner.getX(), owner.getY(), owner.getZ());
+		totem.spawnMe(x, y, z);
 		TOTEMS.computeIfAbsent(owner.getObjectId(), id -> new CopyOnWriteArrayList<>()).add(totem);
 		totem.startPulse(!great && isFlames(kinds) ? OraclesWarchiefsConfig.FLAME_TOTEM_PULSE : OraclesWarchiefsConfig.TOTEM_PULSE);
 		updateCircle(owner);
