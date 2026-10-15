@@ -64,6 +64,7 @@ import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.PvpConfig;
 import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
+import org.l2jmobius.gameserver.config.custom.CombatLogConfig;
 import org.l2jmobius.gameserver.config.custom.CustomBuffConfig;
 import org.l2jmobius.gameserver.config.custom.OraclesWarchiefsConfig;
 import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
@@ -112,6 +113,7 @@ import org.l2jmobius.gameserver.handler.IItemHandler;
 import org.l2jmobius.gameserver.handler.ItemHandler;
 import org.l2jmobius.gameserver.managers.AntiFeedManager;
 import org.l2jmobius.gameserver.managers.CastleManager;
+import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.managers.CoupleManager;
 import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
 import org.l2jmobius.gameserver.managers.DimensionalRiftManager;
@@ -156,6 +158,7 @@ import org.l2jmobius.gameserver.model.actor.holders.player.ArenaParticipantsHold
 import org.l2jmobius.gameserver.model.actor.holders.player.AutoPlaySettingsHolder;
 import org.l2jmobius.gameserver.model.actor.holders.player.AutoUseSettingsHolder;
 import org.l2jmobius.gameserver.model.actor.holders.player.BlockList;
+import org.l2jmobius.gameserver.model.actor.holders.player.CombatLog;
 import org.l2jmobius.gameserver.model.actor.holders.player.ContactList;
 import org.l2jmobius.gameserver.model.actor.holders.player.Duel;
 import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
@@ -490,6 +493,7 @@ public class Player extends Playable
 	private long _onlineTime;
 	private long _onlineBeginTime;
 	private volatile SessionStats _sessionStats;
+	private volatile CombatLog _combatLog;
 	private long _lastAccess;
 	private long _uptime;
 	
@@ -5297,6 +5301,9 @@ public class Player extends Playable
 	@Override
 	public boolean doDie(Creature killer)
 	{
+		// The debuffs for the PvP combat log, before dying removes them.
+		final List<String[]> combatLogDebuffs = CombatLogManager.getDebuffs(this);
+		
 		// Kill the Player
 		if (!super.doDie(killer))
 		{
@@ -5307,6 +5314,9 @@ public class Player extends Playable
 		org.l2jmobius.gameserver.managers.LuckyLootManager.getInstance().onPlayerDied(this);
 		
 		SessionStatsManager.add(this, SessionStat.DEATHS, 1);
+		
+		// PvP combat log of the fight that ends here.
+		CombatLogManager.onDeath(this, killer, combatLogDebuffs);
 		
 		// MODERN TWEAK: The Nemesis System (monsters only, not fake players or their servitors)
 		if (RatesConfig.NEMESIS_SYSTEM_ENABLED && (killer != null) && killer.isAttackable() && !killer.isFakePlayer() && !(killer instanceof org.l2jmobius.gameserver.model.actor.instance.FakePlayerPvpServitor))
@@ -11664,11 +11674,11 @@ public class Player extends Playable
 	{
 		if (skill != null)
 		{
-			getStatus().reduceHp(value, attacker, awake, isDOT, skill.isToggle(), skill.getDmgDirectlyToHP());
+			getStatus().reduceHp(value, attacker, awake, isDOT, skill.isToggle(), skill.getDmgDirectlyToHP(), skill);
 		}
 		else
 		{
-			getStatus().reduceHp(value, attacker, awake, isDOT, false, false);
+			getStatus().reduceHp(value, attacker, awake, isDOT, false, false, null);
 		}
 		
 		// notify the tamed beast of attacks
@@ -13228,6 +13238,8 @@ public class Player extends Playable
 	@Override
 	public void sendDamageMessage(Creature target, int damage, boolean mcrit, boolean pcrit, boolean miss)
 	{
+		CombatLogManager.onDamageMessage(this, target, mcrit || pcrit, miss);
+		
 		// Check if hit is missed
 		if (miss)
 		{
@@ -15170,6 +15182,28 @@ public class Player extends Playable
 	public void setSessionStats(SessionStats sessionStats)
 	{
 		_sessionStats = sessionStats;
+	}
+	
+	/**
+	 * @param create create it if the player has none yet
+	 * @return the PvP combat log (see {@link CombatLogManager}), {@code null} if the player has none and {@code create} is {@code false}
+	 */
+	public CombatLog getCombatLog(boolean create)
+	{
+		CombatLog log = _combatLog;
+		if ((log == null) && create)
+		{
+			synchronized (this)
+			{
+				log = _combatLog;
+				if (log == null)
+				{
+					log = new CombatLog(CombatLogConfig.TIMELINE_SIZE);
+					_combatLog = log;
+				}
+			}
+		}
+		return log;
 	}
 	
 	/**

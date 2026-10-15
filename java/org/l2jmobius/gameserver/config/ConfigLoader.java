@@ -31,6 +31,7 @@ import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.config.custom.ChatModerationConfig;
 import org.l2jmobius.gameserver.config.custom.ClassBalanceConfig;
 import org.l2jmobius.gameserver.config.custom.ClassTransferChallengeConfig;
+import org.l2jmobius.gameserver.config.custom.CombatLogConfig;
 import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
 import org.l2jmobius.gameserver.config.custom.CustomBuffConfig;
 import org.l2jmobius.gameserver.config.custom.CraftingGoalsConfig;
@@ -130,6 +131,7 @@ public class ConfigLoader
 		ChatModerationConfig.load();
 		ClassBalanceConfig.load();
 		ClassTransferChallengeConfig.load();
+		CombatLogConfig.load();
 		CommunityBoardConfig.load();
 		CraftingGoalsConfig.load();
 		CustomMailManagerConfig.load();

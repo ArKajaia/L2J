@@ -16,6 +16,7 @@
  */
 package handlers.skill.effects;
 
+import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.conditions.Condition;
@@ -71,6 +72,8 @@ public class HealPercent extends AbstractEffect
 		{
 			effected.setCurrentHp(amount + effected.getCurrentHp());
 		}
+		
+		CombatLogManager.onHealed(effector, effected, skill, amount, 0);
 		
 		SystemMessage sm;
 		if (effector.getObjectId() != effected.getObjectId())

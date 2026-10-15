@@ -37,6 +37,7 @@ import java.util.logging.Logger;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.config.PlayerConfig;
+import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
@@ -1577,6 +1578,12 @@ public class EffectList
 		
 		// Update effect flags and icons.
 		updateEffectList(true);
+		
+		// PvP combat log.
+		if (skill.isDebuff() && _owner.isPlayer())
+		{
+			CombatLogManager.onDebuffLanded(info);
+		}
 	}
 	
 	/**

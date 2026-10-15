@@ -26,6 +26,7 @@ import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
 import org.l2jmobius.gameserver.config.custom.OfflineTradeConfig;
 import org.l2jmobius.gameserver.data.xml.NpcNameLocalisationData;
+import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.managers.DuelManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -35,6 +36,7 @@ import org.l2jmobius.gameserver.model.actor.holders.player.Duel;
 import org.l2jmobius.gameserver.model.actor.stat.PlayerStat;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.script.QuestState;
+import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.model.stats.Stat;
@@ -71,6 +73,20 @@ public class PlayerStatus extends PlayableStatus
 	}
 	
 	public void reduceHp(double value, Creature attacker, boolean awake, boolean isDOT, boolean isHPConsumption, boolean ignoreCP)
+	{
+		reduceHp(value, attacker, awake, isDOT, isHPConsumption, ignoreCP, null);
+	}
+	
+	/**
+	 * @param value the damage
+	 * @param attacker who deals it
+	 * @param awake stop the effects that end on damage
+	 * @param isDOT damage over time
+	 * @param isHPConsumption the HP cost of a skill
+	 * @param ignoreCP the damage goes directly to HP
+	 * @param skill the skill that deals it, {@code null} for an auto attack or when unknown (only used by the combat log)
+	 */
+	public void reduceHp(double value, Creature attacker, boolean awake, boolean isDOT, boolean isHPConsumption, boolean ignoreCP, Skill skill)
 	{
 		final Player player = getActiveChar();
 		if (player.isDead())
@@ -115,6 +131,8 @@ public class PlayerStatus extends PlayableStatus
 		int fullValue = (int) amount;
 		int tDmg = 0;
 		int mpDam = 0;
+		final double cpBefore = _currentCp;
+		final double hpBefore = getCurrentHp();
 		if ((attacker != null) && (attacker != player))
 		{
 			final Player attackerPlayer = attacker.asPlayer();
@@ -307,6 +325,12 @@ public class PlayerStatus extends PlayableStatus
 			}
 			
 			setCurrentHp(amount);
+		}
+		
+		// PvP combat log, before the player dies of it.
+		if (!isHPConsumption && (attacker != null) && (attacker != player))
+		{
+			CombatLogManager.onDamageTaken(player, attacker, skill, isDOT, (int) (hpBefore - getCurrentHp()), (int) (cpBefore - _currentCp));
 		}
 		
 		if ((player.getCurrentHp() < 0.5) && !isHPConsumption)

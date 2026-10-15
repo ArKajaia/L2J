@@ -36,6 +36,7 @@ import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.geoengine.pathfinding.PathFinding;
 import org.l2jmobius.gameserver.handler.IItemHandler;
 import org.l2jmobius.gameserver.handler.ItemHandler;
+import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.managers.TerritoryWarManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.Location;
@@ -841,6 +842,8 @@ public abstract class Summon extends Playable
 	@Override
 	public void sendDamageMessage(Creature target, int damage, boolean mcrit, boolean pcrit, boolean miss)
 	{
+		CombatLogManager.onDamageMessage(this, target, mcrit || pcrit, miss);
+		
 		if (miss || (_owner == null))
 		{
 			return;
