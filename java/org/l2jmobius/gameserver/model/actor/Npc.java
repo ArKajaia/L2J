@@ -53,12 +53,12 @@ import org.l2jmobius.gameserver.handler.IBypassHandler;
 import org.l2jmobius.gameserver.managers.CHSiegeManager;
 import org.l2jmobius.gameserver.managers.CastleManager;
 import org.l2jmobius.gameserver.managers.FakeClanManager;
+import org.l2jmobius.gameserver.managers.FakeJoinerManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.FortManager;
 import org.l2jmobius.gameserver.managers.ItemManager;
 import org.l2jmobius.gameserver.managers.PvpRankingManager;
 import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
-import org.l2jmobius.gameserver.managers.ResonantMonsterManager;
 import org.l2jmobius.gameserver.managers.ShadowRaidManager;
 import org.l2jmobius.gameserver.managers.TownManager;
 import org.l2jmobius.gameserver.managers.WalkingManager;
@@ -1256,7 +1256,7 @@ public class Npc extends Creature
 			final boolean clanWar = FakeClanManager.getInstance().onFakeKilled(this, player);
 			
 			// Not flagged and no karma: a PK. (Karma is positive here, "< 0" could never be true.) Never in a PvP spot, where everyone is fair game, and never a Shadow Raider, an outlaw, or a rival after a Resonant monster's soul.
-			if (!clanWar && isScriptValue(0) && (getKarma() <= 0) && !isInsideZone(ZoneId.PVP_SPOT) && !ShadowRaidManager.isRaider(this) && !ResonantMonsterManager.isRival(this))
+			if (!clanWar && isScriptValue(0) && (getKarma() <= 0) && !isInsideZone(ZoneId.PVP_SPOT) && !ShadowRaidManager.isRaider(this) && !FakeJoinerManager.getInstance().isRival(this))
 			{
 				if (FakePlayersConfig.FAKE_PLAYER_KILL_KARMA)
 				{

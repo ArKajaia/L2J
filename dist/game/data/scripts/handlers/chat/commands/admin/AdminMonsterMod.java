@@ -21,6 +21,7 @@ import java.util.StringTokenizer;
 import org.l2jmobius.gameserver.config.custom.InfusedMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.ResonantMonsterConfig;
 import org.l2jmobius.gameserver.handler.IAdminCommandHandler;
+import org.l2jmobius.gameserver.managers.FakeJoinerManager;
 import org.l2jmobius.gameserver.managers.InfusedMonsterManager;
 import org.l2jmobius.gameserver.managers.ResonantMonsterManager;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -35,7 +36,7 @@ import org.l2jmobius.gameserver.model.item.holders.Elementals;
  * <li>{@code //monstermod} - what the targeted monster is.</li>
  * <li>{@code //monstermod infused [fire|water|wind|earth|holy|dark]} - infuses it, with a random element if none is given.</li>
  * <li>{@code //monstermod resonant} - makes it Resonant (a raid strength one at the raid tier levels).</li>
- * <li>{@code //monstermod join [helper|rival]} - a fake player joins the fight against the targeted Resonant monster now (somebody must be on its aggro list), as a helper, a rival or rolled.</li>
+ * <li>{@code //monstermod join [helper|rival]} - a fake player joins the fight against the targeted Resonant monster or Nightlord now (somebody must be on its aggro list), as a helper, a rival or rolled.</li>
  * <li>{@code //monstermod clear} - makes it an ordinary monster again.</li>
  * </ul>
  */
@@ -126,22 +127,23 @@ public class AdminMonsterMod implements IAdminCommandHandler
 			}
 			case "join":
 			{
-				if (!monster.isResonant())
+				final FakeJoinerManager.Fight fight = FakeJoinerManager.getFight(monster);
+				if (fight == null)
 				{
-					activeChar.sendSysMessage(monster.getName() + " isn't Resonant (//monstermod resonant first).");
+					activeChar.sendSysMessage(monster.getName() + " isn't Resonant (//monstermod resonant first) or a Nightlord.");
 					return false;
 				}
 
 				final String side = st.hasMoreTokens() ? st.nextToken().toLowerCase() : "";
 				final Boolean helper = side.equals("helper") ? Boolean.TRUE : side.equals("rival") ? Boolean.FALSE : null;
-				final Npc fake = ResonantMonsterManager.getInstance().spawnJoiner(monster, helper);
+				final Npc fake = FakeJoinerManager.getInstance().spawnJoiner(monster, fight, helper);
 				if (fake == null)
 				{
 					activeChar.sendSysMessage("No fake player came: fake players off or at their limit, nobody on " + monster.getName() + "'s aggro list (hit it first), or no place to stand.");
 					return false;
 				}
 
-				activeChar.sendSysMessage(fake.getName() + " (level " + fake.getLevel() + ") joins the fight as a " + (ResonantMonsterManager.isRival(fake) ? "rival" : "helper") + ".");
+				activeChar.sendSysMessage(fake.getName() + " (level " + fake.getLevel() + ") joins the fight as a " + (FakeJoinerManager.getInstance().isRival(fake) ? "rival" : "helper") + ".");
 				return true;
 			}
 			case "clear":

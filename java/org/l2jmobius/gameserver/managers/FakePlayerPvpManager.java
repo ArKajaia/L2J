@@ -2067,8 +2067,8 @@ public class FakePlayerPvpManager
 		
 		World.getInstance().forEachVisibleObjectInRange(victim, Attackable.class, FakePlayerPvpConfig.REVENGE_RANGE, fake ->
 		{
-			// A Resonant monster's helper came to help the players, during that fight and after it.
-			if (!fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || isFighting(fake, killer) || FakePartyManager.getInstance().isSameGroup(fake, killer) || ResonantMonsterManager.isHelper(fake))
+			// A big fight's helper (a Resonant monster, a Nightlord) came to help the players, during that fight and after it.
+			if (!fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || isFighting(fake, killer) || FakePartyManager.getInstance().isSameGroup(fake, killer) || FakeJoinerManager.isHelper(fake))
 			{
 				return;
 			}

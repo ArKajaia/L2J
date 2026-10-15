@@ -69,6 +69,10 @@ public class ResonantMonsterConfig
 	public static String RAID_TITLE_TAG;
 	/** HP percents at which a fake player joins the fight, highest first. */
 	public static int[] FAKE_JOIN_HP_PERCENTS = new int[0];
+	/** By how many HP percent points each of {@link #FAKE_JOIN_HP_PERCENTS} moves either way, rolled for each life. */
+	public static int FAKE_JOIN_HP_VARIANCE;
+	/** Chance (%) that nobody turns up at one of {@link #FAKE_JOIN_HP_PERCENTS}, rolled for each life. */
+	public static int FAKE_JOIN_NO_SHOW_CHANCE;
 	public static int FAKE_HELPER_CHANCE;
 	public static int RIVAL_ATTACK_PLAYER_CHANCE;
 	public static long RIVAL_KILL_COINS;
@@ -176,6 +180,8 @@ public class ResonantMonsterConfig
 		percents.sort(Comparator.reverseOrder());
 		FAKE_JOIN_HP_PERCENTS = percents.stream().limit(30).mapToInt(Integer::intValue).toArray();
 
+		FAKE_JOIN_HP_VARIANCE = Math.max(0, Math.min(30, config.getInt("ResonantFakeJoinHpVariance", 8)));
+		FAKE_JOIN_NO_SHOW_CHANCE = Math.max(0, Math.min(100, config.getInt("ResonantFakeJoinNoShowChance", 25)));
 		FAKE_HELPER_CHANCE = Math.max(0, Math.min(100, config.getInt("ResonantFakeHelperChance", 50)));
 		RIVAL_ATTACK_PLAYER_CHANCE = Math.max(0, Math.min(100, config.getInt("ResonantRivalAttackPlayerChance", 30)));
 		RIVAL_KILL_COINS = Math.max(0, config.getLong("ResonantRivalKillCoins", 300));

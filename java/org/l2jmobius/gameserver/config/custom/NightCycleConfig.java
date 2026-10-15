@@ -66,6 +66,15 @@ public class NightCycleConfig
 	public static int NIGHTLORD_WAVES;
 	public static MonsterArchetype NIGHTLORD_ARCHETYPE;
 	public static String NIGHTLORD_TITLE_TAG;
+	/** How much of a Nightlord's fight (its HP over all its waves) is left, in percent, when a fake player joins it, highest first. */
+	public static int[] NIGHTLORD_FAKE_JOIN_HP_PERCENTS = new int[0];
+	public static int NIGHTLORD_FAKE_JOIN_HP_VARIANCE;
+	public static int NIGHTLORD_FAKE_JOIN_NO_SHOW_CHANCE;
+	public static int NIGHTLORD_FAKE_HELPER_CHANCE;
+	public static int NIGHTLORD_RIVAL_ATTACK_PLAYER_CHANCE;
+	public static long NIGHTLORD_RIVAL_KILL_COINS;
+	public static boolean NIGHTLORD_RIVAL_KILL_CACHE;
+	public static int NIGHTLORD_FAKE_LEAVE_DELAY;
 
 	// Night Watch
 	public static boolean NIGHT_WATCH_ENABLED;
@@ -151,6 +160,14 @@ public class NightCycleConfig
 			}
 		}
 		NIGHTLORD_TITLE_TAG = config.getString("NightlordTitleTag", "[Nightlord]");
+		NIGHTLORD_FAKE_JOIN_HP_PERCENTS = parsePercents(config.getString("NightlordFakeJoinAtHpPercent", "70,30"), "NightlordFakeJoinAtHpPercent");
+		NIGHTLORD_FAKE_JOIN_HP_VARIANCE = Math.max(0, Math.min(30, config.getInt("NightlordFakeJoinHpVariance", 8)));
+		NIGHTLORD_FAKE_JOIN_NO_SHOW_CHANCE = Math.max(0, Math.min(100, config.getInt("NightlordFakeJoinNoShowChance", 25)));
+		NIGHTLORD_FAKE_HELPER_CHANCE = Math.max(0, Math.min(100, config.getInt("NightlordFakeHelperChance", 50)));
+		NIGHTLORD_RIVAL_ATTACK_PLAYER_CHANCE = Math.max(0, Math.min(100, config.getInt("NightlordRivalAttackPlayerChance", 30)));
+		NIGHTLORD_RIVAL_KILL_COINS = Math.max(0, config.getLong("NightlordRivalKillCoins", 300));
+		NIGHTLORD_RIVAL_KILL_CACHE = config.getBoolean("NightlordRivalKillCache", true);
+		NIGHTLORD_FAKE_LEAVE_DELAY = Math.max(0, config.getInt("NightlordFakeLeaveDelay", 30));
 
 		NIGHT_WATCH_ENABLED = config.getBoolean("NightWatchEnabled", true);
 		NIGHT_WATCH_KILL_LEVEL_GAP = config.getInt("NightWatchKillLevelGap", 9);
@@ -233,5 +250,38 @@ public class NightCycleConfig
 			}
 		}
 		return Collections.unmodifiableList(modifiers);
+	}
+
+	/**
+	 * @param value comma-separated HP percents
+	 * @param key the config key, for the warnings
+	 * @return the percents between 1 and 99, highest first, at most 30
+	 */
+	private static int[] parsePercents(String value, String key)
+	{
+		final List<Integer> percents = new ArrayList<>();
+		for (String part : value.split(","))
+		{
+			part = part.trim();
+			if (part.isEmpty())
+			{
+				continue;
+			}
+
+			try
+			{
+				final int percent = Integer.parseInt(part);
+				if ((percent > 0) && (percent < 100))
+				{
+					percents.add(percent);
+				}
+			}
+			catch (NumberFormatException e)
+			{
+				LOGGER.warning("NightCycleConfig: Invalid " + key + " entry: " + part);
+			}
+		}
+		percents.sort(Collections.reverseOrder());
+		return percents.stream().limit(30).mapToInt(Integer::intValue).toArray();
 	}
 }

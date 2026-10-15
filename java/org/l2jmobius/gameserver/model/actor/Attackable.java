@@ -393,9 +393,9 @@ public class Attackable extends Npc
 				{
 					org.l2jmobius.gameserver.managers.HotzoneModifierManager.getInstance().onFakePlayerKilled(this, player);
 					
-					// Shadow Raiders pay hot zone coins and a Sealed Cache, and so do the rivals after a Resonant monster's soul.
+					// Shadow Raiders pay hot zone coins and a Sealed Cache, and so do the rivals of a big fight (a Resonant monster's soul, a Nightlord).
 					ShadowRaidManager.getInstance().onRaiderKilled(this, player);
-					org.l2jmobius.gameserver.managers.ResonantMonsterManager.getInstance().onRivalKilled(this, player);
+					org.l2jmobius.gameserver.managers.FakeJoinerManager.getInstance().onRivalKilled(this, player);
 				}
 			}
 			// One roaming fake player killed by another.
