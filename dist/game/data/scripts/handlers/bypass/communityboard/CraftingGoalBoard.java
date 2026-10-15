@@ -67,10 +67,16 @@ public class CraftingGoalBoard implements IParseBoardHandler
 	private static final String BAR_DONE_FILL = "L2UI_CT1.Gauges.Gauge_DF_Large_CP_Center";
 	private static final String NO_ICON = "icon.etc_question_mark_i00";
 
-	private static final int BOARD_RESULTS = 10;
+	private static final int BOARD_WIDTH = 540;
+	private static final int BOARD_RESULTS = 12;
 	private static final int WINDOW_RESULTS = 7;
-	/** A window holds 17,200 characters of html: past this the remaining materials are left to the board. */
-	private static final int WINDOW_HTML_BUDGET = 14500;
+	/** A window holds 17,200 characters of html, the buttons below take about 1,000: past this the remaining materials are left to the board. */
+	private static final int WINDOW_HTML_BUDGET = 16100;
+	/** About how long the html of one resource line is. */
+	private static final int LINE_HTML_SIZE = 700;
+	/** The height of a row with an icon, a bit more than the 32x32 icon. */
+	private static final int ROW_HEIGHT = 40;
+	private static final int ICON_CELL = 40;
 
 	private static final String[] COMMANDS =
 	{
@@ -91,7 +97,7 @@ public class CraftingGoalBoard implements IParseBoardHandler
 		final String params = command.length() > BOARD_BYPASS.length() ? command.substring(BOARD_BYPASS.length()).trim() : "";
 		String html = HtmCache.getInstance().getHtm(player, PAGE_PATH);
 		html = html.replace("%navigation%", HtmCache.getInstance().getHtm(player, NAVIGATION_PATH));
-		html = html.replace("%content%", buildContent(player, params, 500, BOARD_BYPASS));
+		html = html.replace("%content%", buildContent(player, params, BOARD_WIDTH, BOARD_BYPASS));
 		CommunityBoardHandler.separateAndSend(html, player);
 		return true;
 	}
@@ -209,16 +215,15 @@ public class CraftingGoalBoard implements IParseBoardHandler
 			final int done = CraftingGoal.countCompleteComponents(lines);
 			final int total = CraftingGoal.countComponents(lines);
 			final boolean ready = CraftingGoal.isReady(lines);
-			sb.append("<table width=").append(width).append(" bgcolor=111111><tr>");
-			sb.append("<td width=36 valign=top>").append(icon(productId)).append("</td>");
-			sb.append("<td width=").append(width - 116).append(">");
+			rowStart(sb, width, productId, ROW_HEIGHT + 8);
+			sb.append("<td width=").append(width - 120).append(">");
 			sb.append("<font color=\"").append(COLOR_VALUE).append("\">").append(CraftingGoalManager.describe(goal)).append("</font><br1>");
-			sb.append(bar(width - 116, done, total, done >= total));
+			sb.append(bar(width - 120, done, total, done >= total));
 			sb.append("<font color=\"").append(ready ? COLOR_DONE : COLOR_TEXT).append("\">");
 			sb.append(ready ? "Ready to craft!" : (done + " of " + total + " resources collected"));
 			sb.append("</font></td>");
 			sb.append("<td width=80 align=right>").append(button("Track", bypass + " goal " + goal.getRecipeListId(), 70)).append("</td>");
-			sb.append("</tr></table><br1>");
+			rowEnd(sb, width);
 		}
 		return sb.toString();
 	}
@@ -243,12 +248,12 @@ public class CraftingGoalBoard implements IParseBoardHandler
 		final StringBuilder sb = new StringBuilder();
 
 		// The goal.
-		sb.append("<table width=").append(width).append(" bgcolor=111111><tr>");
-		sb.append("<td width=36 valign=top>").append(icon(goal.getProductId())).append("</td>");
-		sb.append("<td width=").append(width - 36).append(">");
+		rowStart(sb, width, goal.getProductId(), ROW_HEIGHT + 16);
+		sb.append("<td width=").append(width - ICON_CELL).append(">");
 		sb.append("<font color=\"").append(COLOR_VALUE).append("\">").append(CraftingGoalManager.describe(goal)).append("</font><br1>");
 		appendRecipeInfo(sb, player, recipe);
-		sb.append("</td></tr></table>");
+		sb.append("</td>");
+		rowEnd(sb, width);
 		sb.append("<table width=").append(width).append("><tr><td>").append(bar(width, done, total, done >= total)).append("</td></tr>");
 		sb.append("<tr><td align=center><font color=\"").append(ready ? COLOR_DONE : COLOR_TEXT).append("\">");
 		if (ready)
@@ -280,7 +285,7 @@ public class CraftingGoalBoard implements IParseBoardHandler
 			{
 				continue;
 			}
-			if (bypass.equals(WINDOW_BYPASS) && (sb.length() > WINDOW_HTML_BUDGET))
+			if (bypass.equals(WINDOW_BYPASS) && ((sb.length() + LINE_HTML_SIZE) > WINDOW_HTML_BUDGET))
 			{
 				hidden++;
 				continue;
@@ -319,9 +324,8 @@ public class CraftingGoalBoard implements IParseBoardHandler
 
 		final CraftingGoal goal = CraftingGoalManager.getInstance().getGoal(player, recipeListId);
 		final StringBuilder sb = new StringBuilder();
-		sb.append("<table width=").append(width).append(" bgcolor=111111><tr>");
-		sb.append("<td width=36 valign=top>").append(icon(recipe.getItemId())).append("</td>");
-		sb.append("<td width=").append(width - 36).append(">");
+		rowStart(sb, width, recipe.getItemId(), ROW_HEIGHT + 16);
+		sb.append("<td width=").append(width - ICON_CELL).append(">");
 		sb.append("<font color=\"").append(COLOR_VALUE).append("\">").append(CraftingGoalManager.getItemName(recipe.getItemId())).append("</font>");
 		if (recipe.getCount() > 1)
 		{
@@ -329,22 +333,24 @@ public class CraftingGoalBoard implements IParseBoardHandler
 		}
 		sb.append("<br1>");
 		appendRecipeInfo(sb, player, recipe);
-		sb.append("</td></tr></table><br>");
+		sb.append("</td>");
+		rowEnd(sb, width);
+		sb.append("<br>");
 
 		sb.append("<table width=").append(width).append("><tr><td><font color=\"").append(COLOR_TITLE).append("\">Resources for one craft</font></td></tr></table>");
-		sb.append("<table width=").append(width).append(">");
 		for (RecipeHolder ingredient : recipe.getRecipes())
 		{
 			final long have = player.getInventory().getInventoryItemCount(ingredient.getItemId(), -1, false);
-			sb.append("<tr><td width=36>").append(icon(ingredient.getItemId())).append("</td>");
-			sb.append("<td width=").append(width - 116).append("><font color=\"").append(COLOR_TEXT).append("\">").append(CraftingGoalManager.getItemName(ingredient.getItemId())).append("</font>");
+			rowStart(sb, width, ingredient.getItemId(), ROW_HEIGHT);
+			sb.append("<td width=").append(width - ICON_CELL - 90).append("><font color=\"").append(COLOR_TEXT).append("\">").append(CraftingGoalManager.getItemName(ingredient.getItemId())).append("</font>");
 			if (CraftingGoalManager.getInstance().isCraftable(ingredient.getItemId()))
 			{
 				sb.append(" <font color=\"").append(COLOR_MUTED).append("\">(craftable)</font>");
 			}
-			sb.append("</td><td width=80 align=right><font color=\"").append(COLOR_VALUE).append("\">").append(ingredient.getQuantity()).append("</font> <font color=\"").append(COLOR_MUTED).append("\">(").append(have).append(")</font></td></tr>");
+			sb.append("</td><td width=90 align=right><font color=\"").append(COLOR_VALUE).append("\">").append(ingredient.getQuantity()).append("</font> <font color=\"").append(COLOR_MUTED).append("\">(").append(have).append(")</font></td>");
+			rowEnd(sb, width);
 		}
-		sb.append("</table><br>");
+		sb.append("<br>");
 
 		if (error != null)
 		{
@@ -449,9 +455,8 @@ public class CraftingGoalBoard implements IParseBoardHandler
 		{
 			final RecipeList recipe = recipes.get(i);
 			final CraftingGoal goal = CraftingGoalManager.getInstance().getGoal(player, recipe.getId());
-			sb.append("<table width=").append(width).append(" bgcolor=").append((i % 2) == 0 ? "111111" : "1A1A1A").append("><tr>");
-			sb.append("<td width=36>").append(icon(recipe.getItemId())).append("</td>");
-			sb.append("<td width=").append(width - 116).append("><font color=\"").append(goal != null ? COLOR_DONE : COLOR_VALUE).append("\">").append(CraftingGoalManager.getItemName(recipe.getItemId())).append("</font>");
+			rowStart(sb, width, recipe.getItemId(), ROW_HEIGHT);
+			sb.append("<td width=").append(width - ICON_CELL - 80).append("><font color=\"").append(goal != null ? COLOR_DONE : COLOR_VALUE).append("\">").append(CraftingGoalManager.getItemName(recipe.getItemId())).append("</font>");
 			if (recipe.getCount() > 1)
 			{
 				sb.append(" <font color=\"").append(COLOR_TEXT).append("\">x").append(recipe.getCount()).append("</font>");
@@ -463,7 +468,7 @@ public class CraftingGoalBoard implements IParseBoardHandler
 			}
 			sb.append("</font></td>");
 			sb.append("<td width=80 align=right>").append(button(goal != null ? "Tracked" : "Choose", bypass + " view " + recipe.getId(), 70)).append("</td>");
-			sb.append("</tr></table>");
+			rowEnd(sb, width);
 		}
 
 		if (pages > 1)
@@ -499,10 +504,9 @@ public class CraftingGoalBoard implements IParseBoardHandler
 	private static void appendLine(StringBuilder sb, CraftingGoalLine line, int width)
 	{
 		final boolean complete = line.isComplete();
-		sb.append("<table width=").append(width).append("><tr>");
-		sb.append("<td width=36 valign=top>").append(icon(line.getItemId())).append("</td>");
-		sb.append("<td width=").append(width - 36).append(">");
-		sb.append("<table width=").append(width - 40).append(" cellpadding=0 cellspacing=0><tr>");
+		rowStart(sb, width, line.getItemId(), ROW_HEIGHT);
+		sb.append("<td width=").append(width - ICON_CELL).append(">");
+		sb.append("<table width=").append(width - ICON_CELL - 4).append(" cellpadding=0 cellspacing=0><tr>");
 		sb.append("<td><font color=\"").append(complete ? COLOR_DONE : COLOR_TEXT).append("\">").append(CraftingGoalManager.getItemName(line.getItemId())).append("</font>");
 		if (line.isCraftable() && !complete)
 		{
@@ -510,8 +514,9 @@ public class CraftingGoalBoard implements IParseBoardHandler
 		}
 		sb.append("</td><td width=110 align=right><font color=\"").append(complete ? COLOR_DONE : COLOR_VALUE).append("\">").append(line.getHave()).append(" / ").append(line.getNeeded()).append("</font></td>");
 		sb.append("</tr></table>");
-		sb.append(bar(width - 40, line.getHave(), line.getNeeded(), complete));
-		sb.append("</td></tr></table>");
+		sb.append(bar(width - ICON_CELL - 4, line.getHave(), line.getNeeded(), complete));
+		sb.append("</td>");
+		rowEnd(sb, width);
 	}
 
 	/**
@@ -532,6 +537,23 @@ public class CraftingGoalBoard implements IParseBoardHandler
 		}
 		sb.append("</td></tr></table>");
 		return sb.toString();
+	}
+
+	/**
+	 * Opens a row with an item icon. The row has a fixed height so the 32x32 icon never runs into the next row.
+	 */
+	private static void rowStart(StringBuilder sb, int width, int itemId, int height)
+	{
+		sb.append("<table width=").append(width).append(" height=").append(height).append(" cellpadding=0 cellspacing=0><tr>");
+		sb.append("<td width=").append(ICON_CELL).append(" height=").append(height).append(" valign=center>").append(icon(itemId)).append("</td>");
+	}
+
+	/**
+	 * Closes a row opened by {@link #rowStart} and draws a thin line under it.
+	 */
+	private static void rowEnd(StringBuilder sb, int width)
+	{
+		sb.append("</tr></table><img src=\"L2UI.SquareGray\" width=").append(width).append(" height=1>");
 	}
 
 	private static String icon(int itemId)
