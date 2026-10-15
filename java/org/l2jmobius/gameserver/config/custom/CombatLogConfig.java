@@ -19,7 +19,7 @@ package org.l2jmobius.gameserver.config.custom;
 import org.l2jmobius.commons.util.ConfigReader;
 
 /**
- * The PvP combat log shown on death (see {@link org.l2jmobius.gameserver.managers.CombatLogManager}).
+ * The PvP combat log shown on death (see {@link org.l2jmobius.gameserver.managers.CombatLogManager}) and the raid log shown after a raid boss kill (see {@link org.l2jmobius.gameserver.managers.RaidLogManager}).
  */
 public class CombatLogConfig
 {
@@ -33,6 +33,10 @@ public class CombatLogConfig
 	public static boolean TIMELINE_OWN_HITS;
 	public static boolean SHOW_ON_DEATH;
 	public static boolean CHAT_SUMMARY;
+	public static boolean RAID_ENABLED;
+	public static long RAID_IDLE_MILLIS;
+	public static boolean RAID_SHOW_ON_KILL;
+	public static boolean RAID_CHAT_SUMMARY;
 	
 	public static void load()
 	{
@@ -43,5 +47,9 @@ public class CombatLogConfig
 		TIMELINE_OWN_HITS = config.getBoolean("CombatLogTimelineOwnHits", true);
 		SHOW_ON_DEATH = config.getBoolean("CombatLogShowOnDeath", true);
 		CHAT_SUMMARY = config.getBoolean("CombatLogChatSummary", true);
+		RAID_ENABLED = config.getBoolean("RaidLogEnabled", true);
+		RAID_IDLE_MILLIS = Math.max(1, config.getInt("RaidLogIdleMinutes", 5)) * 60000L;
+		RAID_SHOW_ON_KILL = config.getBoolean("RaidLogShowOnKill", true);
+		RAID_CHAT_SUMMARY = config.getBoolean("RaidLogChatSummary", true);
 	}
 }

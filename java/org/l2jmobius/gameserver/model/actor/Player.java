@@ -132,6 +132,7 @@ import org.l2jmobius.gameserver.managers.PassiveTreeManager;
 import org.l2jmobius.gameserver.managers.PunishmentManager;
 import org.l2jmobius.gameserver.managers.PvpRankingManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
+import org.l2jmobius.gameserver.managers.RaidLogManager;
 import org.l2jmobius.gameserver.managers.RecipeManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
 import org.l2jmobius.gameserver.managers.SessionStatsManager;
@@ -154,6 +155,7 @@ import org.l2jmobius.gameserver.model.actor.enums.player.Sex;
 import org.l2jmobius.gameserver.model.actor.enums.player.ShortcutType;
 import org.l2jmobius.gameserver.model.actor.enums.player.TeleportWhereType;
 import org.l2jmobius.gameserver.model.actor.holders.creature.TimeStamp;
+import org.l2jmobius.gameserver.model.actor.holders.npc.RaidLog;
 import org.l2jmobius.gameserver.model.actor.holders.player.ArenaParticipantsHolder;
 import org.l2jmobius.gameserver.model.actor.holders.player.AutoPlaySettingsHolder;
 import org.l2jmobius.gameserver.model.actor.holders.player.AutoUseSettingsHolder;
@@ -494,6 +496,8 @@ public class Player extends Playable
 	private long _onlineBeginTime;
 	private volatile SessionStats _sessionStats;
 	private volatile CombatLog _combatLog;
+	private volatile RaidLog _raidFight;
+	private volatile RaidLog.Report _lastRaidReport;
 	private long _lastAccess;
 	private long _uptime;
 	
@@ -5317,6 +5321,7 @@ public class Player extends Playable
 		
 		// PvP combat log of the fight that ends here.
 		CombatLogManager.onDeath(this, killer, combatLogDebuffs);
+		RaidLogManager.onPlayerDied(this, killer);
 		
 		// MODERN TWEAK: The Nemesis System (monsters only, not fake players or their servitors)
 		if (RatesConfig.NEMESIS_SYSTEM_ENABLED && (killer != null) && killer.isAttackable() && !killer.isFakePlayer() && !(killer instanceof org.l2jmobius.gameserver.model.actor.instance.FakePlayerPvpServitor))
@@ -15182,6 +15187,32 @@ public class Player extends Playable
 	public void setSessionStats(SessionStats sessionStats)
 	{
 		_sessionStats = sessionStats;
+	}
+	
+	/**
+	 * @return the raid boss fight the player took part in last (see {@link RaidLogManager}), {@code null} if none
+	 */
+	public RaidLog getRaidFight()
+	{
+		return _raidFight;
+	}
+	
+	public void setRaidFight(RaidLog raidFight)
+	{
+		_raidFight = raidFight;
+	}
+	
+	/**
+	 * @return the log of the last raid boss kill the player took part in, {@code null} if none
+	 */
+	public RaidLog.Report getLastRaidReport()
+	{
+		return _lastRaidReport;
+	}
+	
+	public void setLastRaidReport(RaidLog.Report report)
+	{
+		_lastRaidReport = report;
 	}
 	
 	/**

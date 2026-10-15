@@ -120,7 +120,18 @@ public class CombatLogManager
 	 */
 	public static void onDamageMessage(Creature attacker, Creature target, boolean crit, boolean miss)
 	{
-		if (!CombatLogConfig.ENABLED || (target == null) || (attacker == null) || (attacker == target))
+		if ((target == null) || (attacker == null) || (attacker == target))
+		{
+			return;
+		}
+
+		if (target.isRaid())
+		{
+			RaidLogManager.onDamageMessage(attacker, target, crit, miss);
+			return;
+		}
+
+		if (!CombatLogConfig.ENABLED)
 		{
 			return;
 		}
@@ -164,7 +175,13 @@ public class CombatLogManager
 	 */
 	public static void onDamageTaken(Player player, Creature attacker, Skill skill, boolean dot, int hp, int cp)
 	{
-		if (!CombatLogConfig.ENABLED || (attacker == null) || (attacker == player) || ((hp <= 0) && (cp <= 0)))
+		if ((attacker == null) || (attacker == player) || ((hp <= 0) && (cp <= 0)))
+		{
+			return;
+		}
+
+		RaidLogManager.onPlayerDamaged(player, attacker, Math.max(0, hp) + Math.max(0, cp));
+		if (!CombatLogConfig.ENABLED)
 		{
 			return;
 		}
@@ -215,7 +232,18 @@ public class CombatLogManager
 	 */
 	public static void onResisted(Creature attacker, Creature target, Skill skill)
 	{
-		if (!CombatLogConfig.ENABLED || (target == null) || !target.isPlayer() || (attacker == null) || (attacker == target))
+		if ((target == null) || (attacker == null) || (attacker == target))
+		{
+			return;
+		}
+
+		if (target.isRaid())
+		{
+			RaidLogManager.onDebuff(attacker, target, false);
+			return;
+		}
+
+		if (!CombatLogConfig.ENABLED || !target.isPlayer())
 		{
 			return;
 		}
@@ -235,14 +263,20 @@ public class CombatLogManager
 	 */
 	public static void onDebuffLanded(BuffInfo info)
 	{
-		if (!CombatLogConfig.ENABLED)
+		final Creature target = info.getEffected();
+		final Creature attacker = info.getEffector();
+		if ((target == null) || (attacker == null) || (attacker == target))
 		{
 			return;
 		}
 
-		final Creature target = info.getEffected();
-		final Creature attacker = info.getEffector();
-		if ((target == null) || !target.isPlayer() || (attacker == null) || (attacker == target))
+		if (target.isRaid())
+		{
+			RaidLogManager.onDebuff(attacker, target, true);
+			return;
+		}
+
+		if (!CombatLogConfig.ENABLED || !target.isPlayer())
 		{
 			return;
 		}
@@ -302,7 +336,13 @@ public class CombatLogManager
 	 */
 	public static void onHealed(Creature healer, Creature target, Skill skill, double hp, double cp)
 	{
-		if (!CombatLogConfig.ENABLED || (target == null) || !target.isPlayer() || ((hp < 1) && (cp < 1)))
+		if ((target == null) || !target.isPlayer() || ((hp < 1) && (cp < 1)))
+		{
+			return;
+		}
+
+		RaidLogManager.onHealed(healer, target, skill, (int) (hp + cp));
+		if (!CombatLogConfig.ENABLED)
 		{
 			return;
 		}
@@ -420,7 +460,7 @@ public class CombatLogManager
 		report.killerName = who.getName();
 		report.killerOwner = (owner != null) && (owner != killer) ? killer.getName() : null;
 		report.killerLevel = who.getLevel();
-		report.killerClass = className(who);
+		report.killerClass = getClassName(who);
 		final Clan clan = who.getClan();
 		report.killerClan = clan == null ? null : clan.getName();
 		report.killerHp = (int) who.getCurrentHp();
@@ -438,7 +478,11 @@ public class CombatLogManager
 		}
 	}
 
-	private static String className(Creature creature)
+	/**
+	 * @param creature a player or fake player
+	 * @return the name of its class, {@code null} if it has none
+	 */
+	public static String getClassName(Creature creature)
 	{
 		ClassInfoHolder info = null;
 		if (creature.isPlayer())
@@ -841,6 +885,15 @@ public class CombatLogManager
 			return owner.getName() + "'s " + creature.getName();
 		}
 		return creature.getName();
+	}
+
+	/**
+	 * @param skill a skill
+	 * @return its name, with its level when above 1
+	 */
+	public static String getSkillName(Skill skill)
+	{
+		return skillName(skill, false);
 	}
 
 	private static String skillName(Skill skill, boolean dot)

@@ -293,6 +293,18 @@ When you die in a PvP fight, a window shows how you died. A fight starts with th
 - A line in chat sums it up, and `.combatlog` (or `.deathlog`) opens the last one again.
 - Built for a full server: nothing is kept for players who aren't in a PvP fight, a hit only updates a fixed-size ring and a few totals, and the window is only built on death or when asked for. Settings in `config/Custom/CombatLog.ini`.
 
+### Raid Log
+
+When a raid boss or grand boss dies, everyone who took part (hit it or its minions, healed someone fighting it, or was hit by it) gets a log of the fight, in a window and in chat ("You: 1.21M damage (12%, rank 3/24). Top: ...").
+
+- **Summary**: the boss, how long it took, how many fought, total damage and damage per second, damage by guards or monsters, damage to minions, healing, deaths, the killing blow, your rank and share, the top 10, and the highlights (biggest hit, top healer, most debuffs, who took the most damage).
+- **Damage**: everyone ranked by damage to the boss (their summons' included): class and level, share, damage per second, hits, crits, biggest hit, summon and minion damage, misses. 15 per page.
+- **Support**: heals done, debuffs landed and tried, damage taken and deaths, best healers first.
+- **Parties**: damage, share and healing of each party.
+- **Mine**: your own fight (damage per second over the fight and while you fought, crits, damage over time, misses, biggest hit, summon and minion damage) and your skills by damage, with hits, crits, biggest and average hit.
+- `.raidlog` (or `.rblog`) opens the last one again. A fight is forgotten after 5 minutes without anything happening to the boss.
+- Each player has their own entry in the fight with its own lock, so a big raid doesn't make players wait on each other, and the windows are built after the kill, away from the combat threads. Settings in `config/Custom/CombatLog.ini`.
+
 ### Performers
 
 Champion Medals from champions teach every class the songs and dances, so the Swordsinger and Bladedancer lines get what a medal can't give: auras that only a performer can keep up, a combat stance each, a 3rd class finale, and better songs and dances of their own. The Swordsinger line keeps the party standing; the Bladedancer line tears the enemy down.
@@ -734,6 +746,9 @@ This program is free software, licensed under the **GNU General Public License, 
 ## Recent Updates
 
 Changes from 28 September – 15 October 2026.
+
+### Raid Log
+- **New**: when a raid boss dies, everyone who fought it gets a log: damage ranking with shares and damage per second, healers and tanks, parties, and their own skills. `.raidlog` opens it again. See [Raid Log](#raid-log).
 
 ### PvP Combat Log
 - **New**: when you die in a PvP fight, a window shows who killed you and how, the attackers, the skills that hurt you, the debuffs you had and a timeline of the last events. `.combatlog` opens it again. See [PvP Combat Log](#pvp-combat-log).

@@ -1579,8 +1579,8 @@ public class EffectList
 		// Update effect flags and icons.
 		updateEffectList(true);
 		
-		// PvP combat log.
-		if (skill.isDebuff() && _owner.isPlayer())
+		// PvP combat log and raid log.
+		if (skill.isDebuff() && (_owner.isPlayer() || _owner.isRaid()))
 		{
 			CombatLogManager.onDebuffLanded(info);
 		}

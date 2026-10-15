@@ -134,6 +134,17 @@ public class VoiceHelp implements IVoicedCommandHandler
 			sb.append("<tr><td colspan=2 height=1 bgcolor=222222></td></tr>");
 		}
 		
+		// Raid Log
+		if (CombatLogConfig.RAID_ENABLED)
+		{
+			sb.append("<tr>");
+			sb.append("<td width=100><font color=\"00FFFF\">.raidlog</font><br1><font color=\"707070\">.rblog</font></td>");
+			sb.append("<td width=170><font color=\"B0B0B0\">Your last raid boss kill: damage ranking, healers, parties, your skills.</font></td>");
+			sb.append("</tr>");
+			sb.append("<tr><td colspan=2 align=right><button value=\"Raid Log\" action=\"bypass voiced_raidlog\" width=80 height=22 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr>");
+			sb.append("<tr><td colspan=2 height=1 bgcolor=222222></td></tr>");
+		}
+		
 		// PvP Spots
 		if (PvpSpotsConfig.ENABLED && PvpSpotsConfig.TELEPORT_ENABLED)
 		{

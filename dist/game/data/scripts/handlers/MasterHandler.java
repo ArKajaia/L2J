@@ -254,6 +254,7 @@ import handlers.chat.commands.voiced.PassiveTreeVoiced;
 //import handlers.chat.commands.voiced.PassivesCommand;
 import handlers.chat.commands.voiced.Premium;
 import handlers.chat.commands.voiced.PvpSpotVoiced;
+import handlers.chat.commands.voiced.RaidLogVoiced;
 import handlers.chat.commands.voiced.SaveHotzoneVoiced;
 import handlers.chat.commands.voiced.SkillsCommand;
 import handlers.chat.commands.voiced.VoiceAutoLootFilter;
@@ -629,6 +630,7 @@ public class MasterHandler
 			NightCycleConfig.ENABLED ? NightVoiced.class : null,
 			CraftingGoalsConfig.ENABLED ? CraftingGoalVoiced.class : null,
 			CombatLogConfig.ENABLED ? CombatLogVoiced.class : null,
+			CombatLogConfig.RAID_ENABLED ? RaidLogVoiced.class : null,
 		},
 		{
 			// Target Handlers
