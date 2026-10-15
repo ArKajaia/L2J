@@ -34,6 +34,7 @@ import org.l2jmobius.commons.database.DatabaseFactory;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.TransmogConfig;
 import org.l2jmobius.gameserver.data.xml.ItemData;
+import org.l2jmobius.gameserver.managers.CraftingGoalManager;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.events.EventDispatcher;
 import org.l2jmobius.gameserver.model.events.EventType;
@@ -819,6 +820,7 @@ public class PlayerInventory extends Inventory
 	{
 		super.refreshWeight();
 		_owner.refreshOverloaded();
+		CraftingGoalManager.getInstance().onInventoryChanged(_owner);
 	}
 	
 	/**

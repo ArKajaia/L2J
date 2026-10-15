@@ -426,6 +426,7 @@ public class RecipeManager
 						_target.sendPacket(SystemMessageId.YOU_FAILED_AT_MIXING_THE_ITEM);
 					}
 					
+					CraftingGoalManager.getInstance().onCraftFailed(_target, _recipeList);
 					updateMakeInfo(false);
 				}
 			}
@@ -681,6 +682,7 @@ public class RecipeManager
 			}
 			
 			_target.getInventory().addItem(ItemProcessType.CRAFT, itemId, itemCount, _target, _player);
+			CraftingGoalManager.getInstance().onCrafted(_target, _recipeList);
 			
 			// inform customer of earned item
 			SystemMessage sm = null;

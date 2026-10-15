@@ -257,6 +257,18 @@ The passive tree lets any character take Spoil, Sweeper Festival, Crystallize an
 - Everything follows the active class: a dwarven subclass counts, a dwarf playing a non-dwarven subclass doesn't. Settings in `config/Custom/DwarvenTrades.ini`.
 - **Fake players**: the Fortune Seeker and Maestro fake players get the combat perks of their class too (Skullcrusher, a Spoil that never misses, Plunderer's Mark, Golem Engineering on their golem, Forged Gear on their gear). A Fortune Seeker spoils the monster it fights first, and the players of its party can sweep it, with its spoiler bonus.
 
+### Crafting Goals
+
+A player picks an item they want to craft and it becomes a goal they track like a quest, resource by resource.
+
+- **Choosing the item**: `.craft` (or `.craft <item name>` to search right away) opens the tracker window, and the Community Board has the same pages (`_bbscraft`, "Crafting Goals" in the menu). Search every recipe by the name of the item it makes, or browse your own recipe book; a recipe's page shows what one craft takes, its success rate, whether you know the recipe, and asks how many items you want (crafts are rounded up for recipes that make a stack, like shots). Up to 3 goals at a time.
+- **Accepting**: the quest accept sound and a "New crafting goal" message on screen.
+- **Resources**: each ingredient of the recipe is a line with how many you have and how many the crafts need in total, with a progress bar that turns gold once complete. Ingredients that are crafted themselves (Crafted Leather, Mithril Alloy, Steel, Cokes...) are broken down into their own materials for the part you still miss, up to 3 recipe levels deep (Crafted Leather -> Leather -> Animal Skin). A material only counts what you carry beyond the resources it feeds, so nothing is counted twice. Worn items don't count.
+- **Progress**: picking up, buying, trading or crafting a tracked resource shows its count on screen ("Animal Skin 34/240") with the quest item sound.
+- **Fireworks**: every resource collected is celebrated with a small Firework (seen by the players around), the quest sound, an on-screen message ("Animal Skin collected! (3/5)") and the tutorial question mark, which opens the tracker. Once you have every resource a Large Firework goes off and you're told to open your recipe book (or take it to a crafter who knows the recipe). Each resource is celebrated once per craft, so dropping and picking it up again sets off nothing.
+- **Completion**: crafting the item, yourself or in a dwarf's workshop, counts a craft; the last one completes the goal with the quest finish sound and a Large Firework. A failed craft keeps the goal, and gathering the lost materials again is celebrated again.
+- Goals are saved with the character (`CRAFT_GOALS` player variable). Settings in `config/Custom/CraftingGoals.ini` (number of goals, breakdown depth, messages, fireworks, question mark).
+
 ### Performers
 
 Champion Medals from champions teach every class the songs and dances, so the Swordsinger and Bladedancer lines get what a medal can't give: auras that only a performer can keep up, a combat stance each, a 3rd class finale, and better songs and dances of their own. The Swordsinger line keeps the party standing; the Bladedancer line tears the enemy down.
@@ -583,7 +595,7 @@ The content pack compiled through this pipeline is large: on the order of **540 
 |---|---|---|
 | Admin commands | GM `//` commands (teleport, spawns, item/currency grants, server control, debugging) | ~85 |
 | User commands | Client-UI-triggered player shortcuts (mount, `/loc`, `/time`, unstuck, party/siege/Olympiad info) | ~15 |
-| Voiced commands | Player-typed `.command`s (banking, autoplay, offline shop, password change, premium status, wedding, DPS meter, PvP spot teleport) | ~25 |
+| Voiced commands | Player-typed `.command`s (banking, autoplay, offline shop, password change, premium status, wedding, DPS meter, PvP spot teleport, crafting goals) | ~25 |
 | Chat handlers | Delivery/range logic per chat channel (general, shout, trade, party, clan, alliance, whisper, hero, petition, battlefield) | 14 |
 | Bypass handlers | Server-side link commands from NPC/HTML dialogs (shops, multisell, warehouse, freight, Olympiad, augmenting, observation) | ~30 |
 | Community Board handlers | `.bbs` page logic (see [Community Board](#community-board)) | 12 |
@@ -697,7 +709,10 @@ This program is free software, licensed under the **GNU General Public License, 
 
 ## Recent Updates
 
-Changes from 28 September – 12 October 2026.
+Changes from 28 September – 15 October 2026.
+
+### Crafting Goals
+- **New**: `.craft` and the Community Board's "Crafting Goals" page let a player choose an item to craft and track it like a quest. Each resource shows how many you have and how many are needed in total (craftable parts are broken down into their materials), every resource collected is celebrated with a small firework, and having everything with a Large Firework. See [Crafting Goals](#crafting-goals).
 
 ### Client rows
 - **New file format**: the `skillgrp_additions.txt` and `skillname-e_additions.txt` files under `client/` are in the L2ClientDat `skill_begin … skill_end` key=value format. Paste them in again.
