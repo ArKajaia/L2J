@@ -82,6 +82,7 @@ import handlers.bypass.communityboard.CraftingGoalBoard;
 import handlers.bypass.communityboard.NightBoard;
 import handlers.bypass.communityboard.PassiveTreeBoard;
 import handlers.bypass.communityboard.PvpRankingBoard;
+import handlers.bypass.communityboard.SessionBoard;
 import handlers.bypass.communityboard.RegionBoard;
 import handlers.bypass.npc.Augment;
 import handlers.bypass.npc.Buy;
@@ -534,6 +535,7 @@ public class MasterHandler
 			PvpRankingBoard.class,
 			NightBoard.class,
 			CraftingGoalBoard.class,
+			SessionBoard.class,
 		},
 		{
 			// Item Handlers

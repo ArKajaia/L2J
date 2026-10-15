@@ -269,6 +269,18 @@ A player picks an item they want to craft and it becomes a goal they track like 
 - **Completion**: crafting the item, yourself or in a dwarf's workshop, counts a craft; the last one completes the goal with the quest finish sound and a Large Firework. A failed craft keeps the goal, and gathering the lost materials again is celebrated again.
 - Goals are saved with the character (`CRAFT_GOALS` player variable). Settings in `config/Custom/CraftingGoals.ini` (number of goals, breakdown depth, messages, fireworks, question mark).
 
+### Session Log
+
+Every login is a session, and the Community Board's "Session Log" page (`_bbssession`) shows what the character achieved in it: the session in progress next to the previous one, side by side.
+
+- **Character**: each class played, from its level and percent at login to where it stands now ("76 (12.4%) to 77 (3.1%)"), subclasses included; levels gained, experience gained and lost (deaths), SP and fame.
+- **Hunting**: monsters killed by you or your summon, monsters killed by your party around you, champions, raid bosses, PvP and PK kills, deaths.
+- **Adena**: adena earned (monsters, quests, selling to shops, your private store), adena spent (shops, teleports, fees...), and how much more or less you carry than at login. Trades, mail and the warehouse only move adena around, so they aren't counted as earned or spent.
+- **Activity**: quests completed (aborting one doesn't count), drops picked up, spoils swept, items crafted.
+- **History**: the last 5 sessions, one line each (date, time played, levels, XP, monsters, adena), with a details page that compares a session with the one before it.
+- **Login summary**: on login a line in chat recalls the last session ("Your last session (2h 14m): +2 levels, 12.35M XP, 340 monsters, 1.20M adena earned.").
+- A session ends when you log out, go back to character selection, or leave a private store behind (offline trade), and is saved with the character (`SESSION_HISTORY` player variable). A short relog in which nothing happened isn't saved, so it doesn't push a real session out of the history. Settings in `config/Custom/SessionStats.ini`.
+
 ### Performers
 
 Champion Medals from champions teach every class the songs and dances, so the Swordsinger and Bladedancer lines get what a medal can't give: auras that only a performer can keep up, a combat stance each, a 3rd class finale, and better songs and dances of their own. The Swordsinger line keeps the party standing; the Bladedancer line tears the enemy down.
@@ -574,7 +586,7 @@ Beyond the core combat loop, the server implements a number of self-contained si
 
 ## Community Board
 
-The in-client Community Board (the ".bbs" interface) is backed by a lightweight forum/topic/post data model (with clan, memo, and mail-flavored forum types alongside normal ones) and a set of interactive board pages served as cached HTML and routed through the same bypass-handling pipeline used for NPC dialogs: clan management, regional teleport/info, a home page with favorites/bookmarks, a friends list, personal memos, in-client mail, an item drop-source search utility, personal buff templates (see [Custom Feature Set](#custom-non-retail-feature-set)), a PvP ranking of the top 20 players and fake players by PvP kills (fake players' kills are kept by name in `fake_player_pvp`: kills of flagged or karma targets, or of anyone in a PvP spot), and management of the passive skill tree feature (see [Custom Feature Set](#custom-non-retail-feature-set)).
+The in-client Community Board (the ".bbs" interface) is backed by a lightweight forum/topic/post data model (with clan, memo, and mail-flavored forum types alongside normal ones) and a set of interactive board pages served as cached HTML and routed through the same bypass-handling pipeline used for NPC dialogs: clan management, regional teleport/info, a home page with favorites/bookmarks, a friends list, personal memos, in-client mail, an item drop-source search utility, personal buff templates (see [Custom Feature Set](#custom-non-retail-feature-set)), a PvP ranking of the top 20 players and fake players by PvP kills (fake players' kills are kept by name in `fake_player_pvp`: kills of flagged or karma targets, or of anyone in a PvP spot), a session log of what the character achieved since logging in (see [Session Log](#session-log)), and management of the passive skill tree feature (see [Custom Feature Set](#custom-non-retail-feature-set)).
 
 ---
 
@@ -710,6 +722,9 @@ This program is free software, licensed under the **GNU General Public License, 
 ## Recent Updates
 
 Changes from 28 September – 15 October 2026.
+
+### Session Log
+- **New**: the Community Board's "Session Log" page shows what a character achieved since logging in (levels, experience, monsters, adena, quests, loot...) next to the previous session, and a history of the last sessions. A line in chat recalls the last session on login. See [Session Log](#session-log).
 
 ### Crafting Goals
 - **New**: `.craft` and the Community Board's "Crafting Goals" page let a player choose an item to craft and track it like a quest. Each resource shows how many you have and how many are needed in total (craftable parts are broken down into their materials), every resource collected is celebrated with a small firework, and having everything with a Large Firework. See [Crafting Goals](#crafting-goals).

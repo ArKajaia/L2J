@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.managers.AntiFeedManager;
+import org.l2jmobius.gameserver.managers.SessionStatsManager;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.network.serverpackets.ServerPacket;
 import org.l2jmobius.gameserver.taskmanagers.AttackStanceTaskManager;
@@ -113,6 +114,7 @@ public class Disconnection
 		{
 			if (_player != null)
 			{
+				SessionStatsManager.getInstance().onLeave(_player);
 				_player.storeMe();
 				
 				if (_player.isOnline())

@@ -27,8 +27,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.l2jmobius.gameserver.managers.ScriptManager;
+import org.l2jmobius.gameserver.managers.SessionStatsManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.sessionstats.SessionStat;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowQuestMark;
 import org.l2jmobius.gameserver.network.serverpackets.QuestList;
 import org.l2jmobius.gameserver.network.serverpackets.TutorialShowQuestionMark;
@@ -662,6 +664,11 @@ public class QuestState
 	 */
 	public void exitQuest(QuestType type, boolean playExitQuest)
 	{
+		// A repeatable quest finished with the finish sound is a completion (one-time and daily ones are counted when they are marked completed).
+		if (playExitQuest && (type == QuestType.REPEATABLE) && isStarted())
+		{
+			SessionStatsManager.add(_player, SessionStat.QUESTS, 1);
+		}
 		exitQuest(type);
 		if (playExitQuest)
 		{
@@ -698,6 +705,7 @@ public class QuestState
 		else
 		{
 			setState(State.COMPLETED);
+			SessionStatsManager.add(_player, SessionStat.QUESTS, 1);
 		}
 		
 		_vars = null;
@@ -714,6 +722,11 @@ public class QuestState
 	 */
 	public void exitQuest(boolean repeatable, boolean playExitQuest)
 	{
+		// A repeatable quest finished with the finish sound is a completion; aborting one (exitQuest(true)) isn't.
+		if (playExitQuest && repeatable && isStarted())
+		{
+			SessionStatsManager.add(_player, SessionStat.QUESTS, 1);
+		}
 		exitQuest(repeatable);
 		if (playExitQuest)
 		{

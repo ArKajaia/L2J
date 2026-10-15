@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
 import org.l2jmobius.gameserver.config.custom.OfflineTradeConfig;
 import org.l2jmobius.gameserver.data.holders.SellBuffHolder;
 import org.l2jmobius.gameserver.managers.AntiFeedManager;
+import org.l2jmobius.gameserver.managers.SessionStatsManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.Summon;
@@ -593,6 +594,8 @@ public class OfflineTraderTable
 			onTransaction(player, false, true);
 		}
 		
+		// The player is gone: their session ends here, not when the store closes.
+		SessionStatsManager.getInstance().onLeave(player);
 		player.storeMe();
 		LOGGER_ACCOUNTING.info("Entering offline mode, " + client);
 		

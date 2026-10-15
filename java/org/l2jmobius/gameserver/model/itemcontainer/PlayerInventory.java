@@ -35,6 +35,7 @@ import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.TransmogConfig;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.managers.CraftingGoalManager;
+import org.l2jmobius.gameserver.managers.SessionStatsManager;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.events.EventDispatcher;
 import org.l2jmobius.gameserver.model.events.EventType;
@@ -46,6 +47,7 @@ import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemLocation;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.item.instance.Item;
+import org.l2jmobius.gameserver.model.sessionstats.SessionStat;
 import org.l2jmobius.gameserver.model.variables.ItemVariables;
 import org.l2jmobius.gameserver.network.SystemMessageId;
 import org.l2jmobius.gameserver.network.holders.TradeItem;
@@ -449,9 +451,13 @@ public class PlayerInventory extends Inventory
 	@Override
 	public Item addItem(ItemProcessType process, Item item, Player actor, Object reference)
 	{
+		final int itemId = item.getId();
+		final long count = item.getCount();
 		final Item addedItem = super.addItem(process, item, actor, reference);
 		if (addedItem != null)
 		{
+			countForSession(process, itemId, count);
+			
 			if ((addedItem.getId() == ADENA_ID) && !addedItem.equals(_adena))
 			{
 				_adena = addedItem;
@@ -486,6 +492,8 @@ public class PlayerInventory extends Inventory
 		final Item item = super.addItem(process, itemId, count, actor, reference);
 		if (item != null)
 		{
+			countForSession(process, itemId, count);
+			
 			if ((item.getId() == ADENA_ID) && !item.equals(_adena))
 			{
 				_adena = item;
@@ -586,6 +594,10 @@ public class PlayerInventory extends Inventory
 	public Item destroyItem(ItemProcessType process, Item item, long count, Player actor, Object reference)
 	{
 		final Item destroyedItem = super.destroyItem(process, item, count, actor, reference);
+		if ((destroyedItem != null) && (item.getId() == ADENA_ID) && (process != ItemProcessType.TRANSFER))
+		{
+			SessionStatsManager.add(_owner, SessionStat.ADENA_SPENT, count);
+		}
 		
 		if ((_adena != null) && (_adena.getCount() <= 0))
 		{
@@ -815,6 +827,47 @@ public class PlayerInventory extends Inventory
 	/**
 	 * Refresh the weight of equipment loaded
 	 */
+	/**
+	 * Counts an item that came into the inventory for the owner's session (see {@link SessionStatsManager}): new adena, loot, spoils and crafts. Items moved from somewhere else (trade, warehouse, mail) don't count.
+	 */
+	private void countForSession(ItemProcessType process, int itemId, long count)
+	{
+		if ((_owner.getSessionStats() == null) || (process == ItemProcessType.TRANSFER))
+		{
+			return;
+		}
+		
+		if (itemId == ADENA_ID)
+		{
+			SessionStatsManager.add(_owner, SessionStat.ADENA_EARNED, count);
+			return;
+		}
+		
+		switch (process)
+		{
+			case LOOT:
+			case PICKUP:
+			{
+				SessionStatsManager.add(_owner, SessionStat.ITEMS_LOOTED, 1);
+				break;
+			}
+			case SWEEP:
+			{
+				SessionStatsManager.add(_owner, SessionStat.SPOILS, 1);
+				break;
+			}
+			case CRAFT:
+			{
+				SessionStatsManager.add(_owner, SessionStat.ITEMS_CRAFTED, count);
+				break;
+			}
+			default:
+			{
+				break;
+			}
+		}
+	}
+	
 	@Override
 	public void refreshWeight()
 	{
