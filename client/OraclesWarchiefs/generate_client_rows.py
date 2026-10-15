@@ -41,7 +41,7 @@ DESC={
  27555:"Max HP +6%. Near your own totem: P. Def. and M. Def. +8%.",
  27556:"P. Def. and M. Def. +8% while near your own totem.",
  27557:"Totems up: {lvl}. Shatter needs 3.",
- 27558:"Plants the Great Totem of the Horde-Father for 20 seconds: Totem of Blood, Totem of the Horde and Totem of Frost-Teeth at once, within 900. It can't be targeted. Reuse time is {reuse_min} minutes.",
+ 27558:"Plants the Great Totem of the Horde-Father for 20 seconds: it raises a Totem of Blood, a Totem of the Horde and a Totem of Frost-Teeth around it that reach 900, can't be broken and don't count towards your totems. Reuse time is {reuse_min} minutes.",
  27559:"Plants a Totem of Flames: every 1.67 seconds it burns up to {targets} enemies within 400 with {power} Power (fire); an enemy another of your Totems of Flames burns takes half from it."+TOTEM,
  27560:"Burned by a Totem of Flames: {power} Power.",
  27561:"Turns you to ice for 5 seconds while your totems fight: you can't move or act, P. Def. and M. Def. +300%, and you recover {heal}% of your max HP every second. Reuse time is 1 minute.",

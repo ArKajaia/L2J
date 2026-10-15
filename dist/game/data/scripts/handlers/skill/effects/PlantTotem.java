@@ -36,7 +36,7 @@ import org.l2jmobius.gameserver.model.skill.Skill;
  * <ul>
  * <li>{@code npcId}: the totem NPC.</li>
  * <li>{@code kinds}: what it pulses, comma separated (BLOOD, HORDE, FROST, ANCESTORS, FLAME).</li>
- * <li>{@code great}: true for the Great Totem of the Horde-Father (doesn't count, can't be targeted).</li>
+ * <li>{@code great}: true for the Great Totem of the Horde-Father: it raises a totem of each kind around it (they don't count, can't be broken; the Great Totem can't be targeted).</li>
  * <li>{@code skillLevel}: the level of its echoes, the skill's level by default.</li>
  * </ul>
  * @author Mobius

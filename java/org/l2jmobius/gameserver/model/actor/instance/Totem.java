@@ -41,7 +41,7 @@ import org.l2jmobius.gameserver.network.serverpackets.DeleteObject;
 
 /**
  * A totem planted by a Totem Warchief (Warcryer line): it stands where it was planted and pulses to everyone around every few seconds, see {@link Totems}.<br>
- * Monsters and the Warchief's enemies can break it; the Great Totem can't be targeted or hurt. It is as high level as its Warchief, its max HP is a part of the Warchief's (when planted), and its P. Def. and M. Def. are those of its NPC template scaled to its level.
+ * Monsters and the Warchief's enemies can break it. The Great Totem can't be targeted or hurt; the totems it raises can't be hurt, but monsters still turn on them (the Totem of the Horde). It is as high level as its Warchief, its max HP is a part of the Warchief's (when planted), and its P. Def. and M. Def. are those of its NPC template scaled to its level.
  * @author Mobius
  */
 public class Totem extends Npc
@@ -63,7 +63,7 @@ public class Totem extends Npc
 	 * @param kinds what it pulses
 	 * @param range how far the pulse reaches
 	 * @param lifetime how long it stands, in milliseconds
-	 * @param great {@code true} for the Great Totem of the Horde-Father
+	 * @param great {@code true} for the Great Totem of the Horde-Father and the totems it raises
 	 * @param skillLevel the level of the skill that planted it (the level of its echoes)
 	 * @param forced {@code true} if it was planted with Ctrl held: its pulses also reach the white players and fake players around, see {@link Totems}
 	 * @param maxHp its max HP
@@ -207,11 +207,19 @@ public class Totem extends Npc
 	}
 
 	/**
-	 * @return {@code true} for the Great Totem of the Horde-Father
+	 * @return {@code true} for the Great Totem of the Horde-Father and the totems it raises (they don't count)
 	 */
 	public boolean isGreat()
 	{
 		return _great;
+	}
+
+	/**
+	 * @return {@code true} for the Great Totem of the Horde-Father itself, which only marks the spot of the totems it raises
+	 */
+	public boolean isGreatCenter()
+	{
+		return _great && _kinds.isEmpty();
 	}
 
 	/**
@@ -320,7 +328,7 @@ public class Totem extends Npc
 	@Override
 	public boolean isAutoAttackable(Creature attacker)
 	{
-		if (_great || (attacker == null) || (attacker == _owner) || isAlikeDead())
+		if (isGreatCenter() || (attacker == null) || (attacker == _owner) || isAlikeDead())
 		{
 			return false;
 		}
@@ -343,7 +351,7 @@ public class Totem extends Npc
 	@Override
 	public boolean isTargetable()
 	{
-		return !_great && super.isTargetable();
+		return !isGreatCenter() && super.isTargetable();
 	}
 
 	@Override
