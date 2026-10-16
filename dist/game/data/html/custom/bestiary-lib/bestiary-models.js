@@ -3,8 +3,10 @@
  *
  * The models come from the client (client/Bestiary/extract_models.py): one .glb per mesh, without
  * skins, and a manifest naming, for each npc, its mesh and the skin of each material slot (the
- * client gives the same mesh other skins for other monsters). view.json says how far the models
- * are turned to face the camera, as set on the bake page.
+ * client gives the same mesh other skins for other monsters), with how each skin's alpha shows:
+ * in the client a texture's alpha is only see-through when the texture or its shader says so
+ * (masked or blended); otherwise it holds something else, such as a shine mask, and the skin is
+ * opaque. view.json says how far the models are turned to face the camera, as set on the bake page.
  */
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
@@ -69,6 +71,19 @@ function loadTexture(key, file) {
 	return textures.get(key);
 }
 
+/**
+ * How a skin's alpha shows: a number is the cut-off of a masked skin, "blend" a skin blended by its
+ * alpha, "opaque" a skin whose alpha is not see-through.
+ */
+function alphaOf(manifest, key) {
+	if (!manifest.alpha) {
+		// Extracted before the extractor read the skins' flags: every alpha cut, as then.
+		return 0.45;
+	}
+	const mode = key ? manifest.alpha[key] : undefined;
+	return mode === undefined ? "opaque" : mode;
+}
+
 /** Forgets the loaded meshes and skins (the bake page goes through thousands). */
 export function clearCache() {
 	for (const promise of meshes.values()) {
@@ -114,12 +129,27 @@ export async function buildMonster(npcId, options) {
 		const replaced = originals.map(original => {
 			const association = gltf.parser.associations.get(original);
 			const slot = association && (association.materials !== undefined) ? association.materials : 0;
-			if (silhouette) {
-				return new THREE.MeshBasicMaterial({ color: 0x050507, side: THREE.DoubleSide });
-			}
-			const material = new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide, roughness: 0.85, metalness: 0, alphaTest: 0.45 });
 			const key = skinOf(slot);
 			const file = key ? (manifest.textures || {})[key] : null;
+			const alpha = alphaOf(manifest, key);
+			let material;
+			if (silhouette) {
+				// All black, but with the holes of a masked skin (a torn cape, feathers), so it has the monster's real outline.
+				material = new THREE.MeshBasicMaterial({ color: 0x050507, side: THREE.DoubleSide });
+				if (typeof alpha !== "number") {
+					return material;
+				}
+				material.alphaTest = alpha;
+			} else {
+				material = new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide, roughness: 0.85, metalness: 0 });
+				if (typeof alpha === "number") {
+					material.alphaTest = alpha;
+				} else if (alpha === "blend") {
+					// Blended by its alpha; what is fully clear is left out, so it doesn't hide what is behind it.
+					material.transparent = true;
+					material.alphaTest = 0.02;
+				}
+			}
 			if (file) {
 				jobs.push(loadTexture(key, file).then(texture => {
 					if (texture) {
