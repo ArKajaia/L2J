@@ -88,7 +88,7 @@ public class PassiveTreeApiServer
 	
 	private static final String CSP = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 	
-	private static final long INSPECT_VALID_MS = 30 * 60 * 1000L; // how long a ".gear" snapshot stays viewable
+	private static final long INSPECT_VALID_MS = 60 * 60 * 1000L; // how long a ".gear" snapshot stays viewable
 	private static final int MAX_INSPECTS = 2000; // snapshots kept at once, so a flood of ".gear" can't eat the memory
 	private static final int MAX_IMPORT_NODES = 2000; // more ids than the tree has nodes in one import is never a real build
 	
@@ -337,6 +337,31 @@ public class PassiveTreeApiServer
 		{
 			return _expiry;
 		}
+	}
+	
+	/** @return how long a ".gear" link stays valid, in words for its message */
+	public static String describeInspectLifetime()
+	{
+		return describeLifetime(INSPECT_VALID_MS / 1000);
+	}
+	
+	/**
+	 * @param seconds how long a link stays valid
+	 * @return it in words for a chat message: "1 hour", "2 hours", "15 minutes", "45 seconds"
+	 */
+	public static String describeLifetime(long seconds)
+	{
+		if ((seconds >= 3600) && ((seconds % 3600) == 0))
+		{
+			final long hours = seconds / 3600;
+			return hours + (hours == 1 ? " hour" : " hours");
+		}
+		if (seconds >= 60)
+		{
+			final long minutes = Math.round(seconds / 60.0);
+			return minutes + (minutes == 1 ? " minute" : " minutes");
+		}
+		return seconds + (seconds == 1 ? " second" : " seconds");
 	}
 	
 	/**

@@ -16,7 +16,7 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
 /**
  * ".gear" - opens the web planner on the full build of the targeted player or fake player (yourself with no target): its gear, stats and passive tree. From there the tree can be copied as a build code or imported straight into your own tree.
  * <p>
- * The build is taken when the command is used and the link stays valid for 30 minutes, even if the target logs off or despawns meanwhile. The link also carries your own 15-minute .treelink token, which is what the import button uses.
+ * The build is taken when the command is used and the link stays valid for an hour, even if the target logs off or despawns meanwhile. The link also carries your own .treelink token (PassiveTreeWebTokenLifetime), which is what the import button uses.
  */
 public class GearVoiced implements IVoicedCommandHandler
 {
@@ -73,7 +73,7 @@ public class GearVoiced implements IVoicedCommandHandler
 		final PassiveTreeApiServer server = PassiveTreeApiServer.getInstance();
 		final String url = PassiveTreeConfig.WEB_BASE_URL + "?token=" + server.generateToken(player.getObjectId(), player.getClassIndex()) + "&inspect=" + server.registerInspect(json);
 
-		player.sendMessage("Link to " + name + " build (click to open, valid 30 minutes):");
+		player.sendMessage("Link to " + name + " build (click to open, valid " + PassiveTreeApiServer.describeInspectLifetime() + "):");
 		player.sendMessage(url);
 		player.sendPacket(new ExLinkOpen(url));
 		return true;
