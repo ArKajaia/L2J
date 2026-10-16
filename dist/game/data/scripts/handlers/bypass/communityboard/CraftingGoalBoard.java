@@ -68,7 +68,7 @@ public class CraftingGoalBoard implements IParseBoardHandler
 	private static final String BAR_DONE_FILL = "L2UI_CT1.Gauges.Gauge_DF_Large_CP_Center";
 	private static final String NO_ICON = "icon.etc_question_mark_i00";
 
-	private static final int BOARD_WIDTH = 530;
+	private static final int BOARD_WIDTH = 480;
 	/** The width of the .craft window's content: the NPC window is 294 wide, and its scroll bar takes some of it. */
 	public static final int WINDOW_WIDTH = 270;
 	private static final int BOARD_RESULTS = 12;
