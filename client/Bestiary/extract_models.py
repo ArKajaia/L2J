@@ -8,7 +8,12 @@ What it needs (see README.txt):
   - Npcgrp.dat saved as text with L2ClientDat (Npcgrp.txt): it names the mesh and
     the textures of every npc id
 
-  python extract_models.py --client "C:/Lineage II" --umodel "C:/tools/umodel/umodel.exe" --npcgrp Npcgrp.txt
+  python extract_models.py --client "C:/Lineage II" --umodel "C:/tools/umodel" --check
+  python extract_models.py --client "C:/Lineage II" --umodel "C:/tools/umodel"
+
+--umodel is umodel.exe or the folder UE Viewer was unpacked to. --npcgrp defaults to the
+npcgrp*.txt in the client's System folder. --check reads everything and lists one package
+with umodel, without exporting anything, to see that it all works first.
 
 What it writes, into dist/game/data/html/custom/bestiary (the server serves it from there):
   models/<mesh>.glb       one per mesh, shared by every monster that uses it
@@ -42,6 +47,10 @@ DEFAULT_OUT = REPO / "dist" / "game" / "data" / "html" / "custom" / "bestiary"
 DEFAULT_TYPES = "Monster,RaidBoss,GrandBoss,FeedableBeast,Chest,RiftInvader,FestivalMonster,SepulcherMonster"
 
 PACKAGE_EXTENSIONS = (".ukx", ".usx", ".utx", ".unr", ".u")
+UMODEL_NAMES = ("umodel_64.exe", "umodel.exe", "umodel")
+# One field of a Npcgrp.txt row: key=[...], key={...} or key=value. L2ClientDat separates them with tabs; a copy
+# with spaces reads the same.
+NPCGRP_FIELD = re.compile(r"(\w+)=(\{[^}]*\}|\[[^\]]*\]|[^\t ]*)")
 GLB_MAGIC = 0x46546C67
 CHUNK_JSON = 0x4E4F534A
 CHUNK_BIN = 0x004E4942
@@ -81,16 +90,14 @@ def list_value(value):
 
 
 def parse_npcgrp(path):
-	"""npc id -> {"mesh": "Package.Mesh", "textures": [...], "textures2": [...]}, from the L2ClientDat text export."""
+	"""npc id -> {"mesh": "Package.Mesh", "textures": [...], "textures2": [...]}, from the L2ClientDat text export:
+	npc_begin	npc_id=24464	class_name=[...]	mesh_name=[LineageNPCs3.illusion_sebion_m00]	texture_name={[LineageMonstersTex6.illusion_sebion.illusion_sebion_t00];[...]}	...	npc_end"""
 	rows = {}
 	for line in read_text(path).splitlines():
+		line = line.strip()
 		if not line.startswith("npc_begin"):
 			continue
-		fields = {}
-		for field in line.split("\t")[1:]:
-			if "=" in field:
-				key, value = field.split("=", 1)
-				fields[key.strip()] = value
+		fields = dict(NPCGRP_FIELD.findall(line))
 		try:
 			npc_id = int(fields.get("npc_id", ""))
 		except ValueError:
@@ -153,10 +160,49 @@ def key_of(full):
 # ---------------------------------------------------------------------------------------------
 
 def umodel_command(value):
-	"""The umodel executable, or a command line (for a wrapper such as 'wine umodel.exe')."""
-	if Path(value).exists():
-		return [str(Path(value))]
+	"""The umodel executable (or the folder UE Viewer was unpacked to), or a command line for a wrapper such as 'wine umodel.exe'."""
+	path = Path(value)
+	if path.is_dir():
+		for name in UMODEL_NAMES:
+			if (path / name).is_file():
+				return [str(path / name)]
+		sys.exit("No umodel in %s: it should hold umodel.exe (or umodel_64.exe) from the UE Viewer download." % path)
+	if path.exists():
+		return [str(path)]
+	# A path (no spaces, or starting like one) that is not there; anything else is a command such as "wine umodel.exe".
+	if (" " not in value.strip()) or re.match(r"^([A-Za-z]:|\.{0,2})[\\/]", value.strip()):
+		sys.exit("No umodel at %s: give umodel.exe, or the folder it is in." % value)
 	return shlex.split(value)
+
+
+def find_npcgrp(client):
+	"""The npcgrp*.txt of the client's System folder (where L2ClientDat saves it next to Npcgrp.dat)."""
+	for folder in [client] + [p for p in client.iterdir() if p.is_dir() and p.name.lower() == "system"]:
+		for file in sorted(folder.iterdir()):
+			if file.is_file() and file.name.lower().startswith("npcgrp") and file.suffix.lower() == ".txt":
+				return file
+	sys.exit("No npcgrp*.txt in %s or its System folder: save Npcgrp.dat as text with L2ClientDat, or give it with --npcgrp." % client)
+
+
+def check_umodel(umodel, client, package_file, names):
+	"""Lists one package with umodel (nothing is exported): it shows that umodel starts, reads the client's
+	encrypted packages, and finds there the meshes Npcgrp names."""
+	command = umodel + ["-list", "-path=" + str(client), package_file.stem]
+	print("Listing %s with umodel (%.0f MB)..." % (package_file.name, package_file.stat().st_size / 1048576.0))
+	try:
+		result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, errors="replace", timeout=600)
+	except (OSError, subprocess.TimeoutExpired) as error:
+		print("  umodel could not list it: %s" % error)
+		return False
+	listing = result.stdout.lower()
+	found = [name for name in names if name in listing]
+	print("  umodel exited with %d; %d of the %d meshes Npcgrp names in %s are in it." % (result.returncode, len(found), len(names), package_file.name))
+	if not found:
+		print("  umodel said:")
+		for line in [l for l in result.stdout.splitlines() if l.strip()][-15:]:
+			print("    " + line)
+		print("  If it does not recognize the package, try --umodel-args \"-game=l2\" (umodel -taglist lists the tags).")
+	return bool(found)
 
 
 def find_packages(client):
@@ -357,7 +403,7 @@ def main():
 	parser = argparse.ArgumentParser(description="Extract monster models and textures from a High Five client for the bestiary.")
 	parser.add_argument("--client", required=True, help="the client folder (Animations, StaticMeshes, Textures, System)")
 	parser.add_argument("--umodel", required=True, help="umodel executable (UE Viewer), or a command such as \"wine umodel.exe\"")
-	parser.add_argument("--npcgrp", required=True, help="Npcgrp.dat saved as text with L2ClientDat")
+	parser.add_argument("--npcgrp", default="", help="Npcgrp.dat saved as text with L2ClientDat (default: npcgrp*.txt in the client's System folder)")
 	parser.add_argument("--out", default=str(DEFAULT_OUT), help="where the bestiary art goes (default: the server's data/html/custom/bestiary)")
 	parser.add_argument("--npcs", default=str(DEFAULT_NPCS), help="the server's npc XML folder, to know which npcs are monsters")
 	parser.add_argument("--types", default=DEFAULT_TYPES, help="npc types to take (default: the monster types)")
@@ -367,6 +413,7 @@ def main():
 	parser.add_argument("--max-texture", type=int, default=1024, help="largest texture side in pixels when Pillow is installed (0 = keep)")
 	parser.add_argument("--umodel-args", default="", help="extra umodel options, e.g. \"-game=l2\"")
 	parser.add_argument("--force", action="store_true", help="export packages again even when done before")
+	parser.add_argument("--check", action="store_true", help="only check the setup: read Npcgrp, find the packages, list one with umodel; nothing is exported")
 	args = parser.parse_args()
 
 	client = Path(args.client)
@@ -382,8 +429,9 @@ def main():
 		pillow = None
 		print("Pillow is not installed: textures are copied as they are (pip install pillow to make them smaller).")
 
-	print("Reading %s" % args.npcgrp)
-	npcgrp = parse_npcgrp(args.npcgrp)
+	npcgrp_file = Path(args.npcgrp) if args.npcgrp else find_npcgrp(client)
+	print("Reading %s" % npcgrp_file)
+	npcgrp = parse_npcgrp(npcgrp_file)
 	print("  %d npcs in Npcgrp" % len(npcgrp))
 	if not npcgrp:
 		sys.exit("No npc_begin rows: save Npcgrp.dat as text with L2ClientDat first (see README.txt).")
@@ -414,6 +462,19 @@ def main():
 	mesh_packages = sorted(set(split_name(r["mesh"])[0] for r in looks.values() if split_name(r["mesh"])[0]))
 	texture_packages = sorted(set(split_name(t)[0] for r in looks.values() for t in r["textures"] + r["textures2"] if split_name(t)[0]))
 	missing_packages = [p for p in mesh_packages + texture_packages if p not in packages]
+
+	if args.check:
+		print("  %d of them have a look in Npcgrp, with %d meshes in %d packages and textures in %d packages" % (len(looks), len(set(key_of(r["mesh"]) for r in looks.values())), len(mesh_packages), len(texture_packages)))
+		if missing_packages:
+			print("  Packages Npcgrp names that are not in the client: %s" % ", ".join(missing_packages))
+		present = [p for p in mesh_packages if p in packages]
+		if not present:
+			sys.exit("None of the mesh packages Npcgrp names is in %s: is it the client folder?" % client)
+		smallest = min(present, key=lambda p: packages[p].stat().st_size)
+		names = sorted(set(split_name(r["mesh"])[1] for r in looks.values() if split_name(r["mesh"])[0] == smallest))
+		ok = check_umodel(umodel, client, packages[smallest], names)
+		print("Ready: run it again without --check to export (it writes into %s)." % out if ok else "Not ready: see above.")
+		return
 
 	work.mkdir(parents=True, exist_ok=True)
 	(out / "models").mkdir(parents=True, exist_ok=True)

@@ -15,20 +15,27 @@ What you need
 - Python 3. Pillow is optional (pip install pillow): with it the textures are
   made smaller (--max-texture, 1024 by default), which saves a lot of space.
 - Npcgrp.dat as text: open system/Npcgrp.dat with L2ClientDat (High Five) and
-  save it as text (Npcgrp.txt), the same way as the other .dat files of this
-  folder. It names the mesh and the textures of every npc id.
+  save it as text (npcgrp.txt) in the same system folder. It names the mesh
+  and the textures of every npc id. The script finds it there by itself
+  (--npcgrp gives another file).
 
 1. Extract
 ----------
-From this folder:
+From this folder, with the paths of your client and of UE Viewer (the folder
+it was unpacked to, or umodel.exe itself), in quotes when they have spaces:
 
-  python extract_models.py --client "C:/Lineage II" --umodel "C:/tools/umodel/umodel.exe" --npcgrp Npcgrp.txt
+  python extract_models.py --client "C:\Lineage II" --umodel "C:\tools\umodel" --check
 
-Try a few monsters first with --only 20487,25013,29001. On Linux, umodel has
-its own build; --umodel "wine umodel.exe" works too.
+--check exports nothing: it reads npcgrp.txt, finds the packages it names in
+the client, and lists one with umodel, to show that everything works. When it
+says "Ready", run the same line without --check. Try a few monsters first with
+--only 20487,25013,29001 if you like (it still exports the whole packages they
+are in, so it takes a while too). On Linux, umodel has its own build;
+--umodel "wine umodel.exe" works too.
 
 It writes into dist/game/data/html/custom/bestiary, where the game server
-serves it from:
+serves it from (if your server runs from another folder, copy the bestiary
+folder into its data/html/custom, or give that folder with --out):
   models/<mesh>.glb        one file per mesh; monsters with the same mesh share it
   textures/<texture>.png   the skins (many monsters are a mesh with another skin)
   models/manifest.json     npc id -> mesh and skins
