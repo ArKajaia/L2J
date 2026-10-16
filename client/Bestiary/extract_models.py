@@ -18,13 +18,18 @@ with umodel, without exporting anything, to see that it all works first.
 What it writes, into dist/game/data/html/custom/bestiary (the server serves it from there):
   models/<mesh>.glb       one per mesh, shared by every monster that uses it
   textures/<texture>.png  the skins (many monsters share a mesh with another skin)
-  models/manifest.json    npc id -> mesh and textures, read by the bestiary page
+  models/manifest.json    npc id -> mesh and textures, and how each texture's alpha shows
   extract_report.txt      what was found, and what was not
 
 Only the monsters of the server (data/stats/npcs, the types of --types) are taken;
 --all takes every npc of Npcgrp.txt. A npc with displayId uses that client npc's look.
 Run it again after a client update; packages already exported are skipped (--force
 exports them again).
+
+A texture's alpha is only see-through in the game when the texture is masked (bMasked) or an
+alpha texture (bAlphaTexture), or when the shader or final blend it is in says so; otherwise
+it holds something else (often where the skin shines) and the skin is opaque. umodel's export
+leaves these out, so each texture package is also read with umodel -dump.
 """
 
 import argparse
@@ -48,6 +53,13 @@ DEFAULT_TYPES = "Monster,RaidBoss,GrandBoss,FeedableBeast,Chest,RiftInvader,Fest
 
 PACKAGE_EXTENSIONS = (".ukx", ".usx", ".utx", ".unr", ".u")
 UMODEL_NAMES = ("umodel_64.exe", "umodel.exe", "umodel")
+# umodel -dump: "ClassName: Texture ObjectName: necro_t00", then the object's properties, one per line
+# ("    bMasked = true"), or all on one line (" { a=b, c=d }") when they are few.
+DUMP_HEADER = re.compile(r"ClassName:\s*(\S+)\s+ObjectName:\s*(\S+)")
+DUMP_PROPERTY = re.compile(r"^    (\w+) = (.*)$")
+DUMP_INLINE = re.compile(r"(\w+)=([^,}]*)")
+# Shader and FinalBlend blendings that let what is behind show through.
+BLENDINGS = ("OB_MODULATE", "OB_TRANSLUCENT", "OB_BRIGHTEN", "OB_DARKEN", "FB_MODULATE", "FB_ALPHABLEND", "FB_ALPHAMODULATE", "FB_TRANSLUCENT", "FB_DARKEN", "FB_BRIGHTEN", "FB_ADD")
 # One field of a Npcgrp.txt row: key=[...], key={...} or key=value. L2ClientDat separates them with tabs; a copy
 # with spaces reads the same.
 NPCGRP_FIELD = re.compile(r"(\w+)=(\{[^}]*\}|\[[^\]]*\]|[^\t ]*)")
@@ -240,6 +252,124 @@ def export_package(umodel, client, work, package, options, log, force):
 	return True
 
 
+def dump_package(umodel, client, work, package, options, log, force):
+	"""Every object of a package with its properties (umodel -dump), which the export leaves out: a texture's
+	bMasked, a shader's OutputBlending. Kept in work/<package>.dump.txt."""
+	file = work / (package.lower() + ".dump.txt")
+	if file.exists() and not force:
+		return read_text(file)
+	command = umodel + ["-dump"] + options + ["-path=" + str(client), package]
+	log.write("\n$ " + " ".join(command) + "\n")
+	log.flush()
+	try:
+		result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, errors="replace", timeout=1800)
+	except (OSError, subprocess.TimeoutExpired) as error:
+		log.write("failed: %s\n" % error)
+		print("    umodel could not read the textures' flags of %s: %s" % (package, error))
+		return ""
+	log.write("exit %d, %d lines of dump\n" % (result.returncode, result.stdout.count("\n")))
+	if result.returncode != 0 or "ObjectName:" not in result.stdout:
+		print("    umodel could not read the textures' flags of %s (see umodel.log)" % package)
+		log.write(result.stdout[-4000:])
+		return ""
+	file.write_text(result.stdout, encoding="utf-8")
+	return result.stdout
+
+
+def parse_dump(text, package, objects):
+	"""Adds the objects of a package's dump: (package, name) and (None, name) -> (class, {property: value}), lowercase."""
+	current = None
+	for line in text.splitlines():
+		header = DUMP_HEADER.search(line)
+		if header:
+			current = {}
+			found = (header.group(1).lower(), current)
+			name = header.group(2).lower()
+			objects.setdefault((package, name), found)
+			objects.setdefault((None, name), found)
+			continue
+		if current is None:
+			continue
+		prop = DUMP_PROPERTY.match(line)
+		if prop:
+			current.setdefault(prop.group(1).lower(), prop.group(2).strip())
+		elif line.startswith(" { "):
+			for key, value in DUMP_INLINE.findall(line):
+				current.setdefault(key.lower(), value.strip())
+
+
+def object_ref(value):
+	"""Texture'LineageMonstersTex6.illusion_sebion.illusion_sebion_t00' -> LineageMonstersTex6.illusion_sebion.illusion_sebion_t00; None -> None"""
+	match = re.search(r"'([^']+)'", value or "")
+	return match.group(1) if match else None
+
+
+def material_look(objects, full, depth=0):
+	"""What a material shows: (the name of its picture, the name of the picture its opacity comes from when it is
+	another one, how its alpha shows), following shaders, final blends and modifiers down to the texture. The alpha
+	is "opaque", "blend", the cut-off of a mask (a number), or None when umodel's dump does not have the material."""
+	package, name = split_name(full)
+	found = (objects.get((package, name)) or objects.get((None, name))) if depth < 8 else None
+	if not found:
+		return full, None, None
+	kind, props = found
+
+	def flag(key):
+		return props.get(key, "").lower() == "true"
+
+	def ref(key):
+		return object_ref(props.get(key))
+
+	def cutoff():
+		# AlphaRef (0-255) when the material tests its alpha itself, else the engine's masked texture cut-off.
+		match = re.match(r"\d+", props.get("alpharef", ""))
+		value = int(match.group(0)) if match else 0
+		return round(max(1, value) / 255.0, 3) if flag("alphatest") and value else 0.5
+
+	if kind == "texture":
+		if flag("bmasked"):
+			return full, None, 0.5
+		return full, None, "blend" if flag("balphatexture") else "opaque"
+	if kind == "shader":
+		diffuse = ref("diffuse")
+		picture = material_look(objects, diffuse, depth + 1)[0] if diffuse else full
+		opacity = ref("opacity")
+		opacity_picture = material_look(objects, opacity, depth + 1)[0] if opacity else None
+		if opacity_picture and key_of(opacity_picture) == key_of(picture):
+			opacity_picture = None
+		blending = props.get("outputblending", "").upper()
+		if flag("alphatest") or blending.startswith("OB_MASKED"):
+			return picture, opacity_picture, cutoff()
+		if blending.startswith(BLENDINGS) or opacity:
+			return picture, opacity_picture, "blend"
+		return picture, None, "opaque"
+	inner = ref("material") or ref("material1")
+	if not inner:
+		return full, None, None
+	picture, opacity_picture, alpha = material_look(objects, inner, depth + 1)
+	if kind == "finalblend":
+		if flag("alphatest"):
+			return picture, opacity_picture, cutoff()
+		if props.get("framebufferblending", "").upper().startswith(BLENDINGS):
+			return picture, opacity_picture, "blend"
+		return picture, None, "opaque"
+	# TexPanner, TexOscillator, Combiner...: as the material they change.
+	return picture, opacity_picture, alpha
+
+
+def guess_alpha(source, pillow):
+	"""For a texture umodel's dump does not have: a mask when its alpha is almost all fully clear or fully solid, with
+	some of it clear (a torn cape); otherwise its alpha is taken as not see-through."""
+	with pillow.open(source) as image:
+		if "A" not in image.getbands():
+			return "opaque"
+		histogram = image.getchannel("A").histogram()
+	total = float(sum(histogram)) or 1
+	clear = sum(histogram[:16])
+	solid = sum(histogram[240:])
+	return 0.5 if (clear >= total * 0.02) and (clear + solid >= total * 0.95) else "opaque"
+
+
 def index_exports(work, packages):
 	"""(package, object) -> file and object -> [files], for everything umodel wrote. umodel puts a package's
 	objects under <out>/<Package>/<Class>/<Object>.<ext>; the package is found by name, whatever the case."""
@@ -295,7 +425,8 @@ def pad(data, filler):
 
 def gltf_to_glb(source, target):
 	"""Packs a .gltf (+.bin) into one .glb without its pictures (the bestiary loads the skins itself, by
-	material slot). Returns, per material slot, the picture file the mesh had there (or None)."""
+	material slot). Returns, per material slot, (the picture file the mesh had there or None, the material's name):
+	umodel names the slot's material but gives it no picture."""
 	if source.suffix.lower() == ".glb":
 		data = source.read_bytes()
 		magic, _, length = struct.unpack_from("<III", data, 0)
@@ -338,7 +469,7 @@ def gltf_to_glb(source, target):
 			image = textures[ref["index"]].get("source", -1)
 			if 0 <= image < len(images) and images[image].get("uri") and not images[image]["uri"].startswith("data:"):
 				picture = base / images[image]["uri"].replace("%20", " ")
-		defaults.append(picture if (picture and picture.exists()) else None)
+		defaults.append((picture if (picture and picture.exists()) else None, material.get("name", "")))
 		for field in ("normalTexture", "occlusionTexture", "emissiveTexture"):
 			material.pop(field, None)
 		pbr.pop("baseColorTexture", None)
@@ -378,8 +509,21 @@ def material_picture(mat_file, index):
 	return None
 
 
-def copy_texture(source, target, max_size, pillow):
-	"""Copies a picture as PNG, made smaller than max_size when Pillow is there."""
+def copy_texture(source, target, max_size, pillow, opacity=None):
+	"""Copies a picture as PNG, made smaller than max_size when Pillow is there. With opacity (another picture, which a
+	shader takes its opacity from) and Pillow, the copy gets that picture's alpha, or its grey when its alpha is all
+	solid (or it has none): an opacity texture without alpha keeps it in its colour."""
+	if opacity and pillow:
+		with pillow.open(source) as image, pillow.open(opacity) as mask:
+			alpha = mask.getchannel("A") if "A" in mask.getbands() else None
+			if alpha is None or alpha.getextrema()[0] == 255:
+				alpha = mask.convert("L")
+			image = image.convert("RGBA")
+			image.putalpha(alpha.resize(image.size))
+			if max_size and max(image.size) > max_size:
+				image.thumbnail((max_size, max_size), getattr(pillow, "LANCZOS", 1))
+			image.save(target, "PNG", optimize=True)
+		return True
 	if source.suffix.lower() == ".png" and not (pillow and max_size):
 		shutil.copyfile(source, target)
 		return True
@@ -488,17 +632,23 @@ def main():
 		for i, package in enumerate(todo, 1):
 			print("[%d/%d] textures of %s" % (i, len(todo), packages[package].name))
 			export_package(umodel, client, work, packages[package].stem, ["-png"] + extra, log, args.force)
+		# How each texture's alpha shows: the flags the export leaves out.
+		objects = {}
+		todo = [p for p in texture_packages if p in packages]
+		for i, package in enumerate(todo, 1):
+			print("[%d/%d] textures' flags of %s" % (i, len(todo), packages[package].name))
+			parse_dump(dump_package(umodel, client, work, packages[package].stem, extra, log, args.force), package, objects)
 
 	print("Collecting the exported files")
 	index = index_exports(work, packages)
 
-	manifest = {"version": 1, "generated": time.strftime("%Y-%m-%d %H:%M:%S"), "meshes": {}, "textures": {}, "npcs": {}}
+	manifest = {"version": 2, "generated": time.strftime("%Y-%m-%d %H:%M:%S"), "meshes": {}, "textures": {}, "alpha": {}, "npcs": {}}
 	manifest_file = out / "models" / "manifest.json"
 	if args.only and manifest_file.exists():
 		# A few npcs again: the others of the last run stay.
 		try:
 			previous = json.loads(manifest_file.read_text(encoding="utf-8"))
-			for part in ("meshes", "textures", "npcs"):
+			for part in ("meshes", "textures", "alpha", "npcs"):
 				manifest[part].update(previous.get(part, {}))
 			for npc_id in server:
 				manifest["npcs"].pop(str(npc_id), None)
@@ -507,21 +657,34 @@ def main():
 	missing_meshes = {}
 	missing_textures = {}
 	failed_meshes = {}
+	guessed_alpha = []
 
 	def take_texture(full_or_path, key):
-		"""Copies a texture (by its client name, or a file) into textures/ once; returns its key or None."""
+		"""Copies a texture (by its client name, or a file) into textures/ once, with how its alpha shows; returns its key or None."""
 		if key in manifest["textures"]:
 			return key
-		source = full_or_path if isinstance(full_or_path, Path) else lookup(index, full_or_path, (".png", ".tga"))
-		if source is None and not isinstance(full_or_path, Path):
-			mat = lookup(index, full_or_path, (".mat",))
-			source = material_picture(mat, index) if mat else None
+		opacity = None
+		alpha = None
+		if isinstance(full_or_path, Path):
+			source = full_or_path
+		else:
+			picture, opacity_name, alpha = material_look(objects, full_or_path)
+			source = lookup(index, picture, (".png", ".tga"))
+			if source is None:
+				mat = lookup(index, full_or_path, (".mat",))
+				source = material_picture(mat, index) if mat else None
+			opacity = lookup(index, opacity_name, (".png", ".tga")) if opacity_name else None
 		if source is None:
 			return None
+		if alpha is None and pillow:
+			alpha = guess_alpha(source, pillow)
+			guessed_alpha.append(key)
 		file = key + ".png"
 		try:
-			if copy_texture(source, out / "textures" / file, args.max_texture, pillow):
+			if copy_texture(source, out / "textures" / file, args.max_texture, pillow, opacity):
 				manifest["textures"][key] = file
+				if alpha is not None:
+					manifest["alpha"][key] = alpha
 				return key
 		except OSError as error:
 			print("    could not copy %s: %s" % (source, error))
@@ -537,8 +700,14 @@ def main():
 				try:
 					defaults = gltf_to_glb(source, out / "models" / (mesh_key + ".glb"))
 					default_keys = []
-					for slot, picture in enumerate(defaults):
-						default_keys.append(take_texture(picture, mesh_key + "__" + str(slot)) if picture else None)
+					for slot, (picture, material) in enumerate(defaults):
+						# The slot's own picture, or the texture its material is named after (umodel gives none).
+						if picture:
+							default_keys.append(take_texture(picture, mesh_key + "__" + str(slot)))
+						elif material and not material.startswith("dummy_material_"):
+							default_keys.append(take_texture(material, key_of(material)))
+						else:
+							default_keys.append(None)
 					manifest["meshes"][mesh_key] = {"file": mesh_key + ".glb", "defaults": default_keys}
 				except (OSError, ValueError, KeyError, struct.error) as error:
 					failed_meshes[mesh_key] = "could not convert %s: %s" % (source, error)
@@ -558,6 +727,9 @@ def main():
 			entry["display"] = server[npc_id]["display"]
 		manifest["npcs"][str(npc_id)] = entry
 
+	if not manifest["alpha"]:
+		# Neither umodel's dump nor Pillow told anything: the page cuts every alpha, as it did before it knew.
+		del manifest["alpha"]
 	manifest_file.write_text(json.dumps(manifest, separators=(",", ":")), encoding="utf-8")
 
 	report = [
@@ -568,6 +740,7 @@ def main():
 		"with a model:            %d%s" % (len(manifest["npcs"]), " (with the earlier runs)" if args.only else ""),
 		"meshes:                  %d" % len(manifest["meshes"]),
 		"textures:                %d" % len(manifest["textures"]),
+		"  masked / blended:      %d / %d" % (sum(1 for a in manifest.get("alpha", {}).values() if not isinstance(a, str)), sum(1 for a in manifest.get("alpha", {}).values() if a == "blend")),
 		"",
 	]
 	if no_look:
@@ -579,13 +752,16 @@ def main():
 		report.append("Meshes without a model (%d):" % len(failed_meshes))
 		for mesh, reason in sorted(failed_meshes.items()):
 			report.append("  %s: %s (npcs %s)" % (mesh, reason, ", ".join(map(str, missing_meshes.get(mesh, [])[:20]))))
+	if guessed_alpha:
+		report.append("")
+		report.append("Textures not in umodel's dump (%d), their alpha guessed from the picture: %s" % (len(guessed_alpha), ", ".join(sorted(guessed_alpha)[:200])))
 	if missing_textures:
 		report.append("")
 		report.append("Textures not found (%d), those monsters show their mesh's own skin:" % len(missing_textures))
 		for texture, npcs in sorted(missing_textures.items()):
 			report.append("  %s (npcs %s)" % (texture, ", ".join(map(str, npcs[:20]))))
 	(out / "extract_report.txt").write_text("\n".join(report) + "\n", encoding="utf-8")
-	print("\n".join(report[:8]))
+	print("\n".join(report[:9]))
 	print("Report: %s" % (out / "extract_report.txt"))
 	print("Done. Open the bestiary bake page (//bestiary in game) to make the portraits of the collection.")
 

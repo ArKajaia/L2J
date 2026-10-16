@@ -38,7 +38,7 @@ serves it from (if your server runs from another folder, copy the bestiary
 folder into its data/html/custom, or give that folder with --out):
   models/<mesh>.glb        one file per mesh; monsters with the same mesh share it
   textures/<texture>.png   the skins (many monsters are a mesh with another skin)
-  models/manifest.json     npc id -> mesh and skins
+  models/manifest.json     npc id -> mesh and skins, and how each skin's alpha shows
   extract_report.txt       what was taken, and what was not found
 
 umodel's raw export goes to client/Bestiary/work; delete it when you are done.
@@ -63,6 +63,20 @@ Size
 The models and skins of all monsters take a few hundred MB (less with Pillow
 and a smaller --max-texture), the portraits about 50 KB each. They are made
 from your client: keep them out of git (.gitignore already does).
+
+See-through parts
+-----------------
+In the game a skin's alpha is only see-through when its texture is masked or
+an alpha texture, or the shader it is in says so. Otherwise the alpha holds
+something else (often where the skin shines), and the skin is solid. umodel's
+export leaves these flags out, so the script also reads each texture package
+with "umodel -dump" (kept in client/Bestiary/work/<package>.dump.txt). Masked
+skins get their holes (torn capes, feathers), blended ones show through, and
+a shader with a separate opacity texture gets that texture's alpha (Pillow
+needed). The few textures umodel's dump does not have are judged from the
+picture (Pillow needed). Models extracted before this was added had every
+alpha cut: run the script again (the packages already exported are kept, only
+the flags are read).
 
 When something is missing
 -------------------------

@@ -3,6 +3,7 @@ package handlers.chat.commands.voiced;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.l2jmobius.gameserver.config.custom.PassiveTreeConfig;
 import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
 import org.l2jmobius.gameserver.managers.BestiaryManager;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -10,11 +11,12 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.network.serverpackets.ExLinkOpen;
 
 import custom.Bestiary.BestiaryWeb;
+import custom.PassiveSkillTree.PassiveTreeApiServer;
 
 /**
  * ".bestiary" - opens the bestiary of the character's account on the web page of the passive tree server: every monster its characters killed, the bonuses it gives, how far each entry is, and the monsters still to find. With a monster targeted, the page opens on that monster.
  * <p>
- * The link carries the same 15-minute token as ".treelink"; the page keeps working after a class change or a logout until it expires.
+ * The link carries the same token as ".treelink" (PassiveTreeWebTokenLifetime, an hour by default); the page keeps working after a class change or a logout until it expires.
  */
 public class BestiaryVoiced implements IVoicedCommandHandler
 {
@@ -57,7 +59,7 @@ public class BestiaryVoiced implements IVoicedCommandHandler
 		}
 
 		final String url = BestiaryWeb.getUrl(player, npcId);
-		player.sendMessage("Your bestiary (click to open, valid 15 minutes):");
+		player.sendMessage("Your bestiary (click to open, valid " + PassiveTreeApiServer.describeLifetime(PassiveTreeConfig.WEB_TOKEN_LIFETIME) + "):");
 		player.sendMessage(url);
 		player.sendPacket(new ExLinkOpen(url));
 		return true;

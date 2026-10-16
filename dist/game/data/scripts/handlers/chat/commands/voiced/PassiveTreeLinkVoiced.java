@@ -8,7 +8,7 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
 import org.l2jmobius.gameserver.network.serverpackets.ExLinkOpen;
 
 /**
- * ".treelink" - hands the player a direct, clickable link to the visual passive tree planner, showing THEIR live allocation for their current class_index. Valid for 15 minutes.
+ * ".treelink" - hands the player a direct, clickable link to the visual passive tree planner, showing THEIR live allocation for their current class_index. Valid for PassiveTreeWebTokenLifetime (an hour by default).
  * <p>
  * Sent as its own chat line with nothing else on it, so the client's URL auto-detection picks up the whole thing cleanly - a trailing sentence on the same line risks getting swallowed into the clickable region or breaking the parser depending on client revision.
  */
@@ -27,7 +27,7 @@ public class PassiveTreeLinkVoiced implements IVoicedCommandHandler
 	}
 
 	/**
-	 * Generates a fresh 15-minute token and hands the player a direct, clickable link to the visual passive tree planner. Shared by both ".treelink" and the Community Board passives page's "Open Web Planner" button, so there's exactly one place that builds this link.
+	 * Generates a fresh token (valid for PassiveTreeWebTokenLifetime) and hands the player a direct, clickable link to the visual passive tree planner. Shared by both ".treelink" and the Community Board passives page's "Open Web Planner" button, so there's exactly one place that builds this link.
 	 * @param player the player to send the link to
 	 */
 	public static void sendPassiveTreeLink(Player player)
@@ -35,7 +35,7 @@ public class PassiveTreeLinkVoiced implements IVoicedCommandHandler
 		final String token = PassiveTreeApiServer.getInstance().generateToken(player.getObjectId(), player.getClassIndex());
 		final String url = PassiveTreeConfig.WEB_BASE_URL + "?token=" + token;
 
-		player.sendMessage("Your passive tree link (click to open, valid 15 minutes):");
+		player.sendMessage("Your passive tree link (click to open, valid " + PassiveTreeApiServer.describeLifetime(PassiveTreeConfig.WEB_TOKEN_LIFETIME) + "):");
 		player.sendMessage(url);
 
 		ExLinkOpen lo = new ExLinkOpen(url);

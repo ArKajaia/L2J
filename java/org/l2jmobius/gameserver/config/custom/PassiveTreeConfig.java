@@ -124,8 +124,8 @@ public class PassiveTreeConfig
 	/** Address of the planner page as players reach it, without the query string. */
 	public static String WEB_BASE_URL = "http://127.0.0.1:8788/passive-tree.html";
 
-	/** Seconds a link (token) stays valid. */
-	public static int WEB_TOKEN_LIFETIME = 900;
+	/** Seconds a player's link (token) stays valid: .treelink, .bestiary, and the import button of a .gear link. */
+	public static int WEB_TOKEN_LIFETIME = 3600;
 
 	/** Seconds a //passivetree admin editor link stays valid. */
 	public static int WEB_ADMIN_TOKEN_LIFETIME = 7200;
@@ -163,7 +163,7 @@ public class PassiveTreeConfig
 		WEB_PORT = Math.max(1, Math.min(65535, config.getInt("PassiveTreeWebPort", 8788)));
 		WEB_SECRET = config.getString("PassiveTreeWebSecret", "").trim();
 		WEB_BASE_URL = config.getString("PassiveTreeWebBaseUrl", "http://127.0.0.1:8788/passive-tree.html").trim();
-		WEB_TOKEN_LIFETIME = Math.max(30, config.getInt("PassiveTreeWebTokenLifetime", 900));
+		WEB_TOKEN_LIFETIME = Math.max(30, config.getInt("PassiveTreeWebTokenLifetime", 3600));
 		WEB_ADMIN_TOKEN_LIFETIME = Math.max(60, config.getInt("PassiveTreeWebAdminTokenLifetime", 7200));
 		WEB_PIN_LIFETIME = Math.max(30, config.getInt("PassiveTreeWebPinLifetime", 600));
 		WEB_RATE_LIMIT_PER_MINUTE = Math.max(1, config.getInt("PassiveTreeWebRateLimitPerMinute", 120));
