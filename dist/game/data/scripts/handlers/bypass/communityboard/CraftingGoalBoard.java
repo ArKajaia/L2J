@@ -68,7 +68,9 @@ public class CraftingGoalBoard implements IParseBoardHandler
 	private static final String BAR_DONE_FILL = "L2UI_CT1.Gauges.Gauge_DF_Large_CP_Center";
 	private static final String NO_ICON = "icon.etc_question_mark_i00";
 
-	private static final int BOARD_WIDTH = 540;
+	private static final int BOARD_WIDTH = 530;
+	/** The width of the .craft window's content: the NPC window is 294 wide, and its scroll bar takes some of it. */
+	public static final int WINDOW_WIDTH = 270;
 	private static final int BOARD_RESULTS = 12;
 	private static final int WINDOW_RESULTS = 7;
 	/** Materials on a page of the window: 14 lines of about 650 characters stay well under the window's 17,200. */
@@ -301,11 +303,12 @@ public class CraftingGoalBoard implements IParseBoardHandler
 			sb.append("</tr></table>");
 		}
 
+		final int buttonWidth = buttonWidth(width, 4);
 		sb.append("<br><table width=").append(width).append("><tr>");
-		sb.append("<td align=center>").append(button("Back", bypass, 80)).append("</td>");
-		sb.append("<td align=center>").append(button("Refresh", bypass + " goal " + recipeListId, 80)).append("</td>");
-		sb.append("<td align=center>").append(button("Recipe", bypass + " view " + recipeListId, 80)).append("</td>");
-		sb.append("<td align=center>").append(button("Abandon", bypass + " abandon " + recipeListId, 80)).append("</td>");
+		sb.append("<td align=center>").append(button("Back", bypass, buttonWidth)).append("</td>");
+		sb.append("<td align=center>").append(button("Refresh", bypass + " goal " + recipeListId, buttonWidth)).append("</td>");
+		sb.append("<td align=center>").append(button("Recipe", bypass + " view " + recipeListId, buttonWidth)).append("</td>");
+		sb.append("<td align=center>").append(button("Abandon", bypass + " abandon " + recipeListId, buttonWidth)).append("</td>");
 		sb.append("</tr></table>");
 		return sb.toString();
 	}
@@ -366,10 +369,11 @@ public class CraftingGoalBoard implements IParseBoardHandler
 		}
 		sb.append("</td><td width=100 align=right>").append(current < pages ? button("Next", bypass + " parts " + recipeListId + " " + (current + 1), 80) : "").append("</td>");
 		sb.append("</tr></table>");
+		final int buttonWidth = buttonWidth(width, 3);
 		sb.append("<table width=").append(width).append("><tr>");
-		sb.append("<td align=center>").append(button("Resources", bypass + " goal " + recipeListId, 90)).append("</td>");
-		sb.append("<td align=center>").append(button("Refresh", bypass + " parts " + recipeListId + " " + current, 90)).append("</td>");
-		sb.append("<td align=center>").append(button("Goals", bypass, 90)).append("</td>");
+		sb.append("<td align=center>").append(button("Resources", bypass + " goal " + recipeListId, buttonWidth)).append("</td>");
+		sb.append("<td align=center>").append(button("Refresh", bypass + " parts " + recipeListId + " " + current, buttonWidth)).append("</td>");
+		sb.append("<td align=center>").append(button("Goals", bypass, buttonWidth)).append("</td>");
 		sb.append("</tr></table>");
 		return sb.toString();
 	}
@@ -436,12 +440,13 @@ public class CraftingGoalBoard implements IParseBoardHandler
 		}
 		sb.append("</font></td></tr></table><br>");
 
+		final int buttonWidth = buttonWidth(width, 3);
 		sb.append("<table width=").append(width).append("><tr>");
-		sb.append("<td align=center>").append(button("Goals", bypass, 90)).append("</td>");
-		sb.append("<td align=center>").append(button("Recipe Book", bypass + " book 1", 90)).append("</td>");
+		sb.append("<td align=center>").append(button("Goals", bypass, buttonWidth)).append("</td>");
+		sb.append("<td align=center>").append(button("Recipe Book", bypass + " book 1", buttonWidth)).append("</td>");
 		if (goal != null)
 		{
-			sb.append("<td align=center>").append(button("Track", bypass + " goal " + recipeListId, 90)).append("</td>");
+			sb.append("<td align=center>").append(button("Track", bypass + " goal " + recipeListId, buttonWidth)).append("</td>");
 		}
 		sb.append("</tr></table>");
 		return sb.toString();
@@ -624,6 +629,14 @@ public class CraftingGoalBoard implements IParseBoardHandler
 		final ItemTemplate template = ItemData.getInstance().getTemplate(itemId);
 		final String icon = (template != null) && (template.getIcon() != null) ? template.getIcon() : NO_ICON;
 		return "<img src=\"" + icon + "\" width=32 height=32>";
+	}
+
+	/**
+	 * @return the width of each of {@code count} buttons side by side: 90, or less to fit the window
+	 */
+	private static int buttonWidth(int width, int count)
+	{
+		return Math.min(90, (width / count) - 8);
 	}
 
 	private static String button(String text, String action, int width)

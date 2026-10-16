@@ -50,6 +50,8 @@ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 public class CombatLogManager
 {
 	private static final int HTML_LIMIT = 16000;
+	/** The width of the content: the NPC window is 294 wide, and its scroll bar takes some of it. */
+	private static final int WIDTH = 270;
 
 	private CombatLogManager()
 	{
@@ -529,7 +531,7 @@ public class CombatLogManager
 	/**
 	 * Opens a page of the last PvP death's log.
 	 * @param player the player
-	 * @param page "summary", "skills" or "timeline"
+	 * @param page "summary", "attackers", "skills" or "timeline"
 	 */
 	public static void show(Player player, String page)
 	{
@@ -543,14 +545,20 @@ public class CombatLogManager
 
 		final StringBuilder sb = new StringBuilder(8192);
 		sb.append("<html><title>Combat Log</title><body><center>");
-		sb.append("<table width=280 border=0 cellspacing=0 cellpadding=1><tr>");
+		sb.append("<table width=" + WIDTH + " border=0 cellspacing=0 cellpadding=0><tr>");
 		tab(sb, "Summary", "summary", page);
+		tab(sb, "Attackers", "attackers", page);
 		tab(sb, "Skills", "skills", page);
 		tab(sb, "Timeline", "timeline", page);
-		sb.append("</tr></table><br>");
+		sb.append("</tr></table><img src=\"L2UI.SquareGray\" width=" + WIDTH + " height=1><br>");
 
 		switch (page)
 		{
+			case "attackers":
+			{
+				attackersPage(sb, report);
+				break;
+			}
 			case "skills":
 			{
 				skillsPage(sb, report);
@@ -576,19 +584,28 @@ public class CombatLogManager
 
 	private static void tab(StringBuilder sb, String label, String page, String current)
 	{
-		sb.append("<td align=center><button value=\"").append(label).append("\" action=\"bypass voiced_combatlog ").append(page).append("\" width=88 height=22 back=\"L2UI_CT1.Button_DF_Down\" fore=\"").append(page.equals(current) ? "L2UI_CT1.Button_DF_Down" : "L2UI_CT1.Button_DF").append("\"></td>");
+		sb.append("<td align=center><button value=\"").append(label).append("\" action=\"bypass voiced_combatlog ").append(page).append("\" width=66 height=22 back=\"L2UI_CT1.Button_DF_Down\" fore=\"").append(page.equals(current) ? "L2UI_CT1.Button_DF_Down" : "L2UI_CT1.Button_DF").append("\"></td>");
 	}
 
 	private static void header(StringBuilder sb, String title)
 	{
-		sb.append("<table width=280 bgcolor=000000><tr><td align=center><font color=\"LEVEL\">").append(title).append("</font></td></tr></table>");
+		sb.append("<table width=" + WIDTH + " height=20 border=0 cellspacing=0 cellpadding=0 bgcolor=000000><tr><td align=center><font color=\"LEVEL\">").append(title).append("</font></td></tr></table>");
+		sb.append("<img src=\"L2UI.SquareGray\" width=" + WIDTH + " height=1>");
+	}
+
+	/**
+	 * Opens a table of rows on a dark background.
+	 */
+	private static void box(StringBuilder sb)
+	{
+		sb.append("<table width=" + WIDTH + " border=0 cellspacing=1 cellpadding=1 bgcolor=111111>");
 	}
 
 	private static void summaryPage(StringBuilder sb, Report r)
 	{
 		// The killer.
 		header(sb, "KILLED BY");
-		sb.append("<table width=280 border=0 cellspacing=1 cellpadding=1 bgcolor=111111>");
+		box(sb);
 		if (r.killerName == null)
 		{
 			sb.append("<tr><td><font color=\"B0B0B0\">Unknown</font></td></tr>");
@@ -622,7 +639,7 @@ public class CombatLogManager
 		// The fight.
 		final long duration = Math.max(1, r.deathTime - r.fightStart);
 		header(sb, "THE FIGHT");
-		sb.append("<table width=280 border=0 cellspacing=1 cellpadding=1 bgcolor=111111>");
+		box(sb);
 		row(sb, "Lasted", seconds(duration) + " s");
 		row(sb, "Damage taken", r.damageTaken + " <font color=\"A0A0A0\">(CP " + r.cpTaken + " / HP " + (r.damageTaken - r.cpTaken) + ")</font>");
 		row(sb, "Taken per sec", String.valueOf((r.damageTaken * 1000) / duration));
@@ -641,12 +658,15 @@ public class CombatLogManager
 		}
 		row(sb, "You dealt", r.damageDealt + " <font color=\"A0A0A0\">(" + r.hitsDealt + " hits, " + r.critsDealt + " crits, " + r.missesDealt + " missed)</font>");
 		row(sb, "Per sec", String.valueOf((r.damageDealt * 1000) / duration));
-		sb.append("</table><br>");
+		sb.append("</table>");
+	}
 
+	private static void attackersPage(StringBuilder sb, Report r)
+	{
 		// The attackers.
 		header(sb, "ATTACKERS");
-		sb.append("<table width=280 border=0 cellspacing=1 cellpadding=1 bgcolor=111111>");
-		sb.append("<tr><td width=110><font color=\"A0A0A0\">Name</font></td><td width=60 align=right><font color=\"A0A0A0\">Damage</font></td><td width=40 align=right><font color=\"A0A0A0\">%</font></td><td width=70 align=right><font color=\"A0A0A0\">Hit/Crit</font></td></tr>");
+		box(sb);
+		sb.append("<tr><td width=105><font color=\"A0A0A0\">Name</font></td><td width=60 align=right><font color=\"A0A0A0\">Damage</font></td><td width=35 align=right><font color=\"A0A0A0\">%</font></td><td width=70 align=right><font color=\"A0A0A0\">Hit/Crit</font></td></tr>");
 		int shown = 0;
 		for (Side side : r.attackers)
 		{
@@ -687,7 +707,7 @@ public class CombatLogManager
 		if (!r.targets.isEmpty())
 		{
 			header(sb, "YOUR TARGETS");
-			sb.append("<table width=280 border=0 cellspacing=1 cellpadding=1 bgcolor=111111>");
+			box(sb);
 			shown = 0;
 			for (Side side : r.targets)
 			{
@@ -695,8 +715,8 @@ public class CombatLogManager
 				{
 					break;
 				}
-				sb.append("<tr><td width=130><font color=\"66CCFF\">").append(escape(side.name)).append("</font></td>");
-				sb.append("<td width=70 align=right>").append(side.damage).append("</td>");
+				sb.append("<tr><td width=125><font color=\"66CCFF\">").append(escape(side.name)).append("</font></td>");
+				sb.append("<td width=65 align=right>").append(side.damage).append("</td>");
 				sb.append("<td width=80 align=right>").append(side.hits + side.dots).append('/').append(side.crits).append("</td></tr>");
 			}
 			sb.append("</table><br>");
@@ -706,14 +726,14 @@ public class CombatLogManager
 		if (!r.activeDebuffs.isEmpty())
 		{
 			header(sb, "DEBUFFS ON YOU");
-			sb.append("<table width=280 border=0 cellspacing=1 cellpadding=1 bgcolor=111111>");
+			box(sb);
 			for (String[] debuff : r.activeDebuffs)
 			{
 				if (sb.length() > (HTML_LIMIT - 300))
 				{
 					break;
 				}
-				sb.append("<tr><td width=34>").append(icon(debuff[1])).append("</td><td width=246>").append(escape(debuff[0])).append(" <font color=\"808080\">").append(debuff[2]).append("s");
+				sb.append("<tr><td width=34 height=36>").append(icon(debuff[1])).append("</td><td width=236>").append(escape(debuff[0])).append(" <font color=\"808080\">").append(debuff[2]).append("s");
 				if (!debuff[3].isEmpty())
 				{
 					sb.append(" - ").append(escape(debuff[3]));
@@ -727,7 +747,7 @@ public class CombatLogManager
 	private static void skillsPage(StringBuilder sb, Report r)
 	{
 		header(sb, "WHAT HURT YOU");
-		sb.append("<table width=280 border=0 cellspacing=1 cellpadding=1 bgcolor=111111>");
+		box(sb);
 		int shown = 0;
 		for (SkillUse use : r.skills)
 		{
@@ -735,7 +755,7 @@ public class CombatLogManager
 			{
 				break;
 			}
-			sb.append("<tr><td width=34>").append(use.skill == null ? "" : icon(use.skill.getIcon())).append("</td><td width=246>");
+			sb.append("<tr><td width=34 height=36>").append(use.skill == null ? "" : icon(use.skill.getIcon())).append("</td><td width=236>");
 			sb.append(escape(skillName(use.skill, false))).append(" <font color=\"808080\">- ").append(escape(use.source)).append("</font><br1>");
 			sb.append("<font color=\"FF6666\">").append(use.damage).append("</font> <font color=\"A0A0A0\">(").append(percent(use.damage, r.damageTaken)).append("%) ").append(use.hits).append(use.hits == 1 ? " hit" : " hits");
 			if (use.crits > 0)
@@ -754,7 +774,7 @@ public class CombatLogManager
 	private static void timelinePage(StringBuilder sb, Report r)
 	{
 		header(sb, "LAST EVENTS (newest first)");
-		sb.append("<table width=280 border=0 cellspacing=0 cellpadding=1>");
+		sb.append("<table width=" + WIDTH + " border=0 cellspacing=0 cellpadding=1>");
 		boolean dark = false;
 		for (int i = r.entries.size() - 1; i >= 0; i--)
 		{
@@ -765,7 +785,7 @@ public class CombatLogManager
 			}
 
 			final Entry e = r.entries.get(i);
-			sb.append("<tr><td width=44 valign=top").append(dark ? " bgcolor=111111" : "").append("><font color=\"808080\">-").append(seconds(r.deathTime - e.time)).append("s</font></td><td width=236").append(dark ? " bgcolor=111111" : "").append('>');
+			sb.append("<tr><td width=44 valign=top").append(dark ? " bgcolor=111111" : "").append("><font color=\"808080\">-").append(seconds(r.deathTime - e.time)).append("s</font></td><td width=226").append(dark ? " bgcolor=111111" : "").append('>');
 			dark = !dark;
 			timelineText(sb, e, r);
 			sb.append("</td></tr>");
@@ -912,7 +932,7 @@ public class CombatLogManager
 
 	private static void row(StringBuilder sb, String label, String value)
 	{
-		sb.append("<tr><td width=90><font color=\"A0A0A0\">").append(label).append("</font></td><td width=190>").append(value).append("</td></tr>");
+		sb.append("<tr><td width=90><font color=\"A0A0A0\">").append(label).append("</font></td><td width=180>").append(value).append("</td></tr>");
 	}
 
 	private static void appendCount(StringBuilder sb, int count, String what)

@@ -60,7 +60,7 @@ public class CraftingGoalVoiced implements IVoicedCommandHandler
 		}
 
 		final NpcHtmlMessage html = new NpcHtmlMessage(0);
-		html.setHtml("<html><title>Crafting Goals</title><body><center>" + CraftingGoalBoard.buildContent(player, args, 280, CraftingGoalBoard.WINDOW_BYPASS) + "</center></body></html>");
+		html.setHtml("<html><title>Crafting Goals</title><body><center>" + CraftingGoalBoard.buildContent(player, args, CraftingGoalBoard.WINDOW_WIDTH, CraftingGoalBoard.WINDOW_BYPASS) + "</center></body></html>");
 		player.sendPacket(html);
 		player.sendPacket(ActionFailed.STATIC_PACKET);
 		return true;
