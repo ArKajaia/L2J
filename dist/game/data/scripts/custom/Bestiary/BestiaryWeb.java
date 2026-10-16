@@ -1,11 +1,8 @@
 package custom.Bestiary;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -42,26 +39,15 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
  * <li>GET /api/bestiary/monster?id=... - one monster, as much of it as the character's tier shows</li>
  * <li>GET /api/bestiary/ranking - the hunters who found the most monsters</li>
  * <li>GET /api/bestiary/map - the land of the map, public</li>
- * <li>GET /bestiary/img?id=... - a picture of a monster, when data/html/custom/bestiary/&lt;npc id&gt;.png (or .jpg, .webp, .gif) exists. Otherwise the page draws a portrait of the monster's race.</li>
+ * </ul>
+ * The monsters' 3D models, skins and portraits, and the GM bake page, are served by {@link BestiaryArt}. Without them the page draws a portrait of each monster's race.
+ * <ul>
  * </ul>
  * @author Claude
  */
 public class BestiaryWeb
 {
 	private static final Path HTML_FILE = Path.of("data/html/custom/bestiary.html");
-	private static final Path IMAGE_FOLDER = Path.of("data/html/custom/bestiary");
-	private static final String[] IMAGE_TYPES =
-	{
-		"png",
-		"jpg",
-		"webp",
-		"gif"
-	};
-	private static final long IMAGE_LIST_TIME = 5 * 60 * 1000L;
-	private static final int MAX_IMAGE_BYTES = 2 * 1024 * 1024;
-
-	private volatile Map<Integer, Path> _images = new HashMap<>();
-	private volatile long _imagesTime;
 	private volatile String _mapJson;
 
 	private BestiaryWeb()
@@ -84,7 +70,7 @@ public class BestiaryWeb
 		server.addRoute("/api/bestiary/monster", "GET", false, this::handleMonster);
 		server.addRoute("/api/bestiary/ranking", "GET", false, this::handleRanking);
 		server.addRoute("/api/bestiary/map", "GET", false, this::handleMap);
-		server.addRoute("/bestiary/img", "GET", false, this::handleImage);
+		BestiaryArt.getInstance().register(server);
 	}
 
 	/**
@@ -115,7 +101,6 @@ public class BestiaryWeb
 		final BestiaryManager manager = BestiaryManager.getInstance();
 		final Map<Integer, BestiaryManager.Entry> entries = manager.getEntries(charId);
 		final BestiaryManager.ServerStats serverStats = manager.getServerStats();
-		final Map<Integer, Path> images = getImages();
 
 		final StringBuilder json = new StringBuilder(256 * 1024);
 		json.append('{');
@@ -153,7 +138,7 @@ public class BestiaryWeb
 			found += tier > 0 ? 1 : 0;
 
 			json.append(first ? "" : ",");
-			appendSummary(json, template, entry, tier, images);
+			appendSummary(json, template, entry, tier);
 			if ((tier > 0) || BestiaryConfig.SHOW_UNDISCOVERED_AREAS)
 			{
 				json.append(",\"a\":").append(ints(kind.getAreas()));
@@ -178,7 +163,7 @@ public class BestiaryWeb
 				continue;
 			}
 			json.append(first ? "" : ",");
-			appendSummary(json, template, entry.getValue(), BestiaryManager.getTier(template, entry.getValue().kills()), images);
+			appendSummary(json, template, entry.getValue(), BestiaryManager.getTier(template, entry.getValue().kills()));
 			json.append('}');
 			first = false;
 		}
@@ -210,7 +195,7 @@ public class BestiaryWeb
 	}
 
 	/** The fields of a monster on the collection's grid, without the closing brace. */
-	private void appendSummary(StringBuilder json, NpcTemplate template, BestiaryManager.Entry entry, int tier, Map<Integer, Path> images)
+	private void appendSummary(StringBuilder json, NpcTemplate template, BestiaryManager.Entry entry, int tier)
 	{
 		json.append("{\"id\":").append(template.getId());
 		if ((tier > 0) || BestiaryConfig.SHOW_UNDISCOVERED_NAMES)
@@ -233,10 +218,7 @@ public class BestiaryWeb
 		{
 			json.append(",\"ag\":1");
 		}
-		if ((tier > 0) && images.containsKey(template.getId()))
-		{
-			json.append(",\"img\":1");
-		}
+		appendLook(json, template.getId());
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -277,6 +259,7 @@ public class BestiaryWeb
 		json.append(",\"r\":").append(SimpleJson.quote(template.getRace().name()));
 		json.append(",\"t\":").append(typeCode(template));
 		json.append(",\"inCollection\":").append(kind != null);
+		appendLook(json, npcId);
 		if (entry != null)
 		{
 			json.append(",\"first\":").append(entry.firstKill()).append(",\"last\":").append(entry.lastKill());
@@ -608,73 +591,25 @@ public class BestiaryWeb
 		PassiveTreeApiServer.getInstance().sendJson(exchange, 200, json);
 	}
 
-	private void handleImage(HttpExchange exchange) throws IOException
+	/**
+	 * The monster's look, for every tier: a monster not found yet shows as the silhouette of its portrait or model.
+	 * @param json where it goes
+	 * @param npcId the monster
+	 */
+	private static void appendLook(StringBuilder json, int npcId)
 	{
-		final PassiveTreeApiServer server = PassiveTreeApiServer.getInstance();
-		final Path file = getImages().get(parseInt(server.readParams(exchange).get("id")));
-		if ((file == null) || !Files.isRegularFile(file) || (Files.size(file) > MAX_IMAGE_BYTES))
+		final BestiaryArt art = BestiaryArt.getInstance();
+		final long portrait = art.getPortraitVersion(npcId);
+		if (portrait > 0)
 		{
-			server.sendText(exchange, 404, "text/plain", "no picture");
-			return;
+			json.append(",\"img\":").append(portrait);
 		}
-
-		final String name = file.getFileName().toString();
-		final String type = name.substring(name.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
-		server.sendBytes(exchange, 200, "image/" + ("jpg".equals(type) ? "jpeg" : type), Files.readAllBytes(file));
+		if (art.hasModel(npcId))
+		{
+			json.append(",\"m\":1");
+		}
 	}
-
-	/** @return the pictures in data/html/custom/bestiary, by npc id. Looked at again every few minutes, so pictures can be added while the server runs. */
-	private Map<Integer, Path> getImages()
-	{
-		final long now = System.currentTimeMillis();
-		if ((now - _imagesTime) < IMAGE_LIST_TIME)
-		{
-			return _images;
-		}
-
-		final Map<Integer, Path> images = new HashMap<>();
-		if (Files.isDirectory(IMAGE_FOLDER))
-		{
-			try (DirectoryStream<Path> files = Files.newDirectoryStream(IMAGE_FOLDER))
-			{
-				for (Path file : files)
-				{
-					final String name = file.getFileName().toString();
-					final int dot = name.lastIndexOf('.');
-					if ((dot <= 0) || !isImageType(name.substring(dot + 1)))
-					{
-						continue;
-					}
-					final int npcId = parseInt(name.substring(0, dot));
-					if (npcId > 0)
-					{
-						images.putIfAbsent(npcId, file);
-					}
-				}
-			}
-			catch (IOException e)
-			{
-				// keep what was there
-				return _images;
-			}
-		}
-		_images = images;
-		_imagesTime = now;
-		return images;
-	}
-
-	private static boolean isImageType(String extension)
-	{
-		for (String type : IMAGE_TYPES)
-		{
-			if (type.equalsIgnoreCase(extension))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
+	
 	// ---------------------------------------------------------------------------------------------
 	// Helpers
 	// ---------------------------------------------------------------------------------------------

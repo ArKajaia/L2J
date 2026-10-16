@@ -389,6 +389,7 @@
 	<admin command="fakeclans" description="Show the clans of fake players: level, leader, members online, reputation, alliance and wars." accessLevel="100" />
 	<admin command="passivetree" description="Open the web passive tree editor: move nodes, change links, effects, costs and skills. Saves are live at once." accessLevel="100" />
 	<admin command="passivetree_reload" description="Load data/passivetree/*.xml again after editing them by hand." accessLevel="100" />
+	<admin command="bestiary" description="Open the bestiary bake page: turn the monster models to face the camera and make the portraits of the collection." accessLevel="100" />
 
 	<!-- ADMIN CLASS TRANSFER CHALLENGES (each works on the named player, else the target, else yourself) -->
 	<admin command="challenge_status" description="Show a player's running class transfer trial and cleared stages: //challenge_status [name]." accessLevel="100" />

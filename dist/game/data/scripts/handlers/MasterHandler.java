@@ -135,6 +135,7 @@ import handlers.chat.channels.ChatWhisper;
 import handlers.chat.commands.admin.AdminAdmin;
 import handlers.chat.commands.admin.AdminAnnouncements;
 import handlers.chat.commands.admin.AdminAugment;
+import handlers.chat.commands.admin.AdminBestiary;
 import handlers.chat.commands.admin.AdminBuffs;
 import handlers.chat.commands.admin.AdminCHSiege;
 import handlers.chat.commands.admin.AdminCamera;
@@ -438,6 +439,7 @@ public class MasterHandler
 			AdminMessages.class,
 			AdminOnline.class,
 			AdminPassiveTree.class,
+			AdminBestiary.class,
 			AdminPathNode.class,
 			AdminPcCafePoints.class,
 			AdminPetition.class,

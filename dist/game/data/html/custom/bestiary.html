@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bestiary</title>
 <link rel="icon" href="data:,">
+<script type="importmap">{"imports":{"three":"/bestiary/lib/three/build/three.module.min.js","three/addons/":"/bestiary/lib/three/examples/jsm/"}}</script>
 <style>
 	:root {
 		--bg: #08080b; --bg2: #14141a; --panel: rgba(20,20,26,0.94); --panel2: #101015;
@@ -138,18 +139,36 @@
 	.hunters .cls { color: var(--dim); font-size: 12px; }
 	.note { text-align: center; color: var(--dim); font-size: 12px; margin: 10px; }
 
-	/* Detail */
-	.shade { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 40; display: none; }
-	.shade.open { display: block; }
-	.detail { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 100%); z-index: 50; background: linear-gradient(180deg, #15151b, #0d0d11); border-left: 1px solid var(--line); box-shadow: -10px 0 30px rgba(0,0,0,0.6); transform: translateX(105%); transition: transform 0.2s ease-out; overflow-y: auto; }
-	.detail.open { transform: none; }
-	.detail .close { position: sticky; top: 10px; float: right; margin: 10px 12px 0 0; background: #1d1d24; border: 1px solid #3a3a42; color: var(--text); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px; z-index: 2; }
-	.detail .close:hover { border-color: var(--gold); color: var(--cream); }
-	.d-head { padding: 22px 20px 14px; text-align: center; border-bottom: 1px solid #241f14; background: radial-gradient(ellipse at top, rgba(217,182,76,0.08), transparent 70%); }
-	.d-head .portrait { width: 150px; height: 150px; margin: 0 auto 12px; border-width: 3px; }
-	.d-head h2 { margin: 0; font-weight: normal; color: var(--cream); font-size: 22px; letter-spacing: 1px; }
-	.d-head .title { color: var(--gold); font-size: 13px; margin-top: 2px; }
-	.d-head .tags { margin-top: 8px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+	/* Profile page */
+	.profile { max-width: 1180px; margin: 0 auto; }
+	.p-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+	.p-nav button { background: #15151b; border: 1px solid #3a3a42; color: var(--text); border-radius: 5px; padding: 6px 12px; cursor: pointer; font-size: 12.5px; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.p-nav button:hover:not(:disabled) { border-color: var(--gold); color: var(--cream); }
+	.p-nav button:disabled { opacity: 0.35; cursor: default; }
+	.p-nav .crumb { color: var(--dim); font-size: 12px; }
+	.p-nav .step { margin-left: auto; display: flex; gap: 6px; }
+	.p-hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 18px; background: linear-gradient(180deg, #15151b, #0d0d11); border: 1px solid #2c2618; border-radius: 10px; overflow: hidden; }
+	.p-stage { position: relative; min-height: 440px; background: radial-gradient(ellipse at 50% 42%, var(--glow, #262630) 0%, #0b0b0f 70%); border-right: 1px solid #241f14; display: flex; align-items: center; justify-content: center; }
+	.p-stage canvas { position: absolute; inset: 0; cursor: grab; touch-action: none; }
+	.p-stage canvas:active { cursor: grabbing; }
+	.p-stage .portrait { width: 260px; height: 260px; border-width: 3px; }
+	.p-stage .big { max-width: 86%; max-height: 400px; object-fit: contain; }
+	.p-stage .big.sil, .portrait img.sil { filter: brightness(0) invert(0.16) drop-shadow(0 0 1.5px rgba(217,182,76,0.5)); }
+	.p-stage .note { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; font-size: 11px; color: #55524a; pointer-events: none; }
+	.p-stage .badge { position: absolute; top: 12px; left: 12px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim); }
+	.p-stage .mystery { position: absolute; top: 40%; left: 0; right: 0; text-align: center; font-size: 64px; color: rgba(217,182,76,0.18); pointer-events: none; }
+	.p-info { padding: 22px 22px 18px 4px; }
+	.p-info h2 { margin: 0; font-weight: normal; color: var(--cream); font-size: 28px; letter-spacing: 1px; }
+	.p-info .title { color: var(--gold); font-size: 14px; margin-top: 3px; }
+	.p-info .tags { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+	.p-info .track { margin: 18px 0 6px; max-width: none; }
+	.p-info .kv { margin-top: 14px; }
+	.p-info .server-line { margin-top: 14px; }
+	.p-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; margin-top: 18px; align-items: start; }
+	.p-card { background: var(--panel); border: 1px solid #2c2618; border-radius: 10px; overflow: hidden; }
+	.p-card .section:last-child { border-bottom: none; }
+	.p-wide { margin-top: 18px; }
+	.portrait img { padding: 4%; }
 	.tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; border: 1px solid #3a3a42; color: var(--text); background: #121217; }
 	.tag.red { border-color: #6a2a22; color: #ff9b90; }
 	.tag.gold { border-color: #6a5420; color: var(--t4); }
@@ -161,7 +180,7 @@
 	.track .lbl { font-size: 10px; margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); }
 	.track .lbl small { display: block; letter-spacing: 0; text-transform: none; font-size: 10px; color: #55524a; }
 	.track .step.on .lbl { color: var(--cream); }
-	.d-kills { font-size: 12px; color: var(--dim); margin-top: 6px; }
+	.d-kills { font-size: 12.5px; color: var(--dim); margin-top: 6px; }
 	.d-kills b { color: var(--cream); font-weight: normal; }
 	.section { padding: 14px 20px; border-bottom: 1px solid #1c1a14; }
 	.section h4 { margin: 0 0 10px; font-weight: normal; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 8px; }
@@ -231,6 +250,11 @@
 		.summary { margin-left: 0; width: 100%; }
 		.tiers .tier-chip { min-width: 0; flex: 1; }
 		.kv { grid-template-columns: repeat(2, 1fr); }
+		.p-hero, .p-grid { grid-template-columns: minmax(0, 1fr); }
+		.p-stage { min-height: 320px; border-right: none; border-bottom: 1px solid #241f14; }
+		.p-info { padding: 16px; }
+		.p-nav .step { margin-left: 0; width: 100%; }
+		.p-nav .step button { flex: 1; }
 		.grid { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); }
 		.card .portrait { width: 70px; height: 70px; }
 	}
@@ -470,14 +494,14 @@
 
 	<section class="view" id="view-grounds"><div class="regions" id="regions"></div></section>
 	<section class="view" id="view-hunters"><div id="hunters"></div></section>
+	<section class="view" id="view-profile"><div class="profile" id="profile"></div></section>
 	<section class="view" id="view-elsewhere">
 		<p class="note">Monsters you met outside the world's hunting grounds: instances, quests, events. They don't count toward completion.</p>
 		<div class="grid" id="elsewhere"></div>
 	</section>
 </main>
 
-<div class="shade" id="shade"></div>
-<aside class="detail" id="detail" aria-live="polite"></aside>
+
 
 <div class="gate" id="gate">
 	<div class="box">
@@ -521,7 +545,8 @@ const TOWNS = [
 const state = {
 	token: null, data: null, byId: new Map(), areaMonsters: [], tab: "collection",
 	filters: { q: "", region: -1, area: -1, min: "", max: "", status: "all", kind: "all", race: "all", sort: "ground" },
-	map: null, mapPromise: null, hunters: null, detailId: 0, detailWorld: false, detail: null
+	map: null, mapPromise: null, hunters: null, detailId: 0, detailWorld: false, detail: null,
+	lastList: [], returnTab: "collection", returnScroll: 0, viewer: null, models: null
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -584,8 +609,8 @@ function portrait(m, extraClass) {
 	const g = m.g || 0;
 	const cls = "portrait g" + g + (extraClass ? " " + extraClass : "");
 	const ring = TIER_COLOR[g];
-	if (g > 0 && m.img) {
-		return `<div class="${cls}" style="--ring:${ring}"><img src="/bestiary/img?id=${m.id}" alt="" loading="lazy"></div>`;
+	if (m.img) {
+		return `<div class="${cls}" style="--ring:${ring}"><img src="${portraitUrl(m)}" alt="" loading="lazy"${g === 0 ? ` class="sil"` : ""}>${g === 0 ? `<div class="q">?</div>` : ""}</div>`;
 	}
 	const symbol = RACE_SYMBOL[m.r] || "ETC";
 	if (g === 0) {
@@ -596,6 +621,8 @@ function portrait(m, extraClass) {
 	const eye = m.t > 0 ? "#ff5a4a" : g >= 2 ? "#0b0b0f" : "#0b0b0f";
 	return `<div class="${cls}" style="--ring:${ring};--glow:${glow}"><svg viewBox="0 0 100 100" style="color:${color};--eye:${eye}"><use href="#r-${symbol}"/></svg></div>`;
 }
+
+function portraitUrl(m) { return `/bestiary/img?id=${m.id}&v=${m.img}`; }
 
 function apiFetch(path) {
 	return fetch("/api/bestiary/" + path, { headers: { "Authorization": "Bearer " + state.token } });
@@ -804,6 +831,12 @@ function renderCollection() {
 		if (list.length > 600) html += `<p class="note">The first 600 are shown. Narrow the filters to see the rest.</p>`;
 	}
 	box.innerHTML = html;
+	const seen = new Set();
+	state.lastList = [];
+	for (const el of box.querySelectorAll(".card[data-id]")) {
+		const id = Number(el.dataset.id);
+		if (!seen.has(id)) { seen.add(id); state.lastList.push(id); }
+	}
 }
 
 /** "Almost there": the entries with the fewest kills left to their next tier. */
@@ -849,7 +882,8 @@ function showArea(areaId) {
 	if (!area) return;
 	state.filters = { q: "", region: area.r, area: areaId, min: "", max: "", status: "all", kind: "all", race: "all", sort: "ground" };
 	syncFilterInputs();
-	closeDetail();
+	state.detailId = 0;
+	if (history.state && history.state.monster) { try { history.pushState({}, "", window.location.pathname); } catch (e) { /* not essential */ } }
 	switchTab("collection");
 	renderCollection();
 	window.scrollTo(0, 0);
@@ -883,30 +917,67 @@ async function renderHunters() {
 // One monster
 // ---------------------------------------------------------------------------------------------
 
-async function openDetail(id) {
+/** The monsters around the open one, in the order the collection shows them. */
+function neighbours(id) {
+	let list = state.lastList.includes(id) ? state.lastList : state.data.monsters.slice().sort((a, b) => a.l - b.l || (a.n || "~").localeCompare(b.n || "~")).map(m => m.id);
+	if (!list.includes(id)) list = [id];
+	const i = list.indexOf(id);
+	return { prev: i > 0 ? list[i - 1] : 0, next: i < list.length - 1 ? list[i + 1] : 0 };
+}
+
+/**
+ * Opens a monster's profile page.
+ * @param id the monster
+ * @param push add it to the browser history (false when coming back through it)
+ */
+async function openProfile(id, push) {
 	const summary = state.byId.get(id);
 	if (!summary) return;
+	if (state.tab !== "profile") {
+		state.returnTab = state.tab;
+		state.returnScroll = window.scrollY;
+	}
+	if (push) {
+		try { history.pushState({ monster: id }, "", "?monster=" + id); } catch (e) { /* not essential */ }
+	}
 	state.detailId = id;
 	state.detailWorld = false;
-	const panel = document.getElementById("detail");
-	panel.innerHTML = `<button class="close" id="d-close" title="Close">&times;</button><div class="d-head">${portrait(summary)}<h2>${esc(displayName(summary))}</h2></div><div class="loading">Reading...</div>`;
-	panel.classList.add("open");
-	document.getElementById("shade").classList.add("open");
-	panel.scrollTop = 0;
+	disposeViewer();
+	switchTab("profile");
+	window.scrollTo(0, 0);
+	document.getElementById("profile").innerHTML = navBar(summary) + `<div class="loading">Reading...</div>`;
 	const [res] = await Promise.all([apiFetch("monster?id=" + id), loadMap()]);
 	if (state.detailId !== id) return;
 	if (!res.ok) {
-		panel.querySelector(".loading").textContent = res.status === 401 ? "This link has expired. Type .bestiary in game for a new one." : "This monster could not be read.";
+		document.querySelector("#profile .loading").textContent = res.status === 401 ? "This link has expired. Type .bestiary in game for a new one." : "This monster could not be read.";
 		return;
 	}
 	state.detail = await res.json();
-	renderDetail();
+	renderProfile();
 }
 
-function closeDetail() {
+/** Back to where the profile was opened from. */
+function closeProfile() {
 	state.detailId = 0;
-	document.getElementById("detail").classList.remove("open");
-	document.getElementById("shade").classList.remove("open");
+	disposeViewer();
+	switchTab(state.returnTab === "profile" ? "collection" : state.returnTab);
+	window.scrollTo(0, state.returnScroll);
+}
+
+function disposeViewer() {
+	if (state.viewer) {
+		state.viewer.dispose();
+		state.viewer = null;
+	}
+}
+
+function navBar(m) {
+	const n = neighbours(m.id);
+	const name = id => { const x = state.byId.get(id); return x ? displayName(x) : ""; };
+	const area = m.a && m.a.length ? state.data.areas[m.a[0]] : null;
+	return `<div class="p-nav"><button id="p-back">&larr; ${state.returnTab === "collection" || state.returnTab === "profile" ? "Collection" : document.querySelector(`.tab[data-view="${state.returnTab}"]`).textContent.trim()}</button>`
+		+ (area ? `<span class="crumb">${esc(state.data.regions[area.r])} &middot; ${esc(area.n)}</span>` : "")
+		+ `<span class="step"><button id="p-prev" ${n.prev ? `data-go="${n.prev}"` : "disabled"} title="Previous (left arrow)">&lsaquo; ${esc(n.prev ? name(n.prev) : "")}</button><button id="p-next" ${n.next ? `data-go="${n.next}"` : "disabled"} title="Next (right arrow)">${esc(n.next ? name(n.next) : "")} &rsaquo;</button></span></div>`;
 }
 
 function lockedBox(m, tier, what) {
@@ -915,15 +986,18 @@ function lockedBox(m, tier, what) {
 	return `<div class="locked"><svg><use href="#i-lock"/></svg><div>Reach <b style="color:${TIER_COLOR[tier]}">${esc(state.data.tierNames[tier - 1])}</b> to learn ${what}: kill <b>${fmt(left)}</b> more (${fmt(m.kills)} / ${fmt(need)}).</div></div>`;
 }
 
-function renderDetail() {
+function renderProfile() {
 	const m = state.detail;
 	const summary = state.byId.get(m.id);
 	const tierNames = state.data.tierNames;
-	const p = { id: m.id, g: m.tier, r: m.r, t: m.t, e: m.attackElement, img: summary.img, n: m.n };
-	let html = `<button class="close" id="d-close" title="Close">&times;</button>`;
+	const p = { id: m.id, g: m.tier, r: m.r, t: m.t, e: m.attackElement, img: m.img, n: m.n, a: m.a };
+	let html = navBar(Object.assign({}, summary, { a: m.a }));
 
-	// Head: portrait, name, tags, tier track.
-	html += `<div class="d-head">${portrait(p)}<h2>${esc(m.n || "Not found yet")}</h2>`;
+	// Hero: the monster on its stage, and who it is.
+	const glow = m.tier >= 4 ? "rgba(242,201,76,0.3)" : m.tier >= 2 && m.attackElement >= 0 ? `color-mix(in srgb, ${elementColor(m.attackElement)} 26%, #0b0b0f)` : "#262630";
+	html += `<div class="p-hero"><div class="p-stage" id="p-stage" style="--glow:${glow}">${stageFallback(p)}`;
+	html += `<span class="badge">${m.tier > 0 ? esc(tierNames[m.tier - 1]) : "Not found yet"}</span></div>`;
+	html += `<div class="p-info"><h2>${esc(m.n || "? ? ?")}</h2>`;
 	if (m.title && KIND_NAME.indexOf(m.title) < 0) html += `<div class="title">${esc(m.title)}</div>`;
 	html += `<div class="tags"><span class="tag">Lv. ${m.l}</span>`;
 	if (m.tier > 0) html += `<span class="tag">${esc(RACE_NAME[m.r] || m.r)}</span>`;
@@ -939,23 +1013,17 @@ function renderDetail() {
 	html += `</div><div class="d-kills">`;
 	if (m.kills) html += `<b>${fmt(m.kills)}</b> killed &middot; first ${fmtDate(m.first)} &middot; last ${ago(m.last)}`;
 	else html += `Not found yet: kill one to add it to your bestiary.`;
-	html += `</div></div>`;
-
-	// Vitals.
+	html += `</div>`;
 	if (m.tier >= 1) {
-		html += `<div class="section"><h4>Vitals${m.live ? "" : `<span class="hint">template base values</span>`}</h4><div class="kv">`;
-		html += kv("HP", fmt(m.hp)) + kv("MP", fmt(m.mp)) + kv("Attack", WEAPON_NAME[m.weapon] || m.weapon || "-");
-		html += kv("EXP", fmt(m.exp)) + kv("SP", fmt(m.sp));
+		html += `<div class="kv">` + kv("HP", fmt(m.hp)) + kv("MP", fmt(m.mp)) + kv("Attack", WEAPON_NAME[m.weapon] || m.weapon || "-") + kv("EXP", fmt(m.exp)) + kv("SP", fmt(m.sp));
 		if (m.respawn && m.respawn[1] > 0) html += kv("Respawn", m.respawn[0] === m.respawn[1] ? fmtDelay(m.respawn[0]) : fmtDelay(m.respawn[0]) + " - " + fmtDelay(m.respawn[1]));
 		else if (m.spawns !== undefined) html += kv("Respawn", "-");
-		if (m.spawns !== undefined) html += kv("In the world", fmt(m.spawns));
-		html += `</div>`;
-		html += sizeComparison(m);
 		html += `</div>`;
 	}
+	html += serverLine(m) + `</div></div>`;
 
-	// Combat: stats, elements, skills.
-	html += `<div class="section"><h4>Combat</h4>`;
+	// Left: combat and size. Right: drops.
+	html += `<div class="p-grid"><div class="p-card"><div class="section"><h4>Combat</h4>`;
 	if (m.tier >= 2) {
 		const s = m.stats;
 		html += `<div class="kv">` + kv("P. Atk.", fmt(s.pAtk)) + kv("M. Atk.", fmt(s.mAtk)) + kv("Atk. Spd.", fmt(s.pAtkSpd)) + kv("P. Def.", fmt(s.pDef)) + kv("M. Def.", fmt(s.mDef)) + kv("Cast Spd.", fmt(s.mAtkSpd));
@@ -966,39 +1034,67 @@ function renderDetail() {
 		html += m.skills.length ? `<div class="skills">${m.skills.map(k => `<span class="skill${k.p ? " p" : ""}${k.d ? " d" : ""}" title="${k.p ? "Passive" : k.d ? "Debuff" : "Active"}">${esc(k.n)} <small>${k.lv}</small></span>`).join("")}</div>` : `<div class="server-line">No skills.</div>`;
 	} else html += lockedBox(m, 2, "its combat stats, elements and skills");
 	html += `</div>`;
-
-	// Drops.
-	html += `<div class="section"><h4>Drops &amp; Spoils${m.tier >= 3 ? `<span class="hint">at the server's rates</span>` : ""}</h4>`;
+	if (m.tier >= 1) html += `<div class="section"><h4>Size${m.live ? "" : `<span class="hint">template base values</span>`}</h4>${sizeComparison(m)}</div>`;
+	html += `</div><div class="p-card"><div class="section"><h4>Drops &amp; Spoils${m.tier >= 3 ? `<span class="hint">at the server's rates</span>` : ""}</h4>`;
 	if (m.tier >= 3) {
 		html += dropTable(m.drops, "Drops") + dropTable(m.spoils, "Spoil");
 		if (!m.drops.length && !m.spoils.length) html += `<div class="server-line">It drops nothing.</div>`;
 	} else html += lockedBox(m, 3, "its drops and spoils");
-	html += `</div>`;
+	html += `</div></div></div>`;
 
-	// Habitat.
+	// Habitat, across the whole width.
 	if (m.a || m.points) {
-		html += `<div class="section"><h4>Habitat</h4>`;
+		html += `<div class="p-card p-wide"><div class="section"><h4>Habitat${m.spawns !== undefined ? `<span class="hint">${fmt(m.spawns)} in the world</span>` : ""}</h4>`;
 		if (m.a && m.a.length) html += `<div class="areas">${m.a.map(a => `<button data-area="${a}">${esc(state.data.areas[a].n)} <span style="color:var(--dim)">&middot; ${esc(state.data.regions[state.data.areas[a].r])}</span></button>`).join("")}</div>`;
 		if (m.points && m.points.length) html += `<div class="map" id="d-map">${mapSvg(m)}<div class="tools"><button id="d-world">${state.detailWorld ? "Zoom in" : "Whole world"}</button></div></div>`;
-		html += `</div>`;
-	}
-
-	// Server.
-	if (m.server) {
-		const s = m.server;
-		html += `<div class="section"><h4>Across the server</h4><div class="server-line">`;
-		if (s.found) {
-			html += `<b>${fmt(s.kills)}</b> killed by <b>${fmt(s.found)}</b> hunter${s.found === 1 ? "" : "s"}`;
-			if (s.hunters) html += ` (found by ${Math.max(1, Math.round(s.found / s.hunters * 100))}% of hunters)`;
-			html += `.`;
-			if (s.firstBy) html += `<br>First found by <b>${esc(s.firstBy)}</b> on ${fmtDate(s.firstAt)}.`;
-		} else html += s.time ? `No hunter had found it at the last count.` : `The server numbers are being counted.`;
-		if (s.time) html += `<br><span style="color:var(--dim);font-size:11px">Counted ${ago(s.time)}.</span>`;
 		html += `</div></div>`;
 	}
 
-	const panel = document.getElementById("detail");
-	panel.innerHTML = html;
+	document.getElementById("profile").innerHTML = html;
+	if (m.m) showModel(m);
+}
+
+/** What the stage shows until (or instead of) the 3D model: the portrait, or the drawing of its race. */
+function stageFallback(p) {
+	if (p.img) return `<img class="big${p.g === 0 ? " sil" : ""}" src="${portraitUrl(p)}" alt="">` + (p.g === 0 ? `<div class="mystery">?</div>` : "");
+	return portrait(p);
+}
+
+/** Puts the 3D model on the stage; a monster not found yet is its black silhouette. */
+async function showModel(m) {
+	const stage = document.getElementById("p-stage");
+	try {
+		if (!state.models) state.models = import("/bestiary/lib/bestiary-models.js");
+		const models = await state.models;
+		if (!models.webglAvailable() || state.detailId !== m.id) return;
+		const holder = document.createElement("div");
+		holder.style.cssText = "position:absolute;inset:0";
+		stage.appendChild(holder);
+		const viewer = await models.createViewer(holder, m.id, { silhouette: m.tier === 0 });
+		if (!viewer) { holder.remove(); return; }
+		if (state.detailId !== m.id) { viewer.dispose(); return; }
+		disposeViewer();
+		state.viewer = viewer;
+		for (const el of stage.querySelectorAll(".big, .portrait")) el.remove();
+		stage.insertAdjacentHTML("beforeend", `<div class="note">Drag to turn &middot; wheel to zoom</div>` + (m.tier === 0 ? `<div class="mystery">?</div>` : ""));
+	} catch (e) {
+		// No WebGL, or the model failed: the portrait stays.
+		console.warn("bestiary: 3D model not shown", e);
+	}
+}
+
+function serverLine(m) {
+	if (!m.server) return "";
+	const s = m.server;
+	let html = `<div class="server-line">`;
+	if (s.found) {
+		html += `<b>${fmt(s.kills)}</b> killed across the server by <b>${fmt(s.found)}</b> hunter${s.found === 1 ? "" : "s"}`;
+		if (s.hunters) html += ` (found by ${Math.max(1, Math.round(s.found / s.hunters * 100))}% of hunters)`;
+		html += `.`;
+		if (s.firstBy) html += `<br>First found by <b>${esc(s.firstBy)}</b> on ${fmtDate(s.firstAt)}.`;
+	} else html += s.time ? `No hunter had found it at the last count.` : `The server numbers are being counted.`;
+	if (s.time) html += `<br><span style="color:var(--dim);font-size:11px">Counted ${ago(s.time)}.</span>`;
+	return html + `</div>`;
 }
 
 function kv(k, v) { return `<div><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`; }
@@ -1035,7 +1131,7 @@ function sizeComparison(m) {
 	const symbol = RACE_SYMBOL[m.r] || "ETC";
 	const color = m.tier >= 2 ? elementColor(m.attackElement) : "var(--none)";
 	let note = ratio >= 1.15 ? `${ratio.toFixed(ratio >= 10 ? 0 : 1)} times as tall as a human` : ratio <= 0.85 ? `${Math.round(ratio * 100)}% of a human's height` : `about as tall as a human`;
-	return `<div class="sub-h">Size</div><div class="size"><div class="fig"><svg width="${(humanPx / 3).toFixed(0)}" height="${humanPx.toFixed(0)}" viewBox="0 0 20 60" preserveAspectRatio="none" style="color:#6f6a5e"><use href="#i-human"/></svg><span>Human</span></div><div class="fig"><svg width="${monsterPx.toFixed(0)}" height="${monsterPx.toFixed(0)}" viewBox="0 0 100 100" style="color:${color};--eye:#0b0b0f"><use href="#r-${symbol}"/></svg><span>${esc(m.n || "?")}</span></div></div><div class="size-note">${note} (height ${fmt(m.height)}, width ${fmt(m.radius * 2)}).</div>`;
+	return `<div class="size"><div class="fig"><svg width="${(humanPx / 3).toFixed(0)}" height="${humanPx.toFixed(0)}" viewBox="0 0 20 60" preserveAspectRatio="none" style="color:#6f6a5e"><use href="#i-human"/></svg><span>Human</span></div><div class="fig"><svg width="${monsterPx.toFixed(0)}" height="${monsterPx.toFixed(0)}" viewBox="0 0 100 100" style="color:${color};--eye:#0b0b0f"><use href="#r-${symbol}"/></svg><span>${esc(m.n || "?")}</span></div></div><div class="size-note">${note} (height ${fmt(m.height)}, width ${fmt(m.radius * 2)}).</div>`;
 }
 
 /** Where the monster spawns, on the land of every spawn point of the collection, with the towns. */
@@ -1086,6 +1182,7 @@ function mapSvg(m) {
 // ---------------------------------------------------------------------------------------------
 
 function switchTab(view) {
+	if (view !== "profile" && state.tab === "profile") disposeViewer();
 	state.tab = view;
 	for (const b of document.querySelectorAll(".tab")) b.classList.toggle("active", b.dataset.view === view);
 	for (const v of document.querySelectorAll(".view")) v.classList.toggle("active", v.id === "view-" + view);
@@ -1097,22 +1194,42 @@ function switchTab(view) {
 function bindEvents() {
 	document.getElementById("tabs").addEventListener("click", e => {
 		const b = e.target.closest(".tab");
-		if (b) switchTab(b.dataset.view);
+		if (b) { state.detailId = 0; if (history.state && history.state.monster) { try { history.pushState({}, "", window.location.pathname); } catch (x) { /* not essential */ } } switchTab(b.dataset.view); }
 	});
 	document.addEventListener("click", e => {
+		const go = e.target.closest("[data-go]");
+		if (go) { openProfile(Number(go.dataset.go), true); return; }
+		if (e.target.closest("#p-back")) { goBack(); return; }
 		const target = e.target.closest("[data-id]");
-		if (target && !e.target.closest(".detail")) { openDetail(Number(target.dataset.id)); return; }
+		if (target) { openProfile(Number(target.dataset.id), true); return; }
 		const area = e.target.closest("[data-area]");
 		if (area) { showArea(Number(area.dataset.area)); return; }
-		if (e.target.closest("#d-close")) { closeDetail(); return; }
 		if (e.target.closest("#d-world")) {
 			state.detailWorld = !state.detailWorld;
 			const map = document.getElementById("d-map");
 			if (map) map.innerHTML = mapSvg(state.detail) + `<div class="tools"><button id="d-world">${state.detailWorld ? "Zoom in" : "Whole world"}</button></div>`;
 		}
 	});
-	document.getElementById("shade").addEventListener("click", closeDetail);
-	document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetail(); });
+	document.addEventListener("keydown", e => {
+		if (state.tab !== "profile" || e.target.closest("input, select, textarea")) return;
+		if (e.key === "Escape") goBack();
+		else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+			const button = document.getElementById(e.key === "ArrowLeft" ? "p-prev" : "p-next");
+			if (button && button.dataset.go) openProfile(Number(button.dataset.go), true);
+		}
+	});
+	// The browser's back and forward buttons go through the profiles opened.
+	window.addEventListener("popstate", () => {
+		const id = Number(new URLSearchParams(window.location.search).get("monster") || 0);
+		if (id && state.byId.has(id)) openProfile(id, false);
+		else if (state.tab === "profile") closeProfile();
+	});
+}
+
+/** Back from a profile: through the history when the page added to it, else straight to the list. */
+function goBack() {
+	if (history.state && history.state.monster) history.back();
+	else closeProfile();
 }
 
 (async function main() {
@@ -1136,7 +1253,10 @@ function bindEvents() {
 	setupFilters();
 	bindEvents();
 	renderCollection();
-	if (monster && state.byId.has(monster)) openDetail(monster);
+	if (monster && state.byId.has(monster)) {
+		try { history.replaceState({}, "", window.location.pathname); history.pushState({ monster: monster }, "", "?monster=" + monster); } catch (e) { /* not essential */ }
+		openProfile(monster, false);
+	}
 })();
 </script>
 </body>

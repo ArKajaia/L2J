@@ -882,23 +882,36 @@ public class PassiveTreeApiServer
 	 */
 	private Player authenticateAdmin(HttpExchange exchange) throws IOException
 	{
+		return authenticateAdmin(exchange, ADMIN_COMMAND);
+	}
+	
+	/**
+	 * The GM an admin token names, for this editor and for the GM pages of other features (the bestiary's bake page).
+	 * @param exchange the request
+	 * @param adminCommand the command the GM's access level must allow, e.g. admin_bestiary
+	 * @return the GM, or {@code null} after the error answer was sent. The GM has to be online and still allowed to use the command, so a link stops working when its GM logs off or loses the right.
+	 * @throws IOException if the answer can't be sent
+	 */
+	public Player authenticateAdmin(HttpExchange exchange, String adminCommand) throws IOException
+	{
+		final String command = "//" + adminCommand.replaceFirst("^admin_", "");
 		final String header = exchange.getRequestHeaders().getFirst("Authorization");
 		final int charId = (header != null) && header.regionMatches(true, 0, "Bearer ", 0, 7) ? verifyAdminToken(header.substring(7).trim()) : -1;
 		if (charId < 0)
 		{
-			sendText(exchange, 401, "application/json", "{\"error\":\"this editor link is invalid or has expired - use //passivetree again\"}");
+			sendText(exchange, 401, "application/json", "{\"error\":\"this link is invalid or has expired - use " + command + " again\"}");
 			return null;
 		}
 		
 		final Player gm = World.getInstance().getPlayer(charId);
 		if (gm == null)
 		{
-			sendText(exchange, 403, "application/json", "{\"error\":\"the GM who opened this editor is not online - log in and use //passivetree again\"}");
+			sendText(exchange, 403, "application/json", "{\"error\":\"the GM who opened this page is not online - log in and use " + command + " again\"}");
 			return null;
 		}
-		if (!AdminData.getInstance().hasAccess(ADMIN_COMMAND, gm.getAccessLevel()))
+		if (!AdminData.getInstance().hasAccess(adminCommand, gm.getAccessLevel()))
 		{
-			sendText(exchange, 403, "application/json", "{\"error\":\"your access level can't use //passivetree\"}");
+			sendText(exchange, 403, "application/json", "{\"error\":\"your access level can't use " + command + "\"}");
 			return null;
 		}
 		return gm;
@@ -1131,11 +1144,50 @@ public class PassiveTreeApiServer
 	/** Headers every answer carries. No Access-Control-Allow-Origin: only this server's own page is meant to call the API, and the token must not leak through a Referer. */
 	private void addSecurityHeaders(HttpExchange exchange)
 	{
+		addSecurityHeaders(exchange, "no-store");
+	}
+	
+	private void addSecurityHeaders(HttpExchange exchange, String cacheControl)
+	{
 		exchange.getResponseHeaders().add("X-Content-Type-Options", "nosniff");
 		exchange.getResponseHeaders().add("Referrer-Policy", "no-referrer");
-		exchange.getResponseHeaders().add("Cache-Control", "no-store");
+		exchange.getResponseHeaders().add("Cache-Control", cacheControl);
 		exchange.getResponseHeaders().add("Content-Security-Policy", CSP);
 		exchange.getResponseHeaders().add("X-Frame-Options", "DENY");
+	}
+	
+	/**
+	 * Sends a file the browser may keep for a while (scripts, models, textures, pictures): everything else this server sends is no-store.
+	 * @param exchange the request
+	 * @param contentType the type of the file
+	 * @param bytes the file
+	 * @param maxAgeSeconds how long the browser may keep it
+	 * @throws IOException if the answer can't be sent
+	 */
+	public void sendStatic(HttpExchange exchange, String contentType, byte[] bytes, int maxAgeSeconds) throws IOException
+	{
+		exchange.getResponseHeaders().add("Content-Type", contentType);
+		addSecurityHeaders(exchange, "public, max-age=" + maxAgeSeconds);
+		exchange.sendResponseHeaders(200, bytes.length);
+		try (OutputStream os = exchange.getResponseBody())
+		{
+			os.write(bytes);
+		}
+	}
+	
+	/**
+	 * @param exchange the request
+	 * @param maxBytes the most the body may hold
+	 * @return the request body, or {@code null} if it is larger than maxBytes
+	 * @throws IOException if it can't be read
+	 */
+	public byte[] readBody(HttpExchange exchange, int maxBytes) throws IOException
+	{
+		try (InputStream in = exchange.getRequestBody())
+		{
+			final byte[] bytes = in.readNBytes(maxBytes + 1);
+			return bytes.length > maxBytes ? null : bytes;
+		}
 	}
 	
 	public void sendText(HttpExchange exchange, int status, String contentType, String body) throws IOException
