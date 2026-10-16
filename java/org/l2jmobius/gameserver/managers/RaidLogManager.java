@@ -44,7 +44,10 @@ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 public class RaidLogManager
 {
 	private static final int HTML_LIMIT = 16000;
-	private static final int PAGE_SIZE = 15;
+	/** The width of the content: the NPC window is 294 wide, and its scroll bar takes some of it. */
+	private static final int WIDTH = 270;
+	/** Fighters on a page of a list: about one window high. */
+	private static final int PAGE_SIZE = 8;
 
 	private RaidLogManager()
 	{
@@ -467,13 +470,13 @@ public class RaidLogManager
 
 		final StringBuilder sb = new StringBuilder(8192);
 		sb.append("<html><title>Raid Log</title><body><center>");
-		sb.append("<table width=280 border=0 cellspacing=0 cellpadding=0><tr>");
+		sb.append("<table width=" + WIDTH + " border=0 cellspacing=0 cellpadding=0><tr>");
 		tab(sb, "Summary", "summary", page);
 		tab(sb, "Damage", "damage", page);
 		tab(sb, "Support", "support", page);
 		tab(sb, "Parties", "parties", page);
 		tab(sb, "Mine", "mine", page);
-		sb.append("</tr></table><br>");
+		sb.append("</tr></table><img src=\"L2UI.SquareGray\" width=" + WIDTH + " height=1><br>");
 
 		switch (page)
 		{
@@ -512,24 +515,33 @@ public class RaidLogManager
 
 	private static void tab(StringBuilder sb, String label, String page, String current)
 	{
-		sb.append("<td align=center><button value=\"").append(label).append("\" action=\"bypass voiced_raidlog ").append(page).append("\" width=55 height=22 back=\"L2UI_CT1.Button_DF_Down\" fore=\"").append(page.equals(current) ? "L2UI_CT1.Button_DF_Down" : "L2UI_CT1.Button_DF").append("\"></td>");
+		sb.append("<td align=center><button value=\"").append(label).append("\" action=\"bypass voiced_raidlog ").append(page).append("\" width=53 height=22 back=\"L2UI_CT1.Button_DF_Down\" fore=\"").append(page.equals(current) ? "L2UI_CT1.Button_DF_Down" : "L2UI_CT1.Button_DF").append("\"></td>");
 	}
 
 	private static void header(StringBuilder sb, String title)
 	{
-		sb.append("<table width=280 bgcolor=000000><tr><td align=center><font color=\"LEVEL\">").append(title).append("</font></td></tr></table>");
+		sb.append("<table width=" + WIDTH + " height=20 border=0 cellspacing=0 cellpadding=0 bgcolor=000000><tr><td align=center><font color=\"LEVEL\">").append(title).append("</font></td></tr></table>");
+		sb.append("<img src=\"L2UI.SquareGray\" width=" + WIDTH + " height=1>");
+	}
+
+	/**
+	 * Opens a table of rows on a dark background.
+	 */
+	private static void box(StringBuilder sb)
+	{
+		sb.append("<table width=" + WIDTH + " border=0 cellspacing=1 cellpadding=1 bgcolor=111111>");
 	}
 
 	private static void row(StringBuilder sb, String label, String value)
 	{
-		sb.append("<tr><td width=95><font color=\"A0A0A0\">").append(label).append("</font></td><td width=185>").append(value).append("</td></tr>");
+		sb.append("<tr><td width=95><font color=\"A0A0A0\">").append(label).append("</font></td><td width=175>").append(value).append("</td></tr>");
 	}
 
 	private static void summaryPage(StringBuilder sb, Report r, int viewerId)
 	{
 		final long fight = Math.max(1, r.end - r.start);
 		header(sb, escape(r.bossName) + " Lv. " + r.bossLevel);
-		sb.append("<table width=280 border=0 cellspacing=1 cellpadding=1 bgcolor=111111>");
+		box(sb);
 		row(sb, "Killed in", duration(fight));
 		row(sb, "Fighters", String.valueOf(r.participants.size()));
 		row(sb, "Damage", r.totalDamage + " <font color=\"A0A0A0\">(" + shortNumber((r.totalDamage * 1000) / fight) + "/s)</font>");
@@ -554,7 +566,7 @@ public class RaidLogManager
 		if (me != null)
 		{
 			header(sb, "YOU");
-			sb.append("<table width=280 border=0 cellspacing=1 cellpadding=1 bgcolor=111111>");
+			box(sb);
 			row(sb, "Rank", r.rankOf(viewerId) + " / " + r.participants.size());
 			row(sb, "Damage", me.damage + " <font color=\"A0A0A0\">(" + percent(me.damage, r.totalDamage) + "%, " + ((me.damage * 1000) / fight) + "/s)</font>");
 			if (me.healed > 0)
@@ -568,18 +580,18 @@ public class RaidLogManager
 			sb.append("</table><br>");
 		}
 
-		// The top 10.
+		// The top 5, the rest is on the damage page.
 		header(sb, "TOP DAMAGE");
-		sb.append("<table width=280 border=0 cellspacing=1 cellpadding=1 bgcolor=111111>");
-		for (int i = 0; (i < 10) && (i < r.participants.size()); i++)
+		box(sb);
+		for (int i = 0; (i < 5) && (i < r.participants.size()); i++)
 		{
 			final Participant p = r.participants.get(i);
 			if (p.damage <= 0)
 			{
 				break;
 			}
-			sb.append("<tr><td width=25><font color=\"A0A0A0\">").append(i + 1).append("</font></td><td width=135><font color=\"").append(p.objectId == viewerId ? "00FF66" : "FFFFFF").append("\">").append(escape(p.name)).append("</font></td>");
-			sb.append("<td width=75 align=right>").append(shortNumber(p.damage)).append("</td><td width=45 align=right><font color=\"A0A0A0\">").append(percent(p.damage, r.totalDamage)).append("%</font></td></tr>");
+			sb.append("<tr><td width=25><font color=\"A0A0A0\">").append(i + 1).append("</font></td><td width=130><font color=\"").append(p.objectId == viewerId ? "00FF66" : "FFFFFF").append("\">").append(escape(p.name)).append("</font></td>");
+			sb.append("<td width=70 align=right>").append(shortNumber(p.damage)).append("</td><td width=45 align=right><font color=\"A0A0A0\">").append(percent(p.damage, r.totalDamage)).append("%</font></td></tr>");
 		}
 		sb.append("</table><br>");
 
@@ -608,7 +620,7 @@ public class RaidLogManager
 			}
 		}
 		header(sb, "HIGHLIGHTS");
-		sb.append("<table width=280 border=0 cellspacing=1 cellpadding=1 bgcolor=111111>");
+		box(sb);
 		if (biggest != null)
 		{
 			row(sb, "Biggest hit", escape(biggest.name) + " <font color=\"FFCC33\">" + biggest.biggest + "</font> <font color=\"A0A0A0\">(" + escape(biggest.biggestSkill == null ? "Attack" : biggest.biggestSkill.getName()) + ")</font>");
@@ -643,7 +655,7 @@ public class RaidLogManager
 		final int pages = Math.max(1, (list.size() + PAGE_SIZE - 1) / PAGE_SIZE);
 		final int page = Math.max(1, Math.min(pages, pageNumber));
 		header(sb, "DAMAGE TO " + escape(r.bossName).toUpperCase());
-		sb.append("<table width=280 border=0 cellspacing=0 cellpadding=1>");
+		sb.append("<table width=" + WIDTH + " border=0 cellspacing=0 cellpadding=1>");
 		boolean dark = false;
 		for (int i = (page - 1) * PAGE_SIZE; (i < list.size()) && (i < (page * PAGE_SIZE)); i++)
 		{
@@ -654,7 +666,7 @@ public class RaidLogManager
 			final Participant p = list.get(i);
 			final String bg = dark ? " bgcolor=111111" : "";
 			dark = !dark;
-			sb.append("<tr><td width=25 valign=top").append(bg).append("><font color=\"A0A0A0\">").append(i + 1).append("</font></td><td width=255").append(bg).append('>');
+			sb.append("<tr><td width=25 valign=top").append(bg).append("><font color=\"A0A0A0\">").append(i + 1).append("</font></td><td width=245").append(bg).append('>');
 			sb.append("<font color=\"").append(p.objectId == viewerId ? "00FF66" : "FFFFFF").append("\">").append(escape(p.name)).append("</font> <font color=\"808080\">").append(p.className != null ? escape(p.className) + " " : "").append(p.level).append("</font><br1>");
 			sb.append("<font color=\"FF9966\">").append(p.damage).append("</font> <font color=\"A0A0A0\">").append(percent(p.damage, r.totalDamage)).append("% ").append((p.damage * 1000) / fight).append("/s ").append(p.hits + p.dots).append(" hits ").append(p.crits).append(" crits max ").append(p.biggest).append("</font>");
 			if ((p.summonDamage > 0) || (p.minionDamage > 0) || (p.misses > 0))
@@ -699,7 +711,7 @@ public class RaidLogManager
 		final int pages = Math.max(1, (list.size() + PAGE_SIZE - 1) / PAGE_SIZE);
 		final int page = Math.max(1, Math.min(pages, pageNumber));
 		header(sb, "HEALS, DEBUFFS AND TANKING");
-		sb.append("<table width=280 border=0 cellspacing=0 cellpadding=1>");
+		sb.append("<table width=" + WIDTH + " border=0 cellspacing=0 cellpadding=1>");
 		boolean dark = false;
 		for (int i = (page - 1) * PAGE_SIZE; (i < list.size()) && (i < (page * PAGE_SIZE)); i++)
 		{
@@ -710,7 +722,7 @@ public class RaidLogManager
 			final Participant p = list.get(i);
 			final String bg = dark ? " bgcolor=111111" : "";
 			dark = !dark;
-			sb.append("<tr><td width=280").append(bg).append("><font color=\"").append(p.objectId == viewerId ? "00FF66" : "FFFFFF").append("\">").append(escape(p.name)).append("</font> <font color=\"808080\">").append(p.className != null ? escape(p.className) : "").append("</font><br1><font color=\"A0A0A0\">");
+			sb.append("<tr><td width=" + WIDTH).append(bg).append("><font color=\"").append(p.objectId == viewerId ? "00FF66" : "FFFFFF").append("\">").append(escape(p.name)).append("</font> <font color=\"808080\">").append(p.className != null ? escape(p.className) : "").append("</font><br1><font color=\"A0A0A0\">");
 			sb.append("healed <font color=\"66FF66\">").append(p.healed).append("</font> (").append(p.heals).append(")");
 			sb.append(" debuffs <font color=\"CC66FF\">").append(p.debuffs).append("</font>/").append(p.debuffs + p.resisted);
 			sb.append("<br1>taken <font color=\"FF6666\">").append(p.damageTaken).append("</font> deaths ").append(p.deaths).append("</font></td></tr>");
@@ -726,8 +738,8 @@ public class RaidLogManager
 	private static void partiesPage(StringBuilder sb, Report r)
 	{
 		header(sb, "PARTIES");
-		sb.append("<table width=280 border=0 cellspacing=1 cellpadding=1 bgcolor=111111>");
-		sb.append("<tr><td width=120><font color=\"A0A0A0\">Leader</font></td><td width=30 align=right><font color=\"A0A0A0\">Size</font></td><td width=80 align=right><font color=\"A0A0A0\">Damage</font></td><td width=50 align=right><font color=\"A0A0A0\">%</font></td></tr>");
+		box(sb);
+		sb.append("<tr><td width=115><font color=\"A0A0A0\">Leader</font></td><td width=30 align=right><font color=\"A0A0A0\">Size</font></td><td width=75 align=right><font color=\"A0A0A0\">Damage</font></td><td width=50 align=right><font color=\"A0A0A0\">%</font></td></tr>");
 		if (r.parties != null)
 		{
 			for (Object[] party : r.parties)
@@ -761,7 +773,7 @@ public class RaidLogManager
 		final long fight = Math.max(1, r.end - r.start);
 		final long active = Math.max(1, me.last - me.first);
 		header(sb, "YOU - RANK " + r.rankOf(viewerId) + " / " + r.participants.size());
-		sb.append("<table width=280 border=0 cellspacing=1 cellpadding=1 bgcolor=111111>");
+		box(sb);
 		row(sb, "Damage", me.damage + " <font color=\"A0A0A0\">(" + percent(me.damage, r.totalDamage) + "%)</font>");
 		row(sb, "Per second", ((me.damage * 1000) / fight) + " <font color=\"A0A0A0\">(" + ((me.damage * 1000) / active) + " while fighting)</font>");
 		row(sb, "Fought", duration(active) + " of " + duration(fight));
@@ -782,7 +794,7 @@ public class RaidLogManager
 		sb.append("</table><br>");
 
 		header(sb, "YOUR SKILLS");
-		sb.append("<table width=280 border=0 cellspacing=1 cellpadding=1 bgcolor=111111>");
+		box(sb);
 		final List<SkillUse> skills = r.skills.get(viewerId);
 		int shown = 0;
 		if (skills != null)
@@ -794,7 +806,7 @@ public class RaidLogManager
 					break;
 				}
 				final String name = use.skill == null ? (use.summon ? "Summon attack" : "Attack") : CombatLogManager.getSkillName(use.skill);
-				sb.append("<tr><td width=34>").append(use.skill == null ? "" : "<img src=\"" + use.skill.getIcon() + "\" width=32 height=32>").append("</td><td width=246>").append(escape(name)).append("<br1><font color=\"FF9966\">").append(use.damage).append("</font> <font color=\"A0A0A0\">(").append(percent(use.damage, me.damage + me.minionDamage)).append("%) ").append(use.hits).append(" hits, ").append(use.crits).append(" crits, max ").append(use.biggest).append(", avg ").append(use.damage / Math.max(1, use.hits)).append("</font></td></tr>");
+				sb.append("<tr><td width=34 height=36>").append(use.skill == null ? "" : "<img src=\"" + use.skill.getIcon() + "\" width=32 height=32>").append("</td><td width=236>").append(escape(name)).append("<br1><font color=\"FF9966\">").append(use.damage).append("</font> <font color=\"A0A0A0\">(").append(percent(use.damage, me.damage + me.minionDamage)).append("%) ").append(use.hits).append(" hits, ").append(use.crits).append(" crits, max ").append(use.biggest).append(", avg ").append(use.damage / Math.max(1, use.hits)).append("</font></td></tr>");
 			}
 		}
 		if (shown == 0)
@@ -810,12 +822,12 @@ public class RaidLogManager
 		{
 			return;
 		}
-		sb.append("<br><table width=280><tr><td width=90 align=left>");
+		sb.append("<br><table width=" + WIDTH + "><tr><td width=85 align=left>");
 		if (current > 1)
 		{
 			sb.append("<button value=\"Previous\" action=\"bypass voiced_raidlog ").append(page).append(' ').append(current - 1).append("\" width=80 height=22 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
 		}
-		sb.append("</td><td width=100 align=center><font color=\"A0A0A0\">Page ").append(current).append(" / ").append(pages).append("</font></td><td width=90 align=right>");
+		sb.append("</td><td width=100 align=center><font color=\"A0A0A0\">Page ").append(current).append(" / ").append(pages).append("</font></td><td width=85 align=right>");
 		if (current < pages)
 		{
 			sb.append("<button value=\"Next\" action=\"bypass voiced_raidlog ").append(page).append(' ').append(current + 1).append("\" width=80 height=22 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");

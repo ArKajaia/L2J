@@ -297,8 +297,8 @@ When you die in a PvP fight, a window shows how you died. A fight starts with th
 
 When a raid boss or grand boss dies, everyone who took part (hit it or its minions, healed someone fighting it, or was hit by it) gets a log of the fight, in a window and in chat ("You: 1.21M damage (12%, rank 3/24). Top: ...").
 
-- **Summary**: the boss, how long it took, how many fought, total damage and damage per second, damage by guards or monsters, damage to minions, healing, deaths, the killing blow, your rank and share, the top 10, and the highlights (biggest hit, top healer, most debuffs, who took the most damage).
-- **Damage**: everyone ranked by damage to the boss (their summons' included): class and level, share, damage per second, hits, crits, biggest hit, summon and minion damage, misses. 15 per page.
+- **Summary**: the boss, how long it took, how many fought, total damage and damage per second, damage by guards or monsters, damage to minions, healing, deaths, the killing blow, your rank and share, the top 5, and the highlights (biggest hit, top healer, most debuffs, who took the most damage).
+- **Damage**: everyone ranked by damage to the boss (their summons' included): class and level, share, damage per second, hits, crits, biggest hit, summon and minion damage, misses. 8 per page.
 - **Support**: heals done, debuffs landed and tried, damage taken and deaths, best healers first.
 - **Parties**: damage, share and healing of each party.
 - **Mine**: your own fight (damage per second over the fight and while you fought, crits, damage over time, misses, biggest hit, summon and minion damage) and your skills by damage, with hits, crits, biggest and average hit.

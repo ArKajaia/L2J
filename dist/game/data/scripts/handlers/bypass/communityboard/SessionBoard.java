@@ -53,7 +53,7 @@ public class SessionBoard implements IParseBoardHandler
 	private static final String NAVIGATION_PATH = "data/html/CommunityBoard/Custom/navigation.html";
 	private static final String PAGE_PATH = "data/html/CommunityBoard/Custom/session/main.html";
 	
-	private static final int WIDTH = 500;
+	private static final int WIDTH = 540;
 	private static final int LABEL_WIDTH = 160;
 	
 	private static final String COLOR_TITLE = "CDB67F";
@@ -165,24 +165,24 @@ public class SessionBoard implements IParseBoardHandler
 		
 		sb.append("<table width=").append(WIDTH).append(" cellpadding=2 cellspacing=0>");
 		sb.append("<tr>");
-		appendHeader(sb, "Date", 110);
-		appendHeader(sb, "Played", 60);
-		appendHeader(sb, "Levels", 50);
-		appendHeader(sb, "XP", 70);
-		appendHeader(sb, "Monsters", 60);
-		appendHeader(sb, "Adena", 80);
+		appendHeader(sb, "Date", 120);
+		appendHeader(sb, "Played", 65);
+		appendHeader(sb, "Levels", 55);
+		appendHeader(sb, "XP", 75);
+		appendHeader(sb, "Monsters", 70);
+		appendHeader(sb, "Adena", 85);
 		appendHeader(sb, "", 70);
 		sb.append("</tr>");
 		for (int i = 0; i < history.size(); i++)
 		{
 			final SessionRecord record = history.get(i);
 			sb.append("<tr").append((i % 2) == 0 ? " bgcolor=\"000000\"" : "").append(">");
-			sb.append("<td width=110><font color=\"").append(COLOR_TEXT).append("\">").append(formatDate(record.getStart())).append("</font></td>");
-			sb.append("<td width=60 align=center><font color=\"").append(COLOR_TEXT).append("\">").append(SessionStatsManager.formatDuration(record.getDurationMillis())).append("</font></td>");
-			sb.append("<td width=50 align=center>").append(signed(record.getLevelsGained(), false)).append("</td>");
-			sb.append("<td width=70 align=center>").append(plain(SessionStatsManager.formatShort(record.get(SessionStat.EXP_GAINED)), record.get(SessionStat.EXP_GAINED))).append("</td>");
-			sb.append("<td width=60 align=center>").append(plain(FormatUtil.formatAdena(record.get(SessionStat.KILLS)), record.get(SessionStat.KILLS))).append("</td>");
-			sb.append("<td width=80 align=center>").append(signed(record.getAdenaChange(), true)).append("</td>");
+			sb.append("<td width=120><font color=\"").append(COLOR_TEXT).append("\">").append(formatDate(record.getStart())).append("</font></td>");
+			sb.append("<td width=65 align=center><font color=\"").append(COLOR_TEXT).append("\">").append(SessionStatsManager.formatDuration(record.getDurationMillis())).append("</font></td>");
+			sb.append("<td width=55 align=center>").append(signed(record.getLevelsGained(), false)).append("</td>");
+			sb.append("<td width=75 align=center>").append(plain(SessionStatsManager.formatShort(record.get(SessionStat.EXP_GAINED)), record.get(SessionStat.EXP_GAINED))).append("</td>");
+			sb.append("<td width=70 align=center>").append(plain(FormatUtil.formatAdena(record.get(SessionStat.KILLS)), record.get(SessionStat.KILLS))).append("</td>");
+			sb.append("<td width=85 align=center>").append(signed(record.getAdenaChange(), true)).append("</td>");
 			sb.append("<td width=70 align=center>").append(button("Details", BYPASS + " view " + i, 60)).append("</td>");
 			sb.append("</tr>");
 		}
