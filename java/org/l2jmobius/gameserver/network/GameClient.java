@@ -38,6 +38,7 @@ import org.l2jmobius.gameserver.data.sql.CharInfoTable;
 import org.l2jmobius.gameserver.data.sql.ClanTable;
 import org.l2jmobius.gameserver.data.sql.ClassTransferChallengeCompletionTable;
 import org.l2jmobius.gameserver.data.xml.SecondaryAuthData;
+import org.l2jmobius.gameserver.managers.BestiaryManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.clan.Clan;
@@ -473,6 +474,7 @@ public class GameClient extends Client<org.l2jmobius.commons.network.Connection<
 			}
 			
 			ClassTransferChallengeCompletionTable.getInstance().deleteCharacter(con, objectId);
+			BestiaryManager.getInstance().deleteCharacter(con, objectId);
 			
 			try (PreparedStatement ps = con.prepareStatement("DELETE FROM character_variables WHERE charId=?"))
 			{

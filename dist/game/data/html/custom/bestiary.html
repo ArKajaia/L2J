@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bestiary</title>
+<link rel="icon" href="data:,">
+<style>
+	:root {
+		--bg: #08080b; --bg2: #14141a; --panel: rgba(20,20,26,0.94); --panel2: #101015;
+		--gold: #d9b64c; --cream: #f0e6c8; --muted: #8a7a55; --line: #7a5c1e; --text: #c9c2ad; --dim: #6f6a5e;
+		--t1: #8fa3b5; --t2: #4aa8ff; --t3: #b07cff; --t4: #f2c94c;
+		--fire: #ff7a45; --water: #4aa8ff; --wind: #6fdc8c; --earth: #c49a5a; --holy: #ffe28a; --dark: #b07cff; --none: #d8cfb6;
+	}
+	* { box-sizing: border-box; }
+	html, body { margin: 0; padding: 0; min-height: 100%; }
+	body {
+		background: radial-gradient(ellipse at top, #17171f 0%, var(--bg) 70%) fixed;
+		color: var(--text); font-family: Georgia, 'Times New Roman', serif; font-size: 14px;
+	}
+	button, input, select { font-family: inherit; font-size: 13px; }
+	a { color: var(--gold); }
+
+	/* Header */
+	.top { position: sticky; top: 0; z-index: 20; background: linear-gradient(180deg, rgba(12,12,16,0.98), rgba(12,12,16,0.9)); border-bottom: 1px solid #2a2418; }
+	.top-inner { max-width: 1500px; margin: 0 auto; padding: 12px 16px 0; }
+	.title-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+	.mark { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(217,182,76,0.2), transparent 70%); flex: none; }
+	.mark svg { width: 26px; height: 26px; color: var(--gold); }
+	.title h1 { margin: 0; font-size: 19px; letter-spacing: 4px; color: var(--cream); text-transform: uppercase; font-weight: normal; }
+	.title .who { margin-top: 3px; font-size: 12px; color: #9fa8b0; }
+	.title .who b { color: var(--gold); font-weight: normal; }
+	.summary { margin-left: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+	.ring { position: relative; width: 58px; height: 58px; flex: none; }
+	.ring svg { width: 58px; height: 58px; transform: rotate(-90deg); }
+	.ring .pct { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--cream); }
+	.stat { background: var(--panel2); border: 1px solid #2c2618; border-radius: 6px; padding: 6px 12px; min-width: 86px; }
+	.stat .label { font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+	.stat .value { font-size: 17px; color: var(--cream); margin-top: 1px; white-space: nowrap; }
+	.stat .value small { font-size: 11px; color: var(--dim); }
+	.tiers { display: flex; gap: 6px; }
+	.tier-chip { border-radius: 6px; padding: 6px 9px; background: var(--panel2); border: 1px solid #2c2618; text-align: center; min-width: 62px; }
+	.tier-chip .label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
+	.tier-chip .value { font-size: 16px; color: var(--cream); }
+	.tabs { display: flex; gap: 2px; margin-top: 12px; overflow-x: auto; }
+	.tab { background: none; border: 1px solid transparent; border-bottom: none; color: var(--muted); padding: 8px 16px; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; font-size: 12px; border-radius: 6px 6px 0 0; white-space: nowrap; }
+	.tab:hover { color: var(--cream); }
+	.tab.active { color: var(--gold); border-color: #3a301c; background: rgba(217,182,76,0.06); }
+	.tab .badge { color: var(--dim); font-size: 11px; margin-left: 4px; }
+
+	main { max-width: 1500px; margin: 0 auto; padding: 16px; }
+	.view { display: none; }
+	.view.active { display: block; }
+
+	/* Collection */
+	.collection { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 18px; align-items: start; }
+	.collection > * { min-width: 0; }
+	.filters { position: sticky; top: 150px; background: var(--panel); border: 1px solid #2c2618; border-radius: 8px; padding: 12px; }
+	.filters summary { display: none; }
+	.filters label { display: block; font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin: 10px 0 4px; }
+	.filters label:first-child { margin-top: 0; }
+	.filters input, .filters select { width: 100%; background: #0d0d10; color: var(--cream); border: 1px solid #3a3a42; border-radius: 4px; padding: 6px 8px; }
+	.filters input:focus, .filters select:focus { outline: none; border-color: var(--gold); }
+	.filters .row { display: flex; gap: 6px; align-items: center; }
+	.filters .row span { color: var(--dim); }
+	.filters .reset { margin-top: 12px; width: 100%; background: #1d1d24; border: 1px solid #3a3a42; color: var(--text); border-radius: 4px; padding: 6px; cursor: pointer; }
+	.filters .reset:hover { border-color: var(--gold); color: var(--cream); }
+	.filters .count { margin-top: 10px; font-size: 12px; color: var(--dim); text-align: center; }
+
+	.near { margin-bottom: 16px; }
+	.near h3, .group h3 { margin: 0 0 8px; font-weight: normal; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); display: flex; align-items: baseline; gap: 10px; }
+	.near-list { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+	.near-item { display: flex; align-items: center; gap: 8px; background: var(--panel2); border: 1px solid #2c2618; border-radius: 6px; padding: 6px 10px 6px 6px; cursor: pointer; flex: none; }
+	.near-item:hover { border-color: var(--gold); }
+	.near-item .portrait { width: 38px; height: 38px; }
+	.near-item .n { font-size: 12px; color: var(--cream); white-space: nowrap; }
+	.near-item .s { font-size: 11px; color: var(--dim); }
+
+	.group { margin-bottom: 22px; content-visibility: auto; contain-intrinsic-size: auto 400px; }
+	.group h3 { flex-wrap: wrap; }
+	.group h3 .region { color: var(--dim); font-size: 11px; }
+	.group h3 .done { margin-left: auto; color: var(--text); letter-spacing: 0; text-transform: none; font-size: 12px; }
+	.group h3 .done.full { color: var(--t4); }
+	.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; }
+	.card { position: relative; background: linear-gradient(180deg, #16161c, #0f0f13); border: 1px solid #26262e; border-radius: 8px; padding: 10px 8px 8px; text-align: center; cursor: pointer; transition: transform 0.12s, border-color 0.12s; }
+	.card:hover { transform: translateY(-2px); border-color: var(--gold); }
+	.card.g0 { border-style: dashed; border-color: #2a2a30; background: #0c0c0f; }
+	.card.g1 { border-color: #3c4652; }
+	.card.g2 { border-color: #24506f; }
+	.card.g3 { border-color: #4f3a6e; }
+	.card.g4 { border-color: #8a7020; box-shadow: 0 0 14px rgba(242,201,76,0.25); }
+	.card .portrait { width: 84px; height: 84px; margin: 0 auto 6px; }
+	.card .name { font-size: 12.5px; color: var(--cream); line-height: 1.25; min-height: 31px; display: flex; align-items: center; justify-content: center; }
+	.card.g0 .name { color: #55524a; letter-spacing: 3px; }
+	.card .meta { font-size: 11px; color: var(--dim); margin-top: 2px; }
+	.card .bar { height: 4px; background: #1d1d24; border-radius: 2px; margin-top: 7px; overflow: hidden; }
+	.card .bar i { display: block; height: 100%; border-radius: 2px; }
+	.card .count { font-size: 10.5px; color: var(--dim); margin-top: 3px; }
+	.card .crown { position: absolute; top: 6px; left: 7px; width: 16px; height: 16px; }
+	.card .aggro { position: absolute; top: 6px; right: 7px; width: 13px; height: 13px; color: #d0574a; }
+	.empty { color: var(--dim); text-align: center; padding: 40px; }
+
+	/* Portraits */
+	.portrait { position: relative; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 50% 38%, var(--glow, #2a2a32) 0%, #0c0c10 72%); border: 2px solid var(--ring, #2a2a30); }
+	.portrait svg { width: 100%; height: 100%; display: block; }
+	.portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+	.portrait .q { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #4a463c; font-size: 30px; }
+	.g4 .portrait, .portrait.g4 { box-shadow: 0 0 10px rgba(242,201,76,0.5), inset 0 0 8px rgba(242,201,76,0.35); }
+
+	/* Grounds */
+	.regions { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr)); gap: 14px; align-items: start; }
+	.region-box { background: var(--panel); border: 1px solid #2c2618; border-radius: 8px; padding: 12px 14px; }
+	.region-box h2 { margin: 0 0 4px; font-weight: normal; font-size: 16px; color: var(--cream); letter-spacing: 1px; display: flex; align-items: baseline; }
+	.region-box h2 span { margin-left: auto; font-size: 12px; color: var(--text); }
+	.region-box .sub { font-size: 11px; color: var(--dim); margin-bottom: 8px; }
+	.ground { display: grid; grid-template-columns: 1fr 74px 52px; align-items: center; gap: 8px; padding: 5px 4px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+	.ground:hover { background: rgba(217,182,76,0.07); }
+	.ground .n { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.ground .n small { color: var(--dim); margin-left: 4px; }
+	.ground .pb { height: 5px; background: #1d1d24; border-radius: 3px; overflow: hidden; }
+	.ground .pb i { display: block; height: 100%; background: var(--gold); }
+	.ground .v { text-align: right; font-size: 12px; color: var(--dim); }
+	.ground.full .v { color: var(--t4); }
+	.bigbar { height: 6px; background: #1d1d24; border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
+	.bigbar i { display: block; height: 100%; background: linear-gradient(90deg, var(--line), var(--gold)); }
+
+	/* Hunters */
+	.hunters { max-width: 860px; margin: 0 auto; background: var(--panel); border: 1px solid #2c2618; border-radius: 8px; padding: 6px 0; }
+	.hunters table { width: 100%; border-collapse: collapse; }
+	.hunters th { text-align: left; font-weight: normal; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid #2c2618; }
+	.hunters td { padding: 8px 12px; border-bottom: 1px solid #1b1b20; font-size: 13px; }
+	.hunters tr.me td { background: rgba(217,182,76,0.08); color: var(--cream); }
+	.hunters td.rank { width: 44px; color: var(--muted); }
+	.hunters tr:nth-child(2) td.rank, .hunters tr:nth-child(3) td.rank, .hunters tr:nth-child(4) td.rank { color: var(--t4); }
+	.hunters td.found { width: 220px; }
+	.hunters .pb { height: 5px; background: #1d1d24; border-radius: 3px; overflow: hidden; margin-top: 3px; }
+	.hunters .pb i { display: block; height: 100%; background: var(--gold); }
+	.hunters .cls { color: var(--dim); font-size: 12px; }
+	.note { text-align: center; color: var(--dim); font-size: 12px; margin: 10px; }
+
+	/* Detail */
+	.shade { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 40; display: none; }
+	.shade.open { display: block; }
+	.detail { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 100%); z-index: 50; background: linear-gradient(180deg, #15151b, #0d0d11); border-left: 1px solid var(--line); box-shadow: -10px 0 30px rgba(0,0,0,0.6); transform: translateX(105%); transition: transform 0.2s ease-out; overflow-y: auto; }
+	.detail.open { transform: none; }
+	.detail .close { position: sticky; top: 10px; float: right; margin: 10px 12px 0 0; background: #1d1d24; border: 1px solid #3a3a42; color: var(--text); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px; z-index: 2; }
+	.detail .close:hover { border-color: var(--gold); color: var(--cream); }
+	.d-head { padding: 22px 20px 14px; text-align: center; border-bottom: 1px solid #241f14; background: radial-gradient(ellipse at top, rgba(217,182,76,0.08), transparent 70%); }
+	.d-head .portrait { width: 150px; height: 150px; margin: 0 auto 12px; border-width: 3px; }
+	.d-head h2 { margin: 0; font-weight: normal; color: var(--cream); font-size: 22px; letter-spacing: 1px; }
+	.d-head .title { color: var(--gold); font-size: 13px; margin-top: 2px; }
+	.d-head .tags { margin-top: 8px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+	.tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; border: 1px solid #3a3a42; color: var(--text); background: #121217; }
+	.tag.red { border-color: #6a2a22; color: #ff9b90; }
+	.tag.gold { border-color: #6a5420; color: var(--t4); }
+	.tag.green { border-color: #24502f; color: #8fe39a; }
+	.track { display: flex; gap: 4px; margin: 14px auto 4px; max-width: 420px; }
+	.track .step { flex: 1; text-align: center; }
+	.track .pip { height: 6px; border-radius: 3px; background: #1d1d24; overflow: hidden; }
+	.track .pip i { display: block; height: 100%; }
+	.track .lbl { font-size: 10px; margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); }
+	.track .lbl small { display: block; letter-spacing: 0; text-transform: none; font-size: 10px; color: #55524a; }
+	.track .step.on .lbl { color: var(--cream); }
+	.d-kills { font-size: 12px; color: var(--dim); margin-top: 6px; }
+	.d-kills b { color: var(--cream); font-weight: normal; }
+	.section { padding: 14px 20px; border-bottom: 1px solid #1c1a14; }
+	.section h4 { margin: 0 0 10px; font-weight: normal; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+	.section h4 .hint { margin-left: auto; letter-spacing: 0; text-transform: none; font-size: 11px; color: #55524a; }
+	.kv { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+	.kv > div { background: #111116; border: 1px solid #1f1f26; border-radius: 5px; padding: 6px 8px; }
+	.kv .k { font-size: 9.5px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; }
+	.kv .v { font-size: 14px; color: var(--cream); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	.locked { display: flex; align-items: center; gap: 12px; background: repeating-linear-gradient(45deg, #101014, #101014 8px, #121217 8px, #121217 16px); border: 1px dashed #2f2f37; border-radius: 6px; padding: 14px; color: var(--dim); font-size: 13px; }
+	.locked svg { width: 22px; height: 22px; color: #55524a; flex: none; }
+	.locked b { color: var(--text); font-weight: normal; }
+	.elements { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 10px; }
+	.el { text-align: center; font-size: 10px; color: var(--dim); }
+	.el .bar { height: 46px; background: #111116; border: 1px solid #1f1f26; border-radius: 4px; position: relative; overflow: hidden; margin-bottom: 3px; }
+	.el .bar i { position: absolute; left: 0; right: 0; bottom: 0; }
+	.el .bar.neg i { top: 0; bottom: auto; opacity: 0.6; }
+	.el .val { color: var(--cream); font-size: 12px; }
+	.skills { display: flex; flex-wrap: wrap; gap: 6px; }
+	.skill { font-size: 12px; padding: 4px 9px; border-radius: 4px; background: #121217; border: 1px solid #2a2a32; color: var(--text); }
+	.skill.p { color: var(--dim); border-style: dashed; }
+	.skill.d { border-color: #4f3a6e; color: #cfb4ff; }
+	.skill small { color: var(--dim); }
+	.drops { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+	.drops th { font-weight: normal; text-align: left; font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); padding: 0 6px 5px; }
+	.drops td { padding: 5px 6px; border-top: 1px solid #1a1a20; }
+	.drops td.c, .drops th.c { text-align: right; white-space: nowrap; }
+	.drops .grp { font-size: 10px; color: #55524a; margin-left: 4px; }
+	.grade { display: inline-block; min-width: 26px; text-align: center; font-size: 10px; padding: 1px 4px; border-radius: 3px; border: 1px solid #333; color: var(--dim); margin-right: 6px; }
+	.grade.D { color: #b7d6b0; border-color: #3b5236; } .grade.C { color: #9fd2ff; border-color: #2b4a66; } .grade.B { color: #f7d27a; border-color: #66532b; }
+	.grade.A { color: #ffa86b; border-color: #6b3f22; } .grade.S, .grade.S80, .grade.S84 { color: #ff8f8f; border-color: #6b2828; }
+	.k-weapon td:nth-child(1) { color: var(--cream); }
+	.sub-h { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin: 12px 0 4px; }
+	.areas { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+	.areas button { font-size: 12px; padding: 3px 10px; border-radius: 12px; border: 1px solid #3a301c; background: #15130e; color: var(--gold); cursor: pointer; }
+	.areas button:hover { background: #221d12; }
+	.map { position: relative; border: 1px solid #241f14; border-radius: 6px; overflow: hidden; background: radial-gradient(ellipse at center, #0f1013, #070709); }
+	.map svg { width: 100%; height: auto; display: block; }
+	.map .tools { position: absolute; top: 6px; right: 6px; display: flex; gap: 4px; }
+	.map .tools button { background: rgba(12,12,16,0.85); border: 1px solid #3a3a42; color: var(--text); border-radius: 4px; font-size: 11px; padding: 3px 8px; cursor: pointer; }
+	.map .tools button:hover { border-color: var(--gold); }
+	.size { display: flex; align-items: flex-end; gap: 18px; height: 110px; padding: 0 10px; border-bottom: 1px solid #2a2a32; }
+	.size .fig { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+	.size .fig svg { display: block; }
+	.size .fig span { font-size: 10px; color: var(--dim); margin-top: 3px; }
+	.size-note { font-size: 12px; color: var(--dim); margin-top: 6px; }
+	.server-line { font-size: 12.5px; color: var(--text); line-height: 1.6; }
+	.server-line b { color: var(--cream); font-weight: normal; }
+	.loading { padding: 60px; text-align: center; color: var(--dim); }
+
+	/* Overlay when there is no valid link */
+	.gate { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; background: rgba(8,8,11,0.96); }
+	.gate.open { display: flex; }
+	.gate .box { max-width: 420px; text-align: center; border: 1px solid var(--line); border-radius: 10px; padding: 28px; background: var(--panel); }
+	.gate h2 { margin: 0 0 10px; font-weight: normal; color: var(--cream); letter-spacing: 3px; text-transform: uppercase; font-size: 17px; }
+	.gate p { color: var(--text); line-height: 1.5; }
+	.gate code { color: var(--gold); font-size: 15px; }
+
+	@media (max-width: 860px) {
+		.collection { grid-template-columns: minmax(0, 1fr); }
+		.filters { position: static; }
+		.filters summary { display: block; cursor: pointer; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; font-size: 12px; }
+		.filters[open] summary { margin-bottom: 10px; }
+		.title-row .summary { gap: 6px; }
+		.stat { min-width: 0; flex: 1; padding: 6px 8px; }
+		.tier-chip .label { font-size: 8px; letter-spacing: 0; }
+		.tiers { width: 100%; }
+		.summary { margin-left: 0; width: 100%; }
+		.tiers .tier-chip { min-width: 0; flex: 1; }
+		.kv { grid-template-columns: repeat(2, 1fr); }
+		.grid { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); }
+		.card .portrait { width: 70px; height: 70px; }
+	}
+</style>
+</head>
+<body>
+
+<!--
+	Race portraits: one silhouette per race, drawn in currentColor (the element of the monster once
+	studied, bone otherwise). Eyes and inner details use var(--eye) so they can glow or go dark.
+	A picture in data/html/custom/bestiary/<npc id>.png replaces the portrait of that monster.
+-->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+	<defs>
+		<symbol id="r-BEAST" viewBox="0 0 100 100">
+			<path fill="currentColor" d="M50 88C43 82 33 74 28 63C23 52 24 42 30 35L23 12L43 27C47 26 53 26 57 27L77 12L70 35C76 42 77 52 72 63C67 74 57 82 50 88Z"/>
+			<path fill="var(--eye)" d="M35 47L46 51L44 55L36 53ZM65 47L54 51L56 55L64 53Z"/>
+			<path fill="var(--eye)" opacity="0.55" d="M44 70L50 77L56 70Z"/>
+		</symbol>
+		<symbol id="r-ANIMAL" viewBox="0 0 100 100">
+			<circle fill="currentColor" cx="26" cy="27" r="12"/><circle fill="currentColor" cx="74" cy="27" r="12"/>
+			<ellipse fill="currentColor" cx="50" cy="56" rx="32" ry="30"/>
+			<circle fill="var(--eye)" opacity="0.5" cx="26" cy="27" r="5"/><circle fill="var(--eye)" opacity="0.5" cx="74" cy="27" r="5"/>
+			<ellipse fill="var(--eye)" opacity="0.35" cx="50" cy="69" rx="14" ry="10"/>
+			<ellipse fill="var(--eye)" cx="50" cy="65" rx="6" ry="4"/>
+			<circle fill="var(--eye)" cx="38" cy="50" r="3.5"/><circle fill="var(--eye)" cx="62" cy="50" r="3.5"/>
+		</symbol>
+		<symbol id="r-BUG" viewBox="0 0 100 100">
+			<g stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+				<path d="M40 50L22 40L12 52M40 56L20 58L10 72M42 62L26 74L22 88M42 44L28 28L30 14"/>
+				<path d="M60 50L78 40L88 52M60 56L80 58L90 72M58 62L74 74L78 88M58 44L72 28L70 14"/>
+			</g>
+			<ellipse fill="currentColor" cx="50" cy="66" rx="17" ry="21"/>
+			<circle fill="currentColor" cx="50" cy="40" r="11"/>
+			<circle fill="var(--eye)" cx="45" cy="38" r="2.6"/><circle fill="var(--eye)" cx="55" cy="38" r="2.6"/>
+			<circle fill="var(--eye)" cx="47" cy="44" r="1.6"/><circle fill="var(--eye)" cx="53" cy="44" r="1.6"/>
+			<path fill="var(--eye)" opacity="0.4" d="M50 52L56 62L50 80L44 62Z"/>
+		</symbol>
+		<symbol id="r-CONSTRUCT" viewBox="0 0 100 100">
+			<rect fill="currentColor" x="36" y="12" width="28" height="22" rx="3"/>
+			<path fill="currentColor" d="M26 38H74L78 70H22Z"/>
+			<rect fill="currentColor" x="8" y="38" width="15" height="40" rx="4"/><rect fill="currentColor" x="77" y="38" width="15" height="40" rx="4"/>
+			<rect fill="currentColor" x="28" y="72" width="17" height="20" rx="2"/><rect fill="currentColor" x="55" y="72" width="17" height="20" rx="2"/>
+			<rect fill="var(--eye)" x="41" y="20" width="7" height="4"/><rect fill="var(--eye)" x="52" y="20" width="7" height="4"/>
+			<path fill="var(--eye)" opacity="0.45" d="M44 46H56L54 60H46Z"/>
+		</symbol>
+		<symbol id="r-DEMONIC" viewBox="0 0 100 100">
+			<path fill="currentColor" d="M32 42C18 34 13 19 18 5C22 18 31 27 42 31ZM68 42C82 34 87 19 82 5C78 18 69 27 58 31Z"/>
+			<path fill="currentColor" d="M50 92C36 86 27 72 27 56C27 40 37 29 50 29C63 29 73 40 73 56C73 72 64 86 50 92Z"/>
+			<path fill="currentColor" d="M27 52L14 46L22 60ZM73 52L86 46L78 60Z"/>
+			<path fill="var(--eye)" d="M34 51L47 57L45 61L35 57ZM66 51L53 57L55 61L65 57Z"/>
+			<path fill="var(--eye)" opacity="0.6" d="M40 74L44 78L48 74L52 78L56 74L60 78L58 81H42Z"/>
+		</symbol>
+		<symbol id="r-DIVINE" viewBox="0 0 100 100">
+			<ellipse fill="none" stroke="currentColor" stroke-width="3" cx="50" cy="13" rx="14" ry="5"/>
+			<path fill="currentColor" opacity="0.8" d="M44 40C30 30 14 30 4 40C14 42 18 48 16 56C26 52 32 56 34 64C38 56 42 50 44 46ZM56 40C70 30 86 30 96 40C86 42 82 48 84 56C74 52 68 56 66 64C62 56 58 50 56 46Z"/>
+			<circle fill="currentColor" cx="50" cy="28" r="9"/>
+			<path fill="currentColor" d="M41 40H59L66 92H34Z"/>
+			<path fill="var(--eye)" opacity="0.5" d="M50 44L54 60L50 88L46 60Z"/>
+		</symbol>
+		<symbol id="r-DRAGON" viewBox="0 0 100 100">
+			<path fill="currentColor" d="M10 62L36 52C40 38 52 28 66 28L72 10L76 30L90 22L82 38C90 46 92 58 86 68L74 72L66 88L58 74L42 74L28 70L12 70Z"/>
+			<path fill="currentColor" opacity="0.6" d="M50 30L44 16L56 26ZM58 28L56 12L64 26Z"/>
+			<path fill="var(--eye)" d="M62 44L74 42L70 48L63 48Z"/>
+			<path fill="var(--eye)" opacity="0.6" d="M14 66L30 64L28 67L16 68ZM34 66L36 70L38 66L40 70L42 66L44 70L46 66Z"/>
+			<circle fill="var(--eye)" opacity="0.5" cx="18" cy="62" r="1.8"/>
+		</symbol>
+		<symbol id="r-ELEMENTAL" viewBox="0 0 100 100">
+			<path fill="currentColor" d="M50 6C60 25 77 34 75 58C73 79 61 92 50 92C37 92 25 81 25 61C25 47 35 40 38 27C44 37 46 44 50 46C53 33 48 21 50 6Z"/>
+			<path fill="var(--eye)" opacity="0.55" d="M50 50C56 60 63 64 62 74C61 83 56 88 50 88C43 88 38 83 38 75C38 68 43 66 45 60C47 64 48 66 50 67C51 61 49 56 50 50Z"/>
+			<circle fill="var(--eye)" cx="43" cy="56" r="2.6"/><circle fill="var(--eye)" cx="57" cy="56" r="2.6"/>
+		</symbol>
+		<symbol id="r-FAIRY" viewBox="0 0 100 100">
+			<path fill="currentColor" opacity="0.75" d="M48 46C38 22 18 14 8 22C6 36 22 48 46 50ZM52 46C62 22 82 14 92 22C94 36 78 48 54 50Z"/>
+			<path fill="currentColor" opacity="0.55" d="M47 54C34 60 22 74 26 86C38 88 46 72 48 58ZM53 54C66 60 78 74 74 86C62 88 54 72 52 58Z"/>
+			<circle fill="currentColor" cx="50" cy="36" r="7"/>
+			<path fill="currentColor" d="M45 44H55L54 74L50 82L46 74Z"/>
+			<circle fill="var(--eye)" cx="47.5" cy="35" r="1.3"/><circle fill="var(--eye)" cx="52.5" cy="35" r="1.3"/>
+			<g fill="var(--eye)" opacity="0.6"><circle cx="18" cy="30" r="1.5"/><circle cx="82" cy="30" r="1.5"/><circle cx="30" cy="78" r="1.2"/><circle cx="70" cy="78" r="1.2"/></g>
+		</symbol>
+		<symbol id="r-GIANT" viewBox="0 0 100 100">
+			<circle fill="currentColor" cx="50" cy="20" r="10"/>
+			<path fill="currentColor" d="M18 36C30 30 70 30 82 36L88 58L78 60L72 44L70 70H30L28 44L22 60L12 58Z"/>
+			<path fill="currentColor" d="M30 70H48L46 94H32ZM52 70H70L68 94H54Z"/>
+			<rect fill="var(--eye)" x="44" y="18" width="4" height="2.5"/><rect fill="var(--eye)" x="52" y="18" width="4" height="2.5"/>
+			<path fill="var(--eye)" opacity="0.35" d="M38 40H62L60 62H40Z"/>
+		</symbol>
+		<symbol id="r-HUMANOID" viewBox="0 0 100 100">
+			<path fill="currentColor" d="M50 8C64 8 72 20 72 34L82 92H18L28 34C28 20 36 8 50 8Z"/>
+			<ellipse fill="var(--eye)" opacity="0.55" cx="50" cy="34" rx="13" ry="15"/>
+			<ellipse fill="#07070a" cx="50" cy="35" rx="10" ry="12"/>
+			<circle fill="var(--eye)" cx="45" cy="34" r="2.2"/><circle fill="var(--eye)" cx="55" cy="34" r="2.2"/>
+			<path fill="var(--eye)" opacity="0.3" d="M50 52L56 92H44Z"/>
+		</symbol>
+		<symbol id="r-ELF" viewBox="0 0 100 100">
+			<path fill="currentColor" d="M30 44L6 26L28 56ZM70 44L94 26L72 56Z"/>
+			<path fill="currentColor" d="M50 82C38 82 29 70 29 54C29 36 38 24 50 24C62 24 71 36 71 54C71 70 62 82 50 82Z"/>
+			<path fill="currentColor" d="M28 50C26 30 36 14 50 14C64 14 74 30 72 50C70 38 62 30 50 30C38 30 30 38 28 50Z"/>
+			<path fill="currentColor" d="M36 82H64L76 96H24Z"/>
+			<path fill="var(--eye)" d="M38 52L47 54L46 57L39 56ZM62 52L53 54L54 57L61 56Z"/>
+		</symbol>
+		<symbol id="r-ORC" viewBox="0 0 100 100">
+			<path fill="currentColor" d="M26 46L8 38L22 58ZM74 46L92 38L78 58Z"/>
+			<path fill="currentColor" d="M50 88C34 88 24 76 24 58C24 38 35 24 50 24C65 24 76 38 76 58C76 76 66 88 50 88Z"/>
+			<path fill="currentColor" d="M32 34C36 18 64 18 68 34Z"/>
+			<rect fill="var(--eye)" opacity="0.5" x="30" y="44" width="40" height="4" rx="2"/>
+			<circle fill="var(--eye)" cx="40" cy="53" r="3"/><circle fill="var(--eye)" cx="60" cy="53" r="3"/>
+			<path fill="var(--eye)" d="M38 72L41 62L44 72ZM62 72L59 62L56 72Z"/>
+			<path fill="var(--eye)" opacity="0.4" d="M40 75H60L57 79H43Z"/>
+		</symbol>
+		<symbol id="r-DWARF" viewBox="0 0 100 100">
+			<path fill="currentColor" d="M26 44C26 24 36 14 50 14C64 14 74 24 74 44Z"/>
+			<rect fill="currentColor" x="20" y="42" width="60" height="7" rx="3"/>
+			<path fill="currentColor" d="M30 50H70V58C70 64 66 68 62 70L66 92L50 84L34 92L38 70C34 68 30 64 30 58Z"/>
+			<path fill="var(--eye)" opacity="0.4" d="M48 18H52V42H48Z"/>
+			<circle fill="var(--eye)" cx="41" cy="56" r="2.6"/><circle fill="var(--eye)" cx="59" cy="56" r="2.6"/>
+			<path fill="var(--eye)" opacity="0.35" d="M40 66H60L56 72L50 70L44 72Z"/>
+		</symbol>
+		<symbol id="r-KAMAEL" viewBox="0 0 100 100">
+			<path fill="currentColor" opacity="0.75" d="M58 36C70 18 86 10 96 12C92 22 90 30 92 40C84 38 80 42 82 52C74 48 70 52 70 60C66 52 62 46 58 44Z"/>
+			<circle fill="currentColor" cx="46" cy="24" r="10"/>
+			<path fill="currentColor" d="M34 38H58L64 92H28Z"/>
+			<path fill="currentColor" d="M34 40L18 66L24 70L36 52ZM58 40L66 64L60 68L56 52Z"/>
+			<circle fill="var(--eye)" cx="42.5" cy="23" r="1.8"/><circle fill="var(--eye)" cx="49.5" cy="23" r="1.8"/>
+			<path fill="var(--eye)" opacity="0.35" d="M44 44H48L50 88H42Z"/>
+		</symbol>
+		<symbol id="r-KNIGHT" viewBox="0 0 100 100">
+			<path fill="currentColor" d="M50 6L56 16H44Z"/>
+			<path fill="currentColor" d="M28 50C28 28 38 16 50 16C62 16 72 28 72 50V70C72 76 66 80 60 80H40C34 80 28 76 28 70Z"/>
+			<path fill="currentColor" d="M22 84C28 78 72 78 78 84L82 96H18Z"/>
+			<rect fill="var(--eye)" x="32" y="44" width="36" height="6" rx="2"/>
+			<rect fill="#07070a" x="34" y="45.5" width="32" height="3" rx="1"/>
+			<path fill="var(--eye)" opacity="0.4" d="M48 52H52V76H48Z"/>
+		</symbol>
+		<symbol id="r-PLANT" viewBox="0 0 100 100">
+			<path fill="currentColor" d="M47 52H53L56 94H44Z"/>
+			<path fill="currentColor" opacity="0.8" d="M48 78C34 66 18 70 10 80C24 86 38 86 48 82ZM52 72C66 58 82 60 90 70C78 78 62 80 52 76Z"/>
+			<path fill="currentColor" d="M50 8C70 8 84 22 84 38C84 52 70 60 50 60C30 60 16 52 16 38C16 22 30 8 50 8Z"/>
+			<path fill="#07070a" d="M22 38C32 46 68 46 78 38C72 52 62 56 50 56C38 56 28 52 22 38Z"/>
+			<path fill="var(--eye)" d="M28 40L32 47L35 41L39 49L42 42L46 50L50 43L54 50L58 42L61 49L65 41L68 47L72 40Z"/>
+			<circle fill="var(--eye)" cx="36" cy="26" r="3"/><circle fill="var(--eye)" cx="64" cy="26" r="3"/>
+		</symbol>
+		<symbol id="r-UNDEAD" viewBox="0 0 100 100">
+			<path fill="currentColor" d="M50 8C70 8 84 22 84 42C84 54 78 62 70 66V78C70 82 66 86 62 86H38C34 86 30 82 30 78V66C22 62 16 54 16 42C16 22 30 8 50 8Z"/>
+			<path fill="var(--eye)" d="M28 44C28 36 34 32 40 32C46 32 48 38 46 46C44 52 38 54 33 52C30 50 28 48 28 44ZM72 44C72 36 66 32 60 32C54 32 52 38 54 46C56 52 62 54 67 52C70 50 72 48 72 44Z"/>
+			<path fill="var(--eye)" opacity="0.8" d="M50 54L55 64H45Z"/>
+			<g fill="#07070a"><rect x="38" y="72" width="3" height="12"/><rect x="45" y="72" width="3" height="12"/><rect x="52" y="72" width="3" height="12"/><rect x="59" y="72" width="3" height="12"/></g>
+		</symbol>
+		<symbol id="r-ETC" viewBox="0 0 100 100">
+			<path fill="currentColor" d="M50 6L92 50L50 94L8 50Z"/>
+			<path fill="#07070a" d="M50 18L82 50L50 82L18 50Z"/>
+			<path fill="currentColor" d="M22 50C30 38 40 32 50 32C60 32 70 38 78 50C70 62 60 68 50 68C40 68 30 62 22 50Z"/>
+			<circle fill="var(--eye)" cx="50" cy="50" r="10"/>
+			<circle fill="#07070a" cx="50" cy="50" r="4"/>
+		</symbol>
+		<symbol id="i-crown" viewBox="0 0 24 24"><path fill="currentColor" d="M3 18L2 7L8 11L12 4L16 11L22 7L21 18Z"/><rect fill="currentColor" x="3" y="19" width="18" height="2.5" rx="1"/></symbol>
+		<symbol id="i-fang" viewBox="0 0 24 24"><path fill="currentColor" d="M4 3H20L16 12L12 22L8 12Z"/></symbol>
+		<symbol id="i-lock" viewBox="0 0 24 24"><rect fill="currentColor" x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7A4 4 0 0 1 16 7V11" stroke="currentColor" stroke-width="2.2" fill="none"/></symbol>
+		<symbol id="i-book" viewBox="0 0 24 24"><path fill="currentColor" d="M4 3H11C12 3 12 4 12 4V21C12 20 11 19 10 19H4ZM20 3H13C12 3 12 4 12 4V21C12 20 13 19 14 19H20Z" opacity="0.9"/><path d="M7 7L9 9M7 10L9 12M15 7L17 9" stroke="#08080b" stroke-width="1.4"/></symbol>
+		<symbol id="i-human" viewBox="0 0 20 60"><circle fill="currentColor" cx="10" cy="6" r="5"/><path fill="currentColor" d="M4 13H16L18 34L15 35L14 24L13 60H11L10 38L9 60H7L6 24L5 35L2 34Z"/></symbol>
+	</defs>
+</svg>
+
+<div class="top">
+	<div class="top-inner">
+		<div class="title-row">
+			<div class="mark"><svg viewBox="0 0 24 24"><use href="#i-book"/></svg></div>
+			<div class="title">
+				<h1>Bestiary</h1>
+				<div class="who" id="who">&nbsp;</div>
+			</div>
+			<div class="summary" id="summary"></div>
+		</div>
+		<div class="tabs" id="tabs">
+			<button class="tab active" data-view="collection">Collection</button>
+			<button class="tab" data-view="grounds">Hunting Grounds</button>
+			<button class="tab" data-view="hunters">Hall of Hunters</button>
+			<button class="tab" data-view="elsewhere" id="tab-elsewhere" style="display:none">Found Elsewhere <span class="badge" id="elsewhere-count"></span></button>
+		</div>
+	</div>
+</div>
+
+<main>
+	<div class="loading" id="loading">Opening the bestiary...</div>
+
+	<section class="view active" id="view-collection">
+		<div class="collection">
+			<details class="filters" id="filters" open>
+				<summary>Filters</summary>
+				<label for="f-q">Search</label>
+				<input id="f-q" type="search" placeholder="Name of a monster" autocomplete="off">
+				<label for="f-region">Region</label>
+				<select id="f-region"><option value="-1">Every region</option></select>
+				<label for="f-area">Hunting ground</label>
+				<select id="f-area"><option value="-1">Every hunting ground</option></select>
+				<label>Level</label>
+				<div class="row"><input id="f-min" type="number" min="1" max="99" placeholder="1"><span>to</span><input id="f-max" type="number" min="1" max="99" placeholder="99"></div>
+				<label for="f-status">Entries</label>
+				<select id="f-status">
+					<option value="all">All</option>
+					<option value="missing">Not found yet</option>
+					<option value="found">Found</option>
+					<option value="g1">Discovered</option>
+					<option value="g2">Studied</option>
+					<option value="g3">Mastered</option>
+					<option value="g4">Legendary</option>
+					<option value="next">Not Legendary yet</option>
+				</select>
+				<label for="f-kind">Kind</label>
+				<select id="f-kind">
+					<option value="all">All monsters</option>
+					<option value="0">Monsters</option>
+					<option value="1">Raid bosses</option>
+					<option value="2">Grand bosses</option>
+					<option value="ag">Aggressive</option>
+				</select>
+				<label for="f-race">Race</label>
+				<select id="f-race"><option value="all">Every race</option></select>
+				<label for="f-sort">Order</label>
+				<select id="f-sort">
+					<option value="ground">By hunting ground</option>
+					<option value="level">Level</option>
+					<option value="name">Name</option>
+					<option value="kills">Most killed</option>
+					<option value="recent">Recently discovered</option>
+					<option value="close">Closest to the next tier</option>
+				</select>
+				<button class="reset" id="f-reset">Clear the filters</button>
+				<div class="count" id="f-count"></div>
+			</details>
+			<div>
+				<div class="near" id="near"></div>
+				<div id="cards"></div>
+			</div>
+		</div>
+	</section>
+
+	<section class="view" id="view-grounds"><div class="regions" id="regions"></div></section>
+	<section class="view" id="view-hunters"><div id="hunters"></div></section>
+	<section class="view" id="view-elsewhere">
+		<p class="note">Monsters you met outside the world's hunting grounds: instances, quests, events. They don't count toward completion.</p>
+		<div class="grid" id="elsewhere"></div>
+	</section>
+</main>
+
+<div class="shade" id="shade"></div>
+<aside class="detail" id="detail" aria-live="polite"></aside>
+
+<div class="gate" id="gate">
+	<div class="box">
+		<h2>Bestiary</h2>
+		<p id="gate-text">Open your bestiary from the game: type <code>.bestiary</code> in chat and click the link.</p>
+	</div>
+</div>
+
+<script>
+"use strict";
+
+const RACE_SYMBOL = {
+	BEAST: "BEAST", ANIMAL: "ANIMAL", BUG: "BUG", CONSTRUCT: "CONSTRUCT", SIEGE_WEAPON: "CONSTRUCT", DEMONIC: "DEMONIC",
+	DIVINE: "DIVINE", DRAGON: "DRAGON", ELEMENTAL: "ELEMENTAL", FAIRY: "FAIRY", GIANT: "GIANT", HUMANOID: "HUMANOID",
+	HUMAN: "HUMANOID", ELF: "ELF", DARK_ELF: "ELF", ORC: "ORC", DWARF: "DWARF", KAMAEL: "KAMAEL", CASTLE_GUARD: "KNIGHT",
+	MERCENARY: "KNIGHT", PLANT: "PLANT", UNDEAD: "UNDEAD", ETC: "ETC", NONE: "ETC"
+};
+const RACE_NAME = {
+	BEAST: "Beast", ANIMAL: "Animal", BUG: "Insect", CONSTRUCT: "Construct", SIEGE_WEAPON: "Siege Weapon", DEMONIC: "Demon",
+	DIVINE: "Angel", DRAGON: "Dragon", ELEMENTAL: "Elemental", FAIRY: "Fairy", GIANT: "Giant", HUMANOID: "Humanoid",
+	HUMAN: "Human", ELF: "Elf", DARK_ELF: "Dark Elf", ORC: "Orc", DWARF: "Dwarf", KAMAEL: "Kamael", CASTLE_GUARD: "Guard",
+	MERCENARY: "Mercenary", PLANT: "Plant", UNDEAD: "Undead", ETC: "Creature", NONE: "Creature"
+};
+const ELEMENTS = ["Fire", "Water", "Wind", "Earth", "Holy", "Dark"];
+const ELEMENT_COLOR = ["var(--fire)", "var(--water)", "var(--wind)", "var(--earth)", "var(--holy)", "var(--dark)"];
+const TIER_COLOR = ["#2a2a30", "var(--t1)", "var(--t2)", "var(--t3)", "var(--t4)"];
+const KIND_NAME = ["Monster", "Raid Boss", "Grand Boss"];
+const WEAPON_NAME = { SWORD: "Sword", BLUNT: "Blunt", DAGGER: "Dagger", BOW: "Bow", POLE: "Polearm", ETC: "Other", FIST: "Fists", DUALFIST: "Fists", DUAL: "Dual swords", ANCIENTSWORD: "Ancient sword", RAPIER: "Rapier", CROSSBOW: "Crossbow", NONE: "None" };
+/** A human's height in game units, for the size comparison. */
+const HUMAN_HEIGHT = 23;
+/** Towns of the map (their first respawn point, from data/mapregion). */
+const TOWNS = [
+	["Talking Island", -83990, 243336], ["Gludin", -83520, 150560], ["Gludio", -14288, 122752], ["Dion", 19025, 145245],
+	["Floran", 17838, 170274], ["Giran", 82480, 149087], ["Heine", 107568, 218256], ["Oren", 80304, 56241],
+	["Aden", 146494, 30584], ["Hunters Village", 116127, 76015], ["Goddard", 148560, -55904], ["Rune", 38096, -46976],
+	["Schuttgart", 88240, -142736], ["Dwarven Village", 116176, -182448], ["Orc Village", -44316, -113136],
+	["Elven Village", 45487, 49767], ["Dark Elven Village", 12501, 16768], ["Kamael Village", -118092, 46955],
+	["Keucereus", -184072, 242773], ["Hellbound", 9155, 252241], ["Primeval Isle", 11088, -24768]
+];
+
+const state = {
+	token: null, data: null, byId: new Map(), areaMonsters: [], tab: "collection",
+	filters: { q: "", region: -1, area: -1, min: "", max: "", status: "all", kind: "all", race: "all", sort: "ground" },
+	map: null, mapPromise: null, hunters: null, detailId: 0, detailWorld: false, detail: null
+};
+
+// ---------------------------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------------------------
+
+function esc(text) {
+	return String(text == null ? "" : text).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
+}
+function fmt(n) { return Number(n || 0).toLocaleString("en-US"); }
+function fmtShort(n) {
+	n = Number(n || 0);
+	if (n >= 1e9) return (n / 1e9).toFixed(n >= 1e10 ? 0 : 1) + "B";
+	if (n >= 1e6) return (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + "M";
+	if (n >= 1e4) return (n / 1e3).toFixed(n >= 1e5 ? 0 : 1) + "K";
+	return fmt(n);
+}
+function fmtChance(c) {
+	if (c >= 99.995) return "100%";
+	if (c >= 10) return c.toFixed(1) + "%";
+	if (c >= 1) return c.toFixed(2) + "%";
+	if (c >= 0.01) return c.toFixed(3) + "%";
+	return c.toFixed(4) + "%";
+}
+function fmtDelay(ms) {
+	const s = Math.round(ms / 1000);
+	if (s < 120) return s + " s";
+	if (s < 7200) return Math.round(s / 60) + " min";
+	const h = s / 3600;
+	return (h < 48 ? (Math.round(h * 10) / 10) + " h" : Math.round(h / 24) + " days");
+}
+function fmtDate(ms) {
+	if (!ms) return "";
+	const d = new Date(ms);
+	return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+function ago(ms) {
+	if (!ms) return "";
+	const m = Math.round((Date.now() - ms) / 60000);
+	if (m < 1) return "just now";
+	if (m < 60) return m + " min ago";
+	if (m < 2880) return Math.round(m / 60) + " h ago";
+	return Math.round(m / 1440) + " days ago";
+}
+function tiersOf(m) { return m.t > 0 ? state.data.bossTiers : state.data.tiers; }
+/** @return {kills needed for the next tier, or 0 when Legendary} */
+function nextTierKills(m) { const tiers = tiersOf(m); const g = m.g || 0; return g < tiers.length ? tiers[g] : 0; }
+/** How far into the current tier the entry is, 0..1. */
+function tierProgress(m) {
+	const tiers = tiersOf(m); const g = m.g || 0; const k = m.k || 0;
+	if (g >= tiers.length) return 1;
+	const from = g === 0 ? 0 : tiers[g - 1];
+	return Math.max(0, Math.min(1, (k - from) / (tiers[g] - from)));
+}
+function displayName(m) { return m.n ? m.n : "? ? ?"; }
+function elementColor(e) { return e >= 0 && e < 6 ? ELEMENT_COLOR[e] : "var(--none)"; }
+
+/** A monster's portrait: its picture when there is one, otherwise the silhouette of its race. */
+function portrait(m, extraClass) {
+	const g = m.g || 0;
+	const cls = "portrait g" + g + (extraClass ? " " + extraClass : "");
+	const ring = TIER_COLOR[g];
+	if (g > 0 && m.img) {
+		return `<div class="${cls}" style="--ring:${ring}"><img src="/bestiary/img?id=${m.id}" alt="" loading="lazy"></div>`;
+	}
+	const symbol = RACE_SYMBOL[m.r] || "ETC";
+	if (g === 0) {
+		return `<div class="${cls}" style="--ring:${ring};--glow:#17171c"><svg viewBox="0 0 100 100" style="color:#1f1f26;--eye:#0b0b0e"><use href="#r-${symbol}"/></svg><div class="q">?</div></div>`;
+	}
+	const color = g >= 2 ? elementColor(m.e) : "var(--none)";
+	const glow = g >= 4 ? "rgba(242,201,76,0.35)" : g >= 2 && m.e >= 0 ? "color-mix(in srgb, " + color + " 30%, transparent)" : "#2a2a32";
+	const eye = m.t > 0 ? "#ff5a4a" : g >= 2 ? "#0b0b0f" : "#0b0b0f";
+	return `<div class="${cls}" style="--ring:${ring};--glow:${glow}"><svg viewBox="0 0 100 100" style="color:${color};--eye:${eye}"><use href="#r-${symbol}"/></svg></div>`;
+}
+
+function apiFetch(path) {
+	return fetch("/api/bestiary/" + path, { headers: { "Authorization": "Bearer " + state.token } });
+}
+function rememberToken(token) {
+	try { if (token) sessionStorage.setItem("bestiaryToken", token); else sessionStorage.removeItem("bestiaryToken"); } catch (e) { /* storage blocked */ }
+}
+function recalledToken() {
+	try { return sessionStorage.getItem("bestiaryToken"); } catch (e) { return null; }
+}
+function showGate(text) {
+	document.getElementById("loading").style.display = "none";
+	if (text) document.getElementById("gate-text").innerHTML = text;
+	document.getElementById("gate").classList.add("open");
+}
+
+// ---------------------------------------------------------------------------------------------
+// Loading
+// ---------------------------------------------------------------------------------------------
+
+async function load() {
+	const res = await apiFetch("collection");
+	if (res.status === 401) {
+		rememberToken(null);
+		showGate("This link has expired. Type <code>.bestiary</code> in game for a new one.");
+		return false;
+	}
+	if (!res.ok) {
+		showGate("The bestiary could not be opened (" + res.status + "). Try again in a moment.");
+		return false;
+	}
+	const data = await res.json();
+	state.data = data;
+	state.byId = new Map();
+	for (const m of data.monsters) state.byId.set(m.id, m);
+	for (const m of data.elsewhere) { m.elsewhere = true; state.byId.set(m.id, m); }
+	state.areaMonsters = data.areas.map(() => []);
+	for (const m of data.monsters) for (const a of (m.a || [])) if (state.areaMonsters[a]) state.areaMonsters[a].push(m);
+	return true;
+}
+
+async function loadMap() {
+	if (!state.mapPromise) {
+		state.mapPromise = fetch("/api/bestiary/map").then(r => r.ok ? r.json() : null).then(map => { state.map = map; return map; }).catch(() => null);
+	}
+	return state.mapPromise;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Header
+// ---------------------------------------------------------------------------------------------
+
+function renderHeader() {
+	const d = state.data;
+	const me = d.me;
+	document.getElementById("who").innerHTML = `<b>${esc(me.name)}</b>` + (me.online ? ` &middot; Lv. ${me.level} ${esc(me.cls || "")}` : " &middot; offline");
+	const pct = d.total ? d.found / d.total : 0;
+	const counts = [0, 0, 0, 0, 0];
+	for (const m of d.monsters) counts[m.g || 0]++;
+	const r = 25, c = 2 * Math.PI * r;
+	let html = `<div class="ring" title="${fmt(d.found)} of ${fmt(d.total)} monsters found"><svg viewBox="0 0 58 58"><circle cx="29" cy="29" r="${r}" fill="none" stroke="#1d1d24" stroke-width="5"/><circle cx="29" cy="29" r="${r}" fill="none" stroke="var(--gold)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${(pct * c).toFixed(1)} ${c.toFixed(1)}"/></svg><div class="pct">${Math.floor(pct * 100)}%</div></div>`;
+	html += `<div class="stat"><div class="label">Found</div><div class="value">${fmt(d.found)} <small>/ ${fmt(d.total)}</small></div></div>`;
+	html += `<div class="stat"><div class="label">Kills</div><div class="value">${fmtShort(d.kills)}</div></div>`;
+	html += `<div class="stat"><div class="label">Rank</div><div class="value">${d.rank ? "#" + fmt(d.rank) + ` <small>of ${fmt(d.hunters)}</small>` : "&mdash;"}</div></div>`;
+	html += `<div class="tiers">`;
+	for (let g = 1; g <= 4; g++) {
+		html += `<div class="tier-chip" style="border-color:color-mix(in srgb, ${TIER_COLOR[g]} 35%, #2c2618)"><div class="label" style="color:${TIER_COLOR[g]}">${esc(d.tierNames[g - 1])}</div><div class="value">${fmt(counts.slice(g).reduce((a, b) => a + b, 0))}</div></div>`;
+	}
+	html += `</div>`;
+	document.getElementById("summary").innerHTML = html;
+	const tab = document.getElementById("tab-elsewhere");
+	tab.style.display = d.elsewhere.length ? "" : "none";
+	document.getElementById("elsewhere-count").textContent = d.elsewhere.length || "";
+}
+
+// ---------------------------------------------------------------------------------------------
+// Collection
+// ---------------------------------------------------------------------------------------------
+
+function setupFilters() {
+	const d = state.data;
+	const region = document.getElementById("f-region");
+	d.regions.forEach((name, i) => region.insertAdjacentHTML("beforeend", `<option value="${i}">${esc(name)}</option>`));
+	const races = [...new Set(d.monsters.map(m => m.r))].sort((a, b) => (RACE_NAME[a] || a).localeCompare(RACE_NAME[b] || b));
+	const race = document.getElementById("f-race");
+	races.forEach(r => race.insertAdjacentHTML("beforeend", `<option value="${esc(r)}">${esc(RACE_NAME[r] || r)}</option>`));
+	fillAreas();
+
+	const bind = (id, key, event) => document.getElementById(id).addEventListener(event || "change", e => {
+		state.filters[key] = e.target.value;
+		if (key === "region") { state.filters.area = -1; fillAreas(); }
+		renderCollection();
+	});
+	bind("f-q", "q", "input");
+	bind("f-region", "region");
+	bind("f-area", "area");
+	bind("f-min", "min", "input");
+	bind("f-max", "max", "input");
+	bind("f-status", "status");
+	bind("f-kind", "kind");
+	bind("f-race", "race");
+	bind("f-sort", "sort");
+	document.getElementById("f-reset").addEventListener("click", () => {
+		state.filters = { q: "", region: -1, area: -1, min: "", max: "", status: "all", kind: "all", race: "all", sort: state.filters.sort };
+		syncFilterInputs();
+		renderCollection();
+	});
+}
+
+function fillAreas() {
+	const d = state.data;
+	const select = document.getElementById("f-area");
+	const region = Number(state.filters.region);
+	let html = `<option value="-1">Every hunting ground</option>`;
+	const areas = d.areas.filter(a => (region < 0 || a.r === region) && state.areaMonsters[a.id].length).sort((a, b) => a.r - b.r || a.lv - b.lv);
+	for (const a of areas) html += `<option value="${a.id}">${esc(a.n)}${region < 0 ? " (" + esc(d.regions[a.r]) + ")" : ""}</option>`;
+	select.innerHTML = html;
+	select.value = String(state.filters.area);
+}
+
+function syncFilterInputs() {
+	const f = state.filters;
+	document.getElementById("f-q").value = f.q;
+	document.getElementById("f-region").value = String(f.region);
+	fillAreas();
+	document.getElementById("f-min").value = f.min;
+	document.getElementById("f-max").value = f.max;
+	document.getElementById("f-status").value = f.status;
+	document.getElementById("f-kind").value = f.kind;
+	document.getElementById("f-race").value = f.race;
+	document.getElementById("f-sort").value = f.sort;
+}
+
+function matches(m) {
+	const f = state.filters;
+	const g = m.g || 0;
+	if (f.q) {
+		if (!m.n || m.n.toLowerCase().indexOf(f.q.toLowerCase()) < 0) return false;
+	}
+	if (Number(f.area) >= 0) { if (!(m.a || []).includes(Number(f.area))) return false; }
+	else if (Number(f.region) >= 0) { if (!(m.a || []).some(a => state.data.areas[a].r === Number(f.region))) return false; }
+	if (f.min && m.l < Number(f.min)) return false;
+	if (f.max && m.l > Number(f.max)) return false;
+	switch (f.status) {
+		case "missing": if (g > 0) return false; break;
+		case "found": if (g === 0) return false; break;
+		case "next": if (g === 0 || g >= 4) return false; break;
+		case "all": break;
+		default: if (g !== Number(f.status.substring(1))) return false;
+	}
+	if (f.kind === "ag") { if (!m.ag) return false; }
+	else if (f.kind !== "all" && m.t !== Number(f.kind)) return false;
+	if (f.race !== "all" && m.r !== f.race) return false;
+	return true;
+}
+
+function card(m) {
+	const g = m.g || 0;
+	const next = nextTierKills(m);
+	const meta = `Lv. ${m.l}` + (g > 0 ? " &middot; " + esc(RACE_NAME[m.r] || m.r) : "");
+	const count = g === 0 ? "Not found yet" : next ? `${fmt(m.k)} / ${fmt(next)}` : `${fmt(m.k)} kills`;
+	const crown = m.t > 0 ? `<svg class="crown" style="color:${m.t === 2 ? "#ff6b5a" : "var(--t4)"}"><use href="#i-crown"/></svg>` : "";
+	const aggro = m.ag ? `<svg class="aggro" title="Aggressive"><use href="#i-fang"/></svg>` : "";
+	return `<div class="card g${g}" data-id="${m.id}" title="${esc(m.n || "Not found yet")}">${crown}${aggro}${portrait(m)}<div class="name">${esc(displayName(m))}</div><div class="meta">${meta}</div><div class="bar"><i style="width:${(tierProgress(m) * 100).toFixed(1)}%;background:${TIER_COLOR[Math.min(4, g + 1)]}"></i></div><div class="count">${count}</div></div>`;
+}
+
+function sortMonsters(list) {
+	const s = state.filters.sort;
+	const byName = (a, b) => (a.n || "~").localeCompare(b.n || "~");
+	if (s === "level" || s === "ground") list.sort((a, b) => a.l - b.l || byName(a, b));
+	else if (s === "name") list.sort(byName);
+	else if (s === "kills") list.sort((a, b) => (b.k || 0) - (a.k || 0) || a.l - b.l);
+	else if (s === "recent") list.sort((a, b) => (b.f || 0) - (a.f || 0) || a.l - b.l);
+	else if (s === "close") list.sort((a, b) => remaining(a) - remaining(b) || a.l - b.l);
+	return list;
+}
+/** Kills left to the next tier, for "closest"; Legendary entries go last. */
+function remaining(m) { const next = nextTierKills(m); return next ? next - (m.k || 0) : Number.MAX_SAFE_INTEGER; }
+
+function renderCollection() {
+	const d = state.data;
+	const list = d.monsters.filter(matches);
+	const box = document.getElementById("cards");
+	document.getElementById("f-count").textContent = `${fmt(list.length)} monster${list.length === 1 ? "" : "s"} shown, ${fmt(list.filter(m => m.g).length)} found`;
+	renderNear();
+	if (!list.length) {
+		box.innerHTML = `<div class="empty">No monster matches these filters.</div>`;
+		return;
+	}
+	let html = "";
+	if (state.filters.sort === "ground") {
+		const shown = new Set(list.map(m => m.id));
+		const areaFilter = Number(state.filters.area);
+		const regionFilter = Number(state.filters.region);
+		const order = d.areas.filter(a => (areaFilter < 0 || a.id === areaFilter) && (regionFilter < 0 || a.r === regionFilter))
+			.sort((a, b) => a.r - b.r || a.lv - b.lv || a.n.localeCompare(b.n));
+		for (const area of order) {
+			const all = state.areaMonsters[area.id];
+			const inArea = sortMonsters(all.filter(m => shown.has(m.id)));
+			if (!inArea.length) continue;
+			const found = all.filter(m => m.g).length;
+			html += `<div class="group"><h3>${esc(area.n)} <span class="region">${esc(d.regions[area.r])} &middot; avg. Lv. ${area.lv}</span><span class="done${found === all.length ? " full" : ""}">${found} / ${all.length} found</span></h3><div class="grid">${inArea.map(card).join("")}</div></div>`;
+		}
+	} else {
+		html = `<div class="grid">${sortMonsters(list).slice(0, 600).map(card).join("")}</div>`;
+		if (list.length > 600) html += `<p class="note">The first 600 are shown. Narrow the filters to see the rest.</p>`;
+	}
+	box.innerHTML = html;
+}
+
+/** "Almost there": the entries with the fewest kills left to their next tier. */
+function renderNear() {
+	const list = state.data.monsters.filter(m => m.g > 0 && m.g < 4).sort((a, b) => remaining(a) - remaining(b)).slice(0, 8);
+	const box = document.getElementById("near");
+	if (!list.length) { box.innerHTML = ""; return; }
+	let html = `<h3>Almost there</h3><div class="near-list">`;
+	for (const m of list) {
+		html += `<div class="near-item" data-id="${m.id}">${portrait(m)}<div><div class="n">${esc(m.n)}</div><div class="s">${fmt(remaining(m))} more to <span style="color:${TIER_COLOR[m.g + 1]}">${esc(state.data.tierNames[m.g])}</span></div></div></div>`;
+	}
+	box.innerHTML = html + `</div>`;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Hunting grounds
+// ---------------------------------------------------------------------------------------------
+
+function renderGrounds() {
+	const d = state.data;
+	let html = "";
+	d.regions.forEach((name, r) => {
+		const areas = d.areas.filter(a => a.r === r && state.areaMonsters[a.id].length).sort((a, b) => a.lv - b.lv || a.n.localeCompare(b.n));
+		if (!areas.length) return;
+		const unique = new Map();
+		for (const a of areas) for (const m of state.areaMonsters[a.id]) unique.set(m.id, m);
+		const all = [...unique.values()];
+		const found = all.filter(m => m.g).length;
+		const legendary = all.filter(m => m.g >= 4).length;
+		html += `<div class="region-box"><h2>${esc(name)}<span>${found} / ${all.length}</span></h2><div class="sub">${areas.length} hunting ground${areas.length === 1 ? "" : "s"} &middot; ${legendary} legendary</div><div class="bigbar"><i style="width:${(found / all.length * 100).toFixed(1)}%"></i></div>`;
+		for (const a of areas) {
+			const ms = state.areaMonsters[a.id];
+			const f = ms.filter(m => m.g).length;
+			html += `<div class="ground${f === ms.length ? " full" : ""}" data-area="${a.id}" data-region="${r}"><div class="n">${esc(a.n)}<small>Lv. ${a.lv}</small></div><div class="pb"><i style="width:${(f / ms.length * 100).toFixed(1)}%"></i></div><div class="v">${f} / ${ms.length}</div></div>`;
+		}
+		html += `</div>`;
+	});
+	document.getElementById("regions").innerHTML = html;
+}
+
+function showArea(areaId) {
+	const area = state.data.areas[areaId];
+	if (!area) return;
+	state.filters = { q: "", region: area.r, area: areaId, min: "", max: "", status: "all", kind: "all", race: "all", sort: "ground" };
+	syncFilterInputs();
+	closeDetail();
+	switchTab("collection");
+	renderCollection();
+	window.scrollTo(0, 0);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Hall of hunters
+// ---------------------------------------------------------------------------------------------
+
+async function renderHunters() {
+	const box = document.getElementById("hunters");
+	if (!state.hunters) {
+		box.innerHTML = `<div class="loading">Counting the hunters...</div>`;
+		const res = await apiFetch("ranking");
+		if (!res.ok) { box.innerHTML = `<div class="empty">The ranking could not be read.</div>`; return; }
+		state.hunters = await res.json();
+	}
+	const h = state.hunters;
+	if (!h.top.length) {
+		box.innerHTML = `<div class="empty">No hunter is ranked yet. The ranking is counted every few minutes.</div>`;
+		return;
+	}
+	const row = x => `<tr class="${x.me ? "me" : ""}"><td class="rank">${x.rank}</td><td>${esc(x.name)}<div class="cls">Lv. ${x.level} ${esc(x.cls)}</div></td><td class="found">${fmt(x.found)} <span class="cls">/ ${fmt(h.total)}</span><div class="pb"><i style="width:${(h.total ? x.found / h.total * 100 : 0).toFixed(1)}%"></i></div></td><td>${fmtShort(x.kills)}</td></tr>`;
+	let html = `<div class="hunters"><table><tr><th>#</th><th>Hunter</th><th>Monsters found</th><th>Kills</th></tr>${h.top.map(row).join("")}`;
+	if (h.me) html += `<tr><td colspan="4" style="text-align:center;color:var(--dim)">&middot; &middot; &middot;</td></tr>` + row(h.me);
+	html += `</table></div><p class="note">${fmt(h.hunters)} hunters &middot; counted ${ago(h.time)}</p>`;
+	box.innerHTML = html;
+}
+
+// ---------------------------------------------------------------------------------------------
+// One monster
+// ---------------------------------------------------------------------------------------------
+
+async function openDetail(id) {
+	const summary = state.byId.get(id);
+	if (!summary) return;
+	state.detailId = id;
+	state.detailWorld = false;
+	const panel = document.getElementById("detail");
+	panel.innerHTML = `<button class="close" id="d-close" title="Close">&times;</button><div class="d-head">${portrait(summary)}<h2>${esc(displayName(summary))}</h2></div><div class="loading">Reading...</div>`;
+	panel.classList.add("open");
+	document.getElementById("shade").classList.add("open");
+	panel.scrollTop = 0;
+	const [res] = await Promise.all([apiFetch("monster?id=" + id), loadMap()]);
+	if (state.detailId !== id) return;
+	if (!res.ok) {
+		panel.querySelector(".loading").textContent = res.status === 401 ? "This link has expired. Type .bestiary in game for a new one." : "This monster could not be read.";
+		return;
+	}
+	state.detail = await res.json();
+	renderDetail();
+}
+
+function closeDetail() {
+	state.detailId = 0;
+	document.getElementById("detail").classList.remove("open");
+	document.getElementById("shade").classList.remove("open");
+}
+
+function lockedBox(m, tier, what) {
+	const need = m.tiers[tier - 1];
+	const left = need - m.kills;
+	return `<div class="locked"><svg><use href="#i-lock"/></svg><div>Reach <b style="color:${TIER_COLOR[tier]}">${esc(state.data.tierNames[tier - 1])}</b> to learn ${what}: kill <b>${fmt(left)}</b> more (${fmt(m.kills)} / ${fmt(need)}).</div></div>`;
+}
+
+function renderDetail() {
+	const m = state.detail;
+	const summary = state.byId.get(m.id);
+	const tierNames = state.data.tierNames;
+	const p = { id: m.id, g: m.tier, r: m.r, t: m.t, e: m.attackElement, img: summary.img, n: m.n };
+	let html = `<button class="close" id="d-close" title="Close">&times;</button>`;
+
+	// Head: portrait, name, tags, tier track.
+	html += `<div class="d-head">${portrait(p)}<h2>${esc(m.n || "Not found yet")}</h2>`;
+	if (m.title && KIND_NAME.indexOf(m.title) < 0) html += `<div class="title">${esc(m.title)}</div>`;
+	html += `<div class="tags"><span class="tag">Lv. ${m.l}</span>`;
+	if (m.tier > 0) html += `<span class="tag">${esc(RACE_NAME[m.r] || m.r)}</span>`;
+	if (m.t > 0) html += `<span class="tag gold">${KIND_NAME[m.t]}</span>`;
+	if (m.tier > 0) html += m.aggressive ? `<span class="tag red">Aggressive</span>` : `<span class="tag green">Passive</span>`;
+	if (!m.inCollection) html += `<span class="tag">Found elsewhere</span>`;
+	html += `</div><div class="track">`;
+	for (let g = 1; g <= 4; g++) {
+		const from = g === 1 ? 0 : m.tiers[g - 2];
+		const fill = Math.max(0, Math.min(1, (m.kills - from) / (m.tiers[g - 1] - from)));
+		html += `<div class="step${m.tier >= g ? " on" : ""}"><div class="pip"><i style="width:${(fill * 100).toFixed(1)}%;background:${TIER_COLOR[g]}"></i></div><div class="lbl">${esc(tierNames[g - 1])}<small>${fmt(m.tiers[g - 1])}</small></div></div>`;
+	}
+	html += `</div><div class="d-kills">`;
+	if (m.kills) html += `<b>${fmt(m.kills)}</b> killed &middot; first ${fmtDate(m.first)} &middot; last ${ago(m.last)}`;
+	else html += `Not found yet: kill one to add it to your bestiary.`;
+	html += `</div></div>`;
+
+	// Vitals.
+	if (m.tier >= 1) {
+		html += `<div class="section"><h4>Vitals${m.live ? "" : `<span class="hint">template base values</span>`}</h4><div class="kv">`;
+		html += kv("HP", fmt(m.hp)) + kv("MP", fmt(m.mp)) + kv("Attack", WEAPON_NAME[m.weapon] || m.weapon || "-");
+		html += kv("EXP", fmt(m.exp)) + kv("SP", fmt(m.sp));
+		if (m.respawn && m.respawn[1] > 0) html += kv("Respawn", m.respawn[0] === m.respawn[1] ? fmtDelay(m.respawn[0]) : fmtDelay(m.respawn[0]) + " - " + fmtDelay(m.respawn[1]));
+		else if (m.spawns !== undefined) html += kv("Respawn", "-");
+		if (m.spawns !== undefined) html += kv("In the world", fmt(m.spawns));
+		html += `</div>`;
+		html += sizeComparison(m);
+		html += `</div>`;
+	}
+
+	// Combat: stats, elements, skills.
+	html += `<div class="section"><h4>Combat</h4>`;
+	if (m.tier >= 2) {
+		const s = m.stats;
+		html += `<div class="kv">` + kv("P. Atk.", fmt(s.pAtk)) + kv("M. Atk.", fmt(s.mAtk)) + kv("Atk. Spd.", fmt(s.pAtkSpd)) + kv("P. Def.", fmt(s.pDef)) + kv("M. Def.", fmt(s.mDef)) + kv("Cast Spd.", fmt(s.mAtkSpd));
+		html += (s.accuracy ? kv("Accuracy", fmt(s.accuracy)) : "") + (s.evasion ? kv("Evasion", fmt(s.evasion)) : "") + kv("Critical", fmt(s.critical)) + kv("Speed", fmt(s.run)) + kv("Range", fmt(s.range)) + `</div>`;
+		html += `<div class="sub-h">Elements</div><div class="server-line">Attacks with ${m.attackElement >= 0 ? `<b style="color:${elementColor(m.attackElement)}">${ELEMENTS[m.attackElement]} ${m.attackElementValue}</b>` : "no element"}</div>`;
+		html += elementBars(m.defenseElements);
+		html += `<div class="sub-h">Skills <span style="color:var(--dim);letter-spacing:0">${m.skills.length || ""}</span></div>`;
+		html += m.skills.length ? `<div class="skills">${m.skills.map(k => `<span class="skill${k.p ? " p" : ""}${k.d ? " d" : ""}" title="${k.p ? "Passive" : k.d ? "Debuff" : "Active"}">${esc(k.n)} <small>${k.lv}</small></span>`).join("")}</div>` : `<div class="server-line">No skills.</div>`;
+	} else html += lockedBox(m, 2, "its combat stats, elements and skills");
+	html += `</div>`;
+
+	// Drops.
+	html += `<div class="section"><h4>Drops &amp; Spoils${m.tier >= 3 ? `<span class="hint">at the server's rates</span>` : ""}</h4>`;
+	if (m.tier >= 3) {
+		html += dropTable(m.drops, "Drops") + dropTable(m.spoils, "Spoil");
+		if (!m.drops.length && !m.spoils.length) html += `<div class="server-line">It drops nothing.</div>`;
+	} else html += lockedBox(m, 3, "its drops and spoils");
+	html += `</div>`;
+
+	// Habitat.
+	if (m.a || m.points) {
+		html += `<div class="section"><h4>Habitat</h4>`;
+		if (m.a && m.a.length) html += `<div class="areas">${m.a.map(a => `<button data-area="${a}">${esc(state.data.areas[a].n)} <span style="color:var(--dim)">&middot; ${esc(state.data.regions[state.data.areas[a].r])}</span></button>`).join("")}</div>`;
+		if (m.points && m.points.length) html += `<div class="map" id="d-map">${mapSvg(m)}<div class="tools"><button id="d-world">${state.detailWorld ? "Zoom in" : "Whole world"}</button></div></div>`;
+		html += `</div>`;
+	}
+
+	// Server.
+	if (m.server) {
+		const s = m.server;
+		html += `<div class="section"><h4>Across the server</h4><div class="server-line">`;
+		if (s.found) {
+			html += `<b>${fmt(s.kills)}</b> killed by <b>${fmt(s.found)}</b> hunter${s.found === 1 ? "" : "s"}`;
+			if (s.hunters) html += ` (found by ${Math.max(1, Math.round(s.found / s.hunters * 100))}% of hunters)`;
+			html += `.`;
+			if (s.firstBy) html += `<br>First found by <b>${esc(s.firstBy)}</b> on ${fmtDate(s.firstAt)}.`;
+		} else html += s.time ? `No hunter had found it at the last count.` : `The server numbers are being counted.`;
+		if (s.time) html += `<br><span style="color:var(--dim);font-size:11px">Counted ${ago(s.time)}.</span>`;
+		html += `</div></div>`;
+	}
+
+	const panel = document.getElementById("detail");
+	panel.innerHTML = html;
+}
+
+function kv(k, v) { return `<div><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`; }
+
+function elementBars(values) {
+	const max = Math.max(100, ...values.map(v => Math.abs(v)));
+	let html = `<div class="elements">`;
+	values.forEach((v, i) => {
+		const h = Math.min(100, Math.abs(v) / max * 100);
+		html += `<div class="el"><div class="bar${v < 0 ? " neg" : ""}"><i style="height:${h.toFixed(0)}%;background:${ELEMENT_COLOR[i]}"></i></div><div class="val">${v > 0 ? "+" : ""}${v}</div>${ELEMENTS[i]}</div>`;
+	});
+	return html + `</div><div class="size-note">Defense against each element (negative is a weakness).</div>`;
+}
+
+function dropTable(list, title) {
+	if (!list || !list.length) return "";
+	const sorted = list.slice().sort((a, b) => b.c - a.c);
+	let html = `<div class="sub-h">${title}</div><table class="drops"><tr><th>Item</th><th class="c">Amount</th><th class="c">Chance</th></tr>`;
+	for (const d of sorted) {
+		const grade = d.g && d.g !== "NONE" ? `<span class="grade ${d.g}">${d.g}</span>` : `<span class="grade">&ndash;</span>`;
+		html += `<tr class="k-${d.k}"><td>${grade}${esc(d.n)}${d.gr ? `<span class="grp" title="Only one item of a group drops at a time">group ${d.gr}</span>` : ""}</td><td class="c">${d.mn === d.mx ? fmt(d.mn) : fmt(d.mn) + "-" + fmt(d.mx)}</td><td class="c">${fmtChance(d.c)}</td></tr>`;
+	}
+	return html + `</table>`;
+}
+
+/** The monster's height next to a human's. */
+function sizeComparison(m) {
+	if (!m.height) return "";
+	const ratio = m.height / HUMAN_HEIGHT;
+	const maxPx = 96;
+	const scale = maxPx / Math.max(HUMAN_HEIGHT, m.height);
+	const humanPx = Math.max(10, HUMAN_HEIGHT * scale);
+	const monsterPx = Math.max(10, m.height * scale);
+	const symbol = RACE_SYMBOL[m.r] || "ETC";
+	const color = m.tier >= 2 ? elementColor(m.attackElement) : "var(--none)";
+	let note = ratio >= 1.15 ? `${ratio.toFixed(ratio >= 10 ? 0 : 1)} times as tall as a human` : ratio <= 0.85 ? `${Math.round(ratio * 100)}% of a human's height` : `about as tall as a human`;
+	return `<div class="sub-h">Size</div><div class="size"><div class="fig"><svg width="${(humanPx / 3).toFixed(0)}" height="${humanPx.toFixed(0)}" viewBox="0 0 20 60" preserveAspectRatio="none" style="color:#6f6a5e"><use href="#i-human"/></svg><span>Human</span></div><div class="fig"><svg width="${monsterPx.toFixed(0)}" height="${monsterPx.toFixed(0)}" viewBox="0 0 100 100" style="color:${color};--eye:#0b0b0f"><use href="#r-${symbol}"/></svg><span>${esc(m.n || "?")}</span></div></div><div class="size-note">${note} (height ${fmt(m.height)}, width ${fmt(m.radius * 2)}).</div>`;
+}
+
+/** Where the monster spawns, on the land of every spawn point of the collection, with the towns. */
+function mapSvg(m) {
+	const pts = m.points;
+	let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+	const land = state.map ? state.map.land : [];
+	const cell = state.map ? state.map.cell : 4096;
+	if (state.detailWorld) {
+		for (const c of land) { minX = Math.min(minX, c[0] * cell); minY = Math.min(minY, c[1] * cell); maxX = Math.max(maxX, (c[0] + 1) * cell); maxY = Math.max(maxY, (c[1] + 1) * cell); }
+		for (const t of TOWNS) { minX = Math.min(minX, t[1]); minY = Math.min(minY, t[2]); maxX = Math.max(maxX, t[1]); maxY = Math.max(maxY, t[2]); }
+	}
+	for (const p of pts) { minX = Math.min(minX, p[0]); minY = Math.min(minY, p[1]); maxX = Math.max(maxX, p[0]); maxY = Math.max(maxY, p[1]); }
+	// At least 60,000 units across, 4:3, with a margin.
+	let w = Math.max(maxX - minX, 1), h = Math.max(maxY - minY, 1);
+	const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+	w = Math.max(w * 1.25, h * 1.25 * 4 / 3, 60000);
+	h = w * 3 / 4;
+	const x0 = cx - w / 2, y0 = cy - h / 2;
+	const inView = (x, y, pad) => x >= x0 - pad && x <= x0 + w + pad && y >= y0 - pad && y <= y0 + h + pad;
+	let maxN = 1;
+	for (const c of land) maxN = Math.max(maxN, c[2]);
+	let svg = `<svg viewBox="${x0.toFixed(0)} ${y0.toFixed(0)} ${w.toFixed(0)} ${h.toFixed(0)}" preserveAspectRatio="xMidYMid meet">`;
+	svg += `<defs><filter id="land-soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="${(cell * 0.55).toFixed(0)}"/></filter></defs>`;
+	svg += `<g fill="#d9b64c" filter="url(#land-soft)">`;
+	for (const c of land) {
+		const x = c[0] * cell, y = c[1] * cell;
+		if (!inView(x, y, cell)) continue;
+		const a = 0.12 + 0.3 * Math.min(1, Math.sqrt(c[2] / maxN) * 2);
+		svg += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" opacity="${a.toFixed(3)}"/>`;
+	}
+	svg += `</g>`;
+	const font = w / 34;
+	for (const t of TOWNS) {
+		if (!inView(t[1], t[2], w * 0.05)) continue;
+		svg += `<g><rect x="${t[1] - font * 0.3}" y="${t[2] - font * 0.3}" width="${font * 0.6}" height="${font * 0.6}" transform="rotate(45 ${t[1]} ${t[2]})" fill="#f0e6c8"/><text x="${t[1] + font * 0.7}" y="${t[2] + font * 0.35}" font-size="${font.toFixed(0)}" fill="#c9c2ad" font-family="Georgia, serif" paint-order="stroke" stroke="#08080b" stroke-width="${(font / 5).toFixed(0)}">${esc(t[0])}</text></g>`;
+	}
+	const color = m.tier >= 2 ? elementColor(m.attackElement) : "#ff7a45";
+	const r = w / 150;
+	svg += `<g fill="${color}">`;
+	for (const p of pts) svg += `<circle cx="${p[0]}" cy="${p[1]}" r="${(r * 2.6).toFixed(0)}" opacity="0.18"/><circle cx="${p[0]}" cy="${p[1]}" r="${r.toFixed(0)}"/>`;
+	svg += `</g></svg>`;
+	return svg;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Tabs and events
+// ---------------------------------------------------------------------------------------------
+
+function switchTab(view) {
+	state.tab = view;
+	for (const b of document.querySelectorAll(".tab")) b.classList.toggle("active", b.dataset.view === view);
+	for (const v of document.querySelectorAll(".view")) v.classList.toggle("active", v.id === "view-" + view);
+	if (view === "grounds") renderGrounds();
+	else if (view === "hunters") renderHunters();
+	else if (view === "elsewhere") document.getElementById("elsewhere").innerHTML = state.data.elsewhere.slice().sort((a, b) => a.l - b.l).map(card).join("");
+}
+
+function bindEvents() {
+	document.getElementById("tabs").addEventListener("click", e => {
+		const b = e.target.closest(".tab");
+		if (b) switchTab(b.dataset.view);
+	});
+	document.addEventListener("click", e => {
+		const target = e.target.closest("[data-id]");
+		if (target && !e.target.closest(".detail")) { openDetail(Number(target.dataset.id)); return; }
+		const area = e.target.closest("[data-area]");
+		if (area) { showArea(Number(area.dataset.area)); return; }
+		if (e.target.closest("#d-close")) { closeDetail(); return; }
+		if (e.target.closest("#d-world")) {
+			state.detailWorld = !state.detailWorld;
+			const map = document.getElementById("d-map");
+			if (map) map.innerHTML = mapSvg(state.detail) + `<div class="tools"><button id="d-world">${state.detailWorld ? "Zoom in" : "Whole world"}</button></div>`;
+		}
+	});
+	document.getElementById("shade").addEventListener("click", closeDetail);
+	document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetail(); });
+}
+
+(async function main() {
+	const params = new URLSearchParams(window.location.search);
+	state.token = params.get("token") || recalledToken();
+	const monster = Number(params.get("monster") || 0);
+	if (params.has("token")) {
+		// Out of the address bar, so it doesn't end up in history, bookmarks or a copied link.
+		params.delete("token");
+		const rest = params.toString();
+		try { history.replaceState(null, "", window.location.pathname + (rest ? "?" + rest : "")); } catch (e) { /* not essential */ }
+	}
+	if (!state.token) { showGate(); return; }
+	let ok = false;
+	try { ok = await load(); } catch (e) { showGate("The bestiary could not be reached. Try again in a moment."); return; }
+	if (!ok) return;
+	rememberToken(state.token);
+	document.getElementById("loading").style.display = "none";
+	renderHeader();
+	if (window.matchMedia && window.matchMedia("(max-width: 860px)").matches) document.getElementById("filters").open = false;
+	setupFilters();
+	bindEvents();
+	renderCollection();
+	if (monster && state.byId.has(monster)) openDetail(monster);
+})();
+</script>
+</body>
+</html>

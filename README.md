@@ -305,6 +305,17 @@ When a raid boss or grand boss dies, everyone who took part (hit it or its minio
 - `.raidlog` (or `.rblog`) opens the last one again. A fight is forgotten after 5 minutes without anything happening to the boss.
 - Each player has their own entry in the fight with its own lock, so a big raid doesn't make players wait on each other, and the windows are built after the kill, away from the combat threads. Settings in `config/Custom/CombatLog.ini`.
 
+### Bestiary
+
+Every monster a character kills goes into its bestiary, a collection on the web page of the passive tree server. `.bestiary` sends the link (with a monster targeted, the page opens on it). Monsters never killed show as a dark silhouette with their level and where they live, so the page is also the list of what is left to find.
+
+- **Collection**: the monsters spawned in the world (spawn files, raid bosses, grand bosses), grouped by hunting ground. Each spawn file is a hunting ground and its folder the region, so `Dion/TanorCanyon.xml` is Tanor Canyon, in Dion. Filters cover name, region, hunting ground, level, tier, kind (raid, grand, aggressive) and race. "Almost there" lists the entries closest to their next tier. Monsters met only in instances or quests are kept under "Found Elsewhere" and don't count toward completion.
+- **Tiers**: each entry goes from Discovered to Studied, Mastered and Legendary as more of that monster die (1 / 50 / 200 / 1000 kills, 1 / 3 / 5 / 10 for bosses). Each tier shows more of it: at Discovered its name, portrait, HP and MP, EXP and SP, respawn, size and habitat; at Studied its combat stats, elements and skills; at Mastered its drops and spoils, with their chances at the server's rates. A Legendary entry gets a gold frame. Discoveries and new tiers are announced in chat and on screen, with a firework from Studied on.
+- **Monster page**: a portrait of its race (tinted with its element once studied), a size comparison with a human, the stats read from one of its kind standing in the world (passives such as HP Increase included), and a map of where it spawns over the land of every spawn point, with the towns. A picture in `data/html/custom/bestiary/<npc id>.png` (or `.jpg`, `.webp`, `.gif`) replaces the portrait of that monster.
+- **Server-wide**: how many of a monster died, how many hunters found it, who found it first and when, and the Hall of Hunters: the characters who found the most monsters, with your own rank.
+- **Kills**: a kill counts for the player who made it (or whose summon did) and for the party members near it. Only kills that give EXP count, so fake players and npcs fighting each other never do.
+- Kills are kept in memory and written in batches every minute, at logout and at shutdown (table `character_bestiary`, created at startup). The page also works after logging off, until its link expires. Settings in `config/Custom/Bestiary.ini`.
+
 ### Performers
 
 Champion Medals from champions teach every class the songs and dances, so the Swordsinger and Bladedancer lines get what a medal can't give: auras that only a performer can keep up, a combat stance each, a 3rd class finale, and better songs and dances of their own. The Swordsinger line keeps the party standing; the Bladedancer line tears the enemy down.
@@ -745,7 +756,10 @@ This program is free software, licensed under the **GNU General Public License, 
 
 ## Recent Updates
 
-Changes from 28 September – 15 October 2026.
+Changes from 28 September – 16 October 2026.
+
+### Bestiary
+- **New**: every monster a character kills fills its bestiary, a collection on the web page of the passive tree server (`.bestiary`). Entries go from Discovered to Legendary with more kills, each tier showing more of the monster (stats, elements and skills, then drops), with a portrait, a size comparison, a habitat map, server-wide numbers and a ranking of hunters. See [Bestiary](#bestiary).
 
 ### Raid Log
 - **New**: when a raid boss dies, everyone who fought it gets a log: damage ranking with shares and damage per second, healers and tanks, parties, and their own skills. `.raidlog` opens it again. See [Raid Log](#raid-log).

@@ -1,5 +1,6 @@
 package custom.PassiveSkillTree;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.InputStream;
@@ -21,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
+import java.util.zip.GZIPOutputStream;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -71,6 +73,7 @@ import org.l2jmobius.gameserver.model.skill.Skill;
  * <li>POST /api/passivetree/admin/save (JSON: version, dryRun, nodes) - checks the tree, and unless dryRun, writes the files (after a backup) and makes the tree live</li>
  * <li>POST /api/passivetree/admin/reload - loads the files again, after they were edited by hand</li>
  * </ul>
+ * Other pages served from here register their own paths with {@link #addRoute}: the bestiary ({@code custom.Bestiary.BestiaryWeb}).
  */
 public class PassiveTreeApiServer
 {
@@ -144,10 +147,28 @@ public class PassiveTreeApiServer
 		}
 	}
 	
+	/** What answers one path. Public so other web pages (the bestiary) can register their own paths on this server. */
 	@FunctionalInterface
-	private interface Handler
+	public interface Handler
 	{
 		void handle(HttpExchange exchange) throws IOException;
+	}
+	
+	/**
+	 * Lets another page (the bestiary) answer a path on this server, with the same checks as the tree's own paths.
+	 * @param path the path, e.g. /api/bestiary/collection
+	 * @param method GET or POST
+	 * @param stateChanging {@code true} if the request changes something (it must then come from this server's own pages)
+	 * @param handler what answers it
+	 */
+	public void addRoute(String path, String method, boolean stateChanging, Handler handler)
+	{
+		if (server == null)
+		{
+			LOGGER.warning("PassiveTreeApiServer: not running, " + path + " is not served.");
+			return;
+		}
+		route(path, method, stateChanging, handler);
 	}
 	
 	/**
@@ -453,6 +474,46 @@ public class PassiveTreeApiServer
 		}
 	}
 	
+	/**
+	 * @param page a page served next to the planner, e.g. bestiary.html
+	 * @return its address, next to the planner page (PassiveTreeWebBaseUrl)
+	 */
+	public String getPageUrl(String page)
+	{
+		try
+		{
+			return URI.create(PassiveTreeConfig.WEB_BASE_URL).resolve(page).toString();
+		}
+		catch (IllegalArgumentException e)
+		{
+			return "http://127.0.0.1:" + PassiveTreeConfig.WEB_PORT + "/" + page;
+		}
+	}
+	
+	/**
+	 * For pages that only need to know whose they are, online or not, on any class (the bestiary): the character named by the player token in the Authorization header.
+	 * @param exchange the request
+	 * @return the character id, or -1 after the error answer was sent
+	 * @throws IOException if the answer can't be sent
+	 */
+	public int authenticateCharacter(HttpExchange exchange) throws IOException
+	{
+		final String header = exchange.getRequestHeaders().getFirst("Authorization");
+		if ((header == null) || !header.regionMatches(true, 0, "Bearer ", 0, 7))
+		{
+			sendText(exchange, 401, "application/json", "{\"error\":\"missing token\"}");
+			return -1;
+		}
+		
+		final int[] verified = verifyToken(header.substring(7).trim());
+		if (verified == null)
+		{
+			sendText(exchange, 401, "application/json", "{\"error\":\"this link has expired - use the command in game again\"}");
+			return -1;
+		}
+		return verified[0];
+	}
+	
 	/** @return the GM's character id if this is a valid, unexpired admin token, otherwise -1 */
 	private int verifyAdminToken(String token)
 	{
@@ -517,7 +578,7 @@ public class PassiveTreeApiServer
 		sendPage(exchange, HTML_FILE);
 	}
 	
-	private void sendPage(HttpExchange exchange, Path file) throws IOException
+	public void sendPage(HttpExchange exchange, Path file) throws IOException
 	{
 		if (!Files.exists(file))
 		{
@@ -1077,11 +1138,49 @@ public class PassiveTreeApiServer
 		exchange.getResponseHeaders().add("X-Frame-Options", "DENY");
 	}
 	
-	private void sendText(HttpExchange exchange, int status, String contentType, String body) throws IOException
+	public void sendText(HttpExchange exchange, int status, String contentType, String body) throws IOException
+	{
+		sendBytes(exchange, status, contentType, body.getBytes(StandardCharsets.UTF_8));
+	}
+	
+	/**
+	 * Sends JSON, compressed when the browser takes gzip and it is worth it (the bestiary sends a few hundred KB).
+	 * @param exchange the request
+	 * @param status the HTTP status
+	 * @param json the body
+	 * @throws IOException if the answer can't be sent
+	 */
+	public void sendJson(HttpExchange exchange, int status, String json) throws IOException
+	{
+		final byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+		final String accepted = exchange.getRequestHeaders().getFirst("Accept-Encoding");
+		if ((bytes.length < 1024) || (accepted == null) || !accepted.toLowerCase().contains("gzip"))
+		{
+			sendBytes(exchange, status, "application/json", bytes);
+			return;
+		}
+		
+		final ByteArrayOutputStream compressed = new ByteArrayOutputStream(bytes.length / 4);
+		try (GZIPOutputStream gzip = new GZIPOutputStream(compressed))
+		{
+			gzip.write(bytes);
+		}
+		exchange.getResponseHeaders().add("Content-Encoding", "gzip");
+		exchange.getResponseHeaders().add("Vary", "Accept-Encoding");
+		sendBytes(exchange, status, "application/json", compressed.toByteArray());
+	}
+	
+	/**
+	 * @param exchange the request
+	 * @param status the HTTP status
+	 * @param contentType the type of the body
+	 * @param bytes the body
+	 * @throws IOException if the answer can't be sent
+	 */
+	public void sendBytes(HttpExchange exchange, int status, String contentType, byte[] bytes) throws IOException
 	{
 		exchange.getResponseHeaders().add("Content-Type", contentType);
 		addSecurityHeaders(exchange);
-		final byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
 		exchange.sendResponseHeaders(status, bytes.length);
 		try (OutputStream os = exchange.getResponseBody())
 		{
@@ -1090,7 +1189,7 @@ public class PassiveTreeApiServer
 	}
 	
 	/** The query string plus, for a POST, the form-encoded body (name=value&name=value). Never the token: that only travels in the Authorization header. */
-	private Map<String, String> readParams(HttpExchange exchange) throws IOException
+	public Map<String, String> readParams(HttpExchange exchange) throws IOException
 	{
 		final Map<String, String> params = new HashMap<>();
 		addParams(params, exchange.getRequestURI().getRawQuery());
