@@ -23,7 +23,7 @@ import java.util.Set;
 import org.l2jmobius.commons.util.ConfigReader;
 
 /**
- * The bestiary: every monster a character has killed, collected on a web page (see {@link org.l2jmobius.gameserver.managers.BestiaryManager}).
+ * The bestiary: every monster an account's characters have killed, collected on a web page, and the drop and EXP bonuses it gives (see {@link org.l2jmobius.gameserver.managers.BestiaryManager}).
  */
 public class BestiaryConfig
 {
@@ -56,6 +56,9 @@ public class BestiaryConfig
 	public static int STORE_INTERVAL;
 	public static int SERVER_STATS_INTERVAL;
 	public static int RANKING_SIZE;
+	public static int[] DROP_BONUS;
+	public static int[] BOSS_DROP_BONUS;
+	public static int[] REGION_EXP_BONUS;
 
 	public static void load()
 	{
@@ -88,6 +91,27 @@ public class BestiaryConfig
 		STORE_INTERVAL = Math.max(10, config.getInt("BestiaryStoreInterval", 60));
 		SERVER_STATS_INTERVAL = Math.max(1, config.getInt("BestiaryServerStatsInterval", 10));
 		RANKING_SIZE = Math.max(5, Math.min(100, config.getInt("BestiaryRankingSize", 20)));
+		DROP_BONUS = readBonuses(config.getString("BestiaryDropBonus", "0,10,25,50"), new int[]
+		{
+			0,
+			10,
+			25,
+			50
+		});
+		BOSS_DROP_BONUS = readBonuses(config.getString("BestiaryBossDropBonus", "0,5,10,20"), new int[]
+		{
+			0,
+			5,
+			10,
+			20
+		});
+		REGION_EXP_BONUS = readBonuses(config.getString("BestiaryRegionExpBonus", "100,167,233,300"), new int[]
+		{
+			100,
+			167,
+			233,
+			300
+		});
 	}
 
 	/**
@@ -116,6 +140,34 @@ public class BestiaryConfig
 			return defaults;
 		}
 		return tiers;
+	}
+
+	/**
+	 * @param value a bonus (percent) per tier, comma separated, Discovered first
+	 * @param defaults the bonuses to use when the value can't be read
+	 * @return one bonus per tier, none below 0
+	 */
+	private static int[] readBonuses(String value, int[] defaults)
+	{
+		final String[] parts = value.split(",");
+		if (parts.length != TIER_NAMES.length)
+		{
+			return defaults;
+		}
+
+		final int[] bonuses = new int[TIER_NAMES.length];
+		try
+		{
+			for (int i = 0; i < bonuses.length; i++)
+			{
+				bonuses[i] = Math.max(0, Integer.parseInt(parts[i].trim()));
+			}
+		}
+		catch (NumberFormatException e)
+		{
+			return defaults;
+		}
+		return bonuses;
 	}
 
 	private static Set<String> readStrings(String value)

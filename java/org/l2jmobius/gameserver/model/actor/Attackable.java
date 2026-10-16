@@ -744,6 +744,9 @@ public class Attackable extends Npc
 									addSp *= PremiumSystemConfig.PREMIUM_RATE_SP;
 								}
 								
+								// Bestiary bonus of the monster's region
+								addExp *= BestiaryManager.getInstance().getExpMultiplier(attacker, this);
+								
 								attacker.addExpAndSp(addExp, addSp, useVitalityRate());
 								if ((addExp > 0) && useVitalityRate())
 								{

@@ -467,6 +467,8 @@ public class GameServer
 			EventDispatcher.getInstance().notifyEventAsync(new OnServerStart());
 		}
 		
+		BestiaryManager.getInstance().onServerStarted();
+		
 		PunishmentManager.getInstance();
 		
 		Runtime.getRuntime().addShutdownHook(Shutdown.getInstance());

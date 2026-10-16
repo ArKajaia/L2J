@@ -728,6 +728,22 @@ public class BestiaryCatalog
 		return Collections.unmodifiableList(_regions);
 	}
 
+	/**
+	 * @return the monsters of each region, as the hunting grounds tab groups them: the bestiary's region EXP bonus counts them
+	 */
+	public Map<String, Set<Integer>> getRegionMonsters()
+	{
+		final Map<String, Set<Integer>> regions = new HashMap<>();
+		for (Area area : _areas)
+		{
+			if (!area._monsters.isEmpty())
+			{
+				regions.computeIfAbsent(area._region, key -> new HashSet<>()).addAll(area._monsters);
+			}
+		}
+		return regions;
+	}
+
 	/** @return the land of the map: {cell x, cell y, spawn points} for every cell of MAP_CELL units with a spawn point */
 	public List<int[]> getLand()
 	{

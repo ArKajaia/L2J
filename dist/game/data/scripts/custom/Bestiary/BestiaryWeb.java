@@ -35,8 +35,8 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
  * The bestiary page and its API, served by the passive tree's web server. A player opens it with ".bestiary", which hands out a link with the same signed token as ".treelink"; the page works on any class and also after the player logged off, until the token expires.
  * <ul>
  * <li>GET /bestiary.html - the page</li>
- * <li>GET /api/bestiary/collection - the whole collection with the character's kills and tiers. Monsters not found yet come without their name (unless BestiaryShowUndiscoveredNames)</li>
- * <li>GET /api/bestiary/monster?id=... - one monster, as much of it as the character's tier shows</li>
+ * <li>GET /api/bestiary/collection - the whole collection with the kills and tiers of the character's account, and its region EXP. Monsters not found yet come without their name (unless BestiaryShowUndiscoveredNames)</li>
+ * <li>GET /api/bestiary/monster?id=... - one monster, as much of it as the account's tier shows, with its drop bonus</li>
  * <li>GET /api/bestiary/ranking - the hunters who found the most monsters</li>
  * <li>GET /api/bestiary/map - the land of the map, public</li>
  * </ul>
@@ -63,6 +63,9 @@ public class BestiaryWeb
 		{
 			return;
 		}
+
+		// The region EXP bonus counts the monsters of each region as the page groups them.
+		BestiaryManager.getInstance().setRegionSource(() -> BestiaryCatalog.getInstance().getRegionMonsters());
 
 		final PassiveTreeApiServer server = PassiveTreeApiServer.getInstance();
 		server.addRoute("/bestiary.html", "GET", false, exchange -> server.sendPage(exchange, HTML_FILE));
@@ -108,10 +111,20 @@ public class BestiaryWeb
 		json.append(",\"tierNames\":").append(strings(BestiaryConfig.TIER_NAMES));
 		json.append(",\"tiers\":").append(ints(BestiaryConfig.TIERS));
 		json.append(",\"bossTiers\":").append(ints(BestiaryConfig.BOSS_TIERS));
+		json.append(",\"dropBonus\":").append(ints(BestiaryConfig.DROP_BONUS));
+		json.append(",\"bossDropBonus\":").append(ints(BestiaryConfig.BOSS_DROP_BONUS));
+		json.append(",\"regionExpBonus\":").append(ints(BestiaryConfig.REGION_EXP_BONUS));
 		json.append(",\"showNames\":").append(BestiaryConfig.SHOW_UNDISCOVERED_NAMES);
 		json.append(",\"showAreas\":").append(BestiaryConfig.SHOW_UNDISCOVERED_AREAS);
 
 		json.append(",\"regions\":").append(strings(catalog.getRegions().toArray(new String[0])));
+		final Map<String, Double> regionExp = manager.getRegionExp(entries);
+		json.append(",\"regionExp\":[");
+		for (int i = 0; i < catalog.getRegions().size(); i++)
+		{
+			json.append(i > 0 ? "," : "").append(String.format(Locale.US, "%.3f", regionExp.getOrDefault(catalog.getRegions().get(i), 1.0)));
+		}
+		json.append(']');
 		json.append(",\"areas\":[");
 		boolean first = true;
 		for (BestiaryCatalog.Area area : catalog.getAreas())
@@ -148,7 +161,7 @@ public class BestiaryWeb
 		}
 		json.append(']');
 
-		// Monsters met outside the collection (instances, quests): only the character's own.
+		// Monsters met outside the collection (instances, quests): only the account's own.
 		json.append(",\"elsewhere\":[");
 		first = true;
 		for (Map.Entry<Integer, BestiaryManager.Entry> entry : entries.entrySet())
@@ -172,7 +185,7 @@ public class BestiaryWeb
 		json.append(",\"found\":").append(found);
 		json.append(",\"total\":").append(catalog.getMonsters().size());
 		json.append(",\"kills\":").append(kills);
-		json.append(",\"rank\":").append(serverStats.getRank(charId));
+		json.append(",\"rank\":").append(serverStats.getRank(manager.getAccountName(charId)));
 		json.append(",\"hunters\":").append(serverStats.hunters().size());
 		json.append(",\"statsTime\":").append(serverStats.time());
 		json.append('}');
@@ -259,6 +272,8 @@ public class BestiaryWeb
 		json.append(",\"r\":").append(SimpleJson.quote(template.getRace().name()));
 		json.append(",\"t\":").append(typeCode(template));
 		json.append(",\"inCollection\":").append(kind != null);
+		json.append(",\"dropBonus\":").append(BestiaryManager.getDropBonus(template, tier));
+		json.append(",\"dropBonuses\":").append(ints(BestiaryManager.isBoss(template) ? BestiaryConfig.BOSS_DROP_BONUS : BestiaryConfig.DROP_BONUS));
 		appendLook(json, npcId);
 		if (entry != null)
 		{
@@ -290,7 +305,7 @@ public class BestiaryWeb
 		}
 		if (tier >= 3)
 		{
-			appendMastered(json, template);
+			appendMastered(json, template, BestiaryManager.getDropBonus(template, tier));
 		}
 		json.append('}');
 		server.sendJson(exchange, 200, json.toString());
@@ -371,8 +386,11 @@ public class BestiaryWeb
 		json.append(']');
 	}
 
-	/** Drops and spoils, at the server's rates (without anyone's premium or bonuses). */
-	private void appendMastered(StringBuilder json, NpcTemplate template)
+	/**
+	 * Drops and spoils, at the server's rates and with the account's bestiary bonus for the items it applies to (without anyone's premium or other bonuses).
+	 * @param dropBonus the account's drop bonus for the monster (percent)
+	 */
+	private void appendMastered(StringBuilder json, NpcTemplate template, int dropBonus)
 	{
 		final boolean boss = BestiaryManager.isBoss(template);
 		json.append(",\"drops\":[");
@@ -385,7 +403,7 @@ public class BestiaryWeb
 				group++;
 				for (DropHolder drop : dropGroup.getDropList())
 				{
-					first = appendDrop(json, first, drop, drop.getChance() * (dropGroup.getChance() / 100), boss, group);
+					first = appendDrop(json, first, drop, drop.getChance() * (dropGroup.getChance() / 100), boss, group, dropBonus);
 				}
 			}
 		}
@@ -393,7 +411,7 @@ public class BestiaryWeb
 		{
 			for (DropHolder drop : template.getDropList())
 			{
-				first = appendDrop(json, first, drop, drop.getChance(), boss, 0);
+				first = appendDrop(json, first, drop, drop.getChance(), boss, 0, dropBonus);
 			}
 		}
 		json.append(']');
@@ -404,13 +422,13 @@ public class BestiaryWeb
 		{
 			for (DropHolder drop : template.getSpoilList())
 			{
-				first = appendDrop(json, first, drop, drop.getChance(), boss, 0);
+				first = appendDrop(json, first, drop, drop.getChance(), boss, 0, 0);
 			}
 		}
 		json.append(']');
 	}
 
-	private boolean appendDrop(StringBuilder json, boolean first, DropHolder drop, double baseChance, boolean boss, int group)
+	private boolean appendDrop(StringBuilder json, boolean first, DropHolder drop, double baseChance, boolean boss, int group, int dropBonus)
 	{
 		final ItemTemplate item = ItemData.getInstance().getTemplate(drop.getItemId());
 		if (item == null)
@@ -425,7 +443,13 @@ public class BestiaryWeb
 		json.append(",\"k\":").append(SimpleJson.quote(itemKind(item)));
 		json.append(",\"mn\":").append(Math.max(1, Math.round(drop.getMin() * rates[1])));
 		json.append(",\"mx\":").append(Math.max(1, Math.round(drop.getMax() * rates[1])));
-		json.append(",\"c\":").append(String.format(Locale.US, "%.4f", Math.min(100, baseChance * rates[0])));
+		// The bestiary's bonus is for the items, as NpcTemplate rolls it: not adena or herbs, nor spoils (the caller gives them none).
+		final boolean boosted = (dropBonus > 0) && (item.getId() != Inventory.ADENA_ID) && !item.hasExImmediateEffect();
+		json.append(",\"c\":").append(String.format(Locale.US, "%.4f", Math.min(100, baseChance * rates[0] * (boosted ? 1 + (dropBonus / 100.0) : 1))));
+		if (boosted)
+		{
+			json.append(",\"b\":1");
+		}
 		if (group > 0)
 		{
 			json.append(",\"gr\":").append(group);
@@ -539,6 +563,7 @@ public class BestiaryWeb
 		}
 
 		final BestiaryManager.ServerStats serverStats = BestiaryManager.getInstance().getServerStats();
+		final String account = BestiaryManager.getInstance().getAccountName(charId);
 		final List<BestiaryManager.Hunter> hunters = serverStats.hunters();
 		final StringBuilder json = new StringBuilder(4 * 1024);
 		json.append("{\"total\":").append(BestiaryCatalog.getInstance().getMonsters().size());
@@ -547,19 +572,20 @@ public class BestiaryWeb
 		json.append(",\"top\":[");
 		for (int i = 0; i < Math.min(BestiaryConfig.RANKING_SIZE, hunters.size()); i++)
 		{
-			appendHunter(json.append(i > 0 ? "," : ""), hunters.get(i), i + 1, charId);
+			appendHunter(json.append(i > 0 ? "," : ""), hunters.get(i), i + 1, account);
 		}
 		json.append(']');
-		final int rank = serverStats.getRank(charId);
+		final int rank = serverStats.getRank(account);
 		if (rank > BestiaryConfig.RANKING_SIZE)
 		{
-			appendHunter(json.append(",\"me\":"), hunters.get(rank - 1), rank, charId);
+			appendHunter(json.append(",\"me\":"), hunters.get(rank - 1), rank, account);
 		}
 		json.append('}');
 		server.sendJson(exchange, 200, json.toString());
 	}
 
-	private void appendHunter(StringBuilder json, BestiaryManager.Hunter hunter, int rank, int charId)
+	/** A hunter of the ranking: its highest character, never its account. */
+	private void appendHunter(StringBuilder json, BestiaryManager.Hunter hunter, int rank, String account)
 	{
 		json.append("{\"rank\":").append(rank);
 		json.append(",\"name\":").append(SimpleJson.quote(hunter.name()));
@@ -567,7 +593,7 @@ public class BestiaryWeb
 		json.append(",\"cls\":").append(SimpleJson.quote(className(hunter.classId())));
 		json.append(",\"found\":").append(hunter.found());
 		json.append(",\"kills\":").append(hunter.kills());
-		json.append(",\"me\":").append(hunter.charId() == charId).append('}');
+		json.append(",\"me\":").append(hunter.account().equalsIgnoreCase(account)).append('}');
 	}
 
 	/** The land never changes while the server runs: worked out once. Public, it only tells where monsters spawn. */

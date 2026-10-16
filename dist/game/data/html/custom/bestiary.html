@@ -124,6 +124,14 @@
 	.ground.full .v { color: var(--t4); }
 	.bigbar { height: 6px; background: #1d1d24; border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
 	.bigbar i { display: block; height: 100%; background: linear-gradient(90deg, var(--line), var(--gold)); }
+	.bonus-intro { max-width: 860px; margin: 0 auto 14px; background: var(--panel); border: 1px solid #2c2618; border-radius: 8px; padding: 10px 14px; font-size: 12.5px; line-height: 1.6; color: var(--text); }
+	.bonus-intro:empty { display: none; }
+	.bonus-intro b { color: var(--cream); font-weight: normal; }
+	.region-box .exp { display: flex; align-items: center; gap: 8px; margin: -2px 0 10px; font-size: 11px; color: var(--dim); }
+	.region-box .exp b { color: var(--t4); font-weight: normal; font-size: 14px; }
+	.region-box .exp .pb { flex: 1; height: 4px; background: #1d1d24; border-radius: 2px; overflow: hidden; }
+	.region-box .exp .pb i { display: block; height: 100%; background: var(--t4); }
+	.drops .up { color: var(--t4); font-size: 9px; margin-left: 3px; }
 
 	/* Hunters */
 	.hunters { max-width: 860px; margin: 0 auto; background: var(--panel); border: 1px solid #2c2618; border-radius: 8px; padding: 6px 0; }
@@ -492,7 +500,7 @@
 		</div>
 	</section>
 
-	<section class="view" id="view-grounds"><div class="regions" id="regions"></div></section>
+	<section class="view" id="view-grounds"><div class="bonus-intro" id="bonus-intro"></div><div class="regions" id="regions"></div></section>
 	<section class="view" id="view-hunters"><div id="hunters"></div></section>
 	<section class="view" id="view-profile"><div class="profile" id="profile"></div></section>
 	<section class="view" id="view-elsewhere">
@@ -557,6 +565,8 @@ function esc(text) {
 	return String(text == null ? "" : text).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
 }
 function fmt(n) { return Number(n || 0).toLocaleString("en-US"); }
+/** 2 reads "x2", 1.4167 reads "x1.42". */
+function fmtMult(x) { return "&times;" + Number(x || 1).toFixed(2).replace(/\.?0+$/, ""); }
 function fmtShort(n) {
 	n = Number(n || 0);
 	if (n >= 1e9) return (n / 1e9).toFixed(n >= 1e10 ? 0 : 1) + "B";
@@ -678,7 +688,7 @@ async function loadMap() {
 function renderHeader() {
 	const d = state.data;
 	const me = d.me;
-	document.getElementById("who").innerHTML = `<b>${esc(me.name)}</b>` + (me.online ? ` &middot; Lv. ${me.level} ${esc(me.cls || "")}` : " &middot; offline");
+	document.getElementById("who").innerHTML = `<b>${esc(me.name)}</b>` + (me.online ? ` &middot; Lv. ${me.level} ${esc(me.cls || "")}` : " &middot; offline") + ` &middot; <span title="Every character of your account adds to this bestiary and has its bonuses">account bestiary</span>`;
 	const pct = d.total ? d.found / d.total : 0;
 	const counts = [0, 0, 0, 0, 0];
 	for (const m of d.monsters) counts[m.g || 0]++;
@@ -855,8 +865,25 @@ function renderNear() {
 // Hunting grounds
 // ---------------------------------------------------------------------------------------------
 
+/** What the bonuses are, from the server's settings. */
+function bonusIntro() {
+	const d = state.data;
+	const tierList = bonus => bonus.map((b, i) => b > 0 ? `${esc(d.tierNames[i])} <b>+${b}%</b>` : "").filter(x => x).join(", ");
+	let html = `Your bestiary is your account's: every character adds to it and has its bonuses.`;
+	const exp = d.regionExpBonus || [];
+	if (exp.some(b => b > 0)) {
+		html += ` The monsters of a region give more EXP the more of them you found and the higher their tiers: <b>${fmtMult(1 + exp[0] / 100)}</b> when all of them are ${esc(d.tierNames[0])}, up to <b>${fmtMult(1 + exp[exp.length - 1] / 100)}</b> when all are ${esc(d.tierNames[exp.length - 1])}.`;
+	}
+	const drops = tierList(d.dropBonus || []), bossDrops = tierList(d.bossDropBonus || []);
+	if (drops || bossDrops) html += ` Each monster also drops its items more often as its tier rises: ${drops || "none"}${bossDrops !== drops ? ` (raid and grand bosses: ${bossDrops || "none"})` : ""}.`;
+	return html;
+}
+
 function renderGrounds() {
 	const d = state.data;
+	const expBonus = d.regionExpBonus || [];
+	const maxExp = 1 + Math.max(0, ...expBonus) / 100;
+	document.getElementById("bonus-intro").innerHTML = bonusIntro();
 	let html = "";
 	d.regions.forEach((name, r) => {
 		const areas = d.areas.filter(a => a.r === r && state.areaMonsters[a.id].length).sort((a, b) => a.lv - b.lv || a.n.localeCompare(b.n));
@@ -867,6 +894,10 @@ function renderGrounds() {
 		const found = all.filter(m => m.g).length;
 		const legendary = all.filter(m => m.g >= 4).length;
 		html += `<div class="region-box"><h2>${esc(name)}<span>${found} / ${all.length}</span></h2><div class="sub">${areas.length} hunting ground${areas.length === 1 ? "" : "s"} &middot; ${legendary} legendary</div><div class="bigbar"><i style="width:${(found / all.length * 100).toFixed(1)}%"></i></div>`;
+		if (maxExp > 1) {
+			const exp = d.regionExp ? d.regionExp[r] : 1;
+			html += `<div class="exp" title="EXP of the monsters of ${esc(name)} for your account, out of ${fmtMult(maxExp)}">EXP <b>${fmtMult(exp)}</b><div class="pb"><i style="width:${((exp - 1) / (maxExp - 1) * 100).toFixed(1)}%"></i></div>${fmtMult(maxExp)}</div>`;
+		}
 		for (const a of areas) {
 			const ms = state.areaMonsters[a.id];
 			const f = ms.filter(m => m.g).length;
@@ -909,7 +940,7 @@ async function renderHunters() {
 	const row = x => `<tr class="${x.me ? "me" : ""}"><td class="rank">${x.rank}</td><td>${esc(x.name)}<div class="cls">Lv. ${x.level} ${esc(x.cls)}</div></td><td class="found">${fmt(x.found)} <span class="cls">/ ${fmt(h.total)}</span><div class="pb"><i style="width:${(h.total ? x.found / h.total * 100 : 0).toFixed(1)}%"></i></div></td><td>${fmtShort(x.kills)}</td></tr>`;
 	let html = `<div class="hunters"><table><tr><th>#</th><th>Hunter</th><th>Monsters found</th><th>Kills</th></tr>${h.top.map(row).join("")}`;
 	if (h.me) html += `<tr><td colspan="4" style="text-align:center;color:var(--dim)">&middot; &middot; &middot;</td></tr>` + row(h.me);
-	html += `</table></div><p class="note">${fmt(h.hunters)} hunters &middot; counted ${ago(h.time)}</p>`;
+	html += `</table></div><p class="note">${fmt(h.hunters)} hunters &middot; each one an account, shown by its highest character &middot; counted ${ago(h.time)}</p>`;
 	box.innerHTML = html;
 }
 
@@ -1008,7 +1039,8 @@ function renderProfile() {
 	for (let g = 1; g <= 4; g++) {
 		const from = g === 1 ? 0 : m.tiers[g - 2];
 		const fill = Math.max(0, Math.min(1, (m.kills - from) / (m.tiers[g - 1] - from)));
-		html += `<div class="step${m.tier >= g ? " on" : ""}"><div class="pip"><i style="width:${(fill * 100).toFixed(1)}%;background:${TIER_COLOR[g]}"></i></div><div class="lbl">${esc(tierNames[g - 1])}<small>${fmt(m.tiers[g - 1])}</small></div></div>`;
+		const bonus = m.dropBonuses ? m.dropBonuses[g - 1] : 0;
+		html += `<div class="step${m.tier >= g ? " on" : ""}"><div class="pip"><i style="width:${(fill * 100).toFixed(1)}%;background:${TIER_COLOR[g]}"></i></div><div class="lbl">${esc(tierNames[g - 1])}<small>${fmt(m.tiers[g - 1])}${bonus ? ` &middot; drops +${bonus}%` : ""}</small></div></div>`;
 	}
 	html += `</div><div class="d-kills">`;
 	if (m.kills) html += `<b>${fmt(m.kills)}</b> killed &middot; first ${fmtDate(m.first)} &middot; last ${ago(m.last)}`;
@@ -1018,6 +1050,9 @@ function renderProfile() {
 		html += `<div class="kv">` + kv("HP", fmt(m.hp)) + kv("MP", fmt(m.mp)) + kv("Attack", WEAPON_NAME[m.weapon] || m.weapon || "-") + kv("EXP", fmt(m.exp)) + kv("SP", fmt(m.sp));
 		if (m.respawn && m.respawn[1] > 0) html += kv("Respawn", m.respawn[0] === m.respawn[1] ? fmtDelay(m.respawn[0]) : fmtDelay(m.respawn[0]) + " - " + fmtDelay(m.respawn[1]));
 		else if (m.spawns !== undefined) html += kv("Respawn", "-");
+		html += kv("Drop bonus", m.dropBonus ? "+" + m.dropBonus + "%" : "None yet");
+		const region = regionExpOf(m);
+		if (region) html += `<div title="EXP of the monsters of ${esc(region.name)} for your account"><div class="k">EXP in ${esc(region.name)}</div><div class="v">${fmtMult(region.exp)}</div></div>`;
 		html += `</div>`;
 	}
 	html += serverLine(m) + `</div></div>`;
@@ -1035,7 +1070,7 @@ function renderProfile() {
 	} else html += lockedBox(m, 2, "its combat stats, elements and skills");
 	html += `</div>`;
 	if (m.tier >= 1) html += `<div class="section"><h4>Size${m.live ? "" : `<span class="hint">template base values</span>`}</h4>${sizeComparison(m)}</div>`;
-	html += `</div><div class="p-card"><div class="section"><h4>Drops &amp; Spoils${m.tier >= 3 ? `<span class="hint">at the server's rates</span>` : ""}</h4>`;
+	html += `</div><div class="p-card"><div class="section"><h4>Drops &amp; Spoils${m.tier >= 3 ? `<span class="hint">at the server's rates${m.dropBonus ? `, items +${m.dropBonus}% with your bestiary` : ""}</span>` : ""}</h4>`;
 	if (m.tier >= 3) {
 		html += dropTable(m.drops, "Drops") + dropTable(m.spoils, "Spoil");
 		if (!m.drops.length && !m.spoils.length) html += `<div class="server-line">It drops nothing.</div>`;
@@ -1052,6 +1087,18 @@ function renderProfile() {
 
 	document.getElementById("profile").innerHTML = html;
 	if (m.m) showModel(m);
+}
+
+/** The region the monster's EXP bonus comes from (the best one, for a monster living in two), or null. */
+function regionExpOf(m) {
+	const d = state.data;
+	if (!d.regionExp || !m.a || !(d.regionExpBonus || []).some(b => b > 0)) return null;
+	let best = null;
+	for (const a of m.a) {
+		const r = d.areas[a] ? d.areas[a].r : -1;
+		if (r >= 0 && (!best || d.regionExp[r] > best.exp)) best = { name: d.regions[r], exp: d.regionExp[r] };
+	}
+	return best;
 }
 
 /** What the stage shows until (or instead of) the 3D model: the portrait, or the drawing of its race. */
@@ -1115,7 +1162,7 @@ function dropTable(list, title) {
 	let html = `<div class="sub-h">${title}</div><table class="drops"><tr><th>Item</th><th class="c">Amount</th><th class="c">Chance</th></tr>`;
 	for (const d of sorted) {
 		const grade = d.g && d.g !== "NONE" ? `<span class="grade ${d.g}">${d.g}</span>` : `<span class="grade">&ndash;</span>`;
-		html += `<tr class="k-${d.k}"><td>${grade}${esc(d.n)}${d.gr ? `<span class="grp" title="Only one item of a group drops at a time">group ${d.gr}</span>` : ""}</td><td class="c">${d.mn === d.mx ? fmt(d.mn) : fmt(d.mn) + "-" + fmt(d.mx)}</td><td class="c">${fmtChance(d.c)}</td></tr>`;
+		html += `<tr class="k-${d.k}"><td>${grade}${esc(d.n)}${d.gr ? `<span class="grp" title="Only one item of a group drops at a time">group ${d.gr}</span>` : ""}</td><td class="c">${d.mn === d.mx ? fmt(d.mn) : fmt(d.mn) + "-" + fmt(d.mx)}</td><td class="c">${fmtChance(d.c)}${d.b ? `<span class="up" title="With your bestiary's drop bonus">&#9650;</span>` : ""}</td></tr>`;
 	}
 	return html + `</table>`;
 }

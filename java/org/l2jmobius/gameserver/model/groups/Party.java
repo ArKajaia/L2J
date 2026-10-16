@@ -36,6 +36,7 @@ import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.ClassBalanceConfig;
 import org.l2jmobius.gameserver.config.custom.PremiumSystemConfig;
+import org.l2jmobius.gameserver.managers.BestiaryManager;
 import org.l2jmobius.gameserver.managers.DuelManager;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.ItemManager;
@@ -810,8 +811,8 @@ public class Party extends AbstractPlayerGroup
 				final double sqLevel = member.getLevel() * member.getLevel();
 				final double preCalculation = (sqLevel / sqLevelSum) * penalty;
 				
-				// Add the XP/SP points to the requested party member
-				double addexp = Math.round(member.calcStat(Stat.EXPSP_RATE, xpReward * preCalculation, null, null));
+				// Add the XP/SP points to the requested party member, the XP with the bestiary bonus of the monster's region for the member's account
+				double addexp = Math.round(member.calcStat(Stat.EXPSP_RATE, xpReward * preCalculation * BestiaryManager.getInstance().getExpMultiplier(member, target), null, null));
 				final double addsp = member.calcStat(Stat.EXPSP_RATE, spReward * preCalculation, null, null);
 				addexp = calculateExpSpPartyCutoff(member.asPlayer(), topLvl, addexp, addsp, useVitalityRate);
 				if (addexp > 0)

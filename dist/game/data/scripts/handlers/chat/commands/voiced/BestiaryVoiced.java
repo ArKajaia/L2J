@@ -12,7 +12,7 @@ import org.l2jmobius.gameserver.network.serverpackets.ExLinkOpen;
 import custom.Bestiary.BestiaryWeb;
 
 /**
- * ".bestiary" - opens the character's bestiary on the web page of the passive tree server: every monster it killed, how far each entry is, and the monsters still to find. With a monster targeted, the page opens on that monster.
+ * ".bestiary" - opens the bestiary of the character's account on the web page of the passive tree server: every monster its characters killed, the bonuses it gives, how far each entry is, and the monsters still to find. With a monster targeted, the page opens on that monster.
  * <p>
  * The link carries the same 15-minute token as ".treelink"; the page keeps working after a class change or a logout until it expires.
  */
