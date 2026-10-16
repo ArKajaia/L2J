@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bestiary Portraits</title>
+<link rel="icon" href="data:,">
+<script type="importmap">{"imports":{"three":"/bestiary/lib/three/build/three.module.min.js","three/addons/":"/bestiary/lib/three/examples/jsm/"}}</script>
+<style>
+	:root { --bg: #08080b; --panel: rgba(20,20,26,0.94); --gold: #d9b64c; --cream: #f0e6c8; --muted: #8a7a55; --text: #c9c2ad; --dim: #6f6a5e; }
+	* { box-sizing: border-box; }
+	body { margin: 0; background: radial-gradient(ellipse at top, #17171f 0%, var(--bg) 70%) fixed; color: var(--text); font-family: Georgia, 'Times New Roman', serif; font-size: 14px; }
+	main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 60px; }
+	h1 { margin: 0 0 4px; font-weight: normal; letter-spacing: 4px; text-transform: uppercase; color: var(--cream); font-size: 19px; }
+	.sub { color: var(--dim); font-size: 12.5px; margin-bottom: 18px; }
+	.box { background: var(--panel); border: 1px solid #2c2618; border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; }
+	.box h2 { margin: 0 0 10px; font-weight: normal; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); }
+	.box p { margin: 6px 0; line-height: 1.5; }
+	code { color: var(--gold); }
+	.stats { display: flex; gap: 10px; flex-wrap: wrap; }
+	.stat { background: #101015; border: 1px solid #2c2618; border-radius: 6px; padding: 8px 14px; min-width: 120px; }
+	.stat .k { font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+	.stat .v { font-size: 20px; color: var(--cream); }
+	.previews { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
+	.preview { background: radial-gradient(circle at 50% 40%, #262630, #0b0b0f 72%); border: 1px solid #26262e; border-radius: 8px; text-align: center; padding: 6px; }
+	.preview img { width: 100%; aspect-ratio: 1; object-fit: contain; display: block; }
+	.preview .n { font-size: 11.5px; color: var(--cream); margin: 4px 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	.controls { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+	.controls label { font-size: 12px; color: var(--dim); display: flex; align-items: center; gap: 8px; }
+	.controls input[type=range] { width: 200px; accent-color: var(--gold); }
+	.controls .val { color: var(--cream); min-width: 38px; display: inline-block; }
+	button { font-family: inherit; font-size: 13px; background: #1d1d24; border: 1px solid #3a3a42; color: var(--text); border-radius: 5px; padding: 7px 14px; cursor: pointer; }
+	button:hover:not(:disabled) { border-color: var(--gold); color: var(--cream); }
+	button.main { background: #2a2210; border-color: #6a5420; color: var(--cream); }
+	button:disabled { opacity: 0.4; cursor: default; }
+	.progress { height: 8px; background: #1d1d24; border-radius: 4px; overflow: hidden; margin: 12px 0 6px; }
+	.progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #7a5c1e, var(--gold)); transition: width 0.2s; }
+	.status { font-size: 12.5px; color: var(--dim); }
+	.status b { color: var(--cream); font-weight: normal; }
+	.recent { display: flex; gap: 6px; margin-top: 10px; overflow: hidden; height: 64px; }
+	.recent img { width: 64px; height: 64px; object-fit: contain; background: #111116; border-radius: 6px; flex: none; }
+	.errors { color: #ff9b90; font-size: 12px; margin-top: 8px; white-space: pre-line; max-height: 160px; overflow: auto; }
+	.gate { text-align: center; padding: 60px 20px; }
+</style>
+</head>
+<body>
+<main>
+	<h1>Bestiary Portraits</h1>
+	<div class="sub" id="who">Opened with //bestiary</div>
+	<div id="app"><div class="box">Loading...</div></div>
+</main>
+
+<script type="module">
+import { loadManifest, loadView, renderPortrait, clearCache, webglAvailable } from "/bestiary/lib/bestiary-models.js";
+
+const app = document.getElementById("app");
+const params = new URLSearchParams(window.location.search);
+let token = params.get("admin");
+try {
+	if (token) sessionStorage.setItem("bestiaryAdmin", token); else token = sessionStorage.getItem("bestiaryAdmin");
+} catch (e) { /* storage blocked */ }
+if (params.has("admin")) {
+	try { history.replaceState(null, "", window.location.pathname); } catch (e) { /* not essential */ }
+}
+
+const esc = text => String(text == null ? "" : text).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
+const fmt = n => Number(n || 0).toLocaleString("en-US");
+const auth = () => ({ "Authorization": "Bearer " + token });
+
+let monsters = [];
+let view = { yaw: 0, pitch: 12 };
+let run = null;
+
+function message(html) {
+	app.innerHTML = `<div class="box gate">${html}</div>`;
+}
+
+async function start() {
+	if (!token) { message("Open this page with <code>//bestiary</code> in game."); return; }
+	if (!webglAvailable()) { message("This browser has no WebGL: open the page in a browser with 3D graphics turned on."); return; }
+	const res = await fetch("/api/bestiary/admin/models", { headers: auth() });
+	if (!res.ok) {
+		const error = await res.json().catch(() => ({}));
+		message(esc(error.error || ("The bake page could not be opened (" + res.status + ").")));
+		return;
+	}
+	const data = await res.json();
+	document.getElementById("who").textContent = "Opened by " + data.gm;
+	const manifest = await loadManifest();
+	view = await loadView(true);
+	monsters = data.monsters.filter(m => m.m);
+	if (!manifest || !monsters.length) {
+		message("No monster has a 3D model yet. Extract them from your client first:<br><br><code>python client/Bestiary/extract_models.py --client ... --umodel ... --npcgrp Npcgrp.txt</code><br><br>(see client/Bestiary/README.txt), then open this page again.");
+		return;
+	}
+	// Monsters sharing a mesh one after the other: the mesh is loaded once for all of them.
+	monsters.sort((a, b) => ((manifest.npcs[a.id] || {}).mesh || "").localeCompare((manifest.npcs[b.id] || {}).mesh || "") || a.id - b.id);
+	render(data, manifest);
+	refreshPreviews();
+}
+
+function render(data, manifest) {
+	const withPortrait = monsters.filter(m => m.img).length;
+	app.innerHTML = `
+		<div class="box"><h2>Models</h2><div class="stats">
+			<div class="stat"><div class="k">Monsters</div><div class="v">${fmt(data.monsters.length)}</div></div>
+			<div class="stat"><div class="k">With a model</div><div class="v">${fmt(monsters.length)}</div></div>
+			<div class="stat"><div class="k">Meshes</div><div class="v">${fmt(Object.keys(manifest.meshes).length)}</div></div>
+			<div class="stat"><div class="k">With a portrait</div><div class="v" id="with-portrait">${fmt(withPortrait)}</div></div>
+		</div></div>
+		<div class="box"><h2>1. Turn them to face you</h2>
+			<p>Every model of the client faces the same way. Turn these until they look at you, then save: the profile pages and the portraits use the same view.</p>
+			<div class="previews" id="previews"></div>
+			<div class="controls">
+				<label>Turn <input type="range" id="yaw" min="-180" max="180" step="15" value="${view.yaw}"><span class="val" id="yaw-v">${view.yaw}&deg;</span></label>
+				<button data-turn="-90">&#8630; 90&deg;</button><button data-turn="90">90&deg; &#8631;</button>
+				<label>From above <input type="range" id="pitch" min="-10" max="45" step="1" value="${view.pitch}"><span class="val" id="pitch-v">${view.pitch}&deg;</span></label>
+				<button id="save-view">Save the view</button><span class="status" id="view-status"></span>
+			</div>
+		</div>
+		<div class="box"><h2>2. Make the portraits</h2>
+			<p>Each portrait is rendered here and saved on the server (data/html/custom/bestiary/&lt;npc id&gt;.webp). Keep this tab in front while it runs; it can be paused and started again.</p>
+			<div class="controls">
+				<label><input type="checkbox" id="only-missing" checked> Only monsters without a portrait</label>
+				<label>Size <select id="size"><option>384</option><option selected>512</option><option>768</option></select></label>
+				<button class="main" id="bake">Make the portraits</button><button id="pause" disabled>Pause</button>
+			</div>
+			<div class="progress"><i id="bar"></i></div>
+			<div class="status" id="bake-status">Ready.</div>
+			<div class="recent" id="recent"></div>
+			<div class="errors" id="errors"></div>
+		</div>`;
+
+	const yaw = document.getElementById("yaw");
+	const pitch = document.getElementById("pitch");
+	const changed = () => {
+		view = { yaw: Number(yaw.value), pitch: Number(pitch.value) };
+		document.getElementById("yaw-v").innerHTML = view.yaw + "&deg;";
+		document.getElementById("pitch-v").innerHTML = view.pitch + "&deg;";
+		document.getElementById("view-status").textContent = "not saved";
+		refreshPreviews();
+	};
+	yaw.addEventListener("change", changed);
+	pitch.addEventListener("change", changed);
+	for (const b of document.querySelectorAll("[data-turn]")) {
+		b.addEventListener("click", () => {
+			let v = Number(yaw.value) + Number(b.dataset.turn);
+			if (v > 180) v -= 360;
+			if (v < -180) v += 360;
+			yaw.value = v;
+			changed();
+		});
+	}
+	document.getElementById("save-view").addEventListener("click", saveView);
+	document.getElementById("bake").addEventListener("click", bake);
+	document.getElementById("pause").addEventListener("click", () => { if (run) run.paused = true; });
+}
+
+/** Up to eight monsters of different meshes, rendered with the view being set. */
+let previewToken = 0;
+async function refreshPreviews() {
+	const box = document.getElementById("previews");
+	if (!box) return;
+	const manifest = await loadManifest();
+	const picked = [];
+	const meshes = new Set();
+	for (const m of monsters) {
+		const mesh = (manifest.npcs[m.id] || {}).mesh;
+		if (!meshes.has(mesh)) { meshes.add(mesh); picked.push(m); }
+		if (picked.length >= 8) break;
+	}
+	const mine = ++previewToken;
+	box.innerHTML = picked.map(m => `<div class="preview"><img id="pv-${m.id}" alt=""><div class="n">${esc(m.n)}</div></div>`).join("");
+	for (const m of picked) {
+		const blob = await renderPortrait(m.id, 256, view);
+		if (mine !== previewToken) return;
+		const img = document.getElementById("pv-" + m.id);
+		if (img && blob) img.src = URL.createObjectURL(blob);
+	}
+}
+
+async function saveView() {
+	const status = document.getElementById("view-status");
+	const res = await fetch("/bestiary/admin/view", { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, auth()), body: JSON.stringify(view) });
+	status.textContent = res.ok ? "saved" : "could not save (" + res.status + ")";
+	if (res.ok) await loadView(true);
+}
+
+async function bake() {
+	if (run && run.paused) { run.paused = false; loop(); return; }
+	const onlyMissing = document.getElementById("only-missing").checked;
+	const list = monsters.filter(m => !onlyMissing || !m.img);
+	run = { list, index: 0, done: 0, failed: 0, started: Date.now(), size: Number(document.getElementById("size").value), paused: false };
+	document.getElementById("errors").textContent = "";
+	loop();
+}
+
+async function loop() {
+	const bakeButton = document.getElementById("bake");
+	const pauseButton = document.getElementById("pause");
+	bakeButton.disabled = true;
+	pauseButton.disabled = false;
+	let lastMesh = null;
+	const manifest = await loadManifest();
+	while (run.index < run.list.length && !run.paused) {
+		const m = run.list[run.index];
+		const mesh = (manifest.npcs[m.id] || {}).mesh;
+		// One mesh at a time in memory.
+		if (lastMesh && mesh !== lastMesh) clearCache();
+		lastMesh = mesh;
+		try {
+			const blob = await renderPortrait(m.id, run.size, view);
+			if (!blob) throw new Error("no model");
+			const res = await fetch("/bestiary/admin/portrait?id=" + m.id, { method: "POST", headers: Object.assign({ "Content-Type": blob.type }, auth()), body: blob });
+			if (!res.ok) {
+				const error = await res.json().catch(() => ({}));
+				throw new Error(error.error || ("HTTP " + res.status));
+			}
+			m.img = Math.floor(Date.now() / 1000);
+			run.done++;
+			const recent = document.getElementById("recent");
+			recent.insertAdjacentHTML("afterbegin", `<img src="${URL.createObjectURL(blob)}" title="${esc(m.n)}">`);
+			while (recent.children.length > 16) recent.lastChild.remove();
+		} catch (e) {
+			run.failed++;
+			document.getElementById("errors").textContent += m.n + " (" + m.id + "): " + e.message + "\n";
+			if (String(e.message).indexOf("expired") >= 0 || String(e.message).indexOf("not online") >= 0) { run.paused = true; }
+		}
+		run.index++;
+		const elapsed = (Date.now() - run.started) / 1000;
+		const left = run.list.length - run.index;
+		const eta = run.index ? Math.round(elapsed / run.index * left) : 0;
+		document.getElementById("bar").style.width = (run.index / run.list.length * 100).toFixed(1) + "%";
+		document.getElementById("bake-status").innerHTML = `<b>${fmt(run.index)}</b> / ${fmt(run.list.length)} &middot; ${fmt(run.done)} saved${run.failed ? ", " + fmt(run.failed) + " failed" : ""} &middot; about ${eta > 90 ? Math.round(eta / 60) + " min" : eta + " s"} left`;
+		document.getElementById("with-portrait").textContent = fmt(monsters.filter(x => x.img).length);
+	}
+	clearCache();
+	pauseButton.disabled = true;
+	bakeButton.disabled = false;
+	bakeButton.textContent = run.paused && run.index < run.list.length ? "Go on" : "Make the portraits";
+	if (!run.paused) document.getElementById("bake-status").innerHTML += " &middot; <b>done</b>. The collection shows the new portraits now.";
+}
+
+start().catch(e => message("Something went wrong: " + esc(e.message)));
+</script>
+</body>
+</html>

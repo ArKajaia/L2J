@@ -135,6 +135,7 @@ import org.l2jmobius.gameserver.managers.PvpSpotManager;
 import org.l2jmobius.gameserver.managers.RaidLogManager;
 import org.l2jmobius.gameserver.managers.RecipeManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
+import org.l2jmobius.gameserver.managers.BestiaryManager;
 import org.l2jmobius.gameserver.managers.SessionStatsManager;
 import org.l2jmobius.gameserver.managers.SiegeManager;
 import org.l2jmobius.gameserver.managers.TerritoryWarManager;
@@ -11278,6 +11279,7 @@ public class Player extends Playable
 		}
 		
 		SessionStatsManager.getInstance().onEnter(this);
+		BestiaryManager.getInstance().onEnter(this);
 		
 		if (EventDispatcher.getInstance().hasListener(EventType.ON_PLAYER_LOGIN, this))
 		{

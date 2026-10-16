@@ -305,6 +305,20 @@ When a raid boss or grand boss dies, everyone who took part (hit it or its minio
 - `.raidlog` (or `.rblog`) opens the last one again. A fight is forgotten after 5 minutes without anything happening to the boss.
 - Each player has their own entry in the fight with its own lock, so a big raid doesn't make players wait on each other, and the windows are built after the kill, away from the combat threads. Settings in `config/Custom/CombatLog.ini`.
 
+### Bestiary
+
+Every monster a player kills goes into the bestiary, a collection on the web page of the passive tree server. The bestiary is the account's: every character of the account adds to the same one and has its bonuses. `.bestiary` sends the link (with a monster targeted, the page opens on it). Monsters never killed show as a dark silhouette with their level and where they live, so the page is also the list of what is left to find.
+
+- **Collection**: the monsters spawned in the world (spawn files, raid bosses, grand bosses), grouped by hunting ground. Each spawn file is a hunting ground and its folder the region, so `Dion/TanorCanyon.xml` is Tanor Canyon, in Dion. Filters cover name, region, hunting ground, level, tier, kind (raid, grand, aggressive) and race. "Almost there" lists the entries closest to their next tier. Monsters met only in instances or quests are kept under "Found Elsewhere" and don't count toward completion.
+- **Tiers**: each entry goes from Discovered to Studied, Mastered and Legendary as more of that monster die (1 / 50 / 200 / 1000 kills, 1 / 3 / 5 / 10 for bosses). Each tier shows more of it: at Discovered its name, portrait, HP and MP, EXP and SP, respawn, size and habitat; at Studied its combat stats, elements and skills; at Mastered its drops and spoils, with their chances at the server's rates. A Legendary entry gets a gold frame. Discoveries and new tiers are announced in chat and on screen, with a firework from Studied on.
+- **Drop bonus**: each tier makes the monster's items drop more often for the account: +10% at Studied, +25% at Mastered, +50% at Legendary (+5 / 10 / 20% for raid and grand bosses). It multiplies each item's chance, like the drop rates, never adds a roll, and leaves adena, herbs and spoils alone. The bonus is the account's of the player the drop is for (the top damage dealer, or the leader of the party that did the most). Profile pages show the chances with it.
+- **Region EXP bonus**: the monsters of a region give more EXP the more of them the account found and the higher their tiers. Each monster counts for its share of the region: a region all Discovered gives twice the EXP, all Legendary four times as much, half of it Discovered 1.5 times. In a party each member gets their own account's bonus on their share; SP is left as it is. The Hunting Grounds tab shows each region's EXP, and chat tells the new one when an entry is found or reaches a tier.
+- **Profile pages**: every monster has its own page (shareable, with previous and next through the collection, and the browser's back button): its 3D model, which can be dragged around and zoomed, its tier track, vitals, combat stats, elements and skills, drops, a size comparison with a human, and a map of where it spawns over the land of every spawn point, with the towns. Stats are read from one of its kind made for the purpose and never spawned, so its own passives (HP Increase...) count but random passives and variants don't.
+- **Monster visuals from your client**: `client/Bestiary/extract_models.py` takes the mesh and the skins of every monster out of your own High Five client, with UE Viewer (umodel) and `Npcgrp.dat` saved as text by L2ClientDat. Monsters sharing a mesh share one `.glb`, each with its own skin. `//bestiary` opens the bake page: turn the models to face the camera, then it renders the portrait of every monster in the GM's browser and saves them on the server. Monsters not found yet show as the silhouette of their real shape. Without models, the page draws a portrait of each monster's race. The art is made from your client and kept out of git. See `client/Bestiary/README.txt`.
+- **Server-wide**: how many of a monster died, how many hunters found it, who found it first and when, and the Hall of Hunters: the accounts that found the most monsters, each shown by its highest character, with your own rank. Accounts with a game master are left out.
+- **Kills**: a kill counts for the player who made it (or whose summon did) and for the party members near it, once per account. Only kills that give EXP count, so fake players and npcs fighting each other never do.
+- Kills are kept in memory and written in batches every minute, at logout and at shutdown (table `account_bestiary`, created at startup; a per-character `character_bestiary` from before is added up into the accounts at the first start). The page also works after logging off, until its link expires. Settings in `config/Custom/Bestiary.ini`.
+
 ### Performers
 
 Champion Medals from champions teach every class the songs and dances, so the Swordsinger and Bladedancer lines get what a medal can't give: auras that only a performer can keep up, a combat stance each, a 3rd class finale, and better songs and dances of their own. The Swordsinger line keeps the party standing; the Bladedancer line tears the enemy down.
@@ -745,7 +759,10 @@ This program is free software, licensed under the **GNU General Public License, 
 
 ## Recent Updates
 
-Changes from 28 September – 15 October 2026.
+Changes from 28 September – 16 October 2026.
+
+### Bestiary
+- **New**: every monster a player kills fills their account's bestiary, a collection on the web page of the passive tree server (`.bestiary`). Entries go from Discovered to Legendary with more kills, each tier showing more of the monster (stats, elements and skills, then drops) and making its items drop more often, with a size comparison, a habitat map, server-wide numbers and a ranking of hunters. The monsters of a region give up to four times the EXP as the account completes it. Each monster has a profile page with its 3D model, taken from your own client by `client/Bestiary/extract_models.py`, and `//bestiary` makes the portraits of the collection. See [Bestiary](#bestiary).
 
 ### Raid Log
 - **New**: when a raid boss dies, everyone who fought it gets a log: damage ranking with shares and damage per second, healers and tanks, parties, and their own skills. `.raidlog` opens it again. See [Raid Log](#raid-log).

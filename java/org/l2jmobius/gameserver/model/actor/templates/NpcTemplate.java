@@ -38,6 +38,7 @@ import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
 import org.l2jmobius.gameserver.data.sql.CharInfoTable;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
+import org.l2jmobius.gameserver.managers.BestiaryManager;
 import org.l2jmobius.gameserver.managers.LuckyLootManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.actor.Attackable;
@@ -850,6 +851,7 @@ public class NpcTemplate extends CreatureTemplate
 		if (dropOccurrenceCounter > 0)
 		{
 			final Player player = killer.asPlayer();
+			final double bestiaryMultiplier = BestiaryManager.getInstance().getDropMultiplier(this, killer);
 			List<ItemHolder> randomDrops = null;
 			ItemHolder cachedItem = null;
 			double totalChance; // total group chance is 100
@@ -893,6 +895,12 @@ public class NpcTemplate extends CreatureTemplate
 						
 						rateChance *= RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER * (champion ? ChampionMonstersConfig.CHAMPION_REWARDS_CHANCE : 1) * passiveMultiplier;
 						rateChance *= LuckyLootManager.getInstance().getDropMultiplier(killer);
+					}
+					
+					// bestiary drop bonus of the monster's tier, for its items
+					if ((itemId != Inventory.ADENA_ID) && !item.hasExImmediateEffect())
+					{
+						rateChance *= bestiaryMultiplier;
 					}
 					
 					// premium chance
@@ -1264,6 +1272,12 @@ public class NpcTemplate extends CreatureTemplate
 					final double passiveMultiplier = victim.isMonster() ? ((Monster) victim).getCustomPassiveDropMultiplier() : 1.0;
 					rateChance *= RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER * (champion ? ChampionMonstersConfig.CHAMPION_REWARDS_CHANCE : 1) * passiveMultiplier;
 					rateChance *= LuckyLootManager.getInstance().getDropMultiplier(killer);
+				}
+				
+				// bestiary drop bonus of the monster's tier, for its items
+				if ((itemId != Inventory.ADENA_ID) && !item.hasExImmediateEffect())
+				{
+					rateChance *= BestiaryManager.getInstance().getDropMultiplier(this, killer);
 				}
 				
 				// premium chance

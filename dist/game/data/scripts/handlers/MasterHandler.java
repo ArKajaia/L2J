@@ -27,6 +27,7 @@ import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPotionsConfig;
 import org.l2jmobius.gameserver.config.custom.BankingConfig;
 import org.l2jmobius.gameserver.config.custom.ChatModerationConfig;
+import org.l2jmobius.gameserver.config.custom.BestiaryConfig;
 import org.l2jmobius.gameserver.config.custom.CombatLogConfig;
 import org.l2jmobius.gameserver.config.custom.CraftingGoalsConfig;
 import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
@@ -53,6 +54,7 @@ import org.l2jmobius.gameserver.handler.TargetHandler;
 import org.l2jmobius.gameserver.handler.UserCommandHandler;
 import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
 
+import custom.Bestiary.BestiaryWeb;
 import custom.PassiveSkillTree.PassiveTreeApiServer;
 import handlers.actions.click.ArtefactClick;
 import handlers.actions.click.DecoyClick;
@@ -133,6 +135,7 @@ import handlers.chat.channels.ChatWhisper;
 import handlers.chat.commands.admin.AdminAdmin;
 import handlers.chat.commands.admin.AdminAnnouncements;
 import handlers.chat.commands.admin.AdminAugment;
+import handlers.chat.commands.admin.AdminBestiary;
 import handlers.chat.commands.admin.AdminBuffs;
 import handlers.chat.commands.admin.AdminCHSiege;
 import handlers.chat.commands.admin.AdminCamera;
@@ -240,6 +243,7 @@ import handlers.chat.commands.voiced.Banking;
 import handlers.chat.commands.voiced.ChangePassword;
 import handlers.chat.commands.voiced.ChatAdmin;
 import handlers.chat.commands.voiced.ClassTransferChallengeVoiced;
+import handlers.chat.commands.voiced.BestiaryVoiced;
 import handlers.chat.commands.voiced.CombatLogVoiced;
 import handlers.chat.commands.voiced.ExperienceGain;
 import handlers.chat.commands.voiced.GearVoiced;
@@ -435,6 +439,7 @@ public class MasterHandler
 			AdminMessages.class,
 			AdminOnline.class,
 			AdminPassiveTree.class,
+			AdminBestiary.class,
 			AdminPathNode.class,
 			AdminPcCafePoints.class,
 			AdminPetition.class,
@@ -631,6 +636,7 @@ public class MasterHandler
 			CraftingGoalsConfig.ENABLED ? CraftingGoalVoiced.class : null,
 			CombatLogConfig.ENABLED ? CombatLogVoiced.class : null,
 			CombatLogConfig.RAID_ENABLED ? RaidLogVoiced.class : null,
+			BestiaryConfig.ENABLED ? BestiaryVoiced.class : null,
 		},
 		{
 			// Target Handlers
@@ -675,6 +681,7 @@ public class MasterHandler
 	{
 		LOGGER.log(Level.INFO, "Loading Handlers...");
 		PassiveTreeApiServer.getInstance().start();
+		BestiaryWeb.getInstance().register();
 		
 		final Map<IHandler<?, ?>, Method> registerHandlerMethods = new HashMap<>();
 		for (IHandler<?, ?> loadInstance : LOAD_INSTANCES)
