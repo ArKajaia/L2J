@@ -53,8 +53,20 @@ public class SessionBoard implements IParseBoardHandler
 	private static final String NAVIGATION_PATH = "data/html/CommunityBoard/Custom/navigation.html";
 	private static final String PAGE_PATH = "data/html/CommunityBoard/Custom/session/main.html";
 	
-	private static final int WIDTH = 530;
-	private static final int LABEL_WIDTH = 160;
+	/** The content is 480 wide, inside a 700 wide page: the board scrolls, and its scroll bar takes some of the width. */
+	private static final int WIDTH = 480;
+	private static final int LABEL_WIDTH = 150;
+	/** The history columns: date, time played, levels, experience, monsters, adena and the details button. They add up to {@link #WIDTH}. */
+	private static final int[] HISTORY_COLUMNS =
+	{
+		100,
+		60,
+		45,
+		65,
+		60,
+		85,
+		65
+	};
 	
 	private static final String COLOR_TITLE = "CDB67F";
 	private static final String COLOR_SECTION = "LEVEL";
@@ -163,30 +175,29 @@ public class SessionBoard implements IParseBoardHandler
 			return sb.toString();
 		}
 		
-		sb.append("<table width=").append(WIDTH).append(" cellpadding=2 cellspacing=0>");
-		sb.append("<tr>");
-		appendHeader(sb, "Date", 115);
-		appendHeader(sb, "Played", 65);
-		appendHeader(sb, "Levels", 55);
-		appendHeader(sb, "XP", 75);
-		appendHeader(sb, "Monsters", 65);
-		appendHeader(sb, "Adena", 85);
-		appendHeader(sb, "", 70);
-		sb.append("</tr>");
+		// Each line is a table of its own: the client doesn't color a table row, only a table.
+		sb.append("<table width=").append(WIDTH).append(" cellpadding=0 cellspacing=0><tr>");
+		appendHeader(sb, "Date", HISTORY_COLUMNS[0]);
+		appendHeader(sb, "Played", HISTORY_COLUMNS[1]);
+		appendHeader(sb, "Levels", HISTORY_COLUMNS[2]);
+		appendHeader(sb, "XP", HISTORY_COLUMNS[3]);
+		appendHeader(sb, "Monsters", HISTORY_COLUMNS[4]);
+		appendHeader(sb, "Adena", HISTORY_COLUMNS[5]);
+		sb.append("<td width=").append(HISTORY_COLUMNS[6]).append("></td>");
+		sb.append("</tr></table>");
 		for (int i = 0; i < history.size(); i++)
 		{
 			final SessionRecord record = history.get(i);
-			sb.append("<tr").append((i % 2) == 0 ? " bgcolor=\"000000\"" : "").append(">");
-			sb.append("<td width=115><font color=\"").append(COLOR_TEXT).append("\">").append(formatDate(record.getStart())).append("</font></td>");
-			sb.append("<td width=65 align=center><font color=\"").append(COLOR_TEXT).append("\">").append(SessionStatsManager.formatDuration(record.getDurationMillis())).append("</font></td>");
-			sb.append("<td width=55 align=center>").append(signed(record.getLevelsGained(), false)).append("</td>");
-			sb.append("<td width=75 align=center>").append(plain(SessionStatsManager.formatShort(record.get(SessionStat.EXP_GAINED)), record.get(SessionStat.EXP_GAINED))).append("</td>");
-			sb.append("<td width=65 align=center>").append(plain(FormatUtil.formatAdena(record.get(SessionStat.KILLS)), record.get(SessionStat.KILLS))).append("</td>");
-			sb.append("<td width=85 align=center>").append(signed(record.getAdenaChange(), true)).append("</td>");
-			sb.append("<td width=70 align=center>").append(button("Details", BYPASS + " view " + i, 60)).append("</td>");
-			sb.append("</tr>");
+			sb.append("<table width=").append(WIDTH).append(" height=26 cellpadding=0 cellspacing=0").append((i % 2) == 0 ? " bgcolor=111111" : "").append("><tr>");
+			sb.append("<td width=").append(HISTORY_COLUMNS[0]).append("><font color=\"").append(COLOR_TEXT).append("\">").append(formatDate(record.getStart())).append("</font></td>");
+			sb.append("<td width=").append(HISTORY_COLUMNS[1]).append(" align=center><font color=\"").append(COLOR_TEXT).append("\">").append(SessionStatsManager.formatDuration(record.getDurationMillis())).append("</font></td>");
+			sb.append("<td width=").append(HISTORY_COLUMNS[2]).append(" align=center>").append(signed(record.getLevelsGained(), false)).append("</td>");
+			sb.append("<td width=").append(HISTORY_COLUMNS[3]).append(" align=center>").append(plain(SessionStatsManager.formatShort(record.get(SessionStat.EXP_GAINED)), record.get(SessionStat.EXP_GAINED))).append("</td>");
+			sb.append("<td width=").append(HISTORY_COLUMNS[4]).append(" align=center>").append(plain(FormatUtil.formatAdena(record.get(SessionStat.KILLS)), record.get(SessionStat.KILLS))).append("</td>");
+			sb.append("<td width=").append(HISTORY_COLUMNS[5]).append(" align=center>").append(signed(record.getAdenaChange(), true)).append("</td>");
+			sb.append("<td width=").append(HISTORY_COLUMNS[6]).append(" align=center>").append(button("Details", BYPASS + " view " + i, 60)).append("</td>");
+			sb.append("</tr></table>");
 		}
-		sb.append("</table>");
 		sb.append("<br><table width=").append(WIDTH).append("><tr><td align=center><font color=\"").append(COLOR_MUTED).append("\">The last ").append(SessionStatsConfig.HISTORY_SIZE).append(" sessions are kept. Adena is how much more (or less) you carried when you logged out.</font></td></tr></table>");
 		return sb.toString();
 	}
@@ -238,7 +249,7 @@ public class SessionBoard implements IParseBoardHandler
 	private static void appendComparison(StringBuilder sb, List<String> titles, List<SessionRecord> records)
 	{
 		final int columnWidth = (WIDTH - LABEL_WIDTH) / records.size();
-		sb.append("<table width=").append(WIDTH).append(" cellpadding=1 cellspacing=0>");
+		sb.append("<table width=").append(WIDTH).append(" cellpadding=0 cellspacing=0>");
 		sb.append("<tr><td width=").append(LABEL_WIDTH).append("></td>");
 		for (String title : titles)
 		{
@@ -248,7 +259,7 @@ public class SessionBoard implements IParseBoardHandler
 		
 		// Time.
 		appendSection(sb, "Time", records.size());
-		appendRow(sb, "Time played", records, true, r -> plain(SessionStatsManager.formatDuration(r.getDurationMillis()), 1));
+		appendRow(sb, "Time played", records, columnWidth, true, r -> plain(SessionStatsManager.formatDuration(r.getDurationMillis()), 1));
 		
 		// Character.
 		appendSection(sb, "Character", records.size());
@@ -263,36 +274,36 @@ public class SessionBoard implements IParseBoardHandler
 		for (int classId : classIds)
 		{
 			final ClassInfoHolder info = ClassListData.getInstance().getClass(classId);
-			appendRow(sb, info != null ? info.getClassName() : "Class " + classId, records, true, r -> formatClass(r, classId));
+			appendRow(sb, info != null ? info.getClassName() : "Class " + classId, records, columnWidth, true, r -> formatClass(r, classId));
 		}
-		appendRow(sb, "Levels gained", records, true, r -> signed(r.getLevelsGained(), false));
-		appendRow(sb, "Experience gained", records, true, r -> stat(r, SessionStat.EXP_GAINED));
-		appendRow(sb, "Experience lost", records, false, r -> lost(r.get(SessionStat.EXP_LOST)));
-		appendRow(sb, "SP gained", records, true, r -> stat(r, SessionStat.SP_GAINED));
-		appendRow(sb, "Fame", records, false, r -> signed(r.get(SessionStat.FAME), false));
+		appendRow(sb, "Levels gained", records, columnWidth, true, r -> signed(r.getLevelsGained(), false));
+		appendRow(sb, "Experience gained", records, columnWidth, true, r -> stat(r, SessionStat.EXP_GAINED));
+		appendRow(sb, "Experience lost", records, columnWidth, false, r -> lost(r.get(SessionStat.EXP_LOST)));
+		appendRow(sb, "SP gained", records, columnWidth, true, r -> stat(r, SessionStat.SP_GAINED));
+		appendRow(sb, "Fame", records, columnWidth, false, r -> signed(r.get(SessionStat.FAME), false));
 		
 		// Hunting.
 		appendSection(sb, "Hunting", records.size());
-		appendRow(sb, "Monsters killed", records, true, r -> stat(r, SessionStat.KILLS));
-		appendRow(sb, "Killed by your party", records, false, r -> stat(r, SessionStat.PARTY_KILLS));
-		appendRow(sb, "Champions", records, false, r -> stat(r, SessionStat.CHAMPION_KILLS));
-		appendRow(sb, "Raid bosses", records, false, r -> stat(r, SessionStat.RAID_KILLS));
-		appendRow(sb, "PvP kills", records, false, r -> stat(r, SessionStat.PVP_KILLS));
-		appendRow(sb, "PK kills", records, false, r -> stat(r, SessionStat.PK_KILLS));
-		appendRow(sb, "Deaths", records, false, r -> lost(r.get(SessionStat.DEATHS)));
+		appendRow(sb, "Monsters killed", records, columnWidth, true, r -> stat(r, SessionStat.KILLS));
+		appendRow(sb, "Killed by your party", records, columnWidth, false, r -> stat(r, SessionStat.PARTY_KILLS));
+		appendRow(sb, "Champions", records, columnWidth, false, r -> stat(r, SessionStat.CHAMPION_KILLS));
+		appendRow(sb, "Raid bosses", records, columnWidth, false, r -> stat(r, SessionStat.RAID_KILLS));
+		appendRow(sb, "PvP kills", records, columnWidth, false, r -> stat(r, SessionStat.PVP_KILLS));
+		appendRow(sb, "PK kills", records, columnWidth, false, r -> stat(r, SessionStat.PK_KILLS));
+		appendRow(sb, "Deaths", records, columnWidth, false, r -> lost(r.get(SessionStat.DEATHS)));
 		
 		// Adena.
 		appendSection(sb, "Adena", records.size());
-		appendRow(sb, "Adena earned", records, true, r -> stat(r, SessionStat.ADENA_EARNED));
-		appendRow(sb, "Adena spent", records, true, r -> lost(r.get(SessionStat.ADENA_SPENT)));
-		appendRow(sb, "Adena carried", records, true, r -> signed(r.getAdenaChange(), true));
+		appendRow(sb, "Adena earned", records, columnWidth, true, r -> stat(r, SessionStat.ADENA_EARNED));
+		appendRow(sb, "Adena spent", records, columnWidth, true, r -> lost(r.get(SessionStat.ADENA_SPENT)));
+		appendRow(sb, "Adena carried", records, columnWidth, true, r -> signed(r.getAdenaChange(), true));
 		
 		// Activity.
 		appendSection(sb, "Activity", records.size());
-		appendRow(sb, "Quests completed", records, true, r -> stat(r, SessionStat.QUESTS));
-		appendRow(sb, "Drops picked up", records, false, r -> stat(r, SessionStat.ITEMS_LOOTED));
-		appendRow(sb, "Spoils swept", records, false, r -> stat(r, SessionStat.SPOILS));
-		appendRow(sb, "Items crafted", records, false, r -> stat(r, SessionStat.ITEMS_CRAFTED));
+		appendRow(sb, "Quests completed", records, columnWidth, true, r -> stat(r, SessionStat.QUESTS));
+		appendRow(sb, "Drops picked up", records, columnWidth, false, r -> stat(r, SessionStat.ITEMS_LOOTED));
+		appendRow(sb, "Spoils swept", records, columnWidth, false, r -> stat(r, SessionStat.SPOILS));
+		appendRow(sb, "Items crafted", records, columnWidth, false, r -> stat(r, SessionStat.ITEMS_CRAFTED));
 		sb.append("</table>");
 		
 		sb.append("<br><table width=").append(WIDTH).append("><tr><td align=center><font color=\"").append(COLOR_MUTED).append("\">Adena earned counts adena from monsters, quests, shops and your private store, not from trades, mail or the warehouse. Adena carried is how much more (or less) you hold than at login.</font></td></tr></table>");
@@ -306,7 +317,7 @@ public class SessionBoard implements IParseBoardHandler
 	/**
 	 * A row of the comparison. A row that isn't always shown is left out when it is empty in every session.
 	 */
-	private static void appendRow(StringBuilder sb, String label, List<SessionRecord> records, boolean always, Cell cell)
+	private static void appendRow(StringBuilder sb, String label, List<SessionRecord> records, int columnWidth, boolean always, Cell cell)
 	{
 		final List<String> cells = new ArrayList<>();
 		boolean empty = true;
@@ -327,7 +338,7 @@ public class SessionBoard implements IParseBoardHandler
 		sb.append("<tr><td width=").append(LABEL_WIDTH).append(" height=18><font color=\"").append(COLOR_TEXT).append("\">").append(label).append("</font></td>");
 		for (String text : cells)
 		{
-			sb.append("<td align=center>").append(text).append("</td>");
+			sb.append("<td width=").append(columnWidth).append(" align=center>").append(text).append("</td>");
 		}
 		sb.append("</tr>");
 	}
