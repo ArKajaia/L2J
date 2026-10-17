@@ -317,9 +317,10 @@
 	.areas button { font-size: 12px; padding: 3px 10px; border-radius: 12px; border: 1px solid #3a301c; background: #15130e; color: var(--gold); cursor: pointer; }
 	.areas button:hover { background: #221d12; }
 	.map { position: relative; border: 1px solid #241f14; border-radius: 6px; overflow: hidden; background: radial-gradient(ellipse at center, #0f1013, #070709); }
-	.map svg { width: 100%; height: auto; display: block; }
+	.map svg { width: 100%; height: auto; aspect-ratio: 4 / 3; display: block; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+	.map svg.dragging { cursor: grabbing; }
 	.map .tools { position: absolute; top: 6px; right: 6px; display: flex; gap: 4px; }
-	.map .tools button { background: rgba(12,12,16,0.85); border: 1px solid #3a3a42; color: var(--text); border-radius: 4px; font-size: 11px; padding: 3px 8px; cursor: pointer; }
+	.map .tools button { min-width: 26px; background: rgba(12,12,16,0.85); border: 1px solid #3a3a42; color: var(--text); border-radius: 4px; font-size: 11px; padding: 3px 8px; cursor: pointer; }
 	.map .tools button:hover { border-color: var(--gold); }
 	.size { display: flex; align-items: flex-end; gap: 18px; height: 110px; padding: 0 10px; border-bottom: 1px solid #2a2a32; }
 	.size .fig { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
@@ -664,7 +665,7 @@ const TOWNS = [
 const state = {
 	token: null, data: null, byId: new Map(), areaMonsters: [], tab: "collection",
 	filters: { q: "", region: -1, area: -1, min: "", max: "", status: "all", kind: "all", race: "all", sort: "ground" },
-	map: null, mapPromise: null, hunters: null, detailId: 0, detailWorld: false, detail: null, bounty: new Map(),
+	map: null, mapPromise: null, hunters: null, detailId: 0, detailWorld: false, mapView: null, mapFrame: 0, detail: null, bounty: new Map(),
 	lastList: [], returnTab: "collection", returnScroll: 0, viewer: null, models: null, farming: null, farmSpoil: null
 };
 
@@ -1425,11 +1426,12 @@ function renderProfile() {
 	if (m.a || m.points) {
 		html += `<div class="p-card p-wide"><div class="section"><h4>Habitat${m.spawns !== undefined ? `<span class="hint">${fmt(m.spawns)} in the world</span>` : ""}</h4>`;
 		if (m.a && m.a.length) html += `<div class="areas">${m.a.map(a => `<button data-area="${a}">${esc(state.data.areas[a].n)} <span style="color:var(--dim)">&middot; ${esc(state.data.regions[state.data.areas[a].r])}</span></button>`).join("")}</div>`;
-		if (m.points && m.points.length) html += `<div class="map" id="d-map">${mapSvg(m)}<div class="tools"><button id="d-world">${state.detailWorld ? "Zoom in" : "Whole world"}</button></div></div>`;
+		if (m.points && m.points.length) html += mapHtml(m);
 		html += `</div></div>`;
 	}
 
 	document.getElementById("profile").innerHTML = html;
+	drawMap();
 	if (m.m) showModel(m);
 }
 
@@ -1585,47 +1587,180 @@ function sizeComparison(m) {
 	return `<div class="size"><div class="fig"><svg width="${(humanPx / 3).toFixed(0)}" height="${humanPx.toFixed(0)}" viewBox="0 0 20 60" preserveAspectRatio="none" style="color:#6f6a5e"><use href="#i-human"/></svg><span>Human</span></div><div class="fig"><svg width="${monsterPx.toFixed(0)}" height="${monsterPx.toFixed(0)}" viewBox="0 0 100 100" style="color:${color};--eye:#0b0b0f"><use href="#r-${symbol}"/></svg><span>${esc(m.n || "?")}</span></div></div><div class="size-note">${note} (height ${fmt(m.height)}, width ${fmt(m.radius * 2)}).</div>`;
 }
 
-/** Where the monster spawns, on the land of every spawn point of the collection, with the towns. */
-function mapSvg(m) {
-	const pts = m.points;
+/** The narrowest the map zooms in to (world units across). */
+const MAP_MIN_WIDTH = 6000;
+
+/** The part of the world the map shows: the client's world map, or else all the land and the towns. */
+function mapWorld() {
+	const image = state.map && state.map.image;
+	if (image) return image.b.slice();
 	let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-	const land = state.map ? state.map.land : [];
 	const cell = state.map ? state.map.cell : 4096;
-	if (state.detailWorld) {
-		for (const c of land) { minX = Math.min(minX, c[0] * cell); minY = Math.min(minY, c[1] * cell); maxX = Math.max(maxX, (c[0] + 1) * cell); maxY = Math.max(maxY, (c[1] + 1) * cell); }
-		for (const t of TOWNS) { minX = Math.min(minX, t[1]); minY = Math.min(minY, t[2]); maxX = Math.max(maxX, t[1]); maxY = Math.max(maxY, t[2]); }
-	}
-	for (const p of pts) { minX = Math.min(minX, p[0]); minY = Math.min(minY, p[1]); maxX = Math.max(maxX, p[0]); maxY = Math.max(maxY, p[1]); }
-	// At least 60,000 units across, 4:3, with a margin.
+	for (const c of state.map ? state.map.land : []) { minX = Math.min(minX, c[0] * cell); minY = Math.min(minY, c[1] * cell); maxX = Math.max(maxX, (c[0] + 1) * cell); maxY = Math.max(maxY, (c[1] + 1) * cell); }
+	for (const t of TOWNS) { minX = Math.min(minX, t[1]); minY = Math.min(minY, t[2]); maxX = Math.max(maxX, t[1]); maxY = Math.max(maxY, t[2]); }
+	return [minX, minY, maxX, maxY];
+}
+
+/** A 4:3 view around a box of the world, with a margin, at least `least` units across. */
+function fitView(minX, minY, maxX, maxY, margin, least) {
 	let w = Math.max(maxX - minX, 1), h = Math.max(maxY - minY, 1);
 	const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
-	w = Math.max(w * 1.25, h * 1.25 * 4 / 3, 60000);
+	w = Math.max(w * margin, h * margin * 4 / 3, least);
 	h = w * 3 / 4;
-	const x0 = cx - w / 2, y0 = cy - h / 2;
-	const inView = (x, y, pad) => x >= x0 - pad && x <= x0 + w + pad && y >= y0 - pad && y <= y0 + h + pad;
-	let maxN = 1;
-	for (const c of land) maxN = Math.max(maxN, c[2]);
-	let svg = `<svg viewBox="${x0.toFixed(0)} ${y0.toFixed(0)} ${w.toFixed(0)} ${h.toFixed(0)}" preserveAspectRatio="xMidYMid meet">`;
-	svg += `<defs><filter id="land-soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="${(cell * 0.55).toFixed(0)}"/></filter></defs>`;
-	svg += `<g fill="#d9b64c" filter="url(#land-soft)">`;
-	for (const c of land) {
-		const x = c[0] * cell, y = c[1] * cell;
-		if (!inView(x, y, cell)) continue;
-		const a = 0.12 + 0.3 * Math.min(1, Math.sqrt(c[2] / maxN) * 2);
-		svg += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" opacity="${a.toFixed(3)}"/>`;
-	}
-	svg += `</g>`;
-	const font = w / 34;
-	for (const t of TOWNS) {
-		if (!inView(t[1], t[2], w * 0.05)) continue;
-		svg += `<g><rect x="${t[1] - font * 0.3}" y="${t[2] - font * 0.3}" width="${font * 0.6}" height="${font * 0.6}" transform="rotate(45 ${t[1]} ${t[2]})" fill="#f0e6c8"/><text x="${t[1] + font * 0.7}" y="${t[2] + font * 0.35}" font-size="${font.toFixed(0)}" fill="#c9c2ad" font-family="Georgia, serif" paint-order="stroke" stroke="#08080b" stroke-width="${(font / 5).toFixed(0)}">${esc(t[0])}</text></g>`;
+	return { x: cx - w / 2, y: cy - h / 2, w, h };
+}
+
+/** The view around the monster's spawn points. */
+function monsterView(m) {
+	let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+	for (const p of m.points) { minX = Math.min(minX, p[0]); minY = Math.min(minY, p[1]); maxX = Math.max(maxX, p[0]); maxY = Math.max(maxY, p[1]); }
+	return fitView(minX, minY, maxX, maxY, 1.25, 60000);
+}
+
+function worldView() {
+	const b = mapWorld();
+	return fitView(b[0], b[1], b[2], b[3], 1.02, 60000);
+}
+
+/** Keeps the middle of the view on the world and its width between MAP_MIN_WIDTH and a bit more than the world. */
+function clampView(v) {
+	const b = mapWorld(), most = worldView().w * 1.5;
+	const w = Math.min(Math.max(v.w, MAP_MIN_WIDTH), most), h = w * 3 / 4;
+	const cx = Math.min(Math.max(v.x + v.w / 2, b[0]), b[2]), cy = Math.min(Math.max(v.y + v.h / 2, b[1]), b[3]);
+	return { x: cx - w / 2, y: cy - h / 2, w, h };
+}
+
+/** The map of the profile: the picture (or the land) once, then drawMap() sets the view and draws the towns and spawn points for it. */
+function mapHtml(m) {
+	state.mapView = state.detailWorld ? worldView() : monsterView(m);
+	return `<div class="map" id="d-map">${mapSvg(m)}<div class="tools"><button data-zoom="1" title="Zoom in">+</button><button data-zoom="-1" title="Zoom out">&minus;</button><button id="d-world">${state.detailWorld ? "This monster" : "Whole world"}</button></div></div>`;
+}
+
+/** Where the monster spawns: on the client's world map, or on the land of every spawn point of the collection. */
+function mapSvg(m) {
+	const v = state.mapView;
+	let svg = `<svg viewBox="${v.x.toFixed(0)} ${v.y.toFixed(0)} ${v.w.toFixed(0)} ${v.h.toFixed(0)}" preserveAspectRatio="xMidYMid meet">`;
+	const image = state.map && state.map.image;
+	if (image) {
+		const b = image.b;
+		svg += `<image href="${esc(image.url)}" x="${b[0]}" y="${b[1]}" width="${b[2] - b[0]}" height="${b[3] - b[1]}" preserveAspectRatio="none"/>`;
+	} else {
+		const land = state.map ? state.map.land : [];
+		const cell = state.map ? state.map.cell : 4096;
+		let maxN = 1;
+		for (const c of land) maxN = Math.max(maxN, c[2]);
+		svg += `<defs><filter id="land-soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="${(cell * 0.55).toFixed(0)}"/></filter></defs>`;
+		svg += `<g fill="#d9b64c" filter="url(#land-soft)">`;
+		for (const c of land) {
+			const a = 0.12 + 0.3 * Math.min(1, Math.sqrt(c[2] / maxN) * 2);
+			svg += `<rect x="${c[0] * cell}" y="${c[1] * cell}" width="${cell}" height="${cell}" opacity="${a.toFixed(3)}"/>`;
+		}
+		svg += `</g>`;
 	}
 	const color = m.tier >= 2 ? elementColor(m.attackElement) : "#ff7a45";
-	const r = w / 150;
-	svg += `<g fill="${color}">`;
-	for (const p of pts) svg += `<circle cx="${p[0]}" cy="${p[1]}" r="${(r * 2.6).toFixed(0)}" opacity="0.18"/><circle cx="${p[0]}" cy="${p[1]}" r="${r.toFixed(0)}"/>`;
-	svg += `</g></svg>`;
-	return svg;
+	return svg + `<g class="towns"></g><g class="pts" fill="${color}"></g></svg>`;
+}
+
+/** Sets the map to state.mapView, with the towns and spawn points sized for it (the same size on screen at every zoom). */
+function drawMap() {
+	state.mapFrame = 0;
+	const svg = document.querySelector("#d-map svg");
+	if (!svg || !state.detail || !state.detail.points) return;
+	const v = state.mapView;
+	svg.setAttribute("viewBox", `${v.x.toFixed(0)} ${v.y.toFixed(0)} ${v.w.toFixed(0)} ${v.h.toFixed(0)}`);
+	const inView = (x, y, pad) => x >= v.x - pad && x <= v.x + v.w + pad && y >= v.y - pad && y <= v.y + v.h + pad;
+	const font = v.w / 34;
+	let towns = "";
+	for (const t of TOWNS) {
+		if (!inView(t[1], t[2], v.w * 0.05)) continue;
+		towns += `<g><rect x="${t[1] - font * 0.3}" y="${t[2] - font * 0.3}" width="${font * 0.6}" height="${font * 0.6}" transform="rotate(45 ${t[1]} ${t[2]})" fill="#f0e6c8"/><text x="${t[1] + font * 0.7}" y="${t[2] + font * 0.35}" font-size="${font.toFixed(0)}" fill="#c9c2ad" font-family="Georgia, serif" paint-order="stroke" stroke="#08080b" stroke-width="${(font / 5).toFixed(0)}">${esc(t[0])}</text></g>`;
+	}
+	svg.querySelector(".towns").innerHTML = towns;
+	const r = v.w / 150;
+	let pts = "";
+	for (const p of state.detail.points) {
+		if (inView(p[0], p[1], r * 3)) pts += `<circle cx="${p[0]}" cy="${p[1]}" r="${(r * 2.6).toFixed(0)}" opacity="0.18"/><circle cx="${p[0]}" cy="${p[1]}" r="${r.toFixed(0)}"/>`;
+	}
+	svg.querySelector(".pts").innerHTML = pts;
+}
+
+function scheduleMap() {
+	if (!state.mapFrame) state.mapFrame = requestAnimationFrame(drawMap);
+}
+
+/** The world point under a point of the screen. */
+function mapPoint(svg, clientX, clientY) {
+	const rect = svg.getBoundingClientRect(), v = state.mapView;
+	return { x: v.x + (clientX - rect.left) / rect.width * v.w, y: v.y + (clientY - rect.top) / rect.height * v.h };
+}
+
+/** Zooms by `factor` (below 1 zooms in) keeping the world point (x, y) where it is on screen, by default the middle. */
+function zoomMap(factor, x, y) {
+	const v = state.mapView;
+	if (x === undefined) { x = v.x + v.w / 2; y = v.y + v.h / 2; }
+	const w = Math.min(Math.max(v.w * factor, MAP_MIN_WIDTH), worldView().w * 1.5), k = w / v.w;
+	state.mapView = clampView({ x: x - (x - v.x) * k, y: y - (y - v.y) * k, w, h: w * 3 / 4 });
+	scheduleMap();
+}
+
+/** Dragging the map with a mouse or a finger, and pinching it with two. */
+const mapDrag = { pointers: new Map(), last: null };
+
+function mapGesture() {
+	const ps = [...mapDrag.pointers.values()];
+	if (!ps.length) return null;
+	const cx = ps.reduce((a, p) => a + p.x, 0) / ps.length, cy = ps.reduce((a, p) => a + p.y, 0) / ps.length;
+	return { n: ps.length, cx, cy, d: ps.length > 1 ? Math.hypot(ps[0].x - ps[1].x, ps[0].y - ps[1].y) : 0 };
+}
+
+function initMapControls() {
+	document.addEventListener("pointerdown", e => {
+		const svg = e.target.closest && e.target.closest("#d-map svg");
+		if (!svg || (e.pointerType === "mouse" && e.button !== 0)) return;
+		svg.setPointerCapture(e.pointerId);
+		mapDrag.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+		mapDrag.last = mapGesture();
+		svg.classList.add("dragging");
+		e.preventDefault();
+	});
+	document.addEventListener("pointermove", e => {
+		if (!mapDrag.pointers.has(e.pointerId)) return;
+		const svg = document.querySelector("#d-map svg");
+		mapDrag.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+		const g = mapGesture(), last = mapDrag.last;
+		mapDrag.last = g;
+		if (!svg || !last || g.n !== last.n) return;
+		const v = state.mapView, scale = v.w / svg.getBoundingClientRect().width;
+		state.mapView = clampView({ x: v.x - (g.cx - last.cx) * scale, y: v.y - (g.cy - last.cy) * scale, w: v.w, h: v.h });
+		if (g.n > 1 && last.d > 0 && g.d > 0) {
+			const p = mapPoint(svg, g.cx, g.cy);
+			zoomMap(last.d / g.d, p.x, p.y);
+		}
+		scheduleMap();
+	});
+	const release = e => {
+		if (!mapDrag.pointers.delete(e.pointerId)) return;
+		mapDrag.last = mapGesture();
+		if (!mapDrag.pointers.size) {
+			const svg = document.querySelector("#d-map svg");
+			if (svg) svg.classList.remove("dragging");
+		}
+	};
+	document.addEventListener("pointerup", release);
+	document.addEventListener("pointercancel", release);
+	document.addEventListener("wheel", e => {
+		const svg = e.target.closest && e.target.closest("#d-map svg");
+		if (!svg) return;
+		e.preventDefault();
+		const p = mapPoint(svg, e.clientX, e.clientY);
+		zoomMap(Math.exp(Math.max(-1, Math.min(1, e.deltaY * (e.deltaMode ? 0.05 : 0.0015)))), p.x, p.y);
+	}, { passive: false });
+	document.addEventListener("dblclick", e => {
+		const svg = e.target.closest && e.target.closest("#d-map svg");
+		if (!svg) return;
+		const p = mapPoint(svg, e.clientX, e.clientY);
+		zoomMap(e.shiftKey ? 2 : 0.5, p.x, p.y);
+	});
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1645,6 +1780,7 @@ function switchTab(view) {
 }
 
 function bindEvents() {
+	initMapControls();
 	document.getElementById("tabs").addEventListener("click", e => {
 		const b = e.target.closest(".tab");
 		if (b && b.dataset.view === "farming") state.farming = null;
@@ -1663,10 +1799,14 @@ function bindEvents() {
 		if (target) { openProfile(Number(target.dataset.id), true); return; }
 		const area = e.target.closest("[data-area]");
 		if (area) { showArea(Number(area.dataset.area)); return; }
-		if (e.target.closest("#d-world")) {
+		const zoom = e.target.closest("#d-map [data-zoom]");
+		if (zoom) { zoomMap(Number(zoom.dataset.zoom) > 0 ? 0.6 : 1 / 0.6); return; }
+		const world = e.target.closest("#d-world");
+		if (world) {
 			state.detailWorld = !state.detailWorld;
-			const map = document.getElementById("d-map");
-			if (map) map.innerHTML = mapSvg(state.detail) + `<div class="tools"><button id="d-world">${state.detailWorld ? "Zoom in" : "Whole world"}</button></div>`;
+			state.mapView = state.detailWorld ? worldView() : monsterView(state.detail);
+			world.textContent = state.detailWorld ? "This monster" : "Whole world";
+			scheduleMap();
 		}
 	});
 	document.addEventListener("change", e => {
