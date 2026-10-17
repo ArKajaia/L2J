@@ -74,6 +74,8 @@ public class BestiaryConfig
 	public static int[][] BOUNTY_REWARD_ITEMS;
 	public static boolean VARIANT_MESSAGES;
 	public static int BOSS_LOG_SIZE;
+	public static boolean DROP_STATS_ENABLED;
+	public static int DROP_STATS_MIN_KILLS;
 
 	public static void load()
 	{
@@ -156,8 +158,10 @@ public class BestiaryConfig
 		BOUNTY_REWARD_ITEMS = readItems(config.getString("BestiaryBountyRewardItems", ""));
 		VARIANT_MESSAGES = config.getBoolean("BestiaryVariantMessages", true);
 		BOSS_LOG_SIZE = Math.max(0, Math.min(50, config.getInt("BestiaryBossLogSize", 10)));
+		DROP_STATS_ENABLED = config.getBoolean("BestiaryDropStatsEnabled", true);
+		DROP_STATS_MIN_KILLS = Math.max(1, config.getInt("BestiaryDropStatsMinKills", 100));
 	}
-	
+
 	/**
 	 * @param value items as "id,count;id,count"
 	 * @return {id, count} of each item that could be read
