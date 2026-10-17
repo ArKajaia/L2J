@@ -37,6 +37,8 @@ public class CraftingGoalVoiced implements IVoicedCommandHandler
 	{
 		"goal",
 		"parts",
+		"farm",
+		"track",
 		"find",
 		"book",
 		"view",

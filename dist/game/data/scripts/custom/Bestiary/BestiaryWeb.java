@@ -19,6 +19,7 @@ import org.l2jmobius.gameserver.data.xml.ClassListData;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.managers.BestiaryManager;
+import org.l2jmobius.gameserver.managers.CraftingGoalManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.npc.DropType;
@@ -26,6 +27,8 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.DropGroupHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.DropHolder;
 import org.l2jmobius.gameserver.model.actor.holders.player.ClassInfoHolder;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.craftinggoal.CraftingGoal;
+import org.l2jmobius.gameserver.model.craftinggoal.CraftingGoalLine;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.model.skill.Skill;
@@ -41,6 +44,7 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
  * <li>GET /api/bestiary/monster?id=... - one monster, as much of it as the account's tier shows, with its drop bonus</li>
  * <li>GET /api/bestiary/ranking - the hunters who found the most monsters</li>
  * <li>POST /api/bestiary/track - points the character's radar at a monster (id=...), when the character is in the world</li>
+ * <li>GET /api/bestiary/farming?spoil=0|1 - where to farm what the character's crafting goals still miss ({@link BestiaryFarming}), when the character is in the world: the goals and their counts live with it</li>
  * <li>GET /api/bestiary/map - the land of the map, public</li>
  * </ul>
  * The monsters' 3D models, skins and portraits, and the GM bake page, are served by {@link BestiaryArt}. Without them the page draws a portrait of each monster's race.
@@ -108,6 +112,7 @@ public class BestiaryWeb
 		server.addRoute("/api/bestiary/ranking", "GET", false, this::handleRanking);
 		server.addRoute("/api/bestiary/map", "GET", false, this::handleMap);
 		server.addRoute("/api/bestiary/track", "POST", true, this::handleTrack);
+		server.addRoute("/api/bestiary/farming", "GET", false, this::handleFarming);
 		BestiaryArt.getInstance().register(server);
 	}
 
@@ -151,6 +156,7 @@ public class BestiaryWeb
 		json.append(",\"regionExpBonus\":").append(ints(BestiaryConfig.REGION_EXP_BONUS));
 		json.append(",\"showNames\":").append(BestiaryConfig.SHOW_UNDISCOVERED_NAMES);
 		json.append(",\"showAreas\":").append(BestiaryConfig.SHOW_UNDISCOVERED_AREAS);
+		json.append(",\"craftGoals\":").append(BestiaryFarming.isAvailable());
 
 		json.append(",\"regions\":").append(strings(catalog.getRegions().toArray(new String[0])));
 		final Map<String, Double> regionExp = manager.getRegionExp(entries);
@@ -682,7 +688,7 @@ public class BestiaryWeb
 	}
 
 	/** @return {chance multiplier, amount multiplier} of the server's rates for this drop, as the Community Board's drop search reads them */
-	private static double[] rates(DropHolder drop, ItemTemplate item, boolean boss)
+	static double[] rates(DropHolder drop, ItemTemplate item, boolean boss)
 	{
 		if (drop.getDropType() == DropType.SPOIL)
 		{
@@ -842,6 +848,122 @@ public class BestiaryWeb
 			player.sendMessage(result.message());
 		}
 		server.sendJson(exchange, 200, "{\"ok\":" + result.tracking() + ",\"msg\":" + SimpleJson.quote(result.message()) + "}");
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	// Farming for crafting goals
+	// ---------------------------------------------------------------------------------------------
+
+	/**
+	 * Where to farm what each crafting goal of the character still misses. Spoils count when asked (spoil=1), by default when the character knows Spoil. Monsters and hunting grounds go by id: the page has them from the collection.
+	 */
+	private void handleFarming(HttpExchange exchange) throws IOException
+	{
+		final PassiveTreeApiServer server = PassiveTreeApiServer.getInstance();
+		final int charId = server.authenticateCharacter(exchange);
+		if (charId < 0)
+		{
+			return;
+		}
+
+		final Player player = World.getInstance().getPlayer(charId);
+		final boolean online = (player != null) && player.isOnline();
+		final StringBuilder json = new StringBuilder(16 * 1024);
+		json.append("{\"on\":").append(BestiaryFarming.isAvailable()).append(",\"online\":").append(online);
+		if (!BestiaryFarming.isAvailable() || !online)
+		{
+			server.sendJson(exchange, 200, json.append('}').toString());
+			return;
+		}
+
+		final String param = server.readParams(exchange).get("spoil");
+		final boolean spoiler = BestiaryFarming.canSpoil(player);
+		final boolean spoils = param != null ? "1".equals(param.trim()) : spoiler;
+		json.append(",\"level\":").append(player.getLevel());
+		json.append(",\"spoiler\":").append(spoiler);
+		json.append(",\"spoil\":").append(spoils);
+		json.append(",\"levelsAbove\":").append(BestiaryConfig.FARMING_LEVELS_ABOVE);
+		json.append(",\"goals\":[");
+		boolean first = true;
+		for (CraftingGoal goal : CraftingGoalManager.getInstance().getGoals(player))
+		{
+			json.append(first ? "" : ",");
+			appendGoalPlan(json, BestiaryFarming.getInstance().plan(player, goal, spoils));
+			first = false;
+		}
+		json.append("]}");
+		server.sendJson(exchange, 200, json.toString());
+	}
+
+	private static void appendGoalPlan(StringBuilder json, BestiaryFarming.GoalPlan plan)
+	{
+		final CraftingGoal goal = plan.goal();
+		json.append("{\"recipe\":").append(goal.getRecipeListId());
+		json.append(",\"item\":").append(goal.getProductId());
+		json.append(",\"name\":").append(SimpleJson.quote(CraftingGoalManager.describe(goal)));
+		json.append(",\"done\":").append(CraftingGoal.countCompleteComponents(plan.lines()));
+		json.append(",\"total\":").append(CraftingGoal.countComponents(plan.lines()));
+		json.append(",\"ready\":").append(CraftingGoal.isReady(plan.lines()));
+		json.append(",\"farmable\":").append(plan.farmable());
+
+		json.append(",\"res\":[");
+		for (int i = 0; i < plan.resources().size(); i++)
+		{
+			final BestiaryFarming.Resource resource = plan.resources().get(i);
+			final CraftingGoalLine line = resource.line();
+			final ItemTemplate item = ItemData.getInstance().getTemplate(line.getItemId());
+			json.append(i > 0 ? "," : "").append("{\"i\":").append(line.getItemId());
+			if (item != null)
+			{
+				appendItem(json, item);
+			}
+			json.append(",\"have\":").append(line.getHave()).append(",\"need\":").append(line.getNeeded());
+			json.append(",\"mat\":").append(line.isMaterial()).append(",\"cr\":").append(line.isCraftable());
+			json.append(",\"u\":").append(resource.unfound());
+			json.append(",\"spots\":[");
+			for (int j = 0; j < resource.spots().size(); j++)
+			{
+				final BestiaryFarming.Spot spot = resource.spots().get(j);
+				json.append(j > 0 ? "," : "").append("{\"id\":").append(spot.template().getId());
+				json.append(",\"pk\":").append(String.format(Locale.US, "%.4f", spot.perKill()));
+				json.append(",\"k\":").append(spot.kills());
+				json.append(",\"c\":").append(spot.counted());
+				appendYield(json, "d", spot.drop());
+				appendYield(json, "s", spot.spoil());
+				json.append('}');
+			}
+			json.append("]}");
+		}
+		json.append(']');
+
+		json.append(",\"grounds\":[");
+		for (int i = 0; i < plan.grounds().size(); i++)
+		{
+			final BestiaryFarming.Ground ground = plan.grounds().get(i);
+			json.append(i > 0 ? "," : "").append("{\"a\":").append(ground.area().getId());
+			json.append(",\"s\":").append(String.format(Locale.US, "%.2f", ground.score()));
+			json.append(",\"best\":[");
+			boolean first = true;
+			for (Map.Entry<Integer, BestiaryFarming.Spot> best : ground.best().entrySet())
+			{
+				json.append(first ? "" : ",").append("{\"r\":").append(best.getKey()).append(",\"id\":").append(best.getValue().template().getId()).append(",\"k\":").append(best.getValue().kills()).append('}');
+				first = false;
+			}
+			json.append("]}");
+		}
+		json.append("]}");
+	}
+
+	/** A drop or spoil of a spot: {c: chance, mn, mx, b: 1 with the account's drop bonus}. */
+	private static void appendYield(StringBuilder json, String key, BestiaryFarming.Yield yield)
+	{
+		if (yield == null)
+		{
+			return;
+		}
+		json.append(",\"").append(key).append("\":{\"c\":").append(String.format(Locale.US, "%.4f", yield.chance()));
+		json.append(",\"mn\":").append(yield.min()).append(",\"mx\":").append(yield.max());
+		json.append(yield.boosted() ? ",\"b\":1}" : "}");
 	}
 
 	/** The land never changes while the server runs: worked out once. Public, it only tells where monsters spawn. */

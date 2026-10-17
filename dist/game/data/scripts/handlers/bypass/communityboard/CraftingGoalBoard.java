@@ -16,10 +16,15 @@
  */
 package handlers.bypass.communityboard;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.StringJoiner;
 
 import org.l2jmobius.gameserver.cache.HtmCache;
+import org.l2jmobius.gameserver.config.custom.BestiaryConfig;
 import org.l2jmobius.gameserver.config.custom.CraftingGoalsConfig;
 import org.l2jmobius.gameserver.data.holders.RecipeHolder;
 import org.l2jmobius.gameserver.data.xml.ItemData;
@@ -32,6 +37,11 @@ import org.l2jmobius.gameserver.model.craftinggoal.CraftingGoal;
 import org.l2jmobius.gameserver.model.craftinggoal.CraftingGoalLine;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.recipe.RecipeList;
+import org.l2jmobius.gameserver.util.FormatUtil;
+
+import custom.Bestiary.BestiaryCatalog;
+import custom.Bestiary.BestiaryFarming;
+import custom.Bestiary.BestiaryTracker;
 
 /**
  * The crafting goal tracker (see {@link CraftingGoalManager}): the goals with the progress of each resource, a recipe search, the player's recipe book and a recipe's page where a goal is taken.<br>
@@ -40,6 +50,8 @@ import org.l2jmobius.gameserver.model.item.recipe.RecipeList;
  * <li>(none) - the goals</li>
  * <li>{@code goal <recipe>} - the resources of a goal</li>
  * <li>{@code parts <recipe> <page>} - the materials of a goal's missing parts</li>
+ * <li>{@code farm <recipe> <page>} - where to farm what a goal still misses, from the bestiary ({@link BestiaryFarming})</li>
+ * <li>{@code track <recipe> <page> <npc>} - points the radar at a monster of that page, and shows the page again</li>
  * <li>{@code find <page> <words>} - recipes whose item name holds the words</li>
  * <li>{@code book <page>} - the recipes the player knows</li>
  * <li>{@code view <recipe>} - a recipe, and how many items to aim for</li>
@@ -78,6 +90,12 @@ public class CraftingGoalBoard implements IParseBoardHandler
 	/** The height of a row with an icon, a bit more than the 32x32 icon. */
 	private static final int ROW_HEIGHT = 40;
 	private static final int ICON_CELL = 40;
+	/** Resources on a page of "Where to Farm", each with its best monsters and their Track buttons: about 2,200 characters each in the window. */
+	private static final int WINDOW_FARM_RESOURCES = 3;
+	private static final int BOARD_FARM_RESOURCES = 6;
+	/** Monsters shown for each resource in the window; the board shows {@link BestiaryFarming#SPOTS}. */
+	private static final int WINDOW_FARM_SPOTS = 2;
+	private static final int FARM_GROUNDS = 3;
 
 	private static final String[] COMMANDS =
 	{
@@ -148,6 +166,22 @@ public class CraftingGoalBoard implements IParseBoardHandler
 				case "view":
 				{
 					return buildRecipe(player, Integer.parseInt(args[1]), null, width, bypass);
+				}
+				case "farm":
+				{
+					return buildFarming(player, Integer.parseInt(args[1]), args.length > 2 ? Integer.parseInt(args[2]) : 1, null, width, bypass);
+				}
+				case "track":
+				{
+					final int recipeListId = Integer.parseInt(args[1]);
+					final int page = Integer.parseInt(args[2]);
+					String notice = null;
+					if (BestiaryFarming.isAvailable())
+					{
+						notice = BestiaryTracker.track(player, Integer.parseInt(args[3])).message();
+						player.sendMessage(notice);
+					}
+					return buildFarming(player, recipeListId, page, notice, width, bypass);
 				}
 				case "add":
 				{
@@ -303,6 +337,15 @@ public class CraftingGoalBoard implements IParseBoardHandler
 			sb.append("</tr></table>");
 		}
 
+		// Where the bestiary would farm what is missing.
+		if (!ready && BestiaryFarming.isAvailable())
+		{
+			sb.append("<br><table width=").append(width).append("><tr>");
+			sb.append("<td width=").append(width - 110).append("><font color=\"").append(COLOR_TITLE).append("\">Where to farm</font><br1><font color=\"").append(COLOR_MUTED).append("\">The bestiary's best spots for what you still miss</font></td>");
+			sb.append("<td width=110 align=right>").append(button("Farm", bypass + " farm " + recipeListId + " 1", 100)).append("</td>");
+			sb.append("</tr></table>");
+		}
+
 		final int buttonWidth = buttonWidth(width, 4);
 		sb.append("<br><table width=").append(width).append("><tr>");
 		sb.append("<td align=center>").append(button("Back", bypass, buttonWidth)).append("</td>");
@@ -376,6 +419,146 @@ public class CraftingGoalBoard implements IParseBoardHandler
 		sb.append("<td align=center>").append(button("Goals", bypass, buttonWidth)).append("</td>");
 		sb.append("</tr></table>");
 		return sb.toString();
+	}
+
+	/**
+	 * Where to farm what a goal still misses: the hunting grounds that give the most of it, then each resource with the best monsters the account found and a Track button for each. Paged in the window ({@link #WINDOW_FARM_RESOURCES}) and on the board ({@link #BOARD_FARM_RESOURCES}), so a goal with many materials stays under their text limits.
+	 * @param notice what tracking a monster said, or {@code null}
+	 */
+	private static String buildFarming(Player player, int recipeListId, int page, String notice, int width, String bypass)
+	{
+		final CraftingGoal goal = CraftingGoalManager.getInstance().getGoal(player, recipeListId);
+		if (goal == null)
+		{
+			return buildGoals(player, width, bypass);
+		}
+		if (!BestiaryFarming.isAvailable())
+		{
+			return buildGoal(player, recipeListId, width, bypass);
+		}
+
+		final boolean window = bypass.equals(WINDOW_BYPASS);
+		final BestiaryFarming.GoalPlan plan = BestiaryFarming.getInstance().plan(player, goal, BestiaryFarming.canSpoil(player));
+		final List<BestiaryFarming.Resource> resources = plan.resources();
+		final StringBuilder sb = new StringBuilder();
+		if (notice != null)
+		{
+			sb.append("<table width=").append(width).append("><tr><td align=center><font color=\"").append(COLOR_VALUE).append("\">").append(notice).append("</font></td></tr></table><br>");
+		}
+
+		rowStart(sb, width, goal.getProductId(), ROW_HEIGHT);
+		sb.append("<td width=").append(width - ICON_CELL).append("><font color=\"").append(COLOR_VALUE).append("\">").append(CraftingGoalManager.describe(goal)).append("</font><br1>");
+		sb.append("<font color=\"").append(COLOR_TITLE).append("\">Where to farm</font> <font color=\"").append(COLOR_MUTED).append("\">Lv. ").append(plan.level()).append(", ").append(plan.spoils() ? "spoils counted" : "drops only (you can't spoil)").append("</font></td>");
+		rowEnd(sb, width);
+		sb.append("<br>");
+
+		final int perPage = window ? WINDOW_FARM_RESOURCES : BOARD_FARM_RESOURCES;
+		final int pages = Math.max(1, (resources.size() + perPage - 1) / perPage);
+		final int current = Math.max(1, Math.min(page, pages));
+		if (resources.isEmpty())
+		{
+			sb.append("<table width=").append(width).append("><tr><td align=center><font color=\"").append(COLOR_TEXT).append("\">Everything is in your bag: nothing left to farm.</font></td></tr></table>");
+		}
+
+		// The hunting grounds, on the first page.
+		if ((current == 1) && !plan.grounds().isEmpty())
+		{
+			sb.append("<table width=").append(width).append("><tr><td><font color=\"").append(COLOR_TITLE).append("\">Best hunting grounds</font></td></tr></table>");
+			for (int i = 0; i < Math.min(FARM_GROUNDS, plan.grounds().size()); i++)
+			{
+				final BestiaryFarming.Ground ground = plan.grounds().get(i);
+				final StringJoiner names = new StringJoiner(", ");
+				for (int resource : ground.best().keySet())
+				{
+					names.add(CraftingGoalManager.getItemName(resources.get(resource).line().getItemId()));
+				}
+				sb.append("<table width=").append(width).append("><tr><td width=").append(width - 70).append("><font color=\"").append(COLOR_VALUE).append("\">").append(ground.area().getName()).append("</font> <font color=\"").append(COLOR_MUTED).append("\">").append(ground.area().getRegion()).append(", Lv. ").append(Math.round(ground.area().getAverageLevel())).append("</font></td>");
+				sb.append("<td width=70 align=right><font color=\"").append(COLOR_TEXT).append("\">").append(ground.best().size()).append(" of ").append(plan.farmable()).append("</font></td></tr>");
+				sb.append("<tr><td colspan=2><font color=\"").append(COLOR_MUTED).append("\">").append(names).append("</font></td></tr></table>");
+				sb.append("<img src=\"L2UI.SquareGray\" width=").append(width).append(" height=1>");
+			}
+			sb.append("<br>");
+		}
+
+		// Each resource still missing, with its best monsters.
+		if (!resources.isEmpty())
+		{
+			sb.append("<table width=").append(width).append("><tr><td><font color=\"").append(COLOR_TITLE).append("\">Still missing</font></td></tr></table>");
+		}
+		final int spotsShown = window ? WINDOW_FARM_SPOTS : BestiaryFarming.SPOTS;
+		for (int i = (current - 1) * perPage; i < Math.min(resources.size(), current * perPage); i++)
+		{
+			final BestiaryFarming.Resource resource = resources.get(i);
+			appendLine(sb, resource.line(), width);
+			for (int j = 0; j < Math.min(spotsShown, resource.spots().size()); j++)
+			{
+				appendSpot(sb, resource.spots().get(j), recipeListId, current, width, bypass);
+			}
+
+			final StringJoiner hints = new StringJoiner(" ");
+			if (resource.spots().isEmpty())
+			{
+				hints.add(resource.line().isCraftable() ? "None of the monsters you found gives it: craft it from its materials." : "None of the monsters you found gives it yet.");
+			}
+			if (resource.unfound() > 0)
+			{
+				hints.add(resource.unfound() == 1 ? "1 monster you haven't found yet gives it too." : resource.unfound() + " monsters you haven't found yet give it too.");
+			}
+			if (hints.length() > 0)
+			{
+				sb.append("<table width=").append(width).append("><tr><td width=").append(ICON_CELL).append("></td><td width=").append(width - ICON_CELL).append("><font color=\"").append(COLOR_MUTED).append("\">").append(hints).append("</font></td></tr></table>");
+			}
+			sb.append("<br>");
+		}
+
+		sb.append("<table width=").append(width).append("><tr>");
+		sb.append("<td width=100 align=left>").append(current > 1 ? button("Previous", bypass + " farm " + recipeListId + " " + (current - 1), 80) : "").append("</td>");
+		sb.append("<td width=").append(width - 200).append(" align=center>");
+		if (pages > 1)
+		{
+			sb.append("<font color=\"").append(COLOR_MUTED).append("\">Page ").append(current).append(" of ").append(pages).append("</font>");
+		}
+		sb.append("</td><td width=100 align=right>").append(current < pages ? button("Next", bypass + " farm " + recipeListId + " " + (current + 1), 80) : "").append("</td>");
+		sb.append("</tr></table>");
+		final int buttonWidth = buttonWidth(width, 3);
+		sb.append("<table width=").append(width).append("><tr>");
+		sb.append("<td align=center>").append(button("Resources", bypass + " goal " + recipeListId, buttonWidth)).append("</td>");
+		sb.append("<td align=center>").append(button("Refresh", bypass + " farm " + recipeListId + " " + current, buttonWidth)).append("</td>");
+		sb.append("<td align=center>").append(button("Goals", bypass, buttonWidth)).append("</td>");
+		sb.append("</tr></table>");
+		sb.append("<table width=").append(width).append("><tr><td align=center><font color=\"").append(COLOR_MUTED).append("\">Only monsters your account found, up to ").append(BestiaryConfig.FARMING_LEVELS_ABOVE).append(" levels above you. A kill counts your bestiary's drop bonus, and less from monsters far below you.</font></td></tr></table>");
+		return sb.toString();
+	}
+
+	/**
+	 * A monster to farm a resource on, under the resource: where it lives, how many one kill gives and the kills it takes, and a button to track it.
+	 */
+	private static void appendSpot(StringBuilder sb, BestiaryFarming.Spot spot, int recipeListId, int page, int width, String bypass)
+	{
+		final String ground = spot.kind().getAreas().isEmpty() ? "" : BestiaryCatalog.getInstance().getAreas().get(spot.kind().getAreas().iterator().next()).getName();
+		final String how = (spot.drop() != null) && (spot.spoil() != null) ? "drop and spoil" : spot.drop() != null ? "drop" : "spoil";
+		sb.append("<table width=").append(width).append(" cellpadding=0 cellspacing=0><tr>");
+		sb.append("<td width=").append(ICON_CELL).append("></td>");
+		sb.append("<td width=").append(width - ICON_CELL - 80).append("><font color=\"").append(COLOR_TEXT).append("\">").append(spot.template().getName()).append("</font> <font color=\"").append(COLOR_MUTED).append("\">Lv. ").append(spot.template().getLevel()).append(ground.isEmpty() ? "" : ", " + ground).append("</font><br1>");
+		sb.append("<font color=\"").append(spot.counted() ? COLOR_VALUE : COLOR_MUTED).append("\">").append(formatPerKill(spot.perKill())).append("</font><font color=\"").append(COLOR_MUTED).append("\"> a kill (").append(how).append("), ~").append(FormatUtil.formatAdena(spot.kills())).append(spot.kills() == 1 ? " kill" : " kills").append(spot.counted() ? "" : ", needs a spoiler").append("</font></td>");
+		sb.append("<td width=80 align=right>").append(button("Track", bypass + " track " + recipeListId + " " + page + " " + spot.template().getId(), 70)).append("</td>");
+		sb.append("</tr></table>");
+	}
+
+	/**
+	 * @return an average amount per kill: "1,240", "1.95", "0.0123"
+	 */
+	private static String formatPerKill(double value)
+	{
+		if (value >= 100)
+		{
+			return FormatUtil.formatAdena(Math.round(value));
+		}
+		if (value >= 1)
+		{
+			return String.format(Locale.US, "%.2f", value).replaceAll("\\.?0+$", "");
+		}
+		return value > 0 ? new BigDecimal(value).round(new MathContext(3)).stripTrailingZeros().toPlainString() : "0";
 	}
 
 	/**
