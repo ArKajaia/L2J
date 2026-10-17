@@ -277,11 +277,12 @@ public class CraftingGoalManager
 	}
 
 	/**
-	 * Called by the {@code RecipeManager} when an item is crafted for a player (by themselves or in a workshop). Counts a craft of the goal that makes this item; the last one completes the goal.
+	 * Called by the {@code RecipeManager} when items are crafted for a player (by themselves or in a workshop). Counts the crafts of the goal that makes this item; the last one completes the goal.
 	 * @param player the player who gets the item
 	 * @param recipe the recipe crafted
+	 * @param crafts the number of successful crafts
 	 */
-	public void onCrafted(Player player, RecipeList recipe)
+	public void onCrafted(Player player, RecipeList recipe, int crafts)
 	{
 		for (CraftingGoal goal : getGoals(player))
 		{
@@ -294,7 +295,7 @@ public class CraftingGoalManager
 			final int left;
 			synchronized (goal)
 			{
-				left = goal.getCrafts() - 1;
+				left = goal.getCrafts() - crafts;
 				goal.setCrafts(left);
 				resetCelebrations(goal);
 			}

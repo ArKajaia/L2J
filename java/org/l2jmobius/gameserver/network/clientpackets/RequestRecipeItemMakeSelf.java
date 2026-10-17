@@ -26,11 +26,13 @@ import org.l2jmobius.gameserver.model.actor.Player;
 public class RequestRecipeItemMakeSelf extends ClientPacket
 {
 	private int _id;
+	private int _count;
 	
 	@Override
 	protected void readImpl()
 	{
 		_id = readInt();
+		_count = readInt();
 	}
 	
 	@Override
@@ -59,6 +61,6 @@ public class RequestRecipeItemMakeSelf extends ClientPacket
 			return;
 		}
 		
-		RecipeManager.getInstance().requestMakeItem(player, _id);
+		RecipeManager.getInstance().requestMakeItem(player, _id, _count);
 	}
 }

@@ -261,7 +261,7 @@ public class RecipeData implements IXmlReader
 		
 		return idList;
 	}
-	
+
 	/**
 	 * Gets the valid recipe list.
 	 * @param player the player

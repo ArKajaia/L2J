@@ -129,6 +129,11 @@ public class RecipeManager
 	
 	public void requestMakeItem(Player player, int recipeListId)
 	{
+		requestMakeItem(player, recipeListId, 1);
+	}
+	
+	public void requestMakeItem(Player player, int recipeListId, int count)
+	{
 		// Check if player is trying to operate a private store or private workshop while engaged in combat.
 		if (player.isInCombat() || player.isInDuel())
 		{
@@ -158,7 +163,7 @@ public class RecipeManager
 			return;
 		}
 		
-		final RecipeItemMaker maker = new RecipeItemMaker(player, recipeList, player);
+		final RecipeItemMaker maker = new RecipeItemMaker(player, recipeList, player, count);
 		if (maker._isValid)
 		{
 			if (PlayerConfig.ALT_GAME_CREATION)
@@ -176,6 +181,7 @@ public class RecipeManager
 	private static class RecipeItemMaker implements Runnable
 	{
 		private static final Logger LOGGER = Logger.getLogger(RecipeItemMaker.class.getName());
+		private static final int MAX_CRAFT_COUNT = 100;
 		protected boolean _isValid;
 		protected List<RecipeItemInfo> _items = null;
 		protected final RecipeList _recipeList;
@@ -191,8 +197,9 @@ public class RecipeManager
 		protected long _price;
 		protected int _totalItems;
 		protected int _delay;
+		protected int _count; // items to create at once
 		
-		public RecipeItemMaker(Player pPlayer, RecipeList pRecipeList, Player pTarget)
+		public RecipeItemMaker(Player pPlayer, RecipeList pRecipeList, Player pTarget, int count)
 		{
 			_player = pPlayer;
 			_target = pTarget;
@@ -201,6 +208,7 @@ public class RecipeManager
 			_skillId = _recipeList.isDwarvenRecipe() ? CommonSkill.CREATE_DWARVEN.getId() : CommonSkill.CREATE_COMMON.getId();
 			_skillLevel = _recipeList.isDwarvenRecipe() ? _player.getDwarvenCraft() : _player.getSkillLevel(_skillId);
 			_skill = _player.getKnownSkill(_skillId);
+			_count = Math.max(1, Math.min(count, MAX_CRAFT_COUNT));
 			_player.setCrafting(true);
 			
 			if (_player.isAlikeDead())
@@ -263,6 +271,14 @@ public class RecipeManager
 				}
 			}
 			
+			// do not try to create more than the materials, hp/mp and adena allow
+			final int requested = _count;
+			_count = Math.min(_count, calculateMaxCount());
+			if (_count < requested)
+			{
+				_target.sendMessage("You can only create " + _count + " of the " + requested + " requested items.");
+			}
+
 			// make temporary items
 			_items = listItems(false);
 			if (_items == null)
@@ -270,31 +286,40 @@ public class RecipeManager
 				abort();
 				return;
 			}
-			
+
 			for (RecipeItemInfo i : _items)
 			{
 				_totalItems += i.getQuantity();
 			}
-			
+
+			// initial AltStatChange checks
+			if (PlayerConfig.ALT_GAME_CREATION)
+			{
+				calculateAltStatChange();
+			}
+
 			// initial statUse checks
 			if (!calculateStatUse(false, false))
 			{
 				abort();
 				return;
 			}
-			
-			// initial AltStatChange checks
+
+			// non-alt creation finishes right away and updates the craft window then
 			if (PlayerConfig.ALT_GAME_CREATION)
 			{
-				calculateAltStatChange();
+				updateMakeInfo(true);
+				updateCurMp();
+				updateCurLoad();
 			}
-			
-			updateMakeInfo(true);
-			updateCurMp();
-			updateCurLoad();
-			
+
 			_player.setCrafting(false);
 			_isValid = true;
+		}
+		
+		public RecipeItemMaker(Player pPlayer, RecipeList pRecipeList, Player pTarget)
+		{
+			this(pPlayer, pRecipeList, pTarget, 1);
 		}
 		
 		@Override
@@ -385,52 +410,64 @@ public class RecipeManager
 		
 		private void finishCrafting()
 		{
-			if (!PlayerConfig.ALT_GAME_CREATION)
+			if (!PlayerConfig.ALT_GAME_CREATION && !calculateStatUse(false, true))
 			{
-				calculateStatUse(false, true);
+				return; // aborted
 			}
-			
+
 			// first take adena for manufacture
-			if ((_target != _player) && (_price > 0) && (_target.transferItem(ItemProcessType.TRANSFER, _target.getInventory().getAdenaInstance().getObjectId(), _price, _player.getInventory(), _player) == null)) // customer must pay for services
+			if ((_target != _player) && (_price > 0) && (_target.transferItem(ItemProcessType.TRANSFER, _target.getInventory().getAdenaInstance().getObjectId(), _price * _count, _player.getInventory(), _player) == null)) // customer must pay for services
 			{
 				_target.sendPacket(SystemMessageId.YOU_DO_NOT_HAVE_ENOUGH_ADENA);
 				abort();
 				return;
 			}
-			
+
 			_items = listItems(true); // this line actually takes materials from inventory
 			if (_items != null)
 			{
-				if ((Rnd.nextDouble() * 100) < DwarvenTrades.getCraftSuccessRate(_player, _recipeList.getSuccessRate()))
+				final int successes = rollCount(_count, DwarvenTrades.getCraftSuccessRate(_player, _recipeList.getSuccessRate()));
+				final int failures = _count - successes;
+				if (successes > 0)
 				{
-					rewardPlayer();
-					updateMakeInfo(true);
+					rewardPlayer(successes);
+					CraftingGoalManager.getInstance().onCrafted(_target, _recipeList, successes);
 				}
-				else
+
+				if (failures > 0)
 				{
 					if (_target != _player)
 					{
 						SystemMessage msg = new SystemMessage(SystemMessageId.YOUR_ATTEMPT_TO_CREATE_S2_FOR_C1_AT_THE_PRICE_OF_S3_ADENA_HAS_FAILED);
 						msg.addString(_target.getName());
 						msg.addItemName(_recipeList.getItemId());
-						msg.addLong(_price);
+						msg.addLong(_price * failures);
 						_player.sendPacket(msg);
 						msg = new SystemMessage(SystemMessageId.C1_HAS_FAILED_TO_CREATE_S2_AT_THE_PRICE_OF_S3_ADENA);
 						msg.addString(_player.getName());
 						msg.addItemName(_recipeList.getItemId());
-						msg.addLong(_price);
+						msg.addLong(_price * failures);
 						_target.sendPacket(msg);
 					}
-					else
+					else if (_count == 1)
 					{
 						_target.sendPacket(SystemMessageId.YOU_FAILED_AT_MIXING_THE_ITEM);
 					}
-					
-					CraftingGoalManager.getInstance().onCraftFailed(_target, _recipeList);
-					updateMakeInfo(false);
+					else
+					{
+						_target.sendMessage("You failed to create " + failures + " of the " + _count + " items.");
+					}
+
+					// a success already counts the goal from the materials left
+					if (successes == 0)
+					{
+						CraftingGoalManager.getInstance().onCraftFailed(_target, _recipeList);
+					}
 				}
+
+				updateMakeInfo(successes > 0);
 			}
-			
+
 			// update load and mana bar of craft window
 			updateCurMp();
 			updateCurLoad();
@@ -438,7 +475,36 @@ public class RecipeManager
 			_player.setCrafting(false);
 			_target.sendItemList(false);
 		}
-		
+
+		/**
+		 * @param tries the number of rolls
+		 * @param chance the chance of each roll in percent
+		 * @return how many of the rolls succeed
+		 */
+		private static int rollCount(int tries, double chance)
+		{
+			if (chance <= 0)
+			{
+				return 0;
+			}
+
+			if (chance >= 100)
+			{
+				return tries;
+			}
+
+			int successes = 0;
+			for (int i = 0; i < tries; i++)
+			{
+				if ((Rnd.nextDouble() * 100) < chance)
+				{
+					successes++;
+				}
+			}
+
+			return successes;
+		}
+
 		private void updateMakeInfo(boolean success)
 		{
 			if (_target == _player)
@@ -531,7 +597,7 @@ public class RecipeManager
 			boolean ret = true;
 			for (RecipeStatHolder statUse : _recipeList.getStatUse())
 			{
-				final double modifiedValue = statUse.getValue() / _creationPasses;
+				final double modifiedValue = (statUse.getValue() * _count) / _creationPasses;
 				if (statUse.getType() == StatType.HP)
 				{
 					// we do not want to kill the player, so its CurrentHP must be greater than the reduce value
@@ -591,6 +657,53 @@ public class RecipeManager
 			return ret;
 		}
 		
+		/**
+		 * @return how many of the requested items the materials, hp/mp and customer adena are enough for (at least 1)
+		 */
+		private int calculateMaxCount()
+		{
+			long max = _count;
+			final Inventory inv = _target.getInventory();
+			for (RecipeHolder recipe : _recipeList.getRecipes())
+			{
+				if (recipe.getQuantity() > 0)
+				{
+					final Item item = inv.getItemByItemId(recipe.getItemId());
+					max = Math.min(max, (item == null ? 0 : item.getCount()) / recipe.getQuantity());
+				}
+			}
+			
+			if ((_target != _player) && (_price > 0))
+			{
+				max = Math.min(max, _target.getAdena() / _price);
+			}
+			
+			// in alt mode crafting waits for hp/mp to regenerate instead
+			if (!PlayerConfig.ALT_GAME_CREATION)
+			{
+				for (RecipeStatHolder statUse : _recipeList.getStatUse())
+				{
+					final double value = statUse.getValue();
+					if (value <= 0)
+					{
+						continue;
+					}
+					
+					if (statUse.getType() == StatType.HP)
+					{
+						// current hp must stay above the reduce value (see calculateStatUse)
+						max = Math.min(max, (long) Math.ceil(_player.getCurrentHp() / value) - 1);
+					}
+					else if (statUse.getType() == StatType.MP)
+					{
+						max = Math.min(max, (long) (_player.getCurrentMp() / value));
+					}
+				}
+			}
+			
+			return (int) Math.max(1, max);
+		}
+		
 		private List<RecipeItemInfo> listItems(boolean remove)
 		{
 			final RecipeHolder[] recipes = _recipeList.getRecipes();
@@ -605,11 +718,13 @@ public class RecipeManager
 					final long itemQuantityAmount = item == null ? 0 : item.getCount();
 					
 					// check materials
-					if (itemQuantityAmount < recipe.getQuantity())
+					final int quantity = recipe.getQuantity() * _count;
+					
+					if (itemQuantityAmount < quantity)
 					{
 						sm = new SystemMessage(SystemMessageId.YOU_ARE_MISSING_S2_S1_REQUIRED_TO_CREATE_THAT);
 						sm.addItemName(recipe.getItemId());
-						sm.addLong(recipe.getQuantity() - itemQuantityAmount);
+						sm.addLong(quantity - itemQuantityAmount);
 						_target.sendPacket(sm);
 						
 						abort();
@@ -617,7 +732,7 @@ public class RecipeManager
 					}
 					
 					// make new temporary object, just for counting purposes
-					materials.add(new RecipeItemInfo(item, recipe.getQuantity()));
+					materials.add(new RecipeItemInfo(item, quantity));
 				}
 			}
 			
@@ -652,75 +767,130 @@ public class RecipeManager
 			_activeMakers.remove(_player.getObjectId());
 		}
 		
-		private void rewardPlayer()
+		private void rewardPlayer(int crafts)
 		{
 			final int rareProdId = _recipeList.getRareItemId();
-			int itemId = _recipeList.getItemId();
-			int itemCount = _recipeList.getCount();
+			final int itemId = _recipeList.getItemId();
 			final ItemTemplate template = ItemData.getInstance().getTemplate(itemId);
-			
+
 			// check that the current recipe has a rare production or not
+			int rareCrafts = 0;
 			if ((rareProdId != -1) && ((rareProdId == itemId) || PlayerConfig.CRAFT_MASTERWORK))
 			{
-				if ((Rnd.nextDouble() * 100) < (_recipeList.getRarity() * PlayerConfig.CRAFT_MASTERWORK_CHANCE_RATE * DwarvenTrades.getMasterworkMultiplier(_player)))
-				{
-					itemId = rareProdId;
-					itemCount = _recipeList.getRareCount();
-				}
+				rareCrafts = rollCount(crafts, _recipeList.getRarity() * PlayerConfig.CRAFT_MASTERWORK_CHANCE_RATE * DwarvenTrades.getMasterworkMultiplier(_player));
 			}
-			
+
+			final int normalCrafts = crafts - rareCrafts;
+
 			// A dwarven crafter sometimes makes twice as many shots, arrows, potions or materials.
-			final ItemTemplate product = ItemData.getInstance().getTemplate(itemId);
-			if ((product != null) && product.isStackable() && ((Rnd.nextDouble() * 100) < DwarvenTrades.getDoubleCraftChance(_player)))
+			final double doubleChance = DwarvenTrades.getDoubleCraftChance(_player);
+			final int normalDoubled = isStackable(itemId) ? rollCount(normalCrafts, doubleChance) : 0;
+			final int rareDoubled = isStackable(rareProdId) ? rollCount(rareCrafts, doubleChance) : 0;
+			if ((normalDoubled + rareDoubled) > 0)
 			{
-				itemCount *= 2;
-				_player.sendMessage("Master's Touch: you made twice as many.");
+				final String times = crafts == 1 ? "" : " in " + (normalDoubled + rareDoubled) + " of " + crafts + " crafts";
+				_player.sendMessage("Master's Touch: you made twice as many" + times + ".");
 				if (_target != _player)
 				{
-					_target.sendMessage("Master's Touch: " + _player.getName() + " made twice as many.");
+					_target.sendMessage("Master's Touch: " + _player.getName() + " made twice as many" + times + ".");
 				}
 			}
-			
-			_target.getInventory().addItem(ItemProcessType.CRAFT, itemId, itemCount, _target, _player);
-			CraftingGoalManager.getInstance().onCrafted(_target, _recipeList);
-			
+
+			final long normalCount = (long) (normalCrafts + normalDoubled) * _recipeList.getCount();
+			final long rareCount = (long) (rareCrafts + rareDoubled) * _recipeList.getRareCount();
+			if (rareProdId == itemId)
+			{
+				addProduct(itemId, normalCount + rareCount, crafts);
+			}
+			else
+			{
+				addProduct(itemId, normalCount, normalCrafts);
+				addProduct(rareProdId, rareCount, rareCrafts);
+			}
+
+			if (PlayerConfig.ALT_GAME_CREATION)
+			{
+				final long[] normal = calculateExpSp(template, normalCount, normalCrafts, false);
+				final long[] rare = calculateExpSp(template, rareCount, rareCrafts, true);
+				final long exp = normal[0] + rare[0];
+				final long sp = normal[1] + rare[1];
+
+				// Added multiplication of Creation speed with XP/SP gain slower crafting -> more XP,
+				// faster crafting -> less XP you can use ALT_GAME_CREATION_XP_RATE/SP to modify XP/SP gained (default = 1)
+				_player.addExpAndSp((int) _player.calcStat(Stat.EXPSP_RATE, exp * PlayerConfig.ALT_GAME_CREATION_XP_RATE * PlayerConfig.ALT_GAME_CREATION_SPEED, null, null), (int) _player.calcStat(Stat.EXPSP_RATE, sp * PlayerConfig.ALT_GAME_CREATION_SP_RATE * PlayerConfig.ALT_GAME_CREATION_SPEED, null, null));
+			}
+		}
+
+		private static boolean isStackable(int itemId)
+		{
+			final ItemTemplate template = ItemData.getInstance().getTemplate(itemId);
+			return (template != null) && template.isStackable();
+		}
+
+		/**
+		 * Gives the customer the items of one product and informs about them.
+		 * @param itemId the product
+		 * @param itemCount the number of items made
+		 * @param crafts the number of crafts that made them
+		 */
+		private void addProduct(int itemId, long itemCount, int crafts)
+		{
+			if (itemCount <= 0)
+			{
+				return;
+			}
+
+			if (!isStackable(itemId) && !GeneralConfig.MULTIPLE_ITEM_DROP)
+			{
+				// the inventory creates a single non stackable item per call then
+				for (long i = 0; i < itemCount; i++)
+				{
+					_target.getInventory().addItem(ItemProcessType.CRAFT, itemId, 1, _target, _player);
+				}
+			}
+			else
+			{
+				_target.getInventory().addItem(ItemProcessType.CRAFT, itemId, itemCount, _target, _player);
+			}
+
 			// inform customer of earned item
 			SystemMessage sm = null;
 			if (_target != _player)
 			{
 				// inform manufacturer of earned profit
+				final long price = _price * crafts;
 				if (itemCount == 1)
 				{
 					sm = new SystemMessage(SystemMessageId.S2_HAS_BEEN_CREATED_FOR_C1_AFTER_THE_PAYMENT_OF_S3_ADENA_WAS_RECEIVED);
 					sm.addString(_target.getName());
 					sm.addItemName(itemId);
-					sm.addLong(_price);
+					sm.addLong(price);
 					_player.sendPacket(sm);
-					
+
 					sm = new SystemMessage(SystemMessageId.C1_CREATED_S2_AFTER_RECEIVING_S3_ADENA);
 					sm.addString(_player.getName());
 					sm.addItemName(itemId);
-					sm.addLong(_price);
+					sm.addLong(price);
 					_target.sendPacket(sm);
 				}
 				else
 				{
 					sm = new SystemMessage(SystemMessageId.S2_S3_HAVE_BEEN_CREATED_FOR_C1_AT_THE_PRICE_OF_S4_ADENA);
 					sm.addString(_target.getName());
-					sm.addInt(itemCount);
+					sm.addLong(itemCount);
 					sm.addItemName(itemId);
-					sm.addLong(_price);
+					sm.addLong(price);
 					_player.sendPacket(sm);
-					
+
 					sm = new SystemMessage(SystemMessageId.C1_CREATED_S2_S3_AT_THE_PRICE_OF_S4_ADENA);
 					sm.addString(_player.getName());
-					sm.addInt(itemCount);
+					sm.addLong(itemCount);
 					sm.addItemName(itemId);
-					sm.addLong(_price);
+					sm.addLong(price);
 					_target.sendPacket(sm);
 				}
 			}
-			
+
 			if (itemCount > 1)
 			{
 				sm = new SystemMessage(SystemMessageId.YOU_HAVE_EARNED_S2_S1_S);
@@ -732,51 +902,46 @@ public class RecipeManager
 				sm = new SystemMessage(SystemMessageId.YOU_HAVE_EARNED_S1);
 				sm.addItemName(itemId);
 			}
-			
+
 			_target.sendPacket(sm);
-			
-			if (PlayerConfig.ALT_GAME_CREATION)
+		}
+
+		/**
+		 * @param template the template of the recipe's product
+		 * @param itemCount the number of items made
+		 * @param crafts the number of crafts that made them
+		 * @param rare {@code true} if the crafts made the rare product
+		 * @return the exp and sp the crafter earns for these crafts in alt game creation
+		 */
+		private long[] calculateExpSp(ItemTemplate template, long itemCount, int crafts, boolean rare)
+		{
+			if (crafts <= 0)
 			{
-				final int recipeLevel = _recipeList.getLevel();
-				if (_exp < 0)
-				{
-					_exp = template.getReferencePrice() * itemCount;
-					_exp /= recipeLevel;
-				}
-				
-				if (_sp < 0)
-				{
-					_sp = _exp / 10;
-				}
-				
-				if (itemId == rareProdId)
-				{
-					_exp *= PlayerConfig.ALT_GAME_CREATION_RARE_XPSP_RATE;
-					_sp *= PlayerConfig.ALT_GAME_CREATION_RARE_XPSP_RATE;
-				}
-				
-				if (_exp < 0)
-				{
-					_exp = 0;
-				}
-				
-				if (_sp < 0)
-				{
-					_sp = 0;
-				}
-				
-				for (int i = _skillLevel; i > recipeLevel; i--)
-				{
-					_exp /= 4;
-					_sp /= 4;
-				}
-				
-				// Added multiplication of Creation speed with XP/SP gain slower crafting -> more XP,
-				// faster crafting -> less XP you can use ALT_GAME_CREATION_XP_RATE/SP to modify XP/SP gained (default = 1)
-				_player.addExpAndSp((int) _player.calcStat(Stat.EXPSP_RATE, _exp * PlayerConfig.ALT_GAME_CREATION_XP_RATE * PlayerConfig.ALT_GAME_CREATION_SPEED, null, null), (int) _player.calcStat(Stat.EXPSP_RATE, _sp * PlayerConfig.ALT_GAME_CREATION_SP_RATE * PlayerConfig.ALT_GAME_CREATION_SPEED, null, null));
+				return new long[2];
 			}
-			
-			updateMakeInfo(true); // success
+
+			final int recipeLevel = _recipeList.getLevel();
+			long exp = _exp < 0 ? (template.getReferencePrice() * itemCount) / recipeLevel : (long) _exp * crafts;
+			long sp = _sp < 0 ? exp / 10 : (long) _sp * crafts;
+			if (rare)
+			{
+				exp *= PlayerConfig.ALT_GAME_CREATION_RARE_XPSP_RATE;
+				sp *= PlayerConfig.ALT_GAME_CREATION_RARE_XPSP_RATE;
+			}
+
+			exp = Math.max(0, exp);
+			sp = Math.max(0, sp);
+			for (int i = _skillLevel; i > recipeLevel; i--)
+			{
+				exp /= 4;
+				sp /= 4;
+			}
+
+			return new long[]
+			{
+				exp,
+				sp
+			};
 		}
 	}
 	
