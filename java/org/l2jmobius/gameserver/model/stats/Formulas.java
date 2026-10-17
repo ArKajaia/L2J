@@ -35,6 +35,7 @@ import org.l2jmobius.gameserver.data.sql.ClanHallTable;
 import org.l2jmobius.gameserver.data.xml.HitConditionBonusData;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.KarmaLossData;
+import org.l2jmobius.gameserver.managers.BestiaryManager;
 import org.l2jmobius.gameserver.managers.CastleManager;
 import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.managers.FortManager;
@@ -668,6 +669,7 @@ public class Formulas
 		damage *= weaponMod;
 		damage *= penaltyMod;
 		damage *= DwarvenTrades.getPlunderMultiplier(attacker, target); // Plunderer's Mark
+		damage *= BestiaryManager.getInstance().getSlayerMultiplier(attacker, target); // Bestiary slayer
 		
 		return Math.max(damage, 1);
 	}
@@ -748,6 +750,7 @@ public class Formulas
 		damage *= weaponMod;
 		damage *= penaltyMod;
 		damage *= DwarvenTrades.getPlunderMultiplier(attacker, target); // Plunderer's Mark
+		damage *= BestiaryManager.getInstance().getSlayerMultiplier(attacker, target); // Bestiary slayer
 		
 		return Math.max(damage, 1);
 	}
@@ -967,6 +970,8 @@ public class Formulas
 			}
 		}
 		
+		damage *= BestiaryManager.getInstance().getSlayerMultiplier(attacker, target); // Bestiary slayer
+		
 		// Passive tree Bloodletter: the critical bonus bleeds over time instead of landing now.
 		if (critRatio > 1)
 		{
@@ -1117,6 +1122,8 @@ public class Formulas
 			}
 		}
 		
+		damage *= BestiaryManager.getInstance().getSlayerMultiplier(attacker, target); // Bestiary slayer
+		
 		return damage;
 	}
 	
@@ -1210,6 +1217,8 @@ public class Formulas
 				}
 			}
 		}
+		
+		damage *= BestiaryManager.getInstance().getSlayerMultiplier(owner, target); // Bestiary slayer
 		
 		return damage;
 	}

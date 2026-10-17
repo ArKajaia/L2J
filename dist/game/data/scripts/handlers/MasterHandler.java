@@ -72,6 +72,7 @@ import handlers.actions.shiftclick.NpcShiftClick;
 import handlers.actions.shiftclick.PlayerShiftClick;
 import handlers.actions.shiftclick.StaticObjectShiftClick;
 import handlers.actions.shiftclick.SummonShiftClick;
+import handlers.bypass.communityboard.BestiaryBoard;
 import handlers.bypass.communityboard.BuffTemplateBoard;
 import handlers.bypass.communityboard.ClanBoard;
 import handlers.bypass.communityboard.DropSearchBoard;
@@ -544,6 +545,7 @@ public class MasterHandler
 			NightBoard.class,
 			CraftingGoalBoard.class,
 			SessionBoard.class,
+			BestiaryBoard.class,
 		},
 		{
 			// Item Handlers
