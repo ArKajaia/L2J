@@ -76,6 +76,8 @@ public class BestiaryConfig
 	public static int BOSS_LOG_SIZE;
 	public static boolean DROP_STATS_ENABLED;
 	public static int DROP_STATS_MIN_KILLS;
+	public static boolean FARMING_ENABLED;
+	public static int FARMING_LEVELS_ABOVE;
 
 	public static void load()
 	{
@@ -160,6 +162,8 @@ public class BestiaryConfig
 		BOSS_LOG_SIZE = Math.max(0, Math.min(50, config.getInt("BestiaryBossLogSize", 10)));
 		DROP_STATS_ENABLED = config.getBoolean("BestiaryDropStatsEnabled", true);
 		DROP_STATS_MIN_KILLS = Math.max(1, config.getInt("BestiaryDropStatsMinKills", 100));
+		FARMING_ENABLED = config.getBoolean("BestiaryFarmingEnabled", true);
+		FARMING_LEVELS_ABOVE = Math.max(0, Math.min(20, config.getInt("BestiaryFarmingLevelsAbove", 5)));
 	}
 
 	/**

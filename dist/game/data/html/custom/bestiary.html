@@ -124,6 +124,44 @@
 	.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 60; max-width: min(560px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 16px; color: var(--cream); font-size: 13px; box-shadow: 0 6px 24px rgba(0,0,0,0.5); display: none; }
 	.toast.open { display: block; }
 
+	/* Crafting goals */
+	.farm-bar { max-width: 1180px; margin: 0 auto 14px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--dim); }
+	.farm-bar label { display: flex; align-items: center; gap: 6px; color: var(--text); cursor: pointer; }
+	.farm-bar label small { color: var(--dim); }
+	.farm-bar button { margin-left: auto; background: #15151b; border: 1px solid #3a3a42; color: var(--text); border-radius: 5px; padding: 5px 12px; cursor: pointer; }
+	.farm-bar button:hover { border-color: var(--gold); color: var(--cream); }
+	.goal-box { max-width: 1180px; margin: 0 auto 18px; background: var(--panel); border: 1px solid #2c2618; border-radius: 10px; padding: 14px 16px; }
+	.goal-box h2 { margin: 0; font-weight: normal; font-size: 18px; color: var(--cream); display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+	.goal-box h2 small { font-size: 12px; color: var(--dim); }
+	.goal-box h2 .ready { color: #8fe39a; }
+	.goal-box .bigbar { margin: 8px 0 4px; }
+	.ground-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+	.ground-chip { background: #15130e; border: 1px solid #3a301c; border-radius: 8px; padding: 6px 10px; cursor: pointer; text-align: left; color: var(--text); max-width: 100%; }
+	.ground-chip:hover { border-color: var(--gold); background: #221d12; }
+	.ground-chip .n { color: var(--gold); font-size: 13px; }
+	.ground-chip .n small { color: var(--dim); font-size: 11px; }
+	.ground-chip .s { color: var(--dim); font-size: 11px; margin-top: 2px; }
+	.res { border-top: 1px solid #1c1a14; padding: 10px 0 4px; }
+	.res-head { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; font-size: 13.5px; color: var(--cream); }
+	.res-head small { color: var(--dim); font-size: 11px; }
+	.res-head .have { margin-left: auto; color: var(--text); font-size: 12.5px; }
+	.res .pb { height: 4px; background: #1d1d24; border-radius: 2px; overflow: hidden; margin: 5px 0 8px; }
+	.res .pb i { display: block; height: 100%; background: var(--line); }
+	.res .hint { font-size: 12px; color: var(--dim); margin: 4px 0; }
+	.res .hint b { color: var(--gold); font-weight: normal; }
+	.spots { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 8px; }
+	.spot { display: flex; align-items: center; gap: 10px; background: var(--panel2); border: 1px solid #2c2618; border-radius: 6px; padding: 7px 10px 7px 7px; cursor: pointer; min-width: 0; }
+	.spot:hover { border-color: var(--gold); }
+	.spot.off { border-style: dashed; }
+	.spot .portrait { width: 44px; height: 44px; flex: none; }
+	.spot .body { flex: 1; min-width: 0; }
+	.spot .n { font-size: 13px; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	.spot .n small { color: var(--dim); font-size: 11px; }
+	.spot .w { font-size: 11px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+	.spot .y { font-size: 12px; color: var(--text); margin-top: 2px; }
+	.spot .y b { color: var(--t4); font-weight: normal; }
+	.spot .up { color: var(--t4); font-size: 9px; margin-left: 2px; }
+
 	/* Slayer */
 	.races { max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 10px; }
 	.race { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 10px; align-items: center; background: var(--panel); border: 1px solid #2c2618; border-radius: 8px; padding: 10px 12px; cursor: pointer; }
@@ -494,6 +532,7 @@
 		<div class="tabs" id="tabs">
 			<button class="tab active" data-view="collection">Collection</button>
 			<button class="tab" data-view="grounds">Hunting Grounds</button>
+			<button class="tab" data-view="farming" id="tab-farming" style="display:none">Crafting Goals</button>
 			<button class="tab" data-view="slayer" id="tab-slayer">Slayer</button>
 			<button class="tab" data-view="hunters">Hall of Hunters</button>
 			<button class="tab" data-view="elsewhere" id="tab-elsewhere" style="display:none">Found Elsewhere <span class="badge" id="elsewhere-count"></span></button>
@@ -560,6 +599,7 @@
 	</section>
 
 	<section class="view" id="view-grounds"><div class="bonus-intro" id="bonus-intro"></div><div class="regions" id="regions"></div></section>
+	<section class="view" id="view-farming"><div id="farming"></div></section>
 	<section class="view" id="view-slayer"><div class="bonus-intro" id="slayer-intro"></div><div class="races" id="races"></div><div class="races-off" id="races-off"></div></section>
 	<section class="view" id="view-hunters"><div id="hunters"></div></section>
 	<section class="view" id="view-profile"><div class="profile" id="profile"></div></section>
@@ -625,7 +665,7 @@ const state = {
 	token: null, data: null, byId: new Map(), areaMonsters: [], tab: "collection",
 	filters: { q: "", region: -1, area: -1, min: "", max: "", status: "all", kind: "all", race: "all", sort: "ground" },
 	map: null, mapPromise: null, hunters: null, detailId: 0, detailWorld: false, detail: null, bounty: new Map(),
-	lastList: [], returnTab: "collection", returnScroll: 0, viewer: null, models: null
+	lastList: [], returnTab: "collection", returnScroll: 0, viewer: null, models: null, farming: null, farmSpoil: null
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -836,6 +876,7 @@ function renderHeader() {
 	const tab = document.getElementById("tab-elsewhere");
 	tab.style.display = d.elsewhere.length ? "" : "none";
 	document.getElementById("tab-slayer").style.display = d.slayer && d.slayer.length ? "" : "none";
+	document.getElementById("tab-farming").style.display = d.craftGoals ? "" : "none";
 	document.getElementById("elsewhere-count").textContent = d.elsewhere.length || "";
 }
 
@@ -1075,6 +1116,102 @@ function showArea(areaId) {
 	switchTab("collection");
 	renderCollection();
 	window.scrollTo(0, 0);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Crafting goals
+// ---------------------------------------------------------------------------------------------
+
+/** Where to farm what each crafting goal of the character still misses. Read again when the tab is clicked or refreshed. */
+async function renderFarming() {
+	const box = document.getElementById("farming");
+	if (!state.farming) {
+		box.innerHTML = `<div class="loading">Reading your crafting goals...</div>`;
+		let res;
+		try {
+			res = await apiFetch("farming" + (state.farmSpoil === null ? "" : "?spoil=" + (state.farmSpoil ? 1 : 0)));
+		} catch (e) {
+			box.innerHTML = `<div class="empty">The server could not be reached.</div>`;
+			return;
+		}
+		if (!res.ok) {
+			box.innerHTML = `<div class="empty">${res.status === 401 ? "This link has expired. Type .bestiary in game for a new one." : "Your crafting goals could not be read."}</div>`;
+			return;
+		}
+		state.farming = await res.json();
+		if (state.tab !== "farming") return;
+	}
+	const f = state.farming;
+	if (!f.on) { box.innerHTML = `<div class="empty">Farming for crafting goals is turned off on this server.</div>`; return; }
+	if (!f.online) { box.innerHTML = `<div class="empty">Log in with ${esc(state.data.me.name)} to see where to farm for its crafting goals: they live with the character in the game.</div>`; return; }
+	let html = `<div class="farm-bar"><span>Lv. ${f.level}</span><label><input type="checkbox" id="farm-spoil"${f.spoil ? " checked" : ""}> Count spoils${f.spoiler ? "" : " <small>(you don't know Spoil)</small>"}</label><button id="farm-refresh">Refresh</button></div>`;
+	if (!f.goals.length) {
+		box.innerHTML = html + `<div class="empty">No crafting goal yet. Type <b>.craft</b> in game to choose an item to craft: what it still needs shows here, with the best places to farm it among the monsters you found.</div>`;
+		return;
+	}
+	for (const g of f.goals) html += goalBox(g);
+	html += `<p class="note">Per kill: how many one kill gives on average, at the server's rates, with your bestiary's drop bonus on each monster, and less from monsters far below your level. Only monsters your account found, up to ${fmt(f.levelsAbove)} levels above you, and no raid bosses.</p>`;
+	box.innerHTML = html;
+}
+
+/** A goal: how far it is, the hunting grounds that give the most of what it misses, and the best monsters for each resource. */
+function goalBox(g) {
+	let html = `<div class="goal-box"><h2>${esc(g.name)} <small>${g.ready ? `<span class="ready">Ready to craft</span>` : `${fmt(g.done)} of ${fmt(g.total)} resources collected`}</small></h2><div class="bigbar"><i style="width:${(g.total ? g.done / g.total * 100 : 0).toFixed(1)}%"></i></div>`;
+	if (!g.res.length) return html + `<div class="server-line">Everything is in your bag: nothing left to farm.</div></div>`;
+	if (g.grounds.length) {
+		html += `<div class="sub-h">Best hunting grounds</div><div class="ground-chips">`;
+		for (const gr of g.grounds) {
+			const a = state.data.areas[gr.a];
+			if (!a) continue;
+			const names = gr.best.map(b => esc(g.res[b.r] ? g.res[b.r].n : "")).join(", ");
+			html += `<button class="ground-chip" data-area="${gr.a}" title="Show the monsters of ${esc(a.n)}"><div class="n">${esc(a.n)} <small>${esc(state.data.regions[a.r])} &middot; Lv. ${a.lv}</small></div><div class="s">${gr.best.length} of the ${fmt(g.farmable)} you can farm: ${names}</div></button>`;
+		}
+		html += `</div>`;
+	}
+	html += `<div class="sub-h">Still missing</div>`;
+	for (const r of g.res) html += resourceRow(r);
+	return html + `</div>`;
+}
+
+function resourceRow(r) {
+	const grade = r.g && r.g !== "NONE" ? `<span class="grade ${r.g}">${r.g}</span>` : "";
+	let html = `<div class="res"><div class="res-head">${grade}${esc(r.n || "Item " + r.i)}${r.mat ? ` <small>material</small>` : ""}<span class="have">${fmt(r.have)} / ${fmt(r.need)}</span></div><div class="pb"><i style="width:${(r.need ? Math.min(1, r.have / r.need) * 100 : 0).toFixed(1)}%"></i></div>`;
+	if (r.spots.length) html += `<div class="spots">${r.spots.map(spotCard).join("")}</div>`;
+	const hints = [];
+	if (!r.spots.length) hints.push(searchHint(r));
+	else if (!r.spots[0].c) hints.push("Only a spoil gives it: bring a spoiler along, or count spoils.");
+	if (r.u && r.spots.length) hints.push(`${fmt(r.u)} monster${r.u === 1 ? "" : "s"} you haven't found yet ${r.u === 1 ? "gives" : "give"} it too.`);
+	if (hints.length) html += `<div class="hint">${hints.join(" ")}</div>`;
+	return html + `</div>`;
+}
+
+/** What to do about a resource no monster you found gives: the regions where the ones you haven't found live, or crafting it. */
+function searchHint(r) {
+	const rg = r.rg || [];
+	let text = "None of the monsters you found gives it.";
+	if (rg.length && !rg[0].h) {
+		text += " Search " + rg.map((x, i) => `<b>${esc(x.n)}</b> (${fmt(x.m)}${i === 0 ? ` monster${x.m === 1 ? "" : "s"} you haven't found` : ""}, from Lv. ${x.lv})`).join(" or ") + ".";
+	} else if (rg.length) {
+		text += " Monsters above your level do: " + rg.map(x => `<b>${esc(x.n)}</b> from Lv. ${x.lv}`).join(", ") + ".";
+	} else if (r.u) {
+		text += ` ${fmt(r.u)} monster${r.u === 1 ? "" : "s"} you haven't found yet ${r.u === 1 ? "gives" : "give"} it.`;
+	} else if (state.data.showAreas && !r.cr) {
+		text = "No monster you can farm gives it: look for it in shops, quests or on raid bosses.";
+	}
+	if (r.cr) text += rg.length || r.u ? " Or craft it from its materials." : " Craft it from its materials.";
+	return text;
+}
+
+/** A monster to farm a resource on: where it lives, how the item comes out of it, and how many kills it takes. */
+function spotCard(s) {
+	const m = state.byId.get(s.id) || { id: s.id, l: 0, r: "ETC", t: 0 };
+	const area = m.a && m.a.length ? state.data.areas[m.a[0]] : null;
+	const amount = y => y.mn === y.mx ? (y.mn > 1 ? " &times;" + fmt(y.mn) : "") : ` &times;${fmt(y.mn)}-${fmt(y.mx)}`;
+	const how = [];
+	if (s.d) how.push(`Drop ${fmtChance(s.d.c)}${s.d.b ? `<span class="up" title="With your bestiary's drop bonus">&#9650;</span>` : ""}${amount(s.d)}`);
+	if (s.s) how.push(`Spoil ${fmtChance(s.s.c)}${amount(s.s)}`);
+	const kills = `<b>${fmtPerKill(s.pk)}</b> a kill &middot; ~${fmt(s.k)} kill${s.k === 1 ? "" : "s"}` + (s.c ? "" : ` &middot; needs a spoiler`);
+	return `<div class="spot${s.c ? "" : " off"}" data-id="${s.id}" title="${esc(displayName(m))}">${portrait(m)}<div class="body"><div class="n">${esc(displayName(m))} <small>Lv. ${m.l}</small></div><div class="w">${area ? esc(area.n) + " &middot; " : ""}${how.join(" &middot; ")}</div><div class="y">${kills}</div></div>${canTrack(m) ? trackButton(s.id) : ""}</div>`;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1502,6 +1639,7 @@ function switchTab(view) {
 	for (const v of document.querySelectorAll(".view")) v.classList.toggle("active", v.id === "view-" + view);
 	if (view === "grounds") renderGrounds();
 	else if (view === "slayer") renderSlayer();
+	else if (view === "farming") renderFarming();
 	else if (view === "hunters") renderHunters();
 	else if (view === "elsewhere") document.getElementById("elsewhere").innerHTML = state.data.elsewhere.slice().sort((a, b) => a.l - b.l).map(card).join("");
 }
@@ -1509,6 +1647,7 @@ function switchTab(view) {
 function bindEvents() {
 	document.getElementById("tabs").addEventListener("click", e => {
 		const b = e.target.closest(".tab");
+		if (b && b.dataset.view === "farming") state.farming = null;
 		if (b) { state.detailId = 0; if (history.state && history.state.monster) { try { history.pushState({}, "", window.location.pathname); } catch (x) { /* not essential */ } } switchTab(b.dataset.view); }
 	});
 	document.addEventListener("click", e => {
@@ -1519,6 +1658,7 @@ function bindEvents() {
 		const go = e.target.closest("[data-go]");
 		if (go) { openProfile(Number(go.dataset.go), true); return; }
 		if (e.target.closest("#p-back")) { goBack(); return; }
+		if (e.target.closest("#farm-refresh")) { state.farming = null; renderFarming(); return; }
 		const target = e.target.closest("[data-id]");
 		if (target) { openProfile(Number(target.dataset.id), true); return; }
 		const area = e.target.closest("[data-area]");
@@ -1528,6 +1668,9 @@ function bindEvents() {
 			const map = document.getElementById("d-map");
 			if (map) map.innerHTML = mapSvg(state.detail) + `<div class="tools"><button id="d-world">${state.detailWorld ? "Zoom in" : "Whole world"}</button></div>`;
 		}
+	});
+	document.addEventListener("change", e => {
+		if (e.target.id === "farm-spoil") { state.farmSpoil = e.target.checked; state.farming = null; renderFarming(); }
 	});
 	document.addEventListener("keydown", e => {
 		if (state.tab !== "profile" || e.target.closest("input, select, textarea")) return;
