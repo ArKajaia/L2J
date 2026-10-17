@@ -112,6 +112,9 @@ public class Attackable extends Npc
 	private int _seederObjId = 0;
 	private final AtomicReference<ItemHolder> _harvestItem = new AtomicReference<>();
 	
+	// Bestiary: when this life first took damage, for the time a kill took.
+	private volatile long _firstDamageTime;
+	
 	// Spoil
 	private int _spoilerObjectId;
 	private final AtomicReference<Collection<ItemHolder>> _sweepItems = new AtomicReference<>();
@@ -969,6 +972,11 @@ public class Attackable extends Npc
 				
 				getAI().notifyAction(Action.ATTACKED, attacker);
 				
+				if ((_firstDamageTime == 0) && (damage > 0))
+				{
+					_firstDamageTime = System.currentTimeMillis();
+				}
+				
 				// Calculate the amount of hate this attackable receives from this attack.
 				final long hateValue = ((long) damage * 100) / (getLevel() + 7);
 				addDamageHate(attacker, damage, (int) hateValue);
@@ -1816,6 +1824,7 @@ public class Attackable extends Npc
 		
 		// Clear mob spoil, seed
 		setSpoilerObjectId(0);
+		_firstDamageTime = 0;
 		
 		// Clear all aggro char from list
 		clearAggroList();
@@ -2223,6 +2232,14 @@ public class Attackable extends Npc
 	public int getChampionTier()
 	{
 		return _championTier; // Returns the real tier for monsters
+	}
+	
+	/**
+	 * @return when this life first took damage (ms), 0 if it never did
+	 */
+	public long getFirstDamageTime()
+	{
+		return _firstDamageTime;
 	}
 	
 	@Override

@@ -16,8 +16,10 @@
  */
 package org.l2jmobius.gameserver.config.custom;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.l2jmobius.commons.util.ConfigReader;
@@ -59,6 +61,19 @@ public class BestiaryConfig
 	public static int[] DROP_BONUS;
 	public static int[] BOSS_DROP_BONUS;
 	public static int[] REGION_EXP_BONUS;
+	public static int[] SLAYER_DAMAGE_BONUS;
+	public static int[] SLAYER_DEFENSE_BONUS;
+	public static int SLAYER_MIN_MONSTERS;
+	public static boolean BOUNTY_ENABLED;
+	public static int BOUNTY_COUNT;
+	public static int BOUNTY_KILLS;
+	public static int BOUNTY_LEVEL_RANGE;
+	public static int BOUNTY_KILL_MULTIPLIER;
+	public static int BOUNTY_RESET_HOUR;
+	public static int BOUNTY_ADENA_PER_LEVEL;
+	public static int[][] BOUNTY_REWARD_ITEMS;
+	public static boolean VARIANT_MESSAGES;
+	public static int BOSS_LOG_SIZE;
 
 	public static void load()
 	{
@@ -112,6 +127,70 @@ public class BestiaryConfig
 			233,
 			300
 		});
+		SLAYER_DAMAGE_BONUS = readBonuses(config.getString("BestiarySlayerDamageBonus", "2,4,7,10"), new int[]
+		{
+			2,
+			4,
+			7,
+			10
+		});
+		SLAYER_DEFENSE_BONUS = readBonuses(config.getString("BestiarySlayerDefenseBonus", "1,2,3,5"), new int[]
+		{
+			1,
+			2,
+			3,
+			5
+		});
+		for (int i = 0; i < SLAYER_DEFENSE_BONUS.length; i++)
+		{
+			SLAYER_DEFENSE_BONUS[i] = Math.min(50, SLAYER_DEFENSE_BONUS[i]);
+		}
+		SLAYER_MIN_MONSTERS = Math.max(1, config.getInt("BestiarySlayerMinMonsters", 10));
+		BOUNTY_ENABLED = config.getBoolean("BestiaryBountyEnabled", true);
+		BOUNTY_COUNT = Math.max(1, Math.min(6, config.getInt("BestiaryBountyCount", 3)));
+		BOUNTY_KILLS = Math.max(1, config.getInt("BestiaryBountyKills", 30));
+		BOUNTY_LEVEL_RANGE = Math.max(1, config.getInt("BestiaryBountyLevelRange", 5));
+		BOUNTY_KILL_MULTIPLIER = Math.max(1, Math.min(10, config.getInt("BestiaryBountyKillMultiplier", 2)));
+		BOUNTY_RESET_HOUR = Math.max(0, Math.min(23, config.getInt("BestiaryBountyResetHour", 6)));
+		BOUNTY_ADENA_PER_LEVEL = Math.max(0, config.getInt("BestiaryBountyAdenaPerLevel", 2000));
+		BOUNTY_REWARD_ITEMS = readItems(config.getString("BestiaryBountyRewardItems", ""));
+		VARIANT_MESSAGES = config.getBoolean("BestiaryVariantMessages", true);
+		BOSS_LOG_SIZE = Math.max(0, Math.min(50, config.getInt("BestiaryBossLogSize", 10)));
+	}
+	
+	/**
+	 * @param value items as "id,count;id,count"
+	 * @return {id, count} of each item that could be read
+	 */
+	private static int[][] readItems(String value)
+	{
+		final List<int[]> items = new ArrayList<>();
+		for (String part : value.split(";"))
+		{
+			final String[] pair = part.split(",");
+			if (pair.length != 2)
+			{
+				continue;
+			}
+			try
+			{
+				final int id = Integer.parseInt(pair[0].trim());
+				final int count = Integer.parseInt(pair[1].trim());
+				if ((id > 0) && (count > 0))
+				{
+					items.add(new int[]
+					{
+						id,
+						count
+					});
+				}
+			}
+			catch (NumberFormatException e)
+			{
+				// not an item: skip it
+			}
+		}
+		return items.toArray(new int[0][]);
 	}
 
 	/**

@@ -41,6 +41,7 @@ import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.model.stats.MoveType;
+import org.l2jmobius.gameserver.model.stats.TraitType;
 
 /**
  * What the bestiary page knows about the monsters of the collection, worked out once from the spawn files, the spawn table and the npc templates:
@@ -204,6 +205,10 @@ public class BestiaryCatalog
 		public final byte attackElement;
 		public final int attackElementValue;
 		public final int[] defenseElements;
+		/** Defence against each {@link TraitType}: 1 is none, below 1 a weakness, above 1 a resistance. */
+		public final float[] defenceTraits;
+		/** Above 0 for each {@link TraitType} it is immune to. */
+		public final int[] traitsInvul;
 
 		Stats(Npc npc)
 		{
@@ -229,6 +234,8 @@ public class BestiaryCatalog
 			{
 				defenseElements[element] = npc.getDefenseElementValue(element);
 			}
+			defenceTraits = npc.getStat().getDefenceTraits().clone();
+			traitsInvul = npc.getStat().getTraitsInvul().clone();
 		}
 
 		Stats(NpcTemplate template)
@@ -276,6 +283,9 @@ public class BestiaryCatalog
 				(int) template.getBaseHolyRes(),
 				(int) template.getBaseDarkRes()
 			};
+			defenceTraits = new float[TraitType.values().length];
+			Arrays.fill(defenceTraits, 1);
+			traitsInvul = new int[TraitType.values().length];
 		}
 	}
 

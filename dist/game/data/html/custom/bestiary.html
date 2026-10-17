@@ -99,6 +99,57 @@
 	.card .count { font-size: 10.5px; color: var(--dim); margin-top: 3px; }
 	.card .crown { position: absolute; top: 6px; left: 7px; width: 16px; height: 16px; }
 	.card .aggro { position: absolute; top: 6px; right: 7px; width: 13px; height: 13px; color: #d0574a; }
+	.card .forms { position: absolute; top: 72px; right: 10px; display: flex; flex-direction: column; gap: 3px; }
+	.card .forms i { width: 7px; height: 7px; border-radius: 50%; display: block; box-shadow: 0 0 4px currentColor; background: currentColor; }
+	.card .wanted { position: absolute; top: 24px; right: 6px; width: 15px; height: 15px; color: var(--t4); }
+	.card.on-bounty { border-color: #8a7020; }
+
+	/* Bounties */
+	.bounties { margin-bottom: 16px; background: linear-gradient(180deg, rgba(217,182,76,0.07), rgba(217,182,76,0.02)); border: 1px solid #3a301c; border-radius: 8px; padding: 10px 12px; }
+	.bounties h3 { margin: 0 0 8px; font-weight: normal; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+	.bounties h3 small { letter-spacing: 0; text-transform: none; font-size: 11.5px; color: var(--dim); }
+	.bounty-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(270px, 100%), 1fr)); gap: 8px; }
+	.bounty { display: flex; align-items: center; gap: 10px; background: var(--panel2); border: 1px solid #2c2618; border-radius: 6px; padding: 7px 10px 7px 7px; cursor: pointer; min-width: 0; }
+	.bounty:hover { border-color: var(--gold); }
+	.bounty.done { opacity: 0.6; }
+	.bounty .portrait { width: 44px; height: 44px; flex: none; }
+	.bounty .body { flex: 1; min-width: 0; }
+	.bounty .n { font-size: 13px; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	.bounty .s { font-size: 11px; color: var(--dim); margin-top: 2px; }
+	.bounty .pb { height: 4px; background: #1d1d24; border-radius: 2px; overflow: hidden; margin-top: 5px; }
+	.bounty .pb i { display: block; height: 100%; background: var(--t4); }
+	.track-btn { background: #15130e; border: 1px solid #3a301c; color: var(--gold); border-radius: 12px; padding: 3px 10px; cursor: pointer; font-size: 11.5px; flex: none; }
+	.track-btn:hover { background: #221d12; }
+	.track-btn:disabled { opacity: 0.4; cursor: default; }
+	.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 60; max-width: min(560px, calc(100% - 32px)); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 16px; color: var(--cream); font-size: 13px; box-shadow: 0 6px 24px rgba(0,0,0,0.5); display: none; }
+	.toast.open { display: block; }
+
+	/* Slayer */
+	.races { max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 10px; }
+	.race { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 10px; align-items: center; background: var(--panel); border: 1px solid #2c2618; border-radius: 8px; padding: 10px 12px; cursor: pointer; }
+	.race:hover { border-color: var(--gold); }
+	.race .portrait { width: 46px; height: 46px; }
+	.race .n { color: var(--cream); font-size: 14px; display: flex; align-items: baseline; gap: 8px; }
+	.race .n small { margin-left: auto; color: var(--dim); font-size: 11.5px; }
+	.race .pb { height: 5px; background: #1d1d24; border-radius: 3px; overflow: hidden; margin: 6px 0 5px; }
+	.race .pb i { display: block; height: 100%; background: linear-gradient(90deg, var(--line), var(--gold)); }
+	.race .b { font-size: 12px; color: var(--dim); }
+	.race .b b { color: var(--t4); font-weight: normal; }
+	.races-off { max-width: 960px; margin: 14px auto 0; color: var(--dim); font-size: 12px; text-align: center; }
+
+	/* Profile extras */
+	.forms-row { display: flex; gap: 6px; flex-wrap: wrap; }
+	.form { font-size: 12px; padding: 4px 10px; border-radius: 12px; border: 1px dashed #3a3a42; color: #55524a; }
+	.form.on { border-style: solid; color: var(--cream); }
+	.tactics { display: flex; flex-wrap: wrap; gap: 6px; }
+	.tactics .tag b { font-weight: normal; color: var(--cream); }
+	.tag.weak { border-color: #24502f; color: #8fe39a; }
+	.tag.strong { border-color: #6a2a22; color: #ff9b90; }
+	.boss-log { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+	.boss-log th { font-weight: normal; text-align: left; font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); padding: 0 6px 5px; }
+	.boss-log td { padding: 5px 6px; border-top: 1px solid #1a1a20; }
+	.boss-log td.c, .boss-log th.c { text-align: right; white-space: nowrap; }
+	.boss-log .clan { color: var(--dim); font-size: 11.5px; }
 	.empty { color: var(--dim); text-align: center; padding: 40px; }
 
 	/* Portraits */
@@ -422,6 +473,7 @@
 		<symbol id="i-fang" viewBox="0 0 24 24"><path fill="currentColor" d="M4 3H20L16 12L12 22L8 12Z"/></symbol>
 		<symbol id="i-lock" viewBox="0 0 24 24"><rect fill="currentColor" x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7A4 4 0 0 1 16 7V11" stroke="currentColor" stroke-width="2.2" fill="none"/></symbol>
 		<symbol id="i-book" viewBox="0 0 24 24"><path fill="currentColor" d="M4 3H11C12 3 12 4 12 4V21C12 20 11 19 10 19H4ZM20 3H13C12 3 12 4 12 4V21C12 20 13 19 14 19H20Z" opacity="0.9"/><path d="M7 7L9 9M7 10L9 12M15 7L17 9" stroke="#08080b" stroke-width="1.4"/></symbol>
+		<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3.2" fill="currentColor"/><path d="M12 1V6M12 18V23M1 12H6M18 12H23" stroke="currentColor" stroke-width="2.2"/></symbol>
 		<symbol id="i-human" viewBox="0 0 20 60"><circle fill="currentColor" cx="10" cy="6" r="5"/><path fill="currentColor" d="M4 13H16L18 34L15 35L14 24L13 60H11L10 38L9 60H7L6 24L5 35L2 34Z"/></symbol>
 	</defs>
 </svg>
@@ -439,6 +491,7 @@
 		<div class="tabs" id="tabs">
 			<button class="tab active" data-view="collection">Collection</button>
 			<button class="tab" data-view="grounds">Hunting Grounds</button>
+			<button class="tab" data-view="slayer" id="tab-slayer">Slayer</button>
 			<button class="tab" data-view="hunters">Hall of Hunters</button>
 			<button class="tab" data-view="elsewhere" id="tab-elsewhere" style="display:none">Found Elsewhere <span class="badge" id="elsewhere-count"></span></button>
 		</div>
@@ -470,6 +523,8 @@
 					<option value="g3">Mastered</option>
 					<option value="g4">Legendary</option>
 					<option value="next">Not Legendary yet</option>
+					<option value="bounty">Today's bounties</option>
+					<option value="rare">With a rare form</option>
 				</select>
 				<label for="f-kind">Kind</label>
 				<select id="f-kind">
@@ -494,6 +549,7 @@
 				<div class="count" id="f-count"></div>
 			</details>
 			<div>
+				<div id="bounties"></div>
 				<div class="near" id="near"></div>
 				<div id="cards"></div>
 			</div>
@@ -501,6 +557,7 @@
 	</section>
 
 	<section class="view" id="view-grounds"><div class="bonus-intro" id="bonus-intro"></div><div class="regions" id="regions"></div></section>
+	<section class="view" id="view-slayer"><div class="bonus-intro" id="slayer-intro"></div><div class="races" id="races"></div><div class="races-off" id="races-off"></div></section>
 	<section class="view" id="view-hunters"><div id="hunters"></div></section>
 	<section class="view" id="view-profile"><div class="profile" id="profile"></div></section>
 	<section class="view" id="view-elsewhere">
@@ -510,6 +567,8 @@
 </main>
 
 
+
+<div class="toast" id="toast" role="status"></div>
 
 <div class="gate" id="gate">
 	<div class="box">
@@ -537,6 +596,15 @@ const ELEMENTS = ["Fire", "Water", "Wind", "Earth", "Holy", "Dark"];
 const ELEMENT_COLOR = ["var(--fire)", "var(--water)", "var(--wind)", "var(--earth)", "var(--holy)", "var(--dark)"];
 const TIER_COLOR = ["#2a2a30", "var(--t1)", "var(--t2)", "var(--t3)", "var(--t4)"];
 const KIND_NAME = ["Monster", "Raid Boss", "Grand Boss"];
+/** Rare forms by bit, as the server sends them. */
+const FORM_COLOR = { 1: "#ff6b5a", 2: "#4aa8ff", 4: "#6fdc8c", 8: "#b07cff" };
+const AI_NAME = { FIGHTER: "Fighter", ARCHER: "Archer", BALANCED: "Fighter and caster", MAGE: "Caster", HEALER: "Healer", CORPSE: "Corpse" };
+const TRAIT_NAME = {
+	SWORD: "Swords", BLUNT: "Blunts", DAGGER: "Daggers", POLE: "Polearms", FIST: "Fists", DUAL: "Dual swords", DUALFIST: "Fist weapons", DUALDAGGER: "Dual daggers",
+	BOW: "Bows", CROSSBOW: "Crossbows", RAPIER: "Rapiers", ANCIENTSWORD: "Ancient swords",
+	POISON: "Poison", BLEED: "Bleed", HOLD: "Hold", SLEEP: "Sleep", SHOCK: "Stun", PARALYZE: "Paralysis", DERANGEMENT: "Fear and confusion",
+	ROOT_PHYSICALLY: "Root", ROOT_MAGICALLY: "Magic root", GUST: "Knock back"
+};
 const WEAPON_NAME = { SWORD: "Sword", BLUNT: "Blunt", DAGGER: "Dagger", BOW: "Bow", POLE: "Polearm", ETC: "Other", FIST: "Fists", DUALFIST: "Fists", DUAL: "Dual swords", ANCIENTSWORD: "Ancient sword", RAPIER: "Rapier", CROSSBOW: "Crossbow", NONE: "None" };
 /** A human's height in game units, for the size comparison. */
 const HUMAN_HEIGHT = 23;
@@ -553,7 +621,7 @@ const TOWNS = [
 const state = {
 	token: null, data: null, byId: new Map(), areaMonsters: [], tab: "collection",
 	filters: { q: "", region: -1, area: -1, min: "", max: "", status: "all", kind: "all", race: "all", sort: "ground" },
-	map: null, mapPromise: null, hunters: null, detailId: 0, detailWorld: false, detail: null,
+	map: null, mapPromise: null, hunters: null, detailId: 0, detailWorld: false, detail: null, bounty: new Map(),
 	lastList: [], returnTab: "collection", returnScroll: 0, viewer: null, models: null
 };
 
@@ -592,6 +660,18 @@ function fmtDate(ms) {
 	if (!ms) return "";
 	const d = new Date(ms);
 	return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+/** How long a fight took: "48 s", "2 min 05 s", "1 h 12 min". */
+function fmtFight(ms) {
+	const s = ms / 1000;
+	if (s < 60) return (s < 10 ? s.toFixed(1) : Math.round(s)) + " s";
+	const m = Math.floor(s / 60);
+	if (m < 60) return m + " min " + String(Math.round(s % 60)).padStart(2, "0") + " s";
+	return Math.floor(m / 60) + " h " + String(m % 60).padStart(2, "0") + " min";
+}
+function fmtUntil(ms) {
+	const m = Math.max(1, Math.round((ms - Date.now()) / 60000));
+	return m < 60 ? m + " min" : Math.floor(m / 60) + " h " + (m % 60) + " min";
 }
 function ago(ms) {
 	if (!ms) return "";
@@ -637,6 +717,41 @@ function portraitUrl(m) { return `/bestiary/img?id=${m.id}&v=${m.img}`; }
 function apiFetch(path) {
 	return fetch("/api/bestiary/" + path, { headers: { "Authorization": "Bearer " + state.token } });
 }
+function apiPost(path, params) {
+	return fetch("/api/bestiary/" + path, { method: "POST", headers: { "Authorization": "Bearer " + state.token, "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(params).toString() });
+}
+
+let toastTimer = 0;
+function toast(text) {
+	const box = document.getElementById("toast");
+	box.textContent = text;
+	box.classList.add("open");
+	clearTimeout(toastTimer);
+	toastTimer = setTimeout(() => box.classList.remove("open"), 6000);
+}
+
+/** Points the character's radar at the nearest one of the monster, in game. */
+async function track(id, button) {
+	if (button) button.disabled = true;
+	try {
+		const res = await apiPost("track", { id: id });
+		const reply = res.ok ? await res.json() : null;
+		toast(reply ? reply.msg : res.status === 401 ? "This link has expired. Type .bestiary in game for a new one." : "The monster could not be tracked.");
+	} catch (e) {
+		toast("The server could not be reached.");
+	} finally {
+		if (button) button.disabled = false;
+	}
+}
+/** A monster can be tracked when its place is known to the page, and the character is in the game. */
+function canTrack(m) { return state.data.me.online && !m.elsewhere && ((m.g || m.tier || 0) > 0 || state.data.showAreas); }
+function trackButton(id) { return `<button class="track-btn" data-track="${id}" title="Point your radar in game at the nearest one">Track</button>`; }
+
+/** The rare forms an entry has, as dots for its card. */
+function formDots(m) {
+	if (!m.v) return "";
+	return `<span class="forms">` + state.data.forms.filter(f => m.v & f.b).map(f => `<i style="color:${FORM_COLOR[f.b]}" title="${esc(f.n)}"></i>`).join("") + `</span>`;
+}
 function rememberToken(token) {
 	try { if (token) sessionStorage.setItem("bestiaryToken", token); else sessionStorage.removeItem("bestiaryToken"); } catch (e) { /* storage blocked */ }
 }
@@ -671,6 +786,7 @@ async function load() {
 	for (const m of data.elsewhere) { m.elsewhere = true; state.byId.set(m.id, m); }
 	state.areaMonsters = data.areas.map(() => []);
 	for (const m of data.monsters) for (const a of (m.a || [])) if (state.areaMonsters[a]) state.areaMonsters[a].push(m);
+	state.bounty = new Map((data.bounties || []).map(b => [b.id, b]));
 	return true;
 }
 
@@ -696,6 +812,10 @@ function renderHeader() {
 	let html = `<div class="ring" title="${fmt(d.found)} of ${fmt(d.total)} monsters found"><svg viewBox="0 0 58 58"><circle cx="29" cy="29" r="${r}" fill="none" stroke="#1d1d24" stroke-width="5"/><circle cx="29" cy="29" r="${r}" fill="none" stroke="var(--gold)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${(pct * c).toFixed(1)} ${c.toFixed(1)}"/></svg><div class="pct">${Math.floor(pct * 100)}%</div></div>`;
 	html += `<div class="stat"><div class="label">Found</div><div class="value">${fmt(d.found)} <small>/ ${fmt(d.total)}</small></div></div>`;
 	html += `<div class="stat"><div class="label">Kills</div><div class="value">${fmtShort(d.kills)}</div></div>`;
+	if (d.forms && d.forms.length) {
+		const forms = d.monsters.concat(d.elsewhere).reduce((n, m) => n + d.forms.filter(f => (m.v || 0) & f.b).length, 0);
+		html += `<div class="stat" title="Rare forms killed: ${esc(d.forms.map(f => f.n).join(", "))}"><div class="label">Rare forms</div><div class="value">${fmt(forms)}</div></div>`;
+	}
 	html += `<div class="stat"><div class="label">Rank</div><div class="value">${d.rank ? "#" + fmt(d.rank) + ` <small>of ${fmt(d.hunters)}</small>` : "&mdash;"}</div></div>`;
 	html += `<div class="tiers">`;
 	for (let g = 1; g <= 4; g++) {
@@ -705,6 +825,7 @@ function renderHeader() {
 	document.getElementById("summary").innerHTML = html;
 	const tab = document.getElementById("tab-elsewhere");
 	tab.style.display = d.elsewhere.length ? "" : "none";
+	document.getElementById("tab-slayer").style.display = d.slayer && d.slayer.length ? "" : "none";
 	document.getElementById("elsewhere-count").textContent = d.elsewhere.length || "";
 }
 
@@ -780,6 +901,8 @@ function matches(m) {
 		case "missing": if (g > 0) return false; break;
 		case "found": if (g === 0) return false; break;
 		case "next": if (g === 0 || g >= 4) return false; break;
+		case "bounty": if (!state.bounty.has(m.id)) return false; break;
+		case "rare": if (!m.v) return false; break;
 		case "all": break;
 		default: if (g !== Number(f.status.substring(1))) return false;
 	}
@@ -796,7 +919,9 @@ function card(m) {
 	const count = g === 0 ? "Not found yet" : next ? `${fmt(m.k)} / ${fmt(next)}` : `${fmt(m.k)} kills`;
 	const crown = m.t > 0 ? `<svg class="crown" style="color:${m.t === 2 ? "#ff6b5a" : "var(--t4)"}"><use href="#i-crown"/></svg>` : "";
 	const aggro = m.ag ? `<svg class="aggro" title="Aggressive"><use href="#i-fang"/></svg>` : "";
-	return `<div class="card g${g}" data-id="${m.id}" title="${esc(m.n || "Not found yet")}">${crown}${aggro}${portrait(m)}<div class="name">${esc(displayName(m))}</div><div class="meta">${meta}</div><div class="bar"><i style="width:${(tierProgress(m) * 100).toFixed(1)}%;background:${TIER_COLOR[Math.min(4, g + 1)]}"></i></div><div class="count">${count}</div></div>`;
+	const bounty = state.bounty.get(m.id);
+	const wanted = bounty && bounty.k < bounty.goal ? `<svg class="wanted"><title>Today's bounty</title><use href="#i-target"/></svg>` : "";
+	return `<div class="card g${g}${wanted ? " on-bounty" : ""}" data-id="${m.id}" title="${esc(m.n || "Not found yet")}">${crown}${aggro}${wanted}${formDots(m)}${portrait(m)}<div class="name">${esc(displayName(m))}</div><div class="meta">${meta}</div><div class="bar"><i style="width:${(tierProgress(m) * 100).toFixed(1)}%;background:${TIER_COLOR[Math.min(4, g + 1)]}"></i></div><div class="count">${count}</div></div>`;
 }
 
 function sortMonsters(list) {
@@ -817,6 +942,7 @@ function renderCollection() {
 	const list = d.monsters.filter(matches);
 	const box = document.getElementById("cards");
 	document.getElementById("f-count").textContent = `${fmt(list.length)} monster${list.length === 1 ? "" : "s"} shown, ${fmt(list.filter(m => m.g).length)} found`;
+	renderBounties();
 	renderNear();
 	if (!list.length) {
 		box.innerHTML = `<div class="empty">No monster matches these filters.</div>`;
@@ -847,6 +973,27 @@ function renderCollection() {
 		const id = Number(el.dataset.id);
 		if (!seen.has(id)) { seen.add(id); state.lastList.push(id); }
 	}
+}
+
+/** Today's bounties: the monsters to hunt, how far each is, and what it pays. */
+function renderBounties() {
+	const d = state.data;
+	const box = document.getElementById("bounties");
+	if (!d.bountyOn) { box.innerHTML = ""; return; }
+	let html = `<div class="bounties"><h3>Today's bounties <small>kills count &times;${d.bountyMult} until done &middot; new ones in ${fmtUntil(d.bountyReset)}</small></h3>`;
+	if (!d.bounties.length) {
+		html += `<div class="note" style="text-align:left;margin:0">No bounty yet today: they come when one of your characters logs in or makes a kill.</div></div>`;
+		box.innerHTML = html;
+		return;
+	}
+	html += `<div class="bounty-list">`;
+	for (const b of d.bounties) {
+		const m = state.byId.get(b.id) || { id: b.id, l: 0, r: "ETC", t: 0 };
+		const done = b.k >= b.goal;
+		const pay = d.bountyAdena > 0 && m.l ? ` &middot; ${fmtShort(d.bountyAdena * m.l)} adena` : "";
+		html += `<div class="bounty${done ? " done" : ""}" data-id="${b.id}">${portrait(m)}<div class="body"><div class="n">${esc(displayName(m))} <span style="color:var(--dim);font-size:11px">Lv. ${m.l}</span></div><div class="s">${done ? "Done" : `${fmt(b.k)} / ${fmt(b.goal)}`}${pay}</div><div class="pb"><i style="width:${Math.min(100, b.k / b.goal * 100).toFixed(1)}%"></i></div></div>${!done && canTrack(m) ? trackButton(b.id) : ""}</div>`;
+	}
+	box.innerHTML = html + `</div></div>`;
 }
 
 /** "Almost there": the entries with the fewest kills left to their next tier. */
@@ -915,6 +1062,35 @@ function showArea(areaId) {
 	syncFilterInputs();
 	state.detailId = 0;
 	if (history.state && history.state.monster) { try { history.pushState({}, "", window.location.pathname); } catch (e) { /* not essential */ } }
+	switchTab("collection");
+	renderCollection();
+	window.scrollTo(0, 0);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Slayer
+// ---------------------------------------------------------------------------------------------
+
+function renderSlayer() {
+	const d = state.data;
+	const dmg = d.slayerDamage || [], def = d.slayerDefense || [];
+	const last = d.tierNames.length - 1;
+	document.getElementById("slayer-intro").innerHTML = `The more monsters of a race you find and the higher their tiers, the harder you hit that race and the less it hurts you. Each monster counts for its share of the race: when every one is ${esc(d.tierNames[0])} you deal <b>+${dmg[0]}%</b> damage and take <b>-${def[0]}%</b>, up to <b>+${dmg[last]}%</b> and <b>-${def[last]}%</b> when all are ${esc(d.tierNames[last])}. Races with fewer than ${fmt(d.slayerMin)} monsters give no bonus. It works for all your characters, and their summons.`;
+	const list = (d.slayer || []).slice().sort((a, b) => b.dmg - a.dmg || b.n - a.n);
+	let html = "";
+	for (const s of list) {
+		const p = { id: 0, g: s.f ? 1 : 0, r: s.r, t: 0, e: -1 };
+		html += `<div class="race" data-race="${esc(s.r)}" title="Show the ${esc(RACE_NAME[s.r] || s.r)} of the collection">${portrait(p)}<div><div class="n">${esc(RACE_NAME[s.r] || s.r)}<small>${fmt(s.f)} / ${fmt(s.n)} found</small></div><div class="pb"><i style="width:${(dmg[last] ? s.dmg / dmg[last] * 100 : 0).toFixed(1)}%"></i></div><div class="b">Damage <b>+${s.dmg.toFixed(2)}%</b> &middot; damage taken <b>-${s.def.toFixed(2)}%</b> <span style="color:#55524a">of +${dmg[last]}% / -${def[last]}%</span></div></div></div>`;
+	}
+	document.getElementById("races").innerHTML = html || `<div class="empty">No race has enough monsters for a bonus.</div>`;
+	const counted = new Set(list.map(s => s.r));
+	const others = [...new Set(d.monsters.map(m => m.r))].filter(r => !counted.has(r)).map(r => RACE_NAME[r] || r).sort();
+	document.getElementById("races-off").textContent = others.length ? "Too few to count: " + others.join(", ") + "." : "";
+}
+
+function showRace(race) {
+	state.filters = { q: "", region: -1, area: -1, min: "", max: "", status: "all", kind: "all", race: race, sort: "level" };
+	syncFilterInputs();
 	switchTab("collection");
 	renderCollection();
 	window.scrollTo(0, 0);
@@ -1035,6 +1211,9 @@ function renderProfile() {
 	if (m.t > 0) html += `<span class="tag gold">${KIND_NAME[m.t]}</span>`;
 	if (m.tier > 0) html += m.aggressive ? `<span class="tag red">Aggressive</span>` : `<span class="tag green">Passive</span>`;
 	if (!m.inCollection) html += `<span class="tag">Found elsewhere</span>`;
+	const bounty = state.bounty.get(m.id);
+	if (bounty) html += `<span class="tag gold" title="Today's bounty: its kills count &times;${state.data.bountyMult} until done">${bounty.k >= bounty.goal ? "Bounty done" : `Bounty ${fmt(bounty.k)} / ${fmt(bounty.goal)}`}</span>`;
+	if (m.inCollection && canTrack(m)) html += trackButton(m.id);
 	html += `</div><div class="track">`;
 	for (let g = 1; g <= 4; g++) {
 		const from = g === 1 ? 0 : m.tiers[g - 2];
@@ -1051,6 +1230,9 @@ function renderProfile() {
 		if (m.respawn && m.respawn[1] > 0) html += kv("Respawn", m.respawn[0] === m.respawn[1] ? fmtDelay(m.respawn[0]) : fmtDelay(m.respawn[0]) + " - " + fmtDelay(m.respawn[1]));
 		else if (m.spawns !== undefined) html += kv("Respawn", "-");
 		html += kv("Drop bonus", m.dropBonus ? "+" + m.dropBonus + "%" : "None yet");
+		if (m.best) html += `<div title="Your account's fastest kill, from the first hit${m.bestBy ? ", by " + esc(m.bestBy) : ""}"><div class="k">Fastest kill</div><div class="v">${fmtFight(m.best)}</div></div>`;
+		const slayer = (state.data.slayer || []).find(s => s.r === m.r);
+		if (slayer && slayer.dmg > 0) html += `<div title="Against every ${esc(RACE_NAME[m.r] || m.r)}: damage dealt +${slayer.dmg.toFixed(2)}%, damage taken -${slayer.def.toFixed(2)}%"><div class="k">${esc(RACE_NAME[m.r] || m.r)} slayer</div><div class="v">+${slayer.dmg.toFixed(1)}%</div></div>`;
 		const region = regionExpOf(m);
 		if (region) html += `<div title="EXP of the monsters of ${esc(region.name)} for your account"><div class="k">EXP in ${esc(region.name)}</div><div class="v">${fmtMult(region.exp)}</div></div>`;
 		html += `</div>`;
@@ -1063,6 +1245,7 @@ function renderProfile() {
 		const s = m.stats;
 		html += `<div class="kv">` + kv("P. Atk.", fmt(s.pAtk)) + kv("M. Atk.", fmt(s.mAtk)) + kv("Atk. Spd.", fmt(s.pAtkSpd)) + kv("P. Def.", fmt(s.pDef)) + kv("M. Def.", fmt(s.mDef)) + kv("Cast Spd.", fmt(s.mAtkSpd));
 		html += (s.accuracy ? kv("Accuracy", fmt(s.accuracy)) : "") + (s.evasion ? kv("Evasion", fmt(s.evasion)) : "") + kv("Critical", fmt(s.critical)) + kv("Speed", fmt(s.run)) + kv("Range", fmt(s.range)) + `</div>`;
+		html += tactics(m);
 		html += `<div class="sub-h">Elements</div><div class="server-line">Attacks with ${m.attackElement >= 0 ? `<b style="color:${elementColor(m.attackElement)}">${ELEMENTS[m.attackElement]} ${m.attackElementValue}</b>` : "no element"}</div>`;
 		html += elementBars(m.defenseElements);
 		html += `<div class="sub-h">Skills <span style="color:var(--dim);letter-spacing:0">${m.skills.length || ""}</span></div>`;
@@ -1070,12 +1253,24 @@ function renderProfile() {
 	} else html += lockedBox(m, 2, "its combat stats, elements and skills");
 	html += `</div>`;
 	if (m.tier >= 1) html += `<div class="section"><h4>Size${m.live ? "" : `<span class="hint">template base values</span>`}</h4>${sizeComparison(m)}</div>`;
+	if (m.tier >= 1 && m.t === 0 && state.data.forms.length) html += `<div class="section"><h4>Rare forms<span class="hint">${state.data.forms.filter(f => m.v & f.b).length} of ${state.data.forms.length} killed</span></h4><div class="forms-row">${state.data.forms.map(f => `<span class="form${m.v & f.b ? " on" : ""}" style="${m.v & f.b ? `border-color:${FORM_COLOR[f.b]};color:${FORM_COLOR[f.b]}` : ""}">${m.v & f.b ? "&#10003; " : ""}${esc(f.n)}</span>`).join("")}</div></div>`;
 	html += `</div><div class="p-card"><div class="section"><h4>Drops &amp; Spoils${m.tier >= 3 ? `<span class="hint">at the server's rates${m.dropBonus ? `, items +${m.dropBonus}% with your bestiary` : ""}</span>` : ""}</h4>`;
 	if (m.tier >= 3) {
 		html += dropTable(m.drops, "Drops") + dropTable(m.spoils, "Spoil");
 		if (!m.drops.length && !m.spoils.length) html += `<div class="server-line">It drops nothing.</div>`;
 	} else html += lockedBox(m, 3, "its drops and spoils");
 	html += `</div></div></div>`;
+
+	// The last kills of a boss across the server.
+	if (m.bossKills) {
+		html += `<div class="p-card p-wide"><div class="section"><h4>Kill log<span class="hint">the last kills on the server</span></h4>`;
+		if (m.bossKills.length) {
+			html += `<table class="boss-log"><tr><th>When</th><th>Slain by</th><th class="c">Party</th><th class="c">Fight</th></tr>`;
+			for (const k of m.bossKills) html += `<tr><td>${fmtDate(k.at)} <span class="clan">${ago(k.at)}</span></td><td>${esc(k.by)}${k.clan ? ` <span class="clan">${esc(k.clan)}</span>` : ""}</td><td class="c">${k.p > 1 ? fmt(k.p) : "Solo"}</td><td class="c">${k.d ? fmtFight(k.d) : "-"}</td></tr>`;
+			html += `</table>`;
+		} else html += `<div class="server-line">No kill recorded yet.</div>`;
+		html += `</div></div>`;
+	}
 
 	// Habitat, across the whole width.
 	if (m.a || m.points) {
@@ -1139,9 +1334,34 @@ function serverLine(m) {
 		if (s.hunters) html += ` (found by ${Math.max(1, Math.round(s.found / s.hunters * 100))}% of hunters)`;
 		html += `.`;
 		if (s.firstBy) html += `<br>First found by <b>${esc(s.firstBy)}</b> on ${fmtDate(s.firstAt)}.`;
+		if (s.best) html += `<br>Fastest kill on the server: <b>${fmtFight(s.best)}</b>.`;
 	} else html += s.time ? `No hunter had found it at the last count.` : `The server numbers are being counted.`;
 	if (s.time) html += `<br><span style="color:var(--dim);font-size:11px">Counted ${ago(s.time)}.</span>`;
 	return html + `</div>`;
+}
+
+/** How it fights and what to hit it with: from its template and its passive skills. */
+function tactics(m) {
+	const t = m.tactics;
+	if (!t) return "";
+	const tags = [];
+	tags.push(t.aggro ? `<span class="tag red">Attacks on sight <b>${fmt(t.aggro)}</b></span>` : `<span class="tag green">Attacks only when hit</span>`);
+	if (t.help) tags.push(`<span class="tag" title="Others of its kind join the fight">Calls for help <b>${fmt(t.help)}</b></span>`);
+	if (!t.moves) tags.push(`<span class="tag">Doesn't move</span>`);
+	else if (!t.walks) tags.push(`<span class="tag">Stays put</span>`);
+	if (t.ai && AI_NAME[t.ai]) tags.push(`<span class="tag">${AI_NAME[t.ai]}</span>`);
+	// The element it defends worst against, when it stands out from the others.
+	const def = m.defenseElements || [];
+	if (def.length === 6) {
+		const low = Math.min(...def), high = Math.max(...def);
+		if (high - low >= 20) {
+			const e = def.indexOf(low);
+			tags.push(`<span class="tag weak" title="Its lowest elemental defense">Hit it with <b style="color:${ELEMENT_COLOR[e]}">${ELEMENTS[e]}</b></span>`);
+		}
+	}
+	for (const w of t.weapons || []) tags.push(`<span class="tag ${w.v > 0 ? "weak" : "strong"}" title="Damage of ${esc(TRAIT_NAME[w.t] || w.t)} against it">${esc(TRAIT_NAME[w.t] || w.t)} <b>${w.v > 0 ? "+" : ""}${w.v}%</b></span>`);
+	for (const r of t.resists || []) tags.push(r.immune ? `<span class="tag strong">Immune to ${esc(TRAIT_NAME[r.t] || r.t)}</span>` : `<span class="tag ${r.v < 0 ? "weak" : "strong"}" title="${r.v < 0 ? "Weak to" : "Resists"} ${esc(TRAIT_NAME[r.t] || r.t)}">${esc(TRAIT_NAME[r.t] || r.t)} <b>${r.v > 0 ? "resists " + r.v : "weak " + (-r.v)}%</b></span>`);
+	return `<div class="sub-h">Tactics</div><div class="tactics">${tags.join("")}</div>`;
 }
 
 function kv(k, v) { return `<div><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`; }
@@ -1234,6 +1454,7 @@ function switchTab(view) {
 	for (const b of document.querySelectorAll(".tab")) b.classList.toggle("active", b.dataset.view === view);
 	for (const v of document.querySelectorAll(".view")) v.classList.toggle("active", v.id === "view-" + view);
 	if (view === "grounds") renderGrounds();
+	else if (view === "slayer") renderSlayer();
 	else if (view === "hunters") renderHunters();
 	else if (view === "elsewhere") document.getElementById("elsewhere").innerHTML = state.data.elsewhere.slice().sort((a, b) => a.l - b.l).map(card).join("");
 }
@@ -1244,6 +1465,10 @@ function bindEvents() {
 		if (b) { state.detailId = 0; if (history.state && history.state.monster) { try { history.pushState({}, "", window.location.pathname); } catch (x) { /* not essential */ } } switchTab(b.dataset.view); }
 	});
 	document.addEventListener("click", e => {
+		const tracked = e.target.closest("[data-track]");
+		if (tracked) { track(Number(tracked.dataset.track), tracked); return; }
+		const race = e.target.closest("[data-race]");
+		if (race) { showRace(race.dataset.race); return; }
 		const go = e.target.closest("[data-go]");
 		if (go) { openProfile(Number(go.dataset.go), true); return; }
 		if (e.target.closest("#p-back")) { goBack(); return; }

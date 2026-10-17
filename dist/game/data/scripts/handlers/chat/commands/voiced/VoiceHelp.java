@@ -151,7 +151,7 @@ public class VoiceHelp implements IVoicedCommandHandler
 		{
 			sb.append("<tr>");
 			sb.append("<td width=100><font color=\"00FFFF\">.bestiary</font></td>");
-			sb.append("<td width=170><font color=\"B0B0B0\">Your account's monster collection on the web: kills, tiers, drop and EXP bonuses, where each one lives.</font></td>");
+			sb.append("<td width=170><font color=\"B0B0B0\">Your account's monster collection on the web: kills, tiers, drop and EXP bonuses, where each one lives. Also .bestiary bounties, .bestiary track &lt;name&gt; and .bestiary untrack.</font></td>");
 			sb.append("</tr>");
 			sb.append("<tr><td colspan=2 align=right><button value=\"Bestiary\" action=\"bypass voiced_bestiary\" width=80 height=22 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr>");
 			sb.append("<tr><td colspan=2 height=1 bgcolor=222222></td></tr>");

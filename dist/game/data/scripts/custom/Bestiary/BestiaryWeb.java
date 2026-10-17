@@ -28,6 +28,7 @@ import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.stats.TraitType;
 
 import custom.PassiveSkillTree.PassiveTreeApiServer;
 
@@ -38,6 +39,7 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
  * <li>GET /api/bestiary/collection - the whole collection with the kills and tiers of the character's account, and its region EXP. Monsters not found yet come without their name (unless BestiaryShowUndiscoveredNames)</li>
  * <li>GET /api/bestiary/monster?id=... - one monster, as much of it as the account's tier shows, with its drop bonus</li>
  * <li>GET /api/bestiary/ranking - the hunters who found the most monsters</li>
+ * <li>POST /api/bestiary/track - points the character's radar at a monster (id=...), when the character is in the world</li>
  * <li>GET /api/bestiary/map - the land of the map, public</li>
  * </ul>
  * The monsters' 3D models, skins and portraits, and the GM bake page, are served by {@link BestiaryArt}. Without them the page draws a portrait of each monster's race.
@@ -49,6 +51,37 @@ public class BestiaryWeb
 {
 	private static final Path HTML_FILE = Path.of("data/html/custom/bestiary.html");
 	private volatile String _mapJson;
+
+	/** The weapons a monster can be weak to or resist (the traits of type 1). */
+	private static final TraitType[] WEAPON_TRAITS =
+	{
+		TraitType.SWORD,
+		TraitType.BLUNT,
+		TraitType.DAGGER,
+		TraitType.POLE,
+		TraitType.FIST,
+		TraitType.DUAL,
+		TraitType.DUALFIST,
+		TraitType.DUALDAGGER,
+		TraitType.BOW,
+		TraitType.CROSSBOW,
+		TraitType.RAPIER,
+		TraitType.ANCIENTSWORD
+	};
+	/** The debuffs a monster can resist, be weak to or be immune to (traits of type 3 that skills land). */
+	private static final TraitType[] RESIST_TRAITS =
+	{
+		TraitType.POISON,
+		TraitType.BLEED,
+		TraitType.HOLD,
+		TraitType.SLEEP,
+		TraitType.SHOCK,
+		TraitType.PARALYZE,
+		TraitType.DERANGEMENT,
+		TraitType.ROOT_PHYSICALLY,
+		TraitType.ROOT_MAGICALLY,
+		TraitType.GUST
+	};
 
 	private BestiaryWeb()
 	{
@@ -73,6 +106,7 @@ public class BestiaryWeb
 		server.addRoute("/api/bestiary/monster", "GET", false, this::handleMonster);
 		server.addRoute("/api/bestiary/ranking", "GET", false, this::handleRanking);
 		server.addRoute("/api/bestiary/map", "GET", false, this::handleMap);
+		server.addRoute("/api/bestiary/track", "POST", true, this::handleTrack);
 		BestiaryArt.getInstance().register(server);
 	}
 
@@ -188,8 +222,65 @@ public class BestiaryWeb
 		json.append(",\"rank\":").append(serverStats.getRank(manager.getAccountName(charId)));
 		json.append(",\"hunters\":").append(serverStats.hunters().size());
 		json.append(",\"statsTime\":").append(serverStats.time());
+		appendForms(json);
+		appendBounties(json, charId);
+		appendSlayer(json, entries);
 		json.append('}');
 		server.sendJson(exchange, 200, json.toString());
+	}
+
+	/** The rare forms of the systems that are enabled: {b: bit, n: name}. */
+	private static void appendForms(StringBuilder json)
+	{
+		final int enabled = BestiaryManager.getEnabledVariants();
+		json.append(",\"forms\":[");
+		boolean first = true;
+		for (int i = 0; i < BestiaryManager.VARIANT_NAMES.length; i++)
+		{
+			if ((enabled & (1 << i)) != 0)
+			{
+				json.append(first ? "" : ",").append("{\"b\":").append(1 << i).append(",\"n\":").append(SimpleJson.quote(BestiaryManager.VARIANT_NAMES[i])).append('}');
+				first = false;
+			}
+		}
+		json.append(']');
+	}
+
+	/** Today's bounties of the account, how much they count and pay, and when the next ones come. */
+	private static void appendBounties(StringBuilder json, int charId)
+	{
+		final BestiaryManager.BountyBoard board = BestiaryManager.getInstance().getBountyBoard(charId);
+		json.append(",\"bountyOn\":").append(BestiaryConfig.BOUNTY_ENABLED);
+		json.append(",\"bountyReset\":").append(board.resetAt());
+		json.append(",\"bountyMult\":").append(BestiaryConfig.BOUNTY_KILL_MULTIPLIER);
+		json.append(",\"bountyAdena\":").append(BestiaryConfig.BOUNTY_ADENA_PER_LEVEL);
+		json.append(",\"bounties\":[");
+		for (int i = 0; i < board.bounties().size(); i++)
+		{
+			final BestiaryManager.Bounty bounty = board.bounties().get(i);
+			json.append(i > 0 ? "," : "").append("{\"id\":").append(bounty.npcId()).append(",\"k\":").append(bounty.progress()).append(",\"goal\":").append(bounty.goal()).append('}');
+		}
+		json.append(']');
+	}
+
+	/** The account's slayer bonus against each race with enough monsters, and the bonus of each tier. */
+	private static void appendSlayer(StringBuilder json, Map<Integer, BestiaryManager.Entry> entries)
+	{
+		json.append(",\"slayerDamage\":").append(ints(BestiaryConfig.SLAYER_DAMAGE_BONUS));
+		json.append(",\"slayerDefense\":").append(ints(BestiaryConfig.SLAYER_DEFENSE_BONUS));
+		json.append(",\"slayerMin\":").append(BestiaryConfig.SLAYER_MIN_MONSTERS);
+		json.append(",\"slayer\":[");
+		boolean first = true;
+		for (BestiaryManager.Slayer slayer : BestiaryManager.getInstance().getSlayer(entries).values())
+		{
+			json.append(first ? "" : ",").append("{\"r\":").append(SimpleJson.quote(slayer.race().name()));
+			json.append(",\"n\":").append(slayer.monsters());
+			json.append(",\"f\":").append(slayer.found());
+			json.append(",\"dmg\":").append(String.format(Locale.US, "%.2f", slayer.damage()));
+			json.append(",\"def\":").append(String.format(Locale.US, "%.2f", slayer.defense())).append('}');
+			first = false;
+		}
+		json.append(']');
 	}
 
 	private void appendCharacter(StringBuilder json, int charId)
@@ -222,6 +313,11 @@ public class BestiaryWeb
 		if (entry != null)
 		{
 			json.append(",\"k\":").append(entry.kills()).append(",\"g\":").append(tier).append(",\"f\":").append(entry.firstKill());
+			final int variants = entry.variants() & BestiaryManager.getEnabledVariants();
+			if (variants != 0)
+			{
+				json.append(",\"v\":").append(variants);
+			}
 		}
 		if (tier >= 2)
 		{
@@ -278,6 +374,16 @@ public class BestiaryWeb
 		if (entry != null)
 		{
 			json.append(",\"first\":").append(entry.firstKill()).append(",\"last\":").append(entry.lastKill());
+			json.append(",\"v\":").append(entry.variants() & BestiaryManager.getEnabledVariants());
+			if (entry.bestTime() > 0)
+			{
+				final String by = CharInfoTable.getInstance().getNameById(entry.bestChar());
+				json.append(",\"best\":").append(entry.bestTime()).append(",\"bestBy\":").append(SimpleJson.quote(by != null ? by : ""));
+			}
+		}
+		if (BestiaryManager.isBoss(template) && (tier > 0))
+		{
+			appendBossKills(json, npcId);
 		}
 		if ((tier > 0) || BestiaryConfig.SHOW_UNDISCOVERED_NAMES)
 		{
@@ -344,6 +450,10 @@ public class BestiaryWeb
 			{
 				json.append(",\"firstBy\":").append(SimpleJson.quote(monster.firstFinder())).append(",\"firstAt\":").append(monster.firstKill());
 			}
+			if (monster.bestTime() > 0)
+			{
+				json.append(",\"best\":").append(monster.bestTime());
+			}
 		}
 		json.append(",\"time\":").append(serverStats.time()).append('}');
 	}
@@ -369,6 +479,7 @@ public class BestiaryWeb
 		json.append(",\"attackElement\":").append(stats.attackElement);
 		json.append(",\"attackElementValue\":").append(stats.attackElementValue);
 		json.append(",\"defenseElements\":").append(ints(stats.defenseElements));
+		appendTactics(json, template, stats);
 
 		json.append(",\"skills\":[");
 		final List<Skill> skills = new ArrayList<>(template.getSkills().values());
@@ -382,6 +493,65 @@ public class BestiaryWeb
 			json.append(",\"p\":").append(skill.isPassive());
 			json.append(",\"d\":").append(skill.isDebuff()).append('}');
 			first = false;
+		}
+		json.append(']');
+	}
+
+	/**
+	 * How it fights and what it is weak to: aggro and help ranges, how it moves, its AI, the weapons that hurt it more or less, and the debuffs it resists.
+	 */
+	private static void appendTactics(StringBuilder json, NpcTemplate template, BestiaryCatalog.Stats stats)
+	{
+		json.append(",\"tactics\":{");
+		json.append("\"aggro\":").append(template.isAggressive() ? template.getAggroRange() : 0);
+		json.append(",\"help\":").append(!template.getClans().isEmpty() ? template.getClanHelpRange() : 0);
+		json.append(",\"moves\":").append(template.canMove());
+		json.append(",\"walks\":").append(template.isRandomWalkEnabled());
+		json.append(",\"ai\":").append(SimpleJson.quote(template.getAIType() != null ? template.getAIType().name() : ""));
+
+		// A weapon's damage is multiplied by 2 minus the defence against it (Formulas.calcWeaponTraitBonus).
+		json.append(",\"weapons\":[");
+		boolean first = true;
+		for (TraitType trait : WEAPON_TRAITS)
+		{
+			final int percent = Math.round((1 - stats.defenceTraits[trait.ordinal()]) * 100);
+			if (Math.abs(percent) >= 5)
+			{
+				json.append(first ? "" : ",").append("{\"t\":").append(SimpleJson.quote(trait.name())).append(",\"v\":").append(percent).append('}');
+				first = false;
+			}
+		}
+		json.append(']');
+
+		json.append(",\"resists\":[");
+		first = true;
+		for (TraitType trait : RESIST_TRAITS)
+		{
+			final boolean immune = stats.traitsInvul[trait.ordinal()] > 0;
+			final int percent = Math.round((stats.defenceTraits[trait.ordinal()] - 1) * 100);
+			if (immune || (Math.abs(percent) >= 5))
+			{
+				json.append(first ? "" : ",").append("{\"t\":").append(SimpleJson.quote(trait.name())).append(",\"v\":").append(percent);
+				json.append(immune ? ",\"immune\":1}" : "}");
+				first = false;
+			}
+		}
+		json.append("]}");
+	}
+
+	/** The last kills of a raid or grand boss across the server. */
+	private static void appendBossKills(StringBuilder json, int npcId)
+	{
+		final List<BestiaryManager.BossKill> kills = BestiaryManager.getInstance().getBossKills(npcId);
+		json.append(",\"bossKills\":[");
+		for (int i = 0; i < kills.size(); i++)
+		{
+			final BestiaryManager.BossKill kill = kills.get(i);
+			json.append(i > 0 ? "," : "").append("{\"at\":").append(kill.time());
+			json.append(",\"d\":").append(kill.duration());
+			json.append(",\"by\":").append(SimpleJson.quote(kill.killer()));
+			json.append(",\"clan\":").append(SimpleJson.quote(kill.clan()));
+			json.append(",\"p\":").append(kill.partySize()).append('}');
 		}
 		json.append(']');
 	}
@@ -596,6 +766,31 @@ public class BestiaryWeb
 		json.append(",\"me\":").append(hunter.account().equalsIgnoreCase(account)).append('}');
 	}
 
+	/** Points the radar of the character (who must be in the world) at the nearest of a monster. */
+	private void handleTrack(HttpExchange exchange) throws IOException
+	{
+		final PassiveTreeApiServer server = PassiveTreeApiServer.getInstance();
+		final int charId = server.authenticateCharacter(exchange);
+		if (charId < 0)
+		{
+			return;
+		}
+
+		final int npcId = parseInt(server.readParams(exchange).get("id"));
+		final Player player = World.getInstance().getPlayer(charId);
+		final BestiaryTracker.Result result;
+		if ((player == null) || !player.isOnline())
+		{
+			result = new BestiaryTracker.Result(false, "Log in with this character to track a monster.");
+		}
+		else
+		{
+			result = BestiaryTracker.track(player, npcId);
+			player.sendMessage(result.message());
+		}
+		server.sendJson(exchange, 200, "{\"ok\":" + result.tracking() + ",\"msg\":" + SimpleJson.quote(result.message()) + "}");
+	}
+
 	/** The land never changes while the server runs: worked out once. Public, it only tells where monsters spawn. */
 	private void handleMap(HttpExchange exchange) throws IOException
 	{
@@ -635,7 +830,7 @@ public class BestiaryWeb
 			json.append(",\"m\":1");
 		}
 	}
-	
+
 	// ---------------------------------------------------------------------------------------------
 	// Helpers
 	// ---------------------------------------------------------------------------------------------

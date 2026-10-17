@@ -1,20 +1,30 @@
 package handlers.chat.commands.voiced;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.l2jmobius.gameserver.config.custom.BestiaryConfig;
 import org.l2jmobius.gameserver.config.custom.PassiveTreeConfig;
+import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
 import org.l2jmobius.gameserver.managers.BestiaryManager;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.network.serverpackets.ExLinkOpen;
 
+import custom.Bestiary.BestiaryTracker;
 import custom.Bestiary.BestiaryWeb;
 import custom.PassiveSkillTree.PassiveTreeApiServer;
 
 /**
  * ".bestiary" - opens the bestiary of the character's account on the web page of the passive tree server: every monster its characters killed, the bonuses it gives, how far each entry is, and the monsters still to find. With a monster targeted, the page opens on that monster.
+ * <ul>
+ * <li>".bestiary track &lt;name or id&gt;" - points the radar at the nearest one of a monster of the bestiary</li>
+ * <li>".bestiary untrack" - clears the radar</li>
+ * <li>".bestiary bounties" - today's bounties, in chat</li>
+ * </ul>
  * <p>
  * The link carries the same token as ".treelink" (PassiveTreeWebTokenLifetime, an hour by default); the page keeps working after a class change or a logout until it expires.
  */
@@ -46,6 +56,36 @@ public class BestiaryVoiced implements IVoicedCommandHandler
 		}
 		LAST_USE.put(player.getObjectId(), now);
 
+		final String args = params != null ? params.trim() : "";
+		final String sub = args.split("\\s+", 2)[0].toLowerCase(Locale.ROOT);
+		switch (sub)
+		{
+			case "track":
+			{
+				final String name = args.length() > 5 ? args.substring(5).trim() : "";
+				if (name.isEmpty())
+				{
+					player.sendMessage("Usage: .bestiary track <name or id of a monster>");
+					return true;
+				}
+				final int npcId = BestiaryTracker.find(player, name);
+				player.sendMessage(npcId > 0 ? BestiaryTracker.track(player, npcId).message() : "No monster of your bestiary is called \"" + name + "\".");
+				return true;
+			}
+			case "untrack":
+			{
+				BestiaryTracker.untrack(player);
+				player.sendMessage("Bestiary: radar cleared.");
+				return true;
+			}
+			case "bounties":
+			case "bounty":
+			{
+				sendBounties(player);
+				return true;
+			}
+		}
+
 		// A targeted monster of the collection, or one the player already found, opens the page on it.
 		final WorldObject target = player.getTarget();
 		int npcId = 0;
@@ -63,6 +103,32 @@ public class BestiaryVoiced implements IVoicedCommandHandler
 		player.sendMessage(url);
 		player.sendPacket(new ExLinkOpen(url));
 		return true;
+	}
+
+	private static void sendBounties(Player player)
+	{
+		if (!BestiaryConfig.BOUNTY_ENABLED)
+		{
+			player.sendMessage("Bestiary bounties are disabled.");
+			return;
+		}
+
+		final BestiaryManager.BountyBoard board = BestiaryManager.getInstance().getBountyBoard(player.getObjectId());
+		if (board.bounties().isEmpty())
+		{
+			player.sendMessage("Bestiary: no bounty today.");
+			return;
+		}
+
+		final long minutes = Math.max(1, (board.resetAt() - System.currentTimeMillis()) / 60000);
+		player.sendMessage("Bestiary bounties (new ones in " + (minutes >= 60 ? (minutes / 60) + " h " + (minutes % 60) + " min" : minutes + " min") + "), kills count x" + BestiaryConfig.BOUNTY_KILL_MULTIPLIER + " until done:");
+		for (BestiaryManager.Bounty bounty : board.bounties())
+		{
+			final NpcTemplate template = NpcData.getInstance().getTemplate(bounty.npcId());
+			final String name = template != null ? template.getName() + " (Lv. " + template.getLevel() + ")" : String.valueOf(bounty.npcId());
+			player.sendMessage((bounty.isDone() ? "  [done] " : "  ") + name + ": " + bounty.progress() + " / " + bounty.goal());
+		}
+		player.sendMessage("Type .bestiary track <name> to point your radar at one.");
 	}
 
 	@Override
