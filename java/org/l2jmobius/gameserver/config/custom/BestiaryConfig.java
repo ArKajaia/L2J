@@ -78,6 +78,7 @@ public class BestiaryConfig
 	public static int DROP_STATS_MIN_KILLS;
 	public static boolean FARMING_ENABLED;
 	public static int FARMING_LEVELS_ABOVE;
+	public static int[] MAP_IMAGE_BOUNDS;
 
 	public static void load()
 	{
@@ -164,6 +165,42 @@ public class BestiaryConfig
 		DROP_STATS_MIN_KILLS = Math.max(1, config.getInt("BestiaryDropStatsMinKills", 100));
 		FARMING_ENABLED = config.getBoolean("BestiaryFarmingEnabled", true);
 		FARMING_LEVELS_ABOVE = Math.max(0, Math.min(20, config.getInt("BestiaryFarmingLevelsAbove", 5)));
+		MAP_IMAGE_BOUNDS = readMapBounds(config.getString("BestiaryMapImageBounds", "-294912,-262144,229376,294912"));
+	}
+
+	/**
+	 * @param value the world coordinates of the map picture's corners, as "left,top,right,bottom"
+	 * @return {left, top, right, bottom}, or the whole world of the geodata (tiles 11-26 by 10-26) when it cannot be read
+	 */
+	private static int[] readMapBounds(String value)
+	{
+		final String[] parts = value.split(",");
+		if (parts.length == 4)
+		{
+			try
+			{
+				final int[] bounds = new int[4];
+				for (int i = 0; i < 4; i++)
+				{
+					bounds[i] = Integer.parseInt(parts[i].trim());
+				}
+				if ((bounds[2] > bounds[0]) && (bounds[3] > bounds[1]))
+				{
+					return bounds;
+				}
+			}
+			catch (NumberFormatException e)
+			{
+				// not four numbers: the default below
+			}
+		}
+		return new int[]
+		{
+			-294912,
+			-262144,
+			229376,
+			294912
+		};
 	}
 
 	/**

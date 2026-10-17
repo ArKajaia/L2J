@@ -87,6 +87,23 @@ client/Bestiary/work/umodel.log. If umodel does not recognize the packages,
 run "umodel -taglist" for Lineage 2's game tag and pass it with
 --umodel-args "-game=<tag>".
 
+World map
+---------
+The profile pages show where each monster spawns on a map. Without a picture
+the map is the land drawn from the spawn points. For the client's own world
+map (the Alt+M one), export the texture package it is in, SysTextures\
+L2Font-e.utx (the letter after the dash is the client's language, Language= in
+system/localization.ini):
+
+  umodel -export -path="C:\Lineage II" -out=work L2Font-e
+
+Find the world map in what it wrote (it can be in a few pieces: put them
+together in an image editor), and save it as
+dist/game/data/html/custom/bestiary/textures/worldmap.png. The page uses it at
+once (no restart). BestiaryMapImageBounds in config/Custom/Bestiary.ini says
+where the picture's corners are in the world: if the towns are not on their
+places, change it (or crop the picture to the world of the geodata).
+
 Turning the models
 ------------------
 The models face the way the client has them. The bake page's preview shows a

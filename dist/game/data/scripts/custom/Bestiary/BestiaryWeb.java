@@ -1,6 +1,7 @@
 package custom.Bestiary;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -55,6 +56,9 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
 public class BestiaryWeb
 {
 	private static final Path HTML_FILE = Path.of("data/html/custom/bestiary.html");
+	/** The client's world map (client/Bestiary/README.txt), served by {@link BestiaryArt} with the skins. */
+	private static final Path MAP_IMAGE = Path.of("data/html/custom/bestiary/textures/worldmap.png");
+	private static final String MAP_IMAGE_URL = "/bestiary/textures/worldmap.png";
 	private volatile String _mapJson;
 
 	/** The weapons a monster can be weak to or resist (the traits of type 1). */
@@ -973,7 +977,10 @@ public class BestiaryWeb
 		json.append(yield.boosted() ? ",\"b\":1}" : "}");
 	}
 
-	/** The land never changes while the server runs: worked out once. Public, it only tells where monsters spawn. */
+	/**
+	 * The land never changes while the server runs: worked out once. Public, it only tells where monsters spawn.<br>
+	 * With the client's world map in {@link #MAP_IMAGE}, it also gives the picture and where its corners are in the world (BestiaryMapImageBounds).
+	 */
 	private void handleMap(HttpExchange exchange) throws IOException
 	{
 		String json = _mapJson;
@@ -987,11 +994,18 @@ public class BestiaryWeb
 				sb.append(first ? "" : ",").append('[').append(cell[0]).append(',').append(cell[1]).append(',').append(cell[2]).append(']');
 				first = false;
 			}
-			sb.append("]}");
+			sb.append(']');
 			json = sb.toString();
 			_mapJson = json;
 		}
-		PassiveTreeApiServer.getInstance().sendJson(exchange, 200, json);
+		final StringBuilder sb = new StringBuilder(json.length() + 128).append(json);
+		if (Files.isRegularFile(MAP_IMAGE))
+		{
+			final int[] b = BestiaryConfig.MAP_IMAGE_BOUNDS;
+			sb.append(",\"image\":{\"url\":\"").append(MAP_IMAGE_URL).append("?v=").append(Files.getLastModifiedTime(MAP_IMAGE).toMillis());
+			sb.append("\",\"b\":[").append(b[0]).append(',').append(b[1]).append(',').append(b[2]).append(',').append(b[3]).append("]}");
+		}
+		PassiveTreeApiServer.getInstance().sendJson(exchange, 200, sb.append('}').toString());
 	}
 
 	/**
