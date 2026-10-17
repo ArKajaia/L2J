@@ -58,6 +58,11 @@ silhouette of their portrait.
 Without portraits, the collection keeps the drawn race portraits, and profile
 pages still show the 3D model.
 
+The portraits are saved with a transparent background. The bestiary shows them
+on dist/game/data/html/custom/bestiary-lib/backgrounds/portrait.webp, and the
+3D models of the profile pages on backgrounds/stage.webp: replace those files
+(same names) to change the scenery, without baking again.
+
 Size
 ----
 The models and skins of all monsters take a few hundred MB (less with Pillow
