@@ -194,6 +194,8 @@
 	.portrait { position: relative; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 50% 38%, var(--glow, #2a2a32) 0%, #0c0c10 72%); border: 2px solid var(--ring, #2a2a30); }
 	.portrait svg { width: 100%; height: 100%; display: block; }
 	.portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+	/* A baked portrait stands on the field of bestiary-lib/backgrounds/portrait.webp, darkened at the edge so the monster stands out. */
+	.portrait.pic { background: radial-gradient(circle at 50% 45%, rgba(8,8,11,0) 48%, rgba(8,8,11,0.5) 100%), url(/bestiary/lib/backgrounds/portrait.webp) center / cover, #0c0c10; }
 	.portrait .q { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #4a463c; font-size: 30px; }
 	.g4 .portrait, .portrait.g4 { box-shadow: 0 0 10px rgba(242,201,76,0.5), inset 0 0 8px rgba(242,201,76,0.35); }
 
@@ -245,14 +247,14 @@
 	.p-nav .crumb { color: var(--dim); font-size: 12px; }
 	.p-nav .step { margin-left: auto; display: flex; gap: 6px; }
 	.p-hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 18px; background: linear-gradient(180deg, #15151b, #0d0d11); border: 1px solid #2c2618; border-radius: 10px; overflow: hidden; }
-	.p-stage { position: relative; min-height: 440px; background: radial-gradient(ellipse at 50% 42%, var(--glow, #262630) 0%, #0b0b0f 70%); border-right: 1px solid #241f14; display: flex; align-items: center; justify-content: center; }
+	.p-stage { position: relative; min-height: 440px; background: linear-gradient(180deg, rgba(11,11,15,0.25) 0%, rgba(11,11,15,0) 45%, rgba(11,11,15,0.45) 100%), url(/bestiary/lib/backgrounds/stage.webp) center 62% / cover, #0b0b0f; border-right: 1px solid #241f14; display: flex; align-items: center; justify-content: center; }
 	.p-stage canvas { position: absolute; inset: 0; cursor: grab; touch-action: none; }
 	.p-stage canvas:active { cursor: grabbing; }
 	.p-stage .portrait { width: 260px; height: 260px; border-width: 3px; }
 	.p-stage .big { max-width: 86%; max-height: 400px; object-fit: contain; }
 	.p-stage .big.sil, .portrait img.sil { filter: brightness(0) invert(0.16) drop-shadow(0 0 1.5px rgba(217,182,76,0.5)); }
-	.p-stage .note { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; font-size: 11px; color: #55524a; pointer-events: none; }
-	.p-stage .badge { position: absolute; top: 12px; left: 12px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim); }
+	.p-stage .note { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; font-size: 11px; color: #9a9384; text-shadow: 0 1px 3px #000; pointer-events: none; }
+	.p-stage .badge { position: absolute; top: 12px; left: 12px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text); text-shadow: 0 1px 3px #000; }
 	.p-stage .mystery { position: absolute; top: 40%; left: 0; right: 0; text-align: center; font-size: 64px; color: rgba(217,182,76,0.18); pointer-events: none; }
 	.p-info { padding: 22px 22px 18px 4px; }
 	.p-info h2 { margin: 0; font-weight: normal; color: var(--cream); font-size: 28px; letter-spacing: 1px; }
@@ -751,7 +753,7 @@ function portrait(m, extraClass) {
 	const cls = "portrait g" + g + (extraClass ? " " + extraClass : "");
 	const ring = TIER_COLOR[g];
 	if (m.img) {
-		return `<div class="${cls}" style="--ring:${ring}"><img src="${portraitUrl(m)}" alt="" loading="lazy"${g === 0 ? ` class="sil"` : ""}>${g === 0 ? `<div class="q">?</div>` : ""}</div>`;
+		return `<div class="${cls} pic" style="--ring:${ring}"><img src="${portraitUrl(m)}" alt="" loading="lazy"${g === 0 ? ` class="sil"` : ""}>${g === 0 ? `<div class="q">?</div>` : ""}</div>`;
 	}
 	const symbol = RACE_SYMBOL[m.r] || "ETC";
 	if (g === 0) {
@@ -1349,8 +1351,7 @@ function renderProfile() {
 	let html = navBar(Object.assign({}, summary, { a: m.a }));
 
 	// Hero: the monster on its stage, and who it is.
-	const glow = m.tier >= 4 ? "rgba(242,201,76,0.3)" : m.tier >= 2 && m.attackElement >= 0 ? `color-mix(in srgb, ${elementColor(m.attackElement)} 26%, #0b0b0f)` : "#262630";
-	html += `<div class="p-hero"><div class="p-stage" id="p-stage" style="--glow:${glow}">${stageFallback(p)}`;
+	html += `<div class="p-hero"><div class="p-stage" id="p-stage">${stageFallback(p)}`;
 	html += `<span class="badge">${m.tier > 0 ? esc(tierNames[m.tier - 1]) : "Not found yet"}</span></div>`;
 	html += `<div class="p-info"><h2>${esc(m.n || "? ? ?")}</h2>`;
 	if (m.title && KIND_NAME.indexOf(m.title) < 0) html += `<div class="title">${esc(m.title)}</div>`;

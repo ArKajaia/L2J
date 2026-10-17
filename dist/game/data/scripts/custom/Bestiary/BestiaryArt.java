@@ -32,7 +32,7 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
  * <li>GET /bestiary/models/&lt;file&gt; - a model (.glb), the manifest (npc id -&gt; mesh and skins) and the view (how the models are turned), from data/html/custom/bestiary/models</li>
  * <li>GET /bestiary/textures/&lt;file&gt; - a skin (.png), from data/html/custom/bestiary/textures</li>
  * <li>GET /bestiary/img?id=... - the portrait of a monster, data/html/custom/bestiary/&lt;npc id&gt;.webp (or .png, .jpg, .gif)</li>
- * <li>GET /bestiary/lib/&lt;path&gt; - the page's scripts (the 3D viewer and three.js), from data/html/custom/bestiary-lib</li>
+ * <li>GET /bestiary/lib/&lt;path&gt; - the page's scripts (the 3D viewer and three.js) and the backgrounds behind portraits and models, from data/html/custom/bestiary-lib</li>
  * <li>GET /bestiary-bake.html - the bake page, opened with //bestiary</li>
  * <li>GET /api/bestiary/admin/models - (GM) the monsters to bake, with their models and portraits</li>
  * <li>POST /bestiary/admin/portrait?id=... - (GM) saves the portrait the page rendered (the body is the picture)</li>
@@ -224,6 +224,18 @@ public class BestiaryArt
 		if (lower.endsWith(".css"))
 		{
 			return "text/css; charset=UTF-8";
+		}
+		if (lower.endsWith(".webp"))
+		{
+			return "image/webp";
+		}
+		if (lower.endsWith(".png"))
+		{
+			return "image/png";
+		}
+		if (lower.endsWith(".jpg") || lower.endsWith(".jpeg"))
+		{
+			return "image/jpeg";
 		}
 		if (lower.endsWith(".txt") || lower.endsWith("license"))
 		{
