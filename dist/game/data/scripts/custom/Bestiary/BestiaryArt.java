@@ -390,7 +390,8 @@ public class BestiaryArt
 			return;
 		}
 
-		final int npcId = parseInt(server.readParams(exchange).get("id"));
+		// The id from the address only: readParams would read the body (the picture) as a form and close it.
+		final int npcId = parseInt(queryParam(exchange, "id"));
 		if (NpcData.getInstance().getTemplate(npcId) == null)
 		{
 			server.sendText(exchange, 400, "application/json", "{\"error\":\"no such npc\"}");
@@ -481,6 +482,24 @@ public class BestiaryArt
 			throw new IllegalArgumentException("not a number: " + value);
 		}
 		return Math.max(min, Math.min(max, (Double) value));
+	}
+
+	/** @return a value of the query string as it is written there (not decoded), or {@code null} */
+	private static String queryParam(HttpExchange exchange, String name)
+	{
+		final String query = exchange.getRequestURI().getRawQuery();
+		if (query == null)
+		{
+			return null;
+		}
+		for (String part : query.split("&"))
+		{
+			if (part.startsWith(name + "="))
+			{
+				return part.substring(name.length() + 1);
+			}
+		}
+		return null;
 	}
 
 	private static int parseInt(String value)

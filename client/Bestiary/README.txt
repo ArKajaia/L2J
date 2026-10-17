@@ -78,6 +78,17 @@ picture (Pillow needed). Models extracted before this was added had every
 alpha cut: run the script again (the packages already exported are kept, only
 the flags are read).
 
+If a monster still shows through where it should not (or is solid where it
+should show through), ask the script how its skins were judged; it exports
+nothing:
+
+  python extract_models.py --client "C:\Lineage II" --umodel "C:\tools\umodel" --explain 20487,25013
+
+For each skin it prints the materials on the way to the texture with the flags
+that decide (bMasked, bAlphaTexture, a shader's Opacity and OutputBlending, a
+final blend's FrameBufferBlending and AlphaTest), how much of the picture's
+alpha is clear, what the script makes of it, and what the manifest says.
+
 When something is missing
 -------------------------
 extract_report.txt lists the npcs without an Npcgrp row, the packages and

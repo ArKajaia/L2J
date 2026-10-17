@@ -177,10 +177,11 @@ def umodel_command(value):
 	if path.is_dir():
 		for name in UMODEL_NAMES:
 			if (path / name).is_file():
-				return [str(path / name)]
+				return [str((path / name).resolve())]
 		sys.exit("No umodel in %s: it should hold umodel.exe (or umodel_64.exe) from the UE Viewer download." % path)
 	if path.exists():
-		return [str(path)]
+		# Absolute: "./umodel" would otherwise be looked for on the PATH.
+		return [str(path.resolve())]
 	# A path (no spaces, or starting like one) that is not there; anything else is a command such as "wine umodel.exe".
 	if (" " not in value.strip()) or re.match(r"^([A-Za-z]:|\.{0,2})[\\/]", value.strip()):
 		sys.exit("No umodel at %s: give umodel.exe, or the folder it is in." % value)
@@ -304,12 +305,20 @@ def object_ref(value):
 	return match.group(1) if match else None
 
 
-def material_look(objects, full, depth=0):
+# The properties --explain shows of each material on the way to the texture.
+EXPLAINED = ("format", "bmasked", "balphatexture", "diffuse", "opacity", "specularitymask", "outputblending", "framebufferblending", "alphatest", "alpharef", "material", "material1", "material2", "mask")
+
+
+def material_look(objects, full, depth=0, trace=None):
 	"""What a material shows: (the name of its picture, the name of the picture its opacity comes from when it is
 	another one, how its alpha shows), following shaders, final blends and modifiers down to the texture. The alpha
-	is "opaque", "blend", the cut-off of a mask (a number), or None when umodel's dump does not have the material."""
+	is "opaque", "blend", the cut-off of a mask (a number), or None when umodel's dump does not have the material.
+	trace, a list, gets a line for each material on the way (--explain)."""
 	package, name = split_name(full)
 	found = (objects.get((package, name)) or objects.get((None, name))) if depth < 8 else None
+	if trace is not None:
+		shown = ", ".join("%s=%s" % (k, found[1][k]) for k in EXPLAINED if found and k in found[1])
+		trace.append("    " + "  " * depth + "%s %s%s" % (found[0] if found else "(not in the dump)", full, (": " + shown) if shown else ""))
 	if not found:
 		return full, None, None
 	kind, props = found
@@ -332,9 +341,9 @@ def material_look(objects, full, depth=0):
 		return full, None, "blend" if flag("balphatexture") else "opaque"
 	if kind == "shader":
 		diffuse = ref("diffuse")
-		picture = material_look(objects, diffuse, depth + 1)[0] if diffuse else full
+		picture = material_look(objects, diffuse, depth + 1, trace)[0] if diffuse else full
 		opacity = ref("opacity")
-		opacity_picture = material_look(objects, opacity, depth + 1)[0] if opacity else None
+		opacity_picture = material_look(objects, opacity, depth + 1, trace)[0] if opacity else None
 		if opacity_picture and key_of(opacity_picture) == key_of(picture):
 			opacity_picture = None
 		blending = props.get("outputblending", "").upper()
@@ -346,7 +355,7 @@ def material_look(objects, full, depth=0):
 	inner = ref("material") or ref("material1")
 	if not inner:
 		return full, None, None
-	picture, opacity_picture, alpha = material_look(objects, inner, depth + 1)
+	picture, opacity_picture, alpha = material_look(objects, inner, depth + 1, trace)
 	if kind == "finalblend":
 		if flag("alphatest"):
 			return picture, opacity_picture, cutoff()
@@ -543,6 +552,61 @@ def copy_texture(source, target, max_size, pillow, opacity=None):
 # Main
 # ---------------------------------------------------------------------------------------------
 
+def alpha_histogram(source, pillow):
+	"""How much of a picture's alpha is fully clear, fully solid and in between, for --explain."""
+	if not pillow:
+		return "Pillow not installed"
+	with pillow.open(source) as image:
+		if "A" not in image.getbands():
+			return "no alpha channel"
+		histogram = image.getchannel("A").histogram()
+	total = float(sum(histogram)) or 1
+	clear = sum(histogram[:16]) / total
+	solid = sum(histogram[240:]) / total
+	return "alpha %.0f%% clear, %.0f%% solid, %.0f%% in between" % (clear * 100, solid * 100, (1 - clear - solid) * 100)
+
+
+def explain(args, client, umodel, extra, work, out, packages, looks, pillow):
+	"""--explain: for each npc, its mesh and skins, each skin's chain of materials with the flags that decide its
+	alpha, what the extractor makes of it, and what the manifest the pages use says."""
+	manifest = {}
+	manifest_file = out / "models" / "manifest.json"
+	if manifest_file.exists():
+		manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
+	work.mkdir(parents=True, exist_ok=True)
+	ids = [int(x) for x in args.explain.split(",") if x.strip().isdigit()]
+	objects = {}
+	wanted = sorted(set(split_name(t)[0] for i in ids if i in looks for t in looks[i]["textures"] if split_name(t)[0] in packages))
+	with open(work / "umodel.log", "a", encoding="utf-8") as log:
+		for package in wanted:
+			parse_dump(dump_package(umodel, client, work, packages[package].stem, extra, log, args.force), package, objects)
+	index = index_exports(work, packages)
+	for npc_id in ids:
+		row = looks.get(npc_id)
+		print("\nnpc %d" % npc_id)
+		if not row:
+			print("  no Npcgrp row with a mesh (or not a server npc of --types)")
+			continue
+		entry = manifest.get("npcs", {}).get(str(npc_id))
+		mesh = manifest.get("meshes", {}).get(entry["mesh"]) if entry else None
+		print("  mesh %s%s" % (row["mesh"], "" if entry else " (not in the manifest)"))
+		if mesh:
+			print("  mesh's own skins: %s" % ", ".join("%s [%s]" % (k, manifest.get("alpha", {}).get(k, "opaque")) if k else "-" for k in mesh.get("defaults", [])))
+		for slot, name in enumerate(row["textures"]):
+			trace = []
+			picture, opacity_name, alpha = material_look(objects, name, trace=trace)
+			key = key_of(name)
+			print("  skin %d: %s" % (slot, name))
+			print("\n".join(trace))
+			source = lookup(index, picture, (".png", ".tga"))
+			if source:
+				print("    picture %s: %s" % (source.name, alpha_histogram(source, pillow)))
+			if opacity_name:
+				print("    opacity from %s" % opacity_name)
+			judged = alpha if alpha is not None else ("guessed from the picture: %s" % guess_alpha(source, pillow) if source and pillow else "unknown")
+			print("    judged: %s; manifest: %s" % (judged, manifest.get("alpha", {}).get(key, "opaque") if "alpha" in manifest else "no alpha table (every alpha cut at 0.45)"))
+
+
 def main():
 	parser = argparse.ArgumentParser(description="Extract monster models and textures from a High Five client for the bestiary.")
 	parser.add_argument("--client", required=True, help="the client folder (Animations, StaticMeshes, Textures, System)")
@@ -558,6 +622,7 @@ def main():
 	parser.add_argument("--umodel-args", default="", help="extra umodel options, e.g. \"-game=l2\"")
 	parser.add_argument("--force", action="store_true", help="export packages again even when done before")
 	parser.add_argument("--check", action="store_true", help="only check the setup: read Npcgrp, find the packages, list one with umodel; nothing is exported")
+	parser.add_argument("--explain", default="", help="comma-separated npc ids: show how each of their skins' alpha is judged (see-through or not), from the flags umodel's dump has; nothing is exported")
 	args = parser.parse_args()
 
 	client = Path(args.client)
@@ -618,6 +683,10 @@ def main():
 		names = sorted(set(split_name(r["mesh"])[1] for r in looks.values() if split_name(r["mesh"])[0] == smallest))
 		ok = check_umodel(umodel, client, packages[smallest], names)
 		print("Ready: run it again without --check to export (it writes into %s)." % out if ok else "Not ready: see above.")
+		return
+
+	if args.explain:
+		explain(args, client, umodel, extra, work, out, packages, looks, pillow)
 		return
 
 	work.mkdir(parents=True, exist_ok=True)
