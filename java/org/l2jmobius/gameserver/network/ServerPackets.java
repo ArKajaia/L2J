@@ -515,20 +515,24 @@ public enum ServerPackets
 	EX_2ND_PASSWORD_VERIFY(0xFE, 0xE6),
 	EX_2ND_PASSWORD_ACK(0xFE, 0xE7),
 	EX_SAY2_FAIL(0xFE, 0xE8),
-	EX_LINK_OPEN(0xFE, 0xE9);
-	
+	EX2_LINK_OPEN(0xFE, 0xFE, 0x01);
+
 	private final int _id1;
 	private final int _id2;
+	private final int _id3;
 	
 	ServerPackets(int id1)
 	{
 		this(id1, -1);
 	}
 	
-	ServerPackets(int id1, int id2)
+	ServerPackets(int id1, int id2) {this(id1, id2, -1);}
+
+	ServerPackets(int id1, int id2, int id3)
 	{
 		_id1 = id1;
 		_id2 = id2;
+		_id3 = id3;
 	}
 	
 	public void writeId(ServerPacket packet, WritableBuffer buffer)
@@ -546,6 +550,11 @@ public enum ServerPackets
 		if (_id2 > 0)
 		{
 			buffer.writeShort(_id2);
+		}
+		if (_id3 > 0)
+		{
+			assert _id1 == 0xfe && _id2 == 0xfe;
+			buffer.writeInt(_id3);
 		}
 	}
 }

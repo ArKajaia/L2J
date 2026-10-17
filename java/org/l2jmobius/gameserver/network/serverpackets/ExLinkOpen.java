@@ -15,7 +15,7 @@ public class ExLinkOpen extends ServerPacket
     @Override
     public void writeImpl(GameClient client, WritableBuffer buffer)
     {
-        ServerPackets.EX_LINK_OPEN.writeId(this, buffer);
+        ServerPackets.EX2_LINK_OPEN.writeId(this, buffer);
         buffer.writeString(_link);
     }
 }
