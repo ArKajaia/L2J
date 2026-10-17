@@ -40,3 +40,14 @@ CREATE TABLE IF NOT EXISTS `bestiary_boss_kills` (
   PRIMARY KEY (`id`),
   KEY `npc_time` (`npc_id`, `kill_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- What really came out of each monster's drops (spoil 0) and spoil (spoil 1)
+-- across the server. item_id 0 counts the rolls: kills, or spoiled kills.
+CREATE TABLE IF NOT EXISTS `bestiary_drop_stats` (
+  `npc_id` INT UNSIGNED NOT NULL,
+  `spoil` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `item_id` INT UNSIGNED NOT NULL,
+  `times` BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  `amount` BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`npc_id`, `spoil`, `item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;

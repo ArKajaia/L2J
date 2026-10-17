@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -62,6 +63,7 @@ import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
+import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
 import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
@@ -84,6 +86,7 @@ import org.l2jmobius.gameserver.util.LocationUtil;
  * <li><b>Rare forms</b> - each entry remembers which variants of the monster the account killed: Champion, Mage, Infused and Resonant (the ones enabled).</li>
  * <li><b>Records</b> - each entry keeps the account's fastest kill (from the first hit to the death) and who made it; raid and grand boss kills go into a server-wide log ({@code bestiary_boss_kills}).</li>
  * <li><b>Slayer</b> - the account deals more damage to the monsters of a race, and takes less from them, the more of that race it found and the higher their tiers (BestiarySlayerDamageBonus, BestiarySlayerDefenseBonus), counted like the region EXP bonus. Races with fewer than BestiarySlayerMinMonsters monsters in the collection give none.</li>
+ * <li><b>Observed drops</b> - every kill a player's drops are rolled for counts, with the items that came out of it, and every spoiled kill the same for the spoil: the page shows how often each item really drops next to its chance ({@code bestiary_drop_stats}, written with the kills).</li>
  * <li><b>Bounties</b> - every day (from BestiaryBountyResetHour) each account gets BestiaryBountyCount monsters to hunt near the level of the character that rolled them, preferring the ones it has the least of. While a bounty is open its kills count BestiaryBountyKillMultiplier times, and finishing it pays adena and BestiaryBountyRewardItems ({@code account_bestiary_bounty}).</li>
  * </ul>
  * @author Claude
@@ -110,6 +113,9 @@ public class BestiaryManager
 		}
 	};
 	private static final String CREATE_BOUNTY_TABLE = "CREATE TABLE IF NOT EXISTS `account_bestiary_bounty` (`account_name` VARCHAR(45) NOT NULL, `day` INT UNSIGNED NOT NULL DEFAULT 0, `npc_ids` VARCHAR(100) NOT NULL DEFAULT '', `progress` VARCHAR(100) NOT NULL DEFAULT '', PRIMARY KEY (`account_name`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
+	private static final String CREATE_DROP_TABLE = "CREATE TABLE IF NOT EXISTS `bestiary_drop_stats` (`npc_id` INT UNSIGNED NOT NULL, `spoil` TINYINT UNSIGNED NOT NULL DEFAULT 0, `item_id` INT UNSIGNED NOT NULL, `times` BIGINT UNSIGNED NOT NULL DEFAULT 0, `amount` BIGINT UNSIGNED NOT NULL DEFAULT 0, PRIMARY KEY (`npc_id`, `spoil`, `item_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
+	private static final String SELECT_DROP_STATS = "SELECT npc_id, spoil, item_id, times, amount FROM bestiary_drop_stats";
+	private static final String UPSERT_DROP_STATS = "INSERT INTO bestiary_drop_stats (npc_id, spoil, item_id, times, amount) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE times=VALUES(times), amount=VALUES(amount)";
 	private static final String CREATE_BOSS_TABLE = "CREATE TABLE IF NOT EXISTS `bestiary_boss_kills` (`id` INT UNSIGNED NOT NULL AUTO_INCREMENT, `npc_id` INT UNSIGNED NOT NULL, `kill_time` BIGINT UNSIGNED NOT NULL, `duration` INT UNSIGNED NOT NULL DEFAULT 0, `killer` VARCHAR(35) NOT NULL, `clan` VARCHAR(45) NOT NULL DEFAULT '', `party_size` TINYINT UNSIGNED NOT NULL DEFAULT 1, PRIMARY KEY (`id`), KEY `npc_time` (`npc_id`, `kill_time`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
 	/** The bestiary of each character, before it became the account's. */
 	private static final String FIND_CHARACTER_TABLE = "SHOW TABLES LIKE 'character_bestiary'";
@@ -185,6 +191,36 @@ public class BestiaryManager
 	 */
 	public record MonsterStats(long kills, int hunters, String firstFinder, long firstKill, int bestTime)
 	{
+	}
+
+	/**
+	 * How often an item really came out of a monster's drops or spoil.
+	 * @param itemId the item
+	 * @param times in how many of the rolls it came out
+	 * @param amount how many of it came out, all those rolls together
+	 */
+	public record ObservedItem(int itemId, long times, long amount)
+	{
+	}
+
+	/**
+	 * What a monster really dropped across the server.
+	 * @param dropRolls how many of its kills had their drops rolled
+	 * @param drops the items that dropped
+	 * @param spoilRolls how many of its kills were spoiled
+	 * @param spoils the items its spoil gave
+	 */
+	public record ObservedDrops(long dropRolls, List<ObservedItem> drops, long spoilRolls, List<ObservedItem> spoils)
+	{
+	}
+
+	/**
+	 * A count of the observed drops: how many times, and how many in all.
+	 */
+	private static final class DropCounter
+	{
+		final AtomicLong times = new AtomicLong();
+		final AtomicLong amount = new AtomicLong();
 	}
 
 	/**
@@ -376,6 +412,11 @@ public class BestiaryManager
 	private volatile Map<Race, int[]> _races;
 	/** The monsters bounties can ask for: plain monsters of the collection that respawn. */
 	private volatile List<NpcTemplate> _bountyPool;
+	/** Observed drops by monster, then by {@link #dropKey}; item 0 counts the rolls. All of the table, read at startup. */
+	private final Map<Integer, Map<Integer, DropCounter>> _drops = new ConcurrentHashMap<>();
+	/** The counts that changed since the last write, as npc id << 32 | drop key. */
+	private final Set<Long> _dropsChanged = ConcurrentHashMap.newKeySet();
+	private final Object _dropStoreLock = new Object();
 	/** The last kills of each raid and grand boss, read from the log when first asked for. */
 	private final Map<Integer, List<BossKill>> _bossKills = new ConcurrentHashMap<>();
 	private volatile Supplier<Map<String, ? extends Collection<Integer>>> _regionSource;
@@ -391,6 +432,11 @@ public class BestiaryManager
 			addColumns(statement);
 			statement.execute(CREATE_BOUNTY_TABLE);
 			statement.execute(CREATE_BOSS_TABLE);
+			statement.execute(CREATE_DROP_TABLE);
+			if (BestiaryConfig.ENABLED && BestiaryConfig.DROP_STATS_ENABLED)
+			{
+				loadDropStats(statement);
+			}
 			migrateCharacterTable(statement);
 		}
 		catch (Exception e)
@@ -550,6 +596,7 @@ public class BestiaryManager
 	 */
 	public void storeAll()
 	{
+		storeDropStats();
 		for (Map.Entry<String, Record> entry : _records.entrySet())
 		{
 			final Record record = entry.getValue();
@@ -1464,6 +1511,160 @@ public class BestiaryManager
 			list.add(new Bounty(bounties.npcIds[i], Math.min(BestiaryConfig.BOUNTY_KILLS, bounties.progress.get(i)), BestiaryConfig.BOUNTY_KILLS));
 		}
 		return new BountyBoard(Collections.unmodifiableList(list), resetAt);
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	// Observed drops
+	// ---------------------------------------------------------------------------------------------
+
+	/** @return the key of an item of a monster's drops or spoil (item 0: the rolls) */
+	private static int dropKey(boolean spoil, int itemId)
+	{
+		return (itemId << 1) | (spoil ? 1 : 0);
+	}
+
+	/**
+	 * Counts what came out of one roll of a monster's drops or spoil: the roll, and each item once, with its amount.
+	 * @param npcId the monster
+	 * @param spoil {@code true} for its spoil, {@code false} for its drops
+	 * @param items what came out, {@code null} or empty for nothing
+	 */
+	public void onDropsRolled(int npcId, boolean spoil, Collection<ItemHolder> items)
+	{
+		if (!BestiaryConfig.ENABLED || !BestiaryConfig.DROP_STATS_ENABLED)
+		{
+			return;
+		}
+
+		final Map<Integer, DropCounter> counters = _drops.computeIfAbsent(npcId, id -> new ConcurrentHashMap<>());
+		count(npcId, counters, dropKey(spoil, 0), 0);
+		if ((items == null) || items.isEmpty())
+		{
+			return;
+		}
+
+		// The same item twice in one roll (two groups) counts once, with both amounts.
+		final Map<Integer, Long> amounts = new HashMap<>();
+		for (ItemHolder item : items)
+		{
+			amounts.merge(item.getId(), item.getCount(), Long::sum);
+		}
+		for (Map.Entry<Integer, Long> item : amounts.entrySet())
+		{
+			count(npcId, counters, dropKey(spoil, item.getKey()), item.getValue());
+		}
+	}
+
+	private void count(int npcId, Map<Integer, DropCounter> counters, int key, long amount)
+	{
+		final DropCounter counter = counters.computeIfAbsent(key, k -> new DropCounter());
+		counter.times.incrementAndGet();
+		counter.amount.addAndGet(amount);
+		_dropsChanged.add(((long) npcId << 32) | (key & 0xFFFFFFFFL));
+	}
+
+	/**
+	 * @param npcId a monster
+	 * @return what it really dropped across the server, the items most often first
+	 */
+	public ObservedDrops getObservedDrops(int npcId)
+	{
+		final Map<Integer, DropCounter> counters = _drops.get(npcId);
+		if (counters == null)
+		{
+			return new ObservedDrops(0, Collections.emptyList(), 0, Collections.emptyList());
+		}
+
+		long dropRolls = 0;
+		long spoilRolls = 0;
+		final List<ObservedItem> drops = new ArrayList<>();
+		final List<ObservedItem> spoils = new ArrayList<>();
+		for (Map.Entry<Integer, DropCounter> entry : counters.entrySet())
+		{
+			final boolean spoil = (entry.getKey() & 1) != 0;
+			final int itemId = entry.getKey() >>> 1;
+			final long times = entry.getValue().times.get();
+			if (itemId == 0)
+			{
+				if (spoil)
+				{
+					spoilRolls = times;
+				}
+				else
+				{
+					dropRolls = times;
+				}
+				continue;
+			}
+			(spoil ? spoils : drops).add(new ObservedItem(itemId, times, entry.getValue().amount.get()));
+		}
+		drops.sort((a, b) -> Long.compare(b.times(), a.times()));
+		spoils.sort((a, b) -> Long.compare(b.times(), a.times()));
+		return new ObservedDrops(dropRolls, drops, spoilRolls, spoils);
+	}
+
+	private void loadDropStats(Statement statement) throws Exception
+	{
+		int rows = 0;
+		try (ResultSet rs = statement.executeQuery(SELECT_DROP_STATS))
+		{
+			while (rs.next())
+			{
+				final DropCounter counter = new DropCounter();
+				counter.times.set(rs.getLong("times"));
+				counter.amount.set(rs.getLong("amount"));
+				_drops.computeIfAbsent(rs.getInt("npc_id"), id -> new ConcurrentHashMap<>()).put(dropKey(rs.getInt("spoil") != 0, rs.getInt("item_id")), counter);
+				rows++;
+			}
+		}
+		LOGGER.info(getClass().getSimpleName() + ": " + rows + " observed drop counts of " + _drops.size() + " monsters.");
+	}
+
+	/**
+	 * Writes the observed drop counts that changed. They are kept whole in memory, so each write sets the totals.
+	 */
+	private void storeDropStats()
+	{
+		synchronized (_dropStoreLock)
+		{
+			if (_dropsChanged.isEmpty())
+			{
+				return;
+			}
+
+			final List<Long> keys = new ArrayList<>(_dropsChanged);
+			try (Connection con = DatabaseFactory.getConnection();
+				PreparedStatement ps = con.prepareStatement(UPSERT_DROP_STATS))
+			{
+				for (long key : keys)
+				{
+					// Taken off before the count is read: a drop that comes in meanwhile marks it again, and the next write takes it.
+					_dropsChanged.remove(key);
+					final int npcId = (int) (key >>> 32);
+					final int dropKey = (int) key;
+					final Map<Integer, DropCounter> counters = _drops.get(npcId);
+					final DropCounter counter = counters != null ? counters.get(dropKey) : null;
+					if (counter == null)
+					{
+						continue;
+					}
+
+					ps.setInt(1, npcId);
+					ps.setInt(2, dropKey & 1);
+					ps.setInt(3, dropKey >>> 1);
+					ps.setLong(4, counter.times.get());
+					ps.setLong(5, counter.amount.get());
+					ps.addBatch();
+				}
+				ps.executeBatch();
+			}
+			catch (Exception e)
+			{
+				// Kept as changed, so the next write tries again.
+				_dropsChanged.addAll(keys);
+				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not store the observed drops.", e);
+			}
+		}
 	}
 
 	// ---------------------------------------------------------------------------------------------

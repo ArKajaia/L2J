@@ -1407,10 +1407,13 @@ public class Attackable extends Npc
 		
 		if (isSpoiled())
 		{
-			_sweepItems.set(npcTemplate.calculateDrops(DropType.SPOIL, this, player));
+			final Collection<ItemHolder> spoilItems = npcTemplate.calculateDrops(DropType.SPOIL, this, player);
+			_sweepItems.set(spoilItems);
+			BestiaryManager.getInstance().onDropsRolled(npcTemplate.getId(), true, spoilItems);
 		}
 		
 		final Collection<ItemHolder> deathItems = npcTemplate.calculateDrops(DropType.DROP, this, player);
+		BestiaryManager.getInstance().onDropsRolled(npcTemplate.getId(), false, deathItems);
 		if (deathItems != null)
 		{
 			for (ItemHolder drop : deathItems)

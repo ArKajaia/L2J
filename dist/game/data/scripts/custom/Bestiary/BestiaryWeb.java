@@ -3,6 +3,7 @@ package custom.Bestiary;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -563,6 +564,9 @@ public class BestiaryWeb
 	private void appendMastered(StringBuilder json, NpcTemplate template, int dropBonus)
 	{
 		final boolean boss = BestiaryManager.isBoss(template);
+		final BestiaryManager.ObservedDrops observed = BestiaryConfig.DROP_STATS_ENABLED ? BestiaryManager.getInstance().getObservedDrops(template.getId()) : null;
+		final Map<Integer, BestiaryManager.ObservedItem> observedDrops = byItem(observed != null ? observed.drops() : null);
+		final Map<Integer, BestiaryManager.ObservedItem> observedSpoils = byItem(observed != null ? observed.spoils() : null);
 		json.append(",\"drops\":[");
 		boolean first = true;
 		if (template.getDropGroups() != null)
@@ -573,7 +577,7 @@ public class BestiaryWeb
 				group++;
 				for (DropHolder drop : dropGroup.getDropList())
 				{
-					first = appendDrop(json, first, drop, drop.getChance() * (dropGroup.getChance() / 100), boss, group, dropBonus);
+					first = appendDrop(json, first, drop, drop.getChance() * (dropGroup.getChance() / 100), boss, group, dropBonus, observedDrops);
 				}
 			}
 		}
@@ -581,9 +585,10 @@ public class BestiaryWeb
 		{
 			for (DropHolder drop : template.getDropList())
 			{
-				first = appendDrop(json, first, drop, drop.getChance(), boss, 0, dropBonus);
+				first = appendDrop(json, first, drop, drop.getChance(), boss, 0, dropBonus, observedDrops);
 			}
 		}
+		appendObservedOnly(json, first, observedDrops);
 		json.append(']');
 
 		json.append(",\"spoils\":[");
@@ -592,13 +597,57 @@ public class BestiaryWeb
 		{
 			for (DropHolder drop : template.getSpoilList())
 			{
-				first = appendDrop(json, first, drop, drop.getChance(), boss, 0, 0);
+				first = appendDrop(json, first, drop, drop.getChance(), boss, 0, 0, observedSpoils);
 			}
 		}
+		appendObservedOnly(json, first, observedSpoils);
 		json.append(']');
+
+		if (observed != null)
+		{
+			json.append(",\"observed\":{\"drops\":").append(observed.dropRolls()).append(",\"spoils\":").append(observed.spoilRolls()).append(",\"min\":").append(BestiaryConfig.DROP_STATS_MIN_KILLS).append('}');
+		}
 	}
 
-	private boolean appendDrop(StringBuilder json, boolean first, DropHolder drop, double baseChance, boolean boss, int group, int dropBonus)
+	/** @return the observed items by id; each one is taken out as its row is written, so what is left never was in the drop list */
+	private static Map<Integer, BestiaryManager.ObservedItem> byItem(List<BestiaryManager.ObservedItem> items)
+	{
+		final Map<Integer, BestiaryManager.ObservedItem> byItem = new LinkedHashMap<>();
+		if (items != null)
+		{
+			for (BestiaryManager.ObservedItem item : items)
+			{
+				byItem.put(item.itemId(), item);
+			}
+		}
+		return byItem;
+	}
+
+	/** Items that came out of the drops or spoil although the lists don't have them (events, other systems' extras): no chance, only how often. */
+	private static void appendObservedOnly(StringBuilder json, boolean first, Map<Integer, BestiaryManager.ObservedItem> observed)
+	{
+		for (BestiaryManager.ObservedItem seen : observed.values())
+		{
+			final ItemTemplate item = ItemData.getInstance().getTemplate(seen.itemId());
+			if (item == null)
+			{
+				continue;
+			}
+			json.append(first ? "" : ",").append("{\"i\":").append(item.getId());
+			appendItem(json, item);
+			json.append(",\"x\":1,\"on\":").append(seen.times()).append(",\"oa\":").append(seen.amount()).append('}');
+			first = false;
+		}
+	}
+
+	private static void appendItem(StringBuilder json, ItemTemplate item)
+	{
+		json.append(",\"n\":").append(SimpleJson.quote(item.getName()));
+		json.append(",\"g\":").append(SimpleJson.quote(item.getCrystalType() != null ? item.getCrystalType().name() : "NONE"));
+		json.append(",\"k\":").append(SimpleJson.quote(itemKind(item)));
+	}
+
+	private boolean appendDrop(StringBuilder json, boolean first, DropHolder drop, double baseChance, boolean boss, int group, int dropBonus, Map<Integer, BestiaryManager.ObservedItem> observed)
 	{
 		final ItemTemplate item = ItemData.getInstance().getTemplate(drop.getItemId());
 		if (item == null)
@@ -608,9 +657,13 @@ public class BestiaryWeb
 
 		final double[] rates = rates(drop, item, boss);
 		json.append(first ? "" : ",").append("{\"i\":").append(item.getId());
-		json.append(",\"n\":").append(SimpleJson.quote(item.getName()));
-		json.append(",\"g\":").append(SimpleJson.quote(item.getCrystalType() != null ? item.getCrystalType().name() : "NONE"));
-		json.append(",\"k\":").append(SimpleJson.quote(itemKind(item)));
+		appendItem(json, item);
+		// An item in two groups: its count is the item's, so it goes on its first row.
+		final BestiaryManager.ObservedItem seen = observed.remove(item.getId());
+		if (seen != null)
+		{
+			json.append(",\"on\":").append(seen.times()).append(",\"oa\":").append(seen.amount());
+		}
 		json.append(",\"mn\":").append(Math.max(1, Math.round(drop.getMin() * rates[1])));
 		json.append(",\"mx\":").append(Math.max(1, Math.round(drop.getMax() * rates[1])));
 		// The bestiary's bonus is for the items, as NpcTemplate rolls it: not adena or herbs, nor spoils (the caller gives them none).
