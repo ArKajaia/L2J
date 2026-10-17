@@ -26,8 +26,32 @@ public class BestiaryTracker
 	 * @param tracking {@code true} if the radar now points at the monster
 	 * @param message what to tell the player
 	 */
-	public record Result(boolean tracking, String message)
+	public static class Result
 	{
+		private final boolean _tracking;
+		private final String _message;
+
+		public Result(boolean tracking, String message)
+		{
+			_tracking = tracking;
+			_message = message;
+		}
+
+		/**
+		 * @return {@code true} if the radar now points at the monster
+		 */
+		public boolean tracking()
+		{
+			return _tracking;
+		}
+
+		/**
+		 * @return what to tell the player
+		 */
+		public String message()
+		{
+			return _message;
+		}
 	}
 
 	private BestiaryTracker()
