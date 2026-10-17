@@ -53,8 +53,54 @@ public class BestiaryFarming
 	 * @param max the most
 	 * @param bonus {@code true} if the bestiary's drop bonus raises the chance (items of the drops, not spoils)
 	 */
-	private record Source(int npcId, boolean spoil, double chance, long min, long max, boolean bonus)
+	private static class Source
 	{
+		private final int npcId;
+		private final boolean spoil;
+		private final double chance;
+		private final long min;
+		private final long max;
+		private final boolean bonus;
+
+		public Source(int npcId, boolean spoil, double chance, long min, long max, boolean bonus)
+		{
+			this.npcId = npcId;
+			this.spoil = spoil;
+			this.chance = chance;
+			this.min = min;
+			this.max = max;
+			this.bonus = bonus;
+		}
+
+		public int npcId()
+		{
+			return npcId;
+		}
+
+		public boolean spoil()
+		{
+			return spoil;
+		}
+
+		public double chance()
+		{
+			return chance;
+		}
+
+		public long min()
+		{
+			return min;
+		}
+
+		public long max()
+		{
+			return max;
+		}
+
+		public boolean bonus()
+		{
+			return bonus;
+		}
 	}
 
 	/**
@@ -64,8 +110,40 @@ public class BestiaryFarming
 	 * @param max the most
 	 * @param boosted {@code true} if the account's drop bonus raised it
 	 */
-	public record Yield(double chance, long min, long max, boolean boosted)
+	public static class Yield
 	{
+		private final double chance;
+		private final long min;
+		private final long max;
+		private final boolean boosted;
+
+		public Yield(double chance, long min, long max, boolean boosted)
+		{
+			this.chance = chance;
+			this.min = min;
+			this.max = max;
+			this.boosted = boosted;
+		}
+
+		public double chance()
+		{
+			return chance;
+		}
+
+		public long min()
+		{
+			return min;
+		}
+
+		public long max()
+		{
+			return max;
+		}
+
+		public boolean boosted()
+		{
+			return boosted;
+		}
 	}
 
 	/**
@@ -78,8 +156,61 @@ public class BestiaryFarming
 	 * @param kills the kills to get what is missing
 	 * @param counted {@code false} for a spoil spot of a character who can't spoil
 	 */
-	public record Spot(NpcTemplate template, BestiaryCatalog.Kind kind, Yield drop, Yield spoil, double perKill, long kills, boolean counted)
+	public static class Spot
 	{
+		private final NpcTemplate template;
+		private final BestiaryCatalog.Kind kind;
+		private final Yield drop;
+		private final Yield spoil;
+		private final double perKill;
+		private final long kills;
+		private final boolean counted;
+
+		public Spot(NpcTemplate template, BestiaryCatalog.Kind kind, Yield drop, Yield spoil, double perKill, long kills, boolean counted)
+		{
+			this.template = template;
+			this.kind = kind;
+			this.drop = drop;
+			this.spoil = spoil;
+			this.perKill = perKill;
+			this.kills = kills;
+			this.counted = counted;
+		}
+
+		public NpcTemplate template()
+		{
+			return template;
+		}
+
+		public BestiaryCatalog.Kind kind()
+		{
+			return kind;
+		}
+
+		public Yield drop()
+		{
+			return drop;
+		}
+
+		public Yield spoil()
+		{
+			return spoil;
+		}
+
+		public double perKill()
+		{
+			return perKill;
+		}
+
+		public long kills()
+		{
+			return kills;
+		}
+
+		public boolean counted()
+		{
+			return counted;
+		}
 	}
 
 	/**
@@ -89,8 +220,40 @@ public class BestiaryFarming
 	 * @param level the lowest level of them
 	 * @param higher {@code true} if they are all above the level range
 	 */
-	public record Hint(String region, int monsters, int level, boolean higher)
+	public static class Hint
 	{
+		private final String region;
+		private final int monsters;
+		private final int level;
+		private final boolean higher;
+
+		public Hint(String region, int monsters, int level, boolean higher)
+		{
+			this.region = region;
+			this.monsters = monsters;
+			this.level = level;
+			this.higher = higher;
+		}
+
+		public String region()
+		{
+			return region;
+		}
+
+		public int monsters()
+		{
+			return monsters;
+		}
+
+		public int level()
+		{
+			return level;
+		}
+
+		public boolean higher()
+		{
+			return higher;
+		}
 	}
 
 	/**
@@ -101,8 +264,47 @@ public class BestiaryFarming
 	 * @param unfound how many monsters the account has not found yet give it (in the level range)
 	 * @param hints where to look for it when no spot gives it, at most {@link #HINTS}
 	 */
-	public record Resource(CraftingGoalLine line, long missing, List<Spot> spots, int unfound, List<Hint> hints)
+	public static class Resource
 	{
+		private final CraftingGoalLine line;
+		private final long missing;
+		private final List<Spot> spots;
+		private final int unfound;
+		private final List<Hint> hints;
+
+		public Resource(CraftingGoalLine line, long missing, List<Spot> spots, int unfound, List<Hint> hints)
+		{
+			this.line = line;
+			this.missing = missing;
+			this.spots = spots;
+			this.unfound = unfound;
+			this.hints = hints;
+		}
+
+		public CraftingGoalLine line()
+		{
+			return line;
+		}
+
+		public long missing()
+		{
+			return missing;
+		}
+
+		public List<Spot> spots()
+		{
+			return spots;
+		}
+
+		public int unfound()
+		{
+			return unfound;
+		}
+
+		public List<Hint> hints()
+		{
+			return hints;
+		}
 		/** @return {@code true} if a monster can be farmed for it by the character */
 		public boolean isFarmable()
 		{
@@ -116,8 +318,33 @@ public class BestiaryFarming
 	 * @param score each resource it gives, counted for its best spot here against the best one anywhere
 	 * @param best its best spot of each resource it gives, by the resource's index in the plan
 	 */
-	public record Ground(BestiaryCatalog.Area area, double score, Map<Integer, Spot> best)
+	public static class Ground
 	{
+		private final BestiaryCatalog.Area area;
+		private final double score;
+		private final Map<Integer, Spot> best;
+
+		public Ground(BestiaryCatalog.Area area, double score, Map<Integer, Spot> best)
+		{
+			this.area = area;
+			this.score = score;
+			this.best = best;
+		}
+
+		public BestiaryCatalog.Area area()
+		{
+			return area;
+		}
+
+		public double score()
+		{
+			return score;
+		}
+
+		public Map<Integer, Spot> best()
+		{
+			return best;
+		}
 	}
 
 	/**
@@ -130,13 +357,112 @@ public class BestiaryFarming
 	 * @param spoils {@code true} if spoils were counted
 	 * @param farmable how many of the resources a found monster gives
 	 */
-	public record GoalPlan(CraftingGoal goal, List<CraftingGoalLine> lines, List<Resource> resources, List<Ground> grounds, int level, boolean spoils, int farmable)
+	public static class GoalPlan
 	{
+		private final CraftingGoal goal;
+		private final List<CraftingGoalLine> lines;
+		private final List<Resource> resources;
+		private final List<Ground> grounds;
+		private final int level;
+		private final boolean spoils;
+		private final int farmable;
+
+		public GoalPlan(CraftingGoal goal, List<CraftingGoalLine> lines, List<Resource> resources, List<Ground> grounds, int level, boolean spoils, int farmable)
+		{
+			this.goal = goal;
+			this.lines = lines;
+			this.resources = resources;
+			this.grounds = grounds;
+			this.level = level;
+			this.spoils = spoils;
+			this.farmable = farmable;
+		}
+
+		public CraftingGoal goal()
+		{
+			return goal;
+		}
+
+		public List<CraftingGoalLine> lines()
+		{
+			return lines;
+		}
+
+		public List<Resource> resources()
+		{
+			return resources;
+		}
+
+		public List<Ground> grounds()
+		{
+			return grounds;
+		}
+
+		public int level()
+		{
+			return level;
+		}
+
+		public boolean spoils()
+		{
+			return spoils;
+		}
+
+		public int farmable()
+		{
+			return farmable;
+		}
 	}
 
 	/** A monster that gives a resource, before the spots are picked. */
-	private record Candidate(NpcTemplate template, BestiaryCatalog.Kind kind, Yield drop, Yield spoil, double dropPerKill, double spoilPerKill)
+	private static class Candidate
 	{
+		private final NpcTemplate template;
+		private final BestiaryCatalog.Kind kind;
+		private final Yield drop;
+		private final Yield spoil;
+		private final double dropPerKill;
+		private final double spoilPerKill;
+
+		public Candidate(NpcTemplate template, BestiaryCatalog.Kind kind, Yield drop, Yield spoil, double dropPerKill, double spoilPerKill)
+		{
+			this.template = template;
+			this.kind = kind;
+			this.drop = drop;
+			this.spoil = spoil;
+			this.dropPerKill = dropPerKill;
+			this.spoilPerKill = spoilPerKill;
+		}
+
+		public NpcTemplate template()
+		{
+			return template;
+		}
+
+		public BestiaryCatalog.Kind kind()
+		{
+			return kind;
+		}
+
+		public Yield drop()
+		{
+			return drop;
+		}
+
+		public Yield spoil()
+		{
+			return spoil;
+		}
+
+		public double dropPerKill()
+		{
+			return dropPerKill;
+		}
+
+		public double spoilPerKill()
+		{
+			return spoilPerKill;
+		}
 		/** @return how many of it one kill gives the character, with the spoils when they count or when nothing else gives it */
 		double perKill(boolean spoils)
 		{
@@ -146,8 +472,33 @@ public class BestiaryFarming
 	}
 
 	/** The spots of a resource, and where to look for it without them. */
-	private record Search(List<Spot> spots, int unfound, List<Hint> hints)
+	private static class Search
 	{
+		private final List<Spot> spots;
+		private final int unfound;
+		private final List<Hint> hints;
+
+		public Search(List<Spot> spots, int unfound, List<Hint> hints)
+		{
+			this.spots = spots;
+			this.unfound = unfound;
+			this.hints = hints;
+		}
+
+		public List<Spot> spots()
+		{
+			return spots;
+		}
+
+		public int unfound()
+		{
+			return unfound;
+		}
+
+		public List<Hint> hints()
+		{
+			return hints;
+		}
 	}
 
 	/** The sources of each item, by item id. */
