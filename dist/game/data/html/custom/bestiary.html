@@ -268,6 +268,7 @@
 	.drops td.c, .drops th.c { text-align: right; white-space: nowrap; }
 	.drops .grp { font-size: 10px; color: #55524a; margin-left: 4px; }
 	.drops td.few { color: var(--dim); }
+	.drops small.exp { display: block; font-size: 10px; color: #55524a; }
 	.drops tr.extra td:first-child { font-style: italic; }
 	.grade { display: inline-block; min-width: 26px; text-align: center; font-size: 10px; padding: 1px 4px; border-radius: 3px; border: 1px solid #333; color: var(--dim); margin-right: 6px; }
 	.grade.D { color: #b7d6b0; border-color: #3b5236; } .grade.C { color: #9fd2ff; border-color: #2b4a66; } .grade.B { color: #f7d27a; border-color: #66532b; }
@@ -650,6 +651,13 @@ function fmtChance(c) {
 	if (c >= 1) return c.toFixed(2) + "%";
 	if (c >= 0.01) return c.toFixed(3) + "%";
 	return c.toFixed(4) + "%";
+}
+/** An average amount per kill: "1,240", "1.95", "0.0123". */
+function fmtPerKill(x) {
+	if (!x) return "0";
+	if (x >= 100) return fmt(Math.round(x));
+	if (x >= 1) return x.toFixed(2).replace(/\.?0+$/, "");
+	return x.toPrecision(3).replace(/0+$/, "");
 }
 function fmtDelay(ms) {
 	const s = Math.round(ms / 1000);
@@ -1260,7 +1268,7 @@ function renderProfile() {
 	if (m.tier >= 3) {
 		const seen = m.observed;
 		html += dropTable(m.drops, "Drops", seen ? seen.drops : -1, seen ? seen.min : 0, "kill") + dropTable(m.spoils, "Spoil", seen ? seen.spoils : -1, seen ? seen.min : 0, "spoiled kill");
-		if (seen) html += `<div class="size-note">Actual: how often each item really came out across the server, with everyone's bonuses (premium, champions, the bestiary's own) and level penalties. Lucky Loot jackpots aren't counted.</div>`;
+		if (seen) html += `<div class="size-note">Actual: in how many kills each item really came out across the server. Per kill: how many of it one kill gives on average, with what the chance and amounts expect below (green or red when it is a quarter off). Both count everyone's bonuses (premium, champions, the bestiary's own) and level penalties, not Lucky Loot jackpots.</div>`;
 		if (!m.drops.length && !m.spoils.length) html += `<div class="server-line">It drops nothing.</div>`;
 	} else html += lockedBox(m, 3, "its drops and spoils");
 	html += `</div></div></div>`;
@@ -1394,11 +1402,23 @@ function dropTable(list, title, rolls, min, what) {
 	// An item listed twice (in two groups) has its count on one row only.
 	const countedItems = new Set(list.filter(d => d.on).map(d => d.i));
 	let html = `<div class="sub-h">${title}${counted ? ` <span style="color:var(--dim);letter-spacing:0;text-transform:none">&middot; actual from ${fmt(rolls)} ${what}${rolls === 1 ? "" : "s"}${few ? ", too few to trust yet" : ""}</span>` : ""}</div>`;
-	html += `<table class="drops"><tr><th>Item</th><th class="c">Amount</th><th class="c">Chance</th>${counted ? `<th class="c">Actual</th>` : ""}</tr>`;
+	html += `<table class="drops"><tr><th>Item</th><th class="c">Amount</th><th class="c">Chance</th>${counted ? `<th class="c">Actual</th>` : ""}<th class="c" title="How many of the item one kill gives on average">Per kill</th></tr>`;
 	for (const d of sorted) {
 		const grade = d.g && d.g !== "NONE" ? `<span class="grade ${d.g}">${d.g}</span>` : `<span class="grade">&ndash;</span>`;
 		const amount = d.x ? (d.on ? fmt(Math.round(d.oa / d.on)) : "-") : d.mn === d.mx ? fmt(d.mn) : fmt(d.mn) + "-" + fmt(d.mx);
 		const chance = d.x ? `<span title="Not in its drop list: it came from an event or another system">&ndash;</span>` : fmtChance(d.c) + (d.b ? `<span class="up" title="With your bestiary's drop bonus">&#9650;</span>` : "");
+		// Per kill: what one kill gives on average, really (all the amounts over all the kills) and as the chance and amounts expect.
+		const expected = d.x ? null : Math.min(100, d.c) / 100 * (d.mn + d.mx) / 2;
+		const shared = !d.on && countedItems.has(d.i);
+		let perKill;
+		if (counted && rolls && !shared && (d.on || !d.x)) {
+			const real = (d.oa || 0) / rolls;
+			const ratio = expected ? real / expected : 0;
+			const off = !few && expected && (ratio > 1.25 || ratio < 0.8);
+			perKill = `<td class="c${few ? " few" : ""}" title="${fmt(d.oa || 0)} over ${fmt(rolls)} ${what}s${expected !== null ? ", expected " + fmtPerKill(expected) : ""}"><span${off ? ` style="color:${ratio > 1 ? "#8fe39a" : "#ff9b90"}"` : ""}>${fmtPerKill(real)}</span>${expected !== null ? `<small class="exp">exp. ${fmtPerKill(expected)}</small>` : ""}</td>`;
+		} else {
+			perKill = `<td class="c" title="As the chance and amounts expect">${shared ? "&uarr;" : expected !== null ? `<span style="color:var(--dim)">${fmtPerKill(expected)}</span>` : "-"}</td>`;
+		}
 		let actual = "";
 		if (counted) {
 			if (!d.on && countedItems.has(d.i)) actual = `<td class="c" style="color:var(--dim)">&uarr;</td>`;
@@ -1409,7 +1429,7 @@ function dropTable(list, title, rolls, min, what) {
 				actual = `<td class="c${few ? " few" : ""}" title="${tip}">${on ? fmtChance(on / rolls * 100) : "0%"}</td>`;
 			}
 		}
-		html += `<tr class="k-${d.k}${d.x ? " extra" : ""}"><td>${grade}${esc(d.n)}${d.gr ? `<span class="grp" title="Only one item of a group drops at a time">group ${d.gr}</span>` : ""}</td><td class="c">${amount}</td><td class="c">${chance}</td>${actual}</tr>`;
+		html += `<tr class="k-${d.k}${d.x ? " extra" : ""}"><td>${grade}${esc(d.n)}${d.gr ? `<span class="grp" title="Only one item of a group drops at a time">group ${d.gr}</span>` : ""}</td><td class="c">${amount}</td><td class="c">${chance}</td>${actual}${perKill}</tr>`;
 	}
 	return html + `</table>`;
 }
