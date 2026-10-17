@@ -66,7 +66,8 @@ public class BestiaryCatalog
 	/** A hunting ground wider than this (world units) is scattered over the world, and doesn't count as the nearest one of anything. */
 	private static final int SCATTERED_SPAN = 120000;
 
-	private static final String OTHER_REGION = "Other Lands";
+	/** The region of the hunting grounds outside the spawn folders: their own names ("Near Giran") say more. */
+	public static final String OTHER_REGION = "Other Lands";
 	private static final String HIDDEN_LAIRS = "Hidden Lairs";
 	/** Town names of data/mapregion that read better in the game's own words. */
 	private static final Map<String, String> TOWN_NAMES = new HashMap<>();

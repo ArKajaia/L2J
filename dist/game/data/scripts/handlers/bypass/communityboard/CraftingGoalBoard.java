@@ -498,9 +498,9 @@ public class CraftingGoalBoard implements IParseBoardHandler
 			final StringJoiner hints = new StringJoiner(" ");
 			if (resource.spots().isEmpty())
 			{
-				hints.add(resource.line().isCraftable() ? "None of the monsters you found gives it: craft it from its materials." : "None of the monsters you found gives it yet.");
+				hints.add(searchHint(resource));
 			}
-			if (resource.unfound() > 0)
+			else if (resource.unfound() > 0)
 			{
 				hints.add(resource.unfound() == 1 ? "1 monster you haven't found yet gives it too." : resource.unfound() + " monsters you haven't found yet give it too.");
 			}
@@ -527,6 +527,52 @@ public class CraftingGoalBoard implements IParseBoardHandler
 		sb.append("<td align=center>").append(button("Goals", bypass, buttonWidth)).append("</td>");
 		sb.append("</tr></table>");
 		sb.append("<table width=").append(width).append("><tr><td align=center><font color=\"").append(COLOR_MUTED).append("\">Only monsters your account found, up to ").append(BestiaryConfig.FARMING_LEVELS_ABOVE).append(" levels above you. A kill counts your bestiary's drop bonus, and less from monsters far below you.</font></td></tr></table>");
+		return sb.toString();
+	}
+
+	/**
+	 * @return what to do about a resource no monster the account found gives: "Search Dion (2 monsters you haven't found, from Lv. 38) or Giran (1, from Lv. 40).", the regions of the ones above the level range, or crafting it
+	 */
+	private static String searchHint(BestiaryFarming.Resource resource)
+	{
+		final List<BestiaryFarming.Hint> hints = resource.hints();
+		final StringBuilder sb = new StringBuilder("None of the monsters you found gives it.");
+		if (!hints.isEmpty() && !hints.get(0).higher())
+		{
+			sb.append(" Search ");
+			for (int i = 0; i < hints.size(); i++)
+			{
+				final BestiaryFarming.Hint hint = hints.get(i);
+				sb.append(i > 0 ? " or " : "").append("<font color=\"").append(COLOR_VALUE).append("\">").append(hint.region()).append("</font> (").append(hint.monsters());
+				if (i == 0)
+				{
+					sb.append(hint.monsters() == 1 ? " monster" : " monsters").append(" you haven't found");
+				}
+				sb.append(", from Lv. ").append(hint.level()).append(')');
+			}
+			sb.append('.');
+		}
+		else if (!hints.isEmpty())
+		{
+			sb.append(" Monsters above your level do: ");
+			for (int i = 0; i < hints.size(); i++)
+			{
+				sb.append(i > 0 ? ", " : "").append("<font color=\"").append(COLOR_VALUE).append("\">").append(hints.get(i).region()).append("</font> from Lv. ").append(hints.get(i).level());
+			}
+			sb.append('.');
+		}
+		else if (resource.unfound() > 0)
+		{
+			sb.append(' ').append(resource.unfound()).append(resource.unfound() == 1 ? " monster you haven't found yet gives it." : " monsters you haven't found yet give it.");
+		}
+		else if (BestiaryConfig.SHOW_UNDISCOVERED_AREAS && !resource.line().isCraftable())
+		{
+			return "No monster you can farm gives it: look for it in shops, quests or on raid bosses.";
+		}
+		if (resource.line().isCraftable())
+		{
+			sb.append(!hints.isEmpty() || (resource.unfound() > 0) ? " Or craft it from its materials." : " Craft it from its materials.");
+		}
 		return sb.toString();
 	}
 

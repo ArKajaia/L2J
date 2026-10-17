@@ -148,6 +148,7 @@
 	.res .pb { height: 4px; background: #1d1d24; border-radius: 2px; overflow: hidden; margin: 5px 0 8px; }
 	.res .pb i { display: block; height: 100%; background: var(--line); }
 	.res .hint { font-size: 12px; color: var(--dim); margin: 4px 0; }
+	.res .hint b { color: var(--gold); font-weight: normal; }
 	.spots { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 8px; }
 	.spot { display: flex; align-items: center; gap: 10px; background: var(--panel2); border: 1px solid #2c2618; border-radius: 6px; padding: 7px 10px 7px 7px; cursor: pointer; min-width: 0; }
 	.spot:hover { border-color: var(--gold); }
@@ -1177,11 +1178,28 @@ function resourceRow(r) {
 	let html = `<div class="res"><div class="res-head">${grade}${esc(r.n || "Item " + r.i)}${r.mat ? ` <small>material</small>` : ""}<span class="have">${fmt(r.have)} / ${fmt(r.need)}</span></div><div class="pb"><i style="width:${(r.need ? Math.min(1, r.have / r.need) * 100 : 0).toFixed(1)}%"></i></div>`;
 	if (r.spots.length) html += `<div class="spots">${r.spots.map(spotCard).join("")}</div>`;
 	const hints = [];
-	if (!r.spots.length) hints.push(r.cr ? "None of the monsters you found gives it: craft it from its materials." : "None of the monsters you found gives it yet.");
+	if (!r.spots.length) hints.push(searchHint(r));
 	else if (!r.spots[0].c) hints.push("Only a spoil gives it: bring a spoiler along, or count spoils.");
-	if (r.u) hints.push(`${fmt(r.u)} monster${r.u === 1 ? "" : "s"} you haven't found yet ${r.u === 1 ? "gives" : "give"} it too.`);
+	if (r.u && r.spots.length) hints.push(`${fmt(r.u)} monster${r.u === 1 ? "" : "s"} you haven't found yet ${r.u === 1 ? "gives" : "give"} it too.`);
 	if (hints.length) html += `<div class="hint">${hints.join(" ")}</div>`;
 	return html + `</div>`;
+}
+
+/** What to do about a resource no monster you found gives: the regions where the ones you haven't found live, or crafting it. */
+function searchHint(r) {
+	const rg = r.rg || [];
+	let text = "None of the monsters you found gives it.";
+	if (rg.length && !rg[0].h) {
+		text += " Search " + rg.map((x, i) => `<b>${esc(x.n)}</b> (${fmt(x.m)}${i === 0 ? ` monster${x.m === 1 ? "" : "s"} you haven't found` : ""}, from Lv. ${x.lv})`).join(" or ") + ".";
+	} else if (rg.length) {
+		text += " Monsters above your level do: " + rg.map(x => `<b>${esc(x.n)}</b> from Lv. ${x.lv}`).join(", ") + ".";
+	} else if (r.u) {
+		text += ` ${fmt(r.u)} monster${r.u === 1 ? "" : "s"} you haven't found yet ${r.u === 1 ? "gives" : "give"} it.`;
+	} else if (state.data.showAreas && !r.cr) {
+		text = "No monster you can farm gives it: look for it in shops, quests or on raid bosses.";
+	}
+	if (r.cr) text += rg.length || r.u ? " Or craft it from its materials." : " Craft it from its materials.";
+	return text;
 }
 
 /** A monster to farm a resource on: where it lives, how the item comes out of it, and how many kills it takes. */

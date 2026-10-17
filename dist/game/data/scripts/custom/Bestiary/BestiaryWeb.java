@@ -920,6 +920,13 @@ public class BestiaryWeb
 			json.append(",\"have\":").append(line.getHave()).append(",\"need\":").append(line.getNeeded());
 			json.append(",\"mat\":").append(line.isMaterial()).append(",\"cr\":").append(line.isCraftable());
 			json.append(",\"u\":").append(resource.unfound());
+			json.append(",\"rg\":[");
+			for (int j = 0; j < resource.hints().size(); j++)
+			{
+				final BestiaryFarming.Hint hint = resource.hints().get(j);
+				json.append(j > 0 ? "," : "").append("{\"n\":").append(SimpleJson.quote(hint.region())).append(",\"m\":").append(hint.monsters()).append(",\"lv\":").append(hint.level()).append(",\"h\":").append(hint.higher()).append('}');
+			}
+			json.append(']');
 			json.append(",\"spots\":[");
 			for (int j = 0; j < resource.spots().size(); j++)
 			{

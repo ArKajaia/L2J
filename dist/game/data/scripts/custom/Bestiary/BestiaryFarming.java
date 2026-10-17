@@ -29,6 +29,7 @@ import org.l2jmobius.gameserver.util.MathUtil;
  * <ul>
  * <li><b>Sources</b> - every item the monsters of the collection drop or spoil, with its chance and amounts at the server's rates, as their profile pages show them. Raid and grand bosses, and monsters that don't respawn, are no farming ground and are left out.</li>
  * <li><b>Spots</b> - for each resource of the goal still missing, the monsters the account found (Discovered or above) up to BestiaryFarmingLevelsAbove levels above the character, best first by how many of it one kill gives: the chance with the account's drop bonus on that monster (not on spoils), times the lower chance of monsters far below the character (the drop formula's level gap), times the average amount. Spoils count for a character who knows Spoil; for the others a resource that only comes from spoil still lists its spoil spots, marked as needing a spoiler. Monsters not found yet are only counted.</li>
+ * <li><b>Where to look</b> - a resource no monster the account found gives names the regions (never the monsters) where the ones not found yet live, when the page shows where they live (BestiaryShowUndiscoveredAreas): the best ones in the level range first, or else the nearest above it.</li>
  * <li><b>Hunting grounds</b> - each ground counts, for every resource, its best spot against the best one anywhere (1 when it is the best place for it), and the grounds that add up to the most come first.</li>
  * </ul>
  * @author Claude
@@ -39,6 +40,8 @@ public class BestiaryFarming
 	public static final int SPOTS = 3;
 	/** The hunting grounds a goal keeps, best first. */
 	public static final int GROUNDS = 5;
+	/** The regions a resource no found monster gives names. */
+	public static final int HINTS = 2;
 	private static final int SPOIL_SKILL_ID = 254;
 
 	/**
@@ -80,13 +83,25 @@ public class BestiaryFarming
 	}
 
 	/**
+	 * A region to look for a resource in, when no monster the account found gives it.
+	 * @param region the region (or the hunting ground, for the lands outside the regions)
+	 * @param monsters how many monsters there give it
+	 * @param level the lowest level of them
+	 * @param higher {@code true} if they are all above the level range
+	 */
+	public record Hint(String region, int monsters, int level, boolean higher)
+	{
+	}
+
+	/**
 	 * A resource of the goal still missing.
 	 * @param line the resource
 	 * @param missing how many are still missing
 	 * @param spots the best monsters for it, at most {@link #SPOTS}
 	 * @param unfound how many monsters the account has not found yet give it (in the level range)
+	 * @param hints where to look for it when no spot gives it, at most {@link #HINTS}
 	 */
-	public record Resource(CraftingGoalLine line, long missing, List<Spot> spots, int unfound)
+	public record Resource(CraftingGoalLine line, long missing, List<Spot> spots, int unfound, List<Hint> hints)
 	{
 		/** @return {@code true} if a monster can be farmed for it by the character */
 		public boolean isFarmable()
@@ -121,6 +136,17 @@ public class BestiaryFarming
 
 	/** A monster that gives a resource, before the spots are picked. */
 	private record Candidate(NpcTemplate template, BestiaryCatalog.Kind kind, Yield drop, Yield spoil, double dropPerKill, double spoilPerKill)
+	{
+		/** @return how many of it one kill gives the character, with the spoils when they count or when nothing else gives it */
+		double perKill(boolean spoils)
+		{
+			final double perKill = dropPerKill + (spoils ? spoilPerKill : 0);
+			return perKill > 0 ? perKill : spoilPerKill;
+		}
+	}
+
+	/** The spots of a resource, and where to look for it without them. */
+	private record Search(List<Spot> spots, int unfound, List<Hint> hints)
 	{
 	}
 
@@ -229,9 +255,9 @@ public class BestiaryFarming
 			}
 
 			final long missing = line.getNeeded() - line.getHave();
-			final int[] unfound = new int[1];
-			final List<Spot> spots = spots(line.getItemId(), missing, entries, level, spoils, unfound);
-			final Resource resource = new Resource(line, missing, Collections.unmodifiableList(spots.subList(0, Math.min(SPOTS, spots.size()))), unfound[0]);
+			final Search search = search(line.getItemId(), missing, entries, level, spoils);
+			final List<Spot> spots = search.spots();
+			final Resource resource = new Resource(line, missing, Collections.unmodifiableList(spots.subList(0, Math.min(SPOTS, spots.size()))), search.unfound(), search.hints());
 			resources.add(resource);
 			allSpots.add(spots);
 			farmable += resource.isFarmable() ? 1 : 0;
@@ -240,15 +266,14 @@ public class BestiaryFarming
 	}
 
 	/**
-	 * @param unfound gets how many monsters not found yet give the item
-	 * @return every spot of the item for the character, best first: the ones that count, or else the spoil ones of a character who can't spoil
+	 * @return every spot of the item for the character, best first (the ones that count, or else the spoil ones of a character who can't spoil), how many monsters not found yet give it, and without spots, where to look for it
 	 */
-	private List<Spot> spots(int itemId, long missing, Map<Integer, BestiaryManager.Entry> entries, int level, boolean spoils, int[] unfound)
+	private Search search(int itemId, long missing, Map<Integer, BestiaryManager.Entry> entries, int level, boolean spoils)
 	{
 		final List<Source> sources = _sources.get(itemId);
 		if (sources == null)
 		{
-			return new ArrayList<>();
+			return new Search(new ArrayList<>(), 0, Collections.emptyList());
 		}
 
 		// The sources of each monster: an item can be in two groups, and in the drops and the spoil.
@@ -260,6 +285,8 @@ public class BestiaryFarming
 
 		final BestiaryCatalog catalog = BestiaryCatalog.getInstance();
 		final List<Candidate> candidates = new ArrayList<>();
+		final List<Candidate> unfound = new ArrayList<>();
+		final List<Candidate> higher = new ArrayList<>();
 		for (Map.Entry<Integer, List<Source>> monster : byMonster.entrySet())
 		{
 			final BestiaryCatalog.Kind kind = catalog.getMonsters().get(monster.getKey());
@@ -269,18 +296,8 @@ public class BestiaryFarming
 			}
 
 			final NpcTemplate template = kind.getTemplate();
-			if (template.getLevel() > (level + BestiaryConfig.FARMING_LEVELS_ABOVE))
-			{
-				continue;
-			}
-
 			final BestiaryManager.Entry entry = entries.get(template.getId());
 			final int tier = entry != null ? BestiaryManager.getTier(template, entry.kills()) : 0;
-			if (tier == 0)
-			{
-				unfound[0]++;
-				continue;
-			}
 
 			final double factor = levelFactor(template.getLevel(), level);
 			final int dropBonus = BestiaryManager.getDropBonus(template, tier);
@@ -305,7 +322,19 @@ public class BestiaryFarming
 					drop = (drop == null) || (chance > drop.chance()) ? yield : drop;
 				}
 			}
-			candidates.add(new Candidate(template, kind, drop, spoil, dropPerKill, spoilPerKill));
+			final Candidate candidate = new Candidate(template, kind, drop, spoil, dropPerKill, spoilPerKill);
+			if (template.getLevel() > (level + BestiaryConfig.FARMING_LEVELS_ABOVE))
+			{
+				higher.add(candidate);
+			}
+			else if (tier == 0)
+			{
+				unfound.add(candidate);
+			}
+			else
+			{
+				candidates.add(candidate);
+			}
 		}
 
 		// What counts for the character; with nothing, the spoil spots for a spoiler to come along.
@@ -341,7 +370,57 @@ public class BestiaryFarming
 			}
 			return Integer.compare(Math.abs(a.template().getLevel() - level), Math.abs(b.template().getLevel() - level));
 		});
-		return spots;
+		return new Search(spots, unfound.size(), spots.isEmpty() ? hints(unfound, higher, spoils) : Collections.emptyList());
+	}
+
+	/**
+	 * Where to look for an item no monster the account found gives: the regions of the monsters not found yet in the level range, the best ones first, or else of the monsters above it, the lowest first. None when the page hides where monsters not found yet live.
+	 */
+	private static List<Hint> hints(List<Candidate> unfound, List<Candidate> higher, boolean spoils)
+	{
+		if (!BestiaryConfig.SHOW_UNDISCOVERED_AREAS || (unfound.isEmpty() && higher.isEmpty()))
+		{
+			return Collections.emptyList();
+		}
+
+		final boolean above = unfound.isEmpty();
+		final List<BestiaryCatalog.Area> areas = BestiaryCatalog.getInstance().getAreas();
+		final Map<String, double[]> regions = new LinkedHashMap<>(); // best per kill, monsters, lowest level
+		for (Candidate candidate : above ? higher : unfound)
+		{
+			final double perKill = candidate.perKill(spoils);
+			final int monsterLevel = candidate.template().getLevel();
+			final List<String> counted = new ArrayList<>(2);
+			for (int areaId : candidate.kind().getAreas())
+			{
+				final BestiaryCatalog.Area area = areas.get(areaId);
+				final String region = BestiaryCatalog.OTHER_REGION.equals(area.getRegion()) ? area.getName() : area.getRegion();
+				if (counted.contains(region))
+				{
+					continue;
+				}
+				counted.add(region);
+				final double[] values = regions.computeIfAbsent(region, key -> new double[]
+				{
+					0,
+					0,
+					Integer.MAX_VALUE
+				});
+				values[0] = Math.max(values[0], perKill);
+				values[1]++;
+				values[2] = Math.min(values[2], monsterLevel);
+			}
+		}
+
+		final List<Map.Entry<String, double[]>> sorted = new ArrayList<>(regions.entrySet());
+		sorted.sort((a, b) -> above ? Double.compare(a.getValue()[2], b.getValue()[2]) : Double.compare(b.getValue()[0], a.getValue()[0]));
+		final List<Hint> hints = new ArrayList<>(HINTS);
+		for (int i = 0; i < Math.min(HINTS, sorted.size()); i++)
+		{
+			final double[] values = sorted.get(i).getValue();
+			hints.add(new Hint(sorted.get(i).getKey(), (int) values[1], (int) values[2], above));
+		}
+		return Collections.unmodifiableList(hints);
 	}
 
 	private static Spot spot(Candidate candidate, double perKill, long missing, boolean counted)
