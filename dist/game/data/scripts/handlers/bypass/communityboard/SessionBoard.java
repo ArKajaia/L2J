@@ -302,7 +302,7 @@ public class SessionBoard implements IParseBoardHandler
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<table width=").append(TILE_WIDTH).append(" cellpadding=0 cellspacing=0 bgcolor=").append(BG_ROW).append(">");
-		sb.append("<tr><td height=7 colspan=3></td></tr><tr><td width=8></td><td width=").append(TILE_WIDTH - 16).append(">");
+		sb.append("<tr><td height=7 colspan=3></td></tr><tr><td width=8></td><td width=").append(TILE_WIDTH - 16).append(" height=18>");
 		sb.append("<font color=\"").append(COLOR_DIM).append("\">").append(label).append("</font>");
 		sb.append("</td><td width=8></td></tr><tr><td height=4 colspan=3></td></tr>");
 		sb.append("<tr><td></td><td height=18>").append(value.replace("<font ", "<font name=\"hs12\" ")).append("</td><td></td></tr>");
