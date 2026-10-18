@@ -42,6 +42,7 @@ import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.craftinggoal.CraftingGoal;
 import org.l2jmobius.gameserver.model.craftinggoal.CraftingGoalLine;
+import org.l2jmobius.gameserver.model.craftinggoal.CraftingGoalNode;
 import org.l2jmobius.gameserver.model.events.Containers;
 import org.l2jmobius.gameserver.model.events.EventType;
 import org.l2jmobius.gameserver.model.events.holders.actor.player.OnPlayerLogin;
@@ -51,6 +52,9 @@ import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.recipe.RecipeList;
 import org.l2jmobius.gameserver.model.script.QuestSound;
+import org.l2jmobius.gameserver.network.serverpackets.Ex2CraftingGoalInfo;
+import org.l2jmobius.gameserver.network.serverpackets.Ex2CraftingGoalRemove;
+import org.l2jmobius.gameserver.network.serverpackets.Ex2CraftingGoalUpdate;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
 import org.l2jmobius.gameserver.network.serverpackets.ServerPacket;
@@ -64,6 +68,8 @@ import org.l2jmobius.gameserver.network.serverpackets.TutorialShowQuestionMark;
  * <li><b>Tracking</b> - every change of the inventory ends in {@code PlayerInventory.refreshWeight()}, which calls {@link #onInventoryChanged(Player)}. The goals are checked a moment later, once for a batch of changes (a sweep, a craft, a trade).</li>
  * <li><b>Celebration</b> - a resource gathered shows its count on screen; one collected sets off a small Firework (once per resource and craft, so dropping and picking it up again sets off nothing), and having every component a Large Firework.</li>
  * <li><b>Completion</b> - crafting the item (yourself or in a dwarf's workshop) counts a craft; the last one completes the goal.</li>
+ * <li><b>Pinning</b> - a goal pinned to the screen is drawn by the client's own tracker: it gets the recipe tree and every line ({@link Ex2CraftingGoalInfo}), then only the lines that change or are gone after each check ({@link Ex2CraftingGoalUpdate}), and {@link Ex2CraftingGoalRemove} when it leaves the screen. The client's
+ * tracker unpins with the bypass {@code _craftpin unpin <recipe>} ({@link #onPinBypass(Player, String)}).</li>
  * </ul>
  * Goals are kept in the player variable {@code CRAFT_GOALS}. The tracker window itself is the {@code .craft} voiced command ({@code _bbscraft} on the Community Board).
  */
@@ -86,6 +92,8 @@ public class CraftingGoalManager
 	private static final int CELEBRATION_MESSAGE_TIME = 5000;
 	/** How many gathered resources one progress message names. */
 	private static final int PROGRESS_MESSAGE_LINES = 2;
+	/** The most nodes of a recipe tree sent to the client. */
+	private static final int MAX_TREE_NODES = 256;
 
 	private final Map<Integer, Tracker> _trackers = new ConcurrentHashMap<>();
 	/** The recipe used to break an item down into its materials, by the item it makes. */
@@ -248,6 +256,7 @@ public class CraftingGoalManager
 		}
 
 		getGoals(player).remove(goal);
+		takeOffScreen(player, goal, Ex2CraftingGoalRemove.ABANDONED);
 		save(player);
 		player.sendPacket(QuestSound.ITEMSOUND_QUEST_GIVEUP.getPacket());
 		player.sendMessage("Crafting goal abandoned: " + getItemName(goal.getProductId()) + ".");
@@ -303,6 +312,7 @@ public class CraftingGoalManager
 			if (left <= 0)
 			{
 				getGoals(player).remove(goal);
+				takeOffScreen(player, goal, Ex2CraftingGoalRemove.COMPLETED);
 				player.sendPacket(QuestSound.ITEMSOUND_QUEST_FINISH.getPacket());
 				player.sendPacket(new ExShowScreenMessage("Crafting goal complete: " + name + "!", ExShowScreenMessage.TOP_CENTER, CELEBRATION_MESSAGE_TIME, 0, true, true));
 				player.sendMessage("Crafting goal complete: " + name + ".");
@@ -350,6 +360,208 @@ public class CraftingGoalManager
 	}
 
 	// ---------------------------------------------------------------------------------------------
+	// Pinning
+	// ---------------------------------------------------------------------------------------------
+
+	/**
+	 * Pins a goal to the client's screen, or takes it off. Pinning a pinned goal sends it again.
+	 * @param player the player
+	 * @param recipeListId the recipe of the goal
+	 * @param pinned {@code true} to pin, {@code false} to unpin
+	 * @return {@code true} if the player has that goal
+	 */
+	public boolean pin(Player player, int recipeListId, boolean pinned)
+	{
+		final CraftingGoal goal = getGoal(player, recipeListId);
+		if (goal == null)
+		{
+			return false;
+		}
+
+		if (pinned)
+		{
+			// Fresh lines first: the updates that follow are worked out from the ones sent here.
+			check(player, goal, false);
+			synchronized (goal)
+			{
+				goal.setPinned(true);
+				sendInfo(player, goal);
+			}
+			player.sendMessage("Crafting goal pinned to your screen: " + getItemName(goal.getProductId()) + ".");
+		}
+		else
+		{
+			if (!takeOffScreen(player, goal, Ex2CraftingGoalRemove.UNPINNED))
+			{
+				return true;
+			}
+			player.sendMessage("Crafting goal unpinned: " + getItemName(goal.getProductId()) + ".");
+		}
+		save(player);
+		return true;
+	}
+
+	/**
+	 * The bypass {@code _craftpin} the client's tracker sends: {@code pin <recipe>}, {@code unpin <recipe>}, or {@code sync <recipe>} to get a pinned goal again (one the player no longer has, or that is not pinned, is taken off the screen). Shows no window.
+	 * @param player the player
+	 * @param args what follows {@code _craftpin}
+	 */
+	public void onPinBypass(Player player, String args)
+	{
+		final String[] parts = args.trim().split("\\s+");
+		if (!CraftingGoalsConfig.ENABLED || (parts.length < 2))
+		{
+			return;
+		}
+
+		final int recipeListId;
+		try
+		{
+			recipeListId = Integer.parseInt(parts[1]);
+		}
+		catch (NumberFormatException e)
+		{
+			return;
+		}
+
+		switch (parts[0].toLowerCase(Locale.ROOT))
+		{
+			case "pin":
+			{
+				pin(player, recipeListId, true);
+				break;
+			}
+			case "unpin":
+			{
+				if (!pin(player, recipeListId, false))
+				{
+					player.sendPacket(new Ex2CraftingGoalRemove(recipeListId, Ex2CraftingGoalRemove.ABANDONED));
+				}
+				break;
+			}
+			case "sync":
+			{
+				final CraftingGoal goal = getGoal(player, recipeListId);
+				if (goal == null)
+				{
+					player.sendPacket(new Ex2CraftingGoalRemove(recipeListId, Ex2CraftingGoalRemove.ABANDONED));
+					break;
+				}
+				synchronized (goal)
+				{
+					if (goal.isPinned())
+					{
+						sendInfo(player, goal);
+					}
+					else
+					{
+						player.sendPacket(new Ex2CraftingGoalRemove(recipeListId, Ex2CraftingGoalRemove.UNPINNED));
+					}
+				}
+				break;
+			}
+		}
+	}
+
+	/**
+	 * Sends a pinned goal with its lines as of its last check. Called holding the goal's lock, so no update goes out between reading the lines here and the client getting them.
+	 */
+	private void sendInfo(Player player, CraftingGoal goal)
+	{
+		player.sendPacket(new Ex2CraftingGoalInfo(goal, player.hasRecipeList(goal.getRecipeListId()), buildTree(goal.getRecipe())));
+	}
+
+	/**
+	 * Unpins a goal and tells the client, if it was pinned.
+	 * @return {@code true} if the goal was pinned
+	 */
+	private boolean takeOffScreen(Player player, CraftingGoal goal, int reason)
+	{
+		synchronized (goal)
+		{
+			if (!goal.isPinned())
+			{
+				return false;
+			}
+			goal.setPinned(false);
+			player.sendPacket(new Ex2CraftingGoalRemove(goal.getRecipeListId(), reason));
+			return true;
+		}
+	}
+
+	/**
+	 * The recipe tree the client's tracker draws: every ingredient of the recipe, then the ingredients of the ones that are crafted, as deep as the breakdown goes. Depth first, so a node's children follow it.
+	 * @param recipe the goal's recipe
+	 * @return the nodes, at most {@link #MAX_TREE_NODES}
+	 */
+	public List<CraftingGoalNode> buildTree(RecipeList recipe)
+	{
+		final List<CraftingGoalNode> tree = new ArrayList<>();
+		if ((recipe != null) && (recipe.getRecipes() != null))
+		{
+			final Set<Integer> path = new HashSet<>();
+			path.add(recipe.getItemId());
+			addNodes(tree, recipe, -1, 0, path);
+		}
+		return tree;
+	}
+
+	/**
+	 * @param path the items on the way down from the goal, so a recipe that loops back is not broken down again
+	 */
+	private void addNodes(List<CraftingGoalNode> tree, RecipeList recipe, int parentIndex, int depth, Set<Integer> path)
+	{
+		for (RecipeHolder ingredient : recipe.getRecipes())
+		{
+			if (tree.size() >= MAX_TREE_NODES)
+			{
+				return;
+			}
+
+			final int itemId = ingredient.getItemId();
+			final RecipeList part = CraftingGoalsConfig.BREAKDOWN && (depth < CraftingGoalsConfig.BREAKDOWN_DEPTH) && !path.contains(itemId) ? _partRecipes.get(itemId) : null;
+			final int index = tree.size();
+			tree.add(new CraftingGoalNode(parentIndex, itemId, ingredient.getQuantity(), part != null ? Math.max(1, part.getCount()) : 0));
+			if (part != null)
+			{
+				path.add(itemId);
+				addNodes(tree, part, index, depth + 1, path);
+				path.remove(itemId);
+			}
+		}
+	}
+
+	/**
+	 * @param goal a pinned goal, its lines as the client has them
+	 * @param lines the lines now
+	 * @return the update with the lines that are new, changed or gone, {@code null} if nothing changed
+	 */
+	private static Ex2CraftingGoalUpdate diff(CraftingGoal goal, List<CraftingGoalLine> lines)
+	{
+		final Map<Integer, CraftingGoalLine> before = new LinkedHashMap<>();
+		for (CraftingGoalLine line : goal.getLines())
+		{
+			before.put(line.getKey(), line);
+		}
+
+		final List<CraftingGoalLine> changed = new ArrayList<>();
+		for (CraftingGoalLine line : lines)
+		{
+			final CraftingGoalLine old = before.remove(line.getKey());
+			if ((old == null) || (old.getHave() != line.getHave()) || (old.getNeeded() != line.getNeeded()) || (old.isCraftable() != line.isCraftable()))
+			{
+				changed.add(line);
+			}
+		}
+
+		if (changed.isEmpty() && before.isEmpty())
+		{
+			return null;
+		}
+		return new Ex2CraftingGoalUpdate(goal.getRecipeListId(), goal.getCrafts(), lines, changed, new ArrayList<>(before.keySet()));
+	}
+
+	// ---------------------------------------------------------------------------------------------
 	// Progress
 	// ---------------------------------------------------------------------------------------------
 
@@ -382,6 +594,16 @@ public class CraftingGoalManager
 		synchronized (goal)
 		{
 			final List<CraftingGoalLine> lines = computeLines(player, goal);
+			if (goal.isPinned())
+			{
+				// Sent holding the lock, so the updates of two checks reach the client in order.
+				final Ex2CraftingGoalUpdate update = diff(goal, lines);
+				if (update != null)
+				{
+					player.sendPacket(update);
+				}
+			}
+
 			final Set<Integer> complete = new HashSet<>();
 			final Map<Integer, Long> have = new HashMap<>();
 			for (CraftingGoalLine line : lines)
@@ -657,9 +879,10 @@ public class CraftingGoalManager
 		}
 
 		final Tracker tracker = new Tracker();
+		final List<CraftingGoal> pinned = new ArrayList<>();
 		for (String entry : saved.split(";"))
 		{
-			// recipe,crafts,ready,celebrated|celebrated...
+			// recipe,crafts,ready,celebrated|celebrated...,pinned
 			final String[] parts = entry.split(",", -1);
 			if (parts.length < 3)
 			{
@@ -684,6 +907,10 @@ public class CraftingGoalManager
 						goal.getCelebrated().add(Integer.parseInt(key));
 					}
 				}
+				if ((parts.length > 4) && parts[4].equals("1"))
+				{
+					pinned.add(goal);
+				}
 				tracker._goals.add(goal);
 			}
 			catch (NumberFormatException e)
@@ -696,6 +923,16 @@ public class CraftingGoalManager
 		{
 			_trackers.put(player.getObjectId(), tracker);
 			checkAll(player, false);
+
+			// Pinned once the lines are counted, so the client gets them whole and no update comes first.
+			for (CraftingGoal goal : pinned)
+			{
+				synchronized (goal)
+				{
+					goal.setPinned(true);
+					sendInfo(player, goal);
+				}
+			}
 		}
 	}
 
@@ -722,6 +959,7 @@ public class CraftingGoalManager
 					sb.append(key);
 					first = false;
 				}
+				sb.append(',').append(goal.isPinned() ? '1' : '0');
 			}
 		}
 

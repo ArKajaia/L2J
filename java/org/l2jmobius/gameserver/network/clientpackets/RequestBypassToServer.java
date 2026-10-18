@@ -65,7 +65,8 @@ public class RequestBypassToServer extends ClientPacket
 		"_olympiad?command",
 		"manor_menu_select",
 		"report",
-		"LearnCustomBuff_"
+		"LearnCustomBuff_",
+		"_craftpin"
 	};
 	
 	// S
@@ -163,6 +164,11 @@ public class RequestBypassToServer extends ClientPacket
 				}
 			}
 			// =======================================
+			else if (_command.startsWith("_craftpin"))
+			{
+				// The client's crafting goal tracker: "_craftpin unpin <recipe>".
+				org.l2jmobius.gameserver.managers.CraftingGoalManager.getInstance().onPinBypass(player, _command.substring(9));
+			}
 			else if (_command.startsWith("voiced_"))
 			{
 				String vCommand = _command.substring(7); // Removes "voiced_"

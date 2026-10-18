@@ -35,6 +35,7 @@ public class CraftingGoal
 	private final int _recipeListId;
 	private int _crafts;
 	private boolean _readyCelebrated;
+	private boolean _pinned;
 	private final Set<Integer> _celebrated = new HashSet<>();
 
 	private List<CraftingGoalLine> _lines = Collections.emptyList();
@@ -96,6 +97,19 @@ public class CraftingGoal
 	public void setReadyCelebrated(boolean readyCelebrated)
 	{
 		_readyCelebrated = readyCelebrated;
+	}
+
+	/**
+	 * @return {@code true} if the goal is pinned to the client's screen
+	 */
+	public boolean isPinned()
+	{
+		return _pinned;
+	}
+
+	public void setPinned(boolean pinned)
+	{
+		_pinned = pinned;
 	}
 
 	public Set<Integer> getCelebrated()

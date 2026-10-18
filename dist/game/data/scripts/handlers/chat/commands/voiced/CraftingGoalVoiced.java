@@ -43,7 +43,9 @@ public class CraftingGoalVoiced implements IVoicedCommandHandler
 		"book",
 		"view",
 		"add",
-		"abandon"
+		"abandon",
+		"pin",
+		"unpin"
 	};
 
 	@Override
