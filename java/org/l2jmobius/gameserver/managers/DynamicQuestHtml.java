@@ -516,7 +516,7 @@ public final class DynamicQuestHtml
 
 		// Running quests.
 		final List<QuestInstance> quests = manager.getQuests(player);
-		sb.append(spacer(8)).append(sectionHeader("Your quests", null));
+		sb.append(spacer(12)).append(sectionHeader("Your quests", null));
 		if (quests.isEmpty())
 		{
 			sb.append(note("None yet. Take one from today's board below."));
@@ -532,7 +532,7 @@ public final class DynamicQuestHtml
 			final StageTemplate stage = quest.getStage();
 			final String stageText = "Stage " + (quest.getStageIndex() + 1) + " of " + quest.getTemplate().getStages().size() + (stage != null ? " - " + quest.format(stage.getName()) : "");
 			final String bottom = "<table cellpadding=0 cellspacing=0><tr><td width=110>" + gauge(110, getProgress(quest), GAUGE_PROGRESS) + "</td><td width=8></td><td><font color=\"" + COLOR_DIM + "\">" + stageText + "</font></td></tr></table>";
-			sb.append(card(BOARD_WIDTH, BG_CARD, top, bottom, button("quest " + quest.getId(), "Open", 60), 64)).append(spacer(2));
+			sb.append(card(BOARD_WIDTH, BG_CARD, top, bottom, button("quest " + quest.getId(), "Open", 60), 64)).append(spacer(5));
 		}
 
 		// The hidden quest under way and the offer a herald brought.
@@ -588,7 +588,7 @@ public final class DynamicQuestHtml
 				offers.add(card(HALF_WIDTH, taken ? BG_CARD_DIM : BG_CARD, line, null, taken ? "<font color=\"" + COLOR_GOOD + "\">Taken</font>" : null, 44));
 			}
 
-			sb.append(spacer(8)).append(sectionHeader("Today in " + town, null));
+			sb.append(spacer(12)).append(sectionHeader("Today in " + town, null));
 			if (offers.isEmpty())
 			{
 				sb.append(note("Nothing today."));
@@ -597,10 +597,10 @@ public final class DynamicQuestHtml
 
 			if (!requests.isEmpty())
 			{
-				sb.append(spacer(8)).append(sectionHeader("Requests", "Taken at the Notice Board"));
+				sb.append(spacer(12)).append(sectionHeader("Requests", "Taken at the Notice Board"));
 				for (String request : requests)
 				{
-					sb.append(request).append(spacer(2));
+					sb.append(request).append(spacer(5));
 				}
 			}
 		}
@@ -609,18 +609,18 @@ public final class DynamicQuestHtml
 		final List<QuestInstance> world = manager.getWorldQuests();
 		if (!world.isEmpty())
 		{
-			sb.append(spacer(8)).append(sectionHeader("World events", "Anyone nearby can join"));
+			sb.append(spacer(12)).append(sectionHeader("World events", "Anyone nearby can join"));
 			for (QuestInstance quest : world)
 			{
 				final String bottom = "<font color=\"" + COLOR_LABEL + "\">Near " + quest.getContext("near", "?") + ", level " + quest.getDifficulty().getQuestLevel() + "</font>";
-				sb.append(card(BOARD_WIDTH, BG_CARD, link("quest " + quest.getId(), quest.getName()), bottom, button("track " + quest.getId(), "Track", 60), 64)).append(spacer(2));
+				sb.append(card(BOARD_WIDTH, BG_CARD, link("quest " + quest.getId(), quest.getName()), bottom, button("track " + quest.getId(), "Track", 60), 64)).append(spacer(5));
 			}
 		}
 
 		// Heralds.
 		final boolean heralds = !player.getVariables().getBoolean(DynamicQuestManager.VAR_NO_HERALDS, false);
 		final String state = "<font color=\"" + COLOR_DIM + "\">Heralds bring you quests while you hunt:</font> <font color=\"" + (heralds ? COLOR_GOOD : COLOR_BAD) + "\">" + (heralds ? "on" : "off") + "</font>";
-		sb.append(spacer(8)).append(card(BOARD_WIDTH, BG_CARD_DIM, state, null, button("heralds " + (heralds ? "off" : "on"), heralds ? "Turn off" : "Turn on", 70), 74));
+		sb.append(spacer(12)).append(card(BOARD_WIDTH, BG_CARD_DIM, state, null, button("heralds " + (heralds ? "off" : "on"), heralds ? "Turn off" : "Turn on", 70), 74));
 		return sb.toString();
 	}
 
@@ -641,7 +641,7 @@ public final class DynamicQuestHtml
 
 		final List<Player> members = DynamicQuestManager.getMembers(player);
 		final String problem = getProblem(manager, player, npc, offer, members);
-		sb.append(spacer(8)).append(sectionHeader("Choose how hard", "Adjusts to you" + (members.size() > 1 ? " and " + (members.size() - 1) + " party members near you" : "")));
+		sb.append(spacer(12)).append(sectionHeader("Choose how hard", "Adjusts to you" + (members.size() > 1 ? " and " + (members.size() - 1) + " party members near you" : "")));
 
 		final List<QuestTier> tiers = new ArrayList<>();
 		for (QuestTier tier : QuestTier.values())
@@ -668,9 +668,9 @@ public final class DynamicQuestHtml
 			sb.append("<table width=").append(inner).append(" cellpadding=0 cellspacing=0>");
 			sb.append("<tr><td><font color=\"").append(tier.getColor()).append("\">").append(tier.getDisplayName()).append("</font></td><td align=right><font color=\"").append(COLOR_DIM).append("\">Lv. ").append(context.getQuestLevel()).append("</font></td></tr>");
 			sb.append("<tr><td height=6 colspan=2></td></tr>");
-			sb.append("<tr><td colspan=2>").append(valueLine(String.format("%,d", preview._exp), "EXP")).append("</td></tr>");
+			sb.append("<tr><td colspan=2 height=18>").append(valueLine(String.format("%,d", preview._exp), "EXP")).append("</td></tr>");
 			sb.append("<tr><td height=3 colspan=2></td></tr>");
-			sb.append("<tr><td colspan=2>").append(valueLine(String.format("%,d", preview._adena), "Adena")).append("</td></tr>");
+			sb.append("<tr><td colspan=2 height=18>").append(valueLine(String.format("%,d", preview._adena), "Adena")).append("</td></tr>");
 			if (problem == null)
 			{
 				sb.append("<tr><td height=8 colspan=2></td></tr>");
@@ -684,7 +684,7 @@ public final class DynamicQuestHtml
 		{
 			sb.append(spacer(8)).append(panel(BG_CARD_DIM, "<font color=\"" + COLOR_BAD + "\">" + problem + "</font>"));
 		}
-		sb.append(spacer(8));
+		sb.append(spacer(12));
 		sb.append(offer.isBoardOffer() ? button("main", "Back to the board", 140) : button("decline", "Not interested", 140));
 		return sb.toString();
 	}
@@ -750,7 +750,7 @@ public final class DynamicQuestHtml
 			}
 		}
 
-		sb.append(spacer(8)).append("<table width=").append(BOARD_WIDTH).append(" cellpadding=0 cellspacing=0><tr>");
+		sb.append(spacer(12)).append("<table width=").append(BOARD_WIDTH).append(" cellpadding=0 cellspacing=0><tr>");
 		sb.append(actions);
 		sb.append("<td>").append(button("track " + quest.getId(), "Track on radar", 120)).append("</td><td width=6></td>");
 		sb.append("<td>").append(button("main", "Back", 80)).append("</td>");
@@ -921,7 +921,7 @@ public final class DynamicQuestHtml
 	}
 
 	/**
-	 * @return a box with a line or two of text and something on the right
+	 * @return a box with a line or two of text and something on the right. Every line gets a cell of its own with a fixed height: the client does not grow a cell to fit its text, so shorter cells overlap the next line.
 	 */
 	private static String card(int width, String bgcolor, String top, String bottom, String right, int rightWidth)
 	{
@@ -929,19 +929,18 @@ public final class DynamicQuestHtml
 		final int textWidth = width - 16 - (right != null ? rightWidth : 0);
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<table width=").append(width).append(" cellpadding=0 cellspacing=0 bgcolor=").append(bgcolor).append(">");
-		sb.append("<tr><td height=4 colspan=").append(columns).append("></td></tr><tr><td width=8></td>");
-		sb.append("<td width=").append(textWidth).append(" valign=top><table width=").append(textWidth).append(" cellpadding=0 cellspacing=0>");
-		sb.append("<tr><td height=18>").append(top).append("</td></tr>");
-		if (bottom != null)
-		{
-			sb.append("<tr><td height=16>").append(bottom).append("</td></tr>");
-		}
-		sb.append("</table></td>");
+		sb.append("<tr><td height=6 colspan=").append(columns).append("></td></tr>");
+		sb.append("<tr><td width=8 height=22></td><td width=").append(textWidth).append(" height=22>").append(top).append("</td>");
 		if (right != null)
 		{
-			sb.append("<td width=").append(rightWidth).append(" align=right>").append(right).append("</td>");
+			sb.append("<td width=").append(rightWidth).append(" height=22 align=right>").append(right).append("</td>");
 		}
-		sb.append("<td width=8></td></tr><tr><td height=4 colspan=").append(columns).append("></td></tr></table>");
+		sb.append("<td width=8></td></tr>");
+		if (bottom != null)
+		{
+			sb.append("<tr><td height=22></td><td height=22>").append(bottom).append("</td>").append(right != null ? "<td></td>" : "").append("<td></td></tr>");
+		}
+		sb.append("<tr><td height=6 colspan=").append(columns).append("></td></tr></table>");
 		return sb.toString();
 	}
 
@@ -958,7 +957,7 @@ public final class DynamicQuestHtml
 		for (int i = 0; i < cells.size(); i += 2)
 		{
 			sb.append("<table width=").append(BOARD_WIDTH).append(" cellpadding=0 cellspacing=0><tr><td width=").append(HALF_WIDTH).append(" valign=top>").append(cells.get(i)).append("</td><td width=6></td><td width=").append(HALF_WIDTH).append(" valign=top>");
-			sb.append((i + 1) < cells.size() ? cells.get(i + 1) : "").append("</td></tr></table>").append(spacer(3));
+			sb.append((i + 1) < cells.size() ? cells.get(i + 1) : "").append("</td></tr></table>").append(spacer(5));
 		}
 	}
 
