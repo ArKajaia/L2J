@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/npcs.xsd">
+	<!-- Dynamic Quests (data/DynamicQuests.xml). -->
+	<npc id="900500" displayId="35606" level="70" type="Folk" name="Notice Board" usingServerSideName="true" title="Bounties and Requests" usingServerSideTitle="true"> <!-- Notice Board (one in every town, next to the gatekeeper) -->
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="9" />
+			<height normal="20" />
+		</collision>
+	</npc>
+	<npc id="900501" displayId="4326" level="70" type="Folk" name="Herald of the Board" usingServerSideName="true" title="[ ! ]" usingServerSideTitle="true"> <!-- Herald (brings TIMER, WORLD_STATE and PLAYER_ACTION quests) -->
+		<race>HUMAN</race>
+		<sex>MALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="50" />
+				<run ground="140" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="8" />
+			<height normal="23" />
+		</collision>
+	</npc>
+	<npc id="900502" displayId="13130" level="70" type="QuestGuard" name="Caravan Wagon" usingServerSideName="true" title="Merchant Caravan" usingServerSideTitle="true"> <!-- Caravan Crossing escortee -->
+		<race>ANIMAL</race>
+		<sex>FEMALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="500000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="41" />
+				<run ground="140" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="false" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="31" />
+			<height normal="32.5" />
+		</collision>
+	</npc>
+	<npc id="900503" displayId="30033" level="70" type="QuestGuard" name="Captive" usingServerSideName="true" title="Rescued" usingServerSideTitle="true"> <!-- Kidnapped escortee -->
+		<race>HUMAN</race>
+		<sex>MALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="500000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="50" />
+				<run ground="120" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="false" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="8" />
+			<height normal="23" />
+		</collision>
+	</npc>
+	<npc id="900504" displayId="30651" level="70" type="QuestGuard" name="Expedition Survivor" usingServerSideName="true" title="Wounded" usingServerSideTitle="true"> <!-- Lost Expedition escortee -->
+		<race>HUMAN</race>
+		<sex>MALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="500000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="50" />
+				<run ground="120" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="false" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="8" />
+			<height normal="23" />
+		</collision>
+	</npc>
+	<npc id="900505" displayId="35423" level="70" type="QuestGuard" name="Camp Banner" usingServerSideName="true" title="Hold the Line" usingServerSideTitle="true"> <!-- Hold the Line banner -->
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="500000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="false" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="9" />
+			<height normal="20" />
+		</collision>
+	</npc>
+	<npc id="900506" displayId="18265" level="70" type="Folk" name="Torn Pack" usingServerSideName="true" title="Search Here" usingServerSideTitle="true"> <!-- INVESTIGATE clue -->
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="13" />
+			<height normal="16" />
+		</collision>
+	</npc>
+	<npc id="900507" displayId="18793" level="70" type="Folk" name="Monster Nest" usingServerSideName="true" title="Burn It" usingServerSideTitle="true"> <!-- Monster Nest nest -->
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="20" />
+			<height normal="25" />
+		</collision>
+	</npc>
+	<npc id="900509" displayId="35686" level="70" type="Folk" name="Caravan Master" usingServerSideName="true" title="Merchants' Guild" usingServerSideTitle="true"> <!-- Caravan Crossing caravan master -->
+		<race>HUMAN</race>
+		<sex>MALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="50" />
+				<run ground="120" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="8" />
+			<height normal="23" />
+		</collision>
+	</npc>
+	<npc id="900510" displayId="35660" level="70" type="Folk" name="Camp Captain" usingServerSideName="true" title="Frontier Guard" usingServerSideTitle="true"> <!-- Hold the Line captain -->
+		<race>HUMAN</race>
+		<sex>MALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="50" />
+				<run ground="120" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="8" />
+			<height normal="23" />
+		</collision>
+	</npc>
+</list>

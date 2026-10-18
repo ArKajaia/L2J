@@ -47,6 +47,7 @@ import org.l2jmobius.gameserver.managers.ItemAuctionManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.managers.PrecautionaryRestartManager;
 import org.l2jmobius.gameserver.managers.BestiaryManager;
+import org.l2jmobius.gameserver.managers.DynamicQuestManager;
 import org.l2jmobius.gameserver.managers.PvpRankingManager;
 import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
@@ -524,6 +525,9 @@ public class Shutdown extends Thread
 		
 		// Save the bestiary kills not written yet.
 		BestiaryManager.getInstance().storeAll();
+		
+		// Save the dynamic quests in progress.
+		DynamicQuestManager.getInstance().storeAll();
 		LOGGER.info("Global Variables Manager: Variables saved(" + tc.getEstimatedTimeAndRestartCounter() + "ms).");
 		
 		// Save Fishing tournament data.

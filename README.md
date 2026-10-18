@@ -229,6 +229,51 @@ Quests no player can look up. When a character quietly meets a secret condition,
 - Failing, dying (for most tasks), logging out or running out of time costs nothing: the messenger comes back later. Each quest can be completed once per character.
 - GMs have `//hiddenquest` (every quest, its condition and a player's progress), `//hiddenquest_trigger`, `//hiddenquest_send`, `//hiddenquest_complete`, `//hiddenquest_abort` and `//hiddenquest_reset`. Settings are in `config/Custom/HiddenQuests.ini`.
 
+### Dynamic Quests
+
+Procedurally generated quests that anyone can take at any level. None of them is a Java class: each is a template in `data/DynamicQuests.xml` built from reusable parts, and every offer is rolled from a seed for the party that takes it.
+
+- **How a template is built**:
+  - **Triggers**: the daily Notice Board, a town npc's request, a timer, a world counter passing a threshold, or something the player does.
+  - **Eligibility**: level, class, race, party size, town, night only, a cooldown and a daily limit.
+  - **Stages**: each is made of objectives done together. There are ten objective types: kill, cull a surge, collect, deliver, escort, investigate, defend, talk to someone, reach a place and burn nests.
+  - **Transitions**: success, failure, timeout, escalation (the target flees, the nests swarm, the outbreak spreads, the kidnappers move their captive and their leader joins) and follow-up quests with a chance.
+  - **Reward**: EXP as a share of the quest level's EXP, SP, adena by level and items by grade.
+- **It adjusts to you**:
+  - The quest's level is the party's average level, moved by the tier you choose (Easy, Normal, Hard, Elite).
+  - Its hunting ground and monsters come from the retail spawns at that level, near where it was taken.
+  - Monster counts grow with the party, and the quest's own monsters become champions in bigger parties and harder tiers.
+  - Escort and defence meters last longer for bigger parties, and time limits get shorter at harder tiers.
+- **Where quests come from**:
+  - A **Notice Board** stands next to the gatekeeper of every town. It has a few board offers each day and the requests of that town's npcs (its real blacksmith, grocer, warehouse keeper or gatekeeper by name). Requests are handed over at the board.
+  - The **Community Board** (`_bbsquests`, "Bounties and Requests") and **`.quests`** show the same board for the nearest town, your quests and the world events. Board offers can be taken from anywhere; requests only at the board.
+  - **Heralds** walk up to players hunting in the open world with a quest (timer, world-state and player-action triggers). The player can accept or turn it down, and the tutorial question mark opens the offer too.
+- **Ten templates ship**:
+  - Wanted (a named monster's trail, then the hunt)
+  - Caravan Crossing (lead a wagon through ambushes to the next town)
+  - Kidnapped (clues, the kidnappers' hideout, then bring the captive home)
+  - Blacksmith's Order (real crafting materials of your grade)
+  - A Favour (one small errand from a pool)
+  - Outbreak (a world event: a hunting ground's monsters multiply without respawning, and everyone near trims them, rewarded by contribution)
+  - Hold the Line (defend a camp banner through waves and a warband leader)
+  - The Lost Expedition (three clues, then save the survivor or slay what took them)
+  - Monster Nests (burn nests that keep spawning their brood)
+  - Urgent Courier (a sealed package to another town on foot; a teleport breaks the seal)
+- **Rewards and abuse**:
+  - Optional objectives and bonus conditions (never below 50% HP, the wagon above 75%, done in half the time, nobody died) and follow-up chains raise the reward, up to a cap.
+  - Each party member is paid. Members far above the quest's level get less, and nothing at twice the gap.
+  - A member must have been near the owner for most of the quest. Only one character per computer is paid.
+  - Accounts have a daily limit. Repeats of the same quest pay less, and grey monsters don't count.
+  - Gathered things are counted by the quest, so they can't be traded.
+  - The board is fixed for the day, and each account takes each offer once, so relogging rolls nothing new.
+- **Persistence**: quests in progress are saved (`character_dynamic_quests`). Kill, collect and investigate progress survives a logout or restart; an escort, a defence, a journey or a nest fight fails when its owner logs out. What each account did today is kept in `dynamic_quest_usage` and `dynamic_quest_taken`.
+- **GM tools**:
+  - `//dynquest [name]`: templates and a player's quests
+  - `//dynquest_start id [tier] [name]`, `//dynquest_herald id [name]`
+  - `//dynquest_complete`, `//dynquest_fail`, `//dynquest_reset`
+  - `//dynquest_reroll` (roll every board again)
+- **Settings**: `config/Custom/DynamicQuests.ini`. The header of `data/DynamicQuests.xml` documents every trigger, objective, transition and reward attribute. New quests are added there.
+
 ### Master Blacksmith
 
 One NPC in Giran (next to the Arena and the Class Master) that does the work of every blacksmith and explains soul crystals and special abilities (SA).
@@ -769,7 +814,12 @@ This program is free software, licensed under the **GNU General Public License, 
 
 ## Recent Updates
 
-Changes from 28 September – 17 October 2026.
+Changes from 28 September – 18 October 2026.
+
+### Dynamic Quests
+- **New**: procedurally generated quests that adjust to the party: its level, its size and the tier chosen. Templates in `data/DynamicQuests.xml` are built from ten reusable objective types (kill, cull, collect, deliver, escort, investigate, defend, talk, reach, destroy), triggers, eligibility rules, transitions (success, failure, timeout, escalation, follow-up) and a reward formula.
+- **New**: a Notice Board next to every town's gatekeeper with daily offers and the town npcs' requests, a Bounties and Requests page on the Community Board, `.quests`, heralds who bring quests to players in the world, and Outbreak world events. Ten templates ship. See [Dynamic Quests](#dynamic-quests).
+- **Changed**: the spawning and placement helpers of the Hidden Quests moved to a shared `QuestSpawnUtil`; the Hidden Quests behave as before.
 
 ### Bestiary
 - **New**: every monster a player kills fills their account's bestiary, a collection on the web page of the passive tree server (`.bestiary`). Entries go from Discovered to Legendary with more kills, each tier showing more of the monster (stats, elements and skills, then drops) and making its items drop more often, with a size comparison, a habitat map, server-wide numbers and a ranking of hunters. The monsters of a region give up to four times the EXP as the account completes it. Each monster has a profile page with its 3D model, taken from your own client by `client/Bestiary/extract_models.py`, and `//bestiary` makes the portraits of the collection. See [Bestiary](#bestiary).
