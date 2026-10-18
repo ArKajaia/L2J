@@ -14,7 +14,9 @@ import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.handler.BypassHandler;
 import org.l2jmobius.gameserver.handler.IBypassHandler;
+import org.l2jmobius.gameserver.config.custom.RadarZonesConfig;
 import org.l2jmobius.gameserver.managers.HotzoneModifierManager;
+import org.l2jmobius.gameserver.managers.RadarZoneManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
@@ -29,6 +31,7 @@ import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
+import org.l2jmobius.gameserver.model.zone.RadarZoneStyle;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.model.zone.ZoneType;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
@@ -247,6 +250,7 @@ public class RotatingHotZones extends Quest
 			}
 
 			HotzoneModifierManager.getInstance().clearModifier(br.getActiveZoneId());
+			RadarZoneManager.getInstance().unpublish(br.getActiveZoneId());
 		}
 		
 		// Offers pointing at the previous rotation are meaningless now.
@@ -269,6 +273,15 @@ public class RotatingHotZones extends Quest
 		}
 		_activeZones = List.copyOf(newZones);
 		_activeZoneSet = Set.copyOf(newZoneSet);
+
+		// The active zones go on every client's radar (RadarZones.ini); the previous ones came off above.
+		if (RadarZonesConfig.HOTZONES)
+		{
+			for (int zoneId : newZoneSet)
+			{
+				RadarZoneManager.getInstance().publish(ZoneManager.getInstance().getZoneById(zoneId), RadarZoneStyle.HOTZONE);
+			}
+		}
 		_nextRotationAt = System.currentTimeMillis() + (ROTATION_HOURS * 60 * 60 * 1000L);
 		
 		for (Player player : World.getInstance().getPlayers())

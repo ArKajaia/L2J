@@ -170,4 +170,19 @@ public class ZoneCylinder extends ZoneForm
 	{
 		return _centerPoint;
 	}
+
+	public int getX()
+	{
+		return _x;
+	}
+
+	public int getY()
+	{
+		return _y;
+	}
+
+	public int getRadius()
+	{
+		return _rad;
+	}
 }
