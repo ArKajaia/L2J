@@ -57,6 +57,7 @@ import org.l2jmobius.gameserver.network.serverpackets.Ex2CraftingGoalRemove;
 import org.l2jmobius.gameserver.network.serverpackets.Ex2CraftingGoalUpdate;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
+import org.l2jmobius.gameserver.network.serverpackets.RecipeItemMakeInfo;
 import org.l2jmobius.gameserver.network.serverpackets.ServerPacket;
 import org.l2jmobius.gameserver.network.serverpackets.TutorialShowQuestionMark;
 
@@ -402,7 +403,7 @@ public class CraftingGoalManager
 	}
 
 	/**
-	 * The bypass {@code _craftpin} the client's tracker sends: {@code pin <recipe>}, {@code unpin <recipe>}, or {@code sync <recipe>} to get a pinned goal again (one the player no longer has, or that is not pinned, is taken off the screen). Shows no window.
+	 * The bypass {@code _craftpin} the client's tracker sends: {@code pin <recipe>}, {@code unpin <recipe>}, {@code sync <recipe>} to get a pinned goal again (one the player no longer has, or that is not pinned, is taken off the screen), or {@code craft <item>} to open the manufacture window of a recipe the player knows for that item ({@link #openManufacture}). Shows no other window.
 	 * @param player the player
 	 * @param args what follows {@code _craftpin}
 	 */
@@ -426,6 +427,12 @@ public class CraftingGoalManager
 
 		switch (parts[0].toLowerCase(Locale.ROOT))
 		{
+			case "craft":
+			{
+				// The id is an item here: the part to craft.
+				openManufacture(player, recipeListId);
+				break;
+			}
 			case "pin":
 			{
 				pin(player, recipeListId, true);
@@ -460,6 +467,41 @@ public class CraftingGoalManager
 				}
 				break;
 			}
+		}
+	}
+
+	/**
+	 * Opens the manufacture window for an item, as the recipe book does: the recipe the player knows that makes it, the surest one first. The client's tracker fills in how many to make. A player who knows no recipe for it is told so in chat.
+	 * @param player the player
+	 * @param itemId the item to craft
+	 */
+	public void openManufacture(Player player, int itemId)
+	{
+		RecipeList best = null;
+		final List<RecipeList> known = new ArrayList<>(player.getDwarvenRecipeBook());
+		known.addAll(player.getCommonRecipeBook());
+		for (RecipeList recipe : known)
+		{
+			if ((recipe.getItemId() == itemId) && ((best == null) || (recipe.getSuccessRate() > best.getSuccessRate())))
+			{
+				best = recipe;
+			}
+		}
+
+		if (best != null)
+		{
+			player.sendPacket(new RecipeItemMakeInfo(best.getId(), player));
+			return;
+		}
+
+		final RecipeList any = _partRecipes.get(itemId);
+		if (any == null)
+		{
+			player.sendMessage(getItemName(itemId) + " can't be crafted.");
+		}
+		else
+		{
+			player.sendMessage("You don't know a recipe for " + getItemName(itemId) + " (" + getItemName(any.getRecipeId()) + ").");
 		}
 	}
 

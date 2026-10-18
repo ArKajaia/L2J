@@ -115,6 +115,9 @@ RequestBypassToServer (0x23) with one of:
   _craftpin unpin <recipeListId>   the tracker's close button   -> 0x04 reason 0
   _craftpin pin <recipeListId>     pin a goal again             -> 0x02
   _craftpin sync <recipeListId>    send me this goal again      -> 0x02, or 0x04 if not pinned / gone
+  _craftpin craft <itemId>         open the manufacture window  -> RecipeItemMakeInfo (0xDD) for the
+                                   surest recipe the player knows for that item, or a chat message
+                                   when the player knows none
 They open no window. The HTML pages use ".craft pin/unpin" bypasses of
 their own; the client screen should use _craftpin.
 
