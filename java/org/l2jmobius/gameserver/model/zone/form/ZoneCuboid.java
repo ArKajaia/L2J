@@ -148,4 +148,24 @@ public class ZoneCuboid extends ZoneForm
 	{
 		return _centerPoint;
 	}
+
+	public int getX1()
+	{
+		return _r.x;
+	}
+
+	public int getY1()
+	{
+		return _r.y;
+	}
+
+	public int getX2()
+	{
+		return _r.x + _r.width;
+	}
+
+	public int getY2()
+	{
+		return _r.y + _r.height;
+	}
 }
