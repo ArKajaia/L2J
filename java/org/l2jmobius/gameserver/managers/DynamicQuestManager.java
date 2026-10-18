@@ -2436,8 +2436,13 @@ public class DynamicQuestManager
 				final QuestInstance quest = findOwnQuest(player, args);
 				if (quest != null)
 				{
-					quest.showMarker(player);
-					player.sendMessage(quest.getMarker() != null ? "Your radar points the way." : "There is nothing to point at right now.");
+					// The current step's place, else the quest's hunting ground.
+					final Location target = quest.getMarker() != null ? quest.getMarker() : quest.getArea();
+					if (target != null)
+					{
+						QuestSpawnUtil.moveMarker(player, target, target);
+					}
+					player.sendMessage(target != null ? "Your radar points the way." : "There is nothing to point at right now.");
 					return DynamicQuestHtml.quest(this, player, npc, quest, channel);
 				}
 				return DynamicQuestHtml.main(this, player, npc, channel);
