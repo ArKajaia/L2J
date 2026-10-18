@@ -40,6 +40,7 @@ import org.l2jmobius.gameserver.config.custom.CustomMailManagerConfig;
 import org.l2jmobius.gameserver.config.custom.DelevelManagerConfig;
 import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
 import org.l2jmobius.gameserver.config.custom.DwarvenTradesConfig;
+import org.l2jmobius.gameserver.config.custom.DynamicQuestConfig;
 import org.l2jmobius.gameserver.config.custom.FactionSystemConfig;
 import org.l2jmobius.gameserver.config.custom.FakeClanConfig;
 import org.l2jmobius.gameserver.config.custom.FakePartyConfig;
@@ -150,6 +151,7 @@ public class ConfigLoader
 		FreeMountsConfig.load();
 		HellboundStatusConfig.load();
 		HiddenQuestConfig.load();
+		DynamicQuestConfig.load();
 		HotzoneCoinDropConfig.load();
 		HotzoneMinibossConfig.load();
 		InfusedMonsterConfig.load();

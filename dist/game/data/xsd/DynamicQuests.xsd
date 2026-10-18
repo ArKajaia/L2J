@@ -1,0 +1,211 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:simpleType name="triggerType">
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="BOARD_DAILY" />
+			<xs:enumeration value="NPC_INTERACTION" />
+			<xs:enumeration value="TIMER" />
+			<xs:enumeration value="WORLD_STATE" />
+			<xs:enumeration value="PLAYER_ACTION" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="objectiveType">
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="KILL" />
+			<xs:enumeration value="CULL" />
+			<xs:enumeration value="COLLECT" />
+			<xs:enumeration value="DELIVER" />
+			<xs:enumeration value="ESCORT" />
+			<xs:enumeration value="INVESTIGATE" />
+			<xs:enumeration value="DEFEND" />
+			<xs:enumeration value="INTERACT" />
+			<xs:enumeration value="REACH" />
+			<xs:enumeration value="DESTROY" />
+			<xs:enumeration value="INTERCEPT" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="transitionEvent">
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="SUCCESS" />
+			<xs:enumeration value="FAILURE" />
+			<xs:enumeration value="TIMEOUT" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="transitionAction">
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="NEXT" />
+			<xs:enumeration value="STAGE" />
+			<xs:enumeration value="COMPLETE" />
+			<xs:enumeration value="FAIL" />
+			<xs:enumeration value="FOLLOW_UP" />
+			<xs:enumeration value="ESCALATE" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="scope">
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="PERSONAL" />
+			<xs:enumeration value="WORLD" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="entry">
+		<xs:attribute name="id" type="xs:positiveInteger" use="required" />
+		<xs:attribute name="count" type="xs:positiveInteger" />
+		<xs:attribute name="minLevel" type="xs:positiveInteger" />
+		<xs:attribute name="maxLevel" type="xs:positiveInteger" />
+		<xs:attribute name="chance" type="xs:decimal" />
+		<xs:attribute name="scaled" type="xs:boolean" />
+	</xs:complexType>
+	<xs:complexType name="text">
+		<xs:simpleContent>
+			<xs:extension base="xs:string">
+				<xs:attribute name="key" type="xs:token" use="required" />
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+	<xs:element name="list">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="settings" minOccurs="0" maxOccurs="1">
+					<xs:complexType>
+						<xs:attribute name="noticeBoardNpc" type="xs:positiveInteger" />
+						<xs:attribute name="heraldNpc" type="xs:positiveInteger" />
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="board" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:attribute name="town" type="xs:string" use="required" />
+						<xs:attribute name="anchor" type="xs:positiveInteger" use="required" />
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="requester" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:attribute name="name" type="xs:token" use="required" />
+						<xs:attribute name="title" type="xs:string" />
+						<xs:attribute name="types" type="xs:string" />
+						<xs:attribute name="label" type="xs:string" />
+						<xs:attribute name="required" type="xs:boolean" />
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="monsterPool" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="band" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:attribute name="minLevel" type="xs:positiveInteger" use="required" />
+									<xs:attribute name="npcId" type="xs:positiveInteger" use="required" />
+									<xs:attribute name="tier" type="xs:nonNegativeInteger" />
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+						<xs:attribute name="name" type="xs:token" use="required" />
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="rewardTable" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="reward" type="entry" maxOccurs="unbounded" />
+						</xs:sequence>
+						<xs:attribute name="name" type="xs:token" use="required" />
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="itemTable" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="item" type="entry" maxOccurs="unbounded" />
+						</xs:sequence>
+						<xs:attribute name="name" type="xs:token" use="required" />
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="textPool" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="entry" type="xs:string" maxOccurs="unbounded" />
+						</xs:sequence>
+						<xs:attribute name="name" type="xs:token" use="required" />
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="template" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="trigger" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:attribute name="type" type="triggerType" use="required" />
+									<xs:anyAttribute processContents="lax" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="eligibility" minOccurs="0" maxOccurs="1">
+								<xs:complexType>
+									<xs:attribute name="minLevel" type="xs:positiveInteger" />
+									<xs:attribute name="maxLevel" type="xs:positiveInteger" />
+									<xs:attribute name="partyMin" type="xs:positiveInteger" />
+									<xs:attribute name="partyMax" type="xs:positiveInteger" />
+									<xs:attribute name="classes" type="xs:string" />
+									<xs:attribute name="races" type="xs:string" />
+									<xs:attribute name="towns" type="xs:string" />
+									<xs:attribute name="nightOnly" type="xs:boolean" />
+									<xs:attribute name="cooldown" type="xs:nonNegativeInteger" />
+									<xs:attribute name="dailyLimit" type="xs:nonNegativeInteger" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="context" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:attribute name="key" type="xs:token" use="required" />
+									<xs:attribute name="pool" type="xs:token" use="required" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="stage" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="text" type="xs:string" minOccurs="0" maxOccurs="1" />
+										<xs:element name="objective" maxOccurs="unbounded">
+											<xs:complexType>
+												<xs:attribute name="type" type="objectiveType" use="required" />
+												<xs:anyAttribute processContents="lax" />
+											</xs:complexType>
+										</xs:element>
+										<xs:element name="on" minOccurs="0" maxOccurs="unbounded">
+											<xs:complexType>
+												<xs:attribute name="event" type="transitionEvent" use="required" />
+												<xs:attribute name="action" type="transitionAction" use="required" />
+												<xs:attribute name="target" type="xs:positiveInteger" />
+												<xs:attribute name="chance" type="xs:decimal" />
+												<xs:attribute name="max" type="xs:positiveInteger" />
+												<xs:attribute name="extraTime" type="xs:nonNegativeInteger" />
+												<xs:attribute name="text" type="xs:string" />
+												<xs:attribute name="maxChain" type="xs:nonNegativeInteger" />
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+									<xs:attribute name="name" type="xs:string" />
+									<xs:attribute name="timeLimit" type="xs:nonNegativeInteger" />
+									<xs:attribute name="failOnDeath" type="xs:boolean" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="reward" minOccurs="0" maxOccurs="1">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="item" type="entry" minOccurs="0" maxOccurs="unbounded" />
+									</xs:sequence>
+									<xs:attribute name="exp" type="xs:decimal" />
+									<xs:attribute name="sp" type="xs:decimal" />
+									<xs:attribute name="adenaPerLevel" type="xs:nonNegativeInteger" />
+									<xs:attribute name="table" type="xs:token" />
+									<xs:attribute name="title" type="xs:string" />
+									<xs:attribute name="minChain" type="xs:nonNegativeInteger" />
+									<xs:attribute name="treasuryPercent" type="xs:nonNegativeInteger" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="text" type="text" minOccurs="0" maxOccurs="unbounded" />
+						</xs:sequence>
+						<xs:attribute name="id" type="xs:positiveInteger" use="required" />
+						<xs:attribute name="name" type="xs:string" use="required" />
+						<xs:attribute name="category" type="xs:string" />
+						<xs:attribute name="scope" type="scope" />
+						<xs:attribute name="requester" type="xs:token" />
+						<xs:attribute name="entryStages" type="xs:string" />
+						<xs:attribute name="enabled" type="xs:boolean" />
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

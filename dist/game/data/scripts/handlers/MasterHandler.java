@@ -28,6 +28,7 @@ import org.l2jmobius.gameserver.config.custom.AutoPotionsConfig;
 import org.l2jmobius.gameserver.config.custom.BankingConfig;
 import org.l2jmobius.gameserver.config.custom.ChatModerationConfig;
 import org.l2jmobius.gameserver.config.custom.BestiaryConfig;
+import org.l2jmobius.gameserver.config.custom.DynamicQuestConfig;
 import org.l2jmobius.gameserver.config.custom.CombatLogConfig;
 import org.l2jmobius.gameserver.config.custom.CraftingGoalsConfig;
 import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
@@ -73,6 +74,7 @@ import handlers.actions.shiftclick.PlayerShiftClick;
 import handlers.actions.shiftclick.StaticObjectShiftClick;
 import handlers.actions.shiftclick.SummonShiftClick;
 import handlers.bypass.communityboard.BestiaryBoard;
+import handlers.bypass.communityboard.DynamicQuestBoard;
 import handlers.bypass.communityboard.BuffTemplateBoard;
 import handlers.bypass.communityboard.ClanBoard;
 import handlers.bypass.communityboard.DropSearchBoard;
@@ -170,6 +172,7 @@ import handlers.chat.commands.admin.AdminGraciaSeeds;
 import handlers.chat.commands.admin.AdminGrandBoss;
 import handlers.chat.commands.admin.AdminHeal;
 import handlers.chat.commands.admin.AdminHelp;
+import handlers.chat.commands.admin.AdminDynamicQuests;
 import handlers.chat.commands.admin.AdminHiddenQuests;
 import handlers.chat.commands.admin.AdminHide;
 import handlers.chat.commands.admin.AdminHtml;
@@ -245,6 +248,7 @@ import handlers.chat.commands.voiced.ChangePassword;
 import handlers.chat.commands.voiced.ChatAdmin;
 import handlers.chat.commands.voiced.ClassTransferChallengeVoiced;
 import handlers.chat.commands.voiced.BestiaryVoiced;
+import handlers.chat.commands.voiced.QuestsVoiced;
 import handlers.chat.commands.voiced.CombatLogVoiced;
 import handlers.chat.commands.voiced.ExperienceGain;
 import handlers.chat.commands.voiced.GearVoiced;
@@ -423,6 +427,7 @@ public class MasterHandler
 			AdminHeal.class,
 			AdminHelp.class,
 			AdminHiddenQuests.class,
+			AdminDynamicQuests.class,
 			AdminHide.class,
 			AdminHtml.class,
 			AdminHwid.class,
@@ -546,6 +551,7 @@ public class MasterHandler
 			CraftingGoalBoard.class,
 			SessionBoard.class,
 			BestiaryBoard.class,
+			DynamicQuestBoard.class,
 		},
 		{
 			// Item Handlers
@@ -639,6 +645,7 @@ public class MasterHandler
 			CombatLogConfig.ENABLED ? CombatLogVoiced.class : null,
 			CombatLogConfig.RAID_ENABLED ? RaidLogVoiced.class : null,
 			BestiaryConfig.ENABLED ? BestiaryVoiced.class : null,
+			DynamicQuestConfig.ENABLED ? QuestsVoiced.class : null,
 		},
 		{
 			// Target Handlers

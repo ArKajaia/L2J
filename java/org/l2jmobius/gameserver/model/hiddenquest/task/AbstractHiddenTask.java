@@ -27,14 +27,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.threads.ThreadPool;
-import org.l2jmobius.commons.util.Rnd;
-import org.l2jmobius.gameserver.ai.Intention;
-import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.HiddenQuestManager;
-import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.StatSet;
-import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -46,13 +41,8 @@ import org.l2jmobius.gameserver.model.hiddenquest.HiddenQuestSession;
 import org.l2jmobius.gameserver.model.hiddenquest.MonsterBand;
 import org.l2jmobius.gameserver.model.hiddenquest.SpawnRole;
 import org.l2jmobius.gameserver.model.interfaces.ILocational;
-import org.l2jmobius.gameserver.model.script.Quest;
-import org.l2jmobius.gameserver.model.zone.type.PeaceZone;
-import org.l2jmobius.gameserver.model.zone.type.TownZone;
-import org.l2jmobius.gameserver.network.enums.ChatType;
-import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
-import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.util.LocationUtil;
+import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
  * Base of the hidden quest task types. A task is driven by its session: {@link #start(Player)} once, then {@link #onTick(Player, int)} every second until it calls {@link #complete()} or {@link #fail(String)}. Everything it spawns is tracked and removed by {@link #cleanup()}.
@@ -229,18 +219,12 @@ public abstract class AbstractHiddenTask
 
 	protected static void screen(Player player, String message)
 	{
-		if ((player != null) && (message != null) && !message.isEmpty())
-		{
-			player.sendPacket(new ExShowScreenMessage(message, ExShowScreenMessage.TOP_CENTER, 5000));
-		}
+		QuestSpawnUtil.screen(player, message);
 	}
 
 	protected static void announce(Player player, String message)
 	{
-		if ((player != null) && (message != null) && !message.isEmpty())
-		{
-			player.sendPacket(new ExShowScreenMessage(message, ExShowScreenMessage.MIDDLE_CENTER, 6000));
-		}
+		QuestSpawnUtil.announce(player, message);
 	}
 
 	/**
@@ -250,11 +234,7 @@ public abstract class AbstractHiddenTask
 	 */
 	protected void say(Npc npc, String message)
 	{
-		final Player player = _session.getPlayer();
-		if ((player != null) && (npc != null) && (message != null) && !message.isEmpty())
-		{
-			player.sendPacket(new CreatureSay(npc, ChatType.NPC_GENERAL, npc.getName(), message));
-		}
+		QuestSpawnUtil.say(_session.getPlayer(), npc, message);
 	}
 
 	/**
@@ -268,15 +248,8 @@ public abstract class AbstractHiddenTask
 		{
 			return;
 		}
-		if (_marker != null)
-		{
-			player.getRadar().removeMarker(_marker.getX(), _marker.getY(), _marker.getZ());
-		}
+		QuestSpawnUtil.moveMarker(player, _marker, location);
 		_marker = location;
-		if (location != null)
-		{
-			player.getRadar().addMarker(location.getX(), location.getY(), location.getZ());
-		}
 	}
 
 	// Spawning.
@@ -291,19 +264,13 @@ public abstract class AbstractHiddenTask
 	protected Npc spawnNpc(int npcId, ILocational location, int heading)
 	{
 		final Player player = _session.getPlayer();
-		final Npc npc = Quest.addSpawn(npcId, location.getX(), location.getY(), location.getZ(), heading, false, 0, false, player != null ? player.getInstanceId() : 0);
+		final Npc npc = QuestSpawnUtil.spawnTaskNpc(npcId, location, heading, player != null ? player.getInstanceId() : 0, TASK_NPC_VAR);
 		if (npc == null)
 		{
 			LOGGER.warning(getClass().getSimpleName() + ": Could not spawn NPC " + npcId + " for hidden quest " + _definition.getId() + ".");
 			return null;
 		}
 
-		npc.getVariables().set(TASK_NPC_VAR, true);
-		npc.setRandomWalking(false);
-		if (npc.isAttackable())
-		{
-			npc.asAttackable().setCanReturnToSpawnPoint(false);
-		}
 		_npcs.add(npc);
 		npc.addListener(new ConsumerEventListener(npc, EventType.ON_CREATURE_DEATH, (OnCreatureDeath event) -> ThreadPool.execute(() -> handleNpcDeath(npc)), this));
 		return npc;
@@ -333,23 +300,8 @@ public abstract class AbstractHiddenTask
 			return null;
 		}
 
-		if (npc.isAttackable())
-		{
-			final Attackable monster = npc.asAttackable();
-			final int championTier = tier >= 0 ? Math.min(3, tier) : Math.max(0, Math.min(3, band.getTier() + role.getTierBonus()));
-			if (championTier > 0)
-			{
-				monster.setChampionTier(championTier);
-			}
-			monster.setCurrentHpMp(monster.getMaxHp(), monster.getMaxMp());
-		}
-
-		final String newTitle = title != null ? title : role.getTitle();
-		if (newTitle != null)
-		{
-			npc.setTitle(newTitle);
-		}
-		npc.broadcastInfo();
+		final int championTier = tier >= 0 ? Math.min(3, tier) : band.getTier() + role.getTierBonus();
+		QuestSpawnUtil.applyTier(npc, championTier, title != null ? title : role.getTitle());
 		attack(npc, target);
 		return npc;
 	}
@@ -392,30 +344,17 @@ public abstract class AbstractHiddenTask
 	 */
 	protected static void attack(Npc npc, Creature target)
 	{
-		if ((npc == null) || (target == null) || !npc.isAttackable() || npc.isDead() || target.isDead())
-		{
-			return;
-		}
-		npc.asAttackable().addDamageHate(target, 0, 1000);
-		npc.getAI().setIntention(Intention.ATTACK, target);
+		QuestSpawnUtil.attack(npc, target);
 	}
 
 	protected static boolean isAlive(Npc npc)
 	{
-		return (npc != null) && npc.isSpawned() && !npc.isDead();
+		return QuestSpawnUtil.isAlive(npc);
 	}
 
 	protected static int countAlive(List<Npc> npcs)
 	{
-		int alive = 0;
-		for (Npc npc : npcs)
-		{
-			if (isAlive(npc))
-			{
-				alive++;
-			}
-		}
-		return alive;
+		return QuestSpawnUtil.countAlive(npcs);
 	}
 
 	/**
@@ -442,48 +381,11 @@ public abstract class AbstractHiddenTask
 	 */
 	public static Location findPoint(ILocational from, int minDistance, int maxDistance, boolean allowTown, int instanceId)
 	{
-		final GeoEngine geo = GeoEngine.getInstance();
-		final int attempts = 40;
-		for (int attempt = 0; attempt < attempts; attempt++)
-		{
-			// Later attempts try shorter distances.
-			final int max = Math.max(minDistance, maxDistance - (((maxDistance - minDistance) * attempt) / attempts));
-			final int distance = Rnd.get(minDistance, max);
-			final double angle = Rnd.nextDouble() * 2 * Math.PI;
-			final int x = from.getX() + (int) (Math.cos(angle) * distance);
-			final int y = from.getY() + (int) (Math.sin(angle) * distance);
-			final int z = geo.getHeight(x, y, from.getZ());
-			if (Math.abs(z - from.getZ()) > 500)
-			{
-				continue;
-			}
-			if (!geo.canMoveToTarget(from.getX(), from.getY(), from.getZ(), x, y, z, instanceId))
-			{
-				continue;
-			}
-			if (!allowTown && isTown(x, y, z))
-			{
-				continue;
-			}
-			return new Location(x, y, z);
-		}
-
-		final double angle = Rnd.nextDouble() * 2 * Math.PI;
-		final int x = from.getX() + (int) (Math.cos(angle) * minDistance);
-		final int y = from.getY() + (int) (Math.sin(angle) * minDistance);
-		final Location valid = geo.getValidLocation(from.getX(), from.getY(), from.getZ(), x, y, geo.getHeight(x, y, from.getZ()), instanceId);
-		return valid != null ? valid : new Location(from.getX(), from.getY(), from.getZ());
-	}
-
-	private static boolean isTown(int x, int y, int z)
-	{
-		final ZoneManager zones = ZoneManager.getInstance();
-		return (zones.getZone(x, y, z, PeaceZone.class) != null) || (zones.getZone(x, y, z, TownZone.class) != null);
+		return QuestSpawnUtil.findPoint(from, minDistance, maxDistance, allowTown, instanceId);
 	}
 
 	protected static String formatTime(int seconds)
 	{
-		final int safe = Math.max(0, seconds);
-		return (safe / 60) + ":" + ((safe % 60) < 10 ? "0" : "") + (safe % 60);
+		return QuestSpawnUtil.formatTime(seconds);
 	}
 }
