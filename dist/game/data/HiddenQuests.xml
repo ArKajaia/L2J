@@ -410,7 +410,7 @@
 		<landmark name="Altar of Rites" x="-44566" y="77508" z="-3736" riddle="An old altar in the elves' woods where the young once proved themselves." hint="North of Gludio, in the Windawood." />
 		<text key="greeting">Ah... a traveller. A real one. I can tell by your boots.</text>
 		<text key="offer">I am Ysolde, and I drew the maps your merchants still sell. My last map was never finished: three places I could never find again, written only as riddles in my old hand. My eyes are too weak now. You have walked every road in this kingdom - you might know the places I mean. Stand where each riddle points, and my map will be whole.</text>
-		<text key="briefing">Here is the first riddle. Read it again any time with the question mark. If a riddle stumps you for long, my map will begin to show you the way. Teleport, walk, swim - however you like. Dying will not stop you.</text>
+		<text key="briefing">Here is the first riddle. Read it again any time with .quests (or the question mark). If a riddle stumps you for long, my map will begin to show you the way. Teleport, walk, swim - however you like. Dying will not stop you.</text>
 		<text key="solved">Yes... yes! Just as I drew it, long ago.</text>
 		<text key="next">The map shifts. Another riddle appears.</text>
 		<text key="hint">A faint mark appears on your map...</text>
@@ -830,7 +830,7 @@
 		<landmark name="Isle of Prayer" x="149518" y="195280" z="-3736" riddle="An island where the faithful once went to be heard, across the water from the town of the water goddess." hint="East of Heine." />
 		<text key="greeting">Well met on the road! And what a road it's been for you, eh?</text>
 		<text key="offer">Dorrin Farstride. I've worn out more boots than most dwarves have worn out beards, and I thought nobody walked farther than me. Then I saw your tracks. Everywhere. So here's a game for two wanderers: I give you riddles about places I've stood, and you go and stand there too. No hurry - teleport, walk, swim, however you like. Four riddles, and we'll know which of us is the true Far-Strider.</text>
-		<text key="briefing">Here's the first riddle. Click the question mark to read it again. If a riddle stumps you for long, my old map will start to help. Dying won't stop the game.</text>
+		<text key="briefing">Here's the first riddle. Type .quests (or click the question mark) to read it again. If a riddle stumps you for long, my old map will start to help. Dying won't stop the game.</text>
 		<text key="solved">Ha! You found it. I left my mark on that stone myself, see?</text>
 		<text key="next">Dorrin scribbles another riddle.</text>
 		<text key="hint">A faint line appears on Dorrin's map...</text>

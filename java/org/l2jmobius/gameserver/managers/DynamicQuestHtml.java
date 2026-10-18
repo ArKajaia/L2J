@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.l2jmobius.gameserver.config.custom.DynamicQuestConfig;
+import org.l2jmobius.gameserver.config.custom.HiddenQuestConfig;
 import org.l2jmobius.gameserver.data.xml.DynamicQuestData;
 import org.l2jmobius.gameserver.managers.DynamicQuestManager.Channel;
 import org.l2jmobius.gameserver.model.actor.Npc;
@@ -40,6 +41,7 @@ import org.l2jmobius.gameserver.model.dynamicquest.StageTemplate;
 import org.l2jmobius.gameserver.model.dynamicquest.TriggerType;
 import org.l2jmobius.gameserver.model.dynamicquest.objective.AbstractObjective;
 import org.l2jmobius.gameserver.model.dynamicquest.objective.DeliverObjective;
+import org.l2jmobius.gameserver.model.hiddenquest.HiddenQuestSession;
 import org.l2jmobius.gameserver.model.siege.Castle;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
@@ -160,7 +162,7 @@ public final class DynamicQuestHtml
 		}
 		for (QuestInstance quest : quests)
 		{
-			sb.append("&#8226; ").append(link("quest " + quest.getId(), quest.getName())).append(" <font color=\"").append(quest.getDifficulty().getTier().getColor()).append("\">").append(quest.getDifficulty().getTier().getDisplayName()).append("</font>");
+			sb.append("- ").append(link("quest " + quest.getId(), quest.getName())).append(" <font color=\"").append(quest.getDifficulty().getTier().getColor()).append("\">").append(quest.getDifficulty().getTier().getDisplayName()).append("</font>");
 			if (quest.getOwnerId() != player.getObjectId())
 			{
 				sb.append(" <font color=\"").append(COLOR_MUTED).append("\">(").append(quest.isWorld() ? "world" : quest.getOwnerName()).append(")</font>");
@@ -168,10 +170,24 @@ public final class DynamicQuestHtml
 			sb.append("<br1>");
 		}
 
+		// The hidden quest under way (some clients never show its question mark).
+		if ((channel != Channel.NPC) && HiddenQuestConfig.ENABLED)
+		{
+			final HiddenQuestSession hidden = HiddenQuestManager.getInstance().getSession(player);
+			if (hidden != null)
+			{
+				sb.append("<br><font color=\"LEVEL\">Hidden quest</font><br1>- ").append(link("hidden", hidden.getDefinition().getName())).append(" <font color=\"").append(COLOR_MUTED).append("\">").append(hidden.getTask() != null ? hidden.getTask().getProgress() : "").append("</font><br1>");
+			}
+			else if (HiddenQuestManager.getInstance().getVisitingQuest(player) != null)
+			{
+				sb.append("<br><font color=\"LEVEL\">Hidden quest</font><br1>- ").append(link("hidden", "A messenger is looking for you")).append("<br1>");
+			}
+		}
+
 		final QuestOffer personal = manager.getPersonalOffer(player);
 		if (personal != null)
 		{
-			sb.append("<br><font color=\"LEVEL\">Offered to you</font><br1>&#8226; ").append(link("offer " + personal.getKey(), getTitle(personal.getTemplate()))).append("<br1>");
+			sb.append("<br><font color=\"LEVEL\">Offered to you</font><br1>- ").append(link("offer " + personal.getKey(), getTitle(personal.getTemplate()))).append("<br1>");
 		}
 
 		// Today's board.
@@ -197,7 +213,7 @@ public final class DynamicQuestHtml
 					sb.append("<br1>");
 				}
 				final boolean taken = manager.isTaken(player, offer);
-				sb.append("&#8226; ");
+				sb.append("- ");
 				if (taken)
 				{
 					sb.append("<font color=\"").append(COLOR_MUTED).append("\">").append(getTitle(offer.getTemplate())).append(" (taken)</font>");
@@ -227,7 +243,7 @@ public final class DynamicQuestHtml
 			sb.append("<br><font color=\"LEVEL\">World events</font><br1>");
 			for (QuestInstance quest : world)
 			{
-				sb.append("&#8226; ").append(link("quest " + quest.getId(), quest.getName())).append(" <font color=\"").append(COLOR_MUTED).append("\">near ").append(quest.getContext("near", "?")).append(", level ").append(quest.getDifficulty().getQuestLevel()).append("</font><br1>");
+				sb.append("- ").append(link("quest " + quest.getId(), quest.getName())).append(" <font color=\"").append(COLOR_MUTED).append("\">near ").append(quest.getContext("near", "?")).append(", level ").append(quest.getDifficulty().getQuestLevel()).append("</font><br1>");
 			}
 		}
 
@@ -351,7 +367,7 @@ public final class DynamicQuestHtml
 				for (AbstractObjective objective : quest.getObjectives())
 				{
 					final String color = objective.isDone() ? COLOR_GOOD : (objective.isOptional() ? COLOR_MUTED : "FFFFFF");
-					sb.append("<font color=\"").append(color).append("\">").append("&#8226; ").append(objective.describe());
+					sb.append("<font color=\"").append(color).append("\">").append("- ").append(objective.describe());
 					if (objective.isOptional())
 					{
 						sb.append(" (optional)");

@@ -64,6 +64,8 @@ public class CullObjective extends AbstractObjective
 		final int players = QuestInstance.playersNear(area, DynamicQuestConfig.WORLD_EVENT_RANGE).size();
 		final int amount = Math.min(_params.getInt("max", 60), _params.getInt("count", 15) + (_params.getInt("perPlayer", 4) * players));
 		spawnSurge(area, amount);
+		// Track points at the surge; everyone who joins gets it on the radar.
+		_quest.setMarker(area);
 		if (_surge.isEmpty())
 		{
 			return "the surge could not be spawned";
@@ -149,6 +151,10 @@ public class CullObjective extends AbstractObjective
 		{
 			_alpha = _quest.spawnMonster(this, pickMonster(random("alpha" + level)), point(area, 100, 400), _params.getInt("alphaTierBonus", 3), text("alphaTitle", "Alpha"), null);
 			_alphaSlain = _alpha == null;
+			if (_alpha != null)
+			{
+				_quest.setMarker(_alpha.getLocation());
+			}
 		}
 		final Location spread = point(area, _params.getInt("spreadMin", 1500), _params.getInt("spreadMax", 2500));
 		spawnSurge(spread, Math.max(5, _surge.size() / 2));

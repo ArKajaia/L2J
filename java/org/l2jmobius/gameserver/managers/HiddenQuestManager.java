@@ -1083,16 +1083,24 @@ public class HiddenQuestManager
 
 	private void onQuestionMark(Player player, int markId)
 	{
-		if (markId != QUESTION_MARK_ID)
+		if (markId == QUESTION_MARK_ID)
 		{
-			return;
+			showQuestionMark(player);
 		}
+	}
 
+	/**
+	 * Shows what the question mark shows: the running task's details (the riddle, the progress) or the waiting messenger's offer. Also reached with .quests, since some clients don't show the mark.
+	 * @param player the player
+	 * @return {@code true} if there was something to show
+	 */
+	public boolean showQuestionMark(Player player)
+	{
 		final HiddenQuestSession session = _sessions.get(player.getObjectId());
 		if ((session != null) && (session.getTask() != null))
 		{
 			session.getTask().handleQuestionMark(player);
-			return;
+			return true;
 		}
 
 		final MessengerVisit visit = _visits.get(player.getObjectId());
@@ -1101,11 +1109,13 @@ public class HiddenQuestManager
 			if (player.calculateDistance2D(visit._npc) > (Npc.INTERACTION_DISTANCE - 50))
 			{
 				player.sendMessage(visit._npc.getName() + " is waiting for you. Walk up to them.");
-				return;
+				return true;
 			}
 			player.setLastQuestNpcObject(visit._npc.getObjectId());
 			showOffer(player, visit._npc);
+			return true;
 		}
+		return false;
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -1456,7 +1466,7 @@ public class HiddenQuestManager
 
 	private static void line(StringBuilder sb, String text)
 	{
-		sb.append("<font color=\"LEVEL\">&#8226;</font> ").append(text).append("<br1>");
+		sb.append("<font color=\"LEVEL\">-</font> ").append(text).append("<br1>");
 	}
 
 	/**

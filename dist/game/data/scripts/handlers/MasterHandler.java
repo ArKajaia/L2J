@@ -29,6 +29,7 @@ import org.l2jmobius.gameserver.config.custom.BankingConfig;
 import org.l2jmobius.gameserver.config.custom.ChatModerationConfig;
 import org.l2jmobius.gameserver.config.custom.BestiaryConfig;
 import org.l2jmobius.gameserver.config.custom.DynamicQuestConfig;
+import org.l2jmobius.gameserver.config.custom.HiddenQuestConfig;
 import org.l2jmobius.gameserver.config.custom.CombatLogConfig;
 import org.l2jmobius.gameserver.config.custom.CraftingGoalsConfig;
 import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
@@ -645,7 +646,7 @@ public class MasterHandler
 			CombatLogConfig.ENABLED ? CombatLogVoiced.class : null,
 			CombatLogConfig.RAID_ENABLED ? RaidLogVoiced.class : null,
 			BestiaryConfig.ENABLED ? BestiaryVoiced.class : null,
-			DynamicQuestConfig.ENABLED ? QuestsVoiced.class : null,
+			DynamicQuestConfig.ENABLED || HiddenQuestConfig.ENABLED ? QuestsVoiced.class : null,
 		},
 		{
 			// Target Handlers

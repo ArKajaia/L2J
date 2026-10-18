@@ -842,6 +842,7 @@ Changes from 28 September – 18 October 2026.
 - **New**: a Notice Board next to every town's gatekeeper with daily offers and the town npcs' requests, a Bounties and Requests page on the Community Board, `.quests`, heralds who bring quests to players in the world, and Outbreak world events. Ten templates ship. See [Dynamic Quests](#dynamic-quests).
 - **Changed**: the spawning and placement helpers of the Hidden Quests moved to a shared `QuestSpawnUtil`; the Hidden Quests behave as before.
 - **New**: 14 more optional Dynamic Quests, among them Treasure Map, Manhunt, Smuggler Interception, The Lost Child, Fisherman's Request, Lord's Levy, Night Watch and Guild Contract. There is a new INTERCEPT objective, fishing, stealth and fugitive (fake player) objectives, and offers that depend on the night or a castle lord.
+- **Fixed**: the question mark of quests isn't shown by every client. Finds and follow-ups now open their window at once, and `.quests` shows everything the question mark would: Dynamic Quest offers, and the Hidden Quest under way (its riddle, its progress, a waiting messenger). Crafting Goals and Dynamic Quests no longer share a question mark id.
 - **Changed**: Dynamic Quests never pester. An unasked offer that is turned down, left to expire or failed doesn't come back that day, and `.quests heralds off` stops heralds.
 
 ### Bestiary

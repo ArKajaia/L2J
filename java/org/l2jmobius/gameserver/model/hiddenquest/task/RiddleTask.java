@@ -83,7 +83,7 @@ public class RiddleTask extends AbstractHiddenTask
 		message.replace("%hint%", _hinted ? landmark.getHint() : "");
 		player.sendPacket(message);
 		player.sendPacket(new TutorialShowQuestionMark(HiddenQuestManager.QUESTION_MARK_ID));
-		screen(player, "Riddle " + (_index + 1) + "/" + _riddles.size() + " - " + text("reread", "click the question mark to read it again."));
+		screen(player, "Riddle " + (_index + 1) + "/" + _riddles.size() + " - " + text("reread", "type .quests to read it again."));
 	}
 
 	@Override

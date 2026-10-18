@@ -120,7 +120,7 @@ public class DynamicQuestManager
 	private static final Logger LOGGER = Logger.getLogger(DynamicQuestManager.class.getName());
 
 	/** The tutorial question mark raised by heralds and follow-ups. */
-	public static final int QUESTION_MARK_ID = 9310;
+	public static final int QUESTION_MARK_ID = 9320;
 
 	/** Where the bypasses of a page go. */
 	public enum Channel
@@ -2224,10 +2224,11 @@ public class DynamicQuestManager
 		offer.setExpires(System.currentTimeMillis() + (DynamicQuestConfig.HERALD_WAIT_TIME * 3000L));
 		_personalOffers.put(player.getObjectId(), offer);
 		_nextOffer.put(player.getObjectId(), System.currentTimeMillis() + (DynamicQuestConfig.OFFER_RETRY_DELAY * 1000L));
-		final String line = template.getText("findText", "You found something. Click the question mark to look at it.");
+		final String line = template.getText("findText", "You found something.");
 		QuestSpawnUtil.announce(player, line);
-		player.sendMessage(line);
+		player.sendMessage(line + " Type .quests to look at it again.");
 		player.sendPacket(new TutorialShowQuestionMark(QUESTION_MARK_ID));
+		sendWindow(player, DynamicQuestHtml.offer(this, player, null, offer, Channel.WINDOW));
 		log(player.getName() + " found " + template.getName() + ".");
 		return true;
 	}
@@ -2297,6 +2298,7 @@ public class DynamicQuestManager
 				herald.setHeading(LocationUtil.calculateHeadingFrom(herald, player));
 				herald.broadcastInfo();
 				QuestSpawnUtil.say(player, herald, offer.getTemplate().getText("heraldLine", "You there! I have work for someone like you."));
+				QuestSpawnUtil.screen(player, herald.getName() + " wants a word with you. Talk to them, or type .quests.");
 				player.sendPacket(new TutorialShowQuestionMark(QUESTION_MARK_ID));
 			}
 			else if ((herald.getAI().getIntention() != Intention.MOVE_TO) || ((System.currentTimeMillis() / 1000) % 2) == 0)
@@ -2412,6 +2414,11 @@ public class DynamicQuestManager
 				declinePersonalOffer(player);
 				return null;
 			}
+			case "hidden":
+			{
+				HiddenQuestManager.getInstance().showQuestionMark(player);
+				return null;
+			}
 			case "heralds":
 			{
 				final boolean off = (args.length > 1) ? args[1].equalsIgnoreCase("off") : !player.getVariables().getBoolean(VAR_NO_HERALDS, false);
@@ -2429,8 +2436,13 @@ public class DynamicQuestManager
 				final QuestInstance quest = findOwnQuest(player, args);
 				if (quest != null)
 				{
-					quest.showMarker(player);
-					player.sendMessage(quest.getMarker() != null ? "Your radar points the way." : "There is nothing to point at right now.");
+					// The current step's place, else the quest's hunting ground.
+					final Location target = quest.getMarker() != null ? quest.getMarker() : quest.getArea();
+					if (target != null)
+					{
+						QuestSpawnUtil.moveMarker(player, target, target);
+					}
+					player.sendMessage(target != null ? "Your radar points the way." : "There is nothing to point at right now.");
 					return DynamicQuestHtml.quest(this, player, npc, quest, channel);
 				}
 				return DynamicQuestHtml.main(this, player, npc, channel);
