@@ -86,14 +86,6 @@ public class SessionBoard implements IParseBoardHandler
 	private static final String BG_HEAD = "1A1712";
 	private static final String BG_ROW = "14120E";
 	
-	// Client icons.
-	private static final String ICON_PAGE = "icon.etc_exp_point_i00";
-	private static final String ICON_TIME = "icon.etc_torch_on_i00";
-	private static final String ICON_LEVEL = "icon.etc_badge_gold_i00";
-	private static final String ICON_EXP = "icon.etc_exp_point_i00";
-	private static final String ICON_ADENA = "icon.etc_adena_i00";
-	private static final String ICON_HUNT = "icon.weapon_long_sword_i00";
-	private static final String ICON_ACTIVITY = "icon.etc_scroll_gray_i00";
 	
 	private static final String[] COMMANDS =
 	{
@@ -209,10 +201,10 @@ public class SessionBoard implements IParseBoardHandler
 			adena += record.getAdenaChange();
 		}
 		sb.append("<table width=").append(WIDTH).append(" cellpadding=0 cellspacing=0><tr>");
-		sb.append("<td>").append(tile(ICON_TIME, "Played", plainText(SessionStatsManager.formatDuration(played)), null)).append("</td><td width=6></td>");
-		sb.append("<td>").append(tile(ICON_LEVEL, "Levels", signed(levels, false), null)).append("</td><td width=6></td>");
-		sb.append("<td>").append(tile(ICON_HUNT, "Monsters", plain(FormatUtil.formatAdena(kills), kills), null)).append("</td><td width=6></td>");
-		sb.append("<td>").append(tile(ICON_ADENA, "Adena", signedShort(adena), null)).append("</td>");
+		sb.append("<td>").append(tile("Played", plainText(SessionStatsManager.formatDuration(played)), null)).append("</td><td width=6></td>");
+		sb.append("<td>").append(tile("Levels", signed(levels, false), null)).append("</td><td width=6></td>");
+		sb.append("<td>").append(tile("Monsters", plain(FormatUtil.formatAdena(kills), kills), null)).append("</td><td width=6></td>");
+		sb.append("<td>").append(tile("Adena", signedShort(adena), null)).append("</td>");
 		sb.append("</tr></table>").append(spacer(12));
 		
 		// Each line is a table of its own: the client doesn't color a table row, only a table.
@@ -284,13 +276,12 @@ public class SessionBoard implements IParseBoardHandler
 	private static void appendHeader(StringBuilder sb, String subtitle, boolean historyTab, int sessions)
 	{
 		sb.append("<table width=").append(WIDTH).append(" cellpadding=0 cellspacing=0 bgcolor=").append(BG_PANEL).append(">");
-		sb.append("<tr><td height=10 colspan=5></td></tr><tr><td width=10></td>");
-		sb.append("<td width=42 valign=top><img src=\"").append(ICON_PAGE).append("\" width=32 height=32></td>");
-		sb.append("<td width=").append(WIDTH - 62 - 190).append(" valign=top><font name=\"hs12\" color=\"").append(COLOR_TITLE).append("\">Session Log</font><br1><font color=\"").append(COLOR_DIM).append("\">").append(subtitle).append("</font></td>");
+		sb.append("<tr><td height=10 colspan=4></td></tr><tr><td width=10></td>");
+				sb.append("<td width=").append(WIDTH - 20 - 190).append(" valign=top><font name=\"hs12\" color=\"").append(COLOR_TITLE).append("\">Session Log</font><br1><font color=\"").append(COLOR_DIM).append("\">").append(subtitle).append("</font></td>");
 		sb.append("<td width=190 align=right valign=top><table cellpadding=0 cellspacing=0><tr><td height=5></td></tr><tr>");
 		sb.append("<td>").append(tab("This session", BYPASS, 94, !historyTab)).append("</td><td width=4></td>");
 		sb.append("<td>").append(tab("History (" + sessions + ")", BYPASS + " history", 90, historyTab)).append("</td>");
-		sb.append("</tr></table></td><td width=10></td></tr><tr><td height=10 colspan=5></td></tr></table>");
+		sb.append("</tr></table></td><td width=10></td></tr><tr><td height=10 colspan=4></td></tr></table>");
 		sb.append(spacer(10));
 	}
 	
@@ -300,19 +291,19 @@ public class SessionBoard implements IParseBoardHandler
 	private static void appendTiles(StringBuilder sb, SessionRecord record, SessionRecord other)
 	{
 		sb.append("<table width=").append(WIDTH).append(" cellpadding=0 cellspacing=0><tr>");
-		sb.append("<td>").append(tile(ICON_TIME, "Played", plainText(SessionStatsManager.formatDuration(record.getDurationMillis())), other != null ? SessionStatsManager.formatDuration(other.getDurationMillis()) : null)).append("</td><td width=6></td>");
-		sb.append("<td>").append(tile(ICON_LEVEL, "Levels", signed(record.getLevelsGained(), false), other != null ? signedText(other.getLevelsGained(), false) : null)).append("</td><td width=6></td>");
-		sb.append("<td>").append(tile(ICON_EXP, "Experience", plain(SessionStatsManager.formatShort(record.get(SessionStat.EXP_GAINED)), record.get(SessionStat.EXP_GAINED)), other != null ? SessionStatsManager.formatShort(other.get(SessionStat.EXP_GAINED)) : null)).append("</td><td width=6></td>");
-		sb.append("<td>").append(tile(ICON_ADENA, "Adena", signedShort(record.getAdenaChange()), other != null ? signedShortText(other.getAdenaChange()) : null)).append("</td>");
+		sb.append("<td>").append(tile("Played", plainText(SessionStatsManager.formatDuration(record.getDurationMillis())), other != null ? SessionStatsManager.formatDuration(other.getDurationMillis()) : null)).append("</td><td width=6></td>");
+		sb.append("<td>").append(tile("Levels", signed(record.getLevelsGained(), false), other != null ? signedText(other.getLevelsGained(), false) : null)).append("</td><td width=6></td>");
+		sb.append("<td>").append(tile("Experience", plain(SessionStatsManager.formatShort(record.get(SessionStat.EXP_GAINED)), record.get(SessionStat.EXP_GAINED)), other != null ? SessionStatsManager.formatShort(other.get(SessionStat.EXP_GAINED)) : null)).append("</td><td width=6></td>");
+		sb.append("<td>").append(tile("Adena", signedShort(record.getAdenaChange()), other != null ? signedShortText(other.getAdenaChange()) : null)).append("</td>");
 		sb.append("</tr></table>").append(spacer(8));
 	}
 	
-	private static String tile(String icon, String label, String value, String other)
+	private static String tile(String label, String value, String other)
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<table width=").append(TILE_WIDTH).append(" cellpadding=0 cellspacing=0 bgcolor=").append(BG_ROW).append(">");
 		sb.append("<tr><td height=7 colspan=3></td></tr><tr><td width=8></td><td width=").append(TILE_WIDTH - 16).append(">");
-		sb.append("<table cellpadding=0 cellspacing=0><tr><td width=20><img src=\"").append(icon).append("\" width=16 height=16></td><td><font color=\"").append(COLOR_DIM).append("\">").append(label).append("</font></td></tr></table>");
+		sb.append("<font color=\"").append(COLOR_DIM).append("\">").append(label).append("</font>");
 		sb.append("</td><td width=8></td></tr><tr><td height=4 colspan=3></td></tr>");
 		sb.append("<tr><td></td><td height=18>").append(value.replace("<font ", "<font name=\"hs12\" ")).append("</td><td></td></tr>");
 		sb.append("<tr><td></td><td><font color=\"").append(COLOR_MUTED).append("\">").append(other != null ? "Last: " + other : "&nbsp;").append("</font></td><td></td></tr>");
@@ -371,7 +362,7 @@ public class SessionBoard implements IParseBoardHandler
 		rows.add(row("Experience lost", records, false, r -> lost(r.get(SessionStat.EXP_LOST))));
 		rows.add(row("SP gained", records, true, r -> stat(r, SessionStat.SP_GAINED)));
 		rows.add(row("Fame", records, false, r -> signed(r.get(SessionStat.FAME), false)));
-		appendSection(sb, ICON_EXP, "Character", rows, columnWidth);
+		appendSection(sb, "Character", rows, columnWidth);
 		
 		// Hunting.
 		rows.clear();
@@ -382,14 +373,14 @@ public class SessionBoard implements IParseBoardHandler
 		rows.add(row("PvP kills", records, false, r -> stat(r, SessionStat.PVP_KILLS)));
 		rows.add(row("PK kills", records, false, r -> stat(r, SessionStat.PK_KILLS)));
 		rows.add(row("Deaths", records, false, r -> lost(r.get(SessionStat.DEATHS))));
-		appendSection(sb, ICON_HUNT, "Hunting", rows, columnWidth);
+		appendSection(sb, "Hunting", rows, columnWidth);
 		
 		// Adena.
 		rows.clear();
 		rows.add(row("Adena earned", records, true, r -> stat(r, SessionStat.ADENA_EARNED)));
 		rows.add(row("Adena spent", records, true, r -> lost(r.get(SessionStat.ADENA_SPENT))));
 		rows.add(row("Adena carried", records, true, r -> signed(r.getAdenaChange(), true)));
-		appendSection(sb, ICON_ADENA, "Adena", rows, columnWidth);
+		appendSection(sb, "Adena", rows, columnWidth);
 		
 		// Activity.
 		rows.clear();
@@ -397,7 +388,7 @@ public class SessionBoard implements IParseBoardHandler
 		rows.add(row("Drops picked up", records, false, r -> stat(r, SessionStat.ITEMS_LOOTED)));
 		rows.add(row("Spoils swept", records, false, r -> stat(r, SessionStat.SPOILS)));
 		rows.add(row("Items crafted", records, false, r -> stat(r, SessionStat.ITEMS_CRAFTED)));
-		appendSection(sb, ICON_ACTIVITY, "Activity", rows, columnWidth);
+		appendSection(sb, "Activity", rows, columnWidth);
 		
 		sb.append(message("Adena earned counts adena from monsters, quests, shops and your private store, not from trades, mail or the warehouse. Adena carried is how much more (or less) you hold than at login."));
 	}
@@ -449,12 +440,12 @@ public class SessionBoard implements IParseBoardHandler
 	}
 	
 	/**
-	 * A section of the comparison: its icon and title over a line, then its rows on alternating backgrounds.
+	 * A section of the comparison: its title over a line, then its rows on alternating backgrounds.
 	 */
-	private static void appendSection(StringBuilder sb, String icon, String title, List<Row> rows, int columnWidth)
+	private static void appendSection(StringBuilder sb, String title, List<Row> rows, int columnWidth)
 	{
-		sb.append("<table width=").append(WIDTH).append(" height=26 cellpadding=0 cellspacing=0><tr><td width=8></td><td width=22><img src=\"").append(icon).append("\" width=16 height=16></td>");
-		sb.append("<td width=").append(WIDTH - 30).append("><font color=\"").append(COLOR_SECTION).append("\">").append(title).append("</font></td></tr></table>");
+		sb.append("<table width=").append(WIDTH).append(" height=22 cellpadding=0 cellspacing=0><tr><td width=8></td>");
+		sb.append("<td width=").append(WIDTH - 8).append("><font color=\"").append(COLOR_SECTION).append("\">").append(title).append("</font></td></tr></table>");
 		sb.append("<img src=\"L2UI.SquareGray\" width=").append(WIDTH).append(" height=1>");
 		int line = 0;
 		for (Row row : rows)

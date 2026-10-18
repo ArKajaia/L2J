@@ -59,7 +59,7 @@ public final class DynamicQuestHtml
 	private static final String COLOR_MUTED = "808080";
 	private static final String COLOR_GOOD = "99CC99";
 
-	// The Community Board pages: wider, with icons, cards and gauges. Only what the High Five client draws: colored tables (never rows or cells), cell backgrounds, client icons and gauge textures.
+	// The Community Board pages: wider, with cards and gauges. Only what the High Five client draws: colored tables (never rows or cells), cell backgrounds and gauge textures. No item icons: the client crops them to the cell instead of scaling them, and they overlap the text.
 	private static final int BOARD_WIDTH = 510;
 	private static final int HALF_WIDTH = (BOARD_WIDTH - 6) / 2;
 	private static final String COLOR_NAME = "EDE3C8";
@@ -73,25 +73,6 @@ public final class DynamicQuestHtml
 	private static final String BG_CARD_DIM = "0F0E0B";
 	private static final String GAUGE_PROGRESS = "EXP";
 	private static final String GAUGE_TIME = "MP";
-	private static final String ICON_EXP = "icon.etc_exp_point_i00";
-	private static final String ICON_ADENA = "icon.etc_adena_i00";
-	private static final String DEFAULT_ICON = "icon.etc_scroll_gray_i00";
-	private static final Map<String, String> CATEGORY_ICONS = Map.ofEntries(
-		Map.entry("ambush", "icon.weapon_dagger_i00"),
-		Map.entry("bounty", "icon.etc_skull_red_i00"),
-		Map.entry("contract", "icon.etc_scroll_gray_i00"),
-		Map.entry("courier", "icon.etc_letter_envelope_i00"),
-		Map.entry("defence", "icon.shield_buckler_i00"),
-		Map.entry("escort", "icon.armor_chain_boots_i00"),
-		Map.entry("hunt", "icon.weapon_long_sword_i00"),
-		Map.entry("mystery", "icon.etc_question_mark_i00"),
-		Map.entry("patrol", "icon.etc_torch_on_i00"),
-		Map.entry("purge", "icon.etc_fire_crystal_i00"),
-		Map.entry("request", "icon.etc_pouch_brown_i00"),
-		Map.entry("rescue", "icon.etc_key_i00"),
-		Map.entry("scouting", "icon.etc_map_yellow_i00"),
-		Map.entry("treasure", "icon.etc_treasure_box_i00"),
-		Map.entry("world event", "icon.etc_warding_orb_red_i00"));
 	/** "3/15" in an objective's progress line. */
 	private static final Pattern COUNT = Pattern.compile("(\\d+)\\s*/\\s*(\\d+)");
 
@@ -119,7 +100,7 @@ public final class DynamicQuestHtml
 	{
 		if (channel == Channel.BOARD)
 		{
-			return boardHeader(DEFAULT_ICON, text, null, null, 0) + spacer(10);
+			return boardHeader(text, null, null, 0) + spacer(10);
 		}
 		return "<table width=" + width(channel) + " cellpadding=0 cellspacing=0><tr><td align=center><font color=\"" + COLOR_TITLE + "\">" + text + "</font></td></tr></table><img src=\"L2UI.SquareGray\" width=" + width(channel) + " height=1><br>";
 	}
@@ -531,11 +512,11 @@ public final class DynamicQuestHtml
 		final StringBuilder sb = new StringBuilder();
 		final int owned = manager.getOwnedQuests(player).size();
 		final String chips = "<table cellpadding=0 cellspacing=0><tr><td>" + chip("ACTIVE", owned, DynamicQuestConfig.MAX_ACTIVE) + "</td><td width=6></td><td>" + chip("TODAY", manager.getAccountDailyTotal(player.getAccountName()), DynamicQuestConfig.ACCOUNT_DAILY_LIMIT) + "</td></tr></table>";
-		sb.append(boardHeader(DEFAULT_ICON, "Bounties &amp; Requests", (town != null ? town + " - " : "") + "new board at " + DynamicQuestConfig.BOARD_RESET_HOUR + ":00", chips, 150));
+		sb.append(boardHeader("Bounties &amp; Requests", (town != null ? town + " - " : "") + "new board at " + DynamicQuestConfig.BOARD_RESET_HOUR + ":00", chips, 150));
 
 		// Running quests.
 		final List<QuestInstance> quests = manager.getQuests(player);
-		sb.append(spacer(12)).append(sectionHeader("Your quests", owned + " of " + DynamicQuestConfig.MAX_ACTIVE + " taken"));
+		sb.append(spacer(8)).append(sectionHeader("Your quests", null));
 		if (quests.isEmpty())
 		{
 			sb.append(note("None yet. Take one from today's board below."));
@@ -551,7 +532,7 @@ public final class DynamicQuestHtml
 			final StageTemplate stage = quest.getStage();
 			final String stageText = "Stage " + (quest.getStageIndex() + 1) + " of " + quest.getTemplate().getStages().size() + (stage != null ? " - " + quest.format(stage.getName()) : "");
 			final String bottom = "<table cellpadding=0 cellspacing=0><tr><td width=110>" + gauge(110, getProgress(quest), GAUGE_PROGRESS) + "</td><td width=8></td><td><font color=\"" + COLOR_DIM + "\">" + stageText + "</font></td></tr></table>";
-			sb.append(card(BOARD_WIDTH, BG_CARD, getIcon(quest.getTemplate()), 32, top, bottom, button("quest " + quest.getId(), "Open", 60), 64)).append(spacer(4));
+			sb.append(card(BOARD_WIDTH, BG_CARD, top, bottom, button("quest " + quest.getId(), "Open", 60), 64)).append(spacer(2));
 		}
 
 		// The hidden quest under way and the offer a herald brought.
@@ -561,17 +542,17 @@ public final class DynamicQuestHtml
 			final HiddenQuestSession hidden = HiddenQuestManager.getInstance().getSession(player);
 			if (hidden != null)
 			{
-				special.add(card(HALF_WIDTH, BG_CARD, "icon.etc_question_mark_i00", 32, "<font color=\"LEVEL\">Hidden quest</font>", link("hidden", hidden.getDefinition().getName()) + (hidden.getTask() != null ? " <font color=\"" + COLOR_LABEL + "\">" + hidden.getTask().getProgress() + "</font>" : ""), null, 0));
+				special.add(card(HALF_WIDTH, BG_CARD, "<font color=\"LEVEL\">Hidden quest</font>", link("hidden", hidden.getDefinition().getName()) + (hidden.getTask() != null ? " <font color=\"" + COLOR_LABEL + "\">" + hidden.getTask().getProgress() + "</font>" : ""), null, 0));
 			}
 			else if (HiddenQuestManager.getInstance().getVisitingQuest(player) != null)
 			{
-				special.add(card(HALF_WIDTH, BG_CARD, "icon.etc_question_mark_i00", 32, "<font color=\"LEVEL\">Hidden quest</font>", link("hidden", "A messenger is looking for you"), null, 0));
+				special.add(card(HALF_WIDTH, BG_CARD, "<font color=\"LEVEL\">Hidden quest</font>", link("hidden", "A messenger is looking for you"), null, 0));
 			}
 		}
 		final QuestOffer personal = manager.getPersonalOffer(player);
 		if (personal != null)
 		{
-			special.add(card(HALF_WIDTH, BG_PANEL, getIcon(personal.getTemplate()), 32, "<font color=\"LEVEL\">Offered to you</font>", link("offer " + personal.getKey(), getTitle(personal.getTemplate())), button("offer " + personal.getKey(), "View", 50), 54));
+			special.add(card(HALF_WIDTH, BG_PANEL, "<font color=\"LEVEL\">Offered to you</font>", link("offer " + personal.getKey(), getTitle(personal.getTemplate())), button("offer " + personal.getKey(), "View", 50), 54));
 		}
 		if (!special.isEmpty())
 		{
@@ -595,19 +576,19 @@ public final class DynamicQuestHtml
 				final String who = offer.getRequester() != null ? offer.getRequester() : offer.getTemplate().getCategory();
 				if (offer.isRequest())
 				{
-					requests.add(card(BOARD_WIDTH, taken ? BG_CARD_DIM : BG_CARD, getIcon(offer.getTemplate()), 24, title, null, taken ? "<font color=\"" + COLOR_GOOD + "\">Taken</font>" : "<font color=\"" + COLOR_LABEL + "\">" + who + "</font>", 150));
+					requests.add(card(BOARD_WIDTH, taken ? BG_CARD_DIM : BG_CARD, title, null, taken ? "<font color=\"" + COLOR_GOOD + "\">Taken</font>" : "<font color=\"" + COLOR_LABEL + "\">" + who + "</font>", 150));
 					continue;
 				}
-				String bottom = "<font color=\"" + COLOR_LABEL + "\">" + who + "</font>";
+				String line = title + " <font color=\"" + COLOR_LABEL + "\">" + who + "</font>";
 				final QuestTrigger trigger = offer.getTemplate().getTrigger(TriggerType.BOARD_DAILY);
 				if (!taken && (trigger != null) && "NIGHT".equals(trigger.getRequires()))
 				{
-					bottom += " <font color=\"" + COLOR_NIGHT + "\">tonight</font>";
+					line += " <font color=\"" + COLOR_NIGHT + "\">tonight</font>";
 				}
-				offers.add(card(HALF_WIDTH, taken ? BG_CARD_DIM : BG_CARD, getIcon(offer.getTemplate()), 32, title, bottom, taken ? "<font color=\"" + COLOR_GOOD + "\">Taken</font>" : null, 44));
+				offers.add(card(HALF_WIDTH, taken ? BG_CARD_DIM : BG_CARD, line, null, taken ? "<font color=\"" + COLOR_GOOD + "\">Taken</font>" : null, 44));
 			}
 
-			sb.append(spacer(12)).append(sectionHeader("Today in " + town, "Board offers can be taken from here"));
+			sb.append(spacer(8)).append(sectionHeader("Today in " + town, null));
 			if (offers.isEmpty())
 			{
 				sb.append(note("Nothing today."));
@@ -616,10 +597,10 @@ public final class DynamicQuestHtml
 
 			if (!requests.isEmpty())
 			{
-				sb.append(spacer(12)).append(sectionHeader("Requests", "Taken at the Notice Board"));
+				sb.append(spacer(8)).append(sectionHeader("Requests", "Taken at the Notice Board"));
 				for (String request : requests)
 				{
-					sb.append(request).append(spacer(4));
+					sb.append(request).append(spacer(2));
 				}
 			}
 		}
@@ -628,18 +609,18 @@ public final class DynamicQuestHtml
 		final List<QuestInstance> world = manager.getWorldQuests();
 		if (!world.isEmpty())
 		{
-			sb.append(spacer(12)).append(sectionHeader("World events", "Anyone nearby can join"));
+			sb.append(spacer(8)).append(sectionHeader("World events", "Anyone nearby can join"));
 			for (QuestInstance quest : world)
 			{
 				final String bottom = "<font color=\"" + COLOR_LABEL + "\">Near " + quest.getContext("near", "?") + ", level " + quest.getDifficulty().getQuestLevel() + "</font>";
-				sb.append(card(BOARD_WIDTH, BG_CARD, getIcon(quest.getTemplate()), 32, link("quest " + quest.getId(), quest.getName()), bottom, button("track " + quest.getId(), "Track", 60), 64)).append(spacer(4));
+				sb.append(card(BOARD_WIDTH, BG_CARD, link("quest " + quest.getId(), quest.getName()), bottom, button("track " + quest.getId(), "Track", 60), 64)).append(spacer(2));
 			}
 		}
 
 		// Heralds.
 		final boolean heralds = !player.getVariables().getBoolean(DynamicQuestManager.VAR_NO_HERALDS, false);
 		final String state = "<font color=\"" + COLOR_DIM + "\">Heralds bring you quests while you hunt:</font> <font color=\"" + (heralds ? COLOR_GOOD : COLOR_BAD) + "\">" + (heralds ? "on" : "off") + "</font>";
-		sb.append(spacer(12)).append(card(BOARD_WIDTH, BG_CARD_DIM, "icon.etc_letter_envelope_i00", 16, state, null, button("heralds " + (heralds ? "off" : "on"), heralds ? "Turn off" : "Turn on", 70), 74));
+		sb.append(spacer(8)).append(card(BOARD_WIDTH, BG_CARD_DIM, state, null, button("heralds " + (heralds ? "off" : "on"), heralds ? "Turn off" : "Turn on", 70), 74));
 		return sb.toString();
 	}
 
@@ -648,7 +629,7 @@ public final class DynamicQuestHtml
 		final QuestTemplate template = offer.getTemplate();
 		final StringBuilder sb = new StringBuilder();
 		sb.append(breadcrumb(getTitle(template)));
-		sb.append(boardHeader(getIcon(template), getTitle(template), template.getCategory() + (offer.getTown() != null ? " - " + offer.getTown() : ""), null, 0));
+		sb.append(boardHeader(getTitle(template), template.getCategory() + (offer.getTown() != null ? " - " + offer.getTown() : ""), null, 0));
 
 		final StringBuilder text = new StringBuilder();
 		if (offer.getRequester() != null)
@@ -660,7 +641,7 @@ public final class DynamicQuestHtml
 
 		final List<Player> members = DynamicQuestManager.getMembers(player);
 		final String problem = getProblem(manager, player, npc, offer, members);
-		sb.append(spacer(12)).append(sectionHeader("Choose how hard", "Adjusts to you" + (members.size() > 1 ? " and " + (members.size() - 1) + " party members near you" : "")));
+		sb.append(spacer(8)).append(sectionHeader("Choose how hard", "Adjusts to you" + (members.size() > 1 ? " and " + (members.size() - 1) + " party members near you" : "")));
 
 		final List<QuestTier> tiers = new ArrayList<>();
 		for (QuestTier tier : QuestTier.values())
@@ -687,9 +668,9 @@ public final class DynamicQuestHtml
 			sb.append("<table width=").append(inner).append(" cellpadding=0 cellspacing=0>");
 			sb.append("<tr><td><font color=\"").append(tier.getColor()).append("\">").append(tier.getDisplayName()).append("</font></td><td align=right><font color=\"").append(COLOR_DIM).append("\">Lv. ").append(context.getQuestLevel()).append("</font></td></tr>");
 			sb.append("<tr><td height=6 colspan=2></td></tr>");
-			sb.append("<tr><td colspan=2>").append(iconLine(ICON_EXP, String.format("%,d", preview._exp), "EXP")).append("</td></tr>");
+			sb.append("<tr><td colspan=2>").append(valueLine(String.format("%,d", preview._exp), "EXP")).append("</td></tr>");
 			sb.append("<tr><td height=3 colspan=2></td></tr>");
-			sb.append("<tr><td colspan=2>").append(iconLine(ICON_ADENA, String.format("%,d", preview._adena), "Adena")).append("</td></tr>");
+			sb.append("<tr><td colspan=2>").append(valueLine(String.format("%,d", preview._adena), "Adena")).append("</td></tr>");
 			if (problem == null)
 			{
 				sb.append("<tr><td height=8 colspan=2></td></tr>");
@@ -703,7 +684,7 @@ public final class DynamicQuestHtml
 		{
 			sb.append(spacer(8)).append(panel(BG_CARD_DIM, "<font color=\"" + COLOR_BAD + "\">" + problem + "</font>"));
 		}
-		sb.append(spacer(12));
+		sb.append(spacer(8));
 		sb.append(offer.isBoardOffer() ? button("main", "Back to the board", 140) : button("decline", "Not interested", 140));
 		return sb.toString();
 	}
@@ -714,7 +695,7 @@ public final class DynamicQuestHtml
 		sb.append(breadcrumb(quest.getName()));
 		final QuestTier tier = quest.getDifficulty().getTier();
 		final String subtitle = "<font color=\"" + tier.getColor() + "\">" + tier.getDisplayName() + "</font> <font color=\"" + COLOR_DIM + "\">- level " + quest.getDifficulty().getQuestLevel() + (quest.isWorld() ? ", near " + quest.getContext("near", "?") : ", party of " + quest.getDifficulty().getPartySize() + ", taken by " + (quest.getOwnerId() == player.getObjectId() ? "you" : quest.getOwnerName())) + "</font>";
-		sb.append(boardHeader(getIcon(quest.getTemplate()), quest.getName(), subtitle, null, 0));
+		sb.append(boardHeader(quest.getName(), subtitle, null, 0));
 
 		final StringBuilder actions = new StringBuilder();
 		synchronized (quest)
@@ -769,7 +750,7 @@ public final class DynamicQuestHtml
 			}
 		}
 
-		sb.append(spacer(12)).append("<table width=").append(BOARD_WIDTH).append(" cellpadding=0 cellspacing=0><tr>");
+		sb.append(spacer(8)).append("<table width=").append(BOARD_WIDTH).append(" cellpadding=0 cellspacing=0><tr>");
 		sb.append(actions);
 		sb.append("<td>").append(button("track " + quest.getId(), "Track on radar", 120)).append("</td><td width=6></td>");
 		sb.append("<td>").append(button("main", "Back", 80)).append("</td>");
@@ -887,11 +868,6 @@ public final class DynamicQuestHtml
 		return -1;
 	}
 
-	private static String getIcon(QuestTemplate template)
-	{
-		return template.getCategory() != null ? CATEGORY_ICONS.getOrDefault(template.getCategory().toLowerCase(), DEFAULT_ICON) : DEFAULT_ICON;
-	}
-
 	// ---------------------------------------------------------------------------------------------
 	// Community Board building blocks
 	// ---------------------------------------------------------------------------------------------
@@ -907,15 +883,15 @@ public final class DynamicQuestHtml
 	}
 
 	/**
-	 * @return the page's title box: icon, title, a line under it and something on the right
+	 * @return the page's title box: title, a line under it and something on the right
 	 */
-	private static String boardHeader(String icon, String title, String subtitle, String right, int rightWidth)
+	private static String boardHeader(String title, String subtitle, String right, int rightWidth)
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<table width=").append(BOARD_WIDTH).append(" cellpadding=0 cellspacing=0 bgcolor=").append(BG_PANEL).append(">");
-		final int columns = right != null ? 5 : 4;
-		sb.append("<tr><td height=10 colspan=").append(columns).append("></td></tr><tr><td width=10></td><td width=42 valign=top><img src=\"").append(icon).append("\" width=32 height=32></td>");
-		sb.append("<td width=").append(BOARD_WIDTH - 62 - rightWidth).append(" valign=top><font name=\"hs12\" color=\"").append(COLOR_TITLE).append("\">").append(title).append("</font>");
+		final int columns = right != null ? 4 : 3;
+		sb.append("<tr><td height=8 colspan=").append(columns).append("></td></tr><tr><td width=10></td>");
+		sb.append("<td width=").append(BOARD_WIDTH - 20 - rightWidth).append(" valign=top><font name=\"hs12\" color=\"").append(COLOR_TITLE).append("\">").append(title).append("</font>");
 		if (subtitle != null)
 		{
 			sb.append("<br1><font color=\"").append(COLOR_DIM).append("\">").append(subtitle).append("</font>");
@@ -925,7 +901,7 @@ public final class DynamicQuestHtml
 		{
 			sb.append("<td width=").append(rightWidth).append(" align=right valign=top>").append(right).append("</td>");
 		}
-		sb.append("<td width=10></td></tr><tr><td height=10 colspan=").append(columns).append("></td></tr></table>");
+		sb.append("<td width=10></td></tr><tr><td height=8 colspan=").append(columns).append("></td></tr></table>");
 		return sb.toString();
 	}
 
@@ -945,38 +921,27 @@ public final class DynamicQuestHtml
 	}
 
 	/**
-	 * @return a box with an icon on the left, a line or two of text and something on the right
+	 * @return a box with a line or two of text and something on the right
 	 */
-	private static String card(int width, String bgcolor, String icon, int iconSize, String top, String bottom, String right, int rightWidth)
+	private static String card(int width, String bgcolor, String top, String bottom, String right, int rightWidth)
 	{
-		final int columns = right != null ? 5 : 4;
-		final int pad = iconSize >= 32 ? 7 : 5;
-		final int textWidth = width - 16 - (iconSize + 8) - (right != null ? rightWidth : 0);
+		final int columns = right != null ? 4 : 3;
+		final int textWidth = width - 16 - (right != null ? rightWidth : 0);
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<table width=").append(width).append(" cellpadding=0 cellspacing=0 bgcolor=").append(bgcolor).append(">");
-		sb.append("<tr><td height=").append(pad).append(" colspan=").append(columns).append("></td></tr><tr><td width=8></td>");
-		sb.append("<td width=").append(iconSize + 8).append(" valign=top><img src=\"").append(icon).append("\" width=").append(iconSize).append(" height=").append(iconSize).append("></td>");
+		sb.append("<tr><td height=4 colspan=").append(columns).append("></td></tr><tr><td width=8></td>");
 		sb.append("<td width=").append(textWidth).append(" valign=top><table width=").append(textWidth).append(" cellpadding=0 cellspacing=0>");
-		sb.append("<tr><td height=").append(bottom != null ? 16 : iconSize).append(">").append(top).append("</td></tr>");
+		sb.append("<tr><td height=18>").append(top).append("</td></tr>");
 		if (bottom != null)
 		{
-			sb.append("<tr><td>").append(bottom).append("</td></tr>");
+			sb.append("<tr><td height=16>").append(bottom).append("</td></tr>");
 		}
 		sb.append("</table></td>");
 		if (right != null)
 		{
-			sb.append("<td width=").append(rightWidth).append(" align=right valign=top>");
-			if (iconSize >= 32)
-			{
-				sb.append("<table cellpadding=0 cellspacing=0><tr><td height=5></td></tr><tr><td>").append(right).append("</td></tr></table>");
-			}
-			else
-			{
-				sb.append(right);
-			}
-			sb.append("</td>");
+			sb.append("<td width=").append(rightWidth).append(" align=right>").append(right).append("</td>");
 		}
-		sb.append("<td width=8></td></tr><tr><td height=").append(pad).append(" colspan=").append(columns).append("></td></tr></table>");
+		sb.append("<td width=8></td></tr><tr><td height=4 colspan=").append(columns).append("></td></tr></table>");
 		return sb.toString();
 	}
 
@@ -993,13 +958,13 @@ public final class DynamicQuestHtml
 		for (int i = 0; i < cells.size(); i += 2)
 		{
 			sb.append("<table width=").append(BOARD_WIDTH).append(" cellpadding=0 cellspacing=0><tr><td width=").append(HALF_WIDTH).append(" valign=top>").append(cells.get(i)).append("</td><td width=6></td><td width=").append(HALF_WIDTH).append(" valign=top>");
-			sb.append((i + 1) < cells.size() ? cells.get(i + 1) : "").append("</td></tr></table>").append(spacer(6));
+			sb.append((i + 1) < cells.size() ? cells.get(i + 1) : "").append("</td></tr></table>").append(spacer(3));
 		}
 	}
 
-	private static String iconLine(String icon, String value, String unit)
+	private static String valueLine(String value, String unit)
 	{
-		return "<table cellpadding=0 cellspacing=0><tr><td width=20><img src=\"" + icon + "\" width=16 height=16></td><td><font color=\"" + COLOR_VALUE + "\">" + value + "</font> <font color=\"" + COLOR_LABEL + "\">" + unit + "</font></td></tr></table>";
+		return "<font color=\"" + COLOR_VALUE + "\">" + value + "</font> <font color=\"" + COLOR_LABEL + "\">" + unit + "</font>";
 	}
 
 	/**
