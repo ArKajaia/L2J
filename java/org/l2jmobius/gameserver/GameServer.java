@@ -158,6 +158,7 @@ import org.l2jmobius.gameserver.managers.PunishmentManager;
 import org.l2jmobius.gameserver.managers.BestiaryManager;
 import org.l2jmobius.gameserver.managers.PvpRankingManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
+import org.l2jmobius.gameserver.managers.RadarZoneManager;
 import org.l2jmobius.gameserver.managers.RaidBossPointsManager;
 import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
@@ -333,6 +334,7 @@ public class GameServer
 		DynamicQuestData.getInstance();
 		DynamicQuestManager.getInstance();
 		CraftingGoalManager.getInstance();
+		RadarZoneManager.getInstance();
 		WalkingManager.getInstance();
 		StaticObjectData.getInstance();
 		ItemAuctionManager.getInstance();

@@ -74,6 +74,7 @@ import org.l2jmobius.gameserver.config.custom.PvpAnnounceConfig;
 import org.l2jmobius.gameserver.config.custom.PvpRewardItemConfig;
 import org.l2jmobius.gameserver.config.custom.PvpSpotsConfig;
 import org.l2jmobius.gameserver.config.custom.PvpTitleColorConfig;
+import org.l2jmobius.gameserver.config.custom.RadarZonesConfig;
 import org.l2jmobius.gameserver.config.custom.RandomSpawnsConfig;
 import org.l2jmobius.gameserver.config.custom.ResonantMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.SchemeBufferConfig;
@@ -175,6 +176,7 @@ public class ConfigLoader
 		PvpAnnounceConfig.load();
 		PvpRewardItemConfig.load();
 		PvpTitleColorConfig.load();
+		RadarZonesConfig.load();
 		RandomSpawnsConfig.load();
 		ResonantMonsterConfig.load();
 		SchemeBufferConfig.load();
