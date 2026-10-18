@@ -23,9 +23,9 @@ package org.l2jmobius.gameserver.model.dynamicquest;
 import java.util.List;
 import java.util.Set;
 
+import org.l2jmobius.gameserver.managers.DynamicQuestManager;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
-import org.l2jmobius.gameserver.taskmanagers.GameTimeTaskManager;
 
 /**
  * Who can take a dynamic quest. Cooldowns and daily limits are kept by the manager.
@@ -129,7 +129,7 @@ public class Eligibility
 		{
 			return "This is not work for your people.";
 		}
-		if (_nightOnly && !GameTimeTaskManager.getInstance().isNight())
+		if (_nightOnly && !DynamicQuestManager.isNightNow())
 		{
 			return "Come back after nightfall.";
 		}

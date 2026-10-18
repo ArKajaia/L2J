@@ -33,8 +33,9 @@ public class Transition
 	private final int _max;
 	private final int _extraTime;
 	private final String _text;
+	private final int _maxChain;
 
-	public Transition(TransitionEvent event, TransitionAction action, int target, double chance, int max, int extraTime, String text)
+	public Transition(TransitionEvent event, TransitionAction action, int target, double chance, int max, int extraTime, String text, int maxChain)
 	{
 		_event = event;
 		_action = action;
@@ -43,6 +44,15 @@ public class Transition
 		_max = max;
 		_extraTime = extraTime;
 		_text = text;
+		_maxChain = maxChain;
+	}
+
+	/**
+	 * @return the chain length from which this transition is skipped, 0 for never (lets a quest follow up on itself a few times)
+	 */
+	public int getMaxChain()
+	{
+		return _maxChain;
 	}
 
 	public TransitionEvent getEvent()

@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.dynamicquest.NoticeBoardSite;
 import org.l2jmobius.gameserver.model.dynamicquest.ObjectiveTemplate;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestInstance;
 import org.l2jmobius.gameserver.model.dynamicquest.WorldMonsterIndex;
@@ -94,6 +95,16 @@ public abstract class AbstractObjective
 	 * @param monster the monster
 	 */
 	public void onKill(Player killer, Attackable monster)
+	{
+	}
+
+	/**
+	 * A participant caught a fish.
+	 * @param fisher the player
+	 * @param fishId the fish item
+	 * @param lureId the lure used
+	 */
+	public void onFish(Player fisher, int fishId, int lureId)
 	{
 	}
 
@@ -387,7 +398,7 @@ public abstract class AbstractObjective
 	}
 
 	/**
-	 * @param at AREA (the hunting ground), LAST (where the previous step ended), NEAR (the owner)
+	 * @param at AREA (the hunting ground), LAST (where the previous step ended), NEAR (the owner), HOME (the Notice Board of the quest's town)
 	 * @return the place
 	 */
 	protected Location resolve(String at)
@@ -395,6 +406,11 @@ public abstract class AbstractObjective
 		Location location = null;
 		switch (at.toUpperCase())
 		{
+			case "HOME":
+			{
+				location = getHome();
+				break;
+			}
 			case "LAST":
 			{
 				location = _quest.getLocation("last");
@@ -420,6 +436,24 @@ public abstract class AbstractObjective
 			location = owner != null ? owner.getLocation() : new Location(0, 0, 0);
 		}
 		return location;
+	}
+
+	/**
+	 * @return the Notice Board of the town the quest was taken at (else the nearest to the owner), {@code null} if none
+	 */
+	protected Location getHome()
+	{
+		NoticeBoardSite site = DynamicQuestData.getInstance().getBoard(_quest.getContext("town", ""));
+		if ((site == null) || (site.getLocation() == null))
+		{
+			final Player owner = _quest.getOwner();
+			site = owner != null ? DynamicQuestData.getInstance().getNearestBoard(owner, 0) : null;
+			if (site != null)
+			{
+				_quest.putContext("town", site.getTown());
+			}
+		}
+		return (site != null) ? site.getLocation() : null;
 	}
 
 	/**

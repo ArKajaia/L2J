@@ -42,6 +42,7 @@ public class QuestOffer
 	private Npc _herald;
 	private long _expires;
 	private boolean _arrived;
+	private boolean _accepted;
 
 	public QuestOffer(String key, QuestTemplate template, String town, long seed, String requester, QuestTier tier, int chain, Map<String, String> carry)
 	{
@@ -148,5 +149,18 @@ public class QuestOffer
 	public void setArrived(boolean arrived)
 	{
 		_arrived = arrived;
+	}
+
+	/**
+	 * @return {@code true} once taken (a personal offer that goes away unaccepted is turned down for the day)
+	 */
+	public boolean isAccepted()
+	{
+		return _accepted;
+	}
+
+	public void setAccepted(boolean accepted)
+	{
+		_accepted = accepted;
 	}
 }

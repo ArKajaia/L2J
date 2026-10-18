@@ -33,11 +33,14 @@ import org.l2jmobius.gameserver.model.dynamicquest.QuestInstance;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestOffer;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTemplate;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTier;
+import org.l2jmobius.gameserver.model.dynamicquest.QuestTrigger;
 import org.l2jmobius.gameserver.model.dynamicquest.RewardCalculator;
 import org.l2jmobius.gameserver.model.dynamicquest.RewardCalculator.Payout;
 import org.l2jmobius.gameserver.model.dynamicquest.StageTemplate;
+import org.l2jmobius.gameserver.model.dynamicquest.TriggerType;
 import org.l2jmobius.gameserver.model.dynamicquest.objective.AbstractObjective;
 import org.l2jmobius.gameserver.model.dynamicquest.objective.DeliverObjective;
+import org.l2jmobius.gameserver.model.siege.Castle;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
@@ -100,9 +103,17 @@ public final class DynamicQuestHtml
 		return template.getText("title", template.getName().replaceAll("\\{[a-zA-Z0-9]+\\}", "").replaceAll("[:\\s]+$", "").trim());
 	}
 
-	private static String fill(String text, QuestOffer offer)
+	private static String fill(DynamicQuestManager manager, String text, QuestOffer offer)
 	{
 		String result = text;
+		if ((result.contains("{lord}") || result.contains("{castle}")) && (offer.getTown() != null))
+		{
+			final Castle castle = manager.getTownCastle(offer.getTown());
+			if ((castle != null) && (castle.getOwner() != null))
+			{
+				result = result.replace("{lord}", castle.getOwner().getName()).replace("{castle}", castle.getName());
+			}
+		}
 		result = result.replace("{town}", offer.getTown() != null ? offer.getTown() : "town");
 		result = result.replace("{requester}", offer.getRequester() != null ? offer.getRequester() : "someone");
 		for (Map.Entry<String, String> entry : offer.getCarry().entrySet())
@@ -171,6 +182,10 @@ public final class DynamicQuestHtml
 			boolean requests = false;
 			for (QuestOffer offer : offers)
 			{
+				if (!manager.isAvailable(offer))
+				{
+					continue;
+				}
 				if (offer.isRequest() && !requests)
 				{
 					requests = true;
@@ -191,6 +206,11 @@ public final class DynamicQuestHtml
 				{
 					sb.append(link("offer " + offer.getKey(), getTitle(offer.getTemplate())));
 					sb.append(" <font color=\"").append(COLOR_MUTED).append("\">").append(offer.getRequester() != null ? offer.getRequester() : offer.getTemplate().getCategory()).append("</font>");
+					final QuestTrigger trigger = offer.getTemplate().getTrigger(TriggerType.BOARD_DAILY);
+					if (!offer.isRequest() && (trigger != null) && "NIGHT".equals(trigger.getRequires()))
+					{
+						sb.append(" <font color=\"8888FF\">(tonight)</font>");
+					}
 				}
 				sb.append("<br1>");
 			}
@@ -211,6 +231,11 @@ public final class DynamicQuestHtml
 			}
 		}
 
+		if (channel != Channel.NPC)
+		{
+			final boolean heralds = !player.getVariables().getBoolean(DynamicQuestManager.VAR_NO_HERALDS, false);
+			sb.append("<br><font color=\"").append(COLOR_MUTED).append("\">Heralds bringing you quests: ").append(heralds ? "on" : "off").append("</font> ").append(link("heralds " + (heralds ? "off" : "on"), heralds ? "[turn off]" : "[turn on]")).append("<br1>");
+		}
 		sb.append("<br><font color=\"").append(COLOR_MUTED).append("\">Done today by your account: ").append(manager.getAccountDailyTotal(player.getAccountName())).append("/").append(DynamicQuestConfig.ACCOUNT_DAILY_LIMIT).append(". The board changes every day at ").append(DynamicQuestConfig.BOARD_RESET_HOUR).append(":00.</font>");
 		return wrap(sb.toString(), channel);
 	}
@@ -228,7 +253,7 @@ public final class DynamicQuestHtml
 		{
 			sb.append("<font color=\"LEVEL\">").append(offer.getRequester()).append("</font> asks:<br1>");
 		}
-		sb.append("<font color=\"").append(COLOR_TEXT).append("\">").append(fill(template.getText("offer", "There is work to be done."), offer)).append("</font><br><br>");
+		sb.append("<font color=\"").append(COLOR_TEXT).append("\">").append(fill(manager, template.getText("offer", "There is work to be done."), offer)).append("</font><br><br>");
 
 		final List<Player> members = DynamicQuestManager.getMembers(player);
 		sb.append("<font color=\"").append(COLOR_MUTED).append("\">It adjusts to you").append(members.size() > 1 ? " and the " + (members.size() - 1) + " party members near you" : "").append(". Choose how hard:</font><br1>");
@@ -250,6 +275,10 @@ public final class DynamicQuestHtml
 		if (manager.isTaken(player, offer))
 		{
 			problem = "Your account already took this one today.";
+		}
+		else if (offer.isBoardOffer() && !manager.isAvailable(offer))
+		{
+			problem = "This one can only be taken at night.";
 		}
 		else if (offer.isRequest() && ((manager.getBoardTown(npc) == null) || !manager.getBoardTown(npc).equals(offer.getTown())))
 		{

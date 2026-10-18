@@ -83,6 +83,10 @@ public final class ObjectiveFactory
 			{
 				return new DestroyObjective(quest, template, index);
 			}
+			case INTERCEPT:
+			{
+				return new InterceptObjective(quest, template, index);
+			}
 		}
 		throw new IllegalArgumentException("Unknown objective type " + template.getType());
 	}

@@ -259,6 +259,26 @@ Procedurally generated quests that anyone can take at any level. None of them is
   - The Lost Expedition (three clues, then save the survivor or slay what took them)
   - Monster Nests (burn nests that keep spawning their brood)
   - Urgent Courier (a sealed package to another town on foot; a teleport breaks the seal)
+- **Fourteen more, all optional**:
+  - The Treasure Map (a rare find on a kill: dig at the marked spot, then guard the chest)
+  - Manhunt (a fugitive fake player who fights back; flagged, so killing them gives no karma)
+  - Corrupted Ground (cleanse tainted totems while the infected keep coming)
+  - Rare Beast Tracking (a trail of tracks to a legendary champion)
+  - Smuggler Interception (catch a smuggler band on the move before it reaches its buyers)
+  - The Lost Child (find a child and lead them home; they wander off if you run ahead)
+  - Fisherman's Request (fish for a harbour town's fishing guild, more for a night lure)
+  - Scout the Frontier (watch from vantage points; getting into a fight ruins it)
+  - Lord's Levy (only where a castle has a lord; the castle pays half again from its treasury)
+  - Rival Adventurers (a bounty, and a party of rival fake adventurers who want it too)
+  - Rift Closing (seal rifts that pour out monsters of a distant land)
+  - Herbalist's Plague (gather fever herbs and hurry them home before they wilt)
+  - Night Watch (only at night: walk the watch posts around the town; it ends at dawn)
+  - Guild Contract (a chain of contracts you may stop at any time; the 5th in a row gives the title "Guild Champion")
+- **Never pushy**:
+  - Quests are picked up when the player wants them. A board shows 5 offers a day, drawn from all the templates, plus a few town requests. Special ones appear only when they fit: the Night Watch at night, the Lord's Levy where a castle has a lord, the Fisherman's Request where the town has a fisherman.
+  - Only a few quests come unasked: heralds (at most one every 30 minutes), a rare find, and a follow-up after a finished quest.
+  - An unasked offer that is turned down, left to expire, or taken and failed is never offered to that character again the same day, and a quest already running is never offered.
+  - `.quests heralds off` stops unasked offers for a character. Nothing is lost by failing: the quest just ends.
 - **Rewards and abuse**:
   - Optional objectives and bonus conditions (never below 50% HP, the wagon above 75%, done in half the time, nobody died) and follow-up chains raise the reward, up to a cap.
   - Each party member is paid. Members far above the quest's level get less, and nothing at twice the gap.
@@ -820,6 +840,8 @@ Changes from 28 September – 18 October 2026.
 - **New**: procedurally generated quests that adjust to the party: its level, its size and the tier chosen. Templates in `data/DynamicQuests.xml` are built from ten reusable objective types (kill, cull, collect, deliver, escort, investigate, defend, talk, reach, destroy), triggers, eligibility rules, transitions (success, failure, timeout, escalation, follow-up) and a reward formula.
 - **New**: a Notice Board next to every town's gatekeeper with daily offers and the town npcs' requests, a Bounties and Requests page on the Community Board, `.quests`, heralds who bring quests to players in the world, and Outbreak world events. Ten templates ship. See [Dynamic Quests](#dynamic-quests).
 - **Changed**: the spawning and placement helpers of the Hidden Quests moved to a shared `QuestSpawnUtil`; the Hidden Quests behave as before.
+- **New**: 14 more optional Dynamic Quests, among them Treasure Map, Manhunt, Smuggler Interception, The Lost Child, Fisherman's Request, Lord's Levy, Night Watch and Guild Contract. There is a new INTERCEPT objective, fishing, stealth and fugitive (fake player) objectives, and offers that depend on the night or a castle lord.
+- **Changed**: Dynamic Quests never pester. An unasked offer that is turned down, left to expire or failed doesn't come back that day, and `.quests heralds off` stops heralds.
 
 ### Bestiary
 - **New**: every monster a player kills fills their account's bestiary, a collection on the web page of the passive tree server (`.bestiary`). Entries go from Discovered to Legendary with more kills, each tier showing more of the monster (stats, elements and skills, then drops) and making its items drop more often, with a size comparison, a habitat map, server-wide numbers and a ranking of hunters. The monsters of a region give up to four times the EXP as the account completes it. Each monster has a profile page with its 3D model, taken from your own client by `client/Bestiary/extract_models.py`, and `//bestiary` makes the portraits of the collection. See [Bestiary](#bestiary).

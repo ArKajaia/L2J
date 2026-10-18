@@ -30,13 +30,16 @@ import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.dynamicquest.HuntingGround;
 import org.l2jmobius.gameserver.model.dynamicquest.ObjectiveTemplate;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestInstance;
+import org.l2jmobius.gameserver.model.dynamicquest.WorldMonsterIndex;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
  * DESTROY: burn {@code nests} nests ({@code nestNpc}) spread within {@code radius} of the hunting ground. While a player is near, each nest spawns one of the place's monsters every {@code spawnEvery} seconds, up to {@code maxAlive} at a time.
  * A nest burns after a player stands next to it for {@code burnTime} seconds. On escalation the nests spawn twice as fast and a brood mother ({@code broodTitle}, {@code broodTierBonus}) appears, who must die too.
+ * With {@code foreign="true"} the brood comes from a hunting ground of the same level far away (the context's {@code foreignLand} names its nearest town): rifts pouring out another land.
  * @author Mobius
  */
 public class DestroyObjective extends AbstractObjective
@@ -59,6 +62,7 @@ public class DestroyObjective extends AbstractObjective
 	private int _total;
 	private int _destroyed;
 	private int _spawnEvery;
+	private final List<Integer> _foreign = new ArrayList<>();
 	private Npc _mother;
 	private boolean _motherSlain = true;
 
@@ -74,6 +78,10 @@ public class DestroyObjective extends AbstractObjective
 		if (area == null)
 		{
 			return "no nests to find";
+		}
+		if (_params.getBoolean("foreign", false))
+		{
+			pickForeignLand(area);
 		}
 		_total = _quest.getDifficulty().count(_params.getInt("nests", 3), false);
 		_spawnEvery = Math.max(5, _params.getInt("spawnEvery", 20));
@@ -96,6 +104,44 @@ public class DestroyObjective extends AbstractObjective
 		_quest.putContext("nests" + _index, String.valueOf(_total));
 		_quest.setMarker(_nests.get(0)._npc.getLocation());
 		return null;
+	}
+
+	/**
+	 * Picks (from the quest's seed) a hunting ground of the quest's level far from here, whose monsters the rifts pour out.
+	 */
+	private void pickForeignLand(Location area)
+	{
+		final Random random = random("foreign");
+		HuntingGround best = null;
+		double bestDistance = -1;
+		for (int attempt = 0; attempt < 6; attempt++)
+		{
+			final HuntingGround ground = WorldMonsterIndex.getInstance().pick(_quest.getDifficulty().getQuestLevel(), random, null, 0);
+			if ((ground == null) || ground.getNpcIds().isEmpty())
+			{
+				continue;
+			}
+			final double distance = Math.hypot(area.getX() - ground.getCenter().getX(), area.getY() - ground.getCenter().getY());
+			if (distance > bestDistance)
+			{
+				best = ground;
+				bestDistance = distance;
+			}
+			if (distance > 30000)
+			{
+				break;
+			}
+		}
+		if (best != null)
+		{
+			_foreign.addAll(best.getNpcIds());
+			_quest.putContext("foreignLand", best.getTown());
+		}
+	}
+
+	private int pickBrood(Random random)
+	{
+		return _foreign.isEmpty() ? pickMonster(random) : _foreign.get(random.nextInt(_foreign.size()));
 	}
 
 	@Override
@@ -173,7 +219,7 @@ public class DestroyObjective extends AbstractObjective
 				nest._brood.removeIf(npc -> !QuestSpawnUtil.isAlive(npc));
 				if (nest._brood.size() < maxAlive)
 				{
-					final Npc add = _quest.spawnMonster(this, pickMonster(random("brood" + second)), point(nest._npc, 60, 200), _params.getInt("tierBonus", 0), title("broodName"), watcher);
+					final Npc add = _quest.spawnMonster(this, pickBrood(random("brood" + second)), point(nest._npc, 60, 200), _params.getInt("tierBonus", 0), title("broodName"), watcher);
 					if (add != null)
 					{
 						nest._brood.add(add);
@@ -215,7 +261,7 @@ public class DestroyObjective extends AbstractObjective
 		{
 			final Random random = random("mother" + level);
 			final Nest nest = _nests.get(random.nextInt(_nests.size()));
-			_mother = _quest.spawnMonster(this, pickMonster(random), point(nest._npc, 80, 200), _params.getInt("broodTierBonus", 2), text("broodTitle", "Brood Mother"), null);
+			_mother = _quest.spawnMonster(this, pickBrood(random), point(nest._npc, 80, 200), _params.getInt("broodTierBonus", 2), text("broodTitle", "Brood Mother"), null);
 			_motherSlain = _mother == null;
 		}
 		_quest.announce(text("swarmText", "The nests are swarming, and their mother has come!"));

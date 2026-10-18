@@ -35,7 +35,8 @@ import org.l2jmobius.gameserver.model.dynamicquest.QuestInstance;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
- * ESCORT: an npc ({@code escortee}, a QuestGuard) follows the owner over {@code legs} legs. With {@code dest="TOWN"} the route heads for the nearest town with a Notice Board (each leg {@code legMin}-{@code legMax} long); with {@code "ROUTE"} it wanders the wilds.
+ * ESCORT: an npc ({@code escortee}, a QuestGuard) follows the owner over {@code legs} legs. With {@code dest="TOWN"} the route heads for the nearest town with a Notice Board, with {@code "HOME"} for the board the quest was taken at (each leg {@code legMin}-{@code legMax} long); with {@code "ROUTE"} it wanders the wilds.
+ * A {@code skittish="true"} escortee stops following when the owner gets more than {@code skittishRange} away and wanders off, until the owner comes back to it.
  * <p>
  * At the end of every leg but the last an ambush ({@code ambushCount}, the monsters living there) attacks it, and it waits until the ambush is beaten. The escortee itself can't die: its meter ({@code meter}, lasting longer for bigger parties) drops by {@code drain} a second for every attacker next to it.
  * Leaving it more than {@code abandonRange} away for {@code lostTime} seconds fails, so does an empty meter. Starts at {@code at} (LAST: where the previous step ended).
@@ -55,6 +56,7 @@ public class EscortObjective extends AbstractObjective
 	private double _meter;
 	private double _maxMeter;
 	private int _away;
+	private boolean _wandering;
 
 	public EscortObjective(QuestInstance quest, ObjectiveTemplate template, int index)
 	{
@@ -97,7 +99,13 @@ public class EscortObjective extends AbstractObjective
 		final int legMin = _params.getInt("legMin", 900);
 		final int legMax = _params.getInt("legMax", 1500);
 		Location destination = null;
-		if ("TOWN".equalsIgnoreCase(_params.getString("dest", "TOWN")))
+		final String dest = _params.getString("dest", "TOWN").toUpperCase();
+		if (dest.equals("HOME"))
+		{
+			destination = getHome();
+			_quest.putContext("dest", _quest.getContext("town", "town"));
+		}
+		else if (dest.equals("TOWN"))
 		{
 			final NoticeBoardSite site = DynamicQuestData.getInstance().getNearestBoard(start, 0);
 			if (site != null)
@@ -209,6 +217,35 @@ public class EscortObjective extends AbstractObjective
 			return;
 		}
 
+		// A skittish charge doesn't follow a leader who runs off: it wanders until the owner comes back.
+		if (_params.getBoolean("skittish", false))
+		{
+			final double distance = owner.calculateDistance2D(_escortee);
+			if (_wandering)
+			{
+				if (distance > 150)
+				{
+					if (!_escortee.isMoving() && ((second % 4) == 0))
+					{
+						_escortee.getAI().setIntention(Intention.MOVE_TO, point(_escortee, 80, 200));
+					}
+					return;
+				}
+				_wandering = false;
+				_escortee.setRunning();
+				_quest.say(_escortee, text("calmText", "Don't leave me again!"));
+				follow(owner);
+			}
+			else if (distance > _params.getInt("skittishRange", 400))
+			{
+				_wandering = true;
+				_escortee.setWalking();
+				_quest.say(_escortee, text("scaredText", "Wait... where did you go? I'm scared!"));
+				QuestSpawnUtil.screen(owner, text("wanderText", "Your charge has wandered off. Go back for it."));
+				return;
+			}
+		}
+
 		final Location waypoint = _waypoints.get(_leg);
 		if (_escortee.calculateDistance2D(waypoint) <= ARRIVE_RANGE)
 		{
@@ -253,6 +290,7 @@ public class EscortObjective extends AbstractObjective
 	@Override
 	protected String defaultDescription()
 	{
-		return "TOWN".equalsIgnoreCase(_params.getString("dest", "TOWN")) ? "Lead your charge safely towards {dest}." : "Lead your charge safely along the route on your radar.";
+		final String dest = _params.getString("dest", "TOWN").toUpperCase();
+		return dest.equals("TOWN") || dest.equals("HOME") ? "Lead your charge safely towards {dest}." : "Lead your charge safely along the route on your radar.";
 	}
 }

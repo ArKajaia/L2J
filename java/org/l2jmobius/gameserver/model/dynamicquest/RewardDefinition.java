@@ -33,13 +33,43 @@ public class RewardDefinition
 	private final double _spRatio;
 	private final long _adenaPerLevel;
 	private final List<RewardEntry> _items;
+	private final String _title;
+	private final int _minChain;
+	private final int _treasuryPercent;
 
-	public RewardDefinition(double expPercent, double spRatio, long adenaPerLevel, List<RewardEntry> items)
+	public RewardDefinition(double expPercent, double spRatio, long adenaPerLevel, List<RewardEntry> items, String title, int minChain, int treasuryPercent)
 	{
 		_expPercent = expPercent;
 		_spRatio = spRatio;
 		_adenaPerLevel = adenaPerLevel;
 		_items = Collections.unmodifiableList(items);
+		_title = title;
+		_minChain = minChain;
+		_treasuryPercent = treasuryPercent;
+	}
+
+	/**
+	 * @return the title the owner gets, {@code null} for none
+	 */
+	public String getTitle()
+	{
+		return _title;
+	}
+
+	/**
+	 * @return the chain length (links before this one) the title needs
+	 */
+	public int getMinChain()
+	{
+		return _minChain;
+	}
+
+	/**
+	 * @return the percent of the adena reward paid on top from the treasury of the castle of the quest's town, 0 for none
+	 */
+	public int getTreasuryPercent()
+	{
+		return _treasuryPercent;
 	}
 
 	/**

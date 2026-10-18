@@ -33,6 +33,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.dynamicquest.ObjectiveTemplate;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestInstance;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
+import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
@@ -40,6 +41,7 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
  * <ul>
  * <li>{@code source="AREA"} (the hunting ground's monsters) or {@code "LEVEL"} (any of the quest's level): each kill gives one with {@code chance} percent.</li>
  * <li>{@code source="NODE"}: {@code nodes} nodes ({@code nodeNpc}) are spawned within {@code radius} of the hunting ground; each is gathered by standing next to it for {@code gatherTime} seconds.</li>
+ * <li>{@code source="FISH"}: each fish a participant catches within {@code radius} of the quest's town counts (anywhere with {@code radius="0"}); {@code nightLure="true"}: only fish caught with a night lure.</li>
  * </ul>
  * What is gathered is counted by the quest, so it can't be traded, dropped or stored. With {@code itemId}, the gatherer also gets that real item.
  * @author Mobius
@@ -98,6 +100,13 @@ public class CollectObjective extends AbstractObjective
 			}
 			_quest.setMarker(area);
 		}
+		else if ("FISH".equals(getSource()))
+		{
+			if (!_template.isOptional() && (_params.getInt("radius", 6000) > 0) && (getHome() != null))
+			{
+				_quest.setMarker(getHome());
+			}
+		}
 		else if (!_template.isOptional() && (_quest.getArea() != null) && "AREA".equals(getSource()))
 		{
 			_quest.setMarker(_quest.getArea());
@@ -109,7 +118,7 @@ public class CollectObjective extends AbstractObjective
 	public void onKill(Player killer, Attackable monster)
 	{
 		final String source = getSource();
-		if ("NODE".equals(source) || !isWorthy(monster))
+		if ("NODE".equals(source) || "FISH".equals(source) || !isWorthy(monster))
 		{
 			return;
 		}
@@ -141,6 +150,26 @@ public class CollectObjective extends AbstractObjective
 		{
 			complete();
 		}
+	}
+
+	@Override
+	public void onFish(Player fisher, int fishId, int lureId)
+	{
+		if (!"FISH".equals(getSource()))
+		{
+			return;
+		}
+		if (_params.getBoolean("nightLure", false) && !Item.isNightLure(lureId))
+		{
+			return;
+		}
+		final int radius = _params.getInt("radius", 6000);
+		final Location home = radius > 0 ? getHome() : null;
+		if ((home != null) && (fisher.calculateDistance2D(home) > radius))
+		{
+			return;
+		}
+		gather(fisher);
 	}
 
 	@Override
@@ -209,7 +238,21 @@ public class CollectObjective extends AbstractObjective
 	@Override
 	protected String defaultDescription()
 	{
-		return "NODE".equals(getSource()) ? "Gather " + _total + " " + getName() + " near {near}." : "Take " + _total + " " + getName() + " from the {monster} and their kin near {near}.";
+		switch (getSource())
+		{
+			case "NODE":
+			{
+				return "Gather " + _total + " " + getName() + " near {near}.";
+			}
+			case "FISH":
+			{
+				return "Catch " + _total + " " + getName() + (_params.getInt("radius", 6000) > 0 ? " in the waters near {town}" : "") + (_params.getBoolean("nightLure", false) ? " with a night lure." : ".");
+			}
+			default:
+			{
+				return "Take " + _total + " " + getName() + " from the {monster} and their kin near {near}.";
+			}
+		}
 	}
 
 	@Override

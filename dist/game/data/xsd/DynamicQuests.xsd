@@ -20,6 +20,7 @@
 			<xs:enumeration value="INTERACT" />
 			<xs:enumeration value="REACH" />
 			<xs:enumeration value="DESTROY" />
+			<xs:enumeration value="INTERCEPT" />
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:simpleType name="transitionEvent">
@@ -81,6 +82,7 @@
 						<xs:attribute name="title" type="xs:string" />
 						<xs:attribute name="types" type="xs:string" />
 						<xs:attribute name="label" type="xs:string" />
+						<xs:attribute name="required" type="xs:boolean" />
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="monsterPool" minOccurs="0" maxOccurs="unbounded">
@@ -169,6 +171,7 @@
 												<xs:attribute name="max" type="xs:positiveInteger" />
 												<xs:attribute name="extraTime" type="xs:nonNegativeInteger" />
 												<xs:attribute name="text" type="xs:string" />
+												<xs:attribute name="maxChain" type="xs:nonNegativeInteger" />
 											</xs:complexType>
 										</xs:element>
 									</xs:sequence>
@@ -186,6 +189,9 @@
 									<xs:attribute name="sp" type="xs:decimal" />
 									<xs:attribute name="adenaPerLevel" type="xs:nonNegativeInteger" />
 									<xs:attribute name="table" type="xs:token" />
+									<xs:attribute name="title" type="xs:string" />
+									<xs:attribute name="minChain" type="xs:nonNegativeInteger" />
+									<xs:attribute name="treasuryPercent" type="xs:nonNegativeInteger" />
 								</xs:complexType>
 							</xs:element>
 							<xs:element name="text" type="text" minOccurs="0" maxOccurs="unbounded" />

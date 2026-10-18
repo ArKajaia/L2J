@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 /**
  * INVESTIGATE: find {@code clues} clues ({@code clueNpc}) one after the other. The first is {@code firstMin}-{@code firstMax} from {@code at}, each next one {@code spacingMin}-{@code spacingMax} from the last.
  * A clue is searched by standing (or sitting) next to it for {@code searchTime} seconds; what is found is a line of the text pool {@code lines}, and with {@code ambushChance} percent {@code ambushCount} monsters jump the searcher. Where the last clue lay becomes the quest's LAST place.
+ * With {@code stealth="true"} it fails as soon as a participant is drawn into a fight ({@code seenText}).
  * @author Mobius
  */
 public class InvestigateObjective extends AbstractObjective
@@ -102,6 +103,17 @@ public class InvestigateObjective extends AbstractObjective
 	@Override
 	public void onTick(int second, List<Player> near)
 	{
+		if (_params.getBoolean("stealth", false))
+		{
+			for (Player player : near)
+			{
+				if (player.isInCombat())
+				{
+					fail(text("seenText", "You were seen. The scouting is ruined."));
+					return;
+				}
+			}
+		}
 		if (!QuestSpawnUtil.isAlive(_clue))
 		{
 			return;

@@ -45,7 +45,9 @@ public enum ObjectiveType
 	/** Get somewhere, maybe without teleporting, maybe through ambushes. */
 	REACH(false),
 	/** Burn nests that keep spawning monsters until they are gone. */
-	DESTROY(false);
+	DESTROY(false),
+	/** Stop a band on the move before it reaches its meeting point. */
+	INTERCEPT(false);
 
 	private final boolean _persistent;
 

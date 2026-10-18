@@ -92,10 +92,13 @@ import org.l2jmobius.gameserver.model.groups.Party;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.script.Quest;
+import org.l2jmobius.gameserver.model.siege.Castle;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
+import org.l2jmobius.gameserver.model.zone.type.TownZone;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 import org.l2jmobius.gameserver.network.serverpackets.TutorialShowQuestionMark;
+import org.l2jmobius.gameserver.taskmanagers.GameTimeTaskManager;
 import org.l2jmobius.gameserver.util.Broadcast;
 import org.l2jmobius.gameserver.util.LocationUtil;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
@@ -149,12 +152,15 @@ public class DynamicQuestManager
 	private static final int REQUESTER_RANGE = 3500;
 	private static final int AREA_CELL = 4096;
 	private static final int HERALD_LEAVE_RANGE = 2500;
+	/** Player variable: the character wants no unasked offers (heralds, finds). */
+	public static final String VAR_NO_HERALDS = "DQ_NO_HERALDS";
 
 	private final Map<Long, QuestInstance> _quests = new ConcurrentHashMap<>();
 	private final Map<Integer, Set<QuestInstance>> _byPlayer = new ConcurrentHashMap<>();
 	private final Map<Integer, QuestOffer> _personalOffers = new ConcurrentHashMap<>();
 	private final Map<Integer, Integer> _heraldOwners = new ConcurrentHashMap<>();
 	private final Map<Integer, Long> _nextOffer = new ConcurrentHashMap<>();
+	private final Map<Integer, Set<Integer>> _turnedDown = new ConcurrentHashMap<>();
 	private final Map<String, Map<Integer, UsageRow>> _usage = new ConcurrentHashMap<>();
 	private final Map<String, Set<String>> _taken = new ConcurrentHashMap<>();
 	private final Map<String, List<QuestOffer>> _boardOffers = new ConcurrentHashMap<>();
@@ -219,6 +225,7 @@ public class DynamicQuestManager
 		{
 			_usageDay = day;
 			_taken.clear();
+			_turnedDown.clear();
 		}
 	}
 
@@ -415,17 +422,27 @@ public class DynamicQuestManager
 		final List<QuestOffer> offers = new ArrayList<>();
 		final List<QuestTemplate> board = new ArrayList<>();
 		final List<QuestTemplate> requests = new ArrayList<>();
+		final List<QuestTemplate> night = new ArrayList<>();
 		for (QuestTemplate template : DynamicQuestData.getInstance().getTemplates())
 		{
 			if ((template.getScope() != QuestScope.PERSONAL) || !template.getEligibility().isForTown(town))
 			{
 				continue;
 			}
-			if (template.getTrigger(TriggerType.BOARD_DAILY) != null)
+			final QuestTrigger boardTrigger = template.getTrigger(TriggerType.BOARD_DAILY);
+			if (boardTrigger != null)
 			{
-				board.add(template);
+				if ("NIGHT".equals(boardTrigger.getRequires()))
+				{
+					night.add(template);
+				}
+				else if (isTownConditionMet(boardTrigger, town))
+				{
+					board.add(template);
+				}
 			}
-			if ((template.getTrigger(TriggerType.NPC_INTERACTION) != null) && (template.getRequester() != null))
+			final QuestTrigger requestTrigger = template.getTrigger(TriggerType.NPC_INTERACTION);
+			if ((requestTrigger != null) && (template.getRequester() != null) && isTownConditionMet(requestTrigger, town) && hasRequester(town, template.getRequester()))
 			{
 				requests.add(template);
 			}
@@ -433,6 +450,11 @@ public class DynamicQuestManager
 
 		int slot = 0;
 		for (QuestTemplate template : pickWeighted(board, TriggerType.BOARD_DAILY, DynamicQuestConfig.BOARD_OFFERS, random))
+		{
+			offers.add(new QuestOffer("B" + day + "-" + townIndex + "-" + slot++, template, town, random.nextLong(), null, null, 0, null));
+		}
+		// One offer of the night: shown only while it is night.
+		for (QuestTemplate template : pickWeighted(night, TriggerType.BOARD_DAILY, 1, random))
 		{
 			offers.add(new QuestOffer("B" + day + "-" + townIndex + "-" + slot++, template, town, random.nextLong(), null, null, 0, null));
 		}
@@ -445,6 +467,93 @@ public class DynamicQuestManager
 			_offerIndex.put(offer.getKey(), offer);
 		}
 		return Collections.unmodifiableList(offers);
+	}
+
+	/**
+	 * @return {@code true} while it is night (the Night Cycle's night when it runs, else the game clock's)
+	 */
+	public static boolean isNightNow()
+	{
+		return NightCycleManager.isStarted() ? NightCycleManager.getInstance().isNight() : GameTimeTaskManager.getInstance().isNight();
+	}
+
+	/**
+	 * @param trigger a trigger
+	 * @param town the town it would be offered in, may be {@code null}
+	 * @return {@code true} if the world is as the trigger requires (NIGHT: night; CASTLE_LORD: the town's castle has a lord)
+	 */
+	public boolean isTownConditionMet(QuestTrigger trigger, String town)
+	{
+		final String requires = trigger.getRequires();
+		if (requires == null)
+		{
+			return true;
+		}
+		switch (requires)
+		{
+			case "NIGHT":
+			{
+				return isNightNow();
+			}
+			case "CASTLE_LORD":
+			{
+				final Castle castle = getTownCastle(town);
+				return (castle != null) && (castle.getOwnerId() > 0) && (castle.getOwner() != null);
+			}
+			default:
+			{
+				return true;
+			}
+		}
+	}
+
+	/**
+	 * @param offer a board offer
+	 * @return {@code true} if it can be seen and taken now (an offer of the night only at night)
+	 */
+	public boolean isAvailable(QuestOffer offer)
+	{
+		final QuestTrigger trigger = offer.getTemplate().getTrigger(offer.isRequest() ? TriggerType.NPC_INTERACTION : TriggerType.BOARD_DAILY);
+		return (trigger == null) || !"NIGHT".equals(trigger.getRequires()) || isNightNow();
+	}
+
+	/**
+	 * @param town a town with a Notice Board
+	 * @return the castle whose lands the town is in, {@code null} if none
+	 */
+	public Castle getTownCastle(String town)
+	{
+		final NoticeBoardSite site = town != null ? DynamicQuestData.getInstance().getBoard(town) : null;
+		if ((site == null) || (site.getLocation() == null))
+		{
+			return null;
+		}
+		final Location location = site.getLocation();
+		final TownZone zone = TownManager.getTown(location.getX(), location.getY(), location.getZ());
+		if (zone == null)
+		{
+			return null;
+		}
+		final int index = CastleManager.getInstance().getCastleIndex(zone.getTaxById());
+		return (index >= 0) && (index < CastleManager.getInstance().getCastles().size()) ? CastleManager.getInstance().getCastles().get(index) : null;
+	}
+
+	private boolean hasRequester(String town, String roleName)
+	{
+		final RequesterRole role = DynamicQuestData.getInstance().getRequester(roleName);
+		if ((role == null) || !role.isRequired())
+		{
+			return true;
+		}
+		for (int npcId : getTownNpcs(town))
+		{
+			final NpcTemplate template = NpcData.getInstance().getTemplate(npcId);
+			if ((template != null) && role.matches(template.getTitle(), template.getType()))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -724,6 +833,10 @@ public class DynamicQuestManager
 		{
 			problem = "Your account already took this one today.";
 		}
+		if ((problem == null) && offer.isBoardOffer() && !isAvailable(offer))
+		{
+			problem = "This one is only taken at night.";
+		}
 		if ((problem == null) && offer.isRequest())
 		{
 			final String town = getBoardTown(npc);
@@ -768,6 +881,16 @@ public class DynamicQuestManager
 			}
 		}
 		fillContext(quest);
+		if (offer.getTemplate().getReward().getTreasuryPercent() > 0)
+		{
+			final Castle castle = getTownCastle(offer.getTown() != null ? offer.getTown() : getNearestTown(player));
+			if ((castle != null) && (castle.getOwner() != null))
+			{
+				quest.putContext("castleId", String.valueOf(castle.getResidenceId()));
+				quest.putContext("castle", castle.getName());
+				quest.putContext("lord", castle.getOwner().getName());
+			}
+		}
 		if (quest.getArea() == null)
 		{
 			final HuntingGround ground = WorldMonsterIndex.getInstance().pick(quest.getDifficulty().getQuestLevel(), quest.random("area"), player, offer.isBoardOffer() ? 25000 : 6000);
@@ -806,6 +929,7 @@ public class DynamicQuestManager
 		}
 		else
 		{
+			offer.setAccepted(true);
 			dismissPersonalOffer(player, null);
 		}
 		save(quest);
@@ -1063,6 +1187,10 @@ public class DynamicQuestManager
 		final Random random = quest.random("transition" + event + quest.getEscalations());
 		for (Transition transition : stage.getTransitions())
 		{
+			if ((transition.getMaxChain() > 0) && (quest.getChain() >= transition.getMaxChain()))
+			{
+				continue;
+			}
 			if ((transition.getEvent() == event) && ((random.nextDouble() * 100) < transition.getChance()))
 			{
 				chosen = transition;
@@ -1212,6 +1340,10 @@ public class DynamicQuestManager
 		if (!quest.isWorld())
 		{
 			ThreadPool.execute(() -> DynamicQuestTable.deleteQuest(quest.getId()));
+			if (state != DynamicQuestState.SUCCESS)
+			{
+				turnDown(quest.getOwnerId(), quest.getTemplate().getId());
+			}
 		}
 
 		if (state == DynamicQuestState.SUCCESS)
@@ -1245,7 +1377,7 @@ public class DynamicQuestManager
 	{
 		final QuestTemplate template = DynamicQuestData.getInstance().getTemplate(templateId);
 		final Player owner = quest.getOwner();
-		if ((template == null) || (owner == null))
+		if ((template == null) || (owner == null) || isTurnedDown(owner.getObjectId(), templateId) || _personalOffers.containsKey(owner.getObjectId()))
 		{
 			return;
 		}
@@ -1273,7 +1405,6 @@ public class DynamicQuestManager
 		}
 		final QuestOffer offer = new QuestOffer("F" + quest.getId(), template, null, Rnd.nextLong(), null, quest.getDifficulty().getTier(), quest.getChain() + 1, carry);
 		offer.setExpires(System.currentTimeMillis() + (DynamicQuestConfig.HERALD_WAIT_TIME * 2000L));
-		dismissPersonalOffer(owner, null);
 		_personalOffers.put(owner.getObjectId(), offer);
 		owner.sendPacket(new TutorialShowQuestionMark(QUESTION_MARK_ID));
 		ThreadPool.schedule(() -> sendWindow(owner, DynamicQuestHtml.offer(this, owner, null, offer, Channel.WINDOW)), 2000);
@@ -1334,11 +1465,41 @@ public class DynamicQuestManager
 				factor *= 0.5 + (0.5 * Math.min(1, quest.getContribution(player.getObjectId()) / fairShare));
 			}
 			final Payout payout = RewardCalculator.compute(quest, factor, true);
+			if (player.getObjectId() == quest.getOwnerId())
+			{
+				payTreasuryShare(quest, payout);
+			}
 			give(player, payout);
+			if ((player.getObjectId() == quest.getOwnerId()) && (quest.getTemplate().getReward().getTitle() != null) && (quest.getChain() >= quest.getTemplate().getReward().getMinChain()))
+			{
+				player.setTitle(quest.format(quest.getTemplate().getReward().getTitle()));
+				player.broadcastTitleInfo();
+				player.sendMessage(quest.getName() + ": you earned the title \"" + player.getTitle() + "\".");
+			}
 			recordCompletion(player.getAccountName(), quest.getTemplate());
 
 			final NpcHtmlMessage html = new NpcHtmlMessage(0, DynamicQuestHtml.complete(quest, payout, successText));
 			player.sendPacket(html);
+		}
+	}
+
+	/**
+	 * The lord of the quest's castle pays a share on top, from the treasury, when it can.
+	 */
+	private static void payTreasuryShare(QuestInstance quest, Payout payout)
+	{
+		final int percent = quest.getTemplate().getReward().getTreasuryPercent();
+		final int castleId = quest.getContextInt("castleId", 0);
+		if ((percent <= 0) || (castleId <= 0) || (payout._adena <= 0))
+		{
+			return;
+		}
+		final Castle castle = CastleManager.getInstance().getCastleById(castleId);
+		final long share = (payout._adena * percent) / 100;
+		if ((castle != null) && (castle.getOwnerId() > 0) && (castle.getTreasury() >= share) && castle.addToTreasuryNoTax(-share))
+		{
+			payout._adena += share;
+			quest.message("The lord of " + castle.getName() + " adds " + String.format("%,d", share) + " Adena from the treasury.");
 		}
 	}
 
@@ -1636,6 +1797,41 @@ public class DynamicQuestManager
 		}
 	}
 
+	/**
+	 * A player caught a fish (called by the fishing code).
+	 * @param player the player
+	 * @param fishId the fish item
+	 * @param lureId the lure used
+	 */
+	public void onFishCaught(Player player, int fishId, int lureId)
+	{
+		if (!DynamicQuestConfig.ENABLED || (player == null))
+		{
+			return;
+		}
+		for (QuestInstance quest : getQuests(player))
+		{
+			synchronized (quest)
+			{
+				if (!quest.isActive() || quest.isStageEnding())
+				{
+					continue;
+				}
+				for (AbstractObjective objective : new ArrayList<>(quest.getObjectives()))
+				{
+					if (!objective.isDone() && !objective.isFailed())
+					{
+						objective.onFish(player, fishId, lureId);
+					}
+				}
+				if (quest.isNeedsCheck())
+				{
+					checkStage(quest);
+				}
+			}
+		}
+	}
+
 	private void onLevelChanged(OnPlayerLevelChanged event)
 	{
 		if (event.getNewLevel() > event.getOldLevel())
@@ -1714,6 +1910,11 @@ public class DynamicQuestManager
 		}
 
 		final List<Player> near = quest.updatePresence();
+		if (quest.getTemplate().getEligibility().isNightOnly() && !isNightNow())
+		{
+			finish(quest, DynamicQuestState.FAILED, quest.getTemplate().getText("failDawn", "Dawn breaks, and the night's work is over."));
+			return;
+		}
 		if ((quest.getStageDeadline() > 0) && (System.currentTimeMillis() > quest.getStageDeadline()))
 		{
 			applyTransition(quest, TransitionEvent.TIMEOUT, null);
@@ -1887,7 +2088,7 @@ public class DynamicQuestManager
 		{
 			return false;
 		}
-		if ((player.getLevel() < DynamicQuestConfig.MIN_LEVEL) || _personalOffers.containsKey(player.getObjectId()))
+		if ((player.getLevel() < DynamicQuestConfig.MIN_LEVEL) || _personalOffers.containsKey(player.getObjectId()) || player.getVariables().getBoolean(VAR_NO_HERALDS, false))
 		{
 			return false;
 		}
@@ -1940,7 +2141,7 @@ public class DynamicQuestManager
 		for (QuestTemplate template : DynamicQuestData.getInstance().getTemplates())
 		{
 			final QuestTrigger trigger = template.getTrigger(TriggerType.PLAYER_ACTION);
-			if ((trigger != null) && action.equalsIgnoreCase(trigger.getParams().getString("action", "KILL")) && (Rnd.get(100.0) < trigger.getChance()) && offerByHerald(player, template))
+			if ((trigger != null) && action.equalsIgnoreCase(trigger.getParams().getString("action", "KILL")) && (Rnd.get(100.0) < trigger.getChance()) && (trigger.isDirect() ? offerDirect(player, template) : offerByHerald(player, template)))
 			{
 				return;
 			}
@@ -1955,7 +2156,7 @@ public class DynamicQuestManager
 	 */
 	public boolean offerByHerald(Player player, QuestTemplate template)
 	{
-		if ((template.getScope() != QuestScope.PERSONAL) || (template.getEligibility().test(player, getMembers(player)) != null) || (checkLimits(player, template) != null))
+		if (!canOffer(player, template))
 		{
 			return false;
 		}
@@ -1979,6 +2180,72 @@ public class DynamicQuestManager
 		herald.getAI().setIntention(Intention.MOVE_TO, QuestSpawnUtil.findPoint(player, 60, 100, true, player.getInstanceId()));
 		log("A herald brings " + template.getName() + " to " + player.getName() + ".");
 		return true;
+	}
+
+	/**
+	 * @param player a player
+	 * @param template a template
+	 * @return {@code true} if it may be offered to the player unasked: never one turned down today or already running
+	 */
+	private boolean canOffer(Player player, QuestTemplate template)
+	{
+		if ((template.getScope() != QuestScope.PERSONAL) || isTurnedDown(player.getObjectId(), template.getId()))
+		{
+			return false;
+		}
+		for (QuestInstance quest : getOwnedQuests(player))
+		{
+			if (quest.getTemplate() == template)
+			{
+				return false;
+			}
+		}
+		final QuestTrigger trigger = template.getTrigger(TriggerType.PLAYER_ACTION) != null ? template.getTrigger(TriggerType.PLAYER_ACTION) : template.getTrigger(TriggerType.TIMER);
+		if ((trigger != null) && !isTownConditionMet(trigger, getNearestTown(player)))
+		{
+			return false;
+		}
+		return (template.getEligibility().test(player, getMembers(player)) == null) && (checkLimits(player, template) == null);
+	}
+
+	/**
+	 * Gives a player an offer that needs no herald (a find: a torn map, a note).
+	 * @param player the player
+	 * @param template the quest
+	 * @return {@code true} if the offer was made
+	 */
+	public boolean offerDirect(Player player, QuestTemplate template)
+	{
+		if (!canOffer(player, template))
+		{
+			return false;
+		}
+		final QuestOffer offer = new QuestOffer("D" + System.nanoTime(), template, null, Rnd.nextLong(), null, rollTier(), 0, null);
+		offer.setExpires(System.currentTimeMillis() + (DynamicQuestConfig.HERALD_WAIT_TIME * 3000L));
+		_personalOffers.put(player.getObjectId(), offer);
+		_nextOffer.put(player.getObjectId(), System.currentTimeMillis() + (DynamicQuestConfig.OFFER_RETRY_DELAY * 1000L));
+		final String line = template.getText("findText", "You found something. Click the question mark to look at it.");
+		QuestSpawnUtil.announce(player, line);
+		player.sendMessage(line);
+		player.sendPacket(new TutorialShowQuestionMark(QUESTION_MARK_ID));
+		log(player.getName() + " found " + template.getName() + ".");
+		return true;
+	}
+
+	private void turnDown(int playerObjectId, int templateId)
+	{
+		if (playerObjectId > 0)
+		{
+			checkDay();
+			_turnedDown.computeIfAbsent(playerObjectId, key -> ConcurrentHashMap.newKeySet()).add(templateId);
+		}
+	}
+
+	private boolean isTurnedDown(int playerObjectId, int templateId)
+	{
+		checkDay();
+		final Set<Integer> turnedDown = _turnedDown.get(playerObjectId);
+		return (turnedDown != null) && turnedDown.contains(templateId);
 	}
 
 	private static QuestTier rollTier()
@@ -2053,6 +2320,10 @@ public class DynamicQuestManager
 		if (!_personalOffers.remove(playerObjectId, offer))
 		{
 			return;
+		}
+		if (!offer.isAccepted())
+		{
+			turnDown(playerObjectId, offer.getTemplate().getId());
 		}
 		final Npc herald = offer.getHerald();
 		if (herald == null)
@@ -2140,6 +2411,13 @@ public class DynamicQuestManager
 			{
 				declinePersonalOffer(player);
 				return null;
+			}
+			case "heralds":
+			{
+				final boolean off = (args.length > 1) ? args[1].equalsIgnoreCase("off") : !player.getVariables().getBoolean(VAR_NO_HERALDS, false);
+				player.getVariables().set(VAR_NO_HERALDS, off);
+				player.sendMessage(off ? "Heralds will leave you alone. Quests stay on the Notice Boards." : "Heralds may bring you quests again.");
+				return DynamicQuestHtml.main(this, player, npc, channel);
 			}
 			case "quest":
 			{

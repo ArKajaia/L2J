@@ -191,4 +191,175 @@
 			<height normal="23" />
 		</collision>
 	</npc>
+	<npc id="900511" displayId="18265" level="70" type="QuestGuard" name="Buried Chest" usingServerSideName="true" title="Dig It Out" usingServerSideTitle="true"> <!-- Treasure Map chest -->
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="500000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="false" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="13" />
+			<height normal="16" />
+		</collision>
+	</npc>
+	<npc id="900512" displayId="31523" level="70" type="Folk" name="Disturbed Earth" usingServerSideName="true" title="X Marks the Spot" usingServerSideTitle="true"> <!-- Treasure Map dig site -->
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="13" />
+			<height normal="16" />
+		</collision>
+	</npc>
+	<npc id="900513" displayId="144" level="70" type="Folk" name="Tainted Totem" usingServerSideName="true" title="Corrupted" usingServerSideTitle="true"> <!-- Corrupted Ground totem -->
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="9" />
+			<height normal="20" />
+		</collision>
+	</npc>
+	<npc id="900514" displayId="35424" level="70" type="Folk" name="Tracker's Mark" usingServerSideName="true" title="Fresh Tracks" usingServerSideTitle="true"> <!-- Rare Beast Tracking tracks -->
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="9" />
+			<height normal="20" />
+		</collision>
+	</npc>
+	<npc id="900515" displayId="35425" level="70" type="Folk" name="Watch Post" usingServerSideName="true" title="Night Watch" usingServerSideTitle="true"> <!-- Night Watch post -->
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="9" />
+			<height normal="20" />
+		</collision>
+	</npc>
+	<npc id="900516" displayId="32071" level="70" type="QuestGuard" name="Lost Child" usingServerSideName="true" title="Lost" usingServerSideTitle="true"> <!-- The Lost Child escortee -->
+		<race>HUMAN</race>
+		<sex>FEMALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="500000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="40" />
+				<run ground="100" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="false" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="6" />
+			<height normal="14" />
+		</collision>
+	</npc>
+	<npc id="900517" displayId="32343" level="70" type="Folk" name="Rift" usingServerSideName="true" title="Torn Open" usingServerSideTitle="true"> <!-- Rift Closing rift -->
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="20" />
+			<height normal="25" />
+		</collision>
+	</npc>
+	<npc id="900518" displayId="20154" level="70" type="Folk" name="Fever Herb" usingServerSideName="true" title="Fragile Roots" usingServerSideTitle="true"> <!-- Herbalist's Plague herb -->
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="10" />
+			<height normal="12" />
+		</collision>
+	</npc>
+	<npc id="900519" displayId="35426" level="70" type="Folk" name="Vantage Point" usingServerSideName="true" title="Keep Low" usingServerSideTitle="true"> <!-- Scout the Frontier vantage point -->
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="1" />
+				<run ground="1" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="9" />
+			<height normal="20" />
+		</collision>
+	</npc>
 </list>

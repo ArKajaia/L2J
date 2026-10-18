@@ -83,13 +83,23 @@ public class DynamicQuestData implements IXmlReader
 		private final String _title;
 		private final Set<String> _types;
 		private final String _label;
+		private final boolean _required;
 
-		public RequesterRole(String name, String title, Set<String> types, String label)
+		public RequesterRole(String name, String title, Set<String> types, String label, boolean required)
 		{
 			_name = name;
 			_title = title;
 			_types = types;
 			_label = label;
+			_required = required;
+		}
+
+		/**
+		 * @return {@code true} if its requests are only offered in towns that have such an npc
+		 */
+		public boolean isRequired()
+		{
+			return _required;
 		}
 
 		public String getName()
@@ -305,7 +315,7 @@ public class DynamicQuestData implements IXmlReader
 							}
 						}
 						final String name = parseString(attrs, "name");
-						_loadingRequesters.put(name, new RequesterRole(name, parseString(attrs, "title", null), types, parseString(attrs, "label", "")));
+						_loadingRequesters.put(name, new RequesterRole(name, parseString(attrs, "title", null), types, parseString(attrs, "label", ""), parseBoolean(attrs, "required", false)));
 						break;
 					}
 				}
@@ -369,7 +379,7 @@ public class DynamicQuestData implements IXmlReader
 		final List<QuestTrigger> triggers = new ArrayList<>();
 		Eligibility eligibility = new Eligibility(1, 999, 1, 9, Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), false, 0, 0);
 		final List<StageTemplate> stages = new ArrayList<>();
-		RewardDefinition reward = new RewardDefinition(0, 0, 0, Collections.emptyList());
+		RewardDefinition reward = new RewardDefinition(0, 0, 0, Collections.emptyList(), null, 0, 0);
 		final Map<String, String> texts = new HashMap<>();
 
 		for (Node child = node.getFirstChild(); child != null; child = child.getNextSibling())
@@ -430,7 +440,7 @@ public class DynamicQuestData implements IXmlReader
 						items.addAll(table);
 					}
 					items.addAll(parseEntries(child));
-					reward = new RewardDefinition(parseDouble(childAttrs, "exp", 0d), parseDouble(childAttrs, "sp", 0.1), parseLong(childAttrs, "adenaPerLevel", 0L), items);
+					reward = new RewardDefinition(parseDouble(childAttrs, "exp", 0d), parseDouble(childAttrs, "sp", 0.1), parseLong(childAttrs, "adenaPerLevel", 0L), items, parseString(childAttrs, "title", null), parseInteger(childAttrs, "minChain", 0), parseInteger(childAttrs, "treasuryPercent", 0));
 					break;
 				}
 				case "text":
@@ -492,7 +502,7 @@ public class DynamicQuestData implements IXmlReader
 				}
 				case "on":
 				{
-					transitions.add(new Transition(parseEnum(childAttrs, TransitionEvent.class, "event"), parseEnum(childAttrs, TransitionAction.class, "action"), parseInteger(childAttrs, "target", 0), parseDouble(childAttrs, "chance", 100d), parseInteger(childAttrs, "max", 1), parseInteger(childAttrs, "extraTime", 0), parseString(childAttrs, "text", null)));
+					transitions.add(new Transition(parseEnum(childAttrs, TransitionEvent.class, "event"), parseEnum(childAttrs, TransitionAction.class, "action"), parseInteger(childAttrs, "target", 0), parseDouble(childAttrs, "chance", 100d), parseInteger(childAttrs, "max", 1), parseInteger(childAttrs, "extraTime", 0), parseString(childAttrs, "text", null), parseInteger(childAttrs, "maxChain", 0)));
 					break;
 				}
 			}

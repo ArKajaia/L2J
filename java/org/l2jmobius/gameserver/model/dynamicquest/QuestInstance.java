@@ -670,10 +670,21 @@ public class QuestInstance
 		{
 			return null;
 		}
+		track(objective, npc);
+		return npc;
+	}
+
+	/**
+	 * Makes an npc spawned elsewhere (a fake player) one of an objective's: tracked, despawned with it, its death sent to it.
+	 * @param objective the objective
+	 * @param npc the npc
+	 */
+	public void track(AbstractObjective objective, Npc npc)
+	{
+		npc.getVariables().set(AbstractHiddenTask.TASK_NPC_VAR, true);
 		npc.getVariables().set(NPC_VAR, String.valueOf(_id));
 		_npcs.put(npc, objective);
 		npc.addListener(new ConsumerEventListener(npc, EventType.ON_CREATURE_DEATH, (OnCreatureDeath event) -> ThreadPool.execute(() -> DynamicQuestManager.getInstance().onQuestNpcDeath(this, npc, event.getAttacker())), this));
-		return npc;
 	}
 
 	/**

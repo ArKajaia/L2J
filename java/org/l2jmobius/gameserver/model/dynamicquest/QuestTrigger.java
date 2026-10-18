@@ -56,6 +56,23 @@ public class QuestTrigger
 	}
 
 	/**
+	 * @return what the world must be like for it to be offered: NIGHT, CASTLE_LORD, or {@code null} for nothing
+	 */
+	public String getRequires()
+	{
+		final String requires = _params.getString("requires", null);
+		return requires != null ? requires.toUpperCase() : null;
+	}
+
+	/**
+	 * @return {@code true} if the offer goes straight to the player (a find, a note) instead of being brought by a herald
+	 */
+	public boolean isDirect()
+	{
+		return "DIRECT".equalsIgnoreCase(_params.getString("delivery", "HERALD"));
+	}
+
+	/**
 	 * @return the chance in percent (default 100)
 	 */
 	public double getChance()
