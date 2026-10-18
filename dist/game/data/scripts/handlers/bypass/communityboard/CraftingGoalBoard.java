@@ -57,6 +57,7 @@ import custom.Bestiary.BestiaryTracker;
  * <li>{@code view <recipe>} - a recipe, and how many items to aim for</li>
  * <li>{@code add <recipe> <amount>} - take (or change) a goal</li>
  * <li>{@code abandon <recipe>} - drop a goal</li>
+ * <li>{@code pin <recipe>} / {@code unpin <recipe>} - put a goal on the client's own tracker or take it off ({@link CraftingGoalManager#pin}), and show the goal again</li>
  * </ul>
  */
 public class CraftingGoalBoard implements IParseBoardHandler
@@ -211,6 +212,13 @@ public class CraftingGoalBoard implements IParseBoardHandler
 					CraftingGoalManager.getInstance().removeGoal(player, Integer.parseInt(args[1]));
 					return buildGoals(player, width, bypass);
 				}
+				case "pin":
+				case "unpin":
+				{
+					final int recipeListId = Integer.parseInt(args[1]);
+					CraftingGoalManager.getInstance().pin(player, recipeListId, action.equals("pin"));
+					return buildGoal(player, recipeListId, width, bypass);
+				}
 				default:
 				{
 					return buildGoals(player, width, bypass);
@@ -256,7 +264,12 @@ public class CraftingGoalBoard implements IParseBoardHandler
 			final boolean ready = CraftingGoal.isReady(lines);
 			rowStart(sb, width, productId, ROW_HEIGHT + 8);
 			sb.append("<td width=").append(width - 120).append(">");
-			sb.append("<font color=\"").append(COLOR_VALUE).append("\">").append(CraftingGoalManager.describe(goal)).append("</font><br1>");
+			sb.append("<font color=\"").append(COLOR_VALUE).append("\">").append(CraftingGoalManager.describe(goal)).append("</font>");
+			if (goal.isPinned())
+			{
+				sb.append(" <font color=\"").append(COLOR_MUTED).append("\">(pinned)</font>");
+			}
+			sb.append("<br1>");
 			sb.append(bar(width - 120, done, total, done >= total));
 			sb.append("<font color=\"").append(ready ? COLOR_DONE : COLOR_TEXT).append("\">");
 			sb.append(ready ? "Ready to craft!" : (done + " of " + total + " resources collected"));
@@ -303,7 +316,13 @@ public class CraftingGoalBoard implements IParseBoardHandler
 		{
 			sb.append(done).append(" of ").append(total).append(" resources collected");
 		}
-		sb.append("</font></td></tr></table><br>");
+		sb.append("</font></td></tr></table>");
+
+		// On the client's own tracker.
+		sb.append("<table width=").append(width).append("><tr>");
+		sb.append("<td width=").append(width - 110).append("><font color=\"").append(COLOR_MUTED).append("\">").append(goal.isPinned() ? "Pinned to your screen." : "Show it on your screen while you play.").append("</font></td>");
+		sb.append("<td width=110 align=right>").append(goal.isPinned() ? button("Unpin", bypass + " unpin " + recipeListId, 100) : button("Pin to Screen", bypass + " pin " + recipeListId, 100)).append("</td>");
+		sb.append("</tr></table><br>");
 
 		// The components of the recipe.
 		sb.append("<table width=").append(width).append("><tr><td><font color=\"").append(COLOR_TITLE).append("\">Resources</font></td></tr></table>");
