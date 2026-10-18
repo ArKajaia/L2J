@@ -120,7 +120,7 @@ public class DynamicQuestManager
 	private static final Logger LOGGER = Logger.getLogger(DynamicQuestManager.class.getName());
 
 	/** The tutorial question mark raised by heralds and follow-ups. */
-	public static final int QUESTION_MARK_ID = 9310;
+	public static final int QUESTION_MARK_ID = 9320;
 
 	/** Where the bypasses of a page go. */
 	public enum Channel
@@ -2224,10 +2224,11 @@ public class DynamicQuestManager
 		offer.setExpires(System.currentTimeMillis() + (DynamicQuestConfig.HERALD_WAIT_TIME * 3000L));
 		_personalOffers.put(player.getObjectId(), offer);
 		_nextOffer.put(player.getObjectId(), System.currentTimeMillis() + (DynamicQuestConfig.OFFER_RETRY_DELAY * 1000L));
-		final String line = template.getText("findText", "You found something. Click the question mark to look at it.");
+		final String line = template.getText("findText", "You found something.");
 		QuestSpawnUtil.announce(player, line);
-		player.sendMessage(line);
+		player.sendMessage(line + " Type .quests to look at it again.");
 		player.sendPacket(new TutorialShowQuestionMark(QUESTION_MARK_ID));
+		sendWindow(player, DynamicQuestHtml.offer(this, player, null, offer, Channel.WINDOW));
 		log(player.getName() + " found " + template.getName() + ".");
 		return true;
 	}
@@ -2297,6 +2298,7 @@ public class DynamicQuestManager
 				herald.setHeading(LocationUtil.calculateHeadingFrom(herald, player));
 				herald.broadcastInfo();
 				QuestSpawnUtil.say(player, herald, offer.getTemplate().getText("heraldLine", "You there! I have work for someone like you."));
+				QuestSpawnUtil.screen(player, herald.getName() + " wants a word with you. Talk to them, or type .quests.");
 				player.sendPacket(new TutorialShowQuestionMark(QUESTION_MARK_ID));
 			}
 			else if ((herald.getAI().getIntention() != Intention.MOVE_TO) || ((System.currentTimeMillis() / 1000) % 2) == 0)
@@ -2410,6 +2412,11 @@ public class DynamicQuestManager
 			case "decline":
 			{
 				declinePersonalOffer(player);
+				return null;
+			}
+			case "hidden":
+			{
+				HiddenQuestManager.getInstance().showQuestionMark(player);
 				return null;
 			}
 			case "heralds":

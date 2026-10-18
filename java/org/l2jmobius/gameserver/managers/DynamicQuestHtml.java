@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.l2jmobius.gameserver.config.custom.DynamicQuestConfig;
+import org.l2jmobius.gameserver.config.custom.HiddenQuestConfig;
 import org.l2jmobius.gameserver.data.xml.DynamicQuestData;
 import org.l2jmobius.gameserver.managers.DynamicQuestManager.Channel;
 import org.l2jmobius.gameserver.model.actor.Npc;
@@ -40,6 +41,7 @@ import org.l2jmobius.gameserver.model.dynamicquest.StageTemplate;
 import org.l2jmobius.gameserver.model.dynamicquest.TriggerType;
 import org.l2jmobius.gameserver.model.dynamicquest.objective.AbstractObjective;
 import org.l2jmobius.gameserver.model.dynamicquest.objective.DeliverObjective;
+import org.l2jmobius.gameserver.model.hiddenquest.HiddenQuestSession;
 import org.l2jmobius.gameserver.model.siege.Castle;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
@@ -166,6 +168,20 @@ public final class DynamicQuestHtml
 				sb.append(" <font color=\"").append(COLOR_MUTED).append("\">(").append(quest.isWorld() ? "world" : quest.getOwnerName()).append(")</font>");
 			}
 			sb.append("<br1>");
+		}
+
+		// The hidden quest under way (some clients never show its question mark).
+		if ((channel != Channel.NPC) && HiddenQuestConfig.ENABLED)
+		{
+			final HiddenQuestSession hidden = HiddenQuestManager.getInstance().getSession(player);
+			if (hidden != null)
+			{
+				sb.append("<br><font color=\"LEVEL\">Hidden quest</font><br1>- ").append(link("hidden", hidden.getDefinition().getName())).append(" <font color=\"").append(COLOR_MUTED).append("\">").append(hidden.getTask() != null ? hidden.getTask().getProgress() : "").append("</font><br1>");
+			}
+			else if (HiddenQuestManager.getInstance().getVisitingQuest(player) != null)
+			{
+				sb.append("<br><font color=\"LEVEL\">Hidden quest</font><br1>- ").append(link("hidden", "A messenger is looking for you")).append("<br1>");
+			}
 		}
 
 		final QuestOffer personal = manager.getPersonalOffer(player);

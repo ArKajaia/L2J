@@ -24,13 +24,15 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.l2jmobius.gameserver.config.custom.DynamicQuestConfig;
+import org.l2jmobius.gameserver.config.custom.HiddenQuestConfig;
 import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
 import org.l2jmobius.gameserver.managers.DynamicQuestManager;
 import org.l2jmobius.gameserver.managers.DynamicQuestManager.Channel;
+import org.l2jmobius.gameserver.managers.HiddenQuestManager;
 import org.l2jmobius.gameserver.model.actor.Player;
 
 /**
- * .quests: the player's dynamic quests, today's board of the nearest town and the world events, in a window.
+ * .quests: the player's dynamic quests, today's board of the nearest town, the world events and the hidden quest under way, in a window. It also shows what the question mark of a quest would, for clients that never show the mark.
  * @author Mobius
  */
 public class QuestsVoiced implements IVoicedCommandHandler
@@ -47,7 +49,7 @@ public class QuestsVoiced implements IVoicedCommandHandler
 	@Override
 	public boolean useVoicedCommand(String command, Player player, String params)
 	{
-		if ((player == null) || !DynamicQuestConfig.ENABLED)
+		if (player == null)
 		{
 			return false;
 		}
@@ -59,6 +61,16 @@ public class QuestsVoiced implements IVoicedCommandHandler
 			return true;
 		}
 		LAST_USE.put(player.getObjectId(), now);
+
+		if (!DynamicQuestConfig.ENABLED)
+		{
+			// Only the Hidden Quests are on: show the riddle, the progress or the messenger's offer.
+			if (!HiddenQuestConfig.ENABLED || !HiddenQuestManager.getInstance().showQuestionMark(player))
+			{
+				player.sendMessage("You have no quest under way.");
+			}
+			return true;
+		}
 
 		final DynamicQuestManager manager = DynamicQuestManager.getInstance();
 		final String html = manager.handleCommand(player, null, Channel.WINDOW, params != null ? params : "");

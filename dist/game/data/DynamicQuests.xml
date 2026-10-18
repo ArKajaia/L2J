@@ -619,7 +619,7 @@
 		</stage>
 		<reward exp="2.5" sp="0.1" adenaPerLevel="2500" table="bounty" />
 		<text key="title">Treasure Map</text>
-		<text key="findText">Among the remains you find a torn map with a mark on it. Click the question mark to look at it.</text>
+		<text key="findText">Among the remains you find a torn map with a mark on it.</text>
 		<text key="offer">A torn map, old and stained, with an X drawn near the hunting grounds you know. Someone buried something there - and didn't come back for it.</text>
 		<text key="success">The old chest holds coin and more. Whoever buried it won't miss it.</text>
 		<text key="failLogout">The map crumbles to dust in your pack.</text>
