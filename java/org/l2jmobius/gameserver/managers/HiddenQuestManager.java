@@ -1456,7 +1456,7 @@ public class HiddenQuestManager
 
 	private static void line(StringBuilder sb, String text)
 	{
-		sb.append("<font color=\"LEVEL\">&#8226;</font> ").append(text).append("<br1>");
+		sb.append("<font color=\"LEVEL\">-</font> ").append(text).append("<br1>");
 	}
 
 	/**
