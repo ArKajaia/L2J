@@ -8,3 +8,12 @@ When asked to check, fix or update game content (quests, NPCs, monsters, drops, 
 - The L2J High Five reference datapack: `https://bitbucket.org/l2jserver/l2j-server-datapack.git` (scripts and dialogs under `src/main/java/com/l2jserver/datapack/`).
 
 Prefer sources that name the chronicle. Where sources disagree with each other or with the retail dialogs in this repo, say so instead of guessing. If a site is blocked by the environment's network policy, name the host so it can be added to the allowed domains, and fall back to search-result summaries.
+
+## Java versions
+
+There are two different Java levels in this repo. Check both before writing code:
+
+- **Core (`java/`)**: Java **25**. Set by `source`/`target` in `build.xml` (the `compile` target), which also refuses to build on an older JDK. Any modern feature is fine here.
+- **Scripts (`dist/game/data/scripts/`)**: Java **8** language level. They are compiled at server startup by `java/org/l2jmobius/gameserver/scripting/engine/ScriptExecutor.java`, which passes `-source 1.8 -target 1.8`. Newer JDK *library* APIs still work (the scripts run on the Java 25 runtime), but newer *language* features fail to compile and stop the script from loading: no `record`, `var`, switch expressions / `case ->`, text blocks (`"""`), `instanceof` pattern matching, `sealed`, or `_` variables. Use a small `private static class` with final fields and getters instead of a record.
+
+To check: `grep -n 'source\|target' build.xml` and `grep -n '"1.8"' java/org/l2jmobius/gameserver/scripting/engine/ScriptExecutor.java`.

@@ -410,8 +410,26 @@ public class SessionBoard implements IParseBoardHandler
 	/**
 	 * A row of the comparison: its label and a cell for each session, {@code null} when it isn't always shown and is empty in every session.
 	 */
-	private record Row(String label, List<String> cells)
+	private static class Row
 	{
+		private final String _label;
+		private final List<String> _cells;
+		
+		public Row(String label, List<String> cells)
+		{
+			_label = label;
+			_cells = cells;
+		}
+		
+		public String label()
+		{
+			return _label;
+		}
+		
+		public List<String> cells()
+		{
+			return _cells;
+		}
 	}
 	
 	private static Row row(String label, List<SessionRecord> records, boolean always, Cell cell)
