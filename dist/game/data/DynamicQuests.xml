@@ -105,19 +105,10 @@
 	</monsterPool>
 
 	<!-- Reward tables, by the grade a character of the quest's level uses. -->
-	<rewardTable name="shots">
-		<reward id="1835" count="300" maxLevel="19" /> <!-- Soulshot: No Grade -->
-		<reward id="1463" count="300" minLevel="20" maxLevel="39" /> <!-- Soulshot (D-Grade) -->
-		<reward id="1464" count="300" minLevel="40" maxLevel="51" /> <!-- Soulshot (C-Grade) -->
-		<reward id="1465" count="250" minLevel="52" maxLevel="60" /> <!-- Soulshot (B-Grade) -->
-		<reward id="1466" count="250" minLevel="61" maxLevel="75" /> <!-- Soulshot (A-Grade) -->
-		<reward id="1467" count="200" minLevel="76" /> <!-- Soulshot (S-Grade) -->
-		<reward id="2509" count="150" maxLevel="19" /> <!-- Spiritshot: No Grade -->
-		<reward id="2510" count="150" minLevel="20" maxLevel="39" /> <!-- Spiritshot (D-Grade) -->
-		<reward id="2511" count="150" minLevel="40" maxLevel="51" /> <!-- Spiritshot (C-Grade) -->
-		<reward id="2512" count="120" minLevel="52" maxLevel="60" /> <!-- Spiritshot (B-Grade) -->
-		<reward id="2513" count="120" minLevel="61" maxLevel="75" /> <!-- Spiritshot (A-Grade) -->
-		<reward id="2514" count="100" minLevel="76" /> <!-- Spiritshot (S-Grade) -->
+	<rewardTable name="caches">
+		<reward id="6492" count="1" maxLevel="39" /> <!-- Sealed Cache (Common) -->
+		<reward id="6499" count="1" minLevel="40" maxLevel="60" /> <!-- Sealed Cache (Rare) -->
+		<reward id="6509" count="1" minLevel="61" /> <!-- Sealed Cache (Epic) -->
 	</rewardTable>
 	<rewardTable name="scrolls">
 		<reward id="955" count="1" minLevel="20" maxLevel="39" chance="15" scaled="false" /> <!-- Scroll: Enchant Weapon (D-Grade) -->
@@ -132,11 +123,9 @@
 		<reward id="960" count="1" minLevel="76" chance="12" scaled="false" /> <!-- Scroll: Enchant Armor (S-Grade) -->
 	</rewardTable>
 	<rewardTable name="bounty">
-		<reward id="1463" count="300" minLevel="20" maxLevel="39" /> <!-- Soulshot (D-Grade) -->
-		<reward id="1464" count="300" minLevel="40" maxLevel="51" /> <!-- Soulshot (C-Grade) -->
-		<reward id="1465" count="250" minLevel="52" maxLevel="60" /> <!-- Soulshot (B-Grade) -->
-		<reward id="1466" count="250" minLevel="61" maxLevel="75" /> <!-- Soulshot (A-Grade) -->
-		<reward id="1467" count="200" minLevel="76" /> <!-- Soulshot (S-Grade) -->
+		<reward id="6492" count="1" minLevel="20" maxLevel="39" /> <!-- Sealed Cache (Common) -->
+		<reward id="6499" count="1" minLevel="40" maxLevel="60" /> <!-- Sealed Cache (Rare) -->
+		<reward id="6509" count="1" minLevel="61" /> <!-- Sealed Cache (Epic) -->
 		<reward id="955" count="1" minLevel="20" maxLevel="39" chance="20" scaled="false" /> <!-- Scroll: Enchant Weapon (D-Grade) -->
 		<reward id="951" count="1" minLevel="40" maxLevel="51" chance="16" scaled="false" /> <!-- Scroll: Enchant Weapon (C-Grade) -->
 		<reward id="8743" count="1" minLevel="46" maxLevel="54" chance="4" scaled="false" /> <!-- High-Grade Life Stone - Level 46 -->
@@ -201,12 +190,6 @@
 		<item id="1831" count="10" /> <!-- Antidote -->
 		<item id="1833" count="10" /> <!-- Bandage -->
 		<item id="736" count="3" /> <!-- Scroll of Escape -->
-		<item id="1835" count="300" maxLevel="19" /> <!-- Soulshot: No Grade -->
-		<item id="1463" count="200" minLevel="20" maxLevel="39" /> <!-- Soulshot (D-Grade) -->
-		<item id="1464" count="200" minLevel="40" maxLevel="51" /> <!-- Soulshot (C-Grade) -->
-		<item id="1465" count="150" minLevel="52" maxLevel="60" /> <!-- Soulshot (B-Grade) -->
-		<item id="1466" count="150" minLevel="61" maxLevel="75" /> <!-- Soulshot (A-Grade) -->
-		<item id="1467" count="100" minLevel="76" /> <!-- Soulshot (S-Grade) -->
 	</itemTable>
 
 	<!-- Names and lines. -->
@@ -370,7 +353,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="{target} has slipped away to a new lair! You have one more chance." />
 		</stage>
-		<reward exp="3" sp="0.1" adenaPerLevel="1200" table="bounty" />
+		<reward exp="3" sp="0.1" adenaPerLevel="6000" table="bounty" />
 		<text key="title">Wanted</text>
 		<text key="offer">A beast of the wilds has grown bold and killed travellers near the roads. The board pays well for its head. Its trail starts in the hunting grounds of your strength.</text>
 		<text key="success">The bounty is yours. The roads are a little safer tonight.</text>
@@ -394,7 +377,7 @@
 			<on event="SUCCESS" action="FOLLOW_UP" target="1" chance="25" text="The caravan master whispers: the brigands answer to someone. The board will want to know." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
-		<reward exp="3" sp="0.1" adenaPerLevel="1500" table="shots">
+		<reward exp="3" sp="0.1" adenaPerLevel="7500" table="caches">
 			<item id="736" count="2" scaled="false" /> <!-- Scroll of Escape -->
 		</reward>
 		<text key="title">Caravan Crossing</text>
@@ -429,7 +412,7 @@
 			<on event="SUCCESS" action="FOLLOW_UP" target="1" chance="30" text="{hostage} heard their leader's name. The board will post a bounty." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
-		<reward exp="3.5" sp="0.1" adenaPerLevel="1500" table="bounty" />
+		<reward exp="3.5" sp="0.1" adenaPerLevel="7500" table="bounty" />
 		<text key="title">Kidnapped!</text>
 		<text key="offer">{requester} begs for help: someone dear was dragged off the road by brigands. Follow their trail, free the captive and bring them home.</text>
 		<text key="success">{hostage} is home, and a whole town owes you.</text>
@@ -447,7 +430,7 @@
 			<objective type="COLLECT" optional="true" source="AREA" name="lumps of cold iron" count="6" chance="30" text="If you can, bring cold iron from the {monster} near {near} too." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
-		<reward exp="1.5" sp="0.1" adenaPerLevel="2500" table="scrolls" />
+		<reward exp="1.5" sp="0.1" adenaPerLevel="12500" table="scrolls" />
 		<text key="title">Blacksmith's Order</text>
 		<text key="offer">{requester} has more orders than materials. Bring what the forge needs - the grade you work with yourself - and be paid well above the shop price.</text>
 		<text key="success">The forge roars again. {requester} pays in coin and in favours.</text>
@@ -477,7 +460,7 @@
 			<objective type="KILL" source="AREA" count="8" text="Thin out the {monster} near {near} that trouble {requester}." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
-		<reward exp="1" sp="0.1" adenaPerLevel="700" table="supplies" />
+		<reward exp="1" sp="0.1" adenaPerLevel="3500" table="supplies" />
 		<text key="title">A Favour</text>
 		<text key="offer">{requester} needs a hand with something small. It won't take long, and they will remember it.</text>
 		<text key="success">{requester} thanks you warmly.</text>
@@ -493,7 +476,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="900" text="The outbreak spreads, and an alpha leads it!" />
 		</stage>
-		<reward exp="3" sp="0.1" adenaPerLevel="1200" table="shots">
+		<reward exp="3" sp="0.1" adenaPerLevel="6000" table="caches">
 			<item id="736" count="1" scaled="false" /> <!-- Scroll of Escape -->
 		</reward>
 		<text key="title">Outbreak</text>
@@ -520,7 +503,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="FAILURE" action="FAIL" text="The banner has fallen, and the camp with it." />
 		</stage>
-		<reward exp="3.5" sp="0.1" adenaPerLevel="1500" table="bounty" />
+		<reward exp="3.5" sp="0.1" adenaPerLevel="7500" table="bounty" />
 		<text key="title">Hold the Line</text>
 		<text key="offer">A camp in the wilds is about to be overrun. Its captain asks for anyone who can hold a line.</text>
 		<text key="success">The camp stands. {captain} salutes you.</text>
@@ -555,7 +538,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="FAIL" text="{beast} has gone to ground." />
 		</stage>
-		<reward exp="3.5" sp="0.1" adenaPerLevel="1500" table="bounty" />
+		<reward exp="3.5" sp="0.1" adenaPerLevel="7500" table="bounty" />
 		<text key="title">The Lost Expedition</text>
 		<text key="offer">An expedition into the wilds has not come back. Find out what happened to them - and bring back anyone you can.</text>
 		<text key="success">You learned the expedition's fate. The board records your name.</text>
@@ -574,7 +557,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="The nests are swarming, and their mother has come!" />
 		</stage>
-		<reward exp="3" sp="0.1" adenaPerLevel="1200" table="bounty" />
+		<reward exp="3" sp="0.1" adenaPerLevel="6000" table="bounty" />
 		<text key="title">Monster Nests</text>
 		<text key="offer">The hunting grounds teem with more beasts every day: something is breeding them. Find the nests and burn them.</text>
 		<text key="success">The nests are ash. The land can breathe again.</text>
@@ -592,7 +575,7 @@
 			<objective type="REACH" dest="TOWN_FAR" minDistance="8000" maxDistance="40000" radius="400" noTeleport="true" ambushEvery="90" ambushCount="2" ambushTitle="Highwayman" bonus="HP_ABOVE:50" teleportText="The seal shatters as you pass through the ether - the package is ruined." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
-		<reward exp="2" sp="0.1" adenaPerLevel="2000" table="supplies" />
+		<reward exp="2" sp="0.1" adenaPerLevel="10000" table="supplies" />
 		<text key="title">Urgent Courier</text>
 		<text key="offer">A sealed package must reach another town, and it can't go through the gatekeepers - the seal breaks in the ether. Carry it on foot, and watch the roads.</text>
 		<text key="success">The package arrives, seal unbroken. The recipient pays the courier's fee.</text>
@@ -617,7 +600,7 @@
 			<objective type="DEFEND" target="900511" at="LAST" waves="3" waveCount="3" waveInterval="30" prep="10" boss="false" meter="100" drain="1" meterName="chest" bonus="METER_ABOVE:60" startText="The lid creaks... something is coming!" winText="The chest is yours." failText="The chest was smashed to splinters." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
-		<reward exp="2.5" sp="0.1" adenaPerLevel="2500" table="bounty" />
+		<reward exp="2.5" sp="0.1" adenaPerLevel="12500" table="bounty" />
 		<text key="title">Treasure Map</text>
 		<text key="findText">Among the remains you find a torn map with a mark on it.</text>
 		<text key="offer">A torn map, old and stained, with an X drawn near the hunting grounds you know. Someone buried something there - and didn't come back for it.</text>
@@ -642,7 +625,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="{fugitive} slipped away to a new hiding place!" />
 		</stage>
-		<reward exp="3.5" sp="0.1" adenaPerLevel="1500" table="bounty" />
+		<reward exp="3.5" sp="0.1" adenaPerLevel="7500" table="bounty" />
 		<text key="title">Manhunt</text>
 		<text key="offer">A deserter turned murderer hides in the wilds. The board wants them stopped. They fight like an adventurer, and they won't come quietly. Killing them is lawful: no karma.</text>
 		<text key="success">Justice is done. The board pays the bounty.</text>
@@ -659,7 +642,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="The corruption spreads faster!" />
 		</stage>
-		<reward exp="3" sp="0.1" adenaPerLevel="1200" table="bounty" />
+		<reward exp="3" sp="0.1" adenaPerLevel="6000" table="bounty" />
 		<text key="title">Corrupted Ground</text>
 		<text key="offer">Something has tainted a hunting ground: the beasts there are sick and savage. Find the corrupted totems and cleanse them.</text>
 		<text key="success">The land is clean again. The beasts calm down.</text>
@@ -683,7 +666,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="{beast} has fled deeper into the wilds!" />
 		</stage>
-		<reward exp="3.5" sp="0.1" adenaPerLevel="1500" table="bounty" />
+		<reward exp="3.5" sp="0.1" adenaPerLevel="7500" table="bounty" />
 		<text key="title">Rare Beast</text>
 		<text key="offer">A beast of legend has been seen: hunters have tried and failed to take it. Follow its tracks and bring it down.</text>
 		<text key="success">You took the beast of legend. Hunters will talk about this.</text>
@@ -700,7 +683,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="FAILURE" action="FAIL" />
 		</stage>
-		<reward exp="3" sp="0.1" adenaPerLevel="1800" table="bounty" />
+		<reward exp="3" sp="0.1" adenaPerLevel="9000" table="bounty" />
 		<text key="title">Smuggler Interception</text>
 		<text key="offer">Smugglers move goods through the wilds under the guards' noses. The board knows their route - not for how long. Catch them on the move.</text>
 		<text key="success">The contraband is seized and the board pays a share of it.</text>
@@ -723,7 +706,7 @@
 			<objective type="ESCORT" escortee="900516" at="LAST" dest="HOME" legs="4" legMin="900" legMax="1500" ambushCount="2" skittish="true" skittishRange="400" meter="100" drain="1.5" meterName="courage" startText="I want to go home..." arriveText="Mama! Thank you, thank you!" failText="{child} ran off in fright and is lost again." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
-		<reward exp="2" sp="0.1" adenaPerLevel="1000" table="supplies" />
+		<reward exp="2" sp="0.1" adenaPerLevel="5000" table="supplies" />
 		<text key="title">The Lost Child</text>
 		<text key="offer">{requester} is beside themselves: a child wandered off into the wilds. Find them and bring them home - gently.</text>
 		<text key="success">{child} is home safe. {requester} can't thank you enough.</text>
@@ -739,7 +722,7 @@
 			<objective type="COLLECT" optional="true" source="FISH" name="moonlit fish" count="2" scale="false" radius="8000" nightLure="true" />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
-		<reward exp="1.5" sp="0.1" adenaPerLevel="1200" table="supplies" />
+		<reward exp="1.5" sp="0.1" adenaPerLevel="6000" table="supplies" />
 		<text key="title">Fisherman's Request</text>
 		<text key="offer">{requester} has an order to fill and too few hands. Catch fish in the waters near {town}. A few caught with a night lure would fetch a better price.</text>
 		<text key="success">{requester} weighs the catch and nods: a fair day's work.</text>
@@ -755,7 +738,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="FAILURE" action="FAIL" />
 		</stage>
-		<reward exp="2.5" sp="0.1" adenaPerLevel="1500" table="scrolls" />
+		<reward exp="2.5" sp="0.1" adenaPerLevel="7500" table="scrolls" />
 		<text key="title">Scout the Frontier</text>
 		<text key="offer">The board needs eyes on the frontier: who camps where, and how many. Watch from the high places - and don't get caught.</text>
 		<text key="success">Your report is worth its weight in gold.</text>
@@ -769,7 +752,7 @@
 			<objective type="KILL" source="AREA" count="12" text="Clear the {monster} from the lands of {castle} near {near}." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
-		<reward exp="2.5" sp="0.1" adenaPerLevel="1500" treasuryPercent="50" table="shots" />
+		<reward exp="2.5" sp="0.1" adenaPerLevel="7500" treasuryPercent="50" table="caches" />
 		<text key="title">Lord's Levy</text>
 		<text key="offer">{lord}, lord of {castle}, posts a levy: the beasts of the castle's lands must be thinned, and the castle pays half again on top of the board's reward, from its own treasury.</text>
 		<text key="success">{lord} is pleased with your work.</text>
@@ -793,7 +776,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="FAIL" text="The rivals took {target} while you dawdled." />
 		</stage>
-		<reward exp="3.5" sp="0.1" adenaPerLevel="1500" table="bounty" />
+		<reward exp="3.5" sp="0.1" adenaPerLevel="7500" table="bounty" />
 		<text key="title">Rival Adventurers</text>
 		<text key="offer">A rich bounty is posted, and you are not the only one who read it. A rival party is already on its way. Get there first.</text>
 		<text key="success">The bounty is yours, and the rivals go home empty-handed.</text>
@@ -809,7 +792,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="The rifts are widening!" />
 		</stage>
-		<reward exp="3" sp="0.1" adenaPerLevel="1500" table="bounty" />
+		<reward exp="3" sp="0.1" adenaPerLevel="7500" table="bounty" />
 		<text key="title">Rift Closing</text>
 		<text key="offer">Strange rifts are opening in the land, and creatures from far-off places come through them. Seal the rifts before the land is overrun.</text>
 		<text key="success">The rifts are sealed. The strange creatures fade away.</text>
@@ -830,7 +813,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="FAIL" text="The herbs have wilted. Too late." />
 		</stage>
-		<reward exp="1.5" sp="0.1" adenaPerLevel="900" table="supplies" />
+		<reward exp="1.5" sp="0.1" adenaPerLevel="4500" table="supplies" />
 		<text key="title">Herbalist's Plague</text>
 		<text key="offer">A fever is spreading through the town, and {requester} needs fresh herbs from the wilds - fast, before they wilt.</text>
 		<text key="success">The fever breaks. {requester} weeps with relief.</text>
@@ -846,7 +829,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="FAIL" text="The watch is over, and you didn't finish your round." />
 		</stage>
-		<reward exp="2.5" sp="0.1" adenaPerLevel="1200" table="shots" />
+		<reward exp="2.5" sp="0.1" adenaPerLevel="6000" table="caches" />
 		<text key="title">Night Watch</text>
 		<text key="offer">The town watch is short of hands tonight. Walk the posts around the town until your round is done. Only at night - the watch ends at dawn.</text>
 		<text key="success">Your round is done and the town sleeps safe.</text>
@@ -880,7 +863,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="FAILURE" action="FAIL" />
 		</stage>
-		<reward exp="2.5" sp="0.1" adenaPerLevel="1500" table="bounty" title="Guild Champion" minChain="4" />
+		<reward exp="2.5" sp="0.1" adenaPerLevel="7500" table="bounty" title="Guild Champion" minChain="4" />
 		<text key="title">Guild Contract</text>
 		<text key="offer">The adventurers' guild has contracts for reliable hands. Finish one and they may offer the next; five in a row and the guild names you its champion. You can stop whenever you like.</text>
 		<text key="success">The guild pays and notes your name.</text>
