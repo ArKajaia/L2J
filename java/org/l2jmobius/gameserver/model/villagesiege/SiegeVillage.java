@@ -30,6 +30,34 @@ import org.l2jmobius.gameserver.model.Location;
  */
 public class SiegeVillage
 {
+	/**
+	 * An entrance set in the data: where its gate standard stands, and optionally where its waves form.
+	 */
+	public static class FixedEntrance
+	{
+		private final Location _gate;
+		private final Location _rally;
+
+		public FixedEntrance(Location gate, Location rally)
+		{
+			_gate = gate;
+			_rally = rally;
+		}
+
+		public Location getGate()
+		{
+			return _gate;
+		}
+
+		/**
+		 * @return where the waves form, {@code null} for straight out from the village
+		 */
+		public Location getRally()
+		{
+			return _rally;
+		}
+	}
+
 	private final String _id;
 	private final String _name;
 	private final String _town;
@@ -37,9 +65,9 @@ public class SiegeVillage
 	private final int _guardLookId;
 	private final int _referenceItemId;
 	private final int _level;
-	private final List<Location> _entrances;
+	private final List<FixedEntrance> _entrances;
 
-	public SiegeVillage(String id, String name, String town, int gatekeeperId, int guardLookId, int referenceItemId, int level, List<Location> entrances)
+	public SiegeVillage(String id, String name, String town, int gatekeeperId, int guardLookId, int referenceItemId, int level, List<FixedEntrance> entrances)
 	{
 		_id = id;
 		_name = name;
@@ -102,9 +130,9 @@ public class SiegeVillage
 	}
 
 	/**
-	 * @return the fixed entrances (gate standards), empty to find them on their own
+	 * @return the fixed entrances, empty to find them on their own
 	 */
-	public List<Location> getEntrances()
+	public List<FixedEntrance> getEntrances()
 	{
 		return _entrances;
 	}

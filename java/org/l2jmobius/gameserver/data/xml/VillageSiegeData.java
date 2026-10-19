@@ -35,6 +35,7 @@ import org.w3c.dom.Node;
 import org.l2jmobius.commons.util.IXmlReader;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.villagesiege.SiegeVillage;
+import org.l2jmobius.gameserver.model.villagesiege.SiegeVillage.FixedEntrance;
 
 /**
  * The villages of Village Under Siege, from {@code data/VillageSiege.xml}.
@@ -75,13 +76,14 @@ public class VillageSiegeData implements IXmlReader
 
 				final NamedNodeMap attrs = node.getAttributes();
 				final String id = parseString(attrs, "id").toLowerCase();
-				final List<Location> entrances = new ArrayList<>();
+				final List<FixedEntrance> entrances = new ArrayList<>();
 				for (Node child = node.getFirstChild(); child != null; child = child.getNextSibling())
 				{
 					if ("entrance".equalsIgnoreCase(child.getNodeName()))
 					{
 						final NamedNodeMap entrance = child.getAttributes();
-						entrances.add(new Location(parseInteger(entrance, "x"), parseInteger(entrance, "y"), parseInteger(entrance, "z")));
+						final Location rally = entrance.getNamedItem("rallyX") != null ? new Location(parseInteger(entrance, "rallyX"), parseInteger(entrance, "rallyY"), parseInteger(entrance, "rallyZ")) : null;
+						entrances.add(new FixedEntrance(new Location(parseInteger(entrance, "x"), parseInteger(entrance, "y"), parseInteger(entrance, "z")), rally));
 					}
 				}
 				_villages.put(id, new SiegeVillage(id, parseString(attrs, "name"), parseString(attrs, "town"), parseInteger(attrs, "gatekeeper"), parseInteger(attrs, "guardLook"), parseInteger(attrs, "referenceItem"), parseInteger(attrs, "level", 0), entrances));

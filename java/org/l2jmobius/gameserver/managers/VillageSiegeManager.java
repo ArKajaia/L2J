@@ -1199,7 +1199,13 @@ public class VillageSiegeManager
 		set.set("clanHelpRange", 300);
 		set.set("isAggressive", false);
 		set.set("corpseTime", 7);
-		return new NpcTemplate(set);
+		final NpcTemplate template = new NpcTemplate(set);
+		template.setParameters(look != null ? look.getParameters() : new StatSet());
+		template.setClans(null);
+		template.setIgnoreClanNpcIds(null);
+		template.setAISkillLists(null);
+		template.setSkills(new HashMap<>());
+		return template;
 	}
 
 	private static double median(List<Double> values, double fallback)

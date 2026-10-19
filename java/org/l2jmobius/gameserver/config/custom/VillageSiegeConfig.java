@@ -155,7 +155,7 @@ public class VillageSiegeConfig
 
 		MAX_ENTRANCES = Math.max(1, config.getInt("VillageSiegeMaxEntrances", 3));
 		ENTRANCE_SPACING = Math.max(300, config.getInt("VillageSiegeEntranceSpacing", 1200));
-		SOURCE_RANGE = Math.max(2000, config.getInt("VillageSiegeSourceRange", 7000));
+		SOURCE_RANGE = Math.max(2000, config.getInt("VillageSiegeSourceRange", 14000));
 		RALLY_DISTANCE = Math.max(300, config.getInt("VillageSiegeRallyDistance", 1100));
 		GUARD_LINE_DISTANCE = Math.max(100, config.getInt("VillageSiegeGuardLineDistance", 300));
 
