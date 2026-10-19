@@ -130,6 +130,10 @@ public class VillageSiegeManager
 	private static final long GUARD_RESPAWN = 90000;
 	/** Regions this far around the village stay awake during a siege. */
 	private static final int KEEP_ACTIVE_RANGE = 2500;
+	/** While its gate stands, a siege guard only goes for monsters this much closer to it than the gate. */
+	private static final int GUARD_GATE_MARGIN = 100;
+	/** ... and always for those this close. */
+	private static final int GUARD_MIN_REACH = 120;
 	/** Fake defenders arrive this far behind the gate, inside the village. */
 	private static final int FAKE_ARRIVAL_RANGE = 250;
 
@@ -1872,18 +1876,33 @@ public class VillageSiegeManager
 	/**
 	 * @param guard a siege guard
 	 * @param target a monster
-	 * @return {@code true} if the monster is near enough to the guard's post for the guard to go for it
+	 * @return {@code true} if the guard goes for the monster: near enough to its post and, while its gate stands, past the gate (the gate is the defenders' to hold)
 	 */
 	public static boolean isInGuardReach(Attackable guard, Creature target)
 	{
 		final Spawn spawn = guard.getSpawn();
-		if (spawn == null)
+		final int postX = spawn != null ? spawn.getX() : guard.getX();
+		final int postY = spawn != null ? spawn.getY() : guard.getY();
+		double reach = VillageSiegeConfig.GUARD_AGGRO_RANGE;
+		final Siege siege = getInstance()._siege;
+		if (siege != null)
 		{
-			return guard.calculateDistance2D(target) <= VillageSiegeConfig.GUARD_AGGRO_RANGE;
+			for (EntranceState entrance : siege._entrances)
+			{
+				for (Npc npc : entrance._guards)
+				{
+					if ((npc == guard) && !entrance._fallen)
+					{
+						final Location gate = entrance._entrance.getGate();
+						reach = Math.min(reach, Math.hypot(gate.getX() - postX, gate.getY() - postY) - GUARD_GATE_MARGIN);
+					}
+				}
+			}
 		}
-		final double dx = target.getX() - spawn.getX();
-		final double dy = target.getY() - spawn.getY();
-		return ((dx * dx) + (dy * dy)) <= ((double) VillageSiegeConfig.GUARD_AGGRO_RANGE * VillageSiegeConfig.GUARD_AGGRO_RANGE);
+		reach = Math.max(GUARD_MIN_REACH, reach);
+		final double dx = target.getX() - postX;
+		final double dy = target.getY() - postY;
+		return ((dx * dx) + (dy * dy)) <= (reach * reach);
 	}
 
 	// ---------------------------------------------------------------------------------------------
