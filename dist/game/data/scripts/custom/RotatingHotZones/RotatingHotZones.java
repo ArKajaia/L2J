@@ -15,6 +15,7 @@ import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.handler.BypassHandler;
 import org.l2jmobius.gameserver.handler.IBypassHandler;
 import org.l2jmobius.gameserver.config.custom.RadarZonesConfig;
+import org.l2jmobius.gameserver.managers.AdventurersGuideManager;
 import org.l2jmobius.gameserver.managers.HotzoneModifierManager;
 import org.l2jmobius.gameserver.managers.RadarZoneManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
@@ -27,6 +28,7 @@ import org.l2jmobius.gameserver.model.events.Containers;
 import org.l2jmobius.gameserver.model.events.EventType;
 import org.l2jmobius.gameserver.model.events.holders.actor.player.OnPlayerLogin;
 import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
+import org.l2jmobius.gameserver.model.guide.GuideLesson;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.skill.Skill;
@@ -438,6 +440,7 @@ public class RotatingHotZones extends Quest
 	public String onFirstTalk(Npc npc, Player player)
 	{
 		showTeleportMenu(player, npc);
+		AdventurersGuideManager.getInstance().discover(player, GuideLesson.HOT_ZONES);
 		return null;
 	}
 	

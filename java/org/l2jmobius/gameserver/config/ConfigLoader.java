@@ -20,6 +20,7 @@
  */
 package org.l2jmobius.gameserver.config;
 
+import org.l2jmobius.gameserver.config.custom.AdventurersGuideConfig;
 import org.l2jmobius.gameserver.config.custom.AllowedPlayerRacesConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPotionsConfig;
@@ -123,6 +124,7 @@ public class ConfigLoader
 		UndergroundColiseumConfig.load();
 		
 		// Custom configurations.
+		AdventurersGuideConfig.load();
 		AllowedPlayerRacesConfig.load();
 		AutoPlayConfig.load();
 		AutoPotionsConfig.load();

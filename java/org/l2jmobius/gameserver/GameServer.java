@@ -140,6 +140,7 @@ import org.l2jmobius.gameserver.managers.FortManager;
 import org.l2jmobius.gameserver.managers.FortSiegeManager;
 import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
 import org.l2jmobius.gameserver.managers.GrandBossManager;
+import org.l2jmobius.gameserver.managers.AdventurersGuideManager;
 import org.l2jmobius.gameserver.managers.CraftingGoalManager;
 import org.l2jmobius.gameserver.managers.DynamicQuestManager;
 import org.l2jmobius.gameserver.managers.HiddenQuestManager;
@@ -334,6 +335,7 @@ public class GameServer
 		DynamicQuestData.getInstance();
 		DynamicQuestManager.getInstance();
 		CraftingGoalManager.getInstance();
+		AdventurersGuideManager.getInstance();
 		RadarZoneManager.getInstance();
 		WalkingManager.getInstance();
 		StaticObjectData.getInstance();

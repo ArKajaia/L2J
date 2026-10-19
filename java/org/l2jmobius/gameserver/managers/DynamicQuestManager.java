@@ -89,6 +89,7 @@ import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
 import org.l2jmobius.gameserver.model.events.listeners.FunctionEventListener;
 import org.l2jmobius.gameserver.model.events.returns.TerminateReturn;
 import org.l2jmobius.gameserver.model.groups.Party;
+import org.l2jmobius.gameserver.model.guide.GuideLesson;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.script.Quest;
@@ -941,6 +942,7 @@ public class DynamicQuestManager
 				member.sendMessage(player.getName() + " took the quest " + quest.getName() + ". You take part while you stay near.");
 			}
 		}
+		AdventurersGuideManager.getInstance().trigger(player, GuideLesson.QUEST_TAKEN, "You have taken the quest " + quest.getName() + ".");
 		log(player.getName() + " took " + quest.getName() + " (template " + quest.getTemplate().getId() + ", " + tier + ", level " + quest.getDifficulty().getQuestLevel() + ", party " + quest.getDifficulty().getPartySize() + ").");
 		return String.valueOf(quest.getId());
 	}
@@ -2178,6 +2180,7 @@ public class DynamicQuestManager
 		_personalOffers.put(player.getObjectId(), offer);
 		_nextOffer.put(player.getObjectId(), System.currentTimeMillis() + (DynamicQuestConfig.OFFER_RETRY_DELAY * 1000L));
 		herald.getAI().setIntention(Intention.MOVE_TO, QuestSpawnUtil.findPoint(player, 60, 100, true, player.getInstanceId()));
+		AdventurersGuideManager.getInstance().trigger(player, GuideLesson.NOTICE_BOARD, "A herald is running up to you with a quest.");
 		log("A herald brings " + template.getName() + " to " + player.getName() + ".");
 		return true;
 	}
@@ -2548,6 +2551,7 @@ public class DynamicQuestManager
 		final DynamicQuestData data = DynamicQuestData.getInstance();
 		if (data.isNoticeBoard(npc.getId()))
 		{
+			AdventurersGuideManager.getInstance().discover(player, GuideLesson.NOTICE_BOARD);
 			return DynamicQuestHtml.main(this, player, npc, Channel.NPC);
 		}
 		if (npc.getId() == data.getHeraldNpcId())

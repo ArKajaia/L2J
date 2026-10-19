@@ -8,12 +8,14 @@ import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.data.xml.SkillData;
+import org.l2jmobius.gameserver.managers.AdventurersGuideManager;
 import org.l2jmobius.gameserver.managers.ArenaSurvivalManager;
 import org.l2jmobius.gameserver.managers.InstanceManager;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.guide.GuideLesson;
 import org.l2jmobius.gameserver.model.instancezone.Instance;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
@@ -95,6 +97,7 @@ public class ArenaMaster extends Quest
 	public String onFirstTalk(Npc npc, Player player)
 	{
 		showMenu(player, npc);
+		AdventurersGuideManager.getInstance().discover(player, GuideLesson.ARENA);
 		return null;
 	}
 	

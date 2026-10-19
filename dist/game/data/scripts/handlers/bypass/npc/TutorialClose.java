@@ -29,6 +29,7 @@ public class TutorialClose implements IBypassHandler
 	private static final String[] COMMANDS =
 	{
 		"tutorial_close",
+		"tutorial_close_0", // The plain close link of the retail tutorial pages, also shown by the Adventurer's Guide without the retail tutorial.
 	};
 	
 	@Override

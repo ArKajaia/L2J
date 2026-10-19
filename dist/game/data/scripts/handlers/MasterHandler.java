@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.l2jmobius.gameserver.config.custom.AdventurersGuideConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPotionsConfig;
 import org.l2jmobius.gameserver.config.custom.BankingConfig;
@@ -81,6 +82,7 @@ import handlers.bypass.communityboard.ClanBoard;
 import handlers.bypass.communityboard.DropSearchBoard;
 import handlers.bypass.communityboard.FavoriteBoard;
 import handlers.bypass.communityboard.FriendsBoard;
+import handlers.bypass.communityboard.GuideBoard;
 import handlers.bypass.communityboard.HomeBoard;
 import handlers.bypass.communityboard.HomepageBoard;
 import handlers.bypass.communityboard.MailBoard;
@@ -91,6 +93,7 @@ import handlers.bypass.communityboard.PassiveTreeBoard;
 import handlers.bypass.communityboard.PvpRankingBoard;
 import handlers.bypass.communityboard.SessionBoard;
 import handlers.bypass.communityboard.RegionBoard;
+import handlers.bypass.npc.AdventurersGuideLink;
 import handlers.bypass.npc.Augment;
 import handlers.bypass.npc.Buy;
 import handlers.bypass.npc.BuyShadowItem;
@@ -253,6 +256,7 @@ import handlers.chat.commands.voiced.QuestsVoiced;
 import handlers.chat.commands.voiced.CombatLogVoiced;
 import handlers.chat.commands.voiced.ExperienceGain;
 import handlers.chat.commands.voiced.GearVoiced;
+import handlers.chat.commands.voiced.GuideVoiced;
 import handlers.chat.commands.voiced.Lang;
 import handlers.chat.commands.voiced.CraftingGoalVoiced;
 import handlers.chat.commands.voiced.NightVoiced;
@@ -484,6 +488,7 @@ public class MasterHandler
 		},
 		{
 			// Bypass Handlers
+			AdventurersGuideLink.class,
 			Augment.class,
 			Buy.class,
 			BuyShadowItem.class,
@@ -553,6 +558,7 @@ public class MasterHandler
 			SessionBoard.class,
 			BestiaryBoard.class,
 			DynamicQuestBoard.class,
+			GuideBoard.class,
 		},
 		{
 			// Item Handlers
@@ -647,6 +653,7 @@ public class MasterHandler
 			CombatLogConfig.RAID_ENABLED ? RaidLogVoiced.class : null,
 			BestiaryConfig.ENABLED ? BestiaryVoiced.class : null,
 			DynamicQuestConfig.ENABLED || HiddenQuestConfig.ENABLED ? QuestsVoiced.class : null,
+			AdventurersGuideConfig.ENABLED ? GuideVoiced.class : null,
 		},
 		{
 			// Target Handlers

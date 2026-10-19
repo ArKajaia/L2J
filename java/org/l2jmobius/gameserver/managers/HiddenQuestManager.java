@@ -63,6 +63,7 @@ import org.l2jmobius.gameserver.model.events.holders.olympiad.OnOlympiadMatchRes
 import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
 import org.l2jmobius.gameserver.model.events.listeners.FunctionEventListener;
 import org.l2jmobius.gameserver.model.events.returns.TerminateReturn;
+import org.l2jmobius.gameserver.model.guide.GuideLesson;
 import org.l2jmobius.gameserver.model.hiddenquest.HiddenQuestDefinition;
 import org.l2jmobius.gameserver.model.hiddenquest.HiddenQuestSession;
 import org.l2jmobius.gameserver.model.hiddenquest.HiddenReward;
@@ -976,6 +977,7 @@ public class HiddenQuestManager
 		html.replace("%text%", quest.getText("offer", "I have a task for you."));
 		html.replace("%forfeit%", HiddenQuestConfig.ALLOW_FORFEIT ? getHtml(player, "offer_forfeit.html") : "");
 		player.sendPacket(html);
+		AdventurersGuideManager.getInstance().discover(player, GuideLesson.HIDDEN_QUESTS);
 		return true;
 	}
 
