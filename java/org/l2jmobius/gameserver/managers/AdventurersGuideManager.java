@@ -434,7 +434,7 @@ public class AdventurersGuideManager
 		player.sendPacket(QuestSound.ITEMSOUND_QUEST_TUTORIAL.getPacket());
 		if (AdventurersGuideConfig.CHAT_NOTICE)
 		{
-			player.sendMessage("Adventurer's Guide: " + (intro != null ? intro + " " : "") + "Click the blinking question mark to learn about " + lesson.getTitle() + ".");
+			player.sendMessage("Adventurer's Guide: " + (intro != null ? intro + " " : "") + "Click the blinking question mark (or type .guide) to learn about " + lesson.getTitle() + ".");
 		}
 	}
 
