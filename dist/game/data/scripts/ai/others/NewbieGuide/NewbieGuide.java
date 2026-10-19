@@ -26,12 +26,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.l2jmobius.gameserver.data.xml.MultisellData;
+import org.l2jmobius.gameserver.managers.ScriptManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.Summon;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
+import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.script.QuestState;
 import org.l2jmobius.gameserver.model.script.Script;
 import org.l2jmobius.gameserver.model.script.State;
@@ -2870,7 +2872,17 @@ public final class NewbieGuide extends Script
 	@Override
 	public String onFirstTalk(Npc npc, Player player)
 	{
-		final QuestState qs = player.getQuestState(Q00255_Tutorial.class.getSimpleName());
+		QuestState qs = player.getQuestState(Q00255_Tutorial.class.getSimpleName());
+		if (qs == null)
+		{
+			// With DisableTutorial the tutorial never starts, so the guides start its state themselves.
+			final Quest tutorial = ScriptManager.getInstance().getScript(Q00255_Tutorial.class.getSimpleName());
+			if (tutorial != null)
+			{
+				qs = tutorial.newQuestState(player);
+			}
+		}
+		
 		if (qs != null)
 		{
 			switch (npc.getId())
