@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="list">
+		<xs:complexType>
+			<xs:choice minOccurs="0" maxOccurs="unbounded">
+				<xs:element name="village">
+					<xs:complexType>
+						<xs:choice minOccurs="0" maxOccurs="unbounded">
+							<xs:element name="entrance">
+								<xs:complexType>
+									<xs:attribute name="x" type="xs:integer" use="required" />
+									<xs:attribute name="y" type="xs:integer" use="required" />
+									<xs:attribute name="z" type="xs:integer" use="required" />
+									<xs:attribute name="rallyX" type="xs:integer" />
+									<xs:attribute name="rallyY" type="xs:integer" />
+									<xs:attribute name="rallyZ" type="xs:integer" />
+								</xs:complexType>
+							</xs:element>
+						</xs:choice>
+						<xs:attribute name="id" type="xs:token" use="required" />
+						<xs:attribute name="name" type="xs:string" use="required" />
+						<xs:attribute name="town" type="xs:string" use="required" />
+						<xs:attribute name="gatekeeper" type="xs:positiveInteger" use="required" />
+						<xs:attribute name="guardLook" type="xs:positiveInteger" use="required" />
+						<xs:attribute name="referenceItem" type="xs:positiveInteger" use="required" />
+						<xs:attribute name="minLevel" type="xs:positiveInteger" />
+						<xs:attribute name="maxLevel" type="xs:positiveInteger" />
+					</xs:complexType>
+				</xs:element>
+			</xs:choice>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

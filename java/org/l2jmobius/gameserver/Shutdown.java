@@ -51,6 +51,7 @@ import org.l2jmobius.gameserver.managers.DynamicQuestManager;
 import org.l2jmobius.gameserver.managers.PvpRankingManager;
 import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
+import org.l2jmobius.gameserver.managers.VillageSiegeManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.olympiad.Hero;
@@ -516,6 +517,9 @@ public class Shutdown extends Thread
 		// Save all global (non-player specific) Quest data that needs to persist after reboot
 		ScriptManager.getInstance().save();
 		LOGGER.info("Script Manager: Data saved(" + tc.getEstimatedTimeAndRestartCounter() + "ms).");
+		
+		// Save the ranking of the village siege going on.
+		VillageSiegeManager.getInstance().storeAll();
 		
 		// Save all global variables data
 		GlobalVariablesManager.getInstance().storeMe();

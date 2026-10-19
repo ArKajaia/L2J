@@ -338,6 +338,12 @@ public class CombatLogManager
 	 */
 	public static void onHealed(Creature healer, Creature target, Skill skill, double hp, double cp)
 	{
+		// Healing the defenders of a village under siege is contribution (fake players included).
+		if (hp >= 1)
+		{
+			VillageSiegeManager.getInstance().onHealed(healer, target, hp);
+		}
+		
 		if ((target == null) || !target.isPlayer() || ((hp < 1) && (cp < 1)))
 		{
 			return;

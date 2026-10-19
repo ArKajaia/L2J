@@ -91,6 +91,7 @@ import org.l2jmobius.gameserver.config.custom.TransmogConfig;
 import org.l2jmobius.gameserver.config.custom.TreasureChestConfig;
 import org.l2jmobius.gameserver.config.custom.WalkerBotProtectionConfig;
 import org.l2jmobius.gameserver.config.custom.WarehouseSortingConfig;
+import org.l2jmobius.gameserver.config.custom.VillageSiegeConfig;
 import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
 import org.l2jmobius.gameserver.config.custom.WeddingConfig;
 
@@ -194,6 +195,7 @@ public class ConfigLoader
 		TreasureChestConfig.load();
 		WalkerBotProtectionConfig.load();
 		WarehouseSortingConfig.load();
+		VillageSiegeConfig.load();
 		WaveChallengeConfig.load();
 		WeddingConfig.load();
 		CustomBuffConfig.load();

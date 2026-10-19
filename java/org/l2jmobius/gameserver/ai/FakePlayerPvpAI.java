@@ -40,6 +40,7 @@ import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
+import org.l2jmobius.gameserver.managers.VillageSiegeManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -392,6 +393,13 @@ public class FakePlayerPvpAI extends AttackableAI
 		if ((profile != null) && profile.isSpotFighter())
 		{
 			thinkSpot(npc, profile, System.currentTimeMillis());
+			return;
+		}
+		
+		// A fake player defending a village under siege fights its monsters at its entrance, and nothing else.
+		if ((profile != null) && profile.isSiegeDefender())
+		{
+			thinkSiege(npc, profile, System.currentTimeMillis());
 			return;
 		}
 		
@@ -3631,6 +3639,68 @@ public class FakePlayerPvpAI extends AttackableAI
 	private long _nextSpotRetarget = 0;
 	// Whether it goes for the leader of its spot: object id -> until when (negative: it keeps away from it).
 	private final Map<Integer, Long> _leaderDecisions = new ConcurrentHashMap<>();
+	
+	/**
+	 * A fake player defending a village under siege (see {@link VillageSiegeManager}): it fights the siege's monsters near its entrance, rests when nothing is close, holds its post by the gate, and reads its scroll when its time is up.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param now the time
+	 */
+	private void thinkSiege(Attackable npc, FakePlayerPvpProfile profile, long now)
+	{
+		// Its time is up, or the siege is over: it reads its scroll and leaves.
+		if (thinkLeave(npc, profile, now))
+		{
+			return;
+		}
+		
+		// Resting: only with no monster of the siege close.
+		final Creature enemy = VillageSiegeManager.getInstance().findDefenderTarget(npc);
+		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
+		_resting = (hpRatio < (_resting ? 0.9 : 0.5)) && ((enemy == null) || (npc.calculateDistance2D(enemy) > 600));
+		if (_resting)
+		{
+			FakePlayerPvpManager.getInstance().tryPotion(npc);
+			if (!npc.isMoving() && !npc.isMovementDisabled())
+			{
+				sitDown(npc);
+			}
+			return;
+		}
+		
+		if (standUp(npc))
+		{
+			return;
+		}
+		
+		// A necromancer keeps its servitor out, duelists and tyrants their energy full.
+		if ((profile.needsServitor() && castOnSelf(npc, null, profile.getSkills(SkillCategory.SUMMON), true, false)) || ((profile.getCharges() < profile.getMaxCharges()) && castOnSelf(npc, null, profile.getSkills(SkillCategory.CHARGE), true, false)))
+		{
+			return;
+		}
+		
+		FakePlayerPvpManager.getInstance().tryPotion(npc);
+		
+		if (enemy != null)
+		{
+			npc.setRunning();
+			FakePlayerPvpManager.getInstance().assistFight(npc, enemy);
+			return;
+		}
+		
+		// Nothing to fight: back to its post by the gate.
+		if (npc.isMoving() || npc.isMovementDisabled())
+		{
+			return;
+		}
+		
+		final Location post = VillageSiegeManager.getInstance().getDefenderPost(npc);
+		if ((post != null) && (npc.calculateDistance2D(post) > 150))
+		{
+			npc.setRunning();
+			moveTo(post.getX(), post.getY(), post.getZ());
+		}
+	}
 	
 	/**
 	 * A fake player of a PvP spot between two fights, like a player in a PvP zone: it goes for its killer first when it comes back from town, otherwise for the best opponent it sees ({@link #findSpotEnemy}); with nobody around it walks over to the fights, and

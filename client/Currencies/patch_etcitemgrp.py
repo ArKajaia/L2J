@@ -1,5 +1,5 @@
 """
-Patches the Dragon Coin, Champion Medal and Sealed Cache rows of an EtcItemgrp.dat
+Patches the Dragon Coin, Champion Medal, Defence Medal and Sealed Cache rows of an EtcItemgrp.dat
 exported by L2ClientDat as text (item_begin ... item_end, tab-separated key=value).
 
 Only the fields below change; every other field (meshes, textures, sounds...) stays
@@ -23,6 +23,11 @@ PATCHES = {
 	},
 	6393: {  # Champion Medal (was Event - Glittering Medal)
 		"icon": "{[icon.etc_event_glitter_medal_i00]}",
+		"weight": "0",
+		"related_quest_id": "{}",
+	},
+	4674: {  # Defence Medal (was Medal of Honor, an unused event item)
+		"icon": "{[icon.etc_badge_gold_i00]}",
 		"weight": "0",
 		"related_quest_id": "{}",
 	},

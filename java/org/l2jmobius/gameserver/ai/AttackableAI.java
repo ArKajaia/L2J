@@ -44,6 +44,7 @@ import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.DimensionalRiftManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.managers.MageMonsterManager;
+import org.l2jmobius.gameserver.managers.VillageSiegeManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.World;
@@ -306,6 +307,11 @@ public class AttackableAI extends CreatureAI
 			// Check if the Monster target is aggressive
 			if (target.isMonster() && NpcConfig.GUARD_ATTACK_AGGRO_MOB)
 			{
+				// The guards of a village under siege hold their line: only what comes near it.
+				if ((me.getVillageSiegeRole() == Attackable.VILLAGE_SIEGE_GUARD) && !VillageSiegeManager.isInGuardReach(me, target))
+				{
+					return false;
+				}
 				return (target.asMonster().isAggressive() && GeoEngine.getInstance().canSeeTarget(me, target));
 			}
 			

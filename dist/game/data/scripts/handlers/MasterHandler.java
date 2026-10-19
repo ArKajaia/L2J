@@ -41,6 +41,7 @@ import org.l2jmobius.gameserver.config.custom.OnlineInfoConfig;
 import org.l2jmobius.gameserver.config.custom.PasswordChangeConfig;
 import org.l2jmobius.gameserver.config.custom.PremiumSystemConfig;
 import org.l2jmobius.gameserver.config.custom.PvpSpotsConfig;
+import org.l2jmobius.gameserver.config.custom.VillageSiegeConfig;
 import org.l2jmobius.gameserver.config.custom.WeddingConfig;
 import org.l2jmobius.gameserver.handler.ActionClickHandler;
 import org.l2jmobius.gameserver.handler.ActionShiftHandler;
@@ -227,6 +228,7 @@ import handlers.chat.commands.admin.AdminTerritoryWar;
 import handlers.chat.commands.admin.AdminTest;
 import handlers.chat.commands.admin.AdminTownLife;
 import handlers.chat.commands.admin.AdminTransform;
+import handlers.chat.commands.admin.AdminVillageSiege;
 import handlers.chat.commands.admin.AdminVitality;
 import handlers.chat.commands.admin.AdminZone;
 import handlers.chat.commands.admin.AdminZoneBuild;
@@ -271,6 +273,7 @@ import handlers.chat.commands.voiced.PvpSpotVoiced;
 import handlers.chat.commands.voiced.RaidLogVoiced;
 import handlers.chat.commands.voiced.SaveHotzoneVoiced;
 import handlers.chat.commands.voiced.SkillsCommand;
+import handlers.chat.commands.voiced.VillageSiegeVoiced;
 import handlers.chat.commands.voiced.VoiceAutoLootFilter;
 import handlers.chat.commands.voiced.VoiceDpsMeter;
 import handlers.chat.commands.voiced.VoiceHelp;
@@ -433,6 +436,7 @@ public class MasterHandler
 			AdminHelp.class,
 			AdminHiddenQuests.class,
 			AdminDynamicQuests.class,
+			AdminVillageSiege.class,
 			AdminHide.class,
 			AdminHtml.class,
 			AdminHwid.class,
@@ -653,6 +657,7 @@ public class MasterHandler
 			CombatLogConfig.RAID_ENABLED ? RaidLogVoiced.class : null,
 			BestiaryConfig.ENABLED ? BestiaryVoiced.class : null,
 			DynamicQuestConfig.ENABLED || HiddenQuestConfig.ENABLED ? QuestsVoiced.class : null,
+			VillageSiegeConfig.ENABLED ? VillageSiegeVoiced.class : null,
 			AdventurersGuideConfig.ENABLED ? GuideVoiced.class : null,
 		},
 		{

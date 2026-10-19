@@ -112,6 +112,7 @@ import org.l2jmobius.gameserver.data.xml.SpawnData;
 import org.l2jmobius.gameserver.data.xml.StaticObjectData;
 import org.l2jmobius.gameserver.data.xml.TeleporterData;
 import org.l2jmobius.gameserver.data.xml.TransformData;
+import org.l2jmobius.gameserver.data.xml.VillageSiegeData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.handler.EffectHandler;
 import org.l2jmobius.gameserver.managers.AirShipManager;
@@ -170,6 +171,7 @@ import org.l2jmobius.gameserver.managers.ServerRestartManager;
 import org.l2jmobius.gameserver.managers.SiegeManager;
 import org.l2jmobius.gameserver.managers.TerritoryWarManager;
 import org.l2jmobius.gameserver.managers.TownLifeManager;
+import org.l2jmobius.gameserver.managers.VillageSiegeManager;
 import org.l2jmobius.gameserver.managers.WalkingManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.managers.games.KrateisCubeManager;
@@ -408,6 +410,8 @@ public class GameServer
 		PvpSpotManager.getInstance();
 		NightCycleManager.getInstance();
 		TownLifeManager.getInstance();
+		VillageSiegeData.getInstance();
+		VillageSiegeManager.getInstance();
 		
 		printSection("Siege");
 		SiegeManager.getInstance().getSieges();

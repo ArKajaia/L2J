@@ -403,6 +403,7 @@
 	<admin command="hiddenquest_complete" description="Complete a player's running hidden quest task: //hiddenquest_complete [name]." accessLevel="100" />
 	<admin command="hiddenquest_abort" description="Fail a player's running hidden quest task: //hiddenquest_abort [name]." accessLevel="100" />
 	<admin command="hiddenquest_reset" description="Forget a hidden quest (or all) for a player - completion, queue and counter: //hiddenquest_reset id|all [name]." accessLevel="100" />
+	<admin command="villagesiege" description="Village Under Siege: //villagesiege [start &lt;village&gt; [minutes] | stop | entrances &lt;village&gt; | goto &lt;village&gt; &lt;entrance&gt; [gate|rally|guards] | stats | reset]." accessLevel="100" />
 	<admin command="dynquest" description="Show every dynamic quest template and a player's dynamic quests: //dynquest [name]." accessLevel="100" />
 	<admin command="dynquest_start" description="Start a dynamic quest template for a player: //dynquest_start id [EASY|NORMAL|HARD|ELITE] [name]." accessLevel="100" />
 	<admin command="dynquest_herald" description="Send a herald with a dynamic quest template to a player: //dynquest_herald id [name]." accessLevel="100" />

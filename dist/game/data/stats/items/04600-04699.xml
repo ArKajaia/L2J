@@ -873,8 +873,8 @@
 		<set name="is_stackable" val="true" />
 		<set name="is_questitem" val="true" />
 	</item>
-	<item id="4674" type="EtcItem" name="Medal of Honor">
-		<set name="icon" val="icon.etc_magic_coin_gold_i00" />
+	<item id="4674" type="EtcItem" name="Defence Medal"> <!-- Village Under Siege currency (retail: Medal of Honor, an unused event item) -->
+		<set name="icon" val="icon.etc_badge_gold_i00" />
 		<set name="immediate_effect" val="true" />
 		<set name="material" val="STEEL" />
 		<set name="is_tradable" val="false" />
@@ -882,7 +882,6 @@
 		<set name="is_sellable" val="false" />
 		<set name="is_depositable" val="false" />
 		<set name="is_stackable" val="true" />
-		<set name="is_questitem" val="true" />
 	</item>
 	<item id="4675" type="EtcItem" name="Medal of Friendship">
 		<set name="icon" val="icon.etc_magic_coin_silver_i00" />

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+	<!--
+	Village Under Siege: Defence Force Board exchange, C-grade jewelry.
+	The gear the retail shops sell, for Defence Medals (4674): a medal for every 1,000 adena of its shop price (VillageSiegeAdenaPerMedal), rounded up.
+	-->
+	<npcs>
+		<npc>900600</npc> <!-- Defence Force Board -->
+	</npcs>
+	<item>
+		<ingredient count="159" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="915" /> <!-- Aquastone Necklace -->
+	</item>
+	<item>
+		<ingredient count="201" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="916" /> <!-- Necklace of Protection -->
+	</item>
+	<item>
+		<ingredient count="303" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="917" /> <!-- Necklace of Mermaid -->
+	</item>
+	<item>
+		<ingredient count="435" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="919" /> <!-- Blessed Necklace -->
+	</item>
+	<item>
+		<ingredient count="435" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="119" /> <!-- Necklace of Seal -->
+	</item>
+	<item>
+		<ingredient count="120" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="852" /> <!-- Moonstone Earring -->
+	</item>
+	<item>
+		<ingredient count="151" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="853" /> <!-- Earring of Protection -->
+	</item>
+	<item>
+		<ingredient count="227" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="854" /> <!-- Earring of Seal -->
+	</item>
+	<item>
+		<ingredient count="326" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="857" /> <!-- Blessed Earring -->
+	</item>
+	<item>
+		<ingredient count="326" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="855" /> <!-- Nassen's Earring -->
+	</item>
+	<item>
+		<ingredient count="80" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="883" /> <!-- Aquastone Ring -->
+	</item>
+	<item>
+		<ingredient count="101" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="884" /> <!-- Ring of Protection -->
+	</item>
+	<item>
+		<ingredient count="152" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="885" /> <!-- Ring of Ages -->
+	</item>
+	<item>
+		<ingredient count="218" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="888" /> <!-- Blessed Ring -->
+	</item>
+	<item>
+		<ingredient count="218" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="886" /> <!-- Ring of Seal -->
+	</item>
+</list>

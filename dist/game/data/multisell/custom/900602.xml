@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+	<!--
+	Village Under Siege: Defence Force Board exchange, No-grade jewelry.
+	The gear the retail shops sell, for Defence Medals (4674): a medal for every 1,000 adena of its shop price (VillageSiegeAdenaPerMedal), rounded up.
+	-->
+	<npcs>
+		<npc>900600</npc> <!-- Defence Force Board -->
+	</npcs>
+	<item>
+		<ingredient count="1" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="1506" /> <!-- Necklace of Courage -->
+	</item>
+	<item>
+		<ingredient count="1" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="118" /> <!-- Necklace of Magic -->
+	</item>
+	<item>
+		<ingredient count="1" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="906" /> <!-- Necklace of Knowledge -->
+	</item>
+	<item>
+		<ingredient count="4" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="907" /> <!-- Necklace of Anguish -->
+	</item>
+	<item>
+		<ingredient count="4" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="1507" /> <!-- Necklace of Valor -->
+	</item>
+	<item>
+		<ingredient count="10" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="908" /> <!-- Necklace of Wisdom -->
+	</item>
+	<item>
+		<ingredient count="17" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="909" /> <!-- Blue Diamond Necklace -->
+	</item>
+	<item>
+		<ingredient count="1" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="112" /> <!-- Apprentice's Earring -->
+	</item>
+	<item>
+		<ingredient count="1" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="113" /> <!-- Mystic's Earring -->
+	</item>
+	<item>
+		<ingredient count="3" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="114" /> <!-- Earring of Strength -->
+	</item>
+	<item>
+		<ingredient count="3" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="115" /> <!-- Earring of Wisdom -->
+	</item>
+	<item>
+		<ingredient count="7" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="845" /> <!-- Cat's Eye Earring -->
+	</item>
+	<item>
+		<ingredient count="13" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="846" /> <!-- Coral Earring -->
+	</item>
+	<item>
+		<ingredient count="1" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="116" /> <!-- Magic Ring -->
+	</item>
+	<item>
+		<ingredient count="1" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="875" /> <!-- Ring of Knowledge -->
+	</item>
+	<item>
+		<ingredient count="2" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="876" /> <!-- Ring of Anguish -->
+	</item>
+	<item>
+		<ingredient count="2" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="1509" /> <!-- Ring of Firefly -->
+	</item>
+	<item>
+		<ingredient count="2" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="1508" /> <!-- Ring of Raccoon -->
+	</item>
+	<item>
+		<ingredient count="5" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="877" /> <!-- Ring of Wisdom -->
+	</item>
+	<item>
+		<ingredient count="9" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="878" /> <!-- Blue Coral Ring -->
+	</item>
+</list>

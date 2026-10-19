@@ -120,6 +120,9 @@ public class FakePlayerPvpProfile
 	private volatile long _spotStayUntil;
 	private volatile int _grudgeObjectId;
 	private volatile long _grudgeUntil;
+	// The village it came to defend in a Village Under Siege (see VillageSiegeManager), null for none, and the entrance it holds.
+	private volatile String _siegeVillage;
+	private volatile int _siegeEntrance;
 	// The part of its HP pool that is CP (FakePvpIncludeCpInHp), and when it may drink its next CP potion.
 	private volatile double _cpShare;
 	private volatile long _nextCpPotionTime;
@@ -781,6 +784,36 @@ public class FakePlayerPvpProfile
 	public boolean isSpotFighter()
 	{
 		return _pvpSpotId != 0;
+	}
+	
+	/**
+	 * @return the village it came to defend (see {@code VillageSiegeManager}), {@code null} for none
+	 */
+	public String getSiegeVillage()
+	{
+		return _siegeVillage;
+	}
+	
+	/**
+	 * @return the entrance of its village it holds
+	 */
+	public int getSiegeEntrance()
+	{
+		return _siegeEntrance;
+	}
+	
+	public void setSiegeDefence(String village, int entrance)
+	{
+		_siegeVillage = village;
+		_siegeEntrance = entrance;
+	}
+	
+	/**
+	 * @return {@code true} if it came to defend a village under siege: it doesn't hunt, talk or taunt, fights the siege's monsters at its entrance, and monsters can kill it
+	 */
+	public boolean isSiegeDefender()
+	{
+		return _siegeVillage != null;
 	}
 	
 	/**

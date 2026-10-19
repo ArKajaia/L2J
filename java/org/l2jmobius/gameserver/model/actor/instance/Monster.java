@@ -209,6 +209,12 @@ public class Monster extends Attackable
 		{
 			return true;
 		}
+		
+		// A monster attacking a village means it (and the guards go for it).
+		if (getVillageSiegeRole() == VILLAGE_SIEGE_MONSTER)
+		{
+			return true;
+		}
 
 		// HORNETS_NEST-style hotzone modifiers make every regular monster aggressive.
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
