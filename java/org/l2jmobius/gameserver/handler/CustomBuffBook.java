@@ -5,8 +5,10 @@ import java.util.List;
 
 import org.l2jmobius.gameserver.config.custom.CustomBuffConfig;
 import org.l2jmobius.gameserver.data.xml.SkillData;
+import org.l2jmobius.gameserver.managers.AdventurersGuideManager;
 import org.l2jmobius.gameserver.model.actor.Playable;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.guide.GuideLesson;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
@@ -25,6 +27,7 @@ public class CustomBuffBook implements IItemHandler
 		}
 		
 		showPage(playable.asPlayer(), item, 1);
+		AdventurersGuideManager.getInstance().discover(playable.asPlayer(), GuideLesson.BUFFS);
 		return true;
 	}
 	

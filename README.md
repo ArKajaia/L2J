@@ -468,6 +468,16 @@ A totem planted without Ctrl hits monsters and the players and fake players with
   - Every fake Oracle and Warchief (the party Hierophants and Doomcryers too) only casts these skills when they pay off: Salvation on itself while it takes damage, Reckoning once on a target that fights, Fulfilment on a Doom of 3 stacks, a target to finish, a Ruin on a player or a Foresight about to run out, Unwritten and the Great Totem on two enemies or more, Shatter when the totems are about to fall, are being broken, the target is low or the explosions catch a crowd. With every totem slot taken it doesn't knock down a fresh totem while Shatter is ready.
 - The town buffers are no longer Prophets or Warcryers.
 
+### Adventurer's Guide
+
+A tutorial for the server's own systems, in the style of the retail Tutorial quest: a blinking question mark with the tutorial sound, and the lesson in the tutorial window when it is clicked.
+
+- **Lessons** (23): the Community Board, the Passive Skill Tree, the three class transfers, the Notice Board and running a dynamic quest, hidden quests, every monster variant (archetypes and rage, Nemesis, Champions, Mages, treasure chests and mimics, Resonant, Thieves, Wave Challenges, Infused), learning buffs with Champion Medals and Buff Templates, the Survival Arena, Luck and Sealed Caches, hot zones and the Night Cycle. Each comes once per character.
+- **When**: at the level its feature becomes available to the character (a monster variant follows its own minimum level, such as `InfusedMinLevel`), or earlier by its event: the first kill of such a monster (for the party members near the killer too), the first Champion Medal or Sealed Cache carried, the first death to a monster (Nemesis), the first nightfall, a quest taken. Talking to the Arena Master, a Notice Board, the Hotzone Teleporter or a hidden quest messenger, or using a Champion Medal, opens the lesson at once beside its window. A disabled feature has no lesson.
+- **Class transfers**: the 1st class lesson is the retail tutorial's page of the character's starting class; the 2nd and 3rd are written for the class the character is in, with the classes it can become. All of them give both roads, the classic quests and the Class Master in Giran with his trial, and mark the Class Master on the map. The retail tutorial's class transfer pages (`tutorial-21*`, `tutorial-22*`, `tutorial-28*`) now name the Class Master too, so they agree when the retail tutorial is on; the guide then leaves the 1st and 2nd class lessons to it.
+- **Guidebook**: `.guide` (or `.guide <lesson>`, for example `.guide arena`) in the tutorial window, and "Adventurer's Guide" on the Community Board (`_bbsguide`): every lesson unlocked, the new ones in yellow, and the ones still to come with their level.
+- Lessons not read keep their question mark over a relog (at most `AdventurersGuideMaxQuestionMarks`). Progress is kept in the player variables `GUIDE_SEEN` and `GUIDE_PENDING`. Pages are in `data/html/guide`; settings in `config/Custom/AdventurersGuide.ini`.
+
 ### Other Custom Features at a Glance
 
 | Area | Features |
@@ -700,7 +710,7 @@ Beyond the core combat loop, the server implements a number of self-contained si
 
 ## Community Board
 
-The in-client Community Board (the ".bbs" interface) is backed by a lightweight forum/topic/post data model (with clan, memo, and mail-flavored forum types alongside normal ones) and a set of interactive board pages served as cached HTML and routed through the same bypass-handling pipeline used for NPC dialogs: clan management, regional teleport/info, a home page with favorites/bookmarks, a friends list, personal memos, in-client mail, an item drop-source search utility, personal buff templates (see [Custom Feature Set](#custom-non-retail-feature-set)), a PvP ranking of the top 20 players and fake players by PvP kills (fake players' kills are kept by name in `fake_player_pvp`: kills of flagged or karma targets, or of anyone in a PvP spot), a session log of what the character achieved since logging in (see [Session Log](#session-log)), and management of the passive skill tree feature (see [Custom Feature Set](#custom-non-retail-feature-set)).
+The in-client Community Board (the ".bbs" interface) is backed by a lightweight forum/topic/post data model (with clan, memo, and mail-flavored forum types alongside normal ones) and a set of interactive board pages served as cached HTML and routed through the same bypass-handling pipeline used for NPC dialogs: clan management, regional teleport/info, a home page with favorites/bookmarks, a friends list, personal memos, in-client mail, an item drop-source search utility, personal buff templates (see [Custom Feature Set](#custom-non-retail-feature-set)), a PvP ranking of the top 20 players and fake players by PvP kills (fake players' kills are kept by name in `fake_player_pvp`: kills of flagged or karma targets, or of anyone in a PvP spot), a session log of what the character achieved since logging in (see [Session Log](#session-log)), the Adventurer's Guidebook (see [Adventurer's Guide](#adventurers-guide)), and management of the passive skill tree feature (see [Custom Feature Set](#custom-non-retail-feature-set)).
 
 ---
 
@@ -835,7 +845,11 @@ This program is free software, licensed under the **GNU General Public License, 
 
 ## Recent Updates
 
-Changes from 28 September – 18 October 2026.
+Changes from 28 September – 19 October 2026.
+
+### Adventurer's Guide
+- **New**: a tutorial for the server's own systems in the style of the retail Tutorial quest. Question marks bring lessons on the class transfers, every monster variant as it becomes available, the Notice Board and dynamic quests, hidden quests, the Survival Arena, learning buffs and the Community Board; `.guide` and the Community Board's Guidebook show them again. See [Adventurer's Guide](#adventurers-guide).
+- **Changed**: the retail tutorial's class transfer pages name the Class Master and his trial beside the classic quests, with a link that marks him on the map. Their plain close link (`tutorial_close_0`) now also closes the window when the retail tutorial is off.
 
 ### Dynamic Quests
 - **New**: procedurally generated quests that adjust to the party: its level, its size and the tier chosen. Templates in `data/DynamicQuests.xml` are built from ten reusable objective types (kill, cull, collect, deliver, escort, investigate, defend, talk, reach, destroy), triggers, eligibility rules, transitions (success, failure, timeout, escalation, follow-up) and a reward formula.
