@@ -1377,9 +1377,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="1808" min="1" max="1" chance="0.7839" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="9623" min="1" max="1" chance="0.9494" /> <!-- Dynasty Mace Piece -->
-				<item id="3036" min="1" max="1" chance="0.7839" /> <!-- Recipe: Spiritshot S -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -1546,7 +1544,6 @@
 			</drop>
 			<spoil>
 				<item id="9992" min="1" max="1" chance="3.2739" /> <!-- Sealed Dynasty Necklace Gemstone -->
-				<item id="3957" min="1" max="1" chance="0.8086" /> <!-- Recipe: Blessed Spiritshot S -->
 				<item id="9537" min="1" max="1" chance="6.5418" /> <!-- Sealed Dynasty Leather Helmet Piece -->
 			</spoil>
 		</dropLists>
@@ -1634,7 +1631,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5157" min="1" max="1" chance="0.766" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				<item id="9622" min="1" max="1" chance="0.9277" /> <!-- Dynasty Cudgel Piece -->
 				<item id="9628" min="1" max="1" chance="13.517" /> <!-- Leonard -->
 			</spoil>
@@ -1722,7 +1718,6 @@
 			<spoil>
 				<item id="1894" min="1" max="1" chance="90.0504" /> <!-- Crafted Leather -->
 				<item id="9993" min="1" max="1" chance="8.4567" /> <!-- Sealed Dynasty Ring Gemstone -->
-				<item id="5162" min="1" max="1" chance="1.1406" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -1805,7 +1800,6 @@
 			</drop>
 			<spoil>
 				<item id="9992" min="1" max="1" chance="3.0626" /> <!-- Sealed Dynasty Necklace Gemstone -->
-				<item id="5167" min="1" max="1" chance="0.7564" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 				<item id="9530" min="1" max="1" chance="2.4787" /> <!-- Sealed Dynasty Breast Plate Piece -->
 			</spoil>
 		</dropLists>
@@ -1982,9 +1976,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5272" min="1" max="1" chance="0.8235" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				<item id="9619" min="1" max="1" chance="1.0371" /> <!-- Dynasty Bow Piece -->
-				<item id="5277" min="1" max="1" chance="0.8235" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -2243,7 +2235,6 @@
 					<item id="9573" min="1" max="1" chance="5.7992" /> <!-- Life Stone - Level 80 -->
 					<item id="9574" min="1" max="1" chance="1.4498" /> <!-- Mid-Grade Life Stone - Level 80 -->
 					<item id="9575" min="1" max="1" chance="0.145" /> <!-- High-Grade Life Stone - Level 80 -->
-					<item id="5272" min="1" max="1" chance="0.3711" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				</group>
 			</drop>
 			<spoil>
@@ -2322,7 +2313,6 @@
 					<item id="9573" min="1" max="1" chance="5.7992" /> <!-- Life Stone - Level 80 -->
 					<item id="9574" min="1" max="1" chance="1.4498" /> <!-- Mid-Grade Life Stone - Level 80 -->
 					<item id="9575" min="1" max="1" chance="0.145" /> <!-- High-Grade Life Stone - Level 80 -->
-					<item id="5277" min="1" max="1" chance="0.3711" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 				</group>
 			</drop>
 			<spoil>
@@ -2416,12 +2406,10 @@
 					<item id="9573" min="1" max="1" chance="2.5093" /> <!-- Life Stone - Level 80 -->
 					<item id="9574" min="1" max="1" chance="0.6273" /> <!-- Mid-Grade Life Stone - Level 80 -->
 					<item id="9575" min="1" max="1" chance="0.0627" /> <!-- High-Grade Life Stone - Level 80 -->
-					<item id="5282" min="1" max="1" chance="0.1606" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 				</group>
 			</drop>
 			<spoil>
 				<item id="9622" min="1" max="1" chance="0.9396" /> <!-- Dynasty Cudgel Piece -->
-				<item id="1808" min="1" max="1" chance="0.7758" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="9530" min="1" max="1" chance="2.5421" /> <!-- Sealed Dynasty Breast Plate Piece -->
 			</spoil>
 		</dropLists>
@@ -2510,7 +2498,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="3036" min="1" max="1" chance="1.0702" /> <!-- Recipe: Spiritshot S -->
 				<item id="9624" min="1" max="1" chance="1.2962" /> <!-- Dynasty Bagh-Nakh Piece -->
 				<item id="1894" min="1" max="1" chance="84.4904" /> <!-- Crafted Leather -->
 			</spoil>
@@ -2598,13 +2585,11 @@
 					<item id="9573" min="1" max="1" chance="2.1164" /> <!-- Life Stone - Level 80 -->
 					<item id="9574" min="1" max="1" chance="0.5291" /> <!-- Mid-Grade Life Stone - Level 80 -->
 					<item id="9575" min="1" max="1" chance="0.0529" /> <!-- High-Grade Life Stone - Level 80 -->
-					<item id="5157" min="1" max="1" chance="0.1356" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				</group>
 			</drop>
 			<spoil>
 				<item id="1894" min="1" max="1" chance="69.2161" /> <!-- Crafted Leather -->
 				<item id="9623" min="1" max="1" chance="1.0619" /> <!-- Dynasty Mace Piece -->
-				<item id="3957" min="1" max="1" chance="0.8767" /> <!-- Recipe: Blessed Spiritshot S -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -2688,12 +2673,10 @@
 					<item id="9573" min="1" max="1" chance="2.5093" /> <!-- Life Stone - Level 80 -->
 					<item id="9574" min="1" max="1" chance="0.6273" /> <!-- Mid-Grade Life Stone - Level 80 -->
 					<item id="9575" min="1" max="1" chance="0.0627" /> <!-- High-Grade Life Stone - Level 80 -->
-					<item id="5162" min="1" max="1" chance="0.1606" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				</group>
 			</drop>
 			<spoil>
 				<item id="9992" min="1" max="1" chance="3.141" /> <!-- Sealed Dynasty Necklace Gemstone -->
-				<item id="5157" min="1" max="1" chance="0.7758" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				<item id="9623" min="1" max="1" chance="0.9396" /> <!-- Dynasty Mace Piece -->
 			</spoil>
 		</dropLists>
@@ -2761,7 +2744,6 @@
 					<item id="4040" min="1" max="1" chance="6.2644" /> <!-- Mold Lubricant -->
 					<item id="9628" min="1" max="1" chance="2.4566" /> <!-- Leonard -->
 					<item id="9630" min="1" max="1" chance="1.6485" /> <!-- Orichalcum -->
-					<item id="5167" min="1" max="1" chance="0.1392" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 				</group>
 			</drop>
 			<spoil>
@@ -2840,7 +2822,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5162" min="1" max="1" chance="0.4382" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				<item id="6701" min="1" max="1" chance="5.2494" /> <!-- Sealed Imperial Crusader Breastplate Part -->
 				<item id="6702" min="1" max="1" chance="6.7573" /> <!-- Sealed Imperial Crusader Gaiters Pattern -->
 			</spoil>
@@ -2993,7 +2974,6 @@
 			</drop>
 			<spoil>
 				<item id="6694" min="1" max="1" chance="2.2218" /> <!-- Saint Spear Blade -->
-				<item id="5272" min="1" max="1" chance="0.4487" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				<item id="6691" min="1" max="1" chance="2.1822" /> <!-- Angel Slayer Blade -->
 			</spoil>
 		</dropLists>
@@ -3066,7 +3046,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5277" min="1" max="1" chance="0.4487" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 				<item id="6689" min="1" max="1" chance="2.1411" /> <!-- Basalt Battlehammer Head -->
 				<item id="6690" min="1" max="1" chance="2.1864" /> <!-- Imperial Staff Head -->
 			</spoil>
@@ -3147,7 +3126,6 @@
 			<spoil>
 				<item id="6695" min="1" max="1" chance="2.1515" /> <!-- Demon Splinter Blade -->
 				<item id="7579" min="1" max="1" chance="2.2182" /> <!-- Draconic Bow Shaft -->
-				<item id="5282" min="1" max="1" chance="0.4509" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -3221,7 +3199,6 @@
 			</drop>
 			<spoil>
 				<item id="5529" min="1" max="1" chance="2.7117" /> <!-- Dragon Slayer Edge -->
-				<item id="1808" min="1" max="1" chance="0.4393" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="5533" min="1" max="1" chance="2.7112" /> <!-- Elysian Head -->
 			</spoil>
 		</dropLists>
@@ -3298,7 +3275,6 @@
 			<spoil>
 				<item id="6703" min="1" max="1" chance="14.4268" /> <!-- Sealed Imperial Crusader Gauntlets Design -->
 				<item id="6704" min="1" max="1" chance="14.4268" /> <!-- Sealed Imperial Crusader Boots Design -->
-				<item id="5277" min="1" max="1" chance="0.4503" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -3370,9 +3346,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="3036" min="1" max="1" chance="0.5783" /> <!-- Recipe: Spiritshot S -->
 				<item id="959" min="1" max="1" chance="0.052" /> <!-- Scroll: Enchant Weapon (S-Grade) -->
-				<item id="3957" min="1" max="1" chance="0.5783" /> <!-- Recipe: Blessed Spiritshot S -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -3525,7 +3499,6 @@
 			<spoil>
 				<item id="6708" min="1" max="1" chance="19.6689" /> <!-- Sealed Draconic Leather Gloves Fabric -->
 				<item id="6709" min="1" max="1" chance="19.6689" /> <!-- Sealed Draconic Leather Boots Design -->
-				<item id="5157" min="1" max="1" chance="0.614" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -3594,12 +3567,10 @@
 					<item id="4039" min="1" max="1" chance="30.0586" /> <!-- Mold Glue -->
 					<item id="4041" min="1" max="1" chance="7.8414" /> <!-- Mold Hardener -->
 					<item id="4044" min="1" max="1" chance="30.0586" /> <!-- Thons -->
-					<item id="5272" min="1" max="1" chance="0.4008" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				</group>
 			</drop>
 			<spoil>
 				<item id="6712" min="1" max="1" chance="18.6681" /> <!-- Sealed Major Arcana Gloves fabric -->
-				<item id="5162" min="1" max="1" chance="0.5827" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				<item id="6713" min="1" max="1" chance="18.6681" /> <!-- Sealed Major Arcana Boots Design -->
 			</spoil>
 		</dropLists>
@@ -3668,7 +3639,6 @@
 					<item id="4040" min="1" max="1" chance="5.6155" /> <!-- Mold Lubricant -->
 					<item id="4042" min="1" max="1" chance="4.6796" /> <!-- Enria -->
 					<item id="4043" min="1" max="1" chance="9.3591" /> <!-- Asofe -->
-					<item id="5277" min="1" max="1" chance="0.1247" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 				</group>
 			</drop>
 			<spoil>
@@ -3745,7 +3715,6 @@
 					<item id="9628" min="1" max="1" chance="2.9277" /> <!-- Leonard -->
 					<item id="9630" min="1" max="1" chance="1.9646" /> <!-- Orichalcum -->
 					<item id="9629" min="1" max="1" chance="1.6229" /> <!-- Adamantine -->
-					<item id="5282" min="1" max="1" chance="0.1659" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 				</group>
 			</drop>
 			<spoil>
@@ -3819,9 +3788,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5282" min="1" max="1" chance="0.6136" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 				<item id="5529" min="1" max="1" chance="3.7877" /> <!-- Dragon Slayer Edge -->
-				<item id="1808" min="1" max="1" chance="0.6136" /> <!-- Recipe: Soulshot (S-Grade) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -3890,7 +3857,6 @@
 					<item id="4040" min="1" max="1" chance="5.6155" /> <!-- Mold Lubricant -->
 					<item id="4042" min="1" max="1" chance="4.6796" /> <!-- Enria -->
 					<item id="4043" min="1" max="1" chance="9.3591" /> <!-- Asofe -->
-					<item id="5157" min="1" max="1" chance="0.1247" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				</group>
 			</drop>
 			<spoil>
@@ -3999,7 +3965,6 @@
 			</drop>
 			<spoil>
 				<item id="959" min="1" max="1" chance="0.0241" /> <!-- Scroll: Enchant Weapon (S-Grade) -->
-				<item id="3036" min="1" max="1" chance="0.268" /> <!-- Recipe: Spiritshot S -->
 				<item id="10397" min="1" max="1" chance="0.2585" /> <!-- Icarus Sawsword Piece -->
 			</spoil>
 		</dropLists>
@@ -4550,7 +4515,6 @@
 			</drop>
 			<spoil>
 				<item id="9542" min="1" max="1" chance="4.0033" /> <!-- Sealed Dynasty Circlet Piece -->
-				<item id="1808" min="1" max="1" chance="0.4948" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="9530" min="1" max="1" chance="1.6215" /> <!-- Sealed Dynasty Breast Plate Piece -->
 			</spoil>
 		</dropLists>
@@ -5161,7 +5125,6 @@
 			</drop>
 			<spoil>
 				<item id="9541" min="1" max="1" chance="13.4861" /> <!-- Sealed Dynasty Stocking Piece -->
-				<item id="1808" min="1" max="1" chance="2.2792" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="9620" min="1" max="1" chance="2.8491" /> <!-- Dynasty Knife Piece -->
 			</spoil>
 		</dropLists>
@@ -5230,7 +5193,6 @@
 					<item id="9573" min="1" max="1" chance="5.0372" /> <!-- Life Stone - Level 80 -->
 					<item id="9574" min="1" max="1" chance="1.2593" /> <!-- Mid-Grade Life Stone - Level 80 -->
 					<item id="9575" min="1" max="1" chance="0.1259" /> <!-- High-Grade Life Stone - Level 80 -->
-					<item id="5272" min="1" max="1" chance="0.3225" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				</group>
 			</drop>
 			<spoil>
@@ -5312,7 +5274,6 @@
 					<item id="9573" min="1" max="1" chance="5.0372" /> <!-- Life Stone - Level 80 -->
 					<item id="9574" min="1" max="1" chance="1.2593" /> <!-- Mid-Grade Life Stone - Level 80 -->
 					<item id="9575" min="1" max="1" chance="0.1259" /> <!-- High-Grade Life Stone - Level 80 -->
-					<item id="5277" min="1" max="1" chance="0.3225" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 				</group>
 			</drop>
 			<spoil>
@@ -5389,7 +5350,6 @@
 					<item id="9573" min="1" max="1" chance="7.714" /> <!-- Life Stone - Level 80 -->
 					<item id="9574" min="1" max="1" chance="1.9285" /> <!-- Mid-Grade Life Stone - Level 80 -->
 					<item id="9575" min="1" max="1" chance="0.1928" /> <!-- High-Grade Life Stone - Level 80 -->
-					<item id="5282" min="1" max="1" chance="0.4937" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 				</group>
 			</drop>
 			<spoil>
@@ -5476,9 +5436,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="1808" min="1" max="1" chance="2.1861" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="9623" min="1" max="1" chance="2.6477" /> <!-- Dynasty Mace Piece -->
-				<item id="3036" min="1" max="1" chance="2.1861" /> <!-- Recipe: Spiritshot S -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -5555,7 +5513,6 @@
 					<item id="9573" min="1" max="1" chance="2.5093" /> <!-- Life Stone - Level 80 -->
 					<item id="9574" min="1" max="1" chance="0.6273" /> <!-- Mid-Grade Life Stone - Level 80 -->
 					<item id="9575" min="1" max="1" chance="0.0627" /> <!-- High-Grade Life Stone - Level 80 -->
-					<item id="5157" min="1" max="1" chance="0.1606" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				</group>
 			</drop>
 			<spoil>
@@ -5630,12 +5587,10 @@
 					<item id="9573" min="1" max="1" chance="5.7992" /> <!-- Life Stone - Level 80 -->
 					<item id="9574" min="1" max="1" chance="1.4498" /> <!-- Mid-Grade Life Stone - Level 80 -->
 					<item id="9575" min="1" max="1" chance="0.145" /> <!-- High-Grade Life Stone - Level 80 -->
-					<item id="5162" min="1" max="1" chance="0.3711" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				</group>
 			</drop>
 			<spoil>
 				<item id="9992" min="1" max="1" chance="1.085" /> <!-- Sealed Dynasty Necklace Gemstone -->
-				<item id="3957" min="1" max="1" chance="0.268" /> <!-- Recipe: Blessed Spiritshot S -->
 				<item id="9537" min="1" max="1" chance="2.168" /> <!-- Sealed Dynasty Leather Helmet Piece -->
 			</spoil>
 		</dropLists>
@@ -5704,11 +5659,9 @@
 					<item id="9573" min="1" max="1" chance="2.5093" /> <!-- Life Stone - Level 80 -->
 					<item id="9574" min="1" max="1" chance="0.6273" /> <!-- Mid-Grade Life Stone - Level 80 -->
 					<item id="9575" min="1" max="1" chance="0.0627" /> <!-- High-Grade Life Stone - Level 80 -->
-					<item id="5167" min="1" max="1" chance="0.1606" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 				</group>
 			</drop>
 			<spoil>
-				<item id="5157" min="1" max="1" chance="0.2259" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				<item id="9622" min="1" max="1" chance="0.2736" /> <!-- Dynasty Cudgel Piece -->
 				<item id="9628" min="1" max="1" chance="3.9865" /> <!-- Leonard -->
 			</spoil>
@@ -5787,7 +5740,6 @@
 			<spoil>
 				<item id="9628" min="1" max="1" chance="3.9865" /> <!-- Leonard -->
 				<item id="9993" min="1" max="1" chance="1.6748" /> <!-- Sealed Dynasty Ring Gemstone -->
-				<item id="5162" min="1" max="1" chance="0.2259" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -5951,7 +5903,6 @@
 			</drop>
 			<spoil>
 				<item id="9541" min="1" max="1" chance="1.5745" /> <!-- Sealed Dynasty Stocking Piece -->
-				<item id="1808" min="1" max="1" chance="0.2661" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="9620" min="1" max="1" chance="0.3326" /> <!-- Dynasty Knife Piece -->
 			</spoil>
 		</dropLists>
@@ -6036,7 +5987,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="3036" min="1" max="1" chance="0.2652" /> <!-- Recipe: Spiritshot S -->
 				<item id="9992" min="1" max="1" chance="1.0739" /> <!-- Sealed Dynasty Necklace Gemstone -->
 				<item id="9628" min="1" max="1" chance="4.6807" /> <!-- Leonard -->
 			</spoil>
@@ -6120,7 +6070,6 @@
 			<spoil>
 				<item id="1894" min="1" max="1" chance="18.0004" /> <!-- Crafted Leather -->
 				<item id="9535" min="1" max="1" chance="0.9178" /> <!-- Sealed Dynasty Leather Armor Piece -->
-				<item id="3957" min="1" max="1" chance="0.228" /> <!-- Recipe: Blessed Spiritshot S -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -6196,7 +6145,6 @@
 			</drop>
 			<spoil>
 				<item id="9992" min="1" max="1" chance="0.8941" /> <!-- Sealed Dynasty Necklace Gemstone -->
-				<item id="5157" min="1" max="1" chance="0.2208" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				<item id="9537" min="1" max="1" chance="1.7866" /> <!-- Sealed Dynasty Leather Helmet Piece -->
 			</spoil>
 		</dropLists>
@@ -6346,9 +6294,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5162" min="1" max="1" chance="0.228" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				<item id="9622" min="1" max="1" chance="0.2761" /> <!-- Dynasty Cudgel Piece -->
-				<item id="5167" min="1" max="1" chance="0.228" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -6423,7 +6369,6 @@
 			<spoil>
 				<item id="1894" min="1" max="1" chance="18.5045" /> <!-- Crafted Leather -->
 				<item id="9993" min="1" max="1" chance="1.7378" /> <!-- Sealed Dynasty Ring Gemstone -->
-				<item id="5162" min="1" max="1" chance="0.2344" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -6536,7 +6481,6 @@
 			</drop>
 			<spoil>
 				<item id="9992" min="1" max="1" chance="0.5104" /> <!-- Sealed Dynasty Necklace Gemstone -->
-				<item id="5167" min="1" max="1" chance="0.1261" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 				<item id="9530" min="1" max="1" chance="0.4131" /> <!-- Sealed Dynasty Breast Plate Piece -->
 			</spoil>
 		</dropLists>
@@ -6618,7 +6562,6 @@
 					<item id="9628" min="1" max="1" chance="2.9277" /> <!-- Leonard -->
 					<item id="9630" min="1" max="1" chance="1.9646" /> <!-- Orichalcum -->
 					<item id="9629" min="1" max="1" chance="1.6229" /> <!-- Adamantine -->
-					<item id="5272" min="1" max="1" chance="0.1659" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				</group>
 				<group chance="52.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->
@@ -6718,7 +6661,6 @@
 					<item id="4039" min="1" max="1" chance="4.2869" /> <!-- Mold Glue -->
 					<item id="4041" min="1" max="1" chance="1.1183" /> <!-- Mold Hardener -->
 					<item id="4044" min="1" max="1" chance="4.2869" /> <!-- Thons -->
-					<item id="5277" min="1" max="1" chance="0.0572" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 					<item id="1345" min="10" max="30" chance="85.7382" /> <!-- Shining Arrow -->
 				</group>
 				<group chance="52.0">
@@ -6749,9 +6691,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5272" min="1" max="1" chance="0.1321" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				<item id="9619" min="1" max="1" chance="0.1664" /> <!-- Dynasty Bow Piece -->
-				<item id="5277" min="1" max="1" chance="0.1321" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -6823,7 +6763,6 @@
 					<item id="9628" min="1" max="1" chance="2.9277" /> <!-- Leonard -->
 					<item id="9630" min="1" max="1" chance="1.9646" /> <!-- Orichalcum -->
 					<item id="9629" min="1" max="1" chance="1.6229" /> <!-- Adamantine -->
-					<item id="5282" min="1" max="1" chance="0.1659" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 				</group>
 				<group chance="52.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->
@@ -6957,7 +6896,6 @@
 			</drop>
 			<spoil>
 				<item id="9540" min="1" max="1" chance="0.6036" /> <!-- Sealed Dynasty Tunic Piece -->
-				<item id="3957" min="1" max="1" chance="0.1499" /> <!-- Recipe: Blessed Spiritshot S -->
 				<item id="9622" min="1" max="1" chance="0.1816" /> <!-- Dynasty Cudgel Piece -->
 			</spoil>
 		</dropLists>
@@ -7027,7 +6965,6 @@
 					<item id="4039" min="1" max="1" chance="4.2869" /> <!-- Mold Glue -->
 					<item id="4041" min="1" max="1" chance="1.1183" /> <!-- Mold Hardener -->
 					<item id="4044" min="1" max="1" chance="4.2869" /> <!-- Thons -->
-					<item id="5157" min="1" max="1" chance="0.0572" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 					<item id="1345" min="10" max="30" chance="85.7382" /> <!-- Shining Arrow -->
 				</group>
 				<group chance="52.0">
@@ -7058,7 +6995,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5157" min="1" max="1" chance="0.1409" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				<item id="9535" min="1" max="1" chance="0.5674" /> <!-- Sealed Dynasty Leather Armor Piece -->
 				<item id="1894" min="1" max="1" chance="11.1275" /> <!-- Crafted Leather -->
 			</spoil>
@@ -7136,7 +7072,6 @@
 					<item id="9628" min="1" max="1" chance="2.9277" /> <!-- Leonard -->
 					<item id="9630" min="1" max="1" chance="1.9646" /> <!-- Orichalcum -->
 					<item id="9629" min="1" max="1" chance="1.6229" /> <!-- Adamantine -->
-					<item id="5162" min="1" max="1" chance="0.1659" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				</group>
 				<group chance="52.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->
@@ -7168,7 +7103,6 @@
 			<spoil>
 				<item id="1894" min="1" max="1" chance="10.4295" /> <!-- Crafted Leather -->
 				<item id="9620" min="1" max="1" chance="0.1651" /> <!-- Dynasty Knife Piece -->
-				<item id="5162" min="1" max="1" chance="0.1321" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -7242,7 +7176,6 @@
 					<item id="9628" min="1" max="1" chance="2.9277" /> <!-- Leonard -->
 					<item id="9630" min="1" max="1" chance="1.9646" /> <!-- Orichalcum -->
 					<item id="9629" min="1" max="1" chance="1.6229" /> <!-- Adamantine -->
-					<item id="5167" min="1" max="1" chance="0.1659" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 				</group>
 				<group chance="52.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->
@@ -7273,7 +7206,6 @@
 			</drop>
 			<spoil>
 				<item id="9531" min="1" max="1" chance="1.3141" /> <!-- Sealed Dynasty Gaiters Piece -->
-				<item id="5167" min="1" max="1" chance="0.1356" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 				<item id="9622" min="1" max="1" chance="0.1642" /> <!-- Dynasty Cudgel Piece -->
 			</spoil>
 		</dropLists>
@@ -7482,9 +7414,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5272" min="1" max="1" chance="0.1505" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				<item id="9623" min="1" max="1" chance="0.1823" /> <!-- Dynasty Mace Piece -->
-				<item id="5277" min="1" max="1" chance="0.1505" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -7795,7 +7725,6 @@
 			<spoil>
 				<item id="1894" min="1" max="1" chance="12.7926" /> <!-- Crafted Leather -->
 				<item id="9620" min="1" max="1" chance="0.2025" /> <!-- Dynasty Knife Piece -->
-				<item id="5162" min="1" max="1" chance="0.162" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -8018,7 +7947,6 @@
 			</drop>
 			<spoil>
 				<item id="9533" min="1" max="1" chance="1.7174" /> <!-- Sealed Dynasty Gauntlet Piece -->
-				<item id="1808" min="1" max="1" chance="0.1595" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="9531" min="1" max="1" chance="1.5464" /> <!-- Sealed Dynasty Gaiters Piece -->
 			</spoil>
 		</dropLists>
@@ -8141,7 +8069,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="3036" min="1" max="1" chance="0.1595" /> <!-- Recipe: Spiritshot S -->
 				<item id="9536" min="1" max="1" chance="0.944" /> <!-- Sealed Dynasty Leather Leggings Piece -->
 				<item id="1894" min="1" max="1" chance="12.5956" /> <!-- Crafted Leather -->
 			</spoil>
@@ -8269,7 +8196,6 @@
 			<spoil>
 				<item id="9532" min="1" max="1" chance="1.2498" /> <!-- Sealed Dynasty Helmet Piece -->
 				<item id="9533" min="1" max="1" chance="1.6628" /> <!-- Sealed Dynasty Gauntlet Piece -->
-				<item id="3957" min="1" max="1" chance="0.1545" /> <!-- Recipe: Blessed Spiritshot S -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -8386,7 +8312,6 @@
 			</drop>
 			<spoil>
 				<item id="9534" min="1" max="1" chance="1.6282" /> <!-- Sealed Dynasty Boot Piece -->
-				<item id="5157" min="1" max="1" chance="0.1513" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				<item id="9622" min="1" max="1" chance="0.1832" /> <!-- Dynasty Cudgel Piece -->
 			</spoil>
 		</dropLists>
@@ -8640,9 +8565,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5162" min="1" max="1" chance="0.139" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				<item id="9542" min="1" max="1" chance="1.1244" /> <!-- Sealed Dynasty Circlet Piece -->
-				<item id="5167" min="1" max="1" chance="0.139" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -8719,7 +8642,6 @@
 					<item id="9573" min="1" max="1" chance="5.7992" /> <!-- Life Stone - Level 80 -->
 					<item id="9574" min="1" max="1" chance="1.4498" /> <!-- Mid-Grade Life Stone - Level 80 -->
 					<item id="9575" min="1" max="1" chance="0.145" /> <!-- High-Grade Life Stone - Level 80 -->
-					<item id="5272" min="1" max="1" chance="0.3711" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				</group>
 				<group chance="42.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->
@@ -8834,7 +8756,6 @@
 					<item id="9573" min="1" max="1" chance="5.7992" /> <!-- Life Stone - Level 80 -->
 					<item id="9574" min="1" max="1" chance="1.4498" /> <!-- Mid-Grade Life Stone - Level 80 -->
 					<item id="9575" min="1" max="1" chance="0.145" /> <!-- High-Grade Life Stone - Level 80 -->
-					<item id="5277" min="1" max="1" chance="0.3711" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 				</group>
 				<group chance="42.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->
@@ -8870,7 +8791,6 @@
 			</drop>
 			<spoil>
 				<item id="9620" min="1" max="1" chance="0.199" /> <!-- Dynasty Knife Piece -->
-				<item id="5272" min="1" max="1" chance="0.1592" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				<item id="9531" min="1" max="1" chance="1.5428" /> <!-- Sealed Dynasty Gaiters Piece -->
 			</spoil>
 		</dropLists>

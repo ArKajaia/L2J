@@ -48,7 +48,6 @@ public class Q00175_TheWayOfTheWarrior extends Quest
 	
 	// Rewards
 	private static final int WARRIORS_SWORD = 9720;
-	private static final ItemHolder SOULSHOTS_NO_GRADE_FOR_ROOKIES = new ItemHolder(5789, 7000);
 	private static final ItemHolder[] REWARDS =
 	{
 		new ItemHolder(1060, 100), // Lesser Healing Potion
@@ -126,12 +125,6 @@ public class Q00175_TheWayOfTheWarrior extends Quest
 				{
 					takeItem(player, MUERTOS_CLAW);
 					giveItems(player, WARRIORS_SWORD, 1);
-					
-					if (player.getLevel() < 25)
-					{
-						playSound(player, "tutorial_voice_026");
-						giveItems(player, SOULSHOTS_NO_GRADE_FOR_ROOKIES);
-					}
 					
 					// Newbie Guide.
 					final Quest newbieGuide = ScriptManager.getInstance().getScript(NewbieGuide.class.getSimpleName());

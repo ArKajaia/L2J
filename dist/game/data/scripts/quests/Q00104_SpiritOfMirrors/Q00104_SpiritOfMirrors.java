@@ -71,9 +71,6 @@ public class Q00104_SpiritOfMirrors extends Quest
 		new ItemHolder(4416, 10), // Echo Crystal - Theme of Celebration
 		new ItemHolder(747, 1), // Wand of Adept
 	};
-	private static final ItemHolder SPIRITSHOTS_NO_GRADE_FOR_ROOKIES = new ItemHolder(5790, 3000);
-	private static final ItemHolder SOULSHOTS_NO_GRADE = new ItemHolder(1835, 1000);
-	private static final ItemHolder SPIRITSHOTS_NO_GRADE = new ItemHolder(2509, 500);
 	
 	// Misc
 	private static final int MIN_LEVEL = 10;
@@ -141,21 +138,6 @@ public class Q00104_SpiritOfMirrors extends Quest
 					{
 						if (qs.isCond(3) && hasQuestItems(player, SPIRITBOUND_WAND1, SPIRITBOUND_WAND2, SPIRITBOUND_WAND3))
 						{
-							if ((player.getLevel() < 25) && player.isMageClass())
-							{
-								giveItems(player, SPIRITSHOTS_NO_GRADE_FOR_ROOKIES);
-								playSound(player, "tutorial_voice_027");
-							}
-							
-							if (!player.isMageClass())
-							{
-								giveItems(player, SOULSHOTS_NO_GRADE);
-							}
-							else
-							{
-								giveItems(player, SPIRITSHOTS_NO_GRADE);
-							}
-							
 							for (ItemHolder reward : REWARDS)
 							{
 								giveItems(player, reward);

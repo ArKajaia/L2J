@@ -5712,7 +5712,6 @@
 					<item id="1876" min="1" max="1" chance="6.85" /> <!-- Mithril Ore -->
 					<item id="1895" min="1" max="1" chance="9.7857" /> <!-- Metallic Fiber -->
 					<item id="4042" min="1" max="1" chance="0.5708" /> <!-- Enria -->
-					<item id="1808" min="1" max="1" chance="0.0152" /> <!-- Recipe: Soulshot (S-Grade) -->
 					<item id="9573" min="1" max="1" chance="0.2378" /> <!-- Life Stone - Level 80 -->
 					<item id="9574" min="1" max="1" chance="0.0595" /> <!-- Mid-Grade Life Stone - Level 80 -->
 					<item id="9575" min="1" max="1" chance="0.0059" /> <!-- High-Grade Life Stone - Level 80 -->
@@ -5753,7 +5752,6 @@
 			</drop>
 			<spoil>
 				<item id="5480" min="1" max="1" chance="1.5799" /> <!-- Sealed Leather Armor of Nightmare Fabric -->
-				<item id="1808" min="1" max="1" chance="0.1565" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="5481" min="1" max="1" chance="1.5799" /> <!-- Sealed Majestic Leather Armor Fabric -->
 			</spoil>
 		</dropLists>
@@ -5869,7 +5867,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="3036" min="1" max="1" chance="0.1206" /> <!-- Recipe: Spiritshot S -->
 				<item id="5487" min="1" max="1" chance="1.2222" /> <!-- Sealed Robe of Nightmare Fabric -->
 				<item id="1894" min="1" max="1" chance="9.5236" /> <!-- Crafted Leather -->
 			</spoil>
@@ -5990,7 +5987,6 @@
 			<spoil>
 				<item id="4040" min="1" max="1" chance="5.9275" /> <!-- Mold Lubricant -->
 				<item id="5488" min="1" max="1" chance="1.3346" /> <!-- Sealed Majestic Robe Fabric -->
-				<item id="3957" min="1" max="1" chance="0.1317" /> <!-- Recipe: Blessed Spiritshot S -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -6099,7 +6095,6 @@
 			</drop>
 			<spoil>
 				<item id="5495" min="1" max="1" chance="3.7283" /> <!-- Sealed Shield of Nightmare Fragment -->
-				<item id="5157" min="1" max="1" chance="0.1091" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				<item id="5502" min="1" max="1" chance="4.1467" /> <!-- Sealed Boots of Nightmare Lining -->
 			</spoil>
 		</dropLists>
@@ -6330,9 +6325,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5162" min="1" max="1" chance="0.114" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				<item id="5514" min="1" max="1" chance="4.3313" /> <!-- Sealed Gauntlets of Nightmare Design -->
-				<item id="5167" min="1" max="1" chance="0.114" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -6560,7 +6553,6 @@
 			</drop>
 			<spoil>
 				<item id="5522" min="1" max="1" chance="0.8946" /> <!-- Sealed Armor of Nightmare Pattern -->
-				<item id="5272" min="1" max="1" chance="0.1167" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				<item id="5523" min="1" max="1" chance="0.8946" /> <!-- Sealed Majestic Plate Armor Pattern -->
 			</spoil>
 		</dropLists>
@@ -7033,7 +7025,6 @@
 			</drop>
 			<spoil>
 				<item id="5481" min="1" max="1" chance="0.9321" /> <!-- Sealed Majestic Leather Armor Fabric -->
-				<item id="1808" min="1" max="1" chance="0.0923" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="5487" min="1" max="1" chance="0.9354" /> <!-- Sealed Robe of Nightmare Fabric -->
 			</spoil>
 		</dropLists>
@@ -7119,7 +7110,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="3036" min="1" max="1" chance="0.102" /> <!-- Recipe: Spiritshot S -->
 				<item id="5488" min="1" max="1" chance="1.0335" /> <!-- Sealed Majestic Robe Fabric -->
 				<item id="4044" min="1" max="1" chance="7.6502" /> <!-- Thons -->
 			</spoil>
@@ -7204,7 +7194,6 @@
 			<spoil>
 				<item id="1895" min="1" max="1" chance="65.5731" /> <!-- Metallic Fiber -->
 				<item id="5495" min="1" max="1" chance="3.485" /> <!-- Sealed Shield of Nightmare Fragment -->
-				<item id="3957" min="1" max="1" chance="0.102" /> <!-- Recipe: Blessed Spiritshot S -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -7288,7 +7277,6 @@
 			</drop>
 			<spoil>
 				<item id="5502" min="1" max="1" chance="5.5226" /> <!-- Sealed Boots of Nightmare Lining -->
-				<item id="5157" min="1" max="1" chance="0.1453" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				<item id="5503" min="1" max="1" chance="5.5226" /> <!-- Sealed Majestic Boots Lining -->
 			</spoil>
 		</dropLists>
@@ -7463,9 +7451,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5162" min="1" max="1" chance="0.1434" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				<item id="5515" min="1" max="1" chance="5.4507" /> <!-- Sealed Majestic Gauntlets Design -->
-				<item id="5167" min="1" max="1" chance="0.1434" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -7647,7 +7633,6 @@
 			</drop>
 			<spoil>
 				<item id="5523" min="1" max="1" chance="1.9263" /> <!-- Sealed Majestic Plate Armor Pattern -->
-				<item id="5272" min="1" max="1" chance="0.2514" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				<item id="5527" min="1" max="1" chance="6.7627" /> <!-- Sealed Helm of Nightmare Design -->
 			</spoil>
 		</dropLists>
@@ -7732,7 +7717,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5277" min="1" max="1" chance="0.8196" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 				<item id="5528" min="1" max="1" chance="22.0493" /> <!-- Sealed Majestic Circlet Design -->
 				<item id="4042" min="1" max="1" chance="30.7367" /> <!-- Enria -->
 			</spoil>
@@ -7814,7 +7798,6 @@
 			<spoil>
 				<item id="4039" min="1" max="1" chance="18.8545" /> <!-- Mold Glue -->
 				<item id="5529" min="1" max="1" chance="1.5518" /> <!-- Dragon Slayer Edge -->
-				<item id="5282" min="1" max="1" chance="0.2514" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -7896,7 +7879,6 @@
 			</drop>
 			<spoil>
 				<item id="5533" min="1" max="1" chance="1.5188" /> <!-- Elysian Head -->
-				<item id="1808" min="1" max="1" chance="0.2461" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="5534" min="1" max="1" chance="1.5201" /> <!-- Soul Bow Stave -->
 			</spoil>
 		</dropLists>
@@ -8063,9 +8045,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="3036" min="1" max="1" chance="0.084" /> <!-- Recipe: Spiritshot S -->
 				<item id="5538" min="1" max="1" chance="0.5187" /> <!-- Dragon Grinder Edge -->
-				<item id="3957" min="1" max="1" chance="0.084" /> <!-- Recipe: Blessed Spiritshot S -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -8228,7 +8208,6 @@
 			</drop>
 			<spoil>
 				<item id="5544" min="1" max="1" chance="0.5182" /> <!-- Branch of the Mother Tree Head -->
-				<item id="5157" min="1" max="1" chance="0.084" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				<item id="5545" min="1" max="1" chance="0.5188" /> <!-- Dark Legion's Edge Blade -->
 			</spoil>
 		</dropLists>
@@ -8319,7 +8298,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5162" min="1" max="1" chance="0.2358" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				<item id="5546" min="1" max="1" chance="1.5986" /> <!-- Sword of Miracles Edge -->
 				<item id="5549" min="1" max="1" chance="53.0489" /> <!-- Metallic Thread -->
 			</spoil>
@@ -8410,7 +8388,6 @@
 			</drop>
 			<spoil>
 				<item id="6342" min="1" max="1" chance="19.4619" /> <!-- Sealed Majestic Earring Gemstone -->
-				<item id="5167" min="1" max="1" chance="0.3818" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -8495,7 +8472,6 @@
 			</drop>
 			<spoil>
 				<item id="6344" min="1" max="1" chance="2.7722" /> <!-- Sealed Majestic Necklace Beads -->
-				<item id="5272" min="1" max="1" chance="0.084" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				<item id="6346" min="1" max="1" chance="6.1568" /> <!-- Sealed Majestic Ring Gemstone -->
 			</spoil>
 		</dropLists>
@@ -8668,9 +8644,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5277" min="1" max="1" chance="0.3207" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 				<item id="8349" min="1" max="1" chance="1.9787" /> <!-- Doom Crusher Head -->
-				<item id="5282" min="1" max="1" chance="0.3207" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -8841,7 +8815,6 @@
 			</drop>
 			<spoil>
 				<item id="5481" min="1" max="1" chance="9.4465" /> <!-- Sealed Majestic Leather Armor Fabric -->
-				<item id="1808" min="1" max="1" chance="0.9356" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="5487" min="1" max="1" chance="9.4799" /> <!-- Sealed Robe of Nightmare Fabric -->
 			</spoil>
 		</dropLists>
@@ -8920,7 +8893,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="3036" min="1" max="1" chance="0.8051" /> <!-- Recipe: Spiritshot S -->
 				<item id="5488" min="1" max="1" chance="8.1576" /> <!-- Sealed Majestic Robe Fabric -->
 				<item id="1889" min="1" max="3" chance="60.3856" /> <!-- Compound Braid -->
 			</spoil>
@@ -9003,7 +8975,6 @@
 			<spoil>
 				<item id="4040" min="1" max="1" chance="10.3289" /> <!-- Mold Lubricant -->
 				<item id="5495" min="1" max="1" chance="7.8421" /> <!-- Sealed Shield of Nightmare Fragment -->
-				<item id="3957" min="1" max="1" chance="0.2295" /> <!-- Recipe: Blessed Spiritshot S -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -9096,7 +9067,6 @@
 			</drop>
 			<spoil>
 				<item id="5502" min="1" max="1" chance="10.1659" /> <!-- Sealed Boots of Nightmare Lining -->
-				<item id="5157" min="1" max="1" chance="0.2675" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				<item id="5503" min="1" max="1" chance="10.1659" /> <!-- Sealed Majestic Boots Lining -->
 			</spoil>
 		</dropLists>
@@ -9265,9 +9235,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5162" min="1" max="1" chance="0.6687" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				<item id="5515" min="1" max="1" chance="25.4123" /> <!-- Sealed Majestic Gauntlets Design -->
-				<item id="5167" min="1" max="1" chance="0.6687" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -9437,7 +9405,6 @@
 			</drop>
 			<spoil>
 				<item id="5523" min="1" max="1" chance="5.305" /> <!-- Sealed Majestic Plate Armor Pattern -->
-				<item id="5272" min="1" max="1" chance="0.6923" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				<item id="5527" min="1" max="1" chance="18.6245" /> <!-- Sealed Helm of Nightmare Design -->
 			</spoil>
 		</dropLists>
@@ -9525,7 +9492,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5277" min="1" max="1" chance="1.593" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 				<item id="5528" min="1" max="1" chance="42.8543" /> <!-- Sealed Majestic Circlet Design -->
 				<item id="4042" min="1" max="1" chance="59.7389" /> <!-- Enria -->
 			</spoil>
@@ -9611,7 +9577,6 @@
 			<spoil>
 				<item id="4041" min="1" max="1" chance="44.7646" /> <!-- Mold Hardener -->
 				<item id="5529" min="1" max="1" chance="14.1233" /> <!-- Dragon Slayer Edge -->
-				<item id="5282" min="1" max="1" chance="2.288" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 			</spoil>
 		</dropLists>
 		<collision>

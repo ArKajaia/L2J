@@ -70,8 +70,6 @@ public class Q00255_Tutorial extends Quest
 	private static final int TUTORIAL_GREMLIN = 18342;
 	
 	// Items
-	private static final int SOULSHOT_NO_GRADE_FOR_BEGINNERS = 5789;
-	private static final int SPIRITSHOT_NO_GRADE_FOR_BEGINNERS = 5790;
 	private static final int BLUE_GEMSTONE = 6353;
 	private static final int TUTORIAL_GUIDE = 5588;
 	
@@ -2113,18 +2111,6 @@ public class Q00255_Tutorial extends Quest
 				}
 				break;
 			}
-			case 26:
-			{
-				if (!talker.isMageClass() || (talker.getPlayerClass() == PlayerClass.ORC_MAGE))
-				{
-					showTutorialHTML(talker, "tutorial-newbie-004a.html");
-				}
-				else
-				{
-					showTutorialHTML(talker, "tutorial-newbie-004b.html");
-				}
-				break;
-			}
 			case 27:
 			{
 				switch (talker.getPlayerClass())
@@ -2649,27 +2635,8 @@ public class Q00255_Tutorial extends Quest
 			{
 				if (hasQuestItems(talker, RECOMMENDATION_1))
 				{
-					if (!talker.isMageClass() && (qs.getMemoStateEx(1) <= 3))
+					if (qs.getMemoStateEx(1) <= 3)
 					{
-						giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-						playTutorialVoice(talker, "tutorial_voice_026");
-						addExpAndSp(talker, 0, 50);
-						qs.setMemoStateEx(1, 4);
-					}
-					
-					if (talker.isMageClass() && (qs.getMemoStateEx(1) <= 3))
-					{
-						if (talker.getPlayerClass() == PlayerClass.ORC_MAGE)
-						{
-							giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-							playTutorialVoice(talker, "tutorial_voice_026");
-						}
-						else
-						{
-							giveItems(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS, 100);
-							playTutorialVoice(talker, "tutorial_voice_027");
-						}
-						
 						addExpAndSp(talker, 0, 50);
 						qs.setMemoStateEx(1, 4);
 					}
@@ -2703,29 +2670,7 @@ public class Q00255_Tutorial extends Quest
 			{
 				if (hasQuestItems(talker, RECOMMENDATION_2))
 				{
-					if (!talker.isMageClass() && (getQuestItemsCount(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS) <= 200))
-					{
-						playTutorialVoice(talker, "tutorial_voice_026");
-						giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-						addExpAndSp(talker, 0, 50);
-					}
-					
-					if (talker.isMageClass() && (getQuestItemsCount(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS) <= 200) && (getQuestItemsCount(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS) <= 100))
-					{
-						if (talker.getPlayerClass() == PlayerClass.ORC_MAGE)
-						{
-							playTutorialVoice(talker, "tutorial_voice_026");
-							giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-						}
-						else
-						{
-							playTutorialVoice(talker, "tutorial_voice_027");
-							giveItems(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-						}
-						
-						addExpAndSp(talker, 0, 50);
-					}
-					
+					addExpAndSp(talker, 0, 50);
 					takeItems(talker, RECOMMENDATION_2, 1);
 					startQuestTimer(npc.getId() + "", 60000, npc, talker);
 					if (qs.getMemoStateEx(1) <= 3)
@@ -2761,29 +2706,7 @@ public class Q00255_Tutorial extends Quest
 			{
 				if (hasQuestItems(talker, BLOOD_OF_MITRAELL))
 				{
-					if (!talker.isMageClass() && (getQuestItemsCount(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS) <= 200))
-					{
-						playTutorialVoice(talker, "tutorial_voice_026");
-						giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-						addExpAndSp(talker, 0, 50);
-					}
-					
-					if (talker.isMageClass() && (getQuestItemsCount(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS) <= 200) && (getQuestItemsCount(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS) <= 100))
-					{
-						if (talker.getPlayerClass() == PlayerClass.ORC_MAGE)
-						{
-							playTutorialVoice(talker, "tutorial_voice_026");
-							giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-						}
-						else
-						{
-							playTutorialVoice(talker, "tutorial_voice_027");
-							giveItems(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-						}
-						
-						addExpAndSp(talker, 0, 50);
-					}
-					
+					addExpAndSp(talker, 0, 50);
 					takeItems(talker, BLOOD_OF_MITRAELL, 1);
 					startQuestTimer(npc.getId() + "", 60000, npc, talker);
 					if (qs.getMemoStateEx(1) <= 3)
@@ -2819,21 +2742,7 @@ public class Q00255_Tutorial extends Quest
 			{
 				if (hasQuestItems(talker, LEAF_OF_THE_MOTHER_TREE))
 				{
-					if (!talker.isMageClass() && (getQuestItemsCount(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS) <= 200))
-					{
-						
-						playTutorialVoice(talker, "tutorial_voice_026");
-						giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-						addExpAndSp(talker, 0, 50);
-					}
-					
-					if (talker.isMageClass() && (getQuestItemsCount(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS) <= 200) && (getQuestItemsCount(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS) <= 100))
-					{
-						playTutorialVoice(talker, "tutorial_voice_027");
-						giveItems(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-						addExpAndSp(talker, 0, 50);
-					}
-					
+					addExpAndSp(talker, 0, 50);
 					takeItems(talker, LEAF_OF_THE_MOTHER_TREE, 1);
 					startQuestTimer(npc.getId() + "", 60000, npc, talker);
 					if (qs.getMemoStateEx(1) <= 3)
@@ -2869,21 +2778,7 @@ public class Q00255_Tutorial extends Quest
 			{
 				if (hasQuestItems(talker, LICENSE_OF_MINER))
 				{
-					if (!talker.isMageClass() && (getQuestItemsCount(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS) <= 200))
-					{
-						
-						playTutorialVoice(talker, "tutorial_voice_026");
-						giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-						addExpAndSp(talker, 0, 50);
-					}
-					
-					if (talker.isMageClass() && (getQuestItemsCount(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS) <= 200) && (getQuestItemsCount(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS) <= 100))
-					{
-						playTutorialVoice(talker, "tutorial_voice_027");
-						giveItems(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS, 100);
-						addExpAndSp(talker, 0, 50);
-					}
-					
+					addExpAndSp(talker, 0, 50);
 					takeItems(talker, LICENSE_OF_MINER, 1);
 					startQuestTimer(npc.getId() + "", 60000, npc, talker);
 					if (qs.getMemoStateEx(1) <= 3)
@@ -2926,13 +2821,7 @@ public class Q00255_Tutorial extends Quest
 						qs.setMemoStateEx(1, 4);
 					}
 					
-					if (getQuestItemsCount(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS) <= 200)
-					{
-						giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-						addExpAndSp(talker, 0, 50);
-					}
-					
-					playTutorialVoice(talker, "tutorial_voice_026");
+					addExpAndSp(talker, 0, 50);
 					showHtmlFile(talker, "30573-002.html");
 				}
 				break;
@@ -2959,8 +2848,6 @@ public class Q00255_Tutorial extends Quest
 		{
 			if ((talker.getRace() == Race.KAMAEL) && (talker.getPlayerClass().level() == 0) && (qs.getMemoStateEx(1) <= 3))
 			{
-				giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-				playTutorialVoice(talker, "tutorial_voice_026");
 				addExpAndSp(talker, 0, 50);
 				qs.setMemoStateEx(1, 4);
 			}
@@ -3019,26 +2906,6 @@ public class Q00255_Tutorial extends Quest
 			
 			startQuestTimer(npc.getId() + "", 30000, npc, talker);
 			qs.setMemoState((qs.getMemoState() & 2147483392) | 4);
-			if (!talker.isMageClass() && !hasQuestItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS))
-			{
-				giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-				playTutorialVoice(talker, "tutorial_voice_026");
-				
-			}
-			
-			if (talker.isMageClass() && !hasQuestItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS) && !hasQuestItems(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS))
-			{
-				if (talker.getPlayerClass() == PlayerClass.ORC_MAGE)
-				{
-					playTutorialVoice(talker, "tutorial_voice_026");
-					giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-				}
-				else
-				{
-					playTutorialVoice(talker, "tutorial_voice_027");
-					giveItems(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS, 100);
-				}
-			}
 			
 			showHtmlFile(talker, "30009-003.html");
 		}
@@ -3098,25 +2965,6 @@ public class Q00255_Tutorial extends Quest
 			
 			startQuestTimer(npc.getId() + "", 30000, npc, talker);
 			qs.setMemoState((qs.getMemoState() & 2147483392) | 4);
-			if (!talker.isMageClass() && !hasQuestItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS))
-			{
-				giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-				playTutorialVoice(talker, "tutorial_voice_026");
-			}
-			
-			if (talker.isMageClass() && !hasQuestItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS) && !hasQuestItems(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS))
-			{
-				if (talker.getPlayerClass() == PlayerClass.ORC_MAGE)
-				{
-					playTutorialVoice(talker, "tutorial_voice_026");
-					giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-				}
-				else
-				{
-					playTutorialVoice(talker, "tutorial_voice_027");
-					giveItems(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS, 100);
-				}
-			}
 			
 			showHtmlFile(talker, "30019-003.html");
 		}
@@ -3201,26 +3049,6 @@ public class Q00255_Tutorial extends Quest
 			startQuestTimer(npc.getId() + "", 30000, npc, talker);
 			
 			qs.setMemoState((qs.getMemoState() & 2147483392) | 4);
-			
-			if (!talker.isMageClass() && !hasQuestItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS))
-			{
-				playTutorialVoice(talker, "tutorial_voice_026");
-				giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-			}
-			
-			if (talker.isMageClass() && !hasQuestItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS) && !hasQuestItems(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS))
-			{
-				if (talker.getPlayerClass() == PlayerClass.ORC_MAGE)
-				{
-					playTutorialVoice(talker, "tutorial_voice_026");
-					giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 100);
-				}
-				else
-				{
-					playTutorialVoice(talker, "tutorial_voice_027");
-					giveItems(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS, 100);
-				}
-			}
 		}
 		else if (qs.getMemoStateEx(1) == 3)
 		{
@@ -3290,25 +3118,6 @@ public class Q00255_Tutorial extends Quest
 			giveItems(talker, LEAF_OF_THE_MOTHER_TREE, 1);
 			startQuestTimer(npc.getId() + "", 30000, npc, talker);
 			qs.setMemoState((qs.getMemoState() & 2147483392) | 4);
-			if (!talker.isMageClass() && !hasQuestItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS))
-			{
-				playTutorialVoice(talker, "tutorial_voice_026");
-				giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-			}
-			
-			if (talker.isMageClass() && !hasQuestItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS) && !hasQuestItems(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS))
-			{
-				if (talker.getPlayerClass() == PlayerClass.ORC_MAGE)
-				{
-					playTutorialVoice(talker, "tutorial_voice_026");
-					giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-				}
-				else
-				{
-					playTutorialVoice(talker, "tutorial_voice_027");
-					giveItems(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS, 100);
-				}
-			}
 			
 			if (!talker.isMageClass())
 			{
@@ -3381,29 +3190,7 @@ public class Q00255_Tutorial extends Quest
 			giveItems(talker, LICENSE_OF_MINER, 1);
 			startQuestTimer(npc.getId() + "", 30000, npc, talker);
 			qs.setMemoState((qs.getMemoState() & 2147483392) | 4);
-			if (!talker.isMageClass() && !hasQuestItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS))
-			{
-				playTutorialVoice(talker, "tutorial_voice_026");
-				giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-			}
-			
-			if (talker.isMageClass() && !hasQuestItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS) && !hasQuestItems(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS))
-			{
-				if (talker.getPlayerClass() == PlayerClass.ORC_MAGE)
-				{
-					playTutorialVoice(talker, "tutorial_voice_026");
-					giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-				}
-				else
-				{
-					playTutorialVoice(talker, "tutorial_voice_027");
-					giveItems(talker, SPIRITSHOT_NO_GRADE_FOR_BEGINNERS, 100);
-				}
-			}
-			else
-			{
-				showHtmlFile(talker, "30530-003.html");
-			}
+			showHtmlFile(talker, "30530-003.html");
 		}
 		else if (qs.getMemoStateEx(1) == 3)
 		{
@@ -3482,12 +3269,6 @@ public class Q00255_Tutorial extends Quest
 			giveItems(talker, VOUCHER_OF_FLAME, 1);
 			startQuestTimer(npc.getId() + "", 30000, npc, talker);
 			qs.setMemoState((qs.getMemoState() & 2147483392) | 4);
-			if (!hasQuestItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS))
-			{
-				giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-			}
-			
-			playTutorialVoice(talker, "tutorial_voice_026");
 		}
 		else if (qs.getMemoStateEx(1) == 3)
 		{
@@ -3544,11 +3325,6 @@ public class Q00255_Tutorial extends Quest
 			giveItems(talker, DIPLOMA, 1);
 			startQuestTimer(npc.getId() + "", 30000, npc, talker);
 			qs.setMemoState((qs.getMemoState() & 2147483392) | 4);
-			if ((talker.getRace() == Race.KAMAEL) && (talker.getPlayerClass().level() == 0) && !hasQuestItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS))
-			{
-				giveItems(talker, SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-				playTutorialVoice(talker, "tutorial_voice_026");
-			}
 		}
 		else if (qs.getMemoStateEx(1) == 3)
 		{

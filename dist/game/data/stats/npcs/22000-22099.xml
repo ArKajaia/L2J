@@ -3043,11 +3043,9 @@
 					<item id="1868" min="1" max="1" chance="69.227" /> <!-- Thread -->
 					<item id="1876" min="1" max="1" chance="6.9227" /> <!-- Mithril Ore -->
 					<item id="1895" min="1" max="1" chance="9.8896" /> <!-- Metallic Fiber -->
-					<item id="1805" min="1" max="1" chance="0.1153" /> <!-- Recipe: Soulshot (C-Grade) -->
 				</group>
 			</drop>
 			<spoil>
-				<item id="1805" min="1" max="1" chance="0.4171" /> <!-- Recipe: Soulshot (C-Grade) -->
 				<item id="1905" min="1" max="1" chance="12.1725" /> <!-- Omen Beast's Eye Earring Gemstone -->
 				<item id="2160" min="1" max="1" chance="8.0731" /> <!-- Recipe: Moonstone Earring -->
 			</spoil>
@@ -5073,7 +5071,6 @@
 					<item id="1885" min="1" max="1" chance="19.2308" /> <!-- High-Grade Suede -->
 					<item id="5550" min="1" max="1" chance="3.0769" /> <!-- Durable Metal Plate -->
 					<item id="5549" min="1" max="1" chance="23.0769" /> <!-- Metallic Thread -->
-					<item id="1805" min="1" max="1" chance="0.7693" /> <!-- Recipe: Soulshot (C-Grade) -->
 				</group>
 				<group chance="42.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->
@@ -7008,7 +7005,6 @@
 					<item id="1876" min="1" max="1" chance="21.413" /> <!-- Mithril Ore -->
 					<item id="1895" min="1" max="1" chance="30.59" /> <!-- Metallic Fiber -->
 					<item id="4042" min="1" max="1" chance="1.7844" /> <!-- Enria -->
-					<item id="1806" min="1" max="1" chance="0.2141" /> <!-- Recipe: Soulshot (B-Grade) -->
 					<item id="8726" min="1" max="1" chance="2.4784" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.6196" /> <!-- Mid-Grade Life Stone - Level 55 -->
 					<item id="8746" min="1" max="1" chance="0.062" /> <!-- High-Grade Life Stone - Level 55 -->
@@ -7016,7 +7012,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="1806" min="1" max="1" chance="1.202" /> <!-- Recipe: Soulshot (B-Grade) -->
 				<item id="1918" min="1" max="1" chance="26.0288" /> <!-- Nassen's Earring Gemstone -->
 				<item id="1895" min="1" max="3" chance="85.8579" /> <!-- Metallic Fiber -->
 			</spoil>
@@ -7114,7 +7109,6 @@
 					<item id="1880" min="1" max="1" chance="3.1463" /> <!-- Steel -->
 					<item id="5550" min="1" max="1" chance="0.4195" /> <!-- Durable Metal Plate -->
 					<item id="4043" min="1" max="1" chance="1.0488" /> <!-- Asofe -->
-					<item id="3034" min="1" max="1" chance="0.0629" /> <!-- Recipe: Spiritshot B -->
 					<item id="8726" min="1" max="1" chance="0.7283" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.1821" /> <!-- Mid-Grade Life Stone - Level 55 -->
 					<item id="8746" min="1" max="1" chance="0.0182" /> <!-- High-Grade Life Stone - Level 55 -->
@@ -7124,7 +7118,6 @@
 			<spoil>
 				<item id="4042" min="1" max="1" chance="5.468" /> <!-- Enria -->
 				<item id="1920" min="1" max="1" chance="11.2261" /> <!-- Necklace of Seal Chain -->
-				<item id="3034" min="1" max="1" chance="0.6562" /> <!-- Recipe: Spiritshot B -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -7220,7 +7213,6 @@
 					<item id="1880" min="1" max="1" chance="3.1463" /> <!-- Steel -->
 					<item id="5550" min="1" max="1" chance="0.4195" /> <!-- Durable Metal Plate -->
 					<item id="4043" min="1" max="1" chance="1.0488" /> <!-- Asofe -->
-					<item id="3034" min="1" max="1" chance="0.0629" /> <!-- Recipe: Spiritshot B -->
 					<item id="8726" min="1" max="1" chance="0.7283" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.1821" /> <!-- Mid-Grade Life Stone - Level 55 -->
 					<item id="8746" min="1" max="1" chance="0.0182" /> <!-- High-Grade Life Stone - Level 55 -->
@@ -7230,7 +7222,6 @@
 			<spoil>
 				<item id="4042" min="1" max="1" chance="5.468" /> <!-- Enria -->
 				<item id="1920" min="1" max="1" chance="11.2261" /> <!-- Necklace of Seal Chain -->
-				<item id="3034" min="1" max="1" chance="0.6562" /> <!-- Recipe: Spiritshot B -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -7326,7 +7317,6 @@
 					<item id="1880" min="1" max="1" chance="3.1463" /> <!-- Steel -->
 					<item id="5550" min="1" max="1" chance="0.4195" /> <!-- Durable Metal Plate -->
 					<item id="4043" min="1" max="1" chance="1.0488" /> <!-- Asofe -->
-					<item id="3034" min="1" max="1" chance="0.0629" /> <!-- Recipe: Spiritshot B -->
 					<item id="8726" min="1" max="1" chance="0.7283" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.1821" /> <!-- Mid-Grade Life Stone - Level 55 -->
 					<item id="8746" min="1" max="1" chance="0.0182" /> <!-- High-Grade Life Stone - Level 55 -->
@@ -7336,7 +7326,6 @@
 			<spoil>
 				<item id="4042" min="1" max="1" chance="5.468" /> <!-- Enria -->
 				<item id="1920" min="1" max="1" chance="11.2261" /> <!-- Necklace of Seal Chain -->
-				<item id="3034" min="1" max="1" chance="0.6562" /> <!-- Recipe: Spiritshot B -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -7432,7 +7421,6 @@
 					<item id="1880" min="1" max="1" chance="3.1463" /> <!-- Steel -->
 					<item id="5550" min="1" max="1" chance="0.4195" /> <!-- Durable Metal Plate -->
 					<item id="4043" min="1" max="1" chance="1.0488" /> <!-- Asofe -->
-					<item id="3034" min="1" max="1" chance="0.0629" /> <!-- Recipe: Spiritshot B -->
 					<item id="8726" min="1" max="1" chance="0.7283" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.1821" /> <!-- Mid-Grade Life Stone - Level 55 -->
 					<item id="8746" min="1" max="1" chance="0.0182" /> <!-- High-Grade Life Stone - Level 55 -->
@@ -7442,7 +7430,6 @@
 			<spoil>
 				<item id="4042" min="1" max="1" chance="5.468" /> <!-- Enria -->
 				<item id="1920" min="1" max="1" chance="11.2261" /> <!-- Necklace of Seal Chain -->
-				<item id="3034" min="1" max="1" chance="0.6562" /> <!-- Recipe: Spiritshot B -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -7538,7 +7525,6 @@
 					<item id="1880" min="1" max="1" chance="3.1463" /> <!-- Steel -->
 					<item id="5550" min="1" max="1" chance="0.4195" /> <!-- Durable Metal Plate -->
 					<item id="4043" min="1" max="1" chance="1.0488" /> <!-- Asofe -->
-					<item id="3034" min="1" max="1" chance="0.0629" /> <!-- Recipe: Spiritshot B -->
 					<item id="8726" min="1" max="1" chance="0.7283" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.1821" /> <!-- Mid-Grade Life Stone - Level 55 -->
 					<item id="8746" min="1" max="1" chance="0.0182" /> <!-- High-Grade Life Stone - Level 55 -->
@@ -7548,7 +7534,6 @@
 			<spoil>
 				<item id="4042" min="1" max="1" chance="5.468" /> <!-- Enria -->
 				<item id="1920" min="1" max="1" chance="11.2261" /> <!-- Necklace of Seal Chain -->
-				<item id="3034" min="1" max="1" chance="0.6562" /> <!-- Recipe: Spiritshot B -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -7644,7 +7629,6 @@
 					<item id="1880" min="1" max="1" chance="3.1463" /> <!-- Steel -->
 					<item id="5550" min="1" max="1" chance="0.4195" /> <!-- Durable Metal Plate -->
 					<item id="4043" min="1" max="1" chance="1.0488" /> <!-- Asofe -->
-					<item id="3034" min="1" max="1" chance="0.0629" /> <!-- Recipe: Spiritshot B -->
 					<item id="8726" min="1" max="1" chance="0.7283" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.1821" /> <!-- Mid-Grade Life Stone - Level 55 -->
 					<item id="8746" min="1" max="1" chance="0.0182" /> <!-- High-Grade Life Stone - Level 55 -->
@@ -7654,7 +7638,6 @@
 			<spoil>
 				<item id="4042" min="1" max="1" chance="5.468" /> <!-- Enria -->
 				<item id="1920" min="1" max="1" chance="11.2261" /> <!-- Necklace of Seal Chain -->
-				<item id="3034" min="1" max="1" chance="0.6562" /> <!-- Recipe: Spiritshot B -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -7750,7 +7733,6 @@
 					<item id="1880" min="1" max="1" chance="3.1463" /> <!-- Steel -->
 					<item id="5550" min="1" max="1" chance="0.4195" /> <!-- Durable Metal Plate -->
 					<item id="4043" min="1" max="1" chance="1.0488" /> <!-- Asofe -->
-					<item id="3034" min="1" max="1" chance="0.0629" /> <!-- Recipe: Spiritshot B -->
 					<item id="8726" min="1" max="1" chance="0.7283" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.1821" /> <!-- Mid-Grade Life Stone - Level 55 -->
 					<item id="8746" min="1" max="1" chance="0.0182" /> <!-- High-Grade Life Stone - Level 55 -->
@@ -7760,7 +7742,6 @@
 			<spoil>
 				<item id="4042" min="1" max="1" chance="5.468" /> <!-- Enria -->
 				<item id="1920" min="1" max="1" chance="11.2261" /> <!-- Necklace of Seal Chain -->
-				<item id="3034" min="1" max="1" chance="0.6562" /> <!-- Recipe: Spiritshot B -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -7856,7 +7837,6 @@
 					<item id="1880" min="1" max="1" chance="3.1463" /> <!-- Steel -->
 					<item id="5550" min="1" max="1" chance="0.4195" /> <!-- Durable Metal Plate -->
 					<item id="4043" min="1" max="1" chance="1.0488" /> <!-- Asofe -->
-					<item id="3034" min="1" max="1" chance="0.0629" /> <!-- Recipe: Spiritshot B -->
 					<item id="8726" min="1" max="1" chance="0.7283" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.1821" /> <!-- Mid-Grade Life Stone - Level 55 -->
 					<item id="8746" min="1" max="1" chance="0.0182" /> <!-- High-Grade Life Stone - Level 55 -->
@@ -7866,7 +7846,6 @@
 			<spoil>
 				<item id="4042" min="1" max="1" chance="5.468" /> <!-- Enria -->
 				<item id="1920" min="1" max="1" chance="11.2261" /> <!-- Necklace of Seal Chain -->
-				<item id="3034" min="1" max="1" chance="0.6562" /> <!-- Recipe: Spiritshot B -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -8338,7 +8317,6 @@
 					<item id="1874" min="1" max="1" chance="3.0793" /> <!-- Oriharukon Ore -->
 					<item id="4043" min="1" max="1" chance="1.5397" /> <!-- Asofe -->
 					<item id="4039" min="1" max="1" chance="1.5397" /> <!-- Mold Glue -->
-					<item id="3955" min="1" max="1" chance="0.0924" /> <!-- Recipe: Blessed Spiritshot B -->
 					<item id="8726" min="1" max="1" chance="1.0692" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.2673" /> <!-- Mid-Grade Life Stone - Level 55 -->
 					<item id="8746" min="1" max="1" chance="0.0267" /> <!-- High-Grade Life Stone - Level 55 -->
@@ -9026,7 +9004,6 @@
 					<item id="1874" min="1" max="1" chance="3.0783" /> <!-- Oriharukon Ore -->
 					<item id="4043" min="1" max="1" chance="1.5391" /> <!-- Asofe -->
 					<item id="4039" min="1" max="1" chance="1.5391" /> <!-- Mold Glue -->
-					<item id="1806" min="1" max="1" chance="0.0923" /> <!-- Recipe: Soulshot (B-Grade) -->
 					<item id="8297" min="1" max="1" chance="0.0352" /> <!-- Recipe: Guardian's Sword (100%) -->
 					<item id="8726" min="1" max="1" chance="1.0688" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.2672" /> <!-- Mid-Grade Life Stone - Level 55 -->
@@ -9149,7 +9126,6 @@
 					<item id="1874" min="1" max="1" chance="3.0783" /> <!-- Oriharukon Ore -->
 					<item id="4043" min="1" max="1" chance="1.5391" /> <!-- Asofe -->
 					<item id="4039" min="1" max="1" chance="1.5391" /> <!-- Mold Glue -->
-					<item id="1806" min="1" max="1" chance="0.0923" /> <!-- Recipe: Soulshot (B-Grade) -->
 					<item id="8297" min="1" max="1" chance="0.0352" /> <!-- Recipe: Guardian's Sword (100%) -->
 					<item id="8726" min="1" max="1" chance="1.0688" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.2672" /> <!-- Mid-Grade Life Stone - Level 55 -->
@@ -10295,7 +10271,6 @@
 					<item id="1879" min="1" max="1" chance="4.5028" /> <!-- Cokes -->
 					<item id="1875" min="1" max="1" chance="1.8011" /> <!-- Stone of Purity -->
 					<item id="4040" min="1" max="1" chance="0.5403" /> <!-- Mold Lubricant -->
-					<item id="3035" min="1" max="1" chance="0.036" /> <!-- Recipe: Spiritshot A -->
 					<item id="8326" min="1" max="1" chance="0.01" /> <!-- Recipe: Doom Crusher (60%) -->
 					<item id="8305" min="1" max="1" chance="0.0206" /> <!-- Recipe: Wizard's Tear (100%) -->
 					<item id="8729" min="1" max="1" chance="0.3602" /> <!-- Life Stone - Level 64 -->
@@ -10338,7 +10313,6 @@
 			</drop>
 			<spoil>
 				<item id="4053" min="1" max="1" chance="9.8368" /> <!-- Ring of Black Ore Gemstone -->
-				<item id="1807" min="1" max="1" chance="0.306" /> <!-- Recipe: Soulshot (A-Grade) -->
 				<item id="4054" min="1" max="1" chance="4.5202" /> <!-- Necklace of Black Ore Beads -->
 			</spoil>
 		</dropLists>
@@ -10415,7 +10389,6 @@
 					<item id="1879" min="1" max="1" chance="7.3329" /> <!-- Cokes -->
 					<item id="1875" min="1" max="1" chance="2.9332" /> <!-- Stone of Purity -->
 					<item id="4040" min="1" max="1" chance="0.8799" /> <!-- Mold Lubricant -->
-					<item id="3035" min="1" max="1" chance="0.0587" /> <!-- Recipe: Spiritshot A -->
 					<item id="8326" min="1" max="1" chance="0.0163" /> <!-- Recipe: Doom Crusher (60%) -->
 					<item id="8305" min="1" max="1" chance="0.0336" /> <!-- Recipe: Wizard's Tear (100%) -->
 					<item id="8729" min="1" max="1" chance="0.5866" /> <!-- Life Stone - Level 64 -->
@@ -10456,7 +10429,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="3035" min="1" max="1" chance="0.3168" /> <!-- Recipe: Spiritshot A -->
 				<item id="4077" min="1" max="1" chance="10.6869" /> <!-- Doom Shield Fragment -->
 				<item id="4039" min="1" max="1" chance="7.919" /> <!-- Mold Glue -->
 			</spoil>

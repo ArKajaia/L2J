@@ -6,22 +6,12 @@
 	<item>
 		<!-- Remnants of Old Dwarves' Dreams -->
 		<ingredient count="9" id="8514" />
-		<!-- Compressed Package of Soulshots (D-Grade) -->
-		<production count="1" id="5135" />
 		<!-- Haste Potion -->
 		<production count="1" id="734" />
 	</item>
 	<item>
 		<!-- Remnants of Old Dwarves' Dreams -->
-		<ingredient count="15" id="8514" />
-		<!-- Compressed Package of Spiritshots (D-Grade) -->
-		<production count="1" id="5141" />
-	</item>
-	<item>
-		<!-- Remnants of Old Dwarves' Dreams -->
 		<ingredient count="38" id="8514" />
-		<!-- Compressed Package of Blessed Spiritshots (D-Grade) -->
-		<production count="1" id="5147" />
 		<!-- Greater Healing Potion -->
 		<production count="1" id="1061" />
 	</item>

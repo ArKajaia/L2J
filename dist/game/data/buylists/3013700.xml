@@ -3,15 +3,6 @@
 	<npcs>
 		<npc>30137</npc> <!-- Vollodos -->
 	</npcs>
-	<item id="1835" /> <!-- Soulshot: No Grade -->
-	<item id="2509" /> <!-- Spiritshot: No Grade -->
-	<item id="3947" /> <!-- Blessed Spiritshot: No Grade -->
-	<item id="5146" /> <!-- Compressed Package of Blessed Spiritshots: No Grade -->
-	<item id="5140" /> <!-- Compressed Package of Spiritshots: No Grade -->
-	<item id="5134" /> <!-- Compressed Package of Soulshots: No Grade -->
-	<item id="5262" /> <!-- Greater Compressed Package of Blessed Spiritshots (No-Grade) -->
-	<item id="5256" /> <!-- Greater Compressed Package of Spiritshots (No-Grade) -->
-	<item id="5250" /> <!-- Greater Compressed Package of Soulshots (No-Grade) -->
 	<item id="17" /> <!-- Wooden Arrow -->
 	<item id="1341" /> <!-- Bone Arrow -->
 	<item id="1060" /> <!-- Lesser Healing Potion -->

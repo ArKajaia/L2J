@@ -66,7 +66,6 @@ public class Q00101_SwordOfSolidarity extends Quest
 		new ItemHolder(4415, 10), // Echo Crystal - Theme of Feast
 		new ItemHolder(4416, 10), // Echo Crystal - Theme of Celebration
 	};
-	private static final ItemHolder SOULSHOTS_NO_GRADE_FOR_ROOKIES = new ItemHolder(5789, 7000);
 	
 	// Misc
 	private static final int MIN_LEVEL = 9;
@@ -118,12 +117,6 @@ public class Q00101_SwordOfSolidarity extends Quest
 				{
 					if (qs.isCond(5) && hasQuestItems(player, BROKEN_SWORD_HANDLE))
 					{
-						if ((player.getLevel() < 25) && !player.isMageClass())
-						{
-							giveItems(player, SOULSHOTS_NO_GRADE_FOR_ROOKIES);
-							playSound(player, "tutorial_voice_026");
-						}
-						
 						for (ItemHolder reward : REWARDS)
 						{
 							giveItems(player, reward);

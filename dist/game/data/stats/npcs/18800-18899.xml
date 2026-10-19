@@ -446,7 +446,6 @@
 					<item id="9628" min="1" max="1" chance="2.9277" /> <!-- Leonard -->
 					<item id="9630" min="1" max="1" chance="1.9646" /> <!-- Orichalcum -->
 					<item id="9629" min="1" max="1" chance="1.6229" /> <!-- Adamantine -->
-					<item id="5282" min="1" max="1" chance="0.1659" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 				</group>
 			</drop>
 			<spoil>

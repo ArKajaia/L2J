@@ -2352,7 +2352,6 @@
 					<item id="1876" min="4" max="12" chance="11.1683" /> <!-- Mithril Ore -->
 					<item id="1895" min="3" max="9" chance="20.5133" /> <!-- Metallic Fiber -->
 					<item id="4042" min="1" max="1" chance="8.3762" /> <!-- Enria -->
-					<item id="1808" min="1" max="1" chance="0.2234" /> <!-- Recipe: Soulshot (S-Grade) -->
 					<item id="9675" min="5" max="15" chance="6.701" /> <!-- Prayer Fragment -->
 					<item id="1344" min="1650" max="4950" chance="3.8073" /> <!-- Mithril Arrow -->
 				</group>

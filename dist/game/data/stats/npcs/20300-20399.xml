@@ -476,7 +476,6 @@
 					<item id="1868" min="1" max="1" chance="75.7576" /> <!-- Thread -->
 					<item id="1873" min="1" max="1" chance="15.1515" /> <!-- Silver Nugget -->
 					<item id="2143" min="1" max="1" chance="7.5758" /> <!-- Recipe: Synthetic Cokes -->
-					<item id="5158" min="1" max="1" chance="1.5151" /> <!-- Recipe: Spiritshot (D) Compressed Package (100%) -->
 				</group>
 				<group chance="42.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->
@@ -2408,7 +2407,6 @@
 					<item id="1872" min="1" max="1" chance="23.2648" /> <!-- Animal Bone -->
 					<item id="1867" min="1" max="1" chance="23.2648" /> <!-- Animal Skin -->
 					<item id="2258" min="1" max="1" chance="0.4266" /> <!-- Recipe: Temptation of Abyss -->
-					<item id="5268" min="1" max="1" chance="0.698" /> <!-- Recipe: Greater Soulshot (D) Compressed Package (100%) -->
 				</group>
 			</drop>
 			<spoil>
@@ -2765,7 +2763,6 @@
 					<item id="1867" min="1" max="1" chance="42.4433" /> <!-- Animal Skin -->
 					<item id="1872" min="1" max="1" chance="42.4433" /> <!-- Animal Bone -->
 					<item id="2174" min="1" max="1" chance="13.8402" /> <!-- Recipe: Hard Leather Gaiters -->
-					<item id="5158" min="1" max="1" chance="1.2732" /> <!-- Recipe: Spiritshot (D) Compressed Package (100%) -->
 				</group>
 				<group chance="42.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->
@@ -3011,12 +3008,10 @@
 				<group chance="23.85930061340332">
 					<item id="1868" min="1" max="1" chance="39.1645" /> <!-- Thread -->
 					<item id="1873" min="1" max="1" chance="7.8329" /> <!-- Silver Nugget -->
-					<item id="3032" min="1" max="1" chance="0.7833" /> <!-- Recipe: Spiritshot D -->
 					<item id="1831" min="1" max="1" chance="52.2193" /> <!-- Antidote -->
 				</group>
 			</drop>
 			<spoil>
-				<item id="3032" min="1" max="1" chance="1.2654" /> <!-- Recipe: Spiritshot D -->
 				<item id="1927" min="1" max="1" chance="2.5237" /> <!-- Hard Leather Shirt Pattern -->
 				<item id="1898" min="1" max="1" chance="3.2496" /> <!-- Blue Diamond Necklace Gem -->
 			</spoil>
@@ -3430,7 +3425,6 @@
 					<item id="1866" min="1" max="1" chance="14.2213" /> <!-- Suede -->
 					<item id="1871" min="1" max="1" chance="21.332" /> <!-- Charcoal -->
 					<item id="1800" min="1" max="1" chance="6.7082" /> <!-- Recipe: Piece Bone Breastplate -->
-					<item id="5268" min="1" max="1" chance="0.8533" /> <!-- Recipe: Greater Soulshot (D) Compressed Package (100%) -->
 					<item id="1831" min="1" max="1" chance="56.8852" /> <!-- Antidote -->
 				</group>
 			</drop>
@@ -3922,8 +3916,6 @@
 					<item id="1864" min="1" max="1" chance="57.4713" /> <!-- Stem -->
 					<item id="1869" min="1" max="1" chance="28.7356" /> <!-- Iron Ore -->
 					<item id="1878" min="1" max="1" chance="11.4943" /> <!-- Braided Hemp -->
-					<item id="5163" min="1" max="1" chance="1.1494" /> <!-- Recipe: Blessed Spiritshot (D) Compressed Package (100%) -->
-					<item id="5273" min="1" max="1" chance="1.1494" /> <!-- Recipe: Greater Spiritshot (D) Compressed Package(100%) -->
 				</group>
 			</drop>
 			<spoil>
@@ -3999,8 +3991,6 @@
 					<item id="1864" min="1" max="1" chance="57.4713" /> <!-- Stem -->
 					<item id="1869" min="1" max="1" chance="28.7356" /> <!-- Iron Ore -->
 					<item id="1878" min="1" max="1" chance="11.4943" /> <!-- Braided Hemp -->
-					<item id="3953" min="1" max="1" chance="1.1494" /> <!-- Recipe: Blessed Spiritshot D -->
-					<item id="5273" min="1" max="1" chance="1.1494" /> <!-- Recipe: Greater Spiritshot (D) Compressed Package(100%) -->
 				</group>
 			</drop>
 			<spoil>
@@ -4266,7 +4256,6 @@
 			</drop>
 			<spoil>
 				<item id="1898" min="1" max="1" chance="3.7198" /> <!-- Blue Diamond Necklace Gem -->
-				<item id="1804" min="1" max="1" chance="1.4485" /> <!-- Recipe: Soulshot (D-Grade) -->
 				<item id="1926" min="1" max="1" chance="3.6578" /> <!-- Piece Bone Breastplate Fragment -->
 			</spoil>
 		</dropLists>
@@ -4431,7 +4420,6 @@
 					<item id="1870" min="1" max="1" chance="48.0542" /> <!-- Coal -->
 					<item id="1865" min="1" max="1" chance="48.0542" /> <!-- Varnish -->
 					<item id="2252" min="1" max="1" chance="1.9694" /> <!-- Recipe: Iron Hammer -->
-					<item id="5268" min="1" max="1" chance="1.9222" /> <!-- Recipe: Greater Soulshot (D) Compressed Package (100%) -->
 				</group>
 				<group chance="42.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->
@@ -4534,7 +4522,6 @@
 					<item id="1872" min="1" max="1" chance="44.7777" /> <!-- Animal Bone -->
 					<item id="1867" min="1" max="1" chance="44.7777" /> <!-- Animal Skin -->
 					<item id="2173" min="1" max="1" chance="9.1012" /> <!-- Recipe: Hard Leather Shirt -->
-					<item id="5273" min="1" max="1" chance="1.3434" /> <!-- Recipe: Greater Spiritshot (D) Compressed Package(100%) -->
 				</group>
 				<group chance="42.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->
@@ -5074,7 +5061,6 @@
 					<item id="1864" min="1" max="1" chance="56.7644" /> <!-- Stem -->
 					<item id="1869" min="1" max="1" chance="28.3822" /> <!-- Iron Ore -->
 					<item id="1878" min="1" max="1" chance="11.3529" /> <!-- Braided Hemp -->
-					<item id="5153" min="1" max="1" chance="1.1353" /> <!-- Recipe: Soulshot (D) Compressed Package (100%) -->
 					<item id="735" min="1" max="1" chance="2.3652" /> <!-- Alacrity Potion -->
 				</group>
 			</drop>
@@ -5626,8 +5612,6 @@
 				<group chance="14.712900161743164">
 					<item id="1873" min="1" max="1" chance="16.129" /> <!-- Silver Nugget -->
 					<item id="1868" min="1" max="1" chance="80.6452" /> <!-- Thread -->
-					<item id="5273" min="1" max="1" chance="1.6129" /> <!-- Recipe: Greater Spiritshot (D) Compressed Package(100%) -->
-					<item id="5158" min="1" max="1" chance="1.6129" /> <!-- Recipe: Spiritshot (D) Compressed Package (100%) -->
 				</group>
 			</drop>
 			<spoil>
@@ -5703,14 +5687,11 @@
 					<item id="1865" min="1" max="1" chance="44.5104" /> <!-- Varnish -->
 					<item id="1870" min="1" max="1" chance="44.5104" /> <!-- Coal -->
 					<item id="1879" min="1" max="1" chance="7.4184" /> <!-- Cokes -->
-					<item id="5158" min="1" max="1" chance="1.7804" /> <!-- Recipe: Spiritshot (D) Compressed Package (100%) -->
-					<item id="5158" min="1" max="1" chance="1.7804" /> <!-- Recipe: Spiritshot (D) Compressed Package (100%) -->
 				</group>
 			</drop>
 			<spoil>
 				<item id="2257" min="1" max="1" chance="0.7102" /> <!-- Recipe: Trident -->
 				<item id="2014" min="1" max="1" chance="0.3339" /> <!-- Iron Hammer Head -->
-				<item id="1804" min="1" max="1" chance="1.1619" /> <!-- Recipe: Soulshot (D-Grade) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -6756,7 +6737,6 @@
 					<item id="1867" min="1" max="1" chance="37.8823" /> <!-- Animal Skin -->
 					<item id="1872" min="1" max="1" chance="37.8823" /> <!-- Animal Bone -->
 					<item id="2175" min="1" max="1" chance="23.099" /> <!-- Recipe: Boots -->
-					<item id="5158" min="1" max="1" chance="1.1364" /> <!-- Recipe: Spiritshot (D) Compressed Package (100%) -->
 				</group>
 			</drop>
 			<spoil>
@@ -6828,7 +6808,6 @@
 					<item id="1868" min="1" max="1" chance="64.2995" /> <!-- Thread -->
 					<item id="1873" min="1" max="1" chance="12.8599" /> <!-- Silver Nugget -->
 					<item id="1801" min="1" max="1" chance="16.1963" /> <!-- Recipe: Piece Bone Gaiters -->
-					<item id="5158" min="1" max="1" chance="1.286" /> <!-- Recipe: Spiritshot (D) Compressed Package (100%) -->
 					<item id="734" min="1" max="1" chance="5.3583" /> <!-- Haste Potion -->
 				</group>
 			</drop>

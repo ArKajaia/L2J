@@ -17,7 +17,6 @@
 package quests.Q00333_HuntOfTheBlackLion;
 
 import org.l2jmobius.gameserver.config.PlayerConfig;
-import org.l2jmobius.gameserver.data.enums.CategoryType;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
@@ -72,8 +71,6 @@ public class Q00333_HuntOfTheBlackLion extends Quest
 	private static final int ALACRITY_POTION = 735;
 	private static final int SCROL_OF_ESCAPE = 736;
 	private static final int HELING_POTION = 1061;
-	private static final int SOULSHOT_D_GRADE = 1463;
-	private static final int SPIRITSHOT_D_GRADE = 2510;
 	private static final int GLUDIO_APPLES = 3444;
 	private static final int DION_CORN_MEAL = 3445;
 	private static final int DIRE_WOLF_PELTS = 3446;
@@ -209,22 +206,11 @@ public class Q00333_HuntOfTheBlackLion extends Quest
 				else if ((getQuestItemsCount(player, LIONS_CLAW) >= 10) && (getQuestItemsCount(player, LIONS_EYE) < 4))
 				{
 					giveItems(player, LIONS_EYE, 1);
-					if (chance < 25)
+					if (chance < 33)
 					{
 						giveItems(player, HELING_POTION, 20);
 					}
-					else if (chance < 50)
-					{
-						if (player.isInCategory(CategoryType.FIGHTER_GROUP))
-						{
-							giveItems(player, SOULSHOT_D_GRADE, 100);
-						}
-						else if (player.isInCategory(CategoryType.MAGE_GROUP))
-						{
-							giveItems(player, SPIRITSHOT_D_GRADE, 50);
-						}
-					}
-					else if (chance < 75)
+					else if (chance < 66)
 					{
 						giveItems(player, SCROL_OF_ESCAPE, 20);
 					}
@@ -239,22 +225,11 @@ public class Q00333_HuntOfTheBlackLion extends Quest
 				else if ((getQuestItemsCount(player, LIONS_CLAW) >= 10) && (getQuestItemsCount(player, LIONS_EYE) >= 4) && (getQuestItemsCount(player, LIONS_EYE) <= 7))
 				{
 					giveItems(player, LIONS_EYE, 1);
-					if (chance < 25)
+					if (chance < 33)
 					{
 						giveItems(player, HELING_POTION, 25);
 					}
-					else if (chance < 50)
-					{
-						if (player.isInCategory(CategoryType.FIGHTER_GROUP))
-						{
-							giveItems(player, SOULSHOT_D_GRADE, 200);
-						}
-						else if (player.isInCategory(CategoryType.MAGE_GROUP))
-						{
-							giveItems(player, SPIRITSHOT_D_GRADE, 100);
-						}
-					}
-					else if (chance < 75)
+					else if (chance < 66)
 					{
 						giveItems(player, SCROL_OF_ESCAPE, 20);
 					}
@@ -269,22 +244,11 @@ public class Q00333_HuntOfTheBlackLion extends Quest
 				else if ((getQuestItemsCount(player, LIONS_CLAW) >= 10) && (getQuestItemsCount(player, LIONS_EYE) >= 8))
 				{
 					takeItems(player, LIONS_EYE, 8);
-					if (chance < 25)
+					if (chance < 33)
 					{
 						giveItems(player, HELING_POTION, 50);
 					}
-					else if (chance < 50)
-					{
-						if (player.isInCategory(CategoryType.FIGHTER_GROUP))
-						{
-							giveItems(player, SOULSHOT_D_GRADE, 400);
-						}
-						else if (player.isInCategory(CategoryType.MAGE_GROUP))
-						{
-							giveItems(player, SPIRITSHOT_D_GRADE, 200);
-						}
-					}
-					else if (chance < 75)
+					else if (chance < 66)
 					{
 						giveItems(player, SCROL_OF_ESCAPE, 30);
 					}

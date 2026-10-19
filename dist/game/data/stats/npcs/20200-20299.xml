@@ -385,7 +385,6 @@
 					<item id="1872" min="1" max="1" chance="39.6392" /> <!-- Animal Bone -->
 					<item id="1882" min="1" max="1" chance="6.6065" /> <!-- Leather -->
 					<item id="2174" min="1" max="1" chance="12.9258" /> <!-- Recipe: Hard Leather Gaiters -->
-					<item id="5273" min="1" max="1" chance="1.1893" /> <!-- Recipe: Greater Spiritshot (D) Compressed Package(100%) -->
 				</group>
 				<group chance="42.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->
@@ -490,7 +489,6 @@
 					<item id="1867" min="1" max="1" chance="23.8284" /> <!-- Animal Skin -->
 					<item id="1872" min="1" max="1" chance="23.8284" /> <!-- Animal Bone -->
 					<item id="1882" min="1" max="1" chance="3.9714" /> <!-- Leather -->
-					<item id="3953" min="1" max="1" chance="0.7149" /> <!-- Recipe: Blessed Spiritshot D -->
 					<item id="1831" min="1" max="1" chance="47.6569" /> <!-- Antidote -->
 				</group>
 				<group chance="42.0">
@@ -1544,8 +1542,6 @@
 					<item id="1870" min="1" max="1" chance="44.6429" /> <!-- Coal -->
 					<item id="1879" min="1" max="1" chance="7.4405" /> <!-- Cokes -->
 					<item id="1875" min="1" max="1" chance="2.9762" /> <!-- Stone of Purity -->
-					<item id="1805" min="1" max="1" chance="0.1488" /> <!-- Recipe: Soulshot (C-Grade) -->
-					<item id="5269" min="1" max="1" chance="0.1487" /> <!-- Recipe: Greater Soulshot (C) Compressed Package(100%) -->
 				</group>
 				<group chance="42.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->
@@ -1790,7 +1786,6 @@
 					<item id="1882" min="1" max="1" chance="9.8111" /> <!-- Leather -->
 					<item id="1894" min="1" max="1" chance="1.5491" /> <!-- Crafted Leather -->
 					<item id="2314" min="1" max="1" chance="0.1928" /> <!-- Recipe: Body Slasher -->
-					<item id="5269" min="1" max="1" chance="0.1471" /> <!-- Recipe: Greater Soulshot (C) Compressed Package(100%) -->
 				</group>
 				<group chance="42.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->
@@ -1928,7 +1923,6 @@
 					<item id="2163" min="1" max="1" chance="1.8914" /> <!-- Recipe: Earring of Protection -->
 					<item id="2225" min="1" max="1" chance="0.8059" /> <!-- Recipe: Demon's Stockings -->
 					<item id="2321" min="1" max="1" chance="0.1292" /> <!-- Recipe: Stiletto -->
-					<item id="5279" min="1" max="1" chance="0.1236" /> <!-- Recipe: Greater Blessed Spiritshot (C) Compressed Package(100%) -->
 					<item id="8723" min="1" max="1" chance="1.4829" /> <!-- Life Stone - Level 46 -->
 					<item id="8733" min="1" max="1" chance="0.3707" /> <!-- Mid-Grade Life Stone - Level 46 -->
 					<item id="8743" min="1" max="1" chance="0.0371" /> <!-- High-Grade Life Stone - Level 46 -->
@@ -2803,8 +2797,6 @@
 					<item id="1872" min="1" max="1" chance="46.2963" /> <!-- Animal Bone -->
 					<item id="1867" min="1" max="1" chance="46.2963" /> <!-- Animal Skin -->
 					<item id="1881" min="1" max="1" chance="4.6296" /> <!-- Coarse Bone Powder -->
-					<item id="5153" min="1" max="1" chance="1.3889" /> <!-- Recipe: Soulshot (D) Compressed Package (100%) -->
-					<item id="5268" min="1" max="1" chance="1.3889" /> <!-- Recipe: Greater Soulshot (D) Compressed Package (100%) -->
 				</group>
 				<group chance="42.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->
@@ -4671,8 +4663,6 @@
 					<item id="1881" min="1" max="1" chance="4.2081" /> <!-- Coarse Bone Powder -->
 					<item id="1875" min="1" max="1" chance="2.104" /> <!-- Stone of Purity -->
 					<item id="4041" min="1" max="1" chance="0.2744" /> <!-- Mold Hardener -->
-					<item id="3034" min="1" max="1" chance="0.0631" /> <!-- Recipe: Spiritshot B -->
-					<item id="5270" min="1" max="1" chance="0.0631" /> <!-- Recipe: Greater Soulshot (B) Compressed Package(100%) -->
 					<item id="4959" min="1" max="1" chance="0.6081" /> <!-- Recipe: Sealed Avadon Boots (60%) -->
 					<item id="4941" min="1" max="1" chance="0.2428" /> <!-- Recipe: Zubei's Gaiters (60%) -->
 					<item id="8726" min="1" max="1" chance="0.7306" /> <!-- Life Stone - Level 55 -->
@@ -4761,7 +4751,6 @@
 					<item id="4043" min="1" max="1" chance="1.045" /> <!-- Asofe -->
 					<item id="4144" min="1" max="1" chance="0.3222" /> <!-- Recipe: Zubei's Leather Gaiters (100%) -->
 					<item id="4184" min="1" max="1" chance="0.0361" /> <!-- Recipe: Sprite's Staff (100%) -->
-					<item id="5155" min="1" max="1" chance="0.0627" /> <!-- Recipe: Soulshot (B) Compressed Package (100%) -->
 					<item id="8726" min="1" max="1" chance="0.7257" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.1814" /> <!-- Mid-Grade Life Stone - Level 55 -->
 					<item id="8746" min="1" max="1" chance="0.0181" /> <!-- High-Grade Life Stone - Level 55 -->
@@ -4771,7 +4760,6 @@
 			<spoil>
 				<item id="4599" min="1" max="1" chance="0.5751" /> <!-- Greater Dye of WIT <Wit+2 Int-2> -->
 				<item id="1873" min="1" max="1" chance="69.0175" /> <!-- Silver Nugget -->
-				<item id="1806" min="1" max="1" chance="0.3451" /> <!-- Recipe: Soulshot (B-Grade) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -4858,7 +4846,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="3955" min="1" max="1" chance="0.3548" /> <!-- Recipe: Blessed Spiritshot B -->
 				<item id="2117" min="1" max="1" chance="0.8346" /> <!-- Ghoul's Staff Head -->
 				<item id="4592" min="1" max="1" chance="0.5913" /> <!-- Greater Dye of CON <Con+2 Dex-2> -->
 			</spoil>
@@ -6262,7 +6249,6 @@
 					<item id="1867" min="1" max="1" chance="45.1466" /> <!-- Animal Skin -->
 					<item id="1872" min="1" max="1" chance="45.1466" /> <!-- Animal Bone -->
 					<item id="1882" min="1" max="1" chance="7.5244" /> <!-- Leather -->
-					<item id="5158" min="1" max="1" chance="1.3544" /> <!-- Recipe: Spiritshot (D) Compressed Package (100%) -->
 					<item id="8294" min="1" max="1" chance="0.828" /> <!-- Recipe: Steel Sword (100%) -->
 				</group>
 				<group chance="42.0">
@@ -7998,7 +7984,6 @@
 					<item id="1871" min="1" max="1" chance="57.2197" /> <!-- Charcoal -->
 					<item id="1866" min="1" max="1" chance="38.1465" /> <!-- Suede -->
 					<item id="2252" min="1" max="1" chance="2.3451" /> <!-- Recipe: Iron Hammer -->
-					<item id="5158" min="1" max="1" chance="2.2887" /> <!-- Recipe: Spiritshot (D) Compressed Package (100%) -->
 				</group>
 				<group chance="42.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->

@@ -35,7 +35,6 @@ public class Q00156_MillenniumLove extends Quest
 	// Items
 	private static final int LILITHS_LETTER = 1022;
 	private static final int THEONS_DIARY = 1023;
-	private static final int GREATER_COMP_SOULSHOUT_PACKAGE_NO_GRADE = 5250;
 	
 	// Misc
 	private static final int MIN_LEVEL = 15;
@@ -128,7 +127,6 @@ public class Q00156_MillenniumLove extends Quest
 						}
 						else if (qs.isCond(2) && hasQuestItems(player, THEONS_DIARY))
 						{
-							giveItems(player, GREATER_COMP_SOULSHOUT_PACKAGE_NO_GRADE, 1);
 							addExpAndSp(player, 3000, 0);
 							qs.exitQuest(false, true);
 							htmltext = "30368-07.html";

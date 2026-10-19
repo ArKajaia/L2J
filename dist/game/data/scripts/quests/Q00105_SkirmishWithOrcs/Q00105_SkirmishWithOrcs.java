@@ -90,10 +90,6 @@ public class Q00105_SkirmishWithOrcs extends Quest
 		new ItemHolder(4415, 10), // Echo Crystal - Theme of Feast
 		new ItemHolder(4416, 10), // Echo Crystal - Theme of Celebration
 	};
-	private static final ItemHolder SPIRITSHOTS_NO_GRADE_FOR_ROOKIES = new ItemHolder(5790, 3000);
-	private static final ItemHolder SOULSHOTS_NO_GRADE_FOR_ROOKIES = new ItemHolder(5789, 7000);
-	private static final ItemHolder SOULSHOTS_NO_GRADE = new ItemHolder(1835, 1000);
-	private static final ItemHolder SPIRITSHOTS_NO_GRADE = new ItemHolder(2509, 500);
 	private static final ItemHolder RED_SUNSET_SWORD = new ItemHolder(981, 1);
 	private static final ItemHolder RED_SUNSET_STAFF = new ItemHolder(754, 1);
 	
@@ -230,15 +226,6 @@ public class Q00105_SkirmishWithOrcs extends Quest
 						giveItems(talker, reward);
 					}
 					
-					if (!talker.isMageClass())
-					{
-						giveItems(talker, SOULSHOTS_NO_GRADE);
-					}
-					else
-					{
-						giveItems(talker, SPIRITSHOTS_NO_GRADE);
-					}
-					
 					if (!talker.isMageClass() && !qs.isCompleted())
 					{
 						giveItems(talker, RED_SUNSET_SWORD);
@@ -246,20 +233,6 @@ public class Q00105_SkirmishWithOrcs extends Quest
 					else if (!qs.isCompleted())
 					{
 						giveItems(talker, RED_SUNSET_STAFF);
-					}
-					
-					if (talker.getLevel() < 25)
-					{
-						if (talker.isMageClass())
-						{
-							giveItems(talker, SPIRITSHOTS_NO_GRADE_FOR_ROOKIES);
-							playSound(talker, "tutorial_voice_027");
-						}
-						else
-						{
-							giveItems(talker, SOULSHOTS_NO_GRADE_FOR_ROOKIES);
-							playSound(talker, "tutorial_voice_026");
-						}
 					}
 					
 					talker.sendPacket(new SocialAction(talker.getObjectId(), 3));

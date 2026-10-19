@@ -64,8 +64,6 @@ public class Q00327_RecoverTheFarmland extends Quest
 	private static final int SCROLL_OF_ESCAPE = 736;
 	private static final int SCROLL_OF_RESURRECTION = 737;
 	private static final int HEALING_POTION = 1061;
-	private static final int SOULSHOT_D = 1463;
-	private static final int SPIRITSHOT_D = 2510;
 	
 	// Misc
 	private static final int MIN_LEVEL = 25;
@@ -277,7 +275,7 @@ public class Q00327_RecoverTheFarmland extends Quest
 				}
 				else
 				{
-					rewardItems(player, SOULSHOT_D, getRandom(70, 110));
+					giveAdena(player, getRandom(980, 1540), true);
 					takeItems(player, ANCIENT_CLAY_URN, 1);
 					html = event;
 				}
@@ -332,7 +330,7 @@ public class Q00327_RecoverTheFarmland extends Quest
 				}
 				else
 				{
-					rewardItems(player, SPIRITSHOT_D, getRandom(50, 90));
+					giveAdena(player, getRandom(900, 1620), true);
 					takeItems(player, ANCIENT_JADE_NECKLACE, 1);
 					html = event;
 				}

@@ -58,8 +58,6 @@ public class Q00259_RequestFromTheFarmOwner extends Quest
 	{
 		CONSUMABLES.put("30405-04.html", new ItemHolder(1061, 2)); // Greater Healing Potion
 		CONSUMABLES.put("30405-05.html", new ItemHolder(17, 250)); // Wooden Arrow
-		CONSUMABLES.put("30405-05a.html", new ItemHolder(1835, 60)); // Soulshot: No Grade
-		CONSUMABLES.put("30405-05c.html", new ItemHolder(2509, 30)); // Spiritshot: No Grade
 	}
 	
 	public Q00259_RequestFromTheFarmOwner()
@@ -84,8 +82,6 @@ public class Q00259_RequestFromTheFarmOwner extends Quest
 		switch (event)
 		{
 			case "30405-03.html":
-			case "30405-05b.html":
-			case "30405-05d.html":
 			case "30497-07.html":
 			{
 				htmltext = event;
@@ -93,8 +89,6 @@ public class Q00259_RequestFromTheFarmOwner extends Quest
 			}
 			case "30405-04.html":
 			case "30405-05.html":
-			case "30405-05a.html":
-			case "30405-05c.html":
 			{
 				if (getQuestItemsCount(player, SPIDER_SKIN) >= SKIN_COUNT)
 				{

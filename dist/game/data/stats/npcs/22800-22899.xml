@@ -174,7 +174,6 @@
 				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
-				<item id="5162" min="1" max="1" chance="0.0858" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				<item id="6701" min="1" max="1" chance="1.0276" /> <!-- Sealed Imperial Crusader Breastplate Part -->
 				<item id="6702" min="1" max="1" chance="1.3228" /> <!-- Sealed Imperial Crusader Gaiters Pattern -->
 				<item id="9630" min="1" max="1" chance="1.0158" /> <!-- Orichalcum -->
@@ -331,7 +330,6 @@
 			</drop>
 			<spoil>
 				<item id="6694" min="1" max="1" chance="0.3866" /> <!-- Saint Spear Blade -->
-				<item id="5272" min="1" max="1" chance="0.0781" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				<item id="6691" min="1" max="1" chance="0.3798" /> <!-- Angel Slayer Blade -->
 				<item id="959" min="1" max="1" chance="0.007" /> <!-- Scroll: Enchant Weapon (S-Grade) -->
 			</spoil>
@@ -412,7 +410,6 @@
 				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
-				<item id="5277" min="1" max="1" chance="0.1179" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 				<item id="6689" min="1" max="1" chance="0.5626" /> <!-- Basalt Battlehammer Head -->
 				<item id="6690" min="1" max="1" chance="0.5745" /> <!-- Imperial Staff Head -->
 			</spoil>
@@ -492,7 +489,6 @@
 			<spoil>
 				<item id="6695" min="1" max="1" chance="0.3888" /> <!-- Demon Splinter Blade -->
 				<item id="7579" min="1" max="1" chance="0.4009" /> <!-- Draconic Bow Shaft -->
-				<item id="5282" min="1" max="1" chance="0.0815" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -567,7 +563,6 @@
 			</drop>
 			<spoil>
 				<item id="5529" min="1" max="1" chance="0.4969" /> <!-- Dragon Slayer Edge -->
-				<item id="1808" min="1" max="1" chance="0.0805" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="5533" min="1" max="1" chance="0.4968" /> <!-- Elysian Head -->
 				<item id="959" min="1" max="1" chance="0.0072" /> <!-- Scroll: Enchant Weapon (S-Grade) -->
 			</spoil>
@@ -648,7 +643,6 @@
 			<spoil>
 				<item id="6703" min="1" max="1" chance="3.5837" /> <!-- Sealed Imperial Crusader Gauntlets Design -->
 				<item id="6704" min="1" max="1" chance="3.5837" /> <!-- Sealed Imperial Crusader Boots Design -->
-				<item id="5277" min="1" max="1" chance="0.1119" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -729,9 +723,7 @@
 				<item id="13028" min="1" max="1" chance="0.33" /> <!-- Vitality Replenishing Herb -->
 			</drop>
 			<spoil>
-				<item id="3036" min="1" max="1" chance="0.0632" /> <!-- Recipe: Spiritshot S -->
 				<item id="959" min="1" max="1" chance="0.0057" /> <!-- Scroll: Enchant Weapon (S-Grade) -->
-				<item id="3957" min="1" max="1" chance="0.0632" /> <!-- Recipe: Blessed Spiritshot S -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -863,7 +855,6 @@
 			<spoil>
 				<item id="6708" min="1" max="1" chance="6.1449" /> <!-- Sealed Draconic Leather Gloves Fabric -->
 				<item id="6709" min="1" max="1" chance="6.1449" /> <!-- Sealed Draconic Leather Boots Design -->
-				<item id="5157" min="1" max="1" chance="0.1918" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -930,7 +921,6 @@
 			</drop>
 			<spoil>
 				<item id="6712" min="1" max="1" chance="10.7447" /> <!-- Sealed Major Arcana Gloves fabric -->
-				<item id="5162" min="1" max="1" chance="0.3354" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				<item id="6713" min="1" max="1" chance="10.7447" /> <!-- Sealed Major Arcana Boots Design -->
 			</spoil>
 		</dropLists>

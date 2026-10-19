@@ -144,36 +144,6 @@
 		<production id="908" count="1" />
 		<statUse name="MP" value="60" />
 	</item>
-	<item id="20" recipeId="1804" name="mk_soulshot_d" craftLevel="2" type="dwarven" successRate="100">
-		<ingredient id="1785" count="9" />
-		<ingredient id="1458" count="3" />
-		<production id="1463" count="468" />
-		<statUse name="MP" value="72" />
-	</item>
-	<item id="21" recipeId="1805" name="mk_soulshot_c" craftLevel="4" type="dwarven" successRate="100">
-		<ingredient id="1785" count="30" />
-		<ingredient id="1459" count="2" />
-		<production id="1464" count="952" />
-		<statUse name="MP" value="84" />
-	</item>
-	<item id="22" recipeId="1806" name="mk_soulshot_b" craftLevel="6" type="dwarven" successRate="100">
-		<ingredient id="1785" count="54" />
-		<ingredient id="1460" count="1" />
-		<production id="1465" count="450" />
-		<statUse name="MP" value="100" />
-	</item>
-	<item id="23" recipeId="1807" name="mk_soulshot_a" craftLevel="7" type="dwarven" successRate="100">
-		<ingredient id="1785" count="36" />
-		<ingredient id="1461" count="1" />
-		<production id="1466" count="300" />
-		<statUse name="MP" value="120" />
-	</item>
-	<item id="24" recipeId="1808" name="mk_soulshot_s" craftLevel="8" type="dwarven" successRate="100">
-		<ingredient id="1785" count="40" />
-		<ingredient id="1462" count="1" />
-		<production id="1467" count="350" />
-		<statUse name="MP" value="150" />
-	</item>
 	<item id="25" recipeId="1814" name="mk_leather" craftLevel="1" type="dwarven" successRate="100">
 		<ingredient id="1867" count="6" />
 		<production id="1882" count="1" />
@@ -3144,70 +3114,10 @@
 		<production id="3136" count="5" />
 		<statUse name="MP" value="100" />
 	</item>
-	<item id="317" recipeId="3032" name="mk_spiritshot_d" craftLevel="2" type="dwarven" successRate="100">
-		<ingredient id="3031" count="3" />
-		<ingredient id="1458" count="1" />
-		<production id="2510" count="100" />
-		<statUse name="MP" value="60" />
-	</item>
-	<item id="318" recipeId="3033" name="mk_spiritshot_c" craftLevel="4" type="dwarven" successRate="100">
-		<ingredient id="3031" count="10" />
-		<ingredient id="1459" count="1" />
-		<production id="2511" count="200" />
-		<statUse name="MP" value="120" />
-	</item>
-	<item id="319" recipeId="3034" name="mk_spiritshot_b" craftLevel="6" type="dwarven" successRate="100">
-		<ingredient id="3031" count="15" />
-		<ingredient id="1460" count="1" />
-		<production id="2512" count="150" />
-		<statUse name="MP" value="180" />
-	</item>
-	<item id="320" recipeId="3035" name="mk_spiritshot_a" craftLevel="7" type="dwarven" successRate="100">
-		<ingredient id="3031" count="22" />
-		<ingredient id="1461" count="1" />
-		<production id="2513" count="200" />
-		<statUse name="MP" value="240" />
-	</item>
-	<item id="321" recipeId="3036" name="mk_spiritshot_s" craftLevel="8" type="dwarven" successRate="100">
-		<ingredient id="3031" count="15" />
-		<ingredient id="1462" count="1" />
-		<production id="2514" count="200" />
-		<statUse name="MP" value="300" />
-	</item>
 	<item id="322" recipeId="3838" name="q_mk_titans_powerstone" craftLevel="2" type="dwarven" successRate="25">
 		<ingredient id="3845" count="1" />
 		<production id="3846" count="1" />
 		<statUse name="MP" value="100" />
-	</item>
-	<item id="323" recipeId="3953" name="mk_blessed_spiritshot_d" craftLevel="2" type="dwarven" successRate="100">
-		<ingredient id="3031" count="8" />
-		<ingredient id="1458" count="2" />
-		<production id="3948" count="100" />
-		<statUse name="MP" value="60" />
-	</item>
-	<item id="324" recipeId="3954" name="mk_blessed_spiritshot_c" craftLevel="4" type="dwarven" successRate="100">
-		<ingredient id="3031" count="30" />
-		<ingredient id="1459" count="2" />
-		<production id="3949" count="200" />
-		<statUse name="MP" value="120" />
-	</item>
-	<item id="325" recipeId="3955" name="mk_blessed_spiritshot_b" craftLevel="6" type="dwarven" successRate="100">
-		<ingredient id="3031" count="16" />
-		<ingredient id="1460" count="2" />
-		<production id="3950" count="100" />
-		<statUse name="MP" value="180" />
-	</item>
-	<item id="326" recipeId="3956" name="mk_blessed_spiritshot_a" craftLevel="7" type="dwarven" successRate="100">
-		<ingredient id="3031" count="70" />
-		<ingredient id="1461" count="2" />
-		<production id="3951" count="200" />
-		<statUse name="MP" value="240" />
-	</item>
-	<item id="327" recipeId="3957" name="mk_blessed_spiritshot_s" craftLevel="8" type="dwarven" successRate="100">
-		<ingredient id="3031" count="50" />
-		<ingredient id="1462" count="2" />
-		<production id="3952" count="200" />
-		<statUse name="MP" value="300" />
 	</item>
 	<item id="328" recipeId="4937" name="mk_adamantite_earing_i" craftLevel="6" type="dwarven" successRate="70">
 		<ingredient id="4937" count="1" />
@@ -5097,96 +5007,6 @@
 		<productionRare id="12511" count="1" rarity="4" />
 		<statUse name="MP" value="174" />
 	</item>
-	<item id="480" recipeId="5153" name="mk_comp_soulshot_d" craftLevel="2" type="dwarven" successRate="100">
-		<ingredient id="1463" count="300" />
-		<ingredient id="5192" count="3" />
-		<production id="5135" count="1" />
-		<statUse name="MP" value="90" />
-	</item>
-	<item id="481" recipeId="5154" name="mk_comp_soulshot_c" craftLevel="4" type="dwarven" successRate="100">
-		<ingredient id="1464" count="300" />
-		<ingredient id="5193" count="3" />
-		<production id="5136" count="1" />
-		<statUse name="MP" value="180" />
-	</item>
-	<item id="482" recipeId="5155" name="mk_comp_soulshot_b" craftLevel="6" type="dwarven" successRate="100">
-		<ingredient id="1465" count="300" />
-		<ingredient id="5194" count="6" />
-		<production id="5137" count="1" />
-		<statUse name="MP" value="270" />
-	</item>
-	<item id="483" recipeId="5156" name="mk_comp_soulshot_a" craftLevel="7" type="dwarven" successRate="100">
-		<ingredient id="1466" count="300" />
-		<ingredient id="5195" count="6" />
-		<production id="5138" count="1" />
-		<statUse name="MP" value="360" />
-	</item>
-	<item id="484" recipeId="5157" name="mk_comp_soulshot_s" craftLevel="8" type="dwarven" successRate="100">
-		<ingredient id="1467" count="300" />
-		<ingredient id="5196" count="2" />
-		<production id="5139" count="1" />
-		<statUse name="MP" value="450" />
-	</item>
-	<item id="485" recipeId="5158" name="mk_comp_spiritshot_d" craftLevel="2" type="dwarven" successRate="100">
-		<ingredient id="2510" count="300" />
-		<ingredient id="5192" count="6" />
-		<production id="5141" count="1" />
-		<statUse name="MP" value="180" />
-	</item>
-	<item id="486" recipeId="5159" name="mk_comp_spiritshot_c" craftLevel="4" type="dwarven" successRate="100">
-		<ingredient id="2511" count="300" />
-		<ingredient id="5193" count="7" />
-		<production id="5142" count="1" />
-		<statUse name="MP" value="360" />
-	</item>
-	<item id="487" recipeId="5160" name="mk_comp_spiritshot_b" craftLevel="6" type="dwarven" successRate="100">
-		<ingredient id="2512" count="300" />
-		<ingredient id="5194" count="12" />
-		<production id="5143" count="1" />
-		<statUse name="MP" value="540" />
-	</item>
-	<item id="488" recipeId="5161" name="mk_comp_spiritshot_a" craftLevel="7" type="dwarven" successRate="100">
-		<ingredient id="2513" count="300" />
-		<ingredient id="5195" count="9" />
-		<production id="5144" count="1" />
-		<statUse name="MP" value="720" />
-	</item>
-	<item id="489" recipeId="5162" name="mk_comp_spiritshot_s" craftLevel="8" type="dwarven" successRate="100">
-		<ingredient id="2514" count="300" />
-		<ingredient id="5196" count="3" />
-		<production id="5145" count="1" />
-		<statUse name="MP" value="900" />
-	</item>
-	<item id="490" recipeId="5163" name="mk_comp_bspiritshot_d" craftLevel="2" type="dwarven" successRate="100">
-		<ingredient id="3948" count="300" />
-		<ingredient id="5192" count="15" />
-		<production id="5147" count="1" />
-		<statUse name="MP" value="180" />
-	</item>
-	<item id="491" recipeId="5164" name="mk_comp_bspiritshot_c" craftLevel="4" type="dwarven" successRate="100">
-		<ingredient id="3949" count="300" />
-		<ingredient id="5193" count="18" />
-		<production id="5148" count="1" />
-		<statUse name="MP" value="360" />
-	</item>
-	<item id="492" recipeId="5165" name="mk_comp_bspiritshot_b" craftLevel="6" type="dwarven" successRate="100">
-		<ingredient id="3950" count="300" />
-		<ingredient id="5194" count="30" />
-		<production id="5149" count="1" />
-		<statUse name="MP" value="540" />
-	</item>
-	<item id="493" recipeId="5166" name="mk_comp_bspiritshot_a" craftLevel="7" type="dwarven" successRate="100">
-		<ingredient id="3951" count="300" />
-		<ingredient id="5195" count="22" />
-		<production id="5150" count="1" />
-		<statUse name="MP" value="720" />
-	</item>
-	<item id="494" recipeId="5167" name="mk_comp_bspiritshot_s" craftLevel="8" type="dwarven" successRate="100">
-		<ingredient id="3952" count="300" />
-		<ingredient id="5196" count="7" />
-		<production id="5151" count="1" />
-		<statUse name="MP" value="900" />
-	</item>
 	<item id="495" recipeId="4440" name="mk_knuckle_dust" craftLevel="5" type="dwarven" successRate="100">
 		<ingredient id="4438" count="9" />
 		<ingredient id="1890" count="54" />
@@ -5209,96 +5029,6 @@
 		<ingredient id="1869" count="10" />
 		<production id="5220" count="1" />
 		<statUse name="MP" value="40" />
-	</item>
-	<item id="498" recipeId="5268" name="mk_adv_comp_soulshot_d" craftLevel="2" type="dwarven" successRate="100">
-		<ingredient id="1463" count="1000" />
-		<ingredient id="5192" count="26" />
-		<production id="5251" count="1" />
-		<statUse name="MP" value="90" />
-	</item>
-	<item id="499" recipeId="5269" name="mk_adv_comp_soulshot_c" craftLevel="4" type="dwarven" successRate="100">
-		<ingredient id="1464" count="1000" />
-		<ingredient id="5193" count="25" />
-		<production id="5252" count="1" />
-		<statUse name="MP" value="180" />
-	</item>
-	<item id="500" recipeId="5270" name="mk_adv_comp_soulshot_b" craftLevel="6" type="dwarven" successRate="100">
-		<ingredient id="1465" count="1000" />
-		<ingredient id="5194" count="50" />
-		<production id="5253" count="1" />
-		<statUse name="MP" value="270" />
-	</item>
-	<item id="501" recipeId="5271" name="mk_adv_comp_soulshot_a" craftLevel="7" type="dwarven" successRate="100">
-		<ingredient id="1466" count="1000" />
-		<ingredient id="5195" count="50" />
-		<production id="5254" count="1" />
-		<statUse name="MP" value="360" />
-	</item>
-	<item id="502" recipeId="5272" name="mk_adv_comp_soulshot_s" craftLevel="8" type="dwarven" successRate="100">
-		<ingredient id="1467" count="1000" />
-		<ingredient id="5196" count="13" />
-		<production id="5255" count="1" />
-		<statUse name="MP" value="450" />
-	</item>
-	<item id="503" recipeId="5273" name="mk_adv_comp_spiritshot_d" craftLevel="2" type="dwarven" successRate="100">
-		<ingredient id="2510" count="1000" />
-		<ingredient id="5192" count="50" />
-		<production id="5257" count="1" />
-		<statUse name="MP" value="180" />
-	</item>
-	<item id="504" recipeId="5274" name="mk_adv_comp_spiritshot_c" craftLevel="4" type="dwarven" successRate="100">
-		<ingredient id="2511" count="1000" />
-		<ingredient id="5193" count="58" />
-		<production id="5258" count="1" />
-		<statUse name="MP" value="360" />
-	</item>
-	<item id="505" recipeId="5275" name="mk_adv_comp_spiritshot_b" craftLevel="6" type="dwarven" successRate="100">
-		<ingredient id="2512" count="1000" />
-		<ingredient id="5194" count="100" />
-		<production id="5259" count="1" />
-		<statUse name="MP" value="540" />
-	</item>
-	<item id="506" recipeId="5276" name="mk_adv_comp_spiritshot_a" craftLevel="7" type="dwarven" successRate="100">
-		<ingredient id="2513" count="1000" />
-		<ingredient id="5195" count="75" />
-		<production id="5260" count="1" />
-		<statUse name="MP" value="720" />
-	</item>
-	<item id="507" recipeId="5277" name="mk_adv_comp_spiritshot_s" craftLevel="8" type="dwarven" successRate="100">
-		<ingredient id="2514" count="1000" />
-		<ingredient id="5196" count="20" />
-		<production id="5261" count="1" />
-		<statUse name="MP" value="900" />
-	</item>
-	<item id="508" recipeId="5278" name="mk_adv_comp_bspiritshot_d" craftLevel="2" type="dwarven" successRate="100">
-		<ingredient id="3948" count="1000" />
-		<ingredient id="5192" count="125" />
-		<production id="5263" count="1" />
-		<statUse name="MP" value="180" />
-	</item>
-	<item id="509" recipeId="5279" name="mk_adv_comp_bspiritshot_c" craftLevel="4" type="dwarven" successRate="100">
-		<ingredient id="3949" count="1000" />
-		<ingredient id="5193" count="150" />
-		<production id="5264" count="1" />
-		<statUse name="MP" value="360" />
-	</item>
-	<item id="510" recipeId="5280" name="mk_adv_comp_bspiritshot_b" craftLevel="6" type="dwarven" successRate="100">
-		<ingredient id="3950" count="1000" />
-		<ingredient id="5194" count="248" />
-		<production id="5265" count="1" />
-		<statUse name="MP" value="540" />
-	</item>
-	<item id="511" recipeId="5281" name="mk_adv_comp_bspiritshot_a" craftLevel="7" type="dwarven" successRate="100">
-		<ingredient id="3951" count="1000" />
-		<ingredient id="5195" count="182" />
-		<production id="5266" count="1" />
-		<statUse name="MP" value="720" />
-	</item>
-	<item id="512" recipeId="5282" name="mk_adv_comp_bspiritshot_s" craftLevel="8" type="dwarven" successRate="100">
-		<ingredient id="3952" count="1000" />
-		<ingredient id="5196" count="46" />
-		<production id="5267" count="1" />
-		<statUse name="MP" value="900" />
 	</item>
 	<item id="513" recipeId="5332" name="mk_sealed_dark_crystal_leather_mail_i" craftLevel="7" type="dwarven" successRate="60">
 		<ingredient id="5332" count="1" />
