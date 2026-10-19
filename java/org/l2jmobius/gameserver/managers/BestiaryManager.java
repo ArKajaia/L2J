@@ -61,6 +61,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.guide.GuideLesson;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
@@ -919,6 +920,7 @@ public class BestiaryManager
 		final String name = template.getName();
 		if (tier == 1)
 		{
+			AdventurersGuideManager.getInstance().trigger(player, GuideLesson.BESTIARY, "You have discovered a new monster for your Bestiary: " + name + "!");
 			if (!BestiaryConfig.DISCOVERY_MESSAGES)
 			{
 				return;

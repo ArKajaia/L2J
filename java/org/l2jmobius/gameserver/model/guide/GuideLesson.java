@@ -21,6 +21,7 @@ import java.util.function.IntSupplier;
 
 import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.AdventurersGuideConfig;
+import org.l2jmobius.gameserver.config.custom.BestiaryConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.config.custom.ClassTransferConfig;
 import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
@@ -41,48 +42,52 @@ import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
 /**
  * A lesson of the Adventurer's Guide (see {@link org.l2jmobius.gameserver.managers.AdventurersGuideManager}). Its page is {@code data/html/guide/<page>.htm}; the class transfer lessons are written for the player's class instead.
  * <p>
- * A lesson is unlocked at its level (when the feature's monsters or npcs become available to the character), or earlier by the event that shows it (meeting such a monster, finding a Champion Medal...). A lesson with no level comes only by its event. The ids of the tutorial
- * question marks follow the order of this enum, so new lessons go at the end.
+ * Every lesson has a minimum level: it never comes to a character below it. Most lessons come when the player may have a question - the first Champion slain, a monster flying into a rage, a Wave Challenge rising again, a herald with a quest. The few with nothing to wait for
+ * (the class transfers, the Notice Board, the Survival Arena...) are <i>announced</i>: they come as soon as their level is reached. The ids of the tutorial question marks follow the order of this enum.
  */
 public enum GuideLesson
 {
-	WELCOME(GuideCategory.BASICS, "The Adventurer's Guide", "welcome", () -> true, () -> 1),
-	COMMUNITY_BOARD(GuideCategory.BASICS, "The Community Board", "community_board", () -> CommunityBoardConfig.CUSTOM_CB_ENABLED, () -> AdventurersGuideConfig.COMMUNITY_BOARD_LEVEL),
-	PASSIVE_TREE(GuideCategory.BASICS, "The Passive Skill Tree", "passive_tree", () -> PassiveTreeConfig.PASSIVE_TREE_ENABLED, () -> PassiveTreeConfig.PASSIVE_TREE_START_LEVEL),
-	CLASS_1(GuideCategory.CLASS, "1st Class Transfer", null, () -> ClassTransferConfig.CLASS_TRANSFER_ENABLED, () -> Math.min(18, ClassTransferConfig.TIER1_MIN_LEVEL)),
-	CLASS_2(GuideCategory.CLASS, "2nd Class Transfer", null, () -> ClassTransferConfig.CLASS_TRANSFER_ENABLED, () -> Math.min(35, ClassTransferConfig.TIER2_MIN_LEVEL)),
-	CLASS_3(GuideCategory.CLASS, "3rd Class Transfer", null, () -> ClassTransferConfig.CLASS_TRANSFER_ENABLED, () -> Math.min(76, ClassTransferConfig.TIER3_MIN_LEVEL)),
-	NOTICE_BOARD(GuideCategory.QUESTS, "The Notice Board", "notice_board", () -> DynamicQuestConfig.ENABLED, () -> DynamicQuestConfig.MIN_LEVEL),
-	QUEST_TAKEN(GuideCategory.QUESTS, "Running a Quest", "quest_taken", () -> DynamicQuestConfig.ENABLED, () -> 0),
-	HIDDEN_QUESTS(GuideCategory.QUESTS, "Hidden Quests", "hidden_quests", () -> HiddenQuestConfig.ENABLED, () -> HiddenQuestConfig.MIN_LEVEL),
-	MONSTER_TRAITS(GuideCategory.MONSTERS, "Archetypes and Rage", "monster_traits", () -> RatesConfig.RANDOM_PASSIVE_SKILLS_ENABLED || MonsterRageConfig.ENABLED, () -> AdventurersGuideConfig.MONSTER_TRAITS_LEVEL),
-	NEMESIS(GuideCategory.MONSTERS, "Nemesis", "nemesis", () -> RatesConfig.NEMESIS_SYSTEM_ENABLED, () -> 0),
-	CHAMPIONS(GuideCategory.MONSTERS, "Champion Monsters", "champions", () -> ChampionMonstersConfig.CHAMPION_ENABLE, () -> ChampionMonstersConfig.CHAMP_MIN_LEVEL),
-	MAGE_MONSTERS(GuideCategory.MONSTERS, "Mage Monsters", "mage_monsters", () -> MageMonsterConfig.ENABLED, () -> MageMonsterConfig.MIN_LEVEL),
-	TREASURE_CHESTS(GuideCategory.MONSTERS, "Treasure Chests and Mimics", "treasure_chests", () -> TreasureChestConfig.ENABLED, () -> AdventurersGuideConfig.TREASURE_CHESTS_LEVEL),
-	RESONANT(GuideCategory.MONSTERS, "Resonant Monsters", "resonant", () -> ResonantMonsterConfig.ENABLED, () -> ResonantMonsterConfig.MIN_LEVEL),
-	THIEVES(GuideCategory.MONSTERS, "Thieves", "thieves", () -> ThiefMonsterConfig.ENABLED, () -> ThiefMonsterConfig.MIN_LEVEL),
-	WAVE_CHALLENGES(GuideCategory.MONSTERS, "Wave Challenges", "wave_challenges", () -> WaveChallengeConfig.ENABLED, () -> WaveChallengeConfig.MIN_LEVEL),
-	INFUSED(GuideCategory.MONSTERS, "Infused Monsters", "infused", () -> InfusedMonsterConfig.ENABLED, () -> InfusedMonsterConfig.MIN_LEVEL),
-	BUFFS(GuideCategory.REWARDS, "Learning Buffs", "buffs", () -> CustomBuffConfig.ENABLE, () -> AdventurersGuideConfig.BUFFS_LEVEL),
-	ARENA(GuideCategory.REWARDS, "The Survival Arena", "arena", () -> RatesConfig.ARENA_SYSTEM_ENABLED, () -> AdventurersGuideConfig.ARENA_LEVEL),
-	LUCK(GuideCategory.REWARDS, "Luck and Sealed Caches", "luck", () -> LuckyLootConfig.LUCK_ENABLED || LuckyLootConfig.SEALED_CACHE_ENABLED, () -> LuckyLootConfig.SEALED_CACHE_MIN_LEVEL),
-	HOT_ZONES(GuideCategory.WORLD, "Hot Zones", "hot_zones", () -> true, () -> AdventurersGuideConfig.HOT_ZONES_LEVEL),
-	NIGHT(GuideCategory.WORLD, "The Night Cycle", "night", () -> NightCycleConfig.ENABLED, () -> AdventurersGuideConfig.NIGHT_LEVEL);
+	WELCOME(GuideCategory.BASICS, "The Adventurer's Guide", "welcome", () -> true, () -> 1, false),
+	COMMUNITY_BOARD(GuideCategory.BASICS, "The Community Board", "community_board", () -> CommunityBoardConfig.CUSTOM_CB_ENABLED, () -> AdventurersGuideConfig.COMMUNITY_BOARD_LEVEL, true),
+	PASSIVE_TREE(GuideCategory.BASICS, "The Passive Skill Tree", "passive_tree", () -> PassiveTreeConfig.PASSIVE_TREE_ENABLED, () -> PassiveTreeConfig.PASSIVE_TREE_START_LEVEL, true),
+	BESTIARY(GuideCategory.BASICS, "The Bestiary", "bestiary", () -> BestiaryConfig.ENABLED, () -> AdventurersGuideConfig.BESTIARY_LEVEL, false),
+	CLASS_1(GuideCategory.CLASS, "1st Class Transfer", null, () -> ClassTransferConfig.CLASS_TRANSFER_ENABLED, () -> Math.min(18, ClassTransferConfig.TIER1_MIN_LEVEL), true),
+	CLASS_2(GuideCategory.CLASS, "2nd Class Transfer", null, () -> ClassTransferConfig.CLASS_TRANSFER_ENABLED, () -> Math.min(35, ClassTransferConfig.TIER2_MIN_LEVEL), true),
+	CLASS_3(GuideCategory.CLASS, "3rd Class Transfer", null, () -> ClassTransferConfig.CLASS_TRANSFER_ENABLED, () -> Math.min(76, ClassTransferConfig.TIER3_MIN_LEVEL), true),
+	NOTICE_BOARD(GuideCategory.QUESTS, "The Notice Board", "notice_board", () -> DynamicQuestConfig.ENABLED, () -> DynamicQuestConfig.MIN_LEVEL, true),
+	QUEST_TAKEN(GuideCategory.QUESTS, "Running a Quest", "quest_taken", () -> DynamicQuestConfig.ENABLED, () -> DynamicQuestConfig.MIN_LEVEL, false),
+	HIDDEN_QUESTS(GuideCategory.QUESTS, "Hidden Quests", "hidden_quests", () -> HiddenQuestConfig.ENABLED, () -> HiddenQuestConfig.MIN_LEVEL, false),
+	MONSTER_TRAITS(GuideCategory.MONSTERS, "Archetypes and Hidden Strengths", "monster_traits", () -> RatesConfig.RANDOM_PASSIVE_SKILLS_ENABLED, () -> AdventurersGuideConfig.MONSTER_TRAITS_LEVEL, false),
+	RAGE(GuideCategory.MONSTERS, "Monster Rage", "rage", () -> MonsterRageConfig.ENABLED, () -> AdventurersGuideConfig.MONSTER_TRAITS_LEVEL, false),
+	NEMESIS(GuideCategory.MONSTERS, "Nemesis", "nemesis", () -> RatesConfig.NEMESIS_SYSTEM_ENABLED, () -> AdventurersGuideConfig.MONSTER_TRAITS_LEVEL, false),
+	CHAMPIONS(GuideCategory.MONSTERS, "Champion Monsters", "champions", () -> ChampionMonstersConfig.CHAMPION_ENABLE, () -> ChampionMonstersConfig.CHAMP_MIN_LEVEL, false),
+	MAGE_MONSTERS(GuideCategory.MONSTERS, "Mage Monsters", "mage_monsters", () -> MageMonsterConfig.ENABLED, () -> MageMonsterConfig.MIN_LEVEL, false),
+	TREASURE_CHESTS(GuideCategory.MONSTERS, "Treasure Chests and Mimics", "treasure_chests", () -> TreasureChestConfig.ENABLED, () -> AdventurersGuideConfig.TREASURE_CHESTS_LEVEL, false),
+	RESONANT(GuideCategory.MONSTERS, "Resonant Monsters", "resonant", () -> ResonantMonsterConfig.ENABLED, () -> ResonantMonsterConfig.MIN_LEVEL, false),
+	THIEVES(GuideCategory.MONSTERS, "Thieves", "thieves", () -> ThiefMonsterConfig.ENABLED, () -> ThiefMonsterConfig.MIN_LEVEL, false),
+	WAVE_CHALLENGES(GuideCategory.MONSTERS, "Wave Challenges", "wave_challenges", () -> WaveChallengeConfig.ENABLED, () -> WaveChallengeConfig.MIN_LEVEL, false),
+	INFUSED(GuideCategory.MONSTERS, "Infused Monsters", "infused", () -> InfusedMonsterConfig.ENABLED, () -> InfusedMonsterConfig.MIN_LEVEL, false),
+	BUFFS(GuideCategory.REWARDS, "Learning Buffs", "buffs", () -> CustomBuffConfig.ENABLE, () -> AdventurersGuideConfig.BUFFS_LEVEL, false),
+	ARENA(GuideCategory.REWARDS, "The Survival Arena", "arena", () -> RatesConfig.ARENA_SYSTEM_ENABLED, () -> AdventurersGuideConfig.ARENA_LEVEL, true),
+	LUCK(GuideCategory.REWARDS, "Luck and Sealed Caches", "luck", () -> LuckyLootConfig.LUCK_ENABLED || LuckyLootConfig.SEALED_CACHE_ENABLED, () -> AdventurersGuideConfig.LUCK_LEVEL, false),
+	HOT_ZONES(GuideCategory.WORLD, "Hot Zones", "hot_zones", () -> true, () -> AdventurersGuideConfig.HOT_ZONES_LEVEL, false),
+	NIGHT(GuideCategory.WORLD, "The Night Cycle", "night", () -> NightCycleConfig.ENABLED, () -> AdventurersGuideConfig.NIGHT_LEVEL, false);
 
 	private final GuideCategory _category;
 	private final String _title;
 	private final String _page;
 	private final BooleanSupplier _enabled;
 	private final IntSupplier _level;
+	private final boolean _announced;
 
-	GuideLesson(GuideCategory category, String title, String page, BooleanSupplier enabled, IntSupplier level)
+	GuideLesson(GuideCategory category, String title, String page, BooleanSupplier enabled, IntSupplier level, boolean announced)
 	{
 		_category = category;
 		_title = title;
 		_page = page;
 		_enabled = enabled;
 		_level = level;
+		_announced = announced;
 	}
 
 	public GuideCategory getCategory()
@@ -112,11 +117,19 @@ public enum GuideLesson
 	}
 
 	/**
-	 * @return the level that unlocks this lesson, 0 if only its event does
+	 * @return the lowest level this lesson comes at
 	 */
 	public int getLevel()
 	{
-		return Math.max(0, _level.getAsInt());
+		return Math.max(1, _level.getAsInt());
+	}
+
+	/**
+	 * @return {@code true} if the lesson comes as soon as its level is reached, {@code false} if it waits for the moment it answers (a monster met, an item found...)
+	 */
+	public boolean isAnnounced()
+	{
+		return _announced;
 	}
 
 	/**

@@ -5,6 +5,7 @@ import org.l2jmobius.gameserver.config.custom.LuckyLootConfig;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.guide.GuideLesson;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
@@ -135,6 +136,7 @@ public class LuckyLootManager
 		{
 			Broadcast.toAllOnlinePlayers(player.getName() + " hit a JACKPOT on " + victim.getName() + "!");
 		}
+		AdventurersGuideManager.getInstance().trigger(player, GuideLesson.LUCK, "JACKPOT! " + victim.getName() + " burst with loot!");
 		return true;
 	}
 
@@ -241,6 +243,10 @@ public class LuckyLootManager
 		final int newStacks = Math.min(killer.getLuckStacks() + 1, LuckyLootConfig.LUCK_MAX_STACKS);
 		killer.setLuckStacks(newStacks);
 		refreshTitle(killer);
+		if (newStacks == 1)
+		{
+			AdventurersGuideManager.getInstance().trigger(killer, GuideLesson.LUCK, "Luck is with you: you gained a Luck stack, shown before your title.");
+		}
 
 		if (LuckyLootConfig.LUCK_MILESTONE_MESSAGE)
 		{

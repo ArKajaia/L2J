@@ -27,11 +27,13 @@ import org.l2jmobius.gameserver.config.custom.TreasureChestConfig;
 import org.l2jmobius.gameserver.config.custom.TreasureChestConfig.ChestMaterial;
 import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.data.xml.SkillData;
+import org.l2jmobius.gameserver.managers.AdventurersGuideManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.InstanceType;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
+import org.l2jmobius.gameserver.model.guide.GuideLesson;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
 import org.l2jmobius.gameserver.model.skill.EffectScope;
@@ -151,6 +153,7 @@ public class Chest extends Monster
 		{
 			return;
 		}
+		AdventurersGuideManager.getInstance().trigger(player, GuideLesson.TREASURE_CHESTS, "That treasure chest was a mimic, and it cursed you!");
 		
 		final List<Integer> skillIds = new ArrayList<>(TreasureChestConfig.MIMIC_DEBUFF_SKILLS);
 		Collections.shuffle(skillIds);
@@ -258,6 +261,10 @@ public class Chest extends Monster
 		if (TreasureChestConfig.MESSAGES && (attacker != null) && (attacker.asPlayer() != null))
 		{
 			attacker.asPlayer().sendMessage("The treasure chest vanished before your eyes.");
+		}
+		if ((attacker != null) && (attacker.asPlayer() != null))
+		{
+			AdventurersGuideManager.getInstance().trigger(attacker.asPlayer(), GuideLesson.TREASURE_CHESTS, "The treasure chest vanished when you struck it!");
 		}
 		
 		// Removes the chest and lets its spawn point respawn it on the normal timer.

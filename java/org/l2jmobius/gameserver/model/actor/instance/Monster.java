@@ -28,6 +28,7 @@ import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData;
 import org.l2jmobius.gameserver.data.custom.CustomSkillPoolData.CustomSkill;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.managers.AdventurersGuideManager;
 import org.l2jmobius.gameserver.managers.ClassTransferChallengeManager;
 import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakeJoinerManager;
@@ -46,6 +47,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.MinionList;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.effects.EffectFlag;
 import org.l2jmobius.gameserver.model.effects.EffectType;
+import org.l2jmobius.gameserver.model.guide.GuideLesson;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.item.holders.Elementals;
 import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
@@ -964,6 +966,7 @@ public class Monster extends Attackable
 
 		final String message = (wave >= totalWaves) ? "Final wave " + wave + "/" + totalWaves + "! Defeat " + getName() + " once more to claim the reward." : "Wave " + (wave - 1) + " cleared! " + getName() + " grows stronger... (wave " + wave + "/" + totalWaves + ")";
 		sendMessageToAttackers(killer, message);
+		AdventurersGuideManager.getInstance().onMonsterEvent(this, GuideLesson.WAVE_CHALLENGES, getName() + " rose again, stronger than before!", killer != null ? killer.asPlayer() : null);
 		return true;
 	}
 
@@ -1659,6 +1662,7 @@ public class Monster extends Attackable
 		_resonantFled = true;
 		final int fleeTime = isResonantRaid() ? ResonantMonsterConfig.RAID_FLEE_TIME : ResonantMonsterConfig.FLEE_TIME;
 		sendMessageToAttackers(null, "The soul of " + getName() + " is fleeing! Catch it within " + fleeTime + " seconds or the resonance fades.");
+		AdventurersGuideManager.getInstance().onMonsterEvent(this, GuideLesson.RESONANT, "The soul of " + getName() + " is fleeing!", null);
 		startEscape(fleeTime * 1000L, "My soul will not be caught!", "The resonance fades...");
 	}
 
@@ -1813,6 +1817,7 @@ public class Monster extends Attackable
 		{
 			sendMessageToAttackers(null, String.format(MonsterRageConfig.MESSAGE, getName()));
 		}
+		AdventurersGuideManager.getInstance().onMonsterEvent(this, GuideLesson.RAGE, getName() + " flew into a rage!", null);
 
 		_rageTask = ThreadPool.schedule(() -> endRage(true), MonsterRageConfig.DURATION_SECONDS * 1000L);
 	}

@@ -32,10 +32,12 @@ public class AdventurersGuideConfig
 	public static boolean CHAT_NOTICE;
 	public static int MAX_QUESTION_MARKS;
 	public static int COMMUNITY_BOARD_LEVEL;
+	public static int BESTIARY_LEVEL;
 	public static int MONSTER_TRAITS_LEVEL;
 	public static int BUFFS_LEVEL;
 	public static int HOT_ZONES_LEVEL;
 	public static int ARENA_LEVEL;
+	public static int LUCK_LEVEL;
 	public static int TREASURE_CHESTS_LEVEL;
 	public static int NIGHT_LEVEL;
 
@@ -47,10 +49,12 @@ public class AdventurersGuideConfig
 		CHAT_NOTICE = config.getBoolean("AdventurersGuideChatNotice", true);
 		MAX_QUESTION_MARKS = Math.max(1, config.getInt("AdventurersGuideMaxQuestionMarks", 3));
 		COMMUNITY_BOARD_LEVEL = config.getInt("AdventurersGuideCommunityBoardLevel", 3);
+		BESTIARY_LEVEL = config.getInt("AdventurersGuideBestiaryLevel", 3);
 		MONSTER_TRAITS_LEVEL = config.getInt("AdventurersGuideMonsterTraitsLevel", 5);
-		BUFFS_LEVEL = config.getInt("AdventurersGuideBuffsLevel", 15);
+		BUFFS_LEVEL = config.getInt("AdventurersGuideBuffsLevel", 10);
 		HOT_ZONES_LEVEL = config.getInt("AdventurersGuideHotZonesLevel", 12);
-		ARENA_LEVEL = config.getInt("AdventurersGuideArenaLevel", 20);
+		ARENA_LEVEL = config.getInt("AdventurersGuideArenaLevel", 40);
+		LUCK_LEVEL = config.getInt("AdventurersGuideLuckLevel", 10);
 		TREASURE_CHESTS_LEVEL = config.getInt("AdventurersGuideTreasureChestsLevel", 25);
 		NIGHT_LEVEL = config.getInt("AdventurersGuideNightLevel", 20);
 	}

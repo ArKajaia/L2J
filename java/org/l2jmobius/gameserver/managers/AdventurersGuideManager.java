@@ -17,8 +17,12 @@
 package org.l2jmobius.gameserver.managers;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -63,6 +67,7 @@ import org.l2jmobius.gameserver.model.groups.Party;
 import org.l2jmobius.gameserver.model.guide.GuideCategory;
 import org.l2jmobius.gameserver.model.guide.GuideLesson;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
+import org.l2jmobius.gameserver.model.item.holders.Elementals;
 import org.l2jmobius.gameserver.model.nightcycle.NightPhase;
 import org.l2jmobius.gameserver.model.script.QuestSound;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
@@ -95,6 +100,8 @@ public class AdventurersGuideManager
 
 	private static final String VAR_SEEN = "GUIDE_SEEN";
 	private static final String VAR_PENDING = "GUIDE_PENDING";
+	/** The opening line of a lesson waiting to be read is kept in this + the lesson's name. */
+	private static final String VAR_INTRO = "GUIDE_INTRO_";
 	private static final String HTML_PATH = "data/html/guide/";
 	private static final String RETAIL_TUTORIAL_PATH = "data/scripts/quests/Q00255_Tutorial/";
 
@@ -159,9 +166,9 @@ public class AdventurersGuideManager
 			}
 
 			checkItems(player);
-			if (NightCycleManager.getInstance().getPhase().isNight() && (player.getLevel() >= AdventurersGuideConfig.NIGHT_LEVEL))
+			if (NightCycleManager.getInstance().getPhase().isNight())
 			{
-				trigger(player, GuideLesson.NIGHT);
+				trigger(player, GuideLesson.NIGHT, "Night has fallen over the land.");
 			}
 		}, LOGIN_DELAY);
 	}
@@ -175,7 +182,7 @@ public class AdventurersGuideManager
 	}
 
 	/**
-	 * Raises the lessons whose level is above {@code fromLevel} and up to {@code toLevel}.
+	 * Raises the announced lessons whose level is above {@code fromLevel} and up to {@code toLevel}. The other lessons wait for their moment.
 	 * @param player the player
 	 * @param fromLevel the level already passed (0 to look at every level up to {@code toLevel})
 	 * @param toLevel the level reached
@@ -185,21 +192,17 @@ public class AdventurersGuideManager
 		for (GuideLesson lesson : GuideLesson.values())
 		{
 			final int level = lesson.getLevel();
-			if ((level > fromLevel) && (level <= toLevel))
+			if (!lesson.isAnnounced() || (level <= fromLevel) || (level > toLevel))
 			{
-				// The night comes at nightfall, unless the character is already in it.
-				if ((lesson == GuideLesson.NIGHT) && !NightCycleManager.getInstance().getPhase().isNight())
-				{
-					continue;
-				}
-
-				// After a class transfer (fromLevel 0) only the class lessons are looked at again: the next one may be due already.
-				if ((fromLevel == 0) && (lesson.getClassTier() == 0))
-				{
-					continue;
-				}
-				trigger(player, lesson);
+				continue;
 			}
+
+			// After a class transfer (fromLevel 0) only the class lessons are looked at again: the next one may be due already.
+			if ((fromLevel == 0) && (lesson.getClassTier() == 0))
+			{
+				continue;
+			}
+			trigger(player, lesson, lesson.getClassTier() > 0 ? null : "You have reached level " + level + ".");
 		}
 	}
 
@@ -212,53 +215,59 @@ public class AdventurersGuideManager
 			return;
 		}
 
-		final Set<GuideLesson> lessons = EnumSet.noneOf(GuideLesson.class);
+		// What the player may wonder about after this kill, and the line that opens its lesson ("%s" is who killed it).
+		final Map<GuideLesson, String> lessons = new EnumMap<>(GuideLesson.class);
 		final Monster monster = target.asMonster();
+		final String name = monster.getName();
 		if (monster instanceof Chest)
 		{
-			lessons.add(GuideLesson.TREASURE_CHESTS);
+			lessons.put(GuideLesson.TREASURE_CHESTS, "%s slain a mimic, " + name + ".");
 		}
 		if (monster.getChampionTier() > 0)
 		{
-			lessons.add(GuideLesson.CHAMPIONS);
+			lessons.put(GuideLesson.CHAMPIONS, "%s slain a Champion monster, " + name + "!");
 		}
 		if (monster.isMageMonster())
 		{
-			lessons.add(GuideLesson.MAGE_MONSTERS);
+			lessons.put(GuideLesson.MAGE_MONSTERS, "%s slain a Mage monster, " + name + ".");
 		}
 		if (monster.isThief())
 		{
-			lessons.add(GuideLesson.THIEVES);
+			lessons.put(GuideLesson.THIEVES, "%s caught a Thief, " + name + ", with its bag " + monster.getThiefPercent() + "% full!");
 		}
 		if (monster.isInfused())
 		{
-			lessons.add(GuideLesson.INFUSED);
+			lessons.put(GuideLesson.INFUSED, "%s slain " + name + ", a monster infused with " + Elementals.getElementName(monster.getInfusedElement()) + ".");
 		}
 		if (monster.isResonant())
 		{
-			lessons.add(GuideLesson.RESONANT);
+			lessons.put(GuideLesson.RESONANT, "%s slain " + name + ", a Resonant monster.");
 		}
 		if (monster.isWaveChallenge())
 		{
-			lessons.add(GuideLesson.WAVE_CHALLENGES);
+			lessons.put(GuideLesson.WAVE_CHALLENGES, "%s beaten every wave of " + name + "'s Wave Challenge!");
 		}
-		if (monster.isRaging() || (monster.getVariables().getInt("PASSIVE_COUNT", 0) > 0))
+		if (monster.getVariables().getString("PASSIVE_AVE", null) != null)
 		{
-			lessons.add(GuideLesson.MONSTER_TRAITS);
+			lessons.put(GuideLesson.MONSTER_TRAITS, "%s slain " + name + ", a monster glowing with hidden strengths.");
 		}
 		if (monster.getVariables().getBoolean("NEMESIS_FLAG", false))
 		{
-			lessons.add(GuideLesson.NEMESIS);
+			lessons.put(GuideLesson.NEMESIS, "%s slain " + name + ", a Nemesis!");
 		}
-		if (monster.isHotzoneMiniboss() || ((monster.getInstanceId() == 0) && (HotzoneModifierManager.getInstance().getZoneModifierFor(monster) != null)))
+		if (monster.isHotzoneMiniboss())
 		{
-			lessons.add(GuideLesson.HOT_ZONES);
+			lessons.put(GuideLesson.HOT_ZONES, "%s slain a Hotzone Menace, " + name + "!");
+		}
+		else if ((monster.getInstanceId() == 0) && (HotzoneModifierManager.getInstance().getZoneModifierFor(monster) != null))
+		{
+			lessons.put(GuideLesson.HOT_ZONES, "You are hunting in an active Hot Zone.");
 		}
 
 		final Party party = killer.getParty();
 		if (party == null)
 		{
-			onKill(killer, lessons);
+			onKill(killer, lessons, true);
 			return;
 		}
 
@@ -266,18 +275,56 @@ public class AdventurersGuideManager
 		{
 			if ((member == killer) || member.isInsideRadius3D(monster, PARTY_RANGE))
 			{
-				onKill(member, lessons);
+				onKill(member, lessons, member == killer);
 			}
 		}
 	}
 
-	private void onKill(Player player, Set<GuideLesson> lessons)
+	private void onKill(Player player, Map<GuideLesson, String> lessons, boolean killer)
 	{
-		for (GuideLesson lesson : lessons)
+		for (Entry<GuideLesson, String> entry : lessons.entrySet())
 		{
-			trigger(player, lesson);
+			trigger(player, entry.getKey(), String.format(entry.getValue(), killer ? "You have" : "Your party has"));
 		}
 		checkItems(player);
+	}
+
+	/**
+	 * Raises a lesson for everyone fighting a monster, when it does something they may wonder about: flies into a rage, rises for its next wave, its soul flees...
+	 * @param monster the monster
+	 * @param lesson the lesson
+	 * @param intro the line that opens the lesson
+	 * @param extra a player to include who may not be on its aggro list (who struck it), or {@code null}
+	 */
+	public void onMonsterEvent(Monster monster, GuideLesson lesson, String intro, Player extra)
+	{
+		if (!AdventurersGuideConfig.ENABLED || (monster == null) || !lesson.isEnabled())
+		{
+			return;
+		}
+
+		final Set<Player> players = new HashSet<>();
+		for (Creature attacker : monster.getAggroList().keySet())
+		{
+			final Player player = attacker.asPlayer();
+			if (player != null)
+			{
+				players.add(player);
+			}
+		}
+		if (extra != null)
+		{
+			players.add(extra);
+		}
+
+		// Away from the monster's own locks.
+		ThreadPool.execute(() ->
+		{
+			for (Player player : players)
+			{
+				trigger(player, lesson, intro);
+			}
+		});
 	}
 
 	/**
@@ -288,7 +335,7 @@ public class AdventurersGuideManager
 	{
 		if (CustomBuffConfig.ENABLE && !isSeen(player, GuideLesson.BUFFS) && (player.getInventory().getItemByItemId(CustomBuffConfig.ITEM_ID) != null))
 		{
-			trigger(player, GuideLesson.BUFFS);
+			trigger(player, GuideLesson.BUFFS, "You have found a " + getItemName(CustomBuffConfig.ITEM_ID) + "!");
 		}
 
 		if (!isSeen(player, GuideLesson.LUCK))
@@ -297,7 +344,7 @@ public class AdventurersGuideManager
 			{
 				if (player.getInventory().getItemByItemId(itemId) != null)
 				{
-					trigger(player, GuideLesson.LUCK);
+					trigger(player, GuideLesson.LUCK, "You have found a " + getItemName(itemId) + "!");
 					break;
 				}
 			}
@@ -312,7 +359,7 @@ public class AdventurersGuideManager
 			return;
 		}
 
-		trigger(event.getTarget().asPlayer(), GuideLesson.NEMESIS);
+		trigger(event.getTarget().asPlayer(), GuideLesson.NEMESIS, killer.getName() + " has defeated you, and grew stronger from it.");
 	}
 
 	private void onNightPhase(NightPhase phase)
@@ -324,9 +371,9 @@ public class AdventurersGuideManager
 
 		for (Player player : World.getInstance().getPlayers())
 		{
-			if (player.isOnline() && !player.isInOfflineMode() && (player.getLevel() >= AdventurersGuideConfig.NIGHT_LEVEL))
+			if (player.isOnline() && !player.isInOfflineMode())
 			{
-				trigger(player, GuideLesson.NIGHT);
+				trigger(player, GuideLesson.NIGHT, phase == NightPhase.DUSK ? "Dusk is falling over the land." : "Night has fallen over the land.");
 			}
 		}
 	}
@@ -347,13 +394,14 @@ public class AdventurersGuideManager
 	}
 
 	/**
-	 * Raises the question mark of a lesson the character hasn't had yet.
+	 * Raises the question mark of a lesson the character hasn't had yet, if the character has its level.
 	 * @param player the player
 	 * @param lesson the lesson
+	 * @param intro the line that opens the lesson the first time it is read: what just happened ("You have slain a Champion monster..."), or {@code null}
 	 */
-	public void trigger(Player player, GuideLesson lesson)
+	public void trigger(Player player, GuideLesson lesson, String intro)
 	{
-		if (!AdventurersGuideConfig.ENABLED || (player == null) || !lesson.isEnabled() || player.isInOfflineMode() || !isForPlayer(player, lesson))
+		if (!AdventurersGuideConfig.ENABLED || (player == null) || !lesson.isEnabled() || player.isInOfflineMode() || (player.getLevel() < lesson.getLevel()) || !isForPlayer(player, lesson))
 		{
 			return;
 		}
@@ -370,28 +418,32 @@ public class AdventurersGuideManager
 			// The oldest lesson gives way: it stays in the Guidebook.
 			while (pending.size() >= AdventurersGuideConfig.MAX_QUESTION_MARKS)
 			{
-				pending.remove(0);
+				player.getVariables().remove(VAR_INTRO + pending.remove(0).name());
 			}
 			pending.add(lesson);
 			setPending(player, pending);
+			if (intro != null)
+			{
+				player.getVariables().set(VAR_INTRO + lesson.name(), intro);
+			}
 		}
 
 		player.sendPacket(new TutorialShowQuestionMark(QUESTION_MARK_BASE + lesson.ordinal()));
 		player.sendPacket(QuestSound.ITEMSOUND_QUEST_TUTORIAL.getPacket());
 		if (AdventurersGuideConfig.CHAT_NOTICE)
 		{
-			player.sendMessage("Adventurer's Guide: " + lesson.getTitle() + ". Click the blinking question mark to read it.");
+			player.sendMessage("Adventurer's Guide: " + (intro != null ? intro + " " : "") + "Click the blinking question mark to learn about " + lesson.getTitle() + ".");
 		}
 	}
 
 	/**
-	 * Opens a lesson at once if the character hasn't read it yet: the player has just found its system (talked to its npc, used its item).
+	 * Opens a lesson at once if the character hasn't read it yet and has its level: the player has just found its system (talked to its npc, used its item).
 	 * @param player the player
 	 * @param lesson the lesson
 	 */
 	public void discover(Player player, GuideLesson lesson)
 	{
-		if (!AdventurersGuideConfig.ENABLED || (player == null) || !lesson.isEnabled() || isSeen(player, lesson))
+		if (!AdventurersGuideConfig.ENABLED || (player == null) || !lesson.isEnabled() || (player.getLevel() < lesson.getLevel()) || isSeen(player, lesson))
 		{
 			return;
 		}
@@ -438,7 +490,7 @@ public class AdventurersGuideManager
 	/**
 	 * @param player the player
 	 * @param lesson a lesson
-	 * @return {@code true} if the character can read it in the Guidebook: its level is reached, or it was raised or read already
+	 * @return {@code true} if the character can read it in the Guidebook: it came already, or it is announced and its level is reached
 	 */
 	public boolean isUnlocked(Player player, GuideLesson lesson)
 	{
@@ -447,8 +499,7 @@ public class AdventurersGuideManager
 			return false;
 		}
 
-		final int level = lesson.getLevel();
-		return ((level > 0) && (player.getLevel() >= level)) || isSeen(player, lesson) || getPending(player).contains(lesson);
+		return (lesson.isAnnounced() && (player.getLevel() >= lesson.getLevel())) || isSeen(player, lesson) || getPending(player).contains(lesson);
 	}
 
 	/**
@@ -471,6 +522,7 @@ public class AdventurersGuideManager
 			{
 				setPending(player, pending);
 			}
+			player.getVariables().remove(VAR_INTRO + lesson.name());
 		}
 	}
 
@@ -571,7 +623,7 @@ public class AdventurersGuideManager
 	public String getBookContent(Player player, String showAction)
 	{
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Every lesson the guide has given you can be read again here. Lessons in <font color=\"LEVEL\">yellow</font> are new.<br>");
+		sb.append("Every lesson the guide has given you can be read again here. Lessons in <font color=\"LEVEL\">yellow</font> are new. The others come when the moment is right.<br>");
 		for (GuideCategory category : GuideCategory.values())
 		{
 			final StringBuilder lines = new StringBuilder();
@@ -588,13 +640,13 @@ public class AdventurersGuideManager
 					lines.append(isSeen(player, lesson) ? lesson.getTitle() : "<font color=\"" + COLOR_NEW + "\">" + lesson.getTitle() + "</font>");
 					lines.append("</a><br1>");
 				}
-				else if (lesson.getLevel() > 0)
+				else if (player.getLevel() < lesson.getLevel())
 				{
 					lines.append("<font color=\"").append(COLOR_LOCKED).append("\">").append(lesson.getTitle()).append(" (level ").append(lesson.getLevel()).append(")</font><br1>");
 				}
 				else
 				{
-					lines.append("<font color=\"").append(COLOR_LOCKED).append("\">? ? ? (not met yet)</font><br1>");
+					lines.append("<font color=\"").append(COLOR_LOCKED).append("\">").append(lesson.getTitle()).append(" (not met yet)</font><br1>");
 				}
 			}
 
@@ -615,9 +667,11 @@ public class AdventurersGuideManager
 	 */
 	public String getLessonContent(Player player, GuideLesson lesson)
 	{
+		final String introLine = player.getVariables().getString(VAR_INTRO + lesson.name(), null);
+		final String intro = introLine != null ? "<font color=\"LEVEL\">" + introLine + "</font><br><br>" : "";
 		if (lesson.getClassTier() > 0)
 		{
-			return getClassContent(player, lesson.getClassTier());
+			return intro + getClassContent(player, lesson.getClassTier());
 		}
 
 		String content = HtmCache.getInstance().getHtm(player, HTML_PATH + lesson.getPage() + ".htm");
@@ -630,7 +684,7 @@ public class AdventurersGuideManager
 		content = content.replace("%level%", String.valueOf(lesson.getLevel()));
 		content = content.replace("%medal%", getItemName(CustomBuffConfig.ITEM_ID));
 		content = content.replace("%coin%", getItemName(RatesConfig.ARENA_CURRENCY_ITEM_ID));
-		return "<center><font color=\"LEVEL\">[" + lesson.getTitle() + "]</font></center><br>" + content;
+		return "<center><font color=\"LEVEL\">[" + lesson.getTitle() + "]</font></center><br>" + intro + content;
 	}
 
 	/**
