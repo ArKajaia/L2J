@@ -200,7 +200,7 @@ public class VillageSiegeConfig
 		LORD_POINTS = Math.max(0, config.getInt("VillageSiegeLordPoints", 300));
 		HEAL_POINTS = Math.max(0, config.getInt("VillageSiegeHealPoints", 10));
 		ACTIVE_POINTS = Math.max(0, config.getInt("VillageSiegeActivePoints", 5));
-		EXPECTED_POINTS_PER_HOUR = Math.max(1, config.getInt("VillageSiegeExpectedPointsPerHour", 1200));
+		EXPECTED_POINTS_PER_HOUR = Math.max(1, config.getInt("VillageSiegeExpectedPointsPerHour", 2000));
 		HOURS_PER_REFERENCE_ITEM = Math.max(1, config.getInt("VillageSiegeHoursPerReferenceItem", 3));
 		ADENA_PER_MEDAL = Math.max(1, config.getInt("VillageSiegeAdenaPerMedal", 1000));
 		END_BONUS_PERCENT = Math.max(0, config.getInt("VillageSiegeEndBonusPercent", 30));

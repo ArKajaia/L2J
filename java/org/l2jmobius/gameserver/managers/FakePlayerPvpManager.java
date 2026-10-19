@@ -3419,8 +3419,8 @@ public class FakePlayerPvpManager
 				// In a party of fake players, the leader logs off for all of them (the others then go their own way).
 				final FakePlayerParty party = profile.getParty();
 				final boolean staysWithParty = (party != null) && (!party.isFakeOnly() || (party.getLeader() != fake));
-				// A PvP spot fighter leaves when its spot says so (see PvpSpotManager).
-				if (!profile.isTrialDuelist() && !staysWithParty && !profile.isSpotFighter())
+				// A PvP spot fighter leaves when its spot says so (see PvpSpotManager), and a village defender when its siege does (see VillageSiegeManager).
+				if (!profile.isTrialDuelist() && !staysWithParty && !profile.isSpotFighter() && !profile.isSiegeDefender())
 				{
 					checkHotzoneLeave(fake, profile, now);
 					
