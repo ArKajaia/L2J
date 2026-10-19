@@ -39,9 +39,6 @@ public class Q00116_BeyondTheHillsOfWinter extends Quest
 	private static final ItemHolder ENERGY_STONE = new ItemHolder(5589, 5);
 	private static final int SUPPLYING_GOODS = 8098;
 	
-	// Reward
-	private static final int SOULSHOT_D = 1463;
-	
 	// Misc
 	private static final int MIN_LEVEL = 30;
 	
@@ -88,17 +85,6 @@ public class Q00116_BeyondTheHillsOfWinter extends Quest
 				if (qs.isMemoState(2))
 				{
 					htmltext = event;
-				}
-				break;
-			}
-			case "MATERIAL":
-			{
-				if (qs.isMemoState(2))
-				{
-					rewardItems(player, SOULSHOT_D, 1740);
-					addExpAndSp(player, 82792, 4981);
-					qs.exitQuest(false, true);
-					htmltext = "32052-03.html";
 				}
 				break;
 			}

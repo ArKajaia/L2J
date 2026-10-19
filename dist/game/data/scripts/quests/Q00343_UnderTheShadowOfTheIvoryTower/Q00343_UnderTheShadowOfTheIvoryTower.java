@@ -50,8 +50,6 @@ public class Q00343_UnderTheShadowOfTheIvoryTower extends Quest
 	private static final int NICKLACE_OF_MERMAID = 917;
 	private static final int SCROLL_ENCHANT_WEAPON_C_GRADE = 951;
 	private static final int SCROLL_ENCHANT_WEAPON_D_GRADE = 955;
-	private static final int SPIRITSHOT_D_GRADE = 2510;
-	private static final int SPIRITSHOT_C_GRADE = 2511;
 	private static final int ECTOPLASM_LIQUEUR = 4365;
 	
 	// Monster
@@ -141,11 +139,11 @@ public class Q00343_UnderTheShadowOfTheIvoryTower extends Quest
 					}
 					else if (chance <= 329)
 					{
-						giveItems(player, SPIRITSHOT_C_GRADE, getRandom(200) + 401);
+						giveAdena(player, (getRandom(200) + 401) * 35, true);
 					}
 					else if (chance <= 559)
 					{
-						giveItems(player, SPIRITSHOT_D_GRADE, getRandom(200) + 401);
+						giveAdena(player, (getRandom(200) + 401) * 18, true);
 					}
 					else if (chance <= 561)
 					{

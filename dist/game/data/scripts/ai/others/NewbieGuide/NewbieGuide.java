@@ -73,8 +73,6 @@ public final class NewbieGuide extends Script
 	private static final int GUIDE_MISSION = 41;
 	
 	// Item
-	private static final int SOULSHOT_NO_GRADE_FOR_BEGINNERS = 5789;
-	private static final int SPIRITSHOT_NO_GRADE_FOR_BEGINNERS = 5790;
 	private static final int SCROLL_RECOVERY_NO_GRADE = 8594;
 	
 	private static final int APPRENTICE_ADVENTURERS_WEAPON_EXCHANGE_COUPON = 7832;
@@ -575,45 +573,15 @@ public final class NewbieGuide extends Script
 		final QuestState qs = getQuestState(talker, true);
 		if ((tutorialQS.getMemoStateEx(1) < 5) && (getOneTimeQuestFlag(talker, GUIDE_MISSION) == 0))
 		{
-			if (!talker.isMageClass())
+			giveItems(qs.getPlayer(), SCROLL_RECOVERY_NO_GRADE, 2);
+			tutorialQS.setMemoStateEx(1, 5);
+			if (talker.getLevel() <= 1)
 			{
-				playSound(qs.getPlayer(), "tutorial_voice_026");
-				giveItems(qs.getPlayer(), SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-				giveItems(qs.getPlayer(), SCROLL_RECOVERY_NO_GRADE, 2);
-				tutorialQS.setMemoStateEx(1, 5);
-				if (talker.getLevel() <= 1)
-				{
-					addExpAndSp(qs.getPlayer(), 68, 50);
-				}
-				else
-				{
-					addExpAndSp(qs.getPlayer(), 0, 50);
-				}
+				addExpAndSp(qs.getPlayer(), 68, 50);
 			}
-			
-			if (talker.isMageClass())
+			else
 			{
-				if (talker.getPlayerClass() == PlayerClass.ORC_MAGE)
-				{
-					playSound(qs.getPlayer(), "tutorial_voice_026");
-					giveItems(qs.getPlayer(), SOULSHOT_NO_GRADE_FOR_BEGINNERS, 200);
-				}
-				else
-				{
-					playSound(qs.getPlayer(), "tutorial_voice_027");
-					giveItems(qs.getPlayer(), SPIRITSHOT_NO_GRADE_FOR_BEGINNERS, 100);
-				}
-				
-				giveItems(qs.getPlayer(), SCROLL_RECOVERY_NO_GRADE, 2);
-				tutorialQS.setMemoStateEx(1, 5);
-				if (talker.getLevel() <= 1)
-				{
-					addExpAndSp(qs.getPlayer(), 68, 50);
-				}
-				else
-				{
-					addExpAndSp(qs.getPlayer(), 0, 50);
-				}
+				addExpAndSp(qs.getPlayer(), 0, 50);
 			}
 			
 			if (talker.getLevel() < 6)

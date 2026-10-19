@@ -65,7 +65,6 @@
 					<item id="1882" min="1" max="1" chance="6.2863" /> <!-- Leather -->
 					<item id="1894" min="1" max="1" chance="0.9926" /> <!-- Crafted Leather -->
 					<item id="4042" min="1" max="1" chance="0.4715" /> <!-- Enria -->
-					<item id="5272" min="1" max="1" chance="0.0126" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 					<item id="8732" min="1" max="1" chance="0.2357" /> <!-- Life Stone - Level 76 -->
 					<item id="8742" min="1" max="1" chance="0.0589" /> <!-- Mid-Grade Life Stone - Level 76 -->
 					<item id="8752" min="1" max="1" chance="0.0059" /> <!-- High-Grade Life Stone - Level 76 -->
@@ -73,7 +72,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5167" min="1" max="1" chance="0.167" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 				<item id="5529" min="1" max="1" chance="1.0311" /> <!-- Dragon Slayer Edge -->
 				<item id="4042" min="1" max="1" chance="6.2641" /> <!-- Enria -->
 			</spoil>
@@ -1364,7 +1362,6 @@
 					<item id="1881" min="1" max="1" chance="4.6174" /> <!-- Coarse Bone Powder -->
 					<item id="1875" min="1" max="1" chance="2.3087" /> <!-- Stone of Purity -->
 					<item id="4041" min="1" max="1" chance="0.3011" /> <!-- Mold Hardener -->
-					<item id="1808" min="1" max="1" chance="0.0154" /> <!-- Recipe: Soulshot (S-Grade) -->
 					<item id="8731" min="1" max="1" chance="0.3206" /> <!-- Life Stone - Level 70 -->
 					<item id="8741" min="1" max="1" chance="0.0802" /> <!-- Mid-Grade Life Stone - Level 70 -->
 					<item id="8751" min="1" max="1" chance="0.008" /> <!-- High-Grade Life Stone - Level 70 -->
@@ -1435,7 +1432,6 @@
 					<item id="1876" min="1" max="1" chance="4.8037" /> <!-- Mithril Ore -->
 					<item id="1895" min="1" max="1" chance="6.8624" /> <!-- Metallic Fiber -->
 					<item id="4042" min="1" max="1" chance="0.4003" /> <!-- Enria -->
-					<item id="3036" min="1" max="1" chance="0.0107" /> <!-- Recipe: Spiritshot S -->
 					<item id="8732" min="1" max="1" chance="0.2002" /> <!-- Life Stone - Level 76 -->
 					<item id="8742" min="1" max="1" chance="0.05" /> <!-- Mid-Grade Life Stone - Level 76 -->
 					<item id="8752" min="1" max="1" chance="0.005" /> <!-- High-Grade Life Stone - Level 76 -->
@@ -1445,7 +1441,6 @@
 			<spoil>
 				<item id="6901" min="1" max="1" chance="0.2078" /> <!-- Recipe: Shining Arrow (100%) -->
 				<item id="5481" min="1" max="1" chance="0.9325" /> <!-- Sealed Majestic Leather Armor Fabric -->
-				<item id="1808" min="1" max="1" chance="0.0924" /> <!-- Recipe: Soulshot (S-Grade) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -1762,7 +1757,6 @@
 			<spoil>
 				<item id="1894" min="1" max="1" chance="37.405" /> <!-- Crafted Leather -->
 				<item id="4052" min="1" max="1" chance="37.7427" /> <!-- Earring of Black Ore Piece -->
-				<item id="1807" min="1" max="1" chance="1.4214" /> <!-- Recipe: Soulshot (A-Grade) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -1855,7 +1849,6 @@
 			</drop>
 			<spoil>
 				<item id="4053" min="1" max="1" chance="43.5874" /> <!-- Ring of Black Ore Gemstone -->
-				<item id="3035" min="1" max="1" chance="1.3559" /> <!-- Recipe: Spiritshot A -->
 				<item id="4054" min="1" max="1" chance="20.0294" /> <!-- Necklace of Black Ore Beads -->
 			</spoil>
 		</dropLists>
@@ -2038,9 +2031,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="3956" min="1" max="1" chance="1.4477" /> <!-- Recipe: Blessed Spiritshot A -->
 				<item id="4078" min="1" max="1" chance="15.8605" /> <!-- Blue Wolf Breastplate Part -->
-				<item id="5156" min="1" max="1" chance="1.4477" /> <!-- Recipe: Soulshot (A) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -2225,7 +2216,6 @@
 			</drop>
 			<spoil>
 				<item id="4053" min="1" max="1" chance="49.6406" /> <!-- Ring of Black Ore Gemstone -->
-				<item id="3035" min="1" max="1" chance="1.5442" /> <!-- Recipe: Spiritshot A -->
 				<item id="4054" min="1" max="1" chance="22.811" /> <!-- Necklace of Black Ore Beads -->
 			</spoil>
 		</dropLists>

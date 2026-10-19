@@ -58,7 +58,6 @@ public class Q00264_KeenClaws extends Quest
 		
 		REWARDS.put(1, Arrays.asList(new ItemHolder(4633, 1)));
 		REWARDS.put(2, Arrays.asList(new ItemHolder(57, 2000)));
-		REWARDS.put(5, Arrays.asList(new ItemHolder(5140, 1)));
 		REWARDS.put(8, Arrays.asList(new ItemHolder(735, 1), new ItemHolder(57, 50)));
 		REWARDS.put(11, Arrays.asList(new ItemHolder(737, 1)));
 		REWARDS.put(14, Arrays.asList(new ItemHolder(734, 1)));

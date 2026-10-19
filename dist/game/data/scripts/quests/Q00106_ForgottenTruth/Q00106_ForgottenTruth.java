@@ -68,9 +68,6 @@ public class Q00106_ForgottenTruth extends Quest
 		new ItemHolder(4415, 10), // Echo Crystal - Theme of Feast
 		new ItemHolder(4416, 10), // Echo Crystal - Theme of Celebration
 	};
-	private static final ItemHolder SPIRITSHOTS_NO_GRADE_FOR_ROOKIES = new ItemHolder(5790, 3000);
-	private static final ItemHolder SOULSHOTS_NO_GRADE = new ItemHolder(1835, 1000);
-	private static final ItemHolder SPIRITSHOTS_NO_GRADE = new ItemHolder(2509, 500);
 	
 	// Misc
 	private static final int MIN_LEVEL = 10;
@@ -168,21 +165,6 @@ public class Q00106_ForgottenTruth extends Quest
 						}
 						else if (qs.isCond(4) && hasQuestItems(talker, KARTAS_TRANSLATION))
 						{
-							if ((talker.getLevel() < 25) && talker.isMageClass())
-							{
-								giveItems(talker, SPIRITSHOTS_NO_GRADE_FOR_ROOKIES);
-								playSound(talker, "tutorial_voice_027");
-							}
-							
-							if (!talker.isMageClass())
-							{
-								giveItems(talker, SOULSHOTS_NO_GRADE);
-							}
-							else
-							{
-								giveItems(talker, SPIRITSHOTS_NO_GRADE);
-							}
-							
 							for (ItemHolder reward : REWARDS)
 							{
 								giveItems(talker, reward);

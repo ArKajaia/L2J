@@ -4,15 +4,6 @@
 		<npc>31756</npc> <!-- Mr. Cat -->
 	</npcs>
 	<item id="6901" price="400000" /> <!-- Recipe: Shining Arrow (100%) -->
-	<item id="5282" price="900000" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
-	<item id="5272" price="900000" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
-	<item id="5277" price="900000" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
-	<item id="3957" price="900000" /> <!-- Recipe: Blessed Spiritshot S -->
-	<item id="5167" price="900000" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
-	<item id="5157" price="900000" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
-	<item id="5162" price="900000" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
-	<item id="1808" price="900000" /> <!-- Recipe: Soulshot (S-Grade) -->
-	<item id="3036" price="900000" /> <!-- Recipe: Spiritshot S -->
 	<item id="6887" price="1952000" /> <!-- Recipe: Angel Slayer (60%) -->
 	<item id="6888" price="1952000" /> <!-- Recipe: Angel Slayer (100%) -->
 	<item id="6899" price="1952000" /> <!-- Recipe: Arcana Mace (60%) -->

@@ -236,7 +236,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5157" min="1" max="1" chance="0.3808" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				<item id="5534" min="1" max="1" chance="2.3519" /> <!-- Soul Bow Stave -->
 				<item id="4044" min="1" max="1" chance="28.5564" /> <!-- Thons -->
 			</spoil>
@@ -316,7 +315,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5157" min="1" max="1" chance="0.4395" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				<item id="5534" min="1" max="1" chance="2.7147" /> <!-- Soul Bow Stave -->
 				<item id="4044" min="1" max="1" chance="32.9609" /> <!-- Thons -->
 			</spoil>
@@ -402,7 +400,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5167" min="1" max="1" chance="0.5086" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 				<item id="5515" min="1" max="1" chance="19.3288" /> <!-- Sealed Majestic Gauntlets Design -->
 				<item id="6901" min="1" max="1" chance="1.1445" /> <!-- Recipe: Shining Arrow (100%) -->
 			</spoil>
@@ -486,7 +483,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5167" min="1" max="1" chance="0.3634" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 				<item id="5515" min="1" max="1" chance="13.8112" /> <!-- Sealed Majestic Gauntlets Design -->
 				<item id="6901" min="1" max="1" chance="0.8178" /> <!-- Recipe: Shining Arrow (100%) -->
 			</spoil>
@@ -580,7 +576,6 @@
 			</drop>
 			<spoil>
 				<item id="5523" min="1" max="1" chance="3.7932" /> <!-- Sealed Majestic Plate Armor Pattern -->
-				<item id="5277" min="1" max="1" chance="0.495" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 				<item id="5527" min="1" max="1" chance="13.317" /> <!-- Sealed Helm of Nightmare Design -->
 			</spoil>
 		</dropLists>
@@ -668,7 +663,6 @@
 			</drop>
 			<spoil>
 				<item id="5523" min="1" max="1" chance="2.4314" /> <!-- Sealed Majestic Plate Armor Pattern -->
-				<item id="5277" min="1" max="1" chance="0.3173" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 				<item id="5527" min="1" max="1" chance="8.5361" /> <!-- Sealed Helm of Nightmare Design -->
 			</spoil>
 		</dropLists>
@@ -755,7 +749,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5282" min="1" max="1" chance="0.4677" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 				<item id="5529" min="1" max="1" chance="2.8873" /> <!-- Dragon Slayer Edge -->
 				<item id="6901" min="1" max="1" chance="1.0524" /> <!-- Recipe: Shining Arrow (100%) -->
 			</spoil>
@@ -845,7 +838,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5282" min="1" max="1" chance="0.5231" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 				<item id="5529" min="1" max="1" chance="3.2288" /> <!-- Dragon Slayer Edge -->
 				<item id="6901" min="1" max="1" chance="1.1769" /> <!-- Recipe: Shining Arrow (100%) -->
 			</spoil>
@@ -943,7 +935,6 @@
 			</drop>
 			<spoil>
 				<item id="5538" min="1" max="1" chance="2.9251" /> <!-- Dragon Grinder Edge -->
-				<item id="5282" min="1" max="1" chance="0.474" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 				<item id="5541" min="1" max="1" chance="2.9245" /> <!-- Tallum Glaive Edge -->
 			</spoil>
 		</dropLists>
@@ -1028,7 +1019,6 @@
 			</drop>
 			<spoil>
 				<item id="5538" min="1" max="1" chance="2.3844" /> <!-- Dragon Grinder Edge -->
-				<item id="5282" min="1" max="1" chance="0.3864" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 				<item id="5541" min="1" max="1" chance="2.3839" /> <!-- Tallum Glaive Edge -->
 			</spoil>
 		</dropLists>
@@ -1122,7 +1112,6 @@
 			<spoil>
 				<item id="1876" min="1" max="5" chance="92.4871" /> <!-- Mithril Ore -->
 				<item id="5545" min="1" max="1" chance="3.8061" /> <!-- Dark Legion's Edge Blade -->
-				<item id="1808" min="1" max="1" chance="0.6166" /> <!-- Recipe: Soulshot (S-Grade) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -1214,7 +1203,6 @@
 			<spoil>
 				<item id="1876" min="1" max="5" chance="71.1201" /> <!-- Mithril Ore -->
 				<item id="5545" min="1" max="1" chance="2.9268" /> <!-- Dark Legion's Edge Blade -->
-				<item id="1808" min="1" max="1" chance="0.4741" /> <!-- Recipe: Soulshot (S-Grade) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -1643,7 +1631,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="3036" min="1" max="1" chance="0.3947" /> <!-- Recipe: Spiritshot S -->
 				<item id="5528" min="1" max="1" chance="10.618" /> <!-- Sealed Majestic Circlet Design -->
 				<item id="4044" min="1" max="1" chance="29.603" /> <!-- Thons -->
 			</spoil>
@@ -1730,7 +1717,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="3036" min="1" max="1" chance="0.402" /> <!-- Recipe: Spiritshot S -->
 				<item id="5528" min="1" max="1" chance="10.8137" /> <!-- Sealed Majestic Circlet Design -->
 				<item id="4044" min="1" max="1" chance="30.1486" /> <!-- Thons -->
 			</spoil>
@@ -1828,7 +1814,6 @@
 			</drop>
 			<spoil>
 				<item id="5533" min="1" max="1" chance="3.0317" /> <!-- Elysian Head -->
-				<item id="5157" min="1" max="1" chance="0.4912" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				<item id="5534" min="1" max="1" chance="3.0344" /> <!-- Soul Bow Stave -->
 			</spoil>
 		</dropLists>
@@ -1913,7 +1898,6 @@
 			</drop>
 			<spoil>
 				<item id="5533" min="1" max="1" chance="2.8459" /> <!-- Elysian Head -->
-				<item id="5157" min="1" max="1" chance="0.4611" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				<item id="5534" min="1" max="1" chance="2.8484" /> <!-- Soul Bow Stave -->
 			</spoil>
 		</dropLists>
@@ -2003,9 +1987,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5162" min="1" max="1" chance="0.529" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				<item id="5538" min="1" max="1" chance="3.2647" /> <!-- Dragon Grinder Edge -->
-				<item id="5167" min="1" max="1" chance="0.529" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -2087,9 +2069,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5162" min="1" max="1" chance="0.5608" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				<item id="5538" min="1" max="1" chance="3.4609" /> <!-- Dragon Grinder Edge -->
-				<item id="5167" min="1" max="1" chance="0.5608" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -2178,7 +2158,6 @@
 			</drop>
 			<spoil>
 				<item id="5544" min="1" max="1" chance="4.3821" /> <!-- Branch of the Mother Tree Head -->
-				<item id="5272" min="1" max="1" chance="0.7107" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				<item id="5545" min="1" max="1" chance="4.3872" /> <!-- Dark Legion's Edge Blade -->
 			</spoil>
 		</dropLists>
@@ -2268,7 +2247,6 @@
 			</drop>
 			<spoil>
 				<item id="5544" min="1" max="1" chance="4.4556" /> <!-- Branch of the Mother Tree Head -->
-				<item id="5272" min="1" max="1" chance="0.7227" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				<item id="5545" min="1" max="1" chance="4.4609" /> <!-- Dark Legion's Edge Blade -->
 			</spoil>
 		</dropLists>
@@ -2865,7 +2843,6 @@
 			</drop>
 			<spoil>
 				<item id="5534" min="1" max="1" chance="4.7043" /> <!-- Soul Bow Stave -->
-				<item id="1808" min="1" max="1" chance="0.7616" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="5537" min="1" max="1" chance="4.7011" /> <!-- Soul Separator Head -->
 			</spoil>
 		</dropLists>
@@ -2947,7 +2924,6 @@
 			</drop>
 			<spoil>
 				<item id="5538" min="1" max="1" chance="4.5528" /> <!-- Dragon Grinder Edge -->
-				<item id="5167" min="1" max="1" chance="0.7377" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 				<item id="5541" min="1" max="1" chance="4.5519" /> <!-- Tallum Glaive Edge -->
 			</spoil>
 		</dropLists>
@@ -3035,7 +3011,6 @@
 			<spoil>
 				<item id="1877" min="1" max="3" chance="63.1579" /> <!-- Adamantite Nugget -->
 				<item id="6342" min="1" max="1" chance="71.5346" /> <!-- Sealed Majestic Earring Gemstone -->
-				<item id="5282" min="1" max="1" chance="1.4035" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -3112,7 +3087,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="3036" min="1" max="1" chance="0.9095" /> <!-- Recipe: Spiritshot S -->
 				<item id="5538" min="1" max="1" chance="5.613" /> <!-- Dragon Grinder Edge -->
 				<item id="1877" min="1" max="1" chance="81.8535" /> <!-- Adamantite Nugget -->
 			</spoil>
@@ -3190,7 +3164,6 @@
 			<spoil>
 				<item id="1894" min="1" max="1" chance="74.4816" /> <!-- Crafted Leather -->
 				<item id="5541" min="1" max="1" chance="5.8213" /> <!-- Tallum Glaive Edge -->
-				<item id="3957" min="1" max="1" chance="0.9434" /> <!-- Recipe: Blessed Spiritshot S -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -3447,7 +3420,6 @@
 			</drop>
 			<spoil>
 				<item id="4116" min="1" max="1" chance="0.2781" /> <!-- Deadman's Glory Stone -->
-				<item id="5276" min="1" max="1" chance="0.0848" /> <!-- Recipe: Greater Spiritshot (A) Compressed Package(100%) -->
 				<item id="4117" min="1" max="1" chance="0.2781" /> <!-- Art of Battle Axe Blade -->
 			</spoil>
 		</dropLists>
@@ -3800,7 +3772,6 @@
 					<item id="1881" min="1" max="1" chance="3.0848" /> <!-- Coarse Bone Powder -->
 					<item id="1875" min="1" max="1" chance="1.5424" /> <!-- Stone of Purity -->
 					<item id="4041" min="1" max="1" chance="0.2012" /> <!-- Mold Hardener -->
-					<item id="5156" min="1" max="1" chance="0.0308" /> <!-- Recipe: Soulshot (A) Compressed Package (100%) -->
 					<item id="8729" min="1" max="1" chance="0.3085" /> <!-- Life Stone - Level 64 -->
 					<item id="8739" min="1" max="1" chance="0.0771" /> <!-- Mid-Grade Life Stone - Level 64 -->
 					<item id="8749" min="1" max="1" chance="0.0077" /> <!-- High-Grade Life Stone - Level 64 -->
@@ -3841,7 +3812,6 @@
 			</drop>
 			<spoil>
 				<item id="4077" min="1" max="1" chance="12.9349" /> <!-- Doom Shield Fragment -->
-				<item id="3956" min="1" max="1" chance="0.3834" /> <!-- Recipe: Blessed Spiritshot A -->
 				<item id="4078" min="1" max="1" chance="4.2002" /> <!-- Blue Wolf Breastplate Part -->
 			</spoil>
 		</dropLists>
@@ -3915,7 +3885,6 @@
 					<item id="1881" min="1" max="1" chance="3.0848" /> <!-- Coarse Bone Powder -->
 					<item id="1875" min="1" max="1" chance="1.5424" /> <!-- Stone of Purity -->
 					<item id="4041" min="1" max="1" chance="0.2012" /> <!-- Mold Hardener -->
-					<item id="5156" min="1" max="1" chance="0.0308" /> <!-- Recipe: Soulshot (A) Compressed Package (100%) -->
 					<item id="8729" min="1" max="1" chance="0.3085" /> <!-- Life Stone - Level 64 -->
 					<item id="8739" min="1" max="1" chance="0.0771" /> <!-- Mid-Grade Life Stone - Level 64 -->
 					<item id="8749" min="1" max="1" chance="0.0077" /> <!-- High-Grade Life Stone - Level 64 -->
@@ -3956,7 +3925,6 @@
 			</drop>
 			<spoil>
 				<item id="4077" min="1" max="1" chance="10.8697" /> <!-- Doom Shield Fragment -->
-				<item id="3956" min="1" max="1" chance="0.3222" /> <!-- Recipe: Blessed Spiritshot A -->
 				<item id="4078" min="1" max="1" chance="3.5296" /> <!-- Blue Wolf Breastplate Part -->
 			</spoil>
 		</dropLists>
@@ -4311,7 +4279,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5281" min="1" max="1" chance="0.4242" /> <!-- Recipe: Greater Blessed Spiritshot (A) Compressed Package(100%) -->
 				<item id="4118" min="1" max="1" chance="1.3173" /> <!-- Evil Spirit Head -->
 				<item id="4052" min="1" max="1" chance="11.2651" /> <!-- Earring of Black Ore Piece -->
 			</spoil>
@@ -4425,7 +4392,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5281" min="1" max="1" chance="0.5348" /> <!-- Recipe: Greater Blessed Spiritshot (A) Compressed Package(100%) -->
 				<item id="4118" min="1" max="1" chance="1.6605" /> <!-- Evil Spirit Head -->
 			</spoil>
 		</dropLists>
@@ -4794,7 +4760,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="1807" min="1" max="1" chance="0.1522" /> <!-- Recipe: Soulshot (A-Grade) -->
 				<item id="4080" min="1" max="1" chance="2.3474" /> <!-- Blue Wolf Gaiters Material -->
 				<item id="4041" min="1" max="1" chance="0.9924" /> <!-- Mold Hardener -->
 			</spoil>
@@ -4903,7 +4868,6 @@
 			<spoil>
 				<item id="1875" min="1" max="1" chance="16.4372" /> <!-- Stone of Purity -->
 				<item id="4081" min="1" max="1" chance="2.4301" /> <!-- Doom Plate Armor Temper -->
-				<item id="3035" min="1" max="1" chance="0.3287" /> <!-- Recipe: Spiritshot A -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -5010,7 +4974,6 @@
 			</drop>
 			<spoil>
 				<item id="4082" min="1" max="1" chance="2.3411" /> <!-- Blue Wolf Leather Armor Texture -->
-				<item id="3956" min="1" max="1" chance="0.2763" /> <!-- Recipe: Blessed Spiritshot A -->
 				<item id="4083" min="1" max="1" chance="2.3411" /> <!-- Leather Armor of Doom Design -->
 			</spoil>
 		</dropLists>
@@ -5224,9 +5187,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5156" min="1" max="1" chance="0.2763" /> <!-- Recipe: Soulshot (A) Compressed Package (100%) -->
 				<item id="4085" min="1" max="1" chance="3.6008" /> <!-- Tunic of Doom Pattern -->
-				<item id="5161" min="1" max="1" chance="0.2763" /> <!-- Recipe: Spiritshot (A) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -5475,7 +5436,6 @@
 			</drop>
 			<spoil>
 				<item id="4087" min="1" max="1" chance="5.951" /> <!-- Stockings of Doom Pattern -->
-				<item id="5166" min="1" max="1" chance="0.3381" /> <!-- Recipe: Blessed Spiritshot (A) Compressed Package (100%) -->
 				<item id="4088" min="1" max="1" chance="9.5843" /> <!-- Blue Wolf Helmet Design -->
 			</spoil>
 		</dropLists>
@@ -5726,7 +5686,6 @@
 			<spoil>
 				<item id="1894" min="1" max="1" chance="8.8983" /> <!-- Crafted Leather -->
 				<item id="4090" min="1" max="1" chance="11.385" /> <!-- Sealed Blue Wolf Boots Design -->
-				<item id="5271" min="1" max="1" chance="0.3381" /> <!-- Recipe: Greater Soulshot (A) Compressed Package(100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -5806,7 +5765,6 @@
 			</drop>
 			<spoil>
 				<item id="4091" min="1" max="1" chance="23.1933" /> <!-- Sealed Doom Gloves Part -->
-				<item id="5276" min="1" max="1" chance="0.6888" /> <!-- Recipe: Greater Spiritshot (A) Compressed Package(100%) -->
 				<item id="4096" min="1" max="1" chance="23.1933" /> <!-- Sealed Blue Wolf Gloves Fabric -->
 			</spoil>
 		</dropLists>
@@ -5968,7 +5926,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5281" min="1" max="1" chance="0.6888" /> <!-- Recipe: Greater Blessed Spiritshot (A) Compressed Package(100%) -->
 				<item id="4114" min="1" max="1" chance="2.2614" /> <!-- Sword of Damascus Blade -->
 				<item id="5438" min="1" max="1" chance="0.2823" /> <!-- Recipe: Meteor Shower(60%) -->
 			</spoil>
@@ -6737,9 +6694,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5156" min="1" max="1" chance="0.1625" /> <!-- Recipe: Soulshot (A) Compressed Package (100%) -->
 				<item id="4114" min="1" max="1" chance="0.5334" /> <!-- Sword of Damascus Blade -->
-				<item id="5161" min="1" max="1" chance="0.1625" /> <!-- Recipe: Spiritshot (A) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -6953,7 +6908,6 @@
 			</drop>
 			<spoil>
 				<item id="4116" min="1" max="1" chance="0.9668" /> <!-- Deadman's Glory Stone -->
-				<item id="5166" min="1" max="1" chance="0.295" /> <!-- Recipe: Blessed Spiritshot (A) Compressed Package (100%) -->
 				<item id="4117" min="1" max="1" chance="0.9668" /> <!-- Art of Battle Axe Blade -->
 			</spoil>
 		</dropLists>
@@ -7169,7 +7123,6 @@
 			<spoil>
 				<item id="4039" min="1" max="1" chance="7.3747" /> <!-- Mold Glue -->
 				<item id="4119" min="1" max="1" chance="0.9684" /> <!-- Demon's Dagger Edge -->
-				<item id="5271" min="1" max="1" chance="0.295" /> <!-- Recipe: Greater Soulshot (A) Compressed Package(100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -7295,7 +7248,6 @@
 			</drop>
 			<spoil>
 				<item id="4120" min="1" max="1" chance="1.4081" /> <!-- Bellion Cestus Edge -->
-				<item id="5276" min="1" max="1" chance="0.4296" /> <!-- Recipe: Greater Spiritshot (A) Compressed Package(100%) -->
 				<item id="4121" min="1" max="1" chance="1.4034" /> <!-- Bow of Peril Shaft -->
 			</spoil>
 		</dropLists>
@@ -7546,7 +7498,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5281" min="1" max="1" chance="0.4296" /> <!-- Recipe: Greater Blessed Spiritshot (A) Compressed Package(100%) -->
 				<item id="4053" min="1" max="1" chance="13.8121" /> <!-- Ring of Black Ore Gemstone -->
 				<item id="5438" min="1" max="1" chance="0.1761" /> <!-- Recipe: Meteor Shower(60%) -->
 			</spoil>

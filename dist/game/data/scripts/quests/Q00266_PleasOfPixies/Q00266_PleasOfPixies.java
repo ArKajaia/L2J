@@ -56,7 +56,7 @@ public class Q00266_PleasOfPixies extends Quest
 	private static final Map<Integer, List<ItemHolder>> REWARDS = new HashMap<>();
 	static
 	{
-		REWARDS.put(0, Arrays.asList(new ItemHolder(1337, 1), new ItemHolder(3032, 1))); // Emerald, Recipe: Spiritshot D
+		REWARDS.put(0, Arrays.asList(new ItemHolder(1337, 1))); // Emerald
 		REWARDS.put(1, Arrays.asList(new ItemHolder(2176, 1), new ItemHolder(1338, 1))); // Recipe: Leather Boots, Blue Onyx
 		REWARDS.put(2, Arrays.asList(new ItemHolder(1339, 1), new ItemHolder(1061, 1))); // Onyx, Greater Healing Potion
 		REWARDS.put(3, Arrays.asList(new ItemHolder(1336, 1), new ItemHolder(1060, 1))); // Glass Shard, Lesser Healing Potion

@@ -205,7 +205,6 @@
 			</drop>
 			<spoil>
 				<item id="2014" min="1" max="1" chance="0.301" /> <!-- Iron Hammer Head -->
-				<item id="5163" min="1" max="1" chance="1.0474" /> <!-- Recipe: Blessed Spiritshot (D) Compressed Package (100%) -->
 				<item id="1898" min="1" max="1" chance="2.6897" /> <!-- Blue Diamond Necklace Gem -->
 			</spoil>
 		</dropLists>
@@ -278,7 +277,6 @@
 					<item id="1880" min="1" max="1" chance="6.6865" /> <!-- Steel -->
 					<item id="1881" min="1" max="1" chance="8.9153" /> <!-- Coarse Bone Powder -->
 					<item id="1882" min="1" max="1" chance="14.8588" /> <!-- Leather -->
-					<item id="3032" min="1" max="1" chance="2.6746" /> <!-- Recipe: Spiritshot D -->
 				</group>
 				<group chance="42.0">
 					<item id="8600" min="1" max="1" chance="55" /> <!-- Herb of Life -->
@@ -315,7 +313,6 @@
 			<spoil>
 				<item id="1864" min="1" max="1" chance="36.6638" /> <!-- Stem -->
 				<item id="1928" min="1" max="1" chance="2.6703" /> <!-- Piece Bone Gaiters Fragment -->
-				<item id="1804" min="1" max="1" chance="0.7333" /> <!-- Recipe: Soulshot (D-Grade) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -724,7 +721,6 @@
 					<item id="1872" min="1" max="1" chance="26.2123" /> <!-- Animal Bone -->
 					<item id="1867" min="1" max="1" chance="26.2123" /> <!-- Animal Skin -->
 					<item id="1881" min="1" max="1" chance="2.6212" /> <!-- Coarse Bone Powder -->
-					<item id="5273" min="1" max="1" chance="0.7864" /> <!-- Recipe: Greater Spiritshot (D) Compressed Package(100%) -->
 					<item id="8294" min="1" max="1" chance="0.4807" /> <!-- Recipe: Steel Sword (100%) -->
 					<item id="1060" min="1" max="1" chance="43.6871" /> <!-- Lesser Healing Potion -->
 				</group>
@@ -2045,13 +2041,11 @@
 					<item id="1885" min="1" max="1" chance="4.5554" /> <!-- High-Grade Suede -->
 					<item id="2307" min="1" max="1" chance="0.2387" /> <!-- Recipe: Heavy Doom Axe -->
 					<item id="2205" min="1" max="1" chance="1.7299" /> <!-- Recipe: Chain Gaiters -->
-					<item id="5164" min="1" max="1" chance="0.1821" /> <!-- Recipe: Blessed Spiritshot (C) Compressed Package (100%) -->
 				</group>
 			</drop>
 			<spoil>
 				<item id="4480" min="1" max="1" chance="0.5103" /> <!-- Dye of WIT <Wit+1 Men-1> -->
 				<item id="2054" min="1" max="1" chance="0.7601" /> <!-- Light Crossbow Shaft -->
-				<item id="1805" min="1" max="1" chance="0.2977" /> <!-- Recipe: Soulshot (C-Grade) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -2929,7 +2923,6 @@
 			<spoil>
 				<item id="4967" min="1" max="1" chance="0.1726" /> <!-- Recipe: Sword of Valhalla (60%) -->
 				<item id="4938" min="1" max="1" chance="3.708" /> <!-- Recipe: Adamantite Ring (70%) -->
-				<item id="1806" min="1" max="1" chance="0.2996" /> <!-- Recipe: Soulshot (B-Grade) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -3273,8 +3266,6 @@
 					<item id="1882" min="1" max="1" chance="7.4674" /> <!-- Leather -->
 					<item id="1894" min="1" max="1" chance="1.1791" /> <!-- Crafted Leather -->
 					<item id="4042" min="1" max="1" chance="0.5601" /> <!-- Enria -->
-					<item id="1806" min="1" max="1" chance="0.0672" /> <!-- Recipe: Soulshot (B-Grade) -->
-					<item id="5270" min="1" max="1" chance="0.0672" /> <!-- Recipe: Greater Soulshot (B) Compressed Package(100%) -->
 					<item id="5436" min="1" max="1" chance="0.0548" /> <!-- Recipe: Berserker Blade(100%) -->
 					<item id="8726" min="1" max="1" chance="0.7779" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.1945" /> <!-- Mid-Grade Life Stone - Level 55 -->
@@ -3284,7 +3275,6 @@
 			</drop>
 			<spoil>
 				<item id="1918" min="1" max="1" chance="4.3851" /> <!-- Nassen's Earring Gemstone -->
-				<item id="1806" min="1" max="1" chance="0.2025" /> <!-- Recipe: Soulshot (B-Grade) -->
 				<item id="1920" min="1" max="1" chance="3.4646" /> <!-- Necklace of Seal Chain -->
 			</spoil>
 		</dropLists>
@@ -3361,7 +3351,6 @@
 					<item id="1889" min="1" max="1" chance="2.5203" /> <!-- Compound Braid -->
 					<item id="4044" min="1" max="1" chance="1.2602" /> <!-- Thons -->
 					<item id="4128" min="1" max="1" chance="0.4679" /> <!-- Recipe: Adamantite Necklace (100%) -->
-					<item id="5275" min="1" max="1" chance="0.0756" /> <!-- Recipe: Greater Spiritshot (B) Compressed Package(100%) -->
 					<item id="4187" min="1" max="1" chance="0.0436" /> <!-- Recipe: Kris (100%) -->
 					<item id="8726" min="1" max="1" chance="0.8751" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.2188" /> <!-- Mid-Grade Life Stone - Level 55 -->
@@ -3370,7 +3359,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="3034" min="1" max="1" chance="0.367" /> <!-- Recipe: Spiritshot B -->
 				<item id="1984" min="1" max="1" chance="3.9333" /> <!-- Theca Leather Armor Pattern -->
 				<item id="4044" min="1" max="1" chance="6.1163" /> <!-- Thons -->
 			</spoil>
@@ -3637,7 +3625,6 @@
 					<item id="4043" min="1" max="1" chance="1.3063" /> <!-- Asofe -->
 					<item id="4039" min="1" max="1" chance="1.3063" /> <!-- Mold Glue -->
 					<item id="1830" min="1" max="1" chance="15.6756" /> <!-- Scroll of Escape: Castle -->
-					<item id="5276" min="1" max="1" chance="0.0523" /> <!-- Recipe: Greater Spiritshot (A) Compressed Package(100%) -->
 					<item id="8729" min="1" max="1" chance="0.5225" /> <!-- Life Stone - Level 64 -->
 					<item id="8739" min="1" max="1" chance="0.1306" /> <!-- Mid-Grade Life Stone - Level 64 -->
 					<item id="8749" min="1" max="1" chance="0.0131" /> <!-- High-Grade Life Stone - Level 64 -->
@@ -3729,7 +3716,6 @@
 					<item id="5220" min="1" max="1" chance="1.942" /> <!-- Metal Hardener -->
 					<item id="4175" min="1" max="1" chance="0.9355" /> <!-- Recipe: Sealed Avadon Boots (100%) -->
 					<item id="2508" min="1" max="1" chance="40.4586" /> <!-- Cursed Bone -->
-					<item id="3956" min="1" max="1" chance="0.0647" /> <!-- Recipe: Blessed Spiritshot A -->
 					<item id="8729" min="1" max="1" chance="0.6473" /> <!-- Life Stone - Level 64 -->
 					<item id="8739" min="1" max="1" chance="0.1618" /> <!-- Mid-Grade Life Stone - Level 64 -->
 					<item id="8749" min="1" max="1" chance="0.0162" /> <!-- High-Grade Life Stone - Level 64 -->
@@ -3821,7 +3807,6 @@
 					<item id="4041" min="1" max="1" chance="0.2555" /> <!-- Mold Hardener -->
 					<item id="4040" min="1" max="1" chance="0.5876" /> <!-- Mold Lubricant -->
 					<item id="1830" min="1" max="1" chance="11.7517" /> <!-- Scroll of Escape: Castle -->
-					<item id="5276" min="1" max="1" chance="0.0392" /> <!-- Recipe: Greater Spiritshot (A) Compressed Package(100%) -->
 					<item id="8729" min="1" max="1" chance="0.3917" /> <!-- Life Stone - Level 64 -->
 					<item id="8739" min="1" max="1" chance="0.0979" /> <!-- Mid-Grade Life Stone - Level 64 -->
 					<item id="8749" min="1" max="1" chance="0.0098" /> <!-- High-Grade Life Stone - Level 64 -->
@@ -3912,7 +3897,6 @@
 					<item id="1881" min="1" max="1" chance="4.6121" /> <!-- Coarse Bone Powder -->
 					<item id="1875" min="1" max="1" chance="2.3061" /> <!-- Stone of Purity -->
 					<item id="4041" min="1" max="1" chance="0.3008" /> <!-- Mold Hardener -->
-					<item id="5156" min="1" max="1" chance="0.0461" /> <!-- Recipe: Soulshot (A) Compressed Package (100%) -->
 					<item id="8730" min="1" max="1" chance="0.3843" /> <!-- Life Stone - Level 67 -->
 					<item id="8740" min="1" max="1" chance="0.0961" /> <!-- Mid-Grade Life Stone - Level 67 -->
 					<item id="8750" min="1" max="1" chance="0.0096" /> <!-- High-Grade Life Stone - Level 67 -->
@@ -3921,8 +3905,6 @@
 			</drop>
 			<spoil>
 				<item id="5478" min="1" max="1" chance="1.5776" /> <!-- Sealed Dark Crystal Leather Armor Pattern -->
-				<item id="1807" min="1" max="1" chance="0.2501" /> <!-- Recipe: Soulshot (A-Grade) -->
-				<item id="1807" min="1" max="1" chance="0.2501" /> <!-- Recipe: Soulshot (A-Grade) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -4006,7 +3988,6 @@
 					<item id="4041" min="1" max="1" chance="0.4912" /> <!-- Mold Hardener -->
 					<item id="4040" min="1" max="1" chance="1.1298" /> <!-- Mold Lubricant -->
 					<item id="4953" min="1" max="1" chance="1.0885" /> <!-- Recipe: Sealed Avadon Gloves (60%) -->
-					<item id="5281" min="1" max="1" chance="0.0753" /> <!-- Recipe: Greater Blessed Spiritshot (A) Compressed Package(100%) -->
 					<item id="8730" min="1" max="1" chance="0.6277" /> <!-- Life Stone - Level 67 -->
 					<item id="8740" min="1" max="1" chance="0.1569" /> <!-- Mid-Grade Life Stone - Level 67 -->
 					<item id="8750" min="1" max="1" chance="0.0157" /> <!-- High-Grade Life Stone - Level 67 -->
@@ -4016,7 +3997,6 @@
 			<spoil>
 				<item id="4054" min="1" max="1" chance="5.9502" /> <!-- Necklace of Black Ore Beads -->
 				<item id="5478" min="1" max="1" chance="2.5403" /> <!-- Sealed Dark Crystal Leather Armor Pattern -->
-				<item id="1807" min="1" max="1" chance="0.4028" /> <!-- Recipe: Soulshot (A-Grade) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -4091,7 +4071,6 @@
 					<item id="1895" min="1" max="1" chance="6.5671" /> <!-- Metallic Fiber -->
 					<item id="4042" min="1" max="1" chance="0.3831" /> <!-- Enria -->
 					<item id="5230" min="1" max="1" chance="0.0306" /> <!-- Recipe: Mithril Arrow (100%) -->
-					<item id="5276" min="1" max="1" chance="0.0306" /> <!-- Recipe: Greater Spiritshot (A) Compressed Package(100%) -->
 					<item id="8729" min="1" max="1" chance="0.3065" /> <!-- Life Stone - Level 64 -->
 					<item id="8739" min="1" max="1" chance="0.0766" /> <!-- Mid-Grade Life Stone - Level 64 -->
 					<item id="8749" min="1" max="1" chance="0.0077" /> <!-- High-Grade Life Stone - Level 64 -->
@@ -4184,7 +4163,6 @@
 					<item id="1884" min="1" max="1" chance="15.1244" /> <!-- Cord -->
 					<item id="4039" min="1" max="1" chance="0.8192" /> <!-- Mold Glue -->
 					<item id="5230" min="1" max="1" chance="0.0328" /> <!-- Recipe: Mithril Arrow (100%) -->
-					<item id="3956" min="1" max="1" chance="0.0328" /> <!-- Recipe: Blessed Spiritshot A -->
 					<item id="8326" min="1" max="1" chance="0.0091" /> <!-- Recipe: Doom Crusher (60%) -->
 					<item id="8729" min="1" max="1" chance="0.3277" /> <!-- Life Stone - Level 64 -->
 					<item id="8739" min="1" max="1" chance="0.0819" /> <!-- Mid-Grade Life Stone - Level 64 -->
@@ -4274,7 +4252,6 @@
 					<item id="1875" min="1" max="1" chance="2.9324" /> <!-- Stone of Purity -->
 					<item id="4040" min="1" max="1" chance="0.8797" /> <!-- Mold Lubricant -->
 					<item id="5230" min="1" max="1" chance="0.0586" /> <!-- Recipe: Mithril Arrow (100%) -->
-					<item id="3956" min="1" max="1" chance="0.0586" /> <!-- Recipe: Blessed Spiritshot A -->
 					<item id="8326" min="1" max="1" chance="0.0163" /> <!-- Recipe: Doom Crusher (60%) -->
 					<item id="8729" min="1" max="1" chance="0.5865" /> <!-- Life Stone - Level 64 -->
 					<item id="8739" min="1" max="1" chance="0.1466" /> <!-- Mid-Grade Life Stone - Level 64 -->
@@ -4744,7 +4721,6 @@
 			</drop>
 			<spoil>
 				<item id="5485" min="1" max="1" chance="5.3992" /> <!-- Sealed Tallum Tunic Texture -->
-				<item id="5156" min="1" max="1" chance="0.8561" /> <!-- Recipe: Soulshot (A) Compressed Package (100%) -->
 				<item id="4041" min="1" max="1" chance="5.5832" /> <!-- Mold Hardener -->
 			</spoil>
 		</dropLists>
@@ -4965,7 +4941,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5161" min="1" max="1" chance="1.3821" /> <!-- Recipe: Spiritshot (A) Compressed Package (100%) -->
 				<item id="5487" min="1" max="1" chance="4.6678" /> <!-- Sealed Robe of Nightmare Fabric -->
 				<item id="729" min="1" max="1" chance="0.1152" /> <!-- Scroll: Enchant Weapon (A-Grade) -->
 			</spoil>
@@ -5411,7 +5386,6 @@
 			</drop>
 			<spoil>
 				<item id="4078" min="1" max="1" chance="12.8365" /> <!-- Blue Wolf Breastplate Part -->
-				<item id="5166" min="1" max="1" chance="1.1717" /> <!-- Recipe: Blessed Spiritshot (A) Compressed Package (100%) -->
 				<item id="5496" min="1" max="1" chance="20.6046" /> <!-- Sealed Dark Crystal Boots Lining -->
 			</spoil>
 		</dropLists>
@@ -5609,7 +5583,6 @@
 					<item id="1885" min="1" max="1" chance="3.7587" /> <!-- High-Grade Suede -->
 					<item id="4041" min="1" max="1" chance="0.3922" /> <!-- Mold Hardener -->
 					<item id="1830" min="1" max="1" chance="18.0416" /> <!-- Scroll of Escape: Castle -->
-					<item id="5276" min="1" max="1" chance="0.0601" /> <!-- Recipe: Greater Spiritshot (A) Compressed Package(100%) -->
 					<item id="8729" min="1" max="1" chance="0.6014" /> <!-- Life Stone - Level 64 -->
 					<item id="8739" min="1" max="1" chance="0.1503" /> <!-- Mid-Grade Life Stone - Level 64 -->
 					<item id="8749" min="1" max="1" chance="0.015" /> <!-- High-Grade Life Stone - Level 64 -->
@@ -5724,7 +5697,6 @@
 					<item id="1894" min="1" max="1" chance="0.7995" /> <!-- Crafted Leather -->
 					<item id="4042" min="1" max="1" chance="0.3797" /> <!-- Enria -->
 					<item id="5230" min="1" max="1" chance="0.0304" /> <!-- Recipe: Mithril Arrow (100%) -->
-					<item id="5276" min="1" max="1" chance="0.0304" /> <!-- Recipe: Greater Spiritshot (A) Compressed Package(100%) -->
 					<item id="8729" min="1" max="1" chance="0.3038" /> <!-- Life Stone - Level 64 -->
 					<item id="8739" min="1" max="1" chance="0.0759" /> <!-- Mid-Grade Life Stone - Level 64 -->
 					<item id="8749" min="1" max="1" chance="0.0076" /> <!-- High-Grade Life Stone - Level 64 -->
@@ -5946,7 +5918,6 @@
 					<item id="1889" min="1" max="1" chance="2.2087" /> <!-- Compound Braid -->
 					<item id="4044" min="1" max="1" chance="1.1043" /> <!-- Thons -->
 					<item id="1830" min="1" max="1" chance="13.2521" /> <!-- Scroll of Escape: Castle -->
-					<item id="3956" min="1" max="1" chance="0.0442" /> <!-- Recipe: Blessed Spiritshot A -->
 					<item id="8729" min="1" max="1" chance="0.4417" /> <!-- Life Stone - Level 64 -->
 					<item id="8739" min="1" max="1" chance="0.1104" /> <!-- Mid-Grade Life Stone - Level 64 -->
 					<item id="8749" min="1" max="1" chance="0.011" /> <!-- High-Grade Life Stone - Level 64 -->
@@ -6036,7 +6007,6 @@
 					<item id="5550" min="1" max="1" chance="0.3709" /> <!-- Durable Metal Plate -->
 					<item id="4043" min="1" max="1" chance="0.9272" /> <!-- Asofe -->
 					<item id="5230" min="1" max="1" chance="0.0371" /> <!-- Recipe: Mithril Arrow (100%) -->
-					<item id="5276" min="1" max="1" chance="0.0371" /> <!-- Recipe: Greater Spiritshot (A) Compressed Package(100%) -->
 					<item id="8729" min="1" max="1" chance="0.3709" /> <!-- Life Stone - Level 64 -->
 					<item id="8739" min="1" max="1" chance="0.0927" /> <!-- Mid-Grade Life Stone - Level 64 -->
 					<item id="8749" min="1" max="1" chance="0.0093" /> <!-- High-Grade Life Stone - Level 64 -->
@@ -6502,7 +6472,6 @@
 					<item id="1874" min="1" max="1" chance="3.1008" /> <!-- Oriharukon Ore -->
 					<item id="4043" min="1" max="1" chance="1.5504" /> <!-- Asofe -->
 					<item id="4039" min="1" max="1" chance="1.5504" /> <!-- Mold Glue -->
-					<item id="5156" min="1" max="1" chance="0.062" /> <!-- Recipe: Soulshot (A) Compressed Package (100%) -->
 					<item id="729" min="1" max="1" chance="0.0052" /> <!-- Scroll: Enchant Weapon (A-Grade) -->
 					<item id="5420" min="1" max="1" chance="0.0452" /> <!-- Recipe: Sealed Armor of Nightmare(60%) -->
 					<item id="8730" min="1" max="1" chance="0.5168" /> <!-- Life Stone - Level 67 -->
@@ -6595,7 +6564,6 @@
 					<item id="1877" min="1" max="1" chance="2.3402" /> <!-- Adamantite Nugget -->
 					<item id="4041" min="1" max="1" chance="0.5087" /> <!-- Mold Hardener -->
 					<item id="4040" min="1" max="1" chance="1.1701" /> <!-- Mold Lubricant -->
-					<item id="5161" min="1" max="1" chance="0.078" /> <!-- Recipe: Spiritshot (A) Compressed Package (100%) -->
 					<item id="8730" min="1" max="1" chance="0.6501" /> <!-- Life Stone - Level 67 -->
 					<item id="8740" min="1" max="1" chance="0.1625" /> <!-- Mid-Grade Life Stone - Level 67 -->
 					<item id="8750" min="1" max="1" chance="0.0163" /> <!-- High-Grade Life Stone - Level 67 -->
@@ -6604,9 +6572,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="1807" min="1" max="1" chance="0.8655" /> <!-- Recipe: Soulshot (A-Grade) -->
 				<item id="5479" min="1" max="1" chance="3.841" /> <!-- Sealed Tallum Leather Armor Pattern -->
-				<item id="3035" min="1" max="1" chance="0.8655" /> <!-- Recipe: Spiritshot A -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -6699,7 +6665,6 @@
 			<spoil>
 				<item id="1984" min="1" max="1" chance="9.5413" /> <!-- Theca Leather Armor Pattern -->
 				<item id="4043" min="1" max="1" chance="14.8367" /> <!-- Asofe -->
-				<item id="1806" min="1" max="1" chance="0.8902" /> <!-- Recipe: Soulshot (B-Grade) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -6779,9 +6744,6 @@
 					<item id="1878" min="1" max="1" chance="12.9687" /> <!-- Braided Hemp -->
 					<item id="1884" min="1" max="1" chance="19.9519" /> <!-- Cord -->
 					<item id="4039" min="1" max="1" chance="1.0807" /> <!-- Mold Glue -->
-					<item id="3034" min="1" max="1" chance="0.0648" /> <!-- Recipe: Spiritshot B -->
-					<item id="5270" min="1" max="1" chance="0.0648" /> <!-- Recipe: Greater Soulshot (B) Compressed Package(100%) -->
-					<item id="3955" min="1" max="1" chance="0.0648" /> <!-- Recipe: Blessed Spiritshot B -->
 					<item id="8726" min="1" max="1" chance="0.7505" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.1876" /> <!-- Mid-Grade Life Stone - Level 55 -->
 					<item id="8746" min="1" max="1" chance="0.0188" /> <!-- High-Grade Life Stone - Level 55 -->
@@ -6871,8 +6833,6 @@
 					<item id="1879" min="1" max="1" chance="7.2097" /> <!-- Cokes -->
 					<item id="1875" min="1" max="1" chance="2.8839" /> <!-- Stone of Purity -->
 					<item id="4040" min="1" max="1" chance="0.8652" /> <!-- Mold Lubricant -->
-					<item id="3955" min="1" max="1" chance="0.0865" /> <!-- Recipe: Blessed Spiritshot B -->
-					<item id="5270" min="1" max="1" chance="0.0865" /> <!-- Recipe: Greater Soulshot (B) Compressed Package(100%) -->
 					<item id="4127" min="1" max="1" chance="1.0707" /> <!-- Recipe: Adamantite Ring (100%) -->
 					<item id="8726" min="1" max="1" chance="1.0013" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.2503" /> <!-- Mid-Grade Life Stone - Level 55 -->
@@ -6882,7 +6842,6 @@
 			</drop>
 			<spoil>
 				<item id="1920" min="1" max="1" chance="15.2063" /> <!-- Necklace of Seal Chain -->
-				<item id="1806" min="1" max="1" chance="0.8888" /> <!-- Recipe: Soulshot (B-Grade) -->
 				<item id="1984" min="1" max="1" chance="9.5264" /> <!-- Theca Leather Armor Pattern -->
 			</spoil>
 		</dropLists>
@@ -7973,7 +7932,6 @@
 					<item id="4041" min="1" max="1" chance="0.2786" /> <!-- Mold Hardener -->
 					<item id="4040" min="1" max="1" chance="0.6408" /> <!-- Mold Lubricant -->
 					<item id="2231" min="1" max="1" chance="0.1381" /> <!-- Recipe: Full Plate Armor -->
-					<item id="5155" min="1" max="1" chance="0.0641" /> <!-- Recipe: Soulshot (B) Compressed Package (100%) -->
 					<item id="8725" min="1" max="1" chance="0.8901" /> <!-- Life Stone - Level 52 -->
 					<item id="8735" min="1" max="1" chance="0.2225" /> <!-- Mid-Grade Life Stone - Level 52 -->
 					<item id="8745" min="1" max="1" chance="0.0223" /> <!-- High-Grade Life Stone - Level 52 -->
@@ -8090,9 +8048,6 @@
 					<item id="5549" min="1" max="1" chance="3.7942" /> <!-- Metallic Thread -->
 					<item id="1889" min="1" max="1" chance="2.5294" /> <!-- Compound Braid -->
 					<item id="4044" min="1" max="1" chance="1.2647" /> <!-- Thons -->
-					<item id="1806" min="1" max="1" chance="0.0759" /> <!-- Recipe: Soulshot (B-Grade) -->
-					<item id="5270" min="1" max="1" chance="0.0759" /> <!-- Recipe: Greater Soulshot (B) Compressed Package(100%) -->
-					<item id="5280" min="1" max="1" chance="0.0759" /> <!-- Recipe: Greater Blessed Spiritshot (B) Compressed Package(100%) -->
 					<item id="8726" min="1" max="1" chance="0.8783" /> <!-- Life Stone - Level 55 -->
 					<item id="8736" min="1" max="1" chance="0.2196" /> <!-- Mid-Grade Life Stone - Level 55 -->
 					<item id="8746" min="1" max="1" chance="0.022" /> <!-- High-Grade Life Stone - Level 55 -->

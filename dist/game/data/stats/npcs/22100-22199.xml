@@ -533,7 +533,6 @@
 					<item id="1881" min="1" max="1" chance="10.0092" /> <!-- Coarse Bone Powder -->
 					<item id="1875" min="1" max="1" chance="5.0046" /> <!-- Stone of Purity -->
 					<item id="4041" min="1" max="1" chance="0.6528" /> <!-- Mold Hardener -->
-					<item id="3957" min="1" max="1" chance="0.0334" /> <!-- Recipe: Blessed Spiritshot S -->
 					<item id="8731" min="1" max="1" chance="0.6951" /> <!-- Life Stone - Level 70 -->
 					<item id="8741" min="1" max="1" chance="0.1738" /> <!-- Mid-Grade Life Stone - Level 70 -->
 					<item id="8751" min="1" max="1" chance="0.0174" /> <!-- High-Grade Life Stone - Level 70 -->
@@ -623,7 +622,6 @@
 					<item id="1881" min="1" max="1" chance="8.1073" /> <!-- Coarse Bone Powder -->
 					<item id="1875" min="1" max="1" chance="4.0537" /> <!-- Stone of Purity -->
 					<item id="4041" min="1" max="1" chance="0.5287" /> <!-- Mold Hardener -->
-					<item id="3957" min="1" max="1" chance="0.027" /> <!-- Recipe: Blessed Spiritshot S -->
 					<item id="8731" min="1" max="1" chance="0.563" /> <!-- Life Stone - Level 70 -->
 					<item id="8741" min="1" max="1" chance="0.1408" /> <!-- Mid-Grade Life Stone - Level 70 -->
 					<item id="8751" min="1" max="1" chance="0.0141" /> <!-- High-Grade Life Stone - Level 70 -->
@@ -707,7 +705,6 @@
 					<item id="4039" min="1" max="1" chance="27.1563" /> <!-- Mold Glue -->
 					<item id="4041" min="1" max="1" chance="7.0842" /> <!-- Mold Hardener -->
 					<item id="4044" min="1" max="1" chance="27.1563" /> <!-- Thons -->
-					<item id="3957" min="1" max="1" chance="0.3621" /> <!-- Recipe: Blessed Spiritshot S -->
 					<item id="8731" min="1" max="1" chance="7.5434" /> <!-- Life Stone - Level 70 -->
 					<item id="8741" min="1" max="1" chance="1.8859" /> <!-- Mid-Grade Life Stone - Level 70 -->
 					<item id="8751" min="1" max="1" chance="0.1886" /> <!-- High-Grade Life Stone - Level 70 -->
@@ -1075,7 +1072,6 @@
 					<item id="1874" min="1" max="1" chance="6.8099" /> <!-- Oriharukon Ore -->
 					<item id="4043" min="1" max="1" chance="3.405" /> <!-- Asofe -->
 					<item id="4039" min="1" max="1" chance="3.405" /> <!-- Mold Glue -->
-					<item id="5272" min="1" max="1" chance="0.0454" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 					<item id="8731" min="1" max="1" chance="0.9458" /> <!-- Life Stone - Level 70 -->
 					<item id="8741" min="1" max="1" chance="0.2365" /> <!-- Mid-Grade Life Stone - Level 70 -->
 					<item id="8751" min="1" max="1" chance="0.0236" /> <!-- High-Grade Life Stone - Level 70 -->
@@ -1083,9 +1079,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="1808" min="1" max="1" chance="0.398" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="5480" min="1" max="1" chance="4.0184" /> <!-- Sealed Leather Armor of Nightmare Fabric -->
-				<item id="3036" min="1" max="1" chance="0.398" /> <!-- Recipe: Spiritshot S -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -1260,7 +1254,6 @@
 					<item id="1881" min="1" max="1" chance="17.9961" /> <!-- Coarse Bone Powder -->
 					<item id="1875" min="1" max="1" chance="8.9981" /> <!-- Stone of Purity -->
 					<item id="4041" min="1" max="1" chance="1.1737" /> <!-- Mold Hardener -->
-					<item id="5282" min="1" max="1" chance="0.06" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 					<item id="8731" min="1" max="1" chance="1.2497" /> <!-- Life Stone - Level 70 -->
 					<item id="8741" min="1" max="1" chance="0.3124" /> <!-- Mid-Grade Life Stone - Level 70 -->
 					<item id="8751" min="1" max="1" chance="0.0312" /> <!-- High-Grade Life Stone - Level 70 -->
@@ -1271,7 +1264,6 @@
 			<spoil>
 				<item id="1875" min="1" max="3" chance="47.5374" /> <!-- Stone of Purity -->
 				<item id="5480" min="1" max="1" chance="6.3993" /> <!-- Sealed Leather Armor of Nightmare Fabric -->
-				<item id="3957" min="1" max="1" chance="0.6338" /> <!-- Recipe: Blessed Spiritshot S -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -1355,7 +1347,6 @@
 					<item id="1876" min="1" max="1" chance="16.0255" /> <!-- Mithril Ore -->
 					<item id="1895" min="1" max="1" chance="22.8936" /> <!-- Metallic Fiber -->
 					<item id="4042" min="1" max="1" chance="1.3355" /> <!-- Enria -->
-					<item id="1808" min="1" max="1" chance="0.0356" /> <!-- Recipe: Soulshot (S-Grade) -->
 					<item id="8731" min="1" max="1" chance="0.7419" /> <!-- Life Stone - Level 70 -->
 					<item id="8741" min="1" max="1" chance="0.1855" /> <!-- Mid-Grade Life Stone - Level 70 -->
 					<item id="8751" min="1" max="1" chance="0.0185" /> <!-- High-Grade Life Stone - Level 70 -->
@@ -1364,7 +1355,6 @@
 			</drop>
 			<spoil>
 				<item id="5481" min="1" max="1" chance="4.2968" /> <!-- Sealed Majestic Leather Armor Fabric -->
-				<item id="5157" min="1" max="1" chance="0.4256" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				<item id="5487" min="1" max="1" chance="4.3119" /> <!-- Sealed Robe of Nightmare Fabric -->
 			</spoil>
 		</dropLists>
@@ -1441,7 +1431,6 @@
 					<item id="1881" min="1" max="1" chance="8.1134" /> <!-- Coarse Bone Powder -->
 					<item id="1875" min="1" max="1" chance="4.0567" /> <!-- Stone of Purity -->
 					<item id="4041" min="1" max="1" chance="0.5291" /> <!-- Mold Hardener -->
-					<item id="3036" min="1" max="1" chance="0.027" /> <!-- Recipe: Spiritshot S -->
 					<item id="8732" min="1" max="1" chance="0.5071" /> <!-- Life Stone - Level 76 -->
 					<item id="8742" min="1" max="1" chance="0.1268" /> <!-- Mid-Grade Life Stone - Level 76 -->
 					<item id="8752" min="1" max="1" chance="0.0127" /> <!-- High-Grade Life Stone - Level 76 -->
@@ -1523,16 +1512,13 @@
 					<item id="5220" min="1" max="1" chance="3.054" /> <!-- Metal Hardener -->
 					<item id="1885" min="1" max="1" chance="6.3625" /> <!-- High-Grade Suede -->
 					<item id="4041" min="1" max="1" chance="0.6639" /> <!-- Mold Hardener -->
-					<item id="3957" min="1" max="1" chance="0.0339" /> <!-- Recipe: Blessed Spiritshot S -->
 					<item id="8732" min="1" max="1" chance="0.6362" /> <!-- Life Stone - Level 76 -->
 					<item id="8742" min="1" max="1" chance="0.1591" /> <!-- Mid-Grade Life Stone - Level 76 -->
 					<item id="8752" min="1" max="1" chance="0.0159" /> <!-- High-Grade Life Stone - Level 76 -->
 				</group>
 			</drop>
 			<spoil>
-				<item id="5162" min="1" max="1" chance="0.3604" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				<item id="5495" min="1" max="1" chance="12.3133" /> <!-- Sealed Shield of Nightmare Fragment -->
-				<item id="5167" min="1" max="1" chance="0.3604" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -1604,7 +1590,6 @@
 					<item id="1880" min="1" max="1" chance="9.7618" /> <!-- Steel -->
 					<item id="5550" min="1" max="1" chance="1.3016" /> <!-- Durable Metal Plate -->
 					<item id="4043" min="1" max="1" chance="3.2539" /> <!-- Asofe -->
-					<item id="5157" min="1" max="1" chance="0.0434" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 					<item id="8732" min="1" max="1" chance="0.8135" /> <!-- Life Stone - Level 76 -->
 					<item id="8742" min="1" max="1" chance="0.2034" /> <!-- Mid-Grade Life Stone - Level 76 -->
 					<item id="8752" min="1" max="1" chance="0.0203" /> <!-- High-Grade Life Stone - Level 76 -->
@@ -1705,7 +1690,6 @@
 			</drop>
 			<spoil>
 				<item id="5503" min="1" max="1" chance="19.7084" /> <!-- Sealed Majestic Boots Lining -->
-				<item id="5272" min="1" max="1" chance="0.5186" /> <!-- Recipe: Greater Soulshot (S) Compressed Package(100%) -->
 				<item id="5514" min="1" max="1" chance="19.7084" /> <!-- Sealed Gauntlets of Nightmare Design -->
 			</spoil>
 		</dropLists>
@@ -1796,7 +1780,6 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5277" min="1" max="1" chance="0.3838" /> <!-- Recipe: Greater Spiritshot (S) Compressed Package(100%) -->
 				<item id="5515" min="1" max="1" chance="14.5843" /> <!-- Sealed Majestic Gauntlets Design -->
 				<item id="4042" min="1" max="1" chance="14.3923" /> <!-- Enria -->
 			</spoil>
@@ -1891,7 +1874,6 @@
 			</drop>
 			<spoil>
 				<item id="5522" min="1" max="1" chance="5.6599" /> <!-- Sealed Armor of Nightmare Pattern -->
-				<item id="5282" min="1" max="1" chance="0.7387" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -1975,7 +1957,6 @@
 			</drop>
 			<spoil>
 				<item id="5523" min="1" max="1" chance="2.9268" /> <!-- Sealed Majestic Plate Armor Pattern -->
-				<item id="1808" min="1" max="1" chance="0.382" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="5527" min="1" max="1" chance="10.2753" /> <!-- Sealed Helm of Nightmare Design -->
 			</spoil>
 		</dropLists>
@@ -2146,7 +2127,6 @@
 			</drop>
 			<spoil>
 				<item id="6342" min="1" max="1" chance="26.4323" /> <!-- Sealed Majestic Earring Gemstone -->
-				<item id="5282" min="1" max="1" chance="0.5186" /> <!-- Recipe: Greater Blessed Spiritshot (S) Compressed Package(100%) -->
 				<item id="6344" min="1" max="1" chance="17.1056" /> <!-- Sealed Majestic Necklace Beads -->
 			</spoil>
 		</dropLists>
@@ -2237,7 +2217,6 @@
 			<spoil>
 				<item id="4040" min="1" max="1" chance="18.5092" /> <!-- Mold Lubricant -->
 				<item id="5480" min="1" max="1" chance="4.1527" /> <!-- Sealed Leather Armor of Nightmare Fabric -->
-				<item id="1808" min="1" max="1" chance="0.4113" /> <!-- Recipe: Soulshot (S-Grade) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -2316,7 +2295,6 @@
 			</drop>
 			<spoil>
 				<item id="5481" min="1" max="1" chance="4.1603" /> <!-- Sealed Majestic Leather Armor Fabric -->
-				<item id="3036" min="1" max="1" chance="0.4121" /> <!-- Recipe: Spiritshot S -->
 				<item id="5487" min="1" max="1" chance="4.1751" /> <!-- Sealed Robe of Nightmare Fabric -->
 			</spoil>
 		</dropLists>
@@ -3451,7 +3429,6 @@
 			</drop>
 			<spoil>
 				<item id="5515" min="1" max="1" chance="15.5316" /> <!-- Sealed Majestic Gauntlets Design -->
-				<item id="3957" min="1" max="1" chance="0.4087" /> <!-- Recipe: Blessed Spiritshot S -->
 				<item id="5522" min="1" max="1" chance="3.1318" /> <!-- Sealed Armor of Nightmare Pattern -->
 			</spoil>
 		</dropLists>
@@ -3721,7 +3698,6 @@
 			<spoil>
 				<item id="5220" min="1" max="1" chance="37.27" /> <!-- Metal Hardener -->
 				<item id="5495" min="1" max="1" chance="14.1485" /> <!-- Sealed Shield of Nightmare Fragment -->
-				<item id="3957" min="1" max="1" chance="0.4141" /> <!-- Recipe: Blessed Spiritshot S -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -3819,7 +3795,6 @@
 			</drop>
 			<spoil>
 				<item id="5502" min="1" max="1" chance="18.2996" /> <!-- Sealed Boots of Nightmare Lining -->
-				<item id="5157" min="1" max="1" chance="0.4816" /> <!-- Recipe: Soulshot (S) Compressed Package (100%) -->
 				<item id="5503" min="1" max="1" chance="18.2996" /> <!-- Sealed Majestic Boots Lining -->
 			</spoil>
 		</dropLists>
@@ -3987,9 +3962,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5162" min="1" max="1" chance="0.4026" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				<item id="5515" min="1" max="1" chance="15.2986" /> <!-- Sealed Majestic Gauntlets Design -->
-				<item id="5167" min="1" max="1" chance="0.4026" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>
@@ -4248,7 +4221,6 @@
 			</drop>
 			<spoil>
 				<item id="5480" min="1" max="1" chance="3.5322" /> <!-- Sealed Leather Armor of Nightmare Fabric -->
-				<item id="1808" min="1" max="1" chance="0.3499" /> <!-- Recipe: Soulshot (S-Grade) -->
 				<item id="5481" min="1" max="1" chance="3.5322" /> <!-- Sealed Majestic Leather Armor Fabric -->
 			</spoil>
 		</dropLists>
@@ -7311,9 +7283,7 @@
 				</group>
 			</drop>
 			<spoil>
-				<item id="5162" min="1" max="1" chance="0.4026" /> <!-- Recipe: Spiritshot (S) Compressed Package (100%) -->
 				<item id="5515" min="1" max="1" chance="15.2986" /> <!-- Sealed Majestic Gauntlets Design -->
-				<item id="5167" min="1" max="1" chance="0.4026" /> <!-- Recipe: Blessed Spiritshot (S) Compressed Package (100%) -->
 			</spoil>
 		</dropLists>
 		<collision>

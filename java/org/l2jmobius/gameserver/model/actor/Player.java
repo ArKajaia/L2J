@@ -7751,6 +7751,12 @@ public class Player extends Playable
 				while (rs.next())
 				{
 					recipe = rd.getRecipeList(rs.getInt("id"));
+					if (recipe == null)
+					{
+						// The recipe was removed from Recipes.xml.
+						continue;
+					}
+
 					if (loadCommon)
 					{
 						if (rs.getInt(2) == 1)

@@ -1904,8 +1904,6 @@
 			<item id="6355" min="1" max="1" chance="100" /> <!-- Mage Staff - for Beginners -->
 			<item id="13121" min="1" max="1" chance="100" /> <!-- Purple-Maned Horse 7-Day Pack -->
 			<item id="1060" min="20" max="20" chance="100" /> <!-- Lesser Healing Potion -->
-			<item id="5789" min="1000" max="1000" chance="100" /> <!-- Soulshot: No Grade for Beginners -->
-			<item id="5790" min="1000" max="1000" chance="100" /> <!-- Spiritshot: No Grade for Beginners -->
 			<item id="9191" min="1" max="1" chance="100" /> <!-- Shadow Item - Teddy Bear Hat - Big Head -->
 			<item id="5593" min="1" max="1" chance="100" /> <!-- SP Scroll (Low-Grade) -->
 		</capsuled_items>

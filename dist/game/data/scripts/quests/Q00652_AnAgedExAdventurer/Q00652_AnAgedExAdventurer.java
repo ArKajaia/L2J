@@ -18,6 +18,7 @@ package quests.Q00652_AnAgedExAdventurer;
 
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.script.QuestState;
 import org.l2jmobius.gameserver.model.script.State;
@@ -33,8 +34,10 @@ public class Q00652_AnAgedExAdventurer extends Quest
 	private static final int SARA = 30180;
 	
 	// Items
-	private static final int SOULSHOT_C = 1464;
 	private static final int ENCHANT_ARMOR_D = 956;
+	
+	// Misc
+	private static final int ADENA_FEE = 2200;
 	
 	public Q00652_AnAgedExAdventurer()
 	{
@@ -55,13 +58,13 @@ public class Q00652_AnAgedExAdventurer extends Quest
 		String htmltext = null;
 		if (event.equals("32012-04.htm"))
 		{
-			if (getQuestItemsCount(player, SOULSHOT_C) < 100)
+			if (player.getAdena() < ADENA_FEE)
 			{
 				return "32012-05.htm";
 			}
 			
 			qs.startQuest();
-			takeItems(player, SOULSHOT_C, 100);
+			takeItems(player, Inventory.ADENA_ID, ADENA_FEE);
 			npc.deleteMe();
 			htmltext = event;
 		}
