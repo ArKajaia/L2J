@@ -131,7 +131,7 @@ public class VillageSiegeManager
 	/** Regions this far around the village stay awake during a siege. */
 	private static final int KEEP_ACTIVE_RANGE = 2500;
 	/** While its gate stands, a siege guard only goes for monsters this much closer to it than the gate. */
-	private static final int GUARD_GATE_MARGIN = 100;
+	private static final int GUARD_GATE_MARGIN = 200;
 	/** ... and always for those this close. */
 	private static final int GUARD_MIN_REACH = 120;
 	/** Fake defenders arrive this far behind the gate, inside the village. */
@@ -1504,7 +1504,7 @@ public class VillageSiegeManager
 				continue;
 			}
 
-			final Creature defender = findDefenderNear(npc);
+			final Creature defender = findDefenderNear(npc, monster._entrance._fallen);
 			if (defender != null)
 			{
 				monster._lastMet = now;
@@ -1568,15 +1568,16 @@ public class VillageSiegeManager
 
 	/**
 	 * @param npc a monster of the siege
-	 * @return the nearest defender it can go for (a player, a fake defender or a siege guard), {@code null} if none
+	 * @param pastGate {@code true} if its gate has fallen: it goes for the guards too (before that they wait behind the gate)
+	 * @return the nearest defender it can go for (a player, a fake defender, or past the gate a siege guard), {@code null} if none
 	 */
-	private static Creature findDefenderNear(Npc npc)
+	private static Creature findDefenderNear(Npc npc, boolean pastGate)
 	{
 		Creature best = null;
 		double bestDistance = Double.MAX_VALUE;
 		for (Creature creature : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, MONSTER_SIGHT))
 		{
-			if (creature.isDead() || creature.isInvisible() || !isDefender(creature))
+			if (creature.isDead() || creature.isInvisible() || !isDefender(creature) || (!pastGate && isSiegeGuard(creature)))
 			{
 				continue;
 			}
@@ -1605,6 +1606,11 @@ public class VillageSiegeManager
 		{
 			return true;
 		}
+		return isSiegeGuard(creature);
+	}
+
+	private static boolean isSiegeGuard(Creature creature)
+	{
 		return creature.isAttackable() && (creature.asAttackable().getVillageSiegeRole() == Attackable.VILLAGE_SIEGE_GUARD);
 	}
 
