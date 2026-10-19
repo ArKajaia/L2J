@@ -312,6 +312,30 @@ public class WorldMonsterIndex
 	}
 
 	/**
+	 * @param x the x
+	 * @param y the y
+	 * @param range the range
+	 * @param minLevel the lowest level wanted
+	 * @param maxLevel the highest level wanted
+	 * @return the monster kinds of those levels living within range of a point, the most common first
+	 */
+	public List<Integer> getNpcIdsInLevels(int x, int y, int range, int minLevel, int maxLevel)
+	{
+		final long rangeSq = (long) range * range;
+		final Map<Integer, Integer> kinds = new HashMap<>();
+		for (Point point : getPoints())
+		{
+			if ((point._level >= minLevel) && (point._level <= maxLevel) && (point.distanceSq(x, y) <= rangeSq))
+			{
+				kinds.merge(point._npcId, 1, Integer::sum);
+			}
+		}
+		final List<Integer> npcIds = new ArrayList<>(kinds.keySet());
+		npcIds.sort((a, b) -> Integer.compare(kinds.get(b), kinds.get(a)));
+		return npcIds;
+	}
+
+	/**
 	 * Something that looks at spawn points (see {@link #forEachPointNear}).
 	 */
 	public interface SpawnPointVisitor

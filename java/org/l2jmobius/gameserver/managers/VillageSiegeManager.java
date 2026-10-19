@@ -78,17 +78,18 @@ import org.l2jmobius.gameserver.model.villagesiege.SiegeEntrance;
 import org.l2jmobius.gameserver.model.villagesiege.SiegeEntranceFinder;
 import org.l2jmobius.gameserver.model.villagesiege.SiegeVillage;
 import org.l2jmobius.gameserver.model.zone.type.TownZone;
+import org.l2jmobius.gameserver.network.enums.ChatType;
+import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
-import org.l2jmobius.gameserver.util.Broadcast;
 import org.l2jmobius.gameserver.util.LocationUtil;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
- * Village Under Siege: once a day, one starting village after the other, the monsters of the hunting grounds around a village attack its entrances.
+ * Village Under Siege: one starting village after the other, the monsters of the hunting grounds around a village attack its entrances.
  * <ul>
- * <li>Schedule: the villages of {@link VillageSiegeConfig#ORDER} are besieged one after the other, {@link VillageSiegeConfig#DURATION} minutes each with a {@link VillageSiegeConfig#BREAK} minute break, from {@link VillageSiegeConfig#FIRST_START_HOUR} on. A restart picks
- * the schedule up where it stands.</li>
+ * <li>Schedule: the villages of {@link VillageSiegeConfig#ORDER} are besieged one after the other, over and over, {@link VillageSiegeConfig#DURATION} minutes each with a {@link VillageSiegeConfig#BREAK} minute rest, counted from a fixed time ({@link #getSlots}). A
+ * restart picks the rotation up where it stands. Only the players up to {@link VillageSiegeConfig#ANNOUNCE_MAX_LEVEL} hear of it.</li>
  * <li>Entrances: the roads the monsters take into the village ({@link SiegeEntranceFinder}). Each has a gate standard the defenders hold: monsters next to it wear its meter down, and when it runs out the gate has fallen. A fallen gate doesn't end the siege, but halves its end
  * bonus.</li>
  * <li>Waves form out on each road and march on the gate. The monsters are the ones living around the village, at its level ({@link SiegeEntranceFinder#findLevel}); a Warband Leader comes now and then and a Siege Lord near the end.</li>
@@ -134,6 +135,10 @@ public class VillageSiegeManager
 	private static final int GUARD_GATE_MARGIN = 200;
 	/** ... and always for those this close. */
 	private static final int GUARD_MIN_REACH = 120;
+	/** A siege's waves are made of this many monster kinds at least, looked for farther out until there are. */
+	private static final int MIN_MONSTER_KINDS = 3;
+	/** When no monster of a siege's levels lives around the village, they are looked for this far. */
+	private static final int FAR_MONSTER_RANGE = 40000;
 	/** Fake defenders arrive this far behind the gate, inside the village. */
 	private static final int FAKE_ARRIVAL_RANGE = 250;
 
@@ -607,10 +612,9 @@ public class VillageSiegeManager
 	}
 
 	/**
-	 * @param time a time in the day wanted
-	 * @return the sieges of that day, in order
+	 * @return the villages of {@link VillageSiegeConfig#ORDER}, in order
 	 */
-	public List<Slot> getSlots(long time)
+	private static List<SiegeVillage> getOrder()
 	{
 		final List<SiegeVillage> villages = new ArrayList<>();
 		for (String id : VillageSiegeConfig.ORDER)
@@ -621,29 +625,71 @@ public class VillageSiegeManager
 				villages.add(village);
 			}
 		}
+		return villages;
+	}
 
+	/**
+	 * The sieges follow each other without end, {@link VillageSiegeConfig#DURATION} minutes each with a {@link VillageSiegeConfig#BREAK} minute rest, counted from {@link VillageSiegeConfig#FIRST_START_HOUR} on 1 January 2026 (server time): a restart picks the rotation up where
+	 * it stands.
+	 * @return when the first siege of the rotation started
+	 */
+	private static long getAnchor()
+	{
+		return LocalDate.of(2026, 1, 1).atTime(VillageSiegeConfig.FIRST_START_HOUR, VillageSiegeConfig.FIRST_START_MINUTE).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+	}
+
+	/**
+	 * @param time a time
+	 * @return the siege going on at that time (if any) and those that start within the following 24 hours, in order
+	 */
+	public static List<Slot> getSlots(long time)
+	{
 		final List<Slot> slots = new ArrayList<>();
+		final List<SiegeVillage> villages = getOrder();
 		if (villages.isEmpty())
 		{
 			return slots;
 		}
 
-		final LocalDateTime cycleStart = getCycleStart(LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ZoneId.systemDefault()));
-		final long cycleMillis = cycleStart.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-		final int offset = VillageSiegeConfig.ROTATE_ORDER ? (int) Math.floorMod(cycleStart.toLocalDate().toEpochDay(), villages.size()) : 0;
-		final long slotMillis = (VillageSiegeConfig.DURATION + VillageSiegeConfig.BREAK) * 60000L;
-		for (int i = 0; i < villages.size(); i++)
+		final long anchor = getAnchor();
+		final long period = (VillageSiegeConfig.DURATION + VillageSiegeConfig.BREAK) * 60000L;
+		for (long index = Math.floorDiv(time - anchor, period);; index++)
 		{
-			final long start = cycleMillis + (i * slotMillis);
-			final long end = start + (VillageSiegeConfig.DURATION * 60000L);
-			// Only what fits in the day.
-			if (end > (cycleMillis + 86400000L))
+			final long start = anchor + (index * period);
+			if (start > (time + 86400000L))
 			{
 				break;
 			}
-			slots.add(new Slot(villages.get((i + offset) % villages.size()), start, end));
+			final long end = start + (VillageSiegeConfig.DURATION * 60000L);
+			if (end > time)
+			{
+				slots.add(new Slot(villages.get((int) Math.floorMod(index, villages.size())), start, end));
+			}
 		}
 		return slots;
+	}
+
+	/**
+	 * @param village a village, {@code null} for any
+	 * @return the next siege of the village that hasn't started, {@code null} if none
+	 */
+	public static Slot getNextSlot(SiegeVillage village)
+	{
+		final long now = System.currentTimeMillis();
+		final int villages = Math.max(1, getOrder().size());
+		final long period = (VillageSiegeConfig.DURATION + VillageSiegeConfig.BREAK) * 60000L;
+		// A whole rotation ahead at most.
+		for (long time = now; time <= (now + (villages * period) + 86400000L); time += 86400000L)
+		{
+			for (Slot slot : getSlots(time))
+			{
+				if ((slot.getStart() > now) && ((village == null) || (slot.getVillage() == village)))
+				{
+					return slot;
+				}
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -659,16 +705,17 @@ public class VillageSiegeManager
 
 		final long now = System.currentTimeMillis();
 		Slot next = null;
-		for (long day = now; (next == null) && (day < (now + (2 * 86400000L))); day += 86400000L)
+		for (Slot slot : getSlots(now))
 		{
-			for (Slot slot : getSlots(day))
+			if ((slot.getEnd() - Math.max(now, slot.getStart())) >= (VillageSiegeConfig.LATE_START_MIN_MINUTES * 60000L))
 			{
-				if ((slot.getEnd() - Math.max(now, slot.getStart())) >= (VillageSiegeConfig.LATE_START_MIN_MINUTES * 60000L))
-				{
-					next = slot;
-					break;
-				}
+				next = slot;
+				break;
 			}
+		}
+		if (next == null)
+		{
+			next = getNextSlot(null);
 		}
 		if (next == null)
 		{
@@ -701,25 +748,6 @@ public class VillageSiegeManager
 			task.cancel(false);
 		}
 		_scheduled.clear();
-	}
-
-	/**
-	 * @return the next siege that hasn't started, {@code null} if none
-	 */
-	public Slot getNextSlot()
-	{
-		final long now = System.currentTimeMillis();
-		for (long day = now; day < (now + (2 * 86400000L)); day += 86400000L)
-		{
-			for (Slot slot : getSlots(day))
-			{
-				if (slot.getStart() > now)
-				{
-					return slot;
-				}
-			}
-		}
-		return null;
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -761,21 +789,53 @@ public class VillageSiegeManager
 			return Collections.emptyList();
 		}
 
-		final List<SiegeEntrance> entrances = SiegeEntranceFinder.find(village, heart, town, getLevel(village));
+		// The roads of the monsters living around, whatever the siege's levels.
+		final List<SiegeEntrance> entrances = SiegeEntranceFinder.find(village, heart, town, getNaturalLevel(village));
 		_entrances.put(village.getId(), entrances);
 		return entrances;
 	}
 
 	/**
 	 * @param village a village
-	 * @return the level of its siege's monsters
+	 * @return the level of its siege's monsters: the middle of the levels set in the data, else the average level of the monsters living around it
 	 */
 	public int getLevel(SiegeVillage village)
 	{
-		if (village.getLevel() > 0)
+		if (village.hasLevels())
 		{
-			return Math.min(village.getLevel(), VillageSiegeConfig.MAX_PLAYER_LEVEL);
+			return (village.getMinLevel() + village.getMaxLevel()) / 2;
 		}
+		return getNaturalLevel(village);
+	}
+
+	/**
+	 * @param village a village
+	 * @return the lowest and highest level of its siege's monsters: the levels set in the data, else {@link VillageSiegeConfig#LEVEL_WINDOW} around the average level of the monsters living around it
+	 */
+	public int[] getLevelRange(SiegeVillage village)
+	{
+		if (village.hasLevels())
+		{
+			return new int[]
+			{
+				village.getMinLevel(),
+				village.getMaxLevel()
+			};
+		}
+		final int level = getNaturalLevel(village);
+		return new int[]
+		{
+			Math.max(1, level - VillageSiegeConfig.LEVEL_WINDOW),
+			level + VillageSiegeConfig.LEVEL_WINDOW
+		};
+	}
+
+	/**
+	 * @param village a village
+	 * @return the average level of the monsters living around it (found once)
+	 */
+	private int getNaturalLevel(SiegeVillage village)
+	{
 		return _levels.computeIfAbsent(village.getId(), id ->
 		{
 			final Location heart = getHeart(village);
@@ -836,12 +896,23 @@ public class VillageSiegeManager
 		final int level = getLevel(village);
 		final long now = System.currentTimeMillis();
 		final Siege siege = new Siege(village, level, now, end, getDay(now), heart, town, getMedalsPerPoint(village));
-		final List<Integer> fallback = pickMonsters(heart, VillageSiegeConfig.SOURCE_RANGE, level, VillageSiegeConfig.LEVEL_WINDOW + 6);
+		// The monsters of the siege's levels living nearest: on the entrance's road, around the village, farther out, or anywhere.
+		// A few kinds at least, so the waves aren't all the same monster.
+		final int[] levels = getLevelRange(village);
+		List<Integer> fallback = pickMonsters(heart, VillageSiegeConfig.SOURCE_RANGE, levels);
+		if (fallback.size() < MIN_MONSTER_KINDS)
+		{
+			fallback = pickMonsters(heart, FAR_MONSTER_RANGE, levels);
+		}
+		if (fallback.size() < MIN_MONSTER_KINDS)
+		{
+			fallback = pickMonsters(heart, Integer.MAX_VALUE / 2, levels);
+		}
 		for (int i = 0; i < entrances.size(); i++)
 		{
 			final SiegeEntrance entrance = entrances.get(i);
-			List<Integer> monsters = pickMonsters(entrance.getRally(), 3500, level, VillageSiegeConfig.LEVEL_WINDOW);
-			if (monsters.isEmpty())
+			List<Integer> monsters = pickMonsters(entrance.getRally(), 3500, levels);
+			if (monsters.size() < MIN_MONSTER_KINDS)
 			{
 				monsters = fallback;
 			}
@@ -889,14 +960,13 @@ public class VillageSiegeManager
 	/**
 	 * @param where a place
 	 * @param range how far around it
-	 * @param level the level wanted
-	 * @param window how far from it
-	 * @return the monsters living there at about that level, the most common first, at most 4
+	 * @param levels the lowest and highest level wanted
+	 * @return the monsters of those levels living there, the most common first, at most 4
 	 */
-	private static List<Integer> pickMonsters(Location where, int range, int level, int window)
+	private static List<Integer> pickMonsters(Location where, int range, int[] levels)
 	{
 		final List<Integer> monsters = new ArrayList<>();
-		for (int npcId : WorldMonsterIndex.getInstance().getNpcIdsNear(where.getX(), where.getY(), range, level, window))
+		for (int npcId : WorldMonsterIndex.getInstance().getNpcIdsInLevels(where.getX(), where.getY(), range, levels[0], levels[1]))
 		{
 			final NpcTemplate template = NpcData.getInstance().getTemplate(npcId);
 			if ((template != null) && WorldMonsterIndex.isPlainMonster(template) && !template.isFlying())
@@ -1771,7 +1841,8 @@ public class VillageSiegeManager
 		}
 
 		final Location arrival = QuestSpawnUtil.findPoint(entrance.getGuardCentre(), 50, FAKE_ARRIVAL_RANGE, true, 0);
-		final int level = Math.max(1, Math.min(VillageSiegeConfig.MAX_PLAYER_LEVEL, siege._level + Rnd.get(-2, 3)));
+		final int[] levels = getLevelRange(siege._village);
+		final int level = Math.max(1, Math.min(VillageSiegeConfig.MAX_PLAYER_LEVEL, Rnd.get(levels[0], levels[1])));
 		final Npc fake = FakePlayerPvpManager.getInstance().spawnFakePlayer(null, level, arrival.getX(), arrival.getY(), arrival.getZ(), 0, null, null);
 		if (fake != null)
 		{
@@ -2410,12 +2481,34 @@ public class VillageSiegeManager
 		return nearest;
 	}
 
+	/**
+	 * Announces to the players a siege is for: up to {@link VillageSiegeConfig#ANNOUNCE_MAX_LEVEL}, and the GMs.
+	 * @param text what
+	 */
 	private static void announce(String text)
 	{
-		if (VillageSiegeConfig.ANNOUNCE)
+		if (!VillageSiegeConfig.ANNOUNCE)
 		{
-			Broadcast.toAllOnlinePlayers(text, true);
+			return;
 		}
+
+		final CreatureSay packet = new CreatureSay(null, ChatType.CRITICAL_ANNOUNCE, "", text);
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player.isOnline() && isAnnouncedTo(player))
+			{
+				player.sendPacket(packet);
+			}
+		}
+	}
+
+	/**
+	 * @param player a player
+	 * @return {@code true} if the sieges are announced to the player: up to {@link VillageSiegeConfig#ANNOUNCE_MAX_LEVEL}, or a GM
+	 */
+	private static boolean isAnnouncedTo(Player player)
+	{
+		return (player.getLevel() <= VillageSiegeConfig.ANNOUNCE_MAX_LEVEL) || player.isGM();
 	}
 
 	/**
@@ -2427,7 +2520,7 @@ public class VillageSiegeManager
 	{
 		for (Player player : World.getInstance().getPlayers())
 		{
-			if (player.isOnline() && isInArea(siege, player))
+			if (player.isOnline() && isAnnouncedTo(player) && isInArea(siege, player))
 			{
 				player.sendPacket(new ExShowScreenMessage(text, ExShowScreenMessage.TOP_CENTER, 5000));
 				player.sendMessage(text);

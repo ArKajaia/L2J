@@ -28,7 +28,7 @@ import java.util.logging.Logger;
 import org.l2jmobius.commons.util.ConfigReader;
 
 /**
- * Village Under Siege (see {@code VillageSiegeManager}): once a day, one starting village after the other, monsters of the hunting grounds around it attack its entrances.
+ * Village Under Siege (see {@code VillageSiegeManager}): one starting village after the other, monsters of the hunting grounds around it attack its entrances.
  */
 public class VillageSiegeConfig
 {
@@ -40,7 +40,6 @@ public class VillageSiegeConfig
 	// Schedule
 	public static boolean ENABLED;
 	public static List<String> ORDER;
-	public static boolean ROTATE_ORDER;
 	public static int FIRST_START_HOUR;
 	public static int FIRST_START_MINUTE;
 	public static int DURATION;
@@ -48,6 +47,7 @@ public class VillageSiegeConfig
 	public static int WARNING;
 	public static int LATE_START_MIN_MINUTES;
 	public static boolean ANNOUNCE;
+	public static int ANNOUNCE_MAX_LEVEL;
 
 	// Who takes part
 	public static int MAX_PLAYER_LEVEL;
@@ -129,7 +129,6 @@ public class VillageSiegeConfig
 			}
 		}
 		ORDER = Collections.unmodifiableList(order);
-		ROTATE_ORDER = config.getBoolean("VillageSiegeRotateOrder", true);
 		final String firstStart = config.getString("VillageSiegeFirstStart", "07:00");
 		try
 		{
@@ -143,11 +142,12 @@ public class VillageSiegeConfig
 			FIRST_START_HOUR = 7;
 			FIRST_START_MINUTE = 0;
 		}
-		DURATION = Math.max(10, config.getInt("VillageSiegeDuration", 120));
-		BREAK = Math.max(1, config.getInt("VillageSiegeBreak", 40));
+		DURATION = Math.max(10, config.getInt("VillageSiegeDuration", 90));
+		BREAK = Math.max(1, config.getInt("VillageSiegeBreak", 180));
 		WARNING = Math.max(0, config.getInt("VillageSiegeWarning", 10));
 		LATE_START_MIN_MINUTES = Math.max(1, config.getInt("VillageSiegeLateStartMinMinutes", 30));
 		ANNOUNCE = config.getBoolean("VillageSiegeAnnounce", true);
+		ANNOUNCE_MAX_LEVEL = Math.max(1, config.getInt("VillageSiegeAnnounceMaxLevel", 40));
 
 		MAX_PLAYER_LEVEL = Math.max(1, config.getInt("VillageSiegeMaxPlayerLevel", 39));
 		GREY_LEVEL_DIFFERENCE = Math.max(1, config.getInt("VillageSiegeGreyLevelDifference", 10));
@@ -171,7 +171,7 @@ public class VillageSiegeConfig
 		LORD_MINUTES = Math.max(0, config.getInt("VillageSiegeLordMinutes", 10));
 		LEVEL_WINDOW = Math.max(1, config.getInt("VillageSiegeLevelWindow", 6));
 
-		GATE_METER = Math.max(10, config.getInt("VillageSiegeGateMeter", 2400));
+		GATE_METER = Math.max(10, config.getInt("VillageSiegeGateMeter", 4800));
 		GATE_DRAIN = Math.max(0, config.getInt("VillageSiegeGateDrain", 1));
 		GATE_DRAIN_RANGE = Math.max(50, config.getInt("VillageSiegeGateDrainRange", 250));
 		GATE_REPAIR = Math.max(0, config.getInt("VillageSiegeGateRepair", 2));

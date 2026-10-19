@@ -64,10 +64,11 @@ public class SiegeVillage
 	private final int _gatekeeperId;
 	private final int _guardLookId;
 	private final int _referenceItemId;
-	private final int _level;
+	private final int _minLevel;
+	private final int _maxLevel;
 	private final List<FixedEntrance> _entrances;
 
-	public SiegeVillage(String id, String name, String town, int gatekeeperId, int guardLookId, int referenceItemId, int level, List<FixedEntrance> entrances)
+	public SiegeVillage(String id, String name, String town, int gatekeeperId, int guardLookId, int referenceItemId, int minLevel, int maxLevel, List<FixedEntrance> entrances)
 	{
 		_id = id;
 		_name = name;
@@ -75,7 +76,8 @@ public class SiegeVillage
 		_gatekeeperId = gatekeeperId;
 		_guardLookId = guardLookId;
 		_referenceItemId = referenceItemId;
-		_level = level;
+		_minLevel = Math.min(minLevel, maxLevel);
+		_maxLevel = Math.max(minLevel, maxLevel);
 		_entrances = Collections.unmodifiableList(entrances);
 	}
 
@@ -122,11 +124,27 @@ public class SiegeVillage
 	}
 
 	/**
-	 * @return the level of the siege's monsters, 0 for the average level of the monsters living around the village
+	 * @return the lowest level of the siege's monsters, 0 to follow the monsters living around the village
 	 */
-	public int getLevel()
+	public int getMinLevel()
 	{
-		return _level;
+		return _minLevel;
+	}
+
+	/**
+	 * @return the highest level of the siege's monsters, 0 to follow the monsters living around the village
+	 */
+	public int getMaxLevel()
+	{
+		return _maxLevel;
+	}
+
+	/**
+	 * @return {@code true} if the data sets the levels of the siege's monsters
+	 */
+	public boolean hasLevels()
+	{
+		return _maxLevel > 0;
 	}
 
 	/**

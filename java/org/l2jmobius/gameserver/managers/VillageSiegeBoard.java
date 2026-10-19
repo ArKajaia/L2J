@@ -205,21 +205,19 @@ public final class VillageSiegeBoard
 		else
 		{
 			sb.append("All is quiet at the gates.<br1>");
-			final Slot next = manager.getNextSlot();
+			final Slot next = VillageSiegeManager.getNextSlot(null);
 			if (next != null)
 			{
 				sb.append("Next siege: <font color=\"LEVEL\">").append(next.getVillage().getName()).append("</font> at ").append(VillageSiegeManager.formatTime(next.getStart())).append(" (in ").append(minutesLeft(next.getStart())).append(").<br>");
 			}
 		}
 
-		if (village != null)
+		if ((village != null) && ((siege == null) || (siege.getVillage() != village)))
 		{
-			for (Slot slot : manager.getSlots(System.currentTimeMillis()))
+			final Slot slot = VillageSiegeManager.getNextSlot(village);
+			if (slot != null)
 			{
-				if (slot.getVillage() == village)
-				{
-					sb.append("This village's siege today: ").append(VillageSiegeManager.formatTime(slot.getStart())).append("-").append(VillageSiegeManager.formatTime(slot.getEnd())).append(".<br>");
-				}
+				sb.append("This village's next siege: ").append(VillageSiegeManager.formatTime(slot.getStart())).append("-").append(VillageSiegeManager.formatTime(slot.getEnd())).append(" (in ").append(minutesLeft(slot.getStart())).append(").<br>");
 			}
 		}
 
@@ -310,9 +308,9 @@ public final class VillageSiegeBoard
 		final long now = System.currentTimeMillis();
 		final Siege siege = manager.getSiege();
 		final StringBuilder sb = new StringBuilder();
-		sb.append("<center><font color=\"LEVEL\">Today's Sieges</font></center><br1>One village at a time, ").append(VillageSiegeConfig.DURATION).append(" minutes each (server time).<br>");
+		sb.append("<center><font color=\"LEVEL\">Coming Sieges</font></center><br1>One village at a time, ").append(VillageSiegeConfig.DURATION).append(" minutes each with ").append(VillageSiegeConfig.BREAK).append(" minutes of rest between two (server time, the next 24 hours).<br>");
 		sb.append("<table width=270><tr><td width=80>Time</td><td width=130>Village</td><td width=60></td></tr>");
-		for (Slot slot : manager.getSlots(now))
+		for (Slot slot : VillageSiegeManager.getSlots(now))
 		{
 			final String state;
 			if ((siege != null) && (siege.getVillage() == slot.getVillage()) && (now >= slot.getStart()) && (now < slot.getEnd()))
@@ -428,7 +426,7 @@ public final class VillageSiegeBoard
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<center><font color=\"LEVEL\">Village Under Siege</font></center><br>");
-		sb.append("Every day the monsters of the hunting grounds attack the starting villages, one village after the other, for ").append(VillageSiegeConfig.DURATION).append(" minutes each.<br1>");
+		sb.append("The monsters of the hunting grounds attack the starting villages, one village after the other, for ").append(VillageSiegeConfig.DURATION).append(" minutes each, with ").append(VillageSiegeConfig.BREAK).append(" minutes of rest between two.<br1>");
 		sb.append("They march on the gate standards of the village's entrances. Monsters next to a standard wear its gate down; when it reaches 0% the gate falls and the monsters run into the streets, where the village guards wait for them. The siege goes on until its time is up.<br>");
 		sb.append("<font color=\"LEVEL\">Contribution</font><br1>");
 		sb.append("Defenders up to level ").append(VillageSiegeConfig.MAX_PLAYER_LEVEL).append(" earn points: a kill's points are shared by the damage each defender did, healing other defenders counts, and so does every minute of fighting. Monsters ").append(VillageSiegeConfig.GREY_LEVEL_DIFFERENCE).append(" or more levels below you give nothing.<br1>");
