@@ -1,0 +1,426 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+	<!--
+	Village Under Siege: Defence Force Board exchange, D-grade weapons.
+	The gear the retail shops sell, for Defence Medals (4674): a medal for every 1,000 adena of its shop price (VillageSiegeAdenaPerMedal), rounded up.
+	-->
+	<npcs>
+		<npc>900600</npc> <!-- Defence Force Board -->
+	</npcs>
+	<item>
+		<ingredient count="315" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="178" /> <!-- Bone Staff -->
+	</item>
+	<item>
+		<ingredient count="315" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="156" /> <!-- Hand Axe -->
+	</item>
+	<item>
+		<ingredient count="315" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="166" /> <!-- Heavy Mace -->
+	</item>
+	<item>
+		<ingredient count="315" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="167" /> <!-- Scalpel -->
+	</item>
+	<item>
+		<ingredient count="315" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="168" /> <!-- Work Hammer -->
+	</item>
+	<item>
+		<ingredient count="315" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="274" /> <!-- Reinforced Bow -->
+	</item>
+	<item>
+		<ingredient count="315" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="221" /> <!-- Assassin Knife -->
+	</item>
+	<item>
+		<ingredient count="315" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="220" /> <!-- Crafted Dagger -->
+	</item>
+	<item>
+		<ingredient count="315" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="258" /> <!-- Bagh-Nakh -->
+	</item>
+	<item>
+		<ingredient count="315" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="291" /> <!-- Trident -->
+	</item>
+	<item>
+		<ingredient count="315" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="5285" /> <!-- Heavy Sword -->
+	</item>
+	<item>
+		<ingredient count="315" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="7885" /> <!-- Priest Sword -->
+	</item>
+	<item>
+		<ingredient count="315" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="123" /> <!-- Saber -->
+	</item>
+	<item>
+		<ingredient count="315" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="7880" /> <!-- Steel Sword -->
+	</item>
+	<item>
+		<ingredient count="409" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2507" /> <!-- Lizardspear -->
+	</item>
+	<item>
+		<ingredient count="409" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="1376" /> <!-- Guard Spear -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="184" /> <!-- Conjuror's Staff -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="182" /> <!-- Doom Hammer -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="180" /> <!-- Mace of Judgment -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="181" /> <!-- Mace of Miracle -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="179" /> <!-- Mace of Prayer -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="183" /> <!-- Mystic Staff -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="185" /> <!-- Staff of Mana -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="86" /> <!-- Tomahawk -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="277" /> <!-- Dark Elven Bow -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="276" /> <!-- Elven Bow -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="275" /> <!-- Long Bow -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="222" /> <!-- Poniard Dagger -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="259" /> <!-- Single-Edged Jamadhr -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="295" /> <!-- Dwarven Trident -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="292" /> <!-- Pike -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="126" /> <!-- Artisan's Sword -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="69" /> <!-- Bastard Sword -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="128" /> <!-- Knight's Sword -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="125" /> <!-- Spinebone Sword -->
+	</item>
+	<item>
+		<ingredient count="551" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="83" /> <!-- Sword of Magic -->
+	</item>
+	<item>
+		<ingredient count="551" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="143" /> <!-- Sword of Mystic -->
+	</item>
+	<item>
+		<ingredient count="551" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="144" /> <!-- Sword of Occult -->
+	</item>
+	<item>
+		<ingredient count="675" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2516" /> <!-- Saber*Saber -->
+	</item>
+	<item>
+		<ingredient count="744" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="157" /> <!-- Spiked Club -->
+	</item>
+	<item>
+		<ingredient count="744" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="186" /> <!-- Staff of Magic -->
+	</item>
+	<item>
+		<ingredient count="744" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="278" /> <!-- Gastraphetes -->
+	</item>
+	<item>
+		<ingredient count="744" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="240" /> <!-- Conjurer's Knife -->
+	</item>
+	<item>
+		<ingredient count="744" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="238" /> <!-- Dagger of Mana -->
+	</item>
+	<item>
+		<ingredient count="744" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="223" /> <!-- Kukuri -->
+	</item>
+	<item>
+		<ingredient count="744" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="239" /> <!-- Mystic Knife -->
+	</item>
+	<item>
+		<ingredient count="744" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="241" /> <!-- Shilen Knife -->
+	</item>
+	<item>
+		<ingredient count="744" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="260" /> <!-- Triple-Edged Jamadhr -->
+	</item>
+	<item>
+		<ingredient count="744" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="296" /> <!-- Dwarven Pike -->
+	</item>
+	<item>
+		<ingredient count="744" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="293" /> <!-- War Hammer -->
+	</item>
+	<item>
+		<ingredient count="744" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="127" /> <!-- Crimson Sword -->
+	</item>
+	<item>
+		<ingredient count="744" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="130" /> <!-- Elven Sword -->
+	</item>
+	<item>
+		<ingredient count="744" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="124" /> <!-- Two-Handed Sword -->
+	</item>
+	<item>
+		<ingredient count="818" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2519" /> <!-- Saber*Artisan's Sword -->
+	</item>
+	<item>
+		<ingredient count="818" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2517" /> <!-- Saber*Bastard Sword -->
+	</item>
+	<item>
+		<ingredient count="818" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2520" /> <!-- Saber*Knight's Sword -->
+	</item>
+	<item>
+		<ingredient count="818" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2518" /> <!-- Saber*Spinebone Sword -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="90" /> <!-- Goat Head Staff -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="172" /> <!-- Heavy Bone Club -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="88" /> <!-- Morning Star -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="7890" /> <!-- Priest Mace -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="169" /> <!-- Skull Breaker -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="158" /> <!-- Tarbar -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="7896" /> <!-- Titan Hammer -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="279" /> <!-- Reinforced Long Bow -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="1660" /> <!-- Cursed Maingauche -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="224" /> <!-- Maingauche -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2540" /> <!-- Artisan's Sword*Artisan's Sword -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2541" /> <!-- Artisan's Sword*Knight's Sword -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2527" /> <!-- Bastard Sword*Artisan's Sword -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2525" /> <!-- Bastard Sword*Bastard Sword -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2528" /> <!-- Bastard Sword*Knight's Sword -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2526" /> <!-- Bastard Sword*Spinebone Sword -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2546" /> <!-- Knight's Sword*Knight's Sword -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2521" /> <!-- Saber*Crimson Sword -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2522" /> <!-- Saber*Elven Sword -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2534" /> <!-- Spinebone Sword*Artisan's Sword -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2535" /> <!-- Spinebone Sword*Knight's Sword -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2533" /> <!-- Spinebone Sword*Spinebone Sword -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="261" /> <!-- Bich'Hwa -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="294" /> <!-- War Pick -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="93" /> <!-- Winged Spear -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="7886" /> <!-- Sword of Magic Fog -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="129" /> <!-- Sword of Revolution -->
+	</item>
+	<item>
+		<ingredient count="1074" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="7881" /> <!-- Titan Sword -->
+	</item>
+	<item>
+		<ingredient count="1276" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2542" /> <!-- Artisan's Sword*Crimson Sword -->
+	</item>
+	<item>
+		<ingredient count="1276" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2543" /> <!-- Artisan's Sword*Elven Sword -->
+	</item>
+	<item>
+		<ingredient count="1276" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2529" /> <!-- Bastard Sword*Crimson Sword -->
+	</item>
+	<item>
+		<ingredient count="1276" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2530" /> <!-- Bastard Sword*Elven Sword -->
+	</item>
+	<item>
+		<ingredient count="1276" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2547" /> <!-- Knight's Sword*Crimson Sword -->
+	</item>
+	<item>
+		<ingredient count="1276" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2548" /> <!-- Knight's Sword*Elven Sword -->
+	</item>
+	<item>
+		<ingredient count="1276" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2536" /> <!-- Spinebone Sword*Crimson Sword -->
+	</item>
+	<item>
+		<ingredient count="1276" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2537" /> <!-- Spinebone Sword*Elven Sword -->
+	</item>
+	<item>
+		<ingredient count="1387" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="187" /> <!-- Atuba Hammer -->
+	</item>
+	<item>
+		<ingredient count="1387" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="190" /> <!-- Atuba Mace -->
+	</item>
+	<item>
+		<ingredient count="1387" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="159" /> <!-- Bonebreaker -->
+	</item>
+	<item>
+		<ingredient count="1387" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="188" /> <!-- Ghost Staff -->
+	</item>
+	<item>
+		<ingredient count="1387" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="189" /> <!-- Staff of Life -->
+	</item>
+	<item>
+		<ingredient count="1387" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="280" /> <!-- Light Crossbow -->
+	</item>
+	<item>
+		<ingredient count="1387" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="225" /> <!-- Mithril Dagger -->
+	</item>
+	<item>
+		<ingredient count="1387" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="262" /> <!-- Scallop Jamadhr -->
+	</item>
+	<item>
+		<ingredient count="1387" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="297" /> <!-- Glaive -->
+	</item>
+	<item>
+		<ingredient count="1387" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="70" /> <!-- Claymore -->
+	</item>
+	<item>
+		<ingredient count="1387" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2499" /> <!-- Elven Long Sword -->
+	</item>
+</list>

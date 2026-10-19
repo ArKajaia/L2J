@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+	<!--
+	Village Under Siege: Defence Force Board exchange, C-grade armor.
+	The gear the retail shops sell, for Defence Medals (4674): a medal for every 1,000 adena of its shop price (VillageSiegeAdenaPerMedal), rounded up.
+	-->
+	<npcs>
+		<npc>900600</npc> <!-- Defence Force Board -->
+	</npcs>
+	<item>
+		<ingredient count="291" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="439" /> <!-- Karmian Tunic -->
+	</item>
+	<item>
+		<ingredient count="291" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="397" /> <!-- Mithril Shirt -->
+	</item>
+	<item>
+		<ingredient count="343" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="398" /> <!-- Plated Leather -->
+	</item>
+	<item>
+		<ingredient count="372" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="399" /> <!-- Rind Leather Armor -->
+	</item>
+	<item>
+		<ingredient count="389" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="354" /> <!-- Chain Mail Shirt -->
+	</item>
+	<item>
+		<ingredient count="496" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="355" /> <!-- Dwarven Chain Mail Shirt -->
+	</item>
+	<item>
+		<ingredient count="566" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="441" /> <!-- Demon's Tunic -->
+	</item>
+	<item>
+		<ingredient count="604" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="440" /> <!-- Robe of Seal -->
+	</item>
+	<item>
+		<ingredient count="635" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="400" /> <!-- Theca Leather Armor -->
+	</item>
+	<item>
+		<ingredient count="825" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="442" /> <!-- Divine Tunic -->
+	</item>
+	<item>
+		<ingredient count="1227" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="60" /> <!-- Composite Armor -->
+	</item>
+	<item>
+		<ingredient count="1341" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="401" /> <!-- Drake Leather Armor -->
+	</item>
+	<item>
+		<ingredient count="1788" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="356" /> <!-- Full Plate Armor -->
+	</item>
+	<item>
+		<ingredient count="183" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="471" /> <!-- Karmian Stockings -->
+	</item>
+	<item>
+		<ingredient count="183" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2387" /> <!-- Reinforced Mithril Gaiters -->
+	</item>
+	<item>
+		<ingredient count="215" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="418" /> <!-- Plated Leather Gaiters -->
+	</item>
+	<item>
+		<ingredient count="233" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="419" /> <!-- Rind Leather Gaiters -->
+	</item>
+	<item>
+		<ingredient count="243" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="381" /> <!-- Chain Gaiters -->
+	</item>
+	<item>
+		<ingredient count="310" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="382" /> <!-- Dwarven Chain Gaiters -->
+	</item>
+	<item>
+		<ingredient count="354" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="472" /> <!-- Demon's Stockings -->
+	</item>
+	<item>
+		<ingredient count="397" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="420" /> <!-- Theca Leather Gaiters -->
+	</item>
+	<item>
+		<ingredient count="516" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="473" /> <!-- Divine Stockings -->
+	</item>
+	<item>
+		<ingredient count="146" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2413" /> <!-- Chain Hood -->
+	</item>
+	<item>
+		<ingredient count="186" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="500" /> <!-- Great Helmet -->
+	</item>
+	<item>
+		<ingredient count="284" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="517" /> <!-- Composite Helmet -->
+	</item>
+	<item>
+		<ingredient count="284" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="1149" /> <!-- Shining Circlet -->
+	</item>
+	<item>
+		<ingredient count="413" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2414" /> <!-- Full Plate Helmet -->
+	</item>
+	<item>
+		<ingredient count="98" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2453" /> <!-- Chain Gloves -->
+	</item>
+	<item>
+		<ingredient count="98" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2454" /> <!-- Karmian Gloves -->
+	</item>
+	<item>
+		<ingredient count="98" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2452" /> <!-- Reinforced Mithril Gloves -->
+	</item>
+	<item>
+		<ingredient count="115" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2455" /> <!-- Plated Leather Gloves -->
+	</item>
+	<item>
+		<ingredient count="124" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2456" /> <!-- Dwarven Chain Gloves -->
+	</item>
+	<item>
+		<ingredient count="124" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2457" /> <!-- Gloves of Seal -->
+	</item>
+	<item>
+		<ingredient count="124" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2458" /> <!-- Rind Leather Gloves -->
+	</item>
+	<item>
+		<ingredient count="189" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2459" /> <!-- Demon's Gloves -->
+	</item>
+	<item>
+		<ingredient count="189" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="608" /> <!-- Mithril Gauntlets -->
+	</item>
+	<item>
+		<ingredient count="212" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2460" /> <!-- Theca Leather Gloves -->
+	</item>
+	<item>
+		<ingredient count="276" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2463" /> <!-- Divine Gloves -->
+	</item>
+	<item>
+		<ingredient count="276" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2461" /> <!-- Drake Leather Gloves -->
+	</item>
+	<item>
+		<ingredient count="276" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2462" /> <!-- Full Plate Gauntlets -->
+	</item>
+	<item>
+		<ingredient count="98" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2433" /> <!-- Boots of Seal -->
+	</item>
+	<item>
+		<ingredient count="98" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2429" /> <!-- Chain Boots -->
+	</item>
+	<item>
+		<ingredient count="98" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2432" /> <!-- Dwarven Chain Boots -->
+	</item>
+	<item>
+		<ingredient count="98" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2430" /> <!-- Karmian Boots -->
+	</item>
+	<item>
+		<ingredient count="98" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2431" /> <!-- Plated Leather Boots -->
+	</item>
+	<item>
+		<ingredient count="98" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="62" /> <!-- Reinforced Mithril Boots -->
+	</item>
+	<item>
+		<ingredient count="124" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="1126" /> <!-- Crimson Boots -->
+	</item>
+	<item>
+		<ingredient count="124" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2434" /> <!-- Rind Leather Boots -->
+	</item>
+	<item>
+		<ingredient count="189" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="64" /> <!-- Composite Boots -->
+	</item>
+	<item>
+		<ingredient count="189" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2435" /> <!-- Demon's Boots -->
+	</item>
+	<item>
+		<ingredient count="212" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2436" /> <!-- Theca Leather Boots -->
+	</item>
+	<item>
+		<ingredient count="276" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="603" /> <!-- Divine Boots -->
+	</item>
+	<item>
+		<ingredient count="276" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2437" /> <!-- Drake Leather Boots -->
+	</item>
+	<item>
+		<ingredient count="276" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2438" /> <!-- Full Plate Boots -->
+	</item>
+	<item>
+		<ingredient count="102" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2495" /> <!-- Chain Shield -->
+	</item>
+	<item>
+		<ingredient count="102" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="631" /> <!-- Eldarake -->
+	</item>
+	<item>
+		<ingredient count="121" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2496" /> <!-- Dwarven Chain Shield -->
+	</item>
+	<item>
+		<ingredient count="131" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="632" /> <!-- Knight's Shield -->
+	</item>
+	<item>
+		<ingredient count="199" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="107" /> <!-- Composite Shield -->
+	</item>
+	<item>
+		<ingredient count="199" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="103" /> <!-- Tower Shield -->
+	</item>
+	<item>
+		<ingredient count="289" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2497" /> <!-- Full Plate Shield -->
+	</item>
+</list>

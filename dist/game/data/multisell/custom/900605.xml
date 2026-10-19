@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+	<!--
+	Village Under Siege: Defence Force Board exchange, D-grade jewelry.
+	The gear the retail shops sell, for Defence Medals (4674): a medal for every 1,000 adena of its shop price (VillageSiegeAdenaPerMedal), rounded up.
+	-->
+	<npcs>
+		<npc>900600</npc> <!-- Defence Force Board -->
+	</npcs>
+	<item>
+		<ingredient count="28" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="910" /> <!-- Necklace of Devotion -->
+	</item>
+	<item>
+		<ingredient count="44" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="911" /> <!-- Enchanted Necklace -->
+	</item>
+	<item>
+		<ingredient count="66" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="912" /> <!-- Near Forest Necklace -->
+	</item>
+	<item>
+		<ingredient count="96" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="913" /> <!-- Elven Necklace -->
+	</item>
+	<item>
+		<ingredient count="125" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="914" /> <!-- Necklace of Darkness -->
+	</item>
+	<item>
+		<ingredient count="21" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="847" /> <!-- Red Crescent Earring -->
+	</item>
+	<item>
+		<ingredient count="33" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="848" /> <!-- Enchanted Earring -->
+	</item>
+	<item>
+		<ingredient count="50" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="849" /> <!-- Tiger's Eye Earring -->
+	</item>
+	<item>
+		<ingredient count="72" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="850" /> <!-- Elven Earring -->
+	</item>
+	<item>
+		<ingredient count="94" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="851" /> <!-- Omen Beast's Eye Earring -->
+	</item>
+	<item>
+		<ingredient count="14" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="890" /> <!-- Ring of Devotion -->
+	</item>
+	<item>
+		<ingredient count="22" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="879" /> <!-- Enchanted Ring -->
+	</item>
+	<item>
+		<ingredient count="33" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="880" /> <!-- Black Pearl Ring -->
+	</item>
+	<item>
+		<ingredient count="48" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="881" /> <!-- Elven Ring -->
+	</item>
+	<item>
+		<ingredient count="63" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="882" /> <!-- Mithril Ring -->
+	</item>
+</list>

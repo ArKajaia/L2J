@@ -58,6 +58,7 @@ import org.l2jmobius.gameserver.managers.RaidLogManager;
 import org.l2jmobius.gameserver.managers.BestiaryManager;
 import org.l2jmobius.gameserver.managers.SessionStatsManager;
 import org.l2jmobius.gameserver.managers.ShadowRaidManager;
+import org.l2jmobius.gameserver.managers.VillageSiegeManager;
 import org.l2jmobius.gameserver.managers.WalkingManager;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -104,6 +105,8 @@ public class Attackable extends Npc
 	private int _championTier;
 	private final Map<Creature, AggroInfo> _aggroList = new ConcurrentHashMap<>();
 	private boolean _canReturnToSpawnPoint = true;
+	// Its part in a Village Under Siege (see VillageSiegeManager): VILLAGE_SIEGE_NONE, VILLAGE_SIEGE_MONSTER or VILLAGE_SIEGE_GUARD.
+	private volatile int _villageSiegeRole = VILLAGE_SIEGE_NONE;
 	private boolean _seeThroughSilentMove = false;
 	
 	// Manor
@@ -170,6 +173,26 @@ public class Attackable extends Npc
 	public Map<Creature, AggroInfo> getAggroList()
 	{
 		return _aggroList;
+	}
+	
+	/** Not part of a Village Under Siege. */
+	public static final int VILLAGE_SIEGE_NONE = 0;
+	/** One of the monsters attacking a village (see VillageSiegeManager). */
+	public static final int VILLAGE_SIEGE_MONSTER = 1;
+	/** One of the guards defending a village (see VillageSiegeManager). */
+	public static final int VILLAGE_SIEGE_GUARD = 2;
+	
+	/**
+	 * @return its part in a Village Under Siege ({@link #VILLAGE_SIEGE_NONE}, {@link #VILLAGE_SIEGE_MONSTER} or {@link #VILLAGE_SIEGE_GUARD})
+	 */
+	public int getVillageSiegeRole()
+	{
+		return _villageSiegeRole;
+	}
+	
+	public void setVillageSiegeRole(int role)
+	{
+		_villageSiegeRole = role;
 	}
 	
 	public boolean canReturnToSpawnPoint()
@@ -304,6 +327,12 @@ public class Attackable extends Npc
 		if (attacker != null)
 		{
 			addDamage(attacker, (int) damage, skill);
+			
+			// A Village Under Siege counts who fought its monsters.
+			if (_villageSiegeRole == VILLAGE_SIEGE_MONSTER)
+			{
+				VillageSiegeManager.getInstance().onSiegeMonsterDamaged(this, attacker, damage);
+			}
 		}
 		
 		// If this Attackable is a Monster and it has spawned minions, call its minions to battle

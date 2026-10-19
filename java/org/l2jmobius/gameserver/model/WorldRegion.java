@@ -228,6 +228,23 @@ public class WorldRegion
 	}
 	
 	/**
+	 * Undoes {@link #keepActive()}: the region goes back to sleep at once if no player is around, else when the last one leaves.
+	 */
+	public void releaseKeepActive()
+	{
+		if (!_keptActive)
+		{
+			return;
+		}
+		
+		_keptActive = false;
+		if (!GeneralConfig.GRIDS_ALWAYS_ON && areNeighborsEmpty())
+		{
+			setActive(false);
+		}
+	}
+	
+	/**
 	 * @return {@code true} if this region stays active even with no player around (see {@link #keepActive()})
 	 */
 	public boolean isKeptActive()

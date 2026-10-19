@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+	<!--
+	Village Under Siege: Defence Force Board exchange, No-grade weapons.
+	The gear the retail shops sell, for Defence Medals (4674): a medal for every 1,000 adena of its shop price (VillageSiegeAdenaPerMedal), rounded up.
+	-->
+	<npcs>
+		<npc>900600</npc> <!-- Defence Force Board -->
+	</npcs>
+	<item>
+		<ingredient count="1" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="4" /> <!-- Club -->
+	</item>
+	<item>
+		<ingredient count="1" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13" /> <!-- Short Bow -->
+	</item>
+	<item>
+		<ingredient count="1" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="11" /> <!-- Bone Dagger -->
+	</item>
+	<item>
+		<ingredient count="1" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="253" /> <!-- Spiked Gloves -->
+	</item>
+	<item>
+		<ingredient count="1" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="1" /> <!-- Short Sword -->
+	</item>
+	<item>
+		<ingredient count="7" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="152" /> <!-- Heavy Chisel -->
+	</item>
+	<item>
+		<ingredient count="10" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="5" /> <!-- Mace -->
+	</item>
+	<item>
+		<ingredient count="10" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="8" /> <!-- Willow Staff -->
+	</item>
+	<item>
+		<ingredient count="10" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="14" /> <!-- Bow -->
+	</item>
+	<item>
+		<ingredient count="10" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="215" /> <!-- Doom Dagger -->
+	</item>
+	<item>
+		<ingredient count="10" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="12" /> <!-- Knife -->
+	</item>
+	<item>
+		<ingredient count="10" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="254" /> <!-- Iron Gloves -->
+	</item>
+	<item>
+		<ingredient count="10" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="3" /> <!-- Broadsword -->
+	</item>
+	<item>
+		<ingredient count="15" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="153" /> <!-- Sigil -->
+	</item>
+	<item>
+		<ingredient count="15" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="738" /> <!-- Sword of Solidarity -->
+	</item>
+	<item>
+		<ingredient count="20" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2373" /> <!-- Eldritch Staff -->
+	</item>
+	<item>
+		<ingredient count="20" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="754" /> <!-- Red Sunset Staff -->
+	</item>
+	<item>
+		<ingredient count="20" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="1511" /> <!-- Silversmith Hammer -->
+	</item>
+	<item>
+		<ingredient count="20" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="747" /> <!-- Wand of Adept -->
+	</item>
+	<item>
+		<ingredient count="20" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2372" /> <!-- Dagger of Adept -->
+	</item>
+	<item>
+		<ingredient count="20" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="989" /> <!-- Eldritch Dagger -->
+	</item>
+	<item>
+		<ingredient count="20" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2374" /> <!-- Red Sunset Dagger -->
+	</item>
+	<item>
+		<ingredient count="20" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="1510" /> <!-- Butcher's Sword -->
+	</item>
+	<item>
+		<ingredient count="20" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="981" /> <!-- Red Sunset Sword -->
+	</item>
+	<item>
+		<ingredient count="26" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="744" /> <!-- Staff of Sentinel -->
+	</item>
+	<item>
+		<ingredient count="26" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="975" /> <!-- Blood Saber -->
+	</item>
+	<item>
+		<ingredient count="26" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="743" /> <!-- Sword of Sentinel -->
+	</item>
+	<item>
+		<ingredient count="42" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="9" /> <!-- Cedar Staff -->
+	</item>
+	<item>
+		<ingredient count="42" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="154" /> <!-- Dwarven Mace -->
+	</item>
+	<item>
+		<ingredient count="42" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="271" /> <!-- Hunting Bow -->
+	</item>
+	<item>
+		<ingredient count="42" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="216" /> <!-- Dirk -->
+	</item>
+	<item>
+		<ingredient count="42" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="255" /> <!-- Fox Claw Gloves -->
+	</item>
+	<item>
+		<ingredient count="42" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="1333" /> <!-- Brandish -->
+	</item>
+	<item>
+		<ingredient count="42" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="66" /> <!-- Gladius -->
+	</item>
+	<item>
+		<ingredient count="42" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="122" /> <!-- Handmade Sword -->
+	</item>
+	<item>
+		<ingredient count="42" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="67" /> <!-- Orcish Sword -->
+	</item>
+	<item>
+		<ingredient count="67" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="946" /> <!-- Skeleton Dagger -->
+	</item>
+	<item>
+		<ingredient count="105" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="176" /> <!-- Apprentice's Staff -->
+	</item>
+	<item>
+		<ingredient count="105" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2501" /> <!-- Bone Club -->
+	</item>
+	<item>
+		<ingredient count="105" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="272" /> <!-- Forest Bow -->
+	</item>
+	<item>
+		<ingredient count="105" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="217" /> <!-- Shining Knife -->
+	</item>
+	<item>
+		<ingredient count="105" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="218" /> <!-- Throwing Knife -->
+	</item>
+	<item>
+		<ingredient count="105" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="256" /> <!-- Cestus -->
+	</item>
+	<item>
+		<ingredient count="105" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="15" /> <!-- Short Spear -->
+	</item>
+	<item>
+		<ingredient count="105" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2" /> <!-- Long Sword -->
+	</item>
+	<item>
+		<ingredient count="105" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="120" /> <!-- Sword of Reflection -->
+	</item>
+	<item>
+		<ingredient count="105" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="121" /> <!-- Sword of Watershadow -->
+	</item>
+	<item>
+		<ingredient count="188" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="155" /> <!-- Flanged Mace -->
+	</item>
+	<item>
+		<ingredient count="188" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="87" /> <!-- Iron Hammer -->
+	</item>
+	<item>
+		<ingredient count="188" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="177" /> <!-- Mage Staff -->
+	</item>
+	<item>
+		<ingredient count="188" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="273" /> <!-- Composite Bow -->
+	</item>
+	<item>
+		<ingredient count="188" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="219" /> <!-- Sword Breaker -->
+	</item>
+	<item>
+		<ingredient count="188" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="257" /> <!-- Viper Fang -->
+	</item>
+	<item>
+		<ingredient count="188" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="16" /> <!-- Great Spear -->
+	</item>
+	<item>
+		<ingredient count="188" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="68" /> <!-- Falchion -->
+	</item>
+	<item>
+		<ingredient count="188" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="5284" /> <!-- Zweihander -->
+	</item>
+</list>

@@ -2037,6 +2037,12 @@ public class FakePlayerPvpManager
 			return damage;
 		}
 		
+		// Defending a village under siege, the monsters can kill it like a player.
+		if (VillageSiegeManager.isSiegeDefender(fake))
+		{
+			return damage;
+		}
+		
 		final double floor = (fake.getMaxHp() * FakePlayerPvpConfig.MONSTER_DAMAGE_FLOOR) / 100.0;
 		final double allowed = fake.getCurrentHp() - floor;
 		return allowed <= 0 ? 0 : Math.min(damage, allowed);
@@ -2068,7 +2074,8 @@ public class FakePlayerPvpManager
 		World.getInstance().forEachVisibleObjectInRange(victim, Attackable.class, FakePlayerPvpConfig.REVENGE_RANGE, fake ->
 		{
 			// A big fight's helper (a Resonant monster, a Nightlord) came to help the players, during that fight and after it.
-			if (!fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || isFighting(fake, killer) || FakePartyManager.getInstance().isSameGroup(fake, killer) || FakeJoinerManager.isHelper(fake))
+			// Nor a defender of a village under siege: everyone there fights the same monsters.
+			if (!fake.isPvpFakePlayer() || fake.isDead() || !fake.hasAI() || isFighting(fake, killer) || FakePartyManager.getInstance().isSameGroup(fake, killer) || FakeJoinerManager.isHelper(fake) || VillageSiegeManager.isSiegeDefender(fake))
 			{
 				return;
 			}

@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+	<!--
+	Village Under Siege: Defence Force Board exchange, D-grade armor.
+	The gear the retail shops sell, for Defence Medals (4674): a medal for every 1,000 adena of its shop price (VillageSiegeAdenaPerMedal), rounded up.
+	-->
+	<npcs>
+		<npc>900600</npc> <!-- Defence Force Board -->
+	</npcs>
+	<item>
+		<ingredient count="49" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="432" /> <!-- Cursed Tunic -->
+	</item>
+	<item>
+		<ingredient count="49" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="391" /> <!-- Puma Skin Shirt -->
+	</item>
+	<item>
+		<ingredient count="65" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="347" /> <!-- Ring Mail Breastplate -->
+	</item>
+	<item>
+		<ingredient count="77" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="392" /> <!-- Lion Skin Shirt -->
+	</item>
+	<item>
+		<ingredient count="77" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="435" /> <!-- Mystic's Tunic -->
+	</item>
+	<item>
+		<ingredient count="77" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="434" /> <!-- White Tunic -->
+	</item>
+	<item>
+		<ingredient count="103" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="348" /> <!-- Scale Mail -->
+	</item>
+	<item>
+		<ingredient count="117" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="393" /> <!-- Mithril Banded Mail -->
+	</item>
+	<item>
+		<ingredient count="117" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="394" /> <!-- Reinforced Leather Shirt -->
+	</item>
+	<item>
+		<ingredient count="117" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="436" /> <!-- Tunic of Knowledge -->
+	</item>
+	<item>
+		<ingredient count="142" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="349" /> <!-- Compound Scale Mail -->
+	</item>
+	<item>
+		<ingredient count="142" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="350" /> <!-- Dwarven Scale Mail -->
+	</item>
+	<item>
+		<ingredient count="142" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="58" /> <!-- Mithril Breastplate -->
+	</item>
+	<item>
+		<ingredient count="157" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="351" /> <!-- Blast Plate -->
+	</item>
+	<item>
+		<ingredient count="172" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="395" /> <!-- Manticore Skin Shirt -->
+	</item>
+	<item>
+		<ingredient count="172" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="437" /> <!-- Mithril Tunic -->
+	</item>
+	<item>
+		<ingredient count="191" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="7857" /> <!-- Clan Oath Aketon -->
+	</item>
+	<item>
+		<ingredient count="191" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="7854" /> <!-- Clan Oath Brigandine -->
+	</item>
+	<item>
+		<ingredient count="230" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="352" /> <!-- Brigandine Tunic -->
+	</item>
+	<item>
+		<ingredient count="254" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="7851" /> <!-- Clan Oath Armor -->
+	</item>
+	<item>
+		<ingredient count="301" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="353" /> <!-- Half Plate Armor -->
+	</item>
+	<item>
+		<ingredient count="367" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="438" /> <!-- Sage's Rag -->
+	</item>
+	<item>
+		<ingredient count="367" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="396" /> <!-- Salamander Skin Mail -->
+	</item>
+	<item>
+		<ingredient count="31" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="465" /> <!-- Cursed Stockings -->
+	</item>
+	<item>
+		<ingredient count="31" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="413" /> <!-- Puma Skin Gaiters -->
+	</item>
+	<item>
+		<ingredient count="41" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="376" /> <!-- Iron Plate Gaiters -->
+	</item>
+	<item>
+		<ingredient count="48" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="467" /> <!-- Dark Stockings -->
+	</item>
+	<item>
+		<ingredient count="48" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="414" /> <!-- Lion Skin Gaiters -->
+	</item>
+	<item>
+		<ingredient count="48" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="468" /> <!-- Mystic's Stockings -->
+	</item>
+	<item>
+		<ingredient count="65" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="377" /> <!-- Scale Gaiters -->
+	</item>
+	<item>
+		<ingredient count="74" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="415" /> <!-- Mithril Banded Gaiters -->
+	</item>
+	<item>
+		<ingredient count="74" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="416" /> <!-- Reinforced Leather Gaiters -->
+	</item>
+	<item>
+		<ingredient count="74" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="469" /> <!-- Stockings of Knowledge -->
+	</item>
+	<item>
+		<ingredient count="98" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="378" /> <!-- Compound Scale Gaiters -->
+	</item>
+	<item>
+		<ingredient count="98" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="379" /> <!-- Dwarven Scale Gaiters -->
+	</item>
+	<item>
+		<ingredient count="98" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="59" /> <!-- Mithril Gaiters -->
+	</item>
+	<item>
+		<ingredient count="108" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="417" /> <!-- Manticore Skin Gaiters -->
+	</item>
+	<item>
+		<ingredient count="108" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="470" /> <!-- Mithril Stockings -->
+	</item>
+	<item>
+		<ingredient count="144" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2378" /> <!-- Brigandine Gaiters -->
+	</item>
+	<item>
+		<ingredient count="144" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2377" /> <!-- Mithril Scale Gaiters -->
+	</item>
+	<item>
+		<ingredient count="188" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="380" /> <!-- Plate Gaiters -->
+	</item>
+	<item>
+		<ingredient count="25" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="45" /> <!-- Bone Helmet -->
+	</item>
+	<item>
+		<ingredient count="39" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="46" /> <!-- Bronze Helmet -->
+	</item>
+	<item>
+		<ingredient count="59" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="7850" /> <!-- Clan Oath Helm -->
+	</item>
+	<item>
+		<ingredient count="59" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="47" /> <!-- Helmet -->
+	</item>
+	<item>
+		<ingredient count="87" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2411" /> <!-- Brigandine Helmet -->
+	</item>
+	<item>
+		<ingredient count="113" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2412" /> <!-- Plate Helmet -->
+	</item>
+	<item>
+		<ingredient count="17" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="604" /> <!-- Crafted Leather Gloves -->
+	</item>
+	<item>
+		<ingredient count="26" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="605" /> <!-- Leather Gauntlets -->
+	</item>
+	<item>
+		<ingredient count="40" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="63" /> <!-- Gauntlets -->
+	</item>
+	<item>
+		<ingredient count="40" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2447" /> <!-- Gloves of Knowledge -->
+	</item>
+	<item>
+		<ingredient count="40" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2446" /> <!-- Reinforced Leather Gloves -->
+	</item>
+	<item>
+		<ingredient count="58" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2449" /> <!-- Brigandine Gauntlets -->
+	</item>
+	<item>
+		<ingredient count="58" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2448" /> <!-- Manticore Skin Gloves -->
+	</item>
+	<item>
+		<ingredient count="58" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2450" /> <!-- Mithril Gloves -->
+	</item>
+	<item>
+		<ingredient count="58" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="606" /> <!-- Rip Gauntlets -->
+	</item>
+	<item>
+		<ingredient count="76" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="61" /> <!-- Mithril Plate Gloves -->
+	</item>
+	<item>
+		<ingredient count="76" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="607" /> <!-- Ogre Power Gauntlets -->
+	</item>
+	<item>
+		<ingredient count="76" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2451" /> <!-- Sage's Worn Gloves -->
+	</item>
+	<item>
+		<ingredient count="17" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="40" /> <!-- Leather Boots -->
+	</item>
+	<item>
+		<ingredient count="26" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="1123" /> <!-- Blue Buckskin Boots -->
+	</item>
+	<item>
+		<ingredient count="40" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2423" /> <!-- Boots of Knowledge -->
+	</item>
+	<item>
+		<ingredient count="40" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="553" /> <!-- Iron Boots -->
+	</item>
+	<item>
+		<ingredient count="40" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2422" /> <!-- Reinforced Leather Boots -->
+	</item>
+	<item>
+		<ingredient count="58" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="1124" /> <!-- Boots of Power -->
+	</item>
+	<item>
+		<ingredient count="58" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2425" /> <!-- Brigandine Boots -->
+	</item>
+	<item>
+		<ingredient count="58" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2426" /> <!-- Elven Mithril Boots -->
+	</item>
+	<item>
+		<ingredient count="58" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2424" /> <!-- Manticore Skin Boots -->
+	</item>
+	<item>
+		<ingredient count="76" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="1125" /> <!-- Assault Boots -->
+	</item>
+	<item>
+		<ingredient count="76" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2428" /> <!-- Plate Boots -->
+	</item>
+	<item>
+		<ingredient count="76" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2427" /> <!-- Salamander Skin Boots -->
+	</item>
+	<item>
+		<ingredient count="17" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="626" /> <!-- Bronze Shield -->
+	</item>
+	<item>
+		<ingredient count="27" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="627" /> <!-- Aspis -->
+	</item>
+	<item>
+		<ingredient count="41" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="628" /> <!-- Hoplon -->
+	</item>
+	<item>
+		<ingredient count="61" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2493" /> <!-- Brigandine Shield -->
+	</item>
+	<item>
+		<ingredient count="61" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="629" /> <!-- Kite Shield -->
+	</item>
+	<item>
+		<ingredient count="79" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="2494" /> <!-- Plate Shield -->
+	</item>
+	<item>
+		<ingredient count="79" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="630" /> <!-- Square Shield -->
+	</item>
+</list>

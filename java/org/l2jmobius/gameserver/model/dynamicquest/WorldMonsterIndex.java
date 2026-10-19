@@ -311,6 +311,33 @@ public class WorldMonsterIndex
 		return npcIds;
 	}
 
+	/**
+	 * Something that looks at spawn points (see {@link #forEachPointNear}).
+	 */
+	public interface SpawnPointVisitor
+	{
+		void visit(int npcId, int level, int x, int y, int z);
+	}
+
+	/**
+	 * Visits the monster spawn points within range of a point, of any level.
+	 * @param x the x
+	 * @param y the y
+	 * @param range the range
+	 * @param visitor what looks at each of them
+	 */
+	public void forEachPointNear(int x, int y, int range, SpawnPointVisitor visitor)
+	{
+		final long rangeSq = (long) range * range;
+		for (Point point : getPoints())
+		{
+			if (point.distanceSq(x, y) <= rangeSq)
+			{
+				visitor.visit(point._npcId, point._level, point._x, point._y, point._z);
+			}
+		}
+	}
+
 	public static WorldMonsterIndex getInstance()
 	{
 		return SingletonHolder.INSTANCE;

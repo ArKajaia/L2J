@@ -294,6 +294,21 @@ Procedurally generated quests that anyone can take at any level. None of them is
   - `//dynquest_reroll` (roll every board again)
 - **Settings**: `config/Custom/DynamicQuests.ini`. The header of `data/DynamicQuests.xml` documents every trigger, objective, transition and reward attribute. New quests are added there.
 
+### Village Under Siege
+
+Once a day, one starting village after the other, the monsters of the hunting grounds around a village attack its entrances. It is content for characters up to level 39 only.
+
+- **Schedule**: Talking Island, the Elven, Dark Elven, Orc, Dwarven and Kamael villages, Gludin, Gludio and Dion are besieged one at a time, 2 hours each with a 40 minute break, from 7:00 server time; the order shifts by one village every day. Every siege is announced 10 minutes before. `.siege` and the Defence Force Board show the day's schedule.
+- **Entrances**: the roads the monsters take into the village. They are found on their own at startup: the monster spawn points around the village are grouped into hunting grounds, a path is found from each to the gatekeeper, and where it crosses into the village's TownZone is an entrance (up to 3, the busiest roads). They can be fixed in `data/VillageSiege.xml`.
+- **Gates**: each entrance has a gate standard whose title shows what is left of the gate. Monsters next to it wear it down, and with no monster at it, it is mended a little. At 0% the gate has fallen: the monsters run into the streets. The siege goes on until its time is up, but its end bonus is halved.
+- **Waves**: every 60-90 seconds a wave forms out on each road and marches on its gate, bigger with more defenders there. The monsters are the ones living around the village, at its level (the average level of the monsters around it). Some are champions, a Warband Leader comes every 20 minutes and the Siege Lord 10 minutes before the end. The siege's monsters give their usual experience and drops.
+- **Guards**: the village's own guards are hidden during its siege (they are level 80 and would end every wave at once). In their place a line of siege guards, with the look of the village's guards, stands behind each gate, 10 levels above the monsters. They only go for monsters that come near their line, so the gate is the players' to hold.
+- **Fake defenders**: fake players come to defend: about 8 with no player there, fewer as players come, so the fighting goes on with nobody watching (the regions around the village stay awake for the siege). They arrive by Scroll of Escape, hold their gate, can be killed by the monsters and read their scroll after 10 to 25 minutes. They are ranked like players.
+- **Contribution**: a kill's points are shared by the damage each defender did to it (what the guards did is lost), healing other defenders counts, and so does every minute of fighting. Monsters 10 or more levels below a character give it nothing, and characters above level 39 earn nothing. The defenders still fighting in the last 15 minutes get 30% more (15% if a gate fell).
+- **Defence Medals**: points are paid in Defence Medals as they are earned (one character per computer per siege). The Defence Force Board next to the gatekeeper of every besieged village exchanges them for the gear the retail shops sell, No-grade to C grade: a medal for every 1,000 adena of an item's shop price. A village pays so that about three hours of fighting there buy a weapon of its level - a Falchion in the race villages, a Two-Handed Sword in Gludin and Gludio, a Homunkulus's Sword in Dion - or two or three armor parts. The medal is the retail Medal of Honor (4674), renamed; it can't be traded or stored, and `client/Currencies` has its client rows.
+- **Defence Force Board**: the siege going on (its gates, the monsters, the best defenders and your contribution), the day's schedule, the ranking of the village's last siege, today's ranking over every siege, the exchange, and how it all works. `.siege` shows the same (without the exchange), with a radar button for each gate.
+- GMs have `//villagesiege` (the villages with their level, entrances and medals an hour, and today's schedule), `//villagesiege start <village> [minutes]`, `stop`, `entrances <village>` (each entrance with a teleport and the line to keep it in the data), `goto`, `stats` (each defender's points an hour, to tune the medal rates) and `reset`. Rankings are kept for a month in `village_siege_ranking`. Settings are in `config/Custom/VillageSiege.ini`.
+
 ### Master Blacksmith
 
 One NPC in Giran (next to the Arena and the Class Master) that does the work of every blacksmith and explains soul crystals and special abilities (SA).
@@ -847,6 +862,9 @@ This program is free software, licensed under the **GNU General Public License, 
 ## Recent Updates
 
 Changes from 28 September – 19 October 2026.
+
+### Village Under Siege
+- **New**: once a day, one starting village after the other (Talking Island, the race villages, Gludin, Gludio and Dion), the monsters of the hunting grounds around attack the village's entrances for 2 hours. Defenders up to level 39 hold the gate standards, siege guards wait behind the gates and fake players come to help. Contribution is paid in Defence Medals, exchanged at the Defence Force Board for No-grade to C-grade gear, and ranked on the board. See [Village Under Siege](#village-under-siege).
 
 ### Adventurer's Guide
 - **New**: a tutorial for the server's own systems in the style of the retail Tutorial quest. Lessons come when the player may have a question (the first Champion slain, a monster raging, a Wave Challenge rising again, a new Bestiary entry...), never below their minimum level: the class transfers, every monster variant, the Notice Board and dynamic quests, hidden quests, the Bestiary, the Survival Arena (from level 40), learning buffs and the Community Board. `.guide` and the Community Board's Guidebook show them again, and each player can turn the pop-ups off there (or with `.guide off`). See [Adventurer's Guide](#adventurers-guide).
