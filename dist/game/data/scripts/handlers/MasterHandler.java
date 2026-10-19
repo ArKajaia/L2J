@@ -97,7 +97,6 @@ import handlers.bypass.communityboard.RegionBoard;
 import handlers.bypass.npc.AdventurersGuideLink;
 import handlers.bypass.npc.Augment;
 import handlers.bypass.npc.Buy;
-import handlers.bypass.npc.BuyShadowItem;
 import handlers.bypass.npc.ChatLink;
 import handlers.bypass.npc.ClanWarehouse;
 import handlers.bypass.npc.Festival;
@@ -495,7 +494,6 @@ public class MasterHandler
 			AdventurersGuideLink.class,
 			Augment.class,
 			Buy.class,
-			BuyShadowItem.class,
 			ChatLink.class,
 			ClanWarehouse.class,
 			Festival.class,
