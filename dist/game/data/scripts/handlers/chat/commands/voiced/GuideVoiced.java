@@ -22,7 +22,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.guide.GuideLesson;
 
 /**
- * .guide: the Adventurer's Guidebook in the tutorial window, every lesson the character has unlocked. {@code .guide <lesson>} opens one lesson (for example {@code .guide arena}).
+ * .guide: the Adventurer's Guidebook in the tutorial window, every lesson the character has unlocked. {@code .guide <lesson>} opens one lesson (for example {@code .guide arena}), {@code .guide off} and {@code .guide on} turn the tutorial pop-ups off and on.
  */
 public class GuideVoiced implements IVoicedCommandHandler
 {
@@ -40,6 +40,12 @@ public class GuideVoiced implements IVoicedCommandHandler
 		}
 
 		final AdventurersGuideManager manager = AdventurersGuideManager.getInstance();
+		if ((params != null) && (params.trim().equalsIgnoreCase("on") || params.trim().equalsIgnoreCase("off")))
+		{
+			manager.setTipsEnabled(player, params.trim().equalsIgnoreCase("on"));
+			return true;
+		}
+
 		final GuideLesson lesson = (params != null) && !params.isEmpty() ? GuideLesson.find(params.trim().replace(' ', '_')) : null;
 		if ((lesson != null) && lesson.isEnabled() && manager.isUnlocked(player, lesson))
 		{

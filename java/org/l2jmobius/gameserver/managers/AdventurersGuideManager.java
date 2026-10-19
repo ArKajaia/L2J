@@ -102,6 +102,8 @@ public class AdventurersGuideManager
 	private static final String VAR_PENDING = "GUIDE_PENDING";
 	/** The opening line of a lesson waiting to be read is kept in this + the lesson's name. */
 	private static final String VAR_INTRO = "GUIDE_INTRO_";
+	/** Set when the player turned the guide's pop-ups off. */
+	private static final String VAR_OFF = "GUIDE_OFF";
 	private static final String HTML_PATH = "data/html/guide/";
 	private static final String RETAIL_TUTORIAL_PATH = "data/scripts/quests/Q00255_Tutorial/";
 
@@ -148,7 +150,7 @@ public class AdventurersGuideManager
 	{
 		ThreadPool.schedule(() ->
 		{
-			if (!player.isOnline() || player.isInOfflineMode())
+			if (!player.isOnline() || player.isInOfflineMode() || !isTipsEnabled(player))
 			{
 				return;
 			}
@@ -401,7 +403,7 @@ public class AdventurersGuideManager
 	 */
 	public void trigger(Player player, GuideLesson lesson, String intro)
 	{
-		if (!AdventurersGuideConfig.ENABLED || (player == null) || !lesson.isEnabled() || player.isInOfflineMode() || (player.getLevel() < lesson.getLevel()) || !isForPlayer(player, lesson))
+		if (!AdventurersGuideConfig.ENABLED || (player == null) || !lesson.isEnabled() || player.isInOfflineMode() || (player.getLevel() < lesson.getLevel()) || !isTipsEnabled(player) || !isForPlayer(player, lesson))
 		{
 			return;
 		}
@@ -443,7 +445,7 @@ public class AdventurersGuideManager
 	 */
 	public void discover(Player player, GuideLesson lesson)
 	{
-		if (!AdventurersGuideConfig.ENABLED || (player == null) || !lesson.isEnabled() || (player.getLevel() < lesson.getLevel()) || isSeen(player, lesson))
+		if (!AdventurersGuideConfig.ENABLED || (player == null) || !lesson.isEnabled() || (player.getLevel() < lesson.getLevel()) || !isTipsEnabled(player) || isSeen(player, lesson))
 		{
 			return;
 		}
@@ -476,6 +478,44 @@ public class AdventurersGuideManager
 	// ---------------------------------------------------------------------------------------------
 	// State
 	// ---------------------------------------------------------------------------------------------
+
+	/**
+	 * @param player the player
+	 * @return {@code true} if the guide's lessons pop up for this character (the player can turn them off on the Community Board's guide page or with {@code .guide off})
+	 */
+	public boolean isTipsEnabled(Player player)
+	{
+		return !player.getVariables().getBoolean(VAR_OFF, false);
+	}
+
+	/**
+	 * Turns the guide's pop-ups on or off for a character. While they are off no question mark is raised and no lesson opens by itself; the Guidebook can still be read, and the lessons that came meanwhile come again at their next moment. Turning them back on raises the
+	 * question marks still waiting.
+	 * @param player the player
+	 * @param enabled {@code true} to turn them on
+	 */
+	public void setTipsEnabled(Player player, boolean enabled)
+	{
+		if (enabled == isTipsEnabled(player))
+		{
+			return;
+		}
+
+		if (enabled)
+		{
+			player.getVariables().remove(VAR_OFF);
+			for (GuideLesson lesson : getPending(player))
+			{
+				player.sendPacket(new TutorialShowQuestionMark(QUESTION_MARK_BASE + lesson.ordinal()));
+			}
+			player.sendMessage("Adventurer's Guide: tutorial pop-ups are on.");
+		}
+		else
+		{
+			player.getVariables().set(VAR_OFF, true);
+			player.sendMessage("Adventurer's Guide: tutorial pop-ups are off. You can still read the Guidebook with .guide or on the Community Board.");
+		}
+	}
 
 	/**
 	 * @param player the player

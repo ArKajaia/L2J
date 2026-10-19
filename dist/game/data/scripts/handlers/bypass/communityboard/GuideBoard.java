@@ -25,7 +25,8 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.guide.GuideLesson;
 
 /**
- * The Adventurer's Guide on the Community Board: the Guidebook (every lesson unlocked, and the ones still to come) and its lessons. {@code _bbsguide show <lesson>} reads one, {@code _bbsguide radar <place>} marks a place of a lesson on the map. {@code .guide} shows the same in the
+ * The Adventurer's Guide on the Community Board: the Guidebook (every lesson unlocked, and the ones still to come) and its lessons. {@code _bbsguide show <lesson>} reads one, {@code _bbsguide radar <place>} marks a place of a lesson on the map, {@code _bbsguide tips on|off} turns the
+ * tutorial pop-ups on or off for the character. {@code .guide} shows the same in the
  * tutorial window.
  */
 public class GuideBoard implements IParseBoardHandler
@@ -61,6 +62,10 @@ public class GuideBoard implements IParseBoardHandler
 		{
 			manager.showOnMap(player, args[1]);
 		}
+		else if (args[0].equalsIgnoreCase("tips") && (args.length > 1) && AdventurersGuideConfig.ENABLED)
+		{
+			manager.setTipsEnabled(player, args[1].equalsIgnoreCase("on"));
+		}
 
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<table width=").append(WIDTH).append("><tr><td>");
@@ -81,10 +86,28 @@ public class GuideBoard implements IParseBoardHandler
 		else
 		{
 			sb.append(manager.getBookContent(player, "bypass " + AdventurersGuideManager.BOARD_BYPASS + " show "));
+			sb.append("</td></tr></table><br>");
+			appendTipsSwitch(sb, manager.isTipsEnabled(player));
+			send(player, sb.toString());
+			return true;
 		}
 		sb.append("</td></tr></table>");
 		send(player, sb.toString());
 		return true;
+	}
+
+	/**
+	 * The switch of the guide's pop-ups: whether new lessons raise the question mark or open by themselves.
+	 * @param sb the page
+	 * @param enabled {@code true} if the pop-ups are on
+	 */
+	private static void appendTipsSwitch(StringBuilder sb, boolean enabled)
+	{
+		sb.append("<table width=").append(WIDTH).append(" bgcolor=111111><tr>");
+		sb.append("<td width=330 height=30>Tutorial pop-ups: ").append(enabled ? "<font color=\"66CC66\">ON</font>" : "<font color=\"FF6666\">OFF</font>");
+		sb.append("<br1><font color=\"808080\">").append(enabled ? "New lessons blink as a question mark when the moment comes." : "No lesson pops up. The Guidebook can still be read here.").append("</font></td>");
+		sb.append("<td width=150 align=right><button value=\"").append(enabled ? "Turn Off" : "Turn On").append("\" action=\"bypass ").append(AdventurersGuideManager.BOARD_BYPASS).append(" tips ").append(enabled ? "off" : "on").append("\" width=120 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td>");
+		sb.append("</tr></table>");
 	}
 
 	private static void send(Player player, String content)
