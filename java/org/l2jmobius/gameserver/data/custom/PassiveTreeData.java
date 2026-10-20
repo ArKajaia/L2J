@@ -18,16 +18,21 @@ import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode.NodeType;
 
 /**
- * Loads every data/passivetree/*.xml file into a flat node map keyed by id. Node ids must be globally unique across all sector files (not just unique within one file) since edges cross sector boundaries at the bridge and Nexus-ingress nodes.
+ * Loads data/passivetree/PassiveTree.xml into a flat node map keyed by id, with the tree's version (the {@code version} of its {@code <list>}, raised by every admin editor save). Each load also builds the definition the game client caches ({@link PassiveTreeBlob}).
  */
 public class PassiveTreeData implements IXmlReader
 {
 	private static final Logger LOGGER = Logger.getLogger(PassiveTreeData.class.getName());
 	
+	/** The tree, relative to the datapack. */
+	public static final String FILE = "data/passivetree/PassiveTree.xml";
+	
 	/** The live tree. Replaced as a whole by {@link #load()}, never changed in place, so a reload while players use the tree never shows them a half-read one. */
 	private volatile Map<Integer, PassiveNode> _nodes = Collections.emptyMap();
-	/** The tree being read by {@link #load()}. Files can be parsed on several threads at once. */
+	private volatile int _version;
+	/** The tree being read by {@link #load()}. */
 	private Map<Integer, PassiveNode> _loading;
+	private int _loadingVersion;
 	
 	protected PassiveTreeData()
 	{
@@ -39,14 +44,17 @@ public class PassiveTreeData implements IXmlReader
 	public synchronized void load()
 	{
 		_loading = new ConcurrentHashMap<>();
-		parseDatapackDirectory("data/passivetree", false);
+		_loadingVersion = 0;
+		parseDatapackFile(FILE);
 		
 		// Filled in id order, so the map iterates the same way whatever order the files were read in.
 		final Map<Integer, PassiveNode> nodes = new HashMap<>();
 		nodes.putAll(new TreeMap<>(_loading));
 		_nodes = Collections.unmodifiableMap(nodes);
+		_version = _loadingVersion;
 		_loading = null;
-		LOGGER.info(getClass().getSimpleName() + ": Loaded " + nodes.size() + " passive tree nodes.");
+		LOGGER.info(getClass().getSimpleName() + ": Loaded " + nodes.size() + " passive tree nodes, version " + _version + ".");
+		PassiveTreeBlob.rebuild(nodes, _version);
 	}
 	
 	@Override
@@ -57,6 +65,10 @@ public class PassiveTreeData implements IXmlReader
 			if (!list.getNodeName().equalsIgnoreCase("list"))
 			{
 				continue;
+			}
+			if (list.getAttributes().getNamedItem("version") != null)
+			{
+				_loadingVersion = parseInteger(list.getAttributes(), "version");
 			}
 			
 			for (Node n = list.getFirstChild(); n != null; n = n.getNextSibling())
@@ -210,6 +222,14 @@ public class PassiveTreeData implements IXmlReader
 		{
 			LOGGER.warning(getClass().getSimpleName() + ": Validation issues - " + refErrors + " broken reference(s), " + unreachable + " unreachable node(s).");
 		}
+	}
+	
+	/**
+	 * @return the {@code version} of PassiveTree.xml as last loaded
+	 */
+	public int getVersion()
+	{
+		return _version;
 	}
 	
 	public PassiveNode getNode(int id)

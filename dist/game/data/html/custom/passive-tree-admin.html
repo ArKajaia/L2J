@@ -212,7 +212,7 @@
 		<div class="spacer"></div>
 		<span id="changes">No changes</span>
 		<button class="btn" id="check" title="Check the tree on the server without saving">Check</button>
-		<button class="btn primary" id="save" title="Check, then save to the tree files and make it live (Ctrl+S)">Save...</button>
+		<button class="btn primary" id="save" title="Check, then save to the tree file and make it live (Ctrl+S)">Save...</button>
 	</header>
 	<div id="banner"></div>
 	<main id="stage" class="tool-select">
@@ -232,10 +232,12 @@
 		<div id="loading">
 			<div id="loading-text">Loading the tree...</div>
 			<div id="offline-start" hidden>
-				<button class="btn primary" id="open-folder">Open the tree folder...</button>
-				<p class="note">Pick <b>dist/game/data</b> (or the folder above it): then saving also makes a backup, the map shows the planner's icons, and skills are checked. Picking <b>dist/game/data/passivetree</b> itself works too.</p>
+				<button class="btn primary" id="open-folder">Open the data folder...</button>
+				<button class="btn" id="open-file">Open PassiveTree.xml...</button>
+				<p class="note">Pick <b>dist/game/data</b> (or the folder above it): then saving also makes a backup, the map shows the planner's icons, and skills are checked. Picking <b>dist/game/data/passivetree</b>, or the file <b>PassiveTree.xml</b> itself, works too.</p>
 				<p class="note warn" id="offline-support"></p>
 				<input type="file" id="folder-input" webkitdirectory multiple hidden>
+				<input type="file" id="file-input" accept=".xml" hidden>
 			</div>
 		</div>
 	</main>
@@ -248,17 +250,18 @@
 "use strict";
 // ===========================================================================
 //  Passive tree editor for GMs (opened in-game with //passivetree).
-//  Loads the tree exactly as data/passivetree/*.xml holds it, lets you move,
-//  link, add, remove and edit nodes, and saves the whole tree back. The server
-//  checks it, backs up the old files, writes the new ones and makes them live.
+//  Loads the tree exactly as data/passivetree/PassiveTree.xml holds it, lets you
+//  move, link, add, remove and edit nodes, and saves the whole tree back. The
+//  server checks it, backs up the old file, writes the new one a version up and
+//  makes it live.
 //
 //  Without a //passivetree link (the page opened straight from disk, say) it
-//  edits the tree files of a folder on this computer instead, without the game
-//  server: it reads and writes them itself, the same way the server does.
+//  edits a PassiveTree.xml on this computer instead, without the game server: it
+//  reads and writes it itself, the same way the server does.
 // ===========================================================================
 const API = "/api/passivetree/admin/";
 const SVG_NS = "http://www.w3.org/2000/svg";
-const DRAFT_KEY = "passiveTreeEditorDraft"; // + ":offline" for the files on this computer
+const DRAFT_KEY = "passiveTreeEditorDraft"; // + ":offline" for the file on this computer
 const TOKEN_KEY = "passiveTreeAdminToken";
 const UNDO_LIMIT = 300;
 const MAX_RING_RADIUS = 150;   // wider shared circles are roads bending round the centre, not clusters
@@ -278,14 +281,14 @@ const EFFECT_KEY_RE = /^[A-Z][A-Z0-9_]*(@[A-Z]+)?$/;
 
 // ------------------------------------------------------------------ state
 let token = null;
-let version = null;             // version of the files this editor is based on
+let version = null;             // hash of the file this editor is based on
 let adminName = "";
-let nodes = [];                 // in file order: the order matters for the saved files
+let nodes = [];                 // in file order: the order matters for the saved file
 let byId = new Map(), indexById = new Map();
 let adj = new Map();            // id -> Set of linked ids, both directions
-let original = new Map();       // id -> canonical text, as the files hold it
+let original = new Map();       // id -> canonical text, as the file holds it
 let types = [], conditions = [], allocations = {}, capKeys = [];
-let files = [], sectors = [], effectKeyUse = new Map(), glyphs = [], usedIcons = [];
+let sectors = [], effectKeyUse = new Map(), glyphs = [], usedIcons = [];
 let selection = new Set();      // insertion order = the order nodes were picked
 let selectedEdge = null;        // [a, b]
 let tool = "select";
@@ -314,7 +317,7 @@ function round1(v) { return Math.round(v * 10) / 10; }
 function edgeKey(a, b) { return a < b ? a + "-" + b : b + "-" + a; }
 function clone(n) { return JSON.parse(JSON.stringify(n)); }
 function canon(n) {
-	return JSON.stringify([n.id, n.file, n.name, n.sector, n.type, n.tier, n.cost, round1(n.x), round1(n.y),
+	return JSON.stringify([n.id, n.name, n.sector, n.type, n.tier, n.cost, round1(n.x), round1(n.y),
 		n.ox === null ? null : round1(n.ox), n.oy === null ? null : round1(n.oy), n.effect, n.skillId,
 		n.skillId > 0 ? n.skillLevel : "", n.icon, n.description, n.requires]);
 }
@@ -388,7 +391,7 @@ async function loadCaps() {
 	} catch (e) { capKeys = []; }
 }
 
-/** Loads the tree from the files. Keeps the view, and the selection where the nodes still exist. */
+/** Loads the tree from the file. Keeps the view, and the selection where the nodes still exist. */
 async function loadTree() {
 	const d = await backend.tree();
 	if (!d || d.error) {
@@ -415,7 +418,7 @@ async function loadTree() {
 
 function fromWire(n) {
 	return {
-		id: n.id, file: n.file, name: n.name, sector: n.sector, type: n.type, tier: n.tier, cost: n.cost,
+		id: n.id, name: n.name, sector: n.sector, type: n.type, tier: n.tier, cost: n.cost,
 		x: n.x, y: n.y, ox: n.ox === undefined ? null : n.ox, oy: n.oy === undefined ? null : n.oy,
 		effect: n.effect || "", skillId: n.skillId || 0, skillLevel: n.skillLevel || "",
 		icon: n.icon || "", description: n.description || "", requires: (n.requires || []).slice()
@@ -423,7 +426,7 @@ function fromWire(n) {
 }
 function toWire(n) {
 	const w = {
-		id: n.id, file: n.file, name: n.name, sector: n.sector, type: n.type, tier: n.tier, cost: n.cost,
+		id: n.id, name: n.name, sector: n.sector, type: n.type, tier: n.tier, cost: n.cost,
 		x: round1(n.x), y: round1(n.y), effect: n.effect, skillId: n.skillId, skillLevel: n.skillId > 0 ? n.skillLevel : "",
 		icon: n.icon, description: n.description, requires: n.requires
 	};
@@ -451,13 +454,13 @@ const serverBackend = {
 		const res = await api("reload", {});
 		return res.ok && res.data ? res.data : { error: (res.data && res.data.error) || "Could not reload." };
 	},
-	saveNote: "The old files are backed up first. Online players get the new tree at once.",
+	saveNote: "The old file is backed up first. Online players get the new tree at once, and game clients fetch it again.",
 	saveButton: "Save and make live",
 	savedTitle: "Saved - the new tree is live",
-	filesNote: "Saving checks the tree, copies the old files to data/passivetree_backup, writes data/passivetree/*.xml and makes the tree live: online players' trees are rebuilt at once.",
+	filesNote: "Saving checks the tree, copies the old file to data/passivetree_backup, writes data/passivetree/PassiveTree.xml one version up and makes the tree live: online players' trees are rebuilt at once, and their game clients fetch the new tree.",
 };
 
-/** Tree files in a folder on this computer, no game server: see the offline part below. */
+/** A PassiveTree.xml on this computer, no game server: see the offline part below. */
 const offlineBackend = {
 	offline: true,
 	tree: () => readOfflineTree(),
@@ -470,43 +473,43 @@ const offlineBackend = {
 	save: body => saveOffline(body),
 	reload: async () => ({ reloaded: true }),
 	get saveNote() {
-		if (!source.canWrite) return "This browser can't write into the folder: the changed files are downloaded, for you to put in data/passivetree.";
-		return (source.hasData ? "The old files are copied to data/passivetree_backup first." : "No backup is made: open the data folder instead of passivetree to get one.")
-			+ " The game server uses the new files after a restart, or at once with //passivetree_reload.";
+		if (!source.canWrite) return "This browser can't write the file: the new PassiveTree.xml is downloaded, for you to put in data/passivetree.";
+		return (source.hasData ? "The old file is copied to data/passivetree_backup first." : "No backup is made: open the data folder to get one.")
+			+ " The game server uses the new file after a restart, or at once with //passivetree_reload.";
 	},
-	get saveButton() { return source.canWrite ? "Save to the files" : "Download the changed files"; },
-	get savedTitle() { return source.canWrite ? "Saved to the files" : "Changed files downloaded"; },
+	get saveButton() { return source.canWrite ? "Save to the file" : "Download the new file"; },
+	get savedTitle() { return source.canWrite ? "Saved to the file" : "New file downloaded"; },
 	get filesNote() {
 		return (source.canWrite
-			? `Saving checks the tree${source.hasData ? ", copies the old files to data/passivetree_backup" : ""} and writes the XML files of the folder you opened. The game server uses them after a restart, or at once with //passivetree_reload.`
-			: "This browser can't write into the folder: saving downloads the changed files, to put in data/passivetree yourself (Chrome and Edge can save straight into the folder).")
+			? `Saving checks the tree${source.hasData ? ", copies the old file to data/passivetree_backup" : ""} and writes PassiveTree.xml one version up. The game server uses it after a restart, or at once with //passivetree_reload.`
+			: "This browser can't write the file: saving downloads the new PassiveTree.xml, to put in data/passivetree yourself (Chrome and Edge can save straight into it).")
 			+ " Players' allocations are only known on the server, and " + (skillTable ? "skills are checked against data/stats/skills." : "skills can't be checked: open the data folder for that.");
 	},
 };
 let backend = serverBackend;
 
-// ------------------------------------------------------------------ offline: tree files on this computer
+// ------------------------------------------------------------------ offline: the tree file on this computer
 // The same reading, checks and writing as PassiveTreeEditor.java, so a save here writes exactly what the server would.
 const NODE_TYPES = ["START", "SMALL", "NOTABLE", "KEYSTONE", "MASTER", "FUNCTION", "ACTIVE_SKILL"];
 const CONDITION_TOKENS = ["HEAVY", "LIGHT", "ROBE", "NOARMOR", "SHIELD", "BOW", "DAGGER", "DUAL", "SWORD", "BLUNT", "POLE", "FIST", "LOWHP", "FULLHP", "NIGHT", "DAY", "STILL", "MOBILE"];
-const LIST_LINE = '<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">';
-const FILE_NAME_RE = /^[A-Za-z0-9_-]{1,64}\.xml$/i;
+const TREE_FILE = "PassiveTree.xml";
+const listLine = version => `<list version="${version}" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">`;
 const ICON_RE = /^[a-z0-9-]{0,40}$/;
 const NODE_COUNT_RE = /^(.*?: )\d+( nodes.*)$/s;
 const MAX_BACKUPS = 30;
 const LISTED = 8;
 
-let source = null;         // where the files are read from and written to (folderSource or fileListSource)
+let source = null;         // where the file is read from and written to (folderSource, fileSource or fileListSource)
 let knownKeys = new Set(); // effect keys of the tree as opened, plus the capped ones: what the server is known to read
 let skillTable = null;     // promise of Map skill id -> {name, maxLevel}, or null without the skill files
 
 function showOfflineStart(message) {
 	$("loading").style.display = "";
 	$("loading-text").textContent = message || (location.protocol === "file:"
-		? "Edit the passive tree files on this computer, without the game server."
-		: "Open this editor in-game with //passivetree to edit the live tree, or edit tree files on this computer:");
+		? "Edit the passive tree file on this computer, without the game server."
+		: "Open this editor in-game with //passivetree to edit the live tree, or edit a tree file on this computer:");
 	$("offline-start").hidden = false;
-	$("offline-support").textContent = window.showDirectoryPicker ? "" : "This browser can't save into a folder: saving downloads the changed files instead. Chrome or Edge can save straight into the folder.";
+	$("offline-support").textContent = window.showDirectoryPicker ? "" : "This browser can't save into a folder or a file: saving downloads the new file instead. Chrome or Edge can save straight into it.";
 }
 
 async function openFolder() {
@@ -520,6 +523,20 @@ async function openFolder() {
 		return;
 	}
 	await startOffline(await folderSource(picked));
+}
+
+/** PassiveTree.xml alone: read and written through its file handle (or read from an <input type=file>, and saved as a download). */
+async function openFile() {
+	if (!window.showOpenFilePicker) { $("file-input").click(); return; }
+	let handle;
+	try {
+		[handle] = await window.showOpenFilePicker({ id: "passivetree-file", types: [{ description: "Passive tree", accept: { "application/xml": [".xml"] } }] });
+	} catch (e) {
+		if (e.name === "SecurityError") $("file-input").click();
+		else if (e.name !== "AbortError") showToast("Could not open the file: " + e.message, true);
+		return;
+	}
+	await startOffline(fileSource(handle));
 }
 
 async function startOffline(src) {
@@ -567,7 +584,7 @@ function backupName() {
 	return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}-${p(d.getMilliseconds(), 3)}`;
 }
 
-/** A folder picked with read and write access. It can be data/passivetree itself, or data, game, dist or the repository folder above it. */
+/** A folder picked with read and write access. It can be data/passivetree itself, or data, game, dist or the repository folder above it. Only PassiveTree.xml in it is read and written. */
 async function folderSource(picked) {
 	let data = (await subdir(picked, ["passivetree"])) ? picked : null, game = null;
 	for (const path of [[], ["game"], ["dist", "game"]]) {
@@ -581,8 +598,8 @@ async function folderSource(picked) {
 		canWrite: true,
 		hasData: !!data,
 		async treeFiles() {
-			const files = new Map();
-			for (const name of await xmlNames(tree)) files.set(name, await readHandleText(tree, [name]));
+			const files = new Map(), text = await readHandleText(tree, [TREE_FILE]);
+			if (text !== null) files.set(TREE_FILE, text);
 			return files;
 		},
 		dataText: parts => (data ? readHandleText(data, parts) : Promise.resolve(null)),
@@ -596,8 +613,7 @@ async function folderSource(picked) {
 			return texts;
 		},
 		write: (name, text) => writeHandleText(tree, name, text),
-		remove: name => tree.removeEntry(name),
-		/** Copies the files to data/passivetree_backup/<time>/ and drops the oldest backups past MAX_BACKUPS, like the server. */
+		/** Copies the file to data/passivetree_backup/<time>/ and drops the oldest backups past MAX_BACKUPS, like the server. */
 		async backup(files) {
 			if (!data) return null;
 			const root = await data.getDirectoryHandle("passivetree_backup", { create: true });
@@ -615,12 +631,32 @@ async function folderSource(picked) {
 	};
 }
 
-/** Files picked in a browser that can't write to a folder: they are read, and a save downloads the changed ones. */
+/** The file PassiveTree.xml alone, picked with read and write access: no backup, glyphs from the page beside this one, no skill check. */
+function fileSource(handle) {
+	return {
+		label: handle.name,
+		canWrite: true,
+		hasData: false,
+		async treeFiles() { return new Map([[TREE_FILE, await (await handle.getFile()).text()]]); },
+		dataText: () => Promise.resolve(null),
+		gameText: () => Promise.resolve(null),
+		skillTexts: () => Promise.resolve([]),
+		async write(name, text) {
+			const writable = await handle.createWritable();
+			await writable.write(text);
+			await writable.close();
+		},
+		backup: async () => null,
+	};
+}
+
+/** Files picked in a browser that can't write to a folder (a folder's files, or PassiveTree.xml alone): they are read, and a save downloads the new file. */
 function fileListSource(fileList) {
 	const all = [...fileList];
 	const path = f => f.webkitRelativePath || f.name;
 	const find = parts => all.find(f => path(f).endsWith("/" + parts.join("/")));
-	const treeList = all.filter(f => { const p = path(f).split("/"); return /\.xml$/i.test(f.name) && p[p.length - 2] === "passivetree"; });
+	const treeList = all.length === 1 && /\.xml$/i.test(all[0].name) ? all
+		: all.filter(f => { const p = path(f).split("/"); return f.name === TREE_FILE && p[p.length - 2] === "passivetree"; });
 	let saved = null; // the tree as last downloaded: what a later save compares with
 	return {
 		label: all.length ? path(all[0]).split("/")[0] : "?",
@@ -629,7 +665,7 @@ function fileListSource(fileList) {
 		async treeFiles() {
 			if (saved) return new Map(saved);
 			const files = new Map();
-			for (const f of treeList.slice().sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))) files.set(f.name, await f.text());
+			if (treeList.length) files.set(TREE_FILE, await treeList[0].text());
 			return files;
 		},
 		async dataText(parts) { const f = find(parts); return f ? f.text() : null; },
@@ -653,7 +689,7 @@ function versionOf(files) {
 	return "local-" + (h1 >>> 0).toString(16) + (h2 >>> 0).toString(16);
 }
 
-/** The nodes of one tree file, as the server's editor reads them (attributes left out stay empty, so they stay left out). */
+/** The nodes of the tree file, as the server's editor reads them (attributes left out stay empty, so they stay left out). */
 function readTreeFile(name, text, out) {
 	const doc = new DOMParser().parseFromString(text, "application/xml");
 	const error = doc.getElementsByTagName("parsererror")[0];
@@ -675,7 +711,7 @@ function readTreeFile(name, text, out) {
 		const type = has("type") ? attr("type").trim().toUpperCase() : "SMALL";
 		const skillId = has("skillId") ? int("skillId") : 0;
 		const node = {
-			id: int("id"), file: name, name: attr("name"), sector: attr("sector"), type,
+			id: int("id"), name: attr("name"), sector: attr("sector"), type,
 			tier: has("tier") ? int("tier") : 0, cost: has("cost") ? int("cost") : (DEFAULT_COST[type] ?? 1),
 			x: has("x") ? num("x") : 0, y: has("y") ? num("y") : 0,
 		};
@@ -690,14 +726,26 @@ function readTreeFile(name, text, out) {
 	}
 }
 
-/** The comment above <list>: the server keeps it, with the node count brought up to date. */
-function headerOf(text) {
+/** What a save keeps besides the nodes, like the server's layout(): the comment above <list> (its node count brought up to date),
+ *  the region comments (node id -> the comment right above that node) and the version of <list>. */
+function layoutOf(text) {
 	const doc = new DOMParser().parseFromString(text, "application/xml");
+	let header = null;
 	for (let n = doc.firstChild; n; n = n.nextSibling) {
-		if (n.nodeType === Node.COMMENT_NODE) return n.nodeValue;
+		if (n.nodeType === Node.COMMENT_NODE) { header = n.nodeValue; break; }
 		if (n.nodeType === Node.ELEMENT_NODE) break;
 	}
-	return null;
+	const regions = new Map();
+	let comment = null;
+	for (let n = doc.documentElement.firstChild; n; n = n.nextSibling) {
+		if (n.nodeType === Node.COMMENT_NODE) comment = n.nodeValue;
+		else if (n.nodeType === Node.ELEMENT_NODE && n.nodeName.toLowerCase() === "node" && comment !== null) {
+			regions.set(Number(String(n.getAttribute("id")).trim()), comment);
+			comment = null;
+		}
+	}
+	const v = String(doc.documentElement.getAttribute("version") || "").trim();
+	return { header, regions, version: v ? Number(v) : 0 };
 }
 
 async function readOfflineTree() {
@@ -705,7 +753,7 @@ async function readOfflineTree() {
 	try { files = await source.treeFiles(); } catch (e) { return { error: "Could not read the folder: " + e.message }; }
 	const list = [];
 	try { files.forEach((text, name) => readTreeFile(name, text, list)); } catch (e) { return { error: e.message }; }
-	if (!list.length) return { error: `There are no passive tree files in "${source.label}". Pick dist/game/data, or dist/game/data/passivetree.` };
+	if (!list.length) return { error: `There is no ${TREE_FILE} in "${source.label}". Pick dist/game/data, dist/game/data/passivetree, or the file itself.` };
 	knownKeys = new Set(capKeys);
 	list.forEach(n => (n.effect || "").split(";").forEach(part => { const key = part.split(":")[0].trim(); if (key) knownKeys.add(key.split("@")[0]); }));
 	return { version: versionOf(files), admin: "Offline: " + source.label, types: NODE_TYPES, conditions: CONDITION_TOKENS, allocations: {}, nodes: list };
@@ -756,7 +804,6 @@ function checkTree(list, before, skills, errors, warnings) {
 		if (!(Number.isInteger(n.id) && n.id > 0)) errors.push(label + ": the id must be above 0.");
 		else if (ids.has(n.id)) errors.push(label + ": the id is used twice.");
 		else ids.set(n.id, n);
-		if (!FILE_NAME_RE.test(n.file)) errors.push(`${label}: the file "${n.file}" must be a plain name ending in .xml (letters, digits, - and _).`);
 		checkText(label, "name", n.name, 80, true);
 		checkText(label, "sector", n.sector, 40, true);
 		checkText(label, "description", n.description, 600, false);
@@ -838,16 +885,17 @@ function coordinate(value) {
 function xmlAttr(name, value) {
 	return " " + name + '="' + String(value).replace(/[\x00-\x1f]/g, "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;") + '"';
 }
-/** A tree file in the generator's layout: the server's toXml(), character for character. */
-function toXml(oldHeader, list) {
-	let header = oldHeader;
-	if (header === null) header = " " + (list.length ? list[0].sector : "Passive tree") + ": " + list.length + " nodes. x/y are authoritative layout coords. ";
+/** The tree file at a version, keeping the comments of layout (see layoutOf): the server's toXml(), character for character. */
+function toXml(layout, version, list) {
+	let header = layout.header;
+	if (header === null) header = " Passive tree: " + list.length + " nodes. x/y are authoritative layout coords. ";
 	else {
 		const m = NODE_COUNT_RE.exec(header);
 		if (m) header = m[1] + list.length + m[2];
 	}
-	let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<!--' + header.replace(/--/g, "- -") + "-->\n" + LIST_LINE + "\n";
+	let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<!--' + header.replace(/--/g, "- -") + "-->\n" + listLine(version) + "\n";
 	list.forEach(n => {
+		if (layout.regions.has(n.id)) xml += "\t<!--" + layout.regions.get(n.id).replace(/--/g, "- -") + "-->\n";
 		xml += "\t<node" + xmlAttr("id", n.id) + xmlAttr("name", n.name) + xmlAttr("sector", n.sector) + xmlAttr("type", n.type)
 			+ xmlAttr("tier", n.tier) + xmlAttr("cost", n.cost) + xmlAttr("x", coordinate(n.x)) + xmlAttr("y", coordinate(n.y));
 		if (n.ox !== null && n.oy !== null) xml += xmlAttr("orbitX", coordinate(n.ox)) + xmlAttr("orbitY", coordinate(n.oy));
@@ -871,7 +919,7 @@ function download(name, text) {
 	setTimeout(() => URL.revokeObjectURL(a.href), 10000);
 }
 
-/** The server's save(): refuse if the files changed since they were opened, check, then back up and write (or download) the changed files. */
+/** The server's save(): refuse if the file changed since it was opened, check, then back up and write (or download) the file one version up. */
 async function saveOffline({ version: base, dryRun, nodes: wire }) {
 	const errors = [], warnings = [];
 	let current;
@@ -879,7 +927,7 @@ async function saveOffline({ version: base, dryRun, nodes: wire }) {
 	const now = versionOf(current);
 	const result = changed => ({ saved: false, dryRun, version: now, errors, warnings, changedFiles: changed || [] });
 	if (now !== base) {
-		errors.push("The tree files changed since you opened them (a save from the game server, another program or a hand edit). Load the files again to get them; your unsaved changes are kept in this browser as a draft.");
+		errors.push("The tree file changed since you opened it (a save from the game server, another program or a hand edit). Load the file again to get it; your unsaved changes are kept in this browser as a draft.");
 		return result();
 	}
 
@@ -896,37 +944,33 @@ async function saveOffline({ version: base, dryRun, nodes: wire }) {
 	const removedNodes = before.filter(n => !newIds.has(n.id)).length;
 	const removedLinks = [...edges(before)].filter(e => !newEdges.has(e)).length;
 	if (removedNodes || removedLinks) {
-		warnings.push(`This removes ${removedNodes} node(s) and ${removedLinks} link(s). Players' allocations can't be checked here: when the game server loads the new files, characters lose nodes that were removed or no longer connect to their starting point, and get those points back.`);
+		warnings.push(`This removes ${removedNodes} node(s) and ${removedLinks} link(s). Players' allocations can't be checked here: when the game server loads the new file, characters lose nodes that were removed or no longer connect to their starting point, and get those points back.`);
 	}
 
-	const byFile = new Map();
-	list.forEach(n => { if (!byFile.has(n.file)) byFile.set(n.file, []); byFile.get(n.file).push(n); });
-	const contents = new Map();
-	[...byFile.keys()].sort().forEach(file => contents.set(file, toXml(current.has(file) ? headerOf(current.get(file)) : null, byFile.get(file))));
-	const changed = [], writes = [], removed = [];
-	contents.forEach((text, file) => { if (current.get(file) !== text) { changed.push(file); writes.push(file); } });
-	current.forEach((_, file) => { if (!contents.has(file)) { removed.push(file); changed.push(file + " (removed: it has no nodes left)"); } });
-	if (!changed.length) { warnings.push("Nothing changed."); return result(changed); }
+	// The tree unchanged is the file as it is, at its own version; a save writes the next version.
+	const text = current.get(TREE_FILE);
+	const layout = layoutOf(text);
+	if (toXml(layout, layout.version, list) === text.replace(/\r\n/g, "\n")) { warnings.push("Nothing changed."); return result([]); }
+	const changed = [`${TREE_FILE} (version ${layout.version + 1})`];
 	if (dryRun) return result(changed);
+	const contents = new Map([[TREE_FILE, toXml(layout, layout.version + 1, list)]]);
 
 	if (!source.canWrite) {
-		writes.forEach(file => download(file, contents.get(file)));
+		download(TREE_FILE, contents.get(TREE_FILE));
 		source.commit(contents);
-		warnings.push(`This browser can't write into the folder, so ${writes.length} changed file(s) were downloaded: put them in data/passivetree, replacing the old ones.`
-			+ (removed.length ? ` Also delete ${removed.join(", ")} there.` : "") + " If only one file arrived, allow this page to download several files.");
+		warnings.push(`This browser can't write the file, so the new ${TREE_FILE} was downloaded: put it in data/passivetree, replacing the old one.`);
 		return { saved: true, dryRun: false, version: versionOf(contents), errors, warnings, changedFiles: changed };
 	}
 
 	let backup;
 	try { backup = await source.backup(current); } catch (e) { errors.push("Could not make the backup, so nothing was saved: " + e.message); return result(changed); }
 	try {
-		for (const file of writes) await source.write(file, contents.get(file));
-		for (const file of removed) await source.remove(file);
+		await source.write(TREE_FILE, contents.get(TREE_FILE));
 	} catch (e) {
-		errors.push("Writing the files failed: " + e.message + (backup ? ` The old files are in ${backup}.` : ""));
+		errors.push("Writing the file failed: " + e.message + (backup ? ` The old file is in ${backup}.` : ""));
 		return result(changed);
 	}
-	warnings.push(backup ? `The old files are backed up in ${backup}.` : "No backup was made: open the data folder instead of passivetree to get one.");
+	warnings.push(backup ? `The old file is backed up in ${backup}.` : "No backup was made: open the data folder to get one.");
 	warnings.push("The game server uses the new tree after a restart, or at once with //passivetree_reload.");
 	return { saved: true, dryRun: false, version: versionOf(await source.treeFiles()), errors, warnings, changedFiles: changed };
 }
@@ -940,7 +984,6 @@ function reindex() {
 		adj.get(n.id).add(p);
 		adj.get(p).add(n.id);
 	}));
-	files = [...new Set(nodes.map(n => n.file))].sort();
 	usedIcons = [...new Set(nodes.map(n => n.icon).filter(Boolean))].sort();
 	sectors = [...new Set(nodes.map(n => n.sector))].sort();
 	effectKeyUse = new Map();
@@ -1041,10 +1084,10 @@ function setType(n, type) {
 	return true;
 }
 
-/** A free id: after the highest one of the file, never one the files had (a removed node's players would get the new node). */
-function nextFreeId(file, taken) {
+/** A free id: after the highest one of the sector, never one the file had (a removed node's players would get the new node). */
+function nextFreeId(sector, taken) {
 	let max = 0;
-	nodes.forEach(n => { if (n.file === file && n.id > max) max = n.id; });
+	nodes.forEach(n => { if (n.sector === sector && n.id > max) max = n.id; });
 	if (!max) nodes.forEach(n => { if (n.id > max) max = n.id; });
 	let id = max + 1;
 	while (byId.has(id) || original.has(id) || (taken && taken.has(id))) id++;
@@ -1066,6 +1109,12 @@ function applyStates(states) {
 		else inserts.push(s);
 	});
 	inserts.sort((a, b) => a.index - b.index).forEach(s => nodes.splice(s.index < 0 ? nodes.length : Math.min(s.index, nodes.length), 0, clone(s.data)));
+}
+/** Puts a new node into the list after the last node of its sector, so it is saved with its region. */
+function insertNode(node) {
+	let at = nodes.length;
+	nodes.forEach((n, i) => { if (n.sector === node.sector) at = i + 1; });
+	nodes.splice(at, 0, node);
 }
 /**
  * One undoable change. {@code ids} are the nodes it may change; {@code fn} makes the change and returns the ids of nodes it
@@ -1158,7 +1207,7 @@ function offerDraft() {
 	const sameBase = draft.version === version;
 	openModal(`<h2>Restore unsaved changes?</h2>
 		<p>This browser kept unsaved editor changes from ${esc(new Date(draft.savedAt).toLocaleString())}.</p>
-		${sameBase ? "" : `<p class="note warn">The tree files have changed since then (another save or a hand edit). Restoring puts your draft over them: saving it would undo those changes.</p>`}
+		${sameBase ? "" : `<p class="note warn">The tree file has changed since then (another save or a hand edit). Restoring puts your draft over it: saving it would undo those changes.</p>`}
 		<div class="actions"><button class="btn danger" id="draft-drop">Throw away</button><button class="btn" id="draft-later">Not now</button><button class="btn primary" id="draft-restore">Restore</button></div>`);
 	$("draft-drop").onclick = () => { dropDraft(); closeModal(); };
 	$("draft-later").onclick = closeModal;
@@ -1528,10 +1577,10 @@ function addNodeAt(w) {
 		let best = Infinity;
 		nodes.forEach(n => { const d = Math.hypot(n.x - w.x, n.y - w.y); if (d < best) { best = d; near = n; } });
 	}
-	const file = near ? near.file : "Custom.xml";
-	const id = nextFreeId(file);
+	const sector = near ? near.sector : "Custom";
+	const id = nextFreeId(sector);
 	const node = {
-		id, file, name: template ? template.name : "New Node", sector: near ? near.sector : "Custom",
+		id, name: template ? template.name : "New Node", sector,
 		type: template && template.type !== "START" ? template.type : "SMALL", tier: template ? template.tier : 0,
 		cost: template && template.type !== "START" ? template.cost : 1,
 		x: round1(snapped(w.x)), y: round1(snapped(w.y)), ox: null, oy: null,
@@ -1540,7 +1589,7 @@ function addNodeAt(w) {
 	};
 	const ids = template ? [template.id] : [];
 	edit("add " + id, ids, () => {
-		nodes.push(node);
+		insertNode(node);
 		byId.set(id, node); adj.set(id, new Set());
 		if (template) addLink(template.id, id);
 		return [id];
@@ -1575,7 +1624,7 @@ function duplicateSelection() {
 	if (!selection.size) return;
 	const ids = [...selection];
 	const map = new Map(), taken = new Set();
-	ids.forEach(id => { const nid = nextFreeId(byId.get(id).file, taken); taken.add(nid); map.set(id, nid); });
+	ids.forEach(id => { const nid = nextFreeId(byId.get(id).sector, taken); taken.add(nid); map.set(id, nid); });
 	edit("duplicate " + ids.length + " node(s)", [], () => {
 		ids.forEach(id => {
 			const src = byId.get(id), copy = clone(src);
@@ -1583,7 +1632,7 @@ function duplicateSelection() {
 			copy.x = round1(src.x + DUPLICATE_OFFSET); copy.y = round1(src.y + DUPLICATE_OFFSET);
 			if (copy.ox !== null) { copy.ox = round1(copy.ox + DUPLICATE_OFFSET); copy.oy = round1(copy.oy + DUPLICATE_OFFSET); }
 			copy.requires = src.requires.filter(r => map.has(r)).map(r => map.get(r)); // links inside the copied group only
-			nodes.push(copy);
+			insertNode(copy);
 		});
 		return [...map.values()];
 	});
@@ -1613,7 +1662,7 @@ function nudge(dx, dy) {
 
 // ------------------------------------------------------------------ search
 function nodeText(n) {
-	return (n.id + " " + n.name + " " + n.sector + " " + n.effect + " " + n.icon + " " + n.type + " " + n.file + " " + n.description).toLowerCase();
+	return (n.id + " " + n.name + " " + n.sector + " " + n.effect + " " + n.icon + " " + n.type + " " + n.description).toLowerCase();
 }
 function applySearch(q) {
 	search.q = q.trim().toLowerCase();
@@ -1677,7 +1726,7 @@ function nodePane(n) {
 	const glyph = glyphFor(n);
 	return `${datalists()}
 	<h2>${esc(n.name || "(no name)")}</h2>
-	<div class="sub">Node ${n.id} · ${esc(n.type)} · ${esc(n.file)}
+	<div class="sub">Node ${n.id} · ${esc(n.type)} · ${esc(n.sector)}
 		${isNew ? '<span class="pill" style="color:var(--added)">new</span>' : dirty.changed.has(n.id) ? '<span class="pill" style="color:var(--changed)">changed</span>' : ""}</div>
 	<div class="note">${backend.offline ? "" : owners ? `Allocated on ${owners} character slot(s).` : "Nobody has allocated it."}${unreachable.has(n.id) ? ' <span class="note err">No starting point leads here.</span>' : ""}</div>
 
@@ -1687,7 +1736,6 @@ function nodePane(n) {
 		<label class="field"><span>Type</span><select data-f="type">${options(types, n.type)}</select></label>
 		<label class="field wide"><span>Name</span><input type="text" data-f="name" value="${esc(n.name)}" maxlength="80"></label>
 		<label class="field"><span>Sector</span><input type="text" data-f="sector" value="${esc(n.sector)}" list="dl-sectors" maxlength="40"></label>
-		<label class="field"><span>File</span><select data-f="file">${options(files, n.file)}<option value="__new">New file...</option></select></label>
 		<label class="field"><span>Cost (points)</span><input type="number" data-f="cost" value="${n.cost}" min="0" max="100"></label>
 		<label class="field"><span>Tier</span><input type="number" data-f="tier" value="${n.tier}" min="0"></label>
 	</div>
@@ -1749,7 +1797,6 @@ function multiPane() {
 	<h2>${list.length} nodes selected</h2>
 	<div class="note">Types: ${count("type")}</div>
 	<div class="note">Sectors: ${count("sector")}</div>
-	<div class="note">Files: ${count("file")}</div>
 	${backend.offline ? "" : `<div class="note">${owners ? owners + " allocation(s) by players." : "Nobody has allocated them."}</div>`}
 
 	<h3>Set on all of them</h3>
@@ -1759,7 +1806,6 @@ function multiPane() {
 		<label class="field"><span>Type</span><select id="m-type">${options(types, null, "(keep)")}</select></label>
 		<label class="field"><span>Cost</span><input type="number" id="m-cost" min="0" max="100"></label>
 		<label class="field"><span>Sector</span><input type="text" id="m-sector" list="dl-sectors"></label>
-		<label class="field"><span>File</span><select id="m-file">${options(files, null, "(keep)")}</select></label>
 		<label class="field"><span>Icon</span><select id="m-icon">${options(iconChoices(), null, "(keep)")}<option value="__none">(none: by type / stat)</option></select></label>
 		<label class="field"><span>Tier</span><input type="number" id="m-tier" min="0"></label>
 		<label class="field wide"><span>Effects (replace, KEY:value;KEY:value)</span><input type="text" id="m-effect" list="dl-keys"></label>
@@ -1793,7 +1839,7 @@ function overviewPane() {
 	const errs = issues.filter(i => i.level === "err"), warns = issues.filter(i => i.level === "warn");
 	const changedList = [...dirty.added].map(id => ({ id, t: "new" })).concat([...dirty.changed].map(id => ({ id, t: "changed" })));
 	return `<h2>Passive tree</h2>
-	<div class="sub">${nodes.length} nodes · ${linkCount} links · ${files.length} files · ${sectors.length} sectors</div>
+	<div class="sub">${nodes.length} nodes · ${linkCount} links · ${sectors.length} sectors</div>
 
 	<h3>Changes</h3>
 	${hasChanges() ? `<ul class="issues">${changedList.slice(0, 200).map(c => `<li data-goto="${c.id}">${esc(nodeLabel(byId.get(c.id)))} <span class="pill">${c.t}</span></li>`).join("")}${dirty.removed.map(id => `<li>${id} <span class="pill">removed</span></li>`).join("")}</ul>
@@ -1802,8 +1848,8 @@ function overviewPane() {
 	<h3>Problems</h3>
 	${errs.length || warns.length ? `<ul class="issues">${errs.concat(warns).slice(0, 300).map(i => `<li ${i.id !== undefined ? `data-goto="${i.id}"` : ""} class="note ${i.level === "err" ? "err" : "warn"}">${esc(i.text)}</li>`).join("")}</ul>` : '<div class="note ok">None found.</div>'}
 
-	<h3>Files</h3>
-	<div class="row"><button class="btn small" data-act="reload-files" title="Load the tree files again, after editing them by hand">Load files again</button>${backend.offline ? "" : '<a class="btn small" href="/passive-tree.html" target="_blank" rel="noopener">Open the planner</a>'}</div>
+	<h3>File</h3>
+	<div class="row"><button class="btn small" data-act="reload-files" title="Load the tree file again, after editing it by hand">Load the file again</button>${backend.offline ? "" : '<a class="btn small" href="/passive-tree.html" target="_blank" rel="noopener">Open the planner</a>'}</div>
 	<div class="note">${esc(backend.filesNote)}</div>
 
 	<h3>How to</h3>
@@ -1863,17 +1909,6 @@ function onNodeField(n, field, raw) {
 			edit(`type of ${n.id}`, [n.id, ...neighbours], () => setType(n, value) ? undefined : false);
 			return;
 		}
-		case "file":
-			if (value === "__new") {
-				const name = prompt("New file name (letters, digits, - and _), e.g. MySector.xml:", n.sector.replace(/[^A-Za-z0-9_-]/g, "") + ".xml");
-				if (!name) return renderInspector();
-				const fileName = /\.xml$/i.test(name) ? name : name + ".xml";
-				if (!/^[A-Za-z0-9_-]{1,64}\.xml$/i.test(fileName)) { showToast("Use letters, digits, - and _ only.", true); return renderInspector(); }
-				edit(`file of ${n.id}`, [n.id], () => { n.file = fileName; });
-				return;
-			}
-			edit(`file of ${n.id}`, [n.id], () => { n.file = value; });
-			return;
 		case "cost": case "tier": case "skillId": {
 			const v = value === "" ? 0 : Number(value);
 			if (!Number.isInteger(v) || v < 0) { showToast(`The ${field} must be a whole number, 0 or more.`, true); return renderInspector(); }
@@ -2010,7 +2045,7 @@ $("inspector").addEventListener("click", e => {
 			return;
 		}
 		case "discard":
-			if (!confirm("Throw away every unsaved change and load the files again?")) return;
+			if (!confirm("Throw away every unsaved change and load the file again?")) return;
 			dropDraft();
 			loadTree();
 			return;
@@ -2021,7 +2056,7 @@ $("inspector").addEventListener("click", e => {
 function multiApply() {
 	const ids = [...selection];
 	const name = $("m-name").value.trim(), type = $("m-type").value, cost = $("m-cost").value.trim(), sector = $("m-sector").value.trim();
-	const file = $("m-file").value, icon = $("m-icon").value, tier = $("m-tier").value.trim(), effect = $("m-effect").value.trim(), scale = $("m-scale").value.trim();
+	const icon = $("m-icon").value, tier = $("m-tier").value.trim(), effect = $("m-effect").value.trim(), scale = $("m-scale").value.trim();
 	if (effect && parseEffect(effect).errors.length) { showToast(parseEffect(effect).errors[0], true); return; }
 	if (cost && !(Number.isInteger(Number(cost)) && Number(cost) >= 0)) { showToast("The cost must be a whole number, 0 or more.", true); return; }
 	if (tier && !(Number.isInteger(Number(tier)) && Number(tier) >= 0)) { showToast("The tier must be a whole number, 0 or more.", true); return; }
@@ -2037,7 +2072,6 @@ function multiApply() {
 			if (cost) n.cost = Number(cost);
 			if (tier) n.tier = Number(tier);
 			if (sector) n.sector = sector;
-			if (file) n.file = file;
 			if (icon) n.icon = icon === "__none" ? "" : icon;
 			if (effect) n.effect = effect;
 			if (scale && n.effect && !parseEffect(n.effect).errors.length) {
@@ -2057,7 +2091,7 @@ $("modal").addEventListener("click", e => { if (e.target.id === "modal") closeMo
 function resultHtml(d) {
 	return (d.errors.length ? `<h3 style="color:var(--danger)">Must be fixed</h3><ul class="errors">${d.errors.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "")
 		+ (d.warnings.length ? `<h3 style="color:var(--warn)">Good to know</h3><ul class="warnings">${d.warnings.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "")
-		+ (d.changedFiles.length ? `<h3>Files</h3><ul>${d.changedFiles.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "");
+		+ (d.changedFiles.length ? `<h3>File</h3><ul>${d.changedFiles.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "");
 }
 
 async function check(thenSave) {
@@ -2094,10 +2128,10 @@ async function doSave() {
 }
 
 async function reloadFiles() {
-	if (hasChanges() && !confirm("You have unsaved changes. Load the files again anyway? (Your changes stay in the browser draft until you save or throw them away.)")) return;
+	if (hasChanges() && !confirm("You have unsaved changes. Load the file again anyway? (Your changes stay in the browser draft until you save or throw them away.)")) return;
 	const d = await backend.reload();
 	if (d.error) { showToast(d.error, true); return; }
-	if (await loadTree()) showToast(`Loaded ${nodes.length} nodes from the files.` + (backend.offline ? "" : " The live tree uses them now."));
+	if (await loadTree()) showToast(`Loaded ${nodes.length} nodes from the file.` + (backend.offline ? "" : " The live tree uses them now."));
 }
 
 // ------------------------------------------------------------------ keys
@@ -2187,10 +2221,12 @@ window.addEventListener("beforeunload", e => {
 	});
 	$("open-folder").addEventListener("click", openFolder);
 	$("folder-input").addEventListener("change", e => { if (e.target.files.length) startOffline(fileListSource(e.target.files)); });
+	$("open-file").addEventListener("click", openFile);
+	$("file-input").addEventListener("change", e => { if (e.target.files.length) startOffline(fileListSource(e.target.files)); });
 	renderLegend();
 	renderToolbar();
 
-	if (!token) { showOfflineStart(); return; } // no //passivetree link: edit files on this computer
+	if (!token) { showOfflineStart(); return; } // no //passivetree link: edit the file on this computer
 	await Promise.all([loadGlyphs("/passive-tree.html"), loadCaps()]);
 	if (await loadTree()) {
 		fitTo(nodes);

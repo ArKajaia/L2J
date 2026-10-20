@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
@@ -37,6 +36,7 @@ import org.l2jmobius.gameserver.data.custom.PassiveTreeEditor;
 import org.l2jmobius.gameserver.data.xml.AdminData;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.managers.PassiveTreeManager;
+import org.l2jmobius.gameserver.managers.PassiveTreeView;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
@@ -68,10 +68,10 @@ import org.l2jmobius.gameserver.model.skill.Skill;
  * The tree editor for GMs (opened with //passivetree) has its own page and endpoints. Its token is made by {@link #generateAdminToken}, can't be mistaken for a player's, and only works while that GM is online and still allowed to use //passivetree:
  * <ul>
  * <li>GET /passive-tree-admin.html - the editor page</li>
- * <li>GET /api/passivetree/admin/tree - every node as the files hold it, the files' version, and how many characters have each node</li>
+ * <li>GET /api/passivetree/admin/tree - every node as the file holds it, the file's hash, and how many characters have each node</li>
  * <li>GET /api/passivetree/admin/skill?id=...&amp;level=... - a skill's name and highest level</li>
- * <li>POST /api/passivetree/admin/save (JSON: version, dryRun, nodes) - checks the tree, and unless dryRun, writes the files (after a backup) and makes the tree live</li>
- * <li>POST /api/passivetree/admin/reload - loads the files again, after they were edited by hand</li>
+ * <li>POST /api/passivetree/admin/save (JSON: version, dryRun, nodes) - checks the tree, and unless dryRun, writes the file one version up (after a backup) and makes the tree live</li>
+ * <li>POST /api/passivetree/admin/reload - loads the file again, after it was edited by hand</li>
  * </ul>
  * Other pages served from here register their own paths with {@link #addRoute}: the bestiary ({@code custom.Bestiary.BestiaryWeb}).
  */
@@ -1072,7 +1072,7 @@ public class PassiveTreeApiServer
 		if (result.saved())
 		{
 			LOGGER.info("PassiveTreeApiServer: " + gm.getName() + " saved the passive tree: " + String.join(", ", result.changedFiles()) + ".");
-			gm.sendMessage("Passive tree saved and live: " + result.changedFiles().size() + " file(s) changed.");
+			gm.sendMessage("Passive tree saved and live: version " + PassiveTreeData.getInstance().getVersion() + ".");
 		}
 		
 		final StringBuilder json = new StringBuilder();
@@ -1085,7 +1085,7 @@ public class PassiveTreeApiServer
 		sendText(exchange, result.errors().isEmpty() ? 200 : 409, "application/json", json.toString());
 	}
 	
-	/** Loads the tree files again: for files edited by hand while the server runs. */
+	/** Loads the tree file again: for a file edited by hand while the server runs. */
 	private void handleAdminReload(HttpExchange exchange) throws IOException
 	{
 		final Player gm = authenticateAdmin(exchange);
@@ -1138,22 +1138,20 @@ public class PassiveTreeApiServer
 	
 	private String buildCharacterJson(Player player)
 	{
-		final PassiveTreeManager mgr = PassiveTreeManager.getInstance();
-		final Set<Integer> allocated = mgr.getAllocatedNodes(player);
-		
+		// The same numbers the game client's passive tree window gets (Ex2PassiveTreeState).
+		final PassiveTreeView view = PassiveTreeView.of(player);
 		final StringBuilder json = new StringBuilder();
-		json.append("{").append("\"name\":\"").append(escape(player.getName())).append("\",").append("\"level\":").append(player.getLevel()).append(",").append("\"earnedPoints\":").append(mgr.getEarnedPoints(player)).append(",").append("\"spentPoints\":").append(mgr.getSpentPoints(player)).append(",").append("\"availablePoints\":").append(mgr.getAvailablePoints(player)).append(",").append("\"allocatedNodeIds\":[").append(joinInts(new ArrayList<>(allocated))).append("],").append("\"templates\":").append(buildTemplatesJson(player)).append("}");
+		json.append("{").append("\"name\":\"").append(escape(view.name())).append("\",").append("\"level\":").append(view.level()).append(",").append("\"earnedPoints\":").append(view.earnedPoints()).append(",").append("\"spentPoints\":").append(view.spentPoints()).append(",").append("\"availablePoints\":").append(view.availablePoints()).append(",").append("\"allocatedNodeIds\":[").append(joinInts(view.allocated())).append("],").append("\"templates\":").append(buildTemplatesJson(view)).append("}");
 		return json.toString();
 	}
 	
 	/** Template list plus what the page needs to enable or grey out its switch buttons: peace zone, remaining wait, and the rules themselves. */
-	private String buildTemplatesJson(Player player)
+	private String buildTemplatesJson(PassiveTreeView view)
 	{
-		final PassiveTreeManager mgr = PassiveTreeManager.getInstance();
 		final StringBuilder json = new StringBuilder();
-		json.append("{\"active\":").append(mgr.getActiveTemplate(player)).append(",").append("\"peaceOnly\":").append(PassiveTreeConfig.TEMPLATE_PEACE_ZONE_ONLY).append(",").append("\"inPeaceZone\":").append(mgr.canSwitchTemplateHere(player)).append(",").append("\"delaySeconds\":").append(PassiveTreeConfig.TEMPLATE_SWITCH_DELAY).append(",").append("\"cooldownMs\":").append(mgr.getTemplateCooldownRemaining(player)).append(",").append("\"list\":[");
+		json.append("{\"active\":").append(view.activeTemplate()).append(",").append("\"peaceOnly\":").append(view.peaceOnly()).append(",").append("\"inPeaceZone\":").append(view.inPeaceZone()).append(",").append("\"delaySeconds\":").append(view.delaySeconds()).append(",").append("\"cooldownMs\":").append(view.cooldownMs()).append(",").append("\"list\":[");
 		boolean first = true;
-		for (PassiveTreeManager.TemplateInfo info : mgr.getTemplates(player))
+		for (PassiveTreeManager.TemplateInfo info : view.templates())
 		{
 			if (!first)
 			{

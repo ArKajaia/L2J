@@ -1,0 +1,184 @@
+Passive Tree - client window protocol
+=====================================
+
+The client (L2Source, l2DecompileTest) shows the passive tree in its own
+window (Ctrl+P, the overlay menu, or ".passives"), drawn like the web
+planner (data/html/custom/passive-tree.html). The server sends only the
+player's allocation; everything else (positions, looks, texts, effects,
+glyphs) is one definition the client keeps in System\PassiveTree.cache.
+
+At world entry the server sends Ex2PassiveTreeVersion. When the client's
+cached copy has the same version and SHA-256 nothing more happens; else the
+client asks for the definition one chunk at a time (RequestEx2PassiveTree
+Chunk, then the next chunk when one arrives), checks the whole against the
+hash, and only then uses and saves it. A tree reload on the server
+(//passivetree_reload or an admin editor save) sends Version to everyone
+online again.
+
+Both sides reject a packet that breaks any rule below whole: it changes
+nothing.
+
+Framing
+-------
+Server packets start with
+  byte  0xFE
+  short 0xFE
+  int   sub id
+(ServerPackets.writeId; EX2_LINK_OPEN is sub id 0x01.)
+
+Client packets start with
+  byte  0xD0
+  short 0xFE
+  int   sub id
+(network.clientpackets.custom.CustomClientPackets; the client's
+net_GameSend leaves 0x00FE out of its extended opcode table.)
+
+Types: byte = 1 byte, short = 2, int = 4, long = 8, double = 8 (IEEE 754),
+little endian like every L2 packet. Packet strings (str) are UTF-16LE with
+a terminating 0. Definition strings (dstr) are short n, then n UTF-16LE
+units, no terminator.
+
+
+The definition
+--------------
+Built by data.custom.PassiveTreeBlob on first use after every tree load.
+At most 2048 nodes, 32 links per node, 256 glyphs, 255 sectors and 4096
+units per string: the client refuses a larger tree.
+
+  int    format              1
+  int    version             <list version="..."> of PassiveTree.xml
+  long   respecAdenaPerPoint Adena per point to respec one node
+  int    resetItemId         the full reset's price ...
+  long   resetItemCount      ... 0 = free
+  dstr   resetCostText       e.g. "100,000 Adena", "Free"
+  byte   templateCount
+  short  capCount
+  capCount x {
+    dstr   key               a stat key, e.g. "CRIT_DMG_PCT"
+    double value             the most the tree adds to it
+  }
+  byte   sectorCount
+  sectorCount x dstr         sector names; nodes refer to them by index
+  byte   groupCount          keystones that cancel each other out
+  groupCount x {
+    byte   n
+    n x dstr                 effect keys, e.g. "KS_POINT_BLANK"
+  }
+  short  glyphCount
+  glyphCount x {
+    dstr   id                "hammer" for <symbol id="icon-hammer">
+    dstr   markup            the inner SVG of that 24x24 <symbol> of
+                             passive-tree.html (the page stays the only
+                             source of the icons)
+  }
+  short  nodeCount           in id order
+  nodeCount x {
+    int    id
+    byte   type              0 START, 1 SMALL, 2 NOTABLE, 3 KEYSTONE,
+                             4 MASTER, 5 FUNCTION, 6 ACTIVE_SKILL
+    byte   cost
+    byte   sector            index into the sectors
+    int    x10, int y10      position, in tenths
+    byte   hasOrbit          1: followed by the centre of the circle the node
+    [int ox10, int oy10]     sits on, in tenths
+    dstr   name
+    dstr   icon              theme glyph, "" for none
+    dstr   effect            the raw spec, e.g. "PATK_PCT:1.5;STR:1"
+    dstr   description
+    int    skillId           0 for none
+    byte   parentCount
+    parentCount x int        linked node ids (none for a START node)
+  }
+
+Nothing may follow the last node. The client formats the effects, picks
+the glyphs and checks availability itself, with the same tables and rules
+as the web planner.
+
+
+Server to client (FE:00FE)
+--------------------------
+
+0x08  Ex2PassiveTreeVersion  - the live definition
+---------------------------------------------------
+  int   version
+  byte  sha256[32]           of the whole definition
+  int   size                 bytes, 1 to 4 MB
+  short chunkCount           ceil(size / 16384)
+
+Sent at world entry (when the tree is enabled), after a tree reload, and
+in answer to a chunk request for a version that is no longer live.
+
+0x09  Ex2PassiveTreeChunk  - one piece of the definition
+--------------------------------------------------------
+  int   version              the one the request named
+  short index                from 0
+  short length               16384, the last one less (the client's
+  length x byte              receive buffer takes about 32 KB a frame)
+
+0x0A  Ex2PassiveTreeState  - the player's tree
+-----------------------------------------------
+  int   earnedPoints
+  int   spentPoints
+  short count                at most 2048
+  count x int                allocated node ids
+  byte  activeTemplate       from 1
+  byte  inPeaceZone          1 if templates may be switched here
+  byte  peaceOnly            1 if templates may only be switched in a peace zone
+  int   delaySeconds         the wait between two switches
+  int   cooldownMs           until the next switch is allowed
+  byte  templateCount        at most 16
+  templateCount x {
+    short nodes
+    short points
+  }
+  str   name                 the character's, at most 32 characters
+  int   level
+
+The web planner's character answer is built from the same numbers
+(managers.PassiveTreeView).
+
+0x0B  Ex2PassiveTreeResult  - what became of a request
+------------------------------------------------------
+  byte  action               1 allocate, 2 respec, 3 reset, 4 template
+  byte  reason               0 OK
+                             1 NOT_AVAILABLE      (locked, unknown, ...)
+                             2 IS_ORIGIN          (a starting node)
+                             3 NOT_ALLOCATED
+                             4 WOULD_DISCONNECT
+                             5 NOT_ENOUGH_ADENA
+                             6 NOT_ENOUGH_ITEMS
+                             7 NOT_IN_PEACE
+                             8 COOLDOWN
+                             9 NOT_ENOUGH_POINTS
+  int   id                   the node, the template, 0 for a reset
+
+The client words the toasts itself. Every action is answered with Result,
+then State.
+
+0x0C  Ex2PassiveTreeOpen  - open the window
+-------------------------------------------
+  (no body)                  ".passives"
+
+
+Client to server (D0:00FE)
+--------------------------
+
+  sub  packet                          body           answer
+  1    RequestEx2PassiveTreeChunk      int version,   Chunk, or Version when
+                                       short index    that version is stale
+  2    RequestEx2PassiveTreeState      -              State
+  3    RequestEx2PassiveTreeAllocate   int nodeId     Result + State
+  4    RequestEx2PassiveTreeDeallocate int nodeId     Result + State
+  5    RequestEx2PassiveTreeReset      -              Result + State
+  6    RequestEx2PassiveTreeTemplate   byte id        Result + State
+
+Requests 2-6 run the same PassiveTreeManager methods as the web planner.
+The server drops a request that has bytes left after its body, actions
+(2-6) closer than 100 ms to the last one, and more than 400 chunk
+requests a minute.
+
+
+Tools
+-----
+tools/passivetree/dump_blob.py <file>  prints a definition, checking it
+                                       against the layout above

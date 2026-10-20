@@ -26,8 +26,6 @@
 									<xs:enumeration value="ACTIVE_SKILL" />
 									<xs:enumeration value="MASTER" />
 									<xs:enumeration value="FUNCTION" />
-									<xs:enumeration value="REGULAR" />
-									<xs:enumeration value="STAT" />
 								</xs:restriction>
 							</xs:simpleType>
 						</xs:attribute>
@@ -57,6 +55,8 @@
 					</xs:complexType>
 				</xs:element>
 			</xs:sequence>
+			<!-- Raised by every admin editor save. The game client caches the tree by version (and hash) and fetches it again when either changes. -->
+			<xs:attribute name="version" type="xs:nonNegativeInteger" use="optional" default="0" />
 		</xs:complexType>
 	</xs:element>
 </xs:schema>
