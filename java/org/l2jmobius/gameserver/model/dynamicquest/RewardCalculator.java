@@ -130,9 +130,10 @@ public final class RewardCalculator
 		final ExperienceData experience = ExperienceData.getInstance();
 		final int safeLevel = Math.max(1, Math.min(experience.getMaxLevel() - 1, level));
 		final long levelExp = Math.max(0, experience.getExpForLevel(safeLevel + 1) - experience.getExpForLevel(safeLevel));
-		payout._exp = (long) ((levelExp * reward.getExpPercent() * multiplier) / 100);
-		payout._sp = (long) (payout._exp * reward.getSpRatio());
-		payout._adena = (long) (reward.getAdenaPerLevel() * level * multiplier);
+		final double exp = (levelExp * reward.getExpPercent() * multiplier) / 100;
+		payout._exp = (long) (exp * DynamicQuestConfig.EXP_RATE);
+		payout._sp = (long) (exp * reward.getSpRatio());
+		payout._adena = (long) (reward.getAdenaPerLevel() * level * multiplier * DynamicQuestConfig.ADENA_RATE);
 
 		for (RewardEntry entry : reward.getItems())
 		{
