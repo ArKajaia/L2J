@@ -59,7 +59,7 @@ public final class DynamicQuestHtml
 	private static final String COLOR_MUTED = "808080";
 	private static final String COLOR_GOOD = "99CC99";
 
-	// The Community Board pages: wider, with cards and gauges. Only what the High Five client draws: colored tables (never rows or cells), cell backgrounds and gauge textures. No item icons: the client crops them to the cell instead of scaling them, and they overlap the text.
+	// The Community Board pages: wider, with icons, cards and gauges. Only what the High Five client draws: colored tables (never rows or cells), cell backgrounds, client icons and gauge textures. Icons are always drawn at their own 32 px: the client crops a smaller size instead of scaling it.
 	private static final int BOARD_WIDTH = 510;
 	private static final int HALF_WIDTH = (BOARD_WIDTH - 6) / 2;
 	private static final String COLOR_NAME = "EDE3C8";
@@ -73,6 +73,26 @@ public final class DynamicQuestHtml
 	private static final String BG_CARD_DIM = "0F0E0B";
 	private static final String GAUGE_PROGRESS = "EXP";
 	private static final String GAUGE_TIME = "MP";
+	private static final int ICON_SIZE = 32;
+	private static final String DEFAULT_ICON = "icon.etc_scroll_gray_i00";
+	private static final String HIDDEN_ICON = "icon.etc_question_mark_i00";
+	private static final String WORLD_ICON = "icon.etc_warding_orb_red_i00";
+	private static final Map<String, String> CATEGORY_ICONS = Map.ofEntries(
+		Map.entry("ambush", "icon.weapon_dagger_i00"),
+		Map.entry("bounty", "icon.etc_skull_red_i00"),
+		Map.entry("contract", "icon.etc_scroll_gray_i00"),
+		Map.entry("courier", "icon.etc_letter_envelope_i00"),
+		Map.entry("defence", "icon.shield_buckler_i00"),
+		Map.entry("escort", "icon.armor_chain_boots_i00"),
+		Map.entry("hunt", "icon.weapon_long_sword_i00"),
+		Map.entry("mystery", HIDDEN_ICON),
+		Map.entry("patrol", "icon.etc_torch_on_i00"),
+		Map.entry("purge", "icon.etc_fire_crystal_i00"),
+		Map.entry("request", "icon.etc_pouch_brown_i00"),
+		Map.entry("rescue", "icon.etc_key_i00"),
+		Map.entry("scouting", "icon.etc_map_yellow_i00"),
+		Map.entry("treasure", "icon.etc_treasure_box_i00"),
+		Map.entry("world event", WORLD_ICON));
 	/** "3/15" in an objective's progress line. */
 	private static final Pattern COUNT = Pattern.compile("(\\d+)\\s*/\\s*(\\d+)");
 
@@ -532,7 +552,7 @@ public final class DynamicQuestHtml
 			final StageTemplate stage = quest.getStage();
 			final String stageText = "Stage " + (quest.getStageIndex() + 1) + " of " + quest.getTemplate().getStages().size() + (stage != null ? " - " + quest.format(stage.getName()) : "");
 			final String bottom = "<table cellpadding=0 cellspacing=0><tr><td width=110>" + gauge(110, getProgress(quest), GAUGE_PROGRESS) + "</td><td width=8></td><td><font color=\"" + COLOR_DIM + "\">" + stageText + "</font></td></tr></table>";
-			sb.append(card(BOARD_WIDTH, BG_CARD, top, bottom, button("quest " + quest.getId(), "Open", 60), 64)).append(spacer(5));
+			sb.append(card(BOARD_WIDTH, BG_CARD, getIcon(quest.getTemplate()), top, bottom, button("quest " + quest.getId(), "Open", 60), 64)).append(spacer(5));
 		}
 
 		// The hidden quest under way and the offer a herald brought.
@@ -542,17 +562,17 @@ public final class DynamicQuestHtml
 			final HiddenQuestSession hidden = HiddenQuestManager.getInstance().getSession(player);
 			if (hidden != null)
 			{
-				special.add(card(HALF_WIDTH, BG_CARD, "<font color=\"LEVEL\">Hidden quest</font>", link("hidden", hidden.getDefinition().getName()) + (hidden.getTask() != null ? " <font color=\"" + COLOR_LABEL + "\">" + hidden.getTask().getProgress() + "</font>" : ""), null, 0));
+				special.add(card(HALF_WIDTH, BG_CARD, HIDDEN_ICON, "<font color=\"LEVEL\">Hidden quest</font>", link("hidden", hidden.getDefinition().getName()) + (hidden.getTask() != null ? " <font color=\"" + COLOR_LABEL + "\">" + hidden.getTask().getProgress() + "</font>" : ""), null, 0));
 			}
 			else if (HiddenQuestManager.getInstance().getVisitingQuest(player) != null)
 			{
-				special.add(card(HALF_WIDTH, BG_CARD, "<font color=\"LEVEL\">Hidden quest</font>", link("hidden", "A messenger is looking for you"), null, 0));
+				special.add(card(HALF_WIDTH, BG_CARD, HIDDEN_ICON, "<font color=\"LEVEL\">Hidden quest</font>", link("hidden", "A messenger is looking for you"), null, 0));
 			}
 		}
 		final QuestOffer personal = manager.getPersonalOffer(player);
 		if (personal != null)
 		{
-			special.add(card(HALF_WIDTH, BG_PANEL, "<font color=\"LEVEL\">Offered to you</font>", link("offer " + personal.getKey(), getTitle(personal.getTemplate())), button("offer " + personal.getKey(), "View", 50), 54));
+			special.add(card(HALF_WIDTH, BG_PANEL, getIcon(personal.getTemplate()), "<font color=\"LEVEL\">Offered to you</font>", link("offer " + personal.getKey(), getTitle(personal.getTemplate())), button("offer " + personal.getKey(), "View", 50), 54));
 		}
 		if (!special.isEmpty())
 		{
@@ -576,16 +596,16 @@ public final class DynamicQuestHtml
 				final String who = offer.getRequester() != null ? offer.getRequester() : offer.getTemplate().getCategory();
 				if (offer.isRequest())
 				{
-					requests.add(card(BOARD_WIDTH, taken ? BG_CARD_DIM : BG_CARD, title, null, taken ? "<font color=\"" + COLOR_GOOD + "\">Taken</font>" : "<font color=\"" + COLOR_LABEL + "\">" + who + "</font>", 150));
+					requests.add(card(BOARD_WIDTH, taken ? BG_CARD_DIM : BG_CARD, getIcon(offer.getTemplate()), title, null, taken ? "<font color=\"" + COLOR_GOOD + "\">Taken</font>" : "<font color=\"" + COLOR_LABEL + "\">" + who + "</font>", 150));
 					continue;
 				}
-				String line = title + " <font color=\"" + COLOR_LABEL + "\">" + who + "</font>";
+				String line = "<font color=\"" + COLOR_LABEL + "\">" + who + "</font>";
 				final QuestTrigger trigger = offer.getTemplate().getTrigger(TriggerType.BOARD_DAILY);
 				if (!taken && (trigger != null) && "NIGHT".equals(trigger.getRequires()))
 				{
 					line += " <font color=\"" + COLOR_NIGHT + "\">tonight</font>";
 				}
-				offers.add(card(HALF_WIDTH, taken ? BG_CARD_DIM : BG_CARD, line, null, taken ? "<font color=\"" + COLOR_GOOD + "\">Taken</font>" : null, 44));
+				offers.add(card(HALF_WIDTH, taken ? BG_CARD_DIM : BG_CARD, getIcon(offer.getTemplate()), title, line, taken ? "<font color=\"" + COLOR_GOOD + "\">Taken</font>" : null, 44));
 			}
 
 			sb.append(spacer(12)).append(sectionHeader("Today in " + town, null));
@@ -613,14 +633,14 @@ public final class DynamicQuestHtml
 			for (QuestInstance quest : world)
 			{
 				final String bottom = "<font color=\"" + COLOR_LABEL + "\">Near " + quest.getContext("near", "?") + ", level " + quest.getDifficulty().getQuestLevel() + "</font>";
-				sb.append(card(BOARD_WIDTH, BG_CARD, link("quest " + quest.getId(), quest.getName()), bottom, button("track " + quest.getId(), "Track", 60), 64)).append(spacer(5));
+				sb.append(card(BOARD_WIDTH, BG_CARD, WORLD_ICON, link("quest " + quest.getId(), quest.getName()), bottom, button("track " + quest.getId(), "Track", 60), 64)).append(spacer(5));
 			}
 		}
 
 		// Heralds.
 		final boolean heralds = !player.getVariables().getBoolean(DynamicQuestManager.VAR_NO_HERALDS, false);
 		final String state = "<font color=\"" + COLOR_DIM + "\">Heralds bring you quests while you hunt:</font> <font color=\"" + (heralds ? COLOR_GOOD : COLOR_BAD) + "\">" + (heralds ? "on" : "off") + "</font>";
-		sb.append(spacer(12)).append(card(BOARD_WIDTH, BG_CARD_DIM, state, null, button("heralds " + (heralds ? "off" : "on"), heralds ? "Turn off" : "Turn on", 70), 74));
+		sb.append(spacer(12)).append(card(BOARD_WIDTH, BG_CARD_DIM, null, state, null, button("heralds " + (heralds ? "off" : "on"), heralds ? "Turn off" : "Turn on", 70), 74));
 		return sb.toString();
 	}
 
@@ -868,6 +888,11 @@ public final class DynamicQuestHtml
 		return -1;
 	}
 
+	private static String getIcon(QuestTemplate template)
+	{
+		return template.getCategory() != null ? CATEGORY_ICONS.getOrDefault(template.getCategory().toLowerCase(), DEFAULT_ICON) : DEFAULT_ICON;
+	}
+
 	// ---------------------------------------------------------------------------------------------
 	// Community Board building blocks
 	// ---------------------------------------------------------------------------------------------
@@ -921,26 +946,32 @@ public final class DynamicQuestHtml
 	}
 
 	/**
-	 * @return a box with a line or two of text and something on the right. Every line gets a cell of its own with a fixed height: the client does not grow a cell to fit its text, so shorter cells overlap the next line.
+	 * @return a box with an icon, a line or two of text and something on the right. A single row with no colspan padding rows: the client did not keep the height of those rows or of the fixed-height text cells, so the cards collapsed onto each other. The height comes from a blank image and the icon instead.
 	 */
-	private static String card(int width, String bgcolor, String top, String bottom, String right, int rightWidth)
+	private static String card(int width, String bgcolor, String icon, String top, String bottom, String right, int rightWidth)
 	{
-		final int columns = right != null ? 4 : 3;
-		final int textWidth = width - 16 - (right != null ? rightWidth : 0);
+		final int height = (icon != null) || (bottom != null) ? 44 : 30;
+		final int iconWidth = icon != null ? ICON_SIZE + 8 : 0;
+		final int textWidth = width - 16 - iconWidth - (right != null ? rightWidth : 0);
 		final StringBuilder sb = new StringBuilder();
-		sb.append("<table width=").append(width).append(" cellpadding=0 cellspacing=0 bgcolor=").append(bgcolor).append(">");
-		sb.append("<tr><td height=6 colspan=").append(columns).append("></td></tr>");
-		sb.append("<tr><td width=8 height=22></td><td width=").append(textWidth).append(" height=22>").append(top).append("</td>");
-		if (right != null)
+		sb.append("<table width=").append(width).append(" cellpadding=0 cellspacing=0 bgcolor=").append(bgcolor).append("><tr>");
+		sb.append("<td width=8 height=").append(height).append("><img src=\"L2UI.SquareBlank\" width=1 height=").append(height).append("></td>");
+		if (icon != null)
 		{
-			sb.append("<td width=").append(rightWidth).append(" height=22 align=right>").append(right).append("</td>");
+			sb.append("<td width=").append(iconWidth).append("><img src=\"").append(icon).append("\" width=").append(ICON_SIZE).append(" height=").append(ICON_SIZE).append("></td>");
 		}
-		sb.append("<td width=8></td></tr>");
+		sb.append("<td width=").append(textWidth).append("><table width=").append(textWidth).append(" cellpadding=0 cellspacing=0>");
+		sb.append("<tr><td width=").append(textWidth).append(" height=18>").append(top).append("</td></tr>");
 		if (bottom != null)
 		{
-			sb.append("<tr><td height=22></td><td height=22>").append(bottom).append("</td>").append(right != null ? "<td></td>" : "").append("<td></td></tr>");
+			sb.append("<tr><td width=").append(textWidth).append(" height=18>").append(bottom).append("</td></tr>");
 		}
-		sb.append("<tr><td height=6 colspan=").append(columns).append("></td></tr></table>");
+		sb.append("</table></td>");
+		if (right != null)
+		{
+			sb.append("<td width=").append(rightWidth).append(" align=right>").append(right).append("</td>");
+		}
+		sb.append("<td width=8></td></tr></table>");
 		return sb.toString();
 	}
 
