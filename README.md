@@ -246,7 +246,7 @@ Procedurally generated quests that anyone can take at any level. None of them is
   - Escort and defence meters last longer for bigger parties, and time limits get shorter at harder tiers.
 - **Where quests come from**:
   - A **Notice Board** stands next to the gatekeeper of every town. It has a few board offers each day and the requests of that town's npcs (its real blacksmith, grocer, warehouse keeper or gatekeeper by name). Requests are handed over at the board.
-  - The **Community Board** (`_bbsquests`, "Bounties and Requests") and **`.quests`** show the same board for the nearest town, your quests and the world events. Board offers can be taken from anywhere; requests only at the board. The Community Board draws it wider: a progress gauge for each of your quests, today's offers two by two on one line each, the difficulties side by side with their rewards, and a gauge per stage and per objective on a running quest.
+  - The **Community Board** (`_bbsquests`, "Bounties and Requests") and **`.quests`** show the same board for the nearest town, your quests and the world events. Board offers can be taken from anywhere; requests only at the board. The Community Board draws it wider: an icon for each category, a progress gauge for each of your quests, today's offers two by two (title, then category), the difficulties side by side with their rewards, and a gauge per stage and per objective on a running quest.
   - **Heralds** walk up to players hunting in the open world with a quest (timer, world-state and player-action triggers). The player can accept or turn it down, and the tutorial question mark opens the offer too.
 - **Ten templates ship**:
   - Wanted (a named monster's trail, then the hunt)
