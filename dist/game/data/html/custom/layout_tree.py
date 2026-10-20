@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Lays out the passive tree in data/passivetree/*.xml, Path of Exile style:
+Lays out the passive tree in data/passivetree/PassiveTree.xml, Path of Exile style:
  - every notable cluster is a ring: the path enters the ring at its first small and the three smalls
    curve around it to the notable (those links are drawn as arcs),
  - the six sector spines are straight roads from the START to the archetype MASTER, with more than one way along
@@ -17,11 +17,11 @@ after editing the tree. orbitX/orbitY is the centre of the circle a node sits on
 link between two nodes on the same circle as an arc instead of a straight line.
 
 The script checks its own result (no crossing links, no nodes on top of each other or of a link) and
-refuses to write the files if the layout is not clean.
+refuses to write the file if the layout is not clean. Only the <node> lines change: the header, the
+version and the region comments stay as they are (an admin editor save raises the version).
 
-Usage: python3 layout_tree.py [path/to/data/passivetree]
+Usage: python3 layout_tree.py [path/to/PassiveTree.xml]
 """
-import glob
 import itertools
 import math
 import os
@@ -30,7 +30,7 @@ import sys
 import xml.etree.ElementTree as ET
 from xml.sax.saxutils import quoteattr
 
-DATA_DIR = [a for a in sys.argv[1:] if not a.startswith("--")][0] if [a for a in sys.argv[1:] if not a.startswith("--")] else os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "passivetree")
+TREE_FILE = ([a for a in sys.argv[1:] if not a.startswith("--")] or [os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "passivetree", "PassiveTree.xml")])[0]
 
 # ------------------------------------------------------------------ layout constants
 SECTOR_BASES = [1000, 2000, 3000, 4000, 5000, 6000]  # Vanguard, Juggernaut, Shadowblade, Deadeye, Arcanist, Hierophant
@@ -177,16 +177,13 @@ class Node:
 
 
 def load():
-	nodes, order, headers = {}, {}, {}
-	for path in sorted(glob.glob(os.path.join(DATA_DIR, "*.xml"))):
-		fn = os.path.basename(path)
-		headers[fn] = open(path, encoding="utf-8").read().split("\n")[1]
-		order[fn] = []
-		for el in ET.parse(path).getroot().findall("node"):
-			node = Node(el.attrib, [int(r.get("nodeId")) for r in el.findall("requires")])
-			nodes[node.id] = node
-			order[fn].append(node.id)
-	return nodes, order, headers
+	"""The nodes, and the file's lines: save() writes them back with each node's own line made again."""
+	nodes = {}
+	for el in ET.parse(TREE_FILE).getroot().findall("node"):
+		node = Node(el.attrib, [int(r.get("nodeId")) for r in el.findall("requires")])
+		nodes[node.id] = node
+	lines = open(TREE_FILE, encoding="utf-8").read().replace("\r\n", "\n").split("\n")
+	return nodes, lines
 
 
 def coord(value):
@@ -194,34 +191,33 @@ def coord(value):
 	return "0.0" if text == "-0.0" else text
 
 
-def save(nodes, order, headers):
-	for fn, ids in order.items():
-		lines = ['<?xml version="1.0" encoding="UTF-8"?>', headers[fn],
-			'<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">']
-		for i in ids:
-			n = nodes[i]
-			attrs = {}
-			for k, v in n.a.items():
-				if k in ("orbitX", "orbitY"):
-					continue
-				if k == "x":
-					v = coord(n.pos[0])
-				elif k == "y":
-					v = coord(n.pos[1])
-				attrs[k] = v
-				if (k == "y") and n.orbit:
-					attrs["orbitX"] = coord(n.orbit[0])
-					attrs["orbitY"] = coord(n.orbit[1])
-			text = " ".join(f"{k}={quoteattr(v)}" for k, v in attrs.items())
-			if not n.parents:
-				lines.append(f"\t<node {text} />")
-			else:
-				lines.append(f"\t<node {text}>")
-				lines += [f'\t\t<requires nodeId="{p}" />' for p in n.parents]
-				lines.append("\t</node>")
-		lines.append("</list>")
-		with open(os.path.join(DATA_DIR, fn), "w", encoding="utf-8", newline="\n") as fh:
-			fh.write("\n".join(lines))
+NODE_LINE = re.compile(r'^\t<node id="(\d+)" .*?( />|>)$')
+
+
+def save(nodes, lines):
+	out = []
+	for line in lines:
+		m = NODE_LINE.match(line)
+		if not m:
+			out.append(line)  # the header, the <list> line with its version, region comments, links
+			continue
+		n = nodes[int(m.group(1))]
+		attrs = {}
+		for k, v in n.a.items():
+			if k in ("orbitX", "orbitY"):
+				continue
+			if k == "x":
+				v = coord(n.pos[0])
+			elif k == "y":
+				v = coord(n.pos[1])
+			attrs[k] = v
+			if (k == "y") and n.orbit:
+				attrs["orbitX"] = coord(n.orbit[0])
+				attrs["orbitY"] = coord(n.orbit[1])
+		text = " ".join(f"{k}={quoteattr(v)}" for k, v in attrs.items())
+		out.append(f"\t<node {text}{m.group(2)}")
+	with open(TREE_FILE, "w", encoding="utf-8", newline="\n") as fh:
+		fh.write("\n".join(out))
 
 
 # ------------------------------------------------------------------ geometry
@@ -735,7 +731,7 @@ def place_attachment(nodes, adj, base, junction, first, io, side, alpha, d, curl
 
 
 def main():
-	nodes, order, headers = load()
+	nodes, lines = load()
 	adj = layout(nodes)
 	crossings, crowded = problems(nodes, adj)
 	for c in crossings:
@@ -743,8 +739,8 @@ def main():
 	for c in crowded:
 		print("CROWDED", c, file=sys.stderr)
 	if (crossings or crowded) and ("--force" not in sys.argv):
-		sys.exit(f"layout is not clean: {len(crossings)} crossing(s), {len(crowded)} crowded spot(s) - files left untouched")
-	save(nodes, order, headers)
+		sys.exit(f"layout is not clean: {len(crossings)} crossing(s), {len(crowded)} crowded spot(s) - file left untouched")
+	save(nodes, lines)
 	print(f"Laid out {len(nodes)} nodes.")
 
 

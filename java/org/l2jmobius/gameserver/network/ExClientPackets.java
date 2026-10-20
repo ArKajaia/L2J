@@ -175,7 +175,9 @@ public enum ExClientPackets
 	REQUEST_BR_LECTURE_MARK(0x90, null, ConnectionState.IN_GAME),
 	REQUEST_GOODS_INVENTORY_INFO(0x91, null, ConnectionState.IN_GAME),
 	REQUEST_USE_GOODS_INVENTORY_ITEM(0x92, null, ConnectionState.IN_GAME),
-	REQUEST_HARDWARE_INFO(0x96, RequestHardWareInfo::new, ConnectionState.values());
+	REQUEST_HARDWARE_INFO(0x96, RequestHardWareInfo::new, ConnectionState.values()),
+	// Project extensions: D0:00FE, then an int32 sub-opcode (network.clientpackets.custom.CustomClientPackets).
+	REQUEST_EX2_CUSTOM(0xFE, null, ConnectionState.IN_GAME);
 	
 	public static final ExClientPackets[] PACKET_ARRAY;
 	static

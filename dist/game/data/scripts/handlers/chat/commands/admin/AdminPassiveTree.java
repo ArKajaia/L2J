@@ -11,8 +11,8 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
 /**
  * The passive tree editor.
  * <ul>
- * <li>//passivetree - opens the web tree editor: move nodes, change links, effects, costs and skills, add and remove nodes. A save writes data/passivetree/*.xml (after a backup in data/passivetree_backup) and is live at once.</li>
- * <li>//passivetree_reload - loads data/passivetree/*.xml again, after they were edited by hand.</li>
+ * <li>//passivetree - opens the web tree editor: move nodes, change links, effects, costs and skills, add and remove nodes. A save writes data/passivetree/PassiveTree.xml one version up (after a backup in data/passivetree_backup) and is live at once.</li>
+ * <li>//passivetree_reload - loads data/passivetree/PassiveTree.xml again, after it was edited by hand.</li>
  * </ul>
  */
 public class AdminPassiveTree implements IAdminCommandHandler
@@ -29,7 +29,7 @@ public class AdminPassiveTree implements IAdminCommandHandler
 		if (command.startsWith("admin_passivetree_reload"))
 		{
 			PassiveTreeEditor.reload();
-			activeChar.sendMessage("Passive tree reloaded: " + PassiveTreeData.getInstance().getAllNodes().size() + " nodes. Online players' trees were rebuilt.");
+			activeChar.sendMessage("Passive tree reloaded: " + PassiveTreeData.getInstance().getAllNodes().size() + " nodes, version " + PassiveTreeData.getInstance().getVersion() + ". Online players' trees were rebuilt.");
 			return true;
 		}
 		

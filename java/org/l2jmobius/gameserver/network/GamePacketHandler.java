@@ -32,6 +32,7 @@ import org.l2jmobius.gameserver.network.clientpackets.RequestDeleteBookMarkSlot;
 import org.l2jmobius.gameserver.network.clientpackets.RequestModifyBookMarkSlot;
 import org.l2jmobius.gameserver.network.clientpackets.RequestSaveBookMarkSlot;
 import org.l2jmobius.gameserver.network.clientpackets.RequestTeleportBookMark;
+import org.l2jmobius.gameserver.network.clientpackets.custom.CustomClientPackets;
 
 /**
  * @author Mobius
@@ -113,6 +114,12 @@ public class GamePacketHandler implements PacketHandler<GameClient>
 				}
 				
 				return null;
+			}
+			
+			// Project extensions: an int32 sub-opcode after D0:00FE, the mirror of FE:00FE.
+			if (exPacketId == 0xFE)
+			{
+				return CustomClientPackets.newPacket(buffer.readInt());
 			}
 			
 			// Create new ClientPacket.

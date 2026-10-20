@@ -50,6 +50,7 @@ import org.l2jmobius.gameserver.model.stats.functions.AbstractFunction;
 import org.l2jmobius.gameserver.model.stats.functions.FuncAdd;
 import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
+import org.l2jmobius.gameserver.network.serverpackets.Ex2PassiveTreeVersion;
 import org.l2jmobius.gameserver.network.serverpackets.ExStorageMaxCount;
 import org.l2jmobius.gameserver.network.serverpackets.SkillCoolTime;
 
@@ -1464,7 +1465,7 @@ public class PassiveTreeManager
 	
 	/**
 	 * Call after {@link PassiveTreeData} was loaded again (the admin tree editor, or //passivetree_reload). Forgets everything worked out from the old tree, then rebuilds every online player's tree from the database: nodes that were removed or no longer connect to the player's START are
-	 * dropped and refunded (as at login), and the stats and skills of what is left are applied again.
+	 * dropped and refunded (as at login), and the stats and skills of what is left are applied again. Every online game client is told the new tree version, so it fetches the new definition.
 	 */
 	public void onTreeReloaded()
 	{
@@ -1474,9 +1475,18 @@ public class PassiveTreeManager
 		}
 		_cache.clear();
 		
+		final boolean announce = PassiveTreeConfig.PASSIVE_TREE_ENABLED;
 		for (Player player : World.getInstance().getPlayers())
 		{
-			ThreadPool.execute(() -> applyAll(player));
+			ThreadPool.execute(() ->
+			{
+				applyAll(player);
+				if (announce)
+				{
+					// Game clients fetch the new definition, then ask for their state again.
+					player.sendPacket(new Ex2PassiveTreeVersion());
+				}
+			});
 		}
 	}
 	

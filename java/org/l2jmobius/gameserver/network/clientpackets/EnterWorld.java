@@ -32,6 +32,7 @@ import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.ServerConfig;
 import org.l2jmobius.gameserver.config.custom.FactionSystemConfig;
 import org.l2jmobius.gameserver.config.custom.OfflineTradeConfig;
+import org.l2jmobius.gameserver.config.custom.PassiveTreeConfig;
 import org.l2jmobius.gameserver.config.custom.PremiumSystemConfig;
 import org.l2jmobius.gameserver.config.custom.ScreenWelcomeMessageConfig;
 import org.l2jmobius.gameserver.config.custom.WeddingConfig;
@@ -97,6 +98,7 @@ import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
 import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
 import org.l2jmobius.gameserver.network.serverpackets.Die;
 import org.l2jmobius.gameserver.network.serverpackets.EtcStatusUpdate;
+import org.l2jmobius.gameserver.network.serverpackets.Ex2PassiveTreeVersion;
 import org.l2jmobius.gameserver.network.serverpackets.ExBasicActionList;
 import org.l2jmobius.gameserver.network.serverpackets.ExGetBookMarkInfoPacket;
 import org.l2jmobius.gameserver.network.serverpackets.ExNoticePostArrived;
@@ -667,6 +669,11 @@ public class EnterWorld extends ClientPacket
 		}
 		
 		PassiveTreeManager.getInstance().onClassContextChanged(player);
+		if (PassiveTreeConfig.PASSIVE_TREE_ENABLED)
+		{
+			// The client checks its cached tree definition against this and fetches it only when it differs.
+			player.sendPacket(new Ex2PassiveTreeVersion());
+		}
 		
 		player.stopSkillEffects(SkillFinishType.REMOVED, 27001);
 		

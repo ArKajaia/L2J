@@ -3,9 +3,10 @@ package handlers.chat.commands.voiced;
 import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
 import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.network.serverpackets.Ex2PassiveTreeOpen;
 
 /**
- * Convenience opener: ".passives" in chat routes straight into the Community Board page.
+ * ".passives" opens the game client's passive tree window (Ex2PassiveTreeOpen; Ctrl+P opens it too). ".passives board" opens the Community Board page instead.
  */
 public class PassiveTreeVoiced implements IVoicedCommandHandler
 {
@@ -22,7 +23,14 @@ public class PassiveTreeVoiced implements IVoicedCommandHandler
 			return false;
 		}
 		
-		CommunityBoardHandler.getInstance().handleParseCommand("_bbspassives", player);
+		if ((params != null) && params.trim().equalsIgnoreCase("board"))
+		{
+			CommunityBoardHandler.getInstance().handleParseCommand("_bbspassives", player);
+			return true;
+		}
+
+		player.sendPacket(Ex2PassiveTreeOpen.STATIC_PACKET);
+		player.sendMessage("Passive tree opened (Ctrl+P opens it too). For the Community Board page, type .passives board");
 		return true;
 	}
 	

@@ -1,5 +1,6 @@
 package org.l2jmobius.gameserver.model.passivetree;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -43,7 +44,7 @@ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
 import org.l2jmobius.gameserver.util.LocationUtil;
 
 /**
- * Build-defining passive tree keystones: rules that change how a mechanic works rather than adding a stat. Every value is read from the allocated nodes' effect strings (see {@link PassiveStatBonusCache}), so balancing stays in data/passivetree/*.xml.
+ * Build-defining passive tree keystones: rules that change how a mechanic works rather than adding a stat. Every value is read from the allocated nodes' effect strings (see {@link PassiveStatBonusCache}), so balancing stays in data/passivetree/PassiveTree.xml.
  * <p>
  * Players and roaming fake players own a passive tree (a fake player's is rolled by {@link org.l2jmobius.gameserver.managers.FakePlayerPvpPassiveTree}). Every helper is a no-op for anything else (summons, NPCs), so the hooks in the combat code can call them unconditionally. Fake
  * players only take the keystones that work for them (FakePvpKeystones.* in FakePlayerPvp.ini); the ones built on MP, CP, servitors or parties stay player-only.
@@ -1246,7 +1247,20 @@ public final class PassiveMechanics
 	}
 	
 	// ---------------------------------------------------------------- allocation
-	
+
+	/**
+	 * @return the keys that cancel each other out, each group's keys sorted (the game client checks them too)
+	 */
+	public static List<List<String>> getExclusiveGroups()
+	{
+		final List<List<String>> groups = new ArrayList<>();
+		for (Set<String> group : EXCLUSIVE_GROUPS)
+		{
+			groups.add(group.stream().sorted().toList());
+		}
+		return groups;
+	}
+
 	/**
 	 * @param a a node
 	 * @param b another node

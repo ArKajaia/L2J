@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -52,24 +51,23 @@ import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode.NodeType;
 
 /**
- * Reads and writes the passive tree files (data/passivetree/*.xml) for the admin tree editor, then loads the tree again so the change is live.
+ * Reads and writes the passive tree file (data/passivetree/PassiveTree.xml) for the admin tree editor, then loads the tree again so the change is live.
  * <p>
- * The editor works on the files, not on {@link PassiveTreeData}: it needs what the loader fills in or throws away (which file a node is in, a description left out so it is made from the effect, the order of the links). A file saved without changes comes out byte for byte the same.
+ * The editor works on the file, not on {@link PassiveTreeData}: it needs what the loader fills in or throws away (a description left out so it is made from the effect, the order of the links, the region comments between the nodes). A tree saved without changes comes out byte for byte the same.
  * <p>
  * Links are saved the way the loader expects them: every node lists all its neighbours, except START nodes, which list none (an empty list is what makes a node a starting point).
  * <p>
- * Every save copies the files it replaces to data/passivetree_backup/&lt;time&gt;/ first.
+ * Every save raises the {@code version} of the file's {@code <list>} (game clients cache the tree by it) and copies the file it replaces to data/passivetree_backup/&lt;time&gt;/ first.
  */
 public final class PassiveTreeEditor
 {
 	private static final Logger LOGGER = Logger.getLogger(PassiveTreeEditor.class.getName());
 
-	public static final Path TREE_DIR = Path.of("data/passivetree");
+	public static final Path TREE_FILE = Path.of(PassiveTreeData.FILE);
 	public static final Path BACKUP_DIR = Path.of("data/passivetree_backup");
 	private static final int MAX_BACKUPS = 30;
 
-	private static final String LIST_LINE = "<list xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"../xsd/passivetree.xsd\">";
-	private static final Pattern FILE_NAME = Pattern.compile("[A-Za-z0-9_-]{1,64}\\.(?i:xml)");
+	private static final String LIST_LINE = "<list version=\"%d\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"../xsd/passivetree.xsd\">";
 	private static final Pattern EFFECT_KEY = Pattern.compile("[A-Z][A-Z0-9_]*(@[A-Z]+)?");
 	private static final Pattern ICON = Pattern.compile("[a-z0-9-]{0,40}");
 	private static final Pattern NODE_COUNT = Pattern.compile("^(.*?: )\\d+( nodes.*)$", Pattern.DOTALL);
@@ -92,7 +90,6 @@ public final class PassiveTreeEditor
 	public static final class EditNode
 	{
 		public int id;
-		public String file = "";
 		public String name = "";
 		public String sector = "";
 		public String type = "SMALL";
@@ -116,8 +113,8 @@ public final class PassiveTreeEditor
 
 	/**
 	 * The tree as it is on disk.
-	 * @param nodes every node, file by file in name order, each file's nodes in file order
-	 * @param version a hash of the files, sent back with a save so it can't overwrite a change it has not seen
+	 * @param nodes every node, in file order
+	 * @param version a hash of the file, sent back with a save so it can't overwrite a change it has not seen
 	 */
 	public record Snapshot(List<EditNode> nodes, String version)
 	{
@@ -125,11 +122,11 @@ public final class PassiveTreeEditor
 
 	/**
 	 * What a save did, or would do.
-	 * @param saved {@code true} if the files were written and the tree loaded again
+	 * @param saved {@code true} if the file was written and the tree loaded again
 	 * @param errors what stops the save
 	 * @param warnings what the save allows but the admin should know
-	 * @param version the version of the files now
-	 * @param changedFiles files written or removed (or that would be)
+	 * @param version the hash of the file now
+	 * @param changedFiles the file and the version it gets, if it was written (or would be)
 	 */
 	public record SaveResult(boolean saved, List<String> errors, List<String> warnings, String version, List<String> changedFiles)
 	{
@@ -138,30 +135,26 @@ public final class PassiveTreeEditor
 	// ------------------------------------------------------------------ reading
 
 	/**
-	 * @return every node of every tree file
-	 * @throws IOException if a file can't be read or isn't valid XML
+	 * @return every node of the tree file
+	 * @throws IOException if the file can't be read or isn't valid XML
 	 */
 	public static synchronized Snapshot read() throws IOException
 	{
 		final List<EditNode> nodes = new ArrayList<>();
-		for (Path file : treeFiles())
+		final Element list = parse(TREE_FILE).getDocumentElement();
+		for (Node n = list.getFirstChild(); n != null; n = n.getNextSibling())
 		{
-			final Element list = parse(file).getDocumentElement();
-			for (Node n = list.getFirstChild(); n != null; n = n.getNextSibling())
+			if ((n instanceof Element element) && element.getNodeName().equalsIgnoreCase("node"))
 			{
-				if ((n instanceof Element element) && element.getNodeName().equalsIgnoreCase("node"))
-				{
-					nodes.add(readNode(element, file.getFileName().toString()));
-				}
+				nodes.add(readNode(element));
 			}
 		}
 		return new Snapshot(nodes, version());
 	}
 
-	private static EditNode readNode(Element element, String file)
+	private static EditNode readNode(Element element)
 	{
 		final EditNode node = new EditNode();
-		node.file = file;
 		node.id = Integer.parseInt(element.getAttribute("id").trim());
 		node.name = element.getAttribute("name");
 		node.sector = element.getAttribute("sector");
@@ -209,14 +202,6 @@ public final class PassiveTreeEditor
 		}
 	}
 
-	private static List<Path> treeFiles() throws IOException
-	{
-		try (Stream<Path> files = Files.list(TREE_DIR))
-		{
-			return files.filter(f -> Files.isRegularFile(f) && f.getFileName().toString().toLowerCase().endsWith(".xml")).sorted().toList();
-		}
-	}
-
 	private static Document parse(Path file) throws IOException
 	{
 		try (InputStream in = Files.newInputStream(file))
@@ -238,39 +223,65 @@ public final class PassiveTreeEditor
 		}
 	}
 
-	/** @return the text of the comment above {@code <list>}, or {@code null} if there is none */
-	private static String header(Path file) throws IOException
+	/**
+	 * What a save keeps of the file besides its nodes.
+	 * @param header the text of the comment above {@code <list>}, or {@code null} if there is none
+	 * @param regions node id -> the text of the comment right above that node (the region it starts)
+	 * @param version the {@code version} of the {@code <list>}
+	 */
+	record Layout(String header, Map<Integer, String> regions, int version)
 	{
-		for (Node n = parse(file).getFirstChild(); n != null; n = n.getNextSibling())
+	}
+
+	static Layout layout(Path file) throws IOException
+	{
+		final Document document = parse(file);
+		String header = null;
+		for (Node n = document.getFirstChild(); n != null; n = n.getNextSibling())
 		{
 			if (n.getNodeType() == Node.COMMENT_NODE)
 			{
-				return n.getNodeValue();
+				header = n.getNodeValue();
+				break;
 			}
 			if (n.getNodeType() == Node.ELEMENT_NODE)
 			{
 				break;
 			}
 		}
-		return null;
+
+		final Element list = document.getDocumentElement();
+		final Map<Integer, String> regions = new HashMap<>();
+		String comment = null;
+		for (Node n = list.getFirstChild(); n != null; n = n.getNextSibling())
+		{
+			if (n.getNodeType() == Node.COMMENT_NODE)
+			{
+				comment = n.getNodeValue();
+			}
+			else if ((n instanceof Element element) && element.getNodeName().equalsIgnoreCase("node") && (comment != null))
+			{
+				regions.put(Integer.parseInt(element.getAttribute("id").trim()), comment);
+				comment = null;
+			}
+		}
+		final String version = list.getAttribute("version").trim();
+		return new Layout(header, regions, version.isEmpty() ? 0 : Integer.parseInt(version));
 	}
 
 	/**
-	 * @return a hash of every tree file's name and content
-	 * @throws IOException if a file can't be read
+	 * @return a hash of the tree file's name and content
+	 * @throws IOException if the file can't be read
 	 */
 	public static String version() throws IOException
 	{
 		try
 		{
 			final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-			for (Path file : treeFiles())
-			{
-				digest.update(file.getFileName().toString().getBytes(StandardCharsets.UTF_8));
-				digest.update((byte) 0);
-				digest.update(Files.readAllBytes(file));
-				digest.update((byte) 0);
-			}
+			digest.update(TREE_FILE.getFileName().toString().getBytes(StandardCharsets.UTF_8));
+			digest.update((byte) 0);
+			digest.update(Files.readAllBytes(TREE_FILE));
+			digest.update((byte) 0);
 			final StringBuilder hex = new StringBuilder();
 			for (byte b : digest.digest())
 			{
@@ -316,7 +327,6 @@ public final class PassiveTreeEditor
 	{
 		final StringBuilder json = new StringBuilder(256);
 		json.append("{\"id\":").append(node.id);
-		json.append(",\"file\":").append(SimpleJson.quote(node.file));
 		json.append(",\"name\":").append(SimpleJson.quote(node.name));
 		json.append(",\"sector\":").append(SimpleJson.quote(node.sector));
 		json.append(",\"type\":").append(SimpleJson.quote(node.type));
@@ -363,7 +373,6 @@ public final class PassiveTreeEditor
 
 			final EditNode node = new EditNode();
 			node.id = integer(map, "id", 0);
-			node.file = string(map, "file");
 			node.name = string(map, "name");
 			node.sector = string(map, "sector");
 			node.type = string(map, "type").toUpperCase();
@@ -454,12 +463,12 @@ public final class PassiveTreeEditor
 	// ------------------------------------------------------------------ saving
 
 	/**
-	 * Checks the nodes, and unless {@code dryRun}, writes them to the tree files and loads the tree again.
+	 * Checks the nodes, and unless {@code dryRun}, writes them to the tree file (one {@code version} up) and loads the tree again.
 	 * @param nodes the whole tree, as the editor has it
-	 * @param baseVersion the {@link #version()} the editor started from; the save is refused if the files have changed since
+	 * @param baseVersion the {@link #version()} the editor started from; the save is refused if the file has changed since
 	 * @param dryRun only check, and say what a save would do
 	 * @return what was done
-	 * @throws IOException if the files can't be read or written
+	 * @throws IOException if the file can't be read or written
 	 */
 	public static synchronized SaveResult save(List<EditNode> nodes, String baseVersion, boolean dryRun) throws IOException
 	{
@@ -469,7 +478,7 @@ public final class PassiveTreeEditor
 		final String current = version();
 		if (!current.equals(baseVersion))
 		{
-			errors.add("The tree files changed since you opened the editor (another save, or a hand edit). Reload the editor to get them; your unsaved changes are kept in this browser as a draft.");
+			errors.add("The tree file changed since you opened the editor (another save, or a hand edit). Reload the editor to get it; your unsaved changes are kept in this browser as a draft.");
 			return new SaveResult(false, errors, warnings, current, List.of());
 		}
 
@@ -482,70 +491,34 @@ public final class PassiveTreeEditor
 		normalizeLinks(nodes);
 		reportRefunds(nodes, warnings);
 
-		// The new content of every file, and the files to remove.
-		final Map<String, List<EditNode>> byFile = new TreeMap<>();
-		for (EditNode node : nodes)
-		{
-			byFile.computeIfAbsent(node.file, k -> new ArrayList<>()).add(node);
-		}
-		final Map<String, String> contents = new LinkedHashMap<>();
-		for (Map.Entry<String, List<EditNode>> entry : byFile.entrySet())
-		{
-			final Path path = TREE_DIR.resolve(entry.getKey());
-			final String oldHeader = Files.exists(path) ? header(path) : null;
-			contents.put(entry.getKey(), toXml(oldHeader, entry.getValue()));
-		}
-
+		// The tree unchanged is the file as it is, at its own version; a save writes the next version.
+		final Layout layout = layout(TREE_FILE);
+		final String fileName = TREE_FILE.getFileName().toString();
 		final List<String> changed = new ArrayList<>();
-		final List<Path> removed = new ArrayList<>();
-		for (Map.Entry<String, String> entry : contents.entrySet())
-		{
-			final Path path = TREE_DIR.resolve(entry.getKey());
-			if (!Files.exists(path) || !Files.readString(path, StandardCharsets.UTF_8).equals(entry.getValue()))
-			{
-				changed.add(entry.getKey());
-			}
-		}
-		for (Path file : treeFiles())
-		{
-			if (!contents.containsKey(file.getFileName().toString()))
-			{
-				removed.add(file);
-				changed.add(file.getFileName() + " (removed: it has no nodes left)");
-			}
-		}
-
-		if (changed.isEmpty())
+		if (toXml(layout, layout.version(), nodes).equals(Files.readString(TREE_FILE, StandardCharsets.UTF_8).replace("\r\n", "\n")))
 		{
 			warnings.add("Nothing changed.");
 			return new SaveResult(false, errors, warnings, current, changed);
 		}
+		changed.add(fileName + " (version " + (layout.version() + 1) + ")");
 		if (dryRun)
 		{
 			return new SaveResult(false, errors, warnings, current, changed);
 		}
 
 		final Path backup = backup();
-		for (Map.Entry<String, String> entry : contents.entrySet())
-		{
-			final Path path = TREE_DIR.resolve(entry.getKey());
-			final Path temp = TREE_DIR.resolve(entry.getKey() + ".tmp");
-			Files.writeString(temp, entry.getValue(), StandardCharsets.UTF_8);
-			Files.move(temp, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-		}
-		for (Path file : removed)
-		{
-			Files.delete(file);
-		}
-		LOGGER.info(PassiveTreeEditor.class.getSimpleName() + ": Saved " + nodes.size() + " passive tree nodes (" + changed.size() + " file(s) changed, backup in " + backup + ").");
+		final Path temp = TREE_FILE.resolveSibling(fileName + ".tmp");
+		Files.writeString(temp, toXml(layout, layout.version() + 1, nodes), StandardCharsets.UTF_8);
+		Files.move(temp, TREE_FILE, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+		LOGGER.info(PassiveTreeEditor.class.getSimpleName() + ": Saved " + nodes.size() + " passive tree nodes as version " + (layout.version() + 1) + " (backup in " + backup + ").");
 
 		reload();
-		warnings.add("The old files are backed up in " + backup.toString().replace('\\', '/') + ".");
+		warnings.add("The old file is backed up in " + backup.toString().replace('\\', '/') + ".");
 		return new SaveResult(true, errors, warnings, version(), changed);
 	}
 
 	/**
-	 * Loads the tree files again and makes the new tree live: online players get their trees rebuilt, and the fake players' prepared trees are grown again.
+	 * Loads the tree file again and makes the new tree live: online players get their trees rebuilt, and the fake players' prepared trees are grown again.
 	 */
 	public static synchronized void reload()
 	{
@@ -570,10 +543,6 @@ public final class PassiveTreeEditor
 				errors.add(label + ": the id is used twice.");
 			}
 
-			if (!FILE_NAME.matcher(node.file).matches())
-			{
-				errors.add(label + ": the file \"" + node.file + "\" must be a plain name ending in .xml (letters, digits, - and _).");
-			}
 			checkText(label, "name", node.name, MAX_NAME, true, errors);
 			checkText(label, "sector", node.sector, MAX_SECTOR, true, errors);
 			checkText(label, "description", node.description, MAX_DESCRIPTION, false, errors);
@@ -836,7 +805,7 @@ public final class PassiveTreeEditor
 	/**
 	 * Makes every link two-way, the way the loader reads them: a node lists all its neighbours, in the order it had them with any missing ones after, and a START node lists none.
 	 */
-	private static void normalizeLinks(List<EditNode> nodes)
+	static void normalizeLinks(List<EditNode> nodes)
 	{
 		final Map<Integer, Set<Integer>> links = links(nodes);
 		for (EditNode node : nodes)
@@ -969,15 +938,12 @@ public final class PassiveTreeEditor
 		return items.size() <= LISTED ? String.join(", ", items) : String.join(", ", items.subList(0, LISTED)) + " and " + (items.size() - LISTED) + " more";
 	}
 
-	/** Copies every tree file to a new folder under {@link #BACKUP_DIR}, and drops the oldest backups past {@link #MAX_BACKUPS}. */
+	/** Copies the tree file to a new folder under {@link #BACKUP_DIR}, and drops the oldest backups past {@link #MAX_BACKUPS}. */
 	private static Path backup() throws IOException
 	{
 		final Path folder = BACKUP_DIR.resolve(LocalDateTime.now().format(BACKUP_NAME));
 		Files.createDirectories(folder);
-		for (Path file : treeFiles())
-		{
-			Files.copy(file, folder.resolve(file.getFileName()), StandardCopyOption.REPLACE_EXISTING);
-		}
+		Files.copy(TREE_FILE, folder.resolve(TREE_FILE.getFileName()), StandardCopyOption.REPLACE_EXISTING);
 
 		try (Stream<Path> stream = Files.list(BACKUP_DIR))
 		{
@@ -1004,19 +970,20 @@ public final class PassiveTreeEditor
 	// ------------------------------------------------------------------ XML
 
 	/**
-	 * @param oldHeader the comment the file had above {@code <list>}, {@code null} for a new file
-	 * @param nodes the file's nodes, in order
-	 * @return the file's content, in the layout the generator writes
+	 * @param layout the comments and version the file has now
+	 * @param version the {@code version} to write
+	 * @param nodes the tree's nodes, in order
+	 * @return the file's content, in the layout tools/passivetree/merge_tree.py and layout_tree.py write
 	 */
-	static String toXml(String oldHeader, List<EditNode> nodes)
+	static String toXml(Layout layout, int version, List<EditNode> nodes)
 	{
 		final StringBuilder xml = new StringBuilder(nodes.size() * 400);
 		xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 
-		String header = oldHeader;
+		String header = layout.header();
 		if (header == null)
 		{
-			header = " " + (nodes.isEmpty() ? "Passive tree" : nodes.get(0).sector) + ": " + nodes.size() + " nodes. x/y are authoritative layout coords. ";
+			header = " Passive tree: " + nodes.size() + " nodes. x/y are authoritative layout coords. ";
 		}
 		else
 		{
@@ -1027,10 +994,15 @@ public final class PassiveTreeEditor
 			}
 		}
 		xml.append("<!--").append(header.replace("--", "- -")).append("-->\n");
-		xml.append(LIST_LINE).append('\n');
+		xml.append(String.format(LIST_LINE, version)).append('\n');
 
 		for (EditNode node : nodes)
 		{
+			final String region = layout.regions().get(node.id);
+			if (region != null)
+			{
+				xml.append("\t<!--").append(region.replace("--", "- -")).append("-->\n");
+			}
 			xml.append("\t<node");
 			attribute(xml, "id", String.valueOf(node.id));
 			attribute(xml, "name", node.name);
