@@ -46,6 +46,8 @@ public class DynamicQuestConfig
 	public static int MIN_PRESENCE_PERCENT;
 	public static boolean ONE_REWARD_PER_COMPUTER;
 	public static double MAX_REWARD_MULTIPLIER;
+	public static double EXP_RATE;
+	public static double ADENA_RATE;
 	public static int OPTIONAL_BONUS_PERCENT;
 	public static int CHAIN_BONUS_PERCENT;
 	public static int EVENT_INTERVAL;
@@ -75,6 +77,8 @@ public class DynamicQuestConfig
 		MIN_PRESENCE_PERCENT = Math.max(0, Math.min(100, config.getInt("DynamicQuestMinPresencePercent", 40)));
 		ONE_REWARD_PER_COMPUTER = config.getBoolean("DynamicQuestOneRewardPerComputer", true);
 		MAX_REWARD_MULTIPLIER = Math.max(1, config.getDouble("DynamicQuestMaxRewardMultiplier", 2.5));
+		EXP_RATE = Math.max(0, config.getDouble("DynamicQuestExpRate", 1));
+		ADENA_RATE = Math.max(0, config.getDouble("DynamicQuestAdenaRate", 1));
 		OPTIONAL_BONUS_PERCENT = Math.max(0, config.getInt("DynamicQuestOptionalBonusPercent", 15));
 		CHAIN_BONUS_PERCENT = Math.max(0, config.getInt("DynamicQuestChainBonusPercent", 10));
 		EVENT_INTERVAL = Math.max(60, config.getInt("DynamicQuestEventInterval", 300));

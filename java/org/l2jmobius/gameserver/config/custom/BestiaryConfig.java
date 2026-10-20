@@ -70,6 +70,7 @@ public class BestiaryConfig
 	public static int BOUNTY_LEVEL_RANGE;
 	public static int BOUNTY_KILL_MULTIPLIER;
 	public static int BOUNTY_RESET_HOUR;
+	/** Adena per level a finished bounty pays, BestiaryBountyAdenaRate included. */
 	public static int BOUNTY_ADENA_PER_LEVEL;
 	public static int[][] BOUNTY_REWARD_ITEMS;
 	public static boolean VARIANT_MESSAGES;
@@ -157,7 +158,8 @@ public class BestiaryConfig
 		BOUNTY_LEVEL_RANGE = Math.max(1, config.getInt("BestiaryBountyLevelRange", 5));
 		BOUNTY_KILL_MULTIPLIER = Math.max(1, Math.min(10, config.getInt("BestiaryBountyKillMultiplier", 2)));
 		BOUNTY_RESET_HOUR = Math.max(0, Math.min(23, config.getInt("BestiaryBountyResetHour", 6)));
-		BOUNTY_ADENA_PER_LEVEL = Math.max(0, config.getInt("BestiaryBountyAdenaPerLevel", 2000));
+		final double bountyAdenaRate = Math.max(0, config.getDouble("BestiaryBountyAdenaRate", 1));
+		BOUNTY_ADENA_PER_LEVEL = (int) Math.min(Integer.MAX_VALUE, Math.round(Math.max(0, config.getInt("BestiaryBountyAdenaPerLevel", 2000)) * bountyAdenaRate));
 		BOUNTY_REWARD_ITEMS = readItems(config.getString("BestiaryBountyRewardItems", ""));
 		VARIANT_MESSAGES = config.getBoolean("BestiaryVariantMessages", true);
 		BOSS_LOG_SIZE = Math.max(0, Math.min(50, config.getInt("BestiaryBossLogSize", 10)));
