@@ -82,6 +82,7 @@ import org.l2jmobius.gameserver.model.actor.enums.player.TeleportWhereType;
 import org.l2jmobius.gameserver.model.actor.holders.creature.EffectList;
 import org.l2jmobius.gameserver.model.actor.holders.creature.InvulSkillHolder;
 import org.l2jmobius.gameserver.model.actor.holders.creature.TimeStamp;
+import org.l2jmobius.gameserver.model.actor.holders.player.AreaTargets;
 import org.l2jmobius.gameserver.model.actor.holders.player.Prophecies;
 import org.l2jmobius.gameserver.model.actor.holders.player.Totems;
 import org.l2jmobius.gameserver.model.actor.instance.GrandBoss;
@@ -1705,6 +1706,12 @@ public abstract class Creature extends WorldObject
 			
 			// Check if target is auto attackable.
 			if (!obj.isAutoAttackable(this))
+			{
+				continue;
+			}
+			
+			// Like the players around, a player's sweep spares a fake player it may not fight without Ctrl: a white one fighting monsters is fair game for a hit of its own only.
+			if (isPlayable() && AreaTargets.isFakePerson(obj) && !AreaTargets.isFakeAreaTarget(this, obj, false))
 			{
 				continue;
 			}

@@ -146,8 +146,8 @@ public class AreaTargets
 	 * @param target a character near it
 	 * @param skill the skill that would reach it
 	 * @param origin where the area is: the target must be in its sight
-	 * @param forced {@code null} for an area of the caster's own (the characters it may fight without Ctrl), {@code FALSE} for a player's totem planted without Ctrl (monsters and the players and fake players with PvP status), {@code TRUE} for one planted with Ctrl (also the white
-	 *            players and fake players it could force-attack). A fake player's areas always hit what its area skills hit.
+	 * @param forced {@code null} for an area of the caster's own (the characters it may fight without Ctrl, a fake player only with PvP status), {@code FALSE} for a player's totem planted without Ctrl (monsters and the players and fake players with PvP status), {@code TRUE} for one
+	 *            planted with Ctrl (also the white players and fake players it could force-attack). A fake player's areas always hit what its area skills hit.
 	 * @return {@code true} for an enemy
 	 */
 	private static boolean isEnemy(Creature caster, Creature target, Skill skill, WorldObject origin, Boolean forced)
@@ -204,16 +204,10 @@ public class AreaTargets
 				}
 			}
 		}
-		else if ((forced != null) && isFakePerson(target))
+		else if (isFakePerson(target))
 		{
-			// A totem: a fake player (and its servitor) with PvP status (flagged, PK, clan war), or any with Ctrl as a force attack; never its own party or clan.
-			final Creature fake = target instanceof FakePlayerPvpServitor ? ((FakePlayerPvpServitor) target).getOwner() : target;
-			if (FakePartyManager.getInstance().isSameGroup(caster, fake) || (FakeClanManager.getInstance().isFriend(fake, caster) && (fake.getKarma() <= 0)))
-			{
-				return false;
-			}
-
-			if (!forced && !hasPvpStatus(caster, fake))
+			// A fake player (and its servitor): one with PvP status (flagged, PK, clan war), or with a totem planted with Ctrl any as a force attack; never its own party or clan.
+			if (!isFakeAreaTarget(caster, target, (forced != null) && forced))
 			{
 				return false;
 			}
@@ -224,8 +218,27 @@ public class AreaTargets
 	}
 
 	/**
-	 * A white fake player in a fight is fair game for a hit of its own (see Monster#isAutoAttackable), not for a totem planted without Ctrl.
-	 * @param caster the totem's Warchief
+	 * Whether a player's area hit that isn't aimed at it (an area skill, a polearm's sweep, a totem) reaches a fake player or a fake player's servitor. Like a player: only one it may fight without Ctrl (flagged, a PK, at war with its clan), or with Ctrl held (a totem planted with
+	 * it) any as a force attack; never its party, clan or alliance, nor in a peace zone. A white fake player fighting monsters, like the fake defenders of a Village Under Siege, is spared.
+	 * @param caster the player (or its summon)
+	 * @param target a fake player or a fake player's servitor, see {@link #isFakePerson(Creature)}
+	 * @param forced {@code true} with Ctrl held
+	 * @return {@code true} if it is hit
+	 */
+	public static boolean isFakeAreaTarget(Creature caster, Creature target, boolean forced)
+	{
+		final Creature fake = target instanceof FakePlayerPvpServitor ? ((FakePlayerPvpServitor) target).getOwner() : target;
+		if (target.isInsideZone(ZoneId.PEACE) || FakePartyManager.getInstance().isSameGroup(caster, fake) || (FakeClanManager.getInstance().isFriend(fake, caster) && (fake.getKarma() <= 0)))
+		{
+			return false;
+		}
+
+		return forced || hasPvpStatus(caster, fake);
+	}
+
+	/**
+	 * A white fake player in a fight is fair game for a hit of its own (see Monster#isAutoAttackable), not for an area hit without Ctrl.
+	 * @param caster the player (or its summon)
 	 * @param fake a fake player
 	 * @return {@code true} if it is flagged, a PK or at war with the caster's clan (or fake players are always fair game)
 	 */

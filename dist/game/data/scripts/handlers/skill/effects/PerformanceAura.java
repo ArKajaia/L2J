@@ -32,6 +32,7 @@ import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
+import org.l2jmobius.gameserver.model.actor.holders.player.AreaTargets;
 import org.l2jmobius.gameserver.model.conditions.Condition;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
@@ -243,6 +244,12 @@ public class PerformanceAura extends AbstractEffect
 		if (performer.isPvpFakePlayer())
 		{
 			return Skill.checkForAreaOffensiveSkills(performer, target, echo, false);
+		}
+
+		// A fake player (and its servitor): like a player, only one the performer may fight without Ctrl, not a white one fighting monsters.
+		if (AreaTargets.isFakePerson(target))
+		{
+			return AreaTargets.isFakeAreaTarget(performer, target, false) && GeoEngine.getInstance().canSeeTarget(performer, target);
 		}
 
 		if (target.isPlayable())
