@@ -11,7 +11,11 @@
 -- required_item_id is NULL throughout (level-only gating, per current
 -- design). Left nullable so a per-transfer item requirement can be added
 -- later without a schema change, if that design question gets revisited.
+--
+-- The table holds no player data, so it is rebuilt on every import: running
+-- this file again replaces the tree instead of adding a second copy of it.
 -- ---------------------------------------------------------------------------
+DROP TABLE IF EXISTS class_transfer_tree;
 CREATE TABLE IF NOT EXISTS class_transfer_tree
 (
 	id INT NOT NULL AUTO_INCREMENT,
@@ -21,7 +25,8 @@ CREATE TABLE IF NOT EXISTS class_transfer_tree
 	required_item_id INT NULL,
 	required_item_count BIGINT NOT NULL DEFAULT 1,
 	PRIMARY KEY (id),
-	KEY idx_from_class_tier (from_class_id, tier)
+	KEY idx_from_class_tier (from_class_id, tier),
+	UNIQUE KEY uk_transfer (from_class_id, to_class_id, tier)
 );
 
 -- =============================================================================
