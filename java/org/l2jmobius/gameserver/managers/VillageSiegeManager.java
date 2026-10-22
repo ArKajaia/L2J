@@ -73,6 +73,7 @@ import org.l2jmobius.gameserver.model.dynamicquest.WorldMonsterIndex;
 import org.l2jmobius.gameserver.model.events.EventType;
 import org.l2jmobius.gameserver.model.events.holders.actor.creature.OnCreatureDeath;
 import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
+import org.l2jmobius.gameserver.model.interfaces.ILocational;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.olympiad.OlympiadManager;
@@ -540,6 +541,15 @@ public class VillageSiegeManager
 		public double getMedalsPerPoint()
 		{
 			return _medalsPerPoint;
+		}
+
+		/**
+		 * @param where a place
+		 * @return {@code true} if it is in the besieged village (its town zone, or close to its heart)
+		 */
+		public boolean covers(ILocational where)
+		{
+			return _town.isInsideZone(where) || (LocationUtil.calculateDistance(where, _heart, false, false) <= VillageSiegeConfig.AREA_RANGE);
 		}
 
 		public Contributor getContributor(Player player)
@@ -1102,6 +1112,7 @@ public class VillageSiegeManager
 		}
 		announce("Monsters attack " + village.getName() + "! Defend the " + gates + " until " + formatTime(end) + ". Defenders up to level " + VillageSiegeConfig.MAX_PLAYER_LEVEL + " earn Defence Medals, more experience and a reward at the end" + (VillageSiegeConfig.TELEPORT ? " - type .siege to join." : "."));
 		invite(siege);
+		TownLifeManager.getInstance().setVillageSiege(siege);
 		LOGGER.info(getClass().getSimpleName() + ": The siege of " + village.getName() + " began (level " + level + ", " + siege._entrances.size() + " entrances, until " + formatTime(end) + ").");
 		return null;
 	}
@@ -1202,6 +1213,7 @@ public class VillageSiegeManager
 		finally
 		{
 			cleanUp(siege);
+			TownLifeManager.getInstance().setVillageSiege(null);
 			_returnUntil = System.currentTimeMillis() + RETURN_TIME;
 			LOGGER.info(getClass().getSimpleName() + ": The siege of " + siege._village.getName() + " ended (" + siege._kills + " monsters slain, " + siege._contributors.size() + " defenders" + (siege._gateFell ? ", a gate fell" : "") + ").");
 			if (!stopped)

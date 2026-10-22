@@ -49,6 +49,8 @@ import org.l2jmobius.gameserver.data.sql.ClanTable;
 import org.l2jmobius.gameserver.data.xml.MapRegionData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.TownLifeResident.Kind;
+import org.l2jmobius.gameserver.managers.VillageSiegeManager.EntranceState;
+import org.l2jmobius.gameserver.managers.VillageSiegeManager.Siege;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -73,6 +75,7 @@ import org.l2jmobius.gameserver.taskmanagers.GameTimeTaskManager;
  * By day townsfolk stroll the streets and stop for a chat, porters carry between the warehouse and the shops, guards walk patrols, children play tag in the square and run up to players for a sweet, a crier shouts the news of the server, fishermen
  * and dock workers keep the harbors busy. At dusk ({@link NightCycleManager}) the children are called in first, then everyone walks into a house and is gone for the night, some retail npcs with nothing to sell included; the lamplighter makes his
  * round. At night watchmen call the hour and a crowd gathers at the tavern until the Witching Hour. At dawn they all come back out. One day a week is festival day: banners, a bonfire, more people, fireworks at dusk.<br>
+ * While monsters besiege a village ({@link VillageSiegeManager}) it is wartime there: most of its people run home as the siege begins, the few left in the streets talk of nothing else, and the crier cries the state of the gates.<br>
  * The streets and npcs of each town come from the town itself (the geodata and the spawns, like the town fake players: {@link FakePlayerTown}), so a town needs no coordinates. Npcs only think while a player is around.
  */
 public class TownLifeManager implements IXmlReader
@@ -110,6 +113,9 @@ public class TownLifeManager implements IXmlReader
 	private long _phaseSince;
 	/** A GM's festival day: {@code null} to follow the calendar. */
 	private volatile Boolean _festivalOverride;
+	/** The village siege going on, {@code null} for none; and the one the last tick saw. */
+	private volatile Siege _villageSiege;
+	private Siege _lastSiege;
 	
 	protected TownLifeManager()
 	{
@@ -231,11 +237,17 @@ public class TownLifeManager implements IXmlReader
 			_clock = clock;
 			final boolean festival = isFestival();
 			final long now = System.currentTimeMillis();
+			final Siege siege = _villageSiege;
+			if (siege != _lastSiege)
+			{
+				onSiegeChange(_lastSiege, siege, now);
+				_lastSiege = siege;
+			}
 			for (TownLifeTown town : _towns)
 			{
 				if (town.isReady())
 				{
-					town.update(clock, festival, now);
+					town.update(clock, festival, (siege != null) && siege.covers(town.center) ? siege : null, now);
 				}
 			}
 		}
@@ -301,6 +313,15 @@ public class TownLifeManager implements IXmlReader
 		_festivalOverride = festival;
 	}
 	
+	/**
+	 * Called by the {@link VillageSiegeManager} when a village siege begins or ends.
+	 * @param siege the siege that began, {@code null} when it ended
+	 */
+	public void setVillageSiege(Siege siege)
+	{
+		_villageSiege = TownLifeConfig.SIEGE ? siege : null;
+	}
+	
 	// ------------------------------------------------------------------
 	// News for the criers
 	// ------------------------------------------------------------------
@@ -334,6 +355,33 @@ public class TownLifeManager implements IXmlReader
 		}
 	}
 	
+	/**
+	 * Every town's crier tells when a village siege begins and how it ended (the besieged town itself cries the gates while it lasts).
+	 */
+	private void onSiegeChange(Siege ended, Siege begun, long now)
+	{
+		if (ended != null)
+		{
+			final String village = ended.getVillage().getName();
+			if ((ended.getEnd() - now) > 60_000)
+			{
+				addNews("Hear ye, hear ye! The monsters have withdrawn from " + village + "! The siege is over!");
+			}
+			else if (ended.hasGateFallen())
+			{
+				addNews("Hear ye, hear ye! The siege of " + village + " is over! A gate fell, but the village stands!");
+			}
+			else
+			{
+				addNews("Hear ye, hear ye! The siege of " + village + " is over! Every gate held! Glory to the defenders!");
+			}
+		}
+		if (begun != null)
+		{
+			addNews("Hear ye, hear ye! Monsters besiege " + begun.getVillage().getName() + "! Brave souls, to its gates!");
+		}
+	}
+	
 	private void addNews(String text)
 	{
 		synchronized (_news)
@@ -350,11 +398,19 @@ public class TownLifeManager implements IXmlReader
 	 * @param town a town
 	 * @param clock the time of day
 	 * @param festival {@code true} on festival day
-	 * @return what its crier shouts next: news it hasn't told yet first, otherwise the next of the sieges, tonight's Omen, the heroes, the festival or a town notice
+	 * @return what its crier shouts next: the siege of the town while it lasts, otherwise news it hasn't told yet first, then the next of the sieges, tonight's Omen, the heroes, the festival or a town notice
 	 */
 	String nextCry(TownLifeTown town, Clock clock, boolean festival)
 	{
 		final long now = System.currentTimeMillis();
+		final Siege villageSiege = town.getSiege();
+		if (villageSiege != null)
+		{
+			// Nothing else matters while it lasts, and the news of the day is old by the end of it.
+			_criedNews.put(town, now);
+			return villageSiegeCry(town, villageSiege, _cryTurn.merge(town, 1, Integer::sum));
+		}
+		
 		final long told = _criedNews.getOrDefault(town, 0L);
 		synchronized (_news)
 		{
@@ -415,6 +471,16 @@ public class TownLifeManager implements IXmlReader
 	private List<String> currentNews(TownLifeTown town)
 	{
 		final List<String> lines = new ArrayList<>();
+		final Siege villageSiege = town.getSiege();
+		if (villageSiege != null)
+		{
+			for (int turn = 0; turn < 4; turn++)
+			{
+				lines.add(villageSiegeCry(town, villageSiege, turn));
+			}
+			return lines;
+		}
+		
 		final long now = System.currentTimeMillis();
 		synchronized (_news)
 		{
@@ -445,6 +511,51 @@ public class TownLifeManager implements IXmlReader
 			lines.add(TownLifeLines.fill(TownLifeLines.random(TownLifeLines.CRIER_FILLER), town.name, null));
 		}
 		return lines;
+	}
+	
+	/**
+	 * @param town the besieged town
+	 * @param siege its siege
+	 * @param turn which of the cries
+	 * @return what its crier cries: the gates, the streets, the call to arms or how the fighting goes
+	 */
+	private static String villageSiegeCry(TownLifeTown town, Siege siege, int turn)
+	{
+		switch (Math.floorMod(turn, 4))
+		{
+			case 0:
+			{
+				EntranceState weakest = null;
+				for (EntranceState entrance : siege.getEntrances())
+				{
+					if (entrance.isFallen())
+					{
+						return "Hear ye! The " + entrance.getName() + " has fallen! Every defender to the " + entrance.getName() + "!";
+					}
+					if ((weakest == null) || (entrance.getMeterPercent() < weakest.getMeterPercent()))
+					{
+						weakest = entrance;
+					}
+				}
+				if ((weakest != null) && (weakest.getMeterPercent() < 50))
+				{
+					return "Hear ye! The " + weakest.getName() + " is breaking! Every blade to the " + weakest.getName() + "!";
+				}
+				return "Hear ye! The gates of " + siege.getVillage().getName() + " hold! Defenders, to the walls until " + VillageSiegeManager.formatTime(siege.getEnd()) + "!";
+			}
+			case 1:
+			{
+				return TownLifeLines.fill("Hear ye, hear ye! Stay off the streets, good people of %town%! Bar your doors and shutters!", town.name, null);
+			}
+			case 2:
+			{
+				return "Hear ye! The Defence Force pays Defence Medals for every monster slain! Fighters, to the gates!";
+			}
+			default:
+			{
+				return "Hear ye! " + siege.getKills() + " monsters slain at the gates so far! Hold until " + VillageSiegeManager.formatTime(siege.getEnd()) + "!";
+			}
+		}
 	}
 	
 	private static String siegeNews()
@@ -594,6 +705,36 @@ public class TownLifeManager implements IXmlReader
 		}
 		
 		final String[] lines;
+		if (resident.town.getSiege() != null)
+		{
+			switch (resident.kind)
+			{
+				case PORTER:
+				case ERRAND_RUNNER:
+				{
+					lines = TownLifeLines.SIEGE_WORKER;
+					break;
+				}
+				case PATROL:
+				case NIGHT_WATCH:
+				{
+					lines = TownLifeLines.SIEGE_PATROL;
+					break;
+				}
+				case CRIER:
+				{
+					lines = TownLifeLines.SIEGE_GREETINGS;
+					break;
+				}
+				default:
+				{
+					lines = resident.siegeLines();
+					break;
+				}
+			}
+			return TownLifeLines.fill(resident.fillGate(TownLifeLines.random(lines)), resident.town.name, player.getName());
+		}
+		
 		switch (resident.kind)
 		{
 			case WANDERER:
@@ -685,7 +826,7 @@ public class TownLifeManager implements IXmlReader
 	{
 		final List<String> lines = new ArrayList<>();
 		final Clock clock = _clock;
-		lines.add("Town Life: " + (TownLifeConfig.ENABLED ? "on" : "off") + ", " + clock.phase().getDisplayName() + (clock.phase() == NightPhase.DUSK ? String.format(" %.0f%%", clock.duskProgress() * 100) : clock.phase() == NightPhase.DAWN ? String.format(" %.0f%%", clock.dawnProgress() * 100) : "") + (isFestival() ? ", festival day" : "") + (_festivalOverride != null ? " (set by a GM)" : ""));
+		lines.add("Town Life: " + (TownLifeConfig.ENABLED ? "on" : "off") + ", " + clock.phase().getDisplayName() + (clock.phase() == NightPhase.DUSK ? String.format(" %.0f%%", clock.duskProgress() * 100) : clock.phase() == NightPhase.DAWN ? String.format(" %.0f%%", clock.dawnProgress() * 100) : "") + (isFestival() ? ", festival day" : "") + (_festivalOverride != null ? " (set by a GM)" : "") + (_villageSiege != null ? ", " + _villageSiege.getVillage().getName() + " under siege" : ""));
 		for (TownLifeTown town : _towns)
 		{
 			lines.addAll(town.describe());

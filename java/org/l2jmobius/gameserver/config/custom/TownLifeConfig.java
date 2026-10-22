@@ -75,6 +75,10 @@ public class TownLifeConfig
 	public static DayOfWeek FESTIVAL_DAY;
 	public static double FESTIVAL_POPULATION;
 	
+	// Village siege
+	public static boolean SIEGE;
+	public static double SIEGE_POPULATION;
+	
 	public static void load()
 	{
 		final ConfigReader config = new ConfigReader(TOWN_LIFE_CONFIG_FILE);
@@ -109,6 +113,9 @@ public class TownLifeConfig
 		FESTIVAL = config.getBoolean("TownLifeFestival", true);
 		FESTIVAL_DAY = config.getEnum("TownLifeFestivalDay", DayOfWeek.class, DayOfWeek.SATURDAY);
 		FESTIVAL_POPULATION = Math.max(1, Math.min(3, config.getDouble("TownLifeFestivalPopulation", 1.5)));
+		
+		SIEGE = config.getBoolean("TownLifeSiege", true);
+		SIEGE_POPULATION = Math.max(0, Math.min(1, config.getDouble("TownLifeSiegePopulation", 0.25)));
 	}
 	
 	/**
