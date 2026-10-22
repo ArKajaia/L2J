@@ -428,8 +428,10 @@ public class Monster extends Attackable
 				continue;
 			}
 			
+			// The pool may list more levels than the skill has: asking for one logs a warning with a stack trace on every spawn.
+			final int dataMaxLevel = SkillData.getInstance().getMaxLevel(randomDbSkill.skillId);
 			int calculatedLevel = (int) Math.round(levelRatio * randomDbSkill.maxLevel);
-			int safeLevel = Math.max(1, Math.min(calculatedLevel, randomDbSkill.maxLevel));
+			int safeLevel = Math.max(1, Math.min(calculatedLevel, dataMaxLevel > 0 ? Math.min(randomDbSkill.maxLevel, dataMaxLevel) : randomDbSkill.maxLevel));
 			
 			Skill randomPassive = SkillData.getInstance().getSkill(randomDbSkill.skillId, safeLevel);
 			if (randomPassive != null)
