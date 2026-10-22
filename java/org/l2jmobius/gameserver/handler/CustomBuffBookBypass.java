@@ -22,18 +22,22 @@ public class CustomBuffBookBypass implements IBypassHandler
 	@Override
 	public boolean onCommand(String command, Player player, Creature target)
 	{
-		// Expected shape: "custombuffbook <page> <itemObjId>"
+		// Expected shapes: "custombuffbook <page>" and "custombuffbook learn <skillId> <page>"
 		final String[] parts = command.trim().split("\\s+");
-		if (parts.length < 3)
-		{
-			return false;
-		}
-		
 		try
 		{
-			final int page = Integer.parseInt(parts[1]);
-			final int itemObjId = Integer.parseInt(parts[2]);
-			CustomBuffBook.showPage(player, itemObjId, page);
+			if ((parts.length >= 4) && parts[1].equals("learn"))
+			{
+				CustomBuffBook.learn(player, Integer.parseInt(parts[2]), Integer.parseInt(parts[3]));
+			}
+			else if (parts.length >= 2)
+			{
+				CustomBuffBook.showPage(player, Integer.parseInt(parts[1]));
+			}
+			else
+			{
+				return false;
+			}
 		}
 		catch (NumberFormatException e)
 		{
@@ -48,4 +52,4 @@ public class CustomBuffBookBypass implements IBypassHandler
 	{
 		return COMMANDS;
 	}
-}
+}

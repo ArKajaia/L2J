@@ -4,20 +4,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.l2jmobius.gameserver.config.custom.CustomBuffConfig;
+import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.managers.AdventurersGuideManager;
 import org.l2jmobius.gameserver.model.actor.Playable;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.guide.GuideLesson;
+import org.l2jmobius.gameserver.model.item.ItemTemplate;
+import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
-import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
+import org.l2jmobius.gameserver.network.serverpackets.ShowBoard;
+import org.l2jmobius.gameserver.util.HtmlUtil;
 
+/**
+ * The Champion Medal's Skill Master: double-clicking the medal opens it in the community board window.<br>
+ * Every buff of {@link CustomBuffConfig#SKILLS} keeps its place on its page; the ones the player already knows are grayed out instead of removed, so learning one doesn't move the others.<br>
+ * The window stays open after learning while the player has medals left, on the same page.
+ */
 public class CustomBuffBook implements IItemHandler
 {
-	private static final int PAGE_LIMIT = 15; // Max items per page
-	
+	private static final int COLUMNS = 2;
+	private static final int ROWS = 7;
+	private static final int PAGE_LIMIT = COLUMNS * ROWS;
+
+	private static final String BYPASS = "custombuffbook";
+
 	@Override
 	public boolean onItemUse(Playable playable, Item item, boolean forceUse)
 	{
@@ -25,148 +38,241 @@ public class CustomBuffBook implements IItemHandler
 		{
 			return false;
 		}
-		
-		showPage(playable.asPlayer(), item, 1);
+
+		showPage(playable.asPlayer(), 1);
 		AdventurersGuideManager.getInstance().discover(playable.asPlayer(), GuideLesson.BUFFS);
 		return true;
 	}
-	
-	public static void showPage(Player player, Item item, int page)
+
+	/**
+	 * Teaches the player a buff for one medal, then shows the same page again, or closes the window when that was the last medal.
+	 * @param player the player
+	 * @param skillId the buff, which must be one of {@link CustomBuffConfig#SKILLS}
+	 * @param page the page the player was on
+	 */
+	public static void learn(Player player, int skillId, int page)
 	{
-		final int itemObjId = (item != null) ? item.getObjectId() : 0;
-		showPage(player, itemObjId, page);
-	}
-	
-	public static void showPage(Player player, int itemObjId, int page)
-	{
-		// Retrieve item from inventory if called from bypass with objectId
-		final Item item = (itemObjId > 0) ? player.getInventory().getItemByObjectId(itemObjId) : null;
-		
-		// 1. Gather all unlearned skills
-		List<Skill> unlearnedSkills = new ArrayList<>();
-		
-		for (Object skillObj : CustomBuffConfig.SKILLS)
+		if (!CustomBuffConfig.SKILLS.contains(skillId))
 		{
-			if (skillObj == null)
-			{
-				continue;
-			}
-			
-			int skillId;
-			if (skillObj instanceof Number)
-			{
-				skillId = ((Number) skillObj).intValue();
-			}
-			else
-			{
-				try
-				{
-					skillId = Integer.parseInt(skillObj.toString().trim());
-				}
-				catch (NumberFormatException e)
-				{
-					continue;
-				}
-			}
-			
-			final int maxLevel = SkillData.getInstance().getMaxLevel(skillId);
-			final Skill skill = SkillData.getInstance().getSkill(skillId, maxLevel);
-			
-			if ((skill != null) && (player.getKnownSkill(skillId) == null))
-			{
-				unlearnedSkills.add(skill);
-			}
+			return;
 		}
-		
-		// 2. Calculate Pages
-		int totalSkills = unlearnedSkills.size();
-		int maxPages = Math.max(1, (int) Math.ceil((double) totalSkills / PAGE_LIMIT));
-		page = Math.max(1, Math.min(page, maxPages));
-		
-		int start = (page - 1) * PAGE_LIMIT;
-		int end = Math.min(start + PAGE_LIMIT, totalSkills);
-		
-		// 3. Build HTML Window
-		final NpcHtmlMessage html = new NpcHtmlMessage(0);
-		final StringBuilder sb = new StringBuilder();
-		
-		sb.append("<html><body><center>");
-		
-		// Header
-		sb.append("<table width=270 height=25 bgcolor=000000>");
-		sb.append("<tr><td align=center><font color=\"LEVEL\"><b>SKILL MASTER</b></font></td></tr>");
-		sb.append("</table><br>");
-		
-		if (item != null)
+
+		final Skill skill = getSkill(skillId);
+		if (skill == null)
 		{
-			sb.append("<font color=\"LEVEL\">Medals Available:</font> <font color=\"00FFFF\"><b>").append(item.getCount()).append("</b></font><br>");
+			return;
 		}
-		
-		if (totalSkills == 0)
+
+		// A double click on Learn mustn't take a second medal for a buff already known.
+		if (player.getKnownSkill(skillId) != null)
 		{
-			sb.append("<br><br><font color=\"00FF00\"><b>Mastery Achieved!</b></font><br>");
-			sb.append("<font color=\"AAAAAA\">You have learned all custom skills.</font>");
+			player.sendMessage("You already know " + skill.getName() + ".");
+			showPage(player, page);
+			return;
+		}
+
+		if (!player.destroyItemByItemId(ItemProcessType.FEE, CustomBuffConfig.ITEM_ID, 1, player, true))
+		{
+			player.sendMessage("You need a " + getMedalName() + " to learn this skill.");
+			closePage(player);
+			return;
+		}
+
+		player.addSkill(skill, true);
+		player.sendSkillList();
+		player.sendMessage("You successfully learned " + skill.getName() + "!");
+
+		if (getMedalCount(player) > 0)
+		{
+			showPage(player, page);
 		}
 		else
 		{
-			sb.append("<table width=270 border=0 cellspacing=2 cellpadding=2 bgcolor=111111>");
-			
-			// Render skills for current page without descriptions
-			for (int i = start; i < end; i++)
-			{
-				Skill skill = unlearnedSkills.get(i);
-				int skillId = skill.getId();
-				
-				String icon = skill.getIcon();
-				if ((icon == null) || icon.isEmpty())
-				{
-					icon = "icon.skill0000";
-				}
-				
-				sb.append("<tr>");
-				// Icon
-				sb.append("<td width=35 align=center valign=middle>");
-				sb.append("<img src=\"").append(icon).append("\" width=32 height=32>");
-				sb.append("</td>");
-				// Clean Skill Name & Level (No descriptions/modes)
-				sb.append("<td width=155 align=left valign=middle>");
-				sb.append("<font color=\"LEVEL\"><b>").append(skill.getName()).append("</b></font> <font color=\"A2A2A2\">Lvl ").append(skill.getLevel()).append("</font>");
-				sb.append("</td>");
-				// Learn Button
-				sb.append("<td width=80 align=right valign=middle>");
-				sb.append("<button value=\"Learn\" action=\"bypass -h LearnCustomBuff_").append(skillId).append("\" width=65 height=22 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
-				sb.append("</td>");
-				sb.append("</tr>");
-				sb.append("<tr><td colspan=3 height=1 bgcolor=222222></td></tr>");
-			}
-			
-			sb.append("</table><br>");
-			
-			// Page Navigation Buttons (Includes -h and item objectId)
-			sb.append("<table width=270><tr>");
-			sb.append("<td align=left width=80>");
-			if (page > 1)
-			{
-				sb.append("<button value=\"Prev\" action=\"bypass -h custombuffbook ").append(page - 1).append(" ").append(itemObjId).append("\" width=65 height=20 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
-			}
-			sb.append("</td>");
-			
-			sb.append("<td align=center width=110><font color=\"A2A2A2\">Page ").append(page).append(" / ").append(maxPages).append("</font></td>");
-			
-			sb.append("<td align=right width=80>");
-			if (page < maxPages)
-			{
-				sb.append("<button value=\"Next\" action=\"bypass -h custombuffbook ").append(page + 1).append(" ").append(itemObjId).append("\" width=65 height=20 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
-			}
-			sb.append("</td>");
-			sb.append("</tr></table>");
+			player.sendMessage("That was your last " + getMedalName() + ".");
+			closePage(player);
 		}
-		
+	}
+
+	public static void showPage(Player player, int page)
+	{
+		// All the configured buffs, learned ones included: they keep their slot and only gray out.
+		final List<Skill> skills = new ArrayList<>();
+		int learned = 0;
+		for (int skillId : CustomBuffConfig.SKILLS)
+		{
+			final Skill skill = getSkill(skillId);
+			if (skill != null)
+			{
+				skills.add(skill);
+				if (player.getKnownSkill(skillId) != null)
+				{
+					learned++;
+				}
+			}
+		}
+
+		final int maxPages = Math.max(1, (skills.size() + PAGE_LIMIT - 1) / PAGE_LIMIT);
+		final int currentPage = Math.max(1, Math.min(page, maxPages));
+		final int start = (currentPage - 1) * PAGE_LIMIT;
+		final int end = Math.min(start + PAGE_LIMIT, skills.size());
+		final long medals = getMedalCount(player);
+
+		final StringBuilder sb = new StringBuilder(16000);
+		sb.append("<html><body><br><center>");
+
+		// Title.
+		sb.append("<table width=740 border=0 cellspacing=0 cellpadding=0>");
+		sb.append("<tr><td height=25 align=center><font name=\"hs12\" color=\"CDB67F\">Skill Master</font></td></tr>");
+		sb.append("<tr><td align=center><font color=\"A2A2A2\">Each ").append(getMedalName()).append(" teaches you one buff of another class for good.</font></td></tr>");
+		sb.append("</table>");
+		sb.append("<img src=\"L2UI.SquareGray\" width=740 height=1><br>");
+
+		// Status bar: medals, progress and paging.
+		sb.append("<table width=740 height=40 border=0 cellspacing=0 cellpadding=4 bgcolor=1A1A1A><tr>");
+		sb.append("<td width=36 align=center><img src=\"").append(getMedalIcon()).append("\" width=32 height=32></td>");
+		sb.append("<td width=220 align=left>Medals: <font color=\"").append(medals > 0 ? "00FF66" : "FF6666").append("\">").append(medals).append("</font></td>");
+		sb.append("<td width=200 align=center>Learned: <font color=\"LEVEL\">").append(learned).append("</font> / ").append(skills.size()).append("</td>");
+		sb.append("<td width=284 align=right>");
+		appendPaging(sb, currentPage, maxPages);
+		sb.append("</td></tr></table>");
+
+		if (skills.isEmpty())
+		{
+			sb.append("<br><br><font color=\"A2A2A2\">There are no buffs to learn.</font>");
+		}
+		else
+		{
+			sb.append("<table width=740 border=0 cellspacing=0 cellpadding=2><tr><td align=center><font color=\"7F7F7F\">");
+			if (learned == skills.size())
+			{
+				sb.append("<font color=\"00FF66\">Mastery achieved!</font> You have learned every buff.");
+			}
+			else
+			{
+				sb.append("Learned buffs stay in their place, grayed out. Every song or dance already in effect makes the next one cost more MP.");
+			}
+			sb.append("</font></td></tr></table>");
+
+			// The buffs, two per row.
+			sb.append("<table width=740 border=0 cellspacing=4 cellpadding=0>");
+			for (int i = start; i < end; i += COLUMNS)
+			{
+				sb.append("<tr>");
+				for (int column = 0; column < COLUMNS; column++)
+				{
+					sb.append("<td width=366 valign=top>");
+					if ((i + column) < end)
+					{
+						appendSkill(sb, player, skills.get(i + column), medals, currentPage);
+					}
+					sb.append("</td>");
+				}
+				sb.append("</tr>");
+			}
+			sb.append("</table>");
+		}
+
 		sb.append("</center></body></html>");
-		
-		html.setHtml(sb.toString());
-		player.sendPacket(html);
+
+		HtmlUtil.sendCBHtml(player, sb.toString());
 		player.sendPacket(ActionFailed.STATIC_PACKET);
 	}
-	
+
+	private static void appendSkill(StringBuilder sb, Player player, Skill skill, long medals, int page)
+	{
+		final boolean known = player.getKnownSkill(skill.getId()) != null;
+		final String description = CustomBuffConfig.DESCRIPTIONS.get(skill.getId());
+
+		String icon = skill.getIcon();
+		if ((icon == null) || icon.isEmpty())
+		{
+			icon = "icon.skill0000";
+		}
+
+		sb.append("<table width=366 height=58 border=0 cellspacing=0 cellpadding=3 bgcolor=").append(known ? "0E0E0E" : "222222").append("><tr>");
+		sb.append("<td width=40 align=center valign=top><img src=\"").append(icon).append("\" width=32 height=32></td>");
+		sb.append("<td width=246 align=left valign=top>");
+		sb.append("<font color=\"").append(known ? "6A6A6A" : "LEVEL").append("\">").append(skill.getName()).append("</font> <font color=\"").append(known ? "4A4A4A" : "8A8A8A").append("\">Lv ").append(skill.getLevel()).append("</font>");
+		if ((description != null) && !description.isEmpty())
+		{
+			sb.append("<br1><font color=\"").append(known ? "555555" : "B09B79").append("\">").append(description).append("</font>");
+		}
+		sb.append("</td>");
+		sb.append("<td width=80 align=center valign=middle>");
+		if (known)
+		{
+			sb.append("<font color=\"5A5A5A\">Learned</font>");
+		}
+		else if (medals > 0)
+		{
+			sb.append("<button value=\"Learn\" action=\"bypass ").append(BYPASS).append(" learn ").append(skill.getId()).append(" ").append(page).append("\" width=70 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
+		}
+		else
+		{
+			sb.append("<font color=\"7F5050\">No medals</font>");
+		}
+		sb.append("</td></tr></table>");
+	}
+
+	private static void appendPaging(StringBuilder sb, int page, int maxPages)
+	{
+		sb.append("<table border=0 cellspacing=0 cellpadding=0><tr>");
+		sb.append("<td width=60 align=center>");
+		if (page > 1)
+		{
+			sb.append("<button value=\"Prev\" action=\"bypass ").append(BYPASS).append(" ").append(page - 1).append("\" width=55 height=22 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
+		}
+		sb.append("</td>");
+		for (int i = 1; i <= maxPages; i++)
+		{
+			sb.append("<td width=18 align=center>");
+			if (i == page)
+			{
+				sb.append("<font color=\"LEVEL\">").append(i).append("</font>");
+			}
+			else
+			{
+				sb.append("<a action=\"bypass ").append(BYPASS).append(" ").append(i).append("\">").append(i).append("</a>");
+			}
+			sb.append("</td>");
+		}
+		sb.append("<td width=60 align=center>");
+		if (page < maxPages)
+		{
+			sb.append("<button value=\"Next\" action=\"bypass ").append(BYPASS).append(" ").append(page + 1).append("\" width=55 height=22 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
+		}
+		sb.append("</td></tr></table>");
+	}
+
+	private static void closePage(Player player)
+	{
+		player.sendPacket(new ShowBoard());
+		player.sendPacket(ActionFailed.STATIC_PACKET);
+	}
+
+	/**
+	 * @param skillId the buff
+	 * @return the level a medal teaches: the highest one, or {@code null} for an unknown skill id
+	 */
+	private static Skill getSkill(int skillId)
+	{
+		return SkillData.getInstance().getSkill(skillId, SkillData.getInstance().getMaxLevel(skillId));
+	}
+
+	private static long getMedalCount(Player player)
+	{
+		return player.getInventory().getInventoryItemCount(CustomBuffConfig.ITEM_ID, -1);
+	}
+
+	private static String getMedalName()
+	{
+		final ItemTemplate template = ItemData.getInstance().getTemplate(CustomBuffConfig.ITEM_ID);
+		return template != null ? template.getName() : "medal";
+	}
+
+	private static String getMedalIcon()
+	{
+		final ItemTemplate template = ItemData.getInstance().getTemplate(CustomBuffConfig.ITEM_ID);
+		return (template != null) && (template.getIcon() != null) ? template.getIcon() : "icon.skill0000";
+	}
 }
