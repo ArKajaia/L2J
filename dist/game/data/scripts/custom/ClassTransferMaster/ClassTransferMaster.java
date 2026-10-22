@@ -1,5 +1,6 @@
 package custom.ClassTransferMaster;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -251,12 +252,30 @@ public class ClassTransferMaster extends Quest
 			}
 		}
 		
-		sb.append("<font color=\"CCCCCC\">Choose your path:</font><br><br>");
+		sb.append("<font color=\"999999\">Current class:</font> <font color=\"LEVEL\">").append(resolveClassName(currentClassId)).append("</font><br>");
+		sb.append("<font color=\"CCCCCC\">Choose your path:</font><br>");
 		
 		for (ClassTransferHolder option : options)
 		{
-			final String className = resolveClassName(option.getToClassId());
-			sb.append("<button value=\"").append(className).append("\" action=\"bypass -h Script ClassTransferMaster transfer_").append(tier).append("_").append(option.getToClassId()).append("\" width=200 height=21 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"><br1>");
+			sb.append("<img src=\"L2UI.SquareGray\" width=230 height=1><br>");
+			sb.append("<button value=\"").append(resolveClassName(option.getToClassId())).append("\" action=\"bypass -h Script ClassTransferMaster transfer_").append(tier).append("_").append(option.getToClassId()).append("\" width=200 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"><br1>");
+			
+			// What this choice leads to at the later transfers, so the player picks with the final class in mind.
+			final List<String> paths = new ArrayList<>();
+			collectFuturePaths(option.getToClassId(), tier + 1, "", paths);
+			if (paths.isEmpty())
+			{
+				sb.append("<font color=\"808080\">Final class</font><br>");
+			}
+			else
+			{
+				sb.append("<font color=\"808080\">Leads to:</font><br1>");
+				for (String path : paths)
+				{
+					sb.append("<font color=\"B09B79\">").append(path).append("</font><br1>");
+				}
+				sb.append("<br>");
+			}
 		}
 		
 		sb.append("</td></tr></table>");
@@ -266,25 +285,38 @@ public class ClassTransferMaster extends Quest
 	}
 	
 	/**
-	 * Resolves a display name for a PlayerClass ID for the button label. TODO: this is the least certain part of this script - verify against your actual PlayerClass API. If there's no static by-ID lookup, this needs to be replaced with whatever accessor your enum actually exposes; falls back to a
-	 * numeric label if resolution fails either way.
-	 */
-	/**
-	 * Resolves a display name for a PlayerClass ID for the button label. TODO: this is the least certain part of this script - verify against your actual PlayerClass API. If there's no static by-ID lookup, this needs to be replaced with whatever accessor your enum actually exposes; falls back to a
-	 * numeric label if resolution fails either way.
-	 * @param classId the PlayerClass ID to resolve a display name for
-	 * @return the class's display name, or {@code "Class #" + classId} if it couldn't be resolved
+	 * @param classId a PlayerClass ID
+	 * @return the class's client name, e.g. "Treasure Hunter", or {@code "Class #" + classId} if the ID is unknown
 	 */
 	private String resolveClassName(int classId)
 	{
-		try
+		final PlayerClass playerClass = PlayerClass.getPlayerClass(classId);
+		return (playerClass != null) ? ClassTransferChallengeManager.getClassName(playerClass) : ("Class #" + classId);
+	}
+	
+	/**
+	 * Adds every chain of later transfers from a class, e.g. "Gladiator, then Duelist".
+	 * @param classId the class the chains start from
+	 * @param tier the tier of the next transfer from that class
+	 * @param prefix the chain so far, empty at the start
+	 * @param paths receives the finished chains
+	 */
+	private void collectFuturePaths(int classId, int tier, String prefix, List<String> paths)
+	{
+		final List<ClassTransferHolder> next = ClassTransferData.getInstance().getEligibleTransfers(classId, tier);
+		if (next.isEmpty())
 		{
-			final PlayerClass playerClass = PlayerClass.getPlayerClass(classId);
-			return (playerClass != null) ? playerClass.name() : ("Class #" + classId);
+			if (!prefix.isEmpty())
+			{
+				paths.add(prefix);
+			}
+			return;
 		}
-		catch (Exception e)
+		
+		for (ClassTransferHolder holder : next)
 		{
-			return "Class #" + classId;
+			final String name = resolveClassName(holder.getToClassId());
+			collectFuturePaths(holder.getToClassId(), tier + 1, prefix.isEmpty() ? name : (prefix + ", then " + name), paths);
 		}
 	}
 	

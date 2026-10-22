@@ -47,7 +47,8 @@ public class ClassTransferData
 	public void load()
 	{
 		_transfers.clear();
-		
+
+		int duplicates = 0;
 		final String query = "SELECT from_class_id, to_class_id, tier, required_item_id, required_item_count FROM class_transfer_tree";
 		try (Connection con = DatabaseFactory.getConnection();
 			PreparedStatement ps = con.prepareStatement(query);
@@ -58,7 +59,18 @@ public class ClassTransferData
 				final int requiredItemIdRaw = rs.getInt("required_item_id");
 				final Integer requiredItemId = rs.wasNull() ? null : requiredItemIdRaw;
 				
-				_transfers.add(new ClassTransferHolder(rs.getInt("from_class_id"), rs.getInt("to_class_id"), rs.getInt("tier"), requiredItemId, rs.getLong("required_item_count")));
+				final int fromClassId = rs.getInt("from_class_id");
+				final int toClassId = rs.getInt("to_class_id");
+				final int tier = rs.getInt("tier");
+
+				// A table imported twice holds every row twice: keep the first, or the Class Master offers each class twice.
+				if (_transfers.stream().anyMatch(h -> (h.getFromClassId() == fromClassId) && (h.getToClassId() == toClassId) && (h.getTier() == tier)))
+				{
+					duplicates++;
+					continue;
+				}
+
+				_transfers.add(new ClassTransferHolder(fromClassId, toClassId, tier, requiredItemId, rs.getLong("required_item_count")));
 			}
 		}
 		catch (Exception e)
@@ -67,6 +79,10 @@ public class ClassTransferData
 		}
 		
 		LOGGER.info("ClassTransferData: Loaded " + _transfers.size() + " class transfer tree entries.");
+		if (duplicates > 0)
+		{
+			LOGGER.warning("ClassTransferData: Skipped " + duplicates + " duplicate rows in class_transfer_tree. Re-import class_transfer_tree.sql to clean the table.");
+		}
 	}
 	
 	/**
