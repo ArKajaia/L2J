@@ -6,10 +6,14 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -31,14 +35,17 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
  * <ul>
  * <li>GET /bestiary/models/&lt;file&gt; - a model (.glb), the manifest (npc id -&gt; mesh and skins) and the view (how the models are turned), from data/html/custom/bestiary/models</li>
  * <li>GET /bestiary/textures/&lt;file&gt; - a skin (.png), from data/html/custom/bestiary/textures</li>
- * <li>GET /bestiary/img?id=... - the portrait of a monster, data/html/custom/bestiary/&lt;npc id&gt;.webp (or .png, .jpg, .gif)</li>
+ * <li>GET /bestiary/img?k=... (a look) or ?id=... (a monster) - a portrait, data/html/custom/bestiary/looks/&lt;look&gt;.webp (or .png, .jpg, .gif)</li>
  * <li>GET /bestiary/lib/&lt;path&gt; - the page's scripts (the 3D viewer and three.js) and the backgrounds behind portraits and models, from data/html/custom/bestiary-lib</li>
  * <li>GET /bestiary-bake.html - the bake page, opened with //bestiary</li>
  * <li>GET /api/bestiary/admin/models - (GM) the monsters to bake, with their models and portraits</li>
- * <li>POST /bestiary/admin/portrait?id=... - (GM) saves the portrait the page rendered (the body is the picture)</li>
+ * <li>POST /bestiary/admin/portrait?k=... - (GM) saves the portrait the page rendered of a look (the body is the picture)</li>
  * <li>POST /bestiary/admin/view - (GM) saves how the models are turned to face the camera</li>
  * </ul>
  * Pictures, models and scripts may be kept by the browser; a portrait's address carries its version, so a new bake is seen at once.
+ * <p>
+ * Portraits belong to looks, not to monsters: monsters of the same mesh and skins (the manifest's npcs entry) look the same, so one picture serves them all (4592 monsters, 701 looks), baked once and
+ * downloaded once. A look is named by {@link #lookId}, the first 31 bits of the SHA-1 of "mesh|skin|skin...", written as 8 hex digits (tools/bestiary/portraits.py and the client use the same).
  * @author Claude
  */
 public class BestiaryArt
@@ -49,6 +56,8 @@ public class BestiaryArt
 	public static final String ADMIN_COMMAND = "admin_bestiary";
 
 	private static final Path ART = Path.of("data/html/custom/bestiary");
+	private static final Path LOOKS = ART.resolve("looks");
+	private static final Pattern LOOK_NAME = Pattern.compile("[0-9a-f]{8}");
 	private static final Path MODELS = ART.resolve("models");
 	private static final Path TEXTURES = ART.resolve("textures");
 	private static final Path LIB = Path.of("data/html/custom/bestiary-lib");
@@ -74,7 +83,7 @@ public class BestiaryArt
 	private static final int CACHE_HOUR = 3600;
 
 	/**
-	 * A portrait on disk.
+	 * A look's portrait on disk.
 	 */
 	private static final class Portrait
 	{
@@ -88,9 +97,10 @@ public class BestiaryArt
 		}
 	}
 
-	private volatile Map<Integer, Portrait> _portraits = Collections.emptyMap();
+	private volatile Map<Integer, Portrait> _portraits = Collections.emptyMap(); // by look
 	private volatile long _portraitsTime;
 	private volatile Set<Integer> _models = Collections.emptySet();
+	private volatile Map<Integer, Integer> _lookOf = Collections.emptyMap(); // npc id -> look
 	private volatile long _manifestModified = -1;
 	private volatile long _manifestChecked;
 
@@ -120,8 +130,66 @@ public class BestiaryArt
 	 */
 	public long getPortraitVersion(int npcId)
 	{
-		final Portrait portrait = getPortraits().get(npcId);
+		final Portrait portrait = getPortraits().get(getLook(npcId));
 		return portrait != null ? portrait._version : 0;
+	}
+
+	/**
+	 * @param npcId a monster
+	 * @return its look (see {@link #lookId}), or 0 when the manifest gives it no model
+	 */
+	public int getLook(int npcId)
+	{
+		final Integer look = getLookMap().get(npcId);
+		return look != null ? look : 0;
+	}
+
+	/**
+	 * @param look a look
+	 * @return its name: 8 lowercase hex digits
+	 */
+	public static String lookName(int look)
+	{
+		return String.format("%08x", look);
+	}
+
+	/**
+	 * @param mesh the manifest's mesh of a monster
+	 * @param skins its skins, in slot order (a missing one as "")
+	 * @return the look of that mesh with those skins: the first 4 bytes of the SHA-1 of "mesh|skin|skin..." (without trailing empty skins), big endian, without the sign bit; never 0
+	 */
+	public static int lookId(String mesh, List<String> skins)
+	{
+		// A missing skin and an empty one both take the mesh's own: trailing ones do not make another look.
+		int count = skins.size();
+		while ((count > 0) && ((skins.get(count - 1) == null) || skins.get(count - 1).isEmpty()))
+		{
+			count--;
+		}
+		final StringBuilder key = new StringBuilder(mesh);
+		for (int i = 0; i < count; i++)
+		{
+			key.append('|').append(skins.get(i) == null ? "" : skins.get(i));
+		}
+		try
+		{
+			final byte[] sha = MessageDigest.getInstance("SHA-1").digest(key.toString().getBytes(StandardCharsets.UTF_8));
+			final int id = (((sha[0] & 0xFF) << 24) | ((sha[1] & 0xFF) << 16) | ((sha[2] & 0xFF) << 8) | (sha[3] & 0xFF)) & 0x7FFFFFFF;
+			return id == 0 ? 1 : id;
+		}
+		catch (NoSuchAlgorithmException e)
+		{
+			throw new IllegalStateException(e);
+		}
+	}
+
+	private static int parseLook(String value)
+	{
+		if ((value == null) || !LOOK_NAME.matcher(value).matches())
+		{
+			return 0;
+		}
+		return (int) Long.parseLong(value, 16);
 	}
 
 	/**
@@ -199,7 +267,9 @@ public class BestiaryArt
 	private void handlePortrait(HttpExchange exchange) throws IOException
 	{
 		final PassiveTreeApiServer server = PassiveTreeApiServer.getInstance();
-		final Portrait portrait = getPortraits().get(parseInt(server.readParams(exchange).get("id")));
+		final Map<String, String> params = server.readParams(exchange);
+		final int look = params.containsKey("k") ? parseLook(params.get("k")) : getLook(parseInt(params.get("id")));
+		final Portrait portrait = getPortraits().get(look);
 		if ((portrait == null) || !Files.isRegularFile(portrait._path) || (Files.size(portrait._path) > MAX_FILE_BYTES))
 		{
 			notFound(exchange);
@@ -253,7 +323,7 @@ public class BestiaryArt
 	// Portraits and manifest
 	// ---------------------------------------------------------------------------------------------
 
-	/** @return the portraits by npc id, looked at again every few minutes and after each save */
+	/** @return the portraits by look, looked at again every few minutes and after each save */
 	private Map<Integer, Portrait> getPortraits()
 	{
 		final long now = System.currentTimeMillis();
@@ -263,24 +333,24 @@ public class BestiaryArt
 		}
 
 		final Map<Integer, Portrait> portraits = new HashMap<>();
-		if (Files.isDirectory(ART))
+		if (Files.isDirectory(LOOKS))
 		{
-			try (DirectoryStream<Path> files = Files.newDirectoryStream(ART))
+			try (DirectoryStream<Path> files = Files.newDirectoryStream(LOOKS))
 			{
 				for (Path file : files)
 				{
 					final String name = file.getFileName().toString();
 					final int dot = name.lastIndexOf('.');
 					final int rank = dot > 0 ? typeRank(name.substring(dot + 1)) : -1;
-					final int npcId = dot > 0 ? parseInt(name.substring(0, dot)) : 0;
-					if ((rank < 0) || (npcId <= 0))
+					final int look = dot > 0 ? parseLook(name.substring(0, dot)) : 0;
+					if ((rank < 0) || (look <= 0))
 					{
 						continue;
 					}
-					final Portrait old = portraits.get(npcId);
+					final Portrait old = portraits.get(look);
 					if ((old == null) || (rank < typeRank(old._path.getFileName().toString().replaceFirst(".*\\.", ""))))
 					{
-						portraits.put(npcId, new Portrait(file, Files.getLastModifiedTime(file).toMillis() / 1000));
+						portraits.put(look, new Portrait(file, Files.getLastModifiedTime(file).toMillis() / 1000));
 					}
 				}
 			}
@@ -310,10 +380,23 @@ public class BestiaryArt
 	/** @return the npc ids of the manifest, read again when the file changed */
 	private Set<Integer> getModels()
 	{
+		readManifest();
+		return _models;
+	}
+
+	/** @return the look of each npc of the manifest, read again when the file changed */
+	private Map<Integer, Integer> getLookMap()
+	{
+		readManifest();
+		return _lookOf;
+	}
+
+	private synchronized void readManifest()
+	{
 		final long now = System.currentTimeMillis();
 		if ((now - _manifestChecked) < MANIFEST_CHECK_TIME)
 		{
-			return _models;
+			return;
 		}
 		_manifestChecked = now;
 
@@ -322,27 +405,45 @@ public class BestiaryArt
 			final long modified = Files.isRegularFile(MANIFEST) ? Files.getLastModifiedTime(MANIFEST).toMillis() : 0;
 			if (modified == _manifestModified)
 			{
-				return _models;
+				return;
 			}
 
 			final Set<Integer> models = new HashSet<>();
+			final Map<Integer, Integer> lookOf = new HashMap<>();
 			if (modified > 0)
 			{
 				final Object manifest = SimpleJson.parse(new String(Files.readAllBytes(MANIFEST), StandardCharsets.UTF_8));
 				final Object npcs = manifest instanceof Map ? ((Map<?, ?>) manifest).get("npcs") : null;
 				if (npcs instanceof Map)
 				{
-					for (Object key : ((Map<?, ?>) npcs).keySet())
+					for (Map.Entry<?, ?> npc : ((Map<?, ?>) npcs).entrySet())
 					{
-						final int npcId = parseInt(String.valueOf(key));
-						if (npcId > 0)
+						final int npcId = parseInt(String.valueOf(npc.getKey()));
+						if ((npcId <= 0) || !(npc.getValue() instanceof Map))
 						{
-							models.add(npcId);
+							continue;
 						}
+						final Map<?, ?> entry = (Map<?, ?>) npc.getValue();
+						final Object mesh = entry.get("mesh");
+						if (mesh == null)
+						{
+							continue;
+						}
+						final List<String> skins = new ArrayList<>();
+						if (entry.get("textures") instanceof List)
+						{
+							for (Object skin : (List<?>) entry.get("textures"))
+							{
+								skins.add(skin == null ? "" : String.valueOf(skin));
+							}
+						}
+						models.add(npcId);
+						lookOf.put(npcId, lookId(String.valueOf(mesh), skins));
 					}
 				}
-				LOGGER.info(getClass().getSimpleName() + ": " + models.size() + " monsters have a 3D model.");
+				LOGGER.info(getClass().getSimpleName() + ": " + models.size() + " monsters have a 3D model, " + new HashSet<>(lookOf.values()).size() + " looks.");
 			}
+			_lookOf = Collections.unmodifiableMap(lookOf);
 			_models = Collections.unmodifiableSet(models);
 			_manifestModified = modified;
 		}
@@ -351,7 +452,6 @@ public class BestiaryArt
 			LOGGER.warning(getClass().getSimpleName() + ": Could not read " + MANIFEST + " - " + e.getMessage());
 			_manifestModified = -1;
 		}
-		return _models;
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -386,6 +486,10 @@ public class BestiaryArt
 			json.append(",\"r\":").append(SimpleJson.quote(template.getRace().name()));
 			json.append(",\"t\":").append(BestiaryManager.isBoss(template) ? 1 : 0);
 			json.append(",\"m\":").append(hasModel(npcId));
+			if (getLook(npcId) != 0)
+			{
+				json.append(",\"k\":\"").append(lookName(getLook(npcId))).append('"');
+			}
 			json.append(",\"img\":").append(getPortraitVersion(npcId)).append('}');
 			first = false;
 		}
@@ -402,11 +506,12 @@ public class BestiaryArt
 			return;
 		}
 
-		// The id from the address only: readParams would read the body (the picture) as a form and close it.
-		final int npcId = parseInt(queryParam(exchange, "id"));
-		if (NpcData.getInstance().getTemplate(npcId) == null)
+		// The look from the address only: readParams would read the body (the picture) as a form and close it.
+		final String lookParam = queryParam(exchange, "k");
+		final int look = lookParam != null ? parseLook(lookParam) : getLook(parseInt(queryParam(exchange, "id")));
+		if ((look == 0) || !getLookMap().containsValue(look))
 		{
-			server.sendText(exchange, 400, "application/json", "{\"error\":\"no such npc\"}");
+			server.sendText(exchange, 400, "application/json", "{\"error\":\"no such look\"}");
 			return;
 		}
 		final byte[] picture = server.readBody(exchange, MAX_PORTRAIT_BYTES);
@@ -417,17 +522,18 @@ public class BestiaryArt
 			return;
 		}
 
-		// Written beside, then moved in place, so the page never reads half a picture; the other types of this monster's portrait go.
-		Files.createDirectories(ART);
-		final Path target = ART.resolve(npcId + "." + type);
-		final Path temp = ART.resolve(npcId + "." + type + ".tmp");
+		// Written beside, then moved in place, so the page never reads half a picture; the other types of this look's portrait go.
+		Files.createDirectories(LOOKS);
+		final String name = lookName(look);
+		final Path target = LOOKS.resolve(name + "." + type);
+		final Path temp = LOOKS.resolve(name + "." + type + ".tmp");
 		Files.write(temp, picture);
 		Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
 		for (String other : PORTRAIT_TYPES)
 		{
 			if (!other.equals(type))
 			{
-				Files.deleteIfExists(ART.resolve(npcId + "." + other));
+				Files.deleteIfExists(LOOKS.resolve(name + "." + other));
 			}
 		}
 		_portraitsTime = 0;

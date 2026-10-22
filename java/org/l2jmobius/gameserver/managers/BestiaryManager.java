@@ -381,6 +381,8 @@ public class BestiaryManager
 		final Set<Integer> players = ConcurrentHashMap.newKeySet();
 		/** Held while the record is written, so two writes of it never cross (an older one landing after a newer one). */
 		final Object storeLock = new Object();
+		/** Goes up with every change of an entry or a bounty: the client's bestiary window asks again only when it moved. */
+		final AtomicInteger revision = new AtomicInteger();
 		/** Goes up each time an entry reaches a new tier, which changes the regions' EXP. */
 		final AtomicInteger tierChanges = new AtomicInteger();
 		volatile RegionExp regionExp;
@@ -589,6 +591,62 @@ public class BestiaryManager
 	{
 		final String account = player.getAccountName();
 		return account != null ? _records.get(account.toLowerCase(Locale.ROOT)) : null;
+	}
+
+	/**
+	 * @param player a player in the world
+	 * @return the revision of its account's entries and bounties (raised by every change), or -1 when the account is not in memory
+	 */
+	public int getRevision(Player player)
+	{
+		final Record record = peekRecord(player);
+		return record != null ? record.revision.get() : -1;
+	}
+
+	/**
+	 * Raises every monster of the collection to a tier for the player's account, with every rare form that is enabled (a GM's tool: //bestiary_unlock). An entry already at or above it keeps its kills. Written
+	 * with the next store, like kills; no messages, no bounty progress.
+	 * @param player a character of the account
+	 * @param tier 1 Discovered ... 4 Legendary
+	 * @return how many entries changed, or -1 without an account
+	 */
+	public int unlockAll(Player player, int tier)
+	{
+		final Record record = getRecord(player);
+		if (record == null)
+		{
+			return -1;
+		}
+
+		final long now = System.currentTimeMillis();
+		final int charId = player.getObjectId();
+		final int variants = getEnabledVariants();
+		int changed = 0;
+		for (int npcId : getCollection())
+		{
+			final NpcTemplate template = NpcData.getInstance().getTemplate(npcId);
+			if (template == null)
+			{
+				continue;
+			}
+			final int[] tiers = getTiers(template);
+			final int kills = tiers[Math.max(1, Math.min(tier, tiers.length)) - 1];
+			final Entry old = record.entries.get(npcId);
+			if ((old != null) && (old.kills() >= kills) && ((old.variants() & variants) == variants))
+			{
+				continue;
+			}
+			record.entries.compute(npcId, (id, current) -> current == null ? new Entry(kills, now, now, charId, variants, 0, 0) : new Entry(Math.max(current.kills(), kills), current.firstKill(), current.lastKill(), current.firstChar(), current.variants() | variants, current.bestTime(), current.bestChar()));
+			record.changed.add(npcId);
+			changed++;
+		}
+		if (changed > 0)
+		{
+			// The regions' EXP and the slayer bonuses follow the tiers.
+			record.tierChanges.incrementAndGet();
+			record.revision.incrementAndGet();
+		}
+		return changed;
 	}
 
 	/**
@@ -879,6 +937,7 @@ public class BestiaryManager
 			return new Entry(old.kills() + added, old.firstKill(), now, old.firstChar(), old.variants() | variants, faster ? duration : old.bestTime(), faster ? charId : old.bestChar());
 		});
 		record.changed.add(npcId);
+		record.revision.incrementAndGet();
 
 		final int tier = getTier(template, entry.kills());
 		if (tier > getTier(template, entry.kills() - added))
@@ -1327,6 +1386,7 @@ public class BestiaryManager
 				return;
 			}
 			record.bounties = new Bounties(day, npcIds, new int[npcIds.length]);
+			record.revision.incrementAndGet();
 			record.bountiesChanged = true;
 		}
 

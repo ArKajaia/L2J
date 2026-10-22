@@ -62,7 +62,7 @@ public class BestiaryWeb
 	private volatile String _mapJson;
 
 	/** The weapons a monster can be weak to or resist (the traits of type 1). */
-	private static final TraitType[] WEAPON_TRAITS =
+	static final TraitType[] WEAPON_TRAITS =
 	{
 		TraitType.SWORD,
 		TraitType.BLUNT,
@@ -78,7 +78,7 @@ public class BestiaryWeb
 		TraitType.ANCIENTSWORD
 	};
 	/** The debuffs a monster can resist, be weak to or be immune to (traits of type 3 that skills land). */
-	private static final TraitType[] RESIST_TRAITS =
+	static final TraitType[] RESIST_TRAITS =
 	{
 		TraitType.POISON,
 		TraitType.BLEED,
@@ -515,7 +515,7 @@ public class BestiaryWeb
 	{
 		json.append(",\"tactics\":{");
 		json.append("\"aggro\":").append(template.isAggressive() ? template.getAggroRange() : 0);
-		json.append(",\"help\":").append(!template.getClans().isEmpty() ? template.getClanHelpRange() : 0);
+		json.append(",\"help\":").append((template.getClans() != null) && !template.getClans().isEmpty() ? template.getClanHelpRange() : 0);
 		json.append(",\"moves\":").append(template.canMove());
 		json.append(",\"walks\":").append(template.isRandomWalkEnabled());
 		json.append(",\"ai\":").append(SimpleJson.quote(template.getAIType() != null ? template.getAIType().name() : ""));
@@ -751,7 +751,7 @@ public class BestiaryWeb
 		};
 	}
 
-	private static String itemKind(ItemTemplate item)
+	static String itemKind(ItemTemplate item)
 	{
 		switch (item.getType2())
 		{
@@ -1019,7 +1019,9 @@ public class BestiaryWeb
 		final long portrait = art.getPortraitVersion(npcId);
 		if (portrait > 0)
 		{
+			// The look names the picture: the page downloads it once for every monster that looks the same.
 			json.append(",\"img\":").append(portrait);
+			json.append(",\"k\":\"").append(BestiaryArt.lookName(art.getLook(npcId))).append('"');
 		}
 		if (art.hasModel(npcId))
 		{
@@ -1032,12 +1034,12 @@ public class BestiaryWeb
 	// ---------------------------------------------------------------------------------------------
 
 	/** @return 0 a monster, 1 a raid boss, 2 a grand boss */
-	private static int typeCode(NpcTemplate template)
+	static int typeCode(NpcTemplate template)
 	{
 		return template.isType("GrandBoss") ? 2 : template.isType("RaidBoss") ? 1 : 0;
 	}
 
-	private static String className(int classId)
+	static String className(int classId)
 	{
 		final ClassInfoHolder info = ClassListData.getInstance().getClass(classId);
 		return info != null ? info.getClassName() : "";

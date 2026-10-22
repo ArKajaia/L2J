@@ -53,7 +53,7 @@
 </main>
 
 <script type="module">
-import { loadManifest, loadView, renderPortrait, clearCache, webglAvailable } from "/bestiary/lib/bestiary-models.js";
+import {  loadManifest, loadView, renderPortrait, clearCache, webglAvailable } from "/bestiary/lib/bestiary-models.js";
 
 const app = document.getElementById("app");
 const params = new URLSearchParams(window.location.search);
@@ -101,13 +101,21 @@ async function start() {
 	refreshPreviews();
 }
 
+/** The first monster of each look (mesh and skins): one portrait serves every monster that looks the same. */
+function looks() {
+	const seen = new Set();
+	return monsters.filter(m => m.k && !seen.has(m.k) && seen.add(m.k));
+}
+
 function render(data, manifest) {
 	const withPortrait = monsters.filter(m => m.img).length;
+	const lookCount = looks().length;
 	app.innerHTML = `
 		<div class="box"><h2>Models</h2><div class="stats">
 			<div class="stat"><div class="k">Monsters</div><div class="v">${fmt(data.monsters.length)}</div></div>
 			<div class="stat"><div class="k">With a model</div><div class="v">${fmt(monsters.length)}</div></div>
 			<div class="stat"><div class="k">Meshes</div><div class="v">${fmt(Object.keys(manifest.meshes).length)}</div></div>
+			<div class="stat"><div class="k">Looks</div><div class="v">${fmt(lookCount)}</div></div>
 			<div class="stat"><div class="k">With a portrait</div><div class="v" id="with-portrait">${fmt(withPortrait)}</div></div>
 		</div></div>
 		<div class="box"><h2>1. Turn them to face you</h2>
@@ -121,9 +129,9 @@ function render(data, manifest) {
 			</div>
 		</div>
 		<div class="box"><h2>2. Make the portraits</h2>
-			<p>Each portrait is rendered here and saved on the server (data/html/custom/bestiary/&lt;npc id&gt;.webp). Keep this tab in front while it runs; it can be paused and started again.</p>
+			<p>Each look (a mesh with its skins) is rendered once here and saved on the server (data/html/custom/bestiary/looks/&lt;look&gt;.webp): every monster that looks the same shows it. Keep this tab in front while it runs; it can be paused and started again. Then make the game client's copies with tools/bestiary/portraits.py.</p>
 			<div class="controls">
-				<label><input type="checkbox" id="only-missing" checked> Only monsters without a portrait</label>
+				<label><input type="checkbox" id="only-missing" checked> Only looks without a portrait</label>
 				<label>Size <select id="size"><option>384</option><option selected>512</option><option>768</option></select></label>
 				<button class="main" id="bake">Make the portraits</button><button id="pause" disabled>Pause</button>
 			</div>
@@ -191,7 +199,7 @@ async function saveView() {
 async function bake() {
 	if (run && run.paused) { run.paused = false; loop(); return; }
 	const onlyMissing = document.getElementById("only-missing").checked;
-	const list = monsters.filter(m => !onlyMissing || !m.img);
+	const list = looks().filter(m => !onlyMissing || !m.img);
 	run = { list, index: 0, done: 0, failed: 0, started: Date.now(), size: Number(document.getElementById("size").value), paused: false };
 	document.getElementById("errors").textContent = "";
 	loop();
@@ -213,12 +221,13 @@ async function loop() {
 		try {
 			const blob = await renderPortrait(m.id, run.size, view);
 			if (!blob) throw new Error("no model");
-			const res = await fetch("/bestiary/admin/portrait?id=" + m.id, { method: "POST", headers: Object.assign({ "Content-Type": blob.type }, auth()), body: blob });
+			const res = await fetch("/bestiary/admin/portrait?k=" + m.k, { method: "POST", headers: Object.assign({ "Content-Type": blob.type }, auth()), body: blob });
 			if (!res.ok) {
 				const error = await res.json().catch(() => ({}));
 				throw new Error(error.error || ("HTTP " + res.status));
 			}
-			m.img = Math.floor(Date.now() / 1000);
+			const made = Math.floor(Date.now() / 1000);
+			for (const same of monsters) if (same.k === m.k) same.img = made;
 			run.done++;
 			const recent = document.getElementById("recent");
 			recent.insertAdjacentHTML("afterbegin", `<img src="${URL.createObjectURL(blob)}" title="${esc(m.n)}">`);
