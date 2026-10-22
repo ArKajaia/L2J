@@ -14,6 +14,10 @@ Else
 	path = Replace(path, "Program Files", "Progra~1")
 End If
 
+'Create the log folder: the JVM writes its GC log there (see java.cfg) before the server makes it.
+Set fso = CreateObject("Scripting.FileSystemObject")
+If Not fso.FolderExists("log") Then fso.CreateFolder("log")
+
 'Load java.cfg parameters.
 Dim parameters
 Set file = CreateObject("Scripting.FileSystemObject").OpenTextFile("java.cfg", 1)

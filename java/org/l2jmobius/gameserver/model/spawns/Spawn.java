@@ -836,6 +836,22 @@ public class Spawn extends Location
 		return _spawnLocation;
 	}
 	
+	/**
+	 * A spawn is the same spawn wherever it is: random and territory spawns move on every respawn, and fake players move theirs to where they hunt.<br>
+	 * With the coordinate-based hash of {@link Location}, a spawn moved after it went into a hash set (like {@link org.l2jmobius.gameserver.data.SpawnTable}) could never be removed from it again.
+	 */
+	@Override
+	public int hashCode()
+	{
+		return System.identityHashCode(this);
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		return this == obj;
+	}
+
 	@Override
 	public String toString()
 	{
