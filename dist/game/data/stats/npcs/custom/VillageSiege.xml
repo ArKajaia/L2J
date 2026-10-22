@@ -16,8 +16,8 @@
 		<status attackable="false" undying="true" />
 		<ai aggroRange="0" isAggressive="false" />
 		<collision>
-			<radius normal="9" />
-			<height normal="20" />
+			<radius normal="51.8" />
+			<height normal="108.25" />
 		</collision>
 	</npc>
 </list>

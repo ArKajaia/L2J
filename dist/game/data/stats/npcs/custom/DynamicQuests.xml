@@ -16,8 +16,8 @@
 		<status attackable="false" undying="true" />
 		<ai aggroRange="0" isAggressive="false" />
 		<collision>
-			<radius normal="9" />
-			<height normal="20" />
+			<radius normal="63.5" />
+			<height normal="97.5" />
 		</collision>
 	</npc>
 	<npc id="900501" displayId="4326" level="70" type="Folk" name="Herald of the Board" usingServerSideName="true" title="[ ! ]" usingServerSideTitle="true"> <!-- Herald (brings TIMER, WORLD_STATE and PLAYER_ACTION quests) -->
