@@ -80,6 +80,7 @@ public class BestiaryConfig
 	public static boolean FARMING_ENABLED;
 	public static int FARMING_LEVELS_ABOVE;
 	public static int[] MAP_IMAGE_BOUNDS;
+	public static String ART_COPY_FOLDER;
 
 	public static void load()
 	{
@@ -168,6 +169,7 @@ public class BestiaryConfig
 		FARMING_ENABLED = config.getBoolean("BestiaryFarmingEnabled", true);
 		FARMING_LEVELS_ABOVE = Math.max(0, Math.min(20, config.getInt("BestiaryFarmingLevelsAbove", 5)));
 		MAP_IMAGE_BOUNDS = readMapBounds(config.getString("BestiaryMapImageBounds", "-294912,-262144,229376,294912"));
+		ART_COPY_FOLDER = config.getString("BestiaryArtCopyFolder", "").trim();
 	}
 
 	/**

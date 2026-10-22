@@ -14,13 +14,15 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.network.serverpackets.ExLinkOpen;
 
+import custom.Bestiary.BestiaryPackets;
 import custom.Bestiary.BestiaryTracker;
 import custom.Bestiary.BestiaryWeb;
 import custom.PassiveSkillTree.PassiveTreeApiServer;
 
 /**
- * ".bestiary" - opens the bestiary of the character's account on the web page of the passive tree server: every monster its characters killed, the bonuses it gives, how far each entry is, and the monsters still to find. With a monster targeted, the page opens on that monster.
+ * ".bestiary" - opens the game client's bestiary window (Ex2BestiaryOpen, client/Bestiary/PROTOCOL.txt): every monster the account's characters killed, the bonuses it gives, how far each entry is, and the monsters still to find. With a monster targeted, it opens on that monster.
  * <ul>
+ * <li>".bestiary web" - the same on the web page of the passive tree server, as a link</li>
  * <li>".bestiary track &lt;name or id&gt;" - points the radar at the nearest one of a monster of the bestiary</li>
  * <li>".bestiary untrack" - clears the radar</li>
  * <li>".bestiary bounties" - today's bounties, in chat</li>
@@ -96,6 +98,12 @@ public class BestiaryVoiced implements IVoicedCommandHandler
 			{
 				npcId = id;
 			}
+		}
+
+		if (!"web".equals(sub))
+		{
+			player.sendPacket(BestiaryPackets.open(npcId));
+			return true;
 		}
 
 		final String url = BestiaryWeb.getUrl(player, npcId);

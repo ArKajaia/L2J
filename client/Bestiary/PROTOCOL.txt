@@ -1,0 +1,405 @@
+Bestiary - client window protocol
+=================================
+
+The client (L2Source, l2DecompileTest) shows the bestiary in its own hosted
+ImGui window, the way the web page (data/html/custom/bestiary.html) does it:
+every tab and every part of a profile. Plan and memory budget:
+l2DecompileTest docs/bestiary-window-plan.md.
+
+What goes where:
+- The catalog (tiers and bonuses, regions, hunting grounds, every monster of
+  the collection with what anyone may see of it, the land of the map) is the
+  same for everyone. It is one definition built once by the server
+  (custom.Bestiary.BestiaryBlob), cached by the client in
+  System\Bestiary.cache, and fetched only when the window opens and the
+  client's copy has another SHA-256 than the server's.
+- Meshes, skins and icons are the client's own (Npcgrp, Item and Skill data):
+  the server sends npc, item and skill ids. Texts that the web page shows
+  from the server (item and skill names, class names) come with the packets,
+  so custom items and skills read the same as on the page.
+- What an account found, and what a tier shows (stats, skills, drops), come
+  over packets, on request, while the window is open.
+- The portraits the web page shows on its cards (renders of the models) are
+  not the client's. They belong to looks, a look being a mesh with its skins
+  (custom.Bestiary.BestiaryArt.lookId, 8 hex digits): every monster that
+  looks the same shares one (4592 monsters, 688 looks). The bake page renders
+  each look once (data/html/custom/bestiary/looks/<look>.webp);
+  tools/bestiary/portraits.py makes 128 x 128 DXT5 copies of them
+  (client/portraits/<look>.l2bp), which the server sends when a card shows
+  and the client keeps in System\BestiaryPortraits\<look>.l2bp.
+
+Server classes: custom.Bestiary.BestiaryBlob (the catalog) and
+custom.Bestiary.BestiaryPackets (every packet below, the requests and their
+limits). The requests are registered in the core's CustomClientPackets at
+startup.
+
+Types: little endian; byte = 1, short = 2, int = 4, long = 8 bytes. Packet
+strings (str) are UTF-16LE with a terminating 0. Definition strings (dstr,
+in the catalog only) are short n, then n UTF-16LE units, no terminator.
+Times are epoch milliseconds unless named otherwise. Both sides drop a packet
+that breaks a rule below whole: it changes nothing.
+
+
+The catalog (format 1)
+----------------------
+At most 8192 monsters, 4096 hunting grounds, 1024 regions, 32 forms, 255
+areas and 255 points per monster, 65535 land cells, 256 units per string,
+2 MB: the client refuses a larger catalog.
+
+  int    format              1
+  int    flags               1 showNames  (BestiaryShowUndiscoveredNames)
+                             2 showAreas  (BestiaryShowUndiscoveredAreas)
+                             4 craftGoals (the Crafting Goals tab)
+  byte   tierCount           4: Discovered, Studied, Mastered, Legendary
+  tierCount x {
+    dstr   name
+    int    kills             BestiaryTiers
+    int    bossKills         BestiaryBossTiers
+    int    dropBonus         percent, BestiaryDropBonus
+    int    bossDropBonus     percent
+    int    regionExpBonus    percent, when a whole region is at this tier
+    int    slayerDamage      percent, when a whole race is at this tier
+    int    slayerDefense     percent
+  }
+  int    slayerMinMonsters
+  byte   formCount           the rare forms of the systems that are enabled
+  formCount x {
+    int    bit               1 Champion, 2 Mage, 4 Infused, 8 Resonant
+    dstr   name
+  }
+  byte   raceCount           every Race of the server, in its order
+  raceCount x dstr           e.g. "UNDEAD"; monsters refer to them by index
+  short  regionCount         in the page's order (by average level)
+  regionCount x dstr
+  short  areaCount           hunting grounds
+  areaCount x {
+    int    id                the page's area id
+    short  region            index into the regions
+    byte   level             average level of its monsters
+    dstr   name
+  }
+  short  monsterCount        in the collection's order
+  monsterCount x {
+    int    id                npc id
+    int    displayId         the client npc whose look it has, 0 = its own
+    byte   level
+    byte   race              index into the races
+    byte   type              0 monster, 1 raid boss, 2 grand boss
+    short  height            collision height, world units
+    short  radius            collision radius
+    dstr   name              the server's, "" unless showNames
+    byte   areaCount         0 unless showAreas
+    areaCount x short        index into the areas
+    byte   pointCount        0 unless showAreas; at most 80 (MAX_POINTS)
+    pointCount x {
+      short  x, y            spawn point in units of 16 world units
+    }
+  }
+  short  cellSize            world units of a land cell (MAP_CELL, 4096)
+  short  landCount           cells with a spawn point of the collection
+  landCount x {
+    short  x, y              cell (world / cellSize, floored)
+    short  points            spawn points in it, at most 65535
+  }
+  short  glyphCount          at most 64: the web page's <symbol>s
+  glyphCount x {
+    dstr   id                "r-BEAST" (race emblems), "i-crown" (icons)
+    dstr   viewBox           "0 0 100 100"
+    dstr   markup            the symbol's inner SVG, at most 4096 units; it
+                             fills with currentColor and var(--eye) as the
+                             page does (the page stays the only source)
+  }
+
+Nothing may follow the last glyph. Without showNames the client shows a found
+monster under the name Ex2BestiaryState gives it. Without showAreas the areas
+and points of a monster come with Ex2BestiaryMonster, for the monsters the
+account found. The land is what the page's map draws when it has no picture;
+the window draws it under the game's world map texture, or alone when that
+texture is not there.
+
+Cache file (System\Bestiary.cache)
+  byte   magic[4]            "L2BE"
+  int    format              1
+  byte   sha256[32]          of the definition
+  int    size                bytes of the definition
+  ...    the definition
+
+//bestiary_export writes it to data/html/custom/bestiary/client/
+Bestiary.cache: copy it into the client's System folder (or ship it with the
+client), and the window opens without fetching anything.
+
+
+Server to client (FE:00FE)
+--------------------------
+
+0x0D  Ex2BestiaryVersion
+  byte  sha256[32]
+  int   size                 bytes, 1 to 2 MB
+  short chunkCount           ceil(size / 16384)
+Sent at world entry when the bestiary is enabled, and in answer to a chunk
+request for a catalog that is no longer live. The client fetches nothing
+then: it asks for chunks when the window opens and its cache differs, so a
+server restart does not have every player download the catalog at login.
+
+0x0E  Ex2BestiaryChunk
+  int   tag                  the first 4 bytes of the sha256, little endian
+  short index                from 0
+  short length               16384, the last one less
+  length x byte
+
+0x0F  Ex2BestiaryState  - the account's collection
+One answer is a run of packets: one summary (part 0), then the entry pages
+(part 1), then the found-elsewhere pages (part 2). Each packet starts with
+  byte  part                 0 summary, 1 entries, 2 elsewhere
+  int   revision             the account's (see the request)
+Every packet of one answer has the same revision; the client uses an answer
+once all its pages arrived.
+
+part 0, the summary:
+  byte  unchanged            1: the client's revision, statsTime and
+                             bountyReset are current, nothing else follows
+  long  statsTime            when the server-wide numbers were counted, 0
+                             before the first count
+  long  bountyReset          when the bounties change next
+  str   name                 the character's, at most 32 characters
+  int   level
+  str   className            at most 64 characters
+  int   found, int total
+  long  kills
+  int   rank                 0 = not ranked
+  int   hunters
+  short entryPages, short elsewherePages
+  int   entryCount, int elsewhereCount
+  short regionCount          one per catalog region
+  regionCount x int          the account's region EXP multiplier x 1000
+  byte  slayerCount          races with enough monsters
+  slayerCount x {
+    byte  race               index into the catalog's races
+    short monsters, short found
+    int   damage, int defense   percent x 100
+  }
+  byte  bountyOn
+  int   bountyMultiplier, int bountyAdenaPerLevel
+  byte  bountyCount          at most 6
+  bountyCount x { int npcId, int progress, int goal }
+
+part 1, entries of the collection's monsters (pages of at most 24 KB):
+  short page                 from 0
+  short count
+  count x {
+    int   npcId
+    int   kills
+    byte  tier               0-4 (0: killed, but fewer kills than Discovered)
+    byte  variants           rare forms killed (the catalog's form bits)
+    byte  flags              1 aggressive
+    byte  element            attack element 0-5, 0xFF none or below Studied
+    long  firstKill
+    str   name               the server's name, at most 64 characters
+    byte  areaCount          where it lives, when the catalog has no areas
+    areaCount x short        (showAreas off) and the monster is found;
+                             else 0. Index into the catalog's areas.
+  }
+
+part 2, monsters found outside the collection (pages of at most 24 KB):
+  short page
+  short count
+  count x {
+    int   npcId, int displayId
+    byte  level, byte race, byte type
+    short height
+    int   kills
+    byte  tier, byte variants, byte flags, byte element
+    long  firstKill
+    str   name               at most 64 characters
+  }
+
+0x10  Ex2BestiaryMonster  - one profile, as much as the account's tier shows
+  int   npcId
+  byte  tier                 0 not found yet; 0xFF no such monster for you
+                             (nothing follows)
+  int   kills
+  byte  inCollection
+  byte  live                 1 the stats are a live monster's, 0 the template's
+  short dropBonus            percent, the account's now
+  str   name                 the server's, "" when hidden
+  str   title
+  long  firstKill, long lastKill   0 = never
+  byte  variants
+  int   bestMs               the account's fastest kill, 0 = none
+  str   bestBy
+  byte  hasAreas             1: the areas and points follow
+  [byte areaCount, areaCount x short (index into the areas),
+   byte pointCount, pointCount x {short x, short y}]
+  tier >= 1:
+    byte  aggressive
+    long  hp, long mp, long exp, long sp      at the server's rates
+    str   weapon             base attack type, e.g. "SWORD"
+    int   spawns             -1 outside the collection
+    int   respawnMin, int respawnMax          ms
+    int   serverHunters, long serverKills, int serverFound
+    str   firstBy, long firstAt
+    int   serverBestMs
+    long  serverTime
+  tier >= 2:
+    12 x int                 pAtk mAtk pDef mDef pAtkSpd mAtkSpd run walk
+                             accuracy evasion critical range
+    byte  attackElement      0xFF none
+    short attackElementValue
+    6 x short                defence: fire water wind earth holy dark
+    int   aggro, int help    ranges, 0 = none
+    byte  moves, byte walks
+    str   ai
+    byte  weaponCount, weaponCount x { str trait, short percent }
+    byte  resistCount, resistCount x { str trait, short percent, byte immune }
+    short skillCount
+    skillCount x { int id, short level, byte flags (1 passive, 2 debuff),
+                   str name }
+  tier >= 3:
+    short dropCount
+    dropCount x {
+      int   itemId
+      str   name, str grade, str kind
+      byte  flags            1 boosted by the bestiary, 2 observed only,
+                             4 has observed counts
+      byte  group            0 = not in a group
+      long  min, long max    at the server's rates (0 when observed only)
+      int   chance           percent x 10000, with the account's bonus
+      long  observedTimes, long observedAmount
+    }
+    short spoilCount, spoilCount x (as a drop)
+    byte  hasObserved
+    [long dropRolls, long spoilRolls, int observedMin]
+  byte  hasKillLog           1 for a raid or grand boss at tier >= 1
+  [byte killCount,
+   killCount x { long at, int durationMs, str by, str clan, byte party }]
+
+0x11  Ex2BestiaryRanking
+  long  statsTime
+  int   total                monsters in the collection
+  int   hunters
+  byte  count                at most BestiaryRankingSize (100)
+  count x hunter
+  byte  hasMe                1: the account's own row, outside the top
+  [hunter]
+  hunter = { int rank, str name, byte level, str className, int found,
+             long kills, byte me }
+
+0x12  Ex2BestiaryFarming  - where to farm what the crafting goals miss
+One packet per goal (and one with goalCount 0 when there are none). A goal
+whose packet would pass 24 KB keeps its first resources and grounds only.
+  byte  on                   farming enabled; 0: nothing follows
+  byte  online               0: nothing follows
+  int   level
+  byte  spoiler              the character knows Spoil
+  byte  spoil                spoils are counted
+  int   levelsAbove
+  byte  goalIndex, byte goalCount
+  (goalCount > 0:)
+  int   recipe, int item
+  str   name
+  int   done, int total
+  byte  ready
+  int   farmable
+  byte  resourceCount
+  resourceCount x {
+    int   itemId
+    str   name, str grade, str kind
+    long  have, long need
+    byte  material, byte craftable
+    int   unfound            monsters not found yet that give it
+    byte  hintCount
+    hintCount x { str region, int monsters, int level, byte higher }
+    byte  spotCount
+    spotCount x {
+      int   npcId
+      long  perKill          x 10000
+      long  kills
+      byte  counted          0: only a spoil gives it and spoils are not
+                             counted for this character
+      byte  has              1 drop, 2 spoil
+      [drop:  int chance (percent x 10000), long min, long max, byte boosted]
+      [spoil: int chance, long min, long max, byte boosted]
+    }
+  }
+  byte  groundCount
+  groundCount x {
+    int   areaId
+    int   score              x 100
+    byte  bestCount
+    bestCount x { byte resource, int npcId, long kills }
+  }
+
+0x13  Ex2BestiaryResult
+  byte  action               1 track, 2 untrack
+  byte  ok
+  int   npcId
+  str   message              as the server words it (also sent in chat)
+
+0x14  Ex2BestiaryOpen
+  int   npcId                0 = the collection   (".bestiary")
+
+0x15  Ex2BestiaryPortrait    one for each monster asked for: its look
+  int   npcId                0 = the field behind every portrait
+  byte  status               0 none (no model, or its look has no copy),
+                             1 the look
+  status 1:
+    int   look               0 for npc 0 only
+    int   version            of the look's picture: the bake's time in s
+
+0x16  Ex2BestiaryPortraitLook  one for each look asked for: its picture
+  int   look
+  byte  status               0 none, 2 the picture
+  status 2:
+    int   version            > 0
+    short side               4..256, a multiple of 4; width = height
+    byte  kind               1 DXT1 (opaque), 5 DXT5
+    int   length             side * side / 2 (DXT1), side * side (DXT5)
+    bytes the blocks         rows of 4 x 4 pixel blocks, top to bottom
+
+  The client keeps a picture as the server's file is, in
+  System\BestiaryPortraits\<look>.l2bp: "L2BP", int format 1, int version,
+  short side, byte kind, byte 0, int length, the blocks.
+
+
+Client to server (D0:00FE)
+--------------------------
+
+  sub  packet                         body                 answer
+  7    RequestEx2BestiaryChunk        int tag, short index Chunk, or Version
+  8    RequestEx2BestiaryState        int revision,        State summary
+                                      long statsTime,      (unchanged), or the
+                                      long bountyReset     whole State
+  9    RequestEx2BestiaryMonster      int npcId            Monster
+  10   RequestEx2BestiaryRanking      -                    Ranking
+  11   RequestEx2BestiaryFarming      byte spoil           Farming (one a goal)
+                                      (0 no, 1 yes,
+                                       2 by the character)
+  12   RequestEx2BestiaryTrack        int npcId (0 clear)  Result
+  13   RequestEx2BestiaryPortraits    byte count (1..16),  Portrait, one each
+                                      count x int npcId
+  14   RequestEx2BestiaryPortraitLooks byte count (1..8),  PortraitLook, one
+                                      count x int look     each
+
+The client asks which look the monsters of the cards in view are, each once
+a session, and for the picture of a look only when it keeps none of that
+version: a look shared by many monsters is downloaded once.
+
+The revision is raised by every change of the account's entries and
+bounties; -1 asks for the whole State. While the window is open the client
+asks for State every 10 s with what it has, and the summary says
+"unchanged" until something changed.
+
+Limits (per connection; a request above them is dropped): chunks 400 a
+minute; State one every 2 s; Monster 10 in any 5 s; Ranking one every 10 s;
+Farming one every 5 s; Track one a second; Portraits 240 a minute (the
+client asks every 300 ms at most); PortraitLooks 120 a minute (960
+pictures; the client asks every 500 ms at most). A request with bytes left after
+its body is dropped.
+
+
+Tools
+-----
+tools/bestiary/dump_blob.py <file>   prints a catalog or a Bestiary.cache,
+                                     checking it against the layout above
+tools/bestiary/portraits.py [art]    makes the client's copies of the looks
+                                     (Pillow, numpy); run it after a bake

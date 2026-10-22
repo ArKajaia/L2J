@@ -765,7 +765,8 @@ function portrait(m, extraClass) {
 	return `<div class="${cls}" style="--ring:${ring};--glow:${glow}"><svg viewBox="0 0 100 100" style="color:${color};--eye:${eye}"><use href="#r-${symbol}"/></svg></div>`;
 }
 
-function portraitUrl(m) { return `/bestiary/img?id=${m.id}&v=${m.img}`; }
+// By look when the server names it: monsters that look the same share one picture, downloaded once.
+function portraitUrl(m) { return m.k ? `/bestiary/img?k=${m.k}&v=${m.img}` : `/bestiary/img?id=${m.id}&v=${m.img}`; }
 
 function apiFetch(path) {
 	return fetch("/api/bestiary/" + path, { headers: { "Authorization": "Bearer " + state.token } });
@@ -1347,7 +1348,7 @@ function renderProfile() {
 	const m = state.detail;
 	const summary = state.byId.get(m.id);
 	const tierNames = state.data.tierNames;
-	const p = { id: m.id, g: m.tier, r: m.r, t: m.t, e: m.attackElement, img: m.img, n: m.n, a: m.a };
+	const p = { id: m.id, g: m.tier, r: m.r, t: m.t, e: m.attackElement, img: m.img, k: m.k, n: m.n, a: m.a };
 	let html = navBar(Object.assign({}, summary, { a: m.a }));
 
 	// Hero: the monster on its stage, and who it is.
