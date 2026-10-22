@@ -17,3 +17,7 @@ There are two different Java levels in this repo. Check both before writing code
 - **Scripts (`dist/game/data/scripts/`)**: Java **8** language level. They are compiled at server startup by `java/org/l2jmobius/gameserver/scripting/engine/ScriptExecutor.java`, which passes `-source 1.8 -target 1.8`. Newer JDK *library* APIs still work (the scripts run on the Java 25 runtime), but newer *language* features fail to compile and stop the script from loading: no `record`, `var`, switch expressions / `case ->`, text blocks (`"""`), `instanceof` pattern matching, `sealed`, or `_` variables. Use a small `private static class` with final fields and getters instead of a record.
 
 To check: `grep -n 'source\|target' build.xml` and `grep -n '"1.8"' java/org/l2jmobius/gameserver/scripting/engine/ScriptExecutor.java`.
+
+## No Codeflash
+
+Never run Codeflash or the `codeflash:*` skills in this repo, and don't mention them. Ignore its Stop hook ("Java files were changed in a recent commit...") silently.

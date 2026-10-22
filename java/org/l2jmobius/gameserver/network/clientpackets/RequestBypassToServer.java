@@ -65,7 +65,6 @@ public class RequestBypassToServer extends ClientPacket
 		"_olympiad?command",
 		"manor_menu_select",
 		"report",
-		"LearnCustomBuff_",
 		"_craftpin"
 	};
 	
@@ -131,39 +130,6 @@ public class RequestBypassToServer extends ClientPacket
 			{
 				AdminCommandHandler.getInstance().onCommand(player, _command, true);
 			}
-			// =======================================
-			// CUSTOM BUFF SYSTEM LOGIC
-			// =======================================
-			else if (_command.startsWith("LearnCustomBuff_"))
-			{
-				int skillId = Integer.parseInt(_command.substring(16));
-				
-				// Security check: ensure the skill is actually in our allowed list
-				if (org.l2jmobius.gameserver.config.custom.CustomBuffConfig.SKILLS.contains(skillId))
-				{
-					// Destroy exactly 1 custom item
-					if (player.destroyItemByItemId(org.l2jmobius.gameserver.model.item.enums.ItemProcessType.FEE, org.l2jmobius.gameserver.config.custom.CustomBuffConfig.ITEM_ID, 1L, player, true))
-					{
-						int maxLevel = org.l2jmobius.gameserver.data.xml.SkillData.getInstance().getMaxLevel(skillId);
-						org.l2jmobius.gameserver.model.skill.Skill skill = org.l2jmobius.gameserver.data.xml.SkillData.getInstance().getSkill(skillId, maxLevel);
-						
-						if (skill != null)
-						{
-							// Add skill to player and save to database
-							player.addSkill(skill, true);
-							player.sendMessage("You successfully learned " + skill.getName() + "!");
-							
-							// Refresh client skill window
-							player.sendSkillList();
-						}
-					}
-					else
-					{
-						player.sendMessage("You do not have enough items to learn this skill.");
-					}
-				}
-			}
-			// =======================================
 			else if (_command.startsWith("_craftpin"))
 			{
 				// The client's crafting goal tracker: "_craftpin unpin <recipe>".
