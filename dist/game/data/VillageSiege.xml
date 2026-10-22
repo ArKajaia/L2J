@@ -12,8 +12,6 @@
 		  town           the name of the village's TownZone (data/zones/custom_town.xml)
 		  gatekeeper     the village gatekeeper npc: the heart of the village, and the Defence Force Board stands near it
 		  guardLook      the npc whose look the siege guards borrow (one of the village's own guards)
-		  referenceItem  sets how many medals the village pays: VillageSiegeHoursPerReferenceItem hours of fighting
-		                 there pay for this item (its retail price / VillageSiegeAdenaPerMedal medals)
 		  minLevel       optional: the levels of the siege's monsters, from minLevel to maxLevel. They are the monsters
 		  maxLevel       of those levels living nearest the village (on the entrance's road, around the village, farther
 		                 out, or anywhere). The siege guards are a few levels above the middle (VillageSiegeGuardLevelOffset).
@@ -26,30 +24,30 @@
 		  The villages below whose roads climb ramps or cross heights the search can't follow have theirs set here, at
 		  the posts of their retail gate guards.
 	-->
-	<village id="talking_island" name="Talking Island Village" town="Talking Island" gatekeeper="30006" guardLook="30039" referenceItem="68" minLevel="8" maxLevel="12" />
-	<village id="elven" name="Elven Village" town="Elven Village" gatekeeper="30146" guardLook="30216" referenceItem="68" minLevel="8" maxLevel="12">
+	<village id="talking_island" name="Talking Island Village" town="Talking Island" gatekeeper="30006" guardLook="30039" minLevel="8" maxLevel="12" />
+	<village id="elven" name="Elven Village" town="Elven Village" gatekeeper="30146" guardLook="30216" minLevel="8" maxLevel="12">
 		<entrance x="45632" y="46522" z="-2992" /> <!-- North: Sentinels Wheeler and Berros -->
 		<entrance x="47498" y="51666" z="-2992" /> <!-- East: Sentinels Kendell and Veltress -->
 		<entrance x="42891" y="51255" z="-2992" /> <!-- West: Sentinels Starden and Rayen -->
 	</village>
-	<village id="dark_elven" name="Dark Elven Village" town="Dark Elven Village" gatekeeper="30134" guardLook="30346" referenceItem="68" minLevel="8" maxLevel="12">
+	<village id="dark_elven" name="Dark Elven Village" town="Dark Elven Village" gatekeeper="30134" guardLook="30346" minLevel="8" maxLevel="12">
 		<entrance x="7570" y="17718" z="-4376" rallyX="6490" rallyY="19761" rallyZ="-3688" /> <!-- West: the ramp down from the south-west guards -->
 		<entrance x="15196" y="15983" z="-4376" rallyX="17204" rallyY="13297" rallyZ="-3732" /> <!-- East: the ramp down from the north-east guards -->
 	</village>
-	<village id="orc" name="Orc Village" town="Orc Village" gatekeeper="30576" guardLook="30577" referenceItem="68" minLevel="8" maxLevel="12">
+	<village id="orc" name="Orc Village" town="Orc Village" gatekeeper="30576" guardLook="30577" minLevel="8" maxLevel="12">
 		<entrance x="-46168" y="-110012" z="-280" /> <!-- South: by the guards Orinak and Tiku -->
 		<entrance x="-45988" y="-117164" z="-240" /> <!-- North: by the guards Rukain and Parugon -->
 	</village>
-	<village id="dwarven" name="Dwarven Village" town="Dwarven Village" gatekeeper="30540" guardLook="30541" referenceItem="68" minLevel="8" maxLevel="12" />
-	<village id="kamael" name="Kamael Village" town="Kamael Village" gatekeeper="32163" guardLook="32174" referenceItem="68" minLevel="8" maxLevel="12">
+	<village id="dwarven" name="Dwarven Village" town="Dwarven Village" gatekeeper="30540" guardLook="30541" minLevel="8" maxLevel="12" />
+	<village id="kamael" name="Kamael Village" town="Kamael Village" gatekeeper="32163" guardLook="32174" minLevel="8" maxLevel="12">
 		<entrance x="-112612" y="47121" z="48" rallyX="-110540" rallyY="47101" rallyZ="-1128" /> <!-- East: the road up from the eastern guards -->
 		<entrance x="-119774" y="49245" z="8" rallyX="-119596" rallyY="51861" rallyZ="-792" /> <!-- South: the road up from the southern guards -->
 	</village>
-	<village id="gludin" name="Gludin Village" town="Gludin Village" gatekeeper="30320" guardLook="30379" referenceItem="124" minLevel="18" maxLevel="24" />
-	<village id="gludio" name="Town of Gludio" town="Gludio Castle Town" gatekeeper="30256" guardLook="30331" referenceItem="124">
+	<village id="gludin" name="Gludin Village" town="Gludin Village" gatekeeper="30320" guardLook="30379" minLevel="18" maxLevel="24" />
+	<village id="gludio" name="Town of Gludio" town="Gludio Castle Town" gatekeeper="30256" guardLook="30331">
 		<entrance x="-14558" y="121021" z="-2986" /> <!-- North-West -->
 		<entrance x="-16622" y="124179" z="-3118" /> <!-- West -->
 		<entrance x="-14170" y="126544" z="-3148" /> <!-- South -->
 	</village>
-	<village id="dion" name="Town of Dion" town="Dion Castle Town" gatekeeper="30059" guardLook="30071" referenceItem="84" minLevel="26" maxLevel="32" />
+	<village id="dion" name="Town of Dion" town="Dion Castle Town" gatekeeper="30059" guardLook="30071" minLevel="26" maxLevel="32" />
 </list>

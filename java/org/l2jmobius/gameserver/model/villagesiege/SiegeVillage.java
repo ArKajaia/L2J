@@ -63,19 +63,17 @@ public class SiegeVillage
 	private final String _town;
 	private final int _gatekeeperId;
 	private final int _guardLookId;
-	private final int _referenceItemId;
 	private final int _minLevel;
 	private final int _maxLevel;
 	private final List<FixedEntrance> _entrances;
 
-	public SiegeVillage(String id, String name, String town, int gatekeeperId, int guardLookId, int referenceItemId, int minLevel, int maxLevel, List<FixedEntrance> entrances)
+	public SiegeVillage(String id, String name, String town, int gatekeeperId, int guardLookId, int minLevel, int maxLevel, List<FixedEntrance> entrances)
 	{
 		_id = id;
 		_name = name;
 		_town = town;
 		_gatekeeperId = gatekeeperId;
 		_guardLookId = guardLookId;
-		_referenceItemId = referenceItemId;
 		_minLevel = Math.min(minLevel, maxLevel);
 		_maxLevel = Math.max(minLevel, maxLevel);
 		_entrances = Collections.unmodifiableList(entrances);
@@ -113,14 +111,6 @@ public class SiegeVillage
 	public int getGuardLookId()
 	{
 		return _guardLookId;
-	}
-
-	/**
-	 * @return the item a defender's {@code VillageSiegeHoursPerReferenceItem} hours of fighting pay for
-	 */
-	public int getReferenceItemId()
-	{
-		return _referenceItemId;
 	}
 
 	/**

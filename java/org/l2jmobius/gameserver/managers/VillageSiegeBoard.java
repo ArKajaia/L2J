@@ -23,7 +23,6 @@ package org.l2jmobius.gameserver.managers;
 import java.util.List;
 
 import org.l2jmobius.gameserver.config.custom.VillageSiegeConfig;
-import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.MultisellData;
 import org.l2jmobius.gameserver.managers.VillageSiegeManager.Contributor;
 import org.l2jmobius.gameserver.managers.VillageSiegeManager.EntranceState;
@@ -34,7 +33,6 @@ import org.l2jmobius.gameserver.managers.VillageSiegeManager.Slot;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
-import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.villagesiege.SiegeVillage;
 
 /**
@@ -557,13 +555,17 @@ public final class VillageSiegeBoard
 			sb.append(" (one character per computer)");
 		}
 		sb.append(". Exchange them for gear up to C grade at any Defence Force Board.");
-		if (village != null)
+		if (VillageSiegeConfig.MEDAL_RATE > 0)
 		{
-			final ItemTemplate item = ItemData.getInstance().getTemplate(village.getReferenceItemId());
-			if (item != null)
+			// The defenders above the village's levels fight monsters of their own level.
+			final int top = VillageSiegeConfig.MAX_PLAYER_LEVEL;
+			final int level = village != null ? VillageSiegeManager.getInstance().getLevel(village) : top;
+			sb.append(" The stronger the monster, the more a point pays: an hour of fighting pays about ");
+			if (level < top)
 			{
-				sb.append(" In ").append(village.getName()).append(", about ").append(VillageSiegeConfig.HOURS_PER_REFERENCE_ITEM).append(" hours of fighting pay for a ").append(item.getName()).append(" (").append(item.getReferencePrice() / VillageSiegeConfig.ADENA_PER_MEDAL).append(" medals).");
+				sb.append(VillageSiegeManager.getMedalsPerHour(level)).append(" medals against monsters of level ").append(level).append(", ");
 			}
+			sb.append(VillageSiegeManager.getMedalsPerHour(top)).append(" medals against monsters of level ").append(top).append(".");
 		}
 		sb.append("<br>Adventurers of every kind come to help, and the village guards stand at the gates.");
 		return sb.append(back(prefix)).toString();
