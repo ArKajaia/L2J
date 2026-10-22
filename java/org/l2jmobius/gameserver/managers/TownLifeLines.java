@@ -279,6 +279,153 @@ final class TownLifeLines
 		"Hear ye! Lost children are to be brought to the town square!",
 	};
 	
+	/** Two townsfolk meeting in the street while monsters besiege %town%. */
+	static final String[][] SIEGE_CONVERSATIONS =
+	{
+		{
+			"Did you hear the horns? They're at the gates!",
+			"I heard. My door's barred, I only came out for bread.",
+			"Then get it and get back inside!"
+		},
+		{
+			"How many of them are out there?",
+			"Hundreds, the guards say. Maybe more.",
+			"And how many defenders?",
+			"Not enough. Never enough."
+		},
+		{
+			"Will the gates hold?",
+			"They held last time.",
+			"Last time they didn't bring rams."
+		},
+		{
+			"My brother went up to the walls with a pitchfork.",
+			"A pitchfork? Against that?",
+			"He says it's better than nothing. I say he's a fool. A brave fool."
+		},
+		{
+			"Where are the adventurers when you need them?",
+			"At the gates, the ones with any sense of honour.",
+			"Then may the gods keep every one of them standing."
+		},
+		{
+			"I can smell the smoke from here.",
+			"That's the burning at the gate. Don't look, just walk.",
+			"I can't help it. What if they break through?"
+		},
+		{
+			"They say the Defence Force pays in medals for every monster slain.",
+			"Medals won't patch my roof if the walls fall.",
+			"No, but the walls won't fall if enough of them fight for medals."
+		},
+		{
+			"The children are all inside?",
+			"Every one. I counted them twice.",
+			"Good. Now we wait."
+		},
+		{
+			"I've hidden the silver under the floor.",
+			"Monsters don't want your silver, they want your neck.",
+			"Then I'll hide under the floor too."
+		},
+		{
+			"Listen... the shouting stopped at the gate.",
+			"Stopped because we won, or because...",
+			"Don't say it. Don't you dare say it."
+		},
+		{
+			"The healers are asking for clean bandages.",
+			"Take my sheets. Take my curtains. Take whatever helps.",
+			"Bless you, neighbour."
+		},
+		{
+			"Why %town%? Why always us?",
+			"Because we're here, and they're hungry.",
+			"That's not an answer.",
+			"It's the only one there is."
+		},
+	};
+	
+	/** Townsfolk greeting a player walking by during a siege. */
+	static final String[] SIEGE_GREETINGS =
+	{
+		"%name%! Are you going to the gates? Please hurry!",
+		"Thank the gods, a fighter! They need you at the walls, %name%!",
+		"Don't stand around, %name%, the monsters are at the gates!",
+		"%name%, the defenders need every blade they can get!",
+		"Be careful out there, %name%. Come back alive.",
+		"Is it true a gate is cracking, %name%? Tell me it isn't!",
+		"Go on, %name%, show those beasts what %town% is made of!",
+	};
+	
+	/** A townsperson still out in the streets during a siege. */
+	static final String[] SIEGE_MUSINGS =
+	{
+		"Hurry, hurry... I shouldn't even be out here.",
+		"Gods, listen to them at the gate...",
+		"If the walls fall, I'm running for the temple.",
+		"Just a few more things and I'm barring the door.",
+		"Hold, gates. Please hold.",
+		"Who would have thought monsters would march on %town%?",
+		"Half the stalls are boarded up already.",
+		"Did that come from the north gate? Or the south?",
+	};
+	
+	/** Porters and errand runners during a siege. */
+	static final String[] SIEGE_WORKER =
+	{
+		"Arrows for the walls! Make way!",
+		"Potions for the defenders, coming through!",
+		"They want more planks at the gate. Always more planks!",
+		"No time to rest, the defenders need this now!",
+		"Out of the way, this is for the healers!",
+		"If I drop this crate, a gate falls. No pressure.",
+	};
+	
+	/** Town patrols during a siege. */
+	static final String[] SIEGE_PATROL =
+	{
+		"Clear the streets! Get indoors!",
+		"Everyone off the streets! Only defenders outside!",
+		"Keep away from the gates unless you can fight!",
+		"Adventurers! To the walls! %town% needs you!",
+		"Stay calm and stay inside. We'll hold.",
+		"Bar your doors and shutters! Now!",
+	};
+	
+	/** Townsfolk running home as the siege begins. */
+	static final String[] SIEGE_FLEE =
+	{
+		"Monsters! Monsters at the gates!",
+		"Run! Get inside!",
+		"The siege! It's started! Bar the doors!",
+		"Gods help us, they're here!",
+		"Inside, everyone, inside!",
+		"I knew it, I knew they'd come!",
+		"My house, I have to get home!",
+		"Close the shutters! Hide the children!",
+	};
+	
+	/** Children running home as the siege begins. */
+	static final String[] SIEGE_CHILD_FLEE =
+	{
+		"Mommy! Mommy, the monsters are coming!",
+		"I'm scared! I want to go home!",
+		"Run, run, run!",
+		"Wait for meee!",
+	};
+	
+	/** Townsfolk coming back out after a siege. */
+	static final String[] SIEGE_OVER =
+	{
+		"Is it over? It's over! We're still standing!",
+		"Thank the gods... %town% held.",
+		"I never want to hear those horns again.",
+		"Look at the street. Look at us. We made it!",
+		"Somebody buy those defenders a drink!",
+		"Hah! Let them come back. We'll be ready.",
+	};
+	
 	/** The hours of the night, for the night watch: index is the game hour 0-5. */
 	static final String[] HOURS =
 	{

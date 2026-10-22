@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.geoengine.geodata.Cell;
 import org.l2jmobius.gameserver.managers.FakePlayerTown.Role;
 import org.l2jmobius.gameserver.managers.FakePlayerTown.TownNpc;
 import org.l2jmobius.gameserver.managers.TownLifeResident.Kind;
+import org.l2jmobius.gameserver.managers.VillageSiegeManager.Siege;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -224,6 +225,13 @@ final class TownLifeTown
 	private long _nextFirework;
 	private long _fireworksUntil;
 	private NightPhase _lastPhase;
+	private long _nextShout;
+	
+	// A village siege.
+	/** The siege of this town going on, {@code null} for none. */
+	private volatile Siege _siege;
+	/** When the last siege of this town ended, 0 for never. */
+	long siegeEndedAt;
 	
 	// The children's game.
 	private TownLifeResident _it;
@@ -973,12 +981,48 @@ final class TownLifeTown
 	// ------------------------------------------------------------------
 	
 	/**
+	 * @return the siege of this town going on, {@code null} for none
+	 */
+	Siege getSiege()
+	{
+		return _siege;
+	}
+	
+	/**
 	 * @param clock the time of day
 	 * @param festival {@code true} on festival day
+	 * @param siege the siege of this town going on, {@code null} for none
 	 * @param now the current time
 	 */
-	void update(TownLifeManager.Clock clock, boolean festival, long now)
+	void update(TownLifeManager.Clock clock, boolean festival, Siege siege, long now)
 	{
+		if (siege != _siege)
+		{
+			_siege = siege;
+			if (siege != null)
+			{
+				// Wartime: the talk of the day stops, most people run home, the crier cries the alarm.
+				for (Conversation conversation : new ArrayList<>(_conversations))
+				{
+					endConversation(conversation);
+				}
+				for (TownLifeResident resident : residents)
+				{
+					resident.onSiegeStart(now);
+				}
+				_nextCry = now + 2000;
+			}
+			else
+			{
+				siegeEndedAt = now;
+				for (TownLifeResident resident : residents)
+				{
+					resident.onSiegeEnd();
+				}
+				_nextCry = now + 5000;
+			}
+		}
+		
 		if ((_lastPhase != clock.phase()) && (_lastPhase != null) && festival && (clock.phase() == NightPhase.DUSK))
 		{
 			_fireworksUntil = now + FIREWORKS_DURATION;
@@ -1023,7 +1067,9 @@ final class TownLifeTown
 		{
 			return;
 		}
-		_nextCry = now + (TownLifeConfig.CRIER_INTERVAL * 60_000L) + Rnd.get(-20_000, 20_000);
+		final long interval = (TownLifeConfig.CRIER_INTERVAL * 60_000L) + Rnd.get(-20_000, 20_000);
+		// During a siege the crier cries the gates more often.
+		_nextCry = now + (_siege != null ? Math.min(interval, Rnd.get(60_000, 90_000)) : interval);
 		
 		for (TownLifeResident resident : residents)
 		{
@@ -1080,6 +1126,19 @@ final class TownLifeTown
 		return true;
 	}
 	
+	/**
+	 * @return {@code true} if someone running home from a siege may cry out (not everyone at once)
+	 */
+	boolean mayShout(long now)
+	{
+		if (now < _nextShout)
+		{
+			return false;
+		}
+		_nextShout = now + 1500;
+		return true;
+	}
+	
 	boolean mayTalkInTavern(long now)
 	{
 		if (now < _nextTavernLine)
@@ -1132,7 +1191,8 @@ final class TownLifeTown
 		final int x = secondNpc.getX() + (int) (Math.cos(angle) * 45);
 		final int y = secondNpc.getY() + (int) (Math.sin(angle) * 45);
 		final Location meetingPoint = TownLifeManager.groundAt(x, y, secondNpc.getZ(), secondNpc);
-		final Conversation conversation = new Conversation(first, second, TownLifeLines.CONVERSATIONS[Rnd.get(TownLifeLines.CONVERSATIONS.length)], meetingPoint, now);
+		final String[][] talks = _siege != null ? TownLifeLines.SIEGE_CONVERSATIONS : TownLifeLines.CONVERSATIONS;
+		final Conversation conversation = new Conversation(first, second, talks[Rnd.get(talks.length)], meetingPoint, now);
 		first.conversation = conversation;
 		second.conversation = conversation;
 		secondNpc.stopMove(null);
@@ -1810,7 +1870,7 @@ final class TownLifeTown
 				hidden++;
 			}
 		}
-		lines.add(name + (_ready ? "" : " (preparing)") + ": " + out + "/" + residents.size() + " out, " + homes.size() + " houses, " + _homebound.size() + " retail homebound (" + hidden + " at home)" + (isHarbor() ? ", " + shoreSpots.size() + " shore spots" : ""));
+		lines.add(name + (_ready ? "" : " (preparing)") + ": " + out + "/" + residents.size() + " out, " + homes.size() + " houses, " + _homebound.size() + " retail homebound (" + hidden + " at home)" + (isHarbor() ? ", " + shoreSpots.size() + " shore spots" : "") + (_siege != null ? ", under siege" : ""));
 		return lines;
 	}
 }
