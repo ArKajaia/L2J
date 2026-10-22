@@ -1,0 +1,6 @@
+{
+  "enabledPlugins": {
+    "codeflash@anthropic-plugin-directory": false,
+    "codeflash@codeflash": false
+  }
+}
