@@ -3,320 +3,280 @@
     <npcs>
         <npc>90000</npc> <!-- Mina -->
     </npcs>
-    
-    <!-- Tier 1: Basic Raw Materials (250 Dragon Coins) -->
+
+    <!--
+    Prices follow the High Five player market at 1 Dragon Coin = 100 Adena (what a coin sells
+    to a shop for). Drop and spoil materials use market estimates; crafted materials cost their
+    recipe ingredients plus 10% for the crafter. No item costs less than 115% of the Adena a shop
+    pays for it, so buying here and selling to a shop never beats selling the coins.
+    -->
+
+    <!-- Basic drop and spoil materials -->
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="250" id="3481" />
         <!-- Stem -->
+        <ingredient count="1" id="3481" />
         <production count="1" id="1864" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="250" id="3481" />
-        <!-- Varnish -->
-        <production count="1" id="1865" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="250" id="3481" />
-        <!-- Suede -->
-        <production count="1" id="1866" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="250" id="3481" />
-        <!-- Animal Skin -->
-        <production count="1" id="1867" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="250" id="3481" />
         <!-- Thread -->
+        <ingredient count="1" id="3481" />
         <production count="1" id="1868" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="250" id="3481" />
+        <!-- Varnish -->
+        <ingredient count="2" id="3481" />
+        <production count="1" id="1865" />
+    </item>
+    <item>
+        <!-- Animal Skin -->
+        <ingredient count="2" id="3481" />
+        <production count="1" id="1867" />
+    </item>
+    <item>
         <!-- Iron Ore -->
+        <ingredient count="2" id="3481" />
         <production count="1" id="1869" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="250" id="3481" />
         <!-- Coal -->
+        <ingredient count="2" id="3481" />
         <production count="1" id="1870" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="250" id="3481" />
         <!-- Charcoal -->
+        <ingredient count="2" id="3481" />
         <production count="1" id="1871" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="250" id="3481" />
         <!-- Animal Bone -->
+        <ingredient count="2" id="3481" />
         <production count="1" id="1872" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="250" id="3481" />
+        <!-- Suede -->
+        <ingredient count="3" id="3481" />
+        <production count="1" id="1866" />
+    </item>
+    <item>
         <!-- Silver Nugget -->
+        <ingredient count="3" id="3481" />
         <production count="1" id="1873" />
     </item>
 
-    <!-- Tier 2: Intermediate & Refined Materials (750 Dragon Coins) -->
+    <!-- Ores and the Stone of Purity -->
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="750" id="3481" />
-        <!-- Oriharukon Ore -->
-        <production count="1" id="1874" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="750" id="3481" />
-        <!-- Stone of Purity -->
-        <production count="1" id="1875" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="750" id="3481" />
         <!-- Mithril Ore -->
+        <ingredient count="20" id="3481" />
         <production count="1" id="1876" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="750" id="3481" />
         <!-- Adamantite Nugget -->
+        <ingredient count="50" id="3481" />
         <production count="1" id="1877" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="750" id="3481" />
+        <!-- Oriharukon Ore -->
+        <ingredient count="40" id="3481" />
+        <production count="1" id="1874" />
+    </item>
+    <item>
+        <!-- Stone of Purity -->
+        <ingredient count="60" id="3481" />
+        <production count="1" id="1875" />
+    </item>
+
+    <!-- Level 1-2 crafted materials (priced from their recipe: ingredients + 10%) -->
+    <item>
+        <!-- Cord -->
+        <ingredient count="3" id="3481" />
+        <production count="1" id="1884" />
+    </item>
+    <item>
         <!-- Braided Hemp -->
+        <ingredient count="4" id="3481" />
         <production count="1" id="1878" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="750" id="3481" />
         <!-- Cokes -->
+        <ingredient count="9" id="3481" />
         <production count="1" id="1879" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="750" id="3481" />
-        <!-- Steel -->
-        <production count="1" id="1880" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="750" id="3481" />
-        <!-- Coarse Bone Powder -->
-        <production count="1" id="1881" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="750" id="3481" />
         <!-- Leather -->
+        <ingredient count="10" id="3481" />
         <production count="1" id="1882" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="750" id="3481" />
-        <!-- Cord -->
-        <production count="1" id="1884" />
-    </item>
-
-    <!-- Tier 3: Advanced Processed Materials (2,000 Dragon Coins) -->
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="2000" id="3481" />
-        <!-- Steel Mold -->
-        <production count="1" id="1883" />
+        <!-- Steel -->
+        <ingredient count="17" id="3481" />
+        <production count="1" id="1880" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="2000" id="3481" />
-        <!-- High-Grade Suede -->
-        <production count="1" id="1885" />
+        <!-- Coarse Bone Powder -->
+        <ingredient count="28" id="3481" />
+        <production count="1" id="1881" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="2000" id="3481" />
-        <!-- Silver Mold -->
-        <production count="1" id="1886" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="2000" id="3481" />
-        <!-- Varnish of Purity -->
-        <production count="1" id="1887" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="2000" id="3481" />
-        <!-- Synthetic Cokes -->
-        <production count="1" id="1888" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="2000" id="3481" />
         <!-- Compound Braid -->
+        <ingredient count="29" id="3481" />
         <production count="1" id="1889" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="2000" id="3481" />
-        <!-- Mithril Alloy -->
-        <production count="1" id="1890" />
+        <!-- High-Grade Suede -->
+        <ingredient count="40" id="3481" />
+        <production count="1" id="1885" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="2000" id="3481" />
-        <!-- Artisan's Frame -->
-        <production count="1" id="1891" />
+        <!-- Steel Mold -->
+        <ingredient count="41" id="3481" />
+        <production count="1" id="1883" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="2000" id="3481" />
-        <!-- Blacksmith's Frame -->
-        <production count="1" id="1892" />
+        <!-- Synthetic Cokes -->
+        <ingredient count="73" id="3481" />
+        <production count="1" id="1888" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="2000" id="3481" />
-        <!-- Oriharukon -->
-        <production count="1" id="1893" />
+        <!-- Silver Mold -->
+        <ingredient count="110" id="3481" />
+        <production count="1" id="1886" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="2000" id="3481" />
-        <!-- Crafted Leather -->
-        <production count="1" id="1894" />
+        <!-- Varnish of Purity -->
+        <ingredient count="160" id="3481" />
+        <production count="1" id="1887" />
     </item>
+
+    <!-- Level 4-5 crafted materials -->
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="2000" id="3481" />
         <!-- Metallic Fiber -->
+        <ingredient count="6" id="3481" />
         <production count="1" id="1895" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="2000" id="3481" />
         <!-- Metallic Thread -->
+        <ingredient count="17" id="3481" />
         <production count="1" id="5549" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="2000" id="3481" />
+        <!-- Crafted Leather -->
+        <ingredient count="63" id="3481" />
+        <production count="1" id="1894" />
+    </item>
+    <item>
         <!-- Durable Metal Plate -->
+        <ingredient count="200" id="3481" />
         <production count="1" id="5550" />
     </item>
+    <item>
+        <!-- Mithril Alloy -->
+        <ingredient count="240" id="3481" />
+        <production count="1" id="1890" />
+    </item>
+    <item>
+        <!-- Oriharukon -->
+        <ingredient count="300" id="3481" />
+        <production count="1" id="1893" />
+    </item>
+    <item>
+        <!-- Blacksmith's Frame -->
+        <ingredient count="1200" id="3481" />
+        <production count="1" id="1892" />
+    </item>
+    <item>
+        <!-- Artisan's Frame -->
+        <ingredient count="1500" id="3481" />
+        <production count="1" id="1891" />
+    </item>
 
-    <!-- Tier 4: Rare Craft Reagents & Molds (5,000 Dragon Coins) -->
+    <!-- Key materials (rare drop and spoil) -->
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="5000" id="3481" />
-        <!-- Mold Glue -->
-        <production count="1" id="4039" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="5000" id="3481" />
-        <!-- Mold Lubricant -->
-        <production count="1" id="4040" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="5000" id="3481" />
-        <!-- Mold Hardener -->
-        <production count="1" id="4041" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="5000" id="3481" />
-        <!-- Enria -->
-        <production count="1" id="4042" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="5000" id="3481" />
-        <!-- Asofe -->
-        <production count="1" id="4043" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="5000" id="3481" />
         <!-- Thons -->
+        <ingredient count="120" id="3481" />
         <production count="1" id="4044" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="5000" id="3481" />
-        <!-- Maestro Holder -->
-        <production count="1" id="4045" />
+        <!-- Mold Glue -->
+        <ingredient count="120" id="3481" />
+        <production count="1" id="4039" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="5000" id="3481" />
+        <!-- Asofe -->
+        <ingredient count="150" id="3481" />
+        <production count="1" id="4043" />
+    </item>
+    <item>
+        <!-- Mold Lubricant -->
+        <ingredient count="180" id="3481" />
+        <production count="1" id="4040" />
+    </item>
+    <item>
+        <!-- Enria -->
+        <ingredient count="250" id="3481" />
+        <production count="1" id="4042" />
+    </item>
+    <item>
+        <!-- Mold Hardener -->
+        <ingredient count="300" id="3481" />
+        <production count="1" id="4041" />
+    </item>
+
+    <!-- Molds, holders and anvils (priced from their recipe) -->
+    <item>
         <!-- Maestro Anvil Lock -->
+        <ingredient count="1600" id="3481" />
         <production count="1" id="4046" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="5000" id="3481" />
-        <!-- Craftsman Mold -->
-        <production count="1" id="4047" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="5000" id="3481" />
-        <!-- Maestro Mold -->
-        <production count="1" id="4048" />
-    </item>
-    <item>
-        <!-- Required Ingredient -->
-        <ingredient count="5000" id="3481" />
         <!-- Reorin's Mold -->
+        <ingredient count="3200" id="3481" />
         <production count="1" id="5551" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="5000" id="3481" />
+        <!-- Maestro Mold -->
+        <ingredient count="3500" id="3481" />
+        <production count="1" id="4048" />
+    </item>
+    <item>
         <!-- Warsmith's Mold -->
+        <ingredient count="6300" id="3481" />
         <production count="1" id="5552" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="5000" id="3481" />
+        <!-- Maestro Holder -->
+        <ingredient count="7100" id="3481" />
+        <production count="1" id="4045" />
+    </item>
+    <item>
+        <!-- Craftsman Mold -->
+        <ingredient count="11000" id="3481" />
+        <production count="1" id="4047" />
+    </item>
+    <item>
         <!-- Arcsmith's Anvil -->
+        <ingredient count="11000" id="3481" />
         <production count="1" id="5553" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="5000" id="3481" />
         <!-- Warsmith's Holder -->
+        <ingredient count="17000" id="3481" />
         <production count="1" id="5554" />
     </item>
 
-    <!-- Tier 5: S80 High-Grade Materials (12,500 Dragon Coins) -->
+    <!-- S80 materials -->
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="12500" id="3481" />
         <!-- Leonard -->
+        <ingredient count="1200" id="3481" />
         <production count="1" id="9628" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="12500" id="3481" />
-        <!-- Adamantine -->
-        <production count="1" id="9629" />
+        <!-- Orichalcum -->
+        <ingredient count="1800" id="3481" />
+        <production count="1" id="9630" />
     </item>
     <item>
-        <!-- Required Ingredient -->
-        <ingredient count="12500" id="3481" />
-        <!-- Orichalcum -->
-        <production count="1" id="9630" />
+        <!-- Adamantine -->
+        <ingredient count="2500" id="3481" />
+        <production count="1" id="9629" />
     </item>
 </list>

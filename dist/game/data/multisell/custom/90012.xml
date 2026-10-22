@@ -4,57 +4,65 @@
         <npc>90000</npc> <!-- Mina -->
     </npcs>
 
+    <!--
+    Prices follow the High Five player market at 1 Dragon Coin = 100 Adena (what a coin sells to a
+    shop for). Crystals sit a little above what a shop pays for them, as on retail markets flooded by
+    crystallizing. Gemstones D-B match the Adena price of the town shops that stock them; Gemstones A
+    and S come from the Merchant of Mammon (30,000 / 100,000 Ancient Adena, i.e. 1,200 / 4,000 coins
+    through the Ancient Adena exchange), so they are priced a little under that route.
+    -->
+
     <!-- Crystals -->
     <item>
         <!-- Crystal (D-Grade) -->
-        <ingredient count="2" id="3481" />
+        <ingredient count="5" id="3481" />
         <production count="1" id="1458" />
     </item>
     <item>
         <!-- Crystal (C-Grade) -->
-        <ingredient count="5" id="3481" />
+        <ingredient count="20" id="3481" />
         <production count="1" id="1459" />
     </item>
     <item>
         <!-- Crystal (B-Grade) -->
-        <ingredient count="15" id="3481" />
+        <ingredient count="55" id="3481" />
         <production count="1" id="1460" />
     </item>
     <item>
         <!-- Crystal (A-Grade) -->
-        <ingredient count="40" id="3481" />
+        <ingredient count="90" id="3481" />
         <production count="1" id="1461" />
     </item>
     <item>
         <!-- Crystal (S-Grade) -->
-        <ingredient count="100" id="3481" />
+        <ingredient count="150" id="3481" />
         <production count="1" id="1462" />
     </item>
 
     <!-- Gemstones -->
     <item>
         <!-- Gemstone D -->
-        <ingredient count="5" id="3481" />
+        <ingredient count="10" id="3481" />
         <production count="1" id="2130" />
     </item>
     <item>
         <!-- Gemstone C -->
-        <ingredient count="10" id="3481" />
+        <ingredient count="30" id="3481" />
         <production count="1" id="2131" />
     </item>
     <item>
         <!-- Gemstone B -->
-        <ingredient count="30" id="3481" />
+        <ingredient count="100" id="3481" />
         <production count="1" id="2132" />
     </item>
     <item>
         <!-- Gemstone A -->
-        <ingredient count="100" id="3481" />
+        <ingredient count="750" id="3481" />
         <production count="1" id="2133" />
     </item>
     <item>
         <!-- Gemstone S -->
-        <ingredient count="300" id="3481" />
+        <ingredient count="2500" id="3481" />
         <production count="1" id="2134" />
     </item>
-</list>
+</list>
