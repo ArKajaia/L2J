@@ -131,18 +131,19 @@ public class CustomBuffBook implements IItemHandler
 		sb.append("<html><body><br><center>");
 
 		// Title.
-		sb.append("<table width=740 border=0 cellspacing=0 cellpadding=0>");
+		sb.append("<table width=720 border=0 cellspacing=0 cellpadding=0>");
 		sb.append("<tr><td height=25 align=center><font name=\"hs12\" color=\"CDB67F\">Skill Master</font></td></tr>");
 		sb.append("<tr><td align=center><font color=\"A2A2A2\">Each ").append(getMedalName()).append(" teaches you one buff of another class for good.</font></td></tr>");
 		sb.append("</table>");
-		sb.append("<img src=\"L2UI.SquareGray\" width=740 height=1><br>");
+		sb.append("<img src=\"L2UI.SquareGray\" width=720 height=1><br>");
 
 		// Status bar: medals, progress and paging.
-		sb.append("<table width=740 height=40 border=0 cellspacing=0 cellpadding=4 bgcolor=1A1A1A><tr>");
-		sb.append("<td width=36 align=center><img src=\"").append(getMedalIcon()).append("\" width=32 height=32></td>");
-		sb.append("<td width=220 align=left>Medals: <font color=\"").append(medals > 0 ? "00FF66" : "FF6666").append("\">").append(medals).append("</font></td>");
-		sb.append("<td width=200 align=center>Learned: <font color=\"LEVEL\">").append(learned).append("</font> / ").append(skills.size()).append("</td>");
-		sb.append("<td width=284 align=right>");
+		// The widths add up to exactly 720 with no padding, otherwise the client stretches the columns past the window.
+		sb.append("<table width=720 height=40 border=0 cellspacing=0 cellpadding=0 bgcolor=1A1A1A><tr>");
+		sb.append("<td fixwidth=44 align=center><img src=\"").append(getMedalIcon()).append("\" width=32 height=32></td>");
+		sb.append("<td fixwidth=196 align=left>Medals: <font color=\"").append(medals > 0 ? "00FF66" : "FF6666").append("\">").append(medals).append("</font></td>");
+		sb.append("<td fixwidth=200 align=center>Learned: <font color=\"LEVEL\">").append(learned).append("</font> / ").append(skills.size()).append("</td>");
+		sb.append("<td fixwidth=280 align=right>");
 		appendPaging(sb, currentPage, maxPages);
 		sb.append("</td></tr></table>");
 
@@ -152,7 +153,7 @@ public class CustomBuffBook implements IItemHandler
 		}
 		else
 		{
-			sb.append("<table width=740 border=0 cellspacing=0 cellpadding=2><tr><td align=center><font color=\"7F7F7F\">");
+			sb.append("<table width=720 border=0 cellspacing=0 cellpadding=0><tr><td fixwidth=720 align=center><font color=\"7F7F7F\">");
 			if (learned == skills.size())
 			{
 				sb.append("<font color=\"00FF66\">Mastery achieved!</font> You have learned every buff.");
@@ -165,22 +166,27 @@ public class CustomBuffBook implements IItemHandler
 			sb.append("</font></td></tr></table>");
 
 			// The buffs, two per row.
-			sb.append("<table width=740 border=0 cellspacing=4 cellpadding=0>");
+			// Two 356 wide cards with an 8 wide gap between them. Each row is its own table, so a long
+			// description in one row cannot shift the columns of the others.
 			for (int i = start; i < end; i += COLUMNS)
 			{
-				sb.append("<tr>");
+				sb.append("<table width=720 border=0 cellspacing=0 cellpadding=0><tr>");
 				for (int column = 0; column < COLUMNS; column++)
 				{
-					sb.append("<td width=366 valign=top>");
+					if (column > 0)
+					{
+						sb.append("<td fixwidth=8></td>");
+					}
+					sb.append("<td fixwidth=356 valign=top>");
 					if ((i + column) < end)
 					{
 						appendSkill(sb, player, skills.get(i + column), medals, currentPage);
 					}
 					sb.append("</td>");
 				}
-				sb.append("</tr>");
+				sb.append("</tr></table>");
+				sb.append("<img src=\"L2UI.SquareBlank\" width=720 height=6>");
 			}
-			sb.append("</table>");
 		}
 
 		sb.append("</center></body></html>");
@@ -202,9 +208,9 @@ public class CustomBuffBook implements IItemHandler
 			icon = "icon.skill0000";
 		}
 
-		sb.append("<table width=366 height=58 border=0 cellspacing=0 cellpadding=3 bgcolor=").append(known ? "0E0E0E" : "222222").append("><tr>");
-		sb.append("<td width=40 align=center valign=top><img src=\"").append(icon).append("\" width=32 height=32></td>");
-		sb.append("<td width=246 align=left valign=top>");
+		sb.append("<table width=356 height=64 border=0 cellspacing=0 cellpadding=0 bgcolor=").append(known ? "0E0E0E" : "222222").append("><tr>");
+		sb.append("<td fixwidth=44 align=center valign=center><img src=\"").append(icon).append("\" width=32 height=32></td>");
+		sb.append("<td fixwidth=226 align=left valign=center>");
 		sb.append("<font color=\"").append(known ? "6A6A6A" : "LEVEL").append("\">").append(skill.getName()).append("</font> ");
 		if (upgrade)
 		{
@@ -219,7 +225,7 @@ public class CustomBuffBook implements IItemHandler
 			sb.append("<br1><font color=\"").append(known ? "555555" : "B09B79").append("\">").append(description).append("</font>");
 		}
 		sb.append("</td>");
-		sb.append("<td width=80 align=center valign=middle>");
+		sb.append("<td fixwidth=86 align=center valign=center>");
 		if (known)
 		{
 			sb.append("<font color=\"5A5A5A\">Learned</font>");
@@ -238,7 +244,7 @@ public class CustomBuffBook implements IItemHandler
 	private static void appendPaging(StringBuilder sb, int page, int maxPages)
 	{
 		sb.append("<table border=0 cellspacing=0 cellpadding=0><tr>");
-		sb.append("<td width=60 align=center>");
+		sb.append("<td fixwidth=60 align=center>");
 		if (page > 1)
 		{
 			sb.append("<button value=\"Prev\" action=\"bypass ").append(BYPASS).append(" ").append(page - 1).append("\" width=55 height=22 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
@@ -246,7 +252,7 @@ public class CustomBuffBook implements IItemHandler
 		sb.append("</td>");
 		for (int i = 1; i <= maxPages; i++)
 		{
-			sb.append("<td width=18 align=center>");
+			sb.append("<td fixwidth=18 align=center>");
 			if (i == page)
 			{
 				sb.append("<font color=\"LEVEL\">").append(i).append("</font>");
@@ -257,7 +263,7 @@ public class CustomBuffBook implements IItemHandler
 			}
 			sb.append("</td>");
 		}
-		sb.append("<td width=60 align=center>");
+		sb.append("<td fixwidth=60 align=center>");
 		if (page < maxPages)
 		{
 			sb.append("<button value=\"Next\" action=\"bypass ").append(BYPASS).append(" ").append(page + 1).append("\" width=55 height=22 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
