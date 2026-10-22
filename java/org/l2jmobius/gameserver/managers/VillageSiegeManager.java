@@ -53,7 +53,6 @@ import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.config.custom.VillageSiegeConfig;
 import org.l2jmobius.gameserver.data.SpawnTable;
 import org.l2jmobius.gameserver.data.xml.ExperienceData;
-import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.data.xml.VillageSiegeData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
@@ -74,7 +73,6 @@ import org.l2jmobius.gameserver.model.events.EventType;
 import org.l2jmobius.gameserver.model.events.holders.actor.creature.OnCreatureDeath;
 import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
 import org.l2jmobius.gameserver.model.interfaces.ILocational;
-import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.olympiad.OlympiadManager;
 import org.l2jmobius.gameserver.model.script.Quest;
@@ -104,8 +102,8 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
  * end.</li>
  * <li>Guards: the village's own guards are hidden for the siege (they would end every wave at once), and siege guards a few levels above the monsters hold a line at each gate with the defenders.</li>
  * <li>Fake players come to defend too ({@link FakePlayerPvpProfile#isSiegeDefender()}): more when no player is there, so the fighting goes on unwatched. The monsters can kill them, and they leave after a while.</li>
- * <li>Contribution: damage to the siege's monsters (shared by damage on each kill), healing the defenders and every minute of fighting. Players up to {@link VillageSiegeConfig#MAX_PLAYER_LEVEL} are paid in Defence Medals as they earn them, get more experience from
- * the siege's monsters and a reward in experience at the end; fake players are ranked too. The Defence Force Board of each village shows the rankings and exchanges the medals for gear up to C grade.</li>
+ * <li>Contribution: damage to the siege's monsters (shared by damage on each kill), healing the defenders and every minute of fighting. Players up to {@link VillageSiegeConfig#MAX_PLAYER_LEVEL} are paid in Defence Medals as they earn them (the more, the stronger the
+ * monster: {@link #getMedalsPerPoint}), get more experience from the siege's monsters and a reward in experience at the end; fake players are ranked too. The Defence Force Board of each village shows the rankings and exchanges the medals for gear up to C grade.</li>
  * </ul>
  */
 public class VillageSiegeManager
@@ -241,6 +239,14 @@ public class VillageSiegeManager
 		public synchronized long getMedals()
 		{
 			return _medals;
+		}
+
+		/**
+		 * @return the medals earned so far, paid or not
+		 */
+		private synchronized double getEarnedMedals()
+		{
+			return _medals + _pendingMedals;
 		}
 
 		/**
@@ -402,7 +408,6 @@ public class VillageSiegeManager
 		private final Map<String, Contributor> _contributors = new ConcurrentHashMap<>();
 		private final Map<String, String> _computers = new ConcurrentHashMap<>();
 		private final List<WorldRegion> _keptRegions = new ArrayList<>();
-		private final double _medalsPerPoint;
 		/** The monster kinds of each level, for the defenders above the village's levels. */
 		private final Map<Integer, List<Integer>> _scaledMonsters = new ConcurrentHashMap<>();
 		private volatile NpcTemplate _guardTemplate;
@@ -417,7 +422,7 @@ public class VillageSiegeManager
 		private volatile int _waves;
 		private int _ticks;
 
-		Siege(SiegeVillage village, int level, long start, long end, int day, Location heart, TownZone town, double medalsPerPoint)
+		Siege(SiegeVillage village, int level, long start, long end, int day, Location heart, TownZone town)
 		{
 			_village = village;
 			_level = level;
@@ -426,7 +431,6 @@ public class VillageSiegeManager
 			_day = day;
 			_heart = heart;
 			_town = town;
-			_medalsPerPoint = medalsPerPoint;
 		}
 
 		public SiegeVillage getVillage()
@@ -533,14 +537,6 @@ public class VillageSiegeManager
 				}
 			}
 			return alive;
-		}
-
-		/**
-		 * @return how many medals a point of contribution pays in this village
-		 */
-		public double getMedalsPerPoint()
-		{
-			return _medalsPerPoint;
 		}
 
 		/**
@@ -736,7 +732,7 @@ public class VillageSiegeManager
 			{
 				names.append(names.length() > 0 ? ", " : "").append(entrance.getName());
 			}
-			LOGGER.info(getClass().getSimpleName() + ": " + village.getName() + ": level " + getLevel(village) + ", " + entrances.size() + " entrances (" + names + "), " + Math.round(getMedalsPerPoint(village) * VillageSiegeConfig.EXPECTED_POINTS_PER_HOUR) + " medals an hour.");
+			LOGGER.info(getClass().getSimpleName() + ": " + village.getName() + ": level " + getLevel(village) + ", " + entrances.size() + " entrances (" + names + "), " + getMedalsPerHour(getLevel(village)) + " medals an hour.");
 		}
 		scheduleNext();
 	}
@@ -1007,14 +1003,21 @@ public class VillageSiegeManager
 	}
 
 	/**
-	 * @param village a village
-	 * @return how many medals a point of contribution pays there
+	 * @param level the level of the monster a point was earned on (of the defender, for healing and the minutes of fighting)
+	 * @return how many medals the point pays: the stronger the monster, the more
 	 */
-	public static double getMedalsPerPoint(SiegeVillage village)
+	public static double getMedalsPerPoint(int level)
 	{
-		final ItemTemplate item = ItemData.getInstance().getTemplate(village.getReferenceItemId());
-		final double price = item != null ? item.getReferencePrice() : 0;
-		return price / VillageSiegeConfig.ADENA_PER_MEDAL / VillageSiegeConfig.HOURS_PER_REFERENCE_ITEM / VillageSiegeConfig.EXPECTED_POINTS_PER_HOUR;
+		return level * VillageSiegeConfig.MEDAL_RATE;
+	}
+
+	/**
+	 * @param level the level of the monsters
+	 * @return the medals an hour of fighting ({@link VillageSiegeConfig#EXPECTED_POINTS_PER_HOUR} points) pays against them
+	 */
+	public static long getMedalsPerHour(int level)
+	{
+		return Math.round(getMedalsPerPoint(level) * VillageSiegeConfig.EXPECTED_POINTS_PER_HOUR);
 	}
 
 	/**
@@ -1049,7 +1052,7 @@ public class VillageSiegeManager
 
 		final int level = getLevel(village);
 		final long now = System.currentTimeMillis();
-		final Siege siege = new Siege(village, level, now, end, getDay(now), heart, town, getMedalsPerPoint(village));
+		final Siege siege = new Siege(village, level, now, end, getDay(now), heart, town);
 		// The monsters of the siege's levels living nearest: on the entrance's road, around the village, farther out, or anywhere.
 		// A few kinds at least, so the waves aren't all the same monster.
 		final int[] levels = getLevelRange(village);
@@ -1172,7 +1175,7 @@ public class VillageSiegeManager
 					if ((contributor._lastActive >= (now - (VillageSiegeConfig.END_BONUS_MINUTES * 60000L))) && (contributor.getPoints() > 0))
 					{
 						final double bonus = (contributor._points * percent) / 100;
-						addPoints(siege, contributor, bonus, false);
+						addPoints(contributor, bonus, (contributor.getEarnedMedals() * percent) / 100);
 						final Player player = contributor._fake ? null : World.getInstance().getPlayer(contributor._objectId);
 						if (player != null)
 						{
@@ -2733,7 +2736,8 @@ public class VillageSiegeManager
 			{
 				continue;
 			}
-			addPoints(siege, contributor, (points * Math.min(maxHp, entry.getValue())) / maxHp, true);
+			final double share = (points * Math.min(maxHp, entry.getValue())) / maxHp;
+			addPoints(contributor, share, share * getMedalsPerPoint(npc.getLevel()));
 		}
 	}
 
@@ -2764,7 +2768,8 @@ public class VillageSiegeManager
 		}
 
 		contributor._lastActive = System.currentTimeMillis();
-		addPoints(siege, contributor, (VillageSiegeConfig.HEAL_POINTS * Math.min(hp, target.getMaxHp())) / target.getMaxHp(), true);
+		final double points = (VillageSiegeConfig.HEAL_POINTS * Math.min(hp, target.getMaxHp())) / target.getMaxHp();
+		addPoints(contributor, points, points * getMedalsPerPoint(contributor._level));
 	}
 
 	/**
@@ -2782,18 +2787,17 @@ public class VillageSiegeManager
 				{
 					contributor._activeMinutes++;
 				}
-				addPoints(siege, contributor, VillageSiegeConfig.ACTIVE_POINTS, true);
+				addPoints(contributor, VillageSiegeConfig.ACTIVE_POINTS, VillageSiegeConfig.ACTIVE_POINTS * getMedalsPerPoint(contributor._level));
 			}
 		}
 	}
 
 	/**
-	 * @param siege the siege
 	 * @param contributor who earned it
 	 * @param points the points
-	 * @param medals {@code true} if the points also earn medals (the end bonus earns them on its own)
+	 * @param medals the medals they pay (not to a fake player, nor to a second character of a computer)
 	 */
-	private static void addPoints(Siege siege, Contributor contributor, double points, boolean medals)
+	private static void addPoints(Contributor contributor, double points, double medals)
 	{
 		if (points <= 0)
 		{
@@ -2805,7 +2809,7 @@ public class VillageSiegeManager
 			contributor._points += points;
 			if (!contributor._fake && (contributor._blocked == null))
 			{
-				contributor._pendingMedals += points * siege._medalsPerPoint;
+				contributor._pendingMedals += medals;
 			}
 		}
 	}

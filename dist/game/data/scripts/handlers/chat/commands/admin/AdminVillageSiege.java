@@ -176,7 +176,7 @@ public class AdminVillageSiege implements IAdminCommandHandler
 		sb.append("<table width=280><tr><td width=85>Village</td><td width=45>Lv</td><td width=35>Gates</td><td width=50>Medals/h</td><td width=60></td></tr>");
 		for (SiegeVillage village : VillageSiegeData.getInstance().getVillages())
 		{
-			final int perHour = (int) Math.round(VillageSiegeManager.getMedalsPerPoint(village) * VillageSiegeConfig.EXPECTED_POINTS_PER_HOUR);
+			final long perHour = VillageSiegeManager.getMedalsPerHour(manager.getLevel(village));
 			final int[] levels = manager.getLevelRange(village);
 			sb.append("<tr><td>").append(village.getId()).append("</td><td>").append(levels[0]).append("-").append(levels[1]).append("</td><td><a action=\"bypass -h admin_villagesiege entrances ").append(village.getId()).append("\">").append(manager.getEntrances(village).size()).append("</a></td><td>").append(perHour).append("</td><td><a action=\"bypass -h admin_villagesiege start ").append(village.getId()).append("\">start</a></td></tr>");
 		}

@@ -22,7 +22,6 @@
 						<xs:attribute name="town" type="xs:string" use="required" />
 						<xs:attribute name="gatekeeper" type="xs:positiveInteger" use="required" />
 						<xs:attribute name="guardLook" type="xs:positiveInteger" use="required" />
-						<xs:attribute name="referenceItem" type="xs:positiveInteger" use="required" />
 						<xs:attribute name="minLevel" type="xs:positiveInteger" />
 						<xs:attribute name="maxLevel" type="xs:positiveInteger" />
 					</xs:complexType>
