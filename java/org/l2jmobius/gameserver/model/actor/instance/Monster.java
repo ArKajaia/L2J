@@ -175,8 +175,8 @@ public class Monster extends Attackable
 				return false;
 			}
 			
-			// Like a player: attackable without Ctrl while fighting, while flagged, or with karma (a PK).
-			return FakePlayersConfig.FAKE_PLAYER_AUTO_ATTACKABLE || isInCombat() || attacker.isMonster() || (getScriptValue() > 0) || (getKarma() > 0);
+			// Like a player: attackable without Ctrl while flagged, or with karma (a PK). A white one fighting monsters, like a fake defender of a Village Under Siege, takes Ctrl.
+			return FakePlayersConfig.FAKE_PLAYER_AUTO_ATTACKABLE || attacker.isMonster() || (getScriptValue() > 0) || (getKarma() > 0);
 		}
 		
 		if (NpcConfig.GUARD_ATTACK_AGGRO_MOB && isAggressive() && (attacker instanceof Guard))

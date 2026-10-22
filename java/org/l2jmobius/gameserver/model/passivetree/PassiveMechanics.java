@@ -23,7 +23,6 @@ import org.l2jmobius.gameserver.model.conditions.ConditionUsingItemType;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
-import org.l2jmobius.gameserver.model.actor.holders.player.AreaTargets;
 import org.l2jmobius.gameserver.model.actor.holders.player.Totems;
 import org.l2jmobius.gameserver.model.groups.Party;
 import org.l2jmobius.gameserver.model.effects.EffectType;
@@ -620,12 +619,6 @@ public final class PassiveMechanics
 		for (Creature creature : World.getInstance().getVisibleObjectsInRange(from, Creature.class, ARC_RANGE))
 		{
 			if ((creature == caster) || struck.contains(creature) || creature.isAlikeDead() || !creature.isAutoAttackable(caster) || (creature == summon) || caster.isInsidePeaceZone(caster, creature))
-			{
-				continue;
-			}
-			
-			// Like the players around, a player's arc spares a fake player it may not fight without Ctrl.
-			if (caster.isPlayable() && AreaTargets.isFakePerson(creature) && !AreaTargets.isFakeAreaTarget(caster, creature, false))
 			{
 				continue;
 			}

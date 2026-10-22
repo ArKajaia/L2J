@@ -1233,10 +1233,10 @@ public class Skill
 			}
 			else if (skill.hasNegativeEffect() && AreaTargets.isFakePerson(target))
 			{
-				// A fake player (and its servitor) like a player: hit only with PvP status (flagged, PK, clan war), or as the target the skill is aimed at with Ctrl (or a fighting one, fair game for a hit of its own, see Monster#isAutoAttackable).
+				// A fake player (and its servitor) like a player: hit only if it may be fought without Ctrl (flagged, PK, clan war, see Monster#isAutoAttackable), or as the target the skill is aimed at with Ctrl.
 				// So the white fake players around, like the fake defenders of a Village Under Siege, are spared.
-				final boolean aimed = (skill.getEffectRange() > 0) && (caster.getTarget() == target) && (AreaTargets.isCtrlCast(caster, skill) || target.isAutoAttackable(caster));
-				if (target.isInsideZone(ZoneId.PEACE) || (!aimed && !AreaTargets.isFakeAreaTarget(caster, target, false)))
+				final boolean forcedTarget = (skill.getEffectRange() > 0) && (caster.getTarget() == target) && AreaTargets.isCtrlCast(caster, skill);
+				if (target.isInsideZone(ZoneId.PEACE) || (!forcedTarget && !target.isAutoAttackable(caster)))
 				{
 					return false;
 				}
