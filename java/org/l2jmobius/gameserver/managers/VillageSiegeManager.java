@@ -48,9 +48,11 @@ import org.l2jmobius.commons.database.DatabaseFactory;
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.config.custom.VillageSiegeConfig;
 import org.l2jmobius.gameserver.data.SpawnTable;
+import org.l2jmobius.gameserver.data.xml.ExperienceData;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.data.xml.VillageSiegeData;
@@ -65,6 +67,7 @@ import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.instance.Guard;
+import org.l2jmobius.gameserver.model.actor.instance.VillageGate;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.dynamicquest.WorldMonsterIndex;
 import org.l2jmobius.gameserver.model.events.EventType;
@@ -72,6 +75,7 @@ import org.l2jmobius.gameserver.model.events.holders.actor.creature.OnCreatureDe
 import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
+import org.l2jmobius.gameserver.model.olympiad.OlympiadManager;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.model.villagesiege.SiegeEntrance;
@@ -82,6 +86,8 @@ import org.l2jmobius.gameserver.network.enums.ChatType;
 import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
+import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
+import org.l2jmobius.gameserver.taskmanagers.AttackStanceTaskManager;
 import org.l2jmobius.gameserver.util.LocationUtil;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
@@ -89,14 +95,16 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
  * Village Under Siege: one starting village after the other, the monsters of the hunting grounds around a village attack its entrances.
  * <ul>
  * <li>Schedule: the villages of {@link VillageSiegeConfig#ORDER} are besieged one after the other, over and over, {@link VillageSiegeConfig#DURATION} minutes each with a {@link VillageSiegeConfig#BREAK} minute rest, counted from a fixed time ({@link #getSlots}). A
- * restart picks the rotation up where it stands. Only the players up to {@link VillageSiegeConfig#ANNOUNCE_MAX_LEVEL} hear of it.</li>
- * <li>Entrances: the roads the monsters take into the village ({@link SiegeEntranceFinder}). Each has a gate standard the defenders hold: monsters next to it wear its meter down, and when it runs out the gate has fallen. A fallen gate doesn't end the siege, but halves its end
- * bonus.</li>
- * <li>Waves form out on each road and march on the gate. The monsters are the ones living around the village, at its level ({@link SiegeEntranceFinder#findLevel}); a Warband Leader comes now and then and a Siege Lord near the end.</li>
- * <li>Guards: the village's own guards are hidden for the siege (they would end every wave at once), and siege guards {@link VillageSiegeConfig#GUARD_LEVEL_OFFSET} levels above the monsters stand on a line behind each gate, for the monsters that get through.</li>
+ * restart picks the rotation up where it stands. Only the players up to {@link VillageSiegeConfig#ANNOUNCE_MAX_LEVEL} hear of it; those up to {@link VillageSiegeConfig#MAX_PLAYER_LEVEL} are invited and may teleport there for free ({@link #join}).</li>
+ * <li>Entrances: the roads the monsters take into the village ({@link SiegeEntranceFinder}). Each has a gate ({@link VillageGate}) with HP: the monsters fight the defenders and the guards first and, with nobody left in front of them, beat on the gate. At 0 HP it falls and
+ * the monsters run into the streets; it is raised again after a while. A fallen gate doesn't end the siege, but halves its end bonus and cuts the defenders' reward.</li>
+ * <li>Three stages (Vanguard, Main Assault, Final Assault): each entrance is kept under pressure, a number of monsters on it that grows with the stage and the defenders there, topped up every few seconds; and now and then a great wave marches on it. The monsters are
+ * the ones living around the village, at its level ({@link SiegeEntranceFinder#findLevel}), and for the defenders above that level, monsters of their own level ({@link VillageSiegeConfig#SCALE_TO_DEFENDERS}). A Warband Leader comes now and then and a Siege Lord near the
+ * end.</li>
+ * <li>Guards: the village's own guards are hidden for the siege (they would end every wave at once), and siege guards a few levels above the monsters hold a line at each gate with the defenders.</li>
  * <li>Fake players come to defend too ({@link FakePlayerPvpProfile#isSiegeDefender()}): more when no player is there, so the fighting goes on unwatched. The monsters can kill them, and they leave after a while.</li>
- * <li>Contribution: damage to the siege's monsters (shared by damage on each kill), healing the defenders and every minute of fighting. Players up to {@link VillageSiegeConfig#MAX_PLAYER_LEVEL} are paid in Defence Medals as they earn them; fake players are ranked
- * too. The Defence Force Board of each village shows the rankings and exchanges the medals for gear up to C grade.</li>
+ * <li>Contribution: damage to the siege's monsters (shared by damage on each kill), healing the defenders and every minute of fighting. Players up to {@link VillageSiegeConfig#MAX_PLAYER_LEVEL} are paid in Defence Medals as they earn them, get more experience from
+ * the siege's monsters and a reward in experience at the end; fake players are ranked too. The Defence Force Board of each village shows the rankings and exchanges the medals for gear up to C grade.</li>
  * </ul>
  */
 public class VillageSiegeManager
@@ -105,7 +113,7 @@ public class VillageSiegeManager
 
 	/** The Defence Force Board, near the gatekeeper of every village. */
 	public static final int BOARD_NPC_ID = 900600;
-	/** The gate standard of an entrance. */
+	/** The gate of an entrance (its template is made for each siege, never in the npc data). */
 	public static final int STANDARD_NPC_ID = 900601;
 	/** Ids of the siege guard templates made for each siege (never in the npc data). */
 	private static final int GUARD_NPC_ID = 900610;
@@ -127,14 +135,42 @@ public class VillageSiegeManager
 	private static final int MONSTER_SIGHT = 450;
 	/** A fake defender fights the monsters this far from its gate (or from itself). */
 	private static final int DEFENDER_REACH = 900;
-	/** The siege guards come back this long after they fall. */
-	private static final long GUARD_RESPAWN = 90000;
 	/** Regions this far around the village stay awake during a siege. */
 	private static final int KEEP_ACTIVE_RANGE = 2500;
-	/** While its gate stands, a siege guard only goes for monsters this much closer to it than the gate. */
-	private static final int GUARD_GATE_MARGIN = 200;
-	/** ... and always for those this close. */
-	private static final int GUARD_MIN_REACH = 120;
+	/** A monster with nobody to fight this close to a standing gate beats on it. */
+	private static final int GATE_ATTACK_RANGE = 700;
+	/** A monster beating on the gate turns on a defender this close (now and then, so the gate keeps taking blows). */
+	private static final int GATE_TURN_RANGE = 300;
+	/** The gate is mended only when it hasn't been hit for this long. */
+	private static final long GATE_REPAIR_DELAY = 10000;
+	/** The defenders near a gate are told how it stands at these HP percents. */
+	private static final int[] GATE_ALARMS =
+	{
+		75,
+		50,
+		25,
+		10
+	};
+	/** Monsters of a top-up of the pressure come in groups of this many. */
+	private static final int REINFORCE_GROUP_MIN = 2;
+	private static final int REINFORCE_GROUP_MAX = 4;
+	/** Each stage starts at this part of the siege. */
+	private static final double[] STAGE_STARTS =
+	{
+		0,
+		0.3,
+		0.7
+	};
+	private static final String[] STAGE_NAMES =
+	{
+		"Vanguard",
+		"Main Assault",
+		"Final Assault"
+	};
+	/** The players who came by the siege's teleport can go back where they were this long after it ended. */
+	private static final long RETURN_TIME = 20 * 60000L;
+	/** Fake defenders arrive in groups of up to this many. */
+	private static final int FAKE_GROUP_MAX = 3;
 	/** A siege's waves are made of this many monster kinds at least, looked for farther out until there are. */
 	private static final int MIN_MONSTER_KINDS = 3;
 	/** When no monster of a siege's levels lives around the village, they are looked for this far. */
@@ -165,6 +201,7 @@ public class VillageSiegeManager
 		private volatile long _lastActive;
 		private volatile String _blocked;
 		private volatile boolean _told;
+		private int _activeMinutes;
 
 		Contributor(String key, int objectId, String name, boolean fake, int level)
 		{
@@ -217,6 +254,14 @@ public class VillageSiegeManager
 		{
 			return _lastActive;
 		}
+
+		/**
+		 * @return the minutes in which it fought
+		 */
+		public synchronized int getActiveMinutes()
+		{
+			return _activeMinutes;
+		}
 	}
 
 	/**
@@ -252,10 +297,14 @@ public class VillageSiegeManager
 		private final Npc[] _guards;
 		private final long[] _guardRespawn;
 		private volatile Npc _standard;
-		private volatile double _meter;
 		private volatile boolean _fallen;
+		private volatile long _fallenAt;
+		private volatile long _lastHit;
+		private volatile int _alarm = 100;
 		private volatile long _nextWave;
+		private volatile long _nextReinforce;
 		private volatile int _shownPercent = -1;
+		private volatile int _falls;
 
 		EntranceState(int index, SiegeEntrance entrance, List<Integer> monsterIds)
 		{
@@ -264,7 +313,6 @@ public class VillageSiegeManager
 			_monsterIds = monsterIds;
 			_guards = new Npc[entrance.getGuardPosts().size()];
 			_guardRespawn = new long[_guards.length];
-			_meter = VillageSiegeConfig.GATE_METER;
 		}
 
 		public String getName()
@@ -283,11 +331,45 @@ public class VillageSiegeManager
 		}
 
 		/**
+		 * @return how many times it fell
+		 */
+		public int getFalls()
+		{
+			return _falls;
+		}
+
+		/**
+		 * @return the gate's HP, 0 if it has fallen
+		 */
+		public int getGateHp()
+		{
+			final Npc standard = _standard;
+			return _fallen || (standard == null) ? 0 : (int) Math.ceil(standard.getCurrentHp());
+		}
+
+		/**
+		 * @return the gate's HP when whole
+		 */
+		public int getGateMaxHp()
+		{
+			final Npc standard = _standard;
+			return standard != null ? standard.getMaxHp() : VillageSiegeConfig.GATE_HP;
+		}
+
+		/**
 		 * @return what is left of the gate, in %
 		 */
 		public int getMeterPercent()
 		{
-			return _fallen ? 0 : (int) Math.ceil((_meter * 100) / VillageSiegeConfig.GATE_METER);
+			return _fallen ? 0 : (int) Math.ceil((getGateHp() * 100.0) / Math.max(1, getGateMaxHp()));
+		}
+
+		/**
+		 * @return when a fallen gate is raised again, 0 if never (or it stands)
+		 */
+		public long getRebuildTime()
+		{
+			return _fallen && (VillageSiegeConfig.GATE_REBUILD_MINUTES > 0) ? _fallenAt + (VillageSiegeConfig.GATE_REBUILD_MINUTES * 60000L) : 0;
 		}
 
 		/**
@@ -320,12 +402,18 @@ public class VillageSiegeManager
 		private final Map<String, String> _computers = new ConcurrentHashMap<>();
 		private final List<WorldRegion> _keptRegions = new ArrayList<>();
 		private final double _medalsPerPoint;
+		/** The monster kinds of each level, for the defenders above the village's levels. */
+		private final Map<Integer, List<Integer>> _scaledMonsters = new ConcurrentHashMap<>();
 		private volatile NpcTemplate _guardTemplate;
+		private volatile NpcTemplate _gateTemplate;
 		private volatile boolean _gateFell;
 		private volatile long _nextLeader;
 		private volatile boolean _lordSent;
 		private volatile long _nextFake;
+		private volatile long _nextStatus;
+		private volatile int _stage;
 		private volatile int _kills;
+		private volatile int _waves;
 		private int _ticks;
 
 		Siege(SiegeVillage village, int level, long start, long end, int day, Location heart, TownZone town, double medalsPerPoint)
@@ -373,6 +461,59 @@ public class VillageSiegeManager
 		public int getKills()
 		{
 			return _kills;
+		}
+
+		/**
+		 * @return the great waves sent so far
+		 */
+		public int getWaves()
+		{
+			return _waves;
+		}
+
+		/**
+		 * @return the stage it is at: 0, 1 or 2
+		 */
+		public int getStage()
+		{
+			return _stage;
+		}
+
+		public String getStageName()
+		{
+			return STAGE_NAMES[_stage];
+		}
+
+		/**
+		 * @return how many gates stand
+		 */
+		public int getGatesStanding()
+		{
+			int standing = 0;
+			for (EntranceState entrance : _entrances)
+			{
+				if (!entrance._fallen)
+				{
+					standing++;
+				}
+			}
+			return standing;
+		}
+
+		/**
+		 * @return the players at the siege now (up to {@link VillageSiegeConfig#MAX_PLAYER_LEVEL})
+		 */
+		public int getPlayersPresent()
+		{
+			int players = 0;
+			for (Player player : World.getInstance().getPlayers())
+			{
+				if (player.isOnline() && !player.isInOfflineMode() && !player.isGM() && (player.getLevel() <= VillageSiegeConfig.MAX_PLAYER_LEVEL) && isInArea(this, player))
+				{
+					players++;
+				}
+			}
+			return players;
 		}
 
 		public int getMonstersAlive()
@@ -561,6 +702,9 @@ public class VillageSiegeManager
 	private final Map<String, SiegeResult> _results = new ConcurrentHashMap<>();
 	/** The Defence Force Boards, by village. */
 	private final Map<String, Npc> _boards = new ConcurrentHashMap<>();
+	/** Where the players who came by the siege's teleport were, by object id. */
+	private final Map<Integer, Location> _returns = new ConcurrentHashMap<>();
+	private volatile long _returnUntil;
 
 	protected VillageSiegeManager()
 	{
@@ -921,8 +1065,9 @@ public class VillageSiegeManager
 				continue;
 			}
 			final EntranceState state = new EntranceState(i, entrance, monsters);
-			// The first waves come soon, one gate after the other.
-			state._nextWave = now + 20000 + (i * 15000L);
+			// The vanguard comes at once, one gate after the other; the first great wave a little later.
+			state._nextReinforce = now + 5000 + (i * 3000L);
+			state._nextWave = now + 60000 + (i * 20000L);
 			siege._entrances.add(state);
 		}
 		if (siege._entrances.isEmpty())
@@ -931,15 +1076,18 @@ public class VillageSiegeManager
 		}
 
 		siege._guardTemplate = createGuardTemplate(village, level);
+		siege._gateTemplate = createGateTemplate();
 		siege._nextLeader = now + (VillageSiegeConfig.LEADER_INTERVAL * 60000L);
-		siege._nextFake = now + 5000;
+		siege._nextFake = now + 3000;
+		siege._nextStatus = now + (VillageSiegeConfig.STATUS_ANNOUNCE_MINUTES * 60000L);
 		_siege = siege;
+		_returns.clear();
 
 		keepActive(siege);
 		hideRetailGuards(siege);
 		for (EntranceState entrance : siege._entrances)
 		{
-			spawnStandard(siege, entrance);
+			spawnStandard(siege, entrance, 100);
 			for (int post = 0; post < entrance._guards.length; post++)
 			{
 				spawnGuard(siege, entrance, post);
@@ -952,7 +1100,8 @@ public class VillageSiegeManager
 		{
 			gates.append(gates.length() > 0 ? ", " : "").append(entrance.getName());
 		}
-		announce("Monsters attack " + village.getName() + "! Defend the " + gates + " until " + formatTime(end) + ". Defenders up to level " + VillageSiegeConfig.MAX_PLAYER_LEVEL + " earn Defence Medals.");
+		announce("Monsters attack " + village.getName() + "! Defend the " + gates + " until " + formatTime(end) + ". Defenders up to level " + VillageSiegeConfig.MAX_PLAYER_LEVEL + " earn Defence Medals, more experience and a reward at the end" + (VillageSiegeConfig.TELEPORT ? " - type .siege to join." : "."));
+		invite(siege);
 		LOGGER.info(getClass().getSimpleName() + ": The siege of " + village.getName() + " began (level " + level + ", " + siege._entrances.size() + " entrances, until " + formatTime(end) + ").");
 		return null;
 	}
@@ -1022,6 +1171,10 @@ public class VillageSiegeManager
 				}
 			}
 			payMedals(siege, true);
+			if (!stopped)
+			{
+				rewardDefenders(siege);
+			}
 
 			// The ranking.
 			final List<Contributor> ranking = siege.getRanking();
@@ -1033,7 +1186,9 @@ public class VillageSiegeManager
 				{
 					top.append(i > 0 ? ", " : "").append(i + 1).append(". ").append(ranking.get(i).getName()).append(" (").append(ranking.get(i).getPoints()).append(")");
 				}
-				announce("The siege of " + siege._village.getName() + " is over" + (siege._gateFell ? " - a gate fell, but the village stands." : " - every gate held!") + (top.length() > 0 ? " Best defenders: " + top + "." : ""));
+				final String outcome = siege._gateFell ? " - a gate fell, but the village stands." : " - victory, every gate held!";
+				announce("The siege of " + siege._village.getName() + " is over" + outcome + " " + siege._kills + " monsters slain by " + siege.getRanking().size() + " defenders." + (top.length() > 0 ? " Best defenders: " + top + "." : ""));
+				screenNear(siege, siege._gateFell ? "The village stands! The siege is over." : "Victory! Every gate held!");
 			}
 			else
 			{
@@ -1047,11 +1202,55 @@ public class VillageSiegeManager
 		finally
 		{
 			cleanUp(siege);
+			_returnUntil = System.currentTimeMillis() + RETURN_TIME;
 			LOGGER.info(getClass().getSimpleName() + ": The siege of " + siege._village.getName() + " ended (" + siege._kills + " monsters slain, " + siege._contributors.size() + " defenders" + (siege._gateFell ? ", a gate fell" : "") + ").");
 			if (!stopped)
 			{
 				scheduleNext();
 			}
+		}
+	}
+
+	/**
+	 * The defenders who fought long enough get a share of a level in experience: the whole of {@link VillageSiegeConfig#REWARD_EXP_PERCENT} for {@link VillageSiegeConfig#REWARD_FULL_MINUTES} minutes of fighting, less for each time a gate fell (never less than half).
+	 * @param siege the siege
+	 */
+	private static void rewardDefenders(Siege siege)
+	{
+		if (VillageSiegeConfig.REWARD_EXP_PERCENT <= 0)
+		{
+			return;
+		}
+
+		int falls = 0;
+		for (EntranceState entrance : siege._entrances)
+		{
+			falls += entrance._falls;
+		}
+		final double outcome = Math.max(0.5, 1 - ((0.5 * falls) / Math.max(1, siege._entrances.size())));
+		for (Contributor contributor : siege._contributors.values())
+		{
+			if (contributor._fake || (contributor._blocked != null) || (contributor.getActiveMinutes() < Math.max(1, VillageSiegeConfig.REWARD_MIN_MINUTES)))
+			{
+				continue;
+			}
+
+			final Player player = World.getInstance().getPlayer(contributor._objectId);
+			if ((player == null) || !player.isOnline() || (player.getLevel() > VillageSiegeConfig.MAX_PLAYER_LEVEL))
+			{
+				continue;
+			}
+
+			final int level = player.getLevel();
+			final long span = ExperienceData.getInstance().getExpForLevel(level + 1) - ExperienceData.getInstance().getExpForLevel(level);
+			final double share = Math.min(1, contributor.getActiveMinutes() / (double) VillageSiegeConfig.REWARD_FULL_MINUTES);
+			final long exp = (long) ((((span * VillageSiegeConfig.REWARD_EXP_PERCENT) / 100.0) * share) * outcome);
+			if (exp <= 0)
+			{
+				continue;
+			}
+			player.addExpAndSp(exp, exp / 10);
+			player.sendMessage(siege._village.getName() + ": the Defence Force thanks you for " + contributor.getActiveMinutes() + " minutes of fighting - " + exp + " experience" + (outcome < 1 ? " (less, as a gate fell)." : "."));
 		}
 	}
 
@@ -1292,16 +1491,113 @@ public class VillageSiegeManager
 		return values.get(values.size() / 2);
 	}
 
-	private static void spawnStandard(Siege siege, EntranceState entrance)
+	/**
+	 * Makes the template of the gates: {@link VillageSiegeConfig#GATE_HP} HP, mended by the siege only.
+	 * @return the template
+	 */
+	private static NpcTemplate createGateTemplate()
+	{
+		final StatSet set = new StatSet(new HashMap<>());
+		set.set("id", STANDARD_NPC_ID);
+		set.set("displayId", 35423); // A siege headquarters flag.
+		set.set("level", 70);
+		set.set("type", "VillageGate");
+		set.set("name", "Village Gate");
+		set.set("usingServerSideName", true);
+		set.set("title", "Gate");
+		set.set("usingServerSideTitle", true);
+		set.set("race", "ETC");
+		set.set("sex", "ETC");
+		set.set("baseSTR", 40);
+		set.set("baseCON", 43);
+		set.set("baseDEX", 30);
+		set.set("baseINT", 21);
+		set.set("baseWIT", 20);
+		set.set("baseMEN", 20);
+		set.set("baseHpMax", VillageSiegeConfig.GATE_HP);
+		set.set("baseMpMax", 100);
+		set.set("baseHpReg", 0);
+		set.set("baseMpReg", 0);
+		set.set("basePAtk", 0);
+		set.set("baseMAtk", 0);
+		set.set("basePDef", 500);
+		set.set("baseMDef", 500);
+		set.set("baseRunSpd", 1);
+		set.set("baseWalkSpd", 1);
+		set.set("collisionRadius", 30);
+		set.set("collisionHeight", 40);
+		set.set("attackable", false);
+		set.set("targetable", true);
+		set.set("talkable", false);
+		set.set("undying", true);
+		set.set("randomWalk", false);
+		set.set("randomAnimation", false);
+		set.set("aggroRange", 0);
+		set.set("isAggressive", false);
+		final NpcTemplate template = new NpcTemplate(set);
+		template.setParameters(new StatSet());
+		template.setClans(null);
+		template.setIgnoreClanNpcIds(null);
+		template.setAISkillLists(null);
+		template.setSkills(new HashMap<>());
+		return template;
+	}
+
+	/**
+	 * Sets up the gate of an entrance, at the HP given.
+	 * @param siege the siege
+	 * @param entrance the entrance
+	 * @param percent its HP, in %
+	 */
+	private static void spawnStandard(Siege siege, EntranceState entrance, int percent)
 	{
 		final Location gate = entrance._entrance.getGate();
-		final Npc standard = QuestSpawnUtil.spawnTaskNpc(STANDARD_NPC_ID, gate, LocationUtil.calculateHeadingFrom(siege._heart, gate), 0, null);
-		if (standard != null)
+		try
 		{
-			standard.setTitle(entrance.getName() + " 100%");
+			final Spawn spawn = new Spawn(siege._gateTemplate);
+			spawn.setXYZ(gate.getX(), gate.getY(), gate.getZ());
+			spawn.setHeading(LocationUtil.calculateHeadingFrom(siege._heart, gate));
+			spawn.setAmount(1);
+			spawn.setRespawnDelay(0);
+			spawn.stopRespawn();
+			final Npc standard = spawn.doSpawn(false);
+			if (standard != null)
+			{
+				standard.setRandomWalking(false);
+				standard.setCurrentHp((standard.getMaxHp() * percent) / 100.0);
+				entrance._shownPercent = -1;
+				entrance._alarm = 100;
+				for (int alarm : GATE_ALARMS)
+				{
+					if (percent <= alarm)
+					{
+						entrance._alarm = alarm;
+					}
+				}
+				entrance._standard = standard;
+				updateGateTitle(entrance);
+			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, VillageSiegeManager.class.getSimpleName() + ": Could not set up a gate of " + siege._village.getName() + ".", e);
+		}
+	}
+
+	/**
+	 * The gate's title shows what is left of it.
+	 * @param entrance the entrance
+	 */
+	private static void updateGateTitle(EntranceState entrance)
+	{
+		final Npc standard = entrance._standard;
+		final int percent = entrance.getMeterPercent();
+		if ((standard != null) && (percent != entrance._shownPercent))
+		{
+			entrance._shownPercent = percent;
+			standard.setTitle(entrance.getName() + " " + percent + "%");
 			standard.broadcastInfo();
 		}
-		entrance._standard = standard;
 	}
 
 	private static void spawnGuard(Siege siege, EntranceState entrance, int post)
@@ -1353,13 +1649,21 @@ public class VillageSiegeManager
 			}
 
 			siege._ticks++;
+			tickStage(siege, now);
 			for (EntranceState entrance : siege._entrances)
 			{
-				tickGate(siege, entrance);
+				tickGate(siege, entrance, now);
+				if (now >= entrance._nextReinforce)
+				{
+					reinforce(siege, entrance);
+					entrance._nextReinforce = now + (VillageSiegeConfig.REINFORCE_INTERVAL * 1000L);
+				}
 				if (now >= entrance._nextWave)
 				{
 					spawnWave(siege, entrance, now);
-					entrance._nextWave = now + (Rnd.get(VillageSiegeConfig.WAVE_INTERVAL_MIN, VillageSiegeConfig.WAVE_INTERVAL_MAX) * 1000L);
+					// The great waves come more often as the siege goes on.
+					final double quicker = 1 - (0.15 * siege._stage);
+					entrance._nextWave = now + (long) (Rnd.get(VillageSiegeConfig.WAVE_INTERVAL_MIN, VillageSiegeConfig.WAVE_INTERVAL_MAX) * 1000L * quicker);
 				}
 				tickGuards(siege, entrance, now);
 			}
@@ -1372,7 +1676,8 @@ public class VillageSiegeManager
 				final Npc lord = spawnMonster(siege, busiest, KIND_LORD);
 				if (lord != null)
 				{
-					announceNear(siege, "The Siege Lord comes for the " + busiest.getName() + " of " + siege._village.getName() + "!");
+					announce("The Siege Lord comes for the " + busiest.getName() + " of " + siege._village.getName() + "!");
+					screenNear(siege, "The Siege Lord comes for the " + busiest.getName() + "!");
 				}
 			}
 
@@ -1380,7 +1685,7 @@ public class VillageSiegeManager
 			{
 				direct(siege, now);
 			}
-			if ((siege._ticks % 10) == 0)
+			if ((siege._ticks % 5) == 0)
 			{
 				tickFakes(siege, now);
 			}
@@ -1392,14 +1697,14 @@ public class VillageSiegeManager
 			{
 				payActiveMinute(siege, now);
 			}
+			if ((VillageSiegeConfig.STATUS_ANNOUNCE_MINUTES > 0) && (now >= siege._nextStatus))
+			{
+				siege._nextStatus = now + (VillageSiegeConfig.STATUS_ANNOUNCE_MINUTES * 60000L);
+				announce(siege._village.getName() + " holds: " + describeGates(siege) + ". " + siege._kills + " monsters slain, " + siege.getPlayersPresent() + " defenders at the gates, " + ((siege._end - now) / 60000) + " minutes to go." + (VillageSiegeConfig.TELEPORT ? " Join with .siege!" : ""));
+			}
 			if ((siege._ticks % STATUS_LOG_TICKS) == 0)
 			{
-				final StringBuilder gates = new StringBuilder();
-				for (EntranceState entrance : siege._entrances)
-				{
-					gates.append(gates.length() > 0 ? ", " : "").append(entrance.getName()).append(' ').append(entrance._fallen ? "fallen" : entrance.getMeterPercent() + "%");
-				}
-				LOGGER.info(getClass().getSimpleName() + ": " + siege._village.getName() + ": " + siege._kills + " slain, " + siege._monsters.size() + " attacking, " + siege.getFakeDefenders() + " fake defenders, " + siege._contributors.size() + " defenders so far; " + gates + ".");
+				LOGGER.info(getClass().getSimpleName() + ": " + siege._village.getName() + " (" + siege.getStageName() + "): " + siege._kills + " slain, " + siege._monsters.size() + " attacking, " + siege.getFakeDefenders() + " fake defenders, " + siege._contributors.size() + " defenders so far; " + describeGates(siege) + ".");
 			}
 		}
 		catch (Exception e)
@@ -1409,64 +1714,206 @@ public class VillageSiegeManager
 	}
 
 	/**
-	 * The monsters at a gate wear its meter down; with nobody at it, it is mended a little.
 	 * @param siege the siege
-	 * @param entrance the entrance
+	 * @return its gates and how they stand ("North Gate 80%, East Gate fallen")
 	 */
-	private void tickGate(Siege siege, EntranceState entrance)
+	private static String describeGates(Siege siege)
 	{
-		if (entrance._fallen)
+		final StringBuilder gates = new StringBuilder();
+		for (EntranceState entrance : siege._entrances)
+		{
+			gates.append(gates.length() > 0 ? ", " : "").append(entrance.getName()).append(' ').append(entrance._fallen ? "fallen" : entrance.getMeterPercent() + "%");
+		}
+		return gates.toString();
+	}
+
+	/**
+	 * The siege goes from one stage to the next (Vanguard, Main Assault, Final Assault): more monsters on each gate, and the great waves come more often.
+	 * @param siege the siege
+	 * @param now the time
+	 */
+	private static void tickStage(Siege siege, long now)
+	{
+		final double done = (now - siege._start) / (double) Math.max(1, siege._end - siege._start);
+		int stage = 0;
+		for (int i = 0; i < STAGE_STARTS.length; i++)
+		{
+			if (done >= STAGE_STARTS[i])
+			{
+				stage = i;
+			}
+		}
+		if (stage <= siege._stage)
 		{
 			return;
 		}
 
-		final Location gate = entrance._entrance.getGate();
-		int attackers = 0;
-		for (SiegeMonster monster : siege._monsters.values())
+		siege._stage = stage;
+		if (stage == (STAGE_NAMES.length - 1))
 		{
-			if (!monster._npc.isDead() && (monster._npc.calculateDistance2D(gate) <= VillageSiegeConfig.GATE_DRAIN_RANGE))
-			{
-				attackers++;
-			}
-		}
-
-		if (attackers > 0)
-		{
-			entrance._meter -= attackers * VillageSiegeConfig.GATE_DRAIN;
+			announce("The Final Assault on " + siege._village.getName() + " begins! The monsters throw everything they have at its gates. Defenders, to the walls!");
 		}
 		else
 		{
-			entrance._meter = Math.min(VillageSiegeConfig.GATE_METER, entrance._meter + VillageSiegeConfig.GATE_REPAIR);
+			announce("The " + STAGE_NAMES[stage] + " on " + siege._village.getName() + " begins! More monsters march on its gates (" + describeGates(siege) + "). Defenders, hold the line!");
 		}
+		screenNear(siege, STAGE_NAMES[stage] + "!");
+	}
 
+	/**
+	 * The monsters at a gate beat on it (see {@link VillageGate}); left alone for a while, it is mended a little. At 0 HP it falls, and a fallen gate is raised again after a while if no monster is at it.
+	 * @param siege the siege
+	 * @param entrance the entrance
+	 * @param now the time
+	 */
+	private void tickGate(Siege siege, EntranceState entrance, long now)
+	{
 		final Npc standard = entrance._standard;
-		if (entrance._meter <= 0)
+		if (entrance._fallen)
 		{
-			entrance._fallen = true;
-			entrance._meter = 0;
-			siege._gateFell = true;
-			if (standard != null)
+			// Raised again, when no monster stands in the way.
+			final long rebuild = entrance.getRebuildTime();
+			if ((rebuild > 0) && (now >= rebuild) && (countMonstersNear(siege, entrance._entrance.getGate(), GATE_ATTACK_RANGE) == 0))
 			{
-				standard.broadcastPacket(new MagicSkillUse(standard, standard, 5130, 1, 500, 0)); // A blast.
-				ThreadPool.schedule(standard::deleteMe, 1500);
-				entrance._standard = null;
+				entrance._fallen = false;
+				spawnStandard(siege, entrance, VillageSiegeConfig.GATE_REBUILD_PERCENT);
+				announceNear(siege, "The defenders raise the " + entrance.getName() + " of " + siege._village.getName() + " again!");
 			}
-			announce("The " + entrance.getName() + " of " + siege._village.getName() + " has fallen! Its guards hold the streets.");
+			return;
+		}
+		if (standard == null)
+		{
 			return;
 		}
 
-		// The standard's title shows what is left of the gate.
-		final int percent = entrance.getMeterPercent();
-		if ((standard != null) && (percent != entrance._shownPercent))
+		if (standard.getCurrentHp() < 1)
 		{
-			entrance._shownPercent = percent;
-			standard.setTitle(entrance.getName() + " " + percent + "%");
-			standard.broadcastInfo();
+			entrance._fallen = true;
+			entrance._fallenAt = now;
+			entrance._falls++;
+			siege._gateFell = true;
+			entrance._standard = null;
+			for (SiegeMonster monster : siege._monsters.values())
+			{
+				monster._npc.asAttackable().stopHating(standard);
+			}
+			standard.setTitle(entrance.getName() + " - fallen");
+			standard.broadcastPacket(new MagicSkillUse(standard, standard, 5130, 1, 500, 0)); // A blast.
+			ThreadPool.schedule(standard::deleteMe, 1500);
+			announce("The " + entrance.getName() + " of " + siege._village.getName() + " has fallen! Monsters pour into the streets!");
+			screenNear(siege, "The " + entrance.getName() + " has fallen!");
+			return;
+		}
+
+		// Left alone for a while: mended a little.
+		if (((now - entrance._lastHit) >= GATE_REPAIR_DELAY) && (standard.getCurrentHp() < standard.getMaxHp()) && (VillageSiegeConfig.GATE_REPAIR > 0))
+		{
+			standard.setCurrentHp(Math.min(standard.getMaxHp(), standard.getCurrentHp() + VillageSiegeConfig.GATE_REPAIR));
+		}
+
+		// The defenders are told when it gets weak.
+		final int percent = entrance.getMeterPercent();
+		for (int alarm : GATE_ALARMS)
+		{
+			if ((percent <= alarm) && (alarm < entrance._alarm))
+			{
+				entrance._alarm = alarm;
+				announceNear(siege, "The " + entrance.getName() + " of " + siege._village.getName() + " is down to " + percent + "%" + (alarm <= 25 ? " - it is about to fall!" : "!"));
+				break;
+			}
+		}
+		// Mended well above the last warning: that warning is given again if it comes down to it.
+		if ((entrance._alarm < 100) && (percent >= (entrance._alarm + 15)))
+		{
+			int above = 100;
+			for (int alarm : GATE_ALARMS)
+			{
+				if (alarm > entrance._alarm)
+				{
+					above = alarm;
+				}
+			}
+			entrance._alarm = above;
+		}
+		updateGateTitle(entrance);
+	}
+
+	/**
+	 * Called from {@link VillageGate#reduceCurrentHp} when a monster of the siege hits a gate.
+	 * @param gate the gate
+	 * @param attacker the monster
+	 * @return the HP the hit takes off: {@link VillageSiegeConfig#GATE_HIT_DAMAGE}, more for a champion, a Warband Leader or the Siege Lord
+	 */
+	public double onGateHit(Npc gate, Creature attacker)
+	{
+		final Siege siege = _siege;
+		if (siege == null)
+		{
+			return 0;
+		}
+
+		for (EntranceState entrance : siege._entrances)
+		{
+			if (entrance._standard == gate)
+			{
+				entrance._lastHit = System.currentTimeMillis();
+				final SiegeMonster monster = siege._monsters.get(attacker.getObjectId());
+				if (monster != null)
+				{
+					monster._lastMet = entrance._lastHit;
+				}
+				return VillageSiegeConfig.GATE_HIT_DAMAGE * (1 + attacker.getChampionTier());
+			}
+		}
+		return 0;
+	}
+
+	/**
+	 * @param creature a creature
+	 * @return {@code true} if it is one of the monsters of a village siege
+	 */
+	public static boolean isSiegeMonster(Creature creature)
+	{
+		return (creature != null) && creature.isAttackable() && (creature.asAttackable().getVillageSiegeRole() == Attackable.VILLAGE_SIEGE_MONSTER);
+	}
+
+	/**
+	 * @param siege the siege
+	 * @param entrance an entrance
+	 * @return how many monsters the entrance should have on it now: by the stage, and more with more defenders there
+	 */
+	private static int getPressure(Siege siege, EntranceState entrance)
+	{
+		final int defenders = countDefenders(siege, entrance._entrance.getGate(), VillageSiegeConfig.AREA_RANGE / 2);
+		return Math.min(VillageSiegeConfig.PRESSURE_MAX, VillageSiegeConfig.PRESSURE[siege._stage] + (int) (defenders * VillageSiegeConfig.PRESSURE_PER_DEFENDER));
+	}
+
+	/**
+	 * Keeps an entrance under pressure: while fewer monsters than {@link #getPressure} are on it, a group more comes up the road.
+	 * @param siege the siege
+	 * @param entrance the entrance
+	 */
+	private void reinforce(Siege siege, EntranceState entrance)
+	{
+		int on = 0;
+		for (SiegeMonster monster : siege._monsters.values())
+		{
+			if ((monster._entrance == entrance) && !monster._npc.isDead())
+			{
+				on++;
+			}
+		}
+
+		final int missing = Math.min(getPressure(siege, entrance) - on, VillageSiegeConfig.MAX_MONSTERS - siege._monsters.size());
+		final int group = Math.min(missing, Rnd.get(REINFORCE_GROUP_MIN, REINFORCE_GROUP_MAX));
+		for (int i = 0; i < group; i++)
+		{
+			spawnMonster(siege, entrance, KIND_WAVE);
 		}
 	}
 
 	/**
-	 * A wave forms out on the road.
+	 * A great wave forms out on the road, on top of the pressure.
 	 * @param siege the siege
 	 * @param entrance the entrance
 	 * @param now the time
@@ -1481,11 +1928,12 @@ public class VillageSiegeManager
 
 		final int defenders = countDefenders(siege, entrance._entrance.getGate(), VillageSiegeConfig.AREA_RANGE);
 		final int bonus = VillageSiegeConfig.WAVE_SIZE_PER_DEFENDERS > 0 ? defenders / VillageSiegeConfig.WAVE_SIZE_PER_DEFENDERS : 0;
-		final int size = Math.min(room, Math.min(VillageSiegeConfig.WAVE_SIZE_MAX, VillageSiegeConfig.WAVE_SIZE + bonus));
+		final int size = Math.min(room, Math.min(VillageSiegeConfig.WAVE_SIZE_MAX, VillageSiegeConfig.WAVE_SIZE + ((VillageSiegeConfig.WAVE_SIZE * siege._stage) / 2) + bonus));
 		for (int i = 0; i < size; i++)
 		{
 			spawnMonster(siege, entrance, KIND_WAVE);
 		}
+		siege._waves++;
 
 		// Now and then a Warband Leader marches with the wave.
 		if ((VillageSiegeConfig.LEADER_INTERVAL > 0) && (now >= siege._nextLeader) && (siege._monsters.size() < VillageSiegeConfig.MAX_MONSTERS))
@@ -1493,9 +1941,11 @@ public class VillageSiegeManager
 			siege._nextLeader = now + (VillageSiegeConfig.LEADER_INTERVAL * 60000L);
 			if (spawnMonster(siege, entrance, KIND_LEADER) != null)
 			{
-				announceNear(siege, "A Warband Leader marches on the " + entrance.getName() + " of " + siege._village.getName() + "!");
+				announceNear(siege, "A Warband Leader marches on the " + entrance.getName() + " of " + siege._village.getName() + " with " + size + " monsters!");
+				return;
 			}
 		}
+		announceNear(siege, "A great wave of " + size + " monsters marches on the " + entrance.getName() + "!");
 	}
 
 	/**
@@ -1506,8 +1956,8 @@ public class VillageSiegeManager
 	 */
 	private Npc spawnMonster(Siege siege, EntranceState entrance, int kind)
 	{
-		final int npcId = entrance._monsterIds.get(kind == KIND_WAVE ? Rnd.get(entrance._monsterIds.size()) : 0);
-		final Location location = QuestSpawnUtil.findPoint(entrance._entrance.getRally(), 20, 220, true, 0);
+		final int npcId = pickMonster(siege, entrance, kind);
+		final Location location = QuestSpawnUtil.findPoint(entrance._entrance.getRally(), 20, 260, true, 0);
 		final Npc npc = QuestSpawnUtil.spawnTaskNpc(npcId, location, LocationUtil.calculateHeadingFrom(location, entrance._entrance.getGate()), 0, null);
 		if (npc == null)
 		{
@@ -1532,7 +1982,7 @@ public class VillageSiegeManager
 			}
 			default:
 			{
-				tier = Rnd.get(100) < VillageSiegeConfig.CHAMPION_CHANCE ? 1 : 0;
+				tier = Rnd.get(100) < (VillageSiegeConfig.CHAMPION_CHANCE * (1 + siege._stage)) ? 1 : 0;
 				title = "Besieger";
 				break;
 			}
@@ -1548,7 +1998,89 @@ public class VillageSiegeManager
 	}
 
 	/**
-	 * Every monster without a fight goes for the nearest defender, else marches on its gate (or, past a fallen gate, on the guards and the heart of the village). Monsters left alone too long are taken away.
+	 * The kind of a monster to send. Most are the village's own; but for every defender at the entrance above the village's levels, as many come at that defender's level ({@link VillageSiegeConfig#SCALE_TO_DEFENDERS}), so nobody outgrows the siege.
+	 * @param siege the siege
+	 * @param entrance the entrance
+	 * @param kind {@link #KIND_WAVE}, {@link #KIND_LEADER} or {@link #KIND_LORD}
+	 * @return the npc id
+	 */
+	private int pickMonster(Siege siege, EntranceState entrance, int kind)
+	{
+		final List<Integer> own = entrance._monsterIds;
+		if (VillageSiegeConfig.SCALE_TO_DEFENDERS)
+		{
+			final int top = getLevelRange(siege._village)[1];
+			final List<Integer> levels = new ArrayList<>();
+			int others = 0;
+			for (Player player : World.getInstance().getPlayers())
+			{
+				if (!player.isOnline() || player.isInOfflineMode() || player.isGM() || player.isDead() || (player.getInstanceId() != 0) || (player.getLevel() > VillageSiegeConfig.MAX_PLAYER_LEVEL) || (player.calculateDistance2D(entrance._entrance.getGate()) > VillageSiegeConfig.AREA_RANGE))
+				{
+					continue;
+				}
+				if (player.getLevel() > (top + VillageSiegeConfig.SCALE_LEVELS_BELOW))
+				{
+					levels.add(player.getLevel());
+				}
+				else
+				{
+					others++;
+				}
+			}
+
+			// A leader or the Lord comes at the level of the strongest of them; a monster of the wave at the level of one of them, as often as they are among the defenders.
+			if (!levels.isEmpty())
+			{
+				Collections.sort(levels);
+				final int level;
+				if (kind != KIND_WAVE)
+				{
+					level = levels.get(levels.size() - 1);
+				}
+				else if (Rnd.get(levels.size() + others) < levels.size())
+				{
+					level = levels.get(Rnd.get(levels.size()));
+				}
+				else
+				{
+					level = 0;
+				}
+				if (level > 0)
+				{
+					final List<Integer> scaled = siege._scaledMonsters.computeIfAbsent(level, l -> findScaledMonsters(siege, l));
+					if (!scaled.isEmpty())
+					{
+						return scaled.get(kind == KIND_WAVE ? Rnd.get(scaled.size()) : 0);
+					}
+				}
+			}
+		}
+		return own.get(kind == KIND_WAVE ? Rnd.get(own.size()) : 0);
+	}
+
+	/**
+	 * @param siege the siege
+	 * @param level a defender's level
+	 * @return the monsters around that level living nearest the village
+	 */
+	private static List<Integer> findScaledMonsters(Siege siege, int level)
+	{
+		final int[] levels =
+		{
+			Math.max(1, level - VillageSiegeConfig.SCALE_LEVELS_BELOW),
+			level + VillageSiegeConfig.SCALE_LEVELS_ABOVE
+		};
+		List<Integer> monsters = pickMonsters(siege._heart, FAR_MONSTER_RANGE, levels);
+		if (monsters.size() < MIN_MONSTER_KINDS)
+		{
+			monsters = pickMonsters(siege._heart, Integer.MAX_VALUE / 2, levels);
+		}
+		return monsters;
+	}
+
+	/**
+	 * Every monster without a fight goes for the nearest defender (the guards included); with nobody left in front of it, it beats on its gate, else it marches on it (or, past a fallen gate, on the guards and the heart of the village). Monsters left alone too long are
+	 * taken away.
 	 * @param siege the siege
 	 * @param now the time
 	 */
@@ -1567,18 +2099,43 @@ public class VillageSiegeManager
 			}
 
 			final Attackable attackable = npc.asAttackable();
-			final Creature target = attackable.getMostHated();
-			if ((target != null) && !target.isDead() && (npc.getAI().getIntention() == Intention.ATTACK) && (npc.calculateDistance2D(target) < 1500))
+			final Npc gate = monster._entrance._standard;
+			Creature target = attackable.getMostHated();
+			if ((target != null) && !target.isSpawned())
+			{
+				// A fallen gate (or someone gone): forgotten.
+				attackable.stopHating(target);
+				target = attackable.getMostHated();
+			}
+			if ((target != null) && !target.isDead() && target.isSpawned() && (npc.getAI().getIntention() == Intention.ATTACK) && (npc.calculateDistance2D(target) < 1500))
 			{
 				monster._lastMet = now;
+				// Beating on the gate: now and then it turns on a defender who came up to it.
+				if ((target == gate) && Rnd.nextBoolean())
+				{
+					final Creature defender = findDefenderNear(npc, GATE_TURN_RANGE);
+					if (defender != null)
+					{
+						attackable.stopHating(gate);
+						QuestSpawnUtil.attack(npc, defender);
+					}
+				}
 				continue;
 			}
 
-			final Creature defender = findDefenderNear(npc, monster._entrance._fallen);
+			final Creature defender = findDefenderNear(npc, MONSTER_SIGHT);
 			if (defender != null)
 			{
 				monster._lastMet = now;
 				QuestSpawnUtil.attack(npc, defender);
+				continue;
+			}
+
+			// Nobody left in front of it: the gate.
+			if ((gate != null) && !monster._entrance._fallen && gate.isSpawned() && (npc.calculateDistance2D(gate) <= GATE_ATTACK_RANGE))
+			{
+				monster._lastMet = now;
+				QuestSpawnUtil.attack(npc, gate);
 				continue;
 			}
 
@@ -1638,24 +2195,26 @@ public class VillageSiegeManager
 
 	/**
 	 * @param npc a monster of the siege
-	 * @param pastGate {@code true} if its gate has fallen: it goes for the guards too (before that they wait behind the gate)
-	 * @return the nearest defender it can go for (a player, a fake defender, or past the gate a siege guard), {@code null} if none
+	 * @param range how far it looks
+	 * @return the defender it goes for (a player, a fake defender or a siege guard): the nearest, but rather one of about its level, {@code null} if none
 	 */
-	private static Creature findDefenderNear(Npc npc, boolean pastGate)
+	private static Creature findDefenderNear(Npc npc, int range)
 	{
 		Creature best = null;
-		double bestDistance = Double.MAX_VALUE;
-		for (Creature creature : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, MONSTER_SIGHT))
+		double bestScore = Double.MAX_VALUE;
+		for (Creature creature : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, range))
 		{
-			if (creature.isDead() || creature.isInvisible() || !isDefender(creature) || (!pastGate && isSiegeGuard(creature)))
+			if (creature.isDead() || creature.isInvisible() || !isDefender(creature))
 			{
 				continue;
 			}
-			final double distance = npc.calculateDistance2D(creature);
-			if (distance < bestDistance)
+			// A monster sent for a strong defender leaves the weak ones to the others when it can.
+			final int levelGap = Math.max(0, Math.abs(creature.getLevel() - npc.getLevel()) - 5);
+			final double score = npc.calculateDistance2D(creature) + (levelGap * 40);
+			if (score < bestScore)
 			{
 				best = creature;
-				bestDistance = distance;
+				bestScore = score;
 			}
 		}
 		return best;
@@ -1699,7 +2258,7 @@ public class VillageSiegeManager
 			{
 				if (entrance._guardRespawn[post] == 0)
 				{
-					entrance._guardRespawn[post] = now + GUARD_RESPAWN;
+					entrance._guardRespawn[post] = now + (VillageSiegeConfig.GUARD_RESPAWN * 1000L);
 				}
 				else if (now >= entrance._guardRespawn[post])
 				{
@@ -1759,6 +2318,25 @@ public class VillageSiegeManager
 		for (Player player : World.getInstance().getPlayers())
 		{
 			if (player.isOnline() && !player.isInOfflineMode() && !player.isDead() && !player.isGM() && (player.getInstanceId() == 0) && (player.calculateDistance2D(where) <= range))
+			{
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * @param siege the siege
+	 * @param where a place
+	 * @param range how far around it
+	 * @return how many of the siege's monsters are there
+	 */
+	private static int countMonstersNear(Siege siege, Location where, int range)
+	{
+		int count = 0;
+		for (SiegeMonster monster : siege._monsters.values())
+		{
+			if (!monster._npc.isDead() && (monster._npc.calculateDistance2D(where) <= range))
 			{
 				count++;
 			}
@@ -1840,22 +2418,37 @@ public class VillageSiegeManager
 			}
 		}
 
-		final Location arrival = QuestSpawnUtil.findPoint(entrance.getGuardCentre(), 50, FAKE_ARRIVAL_RANGE, true, 0);
+		// A small party, at the levels of the defenders there: the village's, or now and then a player's.
 		final int[] levels = getLevelRange(siege._village);
-		final int level = Math.max(1, Math.min(VillageSiegeConfig.MAX_PLAYER_LEVEL, Rnd.get(levels[0], levels[1])));
-		final Npc fake = FakePlayerPvpManager.getInstance().spawnFakePlayer(null, level, arrival.getX(), arrival.getY(), arrival.getZ(), 0, null, null);
-		if (fake != null)
+		final List<Integer> playerLevels = new ArrayList<>();
+		for (Player player : World.getInstance().getPlayers())
 		{
+			if (player.isOnline() && !player.isInOfflineMode() && !player.isGM() && (player.getLevel() <= VillageSiegeConfig.MAX_PLAYER_LEVEL) && isInArea(siege, player))
+			{
+				playerLevels.add(player.getLevel());
+			}
+		}
+		final int group = Math.min(wanted - siege._fakes.size(), Rnd.get(1, FAKE_GROUP_MAX));
+		for (int i = 0; i < group; i++)
+		{
+			final int base = !playerLevels.isEmpty() && Rnd.nextBoolean() ? playerLevels.get(Rnd.get(playerLevels.size())) + Rnd.get(-2, 2) : Rnd.get(levels[0], levels[1]);
+			final int level = Math.max(1, Math.min(VillageSiegeConfig.MAX_PLAYER_LEVEL, base));
+			final Location arrival = QuestSpawnUtil.findPoint(entrance.getGuardCentre(), 50, FAKE_ARRIVAL_RANGE, true, 0);
+			final Npc fake = FakePlayerPvpManager.getInstance().spawnFakePlayer(null, level, arrival.getX(), arrival.getY(), arrival.getZ(), 0, null, null);
+			if (fake == null)
+			{
+				break;
+			}
 			final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
 			profile.setSiegeDefence(siege._village.getId(), entrance._index);
 			profile.setHotzoneId(0);
-			profile.setLeaveTime(now + (Rnd.get(VillageSiegeConfig.FAKE_STAY_MIN * 60, VillageSiegeConfig.FAKE_STAY_MAX * 60) * 1000L));
+			profile.setLeaveTime(Math.min(siege._end + Rnd.get(10000, 60000), now + (Rnd.get(VillageSiegeConfig.FAKE_STAY_MIN * 60, VillageSiegeConfig.FAKE_STAY_MAX * 60) * 1000L)));
 			fake.broadcastPacket(new MagicSkillUse(fake, fake, 2036, 1, 1000, 0)); // Arrives by Scroll of Escape, like a player.
 			siege._fakes.add(fake);
 		}
 
 		// The first ones come quickly.
-		siege._nextFake = now + (siege._fakes.size() < 2 ? 5000 : Rnd.get(VillageSiegeConfig.FAKE_ARRIVAL_MIN, VillageSiegeConfig.FAKE_ARRIVAL_MAX) * 1000L);
+		siege._nextFake = now + (siege._fakes.size() < (wanted / 2) ? 3000 : Rnd.get(VillageSiegeConfig.FAKE_ARRIVAL_MIN, VillageSiegeConfig.FAKE_ARRIVAL_MAX) * 1000L);
 	}
 
 	/**
@@ -1924,15 +2517,16 @@ public class VillageSiegeManager
 
 		final Location gate = entrance._entrance.getGate();
 		final Location line = entrance.getGuardCentre();
-		// A spot of its own between the gate and the guards (its object id spreads them out).
-		final double share = 0.2 + ((fake.getObjectId() % 5) * 0.1);
-		final int side = ((fake.getObjectId() / 5) % 7) - 3;
+		// A spot of its own around the gate, from a little out on the road to the guards' line (its object id spreads them out).
+		final double share = -1.2 + ((fake.getObjectId() % 6) * 0.4);
+		final int side = ((fake.getObjectId() / 6) % 7) - 3;
 		final double dx = line.getX() - gate.getX();
 		final double dy = line.getY() - gate.getY();
 		final double length = Math.max(1, Math.hypot(dx, dy));
 		final int x = gate.getX() + (int) (dx * share) + (int) ((-dy / length) * side * 40);
 		final int y = gate.getY() + (int) (dy * share) + (int) ((dx / length) * side * 40);
-		return new Location(x, y, GeoEngine.getInstance().getHeight(x, y, gate.getZ()));
+		final Location post = new Location(x, y, GeoEngine.getInstance().getHeight(x, y, gate.getZ()));
+		return GeoEngine.getInstance().canMoveToTarget(gate, post) ? post : gate;
 	}
 
 	private static EntranceState getDefenderEntrance(Siege siege, Npc fake)
@@ -1953,33 +2547,16 @@ public class VillageSiegeManager
 	/**
 	 * @param guard a siege guard
 	 * @param target a monster
-	 * @return {@code true} if the guard goes for the monster: near enough to its post and, while its gate stands, past the gate (the gate is the defenders' to hold)
+	 * @return {@code true} if the guard goes for the monster: near enough to its post (the guards hold their line at the gate)
 	 */
 	public static boolean isInGuardReach(Attackable guard, Creature target)
 	{
 		final Spawn spawn = guard.getSpawn();
 		final int postX = spawn != null ? spawn.getX() : guard.getX();
 		final int postY = spawn != null ? spawn.getY() : guard.getY();
-		double reach = VillageSiegeConfig.GUARD_AGGRO_RANGE;
-		final Siege siege = getInstance()._siege;
-		if (siege != null)
-		{
-			for (EntranceState entrance : siege._entrances)
-			{
-				for (Npc npc : entrance._guards)
-				{
-					if ((npc == guard) && !entrance._fallen)
-					{
-						final Location gate = entrance._entrance.getGate();
-						reach = Math.min(reach, Math.hypot(gate.getX() - postX, gate.getY() - postY) - GUARD_GATE_MARGIN);
-					}
-				}
-			}
-		}
-		reach = Math.max(GUARD_MIN_REACH, reach);
 		final double dx = target.getX() - postX;
 		final double dy = target.getY() - postY;
-		return ((dx * dx) + (dy * dy)) <= (reach * reach);
+		return ((dx * dx) + (dy * dy)) <= ((double) VillageSiegeConfig.GUARD_AGGRO_RANGE * VillageSiegeConfig.GUARD_AGGRO_RANGE);
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -2185,15 +2762,14 @@ public class VillageSiegeManager
 	 */
 	private static void payActiveMinute(Siege siege, long now)
 	{
-		if (VillageSiegeConfig.ACTIVE_POINTS <= 0)
-		{
-			return;
-		}
-
 		for (Contributor contributor : siege._contributors.values())
 		{
 			if (contributor._lastActive >= (now - 60000))
 			{
+				synchronized (contributor)
+				{
+					contributor._activeMinutes++;
+				}
 				addPoints(siege, contributor, VillageSiegeConfig.ACTIVE_POINTS, true);
 			}
 		}
@@ -2509,6 +3085,190 @@ public class VillageSiegeManager
 	private static boolean isAnnouncedTo(Player player)
 	{
 		return (player.getLevel() <= VillageSiegeConfig.ANNOUNCE_MAX_LEVEL) || player.isGM();
+	}
+
+	/**
+	 * Tells the players around the village, big on screen.
+	 * @param siege the siege
+	 * @param text what
+	 */
+	private static void screenNear(Siege siege, String text)
+	{
+		final ExShowScreenMessage packet = new ExShowScreenMessage(text, ExShowScreenMessage.TOP_CENTER, 6000);
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (player.isOnline() && isAnnouncedTo(player) && isInArea(siege, player))
+			{
+				player.sendPacket(packet);
+			}
+		}
+	}
+
+	/**
+	 * At the start of a siege, the players it is for and who aren't there yet are told on screen, and shown the siege's window with a button to join it.
+	 * @param siege the siege
+	 */
+	private static void invite(Siege siege)
+	{
+		if (!VillageSiegeConfig.ANNOUNCE)
+		{
+			return;
+		}
+
+		final ExShowScreenMessage packet = new ExShowScreenMessage(siege._village.getName() + " is under siege! Type .siege to join the defence.", ExShowScreenMessage.TOP_CENTER, 8000);
+		for (Player player : World.getInstance().getPlayers())
+		{
+			if (!player.isOnline() || player.isInOfflineMode() || (player.getLevel() > VillageSiegeConfig.MAX_PLAYER_LEVEL) || isInArea(siege, player))
+			{
+				continue;
+			}
+			player.sendPacket(packet);
+			if (VillageSiegeConfig.INVITE && (getJoinRefusal(player) == null))
+			{
+				final String html = VillageSiegeBoard.handle(player, null, "invite");
+				if (html != null)
+				{
+					player.sendPacket(new NpcHtmlMessage(0, html));
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param player a player
+	 * @return why the player can't take the siege's teleport now, {@code null} if it can
+	 */
+	public static String getJoinRefusal(Player player)
+	{
+		if (!VillageSiegeConfig.TELEPORT)
+		{
+			return "There is no teleport to the siege.";
+		}
+		if ((player.getLevel() > VillageSiegeConfig.MAX_PLAYER_LEVEL) && !player.isGM())
+		{
+			return "The Defence Force only calls defenders up to level " + VillageSiegeConfig.MAX_PLAYER_LEVEL + ".";
+		}
+		return getTeleportRefusal(player);
+	}
+
+	/**
+	 * @param player a player
+	 * @return why the player can't teleport now, like at a gatekeeper, {@code null} if it can
+	 */
+	private static String getTeleportRefusal(Player player)
+	{
+		if (player.isAlikeDead())
+		{
+			return "You can't teleport while dead.";
+		}
+		if (AttackStanceTaskManager.getInstance().hasAttackStanceTask(player) || player.isCastingNow() || player.isTeleporting())
+		{
+			return "You can't teleport in the middle of a fight.";
+		}
+		if (player.isInOlympiadMode() || OlympiadManager.getInstance().isRegistered(player) || player.isInDuel() || player.isOnEvent())
+		{
+			return "You can't teleport while you take part in the Olympiad, a duel or an event.";
+		}
+		if (player.isJailed() || player.isInSiege() || player.isInsideZone(org.l2jmobius.gameserver.model.zone.ZoneId.SIEGE) || (player.getInstanceId() != 0) || player.isInBoat())
+		{
+			return "You can't teleport from here.";
+		}
+		if (player.isInStoreMode() || player.isFishing() || player.isFlyingMounted() || player.isMovementDisabled() || player.isCursedWeaponEquipped())
+		{
+			return "You can't teleport right now.";
+		}
+		if (!PlayerConfig.ALT_GAME_KARMA_PLAYER_CAN_USE_GK && (player.getKarma() > 0))
+		{
+			return "The Defence Force doesn't call on chaotic characters.";
+		}
+		return null;
+	}
+
+	/**
+	 * Takes a player to the siege going on, behind the gate with the fewest defenders, for free. It can go back where it was ({@link #returnHome}) until a while after the siege.
+	 * @param player the player
+	 * @return {@code null} if it went, else why not
+	 */
+	public String join(Player player)
+	{
+		final Siege siege = _siege;
+		if (siege == null)
+		{
+			return "No village is under siege now.";
+		}
+		final String refusal = getJoinRefusal(player);
+		if (refusal != null)
+		{
+			return refusal;
+		}
+		if (isInArea(siege, player))
+		{
+			return "You are at the siege already.";
+		}
+
+		EntranceState entrance = null;
+		int fewest = Integer.MAX_VALUE;
+		for (EntranceState state : siege._entrances)
+		{
+			final int defenders = countDefenders(siege, state._entrance.getGate(), VillageSiegeConfig.AREA_RANGE / 2);
+			if (defenders < fewest)
+			{
+				entrance = state;
+				fewest = defenders;
+			}
+		}
+		if (entrance == null)
+		{
+			return "No gate to go to.";
+		}
+
+		_returns.put(player.getObjectId(), player.getLocation());
+		final Location location = QuestSpawnUtil.findPoint(entrance.getGuardCentre(), 30, 150, true, 0);
+		player.teleToLocation(location, false);
+		player.sendMessage(siege._village.getName() + ": you join the defence of the " + entrance.getName() + ". Type .siege to go back when you are done.");
+		return null;
+	}
+
+	/**
+	 * Takes a player who came by the siege's teleport back where it was.
+	 * @param player the player
+	 * @return {@code null} if it went, else why not
+	 */
+	public String returnHome(Player player)
+	{
+		final Location location = _returns.get(player.getObjectId());
+		if ((location == null) || ((_siege == null) && (System.currentTimeMillis() > _returnUntil)))
+		{
+			_returns.remove(player.getObjectId());
+			return "You have nowhere to go back to.";
+		}
+		final String refusal = getTeleportRefusal(player);
+		if (refusal != null)
+		{
+			return refusal;
+		}
+		_returns.remove(player.getObjectId());
+		player.teleToLocation(location, false);
+		return null;
+	}
+
+	/**
+	 * @param player a player
+	 * @return {@code true} if a siege is going on and the player is at it
+	 */
+	public boolean isAtSiege(Player player)
+	{
+		final Siege siege = _siege;
+		return (siege != null) && isInArea(siege, player);
+	}
+
+	/**
+	 * @param player a player
+	 * @return {@code true} if it came by the siege's teleport and can go back
+	 */
+	public boolean canReturn(Player player)
+	{
+		return _returns.containsKey(player.getObjectId()) && ((_siege != null) || (System.currentTimeMillis() <= _returnUntil));
 	}
 
 	/**

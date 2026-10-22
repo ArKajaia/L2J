@@ -117,6 +117,7 @@ public enum InstanceType
 	ClassMaster(Folk),
 	SchemeBuffer(Npc),
 	EventMob(Npc),
+	VillageGate(Npc),
 	UCManagerInstance(Folk);
 	
 	private final InstanceType _parent;
