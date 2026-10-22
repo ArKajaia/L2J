@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/npcs.xsd">
-	<npc id="90001" displayId="35800" level="75" type="Folk" name="Pilkins" title="Arena Master">
-		<!-- Custom Crafter NPC using Support Unit Captain Body -->
+	<npc id="90001" displayId="31226" level="75" type="Folk" name="Pilkins" usingServerSideName="true" title="Arena Master" usingServerSideTitle="true">
+		<!-- Arena Director body -->
 		<parameters>
 			<param name="MoveAroundSocial" value="0" />
 			<param name="MoveAroundSocial1" value="90" />
-			<param name="serverSideName" value="true" />
-			<param name="serverSideTitle" value="true" />
 		</parameters>
 		<race>HUMAN</race>
-		<sex>FEMALE</sex>
+		<sex>MALE</sex>
 		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
 			<vitals hp="2676.65854" hpRegen="8.5" mp="1507.8" mpRegen="3" />
 			<attack physical="794.70901" magical="542.68324" random="30" critical="4" accuracy="5" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
@@ -38,8 +36,8 @@
 		<exCrtEffect>true</exCrtEffect>
 		<ai type="MAGE" aggroRange="300" clanHelpRange="300" isAggressive="false" />
 		<collision>
-			<radius normal="9" />
-			<height normal="23.5" />
+			<radius normal="8" />
+			<height normal="23" />
 		</collision>
 	</npc>
 </list>
