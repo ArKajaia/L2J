@@ -48,11 +48,17 @@ public class VillageSiegeConfig
 	public static int LATE_START_MIN_MINUTES;
 	public static boolean ANNOUNCE;
 	public static int ANNOUNCE_MAX_LEVEL;
+	public static int STATUS_ANNOUNCE_MINUTES;
+	public static boolean INVITE;
+	public static boolean TELEPORT;
 
 	// Who takes part
 	public static int MAX_PLAYER_LEVEL;
 	public static int GREY_LEVEL_DIFFERENCE;
 	public static int AREA_RANGE;
+	public static boolean SCALE_TO_DEFENDERS;
+	public static int SCALE_LEVELS_BELOW;
+	public static int SCALE_LEVELS_ABOVE;
 
 	// Entrances
 	public static int MAX_ENTRANCES;
@@ -62,6 +68,10 @@ public class VillageSiegeConfig
 	public static int GUARD_LINE_DISTANCE;
 
 	// Waves
+	public static int[] PRESSURE;
+	public static double PRESSURE_PER_DEFENDER;
+	public static int PRESSURE_MAX;
+	public static int REINFORCE_INTERVAL;
 	public static int WAVE_INTERVAL_MIN;
 	public static int WAVE_INTERVAL_MAX;
 	public static int WAVE_SIZE;
@@ -74,10 +84,11 @@ public class VillageSiegeConfig
 	public static int LEVEL_WINDOW;
 
 	// Gates
-	public static int GATE_METER;
-	public static int GATE_DRAIN;
-	public static int GATE_DRAIN_RANGE;
+	public static int GATE_HP;
+	public static int GATE_HIT_DAMAGE;
 	public static int GATE_REPAIR;
+	public static int GATE_REBUILD_MINUTES;
+	public static int GATE_REBUILD_PERCENT;
 
 	// Guards
 	public static int GUARD_LEVEL_OFFSET;
@@ -86,6 +97,7 @@ public class VillageSiegeConfig
 	public static double GUARD_ATTACK_MULTIPLIER;
 	public static double GUARD_DEFENCE_MULTIPLIER;
 	public static int GUARD_AGGRO_RANGE;
+	public static int GUARD_RESPAWN;
 	public static int RETAIL_GUARD_RANGE;
 
 	// Fake defenders
@@ -112,6 +124,10 @@ public class VillageSiegeConfig
 	public static boolean ONE_PER_COMPUTER;
 
 	// Rewards
+	public static int EXP_BONUS;
+	public static int REWARD_EXP_PERCENT;
+	public static int REWARD_FULL_MINUTES;
+	public static int REWARD_MIN_MINUTES;
 	public static int MEDAL_ITEM_ID;
 	public static int RANKING_SIZE;
 	public static int ANNOUNCE_TOP;
@@ -148,50 +164,62 @@ public class VillageSiegeConfig
 		LATE_START_MIN_MINUTES = Math.max(1, config.getInt("VillageSiegeLateStartMinMinutes", 30));
 		ANNOUNCE = config.getBoolean("VillageSiegeAnnounce", true);
 		ANNOUNCE_MAX_LEVEL = Math.max(1, config.getInt("VillageSiegeAnnounceMaxLevel", 40));
+		STATUS_ANNOUNCE_MINUTES = Math.max(0, config.getInt("VillageSiegeStatusAnnounceMinutes", 15));
+		INVITE = config.getBoolean("VillageSiegeInvite", true);
+		TELEPORT = config.getBoolean("VillageSiegeTeleport", true);
 
 		MAX_PLAYER_LEVEL = Math.max(1, config.getInt("VillageSiegeMaxPlayerLevel", 39));
 		GREY_LEVEL_DIFFERENCE = Math.max(1, config.getInt("VillageSiegeGreyLevelDifference", 10));
 		AREA_RANGE = Math.max(500, config.getInt("VillageSiegeAreaRange", 2000));
+		SCALE_TO_DEFENDERS = config.getBoolean("VillageSiegeScaleToDefenders", true);
+		SCALE_LEVELS_BELOW = Math.max(0, config.getInt("VillageSiegeScaleLevelsBelow", 3));
+		SCALE_LEVELS_ABOVE = Math.max(0, config.getInt("VillageSiegeScaleLevelsAbove", 1));
 
 		MAX_ENTRANCES = Math.max(1, config.getInt("VillageSiegeMaxEntrances", 3));
 		ENTRANCE_SPACING = Math.max(300, config.getInt("VillageSiegeEntranceSpacing", 1200));
 		SOURCE_RANGE = Math.max(2000, config.getInt("VillageSiegeSourceRange", 14000));
 		RALLY_DISTANCE = Math.max(300, config.getInt("VillageSiegeRallyDistance", 1100));
-		GUARD_LINE_DISTANCE = Math.max(100, config.getInt("VillageSiegeGuardLineDistance", 300));
+		GUARD_LINE_DISTANCE = Math.max(60, config.getInt("VillageSiegeGuardLineDistance", 120));
 
-		final int[] waveInterval = parseRange(config, "VillageSiegeWaveInterval", "60-90", 10);
+		PRESSURE = parseStages(config, "VillageSiegePressure", "10,16,24");
+		PRESSURE_PER_DEFENDER = Math.max(0, config.getDouble("VillageSiegePressurePerDefender", 1.0));
+		PRESSURE_MAX = Math.max(1, config.getInt("VillageSiegePressureMax", 45));
+		REINFORCE_INTERVAL = Math.max(1, config.getInt("VillageSiegeReinforceInterval", 5));
+		final int[] waveInterval = parseRange(config, "VillageSiegeWaveInterval", "90-150", 10);
 		WAVE_INTERVAL_MIN = waveInterval[0];
 		WAVE_INTERVAL_MAX = waveInterval[1];
-		WAVE_SIZE = Math.max(1, config.getInt("VillageSiegeWaveSize", 3));
+		WAVE_SIZE = Math.max(1, config.getInt("VillageSiegeWaveSize", 10));
 		WAVE_SIZE_PER_DEFENDERS = Math.max(0, config.getInt("VillageSiegeWaveSizePerDefenders", 2));
-		WAVE_SIZE_MAX = Math.max(WAVE_SIZE, config.getInt("VillageSiegeWaveSizeMax", 10));
-		MAX_MONSTERS = Math.max(1, config.getInt("VillageSiegeMaxMonsters", 60));
-		CHAMPION_CHANCE = Math.max(0, Math.min(100, config.getInt("VillageSiegeChampionChance", 8)));
+		WAVE_SIZE_MAX = Math.max(WAVE_SIZE, config.getInt("VillageSiegeWaveSizeMax", 30));
+		MAX_MONSTERS = Math.max(1, config.getInt("VillageSiegeMaxMonsters", 150));
+		CHAMPION_CHANCE = Math.max(0, Math.min(100, config.getInt("VillageSiegeChampionChance", 10)));
 		LEADER_INTERVAL = Math.max(0, config.getInt("VillageSiegeLeaderInterval", 20));
 		LORD_MINUTES = Math.max(0, config.getInt("VillageSiegeLordMinutes", 10));
 		LEVEL_WINDOW = Math.max(1, config.getInt("VillageSiegeLevelWindow", 6));
 
-		GATE_METER = Math.max(10, config.getInt("VillageSiegeGateMeter", 4800));
-		GATE_DRAIN = Math.max(0, config.getInt("VillageSiegeGateDrain", 1));
-		GATE_DRAIN_RANGE = Math.max(50, config.getInt("VillageSiegeGateDrainRange", 250));
-		GATE_REPAIR = Math.max(0, config.getInt("VillageSiegeGateRepair", 2));
+		GATE_HP = Math.max(100, config.getInt("VillageSiegeGateHp", 15000));
+		GATE_HIT_DAMAGE = Math.max(1, config.getInt("VillageSiegeGateHitDamage", 10));
+		GATE_REPAIR = Math.max(0, config.getInt("VillageSiegeGateRepair", 5));
+		GATE_REBUILD_MINUTES = Math.max(0, config.getInt("VillageSiegeGateRebuildMinutes", 5));
+		GATE_REBUILD_PERCENT = Math.max(1, Math.min(100, config.getInt("VillageSiegeGateRebuildPercent", 30)));
 
-		GUARD_LEVEL_OFFSET = config.getInt("VillageSiegeGuardLevelOffset", 10);
+		GUARD_LEVEL_OFFSET = config.getInt("VillageSiegeGuardLevelOffset", 4);
 		GUARDS_PER_ENTRANCE = Math.max(0, config.getInt("VillageSiegeGuardsPerEntrance", 4));
-		GUARD_HP_MULTIPLIER = Math.max(0.1, config.getDouble("VillageSiegeGuardHpMultiplier", 3.0));
-		GUARD_ATTACK_MULTIPLIER = Math.max(0.1, config.getDouble("VillageSiegeGuardAttackMultiplier", 1.2));
+		GUARD_HP_MULTIPLIER = Math.max(0.1, config.getDouble("VillageSiegeGuardHpMultiplier", 4.0));
+		GUARD_ATTACK_MULTIPLIER = Math.max(0.1, config.getDouble("VillageSiegeGuardAttackMultiplier", 0.6));
 		GUARD_DEFENCE_MULTIPLIER = Math.max(0.1, config.getDouble("VillageSiegeGuardDefenceMultiplier", 1.5));
-		GUARD_AGGRO_RANGE = Math.max(100, config.getInt("VillageSiegeGuardAggroRange", 450));
+		GUARD_AGGRO_RANGE = Math.max(100, config.getInt("VillageSiegeGuardAggroRange", 350));
+		GUARD_RESPAWN = Math.max(10, config.getInt("VillageSiegeGuardRespawn", 150));
 		RETAIL_GUARD_RANGE = Math.max(0, config.getInt("VillageSiegeRetailGuardRange", 1500));
 
 		FAKE_DEFENDERS = config.getBoolean("VillageSiegeFakeDefenders", true);
-		FAKE_DEFENDERS_ALONE = Math.max(0, config.getInt("VillageSiegeFakeDefendersAlone", 8));
-		FAKE_DEFENDERS_CROWDED = Math.max(0, Math.min(FAKE_DEFENDERS_ALONE, config.getInt("VillageSiegeFakeDefendersCrowded", 3)));
-		FAKE_DEFENDERS_CROWD = Math.max(1, config.getInt("VillageSiegeFakeDefendersCrowd", 10));
-		final int[] stay = parseRange(config, "VillageSiegeFakeDefenderStay", "10-25", 1);
+		FAKE_DEFENDERS_ALONE = Math.max(0, config.getInt("VillageSiegeFakeDefendersAlone", 24));
+		FAKE_DEFENDERS_CROWDED = Math.max(0, Math.min(FAKE_DEFENDERS_ALONE, config.getInt("VillageSiegeFakeDefendersCrowded", 12)));
+		FAKE_DEFENDERS_CROWD = Math.max(1, config.getInt("VillageSiegeFakeDefendersCrowd", 20));
+		final int[] stay = parseRange(config, "VillageSiegeFakeDefenderStay", "40-90", 1);
 		FAKE_STAY_MIN = stay[0];
 		FAKE_STAY_MAX = stay[1];
-		final int[] arrival = parseRange(config, "VillageSiegeFakeDefenderArrival", "20-90", 1);
+		final int[] arrival = parseRange(config, "VillageSiegeFakeDefenderArrival", "8-25", 1);
 		FAKE_ARRIVAL_MIN = arrival[0];
 		FAKE_ARRIVAL_MAX = arrival[1];
 
@@ -207,9 +235,41 @@ public class VillageSiegeConfig
 		END_BONUS_MINUTES = Math.max(1, config.getInt("VillageSiegeEndBonusMinutes", 15));
 		ONE_PER_COMPUTER = config.getBoolean("VillageSiegeOnePerComputer", true);
 
+		EXP_BONUS = Math.max(0, config.getInt("VillageSiegeExpBonus", 50));
+		REWARD_EXP_PERCENT = Math.max(0, config.getInt("VillageSiegeRewardExpPercent", 30));
+		REWARD_FULL_MINUTES = Math.max(1, config.getInt("VillageSiegeRewardFullMinutes", 30));
+		REWARD_MIN_MINUTES = Math.max(0, config.getInt("VillageSiegeRewardMinMinutes", 5));
 		MEDAL_ITEM_ID = config.getInt("VillageSiegeMedalItemId", 4674);
 		RANKING_SIZE = Math.max(3, config.getInt("VillageSiegeRankingSize", 20));
 		ANNOUNCE_TOP = Math.max(0, config.getInt("VillageSiegeAnnounceTop", 3));
+	}
+
+	/**
+	 * @return one value for each of the three stages of a siege (one value for all three)
+	 */
+	private static int[] parseStages(ConfigReader config, String key, String defaultValue)
+	{
+		final String value = config.getString(key, defaultValue);
+		try
+		{
+			return toStages(value);
+		}
+		catch (Exception e)
+		{
+			LOGGER.warning("Invalid " + key + ": " + value);
+			return toStages(defaultValue);
+		}
+	}
+
+	private static int[] toStages(String value)
+	{
+		final String[] parts = value.split(",");
+		final int[] stages = new int[3];
+		for (int i = 0; i < stages.length; i++)
+		{
+			stages[i] = Math.max(0, Integer.parseInt(parts[Math.min(i, parts.length - 1)].trim()));
+		}
+		return stages;
 	}
 
 	private static int[] parseRange(ConfigReader config, String key, String defaultValue, int lowest)

@@ -47,6 +47,7 @@ import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
 import org.l2jmobius.gameserver.config.custom.PremiumSystemConfig;
+import org.l2jmobius.gameserver.config.custom.VillageSiegeConfig;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
 import org.l2jmobius.gameserver.managers.EventDropManager;
@@ -1814,6 +1815,13 @@ public class Attackable extends Npc
 				
 				xp *= mul;
 				sp *= mul;
+			}
+			
+			// The monsters of a Village Under Siege give more to the characters it is for.
+			if ((_villageSiegeRole == VILLAGE_SIEGE_MONSTER) && (VillageSiegeConfig.EXP_BONUS > 0) && (charLevel <= VillageSiegeConfig.MAX_PLAYER_LEVEL))
+			{
+				xp *= 1 + (VillageSiegeConfig.EXP_BONUS / 100.0);
+				sp *= 1 + (VillageSiegeConfig.EXP_BONUS / 100.0);
 			}
 		}
 		

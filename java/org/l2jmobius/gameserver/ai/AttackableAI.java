@@ -977,7 +977,8 @@ public class AttackableAI extends CreatureAI
 			}
 			
 			// Monster teleport to spawn
-			if (npc.isMonster() && (npc.getSpawn() != null) && (npc.getInstanceId() == 0) && (npc.isInCombat() || !World.getInstance().hasVisibleObject(npc, Player.class)))
+			// (Not a monster of a Village Under Siege: the siege sends it on.)
+			if (npc.isMonster() && (npc.getSpawn() != null) && (npc.getInstanceId() == 0) && (npc.getVillageSiegeRole() != Attackable.VILLAGE_SIEGE_MONSTER) && (npc.isInCombat() || !World.getInstance().hasVisibleObject(npc, Player.class)))
 			{
 				npc.teleToLocation(npc.getSpawn(), false);
 			}

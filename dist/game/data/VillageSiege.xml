@@ -2,8 +2,9 @@
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="xsd/VillageSiege.xsd">
 	<!--
 		Village Under Siege (config/Custom/VillageSiege.ini): one village after the other, monsters of the
-		hunting grounds around a starting village attack its entrances. The defenders hold the gate standard of each
-		entrance, the village guards wait behind it, and contribution is paid in Defence Medals.
+		hunting grounds around a starting village attack its entrances. The defenders hold the gate of each
+		entrance with the village guards, and contribution is paid in Defence Medals. Defenders above the levels below
+		get monsters of their own level (VillageSiegeScaleToDefenders).
 
 		village
 		  id             the key used in VillageSiegeOrder and by //villagesiege
@@ -15,10 +16,10 @@
 		                 there pay for this item (its retail price / VillageSiegeAdenaPerMedal medals)
 		  minLevel       optional: the levels of the siege's monsters, from minLevel to maxLevel. They are the monsters
 		  maxLevel       of those levels living nearest the village (on the entrance's road, around the village, farther
-		                 out, or anywhere). The siege guards are 10 levels above the middle (VillageSiegeGuardLevelOffset).
+		                 out, or anywhere). The siege guards are a few levels above the middle (VillageSiegeGuardLevelOffset).
 		                 By default VillageSiegeLevelWindow around the average level of the monsters living around it.
 
-		entrance (optional) a fixed entrance: the gate standard stands at x, y, z, and the waves form at rallyX, rallyY,
+		entrance (optional) a fixed entrance: the gate stands at x, y, z, and the waves form at rallyX, rallyY,
 		  rallyZ (optional; by default straight out from the village). Without any, the entrances are found on their own:
 		  the roads the monsters of the hunting grounds around take into the village (where a path from out on their side
 		  crosses into the TownZone). //villagesiege entrances <id> shows them, with lines to paste here to keep them.

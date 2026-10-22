@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/npcs.xsd">
-	<!-- Village Under Siege (config/Custom/VillageSiege.ini). The siege guards are made for each siege (ids 900610+, never in this file). -->
+	<!-- Village Under Siege (config/Custom/VillageSiege.ini). The gates (id 900601, type VillageGate) and the siege guards (ids 900610+) are made for each siege, never in this file. -->
 	<npc id="900600" displayId="35610" level="70" type="Folk" name="Defence Force Board" usingServerSideName="true" title="Village Under Siege" usingServerSideTitle="true"> <!-- Defence Force Board (one in every besieged village, near the gatekeeper) -->
 		<race>ETC</race>
 		<sex>ETC</sex>
@@ -14,25 +14,6 @@
 			</speed>
 		</stats>
 		<status attackable="false" undying="true" />
-		<ai aggroRange="0" isAggressive="false" />
-		<collision>
-			<radius normal="9" />
-			<height normal="20" />
-		</collision>
-	</npc>
-	<npc id="900601" displayId="35423" level="70" type="Folk" name="Gate Standard" usingServerSideName="true" title="Gate" usingServerSideTitle="true"> <!-- Gate standard of an entrance: its title shows what is left of the gate -->
-		<race>ETC</race>
-		<sex>ETC</sex>
-		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
-			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
-			<attack physical="8" magical="7" />
-			<defence physical="500" magical="500" />
-			<speed>
-				<walk ground="1" />
-				<run ground="1" />
-			</speed>
-		</stats>
-		<status attackable="false" undying="true" talkable="false" />
 		<ai aggroRange="0" isAggressive="false" />
 		<collision>
 			<radius normal="9" />
