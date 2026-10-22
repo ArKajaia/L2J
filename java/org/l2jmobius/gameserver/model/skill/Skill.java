@@ -47,6 +47,7 @@ import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.player.AreaTargets;
 import org.l2jmobius.gameserver.model.actor.instance.Cubic;
 import org.l2jmobius.gameserver.model.conditions.Condition;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
@@ -1228,6 +1229,16 @@ public class Skill
 					{
 						return false;
 					}
+				}
+			}
+			else if (skill.hasNegativeEffect() && AreaTargets.isFakePerson(target))
+			{
+				// A fake player (and its servitor) like a player: hit only if it may be fought without Ctrl (flagged, PK, clan war, see Monster#isAutoAttackable), or as the target the skill is aimed at with Ctrl.
+				// So the white fake players around, like the fake defenders of a Village Under Siege, are spared.
+				final boolean forcedTarget = (skill.getEffectRange() > 0) && (caster.getTarget() == target) && AreaTargets.isCtrlCast(caster, skill);
+				if (target.isInsideZone(ZoneId.PEACE) || (!forcedTarget && !target.isAutoAttackable(caster)))
+				{
+					return false;
 				}
 			}
 		}

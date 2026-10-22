@@ -224,7 +224,7 @@ public class AreaTargets
 	}
 
 	/**
-	 * A white fake player in a fight is fair game for a hit of its own (see Monster#isAutoAttackable), not for a totem planted without Ctrl.
+	 * Like a player, a white fake player (even one fighting monsters) takes Ctrl: see Monster#isAutoAttackable.
 	 * @param caster the totem's Warchief
 	 * @param fake a fake player
 	 * @return {@code true} if it is flagged, a PK or at war with the caster's clan (or fake players are always fair game)
