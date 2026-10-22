@@ -728,11 +728,11 @@ public class TownLifeManager implements IXmlReader
 				}
 				default:
 				{
-					lines = TownLifeLines.SIEGE_MUSINGS;
+					lines = resident.siegeLines();
 					break;
 				}
 			}
-			return TownLifeLines.fill(TownLifeLines.random(lines), resident.town.name, player.getName());
+			return TownLifeLines.fill(resident.fillGate(TownLifeLines.random(lines)), resident.town.name, player.getName());
 		}
 		
 		switch (resident.kind)

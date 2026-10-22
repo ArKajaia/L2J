@@ -393,6 +393,113 @@ final class TownLifeLines
 		"Bar your doors and shutters! Now!",
 	};
 	
+	/** A townsperson who boasts it isn't afraid of the siege, starting a talk (until a gate is damaged and it runs home). */
+	static final String[][] BOASTER_CONVERSATIONS =
+	{
+		{
+			"Afraid of a few monsters? Not me. I'm staying right here.",
+			"You're very brave. Or very foolish.",
+			"Brave. Definitely brave."
+		},
+		{
+			"I told the whole house: let them come, I'm staying out in the street.",
+			"And what did they say?",
+			"They barred the door behind me. Ha! ...They did bar it, didn't they?"
+		},
+		{
+			"If one of them gets past the gate, I'll wrestle it myself.",
+			"With those arms?",
+			"These arms have carried many a sack of flour, friend."
+		},
+		{
+			"Everybody's hiding. Cowards, the lot of them!",
+			"And you're not scared at all?",
+			"Scared? I laugh at sieges. Ha. Ha ha."
+		},
+	};
+	
+	/** A townsperson who boasts it isn't afraid of the siege. */
+	static final String[] BOASTER =
+	{
+		"Monsters? Pah! I've seen scarier things in my soup.",
+		"Afraid? Me? I'll stand right here and watch them break their teeth on our walls.",
+		"Let them come! I could hold a gate myself, with a broom.",
+		"Ha! A siege. In my day we called this a busy market.",
+		"Hide? What for? Our walls have never fallen.",
+		"I'm not afraid. I'm just... standing near my door. For no reason.",
+	};
+	
+	/** The boaster greeting a player walking by. */
+	static final String[] BOASTER_GREETINGS =
+	{
+		"%name%! Off to the gates? No need, I've got this street covered.",
+		"Don't look so worried, %name%. I'm not.",
+		"Monsters, %name%? Let them try me!",
+	};
+	
+	/** The boaster running home once a gate is damaged. */
+	static final String[] BOASTER_FLEE =
+	{
+		"Was that the gate?! It's cracking! I, er... just remembered I left the stove on!",
+		"Right. Well. I'm not afraid, but I'm going inside. For... reasons!",
+		"The gate is breaking?! Out of my way! Bravely! Out of my way!",
+		"I'll, um, guard my house. From the inside. With the door barred.",
+		"Nobody saw that. I was never here!",
+	};
+	
+	/** A townsperson whose son defends a gate (%gate%), starting a talk: certain the village will hold. */
+	static final String[][] PARENT_CONVERSATIONS =
+	{
+		{
+			"My son is at the %gate%. Nothing gets past him.",
+			"You must be worried sick.",
+			"Worried? He's my son! The %gate% will hold."
+		},
+		{
+			"Have you heard how the %gate% is doing?",
+			"Holding, they say.",
+			"Of course it's holding. My boy is there."
+		},
+		{
+			"My son volunteered for the %gate% this morning.",
+			"Brave lad.",
+			"Brave? He gets it from me. They'll hold, you'll see."
+		},
+		{
+			"Did you see the defenders march to the %gate%? My son was at the front!",
+			"I saw a lot of them. Which one was he?",
+			"The one in front! The tall one! The one who'll send those monsters running!"
+		},
+	};
+	
+	/** A townsperson whose son defends a gate (%gate%). */
+	static final String[] PARENT =
+	{
+		"My son is at the %gate%. Not one of those beasts will get past him!",
+		"Worried? Me? My boy holds the %gate%!",
+		"Best spearman in %town%, my son. The %gate% will hold, mark my words.",
+		"I packed him a lunch this morning. A fed son holds a gate, that's what I say.",
+		"Those monsters don't know whose son is standing at the %gate%!",
+		"Ha! Let them knock. My boy will answer the door.",
+	};
+	
+	/** The proud parent greeting a player walking by. */
+	static final String[] PARENT_GREETINGS =
+	{
+		"Going to the %gate%, %name%? Look out for my son, tall lad, can't miss him!",
+		"%name%! If you see my boy at the %gate%, tell him we're proud of him!",
+		"Don't you worry, %name%. My son is at the %gate%, we'll hold.",
+	};
+	
+	/** The proud parent once the gate its son defends has fallen: still certain. */
+	static final String[] PARENT_FALLEN =
+	{
+		"The %gate% fell? Nonsense. My boy is just letting them in so he can get at them!",
+		"He'll have the %gate% back up by supper, you'll see.",
+		"Fallen? Not with my son there. They must mean some other gate.",
+		"A gate is only wood. My son is made of sterner stuff. We'll hold!",
+	};
+	
 	/** Townsfolk running home as the siege begins. */
 	static final String[] SIEGE_FLEE =
 	{

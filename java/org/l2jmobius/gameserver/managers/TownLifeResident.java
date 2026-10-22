@@ -29,6 +29,8 @@ import java.util.logging.Logger;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.custom.TownLifeConfig;
+import org.l2jmobius.gameserver.managers.VillageSiegeManager.EntranceState;
+import org.l2jmobius.gameserver.managers.VillageSiegeManager.Siege;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -105,6 +107,17 @@ final class TownLifeResident
 		FESTIVAL
 	}
 	
+	/** How a townsperson out in the streets takes a siege. */
+	enum Temper
+	{
+		/** Worried, like everybody. */
+		PLAIN,
+		/** Boasts it isn't afraid, until a gate is damaged: then it runs home. */
+		BOASTER,
+		/** Boasts that its son defends a gate, so the village will hold for certain. */
+		PROUD_PARENT
+	}
+	
 	private enum State
 	{
 		/** In its house (not in the world). */
@@ -162,6 +175,12 @@ final class TownLifeResident
 	private boolean _staysForSiege;
 	/** When it sets off home as the siege begins (they don't all go at the same moment). */
 	private long _siegeLeaveAt;
+	/** How it takes the siege, if it stays out. */
+	Temper temper = Temper.PLAIN;
+	/** The gate its son defends (a proud parent), {@code null} for none. */
+	private EntranceState _sonsGate;
+	/** A boaster who saw a gate damaged: it hides for the rest of the siege. */
+	private boolean _scared;
 	
 	// Children.
 	long frozenUntil;
@@ -279,6 +298,12 @@ final class TownLifeResident
 	void update(TownLifeManager.Clock clock, boolean festival, long now)
 	{
 		final Npc npc = getNpc();
+		if ((temper == Temper.BOASTER) && !_scared && town.isGateDamaged())
+		{
+			// So much for not being afraid.
+			_scared = true;
+			_siegeLeaveAt = now;
+		}
 		final boolean out = wantsOut(clock, festival) && !hidesFromSiege(npc, now);
 		if (out)
 		{
@@ -364,6 +389,22 @@ final class TownLifeResident
 			}
 		}
 		_siegeLeaveAt = now + Rnd.get(0, 5000);
+		_scared = false;
+		_sonsGate = null;
+		temper = Temper.PLAIN;
+		if (_staysForSiege && (kind == Kind.WANDERER))
+		{
+			// Of the townsfolk who stay out, some boast they aren't afraid, some that their son holds a gate.
+			final int roll = Rnd.get(5);
+			if (roll < 2)
+			{
+				takeTemper(Temper.BOASTER);
+			}
+			else if (roll < 4)
+			{
+				takeTemper(Temper.PROUD_PARENT);
+			}
+		}
 		
 		final Npc npc = getNpc();
 		if ((npc != null) && ((_state == State.GOING_HOME) || runs()))
@@ -373,11 +414,70 @@ final class TownLifeResident
 	}
 	
 	/**
+	 * It stays out for the siege, and takes it this way.
+	 * @param newTemper how it takes the siege
+	 */
+	void takeTemper(Temper newTemper)
+	{
+		_staysForSiege = true;
+		temper = newTemper;
+		_sonsGate = null;
+		final Siege siege = town.getSiege();
+		if ((newTemper == Temper.PROUD_PARENT) && (siege != null) && !siege.getEntrances().isEmpty())
+		{
+			final List<EntranceState> gates = siege.getEntrances();
+			_sonsGate = gates.get(Rnd.get(gates.size()));
+		}
+	}
+	
+	/**
+	 * @return {@code true} if it stays out during the siege going on
+	 */
+	boolean staysForSiege()
+	{
+		return _staysForSiege;
+	}
+	
+	/**
+	 * @param line a line
+	 * @return the line with the gate its son defends filled in for %gate%
+	 */
+	String fillGate(String line)
+	{
+		return line.replace("%gate%", _sonsGate != null ? _sonsGate.getName() : "gate");
+	}
+	
+	/**
+	 * @return what it says out in the streets during a siege, as it takes it
+	 */
+	String[] siegeLines()
+	{
+		switch (temper)
+		{
+			case BOASTER:
+			{
+				return TownLifeLines.BOASTER;
+			}
+			case PROUD_PARENT:
+			{
+				return (_sonsGate != null) && _sonsGate.isFallen() ? TownLifeLines.PARENT_FALLEN : TownLifeLines.PARENT;
+			}
+			default:
+			{
+				return TownLifeLines.SIEGE_MUSINGS;
+			}
+		}
+	}
+	
+	/**
 	 * The siege is over: those who stayed out slow down again (the others come back out as usual).
 	 */
 	void onSiegeEnd()
 	{
 		_staysForSiege = false;
+		temper = Temper.PLAIN;
+		_sonsGate = null;
+		_scared = false;
 		final Npc npc = getNpc();
 		if ((npc != null) && (_state == State.OUT) && !runs())
 		{
@@ -390,7 +490,7 @@ final class TownLifeResident
 	 */
 	private boolean hidesFromSiege(Npc npc, long now)
 	{
-		return (town.getSiege() != null) && !_staysForSiege && ((npc == null) || (now >= _siegeLeaveAt));
+		return (town.getSiege() != null) && (!_staysForSiege || _scared) && ((npc == null) || (now >= _siegeLeaveAt));
 	}
 	
 	/**
@@ -532,7 +632,11 @@ final class TownLifeResident
 		{
 			// The siege began: everybody runs for their door, some crying out.
 			npc.setRunning();
-			if ((Rnd.get(3) == 0) && town.mayShout(now))
+			if (_scared)
+			{
+				say(npc, TownLifeLines.random(TownLifeLines.BOASTER_FLEE), null);
+			}
+			else if ((Rnd.get(3) == 0) && town.mayShout(now))
 			{
 				say(npc, TownLifeLines.random(kind == Kind.CHILD ? TownLifeLines.SIEGE_CHILD_FLEE : TownLifeLines.SIEGE_FLEE), null);
 			}
@@ -829,9 +933,9 @@ final class TownLifeResident
 				{
 					npc.onRandomAnimation(Rnd.get(1, 3));
 				}
-				if (TownLifeConfig.CHATTER && (Rnd.get(siege ? 3 : 10) == 0))
+				if (TownLifeConfig.CHATTER && (Rnd.get(!siege ? 10 : temper != Temper.PLAIN ? 2 : 3) == 0))
 				{
-					say(npc, TownLifeLines.random(siege ? TownLifeLines.SIEGE_MUSINGS : TownLifeLines.MUSINGS), null);
+					say(npc, fillGate(TownLifeLines.random(siege ? siegeLines() : TownLifeLines.MUSINGS)), null);
 				}
 				waitUntil = now + (siege ? Rnd.get(2000, 7000) : Rnd.get(6000, 25000));
 				break;
@@ -1034,7 +1138,7 @@ final class TownLifeResident
 			{
 				face(npc, player);
 				npc.onRandomAnimation(Rnd.get(1, 3));
-				say(npc, TownLifeLines.random(town.getSiege() != null ? TownLifeLines.SIEGE_GREETINGS : TownLifeLines.GREETINGS), player.getName());
+				say(npc, fillGate(TownLifeLines.random(siegeGreetings())), player.getName());
 				waitUntil = Math.max(waitUntil, now + 3000);
 			}
 			break;
@@ -1043,6 +1147,32 @@ final class TownLifeResident
 		if (_greeted.size() > 50)
 		{
 			_greeted.values().removeIf(time -> (now - time) > GREET_AGAIN);
+		}
+	}
+	
+	/**
+	 * @return how it greets a player: as it takes the siege going on, if one is
+	 */
+	private String[] siegeGreetings()
+	{
+		if (town.getSiege() == null)
+		{
+			return TownLifeLines.GREETINGS;
+		}
+		switch (temper)
+		{
+			case BOASTER:
+			{
+				return TownLifeLines.BOASTER_GREETINGS;
+			}
+			case PROUD_PARENT:
+			{
+				return TownLifeLines.PARENT_GREETINGS;
+			}
+			default:
+			{
+				return TownLifeLines.SIEGE_GREETINGS;
+			}
 		}
 	}
 	
@@ -1084,7 +1214,7 @@ final class TownLifeResident
 		sb.append(": ").append(_state.name().toLowerCase());
 		if (town.getSiege() != null)
 		{
-			sb.append(_staysForSiege ? ", stays out for the siege" : ", hiding from the siege");
+			sb.append(_staysForSiege && !_scared ? ", stays out for the siege" : ", hiding from the siege").append(temper != Temper.PLAIN ? " (" + temper.name().toLowerCase().replace('_', ' ') + (_sonsGate != null ? ", son at the " + _sonsGate.getName() : "") + (_scared ? ", scared off" : "") + ")" : "");
 		}
 		if (npc != null)
 		{

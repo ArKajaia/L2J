@@ -34,6 +34,8 @@ import org.l2jmobius.gameserver.geoengine.geodata.Cell;
 import org.l2jmobius.gameserver.managers.FakePlayerTown.Role;
 import org.l2jmobius.gameserver.managers.FakePlayerTown.TownNpc;
 import org.l2jmobius.gameserver.managers.TownLifeResident.Kind;
+import org.l2jmobius.gameserver.managers.TownLifeResident.Temper;
+import org.l2jmobius.gameserver.managers.VillageSiegeManager.EntranceState;
 import org.l2jmobius.gameserver.managers.VillageSiegeManager.Siege;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
@@ -117,6 +119,9 @@ final class TownLifeTown
 	};
 	/** How long the fireworks last after dusk falls on festival day. */
 	private static final long FIREWORKS_DURATION = 240_000;
+	
+	/** A gate down to this HP percent (or fallen) sends the boasters of a besieged town home. */
+	private static final int BOASTER_NERVE = 90;
 	
 	private static final int PLAY_RADIUS = 340;
 	/** How far around the wharf manager the harbor folk go. */
@@ -232,6 +237,8 @@ final class TownLifeTown
 	private volatile Siege _siege;
 	/** When the last siege of this town ended, 0 for never. */
 	long siegeEndedAt;
+	/** {@code true} once a gate of the siege going on is damaged (or fell). */
+	private boolean _gateDamaged;
 	
 	// The children's game.
 	private TownLifeResident _it;
@@ -989,6 +996,44 @@ final class TownLifeTown
 	}
 	
 	/**
+	 * @return {@code true} once a gate of the siege going on is damaged (or fell)
+	 */
+	boolean isGateDamaged()
+	{
+		return _gateDamaged;
+	}
+	
+	/**
+	 * A besieged town has someone who takes the siege this way, if it has townsfolk at all: one of those who stay out, or else one who would have gone home.
+	 * @param temper how it takes the siege
+	 */
+	private void ensureTemper(Temper temper)
+	{
+		final List<TownLifeResident> plain = new ArrayList<>();
+		final List<TownLifeResident> leaving = new ArrayList<>();
+		for (TownLifeResident resident : residents)
+		{
+			if ((resident.kind != Kind.WANDERER) || resident.festivalOnly)
+			{
+				continue;
+			}
+			if (resident.temper == temper)
+			{
+				return;
+			}
+			if (resident.temper == Temper.PLAIN)
+			{
+				(resident.staysForSiege() ? plain : leaving).add(resident);
+			}
+		}
+		final List<TownLifeResident> candidates = !plain.isEmpty() ? plain : leaving;
+		if (!candidates.isEmpty())
+		{
+			candidates.get(Rnd.get(candidates.size())).takeTemper(temper);
+		}
+	}
+	
+	/**
 	 * @param clock the time of day
 	 * @param festival {@code true} on festival day
 	 * @param siege the siege of this town going on, {@code null} for none
@@ -1010,6 +1055,9 @@ final class TownLifeTown
 				{
 					resident.onSiegeStart(now);
 				}
+				ensureTemper(Temper.BOASTER);
+				ensureTemper(Temper.PROUD_PARENT);
+				_gateDamaged = false;
 				_nextCry = now + 2000;
 			}
 			else
@@ -1020,6 +1068,17 @@ final class TownLifeTown
 					resident.onSiegeEnd();
 				}
 				_nextCry = now + 5000;
+			}
+		}
+		if ((siege != null) && !_gateDamaged)
+		{
+			for (EntranceState entrance : siege.getEntrances())
+			{
+				if (entrance.isFallen() || (entrance.getMeterPercent() <= BOASTER_NERVE))
+				{
+					_gateDamaged = true;
+					break;
+				}
 			}
 		}
 		
@@ -1191,8 +1250,13 @@ final class TownLifeTown
 		final int x = secondNpc.getX() + (int) (Math.cos(angle) * 45);
 		final int y = secondNpc.getY() + (int) (Math.sin(angle) * 45);
 		final Location meetingPoint = TownLifeManager.groundAt(x, y, secondNpc.getZ(), secondNpc);
-		final String[][] talks = _siege != null ? TownLifeLines.SIEGE_CONVERSATIONS : TownLifeLines.CONVERSATIONS;
-		final Conversation conversation = new Conversation(first, second, talks[Rnd.get(talks.length)], meetingPoint, now);
+		final String[][] talks = _siege == null ? TownLifeLines.CONVERSATIONS : first.temper == Temper.BOASTER ? TownLifeLines.BOASTER_CONVERSATIONS : first.temper == Temper.PROUD_PARENT ? TownLifeLines.PARENT_CONVERSATIONS : TownLifeLines.SIEGE_CONVERSATIONS;
+		final String[] lines = talks[Rnd.get(talks.length)].clone();
+		for (int i = 0; i < lines.length; i++)
+		{
+			lines[i] = first.fillGate(lines[i]);
+		}
+		final Conversation conversation = new Conversation(first, second, lines, meetingPoint, now);
 		first.conversation = conversation;
 		second.conversation = conversation;
 		secondNpc.stopMove(null);
