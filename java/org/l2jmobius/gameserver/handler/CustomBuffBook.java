@@ -21,6 +21,7 @@ import org.l2jmobius.gameserver.util.HtmlUtil;
 /**
  * The Champion Medal's Skill Master: double-clicking the medal opens it in the community board window.<br>
  * Every buff of {@link CustomBuffConfig#SKILLS} keeps its place on its page; the ones the player already knows are grayed out instead of removed, so learning one doesn't move the others.<br>
+ * A medal always teaches the highest level, so a buff the player's class taught at a lower level can be improved to it (Upgrade) for one medal too.<br>
  * The window stays open after learning while the player has medals left, on the same page.
  */
 public class CustomBuffBook implements IItemHandler
@@ -64,7 +65,8 @@ public class CustomBuffBook implements IItemHandler
 		}
 
 		// A double click on Learn mustn't take a second medal for a buff already known.
-		if (player.getKnownSkill(skillId) != null)
+		final Skill known = player.getKnownSkill(skillId);
+		if (isLearned(known, skill))
 		{
 			player.sendMessage("You already know " + skill.getName() + ".");
 			showPage(player, page);
@@ -80,7 +82,15 @@ public class CustomBuffBook implements IItemHandler
 
 		player.addSkill(skill, true);
 		player.sendSkillList();
-		player.sendMessage("You successfully learned " + skill.getName() + "!");
+		if (known != null)
+		{
+			player.updateShortcuts(skillId, skill.getLevel());
+			player.sendMessage("You improved " + skill.getName() + " to level " + skill.getLevel() + "!");
+		}
+		else
+		{
+			player.sendMessage("You successfully learned " + skill.getName() + "!");
+		}
 
 		if (getMedalCount(player) > 0)
 		{
@@ -104,7 +114,7 @@ public class CustomBuffBook implements IItemHandler
 			if (skill != null)
 			{
 				skills.add(skill);
-				if (player.getKnownSkill(skillId) != null)
+				if (isLearned(player.getKnownSkill(skillId), skill))
 				{
 					learned++;
 				}
@@ -149,7 +159,8 @@ public class CustomBuffBook implements IItemHandler
 			}
 			else
 			{
-				sb.append("Learned buffs stay in their place, grayed out. Every song or dance already in effect makes the next one cost more MP.");
+				sb.append("Learned buffs stay in their place, grayed out. A buff you know at a lower level can be upgraded to the highest one.");
+				sb.append("<br1>Every song or dance already in effect makes the next one cost more MP.");
 			}
 			sb.append("</font></td></tr></table>");
 
@@ -180,7 +191,9 @@ public class CustomBuffBook implements IItemHandler
 
 	private static void appendSkill(StringBuilder sb, Player player, Skill skill, long medals, int page)
 	{
-		final boolean known = player.getKnownSkill(skill.getId()) != null;
+		final Skill knownSkill = player.getKnownSkill(skill.getId());
+		final boolean known = isLearned(knownSkill, skill);
+		final boolean upgrade = (knownSkill != null) && !known;
 		final String description = CustomBuffConfig.DESCRIPTIONS.get(skill.getId());
 
 		String icon = skill.getIcon();
@@ -192,7 +205,15 @@ public class CustomBuffBook implements IItemHandler
 		sb.append("<table width=366 height=58 border=0 cellspacing=0 cellpadding=3 bgcolor=").append(known ? "0E0E0E" : "222222").append("><tr>");
 		sb.append("<td width=40 align=center valign=top><img src=\"").append(icon).append("\" width=32 height=32></td>");
 		sb.append("<td width=246 align=left valign=top>");
-		sb.append("<font color=\"").append(known ? "6A6A6A" : "LEVEL").append("\">").append(skill.getName()).append("</font> <font color=\"").append(known ? "4A4A4A" : "8A8A8A").append("\">Lv ").append(skill.getLevel()).append("</font>");
+		sb.append("<font color=\"").append(known ? "6A6A6A" : "LEVEL").append("\">").append(skill.getName()).append("</font> ");
+		if (upgrade)
+		{
+			sb.append("<font color=\"8A8A8A\">Lv ").append(knownSkill.getLevel()).append("</font> <font color=\"00FF66\">to Lv ").append(skill.getLevel()).append("</font>");
+		}
+		else
+		{
+			sb.append("<font color=\"").append(known ? "4A4A4A" : "8A8A8A").append("\">Lv ").append(skill.getLevel()).append("</font>");
+		}
 		if ((description != null) && !description.isEmpty())
 		{
 			sb.append("<br1><font color=\"").append(known ? "555555" : "B09B79").append("\">").append(description).append("</font>");
@@ -205,7 +226,7 @@ public class CustomBuffBook implements IItemHandler
 		}
 		else if (medals > 0)
 		{
-			sb.append("<button value=\"Learn\" action=\"bypass ").append(BYPASS).append(" learn ").append(skill.getId()).append(" ").append(page).append("\" width=70 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
+			sb.append("<button value=\"").append(upgrade ? "Upgrade" : "Learn").append("\" action=\"bypass ").append(BYPASS).append(" learn ").append(skill.getId()).append(" ").append(page).append("\" width=70 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
 		}
 		else
 		{
@@ -244,6 +265,16 @@ public class CustomBuffBook implements IItemHandler
 		sb.append("</td></tr></table>");
 	}
 
+	/**
+	 * @param known the player's own level of the buff, or {@code null}
+	 * @param taught the level a medal teaches
+	 * @return {@code true} when a medal has nothing left to teach: the player knows the buff at that level, or enchanted
+	 */
+	private static boolean isLearned(Skill known, Skill taught)
+	{
+		return (known != null) && (known.getLevel() >= taught.getLevel());
+	}
+	
 	private static void closePage(Player player)
 	{
 		player.sendPacket(new ShowBoard());

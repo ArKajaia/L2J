@@ -14553,6 +14553,12 @@ public class Player extends Playable
 	{
 		for (Entry<Integer, Skill> e : getSkills().entrySet())
 		{
+			// A buff at the level a Champion Medal teaches (CustomBuffBook upgrades class buffs to it) stays at any character level.
+			if (CustomBuffConfig.SKILLS.contains(e.getKey()) && (e.getValue().getLevel() >= SkillData.getInstance().getMaxLevel(e.getKey())))
+			{
+				continue;
+			}
+			
 			final SkillLearn learn = SkillTreeData.getInstance().getClassSkill(e.getKey(), e.getValue().getLevel() % 100, getPlayerClass());
 			if (learn != null)
 			{
