@@ -33,6 +33,9 @@ import org.l2jmobius.gameserver.managers.VillageSiegeManager.Slot;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.multisell.Entry;
+import org.l2jmobius.gameserver.model.multisell.Ingredient;
+import org.l2jmobius.gameserver.model.multisell.ListContainer;
 import org.l2jmobius.gameserver.model.villagesiege.SiegeVillage;
 
 /**
@@ -57,6 +60,13 @@ public final class VillageSiegeBoard
 		"Weapons",
 		"Armor",
 		"Jewelry"
+	};
+	/** The decoration lists, after the gear: hair accessories, hats, and agathions with the Formal Wear. */
+	private static final String[] DECORATIONS =
+	{
+		"Accessories",
+		"Hats",
+		"Agathions"
 	};
 
 	private VillageSiegeBoard()
@@ -115,7 +125,7 @@ public final class VillageSiegeBoard
 			}
 			case "schedule":
 			{
-				return wrap(schedule(prefix));
+				return wrap(schedule(player, prefix));
 			}
 			case "rank":
 			{
@@ -127,7 +137,7 @@ public final class VillageSiegeBoard
 			}
 			case "help":
 			{
-				return wrap(help(village, prefix));
+				return wrap(help(player, village, prefix));
 			}
 			case "exchange":
 			{
@@ -196,6 +206,14 @@ public final class VillageSiegeBoard
 		return "<br><center>" + button("Back", prefix + "main", 80) + "</center>";
 	}
 
+	/**
+	 * @return the levels a village's sieges are for: "1-40", "76-85"
+	 */
+	private static String levels(SiegeVillage village)
+	{
+		return village.getMinDefenderLevel() + "-" + village.getMaxDefenderLevel();
+	}
+
 	private static String minutesLeft(long until)
 	{
 		final long minutes = Math.max(0, (until - System.currentTimeMillis()) / 60000);
@@ -211,7 +229,7 @@ public final class VillageSiegeBoard
 		final Siege siege = manager.getSiege();
 		if (siege != null)
 		{
-			sb.append("<font color=\"FF6666\">").append(siege.getVillage().getName()).append(" is under siege!</font> <font color=\"FFCC66\">").append(siege.getStageName()).append("</font><br1>");
+			sb.append("<font color=\"FF6666\">").append(siege.getVillage().getName()).append(" is under siege!</font> <font color=\"FFCC66\">").append(siege.getStageName()).append("</font> <font color=\"B0B0B0\">(levels ").append(levels(siege.getVillage())).append(")</font><br1>");
 			sb.append("Monsters attack until ").append(VillageSiegeManager.formatTime(siege.getEnd())).append(" (").append(minutesLeft(siege.getEnd())).append(" left). ").append(siege.getKills()).append(" slain, ").append(siege.getPlayersPresent()).append(" defenders there.<br1>");
 			for (EntranceState entrance : siege.getEntrances())
 			{
@@ -223,6 +241,10 @@ public final class VillageSiegeBoard
 				sb.append("<br1>Your contribution: <font color=\"LEVEL\">").append(contributor.getPoints()).append("</font> points, ").append(contributor.getMedals()).append(" medals, ").append(contributor.getActiveMinutes()).append(" minutes of fighting.<br1>");
 			}
 			sb.append("<br>");
+			if (!siege.getVillage().isDefenderLevel(player.getLevel()))
+			{
+				appendYourNext(sb, player);
+			}
 			appendJoin(sb, player, prefix);
 		}
 		else
@@ -231,7 +253,11 @@ public final class VillageSiegeBoard
 			final Slot next = VillageSiegeManager.getNextSlot(null);
 			if (next != null)
 			{
-				sb.append("Next siege: <font color=\"LEVEL\">").append(next.getVillage().getName()).append("</font> at ").append(VillageSiegeManager.formatTime(next.getStart())).append(" (in ").append(minutesLeft(next.getStart())).append(").<br>");
+				sb.append("Next siege: <font color=\"LEVEL\">").append(next.getVillage().getName()).append("</font> <font color=\"B0B0B0\">(levels ").append(levels(next.getVillage())).append(")</font> at ").append(VillageSiegeManager.formatTime(next.getStart())).append(" (in ").append(minutesLeft(next.getStart())).append(").<br>");
+			}
+			if ((next == null) || !next.getVillage().isDefenderLevel(player.getLevel()))
+			{
+				appendYourNext(sb, player);
 			}
 			if (manager.canReturn(player))
 			{
@@ -276,6 +302,18 @@ public final class VillageSiegeBoard
 	}
 
 	/**
+	 * The next siege for the player's level, for when the one going on or coming isn't.
+	 */
+	private static void appendYourNext(StringBuilder sb, Player player)
+	{
+		final Slot yours = VillageSiegeManager.getNextSlotFor(player);
+		if (yours != null)
+		{
+			sb.append("Your next siege: <font color=\"LEVEL\">").append(yours.getVillage().getName()).append("</font> at ").append(VillageSiegeManager.formatTime(yours.getStart())).append(" (in ").append(minutesLeft(yours.getStart())).append(").<br>");
+		}
+	}
+
+	/**
 	 * The buttons to join the siege, or to go back where the player came from.
 	 */
 	private static void appendJoin(StringBuilder sb, Player player, String prefix)
@@ -283,7 +321,7 @@ public final class VillageSiegeBoard
 		final VillageSiegeManager manager = VillageSiegeManager.getInstance();
 		final Siege siege = manager.getSiege();
 		sb.append("<center>");
-		if ((siege != null) && VillageSiegeConfig.TELEPORT && (player.getLevel() <= VillageSiegeConfig.MAX_PLAYER_LEVEL) && !manager.isAtSiege(player))
+		if ((siege != null) && VillageSiegeConfig.TELEPORT && siege.getVillage().isDefenderLevel(player.getLevel()) && !manager.isAtSiege(player))
 		{
 			sb.append(button("Join the Defence", prefix + "join", 150)).append("<br1><font color=\"B0B0B0\">Free teleport to the gate that needs you most.</font><br>");
 		}
@@ -295,7 +333,7 @@ public final class VillageSiegeBoard
 	}
 
 	/**
-	 * The window the players up to {@link VillageSiegeConfig#MAX_PLAYER_LEVEL} get when a siege begins.
+	 * The window the players of the siege's defender levels get when it begins.
 	 */
 	private static String invite(Player player)
 	{
@@ -307,16 +345,16 @@ public final class VillageSiegeBoard
 		}
 
 		sb.append("<center><font color=\"FF6666\">").append(siege.getVillage().getName()).append(" is under siege!</font></center><br>");
-		sb.append("The monsters of the hunting grounds march on its gates until ").append(VillageSiegeManager.formatTime(siege.getEnd())).append(". The Defence Force calls on every adventurer up to level ").append(VillageSiegeConfig.MAX_PLAYER_LEVEL).append(" - the monsters come at your own level.<br><br>");
+		sb.append("The monsters of the hunting grounds march on its gates until ").append(VillageSiegeManager.formatTime(siege.getEnd())).append(". The Defence Force calls on every adventurer ").append(siege.getVillage().describeDefenderLevels()).append(" - the monsters come at your own level.<br><br>");
 		sb.append("<font color=\"LEVEL\">The defenders get</font><br1>");
-		sb.append("- Defence Medals as they fight, for gear up to C grade<br1>");
+		sb.append("- Defence Medals as they fight, for gear up to C grade and decorations<br1>");
 		if (VillageSiegeConfig.EXP_BONUS > 0)
 		{
 			sb.append("- ").append(VillageSiegeConfig.EXP_BONUS).append("% more experience from the siege's monsters<br1>");
 		}
 		if (VillageSiegeConfig.REWARD_EXP_PERCENT > 0)
 		{
-			sb.append("- up to ").append(VillageSiegeConfig.REWARD_EXP_PERCENT).append("% of a level when the siege ends<br1>");
+			sb.append("- up to ").append(VillageSiegeManager.formatPercent(VillageSiegeManager.getRewardExpPercent(player.getLevel()))).append("% of a level when the siege ends<br1>");
 		}
 		sb.append("- a place on the ranking of the best defenders<br><br>");
 		appendJoin(sb, player, WINDOW_PREFIX);
@@ -348,7 +386,7 @@ public final class VillageSiegeBoard
 		{
 			sb.append(", and the defenders' own");
 		}
-		sb.append(". Slain: ").append(siege.getKills()).append(". Attacking now: ").append(siege.getMonstersAlive()).append(". Great waves: ").append(siege.getWaves()).append(".<br1>");
+		sb.append(". For defenders ").append(siege.getVillage().describeDefenderLevels()).append(". Slain: ").append(siege.getKills()).append(". Attacking now: ").append(siege.getMonstersAlive()).append(". Great waves: ").append(siege.getWaves()).append(".<br1>");
 		sb.append("Defenders: ").append(siege.getPlayersPresent()).append(" players and ").append(siege.getFakeDefenders()).append(" adventurers.<br1>");
 		if (siege.hasGateFallen())
 		{
@@ -398,14 +436,14 @@ public final class VillageSiegeBoard
 		sb.append("<tr><td><font color=\"").append(color).append("\">").append(rank).append("</font></td><td><font color=\"").append(color).append("\">").append(name).append("</font></td><td>").append(level).append("</td><td>").append(points).append("</td></tr>");
 	}
 
-	private static String schedule(String prefix)
+	private static String schedule(Player player, String prefix)
 	{
 		final VillageSiegeManager manager = VillageSiegeManager.getInstance();
 		final long now = System.currentTimeMillis();
 		final Siege siege = manager.getSiege();
 		final StringBuilder sb = new StringBuilder();
-		sb.append("<center><font color=\"LEVEL\">Coming Sieges</font></center><br1>One village at a time, ").append(VillageSiegeConfig.DURATION).append(" minutes each with ").append(VillageSiegeConfig.BREAK).append(" minutes of rest between two (server time, the next 24 hours).<br>");
-		sb.append("<table width=270><tr><td width=80>Time</td><td width=130>Village</td><td width=60></td></tr>");
+		sb.append("<center><font color=\"LEVEL\">Coming Sieges</font></center><br1>One village at a time, ").append(VillageSiegeConfig.DURATION).append(" minutes each with ").append(VillageSiegeConfig.BREAK).append(" minutes of rest between two (server time, the next 24 hours). Each calls the defenders of its levels; <font color=\"LEVEL\">yours</font> are marked.<br>");
+		sb.append("<table width=270><tr><td width=70>Time</td><td width=110>Village</td><td width=40>Levels</td><td width=50></td></tr>");
 		for (Slot slot : VillageSiegeManager.getSlots(now))
 		{
 			final String state;
@@ -421,7 +459,8 @@ public final class VillageSiegeBoard
 			{
 				state = "in " + minutesLeft(slot.getStart());
 			}
-			sb.append("<tr><td>").append(VillageSiegeManager.formatTime(slot.getStart())).append("-").append(VillageSiegeManager.formatTime(slot.getEnd())).append("</td><td>").append(slot.getVillage().getName()).append("</td><td>").append(state).append("</td></tr>");
+			final String name = slot.getVillage().isDefenderLevel(player.getLevel()) ? "<font color=\"LEVEL\">" + slot.getVillage().getName() + "</font>" : slot.getVillage().getName();
+			sb.append("<tr><td>").append(VillageSiegeManager.formatTime(slot.getStart())).append("-").append(VillageSiegeManager.formatTime(slot.getEnd())).append("</td><td>").append(name).append("</td><td>").append(levels(slot.getVillage())).append("</td><td>").append(state).append("</td></tr>");
 		}
 		sb.append("</table>");
 		return sb.append(back(prefix)).toString();
@@ -514,15 +553,53 @@ public final class VillageSiegeBoard
 			}
 			sb.append("</tr>");
 		}
-		sb.append("</table></center>");
+		sb.append("<tr><td width=60>Decorations</td>");
+		for (int i = 0; i < DECORATIONS.length; i++)
+		{
+			sb.append("<td align=center>").append(button(DECORATIONS[i], prefix + "ms " + ((GRADES.length * KINDS.length) + i), 68)).append("</td>");
+		}
+		sb.append("</tr></table></center><br1>");
+
+		// What the decorations cost, from their lists, and how long that takes at the player's level.
+		long cheapest = Long.MAX_VALUE;
+		long dearest = 0;
+		for (int i = 0; i < DECORATIONS.length; i++)
+		{
+			final ListContainer list = MultisellData.getInstance().getList(VillageSiegeManager.FIRST_MULTISELL_ID + (GRADES.length * KINDS.length) + i);
+			if (list == null)
+			{
+				continue;
+			}
+			for (Entry entry : list.getEntries())
+			{
+				for (Ingredient ingredient : entry.getIngredients())
+				{
+					if (ingredient.getItemId() == VillageSiegeConfig.MEDAL_ITEM_ID)
+					{
+						cheapest = Math.min(cheapest, ingredient.getItemCount());
+						dearest = Math.max(dearest, ingredient.getItemCount());
+					}
+				}
+			}
+		}
+		if (dearest > 0)
+		{
+			sb.append("<font color=\"LEVEL\">Decorations</font>: hair accessories, hats, and agathions - little companions that follow you - with the Formal Wear. No stats, only glory: ").append(cheapest).append(" to ").append(dearest).append(" medals.");
+			// A whole siege of fighting against monsters of the player's level, with the end bonus.
+			final long perSiege = Math.round(((VillageSiegeManager.getMedalsPerHour(player.getLevel()) * VillageSiegeConfig.DURATION) / 60.0) * (1 + (VillageSiegeConfig.END_BONUS_PERCENT / 100.0)));
+			if (perSiege > 0)
+			{
+				sb.append(" A siege against monsters of your level pays about ").append(perSiege).append(" medals with the end bonus: ").append(Math.round((double) cheapest / perSiege)).append(" to ").append(Math.round((double) dearest / perSiege)).append(" sieges.");
+			}
+		}
 		return sb.append(back(prefix)).toString();
 	}
 
-	private static String help(SiegeVillage village, String prefix)
+	private static String help(Player player, SiegeVillage village, String prefix)
 	{
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<center><font color=\"LEVEL\">Village Under Siege</font></center><br>");
-		sb.append("The monsters of the hunting grounds attack the starting villages, one village after the other, for ").append(VillageSiegeConfig.DURATION).append(" minutes each, with ").append(VillageSiegeConfig.BREAK).append(" minutes of rest between two.<br1>");
+		sb.append("The monsters of the hunting grounds attack the villages and towns, one after the other, for ").append(VillageSiegeConfig.DURATION).append(" minutes each, with ").append(VillageSiegeConfig.BREAK).append(" minutes of rest between two. Each siege calls the defenders of its own levels: the starting villages up to level ").append(VillageSiegeConfig.MAX_PLAYER_LEVEL).append(", the towns the higher levels (see the schedule).<br1>");
 		sb.append("They march on the gates of the village's entrances, more and more of them as the siege goes from the Vanguard to the Main Assault and the Final Assault, with great waves now and then. The defenders and the village guards hold the line at each gate; the monsters that get past them beat on the gate. Target a gate to see its HP. At 0 HP it falls and the monsters run into the streets, until the defenders raise it again. The siege goes on until its time is up.<br>");
 		if (VillageSiegeConfig.SCALE_TO_DEFENDERS)
 		{
@@ -530,10 +607,10 @@ public final class VillageSiegeBoard
 		}
 		if (VillageSiegeConfig.TELEPORT)
 		{
-			sb.append("Defenders up to level ").append(VillageSiegeConfig.MAX_PLAYER_LEVEL).append(" can join from anywhere with .siege, for free, and go back where they were afterwards.<br>");
+			sb.append("The defenders a siege calls can join it from anywhere with .siege, for free, and go back where they were afterwards.<br>");
 		}
 		sb.append("<font color=\"LEVEL\">Contribution</font><br1>");
-		sb.append("Defenders up to level ").append(VillageSiegeConfig.MAX_PLAYER_LEVEL).append(" earn points: a kill's points are shared by the damage each defender did, healing other defenders counts, and so does every minute of fighting. Monsters ").append(VillageSiegeConfig.GREY_LEVEL_DIFFERENCE).append(" or more levels below you give nothing.<br1>");
+		sb.append("The defenders a siege calls earn points: a kill's points are shared by the damage each defender did, healing other defenders counts, and so does every minute of fighting. Monsters ").append(VillageSiegeConfig.GREY_LEVEL_DIFFERENCE).append(" or more levels below you give nothing.<br1>");
 		sb.append("Warband Leaders and the Siege Lord are worth much more. Those still fighting at the end get +").append(VillageSiegeConfig.END_BONUS_PERCENT).append("% - halved if a gate fell.<br>");
 		if ((VillageSiegeConfig.EXP_BONUS > 0) || (VillageSiegeConfig.REWARD_EXP_PERCENT > 0))
 		{
@@ -544,7 +621,12 @@ public final class VillageSiegeBoard
 			}
 			if (VillageSiegeConfig.REWARD_EXP_PERCENT > 0)
 			{
-				sb.append("At the end, the defenders get up to ").append(VillageSiegeConfig.REWARD_EXP_PERCENT).append("% of a level for ").append(VillageSiegeConfig.REWARD_FULL_MINUTES).append(" minutes of fighting (less for less, and less for each gate that fell).");
+				sb.append("At the end, the defenders get up to ").append(VillageSiegeConfig.REWARD_EXP_PERCENT).append("% of a level for ").append(VillageSiegeConfig.REWARD_FULL_MINUTES).append(" minutes of fighting (less for less, and less for each gate that fell)");
+				if (VillageSiegeConfig.REWARD_EXP_HALVING_LEVELS > 0)
+				{
+					sb.append(", half as much every ").append(VillageSiegeConfig.REWARD_EXP_HALVING_LEVELS).append(" levels above level ").append(VillageSiegeConfig.REWARD_EXP_FULL_LEVEL).append(": ").append(VillageSiegeManager.formatPercent(VillageSiegeManager.getRewardExpPercent(player.getLevel()))).append("% at your level");
+				}
+				sb.append(".");
 			}
 			sb.append("<br>");
 		}
@@ -554,11 +636,11 @@ public final class VillageSiegeBoard
 		{
 			sb.append(" (one character per computer)");
 		}
-		sb.append(". Exchange them for gear up to C grade at any Defence Force Board.");
+		sb.append(". Exchange them for gear up to C grade, and for decorations, at any Defence Force Board.");
 		if (VillageSiegeConfig.MEDAL_RATE > 0)
 		{
 			// The defenders above the village's levels fight monsters of their own level.
-			final int top = VillageSiegeConfig.MAX_PLAYER_LEVEL;
+			final int top = village != null ? village.getMaxDefenderLevel() : VillageSiegeConfig.MAX_PLAYER_LEVEL;
 			final int level = village != null ? VillageSiegeManager.getInstance().getLevel(village) : top;
 			sb.append(" The stronger the monster, the more a point pays: an hour of fighting pays about ");
 			if (level < top)

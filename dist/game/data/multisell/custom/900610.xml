@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+	<!--
+	Village Under Siege: Defence Force Board exchange, decorations: hats.
+	No stats, only looks. They are priced for the veterans of the town sieges: a siege pays a level 80 defender about 7,800 Defence Medals (4674)
+	(3,000 points for the hour of fighting and the end bonus), so a decoration takes 10 to 30 sieges (78,000 to 234,000 medals).
+	-->
+	<npcs>
+		<npc>900600</npc> <!-- Defence Force Board -->
+	</npcs>
+	<!-- Hats (both hair slots): 15 sieges -->
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="8184" /> <!-- Party Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="8185" /> <!-- Feathered Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="8186" /> <!-- Artisan's Goggles -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="8560" /> <!-- Teddy Bear Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="8561" /> <!-- Piggy Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="8562" /> <!-- Jester Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="8563" /> <!-- Wizard Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="8564" /> <!-- Dapper Cap -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="8565" /> <!-- Romantic Chapeau -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="8918" /> <!-- Leather Cap -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="8922" /> <!-- Pirate Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="10248" /> <!-- Straw Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="10240" /> <!-- Bird Nest -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="10243" /> <!-- Panda Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="10244" /> <!-- White Sheep Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="10245" /> <!-- Black Sheep Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="10246" /> <!-- Frog Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="10247" /> <!-- Fish Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="10249" /> <!-- Chicken Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="12372" /> <!-- Monkey Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="12373" /> <!-- Pig Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="14749" /> <!-- Afro Perm Wig -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="14750" /> <!-- Bamboo Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="14751" /> <!-- Smart Glasses -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13488" /> <!-- Birthday Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13489" /> <!-- Halloween Hat -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13490" /> <!-- Arrow-Pierced Apple -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13491" /> <!-- Popped-Out Eye -->
+	</item>
+	<item>
+		<ingredient count="117000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13492" /> <!-- Graduation Cap -->
+	</item>
+	<!-- Refined hats: 25 sieges -->
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13494" /> <!-- Refined Angel Ring -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13495" /> <!-- Refined Devil Horn -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13496" /> <!-- Refined Pirate Hat -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13497" /> <!-- Refined Chick Hat -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13498" /> <!-- Refined Wizard Hat -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13499" /> <!-- Refined Jester Hat -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13500" /> <!-- Refined Black Feather Mask -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13501" /> <!-- Refined Romantic Chapeau -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13502" /> <!-- Refined Carnival Circlet -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13503" /> <!-- Refined Medieval Style Party Mask -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13504" /> <!-- Refined Dapper Cap -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13505" /> <!-- Clownfish Hat -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="16102" /> <!-- Refined Shark Hat -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="16103" /> <!-- Chic Gold Horn Cap -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="16104" /> <!-- Chic Silver Horn Cap -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="16105" /> <!-- Refined Penguin Hat -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="16106" /> <!-- Refined Brown Turban -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="16107" /> <!-- Refined Yellow Turban -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="16108" /> <!-- Refined Turtle Hat -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="16109" /> <!-- Refined Cow Hat -->
+	</item>
+</list>

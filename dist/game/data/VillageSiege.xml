@@ -2,7 +2,7 @@
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="xsd/VillageSiege.xsd">
 	<!--
 		Village Under Siege (config/Custom/VillageSiege.ini): one village after the other, monsters of the
-		hunting grounds around a starting village attack its entrances. The defenders hold the gate of each
+		hunting grounds around a starting village or a town attack its entrances. The defenders hold the gate of each
 		entrance with the village guards, and contribution is paid in Defence Medals. Defenders above the levels below
 		get monsters of their own level (VillageSiegeScaleToDefenders).
 
@@ -16,6 +16,9 @@
 		  maxLevel       of those levels living nearest the village (on the entrance's road, around the village, farther
 		                 out, or anywhere). The siege guards are a few levels above the middle (VillageSiegeGuardLevelOffset).
 		                 By default VillageSiegeLevelWindow around the average level of the monsters living around it.
+		  minDefenderLevel optional: the levels of the characters the siege is for, who hear of it, are invited, can
+		  maxDefenderLevel take its teleport and earn contribution. By default 1 to VillageSiegeMaxPlayerLevel (and its
+		                 announcements reach VillageSiegeAnnounceMaxLevel).
 
 		entrance (optional) a fixed entrance: the gate stands at x, y, z, and the waves form at rallyX, rallyY,
 		  rallyZ (optional; by default straight out from the village). Without any, the entrances are found on their own:
@@ -50,4 +53,44 @@
 		<entrance x="-14170" y="126544" z="-3148" /> <!-- South -->
 	</village>
 	<village id="dion" name="Town of Dion" town="Dion Castle Town" gatekeeper="30059" guardLook="30071" minLevel="26" maxLevel="32" />
+	<!-- The towns: for the characters above the starting villages, up to level 85 (minDefenderLevel-maxDefenderLevel). Their monsters are the
+	     High Five hunting grounds around them; the defenders above those levels get monsters of their own level, as everywhere. -->
+	<village id="hunters" name="Hunters Village" town="Hunter Village" gatekeeper="30233" guardLook="30709" minLevel="40" maxLevel="45" minDefenderLevel="40" maxDefenderLevel="85"> <!-- Karul Bugbears, Tamlin Orcs, Lakins, Kronbe Spiders -->
+		<entrance x="114538" y="78036" z="-2594" /> <!-- West: guards Norton and Weston -->
+		<entrance x="115120" y="74317" z="-2591" /> <!-- North-West: guards Byron and Makhis -->
+		<entrance x="118372" y="74045" z="-2376" /> <!-- North: guards Gardner and Paros -->
+	</village>
+	<village id="giran" name="Town of Giran" town="Giran Castle Town" gatekeeper="30080" guardLook="30122" minLevel="44" maxLevel="50" minDefenderLevel="40" maxDefenderLevel="85"> <!-- Tanor Silenos, Nightmare Lords -->
+		<entrance x="77026" y="148650" z="-3600" /> <!-- West: in the gateway, by guard Kurt -->
+		<entrance x="81560" y="152696" z="-3528" rallyX="80880" rallyY="154856" rallyZ="-3456" /> <!-- South: in the gateway, behind Captain Jeronin and guard Bane -->
+		<entrance x="81518" y="143460" z="-3530" /> <!-- North-West: guards Vesa and Zerome -->
+	</village>
+	<village id="aden" name="Town of Aden" town="Town of Aden" gatekeeper="30848" guardLook="30871" minLevel="45" maxLevel="50" minDefenderLevel="40" maxDefenderLevel="85"> <!-- Vanor Silenos, Hatar Ratmen, Grave Wanderers -->
+		<entrance x="142590" y="26350" z="-2396" /> <!-- West: guards Aldis and Carlton -->
+		<entrance x="152005" y="25104" z="-2133" /> <!-- East: guards Eastan and Grayson -->
+		<entrance x="147461" y="19839" z="-2009" /> <!-- North: Captain Kurtiz and guard Bret -->
+	</village>
+	<village id="rune" name="Rune Township" town="Rune Castle Town" gatekeeper="31320" guardLook="31341" minLevel="63" maxLevel="71" minDefenderLevel="58" maxDefenderLevel="85"> <!-- Forest of the Dead: Atroxes, Bone Grinders, Vampire Soldiers -->
+		<entrance x="40744" y="-52750" z="-896" /> <!-- North-West: guards Dimitri and Bellard -->
+		<entrance x="36808" y="-48200" z="-1152" rallyX="34904" rallyY="-48104" rallyZ="-1500" /> <!-- West: the road up past the patrols -->
+	</village>
+	<village id="goddard" name="Town of Goddard" town="Town of Goddard" gatekeeper="31275" guardLook="31294" minLevel="67" maxLevel="71" minDefenderLevel="62" maxDefenderLevel="85"> <!-- Antelopes, Bandersnatches, Buffalos, Grendels -->
+		<entrance x="144474" y="-57742" z="-2982" /> <!-- North-West: guards Sven and Henrik -->
+		<entrance x="147712" y="-59424" z="-2982" /> <!-- North: guards Cadmon and Bayard -->
+		<entrance x="150946" y="-57740" z="-2982" /> <!-- North-East: guards Ulrich and Eugen -->
+	</village>
+	<village id="schuttgart" name="Town of Schuttgart" town="Town of Schuttgart" gatekeeper="31964" guardLook="31983" minLevel="72" maxLevel="74" minDefenderLevel="66" maxDefenderLevel="85"> <!-- Pavel Ruins golems -->
+		<entrance x="87358" y="-139277" z="-1538" /> <!-- South: guards Kosmos and Erstack -->
+		<entrance x="84411" y="-140795" z="-1538" /> <!-- South-West: guards Friggar and Sherring -->
+		<entrance x="90325" y="-140772" z="-1538" /> <!-- South-East: guards Gotter and Singa -->
+	</village>
+	<village id="oren" name="Town of Oren" town="Town of Oren" gatekeeper="30177" guardLook="30197" minLevel="82" maxLevel="84" minDefenderLevel="78" maxDefenderLevel="85"> <!-- Plains of the Lizardmen: Tanta Lizardmen -->
+		<entrance x="81525" y="56240" z="-1522" /> <!-- South: guards Stan and Pinaps -->
+		<entrance x="81007" y="53053" z="-1560" /> <!-- West: guards Hector and Emdrere -->
+		<entrance x="79671" y="54284" z="-1555" /> <!-- West road: guards Jerin and Yates -->
+	</village>
+	<village id="heine" name="Heine" town="Heine" gatekeeper="30899" guardLook="30917" minLevel="82" maxLevel="84" minDefenderLevel="78" maxDefenderLevel="85"> <!-- Fields of Silence and Whispers: Mucrokians -->
+		<entrance x="106940" y="218160" z="-3668" /> <!-- West: guards Dupuis and Saige -->
+		<entrance x="115736" y="219281" z="-3659" /> <!-- East: guards Kraisen and Timos -->
+	</village>
 </list>

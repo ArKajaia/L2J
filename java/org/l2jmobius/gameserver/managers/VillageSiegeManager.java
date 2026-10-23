@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -91,10 +92,11 @@ import org.l2jmobius.gameserver.util.LocationUtil;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
- * Village Under Siege: one starting village after the other, the monsters of the hunting grounds around a village attack its entrances.
+ * Village Under Siege: one village or town after the other, the monsters of the hunting grounds around it attack its entrances.
  * <ul>
  * <li>Schedule: the villages of {@link VillageSiegeConfig#ORDER} are besieged one after the other, over and over, {@link VillageSiegeConfig#DURATION} minutes each with a {@link VillageSiegeConfig#BREAK} minute rest, counted from a fixed time ({@link #getSlots}). A
- * restart picks the rotation up where it stands. Only the players up to {@link VillageSiegeConfig#ANNOUNCE_MAX_LEVEL} hear of it; those up to {@link VillageSiegeConfig#MAX_PLAYER_LEVEL} are invited and may teleport there for free ({@link #join}).</li>
+ * restart picks the rotation up where it stands. Each siege is for the characters of its village's defender levels ({@link SiegeVillage#isDefenderLevel}: up to {@link VillageSiegeConfig#MAX_PLAYER_LEVEL} for the starting villages, higher for the towns): only they
+ * hear of it, are invited and may teleport there for free ({@link #join}).</li>
  * <li>Entrances: the roads the monsters take into the village ({@link SiegeEntranceFinder}). Each has a gate ({@link VillageGate}) with HP: the monsters fight the defenders and the guards first and, with nobody left in front of them, beat on the gate. At 0 HP it falls and
  * the monsters run into the streets; it is raised again after a while. A fallen gate doesn't end the siege, but halves its end bonus and cuts the defenders' reward.</li>
  * <li>Three stages (Vanguard, Main Assault, Final Assault): each entrance is kept under pressure, a number of monsters on it that grows with the stage and the defenders there, topped up every few seconds; and now and then a great wave marches on it. The monsters are
@@ -102,8 +104,9 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
  * end.</li>
  * <li>Guards: the village's own guards are hidden for the siege (they would end every wave at once), and siege guards a few levels above the monsters hold a line at each gate with the defenders.</li>
  * <li>Fake players come to defend too ({@link FakePlayerPvpProfile#isSiegeDefender()}): more when no player is there, so the fighting goes on unwatched. The monsters can kill them, and they leave after a while.</li>
- * <li>Contribution: damage to the siege's monsters (shared by damage on each kill), healing the defenders and every minute of fighting. Players up to {@link VillageSiegeConfig#MAX_PLAYER_LEVEL} are paid in Defence Medals as they earn them (the more, the stronger the
- * monster: {@link #getMedalsPerPoint}), get more experience from the siege's monsters and a reward in experience at the end; fake players are ranked too. The Defence Force Board of each village shows the rankings and exchanges the medals for gear up to C grade.</li>
+ * <li>Contribution: damage to the siege's monsters (shared by damage on each kill), healing the defenders and every minute of fighting. Players of the siege's defender levels are paid in Defence Medals as they earn them (the more, the stronger the monster:
+ * {@link #getMedalsPerPoint}), get more experience from the siege's monsters and a reward in experience at the end (a smaller share of a level the higher they are: {@link #getRewardExpPercent}); fake players are ranked too. The Defence Force Board of each village
+ * shows the rankings and exchanges the medals for gear up to C grade and for decorations.</li>
  * </ul>
  */
 public class VillageSiegeManager
@@ -116,9 +119,9 @@ public class VillageSiegeManager
 	public static final int STANDARD_NPC_ID = 900601;
 	/** Ids of the siege guard templates made for each siege (never in the npc data). */
 	private static final int GUARD_NPC_ID = 900610;
-	/** The exchange lists of the board: No-grade, D and C weapons, armor and jewelry. */
+	/** The exchange lists of the board: No-grade, D and C weapons, armor and jewelry, then the decorations (hair accessories, hats, and agathions with the Formal Wear). */
 	public static final int FIRST_MULTISELL_ID = 900600;
-	public static final int MULTISELL_COUNT = 9;
+	public static final int MULTISELL_COUNT = 12;
 
 	/** Kinds of monster. */
 	private static final int KIND_WAVE = 0;
@@ -506,14 +509,14 @@ public class VillageSiegeManager
 		}
 
 		/**
-		 * @return the players at the siege now (up to {@link VillageSiegeConfig#MAX_PLAYER_LEVEL})
+		 * @return the players at the siege now (of its defender levels)
 		 */
 		public int getPlayersPresent()
 		{
 			int players = 0;
 			for (Player player : World.getInstance().getPlayers())
 			{
-				if (player.isOnline() && !player.isInOfflineMode() && !player.isGM() && (player.getLevel() <= VillageSiegeConfig.MAX_PLAYER_LEVEL) && isInArea(this, player))
+				if (player.isOnline() && !player.isInOfflineMode() && !player.isGM() && _village.isDefenderLevel(player.getLevel()) && isInArea(this, player))
 				{
 					players++;
 				}
@@ -825,6 +828,24 @@ public class VillageSiegeManager
 	 */
 	public static Slot getNextSlot(SiegeVillage village)
 	{
+		return findNextSlot(besieged -> (village == null) || (besieged == village));
+	}
+
+	/**
+	 * @param player a player
+	 * @return the next siege for the player's level that hasn't started, {@code null} if none
+	 */
+	public static Slot getNextSlotFor(Player player)
+	{
+		return findNextSlot(besieged -> besieged.isDefenderLevel(player.getLevel()));
+	}
+
+	/**
+	 * @param wanted the villages looked for
+	 * @return the next siege of one of them that hasn't started, {@code null} if none
+	 */
+	private static Slot findNextSlot(Predicate<SiegeVillage> wanted)
+	{
 		final long now = System.currentTimeMillis();
 		final int villages = Math.max(1, getOrder().size());
 		final long period = (VillageSiegeConfig.DURATION + VillageSiegeConfig.BREAK) * 60000L;
@@ -833,7 +854,7 @@ public class VillageSiegeManager
 		{
 			for (Slot slot : getSlots(time))
 			{
-				if ((slot.getStart() > now) && ((village == null) || (slot.getVillage() == village)))
+				if ((slot.getStart() > now) && wanted.test(slot.getVillage()))
 				{
 					return slot;
 				}
@@ -877,7 +898,7 @@ public class VillageSiegeManager
 		final long warning = slot.getStart() - (VillageSiegeConfig.WARNING * 60000L);
 		if ((VillageSiegeConfig.WARNING > 0) && (warning > now))
 		{
-			_scheduled.add(ThreadPool.schedule(() -> announce("In " + VillageSiegeConfig.WARNING + " minutes monsters will attack " + slot.getVillage().getName() + "! Defenders up to level " + VillageSiegeConfig.MAX_PLAYER_LEVEL + " are called to its gates."), warning - now));
+			_scheduled.add(ThreadPool.schedule(() -> announce(slot.getVillage(), "In " + VillageSiegeConfig.WARNING + " minutes monsters will attack " + slot.getVillage().getName() + "! Defenders " + slot.getVillage().describeDefenderLevels() + " are called to its gates."), warning - now));
 		}
 		_scheduled.add(ThreadPool.schedule(() ->
 		{
@@ -989,7 +1010,7 @@ public class VillageSiegeManager
 		return _levels.computeIfAbsent(village.getId(), id ->
 		{
 			final Location heart = getHeart(village);
-			return heart == null ? 1 : SiegeEntranceFinder.findLevel(heart, ZoneManager.getInstance().getZoneByName(village.getTown(), TownZone.class));
+			return heart == null ? 1 : SiegeEntranceFinder.findLevel(heart, ZoneManager.getInstance().getZoneByName(village.getTown(), TownZone.class), village.getMaxDefenderLevel());
 		});
 	}
 
@@ -1113,7 +1134,7 @@ public class VillageSiegeManager
 		{
 			gates.append(gates.length() > 0 ? ", " : "").append(entrance.getName());
 		}
-		announce("Monsters attack " + village.getName() + "! Defend the " + gates + " until " + formatTime(end) + ". Defenders up to level " + VillageSiegeConfig.MAX_PLAYER_LEVEL + " earn Defence Medals, more experience and a reward at the end" + (VillageSiegeConfig.TELEPORT ? " - type .siege to join." : "."));
+		announce(village, "Monsters attack " + village.getName() + "! Defend the " + gates + " until " + formatTime(end) + ". Defenders " + village.describeDefenderLevels() + " earn Defence Medals, more experience and a reward at the end" + (VillageSiegeConfig.TELEPORT ? " - type .siege to join." : "."));
 		invite(siege);
 		TownLifeManager.getInstance().setVillageSiege(siege);
 		LOGGER.info(getClass().getSimpleName() + ": The siege of " + village.getName() + " began (level " + level + ", " + siege._entrances.size() + " entrances, until " + formatTime(end) + ").");
@@ -1201,12 +1222,12 @@ public class VillageSiegeManager
 					top.append(i > 0 ? ", " : "").append(i + 1).append(". ").append(ranking.get(i).getName()).append(" (").append(ranking.get(i).getPoints()).append(")");
 				}
 				final String outcome = siege._gateFell ? " - a gate fell, but the village stands." : " - victory, every gate held!";
-				announce("The siege of " + siege._village.getName() + " is over" + outcome + " " + siege._kills + " monsters slain by " + siege.getRanking().size() + " defenders." + (top.length() > 0 ? " Best defenders: " + top + "." : ""));
+				announce(siege._village, "The siege of " + siege._village.getName() + " is over" + outcome + " " + siege._kills + " monsters slain by " + siege.getRanking().size() + " defenders." + (top.length() > 0 ? " Best defenders: " + top + "." : ""));
 				screenNear(siege, siege._gateFell ? "The village stands! The siege is over." : "Victory! Every gate held!");
 			}
 			else
 			{
-				announce("The siege of " + siege._village.getName() + " was called off.");
+				announce(siege._village, "The siege of " + siege._village.getName() + " was called off.");
 			}
 		}
 		catch (Exception e)
@@ -1227,7 +1248,31 @@ public class VillageSiegeManager
 	}
 
 	/**
-	 * The defenders who fought long enough get a share of a level in experience: the whole of {@link VillageSiegeConfig#REWARD_EXP_PERCENT} for {@link VillageSiegeConfig#REWARD_FULL_MINUTES} minutes of fighting, less for each time a gate fell (never less than half).
+	 * @param level a defender's level
+	 * @return the share of a level (%) the end of a siege gives a defender of that level for {@link VillageSiegeConfig#REWARD_FULL_MINUTES} minutes of fighting: {@link VillageSiegeConfig#REWARD_EXP_PERCENT} up to {@link VillageSiegeConfig#REWARD_EXP_FULL_LEVEL}, halved
+	 *         every {@link VillageSiegeConfig#REWARD_EXP_HALVING_LEVELS} levels above it (a level takes far more fighting up there: with the defaults the reward stays worth about as many kills of monsters of the defender's level from level 40 to 75)
+	 */
+	public static double getRewardExpPercent(int level)
+	{
+		if ((VillageSiegeConfig.REWARD_EXP_HALVING_LEVELS <= 0) || (level <= VillageSiegeConfig.REWARD_EXP_FULL_LEVEL))
+		{
+			return VillageSiegeConfig.REWARD_EXP_PERCENT;
+		}
+		return VillageSiegeConfig.REWARD_EXP_PERCENT * Math.pow(0.5, (level - VillageSiegeConfig.REWARD_EXP_FULL_LEVEL) / (double) VillageSiegeConfig.REWARD_EXP_HALVING_LEVELS);
+	}
+
+	/**
+	 * @param percent a share of a level
+	 * @return it for a page: "30", "7.5", "1.9"
+	 */
+	public static String formatPercent(double percent)
+	{
+		final double rounded = Math.round(percent * 10) / 10.0;
+		return rounded == Math.rint(rounded) ? String.valueOf((long) rounded) : String.valueOf(rounded);
+	}
+
+	/**
+	 * The defenders who fought long enough get a share of a level in experience: the whole of {@link #getRewardExpPercent} for {@link VillageSiegeConfig#REWARD_FULL_MINUTES} minutes of fighting, less for each time a gate fell (never less than half).
 	 * @param siege the siege
 	 */
 	private static void rewardDefenders(Siege siege)
@@ -1251,7 +1296,7 @@ public class VillageSiegeManager
 			}
 
 			final Player player = World.getInstance().getPlayer(contributor._objectId);
-			if ((player == null) || !player.isOnline() || (player.getLevel() > VillageSiegeConfig.MAX_PLAYER_LEVEL))
+			if ((player == null) || !player.isOnline() || !siege._village.isDefenderLevel(player.getLevel()))
 			{
 				continue;
 			}
@@ -1259,7 +1304,7 @@ public class VillageSiegeManager
 			final int level = player.getLevel();
 			final long span = ExperienceData.getInstance().getExpForLevel(level + 1) - ExperienceData.getInstance().getExpForLevel(level);
 			final double share = Math.min(1, contributor.getActiveMinutes() / (double) VillageSiegeConfig.REWARD_FULL_MINUTES);
-			final long exp = (long) ((((span * VillageSiegeConfig.REWARD_EXP_PERCENT) / 100.0) * share) * outcome);
+			final long exp = (long) ((((span * getRewardExpPercent(level)) / 100.0) * share) * outcome);
 			if (exp <= 0)
 			{
 				continue;
@@ -1691,7 +1736,7 @@ public class VillageSiegeManager
 				final Npc lord = spawnMonster(siege, busiest, KIND_LORD);
 				if (lord != null)
 				{
-					announce("The Siege Lord comes for the " + busiest.getName() + " of " + siege._village.getName() + "!");
+					announce(siege._village, "The Siege Lord comes for the " + busiest.getName() + " of " + siege._village.getName() + "!");
 					screenNear(siege, "The Siege Lord comes for the " + busiest.getName() + "!");
 				}
 			}
@@ -1715,7 +1760,7 @@ public class VillageSiegeManager
 			if ((VillageSiegeConfig.STATUS_ANNOUNCE_MINUTES > 0) && (now >= siege._nextStatus))
 			{
 				siege._nextStatus = now + (VillageSiegeConfig.STATUS_ANNOUNCE_MINUTES * 60000L);
-				announce(siege._village.getName() + " holds: " + describeGates(siege) + ". " + siege._kills + " monsters slain, " + siege.getPlayersPresent() + " defenders at the gates, " + ((siege._end - now) / 60000) + " minutes to go." + (VillageSiegeConfig.TELEPORT ? " Join with .siege!" : ""));
+				announce(siege._village, siege._village.getName() + " holds: " + describeGates(siege) + ". " + siege._kills + " monsters slain, " + siege.getPlayersPresent() + " defenders at the gates, " + ((siege._end - now) / 60000) + " minutes to go." + (VillageSiegeConfig.TELEPORT ? " Join with .siege!" : ""));
 			}
 			if ((siege._ticks % STATUS_LOG_TICKS) == 0)
 			{
@@ -1766,11 +1811,11 @@ public class VillageSiegeManager
 		siege._stage = stage;
 		if (stage == (STAGE_NAMES.length - 1))
 		{
-			announce("The Final Assault on " + siege._village.getName() + " begins! The monsters throw everything they have at its gates. Defenders, to the walls!");
+			announce(siege._village, "The Final Assault on " + siege._village.getName() + " begins! The monsters throw everything they have at its gates. Defenders, to the walls!");
 		}
 		else
 		{
-			announce("The " + STAGE_NAMES[stage] + " on " + siege._village.getName() + " begins! More monsters march on its gates (" + describeGates(siege) + "). Defenders, hold the line!");
+			announce(siege._village, "The " + STAGE_NAMES[stage] + " on " + siege._village.getName() + " begins! More monsters march on its gates (" + describeGates(siege) + "). Defenders, hold the line!");
 		}
 		screenNear(siege, STAGE_NAMES[stage] + "!");
 	}
@@ -1815,7 +1860,7 @@ public class VillageSiegeManager
 			standard.setTitle(entrance.getName() + " - fallen");
 			standard.broadcastPacket(new MagicSkillUse(standard, standard, 5130, 1, 500, 0)); // A blast.
 			ThreadPool.schedule(standard::deleteMe, 1500);
-			announce("The " + entrance.getName() + " of " + siege._village.getName() + " has fallen! Monsters pour into the streets!");
+			announce(siege._village, "The " + entrance.getName() + " of " + siege._village.getName() + " has fallen! Monsters pour into the streets!");
 			screenNear(siege, "The " + entrance.getName() + " has fallen!");
 			return;
 		}
@@ -2029,7 +2074,7 @@ public class VillageSiegeManager
 			int others = 0;
 			for (Player player : World.getInstance().getPlayers())
 			{
-				if (!player.isOnline() || player.isInOfflineMode() || player.isGM() || player.isDead() || (player.getInstanceId() != 0) || (player.getLevel() > VillageSiegeConfig.MAX_PLAYER_LEVEL) || (player.calculateDistance2D(entrance._entrance.getGate()) > VillageSiegeConfig.AREA_RANGE))
+				if (!player.isOnline() || player.isInOfflineMode() || player.isGM() || player.isDead() || (player.getInstanceId() != 0) || !siege._village.isDefenderLevel(player.getLevel()) || (player.calculateDistance2D(entrance._entrance.getGate()) > VillageSiegeConfig.AREA_RANGE))
 				{
 					continue;
 				}
@@ -2438,7 +2483,7 @@ public class VillageSiegeManager
 		final List<Integer> playerLevels = new ArrayList<>();
 		for (Player player : World.getInstance().getPlayers())
 		{
-			if (player.isOnline() && !player.isInOfflineMode() && !player.isGM() && (player.getLevel() <= VillageSiegeConfig.MAX_PLAYER_LEVEL) && isInArea(siege, player))
+			if (player.isOnline() && !player.isInOfflineMode() && !player.isGM() && siege._village.isDefenderLevel(player.getLevel()) && isInArea(siege, player))
 			{
 				playerLevels.add(player.getLevel());
 			}
@@ -2447,7 +2492,7 @@ public class VillageSiegeManager
 		for (int i = 0; i < group; i++)
 		{
 			final int base = !playerLevels.isEmpty() && Rnd.nextBoolean() ? playerLevels.get(Rnd.get(playerLevels.size())) + Rnd.get(-2, 2) : Rnd.get(levels[0], levels[1]);
-			final int level = Math.max(1, Math.min(VillageSiegeConfig.MAX_PLAYER_LEVEL, base));
+			final int level = Math.max(siege._village.getMinDefenderLevel(), Math.min(siege._village.getMaxDefenderLevel(), base));
 			final Location arrival = QuestSpawnUtil.findPoint(entrance.getGuardCentre(), 50, FAKE_ARRIVAL_RANGE, true, 0);
 			final Npc fake = FakePlayerPvpManager.getInstance().spawnFakePlayer(null, level, arrival.getX(), arrival.getY(), arrival.getZ(), 0, null, null);
 			if (fake == null)
@@ -2605,12 +2650,12 @@ public class VillageSiegeManager
 		{
 			final Contributor contributor = siege._contributors.computeIfAbsent(playerKey(player), key -> new Contributor(key, player.getObjectId(), player.getName(), false, player.getLevel()));
 			contributor._level = player.getLevel();
-			if (player.getLevel() > VillageSiegeConfig.MAX_PLAYER_LEVEL)
+			if (!siege._village.isDefenderLevel(player.getLevel()))
 			{
 				if (!contributor._told)
 				{
 					contributor._told = true;
-					player.sendMessage(siege._village.getName() + ": only defenders up to level " + VillageSiegeConfig.MAX_PLAYER_LEVEL + " earn contribution.");
+					player.sendMessage(siege._village.getName() + ": only defenders " + siege._village.describeDefenderLevels() + " earn contribution.");
 				}
 				return null;
 			}
@@ -3074,10 +3119,11 @@ public class VillageSiegeManager
 	}
 
 	/**
-	 * Announces to the players a siege is for: up to {@link VillageSiegeConfig#ANNOUNCE_MAX_LEVEL}, and the GMs.
+	 * Announces to the players a siege is for ({@link #isAnnouncedTo}), and the GMs.
+	 * @param village the village besieged
 	 * @param text what
 	 */
-	private static void announce(String text)
+	private static void announce(SiegeVillage village, String text)
 	{
 		if (!VillageSiegeConfig.ANNOUNCE)
 		{
@@ -3087,7 +3133,7 @@ public class VillageSiegeManager
 		final CreatureSay packet = new CreatureSay(null, ChatType.CRITICAL_ANNOUNCE, "", text);
 		for (Player player : World.getInstance().getPlayers())
 		{
-			if (player.isOnline() && isAnnouncedTo(player))
+			if (player.isOnline() && isAnnouncedTo(village, player))
 			{
 				player.sendPacket(packet);
 			}
@@ -3095,12 +3141,13 @@ public class VillageSiegeManager
 	}
 
 	/**
+	 * @param village the village besieged
 	 * @param player a player
-	 * @return {@code true} if the sieges are announced to the player: up to {@link VillageSiegeConfig#ANNOUNCE_MAX_LEVEL}, or a GM
+	 * @return {@code true} if the village's sieges are announced to the player: from its lowest defender level to {@link SiegeVillage#getAnnounceMaxLevel}, or a GM
 	 */
-	private static boolean isAnnouncedTo(Player player)
+	private static boolean isAnnouncedTo(SiegeVillage village, Player player)
 	{
-		return (player.getLevel() <= VillageSiegeConfig.ANNOUNCE_MAX_LEVEL) || player.isGM();
+		return ((player.getLevel() >= village.getMinDefenderLevel()) && (player.getLevel() <= village.getAnnounceMaxLevel())) || player.isGM();
 	}
 
 	/**
@@ -3113,7 +3160,7 @@ public class VillageSiegeManager
 		final ExShowScreenMessage packet = new ExShowScreenMessage(text, ExShowScreenMessage.TOP_CENTER, 6000);
 		for (Player player : World.getInstance().getPlayers())
 		{
-			if (player.isOnline() && isAnnouncedTo(player) && isInArea(siege, player))
+			if (player.isOnline() && isAnnouncedTo(siege._village, player) && isInArea(siege, player))
 			{
 				player.sendPacket(packet);
 			}
@@ -3134,12 +3181,12 @@ public class VillageSiegeManager
 		final ExShowScreenMessage packet = new ExShowScreenMessage(siege._village.getName() + " is under siege! Type .siege to join the defence.", ExShowScreenMessage.TOP_CENTER, 8000);
 		for (Player player : World.getInstance().getPlayers())
 		{
-			if (!player.isOnline() || player.isInOfflineMode() || (player.getLevel() > VillageSiegeConfig.MAX_PLAYER_LEVEL) || isInArea(siege, player))
+			if (!player.isOnline() || player.isInOfflineMode() || !siege._village.isDefenderLevel(player.getLevel()) || isInArea(siege, player))
 			{
 				continue;
 			}
 			player.sendPacket(packet);
-			if (VillageSiegeConfig.INVITE && (getJoinRefusal(player) == null))
+			if (VillageSiegeConfig.INVITE && (getJoinRefusal(siege, player) == null))
 			{
 				final String html = VillageSiegeBoard.handle(player, null, "invite");
 				if (html != null)
@@ -3151,18 +3198,19 @@ public class VillageSiegeManager
 	}
 
 	/**
+	 * @param siege the siege
 	 * @param player a player
 	 * @return why the player can't take the siege's teleport now, {@code null} if it can
 	 */
-	public static String getJoinRefusal(Player player)
+	public static String getJoinRefusal(Siege siege, Player player)
 	{
 		if (!VillageSiegeConfig.TELEPORT)
 		{
 			return "There is no teleport to the siege.";
 		}
-		if ((player.getLevel() > VillageSiegeConfig.MAX_PLAYER_LEVEL) && !player.isGM())
+		if (!siege._village.isDefenderLevel(player.getLevel()) && !player.isGM())
 		{
-			return "The Defence Force only calls defenders up to level " + VillageSiegeConfig.MAX_PLAYER_LEVEL + ".";
+			return "The Defence Force of " + siege._village.getName() + " only calls defenders " + siege._village.describeDefenderLevels() + ".";
 		}
 		return getTeleportRefusal(player);
 	}
@@ -3212,7 +3260,7 @@ public class VillageSiegeManager
 		{
 			return "No village is under siege now.";
 		}
-		final String refusal = getJoinRefusal(player);
+		final String refusal = getJoinRefusal(siege, player);
 		if (refusal != null)
 		{
 			return refusal;
@@ -3296,7 +3344,7 @@ public class VillageSiegeManager
 	{
 		for (Player player : World.getInstance().getPlayers())
 		{
-			if (player.isOnline() && isAnnouncedTo(player) && isInArea(siege, player))
+			if (player.isOnline() && isAnnouncedTo(siege._village, player) && isInArea(siege, player))
 			{
 				player.sendPacket(new ExShowScreenMessage(text, ExShowScreenMessage.TOP_CENTER, 5000));
 				player.sendMessage(text);
@@ -3311,6 +3359,16 @@ public class VillageSiegeManager
 	public static String formatTime(long time)
 	{
 		return LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ZoneId.systemDefault()).format(TIME_FORMAT);
+	}
+
+	/**
+	 * @param level a character's level
+	 * @return {@code true} if a siege is going on and it is for characters of that level
+	 */
+	public boolean isDefenderLevel(int level)
+	{
+		final Siege siege = _siege;
+		return (siege != null) && siege._village.isDefenderLevel(level);
 	}
 
 	/**

@@ -23,6 +23,7 @@ package org.l2jmobius.gameserver.model.villagesiege;
 import java.util.Collections;
 import java.util.List;
 
+import org.l2jmobius.gameserver.config.custom.VillageSiegeConfig;
 import org.l2jmobius.gameserver.model.Location;
 
 /**
@@ -65,9 +66,11 @@ public class SiegeVillage
 	private final int _guardLookId;
 	private final int _minLevel;
 	private final int _maxLevel;
+	private final int _minDefenderLevel;
+	private final int _maxDefenderLevel;
 	private final List<FixedEntrance> _entrances;
 
-	public SiegeVillage(String id, String name, String town, int gatekeeperId, int guardLookId, int minLevel, int maxLevel, List<FixedEntrance> entrances)
+	public SiegeVillage(String id, String name, String town, int gatekeeperId, int guardLookId, int minLevel, int maxLevel, int minDefenderLevel, int maxDefenderLevel, List<FixedEntrance> entrances)
 	{
 		_id = id;
 		_name = name;
@@ -76,6 +79,8 @@ public class SiegeVillage
 		_guardLookId = guardLookId;
 		_minLevel = Math.min(minLevel, maxLevel);
 		_maxLevel = Math.max(minLevel, maxLevel);
+		_minDefenderLevel = minDefenderLevel;
+		_maxDefenderLevel = maxDefenderLevel;
 		_entrances = Collections.unmodifiableList(entrances);
 	}
 
@@ -135,6 +140,47 @@ public class SiegeVillage
 	public boolean hasLevels()
 	{
 		return _maxLevel > 0;
+	}
+
+	/**
+	 * @return the lowest level of the characters the siege is for (called, and paid for their contribution)
+	 */
+	public int getMinDefenderLevel()
+	{
+		return Math.max(1, Math.min(_minDefenderLevel, getMaxDefenderLevel()));
+	}
+
+	/**
+	 * @return the highest level of the characters the siege is for, {@link VillageSiegeConfig#MAX_PLAYER_LEVEL} unless the data sets it
+	 */
+	public int getMaxDefenderLevel()
+	{
+		return _maxDefenderLevel > 0 ? _maxDefenderLevel : VillageSiegeConfig.MAX_PLAYER_LEVEL;
+	}
+
+	/**
+	 * @param level a character's level
+	 * @return {@code true} if the siege is for characters of that level
+	 */
+	public boolean isDefenderLevel(int level)
+	{
+		return (level >= getMinDefenderLevel()) && (level <= getMaxDefenderLevel());
+	}
+
+	/**
+	 * @return the highest level of the characters who hear of the siege: its defenders' if the data sets them, else {@link VillageSiegeConfig#ANNOUNCE_MAX_LEVEL}
+	 */
+	public int getAnnounceMaxLevel()
+	{
+		return _maxDefenderLevel > 0 ? _maxDefenderLevel : VillageSiegeConfig.ANNOUNCE_MAX_LEVEL;
+	}
+
+	/**
+	 * @return the levels the siege is for, to follow "Defenders": "up to level 40", or "of level 40 to 85"
+	 */
+	public String describeDefenderLevels()
+	{
+		return getMinDefenderLevel() <= 1 ? "up to level " + getMaxDefenderLevel() : "of level " + getMinDefenderLevel() + " to " + getMaxDefenderLevel();
 	}
 
 	/**

@@ -126,6 +126,8 @@ public class VillageSiegeConfig
 	// Rewards
 	public static int EXP_BONUS;
 	public static int REWARD_EXP_PERCENT;
+	public static int REWARD_EXP_FULL_LEVEL;
+	public static int REWARD_EXP_HALVING_LEVELS;
 	public static int REWARD_FULL_MINUTES;
 	public static int REWARD_MIN_MINUTES;
 	public static int MEDAL_ITEM_ID;
@@ -137,7 +139,7 @@ public class VillageSiegeConfig
 		final ConfigReader config = new ConfigReader(VILLAGE_SIEGE_CONFIG_FILE);
 		ENABLED = config.getBoolean("VillageSiegeEnabled", true);
 		final List<String> order = new ArrayList<>();
-		for (String village : config.getString("VillageSiegeOrder", "talking_island,elven,dark_elven,orc,dwarven,kamael,gludin,gludio,dion").split(","))
+		for (String village : config.getString("VillageSiegeOrder", "talking_island,hunters,elven,rune,dark_elven,oren,orc,giran,dwarven,goddard,kamael,heine,gludin,aden,gludio,schuttgart,dion").split(","))
 		{
 			if (!village.trim().isEmpty())
 			{
@@ -237,6 +239,8 @@ public class VillageSiegeConfig
 
 		EXP_BONUS = Math.max(0, config.getInt("VillageSiegeExpBonus", 50));
 		REWARD_EXP_PERCENT = Math.max(0, config.getInt("VillageSiegeRewardExpPercent", 30));
+		REWARD_EXP_FULL_LEVEL = Math.max(1, config.getInt("VillageSiegeRewardExpFullLevel", 40));
+		REWARD_EXP_HALVING_LEVELS = Math.max(0, config.getInt("VillageSiegeRewardExpHalvingLevels", 10));
 		REWARD_FULL_MINUTES = Math.max(1, config.getInt("VillageSiegeRewardFullMinutes", 30));
 		REWARD_MIN_MINUTES = Math.max(0, config.getInt("VillageSiegeRewardMinMinutes", 5));
 		MEDAL_ITEM_ID = config.getInt("VillageSiegeMedalItemId", 4674);

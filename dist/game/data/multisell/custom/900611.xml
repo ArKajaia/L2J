@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
+	<!--
+	Village Under Siege: Defence Force Board exchange, decorations: agathions (little companions that follow their owner, with a cute trick and nothing else) and the Formal Wear.
+	No stats, only looks. They are priced for the veterans of the town sieges: a siege pays a level 80 defender about 7,800 Defence Medals (4674)
+	(3,000 points for the hour of fighting and the end bonus), so a decoration takes 10 to 30 sieges (78,000 to 234,000 medals).
+	-->
+	<npcs>
+		<npc>900600</npc> <!-- Defence Force Board -->
+	</npcs>
+	<!-- The Formal Wear (a wedding dress or a tuxedo) and the agathions: 25 sieges -->
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="6408" /> <!-- Formal Wear -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="10320" /> <!-- Agathion Seal Bracelet - Little Angel -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="10326" /> <!-- Agathion Seal Bracelet - Little Devil -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="10606" /> <!-- Agathion Seal Bracelet - Rudolph -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13544" /> <!-- Agathion Summon Bracelet - Boy Teddy Bear -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="13545" /> <!-- Agathion Summon Bracelet - Girl Teddy Bear -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20006" /> <!-- Agathion Seal Bracelet - Majo -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20008" /> <!-- Agathion Seal Bracelet - Black Majo -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20012" /> <!-- Agathion Seal Bracelet - Plaipitak -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20063" /> <!-- Agathion Seal Bracelet - Baby Panda -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20064" /> <!-- Agathion Seal Bracelet - Bamboo Panda -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20212" /> <!-- Agathion Seal Bracelet - Charming Cupid -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20213" /> <!-- Agathion Seal Bracelet - Naughty Cupid -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20221" /> <!-- Agathion Seal Bracelet - White Maneki Neko -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20222" /> <!-- Agathion Seal Bracelet - Black Maneki Neko -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20223" /> <!-- Agathion Seal Bracelet - Brown Maneki Neko -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20230" /> <!-- Agathion Seal Bracelet - One-Eyed Bat Drove -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20252" /> <!-- Agathion Seal Bracelet - Bugbear -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20303" /> <!-- Agathion Seal Bracelet - Button-Eyed Bear Doll -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20309" /> <!-- Agathion Seal Bracelet - Dryad -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20591" /> <!-- Agathion Seal Bracelet - Weaver -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20726" /> <!-- Agathion Seal Bracelet - Zombie -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="21047" /> <!-- Agathion Seal Bracelet - Granny Tiger -->
+	</item>
+	<item>
+		<ingredient count="195000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="21062" /> <!-- Agathion Seal Bracelet - Handy -->
+	</item>
+	<!-- The rarest agathions: 30 sieges -->
+	<item>
+		<ingredient count="234000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20007" /> <!-- Agathion Seal Bracelet - Gold Majo -->
+	</item>
+	<item>
+		<ingredient count="234000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20236" /> <!-- Agathion Seal Bracelet - Pegasus -->
+	</item>
+	<item>
+		<ingredient count="234000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20307" /> <!-- Agathion Seal Bracelet - God of Fortune -->
+	</item>
+	<item>
+		<ingredient count="234000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="20660" /> <!-- Agathion Seal Bracelet - Monkey King -->
+	</item>
+	<item>
+		<ingredient count="234000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="21335" /> <!-- Agathion Summon Bracelet - Griffin -->
+	</item>
+	<item>
+		<ingredient count="234000" id="4674" /> <!-- Defence Medal -->
+		<production count="1" id="21986" /> <!-- Agathion Seal Bracelet - Antharas -->
+	</item>
+</list>
