@@ -184,6 +184,7 @@ public class VillageSiegeManager
 	private static final String INSERT_RANKING = "REPLACE INTO `village_siege_ranking` (`day`, `village`, `name`, `char_id`, `fake`, `level`, `points`, `medals`, `gate_fell`, `end_time`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 	private static final String SELECT_LATEST = "SELECT r.* FROM `village_siege_ranking` r JOIN (SELECT `village`, MAX(`day`) AS `day` FROM `village_siege_ranking` GROUP BY `village`) l ON r.`village` = l.`village` AND r.`day` = l.`day`";
 	private static final String DELETE_OLD = "DELETE FROM `village_siege_ranking` WHERE `day` < ?";
+	private static final String UPDATE_GATE_FELL = "UPDATE `village_siege_ranking` SET `gate_fell` = 1 WHERE `day` = ? AND `village` = ?";
 
 	private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -621,7 +622,7 @@ public class VillageSiegeManager
 	}
 
 	/**
-	 * The result of a siege that ended.
+	 * The result of a village's last day of siege (its sieges of that day added up).
 	 */
 	public static class SiegeResult
 	{
@@ -2960,31 +2961,58 @@ public class VillageSiegeManager
 
 	private void saveResult(Siege siege, List<Contributor> ranking, long now)
 	{
-		final List<RankRow> rows = new ArrayList<>();
+		// The rotation is shorter than a day, so a village can be besieged twice in one: its day's ranking adds both up.
+		final SiegeResult earlier = _results.get(siege._village.getId());
+		final boolean sameDay = (earlier != null) && (earlier.getDay() == siege._day);
+		final Map<String, RankRow> rows = new LinkedHashMap<>();
+		if (sameDay)
+		{
+			for (RankRow row : earlier.getRows())
+			{
+				rows.put(row.getName(), row);
+			}
+		}
 		for (Contributor contributor : ranking)
 		{
-			rows.add(new RankRow(contributor.getName(), contributor._fake, contributor._level, contributor.getPoints(), contributor.getMedals()));
+			final RankRow before = rows.get(contributor.getName());
+			rows.put(contributor.getName(), new RankRow(contributor.getName(), contributor._fake, contributor._level, contributor.getPoints() + (before != null ? before.getPoints() : 0), contributor.getMedals() + (before != null ? before.getMedals() : 0)));
 		}
-		_results.put(siege._village.getId(), new SiegeResult(siege._village.getId(), siege._day, now, siege._gateFell, rows));
+		final List<RankRow> list = new ArrayList<>(rows.values());
+		list.sort((a, b) -> Integer.compare(b.getPoints(), a.getPoints()));
+		final boolean gateFell = siege._gateFell || (sameDay && earlier.hasGateFallen());
+		_results.put(siege._village.getId(), new SiegeResult(siege._village.getId(), siege._day, now, gateFell, list));
 
-		try (Connection con = DatabaseFactory.getConnection();
-			PreparedStatement ps = con.prepareStatement(INSERT_RANKING))
+		try (Connection con = DatabaseFactory.getConnection())
 		{
-			for (Contributor contributor : ranking)
+			try (PreparedStatement ps = con.prepareStatement(INSERT_RANKING))
 			{
-				ps.setInt(1, siege._day);
-				ps.setString(2, siege._village.getId());
-				ps.setString(3, contributor.getName());
-				ps.setInt(4, contributor._objectId);
-				ps.setInt(5, contributor._fake ? 1 : 0);
-				ps.setInt(6, Math.max(0, Math.min(255, contributor._level)));
-				ps.setInt(7, contributor.getPoints());
-				ps.setLong(8, contributor.getMedals());
-				ps.setInt(9, siege._gateFell ? 1 : 0);
-				ps.setLong(10, now);
-				ps.addBatch();
+				for (Contributor contributor : ranking)
+				{
+					final RankRow row = rows.get(contributor.getName());
+					ps.setInt(1, siege._day);
+					ps.setString(2, siege._village.getId());
+					ps.setString(3, contributor.getName());
+					ps.setInt(4, contributor._objectId);
+					ps.setInt(5, contributor._fake ? 1 : 0);
+					ps.setInt(6, Math.max(0, Math.min(255, contributor._level)));
+					ps.setInt(7, row.getPoints());
+					ps.setLong(8, row.getMedals());
+					ps.setInt(9, gateFell ? 1 : 0);
+					ps.setLong(10, now);
+					ps.addBatch();
+				}
+				ps.executeBatch();
 			}
-			ps.executeBatch();
+			// The defenders of the day's first siege who missed the second keep their rows: they learn of a fallen gate too.
+			if (gateFell && sameDay)
+			{
+				try (PreparedStatement ps = con.prepareStatement(UPDATE_GATE_FELL))
+				{
+					ps.setInt(1, siege._day);
+					ps.setString(2, siege._village.getId());
+					ps.executeUpdate();
+				}
+			}
 		}
 		catch (Exception e)
 		{
@@ -3024,10 +3052,9 @@ public class VillageSiegeManager
 			}
 		}
 
-		// The siege going on, unless its village already had one today (a GM started it again): a village counts once a day.
+		// The siege going on: what its village's earlier sieges of the day gave is in the results, and this one is added to them when it ends.
 		final Siege siege = _siege;
-		final SiegeResult done = siege != null ? _results.get(siege._village.getId()) : null;
-		if ((siege != null) && (siege._day == today) && ((done == null) || (done.getDay() != today)))
+		if ((siege != null) && (siege._day == today))
 		{
 			for (Contributor contributor : siege.getRanking())
 			{

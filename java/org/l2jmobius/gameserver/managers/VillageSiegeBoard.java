@@ -492,7 +492,7 @@ public final class VillageSiegeBoard
 		}
 
 		final int day = result.getDay();
-		sb.append("Its last siege (").append(day / 10000).append("-").append(String.format("%02d", (day / 100) % 100)).append("-").append(String.format("%02d", day % 100)).append("): ").append(result.hasGateFallen() ? "<font color=\"FF6666\">a gate fell</font>" : "<font color=\"00FF00\">every gate held</font>").append(".<br>");
+		sb.append("Its last day of siege (").append(day / 10000).append("-").append(String.format("%02d", (day / 100) % 100)).append("-").append(String.format("%02d", day % 100)).append("): ").append(result.hasGateFallen() ? "<font color=\"FF6666\">a gate fell</font>" : "<font color=\"00FF00\">every gate held</font>").append(".<br>");
 		appendRows(sb, player, result.getRows());
 		return sb.append(back(prefix)).toString();
 	}
