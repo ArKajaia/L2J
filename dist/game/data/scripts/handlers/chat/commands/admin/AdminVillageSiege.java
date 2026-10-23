@@ -39,7 +39,7 @@ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 /**
  * Village Under Siege (see {@link VillageSiegeManager}):
  * <ul>
- * <li>//villagesiege: the siege going on, the villages (level, entrances, medals per hour) and today's schedule.</li>
+ * <li>//villagesiege: the siege going on, the villages (level, defender levels, entrances, medals per hour) and today's schedule.</li>
  * <li>//villagesiege start &lt;village&gt; [minutes]: starts the siege of a village now ({@code VillageSiegeDuration} minutes by default).</li>
  * <li>//villagesiege stop: calls off the siege going on (no end bonus, nothing scheduled until the next siege).</li>
  * <li>//villagesiege entrances &lt;village&gt;: the entrances found, with a teleport to each gate and the line to keep it in data/VillageSiege.xml.</li>
@@ -173,12 +173,12 @@ public class AdminVillageSiege implements IAdminCommandHandler
 			sb.append("No siege is going on.<br>");
 		}
 
-		sb.append("<table width=280><tr><td width=85>Village</td><td width=45>Lv</td><td width=35>Gates</td><td width=50>Medals/h</td><td width=60></td></tr>");
+		sb.append("<table width=280><tr><td width=75>Village</td><td width=40>Lv</td><td width=40>Def</td><td width=30>Gates</td><td width=50>Medals/h</td><td width=45></td></tr>");
 		for (SiegeVillage village : VillageSiegeData.getInstance().getVillages())
 		{
 			final long perHour = VillageSiegeManager.getMedalsPerHour(manager.getLevel(village));
 			final int[] levels = manager.getLevelRange(village);
-			sb.append("<tr><td>").append(village.getId()).append("</td><td>").append(levels[0]).append("-").append(levels[1]).append("</td><td><a action=\"bypass -h admin_villagesiege entrances ").append(village.getId()).append("\">").append(manager.getEntrances(village).size()).append("</a></td><td>").append(perHour).append("</td><td><a action=\"bypass -h admin_villagesiege start ").append(village.getId()).append("\">start</a></td></tr>");
+			sb.append("<tr><td>").append(village.getId()).append("</td><td>").append(levels[0]).append("-").append(levels[1]).append("</td><td>").append(village.getMinDefenderLevel()).append("-").append(village.getMaxDefenderLevel()).append("</td><td><a action=\"bypass -h admin_villagesiege entrances ").append(village.getId()).append("\">").append(manager.getEntrances(village).size()).append("</a></td><td>").append(perHour).append("</td><td><a action=\"bypass -h admin_villagesiege start ").append(village.getId()).append("\">start</a></td></tr>");
 		}
 		sb.append("</table><br><font color=\"LEVEL\">The next 24 hours</font><br1>");
 		for (Slot slot : VillageSiegeManager.getSlots(System.currentTimeMillis()))
@@ -194,7 +194,7 @@ public class AdminVillageSiege implements IAdminCommandHandler
 		final List<SiegeEntrance> entrances = VillageSiegeManager.getInstance().getEntrances(village);
 		final StringBuilder sb = new StringBuilder("<html><title>").append(village.getName()).append("</title><body>");
 		final int[] levels = VillageSiegeManager.getInstance().getLevelRange(village);
-		sb.append("Levels ").append(levels[0]).append("-").append(levels[1]).append(", ").append(entrances.size()).append(" entrances").append(village.getEntrances().isEmpty() ? " (found on their own)" : " (from the data)").append(".<br>");
+		sb.append("Levels ").append(levels[0]).append("-").append(levels[1]).append(", defenders ").append(village.getMinDefenderLevel()).append("-").append(village.getMaxDefenderLevel()).append(", ").append(entrances.size()).append(" entrances").append(village.getEntrances().isEmpty() ? " (found on their own)" : " (from the data)").append(".<br>");
 		for (int i = 0; i < entrances.size(); i++)
 		{
 			final SiegeEntrance entrance = entrances.get(i);

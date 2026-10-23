@@ -1818,7 +1818,7 @@ public class Attackable extends Npc
 			}
 			
 			// The monsters of a Village Under Siege give more to the characters it is for.
-			if ((_villageSiegeRole == VILLAGE_SIEGE_MONSTER) && (VillageSiegeConfig.EXP_BONUS > 0) && (charLevel <= VillageSiegeConfig.MAX_PLAYER_LEVEL))
+			if ((_villageSiegeRole == VILLAGE_SIEGE_MONSTER) && (VillageSiegeConfig.EXP_BONUS > 0) && VillageSiegeManager.getInstance().isDefenderLevel(charLevel))
 			{
 				xp *= 1 + (VillageSiegeConfig.EXP_BONUS / 100.0);
 				sp *= 1 + (VillageSiegeConfig.EXP_BONUS / 100.0);

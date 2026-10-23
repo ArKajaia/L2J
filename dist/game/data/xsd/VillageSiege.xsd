@@ -24,6 +24,8 @@
 						<xs:attribute name="guardLook" type="xs:positiveInteger" use="required" />
 						<xs:attribute name="minLevel" type="xs:positiveInteger" />
 						<xs:attribute name="maxLevel" type="xs:positiveInteger" />
+						<xs:attribute name="minDefenderLevel" type="xs:positiveInteger" />
+						<xs:attribute name="maxDefenderLevel" type="xs:positiveInteger" />
 					</xs:complexType>
 				</xs:element>
 			</xs:choice>

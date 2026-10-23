@@ -86,7 +86,7 @@ public class VillageSiegeData implements IXmlReader
 						entrances.add(new FixedEntrance(new Location(parseInteger(entrance, "x"), parseInteger(entrance, "y"), parseInteger(entrance, "z")), rally));
 					}
 				}
-				_villages.put(id, new SiegeVillage(id, parseString(attrs, "name"), parseString(attrs, "town"), parseInteger(attrs, "gatekeeper"), parseInteger(attrs, "guardLook"), parseInteger(attrs, "minLevel", 0), parseInteger(attrs, "maxLevel", 0), entrances));
+				_villages.put(id, new SiegeVillage(id, parseString(attrs, "name"), parseString(attrs, "town"), parseInteger(attrs, "gatekeeper"), parseInteger(attrs, "guardLook"), parseInteger(attrs, "minLevel", 0), parseInteger(attrs, "maxLevel", 0), parseInteger(attrs, "minDefenderLevel", 0), parseInteger(attrs, "maxDefenderLevel", 0), entrances));
 			}
 		}
 	}

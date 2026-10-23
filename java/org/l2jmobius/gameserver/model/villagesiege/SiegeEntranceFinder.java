@@ -542,9 +542,10 @@ public final class SiegeEntranceFinder
 	/**
 	 * @param heart the heart of the village
 	 * @param town the TownZone, to leave its monsters out ({@code null} to keep them)
-	 * @return the level of a siege of the village: the average level of the monsters living around it, around their median level, at most {@link VillageSiegeConfig#MAX_PLAYER_LEVEL}
+	 * @param maxLevel the highest level the siege may have (its defenders' highest)
+	 * @return the level of a siege of the village: the average level of the monsters living around it, around their median level, at most {@code maxLevel}
 	 */
-	public static int findLevel(Location heart, ZoneType town)
+	public static int findLevel(Location heart, ZoneType town, int maxLevel)
 	{
 		final List<Integer> levels = new ArrayList<>();
 		WorldMonsterIndex.getInstance().forEachPointNear(heart.getX(), heart.getY(), VillageSiegeConfig.SOURCE_RANGE, (npcId, level, x, y, z) ->
@@ -572,6 +573,6 @@ public final class SiegeEntranceFinder
 			}
 		}
 		final int average = (int) Math.round((double) sum / Math.max(1, count));
-		return Math.max(1, Math.min(VillageSiegeConfig.MAX_PLAYER_LEVEL, average));
+		return Math.max(1, Math.min(maxLevel, average));
 	}
 }
