@@ -94,7 +94,7 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 /**
  * Village Under Siege: one village or town after the other, the monsters of the hunting grounds around it attack its entrances.
  * <ul>
- * <li>Schedule: the villages of {@link VillageSiegeConfig#ORDER} are besieged one after the other, over and over, {@link VillageSiegeConfig#DURATION} minutes each with a {@link VillageSiegeConfig#BREAK} minute rest, counted from a fixed time ({@link #getSlots}). A
+ * <li>Schedule: the villages of {@link VillageSiegeConfig#ORDER} (some of them more than once) are besieged one after the other, over and over, {@link VillageSiegeConfig#DURATION} minutes each with a {@link VillageSiegeConfig#BREAK} minute rest, counted from a fixed time ({@link #getSlots}). A
  * restart picks the rotation up where it stands. Each siege is for the characters of its village's defender levels ({@link SiegeVillage#isDefenderLevel}: up to {@link VillageSiegeConfig#MAX_PLAYER_LEVEL} for the starting villages, higher for the towns): only they
  * hear of it, are invited and may teleport there for free ({@link #join}).</li>
  * <li>Entrances: the roads the monsters take into the village ({@link SiegeEntranceFinder}). Each has a gate ({@link VillageGate}) with HP: the monsters fight the defenders and the guards first and, with nobody left in front of them, beat on the gate. At 0 HP it falls and

@@ -139,7 +139,7 @@ public class VillageSiegeConfig
 		final ConfigReader config = new ConfigReader(VILLAGE_SIEGE_CONFIG_FILE);
 		ENABLED = config.getBoolean("VillageSiegeEnabled", true);
 		final List<String> order = new ArrayList<>();
-		for (String village : config.getString("VillageSiegeOrder", "talking_island,aden,dion,rune,kamael,oren,dwarven,giran,gludin,goddard,dark_elven,heine,orc,hunters,gludio,schuttgart,elven").split(","))
+		for (String village : config.getString("VillageSiegeOrder", "talking_island,rune,dion,aden,dark_elven,goddard,gludin,giran,orc,oren,gludio,hunters,kamael,rune,dion,aden,elven,schuttgart,gludin,giran,dwarven,heine,gludio,hunters").split(","))
 		{
 			if (!village.trim().isEmpty())
 			{
