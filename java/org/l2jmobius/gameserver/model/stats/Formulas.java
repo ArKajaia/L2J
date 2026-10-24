@@ -92,6 +92,7 @@ import org.l2jmobius.gameserver.model.zone.type.ClanHallZone;
 import org.l2jmobius.gameserver.model.zone.type.FortZone;
 import org.l2jmobius.gameserver.model.zone.type.MotherTreeZone;
 import org.l2jmobius.gameserver.network.SystemMessageId;
+import org.l2jmobius.gameserver.network.serverpackets.CombatInfo;
 import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
 import org.l2jmobius.gameserver.util.LocationUtil;
 import org.l2jmobius.gameserver.util.MathUtil;
@@ -1963,10 +1964,13 @@ public class Formulas
 			counterdmg *= calcWeaponTraitBonus(attacker, target);
 			counterdmg *= calcGeneralTraitBonus(attacker, target, skill.getTraitType(), false);
 			counterdmg *= calcAttributeBonus(attacker, target, skill);
-			attacker.reduceCurrentHp(counterdmg, target, skill);
-			if (crit) // TODO: It counters multiple times depending on how much effects skill has not on critical, but gotta be verified first!
+			try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_COUNTERATTACK, skill, 0))
 			{
 				attacker.reduceCurrentHp(counterdmg, target, skill);
+				if (crit) // TODO: It counters multiple times depending on how much effects skill has not on critical, but gotta be verified first!
+				{
+					attacker.reduceCurrentHp(counterdmg, target, skill);
+				}
 			}
 		}
 	}

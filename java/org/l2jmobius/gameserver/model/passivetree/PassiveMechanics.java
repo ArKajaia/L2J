@@ -37,6 +37,7 @@ import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 import org.l2jmobius.gameserver.model.stats.BaseStat;
 import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.network.SystemMessageId;
+import org.l2jmobius.gameserver.network.serverpackets.CombatInfo;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillLaunched;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
@@ -535,7 +536,7 @@ public final class PassiveMechanics
 		{
 			target.reduceCurrentHp(damage, caster, skill);
 			target.notifyDamageReceived(damage, caster, skill, false, false);
-			caster.sendDamageMessage(target, (int) damage, false, false, false);
+			caster.sendDamageMessage(target, skill, (int) damage, false, false, false);
 		}
 		finally
 		{
@@ -594,11 +595,11 @@ public final class PassiveMechanics
 		}
 		
 		ARCING.set(Boolean.TRUE);
-		try
+		try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_SKILL, skill, 0)) // The jumps come after the cast, its shots are spent.
 		{
 			next.reduceCurrentHp(arcDamage, caster, skill);
 			next.notifyDamageReceived(arcDamage, caster, skill, false, false);
-			caster.sendDamageMessage(next, (int) arcDamage, false, false, false);
+			caster.sendDamageMessage(next, skill, (int) arcDamage, false, false, false);
 		}
 		finally
 		{

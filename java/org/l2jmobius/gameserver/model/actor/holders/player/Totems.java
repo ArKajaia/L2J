@@ -45,6 +45,7 @@ import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.stats.Formulas;
+import org.l2jmobius.gameserver.network.serverpackets.CombatInfo;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
 import org.l2jmobius.gameserver.network.serverpackets.SkillCoolTime;
 import org.l2jmobius.gameserver.util.LocationUtil;
@@ -522,9 +523,13 @@ public class Totems
 			final int damage = (int) (Formulas.calcMagicDam(owner, enemy, burn, shld, false, false, mcrit) * (overlap ? OraclesWarchiefsConfig.FLAME_TOTEM_OVERLAP_DAMAGE : 1));
 			if (damage > 0)
 			{
-				enemy.reduceCurrentHp(damage, owner, burn);
-				enemy.notifyDamageReceived(damage, owner, burn, mcrit, false);
-				owner.sendDamageMessage(enemy, damage, mcrit, false, false);
+				// The flames use none of the Warchief's shots.
+				try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_SKILL, burn, 0))
+				{
+					enemy.reduceCurrentHp(damage, owner, burn);
+					enemy.notifyDamageReceived(damage, owner, burn, mcrit, false);
+					owner.sendDamageMessage(enemy, burn, damage, mcrit, false, false);
+				}
 			}
 
 			if (++hits >= maxTargets)
@@ -562,9 +567,13 @@ public class Totems
 				final int damage = (int) Formulas.calcMagicDam(owner, enemy, skill, shld, false, false, mcrit);
 				if (damage > 0)
 				{
-					enemy.reduceCurrentHp(damage, owner, skill);
-					enemy.notifyDamageReceived(damage, owner, skill, mcrit, false);
-					owner.sendDamageMessage(enemy, damage, mcrit, false, false);
+					// The explosions use none of the Warchief's shots.
+					try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_SKILL, skill, 0))
+					{
+						enemy.reduceCurrentHp(damage, owner, skill);
+						enemy.notifyDamageReceived(damage, owner, skill, mcrit, false);
+						owner.sendDamageMessage(enemy, skill, damage, mcrit, false, false);
+					}
 				}
 
 				if (++hits >= 10)

@@ -1,0 +1,156 @@
+Combat Log - damage message protocol
+====================================
+
+The client (L2Source, l2DecompileTest) shows the System Message window's
+damage lines in its own combat log window, with a colour per kind of line,
+a sword or bow icon after the damage of a normal attack, the skill's icon
+after the damage of a skill, and timestamps.
+
+A stock SystemMessage only carries names as text: no object ids, no skill,
+no attack type. So the damage messages listed below carry a small combat
+block after their params. No new packet: the client reads every
+SystemMessage before the native handler, takes the block, and shortens the
+packet by it, so the native handler reads the stock message.
+
+The server writes the block only when one is attached to the message
+(network.serverpackets.CombatInfo) and CombatLogPacketExtension is True in
+config/Custom/CombatLog.ini (the default). Turn it off for clients that do
+not strip it.
+
+
+Framing
+-------
+SystemMessage, server packet 0x62:
+
+  int   messageId
+  int   paramCount
+  paramCount x {
+    int   type               0 text, 1 int, 2 npc, 3 item, 4 skill, 5 castle,
+                             6 long, 7 zone, 9 element, 10 instance,
+                             11 door, 12 player, 13 system string
+    ...                      the value: str (0, 12), long (6),
+                             int id + int level (4), int x, y, z (7),
+                             int (the others)
+  }
+  [combat block]             only on the messages below
+
+Types: byte = 1 byte, short = 2, int = 4, long = 8, little endian like
+every L2 packet. Strings (str) are UTF-16LE with a terminating 0.
+
+With MultilingualSupport on and a player whose language is not "en", a
+message that has a translation goes out as S1_2 (id 1983, one text param,
+the translated line) instead. The block still follows it, unchanged.
+
+
+The combat block
+----------------
+18 bytes:
+
+  byte  version              1
+  int   attackerObjectId     who deals the damage (0 = unknown)
+  int   targetObjectId       who takes it (0 = unknown)
+  int   skillId              the skill's display id, 0 = none
+  short skillLevel           the skill's display level, 0 = none
+  byte  attackKind           0 unknown
+                             1 normal attack
+                             2 skill
+                             3 reflect       (damage reflected back on a
+                                              normal hit)
+                             4 counterattack (Vengeance-type skill counter;
+                                              skillId is the skill that was
+                                              countered)
+  byte  weaponType           0 unknown, else the attacker's attack type
+                             (Creature.getAttackType(): the weapon, the
+                             transformation's or the NPC's base attack
+                             type) + 1, see the table below
+  byte  flags                1  crit
+                             2  magic crit
+                             4  soulshot / spiritshot used
+                             8  shield (a normal attack the target blocked
+                                with a shield)
+                             16 miss
+                             32 blocked (the target was invulnerable)
+                             64 over-hit (an over-hit skill killed the
+                                monster)
+
+A later version may add fields after these: a client takes everything
+after the params as the block when the version is 1 or more and at least
+18 bytes are left, and reads the fields it knows.
+
+Which flags a line can have:
+- normal attack (kind 1): crit, soulshot and shield come from the hit
+  itself, on every line of that hit, the target's "received" line too.
+- skill (kind 2): crit or magic crit on the "done" line (the "received"
+  line does not know); soulshot / spiritshot when the skill is one that
+  uses them and the caster had one charged. Cubics, the Warchief's totems,
+  the Oracle's prophecies and Arc Conduit jumps never set it.
+- miss, blocked and over-hit only on the lines they name.
+
+
+Weapon types
+------------
+weaponType = WeaponType.ordinal() + 1 (model.item.type.WeaponType):
+
+  0  (unknown)
+  1  SWORD
+  2  BLUNT
+  3  DAGGER
+  4  BOW
+  5  POLE
+  6  NONE          (no weapon)
+  7  DUAL
+  8  ETC
+  9  FIST
+  10 DUALFIST
+  11 FISHINGROD
+  12 RAPIER
+  13 ANCIENTSWORD
+  14 CROSSBOW
+  15 FLAG
+  16 OWNTHING
+  17 DUALDAGGER
+
+Bow and crossbow (4, 14) are the ranged ones.
+
+
+Messages that carry the block
+-----------------------------
+  id    message                                 sent to      attacker  target
+  35    You hit for $s1 damage.                 the player   player    door /
+                                                                       control
+                                                                       tower
+  1130  You have dealt $s1 damage to your       the attacker attacker  the
+        target and $s2 damage to the servitor.  (player)               player hit
+  1996  The attack has been blocked.            the player   player    target
+  2261  $c1 has done $s3 points of damage to    the player,  player /  target
+        $c2.                                    or the owner summon
+                                                of the summon
+  2262  $c1 has received $s3 damage from $c2.   the player   attacker  player /
+                                                hit, or the            summon
+                                                summon's owner
+  2264  $c1 has evaded $c2's attack.            the player   attacker  player
+                                                who evaded
+  2265  $c1's attack went astray.               the player   player    target
+                                                who missed
+
+Where they are sent from:
+  35, 1996, 2261, 2265  model.actor.Player.sendDamageMessage
+  2261                  model.actor.Summon.sendDamageMessage (pets and
+                        servitors)
+  2262                  model.actor.Summon.reduceCurrentHp (to the owner,
+                        the summon as the target)
+  2262, 1130            model.actor.status.PlayerStatus.reduceHp
+  2264                  model.actor.Creature.sendDamageMessage (any
+                        attacker, also in Player's)
+
+No other message carries it: the crit lines (2266 "$c1 landed a critical
+hit!", 1280 "Magic Critical Hit!", 1017 and 1028 the pet's and servitor's
+critical hits) are left as they are, the flags say it on the damage line.
+
+The kind of a hit is passed down to the code that sends the message by a
+CombatInfo.scope (normal attack and reflect in Creature.onHitTimer,
+counterattack in Formulas.calcDamageReflected); without one, a message with
+a skill is kind 2 and one without is kind 0. The skill reaches
+sendDamageMessage through sendDamageMessage(target, skill, damage, mcrit,
+pcrit, miss), which every damage effect handler, cubics, totems, prophecies
+and the passive tree's Echo and Arc Conduit call.

@@ -305,7 +305,7 @@ public class Trap extends Npc
 	}
 	
 	@Override
-	public void sendDamageMessage(Creature target, int damage, boolean mcrit, boolean pcrit, boolean miss)
+	public void sendDamageMessage(Creature target, Skill skill, int damage, boolean mcrit, boolean pcrit, boolean miss)
 	{
 		CombatLogManager.onDamageMessage(this, target, mcrit || pcrit, miss);
 		

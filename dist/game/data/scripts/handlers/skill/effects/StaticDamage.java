@@ -55,7 +55,7 @@ public class StaticDamage extends AbstractEffect
 		effected.notifyDamageReceived(_power, effector, skill, false, false);
 		if (effector.isPlayer())
 		{
-			effector.sendDamageMessage(effected, _power, false, false, false);
+			effector.sendDamageMessage(effected, skill, _power, false, false, false);
 		}
 	}
 }

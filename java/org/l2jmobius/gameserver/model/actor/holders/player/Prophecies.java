@@ -42,6 +42,7 @@ import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.network.SystemMessageId;
+import org.l2jmobius.gameserver.network.serverpackets.CombatInfo;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
 import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
 
@@ -573,9 +574,13 @@ public class Prophecies
 				final int damage = (int) (Formulas.calcMagicDam(oracle, target, resolveSkill, shld, false, false, mcrit) * multiplier * (still ? OraclesWarchiefsConfig.DOOM_STILL_BONUS : 1) * prophecy.stacks);
 				if (damage > 0)
 				{
-					target.reduceCurrentHp(damage, oracle, resolveSkill);
-					target.notifyDamageReceived(damage, oracle, resolveSkill, mcrit, false);
-					oracle.sendDamageMessage(target, damage, mcrit, false, false);
+					// The prophecy uses none of the Oracle's shots.
+					try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_SKILL, resolveSkill, 0))
+					{
+						target.reduceCurrentHp(damage, oracle, resolveSkill);
+						target.notifyDamageReceived(damage, oracle, resolveSkill, mcrit, false);
+						oracle.sendDamageMessage(target, resolveSkill, damage, mcrit, false, false);
+					}
 				}
 				break;
 			}
@@ -612,9 +617,13 @@ public class Prophecies
 				final int damage = (int) Math.min(share * multiplier, target.getMaxHp() * OraclesWarchiefsConfig.RECKONING_MAX_SHARE);
 				if (damage > 0)
 				{
-					target.reduceCurrentHp(damage, oracle, resolveSkill);
-					target.notifyDamageReceived(damage, oracle, resolveSkill, false, false);
-					oracle.sendDamageMessage(target, damage, false, false, false);
+					// The prophecy uses none of the Oracle's shots.
+					try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_SKILL, resolveSkill, 0))
+					{
+						target.reduceCurrentHp(damage, oracle, resolveSkill);
+						target.notifyDamageReceived(damage, oracle, resolveSkill, false, false);
+						oracle.sendDamageMessage(target, resolveSkill, damage, false, false, false);
+					}
 				}
 				break;
 			}

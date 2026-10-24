@@ -48,6 +48,7 @@ import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.network.SystemMessageId;
+import org.l2jmobius.gameserver.network.serverpackets.CombatInfo;
 
 public class Cubic
 {
@@ -565,8 +566,12 @@ public class Cubic
 				}
 				else
 				{
-					_owner.sendDamageMessage(target, damage, mcrit, false, false);
-					target.reduceCurrentHp(damage, _owner, skill);
+					// The cubic's hits use none of the owner's shots.
+					try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_SKILL, skill, 0))
+					{
+						_owner.sendDamageMessage(target, skill, damage, mcrit, false, false);
+						target.reduceCurrentHp(damage, _owner, skill);
+					}
 				}
 			}
 		}
@@ -594,16 +599,20 @@ public class Cubic
 			// Check to see if we should damage the target
 			if ((damage > 0) && !target.isDead())
 			{
-				target.reduceCurrentHp(damage, _owner, skill);
-				
-				// Manage attack or cast break of the target (calculating rate, sending message...)
-				if (!target.isRaid() && Formulas.calcAtkBreak(target, damage))
+				// The cubic's hits use none of the owner's shots.
+				try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_SKILL, skill, 0))
 				{
-					target.breakAttack();
-					target.breakCast();
+					target.reduceCurrentHp(damage, _owner, skill);
+					
+					// Manage attack or cast break of the target (calculating rate, sending message...)
+					if (!target.isRaid() && Formulas.calcAtkBreak(target, damage))
+					{
+						target.breakAttack();
+						target.breakCast();
+					}
+					
+					owner.sendDamageMessage(target, skill, damage, mcrit, false, false);
 				}
-				
-				owner.sendDamageMessage(target, damage, mcrit, false, false);
 			}
 		}
 	}

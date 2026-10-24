@@ -69,6 +69,7 @@ import org.l2jmobius.gameserver.model.zone.ZoneRegion;
 import org.l2jmobius.gameserver.network.SystemMessageId;
 import org.l2jmobius.gameserver.network.serverpackets.AbstractNpcInfo.SummonInfo;
 import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
+import org.l2jmobius.gameserver.network.serverpackets.CombatInfo;
 import org.l2jmobius.gameserver.network.serverpackets.ExPartyPetWindowAdd;
 import org.l2jmobius.gameserver.network.serverpackets.ExPartyPetWindowDelete;
 import org.l2jmobius.gameserver.network.serverpackets.ExPartyPetWindowUpdate;
@@ -840,7 +841,7 @@ public abstract class Summon extends Playable
 	}
 	
 	@Override
-	public void sendDamageMessage(Creature target, int damage, boolean mcrit, boolean pcrit, boolean miss)
+	public void sendDamageMessage(Creature target, Skill skill, int damage, boolean mcrit, boolean pcrit, boolean miss)
 	{
 		CombatLogManager.onDamageMessage(this, target, mcrit || pcrit, miss);
 		
@@ -880,6 +881,7 @@ public abstract class Summon extends Playable
 				sm.addNpcName(this);
 				sm.addString(target.getName());
 				sm.addInt(damage);
+				sm.setCombatInfo(CombatInfo.ofHit(this, target, skill, damage, mcrit, pcrit, false, false));
 			}
 			
 			sendPacket(sm);
@@ -896,6 +898,7 @@ public abstract class Summon extends Playable
 			sm.addNpcName(this);
 			sm.addString(attacker.getName());
 			sm.addInt((int) damage);
+			sm.setCombatInfo(CombatInfo.of(attacker, this, skill, 0));
 			sendPacket(sm);
 		}
 	}
