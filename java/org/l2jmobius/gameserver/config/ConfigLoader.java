@@ -45,6 +45,7 @@ import org.l2jmobius.gameserver.config.custom.DynamicQuestConfig;
 import org.l2jmobius.gameserver.config.custom.FactionSystemConfig;
 import org.l2jmobius.gameserver.config.custom.FakeClanConfig;
 import org.l2jmobius.gameserver.config.custom.FakePartyConfig;
+import org.l2jmobius.gameserver.config.custom.FakeSimulationConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
 import org.l2jmobius.gameserver.config.custom.FindPvpConfig;
@@ -149,6 +150,7 @@ public class ConfigLoader
 		FakePlayersConfig.load();
 		FakePlayerPvpConfig.load();
 		FakePartyConfig.load();
+		FakeSimulationConfig.load();
 		FakeClanConfig.load();
 		FindPvpConfig.load();
 		PvpSpotsConfig.load();

@@ -30,6 +30,7 @@ import org.l2jmobius.gameserver.config.NpcConfig;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.OfflinePlayConfig;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
+import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
@@ -68,6 +69,13 @@ public class DecayTaskManager implements Runnable
 				entry = iterator.next();
 				if (currentTime > entry.getValue())
 				{
+					// The dead body of a fake player of a simulation stays until its run ends (it may be resurrected), then the run removes it.
+					if (FakeSimulationManager.ACTIVE && entry.getKey().isPvpFakePlayer() && entry.getKey().asNpc().getTemplate().getFakePlayerPvpProfile().isSimulant())
+					{
+						entry.setValue(currentTime + 3000);
+						continue;
+					}
+					
 					// The dead body of a roaming fake player goes to town only once no player is watching.
 					if (entry.getKey().isPvpFakePlayer() && FakePlayerPvpManager.isSeenByPlayer(entry.getKey()))
 					{

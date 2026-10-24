@@ -80,6 +80,27 @@ public class AdminCommandHandler implements IHandler<IAdminCommandHandler, Strin
 		return _datatable.get(command);
 	}
 	
+	/**
+	 * @param command an admin command as typed
+	 * @return the name it is registered under: the same, or the one that differs only in case (//SetSimulationPoint is admin_setsimulationpoint)
+	 */
+	private String getRegisteredName(String command)
+	{
+		if (_datatable.containsKey(command))
+		{
+			return command;
+		}
+		
+		for (String registered : _datatable.keySet())
+		{
+			if (registered.equalsIgnoreCase(command))
+			{
+				return registered;
+			}
+		}
+		return command;
+	}
+	
 	public void onCommand(Player player, String fullCommand, boolean useConfirm)
 	{
 		if (!player.isGM())
@@ -87,9 +108,9 @@ public class AdminCommandHandler implements IHandler<IAdminCommandHandler, Strin
 			return;
 		}
 		
-		final String command = fullCommand.split(" ")[0];
-		final String commandNoPrefix = command.substring(6);
+		final String command = getRegisteredName(fullCommand.split(" ")[0]);
 		final IAdminCommandHandler handler = getHandler(command);
+		final String commandNoPrefix = command.substring(6);
 		if (handler == null)
 		{
 			player.sendMessage("The command '" + commandNoPrefix + "' does not exist!");

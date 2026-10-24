@@ -113,6 +113,9 @@ public class FakePlayerPvpProfile
 	
 	/** The party it is in (with players, or with other fake players), {@code null} for none. */
 	private volatile FakePlayerParty _party;
+	// A party-vs-party simulation (see FakeSimulationManager): its run and team, 0 for none.
+	private volatile int _simRunId;
+	private volatile int _simTeamId;
 	
 	// The PvP spot it came to fight in (see PvpSpotManager), 0 for none; whether it is one of the stronger ones; until when it stays; who killed it there last and until when it looks for them.
 	private volatile int _pvpSpotId;
@@ -764,7 +767,37 @@ public class FakePlayerPvpProfile
 	{
 		_party = party;
 	}
-	
+
+	/**
+	 * @return the simulation run it fights in (see {@link org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager}), 0 for none
+	 */
+	public int getSimRunId()
+	{
+		return _simRunId;
+	}
+
+	/**
+	 * @return its team in its simulation run, 0 for none
+	 */
+	public int getSimTeamId()
+	{
+		return _simTeamId;
+	}
+
+	public void setSimulation(int runId, int teamId)
+	{
+		_simRunId = runId;
+		_simTeamId = teamId;
+	}
+
+	/**
+	 * @return {@code true} if it was spawned for a party-vs-party simulation: it only fights the other teams of its run
+	 */
+	public boolean isSimulant()
+	{
+		return _simRunId != 0;
+	}
+
 	/**
 	 * @return the zone id of the PvP spot it came to fight in (see {@link org.l2jmobius.gameserver.managers.PvpSpotManager}), 0 for none
 	 */

@@ -425,6 +425,12 @@ public class Npc extends Creature
 		final FakePlayerInfo fakePlayerInfo;
 		if (_isFakePlayer)
 		{
+			// Gone (its effects end as it leaves): its info would bring it back in the clients, as a name nobody can target.
+			if (!isSpawned())
+			{
+				return;
+			}
+
 			fakePlayerInfo = new FakePlayerInfo(this);
 			fakePlayerInfo.sendInBroadcast();
 		}
@@ -1566,6 +1572,12 @@ public class Npc extends Creature
 		{
 			if (_isFakePlayer)
 			{
+				// Gone: its info would bring it back in the client, as a name nobody can target.
+				if (!isSpawned())
+				{
+					return;
+				}
+
 				player.sendPacket(new FakePlayerInfo(this));
 				
 				// Its clan as the player sees it: clan war icons, attackable without Ctrl.

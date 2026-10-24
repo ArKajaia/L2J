@@ -48,6 +48,7 @@ import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.data.xml.TransformData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpFactory.Looks;
+import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -1613,6 +1614,125 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
+	 * Spawns a fake player for a party-vs-party simulation (see {@link org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager}): no clan, no hotzone, no Scroll of Escape, flagged, and it only fights the other teams of its run.
+	 * @param build its build
+	 * @param level its level
+	 * @param title the title it shows (its team)
+	 * @param seed the seed of its gear and personality: the same seed gives the same fake player
+	 * @param runId its simulation run
+	 * @param teamId its team
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @param instanceId the instance
+	 * @return the fake player, or {@code null} if it could not be created
+	 */
+	public Npc spawnSimulant(FakePlayerPvpBuild build, int level, String title, long seed, int runId, int teamId, int x, int y, int z, int instanceId)
+	{
+		final String name = generateName();
+		try
+		{
+			final int npcId = _nextNpcId.getAndIncrement();
+			final NpcTemplate template = Rnd.seeded(seed, () -> FakePlayerPvpFactory.createTemplate(build, level, npcId, name, null, title));
+			if (template == null)
+			{
+				releaseName(name);
+				return null;
+			}
+
+			final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+			profile.setSimulation(runId, teamId);
+			profile.setSpawnTime(System.currentTimeMillis());
+			profile.setHotzoneId(0);
+			profile.setBlessedEscape(false);
+			final Npc fake = spawnFromTemplate(template, x, y, z, instanceId);
+			if (fake == null)
+			{
+				FakePlayerData.getInstance().removeFakePlayer(name);
+				releaseName(name);
+				return null;
+			}
+
+			flagForSpot(fake);
+			prepareSimulant(fake);
+			return fake;
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn simulation fake player " + build.getName() + " level " + level + ".", e);
+			FakePlayerData.getInstance().removeFakePlayer(name);
+			releaseName(name);
+			return null;
+		}
+	}
+
+	/**
+	 * Gets a fake player of a simulation ready to fight, like a player before a PvP: every buff of its class's buff list (the &lt;buffs&gt; of data/FakePlayerPvp.xml its build uses, whatever FakePvpBuffsEnabled says), its toggles and performance, and its own class buffs
+	 * (Rapid Shot, Hawk Eye, Deflect Arrow, seeds...) except the long cooldown ones it saves for the fight (Frenzy, Zealot...) and the totems and prophecies it plays as the fight goes. HP, MP and CP full.
+	 * @param fake the fake player
+	 */
+	public void prepareSimulant(Npc fake)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		if ((profile == null) || fake.isDead())
+		{
+			return;
+		}
+
+		for (SkillHolder holder : profile.getBuffs())
+		{
+			final Skill skill = holder.getSkill();
+			if ((skill != null) && !isBuffActive(fake, skill))
+			{
+				skill.applyEffects(fake, fake);
+			}
+		}
+
+		refreshToggles(fake, profile);
+
+		// Its servitor out (a dead one comes back before the fight).
+		if (profile.needsServitor())
+		{
+			profile.getSkills(SkillCategory.SUMMON).get(0).applyEffects(fake, fake);
+		}
+
+		for (Skill skill : profile.getSkills(SkillCategory.BUFF))
+		{
+			if (isPreFightBuff(skill) && !isBuffActive(fake, skill))
+			{
+				skill.applyEffects(fake, fake);
+			}
+		}
+
+		fake.setCurrentHpMp(fake.getMaxHp(), fake.getMaxMp());
+		fake.setCurrentCp(fake.getMaxCp());
+		fake.broadcastInfo();
+	}
+
+	/**
+	 * @param skill a buff of a class (see {@link SkillCategory#BUFF})
+	 * @return {@code true} for one a player has on before a fight: a lasting buff on itself, not saved for the fight for its long cooldown, nor a totem or prophecy
+	 */
+	private static boolean isPreFightBuff(Skill skill)
+	{
+		if (!skill.isContinuous() || skill.isDebuff() || skill.isToggle() || (skill.getAbnormalTime() <= 0))
+		{
+			return false;
+		}
+		if ((FakePlayerPvpConfig.PVP_ONLY_REUSE > 0) && (skill.getReuseDelay() >= FakePlayerPvpConfig.PVP_ONLY_REUSE))
+		{
+			return false;
+		}
+		if (FakePlayerPvpAI.isPlayedInFight(skill))
+		{
+			return false;
+		}
+
+		final TargetType targetType = skill.getTargetType();
+		return (targetType == TargetType.SELF) || (targetType == TargetType.ONE) || (targetType == TargetType.PARTY) || (targetType == TargetType.AURA);
+	}
+
+	/**
 	 * Brings back a fake player that died in its PvP spot, like a player that restarted in town and teleported back: same template, so same name, looks and gear, fully buffed. Its name stayed taken meanwhile.
 	 * @param template its template
 	 * @param x where it arrives
@@ -1789,8 +1909,14 @@ public class FakePlayerPvpManager
 		}
 		
 		_fakePlayers.add(fake);
-		
+
+		// A summoner arrives with its servitor out, like a player. First thing: its AI starts thinking as it spawns, and would otherwise start a long summon cast for one that is on its way.
 		final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+		if (profile.needsServitor())
+		{
+			profile.getSkills(SkillCategory.SUMMON).get(0).applyEffects(fake, fake);
+		}
+
 		PassiveTreeManager.getInstance().applyToFakePlayer(fake, profile.getPassives()); // Before the HP is filled up: the tree raises max HP.
 		DwarvenTrades.applyToFakePlayer(fake); // A dwarven crafter's Forged Gear.
 		profile.setTransform(0, null);
@@ -1801,12 +1927,6 @@ public class FakePlayerPvpManager
 		fake.setCurrentHpMp(fake.getMaxHp(), fake.getMaxMp());
 		profile.setSouls(getMaxSouls(fake)); // A Kamael comes from its hunt with its souls.
 		fake.broadcastInfo();
-		
-		// A necromancer arrives with its servitor out, like a player.
-		if (profile.needsServitor())
-		{
-			profile.getSkills(SkillCategory.SUMMON).get(0).applyEffects(fake, fake);
-		}
 		return fake;
 	}
 	
@@ -1838,7 +1958,15 @@ public class FakePlayerPvpManager
 		}
 		
 		FakePlayerData.getInstance().removeFakePlayer(fake.getName());
-		
+
+		// A simulation fake player only lives for its run.
+		if (profile.isSimulant())
+		{
+			FakePartyManager.getInstance().onFakeDecay(fake);
+			releaseName(fake.getName());
+			return;
+		}
+
 		// A PvP spot fighter: it comes back to its spot from town, or its name is free.
 		if (PvpSpotManager.getInstance().onFighterDecay(fake))
 		{
@@ -2768,7 +2896,7 @@ public class FakePlayerPvpManager
 	
 	private void startFight(Attackable fake, Creature player, String[] taunts)
 	{
-		if (player.isDead() || player.isInvisible() || (player.isPlayer() && player.isGM() && !player.asPlayer().getAccessLevel().canTakeAggro()))
+		if (player.isDead() || player.isInvisible() || (player.isPlayer() && player.isGM() && !player.asPlayer().getAccessLevel().canTakeAggro() && !FakeSimulationManager.getInstance().isGuest(player.asPlayer())))
 		{
 			return;
 		}
@@ -3418,9 +3546,9 @@ public class FakePlayerPvpManager
 				// A class transfer challenge opponent stays until its challenge removes it, and so does a fake player in a party with players.
 				// In a party of fake players, the leader logs off for all of them (the others then go their own way).
 				final FakePlayerParty party = profile.getParty();
-				final boolean staysWithParty = (party != null) && (!party.isFakeOnly() || (party.getLeader() != fake));
+				final boolean staysWithParty = (party != null) && (!party.isFakeOnly() || party.isKeptTogether() || (party.getLeader() != fake));
 				// A PvP spot fighter leaves when its spot says so (see PvpSpotManager), and a village defender when its siege does (see VillageSiegeManager).
-				if (!profile.isTrialDuelist() && !staysWithParty && !profile.isSpotFighter() && !profile.isSiegeDefender())
+				if (!profile.isTrialDuelist() && !staysWithParty && !profile.isSpotFighter() && !profile.isSiegeDefender() && !profile.isSimulant())
 				{
 					checkHotzoneLeave(fake, profile, now);
 					

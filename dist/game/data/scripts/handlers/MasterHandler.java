@@ -164,6 +164,7 @@ import handlers.chat.commands.admin.AdminEnchant;
 import handlers.chat.commands.admin.AdminEvents;
 import handlers.chat.commands.admin.AdminExpSp;
 import handlers.chat.commands.admin.AdminFakePlayers;
+import handlers.chat.commands.admin.AdminSimulation;
 import handlers.chat.commands.admin.AdminFence;
 import handlers.chat.commands.admin.AdminFightCalculator;
 import handlers.chat.commands.admin.AdminFortSiege;
@@ -420,6 +421,7 @@ public class MasterHandler
 			AdminEvents.class,
 			AdminExpSp.class,
 			AdminFakePlayers.class,
+			AdminSimulation.class,
 			AdminNight.class,
 			AdminFence.class,
 			AdminFightCalculator.class,
