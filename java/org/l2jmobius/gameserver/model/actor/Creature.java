@@ -160,6 +160,7 @@ import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
 import org.l2jmobius.gameserver.network.serverpackets.Attack;
 import org.l2jmobius.gameserver.network.serverpackets.ChangeMoveType;
 import org.l2jmobius.gameserver.network.serverpackets.ChangeWaitType;
+import org.l2jmobius.gameserver.network.serverpackets.CombatInfo;
 import org.l2jmobius.gameserver.network.serverpackets.ExRotation;
 import org.l2jmobius.gameserver.network.serverpackets.FakePlayerInfo;
 import org.l2jmobius.gameserver.network.serverpackets.FlyToLocation;
@@ -5511,7 +5512,11 @@ public abstract class Creature extends WorldObject
 		
 		// Send message about damage/crit or miss
 		int damage = damageValue;
-		sendDamageMessage(target, damage, false, crit, miss);
+		final int hitFlags = miss ? 0 : ((crit ? CombatInfo.FLAG_CRIT : 0) | (soulshot ? CombatInfo.FLAG_SHOTS : 0) | (shld > 0 ? CombatInfo.FLAG_SHIELD : 0));
+		try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_NORMAL_ATTACK, null, hitFlags))
+		{
+			sendDamageMessage(target, damage, false, crit, miss);
+		}
 		
 		// Check Raidboss attack Creature will be petrified if attacking a raid that's more than 8 levels lower
 		if (target.isRaid() && target.giveRaidCurse() && !NpcConfig.RAID_DISABLE_CURSE && (getLevel() > (target.getLevel() + 8)))
@@ -5563,11 +5568,19 @@ public abstract class Creature extends WorldObject
 			}
 			
 			// reduce targets HP
-			target.reduceCurrentHp(damage, this, null);
+			try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_NORMAL_ATTACK, null, hitFlags))
+			{
+				target.reduceCurrentHp(damage, this, null);
+			}
+			
 			target.notifyDamageReceived(damage, this, null, crit, false);
 			if (reflectedDamage > 0)
 			{
-				reduceCurrentHp(reflectedDamage, target, true, false, null);
+				try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_REFLECT, null, 0))
+				{
+					reduceCurrentHp(reflectedDamage, target, true, false, null);
+				}
+				
 				notifyDamageReceived(reflectedDamage, target, null, crit, false);
 			}
 			
@@ -7137,7 +7150,21 @@ public abstract class Creature extends WorldObject
 	 * @param pcrit
 	 * @param miss
 	 */
-	public void sendDamageMessage(Creature target, int damage, boolean mcrit, boolean pcrit, boolean miss)
+	public final void sendDamageMessage(Creature target, int damage, boolean mcrit, boolean pcrit, boolean miss)
+	{
+		sendDamageMessage(target, null, damage, mcrit, pcrit, miss);
+	}
+	
+	/**
+	 * Send system message about damage.
+	 * @param target
+	 * @param skill the skill that deals it, {@code null} for a normal attack or when unknown (only used by the combat block of the message)
+	 * @param damage
+	 * @param mcrit
+	 * @param pcrit
+	 * @param miss
+	 */
+	public void sendDamageMessage(Creature target, Skill skill, int damage, boolean mcrit, boolean pcrit, boolean miss)
 	{
 		CombatLogManager.onDamageMessage(this, target, mcrit || pcrit, miss);
 		
@@ -7146,6 +7173,7 @@ public abstract class Creature extends WorldObject
 			final SystemMessage sm = new SystemMessage(SystemMessageId.C1_HAS_EVADED_C2_S_ATTACK);
 			sm.addPcName(target.asPlayer());
 			sm.addString(getName());
+			sm.setCombatInfo(CombatInfo.ofHit(this, target, skill, damage, mcrit, pcrit, true, false));
 			target.sendPacket(sm);
 		}
 	}

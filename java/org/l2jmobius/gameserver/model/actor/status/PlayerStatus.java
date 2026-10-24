@@ -42,6 +42,7 @@ import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.network.SystemMessageId;
 import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
+import org.l2jmobius.gameserver.network.serverpackets.CombatInfo;
 import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
 import org.l2jmobius.gameserver.util.LocationUtil;
 
@@ -84,7 +85,7 @@ public class PlayerStatus extends PlayableStatus
 	 * @param isDOT damage over time
 	 * @param isHPConsumption the HP cost of a skill
 	 * @param ignoreCP the damage goes directly to HP
-	 * @param skill the skill that deals it, {@code null} for an auto attack or when unknown (only used by the combat log)
+	 * @param skill the skill that deals it, {@code null} for an auto attack or when unknown (only used by the combat log and the combat block of the damage messages)
 	 */
 	public void reduceHp(double value, Creature attacker, boolean awake, boolean isDOT, boolean isHPConsumption, boolean ignoreCP, Skill skill)
 	{
@@ -284,6 +285,8 @@ public class PlayerStatus extends PlayableStatus
 				
 				smsg.addString(targetName);
 				smsg.addInt(fullValue);
+				final CombatInfo info = CombatInfo.of(attacker, player, skill, 0);
+				smsg.setCombatInfo(info);
 				player.sendPacket(smsg);
 				
 				if ((tDmg > 0) && (attackerPlayer != null))
@@ -291,6 +294,7 @@ public class PlayerStatus extends PlayableStatus
 					smsg = new SystemMessage(SystemMessageId.YOU_HAVE_DEALT_S1_DAMAGE_TO_YOUR_TARGET_AND_S2_DAMAGE_TO_THE_SERVITOR);
 					smsg.addInt(fullValue);
 					smsg.addInt(tDmg);
+					smsg.setCombatInfo(info);
 					attackerPlayer.sendPacket(smsg);
 				}
 			}

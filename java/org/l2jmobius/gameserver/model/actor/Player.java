@@ -321,6 +321,7 @@ import org.l2jmobius.gameserver.network.serverpackets.AbstractHtmlPacket;
 import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
 import org.l2jmobius.gameserver.network.serverpackets.ChangeWaitType;
 import org.l2jmobius.gameserver.network.serverpackets.CharInfo;
+import org.l2jmobius.gameserver.network.serverpackets.CombatInfo;
 import org.l2jmobius.gameserver.network.serverpackets.ConfirmDlg;
 import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
 import org.l2jmobius.gameserver.network.serverpackets.EtcStatusUpdate;
@@ -13243,23 +13244,26 @@ public class Player extends Playable
 	}
 	
 	@Override
-	public void sendDamageMessage(Creature target, int damage, boolean mcrit, boolean pcrit, boolean miss)
+	public void sendDamageMessage(Creature target, Skill skill, int damage, boolean mcrit, boolean pcrit, boolean miss)
 	{
 		CombatLogManager.onDamageMessage(this, target, mcrit || pcrit, miss);
 		
 		// Check if hit is missed
 		if (miss)
 		{
+			final CombatInfo info = CombatInfo.ofHit(this, target, skill, damage, mcrit, pcrit, true, false);
 			if (target.isPlayer())
 			{
 				final SystemMessage sm = new SystemMessage(SystemMessageId.C1_HAS_EVADED_C2_S_ATTACK);
 				sm.addPcName(target.asPlayer());
 				sm.addString(getName());
+				sm.setCombatInfo(info);
 				target.sendPacket(sm);
 			}
 			
 			final SystemMessage sm = new SystemMessage(SystemMessageId.C1_S_ATTACK_WENT_ASTRAY);
 			sm.addPcName(this);
+			sm.setCombatInfo(info);
 			sendPacket(sm);
 			return;
 		}
@@ -13284,12 +13288,15 @@ public class Player extends Playable
 		
 		if (target.isInvul() && !target.isNpc())
 		{
-			sendPacket(SystemMessageId.THE_ATTACK_HAS_BEEN_BLOCKED);
+			final SystemMessage sm = new SystemMessage(SystemMessageId.THE_ATTACK_HAS_BEEN_BLOCKED);
+			sm.setCombatInfo(CombatInfo.ofHit(this, target, skill, damage, mcrit, pcrit, false, true));
+			sendPacket(sm);
 		}
 		else if (target.isDoor() || (target instanceof ControlTower))
 		{
 			final SystemMessage sm = new SystemMessage(SystemMessageId.YOU_HIT_FOR_S1_DAMAGE);
 			sm.addInt(damage);
+			sm.setCombatInfo(CombatInfo.ofHit(this, target, skill, damage, mcrit, pcrit, false, false));
 			sendPacket(sm);
 		}
 		else if (this != target)
@@ -13310,6 +13317,7 @@ public class Player extends Playable
 			
 			sm.addString(targetName);
 			sm.addInt(damage);
+			sm.setCombatInfo(CombatInfo.ofHit(this, target, skill, damage, mcrit, pcrit, false, false));
 			sendPacket(sm);
 		}
 	}

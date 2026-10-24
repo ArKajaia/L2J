@@ -19,6 +19,7 @@ package org.l2jmobius.gameserver.network.serverpackets;
 import java.util.Arrays;
 
 import org.l2jmobius.commons.network.WritableBuffer;
+import org.l2jmobius.gameserver.config.custom.CombatLogConfig;
 import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.model.actor.Npc;
@@ -106,6 +107,7 @@ public class SystemMessage extends ServerPacket
 	private SMParam[] _params;
 	private final SystemMessageId _smId;
 	private int _paramIndex;
+	private CombatInfo _combatInfo;
 	
 	public SystemMessage(int id)
 	{
@@ -340,6 +342,25 @@ public class SystemMessage extends ServerPacket
 		return _params;
 	}
 	
+	/**
+	 * Attaches the combat block the custom client's combat log reads after the params (client/CombatLog/PROTOCOL.txt).
+	 * @param info the block, {@code null} for none
+	 * @return this
+	 */
+	public SystemMessage setCombatInfo(CombatInfo info)
+	{
+		_combatInfo = info;
+		return this;
+	}
+	
+	private void writeCombatInfo(WritableBuffer buffer)
+	{
+		if ((_combatInfo != null) && CombatLogConfig.PACKET_EXTENSION)
+		{
+			_combatInfo.write(buffer);
+		}
+	}
+	
 	@Override
 	public void writeImpl(GameClient client, WritableBuffer buffer)
 	{
@@ -367,6 +388,7 @@ public class SystemMessage extends ServerPacket
 						buffer.writeInt(1);
 						buffer.writeInt(TYPE_TEXT);
 						buffer.writeString(sml.getLocalisation(params));
+						writeCombatInfo(buffer);
 						return;
 					}
 				}
@@ -426,5 +448,7 @@ public class SystemMessage extends ServerPacket
 				}
 			}
 		}
+		
+		writeCombatInfo(buffer);
 	}
 }

@@ -104,7 +104,7 @@ public class PhysicalSoulDamage extends AbstractEffect
 		
 		if (damage > 0)
 		{
-			effector.sendDamageMessage(effected, damage, false, crit, false);
+			effector.sendDamageMessage(effected, skill, damage, false, crit, false);
 			effected.reduceCurrentHp(damage, effector, skill);
 			effected.notifyDamageReceived(damage, effector, skill, crit, false);
 			
