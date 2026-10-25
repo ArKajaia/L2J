@@ -46,8 +46,10 @@ import org.l2jmobius.gameserver.GameServer;
 import org.l2jmobius.gameserver.ai.FakeBrain;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.custom.FakeSimulationConfig;
+import org.l2jmobius.gameserver.data.custom.PassiveTreeData;
 import org.l2jmobius.gameserver.data.enums.CategoryType;
 import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
+import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
@@ -62,15 +64,19 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.effects.EffectFlag;
 import org.l2jmobius.gameserver.model.instancezone.Instance;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
+import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.Weapon;
+import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.network.serverpackets.ExServerPrimitive;
@@ -106,8 +112,6 @@ public class FakeSimulationManager
 
 	/** Seconds the bodies of a matrix battle stay after it ends. */
 	private static final int MATRIX_CLEANUP_DELAY = 2;
-	/** The newest finished matrix battles keep their log folder. */
-	private static final int MATRIX_KEEP_LOGS = 300;
 
 	private static final AtomicInteger RUN_IDS = new AtomicInteger();
 
@@ -702,6 +706,31 @@ public class FakeSimulationManager
 					}
 				}
 				line.put("skills", skills);
+				final FakePlayerPvpPassives passives = profile.getPassives();
+				if (passives != null)
+				{
+					// The tree it rolled: its keystones and the totals of every stat, to tell what its tree gives it.
+					final List<String> keystones = new ArrayList<>();
+					for (int nodeId : passives.getNodeIds())
+					{
+						final PassiveNode node = PassiveTreeData.getInstance().getNode(nodeId);
+						if ((node != null) && (node.getType() == PassiveNode.NodeType.KEYSTONE))
+						{
+							keystones.add(node.getName());
+						}
+					}
+					final Map<String, Object> totals = new TreeMap<>();
+					for (String key : passives.getBonus().keys())
+					{
+						totals.put(key, Math.round(passives.getBonus().get(key) * 100) / 100.0);
+					}
+					line.put("passives", new JsonLine().put("tree", passives.toString()).put("keystones", keystones).put("totals", totals));
+				}
+				final FakePlayerHolder info = npc.getTemplate().getFakePlayerInfo();
+				if (info != null)
+				{
+					line.put("gear", new JsonLine().put("weapon", itemName(info.getEquipRHand())).put("shield", itemName(info.getEquipLHand())).put("chest", itemName(info.getEquipChest())).put("weaponEnchant", info.getWeaponEnchantLevel()).put("armorEnchant", info.getArmorEnchantLevel()));
+				}
 			}
 		}
 		else if (creature.isPlayer())
@@ -709,6 +738,12 @@ public class FakeSimulationManager
 			line.put("classId", creature.asPlayer().getPlayerClass().getId());
 		}
 		return line;
+	}
+
+	private static String itemName(int itemId)
+	{
+		final ItemTemplate item = itemId > 0 ? ItemData.getInstance().getTemplate(itemId) : null;
+		return item != null ? item.getName() : null;
 	}
 
 	/**
@@ -1631,7 +1666,7 @@ public class FakeSimulationManager
 			if (!startBattle(matrix, battle))
 			{
 				LOGGER.warning(getClass().getSimpleName() + ": Could not start matrix battle " + battle.number() + " (" + battle.a() + " vs " + battle.b() + "): skipped.");
-				if (matrix.onFreed(null, MATRIX_KEEP_LOGS))
+				if (matrix.onFreed(null, FakeSimulationConfig.MATRIX_KEEP_LOGS))
 				{
 					finishMatrix(matrix);
 					return;
@@ -1801,7 +1836,7 @@ public class FakeSimulationManager
 		{
 			return;
 		}
-		if (matrix.onFreed(run.getLog().getDir(), MATRIX_KEEP_LOGS))
+		if (matrix.onFreed(run.getLog().getDir(), FakeSimulationConfig.MATRIX_KEEP_LOGS))
 		{
 			finishMatrix(matrix);
 			return;
