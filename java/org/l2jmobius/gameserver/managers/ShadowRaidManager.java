@@ -209,6 +209,7 @@ public class ShadowRaidManager
 				info.setClan(clan.getId(), "Shadow Raider");
 			}
 			raider.getVariables().set(RAIDER_VAR, true);
+			raider.getTemplate().getFakePlayerPvpProfile().setHotzoneId(0); // The raid decides when it leaves, not a hotzone rotation.
 			raider.broadcastInfo();
 			raid._raiders.add(raider);
 		}
@@ -216,6 +217,12 @@ public class ShadowRaidManager
 		if (raid._raiders.isEmpty())
 		{
 			return "no raider could be spawned";
+		}
+
+		// The warband fights as a party: its tank guards the others, its healers heal them, they call their targets.
+		if (raid._raiders.size() > 1)
+		{
+			FakePartyManager.getInstance().createWarbandParty(raid._raiders);
 		}
 
 		_raids.put(raid._id, raid);

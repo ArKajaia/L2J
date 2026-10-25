@@ -121,6 +121,31 @@ final class FakePlayerPvpOraclesWarchiefs
 	}
 	
 	/**
+	 * @param skill a skill an Oracle or Warchief casts on itself
+	 * @return {@code true} for a totem or prophecy it plays as a fight goes (see {@link #isWorthSelfCast}), not a buff to have on before it
+	 */
+	static boolean isPlayedInFight(Skill skill)
+	{
+		switch (skill.getId())
+		{
+			case Prophecies.SALVATION_SKILL_ID:
+			case Prophecies.FULFILMENT_SKILL_ID:
+			case Prophecies.UNWRITTEN_SKILL_ID:
+			case Totems.SHATTER_SKILL_ID:
+			case Totems.SPIRIT_WALK_SKILL_ID:
+			case Totems.SPIRIT_TRANCE_SKILL_ID:
+			case Totems.GREAT_TOTEM_SKILL_ID:
+			{
+				return true;
+			}
+			default:
+			{
+				return Totems.getPlantedKind(skill.getId()) != null;
+			}
+		}
+	}
+
+	/**
 	 * @param npc the fake player
 	 * @param target the creature it fights, {@code null} for none
 	 * @param skill a skill it would cast on itself (a self buff, a heal, a totem...)

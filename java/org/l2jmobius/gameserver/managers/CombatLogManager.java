@@ -22,6 +22,7 @@ import java.util.Locale;
 
 import org.l2jmobius.gameserver.config.custom.CombatLogConfig;
 import org.l2jmobius.gameserver.data.xml.ClassListData;
+import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -208,6 +209,11 @@ public class CombatLogManager
 	 */
 	public static void onDamageDealt(Creature target, Creature attacker, Skill skill, double damage, boolean crit, boolean dot)
 	{
+		if (FakeSimulationManager.ACTIVE)
+		{
+			FakeSimulationManager.getInstance().onDamage(target, attacker, skill, damage, crit, dot);
+		}
+		
 		if (!CombatLogConfig.ENABLED || (attacker == null) || (damage <= 0) || !(target.isPlayable() || target.isFakePlayer() || (target instanceof FakePlayerPvpServitor) || (target instanceof Trap)))
 		{
 			return;
@@ -234,6 +240,11 @@ public class CombatLogManager
 	 */
 	public static void onResisted(Creature attacker, Creature target, Skill skill)
 	{
+		if (FakeSimulationManager.ACTIVE)
+		{
+			FakeSimulationManager.getInstance().onResist(attacker, target, skill);
+		}
+		
 		if ((target == null) || (attacker == null) || (attacker == target))
 		{
 			return;
@@ -265,6 +276,11 @@ public class CombatLogManager
 	 */
 	public static void onDebuffLanded(BuffInfo info)
 	{
+		if (FakeSimulationManager.ACTIVE)
+		{
+			FakeSimulationManager.getInstance().onDebuff(info);
+		}
+		
 		final Creature target = info.getEffected();
 		final Creature attacker = info.getEffector();
 		if ((target == null) || (attacker == null) || (attacker == target))
@@ -338,6 +354,11 @@ public class CombatLogManager
 	 */
 	public static void onHealed(Creature healer, Creature target, Skill skill, double hp, double cp)
 	{
+		if (FakeSimulationManager.ACTIVE)
+		{
+			FakeSimulationManager.getInstance().onHeal(healer, target, skill, hp, cp);
+		}
+		
 		// Healing the defenders of a village under siege is contribution (fake players included).
 		if (hp >= 1)
 		{

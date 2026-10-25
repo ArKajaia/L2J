@@ -61,6 +61,7 @@ import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
 import custom.Bestiary.BestiaryPackets;
 import custom.Bestiary.BestiaryWeb;
 import custom.PassiveSkillTree.PassiveTreeApiServer;
+import custom.Simulation.SimulationWeb;
 import handlers.actions.click.ArtefactClick;
 import handlers.actions.click.DecoyClick;
 import handlers.actions.click.DoorClick;
@@ -164,6 +165,7 @@ import handlers.chat.commands.admin.AdminEnchant;
 import handlers.chat.commands.admin.AdminEvents;
 import handlers.chat.commands.admin.AdminExpSp;
 import handlers.chat.commands.admin.AdminFakePlayers;
+import handlers.chat.commands.admin.AdminSimulation;
 import handlers.chat.commands.admin.AdminFence;
 import handlers.chat.commands.admin.AdminFightCalculator;
 import handlers.chat.commands.admin.AdminFortSiege;
@@ -420,6 +422,7 @@ public class MasterHandler
 			AdminEvents.class,
 			AdminExpSp.class,
 			AdminFakePlayers.class,
+			AdminSimulation.class,
 			AdminNight.class,
 			AdminFence.class,
 			AdminFightCalculator.class,
@@ -703,6 +706,7 @@ public class MasterHandler
 		LOGGER.log(Level.INFO, "Loading Handlers...");
 		PassiveTreeApiServer.getInstance().start();
 		BestiaryWeb.getInstance().register();
+		SimulationWeb.getInstance().register();
 		BestiaryPackets.register();
 		
 		final Map<IHandler<?, ?>, Method> registerHandlerMethods = new HashMap<>();

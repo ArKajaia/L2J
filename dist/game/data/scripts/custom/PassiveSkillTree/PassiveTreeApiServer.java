@@ -942,6 +942,20 @@ public class PassiveTreeApiServer
 		return gm;
 	}
 	
+	/**
+	 * Like {@link #authenticateAdmin(HttpExchange, String)}, but answers nothing: for pages that also let in requests without a token.
+	 * @param exchange the request
+	 * @param adminCommand the command the GM's access level must allow
+	 * @return the GM the admin token names if it is valid, that GM is online and allowed to use the command, otherwise {@code null}
+	 */
+	public Player findAdmin(HttpExchange exchange, String adminCommand)
+	{
+		final String header = exchange.getRequestHeaders().getFirst("Authorization");
+		final int charId = (header != null) && header.regionMatches(true, 0, "Bearer ", 0, 7) ? verifyAdminToken(header.substring(7).trim()) : -1;
+		final Player gm = charId >= 0 ? World.getInstance().getPlayer(charId) : null;
+		return (gm != null) && AdminData.getInstance().hasAccess(adminCommand, gm.getAccessLevel()) ? gm : null;
+	}
+	
 	private void handleAdminTree(HttpExchange exchange) throws IOException
 	{
 		final Player gm = authenticateAdmin(exchange);

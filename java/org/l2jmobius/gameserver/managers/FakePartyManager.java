@@ -32,7 +32,9 @@ import java.util.logging.Logger;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.ai.FakeBrain;
 import org.l2jmobius.gameserver.ai.FakePlayerPvpAI;
+import org.l2jmobius.gameserver.ai.FakePlayerPvpBrain;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.FakePartyConfig;
@@ -48,6 +50,7 @@ import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPartyExperimental;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.instance.FakePlayerPvpServitor;
@@ -183,6 +186,8 @@ public class FakePartyManager
 	private final Map<Integer, FakePlayerParty> _parties = new ConcurrentHashMap<>();
 	/** Parties of fake players only. */
 	private final Set<FakePlayerParty> _fakeParties = ConcurrentHashMap.newKeySet();
+	/** Simulation teams an admin joined, by the object id of that admin (see {@link FakePlayerParty#getGuest()}). */
+	private final Map<Integer, FakePlayerParty> _guestParties = new ConcurrentHashMap<>();
 	/** The answer of a fake player to a player's invites: (fake object id &lt;&lt; 32 | player object id) -> until when, positive for yes, negative for no. */
 	private final Map<Long, Long> _decisions = new ConcurrentHashMap<>();
 	/** HP/MP of the party fake players last sent to the party window (object id -> HP &lt;&lt; 32 | MP). */
@@ -493,7 +498,7 @@ public class FakePartyManager
 		party.addFake(fake);
 		
 		FakePlayerPvpManager.getInstance().onJoinParty(fake);
-		if (fake.hasAI() && (fake.getAI() instanceof FakePlayerPvpAI ai))
+		if (fake.hasAI() && (fake.getAI() instanceof FakePlayerPvpBrain ai))
 		{
 			ai.onJoinParty();
 		}
@@ -533,7 +538,7 @@ public class FakePartyManager
 		if (fake.isSpawned() && !fake.isDead())
 		{
 			FakePlayerPvpManager.getInstance().onLeaveParty(fake);
-			if (fake.hasAI() && (fake.getAI() instanceof FakePlayerPvpAI ai))
+			if (fake.hasAI() && (fake.getAI() instanceof FakePlayerPvpBrain ai))
 			{
 				ai.onLeaveParty();
 			}
@@ -552,10 +557,15 @@ public class FakePartyManager
 		
 		if (party.isFakeOnly())
 		{
+			final Player guest = party.getGuest();
+			if (guest != null)
+			{
+				guest.sendPacket(new FakePartySmallWindowDelete(fake.getObjectId(), fake.getName()));
+			}
 			checkFakeOnly(party);
 			return;
 		}
-		
+
 		final FakePartySmallWindowDelete delete = new FakePartySmallWindowDelete(fake.getObjectId(), fake.getName());
 		SystemMessage sm = null;
 		if (message != null)
@@ -775,6 +785,12 @@ public class FakePartyManager
 		
 		if (creature.isNpc())
 		{
+			// A fake player's servitor (a necromancer's undead, a maestro's golem) is on its owner's side, like a player's summon.
+			if (creature instanceof FakePlayerPvpServitor servitor)
+			{
+				return servitor.getOwner() != null ? getParty(servitor.getOwner()) : null;
+			}
+
 			if (!creature.isFakePlayer())
 			{
 				return null;
@@ -784,17 +800,28 @@ public class FakePartyManager
 			return profile != null ? profile.getParty() : null;
 		}
 		
+		// An admin that joined a simulation team.
+		if (!_guestParties.isEmpty())
+		{
+			final Player guest = creature.asPlayer();
+			final FakePlayerParty guestParty = guest != null ? _guestParties.get(guest.getObjectId()) : null;
+			if (guestParty != null)
+			{
+				return guestParty;
+			}
+		}
+
 		if (_parties.isEmpty())
 		{
 			return null;
 		}
-		
+
 		final Player player = creature.asPlayer();
 		if (player == null)
 		{
 			return null;
 		}
-		
+
 		final FakePlayerParty party = _parties.get(player.getObjectId());
 		if (party != null)
 		{
@@ -1282,6 +1309,16 @@ public class FakePartyManager
 	 */
 	private void checkFakeOnly(FakePlayerParty party)
 	{
+		// A simulation team or a raid warband stays together until all its members are gone (its dead may be resurrected).
+		if (party.isKeptTogether())
+		{
+			if (party.getFakes().isEmpty())
+			{
+				_fakeParties.remove(party);
+			}
+			return;
+		}
+
 		int alive = 0;
 		for (Npc fake : party.getFakes())
 		{
@@ -1304,6 +1341,118 @@ public class FakePartyManager
 		}
 	}
 	
+	// ---------------------------------------------------------------------------------------------
+	// Simulation teams (see FakeSimulationManager)
+	// ---------------------------------------------------------------------------------------------
+
+	/**
+	 * Makes a team of a party-vs-party simulation: a party of fake players only, led by the first one, that stays together until {@link #disbandSimulationParty}.
+	 * @param fakes its fake players, the leader first
+	 * @param brain the AI the team runs: {@link FakeBrain#B} gets the experimental party
+	 * @return the party
+	 */
+	public FakePlayerParty createSimulationParty(List<Npc> fakes, FakeBrain brain)
+	{
+		final FakePlayerParty party = brain == FakeBrain.B ? new FakePlayerPartyExperimental() : new FakePlayerParty(null);
+		party.setSimulation(true);
+		for (Npc fake : fakes)
+		{
+			addToSimulationParty(party, fake);
+		}
+		_fakeParties.add(party);
+		return party;
+	}
+
+	/**
+	 * Makes a Shadow Raid warband a party (see {@link ShadowRaidManager}): its fake players fight together like a party (a tank guards, healers heal, they call their targets), led by the first one. It stays a party until its raiders are all gone.
+	 * @param raiders the raiders, the leader first
+	 * @return the party
+	 */
+	public FakePlayerParty createWarbandParty(List<Npc> raiders)
+	{
+		final FakePlayerParty party = new FakePlayerParty(null);
+		party.setKeptTogether(true);
+		for (Npc raider : raiders)
+		{
+			party.addFake(raider);
+			raider.getTemplate().getFakePlayerPvpProfile().setParty(party);
+		}
+		_fakeParties.add(party);
+		return party;
+	}
+
+	/**
+	 * @param party a simulation team
+	 * @param fake a fake player that joins it (one coming back for an admin that left)
+	 */
+	public void addToSimulationParty(FakePlayerParty party, Npc fake)
+	{
+		party.addFake(fake);
+		fake.getTemplate().getFakePlayerPvpProfile().setParty(party);
+		final Player guest = party.getGuest();
+		if (guest != null)
+		{
+			sendGuestWindow(guest, party);
+		}
+	}
+
+	/**
+	 * Breaks up a simulation team when its run ends: its guest leaves and its fake players are on their own (they are removed right after).
+	 * @param party the team
+	 */
+	public void disbandSimulationParty(FakePlayerParty party)
+	{
+		final Player guest = party.getGuest();
+		if (guest != null)
+		{
+			removeGuest(guest);
+		}
+
+		_fakeParties.remove(party);
+		for (Npc fake : party.getFakes())
+		{
+			party.removeFake(fake);
+			fake.getTemplate().getFakePlayerPvpProfile().setParty(null);
+			_lastStatus.remove(fake.getObjectId());
+		}
+	}
+
+	/**
+	 * An admin joins a simulation team as a player member: the others heal, buff and help it, and it sees them in its party window.
+	 * @param party the team
+	 * @param guest the admin
+	 * @param leads {@code true} if the others follow it instead of their fake leader
+	 */
+	public void setGuest(FakePlayerParty party, Player guest, boolean leads)
+	{
+		party.setGuest(guest, leads);
+		_guestParties.put(guest.getObjectId(), party);
+		sendGuestWindow(guest, party);
+	}
+
+	/**
+	 * @param guest an admin that leaves the simulation team it joined
+	 */
+	public void removeGuest(Player guest)
+	{
+		final FakePlayerParty party = _guestParties.remove(guest.getObjectId());
+		if ((party != null) && (party.getGuest() == guest))
+		{
+			party.setGuest(null, false);
+		}
+		guest.sendPacket(PartySmallWindowDeleteAll.STATIC_PACKET);
+	}
+
+	private void sendGuestWindow(Player guest, FakePlayerParty party)
+	{
+		guest.sendPacket(PartySmallWindowDeleteAll.STATIC_PACKET);
+		guest.sendPacket(new FakePartySmallWindowAll(guest, party));
+		for (Npc fake : party.getFakes())
+		{
+			_lastStatus.remove(fake.getObjectId());
+		}
+	}
+
 	/**
 	 * @param fake a fake player of a party of fake players only
 	 * @return {@code true} if it leads its party: the others follow it, and it logs off for all of them
@@ -1449,6 +1598,21 @@ public class FakePartyManager
 			for (FakePlayerParty party : _fakeParties)
 			{
 				checkFakeOnly(party);
+
+				// The admin that joined a simulation team sees its members' HP and MP in its party window.
+				final Player guest = party.getGuest();
+				if ((guest != null) && guest.isOnline())
+				{
+					for (Npc fake : party.getFakes())
+					{
+						final long status = ((long) (fake.isDead() ? 0 : (int) fake.getCurrentHp()) << 32) | ((int) fake.getCurrentMp() & 0xFFFFFFFFL);
+						final Long last = _lastStatus.put(fake.getObjectId(), status);
+						if ((last == null) || (last != status))
+						{
+							guest.sendPacket(new FakePartySmallWindowUpdate(fake));
+						}
+					}
+				}
 			}
 			
 			_decisions.entrySet().removeIf(entry -> Math.abs(entry.getValue()) < now);

@@ -38,6 +38,7 @@ import java.util.logging.Logger;
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.managers.CombatLogManager;
+import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.effects.AbstractEffect;
@@ -1583,6 +1584,11 @@ public class EffectList
 		if (skill.isDebuff() && (_owner.isPlayer() || _owner.isRaid()))
 		{
 			CombatLogManager.onDebuffLanded(info);
+		}
+		// Party-vs-party simulation log (fake players included).
+		else if (skill.isDebuff() && FakeSimulationManager.ACTIVE)
+		{
+			FakeSimulationManager.getInstance().onDebuff(info);
 		}
 	}
 	

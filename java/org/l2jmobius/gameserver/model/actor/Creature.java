@@ -71,6 +71,7 @@ import org.l2jmobius.gameserver.managers.InstanceManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
 import org.l2jmobius.gameserver.managers.TerritoryWarManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
+import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -2102,6 +2103,12 @@ public abstract class Creature extends WorldObject
 		{
 			_castInterruptTime = -2 + GameTimeTaskManager.getInstance().getGameTicks() + (skillTime / GameTimeTaskManager.MILLIS_IN_TICK);
 			setLastSkillCast(skill);
+			
+			// Party-vs-party simulation log.
+			if (FakeSimulationManager.ACTIVE)
+			{
+				FakeSimulationManager.getInstance().onCastStart(this, skill, target, skillTime);
+			}
 		}
 		else
 		{
@@ -2748,6 +2755,12 @@ public abstract class Creature extends WorldObject
 			setDead(true);
 		}
 		
+		// Party-vs-party simulation log.
+		if (FakeSimulationManager.ACTIVE)
+		{
+			FakeSimulationManager.getInstance().onDeath(this, killer);
+		}
+		
 		if (EventDispatcher.getInstance().hasListener(EventType.ON_CREATURE_DEATH, this))
 		{
 			EventDispatcher.getInstance().notifyEvent(new OnCreatureDeath(killer, this), this);
@@ -2954,6 +2967,12 @@ public abstract class Creature extends WorldObject
 		{
 			setIsPendingRevive(false);
 			setDead(false);
+			
+			// Party-vs-party simulation log.
+			if (FakeSimulationManager.ACTIVE)
+			{
+				FakeSimulationManager.getInstance().onRevive(this);
+			}
 			
 			if ((PlayerConfig.RESPAWN_RESTORE_CP > 0) && (_status.getCurrentCp() < (_stat.getMaxCp() * PlayerConfig.RESPAWN_RESTORE_CP)))
 			{
@@ -4396,6 +4415,12 @@ public abstract class Creature extends WorldObject
 	{
 		if (_isCastingNow || _isCastingSimultaneouslyNow)
 		{
+			// Party-vs-party simulation log.
+			if (FakeSimulationManager.ACTIVE && _isCastingNow)
+			{
+				FakeSimulationManager.getInstance().onCastAbort(this);
+			}
+			
 			Future<?> future = _skillCast;
 			
 			// cancels the skill hit scheduled task
@@ -5004,6 +5029,12 @@ public abstract class Creature extends WorldObject
 					if (!found && !straightLine && isAttackable())
 					{
 						final FallbackRoute route = findFallbackRoute(curX, curY, curZ, originalX, originalY, originalZ, getInstanceId());
+						
+						// Party-vs-party simulation log.
+						if (FakeSimulationManager.ACTIVE)
+						{
+							FakeSimulationManager.getInstance().onPathFail(this, originalX, originalY, originalZ, route != null);
+						}
 						if (route != null)
 						{
 							originalX = route.x();
@@ -6365,6 +6396,12 @@ public abstract class Creature extends WorldObject
 		// Cleanup
 		_skillCast = null;
 		_castInterruptTime = 0;
+		
+		// Party-vs-party simulation log.
+		if (FakeSimulationManager.ACTIVE)
+		{
+			FakeSimulationManager.getInstance().onCastEnd(this, mut.getSkill());
+		}
 		
 		// On each repeat recharge shots before cast.
 		if (mut.getCount() > 0)
