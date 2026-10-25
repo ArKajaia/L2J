@@ -59,6 +59,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpWeapon;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.effects.EffectFlag;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
@@ -105,6 +106,8 @@ public class FakeSimulationManager
 	private final Map<Integer, Guest> _guests = new ConcurrentHashMap<>();
 	/** Regions this run keeps awake (they were not before). */
 	private final Set<WorldRegion> _keptRegions = ConcurrentHashMap.newKeySet();
+	/** A fake player that decided nothing this long into the fight gets its AI kicked. */
+	private static final long AI_KICK_DELAY = 2000;
 	/** At the time limit, teams whose HP and CP left differ by less than this (a ratio of their maximum) end in a draw. */
 	private static final double TIMEOUT_TIE_MARGIN = 0.01;
 	/** //SimulationDraw: admin object id -> fake player object id. */
@@ -131,6 +134,8 @@ public class FakeSimulationManager
 		final Map<String, int[]> roleStats = new TreeMap<>();
 		/** Brain -> {wins, games}: a team counts once per round. */
 		final Map<String, int[]> brainStats = new TreeMap<>();
+		/** When each round was decided (ms into the fight). */
+		final List<Long> decided = new ArrayList<>();
 		final Map<String, Integer> anomalies = new TreeMap<>();
 
 		Series(SimulationSettings settings, List<SimulationPoint> points, String name, Path dir, String pointsFrom, String rerunOf)
@@ -412,6 +417,12 @@ public class FakeSimulationManager
 			lines.add(fromPoints != null ? "Simulation " + pointsFrom + " has fewer than 2 points." : "At least 2 simulation points are needed (//SetSimulationPoint 1, //SetSimulationPoint 2...).");
 			return lines;
 		}
+		// An A/B test compares one brain per team: with another number of teams the last brain would play twice (A:B on 3 points is A, B, B).
+		if (swap && (brainList.split(":").length != points.size()))
+		{
+			lines.add("An A/B test needs one brain per team: " + points.size() + " points for brains " + brainList + ". Use as many points as brains (points of an earlier simulation, or clear one).");
+			return lines;
+		}
 		if ((size < 1) || (size > SimulationComposer.MAX_SIZE))
 		{
 			lines.add("The party size goes from 1 to " + SimulationComposer.MAX_SIZE + ".");
@@ -586,6 +597,15 @@ public class FakeSimulationManager
 		}
 
 		keepRegionsAwake(run);
+
+		// Their AI starts now: waking a region doesn't start the AI of what is in it, only a player coming near does, so with nobody around the teams stood idle until the fight (issue #24).
+		for (SimulationMember member : run.getMembers().values())
+		{
+			if (!member.isAdmin() && (member.getCreature() instanceof Attackable fake) && !fake.isDead())
+			{
+				fake.getAI().setIntention(Intention.ACTIVE);
+			}
+		}
 		run.setTask(ThreadPool.scheduleAtFixedRate(() -> tick(run), FakeSimulationConfig.POSITION_INTERVAL, FakeSimulationConfig.POSITION_INTERVAL));
 		return run;
 	}
@@ -764,6 +784,11 @@ public class FakeSimulationManager
 				return;
 			}
 
+			if ((time - run.getFightStart()) >= AI_KICK_DELAY)
+			{
+				kickIdleAis(run, time);
+			}
+
 			final List<SimulationTeam> alive = new ArrayList<>();
 			for (SimulationTeam team : run.getTeams())
 			{
@@ -914,16 +939,57 @@ public class FakeSimulationManager
 		run.getLog().write(SimulationLog.EVENTS, new JsonLine().put("t", time).put("type", "standstill_push").put("idle", idle).put("pushed", pushed));
 	}
 
+	/**
+	 * Some rounds had fake players that didn't think at all for 18-31 s (issue #24 of docs/fake-player-simulation-issues.md): one that decided nothing yet gets its AI started again, and the first time an {@code ai_kick} event says so.
+	 * @param run the round
+	 * @param time the time of the round
+	 */
+	private void kickIdleAis(SimulationRun run, long time)
+	{
+		for (SimulationTeam team : run.getTeams())
+		{
+			for (SimulationMember member : team.getMembers())
+			{
+				if (!team.isActive(member) || !member.isAlive() || member.isAdmin() || (member.getLastReason() != null) || !(member.getCreature() instanceof Attackable fake))
+				{
+					continue;
+				}
+
+				fake.getAI().setIntention(Intention.ACTIVE);
+				if (!member.isAiKicked())
+				{
+					member.setAiKicked(true);
+					run.getLog().write(SimulationLog.EVENTS, new JsonLine().put("t", time).put("type", "ai_kick").put("id", member.getObjectId()).put("name", member.getName()).put("team", member.getTeamId()).put("sinceFight", time - run.getFightStart()));
+				}
+			}
+		}
+	}
+
 	private void keepRegionsAwake(SimulationRun run)
 	{
 		for (SimulationMember member : run.getMembers().values())
 		{
 			final WorldRegion region = member.getCreature().getWorldRegion();
-			if ((region != null) && !region.isKeptActive())
+			if (region == null)
 			{
-				region.keepActive();
-				_keptRegions.add(region);
+				continue;
 			}
+
+			// The region and its neighbors: an attackable only thinks while its neighbors are active too (AttackableAI#onActionThink), and with only its own region kept, fake players stood idle 18-31 s (issue #24).
+			keepAwake(region);
+			for (WorldRegion neighbor : region.getSurroundingRegions())
+			{
+				keepAwake(neighbor);
+			}
+		}
+	}
+
+	private void keepAwake(WorldRegion region)
+	{
+		if ((region != null) && !region.isKeptActive())
+		{
+			region.keepActive();
+			_keptRegions.add(region);
 		}
 	}
 
@@ -1001,7 +1067,11 @@ public class FakeSimulationManager
 			{
 				teamBrains.put(String.valueOf(team.getId()), team.getBrain().name());
 			}
-			series.results.add(new JsonLine().put("round", run.getRound()).put("winner", run.getWinner()).put("reason", run.getEndReason()).put("duration", run.getEnd() - run.getFightStart()).put("teamBrains", teamBrains).put("anomalies", run.getMonitor().getCounts()));
+			series.results.add(new JsonLine().put("round", run.getRound()).put("winner", run.getWinner()).put("reason", run.getEndReason()).put("duration", run.getEnd() - run.getFightStart()).put("decidedAt", run.getDecidedAt() > 0 ? run.getDecidedAt() - run.getFightStart() : null).put("teamBrains", teamBrains).put("anomalies", run.getMonitor().getCounts()));
+			if (run.getDecidedAt() > 0)
+			{
+				series.decided.add(run.getDecidedAt() - run.getFightStart());
+			}
 			if (run.getWinner() > 0)
 			{
 				series.teamWins.merge(run.getWinner(), 1, Integer::sum);
@@ -1167,7 +1237,7 @@ public class FakeSimulationManager
 			}
 		}
 
-		final String text = SimulationSummary.writeSeries(series.dir, series.name, series.settings, series.results, series.teamWins, series.brainStats, series.buildStats, series.roleStats, series.anomalies);
+		final String text = SimulationSummary.writeSeries(series.dir, series.name, series.settings, series.results, series.teamWins, series.brainStats, series.buildStats, series.roleStats, series.anomalies, series.decided);
 		SimulationLog.prune(Path.of(FakeSimulationConfig.LOG_DIR), FakeSimulationConfig.KEEP_RUNS);
 
 		final Player starter = World.getInstance().getPlayer(series.settings.starterId());
@@ -2002,13 +2072,32 @@ public class FakeSimulationManager
 	}
 
 	/**
+	 * A fake player took another weapon in hand (see {@code FakePlayerPvpManager#equipWeapon}): a tank's bow, a warrior's polearm, or its main weapon again.
+	 */
+	public void onWeaponSwap(Npc fake, FakePlayerPvpWeapon weapon)
+	{
+		final SimulationRun run = _run;
+		final SimulationMember member = run != null ? run.getMember(fake) : null;
+		if (member == null)
+		{
+			return;
+		}
+
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		final String kind = (profile != null) && (weapon == profile.getBow()) ? "bow" : (profile != null) && (weapon == profile.getPolearm()) ? "polearm" : "main";
+		final JsonLine line = event(run, "weapon_swap");
+		line.put("id", member.getObjectId()).put("name", member.getName()).put("team", member.getTeamId()).put("weapon", kind);
+		run.getLog().write(SimulationLog.EVENTS, line);
+	}
+
+	/**
 	 * A cast was interrupted (see {@code Creature#abortCast}).
 	 */
 	public void onCastAbort(Creature caster)
 	{
 		final SimulationRun run = _run;
 		final SimulationMember member = run != null ? run.getMember(caster) : null;
-		if (member == null)
+		if ((member == null) || caster.isTeleporting()) // Shadow Step and Blink teleport, which aborts a cast that already landed.
 		{
 			return;
 		}
@@ -2063,9 +2152,29 @@ public class FakeSimulationManager
 		line.put("victimRole", member.getRole()).put("victimBuild", member.getBuild());
 		who(line, "killer", killer, slayer);
 		line.put("killerBuild", slayer != null ? slayer.getBuild() : null);
-		final Skill skill = killer != null ? killer.getLastSkillCast() : null;
-		line.put("killerLastSkill", skill != null ? skill.getName() : null);
-		run.addKill(line, String.format("%.1fs ", time / 1000.0) + (killer != null ? killer.getName() : "?") + (slayer != null ? " (team " + slayer.getTeamId() + ", " + slayer.getBuild() + ")" : "") + " killed " + victim.getName() + " (team " + member.getTeamId() + ", " + member.getBuild() + ")" + (skill != null ? " with " + skill.getName() : ""));
+		// What dealt the blow: the offensive skill it is casting, else its weapon, else an effect (a bleed, a poison...). Its last cast alone named heals and buffs.
+		final Skill cast = killer != null ? killer.getLastSkillCast() : null;
+		final String blow = killer == null ? null : killer.isCastingNow() && (cast != null) && cast.hasNegativeEffect() ? cast.getName() : killer.isAttackingNow() ? "attack" : "effect";
+		line.put("killingBlow", blow);
+		run.addKill(line, String.format("%.1fs ", time / 1000.0) + (killer != null ? killer.getName() : "?") + (slayer != null ? " (team " + slayer.getTeamId() + ", " + slayer.getBuild() + ")" : "") + " killed " + victim.getName() + " (team " + member.getTeamId() + ", " + member.getBuild() + ")" + (blow != null ? " with " + blow : ""));
+
+		// The round is decided once a team is down to its last member.
+		final SimulationTeam team = run.getTeamOf(member);
+		if ((team != null) && (run.getDecidedAt() == 0))
+		{
+			int alive = 0;
+			for (SimulationMember other : team.getMembers())
+			{
+				if (team.isActive(other) && other.isAlive())
+				{
+					alive++;
+				}
+			}
+			if (alive <= 1)
+			{
+				run.setDecidedAt(time);
+			}
+		}
 		run.getLog().write(SimulationLog.EVENTS, line);
 		run.getMonitor().onDeath(member);
 	}

@@ -63,6 +63,9 @@ public class SimulationMember
 	private Reason _lastReason;
 	private long _lastWait = Long.MIN_VALUE;
 	private long _lastReasonAt;
+	// When it made its first decision (ms since epoch, 0 for not yet), and whether the simulation had to kick its AI (see FakeSimulationManager#kickIdleAis).
+	private long _firstDecisionAt;
+	private boolean _aiKicked;
 	private final Map<Reason, Long> _reasonTime = new EnumMap<>(Reason.class);
 	private final Map<String, Integer> _anomalies = new TreeMap<>();
 
@@ -282,9 +285,31 @@ public class SimulationMember
 		{
 			_reasonTime.merge(previous, Math.min(5000, now - _lastReasonAt), Long::sum);
 		}
+		else if (_firstDecisionAt == 0)
+		{
+			_firstDecisionAt = now;
+		}
 		_lastReason = reason;
 		_lastReasonAt = now;
 		return previous;
+	}
+
+	/**
+	 * @return when it made its first decision (ms since epoch), 0 if none yet
+	 */
+	public synchronized long getFirstDecisionAt()
+	{
+		return _firstDecisionAt;
+	}
+
+	public boolean isAiKicked()
+	{
+		return _aiKicked;
+	}
+
+	public void setAiKicked(boolean aiKicked)
+	{
+		_aiKicked = aiKicked;
 	}
 
 	public synchronized Reason getLastReason()

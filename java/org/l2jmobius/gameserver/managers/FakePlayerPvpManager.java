@@ -3105,6 +3105,10 @@ public class FakePlayerPvpManager
 		}
 		
 		switchWeapon(fake, profile, weapon);
+		if (FakeSimulationManager.ACTIVE)
+		{
+			FakeSimulationManager.getInstance().onWeaponSwap(fake, weapon);
+		}
 		return true;
 	}
 	
