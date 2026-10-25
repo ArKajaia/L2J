@@ -23,9 +23,10 @@ With `--swap` both teams get the same builds, the brains change sides every roun
 
 ## Class-vs-class matrix
 
-`//SimulationMatrix start` (in game) fights every pair of builds in 1v1 battles at the place where the GM stands, many at once. Every battle gets an instance of its own, so all of them share the same spot without seeing or hitting each other. The two fighters spawn `distance` apart along the way the GM faces. The GM teleport menu has **Simulation Field (Cruma Marshlands)** (20480, 104448, -3700): the flattest open field found in the geodata, ±50 in height over 3 km, with nothing blocking movement and no zone (water, peace, siege, boss...) on it.
+`//Simulate matrix 100` (in game; the number is the battles per pair, `//SimulationMatrix start battles=100` is the same) fights every pair of builds in 1v1 battles at the place where the GM stands, many at once. Every battle gets an instance of its own, so all of them share the same spot without seeing or hitting each other. The two fighters spawn `distance` apart along the way the GM faces. The GM teleport menu has **Simulation Field (Cruma Marshlands)** (20480, 104448, -3700): the flattest open field found in the geodata, ±50 in height over 3 km, with nothing blocking movement and no zone (water, peace, siege, boss...) on it.
 
 ```
+//Simulate matrix [battles per pair, 20] [parallel=100] [level=85] [time=300] [distance=1000] [brain=A] [builds=Adventurer,Titan,...] [seed=<n>]
 //SimulationMatrix start [battles=20] [parallel=100] [level=85] [time=300] [distance=1000] [brain=A] [builds=Adventurer,Titan,...] [seed=<n>]
 //SimulationMatrix status | stop | resume [name] [parallel=<n>] | watch | leave | builds
 ```

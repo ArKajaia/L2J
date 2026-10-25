@@ -92,6 +92,12 @@ public class AdminSimulation implements IAdminCommandHandler
 			}
 			case "admin_simulate":
 			{
+				// //Simulate matrix <battles per pair> [...]: the class matrix, like //SimulationMatrix start.
+				if (commandLine.toLowerCase(Locale.ROOT).matches("\\S+\\s+matrix(\\s.*)?"))
+				{
+					st.nextToken();
+					return matrix(activeChar, new StringTokenizer("start " + (st.hasMoreTokens() ? st.nextToken("") : "")), manager);
+				}
 				return simulate(activeChar, st, manager);
 			}
 			case "admin_simulationstatus":
@@ -237,7 +243,7 @@ public class AdminSimulation implements IAdminCommandHandler
 		return true;
 	}
 
-	private static final String MATRIX_USAGE = "Usage: //SimulationMatrix start [battles=20] [parallel=100] [level=85] [time=<s>] [distance=1000] [brain=A] [builds=Adventurer,Titan...] [seed=<n>] | resume [name] [parallel=<n>] | status | stop | watch | leave | builds";
+	private static final String MATRIX_USAGE = "Usage: //Simulate matrix [battles per pair, 20] [parallel=100] [level=85] [time=<s>] [distance=1000] [brain=A] [builds=Adventurer,Titan...] [seed=<n>], or //SimulationMatrix start [battles=20] [parallel=100] [level=85] [time=<s>] [distance=1000] [brain=A] [builds=Adventurer,Titan...] [seed=<n>] | resume [name] [parallel=<n>] | status | stop | watch | leave | builds";
 
 	private boolean matrix(Player activeChar, StringTokenizer st, FakeSimulationManager manager)
 	{
@@ -291,6 +297,11 @@ public class AdminSimulation implements IAdminCommandHandler
 						else if (lower.startsWith("seed="))
 						{
 							seed = Long.parseLong(token.substring(5));
+						}
+						else if (lower.matches("\\d+"))
+						{
+							// A bare number: battles per pair (//Simulate matrix 100).
+							battles = Math.max(1, Math.min(1000, Integer.parseInt(token)));
 						}
 						else
 						{
@@ -415,7 +426,7 @@ public class AdminSimulation implements IAdminCommandHandler
 		activeChar.sendSysMessage("//SimulationStatus - teams, HP, targets and anomalies. //SimulationStop - end it now.");
 		activeChar.sendSysMessage("//JoinParty <team> [tank|melee|ranged|healer|buffer] [lead] - take the place of a fake player of that team. //LeaveParty - leave it.");
 		activeChar.sendSysMessage("//SimulationTrace - the last AI decisions of your target (and trace it). //SimulationDraw - draw its ranges and targets.");
-		activeChar.sendSysMessage("//SimulationMatrix start [battles=20] [parallel=100] [level=85] [builds=...] - a class-vs-class 1v1 win rate matrix at your place: every battle in its own instance, many at once. status, stop, resume [name], watch, leave, builds.");
+		activeChar.sendSysMessage("//Simulate matrix [battles per pair, 20] [parallel=100] [level=85] [builds=...] (or //SimulationMatrix start) - a class-vs-class 1v1 win rate matrix at your place: every battle in its own instance, many at once. status, stop, resume [name], watch, leave, builds.");
 		activeChar.sendSysMessage("//SimulationWeb - a link to the web page: past runs, one-click rerun, start/stop, points, and each character's decisions and path.");
 		activeChar.sendSysMessage("Logs: " + FakeSimulationConfig.LOG_DIR + "/<time>-<seed>/round-NN/ (run.json, events, decisions, positions, anomalies, summary).");
 	}
