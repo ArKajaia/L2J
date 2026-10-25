@@ -272,7 +272,7 @@ public class AdminSimulation implements IAdminCommandHandler
 						}
 						else if (lower.startsWith("parallel="))
 						{
-							parallel = Math.max(1, Math.min(500, Integer.parseInt(token.substring(9))));
+							parallel = Math.max(1, Math.min(1000, Integer.parseInt(token.substring(9))));
 						}
 						else if (lower.startsWith("level="))
 						{
@@ -329,7 +329,7 @@ public class AdminSimulation implements IAdminCommandHandler
 					{
 						try
 						{
-							parallel = Math.max(1, Math.min(500, Integer.parseInt(token.substring(9))));
+							parallel = Math.max(1, Math.min(1000, Integer.parseInt(token.substring(9))));
 						}
 						catch (NumberFormatException e)
 						{
