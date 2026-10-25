@@ -268,3 +268,34 @@ All five have about 30,000 HP (the Doombringer 18,000), P. Atk above 5,000 and a
 5. **Skill nerfs for the top five,** only after 1 and 2 have been re-run, since the tree changes alone may bring them down.
 
 Re-running: a new matrix with 1000 at once takes about 20 minutes for 20 battles per pair. Keep the battle logs with `SimulationMatrixKeepLogs` in `FakeSimulation.ini`. Each `run.json` now lists the fighter's passive tree (keystones, stat totals) and gear, which is what this analysis was built on.
+
+## Re-run after the passive tree changes (`matrix-20261025-232944`)
+
+Applied (commit "Passive tree balance from the level 85 class matrix"):
+- Unending Fury +25% (was 40%), exclusive with Berserk Pact.
+- The new archer, dagger and mage keystone lists.
+- The Battle Oracle's Unwavering Stance.
+- Tank trees wanting damage stats half as much as fighters do.
+- Bruiser trees for archers.
+- Twice the blow rate in the Adventurer's tree.
+
+The rules were checked as applied in the new battles' `run.json`:
+- No Glass Cannon, Chaos Weave or Arc Conduit.
+- No fighter with both low-HP keystones.
+- Hell Knight tree P. Atk +30% (was +47%).
+
+Same matrix: 14,060 battles, 20 per pair. With 740 battles per build, a change under about 4 points is noise.
+
+| Moved | Build: before → after |
+|---|---|
+| Up | Doom Oracle 48.4 → 54.1, Trickster 56.2 → 61.0, Adventurer 40.9 → 45.7, Flame Warchief 34.9 → 39.7, Battle Oracle 38.2 → 42.7 |
+| Down | War Dancer 58.1 → 49.1, Shillien Templar 73.4 → 66.4, Eva's Templar 58.6 → 51.6, Battle Bard 48.9 → 43.4 |
+| No real change | The top five (Titan 92.8, Hell Knight 92.2, Maestro 87.5, Dreadnought 87.0, Doombringer 85.4); the archers (Sagittarius 43.4, Ghost Sentinel 29.1, Moonlight Sentinel 27.3); Wind Rider 33.4, the Soul Hounds 32-40, Dominator 32.2, Hierophant 17.2 |
+
+What it means:
+- **The tank change hit the wrong tanks.** Shillien Templar, Eva's Templar and Battle Bard (a TANK-role build) lost 5-7 points. The Hell Knight didn't move: its lead is its HP, its stun chain and the time-limit rule, not its tree's P. Atk.
+- **The top five don't depend on the low-HP keystones.** Making the pair exclusive and Unending Fury weaker barely moved them. Their lead is heavy-armour HP plus skill damage and stuns, so it needs the skill changes in the top-five section.
+- **The archers and most of the weak casters are held back by their AI, not their tree.** Glass Cannon gone and Unwavering Stance in made 1-2 points. They still stand through 3-4 s casts with a melee on them (shared causes 3 and 5).
+- **War Dancer −9** is the largest move, and its kit was not touched. Likely the fighter keystone change: it used to take both low-HP keystones. Worth a focused look before keeping the exclusive pair as is.
+
+Next: the AI changes as brain B (long casts in melee, Bluff, archer kiting, supports alone, Dominator's peel), then the top-five skill nerfs. Consider undoing the tank damage weight, or limiting it to the Hell Knight's tree.
