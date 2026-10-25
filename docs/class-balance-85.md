@@ -296,6 +296,6 @@ What it means:
 - **The tank change hit the wrong tanks.** Shillien Templar, Eva's Templar and Battle Bard (a TANK-role build) lost 5-7 points. The Hell Knight didn't move: its lead is its HP, its stun chain and the time-limit rule, not its tree's P. Atk.
 - **The top five don't depend on the low-HP keystones.** Making the pair exclusive and Unending Fury weaker barely moved them. Their lead is heavy-armour HP plus skill damage and stuns, so it needs the skill changes in the top-five section.
 - **The archers and most of the weak casters are held back by their AI, not their tree.** Glass Cannon gone and Unwavering Stance in made 1-2 points. They still stand through 3-4 s casts with a melee on them (shared causes 3 and 5).
-- **War Dancer −9** is the largest move, and its kit was not touched. Likely the fighter keystone change: it used to take both low-HP keystones. Worth a focused look before keeping the exclusive pair as is.
+- **War Dancer −9** is the largest move, and nothing of its own was changed. It wasn't in the focused runs, so there is no passive tree data from before to compare. The fighter keystone change (the exclusive pair) is the only change it shares, so it needs a focused run before the pair is kept as is.
 
 Next: the AI changes as brain B (long casts in melee, Bluff, archer kiting, supports alone, Dominator's peel), then the top-five skill nerfs. Consider undoing the tank damage weight, or limiting it to the Hell Knight's tree.
