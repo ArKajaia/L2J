@@ -17,13 +17,17 @@
 package org.l2jmobius.gameserver.managers.simulation;
 
 import java.awt.Color;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +39,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.GameServer;
@@ -42,11 +47,13 @@ import org.l2jmobius.gameserver.ai.FakeBrain;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.custom.FakeSimulationConfig;
 import org.l2jmobius.gameserver.data.enums.CategoryType;
+import org.l2jmobius.gameserver.data.xml.FakePlayerPvpData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
+import org.l2jmobius.gameserver.managers.InstanceManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -61,6 +68,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Skill
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.effects.EffectFlag;
+import org.l2jmobius.gameserver.model.instancezone.Instance;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
 import org.l2jmobius.gameserver.model.item.Weapon;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
@@ -96,15 +104,24 @@ public class FakeSimulationManager
 	/** A fake player engages an enemy this close even without a line of sight (around a corner). */
 	private static final int CLOSE_ENEMY_RANGE = 400;
 
+	/** Seconds the bodies of a matrix battle stay after it ends. */
+	private static final int MATRIX_CLEANUP_DELAY = 2;
+	/** The newest finished matrix battles keep their log folder. */
+	private static final int MATRIX_KEEP_LOGS = 300;
+
 	private static final AtomicInteger RUN_IDS = new AtomicInteger();
 
 	private final Map<Integer, SimulationPoint> _points = new TreeMap<>();
+	/** The round of //Simulate, {@code null} if none. */
 	private volatile SimulationRun _run;
 	private volatile Series _series;
+	/** Every round running: the one of //Simulate, or the battles of the class matrix. */
+	private final Map<Integer, SimulationRun> _runs = new ConcurrentHashMap<>();
+	private volatile SimulationMatrix _matrix;
 	/** Admins in (or waiting to join) a team, by object id. */
 	private final Map<Integer, Guest> _guests = new ConcurrentHashMap<>();
-	/** Regions this run keeps awake (they were not before). */
-	private final Set<WorldRegion> _keptRegions = ConcurrentHashMap.newKeySet();
+	/** Regions the runs keep awake (they were not before), and the runs that keep each one. */
+	private final Map<WorldRegion, Set<Integer>> _keptRegions = new HashMap<>();
 	/** At the time limit, teams whose HP and CP left differ by less than this (a ratio of their maximum) end in a draw. */
 	private static final double TIMEOUT_TIE_MARGIN = 0.01;
 	/** //SimulationDraw: admin object id -> fake player object id. */
@@ -389,7 +406,7 @@ public class FakeSimulationManager
 	public synchronized List<String> simulate(Player admin, int size, int level, boolean mirror, long seed, int rounds, int timeLimit, String brains, boolean swap, List<SimulationPoint> fromPoints, String pointsFrom, String rerunOf)
 	{
 		final List<String> lines = new ArrayList<>();
-		if ((_series != null) || (_run != null))
+		if ((_series != null) || (_run != null) || (_matrix != null))
 		{
 			lines.add("A simulation is already running. //SimulationStop ends it.");
 			return lines;
@@ -519,7 +536,7 @@ public class FakeSimulationManager
 		final SimulationLog log = new SimulationLog(series.dir.resolve(String.format("round-%02d", round)));
 		final SimulationRun run = new SimulationRun(runId, round, settings, log);
 		_run = run;
-		ACTIVE = true;
+		addRun(run);
 
 		// An A/B test plays every composition twice, the brains on swapped sides: the seed changes every 2 rounds.
 		final long compositionSeed = settings.compositionSeed(round);
@@ -567,7 +584,7 @@ public class FakeSimulationManager
 		{
 			log.close();
 			_run = null;
-			ACTIVE = false;
+			removeRun(run);
 			return null;
 		}
 
@@ -916,24 +933,63 @@ public class FakeSimulationManager
 
 	private void keepRegionsAwake(SimulationRun run)
 	{
-		for (SimulationMember member : run.getMembers().values())
+		synchronized (_keptRegions)
 		{
-			final WorldRegion region = member.getCreature().getWorldRegion();
-			if ((region != null) && !region.isKeptActive())
+			for (SimulationMember member : run.getMembers().values())
 			{
-				region.keepActive();
-				_keptRegions.add(region);
+				final WorldRegion region = member.getCreature().getWorldRegion();
+				if (region == null)
+				{
+					continue;
+				}
+
+				final Set<Integer> keepers = _keptRegions.get(region);
+				if (keepers != null)
+				{
+					keepers.add(run.getId());
+				}
+				else if (!region.isKeptActive())
+				{
+					region.keepActive();
+					final Set<Integer> ids = new HashSet<>();
+					ids.add(run.getId());
+					_keptRegions.put(region, ids);
+				}
 			}
 		}
 	}
 
-	private void releaseRegions()
+	/**
+	 * Lets the regions {@code run} kept awake sleep again, once no other run keeps them.
+	 * @param run the round
+	 */
+	private void releaseRegions(SimulationRun run)
 	{
-		for (WorldRegion region : _keptRegions)
+		synchronized (_keptRegions)
 		{
-			region.releaseKeepActive();
+			final Iterator<Map.Entry<WorldRegion, Set<Integer>>> iterator = _keptRegions.entrySet().iterator();
+			while (iterator.hasNext())
+			{
+				final Map.Entry<WorldRegion, Set<Integer>> entry = iterator.next();
+				if (entry.getValue().remove(run.getId()) && entry.getValue().isEmpty())
+				{
+					entry.getKey().releaseKeepActive();
+					iterator.remove();
+				}
+			}
 		}
-		_keptRegions.clear();
+	}
+
+	private void addRun(SimulationRun run)
+	{
+		_runs.put(run.getId(), run);
+		ACTIVE = true;
+	}
+
+	private void removeRun(SimulationRun run)
+	{
+		_runs.remove(run.getId());
+		ACTIVE = !_runs.isEmpty();
 	}
 
 	/**
@@ -962,6 +1018,12 @@ public class FakeSimulationManager
 		final long time = run.time();
 		run.setResult(time, winner, reason);
 		run.getLog().write(SimulationLog.EVENTS, new JsonLine().put("t", time).put("type", "round_end").put("winner", winner).put("reason", reason));
+
+		if (run.getBattle() != null)
+		{
+			endBattle(run);
+			return;
+		}
 
 		final Series series = _series;
 		final String text = SimulationSummary.write(run, series != null ? series.settings.rounds() : 1);
@@ -1089,7 +1151,15 @@ public class FakeSimulationManager
 					leaving.add(npc);
 				}
 			}
-			ThreadPool.schedule(() -> removeFakes(run, leaving), REMOVE_DELAY);
+			ThreadPool.schedule(() ->
+			{
+				removeFakes(run, leaving);
+				// A battle of the matrix had an instance of its own.
+				if (run.getBattle() != null)
+				{
+					InstanceManager.getInstance().destroyInstance(run.getTeams().get(0).getPoint().instanceId());
+				}
+			}, REMOVE_DELAY);
 		}
 		catch (Exception e)
 		{
@@ -1103,10 +1173,16 @@ public class FakeSimulationManager
 				if (_run == run)
 				{
 					_run = null;
-					ACTIVE = false;
 				}
-				releaseRegions();
+				removeRun(run);
+				releaseRegions(run);
 			}
+		}
+
+		if (run.getBattle() != null)
+		{
+			onBattleFreed(run);
+			return;
 		}
 
 		final Series series = _series;
@@ -1194,6 +1270,11 @@ public class FakeSimulationManager
 	 */
 	public String stop(Player admin)
 	{
+		if (_matrix != null)
+		{
+			return stopMatrix();
+		}
+
 		final Series series = _series;
 		final SimulationRun run = _run;
 		if ((series == null) && (run == null))
@@ -1244,6 +1325,11 @@ public class FakeSimulationManager
 	 */
 	public List<String> getStatus()
 	{
+		if (_matrix != null)
+		{
+			return getMatrixStatus();
+		}
+
 		final List<String> lines = new ArrayList<>();
 		final SimulationRun run = _run;
 		if (run == null)
@@ -1291,6 +1377,459 @@ public class FakeSimulationManager
 	}
 
 	// ---------------------------------------------------------------------------------------------
+	// Class matrix
+	// ---------------------------------------------------------------------------------------------
+
+	/**
+	 * Starts a class-vs-class matrix (see {@link SimulationMatrix}): every pair of builds fights {@code battles} 1v1 battles, {@code parallel} at once. Every battle gets an instance of its own at the place of {@code admin}, so they all fight there without
+	 * seeing each other; the two spawn {@code distance} apart along {@code heading}.
+	 * @param admin the admin, {@code null} when started from the web page without one (SimulationWebOpenAccess)
+	 * @param x the middle of the place
+	 * @param y the middle of the place
+	 * @param z the middle of the place
+	 * @param heading the two spawn along this heading
+	 * @param battles battles per pair
+	 * @param parallel battles at once
+	 * @param level the level of the fake players
+	 * @param timeLimit the time limit of a battle, in seconds
+	 * @param distance how far apart the two spawn
+	 * @param brains the AI of both ("A" or "B")
+	 * @param builds build names separated by commas, {@code null} or "all" for one build per class
+	 * @param seed the seed
+	 * @return the lines to tell the admin
+	 */
+	public synchronized List<String> startMatrix(Player admin, int x, int y, int z, int heading, int battles, int parallel, int level, int timeLimit, int distance, String brains, String builds, long seed)
+	{
+		final List<String> lines = new ArrayList<>();
+		final String refusal = getMatrixRefusal();
+		if (refusal != null)
+		{
+			lines.add(refusal);
+			return lines;
+		}
+		final String brainList = brains != null ? SimulationSettings.normalizeBrains(brains) : FakeBrain.A.name();
+		final FakeBrain brain = brainList != null ? FakeBrain.parse(brainList.split(":")[0]) : null;
+		if (brain == null)
+		{
+			lines.add("Unknown brain \"" + brains + "\": A or B.");
+			return lines;
+		}
+		final List<String> unknown = new ArrayList<>();
+		final List<String> list = SimulationMatrix.resolveBuilds(builds, unknown);
+		if (!unknown.isEmpty())
+		{
+			lines.add("Unknown build(s): " + String.join(", ", unknown) + ". The names are in data/FakePlayerPvp.xml (spaces as _ or left out: Treasure_Hunter is Adventurer).");
+			return lines;
+		}
+		if (list.size() < 2)
+		{
+			lines.add("A matrix needs at least 2 builds.");
+			return lines;
+		}
+		if ((admin != null) && (admin.getInstanceId() != 0))
+		{
+			lines.add("Stand in the open world (not in an instance): every battle gets an instance of its own at your place.");
+			return lines;
+		}
+
+		final String name = "matrix-" + LocalDateTime.now().format(FOLDER_TIME);
+		final Path dir = getMatrixRoot().resolve(name);
+		final SimulationMatrix matrix = SimulationMatrix.create(name, dir, list, battles, parallel, level, timeLimit, distance, brain, seed, x, y, GeoEngine.getInstance().getHeight(x, y, z), heading, admin != null ? admin.getObjectId() : 0);
+		return launchMatrix(matrix, lines);
+	}
+
+	/**
+	 * Goes on with a matrix that stopped (or that a restart cut): the battles missing from its results.csv, at its own place.
+	 * @param admin the admin, {@code null} from the web page without one
+	 * @param name the matrix (its folder name), {@code null} for the newest one
+	 * @param parallel battles at once, 0 for as before
+	 * @return the lines to tell the admin
+	 */
+	public synchronized List<String> resumeMatrix(Player admin, String name, int parallel)
+	{
+		final List<String> lines = new ArrayList<>();
+		final String refusal = getMatrixRefusal();
+		if (refusal != null)
+		{
+			lines.add(refusal);
+			return lines;
+		}
+
+		Path dir = null;
+		if (name != null)
+		{
+			dir = getMatrixRoot().resolve(name);
+		}
+		else
+		{
+			try (Stream<Path> dirs = Files.list(getMatrixRoot()))
+			{
+				dir = dirs.filter(path -> Files.exists(path.resolve(SimulationMatrix.SETTINGS))).max(Comparator.comparing(Path::getFileName)).orElse(null);
+			}
+			catch (IOException e)
+			{
+				// No matrix yet.
+			}
+		}
+		final SimulationMatrix matrix = (dir != null) && Files.exists(dir.resolve(SimulationMatrix.SETTINGS)) ? SimulationMatrix.load(dir, parallel, admin != null ? admin.getObjectId() : 0) : null;
+		if (matrix == null)
+		{
+			lines.add(name != null ? "No matrix " + name + " in " + getMatrixRoot().toAbsolutePath() + "." : "No matrix to resume in " + getMatrixRoot().toAbsolutePath() + ".");
+			return lines;
+		}
+		if (matrix.getDone() >= matrix.getTotal())
+		{
+			lines.addAll(matrix.writeMatrix());
+			lines.add("Matrix " + matrix.getName() + " is complete.");
+			return lines;
+		}
+		return launchMatrix(matrix, lines);
+	}
+
+	private List<String> launchMatrix(SimulationMatrix matrix, List<String> lines)
+	{
+		_matrix = matrix;
+		// The first battles spawn away from the admin's thread: 2 fake players each.
+		ThreadPool.execute(() -> fillSlots(matrix));
+		final int left = matrix.getTotal() - matrix.getDone();
+		// About the preparation, a fight and the cleanup.
+		final long minutes = Math.round((left * (FakeSimulationConfig.PREP_TIME + 60 + MATRIX_CLEANUP_DELAY)) / (60.0 * matrix.getParallel()));
+		lines.add("Matrix " + matrix.getName() + ": " + matrix.getBuilds().size() + " classes, " + matrix.getBattles() + " battles per pair, " + left + " battle(s) to go (" + matrix.getDone() + " done), level " + matrix.getLevel() + ", " + matrix.getParallel() + " at once, brain " + matrix.getBrain() + ", " + matrix.getTimeLimit() + " s limit.");
+		lines.add("At " + matrix.getX() + ", " + matrix.getY() + ", " + matrix.getZ() + ", one instance per battle, the two " + matrix.getDistance() + " apart. Roughly " + (minutes / 60) + " h " + (minutes % 60) + " min if a fight lasts about a minute.");
+		lines.add("Results: " + matrix.getDir().resolve(SimulationMatrix.RESULTS).toAbsolutePath() + " (matrix.csv and matrix.txt every 50 battles). //SimulationMatrix status, //SimulationMatrix stop.");
+		return lines;
+	}
+
+	private String getMatrixRefusal()
+	{
+		if ((_series != null) || (_run != null) || (_matrix != null))
+		{
+			return "A simulation is already running. //SimulationStop ends it.";
+		}
+		if (!GameServer.isStarted())
+		{
+			return "The server is still starting: try again in a moment.";
+		}
+		if (!FakePlayerPvpManager.getInstance().isEnabled())
+		{
+			return "Roaming fake players are disabled (FakePvpEnabled in FakePlayerPvp.ini).";
+		}
+		return null;
+	}
+
+	/**
+	 * @return the folder of the class matrices, next to the simulation folders (their pruning leaves them alone)
+	 */
+	public static Path getMatrixRoot()
+	{
+		return Path.of(FakeSimulationConfig.LOG_DIR + "-matrix");
+	}
+
+	/**
+	 * @return what to tell the admin
+	 */
+	public String stopMatrix()
+	{
+		final SimulationMatrix matrix = _matrix;
+		if (matrix == null)
+		{
+			return "No matrix is running.";
+		}
+
+		matrix.stop();
+		int stopped = 0;
+		for (SimulationRun run : _runs.values())
+		{
+			if ((run.getBattle() != null) && (run.getPhase() != SimulationRun.Phase.ENDED))
+			{
+				end(run, 0, "stopped");
+				stopped++;
+			}
+		}
+		return "Matrix " + matrix.getName() + " stopped: " + stopped + " battle(s) cut (they are played again on resume). //SimulationMatrix resume " + matrix.getName() + " goes on.";
+	}
+
+	/**
+	 * @return the matrix running, {@code null} if none
+	 */
+	public SimulationMatrix getMatrix()
+	{
+		return _matrix;
+	}
+
+	/**
+	 * @return the lines of //SimulationMatrix status
+	 */
+	public List<String> getMatrixStatus()
+	{
+		final SimulationMatrix matrix = _matrix;
+		if (matrix == null)
+		{
+			return List.of("No matrix is running. //SimulationMatrix start, or //SimulationMatrix resume [name].");
+		}
+
+		final List<String> lines = new ArrayList<>(matrix.getStatus());
+		final List<String> ranking = matrix.writeMatrix();
+		lines.addAll(ranking.subList(1, Math.min(ranking.size(), 11)));
+		return lines;
+	}
+
+	/**
+	 * Takes {@code admin} into the instance of a battle that runs (it sees the fight, the fake players leave it alone), or back out.
+	 * @param admin the admin
+	 * @return what to tell the admin
+	 */
+	public String watchBattle(Player admin)
+	{
+		final SimulationMatrix matrix = _matrix;
+		final List<SimulationRun> battles = new ArrayList<>();
+		for (SimulationRun run : _runs.values())
+		{
+			if ((run.getBattle() != null) && (run.getPhase() != SimulationRun.Phase.ENDED))
+			{
+				battles.add(run);
+			}
+		}
+		battles.sort(Comparator.comparingInt(SimulationRun::getId));
+		if ((matrix == null) || battles.isEmpty())
+		{
+			if (admin.getInstanceId() != 0)
+			{
+				admin.teleToLocation(admin.getX(), admin.getY(), admin.getZ(), admin.getHeading(), 0);
+			}
+			return "No battle is running.";
+		}
+
+		// The next battle after the one it watches (in start order).
+		SimulationRun next = battles.get(0);
+		for (SimulationRun run : battles)
+		{
+			if (run.getTeams().get(0).getPoint().instanceId() > admin.getInstanceId())
+			{
+				next = run;
+				break;
+			}
+		}
+		final SimulationMatrix.Battle battle = next.getBattle();
+		admin.teleToLocation(matrix.getX(), matrix.getY(), matrix.getZ(), admin.getHeading(), next.getTeams().get(0).getPoint().instanceId());
+		return "Watching battle " + battle.number() + ": " + battle.a() + " vs " + battle.b() + " (round " + (battle.round() + 1) + "). Again for the next one; //SimulationMatrix leave to go back.";
+	}
+
+	/**
+	 * Starts battles until {@link SimulationMatrix#getParallel} run.
+	 * @param matrix the matrix
+	 */
+	private void fillSlots(SimulationMatrix matrix)
+	{
+		while (_matrix == matrix)
+		{
+			final SimulationMatrix.Battle battle = matrix.next();
+			if (battle == null)
+			{
+				return;
+			}
+			if (!startBattle(matrix, battle))
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": Could not start matrix battle " + battle.number() + " (" + battle.a() + " vs " + battle.b() + "): skipped.");
+				if (matrix.onFreed(null, MATRIX_KEEP_LOGS))
+				{
+					finishMatrix(matrix);
+					return;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Spawns a battle of the matrix in a new instance.
+	 * @return {@code true} if it started
+	 */
+	private boolean startBattle(SimulationMatrix matrix, SimulationMatrix.Battle battle)
+	{
+		final FakePlayerPvpBuild[] builds =
+		{
+			FakePlayerPvpData.getInstance().getBuild(battle.aFirst() ? battle.a() : battle.b()),
+			FakePlayerPvpData.getInstance().getBuild(battle.aFirst() ? battle.b() : battle.a())
+		};
+		if ((builds[0] == null) || (builds[1] == null))
+		{
+			return false;
+		}
+
+		final Instance instance = InstanceManager.getInstance().createDynamicInstance(0);
+		final int instanceId = instance.getId();
+		instance.setExitLoc(new Location(matrix.getX(), matrix.getY(), matrix.getZ()));
+
+		final int runId = RUN_IDS.incrementAndGet();
+		final SimulationSettings settings = new SimulationSettings(1, matrix.getLevel(), false, battle.seed(), 1, matrix.getTimeLimit(), matrix.getStarterId(), matrix.getBrain().name(), false);
+		final SimulationLog log = new SimulationLog(matrix.getDir().resolve("battles").resolve(String.format("%06d-%s-vs-%s", battle.number(), slug(battle.a()), slug(battle.b()))));
+		final SimulationRun run = new SimulationRun(runId, battle.number(), settings, log);
+		run.setBattle(battle);
+		addRun(run);
+
+		// The two spots, along the way the admin faced, facing each other.
+		final double angle = Math.toRadians(matrix.getHeading() / 182.044444444);
+		final int half = matrix.getDistance() / 2;
+		final List<Npc> spawned = new ArrayList<>();
+		for (int i = 0; i < 2; i++)
+		{
+			final int teamId = i + 1;
+			final int sign = i == 0 ? -1 : 1;
+			final int x = matrix.getX() + (int) (Math.cos(angle) * half * sign);
+			final int y = matrix.getY() + (int) (Math.sin(angle) * half * sign);
+			final Location spot = GeoEngine.getInstance().getValidLocation(matrix.getX(), matrix.getY(), matrix.getZ(), x, y, matrix.getZ(), instanceId);
+			final int heading = (matrix.getHeading() + (i == 0 ? 0 : 32768)) & 0xFFFF;
+			final SimulationPoint point = new SimulationPoint(teamId, spot.getX(), spot.getY(), spot.getZ(), heading, instanceId);
+			final SimRole role = getRole(builds[i]);
+			final SimulationTeam team = new SimulationTeam(teamId, point, List.of(role), matrix.getBrain());
+			run.getTeams().add(team);
+
+			final long seed = battle.seed() + teamId;
+			final Npc fake = FakePlayerPvpManager.getInstance().spawnSimulant(builds[i], matrix.getLevel(), "Team " + teamId, seed, runId, teamId, team.getBrain(), point.x(), point.y(), point.z(), instanceId);
+			if (fake == null)
+			{
+				for (SimulationTeam made : run.getTeams())
+				{
+					if (made.getParty() != null)
+					{
+						FakePartyManager.getInstance().disbandSimulationParty(made.getParty());
+					}
+				}
+				removeFakes(run, spawned);
+				InstanceManager.getInstance().destroyInstance(instanceId);
+				log.close();
+				removeRun(run);
+				return false;
+			}
+
+			spawned.add(fake);
+			run.addMember(team, new SimulationMember(fake, teamId, role, builds[i].getName(), false, seed, run.time()));
+			team.setParty(FakePartyManager.getInstance().createSimulationParty(List.of(fake), team.getBrain()));
+		}
+
+		final JsonLine json = new JsonLine();
+		json.put("matrix", matrix.getName()).put("battle", battle.number()).put("a", battle.a()).put("b", battle.b()).put("round", battle.round()).put("aSpot", battle.aFirst() ? 1 : 2).put("runId", runId).put("instance", instanceId);
+		json.put("start", LocalDateTime.now().toString()).put("level", matrix.getLevel()).put("seed", battle.seed()).put("brain", matrix.getBrain().name()).put("timeLimit", matrix.getTimeLimit()).put("distance", matrix.getDistance());
+		final List<JsonLine> members = new ArrayList<>();
+		for (SimulationMember member : run.getMembers().values())
+		{
+			members.add(describe(member));
+		}
+		json.put("members", members);
+		log.writeFile("run.json", json.toString());
+		log.write(SimulationLog.EVENTS, new JsonLine().put("t", run.time()).put("type", "round_start").put("battle", battle.number()).put("runId", runId));
+
+		keepRegionsAwake(run);
+		run.setTask(ThreadPool.scheduleAtFixedRate(() -> tick(run), FakeSimulationConfig.POSITION_INTERVAL, FakeSimulationConfig.POSITION_INTERVAL));
+		return true;
+	}
+
+	/**
+	 * @param build a build
+	 * @return the slot it fills in //Simulate, else the closest one by its role
+	 */
+	private static SimRole getRole(FakePlayerPvpBuild build)
+	{
+		for (SimRole role : SimRole.values())
+		{
+			if (role.getBuilds().contains(build.getName()))
+			{
+				return role;
+			}
+		}
+		switch (build.getRole())
+		{
+			case MAGE:
+			{
+				return SimRole.NUKER;
+			}
+			case ARCHER:
+			{
+				return SimRole.ARCHER;
+			}
+			case TANK:
+			{
+				return SimRole.TANK;
+			}
+			default:
+			{
+				return SimRole.MELEE;
+			}
+		}
+	}
+
+	private static String slug(String name)
+	{
+		return name.replaceAll("[^A-Za-z0-9]+", "");
+	}
+
+	/**
+	 * A battle of the matrix ended: its result is written, and it is cleaned up a moment later.
+	 * @param run the round of the battle
+	 */
+	private void endBattle(SimulationRun run)
+	{
+		final SimulationMatrix matrix = _matrix;
+		final SimulationMatrix.Battle battle = run.getBattle();
+		try
+		{
+			SimulationSummary.write(run, matrix != null ? matrix.getTotal() : battle.number());
+			if (matrix != null)
+			{
+				final SimulationTeam winner = run.getWinner() > 0 ? run.getTeam(run.getWinner()) : null;
+				final SimulationTeam a = run.getTeam(battle.aFirst() ? 1 : 2);
+				final SimulationTeam b = run.getTeam(battle.aFirst() ? 2 : 1);
+				final String winnerBuild = (winner != null) && !winner.getMembers().isEmpty() ? winner.getMembers().get(0).getBuild() : null;
+				matrix.record(battle, winnerBuild, run.getEndReason(), run.getFightStart() > 0 ? run.getEnd() - run.getFightStart() : 0, a != null ? a.getHealthLeft() : 0, b != null ? b.getHealthLeft() : 0);
+			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem while recording matrix battle " + battle.number() + ".", e);
+		}
+		ThreadPool.schedule(() -> cleanup(run), MATRIX_CLEANUP_DELAY * 1000L);
+	}
+
+	/**
+	 * A battle of the matrix was cleaned up: the next one takes its slot, or the matrix is over.
+	 * @param run the round of the battle
+	 */
+	private void onBattleFreed(SimulationRun run)
+	{
+		final SimulationMatrix matrix = _matrix;
+		if (matrix == null)
+		{
+			return;
+		}
+		if (matrix.onFreed(run.getLog().getDir(), MATRIX_KEEP_LOGS))
+		{
+			finishMatrix(matrix);
+			return;
+		}
+		fillSlots(matrix);
+	}
+
+	private void finishMatrix(SimulationMatrix matrix)
+	{
+		synchronized (this)
+		{
+			if (_matrix == matrix)
+			{
+				_matrix = null;
+			}
+		}
+
+		final List<String> lines = matrix.writeMatrix();
+		final Player starter = World.getInstance().getPlayer(matrix.getStarterId());
+		if (starter != null)
+		{
+			showText(starter, "Matrix " + matrix.getName(), String.join("\n", lines));
+			starter.sendSysMessage("Matrix " + matrix.getName() + (matrix.isStopped() ? " stopped" : " finished") + ": " + matrix.getDone() + "/" + matrix.getTotal() + " battles. " + matrix.getDir().resolve("matrix.csv").toAbsolutePath());
+		}
+		LOGGER.info(getClass().getSimpleName() + ": Matrix " + matrix.getName() + (matrix.isStopped() ? " stopped" : " finished") + ", " + matrix.getDone() + "/" + matrix.getTotal() + " battles.");
+	}
+
+	// ---------------------------------------------------------------------------------------------
 	// Lookups for the AI
 	// ---------------------------------------------------------------------------------------------
 
@@ -1300,8 +1839,7 @@ public class FakeSimulationManager
 	 */
 	public SimulationRun getRun(int runId)
 	{
-		final SimulationRun run = _run;
-		return (run != null) && (run.getId() == runId) ? run : null;
+		return _runs.get(runId);
 	}
 
 	/**
@@ -1401,7 +1939,7 @@ public class FakeSimulationManager
 	 */
 	public static boolean isRunEnemyWithin(Creature npc, int range)
 	{
-		final SimulationRun run = ACTIVE ? getInstance()._run : null;
+		final SimulationRun run = ACTIVE ? getInstance().runOf(npc) : null;
 		final SimulationMember member = run != null ? run.getMember(npc) : null;
 		if (member == null)
 		{
@@ -1431,7 +1969,7 @@ public class FakeSimulationManager
 			return false;
 		}
 
-		final SimulationRun run = getInstance()._run;
+		final SimulationRun run = getInstance()._runs.get(runId);
 		final SimulationMember a = run != null ? getMemberBehind(run, creature) : null;
 		final SimulationMember b = run != null ? getMemberBehind(run, other) : null;
 		return (a != null) && (b != null) && (a.getTeamId() != b.getTeamId());
@@ -1812,6 +2350,27 @@ public class FakeSimulationManager
 	// ---------------------------------------------------------------------------------------------
 
 	/**
+	 * @param creature a creature
+	 * @return the round it fights in (its summon or servitor: the one of its owner), {@code null} if none
+	 */
+	private SimulationRun runOf(Creature creature)
+	{
+		final int runId = getRunId(creature);
+		return runId != 0 ? _runs.get(runId) : null;
+	}
+
+	/**
+	 * @param creature a creature
+	 * @param other another creature
+	 * @return the round the first fights in, else the one the other fights in, {@code null} if neither
+	 */
+	private SimulationRun runOf(Creature creature, Creature other)
+	{
+		final SimulationRun run = runOf(creature);
+		return run != null ? run : runOf(other);
+	}
+
+	/**
 	 * @param run the round
 	 * @param creature a creature
 	 * @return the member behind {@code creature} (itself, or the owner of its summon or servitor), {@code null} if none
@@ -1848,7 +2407,7 @@ public class FakeSimulationManager
 	 */
 	public void onDamage(Creature target, Creature attacker, Skill skill, double damage, boolean crit, boolean dot)
 	{
-		final SimulationRun run = _run;
+		final SimulationRun run = runOf(attacker, target);
 		if ((run == null) || (damage <= 0))
 		{
 			return;
@@ -1890,7 +2449,7 @@ public class FakeSimulationManager
 	 */
 	public void onHeal(Creature healer, Creature target, Skill skill, double hp, double cp)
 	{
-		final SimulationRun run = _run;
+		final SimulationRun run = runOf(healer, target);
 		if ((run == null) || (target == null) || ((hp < 1) && (cp < 1)))
 		{
 			return;
@@ -1928,7 +2487,7 @@ public class FakeSimulationManager
 	 */
 	public void onDebuff(BuffInfo info)
 	{
-		final SimulationRun run = _run;
+		final SimulationRun run = runOf(info.getEffector(), info.getEffected());
 		if (run == null)
 		{
 			return;
@@ -1953,7 +2512,7 @@ public class FakeSimulationManager
 	 */
 	public void onResist(Creature attacker, Creature target, Skill skill)
 	{
-		final SimulationRun run = _run;
+		final SimulationRun run = runOf(attacker, target);
 		if (run == null)
 		{
 			return;
@@ -1982,7 +2541,7 @@ public class FakeSimulationManager
 	 */
 	public void onCastStart(Creature caster, Skill skill, Creature target, int castTime)
 	{
-		final SimulationRun run = _run;
+		final SimulationRun run = runOf(caster);
 		final SimulationMember member = run != null ? run.getMember(caster) : null;
 		if (member == null)
 		{
@@ -2006,7 +2565,7 @@ public class FakeSimulationManager
 	 */
 	public void onCastAbort(Creature caster)
 	{
-		final SimulationRun run = _run;
+		final SimulationRun run = runOf(caster);
 		final SimulationMember member = run != null ? run.getMember(caster) : null;
 		if (member == null)
 		{
@@ -2025,7 +2584,7 @@ public class FakeSimulationManager
 	 */
 	public void onCastEnd(Creature caster, Skill skill)
 	{
-		final SimulationRun run = _run;
+		final SimulationRun run = runOf(caster);
 		final SimulationMember member = run != null ? run.getMember(caster) : null;
 		if (member == null)
 		{
@@ -2043,7 +2602,7 @@ public class FakeSimulationManager
 	 */
 	public void onDeath(Creature victim, Creature killer)
 	{
-		final SimulationRun run = _run;
+		final SimulationRun run = runOf(victim);
 		final SimulationMember member = run != null ? run.getMember(victim) : null;
 		if (member == null)
 		{
@@ -2075,7 +2634,7 @@ public class FakeSimulationManager
 	 */
 	public void onRevive(Creature creature)
 	{
-		final SimulationRun run = _run;
+		final SimulationRun run = runOf(creature);
 		final SimulationMember member = run != null ? run.getMember(creature) : null;
 		if ((member == null) || (run.getPhase() == SimulationRun.Phase.ENDED))
 		{
@@ -2097,7 +2656,7 @@ public class FakeSimulationManager
 	 */
 	public void onPathFail(Creature creature, int x, int y, int z, boolean fallback)
 	{
-		final SimulationRun run = _run;
+		final SimulationRun run = runOf(creature);
 		final SimulationMember member = run != null ? run.getMember(creature) : null;
 		if (member != null)
 		{
