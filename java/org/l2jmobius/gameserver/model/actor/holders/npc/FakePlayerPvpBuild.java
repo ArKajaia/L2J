@@ -98,6 +98,8 @@ public class FakePlayerPvpBuild
 		RESURRECT
 	}
 	
+	/** A gear variant of another build (see {@link #createVariant}). */
+	private boolean _variant;
 	private final String _name;
 	private final PlayerClass _playerClass;
 	private final Role _role;
@@ -154,7 +156,17 @@ public class FakePlayerPvpBuild
 	 */
 	public FakePlayerPvpBuild createVariant(String name, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight)
 	{
-		return new FakePlayerPvpBuild(name, _playerClass, _role, weaponKit != null ? weaponKit : _weaponKit, armorKit != null ? armorKit : _armorKit, jewelKit != null ? jewelKit : _jewelKit, bowKit != null ? bowKit : _bowKit, polearmKit != null ? polearmKit : _polearmKit, buffList != null ? buffList : _buffList, weight, _skillFighter, _support, _keystones, _hybrid, _skills, _combos);
+		final FakePlayerPvpBuild variant = new FakePlayerPvpBuild(name, _playerClass, _role, weaponKit != null ? weaponKit : _weaponKit, armorKit != null ? armorKit : _armorKit, jewelKit != null ? jewelKit : _jewelKit, bowKit != null ? bowKit : _bowKit, polearmKit != null ? polearmKit : _polearmKit, buffList != null ? buffList : _buffList, weight, _skillFighter, _support, _keystones, _hybrid, _skills, _combos);
+		variant._variant = true;
+		return variant;
+	}
+	
+	/**
+	 * @return {@code true} for a gear variant of another build (a &lt;variant&gt; of data/FakePlayerPvp.xml), {@code false} for a build of its own
+	 */
+	public boolean isVariant()
+	{
+		return _variant;
 	}
 	
 	/**

@@ -16,6 +16,7 @@
  */
 package handlers.chat.commands.admin;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
@@ -25,6 +26,7 @@ import org.l2jmobius.gameserver.config.custom.FakeSimulationConfig;
 import org.l2jmobius.gameserver.handler.IAdminCommandHandler;
 import org.l2jmobius.gameserver.managers.simulation.FakeAiTrace;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
+import org.l2jmobius.gameserver.managers.simulation.SimulationMatrix;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -50,6 +52,7 @@ public class AdminSimulation implements IAdminCommandHandler
 		"admin_simulationtrace",
 		"admin_simulationdraw",
 		"admin_simulationweb",
+		"admin_simulationmatrix",
 		"admin_simulationhelp"
 	};
 
@@ -160,6 +163,10 @@ public class AdminSimulation implements IAdminCommandHandler
 				activeChar.sendPacket(new ExLinkOpen(url));
 				break;
 			}
+			case "admin_simulationmatrix":
+			{
+				return matrix(activeChar, st, manager);
+			}
 			default:
 			{
 				showHelp(activeChar);
@@ -230,6 +237,141 @@ public class AdminSimulation implements IAdminCommandHandler
 		return true;
 	}
 
+	private static final String MATRIX_USAGE = "Usage: //SimulationMatrix start [battles=20] [parallel=100] [level=85] [time=<s>] [distance=1000] [brain=A] [builds=Adventurer,Titan...] [seed=<n>] | resume [name] [parallel=<n>] | status | stop | watch | leave | builds";
+
+	private boolean matrix(Player activeChar, StringTokenizer st, FakeSimulationManager manager)
+	{
+		final String action = st.hasMoreTokens() ? st.nextToken().toLowerCase(Locale.ROOT) : "status";
+		switch (action)
+		{
+			case "start":
+			{
+				int battles = 20;
+				int parallel = 100;
+				int level = 85;
+				int time = FakeSimulationConfig.TIME_LIMIT;
+				int distance = 1000;
+				String brain = null;
+				String builds = null;
+				long seed = Rnd.get(1, Integer.MAX_VALUE);
+				try
+				{
+					while (st.hasMoreTokens())
+					{
+						final String token = st.nextToken();
+						final String lower = token.toLowerCase(Locale.ROOT);
+						if (lower.startsWith("battles="))
+						{
+							battles = Math.max(1, Math.min(1000, Integer.parseInt(token.substring(8))));
+						}
+						else if (lower.startsWith("parallel="))
+						{
+							parallel = Math.max(1, Math.min(500, Integer.parseInt(token.substring(9))));
+						}
+						else if (lower.startsWith("level="))
+						{
+							level = Math.max(1, Math.min(85, Integer.parseInt(token.substring(6))));
+						}
+						else if (lower.startsWith("time="))
+						{
+							time = Math.max(10, Integer.parseInt(token.substring(5)));
+						}
+						else if (lower.startsWith("distance="))
+						{
+							distance = Math.max(100, Math.min(3000, Integer.parseInt(token.substring(9))));
+						}
+						else if (lower.startsWith("brain="))
+						{
+							brain = token.substring(6);
+						}
+						else if (lower.startsWith("builds="))
+						{
+							builds = token.substring(7);
+						}
+						else if (lower.startsWith("seed="))
+						{
+							seed = Long.parseLong(token.substring(5));
+						}
+						else
+						{
+							activeChar.sendSysMessage(MATRIX_USAGE);
+							return false;
+						}
+					}
+				}
+				catch (NumberFormatException e)
+				{
+					activeChar.sendSysMessage(MATRIX_USAGE);
+					return false;
+				}
+				send(activeChar, manager.startMatrix(activeChar, activeChar.getX(), activeChar.getY(), activeChar.getZ(), activeChar.getHeading(), battles, parallel, level, time, distance, brain, builds, seed));
+				break;
+			}
+			case "resume":
+			{
+				String name = null;
+				int parallel = 0;
+				while (st.hasMoreTokens())
+				{
+					final String token = st.nextToken();
+					if (token.toLowerCase(Locale.ROOT).startsWith("parallel="))
+					{
+						try
+						{
+							parallel = Math.max(1, Math.min(500, Integer.parseInt(token.substring(9))));
+						}
+						catch (NumberFormatException e)
+						{
+							activeChar.sendSysMessage(MATRIX_USAGE);
+							return false;
+						}
+					}
+					else
+					{
+						name = token;
+					}
+				}
+				send(activeChar, manager.resumeMatrix(activeChar, name, parallel));
+				break;
+			}
+			case "status":
+			{
+				send(activeChar, manager.getMatrixStatus());
+				break;
+			}
+			case "stop":
+			{
+				activeChar.sendSysMessage(manager.stopMatrix());
+				break;
+			}
+			case "watch":
+			{
+				activeChar.sendSysMessage(manager.watchBattle(activeChar));
+				break;
+			}
+			case "leave":
+			{
+				if (activeChar.getInstanceId() != 0)
+				{
+					activeChar.teleToLocation(activeChar.getX(), activeChar.getY(), activeChar.getZ(), activeChar.getHeading(), 0);
+				}
+				activeChar.sendSysMessage("Back in the open world.");
+				break;
+			}
+			case "builds":
+			{
+				activeChar.sendSysMessage("Matrix builds: " + String.join(", ", SimulationMatrix.resolveBuilds(null, new ArrayList<String>())));
+				break;
+			}
+			default:
+			{
+				activeChar.sendSysMessage(MATRIX_USAGE);
+				return false;
+			}
+		}
+		return true;
+	}
+
 	private static Integer nextInt(StringTokenizer st)
 	{
 		if (!st.hasMoreTokens())
@@ -273,6 +415,7 @@ public class AdminSimulation implements IAdminCommandHandler
 		activeChar.sendSysMessage("//SimulationStatus - teams, HP, targets and anomalies. //SimulationStop - end it now.");
 		activeChar.sendSysMessage("//JoinParty <team> [tank|melee|ranged|healer|buffer] [lead] - take the place of a fake player of that team. //LeaveParty - leave it.");
 		activeChar.sendSysMessage("//SimulationTrace - the last AI decisions of your target (and trace it). //SimulationDraw - draw its ranges and targets.");
+		activeChar.sendSysMessage("//SimulationMatrix start [battles=20] [parallel=100] [level=85] [builds=...] - a class-vs-class 1v1 win rate matrix at your place: every battle in its own instance, many at once. status, stop, resume [name], watch, leave, builds.");
 		activeChar.sendSysMessage("//SimulationWeb - a link to the web page: past runs, one-click rerun, start/stop, points, and each character's decisions and path.");
 		activeChar.sendSysMessage("Logs: " + FakeSimulationConfig.LOG_DIR + "/<time>-<seed>/round-NN/ (run.json, events, decisions, positions, anomalies, summary).");
 	}
