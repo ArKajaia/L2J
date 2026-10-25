@@ -3567,7 +3567,7 @@
 		<requires nodeId="41050" />
 		<requires nodeId="41052" />
 	</node>
-	<node id="41052" name="Berserk Pact" sector="Red Wastes" type="KEYSTONE" tier="0" cost="1" x="-991.1" y="4982.4" effect="PATK_PCT@LOWHP:30;PDEF_PCT@LOWHP:-20;HP_REGEN_PCT:-30" icon="ks-berserk-pact" description="KEYSTONE: Below 50% HP you deal 30% more P.Atk but have 20% less P.Def. HP regeneration is 30% slower.">
+	<node id="41052" name="Berserk Pact" sector="Red Wastes" type="KEYSTONE" tier="0" cost="1" x="-991.1" y="4982.4" effect="KS_BERSERK_PACT:1;PATK_PCT@LOWHP:30;PDEF_PCT@LOWHP:-20;HP_REGEN_PCT:-30" icon="ks-berserk-pact" description="KEYSTONE: Below 50% HP you deal 30% more P.Atk but have 20% less P.Def. HP regeneration is 30% slower. Cannot be combined with Unending Fury.">
 		<requires nodeId="41051" />
 	</node>
 	<node id="41020" name="Bloodboil" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="1341.2" y="4289.0" orbitX="1404.1" orbitY="4373.1" effect="MAXHP_PCT:1.5" icon="heart">
@@ -6235,7 +6235,7 @@
 		<requires nodeId="30022" />
 		<requires nodeId="30025" />
 	</node>
-	<node id="30022" name="Unending Fury" sector="Warlord" type="KEYSTONE" tier="0" cost="1" x="3385.1" y="1076.8" effect="KS_RAMPAGE:40;HEALING_RECEIVED_PCT:-30" icon="ks-unending-fury" description="KEYSTONE: Your P.Atk rises as your HP falls, up to +40% near death, but healing you receive is 30% weaker.">
+	<node id="30022" name="Unending Fury" sector="Warlord" type="KEYSTONE" tier="0" cost="1" x="3385.1" y="1076.8" effect="KS_RAMPAGE:25;HEALING_RECEIVED_PCT:-30" icon="ks-unending-fury" description="KEYSTONE: Your P.Atk rises as your HP falls, up to +25% near death, but healing you receive is 30% weaker. Cannot be combined with Berserk Pact.">
 		<requires nodeId="30021" />
 	</node>
 	<node id="30023" name="Approach" sector="Warlord" type="SMALL" tier="0" cost="1" x="2543.9" y="2253.9" effect="MAXHP:6">

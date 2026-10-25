@@ -78,6 +78,8 @@ public final class PassiveMechanics
 	public static final String RESOLUTE = "KS_RESOLUTE";
 	/** P.Atk bonus % at 0% HP, scaling linearly down to 0 at full HP. */
 	public static final String RAMPAGE = "KS_RAMPAGE";
+	/** Berserk Pact: no mechanic of its own (its bonuses are plain LOWHP stats), the key only marks it, so it can be exclusive with Unending Fury. */
+	public static final String BERSERK_PACT = "KS_BERSERK_PACT";
 	/** % of direct spell damage dealt restored as HP. */
 	public static final String SPELL_LEECH = "KS_SPELL_LEECH";
 	/** Max CP becomes 1; this % of the CP you would have had is added to max MP. */
@@ -108,7 +110,7 @@ public final class PassiveMechanics
 	public static final String SPELL_ECHO = "KS_SPELL_ECHO";
 	
 	/** Keys that cancel each other out; a node carrying one can't be allocated next to a node carrying another key of the same group. */
-	private static final List<Set<String>> EXCLUSIVE_GROUPS = List.of(Set.of(POINT_BLANK, FAR_SHOT));
+	private static final List<Set<String>> EXCLUSIVE_GROUPS = List.of(Set.of(POINT_BLANK, FAR_SHOT), Set.of(RAMPAGE, BERSERK_PACT));
 	
 	/** Point Blank / Far Shot: full bonus at or below this range, full penalty at or above LONG_RANGE. */
 	private static final double POINT_BLANK_RANGE = 150;

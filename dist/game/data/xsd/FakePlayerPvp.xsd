@@ -127,6 +127,7 @@
 						<xs:attribute type="xs:boolean" name="support" />
 						<xs:attribute type="xs:string" name="keystones" />
 						<xs:attribute type="xs:boolean" name="hybrid" />
+						<xs:attribute type="xs:string" name="weights" />
 					</xs:complexType>
 				</xs:element>
 			</xs:sequence>

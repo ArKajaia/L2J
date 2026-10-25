@@ -191,15 +191,15 @@ public class FakePlayerPvpConfig
 		},
 		{
 			"DAGGER",
-			"Unwavering Stance;Purity of Flesh;Nocturne;Child of Night"
+			"Unwavering Stance;Child of Night"
 		},
 		{
 			"ARCHER",
-			"Far Shot@BOW;Relentless Assault;Glass Cannon"
+			"Unwavering Stance;Far Shot@BOW;Relentless Assault"
 		},
 		{
 			"MAGE",
-			"Chaos Weave;Spell Echo;Arc Conduit;Vampiric Sorcery;Ley Anchor;Unshaken Mind"
+			"Spell Echo;Vampiric Sorcery;Ley Anchor;Unshaken Mind"
 		}
 	};
 	

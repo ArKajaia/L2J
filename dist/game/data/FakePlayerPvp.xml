@@ -39,6 +39,8 @@
 	               FakePvpKeystones.* list of its role (config/Custom/FakePlayerPvp.ini), e.g. "Battlemage;Unending Fury".
 	     hybrid  - true for a melee build whose M. Atk. counts too (the Battlemage keystone adds part of it to its P. Atk.):
 	               its passive tree wants the magic stats as much as the physical ones.
+	     weights - how much more (or less) its passive tree wants some stats than its role does, "KEY:factor;KEY:factor"
+	               with the effect keys of data/passivetree (e.g. "BLOW_RATE_PCT:2" for twice the blow rate, 0 for none).
 	     skillFighter - true for a class that deals its damage with skills (Gladiator/Duelist, Tyrant,
 	               daggers): it uses a skill most of the time (FakePvpSkillChance). The others (tanks,
 	               archers, most warriors) fight with their normal attack and use a skill now and then
@@ -713,7 +715,7 @@
 	</build>
 
 	<!-- Daggers -->
-	<build name="Adventurer" classId="93" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="2" skillFighter="true">
+	<build name="Adventurer" classId="93" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="2" skillFighter="true" weights="BLOW_RATE_PCT:2"> <!-- No Mortal Strike in its line (as in retail): its tree wants blow rate twice as much -->
 		<attack>991,409,344,263,30,16</attack>
 		<debuff>358,531,412,96</debuff>
 		<buff>357|356,768,445</buff>
@@ -1223,7 +1225,7 @@
 		</combo>
 		<variant name="Doom Oracle Tallum" armor="ROBE_TALLUM" weight="1" />
 	</build>
-	<build name="Battle Oracle" classId="98" role="FIGHTER" weapon="MAGE_BLUNT" armor="LIGHT_MAGE" buffs="BATTLEMAGE" keystones="Battlemage;Unending Fury;Relentless Assault" hybrid="true" weight="1"> <!-- Prophet line, the battlemage path: Battlemage adds 40% of its M. Atk. to its P. Atk., it fights with its mace and its prophecies hold the target down -->
+	<build name="Battle Oracle" classId="98" role="FIGHTER" weapon="MAGE_BLUNT" armor="LIGHT_MAGE" buffs="BATTLEMAGE" keystones="Battlemage;Unwavering Stance;Relentless Assault" hybrid="true" weight="1"> <!-- Prophet line, the battlemage path: Battlemage adds 40% of its M. Atk. to its P. Atk., it fights with its mace and its prophecies hold the target down -->
 		<attack>27530</attack> <!-- Prophecy of Doom: in melee the target stays put, x1.5 -->
 		<debuff>27533,27536,1412</debuff> <!-- Prophecy of Ruin, Prophecy of Reckoning, Spell Turning (on a player that is casting) -->
 		<buff>27538,27532,27540</buff> <!-- Fulfilment, Prophecy of Salvation on itself, Unwritten -->

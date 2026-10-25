@@ -114,15 +114,16 @@ public class FakePlayerPvpBuild
 	private final boolean _support;
 	private final String _keystones;
 	private final boolean _hybrid;
+	private final String _weights;
 	private final Map<SkillCategory, List<int[]>> _skills;
 	private final List<FakePlayerPvpCombo> _combos;
 	
-	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight, boolean skillFighter, boolean support, String keystones, boolean hybrid)
+	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight, boolean skillFighter, boolean support, String keystones, boolean hybrid, String weights)
 	{
-		this(name, playerClass, role, weaponKit, armorKit, jewelKit, bowKit, polearmKit, buffList, weight, skillFighter, support, keystones, hybrid, new EnumMap<>(SkillCategory.class), new ArrayList<>());
+		this(name, playerClass, role, weaponKit, armorKit, jewelKit, bowKit, polearmKit, buffList, weight, skillFighter, support, keystones, hybrid, weights, new EnumMap<>(SkillCategory.class), new ArrayList<>());
 	}
 	
-	private FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight, boolean skillFighter, boolean support, String keystones, boolean hybrid, Map<SkillCategory, List<int[]>> skills, List<FakePlayerPvpCombo> combos)
+	private FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight, boolean skillFighter, boolean support, String keystones, boolean hybrid, String weights, Map<SkillCategory, List<int[]>> skills, List<FakePlayerPvpCombo> combos)
 	{
 		_name = name;
 		_playerClass = playerClass;
@@ -138,6 +139,7 @@ public class FakePlayerPvpBuild
 		_support = support;
 		_keystones = keystones;
 		_hybrid = hybrid;
+		_weights = weights;
 		_skills = skills;
 		_combos = combos;
 	}
@@ -156,7 +158,7 @@ public class FakePlayerPvpBuild
 	 */
 	public FakePlayerPvpBuild createVariant(String name, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight)
 	{
-		final FakePlayerPvpBuild variant = new FakePlayerPvpBuild(name, _playerClass, _role, weaponKit != null ? weaponKit : _weaponKit, armorKit != null ? armorKit : _armorKit, jewelKit != null ? jewelKit : _jewelKit, bowKit != null ? bowKit : _bowKit, polearmKit != null ? polearmKit : _polearmKit, buffList != null ? buffList : _buffList, weight, _skillFighter, _support, _keystones, _hybrid, _skills, _combos);
+		final FakePlayerPvpBuild variant = new FakePlayerPvpBuild(name, _playerClass, _role, weaponKit != null ? weaponKit : _weaponKit, armorKit != null ? armorKit : _armorKit, jewelKit != null ? jewelKit : _jewelKit, bowKit != null ? bowKit : _bowKit, polearmKit != null ? polearmKit : _polearmKit, buffList != null ? buffList : _buffList, weight, _skillFighter, _support, _keystones, _hybrid, _weights, _skills, _combos);
 		variant._variant = true;
 		return variant;
 	}
@@ -300,6 +302,14 @@ public class FakePlayerPvpBuild
 	public boolean isHybrid()
 	{
 		return _hybrid;
+	}
+	
+	/**
+	 * @return how much more (or less) its passive tree wants some stats than its role does, as "KEY:factor;KEY:factor" (e.g. "BLOW_RATE_PCT:2"), {@code null} for its role's weights
+	 */
+	public String getWeights()
+	{
+		return _weights;
 	}
 	
 	/**
