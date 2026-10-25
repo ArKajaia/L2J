@@ -36,7 +36,9 @@ import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.ai.Action;
 import org.l2jmobius.gameserver.ai.AttackableAI;
 import org.l2jmobius.gameserver.ai.CreatureAI;
+import org.l2jmobius.gameserver.ai.FakeBrain;
 import org.l2jmobius.gameserver.ai.FakePlayerPvpAI;
+import org.l2jmobius.gameserver.ai.FakePlayerPvpAIExperimental;
 import org.l2jmobius.gameserver.ai.FortSiegeGuardAI;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.ai.SiegeGuardAI;
@@ -168,7 +170,13 @@ public class Attackable extends Npc
 	@Override
 	protected CreatureAI initAI()
 	{
-		return isPvpFakePlayer() ? new FakePlayerPvpAI(this) : new AttackableAI(this);
+		if (!isPvpFakePlayer())
+		{
+			return new AttackableAI(this);
+		}
+		
+		// A simulation team may run the experimental AI (see FakeBrain).
+		return FakeBrain.of(getTemplate().getFakePlayerPvpProfile()) == FakeBrain.B ? new FakePlayerPvpAIExperimental(this) : new FakePlayerPvpAI(this);
 	}
 	
 	public Map<Creature, AggroInfo> getAggroList()

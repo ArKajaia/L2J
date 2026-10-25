@@ -28,6 +28,9 @@ import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.network.serverpackets.ExLinkOpen;
+
+import custom.Simulation.SimulationWeb;
 
 /**
  * Party-vs-party simulations of fake players, to test and debug their AI (see {@link FakeSimulationManager}). Command names are case-insensitive (//SetSimulationPoint or //setsimulationpoint).
@@ -46,6 +49,7 @@ public class AdminSimulation implements IAdminCommandHandler
 		"admin_leaveparty",
 		"admin_simulationtrace",
 		"admin_simulationdraw",
+		"admin_simulationweb",
 		"admin_simulationhelp"
 	};
 
@@ -148,6 +152,14 @@ public class AdminSimulation implements IAdminCommandHandler
 				activeChar.sendSysMessage(manager.toggleDraw(activeChar, fake));
 				break;
 			}
+			case "admin_simulationweb":
+			{
+				final String url = SimulationWeb.getUrl(activeChar);
+				activeChar.sendSysMessage("Simulation page (works while you stay online):");
+				activeChar.sendMessage(url);
+				activeChar.sendPacket(new ExLinkOpen(url));
+				break;
+			}
 			default:
 			{
 				showHelp(activeChar);
@@ -162,7 +174,7 @@ public class AdminSimulation implements IAdminCommandHandler
 		final Integer size = nextInt(st);
 		if (size == null)
 		{
-			activeChar.sendSysMessage("Usage: //Simulate <size 1-9> [level] [mirror] [seed=<n>] [rounds=<n>] [time=<seconds>]");
+			activeChar.sendSysMessage("Usage: //Simulate <size 1-9> [level] [mirror] [seed=<n>] [rounds=<n>] [time=<seconds>] [brains=A:B] [swap]");
 			return false;
 		}
 
@@ -171,6 +183,8 @@ public class AdminSimulation implements IAdminCommandHandler
 		long seed = Rnd.get(1, Integer.MAX_VALUE);
 		int rounds = 1;
 		int time = FakeSimulationConfig.TIME_LIMIT;
+		String brains = null;
+		boolean swap = false;
 		try
 		{
 			while (st.hasMoreTokens())
@@ -179,6 +193,14 @@ public class AdminSimulation implements IAdminCommandHandler
 				if (token.equals("mirror"))
 				{
 					mirror = true;
+				}
+				else if (token.equals("swap"))
+				{
+					swap = true;
+				}
+				else if (token.startsWith("brains="))
+				{
+					brains = token.substring(7);
 				}
 				else if (token.startsWith("seed="))
 				{
@@ -200,11 +222,11 @@ public class AdminSimulation implements IAdminCommandHandler
 		}
 		catch (NumberFormatException e)
 		{
-			activeChar.sendSysMessage("Usage: //Simulate <size 1-9> [level] [mirror] [seed=<n>] [rounds=<n>] [time=<seconds>]");
+			activeChar.sendSysMessage("Usage: //Simulate <size 1-9> [level] [mirror] [seed=<n>] [rounds=<n>] [time=<seconds>] [brains=A:B] [swap]");
 			return false;
 		}
 
-		send(activeChar, manager.simulate(activeChar, size, level, mirror, seed, rounds, time));
+		send(activeChar, manager.simulate(activeChar, size, level, mirror, seed, rounds, time, brains, swap));
 		return true;
 	}
 
@@ -247,9 +269,11 @@ public class AdminSimulation implements IAdminCommandHandler
 		activeChar.sendSysMessage("//SetSimulationPoint <n> - your position becomes spawn point n (a team spawns at each point).");
 		activeChar.sendSysMessage("//SimulationPoints - list and draw the points. //ClearSimulationPoint <n|all> - remove points.");
 		activeChar.sendSysMessage("//Simulate <size 1-9> [level] [mirror] [seed=<n>] [rounds=<n>] [time=<s>] - one balanced party per point; they fight until one team is left.");
+		activeChar.sendSysMessage("  brains=A:B - the AI of each team (A current, B experimental); swap - an A/B test: mirrored teams, the brains swap sides every round, new teams every 2 rounds.");
 		activeChar.sendSysMessage("//SimulationStatus - teams, HP, targets and anomalies. //SimulationStop - end it now.");
 		activeChar.sendSysMessage("//JoinParty <team> [tank|melee|ranged|healer|buffer] [lead] - take the place of a fake player of that team. //LeaveParty - leave it.");
 		activeChar.sendSysMessage("//SimulationTrace - the last AI decisions of your target (and trace it). //SimulationDraw - draw its ranges and targets.");
+		activeChar.sendSysMessage("//SimulationWeb - a link to the web page: past runs, one-click rerun, start/stop, points, and each character's decisions and path.");
 		activeChar.sendSysMessage("Logs: " + FakeSimulationConfig.LOG_DIR + "/<time>-<seed>/round-NN/ (run.json, events, decisions, positions, anomalies, summary).");
 	}
 

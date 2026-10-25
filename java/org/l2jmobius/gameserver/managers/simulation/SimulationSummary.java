@@ -54,6 +54,7 @@ public class SimulationSummary
 		json.put("round", run.getRound());
 		json.put("rounds", rounds);
 		json.put("seed", settings.seed());
+		json.put("compositionSeed", settings.compositionSeed(run.getRound()));
 		json.put("winner", run.getWinner());
 		json.put("reason", run.getEndReason());
 		json.put("fightDuration", duration);
@@ -70,7 +71,7 @@ public class SimulationSummary
 				}
 				members.add(new JsonLine().put("id", member.getObjectId()).put("name", member.getName()).put("role", member.getRole()).put("build", member.getBuild()).put("admin", member.isAdmin()).put("active", team.isActive(member)).put("alive", member.isAlive()).put("damageDealt", (long) member.getDamageDealt()).put("damageTaken", (long) member.getDamageTaken()).put("healDone", (long) member.getHealDone()).put("healReceived", (long) member.getHealReceived()).put("kills", member.getKills()).put("deaths", member.getDeaths()).put("diedAt", member.getDiedAt() >= 0 ? member.getDiedAt() : null).put("aliveTime", member.getAliveTime()).put("distance", (long) member.getDistance()).put("resisted", member.getResisted()).put("pathFailures", member.getPathFailures()).put("decisionTime", decisions).put("anomalies", member.getAnomalies()));
 			}
-			teams.add(new JsonLine().put("id", team.getId()).put("alive", team.isAlive()).ratio("healthLeft", team.getHealthLeft()).put("members", members));
+			teams.add(new JsonLine().put("id", team.getId()).put("brain", team.getBrain().name()).put("alive", team.isAlive()).ratio("healthLeft", team.getHealthLeft()).put("members", members));
 		}
 		json.put("teams", teams);
 		json.put("kills", run.getKills());
@@ -83,7 +84,7 @@ public class SimulationSummary
 		sb.append("Result: ").append(run.getWinner() > 0 ? "team " + run.getWinner() + " wins" : "no winner").append(" (").append(run.getEndReason()).append(") after ").append(String.format("%.1f", duration / 1000.0)).append(" s of fighting.\n\n");
 		for (SimulationTeam team : run.getTeams())
 		{
-			sb.append("Team ").append(team.getId()).append(team.getId() == run.getWinner() ? " (winner)" : "").append(", ").append(Math.round(team.getHealthLeft() * 100)).append("% HP+CP left\n");
+			sb.append("Team ").append(team.getId()).append(", brain ").append(team.getBrain()).append(team.getId() == run.getWinner() ? " (winner)" : "").append(", ").append(Math.round(team.getHealthLeft() * 100)).append("% HP+CP left\n");
 			for (SimulationMember member : team.getMembers())
 			{
 				sb.append("  ").append(member.getName()).append(" - ").append(member.getRole().name().toLowerCase()).append(", ").append(member.getBuild()).append(member.isAdmin() ? ", admin" : "").append(team.isActive(member) ? "" : ", replaced/left").append('\n');
@@ -161,11 +162,23 @@ public class SimulationSummary
 	}
 
 	/**
-	 * Writes the summary of all the rounds of a simulation: wins by team, build and role, and anomalies.
+	 * Writes the summary of all the rounds of a simulation: wins by team (the point it fought from), brain, build and role, and anomalies.
 	 * @return the text summary
 	 */
-	public static String writeSeries(Path dir, String name, SimulationSettings settings, List<JsonLine> results, Map<Integer, Integer> teamWins, Map<String, int[]> buildStats, Map<String, int[]> roleStats, Map<String, Integer> anomalies)
+	public static String writeSeries(Path dir, String name, SimulationSettings settings, List<JsonLine> results, Map<Integer, Integer> teamWins, Map<String, int[]> brainStats, Map<String, int[]> buildStats, Map<String, int[]> roleStats, Map<String, Integer> anomalies)
 	{
+		// Each brain's win rate, with its 95% interval (Wilson): a change to brain B wins more only if its interval is above 50%.
+		final Map<String, JsonLine> brains = new LinkedHashMap<>();
+		final StringBuilder brainText = new StringBuilder();
+		for (Map.Entry<String, int[]> entry : brainStats.entrySet())
+		{
+			final int wins = entry.getValue()[0];
+			final int games = entry.getValue()[1];
+			final double[] interval = wilson(wins, games);
+			brains.put(entry.getKey(), new JsonLine().put("wins", wins).put("games", games).ratio("rate", games > 0 ? (double) wins / games : 0).ratio("low", interval[0]).ratio("high", interval[1]));
+			brainText.append(brainText.length() > 0 ? ", " : "").append(entry.getKey()).append(' ').append(wins).append('/').append(games).append(String.format(" (%.0f%%, 95%% %.0f-%.0f%%)", games > 0 ? (100.0 * wins) / games : 0, 100 * interval[0], 100 * interval[1]));
+		}
+
 		final Map<String, String> builds = new LinkedHashMap<>();
 		for (Map.Entry<String, int[]> entry : buildStats.entrySet())
 		{
@@ -177,11 +190,12 @@ public class SimulationSummary
 			roles.put(entry.getKey(), entry.getValue()[0] + "/" + entry.getValue()[1]);
 		}
 
-		final JsonLine json = new JsonLine().put("name", name).put("size", settings.size()).put("level", settings.level()).put("mirror", settings.mirror()).put("seed", settings.seed()).put("rounds", results.size()).put("results", results).put("teamWins", teamWins).put("buildWinsPerGames", builds).put("roleWinsPerGames", roles).put("anomalies", anomalies);
+		final JsonLine json = new JsonLine().put("name", name).put("size", settings.size()).put("level", settings.level()).put("mirror", settings.mirror()).put("seed", settings.seed()).put("brains", settings.brains()).put("swap", settings.swap()).put("rounds", results.size()).put("results", results).put("teamWins", teamWins).put("brainWins", brains).put("buildWinsPerGames", builds).put("roleWinsPerGames", roles).put("anomalies", anomalies);
 
 		final StringBuilder sb = new StringBuilder();
-		sb.append(name).append(": ").append(results.size()).append(" round(s) of ").append(settings.size()).append(" per team, level ").append(settings.level()).append(settings.mirror() ? ", mirror" : "").append(", seed ").append(settings.seed()).append('\n');
-		sb.append("Wins by team: ").append(teamWins).append('\n');
+		sb.append(name).append(": ").append(results.size()).append(" round(s) of ").append(settings.size()).append(" per team, level ").append(settings.level()).append(settings.mirror() ? ", mirror" : "").append(", seed ").append(settings.seed()).append(", brains ").append(settings.brains()).append(settings.swap() ? ", A/B test" : "").append('\n');
+		sb.append("Wins by team (side): ").append(teamWins).append('\n');
+		sb.append("Wins by brain: ").append(brainText.length() > 0 ? brainText : "none").append('\n');
 		sb.append("Wins/games by role: ").append(roles).append('\n');
 		sb.append("Wins/games by build: ").append(builds).append('\n');
 		sb.append("Anomalies: ").append(anomalies).append('\n');
@@ -202,5 +216,33 @@ public class SimulationSummary
 			LOGGER.log(Level.WARNING, "SimulationSummary: Could not write the summary of " + name + ".", e);
 		}
 		return text;
+	}
+
+	/**
+	 * @param wins how many games were won
+	 * @param games how many games were played
+	 * @return the 95% Wilson interval of the win rate: {low, high}
+	 */
+	public static double[] wilson(int wins, int games)
+	{
+		if (games <= 0)
+		{
+			return new double[]
+			{
+				0,
+				1
+			};
+		}
+
+		final double z = 1.96;
+		final double p = (double) wins / games;
+		final double denominator = 1 + ((z * z) / games);
+		final double center = (p + ((z * z) / (2 * games))) / denominator;
+		final double margin = (z * Math.sqrt(((p * (1 - p)) / games) + ((z * z) / (4.0 * games * games)))) / denominator;
+		return new double[]
+		{
+			Math.max(0, center - margin),
+			Math.min(1, center + margin)
+		};
 	}
 }

@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulations</title>
+<style>
+	:root {
+		--bg: #08080b;
+		--panel: rgba(20, 20, 26, 0.94);
+		--panel-2: #15151b;
+		--line: #2a2a33;
+		--gold: #d9b64c;
+		--cream: #f0e6c8;
+		--muted: #8a7a55;
+		--text: #c9c2ad;
+		--dim: #6f6a5e;
+		--good: #0ca30c;
+		--warning: #fab219;
+		--critical: #d03b3b;
+		/* Team colours: the dark steps of the dataviz reference categorical order, by team id. */
+		--team-1: #3987e5;
+		--team-2: #d95926;
+		--team-3: #199e70;
+		--team-4: #c98500;
+		--team-5: #d55181;
+		--team-6: #008300;
+		--team-7: #9085e9;
+		--team-8: #e66767;
+		color-scheme: dark;
+	}
+	* { box-sizing: border-box; }
+	html, body { margin: 0; height: 100%; }
+	body { background: var(--bg); color: var(--text); font: 13px/1.45 "Segoe UI", system-ui, sans-serif; }
+	button, select, input { font: inherit; color: var(--cream); background: #1d1d25; border: 1px solid var(--line); border-radius: 4px; padding: 4px 10px; }
+	button { cursor: pointer; }
+	button:hover:not(:disabled) { border-color: var(--gold); }
+	button:disabled { opacity: 0.45; cursor: default; }
+	button.primary { background: #3a3016; border-color: var(--gold); color: var(--gold); font-weight: 600; }
+	button.danger { border-color: #6a2626; color: #ff9a9a; }
+	input[type=number], input[type=text] { width: 100%; }
+	h1, h2, h3 { color: var(--gold); font-weight: 600; margin: 0; }
+	h1 { font-size: 17px; letter-spacing: 0.04em; }
+	h2 { font-size: 15px; }
+	h3 { font-size: 13px; color: var(--cream); }
+	table { border-collapse: collapse; width: 100%; }
+	th { text-align: left; font-weight: 600; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 6px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel-2); }
+	td { padding: 3px 6px; border-bottom: 1px solid #1c1c23; white-space: nowrap; }
+	td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+	tr.click { cursor: pointer; }
+	tr.click:hover td { background: #1b1b22; }
+	tr.sel td { background: #2a2414 !important; }
+	tr.now td { background: #1d2333; }
+	.muted { color: var(--dim); }
+	.chip { display: inline-block; padding: 1px 7px; border-radius: 10px; background: #1d1d25; border: 1px solid var(--line); font-size: 11px; color: var(--text); margin-right: 4px; }
+	.chip.gold { color: var(--gold); border-color: #5b4c22; }
+	.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+
+	#app { display: grid; grid-template-rows: auto 1fr; height: 100%; }
+	header { display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+	header .grow { flex: 1; }
+	#status { display: flex; align-items: center; gap: 10px; padding: 3px 10px; border-radius: 14px; border: 1px solid var(--line); background: #111117; cursor: pointer; }
+	#status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); }
+	#status.live .dot { background: var(--good); box-shadow: 0 0 6px var(--good); }
+	#status .bars { display: flex; gap: 6px; }
+	.hpbar { width: 60px; height: 6px; background: #26262e; border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; }
+	.hpbar > i { display: block; height: 100%; border-radius: 3px; }
+
+	#layout { display: grid; grid-template-columns: 300px 1fr; min-height: 0; }
+	aside { border-right: 1px solid var(--line); overflow: auto; background: #0c0c10; }
+	aside .head { padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: #0c0c10; border-bottom: 1px solid var(--line); }
+	.run { padding: 8px 12px; border-bottom: 1px solid #18181e; cursor: pointer; }
+	.run:hover { background: #131319; }
+	.run.sel { background: #1c1810; border-left: 3px solid var(--gold); padding-left: 9px; }
+	.run .top { display: flex; justify-content: space-between; color: var(--cream); }
+	.run .sub { font-size: 11px; color: var(--dim); margin-top: 2px; }
+	.run .wins { margin-top: 3px; font-size: 11px; }
+	main { overflow: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+	.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px; min-width: 0; }
+	.card > .title { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+	.card > .title .grow { flex: 1; }
+	.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+	.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+	.tabs button { padding: 2px 9px; font-size: 12px; }
+	.tabs button.on { border-color: var(--gold); color: var(--gold); background: #2a2414; }
+	.empty { color: var(--dim); padding: 30px; text-align: center; }
+	.scroll { overflow: auto; max-height: 420px; }
+
+	#mapwrap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+	#map { width: 100%; height: 520px; background: #0d0d12; border: 1px solid var(--line); border-radius: 4px; display: block; }
+	#map text { font: 11px "Segoe UI", sans-serif; }
+	.timeline { display: flex; align-items: center; gap: 8px; }
+	.timeline input[type=range] { flex: 1; accent-color: var(--gold); }
+	.timeline .clock { font-variant-numeric: tabular-nums; color: var(--cream); min-width: 110px; text-align: right; }
+	.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; }
+	#tip { position: fixed; pointer-events: none; background: #18181f; border: 1px solid #3a3a46; border-radius: 4px; padding: 6px 8px; font-size: 12px; color: var(--cream); display: none; z-index: 30; max-width: 280px; }
+	#tip .k { color: var(--dim); }
+
+	.split { display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: 14px; }
+	.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 10px; margin: 8px 0; }
+	.stats div b { display: block; color: var(--cream); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+	.stats div span { font-size: 11px; color: var(--dim); }
+	.reason { display: grid; grid-template-columns: 130px 1fr 44px; gap: 6px; align-items: center; font-size: 11px; margin: 2px 0; }
+	.reason .bar { height: 8px; background: #22222a; border-radius: 0 4px 4px 0; }
+	.reason .bar i { display: block; height: 100%; background: var(--gold); border-radius: 0 4px 4px 0; opacity: 0.85; }
+	.kind-event td { color: #9fb8d9; }
+	.kind-anomaly td { color: #ec835a; }
+
+	.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 20; padding: 16px; }
+	.modal.open { display: flex; }
+	.modal .box { background: var(--panel-2); border: 1px solid var(--gold); border-radius: 6px; padding: 16px; width: 420px; max-width: 100%; max-height: 100%; overflow: auto; }
+	.form { display: grid; grid-template-columns: 120px 1fr; gap: 8px 10px; align-items: center; margin: 12px 0; }
+	.form label { color: var(--muted); }
+	#toasts { position: fixed; right: 14px; bottom: 14px; display: flex; flex-direction: column; gap: 6px; z-index: 40; max-width: 460px; }
+	.toast { background: #18181f; border: 1px solid var(--gold); border-left-width: 4px; border-radius: 4px; padding: 8px 10px; color: var(--cream); white-space: pre-wrap; }
+	.toast.err { border-color: var(--critical); }
+	#fatal { display: none; padding: 60px; text-align: center; color: var(--cream); font-size: 15px; }
+
+	@media (max-width: 1300px) {
+		.split { grid-template-columns: 1fr; }
+	}
+	@media (max-width: 900px) {
+		#layout { grid-template-columns: 1fr; }
+		aside { max-height: 260px; border-right: 0; border-bottom: 1px solid var(--line); }
+		.split { grid-template-columns: 1fr; }
+		#map { height: 360px; }
+	}
+</style>
+</head>
+<body>
+<div id="fatal"></div>
+<div id="app">
+	<header>
+		<h1>Fake player simulations</h1>
+		<div id="status" title="The simulation running now"><span class="dot"></span><span id="statusText">…</span><span class="bars" id="statusBars"></span></div>
+		<div class="grow"></div>
+		<button id="btnStop" class="danger" disabled>Stop</button>
+		<button id="btnPoints">Points</button>
+		<button id="btnNew" class="primary">New simulation</button>
+	</header>
+	<div id="layout">
+		<aside>
+			<div class="head"><h2>Past runs</h2><span class="muted" id="runCount"></span></div>
+			<div id="runs"></div>
+		</aside>
+		<main id="main">
+			<div class="empty">Pick a run on the left, or start a new simulation.</div>
+		</main>
+	</div>
+</div>
+
+<div class="modal" id="newModal">
+	<div class="box">
+		<h2 id="newTitle">New simulation</h2>
+		<div class="form">
+			<label for="fSize">Party size</label><input id="fSize" type="number" min="1" max="9" value="3">
+			<label for="fLevel">Level</label><input id="fLevel" type="number" min="1" max="85" value="80">
+			<label for="fMirror">Mirror builds</label><span><input id="fMirror" type="checkbox"> <span class="muted">same builds in every team</span></span>
+			<label for="fBrains">Brains</label><select id="fBrains"><option value="A">A vs A (current AI)</option><option value="A:B">A vs B (current vs experimental)</option><option value="B">B vs B (experimental)</option></select>
+			<label for="fSwap">A/B test</label><span><input id="fSwap" type="checkbox"> <span class="muted">mirrored teams, brains swap sides every round, new teams every 2 rounds</span></span>
+			<label for="fSeed">Seed</label><input id="fSeed" type="text" placeholder="blank: random">
+			<label for="fRounds">Rounds</label><input id="fRounds" type="number" min="1" max="100" value="1">
+			<label for="fTime">Time limit (s)</label><input id="fTime" type="number" min="10" value="300">
+			<label for="fPoints">Spawn points</label><select id="fPoints"></select>
+			<label for="fSwapPoints">Swap points</label><span><input id="fSwapPoints" type="checkbox"> <span class="muted">each team spawns at the next team's point (same builds with the same seed)</span></span>
+		</div>
+		<div class="row" style="justify-content:flex-end">
+			<button id="newCancel">Cancel</button>
+			<button id="newGo" class="primary">Start</button>
+		</div>
+	</div>
+</div>
+
+<div class="modal" id="pointsModal">
+	<div class="box" style="width:640px">
+		<div class="row" style="justify-content:space-between"><h2>Saved spawn points</h2><button id="pointsClose">Close</button></div>
+		<p class="muted">One team spawns at each point. Set a point in game with <b>//SetSimulationPoint n</b> where you stand.</p>
+		<div id="pointsBody"></div>
+		<div class="row" style="justify-content:flex-end;margin-top:10px">
+			<button id="pointsDraw">Draw in game</button>
+			<button id="pointsClearAll" class="danger">Clear all</button>
+		</div>
+	</div>
+</div>
+
+<div id="tip"></div>
+<div id="toasts"></div>
+
+<script>
+"use strict";
+// ------------------------------------------------------------------------------------------------
+// Auth and API
+// ------------------------------------------------------------------------------------------------
+const TOKEN_KEY = "simulationToken";
+const STATUS_MS = 3000;
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+let token = new URLSearchParams(location.search).get("admin");
+try {
+	if (token) sessionStorage.setItem(TOKEN_KEY, token);
+	else token = sessionStorage.getItem(TOKEN_KEY);
+} catch (e) { /* storage blocked: the token lives in this page only */ }
+if (location.search) history.replaceState(null, "", location.pathname);
+
+function fatal(message) {
+	document.getElementById("app").style.display = "none";
+	const box = document.getElementById("fatal");
+	box.style.display = "block";
+	box.textContent = message;
+}
+
+async function api(path, params) {
+	// Without a token the server answers only with SimulationWebOpenAccess on.
+	const options = { headers: token ? { Authorization: "Bearer " + token } : {} };
+	let url = "/api/simulation/" + path;
+	if (params && params.post) {
+		delete params.post;
+		options.method = "POST";
+		options.headers["Content-Type"] = "application/x-www-form-urlencoded";
+		options.body = new URLSearchParams(params).toString();
+	} else if (params) {
+		url += "?" + new URLSearchParams(params).toString();
+	}
+	const response = await fetch(url, options);
+	let data = null;
+	try { data = await response.json(); } catch (e) { /* not JSON */ }
+	if (response.status === 401 || response.status === 403) {
+		fatal((data && data.error) || "Not allowed - use //SimulationWeb in game again.");
+		throw new Error("auth");
+	}
+	if (!response.ok) throw new Error((data && data.error) || ("HTTP " + response.status));
+	return data;
+}
+
+function toast(text, error) {
+	const div = document.createElement("div");
+	div.className = "toast" + (error ? " err" : "");
+	div.textContent = text;
+	document.getElementById("toasts").appendChild(div);
+	setTimeout(() => div.remove(), error ? 9000 : 6000);
+}
+
+// ------------------------------------------------------------------------------------------------
+// Helpers
+// ------------------------------------------------------------------------------------------------
+function el(tag, attrs, ...children) {
+	const node = document.createElement(tag);
+	if (attrs) for (const [k, v] of Object.entries(attrs)) {
+		if (v == null || v === false) continue;
+		if (k === "class") node.className = v;
+		else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
+		else if (k === "style") node.style.cssText = v;
+		else node.setAttribute(k, v === true ? "" : v);
+	}
+	for (const child of children.flat()) {
+		if (child == null || child === false) continue;
+		node.appendChild(typeof child === "object" ? child : document.createTextNode(String(child)));
+	}
+	return node;
+}
+function svg(tag, attrs) {
+	const node = document.createElementNS(SVG_NS, tag);
+	for (const [k, v] of Object.entries(attrs || {})) if (v != null) node.setAttribute(k, v);
+	return node;
+}
+function teamColor(team) { return "var(--team-" + (((team - 1) % 8 + 8) % 8 + 1) + ")"; }
+function swatch(team) { return el("span", { class: "swatch", style: "background:" + teamColor(team) }); }
+function clock(ms) {
+	if (ms == null) return "";
+	const s = Math.max(0, ms) / 1000;
+	const m = Math.floor(s / 60);
+	return m + ":" + (s - m * 60).toFixed(1).padStart(4, "0");
+}
+function num(value) { return value == null ? "" : Math.round(value).toLocaleString(); }
+function pct(ratio) { return ratio == null ? "" : Math.round(ratio * 100) + "%"; }
+function runDate(name) {
+	const m = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})/.exec(name);
+	return m ? m[1] + "-" + m[2] + "-" + m[3] + " " + m[4] + ":" + m[5] + ":" + m[6] : name;
+}
+function hpBar(ratio, color) {
+	return el("span", { class: "hpbar" }, el("i", { style: "width:" + Math.round((ratio || 0) * 100) + "%;background:" + color }));
+}
+/** The index of the last sample at or before t (binary search on a sorted array). */
+function at(times, t) {
+	let lo = 0, hi = times.length - 1, found = -1;
+	while (lo <= hi) {
+		const mid = (lo + hi) >> 1;
+		if (times[mid] <= t) { found = mid; lo = mid + 1; } else hi = mid - 1;
+	}
+	return found;
+}
+const tip = document.getElementById("tip");
+function showTip(event, lines) {
+	tip.replaceChildren(...lines.map(([k, v]) => el("div", null, k ? el("span", { class: "k" }, k + " ") : null, v)));
+	tip.style.display = "block";
+	const x = Math.min(event.clientX + 14, innerWidth - tip.offsetWidth - 8);
+	const y = Math.min(event.clientY + 14, innerHeight - tip.offsetHeight - 8);
+	tip.style.left = x + "px";
+	tip.style.top = y + "px";
+}
+function hideTip() { tip.style.display = "none"; }
+
+// ------------------------------------------------------------------------------------------------
+// State
+// ------------------------------------------------------------------------------------------------
+const state = {
+	status: null,
+	runs: [],
+	series: null,     // the selected run (an entry of runs)
+	round: 1,
+	roundData: null,  // { run, summary, anomalies, running }
+	positions: null,  // { strings, members }
+	members: {},      // id -> member of run.json, with team and summary stats
+	member: null,     // the selected character id
+	memberData: null, // { decisions, events, anomalies }
+	t: 0,
+	duration: 0,
+	playing: false,
+	speed: 4,
+	reasonFilter: "",
+	showEvents: true,
+	live: false       // the main view shows the running round live
+};
+
+// ------------------------------------------------------------------------------------------------
+// Status (polled)
+// ------------------------------------------------------------------------------------------------
+async function pollStatus() {
+	try {
+		const status = await api("status");
+		const wasRunning = state.status && state.status.running;
+		const previousSeries = state.status && state.status.series;
+		const previousRound = state.status && state.status.round;
+		state.status = status;
+		renderStatus();
+		// A new round of the running simulation shows up in its list too.
+		if (wasRunning !== status.running || previousSeries !== status.series || previousRound !== status.round) loadRuns();
+		if (state.live) renderLive();
+	} catch (e) {
+		if (e.message !== "auth") document.getElementById("statusText").textContent = "server unreachable";
+	}
+}
+
+function renderStatus() {
+	const s = state.status;
+	const box = document.getElementById("status");
+	box.classList.toggle("live", !!s.running);
+	document.getElementById("btnStop").disabled = !s.running || s.stopping;
+	const bars = document.getElementById("statusBars");
+	bars.replaceChildren();
+	if (!s.running) {
+		document.getElementById("statusText").textContent = "Idle · " + s.savedPoints + " saved point(s)";
+		return;
+	}
+	if (!s.teams) {
+		document.getElementById("statusText").textContent = "Between rounds" + (s.stopping ? " · stopping" : "");
+		return;
+	}
+	const fight = s.fightStart > 0 ? " · fight " + clock(s.time - s.fightStart) + " / " + clock(s.timeLimit * 1000) : "";
+	document.getElementById("statusText").textContent = "Round " + s.round + "/" + s.rounds + " · " + s.phase.toLowerCase() + " · " + clock(s.time) + fight + (s.stopping ? " · stopping" : "");
+	for (const team of s.teams) {
+		bars.appendChild(el("span", { title: "Team " + team.id + ": " + team.alive + "/" + team.total + " alive, " + pct(team.health) + " HP+CP" }, swatch(team.id), hpBar(team.health, teamColor(team.id))));
+	}
+}
+
+// ------------------------------------------------------------------------------------------------
+// Past runs
+// ------------------------------------------------------------------------------------------------
+async function loadRuns() {
+	try {
+		const data = await api("runs");
+		state.runs = data.runs;
+		document.getElementById("runCount").textContent = data.runs.length + " / " + data.keep + " kept";
+		if (state.series) {
+			const fresh = data.runs.find(r => r.name === state.series.name);
+			if (fresh) {
+				const roundsChanged = fresh.roundsDone !== state.series.roundsDone || fresh.results.length !== state.series.results.length;
+				state.series = fresh;
+				if (roundsChanged) renderSeries();
+			}
+		}
+		renderRuns();
+	} catch (e) {
+		if (e.message !== "auth") toast("Could not list the runs: " + e.message, true);
+	}
+}
+
+function winsText(run) {
+	const wins = {};
+	for (const r of run.results) if (r.winner > 0) wins[r.winner] = (wins[r.winner] || 0) + 1;
+	return wins;
+}
+
+// "A 7/10 (70%) · B 3/10 (30%)", or null for a run where every team ran A.
+function brainWinsText(run) {
+	const brains = Object.keys(run.brainWins || {});
+	if (!brains.length || (brains.length === 1 && brains[0] === "A")) return null;
+	return brains.sort().map(b => {
+		const w = run.brainWins[b];
+		return b + " " + w.wins + "/" + w.games + (w.games ? " (" + Math.round(100 * w.wins / w.games) + "%)" : "");
+	}).join(" · ");
+}
+
+function renderRuns() {
+	const box = document.getElementById("runs");
+	box.replaceChildren();
+	if (!state.runs.length) {
+		box.appendChild(el("div", { class: "empty" }, "No simulation has run yet."));
+		return;
+	}
+	for (const run of state.runs) {
+		const wins = winsText(run);
+		const draws = run.results.filter(r => r.winner <= 0).length;
+		box.appendChild(el("div", { class: "run" + (state.series && state.series.name === run.name && !state.live ? " sel" : ""), onclick: () => selectSeries(run.name) },
+			el("div", { class: "top" }, el("span", null, runDate(run.name)), run.running ? el("span", { class: "chip gold" }, "running") : el("span", { class: "muted" }, run.roundsDone + "/" + run.rounds + " rd")),
+			el("div", { class: "sub" }, run.points.length + " teams of " + run.size + " · lvl " + run.level + (run.mirror ? " · mirror" : "") + (run.brains && run.brains !== "A" ? " · brains " + run.brains : "") + (run.swap ? " · A/B" : "") + " · seed " + run.seed),
+			brainWinsText(run) ? el("div", { class: "sub", title: "Wins/games by brain" }, brainWinsText(run)) : null,
+			el("div", { class: "wins" },
+				Object.keys(wins).sort((a, b) => a - b).map(team => el("span", { style: "margin-right:8px" }, swatch(+team), "T" + team + " " + wins[team])),
+				draws ? el("span", { class: "muted" }, draws + " no winner") : null,
+				run.rerunOf ? el("span", { class: "chip", title: "Rerun of " + run.rerunOf }, "rerun") : null)));
+	}
+}
+
+async function selectSeries(name, round) {
+	const run = state.runs.find(r => r.name === name);
+	if (!run) return;
+	stopPlaying();
+	state.live = false;
+	state.series = run;
+	state.round = round || 1;
+	state.member = null;
+	state.memberData = null;
+	renderRuns();
+	renderSeries();
+	await loadRound();
+}
+
+// ------------------------------------------------------------------------------------------------
+// Series view
+// ------------------------------------------------------------------------------------------------
+function pointOptions(select, ownName) {
+	select.replaceChildren();
+	if (ownName) {
+		const own = state.runs.find(r => r.name === ownName);
+		select.appendChild(el("option", { value: "same" }, "This run's points (" + (own ? own.points.length : "?") + ")"));
+	}
+	select.appendChild(el("option", { value: "saved" }, "Saved points now (" + (state.status ? state.status.savedPoints : "?") + ")"));
+	for (const run of state.runs) {
+		if (run.name === ownName) continue;
+		select.appendChild(el("option", { value: run.name }, "Points of " + runDate(run.name) + " (" + run.points.length + ")"));
+	}
+}
+
+function renderSeries() {
+	const run = state.series;
+	const main = document.getElementById("main");
+	main.replaceChildren();
+	const pointsSelect = el("select", { title: "Where the teams spawn" });
+	pointOptions(pointsSelect, run.name);
+	const busy = state.status && state.status.running;
+	const sameTip = "Same size, level, mirror, seed, rounds and time limit: the same builds, gear and names. Combat rolls aren't seeded, so the fights play out differently.";
+	const rounds = [];
+	for (let i = 1; i <= run.roundsDone; i++) rounds.push(i);
+
+	main.appendChild(el("div", { class: "card" },
+		el("div", { class: "title" },
+			el("h2", null, runDate(run.name)),
+			run.running ? el("span", { class: "chip gold" }, "running") : null,
+			run.rerunOf ? el("span", { class: "chip", style: "cursor:pointer", title: "Open the run this one reruns", onclick: () => selectSeries(run.rerunOf) }, "rerun of " + runDate(run.rerunOf)) : null,
+			el("div", { class: "grow" }),
+			pointsSelect,
+			el("button", { class: "primary", title: sameTip, disabled: busy, onclick: () => rerun(run.name, pointsSelect.value) }, "Rerun"),
+			el("button", { title: "Open the form with these settings", onclick: () => openNew(run, pointsSelect.value === "same" ? run.name : pointsSelect.value) }, "Edit & run")),
+		el("div", { class: "row" },
+			el("span", { class: "chip" }, run.points.length + " teams of " + run.size),
+			el("span", { class: "chip" }, "level " + run.level),
+			run.mirror ? el("span", { class: "chip" }, "mirror") : null,
+			run.brains && run.brains !== "A" ? el("span", { class: "chip", title: "The AI of each team (A current, B experimental)" }, "brains " + run.brains) : null,
+			run.swap ? el("span", { class: "chip", title: "Mirrored teams, brains swap sides every round, new teams every 2 rounds" }, "A/B test") : null,
+			brainWinsText(run) ? el("span", { class: "chip gold", title: "Wins/games by brain" }, brainWinsText(run)) : null,
+			el("span", { class: "chip" }, "seed " + run.seed),
+			el("span", { class: "chip" }, run.rounds + " round(s)"),
+			el("span", { class: "chip" }, run.timeLimit + " s limit"),
+			el("span", { class: "chip", title: "Where its points came from" }, "points: " + (run.pointsFrom == null || run.pointsFrom === "saved" ? "saved" : run.pointsFrom === run.name ? "own" : runDate(run.pointsFrom)))),
+		el("table", { style: "margin-top:10px" },
+			el("tr", null, el("th", null, "Point"), el("th", { class: "num" }, "x"), el("th", { class: "num" }, "y"), el("th", { class: "num" }, "z"), el("th", null, "Builds")),
+			run.points.map(p => el("tr", null, el("td", null, swatch(p.id), "Team " + p.id), el("td", { class: "num" }, p.x), el("td", { class: "num" }, p.y), el("td", { class: "num" }, p.z), el("td", { style: "white-space:normal" }, (run.teams[p.id] || []).join(", "))))),
+		el("div", { class: "row", style: "margin-top:10px" },
+			el("span", { class: "muted" }, "Round"),
+			el("div", { class: "tabs" }, rounds.map(i => {
+				const result = run.results.find(r => r.round === i);
+				return el("button", { class: i === state.round ? "on" : null, title: result ? (result.winner > 0 ? "Team " + result.winner + (result.winnerBrain ? " (brain " + result.winnerBrain + ")" : "") + " won" : "No winner") + " (" + result.reason + ")" : "running", onclick: () => { state.round = i; state.member = null; state.memberData = null; renderSeries(); loadRound(); } }, i, result && result.winner > 0 ? el("span", { class: "swatch", style: "margin:0 0 0 5px;background:" + teamColor(result.winner) }) : null);
+			})))));
+	main.appendChild(el("div", { id: "roundBox" }, el("div", { class: "empty" }, "Loading the round…")));
+}
+
+async function loadRound() {
+	const run = state.series;
+	if (!run) return;
+	const params = { series: run.name, round: state.round };
+	try {
+		const [roundData, positions] = await Promise.all([api("round", params), api("positions", params)]);
+		if (state.series !== run || params.round !== state.round) return;
+		state.roundData = roundData;
+		state.positions = positions;
+		state.members = {};
+		for (const m of roundData.run.members || []) state.members[m.id] = Object.assign({}, m);
+		if (roundData.summary) {
+			for (const team of roundData.summary.teams) for (const m of team.members) state.members[m.id] = Object.assign(state.members[m.id] || {}, m, { team: team.id });
+		}
+		let end = 0;
+		for (const track of Object.values(positions.members)) if (track.t.length) end = Math.max(end, track.t[track.t.length - 1]);
+		state.duration = end;
+		state.t = Math.min(state.t, end) || end;
+		renderRound();
+	} catch (e) {
+		if (e.message === "auth") return;
+		const box = document.getElementById("roundBox");
+		if (box) box.replaceChildren(el("div", { class: "card empty" }, "Could not load the round: " + e.message));
+	}
+}
+
+function memberName(id) {
+	const m = state.members[id];
+	if (m) return m.name;
+	const track = state.positions && state.positions.members[id];
+	return track ? track.name : "#" + id;
+}
+
+function renderRound() {
+	const box = document.getElementById("roundBox");
+	if (!box) return;
+	box.replaceChildren();
+	const data = state.roundData;
+	const summary = data.summary;
+
+	// Result and teams.
+	const result = summary
+		? el("div", { class: "row" },
+			summary.winner > 0 ? el("h3", null, swatch(summary.winner), "Team " + summary.winner + " won") : el("h3", null, "No winner"),
+			el("span", { class: "chip" }, summary.reason),
+			el("span", { class: "chip" }, "fight " + clock(summary.fightDuration)),
+			Object.keys(summary.anomalyCounts || {}).length ? el("span", { class: "chip", title: Object.entries(summary.anomalyCounts).map(([k, v]) => k + ": " + v).join("\n") }, Object.values(summary.anomalyCounts).reduce((a, b) => a + b, 0) + " anomalies") : null)
+		: el("div", { class: "row" }, el("h3", null, data.running ? "In progress" : "No summary"), el("span", { class: "muted" }, data.running ? "the logs are written as the round goes and complete when it ends" : "the round was cut short"));
+
+	const head = el("tr", null, el("th", null, "Character"), el("th", null, "Role"), el("th", null, "Build"), el("th", { class: "num" }, "Dealt"), el("th", { class: "num" }, "Taken"), el("th", { class: "num" }, "Healed"), el("th", { class: "num" }, "K/D"), el("th", { class: "num" }, "Alive"), el("th", { class: "num" }, "Anom."));
+	const rows = [];
+	const byTeam = {};
+	for (const m of Object.values(state.members)) (byTeam[m.team] = byTeam[m.team] || []).push(m);
+	for (const team of Object.keys(byTeam).sort((a, b) => a - b)) {
+		for (const m of byTeam[team]) {
+			const anomalies = m.anomalies ? Object.values(m.anomalies).reduce((a, b) => a + b, 0) : "";
+			rows.push(el("tr", { class: "click member-row" + (state.member === m.id ? " sel" : ""), "data-id": m.id, onclick: () => selectMember(m.id) },
+				el("td", null, swatch(m.team), m.name, m.admin ? el("span", { class: "chip gold", style: "margin-left:5px" }, "GM") : null),
+				el("td", null, String(m.role || "").toLowerCase()),
+				el("td", null, m.build),
+				el("td", { class: "num" }, num(m.damageDealt)),
+				el("td", { class: "num" }, num(m.damageTaken)),
+				el("td", { class: "num" }, num(m.healDone)),
+				el("td", { class: "num" }, m.kills != null ? m.kills + "/" + m.deaths : ""),
+				el("td", { class: "num" }, m.aliveTime != null ? clock(m.aliveTime) : ""),
+				el("td", { class: "num" }, anomalies || "")));
+		}
+	}
+	box.appendChild(el("div", { class: "card" }, el("div", { class: "title" }, result), el("div", { class: "scroll" }, el("table", null, head, rows))));
+
+	// Map.
+	box.appendChild(mapCard());
+	drawMap();
+
+	// The selected character.
+	box.appendChild(el("div", { id: "memberBox" }));
+	if (state.member) loadMember(); else renderMember();
+
+	// Anomalies of the round.
+	if (data.anomalies.length) {
+		box.appendChild(el("div", { class: "card", style: "margin-top:14px" },
+			el("div", { class: "title" }, el("h3", null, "Anomalies (" + data.anomalies.length + ")")),
+			el("div", { class: "scroll", style: "max-height:260px" }, el("table", null,
+				el("tr", null, el("th", null, "Time"), el("th", null, "Type"), el("th", null, "Character"), el("th", null, "Details")),
+				data.anomalies.map(a => el("tr", { class: "click", onclick: () => { selectMember(a.id); setTime(a.from != null ? a.from : a.t); } },
+					el("td", null, clock(a.from != null ? a.from : a.t) + (a.to != null && a.to !== a.from ? " – " + clock(a.to) : "")),
+					el("td", null, a.type),
+					el("td", null, swatch(a.team), a.name),
+					el("td", { class: "muted", style: "white-space:normal" }, a.details ? Object.entries(a.details).map(([k, v]) => k + " " + (typeof v === "object" ? JSON.stringify(v) : v)).join(", ") : "")))))));
+	}
+}
+
+// ------------------------------------------------------------------------------------------------
+// Map
+// ------------------------------------------------------------------------------------------------
+let mapGeometry = null;
+
+function mapCard() {
+	const legendTeams = [...new Set(Object.values(state.members).map(m => m.team))].sort((a, b) => a - b);
+	return el("div", { class: "card", style: "margin-bottom:14px" },
+		el("div", { class: "title" },
+			el("h3", null, "Map"),
+			el("div", { class: "legend" }, legendTeams.map(t => el("span", null, swatch(t), "Team " + t)), el("span", { class: "muted" }, "◇ spawn point · ✕ dead · dashed: target of the selected character")),
+			el("div", { class: "grow" })),
+		el("div", { id: "mapwrap" },
+			svg("svg", { id: "map" }),
+			el("div", { class: "timeline" },
+				el("button", { id: "btnPlay", onclick: togglePlay }, state.playing ? "❚❚" : "▶"),
+				el("select", { title: "Playback speed", onchange: e => { state.speed = +e.target.value; } }, [1, 2, 4, 8, 16].map(s => el("option", { value: s, selected: s === state.speed }, s + "×"))),
+				el("input", { type: "range", id: "scrub", min: 0, max: state.duration, step: 100, value: state.t, oninput: e => setTime(+e.target.value) }),
+				el("span", { class: "clock", id: "clock" }, clock(state.t) + " / " + clock(state.duration)))));
+}
+
+/** Fits the world rectangle of the round (positions and points) into the map. */
+function computeGeometry(tracks, points) {
+	let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+	const add = (x, y) => { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); };
+	for (const track of tracks) for (let i = 0; i < track.x.length; i++) add(track.x[i], track.y[i]);
+	for (const p of points) add(p.x, p.y);
+	if (minX === Infinity) { minX = 0; maxX = 1000; minY = 0; maxY = 1000; }
+	const pad = Math.max(150, (maxX - minX + maxY - minY) * 0.06);
+	return { minX: minX - pad, minY: minY - pad, w: Math.max(400, maxX - minX + pad * 2), h: Math.max(400, maxY - minY + pad * 2) };
+}
+
+function drawMap() {
+	const map = document.getElementById("map");
+	if (!map) return;
+	map.replaceChildren();
+	const tracks = Object.entries(state.positions.members).map(([id, track]) => Object.assign({ id: +id }, track));
+	const points = state.roundData.run.points || [];
+	const g = mapGeometry = computeGeometry(tracks, points);
+	map.setAttribute("viewBox", g.minX + " " + g.minY + " " + g.w + " " + g.h);
+	map.setAttribute("preserveAspectRatio", "xMidYMid meet");
+	const unit = Math.max(g.w, g.h) / 600; // one screen pixel, roughly
+
+	// Grid every 500 (or 1000) world units, recessive.
+	const step = g.w > 8000 ? 1000 : 500;
+	const grid = svg("g", { stroke: "#1b1b22", "stroke-width": unit });
+	for (let x = Math.ceil(g.minX / step) * step; x < g.minX + g.w; x += step) grid.appendChild(svg("line", { x1: x, y1: g.minY, x2: x, y2: g.minY + g.h }));
+	for (let y = Math.ceil(g.minY / step) * step; y < g.minY + g.h; y += step) grid.appendChild(svg("line", { x1: g.minX, y1: y, x2: g.minX + g.w, y2: y }));
+	map.appendChild(grid);
+	const scale = svg("g", { fill: "#6f6a5e" });
+	const sx = g.minX + 20 * unit, sy = g.minY + g.h - 20 * unit;
+	scale.appendChild(svg("line", { x1: sx, y1: sy, x2: sx + step, y2: sy, stroke: "#6f6a5e", "stroke-width": 2 * unit }));
+	const scaleText = svg("text", { x: sx, y: sy - 6 * unit, "font-size": 11 * unit });
+	scaleText.textContent = step + " units";
+	scale.appendChild(scaleText);
+	map.appendChild(scale);
+
+	// Spawn points.
+	for (const p of points) {
+		const s = 9 * unit;
+		map.appendChild(svg("path", { d: "M" + p.x + " " + (p.y - s) + "L" + (p.x + s) + " " + p.y + "L" + p.x + " " + (p.y + s) + "L" + (p.x - s) + " " + p.y + "Z", fill: "none", stroke: teamColor(p.id), "stroke-width": 2 * unit }));
+		const label = svg("text", { x: p.x + 12 * unit, y: p.y + 4 * unit, "font-size": 11 * unit, fill: "#8a7a55" });
+		label.textContent = "P" + p.id;
+		map.appendChild(label);
+	}
+
+	// Trails: faint for everyone, bright for the selected character.
+	const trails = svg("g", { fill: "none", "stroke-linejoin": "round", "stroke-linecap": "round" });
+	for (const track of tracks) {
+		if (!track.x.length) continue;
+		const selected = track.id === state.member;
+		let d = "";
+		for (let i = 0; i < track.x.length; i++) d += (i ? "L" : "M") + track.x[i] + " " + track.y[i];
+		trails.appendChild(svg("path", { d, stroke: teamColor(track.team), "stroke-width": (selected ? 2.5 : 1.5) * unit, opacity: state.member == null ? 0.35 : selected ? 0.95 : 0.12 }));
+	}
+	map.appendChild(trails);
+	map.appendChild(svg("g", { id: "mapNow" }));
+	drawNow();
+}
+
+/** The dots at the scrubber time. */
+function drawNow() {
+	const layer = document.getElementById("mapNow");
+	if (!layer || !mapGeometry) return;
+	layer.replaceChildren();
+	const g = mapGeometry;
+	const unit = Math.max(g.w, g.h) / 600;
+	const strings = state.positions.strings;
+	const now = {};
+	for (const [id, track] of Object.entries(state.positions.members)) {
+		const i = at(track.t, state.t);
+		if (i < 0) continue;
+		now[id] = { id: +id, track, i, x: track.x[i], y: track.y[i] };
+	}
+
+	// The selected character's target.
+	const sel = state.member != null ? now[state.member] : null;
+	if (sel) {
+		const target = now[sel.track.target[sel.i]];
+		if (target) layer.appendChild(svg("line", { x1: sel.x, y1: sel.y, x2: target.x, y2: target.y, stroke: "#f0e6c8", "stroke-width": 1.5 * unit, "stroke-dasharray": (6 * unit) + " " + (4 * unit), opacity: 0.8 }));
+	}
+
+	for (const dot of Object.values(now)) {
+		const track = dot.track;
+		const alive = track.alive[dot.i] === 1;
+		const selected = dot.id === state.member;
+		const r = (selected ? 8 : 6) * unit;
+		const group = svg("g", { style: "cursor:pointer" });
+		// A bigger, invisible hit area.
+		group.appendChild(svg("circle", { cx: dot.x, cy: dot.y, r: r * 2, fill: "transparent" }));
+		if (alive) {
+			const hp = track.hp[dot.i] / 100;
+			group.appendChild(svg("circle", { cx: dot.x, cy: dot.y, r, fill: teamColor(track.team), stroke: "#0d0d12", "stroke-width": 2 * unit }));
+			// HP ring.
+			const ring = r + 3 * unit;
+			const length = 2 * Math.PI * ring;
+			group.appendChild(svg("circle", { cx: dot.x, cy: dot.y, r: ring, fill: "none", stroke: "#26262e", "stroke-width": 2 * unit }));
+			group.appendChild(svg("circle", { cx: dot.x, cy: dot.y, r: ring, fill: "none", stroke: hp > 0.5 ? "#0ca30c" : hp > 0.25 ? "#fab219" : "#d03b3b", "stroke-width": 2 * unit, "stroke-dasharray": (length * hp) + " " + length, transform: "rotate(-90 " + dot.x + " " + dot.y + ")" }));
+		} else {
+			const s = r * 0.8;
+			group.appendChild(svg("path", { d: "M" + (dot.x - s) + " " + (dot.y - s) + "L" + (dot.x + s) + " " + (dot.y + s) + "M" + (dot.x + s) + " " + (dot.y - s) + "L" + (dot.x - s) + " " + (dot.y + s), stroke: teamColor(track.team), "stroke-width": 2.5 * unit, opacity: 0.7 }));
+		}
+		if (selected) group.appendChild(svg("circle", { cx: dot.x, cy: dot.y, r: r + 7 * unit, fill: "none", stroke: "#d9b64c", "stroke-width": 1.5 * unit }));
+		if (selected || (state.member == null && alive)) {
+			const label = svg("text", { x: dot.x + r + 5 * unit, y: dot.y - r, "font-size": 11 * unit, fill: "#c9c2ad" });
+			label.textContent = track.name;
+			group.appendChild(label);
+		}
+		const decision = track.d[dot.i] >= 0 ? strings[track.d[dot.i]] : "";
+		const casting = track.c[dot.i] >= 0 ? strings[track.c[dot.i]] : "";
+		const m = state.members[dot.id] || {};
+		group.addEventListener("mousemove", e => showTip(e, [
+			[null, track.name + " · team " + track.team],
+			["build", m.build || ""],
+			["HP", alive ? track.hp[dot.i] + "% · CP " + track.cp[dot.i] : "dead"],
+			["decision", decision],
+			casting ? ["casting", casting] : null,
+			track.target[dot.i] ? ["target", memberName(track.target[dot.i])] : null,
+			["at", track.x[dot.i] + ", " + track.y[dot.i] + ", " + track.z[dot.i]]
+		].filter(Boolean)));
+		group.addEventListener("mouseleave", hideTip);
+		group.addEventListener("click", () => selectMember(dot.id));
+		layer.appendChild(group);
+	}
+}
+
+function setTime(t) {
+	state.t = Math.max(0, Math.min(state.duration, t));
+	const scrub = document.getElementById("scrub");
+	if (scrub) scrub.value = state.t;
+	const c = document.getElementById("clock");
+	if (c) c.textContent = clock(state.t) + " / " + clock(state.duration);
+	drawNow();
+	markCurrentRow();
+}
+
+let playTimer = null, playLast = 0;
+function togglePlay() {
+	if (state.playing) { stopPlaying(); return; }
+	if (state.t >= state.duration) state.t = 0;
+	state.playing = true;
+	playLast = performance.now();
+	const tick = now => {
+		if (!state.playing) return;
+		setTime(state.t + (now - playLast) * state.speed);
+		playLast = now;
+		if (state.t >= state.duration) { stopPlaying(); return; }
+		playTimer = requestAnimationFrame(tick);
+	};
+	playTimer = requestAnimationFrame(tick);
+	const b = document.getElementById("btnPlay");
+	if (b) b.textContent = "❚❚";
+}
+function stopPlaying() {
+	state.playing = false;
+	if (playTimer) cancelAnimationFrame(playTimer);
+	playTimer = null;
+	const b = document.getElementById("btnPlay");
+	if (b) b.textContent = "▶";
+}
+
+// ------------------------------------------------------------------------------------------------
+// One character
+// ------------------------------------------------------------------------------------------------
+async function selectMember(id) {
+	if (state.live) return;
+	state.member = id;
+	state.memberData = null;
+	state.reasonFilter = "";
+	drawMap();
+	renderRoundTableSelection();
+	await loadMember();
+	const box = document.getElementById("memberBox");
+	if (box) box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function renderRoundTableSelection() {
+	document.querySelectorAll("#roundBox tr.member-row").forEach(row => row.classList.toggle("sel", +row.dataset.id === state.member));
+}
+
+async function loadMember() {
+	const id = state.member;
+	const run = state.series;
+	try {
+		const data = await api("member", { series: run.name, round: state.round, id });
+		if (state.member !== id || state.series !== run) return;
+		state.memberData = data;
+		renderMember();
+	} catch (e) {
+		if (e.message !== "auth") toast("Could not load the character: " + e.message, true);
+	}
+}
+
+function describeEvent(e) {
+	const skip = new Set(["t", "type", "id", "name", "team", "runId"]);
+	const parts = [];
+	for (const [k, v] of Object.entries(e)) {
+		if (skip.has(k) || v == null || k.endsWith("Id") || k.endsWith("Team")) continue;
+		parts.push(k + " " + (typeof v === "object" ? JSON.stringify(v) : v));
+	}
+	return parts.join(" · ");
+}
+
+let rowTimes = [];
+function renderMember() {
+	const box = document.getElementById("memberBox");
+	if (!box) return;
+	box.replaceChildren();
+	if (state.member == null) {
+		box.appendChild(el("div", { class: "card empty" }, "Click a character in the table or on the map to see its decisions and where it went."));
+		return;
+	}
+	const m = state.members[state.member] || { name: memberName(state.member) };
+	const data = state.memberData;
+	if (!data) {
+		box.appendChild(el("div", { class: "card empty" }, "Loading " + m.name + "…"));
+		return;
+	}
+
+	// Time per decision, from the summary (single hue: the bar length is the value).
+	const reasonTime = m.decisionTime || {};
+	const totalReason = Object.values(reasonTime).reduce((a, b) => a + b, 0);
+	const reasonsSorted = Object.entries(reasonTime).sort((a, b) => b[1] - a[1]);
+	const maxReason = reasonsSorted.length ? reasonsSorted[0][1] : 1;
+	const counts = {};
+	for (const d of data.decisions) counts[d.reason] = (counts[d.reason] || 0) + 1;
+
+	const left = el("div", { class: "card" },
+		el("div", { class: "title" }, el("h2", null, swatch(m.team), m.name), el("button", { title: "Clear the selection", onclick: () => { state.member = null; state.memberData = null; drawMap(); renderMember(); renderRoundTableSelection(); } }, "✕")),
+		el("div", { class: "muted" }, [m.build, m.role ? String(m.role).toLowerCase() : null, m.classId != null ? "class " + m.classId : null, m.personality].filter(Boolean).join(" · ")),
+		el("div", { class: "stats" },
+			[["Dealt", num(m.damageDealt)], ["Taken", num(m.damageTaken)], ["Healed", num(m.healDone)], ["K / D", m.kills != null ? m.kills + " / " + m.deaths : ""], ["Alive", m.aliveTime != null ? clock(m.aliveTime) : ""], ["Walked", num(m.distance)], ["Resisted", m.resisted], ["Path fails", m.pathFailures], ["Decisions", data.decisions.length]].map(([k, v]) => el("div", null, el("b", null, v == null ? "" : v), el("span", null, k)))),
+		m.anomalies && Object.keys(m.anomalies).length ? el("div", { style: "margin-bottom:8px" }, Object.entries(m.anomalies).map(([k, v]) => el("span", { class: "chip", style: "color:#ec835a" }, k + " " + v))) : null,
+		el("h3", { style: "margin:8px 0 4px" }, "Time per decision"),
+		reasonsSorted.length ? reasonsSorted.map(([reason, ms]) => el("div", { class: "reason", style: "cursor:pointer", title: clock(ms) + " in " + reason + " · " + (counts[reason] || 0) + " line(s) · click to filter", onclick: () => { state.reasonFilter = state.reasonFilter === reason ? "" : reason; renderMember(); } },
+			el("span", { style: state.reasonFilter === reason ? "color:var(--gold)" : "" }, reason),
+			el("span", { class: "bar" }, el("i", { style: "width:" + Math.max(2, (ms / maxReason) * 100) + "%" })),
+			el("span", { class: "muted", style: "text-align:right" }, Math.round((ms / Math.max(1, totalReason)) * 100) + "%")))
+			: el("div", { class: "muted" }, "Not in the summary yet."));
+
+	// Decisions, with events and anomalies mixed in by time.
+	const rows = [];
+	for (const d of data.decisions) if (!state.reasonFilter || d.reason === state.reasonFilter) rows.push({ t: d.t, kind: "decision", d });
+	if (state.showEvents && !state.reasonFilter) {
+		for (const e of data.events) rows.push({ t: e.t, kind: "event", e });
+		for (const a of data.anomalies) rows.push({ t: a.from != null ? a.from : a.t, kind: "anomaly", a });
+	}
+	rows.sort((a, b) => a.t - b.t);
+	rowTimes = rows.map(r => r.t);
+
+	const reasonSelect = el("select", { onchange: e => { state.reasonFilter = e.target.value; renderMember(); } },
+		el("option", { value: "" }, "All decisions"),
+		Object.keys(counts).sort().map(r => el("option", { value: r, selected: r === state.reasonFilter }, r + " (" + counts[r] + ")")));
+	const table = el("table", { id: "decisions" },
+		el("tr", null, el("th", null, "Time"), el("th", null, "Decision"), el("th", null, "Kind"), el("th", null, "Skill"), el("th", null, "Target"), el("th", { class: "num" }, "Gap"), el("th", null, "LOS"), el("th", { class: "num" }, "HP"), el("th", { class: "num" }, "Tgt HP"), el("th", null, "Intention"), el("th", { class: "num" }, "x, y, z"), el("th", { class: "num" }, "Leader")),
+		rows.map((r, i) => {
+			const click = () => { stopPlaying(); setTime(r.t); };
+			if (r.kind === "event") {
+				return el("tr", { class: "click kind-event", "data-i": i, onclick: click }, el("td", null, clock(r.t)), el("td", null, r.e.type), el("td", { colspan: 10, class: "muted", style: "white-space:normal;color:#7f94b0" }, describeEvent(r.e)));
+			}
+			if (r.kind === "anomaly") {
+				return el("tr", { class: "click kind-anomaly", "data-i": i, onclick: click }, el("td", null, clock(r.t)), el("td", null, "⚠ " + r.a.type), el("td", { colspan: 10, style: "white-space:normal" }, r.a.details ? Object.entries(r.a.details).map(([k, v]) => k + " " + (typeof v === "object" ? JSON.stringify(v) : v)).join(" · ") : ""));
+			}
+			const d = r.d;
+			return el("tr", { class: "click", "data-i": i, onclick: click, title: d.previous ? "after " + d.previous : null },
+				el("td", null, clock(d.t)),
+				el("td", { style: "color:var(--cream)" }, d.reason),
+				el("td", { class: "muted" }, d.kind || ""),
+				el("td", null, d.skill || ""),
+				el("td", null, d.target || ""),
+				el("td", { class: "num" }, d.gap != null ? d.gap : ""),
+				el("td", null, d.los == null ? "" : d.los ? "yes" : el("span", { style: "color:#ec835a" }, "no")),
+				el("td", { class: "num" }, pct(d.hp)),
+				el("td", { class: "num" }, pct(d.targetHp)),
+				el("td", { class: "muted" }, d.intention || ""),
+				el("td", { class: "num" }, d.x + ", " + d.y + ", " + d.z),
+				el("td", { class: "num" }, d.leaderDist != null ? d.leaderDist : ""));
+		}));
+
+	const right = el("div", { class: "card" },
+		el("div", { class: "title" },
+			el("h3", null, "Decisions and location"),
+			el("span", { class: "muted" }, rows.length + " line(s)" + (data.cut ? " (cut: too many)" : "")),
+			el("div", { class: "grow" }),
+			reasonSelect,
+			el("label", { class: "muted" }, el("input", { type: "checkbox", checked: state.showEvents, onchange: e => { state.showEvents = e.target.checked; renderMember(); } }), " events & anomalies")),
+		el("div", { class: "scroll", id: "decisionScroll", style: "max-height:520px" }, rows.length ? table : el("div", { class: "empty" }, "No decisions logged for this character.")));
+
+	box.appendChild(el("div", { class: "split" }, left, right));
+	markCurrentRow();
+}
+
+/** Highlights the last line at or before the scrubber, and keeps it in view while playing. */
+let currentRow = -1;
+function markCurrentRow() {
+	const table = document.getElementById("decisions");
+	if (!table) return;
+	const i = at(rowTimes, state.t);
+	if (i === currentRow && table.querySelector("tr.now")) return;
+	const old = table.querySelector("tr.now");
+	if (old) old.classList.remove("now");
+	currentRow = i;
+	if (i < 0) return;
+	const row = table.querySelector('tr[data-i="' + i + '"]');
+	if (!row) return;
+	row.classList.add("now");
+	const scroll = document.getElementById("decisionScroll");
+	const top = row.offsetTop, bottom = top + row.offsetHeight;
+	if (top < scroll.scrollTop + 24 || bottom > scroll.scrollTop + scroll.clientHeight) scroll.scrollTop = top - scroll.clientHeight / 2;
+}
+
+// ------------------------------------------------------------------------------------------------
+// Live view
+// ------------------------------------------------------------------------------------------------
+function openLive() {
+	if (!state.status || !state.status.running) return;
+	stopPlaying();
+	state.live = true;
+	state.series = null;
+	renderRuns();
+	renderLive();
+}
+
+function renderLive() {
+	const s = state.status;
+	const main = document.getElementById("main");
+	if (!s.running) {
+		state.live = false;
+		main.replaceChildren(el("div", { class: "card empty" }, "The simulation is over.", el("br"), s.series ? el("button", { style: "margin-top:10px", onclick: () => selectSeries(s.series) }, "Open its results") : null));
+		const last = state.runs[0];
+		if (last) main.firstChild.appendChild(el("button", { class: "primary", style: "margin:10px 0 0 8px", onclick: () => selectSeries(last.name) }, "Open the last run"));
+		return;
+	}
+	const card = el("div", { class: "card" },
+		el("div", { class: "title" }, el("h2", null, "Live"), el("span", { class: "muted" }, s.series ? runDate(s.series) : ""), el("div", { class: "grow" }), s.series ? el("button", { onclick: () => selectSeries(s.series, s.round) }, "Open its logs") : null),
+		s.teams ? null : el("div", { class: "muted" }, "Between rounds…"));
+	if (s.teams) {
+		const grid = el("div", { style: "display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px" });
+		for (const team of s.teams) {
+			grid.appendChild(el("div", { style: "border:1px solid var(--line);border-radius:4px;padding:8px" },
+				el("div", { class: "row", style: "justify-content:space-between" }, el("h3", null, swatch(team.id), "Team " + team.id, team.brain ? el("span", { class: "chip", style: "margin-left:6px", title: "The AI this team runs" }, "brain " + team.brain) : null), el("span", { class: "muted" }, team.alive + "/" + team.total + " · " + pct(team.health))),
+				team.members.map(m => el("div", { class: "row", style: "justify-content:space-between;margin-top:3px", title: m.build + (m.decision ? " · " + m.decision : "") },
+					el("span", { style: m.alive ? "" : "color:var(--dim);text-decoration:line-through" }, m.name, el("span", { class: "muted" }, " " + m.role.toLowerCase())),
+					el("span", null, el("span", { class: "muted", style: "font-size:11px;margin-right:6px" }, m.decision || ""), hpBar(m.alive ? m.hp : 0, teamColor(team.id)))))));
+		}
+		card.appendChild(grid);
+		// Where everyone is now.
+		const map = svg("svg", { id: "liveMap", style: "width:100%;height:420px;background:#0d0d12;border:1px solid var(--line);border-radius:4px;margin-top:10px;display:block" });
+		const members = s.teams.flatMap(t => t.members.map(m => Object.assign({ team: t.id }, m)));
+		const tracks = members.map(m => ({ x: [m.x], y: [m.y] }));
+		const points = s.teams.map(t => Object.assign({ id: t.id }, t.point));
+		const g = computeGeometry(tracks, points);
+		const unit = Math.max(g.w, g.h) / 600;
+		map.setAttribute("viewBox", g.minX + " " + g.minY + " " + g.w + " " + g.h);
+		for (const p of points) {
+			const sz = 9 * unit;
+			map.appendChild(svg("path", { d: "M" + p.x + " " + (p.y - sz) + "L" + (p.x + sz) + " " + p.y + "L" + p.x + " " + (p.y + sz) + "L" + (p.x - sz) + " " + p.y + "Z", fill: "none", stroke: teamColor(p.id), "stroke-width": 2 * unit }));
+		}
+		const byId = {};
+		for (const m of members) byId[m.id] = m;
+		for (const m of members) {
+			const target = byId[m.targetId];
+			if (m.alive && target) map.appendChild(svg("line", { x1: m.x, y1: m.y, x2: target.x, y2: target.y, stroke: teamColor(m.team), "stroke-width": unit, opacity: 0.35 }));
+		}
+		for (const m of members) {
+			const dot = svg("circle", { cx: m.x, cy: m.y, r: 6 * unit, fill: m.alive ? teamColor(m.team) : "#3a3a44", stroke: "#0d0d12", "stroke-width": 2 * unit });
+			dot.addEventListener("mousemove", e => showTip(e, [[null, m.name + " · team " + m.team], ["build", m.build], ["HP", m.alive ? pct(m.hp) + " · CP " + pct(m.cp) : "dead"], ["decision", m.decision || ""], m.targetId ? ["target", byId[m.targetId] ? byId[m.targetId].name : "#" + m.targetId] : null].filter(Boolean)));
+			dot.addEventListener("mouseleave", hideTip);
+			map.appendChild(dot);
+			if (!m.alive) continue; // the dead pile up where they fell: their name is in the tooltip
+			const label = svg("text", { x: m.x + 9 * unit, y: m.y - 6 * unit, "font-size": 11 * unit, fill: "#c9c2ad" });
+			label.textContent = m.name;
+			map.appendChild(label);
+		}
+		card.appendChild(map);
+	}
+	main.replaceChildren(card);
+}
+
+// ------------------------------------------------------------------------------------------------
+// Actions
+// ------------------------------------------------------------------------------------------------
+function showLines(data) {
+	if (data && data.lines && data.lines.length) toast(data.lines.join("\n"), !data.series);
+}
+
+async function afterStart(data) {
+	showLines(data);
+	await pollStatus();
+	await loadRuns();
+	if (data && data.series) openLive();
+}
+
+async function rerun(series, points) {
+	try {
+		await afterStart(await api("rerun", { post: true, series, points }));
+	} catch (e) {
+		if (e.message !== "auth") toast(e.message, true);
+	}
+}
+
+function openNew(run, points) {
+	const s = state.status || { defaults: {} };
+	document.getElementById("newTitle").textContent = run ? "Run again, changed" : "New simulation";
+	document.getElementById("fSize").value = run ? run.size : 3;
+	document.getElementById("fLevel").value = run ? run.level : (s.defaults.level || 80);
+	document.getElementById("fMirror").checked = run ? run.mirror : false;
+	document.getElementById("fBrains").value = run && run.brains ? run.brains : "A";
+	document.getElementById("fSwap").checked = run ? !!run.swap : false;
+	document.getElementById("fSeed").value = run ? run.seed : "";
+	document.getElementById("fRounds").value = run ? run.rounds : 1;
+	document.getElementById("fTime").value = run ? run.timeLimit : (s.defaults.timeLimit || 300);
+	const select = document.getElementById("fPoints");
+	pointOptions(select, null);
+	select.value = points || "saved";
+	document.getElementById("fSwapPoints").checked = false;
+	document.getElementById("newModal").classList.add("open");
+	document.getElementById("newModal").dataset.rerunOf = run ? run.name : "";
+}
+
+async function startNew() {
+	const params = {
+		post: true,
+		size: document.getElementById("fSize").value,
+		level: document.getElementById("fLevel").value,
+		mirror: document.getElementById("fMirror").checked ? "1" : "0",
+		brains: document.getElementById("fBrains").value,
+		swap: document.getElementById("fSwap").checked ? "1" : "0",
+		seed: document.getElementById("fSeed").value,
+		rounds: document.getElementById("fRounds").value,
+		time: document.getElementById("fTime").value,
+		points: document.getElementById("fPoints").value,
+		swapPoints: document.getElementById("fSwapPoints").checked ? "1" : "0"
+	};
+	document.getElementById("newGo").disabled = true;
+	try {
+		const data = await api("start", params);
+		if (data.series) document.getElementById("newModal").classList.remove("open");
+		await afterStart(data);
+	} catch (e) {
+		if (e.message !== "auth") toast(e.message, true);
+	} finally {
+		document.getElementById("newGo").disabled = false;
+	}
+}
+
+async function stopRun() {
+	if (!confirm("Stop the running simulation?")) return;
+	try {
+		showLines(await api("stop", { post: true }));
+		pollStatus();
+	} catch (e) {
+		if (e.message !== "auth") toast(e.message, true);
+	}
+}
+
+async function openPoints() {
+	document.getElementById("pointsModal").classList.add("open");
+	const body = document.getElementById("pointsBody");
+	body.replaceChildren(el("div", { class: "muted" }, "Loading…"));
+	try {
+		const data = await api("points");
+		const links = {};
+		for (const l of data.links) links[l.a + "-" + l.b] = links[l.b + "-" + l.a] = l;
+		if (!data.points.length) {
+			body.replaceChildren(el("div", { class: "empty" }, "No saved points."));
+			return;
+		}
+		body.replaceChildren(
+			el("table", null,
+				el("tr", null, el("th", null, "Point"), el("th", { class: "num" }, "x"), el("th", { class: "num" }, "y"), el("th", { class: "num" }, "z"), el("th", { class: "num" }, "Inst."), data.points.map(p => el("th", { class: "num", title: "Distance to point " + p.id + " (red: no line of sight)" }, "→P" + p.id)), el("th", null, "")),
+				data.points.map(p => el("tr", null,
+					el("td", null, swatch(p.id), "P" + p.id),
+					el("td", { class: "num" }, p.x), el("td", { class: "num" }, p.y), el("td", { class: "num" }, p.z), el("td", { class: "num" }, p.instance || ""),
+					data.points.map(o => {
+						const l = links[p.id + "-" + o.id];
+						return el("td", { class: "num", style: l && !l.los ? "color:#ec835a" : "" }, l ? l.distance + (l.los ? "" : " ✕") : "–");
+					}),
+					el("td", null, el("button", { class: "danger", onclick: () => clearPoint(String(p.id)) }, "Clear"))))),
+			el("p", { class: "muted" }, "✕ means the two points don't see each other: the teams march around. Spawn radius " + data.spawnRadius + "."));
+	} catch (e) {
+		if (e.message !== "auth") body.replaceChildren(el("div", { class: "muted" }, e.message));
+	}
+}
+
+async function clearPoint(id) {
+	if (!confirm(id === "all" ? "Clear every saved point?" : "Clear point " + id + "?")) return;
+	try {
+		showLines(await api("points/clear", { post: true, id }));
+		openPoints();
+		pollStatus();
+	} catch (e) {
+		if (e.message !== "auth") toast(e.message, true);
+	}
+}
+
+// ------------------------------------------------------------------------------------------------
+// Start
+// ------------------------------------------------------------------------------------------------
+document.getElementById("btnNew").addEventListener("click", () => openNew(null, "saved"));
+document.getElementById("newCancel").addEventListener("click", () => document.getElementById("newModal").classList.remove("open"));
+document.getElementById("newGo").addEventListener("click", startNew);
+document.getElementById("btnStop").addEventListener("click", stopRun);
+document.getElementById("btnPoints").addEventListener("click", openPoints);
+document.getElementById("pointsClose").addEventListener("click", () => document.getElementById("pointsModal").classList.remove("open"));
+document.getElementById("pointsClearAll").addEventListener("click", () => clearPoint("all"));
+document.getElementById("pointsDraw").addEventListener("click", async () => { try { showLines(await api("points/draw", { post: true })); } catch (e) { if (e.message !== "auth") toast(e.message, true); } });
+document.getElementById("status").addEventListener("click", openLive);
+for (const modal of document.querySelectorAll(".modal")) modal.addEventListener("click", e => { if (e.target === modal) modal.classList.remove("open"); });
+document.addEventListener("keydown", e => {
+	if (e.key === "Escape") document.querySelectorAll(".modal.open").forEach(m => m.classList.remove("open"));
+	if (e.key === " " && document.getElementById("scrub") && !/INPUT|SELECT|BUTTON|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); togglePlay(); }
+});
+
+// A 401/403 (no token, SimulationWebOpenAccess off) shows the server's answer instead of the page.
+pollStatus().then(loadRuns).then(() => { if (state.status && state.status.running) openLive(); });
+setInterval(pollStatus, STATUS_MS);
+</script>
+</body>
+</html>

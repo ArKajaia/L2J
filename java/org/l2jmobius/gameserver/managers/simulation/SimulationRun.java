@@ -52,6 +52,7 @@ public class SimulationRun
 	private final SimulationMonitor _monitor;
 	private volatile Phase _phase = Phase.PREP;
 	private volatile long _fightStart;
+	private volatile long _lastClash;
 	private volatile long _end;
 	private volatile int _winner;
 	private volatile String _endReason;
@@ -194,6 +195,19 @@ public class SimulationRun
 	public void setFightStart(long fightStart)
 	{
 		_fightStart = fightStart;
+	}
+
+	/**
+	 * @return when (ms since the start) a fake player last hurt a fake player of another team, or the round was last pushed back into the fight; 0 if never
+	 */
+	public long getLastClash()
+	{
+		return _lastClash;
+	}
+
+	public void setLastClash(long time)
+	{
+		_lastClash = time;
 	}
 
 	/**

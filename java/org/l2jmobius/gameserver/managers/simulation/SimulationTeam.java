@@ -19,6 +19,7 @@ package org.l2jmobius.gameserver.managers.simulation;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.l2jmobius.gameserver.ai.FakeBrain;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 
 /**
@@ -29,15 +30,17 @@ public class SimulationTeam
 	private final int _id;
 	private final SimulationPoint _point;
 	private final List<SimRole> _roles;
+	private final FakeBrain _brain;
 	private final List<SimulationMember> _members = new CopyOnWriteArrayList<>();
 	private volatile FakePlayerParty _party;
 	private volatile boolean _firstDeathSeen;
 
-	public SimulationTeam(int id, SimulationPoint point, List<SimRole> roles)
+	public SimulationTeam(int id, SimulationPoint point, List<SimRole> roles, FakeBrain brain)
 	{
 		_id = id;
 		_point = point;
 		_roles = roles;
+		_brain = brain;
 	}
 
 	public int getId()
@@ -48,6 +51,14 @@ public class SimulationTeam
 	public SimulationPoint getPoint()
 	{
 		return _point;
+	}
+
+	/**
+	 * @return the AI its fake players run
+	 */
+	public FakeBrain getBrain()
+	{
+		return _brain;
 	}
 
 	/**

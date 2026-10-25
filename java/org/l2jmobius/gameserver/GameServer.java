@@ -205,6 +205,7 @@ public class GameServer
 	private static final Logger LOGGER = Logger.getLogger(GameServer.class.getName());
 	
 	private static final long START_TIME = System.currentTimeMillis();
+	private static volatile boolean _started;
 	private long _sectionStartTime = START_TIME;
 	private String _previousSectionName = null;
 	
@@ -526,6 +527,7 @@ public class GameServer
 		LOGGER.info(StringUtil.concat(getClass().getSimpleName(), ": Started, using ", getUsedMemoryMB(), " of ", totalMem, " MB total memory."));
 		LOGGER.info(StringUtil.concat(getClass().getSimpleName(), ": Maximum number of connected players is ", ServerConfig.MAXIMUM_ONLINE_USERS, "."));
 		LOGGER.info(StringUtil.concat(getClass().getSimpleName(), ": Server loaded in ", ((System.currentTimeMillis() - START_TIME) / 1000), " seconds."));
+		_started = true;
 		
 		new ConnectionManager<>(new InetSocketAddress(ServerConfig.PORT_GAME), GameClient::new, new GamePacketHandler());
 		
@@ -571,6 +573,14 @@ public class GameServer
 	public static long getStartTime()
 	{
 		return START_TIME;
+	}
+	
+	/**
+	 * @return {@code true} once the server finished loading (pages served during the load, like the simulation page, can be used before it)
+	 */
+	public static boolean isStarted()
+	{
+		return _started;
 	}
 	
 	public static void main(String[] args) throws Exception

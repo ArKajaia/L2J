@@ -37,6 +37,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.threads.ThreadPool;
+import org.l2jmobius.gameserver.GameServer;
+import org.l2jmobius.gameserver.ai.FakeBrain;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.custom.FakeSimulationConfig;
 import org.l2jmobius.gameserver.data.enums.CategoryType;
@@ -49,6 +51,7 @@ import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.WorldRegion;
+import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -102,6 +105,8 @@ public class FakeSimulationManager
 	private final Map<Integer, Guest> _guests = new ConcurrentHashMap<>();
 	/** Regions this run keeps awake (they were not before). */
 	private final Set<WorldRegion> _keptRegions = ConcurrentHashMap.newKeySet();
+	/** At the time limit, teams whose HP and CP left differ by less than this (a ratio of their maximum) end in a draw. */
+	private static final double TIMEOUT_TIE_MARGIN = 0.01;
 	/** //SimulationDraw: admin object id -> fake player object id. */
 	private final Map<Integer, Integer> _draws = new ConcurrentHashMap<>();
 	private ScheduledFuture<?> _drawTask;
@@ -115,19 +120,27 @@ public class FakeSimulationManager
 		final List<SimulationPoint> points;
 		final String name;
 		final Path dir;
+		/** Where the points came from: "saved", or the simulation they were taken from. */
+		final String pointsFrom;
+		/** The simulation this one reruns, {@code null} if none. */
+		final String rerunOf;
 		volatile boolean stopped;
 		final List<JsonLine> results = new ArrayList<>();
 		final Map<Integer, Integer> teamWins = new TreeMap<>();
 		final Map<String, int[]> buildStats = new TreeMap<>();
 		final Map<String, int[]> roleStats = new TreeMap<>();
+		/** Brain -> {wins, games}: a team counts once per round. */
+		final Map<String, int[]> brainStats = new TreeMap<>();
 		final Map<String, Integer> anomalies = new TreeMap<>();
 
-		Series(SimulationSettings settings, List<SimulationPoint> points, String name, Path dir)
+		Series(SimulationSettings settings, List<SimulationPoint> points, String name, Path dir, String pointsFrom, String rerunOf)
 		{
 			this.settings = settings;
 			this.points = points;
 			this.name = name;
 			this.dir = dir;
+			this.pointsFrom = pointsFrom;
+			this.rerunOf = rerunOf;
 		}
 	}
 
@@ -279,12 +292,29 @@ public class FakeSimulationManager
 		return lines;
 	}
 
-	private static boolean canSee(SimulationPoint point, SimulationPoint other)
+	/**
+	 * @return the saved points, by number
+	 */
+	public synchronized Map<Integer, SimulationPoint> getPoints()
+	{
+		return new TreeMap<>(_points);
+	}
+
+	/**
+	 * @param point a point
+	 * @param other another point
+	 * @return {@code true} if a fake player standing on one sees the other
+	 */
+	public static boolean canSee(SimulationPoint point, SimulationPoint other)
 	{
 		return GeoEngine.getInstance().canSeeTarget(point.x(), point.y(), point.z() + 40, other.x(), other.y(), other.z() + 40, point.instanceId());
 	}
 
-	private void drawPoints(Player admin)
+	/**
+	 * Draws the saved points for {@code admin}: yellow circles, lines green where two points see each other, red where they don't.
+	 * @param admin the admin
+	 */
+	public synchronized void drawPoints(Player admin)
 	{
 		final ExServerPrimitive packet = new ExServerPrimitive("SimulationPoints", admin.getX(), admin.getY(), admin.getZ());
 		final List<SimulationPoint> points = new ArrayList<>(_points.values());
@@ -324,16 +354,39 @@ public class FakeSimulationManager
 
 	/**
 	 * Starts a simulation: one party of {@code size} at every point.
-	 * @param admin the admin
+	 * @param admin the admin, {@code null} when started from the web page without one (SimulationWebOpenAccess)
 	 * @param size the party size (1-9)
 	 * @param level the level of the fake players
 	 * @param mirror {@code true} for the same builds in every team
 	 * @param seed the seed of the teams
 	 * @param rounds how many rounds
 	 * @param timeLimit the time limit of a round, in seconds
+	 * @param brains the AI of each team ("A", "A:B", see {@link SimulationSettings#brains}), {@code null} for A
+	 * @param swap {@code true} for an A/B test (see {@link SimulationSettings#swap})
 	 * @return the lines to tell the admin
 	 */
-	public synchronized List<String> simulate(Player admin, int size, int level, boolean mirror, long seed, int rounds, int timeLimit)
+	public List<String> simulate(Player admin, int size, int level, boolean mirror, long seed, int rounds, int timeLimit, String brains, boolean swap)
+	{
+		return simulate(admin, size, level, mirror, seed, rounds, timeLimit, brains, swap, null, null, null);
+	}
+
+	/**
+	 * Starts a simulation at the given points (see {@link #simulate(Player, int, int, boolean, long, int, int, String, boolean)}).
+	 * @param admin the admin, {@code null} when started from the web page without one (SimulationWebOpenAccess)
+	 * @param size the party size (1-9)
+	 * @param level the level of the fake players
+	 * @param mirror {@code true} for the same builds in every team
+	 * @param seed the seed of the teams
+	 * @param rounds how many rounds
+	 * @param timeLimit the time limit of a round, in seconds
+	 * @param brains the AI of each team ("A", "A:B", see {@link SimulationSettings#brains}), {@code null} for A
+	 * @param swap {@code true} for an A/B test (see {@link SimulationSettings#swap})
+	 * @param fromPoints the points, {@code null} for the saved ones
+	 * @param pointsFrom the simulation {@code fromPoints} come from (written in run.json), {@code null} for the saved points
+	 * @param rerunOf the simulation this one reruns (written in run.json), {@code null} if none
+	 * @return the lines to tell the admin
+	 */
+	public synchronized List<String> simulate(Player admin, int size, int level, boolean mirror, long seed, int rounds, int timeLimit, String brains, boolean swap, List<SimulationPoint> fromPoints, String pointsFrom, String rerunOf)
 	{
 		final List<String> lines = new ArrayList<>();
 		if ((_series != null) || (_run != null))
@@ -341,9 +394,22 @@ public class FakeSimulationManager
 			lines.add("A simulation is already running. //SimulationStop ends it.");
 			return lines;
 		}
-		if (_points.size() < 2)
+		// While the server starts, regions and AI tasks are still coming up: the teams would stand idle.
+		if (!GameServer.isStarted())
 		{
-			lines.add("At least 2 simulation points are needed (//SetSimulationPoint 1, //SetSimulationPoint 2...).");
+			lines.add("The server is still starting: try again in a moment.");
+			return lines;
+		}
+		final String brainList = brains != null ? SimulationSettings.normalizeBrains(brains) : FakeBrain.A.name();
+		if (brainList == null)
+		{
+			lines.add("Unknown brains \"" + brains + "\": use letters A or B, one per team (A:B).");
+			return lines;
+		}
+		final List<SimulationPoint> points = new ArrayList<>(fromPoints != null ? fromPoints : _points.values());
+		if (points.size() < 2)
+		{
+			lines.add(fromPoints != null ? "Simulation " + pointsFrom + " has fewer than 2 points." : "At least 2 simulation points are needed (//SetSimulationPoint 1, //SetSimulationPoint 2...).");
 			return lines;
 		}
 		if ((size < 1) || (size > SimulationComposer.MAX_SIZE))
@@ -357,9 +423,8 @@ public class FakeSimulationManager
 			return lines;
 		}
 
-		// Monsters and players around the points join in: better an empty place.
-		final List<SimulationPoint> points = new ArrayList<>(_points.values());
-		for (SimulationPoint point : points)
+		// Monsters and players around the points join in: better an empty place (seen from the admin, so not checked when started from the web without one).
+		for (SimulationPoint point : admin != null ? points : List.<SimulationPoint> of())
 		{
 			final int[] crowd = new int[2];
 			final Location location = new Location(point.x(), point.y(), point.z());
@@ -386,8 +451,8 @@ public class FakeSimulationManager
 
 		final String name = LocalDateTime.now().format(FOLDER_TIME) + "-" + seed;
 		final Path dir = Path.of(FakeSimulationConfig.LOG_DIR, name);
-		final SimulationSettings settings = new SimulationSettings(size, level, mirror, seed, Math.max(1, rounds), timeLimit, admin.getObjectId());
-		final Series series = new Series(settings, points, name, dir);
+		final SimulationSettings settings = new SimulationSettings(size, level, mirror, seed, Math.max(1, rounds), timeLimit, admin != null ? admin.getObjectId() : 0, brainList, swap);
+		final Series series = new Series(settings, points, name, dir, fromPoints != null ? pointsFrom : "saved", rerunOf);
 		_series = series;
 
 		final SimulationRun run = startRound(series, 1);
@@ -403,9 +468,48 @@ public class FakeSimulationManager
 		{
 			roles.append(roles.length() > 0 ? ", " : "").append(role.name().toLowerCase());
 		}
-		lines.add("Simulation started: " + points.size() + " teams of " + size + " (" + roles + "), level " + level + (mirror ? ", mirror" : "") + ", seed " + seed + ", " + settings.rounds() + " round(s), " + timeLimit + " s limit.");
+		lines.add("Simulation started: " + points.size() + " teams of " + size + " (" + roles + "), level " + level + (mirror ? ", mirror" : "") + ", seed " + seed + ", " + settings.rounds() + " round(s), " + timeLimit + " s limit, brains " + brainList + (swap ? ", A/B test (mirrored, brains swap sides every round, new teams every 2 rounds)" : "") + ".");
 		lines.add("They get ready for " + FakeSimulationConfig.PREP_TIME + " s, then march. Log: " + dir.toAbsolutePath());
 		return lines;
+	}
+
+	/**
+	 * Runs a past simulation again: the same size, level, mirror, seed, rounds and time limit, so the same builds, gear and names (the fights themselves differ).
+	 * @param admin the admin
+	 * @param seriesName the simulation to rerun (its folder name)
+	 * @param pointsFrom "same" for its own points, "saved" for the saved points, or the name of another simulation to take the points of
+	 * @return the lines to tell the admin
+	 */
+	public List<String> rerun(Player admin, String seriesName, String pointsFrom)
+	{
+		final Path dir = SimulationHistory.resolveSeries(seriesName);
+		final SimulationSettings settings = dir != null ? SimulationHistory.readSettings(dir) : null;
+		if (settings == null)
+		{
+			return List.of("No simulation " + seriesName + " (or its run.json can't be read).");
+		}
+
+		final String source = (pointsFrom == null) || pointsFrom.isEmpty() || pointsFrom.equals("same") ? seriesName : pointsFrom;
+		final List<SimulationPoint> points = getPointsOf(source);
+		if ((points == null) && !source.equals("saved"))
+		{
+			return List.of("No simulation " + source + " to take the points of.");
+		}
+		return simulate(admin, settings.size(), settings.level(), settings.mirror(), settings.seed(), settings.rounds(), settings.timeLimit(), settings.brains(), settings.swap(), points, source, seriesName);
+	}
+
+	/**
+	 * @param source "saved", or the name of a simulation
+	 * @return {@code null} for the saved points, otherwise the points that simulation used ({@code null} if there is no such simulation)
+	 */
+	public List<SimulationPoint> getPointsOf(String source)
+	{
+		if ((source == null) || source.equals("saved"))
+		{
+			return null;
+		}
+		final Path dir = SimulationHistory.resolveSeries(source);
+		return dir != null ? SimulationHistory.readPoints(dir) : null;
 	}
 
 	private synchronized SimulationRun startRound(Series series, int round)
@@ -417,7 +521,9 @@ public class FakeSimulationManager
 		_run = run;
 		ACTIVE = true;
 
-		final Random random = new Random(settings.seed());
+		// An A/B test plays every composition twice, the brains on swapped sides: the seed changes every 2 rounds.
+		final long compositionSeed = settings.compositionSeed(round);
+		final Random random = new Random(compositionSeed);
 		final List<SimRole> roles = SimulationComposer.getRoles(settings.size());
 		final FakePlayerPvpBuild[] mirrorBuilds = new FakePlayerPvpBuild[roles.size()];
 		for (int i = 0; i < roles.size(); i++)
@@ -426,24 +532,25 @@ public class FakeSimulationManager
 		}
 
 		int spawned = 0;
-		for (SimulationPoint point : series.points)
+		for (int teamIndex = 0; teamIndex < series.points.size(); teamIndex++)
 		{
-			final SimulationTeam team = new SimulationTeam(point.id(), point, roles);
+			final SimulationPoint point = series.points.get(teamIndex);
+			final SimulationTeam team = new SimulationTeam(point.id(), point, roles, settings.brainOf(teamIndex, series.points.size(), round));
 			run.getTeams().add(team);
 			final List<Npc> fakes = new ArrayList<>();
 			for (int i = 0; i < roles.size(); i++)
 			{
 				final SimRole role = roles.get(i);
-				final FakePlayerPvpBuild build = settings.mirror() ? mirrorBuilds[i] : SimulationComposer.pick(role, random);
+				final FakePlayerPvpBuild build = settings.mirrored() ? mirrorBuilds[i] : SimulationComposer.pick(role, random);
 				if (build == null)
 				{
 					LOGGER.warning(getClass().getSimpleName() + ": No build for the " + role + " slot.");
 					continue;
 				}
 
-				final long seed = settings.mirror() ? ((settings.seed() * 31) + i) : ((((settings.seed() * 31) + i) * 1009) + point.id());
+				final long seed = settings.mirrored() ? ((compositionSeed * 31) + i) : ((((compositionSeed * 31) + i) * 1009) + point.id());
 				final Location location = getSpawnLocation(point, i, roles.size());
-				final Npc fake = FakePlayerPvpManager.getInstance().spawnSimulant(build, settings.level(), "Team " + point.id(), seed, runId, point.id(), location.getX(), location.getY(), location.getZ(), point.instanceId());
+				final Npc fake = FakePlayerPvpManager.getInstance().spawnSimulant(build, settings.level(), "Team " + point.id(), seed, runId, point.id(), team.getBrain(), location.getX(), location.getY(), location.getZ(), point.instanceId());
 				if (fake == null)
 				{
 					continue;
@@ -453,7 +560,7 @@ public class FakeSimulationManager
 				fakes.add(fake);
 				spawned++;
 			}
-			team.setParty(FakePartyManager.getInstance().createSimulationParty(fakes));
+			team.setParty(FakePartyManager.getInstance().createSimulationParty(fakes, team.getBrain()));
 		}
 
 		if (spawned == 0)
@@ -508,8 +615,19 @@ public class FakeSimulationManager
 		json.put("level", settings.level());
 		json.put("mirror", settings.mirror());
 		json.put("seed", settings.seed());
+		json.put("compositionSeed", settings.compositionSeed(run.getRound()));
+		json.put("brains", settings.brains());
+		json.put("swap", settings.swap());
+		final Map<String, String> teamBrains = new LinkedHashMap<>();
+		for (SimulationTeam team : run.getTeams())
+		{
+			teamBrains.put(String.valueOf(team.getId()), team.getBrain().name());
+		}
+		json.put("teamBrains", teamBrains);
 		json.put("rounds", settings.rounds());
 		json.put("timeLimit", settings.timeLimit());
+		json.put("pointsFrom", series.pointsFrom);
+		json.put("rerunOf", series.rerunOf);
 		final Map<String, Object> config = new LinkedHashMap<>();
 		config.put("prepTime", FakeSimulationConfig.PREP_TIME);
 		config.put("positionInterval", FakeSimulationConfig.POSITION_INTERVAL);
@@ -549,6 +667,7 @@ public class FakeSimulationManager
 			if (profile != null)
 			{
 				line.put("classId", (npc.getTemplate().getFakePlayerInfo() != null) && (npc.getTemplate().getFakePlayerInfo().getPlayerClass() != null) ? npc.getTemplate().getFakePlayerInfo().getPlayerClass().getId() : null);
+				line.put("brain", profile.getBrain().name());
 				line.put("buildRole", profile.getRole());
 				line.put("personality", String.valueOf(profile.getPersonality()));
 				line.put("runner", profile.isRunner());
@@ -654,21 +773,40 @@ public class FakeSimulationManager
 				}
 			}
 
+			// All the other teams ran off: the one left standing wins.
+			final SimulationTeam routWinner = alive.size() > 1 ? getRoutWinner(run, alive) : null;
 			if (alive.size() <= 1)
 			{
 				end(run, alive.isEmpty() ? 0 : alive.get(0).getId(), alive.isEmpty() ? "draw" : "victory");
 			}
 			else if ((time - run.getFightStart()) >= (run.getSettings().timeLimit() * 1000L))
 			{
+				// The most HP and CP left wins; teams that close (the same health, often nobody fought) end in a draw rather than a win for the first one.
 				SimulationTeam best = null;
+				double second = -1;
 				for (SimulationTeam team : alive)
 				{
 					if ((best == null) || (team.getHealthLeft() > best.getHealthLeft()))
 					{
+						second = best != null ? best.getHealthLeft() : -1;
 						best = team;
 					}
+					else
+					{
+						second = Math.max(second, team.getHealthLeft());
+					}
 				}
-				end(run, best.getId(), "timeout");
+				final boolean tie = (best.getHealthLeft() - second) < TIMEOUT_TIE_MARGIN;
+				end(run, tie ? 0 : best.getId(), tie ? "draw" : "timeout");
+			}
+			else if (routWinner != null)
+			{
+				run.getLog().write(SimulationLog.EVENTS, new JsonLine().put("t", time).put("type", "rout").put("winner", routWinner.getId()));
+				end(run, routWinner.getId(), "rout");
+			}
+			else if ((FakeSimulationConfig.STANDSTILL_TIME > 0) && ((time - Math.max(run.getFightStart(), run.getLastClash())) >= (FakeSimulationConfig.STANDSTILL_TIME * 1000L)))
+			{
+				pushToFight(run, time);
 			}
 		}
 		catch (Exception e)
@@ -680,6 +818,102 @@ public class FakeSimulationManager
 	/**
 	 * Keeps the regions of the members awake: a fake player only thinks while its region is, and the admin may stand far from the teams.
 	 */
+	/**
+	 * @param run the round
+	 * @param alive the teams with someone alive (at least 2)
+	 * @return the one team left standing when all the others fled ({@link #isRouted}), {@code null} if none (or the rule is off)
+	 */
+	private static SimulationTeam getRoutWinner(SimulationRun run, List<SimulationTeam> alive)
+	{
+		if (FakeSimulationConfig.ROUT_DISTANCE <= 0)
+		{
+			return null;
+		}
+
+		SimulationTeam standing = null;
+		for (SimulationTeam team : alive)
+		{
+			if (!isRouted(run, team))
+			{
+				if (standing != null)
+				{
+					return null; // Two teams still fight.
+				}
+				standing = team;
+			}
+		}
+		return standing;
+	}
+
+	/**
+	 * @return {@code true} if every living member of {@code team} runs away ({@link Reason#FLEE}, {@link Reason#ESCAPE}) and is at least {@link FakeSimulationConfig#ROUT_DISTANCE} from its closest living enemy; an admin in the team never runs for it
+	 */
+	private static boolean isRouted(SimulationRun run, SimulationTeam team)
+	{
+		boolean anyone = false;
+		for (SimulationMember member : team.getMembers())
+		{
+			if (!team.isActive(member) || !member.isAlive())
+			{
+				continue;
+			}
+			if (member.isAdmin() || ((member.getLastReason() != Reason.FLEE) && (member.getLastReason() != Reason.ESCAPE)))
+			{
+				return false;
+			}
+			for (SimulationMember enemy : run.getEnemiesOf(member))
+			{
+				if (member.getCreature().calculateDistance2D(enemy.getCreature()) < FakeSimulationConfig.ROUT_DISTANCE)
+				{
+					return false;
+				}
+			}
+			anyone = true;
+		}
+		return anyone;
+	}
+
+	/**
+	 * The teams stand apart (no fake player hurt another team's for {@link FakeSimulationConfig#STANDSTILL_TIME} s, see issue #18 of docs/fake-player-simulation-issues.md): every fake player is sent at its closest living enemy, as if it saw it. Both brains get the same push and
+	 * play it their own way.
+	 * @param run the round
+	 * @param time the time of the round
+	 */
+	private void pushToFight(SimulationRun run, long time)
+	{
+		final long idle = time - Math.max(run.getFightStart(), run.getLastClash());
+		run.setLastClash(time);
+		int pushed = 0;
+		for (SimulationTeam team : run.getTeams())
+		{
+			for (SimulationMember member : team.getMembers())
+			{
+				if (!team.isActive(member) || !member.isAlive() || !(member.getCreature() instanceof Attackable fake))
+				{
+					continue;
+				}
+
+				Creature closest = null;
+				double closestDistance = Double.MAX_VALUE;
+				for (SimulationMember enemy : run.getEnemiesOf(member))
+				{
+					final double distance = fake.calculateDistance2D(enemy.getCreature());
+					if (distance < closestDistance)
+					{
+						closest = enemy.getCreature();
+						closestDistance = distance;
+					}
+				}
+				if (closest != null)
+				{
+					FakePlayerPvpManager.getInstance().assistFight(fake, closest);
+					pushed++;
+				}
+			}
+		}
+		run.getLog().write(SimulationLog.EVENTS, new JsonLine().put("t", time).put("type", "standstill_push").put("idle", idle).put("pushed", pushed));
+	}
+
 	private void keepRegionsAwake(SimulationRun run)
 	{
 		for (SimulationMember member : run.getMembers().values())
@@ -762,7 +996,12 @@ public class FakeSimulationManager
 	{
 		synchronized (series)
 		{
-			series.results.add(new JsonLine().put("round", run.getRound()).put("winner", run.getWinner()).put("reason", run.getEndReason()).put("duration", run.getEnd() - run.getFightStart()).put("anomalies", run.getMonitor().getCounts()));
+			final Map<String, String> teamBrains = new LinkedHashMap<>();
+			for (SimulationTeam team : run.getTeams())
+			{
+				teamBrains.put(String.valueOf(team.getId()), team.getBrain().name());
+			}
+			series.results.add(new JsonLine().put("round", run.getRound()).put("winner", run.getWinner()).put("reason", run.getEndReason()).put("duration", run.getEnd() - run.getFightStart()).put("teamBrains", teamBrains).put("anomalies", run.getMonitor().getCounts()));
 			if (run.getWinner() > 0)
 			{
 				series.teamWins.merge(run.getWinner(), 1, Integer::sum);
@@ -770,6 +1009,12 @@ public class FakeSimulationManager
 			for (SimulationTeam team : run.getTeams())
 			{
 				final boolean won = team.getId() == run.getWinner();
+				final int[] brain = series.brainStats.computeIfAbsent(team.getBrain().name(), _ -> new int[2]);
+				brain[1]++;
+				if (won)
+				{
+					brain[0]++;
+				}
 				for (SimulationMember member : team.getMembers())
 				{
 					if (member.isAdmin())
@@ -922,7 +1167,7 @@ public class FakeSimulationManager
 			}
 		}
 
-		final String text = SimulationSummary.writeSeries(series.dir, series.name, series.settings, series.results, series.teamWins, series.buildStats, series.roleStats, series.anomalies);
+		final String text = SimulationSummary.writeSeries(series.dir, series.name, series.settings, series.results, series.teamWins, series.brainStats, series.buildStats, series.roleStats, series.anomalies);
 		SimulationLog.prune(Path.of(FakeSimulationConfig.LOG_DIR), FakeSimulationConfig.KEEP_RUNS);
 
 		final Player starter = World.getInstance().getPlayer(series.settings.starterId());
@@ -966,6 +1211,32 @@ public class FakeSimulationManager
 			return "Simulation stopped: the bodies are removed in " + FakeSimulationConfig.CLEANUP_DELAY + " s.";
 		}
 		return "The simulation ends after this round's cleanup.";
+	}
+
+	/**
+	 * @return the round running now, {@code null} if none
+	 */
+	public SimulationRun getCurrentRun()
+	{
+		return _run;
+	}
+
+	/**
+	 * @return the name (log folder) of the simulation running now, {@code null} if none
+	 */
+	public String getCurrentSeriesName()
+	{
+		final Series series = _series;
+		return series != null ? series.name : null;
+	}
+
+	/**
+	 * @return {@code true} if the running simulation was told to stop
+	 */
+	public boolean isStopping()
+	{
+		final Series series = _series;
+		return (series != null) && series.stopped;
 	}
 
 	/**
@@ -1395,7 +1666,7 @@ public class FakeSimulationManager
 
 		run.getLog().write(SimulationLog.EVENTS, new JsonLine().put("t", run.time()).put("type", "admin_leave").put("admin", admin.getName()).put("team", team.getId()));
 		final FakePlayerPvpBuild build = org.l2jmobius.gameserver.data.xml.FakePlayerPvpData.getInstance().getBuild(guest.replacedBuild);
-		final Npc fake = build != null ? FakePlayerPvpManager.getInstance().spawnSimulant(build, run.getSettings().level(), "Team " + team.getId(), guest.replacedSeed, run.getId(), team.getId(), admin.getX(), admin.getY(), admin.getZ(), admin.getInstanceId()) : null;
+		final Npc fake = build != null ? FakePlayerPvpManager.getInstance().spawnSimulant(build, run.getSettings().level(), "Team " + team.getId(), guest.replacedSeed, run.getId(), team.getId(), team.getBrain(), admin.getX(), admin.getY(), admin.getZ(), admin.getInstanceId()) : null;
 		if (fake == null)
 		{
 			return "You left team " + guest.teamId + " (the fake player you replaced could not come back).";
@@ -1592,6 +1863,12 @@ public class FakeSimulationManager
 
 		final long time = run.time();
 		final boolean self = (dealer != null) && (dealer == victim); // A toggle that costs HP (Arcane Wisdom...), a skill that hurts its caster.
+
+		// The teams themselves clash (servitors don't count: two tanks can trade hits with each other's servitor all round while their teams stand apart).
+		if ((dealer != null) && (victim != null) && (dealer.getTeamId() != victim.getTeamId()) && (run.getMember(attacker) != null) && (run.getMember(target) != null))
+		{
+			run.setLastClash(time);
+		}
 		if ((dealer != null) && !self)
 		{
 			dealer.addDealt(damage);

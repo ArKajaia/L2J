@@ -399,6 +399,7 @@
 	<admin command="simulationtrace" description="Show the last AI decisions of the targeted fake player, and trace it (again to stop)." accessLevel="100" />
 	<admin command="simulationdraw" description="Draw the ranges, target and leader of the targeted fake player (again to stop)." accessLevel="100" />
 	<admin command="simulationhelp" description="List the simulation commands." accessLevel="100" />
+	<admin command="simulationweb" description="Open the simulation web page: past runs, rerun, start and stop, points, and each character's decisions and path. Needs //simulate too." accessLevel="100" />
 	<admin command="passivetree" description="Open the web passive tree editor: move nodes, change links, effects, costs and skills. Saves are live at once." accessLevel="100" />
 	<admin command="passivetree_reload" description="Load data/passivetree/*.xml again after editing them by hand." accessLevel="100" />
 	<admin command="bestiary" description="Open the bestiary bake page: turn the monster models to face the camera and make the portraits of the collection." accessLevel="100" />

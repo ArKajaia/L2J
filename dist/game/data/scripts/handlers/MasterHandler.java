@@ -61,6 +61,7 @@ import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
 import custom.Bestiary.BestiaryPackets;
 import custom.Bestiary.BestiaryWeb;
 import custom.PassiveSkillTree.PassiveTreeApiServer;
+import custom.Simulation.SimulationWeb;
 import handlers.actions.click.ArtefactClick;
 import handlers.actions.click.DecoyClick;
 import handlers.actions.click.DoorClick;
@@ -705,6 +706,7 @@ public class MasterHandler
 		LOGGER.log(Level.INFO, "Loading Handlers...");
 		PassiveTreeApiServer.getInstance().start();
 		BestiaryWeb.getInstance().register();
+		SimulationWeb.getInstance().register();
 		BestiaryPackets.register();
 		
 		final Map<IHandler<?, ?>, Method> registerHandlerMethods = new HashMap<>();

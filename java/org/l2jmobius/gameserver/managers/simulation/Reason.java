@@ -28,6 +28,10 @@ public enum Reason
 	APPROACH,
 	/** In range of a skill but can't see its target: walks toward it. */
 	APPROACH_NO_LOS,
+	/** In range but something is in the way: goes to a spot that sees its target (the skill or action is in "kind"). */
+	FIRING_POSITION,
+	/** An archer or mage that can't see its target turns to another enemy it sees and reaches. */
+	RETARGET_VISIBLE,
 	/** Auto attack. */
 	AUTO_ATTACK,
 	/** Walks into auto attack range. */

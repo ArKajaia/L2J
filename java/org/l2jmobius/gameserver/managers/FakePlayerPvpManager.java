@@ -33,7 +33,9 @@ import java.util.logging.Logger;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.ai.FakeBrain;
 import org.l2jmobius.gameserver.ai.FakePlayerPvpAI;
+import org.l2jmobius.gameserver.ai.FakePlayerPvpBrain;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
@@ -148,7 +150,9 @@ public class FakePlayerPvpManager
 	private static final long REFUSE_MEMORY = 60000;
 	/** A fake player doesn't pick a fight with a player this many levels above it (it only complains). */
 	private static final int OUTLEVELED_DIFFERENCE = 6;
-	
+	/** Mixed into a simulation fake player's seed for its name, so the name doesn't follow the same draws as its gear. */
+	private static final long SIMULANT_NAME_SALT = 0x5EED_4A3EL;
+
 	private static final String[] NAME_PREFIXES =
 	{
 		"Dark", "Shadow", "Blood", "Night", "Storm", "Frost", "Fire", "Iron", "Silver", "Death", "Wolf", "Dragon", "Soul", "Ghost", "Rage", "Grim", "Holy", "Wild", "Mad", "Evil", "Sky", "Moon", "Sun", "Stone", "Doom", "Hell", "Ice", "Venom", "Chaos", "Neo", "Lil", "Big", "Sweet", "Crazy", "Lucky", "Swift", "Silent", "Red", "Black", "Wicked"
@@ -1621,15 +1625,17 @@ public class FakePlayerPvpManager
 	 * @param seed the seed of its gear and personality: the same seed gives the same fake player
 	 * @param runId its simulation run
 	 * @param teamId its team
+	 * @param brain the AI it runs
 	 * @param x the x
 	 * @param y the y
 	 * @param z the z
 	 * @param instanceId the instance
 	 * @return the fake player, or {@code null} if it could not be created
 	 */
-	public Npc spawnSimulant(FakePlayerPvpBuild build, int level, String title, long seed, int runId, int teamId, int x, int y, int z, int instanceId)
+	public Npc spawnSimulant(FakePlayerPvpBuild build, int level, String title, long seed, int runId, int teamId, FakeBrain brain, int x, int y, int z, int instanceId)
 	{
-		final String name = generateName();
+		// The name comes from the seed too, so a rerun fields the same characters (one taken meanwhile moves on to the next name the seed gives).
+		final String name = Rnd.seeded(((seed ^ SIMULANT_NAME_SALT) * 31) + teamId, this::generateName);
 		try
 		{
 			final int npcId = _nextNpcId.getAndIncrement();
@@ -1642,6 +1648,7 @@ public class FakePlayerPvpManager
 
 			final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
 			profile.setSimulation(runId, teamId);
+			profile.setBrain(brain);
 			profile.setSpawnTime(System.currentTimeMillis());
 			profile.setHotzoneId(0);
 			profile.setBlessedEscape(false);
@@ -2444,13 +2451,11 @@ public class FakePlayerPvpManager
 	 */
 	public void converse(Attackable fake, Npc other, boolean rivalry)
 	{
-		if (!(fake.getAI() instanceof FakePlayerPvpAI) || !other.hasAI() || !(other.getAI() instanceof FakePlayerPvpAI))
+		if (!(fake.getAI() instanceof FakePlayerPvpBrain fakeAI) || !other.hasAI() || !(other.getAI() instanceof FakePlayerPvpBrain otherAI))
 		{
 			return;
 		}
 		
-		final FakePlayerPvpAI fakeAI = (FakePlayerPvpAI) fake.getAI();
-		final FakePlayerPvpAI otherAI = (FakePlayerPvpAI) other.getAI();
 		final String[][] dialogues = rivalry ? DIALOGUES_RIVALRY : DIALOGUES_HUNTING;
 		final String[] lines = dialogues[Rnd.get(dialogues.length)];
 		
@@ -2496,7 +2501,7 @@ public class FakePlayerPvpManager
 			final boolean first = (i % 2) == 0;
 			final Npc speaker = first ? fake : other;
 			final Npc listener = first ? other : fake;
-			final FakePlayerPvpAI speakerAI = first ? fakeAI : otherAI;
+			final FakePlayerPvpBrain speakerAI = first ? fakeAI : otherAI;
 			final String text = lines[i];
 			ThreadPool.schedule(() ->
 			{

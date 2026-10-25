@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.ai.FakeBrain;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
@@ -116,6 +117,8 @@ public class FakePlayerPvpProfile
 	// A party-vs-party simulation (see FakeSimulationManager): its run and team, 0 for none.
 	private volatile int _simRunId;
 	private volatile int _simTeamId;
+	// The AI it runs (only simulation teams run another one than A).
+	private volatile FakeBrain _brain = FakeBrain.A;
 	
 	// The PvP spot it came to fight in (see PvpSpotManager), 0 for none; whether it is one of the stronger ones; until when it stays; who killed it there last and until when it looks for them.
 	private volatile int _pvpSpotId;
@@ -788,6 +791,22 @@ public class FakePlayerPvpProfile
 	{
 		_simRunId = runId;
 		_simTeamId = teamId;
+	}
+
+	/**
+	 * @return the AI it runs: {@link FakeBrain#A} unless a simulation gave it another one
+	 */
+	public FakeBrain getBrain()
+	{
+		return _brain;
+	}
+
+	/**
+	 * @param brain the AI it runs (set before it spawns: its AI is made on first use)
+	 */
+	public void setBrain(FakeBrain brain)
+	{
+		_brain = brain != null ? brain : FakeBrain.A;
 	}
 
 	/**

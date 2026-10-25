@@ -36,6 +36,9 @@ public class FakeSimulationConfig
 	public static int CROWD_WARNING_RANGE;
 	public static String LOG_DIR;
 	public static int KEEP_RUNS;
+	public static boolean WEB_OPEN_ACCESS;
+	public static int STANDSTILL_TIME;
+	public static int ROUT_DISTANCE;
 
 	public static void load()
 	{
@@ -50,5 +53,8 @@ public class FakeSimulationConfig
 		CROWD_WARNING_RANGE = Math.max(0, config.getInt("SimulationCrowdWarningRange", 1500));
 		LOG_DIR = config.getString("SimulationLogDir", "log/simulation");
 		KEEP_RUNS = Math.max(1, config.getInt("SimulationKeepRuns", 50));
+		WEB_OPEN_ACCESS = config.getBoolean("SimulationWebOpenAccess", false);
+		STANDSTILL_TIME = Math.max(0, config.getInt("SimulationStandstillTime", 20));
+		ROUT_DISTANCE = Math.max(0, config.getInt("SimulationRoutDistance", 1500));
 	}
 }

@@ -19,6 +19,7 @@ package org.l2jmobius.gameserver.managers.simulation;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -97,7 +98,7 @@ public class SimulationMonitor
 	private static final Set<Integer> DEFENSES = Set.of(110, 368, 139, 420, 406, 351, 916, 6282);
 	private static final int DIVE_RANGE = 450;
 	/** Decisions that are a deliberate wait, not a stuck or idle fake player. */
-	private static final Set<Reason> WAITING = Set.of(Reason.HOLD_OFF, Reason.WAIT_INVUL, Reason.GUARD_HOLD, Reason.KITE_MOVING, Reason.HEALER_DEFEND, Reason.HOLD_FOR_TANK);
+	private static final Set<Reason> WAITING = EnumSet.of(Reason.HOLD_OFF, Reason.WAIT_INVUL, Reason.GUARD_HOLD, Reason.KITE_MOVING, Reason.HEALER_DEFEND, Reason.HOLD_FOR_TANK);
 
 	/** A heal or a cast of a member: when (ms), by whom, on whom (object ids). */
 	private record Act(long time, int actorId, int targetId)

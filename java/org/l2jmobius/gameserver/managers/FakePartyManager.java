@@ -32,7 +32,9 @@ import java.util.logging.Logger;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.ai.FakeBrain;
 import org.l2jmobius.gameserver.ai.FakePlayerPvpAI;
+import org.l2jmobius.gameserver.ai.FakePlayerPvpBrain;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.FakePartyConfig;
@@ -48,6 +50,7 @@ import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPartyExperimental;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.instance.FakePlayerPvpServitor;
@@ -495,7 +498,7 @@ public class FakePartyManager
 		party.addFake(fake);
 		
 		FakePlayerPvpManager.getInstance().onJoinParty(fake);
-		if (fake.hasAI() && (fake.getAI() instanceof FakePlayerPvpAI ai))
+		if (fake.hasAI() && (fake.getAI() instanceof FakePlayerPvpBrain ai))
 		{
 			ai.onJoinParty();
 		}
@@ -535,7 +538,7 @@ public class FakePartyManager
 		if (fake.isSpawned() && !fake.isDead())
 		{
 			FakePlayerPvpManager.getInstance().onLeaveParty(fake);
-			if (fake.hasAI() && (fake.getAI() instanceof FakePlayerPvpAI ai))
+			if (fake.hasAI() && (fake.getAI() instanceof FakePlayerPvpBrain ai))
 			{
 				ai.onLeaveParty();
 			}
@@ -1345,11 +1348,12 @@ public class FakePartyManager
 	/**
 	 * Makes a team of a party-vs-party simulation: a party of fake players only, led by the first one, that stays together until {@link #disbandSimulationParty}.
 	 * @param fakes its fake players, the leader first
+	 * @param brain the AI the team runs: {@link FakeBrain#B} gets the experimental party
 	 * @return the party
 	 */
-	public FakePlayerParty createSimulationParty(List<Npc> fakes)
+	public FakePlayerParty createSimulationParty(List<Npc> fakes, FakeBrain brain)
 	{
-		final FakePlayerParty party = new FakePlayerParty(null);
+		final FakePlayerParty party = brain == FakeBrain.B ? new FakePlayerPartyExperimental() : new FakePlayerParty(null);
 		party.setSimulation(true);
 		for (Npc fake : fakes)
 		{
