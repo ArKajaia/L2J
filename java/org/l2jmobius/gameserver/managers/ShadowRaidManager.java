@@ -37,6 +37,8 @@ public class ShadowRaidManager
 
 	/** What {@link #startRaid} says when nobody hunts in the open world. */
 	public static final String NO_PLAYER = "nobody hunts in the open world";
+	/** What {@link #startRaid} says when none of the warband could be spawned. */
+	private static final String NO_RAIDER = "no raider could be spawned";
 
 	/** Set on a raider: its kill is never a PK, and pays the raid reward. */
 	public static final String RAIDER_VAR = "SHADOW_RAIDER";
@@ -51,10 +53,14 @@ public class ShadowRaidManager
 	private static final int LAND_MAX = 1500;
 	/** Lowest level of a player a raid comes for. */
 	private static final int MIN_PLAYER_LEVEL = 20;
+	/** How often (s) a raid that found nobody to come for looks again, until the Witching Hour. */
+	private static final int RETRY_SECONDS = 60;
 
 	private final AtomicInteger _nextId = new AtomicInteger(1);
 	private final Map<Integer, Raid> _raids = new ConcurrentHashMap<>();
 	private final List<ScheduledFuture<?>> _scheduled = new CopyOnWriteArrayList<>();
+	/** Changes each time the night's raids are set or called off, so a retry already running knows it belongs to a night that is over. */
+	private final AtomicInteger _night = new AtomicInteger();
 	private ScheduledFuture<?> _tickTask;
 
 	/**
@@ -132,10 +138,51 @@ public class ShadowRaidManager
 		// Before the Witching Hour, which has its own dead to deal with.
 		final int nightSeconds = secondsToDawn - (NightCycleConfig.WITCHING_HOUR_MINUTES * 10);
 		final int last = Math.max(FIRST_RAID_MAX, nightSeconds - 300);
+		final long deadline = System.currentTimeMillis() + (Math.max(nightSeconds, last) * 1000L);
+		final int night = _night.get();
 		for (int i = 0; i < NightCycleConfig.NIGHT_RAID_COUNT; i++)
 		{
 			final int delay = i == 0 ? Rnd.get(FIRST_RAID_MIN, FIRST_RAID_MAX) : Rnd.get(FIRST_RAID_MAX, last);
-			_scheduled.add(ThreadPool.schedule(() -> startRaid(null), delay * 1000L));
+			schedule(night, deadline, delay);
+		}
+	}
+
+	private void schedule(int night, long deadline, int delaySeconds)
+	{
+		_scheduled.removeIf(ScheduledFuture::isDone);
+		final ScheduledFuture<?> task = ThreadPool.schedule(() -> scheduledRaid(night, deadline), delaySeconds * 1000L);
+		if (task != null)
+		{
+			_scheduled.add(task);
+		}
+	}
+
+	/**
+	 * A raid of the night comes. If nobody hunts in the open world right now (or no raider could be spawned), it looks again every {@link #RETRY_SECONDS} until the Witching Hour, rather than being lost.
+	 * @param night the night it was set for
+	 * @param deadline when it stops looking
+	 */
+	private synchronized void scheduledRaid(int night, long deadline)
+	{
+		if (night != _night.get())
+		{
+			return; // Dawn came while it waited.
+		}
+
+		final String problem = startRaid(null);
+		if (problem == null)
+		{
+			return;
+		}
+
+		final boolean retry = NO_PLAYER.equals(problem) || NO_RAIDER.equals(problem);
+		if (retry && ((System.currentTimeMillis() + (RETRY_SECONDS * 1000L)) <= deadline))
+		{
+			schedule(night, deadline, RETRY_SECONDS);
+		}
+		else
+		{
+			LOGGER.info(getClass().getSimpleName() + ": A Shadow Raid did not come tonight: " + problem + ".");
 		}
 	}
 
@@ -158,6 +205,7 @@ public class ShadowRaidManager
 
 	private void cancelScheduled()
 	{
+		_night.incrementAndGet();
 		for (ScheduledFuture<?> task : _scheduled)
 		{
 			task.cancel(false);
@@ -216,7 +264,7 @@ public class ShadowRaidManager
 
 		if (raid._raiders.isEmpty())
 		{
-			return "no raider could be spawned";
+			return NO_RAIDER;
 		}
 
 		// The warband fights as a party: its tank guards the others, its healers heal them, they call their targets.
