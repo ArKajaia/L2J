@@ -1571,10 +1571,30 @@ public class FakePlayerPvpManager
 	 */
 	public Npc spawnSpotFighter(FakePlayerPvpBuild build, int level, boolean elite, int spotId, int x, int y, int z, Npc friend)
 	{
-		final String name = generateName();
+		return spawnSpotFighter(build, level, elite, spotId, x, y, z, friend, null, 0);
+	}
+	
+	/**
+	 * Spawns a fake player that comes to a PvP spot only to fight, made from a seed: the same name, build, level and seed give the same character each time, with the same looks, gear, enchants and passive tree (see {@link PvpSpotRoster}).
+	 * @param build its build
+	 * @param level its level
+	 * @param elite {@code true} for one of the stronger ones
+	 * @param spotId the zone id of the spot
+	 * @param x where it arrives
+	 * @param y where it arrives
+	 * @param z where it arrives
+	 * @param friend a fake player it comes with (it joins its clan), {@code null} for none
+	 * @param knownName the name of a known character (kept, see {@link #keepName}), {@code null} for a new name
+	 * @param seed the seed it is made from, 0 for a stranger made at random
+	 * @return the fake player, or {@code null} if it could not be created
+	 */
+	public Npc spawnSpotFighter(FakePlayerPvpBuild build, int level, boolean elite, int spotId, int x, int y, int z, Npc friend, String knownName, long seed)
+	{
+		final String name = knownName != null ? knownName : generateName();
 		try
 		{
-			final NpcTemplate template = FakePlayerPvpFactory.createTemplate(build, level, _nextNpcId.getAndIncrement(), name, null, "", null, elite, true);
+			final int npcId = _nextNpcId.getAndIncrement();
+			final NpcTemplate template = seed != 0 ? Rnd.seeded(seed, () -> FakePlayerPvpFactory.createTemplate(build, level, npcId, name, null, "", null, elite, true)) : FakePlayerPvpFactory.createTemplate(build, level, npcId, name, null, "", null, elite, true);
 			if (template == null)
 			{
 				releaseName(name);

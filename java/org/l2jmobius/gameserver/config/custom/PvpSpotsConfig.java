@@ -60,6 +60,18 @@ public class PvpSpotsConfig
 	public static int MATCH_PLAYER_LEVEL_RANGE;
 	public static double EQUIPMENT_DROP_CHANCE;
 
+	// The roster of known fake players
+	public static boolean ROSTER_ENABLED;
+	public static int ROSTER_MAX;
+	public static int ROSTER_NEW_CHANCE;
+	public static int ROSTER_PLAY_HOURS_MIN;
+	public static int ROSTER_PLAY_HOURS_MAX;
+	public static int ROSTER_REST_MIN;
+	public static int ROSTER_REST_MAX;
+	public static double ROSTER_RETIRE_CHANCE;
+	public static int ROSTER_RETIRE_MIN_AGE;
+	public static int ROSTER_RETIRE_FULL_AGE;
+
 	// The strong one
 	public static int ELITE_CHANCE;
 	public static int MAX_ELITES;
@@ -107,6 +119,19 @@ public class PvpSpotsConfig
 		MATCH_PLAYER_LEVEL_CHANCE = Math.max(0, Math.min(100, config.getInt("PvpSpotMatchPlayerLevelChance", 60)));
 		MATCH_PLAYER_LEVEL_RANGE = Math.max(0, config.getInt("PvpSpotMatchPlayerLevelRange", 3));
 		EQUIPMENT_DROP_CHANCE = Math.max(0, Math.min(100, config.getDouble("PvpSpotEquipmentDropChance", 0)));
+
+		ROSTER_ENABLED = config.getBoolean("PvpSpotRosterEnabled", true);
+		ROSTER_MAX = Math.max(0, config.getInt("PvpSpotRosterMax", 1000));
+		ROSTER_NEW_CHANCE = Math.max(0, Math.min(100, config.getInt("PvpSpotRosterNewChance", 20)));
+		final int[] playHours = parseRange(config, "PvpSpotRosterDailyPlayHours", "2-8", 1);
+		ROSTER_PLAY_HOURS_MIN = Math.min(24, playHours[0]);
+		ROSTER_PLAY_HOURS_MAX = Math.min(24, playHours[1]);
+		final int[] rest = parseRange(config, "PvpSpotRosterRest", "5-45", 1);
+		ROSTER_REST_MIN = rest[0];
+		ROSTER_REST_MAX = rest[1];
+		ROSTER_RETIRE_CHANCE = Math.max(0, Math.min(100, config.getDouble("PvpSpotRosterRetireChance", 5)));
+		ROSTER_RETIRE_MIN_AGE = Math.max(0, config.getInt("PvpSpotRosterRetireMinAge", 7));
+		ROSTER_RETIRE_FULL_AGE = Math.max(ROSTER_RETIRE_MIN_AGE + 1, config.getInt("PvpSpotRosterRetireFullAge", 60));
 
 		ELITE_CHANCE = Math.max(0, Math.min(100, config.getInt("PvpSpotEliteChance", 20)));
 		MAX_ELITES = Math.max(0, config.getInt("PvpSpotMaxElites", 1));
