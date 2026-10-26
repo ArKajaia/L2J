@@ -29,6 +29,8 @@ With `--swap` both teams get the same builds, the brains change sides every roun
 //Simulate matrix [battles per pair, 20] [parallel=100] [level=85] [time=300] [distance=1000] [brain=A] [builds=Adventurer,Titan,...] [seed=<n>]
 //SimulationMatrix start [battles=20] [parallel=100] [level=85] [time=300] [distance=1000] [brain=A] [builds=Adventurer,Titan,...] [seed=<n>]
 //SimulationMatrix status | stop | resume [name] [parallel=<n>] | watch | leave | builds
+//Simulate matrix 10 builds=all,Sagittarius_Heavy focus=Sagittarius_Heavy,Sagittarius   (a build tried against every build)
+//Simulate matrix 40 brain=A:B mirror                                                    (an A/B test: every build against itself)
 ```
 
 - By default every build of `data/FakePlayerPvp.xml` takes part, the gear variants aside: 38 builds, 703 pairs. 20 battles per pair is 14,060 battles; with 100 at once that is about 2 hours (a battle is 10 s of preparation, the fight, and 2 s of cleanup), with 1000 at once about 20 minutes. Memory: 1000 at once took the game server past 12 GB (heap plus geodata) and a 16 GB machine killed it twice; 600 at once ran through. A matrix that dies goes on with `resume`.

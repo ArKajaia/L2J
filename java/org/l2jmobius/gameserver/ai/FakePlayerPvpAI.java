@@ -461,13 +461,21 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		{
 			endPoke(npc);
 			
-			// Not with a fight still going on around it (someone hitting it, one it chose not to hit back, a pursuer...): it stays on its feet and drinks a potion.
-			if (isPvpThreatNear(npc))
+			// Not with a fight still going on around it (someone or a monster hitting it, one it chose not to hit back, a pursuer...): it stays on its feet and drinks a potion.
+			if (isFightNear(npc))
 			{
 				_resting = false;
 				if (!standUp(npc))
 				{
 					FakePlayerPvpManager.getInstance().tryPotion(npc);
+					
+					// A monster on it: it hits back rather than stand there.
+					final Creature monster = getMonsterOnIt(npc);
+					if (monster != null)
+					{
+						npc.addDamageHate(monster, 0, 1);
+						setIntention(Intention.ATTACK, monster);
+					}
 				}
 				return;
 			}
@@ -1453,6 +1461,36 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * @param npc a fake player
+	 * @return {@code true} if a fight goes on around it: a PvP threat ({@link #isPvpThreatNear}), or a monster that has it as its target and fights. A fake player never sits down to rest then.
+	 */
+	private static boolean isFightNear(Attackable npc)
+	{
+		if (isPvpThreatNear(npc))
+		{
+			return true;
+		}
+		
+		return getMonsterOnIt(npc) != null;
+	}
+	
+	/**
+	 * @param npc a fake player
+	 * @return a monster (not a fake player) that has it as its target and fights, {@code null} if none
+	 */
+	private static Creature getMonsterOnIt(Attackable npc)
+	{
+		for (Creature creature : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, THREAT_RANGE))
+		{
+			if ((creature.getTarget() == npc) && creature.isMonster() && !creature.isFakePlayer() && !creature.isAlikeDead() && (creature.isInCombat() || creature.isAttackingNow() || creature.isCastingNow()))
+			{
+				return creature;
+			}
+		}
+		return null;
 	}
 	
 	/**
@@ -3101,7 +3139,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	private void sitDown(Attackable npc)
 	{
 		final FakePlayerHolder holder = npc.getTemplate().getFakePlayerInfo();
-		if ((holder == null) || holder.isSitting())
+		if ((holder == null) || holder.isSitting() || isFightNear(npc))
 		{
 			return;
 		}
@@ -4302,7 +4340,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		// Resting: only with no monster of the siege close.
 		final Creature enemy = VillageSiegeManager.getInstance().findDefenderTarget(npc);
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
-		_resting = (hpRatio < (_resting ? 0.9 : 0.5)) && ((enemy == null) || (npc.calculateDistance2D(enemy) > 600));
+		_resting = (hpRatio < (_resting ? 0.9 : 0.5)) && ((enemy == null) || (npc.calculateDistance2D(enemy) > 600)) && !isFightNear(npc);
 		if (_resting)
 		{
 			FakePlayerPvpManager.getInstance().tryPotion(npc);
@@ -4372,7 +4410,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		
 		// Resting: only with nobody around to come for it, like a player in a PvP zone (a pursuer it just got away from is still coming).
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
-		_resting = (hpRatio < (_resting ? 0.9 : 0.5)) && !isSpotThreatNear(npc, zone) && !isPvpThreatNear(npc);
+		_resting = (hpRatio < (_resting ? 0.9 : 0.5)) && !isSpotThreatNear(npc, zone) && !isFightNear(npc);
 		if (_resting)
 		{
 			FakePlayerPvpManager.getInstance().tryPotion(npc);
@@ -5801,7 +5839,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		final boolean leaderSits = leader.isPlayer() && leader.asPlayer().isSitting();
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
 		_resting = !leader.isMoving() && (leaderSits || (hpRatio < (_resting ? 0.9 : 0.5)));
-		if (_resting && isPvpThreatNear(npc))
+		if (_resting && isFightNear(npc))
 		{
 			_resting = false;
 			if (!standUp(npc))

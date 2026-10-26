@@ -1430,11 +1430,12 @@ public class FakeSimulationManager
 	 * @param distance how far apart the two spawn
 	 * @param brains the AI of both ("A" or "B"), or of the first and second build of each pair ("A:B", an A/B test with {@code mirror})
 	 * @param mirror {@code true} for an A/B test: every build only fights itself
+	 * @param focus build names separated by commas: only the pairs with one of them fight ({@code null} for every pair)
 	 * @param builds build names separated by commas, {@code null} or "all" for one build per class
 	 * @param seed the seed
 	 * @return the lines to tell the admin
 	 */
-	public synchronized List<String> startMatrix(Player admin, int x, int y, int z, int heading, int battles, int parallel, int level, int timeLimit, int distance, String brains, boolean mirror, String builds, long seed)
+	public synchronized List<String> startMatrix(Player admin, int x, int y, int z, int heading, int battles, int parallel, int level, int timeLimit, int distance, String brains, boolean mirror, String focus, String builds, long seed)
 	{
 		final List<String> lines = new ArrayList<>();
 		final String refusal = getMatrixRefusal();
@@ -1458,6 +1459,19 @@ public class FakeSimulationManager
 			lines.add("Unknown build(s): " + String.join(", ", unknown) + ". The names are in data/FakePlayerPvp.xml (spaces as _ or left out: Treasure_Hunter is Adventurer).");
 			return lines;
 		}
+		final List<String> focusList = (focus == null) || focus.isBlank() ? List.of() : SimulationMatrix.resolveBuilds(focus, unknown);
+		if (!unknown.isEmpty())
+		{
+			lines.add("Unknown build(s): " + String.join(", ", unknown) + ".");
+			return lines;
+		}
+		for (String name : focusList)
+		{
+			if (!list.contains(name))
+			{
+				list.add(name);
+			}
+		}
 		if (list.size() < (mirror ? 1 : 2))
 		{
 			lines.add("A matrix needs at least 2 builds.");
@@ -1471,7 +1485,7 @@ public class FakeSimulationManager
 
 		final String name = "matrix-" + LocalDateTime.now().format(FOLDER_TIME);
 		final Path dir = getMatrixRoot().resolve(name);
-		final SimulationMatrix matrix = SimulationMatrix.create(name, dir, list, battles, parallel, level, timeLimit, distance, brain, brainB, mirror, seed, x, y, GeoEngine.getInstance().getHeight(x, y, z), heading, admin != null ? admin.getObjectId() : 0);
+		final SimulationMatrix matrix = SimulationMatrix.create(name, dir, list, battles, parallel, level, timeLimit, distance, brain, brainB, mirror, focusList, seed, x, y, GeoEngine.getInstance().getHeight(x, y, z), heading, admin != null ? admin.getObjectId() : 0);
 		return launchMatrix(matrix, lines);
 	}
 

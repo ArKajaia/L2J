@@ -473,13 +473,21 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		{
 			endPoke(npc);
 			
-			// Not with a fight still going on around it (someone hitting it, one it chose not to hit back, a pursuer...): it stays on its feet and drinks a potion.
-			if (isPvpThreatNear(npc))
+			// Not with a fight still going on around it (someone or a monster hitting it, one it chose not to hit back, a pursuer...): it stays on its feet and drinks a potion.
+			if (isFightNear(npc))
 			{
 				_resting = false;
 				if (!standUp(npc))
 				{
 					FakePlayerPvpManager.getInstance().tryPotion(npc);
+					
+					// A monster on it: it hits back rather than stand there.
+					final Creature monster = getMonsterOnIt(npc);
+					if (monster != null)
+					{
+						npc.addDamageHate(monster, 0, 1);
+						setIntention(Intention.ATTACK, monster);
+					}
 				}
 				return;
 			}
@@ -975,7 +983,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		// casts what it can finish first (a nuker wins by out-damaging the melee) and only steps back with nothing short enough (below).
 		if (pressed && canMove && !npc.isAttackingNow() && ((distance - collision) < PRESSED_KITE_DISTANCE))
 		{
-			if (_combo != null)
+			// An archer's combos are its long shots; a mage's are its burst (the Soul Hounds' Soul Vortex chain): it keeps it.
+			if ((_combo != null) && !mage)
 			{
 				endCombo(now);
 			}
@@ -1040,7 +1049,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 		
 		// Combos: the skill chains a practiced player of this class plays (with its weapon, not with the spare bow or polearm).
-		if (!bowHeld && !polearmHeld && (defenses == 0) && !pressed && playCombo(npc, profile, target, pvp, distance, collision, canMove, now))
+		if (!bowHeld && !polearmHeld && (defenses == 0) && (!pressed || mage) && playCombo(npc, profile, target, pvp, distance, collision, canMove, now))
 		{
 			trace(Reason.COMBO_STEP, target, null, _combo != null ? _combo.getName() : null);
 			return;
@@ -1500,6 +1509,36 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * @param npc a fake player
+	 * @return {@code true} if a fight goes on around it: a PvP threat ({@link #isPvpThreatNear}), or a monster that has it as its target and fights. A fake player never sits down to rest then.
+	 */
+	private static boolean isFightNear(Attackable npc)
+	{
+		if (isPvpThreatNear(npc))
+		{
+			return true;
+		}
+		
+		return getMonsterOnIt(npc) != null;
+	}
+	
+	/**
+	 * @param npc a fake player
+	 * @return a monster (not a fake player) that has it as its target and fights, {@code null} if none
+	 */
+	private static Creature getMonsterOnIt(Attackable npc)
+	{
+		for (Creature creature : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, THREAT_RANGE))
+		{
+			if ((creature.getTarget() == npc) && creature.isMonster() && !creature.isFakePlayer() && !creature.isAlikeDead() && (creature.isInCombat() || creature.isAttackingNow() || creature.isCastingNow()))
+			{
+				return creature;
+			}
+		}
+		return null;
 	}
 	
 	/**
@@ -3163,7 +3202,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private void sitDown(Attackable npc)
 	{
 		final FakePlayerHolder holder = npc.getTemplate().getFakePlayerInfo();
-		if ((holder == null) || holder.isSitting())
+		if ((holder == null) || holder.isSitting() || isFightNear(npc))
 		{
 			return;
 		}
@@ -4437,7 +4476,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		// Resting: only with no monster of the siege close.
 		final Creature enemy = VillageSiegeManager.getInstance().findDefenderTarget(npc);
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
-		_resting = (hpRatio < (_resting ? 0.9 : 0.5)) && ((enemy == null) || (npc.calculateDistance2D(enemy) > 600));
+		_resting = (hpRatio < (_resting ? 0.9 : 0.5)) && ((enemy == null) || (npc.calculateDistance2D(enemy) > 600)) && !isFightNear(npc);
 		if (_resting)
 		{
 			FakePlayerPvpManager.getInstance().tryPotion(npc);
@@ -4507,7 +4546,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		
 		// Resting: only with nobody around to come for it, like a player in a PvP zone (a pursuer it just got away from is still coming).
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
-		_resting = (hpRatio < (_resting ? 0.9 : 0.5)) && !isSpotThreatNear(npc, zone) && !isPvpThreatNear(npc);
+		_resting = (hpRatio < (_resting ? 0.9 : 0.5)) && !isSpotThreatNear(npc, zone) && !isFightNear(npc);
 		if (_resting)
 		{
 			FakePlayerPvpManager.getInstance().tryPotion(npc);
@@ -5936,7 +5975,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		final boolean leaderSits = leader.isPlayer() && leader.asPlayer().isSitting();
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
 		_resting = !leader.isMoving() && (leaderSits || (hpRatio < (_resting ? 0.9 : 0.5)));
-		if (_resting && isPvpThreatNear(npc))
+		if (_resting && isFightNear(npc))
 		{
 			_resting = false;
 			if (!standUp(npc))

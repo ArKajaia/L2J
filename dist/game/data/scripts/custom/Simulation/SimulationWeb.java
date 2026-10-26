@@ -843,7 +843,7 @@ public class SimulationWeb
 			server.sendText(exchange, 400, "application/json", "{\"error\":\"the seed must be a whole number\"}");
 			return;
 		}
-		sendMatrixLines(exchange, FakeSimulationManager.getInstance().startMatrix(gm, x, y, z, heading, battles, parallel, level, time, distance, brain, "1".equals(params.get("mirror")) || "true".equals(params.get("mirror")), builds, seed));
+		sendMatrixLines(exchange, FakeSimulationManager.getInstance().startMatrix(gm, x, y, z, heading, battles, parallel, level, time, distance, brain, "1".equals(params.get("mirror")) || "true".equals(params.get("mirror")), params.get("focus"), builds, seed));
 	}
 
 	private void handleMatrixResume(HttpExchange exchange) throws IOException
