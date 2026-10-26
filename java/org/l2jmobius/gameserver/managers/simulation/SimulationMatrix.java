@@ -345,13 +345,13 @@ public class SimulationMatrix
 	/**
 	 * A battle ended: its line goes to results.csv.
 	 * @param battle the battle
-	 * @param winner the winning build, {@code null} for a draw
+	 * @param result "a" if {@link Battle#a} won, "b" if {@link Battle#b} did, "draw" otherwise
 	 * @param reason victory, timeout, rout, draw or stopped
 	 * @param duration how long the fight lasted, in milliseconds
 	 * @param aHp HP and CP left of {@link Battle#a}, a ratio
 	 * @param bHp HP and CP left of {@link Battle#b}, a ratio
 	 */
-	public void record(Battle battle, String winner, String reason, long duration, double aHp, double bHp)
+	public void record(Battle battle, String result, String reason, long duration, double aHp, double bHp)
 	{
 		// A battle cut by //SimulationMatrix stop is played again on resume.
 		if (reason.equals("stopped"))
@@ -359,7 +359,6 @@ public class SimulationMatrix
 			return;
 		}
 
-		final String result = winner == null ? "draw" : winner.equals(battle.a()) ? "a" : "b";
 		final String line = battle.number() + "," + battle.a() + "," + battle.b() + "," + battle.round() + "," + result + "," + reason + "," + duration + "," + String.format(Locale.ROOT, "%.3f", aHp) + "," + String.format(Locale.ROOT, "%.3f", bHp) + "," + (battle.aFirst() ? 1 : 2);
 		final boolean write;
 		synchronized (this)

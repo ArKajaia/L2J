@@ -103,7 +103,7 @@ import org.l2jmobius.gameserver.util.LocationUtil;
  * </ul>
  * <p>
  * Brain B ({@link FakeBrain#B}): the experimental copy of {@link FakePlayerPvpAI}, which simulation teams can run against it. Changes go here first and are moved into {@link FakePlayerPvpAI} once simulations show they win more (see docs/fake-player-simulation-issues.md). Being
- * tested (docs/class-balance-85.md): archers and mages keep a melee at bay (no cast a melee would interrupt, peel or step back first, a bow's normal attack in between), and a party of one is no party (a healer alone fights).
+ * tested (docs/class-balance-85.md): archers and mages keep a melee at bay (no cast a melee would interrupt, peel or step back first, a bow's normal attack in between).
  */
 public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePlayerPvpBrain
 {
@@ -647,8 +647,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 
 		// A healer or buffer looks after its party first, even in a fight.
-		// Brain B: a party of one (a simulation's 1v1, a party whose others are gone) is no party: a healer or buffer alone fights instead of looking after nobody.
-		final FakePlayerParty party = (profile.getParty() != null) && (profile.getParty().size() <= 1) ? null : profile.getParty();
+		final FakePlayerParty party = profile.getParty();
 		final boolean withPlayers = (party != null) && !party.isFakeOnly();
 
 		// A healer someone is on defends itself first: stops them, heals itself, runs to its tank. It never spends that moment hitting someone.

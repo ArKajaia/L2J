@@ -1818,8 +1818,9 @@ public class FakeSimulationManager
 				final SimulationTeam winner = run.getWinner() > 0 ? run.getTeam(run.getWinner()) : null;
 				final SimulationTeam a = run.getTeam(battle.aFirst() ? 1 : 2);
 				final SimulationTeam b = run.getTeam(battle.aFirst() ? 2 : 1);
-				final String winnerBuild = (winner != null) && !winner.getMembers().isEmpty() ? winner.getMembers().get(0).getBuild() : null;
-				matrix.record(battle, winnerBuild, run.getEndReason(), run.getFightStart() > 0 ? run.getEnd() - run.getFightStart() : 0, a != null ? a.getHealthLeft() : 0, b != null ? b.getHealthLeft() : 0);
+				// By team, not by build: in an A/B test both sides play the same build.
+				final String result = winner == null ? "draw" : winner == a ? "a" : "b";
+				matrix.record(battle, result, run.getEndReason(), run.getFightStart() > 0 ? run.getEnd() - run.getFightStart() : 0, a != null ? a.getHealthLeft() : 0, b != null ? b.getHealthLeft() : 0);
 			}
 		}
 		catch (Exception e)
