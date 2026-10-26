@@ -35,6 +35,7 @@ import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.stats.Calculator;
+import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.model.stats.MoveType;
 import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.model.stats.TraitType;
@@ -519,7 +520,8 @@ public class CreatureStat
 			return 0;
 		}
 		
-		return calcStat(Stat.MOVE_SPEED, baseRunSpd * _gmSpeedMultiplier, null, null);
+		// Custom: class balance run speed bonus, for players and roaming fake players.
+		return calcStat(Stat.MOVE_SPEED, baseRunSpd * _gmSpeedMultiplier, null, null) + Formulas.balance(ClassBalanceConfig.RUN_SPEED_BONUS, _creature, 0);
 	}
 	
 	/**

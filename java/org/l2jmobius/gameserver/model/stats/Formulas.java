@@ -515,7 +515,18 @@ public class Formulas
 	 * @param creature a player or roaming fake player
 	 * @return its class's multiplier, 1 for anything else
 	 */
-	private static float balance(float[] multipliers, Creature creature)
+	public static float balance(float[] multipliers, Creature creature)
+	{
+		return balance(multipliers, creature, 1);
+	}
+	
+	/**
+	 * @param values class balance values, by class id
+	 * @param creature a player or roaming fake player
+	 * @param otherwise the value of anything else
+	 * @return its class's value, {@code otherwise} for anything else
+	 */
+	public static float balance(float[] values, Creature creature, float otherwise)
 	{
 		PlayerClass playerClass = null;
 		if (creature.isPlayer())
@@ -526,7 +537,7 @@ public class Formulas
 		{
 			playerClass = creature.asNpc().getTemplate().getFakePlayerInfo().getPlayerClass();
 		}
-		return playerClass != null ? multipliers[playerClass.getId()] : 1;
+		return playerClass != null ? values[playerClass.getId()] : otherwise;
 	}
 	
 	/**
@@ -859,6 +870,10 @@ public class Formulas
 				{
 					damage *= ClassBalanceConfig.PVP_PHYSICAL_ATTACK_CRITICAL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
 				}
+				else if (isFakePvp(attacker, target))
+				{
+					damage *= balance(ClassBalanceConfig.PVP_PHYSICAL_ATTACK_CRITICAL_DAMAGE_MULTIPLIERS, attacker);
+				}
 				else if (isPvE)
 				{
 					damage *= ClassBalanceConfig.PVE_PHYSICAL_ATTACK_CRITICAL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
@@ -869,6 +884,10 @@ public class Formulas
 				if (isPvP)
 				{
 					damage *= ClassBalanceConfig.PVP_PHYSICAL_SKILL_CRITICAL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
+				}
+				else if (isFakePvp(attacker, target))
+				{
+					damage *= balance(ClassBalanceConfig.PVP_PHYSICAL_SKILL_CRITICAL_DAMAGE_MULTIPLIERS, attacker);
 				}
 				else if (isPvE)
 				{

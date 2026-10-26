@@ -75,6 +75,7 @@ public class ClassBalanceConfig
 	public static float[] SKILL_REUSE_MULTIPLIERS = new float[137];
 	/** Class id -> skill id -> reuse multiplier (ClassSkillReuseMultipliers), for players and roaming fake players. */
 	public static Map<Integer, Map<Integer, Float>> CLASS_SKILL_REUSE_MULTIPLIERS = new HashMap<>();
+	public static float[] RUN_SPEED_BONUS = new float[137];
 	public static float[] EXP_AMOUNT_MULTIPLIERS = new float[137];
 	public static float[] SP_AMOUNT_MULTIPLIERS = new float[137];
 	
@@ -628,6 +629,17 @@ public class ClassBalanceConfig
 			}
 		}
 		CLASS_SKILL_REUSE_MULTIPLIERS = classSkillReuse;
+		
+		Arrays.fill(RUN_SPEED_BONUS, 0f);
+		for (String info : config.getString("RunSpeedBonus", "").trim().split(";"))
+		{
+			final String[] classInfo = info.trim().split("[*]");
+			if (classInfo.length == 2)
+			{
+				final String id = classInfo[0].trim();
+				RUN_SPEED_BONUS[StringUtil.isNumeric(id) ? Integer.parseInt(id) : Enum.valueOf(PlayerClass.class, id).getId()] = Float.parseFloat(classInfo[1].trim());
+			}
+		}
 		
 		Arrays.fill(EXP_AMOUNT_MULTIPLIERS, 1f);
 		final String[] expAmountMultipliers = config.getString("ExpAmountMultipliers", "").trim().split(";");
