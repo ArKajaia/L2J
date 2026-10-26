@@ -447,20 +447,30 @@ public class FakePlayerPvpPassiveTree
 	}
 
 	/**
+	 * @param keystones a build's own keystone list
+	 * @return {@code true} if it adds to its role's list ("+Soul Link") instead of replacing it
+	 */
+	private static boolean addsToRole(String keystones)
+	{
+		return (keystones != null) && keystones.startsWith("+");
+	}
+	
+	/**
 	 * @param key a pool
-	 * @return the keystones its orders may head for: the build's own list, or its role's
+	 * @return the keystones its orders may head for: the build's own list, its role's, or its role's and the build's extra ones
 	 */
 	private List<Keystone> getKeystones(PoolKey key)
 	{
+		final List<Keystone> roleKeystones = _keystones.getOrDefault(key.role(), List.of());
 		if (key.keystones() == null)
 		{
-			return _keystones.getOrDefault(key.role(), List.of());
+			return roleKeystones;
 		}
 
-		return _buildKeystones.computeIfAbsent(key.keystones(), list ->
+		final List<Keystone> own = _buildKeystones.computeIfAbsent(key.keystones(), list ->
 		{
 			final List<String> entries = new ArrayList<>();
-			for (String entry : list.split(";"))
+			for (String entry : (addsToRole(list) ? list.substring(1) : list).split(";"))
 			{
 				if (!entry.isBlank())
 				{
@@ -469,6 +479,14 @@ public class FakePlayerPvpPassiveTree
 			}
 			return parseKeystones(entries, "The keystones of a build in FakePlayerPvp.xml");
 		});
+		if (!addsToRole(key.keystones()))
+		{
+			return own;
+		}
+		
+		final List<Keystone> combined = new ArrayList<>(roleKeystones);
+		combined.addAll(own);
+		return combined;
 	}
 
 	/**
@@ -686,7 +704,7 @@ public class FakePlayerPvpPassiveTree
 					}
 				}
 
-				pool[v] = new Growth(key.origin(), effectWeights, keystones, key.keystones() != null, style, PassiveTreeConfig.PASSIVE_TREE_MAX_POINTS).grow();
+				pool[v] = new Growth(key.origin(), effectWeights, keystones, (key.keystones() != null) && !addsToRole(key.keystones()), style, PassiveTreeConfig.PASSIVE_TREE_MAX_POINTS).grow();
 			}
 			return pool;
 		});

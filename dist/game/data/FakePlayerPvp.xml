@@ -37,6 +37,8 @@
      its own, see FakePvpGearLevelDrop* in config/Custom/FakePlayerPvp.ini), like players behind on gear.
 	     keystones - the passive tree keystones it heads for, in order (the first one in reach first), instead of the
 	               FakePvpKeystones.* list of its role (config/Custom/FakePlayerPvp.ini), e.g. "Battlemage;Unending Fury".
+	               Starting with "+" it adds them to its role's list instead, picked like the others (not first),
+	               e.g. "+Soul Link".
 	     hybrid  - true for a melee build whose M. Atk. counts too (the Battlemage keystone adds part of it to its P. Atk.):
 	               its passive tree wants the magic stats as much as the physical ones.
 	     weights - how much more (or less) its passive tree wants some stats than its role does, "KEY:factor;KEY:factor"
@@ -592,7 +594,7 @@
 		</combo>
 		<variant name="Dominator Tallum" armor="ROBE_TALLUM" weight="1" />
 	</build>
-	<build name="Soultaker" classId="95" role="MAGE" weapon="MAGE" armor="ROBE" weight="2"> <!-- Necromancer line -->
+	<build name="Soultaker" classId="95" role="MAGE" weapon="MAGE" armor="ROBE" keystones="+Soul Link" weight="2"> <!-- Necromancer line: Soul Link sends part of its damage to its servitor, like Transfer Pain -->
 		<attack>1467,1343,1159,1148,1234,1382,1181,1147,1220,1184,1177</attack>
 		<debuff>1336,1337,1064,1263,1269,1160,1164,1222,1163,1168,1298</debuff>
 		<buff>1532</buff>
