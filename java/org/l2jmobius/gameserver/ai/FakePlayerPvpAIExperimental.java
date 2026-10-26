@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.config.custom.FakeClanConfig;
 import org.l2jmobius.gameserver.config.custom.FakePartyConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayerPvpConfig;
 import org.l2jmobius.gameserver.config.custom.PvpSpotsConfig;
+import org.l2jmobius.gameserver.data.xml.HitConditionBonusData;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.FakeClanManager;
@@ -74,6 +75,7 @@ import org.l2jmobius.gameserver.model.effects.AbstractEffect;
 import org.l2jmobius.gameserver.model.item.Weapon;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
 import org.l2jmobius.gameserver.model.skill.EffectScope;
 import org.l2jmobius.gameserver.model.skill.Skill;
@@ -94,16 +96,28 @@ import org.l2jmobius.gameserver.util.LocationUtil;
  * want a fight (see {@link #lookForPoke}). Unflagged, it may not hit back a higher level (see {@link FakePlayerPvpManager#onFakePlayerAttacked}). Warriors surrounded by monsters take out a polearm to hit several of them at once. Necromancers keep their servitor out
  * with Transfer Pain on, and when it dies in a PvP they run off to summon a new one and come back (see {@link #thinkRegroup}).
  * <p>
- * Changes tested in party-vs-party simulations as brain B ({@link FakeBrain}) before they moved here: B won 37 of 57 rounds against the version without them (levels 40, 61 and 80, see docs/fake-player-simulation-issues.md for the issues and the results):
+ * Changes tested in party-vs-party simulations as brain B ({@link FakeBrain}) before they moved here, see docs/fake-player-simulation-issues.md for the issues and the results. First, B won 37 of 57 rounds against the version without them:
  * <ul>
  * <li>#1: it is never its own target ({@link #isValidTarget}).</li>
  * <li>#4, #7: target choice ({@link #focusScore}): an enemy on a squishy of the party (its healer first) is answered at any range, an archer or mage weighs only the distance beyond its reach and prefers squishies, and the damage an enemy did to the party counts sooner.</li>
  * <li>#5, #6: a healer defends itself against enemies shooting or casting at it from range too, heals itself first when low and before the hit while one casts at it, drinks potions while it defends, and silenced it takes cover behind its tank ({@link #defendHealer}).</li>
  * <li>#16: a tank keeps its bow out only while its target gets away (or while it is rooted itself) ({@link #chooseWeapon}).</li>
  * </ul>
+ * Then B won 41 of 60 rounds (levels 40, 61 and 80) against the version without these:
+ * <ul>
+ * <li>#8: no self-heal longer than 2 seconds to cast while a melee enemy is on it.</li>
+ * <li>#10: no debuffs on an enemy that just reflected one.</li>
+ * <li>#20: stepping back and running away pick, of a fan of points, the one farthest from all the enemies around, not just straight away from one ({@link #pickRetreat}).</li>
+ * <li>#21: an archer with an enemy on it within 600 (one coming at it too) steps aside once after each shot (an arrow or a skill), keeping its target in range and sight: shoot, step, shoot.</li>
+ * <li>#23: a tank that leads its party, while nobody is on the party, holds further ahead so the party moves up with it, until its target is within reach (holding by its squishies froze the whole team); a healer in a fight doesn't chase its leader while its heals still reach it.</li>
+ * <li>#25: a melee doesn't leave a target it is already on to hold for its tank, holds by the tank rather than the middle of the party, and for 5 seconds at most.</li>
+ * <li>#27: a healer under ranged burst steps out of the shooters' reach, toward its party.</li>
+ * <li>#28: an enemy tank on a squishy of the party gets no pressure bonus (it is answered with peels, not damage).</li>
+ * <li>#29: an archer in a PvP shoots plain arrows (they crit far more often once buffed) and keeps its skills, combos and debuffs for when its arrows would miss (hit chance below 75%); peeling with Stun Shot stays as it was.</li>
+ * </ul>
  * <p>
  * Brain B ({@link FakeBrain#B}): the experimental copy of {@link FakePlayerPvpAI}, which simulation teams can run against it. Changes go here first and are moved into {@link FakePlayerPvpAI} once simulations show they win more (see docs/fake-player-simulation-issues.md). It starts
- * as a copy of {@link FakePlayerPvpAI}: nothing changed yet (its last changes, archers and mages keeping a melee at bay, were promoted, see docs/class-balance-85.md).
+ * as a copy of {@link FakePlayerPvpAI}: nothing changed yet (its last changes were promoted, see docs/fake-player-simulation-issues.md; the archer kiting of docs/class-balance-85.md round 11 went into both).
  */
 public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePlayerPvpBrain
 {
@@ -121,6 +135,16 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final long CAST_MARGIN = 300;
 	/** A cast this short always goes. */
 	private static final long QUICK_CAST = 600;
+	/** An archer steps back from a melee closer than this (and that would reach it before its next shot is off). */
+	private static final int ARCHER_KITE_DISTANCE = 600;
+	/** The shortest step back of an archer: about one shot's worth of distance from a melee chasing it. */
+	private static final int ARCHER_KITE_STEP = 350;
+	/** An archer whose way back is blocked tries these angles (degrees) off it, one side then the other. */
+	private static final int[] ARCHER_KITE_ANGLES = { 45, -45, 90, -90 };
+	/** #21: an archer steps aside after a shot when an enemy this close is on it (one coming at it too: inside melee reach the peel and kite step take over), this far, within this long after the shot. */
+	private static final int RELOAD_STEP_THREAT = 600;
+	private static final int RELOAD_STEP = 150;
+	private static final long SHOT_STEP_WINDOW = 1500;
 	/** A Totem Warchief stepping back around its totem stops this far beyond it. */
 	private static final int TOTEM_KITE_OFFSET = 150;
 	
@@ -269,6 +293,16 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	
 	private long _kiteEndTime = 0;
 	private long _nextKiteTime = 0;
+	// #21: when it last shot (an arrow or a skill on an enemy), and whether it stepped aside since.
+	private long _lastShotTime = 0;
+	private boolean _shotStepped = true;
+	// #25: the enemy it holds for its tank on, and since when.
+	private Creature _holdTarget;
+	private long _holdSince;
+	// #10: who it last debuffed and when, and the enemies that reflected one: object id -> until when it leaves their debuffs alone.
+	private Creature _lastDebuffTarget;
+	private long _lastDebuffTime;
+	private final Map<Integer, Long> _reflectors = new ConcurrentHashMap<>();
 	private volatile boolean _resting = false;
 	
 	// Running away from a PvP it is losing: since when, when it runs on and may read its scroll, and whether it gave up running (then it fights to the end).
@@ -904,7 +938,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return;
 		}
 
-		if ((hpRatio < 0.5) && (Rnd.get(100) < 50) && castOnSelf(npc, target, affordable(npc, profile.getSkills(SkillCategory.HEAL), safeCast), true, true))
+		if ((hpRatio < 0.5) && (Rnd.get(100) < 50) && castOnSelf(npc, target, quickHeals(npc, affordable(npc, profile.getSkills(SkillCategory.HEAL), safeCast)), true, true))
 		{
 			trace(Reason.SELF_SKILL, target, npc.getLastSkillCast(), "HEAL");
 			return;
@@ -979,9 +1013,28 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 		}
 
+		// An archer against a melee after it shoots while the melee can't reach it before the shot is off, and otherwise steps back as soon as the last shot is off (no pause between steps), at an
+		// angle where the way straight back is blocked. So it keeps the melee near the edge of its reach instead of letting it in.
+		final boolean archerKite = pvp && canMove && (role == Role.ARCHER) && !bowHeld && isMeleeThreat(target);
+		if (archerKite && !npc.isAttackingNow() && ((distance - collision) < ARCHER_KITE_DISTANCE) && (safeCast < (getShotTime(npc) + CAST_MARGIN)))
+		{
+			if (_combo != null)
+			{
+				endCombo(now);
+			}
+			if (pressed && useSkill(npc, target, pickPeel(npc, target, profile, defenses, distance - collision, safeCast, mage), distance, collision, false))
+			{
+				return;
+			}
+			if (archerKiteStep(npc, target, now))
+			{
+				return;
+			}
+		}
+		
 		// A pressed archer or mage stops the melee (with what lands before it arrives), even in the middle of a combo, rather than stand through a cast. An archer then steps back and shoots in between; a mage
 		// casts what it can finish first (a nuker wins by out-damaging the melee) and only steps back with nothing short enough (below).
-		if (pressed && canMove && !npc.isAttackingNow() && ((distance - collision) < PRESSED_KITE_DISTANCE))
+		if (!archerKite && pressed && canMove && !npc.isAttackingNow() && ((distance - collision) < PRESSED_KITE_DISTANCE))
 		{
 			// An archer's combos are its long shots; a mage's are its burst (the Soul Hounds' Soul Vortex chain): it keeps it.
 			if ((_combo != null) && !mage)
@@ -999,7 +1052,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 
 		// Archers and mages stop a player in melee range (root, stun, Aura Flash...), then step back (unless a combo is finishing a stunned target).
-		if (canMove && role.isRanged() && (_combo == null) && !npc.isAttackingNow() && ((distance - collision) < profile.getPersonality().getKiteDistance()) && (now >= _nextKiteTime))
+		if (!archerKite && canMove && role.isRanged() && (_combo == null) && !npc.isAttackingNow() && ((distance - collision) < profile.getPersonality().getKiteDistance()) && (now >= _nextKiteTime))
 		{
 			if (pvp && !isDisabled(target) && useSkill(npc, target, pickPeel(npc, target, profile, defenses, distance - collision, safeCast, mage), distance, collision, false))
 			{
@@ -1015,6 +1068,22 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 
 			if (kiteStep(npc, target, now))
 			{
+				return;
+			}
+		}
+
+		// #21: an archer with an enemy on it (coming at it, or already there) steps aside once after each shot, keeping its target in range and sight, before the next one: shoot, step, shoot (standing still between shots, it took every hit).
+		if (canMove && ((role == Role.ARCHER) || bowHeld) && (_combo == null) && !npc.isAttackingNow() && !_shotStepped && ((now - _lastShotTime) < SHOT_STEP_WINDOW) && isEnemyOnMe(npc, RELOAD_STEP_THREAT))
+		{
+			_shotStepped = true;
+			final Location point = pickRetreat(npc, target, RELOAD_STEP, target, (npc.getPhysicalAttackRange() + collision) - 50, null);
+			if (point != null)
+			{
+				_progressTime = now;
+				trace(Reason.KITE_STEP, target, null, "RELOAD");
+				npc.setRunning();
+				moveTo(point.getX(), point.getY(), point.getZ());
+				_kiteEndTime = now + Math.min(800, (long) ((npc.calculateDistance2D(point) * 1000.0) / Math.max(1, npc.getMoveSpeed())));
 				return;
 			}
 		}
@@ -1048,8 +1117,11 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return;
 		}
 		
+		// #29: an archer in a PvP shoots plain arrows while they land, buffed archers deal most of their damage that way; its skills are for a target its arrows miss (peeling with Stun Shot is above, in the step back).
+		final boolean arrowsFirst = pvp && (role == Role.ARCHER) && (getHitChance(npc, target) >= ARCHER_ARROW_HIT_CHANCE);
+
 		// Combos: the skill chains a practiced player of this class plays (with its weapon, not with the spare bow or polearm).
-		if (!bowHeld && !polearmHeld && (defenses == 0) && (!pressed || mage) && playCombo(npc, profile, target, pvp, distance, collision, canMove, now))
+		if (!bowHeld && !polearmHeld && !arrowsFirst && (defenses == 0) && (!pressed || mage) && playCombo(npc, profile, target, pvp, distance, collision, canMove, now))
 		{
 			trace(Reason.COMBO_STEP, target, null, _combo != null ? _combo.getName() : null);
 			return;
@@ -1060,14 +1132,16 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		final FakePlayerPvpPersonality personality = profile.getPersonality();
 		final int debuffChance = pvp ? (_autoAttacker ? (personality.getPvpDebuffChance() / 2) : personality.getPvpDebuffChance()) : 5;
 		// With the bow out it only uses what reaches the target from where it stands, instead of running in.
-		if ((Rnd.get(100) < debuffChance) && useSkill(npc, target, inReach(pickSkill(npc, target, affordable(npc, profile.getSkills(SkillCategory.DEBUFF), safeCast), true, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))
+		if (!arrowsFirst && (Rnd.get(100) < debuffChance) && useSkill(npc, target, inReach(pickSkill(npc, target, affordable(npc, profile.getSkills(SkillCategory.DEBUFF), safeCast), true, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))
 		{
 			return;
 		}
 		
 		// Attack skills, best first. Mages cast whenever they can, Gladiators, Tyrants and daggers fight with their skills, and the other classes (tanks, archers, most warriors) auto attack and use a skill now and then, like players.
 		final int skillChance = _autoAttacker ? (pvp ? personality.getAutoAttackPvpSkillChance() : personality.getAutoAttackSkillChance()) : (pvp ? personality.getPvpSkillChance() : personality.getSkillChance());
-		if ((mage || (Rnd.get(100) < skillChance)) && useSkill(npc, target, inReach(pickSkill(npc, target, affordable(npc, profile.getSkills(SkillCategory.ATTACK), safeCast), false, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))
+		// #29: an archer whose arrows would miss uses its skills every time (they don't miss), one whose arrows land none.
+		final boolean archerSkills = pvp && (role == Role.ARCHER);
+		if ((archerSkills ? !arrowsFirst : (mage || (Rnd.get(100) < skillChance))) && useSkill(npc, target, inReach(pickSkill(npc, target, affordable(npc, profile.getSkills(SkillCategory.ATTACK), safeCast), false, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))
 		{
 			return;
 		}
@@ -1132,6 +1206,10 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			noticeDefenses(target, false);
 		}
 		_actor.doAttack(target);
+		if ((role == Role.ARCHER) || bowHeld)
+		{
+			markShot(); // #21.
+		}
 	}
 	
 	@Override
@@ -1602,6 +1680,18 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		// In a PvP spot it runs around inside it, not off into the wild.
 		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
 		final PvpSpotZone spot = (profile != null) && profile.isSpotFighter() ? PvpSpotManager.getZone(profile.getPvpSpotId()) : null;
+		// #20: out in the open, away from all the enemies around, not only from its pursuer.
+		if (spot == null)
+		{
+			final Location destination = pickRetreat(npc, pursuer, FLEE_STEP, null, 0, null);
+			if ((destination != null) && (npc.calculateDistance2D(destination) >= (FLEE_STEP / 3)))
+			{
+				npc.setRunning();
+				moveTo(destination.getX(), destination.getY(), destination.getZ());
+				return true;
+			}
+		}
+
 		final double away = Math.atan2(npc.getY() - pursuer.getY(), npc.getX() - pursuer.getX());
 		for (int pass = spot != null ? 0 : 1; pass < 2; pass++)
 		{
@@ -1983,7 +2073,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			score -= Math.min(FOCUS_FIRE_MAX, focusFire);
 
 			// #4: one that is on a squishy of the party is answered, from wherever it shoots (it used to react only to divers within a few hundred).
-			if ((enemy.getTarget() instanceof Creature victim) && (victim != enemy) && !victim.isDead() && party.isMember(victim))
+			if ((enemy.getTarget() instanceof Creature victim) && (victim != enemy) && !victim.isDead() && party.isMember(victim) && !isTank(enemy)) // #28: not an enemy tank, which peels rather than kills.
 			{
 				if (isHealer(victim))
 				{
@@ -2154,12 +2244,14 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 */
 	private int getKnownDefenses(Creature target)
 	{
+		// #10: an enemy that reflected one of its debuffs gets none for a while.
+		final int reflected = isReflector(target) ? (MAGIC_DEBUFFS | PHYSICAL_DEBUFFS) : 0;
 		if (_noticedDefenses.isEmpty() || !isPvpEnemy(target))
 		{
-			return 0;
+			return reflected;
 		}
 		
-		int flags = 0;
+		int flags = reflected;
 		for (BuffInfo info : target.getEffectList().getBuffs())
 		{
 			if (!info.isRemoved() && _noticedDefenses.contains(info))
@@ -2174,6 +2266,38 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		return flags;
 	}
 	
+	/** #10: a debuff of its own on itself this soon after it debuffed someone came back from them; it leaves that one's debuffs alone this long. */
+	private static final long REFLECT_NOTICE_TIME = 5000;
+	private static final long REFLECT_MEMORY = 30000;
+
+	/**
+	 * #10: {@code true} if {@code target} reflected one of its debuffs lately. Notices a new one first: a debuff of its own on itself, soon after it debuffed someone.
+	 */
+	private boolean isReflector(Creature target)
+	{
+		final long now = System.currentTimeMillis();
+		final Creature last = _lastDebuffTarget;
+		if ((last != null) && ((now - _lastDebuffTime) <= REFLECT_NOTICE_TIME))
+		{
+			final Attackable npc = getActiveChar();
+			for (BuffInfo info : npc.getEffectList().getDebuffs())
+			{
+				if ((info.getEffector() == npc) && !info.isRemoved())
+				{
+					_reflectors.put(last.getObjectId(), now + REFLECT_MEMORY);
+					_lastDebuffTarget = null;
+					break;
+				}
+			}
+		}
+		if (_reflectors.isEmpty())
+		{
+			return false;
+		}
+		final Long until = _reflectors.get(target.getObjectId());
+		return (until != null) && (until > now);
+	}
+
 	/**
 	 * @param defenses what the defensive buffs it noticed on the target keep from working
 	 * @param skill a skill
@@ -3835,6 +3959,20 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		trace(Reason.CAST, target, skill, getSkillKind(skill));
 		noticeDefenses(target, skill.isMagic());
 		clientStopMoving(null);
+
+		// #10: who it last debuffed, to tell when a debuff comes back.
+		if (skill.isDebuff() && (target != npc))
+		{
+			_lastDebuffTarget = target;
+			_lastDebuffTime = System.currentTimeMillis();
+		}
+
+		// #21: an archer's skill on an enemy is a shot too.
+		final FakePlayerPvpProfile shooter = npc.getTemplate().getFakePlayerPvpProfile();
+		if ((shooter != null) && (target != npc) && skill.hasNegativeEffect() && ((shooter.getRole() == Role.ARCHER) || shooter.isBowHeld()))
+		{
+			markShot();
+		}
 		
 		// Blink and Warp jump back from where it faces: it faces the player it gets away from.
 		if (hasEffect(skill, "Blink"))
@@ -4322,6 +4460,70 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	}
 	
 	/**
+	 * @param npc an archer
+	 * @return how long, in milliseconds, it stands still for a shot: until the arrow flies and half the bow's reuse is over
+	 */
+	private static long getShotTime(Attackable npc)
+	{
+		return (npc.calculateTimeBetweenAttacks() + npc.calculateReuseTime(npc.getActiveWeaponItem())) / 2;
+	}
+	
+	/**
+	 * An archer's step back from a melee: straight away from it, or at an angle when that way is blocked. Unlike {@link #kiteStep}, the next one may follow as soon as this one ends (and a shot is off).
+	 * @param npc the archer
+	 * @param target the melee after it
+	 * @param now the current time
+	 * @return {@code true} if it started moving
+	 */
+	private boolean archerKiteStep(Attackable npc, Creature target, long now)
+	{
+		if (now < _nextKiteTime)
+		{
+			return false;
+		}
+		
+		double dx = npc.getX() - target.getX();
+		double dy = npc.getY() - target.getY();
+		double length = Math.hypot(dx, dy);
+		if (length < 1)
+		{
+			final double angle = Rnd.nextDouble() * 2 * Math.PI;
+			dx = Math.cos(angle);
+			dy = Math.sin(angle);
+			length = 1;
+		}
+		dx /= length;
+		dy /= length;
+		
+		final int step = Math.max(FakePlayerPvpPersonality.of(npc).getKiteStep(), ARCHER_KITE_STEP);
+		final boolean flip = Rnd.nextBoolean(); // Not always the same side first.
+		for (int i = -1; i < ARCHER_KITE_ANGLES.length; i++)
+		{
+			final double angle = i < 0 ? 0 : Math.toRadians(flip ? -ARCHER_KITE_ANGLES[i] : ARCHER_KITE_ANGLES[i]);
+			final double cos = Math.cos(angle);
+			final double sin = Math.sin(angle);
+			final int x = npc.getX() + (int) (((dx * cos) - (dy * sin)) * step);
+			final int y = npc.getY() + (int) (((dx * sin) + (dy * cos)) * step);
+			final Location destination = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, npc.getZ() + 30, npc.getInstanceId());
+			if ((npc.calculateDistance2D(destination) < (step / 2)) || !GeoEngine.getInstance().canMoveToTarget(npc.getX(), npc.getY(), npc.getZ(), destination.getX(), destination.getY(), destination.getZ(), npc.getInstanceId()))
+			{
+				continue;
+			}
+			
+			trace(Reason.KITE_STEP, target, null, i < 0 ? null : "ANGLE");
+			npc.setRunning();
+			moveTo(destination.getX(), destination.getY(), destination.getZ());
+			_kiteEndTime = now + Math.min(3000, (long) ((npc.calculateDistance2D(destination) * 1000.0) / Math.max(1, npc.getMoveSpeed())));
+			_nextKiteTime = _kiteEndTime;
+			return true;
+		}
+		
+		trace(Reason.KITE_CORNERED, target);
+		_nextKiteTime = now + 1500; // Cornered every way - shoot back for a moment.
+		return false;
+	}
+	
+	/**
 	 * Steps back from {@code target} by its {@link FakePlayerPvpConfig#KITE_STEP}, onto a point geodata allows.
 	 * @return {@code true} if it started moving
 	 */
@@ -4336,21 +4538,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 */
 	private boolean kiteStep(Attackable npc, Creature target, long now, int step)
 	{
-		double dx = npc.getX() - target.getX();
-		double dy = npc.getY() - target.getY();
-		double length = Math.hypot(dx, dy);
-		if (length < 1)
-		{
-			final double angle = Rnd.nextDouble() * 2 * Math.PI;
-			dx = Math.cos(angle);
-			dy = Math.sin(angle);
-			length = 1;
-		}
-		
-		final int x = npc.getX() + (int) ((dx / length) * step);
-		final int y = npc.getY() + (int) ((dy / length) * step);
-		final Location destination = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, npc.getZ() + 30, npc.getInstanceId());
-		if ((npc.calculateDistance2D(destination) < 50) || !GeoEngine.getInstance().canMoveToTarget(npc.getX(), npc.getY(), npc.getZ(), destination.getX(), destination.getY(), destination.getZ(), npc.getInstanceId()))
+		// #20: away from all the enemies around, not only from its target (stepping back from a diver used to walk into its friends).
+		final Location destination = pickRetreat(npc, target, step, null, 0, null);
+		if (destination == null)
 		{
 			trace(Reason.KITE_CORNERED, target);
 			_nextKiteTime = now + 3000; // Cornered - fight for a while.
@@ -4365,6 +4555,174 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		return true;
 	}
 	
+	/** #20: enemies this close count when it picks where to step back to. */
+	private static final int RETREAT_SCAN_RANGE = 1200;
+	/** #20: a step that stays near its party stays this close to it (or gets closer). */
+	private static final int RETREAT_KEEP_NEAR = 400;
+	/** #20: the directions it tries, from straight away from the enemies around (radians). */
+	private static final double[] RETREAT_TURNS =
+	{
+		0,
+		0.4,
+		-0.4,
+		0.8,
+		-0.8,
+		1.2,
+		-1.2,
+		1.6,
+		-1.6,
+		2.1,
+		-2.1
+	};
+	/** #20: a step that loses sight of the target it keeps in range scores this much less. */
+	private static final double RETREAT_NO_LOS_MALUS = 300;
+
+	/**
+	 * #20: where to step back to. Of a fan of points {@code step} away, around straight away from the enemies around (the closest ones weigh most), the one farthest from them all: the distance to the closest enemy counts most, the average distance a little.
+	 * @param npc the fake player
+	 * @param threat the enemy it steps back from (counted even beyond {@link #RETREAT_SCAN_RANGE})
+	 * @param step how far
+	 * @param keepWithin a target to keep within {@code range} (an archer's shot), {@code null} for none
+	 * @param range how close {@code keepWithin} stays
+	 * @param keepNear where its party is: a point farther than {@link #RETREAT_KEEP_NEAR} from it, and farther than now, isn't taken; {@code null} for none
+	 * @return the point, {@code null} if none it can walk to
+	 */
+	private static Location pickRetreat(Attackable npc, Creature threat, int step, Creature keepWithin, int range, Location keepNear)
+	{
+		final List<Creature> enemies = new ArrayList<>();
+		double centerX = 0;
+		double centerY = 0;
+		double weight = 0;
+		for (Creature enemy : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, RETREAT_SCAN_RANGE))
+		{
+			if (!isPvpEnemy(enemy) || enemy.isAlikeDead() || !isValidTarget(npc, enemy))
+			{
+				continue;
+			}
+			enemies.add(enemy);
+			final double w = 1.0 / Math.max(50, npc.calculateDistance2D(enemy));
+			centerX += enemy.getX() * w;
+			centerY += enemy.getY() * w;
+			weight += w;
+		}
+		if ((threat != null) && !enemies.contains(threat))
+		{
+			enemies.add(threat);
+			final double w = 1.0 / Math.max(50, npc.calculateDistance2D(threat));
+			centerX += threat.getX() * w;
+			centerY += threat.getY() * w;
+			weight += w;
+		}
+		final double away = weight > 0 ? Math.atan2(npc.getY() - (centerY / weight), npc.getX() - (centerX / weight)) : Rnd.nextDouble() * 2 * Math.PI;
+		final double nearNow = keepNear != null ? Math.hypot(npc.getX() - keepNear.getX(), npc.getY() - keepNear.getY()) : 0;
+
+		Location best = null;
+		double bestScore = -Double.MAX_VALUE;
+		for (double turn : RETREAT_TURNS)
+		{
+			final double angle = away + turn;
+			final int x = npc.getX() + (int) (Math.cos(angle) * step);
+			final int y = npc.getY() + (int) (Math.sin(angle) * step);
+			final Location point = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, npc.getZ() + 30, npc.getInstanceId());
+			if ((npc.calculateDistance2D(point) < 50) || !GeoEngine.getInstance().canMoveToTarget(npc.getX(), npc.getY(), npc.getZ(), point.getX(), point.getY(), point.getZ(), npc.getInstanceId()))
+			{
+				continue;
+			}
+			if ((keepWithin != null) && (Math.hypot(point.getX() - keepWithin.getX(), point.getY() - keepWithin.getY()) > range))
+			{
+				continue;
+			}
+			if (keepNear != null)
+			{
+				final double near = Math.hypot(point.getX() - keepNear.getX(), point.getY() - keepNear.getY());
+				if ((near > RETREAT_KEEP_NEAR) && (near > nearNow))
+				{
+					continue;
+				}
+			}
+
+			double closest = Double.MAX_VALUE;
+			double sum = 0;
+			for (Creature enemy : enemies)
+			{
+				final double distance = Math.hypot(point.getX() - enemy.getX(), point.getY() - enemy.getY());
+				closest = Math.min(closest, distance);
+				sum += distance;
+			}
+			double score = enemies.isEmpty() ? -Math.abs(turn) : closest + ((0.25 * sum) / enemies.size());
+			if ((keepWithin != null) && !GeoEngine.getInstance().canSeeTarget(point.getX(), point.getY(), point.getZ(), keepWithin.getX(), keepWithin.getY(), keepWithin.getZ(), npc.getInstanceId()))
+			{
+				score -= RETREAT_NO_LOS_MALUS;
+			}
+			if (score > bestScore)
+			{
+				bestScore = score;
+				best = point;
+			}
+		}
+		return best;
+	}
+
+	/** #29: below this chance of landing an arrow, an archer uses its skills. */
+	private static final double ARCHER_ARROW_HIT_CHANCE = 0.75;
+
+	/**
+	 * #29: the chance its normal attack lands on {@code target}, worked out like {@link org.l2jmobius.gameserver.model.stats.Formulas#calcHitMiss} (accuracy against evasion, the bonus of where they stand, between 20% and 98%) without the roll.
+	 */
+	private static double getHitChance(Creature attacker, Creature target)
+	{
+		if (PassiveMechanics.neverMisses(attacker))
+		{
+			return 1;
+		}
+		double chance = (80 + (2 * (attacker.getAccuracy() - target.getEvasionRate(attacker)))) * 10;
+		chance *= HitConditionBonusData.getInstance().getConditionBonus(attacker, target);
+		return Math.max(200, Math.min(980, chance)) / 1000.0;
+	}
+
+	/**
+	 * @param npc the fake player
+	 * @param range how close
+	 * @return {@code true} if a living enemy of its fight is this close
+	 */
+	private static boolean isEnemyAround(Attackable npc, int range)
+	{
+		for (Creature enemy : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, range))
+		{
+			if (isPvpEnemy(enemy) && !enemy.isAlikeDead() && isValidTarget(npc, enemy))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * #21: it just shot; it may step aside once before the next shot.
+	 */
+	private void markShot()
+	{
+		_lastShotTime = System.currentTimeMillis();
+		_shotStepped = false;
+	}
+
+	/**
+	 * @param npc the fake player
+	 * @param range how close
+	 * @return {@code true} if an enemy this close targets it and can act (not stunned, rooted, asleep...)
+	 */
+	private static boolean isEnemyOnMe(Attackable npc, int range)
+	{
+		for (Creature enemy : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, range))
+		{
+			if ((enemy.getTarget() == npc) && isPvpEnemy(enemy) && !enemy.isAlikeDead() && !isDisabled(enemy) && isValidTarget(npc, enemy))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * Spirit Walk (Doomcryer): swaps places with its totem farthest from {@code enemy}, which is left by the totem, in its pulses.
 	 * @return {@code true} if it cast it
@@ -5191,9 +5549,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 		}
 
+		// #23: a tank that leads its party, while nobody is on the party and its target is still far, holds further ahead: the party follows it, so the team moves up together, as far as it can follow (holding by its squishies froze the whole team; going straight in left its healer chasing it).
+		final boolean advance = tank && (party.getActiveLeader() == npc) && (npc.calculateDistance2D(target) > TANK_LEAD_STOP) && !isPartyFought(npc, party);
+
 		// Nothing close: it holds its ground, a tank in front of its squishies, a support with its party.
 		_progressTime = now; // Waiting on purpose, not stuck.
-		trace(Reason.GUARD_HOLD, target);
+		trace(Reason.GUARD_HOLD, target, null, advance ? "ADVANCE" : null);
 		int holdX = anchor.getX();
 		int holdY = anchor.getY();
 		if (tank)
@@ -5201,8 +5562,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			final double dx = target.getX() - anchor.getX();
 			final double dy = target.getY() - anchor.getY();
 			final double length = Math.max(1, Math.hypot(dx, dy));
-			holdX += (int) ((dx / length) * GUARD_FRONT);
-			holdY += (int) ((dy / length) * GUARD_FRONT);
+			final int front = advance ? GUARD_FRONT + TANK_LEAD_STEP : GUARD_FRONT;
+			holdX += (int) ((dx / length) * front);
+			holdY += (int) ((dy / length) * front);
 		}
 
 		final int tolerance = tank ? GUARD_HOLD_TOLERANCE : SUPPORT_GUARD_LEASH;
@@ -5235,6 +5597,33 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 * @param now the current time
 	 * @return {@code true} if it holds this think
 	 */
+	/** #23: a tank leading its party holds this much further ahead while it advances, and stops advancing once its target is this close. */
+	private static final int TANK_LEAD_STEP = 300;
+	private static final int TANK_LEAD_STOP = 700;
+	/** #23: a healer doesn't follow its leader while enemies are this close and its leader this close (its heals reach). */
+	private static final int HEALER_FIGHT_RANGE = 1200;
+	private static final int HEALER_FOLLOW_REACH = 550;
+
+	/**
+	 * #23: {@code true} if an enemy close by targets a member of {@code party}.
+	 */
+	private static boolean isPartyFought(Attackable npc, FakePlayerParty party)
+	{
+		for (Creature enemy : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, GUARD_SCAN_RANGE))
+		{
+			if ((enemy.getTarget() instanceof Creature victim) && party.isMember(victim) && isPvpEnemy(enemy) && !enemy.isAlikeDead() && isValidTarget(npc, enemy))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** #25: within its attack range and this much more, it is already on its target: no hold. */
+	private static final int HOLD_ENGAGED_MARGIN = 150;
+	/** #25: it holds on one enemy this long at most. */
+	private static final long HOLD_MAX_TIME = 5000;
+
 	private boolean holdForTank(Attackable npc, FakePlayerPvpProfile profile, FakePlayerParty party, Creature target, long now)
 	{
 		final Role role = profile.isTransformed() ? Role.FIGHTER : profile.getRole();
@@ -5250,6 +5639,14 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return false;
 		}
 
+		// #25: already on it. Holding is for not charging in, not for leaving a fight it is in.
+		if ((npc.calculateDistance2D(target) - npc.getTemplate().getCollisionRadius() - target.getTemplate().getCollisionRadius()) <= (npc.getPhysicalAttackRange() + HOLD_ENGAGED_MARGIN))
+		{
+			_holdTarget = null;
+			return false;
+		}
+
+		Creature tankMember = null;
 		long x = 0;
 		long y = 0;
 		long z = 0;
@@ -5266,6 +5663,10 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			{
 				return false;
 			}
+			if (isTank(member) && ((tankMember == null) || (npc.calculateDistance2D(member) < npc.calculateDistance2D(tankMember))))
+			{
+				tankMember = member;
+			}
 			x += member.getX();
 			y += member.getY();
 			z += member.getZ();
@@ -5276,8 +5677,20 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return false;
 		}
 
-		final Location anchor = new Location((int) (x / others), (int) (y / others), (int) (z / others));
+		// #25: by its tank when it has one (the middle of the party sits far back when the backline does).
+		final Location anchor = tankMember != null ? new Location(tankMember.getX(), tankMember.getY(), tankMember.getZ()) : new Location((int) (x / others), (int) (y / others), (int) (z / others));
 		if (target.calculateDistance2D(anchor) <= MELEE_LEASH)
+		{
+			return false;
+		}
+
+		// #25: a hold on one enemy lasts a moment, then it goes.
+		if (_holdTarget != target)
+		{
+			_holdTarget = target;
+			_holdSince = now;
+		}
+		else if ((now - _holdSince) > HOLD_MAX_TIME)
 		{
 			return false;
 		}
@@ -5335,6 +5748,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final double HEALER_LOW_HP = 0.5;
 	/** #5: with an enemy casting or shooting at it, a healer heals itself already below this much of its HP. */
 	private static final double HEALER_PRE_HEAL = 0.95;
+	/** #27: below this much of its HP, a healer under ranged fire steps back this far, out of the shooters' reach. */
+	private static final double HEALER_RANGED_RETREAT_HP = 0.7;
+	private static final int HEALER_RANGED_RETREAT_STEP = 300;
 	/** #6: a silenced healer takes cover this far behind its tank, away from who is on it. */
 	private static final int HEALER_COVER_DISTANCE = 150;
 	/** An archer or mage looks after party healers this close, and stops someone on one at most this often. */
@@ -5386,6 +5802,29 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 
 		// #5: low, its heal comes before anything else (it used to root a diver at 6% HP, and die).
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
+
+		// #27: under ranged burst, it steps out of the shooters' reach toward its party before it heals again (healing in place inside their reach lost the race at level 80).
+		if ((attacker == null) && (shooter != null) && !npc.isMovementDisabled())
+		{
+			if (npc.isMoving() && (now < _kiteEndTime))
+			{
+				trace(Reason.HEALER_RETREAT, shooter);
+				return true;
+			}
+			if ((hpRatio < HEALER_RANGED_RETREAT_HP) && (now >= _nextKiteTime) && (npc.calculateDistance2D(shooter) <= (getThreatReach(shooter) + 50)))
+			{
+				final Location point = pickRetreat(npc, shooter, HEALER_RANGED_RETREAT_STEP, null, 0, getPartyAnchor(npc, party));
+				if (point != null)
+				{
+					trace(Reason.HEALER_RETREAT, shooter);
+					npc.setRunning();
+					moveTo(point.getX(), point.getY(), point.getZ());
+					_kiteEndTime = now + Math.min(2000, (long) ((npc.calculateDistance2D(point) * 1000.0) / Math.max(1, npc.getMoveSpeed())));
+					_nextKiteTime = now + 2500;
+					return true;
+				}
+			}
+		}
 		if ((hpRatio < HEALER_LOW_HP) && healSelf(npc, profile))
 		{
 			return true;
@@ -5476,17 +5915,74 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	}
 
 	/**
+	 * #27: where its party is: its closest tank, otherwise the middle of the others.
+	 * @return the place, {@code null} if it is alone
+	 */
+	private static Location getPartyAnchor(Attackable npc, FakePlayerParty party)
+	{
+		Creature tank = null;
+		long x = 0;
+		long y = 0;
+		long z = 0;
+		int others = 0;
+		for (Creature member : party.getMembers())
+		{
+			if ((member == npc) || member.isDead() || !member.isSpawned() || (member.getInstanceId() != npc.getInstanceId()))
+			{
+				continue;
+			}
+			if (isTank(member) && ((tank == null) || (npc.calculateDistance2D(member) < npc.calculateDistance2D(tank))))
+			{
+				tank = member;
+			}
+			x += member.getX();
+			y += member.getY();
+			z += member.getZ();
+			others++;
+		}
+		if (tank != null)
+		{
+			return new Location(tank.getX(), tank.getY(), tank.getZ());
+		}
+		return others > 0 ? new Location((int) (x / others), (int) (y / others), (int) (z / others)) : null;
+	}
+
+	/**
 	 * A healer heals itself with its fastest heal.
 	 * @return {@code true} if it cast one
 	 */
 	private boolean healSelf(Attackable npc, FakePlayerPvpProfile profile)
 	{
-		Skill heal = pickHeal(npc, profile.getSkills(SkillCategory.PARTY_HEAL), npc, true);
+		Skill heal = pickHeal(npc, quickHeals(npc, profile.getSkills(SkillCategory.PARTY_HEAL)), npc, true);
 		if (heal == null)
 		{
-			heal = pickHeal(npc, profile.getSkills(SkillCategory.HEAL), npc, true);
+			heal = pickHeal(npc, quickHeals(npc, profile.getSkills(SkillCategory.HEAL)), npc, true);
 		}
 		return (heal != null) && castSupport(npc, npc, heal, Reason.SUPPORT_HEAL);
+	}
+
+	/** #8: with a melee enemy this close on it, a self-heal longer than this to cast is left aside (it gets interrupted: Divine Heal 57% of the time). */
+	private static final int MELEE_ON_ME_RANGE = 150;
+	private static final int LONG_HEAL_TIME = 2000;
+
+	/**
+	 * #8: the heals it can cast on itself now: all of them, or only the quick ones while a melee enemy is on it.
+	 */
+	private static List<Skill> quickHeals(Attackable npc, List<Skill> heals)
+	{
+		if (heals.isEmpty() || !isEnemyOnMe(npc, MELEE_ON_ME_RANGE))
+		{
+			return heals;
+		}
+		final List<Skill> quick = new ArrayList<>(heals.size());
+		for (Skill heal : heals)
+		{
+			if (heal.getHitTime() <= LONG_HEAL_TIME)
+			{
+				quick.add(heal);
+			}
+		}
+		return quick;
 	}
 
 	/**
@@ -5958,6 +6454,17 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			npc.addDamageHate(target, 0, 1);
 			npc.setRunning();
 			setIntention(Intention.ATTACK, target);
+			return true;
+		}
+
+		// #23: a healer in a fight doesn't chase its leader while its heals still reach it: it stays where it heals from.
+		if (isPureHealer(profile) && (npc.calculateDistance2D(leader) <= HEALER_FOLLOW_REACH) && isEnemyAround(npc, HEALER_FIGHT_RANGE))
+		{
+			if (npc.isMoving())
+			{
+				clientStopMoving(null);
+			}
+			trace(Reason.GUARD_HOLD, leader, null, "HEALER");
 			return true;
 		}
 

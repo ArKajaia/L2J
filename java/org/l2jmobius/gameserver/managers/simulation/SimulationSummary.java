@@ -58,6 +58,7 @@ public class SimulationSummary
 		json.put("winner", run.getWinner());
 		json.put("reason", run.getEndReason());
 		json.put("fightDuration", duration);
+		json.put("decidedAt", run.getDecidedAt() > 0 ? run.getDecidedAt() - run.getFightStart() : null);
 		final List<JsonLine> teams = new ArrayList<>();
 		for (SimulationTeam team : run.getTeams())
 		{
@@ -71,7 +72,17 @@ public class SimulationSummary
 				}
 				members.add(new JsonLine().put("id", member.getObjectId()).put("name", member.getName()).put("role", member.getRole()).put("build", member.getBuild()).put("admin", member.isAdmin()).put("active", team.isActive(member)).put("alive", member.isAlive()).put("damageDealt", (long) member.getDamageDealt()).put("damageTaken", (long) member.getDamageTaken()).put("healDone", (long) member.getHealDone()).put("healReceived", (long) member.getHealReceived()).put("kills", member.getKills()).put("deaths", member.getDeaths()).put("diedAt", member.getDiedAt() >= 0 ? member.getDiedAt() : null).put("aliveTime", member.getAliveTime()).put("distance", (long) member.getDistance()).put("resisted", member.getResisted()).put("pathFailures", member.getPathFailures()).put("decisionTime", decisions).put("anomalies", member.getAnomalies()));
 			}
-			teams.add(new JsonLine().put("id", team.getId()).put("brain", team.getBrain().name()).put("alive", team.isAlive()).ratio("healthLeft", team.getHealthLeft()).put("members", members));
+			// When its first fake player made its first decision (ms since the start): late thinking shows here (issue #24).
+			long firstDecision = 0;
+			for (SimulationMember member : team.getMembers())
+			{
+				final long at = member.getFirstDecisionAt();
+				if ((at > 0) && ((firstDecision == 0) || (at < firstDecision)))
+				{
+					firstDecision = at;
+				}
+			}
+			teams.add(new JsonLine().put("id", team.getId()).put("brain", team.getBrain().name()).put("alive", team.isAlive()).ratio("healthLeft", team.getHealthLeft()).put("firstDecision", firstDecision > 0 ? firstDecision - run.getStartTime() : null).put("members", members));
 		}
 		json.put("teams", teams);
 		json.put("kills", run.getKills());
@@ -165,7 +176,7 @@ public class SimulationSummary
 	 * Writes the summary of all the rounds of a simulation: wins by team (the point it fought from), brain, build and role, and anomalies.
 	 * @return the text summary
 	 */
-	public static String writeSeries(Path dir, String name, SimulationSettings settings, List<JsonLine> results, Map<Integer, Integer> teamWins, Map<String, int[]> brainStats, Map<String, int[]> buildStats, Map<String, int[]> roleStats, Map<String, Integer> anomalies)
+	public static String writeSeries(Path dir, String name, SimulationSettings settings, List<JsonLine> results, Map<Integer, Integer> teamWins, Map<String, int[]> brainStats, Map<String, int[]> buildStats, Map<String, int[]> roleStats, Map<String, Integer> anomalies, List<Long> decided)
 	{
 		// Each brain's win rate, with its 95% interval (Wilson): a change to brain B wins more only if its interval is above 50%.
 		final Map<String, JsonLine> brains = new LinkedHashMap<>();
@@ -196,6 +207,15 @@ public class SimulationSummary
 		sb.append(name).append(": ").append(results.size()).append(" round(s) of ").append(settings.size()).append(" per team, level ").append(settings.level()).append(settings.mirror() ? ", mirror" : "").append(", seed ").append(settings.seed()).append(", brains ").append(settings.brains()).append(settings.swap() ? ", A/B test" : "").append('\n');
 		sb.append("Wins by team (side): ").append(teamWins).append('\n');
 		sb.append("Wins by brain: ").append(brainText.length() > 0 ? brainText : "none").append('\n');
+		if (!decided.isEmpty())
+		{
+			long sum = 0;
+			for (long time : decided)
+			{
+				sum += time;
+			}
+			sb.append("Decided (a team down to its last member) after ").append(Math.round(sum / 1000.0 / decided.size())).append(" s on average\n");
+		}
 		sb.append("Wins/games by role: ").append(roles).append('\n');
 		sb.append("Wins/games by build: ").append(builds).append('\n');
 		sb.append("Anomalies: ").append(anomalies).append('\n');

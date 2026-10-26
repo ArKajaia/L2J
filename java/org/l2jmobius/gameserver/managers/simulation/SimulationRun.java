@@ -53,6 +53,7 @@ public class SimulationRun
 	private volatile Phase _phase = Phase.PREP;
 	private volatile long _fightStart;
 	private volatile long _lastClash;
+	private volatile long _decidedAt;
 	private volatile long _end;
 	private volatile int _winner;
 	private volatile String _endReason;
@@ -202,6 +203,27 @@ public class SimulationRun
 	/**
 	 * @return when (ms since the start) a fake player last hurt a fake player of another team, or the round was last pushed back into the fight; 0 if never
 	 */
+	/**
+	 * @return when it started (ms since epoch)
+	 */
+	public long getStartTime()
+	{
+		return _start;
+	}
+
+	/**
+	 * @return when (ms since the start) a team was first down to its last member, 0 if none yet: the round was decided then, whatever a last tank under Ultimate Defense does after
+	 */
+	public long getDecidedAt()
+	{
+		return _decidedAt;
+	}
+
+	public void setDecidedAt(long time)
+	{
+		_decidedAt = time;
+	}
+
 	public long getLastClash()
 	{
 		return _lastClash;

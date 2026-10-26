@@ -121,6 +121,9 @@ def report(api, names):
                 first_deaths[brain_of.get(first["victimTeam"], "?")] += 1
                 if first.get("victimRole") == "HEALER":
                     healer_first[brain_of.get(first["victimTeam"], "?")] += 1
+            if summary.get("decidedAt") is not None:
+                decided.append(summary["decidedAt"] / 1000)
+            elif kills:
                 alive = dict(size)
                 for kill in kills:
                     alive[kill["victimTeam"]] = alive.get(kill["victimTeam"], 1) - 1
