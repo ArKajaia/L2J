@@ -64,6 +64,8 @@ public class SimulationMonitor
 	public static final String PATH_FAIL = "PATH_FAIL";
 	public static final String SPLIT = "SPLIT";
 	public static final String FLEE_ALONE = "FLEE_ALONE";
+	/** An enemy this close on a member that runs makes it a kite, not a {@link #FLEE_ALONE}. */
+	private static final int KITE_PURSUER_RANGE = 150;
 	public static final String PRESSURE_UNANSWERED = "PRESSURE_UNANSWERED";
 	public static final String TARGET_FLIP = "TARGET_FLIP";
 	public static final String WASTED_CAST = "WASTED_CAST";
@@ -224,6 +226,15 @@ public class SimulationMonitor
 		if (team == null)
 		{
 			return;
+		}
+
+		// Kiting a melee enemy that is on it (an archer stepping away from a dagger) is no flight from the fight.
+		for (SimulationMember enemy : _run.getEnemiesOf(member))
+		{
+			if ((enemy.getCreature().getTarget() == member.getCreature()) && (enemy.getCreature().calculateDistance2D(member.getCreature()) < KITE_PURSUER_RANGE))
+			{
+				return;
+			}
 		}
 
 		final List<SimulationMember> fighting = new ArrayList<>();
