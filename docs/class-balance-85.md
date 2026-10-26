@@ -393,3 +393,30 @@ Brain B is now neutral or better for every mage. With the archer results of roun
 | Eva's Templar with a dagger | 55.7 → 57.0 (+1.3) | no |
 
 At level 84 and above, the tanks' armour kit is the same Vesper set as the daggers' heavy kit, so a dagger "in tank armour" is the heavy variant the Adventurer and Wind Rider already roam with. Trickster (Kamael) gets no heavy variant.
+
+## Round 5: brain B promoted, tank heals, archer trees (`matrix-20261026-065134`)
+
+**Changes**
+- The ranged AI from rounds 3 and 4 is now `FakePlayerPvpAI`.
+- The knights' self-heals (Divine Heal, Holy Blessing, and Elemental Heal for the Elven knights) have twice their reuse, through `ClassSkillReuseMultipliers` in `ClassBalance.ini`.
+- Archer trees want P. Atk % and critical damage % twice as much.
+
+Full matrix, 14,060 battles, 500 at once. Each class has 740 battles, so a change under about 4 points is noise. The archers' new heavy variants don't take part: the matrix uses each class's main build.
+
+**Tank heals:** the reuse doubled as intended. The shortest gap between two heals went from 3.0 to 6.0 s, and casts per battle fell by a third (Eva's Templar Elemental Heal 9.5 → 6.1, Phoenix Knight Divine Heal 6.3 → 4.6, Hell Knight 2.9 → 1.9). The tanks didn't get weaker: Hell Knight 87.2 → 90.3, Phoenix Knight 63.6 → 66.6, Eva's Templar 51.2 → 54.1, all within noise. Holy Blessing wasn't cast in either run. Their self-heals aren't what keeps them alive; their HP, defence and stun chains are.
+
+**Archer trees:** every archer gained a little:
+- Sagittarius 40.7 → 43.0
+- Ghost Sentinel 29.8 → 31.9
+- Moonlight Sentinel 28.4 → 31.1
+- Trickster 68.8 → 71.5
+
+About +2.5 on average, a consistent direction but each within noise.
+
+**Ranking now** (round 3 with brain B in brackets):
+- **Top five:** Titan 91.2 (92.7), Hell Knight 90.3 (87.2), Dreadnought 87.0 (88.1), Maestro 85.4 (86.2), Doombringer 83.9 (87.2).
+- **Middle:** Trickster 71.5, Archmage 62.6, Storm Screamer 60.8, Doom Oracle 59.1, Mystic Muse 58.5, Soultaker 58.4, Dominator 45.1.
+- **Bottom, healers aside:** Moonlight Sentinel 31.1, Ghost Sentinel 31.9, Male Soul Hound 31.9, Wind Rider 26.1.
+- **Moves to watch:** Wind Rider 30.9 → 26.1, Adventurer 42.0 → 37.8 and Duelist 55.4 → 50.1 lost the most. Nothing in this round touched them directly, so the likely cause is the archers and mages around them getting stronger.
+
+The spread of the win rates (standard deviation 22) hasn't moved since round 3. The top five are still where they were, and the skill nerfs of the "top five" section are what's left to bring them down.
