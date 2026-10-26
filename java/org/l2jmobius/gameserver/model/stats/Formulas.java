@@ -752,6 +752,7 @@ public class Formulas
 			// Damage bonuses in PvP fight
 			pvpBonus = attacker.calcStat(Stat.PVP_PHYS_SKILL_DMG, 1, null, null);
 			pvpBonus *= ClassBalanceConfig.PVP_PHYSICAL_SKILL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
+			pvpBonus *= ClassBalanceConfig.PVP_BLOW_SKILL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()]; // Custom: Backstab is a blow too.
 			
 			// Defense bonuses in PvP fight
 			defence *= target.calcStat(Stat.PVP_PHYS_SKILL_DEF, 1, null, null);
@@ -761,6 +762,7 @@ public class Formulas
 		{
 			// Custom: the class balance multipliers between roaming fake players and players too.
 			pvpBonus *= balance(ClassBalanceConfig.PVP_PHYSICAL_SKILL_DAMAGE_MULTIPLIERS, attacker);
+			pvpBonus *= balance(ClassBalanceConfig.PVP_BLOW_SKILL_DAMAGE_MULTIPLIERS, attacker);
 			defence *= balance(ClassBalanceConfig.PVP_PHYSICAL_SKILL_DEFENCE_MULTIPLIERS, target);
 		}
 		

@@ -2139,6 +2139,11 @@ public abstract class Creature extends WorldObject
 		{
 			reuseDelay = (int) (reuseDelay * ClassBalanceConfig.SKILL_REUSE_MULTIPLIERS[asPlayer().getPlayerClass().getId()]);
 		}
+		else if (isPvpFakePlayer())
+		{
+			// Custom: roaming fake players too.
+			reuseDelay = (int) (reuseDelay * Formulas.balance(ClassBalanceConfig.SKILL_REUSE_MULTIPLIERS, this));
+		}
 		
 		// Custom: reuse of some skills for some classes (ClassSkillReuseMultipliers: the tanks' self-heals), players and roaming fake players alike.
 		if (!ClassBalanceConfig.CLASS_SKILL_REUSE_MULTIPLIERS.isEmpty())
