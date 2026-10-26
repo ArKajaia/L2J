@@ -55,6 +55,7 @@ public class FakePlayerPvpProfile
 	private final FakePlayerPvpWeapon _mainWeapon;
 	private final FakePlayerPvpWeapon _bow;
 	private final FakePlayerPvpWeapon _polearm;
+	private final FakePlayerPvpWeapon _caster;
 	private volatile FakePlayerPvpWeapon _heldWeapon;
 	// Its bare hands (and shield) while a player's Disarm holds, and the weapon it had out before.
 	private FakePlayerPvpWeapon _unarmed;
@@ -145,9 +146,10 @@ public class FakePlayerPvpProfile
 	 * @param mainWeapon its weapon (and shield)
 	 * @param bow the bow it carries besides its weapon, {@code null} for none
 	 * @param polearm the polearm it carries besides its weapon, {@code null} for none
+	 * @param caster the magic weapon it carries besides its weapon, {@code null} for none
 	 * @param personality its temper (see {@link FakePlayerPvpPersonality}); it runs away from a PvP it is losing with its own flee chance, otherwise it fights to the death
 	 */
-	public FakePlayerPvpProfile(FakePlayerPvpBuild build, PlayerClass playerClass, int level, List<SkillHolder> buffs, int armorWornMask, int armorMask, int maxCharges, List<ItemEnchantHolder> equipment, FakePlayerPvpWeapon mainWeapon, FakePlayerPvpWeapon bow, FakePlayerPvpWeapon polearm, FakePlayerPvpPersonality personality)
+	public FakePlayerPvpProfile(FakePlayerPvpBuild build, PlayerClass playerClass, int level, List<SkillHolder> buffs, int armorWornMask, int armorMask, int maxCharges, List<ItemEnchantHolder> equipment, FakePlayerPvpWeapon mainWeapon, FakePlayerPvpWeapon bow, FakePlayerPvpWeapon polearm, FakePlayerPvpWeapon caster, FakePlayerPvpPersonality personality)
 	{
 		_build = build;
 		_playerClass = playerClass;
@@ -158,6 +160,7 @@ public class FakePlayerPvpProfile
 		_mainWeapon = mainWeapon;
 		_bow = bow;
 		_polearm = polearm;
+		_caster = caster;
 		_heldWeapon = mainWeapon;
 		_maxCharges = maxCharges;
 		_charges.set(maxCharges);
@@ -317,6 +320,22 @@ public class FakePlayerPvpProfile
 	public FakePlayerPvpWeapon getPolearm()
 	{
 		return _polearm;
+	}
+	
+	/**
+	 * @return the magic weapon it carries besides its weapon (a hybrid Soul Hound's mace), {@code null} for none
+	 */
+	public FakePlayerPvpWeapon getCaster()
+	{
+		return _caster;
+	}
+	
+	/**
+	 * @return {@code true} if it has switched to its magic weapon: it then fights like a mage, from a distance
+	 */
+	public boolean isCasterHeld()
+	{
+		return (_caster != null) && (_heldWeapon == _caster);
 	}
 	
 	/**

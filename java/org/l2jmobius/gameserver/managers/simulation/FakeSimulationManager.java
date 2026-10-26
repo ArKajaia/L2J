@@ -2674,7 +2674,7 @@ public class FakeSimulationManager
 	 */
 	public void onWeaponSwap(Npc fake, FakePlayerPvpWeapon weapon)
 	{
-		final SimulationRun run = _run;
+		final SimulationRun run = runOf(fake);
 		final SimulationMember member = run != null ? run.getMember(fake) : null;
 		if (member == null)
 		{
@@ -2682,7 +2682,7 @@ public class FakeSimulationManager
 		}
 
 		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
-		final String kind = (profile != null) && (weapon == profile.getBow()) ? "bow" : (profile != null) && (weapon == profile.getPolearm()) ? "polearm" : "main";
+		final String kind = (profile != null) && (weapon == profile.getBow()) ? "bow" : (profile != null) && (weapon == profile.getPolearm()) ? "polearm" : (profile != null) && (weapon == profile.getCaster()) ? "caster" : "main";
 		final JsonLine line = event(run, "weapon_swap");
 		line.put("id", member.getObjectId()).put("name", member.getName()).put("team", member.getTeamId()).put("weapon", kind);
 		run.getLog().write(SimulationLog.EVENTS, line);

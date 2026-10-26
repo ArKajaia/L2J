@@ -3131,6 +3131,12 @@ public class FakePlayerPvpManager
 			fake.addSkill(skill);
 		}
 		
+		// Like a player taking off a weapon with Health: what is left above the lower max HP is lost, and it doesn't come back with the weapon.
+		if (fake.getCurrentHp() > fake.getMaxHp())
+		{
+			fake.setCurrentHp(fake.getMaxHp());
+		}
+		
 		// Shows the new weapon to the players around.
 		fake.setLRHandId(weapon.getShieldId(), weapon.getWeaponId());
 	}

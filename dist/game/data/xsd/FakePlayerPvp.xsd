@@ -82,12 +82,22 @@
 												<xs:attribute type="xs:boolean" name="self" />
 												<xs:attribute type="xs:boolean" name="behind" />
 												<xs:attribute type="xs:boolean" name="disabledTarget" />
+												<xs:attribute type="xs:boolean" name="mageTarget" />
 											</xs:complexType>
 										</xs:element>
 									</xs:sequence>
 									<xs:attribute type="xs:string" name="name" />
 									<xs:attribute type="xs:boolean" name="pvp" />
 									<xs:attribute type="xs:int" name="chance" />
+									<xs:attribute name="weapon">
+										<xs:simpleType>
+											<xs:restriction base="xs:string">
+												<xs:enumeration value="ANY" />
+												<xs:enumeration value="MAIN" />
+												<xs:enumeration value="CASTER" />
+											</xs:restriction>
+										</xs:simpleType>
+									</xs:attribute>
 								</xs:complexType>
 							</xs:element>
 							<xs:element name="variant" maxOccurs="unbounded" minOccurs="0">
@@ -98,6 +108,7 @@
 									<xs:attribute type="xs:string" name="jewels" />
 									<xs:attribute type="xs:string" name="bow" />
 									<xs:attribute type="xs:string" name="polearm" />
+									<xs:attribute type="xs:string" name="caster" />
 									<xs:attribute type="xs:string" name="buffs" />
 									<xs:attribute type="xs:int" name="weight" />
 								</xs:complexType>
@@ -121,6 +132,7 @@
 						<xs:attribute type="xs:string" name="jewels" />
 						<xs:attribute type="xs:string" name="bow" />
 						<xs:attribute type="xs:string" name="polearm" />
+						<xs:attribute type="xs:string" name="caster" />
 						<xs:attribute type="xs:string" name="buffs" />
 						<xs:attribute type="xs:int" name="weight" />
 						<xs:attribute type="xs:boolean" name="skillFighter" />

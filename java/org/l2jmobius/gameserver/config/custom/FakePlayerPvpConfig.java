@@ -143,6 +143,9 @@ public class FakePlayerPvpConfig
 	public static int POLEARM_SWAP_MONSTERS;
 	public static int POLEARM_PUT_AWAY_MONSTERS;
 	public static int POLEARM_SURROUND_RANGE;
+	public static boolean CASTER_SWAP_ENABLED;
+	public static int CASTER_SWAP_MIN_LEVEL;
+	public static int CASTER_SWAP_DISTANCE;
 	public static int TAUNT_CHANCE;
 	public static int GREET_CHANCE;
 	public static int RETURN_CHANCE;
@@ -381,6 +384,9 @@ public class FakePlayerPvpConfig
 		POLEARM_SWAP_MONSTERS = Math.max(1, config.getInt("FakePvpPolearmSwapMonsters", 8));
 		POLEARM_PUT_AWAY_MONSTERS = Math.max(0, Math.min(POLEARM_SWAP_MONSTERS, config.getInt("FakePvpPolearmPutAwayMonsters", 4)));
 		POLEARM_SURROUND_RANGE = Math.max(50, config.getInt("FakePvpPolearmSurroundRange", 300));
+		CASTER_SWAP_ENABLED = config.getBoolean("FakePvpCasterSwapEnabled", true);
+		CASTER_SWAP_MIN_LEVEL = config.getInt("FakePvpCasterSwapMinLevel", 40);
+		CASTER_SWAP_DISTANCE = Math.max(0, config.getInt("FakePvpCasterSwapDistance", 400));
 		TAUNT_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpTauntChance", 50)));
 		GREET_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpGreetChance", 25)));
 		RETURN_CHANCE = Math.max(0, Math.min(100, config.getInt("FakePvpReturnChance", 30)));
