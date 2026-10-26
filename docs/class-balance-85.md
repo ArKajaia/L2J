@@ -551,7 +551,7 @@ The disk of the test machine filled up halfway through. The run was resumed, and
 | Flame Warchief | 41.9 | 35.5 | −6.4 |
 | Male Soul Hound | 41.2 | 31.5 | −9.7 |
 
-- Hell Knight came down 5.4 and the top four are now within 6 points of each other. Doombringer is first: it gained most from the tree's HP coming back.
+- Hell Knight came down 5.4 and the top four are now within 6 points of each other. Doombringer is first, likely helped by the tree's HP coming back (not checked in the logs).
 - Mystic Muse and Storm Screamer gained from the M.Atk nodes and the speed. Archmage +2.8, Soultaker flat.
-- The Soul Hounds lost ground (Male −9.7) despite the speed; the HP the melee classes got back weighs more against them than the M.Atk they gained.
+- The Soul Hounds lost ground (Male −9.7) despite the speed. A likely cause, not checked in the logs: the HP the melee classes got back weighs more against them than the M.Atk they gained.
 - Daggers and archers moved little: Adventurer +4.1, Ghost Sentinel +2.9, Moonlight Sentinel −3.2. Bottom: Moonlight Sentinel 24.8, Ghost Sentinel 27.9, Wind Rider 28.6.
