@@ -240,16 +240,6 @@
 		<tier minLevel="80" rhand="10216" /> <!-- Icarus Disperser -->
 		<tier minLevel="84" rhand="13460" /> <!-- Vesper Shaper -->
 	</kit>
-	<kit name="DAGGER_SHIELD"> <!-- A dagger with the tanks' shield (gear tests, docs/class-balance-85.md) -->
-		<tier minLevel="1" rhand="219" lhand="102" /> <!-- Sword Breaker / Round Shield -->
-		<tier minLevel="20" rhand="225" lhand="2493" /> <!-- Mithril Dagger / Brigandine Shield -->
-		<tier minLevel="40" rhand="228" lhand="2497" /> <!-- Crystal Dagger / Full Plate Shield -->
-		<tier minLevel="52" rhand="234" lhand="110" /> <!-- Demon's Dagger / Doom Shield -->
-		<tier minLevel="61" rhand="236" lhand="2498" /> <!-- Soul Separator / Shield of Nightmare -->
-		<tier minLevel="76" rhand="6367" lhand="6377" /> <!-- Angel Slayer / Imperial Crusader Shield -->
-		<tier minLevel="80" rhand="10216" lhand="9441" /> <!-- Icarus Disperser / Dynasty Shield -->
-		<tier minLevel="84" rhand="13460" lhand="13471" /> <!-- Vesper Shaper / Vesper Shield -->
-	</kit>
 	<kit name="BOW">
 		<tier minLevel="1" rhand="273" /> <!-- Composite Bow -->
 		<tier minLevel="20" rhand="280" /> <!-- Light Crossbow -->
@@ -650,7 +640,6 @@
 			<step skill="400" optional="true" /> <!-- Tribunal -->
 		</combo>
 		<variant name="Phoenix Knight Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
-		<variant name="Phoenix Knight Dagger" weapon="DAGGER_SHIELD" weight="0" /> <!-- Gear test: a dagger and its shield -->
 	</build>
 	<build name="Eva's Templar" classId="99" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2">
 		<attack>984,3</attack>
@@ -671,7 +660,6 @@
 			<step skill="402" optional="true" /> <!-- Arrest -->
 		</combo>
 		<variant name="Eva's Templar Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
-		<variant name="Eva's Templar Dagger" weapon="DAGGER_SHIELD" weight="0" /> <!-- Gear test: a dagger and its shield -->
 	</build>
 	<build name="Hell Knight" classId="91" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2"> <!-- Dark Avenger line -->
 		<attack>762,401,984,70,3</attack>
@@ -699,7 +687,6 @@
 			<step skill="70" /> <!-- Drain Health -->
 		</combo>
 		<variant name="Hell Knight Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
-		<variant name="Hell Knight Dagger" weapon="DAGGER_SHIELD" weight="0" /> <!-- Gear test: a dagger and its shield -->
 	</build>
 	<build name="Shillien Templar" classId="106" role="TANK" weapon="SWORD_SHIELD" armor="HEAVY_TANK" bow="BOW" buffs="TANK" weight="2">
 		<attack>279,223,289,105,984,70,3</attack>
@@ -725,7 +712,6 @@
 			<step skill="289" optional="true" /> <!-- Life Leech -->
 		</combo>
 		<variant name="Shillien Templar Legacy" weapon="SWORD_SHIELD_ALT" armor="HEAVY_LEGACY" weight="1" />
-		<variant name="Shillien Templar Dagger" weapon="DAGGER_SHIELD" weight="0" /> <!-- Gear test: a dagger and its shield -->
 	</build>
 
 	<!-- Daggers -->
@@ -769,7 +755,6 @@
 			<step skill="30" optional="true" /> <!-- Backstab, only when not in front -->
 		</combo>
 		<variant name="Adventurer Heavy" armor="HEAVY_DAGGER" weight="1" />
-		<variant name="Adventurer Tank Armor" armor="HEAVY_TANK" weight="0" /> <!-- Gear test: the tanks' heavy armour -->
 	</build>
 	<build name="Wind Rider" classId="101" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="2" skillFighter="true">
 		<attack>991,344,263,321,30,16</attack>
@@ -807,7 +792,6 @@
 			<step skill="30" optional="true" /> <!-- Backstab, only when not in front -->
 		</combo>
 		<variant name="Wind Rider Heavy" weapon="DAGGER_ALT" armor="HEAVY_DAGGER" weight="1" />
-		<variant name="Wind Rider Tank Armor" armor="HEAVY_TANK" weight="0" /> <!-- Gear test: the tanks' heavy armour -->
 	</build>
 	<build name="Ghost Hunter" classId="108" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="2" skillFighter="true">
 		<attack>991,344,263,321,30,223,16</attack>
@@ -846,7 +830,7 @@
 			<step skill="30" optional="true" /> <!-- Backstab, only when not in front -->
 		</combo>
 		<variant name="Ghost Hunter Legacy" weapon="DAGGER_ALT" armor="LIGHT_LEGACY" weight="1" />
-		<variant name="Ghost Hunter Tank Armor" armor="HEAVY_TANK" weight="0" /> <!-- Gear test: the tanks' heavy armour -->
+		<variant name="Ghost Hunter Heavy" armor="HEAVY_DAGGER" weight="1" /> <!-- Heavy armour, like the Adventurer and Wind Rider ones: +3 in the gear test (docs/class-balance-85.md) -->
 	</build>
 
 	<!-- Archers -->
@@ -870,7 +854,7 @@
 			<step skill="19" />
 		</combo>
 		<variant name="Sagittarius Legacy" weapon="BOW_ALT" armor="LIGHT_LEGACY" weight="1" />
-		<variant name="Sagittarius Heavy" armor="HEAVY" weight="0" /> <!-- Gear test: heavy armour -->
+		<variant name="Sagittarius Heavy" armor="HEAVY" weight="1" /> <!-- Heavy armour: +5 to +9 in the gear test (docs/class-balance-85.md) -->
 	</build>
 	<build name="Moonlight Sentinel" classId="102" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="2">
 		<attack>987,24,990,772,343,369,19,56</attack>
@@ -893,7 +877,7 @@
 			<step skill="19" />
 		</combo>
 		<variant name="Moonlight Sentinel Legacy" weapon="BOW_ALT" armor="LIGHT_LEGACY" weight="1" />
-		<variant name="Moonlight Sentinel Heavy" armor="HEAVY" weight="0" /> <!-- Gear test: heavy armour -->
+		<variant name="Moonlight Sentinel Heavy" armor="HEAVY" weight="1" /> <!-- Heavy armour: +5 to +9 in the gear test (docs/class-balance-85.md) -->
 	</build>
 	<build name="Ghost Sentinel" classId="109" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="2">
 		<attack>987,990,773,343,314,369,19,56</attack>
@@ -915,7 +899,7 @@
 			<step skill="19" />
 		</combo>
 		<variant name="Ghost Sentinel Legacy" armor="LIGHT_LEGACY" weight="1" />
-		<variant name="Ghost Sentinel Heavy" armor="HEAVY" weight="0" /> <!-- Gear test: heavy armour -->
+		<variant name="Ghost Sentinel Heavy" armor="HEAVY" weight="1" /> <!-- Heavy armour: +5 to +9 in the gear test (docs/class-balance-85.md) -->
 	</build>
 
 	<!-- Warriors -->
