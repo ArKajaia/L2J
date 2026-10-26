@@ -74,6 +74,10 @@ public class FakePlayerPvpPassiveTree
 	private static final double COMMON_WEIGHT = 2;
 	/** Weight of an effect key the role is built on (P. Atk. for fighters, M. Atk. for mages...). */
 	private static final double ROLE_WEIGHT = 3;
+	/** Archers want P. Atk. and critical damage this much more than their other damage keys: their shots and normal attacks live on them (docs/class-balance-85.md). */
+	private static final double ARCHER_DAMAGE_FACTOR = 2;
+	/** The keys {@link #ARCHER_DAMAGE_FACTOR} raises. */
+	private static final Set<String> ARCHER_DAMAGE_KEYS = Set.of("PATK_PCT", "CRIT_DMG_PCT");
 	/** How much an effect counts whose condition holds only part of the time (LOWHP, NIGHT, STILL...). */
 	private static final double PART_TIME_WEIGHT = 0.5;
 	/** Worth of a path that gives nothing, so once nothing of use is left a tree still spends its points, on the shortest steps. */
@@ -1123,6 +1127,10 @@ public class FakePlayerPvpPassiveTree
 			}
 			case ARCHER:
 			{
+				if (ARCHER_DAMAGE_KEYS.contains(key))
+				{
+					return ROLE_WEIGHT * ARCHER_DAMAGE_FACTOR;
+				}
 				return PHYSICAL_KEYS.contains(key) || ARCHER_KEYS.contains(key) ? ROLE_WEIGHT : 0;
 			}
 			default:

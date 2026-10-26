@@ -80,6 +80,7 @@ import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
+import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.model.zone.type.PvpSpotZone;
 import org.l2jmobius.gameserver.network.serverpackets.ChangeWaitType;
@@ -109,6 +110,14 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	private static final int MAX_HUNT_LEVEL_DIFFERENCE = 10;
 	/** The range a mage tries to fight from. */
 	private static final int MAGE_RANGE = 600;
+	/** An archer or mage is pressed when a melee after it would reach it within this many milliseconds. */
+	private static final long PRESSED_TIME = 2500;
+	/** A pressed archer or mage steps back while the melee is closer than this. */
+	private static final int PRESSED_KITE_DISTANCE = 350;
+	/** A cast that ends this long after the melee reaches it still goes (the hit lands as the cast ends). */
+	private static final long CAST_MARGIN = 300;
+	/** A cast this short always goes. */
+	private static final long QUICK_CAST = 600;
 	/** A Totem Warchief stepping back around its totem stops this far beyond it. */
 	private static final int TOTEM_KITE_OFFSET = 150;
 	
@@ -823,6 +832,10 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		final double distance = npc.calculateDistance2D(target);
 		final int collision = npc.getTemplate().getCollisionRadius() + target.getTemplate().getCollisionRadius();
 		trackChase(target, distance - collision, now);
+
+		// How long an archer or mage may cast before the melee after it reaches it; pressed, it doesn't start what it couldn't finish.
+		final long safeCast = pvp && role.isRanged() && !profile.isTransformed() ? getSafeCastTime(npc, target, distance - collision) : Long.MAX_VALUE;
+		final boolean pressed = safeCast < PRESSED_TIME;
 		
 		// Some players run from a fight they are losing.
 		if (!pvp)
@@ -888,14 +901,14 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return;
 		}
 
-		if ((hpRatio < 0.5) && (Rnd.get(100) < 50) && castOnSelf(npc, target, profile.getSkills(SkillCategory.HEAL), true, true))
+		if ((hpRatio < 0.5) && (Rnd.get(100) < 50) && castOnSelf(npc, target, affordable(npc, profile.getSkills(SkillCategory.HEAL), safeCast), true, true))
 		{
 			trace(Reason.SELF_SKILL, target, npc.getLastSkillCast(), "HEAL");
 			return;
 		}
 
 		// Long cooldown buffs (Frenzy, Zealot, Focus Power...) are saved for players. Prophecies on itself and totems only where they pay off (see FakePlayerPvpOraclesWarchiefs).
-		if (castOnSelf(npc, target, profile.getSkills(SkillCategory.BUFF), false, pvp))
+		if (castOnSelf(npc, target, affordable(npc, profile.getSkills(SkillCategory.BUFF), safeCast), false, pvp))
 		{
 			trace(Reason.SELF_SKILL, target, npc.getLastSkillCast(), "BUFF");
 			return;
@@ -963,10 +976,29 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			}
 		}
 
+		// A pressed archer or mage stops the melee (with what lands before it arrives), even in the middle of a combo, rather than stand through a cast. An archer then steps back and shoots in between; a mage
+		// casts what it can finish first (a nuker wins by out-damaging the melee) and only steps back with nothing short enough (below).
+		if (pressed && canMove && !npc.isAttackingNow() && ((distance - collision) < PRESSED_KITE_DISTANCE))
+		{
+			// An archer's combos are its long shots; a mage's are its burst (the Soul Hounds' Soul Vortex chain): it keeps it.
+			if ((_combo != null) && !mage)
+			{
+				endCombo(now);
+			}
+			if (useSkill(npc, target, pickPeel(npc, target, profile, defenses, distance - collision, safeCast, mage), distance, collision, false))
+			{
+				return;
+			}
+			if (!mage && kiteStep(npc, target, now))
+			{
+				return;
+			}
+		}
+
 		// Archers and mages stop a player in melee range (root, stun, Aura Flash...), then step back (unless a combo is finishing a stunned target).
 		if (canMove && role.isRanged() && (_combo == null) && !npc.isAttackingNow() && ((distance - collision) < profile.getPersonality().getKiteDistance()) && (now >= _nextKiteTime))
 		{
-			if (pvp && !isDisabled(target) && useSkill(npc, target, pickPeel(npc, target, profile, defenses, distance - collision), distance, collision, false))
+			if (pvp && !isDisabled(target) && useSkill(npc, target, pickPeel(npc, target, profile, defenses, distance - collision, safeCast, mage), distance, collision, false))
 			{
 				return;
 			}
@@ -1014,7 +1046,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		}
 		
 		// Combos: the skill chains a practiced player of this class plays (with its weapon, not with the spare bow or polearm).
-		if (!bowHeld && !polearmHeld && (defenses == 0) && playCombo(npc, profile, target, pvp, distance, collision, canMove, now))
+		if (!bowHeld && !polearmHeld && (defenses == 0) && (!pressed || mage) && playCombo(npc, profile, target, pvp, distance, collision, canMove, now))
 		{
 			trace(Reason.COMBO_STEP, target, null, _combo != null ? _combo.getName() : null);
 			return;
@@ -1025,14 +1057,14 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		final FakePlayerPvpPersonality personality = profile.getPersonality();
 		final int debuffChance = pvp ? (_autoAttacker ? (personality.getPvpDebuffChance() / 2) : personality.getPvpDebuffChance()) : 5;
 		// With the bow out it only uses what reaches the target from where it stands, instead of running in.
-		if ((Rnd.get(100) < debuffChance) && useSkill(npc, target, inReach(pickSkill(npc, target, profile.getSkills(SkillCategory.DEBUFF), true, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))
+		if ((Rnd.get(100) < debuffChance) && useSkill(npc, target, inReach(pickSkill(npc, target, affordable(npc, profile.getSkills(SkillCategory.DEBUFF), safeCast), true, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))
 		{
 			return;
 		}
 		
 		// Attack skills, best first. Mages cast whenever they can, Gladiators, Tyrants and daggers fight with their skills, and the other classes (tanks, archers, most warriors) auto attack and use a skill now and then, like players.
 		final int skillChance = _autoAttacker ? (pvp ? personality.getAutoAttackPvpSkillChance() : personality.getAutoAttackSkillChance()) : (pvp ? personality.getPvpSkillChance() : personality.getSkillChance());
-		if ((mage || (Rnd.get(100) < skillChance)) && useSkill(npc, target, inReach(pickSkill(npc, target, profile.getSkills(SkillCategory.ATTACK), false, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))
+		if ((mage || (Rnd.get(100) < skillChance)) && useSkill(npc, target, inReach(pickSkill(npc, target, affordable(npc, profile.getSkills(SkillCategory.ATTACK), safeCast), false, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))
 		{
 			return;
 		}
@@ -1040,6 +1072,19 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		// Mages never melee: between spells they stay in casting range.
 		if (mage)
 		{
+			// Pressed with nothing short enough to cast, it steps back; cornered, it casts anyway.
+			if (pressed)
+			{
+				if (canMove && kiteStep(npc, target, now))
+				{
+					return;
+				}
+				if (useSkill(npc, target, inReach(pickSkill(npc, target, profile.getSkills(SkillCategory.ATTACK), false, reach, pvp, defenses), false, reach), distance, collision, false))
+				{
+					return;
+				}
+			}
+
 			if (canMove && (distance > (MAGE_RANGE + collision)))
 			{
 				trace(Reason.MAGE_POSITION, target);
@@ -2321,8 +2366,23 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	 */
 	private static Skill pickPeel(Attackable npc, Creature target, FakePlayerPvpProfile profile, int defenses, double gap)
 	{
+		return pickPeel(npc, target, profile, defenses, gap, Long.MAX_VALUE, false);
+	}
+
+	/**
+	 * {@link #pickPeel(Attackable, Creature, FakePlayerPvpProfile, int, double)} for an archer or mage a melee is after.
+	 * @param safeCast how long it may cast (see {@link #getSafeCastTime})
+	 * @param mage {@code true} for a mage: it doesn't use a melee skill to peel
+	 */
+		private static Skill pickPeel(Attackable npc, Creature target, FakePlayerPvpProfile profile, int defenses, double gap, long safeCast, boolean mage)
+	{
 		for (Skill skill : profile.getSkills(SkillCategory.PEEL))
 		{
+			// Only what lands before the melee arrives, and no physical melee skill for a mage (Hammer Crush, Stun Attack: it would stay in melee to use them). Its spells around itself (Aura Flash, Blink) are kept.
+			if ((mage && skill.isPhysical() && (getSkillReach(skill) < 150)) || (getCastTime(npc, skill) > Math.max(QUICK_CAST, safeCast + CAST_MARGIN)))
+			{
+				continue;
+			}
 			if ((gap <= getSkillReach(skill)) && !target.isAffectedBySkill(skill.getId()) && !isBlocked(defenses, skill, true) && canCast(npc, skill, target))
 			{
 				return skill;
@@ -3998,6 +4058,75 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	 * @param target a creature
 	 * @return {@code true} if it can't act or move freely (stun, sleep, paralysis, root)
 	 */
+	/**
+	 * @param npc an archer or mage
+	 * @param target its target
+	 * @param gap the distance between them, collisions excluded
+	 * @return how many milliseconds it may cast before {@code target}, a melee after it, reaches it; {@link Long#MAX_VALUE} if the target isn't a melee coming at it or can't move
+	 */
+	private static long getSafeCastTime(Attackable npc, Creature target, double gap)
+	{
+		if ((target.getTarget() != npc) || !isMeleeThreat(target) || isDisabled(target) || target.isMovementDisabled())
+		{
+			return Long.MAX_VALUE;
+		}
+		return (long) ((Math.max(0, gap - target.getPhysicalAttackRange()) * 1000) / Math.max(1, target.getMoveSpeed()));
+	}
+
+	/**
+	 * @param target a creature
+	 * @return {@code true} if it fights in melee (not with a bow or spells)
+	 */
+	private static boolean isMeleeThreat(Creature target)
+	{
+		if (target.getPhysicalAttackRange() > 300)
+		{
+			return false; // A bow.
+		}
+		if (target.isPlayer())
+		{
+			return !target.asPlayer().isMageClass();
+		}
+		final FakePlayerPvpProfile profile = target.isNpc() ? target.asNpc().getTemplate().getFakePlayerPvpProfile() : null;
+		return (profile == null) || profile.isTransformed() || !profile.getRole().isRanged();
+	}
+
+	/**
+	 * @param npc the caster
+	 * @param skill a skill
+	 * @return how long casting it takes, in milliseconds, with its attack or casting speed
+	 */
+	private static long getCastTime(Attackable npc, Skill skill)
+	{
+		final int time = skill.getHitTime() + skill.getCoolTime();
+		return skill.isStatic() ? time : Formulas.calcAtkSpd(npc, skill, time);
+	}
+
+	/**
+	 * @param npc the caster
+	 * @param skills skills
+	 * @param safeCast how long it may cast (see {@link #getSafeCastTime})
+	 * @return those it can finish in that time, all of them when time doesn't press
+	 */
+	private static List<Skill> affordable(Attackable npc, List<Skill> skills, long safeCast)
+	{
+		if (safeCast == Long.MAX_VALUE)
+		{
+			return skills;
+		}
+
+		final List<Skill> affordable = new ArrayList<>(skills.size());
+		for (Skill skill : skills)
+		{
+			final long time = getCastTime(npc, skill);
+			if ((time <= QUICK_CAST) || (time <= (safeCast + CAST_MARGIN)))
+			{
+				affordable.add(skill);
+			}
+		}
+		return affordable;
+	}
+
 	private static boolean isDisabled(Creature target)
 	{
 		return target.isStunned() || target.isSleeping() || target.isParalyzed() || target.isRooted();

@@ -102,8 +102,8 @@ import org.l2jmobius.gameserver.util.LocationUtil;
  * <li>#16: a tank keeps its bow out only while its target gets away (or while it is rooted itself) ({@link #chooseWeapon}).</li>
  * </ul>
  * <p>
- * Brain B ({@link FakeBrain#B}): the experimental copy of {@link FakePlayerPvpAI}, which simulation teams can run against it. Changes go here first and are moved into {@link FakePlayerPvpAI} once simulations show they win more (see docs/fake-player-simulation-issues.md). Being
- * tested (docs/class-balance-85.md): archers and mages keep a melee at bay (no cast a melee would interrupt, peel or step back first, a bow's normal attack in between).
+ * Brain B ({@link FakeBrain#B}): the experimental copy of {@link FakePlayerPvpAI}, which simulation teams can run against it. Changes go here first and are moved into {@link FakePlayerPvpAI} once simulations show they win more (see docs/fake-player-simulation-issues.md). It starts
+ * as a copy of {@link FakePlayerPvpAI}: nothing changed yet (its last changes, archers and mages keeping a melee at bay, were promoted, see docs/class-balance-85.md).
  */
 public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePlayerPvpBrain
 {
@@ -113,13 +113,13 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final int MAX_HUNT_LEVEL_DIFFERENCE = 10;
 	/** The range a mage tries to fight from. */
 	private static final int MAGE_RANGE = 600;
-	/** Brain B: an archer or mage is pressed when a melee after it would reach it within this many milliseconds. */
+	/** An archer or mage is pressed when a melee after it would reach it within this many milliseconds. */
 	private static final long PRESSED_TIME = 2500;
-	/** Brain B: a pressed archer or mage steps back while the melee is closer than this. */
+	/** A pressed archer or mage steps back while the melee is closer than this. */
 	private static final int PRESSED_KITE_DISTANCE = 350;
-	/** Brain B: a cast that ends this long after the melee reaches it still goes (the hit lands as the cast ends). */
+	/** A cast that ends this long after the melee reaches it still goes (the hit lands as the cast ends). */
 	private static final long CAST_MARGIN = 300;
-	/** Brain B: a cast this short always goes. */
+	/** A cast this short always goes. */
 	private static final long QUICK_CAST = 600;
 	/** A Totem Warchief stepping back around its totem stops this far beyond it. */
 	private static final int TOTEM_KITE_OFFSET = 150;
@@ -836,7 +836,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		final int collision = npc.getTemplate().getCollisionRadius() + target.getTemplate().getCollisionRadius();
 		trackChase(target, distance - collision, now);
 
-		// Brain B: how long an archer or mage may cast before the melee after it reaches it; pressed, it doesn't start what it couldn't finish.
+		// How long an archer or mage may cast before the melee after it reaches it; pressed, it doesn't start what it couldn't finish.
 		final long safeCast = pvp && role.isRanged() && !profile.isTransformed() ? getSafeCastTime(npc, target, distance - collision) : Long.MAX_VALUE;
 		final boolean pressed = safeCast < PRESSED_TIME;
 		
@@ -979,7 +979,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 		}
 
-		// Brain B: a pressed archer or mage stops the melee (with what lands before it arrives), even in the middle of a combo, rather than stand through a cast. An archer then steps back and shoots in between; a mage
+		// A pressed archer or mage stops the melee (with what lands before it arrives), even in the middle of a combo, rather than stand through a cast. An archer then steps back and shoots in between; a mage
 		// casts what it can finish first (a nuker wins by out-damaging the melee) and only steps back with nothing short enough (below).
 		if (pressed && canMove && !npc.isAttackingNow() && ((distance - collision) < PRESSED_KITE_DISTANCE))
 		{
@@ -1075,7 +1075,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		// Mages never melee: between spells they stay in casting range.
 		if (mage)
 		{
-			// Brain B: pressed with nothing short enough to cast, it steps back; cornered, it casts anyway.
+			// Pressed with nothing short enough to cast, it steps back; cornered, it casts anyway.
 			if (pressed)
 			{
 				if (canMove && kiteStep(npc, target, now))
@@ -2373,7 +2373,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	}
 
 	/**
-	 * Brain B: {@link #pickPeel(Attackable, Creature, FakePlayerPvpProfile, int, double)} for an archer or mage a melee is after.
+	 * {@link #pickPeel(Attackable, Creature, FakePlayerPvpProfile, int, double)} for an archer or mage a melee is after.
 	 * @param safeCast how long it may cast (see {@link #getSafeCastTime})
 	 * @param mage {@code true} for a mage: it doesn't use a melee skill to peel
 	 */
@@ -2381,7 +2381,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	{
 		for (Skill skill : profile.getSkills(SkillCategory.PEEL))
 		{
-			// Brain B: only what lands before the melee arrives, and no physical melee skill for a mage (Hammer Crush, Stun Attack: it would stay in melee to use them). Its spells around itself (Aura Flash, Blink) are kept.
+			// Only what lands before the melee arrives, and no physical melee skill for a mage (Hammer Crush, Stun Attack: it would stay in melee to use them). Its spells around itself (Aura Flash, Blink) are kept.
 			if ((mage && skill.isPhysical() && (getSkillReach(skill) < 150)) || (getCastTime(npc, skill) > Math.max(QUICK_CAST, safeCast + CAST_MARGIN)))
 			{
 				continue;
@@ -4062,7 +4062,6 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 * @return {@code true} if it can't act or move freely (stun, sleep, paralysis, root)
 	 */
 	/**
-	 * Brain B.
 	 * @param npc an archer or mage
 	 * @param target its target
 	 * @param gap the distance between them, collisions excluded
@@ -4078,7 +4077,6 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	}
 
 	/**
-	 * Brain B.
 	 * @param target a creature
 	 * @return {@code true} if it fights in melee (not with a bow or spells)
 	 */
@@ -4097,7 +4095,6 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	}
 
 	/**
-	 * Brain B.
 	 * @param npc the caster
 	 * @param skill a skill
 	 * @return how long casting it takes, in milliseconds, with its attack or casting speed
@@ -4109,7 +4106,6 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	}
 
 	/**
-	 * Brain B.
 	 * @param npc the caster
 	 * @param skills skills
 	 * @param safeCast how long it may cast (see {@link #getSafeCastTime})

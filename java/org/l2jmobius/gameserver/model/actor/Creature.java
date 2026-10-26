@@ -79,6 +79,7 @@ import org.l2jmobius.gameserver.model.WorldRegion;
 import org.l2jmobius.gameserver.model.actor.enums.creature.InstanceType;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
+import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.enums.player.TeleportWhereType;
 import org.l2jmobius.gameserver.model.actor.holders.creature.EffectList;
 import org.l2jmobius.gameserver.model.actor.holders.creature.InvulSkillHolder;
@@ -2137,6 +2138,17 @@ public abstract class Creature extends WorldObject
 		if (isPlayable())
 		{
 			reuseDelay = (int) (reuseDelay * ClassBalanceConfig.SKILL_REUSE_MULTIPLIERS[asPlayer().getPlayerClass().getId()]);
+		}
+		
+		// Custom: reuse of some skills for some classes (ClassSkillReuseMultipliers: the tanks' self-heals), players and roaming fake players alike.
+		if (!ClassBalanceConfig.CLASS_SKILL_REUSE_MULTIPLIERS.isEmpty())
+		{
+			final PlayerClass casterClass = isPlayer() ? asPlayer().getPlayerClass() : isPvpFakePlayer() && (asNpc().getTemplate().getFakePlayerInfo() != null) ? asNpc().getTemplate().getFakePlayerInfo().getPlayerClass() : null;
+			final Map<Integer, Float> classReuse = casterClass != null ? ClassBalanceConfig.CLASS_SKILL_REUSE_MULTIPLIERS.get(casterClass.getId()) : null;
+			if (classReuse != null)
+			{
+				reuseDelay = (int) (reuseDelay * classReuse.getOrDefault(skill.getId(), 1f));
+			}
 		}
 		
 		// Custom: Inevitable Doom (Hierophant) shortens Prophecy of Doom.

@@ -21,6 +21,8 @@
 package org.l2jmobius.gameserver.config.custom;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.l2jmobius.commons.util.ConfigReader;
 import org.l2jmobius.commons.util.StringUtil;
@@ -71,6 +73,8 @@ public class ClassBalanceConfig
 	public static float[] PLAYER_HEALING_SKILL_MULTIPLIERS = new float[137];
 	public static float[] SKILL_MASTERY_CHANCE_MULTIPLIERS = new float[137];
 	public static float[] SKILL_REUSE_MULTIPLIERS = new float[137];
+	/** Class id -> skill id -> reuse multiplier (ClassSkillReuseMultipliers), for players and roaming fake players. */
+	public static Map<Integer, Map<Integer, Float>> CLASS_SKILL_REUSE_MULTIPLIERS = new HashMap<>();
 	public static float[] EXP_AMOUNT_MULTIPLIERS = new float[137];
 	public static float[] SP_AMOUNT_MULTIPLIERS = new float[137];
 	
@@ -602,6 +606,28 @@ public class ClassBalanceConfig
 				}
 			}
 		}
+		
+		final Map<Integer, Map<Integer, Float>> classSkillReuse = new HashMap<>();
+		for (String group : config.getString("ClassSkillReuseMultipliers", "").trim().split(";"))
+		{
+			// classes:skills*multiplier, e.g. PHOENIX_KNIGHT,HELL_KNIGHT:45,262*2
+			final String[] parts = group.trim().split("[:*]");
+			if (parts.length != 3)
+			{
+				continue;
+			}
+			final float multiplier = Float.parseFloat(parts[2].trim());
+			for (String classId : parts[0].split(","))
+			{
+				final String id = classId.trim();
+				final int playerClass = StringUtil.isNumeric(id) ? Integer.parseInt(id) : Enum.valueOf(PlayerClass.class, id).getId();
+				for (String skillId : parts[1].split(","))
+				{
+					classSkillReuse.computeIfAbsent(playerClass, _ -> new HashMap<>()).put(Integer.parseInt(skillId.trim()), multiplier);
+				}
+			}
+		}
+		CLASS_SKILL_REUSE_MULTIPLIERS = classSkillReuse;
 		
 		Arrays.fill(EXP_AMOUNT_MULTIPLIERS, 1f);
 		final String[] expAmountMultipliers = config.getString("ExpAmountMultipliers", "").trim().split(";");
