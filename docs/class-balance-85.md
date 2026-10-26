@@ -299,3 +299,52 @@ What it means:
 - **War Dancer −9** is the largest move, and nothing of its own was changed. It wasn't in the focused runs, so there is no passive tree data from before to compare. The fighter keystone change (the exclusive pair) is the only change it shares, so it needs a focused run before the pair is kept as is.
 
 Next: the AI changes as brain B (long casts in melee, Bluff, archer kiting, supports alone, Dominator's peel), then the top-five skill nerfs. Consider undoing the tank damage weight, or limiting it to the Hell Knight's tree.
+
+## Round 3: mage keystones and the brain B ranged AI
+
+**Changes**
+- Tank trees weigh damage stats like fighters again.
+- Mind Over Matter and Martyr's Vow work for fake players. A fake mage under Martyr's Vow pays its casts with HP and gets max HP from max MP; under Mind Over Matter its MP soaks damage. Both lead the mage keystone list, and `FakePvpKeystonePartners` sends a tree that took Mind Over Matter to Martyr's Vow next. The result: 62% of mages take Mind Over Matter, 53% Martyr's Vow, 44% both. An Archmage with both has about 17,600 HP (13,000 before), pays 1,500-2,700 HP in casts a fight, and soaks about 7,900 damage with its MP.
+- Brain B, for archers and mages a melee is after:
+  - It works out how long it may cast before the melee reaches it. Under 2.5 s it is *pressed*.
+  - Pressed, it peels only with what lands in time; a mage never peels with a physical melee skill.
+  - It skips combos, and casts only attacks, debuffs, heals and buffs it can finish.
+  - An archer steps back and shoots normal attacks in between.
+  - A mage casts what it can finish first, and steps back only with nothing short enough.
+- The matrix can run A/B tests (`brain=A:B mirror`). A mirror test can't measure this change, though: an archer against an archer never meets a melee. The measure below is a full matrix with brain B against one with brain A, on the same tree. Melee classes play the same under both brains, so the difference is the archer and mage AI.
+
+**Runs:** `matrix-20261026-001906` (brain A, new tree), then three brain B versions:
+- `-005904`: party-of-one rule, mage melee peels dropped.
+- `-012643`: the party-of-one rule removed.
+- `-015454`: the final version. It ran at 600 at once after the server ran out of memory at 1000.
+
+The party-of-one rule (a healer alone fights instead of healing) lost badly in the corrected A/B test (Cardinal and Eva's Saint 1 win in 40), so it was taken out.
+
+**The tree changes, brain A** (against the run before them):
+- Nukers up: Storm Screamer +5.0, Soultaker +4.6, Mystic Muse +2.7, Archmage +2.0.
+- The tanks back: Shillien Templar +2.7, Eva's Templar +2.3, Battle Bard +3.8.
+- Hell Knight −6.2 and Duelist −6.9 against the tougher mages.
+- The Soul Hounds and Dominator didn't move: their problem is damage, not survival.
+
+**Brain B (final) against brain A**, archers and mages, win % against melee and tanks (overall win % in brackets):
+
+| Build | A | B | Change |
+|---|---|---|---|
+| Trickster | 36.8 (60.5) | 52.8 (68.8) | **+16.0** |
+| Dominator | 12.2 (34.5) | 26.2 (41.8) | **+14.0** |
+| Moonlight Sentinel | 5.8 (24.7) | 14.0 (28.4) | **+8.2** |
+| Doom Oracle | 59.0 (55.7) | 62.8 (58.8) | +3.8 |
+| Ghost Sentinel | 8.8 (29.3) | 11.2 (29.8) | +2.5 |
+| Flame Warchief | 31.0 (40.4) | 33.5 (41.2) | +2.5 |
+| Storm Screamer, Soultaker, Archmage, Sagittarius | | | within ±0.5 |
+| Mystic Muse | 51.2 (58.6) | 49.0 (57.8) | −2.2 |
+| Female Soul Hound | 41.8 (35.5) | 37.0 (34.2) | **−4.8** |
+| Male Soul Hound | 40.5 (35.7) | 32.2 (31.5) | **−8.2** |
+| All archers and mages | 34.1 | 36.6 | **+2.5** (±1.8) |
+
+What it means:
+- **Stepping back and finishing the cast first** helps the builds that lose the damage race: Trickster, Dominator and Moonlight Sentinel.
+- **The nukers who win by bursting** (Archmage, Storm Screamer, Soultaker) are unchanged since mages cast first.
+- **Ghost Sentinel and Sagittarius barely move.** A melee as fast as them still catches them: they need a slow (Hamstring Shot) to land first, or more speed.
+- **The Soul Hounds lose under brain B** in all three versions. Keep them on brain A when B is promoted (gate the pressed logic off for them), or find what costs them before promoting.
+- **Promoting:** B as it stands wins 2.5 points for the archers and mages taken together, and big for three of them. Per the A/B rules it can be promoted with the Soul Hounds left out; the top five are untouched by it (Titan 92.7, Hell Knight 87.2, Maestro 86.2, Dreadnought 88.1, Doombringer 87.2).
