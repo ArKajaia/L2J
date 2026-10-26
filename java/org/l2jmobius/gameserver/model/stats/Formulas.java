@@ -44,6 +44,7 @@ import org.l2jmobius.gameserver.managers.SiegeManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
 import org.l2jmobius.gameserver.model.actor.holders.player.Performers;
 import org.l2jmobius.gameserver.model.actor.holders.player.Prophecies;
@@ -499,6 +500,36 @@ public class Formulas
 	}
 	
 	/**
+	 * Custom: a fight the class balance PvP multipliers cover although it isn't player against player: a roaming fake player against a player or another roaming fake player.
+	 * @param attacker the attacker
+	 * @param target the target
+	 * @return {@code true} if a roaming fake player is on one side and a player or roaming fake player on the other
+	 */
+	private static boolean isFakePvp(Creature attacker, Creature target)
+	{
+		return (attacker.isPvpFakePlayer() && (target.isPlayer() || target.isPvpFakePlayer())) || (target.isPvpFakePlayer() && attacker.isPlayer());
+	}
+	
+	/**
+	 * @param multipliers class balance multipliers, by class id
+	 * @param creature a player or roaming fake player
+	 * @return its class's multiplier, 1 for anything else
+	 */
+	private static float balance(float[] multipliers, Creature creature)
+	{
+		PlayerClass playerClass = null;
+		if (creature.isPlayer())
+		{
+			playerClass = creature.asPlayer().getPlayerClass();
+		}
+		else if (creature.isPvpFakePlayer() && (creature.asNpc().getTemplate().getFakePlayerInfo() != null))
+		{
+			playerClass = creature.asNpc().getTemplate().getFakePlayerInfo().getPlayerClass();
+		}
+		return playerClass != null ? multipliers[playerClass.getId()] : 1;
+	}
+	
+	/**
 	 * Calculates the CP regeneration rate (base + modifiers).
 	 * @param player the player
 	 * @return the CP regeneration rate
@@ -616,6 +647,12 @@ public class Formulas
 			defence *= target.calcStat(Stat.PVP_PHYS_SKILL_DEF, 1, null, null);
 			defence *= ClassBalanceConfig.PVP_BLOW_SKILL_DEFENCE_MULTIPLIERS[target.asPlayer().getPlayerClass().getId()];
 		}
+		else if (isFakePvp(attacker, target))
+		{
+			// Custom: the class balance multipliers between roaming fake players and players too.
+			pvpBonus *= balance(ClassBalanceConfig.PVP_BLOW_SKILL_DAMAGE_MULTIPLIERS, attacker);
+			defence *= balance(ClassBalanceConfig.PVP_BLOW_SKILL_DEFENCE_MULTIPLIERS, target);
+		}
 		
 		if (isPvE)
 		{
@@ -708,6 +745,12 @@ public class Formulas
 			// Defense bonuses in PvP fight
 			defence *= target.calcStat(Stat.PVP_PHYS_SKILL_DEF, 1, null, null);
 			defence *= ClassBalanceConfig.PVP_PHYSICAL_SKILL_DEFENCE_MULTIPLIERS[target.asPlayer().getPlayerClass().getId()];
+		}
+		else if (isFakePvp(attacker, target))
+		{
+			// Custom: the class balance multipliers between roaming fake players and players too.
+			pvpBonus *= balance(ClassBalanceConfig.PVP_PHYSICAL_SKILL_DAMAGE_MULTIPLIERS, attacker);
+			defence *= balance(ClassBalanceConfig.PVP_PHYSICAL_SKILL_DEFENCE_MULTIPLIERS, target);
 		}
 		
 		// Initial damage
@@ -883,6 +926,11 @@ public class Formulas
 				damage *= attacker.calcStat(Stat.PVP_PHYS_SKILL_DMG, 1, null, null);
 				damage *= ClassBalanceConfig.PVP_PHYSICAL_SKILL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
 			}
+		}
+		else if (isFakePvp(attacker, target))
+		{
+			// Custom: the class balance multipliers between roaming fake players and players too.
+			damage *= balance(skill == null ? ClassBalanceConfig.PVP_PHYSICAL_ATTACK_DAMAGE_MULTIPLIERS : ClassBalanceConfig.PVP_PHYSICAL_SKILL_DAMAGE_MULTIPLIERS, attacker);
 		}
 		
 		// Physical skill dmg boost

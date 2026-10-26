@@ -651,7 +651,7 @@
 		<icon>icon.skill0921</icon>
 		<operateType>A1</operateType>
 		<targetType>ONE</targetType>
-		<baseCritRate>30</baseCritRate>
+		<baseCritRate>15</baseCritRate>
 		<castRange>80</castRange>
 		<coolTime>720</coolTime>
 		<effectPoint>-337</effectPoint>
