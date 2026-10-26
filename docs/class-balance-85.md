@@ -579,4 +579,4 @@ Only the pairs with an archer or a Soul Hound fought, 15 battles each: 3,780 bat
 
 - The bow archers now take about 40% less damage per second (Sagittarius 523 → 312) and live 53–59 s instead of 36–38 s. Against tanks they win 34–52% instead of 2%, against melee 47–55% instead of 20–27%. They still spend 43–47% of the time within 150 of a melee (53–55% before), but are cornered much less.
 - The nuker Soul Hounds deal 8% more damage (464 → 500 per second), what +4 INT should give.
-- The hybrids are weaker than the nukers: less HP (15,500–17,000 against 20,000, their tree takes no HP), they walk into melee and win 4–6% against tanks.
+- The hybrids are weaker than the nukers: less HP (15,500–17,000 against 20,000; not yet checked why), they walk into melee and win 4–6% against tanks.
