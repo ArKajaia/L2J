@@ -286,7 +286,7 @@ public class AdventurersGuideManager
 	{
 		for (Entry<GuideLesson, String> entry : lessons.entrySet())
 		{
-			trigger(player, entry.getKey(), String.format(entry.getValue(), killer ? "You have" : "Your party has"));
+			trigger(player, entry.getKey(), entry.getValue().replace("%s", killer ? "You have" : "Your party has"));
 		}
 		checkItems(player);
 	}
