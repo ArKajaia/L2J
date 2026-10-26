@@ -86,6 +86,8 @@ public class PvpSpotManager
 	private static final int DRIFT_MAX = 240000;
 	/** A fake player that should have left this long ago, and still couldn't read its scroll, logs off. */
 	private static final long LEAVE_GRACE = 60000;
+	/** How far from the level wanted a known fake player may be. */
+	private static final int KNOWN_LEVEL_RANGE = 3;
 	/** The world regions this far around a spot never go to sleep: its fake players fight there, and chase a bit outside it, whether a player is around or not. */
 	private static final int KEEP_ACTIVE_RANGE = PvpSpotsConfig.CHASE_OUTSIDE + 1000;
 	/** A killer this far from a spot it isn't in still gets the kill (an archer shooting in from the edge). */
@@ -379,6 +381,11 @@ public class PvpSpotManager
 		}
 		
 		final long now = System.currentTimeMillis();
+		if (PvpSpotsConfig.FAKE_PLAYERS && PvpSpotRoster.isEnabled() && FakePlayerPvpManager.getInstance().isEnabled())
+		{
+			PvpSpotRoster.getInstance().tick(now);
+		}
+		
 		for (PvpSpotZone zone : ZoneManager.getInstance().getAllZones(PvpSpotZone.class))
 		{
 			try
@@ -533,25 +540,42 @@ public class PvpSpotManager
 		final int size = !elite && (room >= 2) && FakeClanManager.getInstance().isEnabled() && (Rnd.get(100) < PvpSpotsConfig.GROUP_CHANCE) ? Rnd.get(2, Math.min(PvpSpotsConfig.GROUP_MAX_SIZE, room)) : 1;
 		final Location landing = getLandingPoint(zone);
 		final int level = pickLevel(zone);
+		final boolean rostered = PvpSpotRoster.isEnabled();
 		Npc first = null;
 		for (int i = 0; i < size; i++)
 		{
-			final FakePlayerPvpBuild build = FakePlayerPvpData.getInstance().getRandomBuild(PvpSpotManager::isFighterBuild);
+			// The strong one is about the level of the others (its gear makes it strong), friends are about the same level.
+			final int memberLevel = clamp(zone, i == 0 ? (elite ? level + Rnd.get(0, 2) : level) : level + Rnd.get(-2, 2));
+			final boolean memberElite = elite && (i == 0);
+			final Location point = i == 0 ? landing : scatter(zone, landing, GROUP_SCATTER);
+			
+			// Often one of the known fake players that is free (its play window and play time of today allow it), made again exactly as it was, otherwise a new one that is saved.
+			final PvpSpotRoster.Entry known = rostered ? PvpSpotRoster.getInstance().pick(zone.getSpotMinLevel(), zone.getSpotMaxLevel(), memberLevel, KNOWN_LEVEL_RANGE, memberElite) : null;
+			final FakePlayerPvpBuild build = known != null ? FakePlayerPvpData.getInstance().getBuild(known.getBuildName()) : FakePlayerPvpData.getInstance().getRandomBuild(PvpSpotManager::isFighterBuild);
 			if (build == null)
 			{
 				return;
 			}
-
-			// The strong one is about the level of the others (its gear makes it strong), friends are about the same level.
-			final int memberLevel = clamp(zone, i == 0 ? (elite ? level + Rnd.get(0, 2) : level) : level + Rnd.get(-2, 2));
-			final Location point = i == 0 ? landing : scatter(zone, landing, GROUP_SCATTER);
-			final Npc fake = FakePlayerPvpManager.getInstance().spawnSpotFighter(build, memberLevel, elite && (i == 0), zone.getId(), point.getX(), point.getY(), point.getZ(), first);
+			
+			final long seed = known != null ? known.getSeed() : rostered ? Rnd.nextLong() | 1 : 0;
+			final Npc fake = FakePlayerPvpManager.getInstance().spawnSpotFighter(build, known != null ? known.getLevel() : memberLevel, memberElite, zone.getId(), point.getX(), point.getY(), point.getZ(), first, known != null ? known.getName() : null, seed);
 			if (fake == null)
 			{
 				continue;
 			}
-
-			fake.getTemplate().getFakePlayerPvpProfile().setSpotStayUntil(now + (Rnd.get(PvpSpotsConfig.STAY_TIME_MIN, PvpSpotsConfig.STAY_TIME_MAX) * 1000L));
+			
+			PvpSpotRoster.Entry entry = known;
+			if (known != null)
+			{
+				PvpSpotRoster.getInstance().begin(known, fake);
+			}
+			else if (rostered)
+			{
+				entry = PvpSpotRoster.getInstance().register(fake, build, memberLevel, memberElite, seed);
+			}
+			
+			final long stay = Rnd.get(PvpSpotsConfig.STAY_TIME_MIN, PvpSpotsConfig.STAY_TIME_MAX) * 1000L;
+			fake.getTemplate().getFakePlayerPvpProfile().setSpotStayUntil(now + (rostered ? PvpSpotRoster.getInstance().limitStay(entry, stay) : stay));
 			spot._fighters.add(fake);
 			if (first == null)
 			{
@@ -931,7 +955,7 @@ public class PvpSpotManager
 			return true;
 		}
 
-		FakePlayerPvpManager.getInstance().releaseName(fake.getName());
+		release(fake.getName());
 		return true;
 	}
 
@@ -961,7 +985,7 @@ public class PvpSpotManager
 		final PvpSpotZone zone = ZoneManager.getInstance().getZoneById(spotId, PvpSpotZone.class);
 		if ((spot == null) || (zone == null) || !PvpSpotsConfig.ENABLED || !PvpSpotsConfig.FAKE_PLAYERS || !FakePlayerPvpManager.getInstance().isEnabled() || (spot._fighters.size() >= getFightersMax()))
 		{
-			FakePlayerPvpManager.getInstance().releaseName(name);
+			release(name);
 			return;
 		}
 
@@ -970,6 +994,27 @@ public class PvpSpotManager
 		if (fake != null)
 		{
 			spot._fighters.add(fake);
+			if (PvpSpotRoster.isEnabled())
+			{
+				PvpSpotRoster.getInstance().attach(name, fake);
+			}
+		}
+		else
+		{
+			release(name);
+		}
+	}
+
+	/**
+	 * A fake player of a spot is gone for good: its name is free (unless it is a known one) and a known character logs off, saving its play time.
+	 * @param name its name
+	 */
+	private static void release(String name)
+	{
+		FakePlayerPvpManager.getInstance().releaseName(name);
+		if (PvpSpotRoster.isEnabled())
+		{
+			PvpSpotRoster.getInstance().endSession(name);
 		}
 	}
 
@@ -985,7 +1030,7 @@ public class PvpSpotManager
 			if (_returns.remove(entry.getKey(), entry.getValue()))
 			{
 				entry.getValue().cancel(false);
-				FakePlayerPvpManager.getInstance().releaseName(entry.getKey());
+				release(entry.getKey());
 				count++;
 			}
 		}
