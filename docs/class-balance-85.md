@@ -492,3 +492,35 @@ The four healers (Hierophant, Cardinal, Shillien Saint, Eva's Saint) are no long
 - The tree's HP and defence nerf didn't touch the top three: Titan, Hell Knight and Maestro are within noise of round 7. The ones it hurt are the tanks and support fighters who take those nodes: Shillien Templar, Phoenix Knight, War Dancer, Battle Bard, Battle Oracle.
 - Female Soul Hound fell 7.4 even with the reuse cut. Male Soul Hound didn't move.
 - Bottom four: Battle Oracle 26.8, Moonlight Sentinel 27.4, Wind Rider 28.8, Ghost Sentinel 29.2.
+
+## Round 9: Battle Roar, Titan and Maestro defences, Judgment (`matrix-20261026-112619`)
+
+**Why the top three were still on top after round 8** (5,000 kept battle logs): they have 27,600–30,700 HP, and nothing so far had touched it. Titan takes damage nodes (+65% P.Atk) rather than HP nodes, so the round 8 tree HP cut barely reached it. Battle Roar healed Titans about 5,200 HP a battle and Dreadnoughts about 7,100. Hell Knight took the least damage of any class (193/s, 2,959 P.Def), and Judgment, back every 4 s, cut the enemy's critical damage by 35%. Maestro had four stuns, two of them (Golem Punch, Rush Impact) never nerfed.
+
+**Changes**
+- Battle Roar (121) heals and raises max HP by half the retail High Five values, for every class (level 6: 35% → 18%).
+- Titan and Maestro: P.Def and M.Def ×0.85 against players and roaming fake players (`PvpPhysicalAttackDefenceMultipliers`, `PvpMagicalSkillDefenceMultipliers`).
+- Hell Knight: Judgment (401) reuse ×2. Maestro: Golem Punch (808) and Rush Impact (995) reuse ×1.5.
+- Every `ClassBalance.ini` setting now applies to roaming fake players (and their servitors) as to players (and their summons), including magic damage, defence and critical settings, critical chance, P.Def, skill mastery, healing and reuse. A player hitting a roaming fake player no longer gets the PvE multipliers on top of the PvP ones.
+
+**Checked in the logs** (round 8 → round 9):
+- Shortest gap between two Judgments 3.5 → 7.0 s, Golem Punch 2.6 → 3.9 s, Maestro's Rush Impact 17.9 → 26.4 s.
+- Battle Roar heals half as much: Titan 10,500 → 5,500 HP a cast, 5,200 → 3,000 a battle; Dreadnought 7,100 → 3,400 a battle.
+- Damage taken per second: Titan 786 → 901, Maestro 636 → 764, Hell Knight 244 → 240.
+
+20 battles per pair, 34 classes, 11,220 battles. Each class has 660 battles, so a change under about 4 points is noise.
+
+| Class | Round 8 | Round 9 | Change |
+|---|---|---|---|
+| Hell Knight | 82.3 | 81.4 | −0.9 |
+| Titan | 85.6 | 79.5 | −6.1 |
+| Maestro | 81.4 | 73.4 | −8.0 |
+| Doombringer | 73.0 | 71.4 | −1.6 |
+| Dreadnought | 72.9 | 69.2 | −3.7 |
+| Female Soul Hound | 30.8 | 36.4 | +5.6 |
+| Male Soul Hound | 36.5 | 41.2 | +4.7 |
+| Fortune Seeker | 57.7 | 61.9 | +4.2 |
+| Ghost Sentinel | 29.2 | 25.0 | −4.2 |
+
+- Titan and Maestro came down clearly. Hell Knight is now first: Judgment is cast 28% less, but it still takes no more damage than before, so its defence, not Judgment, is what keeps it on top.
+- Bottom four: Ghost Sentinel 25.0, Wind Rider 26.8, Moonlight Sentinel 28.0, Battle Oracle 29.7.
