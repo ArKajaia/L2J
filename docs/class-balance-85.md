@@ -612,3 +612,25 @@ Full matrix, 36 classes (the 34 of round 10 and the two hybrid Soul Hounds), 50 
 - The spread keeps narrowing: the standard deviation of the win rates (healers aside) went 18.5 (round 5) → 15.5 (round 10) → 13.5, and the range 26–91 → 25–78 → 29–74.
 - The nuker Soul Hounds are up 6.5–7.5 points; the hybrids are weaker than them.
 - Bottom: Female Soul Hound Hybrid 28.8, Wind Rider 30.7, Doomcryer 31.7, War Dancer 32.2, Battle Bard 33.4. Battle Bard and War Dancer lost the most without a change of their own, probably to the archers (not checked).
+
+## Round 13: hybrid Soul Hounds swap to a mace (`matrix-20261026-183205`, Soul Hounds only)
+
+**Changes**
+- Hybrid Soul Hounds carry a one-handed magic mace with Acumen (`SOUL_MACE`: Arcana Mace, Icarus Hall, Vesper Caster - Acumen at 76/80/84) beside a rapier with Health (`RAPIER_HEALTH`). Each weapon's special ability counts only while it is held, and taking off the Health rapier loses the HP above the lower max, like a player's unequip.
+- Against a melee player (tanks, warriors, daggers) they take the mace out and fight like a mage, keeping their distance. Against anyone else they take it out from 400 or more away when a mace combo is ready, cast it, and go back to the rapier. Final Form and monsters get the rapier.
+- Mace combos (`weapon="CASTER"`): Shadow Bind, Soul Web, Soul of Pain; Steal Divinity, Voice Bind, Soul Vortex, Soul Strike, Soul of Pain; Death Mark, Leopold, Soul Strike. The rapier combos are `weapon="MAIN"`. Voice Bind is `mageTarget`: no longer cast on warriors.
+- Retail note: High Five's Rapier Mastery gives +15% Casting Spd. with a rapier out ([l2db.info](https://l2db.info/high-five)), so the swap trades it for Acumen's +15% and the mace's higher M. Atk. (Arcana Mace 175 against Laevateinn 132). Maximum Ability (the rapier's +4 enchant proc) is not modelled for fake players.
+
+The four Soul Hound builds against all 40 builds, 10 battles per pair, level 85, brain A: 1,500 battles, 390 per Soul Hound build, so a cell is about ±5 points (95%) and a change under about 7 points is noise. The baseline (`matrix-20261026-190413`) is the same matrix on the code before the change.
+
+| Build | Baseline | Round 13 | Change | vs tanks | vs melee | vs daggers | vs archers | vs mages | vs supports |
+|---|---|---|---|---|---|---|---|---|---|
+| Male Soul Hound Hybrid | 42.3 | 50.5 | +8.2 | 2 → 16 | 34 → 40 | 60 → 57 | 72 → 60 | 41 → 57 | 61 → 76 |
+| Female Soul Hound Hybrid | 39.0 | 46.9 | +7.9 | 2 → 14 | 28 → 35 | 47 → 57 | 52 → 62 | 44 → 46 | 64 → 79 |
+| Male Soul Hound | 39.6 | 42.3 | +2.7 | 66 → 66 | 35 → 43 | 60 → 40 | 28 → 28 | 21 → 22 | 48 → 56 |
+| Female Soul Hound | 44.9 | 46.3 | +1.4 | 56 → 72 | 48 → 38 | 67 → 77 | 25 → 38 | 20 → 20 | 63 → 64 |
+
+- The hybrids are up about 8 points each and are no longer below the nukers. The nukers didn't change; their small moves are noise (and they meet the hybrids too).
+- The mace is out 82–88% of the time against tanks and warriors, 77% against daggers, and about 21% against archers, mages and supports (the opening burst from range, then the rapier). About 1.1 swaps a battle against ranged targets, 3.2 against tanks (Final Form puts the mace away).
+- Max HP with the rapier out went 16,965 → 21,040 (male) and 15,740 → 19,167 (female). Part of the gain is the Health rapier rather than the swapping. It multiplies the whole HP pool, CP included (`FakePvpIncludeCpInHp`), like buffs and set bonuses do for fake players, so it gives more than a player's +25% HP. The two weren't tested apart.
+- Tanks are still the hybrids' worst match (14–16%).
