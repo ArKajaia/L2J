@@ -774,7 +774,7 @@
 		<set name="mp_consume" val="6" />
 		<set name="element_enabled" val="true" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">689</stat>
 			<stat type="mAtk">163</stat>
@@ -808,7 +808,7 @@
 		<set name="mp_consume" val="6" />
 		<set name="element_enabled" val="true" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">689</stat>
 			<stat type="mAtk">163</stat>
@@ -841,7 +841,7 @@
 		<set name="mp_consume" val="6" />
 		<set name="element_enabled" val="true" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">689</stat>
 			<stat type="mAtk">163</stat>
@@ -1825,7 +1825,7 @@
 		<set name="soulshots" val="7" />
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="1" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<set name="is_tradable" val="false" />
 		<set name="is_dropable" val="false" />
 		<set name="is_sellable" val="false" />

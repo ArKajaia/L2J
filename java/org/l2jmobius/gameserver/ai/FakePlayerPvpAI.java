@@ -118,6 +118,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	private static final long CAST_MARGIN = 300;
 	/** A cast this short always goes. */
 	private static final long QUICK_CAST = 600;
+	/** An archer steps back from a melee closer than this (and that would reach it before its next shot is off). */
+	private static final int ARCHER_KITE_DISTANCE = 600;
+	/** The shortest step back of an archer: about one shot's worth of distance from a melee chasing it. */
+	private static final int ARCHER_KITE_STEP = 350;
+	/** An archer whose way back is blocked tries these angles (degrees) off it, one side then the other. */
+	private static final int[] ARCHER_KITE_ANGLES = { 45, -45, 90, -90 };
 	/** A Totem Warchief stepping back around its totem stops this far beyond it. */
 	private static final int TOTEM_KITE_OFFSET = 150;
 	
@@ -976,9 +982,28 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			}
 		}
 
+		// An archer against a melee after it shoots while the melee can't reach it before the shot is off, and otherwise steps back as soon as the last shot is off (no pause between steps), at an
+		// angle where the way straight back is blocked. So it keeps the melee near the edge of its reach instead of letting it in.
+		final boolean archerKite = pvp && canMove && (role == Role.ARCHER) && !bowHeld && isMeleeThreat(target);
+		if (archerKite && !npc.isAttackingNow() && ((distance - collision) < ARCHER_KITE_DISTANCE) && (safeCast < (getShotTime(npc) + CAST_MARGIN)))
+		{
+			if (_combo != null)
+			{
+				endCombo(now);
+			}
+			if (pressed && useSkill(npc, target, pickPeel(npc, target, profile, defenses, distance - collision, safeCast, mage), distance, collision, false))
+			{
+				return;
+			}
+			if (archerKiteStep(npc, target, now))
+			{
+				return;
+			}
+		}
+		
 		// A pressed archer or mage stops the melee (with what lands before it arrives), even in the middle of a combo, rather than stand through a cast. An archer then steps back and shoots in between; a mage
 		// casts what it can finish first (a nuker wins by out-damaging the melee) and only steps back with nothing short enough (below).
-		if (pressed && canMove && !npc.isAttackingNow() && ((distance - collision) < PRESSED_KITE_DISTANCE))
+		if (!archerKite && pressed && canMove && !npc.isAttackingNow() && ((distance - collision) < PRESSED_KITE_DISTANCE))
 		{
 			// An archer's combos are its long shots; a mage's are its burst (the Soul Hounds' Soul Vortex chain): it keeps it.
 			if ((_combo != null) && !mage)
@@ -996,7 +1021,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		}
 
 		// Archers and mages stop a player in melee range (root, stun, Aura Flash...), then step back (unless a combo is finishing a stunned target).
-		if (canMove && role.isRanged() && (_combo == null) && !npc.isAttackingNow() && ((distance - collision) < profile.getPersonality().getKiteDistance()) && (now >= _nextKiteTime))
+		if (!archerKite && canMove && role.isRanged() && (_combo == null) && !npc.isAttackingNow() && ((distance - collision) < profile.getPersonality().getKiteDistance()) && (now >= _nextKiteTime))
 		{
 			if (pvp && !isDisabled(target) && useSkill(npc, target, pickPeel(npc, target, profile, defenses, distance - collision, safeCast, mage), distance, collision, false))
 			{
@@ -4316,6 +4341,70 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	private static boolean isPvpOnly(Skill skill)
 	{
 		return (FakePlayerPvpConfig.PVP_ONLY_REUSE > 0) && (skill.getReuseDelay() >= FakePlayerPvpConfig.PVP_ONLY_REUSE);
+	}
+	
+	/**
+	 * @param npc an archer
+	 * @return how long, in milliseconds, it stands still for a shot: until the arrow flies and half the bow's reuse is over
+	 */
+	private static long getShotTime(Attackable npc)
+	{
+		return (npc.calculateTimeBetweenAttacks() + npc.calculateReuseTime(npc.getActiveWeaponItem())) / 2;
+	}
+	
+	/**
+	 * An archer's step back from a melee: straight away from it, or at an angle when that way is blocked. Unlike {@link #kiteStep}, the next one may follow as soon as this one ends (and a shot is off).
+	 * @param npc the archer
+	 * @param target the melee after it
+	 * @param now the current time
+	 * @return {@code true} if it started moving
+	 */
+	private boolean archerKiteStep(Attackable npc, Creature target, long now)
+	{
+		if (now < _nextKiteTime)
+		{
+			return false;
+		}
+		
+		double dx = npc.getX() - target.getX();
+		double dy = npc.getY() - target.getY();
+		double length = Math.hypot(dx, dy);
+		if (length < 1)
+		{
+			final double angle = Rnd.nextDouble() * 2 * Math.PI;
+			dx = Math.cos(angle);
+			dy = Math.sin(angle);
+			length = 1;
+		}
+		dx /= length;
+		dy /= length;
+		
+		final int step = Math.max(FakePlayerPvpPersonality.of(npc).getKiteStep(), ARCHER_KITE_STEP);
+		final boolean flip = Rnd.nextBoolean(); // Not always the same side first.
+		for (int i = -1; i < ARCHER_KITE_ANGLES.length; i++)
+		{
+			final double angle = i < 0 ? 0 : Math.toRadians(flip ? -ARCHER_KITE_ANGLES[i] : ARCHER_KITE_ANGLES[i]);
+			final double cos = Math.cos(angle);
+			final double sin = Math.sin(angle);
+			final int x = npc.getX() + (int) (((dx * cos) - (dy * sin)) * step);
+			final int y = npc.getY() + (int) (((dx * sin) + (dy * cos)) * step);
+			final Location destination = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, npc.getZ() + 30, npc.getInstanceId());
+			if ((npc.calculateDistance2D(destination) < (step / 2)) || !GeoEngine.getInstance().canMoveToTarget(npc.getX(), npc.getY(), npc.getZ(), destination.getX(), destination.getY(), destination.getZ(), npc.getInstanceId()))
+			{
+				continue;
+			}
+			
+			trace(Reason.KITE_STEP, target, null, i < 0 ? null : "ANGLE");
+			npc.setRunning();
+			moveTo(destination.getX(), destination.getY(), destination.getZ());
+			_kiteEndTime = now + Math.min(3000, (long) ((npc.calculateDistance2D(destination) * 1000.0) / Math.max(1, npc.getMoveSpeed())));
+			_nextKiteTime = _kiteEndTime;
+			return true;
+		}
+		
+		trace(Reason.KITE_CORNERED, target);
+		_nextKiteTime = now + 1500; // Cornered every way - shoot back for a moment.
+		return false;
 	}
 	
 	/**

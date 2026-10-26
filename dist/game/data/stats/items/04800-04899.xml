@@ -299,7 +299,7 @@
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="2" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">220</stat>
 			<stat type="mAtk">61</stat>
@@ -331,7 +331,7 @@
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="2" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">220</stat>
 			<stat type="mAtk">61</stat>
@@ -483,7 +483,7 @@
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="3" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">252</stat>
 			<stat type="mAtk">68</stat>
@@ -515,7 +515,7 @@
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="3" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<set name="reduced_soulshot" val="59,7" />
 		<stats>
 			<stat type="pAtk">252</stat>
@@ -545,7 +545,7 @@
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="3" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<set name="reduced_mp_consume" val="47,1" />
 		<stats>
 			<stat type="pAtk">252</stat>
@@ -669,7 +669,7 @@
 		<set name="spiritshots" val="3" />
 		<set name="mp_consume" val="3" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">323</stat>
 			<stat type="mAtk">83</stat>
@@ -701,7 +701,7 @@
 		<set name="spiritshots" val="3" />
 		<set name="mp_consume" val="3" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<set name="reduced_soulshot" val="61,9" />
 		<stats>
 			<stat type="pAtk">323</stat>
@@ -731,7 +731,7 @@
 		<set name="spiritshots" val="3" />
 		<set name="mp_consume" val="3" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<set name="reduced_mp_consume" val="42,1" />
 		<stats>
 			<stat type="pAtk">323</stat>
@@ -855,7 +855,7 @@
 		<set name="spiritshots" val="1" />
 		<set name="mp_consume" val="4" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">400</stat>
 			<stat type="mAtk">99</stat>
@@ -916,7 +916,7 @@
 		<set name="spiritshots" val="1" />
 		<set name="mp_consume" val="4" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<set name="reduced_mp_consume" val="42,2" />
 		<stats>
 			<stat type="pAtk">400</stat>
@@ -945,7 +945,7 @@
 		<set name="spiritshots" val="1" />
 		<set name="mp_consume" val="4" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">440</stat>
 			<stat type="mAtk">107</stat>
@@ -973,7 +973,7 @@
 		<set name="spiritshots" val="1" />
 		<set name="mp_consume" val="4" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">440</stat>
 			<stat type="mAtk">107</stat>
@@ -1001,7 +1001,7 @@
 		<set name="spiritshots" val="1" />
 		<set name="mp_consume" val="4" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">440</stat>
 			<stat type="mAtk">107</stat>

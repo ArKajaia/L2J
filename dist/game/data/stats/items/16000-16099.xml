@@ -466,7 +466,7 @@
 		<set name="spiritshots" val="1" />
 		<set name="mp_consume" val="6" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<set name="is_tradable" val="false" />
 		<set name="is_dropable" val="false" />
 		<set name="is_sellable" val="false" />
@@ -502,7 +502,7 @@
 		<set name="spiritshots" val="1" />
 		<set name="mp_consume" val="6" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<set name="is_tradable" val="false" />
 		<set name="is_dropable" val="false" />
 		<set name="is_sellable" val="false" />
@@ -538,7 +538,7 @@
 		<set name="spiritshots" val="1" />
 		<set name="mp_consume" val="6" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<set name="is_tradable" val="false" />
 		<set name="is_dropable" val="false" />
 		<set name="is_sellable" val="false" />
@@ -1591,7 +1591,7 @@
 		<set name="mp_consume" val="6" />
 		<set name="element_enabled" val="true" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">724</stat>
 			<stat type="mAtk">176</stat>
@@ -2667,7 +2667,7 @@
 		<set name="mp_consume" val="6" />
 		<set name="element_enabled" val="true" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">724</stat>
 			<stat type="mAtk">176</stat>
@@ -2702,7 +2702,7 @@
 		<set name="mp_consume" val="6" />
 		<set name="element_enabled" val="true" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">724</stat>
 			<stat type="mAtk">176</stat>
@@ -2736,7 +2736,7 @@
 		<set name="mp_consume" val="6" />
 		<set name="element_enabled" val="true" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">724</stat>
 			<stat type="mAtk">176</stat>

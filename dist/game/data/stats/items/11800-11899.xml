@@ -1549,7 +1549,7 @@
 		<set name="soulshots" val="10" />
 		<set name="spiritshots" val="3" />
 		<set name="mp_consume" val="3" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">323</stat>
 			<stat type="mAtk">83</stat>

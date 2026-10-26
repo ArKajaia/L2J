@@ -149,7 +149,7 @@
 		<set name="soulshots" val="7" />
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="1" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<set name="enchanted" val="15" />
 		<stats>
 			<stat type="pAtk">64</stat>

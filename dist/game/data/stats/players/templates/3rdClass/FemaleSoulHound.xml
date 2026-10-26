@@ -2,11 +2,11 @@
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../xsd/playerTemplate.xsd">
 	<classId>133</classId>
 	<staticData>
-		<baseINT>28</baseINT>
+		<baseINT>32</baseINT> <!-- Custom: retail 28, +4 (docs/class-balance-85.md, round 11) -->
 		<baseSTR>39</baseSTR>
 		<baseCON>30</baseCON>
 		<baseMEN>27</baseMEN>
-		<baseDEX>35</baseDEX>
+		<baseDEX>39</baseDEX> <!-- Custom: retail 35, +4 -->
 		<baseWIT>11</baseWIT>
 		<creationPoints>
 			<node x="-125607" y="38452" z="1152" />

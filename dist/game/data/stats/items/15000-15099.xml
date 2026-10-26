@@ -932,7 +932,7 @@
 		<set name="soulshots" val="3" />
 		<set name="spiritshots" val="1" />
 		<set name="mp_consume" val="4" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<set name="is_tradable" val="false" />
 		<set name="is_dropable" val="false" />
 		<set name="is_sellable" val="false" />
@@ -964,7 +964,7 @@
 		<set name="soulshots" val="10" />
 		<set name="spiritshots" val="3" />
 		<set name="mp_consume" val="3" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<set name="is_tradable" val="false" />
 		<set name="is_dropable" val="false" />
 		<set name="is_sellable" val="false" />
@@ -996,7 +996,7 @@
 		<set name="soulshots" val="10" />
 		<set name="spiritshots" val="3" />
 		<set name="mp_consume" val="2" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<set name="is_tradable" val="false" />
 		<set name="is_dropable" val="false" />
 		<set name="is_sellable" val="false" />
