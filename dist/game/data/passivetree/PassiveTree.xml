@@ -38,20 +38,20 @@
 		<requires nodeId="5001" />
 		<requires nodeId="33406" />
 	</node>
-	<node id="5004" name="Spellcraft" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1736.7" y="-2548.0" orbitX="-1838.1" orbitY="-2575.2" effect="MATK_PCT:1" icon="flame">
+	<node id="5004" name="Spellcraft" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1736.7" y="-2548.0" orbitX="-1838.1" orbitY="-2575.2" effect="MATK_PCT:1.2" icon="flame">
 		<requires nodeId="5006" />
 		<requires nodeId="5090" />
 		<requires nodeId="5091" />
 	</node>
-	<node id="5006" name="Spellcraft" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1829.0" y="-2470.6" orbitX="-1838.1" orbitY="-2575.2" effect="MATK_PCT:1" icon="flame">
+	<node id="5006" name="Spellcraft" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1829.0" y="-2470.6" orbitX="-1838.1" orbitY="-2575.2" effect="MATK_PCT:1.2" icon="flame">
 		<requires nodeId="5004" />
 		<requires nodeId="5007" />
 	</node>
-	<node id="5007" name="Spellcraft" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1933.3" y="-2530.8" orbitX="-1838.1" orbitY="-2575.2" effect="MATK_PCT:1" icon="flame">
+	<node id="5007" name="Spellcraft" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1933.3" y="-2530.8" orbitX="-1838.1" orbitY="-2575.2" effect="MATK_PCT:1.2" icon="flame">
 		<requires nodeId="5006" />
 		<requires nodeId="5008" />
 	</node>
-	<node id="5008" name="Spell Surge" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-1912.4" y="-2649.5" orbitX="-1838.1" orbitY="-2575.2" effect="MATK_PCT:5;INT:1" icon="flame" description="Spellcraft mastery.">
+	<node id="5008" name="Spell Surge" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-1912.4" y="-2649.5" orbitX="-1838.1" orbitY="-2575.2" effect="MATK_PCT:6;INT:1" icon="flame" description="Spellcraft mastery.">
 		<requires nodeId="5007" />
 	</node>
 	<node id="5009" name="Mana Pool" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1338.3" y="-2778.0" orbitX="-1311.1" orbitY="-2879.4" effect="MAXMP:20" icon="crystal">
@@ -188,19 +188,19 @@
 		<requires nodeId="5044" />
 		<requires nodeId="5043" />
 	</node>
-	<node id="5048" name="Spellcraft" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-641.1" y="-1611.0" orbitX="-927.4" orbitY="-1716.2" effect="MATK_PCT:1.2" icon="flame">
+	<node id="5048" name="Spellcraft" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-641.1" y="-1611.0" orbitX="-927.4" orbitY="-1716.2" effect="MATK_PCT:1.4" icon="flame">
 		<requires nodeId="5039" />
 		<requires nodeId="5053" />
 	</node>
-	<node id="5049" name="Spellcraft" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-875.4" y="-2016.8" orbitX="-927.4" orbitY="-1716.2" effect="MATK_PCT:1.2" icon="flame">
+	<node id="5049" name="Spellcraft" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-875.4" y="-2016.8" orbitX="-927.4" orbitY="-1716.2" effect="MATK_PCT:1.4" icon="flame">
 		<requires nodeId="5053" />
 		<requires nodeId="5016" />
 	</node>
-	<node id="5050" name="Spellcraft" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-775.8" y="-1803.7" effect="MATK_PCT:1.2" icon="flame">
+	<node id="5050" name="Spellcraft" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-775.8" y="-1803.7" effect="MATK_PCT:1.4" icon="flame">
 		<requires nodeId="5053" />
 		<requires nodeId="5037" />
 	</node>
-	<node id="5053" name="Spell Surge" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-663.2" y="-1868.7" orbitX="-927.4" orbitY="-1716.2" effect="MATK_PCT:5;INT:1" icon="flame" description="Spellcraft mastery.">
+	<node id="5053" name="Spell Surge" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-663.2" y="-1868.7" orbitX="-927.4" orbitY="-1716.2" effect="MATK_PCT:6;INT:1" icon="flame" description="Spellcraft mastery.">
 		<requires nodeId="5050" />
 		<requires nodeId="5048" />
 		<requires nodeId="5049" />
@@ -290,7 +290,7 @@
 	<node id="5078" name="Mind Over Matter" sector="Arcanist" type="KEYSTONE" tier="0" cost="1" x="-489.3" y="-687.5" effect="KS_MIND_OVER_MATTER:30" icon="ks-mind-over-matter" description="KEYSTONE: 30% of the damage you take is drained from your MP instead of your HP, until your MP runs out.">
 		<requires nodeId="5077" />
 	</node>
-	<node id="5079" name="Elemental Singularity" sector="Arcanist" type="MASTER" tier="0" cost="1" x="-360.0" y="-623.5" effect="INT:2;MATK_PCT:8;CAST_SPD_PCT:2" icon="vortex" description="Archetype capstone.">
+	<node id="5079" name="Elemental Singularity" sector="Arcanist" type="MASTER" tier="0" cost="1" x="-360.0" y="-623.5" effect="INT:2;MATK_PCT:9.6;CAST_SPD_PCT:2" icon="vortex" description="Archetype capstone.">
 		<requires nodeId="5080" />
 		<requires nodeId="9009" />
 	</node>
@@ -423,7 +423,7 @@
 		<requires nodeId="47401" />
 		<requires nodeId="47403" />
 	</node>
-	<node id="47403" name="Inferno" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-2279.9" y="-3648.9" orbitX="-1955.1" orbitY="-3836.4" effect="FIRE_ATK:20;MATK_PCT:2" icon="flame">
+	<node id="47403" name="Inferno" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-2279.9" y="-3648.9" orbitX="-1955.1" orbitY="-3836.4" effect="FIRE_ATK:20;MATK_PCT:2.4" icon="flame">
 		<requires nodeId="47402" />
 		<requires nodeId="47404" />
 	</node>
@@ -443,7 +443,7 @@
 		<requires nodeId="47406" />
 		<requires nodeId="47408" />
 	</node>
-	<node id="47408" name="Tidecaller" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-2020.1" y="-3798.9" orbitX="-2344.9" orbitY="-3611.4" effect="WATER_ATK:20;MATK_PCT:2" icon="drop">
+	<node id="47408" name="Tidecaller" sector="Arcanist" type="NOTABLE" tier="0" cost="1" x="-2020.1" y="-3798.9" orbitX="-2344.9" orbitY="-3611.4" effect="WATER_ATK:20;MATK_PCT:2.4" icon="drop">
 		<requires nodeId="47407" />
 		<requires nodeId="47409" />
 	</node>
@@ -1333,7 +1333,7 @@
 		<requires nodeId="45070" />
 		<requires nodeId="45072" />
 	</node>
-	<node id="45072" name="Dawnbringer" sector="Hallowmere" type="KEYSTONE" tier="0" cost="1" x="5604.6" y="-1038.7" effect="PATK_PCT@DAY:12;MATK_PCT@DAY:12;HP_REGEN_PCT@DAY:30;PATK_PCT@NIGHT:-12;MATK_PCT@NIGHT:-12" icon="ks-dawnbringer" description="KEYSTONE: During the day: +12% P.Atk and M.Atk, 30% faster HP regeneration. At night: -12% P.Atk and M.Atk.">
+	<node id="45072" name="Dawnbringer" sector="Hallowmere" type="KEYSTONE" tier="0" cost="1" x="5604.6" y="-1038.7" effect="PATK_PCT@DAY:12;MATK_PCT@DAY:14.4;HP_REGEN_PCT@DAY:30;PATK_PCT@NIGHT:-12;MATK_PCT@NIGHT:-12" icon="ks-dawnbringer" description="KEYSTONE: During the day: +12% P.Atk and +14.4% M.Atk, 30% faster HP regeneration. At night: -12% P.Atk and M.Atk.">
 		<requires nodeId="45071" />
 	</node>
 	<node id="45080" name="Warden's Road" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3442.1" y="-4030.2" effect="PDEF_PCT:1.5" icon="tower-shield">
@@ -1769,7 +1769,7 @@
 		<requires nodeId="47501" />
 		<requires nodeId="47503" />
 	</node>
-	<node id="47503" name="Radiant Smite" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="2020.1" y="-3798.9" orbitX="2344.9" orbitY="-3611.4" effect="HOLY_ATK:20;MATK_PCT:2" icon="sun">
+	<node id="47503" name="Radiant Smite" sector="Hierophant" type="NOTABLE" tier="0" cost="1" x="2020.1" y="-3798.9" orbitX="2344.9" orbitY="-3611.4" effect="HOLY_ATK:20;MATK_PCT:2.4" icon="sun">
 		<requires nodeId="47502" />
 		<requires nodeId="47504" />
 	</node>
@@ -2048,7 +2048,7 @@
 	<node id="40082" name="Whirling Steel" sector="Ironmarch" type="KEYSTONE" tier="0" cost="1" x="3435.4" y="4397.1" effect="KS_WHIRLING_STEEL:50;ATK_SPD_PCT:-15" icon="ks-whirling-steel" description="KEYSTONE: Your normal attacks with any melee weapon also hit up to 2 more enemies in front of you for 50% damage (a polearm hits 2 more enemies than it would). -15% Attack Speed.">
 		<requires nodeId="40081" />
 	</node>
-	<node id="44100" name="Echoing Path" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4981.0" y="1655.9" effect="MATK_PCT:1.5" icon="hourglass">
+	<node id="44100" name="Echoing Path" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="4981.0" y="1655.9" effect="MATK_PCT:1.8" icon="hourglass">
 		<requires nodeId="40039" />
 		<requires nodeId="44101" />
 	</node>
@@ -2534,7 +2534,7 @@
 		<requires nodeId="47114" />
 	</node>
 	<!-- Ley Expanse: an outer region beyond the rim between Arcanist and Hierophant. -->
-	<node id="44001" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1429.6" y="-3927.9" effect="MATK_PCT:0.8">
+	<node id="44001" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1429.6" y="-3927.9" effect="MATK_PCT:1">
 		<requires nodeId="39419" />
 		<requires nodeId="44020" />
 		<requires nodeId="44060" />
@@ -2549,7 +2549,7 @@
 		<requires nodeId="44032" />
 		<requires nodeId="44063" />
 	</node>
-	<node id="44004" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="746.7" y="-4234.7" effect="MATK_PCT:0.8">
+	<node id="44004" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="746.7" y="-4234.7" effect="MATK_PCT:1">
 		<requires nodeId="44024" />
 		<requires nodeId="44061" />
 		<requires nodeId="44065" />
@@ -2565,7 +2565,7 @@
 		<requires nodeId="44067" />
 		<requires nodeId="44070" />
 	</node>
-	<node id="44007" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="500.7" y="-4763.8" effect="MATK_PCT:0.8">
+	<node id="44007" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="500.7" y="-4763.8" effect="MATK_PCT:1">
 		<requires nodeId="44036" />
 		<requires nodeId="44071" />
 	</node>
@@ -2583,7 +2583,7 @@
 		<requires nodeId="44050" />
 		<requires nodeId="44052" />
 	</node>
-	<node id="44052" name="Iron Mage" sector="Ley Expanse" type="KEYSTONE" tier="0" cost="1" x="0.0" y="-5030.0" effect="MATK_PCT@HEAVY:15;CAST_SPD_PCT@HEAVY:10;MP_REGEN_PCT:-30" icon="ks-iron-mage" description="KEYSTONE: In heavy armour: +15% M.Atk and +10% casting speed. MP regeneration is 30% slower.">
+	<node id="44052" name="Iron Mage" sector="Ley Expanse" type="KEYSTONE" tier="0" cost="1" x="0.0" y="-5030.0" effect="MATK_PCT@HEAVY:18;CAST_SPD_PCT@HEAVY:10;MP_REGEN_PCT:-30" icon="ks-iron-mage" description="KEYSTONE: In heavy armour: +18% M.Atk and +10% casting speed. MP regeneration is 30% slower.">
 		<requires nodeId="44051" />
 	</node>
 	<node id="44020" name="Leyblood" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1281.7" y="-4204.3" orbitX="1232.1" orbitY="-4296.8" effect="MAXHP_PCT:1.5" icon="heart">
@@ -2613,7 +2613,7 @@
 		<requires nodeId="44025" />
 		<requires nodeId="44027" />
 	</node>
-	<node id="44027" name="Silken Focus" sector="Ley Expanse" type="NOTABLE" tier="0" cost="1" x="547.2" y="-4557.9" orbitX="631.8" orbitY="-4495.8" effect="CAST_SPD_PCT@ROBE:6;MATK_PCT@ROBE:4" icon="robe" description="Robe Weaving mastery. Robes only.">
+	<node id="44027" name="Silken Focus" sector="Ley Expanse" type="NOTABLE" tier="0" cost="1" x="547.2" y="-4557.9" orbitX="631.8" orbitY="-4495.8" effect="CAST_SPD_PCT@ROBE:6;MATK_PCT@ROBE:4.8" icon="robe" description="Robe Weaving mastery. Robes only.">
 		<requires nodeId="44026" />
 	</node>
 	<node id="44028" name="Runeplate" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-674.1" y="-4399.7" orbitX="-631.8" orbitY="-4495.8" effect="MDEF_PCT@HEAVY:2" icon="ward">
@@ -2631,19 +2631,19 @@
 	<node id="44031" name="Warded Plate" sector="Ley Expanse" type="NOTABLE" tier="0" cost="1" x="-547.2" y="-4557.9" orbitX="-631.8" orbitY="-4495.8" effect="MDEF_PCT@HEAVY:8;MAXHP_PCT:2" icon="ward" description="Runeplate mastery. Heavy armour only.">
 		<requires nodeId="44030" />
 	</node>
-	<node id="44032" name="Bladecaster" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1281.7" y="-4204.3" orbitX="-1232.1" orbitY="-4296.8" effect="MATK_PCT@SWORD:2" icon="sword">
+	<node id="44032" name="Bladecaster" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1281.7" y="-4204.3" orbitX="-1232.1" orbitY="-4296.8" effect="MATK_PCT@SWORD:2.4" icon="sword">
 		<requires nodeId="44003" />
 		<requires nodeId="44033" />
 	</node>
-	<node id="44033" name="Bladecaster" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1162.1" y="-4218.6" orbitX="-1232.1" orbitY="-4296.8" effect="MATK_PCT@SWORD:2" icon="sword">
+	<node id="44033" name="Bladecaster" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1162.1" y="-4218.6" orbitX="-1232.1" orbitY="-4296.8" effect="MATK_PCT@SWORD:2.4" icon="sword">
 		<requires nodeId="44032" />
 		<requires nodeId="44034" />
 	</node>
-	<node id="44034" name="Bladecaster" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1134.6" y="-4335.9" orbitX="-1232.1" orbitY="-4296.8" effect="MATK_PCT@SWORD:2" icon="sword">
+	<node id="44034" name="Bladecaster" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-1134.6" y="-4335.9" orbitX="-1232.1" orbitY="-4296.8" effect="MATK_PCT@SWORD:2.4" icon="sword">
 		<requires nodeId="44033" />
 		<requires nodeId="44035" />
 	</node>
-	<node id="44035" name="Spellblade" sector="Ley Expanse" type="NOTABLE" tier="0" cost="1" x="-1235.5" y="-4401.8" orbitX="-1232.1" orbitY="-4296.8" effect="MATK_PCT@SWORD:6;PATK_PCT@ROBE:5" icon="sword" description="Bladecaster mastery. A sword in hand, a robe on your back.">
+	<node id="44035" name="Spellblade" sector="Ley Expanse" type="NOTABLE" tier="0" cost="1" x="-1235.5" y="-4401.8" orbitX="-1232.1" orbitY="-4296.8" effect="MATK_PCT@SWORD:7.2;PATK_PCT@ROBE:5" icon="sword" description="Bladecaster mastery. A sword in hand, a robe on your back.">
 		<requires nodeId="44034" />
 	</node>
 	<node id="44036" name="Mana Skin" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="766.8" y="-4866.5" orbitX="864.8" orbitY="-4904.3" effect="MAXMP:15" icon="drop">
@@ -2701,7 +2701,7 @@
 		<requires nodeId="44004" />
 		<requires nodeId="44060" />
 	</node>
-	<node id="44062" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1644.3" y="-3957.9" effect="MATK_PCT:0.8">
+	<node id="44062" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1644.3" y="-3957.9" effect="MATK_PCT:1">
 		<requires nodeId="44001" />
 		<requires nodeId="44040" />
 	</node>
@@ -2713,7 +2713,7 @@
 		<requires nodeId="44005" />
 		<requires nodeId="44063" />
 	</node>
-	<node id="44065" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="560.1" y="-4283.5" effect="MATK_PCT:0.8">
+	<node id="44065" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="560.1" y="-4283.5" effect="MATK_PCT:1">
 		<requires nodeId="44004" />
 		<requires nodeId="44066" />
 	</node>
@@ -2725,7 +2725,7 @@
 		<requires nodeId="44006" />
 		<requires nodeId="44066" />
 	</node>
-	<node id="44068" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-560.1" y="-4283.5" effect="MATK_PCT:0.8">
+	<node id="44068" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="-560.1" y="-4283.5" effect="MATK_PCT:1">
 		<requires nodeId="44005" />
 		<requires nodeId="44069" />
 	</node>
@@ -2737,7 +2737,7 @@
 		<requires nodeId="44006" />
 		<requires nodeId="44069" />
 	</node>
-	<node id="44071" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="250.5" y="-4701.8" effect="MATK_PCT:0.8">
+	<node id="44071" name="Ley Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="250.5" y="-4701.8" effect="MATK_PCT:1">
 		<requires nodeId="44007" />
 		<requires nodeId="44050" />
 	</node>
@@ -2749,7 +2749,7 @@
 		<requires nodeId="44008" />
 		<requires nodeId="44050" />
 	</node>
-	<node id="44080" name="Anchor Stones" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="967.4" y="-5182.7" effect="MATK_PCT@STILL:3" icon="rune">
+	<node id="44080" name="Anchor Stones" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="967.4" y="-5182.7" effect="MATK_PCT@STILL:3.6" icon="rune">
 		<requires nodeId="44039" />
 		<requires nodeId="44081" />
 	</node>
@@ -2757,14 +2757,14 @@
 		<requires nodeId="44080" />
 		<requires nodeId="44082" />
 	</node>
-	<node id="44082" name="Ley Anchor" sector="Ley Expanse" type="KEYSTONE" tier="0" cost="1" x="1040.8" y="-5575.9" effect="MATK_PCT@STILL:25;CAST_SPD_PCT@STILL:20;MDEF_PCT@STILL:15;MATK_PCT@MOBILE:-15" icon="ks-ley-anchor" description="KEYSTONE: Once you have stood still for 2 seconds you are Anchored: +25% M.Atk, +20% Casting Speed and +15% M.Def. Until then (and while moving), -15% M.Atk.">
+	<node id="44082" name="Ley Anchor" sector="Ley Expanse" type="KEYSTONE" tier="0" cost="1" x="1040.8" y="-5575.9" effect="MATK_PCT@STILL:30;CAST_SPD_PCT@STILL:20;MDEF_PCT@STILL:15;MATK_PCT@MOBILE:-15" icon="ks-ley-anchor" description="KEYSTONE: Once you have stood still for 2 seconds you are Anchored: +30% M.Atk, +20% Casting Speed and +15% M.Def. Until then (and while moving), -15% M.Atk.">
 		<requires nodeId="44081" />
 	</node>
 	<node id="44090" name="Spellblade Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="2197.6" y="-4712.8" effect="PATK_PCT:1.5" icon="staff">
 		<requires nodeId="44043" />
 		<requires nodeId="44091" />
 	</node>
-	<node id="44091" name="Spellblade Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="2282.1" y="-4894.1" effect="MATK_PCT:1.5" icon="staff">
+	<node id="44091" name="Spellblade Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="2282.1" y="-4894.1" effect="MATK_PCT:1.8" icon="staff">
 		<requires nodeId="44090" />
 		<requires nodeId="44092" />
 	</node>
@@ -2772,17 +2772,17 @@
 		<requires nodeId="44091" />
 	</node>
 	<!-- Mystic: hybrid of Arcanist and Hierophant filling the gap between their arms. -->
-	<node id="30401" name="Confluence" sector="Mystic" type="SMALL" tier="0" cost="1" x="0.0" y="-2400.0" effect="MATK_PCT:0.3;MAXMP:8">
+	<node id="30401" name="Confluence" sector="Mystic" type="SMALL" tier="0" cost="1" x="0.0" y="-2400.0" effect="MATK_PCT:0.4;MAXMP:8">
 		<requires nodeId="24102" />
 		<requires nodeId="30402" />
 	</node>
-	<node id="30402" name="Confluence" sector="Mystic" type="SMALL" tier="0" cost="1" x="0.0" y="-2550.0" effect="MATK_PCT:0.3;MAXMP:8">
+	<node id="30402" name="Confluence" sector="Mystic" type="SMALL" tier="0" cost="1" x="0.0" y="-2550.0" effect="MATK_PCT:0.4;MAXMP:8">
 		<requires nodeId="30401" />
 		<requires nodeId="30405" />
 		<requires nodeId="33401" />
 		<requires nodeId="33402" />
 	</node>
-	<node id="30403" name="Arcane Crossing" sector="Mystic" type="SMALL" tier="0" cost="1" x="-640.0" y="-2450.0" effect="MATK_PCT:0.4;MAXMP:6">
+	<node id="30403" name="Arcane Crossing" sector="Mystic" type="SMALL" tier="0" cost="1" x="-640.0" y="-2450.0" effect="MATK_PCT:0.5;MAXMP:6">
 		<requires nodeId="30406" />
 		<requires nodeId="33401" />
 		<requires nodeId="33403" />
@@ -2798,7 +2798,7 @@
 		<requires nodeId="30407" />
 		<requires nodeId="30412" />
 	</node>
-	<node id="30406" name="Surging Power" sector="Mystic" type="SMALL" tier="0" cost="1" x="-359.0" y="-2644.6" orbitX="-420.0" orbitY="-2730.0" effect="MATK_PCT:0.6;CAST_SPD_PCT:0.5" icon="rune">
+	<node id="30406" name="Surging Power" sector="Mystic" type="SMALL" tier="0" cost="1" x="-359.0" y="-2644.6" orbitX="-420.0" orbitY="-2730.0" effect="MATK_PCT:0.7;CAST_SPD_PCT:0.5" icon="rune">
 		<requires nodeId="30403" />
 		<requires nodeId="30405" />
 		<requires nodeId="30410" />
@@ -2808,7 +2808,7 @@
 		<requires nodeId="30405" />
 		<requires nodeId="30411" />
 	</node>
-	<node id="30408" name="Surging Power" sector="Mystic" type="SMALL" tier="0" cost="1" x="-411.8" y="-2834.7" orbitX="-420.0" orbitY="-2730.0" effect="MATK_PCT:0.6;CAST_SPD_PCT:0.5" icon="rune">
+	<node id="30408" name="Surging Power" sector="Mystic" type="SMALL" tier="0" cost="1" x="-411.8" y="-2834.7" orbitX="-420.0" orbitY="-2730.0" effect="MATK_PCT:0.7;CAST_SPD_PCT:0.5" icon="rune">
 		<requires nodeId="30410" />
 		<requires nodeId="30415" />
 	</node>
@@ -2816,7 +2816,7 @@
 		<requires nodeId="30411" />
 		<requires nodeId="30416" />
 	</node>
-	<node id="30410" name="Surging Power" sector="Mystic" type="SMALL" tier="0" cost="1" x="-318.8" y="-2758.1" orbitX="-420.0" orbitY="-2730.0" effect="MATK_PCT:0.6;CAST_SPD_PCT:0.5" icon="rune">
+	<node id="30410" name="Surging Power" sector="Mystic" type="SMALL" tier="0" cost="1" x="-318.8" y="-2758.1" orbitX="-420.0" orbitY="-2730.0" effect="MATK_PCT:0.7;CAST_SPD_PCT:0.5" icon="rune">
 		<requires nodeId="30406" />
 		<requires nodeId="30408" />
 	</node>
@@ -2832,7 +2832,7 @@
 		<requires nodeId="30427" />
 		<requires nodeId="30470" />
 	</node>
-	<node id="30415" name="Overcharged Sigils" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="-515.6" y="-2773.5" orbitX="-420.0" orbitY="-2730.0" effect="MCRIT_DMG_PCT:10;MATK_PCT:3" icon="rune" description="Surging Power mastery. Magic critical hits erupt.">
+	<node id="30415" name="Overcharged Sigils" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="-515.6" y="-2773.5" orbitX="-420.0" orbitY="-2730.0" effect="MCRIT_DMG_PCT:10;MATK_PCT:3.6" icon="rune" description="Surging Power mastery. Magic critical hits erupt.">
 		<requires nodeId="30408" />
 	</node>
 	<node id="30416" name="Clarity" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="515.6" y="-2773.5" orbitX="420.0" orbitY="-2730.0" effect="SPELL_MP_COST_RED_PCT:8;MP_REGEN_PCT:4" icon="crystal" description="Still Mind mastery. Spells cost less MP.">
@@ -2865,10 +2865,10 @@
 		<requires nodeId="30424" />
 		<requires nodeId="30426" />
 	</node>
-	<node id="30424" name="Arcane Hunter" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="760.0" y="-3470.0" effect="PVE_MDMG_PCT:6;MATK_PCT:1" icon="staff" description="Spellwork tuned for clearing monsters.">
+	<node id="30424" name="Arcane Hunter" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="760.0" y="-3470.0" effect="PVE_MDMG_PCT:6;MATK_PCT:1.2" icon="staff" description="Spellwork tuned for clearing monsters.">
 		<requires nodeId="30423" />
 	</node>
-	<node id="30425" name="Arcane Path" sector="Mystic" type="SMALL" tier="0" cost="1" x="-560.0" y="-3150.0" effect="MATK_PCT:0.4;MCRIT_RATE_ADD:3">
+	<node id="30425" name="Arcane Path" sector="Mystic" type="SMALL" tier="0" cost="1" x="-560.0" y="-3150.0" effect="MATK_PCT:0.5;MCRIT_RATE_ADD:3">
 		<requires nodeId="30412" />
 		<requires nodeId="30417" />
 		<requires nodeId="30421" />
@@ -2894,7 +2894,7 @@
 	<node id="30430" name="Temporal Flow" sector="Mystic" type="ACTIVE_SKILL" tier="0" cost="1" x="990.0" y="-3300.0" effect="MAXHP:15" skillId="27464" skillLevel="1" icon="skill-temporal-flow" description="ACTIVE: magic skills recharge 25% faster and cast 10% faster for 15s (180s cooldown).">
 		<requires nodeId="30429" />
 	</node>
-	<node id="30451" name="Waystone" sector="Mystic" type="SMALL" tier="0" cost="1" x="94.2" y="-1797.5" effect="MATK_PCT:0.4">
+	<node id="30451" name="Waystone" sector="Mystic" type="SMALL" tier="0" cost="1" x="94.2" y="-1797.5" effect="MATK_PCT:0.5">
 		<requires nodeId="24202" />
 		<requires nodeId="30452" />
 	</node>
@@ -2914,19 +2914,19 @@
 		<requires nodeId="24201" />
 		<requires nodeId="30462" />
 	</node>
-	<node id="30452" name="Ley Wellspring" sector="Mystic" type="SMALL" tier="0" cost="1" x="199.1" y="-1894.4" orbitX="276.3" orbitY="-1965.7" effect="MATK_PCT:0.5;MP_REGEN_PCT:0.5" icon="eye">
+	<node id="30452" name="Ley Wellspring" sector="Mystic" type="SMALL" tier="0" cost="1" x="199.1" y="-1894.4" orbitX="276.3" orbitY="-1965.7" effect="MATK_PCT:0.6;MP_REGEN_PCT:0.5" icon="eye">
 		<requires nodeId="30451" />
 		<requires nodeId="30453" />
 	</node>
-	<node id="30453" name="Ley Wellspring" sector="Mystic" type="SMALL" tier="0" cost="1" x="316.8" y="-1868.8" orbitX="276.3" orbitY="-1965.7" effect="MATK_PCT:0.5;MP_REGEN_PCT:0.5" icon="eye">
+	<node id="30453" name="Ley Wellspring" sector="Mystic" type="SMALL" tier="0" cost="1" x="316.8" y="-1868.8" orbitX="276.3" orbitY="-1965.7" effect="MATK_PCT:0.6;MP_REGEN_PCT:0.5" icon="eye">
 		<requires nodeId="30452" />
 		<requires nodeId="30454" />
 	</node>
-	<node id="30454" name="Ley Wellspring" sector="Mystic" type="SMALL" tier="0" cost="1" x="381.1" y="-1970.7" orbitX="276.3" orbitY="-1965.7" effect="MATK_PCT:0.5;MP_REGEN_PCT:0.5" icon="eye">
+	<node id="30454" name="Ley Wellspring" sector="Mystic" type="SMALL" tier="0" cost="1" x="381.1" y="-1970.7" orbitX="276.3" orbitY="-1965.7" effect="MATK_PCT:0.6;MP_REGEN_PCT:0.5" icon="eye">
 		<requires nodeId="30453" />
 		<requires nodeId="30455" />
 	</node>
-	<node id="30455" name="Archon's Insight" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="307.4" y="-2065.9" orbitX="276.3" orbitY="-1965.7" effect="INT:1;MEN:1;MATK_PCT:2" icon="eye" description="Ley Wellspring mastery. Suits a Arcanist/Hierophant hybrid.">
+	<node id="30455" name="Archon's Insight" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="307.4" y="-2065.9" orbitX="276.3" orbitY="-1965.7" effect="INT:1;MEN:1;MATK_PCT:2.4" icon="eye" description="Ley Wellspring mastery. Suits a Arcanist/Hierophant hybrid.">
 		<requires nodeId="30454" />
 	</node>
 	<node id="30457" name="War Hymn" sector="Mystic" type="SMALL" tier="0" cost="1" x="20.3" y="-868.0" orbitX="0.0" orbitY="-765.0" effect="PATK_PCT:0.6;ATK_SPD_PCT:0.4" icon="sword">
@@ -3052,7 +3052,7 @@
 		<requires nodeId="2098" />
 		<requires nodeId="2103" />
 	</node>
-	<node id="9004" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="520.0" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.3">
+	<node id="9004" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="520.0" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.4">
 		<requires nodeId="9003" />
 		<requires nodeId="9005" />
 		<requires nodeId="9023" />
@@ -3087,7 +3087,7 @@
 		<requires nodeId="5098" />
 		<requires nodeId="5103" />
 	</node>
-	<node id="9010" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="-520.0" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.3">
+	<node id="9010" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="0.0" y="-520.0" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.4">
 		<requires nodeId="9009" />
 		<requires nodeId="9011" />
 		<requires nodeId="9032" />
@@ -3114,7 +3114,7 @@
 	<node id="9015" name="Pillar of Grace" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="-227.9" y="30.8" orbitX="-25.4" orbitY="449.8" effect="DEX:1;MOVE_SPEED_ADD:2.4" icon="feather">
 		<requires nodeId="9028" />
 	</node>
-	<node id="9016" name="Pillar of Intellect" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="-140.6" y="-182.0" orbitX="-402.3" orbitY="203.0" effect="INT:1;MATK_PCT:4" icon="book">
+	<node id="9016" name="Pillar of Intellect" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="-140.6" y="-182.0" orbitX="-402.3" orbitY="203.0" effect="INT:1;MATK_PCT:4.8" icon="book">
 		<requires nodeId="9031" />
 	</node>
 	<node id="9017" name="Pillar of Wisdom" sector="Nexus" type="NOTABLE" tier="0" cost="1" x="87.3" y="-212.8" orbitX="-376.9" orbitY="-246.9" effect="WIT:1;CAST_SPD_PCT:3" icon="eye">
@@ -3167,15 +3167,15 @@
 		<requires nodeId="9015" />
 		<requires nodeId="9027" />
 	</node>
-	<node id="9029" name="Intellect Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-368.9" y="-261.3" orbitX="-402.3" orbitY="203.0" effect="MATK_PCT:0.5" icon="book">
+	<node id="9029" name="Intellect Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-368.9" y="-261.3" orbitX="-402.3" orbitY="203.0" effect="MATK_PCT:0.6" icon="book">
 		<requires nodeId="9008" />
 		<requires nodeId="9030" />
 	</node>
-	<node id="9030" name="Intellect Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-288.6" y="-248.4" orbitX="-402.3" orbitY="203.0" effect="MATK_PCT:0.5" icon="book">
+	<node id="9030" name="Intellect Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-288.6" y="-248.4" orbitX="-402.3" orbitY="203.0" effect="MATK_PCT:0.6" icon="book">
 		<requires nodeId="9029" />
 		<requires nodeId="9031" />
 	</node>
-	<node id="9031" name="Intellect Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-211.7" y="-221.7" orbitX="-402.3" orbitY="203.0" effect="MATK_PCT:0.5" icon="book">
+	<node id="9031" name="Intellect Conduit" sector="Nexus" type="SMALL" tier="0" cost="1" x="-211.7" y="-221.7" orbitX="-402.3" orbitY="203.0" effect="MATK_PCT:0.6" icon="book">
 		<requires nodeId="9016" />
 		<requires nodeId="9030" />
 	</node>
@@ -3567,7 +3567,7 @@
 		<requires nodeId="41050" />
 		<requires nodeId="41052" />
 	</node>
-	<node id="41052" name="Berserk Pact" sector="Red Wastes" type="KEYSTONE" tier="0" cost="1" x="-991.1" y="4982.4" effect="PATK_PCT@LOWHP:30;PDEF_PCT@LOWHP:-20;HP_REGEN_PCT:-30" icon="ks-berserk-pact" description="KEYSTONE: Below 50% HP you deal 30% more P.Atk but have 20% less P.Def. HP regeneration is 30% slower.">
+	<node id="41052" name="Berserk Pact" sector="Red Wastes" type="KEYSTONE" tier="0" cost="1" x="-991.1" y="4982.4" effect="KS_BERSERK_PACT:1;PATK_PCT@LOWHP:30;PDEF_PCT@LOWHP:-20;HP_REGEN_PCT:-30" icon="ks-berserk-pact" description="KEYSTONE: Below 50% HP you deal 30% more P.Atk but have 20% less P.Def. HP regeneration is 30% slower. Cannot be combined with Unending Fury.">
 		<requires nodeId="41051" />
 	</node>
 	<node id="41020" name="Bloodboil" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="1341.2" y="4289.0" orbitX="1404.1" orbitY="4373.1" effect="MAXHP_PCT:1.5" icon="heart">
@@ -4697,11 +4697,11 @@
 		<requires nodeId="47214" />
 	</node>
 	<!-- Spellbow: hybrid of Deadeye and Arcanist filling the gap between their arms. -->
-	<node id="30301" name="Confluence" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2078.5" y="-1200.0" effect="PATK_PCT:0.3;MATK_PCT:0.3">
+	<node id="30301" name="Confluence" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2078.5" y="-1200.0" effect="PATK_PCT:0.3;MATK_PCT:0.4">
 		<requires nodeId="23102" />
 		<requires nodeId="30302" />
 	</node>
-	<node id="30302" name="Confluence" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2208.4" y="-1275.0" effect="PATK_PCT:0.3;MATK_PCT:0.3">
+	<node id="30302" name="Confluence" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2208.4" y="-1275.0" effect="PATK_PCT:0.3;MATK_PCT:0.4">
 		<requires nodeId="30301" />
 		<requires nodeId="30305" />
 		<requires nodeId="33301" />
@@ -4712,7 +4712,7 @@
 		<requires nodeId="33301" />
 		<requires nodeId="33303" />
 	</node>
-	<node id="30304" name="Arcane Crossing" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1801.8" y="-1779.3" effect="MATK_PCT:0.4;MAXMP:6">
+	<node id="30304" name="Arcane Crossing" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1801.8" y="-1779.3" effect="MATK_PCT:0.5;MAXMP:6">
 		<requires nodeId="30307" />
 		<requires nodeId="33302" />
 		<requires nodeId="33304" />
@@ -4728,7 +4728,7 @@
 		<requires nodeId="30305" />
 		<requires nodeId="30310" />
 	</node>
-	<node id="30307" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2110.8" y="-1633.2" orbitX="-2154.2" orbitY="-1728.7" effect="MATK_PCT:0.6;MCRIT_RATE_ADD:5" icon="comet">
+	<node id="30307" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2110.8" y="-1633.2" orbitX="-2154.2" orbitY="-1728.7" effect="MATK_PCT:0.7;MCRIT_RATE_ADD:5" icon="comet">
 		<requires nodeId="30304" />
 		<requires nodeId="30305" />
 		<requires nodeId="30311" />
@@ -4737,7 +4737,7 @@
 		<requires nodeId="30310" />
 		<requires nodeId="30315" />
 	</node>
-	<node id="30309" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2249.0" y="-1774.0" orbitX="-2154.2" orbitY="-1728.7" effect="MATK_PCT:0.6;MCRIT_RATE_ADD:5" icon="comet">
+	<node id="30309" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2249.0" y="-1774.0" orbitX="-2154.2" orbitY="-1728.7" effect="MATK_PCT:0.7;MCRIT_RATE_ADD:5" icon="comet">
 		<requires nodeId="30311" />
 		<requires nodeId="30316" />
 	</node>
@@ -4745,7 +4745,7 @@
 		<requires nodeId="30306" />
 		<requires nodeId="30308" />
 	</node>
-	<node id="30311" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2229.2" y="-1655.2" orbitX="-2154.2" orbitY="-1728.7" effect="MATK_PCT:0.6;MCRIT_RATE_ADD:5" icon="comet">
+	<node id="30311" name="Arcane Sight" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2229.2" y="-1655.2" orbitX="-2154.2" orbitY="-1728.7" effect="MATK_PCT:0.7;MCRIT_RATE_ADD:5" icon="comet">
 		<requires nodeId="30307" />
 		<requires nodeId="30309" />
 	</node>
@@ -4757,10 +4757,10 @@
 		<requires nodeId="30327" />
 		<requires nodeId="30370" />
 	</node>
-	<node id="30315" name="Runic Fletching" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-2659.7" y="-940.2" orbitX="-2574.2" orbitY="-1001.3" effect="PVE_BOW_DMG_PCT:5;ACCURACY_ADD:2;MATK_PCT:2" icon="rune" description="Runed Arrow mastery. Enchanted shafts tear through monsters.">
+	<node id="30315" name="Runic Fletching" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-2659.7" y="-940.2" orbitX="-2574.2" orbitY="-1001.3" effect="PVE_BOW_DMG_PCT:5;ACCURACY_ADD:2;MATK_PCT:2.4" icon="rune" description="Runed Arrow mastery. Enchanted shafts tear through monsters.">
 		<requires nodeId="30308" />
 	</node>
-	<node id="30316" name="Seeker Spells" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-2144.1" y="-1833.2" orbitX="-2154.2" orbitY="-1728.7" effect="MCRIT_RATE_ADD:20;MATK_PCT:3;ACCURACY_ADD:1" icon="comet" description="Arcane Sight mastery. Spells find the weak point.">
+	<node id="30316" name="Seeker Spells" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-2144.1" y="-1833.2" orbitX="-2154.2" orbitY="-1728.7" effect="MCRIT_RATE_ADD:20;MATK_PCT:3.6;ACCURACY_ADD:1" icon="comet" description="Arcane Sight mastery. Spells find the weak point.">
 		<requires nodeId="30309" />
 	</node>
 	<node id="30317" name="Focus" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2856.3" y="-1354.7" orbitX="-2924.6" orbitY="-1434.5" effect="CRIT_DMG_PCT:0.6;MCRIT_DMG_PCT:1.2" icon="spark">
@@ -4800,7 +4800,7 @@
 		<requires nodeId="30329" />
 		<requires nodeId="33305" />
 	</node>
-	<node id="30326" name="Arcane Path" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2448.0" y="-2060.0" effect="MATK_PCT:0.4;CAST_SPD_PCT:0.3">
+	<node id="30326" name="Arcane Path" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2448.0" y="-2060.0" effect="MATK_PCT:0.5;CAST_SPD_PCT:0.3">
 		<requires nodeId="30312" />
 		<requires nodeId="30323" />
 		<requires nodeId="33307" />
@@ -4835,15 +4835,15 @@
 		<requires nodeId="23103" />
 		<requires nodeId="30361" />
 	</node>
-	<node id="30352" name="Arcane Fletching" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1121.5" y="-647.5" orbitX="-1212.4" orbitY="-700.0" effect="ACCURACY_ADD:0.3;MATK_PCT:0.6" icon="star">
+	<node id="30352" name="Arcane Fletching" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1121.5" y="-647.5" orbitX="-1212.4" orbitY="-700.0" effect="ACCURACY_ADD:0.3;MATK_PCT:0.7" icon="star">
 		<requires nodeId="30351" />
 		<requires nodeId="30353" />
 	</node>
-	<node id="30353" name="Arcane Fletching" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1230.7" y="-596.6" orbitX="-1212.4" orbitY="-700.0" effect="ACCURACY_ADD:0.3;MATK_PCT:0.6" icon="star">
+	<node id="30353" name="Arcane Fletching" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1230.7" y="-596.6" orbitX="-1212.4" orbitY="-700.0" effect="ACCURACY_ADD:0.3;MATK_PCT:0.7" icon="star">
 		<requires nodeId="30352" />
 		<requires nodeId="30354" />
 	</node>
-	<node id="30354" name="Arcane Fletching" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1315.8" y="-681.8" orbitX="-1212.4" orbitY="-700.0" effect="ACCURACY_ADD:0.3;MATK_PCT:0.6" icon="star">
+	<node id="30354" name="Arcane Fletching" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-1315.8" y="-681.8" orbitX="-1212.4" orbitY="-700.0" effect="ACCURACY_ADD:0.3;MATK_PCT:0.7" icon="star">
 		<requires nodeId="30353" />
 		<requires nodeId="30355" />
 	</node>
@@ -4917,38 +4917,38 @@
 	<node id="30374" name="Hunter's Stamina" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-3050.0" y="-2102.6" orbitX="-3061.0" orbitY="-1998.2" effect="MAXHP_PCT:4;MAXMP:40" icon="heart" description="Bowyer's Blood mastery. Stamina for the long hunt.">
 		<requires nodeId="30373" />
 	</node>
-	<node id="30375" name="Runed Bowstring" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3176.9" y="-1689.0" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:1.5" icon="bow">
+	<node id="30375" name="Runed Bowstring" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3176.9" y="-1689.0" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:1.8" icon="bow">
 		<requires nodeId="30370" />
 		<requires nodeId="30376" />
 	</node>
-	<node id="30376" name="Runed Bowstring" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3269.2" y="-1766.4" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:1.5" icon="bow">
+	<node id="30376" name="Runed Bowstring" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3269.2" y="-1766.4" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:1.8" icon="bow">
 		<requires nodeId="30375" />
 		<requires nodeId="30377" />
 	</node>
-	<node id="30377" name="Runed Bowstring" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3373.5" y="-1706.2" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:1.5" icon="bow">
+	<node id="30377" name="Runed Bowstring" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3373.5" y="-1706.2" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:1.8" icon="bow">
 		<requires nodeId="30376" />
 		<requires nodeId="30378" />
 	</node>
-	<node id="30378" name="Spellstring" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-3352.6" y="-1587.5" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:6;CAST_SPD_PCT@BOW:4" icon="bow" description="Runed Bowstring mastery. Spells cast with a bow in hand.">
+	<node id="30378" name="Spellstring" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-3352.6" y="-1587.5" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:7.2;CAST_SPD_PCT@BOW:4" icon="bow" description="Runed Bowstring mastery. Spells cast with a bow in hand.">
 		<requires nodeId="30377" />
 	</node>
 	<node id="30364" name="Heartstone" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-757.7" y="-530.6" effect="MAXHP:12">
 		<requires nodeId="23302" />
 		<requires nodeId="30365" />
 	</node>
-	<node id="30365" name="Arcane Quiver" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-719.3" y="-470.8" orbitX="-662.5" orbitY="-382.5" effect="MATK_PCT@BOW:2" icon="arrow">
+	<node id="30365" name="Arcane Quiver" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-719.3" y="-470.8" orbitX="-662.5" orbitY="-382.5" effect="MATK_PCT@BOW:2.4" icon="arrow">
 		<requires nodeId="30364" />
 		<requires nodeId="30366" />
 	</node>
-	<node id="30366" name="Arcane Quiver" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-764.9" y="-359.3" orbitX="-662.5" orbitY="-382.5" effect="MATK_PCT@BOW:2" icon="arrow">
+	<node id="30366" name="Arcane Quiver" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-764.9" y="-359.3" orbitX="-662.5" orbitY="-382.5" effect="MATK_PCT@BOW:2.4" icon="arrow">
 		<requires nodeId="30365" />
 		<requires nodeId="30367" />
 	</node>
-	<node id="30367" name="Arcane Quiver" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-675.8" y="-278.3" orbitX="-662.5" orbitY="-382.5" effect="MATK_PCT@BOW:2" icon="arrow">
+	<node id="30367" name="Arcane Quiver" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-675.8" y="-278.3" orbitX="-662.5" orbitY="-382.5" effect="MATK_PCT@BOW:2.4" icon="arrow">
 		<requires nodeId="30366" />
 		<requires nodeId="30368" />
 	</node>
-	<node id="30368" name="Enchanted Arrows" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-569.2" y="-334.4" orbitX="-662.5" orbitY="-382.5" effect="PATK_PCT@BOW:5;MATK_PCT:3" icon="arrow" description="Arcane Quiver mastery. Bows only.">
+	<node id="30368" name="Enchanted Arrows" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-569.2" y="-334.4" orbitX="-662.5" orbitY="-382.5" effect="PATK_PCT@BOW:5;MATK_PCT:3.6" icon="arrow" description="Arcane Quiver mastery. Bows only.">
 		<requires nodeId="30367" />
 	</node>
 	<!-- Stalker: hybrid of Shadowblade and Deadeye filling the gap between their arms. -->
@@ -5263,7 +5263,7 @@
 		<requires nodeId="43050" />
 		<requires nodeId="43052" />
 	</node>
-	<node id="43052" name="Glass Cannon" sector="Starfall" type="KEYSTONE" tier="0" cost="1" x="-4810.4" y="-1632.9" effect="PATK_PCT:15;MATK_PCT:15;MAXHP_PCT:-30" icon="ks-glass-cannon" description="KEYSTONE: +15% P.Atk and M.Atk, but 30% less maximum HP.">
+	<node id="43052" name="Glass Cannon" sector="Starfall" type="KEYSTONE" tier="0" cost="1" x="-4810.4" y="-1632.9" effect="PATK_PCT:15;MATK_PCT:18;MAXHP_PCT:-30" icon="ks-glass-cannon" description="KEYSTONE: +15% P.Atk and +18% M.Atk, but 30% less maximum HP.">
 		<requires nodeId="43051" />
 	</node>
 	<node id="43020" name="Starblood" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3043.8" y="-3306.0" orbitX="-3085.2" orbitY="-3402.5" effect="MAXHP_PCT:1.5" icon="constellation">
@@ -5293,7 +5293,7 @@
 		<requires nodeId="43025" />
 		<requires nodeId="43027" />
 	</node>
-	<node id="43027" name="Untouched" sector="Starfall" type="NOTABLE" tier="0" cost="1" x="-3134.1" y="-2716.7" orbitX="-3133.8" orbitY="-2821.7" effect="PATK_PCT@FULLHP:8;MATK_PCT@FULLHP:8" icon="sun" description="Perfect Form mastery. Only above 90% HP.">
+	<node id="43027" name="Untouched" sector="Starfall" type="NOTABLE" tier="0" cost="1" x="-3134.1" y="-2716.7" orbitX="-3133.8" orbitY="-2821.7" effect="PATK_PCT@FULLHP:8;MATK_PCT@FULLHP:9.6" icon="sun" description="Perfect Form mastery. Only above 90% HP.">
 		<requires nodeId="43026" />
 	</node>
 	<node id="43028" name="Meteor Strike" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3637.0" y="-3077.1" orbitX="-3689.6" orbitY="-3167.9" effect="CRIT_DMG_PCT:2" icon="star">
@@ -5386,7 +5386,7 @@
 		<requires nodeId="43009" />
 		<requires nodeId="43010" />
 	</node>
-	<node id="43070" name="Moonward Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-5031.6" y="-1231.2" effect="MATK_PCT@NIGHT:2" icon="moon">
+	<node id="43070" name="Moonward Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-5031.6" y="-1231.2" effect="MATK_PCT@NIGHT:2.4" icon="moon">
 		<requires nodeId="43047" />
 		<requires nodeId="43071" />
 	</node>
@@ -5394,10 +5394,10 @@
 		<requires nodeId="43070" />
 		<requires nodeId="43072" />
 	</node>
-	<node id="43072" name="Nocturne" sector="Starfall" type="KEYSTONE" tier="0" cost="1" x="-5420.1" y="-1326.3" effect="PATK_PCT@NIGHT:12;MATK_PCT@NIGHT:12;EVASION_ADD@NIGHT:4;PDEF_PCT@DAY:-12;MDEF_PCT@DAY:-12" icon="ks-nocturne" description="KEYSTONE: At night: +12% P.Atk and M.Atk, +4 Evasion. During the day: -12% P.Def and M.Def.">
+	<node id="43072" name="Nocturne" sector="Starfall" type="KEYSTONE" tier="0" cost="1" x="-5420.1" y="-1326.3" effect="PATK_PCT@NIGHT:12;MATK_PCT@NIGHT:14.4;EVASION_ADD@NIGHT:4;PDEF_PCT@DAY:-12;MDEF_PCT@DAY:-12" icon="ks-nocturne" description="KEYSTONE: At night: +12% P.Atk and +14.4% M.Atk, +4 Evasion. During the day: -12% P.Def and M.Def.">
 		<requires nodeId="43071" />
 	</node>
-	<node id="43080" name="Stormward Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4495.0" y="-2913.2" effect="MATK_PCT:1.5" icon="bolt">
+	<node id="43080" name="Stormward Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-4495.0" y="-2913.2" effect="MATK_PCT:1.8" icon="bolt">
 		<requires nodeId="43039" />
 		<requires nodeId="43081" />
 	</node>
@@ -5408,7 +5408,7 @@
 	<node id="43082" name="Arc Conduit" sector="Starfall" type="KEYSTONE" tier="0" cost="1" x="-4830.6" y="-3130.8" effect="KS_ARC_CONDUIT:50;SPELL_MP_COST_RED_PCT:-30" icon="ks-arc-conduit" description="KEYSTONE: Your single-target damage spells jump to the nearest enemy within 300 of the target for 50% of the damage, then to one more for 25%, flying from one to the next. Spells cost 30% more MP.">
 		<requires nodeId="43081" />
 	</node>
-	<node id="43090" name="Wild Starfire" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3932.8" y="-3350.0" effect="MATK_PCT:1.5" icon="vortex">
+	<node id="43090" name="Wild Starfire" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3932.8" y="-3350.0" effect="MATK_PCT:1.8" icon="vortex">
 		<requires nodeId="43031" />
 		<requires nodeId="43091" />
 	</node>
@@ -6235,7 +6235,7 @@
 		<requires nodeId="30022" />
 		<requires nodeId="30025" />
 	</node>
-	<node id="30022" name="Unending Fury" sector="Warlord" type="KEYSTONE" tier="0" cost="1" x="3385.1" y="1076.8" effect="KS_RAMPAGE:40;HEALING_RECEIVED_PCT:-30" icon="ks-unending-fury" description="KEYSTONE: Your P.Atk rises as your HP falls, up to +40% near death, but healing you receive is 30% weaker.">
+	<node id="30022" name="Unending Fury" sector="Warlord" type="KEYSTONE" tier="0" cost="1" x="3385.1" y="1076.8" effect="KS_RAMPAGE:25;HEALING_RECEIVED_PCT:-30" icon="ks-unending-fury" description="KEYSTONE: Your P.Atk rises as your HP falls, up to +25% near death, but healing you receive is 30% weaker. Cannot be combined with Berserk Pact.">
 		<requires nodeId="30021" />
 	</node>
 	<node id="30023" name="Approach" sector="Warlord" type="SMALL" tier="0" cost="1" x="2543.9" y="2253.9" effect="MAXHP:6">
@@ -6302,19 +6302,19 @@
 	<node id="30055" name="Warlord's Bulwark" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="1939.5" y="836.5" orbitX="1836.2" orbitY="817.5" effect="STR:1;CON:1;PDEF_PCT:2" icon="shield" description="Steelhide Rage mastery. Suits a Vanguard/Juggernaut hybrid.">
 		<requires nodeId="30054" />
 	</node>
-	<node id="30057" name="Arcane Edge" sector="Warlord" type="SMALL" tier="0" cost="1" x="1191.4" y="537.2" orbitX="1238.5" orbitY="631.0" effect="MATK_PCT:0.8" icon="staff">
+	<node id="30057" name="Arcane Edge" sector="Warlord" type="SMALL" tier="0" cost="1" x="1191.4" y="537.2" orbitX="1238.5" orbitY="631.0" effect="MATK_PCT:1" icon="staff">
 		<requires nodeId="30056" />
 		<requires nodeId="30058" />
 	</node>
-	<node id="30058" name="Arcane Edge" sector="Warlord" type="SMALL" tier="0" cost="1" x="1134.2" y="643.3" orbitX="1238.5" orbitY="631.0" effect="MATK_PCT:0.8" icon="staff">
+	<node id="30058" name="Arcane Edge" sector="Warlord" type="SMALL" tier="0" cost="1" x="1134.2" y="643.3" orbitX="1238.5" orbitY="631.0" effect="MATK_PCT:1" icon="staff">
 		<requires nodeId="30057" />
 		<requires nodeId="30059" />
 	</node>
-	<node id="30059" name="Arcane Edge" sector="Warlord" type="SMALL" tier="0" cost="1" x="1214.3" y="733.2" orbitX="1238.5" orbitY="631.0" effect="MATK_PCT:0.8" icon="staff">
+	<node id="30059" name="Arcane Edge" sector="Warlord" type="SMALL" tier="0" cost="1" x="1214.3" y="733.2" orbitX="1238.5" orbitY="631.0" effect="MATK_PCT:1" icon="staff">
 		<requires nodeId="30058" />
 		<requires nodeId="30060" />
 	</node>
-	<node id="30060" name="Spellsword Oath" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="1326.2" y="688.7" orbitX="1238.5" orbitY="631.0" effect="INT:1;MATK_PCT:4;CAST_SPD_PCT:3" icon="staff" description="Arcane Edge mastery. Off-path: pays off only if you rebuild around it.">
+	<node id="30060" name="Spellsword Oath" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="1326.2" y="688.7" orbitX="1238.5" orbitY="631.0" effect="INT:1;MATK_PCT:4.8;CAST_SPD_PCT:3" icon="staff" description="Arcane Edge mastery. Off-path: pays off only if you rebuild around it.">
 		<requires nodeId="30059" />
 	</node>
 	<node id="33001" name="Lifeblood Trail" sector="Warlord" type="SMALL" tier="0" cost="1" x="2325.1" y="972.9" effect="MAXHP:15">

@@ -826,7 +826,7 @@ public class SimulationWeb
 		final int z = parseInt(params.get("z"), here ? gm.getZ() : MATRIX_FIELD[2]);
 		final int heading = parseInt(params.get("heading"), here ? gm.getHeading() : MATRIX_FIELD[3]);
 		final int battles = Math.max(1, Math.min(1000, parseInt(params.get("battles"), 20)));
-		final int parallel = Math.max(1, Math.min(500, parseInt(params.get("parallel"), 100)));
+		final int parallel = Math.max(1, Math.min(1000, parseInt(params.get("parallel"), 100)));
 		final int level = Math.max(1, Math.min(85, parseInt(params.get("level"), 85)));
 		final int time = Math.max(10, parseInt(params.get("time"), FakeSimulationConfig.TIME_LIMIT));
 		final int distance = Math.max(100, Math.min(3000, parseInt(params.get("distance"), 1000)));
@@ -843,7 +843,7 @@ public class SimulationWeb
 			server.sendText(exchange, 400, "application/json", "{\"error\":\"the seed must be a whole number\"}");
 			return;
 		}
-		sendMatrixLines(exchange, FakeSimulationManager.getInstance().startMatrix(gm, x, y, z, heading, battles, parallel, level, time, distance, brain, builds, seed));
+		sendMatrixLines(exchange, FakeSimulationManager.getInstance().startMatrix(gm, x, y, z, heading, battles, parallel, level, time, distance, brain, "1".equals(params.get("mirror")) || "true".equals(params.get("mirror")), params.get("focus"), builds, seed));
 	}
 
 	private void handleMatrixResume(HttpExchange exchange) throws IOException
@@ -857,7 +857,7 @@ public class SimulationWeb
 
 		final Map<String, String> params = server.readParams(exchange);
 		final String name = (params.get("name") == null) || params.get("name").trim().isEmpty() ? null : params.get("name").trim();
-		sendMatrixLines(exchange, FakeSimulationManager.getInstance().resumeMatrix(gm, name, Math.max(0, Math.min(500, parseInt(params.get("parallel"), 0)))));
+		sendMatrixLines(exchange, FakeSimulationManager.getInstance().resumeMatrix(gm, name, Math.max(0, Math.min(1000, parseInt(params.get("parallel"), 0)))));
 	}
 
 	private void handleMatrixStop(HttpExchange exchange) throws IOException

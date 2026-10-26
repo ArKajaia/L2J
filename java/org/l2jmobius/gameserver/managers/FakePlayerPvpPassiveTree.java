@@ -74,6 +74,10 @@ public class FakePlayerPvpPassiveTree
 	private static final double COMMON_WEIGHT = 2;
 	/** Weight of an effect key the role is built on (P. Atk. for fighters, M. Atk. for mages...). */
 	private static final double ROLE_WEIGHT = 3;
+	/** Archers want P. Atk. and critical damage this much more than their other damage keys: their shots and normal attacks live on them (docs/class-balance-85.md). */
+	private static final double ARCHER_DAMAGE_FACTOR = 2;
+	/** The keys {@link #ARCHER_DAMAGE_FACTOR} raises. */
+	private static final Set<String> ARCHER_DAMAGE_KEYS = Set.of("PATK_PCT", "CRIT_DMG_PCT");
 	/** How much an effect counts whose condition holds only part of the time (LOWHP, NIGHT, STILL...). */
 	private static final double PART_TIME_WEIGHT = 0.5;
 	/** Worth of a path that gives nothing, so once nothing of use is left a tree still spends its points, on the shortest steps. */
@@ -168,12 +172,13 @@ public class FakePlayerPvpPassiveTree
 				}
 				case ARCHER:
 				{
+					// Bruisers as often as the others: an archer a melee catches lives on its HP (docs/class-balance-85.md).
 					return new int[]
 					{
 						3,
 						3,
 						3,
-						1,
+						3,
 						3
 					};
 				}
@@ -234,8 +239,9 @@ public class FakePlayerPvpPassiveTree
 	 * @param gear the gear key, see {@link #gearKey}
 	 * @param keystones the build's own keystone list (see {@link FakePlayerPvpBuild#getKeystones()}), {@code null} for its role's
 	 * @param hybrid {@code true} for a melee build whose M. Atk. counts too (see {@link FakePlayerPvpBuild#isHybrid()})
+	 * @param weights the build's own weight factors (see {@link FakePlayerPvpBuild#getWeights()}), {@code null} for none
 	 */
-	private record PoolKey(int origin, Role role, int gear, String keystones, boolean hybrid)
+	private record PoolKey(int origin, Role role, int gear, String keystones, boolean hybrid, String weights)
 	{
 	}
 
@@ -441,20 +447,30 @@ public class FakePlayerPvpPassiveTree
 	}
 
 	/**
+	 * @param keystones a build's own keystone list
+	 * @return {@code true} if it adds to its role's list ("+Soul Link") instead of replacing it
+	 */
+	private static boolean addsToRole(String keystones)
+	{
+		return (keystones != null) && keystones.startsWith("+");
+	}
+	
+	/**
 	 * @param key a pool
-	 * @return the keystones its orders may head for: the build's own list, or its role's
+	 * @return the keystones its orders may head for: the build's own list, its role's, or its role's and the build's extra ones
 	 */
 	private List<Keystone> getKeystones(PoolKey key)
 	{
+		final List<Keystone> roleKeystones = _keystones.getOrDefault(key.role(), List.of());
 		if (key.keystones() == null)
 		{
-			return _keystones.getOrDefault(key.role(), List.of());
+			return roleKeystones;
 		}
 
-		return _buildKeystones.computeIfAbsent(key.keystones(), list ->
+		final List<Keystone> own = _buildKeystones.computeIfAbsent(key.keystones(), list ->
 		{
 			final List<String> entries = new ArrayList<>();
-			for (String entry : list.split(";"))
+			for (String entry : (addsToRole(list) ? list.substring(1) : list).split(";"))
 			{
 				if (!entry.isBlank())
 				{
@@ -463,6 +479,14 @@ public class FakePlayerPvpPassiveTree
 			}
 			return parseKeystones(entries, "The keystones of a build in FakePlayerPvp.xml");
 		});
+		if (!addsToRole(key.keystones()))
+		{
+			return own;
+		}
+		
+		final List<Keystone> combined = new ArrayList<>(roleKeystones);
+		combined.addAll(own);
+		return combined;
 	}
 
 	/**
@@ -498,7 +522,7 @@ public class FakePlayerPvpPassiveTree
 			return null;
 		}
 
-		final Variant[] variants = _pools.computeIfAbsent(new PoolKey(origin, build.getRole(), gearKey(armorMask, wornMask), build.getKeystones(), build.isHybrid()), this::growPool);
+		final Variant[] variants = _pools.computeIfAbsent(new PoolKey(origin, build.getRole(), gearKey(armorMask, wornMask), build.getKeystones(), build.isHybrid(), build.getWeights()), this::growPool);
 		final Variant variant = variants[Rnd.get(variants.length)];
 		final boolean allSubclasses = (level >= FakePlayerPvpConfig.PASSIVE_TREE_SUBCLASS_MIN_LEVEL) && (elite || (pvpSpot && (level >= FakePlayerPvpConfig.PASSIVE_TREE_SPOT_SUBCLASS_LEVEL) && (Rnd.get(100) < FakePlayerPvpConfig.PASSIVE_TREE_SPOT_SUBCLASS_CHANCE)));
 		final int subclasses = allSubclasses ? FakePlayerPvpConfig.PASSIVE_TREE_MAX_SUBCLASSES : rollSubclasses(level);
@@ -633,10 +657,11 @@ public class FakePlayerPvpPassiveTree
 		final String sector = _nodes[key.origin()].getSector();
 		long seed = (((POOL_SEED * 31) + sector.hashCode()) * 31 * 31) + (key.role().ordinal() * 31L) + key.gear();
 		// A build with its own keystones or weights grows its own trees (the role's keep their seed).
-		if ((key.keystones() != null) || key.hybrid())
+		if ((key.keystones() != null) || key.hybrid() || (key.weights() != null))
 		{
-			seed = (seed * 31) + (key.keystones() != null ? key.keystones().hashCode() : 0) + (key.hybrid() ? 1 : 0);
+			seed = (seed * 31) + (key.keystones() != null ? key.keystones().hashCode() : 0) + (key.hybrid() ? 1 : 0) + (key.weights() != null ? key.weights().hashCode() * 7 : 0);
 		}
+		final Map<String, Double> buildWeights = parseWeights(key.weights());
 		return Rnd.seeded(seed, () ->
 		{
 			// The keystones of the role (or build) that are of use with this gear.
@@ -665,7 +690,7 @@ public class FakePlayerPvpPassiveTree
 				final double[] keyWeights = new double[_keys.length];
 				for (int k = 0; k < _keys.length; k++)
 				{
-					keyWeights[k] = (keyWeight(key.role(), key.hybrid(), _keys[k]) * groupFactor(_keys[k], groups) * jitter(KEY_JITTER)) / _units[k];
+					keyWeights[k] = (keyWeight(key.role(), key.hybrid(), _keys[k]) * buildWeights.getOrDefault(_keys[k], 1.0) * groupFactor(_keys[k], groups) * jitter(KEY_JITTER)) / _units[k];
 				}
 
 				// How much this order wants each effect of each node with this gear, by its size, before caps.
@@ -679,7 +704,7 @@ public class FakePlayerPvpPassiveTree
 					}
 				}
 
-				pool[v] = new Growth(key.origin(), effectWeights, keystones, key.keystones() != null, style, PassiveTreeConfig.PASSIVE_TREE_MAX_POINTS).grow();
+				pool[v] = new Growth(key.origin(), effectWeights, keystones, (key.keystones() != null) && !addsToRole(key.keystones()), style, PassiveTreeConfig.PASSIVE_TREE_MAX_POINTS).grow();
 			}
 			return pool;
 		});
@@ -987,6 +1012,23 @@ public class FakePlayerPvpPassiveTree
 				return null;
 			}
 
+			// A keystone that goes with one it took (FakePvpKeystonePartners: Martyr's Vow after Mind Over Matter) comes next.
+			for (int chosen : _chosen)
+			{
+				final String partner = FakePlayerPvpConfig.PASSIVE_TREE_KEYSTONE_PARTNERS.get(_nodes[chosen].getName());
+				if (partner == null)
+				{
+					continue;
+				}
+				for (int keystone : _keystoneChoices)
+				{
+					if (_nodes[keystone].getName().equals(partner) && !_taken[keystone] && (_distance[keystone] != Long.MAX_VALUE) && !conflictsWithChosen(keystone))
+					{
+						return path(keystone);
+					}
+				}
+			}
+
 			final List<Integer> reachable = new ArrayList<>();
 			final List<Double> chances = new ArrayList<>();
 			double total = 0;
@@ -1103,6 +1145,10 @@ public class FakePlayerPvpPassiveTree
 			}
 			case ARCHER:
 			{
+				if (ARCHER_DAMAGE_KEYS.contains(key))
+				{
+					return ROLE_WEIGHT * ARCHER_DAMAGE_FACTOR;
+				}
 				return PHYSICAL_KEYS.contains(key) || ARCHER_KEYS.contains(key) ? ROLE_WEIGHT : 0;
 			}
 			default:
@@ -1110,6 +1156,35 @@ public class FakePlayerPvpPassiveTree
 				return PHYSICAL_KEYS.contains(key) ? ROLE_WEIGHT : 0;
 			}
 		}
+	}
+
+	/**
+	 * @param text a build's weight factors, "KEY:factor;KEY:factor" (see {@link FakePlayerPvpBuild#getWeights()}), {@code null} for none
+	 * @return the factor of each key; a malformed entry is left out
+	 */
+	private static Map<String, Double> parseWeights(String text)
+	{
+		final Map<String, Double> weights = new HashMap<>();
+		if (text == null)
+		{
+			return weights;
+		}
+		for (String part : text.split(";"))
+		{
+			final int colon = part.indexOf(':');
+			if (colon > 0)
+			{
+				try
+				{
+					weights.put(part.substring(0, colon).trim(), Math.max(0, Double.parseDouble(part.substring(colon + 1).trim())));
+				}
+				catch (NumberFormatException e)
+				{
+					LOGGER.warning(FakePlayerPvpPassiveTree.class.getSimpleName() + ": Bad build weight \"" + part + "\".");
+				}
+			}
+		}
+		return weights;
 	}
 
 	/** Made on first use, and made again by {@link #reload()} once the tree has been edited. */

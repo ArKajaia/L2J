@@ -1726,7 +1726,7 @@
 		<set name="soulshots" val="6" />
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="1" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">34</stat>
 			<stat type="mAtk">12</stat>
@@ -1750,7 +1750,7 @@
 		<set name="soulshots" val="7" />
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="1" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">49</stat>
 			<stat type="mAtk">17</stat>
@@ -1774,7 +1774,7 @@
 		<set name="soulshots" val="7" />
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="1" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">64</stat>
 			<stat type="mAtk">21</stat>
@@ -1802,7 +1802,7 @@
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="1" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">82</stat>
 			<stat type="mAtk">26</stat>
@@ -1858,7 +1858,7 @@
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="2" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">105</stat>
 			<stat type="mAtk">32</stat>
@@ -1886,7 +1886,7 @@
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="2" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">105</stat>
 			<stat type="mAtk">32</stat>
@@ -1914,7 +1914,7 @@
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="2" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">132</stat>
 			<stat type="mAtk">39</stat>
@@ -1970,7 +1970,7 @@
 		<set name="spiritshots" val="3" />
 		<set name="mp_consume" val="2" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">191</stat>
 			<stat type="mAtk">54</stat>
@@ -1999,7 +1999,7 @@
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="2" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">220</stat>
 			<stat type="mAtk">61</stat>
@@ -2115,7 +2115,7 @@
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="3" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">252</stat>
 			<stat type="mAtk">68</stat>
@@ -2144,7 +2144,7 @@
 		<set name="spiritshots" val="3" />
 		<set name="mp_consume" val="3" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">323</stat>
 			<stat type="mAtk">83</stat>
@@ -2173,7 +2173,7 @@
 		<set name="spiritshots" val="1" />
 		<set name="mp_consume" val="4" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">400</stat>
 			<stat type="mAtk">99</stat>
@@ -2202,7 +2202,7 @@
 		<set name="spiritshots" val="1" />
 		<set name="mp_consume" val="4" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">440</stat>
 			<stat type="mAtk">107</stat>
@@ -2258,7 +2258,7 @@
 		<set name="spiritshots" val="1" />
 		<set name="mp_consume" val="5" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">519</stat>
 			<stat type="mAtk">121</stat>

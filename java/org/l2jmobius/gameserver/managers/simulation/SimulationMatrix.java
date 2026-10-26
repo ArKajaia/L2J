@@ -88,6 +88,12 @@ public class SimulationMatrix
 	private final int _timeLimit;
 	private final int _distance;
 	private final FakeBrain _brain;
+	/** The AI of the second build of each pair: the same as {@link #_brain}, or the other one for an A/B test. */
+	private final FakeBrain _brainB;
+	/** {@code true} for an A/B test: every build only fights itself, one side with each brain. */
+	private final boolean _mirror;
+	/** Only the pairs with one of these builds fight (empty for every pair): a build tried against every other one. */
+	private final List<String> _focus;
 	private final long _seed;
 	private final int _x;
 	private final int _y;
@@ -108,7 +114,7 @@ public class SimulationMatrix
 	/** Finished battle folders, oldest first: only the newest are kept. */
 	private final Deque<Path> _keptLogs = new ArrayDeque<>();
 
-	private SimulationMatrix(String name, Path dir, List<String> builds, int battles, int parallel, int level, int timeLimit, int distance, FakeBrain brain, long seed, int x, int y, int z, int heading, int starterId)
+	private SimulationMatrix(String name, Path dir, List<String> builds, int battles, int parallel, int level, int timeLimit, int distance, FakeBrain brain, FakeBrain brainB, boolean mirror, List<String> focus, long seed, int x, int y, int z, int heading, int starterId)
 	{
 		_name = name;
 		_dir = dir;
@@ -119,6 +125,9 @@ public class SimulationMatrix
 		_timeLimit = timeLimit;
 		_distance = distance;
 		_brain = brain;
+		_brainB = brainB;
+		_mirror = mirror;
+		_focus = focus;
 		_seed = seed;
 		_x = x;
 		_y = y;
@@ -137,7 +146,10 @@ public class SimulationMatrix
 	 * @param level the level of the fake players
 	 * @param timeLimit the time limit of a battle, in seconds
 	 * @param distance how far apart the two spawn
-	 * @param brain the AI of both
+	 * @param brain the AI of the first build of each pair
+	 * @param brainB the AI of the second one (the same for a class matrix, the other one for an A/B test)
+	 * @param mirror {@code true} for an A/B test: every build only fights itself
+	 * @param focus only the pairs with one of these builds fight, empty for every pair
 	 * @param seed the seed
 	 * @param x the middle of the place
 	 * @param y the middle of the place
@@ -146,9 +158,9 @@ public class SimulationMatrix
 	 * @param starterId the admin that started it
 	 * @return the matrix, its settings saved
 	 */
-	public static SimulationMatrix create(String name, Path dir, List<String> builds, int battles, int parallel, int level, int timeLimit, int distance, FakeBrain brain, long seed, int x, int y, int z, int heading, int starterId)
+	public static SimulationMatrix create(String name, Path dir, List<String> builds, int battles, int parallel, int level, int timeLimit, int distance, FakeBrain brain, FakeBrain brainB, boolean mirror, List<String> focus, long seed, int x, int y, int z, int heading, int starterId)
 	{
-		final SimulationMatrix matrix = new SimulationMatrix(name, dir, builds, battles, parallel, level, timeLimit, distance, brain, seed, x, y, z, heading, starterId);
+		final SimulationMatrix matrix = new SimulationMatrix(name, dir, builds, battles, parallel, level, timeLimit, distance, brain, brainB, mirror, focus, seed, x, y, z, heading, starterId);
 		matrix.saveSettings();
 		matrix.fillQueue(Map.of());
 		return matrix;
@@ -169,7 +181,8 @@ public class SimulationMatrix
 			settings.load(reader);
 			final List<String> builds = List.of(settings.getProperty("builds").split("\\|"));
 			final FakeBrain brain = FakeBrain.parse(settings.getProperty("brain", "A"));
-			final SimulationMatrix matrix = new SimulationMatrix(dir.getFileName().toString(), dir, builds, Integer.parseInt(settings.getProperty("battles")), parallel > 0 ? parallel : Integer.parseInt(settings.getProperty("parallel")), Integer.parseInt(settings.getProperty("level")), Integer.parseInt(settings.getProperty("timeLimit")), Integer.parseInt(settings.getProperty("distance")), brain != null ? brain : FakeBrain.A, Long.parseLong(settings.getProperty("seed")), Integer.parseInt(settings.getProperty("x")), Integer.parseInt(settings.getProperty("y")), Integer.parseInt(settings.getProperty("z")), Integer.parseInt(settings.getProperty("heading")), starterId);
+			final FakeBrain brainB = FakeBrain.parse(settings.getProperty("brainB", settings.getProperty("brain", "A")));
+			final SimulationMatrix matrix = new SimulationMatrix(dir.getFileName().toString(), dir, builds, Integer.parseInt(settings.getProperty("battles")), parallel > 0 ? parallel : Integer.parseInt(settings.getProperty("parallel")), Integer.parseInt(settings.getProperty("level")), Integer.parseInt(settings.getProperty("timeLimit")), Integer.parseInt(settings.getProperty("distance")), brain != null ? brain : FakeBrain.A, brainB != null ? brainB : FakeBrain.A, Boolean.parseBoolean(settings.getProperty("mirror", "false")), settings.getProperty("focus", "").isEmpty() ? List.of() : List.of(settings.getProperty("focus").split("\\|")), Long.parseLong(settings.getProperty("seed")), Integer.parseInt(settings.getProperty("x")), Integer.parseInt(settings.getProperty("y")), Integer.parseInt(settings.getProperty("z")), Integer.parseInt(settings.getProperty("heading")), starterId);
 			final Map<String, Integer> played = matrix.readResults();
 			matrix.fillQueue(played);
 			return matrix;
@@ -182,27 +195,28 @@ public class SimulationMatrix
 	}
 
 	/**
-	 * @param filter build names separated by commas, "all" or {@code null} for every class
+	 * @param filter build names separated by commas (gear variants too), "all" for every build, {@code null} for every build
 	 * @param unknown filled with the names that match no build
 	 * @return the builds of the matrix: every build (not the gear variants), in data/FakePlayerPvp.xml order
 	 */
 	public static List<String> resolveBuilds(String filter, List<String> unknown)
 	{
 		final List<String> builds = new ArrayList<>();
-		if ((filter == null) || filter.isEmpty() || filter.equalsIgnoreCase("all"))
+		for (String name : ((filter == null) || filter.isEmpty() ? "all" : filter).split(","))
 		{
-			for (FakePlayerPvpBuild build : FakePlayerPvpData.getInstance().getBuilds())
+			// "all": every build (not the gear variants), in data/FakePlayerPvp.xml order; more names can follow, gear variants too.
+			if (name.trim().equalsIgnoreCase("all"))
 			{
-				if (!build.isVariant())
+				for (FakePlayerPvpBuild build : FakePlayerPvpData.getInstance().getBuilds())
 				{
-					builds.add(build.getName());
+					if (!build.isVariant() && !builds.contains(build.getName()))
+					{
+						builds.add(build.getName());
+					}
 				}
+				continue;
 			}
-			return builds;
-		}
 
-		for (String name : filter.split(","))
-		{
 			final FakePlayerPvpBuild build = FakePlayerPvpData.getInstance().getBuild(name.trim().replace('_', ' '));
 			if (build == null)
 			{
@@ -226,6 +240,9 @@ public class SimulationMatrix
 		settings.setProperty("timeLimit", String.valueOf(_timeLimit));
 		settings.setProperty("distance", String.valueOf(_distance));
 		settings.setProperty("brain", _brain.name());
+		settings.setProperty("brainB", _brainB.name());
+		settings.setProperty("mirror", String.valueOf(_mirror));
+		settings.setProperty("focus", String.join("|", _focus));
 		settings.setProperty("seed", String.valueOf(_seed));
 		settings.setProperty("x", String.valueOf(_x));
 		settings.setProperty("y", String.valueOf(_y));
@@ -285,10 +302,14 @@ public class SimulationMatrix
 		{
 			for (int i = 0; i < _builds.size(); i++)
 			{
-				for (int j = i + 1; j < _builds.size(); j++)
+				for (int j = _mirror ? i : i + 1; j < (_mirror ? i + 1 : _builds.size()); j++)
 				{
 					final String a = _builds.get(i);
 					final String b = _builds.get(j);
+					if (!_focus.isEmpty() && !_focus.contains(a) && !_focus.contains(b))
+					{
+						continue;
+					}
 					if (round < played.getOrDefault(key(a, b), 0))
 					{
 						continue;
@@ -334,13 +355,13 @@ public class SimulationMatrix
 	/**
 	 * A battle ended: its line goes to results.csv.
 	 * @param battle the battle
-	 * @param winner the winning build, {@code null} for a draw
+	 * @param result "a" if {@link Battle#a} won, "b" if {@link Battle#b} did, "draw" otherwise
 	 * @param reason victory, timeout, rout, draw or stopped
 	 * @param duration how long the fight lasted, in milliseconds
 	 * @param aHp HP and CP left of {@link Battle#a}, a ratio
 	 * @param bHp HP and CP left of {@link Battle#b}, a ratio
 	 */
-	public void record(Battle battle, String winner, String reason, long duration, double aHp, double bHp)
+	public void record(Battle battle, String result, String reason, long duration, double aHp, double bHp)
 	{
 		// A battle cut by //SimulationMatrix stop is played again on resume.
 		if (reason.equals("stopped"))
@@ -348,7 +369,6 @@ public class SimulationMatrix
 			return;
 		}
 
-		final String result = winner == null ? "draw" : winner.equals(battle.a()) ? "a" : "b";
 		final String line = battle.number() + "," + battle.a() + "," + battle.b() + "," + battle.round() + "," + result + "," + reason + "," + duration + "," + String.format(Locale.ROOT, "%.3f", aHp) + "," + String.format(Locale.ROOT, "%.3f", bHp) + "," + (battle.aFirst() ? 1 : 2);
 		final boolean write;
 		synchronized (this)
@@ -446,6 +466,11 @@ public class SimulationMatrix
 	 */
 	public List<String> writeMatrix()
 	{
+		if (_mirror)
+		{
+			return writeAbTest();
+		}
+
 		final StringBuilder csv = new StringBuilder("class");
 		for (String build : _builds)
 		{
@@ -497,6 +522,45 @@ public class SimulationMatrix
 		catch (IOException e)
 		{
 			LOGGER.log(Level.WARNING, "SimulationMatrix: Could not write the matrix of " + _dir + ".", e);
+		}
+		return lines;
+	}
+
+	/**
+	 * An A/B test (every build against itself, one side with each brain): writes ab.txt, how often the second brain won with each build, a draw counting half.
+	 * @return its lines
+	 */
+	private List<String> writeAbTest()
+	{
+		final List<String> lines = new ArrayList<>();
+		lines.add("A/B test " + _name + ": " + getDone() + "/" + _total + " battles, level " + _level + ", " + _builds.size() + " classes, " + _battles + " per class, brain " + _brain + " against brain " + _brainB + ".");
+		final int[] all = new int[3];
+		synchronized (this)
+		{
+			for (String build : _builds)
+			{
+				final int[] counts = _pairs.get(key(build, build));
+				if (counts == null)
+				{
+					continue;
+				}
+				final int games = counts[0] + counts[1] + counts[2];
+				lines.add(String.format(Locale.ROOT, "%-20s %s %3d, %s %3d, draws %2d: %s %5.1f%%", build, _brain, counts[0], _brainB, counts[1], counts[2], _brainB, games > 0 ? (100.0 * (counts[1] + (counts[2] / 2.0))) / games : 0));
+				for (int i = 0; i < 3; i++)
+				{
+					all[i] += counts[i];
+				}
+			}
+		}
+		final int games = all[0] + all[1] + all[2];
+		lines.add(String.format(Locale.ROOT, "All: %s %d, %s %d, draws %d: %s %.1f%%", _brain, all[0], _brainB, all[1], all[2], _brainB, games > 0 ? (100.0 * (all[1] + (all[2] / 2.0))) / games : 0));
+		try
+		{
+			Files.writeString(_dir.resolve("ab.txt"), String.join(System.lineSeparator(), lines) + System.lineSeparator(), StandardCharsets.UTF_8);
+		}
+		catch (IOException e)
+		{
+			LOGGER.log(Level.WARNING, "SimulationMatrix: Could not write the A/B test of " + _dir + ".", e);
 		}
 		return lines;
 	}
@@ -599,6 +663,30 @@ public class SimulationMatrix
 	public FakeBrain getBrain()
 	{
 		return _brain;
+	}
+
+	/**
+	 * @return the AI of the second build of each pair
+	 */
+	public FakeBrain getBrainB()
+	{
+		return _brainB;
+	}
+
+	/**
+	 * @return {@code true} for an A/B test (every build only fights itself, one side with each brain)
+	 */
+	public boolean isMirror()
+	{
+		return _mirror;
+	}
+
+	/**
+	 * @return the brains, "A" or "A:B"
+	 */
+	public String getBrains()
+	{
+		return _brain == _brainB ? _brain.name() : _brain.name() + ":" + _brainB.name();
 	}
 
 	public long getSeed()

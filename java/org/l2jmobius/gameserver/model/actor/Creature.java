@@ -79,6 +79,7 @@ import org.l2jmobius.gameserver.model.WorldRegion;
 import org.l2jmobius.gameserver.model.actor.enums.creature.InstanceType;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
+import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.enums.player.TeleportWhereType;
 import org.l2jmobius.gameserver.model.actor.holders.creature.EffectList;
 import org.l2jmobius.gameserver.model.actor.holders.creature.InvulSkillHolder;
@@ -2134,16 +2135,26 @@ public abstract class Creature extends WorldObject
 			reuseDelay = (int) (skill.getReuseDelay() * calcStat(Stat.DANCE_REUSE, 1, null, null));
 		}
 		
-		if (isPlayable())
+		// Class balance, for players and roaming fake players alike.
+		reuseDelay = (int) (reuseDelay * Formulas.balance(ClassBalanceConfig.SKILL_REUSE_MULTIPLIERS, this));
+		
+		// Custom: reuse of some skills for some classes (ClassSkillReuseMultipliers: the tanks' self-heals), players and roaming fake players alike.
+		if (!ClassBalanceConfig.CLASS_SKILL_REUSE_MULTIPLIERS.isEmpty())
 		{
-			reuseDelay = (int) (reuseDelay * ClassBalanceConfig.SKILL_REUSE_MULTIPLIERS[asPlayer().getPlayerClass().getId()]);
+			final PlayerClass casterClass = Formulas.balanceClass(this);
+			final Map<Integer, Float> classReuse = casterClass != null ? ClassBalanceConfig.CLASS_SKILL_REUSE_MULTIPLIERS.get(casterClass.getId()) : null;
+			if (classReuse != null)
+			{
+				reuseDelay = (int) (reuseDelay * classReuse.getOrDefault(skill.getId(), 1f));
+			}
 		}
 		
 		// Custom: Inevitable Doom (Hierophant) shortens Prophecy of Doom.
 		reuseDelay = Prophecies.getReuseDelay(this, skill, reuseDelay);
 		
 		// Check if this skill consume mp on start casting
-		final int initmpcons = isPvpFakePlayer() ? 0 : _stat.getMpInitialConsume(skill); // Roaming fake players don't use MP.
+		// Roaming fake players don't use MP, but one under Martyr's Vow pays the cost with HP like a player.
+		final int initmpcons = isPvpFakePlayer() && !PassiveMechanics.paysWithHp(this, skill) ? 0 : _stat.getMpInitialConsume(skill);
 		if (initmpcons > 0)
 		{
 			final StatusUpdate su = new StatusUpdate(this);
@@ -6273,7 +6284,8 @@ public abstract class Creature extends WorldObject
 			boolean isSendStatus = false;
 			
 			// Consume MP of the Creature and Send the Server->Client packet StatusUpdate with current HP and MP to all other Player to inform
-			final double mpConsume = isPvpFakePlayer() ? 0 : _stat.getMpConsume(skill); // Roaming fake players don't use MP.
+			// Roaming fake players don't use MP, but one under Martyr's Vow pays the cost with HP like a player.
+			final double mpConsume = isPvpFakePlayer() && !PassiveMechanics.paysWithHp(this, skill) ? 0 : _stat.getMpConsume(skill);
 			if ((mpConsume > 0) && PassiveMechanics.paysWithHp(this, skill))
 			{
 				// Passive tree blood keystones: the MP cost is paid with HP, and can never kill.

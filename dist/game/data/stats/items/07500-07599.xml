@@ -955,7 +955,7 @@
 		<set name="mp_consume" val="6" />
 		<set name="element_enabled" val="true" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">581</stat>
 			<stat type="mAtk">132</stat>
@@ -985,7 +985,7 @@
 		<set name="mp_consume" val="6" />
 		<set name="element_enabled" val="true" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<set name="reduced_mp_consume" val="26,1" />
 		<stats>
 			<stat type="pAtk">581</stat>
@@ -1019,7 +1019,7 @@
 		<set name="mp_consume" val="6" />
 		<set name="element_enabled" val="true" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">581</stat>
 			<stat type="mAtk">132</stat>
@@ -1052,7 +1052,7 @@
 		<set name="mp_consume" val="6" />
 		<set name="element_enabled" val="true" />
 		<set name="enchant_enabled" val="true" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">581</stat>
 			<stat type="mAtk">132</stat>

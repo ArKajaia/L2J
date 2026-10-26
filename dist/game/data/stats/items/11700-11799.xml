@@ -741,7 +741,7 @@
 		<set name="soulshots" val="10" />
 		<set name="spiritshots" val="3" />
 		<set name="mp_consume" val="2" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">191</stat>
 			<stat type="mAtk">54</stat>
@@ -1546,7 +1546,7 @@
 		<set name="soulshots" val="8" />
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="2" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">220</stat>
 			<stat type="mAtk">61</stat>
@@ -1949,7 +1949,7 @@
 		<set name="soulshots" val="8" />
 		<set name="spiritshots" val="2" />
 		<set name="mp_consume" val="3" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<stats>
 			<stat type="pAtk">252</stat>
 			<stat type="mAtk">68</stat>

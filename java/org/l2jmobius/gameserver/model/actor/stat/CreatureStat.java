@@ -35,6 +35,7 @@ import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.stats.Calculator;
+import org.l2jmobius.gameserver.model.stats.Formulas;
 import org.l2jmobius.gameserver.model.stats.MoveType;
 import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.model.stats.TraitType;
@@ -387,16 +388,10 @@ public class CreatureStat
 		
 		int val = (int) calcStat(Stat.MCRITICAL_RATE, 1, target, skill) * 10;
 		
-		if ((skill != null) && (target != null) && _creature.isPlayable())
+		// Class balance, for players and roaming fake players alike.
+		if ((skill != null) && (target != null) && (Formulas.balanceClass(_creature) != null))
 		{
-			if (target.isPlayable())
-			{
-				val *= ClassBalanceConfig.PVP_MAGICAL_SKILL_CRITICAL_CHANCE_MULTIPLIERS[_creature.asPlayer().getPlayerClass().getId()];
-			}
-			else
-			{
-				val *= ClassBalanceConfig.PVE_MAGICAL_SKILL_CRITICAL_CHANCE_MULTIPLIERS[_creature.asPlayer().getPlayerClass().getId()];
-			}
+			val *= Formulas.balance(Formulas.balanceClass(target) != null ? ClassBalanceConfig.PVP_MAGICAL_SKILL_CRITICAL_CHANCE_MULTIPLIERS : ClassBalanceConfig.PVE_MAGICAL_SKILL_CRITICAL_CHANCE_MULTIPLIERS, _creature);
 		}
 		
 		// if (!_creature.isGM())
@@ -424,16 +419,10 @@ public class CreatureStat
 			defence *= NpcConfig.RAID_MDEFENCE_MULTIPLIER;
 		}
 		
-		if ((skill != null) && (target != null) && target.isPlayable())
+		// Class balance, for players and roaming fake players alike.
+		if ((skill != null) && (target != null) && (Formulas.balanceClass(target) != null))
 		{
-			if (skill.isMagic())
-			{
-				defence *= ClassBalanceConfig.PVE_MAGICAL_SKILL_DEFENCE_MULTIPLIERS[target.asPlayer().getPlayerClass().getId()];
-			}
-			else
-			{
-				defence *= ClassBalanceConfig.PVE_PHYSICAL_SKILL_DEFENCE_MULTIPLIERS[target.asPlayer().getPlayerClass().getId()];
-			}
+			defence *= Formulas.balance(skill.isMagic() ? ClassBalanceConfig.PVE_MAGICAL_SKILL_DEFENCE_MULTIPLIERS : ClassBalanceConfig.PVE_PHYSICAL_SKILL_DEFENCE_MULTIPLIERS, target);
 		}
 		
 		// Calculate modifiers Magic Attack
@@ -519,7 +508,8 @@ public class CreatureStat
 			return 0;
 		}
 		
-		return calcStat(Stat.MOVE_SPEED, baseRunSpd * _gmSpeedMultiplier, null, null);
+		// Custom: class balance run speed bonus, for players and roaming fake players.
+		return calcStat(Stat.MOVE_SPEED, baseRunSpd * _gmSpeedMultiplier, null, null) + Formulas.balance(ClassBalanceConfig.RUN_SPEED_BONUS, _creature, 0);
 	}
 	
 	/**
@@ -680,14 +670,15 @@ public class CreatureStat
 	 */
 	public double getPDef(Creature target)
 	{
-		if (_creature.isPlayable() && (target != null))
+		// Class balance, for players and roaming fake players alike.
+		if ((target != null) && (Formulas.balanceClass(_creature) != null))
 		{
-			if (target.isPlayable())
+			if (Formulas.balanceClass(target) != null)
 			{
-				return ClassBalanceConfig.PVP_PHYSICAL_ATTACK_DEFENCE_MULTIPLIERS[_creature.asPlayer().getPlayerClass().getId()] * calcStat(Stat.POWER_DEFENCE, _creature.isRaid() ? _creature.getTemplate().getBasePDef() * NpcConfig.RAID_PDEFENCE_MULTIPLIER : _creature.getTemplate().getBasePDef(), target, null);
+				return Formulas.balance(ClassBalanceConfig.PVP_PHYSICAL_ATTACK_DEFENCE_MULTIPLIERS, _creature) * calcStat(Stat.POWER_DEFENCE, _creature.isRaid() ? _creature.getTemplate().getBasePDef() * NpcConfig.RAID_PDEFENCE_MULTIPLIER : _creature.getTemplate().getBasePDef(), target, null);
 			}
 			
-			return ClassBalanceConfig.PVE_PHYSICAL_ATTACK_DEFENCE_MULTIPLIERS[_creature.asPlayer().getPlayerClass().getId()] * calcStat(Stat.POWER_DEFENCE, _creature.isRaid() ? _creature.getTemplate().getBasePDef() * NpcConfig.RAID_PDEFENCE_MULTIPLIER : _creature.getTemplate().getBasePDef(), target, null);
+			return Formulas.balance(ClassBalanceConfig.PVE_PHYSICAL_ATTACK_DEFENCE_MULTIPLIERS, _creature) * calcStat(Stat.POWER_DEFENCE, _creature.isRaid() ? _creature.getTemplate().getBasePDef() * NpcConfig.RAID_PDEFENCE_MULTIPLIER : _creature.getTemplate().getBasePDef(), target, null);
 		}
 		
 		return calcStat(Stat.POWER_DEFENCE, _creature.isRaid() ? _creature.getTemplate().getBasePDef() * NpcConfig.RAID_PDEFENCE_MULTIPLIER : _creature.getTemplate().getBasePDef(), target, null);

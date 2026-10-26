@@ -243,7 +243,7 @@ public class AdminSimulation implements IAdminCommandHandler
 		return true;
 	}
 
-	private static final String MATRIX_USAGE = "Usage: //Simulate matrix [battles per pair, 20] [parallel=100] [level=85] [time=<s>] [distance=1000] [brain=A] [builds=Adventurer,Titan...] [seed=<n>], or //SimulationMatrix start [battles=20] [parallel=100] [level=85] [time=<s>] [distance=1000] [brain=A] [builds=Adventurer,Titan...] [seed=<n>] | resume [name] [parallel=<n>] | status | stop | watch | leave | builds";
+	private static final String MATRIX_USAGE = "Usage: //Simulate matrix [battles per pair, 20] [parallel=100] [level=85] [time=<s>] [distance=1000] [brain=A|B|A:B] [mirror] [builds=all,Adventurer_Heavy...] [focus=Adventurer_Heavy,...] [seed=<n>], or //SimulationMatrix start [battles=20] [parallel=100] [level=85] [time=<s>] [distance=1000] [brain=A] [builds=Adventurer,Titan...] [seed=<n>] | resume [name] [parallel=<n>] | status | stop | watch | leave | builds";
 
 	private boolean matrix(Player activeChar, StringTokenizer st, FakeSimulationManager manager)
 	{
@@ -258,6 +258,8 @@ public class AdminSimulation implements IAdminCommandHandler
 				int time = FakeSimulationConfig.TIME_LIMIT;
 				int distance = 1000;
 				String brain = null;
+				boolean mirror = false;
+				String focus = null;
 				String builds = null;
 				long seed = Rnd.get(1, Integer.MAX_VALUE);
 				try
@@ -272,7 +274,7 @@ public class AdminSimulation implements IAdminCommandHandler
 						}
 						else if (lower.startsWith("parallel="))
 						{
-							parallel = Math.max(1, Math.min(500, Integer.parseInt(token.substring(9))));
+							parallel = Math.max(1, Math.min(1000, Integer.parseInt(token.substring(9))));
 						}
 						else if (lower.startsWith("level="))
 						{
@@ -298,6 +300,16 @@ public class AdminSimulation implements IAdminCommandHandler
 						{
 							seed = Long.parseLong(token.substring(5));
 						}
+						else if (lower.startsWith("focus="))
+						{
+							// Only the pairs with one of these builds fight: they are tried against every build.
+							focus = token.substring(6);
+						}
+						else if (lower.equals("mirror"))
+						{
+							// An A/B test: every build only fights itself, one side with each brain (brain=A:B).
+							mirror = true;
+						}
 						else if (lower.matches("\\d+"))
 						{
 							// A bare number: battles per pair (//Simulate matrix 100).
@@ -315,7 +327,7 @@ public class AdminSimulation implements IAdminCommandHandler
 					activeChar.sendSysMessage(MATRIX_USAGE);
 					return false;
 				}
-				send(activeChar, manager.startMatrix(activeChar, activeChar.getX(), activeChar.getY(), activeChar.getZ(), activeChar.getHeading(), battles, parallel, level, time, distance, brain, builds, seed));
+				send(activeChar, manager.startMatrix(activeChar, activeChar.getX(), activeChar.getY(), activeChar.getZ(), activeChar.getHeading(), battles, parallel, level, time, distance, brain, mirror, focus, builds, seed));
 				break;
 			}
 			case "resume":
@@ -329,7 +341,7 @@ public class AdminSimulation implements IAdminCommandHandler
 					{
 						try
 						{
-							parallel = Math.max(1, Math.min(500, Integer.parseInt(token.substring(9))));
+							parallel = Math.max(1, Math.min(1000, Integer.parseInt(token.substring(9))));
 						}
 						catch (NumberFormatException e)
 						{

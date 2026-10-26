@@ -40,6 +40,7 @@ Rules:
 - A change is **promoted** once B beats A: copy `FakePlayerPvpAIExperimental` over `FakePlayerPvpAI` (renaming the class back), move the party overrides into `FakePlayerParty`, then start the next experiment from a fresh copy.
 - Harness changes (logging, the monitor, the simulation manager) affect both teams equally, so they don't need a brain.
 - Promoted so far: #1, #4, #5, #6, #7, #16 on 2026-10-25 (B won 37 of 57 rounds).
+- Promoted on 2026-10-26: archers and mages keep a melee at bay (no cast a melee would interrupt, peel with what lands in time, archers step back and shoot normal attacks in between, mages keep their combos). Against melee and tanks: Dominator +19, Trickster +16, Moonlight Sentinel +8, Storm Screamer +6, the others neutral (docs/class-balance-85.md, rounds 3 and 4).
 - Promoted on 2026-10-26: #8, #10, #20, #21, #23 (softened), #25, #27, #28, #29 (B won 41 of 60 rounds); #9 was tried and reverted. Brain B is a fresh copy again.
 
 ### Running an experiment

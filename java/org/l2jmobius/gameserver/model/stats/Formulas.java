@@ -44,6 +44,8 @@ import org.l2jmobius.gameserver.managers.SiegeManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.instance.FakePlayerPvpServitor;
+import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.holders.player.DwarvenTrades;
 import org.l2jmobius.gameserver.model.actor.holders.player.Performers;
 import org.l2jmobius.gameserver.model.actor.holders.player.Prophecies;
@@ -499,6 +501,85 @@ public class Formulas
 	}
 	
 	/**
+	 * Custom: the class whose class balance multipliers (ClassBalance.ini) a creature uses: a player's, a summon's owner's, a roaming fake player's or a roaming fake player's servitor's owner's.
+	 * @param creature the creature
+	 * @return its class, {@code null} for anything else (monsters, NPCs)
+	 */
+	public static PlayerClass balanceClass(Creature creature)
+	{
+		if (creature == null)
+		{
+			return null;
+		}
+		if (creature.isPlayable())
+		{
+			final Player player = creature.asPlayer();
+			return player != null ? player.getPlayerClass() : null;
+		}
+		final Creature fake = creature instanceof FakePlayerPvpServitor ? ((FakePlayerPvpServitor) creature).getOwner() : creature;
+		if ((fake != null) && fake.isPvpFakePlayer() && (fake.asNpc().getTemplate().getFakePlayerInfo() != null))
+		{
+			return fake.asNpc().getTemplate().getFakePlayerInfo().getPlayerClass();
+		}
+		return null;
+	}
+	
+	/**
+	 * Custom: the class balance PvP multipliers apply between players and roaming fake players alike (and their summons).
+	 * @param attacker the attacker
+	 * @param target the target
+	 * @return {@code true} if both sides have a class
+	 */
+	public static boolean isBalancePvp(Creature attacker, Creature target)
+	{
+		return (balanceClass(attacker) != null) && (balanceClass(target) != null);
+	}
+	
+	/**
+	 * Custom: the class balance PvE multipliers of the attacker: a player or roaming fake player against a monster.
+	 * @param attacker the attacker
+	 * @param target the target
+	 * @return {@code true} if the attacker has a class and the target is a monster without one
+	 */
+	public static boolean isBalancePve(Creature attacker, Creature target)
+	{
+		return (balanceClass(attacker) != null) && target.isAttackable() && (balanceClass(target) == null);
+	}
+	
+	/**
+	 * Custom: the class balance PvE defence multipliers of the target: a monster against a player or roaming fake player.
+	 * @param attacker the attacker
+	 * @param target the target
+	 * @return {@code true} if the attacker is a monster without a class and the target has one
+	 */
+	public static boolean isBalanceMonsterAttack(Creature attacker, Creature target)
+	{
+		return attacker.isAttackable() && (balanceClass(attacker) == null) && (balanceClass(target) != null);
+	}
+	
+	/**
+	 * @param multipliers class balance multipliers, by class id
+	 * @param creature a player, roaming fake player or one of their summons
+	 * @return its class's multiplier, 1 for anything else
+	 */
+	public static float balance(float[] multipliers, Creature creature)
+	{
+		return balance(multipliers, creature, 1);
+	}
+	
+	/**
+	 * @param values class balance values, by class id
+	 * @param creature a player, roaming fake player or one of their summons
+	 * @param otherwise the value of anything else
+	 * @return its class's value, {@code otherwise} for anything else
+	 */
+	public static float balance(float[] values, Creature creature, float otherwise)
+	{
+		final PlayerClass playerClass = balanceClass(creature);
+		return playerClass != null ? values[playerClass.getId()] : otherwise;
+	}
+	
+	/**
 	 * Calculates the CP regeneration rate (base + modifiers).
 	 * @param player the player
 	 * @return the CP regeneration rate
@@ -610,21 +691,24 @@ public class Formulas
 		{
 			// Damage bonuses in PvP fight
 			pvpBonus = attacker.calcStat(Stat.PVP_PHYS_SKILL_DMG, 1, null, null);
-			pvpBonus *= ClassBalanceConfig.PVP_BLOW_SKILL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
 			
 			// Defense bonuses in PvP fight
 			defence *= target.calcStat(Stat.PVP_PHYS_SKILL_DEF, 1, null, null);
-			defence *= ClassBalanceConfig.PVP_BLOW_SKILL_DEFENCE_MULTIPLIERS[target.asPlayer().getPlayerClass().getId()];
 		}
 		
-		if (isPvE)
+		// Class balance, for players and roaming fake players alike.
+		if (isBalancePvp(attacker, target))
 		{
-			pvpBonus *= ClassBalanceConfig.PVE_BLOW_SKILL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
+			pvpBonus *= balance(ClassBalanceConfig.PVP_BLOW_SKILL_DAMAGE_MULTIPLIERS, attacker);
+			defence *= balance(ClassBalanceConfig.PVP_BLOW_SKILL_DEFENCE_MULTIPLIERS, target);
 		}
-		
-		if (attacker.isAttackable() && target.isPlayable())
+		else if (isBalancePve(attacker, target))
 		{
-			defence *= ClassBalanceConfig.PVE_BLOW_SKILL_DEFENCE_MULTIPLIERS[target.asPlayer().getPlayerClass().getId()];
+			pvpBonus *= balance(ClassBalanceConfig.PVE_BLOW_SKILL_DAMAGE_MULTIPLIERS, attacker);
+		}
+		else if (isBalanceMonsterAttack(attacker, target))
+		{
+			defence *= balance(ClassBalanceConfig.PVE_BLOW_SKILL_DEFENCE_MULTIPLIERS, target);
 		}
 		
 		// Initial damage
@@ -703,11 +787,25 @@ public class Formulas
 		{
 			// Damage bonuses in PvP fight
 			pvpBonus = attacker.calcStat(Stat.PVP_PHYS_SKILL_DMG, 1, null, null);
-			pvpBonus *= ClassBalanceConfig.PVP_PHYSICAL_SKILL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
 			
 			// Defense bonuses in PvP fight
 			defence *= target.calcStat(Stat.PVP_PHYS_SKILL_DEF, 1, null, null);
-			defence *= ClassBalanceConfig.PVP_PHYSICAL_SKILL_DEFENCE_MULTIPLIERS[target.asPlayer().getPlayerClass().getId()];
+		}
+		
+		// Class balance, for players and roaming fake players alike (Backstab is a blow too).
+		if (isBalancePvp(attacker, target))
+		{
+			pvpBonus *= balance(ClassBalanceConfig.PVP_PHYSICAL_SKILL_DAMAGE_MULTIPLIERS, attacker);
+			pvpBonus *= balance(ClassBalanceConfig.PVP_BLOW_SKILL_DAMAGE_MULTIPLIERS, attacker);
+			defence *= balance(ClassBalanceConfig.PVP_PHYSICAL_SKILL_DEFENCE_MULTIPLIERS, target);
+		}
+		else if (isBalancePve(attacker, target))
+		{
+			pvpBonus *= balance(ClassBalanceConfig.PVE_BLOW_SKILL_DAMAGE_MULTIPLIERS, attacker);
+		}
+		else if (isBalanceMonsterAttack(attacker, target))
+		{
+			defence *= balance(ClassBalanceConfig.PVE_BLOW_SKILL_DEFENCE_MULTIPLIERS, target);
 		}
 		
 		// Initial damage
@@ -778,7 +876,12 @@ public class Formulas
 		if (isPvP)
 		{
 			defence *= (skill == null) ? target.calcStat(Stat.PVP_PHYSICAL_DEF, 1, null, null) : target.calcStat(Stat.PVP_PHYS_SKILL_DEF, 1, null, null);
-			defence *= ClassBalanceConfig.PVP_PHYSICAL_SKILL_DEFENCE_MULTIPLIERS[target.asPlayer().getPlayerClass().getId()];
+		}
+		
+		// Class balance, for players and roaming fake players alike (P.Def against attacks also through getPDef).
+		if (isBalancePvp(attacker, target))
+		{
+			defence *= balance(ClassBalanceConfig.PVP_PHYSICAL_SKILL_DEFENCE_MULTIPLIERS, target);
 		}
 		
 		switch (shld)
@@ -812,24 +915,24 @@ public class Formulas
 			
 			if (skill == null)
 			{
-				if (isPvP)
+				if (isBalancePvp(attacker, target))
 				{
-					damage *= ClassBalanceConfig.PVP_PHYSICAL_ATTACK_CRITICAL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
+					damage *= balance(ClassBalanceConfig.PVP_PHYSICAL_ATTACK_CRITICAL_DAMAGE_MULTIPLIERS, attacker);
 				}
-				else if (isPvE)
+				else if (isBalancePve(attacker, target))
 				{
-					damage *= ClassBalanceConfig.PVE_PHYSICAL_ATTACK_CRITICAL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
+					damage *= balance(ClassBalanceConfig.PVE_PHYSICAL_ATTACK_CRITICAL_DAMAGE_MULTIPLIERS, attacker);
 				}
 			}
 			else
 			{
-				if (isPvP)
+				if (isBalancePvp(attacker, target))
 				{
-					damage *= ClassBalanceConfig.PVP_PHYSICAL_SKILL_CRITICAL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
+					damage *= balance(ClassBalanceConfig.PVP_PHYSICAL_SKILL_CRITICAL_DAMAGE_MULTIPLIERS, attacker);
 				}
-				else if (isPvE)
+				else if (isBalancePve(attacker, target))
 				{
-					damage *= ClassBalanceConfig.PVE_PHYSICAL_SKILL_CRITICAL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
+					damage *= balance(ClassBalanceConfig.PVE_PHYSICAL_SKILL_CRITICAL_DAMAGE_MULTIPLIERS, attacker);
 				}
 			}
 			
@@ -876,13 +979,17 @@ public class Formulas
 			if (skill == null)
 			{
 				damage *= attacker.calcStat(Stat.PVP_PHYSICAL_DMG, 1, null, null);
-				damage *= ClassBalanceConfig.PVP_PHYSICAL_ATTACK_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
 			}
 			else
 			{
 				damage *= attacker.calcStat(Stat.PVP_PHYS_SKILL_DMG, 1, null, null);
-				damage *= ClassBalanceConfig.PVP_PHYSICAL_SKILL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
 			}
+		}
+		
+		// Class balance, for players and roaming fake players alike.
+		if (isBalancePvp(attacker, target))
+		{
+			damage *= balance(skill == null ? ClassBalanceConfig.PVP_PHYSICAL_ATTACK_DAMAGE_MULTIPLIERS : ClassBalanceConfig.PVP_PHYSICAL_SKILL_DAMAGE_MULTIPLIERS, attacker);
 		}
 		
 		// Physical skill dmg boost
@@ -915,16 +1022,9 @@ public class Formulas
 			{
 				damage *= attacker.calcStat(Stat.PVE_PHYSICAL_DMG, 1, null, null);
 				
-				if (attacker.isPlayable())
+				if (isBalancePve(attacker, target))
 				{
-					if (skill == null)
-					{
-						damage *= ClassBalanceConfig.PVE_PHYSICAL_ATTACK_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
-					}
-					else
-					{
-						damage *= ClassBalanceConfig.PVE_PHYSICAL_SKILL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
-					}
+					damage *= balance(skill == null ? ClassBalanceConfig.PVE_PHYSICAL_ATTACK_DAMAGE_MULTIPLIERS : ClassBalanceConfig.PVE_PHYSICAL_SKILL_DAMAGE_MULTIPLIERS, attacker);
 				}
 			}
 			
@@ -1007,16 +1107,13 @@ public class Formulas
 		// PvP bonuses for defense
 		if (isPvP)
 		{
-			if (skill.isMagic())
-			{
-				mDef *= target.calcStat(Stat.PVP_MAGICAL_DEF, 1, null, null);
-				mDef *= ClassBalanceConfig.PVP_MAGICAL_SKILL_DEFENCE_MULTIPLIERS[target.asPlayer().getPlayerClass().getId()];
-			}
-			else
-			{
-				mDef *= target.calcStat(Stat.PVP_PHYS_SKILL_DEF, 1, null, null);
-				mDef *= ClassBalanceConfig.PVP_PHYSICAL_SKILL_DEFENCE_MULTIPLIERS[target.asPlayer().getPlayerClass().getId()];
-			}
+			mDef *= target.calcStat(skill.isMagic() ? Stat.PVP_MAGICAL_DEF : Stat.PVP_PHYS_SKILL_DEF, 1, null, null);
+		}
+		
+		// Class balance, for players and roaming fake players alike.
+		if (isBalancePvp(attacker, target))
+		{
+			mDef *= balance(skill.isMagic() ? ClassBalanceConfig.PVP_MAGICAL_SKILL_DEFENCE_MULTIPLIERS : ClassBalanceConfig.PVP_PHYSICAL_SKILL_DEFENCE_MULTIPLIERS, target);
 		}
 		
 		// Bonus Spirit shot
@@ -1065,9 +1162,10 @@ public class Formulas
 			damage *= attacker.isPlayer() && target.isPlayer() ? 2.5 : 3;
 			damage *= attacker.calcStat(Stat.MAGIC_CRIT_DMG, 1, null, null);
 			
-			if (attacker.isPlayable())
+			// Class balance, for players and roaming fake players alike.
+			if (balanceClass(attacker) != null)
 			{
-				damage *= target.isPlayable() ? ClassBalanceConfig.PVP_MAGICAL_SKILL_CRITICAL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()] : ClassBalanceConfig.PVE_MAGICAL_SKILL_CRITICAL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
+				damage *= balance(balanceClass(target) != null ? ClassBalanceConfig.PVP_MAGICAL_SKILL_CRITICAL_DAMAGE_MULTIPLIERS : ClassBalanceConfig.PVE_MAGICAL_SKILL_CRITICAL_DAMAGE_MULTIPLIERS, attacker);
 			}
 		}
 		
@@ -1080,18 +1178,13 @@ public class Formulas
 		// PvP bonuses for damage
 		if (isPvP)
 		{
-			final Stat stat;
-			if (skill.isMagic())
-			{
-				stat = Stat.PVP_MAGICAL_DMG;
-				damage *= ClassBalanceConfig.PVP_MAGICAL_SKILL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
-			}
-			else
-			{
-				stat = Stat.PVP_PHYS_SKILL_DMG;
-				damage *= ClassBalanceConfig.PVP_PHYSICAL_SKILL_DAMAGE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
-			}
-			damage *= attacker.calcStat(stat, 1, null, null);
+			damage *= attacker.calcStat(skill.isMagic() ? Stat.PVP_MAGICAL_DMG : Stat.PVP_PHYS_SKILL_DMG, 1, null, null);
+		}
+		
+		// Class balance, for players and roaming fake players alike.
+		if (isBalancePvp(attacker, target))
+		{
+			damage *= balance(skill.isMagic() ? ClassBalanceConfig.PVP_MAGICAL_SKILL_DAMAGE_MULTIPLIERS : ClassBalanceConfig.PVP_PHYSICAL_SKILL_DAMAGE_MULTIPLIERS, attacker);
 		}
 		
 		// Passive tree Arcane Overload, Point Blank / Far Shot and Chaos Weave.
@@ -1103,11 +1196,14 @@ public class Formulas
 		{
 			damage *= attacker.calcStat(Stat.PVE_MAGICAL_DMG, 1, null, null);
 			
+			if (isBalancePve(attacker, target))
+			{
+				damage *= balance(ClassBalanceConfig.PVE_MAGICAL_SKILL_DAMAGE_MULTIPLIERS, attacker);
+			}
+			
 			final Player attackerPlayer = attacker.asPlayer();
 			if (attackerPlayer != null)
 			{
-				damage *= ClassBalanceConfig.PVE_MAGICAL_SKILL_DAMAGE_MULTIPLIERS[attackerPlayer.getPlayerClass().getId()];
-				
 				if (!target.isRaid() && !target.isRaidMinion() && (target.getLevel() >= NpcConfig.MIN_NPC_LEVEL_DMG_PENALTY) && ((target.getLevel() - attackerPlayer.getLevel()) >= 2))
 				{
 					final int levelDiff = target.getLevel() - attackerPlayer.getLevel() - 1;
@@ -1261,27 +1357,26 @@ public class Formulas
 		}
 		rate *= PassiveMechanics.critRateMultiplier(attacker);
 		
-		final boolean isPvP = attacker.isPlayable() && target.isPlayable();
 		if (skill == null)
 		{
-			if (isPvP)
+			if (isBalancePvp(attacker, target))
 			{
-				rate *= ClassBalanceConfig.PVP_PHYSICAL_ATTACK_CRITICAL_CHANCE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
+				rate *= balance(ClassBalanceConfig.PVP_PHYSICAL_ATTACK_CRITICAL_CHANCE_MULTIPLIERS, attacker);
 			}
-			else if (attacker.isPlayable() && target.isAttackable()) // isPvE
+			else if (isBalancePve(attacker, target))
 			{
-				rate *= ClassBalanceConfig.PVE_PHYSICAL_ATTACK_CRITICAL_CHANCE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
+				rate *= balance(ClassBalanceConfig.PVE_PHYSICAL_ATTACK_CRITICAL_CHANCE_MULTIPLIERS, attacker);
 			}
 		}
 		else
 		{
-			if (isPvP)
+			if (isBalancePvp(attacker, target))
 			{
-				rate *= ClassBalanceConfig.PVP_PHYSICAL_SKILL_CRITICAL_CHANCE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
+				rate *= balance(ClassBalanceConfig.PVP_PHYSICAL_SKILL_CRITICAL_CHANCE_MULTIPLIERS, attacker);
 			}
-			else if (attacker.isPlayable() && target.isAttackable()) // isPvE
+			else if (isBalancePve(attacker, target))
 			{
-				rate *= ClassBalanceConfig.PVE_PHYSICAL_SKILL_CRITICAL_CHANCE_MULTIPLIERS[attacker.asPlayer().getPlayerClass().getId()];
+				rate *= balance(ClassBalanceConfig.PVE_PHYSICAL_SKILL_CRITICAL_CHANCE_MULTIPLIERS, attacker);
 			}
 		}
 		
@@ -1757,11 +1852,14 @@ public class Formulas
 		{
 			damage *= attacker.calcStat(Stat.PVE_MAGICAL_DMG, 1, null, null);
 			
+			if (isBalancePve(attacker, target))
+			{
+				damage *= balance(ClassBalanceConfig.PVE_MAGICAL_SKILL_DAMAGE_MULTIPLIERS, attacker);
+			}
+			
 			final Player attackerPlayer = attacker.asPlayer();
 			if (attackerPlayer != null)
 			{
-				damage *= ClassBalanceConfig.PVE_MAGICAL_SKILL_DAMAGE_MULTIPLIERS[attackerPlayer.getPlayerClass().getId()];
-				
 				if (!target.isRaid() && !target.isRaidMinion() && (target.getLevel() >= NpcConfig.MIN_NPC_LEVEL_DMG_PENALTY) && ((target.getLevel() - attackerPlayer.getLevel()) >= 2))
 				{
 					final int levelDiff = target.getLevel() - attackerPlayer.getLevel() - 1;
@@ -1891,7 +1989,7 @@ public class Formulas
 		}
 		
 		chance *= actor.getStat().calcStat(Stat.SKILL_MASTERY_RATE, 1, null, null);
-		return (Rnd.get(100) < (chance * ClassBalanceConfig.SKILL_MASTERY_CHANCE_MULTIPLIERS[actor.asPlayer().getPlayerClass().getId()]));
+		return (Rnd.get(100) < (chance * balance(ClassBalanceConfig.SKILL_MASTERY_CHANCE_MULTIPLIERS, actor)));
 	}
 	
 	/**

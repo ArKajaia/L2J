@@ -29,12 +29,14 @@ With `--swap` both teams get the same builds, the brains change sides every roun
 //Simulate matrix [battles per pair, 20] [parallel=100] [level=85] [time=300] [distance=1000] [brain=A] [builds=Adventurer,Titan,...] [seed=<n>]
 //SimulationMatrix start [battles=20] [parallel=100] [level=85] [time=300] [distance=1000] [brain=A] [builds=Adventurer,Titan,...] [seed=<n>]
 //SimulationMatrix status | stop | resume [name] [parallel=<n>] | watch | leave | builds
+//Simulate matrix 10 builds=all,Sagittarius_Heavy focus=Sagittarius_Heavy,Sagittarius   (a build tried against every build)
+//Simulate matrix 40 brain=A:B mirror                                                    (an A/B test: every build against itself)
 ```
 
-- By default every build of `data/FakePlayerPvp.xml` takes part, the gear variants aside: 38 builds, 703 pairs. 20 battles per pair is 14,060 battles; with 100 at once that is about 2 hours (a battle is 10 s of preparation, the fight, and 2 s of cleanup).
+- By default every build of `data/FakePlayerPvp.xml` takes part, the gear variants aside: 38 builds, 703 pairs. 20 battles per pair is 14,060 battles; with 100 at once that is about 2 hours (a battle is 10 s of preparation, the fight, and 2 s of cleanup), with 1000 at once about 20 minutes. Memory: with a 12 GB heap the game server was killed on a 16 GB machine, twice at 1000 at once and once at 600 (the ZGC heap counts in full). A 10 GB heap (`-Xmx10g -XX:SoftMaxHeapSize=8g`) and 500 at once is what ran through; give it more memory for more battles at once. A matrix that dies goes on with `resume`.
 - The battles go one round of every pair at a time, so a matrix stopped early still covers every pair evenly. The two builds of a pair change spots every battle.
 - `watch` takes the GM into the instance of a running battle (again for the next one), `leave` back out. The fake players leave the GM alone.
-- Output goes to `log/simulation-matrix/matrix-<time>/`: `results.csv` gets one line per battle (`battle,a,b,round,winner,reason,duration_ms,a_hp,b_hp,a_spot`, with `winner` set to `a`, `b` or `draw`). `matrix.csv` (the win rate of each row against each column, in percent, a draw counting half) and `matrix.txt` (the builds ranked) are rewritten every 50 battles and at the end. Battle logs are in `battles/`, and only the newest 300 are kept.
+- Output goes to `log/simulation-matrix/matrix-<time>/`: `results.csv` gets one line per battle (`battle,a,b,round,winner,reason,duration_ms,a_hp,b_hp,a_spot`, with `winner` set to `a`, `b` or `draw`). `matrix.csv` (the win rate of each row against each column, in percent, a draw counting half) and `matrix.txt` (the builds ranked) are rewritten every 50 battles and at the end. Battle logs are in `battles/`, and only the newest `SimulationMatrixKeepLogs` (300 by default, in `FakeSimulation.ini`) are kept.
 - A matrix that was stopped or cut by a restart goes on with `resume`, from its `results.csv`. Battles cut by `stop` are played again.
 
 `matrix.py` writes `matrix.csv` and a heat map page, `matrix.html`, from a matrix folder. It can also start, resume or follow a matrix through the web API (`SimulationWebOpenAccess` or `--token`; started from the web without a GM, a matrix fights at the Cruma Marshlands field):

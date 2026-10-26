@@ -37,8 +37,12 @@
      its own, see FakePvpGearLevelDrop* in config/Custom/FakePlayerPvp.ini), like players behind on gear.
 	     keystones - the passive tree keystones it heads for, in order (the first one in reach first), instead of the
 	               FakePvpKeystones.* list of its role (config/Custom/FakePlayerPvp.ini), e.g. "Battlemage;Unending Fury".
+	               Starting with "+" it adds them to its role's list instead, picked like the others (not first),
+	               e.g. "+Soul Link".
 	     hybrid  - true for a melee build whose M. Atk. counts too (the Battlemage keystone adds part of it to its P. Atk.):
 	               its passive tree wants the magic stats as much as the physical ones.
+	     weights - how much more (or less) its passive tree wants some stats than its role does, "KEY:factor;KEY:factor"
+	               with the effect keys of data/passivetree (e.g. "BLOW_RATE_PCT:2" for twice the blow rate, 0 for none).
 	     skillFighter - true for a class that deals its damage with skills (Gladiator/Duelist, Tyrant,
 	               daggers): it uses a skill most of the time (FakePvpSkillChance). The others (tanks,
 	               archers, most warriors) fight with their normal attack and use a skill now and then
@@ -485,6 +489,13 @@
 		<tier minLevel="76">1363,1;364,1;915,1;764,1;1542,1</tier> <!-- Chant of Victory, Song of Champion, Dance of Berserker, Song of Wind Storm, Counter Critical -->
 		<tier minLevel="80">1499,1;1501,1;1502,1;1504,1</tier> <!-- Improved Combat/Condition/Critical Attack/Movement -->
 	</buffs>
+	<buffs name="SOUL_HYBRID"> <!-- A Soul Hound that fights with its rapier and its soul nukes: the battlemage buffs (fighter buffs with Empower), and Acumen and Concentration for the casts. -->
+		<tier minLevel="1">1068,3;1040,3;1204,2;1086,2;1059,3;1085,3;1078,6;1045,6;1048,6;1035,4;1036,2</tier> <!-- Might, Shield, Wind Walk, Haste, Empower, Acumen, Concentration, Bless the Body/Soul, Mental Shield, Magic Barrier -->
+		<tier minLevel="40">1077,3;1242,3;1240,3;1268,4;1062,2;271,1;273,1;264,1;268,1;304,1</tier> <!-- Focus, Death Whisper, Guidance, Vampiric Rage, Berserker Spirit, Dance of the Warrior/Mystic, Song of Earth/Wind/Vitality -->
+		<tier minLevel="61">1388,3;310,1;269,1;267,1;1259,4;1461,1</tier> <!-- Greater Might, Dance of the Vampire, Song of Hunter/Warding, Resist Shock, Chant of Protection -->
+		<tier minLevel="76">1363,1;364,1;915,1;764,1;1542,1</tier> <!-- Chant of Victory, Song of Champion, Dance of Berserker, Song of Wind Storm, Counter Critical -->
+		<tier minLevel="80">1499,1;1501,1;1502,1;1504,1</tier> <!-- Improved Combat/Condition/Critical Attack/Movement -->
+	</buffs>
 	<buffs name="MAGE">
 		<tier minLevel="1">1040,3;1204,2;1045,6;1048,6;1035,4;1036,2;1059,3;1085,3;1078,6</tier> <!-- Shield, Wind Walk, Bless the Body/Soul, Mental Shield, Magic Barrier, Empower, Acumen, Concentration -->
 		<tier minLevel="40">1303,2;1062,2;1397,3;273,1;276,1;264,1;268,1;304,1;363,1</tier> <!-- Wild Magic, Berserker Spirit, Clarity, Dance of the Mystic/Concentration, Song of Earth/Wind/Vitality/Meditation -->
@@ -590,7 +601,7 @@
 		</combo>
 		<variant name="Dominator Tallum" armor="ROBE_TALLUM" weight="1" />
 	</build>
-	<build name="Soultaker" classId="95" role="MAGE" weapon="MAGE" armor="ROBE" weight="2"> <!-- Necromancer line -->
+	<build name="Soultaker" classId="95" role="MAGE" weapon="MAGE" armor="ROBE" keystones="+Soul Link" weight="2"> <!-- Necromancer line: Soul Link sends part of its damage to its servitor, like Transfer Pain -->
 		<attack>1467,1343,1159,1148,1234,1382,1181,1147,1220,1184,1177</attack>
 		<debuff>1336,1337,1064,1263,1269,1160,1164,1222,1163,1168,1298</debuff>
 		<buff>1532</buff>
@@ -713,7 +724,7 @@
 	</build>
 
 	<!-- Daggers -->
-	<build name="Adventurer" classId="93" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="2" skillFighter="true">
+	<build name="Adventurer" classId="93" role="DAGGER" weapon="DAGGER" armor="LIGHT_DAGGER" weight="2" skillFighter="true" weights="BLOW_RATE_PCT:2"> <!-- No Mortal Strike in its line (as in retail): its tree wants blow rate twice as much -->
 		<attack>991,409,344,263,30,16</attack>
 		<debuff>358,531,412,96</debuff>
 		<buff>357|356,768,445</buff>
@@ -828,6 +839,7 @@
 			<step skill="30" optional="true" /> <!-- Backstab, only when not in front -->
 		</combo>
 		<variant name="Ghost Hunter Legacy" weapon="DAGGER_ALT" armor="LIGHT_LEGACY" weight="1" />
+		<variant name="Ghost Hunter Heavy" armor="HEAVY_DAGGER" weight="1" /> <!-- Heavy armour, like the Adventurer and Wind Rider ones: +3 in the gear test (docs/class-balance-85.md) -->
 	</build>
 
 	<!-- Archers -->
@@ -851,6 +863,7 @@
 			<step skill="19" />
 		</combo>
 		<variant name="Sagittarius Legacy" weapon="BOW_ALT" armor="LIGHT_LEGACY" weight="1" />
+		<variant name="Sagittarius Heavy" armor="HEAVY" weight="1" /> <!-- Heavy armour: +5 to +9 in the gear test (docs/class-balance-85.md) -->
 	</build>
 	<build name="Moonlight Sentinel" classId="102" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="2">
 		<attack>987,24,990,772,343,369,19,56</attack>
@@ -873,6 +886,7 @@
 			<step skill="19" />
 		</combo>
 		<variant name="Moonlight Sentinel Legacy" weapon="BOW_ALT" armor="LIGHT_LEGACY" weight="1" />
+		<variant name="Moonlight Sentinel Heavy" armor="HEAVY" weight="1" /> <!-- Heavy armour: +5 to +9 in the gear test (docs/class-balance-85.md) -->
 	</build>
 	<build name="Ghost Sentinel" classId="109" role="ARCHER" weapon="BOW" armor="LIGHT_ARCHER" weight="2">
 		<attack>987,990,773,343,314,369,19,56</attack>
@@ -894,6 +908,7 @@
 			<step skill="19" />
 		</combo>
 		<variant name="Ghost Sentinel Legacy" armor="LIGHT_LEGACY" weight="1" />
+		<variant name="Ghost Sentinel Heavy" armor="HEAVY" weight="1" /> <!-- Heavy armour: +5 to +9 in the gear test (docs/class-balance-85.md) -->
 	</build>
 
 	<!-- Warriors -->
@@ -1040,6 +1055,50 @@
 			<step skill="1433" optional="true" /> <!-- Abyssal Blaze -->
 		</combo>
 		<variant name="Female Soul Hound Legacy" armor="LIGHT_LEGACY" weight="1" />
+	</build>
+	<build name="Male Soul Hound Hybrid" classId="132" role="FIGHTER" weapon="RAPIER" armor="LIGHT_DAGGER" buffs="SOUL_HYBRID" hybrid="true" skillFighter="true" weight="1"> <!-- Kamael, male: the hybrid way (rapier skills up close, soul nukes in between), against the nuker build above -->
+		<attack>1436,504,505,1516,478,1469,1433,939</attack> <!-- Soul of Pain, Triple Thrust, Shining Edge, Soul Strike, Double Thrust, Leopold, Abyssal Blaze, Soul Rage -->
+		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
+		<buff>1441,482,1532,1515</buff>
+		<emergency>837,1556</emergency>
+		<toggle>481,480</toggle>
+		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
+		<transform>538</transform> <!-- Final Form -->
+		<combo name="Soul vortex" pvp="true">
+			<step skill="1512" /> <!-- Soul Vortex: slows it down -->
+			<step skill="504" /> <!-- Triple Thrust -->
+			<step skill="1436" optional="true" /> <!-- Soul of Pain -->
+			<step skill="505" optional="true" /> <!-- Shining Edge -->
+		</combo>
+		<combo name="Voice bind" pvp="true" chance="50">
+			<step skill="1447" /> <!-- Voice Bind -->
+			<step skill="1435" optional="true" /> <!-- Death Mark -->
+			<step skill="504" /> <!-- Triple Thrust -->
+			<step skill="1436" optional="true" /> <!-- Soul of Pain -->
+		</combo>
+		<variant name="Male Soul Hound Hybrid Legacy" armor="LIGHT_LEGACY" weight="1" />
+	</build>
+	<build name="Female Soul Hound Hybrid" classId="133" role="FIGHTER" weapon="RAPIER" armor="LIGHT_DAGGER" buffs="SOUL_HYBRID" hybrid="true" skillFighter="true" weight="1"> <!-- Kamael, female: the hybrid way (rapier skills up close, soul nukes in between), against the nuker build above -->
+		<attack>1436,504,505,1516,478,1469,1433,939</attack> <!-- Soul of Pain, Triple Thrust, Shining Edge, Soul Strike, Double Thrust, Leopold, Abyssal Blaze, Soul Rage -->
+		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
+		<buff>1441,482,1532,1515</buff>
+		<emergency>837,1556</emergency>
+		<toggle>481,480</toggle>
+		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
+		<transform>538</transform> <!-- Final Form -->
+		<combo name="Soul vortex" pvp="true">
+			<step skill="1512" /> <!-- Soul Vortex: slows it down -->
+			<step skill="504" /> <!-- Triple Thrust -->
+			<step skill="1436" optional="true" /> <!-- Soul of Pain -->
+			<step skill="505" optional="true" /> <!-- Shining Edge -->
+		</combo>
+		<combo name="Voice bind" pvp="true" chance="50">
+			<step skill="1447" /> <!-- Voice Bind -->
+			<step skill="1435" optional="true" /> <!-- Death Mark -->
+			<step skill="504" /> <!-- Triple Thrust -->
+			<step skill="1436" optional="true" /> <!-- Soul of Pain -->
+		</combo>
+		<variant name="Female Soul Hound Hybrid Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
 	<build name="Judicator" classId="136" role="FIGHTER" weapon="RAPIER" armor="LIGHT_DAGGER" weight="2" skillFighter="true"> <!-- Kamael, female (Warder, Inspector) -->
 		<attack>505,504,939,478,492,1433,1434,468,1431</attack>
@@ -1223,7 +1282,7 @@
 		</combo>
 		<variant name="Doom Oracle Tallum" armor="ROBE_TALLUM" weight="1" />
 	</build>
-	<build name="Battle Oracle" classId="98" role="FIGHTER" weapon="MAGE_BLUNT" armor="LIGHT_MAGE" buffs="BATTLEMAGE" keystones="Battlemage;Unending Fury;Relentless Assault" hybrid="true" weight="1"> <!-- Prophet line, the battlemage path: Battlemage adds 40% of its M. Atk. to its P. Atk., it fights with its mace and its prophecies hold the target down -->
+	<build name="Battle Oracle" classId="98" role="FIGHTER" weapon="MAGE_BLUNT" armor="LIGHT_MAGE" buffs="BATTLEMAGE" keystones="Battlemage;Unwavering Stance;Relentless Assault" hybrid="true" weight="1"> <!-- Prophet line, the battlemage path: Battlemage adds 40% of its M. Atk. to its P. Atk., it fights with its mace and its prophecies hold the target down -->
 		<attack>27530</attack> <!-- Prophecy of Doom: in melee the target stays put, x1.5 -->
 		<debuff>27533,27536,1412</debuff> <!-- Prophecy of Ruin, Prophecy of Reckoning, Spell Turning (on a player that is casting) -->
 		<buff>27538,27532,27540</buff> <!-- Fulfilment, Prophecy of Salvation on itself, Unwritten -->

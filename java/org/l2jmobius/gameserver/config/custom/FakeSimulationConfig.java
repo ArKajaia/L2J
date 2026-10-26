@@ -39,6 +39,7 @@ public class FakeSimulationConfig
 	public static boolean WEB_OPEN_ACCESS;
 	public static int STANDSTILL_TIME;
 	public static int ROUT_DISTANCE;
+	public static int MATRIX_KEEP_LOGS;
 
 	public static void load()
 	{
@@ -56,5 +57,6 @@ public class FakeSimulationConfig
 		WEB_OPEN_ACCESS = config.getBoolean("SimulationWebOpenAccess", false);
 		STANDSTILL_TIME = Math.max(0, config.getInt("SimulationStandstillTime", 20));
 		ROUT_DISTANCE = Math.max(0, config.getInt("SimulationRoutDistance", 1500));
+		MATRIX_KEEP_LOGS = Math.max(0, config.getInt("SimulationMatrixKeepLogs", 300));
 	}
 }

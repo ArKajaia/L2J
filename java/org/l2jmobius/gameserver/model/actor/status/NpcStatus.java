@@ -24,6 +24,7 @@ import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.player.Duel;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 
 public class NpcStatus extends CreatureStatus
 {
@@ -59,7 +60,9 @@ public class NpcStatus extends CreatureStatus
 			npc.addAttackerToAttackByList(attacker);
 		}
 		
-		super.reduceHp(value, attacker, awake, isDOT, isHpConsumption);
+		// Passive tree Mind Over Matter of a roaming fake player: part of the damage is taken from MP first, like a player's.
+		final double damage = npc.isPvpFakePlayer() && !isHpConsumption ? PassiveMechanics.absorbDamageWithMp(npc, value) : value;
+		super.reduceHp(damage, attacker, awake, isDOT, isHpConsumption);
 	}
 	
 	@Override

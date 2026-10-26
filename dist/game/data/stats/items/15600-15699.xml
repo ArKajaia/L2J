@@ -1270,7 +1270,7 @@
 		<set name="soulshots" val="1" />
 		<set name="spiritshots" val="1" />
 		<set name="mp_consume" val="6" />
-		<set name="reuse_delay" val="1500" />
+		<set name="reuse_delay" val="1200" />
 		<set name="is_oly_restricted" val="true" />
 		<conditions msgId="1518">
 			<player isHero="true" />
