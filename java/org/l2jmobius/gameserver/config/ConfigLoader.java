@@ -86,6 +86,7 @@ import org.l2jmobius.gameserver.config.custom.ServerTimeConfig;
 import org.l2jmobius.gameserver.config.custom.SessionStatsConfig;
 import org.l2jmobius.gameserver.config.custom.StartingLocationConfig;
 import org.l2jmobius.gameserver.config.custom.StartingTitleConfig;
+import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
 import org.l2jmobius.gameserver.config.custom.ThiefMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.TownLifeConfig;
 import org.l2jmobius.gameserver.config.custom.TransmogConfig;
@@ -198,6 +199,7 @@ public class ConfigLoader
 		WalkerBotProtectionConfig.load();
 		WarehouseSortingConfig.load();
 		VillageSiegeConfig.load();
+		TeamVsTeamConfig.load();
 		WaveChallengeConfig.load();
 		WeddingConfig.load();
 		CustomBuffConfig.load();

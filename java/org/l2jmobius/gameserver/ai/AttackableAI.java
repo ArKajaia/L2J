@@ -415,7 +415,7 @@ public class AttackableAI extends CreatureAI
 					intention = Intention.ACTIVE;
 				}
 				// A fake player of a simulation thinks with no player around (a matrix battle has its own instance): idle, it would stand still until hit (issue #24 of docs/fake-player-simulation-issues.md).
-				else if ((npc.getTemplate().getFakePlayerPvpProfile() != null) && npc.getTemplate().getFakePlayerPvpProfile().isSimulant())
+				else if ((npc.getTemplate().getFakePlayerPvpProfile() != null) && npc.getTemplate().getFakePlayerPvpProfile().isTeamFighter())
 				{
 					intention = Intention.ACTIVE;
 				}

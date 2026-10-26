@@ -1,0 +1,2084 @@
+/*
+ * Copyright (c) 2013 L2jMobius
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+ * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+package org.l2jmobius.gameserver.managers;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.l2jmobius.commons.threads.ThreadPool;
+import org.l2jmobius.commons.time.SchedulingPattern;
+import org.l2jmobius.commons.time.TimeUtil;
+import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.ai.FakeBrain;
+import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
+import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
+import org.l2jmobius.gameserver.data.enums.CategoryType;
+import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.managers.simulation.SimRole;
+import org.l2jmobius.gameserver.managers.simulation.SimulationComposer;
+import org.l2jmobius.gameserver.model.Location;
+import org.l2jmobius.gameserver.model.World;
+import org.l2jmobius.gameserver.model.WorldRegion;
+import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.Npc;
+import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
+import org.l2jmobius.gameserver.model.groups.Party;
+import org.l2jmobius.gameserver.model.instancezone.Instance;
+import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
+import org.l2jmobius.gameserver.model.item.holders.ItemChanceHolder;
+import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
+import org.l2jmobius.gameserver.model.item.type.WeaponType;
+import org.l2jmobius.gameserver.model.item.Weapon;
+import org.l2jmobius.gameserver.model.olympiad.OlympiadManager;
+import org.l2jmobius.gameserver.model.script.Quest;
+import org.l2jmobius.gameserver.model.skill.CommonSkill;
+import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
+import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
+import org.l2jmobius.gameserver.model.zone.ZoneId;
+import org.l2jmobius.gameserver.network.NpcStringId;
+import org.l2jmobius.gameserver.network.serverpackets.ExSendUIEvent;
+import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
+import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
+import org.l2jmobius.gameserver.network.serverpackets.ServerPacket;
+import org.l2jmobius.gameserver.taskmanagers.DecayTaskManager;
+import org.l2jmobius.gameserver.util.Broadcast;
+import org.l2jmobius.gameserver.util.QuestSpawnUtil;
+
+/**
+ * Team vs Team: every {@link TeamVsTeamConfig#SCHEDULE} the TvT Event Manager takes registrations, then every level bracket with players gets its own copy of the Ruins of Despair (an instance), Blue on one side, Red on the other, {@link TeamVsTeamConfig#TEAM_SIZE} a side.
+ * <ul>
+ * <li>A party plays in one team. One whose members are in different brackets is broken up, each member going to its own bracket (the members of a bracket stay together).</li>
+ * <li>The real players are spread evenly between the teams, and the free places are filled with fake players of the bracket's levels. A party of players gets the fake players it lacks (a tank, a healer, an archer...) up to {@link TeamVsTeamConfig#PARTY_SIZE}, the rest of a team
+ * fights in parties of fake players. Fake players fight as parties (they call targets, heal, buff and resurrect each other), help the team mates that fight nearby, and go for the closest enemies otherwise.</li>
+ * <li>The faction system's rules hold between the teams: the other team is attacked without Ctrl, the own team can't be hurt even with Ctrl, and no kill gives karma (the instance is a PvP one). Everyone shows a blue or red circle and name.</li>
+ * <li>The dead come back at their base. Each kill gives the killer one of {@link TeamVsTeamConfig#KILL_REWARDS}; the team with the most kills wins, and each of its players gets {@link TeamVsTeamConfig#WIN_REWARD}.</li>
+ * </ul>
+ * The dialogs of the manager are in the TvT event script (custom/events/TeamVsTeam).
+ */
+public class TeamVsTeamManager
+{
+	private static final Logger LOGGER = Logger.getLogger(TeamVsTeamManager.class.getName());
+
+	/** The TvT Event Manager. */
+	public static final int MANAGER_NPC_ID = 70010;
+	/** data/instances/custom/tvt_event.xml: a PvP instance without spawns. */
+	public static final int INSTANCE_TEMPLATE_ID = 3051;
+
+	/** {@code true} while a match goes on: the combat hooks only look further then. */
+	public static volatile boolean ACTIVE = false;
+
+	private static final long TICK_MS = 1000;
+	/** A fake player engages an enemy it sees this close (or that is very close, seen or not). */
+	private static final int SIGHT_RANGE = 1200;
+	private static final int CLOSE_ENEMY_RANGE = 150;
+	/** A fake player with no enemy in sight goes to help team mates fighting this close. */
+	private static final int HELP_RANGE = 2500;
+	/** How long the result stays on screen before everyone goes home. */
+	private static final long END_DELAY = 10000;
+	/** Registration reminders, in minutes before the end of it. */
+	private static final int[] WARNINGS =
+	{
+		5,
+		3,
+		1
+	};
+	private static final SkillHolder GHOST_WALKING = new SkillHolder(100000, 1); // Spawn protection look (Ultimate Defense effect).
+
+	public enum Phase
+	{
+		/** Teleported: buffs, nobody leaves the bases. */
+		PREP,
+		/** The fight. */
+		FIGHT,
+		/** The result is shown, everyone goes home shortly. */
+		ENDED
+	}
+
+	/** How two creatures stand to each other in the event. */
+	public enum Relation
+	{
+		/** Neither is in a match. */
+		NONE,
+		/** Same match, same team. */
+		ALLY,
+		/** Same match, other team. */
+		ENEMY,
+		/** Only one of them is in a match, or they are in different ones: they leave each other alone. */
+		STRANGER
+	}
+
+	/**
+	 * A player or fake player of a match.
+	 */
+	public static class Fighter
+	{
+		private final Creature _creature;
+		private final Match _match;
+		private final Side _side;
+		private final SimRole _role;
+		// Where a player was before the match, and its name color.
+		private Location _returnLocation;
+		private int _nameColor;
+		private volatile int _kills;
+		private volatile int _deaths;
+		private volatile long _respawnAt;
+		private volatile long _protectedUntil;
+
+		Fighter(Creature creature, Match match, Side side, SimRole role)
+		{
+			_creature = creature;
+			_match = match;
+			_side = side;
+			_role = role;
+		}
+
+		public Creature getCreature()
+		{
+			return _creature;
+		}
+
+		public Match getMatch()
+		{
+			return _match;
+		}
+
+		public Side getSide()
+		{
+			return _side;
+		}
+
+		public boolean isPlayer()
+		{
+			return _creature.isPlayer();
+		}
+
+		public int getKills()
+		{
+			return _kills;
+		}
+
+		public int getDeaths()
+		{
+			return _deaths;
+		}
+
+		/**
+		 * @return {@code true} while it is under its spawn protection
+		 */
+		public boolean isProtected()
+		{
+			return _protectedUntil > 0;
+		}
+
+		boolean isAlive()
+		{
+			return !_creature.isDead() && (_creature.isPlayer() || _creature.isSpawned());
+		}
+	}
+
+	/**
+	 * Blue or Red of a match.
+	 */
+	public static class Side
+	{
+		private final Team _team;
+		private final String _name;
+		private final Location _base;
+		private final int _nameColor;
+		private final List<Fighter> _fighters = new CopyOnWriteArrayList<>();
+		private final List<FakePlayerParty> _parties = new CopyOnWriteArrayList<>();
+		private final AtomicInteger _score = new AtomicInteger();
+		// Worked out by the tick for the fake players: where team mates fight right now, and where the enemy groups are.
+		private volatile List<Location> _clashes = List.of();
+		private volatile List<Location> _enemyGroups = List.of();
+
+		Side(Team team, String name, Location base, int nameColor)
+		{
+			_team = team;
+			_name = name;
+			_base = base;
+			_nameColor = nameColor;
+		}
+
+		public Team getTeam()
+		{
+			return _team;
+		}
+
+		public String getName()
+		{
+			return _name;
+		}
+
+		public Location getBase()
+		{
+			return _base;
+		}
+
+		public int getScore()
+		{
+			return _score.get();
+		}
+
+		public List<Fighter> getFighters()
+		{
+			return _fighters;
+		}
+
+		public int getPlayerCount()
+		{
+			int count = 0;
+			for (Fighter fighter : _fighters)
+			{
+				if (fighter.isPlayer())
+				{
+					count++;
+				}
+			}
+			return count;
+		}
+	}
+
+	/**
+	 * One instance of the Ruins of Despair, for one bracket.
+	 */
+	public static class Match
+	{
+		private final int _id;
+		private final int _minLevel;
+		private final int _maxLevel;
+		private final int _instanceId;
+		private final Side _blue;
+		private final Side _red;
+		private final long _prepEnd;
+		private final Set<WorldRegion> _keptRegions = new HashSet<>();
+		private volatile Phase _phase = Phase.PREP;
+		private volatile long _fightEnd;
+		private volatile ScheduledFuture<?> _task;
+
+		Match(int id, int minLevel, int maxLevel, int instanceId)
+		{
+			_id = id;
+			_minLevel = minLevel;
+			_maxLevel = maxLevel;
+			_instanceId = instanceId;
+			_blue = new Side(Team.BLUE, "Blue", TeamVsTeamConfig.BLUE_BASE, TeamVsTeamConfig.BLUE_NAME_COLOR);
+			_red = new Side(Team.RED, "Red", TeamVsTeamConfig.RED_BASE, TeamVsTeamConfig.RED_NAME_COLOR);
+			_prepEnd = System.currentTimeMillis() + (TeamVsTeamConfig.PREP_TIME * 1000L);
+		}
+
+		public int getId()
+		{
+			return _id;
+		}
+
+		public String getBracketName()
+		{
+			return _minLevel == _maxLevel ? String.valueOf(_minLevel) : _minLevel + "-" + _maxLevel;
+		}
+
+		public int getInstanceId()
+		{
+			return _instanceId;
+		}
+
+		public Phase getPhase()
+		{
+			return _phase;
+		}
+
+		public Side getBlue()
+		{
+			return _blue;
+		}
+
+		public Side getRed()
+		{
+			return _red;
+		}
+
+		public Side getOther(Side side)
+		{
+			return side == _blue ? _red : _blue;
+		}
+
+		/**
+		 * @return the seconds of fighting left (or of preparation, before the fight)
+		 */
+		public int getSecondsLeft()
+		{
+			final long end = _phase == Phase.PREP ? _prepEnd : _fightEnd;
+			return (int) Math.max(0, (end - System.currentTimeMillis()) / 1000);
+		}
+
+		List<Fighter> getAllFighters()
+		{
+			final List<Fighter> all = new ArrayList<>(_blue._fighters);
+			all.addAll(_red._fighters);
+			return all;
+		}
+
+		List<Player> getPlayers()
+		{
+			final List<Player> players = new ArrayList<>();
+			for (Fighter fighter : getAllFighters())
+			{
+				if (fighter.isPlayer())
+				{
+					players.add(fighter._creature.asPlayer());
+				}
+			}
+			return players;
+		}
+
+		void broadcast(ServerPacket packet)
+		{
+			for (Player player : getPlayers())
+			{
+				player.sendPacket(packet);
+			}
+		}
+	}
+
+	private enum State
+	{
+		INACTIVE,
+		REGISTRATION
+	}
+
+	private final AtomicInteger _nextMatchId = new AtomicInteger(1);
+	private final Map<Integer, Match> _matches = new ConcurrentHashMap<>();
+	/** Every player and fake player of a match, by object id. */
+	private final Map<Integer, Fighter> _fighters = new ConcurrentHashMap<>();
+	/** The registered players by object id, in the order they registered. */
+	private final Map<Integer, Long> _registered = new ConcurrentHashMap<>();
+	private final List<Npc> _managers = new CopyOnWriteArrayList<>();
+	private final List<ScheduledFuture<?>> _registrationTasks = new CopyOnWriteArrayList<>();
+	private volatile State _state = State.INACTIVE;
+	private volatile long _registrationEnd;
+	private ScheduledFuture<?> _scheduleTask;
+
+	protected TeamVsTeamManager()
+	{
+		if (!TeamVsTeamConfig.ENABLED)
+		{
+			return;
+		}
+
+		scheduleNext();
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	// Schedule and registration
+	// ---------------------------------------------------------------------------------------------
+
+	private synchronized void scheduleNext()
+	{
+		if (_scheduleTask != null)
+		{
+			_scheduleTask.cancel(false);
+			_scheduleTask = null;
+		}
+
+		final long delay;
+		try
+		{
+			delay = new SchedulingPattern(TeamVsTeamConfig.SCHEDULE).getDelayToNextFromNow() + 5000; // 5 seconds late, so it never runs twice for one time.
+		}
+		catch (Exception e)
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": Bad TvTSchedule \"" + TeamVsTeamConfig.SCHEDULE + "\": the event doesn't start by itself.");
+			return;
+		}
+
+		_scheduleTask = ThreadPool.schedule(() ->
+		{
+			final String refusal = openRegistration();
+			if (refusal != null)
+			{
+				LOGGER.info(getClass().getSimpleName() + ": Registration did not open: " + refusal + ".");
+			}
+			scheduleNext();
+		}, delay);
+		LOGGER.info(getClass().getSimpleName() + ": Next registration at " + TimeUtil.getDateTimeString(System.currentTimeMillis() + delay) + ".");
+	}
+
+	/**
+	 * Opens the registration (the schedule, or an admin's //event).
+	 * @return {@code null} if it opened, else why not
+	 */
+	public synchronized String openRegistration()
+	{
+		if (!TeamVsTeamConfig.ENABLED)
+		{
+			return "the event is disabled";
+		}
+		if (_state != State.INACTIVE)
+		{
+			return "registration is already open";
+		}
+		if (TeamVsTeamConfig.BRACKETS.isEmpty())
+		{
+			return "there is no level bracket (TvTBrackets)";
+		}
+		if ((TeamVsTeamConfig.BLUE_BASE == null) || (TeamVsTeamConfig.RED_BASE == null))
+		{
+			return "a base is missing (TvTBlueBase, TvTRedBase)";
+		}
+
+		_state = State.REGISTRATION;
+		_registered.clear();
+		_registrationEnd = System.currentTimeMillis() + (TeamVsTeamConfig.REGISTRATION_TIME * 60000L);
+		if (DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP > 0)
+		{
+			AntiFeedManager.getInstance().registerEvent(AntiFeedManager.L2EVENT_ID);
+			AntiFeedManager.getInstance().clear(AntiFeedManager.L2EVENT_ID);
+		}
+
+		for (Location location : TeamVsTeamConfig.MANAGER_LOCATIONS)
+		{
+			final Npc manager = Quest.addSpawn(MANAGER_NPC_ID, location, false, 0);
+			if (manager != null)
+			{
+				manager.setRandomWalking(false);
+				_managers.add(manager);
+			}
+		}
+
+		for (int warning : WARNINGS)
+		{
+			if (TeamVsTeamConfig.REGISTRATION_TIME > warning)
+			{
+				_registrationTasks.add(ThreadPool.schedule(() -> Broadcast.toAllOnlinePlayers("TvT: Registration closes in " + warning + " minute" + (warning > 1 ? "s" : "") + ". " + _registered.size() + " registered so far."), (TeamVsTeamConfig.REGISTRATION_TIME - warning) * 60000L));
+			}
+		}
+		_registrationTasks.add(ThreadPool.schedule(this::closeRegistration, TeamVsTeamConfig.REGISTRATION_TIME * 60000L));
+
+		Broadcast.toAllOnlinePlayers("TvT: Registration is open for " + TeamVsTeamConfig.REGISTRATION_TIME + " minutes at the TvT Event Manager in Giran. " + TeamVsTeamConfig.TEAM_SIZE + " vs " + TeamVsTeamConfig.TEAM_SIZE + " in the Ruins of Despair, levels " + describeBrackets() + ".");
+		LOGGER.info(getClass().getSimpleName() + ": Registration opened.");
+		return null;
+	}
+
+	/**
+	 * @return the brackets as text: 41-45, 46-50...
+	 */
+	public static String describeBrackets()
+	{
+		final StringBuilder sb = new StringBuilder();
+		for (int[] bracket : TeamVsTeamConfig.BRACKETS)
+		{
+			sb.append(sb.length() > 0 ? ", " : "").append(bracket[0] == bracket[1] ? String.valueOf(bracket[0]) : bracket[0] + "-" + bracket[1]);
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * @param level a level
+	 * @return the index of its bracket in {@link TeamVsTeamConfig#BRACKETS}, -1 for none
+	 */
+	public static int getBracket(int level)
+	{
+		for (int i = 0; i < TeamVsTeamConfig.BRACKETS.size(); i++)
+		{
+			final int[] bracket = TeamVsTeamConfig.BRACKETS.get(i);
+			if ((level >= bracket[0]) && (level <= bracket[1]))
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	public boolean isRegistrationOpen()
+	{
+		return _state == State.REGISTRATION;
+	}
+
+	/**
+	 * @return the seconds of registration left, 0 if it is closed
+	 */
+	public int getRegistrationSecondsLeft()
+	{
+		return isRegistrationOpen() ? (int) Math.max(0, (_registrationEnd - System.currentTimeMillis()) / 1000) : 0;
+	}
+
+	public boolean isRegistered(Player player)
+	{
+		return _registered.containsKey(player.getObjectId());
+	}
+
+	public int getRegisteredCount()
+	{
+		return _registered.size();
+	}
+
+	/**
+	 * @param bracket a bracket index
+	 * @return how many registered players are in it now
+	 */
+	public int getRegisteredCount(int bracket)
+	{
+		int count = 0;
+		for (int objectId : _registered.keySet())
+		{
+			final Player player = World.getInstance().getPlayer(objectId);
+			if ((player != null) && (getBracket(player.getLevel()) == bracket))
+			{
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * @param player a player
+	 * @return why it can't play now, {@code null} if it can
+	 */
+	public static String getJoinRefusal(Player player)
+	{
+		if (getBracket(player.getLevel()) < 0)
+		{
+			return "Level " + player.getLevel() + " is outside every TvT bracket (" + describeBrackets() + ").";
+		}
+		if (player.isOnEvent() || (player.getBlockCheckerArena() > -1))
+		{
+			return "You are already on an event.";
+		}
+		if (player.isInOlympiadMode() || OlympiadManager.getInstance().isRegistered(player))
+		{
+			return "You are registered on the Olympiad.";
+		}
+		if (player.isInDuel())
+		{
+			return "You are in a duel.";
+		}
+		if (player.getInstanceId() > 0)
+		{
+			return "You are in an instance.";
+		}
+		if (player.isInSiege() || player.isInsideZone(ZoneId.SIEGE))
+		{
+			return "You are on a siege.";
+		}
+		if (player.isCursedWeaponEquipped() || (player.getKarma() > 0))
+		{
+			return "Players with karma can't take part.";
+		}
+		if (player.isJailed() || player.isInOfflineMode())
+		{
+			return "You can't take part now.";
+		}
+		if (player.isFlyingMounted())
+		{
+			return "You can't take part while flying.";
+		}
+		if (player.isFishing())
+		{
+			return "You can't take part while fishing.";
+		}
+		return null;
+	}
+
+	/**
+	 * Registers a player.
+	 * @param player the player
+	 * @return what to tell it
+	 */
+	public String register(Player player)
+	{
+		if (!isRegistrationOpen())
+		{
+			return "Registration is closed.";
+		}
+		if (isRegistered(player))
+		{
+			return "You are already registered.";
+		}
+		if (player.isRegisteredOnEvent())
+		{
+			return "You are already registered on another event.";
+		}
+
+		final String refusal = getJoinRefusal(player);
+		if (refusal != null)
+		{
+			return refusal;
+		}
+
+		if ((DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP > 0) && !AntiFeedManager.getInstance().tryAddPlayer(AntiFeedManager.L2EVENT_ID, player, DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP))
+		{
+			return "Too many players from your computer are registered already.";
+		}
+
+		_registered.put(player.getObjectId(), System.currentTimeMillis());
+		player.setRegisteredOnEvent(true);
+		final int[] bracket = TeamVsTeamConfig.BRACKETS.get(getBracket(player.getLevel()));
+		return "You are registered for the levels " + bracket[0] + "-" + bracket[1] + " match.";
+	}
+
+	/**
+	 * The party leader registers its whole party.
+	 * @param leader the leader
+	 * @return what to tell it
+	 */
+	public String registerParty(Player leader)
+	{
+		final Party party = leader.getParty();
+		if ((party == null) || !party.isLeader(leader))
+		{
+			return "Only a party leader can register a party.";
+		}
+		if (!isRegistrationOpen())
+		{
+			return "Registration is closed.";
+		}
+
+		final StringBuilder sb = new StringBuilder();
+		int registered = 0;
+		for (Player member : party.getMembers())
+		{
+			if (isRegistered(member))
+			{
+				registered++;
+				continue;
+			}
+
+			final String result = register(member);
+			if (isRegistered(member))
+			{
+				registered++;
+				if (member != leader)
+				{
+					member.sendMessage("TvT: " + leader.getName() + " registered the party. " + result);
+				}
+			}
+			else
+			{
+				sb.append(member.getName()).append(": ").append(result).append(" ");
+				member.sendMessage("TvT: You could not be registered: " + result);
+			}
+		}
+		return registered + " of " + party.getMemberCount() + " members are registered." + (sb.length() > 0 ? " " + sb.toString().trim() : "");
+	}
+
+	/**
+	 * @param player a player that cancels its registration
+	 * @return what to tell it
+	 */
+	public String unregister(Player player)
+	{
+		if (_registered.remove(player.getObjectId()) == null)
+		{
+			return "You are not registered.";
+		}
+
+		player.setRegisteredOnEvent(false);
+		if (DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP > 0)
+		{
+			AntiFeedManager.getInstance().removePlayer(AntiFeedManager.L2EVENT_ID, player);
+		}
+		return "Your registration is canceled.";
+	}
+
+	private void cancelRegistrationTasks()
+	{
+		for (ScheduledFuture<?> task : _registrationTasks)
+		{
+			task.cancel(false);
+		}
+		_registrationTasks.clear();
+		for (Npc manager : _managers)
+		{
+			manager.deleteMe();
+		}
+		_managers.clear();
+	}
+
+	/**
+	 * Registration is over: the players are sorted into brackets, teams and parties, and the matches start.
+	 */
+	public synchronized void closeRegistration()
+	{
+		if (_state != State.REGISTRATION)
+		{
+			return;
+		}
+
+		_state = State.INACTIVE;
+		cancelRegistrationTasks();
+
+		// Who is still there and can go.
+		final List<Player> players = new ArrayList<>();
+		for (int objectId : _registered.keySet())
+		{
+			final Player player = World.getInstance().getPlayer(objectId);
+			if ((player == null) || !player.isOnline())
+			{
+				continue;
+			}
+
+			player.setRegisteredOnEvent(false);
+			final String refusal = getJoinRefusal(player);
+			if (refusal != null)
+			{
+				player.sendMessage("TvT: You can't take part: " + refusal);
+				continue;
+			}
+			players.add(player);
+		}
+		_registered.clear();
+
+		if (players.isEmpty())
+		{
+			Broadcast.toAllOnlinePlayers("TvT: Nobody registered, no match this time.");
+			return;
+		}
+
+		// The groups of each bracket: a party's members of one bracket stay together; one with members in several brackets is broken up.
+		final Map<Integer, List<List<Player>>> brackets = new LinkedHashMap<>();
+		final Set<Player> placed = new HashSet<>();
+		for (Player player : players)
+		{
+			if (placed.contains(player))
+			{
+				continue;
+			}
+
+			final List<Player> members = new ArrayList<>();
+			final Party party = player.getParty();
+			if (party != null)
+			{
+				for (Player member : party.getMembers())
+				{
+					if (players.contains(member))
+					{
+						members.add(member);
+					}
+				}
+			}
+			else
+			{
+				members.add(player);
+			}
+
+			final Map<Integer, List<Player>> byBracket = new LinkedHashMap<>();
+			for (Player member : members)
+			{
+				placed.add(member);
+				byBracket.computeIfAbsent(getBracket(member.getLevel()), _ -> new ArrayList<>()).add(member);
+			}
+			if (byBracket.size() > 1)
+			{
+				for (Player member : members)
+				{
+					member.sendMessage("TvT: Your party has members of different level brackets: it is broken up, and each of you plays in the match of their level.");
+				}
+			}
+			for (Map.Entry<Integer, List<Player>> entry : byBracket.entrySet())
+			{
+				brackets.computeIfAbsent(entry.getKey(), _ -> new ArrayList<>()).add(entry.getValue());
+			}
+		}
+
+		final boolean fakes = FakePlayerPvpManager.getInstance().isEnabled();
+		final StringBuilder started = new StringBuilder();
+		for (Map.Entry<Integer, List<List<Player>>> entry : brackets.entrySet())
+		{
+			final int[] bracket = TeamVsTeamConfig.BRACKETS.get(entry.getKey());
+			final List<List<Player>> groups = entry.getValue();
+			int count = 0;
+			for (List<Player> group : groups)
+			{
+				count += group.size();
+			}
+
+			if ((count < TeamVsTeamConfig.MIN_PLAYERS) || (!fakes && (count < 2)))
+			{
+				for (List<Player> group : groups)
+				{
+					for (Player player : group)
+					{
+						player.sendMessage("TvT: Not enough players registered for the levels " + bracket[0] + "-" + bracket[1] + " match.");
+					}
+				}
+				continue;
+			}
+
+			// A match holds two teams: more players make more matches. The biggest groups are placed first.
+			groups.sort((a, b) -> Integer.compare(b.size(), a.size()));
+			final List<List<List<Player>>> matches = new ArrayList<>();
+			final List<Integer> sizes = new ArrayList<>();
+			for (List<Player> group : groups)
+			{
+				int index = -1;
+				for (int i = 0; i < matches.size(); i++)
+				{
+					if ((sizes.get(i) + group.size()) <= (TeamVsTeamConfig.TEAM_SIZE * 2))
+					{
+						index = i;
+						break;
+					}
+				}
+				if (index < 0)
+				{
+					matches.add(new ArrayList<>());
+					sizes.add(0);
+					index = matches.size() - 1;
+				}
+				matches.get(index).add(group);
+				sizes.set(index, sizes.get(index) + group.size());
+			}
+
+			for (List<List<Player>> matchGroups : matches)
+			{
+				// Even teams: each group goes where there are fewer players so far.
+				final List<List<Player>> blue = new ArrayList<>();
+				final List<List<Player>> red = new ArrayList<>();
+				int blueCount = 0;
+				int redCount = 0;
+				final List<List<Player>> unplaced = new ArrayList<>();
+				for (List<Player> group : matchGroups)
+				{
+					final boolean toBlue = blueCount < redCount ? true : (redCount < blueCount ? false : Rnd.nextBoolean());
+					if (toBlue && ((blueCount + group.size()) <= TeamVsTeamConfig.TEAM_SIZE))
+					{
+						blue.add(group);
+						blueCount += group.size();
+					}
+					else if ((redCount + group.size()) <= TeamVsTeamConfig.TEAM_SIZE)
+					{
+						red.add(group);
+						redCount += group.size();
+					}
+					else if ((blueCount + group.size()) <= TeamVsTeamConfig.TEAM_SIZE)
+					{
+						blue.add(group);
+						blueCount += group.size();
+					}
+					else
+					{
+						unplaced.add(group);
+					}
+				}
+
+				for (List<Player> group : unplaced)
+				{
+					for (Player player : group)
+					{
+						player.sendMessage("TvT: There was no room left for your group in the levels " + bracket[0] + "-" + bracket[1] + " match.");
+					}
+				}
+
+				// Without fake players both teams need someone.
+				if (!fakes && ((blueCount == 0) || (redCount == 0)))
+				{
+					for (List<Player> group : matchGroups)
+					{
+						for (Player player : group)
+						{
+							player.sendMessage("TvT: Not enough players for two teams in the levels " + bracket[0] + "-" + bracket[1] + " match.");
+						}
+					}
+					continue;
+				}
+
+				final Match match = startMatch(bracket, blue, red);
+				if (match != null)
+				{
+					started.append(started.length() > 0 ? ", " : "").append(match.getBracketName());
+				}
+			}
+		}
+
+		if (started.length() > 0)
+		{
+			Broadcast.toAllOnlinePlayers("TvT: The matches start in the Ruins of Despair (levels " + started + "). Good luck!");
+		}
+		else
+		{
+			Broadcast.toAllOnlinePlayers("TvT: Not enough players registered, no match this time.");
+		}
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	// Match setup
+	// ---------------------------------------------------------------------------------------------
+
+	private Match startMatch(int[] bracket, List<List<Player>> blueGroups, List<List<Player>> redGroups)
+	{
+		final Instance instance = InstanceManager.getInstance().createDynamicInstance(INSTANCE_TEMPLATE_ID);
+		if (instance == null)
+		{
+			return null;
+		}
+
+		final Match match = new Match(_nextMatchId.getAndIncrement(), bracket[0], bracket[1], instance.getId());
+		_matches.put(match.getId(), match);
+		ACTIVE = true;
+		keepRegionsAwake(match);
+
+		try
+		{
+			// Everyone leaves their party first: the event parties are made afresh, a broken up party included.
+			for (List<Player> group : blueGroups)
+			{
+				group.forEach(Player::leaveParty);
+			}
+			for (List<Player> group : redGroups)
+			{
+				group.forEach(Player::leaveParty);
+			}
+
+			buildSide(match, match._blue, blueGroups, instance);
+			buildSide(match, match._red, redGroups, instance);
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem while setting up match " + match.getId() + ".", e);
+		}
+
+		for (Player player : match.getPlayers())
+		{
+			player.sendPacket(new ExSendUIEvent(player, false, false, TeamVsTeamConfig.PREP_TIME, 0, NpcStringId.TIME_REMAINING));
+			final Fighter fighter = _fighters.get(player.getObjectId());
+			sendScreen(player, "You fight for team " + fighter._side._name + ". The fight starts in " + TeamVsTeamConfig.PREP_TIME + " seconds.", 8, true);
+			player.sendMessage("TvT: Team " + fighter._side._name + " (levels " + match.getBracketName() + "): " + TeamVsTeamConfig.TEAM_SIZE + " vs " + TeamVsTeamConfig.TEAM_SIZE + ". The other team is attacked without Ctrl; most kills in " + TeamVsTeamConfig.FIGHT_TIME + " minutes wins.");
+		}
+
+		match._task = ThreadPool.scheduleAtFixedRate(() -> tick(match), TICK_MS, TICK_MS);
+		LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " (levels " + match.getBracketName() + ") started: Blue " + match._blue.getPlayerCount() + " players / " + match._blue._fighters.size() + ", Red " + match._red.getPlayerCount() + " players / " + match._red._fighters.size() + ".");
+		return match;
+	}
+
+	/**
+	 * Fills one side: the players' groups become its parties, topped up with the fake players they lack, then parties of fake players fill the free places.
+	 */
+	private void buildSide(Match match, Side side, List<List<Player>> groups, Instance instance)
+	{
+		final boolean fakes = FakePlayerPvpManager.getInstance().isEnabled();
+		int players = 0;
+		for (List<Player> group : groups)
+		{
+			players += group.size();
+		}
+		int slots = fakes ? Math.max(0, TeamVsTeamConfig.TEAM_SIZE - players) : 0;
+
+		// Lone players get a party each while the team has room for parties of its size, the others join theirs.
+		final int partyCount = Math.max(1, (TeamVsTeamConfig.TEAM_SIZE + TeamVsTeamConfig.PARTY_SIZE - 1) / TeamVsTeamConfig.PARTY_SIZE);
+		final List<List<Player>> parties = new ArrayList<>();
+		final List<List<Player>> soloParties = new ArrayList<>();
+		final List<Player> solos = new ArrayList<>();
+		for (List<Player> group : groups)
+		{
+			if (group.size() > 1)
+			{
+				parties.add(new ArrayList<>(group));
+			}
+			else
+			{
+				solos.addAll(group);
+			}
+		}
+		for (Player solo : solos)
+		{
+			if ((parties.size() + soloParties.size()) < partyCount)
+			{
+				final List<Player> party = new ArrayList<>();
+				party.add(solo);
+				soloParties.add(party);
+				continue;
+			}
+
+			// The solo party with the fewest players takes it (a party holds 9).
+			List<Player> smallest = null;
+			for (List<Player> party : soloParties)
+			{
+				if ((party.size() < 9) && ((smallest == null) || (party.size() < smallest.size())))
+				{
+					smallest = party;
+				}
+			}
+			if (smallest == null)
+			{
+				smallest = new ArrayList<>();
+				soloParties.add(smallest);
+			}
+			smallest.add(solo);
+		}
+		parties.addAll(soloParties);
+
+		for (List<Player> members : parties)
+		{
+			final Player leader = members.get(0);
+			for (Player player : members)
+			{
+				enterPlayer(match, side, player, instance);
+			}
+
+			if (members.size() > 1)
+			{
+				final Party party = new Party(leader, leader.getPartyDistributionType());
+				leader.setParty(party);
+				for (int i = 1; i < members.size(); i++)
+				{
+					members.get(i).joinParty(party);
+				}
+			}
+
+			// The fake players it lacks, in the roles its players don't fill.
+			final int wanted = Math.min(slots, Math.max(0, TeamVsTeamConfig.PARTY_SIZE - members.size()));
+			if (wanted <= 0)
+			{
+				continue;
+			}
+
+			final List<SimRole> roles = new ArrayList<>(SimulationComposer.getRoles(members.size() + wanted));
+			for (Player player : members)
+			{
+				roles.remove(getRole(player));
+			}
+			while (roles.size() > wanted)
+			{
+				roles.remove(roles.size() - 1);
+			}
+
+			final List<Npc> spawned = spawnFakes(match, side, roles, instance);
+			slots -= wanted;
+			if (!spawned.isEmpty())
+			{
+				side._parties.add(FakePartyManager.getInstance().createEventParty(leader, spawned));
+			}
+		}
+
+		// Parties of fake players for the rest.
+		while (slots > 0)
+		{
+			final int size = Math.min(TeamVsTeamConfig.PARTY_SIZE, slots);
+			slots -= size;
+			final List<Npc> spawned = spawnFakes(match, side, SimulationComposer.getRoles(size), instance);
+			if (spawned.size() > 1)
+			{
+				side._parties.add(FakePartyManager.getInstance().createSimulationParty(spawned, FakeBrain.A));
+			}
+		}
+	}
+
+	private List<Npc> spawnFakes(Match match, Side side, List<SimRole> roles, Instance instance)
+	{
+		final List<Npc> spawned = new ArrayList<>();
+		for (SimRole role : roles)
+		{
+			final FakePlayerPvpBuild build = SimulationComposer.pick(role, ThreadLocalRandom.current());
+			if (build == null)
+			{
+				continue;
+			}
+
+			final int level = Rnd.get(match._minLevel, match._maxLevel);
+			final Location location = QuestSpawnUtil.findPoint(side._base, 20, Math.max(40, TeamVsTeamConfig.SPAWN_RADIUS), true, instance.getId());
+			final Npc fake = FakePlayerPvpManager.getInstance().spawnTvtFighter(build, level, side._name, match.getId(), side._team, side._nameColor, location.getX(), location.getY(), location.getZ(), instance.getId());
+			if (fake == null)
+			{
+				continue;
+			}
+
+			final Fighter fighter = new Fighter(fake, match, side, role);
+			side._fighters.add(fighter);
+			_fighters.put(fake.getObjectId(), fighter);
+			spawned.add(fake);
+		}
+		return spawned;
+	}
+
+	/**
+	 * Takes a player into a match: its team color and circle, its base, full HP.
+	 */
+	private void enterPlayer(Match match, Side side, Player player, Instance instance)
+	{
+		final Fighter fighter = new Fighter(player, match, side, getRole(player));
+		fighter._returnLocation = new Location(player.getX(), player.getY(), player.getZ(), player.getHeading());
+		fighter._nameColor = player.getAppearance().getNameColor();
+		side._fighters.add(fighter);
+		_fighters.put(player.getObjectId(), fighter);
+
+		player.setRegisteredOnEvent(false);
+		player.setOnEvent(true);
+		if (player.isDead())
+		{
+			player.doRevive();
+		}
+		if (player.isSitting())
+		{
+			player.standUp();
+		}
+
+		player.getAppearance().setNameColor(side._nameColor);
+		player.setTeam(side._team);
+		player.teleToLocation(side._base, instance.getId(), TeamVsTeamConfig.SPAWN_RADIUS);
+		player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
+		player.setCurrentCp(player.getMaxCp());
+		player.broadcastUserInfo();
+	}
+
+	/**
+	 * @param player a player
+	 * @return the slot of its class in a party: archer with a bow, healer for a cleric, nuker for another mystic, buffer for a dancer or bard, tank for a knight, melee otherwise
+	 */
+	private static SimRole getRole(Player player)
+	{
+		final Weapon weapon = player.getActiveWeaponItem();
+		if ((weapon != null) && ((weapon.getItemType() == WeaponType.BOW) || (weapon.getItemType() == WeaponType.CROSSBOW)))
+		{
+			return SimRole.ARCHER;
+		}
+		if (player.isInCategory(CategoryType.CLERIC_GROUP) || player.isInCategory(CategoryType.HEAL_GROUP))
+		{
+			return SimRole.HEALER;
+		}
+		if (player.isMageClass())
+		{
+			return SimRole.NUKER;
+		}
+		if (player.isInCategory(CategoryType.SUBJOB_GROUP_DANCE))
+		{
+			return SimRole.BUFFER;
+		}
+		if (player.isInCategory(CategoryType.TANKER_GROUP) || player.isInCategory(CategoryType.KNIGHT_GROUP))
+		{
+			return SimRole.TANK;
+		}
+		return SimRole.MELEE;
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	// The match
+	// ---------------------------------------------------------------------------------------------
+
+	private void tick(Match match)
+	{
+		try
+		{
+			final long now = System.currentTimeMillis();
+			switch (match._phase)
+			{
+				case PREP:
+				{
+					// Nobody leaves the bases before the fight.
+					for (Fighter fighter : match.getAllFighters())
+					{
+						if (fighter.isPlayer() && !checkPlayerStillIn(fighter))
+						{
+							continue;
+						}
+
+						final Creature creature = fighter._creature;
+						if (!creature.isDead() && !creature.isTeleporting() && (creature.calculateDistance2D(fighter._side._base) > TeamVsTeamConfig.BASE_RADIUS))
+						{
+							creature.teleToLocation(fighter._side._base, match._instanceId, TeamVsTeamConfig.SPAWN_RADIUS);
+							if (fighter.isPlayer())
+							{
+								sendScreen(creature.asPlayer(), "The fight hasn't started yet!", 4, false);
+							}
+						}
+					}
+
+					if (now >= match._prepEnd)
+					{
+						startFight(match);
+					}
+					break;
+				}
+				case FIGHT:
+				{
+					for (Fighter fighter : match.getAllFighters())
+					{
+						if (fighter.isPlayer() && !checkPlayerStillIn(fighter))
+						{
+							continue;
+						}
+
+						final Creature creature = fighter._creature;
+						if (creature.isDead())
+						{
+							if ((fighter._respawnAt > 0) && (now >= fighter._respawnAt))
+							{
+								respawn(fighter);
+							}
+							continue;
+						}
+						fighter._respawnAt = 0; // Resurrected by a team mate.
+
+						if (creature.isTeleporting())
+						{
+							continue;
+						}
+
+						// No camping in front of the other team's spawn: whoever walks into its base is sent home.
+						final Side other = match.getOther(fighter._side);
+						if (creature.calculateDistance2D(other._base) < TeamVsTeamConfig.BASE_RADIUS)
+						{
+							creature.teleToLocation(fighter._side._base, match._instanceId, TeamVsTeamConfig.SPAWN_RADIUS);
+							if (fighter.isPlayer())
+							{
+								sendScreen(creature.asPlayer(), "Entering the enemy base is not allowed!", 5, false);
+							}
+							continue;
+						}
+
+						// Spawn protection ends once it leaves its base, or after a while.
+						if (fighter.isProtected() && ((now >= fighter._protectedUntil) || (creature.calculateDistance2D(fighter._side._base) > TeamVsTeamConfig.BASE_RADIUS)))
+						{
+							unprotect(fighter);
+						}
+					}
+
+					updateTactics(match);
+
+					// Every player left: the fake players don't fight on alone.
+					if (match.getPlayers().isEmpty())
+					{
+						endMatch(match, true);
+					}
+					else if (now >= match._fightEnd)
+					{
+						endMatch(match, false);
+					}
+					break;
+				}
+				case ENDED:
+				{
+					break;
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem in match " + match.getId() + ".", e);
+		}
+	}
+
+	/**
+	 * @return {@code false} if the player left the match (it went offline or out of the instance): it is taken out of it
+	 */
+	private boolean checkPlayerStillIn(Fighter fighter)
+	{
+		final Player player = fighter._creature.asPlayer();
+		if (player.isOnline() && !player.isInOfflineMode() && ((player.getInstanceId() == fighter._match._instanceId) || player.isTeleporting()))
+		{
+			return true;
+		}
+
+		// One that went offline logs in again where it was before the match.
+		leave(fighter, !player.isOnline());
+		return false;
+	}
+
+	private void startFight(Match match)
+	{
+		match._phase = Phase.FIGHT;
+		match._fightEnd = System.currentTimeMillis() + (TeamVsTeamConfig.FIGHT_TIME * 60000L);
+		for (Player player : match.getPlayers())
+		{
+			player.sendPacket(new ExSendUIEvent(player, false, false, TeamVsTeamConfig.FIGHT_TIME * 60, 0, NpcStringId.TIME_REMAINING));
+			sendScreen(player, "The fight has begun!", 5, true);
+		}
+		for (Fighter fighter : match.getAllFighters())
+		{
+			if (!fighter.isPlayer() && (fighter._creature instanceof Npc fake) && !fake.isDead())
+			{
+				fake.setRunning();
+				fake.getAI().setIntention(Intention.ACTIVE);
+			}
+		}
+	}
+
+	/**
+	 * For the fake players: where each side's members fight right now, and where the enemy groups are (the middle of each party's living members outside their base).
+	 */
+	private static void updateTactics(Match match)
+	{
+		for (Side side : new Side[]
+		{
+			match._blue,
+			match._red
+		})
+		{
+			final Side other = match.getOther(side);
+			final List<Location> clashes = new ArrayList<>();
+			for (Fighter fighter : side._fighters)
+			{
+				if (!fighter.isAlive())
+				{
+					continue;
+				}
+				for (Fighter enemy : other._fighters)
+				{
+					if (enemy.isAlive() && !enemy.isProtected() && (fighter._creature.calculateDistance2D(enemy._creature) <= SIGHT_RANGE))
+					{
+						clashes.add(new Location(fighter._creature.getX(), fighter._creature.getY(), fighter._creature.getZ()));
+						break;
+					}
+				}
+			}
+			side._clashes = clashes;
+
+			// The groups of the other side: its parties, and its members on their own.
+			final Map<Object, long[]> groups = new LinkedHashMap<>();
+			for (Fighter enemy : other._fighters)
+			{
+				if (!enemy.isAlive() || enemy.isProtected() || (enemy._creature.calculateDistance2D(other._base) <= TeamVsTeamConfig.BASE_RADIUS))
+				{
+					continue;
+				}
+				final FakePlayerParty party = FakePartyManager.getInstance().getParty(enemy._creature);
+				final Object key = party != null ? party : enemy;
+				final long[] sum = groups.computeIfAbsent(key, _ -> new long[4]);
+				sum[0] += enemy._creature.getX();
+				sum[1] += enemy._creature.getY();
+				sum[2] += enemy._creature.getZ();
+				sum[3]++;
+			}
+			final List<Location> enemyGroups = new ArrayList<>();
+			for (long[] sum : groups.values())
+			{
+				enemyGroups.add(new Location((int) (sum[0] / sum[3]), (int) (sum[1] / sum[3]), (int) (sum[2] / sum[3])));
+			}
+			side._enemyGroups = enemyGroups;
+		}
+	}
+
+	private void respawn(Fighter fighter)
+	{
+		fighter._respawnAt = 0;
+		final Creature creature = fighter._creature;
+		if (!creature.isDead())
+		{
+			return;
+		}
+
+		final Match match = fighter._match;
+		if (creature.isPlayer())
+		{
+			final Player player = creature.asPlayer();
+			player.setIsPendingRevive(true);
+			player.teleToLocation(fighter._side._base, match._instanceId, TeamVsTeamConfig.SPAWN_RADIUS);
+			player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
+			player.setCurrentCp(player.getMaxCp());
+		}
+		else if (creature instanceof Npc fake)
+		{
+			DecayTaskManager.getInstance().cancel(fake);
+			fake.doRevive();
+			fake.teleToLocation(fighter._side._base, match._instanceId, TeamVsTeamConfig.SPAWN_RADIUS);
+			FakePartyManager.getInstance().onRevived(fake);
+			FakePlayerPvpManager.getInstance().prepareSimulant(fake);
+			fake.setRunning();
+		}
+		protect(fighter);
+	}
+
+	private static void protect(Fighter fighter)
+	{
+		if (TeamVsTeamConfig.SPAWN_PROTECTION <= 0)
+		{
+			return;
+		}
+
+		final Creature creature = fighter._creature;
+		fighter._protectedUntil = System.currentTimeMillis() + (TeamVsTeamConfig.SPAWN_PROTECTION * 1000L);
+		creature.setInvul(true);
+		final Skill skill = GHOST_WALKING.getSkill();
+		if (skill != null)
+		{
+			skill.applyEffects(creature, creature);
+		}
+	}
+
+	private static void unprotect(Fighter fighter)
+	{
+		if (!fighter.isProtected())
+		{
+			return;
+		}
+
+		fighter._protectedUntil = 0;
+		final Creature creature = fighter._creature;
+		creature.setInvul(false);
+		final Skill skill = GHOST_WALKING.getSkill();
+		if ((skill != null) && creature.isAffectedBySkill(skill.getId()))
+		{
+			creature.getEffectList().stopSkillEffects(SkillFinishType.REMOVED, skill);
+		}
+	}
+
+	/**
+	 * Called by {@code Creature#doDie} while a match goes on.
+	 * @param victim who died
+	 * @param killer who killed it
+	 */
+	public void onDeath(Creature victim, Creature killer)
+	{
+		final Fighter dead = _fighters.get(victim.getObjectId());
+		if ((dead == null) || (dead._match._phase != Phase.FIGHT))
+		{
+			return;
+		}
+
+		final Match match = dead._match;
+		dead._deaths++;
+		dead._respawnAt = System.currentTimeMillis() + (TeamVsTeamConfig.RESPAWN_DELAY * 1000L);
+
+		final Fighter slayer = getFighter(killer);
+		if ((slayer != null) && (slayer._match == match) && (slayer._side != dead._side))
+		{
+			slayer._kills++;
+			slayer._side._score.incrementAndGet();
+			if (slayer.isPlayer())
+			{
+				rewardKill(slayer._creature.asPlayer(), victim);
+			}
+			match.broadcast(new ExShowScreenMessage("Blue " + match._blue.getScore() + " : " + match._red.getScore() + " Red", ExShowScreenMessage.BOTTOM_RIGHT, 15000, 0, true, false));
+		}
+
+		if (dead.isPlayer())
+		{
+			dead._creature.sendMessage("TvT: You come back at your base in " + TeamVsTeamConfig.RESPAWN_DELAY + " seconds.");
+		}
+	}
+
+	private static void rewardKill(Player killer, Creature victim)
+	{
+		final List<ItemChanceHolder> rewards = TeamVsTeamConfig.KILL_REWARDS;
+		if (rewards.isEmpty())
+		{
+			return;
+		}
+
+		double total = 0;
+		for (ItemChanceHolder reward : rewards)
+		{
+			total += reward.getChance();
+		}
+
+		double roll = Rnd.nextDouble() * Math.max(100, total);
+		for (ItemChanceHolder reward : rewards)
+		{
+			roll -= reward.getChance();
+			if (roll < 0)
+			{
+				killer.addItem(ItemProcessType.REWARD, reward.getId(), reward.getCount(), victim, true);
+				return;
+			}
+		}
+	}
+
+	/**
+	 * The fight is over: the result, the rewards, and everyone goes home a little later.
+	 * @param match the match
+	 * @param abandoned {@code true} if it ends without a result (every player left, or an admin stopped it)
+	 */
+	private void endMatch(Match match, boolean abandoned)
+	{
+		if (match._phase == Phase.ENDED)
+		{
+			return;
+		}
+		match._phase = Phase.ENDED;
+
+		for (Fighter fighter : match.getAllFighters())
+		{
+			final Creature creature = fighter._creature;
+			creature.abortAttack();
+			creature.abortCast();
+			creature.setInvul(true);
+			if (!fighter.isPlayer() && creature.hasAI())
+			{
+				creature.getAI().setIntention(Intention.IDLE);
+			}
+		}
+
+		final int blue = match._blue.getScore();
+		final int red = match._red.getScore();
+		final Side winner = abandoned ? null : (blue > red ? match._blue : (red > blue ? match._red : null));
+		final String result = abandoned ? "The match is over." : (winner == null ? "The match ended in a tie, " + blue + " : " + red + "." : "Team " + winner._name + " won the match, " + Math.max(blue, red) + " : " + Math.min(blue, red) + "!");
+
+		// The best killers of the match.
+		final List<Fighter> ranking = match.getAllFighters();
+		ranking.sort((a, b) -> Integer.compare(b._kills, a._kills));
+		final StringBuilder best = new StringBuilder();
+		for (int i = 0; (i < 3) && (i < ranking.size()) && (ranking.get(i)._kills > 0); i++)
+		{
+			best.append(best.length() > 0 ? ", " : "").append(ranking.get(i)._creature.getName()).append(" (").append(ranking.get(i)._kills).append(')');
+		}
+
+		final Skill firework = CommonSkill.FIREWORK.getSkill();
+		for (Player player : match.getPlayers())
+		{
+			final Fighter fighter = _fighters.get(player.getObjectId());
+			player.sendPacket(new ExSendUIEvent(player, true, false, 0, 0, NpcStringId.TIME_REMAINING));
+			sendScreen(player, result, 7, true);
+			player.sendMessage("TvT: " + result + (best.length() > 0 ? " Best killers: " + best + "." : "") + ((fighter != null) ? " You: " + fighter._kills + " kills, " + fighter._deaths + " deaths." : ""));
+			if ((winner != null) && (fighter != null) && (fighter._side == winner))
+			{
+				if (firework != null)
+				{
+					player.broadcastPacket(new MagicSkillUse(player, player, firework.getId(), firework.getLevel(), firework.getHitTime(), firework.getReuseDelay()));
+				}
+				player.broadcastSocialAction(3);
+				for (ItemHolder reward : TeamVsTeamConfig.WIN_REWARD)
+				{
+					player.addItem(ItemProcessType.REWARD, reward.getId(), reward.getCount(), null, true);
+				}
+			}
+		}
+
+		LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " (levels " + match.getBracketName() + ") ended: " + result);
+		ThreadPool.schedule(() -> cleanup(match), abandoned ? 2000 : END_DELAY);
+	}
+
+	/**
+	 * Everyone goes home: the players back where they were, the fake players out of the world, the instance away.
+	 */
+	private void cleanup(Match match)
+	{
+		try
+		{
+			if (match._task != null)
+			{
+				match._task.cancel(false);
+				match._task = null;
+			}
+
+			for (Side side : new Side[]
+			{
+				match._blue,
+				match._red
+			})
+			{
+				for (FakePlayerParty party : side._parties)
+				{
+					if (party.isFakeOnly())
+					{
+						FakePartyManager.getInstance().disbandSimulationParty(party);
+					}
+					else
+					{
+						FakePartyManager.getInstance().disbandEventParty(party);
+					}
+				}
+				side._parties.clear();
+			}
+
+			for (Fighter fighter : match.getAllFighters())
+			{
+				if (fighter.isPlayer())
+				{
+					restorePlayer(fighter, true);
+				}
+				else
+				{
+					removeFake((Npc) fighter._creature);
+				}
+				_fighters.remove(fighter._creature.getObjectId(), fighter);
+			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem while cleaning up match " + match.getId() + ".", e);
+		}
+		finally
+		{
+			releaseRegions(match);
+			InstanceManager.getInstance().destroyInstance(match._instanceId);
+			_matches.remove(match.getId());
+			ACTIVE = !_matches.isEmpty();
+		}
+	}
+
+	private static void removeFake(Npc fake)
+	{
+		try
+		{
+			DecayTaskManager.getInstance().cancel(fake);
+			if (!fake.isDead())
+			{
+				fake.abortAttack();
+				fake.abortCast();
+				fake.stopTransformation(true);
+				FakePlayerPvpManager.getInstance().untransform(fake);
+				FakePlayerPvpManager.getInstance().unsummonServitor(fake);
+			}
+			if (!fake.isDecayed())
+			{
+				fake.deleteMe();
+			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, TeamVsTeamManager.class.getSimpleName() + ": Could not remove " + fake.getName() + ".", e);
+		}
+	}
+
+	/**
+	 * Gives a player back its state from before the match.
+	 * @param fighter the player's fighter
+	 * @param teleport {@code true} to send it back where it was
+	 */
+	private void restorePlayer(Fighter fighter, boolean teleport)
+	{
+		final Player player = fighter._creature.asPlayer();
+		unprotect(fighter);
+		player.setInvul(false);
+		player.setTeam(Team.NONE);
+		player.getAppearance().setNameColor(fighter._nameColor);
+		player.setOnEvent(false);
+		player.setRegisteredOnEvent(false);
+		player.leaveParty();
+		if (player.isDead())
+		{
+			player.doRevive();
+		}
+		player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
+		player.setCurrentCp(player.getMaxCp());
+		player.sendPacket(new ExSendUIEvent(player, true, false, 0, 0, NpcStringId.TIME_REMAINING));
+
+		final Instance instance = InstanceManager.getInstance().getInstance(fighter._match._instanceId);
+		if (instance != null)
+		{
+			instance.removePlayer(player.getObjectId());
+		}
+
+		final Location back = fighter._returnLocation;
+		if (teleport && player.isOnline() && (back != null))
+		{
+			player.teleToLocation(back.getX(), back.getY(), back.getZ(), back.getHeading(), 0, 0);
+		}
+		player.broadcastUserInfo();
+	}
+
+	/**
+	 * A player leaves a match before its end (logged off, left the instance): it gets its state back, and a fake player of its role takes its place.
+	 * @param fighter the player's fighter
+	 * @param loggingOff {@code true} if it logs off: it logs in again where it was before the match
+	 */
+	private void leave(Fighter fighter, boolean loggingOff)
+	{
+		if (_fighters.remove(fighter._creature.getObjectId(), fighter))
+		{
+			fighter._side._fighters.remove(fighter);
+		}
+		else
+		{
+			return;
+		}
+
+		final Player player = fighter._creature.asPlayer();
+		
+		// The fake players of its party stay in the match, as a party of their own.
+		for (FakePlayerParty party : fighter._side._parties)
+		{
+			if (party.getHost() == player)
+			{
+				final List<Npc> fakes = new ArrayList<>(party.getFakes());
+				FakePartyManager.getInstance().disbandEventParty(party);
+				fighter._side._parties.remove(party);
+				if (fakes.size() > 1)
+				{
+					fighter._side._parties.add(FakePartyManager.getInstance().createSimulationParty(fakes, FakeBrain.A));
+				}
+				break;
+			}
+		}
+		
+		restorePlayer(fighter, false);
+		if (loggingOff && (fighter._returnLocation != null))
+		{
+			player.setInstanceId(0);
+			player.setXYZInvisible(fighter._returnLocation.getX(), fighter._returnLocation.getY(), fighter._returnLocation.getZ());
+		}
+
+		final Match match = fighter._match;
+		if ((match._phase != Phase.ENDED) && FakePlayerPvpManager.getInstance().isEnabled())
+		{
+			final Instance instance = InstanceManager.getInstance().getInstance(match._instanceId);
+			if (instance != null)
+			{
+				final List<Npc> spawned = spawnFakes(match, fighter._side, List.of(fighter._role), instance);
+				for (Npc fake : spawned)
+				{
+					if (match._phase == Phase.FIGHT)
+					{
+						protect(_fighters.get(fake.getObjectId()));
+					}
+				}
+			}
+		}
+
+		for (Player other : match.getPlayers())
+		{
+			other.sendMessage("TvT: " + player.getName() + " left the match.");
+		}
+	}
+
+	/**
+	 * Called by {@code Player#deleteMe}: a registered player is taken off the list, one in a match leaves it and logs in again where it was before.
+	 * @param player the player logging off
+	 */
+	public void onLogout(Player player)
+	{
+		if (_registered.remove(player.getObjectId()) != null)
+		{
+			player.setRegisteredOnEvent(false);
+		}
+
+		final Fighter fighter = _fighters.get(player.getObjectId());
+		if ((fighter != null) && fighter.isPlayer())
+		{
+			leave(fighter, true);
+		}
+	}
+
+	/**
+	 * Stops everything: registration and the matches going on, without rewards (an admin's //event stop).
+	 */
+	public synchronized void stop()
+	{
+		if (_state == State.REGISTRATION)
+		{
+			_state = State.INACTIVE;
+			cancelRegistrationTasks();
+			for (int objectId : _registered.keySet())
+			{
+				final Player player = World.getInstance().getPlayer(objectId);
+				if (player != null)
+				{
+					player.setRegisteredOnEvent(false);
+				}
+			}
+			_registered.clear();
+			Broadcast.toAllOnlinePlayers("TvT: The event was canceled.");
+		}
+
+		for (Match match : _matches.values())
+		{
+			endMatch(match, true);
+		}
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	// Regions
+	// ---------------------------------------------------------------------------------------------
+
+	/**
+	 * Keeps the regions between the bases awake for the match: the fake players' AI only runs in active regions.
+	 */
+	private static void keepRegionsAwake(Match match)
+	{
+		final Location blue = TeamVsTeamConfig.BLUE_BASE;
+		final Location red = TeamVsTeamConfig.RED_BASE;
+		final int margin = 2000;
+		final int step = 1 << World.SHIFT_BY;
+		synchronized (match._keptRegions)
+		{
+			for (int x = Math.min(blue.getX(), red.getX()) - margin; x <= (Math.max(blue.getX(), red.getX()) + margin); x += step)
+			{
+				for (int y = Math.min(blue.getY(), red.getY()) - margin; y <= (Math.max(blue.getY(), red.getY()) + margin); y += step)
+				{
+					final WorldRegion region = World.getInstance().getRegion(x, y, blue.getZ());
+					if ((region != null) && !region.isKeptActive())
+					{
+						region.keepActive();
+						match._keptRegions.add(region);
+					}
+				}
+			}
+		}
+	}
+
+	private void releaseRegions(Match match)
+	{
+		// Another match going on still needs them (they all play in the same place): it takes them over.
+		Match heir = null;
+		for (Match other : _matches.values())
+		{
+			if ((other != match) && (other._phase != Phase.ENDED))
+			{
+				heir = other;
+				break;
+			}
+		}
+		
+		synchronized (match._keptRegions)
+		{
+			if (heir != null)
+			{
+				synchronized (heir._keptRegions)
+				{
+					heir._keptRegions.addAll(match._keptRegions);
+				}
+			}
+			else
+			{
+				for (WorldRegion region : match._keptRegions)
+				{
+					region.releaseKeepActive();
+				}
+			}
+			match._keptRegions.clear();
+		}
+	}
+	
+	// ---------------------------------------------------------------------------------------------
+	// Who fights whom (combat hooks, fake player AI)
+	// ---------------------------------------------------------------------------------------------
+
+	/**
+	 * @param creature a creature (a summon or servitor counts as its owner)
+	 * @return its fighter, {@code null} if it is in no match
+	 */
+	public static Fighter getFighter(Creature creature)
+	{
+		if (!ACTIVE || (creature == null))
+		{
+			return null;
+		}
+
+		final TeamVsTeamManager manager = getInstance();
+		final Fighter fighter = manager._fighters.get(creature.getObjectId());
+		if (fighter != null)
+		{
+			return fighter;
+		}
+
+		final Creature owner = CombatLogManager.getPvpOwner(creature);
+		return (owner != null) && (owner != creature) ? manager._fighters.get(owner.getObjectId()) : null;
+	}
+
+	/**
+	 * @param a a creature
+	 * @param b another creature
+	 * @return how they stand to each other in the event
+	 */
+	public static Relation getRelation(Creature a, Creature b)
+	{
+		if (!ACTIVE)
+		{
+			return Relation.NONE;
+		}
+
+		final Fighter fa = getFighter(a);
+		final Fighter fb = getFighter(b);
+		if ((fa == null) && (fb == null))
+		{
+			return Relation.NONE;
+		}
+		if ((fa == null) || (fb == null) || (fa._match != fb._match))
+		{
+			return Relation.STRANGER;
+		}
+		return fa._side == fb._side ? Relation.ALLY : Relation.ENEMY;
+	}
+
+	/**
+	 * @param attacker a creature
+	 * @param target another creature
+	 * @return {@code true} if one of them is in a match and the other isn't an enemy of the fight going on: the attack is not allowed (the own team even with Ctrl, anyone before or after the fight)
+	 */
+	public static boolean isForbidden(Creature attacker, Creature target)
+	{
+		if (!ACTIVE)
+		{
+			return false;
+		}
+
+		final Relation relation = getRelation(attacker, target);
+		return (relation != Relation.NONE) && !isFightOn(attacker, relation);
+	}
+
+	/**
+	 * @param attacker a creature
+	 * @param target another creature
+	 * @return {@code true} if they are enemies of a match whose fight goes on: attacked without Ctrl
+	 */
+	public static boolean isEnemy(Creature attacker, Creature target)
+	{
+		return ACTIVE && isFightOn(attacker, getRelation(attacker, target));
+	}
+
+	private static boolean isFightOn(Creature creature, Relation relation)
+	{
+		if (relation != Relation.ENEMY)
+		{
+			return false;
+		}
+		final Fighter fighter = getFighter(creature);
+		return (fighter != null) && (fighter._match._phase == Phase.FIGHT);
+	}
+
+	/**
+	 * @param creature a creature
+	 * @return {@code true} if it is in a match and stands in its own team's base
+	 */
+	public static boolean isAtOwnBase(Creature creature)
+	{
+		final Fighter fighter = getFighter(creature);
+		return (fighter != null) && (creature.calculateDistance2D(fighter._side._base) <= TeamVsTeamConfig.BASE_RADIUS);
+	}
+	
+	/**
+	 * @param fake a fake player of a match
+	 * @return the phase of its match, {@code null} if it is in none
+	 */
+	public Phase getPhase(Npc fake)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		final Match match = profile != null ? _matches.get(profile.getTvtMatchId()) : null;
+		return match != null ? match._phase : null;
+	}
+
+	/**
+	 * @param fake a fake player of a match
+	 * @return the closest enemy it sees within {@link #SIGHT_RANGE} (or very close), not under spawn protection, {@code null} if none
+	 */
+	public Creature findEnemyInSight(Npc fake)
+	{
+		final Fighter fighter = _fighters.get(fake.getObjectId());
+		if ((fighter == null) || (fighter._match._phase != Phase.FIGHT))
+		{
+			return null;
+		}
+
+		Creature closest = null;
+		double closestDistance = Double.MAX_VALUE;
+		for (Fighter enemy : fighter._match.getOther(fighter._side)._fighters)
+		{
+			final Creature creature = enemy._creature;
+			if (!enemy.isAlive() || enemy.isProtected() || creature.isInvisible() || (creature.getInstanceId() != fake.getInstanceId()))
+			{
+				continue;
+			}
+
+			final double distance = fake.calculateDistance2D(creature);
+			if ((distance < closestDistance) && (distance <= SIGHT_RANGE) && ((distance <= CLOSE_ENEMY_RANGE) || GeoEngine.getInstance().canSeeTarget(fake, creature)))
+			{
+				closest = creature;
+				closestDistance = distance;
+			}
+		}
+		return closest;
+	}
+
+	/**
+	 * Where a fake player with no enemy in sight goes: to the closest team mates fighting within {@link #HELP_RANGE}, else to the closest enemy group, else up to the enemy base (its members are all there, coming back).
+	 * @param fake a fake player of a match
+	 * @return where to go, {@code null} for nowhere
+	 */
+	public Location getMarchTarget(Npc fake)
+	{
+		final Fighter fighter = _fighters.get(fake.getObjectId());
+		if ((fighter == null) || (fighter._match._phase != Phase.FIGHT))
+		{
+			return null;
+		}
+
+		final Location help = closest(fake, fighter._side._clashes, HELP_RANGE);
+		if (help != null)
+		{
+			return help;
+		}
+
+		final Location group = closest(fake, fighter._side._enemyGroups, Integer.MAX_VALUE);
+		if (group != null)
+		{
+			return group;
+		}
+
+		// Short of the enemy base, on the way from its own.
+		final Location own = fighter._side._base;
+		final Location enemy = fighter._match.getOther(fighter._side)._base;
+		final double distance = Math.hypot(enemy.getX() - own.getX(), enemy.getY() - own.getY());
+		if (distance < 1)
+		{
+			return null;
+		}
+		final double ratio = Math.max(0, (distance - TeamVsTeamConfig.BASE_RADIUS - 300) / distance);
+		final int x = own.getX() + (int) ((enemy.getX() - own.getX()) * ratio);
+		final int y = own.getY() + (int) ((enemy.getY() - own.getY()) * ratio);
+		return new Location(x, y, GeoEngine.getInstance().getHeight(x, y, enemy.getZ()));
+	}
+
+	private static Location closest(Npc fake, Collection<Location> locations, int range)
+	{
+		Location best = null;
+		double bestDistance = range;
+		for (Location location : locations)
+		{
+			final double distance = fake.calculateDistance2D(location);
+			if ((distance > 50) && (distance < bestDistance))
+			{
+				best = location;
+				bestDistance = distance;
+			}
+		}
+		return best;
+	}
+
+	/**
+	 * @return the matches going on
+	 */
+	public Collection<Match> getMatches()
+	{
+		return _matches.values();
+	}
+
+	private static void sendScreen(Player player, String text, int seconds, boolean effect)
+	{
+		player.sendPacket(new ExShowScreenMessage(text, ExShowScreenMessage.TOP_CENTER, seconds * 1000, 0, true, effect));
+	}
+
+	public static TeamVsTeamManager getInstance()
+	{
+		return SingletonHolder.INSTANCE;
+	}
+
+	private static class SingletonHolder
+	{
+		protected static final TeamVsTeamManager INSTANCE = new TeamVsTeamManager();
+	}
+}

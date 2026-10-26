@@ -118,6 +118,8 @@ public class FakePlayerPvpProfile
 	// A party-vs-party simulation (see FakeSimulationManager): its run and team, 0 for none.
 	private volatile int _simRunId;
 	private volatile int _simTeamId;
+	// A Team vs Team match (see TeamVsTeamManager) it fights in, 0 for none.
+	private volatile int _tvtMatchId;
 	// The AI it runs (only simulation teams run another one than A).
 	private volatile FakeBrain _brain = FakeBrain.A;
 	
@@ -834,6 +836,35 @@ public class FakePlayerPvpProfile
 	public boolean isSimulant()
 	{
 		return _simRunId != 0;
+	}
+
+	/**
+	 * @return the Team vs Team match it fights in (see {@link org.l2jmobius.gameserver.managers.TeamVsTeamManager}), 0 for none
+	 */
+	public int getTvtMatchId()
+	{
+		return _tvtMatchId;
+	}
+
+	public void setTvtMatchId(int matchId)
+	{
+		_tvtMatchId = matchId;
+	}
+
+	/**
+	 * @return {@code true} if it was spawned for a Team vs Team match: it only fights the other team of its match
+	 */
+	public boolean isTvtFighter()
+	{
+		return _tvtMatchId != 0;
+	}
+
+	/**
+	 * @return {@code true} for a fake player of a team fight (a simulation run or a Team vs Team match): it stays in the fight until it ends, no hunting, roaming, leashing, escaping or coming back from town
+	 */
+	public boolean isTeamFighter()
+	{
+		return (_simRunId != 0) || (_tvtMatchId != 0);
 	}
 
 	/**

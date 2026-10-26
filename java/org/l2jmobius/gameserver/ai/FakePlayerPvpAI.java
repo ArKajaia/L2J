@@ -42,6 +42,7 @@ import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
+import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.VillageSiegeManager;
 import org.l2jmobius.gameserver.managers.simulation.FakeAiTrace;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
@@ -471,6 +472,13 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return;
 		}
 		
+		// Likewise a fake player of a Team vs Team match: it fights for its team.
+		if ((profile != null) && profile.isTvtFighter())
+		{
+			thinkTeamVsTeam(npc, profile);
+			return;
+		}
+		
 		// A fake player of a PvP spot came only to fight: no hunting, poking, greeting or talks.
 		if ((profile != null) && profile.isSpotFighter())
 		{
@@ -792,7 +800,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			}
 		}
 		// Monsters are only hunted around the spawn point, players are chased further (and it runs away as far as it needs to). A fake player of a simulation has no hunting ground.
-		else if ((npc.getSpawn() != null) && !profile.isSimulant() && !_fleeing && !_regrouping && !_returning && (npc.calculateDistance2D(npc.getSpawn()) > (isPvpEnemy(target) ? profile.getPersonality().getChaseRange() : profile.getPersonality().getLeashRange())))
+		else if ((npc.getSpawn() != null) && !profile.isTeamFighter() && !_fleeing && !_regrouping && !_returning && (npc.calculateDistance2D(npc.getSpawn()) > (isPvpEnemy(target) ? profile.getPersonality().getChaseRange() : profile.getPersonality().getLeashRange())))
 		{
 			final Spawn spawn = npc.getSpawn();
 			// Back to its hunting ground, staying ACTIVE: a MOVE_TO that finds no path never arrives, and the AI would stop thinking.
@@ -832,11 +840,11 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		}
 		else
 		{
-			if (!isPvpEnemy(target) && !withPlayers && !profile.isSimulant())
+			if (!isPvpEnemy(target) && !withPlayers && !profile.isTeamFighter())
 			{
 				lookForNewFaces(npc, now);
 			}
-			if (!isPvpEnemy(target) && !withPlayers && !profile.isSimulant() && (lookForRevenge(npc, now) || lookForPvp(npc, now)))
+			if (!isPvpEnemy(target) && !withPlayers && !profile.isTeamFighter() && (lookForRevenge(npc, now) || lookForPvp(npc, now)))
 			{
 				return;
 			}
@@ -1738,9 +1746,9 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return false;
 		}
 
-		// A fake player of a simulation stays in it until its run ends.
+		// A fake player of a simulation or a Team vs Team match stays in it until it ends.
 		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
-		if ((profile != null) && profile.isSimulant())
+		if ((profile != null) && profile.isTeamFighter())
 		{
 			return false;
 		}
@@ -2017,7 +2025,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			final WorldObject itsTarget = enemy.getTarget();
 			final boolean fightsParty = (itsTarget == npc) || ((itsTarget instanceof Creature) && party.isMember((Creature) itsTarget));
 			final boolean healsEnemy = isHealer(enemy) && (itsTarget instanceof Creature) && hates(npc, (Creature) itsTarget, FakePlayerPvpManager.PVP_HATE);
-			if (fightsParty || healsEnemy || FakeSimulationManager.isRunEnemy(npc, enemy))
+			if (fightsParty || healsEnemy || FakeSimulationManager.isRunEnemy(npc, enemy) || TeamVsTeamManager.isEnemy(npc, enemy))
 			{
 				enemies.add(enemy);
 			}
@@ -3509,8 +3517,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return false;
 		}
 
-		// The teams of a simulation only fight each other.
-		if (!FakeSimulationManager.canFight(npc, target))
+		// The teams of a simulation only fight each other, and so do the teams of a Team vs Team match.
+		if (!FakeSimulationManager.canFight(npc, target) || TeamVsTeamManager.isForbidden(npc, target))
 		{
 			return false;
 		}
@@ -6379,6 +6387,91 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 
 		// The leader (or one on its own) marches toward the nearest other team.
 		final Location destination = FakeSimulationManager.getInstance().getMarchTarget(npc);
+		if (destination == null)
+		{
+			trace(Reason.SIM_WAIT, null);
+			return;
+		}
+
+		trace(Reason.SIM_MARCH, null);
+		final long now = System.currentTimeMillis();
+		if (npc.isMovementDisabled() || standUp(npc) || (now < _nextMarchTime))
+		{
+			return;
+		}
+		if (npc.isMoving() && (_marchDestination != null) && (Math.hypot(_marchDestination.getX() - destination.getX(), _marchDestination.getY() - destination.getY()) < MARCH_UPDATE_DISTANCE))
+		{
+			return;
+		}
+
+		_marchDestination = destination;
+		_nextMarchTime = now + MARCH_INTERVAL;
+		npc.setRunning();
+		moveTo(destination.getX(), destination.getY(), destination.getZ());
+	}
+
+	/**
+	 * A fake player of a Team vs Team match (see {@link TeamVsTeamManager}), not fighting yet: it gets ready at its base before the fight, then engages an enemy it sees, plays with its party, or (the leader, or one on its own) goes where its team mates
+	 * fight, else for the closest enemy group. A party led by a player that is dead or back at its base goes on with the team instead of waiting for it.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 */
+	private void thinkTeamVsTeam(Attackable npc, FakePlayerPvpProfile profile)
+	{
+		final TeamVsTeamManager.Phase phase = TeamVsTeamManager.getInstance().getPhase(npc);
+		final FakePlayerParty party = profile.getParty();
+		if ((phase == null) || (phase == TeamVsTeamManager.Phase.ENDED))
+		{
+			trace(Reason.SIM_WAIT, null);
+			return;
+		}
+
+		// Its spawn follows it: nothing sends it back to where it appeared.
+		final Spawn spawn = npc.getSpawn();
+		if (spawn != null)
+		{
+			spawn.setXYZ(npc.getX(), npc.getY(), npc.getZ());
+		}
+
+		if (phase == TeamVsTeamManager.Phase.PREP)
+		{
+			// Supports buff the party, necromancers summon, duelists charge up.
+			if (((party != null) && supportParty(npc, profile, party, false)) || ((profile.getCharges() < profile.getMaxCharges()) && castOnSelf(npc, null, profile.getSkills(SkillCategory.CHARGE), true, false)))
+			{
+				return;
+			}
+			trace(Reason.SIM_PREP, null);
+			return;
+		}
+
+		// An enemy in sight: the fight is on.
+		final Creature enemy = TeamVsTeamManager.getInstance().findEnemyInSight(npc);
+		if (enemy != null)
+		{
+			if (standUp(npc))
+			{
+				trace(Reason.STAND_UP, enemy);
+				return;
+			}
+			trace(Reason.SIM_ENGAGE, enemy);
+			npc.setRunning();
+			FakePlayerPvpManager.getInstance().assistFight(npc, enemy);
+			return;
+		}
+
+		// With its party: support, its fights, following its leader. A player leading it that is down or back at its base doesn't hold the party back.
+		if (party != null)
+		{
+			final Creature leader = party.getActiveLeader();
+			final boolean leaderAway = (leader != null) && leader.isPlayer() && (leader.isDead() || TeamVsTeamManager.isAtOwnBase(leader));
+			if (leaderAway ? supportParty(npc, profile, party, false) : thinkParty(npc, profile, party))
+			{
+				return;
+			}
+		}
+
+		// Where the team needs it.
+		final Location destination = TeamVsTeamManager.getInstance().getMarchTarget(npc);
 		if (destination == null)
 		{
 			trace(Reason.SIM_WAIT, null);
