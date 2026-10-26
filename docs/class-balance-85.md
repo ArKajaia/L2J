@@ -457,3 +457,38 @@ Full matrix with 10 battles per pair, 7,030 battles. Each class has 370 battles,
 - **Who gained:** the classes those seven used to beat. Doom Oracle +6.8, Grand Khavatari +6.1, Flame Warchief +6.2, War Dancer +6.0, Spectral Dancer +5.8, Female Soul Hound +5.6, Battle Oracle +5.5. Shillien Templar (75.9) and Phoenix Knight (71.6) are now 6th and 7th.
 - **Ghost Sentinel** went 36.2 → 29.7, the only big drop outside the seven.
 - **Bottom, healers aside:** Wind Rider 29.6, Ghost Sentinel 29.7, Moonlight Sentinel 30.5 and Doomcryer 31.8.
+
+## Round 8: weaker passive tree defences, daggers, bows and nukers up (`matrix-20261026-101147`)
+
+**Changes** (on top of round 7)
+- Passive tree: every MAXHP and MAXHP_PCT bonus halved, every PDEF_PCT and MDEF_PCT bonus cut by 20%. Drawbacks (negative values) kept as they were.
+- Daggers (Adventurer, Wind Rider, Ghost Hunter): blows +30% in PvP. Backstab now uses the blow multiplier too.
+- Bow archers (Sagittarius, Moonlight Sentinel, Ghost Sentinel): critical damage +15% in PvP. The Trickster (crossbow) is left out.
+- Nukers (Archmage, Soultaker, Mystic Muse, Storm Screamer, the Soul Hounds, the summoners): skill reuse −10%. `SkillReuseMultipliers` now also applies to roaming fake players.
+
+The four healers (Hierophant, Cardinal, Shillien Saint, Eva's Saint) are no longer in the matrix: 34 classes, 20 battles per pair, 11,220 battles. Each class has 660 battles, so a change under about 4 points is noise. The comparison is with round 7 without those four classes.
+
+| Class | Round 7 | Round 8 | Change |
+|---|---|---|---|
+| Titan | 87.0 | 85.6 | −1.4 |
+| Hell Knight | 80.0 | 82.3 | +2.3 |
+| Maestro | 80.5 | 81.4 | +0.9 |
+| Adventurer | 31.2 | 40.6 | +9.4 |
+| Wind Rider | 21.2 | 28.8 | +7.6 |
+| Ghost Hunter | 34.8 | 38.9 | +4.1 |
+| Ghost Sentinel | 22.1 | 29.2 | +7.1 |
+| Moonlight Sentinel | 22.4 | 27.4 | +5.0 |
+| Sagittarius | 39.1 | 41.1 | +2.0 |
+| Archmage | 58.2 | 63.5 | +5.3 |
+| Mystic Muse | 55.2 | 58.9 | +3.7 |
+| Female Soul Hound | 38.2 | 30.8 | −7.4 |
+| War Dancer | 42.4 | 36.1 | −6.3 |
+| Shillien Templar | 73.5 | 67.6 | −5.9 |
+| Battle Bard | 40.6 | 35.5 | −5.1 |
+| Battle Oracle | 31.8 | 26.8 | −5.0 |
+| Phoenix Knight | 68.3 | 63.5 | −4.8 |
+
+- The dagger, bow and nuker buffs worked. The daggers gained the most.
+- The tree's HP and defence nerf didn't touch the top three: Titan, Hell Knight and Maestro are within noise of round 7. The ones it hurt are the tanks and support fighters who take those nodes: Shillien Templar, Phoenix Knight, War Dancer, Battle Bard, Battle Oracle.
+- Female Soul Hound fell 7.4 even with the reuse cut. Male Soul Hound didn't move.
+- Bottom four: Battle Oracle 26.8, Moonlight Sentinel 27.4, Wind Rider 28.8, Ghost Sentinel 29.2.
