@@ -1616,81 +1616,82 @@
 		</effects>
 	</skill>
 	<skill id="121" levels="6" name="Battle Roar" enchantGroup1="1" enchantGroup2="1">
-		<!-- Level 1: Regenerates 10% of the user's original HP and increases the user's Max HP by 10% for 10 minutes. -->
-		<!-- Level 2: Regenerates 15% of the user's original HP and increases the user's Max HP by 15% for 10 minutes. -->
-		<!-- Level 3: Regenerates 20% of the user's original HP and increases the user's Max HP by 20% for 10 minutes. -->
-		<!-- Level 4: Regenerates 25% of the user's original HP and increases the user's Max HP by 25% for 10 minutes. -->
-		<!-- Level 5: Regenerates 30% of the user's original HP and increases the user's Max HP by 30% for 10 minutes. -->
-		<!-- Level 6: Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. -->
-		<!-- Level 101 (+1 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 102 (+2 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 103 (+3 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 104 (+4 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 105 (+5 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 106 (+6 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 107 (+7 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 108 (+8 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 109 (+9 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 110 (+10 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 111 (+11 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 112 (+12 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 113 (+13 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 114 (+14 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 115 (+15 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 116 (+16 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 117 (+17 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 118 (+18 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 119 (+19 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 120 (+20 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 121 (+21 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 122 (+22 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 123 (+23 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 124 (+24 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 125 (+25 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 126 (+26 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 127 (+27 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 128 (+28 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 129 (+29 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 130 (+30 Recycle): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
-		<!-- Level 201 (+1 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 1. -->
-		<!-- Level 202 (+2 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 1. -->
-		<!-- Level 203 (+3 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 1. -->
-		<!-- Level 204 (+4 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 2. -->
-		<!-- Level 205 (+5 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 2. -->
-		<!-- Level 206 (+6 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 2. -->
-		<!-- Level 207 (+7 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 3. -->
-		<!-- Level 208 (+8 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 3. -->
-		<!-- Level 209 (+9 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 3. -->
-		<!-- Level 210 (+10 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 4. -->
-		<!-- Level 211 (+11 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 4. -->
-		<!-- Level 212 (+12 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 4. -->
-		<!-- Level 213 (+13 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 4. -->
-		<!-- Level 214 (+14 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 5. -->
-		<!-- Level 215 (+15 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 5. -->
-		<!-- Level 216 (+16 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 5. -->
-		<!-- Level 217 (+17 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 6. -->
-		<!-- Level 218 (+18 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 6. -->
-		<!-- Level 219 (+19 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 6. -->
-		<!-- Level 220 (+20 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 7. -->
-		<!-- Level 221 (+21 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 7. -->
-		<!-- Level 222 (+22 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 7. -->
-		<!-- Level 223 (+23 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 7. -->
-		<!-- Level 224 (+24 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 8. -->
-		<!-- Level 225 (+25 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 8. -->
-		<!-- Level 226 (+26 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 8. -->
-		<!-- Level 227 (+27 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 9. -->
-		<!-- Level 228 (+28 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 9. -->
-		<!-- Level 229 (+29 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 9. -->
-		<!-- Level 230 (+30 Attack): Regenerates 35% of the user's original HP and increases the user's Max HP by 35% for 10 minutes. Enchant Attack: Increases P. Atk. by 10. -->
+		<!-- Level 1: Regenerates 5% of the user's original HP and increases the user's Max HP by 5% for 10 minutes. -->
+		<!-- Level 2: Regenerates 8% of the user's original HP and increases the user's Max HP by 8% for 10 minutes. -->
+		<!-- Level 3: Regenerates 10% of the user's original HP and increases the user's Max HP by 10% for 10 minutes. -->
+		<!-- Level 4: Regenerates 13% of the user's original HP and increases the user's Max HP by 13% for 10 minutes. -->
+		<!-- Level 5: Regenerates 15% of the user's original HP and increases the user's Max HP by 15% for 10 minutes. -->
+		<!-- Level 6: Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. -->
+		<!-- Level 101 (+1 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 102 (+2 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 103 (+3 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 104 (+4 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 105 (+5 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 106 (+6 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 107 (+7 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 108 (+8 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 109 (+9 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 110 (+10 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 111 (+11 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 112 (+12 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 113 (+13 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 114 (+14 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 115 (+15 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 116 (+16 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 117 (+17 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 118 (+18 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 119 (+19 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 120 (+20 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 121 (+21 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 122 (+22 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 123 (+23 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 124 (+24 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 125 (+25 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 126 (+26 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 127 (+27 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 128 (+28 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 129 (+29 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 130 (+30 Recycle): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Recycle: Decreases re-use time. -->
+		<!-- Level 201 (+1 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 1. -->
+		<!-- Level 202 (+2 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 1. -->
+		<!-- Level 203 (+3 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 1. -->
+		<!-- Level 204 (+4 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 2. -->
+		<!-- Level 205 (+5 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 2. -->
+		<!-- Level 206 (+6 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 2. -->
+		<!-- Level 207 (+7 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 3. -->
+		<!-- Level 208 (+8 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 3. -->
+		<!-- Level 209 (+9 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 3. -->
+		<!-- Level 210 (+10 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 4. -->
+		<!-- Level 211 (+11 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 4. -->
+		<!-- Level 212 (+12 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 4. -->
+		<!-- Level 213 (+13 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 4. -->
+		<!-- Level 214 (+14 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 5. -->
+		<!-- Level 215 (+15 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 5. -->
+		<!-- Level 216 (+16 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 5. -->
+		<!-- Level 217 (+17 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 6. -->
+		<!-- Level 218 (+18 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 6. -->
+		<!-- Level 219 (+19 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 6. -->
+		<!-- Level 220 (+20 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 7. -->
+		<!-- Level 221 (+21 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 7. -->
+		<!-- Level 222 (+22 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 7. -->
+		<!-- Level 223 (+23 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 7. -->
+		<!-- Level 224 (+24 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 8. -->
+		<!-- Level 225 (+25 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 8. -->
+		<!-- Level 226 (+26 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 8. -->
+		<!-- Level 227 (+27 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 9. -->
+		<!-- Level 228 (+28 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 9. -->
+		<!-- Level 229 (+29 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 9. -->
+		<!-- Level 230 (+30 Attack): Regenerates 18% of the user's original HP and increases the user's Max HP by 18% for 10 minutes. Enchant Attack: Increases P. Atk. by 10. -->
 		<table name="#abnormalLevels">1 2 3 4 5 6</table>
-		<table name="#power">10 15 20 25 30 35</table>
-		<table name="#amount">10 15 20 25 30 35</table>
+		<table name="#power">5 8 10 13 15 18</table>
+		<table name="#amount">5 8 10 13 15 18</table>
 		<table name="#effectPoints">268 379 467 549 597 635</table>
 		<table name="#magicLevel">28 40 49 58 64 70</table>
 		<table name="#mpConsume">13 18 22 27 30 33</table>
 		<table name="#ench1Reuse">148000 145000 143000 140000 138000 135000 133000 130000 128000 125000 123000 120000 118000 115000 113000 110000 108000 105000 103000 100000 98000 95000 93000 90000 88000 85000 83000 80000 78000 75000</table>
 		<table name="#ench2pAtk">1 1 1 2 2 2 3 3 3 4 4 4 4 5 5 5 6 6 6 7 7 7 7 8 8 8 9 9 9 10</table>
 		<table name="#enchMagicLvl">76 76 76 77 77 77 78 78 78 79 79 79 80 80 80 81 81 81 82 82 82 83 83 83 84 84 84 85 85 85</table>
+		<!-- Custom: half the retail High Five values (35% at level 6) for every class (docs/class-balance-85.md, round 9). -->
 		<icon>icon.skill0121</icon>
 		<operateType>A2</operateType>
 		<targetType>SELF</targetType>
@@ -1717,13 +1718,13 @@
 		</effects>
 		<enchant2effects>
 			<effect name="MaxHp">
-				<power>35</power>
+				<power>18</power>
 				<type>PER</type>
 				<heal>false</heal>
 				<add stat="pAtk">#ench2pAtk</add>
 			</effect>
 			<effect name="HealPercent">
-				<power>35</power>
+				<power>18</power>
 			</effect>
 		</enchant2effects>
 	</skill>

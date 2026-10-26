@@ -103,9 +103,10 @@ public class Heal extends AbstractEffect
 			amount += staticShotBonus + Math.sqrt(mAtkMul * effector.getMAtk(effector, null));
 			amount = effected.calcStat(Stat.HEAL_EFFECT, amount, null, null);
 			
-			if (effector.isPlayable() && (skill.getItemConsumeCount() <= 0))
+			// Class balance, for players and roaming fake players alike.
+			if ((Formulas.balanceClass(effector) != null) && (skill.getItemConsumeCount() <= 0))
 			{
-				amount *= ClassBalanceConfig.PLAYER_HEALING_SKILL_MULTIPLIERS[effector.asPlayer().getPlayerClass().getId()];
+				amount *= Formulas.balance(ClassBalanceConfig.PLAYER_HEALING_SKILL_MULTIPLIERS, effector);
 			}
 			
 			// Heal critic, since CT2.3 Gracia Final
