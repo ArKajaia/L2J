@@ -971,7 +971,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 		}
 
-		// Brain B: a pressed archer or mage stops the melee (with what lands before it arrives) or steps back, even in the middle of a combo, rather than stand through a cast.
+		// Brain B: a pressed archer or mage stops the melee (with what lands before it arrives), even in the middle of a combo, rather than stand through a cast. An archer then steps back and shoots in between; a mage
+		// casts what it can finish first (a nuker wins by out-damaging the melee) and only steps back with nothing short enough (below).
 		if (pressed && canMove && !npc.isAttackingNow() && ((distance - collision) < PRESSED_KITE_DISTANCE))
 		{
 			if (_combo != null)
@@ -982,7 +983,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			{
 				return;
 			}
-			if (kiteStep(npc, target, now))
+			if (!mage && kiteStep(npc, target, now))
 			{
 				return;
 			}
