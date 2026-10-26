@@ -524,3 +524,34 @@ The four healers (Hierophant, Cardinal, Shillien Saint, Eva's Saint) are no long
 
 - Titan and Maestro came down clearly. Hell Knight is now first: Judgment is cast 28% less, but it still takes no more damage than before, so its defence, not Judgment, is what keeps it on top.
 - Bottom four: Ghost Sentinel 25.0, Wind Rider 26.8, Moonlight Sentinel 28.0, Battle Oracle 29.7.
+
+## Round 10: Hell Knight defences, faster daggers, archers and mages, M.Atk nodes (`matrix-20261026-123905`)
+
+**Changes** (on top of round 9)
+- Hell Knight: P.Def and M.Def ×0.85 in PvP, like Titan and Maestro.
+- Run speed +20 for daggers (Adventurer, Wind Rider, Ghost Hunter), archers (Sagittarius, Moonlight Sentinel, Ghost Sentinel, Trickster: −15 + 20 = +5) and mages (Archmage, Soultaker, Mystic Muse, Storm Screamer, the Soul Hounds, the summoners).
+- The round 8 cut of the passive tree's HP and P.Def/M.Def nodes is reverted.
+- Every M.Atk % bonus of the passive tree +20%, rounded to one decimal (the 0.2% nodes stay 0.2%).
+- The Soultaker may take Soul Link (a build's `keystones="+Name"` adds to its role's list). Vampiric Sorcery was already open to every mage.
+
+**Checked in the logs:** run speed Adventurer 219, Sagittarius 222, Archmage 217, Trickster 228 (all +20 on round 8); HP back up (Titan 30,700 → 34,150, Archmage 13,700 → 16,050); 23% of the Soultakers took Soul Link.
+
+The disk of the test machine filled up halfway through. The run was resumed, and 7 result lines written during the failure were mixed up and are left out: 5,605 of 5,610 battles. Each class has 330 battles, so a change under about 5 points is noise.
+
+| Class | Round 9 | Round 10 | Change |
+|---|---|---|---|
+| Doombringer | 71.4 | 78.3 | +6.9 |
+| Titan | 79.5 | 77.9 | −1.6 |
+| Hell Knight | 81.4 | 76.0 | −5.4 |
+| Maestro | 73.4 | 72.4 | −1.0 |
+| Mystic Muse | 55.6 | 63.9 | +8.3 |
+| Storm Screamer | 53.2 | 59.1 | +5.9 |
+| Battle Oracle | 29.7 | 36.0 | +6.3 |
+| Fortune Seeker | 61.9 | 56.1 | −5.8 |
+| Flame Warchief | 41.9 | 35.5 | −6.4 |
+| Male Soul Hound | 41.2 | 31.5 | −9.7 |
+
+- Hell Knight came down 5.4 and the top four are now within 6 points of each other. Doombringer is first: it gained most from the tree's HP coming back.
+- Mystic Muse and Storm Screamer gained from the M.Atk nodes and the speed. Archmage +2.8, Soultaker flat.
+- The Soul Hounds lost ground (Male −9.7) despite the speed; the HP the melee classes got back weighs more against them than the M.Atk they gained.
+- Daggers and archers moved little: Adventurer +4.1, Ghost Sentinel +2.9, Moonlight Sentinel −3.2. Bottom: Moonlight Sentinel 24.8, Ghost Sentinel 27.9, Wind Rider 28.6.
