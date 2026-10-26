@@ -420,3 +420,40 @@ About +2.5 on average, a consistent direction but each within noise.
 - **Moves to watch:** Wind Rider 30.9 → 26.1, Adventurer 42.0 → 37.8 and Duelist 55.4 → 50.1 lost the most. Nothing in this round touched them directly, so the likely cause is the archers and mages around them getting stronger.
 
 The spread of the win rates (standard deviation 22) hasn't moved since round 3. The top five are still where they were, and the skill nerfs of the "top five" section are what's left to bring them down.
+
+## Round 6: top five skill nerfs and stun reuse (`matrix-20261026-075343`, stopped)
+
+**Changes**
+- Crush of Doom (315) power −10%, Cursed Pierce (921) critical rate 30 → 15.
+- Stuns take 1.5× as long to come back for the top five (Shield Stun, Hammer Crush, Stun Attack, Armor Crush, Shock Blast, Shoulder Charge), and Doombringer's Disarm 2×, through `ClassSkillReuseMultipliers`.
+- PvP physical damage ×0.9 for the top five in `ClassBalance.ini`. The class balance PvP multipliers now also apply when a roaming fake player is in the fight.
+
+The longer reuses showed up in the logs: the shortest gap between two Shield Stuns went from 2.6 to 4.0 s, Hammer Crush 2.7 → 3.9 s, Armor Crush 3.5 → 5.3 s, Shock Blast 7.0 → 11.0 s and Disarm 7.0 → 14.0 s. Shoulder Charge stayed at 7.2 s.
+
+The run was stopped at 16,671 of 35,150 battles, about 25 per pair. The top five barely moved: Titan 91.2 → 90.6, Hell Knight 90.3 → 87.7, Dreadnought 87.0 → 85.2, Maestro 85.4 → 84.9, Doombringer 83.9 → 84.4. Each class had about 880 battles, so a change under about 3 points is noise. Stun uptime wasn't what kept them on top.
+
+## Round 7: top seven melee damage, crits and speed (`matrix-20261026-090555`)
+
+**Changes** (on top of round 6), for the seven melee classes at the top of round 6: Titan, Hell Knight, Maestro, Dreadnought, Doombringer, Fortune Seeker and Trickster.
+- PvP physical damage (attacks and skills) ×0.8, instead of ×0.9.
+- PvP physical critical damage ×0.7. These multipliers now also apply when a roaming fake player is in the fight.
+- Run speed −15, through the new `RunSpeedBonus` option of `ClassBalance.ini` (a flat bonus by class, negative to take speed away, for players and roaming fake players).
+
+Full matrix with 10 battles per pair, 7,030 battles. Each class has 370 battles, so a change under about 5 points is noise. Compared with round 6:
+
+| Class | Round 6 | Round 7 | Change |
+|---|---|---|---|
+| Titan | 90.6 | 88.4 | −2.2 |
+| Maestro | 84.9 | 82.4 | −2.5 |
+| Hell Knight | 87.7 | 82.2 | −5.5 |
+| Dreadnought | 85.2 | 76.5 | −8.7 |
+| Doombringer | 84.4 | 76.1 | −8.3 |
+| Fortune Seeker | 73.8 | 61.9 | −11.9 |
+| Trickster | 72.1 | 51.6 | −20.5 |
+
+- **Fortune Seeker and Trickster** fell to the middle, with this as their first nerf.
+- **Dreadnought, Doombringer and Hell Knight** came down clearly.
+- **Titan and Maestro** hardly moved, and they are still first and second.
+- **Who gained:** the classes those seven used to beat. Doom Oracle +6.8, Grand Khavatari +6.1, Flame Warchief +6.2, War Dancer +6.0, Spectral Dancer +5.8, Female Soul Hound +5.6, Battle Oracle +5.5. Shillien Templar (75.9) and Phoenix Knight (71.6) are now 6th and 7th.
+- **Ghost Sentinel** went 36.2 → 29.7, the only big drop outside the seven.
+- **Bottom, healers aside:** Wind Rider 29.6, Ghost Sentinel 29.7, Moonlight Sentinel 30.5 and Doomcryer 31.8.
