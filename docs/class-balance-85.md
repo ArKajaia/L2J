@@ -555,3 +555,28 @@ The disk of the test machine filled up halfway through. The run was resumed, and
 - Mystic Muse and Storm Screamer gained from the M.Atk nodes and the speed. Archmage +2.8, Soultaker flat.
 - The Soul Hounds lost ground (Male −9.7) despite the speed. A likely cause, not checked in the logs: the HP the melee classes got back weighs more against them than the M.Atk they gained.
 - Daggers and archers moved little: Adventurer +4.1, Ghost Sentinel +2.9, Moonlight Sentinel −3.2. Bottom: Moonlight Sentinel 24.8, Ghost Sentinel 27.9, Wind Rider 28.6.
+
+## Round 11: archer kiting, bow reuse, Soul Hounds (`matrix-20261026-144042`, archers and Soul Hounds only)
+
+**Changes**
+- Fake player archers against a melee: they shoot while the melee can't reach them before the shot is off, and otherwise step back (from 600 away, at least 350 per step) as soon as the last shot is off, at an angle when the way back is blocked. Before, they waited for the melee at 280 and paused 3–5 s between steps.
+- Bows: attack reuse 1,500 → 1,200 ms (167 bows).
+- Soul Hounds: base INT and DEX +4.
+- New builds: Male and Female Soul Hound Hybrid (fighter role, rapier skills and soul nukes, fighter buffs with Acumen and Empower).
+
+Only the pairs with an archer or a Soul Hound fought, 15 battles each: 3,780 battles, 525 per focus class, so a change under about 4 points is noise. The overall rates are against a slightly different set of opponents than round 10 (the hybrids are new).
+
+| Class | Round 10 | Round 11 | Change |
+|---|---|---|---|
+| Sagittarius | 41.8 | 59.1 | +17.3 |
+| Moonlight Sentinel | 24.8 | 46.7 | +21.9 |
+| Ghost Sentinel | 27.9 | 46.5 | +18.6 |
+| Trickster | 52.6 | 47.5 | −5.1 |
+| Female Soul Hound | 32.7 | 40.2 | +7.5 |
+| Male Soul Hound | 31.5 | 37.0 | +5.5 |
+| Male Soul Hound Hybrid | – | 34.5 | |
+| Female Soul Hound Hybrid | – | 27.6 | |
+
+- The bow archers now take about 40% less damage per second (Sagittarius 523 → 312) and live 53–59 s instead of 36–38 s. Against tanks they win 34–52% instead of 2%, against melee 47–55% instead of 20–27%. They still spend 43–47% of the time within 150 of a melee (53–55% before), but are cornered much less.
+- The nuker Soul Hounds deal 8% more damage (464 → 500 per second), what +4 INT should give.
+- The hybrids are weaker than the nukers: less HP (15,500–17,000 against 20,000, their tree takes no HP), they walk into melee and win 4–6% against tanks.
