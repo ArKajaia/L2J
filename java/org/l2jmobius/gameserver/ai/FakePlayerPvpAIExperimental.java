@@ -2341,8 +2341,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	{
 		for (Skill skill : profile.getSkills(SkillCategory.PEEL))
 		{
-			// Brain B: only what lands before the melee arrives, and no melee skill for a mage (it would stay in melee to use it).
-			if ((mage && (getSkillReach(skill) < 150)) || (getCastTime(npc, skill) > Math.max(QUICK_CAST, safeCast + CAST_MARGIN)))
+			// Brain B: only what lands before the melee arrives, and no physical melee skill for a mage (Hammer Crush, Stun Attack: it would stay in melee to use them). Its spells around itself (Aura Flash, Blink) are kept.
+			if ((mage && skill.isPhysical() && (getSkillReach(skill) < 150)) || (getCastTime(npc, skill) > Math.max(QUICK_CAST, safeCast + CAST_MARGIN)))
 			{
 				continue;
 			}
