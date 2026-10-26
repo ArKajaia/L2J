@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.config.custom.FakeSimulationConfig;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.managers.simulation.SimulationHistory;
 import org.l2jmobius.gameserver.managers.simulation.SimulationLog;
+import org.l2jmobius.gameserver.managers.simulation.SimulationMatrix;
 import org.l2jmobius.gameserver.managers.simulation.SimulationMember;
 import org.l2jmobius.gameserver.managers.simulation.SimulationPoint;
 import org.l2jmobius.gameserver.managers.simulation.SimulationRun;
@@ -58,6 +59,8 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
  * <li>GET /api/simulation/member?series=&amp;round=&amp;id= - the decisions, events and anomalies of one character</li>
  * <li>POST /api/simulation/start, /rerun, /stop - like //Simulate and //SimulationStop (start: size, level, mirror, rounds, time, seed, points, swapPoints, brains like A:B, swap for an A/B test)</li>
  * <li>GET /api/simulation/points, POST /api/simulation/points/clear, /points/draw - the saved spawn points</li>
+ * <li>POST /api/simulation/matrix/start, /matrix/resume, /matrix/stop, GET /matrix/status - the class-vs-class matrix, like //SimulationMatrix (start: battles, parallel, level, time, distance, brain, builds, seed, and x, y, z, heading for the place: the GM's own
+ * place by default, else the simulation field by Cruma Marshlands)</li>
  * </ul>
  * Everything is read from the files the simulations leave (see {@link SimulationLog}), so past runs survive restarts until SimulationKeepRuns prunes them.
  * @author Claude
@@ -163,6 +166,10 @@ public class SimulationWeb
 		server.addRoute("/api/simulation/points/clear", "POST", true, this::handleClearPoint);
 		server.addRoute("/api/simulation/points/draw", "POST", true, this::handleDrawPoints);
 		server.addRoute("/api/simulation/points", "GET", false, this::handlePoints);
+		server.addRoute("/api/simulation/matrix/start", "POST", true, this::handleMatrixStart);
+		server.addRoute("/api/simulation/matrix/resume", "POST", true, this::handleMatrixResume);
+		server.addRoute("/api/simulation/matrix/stop", "POST", true, this::handleMatrixStop);
+		server.addRoute("/api/simulation/matrix/status", "GET", false, this::handleMatrixStatus);
 		if (FakeSimulationConfig.WEB_OPEN_ACCESS)
 		{
 			LOGGER.warning("SimulationWeb: SimulationWebOpenAccess is on - anyone who reaches " + server.getPageUrl("simulation.html") + " can start and stop simulations.");
@@ -788,6 +795,113 @@ public class SimulationWeb
 		final List<String> lines = new ArrayList<>();
 		lines.add(FakeSimulationManager.getInstance().stop(gm));
 		sendLines(exchange, lines);
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	// Class matrix
+	// ---------------------------------------------------------------------------------------------
+
+	/** Where a matrix started from the web without a GM's place fights: the open field by Cruma Marshlands (also in the GM teleport menu). */
+	private static final int[] MATRIX_FIELD =
+	{
+		20480,
+		104448,
+		-3700,
+		0
+	};
+
+	private void handleMatrixStart(HttpExchange exchange) throws IOException
+	{
+		final PassiveTreeApiServer server = PassiveTreeApiServer.getInstance();
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+
+		final Map<String, String> params = server.readParams(exchange);
+		final boolean here = (gm != null) && (gm.getInstanceId() == 0);
+		final int x = parseInt(params.get("x"), here ? gm.getX() : MATRIX_FIELD[0]);
+		final int y = parseInt(params.get("y"), here ? gm.getY() : MATRIX_FIELD[1]);
+		final int z = parseInt(params.get("z"), here ? gm.getZ() : MATRIX_FIELD[2]);
+		final int heading = parseInt(params.get("heading"), here ? gm.getHeading() : MATRIX_FIELD[3]);
+		final int battles = Math.max(1, Math.min(1000, parseInt(params.get("battles"), 20)));
+		final int parallel = Math.max(1, Math.min(500, parseInt(params.get("parallel"), 100)));
+		final int level = Math.max(1, Math.min(85, parseInt(params.get("level"), 85)));
+		final int time = Math.max(10, parseInt(params.get("time"), FakeSimulationConfig.TIME_LIMIT));
+		final int distance = Math.max(100, Math.min(3000, parseInt(params.get("distance"), 1000)));
+		final String brain = (params.get("brain") == null) || params.get("brain").trim().isEmpty() ? null : params.get("brain").trim();
+		final String builds = (params.get("builds") == null) || params.get("builds").trim().isEmpty() ? null : params.get("builds").trim();
+		long seed;
+		try
+		{
+			final String text = params.get("seed");
+			seed = (text == null) || text.trim().isEmpty() ? Rnd.get(1, Integer.MAX_VALUE) : Long.parseLong(text.trim());
+		}
+		catch (NumberFormatException e)
+		{
+			server.sendText(exchange, 400, "application/json", "{\"error\":\"the seed must be a whole number\"}");
+			return;
+		}
+		sendMatrixLines(exchange, FakeSimulationManager.getInstance().startMatrix(gm, x, y, z, heading, battles, parallel, level, time, distance, brain, builds, seed));
+	}
+
+	private void handleMatrixResume(HttpExchange exchange) throws IOException
+	{
+		final PassiveTreeApiServer server = PassiveTreeApiServer.getInstance();
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+
+		final Map<String, String> params = server.readParams(exchange);
+		final String name = (params.get("name") == null) || params.get("name").trim().isEmpty() ? null : params.get("name").trim();
+		sendMatrixLines(exchange, FakeSimulationManager.getInstance().resumeMatrix(gm, name, Math.max(0, Math.min(500, parseInt(params.get("parallel"), 0)))));
+	}
+
+	private void handleMatrixStop(HttpExchange exchange) throws IOException
+	{
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+
+		final List<String> lines = new ArrayList<>();
+		lines.add(FakeSimulationManager.getInstance().stopMatrix());
+		sendMatrixLines(exchange, lines);
+	}
+
+	private void handleMatrixStatus(HttpExchange exchange) throws IOException
+	{
+		if (!authorize(exchange))
+		{
+			return;
+		}
+		sendMatrixLines(exchange, FakeSimulationManager.getInstance().getMatrixStatus());
+	}
+
+	/** Answers with what the manager said, and the matrix running now: its name, folder, battles done, running and in all. */
+	private static void sendMatrixLines(HttpExchange exchange, List<String> lines) throws IOException
+	{
+		final SimulationMatrix matrix = FakeSimulationManager.getInstance().getMatrix();
+		final StringBuilder json = new StringBuilder("{\"matrix\":");
+		if (matrix != null)
+		{
+			json.append("{\"name\":").append(SimpleJson.quote(matrix.getName())).append(",\"dir\":").append(SimpleJson.quote(matrix.getDir().toAbsolutePath().toString())).append(",\"done\":").append(matrix.getDone()).append(",\"running\":").append(matrix.getRunning()).append(",\"total\":").append(matrix.getTotal()).append(",\"stopping\":").append(matrix.isStopped()).append('}');
+		}
+		else
+		{
+			json.append("null");
+		}
+		json.append(",\"lines\":[");
+		for (int i = 0; i < lines.size(); i++)
+		{
+			json.append(i > 0 ? "," : "").append(SimpleJson.quote(lines.get(i)));
+		}
+		json.append("]}");
+		PassiveTreeApiServer.getInstance().sendJson(exchange, 200, json.toString());
 	}
 
 	/** Answers with what the manager said, and the simulation running now (set if it started). */

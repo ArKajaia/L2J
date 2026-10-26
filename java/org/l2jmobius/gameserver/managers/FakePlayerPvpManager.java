@@ -1662,6 +1662,8 @@ public class FakePlayerPvpManager
 
 			flagForSpot(fake);
 			prepareSimulant(fake);
+			// Its AI only starts by itself when a player sees it spawn: with nobody around (a matrix battle has its own instance, the admin may stand far away) it would stand idle until hit (issue #24 of docs/fake-player-simulation-issues.md).
+			fake.getAI().setIntention(Intention.ACTIVE);
 			return fake;
 		}
 		catch (Exception e)

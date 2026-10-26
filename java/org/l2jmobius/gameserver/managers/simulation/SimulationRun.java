@@ -58,6 +58,8 @@ public class SimulationRun
 	private volatile int _winner;
 	private volatile String _endReason;
 	private volatile ScheduledFuture<?> _task;
+	/** The battle of a class matrix this round plays, {@code null} for a round of //Simulate. */
+	private volatile SimulationMatrix.Battle _battle;
 
 	public SimulationRun(int id, int round, SimulationSettings settings, SimulationLog log)
 	{
@@ -274,6 +276,16 @@ public class SimulationRun
 	 * @param member a member
 	 * @return its team
 	 */
+	public SimulationMatrix.Battle getBattle()
+	{
+		return _battle;
+	}
+
+	public void setBattle(SimulationMatrix.Battle battle)
+	{
+		_battle = battle;
+	}
+
 	public SimulationTeam getTeamOf(SimulationMember member)
 	{
 		return getTeam(member.getTeamId());

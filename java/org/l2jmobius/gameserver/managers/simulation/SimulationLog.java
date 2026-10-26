@@ -220,7 +220,7 @@ public class SimulationLog
 		}
 	}
 
-	private static void deleteTree(Path dir)
+	static void deleteTree(Path dir)
 	{
 		try (Stream<Path> paths = Files.walk(dir))
 		{
