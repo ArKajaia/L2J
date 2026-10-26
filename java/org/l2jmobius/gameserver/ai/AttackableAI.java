@@ -459,31 +459,36 @@ public class AttackableAI extends CreatureAI
 	@Override
 	protected void onActionAfraid(Creature effector, boolean start)
 	{
-		if (_fearTask == null)
+		synchronized (this)
 		{
-			setFearTime(20); // 20 seconds total fear
-			_fearTask = ThreadPool.scheduleAtFixedRate(new FearTask(this, effector, start), 0, FEAR_TICKS * 1000); // 3-second path updates
-			_actor.startAbnormalVisualEffect(true, AbnormalVisualEffect.TURN_FLEE);
-		}
-		else
-		{
-			super.onActionAfraid(effector, start);
-			
-			if ((_actor.isDead() || (_fearTime <= 0)) && (_fearTask != null))
+			if (_fearTask == null)
 			{
-				_fearTask.cancel(true);
-				_fearTask = null;
-				_actor.stopAbnormalVisualEffect(true, AbnormalVisualEffect.TURN_FLEE);
-				
-				// Resume fighting the attacker if they are still alive; otherwise, switch to ACTIVE state
-				if ((effector != null) && !effector.isDead())
-				{
-					setIntention(Intention.ATTACK, effector);
-				}
-				else
-				{
-					setIntention(Intention.ACTIVE);
-				}
+				// Runs away now, and the task takes over every 3 seconds. Scheduled with no delay, the task's first run could come back here before _fearTask was set and start
+				// another task, which did the same: with fear on many creatures they piled up by the million and choked the scheduler.
+				setFearTime(20 - FEAR_TICKS); // 20 seconds total fear
+				_actor.startAbnormalVisualEffect(true, AbnormalVisualEffect.TURN_FLEE);
+				super.onActionAfraid(effector, start);
+				_fearTask = ThreadPool.scheduleAtFixedRate(new FearTask(this, effector, false), FEAR_TICKS * 1000, FEAR_TICKS * 1000); // 3-second path updates
+				return;
+			}
+		}
+		
+		super.onActionAfraid(effector, start);
+		
+		if ((_actor.isDead() || (_fearTime <= 0)) && (_fearTask != null))
+		{
+			_fearTask.cancel(true);
+			_fearTask = null;
+			_actor.stopAbnormalVisualEffect(true, AbnormalVisualEffect.TURN_FLEE);
+			
+			// Resume fighting the attacker if they are still alive; otherwise, switch to ACTIVE state
+			if ((effector != null) && !effector.isDead())
+			{
+				setIntention(Intention.ATTACK, effector);
+			}
+			else
+			{
+				setIntention(Intention.ACTIVE);
 			}
 		}
 	}
