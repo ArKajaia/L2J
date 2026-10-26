@@ -348,3 +348,48 @@ What it means:
 - **Ghost Sentinel and Sagittarius barely move.** A melee as fast as them still catches them: they need a slow (Hamstring Shot) to land first, or more speed.
 - **The Soul Hounds lose under brain B** in all three versions. Keep them on brain A when B is promoted (gate the pressed logic off for them), or find what costs them before promoting.
 - **Promoting:** B as it stands wins 2.5 points for the archers and mages taken together, and big for three of them. Per the A/B rules it can be promoted with the Soul Hounds left out; the top five are untouched by it (Titan 92.7, Hell Knight 87.2, Maestro 86.2, Dreadnought 88.1, Doombringer 87.2).
+
+## Round 4: the Soul Hounds, sitting, and gear tests
+
+**Why brain B hurt the Soul Hounds.** Under brain B their damage per second fell 10-13% (Male 522 → 452, Female 539 → 492) with no gain in safety: a melee was on them 52% of the time under both brains. There were two causes:
+- Pressed, brain B skipped combos, and the Soul Hounds' burst is a combo (Soul Vortex → Extinction → Soul Strike → Soul of Pain).
+- The cast filter left them mostly binds (Shadow Bind and Voice Bind 3.0 → 3.8 casts a battle) in place of damage.
+
+Stepping back gained them nothing: they were "cornered" twice as often.
+
+The fix: a pressed mage keeps its combo, and only archers drop theirs. Brain A against B, each mage against every build, 20 battles each (740 per mage, about ±5):
+
+| Build | vs melee/tank, A → B | Overall, A → B |
+|---|---|---|
+| Dominator | 12.0 → 31.0 | 33.9 → 44.6 |
+| Storm Screamer | 39.2 → 45.5 | 55.4 → 58.4 |
+| Flame Warchief | 32.0 → 36.8 | 43.8 → 44.8 |
+| Soultaker | 44.0 → 48.0 | 54.7 → 56.0 |
+| Male Soul Hound | 41.8 → 42.5 | 35.5 → 36.6 |
+| Female Soul Hound | 41.5 → 38.8 | 36.6 → 35.1 |
+| Doom Oracle | 61.5 → 62.8 | 59.4 → 60.5 |
+| Mystic Muse | 53.8 → 53.0 | 59.3 → 61.3 |
+| Archmage | 61.2 → 59.5 | 68.2 → 66.6 |
+
+Brain B is now neutral or better for every mage. With the archer results of round 3 (Trickster +16, Moonlight Sentinel +8 against melee), it is ready to promote.
+
+**Sitting in a fight.** The rest checks (alone, in a party, in a PvP spot, defending a siege) only looked for PvP threats. A hurt fake player could sit down with a monster still on it: after a kill, a monster it gave up on, a siege monster just past 600.
+
+`isFightNear` now also counts a monster that targets it and fights. All four rest checks use it, and `sitDown` refuses during a fight. Alone, it hits that monster back. This is in both brains. It compiles, but it couldn't be watched in game: the simulations never rest (no REST decision in 14,060 battles).
+
+**Gear tests** (brain A; each variant and its normal build against the same 38 builds, 10 battles each, 380 per variant, about ±7):
+
+| Variant | Normal → variant | Kept |
+|---|---|---|
+| Sagittarius in heavy armour | 36.2 → 44.3 (+8.1) | yes, weight 1 |
+| Ghost Sentinel in heavy armour | 25.8 → 34.3 (+8.5) | yes, weight 1 |
+| Moonlight Sentinel in heavy armour | 23.0 → 27.6 (+4.7) | yes, weight 1 |
+| Adventurer in tank armour | 41.1 → 43.2 (+2.1) | already has a heavy variant |
+| Wind Rider in tank armour | 31.8 → 35.9 (+4.2) | already has a heavy variant |
+| Ghost Hunter in tank armour | 43.4 → 46.6 (+3.2) | yes, a Heavy variant, weight 1 |
+| Hell Knight with a dagger | 87.8 → 75.5 (−12.3) | no |
+| Shillien Templar with a dagger | 77.2 → 69.5 (−7.7) | no |
+| Phoenix Knight with a dagger | 66.1 → 59.5 (−6.6) | no |
+| Eva's Templar with a dagger | 55.7 → 57.0 (+1.3) | no |
+
+At level 84 and above, the tanks' armour kit is the same Vesper set as the daggers' heavy kit, so a dagger "in tank armour" is the heavy variant the Adventurer and Wind Rider already roam with. Trickster (Kamael) gets no heavy variant.
