@@ -117,7 +117,7 @@ import org.l2jmobius.gameserver.util.LocationUtil;
  * </ul>
  * <p>
  * Brain B ({@link FakeBrain#B}): the experimental copy of {@link FakePlayerPvpAI}, which simulation teams can run against it. Changes go here first and are moved into {@link FakePlayerPvpAI} once simulations show they win more (see docs/fake-player-simulation-issues.md). It starts
- * as a copy of {@link FakePlayerPvpAI}: nothing changed yet (its last changes were promoted, see docs/fake-player-simulation-issues.md; the archer kiting of docs/class-balance-85.md round 11 went into both).
+ * as a copy of {@link FakePlayerPvpAI}: nothing changed yet (its last changes were promoted, see docs/fake-player-simulation-issues.md; the archer kiting of docs/class-balance-85.md round 11 and the hybrid Soul Hound mace swap went into both).
  */
 public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePlayerPvpBrain
 {
@@ -853,8 +853,14 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		
 		FakePlayerPvpManager.getInstance().tryPotion(npc);
 		
+		// A hybrid Soul Hound takes out its mace to fight a melee from a distance, or for a burst of casts from afar, and fights like a mage while it holds it.
+		if (profile.getCaster() != null)
+		{
+			chooseCaster(npc, profile, target, now);
+		}
+		
 		// In Final Form a Kamael fights up close with the transformation's skills, whatever its class.
-		final Role role = profile.isTransformed() ? Role.FIGHTER : profile.getRole();
+		final Role role = profile.isTransformed() ? Role.FIGHTER : profile.isCasterHeld() ? Role.MAGE : profile.getRole();
 		final boolean mage = role == Role.MAGE;
 		_autoAttacker = !mage && !profile.getBuild().isSkillFighter() && !profile.isTransformed();
 		final boolean pvp = isPvpEnemy(target);
@@ -2028,7 +2034,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private double focusScore(Attackable npc, FakePlayerParty party, Creature enemy)
 	{
 		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
-		final boolean ranged = (profile != null) && !profile.isTransformed() && (profile.getRole().isRanged() || profile.isBowHeld());
+		final boolean ranged = (profile != null) && !profile.isTransformed() && (profile.getRole().isRanged() || profile.isBowHeld() || profile.isCasterHeld());
 
 		// #7: an archer or mage hits anyone within its reach as easily, so only the walk beyond its reach counts (counting the whole distance kept the backline safe).
 		final double distance = npc.calculateDistance2D(enemy);
@@ -2207,7 +2213,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private boolean isPlayedAround(Attackable npc, Creature enemy)
 	{
 		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
-		final boolean mage = (profile != null) && !profile.isTransformed() && (profile.getRole() == Role.MAGE);
+		final boolean mage = (profile != null) && !profile.isTransformed() && ((profile.getRole() == Role.MAGE) || profile.isCasterHeld());
 		return (getKnownDefenses(enemy) & ((mage ? MAGIC_DAMAGE : PHYSICAL_DAMAGE) | DANGEROUS)) != 0;
 	}
 	
@@ -3876,6 +3882,93 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	}
 	
 	/**
+	 * A hybrid Soul Hound (a rapier with Health, a mace with Acumen) swaps like a player that keeps its mace on a hotkey: against a melee player it takes the mace out and fights like a mage, keeping its distance; against anyone else it takes it out
+	 * from {@link FakePlayerPvpConfig#CASTER_SWAP_DISTANCE} or farther when one of its mace combos (weapon="CASTER") is ready, casts it, and goes back to its rapier once it is done, for its HP and its physical skills. Monsters, and Final Form,
+	 * get the rapier. A real player swaps weapons instantly, so it doesn't cost a tick, but it doesn't break off a combo for it.
+	 * @param npc the fake player
+	 * @param profile its profile, with a magic weapon
+	 * @param target its target
+	 * @param now the current time
+	 */
+	private void chooseCaster(Attackable npc, FakePlayerPvpProfile profile, Creature target, long now)
+	{
+		if ((now < _nextWeaponSwapTime) || npc.isAttackingNow() || npc.isCastingNow() || npc.isStunned() || npc.isSleeping() || npc.isParalyzed())
+		{
+			return;
+		}
+		
+		final boolean held = profile.isCasterHeld();
+		final boolean comboOn = (_combo != null) && (_combo.getStance() != FakePlayerPvpCombo.Stance.ANY);
+		final boolean wantsCaster;
+		if (!isPvpEnemy(target) || profile.isTransformed() || profile.isBowHeld() || profile.isPolearmHeld())
+		{
+			wantsCaster = false;
+		}
+		else if (comboOn)
+		{
+			return; // It finishes the combo with the weapon it started it with.
+		}
+		else if (isMeleeThreat(target))
+		{
+			wantsCaster = true;
+		}
+		else
+		{
+			// From afar, for a mace combo; once it is cast, back to the rapier (unless another one is ready and the target still keeps away).
+			wantsCaster = (npc.calculateDistance2D(target) >= FakePlayerPvpConfig.CASTER_SWAP_DISTANCE) && (now >= _nextComboTime) && isStanceComboReady(npc, profile, target, FakePlayerPvpCombo.Stance.CASTER);
+		}
+		
+		if (wantsCaster == held)
+		{
+			return;
+		}
+		
+		if (FakePlayerPvpManager.getInstance().equipWeapon(npc, wantsCaster ? profile.getCaster() : profile.getMainWeapon()))
+		{
+			_nextWeaponSwapTime = now + FakePlayerPvpConfig.WEAPON_SWAP_INTERVAL;
+		}
+	}
+	
+	/**
+	 * @return {@code true} if one of its PvP combos played with {@code stance} could start now
+	 */
+	private static boolean isStanceComboReady(Attackable npc, FakePlayerPvpProfile profile, Creature target, FakePlayerPvpCombo.Stance stance)
+	{
+		for (FakePlayerPvpCombo.Chain combo : profile.getCombos())
+		{
+			if ((combo.getStance() == stance) && isComboReady(npc, profile, combo, target))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * @param profile its profile
+	 * @param combo a combo
+	 * @return {@code true} if {@code combo} is played with the weapon it holds now
+	 */
+	private static boolean isStanceHeld(FakePlayerPvpProfile profile, FakePlayerPvpCombo.Chain combo)
+	{
+		switch (combo.getStance())
+		{
+			case MAIN:
+			{
+				return !profile.isCasterHeld();
+			}
+			case CASTER:
+			{
+				return profile.isCasterHeld();
+			}
+			default:
+			{
+				return true;
+			}
+		}
+	}
+	
+	/**
 	 * @param npc the fake player
 	 * @return how many monsters fight it close by (the ones its polearm sweeps)
 	 */
@@ -4006,7 +4099,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			
 			for (FakePlayerPvpCombo.Chain combo : profile.getCombos())
 			{
-				if ((!combo.isPvp() || pvp) && (Rnd.get(100) < combo.getChance()) && isComboReady(npc, profile, combo, target))
+				if ((!combo.isPvp() || pvp) && isStanceHeld(profile, combo) && (Rnd.get(100) < combo.getChance()) && isComboReady(npc, profile, combo, target))
 				{
 					_combo = combo;
 					_comboTarget = target;
@@ -4062,8 +4155,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 				continue;
 			}
 			
-			// Follow-ups that only make sense on a stunned/held target.
-			if (step.needsDisabledTarget() && !isDisabled(target))
+			// Follow-ups that only make sense on a stunned/held target, or on one that casts (a silence).
+			if ((step.needsDisabledTarget() && !isDisabled(target)) || (step.needsMageTarget() && !castsMagic(target)))
 			{
 				if (step.isOptional())
 				{
@@ -4148,7 +4241,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			if (!firstChecked)
 			{
 				firstChecked = true;
-				if (!step.isSelf() && ((step.needsDisabledTarget() && !isDisabled(target)) || !canCast(npc, skill, target) || !FakePlayerPvpOraclesWarchiefs.isWorthCasting(npc, target, skill)))
+				if (!step.isSelf() && ((step.needsDisabledTarget() && !isDisabled(target)) || (step.needsMageTarget() && !castsMagic(target)) || !canCast(npc, skill, target) || !FakePlayerPvpOraclesWarchiefs.isWorthCasting(npc, target, skill)))
 				{
 					return false;
 				}
@@ -4229,7 +4322,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return !target.asPlayer().isMageClass();
 		}
 		final FakePlayerPvpProfile profile = target.isNpc() ? target.asNpc().getTemplate().getFakePlayerPvpProfile() : null;
-		return (profile == null) || profile.isTransformed() || !profile.getRole().isRanged();
+		return (profile == null) || profile.isTransformed() || (!profile.getRole().isRanged() && !profile.isCasterHeld());
 	}
 
 	/**
@@ -6146,7 +6239,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 */
 	private Creature findVisibleTarget(Attackable npc, FakePlayerPvpProfile profile, FakePlayerParty party, Creature target, long now)
 	{
-		final boolean ranged = !profile.isTransformed() && (profile.getRole().isRanged() || profile.isBowHeld());
+		final boolean ranged = !profile.isTransformed() && (profile.getRole().isRanged() || profile.isBowHeld() || profile.isCasterHeld());
 		if (!ranged || ((party != null) && (party.getFocus(now) == target)) || GeoEngine.getInstance().canSeeTarget(npc, target))
 		{
 			return null;
@@ -7046,6 +7139,16 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		
 		final BuffInfo info = member.getEffectList().getBuffInfoBySkillId(skill.getId());
 		return (info != null) && (info.getSkill().getLevel() <= skill.getLevel()) && (info.getTime() < BUFF_REFRESH_TIME);
+	}
+	
+	/**
+	 * @param creature a player or fake player
+	 * @return {@code true} for one that fights with magic: a mystic, or a fake player whose soul nukes count as much as its rapier (a hybrid Soul Hound)
+	 */
+	private static boolean castsMagic(Creature creature)
+	{
+		final FakePlayerPvpProfile profile = creature.isNpc() ? creature.asNpc().getTemplate().getFakePlayerPvpProfile() : null;
+		return isMage(creature) || ((profile != null) && (profile.getBuild().isHybrid() || profile.isCasterHeld()));
 	}
 	
 	/**

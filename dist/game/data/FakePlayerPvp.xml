@@ -28,6 +28,11 @@
 	               monsters surround it, so its normal attacks hit several of them, and switches back to its
 	               weapon once most of them are dead (see FakePvpPolearm* in config/Custom/FakePlayerPvp.ini).
 	               A build whose weapon is a polearm (Dreadnought) always has its multi-attack.
+	     caster  - kit of a magic weapon it carries besides its weapon (hybrid Soul Hounds: a mace with Acumen beside a rapier
+	               with Health). Against a melee player it takes it out and fights like a mage, keeping its distance; against
+	               anyone else it takes it out from afar (FakePvpCasterSwapDistance) for a weapon="CASTER" combo, then goes back to
+	               its weapon. A special ability of either weapon only counts while it holds it (see FakePvpCasterSwap* in
+	               config/Custom/FakePlayerPvp.ini).
 	     weight  - relative chance to pick this build.
      variant - a second build of the same class: the same skills and combos, other gear, like players of
                a class that don't all wear the same set (a dagger in Tallum Plate, a mage still in its Dark
@@ -82,11 +87,14 @@
 	     combo     - skill chains played in order, like a practiced player's rotation. The first one that is
 	                 ready (required steps learned and off cooldown, enough energy) starts.
 	                 pvp="true": only against players. chance: % to start it when ready (default 100).
+	                 weapon="MAIN" or "CASTER": only with its own weapon, or its caster weapon, out (default either).
+	                 A build with a caster kit takes the caster weapon out for its CASTER combos.
 	                 step attributes:
 	                   optional       - skipped when it can't be used right now (otherwise it is waited for)
 	                   self           - cast on itself (buff before the burst)
 	                   behind         - get behind the target first (Backstab, Lethal Blow)
 	                   disabledTarget - only while the target is stunned, asleep, paralyzed or rooted
+	                   mageTarget     - only against a target that fights with magic (a silence is wasted on a warrior)
 	                 A debuff that is already on the target is skipped, and so is a self buff when it, or any
 	                 buff of the same type, is already on (e.g. Focus Chance/Power/Death replace each other).
 	     Class passive skills (masteries, etc.) for the level are always added.
@@ -292,6 +300,25 @@
 		<tier minLevel="76" rhand="9364" /> <!-- Laevateinn -->
 		<tier minLevel="80" rhand="10224" /> <!-- Icarus Stinger -->
 		<tier minLevel="84" rhand="13468" /> <!-- Vesper Pincer -->
+	</kit>
+	<kit name="RAPIER_HEALTH"> <!-- Hybrid Soul Hounds: the rapier with Health (+25% Max HP) where its grade has one, which counts only while they hold it (see the caster kit below). -->
+		<tier minLevel="1" rhand="9720" /> <!-- Warrior's Sword -->
+		<tier minLevel="20" rhand="9222" /> <!-- Epee -->
+		<tier minLevel="40" rhand="9292" /> <!-- Admiral's Estoc (no Health at C grade) -->
+		<tier minLevel="52" rhand="9316" /> <!-- Colichemarde (no Health at B grade) -->
+		<tier minLevel="61" rhand="9354" /> <!-- Eclair Bijou - Health -->
+		<tier minLevel="76" rhand="9366" /> <!-- Laevateinn - Health -->
+		<tier minLevel="80" rhand="10462" /> <!-- Icarus Stinger - Health -->
+		<tier minLevel="84" rhand="14152" /> <!-- Vesper Pincer - Health -->
+	</kit>
+	<kit name="SOUL_MACE"> <!-- The magic weapon a hybrid Soul Hound keeps on a hotkey: one-handed magic maces, with Acumen (+15% Casting Spd.) where the grade has one. Rapier Mastery's +15% Casting Spd. only counts with the rapier out. -->
+		<tier minLevel="20" rhand="179" /> <!-- Mace of Prayer -->
+		<tier minLevel="40" rhand="7710" /> <!-- Club of Nature - Acumen -->
+		<tier minLevel="52" rhand="8141" /> <!-- Spell Breaker - Acumen -->
+		<tier minLevel="61" rhand="8150" /> <!-- Flaming Dragon Skull - Acumen -->
+		<tier minLevel="76" rhand="6608" /> <!-- Arcana Mace - Acumen -->
+		<tier minLevel="80" rhand="10457" /> <!-- Icarus Hall - Acumen -->
+		<tier minLevel="84" rhand="14142" /> <!-- Vesper Caster - Acumen -->
 	</kit>
 	<kit name="CROSSBOW">
 		<tier minLevel="1" rhand="9212" /> <!-- Field Gun -->
@@ -1056,46 +1083,88 @@
 		</combo>
 		<variant name="Female Soul Hound Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Male Soul Hound Hybrid" classId="132" role="FIGHTER" weapon="RAPIER" armor="LIGHT_DAGGER" buffs="SOUL_HYBRID" hybrid="true" skillFighter="true" weight="1"> <!-- Kamael, male: the hybrid way (rapier skills up close, soul nukes in between), against the nuker build above -->
-		<attack>1436,504,505,1516,478,1469,1433,939</attack> <!-- Soul of Pain, Triple Thrust, Shining Edge, Soul Strike, Double Thrust, Leopold, Abyssal Blaze, Soul Rage -->
+	<build name="Male Soul Hound Hybrid" classId="132" role="FIGHTER" weapon="RAPIER_HEALTH" caster="SOUL_MACE" armor="LIGHT_DAGGER" buffs="SOUL_HYBRID" hybrid="true" skillFighter="true" weight="1"> <!-- Kamael, male: the hybrid way (rapier skills up close, soul nukes in between), against the nuker build above. Like a top PvP Soul Hound it keeps a mace on a hotkey: against a melee it swaps to it and kites like a mage; against anyone else it swaps to it from afar for a burst of casts (the weapon="CASTER" combos) and back to the rapier for its HP and physical skills -->
+		<attack>1436,504,505,1516,478,1469,1433,939,1512,1439</attack> <!-- Soul of Pain, Triple Thrust, Shining Edge, Soul Strike, Double Thrust, Leopold, Abyssal Blaze, Soul Rage, Soul Vortex, Curse of Divinity (the rapier skills are left out while the mace is out) -->
 		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
 		<buff>1441,482,1532,1515</buff>
 		<emergency>837,1556</emergency>
 		<toggle>481,480</toggle>
+		<peel>1448,1446,1447</peel> <!-- With the mace out: Blink stuns around it and jumps back, Shadow Bind roots -->
 		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
 		<transform>538</transform> <!-- Final Form -->
-		<combo name="Soul vortex" pvp="true">
+		<combo name="Soul vortex" pvp="true" weapon="MAIN">
 			<step skill="1512" /> <!-- Soul Vortex: slows it down -->
 			<step skill="504" /> <!-- Triple Thrust -->
 			<step skill="1436" optional="true" /> <!-- Soul of Pain -->
 			<step skill="505" optional="true" /> <!-- Shining Edge -->
 		</combo>
-		<combo name="Voice bind" pvp="true" chance="50">
-			<step skill="1447" /> <!-- Voice Bind -->
+		<combo name="Voice bind" pvp="true" chance="50" weapon="MAIN">
+			<step skill="1447" mageTarget="true" /> <!-- Voice Bind -->
 			<step skill="1435" optional="true" /> <!-- Death Mark -->
 			<step skill="504" /> <!-- Triple Thrust -->
+			<step skill="1436" optional="true" /> <!-- Soul of Pain -->
+		</combo>
+		<!-- With the mace out: Acumen and its M. Atk. for the casts, then back to the rapier. -->
+		<combo name="Mace: bind and nuke" pvp="true" chance="60" weapon="CASTER">
+			<step skill="1446" /> <!-- Shadow Bind: roots it, to keep the distance -->
+			<step skill="1529" optional="true" /> <!-- Soul Web -->
+			<step skill="1436" /> <!-- Soul of Pain -->
+			<step skill="1433" optional="true" /> <!-- Abyssal Blaze -->
+		</combo>
+		<combo name="Mace: steal and vortex" pvp="true" weapon="CASTER">
+			<step skill="1440" optional="true" /> <!-- Steal Divinity -->
+			<step skill="1447" optional="true" mageTarget="true" /> <!-- Voice Bind -->
+			<step skill="1512" /> <!-- Soul Vortex -->
+			<step skill="1516" optional="true" /> <!-- Soul Strike -->
+			<step skill="1436" optional="true" /> <!-- Soul of Pain -->
+		</combo>
+		<combo name="Mace: Leopold" pvp="true" weapon="CASTER">
+			<step skill="1435" optional="true" /> <!-- Death Mark -->
+			<step skill="1469" /> <!-- Leopold -->
+			<step skill="1516" optional="true" /> <!-- Soul Strike -->
 			<step skill="1436" optional="true" /> <!-- Soul of Pain -->
 		</combo>
 		<variant name="Male Soul Hound Hybrid Legacy" armor="LIGHT_LEGACY" weight="1" />
 	</build>
-	<build name="Female Soul Hound Hybrid" classId="133" role="FIGHTER" weapon="RAPIER" armor="LIGHT_DAGGER" buffs="SOUL_HYBRID" hybrid="true" skillFighter="true" weight="1"> <!-- Kamael, female: the hybrid way (rapier skills up close, soul nukes in between), against the nuker build above -->
-		<attack>1436,504,505,1516,478,1469,1433,939</attack> <!-- Soul of Pain, Triple Thrust, Shining Edge, Soul Strike, Double Thrust, Leopold, Abyssal Blaze, Soul Rage -->
+	<build name="Female Soul Hound Hybrid" classId="133" role="FIGHTER" weapon="RAPIER_HEALTH" caster="SOUL_MACE" armor="LIGHT_DAGGER" buffs="SOUL_HYBRID" hybrid="true" skillFighter="true" weight="1"> <!-- Kamael, female: the hybrid way (rapier skills up close, soul nukes in between), against the nuker build above. Like a top PvP Soul Hound it keeps a mace on a hotkey: against a melee it swaps to it and kites like a mage; against anyone else it swaps to it from afar for a burst of casts (the weapon="CASTER" combos) and back to the rapier for its HP and physical skills -->
+		<attack>1436,504,505,1516,478,1469,1433,939,1512,1439</attack> <!-- Soul of Pain, Triple Thrust, Shining Edge, Soul Strike, Double Thrust, Leopold, Abyssal Blaze, Soul Rage, Soul Vortex, Curse of Divinity (the rapier skills are left out while the mace is out) -->
 		<debuff>1435,1447,1446,1529,1511,1445,1440</debuff>
 		<buff>1441,482,1532,1515</buff>
 		<emergency>837,1556</emergency>
 		<toggle>481,480</toggle>
+		<peel>1448,1446,1447</peel> <!-- With the mace out: Blink stuns around it and jumps back, Shadow Bind roots -->
 		<cleanse>1510</cleanse> <!-- Soul Cleanse -->
 		<transform>538</transform> <!-- Final Form -->
-		<combo name="Soul vortex" pvp="true">
+		<combo name="Soul vortex" pvp="true" weapon="MAIN">
 			<step skill="1512" /> <!-- Soul Vortex: slows it down -->
 			<step skill="504" /> <!-- Triple Thrust -->
 			<step skill="1436" optional="true" /> <!-- Soul of Pain -->
 			<step skill="505" optional="true" /> <!-- Shining Edge -->
 		</combo>
-		<combo name="Voice bind" pvp="true" chance="50">
-			<step skill="1447" /> <!-- Voice Bind -->
+		<combo name="Voice bind" pvp="true" chance="50" weapon="MAIN">
+			<step skill="1447" mageTarget="true" /> <!-- Voice Bind -->
 			<step skill="1435" optional="true" /> <!-- Death Mark -->
 			<step skill="504" /> <!-- Triple Thrust -->
+			<step skill="1436" optional="true" /> <!-- Soul of Pain -->
+		</combo>
+		<!-- With the mace out: Acumen and its M. Atk. for the casts, then back to the rapier. -->
+		<combo name="Mace: bind and nuke" pvp="true" chance="60" weapon="CASTER">
+			<step skill="1446" /> <!-- Shadow Bind: roots it, to keep the distance -->
+			<step skill="1529" optional="true" /> <!-- Soul Web -->
+			<step skill="1436" /> <!-- Soul of Pain -->
+			<step skill="1433" optional="true" /> <!-- Abyssal Blaze -->
+		</combo>
+		<combo name="Mace: steal and vortex" pvp="true" weapon="CASTER">
+			<step skill="1440" optional="true" /> <!-- Steal Divinity -->
+			<step skill="1447" optional="true" mageTarget="true" /> <!-- Voice Bind -->
+			<step skill="1512" /> <!-- Soul Vortex -->
+			<step skill="1516" optional="true" /> <!-- Soul Strike -->
+			<step skill="1436" optional="true" /> <!-- Soul of Pain -->
+		</combo>
+		<combo name="Mace: Leopold" pvp="true" weapon="CASTER">
+			<step skill="1435" optional="true" /> <!-- Death Mark -->
+			<step skill="1469" /> <!-- Leopold -->
+			<step skill="1516" optional="true" /> <!-- Soul Strike -->
 			<step skill="1436" optional="true" /> <!-- Soul of Pain -->
 		</combo>
 		<variant name="Female Soul Hound Hybrid Legacy" armor="LIGHT_LEGACY" weight="1" />

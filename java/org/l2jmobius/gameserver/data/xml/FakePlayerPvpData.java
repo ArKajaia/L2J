@@ -103,6 +103,12 @@ public class FakePlayerPvpData implements IXmlReader
 				LOGGER.warning(getClass().getSimpleName() + ": Build " + build.getName() + " uses unknown polearm kit " + build.getPolearmKit() + ".");
 				return true;
 			}
+			
+			if ((build.getCasterKit() != null) && !_kits.containsKey(build.getCasterKit()))
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": Build " + build.getName() + " uses unknown caster kit " + build.getCasterKit() + ".");
+				return true;
+			}
 			return false;
 		});
 		
@@ -174,7 +180,7 @@ public class FakePlayerPvpData implements IXmlReader
 					return;
 				}
 				
-				final FakePlayerPvpBuild build = new FakePlayerPvpBuild(name, playerClass, parseEnum(attrs, Role.class, "role"), parseString(attrs, "weapon"), parseString(attrs, "armor"), parseString(attrs, "jewels", "JEWELS"), parseString(attrs, "bow", null), parseString(attrs, "polearm", null), parseString(attrs, "buffs", playerClass.isMage() ? "MAGE" : "FIGHTER"), Math.max(0, parseInteger(attrs, "weight", 1)), parseBoolean(attrs, "skillFighter", false), parseBoolean(attrs, "support", false), parseString(attrs, "keystones", null), parseBoolean(attrs, "hybrid", false), parseString(attrs, "weights", null));
+				final FakePlayerPvpBuild build = new FakePlayerPvpBuild(name, playerClass, parseEnum(attrs, Role.class, "role"), parseString(attrs, "weapon"), parseString(attrs, "armor"), parseString(attrs, "jewels", "JEWELS"), parseString(attrs, "bow", null), parseString(attrs, "polearm", null), parseString(attrs, "caster", null), parseString(attrs, "buffs", playerClass.isMage() ? "MAGE" : "FIGHTER"), Math.max(0, parseInteger(attrs, "weight", 1)), parseBoolean(attrs, "skillFighter", false), parseBoolean(attrs, "support", false), parseString(attrs, "keystones", null), parseBoolean(attrs, "hybrid", false), parseString(attrs, "weights", null));
 				final List<NamedNodeMap> variants = new ArrayList<>();
 				for (Node skillsNode = buildNode.getFirstChild(); skillsNode != null; skillsNode = skillsNode.getNextSibling())
 				{
@@ -187,11 +193,11 @@ public class FakePlayerPvpData implements IXmlReader
 					if ("combo".equalsIgnoreCase(skillsNode.getNodeName()))
 					{
 						final NamedNodeMap comboAttrs = skillsNode.getAttributes();
-						final FakePlayerPvpCombo combo = new FakePlayerPvpCombo(parseString(comboAttrs, "name", ""), parseBoolean(comboAttrs, "pvp", false), Math.max(0, Math.min(100, parseInteger(comboAttrs, "chance", 100))));
+						final FakePlayerPvpCombo combo = new FakePlayerPvpCombo(parseString(comboAttrs, "name", ""), parseBoolean(comboAttrs, "pvp", false), Math.max(0, Math.min(100, parseInteger(comboAttrs, "chance", 100))), parseEnum(comboAttrs, FakePlayerPvpCombo.Stance.class, "weapon", FakePlayerPvpCombo.Stance.ANY));
 						forEach(skillsNode, "step", stepNode ->
 						{
 							final NamedNodeMap stepAttrs = stepNode.getAttributes();
-							combo.addStep(new FakePlayerPvpCombo.Step(parseIds(parseString(stepAttrs, "skill")), parseBoolean(stepAttrs, "optional", false), parseBoolean(stepAttrs, "self", false), parseBoolean(stepAttrs, "behind", false), parseBoolean(stepAttrs, "disabledTarget", false)));
+							combo.addStep(new FakePlayerPvpCombo.Step(parseIds(parseString(stepAttrs, "skill")), parseBoolean(stepAttrs, "optional", false), parseBoolean(stepAttrs, "self", false), parseBoolean(stepAttrs, "behind", false), parseBoolean(stepAttrs, "disabledTarget", false), parseBoolean(stepAttrs, "mageTarget", false)));
 						});
 						
 						if (!combo.getSteps().isEmpty())
@@ -228,7 +234,7 @@ public class FakePlayerPvpData implements IXmlReader
 				// Second builds: other gear, the same skills and combos (shared, so only once the build has them all).
 				for (NamedNodeMap variantAttrs : variants)
 				{
-					_builds.add(build.createVariant(parseString(variantAttrs, "name"), parseString(variantAttrs, "weapon", null), parseString(variantAttrs, "armor", null), parseString(variantAttrs, "jewels", null), parseString(variantAttrs, "bow", null), parseString(variantAttrs, "polearm", null), parseString(variantAttrs, "buffs", null), Math.max(0, parseInteger(variantAttrs, "weight", 1))));
+					_builds.add(build.createVariant(parseString(variantAttrs, "name"), parseString(variantAttrs, "weapon", null), parseString(variantAttrs, "armor", null), parseString(variantAttrs, "jewels", null), parseString(variantAttrs, "bow", null), parseString(variantAttrs, "polearm", null), parseString(variantAttrs, "caster", null), parseString(variantAttrs, "buffs", null), Math.max(0, parseInteger(variantAttrs, "weight", 1))));
 				}
 			});
 		});

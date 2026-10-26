@@ -108,6 +108,7 @@ public class FakePlayerPvpBuild
 	private final String _jewelKit;
 	private final String _bowKit;
 	private final String _polearmKit;
+	private final String _casterKit;
 	private final String _buffList;
 	private final int _weight;
 	private final boolean _skillFighter;
@@ -118,12 +119,12 @@ public class FakePlayerPvpBuild
 	private final Map<SkillCategory, List<int[]>> _skills;
 	private final List<FakePlayerPvpCombo> _combos;
 	
-	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight, boolean skillFighter, boolean support, String keystones, boolean hybrid, String weights)
+	public FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String casterKit, String buffList, int weight, boolean skillFighter, boolean support, String keystones, boolean hybrid, String weights)
 	{
-		this(name, playerClass, role, weaponKit, armorKit, jewelKit, bowKit, polearmKit, buffList, weight, skillFighter, support, keystones, hybrid, weights, new EnumMap<>(SkillCategory.class), new ArrayList<>());
+		this(name, playerClass, role, weaponKit, armorKit, jewelKit, bowKit, polearmKit, casterKit, buffList, weight, skillFighter, support, keystones, hybrid, weights, new EnumMap<>(SkillCategory.class), new ArrayList<>());
 	}
 	
-	private FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight, boolean skillFighter, boolean support, String keystones, boolean hybrid, String weights, Map<SkillCategory, List<int[]>> skills, List<FakePlayerPvpCombo> combos)
+	private FakePlayerPvpBuild(String name, PlayerClass playerClass, Role role, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String casterKit, String buffList, int weight, boolean skillFighter, boolean support, String keystones, boolean hybrid, String weights, Map<SkillCategory, List<int[]>> skills, List<FakePlayerPvpCombo> combos)
 	{
 		_name = name;
 		_playerClass = playerClass;
@@ -133,6 +134,7 @@ public class FakePlayerPvpBuild
 		_jewelKit = jewelKit;
 		_bowKit = bowKit;
 		_polearmKit = polearmKit;
+		_casterKit = casterKit;
 		_buffList = buffList;
 		_weight = weight;
 		_skillFighter = skillFighter;
@@ -152,13 +154,14 @@ public class FakePlayerPvpBuild
 	 * @param jewelKit its jewel kit, {@code null} for this build's
 	 * @param bowKit its bow kit, {@code null} for this build's
 	 * @param polearmKit its polearm kit, {@code null} for this build's
+	 * @param casterKit its magic weapon kit, {@code null} for this build's
 	 * @param buffList its buff list, {@code null} for this build's
 	 * @param weight its relative chance to be picked
 	 * @return the variant
 	 */
-	public FakePlayerPvpBuild createVariant(String name, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String buffList, int weight)
+	public FakePlayerPvpBuild createVariant(String name, String weaponKit, String armorKit, String jewelKit, String bowKit, String polearmKit, String casterKit, String buffList, int weight)
 	{
-		final FakePlayerPvpBuild variant = new FakePlayerPvpBuild(name, _playerClass, _role, weaponKit != null ? weaponKit : _weaponKit, armorKit != null ? armorKit : _armorKit, jewelKit != null ? jewelKit : _jewelKit, bowKit != null ? bowKit : _bowKit, polearmKit != null ? polearmKit : _polearmKit, buffList != null ? buffList : _buffList, weight, _skillFighter, _support, _keystones, _hybrid, _weights, _skills, _combos);
+		final FakePlayerPvpBuild variant = new FakePlayerPvpBuild(name, _playerClass, _role, weaponKit != null ? weaponKit : _weaponKit, armorKit != null ? armorKit : _armorKit, jewelKit != null ? jewelKit : _jewelKit, bowKit != null ? bowKit : _bowKit, polearmKit != null ? polearmKit : _polearmKit, casterKit != null ? casterKit : _casterKit, buffList != null ? buffList : _buffList, weight, _skillFighter, _support, _keystones, _hybrid, _weights, _skills, _combos);
 		variant._variant = true;
 		return variant;
 	}
@@ -265,6 +268,14 @@ public class FakePlayerPvpBuild
 	public String getPolearmKit()
 	{
 		return _polearmKit;
+	}
+	
+	/**
+	 * @return the kit of the magic weapon it carries besides its weapon (hybrid Soul Hounds: a mace beside the rapier) and takes out to cast from a distance, {@code null} for none
+	 */
+	public String getCasterKit()
+	{
+		return _casterKit;
 	}
 	
 	/**

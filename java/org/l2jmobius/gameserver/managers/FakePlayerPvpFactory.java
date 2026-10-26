@@ -363,8 +363,10 @@ public class FakePlayerPvpFactory
 			mDef += (2 * getStat(ring, Stat.MAGIC_DEFENCE)) + defenceEnchantBonus(leftRingEnchant) + defenceEnchantBonus(rightRingEnchant);
 		}
 		
-		// Weapon: its stats replace the unarmed ones (weapon "set" functions). A polearm (Dreadnoughts) also gives its Polearm Multi-attack while it holds it.
-		final FakePlayerPvpWeapon mainWeapon = createWeapon(classTemplate, weapon, shield, weaponEnchant, (weapon != null) && (weapon.getItemType() == WeaponType.POLE) ? getPassiveSkills(weapon) : Collections.emptyList());
+		// Weapon: its stats replace the unarmed ones (weapon "set" functions). A polearm (Dreadnoughts) also gives its Polearm Multi-attack while it holds it, and the weapon of a build that swaps to a magic weapon its special ability
+		// (a hybrid Soul Hound's rapier with Health), which it gives up while the other one is out.
+		final boolean caster = FakePlayerPvpConfig.CASTER_SWAP_ENABLED && (build.getCasterKit() != null) && (level >= FakePlayerPvpConfig.CASTER_SWAP_MIN_LEVEL);
+		final FakePlayerPvpWeapon mainWeapon = createWeapon(classTemplate, weapon, shield, weaponEnchant, (weapon != null) && ((weapon.getItemType() == WeaponType.POLE) || caster) ? getPassiveSkills(weapon) : Collections.emptyList());
 		
 		// Tanks and tyrants carry a bow for players they can't catch.
 		FakePlayerPvpWeapon bow = null;
@@ -388,6 +390,18 @@ public class FakePlayerPvpFactory
 			if ((polearmItem instanceof Weapon) && (polearmItem.getItemType() == WeaponType.POLE))
 			{
 				polearm = createWeapon(classTemplate, (Weapon) polearmItem, null, enchanter.roll(polearmItem, Kind.WEAPON) / 2, getPassiveSkills(polearmItem));
+			}
+		}
+		
+		// Hybrid Soul Hounds carry a magic weapon (a mace with Acumen) to cast from a distance. Its special ability counts only while it holds it.
+		FakePlayerPvpWeapon casterWeapon = null;
+		if (caster)
+		{
+			final FakePlayerPvpGearTier casters = data.getGear(build.getCasterKit(), elite ? level : rollGearLevel(level), elite);
+			final ItemTemplate casterItem = getItem(casters != null ? casters.getRHand() : 0);
+			if ((casterItem instanceof Weapon) && ((Weapon) casterItem).isMagicWeapon())
+			{
+				casterWeapon = createWeapon(classTemplate, (Weapon) casterItem, null, enchanter.roll(casterItem, Kind.WEAPON) / 2, getPassiveSkills(casterItem));
 			}
 		}
 		
@@ -587,8 +601,12 @@ public class FakePlayerPvpFactory
 		{
 			equipment.add(new ItemEnchantHolder(polearm.getWeaponId(), 1, polearm.getEnchant()));
 		}
+		if (casterWeapon != null)
+		{
+			equipment.add(new ItemEnchantHolder(casterWeapon.getWeaponId(), 1, casterWeapon.getEnchant()));
+		}
 		
-		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), armorWornMask, chest != null ? chest.getItemMask() : 0, maxCharges, equipment, mainWeapon, bow, polearm, elite ? FakePlayerPvpPersonality.elite() : FakePlayerPvpPersonality.random());
+		final FakePlayerPvpProfile profile = new FakePlayerPvpProfile(build, playerClass, level, data.getBuffs(build.getBuffList(), level), armorWornMask, chest != null ? chest.getItemMask() : 0, maxCharges, equipment, mainWeapon, bow, polearm, casterWeapon, elite ? FakePlayerPvpPersonality.elite() : FakePlayerPvpPersonality.random());
 		
 		profile.setPassives(passives);
 		profile.setElite(elite);

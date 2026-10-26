@@ -34,6 +34,19 @@ import org.l2jmobius.gameserver.model.skill.Skill;
 public class FakePlayerPvpCombo
 {
 	/**
+	 * The weapon a combo is played with, for a build that carries a magic weapon besides its own (hybrid Soul Hounds).
+	 */
+	public enum Stance
+	{
+		/** With whatever it holds. */
+		ANY,
+		/** Only with its own weapon out (the rapier skills). */
+		MAIN,
+		/** Only with its magic weapon out (the nukes and debuffs it casts from a distance). */
+		CASTER
+	}
+	
+	/**
 	 * One skill of a combo.
 	 */
 	public static class Step
@@ -43,6 +56,7 @@ public class FakePlayerPvpCombo
 		private final boolean _self;
 		private final boolean _behind;
 		private final boolean _disabledTarget;
+		private final boolean _mageTarget;
 		
 		/**
 		 * @param skillIds alternatives, the first one the fake player has learned is used
@@ -50,14 +64,16 @@ public class FakePlayerPvpCombo
 		 * @param self cast on itself (a buff before the burst)
 		 * @param behind get behind the target before using it (blows)
 		 * @param disabledTarget only used while the target is stunned, rooted, asleep or paralyzed
+		 * @param mageTarget only used against a target that fights with magic (a silence is wasted on a warrior)
 		 */
-		public Step(int[] skillIds, boolean optional, boolean self, boolean behind, boolean disabledTarget)
+		public Step(int[] skillIds, boolean optional, boolean self, boolean behind, boolean disabledTarget, boolean mageTarget)
 		{
 			_skillIds = skillIds;
 			_optional = optional;
 			_self = self;
 			_behind = behind;
 			_disabledTarget = disabledTarget;
+			_mageTarget = mageTarget;
 		}
 		
 		public int[] getSkillIds()
@@ -83,6 +99,11 @@ public class FakePlayerPvpCombo
 		public boolean needsDisabledTarget()
 		{
 			return _disabledTarget;
+		}
+		
+		public boolean needsMageTarget()
+		{
+			return _mageTarget;
 		}
 	}
 	
@@ -115,6 +136,11 @@ public class FakePlayerPvpCombo
 			return _combo.getChance();
 		}
 		
+		public Stance getStance()
+		{
+			return _combo.getStance();
+		}
+		
 		public int size()
 		{
 			return _skills.size();
@@ -138,18 +164,21 @@ public class FakePlayerPvpCombo
 	private final String _name;
 	private final boolean _pvp;
 	private final int _chance;
+	private final Stance _stance;
 	private final List<Step> _steps = new ArrayList<>();
 	
 	/**
 	 * @param name a name, for reading the data file
 	 * @param pvp only used against players
 	 * @param chance the chance (in %) to start it whenever it is ready
+	 * @param stance the weapon it is played with
 	 */
-	public FakePlayerPvpCombo(String name, boolean pvp, int chance)
+	public FakePlayerPvpCombo(String name, boolean pvp, int chance, Stance stance)
 	{
 		_name = name;
 		_pvp = pvp;
 		_chance = chance;
+		_stance = stance;
 	}
 	
 	public void addStep(Step step)
@@ -170,6 +199,11 @@ public class FakePlayerPvpCombo
 	public int getChance()
 	{
 		return _chance;
+	}
+	
+	public Stance getStance()
+	{
+		return _stance;
 	}
 	
 	public List<Step> getSteps()
