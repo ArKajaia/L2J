@@ -580,3 +580,35 @@ Only the pairs with an archer or a Soul Hound fought, 15 battles each: 3,780 bat
 - The bow archers now take about 40% less damage per second (Sagittarius 523 → 312) and live 53–59 s instead of 36–38 s. Against tanks they win 34–52% instead of 2%, against melee 47–55% instead of 20–27%. They still spend 43–47% of the time within 150 of a melee (53–55% before), but are cornered much less.
 - The nuker Soul Hounds deal 8% more damage (464 → 500 per second), what +4 INT should give.
 - The hybrids are weaker than the nukers: less HP (15,500–17,000 against 20,000; not yet checked why), they walk into melee and win 4–6% against tanks.
+
+## Round 12: full matrix after the archer and Soul Hound changes (`matrix-20261026-154924`)
+
+**Changes** (on top of round 11)
+- Trickster: PvP physical damage ×0.8 → ×0.88 (+10%).
+- Fix: fear (Curse Fear, Horror...) scheduled its 3-second task with no delay, and the task's first run could start another one before the first was recorded. In a long matrix 3.2 million of them piled up, the scheduler fell behind and from about battle 16,500 the fights stalled at full HP (300 s draws). The first attempt at this round was thrown away; in this one at most a handful of fear tasks were queued at any time.
+
+Full matrix, 36 classes (the 34 of round 10 and the two hybrid Soul Hounds), 50 battles per pair, 31,500 battles. Each class has 1,750 battles, so a change under about 2.5 points is noise. 24 draws, none of them a stalled fight.
+
+| Class | Round 10 | Round 12 | Change |
+|---|---|---|---|
+| Titan | 77.9 | 74.0 | −3.9 |
+| Doombringer | 78.3 | 71.4 | −6.9 |
+| Hell Knight | 76.0 | 70.8 | −5.2 |
+| Shillien Templar | 67.5 | 69.1 | +1.6 |
+| Maestro | 72.4 | 66.2 | −6.2 |
+| Sagittarius | 41.8 | 58.7 | +16.9 |
+| Trickster | 52.6 | 54.5 | +1.9 |
+| Moonlight Sentinel | 24.8 | 48.7 | +23.9 |
+| Ghost Sentinel | 27.9 | 45.3 | +17.4 |
+| Ghost Hunter | 39.4 | 47.7 | +8.3 |
+| Female Soul Hound | 32.7 | 40.2 | +7.5 |
+| Male Soul Hound | 31.5 | 38.0 | +6.5 |
+| Male Soul Hound Hybrid | – | 34.6 | |
+| Battle Bard | 40.6 | 33.4 | −7.2 |
+| War Dancer | 38.2 | 32.2 | −6.0 |
+| Female Soul Hound Hybrid | – | 28.8 | |
+
+- The bow archers kept what they gained in round 11; the melee top (Doombringer, Hell Knight, Maestro) came down 5–7 points against them.
+- The spread keeps narrowing: the standard deviation of the win rates (healers aside) went 18.5 (round 5) → 15.5 (round 10) → 13.5, and the range 26–91 → 25–78 → 29–74.
+- The nuker Soul Hounds are up 6.5–7.5 points; the hybrids are weaker than them.
+- Bottom: Female Soul Hound Hybrid 28.8, Wind Rider 30.7, Doomcryer 31.7, War Dancer 32.2, Battle Bard 33.4. Battle Bard and War Dancer lost the most without a change of their own, probably to the archers (not checked).
