@@ -91,6 +91,8 @@ public class FakePlayerPvpConfig
 	public static int PASSIVE_TREE_KEYSTONE_MIN_LEVEL;
 	/** Role name -> the keystones (node names, optionally {@code Name@TOKEN} for a gear condition) a fake player of that role may take. */
 	public static Map<String, List<String>> PASSIVE_TREE_KEYSTONES;
+	/** Keystone name -> the keystone a fake player that took it heads for next, if it is on its role's list and in reach (FakePvpKeystonePartners). */
+	public static Map<String, String> PASSIVE_TREE_KEYSTONE_PARTNERS;
 	public static boolean BUFFS_ENABLED;
 	public static int POTION_HP_PERCENT;
 	public static int POTION_HEAL_PERCENT;
@@ -199,7 +201,7 @@ public class FakePlayerPvpConfig
 		},
 		{
 			"MAGE",
-			"Spell Echo;Vampiric Sorcery;Ley Anchor;Unshaken Mind"
+			"Mind Over Matter;Martyr's Vow;Spell Echo;Vampiric Sorcery;Ley Anchor;Unshaken Mind"
 		}
 	};
 	
@@ -294,6 +296,20 @@ public class FakePlayerPvpConfig
 			keystones.put(role[0], List.copyOf(names));
 		}
 		PASSIVE_TREE_KEYSTONES = keystones;
+		final Map<String, String> partners = new HashMap<>();
+		for (String entry : config.getString("FakePvpKeystonePartners", "Mind Over Matter>Martyr's Vow").split(","))
+		{
+			final String[] pair = entry.split(">");
+			if ((pair.length == 2) && !pair[0].isBlank() && !pair[1].isBlank())
+			{
+				partners.put(pair[0].trim(), pair[1].trim());
+			}
+			else if (!entry.isBlank())
+			{
+				LOGGER.warning("FakePlayerPvpConfig: Invalid FakePvpKeystonePartners entry: " + entry);
+			}
+		}
+		PASSIVE_TREE_KEYSTONE_PARTNERS = partners;
 		BUFFS_ENABLED = config.getBoolean("FakePvpBuffsEnabled", true);
 		POTION_HP_PERCENT = Math.max(0, Math.min(100, config.getInt("FakePvpPotionHpPercent", 50)));
 		POTION_HEAL_PERCENT = Math.max(0, Math.min(100, config.getInt("FakePvpPotionHealPercent", 6)));

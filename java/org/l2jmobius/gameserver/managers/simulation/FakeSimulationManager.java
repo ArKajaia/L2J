@@ -1428,12 +1428,13 @@ public class FakeSimulationManager
 	 * @param level the level of the fake players
 	 * @param timeLimit the time limit of a battle, in seconds
 	 * @param distance how far apart the two spawn
-	 * @param brains the AI of both ("A" or "B")
+	 * @param brains the AI of both ("A" or "B"), or of the first and second build of each pair ("A:B", an A/B test with {@code mirror})
+	 * @param mirror {@code true} for an A/B test: every build only fights itself
 	 * @param builds build names separated by commas, {@code null} or "all" for one build per class
 	 * @param seed the seed
 	 * @return the lines to tell the admin
 	 */
-	public synchronized List<String> startMatrix(Player admin, int x, int y, int z, int heading, int battles, int parallel, int level, int timeLimit, int distance, String brains, String builds, long seed)
+	public synchronized List<String> startMatrix(Player admin, int x, int y, int z, int heading, int battles, int parallel, int level, int timeLimit, int distance, String brains, boolean mirror, String builds, long seed)
 	{
 		final List<String> lines = new ArrayList<>();
 		final String refusal = getMatrixRefusal();
@@ -1444,9 +1445,10 @@ public class FakeSimulationManager
 		}
 		final String brainList = brains != null ? SimulationSettings.normalizeBrains(brains) : FakeBrain.A.name();
 		final FakeBrain brain = brainList != null ? FakeBrain.parse(brainList.split(":")[0]) : null;
-		if (brain == null)
+		final FakeBrain brainB = brainList != null ? FakeBrain.parse(brainList.split(":")[brainList.split(":").length - 1]) : null;
+		if ((brain == null) || (brainB == null))
 		{
-			lines.add("Unknown brain \"" + brains + "\": A or B.");
+			lines.add("Unknown brain \"" + brains + "\": A, B or A:B.");
 			return lines;
 		}
 		final List<String> unknown = new ArrayList<>();
@@ -1456,7 +1458,7 @@ public class FakeSimulationManager
 			lines.add("Unknown build(s): " + String.join(", ", unknown) + ". The names are in data/FakePlayerPvp.xml (spaces as _ or left out: Treasure_Hunter is Adventurer).");
 			return lines;
 		}
-		if (list.size() < 2)
+		if (list.size() < (mirror ? 1 : 2))
 		{
 			lines.add("A matrix needs at least 2 builds.");
 			return lines;
@@ -1469,7 +1471,7 @@ public class FakeSimulationManager
 
 		final String name = "matrix-" + LocalDateTime.now().format(FOLDER_TIME);
 		final Path dir = getMatrixRoot().resolve(name);
-		final SimulationMatrix matrix = SimulationMatrix.create(name, dir, list, battles, parallel, level, timeLimit, distance, brain, seed, x, y, GeoEngine.getInstance().getHeight(x, y, z), heading, admin != null ? admin.getObjectId() : 0);
+		final SimulationMatrix matrix = SimulationMatrix.create(name, dir, list, battles, parallel, level, timeLimit, distance, brain, brainB, mirror, seed, x, y, GeoEngine.getInstance().getHeight(x, y, z), heading, admin != null ? admin.getObjectId() : 0);
 		return launchMatrix(matrix, lines);
 	}
 
@@ -1529,7 +1531,7 @@ public class FakeSimulationManager
 		final int left = matrix.getTotal() - matrix.getDone();
 		// About the preparation, a fight and the cleanup.
 		final long minutes = Math.round((left * (FakeSimulationConfig.PREP_TIME + 60 + MATRIX_CLEANUP_DELAY)) / (60.0 * matrix.getParallel()));
-		lines.add("Matrix " + matrix.getName() + ": " + matrix.getBuilds().size() + " classes, " + matrix.getBattles() + " battles per pair, " + left + " battle(s) to go (" + matrix.getDone() + " done), level " + matrix.getLevel() + ", " + matrix.getParallel() + " at once, brain " + matrix.getBrain() + ", " + matrix.getTimeLimit() + " s limit.");
+		lines.add("Matrix " + matrix.getName() + ": " + matrix.getBuilds().size() + " classes, " + matrix.getBattles() + " battles per pair, " + left + " battle(s) to go (" + matrix.getDone() + " done), level " + matrix.getLevel() + ", " +  matrix.getParallel() + " at once, brain " + matrix.getBrains() + (matrix.isMirror() ? " (A/B test: every build against itself)" : "") + ", " + matrix.getTimeLimit() + " s limit.");
 		lines.add("At " + matrix.getX() + ", " + matrix.getY() + ", " + matrix.getZ() + ", one instance per battle, the two " + matrix.getDistance() + " apart. Roughly " + (minutes / 60) + " h " + (minutes % 60) + " min if a fight lasts about a minute.");
 		lines.add("Results: " + matrix.getDir().resolve(SimulationMatrix.RESULTS).toAbsolutePath() + " (matrix.csv and matrix.txt every 50 battles). //SimulationMatrix status, //SimulationMatrix stop.");
 		return lines;
@@ -1696,7 +1698,7 @@ public class FakeSimulationManager
 		instance.setExitLoc(new Location(matrix.getX(), matrix.getY(), matrix.getZ()));
 
 		final int runId = RUN_IDS.incrementAndGet();
-		final SimulationSettings settings = new SimulationSettings(1, matrix.getLevel(), false, battle.seed(), 1, matrix.getTimeLimit(), matrix.getStarterId(), matrix.getBrain().name(), false);
+		final SimulationSettings settings = new SimulationSettings(1, matrix.getLevel(), false, battle.seed(), 1, matrix.getTimeLimit(), matrix.getStarterId(), matrix.getBrains(), false);
 		final SimulationLog log = new SimulationLog(matrix.getDir().resolve("battles").resolve(String.format("%06d-%s-vs-%s", battle.number(), slug(battle.a()), slug(battle.b()))));
 		final SimulationRun run = new SimulationRun(runId, battle.number(), settings, log);
 		run.setBattle(battle);
@@ -1716,7 +1718,9 @@ public class FakeSimulationManager
 			final int heading = (matrix.getHeading() + (i == 0 ? 0 : 32768)) & 0xFFFF;
 			final SimulationPoint point = new SimulationPoint(teamId, spot.getX(), spot.getY(), spot.getZ(), heading, instanceId);
 			final SimRole role = getRole(builds[i]);
-			final SimulationTeam team = new SimulationTeam(teamId, point, List.of(role), matrix.getBrain());
+			// The first build of the pair plays the first brain (in an A/B test both builds are the same, and the brains change spots every battle).
+			final boolean firstBuild = (i == 0) == battle.aFirst();
+			final SimulationTeam team = new SimulationTeam(teamId, point, List.of(role), firstBuild ? matrix.getBrain() : matrix.getBrainB());
 			run.getTeams().add(team);
 
 			final long seed = battle.seed() + teamId;
@@ -1744,7 +1748,7 @@ public class FakeSimulationManager
 
 		final JsonLine json = new JsonLine();
 		json.put("matrix", matrix.getName()).put("battle", battle.number()).put("a", battle.a()).put("b", battle.b()).put("round", battle.round()).put("aSpot", battle.aFirst() ? 1 : 2).put("runId", runId).put("instance", instanceId);
-		json.put("start", LocalDateTime.now().toString()).put("level", matrix.getLevel()).put("seed", battle.seed()).put("brain", matrix.getBrain().name()).put("timeLimit", matrix.getTimeLimit()).put("distance", matrix.getDistance());
+		json.put("start", LocalDateTime.now().toString()).put("level", matrix.getLevel()).put("seed", battle.seed()).put("brain", matrix.getBrains()).put("timeLimit", matrix.getTimeLimit()).put("distance", matrix.getDistance());
 		final List<JsonLine> members = new ArrayList<>();
 		for (SimulationMember member : run.getMembers().values())
 		{

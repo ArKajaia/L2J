@@ -335,11 +335,11 @@ public final class PassiveMechanics
 	
 	/**
 	 * Mind Over Matter: part of the damage about to hit HP is taken from MP instead.
-	 * @param player the player taking damage
+	 * @param player the player or roaming fake player taking damage
 	 * @param amount damage about to be applied to HP
 	 * @return the damage left for HP
 	 */
-	public static double absorbDamageWithMp(Player player, double amount)
+	public static double absorbDamageWithMp(Creature player, double amount)
 	{
 		final double pct = value(player, MIND_OVER_MATTER);
 		if ((pct <= 0) || (amount <= 0))

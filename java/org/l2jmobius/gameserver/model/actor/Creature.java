@@ -2143,7 +2143,8 @@ public abstract class Creature extends WorldObject
 		reuseDelay = Prophecies.getReuseDelay(this, skill, reuseDelay);
 		
 		// Check if this skill consume mp on start casting
-		final int initmpcons = isPvpFakePlayer() ? 0 : _stat.getMpInitialConsume(skill); // Roaming fake players don't use MP.
+		// Roaming fake players don't use MP, but one under Martyr's Vow pays the cost with HP like a player.
+		final int initmpcons = isPvpFakePlayer() && !PassiveMechanics.paysWithHp(this, skill) ? 0 : _stat.getMpInitialConsume(skill);
 		if (initmpcons > 0)
 		{
 			final StatusUpdate su = new StatusUpdate(this);
@@ -6273,7 +6274,8 @@ public abstract class Creature extends WorldObject
 			boolean isSendStatus = false;
 			
 			// Consume MP of the Creature and Send the Server->Client packet StatusUpdate with current HP and MP to all other Player to inform
-			final double mpConsume = isPvpFakePlayer() ? 0 : _stat.getMpConsume(skill); // Roaming fake players don't use MP.
+			// Roaming fake players don't use MP, but one under Martyr's Vow pays the cost with HP like a player.
+			final double mpConsume = isPvpFakePlayer() && !PassiveMechanics.paysWithHp(this, skill) ? 0 : _stat.getMpConsume(skill);
 			if ((mpConsume > 0) && PassiveMechanics.paysWithHp(this, skill))
 			{
 				// Passive tree blood keystones: the MP cost is paid with HP, and can never kill.

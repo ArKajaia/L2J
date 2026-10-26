@@ -910,6 +910,12 @@ public class PassiveTreeManager
 		{
 			npc.addStatFunc(new FuncAdd(Stat.MAX_MP, FAKE_GETTER_ORDER, PASSIVE_TREE_FUNC_OWNER, maxMp, null));
 		}
+		final double bloodMagic = bonus.get(PassiveMechanics.BLOOD_MAGIC);
+		if (bloodMagic > 0)
+		{
+			// Martyr's Vow: max HP grows by a share of max MP, like PassiveMechanics.maxHp (its skills are paid with HP, see Creature).
+			npc.addStatFunc(new KeystoneFunc(Stat.MAX_HP, FAKE_GETTER_ORDER + 2, (creature, target, value) -> value + ((creature.getMaxMp() * bloodMagic) / 100.0)));
+		}
 		
 		// The keystones Player works into its getters, worked out each time the stat is read since they follow the fight.
 		if (bonus.get(PassiveMechanics.RAMPAGE) > 0)

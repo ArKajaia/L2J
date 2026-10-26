@@ -74,8 +74,6 @@ public class FakePlayerPvpPassiveTree
 	private static final double COMMON_WEIGHT = 2;
 	/** Weight of an effect key the role is built on (P. Atk. for fighters, M. Atk. for mages...). */
 	private static final double ROLE_WEIGHT = 3;
-	/** Weight of a damage key (P. Atk., critical hits...) for a tank: it is built to hold, so it wants less of them than a fighter (a Hell Knight's tree gave +47% P. Atk. on top of +31% HP). */
-	private static final double TANK_DAMAGE_WEIGHT = ROLE_WEIGHT / 2;
 	/** How much an effect counts whose condition holds only part of the time (LOWHP, NIGHT, STILL...). */
 	private static final double PART_TIME_WEIGHT = 0.5;
 	/** Worth of a path that gives nothing, so once nothing of use is left a tree still spends its points, on the shortest steps. */
@@ -992,6 +990,23 @@ public class FakePlayerPvpPassiveTree
 				return null;
 			}
 
+			// A keystone that goes with one it took (FakePvpKeystonePartners: Martyr's Vow after Mind Over Matter) comes next.
+			for (int chosen : _chosen)
+			{
+				final String partner = FakePlayerPvpConfig.PASSIVE_TREE_KEYSTONE_PARTNERS.get(_nodes[chosen].getName());
+				if (partner == null)
+				{
+					continue;
+				}
+				for (int keystone : _keystoneChoices)
+				{
+					if (_nodes[keystone].getName().equals(partner) && !_taken[keystone] && (_distance[keystone] != Long.MAX_VALUE) && !conflictsWithChosen(keystone))
+					{
+						return path(keystone);
+					}
+				}
+			}
+
 			final List<Integer> reachable = new ArrayList<>();
 			final List<Double> chances = new ArrayList<>();
 			double total = 0;
@@ -1100,7 +1115,7 @@ public class FakePlayerPvpPassiveTree
 			}
 			case TANK:
 			{
-				return TANK_KEYS.contains(key) ? ROLE_WEIGHT : PHYSICAL_KEYS.contains(key) ? TANK_DAMAGE_WEIGHT : 0;
+				return PHYSICAL_KEYS.contains(key) || TANK_KEYS.contains(key) ? ROLE_WEIGHT : 0;
 			}
 			case DAGGER:
 			{
