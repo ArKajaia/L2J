@@ -61,6 +61,9 @@ public class TeamVsTeamConfig
 	public static List<Location> MANAGER_LOCATIONS;
 	public static int BLUE_NAME_COLOR;
 	public static int RED_NAME_COLOR;
+	public static boolean BUFF_TEMPLATE;
+	/** The buffs players may put in their TvT Event buff template: {skill id, level}, level 0 for the skill's highest. */
+	public static List<int[]> BUFFS;
 
 	public static void load()
 	{
@@ -165,6 +168,31 @@ public class TeamVsTeamConfig
 
 		BLUE_NAME_COLOR = Integer.decode("0x" + config.getString("TvTBlueNameColor", "FF9F7F"));
 		RED_NAME_COLOR = Integer.decode("0x" + config.getString("TvTRedNameColor", "5F5FFF"));
+		
+		BUFF_TEMPLATE = config.getBoolean("TvTBuffTemplate", true);
+		final List<int[]> buffs = new ArrayList<>();
+		for (String part : config.getString("TvTBuffs", "1204;1068;1040;1036;1035;1045;1048;1086;1085;1062;1077;1240;1242;1268;1059;1303;1078;1087;1397;1032;1073;1044;1182;1191;1189;1033;1392;1393;271;272;273;274;275;310;264;265;266;267;268;269;304;349;363;364").split(";"))
+		{
+			if (part.isBlank())
+			{
+				continue;
+			}
+			
+			final String[] values = part.trim().split(",");
+			try
+			{
+				buffs.add(new int[]
+				{
+					Integer.parseInt(values[0].trim()),
+					values.length > 1 ? Math.max(0, Integer.parseInt(values[1].trim())) : 0
+				});
+			}
+			catch (NumberFormatException e)
+			{
+				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad buff \"" + part + "\" in TvTBuffs.");
+			}
+		}
+		BUFFS = Collections.unmodifiableList(buffs);
 	}
 
 	private static Location parseLocation(String text, String key)

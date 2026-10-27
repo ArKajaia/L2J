@@ -1174,9 +1174,14 @@ public class TeamVsTeamManager
 		player.getAppearance().setNameColor(side._nameColor);
 		player.setTeam(side._team);
 		player.teleToLocation(side._base, instance.getId(), TeamVsTeamConfig.SPAWN_RADIUS);
-		player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
-		player.setCurrentCp(player.getMaxCp());
+		buffAndHeal(player);
 		player.broadcastUserInfo();
+		
+		final BuffTemplateManager templates = BuffTemplateManager.getInstance();
+		if (templates.isTvtTemplateEnabled() && templates.getTemplate(player, BuffTemplateManager.TVT_SLOT).skillIds().isEmpty())
+		{
+			player.sendMessage("TvT: Your TvT Event buff template is empty. Fill it on the Community Board (Buff Templates) to get those buffs whenever you come back at your base.");
+		}
 	}
 
 	/**
@@ -1422,8 +1427,7 @@ public class TeamVsTeamManager
 			final Player player = creature.asPlayer();
 			player.setIsPendingRevive(true);
 			player.teleToLocation(fighter._side._base, match._instanceId, TeamVsTeamConfig.SPAWN_RADIUS);
-			player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
-			player.setCurrentCp(player.getMaxCp());
+			buffAndHeal(player);
 		}
 		else if (creature instanceof Npc fake)
 		{
@@ -1437,6 +1441,17 @@ public class TeamVsTeamManager
 		protect(fighter);
 	}
 
+	/**
+	 * Gives a player its TvT Event buff template (see {@link BuffTemplateManager#applyTvtTemplate}), then full HP, CP and MP (after the buffs, which may raise them).
+	 * @param player the player, alive
+	 */
+	private static void buffAndHeal(Player player)
+	{
+		BuffTemplateManager.getInstance().applyTvtTemplate(player);
+		player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
+		player.setCurrentCp(player.getMaxCp());
+	}
+	
 	/**
 	 * Teleports a fighter to its base. A fake player's teleport stops its AI task (the old spot's {@code decayMe}) while its intention stays ACTIVE, so setting ACTIVE again wouldn't wake it: its AI task starts again here.
 	 * @param fighter the fighter

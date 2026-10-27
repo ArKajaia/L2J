@@ -38,6 +38,7 @@ import org.l2jmobius.gameserver.model.skill.Skill;
 
 /**
  * Community Board page for buff templates: lists the character's template slots, lets it fill them with buffs from its own skill tree and applies a template to the character or its summon.<br>
+ * The TvT Event template ({@link BuffTemplateManager#TVT_SLOT}) is edited here too, from the event's buffs and the character's own, but only the Team vs Team event applies it (when the character enters a match and each time it comes back at its base).<br>
  * The client resets the scroll position whenever a Community Board page is redrawn, so every page is laid out to fit the window without scrolling: the editor shows the template and the available buffs side by side, each paged separately, and every action returns to the same pages.<br>
  * The page only builds bypasses; every bypass is validated again by {@link BuffTemplateManager}, since Community Board bypasses are not bound to the HTML that was sent.
  */
@@ -177,14 +178,24 @@ public class BuffTemplateBoard implements IParseBoardHandler
 		sb.append("</font></td></tr></table>");
 		appendStatus(sb, status, statusColor);
 		
-		for (int slot = 1; slot <= manager.getSlotCount(); slot++)
+		final int first = manager.isValidSlot(BuffTemplateManager.TVT_SLOT) ? BuffTemplateManager.TVT_SLOT : 1;
+		for (int slot = first; slot <= manager.getSlotCount(); slot++)
 		{
 			final BuffTemplate template = manager.getTemplate(player, slot);
+			final boolean tvt = slot == BuffTemplateManager.TVT_SLOT;
 			sb.append("<table width=520 cellspacing=0 cellpadding=2 bgcolor=\"000000\">");
 			sb.append("<tr>");
-			sb.append("<td width=190><font color=\"CDB67F\">").append(template.name()).append("</font> <font color=\"777777\">(").append(template.skillIds().size()).append(" / ").append(manager.getMaxBuffs()).append(")</font></td>");
-			sb.append("<td width=110>").append(button("Buff Me", "_bbsselfbuff_use " + slot + " self", 100, 25)).append("</td>");
-			sb.append("<td width=110>").append(button("Buff Summon", "_bbsselfbuff_use " + slot + " summon", 100, 25)).append("</td>");
+			sb.append("<td width=190><font color=\"").append(tvt ? "LEVEL" : "CDB67F").append("\">").append(template.name()).append("</font> <font color=\"777777\">(").append(template.skillIds().size()).append(" / ").append(manager.getMaxBuffs()).append(")</font></td>");
+			if (tvt)
+			{
+				// Only the event applies it.
+				sb.append("<td width=220><font color=\"B09878\">Given in TvT on entry and every respawn</font></td>");
+			}
+			else
+			{
+				sb.append("<td width=110>").append(button("Buff Me", "_bbsselfbuff_use " + slot + " self", 100, 25)).append("</td>");
+				sb.append("<td width=110>").append(button("Buff Summon", "_bbsselfbuff_use " + slot + " summon", 100, 25)).append("</td>");
+			}
 			sb.append("<td width=110>").append(button("Edit", "_bbsselfbuff_edit " + slot + " 0 0", 100, 25)).append("</td>");
 			sb.append("</tr>");
 			sb.append("</table>");
@@ -237,9 +248,10 @@ public class BuffTemplateBoard implements IParseBoardHandler
 		}
 		
 		final BuffTemplate template = manager.getTemplate(player, slot);
+		final boolean tvt = slot == BuffTemplateManager.TVT_SLOT;
 		final List<Integer> inTemplate = template.skillIds();
 		final List<Skill> available = new ArrayList<>();
-		for (Skill skill : manager.getEligibleBuffs(player))
+		for (Skill skill : manager.getEligibleBuffs(player, slot))
 		{
 			if (!inTemplate.contains(skill.getId()))
 			{
@@ -257,11 +269,18 @@ public class BuffTemplateBoard implements IParseBoardHandler
 		final StringBuilder sb = new StringBuilder();
 		appendTitle(sb, "Edit: " + template.name());
 		
-		// Rename + back.
+		// Rename + back (the TvT Event template keeps its name).
 		sb.append("<table width=540><tr>");
-		sb.append("<td width=160><edit var=\"tplname\" width=150 height=15 length=").append(BuffTemplateManager.MAX_NAME_LENGTH).append("></td>");
-		sb.append("<td width=90>").append(button("Rename", "_bbsselfbuff_rename " + slot + pages + " $tplname", 85, 22)).append("</td>");
-		sb.append("<td width=200></td>");
+		if (tvt)
+		{
+			sb.append("<td width=450><font color=\"B09878\">Given with full HP, CP and MP when you enter a TvT match and every time you come back at your base.</font></td>");
+		}
+		else
+		{
+			sb.append("<td width=160><edit var=\"tplname\" width=150 height=15 length=").append(BuffTemplateManager.MAX_NAME_LENGTH).append("></td>");
+			sb.append("<td width=90>").append(button("Rename", "_bbsselfbuff_rename " + slot + pages + " $tplname", 85, 22)).append("</td>");
+			sb.append("<td width=200></td>");
+		}
 		sb.append("<td width=90>").append(button("Back", "_bbsselfbuff", 85, 22)).append("</td>");
 		sb.append("</tr></table>");
 		appendStatus(sb, status, statusColor);
@@ -282,11 +301,11 @@ public class BuffTemplateBoard implements IParseBoardHandler
 		}
 		for (int skillId : inTemplate.subList(tp * ROWS_PER_PAGE, Math.min(inTemplate.size(), (tp + 1) * ROWS_PER_PAGE)))
 		{
-			final Skill known = player.getKnownSkill(skillId);
-			final boolean usable = manager.isEligible(player, known);
-			final Skill shown = displaySkill(player, skillId);
+			final Skill usableSkill = manager.getUsableSkill(player, slot, skillId);
+			final boolean usable = usableSkill != null;
+			final Skill shown = usable ? usableSkill : displaySkill(player, skillId);
 			final String name = shown != null ? shown.getName() : "Skill " + skillId;
-			final String detail = usable ? level(known) : "<font color=\"" + COLOR_ERROR + "\">not usable by this character</font>";
+			final String detail = usable ? level(usableSkill) + eventTag(player, usableSkill) : "<font color=\"" + COLOR_ERROR + "\">not usable by this character</font>";
 			appendRow(sb, shown, name, detail, usable, button("Remove", "_bbsselfbuff_remove " + slot + " " + skillId + pages, 60, 22));
 		}
 		sb.append("</table>");
@@ -296,7 +315,7 @@ public class BuffTemplateBoard implements IParseBoardHandler
 		// Right column.
 		sb.append("<td width=270 valign=top>");
 		sb.append("<table width=266 cellspacing=0 cellpadding=1 bgcolor=\"000000\"><tr>");
-		sb.append("<td width=176><font color=\"LEVEL\">Your buffs</font> <font color=\"777777\">").append(available.size()).append(" more</font></td>");
+		sb.append("<td width=176><font color=\"LEVEL\">").append(tvt ? "Event and your buffs" : "Your buffs").append("</font> <font color=\"777777\">").append(available.size()).append(" more</font></td>");
 		sb.append("<td width=90 align=right>").append(available.isEmpty() ? "" : button("Add All", "_bbsselfbuff_addall " + slot + pages, 85, 20)).append("</td>");
 		sb.append("</tr></table>");
 		sb.append("<table width=266 cellspacing=0 cellpadding=1>");
@@ -306,7 +325,7 @@ public class BuffTemplateBoard implements IParseBoardHandler
 		}
 		for (Skill skill : available.subList(ap * ROWS_PER_PAGE, Math.min(available.size(), (ap + 1) * ROWS_PER_PAGE)))
 		{
-			appendRow(sb, skill, skill.getName(), level(skill), true, button("Add", "_bbsselfbuff_add " + slot + " " + skill.getId() + pages, 60, 22));
+			appendRow(sb, skill, skill.getName(), level(skill) + eventTag(player, skill), true, button("Add", "_bbsselfbuff_add " + slot + " " + skill.getId() + pages, 60, 22));
 		}
 		sb.append("</table>");
 		appendPager(sb, ap, aPages, "_bbsselfbuff_edit " + slot + " " + tp + " %d");
@@ -381,6 +400,17 @@ public class BuffTemplateBoard implements IParseBoardHandler
 	private static String button(String value, String bypass, int width, int height)
 	{
 		return "<button value=\"" + value + "\" action=\"bypass " + bypass + "\" width=" + width + " height=" + height + " back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">";
+	}
+	
+	/**
+	 * @param player the owner
+	 * @param skill a buff as a template applies it
+	 * @return a mark for a TvT event buff (one the character doesn't know at that level), empty otherwise
+	 */
+	private static String eventTag(Player player, Skill skill)
+	{
+		final Skill known = player.getKnownSkill(skill.getId());
+		return ((known == null) || (known.getLevel() != skill.getLevel())) && (BuffTemplateManager.getTvtBuff(skill.getId()) != null) ? " <font color=\"LEVEL\">TvT</font>" : "";
 	}
 	
 	private static String level(Skill skill)
