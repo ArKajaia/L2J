@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
 import org.l2jmobius.gameserver.config.custom.CustomBuffConfig;
+import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.data.xml.SkillTreeData;
 import org.l2jmobius.gameserver.model.actor.Creature;
@@ -52,11 +53,16 @@ import org.l2jmobius.gameserver.model.zone.ZoneId;
  * <li>it must come from the character's own skill tree, be listed in Player.ini SkillDurationList and pass the structural buff filter;</li>
  * <li>it is only placed on the character or its own summon, never on anyone else.</li>
  * </ul>
- * Templates are stored in character variables, so they are saved and deleted together with the character.
+ * Templates are stored in character variables, so they are saved and deleted together with the character.<br>
+ * Besides its numbered templates, a character has the TvT Event template ({@link #TVT_SLOT}): it may also hold the event's buffs (TvTBuffs in TeamVsTeam.ini), and only the Team vs Team event applies it, when the character enters a match and each time it comes back at its base.
  */
 public class BuffTemplateManager
 {
 	public static final int MAX_NAME_LENGTH = 16;
+	
+	/** The slot of the TvT Event template (see {@link TeamVsTeamManager}). */
+	public static final int TVT_SLOT = 0;
+	private static final String TVT_TEMPLATE_NAME = "TvT Event";
 	
 	private static final String VARIABLE_PREFIX = "CB_BUFF_TEMPLATE_";
 	private static final Pattern NAME_PATTERN = Pattern.compile("[A-Za-z0-9 _-]{1," + MAX_NAME_LENGTH + "}");
@@ -97,7 +103,52 @@ public class BuffTemplateManager
 	
 	public boolean isValidSlot(int slot)
 	{
-		return (slot >= 1) && (slot <= getSlotCount());
+		return ((slot >= 1) && (slot <= getSlotCount())) || ((slot == TVT_SLOT) && isTvtTemplateEnabled());
+	}
+	
+	/**
+	 * @return {@code true} if characters have a TvT Event template (TvTEnabled and TvTBuffTemplate in TeamVsTeam.ini)
+	 */
+	public boolean isTvtTemplateEnabled()
+	{
+		return TeamVsTeamConfig.ENABLED && TeamVsTeamConfig.BUFF_TEMPLATE;
+	}
+	
+	/**
+	 * @param skillId a skill id
+	 * @return that buff of TvTBuffs at its configured level (its highest if none), {@code null} if it isn't one of them
+	 */
+	public static Skill getTvtBuff(int skillId)
+	{
+		for (int[] buff : TeamVsTeamConfig.BUFFS)
+		{
+			if (buff[0] == skillId)
+			{
+				return SkillData.getInstance().getSkill(skillId, buff[1] > 0 ? buff[1] : SkillData.getInstance().getMaxLevel(skillId));
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * @param player the owner
+	 * @param slot the template slot
+	 * @param skillId a buff of the template
+	 * @return the buff as it is applied from that slot: the character's own buff if it may be in a template, or for the TvT Event template the event's buff if that is higher; {@code null} if it can't be applied from that slot
+	 */
+	public Skill getUsableSkill(Player player, int slot, int skillId)
+	{
+		final Skill known = player.getKnownSkill(skillId);
+		final Skill own = isEligible(player, known) ? known : null;
+		if (slot == TVT_SLOT)
+		{
+			final Skill event = getTvtBuff(skillId);
+			if ((event != null) && ((own == null) || (event.getLevel() >= own.getLevel())))
+			{
+				return event;
+			}
+		}
+		return own;
 	}
 	
 	/**
@@ -107,7 +158,7 @@ public class BuffTemplateManager
 	 */
 	public BuffTemplate getTemplate(Player player, int slot)
 	{
-		final String defaultName = "Template " + slot;
+		final String defaultName = slot == TVT_SLOT ? TVT_TEMPLATE_NAME : "Template " + slot;
 		if (!isValidSlot(slot))
 		{
 			return new BuffTemplate(slot, defaultName, Collections.emptyList());
@@ -138,7 +189,7 @@ public class BuffTemplateManager
 			}
 		}
 		
-		return new BuffTemplate(slot, isValidName(name) ? name : defaultName, Collections.unmodifiableList(skillIds));
+		return new BuffTemplate(slot, (slot != TVT_SLOT) && isValidName(name) ? name : defaultName, Collections.unmodifiableList(skillIds));
 	}
 	
 	private void storeTemplate(Player player, int slot, String name, List<Integer> skillIds)
@@ -261,12 +312,43 @@ public class BuffTemplateManager
 	 */
 	public List<Skill> getEligibleBuffs(Player player)
 	{
+		return getEligibleBuffs(player, 1);
+	}
+	
+	/**
+	 * @param player the owner
+	 * @param slot the template slot
+	 * @return every buff that may be placed in that template, as it would be applied, sorted by name: the character's own, and the event's for the TvT Event template
+	 */
+	public List<Skill> getEligibleBuffs(Player player, int slot)
+	{
 		final List<Skill> result = new ArrayList<>();
 		for (Skill skill : player.getAllSkills())
 		{
 			if (isEligible(player, skill))
 			{
-				result.add(skill);
+				result.add(slot == TVT_SLOT ? getUsableSkill(player, slot, skill.getId()) : skill);
+			}
+		}
+		
+		if (slot == TVT_SLOT)
+		{
+			for (int[] buff : TeamVsTeamConfig.BUFFS)
+			{
+				final Skill skill = getUsableSkill(player, slot, buff[0]);
+				boolean listed = false;
+				for (Skill other : result)
+				{
+					if (other.getId() == buff[0])
+					{
+						listed = true;
+						break;
+					}
+				}
+				if ((skill != null) && !listed)
+				{
+					result.add(skill);
+				}
 			}
 		}
 		
@@ -300,8 +382,7 @@ public class BuffTemplateManager
 				return "A template can hold at most " + getMaxBuffs() + " buffs.";
 			}
 			
-			final Skill skill = player.getKnownSkill(skillId);
-			if (!isEligible(player, skill))
+			if (getUsableSkill(player, slot, skillId) == null)
 			{
 				return "That skill cannot be added to a buff template.";
 			}
@@ -331,7 +412,7 @@ public class BuffTemplateManager
 			final BuffTemplate template = getTemplate(player, slot);
 			final List<Integer> skillIds = new ArrayList<>(template.skillIds());
 			int added = 0;
-			for (Skill skill : getEligibleBuffs(player))
+			for (Skill skill : getEligibleBuffs(player, slot))
 			{
 				if (skillIds.size() >= getMaxBuffs())
 				{
@@ -381,6 +462,11 @@ public class BuffTemplateManager
 	 */
 	public String rename(Player player, int slot, String name)
 	{
+		if (slot == TVT_SLOT)
+		{
+			return "The " + TVT_TEMPLATE_NAME + " template keeps its name.";
+		}
+		
 		final String trimmed = (name == null) ? "" : name.trim();
 		if (!isValidSlot(slot) || !isValidName(trimmed))
 		{
@@ -459,6 +545,11 @@ public class BuffTemplateManager
 		if (!isEnabled() || !isValidSlot(slot))
 		{
 			return new UseResult(false, "Invalid template.");
+		}
+		
+		if (slot == TVT_SLOT)
+		{
+			return new UseResult(false, "The " + TVT_TEMPLATE_NAME + " template is given by the event itself: when you enter a TvT match and every time you come back at your base.");
 		}
 		
 		synchronized (getLock(player))
@@ -554,6 +645,49 @@ public class BuffTemplateManager
 			final String result = sb.toString();
 			player.sendMessage(result);
 			return new UseResult(true, result);
+		}
+	}
+	
+	/**
+	 * Gives a character the buffs of its TvT Event template (the Team vs Team event calls this when it enters a match and each time it comes back at its base): no use conditions, price or cooldown. Its summon gets them too when it is near.
+	 * @param player the character
+	 * @return how many buffs landed on the character
+	 */
+	public int applyTvtTemplate(Player player)
+	{
+		if (!isTvtTemplateEnabled())
+		{
+			return 0;
+		}
+		
+		synchronized (getLock(player))
+		{
+			final Summon summon = player.getSummon();
+			final boolean summonNear = (summon != null) && !summon.isAlikeDead() && summon.isSpawned() && (summon.getInstanceId() == player.getInstanceId()) && player.isInsideRadius3D(summon, SUMMON_MAX_DISTANCE);
+			int applied = 0;
+			for (int skillId : getTemplate(player, TVT_SLOT).skillIds())
+			{
+				final Skill skill = getUsableSkill(player, TVT_SLOT, skillId);
+				if (skill == null)
+				{
+					continue;
+				}
+				
+				if (canTarget(skill, player))
+				{
+					skill.applyEffects(player, player);
+					if (skill.hasEffects(EffectScope.SELF))
+					{
+						skill.applyEffects(player, player, true, false, true, 0);
+					}
+					applied++;
+				}
+				if (summonNear && canTarget(skill, summon))
+				{
+					skill.applyEffects(player, summon);
+				}
+			}
+			return applied;
 		}
 	}
 	
