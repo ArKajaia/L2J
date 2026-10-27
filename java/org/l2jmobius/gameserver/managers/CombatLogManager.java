@@ -214,6 +214,12 @@ public class CombatLogManager
 			FakeSimulationManager.getInstance().onDamage(target, attacker, skill, damage, crit, dot);
 		}
 		
+		// Team vs Team: hurting someone ends the attacker's spawn protection.
+		if (TeamVsTeamManager.ACTIVE && (attacker != null) && (damage > 0))
+		{
+			TeamVsTeamManager.getInstance().onDamageDealt(attacker);
+		}
+		
 		if (!CombatLogConfig.ENABLED || (attacker == null) || (damage <= 0) || !(target.isPlayable() || target.isFakePlayer() || (target instanceof FakePlayerPvpServitor) || (target instanceof Trap)))
 		{
 			return;

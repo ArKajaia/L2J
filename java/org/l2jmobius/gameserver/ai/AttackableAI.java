@@ -381,6 +381,14 @@ public class AttackableAI extends CreatureAI
 		AttackableThinkTaskManager.getInstance().add(getActiveChar());
 	}
 	
+	/**
+	 * @return {@code true} while a think of this AI is in progress
+	 */
+	public boolean isThinkingNow()
+	{
+		return _thinking.get();
+	}
+	
 	@Override
 	public void stopAITask()
 	{
