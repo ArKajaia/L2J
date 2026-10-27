@@ -69,6 +69,7 @@ import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.managers.IdManager;
 import org.l2jmobius.gameserver.managers.InstanceManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
+import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.TerritoryWarManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
@@ -1230,6 +1231,14 @@ public abstract class Creature extends WorldObject
 				// Checking if target has moved to peace zone
 				else if (target.isInsidePeaceZone(player))
 				{
+					getAI().setIntention(Intention.ACTIVE);
+					sendPacket(ActionFailed.STATIC_PACKET);
+					return;
+				}
+				// Team vs Team: not the own team, even with Ctrl, and nobody before or after the fight.
+				else if (TeamVsTeamManager.isForbidden(this, target))
+				{
+					sendPacket(SystemMessageId.INVALID_TARGET);
 					getAI().setIntention(Intention.ACTIVE);
 					sendPacket(ActionFailed.STATIC_PACKET);
 					return;
@@ -2770,6 +2779,12 @@ public abstract class Creature extends WorldObject
 		if (FakeSimulationManager.ACTIVE)
 		{
 			FakeSimulationManager.getInstance().onDeath(this, killer);
+		}
+		
+		// Team vs Team score, kill reward and respawn.
+		if (TeamVsTeamManager.ACTIVE)
+		{
+			TeamVsTeamManager.getInstance().onDeath(this, killer);
 		}
 		
 		if (EventDispatcher.getInstance().hasListener(EventType.ON_CREATURE_DEATH, this))

@@ -225,6 +225,7 @@ import handlers.chat.commands.admin.AdminSummon;
 import handlers.chat.commands.admin.AdminSuperHaste;
 import handlers.chat.commands.admin.AdminTarget;
 import handlers.chat.commands.admin.AdminTargetSay;
+import handlers.chat.commands.admin.AdminTeamVsTeam;
 import handlers.chat.commands.admin.AdminTeleport;
 import handlers.chat.commands.admin.AdminTerritoryWar;
 import handlers.chat.commands.admin.AdminTest;
@@ -440,6 +441,7 @@ public class MasterHandler
 			AdminHiddenQuests.class,
 			AdminDynamicQuests.class,
 			AdminVillageSiege.class,
+			AdminTeamVsTeam.class,
 			AdminHide.class,
 			AdminHtml.class,
 			AdminHwid.class,

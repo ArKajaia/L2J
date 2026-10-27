@@ -37,7 +37,7 @@ public class FakePlayerHolder
 	private final int _hair;
 	private final int _hairColor;
 	private final int _face;
-	private final int _nameColor;
+	private volatile int _nameColor;
 	private final int _titleColor;
 	private final int _equipHead;
 	private int _equipRHand;
@@ -152,6 +152,14 @@ public class FakePlayerHolder
 	public int getNameColor()
 	{
 		return _nameColor;
+	}
+	
+	/**
+	 * @param nameColor the color its name shows in (a team color, see {@link org.l2jmobius.gameserver.managers.TeamVsTeamManager}); call {@code broadcastInfo()} after
+	 */
+	public void setNameColor(int nameColor)
+	{
+		_nameColor = nameColor;
 	}
 	
 	public int getTitleColor()

@@ -138,6 +138,7 @@ import org.l2jmobius.gameserver.managers.ScriptManager;
 import org.l2jmobius.gameserver.managers.BestiaryManager;
 import org.l2jmobius.gameserver.managers.SessionStatsManager;
 import org.l2jmobius.gameserver.managers.SiegeManager;
+import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.TerritoryWarManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.Location;
@@ -8988,6 +8989,12 @@ public class Player extends Playable
 			return false;
 		}
 		
+		// Team vs Team: the other team (its players, fake players and summons), while the fight is on, without Ctrl like the faction system's enemies; never the own team, nor anyone outside the match.
+		if (TeamVsTeamManager.ACTIVE && (TeamVsTeamManager.getRelation(this, attacker) != TeamVsTeamManager.Relation.NONE))
+		{
+			return TeamVsTeamManager.isEnemy(attacker, this);
+		}
+		
 		// Check if the attacker is a Monster
 		if (attacker.isMonster())
 		{
@@ -9433,6 +9440,14 @@ public class Player extends Playable
 			{
 				// If Creature or target is in a peace zone, send a system message TARGET_IN_PEACEZONE a Server->Client packet ActionFailed
 				sendPacket(SystemMessageId.YOU_MAY_NOT_ATTACK_THIS_TARGET_IN_A_PEACEFUL_ZONE);
+				sendPacket(ActionFailed.STATIC_PACKET);
+				return false;
+			}
+			
+			// Team vs Team: not on the own team, even with Ctrl, and nobody before or after the fight.
+			if ((target != this) && (target instanceof Creature) && TeamVsTeamManager.isForbidden(this, (Creature) target))
+			{
+				sendPacket(SystemMessageId.INVALID_TARGET);
 				sendPacket(ActionFailed.STATIC_PACKET);
 				return false;
 			}
@@ -11989,6 +12004,16 @@ public class Player extends Playable
 			{
 				HandysBlockCheckerManager.getInstance().onDisconnect(this);
 			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.SEVERE, "deleteMe()", e);
+		}
+		
+		// Team vs Team: off the registration list, out of its match (it logs in again where it was before the match).
+		try
+		{
+			TeamVsTeamManager.getInstance().onLogout(this);
 		}
 		catch (Exception e)
 		{

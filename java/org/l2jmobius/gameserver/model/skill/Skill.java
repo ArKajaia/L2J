@@ -43,6 +43,7 @@ import org.l2jmobius.gameserver.handler.ITargetTypeHandler;
 import org.l2jmobius.gameserver.handler.TargetHandler;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
+import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Creature;
@@ -1203,6 +1204,12 @@ public class Skill
 					return false;
 				}
 				
+				// Team vs Team: the other team only, while the fight is on (nobody outside the match either).
+				if (TeamVsTeamManager.isForbidden(caster, target))
+				{
+					return false;
+				}
+				
 				// Auto play target mode check.
 				if (player.isAutoPlaying() && ((targetPlayer.getPvpFlag() == 0) || (targetPlayer.getKarma() < 1)))
 				{
@@ -1236,7 +1243,7 @@ public class Skill
 				// A fake player (and its servitor) like a player: hit only if it may be fought without Ctrl (flagged, PK, clan war, see Monster#isAutoAttackable), or as the target the skill is aimed at with Ctrl.
 				// So the white fake players around, like the fake defenders of a Village Under Siege, are spared.
 				final boolean forcedTarget = (skill.getEffectRange() > 0) && (caster.getTarget() == target) && AreaTargets.isCtrlCast(caster, skill);
-				if (target.isInsideZone(ZoneId.PEACE) || (!forcedTarget && !target.isAutoAttackable(caster)))
+				if (target.isInsideZone(ZoneId.PEACE) || (!forcedTarget && !target.isAutoAttackable(caster)) || TeamVsTeamManager.isForbidden(caster, target))
 				{
 					return false;
 				}

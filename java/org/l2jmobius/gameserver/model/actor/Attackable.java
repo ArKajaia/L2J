@@ -385,6 +385,18 @@ public class Attackable extends Npc
 	 * @param killer The Creature that has killed the Attackable
 	 */
 	@Override
+	public void doRevive()
+	{
+		super.doRevive();
+		
+		// A fake player's death stopped its AI task while its intention still reads ACTIVE, so setting ACTIVE again changes nothing: it would stand still until hit. It thinks again now (a party healer's resurrection, a Team vs Team respawn).
+		if (!isDead() && isFakePlayer() && hasAI() && (getAI() instanceof AttackableAI ai))
+		{
+			ai.startAITask();
+		}
+	}
+	
+	@Override
 	public boolean doDie(Creature killer)
 	{
 		// Kill the Npc (the corpse disappeared after 7 seconds)

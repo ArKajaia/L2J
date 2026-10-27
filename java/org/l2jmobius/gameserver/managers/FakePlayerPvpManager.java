@@ -59,6 +59,7 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
 import org.l2jmobius.gameserver.model.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.model.actor.enums.player.Sex;
 import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
@@ -1696,6 +1697,63 @@ public class FakePlayerPvpManager
 	}
 
 	/**
+	 * Spawns a fake player for a Team vs Team match (see {@link TeamVsTeamManager}): no clan, no hotzone, no Scroll of Escape, in its team's colors, and it only fights the other team of its match.
+	 * @param build its build
+	 * @param level its level
+	 * @param title the title it shows (its team)
+	 * @param matchId its match
+	 * @param team its team (the circle around it)
+	 * @param nameColor the color of its name
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @param instanceId the instance of the match
+	 * @return the fake player, or {@code null} if it could not be created
+	 */
+	public Npc spawnTvtFighter(FakePlayerPvpBuild build, int level, String title, int matchId, Team team, int nameColor, int x, int y, int z, int instanceId)
+	{
+		final String name = generateName();
+		try
+		{
+			final int npcId = _nextNpcId.getAndIncrement();
+			final NpcTemplate template = FakePlayerPvpFactory.createTemplate(build, level, npcId, name, null, title);
+			if (template == null)
+			{
+				releaseName(name);
+				return null;
+			}
+
+			final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+			profile.setTvtMatchId(matchId);
+			profile.setBrain(FakeBrain.A);
+			profile.setSpawnTime(System.currentTimeMillis());
+			profile.setHotzoneId(0);
+			profile.setBlessedEscape(false);
+			template.getFakePlayerInfo().setNameColor(nameColor);
+			final Npc fake = spawnFromTemplate(template, x, y, z, instanceId);
+			if (fake == null)
+			{
+				FakePlayerData.getInstance().removeFakePlayer(name);
+				releaseName(name);
+				return null;
+			}
+
+			fake.setTeam(team);
+			prepareSimulant(fake);
+			// Its AI only starts by itself when a player sees it spawn.
+			fake.getAI().setIntention(Intention.ACTIVE);
+			return fake;
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn Team vs Team fake player " + build.getName() + " level " + level + ".", e);
+			FakePlayerData.getInstance().removeFakePlayer(name);
+			releaseName(name);
+			return null;
+		}
+	}
+
+	/**
 	 * Gets a fake player of a simulation ready to fight, like a player before a PvP: every buff of its class's buff list (the &lt;buffs&gt; of data/FakePlayerPvp.xml its build uses, whatever FakePvpBuffsEnabled says), its toggles and performance, and its own class buffs
 	 * (Rapid Shot, Hawk Eye, Deflect Arrow, seeds...) except the long cooldown ones it saves for the fight (Frenzy, Zealot...) and the totems and prophecies it plays as the fight goes. HP, MP and CP full.
 	 * @param fake the fake player
@@ -1988,8 +2046,8 @@ public class FakePlayerPvpManager
 		
 		FakePlayerData.getInstance().removeFakePlayer(fake.getName());
 
-		// A simulation fake player only lives for its run.
-		if (profile.isSimulant())
+		// A fake player of a simulation or a Team vs Team match only lives for its fight.
+		if (profile.isTeamFighter())
 		{
 			FakePartyManager.getInstance().onFakeDecay(fake);
 			releaseName(fake.getName());
@@ -2265,7 +2323,7 @@ public class FakePlayerPvpManager
 	public void onFakePlayerAttacked(Attackable fake, Creature attacker)
 	{
 		final Creature enemy = getPvpEnemy(attacker);
-		if ((enemy == null) || (enemy == fake) || fake.isDead() || isFighting(fake, enemy) || FakePartyManager.getInstance().isSameGroup(fake, enemy))
+		if ((enemy == null) || (enemy == fake) || fake.isDead() || isFighting(fake, enemy) || FakePartyManager.getInstance().isSameGroup(fake, enemy) || TeamVsTeamManager.isForbidden(fake, enemy))
 		{
 			return;
 		}
@@ -2280,7 +2338,8 @@ public class FakePlayerPvpManager
 		}
 		
 		final long now = System.currentTimeMillis();
-		final boolean unflagged = fake.isScriptValue(0) && (fake.getKarma() <= 0);
+		// A Team vs Team fighter came to fight: it always hits back.
+		final boolean unflagged = fake.isScriptValue(0) && (fake.getKarma() <= 0) && !profile.isTvtFighter();
 		if (profile.isRefusing(enemy, now))
 		{
 			// Still not hitting back, for a while longer since they go on.
@@ -2800,6 +2859,12 @@ public class FakePlayerPvpManager
 	 */
 	public static boolean isFairAreaTarget(Attackable fake, Player player)
 	{
+		// In a Team vs Team match: the other team, while the fight is on.
+		if (TeamVsTeamManager.ACTIVE && (TeamVsTeamManager.getRelation(fake, player) != TeamVsTeamManager.Relation.NONE))
+		{
+			return TeamVsTeamManager.isEnemy(fake, player);
+		}
+		
 		if (player.isInsideZone(ZoneId.PEACE))
 		{
 			return false;
@@ -2825,6 +2890,12 @@ public class FakePlayerPvpManager
 	 */
 	public static boolean isFairAreaTarget(Attackable fake, Npc other)
 	{
+		// In a Team vs Team match: the other team, while the fight is on.
+		if (TeamVsTeamManager.ACTIVE && (TeamVsTeamManager.getRelation(fake, other) != TeamVsTeamManager.Relation.NONE))
+		{
+			return TeamVsTeamManager.isEnemy(fake, other);
+		}
+		
 		if (other.isInsideZone(ZoneId.PEACE))
 		{
 			return false;
@@ -2985,8 +3056,8 @@ public class FakePlayerPvpManager
 		// A few words from the ground.
 		taunt(fake, getDeathTaunts(fake), true);
 		
-		// A class transfer challenge opponent is part of the trial: no return trip, no gear, no loot.
-		if (profile.isTrialDuelist())
+		// A class transfer challenge opponent is part of the trial, a Team vs Team fighter part of its match: no return trip, no gear, no loot.
+		if (profile.isTrialDuelist() || profile.isTvtFighter())
 		{
 			return;
 		}
@@ -3585,7 +3656,7 @@ public class FakePlayerPvpManager
 				final FakePlayerParty party = profile.getParty();
 				final boolean staysWithParty = (party != null) && (!party.isFakeOnly() || party.isKeptTogether() || (party.getLeader() != fake));
 				// A PvP spot fighter leaves when its spot says so (see PvpSpotManager), and a village defender when its siege does (see VillageSiegeManager).
-				if (!profile.isTrialDuelist() && !staysWithParty && !profile.isSpotFighter() && !profile.isSiegeDefender() && !profile.isSimulant())
+				if (!profile.isTrialDuelist() && !staysWithParty && !profile.isSpotFighter() && !profile.isSiegeDefender() && !profile.isTeamFighter())
 				{
 					checkHotzoneLeave(fake, profile, now);
 					

@@ -141,6 +141,15 @@ public class AttackableThinkTaskManager
 		}
 	}
 	
+	/**
+	 * @param attackable an attackable
+	 * @return {@code true} if its AI thinks every second (its AI task is on)
+	 */
+	public boolean isThinking(Attackable attackable)
+	{
+		return ASSIGNED.containsKey(attackable);
+	}
+	
 	public static AttackableThinkTaskManager getInstance()
 	{
 		return SingletonHolder.INSTANCE;

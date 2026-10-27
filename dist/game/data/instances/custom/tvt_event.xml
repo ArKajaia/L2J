@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Team vs Team event (see TeamVsTeamManager): a copy of the Ruins of Despair, without monsters, for one level bracket. The bases are in config/Custom/TeamVsTeam.ini. -->
+<instance id="3051" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/instance.xsd">
+	<PvPInstance val="true" />
+	<exitPoint x="83425" y="148585" z="-3406" />
+</instance>

@@ -1364,6 +1364,63 @@ public class FakePartyManager
 	}
 
 	/**
+	 * Makes a party of players (or a lone player) and fake players for a Team vs Team match (see {@link TeamVsTeamManager}): the fake players heal, buff, resurrect and follow the players like invited ones, show in the party window, and stay until the match ends.
+	 * @param host the leader of the players' {@link Party}, or the lone player
+	 * @param fakes the fake players
+	 * @return the party
+	 */
+	public FakePlayerParty createEventParty(Player host, List<Npc> fakes)
+	{
+		final FakePlayerParty party = new FakePlayerParty(host);
+		party.setKeptTogether(true);
+		_parties.put(host.getObjectId(), party);
+		for (Npc fake : fakes)
+		{
+			addToEventParty(party, fake);
+		}
+		refreshWindows(party);
+		return party;
+	}
+
+	/**
+	 * @param party a party of a Team vs Team match (see {@link #createEventParty})
+	 * @param fake a fake player that joins it
+	 */
+	public void addToEventParty(FakePlayerParty party, Npc fake)
+	{
+		party.addFake(fake);
+		fake.getTemplate().getFakePlayerPvpProfile().setParty(party);
+		FakePlayerPvpManager.getInstance().onJoinParty(fake);
+		if (fake.hasAI() && (fake.getAI() instanceof FakePlayerPvpBrain ai))
+		{
+			ai.onJoinParty();
+		}
+	}
+
+	/**
+	 * Breaks up a party of a Team vs Team match when the match ends: its fake players are on their own (they are removed right after), and its players see their party window without them.
+	 * @param party the party
+	 */
+	public void disbandEventParty(FakePlayerParty party)
+	{
+		if (party.getHost() != null)
+		{
+			_parties.remove(party.getHost().getObjectId(), party);
+		}
+		_fakeParties.remove(party);
+		for (Npc fake : party.getFakes())
+		{
+			party.removeFake(fake);
+			fake.getTemplate().getFakePlayerPvpProfile().setParty(null);
+			_lastStatus.remove(fake.getObjectId());
+			for (Player player : party.getPlayers())
+			{
+				player.sendPacket(new FakePartySmallWindowDelete(fake.getObjectId(), fake.getName()));
+			}
+		}
+	}
+
+	/**
 	 * Makes a Shadow Raid warband a party (see {@link ShadowRaidManager}): its fake players fight together like a party (a tank guards, healers heal, they call their targets), led by the first one. It stays a party until its raiders are all gone.
 	 * @param raiders the raiders, the leader first
 	 * @return the party
@@ -1553,7 +1610,8 @@ public class FakePartyManager
 						continue;
 					}
 					
-					if (!fake.isDead())
+					// A party of a Team vs Team match fights where its AI takes it: no walking over or teleporting to a leader that came back at its base.
+					if (!fake.isDead() && !party.isKeptTogether())
 					{
 						// Its hunting ground is where its party is: nothing sends it back somewhere else.
 						if (fake.getSpawn() != null)

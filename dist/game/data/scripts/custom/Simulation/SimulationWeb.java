@@ -31,6 +31,7 @@ import java.util.logging.Logger;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.commons.util.SimpleJson;
 import org.l2jmobius.gameserver.config.custom.FakeSimulationConfig;
+import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.managers.simulation.SimulationHistory;
 import org.l2jmobius.gameserver.managers.simulation.SimulationLog;
@@ -170,6 +171,11 @@ public class SimulationWeb
 		server.addRoute("/api/simulation/matrix/resume", "POST", true, this::handleMatrixResume);
 		server.addRoute("/api/simulation/matrix/stop", "POST", true, this::handleMatrixStop);
 		server.addRoute("/api/simulation/matrix/status", "GET", false, this::handleMatrixStatus);
+		server.addRoute("/api/tvt/status", "GET", false, this::handleTvtStatus);
+		server.addRoute("/api/tvt/simulate", "POST", true, this::handleTvtSimulate);
+		server.addRoute("/api/tvt/stop", "POST", true, this::handleTvtStop);
+		server.addRoute("/api/tvt/open", "POST", true, this::handleTvtOpen);
+		server.addRoute("/api/tvt/close", "POST", true, this::handleTvtClose);
 		if (FakeSimulationConfig.WEB_OPEN_ACCESS)
 		{
 			LOGGER.warning("SimulationWeb: SimulationWebOpenAccess is on - anyone who reaches " + server.getPageUrl("simulation.html") + " can start and stop simulations.");
@@ -986,6 +992,95 @@ public class SimulationWeb
 		FakeSimulationManager.getInstance().drawPoints(gm);
 		lines.add("The points are drawn in game around " + gm.getName() + ".");
 		sendLines(exchange, lines);
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	// Team vs Team (see TeamVsTeamManager): matches of fake players only, to watch the event
+	// ---------------------------------------------------------------------------------------------
+
+	private void handleTvtStatus(HttpExchange exchange) throws IOException
+	{
+		if (!authorize(exchange))
+		{
+			return;
+		}
+
+		final Map<String, String> params = PassiveTreeApiServer.getInstance().readParams(exchange);
+		sendTvtLines(exchange, TeamVsTeamManager.getInstance().getStatus("1".equals(params.get("detail")) || "true".equals(params.get("detail"))));
+	}
+
+	private void handleTvtSimulate(HttpExchange exchange) throws IOException
+	{
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+
+		final Map<String, String> params = PassiveTreeApiServer.getInstance().readParams(exchange);
+		final int level = parseInt(params.get("level"), gm != null ? gm.getLevel() : DEFAULT_LEVEL);
+		final List<String> lines = new ArrayList<>();
+		lines.add(TeamVsTeamManager.getInstance().simulate(level));
+		sendTvtLines(exchange, lines);
+	}
+
+	private void handleTvtStop(HttpExchange exchange) throws IOException
+	{
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+
+		final Map<String, String> params = PassiveTreeApiServer.getInstance().readParams(exchange);
+		final List<String> lines = new ArrayList<>();
+		lines.add(TeamVsTeamManager.getInstance().stopMatch(parseInt(params.get("match"), 0)));
+		sendTvtLines(exchange, lines);
+	}
+
+	private void handleTvtOpen(HttpExchange exchange) throws IOException
+	{
+		if (!authorize(exchange))
+		{
+			return;
+		}
+
+		final String refusal = TeamVsTeamManager.getInstance().openRegistration();
+		final List<String> lines = new ArrayList<>();
+		lines.add(refusal == null ? "Registration opened." : "Could not open: " + refusal + ".");
+		sendTvtLines(exchange, lines);
+	}
+
+	private void handleTvtClose(HttpExchange exchange) throws IOException
+	{
+		if (!authorize(exchange))
+		{
+			return;
+		}
+
+		final TeamVsTeamManager manager = TeamVsTeamManager.getInstance();
+		final List<String> lines = new ArrayList<>();
+		if (manager.isRegistrationOpen())
+		{
+			manager.closeRegistration();
+			lines.add("Registration closed.");
+		}
+		else
+		{
+			lines.add("Registration is not open.");
+		}
+		sendTvtLines(exchange, lines);
+	}
+
+	private static void sendTvtLines(HttpExchange exchange, List<String> lines) throws IOException
+	{
+		final StringBuilder json = new StringBuilder("{\"lines\":[");
+		for (int i = 0; i < lines.size(); i++)
+		{
+			json.append(i > 0 ? "," : "").append(SimpleJson.quote(lines.get(i)));
+		}
+		json.append("]}");
+		PassiveTreeApiServer.getInstance().sendJson(exchange, 200, json.toString());
 	}
 
 	// ---------------------------------------------------------------------------------------------
