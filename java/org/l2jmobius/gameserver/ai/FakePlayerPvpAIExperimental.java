@@ -42,6 +42,7 @@ import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
+import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.VillageSiegeManager;
 import org.l2jmobius.gameserver.managers.simulation.FakeAiTrace;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
@@ -62,6 +63,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.SkillCategory;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPartyExperimental;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpCombo;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
@@ -115,16 +117,25 @@ import org.l2jmobius.gameserver.util.LocationUtil;
  * <li>#28: an enemy tank on a squishy of the party gets no pressure bonus (it is answered with peels, not damage).</li>
  * <li>#29: an archer in a PvP shoots plain arrows (they crit far more often once buffed) and keeps its skills, combos and debuffs for when its arrows would miss (hit chance below 75%); peeling with Stun Shot stays as it was.</li>
  * </ul>
+ * Then B won 181 of 300 party battles of an arena (levels 40, 61 and 80, every level above half) against the version without these:
+ * <ul>
+ * <li>Two tiers: a party brain ({@link FakePartyBrainExperimental}, one per party, see {@link FakePlayerParty#getBrain}) makes the party's general decisions, and this class (one per fake player) carries them out with its micro. The party brain decides who the party
+ * fights and who follows the leader out of a fight, where a simulation team marches, the party's call (focus) and its share of every member's target choice, who the tanks and supports guard and who dives them, who is on the healers, and where the party
+ * is.</li>
+ * <li>A party stance ({@link FakePartyBrainExperimental#getStance}): while a member fights, every member does, not only the ones that saw the enemy.</li>
+ * <li>#30: a healer in a fight stands as far behind its party's front as its heals still reach the members that fight ({@link FakePartyBrainExperimental#getCover}), so an archer or mage that wants it has to come deep into the party.</li>
+ * <li>#31: the archer or mage shooting the healer is answered: a tank close by goes for it, and the archers and mages stop it from where they stand ({@link FakePartyBrainExperimental#getShooterOnHealer}).</li>
+ * </ul>
  * <p>
  * Brain B ({@link FakeBrain#B}): the experimental copy of {@link FakePlayerPvpAI}, which simulation teams can run against it. Changes go here first and are moved into {@link FakePlayerPvpAI} once simulations show they win more (see docs/fake-player-simulation-issues.md). It starts
- * as a copy of {@link FakePlayerPvpAI}: nothing changed yet (its last changes were promoted, see docs/fake-player-simulation-issues.md; the archer kiting of docs/class-balance-85.md round 11 and the hybrid Soul Hound mace swap went into both).
+ * as a copy of {@link FakePlayerPvpAI}, with its party tier in {@link FakePartyBrainExperimental}: nothing changed yet. (Its Team vs Team code is never used: only simulation teams run brain B.)
  */
 public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePlayerPvpBrain
 {
 	/** One in this many idle ticks the fake player walks somewhere else around its spawn point. */
 	private static final int WANDER_CHANCE = 8;
 	/** Monsters more levels away than this are not worth hunting. */
-	private static final int MAX_HUNT_LEVEL_DIFFERENCE = 10;
+	static final int MAX_HUNT_LEVEL_DIFFERENCE = 10;
 	/** The range a mage tries to fight from. */
 	private static final int MAGE_RANGE = 600;
 	/** An archer or mage is pressed when a melee after it would reach it within this many milliseconds. */
@@ -412,6 +423,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private long _firingUntil;
 	// In a simulation: where it last marched to, and when it may set off again.
 	private Location _marchDestination;
+	/** The party brain of a party that isn't a simulation team's (see {@link #partyBrain}). */
+	private FakePartyBrainExperimental _ownPartyBrain;
 	private long _nextMarchTime;
 	
 	public FakePlayerPvpAIExperimental(Attackable creature)
@@ -471,6 +484,13 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		if ((profile != null) && profile.isSimulant())
 		{
 			thinkSimulation(npc, profile);
+			return;
+		}
+		
+		// Likewise a fake player of a Team vs Team match: it fights for its team.
+		if ((profile != null) && profile.isTvtFighter())
+		{
+			thinkTeamVsTeam(npc, profile);
 			return;
 		}
 		
@@ -691,6 +711,10 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		// A healer or buffer looks after its party first, even in a fight.
 		final FakePlayerParty party = profile.getParty();
 		final boolean withPlayers = (party != null) && !party.isFakeOnly();
+		if (party != null)
+		{
+			partyBrain(party).update(npc, profile, System.currentTimeMillis()); // The party thinks too (its stance).
+		}
 
 		// A healer someone is on defends itself first: stops them, heals itself, runs to its tank. It never spends that moment hitting someone.
 		if ((party != null) && isPureHealer(profile) && defendHealer(npc, profile, party, System.currentTimeMillis()))
@@ -718,6 +742,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			trace(Reason.DROP_TARGET_INVALID, target);
 			dropTarget(npc);
 			return;
+		}
+
+		// In a fight, a Team vs Team fake player waiting in ambush (or on its way to it) has left it.
+		if (profile.isTvtFighter())
+		{
+			TeamVsTeamManager.getInstance().springAmbush(npc);
 		}
 		
 		// Against several players, the one it can finish first. In a PvP spot, also anyone around that is a better target (someone low, someone after it or its clan mates, its killer, the leader...).
@@ -752,6 +782,15 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			if (visible != null)
 			{
 				target = visible;
+			}
+
+			// In a Team vs Team match, one that knows the game doesn't chase its target into a group of its friends alone, nor stays in a group fight while it plays on its own.
+			if (profile.isTvtFighter() && avoidsGroup(npc, profile, target, now))
+			{
+				trace(Reason.LONE_AVOID, target);
+				npc.stopHating(target);
+				dropTarget(npc);
+				return;
 			}
 		}
 
@@ -795,7 +834,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 		}
 		// Monsters are only hunted around the spawn point, players are chased further (and it runs away as far as it needs to). A fake player of a simulation has no hunting ground.
-		else if ((npc.getSpawn() != null) && !profile.isSimulant() && !_fleeing && !_regrouping && !_returning && (npc.calculateDistance2D(npc.getSpawn()) > (isPvpEnemy(target) ? profile.getPersonality().getChaseRange() : profile.getPersonality().getLeashRange())))
+		else if ((npc.getSpawn() != null) && !profile.isTeamFighter() && !_fleeing && !_regrouping && !_returning && (npc.calculateDistance2D(npc.getSpawn()) > (isPvpEnemy(target) ? profile.getPersonality().getChaseRange() : profile.getPersonality().getLeashRange())))
 		{
 			final Spawn spawn = npc.getSpawn();
 			// Back to its hunting ground, staying ACTIVE: a MOVE_TO that finds no path never arrives, and the AI would stop thinking.
@@ -835,11 +874,11 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 		else
 		{
-			if (!isPvpEnemy(target) && !withPlayers && !profile.isSimulant())
+			if (!isPvpEnemy(target) && !withPlayers && !profile.isTeamFighter())
 			{
 				lookForNewFaces(npc, now);
 			}
-			if (!isPvpEnemy(target) && !withPlayers && !profile.isSimulant() && (lookForRevenge(npc, now) || lookForPvp(npc, now)))
+			if (!isPvpEnemy(target) && !withPlayers && !profile.isTeamFighter() && (lookForRevenge(npc, now) || lookForPvp(npc, now)))
 			{
 				return;
 			}
@@ -1747,9 +1786,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return false;
 		}
 
-		// A fake player of a simulation stays in it until its run ends.
+		// A fake player of a simulation or a Team vs Team match stays in it until it ends.
 		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
-		if ((profile != null) && profile.isSimulant())
+		if ((profile != null) && profile.isTeamFighter())
 		{
 			return false;
 		}
@@ -1832,15 +1871,10 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	}
 	
 	/** Enemies of the fight this far away are weighed as targets (in a party, not only the ones that hit it). */
-	private static final int FOCUS_SCAN_RANGE = 1500;
+	static final int FOCUS_SCAN_RANGE = 1500;
 	/** How much more an enemy healer is worth as a target, and an enemy buffer, than a damage dealer (on a score where 1 is full HP). */
 	private static final double HEALER_PRIORITY = 0.6;
 	private static final double SUPPORT_PRIORITY = 0.25;
-	/** How much more a target is worth for each party member already on it (focus fire), up to {@link #FOCUS_FIRE_MAX}. */
-	private static final double FOCUS_FIRE_BONUS = 0.2;
-	private static final double FOCUS_FIRE_MAX = 0.6;
-	/** An enemy called for the party (see {@link FakePlayerParty#getFocus}) stays called this long, and calling it again extends it. */
-	private static final long PARTY_FOCUS_TIME = 10000;
 	/** An enemy tank is worth this much less as a target (a dagger's own penalty is bigger). */
 	private static final double TANK_PENALTY = 0.35;
 	/** An archer or mage weighs the enemies of the fight this far away (to see the backline behind a tank). */
@@ -1849,23 +1883,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final double ASSASSIN_HEALER_FACTOR = 2;
 	private static final double ASSASSIN_SQUISHY_PRIORITY = 0.3;
 	private static final double ASSASSIN_TANK_PENALTY = 0.5;
-	/** An enemy this low is called for the party to finish. */
-	private static final double FINISH_CALL_HEALTH = 0.3;
-	/** A call gets this long to bring its target down by this much of its HP and CP; otherwise it is dropped, and that target isn't called again (and is worth less) for this long. */
-	private static final long CALL_PROGRESS_TIME = 8000;
-	private static final double CALL_MIN_LOSS = 0.2;
-	private static final long CALL_DROP_TIME = 10000;
-	private static final double DROPPED_CALL_PENALTY = 0.5;
-	/** The enemy that hurt the party most is worth up to this much more; it gets all of it once it dealt this many times its own max HP to the party. */
-	private static final double THREAT_MAX = 0.4;
-	private static final double THREAT_HP_SCALE = 0.75; // #7: it was 2, which only counted once a fight was decided.
-	/** #4: an enemy on the party's healer, or on another squishy of it, is worth this much more (answered at any range). */
-	private static final double PRESSURE_ON_HEALER = 0.35;
-	private static final double PRESSURE_ON_SQUISHY = 0.15;
 	/** #7: an archer or mage weighs an enemy mage or archer this much more. */
 	private static final double RANGED_SQUISHY_PRIORITY = 0.15;
-	/** An enemy healer this close to a low enemy can heal it back up: it is called instead. */
-	private static final int ENEMY_HEAL_REACH = 900;
 
 	/**
 	 * In a fight against several players, a player goes for the one it can finish first: low on HP, close by, never an invincible one. In a party it plays like a party:
@@ -1884,26 +1903,26 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	{
 		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
 		final FakePlayerParty party = profile != null ? profile.getParty() : null;
+		final FakePartyBrainExperimental partyBrain = party != null ? partyBrain(party) : null;
 
 		// A call that doesn't bring its target down (a healer heals it through) is dropped: the party turns to someone it can kill.
-		if (party != null)
+		if (partyBrain != null)
 		{
-			final double startHealth = party.getFocusStartHealth();
-			final Creature dropped = party.dropFailedFocus(now, CALL_PROGRESS_TIME, CALL_MIN_LOSS, CALL_DROP_TIME);
-			if (dropped != null)
+			final Creature dropped = partyBrain.dropFailedCall(npc, now);
+			if ((dropped != null) && (_focus == dropped))
 			{
-				FakeAiTrace.onCallDropped(npc, dropped, startHealth, getHealth(dropped));
-				if (_focus == dropped)
-				{
-					_focus = null;
-				}
+				_focus = null;
 			}
 		}
 
 		// The party's call first: everyone on the same enemy. Not a healer: it keeps healing, and only hits what is close to it. Not a tank either: it guards its squishies (see guardBackline), and only calls for the others.
 		final boolean healer = (profile != null) && isPureHealer(profile);
 		final boolean tank = (profile != null) && !profile.isTransformed() && (profile.getRole() == Role.TANK);
-		final Creature called = (party != null) && !healer && !tank ? party.getFocus(now) : null;
+		Creature called = partyBrain != null ? partyBrain.getCallFor(healer, tank, now) : null;
+		if ((called != null) && (profile != null) && profile.isTvtFighter() && !heedsCall(profile, called, now))
+		{
+			called = null;
+		}
 		if ((called != null) && isPvpEnemy(called) && !called.isInvul() && !isPlayedAround(npc, called) && (npc.calculateDistance2D(called) <= getFocusScanRange(npc)) && isValidTarget(npc, called))
 		{
 			if (!hates(npc, called, FakePlayerPvpManager.PVP_HATE))
@@ -1950,27 +1969,13 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			_focusUntil = now + FOCUS_TIME;
 		}
 
-		// An enemy healer, or one about to fall: the whole party on it. Not one its healer can heal back up: the healer first.
-		if ((party != null) && !healer)
+		// An enemy healer, or one about to fall: the whole party on it. Not one its healer can heal back up: the healer first. The party brain picks the call, it only checks it can hurt it.
+		if ((partyBrain != null) && !healer)
 		{
-			Creature call = null;
-			if (isHealer(best))
+			final Creature call = partyBrain.pickCall(npc, best, now);
+			if ((call != null) && !isPlayedAround(npc, call) && ((profile == null) || !profile.isTvtFighter() || makesCall(profile, call)))
 			{
-				call = best;
-			}
-			else if (getHealth(best) < FINISH_CALL_HEALTH)
-			{
-				final Creature enemyHealer = findEnemyHealerNear(npc, best, ENEMY_HEAL_REACH);
-				call = (enemyHealer != null) && (npc.calculateDistance2D(enemyHealer) <= FOCUS_SCAN_RANGE) ? enemyHealer : (enemyHealer == null ? best : null);
-			}
-
-			if ((call != null) && !call.isInvul() && !isPlayedAround(npc, call) && !party.isCallDropped(call, now))
-			{
-				if (party.getFocus(now) != call)
-				{
-					FakeAiTrace.onFocusCall(npc, call, isHealer(call) ? "HEALER" : "FINISH");
-				}
-				party.setFocus(call, now, now + PARTY_FOCUS_TIME);
+				partyBrain.makeCall(npc, call, now);
 				if ((call != best) && !tank)
 				{
 					if (!hates(npc, call, FakePlayerPvpManager.PVP_HATE))
@@ -1984,6 +1989,65 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 		}
 		return best;
+	}
+
+	/** In a Team vs Team match: the chance it follows a call of its party (at least this, this much more for one that plays in a group best: never all of them), how soon it asks itself again after it didn't, and how long it takes to switch. */
+	private static final double CALL_HEED_MIN = 0.5;
+	private static final double CALL_HEED_TEAMPLAY = 0.42;
+	private static final long CALL_REROLL_TIME = 6000;
+	private static final int CALL_REACTION_TIME = 300;
+	private static final int CALL_REACTION_TEAMPLAY_TIME = 1700;
+	/** In a Team vs Team match: the chance it calls an enemy for its party (at least this, this much more for one that plays in a group best). */
+	private static final double CALL_MAKE_MIN = 0.4;
+	private static final double CALL_MAKE_TEAMPLAY = 0.55;
+
+	// In a Team vs Team match: the party call it heard last, whether it follows it, from when (it takes a moment to switch), and when it last asked itself.
+	private Creature _heardCall;
+	private boolean _heedsCall;
+	private long _heedFrom;
+	private long _heedRollTime;
+	// The enemy it last thought about calling for its party, and whether it calls it.
+	private Creature _callCandidate;
+	private boolean _makesCall;
+
+	/**
+	 * In a Team vs Team match a fake player doesn't follow every call of its party, like a player who misses one in the heat of the fight or likes its own target better: the better it plays in a group the more often, and the sooner it switches. One that didn't asks
+	 * itself again a few seconds later.
+	 * @param profile its profile
+	 * @param called the enemy its party called
+	 * @param now the current time
+	 * @return {@code true} if it goes for the call now
+	 */
+	private boolean heedsCall(FakePlayerPvpProfile profile, Creature called, long now)
+	{
+		final double teamplay = profile.getPersonality().getTeamplay();
+		final boolean newCall = called != _heardCall;
+		if (newCall || (!_heedsCall && (now >= (_heedRollTime + CALL_REROLL_TIME))))
+		{
+			_heardCall = called;
+			_heedsCall = Rnd.nextDouble() < (CALL_HEED_MIN + (CALL_HEED_TEAMPLAY * teamplay));
+			_heedRollTime = now;
+			if (newCall)
+			{
+				_heedFrom = now + Rnd.get(CALL_REACTION_TIME, CALL_REACTION_TIME + (int) (CALL_REACTION_TEAMPLAY_TIME * (1 - teamplay)));
+			}
+		}
+		return _heedsCall && (now >= _heedFrom);
+	}
+
+	/**
+	 * @param profile its profile
+	 * @param call an enemy it could call for its party
+	 * @return {@code true} if it calls it: in a Team vs Team match not always, more often the better it plays in a group (decided once per enemy)
+	 */
+	private boolean makesCall(FakePlayerPvpProfile profile, Creature call)
+	{
+		if (call != _callCandidate)
+		{
+			_callCandidate = call;
+			_makesCall = Rnd.nextDouble() < (CALL_MAKE_MIN + (CALL_MAKE_TEAMPLAY * profile.getPersonality().getTeamplay()));
+		}
+		return _makesCall;
 	}
 
 	/**
@@ -2011,25 +2075,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 		}
 
-		if (party == null)
+		if (party != null)
 		{
-			return enemies;
-		}
-
-		for (Creature enemy : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, getFocusScanRange(npc)))
-		{
-			if (enemies.contains(enemy) || !isPvpEnemy(enemy) || enemy.isAlikeDead() || !isValidTarget(npc, enemy))
-			{
-				continue;
-			}
-
-			final WorldObject itsTarget = enemy.getTarget();
-			final boolean fightsParty = (itsTarget == npc) || ((itsTarget instanceof Creature) && party.isMember((Creature) itsTarget));
-			final boolean healsEnemy = isHealer(enemy) && (itsTarget instanceof Creature) && hates(npc, (Creature) itsTarget, FakePlayerPvpManager.PVP_HATE);
-			if (fightsParty || healsEnemy || FakeSimulationManager.isRunEnemy(npc, enemy))
-			{
-				enemies.add(enemy);
-			}
+			partyBrain(party).addFightEnemies(npc, enemies, getFocusScanRange(npc));
 		}
 		return enemies;
 	}
@@ -2072,87 +2120,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			score += assassin ? ASSASSIN_TANK_PENALTY : TANK_PENALTY;
 		}
 
+		// The party's share: focus fire, enemies on its squishies, the damage done to the party, failed calls.
 		if (party != null)
 		{
-			double focusFire = 0;
-			for (Creature member : party.getMembers())
-			{
-				if ((member != npc) && !member.isDead() && (member.getTarget() == enemy))
-				{
-					focusFire += FOCUS_FIRE_BONUS;
-				}
-			}
-			score -= Math.min(FOCUS_FIRE_MAX, focusFire);
-
-			// #4: one that is on a squishy of the party is answered, from wherever it shoots (it used to react only to divers within a few hundred).
-			if ((enemy.getTarget() instanceof Creature victim) && (victim != enemy) && !victim.isDead() && party.isMember(victim) && !isTank(enemy)) // #28: not an enemy tank, which peels rather than kills.
-			{
-				if (isHealer(victim))
-				{
-					score -= PRESSURE_ON_HEALER;
-				}
-				else if (isSquishy(victim))
-				{
-					score -= PRESSURE_ON_SQUISHY;
-				}
-			}
-
-			// The one that hurts the party most (its damage to the party's fake players so far), and not one a call on just failed (it is healed through).
-			score -= Math.min(THREAT_MAX, (getPartyDamage(party, enemy) / Math.max(1.0, npc.getMaxHp() * THREAT_HP_SCALE)) * THREAT_MAX);
-			if (party.isCallDropped(enemy, System.currentTimeMillis()))
-			{
-				score += DROPPED_CALL_PENALTY;
-			}
+			score = partyBrain(party).adjustScore(npc, enemy, score);
 		}
 		return score;
-	}
-
-	/**
-	 * @param party a party
-	 * @param enemy an enemy
-	 * @return the damage {@code enemy} dealt to the party's fake players so far (their aggro lists)
-	 */
-	private static long getPartyDamage(FakePlayerParty party, Creature enemy)
-	{
-		long damage = 0;
-		for (Npc fake : party.getFakes())
-		{
-			if (fake.isAttackable())
-			{
-				final AggroInfo info = fake.asAttackable().getAggroList().get(enemy);
-				if (info != null)
-				{
-					damage += info.getDamage();
-				}
-			}
-		}
-		return damage;
-	}
-
-	/**
-	 * @param npc the fake player
-	 * @param target an enemy
-	 * @param range how close to {@code target}
-	 * @return a living enemy healer within {@code range} of {@code target} that it may fight (the closest), {@code null} if none
-	 */
-	private static Creature findEnemyHealerNear(Attackable npc, Creature target, int range)
-	{
-		Creature closest = null;
-		double closestDistance = Double.MAX_VALUE;
-		for (Creature creature : World.getInstance().getVisibleObjectsInRange(target, Creature.class, range))
-		{
-			if ((creature == npc) || creature.isAlikeDead() || !isHealer(creature) || !isPvpEnemy(creature) || !isValidTarget(npc, creature))
-			{
-				continue;
-			}
-			final double distance = creature.calculateDistance2D(target);
-			if (distance < closestDistance)
-			{
-				closest = creature;
-				closestDistance = distance;
-			}
-		}
-		return closest;
 	}
 
 	/**
@@ -2179,7 +2152,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 * @param creature an enemy
 	 * @return {@code true} for a tank: a fake player's tank build, a player of the knight classes
 	 */
-	private static boolean isTank(Creature creature)
+	static boolean isTank(Creature creature)
 	{
 		if (creature.isPlayer())
 		{
@@ -2193,7 +2166,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	/**
 	 * @return its HP and CP left, as a ratio of their maximum
 	 */
-	private static double getHealth(Creature creature)
+	static double getHealth(Creature creature)
 	{
 		return (creature.getCurrentHp() + creature.getCurrentCp()) / Math.max(1, creature.getMaxHp() + creature.getMaxCp());
 	}
@@ -2400,7 +2373,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 * @param creature an enemy
 	 * @return how far it can hurt or hold someone from where it stands: its auto attack range, or its longest damage, debuff or peel skill (a fake player's build, a player's skills)
 	 */
-	private static int getThreatReach(Creature creature)
+	static int getThreatReach(Creature creature)
 	{
 		int reach = creature.getPhysicalAttackRange();
 		final FakePlayerPvpProfile profile = creature.isNpc() ? creature.asNpc().getTemplate().getFakePlayerPvpProfile() : null;
@@ -3288,7 +3261,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 * @param creature a creature
 	 * @return {@code true} if fighting {@code creature} is a PvP: a player, a player's summon, or another roaming fake player
 	 */
-	private static boolean isPvpEnemy(Creature creature)
+	static boolean isPvpEnemy(Creature creature)
 	{
 		return FakePlayerPvpManager.isPvpEnemy(creature);
 	}
@@ -3382,7 +3355,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 * @param minHate the hate needed
 	 * @return {@code true} if {@code attackable} hates {@code creature} at least {@code minHate}
 	 */
-	private static boolean hates(Attackable attackable, Creature creature, long minHate)
+	static boolean hates(Attackable attackable, Creature creature, long minHate)
 	{
 		final AggroInfo info = attackable.getAggroList().get(creature);
 		return (info != null) && (info.getHate() >= minHate);
@@ -3504,7 +3477,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 * @param target a creature it hates
 	 * @return {@code true} if it can keep fighting {@code target}
 	 */
-	private static boolean isValidTarget(Attackable npc, Creature target)
+	static boolean isValidTarget(Attackable npc, Creature target)
 	{
 		// #1: never itself (isSameGroup says no for one creature, so a support targeting an ally passed as a diver on it and rooted itself).
 		if ((target == npc) || target.isAlikeDead() || !target.isSpawned() || target.isInvisible() || (target.getInstanceId() != npc.getInstanceId()))
@@ -3518,8 +3491,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return false;
 		}
 
-		// The teams of a simulation only fight each other.
-		if (!FakeSimulationManager.canFight(npc, target))
+		// The teams of a simulation only fight each other, and so do the teams of a Team vs Team match.
+		if (!FakeSimulationManager.canFight(npc, target) || TeamVsTeamManager.isForbidden(npc, target))
 		{
 			return false;
 		}
@@ -4367,7 +4340,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		return affordable;
 	}
 
-	private static boolean isDisabled(Creature target)
+	static boolean isDisabled(Creature target)
 	{
 		return target.isStunned() || target.isSleeping() || target.isParalyzed() || target.isRooted();
 	}
@@ -4784,7 +4757,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 * @param range how close
 	 * @return {@code true} if a living enemy of its fight is this close
 	 */
-	private static boolean isEnemyAround(Attackable npc, int range)
+	static boolean isEnemyAround(Attackable npc, int range)
 	{
 		for (Creature enemy : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, range))
 		{
@@ -5468,16 +5441,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final long SUPPORT_RECAST_DELAY = 10000;
 	/** A buff it keeps up on the party is cast again when it has less than this many seconds left. */
 	private static final int BUFF_REFRESH_TIME = 60;
-	/** With {@link FakePartyConfig#HUNT_WHEN_IDLE}, it pulls the monsters this close to its idle party leader. */
-	private static final int IDLE_HUNT_RANGE = 700;
 	
 	/** Buffs only fighters want (P. Atk., attack speed, critical, accuracy, vampiric...). */
 	private static final Set<Integer> FIGHTER_BUFFS = Set.of(1068, 1086, 1077, 1242, 1240, 1268, 1388, 1499, 1502, 1007, 1251, 1253, 1308, 1309, 1310, 1390, 1517, 1518, 1519, 1363, 1003, 1249, 1563, 1536, 1537, 1364, 1414, 271, 275, 274, 310, 765, 272, 269, 364, 1356, 1357);
 	/** Buffs only mages want (M. Atk., casting speed, magic critical, MP...). */
 	private static final Set<Integer> MAGE_BUFFS = Set.of(1085, 1059, 1303, 1397, 1078, 1048, 1500, 1413, 1002, 1004, 1365, 273, 276, 365, 363, 1355);
 	
-	/** An enemy this close to a squishy party member and targeting it is diving it. */
-	private static final int GUARD_THREAT_RANGE = 450;
 	/** A tank doesn't go after an enemy farther than this from the squishies it guards, a support than this. */
 	private static final int TANK_GUARD_LEASH = 700;
 	private static final int SUPPORT_GUARD_LEASH = 450;
@@ -5485,19 +5454,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final int SUPPORT_GUARD_REACH = 500;
 	/** A healer only hits an enemy this close (its Wind Strike, Vampiric Touch...), it doesn't walk up to one. */
 	private static final int HEALER_OFFENSE_REACH = 600;
-	/** A diver a tank is on still counts as one this far from the squishy it targets. */
-	private static final double DIVER_KEEP_FACTOR = 1.5;
 	/** How much worse (in score) than the best diver the one a tank is on may be, and it stays on it. */
 	private static final double DIVER_KEEP_MARGIN = 150;
-	/** How much more a diver on a healer counts, and how much less an archer or mage that dives (it only shoots from there). */
-	private static final double DIVER_HEALER_BONUS = 450;
-	private static final double DIVER_RANGED_MALUS = 300;
 	/** A tank with nothing close to fight holds this far in front of its squishies, toward the enemy. */
 	private static final int GUARD_FRONT = 200;
 	/** It walks back to its guard point once it is this far from it. */
 	private static final int GUARD_HOLD_TOLERANCE = 150;
-	/** Party members farther than this are not guarded (they ran off). */
-	private static final int GUARD_SCAN_RANGE = 1500;
 
 	/**
 	 * A tank or a support of a party fights like one that looks after its squishies (mages, archers, healers), not like a lone duelist:
@@ -5523,54 +5485,22 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 
 		// Who it guards: the squishies of its party (a support stays with the whole party), close enough to matter.
-		final List<Creature> guarded = new ArrayList<>();
-		long x = 0;
-		long y = 0;
-		long z = 0;
-		for (Creature member : party.getMembers())
-		{
-			if ((member == npc) || member.isDead() || !member.isSpawned() || (member.getInstanceId() != npc.getInstanceId()) || (npc.calculateDistance2D(member) > GUARD_SCAN_RANGE) || (!support && !isSquishy(member)))
-			{
-				continue;
-			}
-			guarded.add(member);
-			x += member.getX();
-			y += member.getY();
-			z += member.getZ();
-		}
-		if (guarded.isEmpty())
+		final FakePartyBrainExperimental partyBrain = partyBrain(party);
+		final FakePartyBrainExperimental.Guard guard = partyBrain.getGuarded(npc, support);
+		if (guard == null)
 		{
 			return target;
 		}
-		final Location anchor = new Location((int) (x / guarded.size()), (int) (y / guarded.size()), (int) (z / guarded.size()));
+		final List<Creature> guarded = guard.members();
+		final Location anchor = guard.anchor();
 		
-
 		// Someone dives a squishy: the one closest to its victim, on a healer first, a melee one before an archer or mage that only shoots from there.
-		Creature diver = null;
-		double best = Double.MAX_VALUE;
-		for (Creature member : guarded)
-		{
-			if (!isSquishy(member))
-			{
-				continue;
-			}
-			for (Creature enemy : World.getInstance().getVisibleObjectsInRange(member, Creature.class, GUARD_THREAT_RANGE))
-			{
-				if ((enemy.getTarget() != member) || !isPvpEnemy(enemy) || enemy.isAlikeDead() || !isValidTarget(npc, enemy))
-				{
-					continue;
-				}
-				final double score = getDiverScore(enemy, member);
-				if (score < best)
-				{
-					diver = enemy;
-					best = score;
-				}
-			}
-		}
-
+		final FakePartyBrainExperimental.Diver dive = partyBrain.findDiver(npc, guarded);
+		final Creature diver = dive.enemy();
+		final double best = dive.score();
+		
 		// A tank on a diver stays on it while it still dives one of its squishies and no clearly worse one is at it (no turning to every enemy that comes close).
-		if (tank && (target != diver) && isDiving(target, guarded) && (getDiverScore(target, (Creature) target.getTarget()) <= (best + DIVER_KEEP_MARGIN)))
+		if (tank && (target != diver) && FakePartyBrainExperimental.isDiving(target, guarded) && (FakePartyBrainExperimental.getDiverScore(target, (Creature) target.getTarget()) <= (best + DIVER_KEEP_MARGIN)))
 		{
 			return target;
 		}
@@ -5598,6 +5528,23 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 		}
 
+		// #31: an enemy archer or mage shooting its healer came deep into the party for it: a tank close enough goes for it.
+		if (tank)
+		{
+			final Creature shooter = partyBrain.getShooterOnHealer(npc);
+			if ((shooter != null) && (npc.calculateDistance2D(shooter) <= TANK_SHOOTER_RANGE))
+			{
+				if (shooter != target)
+				{
+					trace(Reason.GUARD_PEEL, shooter, null, "SHOOTER");
+					npc.addDamageHate(shooter, 0, FakePlayerPvpManager.PVP_HATE);
+					_focus = shooter;
+					_focusUntil = now + FOCUS_TIME;
+				}
+				return shooter;
+			}
+		}
+
 		// A healer doesn't walk up to anyone to hit them: only what its spells reach from where it stands, by its party.
 		final int leash = tank ? TANK_GUARD_LEASH : SUPPORT_GUARD_LEASH + SUPPORT_GUARD_REACH;
 		if (!tank && isPureHealer(profile))
@@ -5619,22 +5566,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		// A tank takes on the closest enemy within reach of its squishies that fights the party.
 		if (tank)
 		{
-			Creature closest = null;
-			double closestDistance = Double.MAX_VALUE;
-			for (Creature enemy : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, GUARD_SCAN_RANGE))
-			{
-				if (!isPvpEnemy(enemy) || enemy.isAlikeDead() || !isValidTarget(npc, enemy))
-				{
-					continue;
-				}
-				final double distance = enemy.calculateDistance2D(anchor);
-				final WorldObject itsTarget = enemy.getTarget();
-				if ((distance < closestDistance) && (distance <= leash) && (hates(npc, enemy, FakePlayerPvpManager.PVP_HATE) || ((itsTarget instanceof Creature) && party.isMember((Creature) itsTarget))))
-				{
-					closest = enemy;
-					closestDistance = distance;
-				}
-			}
+			final Creature closest = partyBrain.findGuardTarget(npc, anchor, leash);
 			if (closest != null)
 			{
 				if (closest != target)
@@ -5649,13 +5581,15 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 
 		// #23: a tank that leads its party, while nobody is on the party and its target is still far, holds further ahead: the party follows it, so the team moves up together, as far as it can follow (holding by its squishies froze the whole team; going straight in left its healer chasing it).
-		final boolean advance = tank && (party.getActiveLeader() == npc) && (npc.calculateDistance2D(target) > TANK_LEAD_STOP) && !isPartyFought(npc, party);
+		final boolean advance = tank && (party.getActiveLeader() == npc) && (npc.calculateDistance2D(target) > TANK_LEAD_STOP) && !partyBrain.isPartyFought(npc);
 
-		// Nothing close: it holds its ground, a tank in front of its squishies, a support with its party.
+		// Nothing close: it holds its ground, a tank in front of its squishies, a support with its party, (#30) a healer in the cover its party brain found.
+		final Location cover = !tank && isPureHealer(profile) ? partyBrain.getCover() : null;
 		_progressTime = now; // Waiting on purpose, not stuck.
-		trace(Reason.GUARD_HOLD, target, null, advance ? "ADVANCE" : null);
-		int holdX = anchor.getX();
-		int holdY = anchor.getY();
+		trace(Reason.GUARD_HOLD, target, null, advance ? "ADVANCE" : (cover != null ? "COVER" : null));
+		int holdX = cover != null ? cover.getX() : anchor.getX();
+		int holdY = cover != null ? cover.getY() : anchor.getY();
+		final int holdZ = cover != null ? cover.getZ() : anchor.getZ();
 		if (tank)
 		{
 			final double dx = target.getX() - anchor.getX();
@@ -5666,10 +5600,10 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			holdY += (int) ((dy / length) * front);
 		}
 
-		final int tolerance = tank ? GUARD_HOLD_TOLERANCE : SUPPORT_GUARD_LEASH;
+		final int tolerance = tank ? GUARD_HOLD_TOLERANCE : (cover != null ? COVER_TOLERANCE : SUPPORT_GUARD_LEASH);
 		if ((Math.hypot(npc.getX() - holdX, npc.getY() - holdY) > tolerance) && !npc.isMovementDisabled())
 		{
-			final Location point = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), holdX, holdY, anchor.getZ(), npc.getInstanceId());
+			final Location point = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), holdX, holdY, holdZ, npc.getInstanceId());
 			npc.setRunning();
 			moveTo(point.getX(), point.getY(), point.getZ());
 		}
@@ -5681,11 +5615,21 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		return null;
 	}
 
-	/** A melee damage dealer doesn't go after an enemy farther than this from its party, unless its tank is this close to that enemy. */
+	/** A melee damage dealer doesn't go after an enemy farther than this from its party (unless its tank is on that enemy, see {@link FakePartyBrainExperimental#getHoldAnchor}). */
 	private static final int MELEE_LEASH = 700;
-	private static final int MELEE_TANK_LEAD = 400;
 	/** It holds within this distance of its party meanwhile. */
 	private static final int MELEE_HOLD_DISTANCE = 250;
+
+	/** #31: a tank goes for an enemy archer or mage shooting its healer this close to it. */
+	private static final int TANK_SHOOTER_RANGE = 800;
+	/** #23: a tank leading its party holds this much further ahead while it advances, and stops advancing once its target is this close. */
+	private static final int TANK_LEAD_STEP = 300;
+	private static final int TANK_LEAD_STOP = 700;
+
+	/** #25: within its attack range and this much more, it is already on its target: no hold. */
+	private static final int HOLD_ENGAGED_MARGIN = 150;
+	/** #25: it holds on one enemy this long at most. */
+	private static final long HOLD_MAX_TIME = 5000;
 
 	/**
 	 * A melee damage dealer of a party (not a dagger, whose job is to dive) doesn't charge an enemy far from its party alone, into all of them: it holds by its party until that enemy comes close, its tank engages it, or the enemy goes after the party.
@@ -5696,33 +5640,6 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 * @param now the current time
 	 * @return {@code true} if it holds this think
 	 */
-	/** #23: a tank leading its party holds this much further ahead while it advances, and stops advancing once its target is this close. */
-	private static final int TANK_LEAD_STEP = 300;
-	private static final int TANK_LEAD_STOP = 700;
-	/** #23: a healer doesn't follow its leader while enemies are this close and its leader this close (its heals reach). */
-	private static final int HEALER_FIGHT_RANGE = 1200;
-	private static final int HEALER_FOLLOW_REACH = 550;
-
-	/**
-	 * #23: {@code true} if an enemy close by targets a member of {@code party}.
-	 */
-	private static boolean isPartyFought(Attackable npc, FakePlayerParty party)
-	{
-		for (Creature enemy : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, GUARD_SCAN_RANGE))
-		{
-			if ((enemy.getTarget() instanceof Creature victim) && party.isMember(victim) && isPvpEnemy(enemy) && !enemy.isAlikeDead() && isValidTarget(npc, enemy))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/** #25: within its attack range and this much more, it is already on its target: no hold. */
-	private static final int HOLD_ENGAGED_MARGIN = 150;
-	/** #25: it holds on one enemy this long at most. */
-	private static final long HOLD_MAX_TIME = 5000;
-
 	private boolean holdForTank(Attackable npc, FakePlayerPvpProfile profile, FakePlayerParty party, Creature target, long now)
 	{
 		final Role role = profile.isTransformed() ? Role.FIGHTER : profile.getRole();
@@ -5745,40 +5662,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return false;
 		}
 
-		Creature tankMember = null;
-		long x = 0;
-		long y = 0;
-		long z = 0;
-		int others = 0;
-		for (Creature member : party.getMembers())
-		{
-			if ((member == npc) || member.isDead() || !member.isSpawned() || (member.getInstanceId() != npc.getInstanceId()) || (npc.calculateDistance2D(member) > GUARD_SCAN_RANGE))
-			{
-				continue;
-			}
-
-			// Its tank is on that enemy already: it follows it in.
-			if (isTank(member) && (member.calculateDistance2D(target) <= MELEE_TANK_LEAD))
-			{
-				return false;
-			}
-			if (isTank(member) && ((tankMember == null) || (npc.calculateDistance2D(member) < npc.calculateDistance2D(tankMember))))
-			{
-				tankMember = member;
-			}
-			x += member.getX();
-			y += member.getY();
-			z += member.getZ();
-			others++;
-		}
-		if (others == 0)
-		{
-			return false;
-		}
-
-		// #25: by its tank when it has one (the middle of the party sits far back when the backline does).
-		final Location anchor = tankMember != null ? new Location(tankMember.getX(), tankMember.getY(), tankMember.getZ()) : new Location((int) (x / others), (int) (y / others), (int) (z / others));
-		if (target.calculateDistance2D(anchor) <= MELEE_LEASH)
+		// #25: by its tank when it has one (the middle of the party sits far back when the backline does). None when its tank is on that enemy already (it follows it in), or nobody is around.
+		final Location anchor = partyBrain(party).getHoldAnchor(npc, target);
+		if ((anchor == null) || (target.calculateDistance2D(anchor) <= MELEE_LEASH))
 		{
 			return false;
 		}
@@ -5810,33 +5696,8 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		return true;
 	}
 
-	/**
-	 * @param enemy an enemy diving a squishy
-	 * @param victim the squishy
-	 * @return how urgent it is to peel {@code enemy}, lower first: close to its victim, on a healer, a melee one (a dagger on the healer) before an archer or mage that shoots from where it stands
-	 */
-	private static double getDiverScore(Creature enemy, Creature victim)
-	{
-		return enemy.calculateDistance2D(victim) - (isHealer(victim) ? DIVER_HEALER_BONUS : 0) + (isSquishy(enemy) ? DIVER_RANGED_MALUS : 0);
-	}
-
-	/**
-	 * @param enemy an enemy
-	 * @param guarded the party members a tank guards
-	 * @return {@code true} if {@code enemy} still targets one of the squishies among them, close to it
-	 */
-	private static boolean isDiving(Creature enemy, List<Creature> guarded)
-	{
-		final WorldObject itsTarget = enemy.getTarget();
-		if (enemy.isAlikeDead() || !(itsTarget instanceof Creature) || !guarded.contains(itsTarget) || !isSquishy((Creature) itsTarget))
-		{
-			return false;
-		}
-		return enemy.calculateDistance2D(itsTarget) <= (GUARD_THREAT_RANGE * DIVER_KEEP_FACTOR);
-	}
-
 	/** An enemy this close to a healer and targeting it is on it. */
-	private static final int HEALER_DIVE_RANGE = 200;
+	static final int HEALER_DIVE_RANGE = 200;
 	/** A healer someone is on heals itself below this much of its HP. */
 	private static final double HEALER_SELF_HEAL = 0.85;
 	/** A healer running to its tank stops this close to it. */
@@ -5852,8 +5713,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	private static final int HEALER_RANGED_RETREAT_STEP = 300;
 	/** #6: a silenced healer takes cover this far behind its tank, away from who is on it. */
 	private static final int HEALER_COVER_DISTANCE = 150;
-	/** An archer or mage looks after party healers this close, and stops someone on one at most this often. */
-	private static final int ALLY_PEEL_SCAN = 1200;
+	/** An archer or mage stops someone on one of its party's healers at most this often. */
 	private static final long ALLY_PEEL_INTERVAL = 3000;
 
 	/**
@@ -5912,7 +5772,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 			if ((hpRatio < HEALER_RANGED_RETREAT_HP) && (now >= _nextKiteTime) && (npc.calculateDistance2D(shooter) <= (getThreatReach(shooter) + 50)))
 			{
-				final Location point = pickRetreat(npc, shooter, HEALER_RANGED_RETREAT_STEP, null, 0, getPartyAnchor(npc, party));
+				final Location point = pickRetreat(npc, shooter, HEALER_RANGED_RETREAT_STEP, null, 0, partyBrain(party).getAnchor(npc));
 				if (point != null)
 				{
 					trace(Reason.HEALER_RETREAT, shooter);
@@ -5950,11 +5810,11 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return true;
 		}
 
-		// #5: from range only, it stays where it heals from (running to its tank doesn't take it out of a mage's reach), but it doesn't attack.
+		// #5: from range only, it stays where it heals from (running to its tank doesn't take it out of a mage's reach), but it doesn't attack. #30: with nothing to heal, it takes the cover its party brain found, out of the shooters' reach.
 		final boolean silenced = npc.isMuted();
 		if ((attacker == null) && !silenced)
 		{
-			if (!supportParty(npc, profile, party, true))
+			if (!supportParty(npc, profile, party, true) && !takeCover(npc, party, threat))
 			{
 				trace(Reason.HEALER_DEFEND, threat);
 			}
@@ -5962,32 +5822,11 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 
 		// Run to its tank (or the rest of its party).
-		Creature guard = null;
-		double guardDistance = Double.MAX_VALUE;
-		long x = 0;
-		long y = 0;
-		long z = 0;
-		int others = 0;
-		for (Creature member : party.getMembers())
-		{
-			if ((member == npc) || member.isDead() || !member.isSpawned() || (member.getInstanceId() != npc.getInstanceId()))
-			{
-				continue;
-			}
-			x += member.getX();
-			y += member.getY();
-			z += member.getZ();
-			others++;
-			final double distance = npc.calculateDistance2D(member);
-			if (isTank(member) && (distance < guardDistance))
-			{
-				guard = member;
-				guardDistance = distance;
-			}
-		}
+		final FakePartyBrainExperimental partyBrain = partyBrain(party);
+		final Creature guard = partyBrain.getClosestTank(npc);
 
 		// #6: silenced, it can't heal nor stop anyone: it takes cover behind its tank, on the far side from who is on it.
-		Location shelter = guard != null ? new Location(guard.getX(), guard.getY(), guard.getZ()) : (others > 0 ? new Location((int) (x / others), (int) (y / others), (int) (z / others)) : null);
+		Location shelter = partyBrain.getAnchor(npc);
 		if (silenced && (guard != null))
 		{
 			final double away = Math.hypot(guard.getX() - threat.getX(), guard.getY() - threat.getY());
@@ -6013,37 +5852,29 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		return true;
 	}
 
+	/** #30: a healer this close to its cover is in it. */
+	private static final int COVER_TOLERANCE = 80;
+
 	/**
-	 * #27: where its party is: its closest tank, otherwise the middle of the others.
-	 * @return the place, {@code null} if it is alone
+	 * #30: a healer goes to the cover its party brain found (behind the front, out of the enemy shooters' reach).
+	 * @param npc the healer
+	 * @param party its party
+	 * @param threat who shoots or casts at it
+	 * @return {@code true} if it is on its way there
 	 */
-	private static Location getPartyAnchor(Attackable npc, FakePlayerParty party)
+	private boolean takeCover(Attackable npc, FakePlayerParty party, Creature threat)
 	{
-		Creature tank = null;
-		long x = 0;
-		long y = 0;
-		long z = 0;
-		int others = 0;
-		for (Creature member : party.getMembers())
+		final Location cover = partyBrain(party).getCover();
+		if ((cover == null) || npc.isMovementDisabled() || (Math.hypot(npc.getX() - cover.getX(), npc.getY() - cover.getY()) <= COVER_TOLERANCE))
 		{
-			if ((member == npc) || member.isDead() || !member.isSpawned() || (member.getInstanceId() != npc.getInstanceId()))
-			{
-				continue;
-			}
-			if (isTank(member) && ((tank == null) || (npc.calculateDistance2D(member) < npc.calculateDistance2D(tank))))
-			{
-				tank = member;
-			}
-			x += member.getX();
-			y += member.getY();
-			z += member.getZ();
-			others++;
+			return false;
 		}
-		if (tank != null)
-		{
-			return new Location(tank.getX(), tank.getY(), tank.getZ());
-		}
-		return others > 0 ? new Location((int) (x / others), (int) (y / others), (int) (z / others)) : null;
+
+		trace(Reason.HEALER_RETREAT, threat, null, "COVER");
+		final Location point = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), cover.getX(), cover.getY(), cover.getZ(), npc.getInstanceId());
+		npc.setRunning();
+		moveTo(point.getX(), point.getY(), point.getZ());
+		return true;
 	}
 
 	/**
@@ -6099,34 +5930,29 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return false;
 		}
 
-		for (Creature member : party.getMembers())
+		// The ones on a healer close by, and (#31) the archer or mage shooting it from range.
+		final FakePartyBrainExperimental partyBrain = partyBrain(party);
+		final List<Creature> enemies = partyBrain.findEnemiesOnHealers(npc);
+		final Creature shooter = partyBrain.getShooterOnHealer(npc);
+		if ((shooter != null) && !enemies.contains(shooter) && !isDisabled(shooter) && GeoEngine.getInstance().canSeeTarget(npc, shooter))
 		{
-			if ((member == npc) || member.isDead() || !isHealer(member) || (npc.calculateDistance2D(member) > ALLY_PEEL_SCAN))
+			enemies.add(shooter);
+		}
+		for (Creature enemy : enemies)
+		{
+			final double distance = npc.calculateDistance2D(enemy);
+			final int collision = npc.getTemplate().getCollisionRadius() + enemy.getTemplate().getCollisionRadius();
+			final Skill peel = pickPeel(npc, enemy, profile, getKnownDefenses(enemy), distance - collision);
+			if (peel == null)
 			{
 				continue;
 			}
 
-			for (Creature enemy : World.getInstance().getVisibleObjectsInRange(member, Creature.class, HEALER_DIVE_RANGE))
+			_nextAllyPeel = now + ALLY_PEEL_INTERVAL;
+			trace(Reason.PEEL_FOR_ALLY, enemy, peel, enemy == shooter ? "SHOOTER" : "PEEL");
+			if (useSkill(npc, enemy, peel, distance, collision, false))
 			{
-				if ((enemy.getTarget() != member) || !isPvpEnemy(enemy) || enemy.isAlikeDead() || isDisabled(enemy) || !isValidTarget(npc, enemy) || !GeoEngine.getInstance().canSeeTarget(npc, enemy))
-				{
-					continue;
-				}
-
-				final double distance = npc.calculateDistance2D(enemy);
-				final int collision = npc.getTemplate().getCollisionRadius() + enemy.getTemplate().getCollisionRadius();
-				final Skill peel = pickPeel(npc, enemy, profile, getKnownDefenses(enemy), distance - collision);
-				if (peel == null)
-				{
-					continue;
-				}
-
-				_nextAllyPeel = now + ALLY_PEEL_INTERVAL;
-				trace(Reason.PEEL_FOR_ALLY, enemy, peel, "PEEL");
-				if (useSkill(npc, enemy, peel, distance, collision, false))
-				{
-					return true;
-				}
+				return true;
 			}
 		}
 		return false;
@@ -6291,7 +6117,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 * @param creature a party member
 	 * @return {@code true} for one that can't take a beating: a mystic (healers included) or an archer
 	 */
-	private static boolean isSquishy(Creature creature)
+	static boolean isSquishy(Creature creature)
 	{
 		if (creature.isPlayer())
 		{
@@ -6311,7 +6137,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 * @param creature a party member
 	 * @return {@code true} for a healer, the first one to keep alive
 	 */
-	private static boolean isHealer(Creature creature)
+	static boolean isHealer(Creature creature)
 	{
 		if (creature.isPlayer())
 		{
@@ -6353,6 +6179,13 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			spawn.setXYZ(npc.getX(), npc.getY(), npc.getZ());
 		}
 
+		// The party thinks too (its stance).
+		final FakePartyBrainExperimental partyBrain = party != null ? partyBrain(party) : null;
+		if (partyBrain != null)
+		{
+			partyBrain.update(npc, profile, System.currentTimeMillis());
+		}
+
 		if (phase == SimulationRun.Phase.PREP)
 		{
 			// Supports buff the team, necromancers summon, duelists charge up.
@@ -6380,6 +6213,21 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return;
 		}
 
+		// Its party is engaged: it joins the fight even though it sees no enemy itself (it doesn't wait for its leader to fight).
+		final Creature partyEnemy = partyBrain != null ? partyBrain.getEngageTarget(npc) : null;
+		if (partyEnemy != null)
+		{
+			if (standUp(npc))
+			{
+				trace(Reason.STAND_UP, partyEnemy);
+				return;
+			}
+			trace(Reason.SIM_ENGAGE, partyEnemy, null, "PARTY");
+			npc.setRunning();
+			FakePlayerPvpManager.getInstance().assistFight(npc, partyEnemy);
+			return;
+		}
+
 		// With its party: support, its fights, following its leader.
 		if ((party != null) && thinkParty(npc, profile, party))
 		{
@@ -6387,7 +6235,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 
 		// The leader (or one on its own) marches toward the nearest other team.
-		final Location destination = FakeSimulationManager.getInstance().getMarchTarget(npc);
+		final Location destination = party != null ? partyBrain(party).getMarchTarget(npc) : FakeSimulationManager.getInstance().getMarchTarget(npc);
 		if (destination == null)
 		{
 			trace(Reason.SIM_WAIT, null);
@@ -6409,6 +6257,474 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		_nextMarchTime = now + MARCH_INTERVAL;
 		npc.setRunning();
 		moveTo(destination.getX(), destination.getY(), destination.getZ());
+	}
+
+	/**
+	 * A fake player of a Team vs Team match (see {@link TeamVsTeamManager}), not fighting yet: it gets ready at its base before the fight, then engages an enemy it sees, plays with its party, or (the leader, or one on its own) goes where its team mates
+	 * fight, else for the closest enemy group. A party led by a player that is dead or back at its base goes on with the team instead of waiting for it.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 */
+	private void thinkTeamVsTeam(Attackable npc, FakePlayerPvpProfile profile)
+	{
+		final TeamVsTeamManager.Phase phase = TeamVsTeamManager.getInstance().getPhase(npc);
+		final FakePlayerParty party = profile.getParty();
+		if ((phase == null) || (phase == TeamVsTeamManager.Phase.ENDED))
+		{
+			trace(Reason.SIM_WAIT, null);
+			return;
+		}
+
+		// Its spawn follows it: nothing sends it back to where it appeared.
+		final Spawn spawn = npc.getSpawn();
+		if (spawn != null)
+		{
+			spawn.setXYZ(npc.getX(), npc.getY(), npc.getZ());
+		}
+
+		if (phase == TeamVsTeamManager.Phase.PREP)
+		{
+			// Supports buff the party, necromancers summon, duelists charge up.
+			if (((party != null) && supportParty(npc, profile, party, false)) || ((profile.getCharges() < profile.getMaxCharges()) && castOnSelf(npc, null, profile.getSkills(SkillCategory.CHARGE), true, false)))
+			{
+				return;
+			}
+			trace(Reason.SIM_PREP, null);
+			return;
+		}
+
+		// Nobody fights from inside its own base (an attack from there is refused, see TeamVsTeamManager#isForbidden). One that picked a fight there anyway dropped it at once and picked it again,
+		// standing in its base taunting for as long as an enemy waited outside: in its base it only heads out.
+		final boolean atBase = TeamVsTeamManager.isAtOwnBase(npc);
+		final TeamVsTeamManager tvt = TeamVsTeamManager.getInstance();
+		final long now = System.currentTimeMillis();
+
+		// Some play a whole life on their own, others go off on their own now and then (see considerGoingLone).
+		if (!atBase)
+		{
+			considerGoingLone(npc, profile, party, now);
+		}
+
+		// An enemy in sight: the fight is on (from its base, it runs out at it first).
+		final Creature enemy = tvt.findEnemyInSight(npc);
+		if (enemy != null)
+		{
+			if (standUp(npc))
+			{
+				trace(Reason.STAND_UP, enemy);
+				return;
+			}
+			if (atBase)
+			{
+				trace(Reason.SIM_MARCH, enemy);
+				marchTo(npc, enemy.getLocation(), false);
+				return;
+			}
+
+			// On its way to its corner or waiting there, it lets the enemies by that aren't alone (unless they are on it or close): it is there for one alone.
+			if ((tvt.getAmbushSpot(npc) != null) && (enemy.getTarget() != npc) && (npc.calculateDistance2D(enemy) > AVOID_MIN_DISTANCE) && (TeamVsTeamManager.getAlliesNear(enemy) > 0))
+			{
+				trace(Reason.LONE_AMBUSH, enemy);
+				holdAmbush(npc);
+				return;
+			}
+
+			// Alone, it doesn't take on a group from afar: it stays hidden in its corner, or slips back to its team mates. On its own, it leaves the group fights to its team and goes on looking for someone alone.
+			if (avoidsGroup(npc, profile, enemy, now))
+			{
+				trace(Reason.LONE_AVOID, enemy);
+				if (!holdAmbush(npc))
+				{
+					if (tvt.isLone(npc))
+					{
+						thinkLone(npc, profile, now);
+					}
+					else
+					{
+						slipAway(npc, enemy);
+					}
+				}
+				return;
+			}
+
+			trace(Reason.SIM_ENGAGE, enemy);
+			tvt.springAmbush(npc);
+			npc.setRunning();
+			FakePlayerPvpManager.getInstance().assistFight(npc, enemy);
+			return;
+		}
+
+		// On its own: it hunts the enemies alone, waits in ambush or roams the field instead of going with its party.
+		if (tvt.isLone(npc))
+		{
+			thinkLone(npc, profile, now);
+			return;
+		}
+
+		// With its party: support, its fights, following its leader. A player leading it that is down or back at its base doesn't hold the party back. In its base it buffs and goes with its leader, the party's fights wait until it is out.
+		if (party != null)
+		{
+			final Creature leader = party.getActiveLeader();
+			final boolean leaderAway = (leader != null) && leader.isPlayer() && (leader.isDead() || TeamVsTeamManager.isAtOwnBase(leader));
+			if (leaderAway || atBase)
+			{
+				if (supportParty(npc, profile, party, false) || (!leaderAway && (leader != null) && (leader != npc) && followLeader(npc, party, leader)))
+				{
+					return;
+				}
+			}
+			else if (thinkParty(npc, profile, party))
+			{
+				return;
+			}
+		}
+
+		// Where the team needs it.
+		final Location destination = tvt.getMarchTarget(npc);
+		if (destination == null)
+		{
+			trace(Reason.SIM_WAIT, null);
+			return;
+		}
+
+		trace(Reason.SIM_MARCH, null);
+		marchTo(npc, destination, true);
+	}
+
+	/** In a Team vs Team match: the chance to play a whole life on its own, for one that knows the game best and plays in a group worst (see {@link #considerGoingLone}). */
+	private static final double LONE_LIFE_CHANCE = 0.35;
+	/** The chance, at each look, to go off on its own for a while: at least this, and this much more for one that plays in a group worst. Half as much in a party with players. */
+	private static final double STRAY_CHANCE_MIN = 0.03;
+	private static final double STRAY_CHANCE_TEAMPLAY = 0.2;
+	/** How often it thinks about going off on its own, and for how long it does. */
+	private static final int STRAY_CHECK_MIN_TIME = 15000;
+	private static final int STRAY_CHECK_MAX_TIME = 30000;
+	private static final int STRAY_MIN_TIME = 20000;
+	private static final int STRAY_MAX_TIME = 45000;
+	/** On its own, it hunts an enemy alone this far, and this much farther for one that knows the game best. */
+	private static final int LONE_HUNT_RANGE = 1500;
+	private static final int LONE_HUNT_RANGE_KNOWLEDGE = 1500;
+	/** On its own, the chance it plans to camp in ambush rather than hunt (at least this, this much more for one that knows the game best), how long a plan lasts, and how often it may look for a corner. A camper hunts only an enemy alone this close. */
+	private static final double CAMP_CHANCE_MIN = 0.3;
+	private static final double CAMP_CHANCE_KNOWLEDGE = 0.4;
+	private static final int PLAN_MIN_TIME = 30000;
+	private static final int PLAN_MAX_TIME = 60000;
+	private static final long AMBUSH_RETRY_TIME = 8000;
+	private static final int CAMPER_HUNT_RANGE = 900;
+	/** A hunter with nobody alone in reach sets up an ambush now and then too: at least this chance, this much more for one that knows the game best. */
+	private static final double AMBUSH_CHANCE_MIN = 0.15;
+	private static final double AMBUSH_CHANCE_KNOWLEDGE = 0.35;
+	/** How long it may take to get to its corner, and how long it waits there (this much longer for one that knows the game best: patience pays off). */
+	private static final int AMBUSH_TRAVEL_TIME = 25000;
+	private static final int AMBUSH_WAIT_MIN_TIME = 12000;
+	private static final int AMBUSH_WAIT_KNOWLEDGE_TIME = 25000;
+	/** How long it roams toward one spot of the field before it picks another. */
+	private static final int WANDER_MIN_TIME = 12000;
+	private static final int WANDER_MAX_TIME = 25000;
+	/** Alone, it doesn't take on a group of enemies (at least 3) farther than this, with this chance (this much more for one that knows the game best), decided for a while. */
+	private static final int AVOID_MIN_DISTANCE = 450;
+	private static final double AVOID_CHANCE_MIN = 0.2;
+	private static final double AVOID_CHANCE_KNOWLEDGE = 0.7;
+	private static final long AVOID_DECISION_TIME = 8000;
+	/** Slipping away from a group with no team mates to go to, it runs this far from them. */
+	private static final int SLIP_AWAY_DISTANCE = 600;
+
+	// In a Team vs Team match: when it next thinks about going off on its own, and for which life (its death count) it decided whether it plays it alone.
+	private long _nextLoneCheck;
+	private int _loneLife = -1;
+	// On its own: the spot it roams to and until when, when its ambush ends (and by when it must have got to its corner), and when it may look for a corner again.
+	private Location _wanderSpot;
+	private long _wanderUntil;
+	private long _ambushUntil;
+	private long _ambushArriveBy;
+	private long _nextAmbushTry;
+	// Its plan on its own (camping in ambush, or hunting), and until when.
+	private boolean _camper;
+	private long _planUntil;
+	// Alone against a group: until when its decision holds, and whether it keeps out of it.
+	private long _avoidUntil;
+	private boolean _avoids;
+
+	/**
+	 * In a Team vs Team match, like players do: one that knows the game and plays in a group less well may play a whole life on its own, hunting the enemies that are alone; a damage dealer that doesn't lead its party goes off on its own for a while now and then,
+	 * more often the worse it plays in a group. Only so many of a team at once (see {@link TeamVsTeamManager#goLone}). A fake player that came to lead its party (its leader died) goes back to it.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param party its party, {@code null} for none
+	 * @param now the current time
+	 */
+	private void considerGoingLone(Attackable npc, FakePlayerPvpProfile profile, FakePlayerParty party, long now)
+	{
+		final TeamVsTeamManager tvt = TeamVsTeamManager.getInstance();
+		final boolean leads = (party != null) && (party.getActiveLeader() == npc) && (party.size() > 1);
+		if (tvt.isLone(npc))
+		{
+			if (leads)
+			{
+				tvt.endLone(npc);
+			}
+			return;
+		}
+		if (leads)
+		{
+			return;
+		}
+
+		final FakePlayerPvpPersonality personality = profile.getPersonality();
+		final boolean withPlayers = (party != null) && !party.isFakeOnly();
+		final int life = TeamVsTeamManager.getDeaths(npc);
+		if (life != _loneLife)
+		{
+			_loneLife = life;
+			_nextLoneCheck = now + Rnd.get(STRAY_CHECK_MIN_TIME, STRAY_CHECK_MAX_TIME);
+			if (!withPlayers && (Rnd.nextDouble() < (LONE_LIFE_CHANCE * personality.getKnowledge() * (1 - (personality.getTeamplay() / 2)))) && tvt.goLone(npc, Long.MAX_VALUE))
+			{
+				return;
+			}
+		}
+
+		if (now < _nextLoneCheck)
+		{
+			return;
+		}
+		_nextLoneCheck = now + Rnd.get(STRAY_CHECK_MIN_TIME, STRAY_CHECK_MAX_TIME);
+		final double chance = STRAY_CHANCE_MIN + (STRAY_CHANCE_TEAMPLAY * (1 - personality.getTeamplay()));
+		if (Rnd.nextDouble() < (withPlayers ? chance / 2 : chance))
+		{
+			tvt.goLone(npc, now + Rnd.get(STRAY_MIN_TIME, STRAY_MAX_TIME));
+		}
+	}
+
+	/**
+	 * A fake player on its own in a Team vs Team match, with no enemy in sight: it waits at the corner it chose for someone alone to come by, else goes for the closest enemy alone, else sets up an ambush on the enemies' way or roams the field. It plans for a while
+	 * to camp (more likely the better it knows the game: it sets up an ambush first, and only goes for an enemy alone close by) or to hunt (it goes for an enemy alone farther, and sets up an ambush only now and then).
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param now the current time
+	 */
+	private void thinkLone(Attackable npc, FakePlayerPvpProfile profile, long now)
+	{
+		final TeamVsTeamManager tvt = TeamVsTeamManager.getInstance();
+		final double knowledge = profile.getPersonality().getKnowledge();
+
+		// Duelists and tyrants keep their energy full meanwhile.
+		if ((profile.getCharges() < profile.getMaxCharges()) && castOnSelf(npc, null, profile.getSkills(SkillCategory.CHARGE), true, false))
+		{
+			return;
+		}
+
+		// Its ambush: on its way to its corner, or waiting there.
+		final Location ambush = tvt.getAmbushSpot(npc);
+		if (ambush != null)
+		{
+			final boolean there = npc.calculateDistance2D(ambush) <= TeamVsTeamManager.AMBUSH_REACHED;
+			if ((now >= _ambushUntil) || (!there && (now >= _ambushArriveBy)))
+			{
+				tvt.setAmbushSpot(npc, null);
+			}
+			else
+			{
+				trace(Reason.LONE_AMBUSH, null);
+				if (there)
+				{
+					if (npc.isMoving())
+					{
+						clientStopMoving(null);
+					}
+				}
+				else
+				{
+					marchTo(npc, ambush, false);
+				}
+				return;
+			}
+		}
+
+		if (now >= _planUntil)
+		{
+			_planUntil = now + Rnd.get(PLAN_MIN_TIME, PLAN_MAX_TIME);
+			_camper = Rnd.nextDouble() < (CAMP_CHANCE_MIN + (CAMP_CHANCE_KNOWLEDGE * knowledge));
+		}
+
+		// Someone alone in reach: it goes for them.
+		final Location prey = tvt.findLoneEnemy(npc, _camper ? CAMPER_HUNT_RANGE : (int) (LONE_HUNT_RANGE + (LONE_HUNT_RANGE_KNOWLEDGE * knowledge)));
+		if (prey != null)
+		{
+			trace(Reason.LONE_HUNT, null);
+			_wanderSpot = null;
+			marchTo(npc, prey, false);
+			return;
+		}
+
+		// Nobody: an ambush at a corner on the enemies' way, or a look round the field.
+		if (now >= _nextAmbushTry)
+		{
+			_nextAmbushTry = now + AMBUSH_RETRY_TIME;
+			if (_camper || (Rnd.nextDouble() < (AMBUSH_CHANCE_MIN + (AMBUSH_CHANCE_KNOWLEDGE * knowledge))))
+			{
+				final Location spot = tvt.findAmbushSpot(npc);
+				if (spot != null)
+				{
+					tvt.setAmbushSpot(npc, spot);
+					_ambushArriveBy = now + AMBUSH_TRAVEL_TIME;
+					_ambushUntil = _ambushArriveBy + Rnd.get(AMBUSH_WAIT_MIN_TIME, AMBUSH_WAIT_MIN_TIME + (int) (AMBUSH_WAIT_KNOWLEDGE_TIME * knowledge));
+					_wanderSpot = null;
+					trace(Reason.LONE_AMBUSH, null);
+					marchTo(npc, spot, false);
+					return;
+				}
+			}
+		}
+
+		if ((_wanderSpot == null) || (now >= _wanderUntil) || (npc.calculateDistance2D(_wanderSpot) < 80))
+		{
+			_wanderSpot = tvt.findWanderSpot(npc);
+			_wanderUntil = now + Rnd.get(WANDER_MIN_TIME, WANDER_MAX_TIME);
+		}
+		trace(Reason.LONE_HUNT, null);
+		if (_wanderSpot != null)
+		{
+			marchTo(npc, _wanderSpot, false);
+		}
+	}
+
+	/**
+	 * In a Team vs Team match: does it keep out of a fight with {@code enemy}? Alone (no team mate close by) or on its own (see {@link #considerGoingLone}: it leaves the group fights to its team), against a group of at least three, not yet close nor after it, it
+	 * does with a chance that grows with its knowledge of the game. One that knows it little charges in, or chases a target into its friends. Decided for a while, not at every think.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param enemy the enemy it sees or fights
+	 * @param now the current time
+	 * @return {@code true} to keep out of it
+	 */
+	private boolean avoidsGroup(Attackable npc, FakePlayerPvpProfile profile, Creature enemy, long now)
+	{
+		if ((enemy.getTarget() == npc) || (npc.calculateDistance2D(enemy) <= AVOID_MIN_DISTANCE) || (TeamVsTeamManager.getAlliesNear(enemy) < 2) || ((TeamVsTeamManager.getAlliesNear(npc) > 0) && !TeamVsTeamManager.getInstance().isLone(npc)))
+		{
+			return false;
+		}
+
+		if (now >= _avoidUntil)
+		{
+			_avoidUntil = now + AVOID_DECISION_TIME;
+			_avoids = Rnd.nextDouble() < (AVOID_CHANCE_MIN + (AVOID_CHANCE_KNOWLEDGE * profile.getPersonality().getKnowledge()));
+		}
+		return _avoids;
+	}
+
+	/**
+	 * Waiting in ambush, it stays at its corner (or goes on to it) and lets a group pass by.
+	 * @param npc the fake player
+	 * @return {@code true} if it has an ambush to hold
+	 */
+	private boolean holdAmbush(Attackable npc)
+	{
+		final Location ambush = TeamVsTeamManager.getInstance().getAmbushSpot(npc);
+		if (ambush == null)
+		{
+			return false;
+		}
+
+		if (npc.calculateDistance2D(ambush) > TeamVsTeamManager.AMBUSH_REACHED)
+		{
+			marchTo(npc, ambush, false);
+		}
+		else if (npc.isMoving())
+		{
+			clientStopMoving(null);
+		}
+		return true;
+	}
+
+	/**
+	 * Alone with a group of enemies in sight: back to the closest of its team mates that stand together, else away from them.
+	 * @param npc the fake player
+	 * @param enemy one of them
+	 */
+	private void slipAway(Attackable npc, Creature enemy)
+	{
+		_wanderSpot = null;
+		Location spot = TeamVsTeamManager.getInstance().findRegroupSpot(npc);
+		if (spot == null)
+		{
+			final double length = Math.max(1, npc.calculateDistance2D(enemy));
+			final int x = npc.getX() + (int) (((npc.getX() - enemy.getX()) / length) * SLIP_AWAY_DISTANCE);
+			final int y = npc.getY() + (int) (((npc.getY() - enemy.getY()) / length) * SLIP_AWAY_DISTANCE);
+			spot = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, GeoEngine.getInstance().getHeight(x, y, npc.getZ()), npc.getInstanceId());
+		}
+		marchTo(npc, spot, false);
+	}
+
+	/** In a Team vs Team match: how far its own spot may lie from where it marches to, so a party doesn't run on one line to one point. */
+	private static final int TVT_MARCH_JITTER = 130;
+	/** In a Team vs Team match: how long it keeps its own spot before it picks another (also when it holds a place, so it moves about there like a player). */
+	private static final long TVT_JITTER_MIN_TIME = 5000;
+	private static final long TVT_JITTER_MAX_TIME = 11000;
+	/** In a Team vs Team match: how often it may set off again (it varies, so the team doesn't turn as one). */
+	private static final long TVT_MARCH_MIN_INTERVAL = 700;
+	private static final long TVT_MARCH_MAX_INTERVAL = 1900;
+	/** In a Team vs Team match: the chance to stand a moment before it sets off (at least this, this much more for one that knows the game least), and how long. */
+	private static final double HESITATE_CHANCE_MIN = 0.02;
+	private static final double HESITATE_CHANCE_KNOWLEDGE = 0.1;
+	private static final int HESITATE_MIN_TIME = 700;
+	private static final int HESITATE_MAX_TIME = 2000;
+
+	// In a Team vs Team match: its own offset from where it marches to, and until when it keeps it.
+	private int _marchJitterX;
+	private int _marchJitterY;
+	private long _marchJitterUntil;
+
+	/**
+	 * In a Team vs Team match: sets off toward a spot, unless it is on its way there already or set off a moment ago.
+	 * @param npc the fake player
+	 * @param destination where to go
+	 * @param ownSpot {@code true} to go to a spot of its own near it (see {@link #TVT_MARCH_JITTER}), {@code false} for the spot itself (an enemy to run out at)
+	 */
+	private void marchTo(Attackable npc, Location destination, boolean ownSpot)
+	{
+		final long now = System.currentTimeMillis();
+		if (npc.isMovementDisabled() || standUp(npc) || (now < _nextMarchTime))
+		{
+			return;
+		}
+
+		Location target = destination;
+		if (ownSpot)
+		{
+			if (now >= _marchJitterUntil)
+			{
+				final double angle = Rnd.nextDouble() * 2 * Math.PI;
+				final double distance = Rnd.get(TVT_MARCH_JITTER / 3, TVT_MARCH_JITTER);
+				_marchJitterX = (int) (Math.cos(angle) * distance);
+				_marchJitterY = (int) (Math.sin(angle) * distance);
+				_marchJitterUntil = now + Rnd.get(TVT_JITTER_MIN_TIME, TVT_JITTER_MAX_TIME);
+			}
+			final int x = destination.getX() + _marchJitterX;
+			final int y = destination.getY() + _marchJitterY;
+			final int z = GeoEngine.getInstance().getHeight(x, y, destination.getZ());
+			if (GeoEngine.getInstance().canMoveToTarget(destination.getX(), destination.getY(), destination.getZ(), x, y, z, npc.getInstanceId()))
+			{
+				target = new Location(x, y, z);
+			}
+		}
+
+		// On its way there already, it doesn't turn for a few steps' difference; standing, it stays once there (a new spot of its own sets it off again, so it moves about where it holds).
+		if (npc.isMoving() ? ((_marchDestination != null) && (Math.hypot(_marchDestination.getX() - target.getX(), _marchDestination.getY() - target.getY()) < MARCH_UPDATE_DISTANCE)) : (npc.calculateDistance2D(target) < 40))
+		{
+			return;
+		}
+
+		// Now and then it stands a moment before it sets off (looks round, checks the map), more often the less it knows the game.
+		if (!npc.isMoving() && (Rnd.nextDouble() < (HESITATE_CHANCE_MIN + (HESITATE_CHANCE_KNOWLEDGE * (1 - FakePlayerPvpPersonality.of(npc).getKnowledge())))))
+		{
+			_nextMarchTime = now + Rnd.get(HESITATE_MIN_TIME, HESITATE_MAX_TIME);
+			return;
+		}
+
+		_marchDestination = target;
+		_nextMarchTime = now + Rnd.get(TVT_MARCH_MIN_INTERVAL, TVT_MARCH_MAX_INTERVAL);
+		npc.setRunning();
+		moveTo(target.getX(), target.getY(), target.getZ());
 	}
 
 	/**
@@ -6526,53 +6842,57 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			return true;
 		}
 		
-		// The one that leads right now: a leader stunned or casting something long hands over for the moment.
-		final Creature leader = party.getActiveLeader();
-		if ((leader == null) || (leader == npc))
+		// What the party wants of it: help with what the party fights, follow its leader, hold where it heals from, or nothing (it leads).
+		final FakePartyBrainExperimental.PartyOrder order = partyBrain(party).orderFor(npc, profile);
+		final Creature leader = order.target();
+		switch (order.kind())
 		{
-			return false;
-		}
-		
-		// The party fights: the leader's target, or a monster that attacks a member.
-		final Creature target = findPartyTarget(npc, profile, party, leader);
-		if (target != null)
-		{
-			_resting = false;
-			if (standUp(npc))
+			case LEAD:
 			{
+				return false;
+			}
+			case ASSIST:
+			{
+				final Creature target = order.target();
+				_resting = false;
+				if (standUp(npc))
+				{
+					return true;
+				}
+				
+				trace(Reason.PARTY_ASSIST, target);
+				if (isPvpEnemy(target))
+				{
+					FakePlayerPvpManager.getInstance().assistFight(npc, target);
+					return true;
+				}
+				
+				npc.addDamageHate(target, 0, 1);
+				npc.setRunning();
+				setIntention(Intention.ATTACK, target);
 				return true;
 			}
-			
-			trace(Reason.PARTY_ASSIST, target);
-			if (isPvpEnemy(target))
+			case HEALER_HOLD:
 			{
-				FakePlayerPvpManager.getInstance().assistFight(npc, target);
+				if (npc.isMoving())
+				{
+					clientStopMoving(null);
+				}
+				trace(Reason.GUARD_HOLD, leader, null, "HEALER");
 				return true;
 			}
-
-			npc.addDamageHate(target, 0, 1);
-			npc.setRunning();
-			setIntention(Intention.ATTACK, target);
-			return true;
-		}
-
-		// #23: a healer in a fight doesn't chase its leader while its heals still reach it: it stays where it heals from.
-		if (isPureHealer(profile) && (npc.calculateDistance2D(leader) <= HEALER_FOLLOW_REACH) && isEnemyAround(npc, HEALER_FIGHT_RANGE))
-		{
-			if (npc.isMoving())
+			default:
 			{
-				clientStopMoving(null);
+				if (follow(npc, profile, leader, order.kind()))
+				{
+					trace(Reason.FOLLOW_LEADER, leader);
+					return true;
+				}
+				break;
 			}
-			trace(Reason.GUARD_HOLD, leader, null, "HEALER");
-			return true;
 		}
 
-		if (followLeader(npc, party, leader))
-		{
-			trace(Reason.FOLLOW_LEADER, leader);
-			return true;
-		}
-		
+
 		// It rests when the party stands around (and sits down with its leader), like players. Not with a fight still going on around it: it stays on its feet and drinks a potion.
 		final boolean leaderSits = leader.isPlayer() && leader.asPlayer().isSitting();
 		final double hpRatio = npc.getCurrentHp() / npc.getMaxHp();
@@ -6605,53 +6925,102 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		trace(Reason.IDLE, leader);
 
 		// Pulls the monsters around while the leader stands there (FakePartyHuntWhenIdle).
-		if (FakePartyConfig.HUNT_WHEN_IDLE && !leader.isMoving() && !isPureHealer(profile) && !party.isFakeOnly())
+		final Creature prey = partyBrain(party).findIdlePrey(npc, profile, leader);
+		if (prey != null)
 		{
-			final Creature prey = findIdlePrey(npc, leader);
-			if (prey != null)
-			{
-				npc.addDamageHate(prey, 0, 1);
-				npc.setRunning();
-				setIntention(Intention.ATTACK, prey);
-			}
+			npc.addDamageHate(prey, 0, 1);
+			npc.setRunning();
+			setIntention(Intention.ATTACK, prey);
 		}
 		return true;
 	}
-	
-	
+
+	/** A Team vs Team formation: how far its place may lie from its leader, and how close to it counts as there. */
+	private static final int FORMATION_MIN_DISTANCE = 90;
+	private static final int FORMATION_MAX_DISTANCE = 230;
+	private static final int FORMATION_REACHED = 50;
+	/** A formation place closer than this to the one it is on its way to doesn't make it turn. */
+	private static final int FORMATION_UPDATE_DISTANCE = 90;
+	/** Its place may lie this much farther from its leader for one that plays in a group worst (see {@link FakePlayerPvpPersonality#getTeamplay}). */
+	private static final int FORMATION_LOOSENESS = 220;
+	/** It sets off after its leader up to this long later, and this much longer for one that plays in a group worst. */
+	private static final int FOLLOW_LAG_TIME = 300;
+	private static final int FOLLOW_LAG_TEAMPLAY_TIME = 1500;
+
+	// Its place in a Team vs Team formation, relative to where its leader goes (an angle off that way, a distance), picked once; the way its leader went last; where it last set off to.
+	private double _formationAngle = Double.NaN;
+	private int _formationDistance;
+	private double _leaderCourse = Double.NaN;
+	private Location _formationOrder;
+	private long _formationLagUntil;
+
 	/**
-	 * Follows the party leader: runs (or walks) after it.
+	 * Follows the leader of a Team vs Team party to its own place in a loose formation: melee and tanks off its sides toward the front, the ranged, healers and supports behind it. Each member keeps its place, so the party moves as a spread group.
 	 * @param npc the fake player
-	 * @param party its party
+	 * @param profile its profile
 	 * @param leader its party leader
-	 * @return {@code true} if it is on its way to the leader
+	 * @return {@code true} if it is on its way to its place, {@code false} if it is there, {@code null} if its place can't be reached (it follows the usual way)
 	 */
-	private boolean followLeader(Attackable npc, FakePlayerParty party, Creature leader)
+	private Boolean followInFormation(Attackable npc, FakePlayerPvpProfile profile, Creature leader)
 	{
-		// Far away (it teleported): FakePartyManager brings it there a while later. Fake players hunting together just go their own way; a simulation team stays together and runs back.
-		if (FakePartyManager.isFarFrom(npc, leader) && !party.isKeptTogether())
+		if (Double.isNaN(_formationAngle))
 		{
-			if (party.isFakeOnly())
-			{
-				FakePartyManager.getInstance().leave(npc, false, true);
-				return false;
-			}
-			return true;
+			final boolean behind = isPureHealer(profile) || profile.getRole().isRanged() || !profile.getSkills(SkillCategory.HEAL).isEmpty();
+			final double side = Rnd.nextBoolean() ? 1 : -1;
+			_formationAngle = side * Math.toRadians(behind ? Rnd.get(115, 170) : Rnd.get(35, 90));
+			_formationDistance = Rnd.get(FORMATION_MIN_DISTANCE, FORMATION_MAX_DISTANCE + (int) (FORMATION_LOOSENESS * (1 - profile.getPersonality().getTeamplay())));
 		}
-		
-		final double distance = npc.calculateDistance2D(leader);
-		final int followDistance = FakePartyConfig.FOLLOW_DISTANCE;
-		if (distance <= followDistance)
+
+		// The way the leader goes: where it faces while it moves, the last such way while it stands (it turns to fight, the formation doesn't swing round with it).
+		if (leader.isMoving() || Double.isNaN(_leaderCourse))
 		{
+			_leaderCourse = Math.toRadians(LocationUtil.convertHeadingToDegree(leader.getHeading()));
+		}
+
+		final double angle = _leaderCourse + _formationAngle;
+		final int x = leader.getX() + (int) (Math.cos(angle) * _formationDistance);
+		final int y = leader.getY() + (int) (Math.sin(angle) * _formationDistance);
+		final int z = GeoEngine.getInstance().getHeight(x, y, leader.getZ());
+		if (!GeoEngine.getInstance().canMoveToTarget(leader.getX(), leader.getY(), leader.getZ(), x, y, z, npc.getInstanceId()))
+		{
+			_formationOrder = null;
+			return null;
+		}
+
+		if (Math.hypot(npc.getX() - x, npc.getY() - y) <= FORMATION_REACHED)
+		{
+			_formationOrder = null;
+			_formationLagUntil = 0;
 			return false;
 		}
-		
+
 		if (standUp(npc) || npc.isMovementDisabled())
 		{
 			return true;
 		}
-		
-		if (leader.isRunning() || (distance > (followDistance * 3)))
+
+		// Standing, it sets off after its leader a moment later, like a player who looks up and sees the party leaving (not once it fell far behind).
+		if (!npc.isMoving() && (npc.calculateDistance2D(leader) < (FORMATION_MAX_DISTANCE * 2.5)))
+		{
+			final long now = System.currentTimeMillis();
+			if (_formationLagUntil == 0)
+			{
+				_formationLagUntil = now + Rnd.get(0, FOLLOW_LAG_TIME + (int) (FOLLOW_LAG_TEAMPLAY_TIME * (1 - profile.getPersonality().getTeamplay())));
+			}
+			if (now < _formationLagUntil)
+			{
+				return true;
+			}
+		}
+		_formationLagUntil = 0;
+
+		// On its way there already: it doesn't turn for every step its leader takes.
+		if (npc.isMoving() && (_formationOrder != null) && (Math.hypot(_formationOrder.getX() - x, _formationOrder.getY() - y) < FORMATION_UPDATE_DISTANCE))
+		{
+			return true;
+		}
+
+		if (leader.isRunning() || (npc.calculateDistance2D(leader) > (FORMATION_MAX_DISTANCE * 2)))
 		{
 			npc.setRunning();
 		}
@@ -6659,138 +7028,97 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		{
 			npc.setWalking();
 		}
-		
-		moveToPawn(leader, Rnd.get(Math.max(40, followDistance / 3), Math.max(60, (followDistance * 2) / 3)));
+		_formationOrder = new Location(x, y, z);
+		moveTo(x, y, z);
 		return true;
 	}
 	
 	/**
+	 * Follows the party leader: runs (or walks) after it, as its party brain says (see {@link FakePartyBrainExperimental#getFollow}).
+	 * @param npc the fake player
+	 * @param party its party
+	 * @param leader its party leader
+	 * @return {@code true} if it is on its way to the leader
+	 */
+	private boolean followLeader(Attackable npc, FakePlayerParty party, Creature leader)
+	{
+		return follow(npc, npc.getTemplate().getFakePlayerPvpProfile(), leader, partyBrain(party).getFollow(npc, leader));
+	}
+
+	/**
+	 * Carries out a follow order of its party brain.
 	 * @param npc the fake player
 	 * @param profile its profile
-	 * @param party its party
-	 * @param leader the party leader
-	 * @return what the party fights and it should join: the leader's target once the leader (or a member) fights it, else the closest monster attacking a member, {@code null} if none. A healer stays out of fights.
+	 * @param leader its party leader
+	 * @param kind the order: {@link FakePartyBrainExperimental.OrderKind#WAIT_FAR}, {@link FakePartyBrainExperimental.OrderKind#LEAVE_PARTY}, {@link FakePartyBrainExperimental.OrderKind#STAY}, {@link FakePartyBrainExperimental.OrderKind#FOLLOW_RUN} or {@link FakePartyBrainExperimental.OrderKind#FOLLOW_WALK}
+	 * @return {@code true} if it is on its way to the leader
 	 */
-	private Creature findPartyTarget(Attackable npc, FakePlayerPvpProfile profile, FakePlayerParty party, Creature leader)
+	private boolean follow(Attackable npc, FakePlayerPvpProfile profile, Creature leader, FakePartyBrainExperimental.OrderKind kind)
 	{
-		if (isPureHealer(profile))
+		// Far away (it teleported): FakePartyManager brings it there a while later. Fake players hunting together just go their own way.
+		if (kind == FakePartyBrainExperimental.OrderKind.WAIT_FAR)
 		{
-			return null;
+			return true;
 		}
-		
-		final WorldObject leaderTarget = leader.getTarget();
-		if ((leaderTarget instanceof Creature) && isPartyPrey(npc, party, (Creature) leaderTarget, leader))
+		if (kind == FakePartyBrainExperimental.OrderKind.LEAVE_PARTY)
 		{
-			return (Creature) leaderTarget;
+			FakePartyManager.getInstance().leave(npc, false, true);
+			return false;
 		}
-		
-		final Creature[] closest = new Creature[1];
-		final double[] closestDistance =
+
+		// A Team vs Team party moves in a loose formation around its leader, not in a line behind it.
+		if ((profile != null) && profile.isTvtFighter())
 		{
-			Double.MAX_VALUE
-		};
-		World.getInstance().forEachVisibleObjectInRange(leader, Monster.class, FakePartyConfig.LEASH_RANGE, monster ->
-		{
-			if (monster.isFakePlayer() || monster.isDead() || !monster.isSpawned() || (monster.getInstanceId() != npc.getInstanceId()) || !isAttackingParty(monster, party))
+			final Boolean onTheWay = followInFormation(npc, profile, leader);
+			if (onTheWay != null)
 			{
-				return;
+				return onTheWay;
 			}
-			
-			final double distance = npc.calculateDistance2D(monster);
-			if (distance < closestDistance[0])
-			{
-				closest[0] = monster;
-				closestDistance[0] = distance;
-			}
-		});
-		return closest[0];
-	}
-	
-	/**
-	 * @param npc the fake player
-	 * @param party its party
-	 * @param target the leader's target
-	 * @param leader the party leader
-	 * @return {@code true} if the party fights {@code target} and it should help
-	 */
-	private static boolean isPartyPrey(Attackable npc, FakePlayerParty party, Creature target, Creature leader)
-	{
-		if ((target == npc) || target.isAlikeDead() || !target.isSpawned() || target.isInvisible() || (target.getInstanceId() != npc.getInstanceId()) || party.isMember(target) || (leader.calculateDistance2D(target) > FakePartyConfig.LEASH_RANGE))
+		}
+
+		if (kind == FakePartyBrainExperimental.OrderKind.STAY)
 		{
 			return false;
 		}
-		
-		// The leader of fake players hunting together: what it fights.
-		if (leader.isAttackable())
+
+		if (standUp(npc) || npc.isMovementDisabled())
 		{
-			return leader.asAttackable().getMostHated() == target;
+			return true;
 		}
-		
-		// A player: a monster once the party fights it.
-		if (target.isMonster() && !target.isFakePlayer())
+
+		if (kind == FakePartyBrainExperimental.OrderKind.FOLLOW_RUN)
 		{
-			return leader.isAttackingNow() || leader.isCastingNow() || isAttackingParty(target.asAttackable(), party);
+			npc.setRunning();
 		}
-		
-		// A player or fake player the leader fights: only one that can be fought without becoming a PK (flagged, karma), or one that attacks the party.
-		if ((target.isPlayer() || target.isPvpFakePlayer()) && (leader.isAttackingNow() || leader.isCastingNow()))
+		else
 		{
-			final boolean flagged = target.isPlayer() ? ((target.asPlayer().getPvpFlag() > 0) || (target.getKarma() > 0)) : ((target.asNpc().getScriptValue() > 0) || (target.getKarma() > 0));
-			final WorldObject itsTarget = target.getTarget();
-			return flagged || ((itsTarget instanceof Creature) && party.isMember((Creature) itsTarget));
+			npc.setWalking();
 		}
-		
-		return false;
+		final int followDistance = FakePartyConfig.FOLLOW_DISTANCE;
+		moveToPawn(leader, Rnd.get(Math.max(40, followDistance / 3), Math.max(60, (followDistance * 2) / 3)));
+		return true;
+	}
+
+	/**
+	 * @param party its party
+	 * @return the party brain of {@code party}: the one it shares with its members (a simulation team of brain B), else one of its own
+	 */
+	private FakePartyBrainExperimental partyBrain(FakePlayerParty party)
+	{
+		if (party instanceof FakePlayerPartyExperimental experimental)
+		{
+			return experimental.getExperimentalBrain();
+		}
+
+		FakePartyBrainExperimental brain = _ownPartyBrain;
+		if ((brain == null) || (brain.getParty() != party))
+		{
+			brain = new FakePartyBrainExperimental(party);
+			_ownPartyBrain = brain;
+		}
+		return brain;
 	}
 	
-	/**
-	 * @param monster a monster
-	 * @param party a party
-	 * @return {@code true} if {@code monster} fights a member of {@code party} (it hates a member, or a member hit it)
-	 */
-	private static boolean isAttackingParty(Attackable monster, FakePlayerParty party)
-	{
-		for (Creature attacker : monster.getAggroList().keySet())
-		{
-			if (party.isMember(attacker) || (attacker.isSummon() && party.isMember(attacker.asPlayer())))
-			{
-				return true;
-			}
-		}
-		
-		final WorldObject target = monster.getTarget();
-		return monster.isInCombat() && (target instanceof Creature) && party.isMember((Creature) target);
-	}
-	
-	/**
-	 * @param npc the fake player
-	 * @param leader the party leader
-	 * @return the closest monster around the leader nobody fights and worth hunting, {@code null} if none
-	 */
-	private static Creature findIdlePrey(Attackable npc, Creature leader)
-	{
-		final Creature[] closest = new Creature[1];
-		final double[] closestDistance =
-		{
-			Double.MAX_VALUE
-		};
-		World.getInstance().forEachVisibleObjectInRange(leader, Monster.class, IDLE_HUNT_RANGE, monster ->
-		{
-			if (monster.isFakePlayer() || monster.isDead() || !monster.isSpawned() || monster.isRaid() || monster.isInCombat() || !monster.getAggroList().isEmpty() || (monster.getInstanceId() != npc.getInstanceId()) || (Math.abs(monster.getLevel() - leader.getLevel()) > MAX_HUNT_LEVEL_DIFFERENCE))
-			{
-				return;
-			}
-			
-			// The line of sight (the costly check) only for one closer than the closest so far.
-			final double distance = npc.calculateDistance2D(monster);
-			if ((distance < closestDistance[0]) && GeoEngine.getInstance().canSeeTarget(leader, monster))
-			{
-				closest[0] = monster;
-				closestDistance[0] = distance;
-			}
-		});
-		return closest[0];
-	}
 	
 	/**
 	 * A healer or buffer looks after its party: heals (a group heal when several members are hurt), resurrection, recharge, then the buffs that are missing.
@@ -7176,7 +7504,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 * @param profile a fake player profile
 	 * @return {@code true} for a healer: it heals its party and stays out of the fights
 	 */
-	private static boolean isPureHealer(FakePlayerPvpProfile profile)
+	static boolean isPureHealer(FakePlayerPvpProfile profile)
 	{
 		return profile.getBuild().isSupport() && !profile.getSkills(SkillCategory.PARTY_HEAL).isEmpty();
 	}

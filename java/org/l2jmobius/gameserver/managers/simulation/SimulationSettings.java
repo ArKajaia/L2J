@@ -86,7 +86,7 @@ public record SimulationSettings(int size, int level, boolean mirror, long seed,
 	 * @param value a number
 	 * @return a well spread number made from it (SplitMix64)
 	 */
-	private static long mix(long value)
+	static long mix(long value)
 	{
 		long z = value + 0x9E3779B97F4A7C15L;
 		z = (z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9L;

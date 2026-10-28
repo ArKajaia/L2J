@@ -114,6 +114,11 @@
 	#toasts { position: fixed; right: 14px; bottom: 14px; display: flex; flex-direction: column; gap: 6px; z-index: 40; max-width: 460px; }
 	.toast { background: #18181f; border: 1px solid var(--gold); border-left-width: 4px; border-radius: 4px; padding: 8px 10px; color: var(--cream); white-space: pre-wrap; }
 	.toast.err { border-color: var(--critical); }
+	.progress { height: 8px; background: #22222a; border-radius: 4px; overflow: hidden; margin: 6px 0 10px; }
+	.progress > i { display: block; height: 100%; background: var(--gold); }
+	.lines { white-space: pre-wrap; font: 12px/1.5 Consolas, "Cascadia Mono", monospace; color: var(--text); background: #0d0d12; border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; overflow-x: auto; }
+	.arena-item { padding: 6px 8px; border-bottom: 1px solid #1c1c23; cursor: pointer; }
+	.arena-item:hover { background: #15151b; }
 	#fatal { display: none; padding: 60px; text-align: center; color: var(--cream); font-size: 15px; }
 
 	@media (max-width: 1300px) {
@@ -135,6 +140,7 @@
 		<div id="status" title="The simulation running now"><span class="dot"></span><span id="statusText">…</span><span class="bars" id="statusBars"></span></div>
 		<div class="grow"></div>
 		<button id="btnStop" class="danger" disabled>Stop</button>
+		<button id="btnArena" title="A/B party battles of two brains, many at once in instances: progress, wins so far, and each battle to watch in game">Arena</button>
 		<button id="btnPoints">Points</button>
 		<button id="btnNew" class="primary">New simulation</button>
 	</header>
@@ -319,7 +325,11 @@ const state = {
 	speed: 4,
 	reasonFilter: "",
 	showEvents: true,
-	live: false       // the main view shows the running round live
+	live: false,      // the main view shows the running round live
+	arenaView: false, // the main view shows the arena
+	arena: null,      // /arena/battles: { admin, watching, arena, lines, battles }
+	arenas: [],       // /arena/list: the arenas run so far
+	openArena: null   // the past arena whose summary is open
 };
 
 // ------------------------------------------------------------------------------------------------
@@ -331,8 +341,14 @@ async function pollStatus() {
 		const wasRunning = state.status && state.status.running;
 		const previousSeries = state.status && state.status.series;
 		const previousRound = state.status && state.status.round;
+		const hadArena = state.status && state.status.arena;
 		state.status = status;
 		renderStatus();
+		renderArenaButton();
+		if (state.arenaView) {
+			loadArena();
+			if (hadArena && !status.arena) loadArenas();
+		}
 		// A new round of the running simulation shows up in its list too.
 		if (wasRunning !== status.running || previousSeries !== status.series || previousRound !== status.round) loadRuns();
 		if (state.live) renderLive();
@@ -349,7 +365,8 @@ function renderStatus() {
 	const bars = document.getElementById("statusBars");
 	bars.replaceChildren();
 	if (!s.running) {
-		document.getElementById("statusText").textContent = "Idle · " + s.savedPoints + " saved point(s)";
+		box.classList.toggle("live", !!s.arena);
+		document.getElementById("statusText").textContent = s.arena ? "Arena " + s.arena.done + "/" + s.arena.total + " · " + s.arena.running + " running" + (s.arena.stopping ? " · stopping" : "") : "Idle · " + s.savedPoints + " saved point(s)";
 		return;
 	}
 	if (!s.teams) {
@@ -427,6 +444,7 @@ async function selectSeries(name, round) {
 	if (!run) return;
 	stopPlaying();
 	state.live = false;
+	state.arenaView = false;
 	state.series = run;
 	state.round = round || 1;
 	state.member = null;
@@ -925,6 +943,7 @@ function openLive() {
 	if (!state.status || !state.status.running) return;
 	stopPlaying();
 	state.live = true;
+	state.arenaView = false;
 	state.series = null;
 	renderRuns();
 	renderLive();
@@ -984,6 +1003,136 @@ function renderLive() {
 		card.appendChild(map);
 	}
 	main.replaceChildren(card);
+}
+
+// ------------------------------------------------------------------------------------------------
+// Arena: A/B party battles of two brains, many at once, each in its own instance
+// ------------------------------------------------------------------------------------------------
+function renderArenaButton() {
+	const a = state.status && state.status.arena;
+	const button = document.getElementById("btnArena");
+	button.textContent = a ? "Arena " + a.done + "/" + a.total : "Arena";
+	button.classList.toggle("primary", !!a);
+}
+
+async function openArena() {
+	stopPlaying();
+	state.live = false;
+	state.series = null;
+	state.arenaView = true;
+	renderRuns();
+	renderArena();
+	await Promise.all([loadArena(), loadArenas()]);
+}
+
+async function loadArena() {
+	try {
+		state.arena = await api("arena/battles");
+		if (state.arenaView) renderArena();
+	} catch (e) {
+		if (e.message !== "auth") toast("Could not read the arena: " + e.message, true);
+	}
+}
+
+async function loadArenas() {
+	try {
+		state.arenas = (await api("arena/list")).arenas;
+		if (state.arenaView) renderArena();
+	} catch (e) {
+		if (e.message !== "auth") toast("Could not list the arenas: " + e.message, true);
+	}
+}
+
+async function arenaAction(path, params) {
+	try {
+		const data = await api(path, Object.assign({ post: true }, params || {}));
+		if (data && data.lines && data.lines.length) toast(data.lines.join("\n"));
+	} catch (e) {
+		if (e.message !== "auth") toast(e.message, true);
+	}
+	await pollStatus();
+	await loadArena();
+}
+
+function teamCell(team) {
+	return el("td", { title: team.members.map(m => m.name + " · " + m.build + " · " + (m.alive ? pct(m.hp) + " HP" : "dead")).join("\n") },
+		swatch(team.id), el("span", { class: "chip" + (team.brain === "B" ? " gold" : ""), title: "The AI this team runs" }, team.brain),
+		el("span", { style: "display:inline-block;min-width:34px" }, team.alive + "/" + team.total), hpBar(team.health, teamColor(team.id)));
+}
+
+function renderArena() {
+	const main = document.getElementById("main");
+	const data = state.arena;
+	const cards = [];
+	if (!data) {
+		cards.push(el("div", { class: "card empty" }, "Loading the arena…"));
+	} else if (data.arena) {
+		const a = data.arena;
+		const admin = !!data.admin;
+		const card = el("div", { class: "card" },
+			el("div", { class: "title" }, el("h2", null, "Arena"), el("span", { class: "muted" }, a.name), a.stopping ? el("span", { class: "chip" }, "stopping") : el("span", { class: "chip gold" }, "running"), el("div", { class: "grow" }),
+				el("button", { disabled: !admin, title: admin ? "Your character goes into the next battle's instance" : "Open this page with //SimulationWeb in game to watch", onclick: () => arenaAction("arena/watch", { run: 0 }) }, "Watch next"),
+				el("button", { disabled: !admin || !data.watching, title: "Back to the open world", onclick: () => arenaAction("arena/leave") }, "Leave"),
+				el("button", { class: "danger", disabled: a.stopping, onclick: () => { if (confirm("Stop the arena? Running battles are cut and not counted.")) arenaAction("arena/stop"); } }, "Stop")),
+			el("div", { class: "row" }, el("span", null, a.done + " / " + a.total + " battles done"), el("span", { class: "muted" }, a.running + " running · " + a.size + " vs " + a.size + " · up to " + a.parallel + " at once · seed " + a.seed)),
+			el("div", { class: "progress" }, el("i", { style: "width:" + Math.round(100 * a.done / Math.max(1, a.total)) + "%" })),
+			el("div", { class: "lines" }, data.lines.slice(1).join("\n")),
+			admin ? null : el("div", { class: "muted", style: "margin-top:8px" }, "Watching takes your character into a battle's instance: open this page with //SimulationWeb in game (and stay online). In game, //SimulationArena shows the same list."));
+		const table = el("table", null, el("thead", null, el("tr", null, el("th", { class: "num" }, "#"), el("th", { class: "num" }, "Lvl"), el("th", { class: "num" }, "Comp"), el("th", null, "Team 1"), el("th", null, "Team 2"), el("th", { class: "num" }, "Fight"), el("th", null, ""))));
+		const body = el("tbody");
+		for (const b of data.battles) {
+			const watching = data.watching && data.watching === b.instance;
+			body.appendChild(el("tr", { class: watching ? "now" : null },
+				el("td", { class: "num" }, b.number), el("td", { class: "num" }, b.level), el("td", { class: "num", title: "Composition " + b.composition + ", side " + (b.side + 1) + " of 2" }, b.composition + (b.side ? "b" : "a")),
+				b.teams[0] ? teamCell(b.teams[0]) : el("td"), b.teams[1] ? teamCell(b.teams[1]) : el("td"),
+				el("td", { class: "num" }, b.fightStart > 0 ? clock(b.time - b.fightStart) : b.phase.toLowerCase()),
+				el("td", null, watching ? el("span", { class: "chip gold" }, "watching") : el("button", { disabled: !admin, title: admin ? "Your character goes into this battle's instance" : "Open this page with //SimulationWeb in game to watch", onclick: () => arenaAction("arena/watch", { run: b.run }) }, "Watch"))));
+		}
+		table.appendChild(body);
+		card.appendChild(el("h3", { style: "margin:12px 0 6px" }, "Battles running now (" + data.battles.length + ")"));
+		card.appendChild(data.battles.length ? el("div", { class: "scroll", style: "max-height:560px" }, table) : el("div", { class: "muted" }, "None right now."));
+		cards.push(card);
+	} else {
+		cards.push(arenaStartCard(data));
+	}
+
+	const past = el("div", { class: "card" }, el("div", { class: "title" }, el("h2", null, "Arenas so far"), el("span", { class: "muted" }, state.arenas.length + " (log/simulation-arena)")));
+	if (!state.arenas.length) past.appendChild(el("div", { class: "muted" }, "No arena has run yet."));
+	for (const a of state.arenas) {
+		const open = state.openArena === a.name;
+		const brainLine = a.summary.filter(l => /^\s*brain /.test(l)).map(l => l.trim().replace(/, first death.*/, "")).join(" · ");
+		past.appendChild(el("div", { class: "arena-item", onclick: () => { state.openArena = open ? null : a.name; renderArena(); } },
+			el("div", { class: "row", style: "justify-content:space-between" }, el("span", { style: "color:var(--cream)" }, runDate(a.name.replace(/^arena-/, ""))), el("span", null, a.running ? el("span", { class: "chip gold" }, "running") : null, el("span", { class: "muted" }, a.done + " battles"))),
+			brainLine ? el("div", { class: "muted", style: "font-size:11px;margin-top:2px" }, brainLine) : null));
+		if (open) past.appendChild(el("div", { class: "lines", style: "margin:6px 0 10px" }, (a.summary.length ? a.summary.join("\n") : "No summary yet.") + "\n\n" + a.dir));
+	}
+	cards.push(past);
+	main.replaceChildren(...cards);
+}
+
+function arenaStartCard(data) {
+	const level = (state.status && state.status.defaults && state.status.defaults.level) || 80;
+	const field = (id, label, input) => [el("label", { for: id }, label), input];
+	const form = el("div", { class: "form", style: "grid-template-columns:160px minmax(0,260px)" },
+		field("aLevels", "Levels", el("input", { id: "aLevels", type: "text", value: "40,61,80" })),
+		field("aBattles", "Battles per level", el("input", { id: "aBattles", type: "number", min: 2, max: 1000, value: 100 })),
+		field("aParallel", "At once", el("input", { id: "aParallel", type: "number", min: 1, max: 500, value: 100 })),
+		field("aSize", "Party size", el("input", { id: "aSize", type: "number", min: 1, max: 9, value: 5 })),
+		field("aBrains", "Brains", el("select", { id: "aBrains" }, el("option", { value: "A:B" }, "A vs B (current vs experimental)"), el("option", { value: "A:A" }, "A vs A (calibration)"), el("option", { value: "B:B" }, "B vs B"))),
+		field("aTime", "Time limit (s)", el("input", { id: "aTime", type: "number", min: 10, value: (state.status && state.status.defaults && state.status.defaults.timeLimit) || 300 })),
+		field("aDistance", "Teams apart", el("input", { id: "aDistance", type: "number", min: 300, max: 3000, value: 1500 })),
+		field("aPlace", "Place", el("select", { id: "aPlace" }, el("option", { value: "field" }, "Cruma Marshlands field"), el("option", { value: "" }, data.admin ? "Where " + data.admin + " stands" : "Where the GM of the link stands"))),
+		field("aSeed", "Seed", el("input", { id: "aSeed", type: "text", placeholder: "blank: random" })));
+	const go = el("button", { class: "primary", onclick: async () => {
+		go.disabled = true;
+		const value = id => document.getElementById(id).value;
+		await arenaAction("arena/start", { levels: value("aLevels") || String(level), battles: value("aBattles"), parallel: value("aParallel"), size: value("aSize"), brains: value("aBrains"), time: value("aTime"), distance: value("aDistance"), place: value("aPlace"), seed: value("aSeed") });
+		go.disabled = false;
+	} }, "Start arena");
+	return el("div", { class: "card" },
+		el("div", { class: "title" }, el("h2", null, "Arena"), el("span", { class: "muted" }, "none running")),
+		el("div", { class: "muted" }, "Party battles of two brains, mirrored builds on both sides, each composition played from both sides, many at once in instances. Wins with 95% intervals by brain, level and side."),
+		form, go);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1111,10 +1260,11 @@ document.getElementById("newCancel").addEventListener("click", () => document.ge
 document.getElementById("newGo").addEventListener("click", startNew);
 document.getElementById("btnStop").addEventListener("click", stopRun);
 document.getElementById("btnPoints").addEventListener("click", openPoints);
+document.getElementById("btnArena").addEventListener("click", openArena);
 document.getElementById("pointsClose").addEventListener("click", () => document.getElementById("pointsModal").classList.remove("open"));
 document.getElementById("pointsClearAll").addEventListener("click", () => clearPoint("all"));
 document.getElementById("pointsDraw").addEventListener("click", async () => { try { showLines(await api("points/draw", { post: true })); } catch (e) { if (e.message !== "auth") toast(e.message, true); } });
-document.getElementById("status").addEventListener("click", openLive);
+document.getElementById("status").addEventListener("click", () => (state.status && !state.status.running && state.status.arena ? openArena() : openLive()));
 for (const modal of document.querySelectorAll(".modal")) modal.addEventListener("click", e => { if (e.target === modal) modal.classList.remove("open"); });
 document.addEventListener("keydown", e => {
 	if (e.key === "Escape") document.querySelectorAll(".modal.open").forEach(m => m.classList.remove("open"));
@@ -1122,7 +1272,10 @@ document.addEventListener("keydown", e => {
 });
 
 // A 401/403 (no token, SimulationWebOpenAccess off) shows the server's answer instead of the page.
-pollStatus().then(loadRuns).then(() => { if (state.status && state.status.running) openLive(); });
+pollStatus().then(loadRuns).then(() => {
+	if (state.status && state.status.running) openLive();
+	else if (state.status && state.status.arena) openArena();
+});
 setInterval(pollStatus, STATUS_MS);
 </script>
 </body>

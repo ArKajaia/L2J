@@ -21,6 +21,27 @@ python tools/simulation/ab_test.py --report 20261025-133126-393834156 20261025-1
 
 With `--swap` both teams get the same builds, the brains change sides every round, and a new composition comes every 2 rounds, so only the brain differs. B is better only if its 95% interval stays above 50%. About 100 rounds are needed before a 60% win rate is clearly above 50%.
 
+## A/B arena: party battles in instances, many at once
+
+`//Simulate ab [battles per level, 20] [levels=40,61,80] [parallel=100] [size=5] [brains=A:B] [time=300] [distance=1500] [seed=<n>]` (or `ab_test.py --parallel`) runs the A/B test as party battles that all fight at the same field, each in an instance of its own, `parallel` at once. Both teams of a battle get the same builds, gear and personalities, and every composition is fought twice with the brains on swapped sides, so only the brain differs. The compositions go through the levels in turn, so an arena stopped early covers every level about evenly.
+
+```bash
+# 100 battles per level at 40, 61 and 80, 100 at once (from the web with no GM: at the Cruma Marshlands field).
+python tools/simulation/ab_test.py --parallel 100 --levels 40,61,80 --rounds 100
+```
+
+Output goes to `log/simulation-arena/arena-<time>/`: `results.csv` (one line per battle: level, composition, side, both brains, winner and its brain, reason, duration, decided-at, HP left, first death), `summary.txt` (wins by brain with their 95% interval, per level, by side; rewritten every 20 battles and at the end), and `battles/` with the logs of the newest 300 battles. `//SimulationStatus` and `//SimulationStop` (or `/api/simulation/arena/status`, `/arena/stop`) follow and stop it.
+
+To watch the battles:
+- **In game:** `//SimulationArena` opens a panel with the arena's progress, its wins so far and every battle running now. Each battle has a **Watch** button that takes the GM into its instance. The panel also has Next, Leave, Refresh and Stop. When the battle being watched ends, the GM moves on to the next one instead of being sent to town. The fake players leave the GM alone.
+- **On the web page:** the **Arena** button shows the same things: progress, the summary so far, the running battles with each team's brain, members alive and HP, and the arenas run so far with their summaries. It can also start an arena. Watch buttons need the page opened through `//SimulationWeb` (with the GM online), since they move the character. The API is `/api/simulation/arena/battles`, `/arena/list`, `/arena/watch` (`run`, blank for the next battle) and `/arena/leave`.
+
+`party_report.py <arena folder>` reports how the parties of an arena fight, per brain, from the battles it kept. It covers the healer race (who is hit first, who dies first and when, healers alive at the end), where each role stands at first contact, the team's spread, where the healer and the shooter stand at the first shot on the healer, the focus calls, and brain B's party-brain features (stances, cover, answers to shooters):
+
+```bash
+python tools/simulation/party_report.py build/server/game/log/simulation-arena/arena-20261028-191653
+```
+
 ## Class-vs-class matrix
 
 `//Simulate matrix 100` (in game; the number is the battles per pair, `//SimulationMatrix start battles=100` is the same) fights every pair of builds in 1v1 battles at the place where the GM stands, many at once. Every battle gets an instance of its own, so all of them share the same spot without seeing or hitting each other. The two fighters spawn `distance` apart along the way the GM faces. The GM teleport menu has **Simulation Field (Cruma Marshlands)** (20480, 104448, -3700): the flattest open field found in the geodata, ±50 in height over 3 km, with nothing blocking movement and no zone (water, peace, siege, boss...) on it.

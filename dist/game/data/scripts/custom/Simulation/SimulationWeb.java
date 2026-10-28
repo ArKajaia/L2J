@@ -27,12 +27,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.commons.util.SimpleJson;
 import org.l2jmobius.gameserver.config.custom.FakeSimulationConfig;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
+import org.l2jmobius.gameserver.managers.simulation.SimulationArena;
 import org.l2jmobius.gameserver.managers.simulation.SimulationHistory;
 import org.l2jmobius.gameserver.managers.simulation.SimulationLog;
 import org.l2jmobius.gameserver.managers.simulation.SimulationMatrix;
@@ -60,6 +62,10 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
  * <li>GET /api/simulation/member?series=&amp;round=&amp;id= - the decisions, events and anomalies of one character</li>
  * <li>POST /api/simulation/start, /rerun, /stop - like //Simulate and //SimulationStop (start: size, level, mirror, rounds, time, seed, points, swapPoints, brains like A:B, swap for an A/B test)</li>
  * <li>GET /api/simulation/points, POST /api/simulation/points/clear, /points/draw - the saved spawn points</li>
+ * <li>POST /api/simulation/arena/start, /arena/stop, GET /arena/status - the A/B arena, like //Simulate ab: party battles of two brains, many at once in instances (start: battles per level, levels, parallel, size, brains, time, distance, seed, and x, y, z, heading for the
+ * place: the GM's own, else the Cruma Marshlands field)</li>
+ * <li>GET /api/simulation/arena/battles - the arena running now, its status lines and the battles that run, each with its teams; GET /arena/list - the arenas run so far with their summary; POST /arena/watch (run: a battle, blank for the next one) and
+ * /arena/leave - take the GM of the link into a battle's instance to watch it, or back out</li>
  * <li>POST /api/simulation/matrix/start, /matrix/resume, /matrix/stop, GET /matrix/status - the class-vs-class matrix, like //SimulationMatrix (start: battles, parallel, level, time, distance, brain, builds, seed, and x, y, z, heading for the place: the GM's own
  * place by default, else the simulation field by Cruma Marshlands)</li>
  * </ul>
@@ -176,6 +182,13 @@ public class SimulationWeb
 		server.addRoute("/api/tvt/stop", "POST", true, this::handleTvtStop);
 		server.addRoute("/api/tvt/open", "POST", true, this::handleTvtOpen);
 		server.addRoute("/api/tvt/close", "POST", true, this::handleTvtClose);
+		server.addRoute("/api/simulation/arena/start", "POST", true, this::handleArenaStart);
+		server.addRoute("/api/simulation/arena/stop", "POST", true, this::handleArenaStop);
+		server.addRoute("/api/simulation/arena/status", "GET", false, this::handleArenaStatus);
+		server.addRoute("/api/simulation/arena/battles", "GET", false, this::handleArenaBattles);
+		server.addRoute("/api/simulation/arena/list", "GET", false, this::handleArenaList);
+		server.addRoute("/api/simulation/arena/watch", "POST", true, this::handleArenaWatch);
+		server.addRoute("/api/simulation/arena/leave", "POST", true, this::handleArenaLeave);
 		if (FakeSimulationConfig.WEB_OPEN_ACCESS)
 		{
 			LOGGER.warning("SimulationWeb: SimulationWebOpenAccess is on - anyone who reaches " + server.getPageUrl("simulation.html") + " can start and stop simulations.");
@@ -214,6 +227,8 @@ public class SimulationWeb
 		json.append(",\"series\":").append(quoteOrNull(series));
 		json.append(",\"stopping\":").append(manager.isStopping());
 		json.append(",\"savedPoints\":").append(manager.getPoints().size());
+		json.append(",\"arena\":");
+		appendArena(json, manager.getArena());
 		json.append(",\"defaults\":{\"level\":").append(gm != null ? gm.getLevel() : DEFAULT_LEVEL).append(",\"timeLimit\":").append(FakeSimulationConfig.TIME_LIMIT).append(",\"prepTime\":").append(FakeSimulationConfig.PREP_TIME).append('}');
 		if (run != null)
 		{
@@ -886,6 +901,274 @@ public class SimulationWeb
 			return;
 		}
 		sendMatrixLines(exchange, FakeSimulationManager.getInstance().getMatrixStatus());
+	}
+
+	private void handleArenaStart(HttpExchange exchange) throws IOException
+	{
+		final PassiveTreeApiServer server = PassiveTreeApiServer.getInstance();
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+
+		final Map<String, String> params = server.readParams(exchange);
+		final boolean here = (gm != null) && (gm.getInstanceId() == 0) && !"field".equals(params.get("place"));
+		final int x = parseInt(params.get("x"), here ? gm.getX() : MATRIX_FIELD[0]);
+		final int y = parseInt(params.get("y"), here ? gm.getY() : MATRIX_FIELD[1]);
+		final int z = parseInt(params.get("z"), here ? gm.getZ() : MATRIX_FIELD[2]);
+		final int heading = parseInt(params.get("heading"), here ? gm.getHeading() : MATRIX_FIELD[3]);
+		final int battles = Math.max(2, Math.min(1000, parseInt(params.get("battles"), 20)));
+		final int parallel = Math.max(1, Math.min(500, parseInt(params.get("parallel"), 100)));
+		final int size = parseInt(params.get("size"), 5);
+		final int time = Math.max(10, parseInt(params.get("time"), FakeSimulationConfig.TIME_LIMIT));
+		final int distance = Math.max(300, Math.min(3000, parseInt(params.get("distance"), 1500)));
+		final String brains = (params.get("brains") == null) || params.get("brains").trim().isEmpty() ? "A:B" : params.get("brains").trim();
+		final List<Integer> levels = new ArrayList<>();
+		for (String level : (params.get("levels") != null ? params.get("levels") : "").split(","))
+		{
+			final int value = parseInt(level, 0);
+			if (value > 0)
+			{
+				levels.add(Math.min(85, value));
+			}
+		}
+		if (levels.isEmpty())
+		{
+			levels.add(gm != null ? gm.getLevel() : DEFAULT_LEVEL);
+		}
+		long seed;
+		try
+		{
+			final String text = params.get("seed");
+			seed = (text == null) || text.trim().isEmpty() ? Rnd.get(1, Integer.MAX_VALUE) : Long.parseLong(text.trim());
+		}
+		catch (NumberFormatException e)
+		{
+			server.sendText(exchange, 400, "application/json", "{\"error\":\"the seed must be a whole number\"}");
+			return;
+		}
+		sendArenaLines(exchange, FakeSimulationManager.getInstance().startArena(gm, x, y, z, heading, levels, battles, parallel, size, brains, time, distance, seed));
+	}
+
+	private void handleArenaStop(HttpExchange exchange) throws IOException
+	{
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+
+		final List<String> lines = new ArrayList<>();
+		lines.add(FakeSimulationManager.getInstance().stopArena());
+		sendArenaLines(exchange, lines);
+	}
+
+	private void handleArenaStatus(HttpExchange exchange) throws IOException
+	{
+		if (!authorize(exchange))
+		{
+			return;
+		}
+		sendArenaLines(exchange, FakeSimulationManager.getInstance().getArenaStatus());
+	}
+
+	private void handleArenaBattles(HttpExchange exchange) throws IOException
+	{
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+
+		final FakeSimulationManager manager = FakeSimulationManager.getInstance();
+		final SimulationArena arena = manager.getArena();
+		final StringBuilder json = new StringBuilder(16384);
+		json.append("{\"admin\":").append(quoteOrNull(gm != null ? gm.getName() : null));
+		json.append(",\"watching\":").append(gm != null ? gm.getInstanceId() : 0);
+		json.append(",\"arena\":");
+		appendArena(json, arena);
+		json.append(",\"lines\":[");
+		final List<String> lines = arena != null ? arena.getStatus() : new ArrayList<String>();
+		for (int i = 0; i < lines.size(); i++)
+		{
+			json.append(i > 0 ? "," : "").append(SimpleJson.quote(lines.get(i)));
+		}
+		json.append("],\"battles\":[");
+		if (arena != null)
+		{
+			boolean first = true;
+			for (SimulationRun run : manager.getArenaRuns())
+			{
+				final SimulationArena.Battle battle = run.getArenaBattle();
+				json.append(first ? "" : ",");
+				first = false;
+				json.append("{\"run\":").append(run.getId());
+				json.append(",\"number\":").append(battle.number());
+				json.append(",\"level\":").append(battle.level());
+				json.append(",\"composition\":").append(battle.composition() + 1);
+				json.append(",\"side\":").append(battle.side());
+				json.append(",\"instance\":").append(FakeSimulationManager.getInstanceOf(run));
+				json.append(",\"phase\":").append(SimpleJson.quote(run.getPhase().name()));
+				json.append(",\"time\":").append(run.time());
+				json.append(",\"fightStart\":").append(run.getFightStart());
+				json.append(",\"teams\":[");
+				boolean firstTeam = true;
+				for (SimulationTeam team : run.getTeams())
+				{
+					int alive = 0;
+					int total = 0;
+					final StringBuilder members = new StringBuilder();
+					for (SimulationMember member : team.getMembers())
+					{
+						if (!team.isActive(member))
+						{
+							continue;
+						}
+						total++;
+						if (member.isAlive())
+						{
+							alive++;
+						}
+						final Creature creature = member.getCreature();
+						members.append(members.length() > 0 ? "," : "").append("{\"name\":").append(SimpleJson.quote(member.getName()));
+						members.append(",\"role\":").append(SimpleJson.quote(member.getRole().name()));
+						members.append(",\"build\":").append(SimpleJson.quote(member.getBuild()));
+						members.append(",\"alive\":").append(member.isAlive());
+						members.append(",\"hp\":").append(member.isAlive() ? ratio(creature.getCurrentHp(), creature.getMaxHp()) : "0").append('}');
+					}
+					json.append(firstTeam ? "" : ",");
+					firstTeam = false;
+					json.append("{\"id\":").append(team.getId());
+					json.append(",\"brain\":").append(SimpleJson.quote(team.getBrain().name()));
+					json.append(",\"alive\":").append(alive).append(",\"total\":").append(total);
+					json.append(",\"health\":").append(ratio(team.getHealthLeft(), 1));
+					json.append(",\"members\":[").append(members).append("]}");
+				}
+				json.append("]}");
+			}
+		}
+		json.append("]}");
+		PassiveTreeApiServer.getInstance().sendJson(exchange, 200, json.toString());
+	}
+
+	/** The arenas run so far, newest first: name, battles done, running or not, and the lines of their summary. */
+	private void handleArenaList(HttpExchange exchange) throws IOException
+	{
+		if (!authorize(exchange))
+		{
+			return;
+		}
+
+		final SimulationArena running = FakeSimulationManager.getInstance().getArena();
+		final List<Path> dirs = new ArrayList<>();
+		final Path root = FakeSimulationManager.getArenaRoot();
+		if (Files.isDirectory(root))
+		{
+			try (Stream<Path> stream = Files.list(root))
+			{
+				stream.filter(Files::isDirectory).forEach(dirs::add);
+			}
+		}
+		dirs.sort((a, b) -> b.getFileName().toString().compareTo(a.getFileName().toString()));
+		final StringBuilder json = new StringBuilder(8192).append("{\"arenas\":[");
+		for (int i = 0; i < Math.min(dirs.size(), 50); i++)
+		{
+			final Path dir = dirs.get(i);
+			final String name = dir.getFileName().toString();
+			int done = 0;
+			final Path results = dir.resolve(SimulationArena.RESULTS);
+			if (Files.isRegularFile(results))
+			{
+				try (BufferedReader reader = Files.newBufferedReader(results, StandardCharsets.UTF_8))
+				{
+					while (reader.readLine() != null)
+					{
+						done++;
+					}
+				}
+				done = Math.max(0, done - 1);
+			}
+			final Path summary = dir.resolve(SimulationArena.SUMMARY);
+			final List<String> lines = Files.isRegularFile(summary) ? Files.readAllLines(summary, StandardCharsets.UTF_8) : new ArrayList<String>();
+			json.append(i > 0 ? "," : "").append("{\"name\":").append(SimpleJson.quote(name));
+			json.append(",\"running\":").append((running != null) && running.getName().equals(name));
+			json.append(",\"done\":").append(done);
+			json.append(",\"dir\":").append(SimpleJson.quote(dir.toAbsolutePath().toString()));
+			json.append(",\"summary\":[");
+			for (int j = 0; j < lines.size(); j++)
+			{
+				json.append(j > 0 ? "," : "").append(SimpleJson.quote(lines.get(j)));
+			}
+			json.append("]}");
+		}
+		json.append("]}");
+		PassiveTreeApiServer.getInstance().sendJson(exchange, 200, json.toString());
+	}
+
+	/** Takes the GM of the link into the instance of a battle (run, or blank for the next one): it has to be online, the page opened with //SimulationWeb. */
+	private void handleArenaWatch(HttpExchange exchange) throws IOException
+	{
+		final PassiveTreeApiServer server = PassiveTreeApiServer.getInstance();
+		final Player gm = getGm(exchange);
+		if (gm == null)
+		{
+			if (FakeSimulationConfig.WEB_OPEN_ACCESS)
+			{
+				server.sendText(exchange, 400, "application/json", "{\"error\":\"Watching takes your character into the battle: open this page with //SimulationWeb in game (and stay online).\"}");
+			}
+			return;
+		}
+
+		final Map<String, String> params = server.readParams(exchange);
+		final List<String> lines = new ArrayList<>();
+		lines.add(FakeSimulationManager.getInstance().watchArenaBattle(gm, parseInt(params.get("run"), 0)));
+		sendArenaLines(exchange, lines);
+	}
+
+	private void handleArenaLeave(HttpExchange exchange) throws IOException
+	{
+		final PassiveTreeApiServer server = PassiveTreeApiServer.getInstance();
+		final Player gm = getGm(exchange);
+		if (gm == null)
+		{
+			if (FakeSimulationConfig.WEB_OPEN_ACCESS)
+			{
+				server.sendText(exchange, 400, "application/json", "{\"error\":\"Open this page with //SimulationWeb in game: there is no character to take back.\"}");
+			}
+			return;
+		}
+
+		FakeSimulationManager.getInstance().leaveBattle(gm);
+		final List<String> lines = new ArrayList<>();
+		lines.add("Back in the open world.");
+		sendArenaLines(exchange, lines);
+	}
+
+	private static void appendArena(StringBuilder json, SimulationArena arena)
+	{
+		if (arena == null)
+		{
+			json.append("null");
+			return;
+		}
+		json.append("{\"name\":").append(SimpleJson.quote(arena.getName())).append(",\"dir\":").append(SimpleJson.quote(arena.getDir().toAbsolutePath().toString())).append(",\"done\":").append(arena.getDone()).append(",\"running\":").append(arena.getRunning()).append(",\"total\":").append(arena.getTotal()).append(",\"stopping\":").append(arena.isStopped());
+		json.append(",\"size\":").append(arena.getSize()).append(",\"parallel\":").append(arena.getParallel()).append(",\"timeLimit\":").append(arena.getTimeLimit()).append(",\"seed\":").append(SimpleJson.quote(String.valueOf(arena.getSeed()))).append('}');
+	}
+
+	/** Answers with what the manager said, and the arena running now: its name, folder, battles done, running and in all. */
+	private static void sendArenaLines(HttpExchange exchange, List<String> lines) throws IOException
+	{
+		final SimulationArena arena = FakeSimulationManager.getInstance().getArena();
+		final StringBuilder json = new StringBuilder("{\"arena\":");
+		appendArena(json, arena);
+		json.append(",\"lines\":[");
+		for (int i = 0; i < lines.size(); i++)
+		{
+			json.append(i > 0 ? "," : "").append(SimpleJson.quote(lines.get(i)));
+		}
+		json.append("]}");
+		PassiveTreeApiServer.getInstance().sendJson(exchange, 200, json.toString());
 	}
 
 	/** Answers with what the manager said, and the matrix running now: its name, folder, battles done, running and in all. */

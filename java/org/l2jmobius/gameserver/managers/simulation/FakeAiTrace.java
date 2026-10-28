@@ -278,6 +278,30 @@ public class FakeAiTrace
 	}
 
 	/**
+	 * Notes that the party of {@code npc} changed its stance (its party brain, see {@code FakePartyBrain}).
+	 * @param npc the member whose think made the party think
+	 * @param from the stance before
+	 * @param to the stance now
+	 * @param why what made it change
+	 * @param target the enemy the party fights, {@code null} if none
+	 */
+	public static void onPartyStance(Npc npc, String from, String to, String why, Creature target)
+	{
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		if ((profile == null) || !profile.isSimulant())
+		{
+			return;
+		}
+
+		final SimulationRun run = FakeSimulationManager.getInstance().getRun(profile.getSimRunId());
+		final SimulationMember member = run != null ? run.getMember(npc) : null;
+		if (member != null)
+		{
+			run.getLog().write(SimulationLog.EVENTS, new JsonLine().put("t", run.time()).put("type", "party_stance").put("team", member.getTeamId()).put("from", from).put("to", to).put("why", why).put("by", member.getName()).put("target", target != null ? target.getName() : null));
+		}
+	}
+
+	/**
 	 * Notes that the AI of {@code npc} changed its attack target.
 	 * @param npc the fake player
 	 * @param previous its target before, {@code null} for none
