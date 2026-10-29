@@ -103,8 +103,8 @@ public class TeamVsTeamConfig
 		brackets.sort((a, b) -> Integer.compare(a[0], b[0]));
 		BRACKETS = Collections.unmodifiableList(brackets);
 
-		BLUE_BASES = parseLocations(config.getString("TvTBlueBase", "-22750,143300,-3904,63065;-21700,144750,-3816,58773;-17400,146250,-3752,46596"), "TvTBlueBase");
-		RED_BASES = parseLocations(config.getString("TvTRedBase", "-19800,138650,-3896,12515;-16250,138600,-3792,21936;-13000,142000,-3688,32285"), "TvTRedBase");
+		BLUE_BASES = parseLocations(config.getString("TvTBlueBase", "-17200,147000,-3704,46757;-19800,146600,-3736,52784;-21600,145400,-3760,57879"), "TvTBlueBase");
+		RED_BASES = parseLocations(config.getString("TvTRedBase", "-20200,138700,-3896,11380;-16400,138400,-3792,20956;-14600,139400,-3792,25627"), "TvTRedBase");
 		BLUE_BASE = BLUE_BASES.isEmpty() ? null : BLUE_BASES.get(0);
 		RED_BASE = RED_BASES.isEmpty() ? null : RED_BASES.get(0);
 		SPAWN_RADIUS = Math.max(0, config.getInt("TvTSpawnRadius", 150));
