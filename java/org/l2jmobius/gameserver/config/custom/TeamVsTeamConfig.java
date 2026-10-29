@@ -58,6 +58,10 @@ public class TeamVsTeamConfig
 	public static Location RED_BASE;
 	public static int SPAWN_RADIUS;
 	public static int BASE_RADIUS;
+	/** Players coming this close to the edge of an enemy base are warned that it stuns them (see TeamVsTeamManager). */
+	public static int BASE_WARNING_DISTANCE;
+	/** The fence round the field: {middle x, middle y, radius along x, radius along y} of an ellipse, {@code null} for none (see TeamVsTeamBarrier). */
+	public static int[] BARRIER;
 	public static int RESPAWN_DELAY;
 	public static int SPAWN_PROTECTION;
 	public static List<ItemChanceHolder> KILL_REWARDS;
@@ -109,6 +113,34 @@ public class TeamVsTeamConfig
 		RED_BASE = RED_BASES.isEmpty() ? null : RED_BASES.get(0);
 		SPAWN_RADIUS = Math.max(0, config.getInt("TvTSpawnRadius", 150));
 		BASE_RADIUS = Math.max(100, config.getInt("TvTBaseRadius", 700));
+		BASE_WARNING_DISTANCE = Math.max(0, config.getInt("TvTBaseWarningDistance", 500));
+		BARRIER = null;
+		final String barrier = config.getString("TvTBarrier", "-17800,142600,5900,5300").trim();
+		if (!barrier.isEmpty())
+		{
+			final String[] values = barrier.split(",");
+			try
+			{
+				if (values.length != 4)
+				{
+					throw new NumberFormatException();
+				}
+				final int[] parsed = new int[4];
+				for (int i = 0; i < 4; i++)
+				{
+					parsed[i] = Integer.parseInt(values[i].trim());
+				}
+				if ((parsed[2] < 500) || (parsed[3] < 500))
+				{
+					throw new NumberFormatException();
+				}
+				BARRIER = parsed;
+			}
+			catch (NumberFormatException e)
+			{
+				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad TvTBarrier \"" + barrier + "\" (x,y,radius x,radius y, radii at least 500): no barrier.");
+			}
+		}
 		RESPAWN_DELAY = Math.max(1, config.getInt("TvTRespawnDelay", 10));
 		SPAWN_PROTECTION = Math.max(0, config.getInt("TvTSpawnProtection", 15));
 

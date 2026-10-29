@@ -57,6 +57,7 @@ import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
+import org.l2jmobius.gameserver.model.actor.instance.Fence;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
@@ -69,6 +70,7 @@ import org.l2jmobius.gameserver.model.item.type.WeaponType;
 import org.l2jmobius.gameserver.model.item.Weapon;
 import org.l2jmobius.gameserver.model.olympiad.OlympiadManager;
 import org.l2jmobius.gameserver.model.script.Quest;
+import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
 import org.l2jmobius.gameserver.model.skill.CommonSkill;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
@@ -172,6 +174,14 @@ public class TeamVsTeamManager
 		1
 	};
 	private static final SkillHolder GHOST_WALKING = new SkillHolder(100000, 1); // Spawn protection look (Ultimate Defense effect).
+	/** A player close to an enemy base is warned again at most this often. */
+	private static final long BASE_WARNING_INTERVAL = 6000;
+	/** A fake player this close to the edge of an enemy base turns back (it checks every second: farther than it runs in one). */
+	private static final int FAKE_TURN_BACK_DISTANCE = 350;
+	/** It turns back toward the middle of the field, this far. */
+	private static final int TURN_BACK_STEP = 500;
+	/** Someone this far beyond the fence (a skill that moved them, a gap in it) is brought back inside it. */
+	private static final int BARRIER_MARGIN = 250;
 
 	public enum Phase
 	{
@@ -220,6 +230,9 @@ public class TeamVsTeamManager
 		private volatile long _loneUntil;
 		private volatile Location _ambushSpot;
 		private volatile long _ambushSprungAt;
+		// Stunned in an enemy base until it dies (see trap), and when a player may be warned again that it comes close to one.
+		private volatile boolean _trapped;
+		private long _nextBaseWarning;
 
 		Fighter(Creature creature, Match match, Side side, SimRole role)
 		{
@@ -475,6 +488,8 @@ public class TeamVsTeamManager
 		private volatile boolean _simulated;
 		// When its fake players may say something again.
 		private long _nextChat;
+		// The fence round its field (see TeamVsTeamBarrier).
+		private final List<Fence> _barrier = new ArrayList<>();
 
 		Match(int id, int minLevel, int maxLevel, int instanceId)
 		{
@@ -1134,6 +1149,7 @@ public class TeamVsTeamManager
 
 		final Match match = new Match(_nextMatchId.getAndIncrement(), bracket[0], bracket[1], instance.getId());
 		match._simulated = simulated;
+		match._barrier.addAll(TeamVsTeamBarrier.build(instance.getId()));
 		_matches.put(match.getId(), match);
 		ACTIVE = true;
 		keepRegionsAwake(match);
@@ -1167,7 +1183,7 @@ public class TeamVsTeamManager
 		}
 
 		match._task = ThreadPool.scheduleAtFixedRate(() -> tick(match), TICK_MS, TICK_MS);
-		LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " (levels " + match.getBracketName() + ") started: Blue " + match._blue.getPlayerCount() + " players / " + match._blue._fighters.size() + ", Red " + match._red.getPlayerCount() + " players / " + match._red._fighters.size() + ".");
+		LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " (levels " + match.getBracketName() + ") started: Blue " + match._blue.getPlayerCount() + " players / " + match._blue._fighters.size() + ", Red " + match._red.getPlayerCount() + " players / " + match._red._fighters.size() + ", " + match._barrier.size() + " walls of fence round the field.");
 		return match;
 	}
 
@@ -1441,16 +1457,35 @@ public class TeamVsTeamManager
 							continue;
 						}
 
-						// No camping in front of the other team's spawn: whoever walks into one of its bases is sent to its own closest one.
-						final Side other = match.getOther(fighter._side);
-						if (other.getBaseDistance(creature) < TeamVsTeamConfig.BASE_RADIUS)
+						// Nobody leaves the field: the fence stops everyone, and whoever got through anyway (a skill that moves them) is brought back inside.
+						if (TeamVsTeamBarrier.isOutside(creature, BARRIER_MARGIN))
 						{
-							sendHome(fighter, fighter._side.getClosestBase(creature));
-							if (fighter.isPlayer())
+							sendInside(fighter);
+							continue;
+						}
+
+						// No camping in front of the other team's spawn: whoever walks into one of its bases is stunned there until it dies, and its team may kill it from inside the base. Players coming close are warned first, fake players turn back.
+						final Side other = match.getOther(fighter._side);
+						final double enemyBase = other.getBaseDistance(creature);
+						if (enemyBase < TeamVsTeamConfig.BASE_RADIUS)
+						{
+							if (!fighter._trapped)
 							{
-								sendScreen(creature.asPlayer(), "Entering the enemy base is not allowed!", 5, false);
+								trap(fighter);
 							}
 							continue;
+						}
+						if (fighter.isPlayer())
+						{
+							if ((enemyBase < (TeamVsTeamConfig.BASE_RADIUS + TeamVsTeamConfig.BASE_WARNING_DISTANCE)) && (now >= fighter._nextBaseWarning))
+							{
+								fighter._nextBaseWarning = now + BASE_WARNING_INTERVAL;
+								sendScreen(creature.asPlayer(), "Enemy base ahead! Step into it and you are stunned until you die.", 4, true);
+							}
+						}
+						else if (enemyBase < (TeamVsTeamConfig.BASE_RADIUS + FAKE_TURN_BACK_DISTANCE))
+						{
+							turnBack(fighter, other);
 						}
 
 						// Spawn protection lasts a while (it ends sooner when it hurts someone, see onDamageDealt), so the ones coming back can join their team.
@@ -1667,6 +1702,104 @@ public class TeamVsTeamManager
 		}
 	}
 	
+	/**
+	 * Brings someone that got beyond the fence back inside it (on the way to the middle of the field).
+	 */
+	private static void sendInside(Fighter fighter)
+	{
+		final Creature creature = fighter._creature;
+		if (fighter._match._simulated)
+		{
+			LOGGER.info(TeamVsTeamManager.class.getSimpleName() + ": Match " + fighter._match.getId() + ": " + describe(fighter) + " got beyond the fence at " + creature.getX() + "," + creature.getY() + "," + creature.getZ() + " and is brought back.");
+		}
+		creature.abortAttack();
+		creature.abortCast();
+		creature.teleToLocation(TeamVsTeamBarrier.getInside(creature), fighter._match._instanceId, 0);
+		if (creature.isPlayer())
+		{
+			sendScreen(creature.asPlayer(), "You can't leave the battlefield!", 4, false);
+		}
+		else if (!creature.isDead() && creature.hasAI() && (creature.getAI() instanceof AttackableAI ai))
+		{
+			ai.startAITask();
+		}
+	}
+
+	/**
+	 * Someone walked into an enemy base: it is stunned there until it dies (it can't move, attack nor use a skill, and nothing cleanses it), and the base's team may kill it from inside its base.
+	 */
+	private void trap(Fighter fighter)
+	{
+		final Creature creature = fighter._creature;
+		fighter._trapped = true;
+		creature.abortAttack();
+		creature.abortCast();
+		creature.stopMove(null);
+		creature.setParalyzed(true);
+		creature.startAbnormalVisualEffect(true, AbnormalVisualEffect.STUN);
+		if (creature.isPlayer())
+		{
+			sendScreen(creature.asPlayer(), "You entered the enemy base: you are stunned until you die!", 6, true);
+			creature.sendMessage("TvT: You entered the enemy base and are stunned until you die.");
+		}
+		if (fighter._match._simulated)
+		{
+			LOGGER.info(getClass().getSimpleName() + ": Match " + fighter._match.getId() + ": " + describe(fighter) + " walked into the enemy base and is stunned there.");
+		}
+	}
+
+	/**
+	 * Ends the stun of an enemy base (at its death, or when it leaves the match).
+	 */
+	private static void untrap(Fighter fighter)
+	{
+		if (!fighter._trapped)
+		{
+			return;
+		}
+
+		fighter._trapped = false;
+		final Creature creature = fighter._creature;
+		creature.setParalyzed(false);
+		creature.stopAbnormalVisualEffect(true, AbnormalVisualEffect.STUN);
+	}
+
+	/**
+	 * A fake player about to walk into an enemy base turns back toward the middle of the field (it sees the warning like a player does).
+	 */
+	private static void turnBack(Fighter fighter, Side enemySide)
+	{
+		final Creature creature = fighter._creature;
+		if (creature.isMovementDisabled() || !creature.hasAI())
+		{
+			return;
+		}
+
+		final Location base = enemySide.getClosestBase(creature);
+		final double length = Math.max(1, creature.calculateDistance2D(base));
+		final int x = creature.getX() + (int) (((creature.getX() - base.getX()) / length) * TURN_BACK_STEP);
+		final int y = creature.getY() + (int) (((creature.getY() - base.getY()) / length) * TURN_BACK_STEP);
+		final Location away = GeoEngine.getInstance().getValidLocation(creature.getX(), creature.getY(), creature.getZ(), x, y, GeoEngine.getInstance().getHeight(x, y, creature.getZ()), creature.getInstanceId());
+		creature.abortAttack();
+		creature.setTarget(null);
+		if (creature.isAttackable())
+		{
+			creature.asAttackable().clearAggroList();
+		}
+		creature.setRunning();
+		creature.getAI().setIntention(Intention.MOVE_TO, away);
+	}
+
+	/**
+	 * @param creature a creature
+	 * @return {@code true} if it is stunned in an enemy base of its match until it dies
+	 */
+	public static boolean isTrapped(Creature creature)
+	{
+		final Fighter fighter = getFighter(creature);
+		return (fighter != null) && fighter._trapped;
+	}
+
 	private static void protect(Fighter fighter)
 	{
 		if (TeamVsTeamConfig.SPAWN_PROTECTION <= 0)
@@ -1719,6 +1852,7 @@ public class TeamVsTeamManager
 		dead._deaths++;
 		dead._loneUntil = 0;
 		dead._ambushSpot = null;
+		untrap(dead);
 		dead._side.joinWave(dead, System.currentTimeMillis());
 
 		final Fighter slayer = getFighter(killer);
@@ -1877,6 +2011,7 @@ public class TeamVsTeamManager
 				}
 				else
 				{
+					untrap(fighter);
 					removeFake((Npc) fighter._creature);
 				}
 				_fighters.remove(fighter._creature.getObjectId(), fighter);
@@ -1888,6 +2023,7 @@ public class TeamVsTeamManager
 		}
 		finally
 		{
+			TeamVsTeamBarrier.remove(match._barrier);
 			releaseRegions(match);
 			InstanceManager.getInstance().destroyInstance(match._instanceId);
 			_matches.remove(match.getId());
@@ -1928,6 +2064,7 @@ public class TeamVsTeamManager
 	{
 		final Player player = fighter._creature.asPlayer();
 		unprotect(fighter);
+		untrap(fighter);
 		player.setInvul(false);
 		player.setTeam(Team.NONE);
 		player.getAppearance().setNameColor(fighter._nameColor);
@@ -2219,7 +2356,7 @@ public class TeamVsTeamManager
 	}
 
 	/**
-	 * The bases are safe: nobody standing in their own base hurts anyone or can be hurt, so nobody camps at a base's edge to kill the ones coming back (and no one shoots out of it).
+	 * The bases are safe: nobody standing in their own base hurts anyone or can be hurt, so nobody camps at a base's edge to kill the ones coming back (and no one shoots out of it). One stunned in an enemy base (see {@link #trap}) may be hurt from inside it.
 	 */
 	private static boolean isFightOn(Creature attacker, Creature target, Relation relation)
 	{
@@ -2229,7 +2366,7 @@ public class TeamVsTeamManager
 		}
 		final Fighter fa = getFighter(attacker);
 		final Fighter fb = getFighter(target);
-		return (fa != null) && (fb != null) && (fa._match._phase == Phase.FIGHT) && !isInBase(attacker, fa) && !isInBase(target, fb);
+		return (fa != null) && (fb != null) && (fa._match._phase == Phase.FIGHT) && !isInBase(target, fb) && (fb._trapped || !isInBase(attacker, fa));
 	}
 
 	/**
@@ -2901,7 +3038,7 @@ public class TeamVsTeamManager
 					final Creature creature = fighter._creature;
 					final FakePlayerParty party = FakePartyManager.getInstance().getParty(creature);
 					final Creature target = creature.getTarget() instanceof Creature ? (Creature) creature.getTarget() : null;
-					lines.add("    " + describe(fighter) + " lv" + creature.getLevel() + (creature.isDead() ? " DEAD" : " " + (int) ((100 * creature.getCurrentHp()) / creature.getMaxHp()) + "%hp") + (fighter.isProtected() ? " protected" : "") + " k" + fighter._kills + "/d" + fighter._deaths + " at " + creature.getX() + "," + creature.getY() + "," + creature.getZ() + " base " + (int) side.getBaseDistance(creature) + (fighter.isLone() ? " lone" : "") + (fighter._ambushSpot != null ? (fighter.isInAmbush() ? " in-ambush" : " to-ambush") : "") + " near " + fighter._alliesNear + (creature.hasAI() ? " " + creature.getAI().getIntention() : "") + (creature.isMoving() ? " moving" : "") + (creature.isCastingNow() ? " casting" : "") + describeAiState(creature) + (target != null ? " target " + target.getName() : "") + (party != null ? " party " + Integer.toHexString(System.identityHashCode(party)) : " no party"));
+					lines.add("    " + describe(fighter) + " lv" + creature.getLevel() + (creature.isDead() ? " DEAD" : " " + (int) ((100 * creature.getCurrentHp()) / creature.getMaxHp()) + "%hp") + (fighter.isProtected() ? " protected" : "") + " k" + fighter._kills + "/d" + fighter._deaths + " at " + creature.getX() + "," + creature.getY() + "," + creature.getZ() + " base " + (int) side.getBaseDistance(creature) + (fighter._trapped ? " TRAPPED" : "") + (fighter.isLone() ? " lone" : "") + (fighter._ambushSpot != null ? (fighter.isInAmbush() ? " in-ambush" : " to-ambush") : "") + " near " + fighter._alliesNear + (creature.hasAI() ? " " + creature.getAI().getIntention() : "") + (creature.isMoving() ? " moving" : "") + (creature.isCastingNow() ? " casting" : "") + describeAiState(creature) + (target != null ? " target " + target.getName() : "") + (party != null ? " party " + Integer.toHexString(System.identityHashCode(party)) : " no party"));
 				}
 			}
 		}

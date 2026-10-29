@@ -6549,7 +6549,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				trace(Reason.STAND_UP, enemy);
 				return;
 			}
-			if (atBase)
+			// From its base it runs out at an enemy, but kills one stunned in the base (see TeamVsTeamManager#isTrapped) from there.
+			if (atBase && !TeamVsTeamManager.isTrapped(enemy))
 			{
 				trace(Reason.SIM_MARCH, enemy);
 				marchTo(npc, enemy.getLocation(), false);
