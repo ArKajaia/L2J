@@ -7919,7 +7919,7 @@ public class Player extends Playable
 			ps.setInt(24, getRace().ordinal());
 			ps.setInt(25, getPlayerClass().getId());
 			ps.setLong(26, _deleteTimer);
-			ps.setString(27, getTitle());
+			ps.setString(27, TeamVsTeamManager.getOwnTitle(this));
 			ps.setInt(28, _appearance.getTitleColor());
 			ps.setInt(29, getAccessLevel().getLevel());
 			ps.setInt(30, isOnlineInt());

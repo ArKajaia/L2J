@@ -1253,8 +1253,8 @@ public class Npc extends Creature
 		
 		final Weapon weapon = (killer != null) ? killer.getActiveWeaponItem() : null;
 		_killingBlowWeaponId = (weapon != null) ? weapon.getId() : 0;
-		// A class transfer challenge opponent is part of the trial: killing it is neither a PK nor a PvP kill.
-		if (_isFakePlayer && (killer != null) && killer.isPlayable() && !isTrialDuelist())
+		// A class transfer challenge opponent is part of the trial: killing it is neither a PK nor a PvP kill. Nor is a kill in a PvP zone (a PvP instance, such as a Team vs Team match, or an arena), as for a player (see Player#onKillUpdatePvPKarma).
+		if (_isFakePlayer && (killer != null) && killer.isPlayable() && !isTrialDuelist() && !isInsideZone(ZoneId.PVP))
 		{
 			final Player player = killer.asPlayer();
 			

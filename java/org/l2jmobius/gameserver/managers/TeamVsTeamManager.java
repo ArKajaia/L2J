@@ -56,6 +56,7 @@ import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 import org.l2jmobius.gameserver.model.actor.instance.Fence;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
@@ -80,6 +81,7 @@ import org.l2jmobius.gameserver.network.NpcStringId;
 import org.l2jmobius.gameserver.network.serverpackets.ExSendUIEvent;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
+import org.l2jmobius.gameserver.network.serverpackets.NicknameChanged;
 import org.l2jmobius.gameserver.network.serverpackets.ServerPacket;
 import org.l2jmobius.gameserver.taskmanagers.AttackableThinkTaskManager;
 import org.l2jmobius.gameserver.taskmanagers.DecayTaskManager;
@@ -215,9 +217,10 @@ public class TeamVsTeamManager
 		private final Match _match;
 		private final Side _side;
 		private final SimRole _role;
-		// Where a player was before the match, and its name color.
+		// Where a player was before the match, its name color and its own title (it shows its score meanwhile, see showScore).
 		private Location _returnLocation;
 		private int _nameColor;
+		private volatile String _title;
 		private volatile int _kills;
 		private volatile int _deaths;
 		private volatile long _respawnAt;
@@ -1322,6 +1325,7 @@ public class TeamVsTeamManager
 			final Fighter fighter = new Fighter(fake, match, side, role);
 			side._fighters.add(fighter);
 			_fighters.put(fake.getObjectId(), fighter);
+			showScore(fighter);
 			spawned.add(fake);
 		}
 		return spawned;
@@ -1335,6 +1339,7 @@ public class TeamVsTeamManager
 		final Fighter fighter = new Fighter(player, match, side, getRole(player));
 		fighter._returnLocation = new Location(player.getX(), player.getY(), player.getZ(), player.getHeading());
 		fighter._nameColor = player.getAppearance().getNameColor();
+		fighter._title = player.getTitle();
 		side._fighters.add(fighter);
 		_fighters.put(player.getObjectId(), fighter);
 
@@ -1353,6 +1358,7 @@ public class TeamVsTeamManager
 
 		player.getAppearance().setNameColor(side._nameColor);
 		player.setTeam(side._team);
+		player.setTitle(scoreTitle(fighter));
 		player.teleToLocation(side._base, instance.getId(), TeamVsTeamConfig.SPAWN_RADIUS);
 		buffAndHeal(player);
 		player.broadcastUserInfo();
@@ -1850,6 +1856,7 @@ public class TeamVsTeamManager
 		final Match match = dead._match;
 		final boolean deadAlone = dead._alliesNear == 0;
 		dead._deaths++;
+		showScore(dead);
 		dead._loneUntil = 0;
 		dead._ambushSpot = null;
 		untrap(dead);
@@ -1860,6 +1867,11 @@ public class TeamVsTeamManager
 		{
 			slayer._kills++;
 			slayer._side._score.incrementAndGet();
+			showScore(slayer);
+			if (slayer.isPlayer())
+			{
+				sendScreen(slayer._creature.asPlayer(), "You killed " + victim.getName() + "! Your score: " + slayer._kills + " kills, " + slayer._deaths + " deaths.", 3, false);
+			}
 			if (slayer.isPlayer())
 			{
 				rewardKill(slayer._creature.asPlayer(), victim);
@@ -1876,8 +1888,52 @@ public class TeamVsTeamManager
 
 		if (dead.isPlayer())
 		{
-			dead._creature.sendMessage("TvT: You come back at your base in " + TeamVsTeamConfig.RESPAWN_DELAY + " seconds.");
+			dead._creature.sendMessage("TvT: You come back at your base in " + TeamVsTeamConfig.RESPAWN_DELAY + " seconds. Your score: " + dead._kills + " kills, " + dead._deaths + " deaths.");
 		}
+	}
+
+	/**
+	 * @param fighter a fighter
+	 * @return its score as a title: kills and deaths ("K:3 D:1")
+	 */
+	private static String scoreTitle(Fighter fighter)
+	{
+		return "K:" + fighter._kills + " D:" + fighter._deaths;
+	}
+
+	/**
+	 * Shows a fighter's score as its title, to itself and to everyone around (a player's own title comes back when it leaves the match).
+	 * @param fighter a fighter
+	 */
+	private static void showScore(Fighter fighter)
+	{
+		final Creature creature = fighter._creature;
+		final String title = scoreTitle(fighter);
+		if (creature.isPlayer())
+		{
+			creature.setTitle(title);
+			creature.asPlayer().broadcastTitleInfo();
+			return;
+		}
+
+		final FakePlayerHolder holder = creature.asNpc().getTemplate().getFakePlayerInfo();
+		if (holder != null)
+		{
+			holder.setTitle(title);
+		}
+		creature.setTitle(title);
+		creature.broadcastPacket(new NicknameChanged(creature));
+	}
+
+	/**
+	 * @param player a player
+	 * @return the title to save for it: its own, not the score it shows in a match
+	 */
+	public static String getOwnTitle(Player player)
+	{
+		final Fighter fighter = getFighter(player);
+		final String title = fighter != null ? fighter._title : null;
+		return title != null ? title : player.getTitle();
 	}
 
 	private static void rewardKill(Player killer, Creature victim)
@@ -2068,6 +2124,11 @@ public class TeamVsTeamManager
 		player.setInvul(false);
 		player.setTeam(Team.NONE);
 		player.getAppearance().setNameColor(fighter._nameColor);
+		if (fighter._title != null)
+		{
+			player.setTitle(fighter._title);
+			fighter._title = null;
+		}
 		player.setOnEvent(false);
 		player.setRegisteredOnEvent(false);
 		player.setCanRevive(true);

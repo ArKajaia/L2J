@@ -324,6 +324,14 @@ public class FakePlayerHolder
 	}
 	
 	/**
+	 * @param title the title it shows (its score in a Team vs Team match)
+	 */
+	public void setTitle(String title)
+	{
+		_title = title != null ? title : "";
+	}
+
+	/**
 	 * Joins or leaves a clan, for a fake player that is its own (see {@link org.l2jmobius.gameserver.managers.FakeClanManager}).
 	 * @param clanId the clan id, 0 for none
 	 * @param title the title it shows
