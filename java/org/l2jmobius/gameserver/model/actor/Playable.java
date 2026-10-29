@@ -22,7 +22,9 @@ package org.l2jmobius.gameserver.model.actor;
 
 import org.l2jmobius.gameserver.ai.Action;
 import org.l2jmobius.gameserver.managers.InstanceManager;
+import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
+import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.enums.creature.InstanceType;
 import org.l2jmobius.gameserver.model.actor.stat.PlayableStat;
@@ -118,6 +120,16 @@ public abstract class Playable extends Creature
 			// now reset currentHp to zero
 			setCurrentHp(0);
 			setDead(true);
+		}
+		
+		// As in Creature#doDie, which this doesn't call: the party-vs-party simulation log, and the Team vs Team score, kill reward and respawn (without it a player that died in a match never came back).
+		if (FakeSimulationManager.ACTIVE)
+		{
+			FakeSimulationManager.getInstance().onDeath(this, killer);
+		}
+		if (TeamVsTeamManager.ACTIVE)
+		{
+			TeamVsTeamManager.getInstance().onDeath(this, killer);
 		}
 		
 		// Set target to null and cancel Attack or Cast
