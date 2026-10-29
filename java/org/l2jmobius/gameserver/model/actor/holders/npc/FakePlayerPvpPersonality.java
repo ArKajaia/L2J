@@ -33,7 +33,12 @@ import org.l2jmobius.gameserver.model.actor.Npc;
  * <li>chattiness: talks more (or less) in general chat;</li>
  * <li>roaming: hunts further from its spawn point.</li>
  * </ul>
- * Only the scales are rolled, the values are read from the config on every use, so a config reload applies to fake players already out. A value set to 0 in the config stays 0 (off).
+ * Only the scales are rolled, the values are read from the config on every use, so a config reload applies to fake players already out. A value set to 0 in the config stays 0 (off).<br>
+ * Two more, from 0 to 1, say how well it plays a team fight (Team vs Team, see {@link org.l2jmobius.gameserver.managers.TeamVsTeamManager}). Most fake players are average, few are very good or very bad, and the worst still play a decent game:
+ * <ul>
+ * <li>knowledge: how well it knows the game. It sees enemies sooner, picks the one alone or low rather than the closest, doesn't take on a group on its own nor chase into one, sets up ambushes at a wall's corner and waits there longer, and makes fewer slips (a moment's hesitation);</li>
+ * <li>teamplay: how well it plays in a group. It keeps closer to its party and follows its leader sooner, wanders off on its own less often, follows its party's calls more often and sooner, and makes more calls itself.</li>
+ * </ul>
  */
 public class FakePlayerPvpPersonality
 {
@@ -48,6 +53,9 @@ public class FakePlayerPvpPersonality
 	private final double _skill;
 	private final double _chattiness;
 	private final double _roaming;
+	// Team fight traits, from 0 to 1.
+	private final double _knowledge;
+	private final double _teamplay;
 
 	// Chances, from -1 to 1 of FakePvpPersonalityVariance.
 	private final double _skillChance;
@@ -94,7 +102,7 @@ public class FakePlayerPvpPersonality
 	 */
 	public static FakePlayerPvpPersonality elite()
 	{
-		return new FakePlayerPvpPersonality(0.5 + (Rnd.nextDouble() * 0.5), 0.7 + (Rnd.nextDouble() * 0.3), roll(), roll());
+		return new FakePlayerPvpPersonality(true, 0.5 + (Rnd.nextDouble() * 0.5), 0.7 + (Rnd.nextDouble() * 0.3), roll(), roll(), 0.6 + (Rnd.nextDouble() * 0.4), 0.4 + (Rnd.nextDouble() * 0.6));
 	}
 
 	/**
@@ -109,23 +117,20 @@ public class FakePlayerPvpPersonality
 	
 	private FakePlayerPvpPersonality(boolean random)
 	{
-		this(random, random ? roll() : 0, random ? roll() : 0, random ? roll() : 0, random ? roll() : 0);
+		this(random, random ? roll() : 0, random ? roll() : 0, random ? roll() : 0, random ? roll() : 0, random ? rollTeamTrait() : 0.5, random ? rollTeamTrait() : 0.5);
 	}
 	
 	/**
-	 * A personality with the given traits (from -1 to 1), each value following its trait with a bit of its own randomness.
+	 * A personality with the given traits (from -1 to 1, the team fight ones from 0 to 1), each value following its trait with a bit of its own randomness.
 	 */
-	private FakePlayerPvpPersonality(double aggression, double skill, double chattiness, double roaming)
-	{
-		this(true, aggression, skill, chattiness, roaming);
-	}
-	
-	private FakePlayerPvpPersonality(boolean random, double aggression, double skill, double chattiness, double roaming)
+	private FakePlayerPvpPersonality(boolean random, double aggression, double skill, double chattiness, double roaming, double knowledge, double teamplay)
 	{
 		_aggression = aggression;
 		_skill = skill;
 		_chattiness = chattiness;
 		_roaming = roaming;
+		_knowledge = knowledge;
+		_teamplay = teamplay;
 
 		_skillChance = follow(random, _skill);
 		_pvpSkillChance = follow(random, _skill);
@@ -164,6 +169,14 @@ public class FakePlayerPvpPersonality
 	private static double roll()
 	{
 		return (Rnd.nextDouble() * 2) - 1;
+	}
+
+	/**
+	 * @return a team fight trait from 0 to 1: the average of two rolls, so most are average and few are at the ends
+	 */
+	private static double rollTeamTrait()
+	{
+		return (Rnd.nextDouble() + Rnd.nextDouble()) / 2;
 	}
 
 	/**
@@ -214,6 +227,22 @@ public class FakePlayerPvpPersonality
 	public double getRoaming()
 	{
 		return _roaming;
+	}
+
+	/**
+	 * @return how well it knows the game, from 0 to 1 (see the class description)
+	 */
+	public double getKnowledge()
+	{
+		return _knowledge;
+	}
+
+	/**
+	 * @return how well it plays in a group, from 0 to 1 (see the class description)
+	 */
+	public double getTeamplay()
+	{
+		return _teamplay;
 	}
 
 	/**
@@ -445,6 +474,6 @@ public class FakePlayerPvpPersonality
 	@Override
 	public String toString()
 	{
-		return String.format("aggression %+.2f, skill %+.2f, chattiness %+.2f, roaming %+.2f", _aggression, _skill, _chattiness, _roaming);
+		return String.format("aggression %+.2f, skill %+.2f, chattiness %+.2f, roaming %+.2f, knowledge %.2f, teamplay %.2f", _aggression, _skill, _chattiness, _roaming, _knowledge, _teamplay);
 	}
 }

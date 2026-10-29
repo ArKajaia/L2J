@@ -128,6 +128,12 @@ public enum Reason
 	SIM_MARCH,
 	/** Nothing to do: no enemy left, or the run is over. */
 	SIM_WAIT,
+	/** On its own in a Team vs Team match: goes for an enemy that is alone, or roams the field looking for one. */
+	LONE_HUNT,
+	/** On its own in a Team vs Team match: goes to a wall's corner on the enemies' way, or waits there for someone alone. */
+	LONE_AMBUSH,
+	/** Alone in a Team vs Team match: doesn't take on (or chase into) a group of enemies, waits in its corner or slips back to its team mates. */
+	LONE_AVOID,
 
 	/** Nothing else to do this think. */
 	IDLE
