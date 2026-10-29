@@ -4691,6 +4691,25 @@ public abstract class Creature extends WorldObject
 		}
 		
 		final boolean arrived = distFraction > 1;
+
+		// A fence stops npcs too (players are stopped above). Their geodata path doesn't know about fences, so a path may lead through one: they stop at it. Their height between two points of a path is a straight line, off the ground on a slope: the ground's counts.
+		if (!isPlayer() && !isFloating)
+		{
+			final WorldRegion region = getWorldRegion();
+			if ((region != null) && !region.getFences().isEmpty())
+			{
+				final int xNext = arrived ? move.xDestination : (int) (move.xAccurate + (dx * distFraction));
+				final int yNext = arrived ? move.yDestination : (int) (move.yAccurate + (dy * distFraction));
+				final int zGround = GeoEngine.getInstance().getHeight(xPrev, yPrev, zPrev);
+				if (FenceData.getInstance().checkIfFenceBetween(xPrev, yPrev, zGround, xNext, yNext, zGround, getInstanceId()))
+				{
+					move.onGeodataPathIndex = -1;
+					stopMove(null);
+					return true;
+				}
+			}
+		}
+
 		if (arrived)
 		{
 			// Set the position of the Creature to the destination.
