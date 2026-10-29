@@ -724,6 +724,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			dropTarget(npc);
 			return;
 		}
+
+		// In a fight, a Team vs Team fake player waiting in ambush (or on its way to it) has left it.
+		if (profile.isTvtFighter())
+		{
+			TeamVsTeamManager.getInstance().springAmbush(npc);
+		}
 		
 		// Against several players, the one it can finish first. In a PvP spot, also anyone around that is a better target (someone low, someone after it or its clan mates, its killer, the leader...).
 		final long now = System.currentTimeMillis();
@@ -757,6 +763,15 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			if (visible != null)
 			{
 				target = visible;
+			}
+
+			// In a Team vs Team match, one that knows the game doesn't chase its target into a group of its friends alone, nor stays in a group fight while it plays on its own.
+			if (profile.isTvtFighter() && avoidsGroup(npc, profile, target, now))
+			{
+				trace(Reason.LONE_AVOID, target);
+				npc.stopHating(target);
+				dropTarget(npc);
+				return;
 			}
 		}
 
@@ -1908,7 +1923,11 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		// The party's call first: everyone on the same enemy. Not a healer: it keeps healing, and only hits what is close to it. Not a tank either: it guards its squishies (see guardBackline), and only calls for the others.
 		final boolean healer = (profile != null) && isPureHealer(profile);
 		final boolean tank = (profile != null) && !profile.isTransformed() && (profile.getRole() == Role.TANK);
-		final Creature called = (party != null) && !healer && !tank ? party.getFocus(now) : null;
+		Creature called = (party != null) && !healer && !tank ? party.getFocus(now) : null;
+		if ((called != null) && profile.isTvtFighter() && !heedsCall(profile, called, now))
+		{
+			called = null;
+		}
 		if ((called != null) && isPvpEnemy(called) && !called.isInvul() && !isPlayedAround(npc, called) && (npc.calculateDistance2D(called) <= getFocusScanRange(npc)) && isValidTarget(npc, called))
 		{
 			if (!hates(npc, called, FakePlayerPvpManager.PVP_HATE))
@@ -1969,7 +1988,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				call = (enemyHealer != null) && (npc.calculateDistance2D(enemyHealer) <= FOCUS_SCAN_RANGE) ? enemyHealer : (enemyHealer == null ? best : null);
 			}
 
-			if ((call != null) && !call.isInvul() && !isPlayedAround(npc, call) && !party.isCallDropped(call, now))
+			if ((call != null) && !call.isInvul() && !isPlayedAround(npc, call) && !party.isCallDropped(call, now) && ((profile == null) || !profile.isTvtFighter() || makesCall(profile, call)))
 			{
 				if (party.getFocus(now) != call)
 				{
@@ -1989,6 +2008,65 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			}
 		}
 		return best;
+	}
+
+	/** In a Team vs Team match: the chance it follows a call of its party (at least this, this much more for one that plays in a group best: never all of them), how soon it asks itself again after it didn't, and how long it takes to switch. */
+	private static final double CALL_HEED_MIN = 0.5;
+	private static final double CALL_HEED_TEAMPLAY = 0.42;
+	private static final long CALL_REROLL_TIME = 6000;
+	private static final int CALL_REACTION_TIME = 300;
+	private static final int CALL_REACTION_TEAMPLAY_TIME = 1700;
+	/** In a Team vs Team match: the chance it calls an enemy for its party (at least this, this much more for one that plays in a group best). */
+	private static final double CALL_MAKE_MIN = 0.4;
+	private static final double CALL_MAKE_TEAMPLAY = 0.55;
+
+	// In a Team vs Team match: the party call it heard last, whether it follows it, from when (it takes a moment to switch), and when it last asked itself.
+	private Creature _heardCall;
+	private boolean _heedsCall;
+	private long _heedFrom;
+	private long _heedRollTime;
+	// The enemy it last thought about calling for its party, and whether it calls it.
+	private Creature _callCandidate;
+	private boolean _makesCall;
+
+	/**
+	 * In a Team vs Team match a fake player doesn't follow every call of its party, like a player who misses one in the heat of the fight or likes its own target better: the better it plays in a group the more often, and the sooner it switches. One that didn't asks
+	 * itself again a few seconds later.
+	 * @param profile its profile
+	 * @param called the enemy its party called
+	 * @param now the current time
+	 * @return {@code true} if it goes for the call now
+	 */
+	private boolean heedsCall(FakePlayerPvpProfile profile, Creature called, long now)
+	{
+		final double teamplay = profile.getPersonality().getTeamplay();
+		final boolean newCall = called != _heardCall;
+		if (newCall || (!_heedsCall && (now >= (_heedRollTime + CALL_REROLL_TIME))))
+		{
+			_heardCall = called;
+			_heedsCall = Rnd.nextDouble() < (CALL_HEED_MIN + (CALL_HEED_TEAMPLAY * teamplay));
+			_heedRollTime = now;
+			if (newCall)
+			{
+				_heedFrom = now + Rnd.get(CALL_REACTION_TIME, CALL_REACTION_TIME + (int) (CALL_REACTION_TEAMPLAY_TIME * (1 - teamplay)));
+			}
+		}
+		return _heedsCall && (now >= _heedFrom);
+	}
+
+	/**
+	 * @param profile its profile
+	 * @param call an enemy it could call for its party
+	 * @return {@code true} if it calls it: in a Team vs Team match not always, more often the better it plays in a group (decided once per enemy)
+	 */
+	private boolean makesCall(FakePlayerPvpProfile profile, Creature call)
+	{
+		if (call != _callCandidate)
+		{
+			_callCandidate = call;
+			_makesCall = Rnd.nextDouble() < (CALL_MAKE_MIN + (CALL_MAKE_TEAMPLAY * profile.getPersonality().getTeamplay()));
+		}
+		return _makesCall;
 	}
 
 	/**
@@ -6453,9 +6531,17 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		// Nobody fights from inside its own base (an attack from there is refused, see TeamVsTeamManager#isForbidden). One that picked a fight there anyway dropped it at once and picked it again,
 		// standing in its base taunting for as long as an enemy waited outside: in its base it only heads out.
 		final boolean atBase = TeamVsTeamManager.isAtOwnBase(npc);
+		final TeamVsTeamManager tvt = TeamVsTeamManager.getInstance();
+		final long now = System.currentTimeMillis();
+
+		// Some play a whole life on their own, others go off on their own now and then (see considerGoingLone).
+		if (!atBase)
+		{
+			considerGoingLone(npc, profile, party, now);
+		}
 
 		// An enemy in sight: the fight is on (from its base, it runs out at it first).
-		final Creature enemy = TeamVsTeamManager.getInstance().findEnemyInSight(npc);
+		final Creature enemy = tvt.findEnemyInSight(npc);
 		if (enemy != null)
 		{
 			if (standUp(npc))
@@ -6469,9 +6555,44 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				marchTo(npc, enemy.getLocation(), false);
 				return;
 			}
+
+			// On its way to its corner or waiting there, it lets the enemies by that aren't alone (unless they are on it or close): it is there for one alone.
+			if ((tvt.getAmbushSpot(npc) != null) && (enemy.getTarget() != npc) && (npc.calculateDistance2D(enemy) > AVOID_MIN_DISTANCE) && (TeamVsTeamManager.getAlliesNear(enemy) > 0))
+			{
+				trace(Reason.LONE_AMBUSH, enemy);
+				holdAmbush(npc);
+				return;
+			}
+
+			// Alone, it doesn't take on a group from afar: it stays hidden in its corner, or slips back to its team mates. On its own, it leaves the group fights to its team and goes on looking for someone alone.
+			if (avoidsGroup(npc, profile, enemy, now))
+			{
+				trace(Reason.LONE_AVOID, enemy);
+				if (!holdAmbush(npc))
+				{
+					if (tvt.isLone(npc))
+					{
+						thinkLone(npc, profile, now);
+					}
+					else
+					{
+						slipAway(npc, enemy);
+					}
+				}
+				return;
+			}
+
 			trace(Reason.SIM_ENGAGE, enemy);
+			tvt.springAmbush(npc);
 			npc.setRunning();
 			FakePlayerPvpManager.getInstance().assistFight(npc, enemy);
+			return;
+		}
+
+		// On its own: it hunts the enemies alone, waits in ambush or roams the field instead of going with its party.
+		if (tvt.isLone(npc))
+		{
+			thinkLone(npc, profile, now);
 			return;
 		}
 
@@ -6494,7 +6615,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		}
 
 		// Where the team needs it.
-		final Location destination = TeamVsTeamManager.getInstance().getMarchTarget(npc);
+		final Location destination = tvt.getMarchTarget(npc);
 		if (destination == null)
 		{
 			trace(Reason.SIM_WAIT, null);
@@ -6505,6 +6626,270 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		marchTo(npc, destination, true);
 	}
 
+	/** In a Team vs Team match: the chance to play a whole life on its own, for one that knows the game best and plays in a group worst (see {@link #considerGoingLone}). */
+	private static final double LONE_LIFE_CHANCE = 0.35;
+	/** The chance, at each look, to go off on its own for a while: at least this, and this much more for one that plays in a group worst. Half as much in a party with players. */
+	private static final double STRAY_CHANCE_MIN = 0.03;
+	private static final double STRAY_CHANCE_TEAMPLAY = 0.2;
+	/** How often it thinks about going off on its own, and for how long it does. */
+	private static final int STRAY_CHECK_MIN_TIME = 15000;
+	private static final int STRAY_CHECK_MAX_TIME = 30000;
+	private static final int STRAY_MIN_TIME = 20000;
+	private static final int STRAY_MAX_TIME = 45000;
+	/** On its own, it hunts an enemy alone this far, and this much farther for one that knows the game best. */
+	private static final int LONE_HUNT_RANGE = 1500;
+	private static final int LONE_HUNT_RANGE_KNOWLEDGE = 1500;
+	/** On its own, the chance it plans to camp in ambush rather than hunt (at least this, this much more for one that knows the game best), how long a plan lasts, and how often it may look for a corner. A camper hunts only an enemy alone this close. */
+	private static final double CAMP_CHANCE_MIN = 0.3;
+	private static final double CAMP_CHANCE_KNOWLEDGE = 0.4;
+	private static final int PLAN_MIN_TIME = 30000;
+	private static final int PLAN_MAX_TIME = 60000;
+	private static final long AMBUSH_RETRY_TIME = 8000;
+	private static final int CAMPER_HUNT_RANGE = 900;
+	/** A hunter with nobody alone in reach sets up an ambush now and then too: at least this chance, this much more for one that knows the game best. */
+	private static final double AMBUSH_CHANCE_MIN = 0.15;
+	private static final double AMBUSH_CHANCE_KNOWLEDGE = 0.35;
+	/** How long it may take to get to its corner, and how long it waits there (this much longer for one that knows the game best: patience pays off). */
+	private static final int AMBUSH_TRAVEL_TIME = 25000;
+	private static final int AMBUSH_WAIT_MIN_TIME = 12000;
+	private static final int AMBUSH_WAIT_KNOWLEDGE_TIME = 25000;
+	/** How long it roams toward one spot of the field before it picks another. */
+	private static final int WANDER_MIN_TIME = 12000;
+	private static final int WANDER_MAX_TIME = 25000;
+	/** Alone, it doesn't take on a group of enemies (at least 3) farther than this, with this chance (this much more for one that knows the game best), decided for a while. */
+	private static final int AVOID_MIN_DISTANCE = 450;
+	private static final double AVOID_CHANCE_MIN = 0.2;
+	private static final double AVOID_CHANCE_KNOWLEDGE = 0.7;
+	private static final long AVOID_DECISION_TIME = 8000;
+	/** Slipping away from a group with no team mates to go to, it runs this far from them. */
+	private static final int SLIP_AWAY_DISTANCE = 600;
+
+	// In a Team vs Team match: when it next thinks about going off on its own, and for which life (its death count) it decided whether it plays it alone.
+	private long _nextLoneCheck;
+	private int _loneLife = -1;
+	// On its own: the spot it roams to and until when, when its ambush ends (and by when it must have got to its corner), and when it may look for a corner again.
+	private Location _wanderSpot;
+	private long _wanderUntil;
+	private long _ambushUntil;
+	private long _ambushArriveBy;
+	private long _nextAmbushTry;
+	// Its plan on its own (camping in ambush, or hunting), and until when.
+	private boolean _camper;
+	private long _planUntil;
+	// Alone against a group: until when its decision holds, and whether it keeps out of it.
+	private long _avoidUntil;
+	private boolean _avoids;
+
+	/**
+	 * In a Team vs Team match, like players do: one that knows the game and plays in a group less well may play a whole life on its own, hunting the enemies that are alone; a damage dealer that doesn't lead its party goes off on its own for a while now and then,
+	 * more often the worse it plays in a group. Only so many of a team at once (see {@link TeamVsTeamManager#goLone}). A fake player that came to lead its party (its leader died) goes back to it.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param party its party, {@code null} for none
+	 * @param now the current time
+	 */
+	private void considerGoingLone(Attackable npc, FakePlayerPvpProfile profile, FakePlayerParty party, long now)
+	{
+		final TeamVsTeamManager tvt = TeamVsTeamManager.getInstance();
+		final boolean leads = (party != null) && (party.getActiveLeader() == npc) && (party.size() > 1);
+		if (tvt.isLone(npc))
+		{
+			if (leads)
+			{
+				tvt.endLone(npc);
+			}
+			return;
+		}
+		if (leads)
+		{
+			return;
+		}
+
+		final FakePlayerPvpPersonality personality = profile.getPersonality();
+		final boolean withPlayers = (party != null) && !party.isFakeOnly();
+		final int life = TeamVsTeamManager.getDeaths(npc);
+		if (life != _loneLife)
+		{
+			_loneLife = life;
+			_nextLoneCheck = now + Rnd.get(STRAY_CHECK_MIN_TIME, STRAY_CHECK_MAX_TIME);
+			if (!withPlayers && (Rnd.nextDouble() < (LONE_LIFE_CHANCE * personality.getKnowledge() * (1 - (personality.getTeamplay() / 2)))) && tvt.goLone(npc, Long.MAX_VALUE))
+			{
+				return;
+			}
+		}
+
+		if (now < _nextLoneCheck)
+		{
+			return;
+		}
+		_nextLoneCheck = now + Rnd.get(STRAY_CHECK_MIN_TIME, STRAY_CHECK_MAX_TIME);
+		final double chance = STRAY_CHANCE_MIN + (STRAY_CHANCE_TEAMPLAY * (1 - personality.getTeamplay()));
+		if (Rnd.nextDouble() < (withPlayers ? chance / 2 : chance))
+		{
+			tvt.goLone(npc, now + Rnd.get(STRAY_MIN_TIME, STRAY_MAX_TIME));
+		}
+	}
+
+	/**
+	 * A fake player on its own in a Team vs Team match, with no enemy in sight: it waits at the corner it chose for someone alone to come by, else goes for the closest enemy alone, else sets up an ambush on the enemies' way or roams the field. It plans for a while
+	 * to camp (more likely the better it knows the game: it sets up an ambush first, and only goes for an enemy alone close by) or to hunt (it goes for an enemy alone farther, and sets up an ambush only now and then).
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param now the current time
+	 */
+	private void thinkLone(Attackable npc, FakePlayerPvpProfile profile, long now)
+	{
+		final TeamVsTeamManager tvt = TeamVsTeamManager.getInstance();
+		final double knowledge = profile.getPersonality().getKnowledge();
+
+		// Duelists and tyrants keep their energy full meanwhile.
+		if ((profile.getCharges() < profile.getMaxCharges()) && castOnSelf(npc, null, profile.getSkills(SkillCategory.CHARGE), true, false))
+		{
+			return;
+		}
+
+		// Its ambush: on its way to its corner, or waiting there.
+		final Location ambush = tvt.getAmbushSpot(npc);
+		if (ambush != null)
+		{
+			final boolean there = npc.calculateDistance2D(ambush) <= TeamVsTeamManager.AMBUSH_REACHED;
+			if ((now >= _ambushUntil) || (!there && (now >= _ambushArriveBy)))
+			{
+				tvt.setAmbushSpot(npc, null);
+			}
+			else
+			{
+				trace(Reason.LONE_AMBUSH, null);
+				if (there)
+				{
+					if (npc.isMoving())
+					{
+						clientStopMoving(null);
+					}
+				}
+				else
+				{
+					marchTo(npc, ambush, false);
+				}
+				return;
+			}
+		}
+
+		if (now >= _planUntil)
+		{
+			_planUntil = now + Rnd.get(PLAN_MIN_TIME, PLAN_MAX_TIME);
+			_camper = Rnd.nextDouble() < (CAMP_CHANCE_MIN + (CAMP_CHANCE_KNOWLEDGE * knowledge));
+		}
+
+		// Someone alone in reach: it goes for them.
+		final Location prey = tvt.findLoneEnemy(npc, _camper ? CAMPER_HUNT_RANGE : (int) (LONE_HUNT_RANGE + (LONE_HUNT_RANGE_KNOWLEDGE * knowledge)));
+		if (prey != null)
+		{
+			trace(Reason.LONE_HUNT, null);
+			_wanderSpot = null;
+			marchTo(npc, prey, false);
+			return;
+		}
+
+		// Nobody: an ambush at a corner on the enemies' way, or a look round the field.
+		if (now >= _nextAmbushTry)
+		{
+			_nextAmbushTry = now + AMBUSH_RETRY_TIME;
+			if (_camper || (Rnd.nextDouble() < (AMBUSH_CHANCE_MIN + (AMBUSH_CHANCE_KNOWLEDGE * knowledge))))
+			{
+				final Location spot = tvt.findAmbushSpot(npc);
+				if (spot != null)
+				{
+					tvt.setAmbushSpot(npc, spot);
+					_ambushArriveBy = now + AMBUSH_TRAVEL_TIME;
+					_ambushUntil = _ambushArriveBy + Rnd.get(AMBUSH_WAIT_MIN_TIME, AMBUSH_WAIT_MIN_TIME + (int) (AMBUSH_WAIT_KNOWLEDGE_TIME * knowledge));
+					_wanderSpot = null;
+					trace(Reason.LONE_AMBUSH, null);
+					marchTo(npc, spot, false);
+					return;
+				}
+			}
+		}
+
+		if ((_wanderSpot == null) || (now >= _wanderUntil) || (npc.calculateDistance2D(_wanderSpot) < 80))
+		{
+			_wanderSpot = tvt.findWanderSpot(npc);
+			_wanderUntil = now + Rnd.get(WANDER_MIN_TIME, WANDER_MAX_TIME);
+		}
+		trace(Reason.LONE_HUNT, null);
+		if (_wanderSpot != null)
+		{
+			marchTo(npc, _wanderSpot, false);
+		}
+	}
+
+	/**
+	 * In a Team vs Team match: does it keep out of a fight with {@code enemy}? Alone (no team mate close by) or on its own (see {@link #considerGoingLone}: it leaves the group fights to its team), against a group of at least three, not yet close nor after it, it
+	 * does with a chance that grows with its knowledge of the game. One that knows it little charges in, or chases a target into its friends. Decided for a while, not at every think.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param enemy the enemy it sees or fights
+	 * @param now the current time
+	 * @return {@code true} to keep out of it
+	 */
+	private boolean avoidsGroup(Attackable npc, FakePlayerPvpProfile profile, Creature enemy, long now)
+	{
+		if ((enemy.getTarget() == npc) || (npc.calculateDistance2D(enemy) <= AVOID_MIN_DISTANCE) || (TeamVsTeamManager.getAlliesNear(enemy) < 2) || ((TeamVsTeamManager.getAlliesNear(npc) > 0) && !TeamVsTeamManager.getInstance().isLone(npc)))
+		{
+			return false;
+		}
+
+		if (now >= _avoidUntil)
+		{
+			_avoidUntil = now + AVOID_DECISION_TIME;
+			_avoids = Rnd.nextDouble() < (AVOID_CHANCE_MIN + (AVOID_CHANCE_KNOWLEDGE * profile.getPersonality().getKnowledge()));
+		}
+		return _avoids;
+	}
+
+	/**
+	 * Waiting in ambush, it stays at its corner (or goes on to it) and lets a group pass by.
+	 * @param npc the fake player
+	 * @return {@code true} if it has an ambush to hold
+	 */
+	private boolean holdAmbush(Attackable npc)
+	{
+		final Location ambush = TeamVsTeamManager.getInstance().getAmbushSpot(npc);
+		if (ambush == null)
+		{
+			return false;
+		}
+
+		if (npc.calculateDistance2D(ambush) > TeamVsTeamManager.AMBUSH_REACHED)
+		{
+			marchTo(npc, ambush, false);
+		}
+		else if (npc.isMoving())
+		{
+			clientStopMoving(null);
+		}
+		return true;
+	}
+
+	/**
+	 * Alone with a group of enemies in sight: back to the closest of its team mates that stand together, else away from them.
+	 * @param npc the fake player
+	 * @param enemy one of them
+	 */
+	private void slipAway(Attackable npc, Creature enemy)
+	{
+		_wanderSpot = null;
+		Location spot = TeamVsTeamManager.getInstance().findRegroupSpot(npc);
+		if (spot == null)
+		{
+			final double length = Math.max(1, npc.calculateDistance2D(enemy));
+			final int x = npc.getX() + (int) (((npc.getX() - enemy.getX()) / length) * SLIP_AWAY_DISTANCE);
+			final int y = npc.getY() + (int) (((npc.getY() - enemy.getY()) / length) * SLIP_AWAY_DISTANCE);
+			spot = GeoEngine.getInstance().getValidLocation(npc.getX(), npc.getY(), npc.getZ(), x, y, GeoEngine.getInstance().getHeight(x, y, npc.getZ()), npc.getInstanceId());
+		}
+		marchTo(npc, spot, false);
+	}
+
 	/** In a Team vs Team match: how far its own spot may lie from where it marches to, so a party doesn't run on one line to one point. */
 	private static final int TVT_MARCH_JITTER = 130;
 	/** In a Team vs Team match: how long it keeps its own spot before it picks another (also when it holds a place, so it moves about there like a player). */
@@ -6513,6 +6898,11 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	/** In a Team vs Team match: how often it may set off again (it varies, so the team doesn't turn as one). */
 	private static final long TVT_MARCH_MIN_INTERVAL = 700;
 	private static final long TVT_MARCH_MAX_INTERVAL = 1900;
+	/** In a Team vs Team match: the chance to stand a moment before it sets off (at least this, this much more for one that knows the game least), and how long. */
+	private static final double HESITATE_CHANCE_MIN = 0.02;
+	private static final double HESITATE_CHANCE_KNOWLEDGE = 0.1;
+	private static final int HESITATE_MIN_TIME = 700;
+	private static final int HESITATE_MAX_TIME = 2000;
 
 	// In a Team vs Team match: its own offset from where it marches to, and until when it keeps it.
 	private int _marchJitterX;
@@ -6556,6 +6946,13 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		// On its way there already, it doesn't turn for a few steps' difference; standing, it stays once there (a new spot of its own sets it off again, so it moves about where it holds).
 		if (npc.isMoving() ? ((_marchDestination != null) && (Math.hypot(_marchDestination.getX() - target.getX(), _marchDestination.getY() - target.getY()) < MARCH_UPDATE_DISTANCE)) : (npc.calculateDistance2D(target) < 40))
 		{
+			return;
+		}
+
+		// Now and then it stands a moment before it sets off (looks round, checks the map), more often the less it knows the game.
+		if (!npc.isMoving() && (Rnd.nextDouble() < (HESITATE_CHANCE_MIN + (HESITATE_CHANCE_KNOWLEDGE * (1 - FakePlayerPvpPersonality.of(npc).getKnowledge())))))
+		{
+			_nextMarchTime = now + Rnd.get(HESITATE_MIN_TIME, HESITATE_MAX_TIME);
 			return;
 		}
 
@@ -6835,12 +7232,18 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	private static final int FORMATION_REACHED = 50;
 	/** A formation place closer than this to the one it is on its way to doesn't make it turn. */
 	private static final int FORMATION_UPDATE_DISTANCE = 90;
+	/** Its place may lie this much farther from its leader for one that plays in a group worst (see {@link FakePlayerPvpPersonality#getTeamplay}). */
+	private static final int FORMATION_LOOSENESS = 220;
+	/** It sets off after its leader up to this long later, and this much longer for one that plays in a group worst. */
+	private static final int FOLLOW_LAG_TIME = 300;
+	private static final int FOLLOW_LAG_TEAMPLAY_TIME = 1500;
 
 	// Its place in a Team vs Team formation, relative to where its leader goes (an angle off that way, a distance), picked once; the way its leader went last; where it last set off to.
 	private double _formationAngle = Double.NaN;
 	private int _formationDistance;
 	private double _leaderCourse = Double.NaN;
 	private Location _formationOrder;
+	private long _formationLagUntil;
 
 	/**
 	 * Follows the leader of a Team vs Team party to its own place in a loose formation: melee and tanks off its sides toward the front, the ranged, healers and supports behind it. Each member keeps its place, so the party moves as a spread group.
@@ -6856,7 +7259,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			final boolean behind = isPureHealer(profile) || profile.getRole().isRanged() || !profile.getSkills(SkillCategory.HEAL).isEmpty();
 			final double side = Rnd.nextBoolean() ? 1 : -1;
 			_formationAngle = side * Math.toRadians(behind ? Rnd.get(115, 170) : Rnd.get(35, 90));
-			_formationDistance = Rnd.get(FORMATION_MIN_DISTANCE, FORMATION_MAX_DISTANCE);
+			_formationDistance = Rnd.get(FORMATION_MIN_DISTANCE, FORMATION_MAX_DISTANCE + (int) (FORMATION_LOOSENESS * (1 - profile.getPersonality().getTeamplay())));
 		}
 
 		// The way the leader goes: where it faces while it moves, the last such way while it stands (it turns to fight, the formation doesn't swing round with it).
@@ -6878,6 +7281,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		if (Math.hypot(npc.getX() - x, npc.getY() - y) <= FORMATION_REACHED)
 		{
 			_formationOrder = null;
+			_formationLagUntil = 0;
 			return false;
 		}
 
@@ -6885,6 +7289,21 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		{
 			return true;
 		}
+
+		// Standing, it sets off after its leader a moment later, like a player who looks up and sees the party leaving (not once it fell far behind).
+		if (!npc.isMoving() && (npc.calculateDistance2D(leader) < (FORMATION_MAX_DISTANCE * 2.5)))
+		{
+			final long now = System.currentTimeMillis();
+			if (_formationLagUntil == 0)
+			{
+				_formationLagUntil = now + Rnd.get(0, FOLLOW_LAG_TIME + (int) (FOLLOW_LAG_TEAMPLAY_TIME * (1 - profile.getPersonality().getTeamplay())));
+			}
+			if (now < _formationLagUntil)
+			{
+				return true;
+			}
+		}
+		_formationLagUntil = 0;
 
 		// On its way there already: it doesn't turn for every step its leader takes.
 		if (npc.isMoving() && (_formationOrder != null) && (Math.hypot(_formationOrder.getX() - x, _formationOrder.getY() - y) < FORMATION_UPDATE_DISTANCE))

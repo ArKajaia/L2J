@@ -46,6 +46,7 @@ import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
 import org.l2jmobius.gameserver.data.enums.CategoryType;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.geoengine.pathfinding.PathFinding;
 import org.l2jmobius.gameserver.managers.simulation.SimRole;
 import org.l2jmobius.gameserver.managers.simulation.SimulationComposer;
 import org.l2jmobius.gameserver.model.Location;
@@ -57,6 +58,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.groups.Party;
 import org.l2jmobius.gameserver.model.instancezone.Instance;
@@ -113,6 +115,38 @@ public class TeamVsTeamManager
 	private static final int HELP_RANGE = 2500;
 	/** A fake player doesn't march on enemies this close to the edge of their base (it fights them if it sees them). */
 	private static final int BASE_APPROACH = 600;
+	/** A fighter with no living team mate this close is alone: the fake players look for enemies alone, and one alone doesn't take on a group. */
+	private static final int ALONE_RANGE = 700;
+	/** A fake player that knows the game least (see {@link FakePlayerPvpPersonality#getKnowledge}) sees enemies this share of {@link #SIGHT_RANGE} less far. */
+	private static final double SIGHT_KNOWLEDGE_LOSS = 0.2;
+	/** Picking the enemy to engage, for one that knows the game best: an enemy alone, or one low on HP, counts as this much closer (a share of {@link #SIGHT_RANGE}), one in a group as farther for one alone. */
+	private static final double LONE_TARGET_BONUS = 0.35;
+	private static final double LOW_TARGET_BONUS = 0.3;
+	private static final double GROUP_TARGET_PENALTY = 0.3;
+	/** A fake player that knows the game best picks off an enemy alone this close before it joins a fight further away (see {@link #getMarchTarget}). */
+	private static final int LONE_PICK_RANGE = 1500;
+	/** Fake players on their own (see {@link #goLone}): at most this share of a team's fake players at once, and at least this many. */
+	private static final int LONE_SHARE_PERCENT = 25;
+	private static final int LONE_MIN = 2;
+	/** A fake player waiting in ambush at its corner is noticed by an enemy fake player only this close, and this much more for one that knows the game best. */
+	private static final int AMBUSH_NOTICE_MIN = 350;
+	private static final int AMBUSH_NOTICE_KNOWLEDGE = 350;
+	/** It stands at its ambush spot this close. */
+	public static final int AMBUSH_REACHED = 60;
+	/** An ambush spot lies this far from the enemies' way (see {@link #findAmbushSpot}), and that way at most this far from the one looking. */
+	private static final int AMBUSH_MIN_DISTANCE = 180;
+	private static final int AMBUSH_MAX_DISTANCE = 650;
+	private static final int AMBUSH_SEARCH_RANGE = 1800;
+	/** Looking for a wall at an ambush spot: so many ways round it, this far. A spot with a wall on 2 to 5 of them is by a wall or in a corner, not in the open nor in a hole. */
+	private static final int AMBUSH_PROBES = 8;
+	private static final int AMBUSH_PROBE_LENGTH = 90;
+	private static final int AMBUSH_MIN_WALLS = 2;
+	private static final int AMBUSH_MAX_WALLS = 5;
+	/** A kill this soon after its killer left its ambush counts as one from ambush (the simulated matches' log). */
+	private static final long AMBUSH_KILL_TIME = 20000;
+	/** A fake player roaming on its own goes to spots of the field this far from it. */
+	private static final int WANDER_MIN_DISTANCE = 600;
+	private static final int WANDER_MAX_DISTANCE = 2500;
 	/** The parties of a team march in lanes (see {@link #inLane}): this far apart across the field. */
 	private static final int LANE_WIDTH = 450;
 	/** A lane narrows from this far from where it leads, and is gone this close to it: the parties come from the sides, then close in together. */
@@ -180,6 +214,12 @@ public class TeamVsTeamManager
 		// The spawn point of its wave, where it comes back.
 		private volatile Location _respawnBase;
 		private volatile long _protectedUntil;
+		// Worked out by the tick: how many living team mates stand within ALONE_RANGE of it.
+		private volatile int _alliesNear;
+		// A fake player on its own (see goLone): until when, the corner it waits at in ambush (null for none), and when it last left one to jump someone.
+		private volatile long _loneUntil;
+		private volatile Location _ambushSpot;
+		private volatile long _ambushSprungAt;
 
 		Fighter(Creature creature, Match match, Side side, SimRole role)
 		{
@@ -231,6 +271,23 @@ public class TeamVsTeamManager
 		{
 			return !_creature.isDead() && (_creature.isPlayer() || _creature.isSpawned());
 		}
+
+		/**
+		 * @return {@code true} if it is a fake player on its own for now (see {@link TeamVsTeamManager#goLone})
+		 */
+		boolean isLone()
+		{
+			return System.currentTimeMillis() < _loneUntil;
+		}
+
+		/**
+		 * @return {@code true} if it stands still at its ambush spot, waiting
+		 */
+		boolean isInAmbush()
+		{
+			final Location spot = _ambushSpot;
+			return (spot != null) && !_creature.isMoving() && (_creature.calculateDistance2D(spot) <= AMBUSH_REACHED);
+		}
 	}
 
 	/**
@@ -253,6 +310,8 @@ public class TeamVsTeamManager
 		private long _nextWave;
 		private Location _waveBase;
 		private volatile List<Location> _enemyGroups = List.of();
+		// Worked out by the tick too: where the enemies alone are (out of their base), which the fake players on their own hunt.
+		private volatile List<Location> _loneEnemies = List.of();
 		// The lane of each of its parties (and of its members on their own), see inLane.
 		private final Map<Object, Integer> _lanes = new ConcurrentHashMap<>();
 		private final AtomicInteger _nextLane = new AtomicInteger(Rnd.get(LANES.length));
@@ -302,6 +361,21 @@ public class TeamVsTeamManager
 			for (Location base : _bases)
 			{
 				closest = Math.min(closest, creature.calculateDistance2D(base));
+			}
+			return closest;
+		}
+
+		/**
+		 * @param x a spot's x
+		 * @param y a spot's y
+		 * @return how far the spot lies from the closest of these spawn points
+		 */
+		double getBaseDistance(int x, int y)
+		{
+			double closest = Double.MAX_VALUE;
+			for (Location base : _bases)
+			{
+				closest = Math.min(closest, Math.hypot(base.getX() - x, base.getY() - y));
 			}
 			return closest;
 		}
@@ -1451,6 +1525,30 @@ public class TeamVsTeamManager
 	 */
 	private static void updateTactics(Match match)
 	{
+		// How many living team mates each fighter has close by: alone or in a group.
+		for (Side side : new Side[]
+		{
+			match._blue,
+			match._red
+		})
+		{
+			for (Fighter fighter : side._fighters)
+			{
+				int near = 0;
+				if (fighter.isAlive())
+				{
+					for (Fighter mate : side._fighters)
+					{
+						if ((mate != fighter) && mate.isAlive() && (fighter._creature.calculateDistance2D(mate._creature) <= ALONE_RANGE))
+						{
+							near++;
+						}
+					}
+				}
+				fighter._alliesNear = near;
+			}
+		}
+
 		for (Side side : new Side[]
 		{
 			match._blue,
@@ -1499,6 +1597,17 @@ public class TeamVsTeamManager
 				enemyGroups.add(new Location((int) (sum[0] / sum[3]), (int) (sum[1] / sum[3]), (int) (sum[2] / sum[3])));
 			}
 			side._enemyGroups = enemyGroups;
+
+			// The enemies alone, out of their base, for the fake players hunting on their own.
+			final List<Location> loneEnemies = new ArrayList<>();
+			for (Fighter enemy : other._fighters)
+			{
+				if (enemy.isAlive() && !enemy.isProtected() && (enemy._alliesNear == 0) && !enemy._creature.isInvisible() && (other.getBaseDistance(enemy._creature) > (TeamVsTeamConfig.BASE_RADIUS + BASE_APPROACH)))
+				{
+					loneEnemies.add(enemy._creature.getLocation());
+				}
+			}
+			side._loneEnemies = loneEnemies;
 		}
 	}
 
@@ -1606,7 +1715,10 @@ public class TeamVsTeamManager
 		}
 
 		final Match match = dead._match;
+		final boolean deadAlone = dead._alliesNear == 0;
 		dead._deaths++;
+		dead._loneUntil = 0;
+		dead._ambushSpot = null;
 		dead._side.joinWave(dead, System.currentTimeMillis());
 
 		final Fighter slayer = getFighter(killer);
@@ -1623,7 +1735,9 @@ public class TeamVsTeamManager
 		
 		if (match._simulated)
 		{
-			LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " " + (match.getSecondsLeft() / 60) + ":" + String.format("%02d", match.getSecondsLeft() % 60) + " left: " + (slayer != null ? describe(slayer) : (killer != null ? killer.getName() : "?")) + " killed " + describe(dead) + ". Blue " + match._blue.getScore() + " : " + match._red.getScore() + " Red.");
+			// How the kill came about: its killer on its own, out of an ambush, its victim alone.
+			final String how = (slayer == null ? "" : (slayer.isLone() ? " [lone]" : "") + ((System.currentTimeMillis() - slayer._ambushSprungAt) < AMBUSH_KILL_TIME ? " [ambush]" : "")) + (deadAlone ? " [victim alone]" : "");
+			LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " " + (match.getSecondsLeft() / 60) + ":" + String.format("%02d", match.getSecondsLeft() % 60) + " left: " + (slayer != null ? describe(slayer) : (killer != null ? killer.getName() : "?")) + " killed " + describe(dead) + how + ". Blue " + match._blue.getScore() + " : " + match._red.getScore() + " Red.");
 		}
 
 		if (dead.isPlayer())
@@ -2188,8 +2302,10 @@ public class TeamVsTeamManager
 	}
 
 	/**
+	 * The enemy a fake player engages: one it sees within {@link #SIGHT_RANGE} (less far the less it knows the game, see {@link FakePlayerPvpPersonality#getKnowledge}) or that is very close, not under spawn protection. One waiting in ambush at its corner it
+	 * only notices close by. It takes the closest; the better it knows the game, the more it goes for an enemy alone or low on HP instead, and (alone itself) the less for one in a group.
 	 * @param fake a fake player of a match
-	 * @return the closest enemy it sees within {@link #SIGHT_RANGE} (or very close), not under spawn protection, {@code null} if none
+	 * @return the enemy, {@code null} if none
 	 */
 	public Creature findEnemyInSight(Npc fake)
 	{
@@ -2199,8 +2315,12 @@ public class TeamVsTeamManager
 			return null;
 		}
 
-		Creature closest = null;
-		double closestDistance = Double.MAX_VALUE;
+		final double knowledge = FakePlayerPvpPersonality.of(fake).getKnowledge();
+		final double sight = SIGHT_RANGE * (1 - (SIGHT_KNOWLEDGE_LOSS * (1 - knowledge)));
+		final double ambushNotice = AMBUSH_NOTICE_MIN + (AMBUSH_NOTICE_KNOWLEDGE * knowledge);
+		final boolean alone = fighter._alliesNear == 0;
+		Creature best = null;
+		double bestScore = Double.MAX_VALUE;
 		for (Fighter enemy : fighter._match.getOther(fighter._side)._fighters)
 		{
 			final Creature creature = enemy._creature;
@@ -2210,13 +2330,341 @@ public class TeamVsTeamManager
 			}
 
 			final double distance = fake.calculateDistance2D(creature);
-			if ((distance < closestDistance) && (distance <= SIGHT_RANGE) && ((distance <= CLOSE_ENEMY_RANGE) || GeoEngine.getInstance().canSeeTarget(fake, creature)))
+			if ((distance > sight) || ((distance > CLOSE_ENEMY_RANGE) && ((enemy.isInAmbush() && (distance > ambushNotice)) || !GeoEngine.getInstance().canSeeTarget(fake, creature))))
 			{
-				closest = creature;
-				closestDistance = distance;
+				continue;
+			}
+
+			double score = distance / SIGHT_RANGE;
+			score -= knowledge * (((enemy._alliesNear == 0) ? LONE_TARGET_BONUS : 0) + (LOW_TARGET_BONUS * (1 - (creature.getCurrentHp() / Math.max(1, creature.getMaxHp())))));
+			if (alone && (enemy._alliesNear >= 2))
+			{
+				score += knowledge * GROUP_TARGET_PENALTY;
+			}
+			if (score < bestScore)
+			{
+				best = creature;
+				bestScore = score;
 			}
 		}
-		return closest;
+		return best;
+	}
+
+	/**
+	 * @param creature a fighter of a match
+	 * @return how many living team mates stand close to it (worked out every second), 0 if it is in no match
+	 */
+	public static int getAlliesNear(Creature creature)
+	{
+		final Fighter fighter = getFighter(creature);
+		return fighter != null ? fighter._alliesNear : 0;
+	}
+
+	/**
+	 * @param creature a fighter of a match
+	 * @return how many times it died in its match, 0 if it is in none
+	 */
+	public static int getDeaths(Creature creature)
+	{
+		final Fighter fighter = getFighter(creature);
+		return fighter != null ? fighter._deaths : 0;
+	}
+
+	/**
+	 * A fake player goes off on its own: it leaves its party for a while to hunt enemies alone, roam the field or wait in ambush. Only a damage dealer (melee, archer, nuker: a tank, healer or buffer alone kills nobody), and only so many of a team's fake players
+	 * at once (see {@link #LONE_SHARE_PERCENT}), so the team still fights as one.
+	 * @param fake a fake player of a match, alive
+	 * @param until until when ({@link Long#MAX_VALUE} for the rest of this life)
+	 * @return {@code true} if it may
+	 */
+	public boolean goLone(Npc fake, long until)
+	{
+		final Fighter fighter = _fighters.get(fake.getObjectId());
+		if ((fighter == null) || (fighter._match._phase != Phase.FIGHT) || ((fighter._role != SimRole.MELEE) && (fighter._role != SimRole.ARCHER) && (fighter._role != SimRole.NUKER)))
+		{
+			return false;
+		}
+
+		final Side side = fighter._side;
+		synchronized (side)
+		{
+			int fakes = 0;
+			int lone = 0;
+			for (Fighter mate : side._fighters)
+			{
+				if (!mate.isPlayer())
+				{
+					fakes++;
+					if (mate.isAlive() && mate.isLone())
+					{
+						lone++;
+					}
+				}
+			}
+			if (lone >= Math.max(LONE_MIN, (fakes * LONE_SHARE_PERCENT) / 100))
+			{
+				return false;
+			}
+			fighter._loneUntil = until;
+		}
+		return true;
+	}
+
+	/**
+	 * @param fake a fake player of a match
+	 * @return {@code true} if it is on its own for now (see {@link #goLone})
+	 */
+	public boolean isLone(Npc fake)
+	{
+		final Fighter fighter = _fighters.get(fake.getObjectId());
+		return (fighter != null) && fighter.isLone();
+	}
+
+	/**
+	 * A fake player on its own goes back to its party.
+	 * @param fake a fake player of a match
+	 */
+	public void endLone(Npc fake)
+	{
+		final Fighter fighter = _fighters.get(fake.getObjectId());
+		if (fighter != null)
+		{
+			fighter._loneUntil = 0;
+			fighter._ambushSpot = null;
+		}
+	}
+
+	/**
+	 * @param fake a fake player of a match
+	 * @return the corner it waits at in ambush, {@code null} for none
+	 */
+	public Location getAmbushSpot(Npc fake)
+	{
+		final Fighter fighter = _fighters.get(fake.getObjectId());
+		return fighter != null ? fighter._ambushSpot : null;
+	}
+
+	/**
+	 * @param fake a fake player of a match
+	 * @param spot the corner it waits at in ambush (see {@link #findAmbushSpot}), {@code null} when it leaves it
+	 */
+	public void setAmbushSpot(Npc fake, Location spot)
+	{
+		final Fighter fighter = _fighters.get(fake.getObjectId());
+		if (fighter != null)
+		{
+			fighter._ambushSpot = spot;
+			if ((spot != null) && fighter._match._simulated)
+			{
+				LOGGER.info(getClass().getSimpleName() + ": Match " + fighter._match.getId() + ": " + describe(fighter) + " sets up an ambush at " + spot.getX() + "," + spot.getY() + "," + spot.getZ() + ", " + (int) fake.calculateDistance2D(spot) + " away.");
+			}
+		}
+	}
+
+	/**
+	 * A fake player leaves its ambush to jump an enemy.
+	 * @param fake a fake player of a match
+	 */
+	public void springAmbush(Npc fake)
+	{
+		final Fighter fighter = _fighters.get(fake.getObjectId());
+		if ((fighter != null) && (fighter._ambushSpot != null))
+		{
+			if (fighter.isInAmbush())
+			{
+				fighter._ambushSprungAt = System.currentTimeMillis();
+			}
+			fighter._ambushSpot = null;
+		}
+	}
+
+	/**
+	 * @param fake a fake player of a match
+	 * @param range how far it looks
+	 * @return where the closest enemy alone is (out of its base), {@code null} if none within {@code range}
+	 */
+	public Location findLoneEnemy(Npc fake, int range)
+	{
+		final Fighter fighter = _fighters.get(fake.getObjectId());
+		return (fighter != null) && (fighter._match._phase == Phase.FIGHT) ? closest(fake, fighter._side._loneEnemies, range) : null;
+	}
+
+	/**
+	 * @param fake a fake player of a match
+	 * @return where the closest of its team mates that stand together are (it slips back to them), {@code null} if none
+	 */
+	public Location findRegroupSpot(Npc fake)
+	{
+		final Fighter fighter = _fighters.get(fake.getObjectId());
+		if (fighter == null)
+		{
+			return null;
+		}
+
+		Location best = null;
+		double bestDistance = Double.MAX_VALUE;
+		for (Fighter mate : fighter._side._fighters)
+		{
+			if ((mate == fighter) || !mate.isAlive() || (mate._alliesNear == 0) || isInBase(mate._creature, mate))
+			{
+				continue;
+			}
+			final double distance = fake.calculateDistance2D(mate._creature);
+			if (distance < bestDistance)
+			{
+				best = mate._creature.getLocation();
+				bestDistance = distance;
+			}
+		}
+		return best;
+	}
+
+	/**
+	 * A spot for an ambush: by a wall or in a corner, near where the enemies come by (on their way from their spawn points to where the fighting is, the ones coming back from the dead often one by one; or to the middle of the field), out of their sight from that
+	 * way until they are close. The ruins have walls and corners all over.
+	 * @param fake a fake player of a match
+	 * @return the spot, {@code null} if none found close enough
+	 */
+	public Location findAmbushSpot(Npc fake)
+	{
+		final Fighter fighter = _fighters.get(fake.getObjectId());
+		if ((fighter == null) || (fighter._match._phase != Phase.FIGHT))
+		{
+			return null;
+		}
+
+		final Side side = fighter._side;
+		final Side enemySide = fighter._match.getOther(side);
+		final Location center = getFieldCenter();
+		final GeoEngine geo = GeoEngine.getInstance();
+		final int instanceId = fake.getInstanceId();
+
+		// Where the enemies come by: somewhere on the way from each of their spawn points to the closest fight (else the middle), out of their base.
+		final List<Location> ways = new ArrayList<>();
+		final double reach = (TeamVsTeamConfig.BASE_RADIUS + BASE_APPROACH) * 1.2;
+		for (Location base : enemySide._bases)
+		{
+			Location goal = center;
+			for (Location clash : side._clashes)
+			{
+				if (Math.hypot(clash.getX() - base.getX(), clash.getY() - base.getY()) < Math.hypot(goal.getX() - base.getX(), goal.getY() - base.getY()))
+				{
+					goal = clash;
+				}
+			}
+			final double length = Math.max(1, Math.hypot(goal.getX() - base.getX(), goal.getY() - base.getY()));
+			if (length <= reach)
+			{
+				continue;
+			}
+			final double share = (reach / length) + (Rnd.nextDouble() * (1 - (reach / length)) * 0.7);
+			final int x = base.getX() + (int) ((goal.getX() - base.getX()) * share);
+			final int y = base.getY() + (int) ((goal.getY() - base.getY()) * share);
+			ways.add(new Location(x, y, geo.getHeight(x, y, base.getZ() + (int) ((goal.getZ() - base.getZ()) * share))));
+		}
+		if (ways.isEmpty())
+		{
+			ways.add(center);
+		}
+		ways.sort((a, b) -> Double.compare(fake.calculateDistance2D(a), fake.calculateDistance2D(b)));
+
+		for (int w = 0; w < Math.min(2, ways.size()); w++)
+		{
+			final Location way = ways.get(w);
+			if (fake.calculateDistance2D(way) > AMBUSH_SEARCH_RANGE)
+			{
+				break;
+			}
+
+			Location best = null;
+			double bestScore = Double.MAX_VALUE;
+			for (int i = 0; i < 28; i++)
+			{
+				final double angle = Rnd.nextDouble() * 2 * Math.PI;
+				final int distance = Rnd.get(AMBUSH_MIN_DISTANCE, AMBUSH_MAX_DISTANCE);
+				final int x = way.getX() + (int) (Math.cos(angle) * distance);
+				final int y = way.getY() + (int) (Math.sin(angle) * distance);
+				final int z = geo.getHeight(x, y, way.getZ());
+				if ((Math.abs(z - way.getZ()) > 200) || (enemySide.getBaseDistance(x, y) <= (TeamVsTeamConfig.BASE_RADIUS + BASE_APPROACH)) || (side.getBaseDistance(x, y) <= TeamVsTeamConfig.BASE_RADIUS))
+				{
+					continue;
+				}
+
+				// By a wall or in a corner: some ways round it are blocked, not all.
+				int walls = 0;
+				for (int p = 0; p < AMBUSH_PROBES; p++)
+				{
+					final double probe = (p * 2 * Math.PI) / AMBUSH_PROBES;
+					final int px = x + (int) (Math.cos(probe) * AMBUSH_PROBE_LENGTH);
+					final int py = y + (int) (Math.sin(probe) * AMBUSH_PROBE_LENGTH);
+					if (!geo.canMoveToTarget(x, y, z, px, py, geo.getHeight(px, py, z), instanceId))
+					{
+						walls++;
+					}
+				}
+				if ((walls < AMBUSH_MIN_WALLS) || (walls > AMBUSH_MAX_WALLS))
+				{
+					continue;
+				}
+
+				// Out of sight from where they come.
+				if (geo.canSeeTarget(way.getX(), way.getY(), way.getZ(), x, y, z, instanceId))
+				{
+					continue;
+				}
+
+				// A corner (three or four ways blocked) rather than a plain wall, and close to their way.
+				final double score = Math.abs(walls - 3.5) + (distance / 1000.0);
+				if (score < bestScore)
+				{
+					best = new Location(x, y, z);
+					bestScore = score;
+				}
+			}
+
+			if ((best != null) && (geo.canMoveToTarget(fake.getX(), fake.getY(), fake.getZ(), best.getX(), best.getY(), best.getZ(), instanceId) || (PathFinding.getInstance().findPath(fake.getX(), fake.getY(), fake.getZ(), best.getX(), best.getY(), best.getZ(), instanceId, false) != null)))
+			{
+				return best;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @param fake a fake player of a match roaming on its own
+	 * @return a spot of the field to roam to, out of both teams' bases, {@code null} if none found
+	 */
+	public Location findWanderSpot(Npc fake)
+	{
+		final Fighter fighter = _fighters.get(fake.getObjectId());
+		if (fighter == null)
+		{
+			return null;
+		}
+
+		final Side side = fighter._side;
+		final Side enemySide = fighter._match.getOther(side);
+		final Location center = getFieldCenter();
+		final double radius = Math.hypot(side.getCenter().getX() - enemySide.getCenter().getX(), side.getCenter().getY() - enemySide.getCenter().getY()) * 0.45;
+		final GeoEngine geo = GeoEngine.getInstance();
+		for (int i = 0; i < 12; i++)
+		{
+			final double angle = Rnd.nextDouble() * 2 * Math.PI;
+			final double distance = Math.sqrt(Rnd.nextDouble()) * radius;
+			final int x = center.getX() + (int) (Math.cos(angle) * distance);
+			final int y = center.getY() + (int) (Math.sin(angle) * distance);
+			final double away = Math.hypot(fake.getX() - x, fake.getY() - y);
+			if ((away < WANDER_MIN_DISTANCE) || (away > WANDER_MAX_DISTANCE) || (enemySide.getBaseDistance(x, y) <= (TeamVsTeamConfig.BASE_RADIUS + BASE_APPROACH)) || (side.getBaseDistance(x, y) <= TeamVsTeamConfig.BASE_RADIUS))
+			{
+				continue;
+			}
+			final int z = geo.getHeight(x, y, center.getZ());
+			if (Math.abs(z - center.getZ()) <= 400)
+			{
+				return new Location(x, y, z);
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -2233,6 +2681,14 @@ public class TeamVsTeamManager
 		}
 
 		final Location help = closest(fake, fighter._side._clashes, HELP_RANGE);
+
+		// One that knows the game picks off an enemy alone close by before it joins a fight further away.
+		final Location lone = closest(fake, fighter._side._loneEnemies, (int) (LONE_PICK_RANGE * FakePlayerPvpPersonality.of(fake).getKnowledge()));
+		if ((lone != null) && ((help == null) || (fake.calculateDistance2D(lone) < fake.calculateDistance2D(help))))
+		{
+			return lone;
+		}
+
 		if (help != null)
 		{
 			return inLane(fake, fighter, help, true);
@@ -2445,7 +2901,7 @@ public class TeamVsTeamManager
 					final Creature creature = fighter._creature;
 					final FakePlayerParty party = FakePartyManager.getInstance().getParty(creature);
 					final Creature target = creature.getTarget() instanceof Creature ? (Creature) creature.getTarget() : null;
-					lines.add("    " + describe(fighter) + " lv" + creature.getLevel() + (creature.isDead() ? " DEAD" : " " + (int) ((100 * creature.getCurrentHp()) / creature.getMaxHp()) + "%hp") + (fighter.isProtected() ? " protected" : "") + " k" + fighter._kills + "/d" + fighter._deaths + " at " + creature.getX() + "," + creature.getY() + "," + creature.getZ() + " base " + (int) side.getBaseDistance(creature) + (creature.hasAI() ? " " + creature.getAI().getIntention() : "") + (creature.isMoving() ? " moving" : "") + (creature.isCastingNow() ? " casting" : "") + describeAiState(creature) + (target != null ? " target " + target.getName() : "") + (party != null ? " party " + Integer.toHexString(System.identityHashCode(party)) : " no party"));
+					lines.add("    " + describe(fighter) + " lv" + creature.getLevel() + (creature.isDead() ? " DEAD" : " " + (int) ((100 * creature.getCurrentHp()) / creature.getMaxHp()) + "%hp") + (fighter.isProtected() ? " protected" : "") + " k" + fighter._kills + "/d" + fighter._deaths + " at " + creature.getX() + "," + creature.getY() + "," + creature.getZ() + " base " + (int) side.getBaseDistance(creature) + (fighter.isLone() ? " lone" : "") + (fighter._ambushSpot != null ? (fighter.isInAmbush() ? " in-ambush" : " to-ambush") : "") + " near " + fighter._alliesNear + (creature.hasAI() ? " " + creature.getAI().getIntention() : "") + (creature.isMoving() ? " moving" : "") + (creature.isCastingNow() ? " casting" : "") + describeAiState(creature) + (target != null ? " target " + target.getName() : "") + (party != null ? " party " + Integer.toHexString(System.identityHashCode(party)) : " no party"));
 				}
 			}
 		}
@@ -2502,7 +2958,7 @@ public class TeamVsTeamManager
 		else
 		{
 			final FakePlayerPvpProfile profile = creature.asNpc().getTemplate().getFakePlayerPvpProfile();
-			build = (profile != null) && (profile.getBuild() != null) ? profile.getBuild().getName() : "?";
+			build = ((profile != null) && (profile.getBuild() != null) ? profile.getBuild().getName() : "?") + (profile != null ? String.format(", knowledge %.2f, teamplay %.2f", profile.getPersonality().getKnowledge(), profile.getPersonality().getTeamplay()) : "");
 		}
 		return creature.getName() + " (" + fighter._side._name + ", " + build + ")";
 	}
