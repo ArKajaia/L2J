@@ -83,13 +83,13 @@ import org.l2jmobius.gameserver.util.Broadcast;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
- * Team vs Team: every {@link TeamVsTeamConfig#SCHEDULE} the TvT Event Manager takes registrations, then every level bracket with players gets its own copy of the Ruins of Despair (an instance), Blue on one side, Red on the other, {@link TeamVsTeamConfig#TEAM_SIZE} a side.
+ * Team vs Team: every {@link TeamVsTeamConfig#SCHEDULE} the TvT Event Manager takes registrations, then every level bracket with players gets its own copy of the Ruins of Despair (an instance), each team with its spawn points on its own half of the ring wall ({@link TeamVsTeamConfig#BLUE_BASES}, {@link TeamVsTeamConfig#RED_BASES}), {@link TeamVsTeamConfig#TEAM_SIZE} a side.
  * <ul>
  * <li>A party plays in one team. One whose members are in different brackets is broken up, each member going to its own bracket (the members of a bracket stay together).</li>
  * <li>The real players are spread evenly between the teams, and the free places are filled with fake players of the bracket's levels. A party of players gets the fake players it lacks (a tank, a healer, an archer...) up to {@link TeamVsTeamConfig#PARTY_SIZE}, the rest of a team
  * fights in parties of fake players. Fake players fight as parties (they call targets, heal, buff and resurrect each other), help the team mates that fight nearby, and go for the closest enemies otherwise.</li>
  * <li>The faction system's rules hold between the teams: the other team is attacked without Ctrl, the own team can't be hurt even with Ctrl, and no kill gives karma (the instance is a PvP one). Everyone shows a blue or red circle and name.</li>
- * <li>The dead come back at their base. Each kill gives the killer one of {@link TeamVsTeamConfig#KILL_REWARDS}; the team with the most kills wins, and each of its players gets {@link TeamVsTeamConfig#WIN_REWARD}.</li>
+ * <li>The dead come back in waves, each wave at one of its team's spawn points picked by chance. Each kill gives the killer one of {@link TeamVsTeamConfig#KILL_REWARDS}; the team with the most kills wins, and each of its players gets {@link TeamVsTeamConfig#WIN_REWARD}.</li>
  * </ul>
  * The dialogs of the manager are in the TvT event script (custom/events/TeamVsTeam).
  */
@@ -127,6 +127,9 @@ public class TeamVsTeamManager
 	};
 	/** How long the result stays on screen before everyone goes home. */
 	private static final long END_DELAY = 10000;
+	/** The fake players of a match say something at most once in this many milliseconds, all of them together (see {@link #mayChat}). */
+	private static final int CHAT_MIN_GAP = 8000;
+	private static final int CHAT_MAX_GAP = 20000;
 	/** Registration reminders, in minutes before the end of it. */
 	private static final int[] WARNINGS =
 	{
@@ -174,6 +177,8 @@ public class TeamVsTeamManager
 		private volatile int _kills;
 		private volatile int _deaths;
 		private volatile long _respawnAt;
+		// The spawn point of its wave, where it comes back.
+		private volatile Location _respawnBase;
 		private volatile long _protectedUntil;
 
 		Fighter(Creature creature, Match match, Side side, SimRole role)
@@ -235,6 +240,8 @@ public class TeamVsTeamManager
 	{
 		private final Team _team;
 		private final String _name;
+		// Its spawn points: it starts at the first one, its dead come back at one of them.
+		private final List<Location> _bases;
 		private final Location _base;
 		private final int _nameColor;
 		private final List<Fighter> _fighters = new CopyOnWriteArrayList<>();
@@ -242,18 +249,20 @@ public class TeamVsTeamManager
 		private final AtomicInteger _score = new AtomicInteger();
 		// Worked out by the tick for the fake players: where team mates fight right now, and where the enemy groups are.
 		private volatile List<Location> _clashes = List.of();
-		// When the next group of its dead comes back: the ones that die close together come back together, instead of one after the other into the enemies.
+		// When the next group of its dead comes back, and where: the ones that die close together come back together at one spawn point, instead of one after the other into the enemies.
 		private long _nextWave;
+		private Location _waveBase;
 		private volatile List<Location> _enemyGroups = List.of();
 		// The lane of each of its parties (and of its members on their own), see inLane.
 		private final Map<Object, Integer> _lanes = new ConcurrentHashMap<>();
 		private final AtomicInteger _nextLane = new AtomicInteger(Rnd.get(LANES.length));
 
-		Side(Team team, String name, Location base, int nameColor)
+		Side(Team team, String name, List<Location> bases, int nameColor)
 		{
 			_team = team;
 			_name = name;
-			_base = base;
+			_bases = bases;
+			_base = bases.get(0);
 			_nameColor = nameColor;
 		}
 
@@ -267,9 +276,59 @@ public class TeamVsTeamManager
 			return _name;
 		}
 
+		/**
+		 * @return the spawn point it starts at
+		 */
 		public Location getBase()
 		{
 			return _base;
+		}
+
+		/**
+		 * @return its spawn points
+		 */
+		public List<Location> getBases()
+		{
+			return _bases;
+		}
+
+		/**
+		 * @param creature a creature
+		 * @return how far it stands from the closest of these spawn points
+		 */
+		double getBaseDistance(Creature creature)
+		{
+			double closest = Double.MAX_VALUE;
+			for (Location base : _bases)
+			{
+				closest = Math.min(closest, creature.calculateDistance2D(base));
+			}
+			return closest;
+		}
+
+		/**
+		 * @param creature a creature
+		 * @return the closest of these spawn points
+		 */
+		Location getClosestBase(Creature creature)
+		{
+			Location closest = _base;
+			for (Location base : _bases)
+			{
+				if (creature.calculateDistance2D(base) < creature.calculateDistance2D(closest))
+				{
+					closest = base;
+				}
+			}
+			return closest;
+		}
+
+		/**
+		 * @return the middle of its spawn points
+		 */
+		Location getCenter()
+		{
+			return center(_bases);
 		}
 
 		public int getScore()
@@ -278,17 +337,20 @@ public class TeamVsTeamManager
 		}
 		
 		/**
-		 * @param now the time of a death
-		 * @return when the one that died comes back: with the wave already waiting if it comes in at least half the respawn delay, else in a new wave after the full delay
+		 * Puts one that died into a wave: the wave already waiting if it comes in at least half the respawn delay, else a new wave after the full delay, at a spawn point picked by chance.
+		 * @param dead the one that died
+		 * @param now the time of its death
 		 */
-		synchronized long nextWave(long now)
+		synchronized void joinWave(Fighter dead, long now)
 		{
 			final long delay = TeamVsTeamConfig.RESPAWN_DELAY * 1000L;
-			if ((_nextWave - now) < (delay / 2))
+			if (((_nextWave - now) < (delay / 2)) || (_waveBase == null))
 			{
 				_nextWave = now + delay;
+				_waveBase = _bases.get(Rnd.get(_bases.size()));
 			}
-			return _nextWave;
+			dead._respawnAt = _nextWave;
+			dead._respawnBase = _waveBase;
 		}
 
 		/**
@@ -337,6 +399,8 @@ public class TeamVsTeamManager
 		private volatile ScheduledFuture<?> _task;
 		// A match of fake players only (//tvt simulate): it plays to its end without players, and logs its kills.
 		private volatile boolean _simulated;
+		// When its fake players may say something again.
+		private long _nextChat;
 
 		Match(int id, int minLevel, int maxLevel, int instanceId)
 		{
@@ -344,8 +408,8 @@ public class TeamVsTeamManager
 			_minLevel = minLevel;
 			_maxLevel = maxLevel;
 			_instanceId = instanceId;
-			_blue = new Side(Team.BLUE, "Blue", TeamVsTeamConfig.BLUE_BASE, TeamVsTeamConfig.BLUE_NAME_COLOR);
-			_red = new Side(Team.RED, "Red", TeamVsTeamConfig.RED_BASE, TeamVsTeamConfig.RED_NAME_COLOR);
+			_blue = new Side(Team.BLUE, "Blue", TeamVsTeamConfig.BLUE_BASES, TeamVsTeamConfig.BLUE_NAME_COLOR);
+			_red = new Side(Team.RED, "Red", TeamVsTeamConfig.RED_BASES, TeamVsTeamConfig.RED_NAME_COLOR);
 			_prepEnd = System.currentTimeMillis() + (TeamVsTeamConfig.PREP_TIME * 1000L);
 		}
 
@@ -505,7 +569,7 @@ public class TeamVsTeamManager
 		}
 		if ((TeamVsTeamConfig.BLUE_BASE == null) || (TeamVsTeamConfig.RED_BASE == null))
 		{
-			return "a base is missing (TvTBlueBase, TvTRedBase)";
+			return "a team has no spawn point (TvTBlueBase, TvTRedBase)";
 		}
 
 		_state = State.REGISTRATION;
@@ -1264,7 +1328,7 @@ public class TeamVsTeamManager
 						final Creature creature = fighter._creature;
 						if (!creature.isDead() && !creature.isTeleporting() && (creature.calculateDistance2D(fighter._side._base) > TeamVsTeamConfig.BASE_RADIUS))
 						{
-							sendHome(fighter);
+							sendHome(fighter, fighter._side._base);
 							if (fighter.isPlayer())
 							{
 								sendScreen(creature.asPlayer(), "The fight hasn't started yet!", 4, false);
@@ -1303,11 +1367,11 @@ public class TeamVsTeamManager
 							continue;
 						}
 
-						// No camping in front of the other team's spawn: whoever walks into its base is sent home.
+						// No camping in front of the other team's spawn: whoever walks into one of its bases is sent to its own closest one.
 						final Side other = match.getOther(fighter._side);
-						if (creature.calculateDistance2D(other._base) < TeamVsTeamConfig.BASE_RADIUS)
+						if (other.getBaseDistance(creature) < TeamVsTeamConfig.BASE_RADIUS)
 						{
-							sendHome(fighter);
+							sendHome(fighter, fighter._side.getClosestBase(creature));
 							if (fighter.isPlayer())
 							{
 								sendScreen(creature.asPlayer(), "Entering the enemy base is not allowed!", 5, false);
@@ -1417,7 +1481,7 @@ public class TeamVsTeamManager
 			for (Fighter enemy : other._fighters)
 			{
 				// Not the ones still by their base: the fake players don't go and wait at the other team's base for them to come out.
-				if (!enemy.isAlive() || enemy.isProtected() || (enemy._creature.calculateDistance2D(other._base) <= (TeamVsTeamConfig.BASE_RADIUS + BASE_APPROACH)))
+				if (!enemy.isAlive() || enemy.isProtected() || (other.getBaseDistance(enemy._creature) <= (TeamVsTeamConfig.BASE_RADIUS + BASE_APPROACH)))
 				{
 					continue;
 				}
@@ -1448,18 +1512,19 @@ public class TeamVsTeamManager
 		}
 
 		final Match match = fighter._match;
+		final Location base = fighter._respawnBase != null ? fighter._respawnBase : fighter._side._base;
 		if (creature.isPlayer())
 		{
 			final Player player = creature.asPlayer();
 			player.setIsPendingRevive(true);
-			player.teleToLocation(fighter._side._base, match._instanceId, TeamVsTeamConfig.SPAWN_RADIUS);
+			player.teleToLocation(base, match._instanceId, TeamVsTeamConfig.SPAWN_RADIUS);
 			buffAndHeal(player);
 		}
 		else if (creature instanceof Npc fake)
 		{
 			DecayTaskManager.getInstance().cancel(fake);
 			fake.doRevive();
-			sendHome(fighter);
+			sendHome(fighter, base);
 			FakePartyManager.getInstance().onRevived(fake);
 			FakePlayerPvpManager.getInstance().prepareSimulant(fake);
 			fake.setRunning();
@@ -1479,13 +1544,14 @@ public class TeamVsTeamManager
 	}
 	
 	/**
-	 * Teleports a fighter to its base. A fake player's teleport stops its AI task (the old spot's {@code decayMe}) while its intention stays ACTIVE, so setting ACTIVE again wouldn't wake it: its AI task starts again here.
+	 * Teleports a fighter to one of its bases. A fake player's teleport stops its AI task (the old spot's {@code decayMe}) while its intention stays ACTIVE, so setting ACTIVE again wouldn't wake it: its AI task starts again here.
 	 * @param fighter the fighter
+	 * @param base the spawn point
 	 */
-	private static void sendHome(Fighter fighter)
+	private static void sendHome(Fighter fighter, Location base)
 	{
 		final Creature creature = fighter._creature;
-		creature.teleToLocation(fighter._side._base, fighter._match._instanceId, TeamVsTeamConfig.SPAWN_RADIUS);
+		creature.teleToLocation(base, fighter._match._instanceId, TeamVsTeamConfig.SPAWN_RADIUS);
 		if (!creature.isPlayer() && !creature.isDead() && creature.hasAI() && (creature.getAI() instanceof AttackableAI ai))
 		{
 			ai.startAITask();
@@ -1541,7 +1607,7 @@ public class TeamVsTeamManager
 
 		final Match match = dead._match;
 		dead._deaths++;
-		dead._respawnAt = dead._side.nextWave(System.currentTimeMillis());
+		dead._side.joinWave(dead, System.currentTimeMillis());
 
 		final Fighter slayer = getFighter(killer);
 		if ((slayer != null) && (slayer._match == match) && (slayer._side != dead._side))
@@ -1891,21 +1957,33 @@ public class TeamVsTeamManager
 	// ---------------------------------------------------------------------------------------------
 
 	/**
-	 * Keeps the regions between the bases awake for the match: the fake players' AI only runs in active regions.
+	 * Keeps the regions around the spawn points awake for the match: the fake players' AI only runs in active regions.
 	 */
 	private static void keepRegionsAwake(Match match)
 	{
-		final Location blue = TeamVsTeamConfig.BLUE_BASE;
-		final Location red = TeamVsTeamConfig.RED_BASE;
+		final List<Location> bases = new ArrayList<>(TeamVsTeamConfig.BLUE_BASES);
+		bases.addAll(TeamVsTeamConfig.RED_BASES);
+		int minX = Integer.MAX_VALUE;
+		int maxX = Integer.MIN_VALUE;
+		int minY = Integer.MAX_VALUE;
+		int maxY = Integer.MIN_VALUE;
+		for (Location base : bases)
+		{
+			minX = Math.min(minX, base.getX());
+			maxX = Math.max(maxX, base.getX());
+			minY = Math.min(minY, base.getY());
+			maxY = Math.max(maxY, base.getY());
+		}
+		final int z = bases.get(0).getZ();
 		final int margin = 2000;
 		final int step = 1 << World.SHIFT_BY;
 		synchronized (match._keptRegions)
 		{
-			for (int x = Math.min(blue.getX(), red.getX()) - margin; x <= (Math.max(blue.getX(), red.getX()) + margin); x += step)
+			for (int x = minX - margin; x <= (maxX + margin); x += step)
 			{
-				for (int y = Math.min(blue.getY(), red.getY()) - margin; y <= (Math.max(blue.getY(), red.getY()) + margin); y += step)
+				for (int y = minY - margin; y <= (maxY + margin); y += step)
 				{
-					final WorldRegion region = World.getInstance().getRegion(x, y, blue.getZ());
+					final WorldRegion region = World.getInstance().getRegion(x, y, z);
 					if ((region != null) && !region.isKeptActive())
 					{
 						region.keepActive();
@@ -2047,7 +2125,7 @@ public class TeamVsTeamManager
 	 */
 	private static boolean isInBase(Creature creature, Fighter fighter)
 	{
-		return creature.calculateDistance2D(fighter._side._base) <= TeamVsTeamConfig.BASE_RADIUS;
+		return fighter._side.getBaseDistance(creature) <= TeamVsTeamConfig.BASE_RADIUS;
 	}
 
 	/**
@@ -2070,7 +2148,7 @@ public class TeamVsTeamManager
 	public static boolean isAtOwnBase(Creature creature)
 	{
 		final Fighter fighter = getFighter(creature);
-		return (fighter != null) && (creature.calculateDistance2D(fighter._side._base) <= TeamVsTeamConfig.BASE_RADIUS);
+		return (fighter != null) && (fighter._side.getBaseDistance(creature) <= TeamVsTeamConfig.BASE_RADIUS);
 	}
 	
 	/**
@@ -2082,6 +2160,31 @@ public class TeamVsTeamManager
 		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
 		final Match match = profile != null ? _matches.get(profile.getTvtMatchId()) : null;
 		return match != null ? match._phase : null;
+	}
+
+	/**
+	 * @param fake a fake player of a match about to say something
+	 * @return {@code true} if it may: the fake players of a match talk like the players of an event, one line now and then, not each of them every few seconds
+	 */
+	public boolean mayChat(Npc fake)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		final Match match = profile != null ? _matches.get(profile.getTvtMatchId()) : null;
+		if (match == null)
+		{
+			return false;
+		}
+
+		final long now = System.currentTimeMillis();
+		synchronized (match)
+		{
+			if (now < match._nextChat)
+			{
+				return false;
+			}
+			match._nextChat = now + Rnd.get(CHAT_MIN_GAP, CHAT_MAX_GAP);
+			return true;
+		}
 	}
 
 	/**
@@ -2141,12 +2244,37 @@ public class TeamVsTeamManager
 			return inLane(fake, fighter, group, true);
 		}
 
-		// The enemies are all back at their base: it holds the middle of the field, where they come out to, instead of waiting at their base's edge.
-		final Location own = fighter._side._base;
-		final Location enemy = fighter._match.getOther(fighter._side)._base;
-		final int x = (own.getX() + enemy.getX()) / 2;
-		final int y = (own.getY() + enemy.getY()) / 2;
-		return inLane(fake, fighter, new Location(x, y, GeoEngine.getInstance().getHeight(x, y, (own.getZ() + enemy.getZ()) / 2)), false);
+		// The enemies are all back at their bases: it holds the middle of the field, where they come out to, instead of waiting at a base's edge.
+		return inLane(fake, fighter, getFieldCenter(), false);
+	}
+
+	/**
+	 * @return the middle of the field: of every spawn point of both teams
+	 */
+	public static Location getFieldCenter()
+	{
+		final List<Location> all = new ArrayList<>(TeamVsTeamConfig.BLUE_BASES);
+		all.addAll(TeamVsTeamConfig.RED_BASES);
+		return center(all);
+	}
+
+	/**
+	 * @param locations some spots (at least one)
+	 * @return their middle, on the ground
+	 */
+	static Location center(List<Location> locations)
+	{
+		long x = 0;
+		long y = 0;
+		long z = 0;
+		for (Location location : locations)
+		{
+			x += location.getX();
+			y += location.getY();
+			z += location.getZ();
+		}
+		final int size = locations.size();
+		return new Location((int) (x / size), (int) (y / size), GeoEngine.getInstance().getHeight((int) (x / size), (int) (y / size), (int) (z / size)));
 	}
 
 	/**
@@ -2172,9 +2300,9 @@ public class TeamVsTeamManager
 			return spot;
 		}
 
-		// Across the field: square to the line between the bases.
-		final Location own = fighter._side._base;
-		final Location enemy = fighter._match.getOther(fighter._side)._base;
+		// Across the field: square to the line between the middles of the teams' spawn points.
+		final Location own = fighter._side.getCenter();
+		final Location enemy = fighter._match.getOther(fighter._side).getCenter();
 		final double length = Math.max(1, Math.hypot(enemy.getX() - own.getX(), enemy.getY() - own.getY()));
 		final double acrossX = -(enemy.getY() - own.getY()) / length;
 		final double acrossY = (enemy.getX() - own.getX()) / length;
@@ -2221,7 +2349,7 @@ public class TeamVsTeamManager
 		}
 		if ((TeamVsTeamConfig.BLUE_BASE == null) || (TeamVsTeamConfig.RED_BASE == null))
 		{
-			return "A base is missing (TvTBlueBase, TvTRedBase).";
+			return "A team has no spawn point (TvTBlueBase, TvTRedBase).";
 		}
 		
 		final int index = getBracket(level);
@@ -2301,7 +2429,7 @@ public class TeamVsTeamManager
 						alive++;
 						x += fighter._creature.getX();
 						y += fighter._creature.getY();
-						if (fighter._creature.calculateDistance2D(side._base) <= TeamVsTeamConfig.BASE_RADIUS)
+						if (side.getBaseDistance(fighter._creature) <= TeamVsTeamConfig.BASE_RADIUS)
 						{
 							atBase++;
 						}
@@ -2317,7 +2445,7 @@ public class TeamVsTeamManager
 					final Creature creature = fighter._creature;
 					final FakePlayerParty party = FakePartyManager.getInstance().getParty(creature);
 					final Creature target = creature.getTarget() instanceof Creature ? (Creature) creature.getTarget() : null;
-					lines.add("    " + describe(fighter) + " lv" + creature.getLevel() + (creature.isDead() ? " DEAD" : " " + (int) ((100 * creature.getCurrentHp()) / creature.getMaxHp()) + "%hp") + (fighter.isProtected() ? " protected" : "") + " k" + fighter._kills + "/d" + fighter._deaths + " at " + creature.getX() + "," + creature.getY() + "," + creature.getZ() + " base " + (int) creature.calculateDistance2D(side._base) + (creature.hasAI() ? " " + creature.getAI().getIntention() : "") + (creature.isMoving() ? " moving" : "") + (creature.isCastingNow() ? " casting" : "") + describeAiState(creature) + (target != null ? " target " + target.getName() : "") + (party != null ? " party " + Integer.toHexString(System.identityHashCode(party)) : " no party"));
+					lines.add("    " + describe(fighter) + " lv" + creature.getLevel() + (creature.isDead() ? " DEAD" : " " + (int) ((100 * creature.getCurrentHp()) / creature.getMaxHp()) + "%hp") + (fighter.isProtected() ? " protected" : "") + " k" + fighter._kills + "/d" + fighter._deaths + " at " + creature.getX() + "," + creature.getY() + "," + creature.getZ() + " base " + (int) side.getBaseDistance(creature) + (creature.hasAI() ? " " + creature.getAI().getIntention() : "") + (creature.isMoving() ? " moving" : "") + (creature.isCastingNow() ? " casting" : "") + describeAiState(creature) + (target != null ? " target " + target.getName() : "") + (party != null ? " party " + Integer.toHexString(System.identityHashCode(party)) : " no party"));
 				}
 			}
 		}

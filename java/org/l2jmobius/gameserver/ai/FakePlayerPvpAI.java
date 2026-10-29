@@ -1226,6 +1226,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	@Override
 	protected void onActionAttacked(Creature attacker)
 	{
+		// Its own toggle or damage over time burning its HP: nobody to fight. It turned on itself at each tick, dropped itself the next think and stopped what it was doing, every second or two.
+		if (attacker == getActiveChar())
+		{
+			return;
+		}
+
 		// A party member's stray hit: no fight over it.
 		if (FakePartyManager.getInstance().isSameGroup(getActiveChar(), attacker))
 		{
