@@ -54,6 +54,7 @@ class Brain:
         self.kinds = Counter()  # decisions of brain B's party features: COVER moves and holds, SHOOTER peels and tank charges
         self.healer_gap = []  # at the first archer or nuker shot on our healer: the healer's distance to its nearest teammate
         self.shooter_gap = []  # ... and the shooter's distance to our nearest member
+        self.focus_diffs = Counter()  # brain B's target choices brain A would have made differently: "A's pick -> B's pick" by role
 
 
 def analyse(arena):
@@ -152,6 +153,8 @@ def analyse(arena):
         for e in events:
             if e.get("type") == "focus_call" and e.get("team") in team_brain:
                 brains[team_brain[e["team"]]].calls[e.get("why")] += 1
+            elif e.get("type") == "focus_diff" and e.get("team") in team_brain:
+                brains[team_brain[e["team"]]].focus_diffs[f"{role.get(e.get('legacyId'), 'other').lower()} -> {role.get(e.get('chosenId'), 'other').lower()}"] += 1
 
         # The first archer or nuker shot on each healer: how far the healer stood from its team, and the shooter from it.
         if positions:
@@ -204,6 +207,7 @@ def main():
     rows.append(("  ... shooter to our team", lambda b: f"{median(b.shooter_gap):.0f}" if b.shooter_gap else "-"))
     rows.append(("joined on the party's call", lambda b: str(b.party_engages)))
     rows.append(("focus calls", lambda b: ", ".join(f"{k.lower()} {v}" for k, v in b.calls.most_common()) or "-"))
+    rows.append(("other target than A would (A -> B)", lambda b: (f"{sum(b.focus_diffs.values())}: " + ", ".join(f"{k} {v}" for k, v in b.focus_diffs.most_common(4))) if b.focus_diffs else "-"))
     rows.append(("cover / shooter answers", lambda b: ", ".join(f"{k.lower()} {v}" for k, v in b.kinds.most_common()) or "-"))
     rows.append(("time in stance", lambda b: ", ".join(f"{s.lower()} {pct(v, sum(b.stance_time.values()))}" for s, v in b.stance_time.most_common()) or "-"))
     width = max(len(label) for label, _ in rows)

@@ -128,7 +128,15 @@ import org.l2jmobius.gameserver.util.LocationUtil;
  * </ul>
  * <p>
  * Brain B ({@link FakeBrain#B}): the experimental copy of {@link FakePlayerPvpAI}, which simulation teams can run against it. Changes go here first and are moved into {@link FakePlayerPvpAI} once simulations show they win more (see docs/fake-player-simulation-issues.md). It starts
- * as a copy of {@link FakePlayerPvpAI}, with its party tier in {@link FakePartyBrainExperimental}: nothing changed yet. (Its Team vs Team code is never used: only simulation teams run brain B.)
+ * as a copy of {@link FakePlayerPvpAI}, with its party tier in {@link FakePartyBrainExperimental} (its Team vs Team code is never used: only simulation teams run brain B). Changed since:
+ * <ul>
+ * <li>#32: its target choice ({@link #chooseFocus}) takes the best enemy of the fight whatever order they are listed in, then the margin that keeps it from flipping applies once, against the one it fights.</li>
+ * <li>#33, #34: the distance to a target counts more in its score ({@link #FOCUS_DISTANCE_SCALE}, 1200 against 2000), and an archer or mage counts all of it, not only the walk beyond its reach: a healer far behind its party is less often worth it over a
+ * closer squishy. In a simulation, a {@code focus_diff} event notes each choice brain A would have made differently ({@link #noteLegacyFocus}).</li>
+ * <li>#35: an archer or mage doesn't pick a target it would have to walk up to into the reach of other enemies that don't reach it now ({@link #getExposurePenalty}: 0.8 per such enemy, up to 2).</li>
+ * <li>#36: that price never sends it onto a tank: when it would, it chooses as if there were no such price.</li>
+ * <li>#37: an enemy under 40% HP it fights stays its target until it falls, even over a party call, unless it can't hurt it now or it got more than 400 beyond its reach ({@link #isFinishing}). Not for a tank, nor on an enemy tank.</li>
+ * </ul>
  */
 public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePlayerPvpBrain
 {
@@ -332,6 +340,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	// The player it focuses in a fight against several (the weakest one), and until when.
 	private Creature _focus = null;
 	private long _focusUntil = 0;
+	// #34: the last choice of its that brain A would have made differently, and brain A's choice then (noted once per change).
+	private Creature _legacyFocusChosen;
+	private Creature _legacyFocus;
 	
 	// Flagged and karma players passing by: when it looks next, and whom it already thought about (object id -> time).
 	private long _nextOpportunityScan = 0;
@@ -1872,6 +1883,9 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	
 	/** Enemies of the fight this far away are weighed as targets (in a party, not only the ones that hit it). */
 	static final int FOCUS_SCAN_RANGE = 1500;
+	/** #33, #34: the distance to an enemy adds 1 to its score (lower is better) per this many units: 1000 farther counts like 83% more of its HP left. Brain A: 2000 (50%), and for an archer or mage only the walk beyond its reach. */
+	private static final double FOCUS_DISTANCE_SCALE = 1200;
+	private static final double LEGACY_FOCUS_DISTANCE_SCALE = 2000;
 	/** How much more an enemy healer is worth as a target, and an enemy buffer, than a damage dealer (on a score where 1 is full HP). */
 	private static final double HEALER_PRIORITY = 0.6;
 	private static final double SUPPORT_PRIORITY = 0.25;
@@ -1915,6 +1929,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 		}
 
+		// #37: an enemy under 40% HP it fights stays its target until it falls, whatever else comes up (a call, a better score): leaving one that low let its healer heal it back up. Not for a tank, which guards its squishies, nor on an enemy tank.
+		if (!isTank(npc) && isFinishing(npc, mostHated))
+		{
+			return mostHated;
+		}
+
 		// The party's call first: everyone on the same enemy. Not a healer: it keeps healing, and only hits what is close to it. Not a tank either: it guards its squishies (see guardBackline), and only calls for the others.
 		final boolean healer = (profile != null) && isPureHealer(profile);
 		final boolean tank = (profile != null) && !profile.isTransformed() && (profile.getRole() == Role.TANK);
@@ -1941,22 +1961,23 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 
 		_focus = null;
-		Creature best = mostHated;
-		double bestScore = focusScore(npc, party, mostHated);
-		for (Creature enemy : getFightEnemies(npc, party))
-		{
-			if (enemy == mostHated)
-			{
-				continue;
-			}
+		final List<Creature> enemies = getFightEnemies(npc, party);
+		Creature best = pickFocus(npc, party, mostHated, enemies, true);
 
-			// Clearly better only, so it doesn't flip between two.
-			final double score = focusScore(npc, party, enemy);
-			if (score < (bestScore - 0.25))
+		// #36: the price of walking into other enemies' reach (#35) doesn't send it onto a tank, the worst target there is: then it chooses as if there were no such price.
+		if (isTank(best))
+		{
+			final Creature unexposed = pickFocus(npc, party, mostHated, enemies, false);
+			if (!isTank(unexposed))
 			{
-				best = enemy;
-				bestScore = score;
+				best = unexposed;
 			}
+		}
+
+		// #34: in a simulation, what brain A would have chosen here (its distance rule and its margin between every two enemies), noted when it differs.
+		if ((profile != null) && profile.isSimulant())
+		{
+			noteLegacyFocus(npc, party, mostHated, enemies, best);
 		}
 
 		if (best != mostHated)
@@ -2082,18 +2103,157 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		return enemies;
 	}
 
+	/** #35: an archer or mage that would walk into the reach of another enemy to get its target in reach adds this much to the target's score per such enemy, up to the most. */
+	private static final double EXPOSURE_PENALTY = 0.8;
+	private static final double EXPOSURE_MAX = 2.0;
+	/** #35: it would stop this far inside its reach of the target, and weighs the enemies this close. */
+	private static final int EXPOSURE_STAND_MARGIN = 50;
+	private static final int EXPOSURE_SCAN_RANGE = 2500;
+
 	/**
+	 * #35: the price of walking up to {@code target}: an archer or mage out of its reach would stop just inside it, on the way there. Each other living enemy that reaches that spot (its weapon or its attack, debuff and peel skills, not a spare bow) but doesn't
+	 * reach it where it stands now costs {@link #EXPOSURE_PENALTY}, up to {@link #EXPOSURE_MAX}: that much more than a healer is worth, so it doesn't walk into a second enemy's reach for one.
+	 * @param npc the archer or mage
+	 * @param target the enemy it weighs
+	 * @param distance its distance to {@code target}
+	 * @return what it adds to the score of {@code target}, 0 if {@code target} is in its reach already or no other enemy waits on the way
+	 */
+	private static double getExposurePenalty(Attackable npc, Creature target, double distance)
+	{
+		final int reach = getThreatReach(npc, true);
+		if ((distance <= reach) || (distance < 1))
+		{
+			return 0;
+		}
+
+		final double stand = Math.max(0, reach - EXPOSURE_STAND_MARGIN);
+		final double spotX = target.getX() + (((npc.getX() - target.getX()) / distance) * stand);
+		final double spotY = target.getY() + (((npc.getY() - target.getY()) / distance) * stand);
+		int exposed = 0;
+		for (Creature enemy : World.getInstance().getVisibleObjectsInRange(npc, Creature.class, EXPOSURE_SCAN_RANGE))
+		{
+			if ((enemy == target) || !isPvpEnemy(enemy) || enemy.isAlikeDead() || !isValidTarget(npc, enemy))
+			{
+				continue;
+			}
+			final int enemyReach = getThreatReach(enemy, false);
+			if ((Math.hypot(enemy.getX() - spotX, enemy.getY() - spotY) <= enemyReach) && (npc.calculateDistance2D(enemy) > enemyReach))
+			{
+				exposed++;
+			}
+		}
+		return Math.min(EXPOSURE_MAX, exposed * EXPOSURE_PENALTY);
+	}
+
+	/** #37: an enemy it fights below this much of its HP is finished before anything else, unless it got this much farther than its reach. */
+	private static final double FINISH_HP = 0.4;
+	private static final int FINISH_CHASE = 400;
+
+	/**
+	 * #37: whether it finishes {@code target} before anything else: an enemy it fights (not a tank: it heals itself and has Ultimate Defense), below {@link #FINISH_HP} of its HP, that it can hurt (not invincible, no defense it noticed that its damage doesn't get through) and that isn't more than
+	 * {@link #FINISH_CHASE} beyond its reach.
+	 * @param npc the fake player
+	 * @param target the enemy it fights, {@code null} for none
+	 * @return {@code true} if it stays on {@code target}
+	 */
+	private boolean isFinishing(Attackable npc, Creature target)
+	{
+		return (target != null) && isPvpEnemy(target) && !isTank(target) && !target.isAlikeDead() && ((target.getCurrentHp() / Math.max(1, target.getMaxHp())) < FINISH_HP) && !target.isInvul() && !isPlayedAround(npc, target) && (npc.calculateDistance2D(target) <= (getThreatReach(npc) + FINISH_CHASE)) && isValidTarget(npc, target);
+	}
+
+	/**
+	 * #32: the best enemy of the fight, whatever order they come in (the margin used to apply between every two of them, so the first one listed often won: the side of the world region it stood in decided). It replaces the one it fights only when clearly
+	 * better, so it doesn't flip between two.
+	 * @param npc the fake player
+	 * @param party its party, {@code null} if none
+	 * @param mostHated the enemy it fights
+	 * @param enemies the enemies of its fight
+	 * @param exposure {@code true} to count the price of walking into other enemies' reach (#35)
+	 * @return the enemy to fight
+	 */
+	private Creature pickFocus(Attackable npc, FakePlayerParty party, Creature mostHated, List<Creature> enemies, boolean exposure)
+	{
+		final double mostHatedScore = focusScore(npc, party, mostHated, false, exposure);
+		Creature top = null;
+		double topScore = Double.MAX_VALUE;
+		for (Creature enemy : enemies)
+		{
+			if (enemy == mostHated)
+			{
+				continue;
+			}
+
+			final double score = focusScore(npc, party, enemy, false, exposure);
+			if (score < topScore)
+			{
+				top = enemy;
+				topScore = score;
+			}
+		}
+		return (top != null) && (topScore < (mostHatedScore - 0.25)) ? top : mostHated;
+	}
+
+	/**
+	 * #34: what brain A would have chosen in the same spot: the scores of brain A ({@code legacy}), and its margin applied between every two enemies in the order they are listed. Noted in the simulation's log when it isn't {@code chosen}, once per change.
+	 * @param npc the fake player
+	 * @param party its party
+	 * @param mostHated the enemy it fights
+	 * @param enemies the enemies of its fight
+	 * @param chosen what it chose
+	 */
+	private void noteLegacyFocus(Attackable npc, FakePlayerParty party, Creature mostHated, List<Creature> enemies, Creature chosen)
+	{
+		Creature legacy = mostHated;
+		double legacyScore = focusScore(npc, party, mostHated, true, false);
+		for (Creature enemy : enemies)
+		{
+			if (enemy == mostHated)
+			{
+				continue;
+			}
+			final double score = focusScore(npc, party, enemy, true, false);
+			if (score < (legacyScore - 0.25))
+			{
+				legacy = enemy;
+				legacyScore = score;
+			}
+		}
+
+		if (legacy == chosen)
+		{
+			_legacyFocusChosen = null;
+			_legacyFocus = null;
+			return;
+		}
+		if ((_legacyFocusChosen == chosen) && (_legacyFocus == legacy))
+		{
+			return;
+		}
+		_legacyFocusChosen = chosen;
+		_legacyFocus = legacy;
+		FakeAiTrace.onFocusDiff(npc, chosen, focusScore(npc, party, chosen, false, true), legacy, legacyScore);
+	}
+
+	/**
+	 * @param legacy {@code true} for brain A's score (#34): an archer or mage counts only the walk beyond its reach, at {@link #LEGACY_FOCUS_DISTANCE_SCALE}
+	 * @param exposure {@code true} to count, for an archer or mage, the price of walking into other enemies' reach (#35)
 	 * @return how good a target {@code enemy} is, lower is better: low on HP and close by, a healer (then a buffer) first, one its party already hits; never an invincible one, nor one whose Ultimate Defense, Guts, Zealot or Angelic Icon it noticed if there is another
 	 */
-	private double focusScore(Attackable npc, FakePlayerParty party, Creature enemy)
+	private double focusScore(Attackable npc, FakePlayerParty party, Creature enemy, boolean legacy, boolean exposure)
 	{
 		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
 		final boolean ranged = (profile != null) && !profile.isTransformed() && (profile.getRole().isRanged() || profile.isBowHeld() || profile.isCasterHeld());
 
-		// #7: an archer or mage hits anyone within its reach as easily, so only the walk beyond its reach counts (counting the whole distance kept the backline safe).
+		// #34: the whole distance counts, for an archer or mage too, and more than before: a healer far behind its party is less often worth it over a closer squishy. (#7 made an archer or mage count only the walk beyond its reach, which brain A still does.)
 		final double distance = npc.calculateDistance2D(enemy);
-		final double walk = ranged ? Math.max(0, distance - getThreatReach(npc)) : distance;
-		double score = (enemy.getCurrentHp() / Math.max(1, enemy.getMaxHp())) + (walk / 2000.0) + (enemy.isInvul() ? 2 : 0) + (isPlayedAround(npc, enemy) ? 1.5 : 0);
+		final double walk = legacy && ranged ? Math.max(0, distance - getThreatReach(npc)) : distance;
+		double score = (enemy.getCurrentHp() / Math.max(1, enemy.getMaxHp())) + (walk / (legacy ? LEGACY_FOCUS_DISTANCE_SCALE : FOCUS_DISTANCE_SCALE)) + (enemy.isInvul() ? 2 : 0) + (isPlayedAround(npc, enemy) ? 1.5 : 0);
+
+		// #35: an archer or mage that would have to walk up to it, into the reach of other enemies that don't reach it where it stands, leaves it.
+		if (ranged && exposure)
+		{
+			score += getExposurePenalty(npc, enemy, distance);
+		}
 
 		// A dagger is an assassin: it goes for the backline (a healer above all, then mages and archers) and leaves the tanks alone. A tank guards rather than hunts healers.
 		final boolean assassin = isAssassin(npc);
@@ -2375,6 +2535,16 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 	 */
 	static int getThreatReach(Creature creature)
 	{
+		return getThreatReach(creature, true);
+	}
+
+	/**
+	 * @param creature an enemy
+	 * @param withBow {@code false} to leave out the spare bow of a tank or tyrant (it only takes it out against one it can't reach)
+	 * @return how far it can hurt or hold someone from where it stands (see {@link #getThreatReach(Creature)})
+	 */
+	private static int getThreatReach(Creature creature, boolean withBow)
+	{
 		int reach = creature.getPhysicalAttackRange();
 		final FakePlayerPvpProfile profile = creature.isNpc() ? creature.asNpc().getTemplate().getFakePlayerPvpProfile() : null;
 		if (profile != null)
@@ -2388,7 +2558,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 			}
 
 			// A tank or tyrant takes out its bow against one it can't reach.
-			if (profile.getBow() != null)
+			if (withBow && (profile.getBow() != null))
 			{
 				reach = Math.max(reach, profile.getBow().getAttackRange());
 			}
