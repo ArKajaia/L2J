@@ -147,6 +147,9 @@ public class FakePlayerPvpManager
 	private static final int RETURN_MAX_RETRIES = 15;
 	/** A fake player says at most one thing in this many milliseconds. */
 	private static final long CHAT_INTERVAL = 20000;
+	/** A fake player of a Team vs Team match says at most one thing in this many milliseconds, and only one in this many (in %) of the times it would otherwise (see {@link #getTvtLines}). */
+	private static final long TVT_CHAT_INTERVAL = 60000;
+	private static final int TVT_CHAT_CHANCE = 30;
 	/** How long a fake player keeps not hitting back an attacker it chose not to fight, after their last hit. */
 	private static final long REFUSE_MEMORY = 60000;
 	/** A fake player doesn't pick a fight with a player this many levels above it (it only complains). */
@@ -2991,6 +2994,80 @@ public class FakePlayerPvpManager
 	 */
 	/** Nothing to say. */
 	private static final String[] NO_TAUNTS = {};
+
+	// What a fake player of a Team vs Team match says: about the match, like a player of an event (see getTvtLines).
+	private static final String[] TVT_ENGAGE =
+	{
+		"go go",
+		"inc",
+		"here they come",
+		"push",
+		"on me",
+		"focus",
+		"lets go",
+		"they are here",
+		"fight",
+		"come on"
+	};
+	private static final String[] TVT_KILL =
+	{
+		"gg",
+		"ez",
+		"next",
+		"lol",
+		"one down",
+		"nice",
+		"got him",
+		"bye",
+		"too slow"
+	};
+	private static final String[] TVT_DEATH =
+	{
+		"wtf",
+		"omg",
+		"lag",
+		"ugh",
+		"no heal?",
+		"they focus me",
+		"so much dmg",
+		"rip",
+		"noo",
+		"lol ok"
+	};
+	private static final String[] TVT_FLEE =
+	{
+		"heal pls",
+		"help",
+		"low hp",
+		"need heal",
+		"back back",
+		"heal me"
+	};
+
+	/**
+	 * @param taunts what a fake player would say outside an event
+	 * @return what a fake player of a Team vs Team match says instead: the match's lines of the same kind, nothing for the kinds that don't fit a match (greetings, farming spots, kill steals, refusals...)
+	 */
+	private static String[] getTvtLines(String[] taunts)
+	{
+		if ((taunts == TAUNTS_ATTACKED) || (taunts == TAUNTS_JOIN_FIGHT))
+		{
+			return TVT_ENGAGE;
+		}
+		if ((taunts == TAUNTS_KILL) || (taunts == PvpSpotManager.TAUNTS_KILL))
+		{
+			return TVT_KILL;
+		}
+		if ((taunts == TAUNTS_DEATH) || (taunts == PvpSpotManager.TAUNTS_DEATH))
+		{
+			return TVT_DEATH;
+		}
+		if (taunts == TAUNTS_FLEE)
+		{
+			return TVT_FLEE;
+		}
+		return NO_TAUNTS;
+	}
 	
 	private void startFight(Attackable fake, Creature player, String[] taunts)
 	{
@@ -3036,9 +3113,20 @@ public class FakePlayerPvpManager
 		{
 			return false;
 		}
-		profile.setNextChatTime(now + CHAT_INTERVAL);
 		
-		final String text = taunts[Rnd.get(taunts.length)];
+		// A Team vs Team fighter talks like a player of an event match: about the match, and rarely. Its usual lines are about farming spots and ambushes, and forty fake players in one place each talking every 20 seconds made a wall of text.
+		String[] lines = taunts;
+		if (profile.isTvtFighter())
+		{
+			lines = getTvtLines(taunts);
+			if ((lines.length == 0) || (Rnd.get(100) >= TVT_CHAT_CHANCE) || !TeamVsTeamManager.getInstance().mayChat(fake))
+			{
+				return false;
+			}
+		}
+		profile.setNextChatTime(now + (profile.isTvtFighter() ? TVT_CHAT_INTERVAL : CHAT_INTERVAL));
+		
+		final String text = lines[Rnd.get(lines.length)];
 		ThreadPool.schedule(() ->
 		{
 			if ((dead || !fake.isDead()) && fake.isSpawned())

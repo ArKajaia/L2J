@@ -1226,6 +1226,12 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	@Override
 	protected void onActionAttacked(Creature attacker)
 	{
+		// Its own toggle or damage over time burning its HP: nobody to fight. It turned on itself at each tick, dropped itself the next think and stopped what it was doing, every second or two.
+		if (attacker == getActiveChar())
+		{
+			return;
+		}
+
 		// A party member's stray hit: no fight over it.
 		if (FakePartyManager.getInstance().isSameGroup(getActiveChar(), attacker))
 		{
@@ -6444,7 +6450,11 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return;
 		}
 
-		// An enemy in sight: the fight is on.
+		// Nobody fights from inside its own base (an attack from there is refused, see TeamVsTeamManager#isForbidden). One that picked a fight there anyway dropped it at once and picked it again,
+		// standing in its base taunting for as long as an enemy waited outside: in its base it only heads out.
+		final boolean atBase = TeamVsTeamManager.isAtOwnBase(npc);
+
+		// An enemy in sight: the fight is on (from its base, it runs out at it first).
 		final Creature enemy = TeamVsTeamManager.getInstance().findEnemyInSight(npc);
 		if (enemy != null)
 		{
@@ -6453,18 +6463,31 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 				trace(Reason.STAND_UP, enemy);
 				return;
 			}
+			if (atBase)
+			{
+				trace(Reason.SIM_MARCH, enemy);
+				marchTo(npc, enemy.getLocation(), false);
+				return;
+			}
 			trace(Reason.SIM_ENGAGE, enemy);
 			npc.setRunning();
 			FakePlayerPvpManager.getInstance().assistFight(npc, enemy);
 			return;
 		}
 
-		// With its party: support, its fights, following its leader. A player leading it that is down or back at its base doesn't hold the party back.
+		// With its party: support, its fights, following its leader. A player leading it that is down or back at its base doesn't hold the party back. In its base it buffs and goes with its leader, the party's fights wait until it is out.
 		if (party != null)
 		{
 			final Creature leader = party.getActiveLeader();
 			final boolean leaderAway = (leader != null) && leader.isPlayer() && (leader.isDead() || TeamVsTeamManager.isAtOwnBase(leader));
-			if (leaderAway ? supportParty(npc, profile, party, false) : thinkParty(npc, profile, party))
+			if (leaderAway || atBase)
+			{
+				if (supportParty(npc, profile, party, false) || (!leaderAway && (leader != null) && (leader != npc) && followLeader(npc, party, leader)))
+				{
+					return;
+				}
+			}
+			else if (thinkParty(npc, profile, party))
 			{
 				return;
 			}
@@ -6479,20 +6502,67 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		}
 
 		trace(Reason.SIM_MARCH, null);
+		marchTo(npc, destination, true);
+	}
+
+	/** In a Team vs Team match: how far its own spot may lie from where it marches to, so a party doesn't run on one line to one point. */
+	private static final int TVT_MARCH_JITTER = 130;
+	/** In a Team vs Team match: how long it keeps its own spot before it picks another (also when it holds a place, so it moves about there like a player). */
+	private static final long TVT_JITTER_MIN_TIME = 5000;
+	private static final long TVT_JITTER_MAX_TIME = 11000;
+	/** In a Team vs Team match: how often it may set off again (it varies, so the team doesn't turn as one). */
+	private static final long TVT_MARCH_MIN_INTERVAL = 700;
+	private static final long TVT_MARCH_MAX_INTERVAL = 1900;
+
+	// In a Team vs Team match: its own offset from where it marches to, and until when it keeps it.
+	private int _marchJitterX;
+	private int _marchJitterY;
+	private long _marchJitterUntil;
+
+	/**
+	 * In a Team vs Team match: sets off toward a spot, unless it is on its way there already or set off a moment ago.
+	 * @param npc the fake player
+	 * @param destination where to go
+	 * @param ownSpot {@code true} to go to a spot of its own near it (see {@link #TVT_MARCH_JITTER}), {@code false} for the spot itself (an enemy to run out at)
+	 */
+	private void marchTo(Attackable npc, Location destination, boolean ownSpot)
+	{
 		final long now = System.currentTimeMillis();
 		if (npc.isMovementDisabled() || standUp(npc) || (now < _nextMarchTime))
 		{
 			return;
 		}
-		if (npc.isMoving() && (_marchDestination != null) && (Math.hypot(_marchDestination.getX() - destination.getX(), _marchDestination.getY() - destination.getY()) < MARCH_UPDATE_DISTANCE))
+
+		Location target = destination;
+		if (ownSpot)
+		{
+			if (now >= _marchJitterUntil)
+			{
+				final double angle = Rnd.nextDouble() * 2 * Math.PI;
+				final double distance = Rnd.get(TVT_MARCH_JITTER / 3, TVT_MARCH_JITTER);
+				_marchJitterX = (int) (Math.cos(angle) * distance);
+				_marchJitterY = (int) (Math.sin(angle) * distance);
+				_marchJitterUntil = now + Rnd.get(TVT_JITTER_MIN_TIME, TVT_JITTER_MAX_TIME);
+			}
+			final int x = destination.getX() + _marchJitterX;
+			final int y = destination.getY() + _marchJitterY;
+			final int z = GeoEngine.getInstance().getHeight(x, y, destination.getZ());
+			if (GeoEngine.getInstance().canMoveToTarget(destination.getX(), destination.getY(), destination.getZ(), x, y, z, npc.getInstanceId()))
+			{
+				target = new Location(x, y, z);
+			}
+		}
+
+		// On its way there already, it doesn't turn for a few steps' difference; standing, it stays once there (a new spot of its own sets it off again, so it moves about where it holds).
+		if (npc.isMoving() ? ((_marchDestination != null) && (Math.hypot(_marchDestination.getX() - target.getX(), _marchDestination.getY() - target.getY()) < MARCH_UPDATE_DISTANCE)) : (npc.calculateDistance2D(target) < 40))
 		{
 			return;
 		}
 
-		_marchDestination = destination;
-		_nextMarchTime = now + MARCH_INTERVAL;
+		_marchDestination = target;
+		_nextMarchTime = now + Rnd.get(TVT_MARCH_MIN_INTERVAL, TVT_MARCH_MAX_INTERVAL);
 		npc.setRunning();
-		moveTo(destination.getX(), destination.getY(), destination.getZ());
+		moveTo(target.getX(), target.getY(), target.getZ());
 	}
 
 	/**
@@ -6723,6 +6793,17 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return true;
 		}
 		
+		// A Team vs Team party moves in a loose formation around its leader, not in a line behind it.
+		final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+		if ((profile != null) && profile.isTvtFighter())
+		{
+			final Boolean onTheWay = followInFormation(npc, profile, leader);
+			if (onTheWay != null)
+			{
+				return onTheWay;
+			}
+		}
+
 		final double distance = npc.calculateDistance2D(leader);
 		final int followDistance = FakePartyConfig.FOLLOW_DISTANCE;
 		if (distance <= followDistance)
@@ -6745,6 +6826,82 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		}
 		
 		moveToPawn(leader, Rnd.get(Math.max(40, followDistance / 3), Math.max(60, (followDistance * 2) / 3)));
+		return true;
+	}
+
+	/** A Team vs Team formation: how far its place may lie from its leader, and how close to it counts as there. */
+	private static final int FORMATION_MIN_DISTANCE = 90;
+	private static final int FORMATION_MAX_DISTANCE = 230;
+	private static final int FORMATION_REACHED = 50;
+	/** A formation place closer than this to the one it is on its way to doesn't make it turn. */
+	private static final int FORMATION_UPDATE_DISTANCE = 90;
+
+	// Its place in a Team vs Team formation, relative to where its leader goes (an angle off that way, a distance), picked once; the way its leader went last; where it last set off to.
+	private double _formationAngle = Double.NaN;
+	private int _formationDistance;
+	private double _leaderCourse = Double.NaN;
+	private Location _formationOrder;
+
+	/**
+	 * Follows the leader of a Team vs Team party to its own place in a loose formation: melee and tanks off its sides toward the front, the ranged, healers and supports behind it. Each member keeps its place, so the party moves as a spread group.
+	 * @param npc the fake player
+	 * @param profile its profile
+	 * @param leader its party leader
+	 * @return {@code true} if it is on its way to its place, {@code false} if it is there, {@code null} if its place can't be reached (it follows the usual way)
+	 */
+	private Boolean followInFormation(Attackable npc, FakePlayerPvpProfile profile, Creature leader)
+	{
+		if (Double.isNaN(_formationAngle))
+		{
+			final boolean behind = isPureHealer(profile) || profile.getRole().isRanged() || !profile.getSkills(SkillCategory.HEAL).isEmpty();
+			final double side = Rnd.nextBoolean() ? 1 : -1;
+			_formationAngle = side * Math.toRadians(behind ? Rnd.get(115, 170) : Rnd.get(35, 90));
+			_formationDistance = Rnd.get(FORMATION_MIN_DISTANCE, FORMATION_MAX_DISTANCE);
+		}
+
+		// The way the leader goes: where it faces while it moves, the last such way while it stands (it turns to fight, the formation doesn't swing round with it).
+		if (leader.isMoving() || Double.isNaN(_leaderCourse))
+		{
+			_leaderCourse = Math.toRadians(LocationUtil.convertHeadingToDegree(leader.getHeading()));
+		}
+
+		final double angle = _leaderCourse + _formationAngle;
+		final int x = leader.getX() + (int) (Math.cos(angle) * _formationDistance);
+		final int y = leader.getY() + (int) (Math.sin(angle) * _formationDistance);
+		final int z = GeoEngine.getInstance().getHeight(x, y, leader.getZ());
+		if (!GeoEngine.getInstance().canMoveToTarget(leader.getX(), leader.getY(), leader.getZ(), x, y, z, npc.getInstanceId()))
+		{
+			_formationOrder = null;
+			return null;
+		}
+
+		if (Math.hypot(npc.getX() - x, npc.getY() - y) <= FORMATION_REACHED)
+		{
+			_formationOrder = null;
+			return false;
+		}
+
+		if (standUp(npc) || npc.isMovementDisabled())
+		{
+			return true;
+		}
+
+		// On its way there already: it doesn't turn for every step its leader takes.
+		if (npc.isMoving() && (_formationOrder != null) && (Math.hypot(_formationOrder.getX() - x, _formationOrder.getY() - y) < FORMATION_UPDATE_DISTANCE))
+		{
+			return true;
+		}
+
+		if (leader.isRunning() || (npc.calculateDistance2D(leader) > (FORMATION_MAX_DISTANCE * 2)))
+		{
+			npc.setRunning();
+		}
+		else
+		{
+			npc.setWalking();
+		}
+		_formationOrder = new Location(x, y, z);
+		moveTo(x, y, z);
 		return true;
 	}
 	

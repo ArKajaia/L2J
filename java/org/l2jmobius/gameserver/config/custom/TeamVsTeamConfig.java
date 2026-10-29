@@ -50,6 +50,10 @@ public class TeamVsTeamConfig
 	public static int MIN_PLAYERS;
 	/** The level brackets, lowest first: {min, max} each. */
 	public static List<int[]> BRACKETS;
+	/** The spawn points of the teams: each team starts at its first one, its dead come back at one of them (see TeamVsTeamManager). */
+	public static List<Location> BLUE_BASES;
+	public static List<Location> RED_BASES;
+	/** The first spawn point of each team, where it starts ({@code null} for none). */
 	public static Location BLUE_BASE;
 	public static Location RED_BASE;
 	public static int SPAWN_RADIUS;
@@ -99,8 +103,10 @@ public class TeamVsTeamConfig
 		brackets.sort((a, b) -> Integer.compare(a[0], b[0]));
 		BRACKETS = Collections.unmodifiableList(brackets);
 
-		BLUE_BASE = parseLocation(config.getString("TvTBlueBase", "-21056,140955,-3896,64000"), "TvTBlueBase");
-		RED_BASE = parseLocation(config.getString("TvTRedBase", "-16775,140017,-3872,31000"), "TvTRedBase");
+		BLUE_BASES = parseLocations(config.getString("TvTBlueBase", "-17200,147000,-3704,46757;-19800,146600,-3736,52784;-21600,145400,-3760,57879"), "TvTBlueBase");
+		RED_BASES = parseLocations(config.getString("TvTRedBase", "-20200,138700,-3896,11380;-16400,138400,-3792,20956;-14600,139400,-3792,25627"), "TvTRedBase");
+		BLUE_BASE = BLUE_BASES.isEmpty() ? null : BLUE_BASES.get(0);
+		RED_BASE = RED_BASES.isEmpty() ? null : RED_BASES.get(0);
 		SPAWN_RADIUS = Math.max(0, config.getInt("TvTSpawnRadius", 150));
 		BASE_RADIUS = Math.max(100, config.getInt("TvTBaseRadius", 700));
 		RESPAWN_DELAY = Math.max(1, config.getInt("TvTRespawnDelay", 10));
@@ -193,6 +199,23 @@ public class TeamVsTeamConfig
 			}
 		}
 		BUFFS = Collections.unmodifiableList(buffs);
+	}
+
+	private static List<Location> parseLocations(String text, String key)
+	{
+		final List<Location> locations = new ArrayList<>();
+		for (String part : text.split(";"))
+		{
+			if (!part.isBlank())
+			{
+				final Location location = parseLocation(part, key);
+				if (location != null)
+				{
+					locations.add(location);
+				}
+			}
+		}
+		return Collections.unmodifiableList(locations);
 	}
 
 	private static Location parseLocation(String text, String key)

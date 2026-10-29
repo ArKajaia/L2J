@@ -20,7 +20,6 @@
  */
 package handlers.chat.commands.admin;
 
-import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
 import org.l2jmobius.gameserver.handler.IAdminCommandHandler;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager.Match;
@@ -98,9 +97,8 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 					activeChar.sendMessage("No such match.");
 					break;
 				}
-				final Location blue = TeamVsTeamConfig.BLUE_BASE;
-				final Location red = TeamVsTeamConfig.RED_BASE;
-				activeChar.teleToLocation((blue.getX() + red.getX()) / 2, (blue.getY() + red.getY()) / 2, blue.getZ(), 0, match.getInstanceId(), 0);
+				final Location center = TeamVsTeamManager.getFieldCenter();
+				activeChar.teleToLocation(center.getX(), center.getY(), center.getZ(), 0, match.getInstanceId(), 0);
 				activeChar.sendMessage("Watching match " + match.getId() + " (levels " + match.getBracketName() + "). //instance or a teleport takes you back out.");
 				break;
 			}
