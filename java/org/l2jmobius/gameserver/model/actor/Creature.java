@@ -69,9 +69,10 @@ import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.managers.IdManager;
 import org.l2jmobius.gameserver.managers.InstanceManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
-import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
+import org.l2jmobius.gameserver.managers.TeamEventRules;
 import org.l2jmobius.gameserver.managers.TerritoryWarManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
+import org.l2jmobius.gameserver.managers.conquest.ConquestManager;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
@@ -1235,8 +1236,8 @@ public abstract class Creature extends WorldObject
 					sendPacket(ActionFailed.STATIC_PACKET);
 					return;
 				}
-				// Team vs Team: not the own team, even with Ctrl, and nobody before or after the fight.
-				else if (TeamVsTeamManager.isForbidden(this, target))
+				// Team vs Team and Conquest: not the own team, even with Ctrl, and nobody before or after the fight.
+				else if (TeamEventRules.isForbidden(this, target))
 				{
 					sendPacket(SystemMessageId.INVALID_TARGET);
 					getAI().setIntention(Intention.ACTIVE);
@@ -1349,7 +1350,8 @@ public abstract class Creature extends WorldObject
 				_attackEndTime = currentTime + TimeUnit.MILLISECONDS.toNanos(Integer.MAX_VALUE);
 			}
 			
-			if (isFakePlayer() && !FakePlayersConfig.FAKE_PLAYER_AUTO_ATTACKABLE && (target.isPlayable() || target.isFakePlayer()))
+			// A Conquest fighter keeps its team's look: it is never flagged.
+			if (isFakePlayer() && !FakePlayersConfig.FAKE_PLAYER_AUTO_ATTACKABLE && (target.isPlayable() || target.isFakePlayer()) && !TeamEventRules.isConquestFighter(this))
 			{
 				final Npc npc = asNpc();
 				if (!npc.isScriptValue(1))
@@ -2784,10 +2786,10 @@ public abstract class Creature extends WorldObject
 			FakeSimulationManager.getInstance().onDeath(this, killer);
 		}
 		
-		// Team vs Team score, kill reward and respawn.
-		if (TeamVsTeamManager.ACTIVE)
+		// Team vs Team and Conquest: score, kill reward and respawn.
+		if (TeamEventRules.isActive())
 		{
-			TeamVsTeamManager.getInstance().onDeath(this, killer);
+			TeamEventRules.onDeath(this, killer);
 		}
 		
 		if (EventDispatcher.getInstance().hasListener(EventType.ON_CREATURE_DEATH, this))
@@ -5073,6 +5075,25 @@ public abstract class Creature extends WorldObject
 					// A single route point means the destination is reachable in a straight line (straight segments are merged into their end point).
 					boolean straightLine = clearLine || ((move.geoPath != null) && (move.geoPath.size() == 1));
 					
+					// A Conquest fighter (or its servitor) the pathfinding found no way for (too long for it, or to a spot inside a wall) takes the ways across its map instead: it walks to the next stretch of one.
+					if (!found && !straightLine && TeamEventRules.isConquestFighter(this))
+					{
+						final Location step = ConquestManager.getInstance().routeStep(this, originalX, originalY, originalZ);
+						if (step != null)
+						{
+							originalX = step.getX();
+							originalY = step.getY();
+							originalZ = step.getZ();
+							straightLine = GeoEngine.getInstance().canMoveToTarget(curX, curY, curZ, originalX, originalY, originalZ, getInstanceId());
+							if (!straightLine)
+							{
+								move.geoPath = PathFinding.getInstance().findPath(curX, curY, curZ, originalX, originalY, originalZ, getInstanceId(), false);
+								found = (move.geoPath != null) && (move.geoPath.size() > 1);
+								straightLine = (move.geoPath != null) && (move.geoPath.size() == 1);
+							}
+						}
+					}
+
 					// If path not found and this is an Attackable, move to the closest reachable point around the destination instead.
 					if (!found && !straightLine && isAttackable())
 					{
@@ -5120,6 +5141,15 @@ public abstract class Creature extends WorldObject
 						// return;
 						// }
 						
+						// A Conquest fighter (or its servitor) never walks through walls into the rock of a map like the Pagan Temple: it goes as far as the ground lets it toward the spot.
+						if (!straightLine && TeamEventRules.isConquestFighter(this))
+						{
+							final Location reachable = GeoEngine.getInstance().getValidLocation(curX, curY, curZ, originalX, originalY, originalZ, getInstanceId());
+							originalX = reachable.getX();
+							originalY = reachable.getY();
+							originalZ = reachable.getZ();
+							straightLine = true;
+						}
 						move.disregardingGeodata = !straightLine;
 						x = originalX;
 						y = originalY;
@@ -6769,7 +6799,7 @@ public abstract class Creature extends WorldObject
 						}
 					}
 					
-					if (isFakePlayer()) // fake player attacks player
+					if (isFakePlayer() && !TeamEventRules.isConquestFighter(this)) // fake player attacks player (a Conquest fighter keeps its team's look)
 					{
 						if (target.isPlayable() || target.isFakePlayer())
 						{

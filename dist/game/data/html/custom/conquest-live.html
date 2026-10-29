@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conquest Live</title>
+<style>
+	:root {
+		--bg: #08080b;
+		--panel: rgba(20, 20, 26, 0.94);
+		--panel-2: #15151b;
+		--line: #2a2a33;
+		--gold: #d9b64c;
+		--cream: #f0e6c8;
+		--muted: #8a7a55;
+		--text: #c9c2ad;
+		--dim: #6f6a5e;
+		--good: #0ca30c;
+		--warning: #fab219;
+		--critical: #d03b3b;
+		--blue: #468cff;
+		--red: #ff4b3c;
+		color-scheme: dark;
+	}
+	* { box-sizing: border-box; }
+	[hidden] { display: none !important; }
+	html, body { margin: 0; height: 100%; }
+	body { background: var(--bg); color: var(--text); font: 13px/1.45 "Segoe UI", system-ui, sans-serif; }
+	button, select, input { font: inherit; color: var(--cream); background: #1d1d25; border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; }
+	button { cursor: pointer; white-space: nowrap; }
+	button:hover:not(:disabled) { border-color: var(--gold); }
+	button:disabled { opacity: 0.45; cursor: default; }
+	button.primary { background: #3a3016; border-color: var(--gold); color: var(--gold); font-weight: 600; }
+	button.danger { border-color: #6a2626; color: #ff9a9a; }
+	button.small { padding: 1px 6px; font-size: 12px; }
+	h1, h2, h3 { color: var(--gold); font-weight: 600; margin: 0; }
+	h1 { font-size: 17px; letter-spacing: 0.04em; }
+	h2 { font-size: 14px; }
+	h3 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+	.muted { color: var(--dim); }
+	.chip { display: inline-block; padding: 1px 8px; border-radius: 10px; background: #1d1d25; border: 1px solid var(--line); font-size: 11px; color: var(--text); white-space: nowrap; }
+	.chip.good { color: #7fe07f; border-color: #245c24; }
+	.chip.warn { color: var(--warning); border-color: #6a5220; }
+	.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: -1px; margin-right: 5px; }
+	.row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+	#app { display: grid; grid-template-rows: auto 1fr; height: 100%; }
+	header { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+	header .grow { flex: 1; }
+	header input[type=number] { width: 80px; }
+	header input[type=text] { width: 70px; }
+	#phase { font-variant-numeric: tabular-nums; }
+
+	#layout { display: grid; grid-template-columns: 1fr 380px; min-height: 0; }
+	#viewWrap { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: #050508; }
+	#view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+	#view.panning { cursor: grabbing; }
+	.overlay { position: absolute; display: flex; gap: 8px; align-items: center; background: rgba(12, 12, 16, 0.86); border: 1px solid var(--line); border-radius: 6px; padding: 5px 7px; flex-wrap: wrap; }
+	.overlay[hidden] { display: none; }
+	#toolbar { left: 10px; top: 10px; }
+	#legend { right: 10px; bottom: 10px; font-size: 12px; }
+	#empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--dim); font-size: 14px; pointer-events: none; text-align: center; padding: 20px; }
+
+	aside { border-left: 1px solid var(--line); overflow: auto; background: #0c0c10; }
+	.section { padding: 10px 12px; border-bottom: 1px solid #1a1a21; display: flex; flex-direction: column; gap: 8px; }
+	.teams { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+	.team { border: 1px solid var(--line); border-radius: 6px; padding: 8px; background: #111116; display: flex; flex-direction: column; gap: 4px; }
+	.team.blue { border-top: 3px solid var(--blue); }
+	.team.red { border-top: 3px solid var(--red); }
+	.team.won { box-shadow: 0 0 0 1px var(--gold) inset; }
+	.team .score { font-size: 26px; font-weight: 700; color: var(--cream); font-variant-numeric: tabular-nums; line-height: 1.1; }
+	.team .drain { color: var(--warning); font-size: 12px; }
+	.bar { height: 6px; background: #26262e; border-radius: 3px; overflow: hidden; }
+	.bar > i { display: block; height: 100%; border-radius: 3px; }
+	.stat { display: flex; justify-content: space-between; font-size: 12px; font-variant-numeric: tabular-nums; }
+	table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+	th { text-align: left; font-weight: 600; color: var(--muted); font-size: 11px; padding: 3px 4px; border-bottom: 1px solid var(--line); }
+	td { padding: 3px 4px; border-bottom: 1px solid #1a1a21; }
+	td.num, th.num { text-align: right; }
+	.progress { position: relative; height: 8px; background: #26262e; border-radius: 4px; overflow: hidden; min-width: 90px; }
+	.progress > i { position: absolute; top: 0; bottom: 0; }
+	.progress > b { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #555; }
+	#log { font-size: 12px; max-height: 260px; overflow: auto; display: flex; flex-direction: column-reverse; }
+	#log div { padding: 2px 0; border-bottom: 1px solid #16161c; }
+	#log .t { color: var(--dim); font-variant-numeric: tabular-nums; margin-right: 6px; }
+	details summary { cursor: pointer; color: var(--muted); }
+	#selected .name { color: var(--cream); font-weight: 600; font-size: 14px; }
+	#selected .member { cursor: pointer; }
+	#selected .member:hover td { background: #17171d; }
+	#selected .member.me td { background: #16261a; }
+	#toasts { position: fixed; right: 14px; bottom: 14px; display: flex; flex-direction: column; gap: 6px; z-index: 40; max-width: 460px; }
+	.toast { background: #18181f; border: 1px solid var(--gold); border-left-width: 4px; border-radius: 4px; padding: 8px 10px; color: var(--cream); white-space: pre-wrap; }
+	.toast.err { border-color: var(--critical); }
+	#fatal { display: none; padding: 60px 16px; text-align: center; color: var(--cream); font-size: 15px; }
+
+	@media (max-width: 900px) {
+		#app { height: auto; min-height: 100%; }
+		#layout { grid-template-columns: 1fr; }
+		#viewWrap { height: 60vh; }
+		aside { border-left: 0; border-top: 1px solid var(--line); }
+		header { padding: 8px 16px; }
+	}
+</style>
+</head>
+<body>
+<div id="fatal"></div>
+<div id="app">
+	<header>
+		<h1>Conquest Live</h1>
+		<span id="phase" class="chip">…</span>
+		<span id="mapName" class="muted"></span>
+		<span class="grow"></span>
+		<span id="startBox" class="row" hidden>
+			<select id="startMap" aria-label="Map"></select>
+			<label class="row muted">players a team <input id="startPlayers" type="number" min="5" step="5"></label>
+			<label class="row muted">levels <input id="startLevels" type="text" placeholder="80-85"></label>
+			<button id="start" class="primary">Start match</button>
+		</span>
+		<span id="runBox" class="row" hidden>
+			<button id="watch" title="Teleport into the match's copy of the map">Watch in game</button>
+			<button id="leave">Leave</button>
+			<button id="stop" class="danger">Stop match</button>
+		</span>
+	</header>
+	<div id="layout">
+		<div id="viewWrap">
+			<canvas id="view"></canvas>
+			<div id="empty">No match is running. Start one above, or in game with //conquest &lt;map&gt; start.</div>
+			<div id="toolbar" class="overlay">
+				<button id="fit" class="small">Fit</button>
+				<label class="row muted" style="gap:4px"><input type="checkbox" id="showOrders" checked> orders</label>
+				<label class="row muted" style="gap:4px"><input type="checkbox" id="showDead"> dead</label>
+			</div>
+			<div id="legend" class="overlay">
+				<span><span class="swatch" style="background:var(--blue)"></span>Blue</span>
+				<span><span class="swatch" style="background:var(--red)"></span>Red</span>
+				<span><span class="swatch" style="background:#3ddc6b"></span>selected party</span>
+				<span class="muted">rings: capture points (fill = holder, arc = progress) · ↻ next wave</span>
+			</div>
+		</div>
+		<aside>
+			<div class="section">
+				<div class="teams" id="teams"></div>
+				<div id="result" class="chip good" hidden></div>
+			</div>
+			<div class="section" id="selectedBox" hidden>
+				<div class="row" style="justify-content:space-between"><h3>Selected</h3><button id="unselect" class="small">Clear</button></div>
+				<div id="selected"></div>
+			</div>
+			<div class="section">
+				<h3>Capture points</h3>
+				<table id="points"></table>
+			</div>
+			<div class="section">
+				<h3>Log</h3>
+				<div id="log"></div>
+			</div>
+			<div class="section">
+				<details id="partiesBox">
+					<summary>Parties and orders</summary>
+					<div id="parties" style="margin-top:6px"></div>
+				</details>
+			</div>
+			<div class="section">
+				<h3>Server</h3>
+				<div id="perf" class="muted" style="font-size:12px"></div>
+			</div>
+		</aside>
+	</div>
+</div>
+<div id="toasts"></div>
+
+<script>
+"use strict";
+const TOKEN_KEY = "conquestToken";
+const POLL_MS = 1000;
+const COLORS = { blue: "#468cff", red: "#ff4b3c", none: "#cfcfcf" };
+const FILLS = { blue: "rgba(70,140,255,0.28)", red: "rgba(255,75,60,0.28)", none: "rgba(220,220,220,0.10)" };
+
+let token = new URLSearchParams(location.search).get("admin");
+try {
+	if (token) sessionStorage.setItem(TOKEN_KEY, token);
+	else token = sessionStorage.getItem(TOKEN_KEY);
+} catch (e) { /* storage blocked: the token lives in this page only */ }
+if (location.search) history.replaceState(null, "", location.pathname);
+
+const $ = (id) => document.getElementById(id);
+
+function fatal(message) {
+	$("app").style.display = "none";
+	const box = $("fatal");
+	box.style.display = "block";
+	box.textContent = message;
+}
+
+async function request(path, params, asBlob) {
+	const options = { headers: token ? { Authorization: "Bearer " + token } : {} };
+	let url = "/api/conquest/" + path;
+	if (params && params.post) {
+		delete params.post;
+		options.method = "POST";
+		options.headers["Content-Type"] = "application/x-www-form-urlencoded";
+		options.body = new URLSearchParams(params).toString();
+	} else if (params) {
+		url += "?" + new URLSearchParams(params).toString();
+	}
+	const response = await fetch(url, options);
+	if (asBlob && response.ok) return response.blob();
+	let data = null;
+	try { data = await response.json(); } catch (e) { /* not JSON */ }
+	if (response.status === 401 || response.status === 403) {
+		fatal((data && data.error) || "Not allowed - use //conquest live in game again.");
+		throw new Error("auth");
+	}
+	if (!response.ok) throw new Error((data && data.error) || ("HTTP " + response.status));
+	return data;
+}
+
+function toast(text, error) {
+	const div = document.createElement("div");
+	div.className = "toast" + (error ? " err" : "");
+	div.textContent = text;
+	$("toasts").appendChild(div);
+	setTimeout(() => div.remove(), error ? 9000 : 5000);
+}
+
+function report(error) {
+	if (error.message !== "auth") toast(error.message, true);
+}
+
+function el(tag, attrs, children) {
+	const node = document.createElement(tag);
+	for (const key in attrs || {}) {
+		if (key === "class") node.className = attrs[key];
+		else if (key === "text") node.textContent = attrs[key];
+		else if (key.startsWith("on")) node.addEventListener(key.substring(2), attrs[key]);
+		else node.setAttribute(key, attrs[key]);
+	}
+	for (const child of [].concat(children || [])) {
+		if (child != null) node.appendChild(typeof child === "string" ? document.createTextNode(child) : child);
+	}
+	return node;
+}
+
+const fmt = (n) => Math.round(n).toLocaleString("en-US");
+const clock = (t) => (t < 0 ? "-" : "") + Math.floor(Math.abs(t) / 60) + ":" + String(Math.abs(t) % 60).padStart(2, "0");
+
+// ------------------------------------------------------------------------------------------------
+// State
+// ------------------------------------------------------------------------------------------------
+
+const state = {
+	data: null,
+	matchId: null,
+	terrain: null,
+	terrainKey: null,
+	view: { cx: 0, cy: 0, scale: 20 },
+	viewMoved: false,
+	startFilled: false,
+	selected: null      // the object id of the selected fighter
+};
+
+const SELECTED = "#3ddc6b";
+// A fighter row: [id, x, y, alive, hp %, party, role, leader, name, build, level, kills, deaths].
+const F = { id: 0, x: 1, y: 2, alive: 3, hp: 4, party: 5, role: 6, leader: 7, name: 8, build: 9, level: 10, kills: 11, deaths: 12 };
+
+/** @return { team, row } of the selected fighter, null if none (or gone) */
+function findSelected(match) {
+	if (!match || state.selected == null) return null;
+	for (const team of match.teams) {
+		const row = team.fighters.find((f) => f[F.id] === state.selected);
+		if (row) return { team: team, row: row };
+	}
+	return null;
+}
+
+// ------------------------------------------------------------------------------------------------
+// Polling
+// ------------------------------------------------------------------------------------------------
+
+async function poll() {
+	if (document.visibilityState === "visible") {
+		try {
+			const data = await request("live");
+			state.data = data;
+			const match = data.match;
+			if (match && match.id !== state.matchId) {
+				state.matchId = match.id;
+				state.viewMoved = false;
+				fitView();
+				loadTerrain(match.map);
+			}
+			if (!match) state.matchId = null;
+			render();
+		} catch (e) {
+			if (e.message === "auth") return;
+		}
+	}
+	setTimeout(poll, POLL_MS);
+}
+
+async function loadTerrain(map) {
+	const w = map.maxX - map.minX;
+	const h = map.maxY - map.minY;
+	const pad = Math.max(1500, Math.round(Math.max(w, h) * 0.15));
+	const snap = (v) => Math.round(v / 16) * 16;
+	const area = { minX: snap(map.minX - pad), minY: snap(map.minY - pad), maxX: snap(map.maxX + pad), maxY: snap(map.maxY + pad), z: Math.round(map.z) };
+	const key = [area.minX, area.minY, area.maxX, area.maxY, area.z].join(",");
+	if (key === state.terrainKey) return;
+	state.terrainKey = key;
+	try {
+		const blob = await request("terrain", area, true);
+		const img = new Image();
+		img.onload = () => {
+			if (state.terrainKey !== key) return;
+			state.terrain = Object.assign({ img: img }, area);
+			draw();
+		};
+		img.src = URL.createObjectURL(blob);
+	} catch (e) {
+		state.terrainKey = null;
+		report(e);
+	}
+}
+
+// ------------------------------------------------------------------------------------------------
+// Sidebar and header
+// ------------------------------------------------------------------------------------------------
+
+function render() {
+	const data = state.data;
+	const match = data && data.match;
+	$("startBox").hidden = !!match;
+	$("runBox").hidden = !match;
+	$("empty").style.display = match ? "none" : "flex";
+	if (!match) {
+		$("phase").textContent = "no match";
+		$("phase").className = "chip";
+		$("mapName").textContent = "";
+		fillStart(data);
+		$("teams").innerHTML = "";
+		$("points").innerHTML = "";
+		$("log").innerHTML = "";
+		$("parties").innerHTML = "";
+		$("perf").textContent = "";
+		$("result").hidden = true;
+		draw();
+		return;
+	}
+
+	const phase = match.phase;
+	$("phase").textContent = phase === "PREP" ? "getting ready · starts in " + clock(-match.time).replace("-", "") : phase === "FIGHT" ? "fight · " + clock(match.time) + " / " + clock(match.timeLimit) : "ended · " + clock(match.time);
+	$("phase").className = "chip " + (phase === "FIGHT" ? "good" : phase === "PREP" ? "warn" : "");
+	$("mapName").textContent = match.map.name + " · " + match.perTeam + " vs " + match.perTeam + " · levels " + match.levels;
+	$("watch").disabled = data.watching;
+	$("leave").disabled = !data.watching;
+	$("stop").disabled = phase === "ENDED";
+
+	// Teams.
+	const teams = $("teams");
+	teams.innerHTML = "";
+	for (const team of match.teams) {
+		const share = Math.max(0, Math.min(1, team.score / data.defaults.startScore));
+		teams.appendChild(el("div", { class: "team " + team.team + (match.winner === team.team ? " won" : "") }, [
+			el("div", { class: "row", style: "justify-content:space-between" }, [el("h2", { style: "color:" + COLORS[team.team] }, team.name), el("span", { class: "chip", title: "commander" }, team.commander)]),
+			el("div", { class: "score" }, fmt(team.score)),
+			el("div", { class: "bar" }, el("i", { style: "width:" + (share * 100) + "%;background:" + COLORS[team.team] })),
+			el("div", { class: "drain" }, phase === "FIGHT" ? "−" + team.drain + " / s" : " "),
+			el("div", { class: "stat" }, [el("span", { class: "muted" }, "points held"), el("span", {}, String(team.held))]),
+			el("div", { class: "stat" }, [el("span", { class: "muted" }, "alive"), el("span", {}, team.alive + " / " + team.total)]),
+			el("div", { class: "stat" }, [el("span", { class: "muted" }, "kills"), el("span", {}, String(team.kills))]),
+			el("div", { class: "stat" }, [el("span", { class: "muted" }, "parties"), el("span", {}, String(team.parties.length))]),
+			el("div", { class: "stat" }, [el("span", { class: "muted" }, "next wave"), el("span", { style: team.wave ? "color:var(--cream)" : "" }, team.wave ? team.wave.in + "s · " + team.wave.waiting + " waiting" : "—")])
+		]));
+	}
+	$("result").hidden = !match.result;
+	$("result").textContent = match.result || "";
+
+	// Capture points.
+	const points = $("points");
+	points.innerHTML = "";
+	points.appendChild(el("tr", {}, [el("th", {}, "Point"), el("th", {}, "Holder"), el("th", {}, "Progress"), el("th", { class: "num" }, "Blue"), el("th", { class: "num" }, "Red")]));
+	for (const p of match.points) {
+		const bar = el("div", { class: "progress", title: "−100 Red · 0 neutral · +100 Blue" });
+		const width = Math.abs(p.progress) / 2;
+		bar.appendChild(el("i", { style: (p.progress >= 0 ? "left:50%;" : "right:50%;") + "width:" + width + "%;background:" + (p.progress >= 0 ? COLORS.blue : COLORS.red) }));
+		bar.appendChild(el("b"));
+		points.appendChild(el("tr", { style: "cursor:pointer", onclick: () => centerOn(p.x, p.y) }, [
+			el("td", {}, el("b", {}, p.name)),
+			el("td", { style: "color:" + COLORS[p.owner] }, (p.owner === "none" ? "neutral" : p.owner) + (p.stalemate ? " ⚔" : "")),
+			el("td", {}, bar),
+			el("td", { class: "num", style: "color:" + COLORS.blue }, String(p.blue)),
+			el("td", { class: "num", style: "color:" + COLORS.red }, String(p.red))
+		]));
+	}
+
+	// Log, newest at the bottom (the box is reversed so it stays scrolled to the end).
+	const log = $("log");
+	log.innerHTML = "";
+	for (const entry of match.log.slice().reverse()) {
+		log.appendChild(el("div", {}, [el("span", { class: "t" }, clock(entry.t)), entry.text]));
+	}
+
+	// Parties.
+	if ($("partiesBox").open) {
+		const box = $("parties");
+		box.innerHTML = "";
+		for (const team of match.teams) {
+			const table = el("table", {}, el("tr", {}, [el("th", {}, team.name), el("th", { class: "num" }, "Alive"), el("th", {}, "Order")]));
+			for (const party of team.parties) {
+				const order = party.order ? party.order.kind.toLowerCase() + (party.order.point ? " " + party.order.point : "") : "—";
+				table.appendChild(el("tr", { style: "cursor:pointer", onclick: () => party.leader && centerOn(party.leader.x, party.leader.y) }, [
+					el("td", {}, "Party " + party.id), el("td", { class: "num" }, party.alive + "/5"), el("td", {}, order)
+				]));
+			}
+			box.appendChild(table);
+		}
+	}
+
+	renderSelected(match);
+	$("perf").textContent = "Tick " + match.tickMs + " ms · commanders " + match.commandMs + " ms · ways " + (match.navReady ? "ready" : "being worked out") +
+		(match.pending ? " · " + match.pending + " still to spawn" : "") + " · put back in the area: " + match.returned + " · put back on the ground: " + (match.unstuck || 0) + " · instance " + match.instance;
+	draw();
+}
+
+function renderSelected(match) {
+	const found = findSelected(match);
+	$("selectedBox").hidden = !found;
+	const box = $("selected");
+	box.innerHTML = "";
+	if (!found) {
+		state.selected = null;
+		return;
+	}
+	const row = found.row;
+	const team = found.team;
+	const party = team.parties.find((p) => p.id === row[F.party]);
+	const order = party && party.order ? party.order.kind.toLowerCase() + (party.order.point ? " " + party.order.point : "") : "—";
+	box.appendChild(el("div", { class: "row" }, [el("span", { class: "swatch", style: "background:" + COLORS[team.team] }), el("span", { class: "name" }, row[F.name]), el("span", { class: "chip" }, row[F.alive] ? "HP " + row[F.hp] + "%" : "dead")]));
+	box.appendChild(el("div", { class: "muted", style: "font-size:12px" }, row[F.build] + " · " + row[F.role] + " · level " + row[F.level] + " · " + row[F.kills] + " kills, " + row[F.deaths] + " deaths"));
+	box.appendChild(el("div", { style: "font-size:12px" }, team.name + " party " + row[F.party] + " · order: " + order));
+	const table = el("table");
+	for (const member of team.fighters.filter((f) => f[F.party] === row[F.party])) {
+		table.appendChild(el("tr", { class: "member" + (member === row ? " me" : ""), onclick: () => { state.selected = member[F.id]; centerOn(member[F.x], member[F.y]); render(); } }, [
+			el("td", {}, (member[F.leader] ? "★ " : "") + member[F.name]),
+			el("td", { class: "muted" }, member[F.build]),
+			el("td", { class: "num" }, member[F.alive] ? member[F.hp] + "%" : "dead")
+		]));
+	}
+	box.appendChild(table);
+}
+
+function fillStart(data) {
+	if (!data || state.startFilled) return;
+	const select = $("startMap");
+	select.innerHTML = "";
+	for (const map of data.maps) select.appendChild(el("option", { value: map.id }, map.name + " (up to " + map.maxPlayers + ")"));
+	const sync = () => {
+		const map = data.maps.find((m) => m.id === select.value);
+		if (map) $("startPlayers").value = map.maxPlayers;
+	};
+	select.onchange = sync;
+	sync();
+	$("startLevels").placeholder = data.defaults.levels;
+	$("start").disabled = !data.maps.length;
+	state.startFilled = data.maps.length > 0;
+}
+
+// ------------------------------------------------------------------------------------------------
+// View
+// ------------------------------------------------------------------------------------------------
+
+const canvas = $("view");
+const ctx = canvas.getContext("2d");
+let drawQueued = false;
+
+function canvasSize() {
+	const rect = canvas.getBoundingClientRect();
+	return { w: rect.width, h: rect.height };
+}
+
+function toScreen(x, y) {
+	const size = canvasSize();
+	const v = state.view;
+	return [(x - v.cx) / v.scale + size.w / 2, (y - v.cy) / v.scale + size.h / 2];
+}
+
+function toWorld(sx, sy) {
+	const size = canvasSize();
+	const v = state.view;
+	return [(sx - size.w / 2) * v.scale + v.cx, (sy - size.h / 2) * v.scale + v.cy];
+}
+
+function fitView() {
+	const match = state.data && state.data.match;
+	if (!match) return;
+	const map = match.map;
+	const size = canvasSize();
+	state.view.cx = (map.minX + map.maxX) / 2;
+	state.view.cy = (map.minY + map.maxY) / 2;
+	state.view.scale = Math.max((map.maxX - map.minX) / Math.max(100, size.w - 60), (map.maxY - map.minY) / Math.max(100, size.h - 60), 1);
+	state.viewMoved = false;
+	draw();
+}
+
+function centerOn(x, y) {
+	state.view.cx = x;
+	state.view.cy = y;
+	state.viewMoved = true;
+	draw();
+}
+
+function draw() {
+	if (drawQueued) return;
+	drawQueued = true;
+	requestAnimationFrame(() => {
+		drawQueued = false;
+		paint();
+	});
+}
+
+function paint() {
+	const size = canvasSize();
+	const ratio = window.devicePixelRatio || 1;
+	if (canvas.width !== Math.round(size.w * ratio) || canvas.height !== Math.round(size.h * ratio)) {
+		canvas.width = Math.round(size.w * ratio);
+		canvas.height = Math.round(size.h * ratio);
+	}
+	ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+	ctx.fillStyle = "#050508";
+	ctx.fillRect(0, 0, size.w, size.h);
+	const data = state.data;
+	const match = data && data.match;
+	if (!match) return;
+	const map = match.map;
+	const scale = state.view.scale;
+
+	const t = state.terrain;
+	if (t) {
+		const a = toScreen(t.minX, t.minY);
+		const b = toScreen(t.maxX, t.maxY);
+		ctx.imageSmoothingEnabled = scale > 8;
+		ctx.globalAlpha = 0.85;
+		ctx.drawImage(t.img, a[0], a[1], b[0] - a[0], b[1] - a[1]);
+		ctx.globalAlpha = 1;
+	}
+
+	// The area.
+	const a = toScreen(map.minX, map.minY);
+	const b = toScreen(map.maxX, map.maxY);
+	ctx.fillStyle = "rgba(0,0,0,0.5)";
+	ctx.beginPath();
+	ctx.rect(0, 0, size.w, size.h);
+	ctx.rect(a[0], a[1], b[0] - a[0], b[1] - a[1]);
+	ctx.fill("evenodd");
+	ctx.setLineDash([8, 6]);
+	ctx.strokeStyle = "rgba(240,240,240,0.8)";
+	ctx.lineWidth = 1.5;
+	ctx.strokeRect(a[0], a[1], b[0] - a[0], b[1] - a[1]);
+	ctx.setLineDash([]);
+
+	// Spawn points, and where the next wave comes back with its countdown.
+	for (const team of match.teams) {
+		ctx.strokeStyle = COLORS[team.team];
+		ctx.globalAlpha = 0.5;
+		ctx.lineWidth = 1;
+		for (const sp of team.spawns) {
+			const s = toScreen(sp[0], sp[1]);
+			ctx.beginPath(); ctx.arc(s[0], s[1], Math.max(4, sp[2] / scale), 0, Math.PI * 2); ctx.stroke();
+		}
+		ctx.globalAlpha = 1;
+		if (team.wave) {
+			ctx.font = "bold 12px Segoe UI, sans-serif";
+			for (const at of team.wave.at) {
+				const s = toScreen(at[0], at[1]);
+				const text = "↻ " + team.wave.in + "s (" + team.wave.waiting + ")";
+				ctx.lineWidth = 3;
+				ctx.strokeStyle = "rgba(0,0,0,0.85)";
+				ctx.fillStyle = COLORS[team.team];
+				ctx.strokeText(text, s[0] + 8, s[1] - 8);
+				ctx.fillText(text, s[0] + 8, s[1] - 8);
+			}
+		}
+	}
+
+	// Capture points: filled with the holder's colour, an arc for the progress toward the team pushing it.
+	for (const p of match.points) {
+		const s = toScreen(p.x, p.y);
+		const r = Math.max(8, p.radius / scale);
+		ctx.fillStyle = FILLS[p.owner];
+		ctx.strokeStyle = COLORS[p.owner];
+		ctx.lineWidth = 2;
+		ctx.beginPath(); ctx.arc(s[0], s[1], r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+		if (Math.abs(p.progress) > 0.5) {
+			ctx.strokeStyle = p.progress > 0 ? COLORS.blue : COLORS.red;
+			ctx.lineWidth = 5;
+			ctx.beginPath();
+			ctx.arc(s[0], s[1], r + 5, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * Math.abs(p.progress) / 100));
+			ctx.stroke();
+		}
+		ctx.font = "bold " + Math.round(Math.min(24, Math.max(12, r * 0.6))) + "px Segoe UI, sans-serif";
+		ctx.textAlign = "center";
+		ctx.textBaseline = "middle";
+		ctx.lineWidth = 3;
+		ctx.strokeStyle = "rgba(0,0,0,0.85)";
+		ctx.fillStyle = "#ffffff";
+		ctx.strokeText(p.name, s[0], s[1]);
+		ctx.fillText(p.name, s[0], s[1]);
+		if (p.blue || p.red) {
+			ctx.font = "11px Segoe UI, sans-serif";
+			const text = p.blue + " : " + p.red + (p.stalemate ? " ⚔" : "");
+			ctx.strokeText(text, s[0], s[1] + r + 16);
+			ctx.fillText(text, s[0], s[1] + r + 16);
+		}
+		ctx.textAlign = "start";
+		ctx.textBaseline = "alphabetic";
+	}
+
+	// Orders: a line from each party's leader to where it was sent.
+	if ($("showOrders").checked) {
+		for (const team of match.teams) {
+			ctx.strokeStyle = team.team === "blue" ? "rgba(110,165,255,0.45)" : "rgba(255,110,95,0.45)";
+			ctx.lineWidth = 1;
+			ctx.setLineDash([3, 4]);
+			for (const party of team.parties) {
+				if (!party.leader || !party.order) continue;
+				const s1 = toScreen(party.leader.x, party.leader.y);
+				const s2 = toScreen(party.order.x, party.order.y);
+				ctx.beginPath(); ctx.moveTo(s1[0], s1[1]); ctx.lineTo(s2[0], s2[1]); ctx.stroke();
+			}
+			ctx.setLineDash([]);
+		}
+	}
+
+	// Fighters (the selected party drawn last, on top).
+	const dot = Math.max(2, Math.min(4, 300 / scale));
+	const showDead = $("showDead").checked;
+	const selected = findSelected(match);
+	for (const team of match.teams) {
+		for (const f of team.fighters) {
+			if (selected && team === selected.team && f[F.party] === selected.row[F.party]) continue;
+			const s = toScreen(f[1], f[2]);
+			if (s[0] < -10 || s[1] < -10 || s[0] > size.w + 10 || s[1] > size.h + 10) continue;
+			if (!f[3]) {
+				if (!showDead) continue;
+				ctx.strokeStyle = "rgba(200,200,200,0.5)";
+				ctx.lineWidth = 1;
+				ctx.beginPath(); ctx.moveTo(s[0] - 2, s[1] - 2); ctx.lineTo(s[0] + 2, s[1] + 2); ctx.moveTo(s[0] + 2, s[1] - 2); ctx.lineTo(s[0] - 2, s[1] + 2); ctx.stroke();
+				continue;
+			}
+			ctx.fillStyle = COLORS[team.team];
+			ctx.globalAlpha = 0.45 + 0.55 * (f[4] / 100);
+			ctx.beginPath(); ctx.arc(s[0], s[1], dot, 0, Math.PI * 2); ctx.fill();
+		}
+	}
+	ctx.globalAlpha = 1;
+	if (selected) {
+		const big = dot + 2;
+		for (const f of selected.team.fighters.filter((m) => m[F.party] === selected.row[F.party])) {
+			const s = toScreen(f[F.x], f[F.y]);
+			ctx.globalAlpha = f[F.alive] ? 1 : 0.45;
+			ctx.fillStyle = SELECTED;
+			ctx.beginPath(); ctx.arc(s[0], s[1], big, 0, Math.PI * 2); ctx.fill();
+			if (f[F.leader]) {
+				ctx.strokeStyle = "#ffffff";
+				ctx.lineWidth = 2;
+				ctx.beginPath(); ctx.arc(s[0], s[1], big + 2, 0, Math.PI * 2); ctx.stroke();
+			}
+			if (f === selected.row) {
+				ctx.strokeStyle = SELECTED;
+				ctx.lineWidth = 1.5;
+				ctx.beginPath(); ctx.arc(s[0], s[1], big + 6, 0, Math.PI * 2); ctx.stroke();
+			}
+		}
+		ctx.globalAlpha = 1;
+		const party = selected.team.parties.find((p) => p.id === selected.row[F.party]);
+		if (party && party.leader && party.order) {
+			const s1 = toScreen(party.leader.x, party.leader.y);
+			const s2 = toScreen(party.order.x, party.order.y);
+			ctx.strokeStyle = SELECTED;
+			ctx.lineWidth = 2;
+			ctx.setLineDash([6, 4]);
+			ctx.beginPath(); ctx.moveTo(s1[0], s1[1]); ctx.lineTo(s2[0], s2[1]); ctx.stroke();
+			ctx.setLineDash([]);
+		}
+	}
+
+	// The GM, when watching.
+	if (data.watching && data.gm) {
+		const s = toScreen(data.gm.x, data.gm.y);
+		ctx.strokeStyle = "#ffffff";
+		ctx.lineWidth = 2;
+		ctx.beginPath(); ctx.arc(s[0], s[1], 7, 0, Math.PI * 2); ctx.stroke();
+		ctx.font = "11px Segoe UI, sans-serif";
+		ctx.fillStyle = "#ffffff";
+		ctx.fillText(data.admin, s[0] + 10, s[1] - 8);
+	}
+}
+
+let drag = null;
+canvas.addEventListener("pointerdown", (event) => {
+	if (event.button !== 0) return;
+	const rect = canvas.getBoundingClientRect();
+	canvas.setPointerCapture(event.pointerId);
+	drag = { sx: event.clientX - rect.left, sy: event.clientY - rect.top, cx: state.view.cx, cy: state.view.cy, moved: false };
+	canvas.classList.add("panning");
+});
+canvas.addEventListener("pointermove", (event) => {
+	if (!drag) return;
+	const rect = canvas.getBoundingClientRect();
+	state.view.cx = drag.cx - (event.clientX - rect.left - drag.sx) * state.view.scale;
+	state.view.cy = drag.cy - (event.clientY - rect.top - drag.sy) * state.view.scale;
+	if (Math.hypot(event.clientX - rect.left - drag.sx, event.clientY - rect.top - drag.sy) > 3) {
+		drag.moved = true;
+		state.viewMoved = true;
+	}
+	draw();
+});
+const endDrag = () => { drag = null; canvas.classList.remove("panning"); };
+canvas.addEventListener("pointerup", (event) => {
+	if (drag && !drag.moved) pick(drag.sx, drag.sy);
+	endDrag();
+});
+
+/** Selects the fighter nearest the click (within a few pixels), or clears the selection. */
+function pick(sx, sy) {
+	const match = state.data && state.data.match;
+	if (!match) return;
+	const showDead = $("showDead").checked;
+	let best = null;
+	let bestDistance = 10;
+	for (const team of match.teams) {
+		for (const f of team.fighters) {
+			if (!f[F.alive] && !showDead) continue;
+			const s = toScreen(f[F.x], f[F.y]);
+			const d = Math.hypot(s[0] - sx, s[1] - sy);
+			if (d < bestDistance) {
+				best = f;
+				bestDistance = d;
+			}
+		}
+	}
+	state.selected = best ? best[F.id] : null;
+	render();
+}
+canvas.addEventListener("pointercancel", endDrag);
+canvas.addEventListener("wheel", (event) => {
+	event.preventDefault();
+	const rect = canvas.getBoundingClientRect();
+	const sx = event.clientX - rect.left;
+	const sy = event.clientY - rect.top;
+	const before = toWorld(sx, sy);
+	state.view.scale = Math.min(400, Math.max(0.5, state.view.scale * (event.deltaY > 0 ? 1.2 : 1 / 1.2)));
+	const after = toWorld(sx, sy);
+	state.view.cx += before[0] - after[0];
+	state.view.cy += before[1] - after[1];
+	state.viewMoved = true;
+	draw();
+}, { passive: false });
+new ResizeObserver(() => {
+	if (!state.viewMoved) fitView();
+	else draw();
+}).observe($("viewWrap"));
+
+// ------------------------------------------------------------------------------------------------
+// Buttons
+// ------------------------------------------------------------------------------------------------
+
+$("fit").addEventListener("click", fitView);
+$("showOrders").addEventListener("change", draw);
+$("showDead").addEventListener("change", draw);
+$("partiesBox").addEventListener("toggle", render);
+$("unselect").addEventListener("click", () => { state.selected = null; render(); });
+
+async function act(path, params) {
+	try {
+		const data = await request(path, Object.assign({ post: 1 }, params || {}));
+		toast(data.lines.join("\n"));
+		state.startFilled = false;
+	} catch (e) { report(e); }
+}
+
+$("start").addEventListener("click", () => act("match/start", { map: $("startMap").value, perTeam: $("startPlayers").value, levels: $("startLevels").value.trim() }));
+$("stop").addEventListener("click", () => { if (confirm("Stop the match? It ends without a result.")) act("match/stop"); });
+$("watch").addEventListener("click", () => act("match/watch"));
+$("leave").addEventListener("click", () => act("match/leave"));
+
+if (!token) {
+	fatal("This page opens from the game: use //conquest live.");
+} else {
+	poll();
+}
+</script>
+</body>
+</html>

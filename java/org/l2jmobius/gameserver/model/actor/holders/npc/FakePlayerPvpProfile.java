@@ -120,6 +120,8 @@ public class FakePlayerPvpProfile
 	private volatile int _simTeamId;
 	// A Team vs Team match (see TeamVsTeamManager) it fights in, 0 for none.
 	private volatile int _tvtMatchId;
+	// A Conquest match (see ConquestManager) it fights in, 0 for none.
+	private volatile int _conquestMatchId;
 	// The AI it runs (only simulation teams run another one than A).
 	private volatile FakeBrain _brain = FakeBrain.A;
 	
@@ -860,11 +862,40 @@ public class FakePlayerPvpProfile
 	}
 
 	/**
-	 * @return {@code true} for a fake player of a team fight (a simulation run or a Team vs Team match): it stays in the fight until it ends, no hunting, roaming, leashing, escaping or coming back from town
+	 * @return {@code true} for a fake player of a team fight (a simulation run, a Team vs Team or a Conquest match): it stays in the fight until it ends, no hunting, roaming, leashing, escaping or coming back from town
 	 */
 	public boolean isTeamFighter()
 	{
-		return (_simRunId != 0) || (_tvtMatchId != 0);
+		return (_simRunId != 0) || (_tvtMatchId != 0) || (_conquestMatchId != 0);
+	}
+
+	/**
+	 * @return the Conquest match it fights in (see {@link org.l2jmobius.gameserver.managers.conquest.ConquestManager}), 0 for none
+	 */
+	public int getConquestMatchId()
+	{
+		return _conquestMatchId;
+	}
+
+	public void setConquestMatchId(int matchId)
+	{
+		_conquestMatchId = matchId;
+	}
+
+	/**
+	 * @return {@code true} if it was spawned for a Conquest match: it only fights the other team of its match
+	 */
+	public boolean isConquestFighter()
+	{
+		return _conquestMatchId != 0;
+	}
+
+	/**
+	 * @return {@code true} for a fake player of an event team (Team vs Team or Conquest): it plays its party's calls by its teamplay, moves in formation and always hits back
+	 */
+	public boolean isSquadFighter()
+	{
+		return (_tvtMatchId != 0) || (_conquestMatchId != 0);
 	}
 
 	/**

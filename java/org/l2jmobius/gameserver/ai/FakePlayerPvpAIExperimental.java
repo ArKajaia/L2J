@@ -42,6 +42,7 @@ import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
+import org.l2jmobius.gameserver.managers.TeamEventRules;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.VillageSiegeManager;
 import org.l2jmobius.gameserver.managers.simulation.FakeAiTrace;
@@ -3662,7 +3663,7 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 
 		// The teams of a simulation only fight each other, and so do the teams of a Team vs Team match.
-		if (!FakeSimulationManager.canFight(npc, target) || TeamVsTeamManager.isForbidden(npc, target))
+		if (!FakeSimulationManager.canFight(npc, target) || TeamEventRules.isForbidden(npc, target))
 		{
 			return false;
 		}

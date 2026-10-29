@@ -42,8 +42,11 @@ import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
+import org.l2jmobius.gameserver.managers.TeamEventRules;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.VillageSiegeManager;
+import org.l2jmobius.gameserver.managers.conquest.ConquestManager;
+import org.l2jmobius.gameserver.managers.conquest.ConquestMatch;
 import org.l2jmobius.gameserver.managers.simulation.FakeAiTrace;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.managers.simulation.Reason;
@@ -485,6 +488,13 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		if ((profile != null) && profile.isTvtFighter())
 		{
 			thinkTeamVsTeam(npc, profile);
+			return;
+		}
+
+		// And one of a Conquest match: it fights for its team where its commander sends its party.
+		if ((profile != null) && profile.isConquestFighter())
+		{
+			thinkConquest(npc, profile);
 			return;
 		}
 		
@@ -1913,7 +1923,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		final boolean healer = (profile != null) && isPureHealer(profile);
 		final boolean tank = (profile != null) && !profile.isTransformed() && (profile.getRole() == Role.TANK);
 		Creature called = partyBrain != null ? partyBrain.getCallFor(healer, tank, now) : null;
-		if ((called != null) && (profile != null) && profile.isTvtFighter() && !heedsCall(profile, called, now))
+		if ((called != null) && (profile != null) && profile.isSquadFighter() && !heedsCall(profile, called, now))
 		{
 			called = null;
 		}
@@ -1967,7 +1977,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		if ((partyBrain != null) && !healer)
 		{
 			final Creature call = partyBrain.pickCall(npc, best, now);
-			if ((call != null) && !isPlayedAround(npc, call) && ((profile == null) || !profile.isTvtFighter() || makesCall(profile, call)))
+			if ((call != null) && !isPlayedAround(npc, call) && ((profile == null) || !profile.isSquadFighter() || makesCall(profile, call)))
 			{
 				partyBrain.makeCall(npc, call, now);
 				if ((call != best) && !tank)
@@ -3485,8 +3495,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return false;
 		}
 
-		// The teams of a simulation only fight each other, and so do the teams of a Team vs Team match.
-		if (!FakeSimulationManager.canFight(npc, target) || TeamVsTeamManager.isForbidden(npc, target))
+		// The teams of a simulation only fight each other, and so do the teams of a Team vs Team or Conquest match.
+		if (!FakeSimulationManager.canFight(npc, target) || TeamEventRules.isForbidden(npc, target))
 		{
 			return false;
 		}
@@ -6386,6 +6396,90 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		marchTo(npc, destination, true);
 	}
 
+	/**
+	 * A fake player of a Conquest match (see {@link ConquestManager}): it gets ready at its spawn point before the fight, then engages an enemy it sees, plays with its party, or (the leader, or one without a party) marches where its team's commander sent
+	 * its party, one stretch of the way at a time.
+	 */
+	private void thinkConquest(Attackable npc, FakePlayerPvpProfile profile)
+	{
+		final ConquestManager conquest = ConquestManager.getInstance();
+		final ConquestMatch.Phase phase = conquest.getPhase(npc);
+		final FakePlayerParty party = profile.getParty();
+		if ((phase == null) || (phase == ConquestMatch.Phase.ENDED))
+		{
+			trace(Reason.SIM_WAIT, null);
+			return;
+		}
+
+		// Its spawn follows it: nothing sends it back to where it appeared.
+		final Spawn spawn = npc.getSpawn();
+		if (spawn != null)
+		{
+			spawn.setXYZ(npc.getX(), npc.getY(), npc.getZ());
+		}
+
+		if (phase == ConquestMatch.Phase.PREP)
+		{
+			// Supports buff the party, necromancers summon, duelists charge up.
+			if (((party != null) && supportParty(npc, profile, party, false)) || ((profile.getCharges() < profile.getMaxCharges()) && castOnSelf(npc, null, profile.getSkills(SkillCategory.CHARGE), true, false)))
+			{
+				return;
+			}
+			trace(Reason.SIM_PREP, null);
+			return;
+		}
+
+		// An enemy in sight: the fight is on (from its base, it runs out at it first: nobody fights from in there).
+		final boolean atBase = conquest.isAtOwnBase(npc);
+		final Creature enemy = conquest.findEnemyInSight(npc);
+		if (enemy != null)
+		{
+			if (standUp(npc))
+			{
+				trace(Reason.STAND_UP, enemy);
+				return;
+			}
+			if (atBase)
+			{
+				trace(Reason.SIM_MARCH, enemy);
+				marchTo(npc, enemy.getLocation(), false);
+				return;
+			}
+			trace(Reason.SIM_ENGAGE, enemy);
+			npc.setRunning();
+			FakePlayerPvpManager.getInstance().assistFight(npc, enemy);
+			return;
+		}
+
+		// With its party: support, its fights, following its leader (in its base it buffs and goes with its leader).
+		if (party != null)
+		{
+			final Creature leader = party.getActiveLeader();
+			if (atBase)
+			{
+				if (supportParty(npc, profile, party, false) || ((leader != null) && (leader != npc) && followLeader(npc, party, leader)))
+				{
+					return;
+				}
+			}
+			else if (thinkParty(npc, profile, party))
+			{
+				return;
+			}
+		}
+
+		// Where the commander sent its party.
+		final Location destination = conquest.getMarchTarget(npc);
+		if (destination == null)
+		{
+			trace(Reason.SIM_WAIT, null);
+			return;
+		}
+
+		trace(Reason.SIM_MARCH, null);
+		marchTo(npc, destination, true);
+	}
+
 	/** In a Team vs Team match: the chance to play a whole life on its own, for one that knows the game best and plays in a group worst (see {@link #considerGoingLone}). */
 	private static final double LONE_LIFE_CHANCE = 0.35;
 	/** The chance, at each look, to go off on its own for a while: at least this, and this much more for one that plays in a group worst. Half as much in a party with players. */
@@ -7061,8 +7155,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return false;
 		}
 
-		// A Team vs Team party moves in a loose formation around its leader, not in a line behind it.
-		if ((profile != null) && profile.isTvtFighter())
+		// A Team vs Team or Conquest party moves in a loose formation around its leader, not in a line behind it.
+		if ((profile != null) && profile.isSquadFighter())
 		{
 			final Boolean onTheWay = followInFormation(npc, profile, leader);
 			if (onTheWay != null)

@@ -43,7 +43,7 @@ import org.l2jmobius.gameserver.config.custom.FakePartyConfig;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
-import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
+import org.l2jmobius.gameserver.managers.TeamEventRules;
 import org.l2jmobius.gameserver.managers.simulation.FakeAiTrace;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.managers.simulation.SimulationRun;
@@ -881,7 +881,7 @@ public class FakePartyBrain
 			final WorldObject itsTarget = enemy.getTarget();
 			final boolean fightsParty = (itsTarget == npc) || ((itsTarget instanceof Creature) && _party.isMember((Creature) itsTarget));
 			final boolean healsEnemy = isHealer(enemy) && (itsTarget instanceof Creature) && hates(npc, (Creature) itsTarget, FakePlayerPvpManager.PVP_HATE);
-			if (fightsParty || healsEnemy || FakeSimulationManager.isRunEnemy(npc, enemy) || TeamVsTeamManager.isEnemy(npc, enemy))
+			if (fightsParty || healsEnemy || FakeSimulationManager.isRunEnemy(npc, enemy) || TeamEventRules.isEnemy(npc, enemy))
 			{
 				enemies.add(enemy);
 			}
