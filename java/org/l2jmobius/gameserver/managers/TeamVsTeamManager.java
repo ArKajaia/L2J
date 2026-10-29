@@ -113,6 +113,18 @@ public class TeamVsTeamManager
 	private static final int HELP_RANGE = 2500;
 	/** A fake player doesn't march on enemies this close to the edge of their base (it fights them if it sees them). */
 	private static final int BASE_APPROACH = 600;
+	/** The parties of a team march in lanes (see {@link #inLane}): this far apart across the field. */
+	private static final int LANE_WIDTH = 450;
+	/** A lane narrows from this far from where it leads, and is gone this close to it: the parties come from the sides, then close in together. */
+	private static final int LANE_TAPER = 1800;
+	private static final int LANE_MERGE = 350;
+	/** The lanes, in the order a team's parties take them: the middle, left, right. */
+	private static final int[] LANES =
+	{
+		0,
+		-1,
+		1
+	};
 	/** How long the result stays on screen before everyone goes home. */
 	private static final long END_DELAY = 10000;
 	/** Registration reminders, in minutes before the end of it. */
@@ -233,6 +245,9 @@ public class TeamVsTeamManager
 		// When the next group of its dead comes back: the ones that die close together come back together, instead of one after the other into the enemies.
 		private long _nextWave;
 		private volatile List<Location> _enemyGroups = List.of();
+		// The lane of each of its parties (and of its members on their own), see inLane.
+		private final Map<Object, Integer> _lanes = new ConcurrentHashMap<>();
+		private final AtomicInteger _nextLane = new AtomicInteger(Rnd.get(LANES.length));
 
 		Side(Team team, String name, Location base, int nameColor)
 		{
@@ -274,6 +289,15 @@ public class TeamVsTeamManager
 				_nextWave = now + delay;
 			}
 			return _nextWave;
+		}
+
+		/**
+		 * @param group a party, or a fighter on its own
+		 * @return its lane: -1, 0 or 1 (the parties take them in turns)
+		 */
+		int getLane(Object group)
+		{
+			return _lanes.computeIfAbsent(group, _ -> LANES[_nextLane.getAndIncrement() % LANES.length]);
 		}
 
 		public List<Fighter> getFighters()
@@ -1162,6 +1186,8 @@ public class TeamVsTeamManager
 
 		player.setRegisteredOnEvent(false);
 		player.setOnEvent(true);
+		// No "To Village" when it dies: the dead come back at their base by themselves (the button took a player out of the match).
+		player.setCanRevive(false);
 		if (player.isDead())
 		{
 			player.doRevive();
@@ -1727,6 +1753,7 @@ public class TeamVsTeamManager
 		player.getAppearance().setNameColor(fighter._nameColor);
 		player.setOnEvent(false);
 		player.setRegisteredOnEvent(false);
+		player.setCanRevive(true);
 		player.leaveParty();
 		if (player.isDead())
 		{
@@ -2105,13 +2132,13 @@ public class TeamVsTeamManager
 		final Location help = closest(fake, fighter._side._clashes, HELP_RANGE);
 		if (help != null)
 		{
-			return help;
+			return inLane(fake, fighter, help, true);
 		}
 
 		final Location group = closest(fake, fighter._side._enemyGroups, Integer.MAX_VALUE);
 		if (group != null)
 		{
-			return group;
+			return inLane(fake, fighter, group, true);
 		}
 
 		// The enemies are all back at their base: it holds the middle of the field, where they come out to, instead of waiting at their base's edge.
@@ -2119,7 +2146,50 @@ public class TeamVsTeamManager
 		final Location enemy = fighter._match.getOther(fighter._side)._base;
 		final int x = (own.getX() + enemy.getX()) / 2;
 		final int y = (own.getY() + enemy.getY()) / 2;
-		return new Location(x, y, GeoEngine.getInstance().getHeight(x, y, (own.getZ() + enemy.getZ()) / 2));
+		return inLane(fake, fighter, new Location(x, y, GeoEngine.getInstance().getHeight(x, y, (own.getZ() + enemy.getZ()) / 2)), false);
+	}
+
+	/**
+	 * Moves a spot a fake player marches to into its party's lane: the parties of a team come at it from its left, the middle and its right (across the field, between the bases) instead of all on one line. Coming at a fight the lane narrows as it closes in, so
+	 * they flank it, then meet; holding the middle of the field it stays as wide, a front across it. A lane that runs into a wall is half as wide, else the party takes the middle one.
+	 * @param fake a fake player of a match
+	 * @param fighter its fighter
+	 * @param spot where it marches to
+	 * @param closingIn {@code true} if the lane narrows close to {@code spot}
+	 * @return where it goes
+	 */
+	private static Location inLane(Npc fake, Fighter fighter, Location spot, boolean closingIn)
+	{
+		final FakePlayerParty party = FakePartyManager.getInstance().getParty(fake);
+		final int lane = fighter._side.getLane(party != null ? party : fighter);
+		double offset = lane * LANE_WIDTH;
+		if (closingIn)
+		{
+			offset *= Math.max(0, Math.min(1, (fake.calculateDistance2D(spot) - LANE_MERGE) / (LANE_TAPER - LANE_MERGE)));
+		}
+		if (Math.abs(offset) < 50)
+		{
+			return spot;
+		}
+
+		// Across the field: square to the line between the bases.
+		final Location own = fighter._side._base;
+		final Location enemy = fighter._match.getOther(fighter._side)._base;
+		final double length = Math.max(1, Math.hypot(enemy.getX() - own.getX(), enemy.getY() - own.getY()));
+		final double acrossX = -(enemy.getY() - own.getY()) / length;
+		final double acrossY = (enemy.getX() - own.getX()) / length;
+		final GeoEngine geo = GeoEngine.getInstance();
+		for (double share = 1; share >= 0.5; share -= 0.5)
+		{
+			final int x = spot.getX() + (int) (acrossX * offset * share);
+			final int y = spot.getY() + (int) (acrossY * offset * share);
+			final int z = geo.getHeight(x, y, spot.getZ());
+			if (geo.canMoveToTarget(spot.getX(), spot.getY(), spot.getZ(), x, y, z, fake.getInstanceId()))
+			{
+				return new Location(x, y, z);
+			}
+		}
+		return spot;
 	}
 
 	private static Location closest(Npc fake, Collection<Location> locations, int range)
