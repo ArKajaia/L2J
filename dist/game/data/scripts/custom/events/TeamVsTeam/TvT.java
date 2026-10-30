@@ -20,7 +20,10 @@
  */
 package custom.events.TeamVsTeam;
 
+import java.util.List;
+
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
+import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig.TopReward;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.model.actor.Npc;
@@ -115,6 +118,7 @@ public class TvT extends Event
 		html.replace("%size%", String.valueOf(TeamVsTeamConfig.TEAM_SIZE));
 		html.replace("%fight%", String.valueOf(TeamVsTeamConfig.FIGHT_TIME));
 		html.replace("%reward%", describeReward());
+		html.replace("%top%", describeTopRewards());
 		html.replace("%brackets%", TeamVsTeamManager.describeBrackets());
 		html.replace("%time%", (seconds / 60) + " min " + (seconds % 60) + " s");
 		html.replace("%count%", String.valueOf(manager.getRegisteredCount()));
@@ -132,6 +136,25 @@ public class TvT extends Event
 			sb.append(sb.length() > 0 ? ", " : "").append(reward.getCount()).append(' ').append(item != null ? item.getName() : String.valueOf(reward.getId()));
 		}
 		return sb.length() > 0 ? sb.toString() : "nothing";
+	}
+
+	private static String describeTopRewards()
+	{
+		final StringBuilder sb = new StringBuilder();
+		final List<TopReward> rewards = TeamVsTeamConfig.TOP_REWARDS;
+		for (int i = 0; i < rewards.size(); i++)
+		{
+			final TopReward reward = rewards.get(i);
+			sb.append(sb.length() > 0 ? ", " : "").append(ordinal(i + 1)).append(' ').append(reward.count()).append(reward.weapon() ? " Crystal Scroll: Enchant Weapon" : " Crystal Scroll: Enchant Armor");
+		}
+		return sb.length() > 0 ? " Its best players also get Crystal Scrolls of their grade: " + sb + "." : "";
+	}
+
+	private static String ordinal(int place)
+	{
+		final int lastTwo = place % 100;
+		final int last = place % 10;
+		return place + (((lastTwo >= 11) && (lastTwo <= 13)) ? "th" : (last == 1 ? "st" : (last == 2 ? "nd" : (last == 3 ? "rd" : "th"))));
 	}
 
 	@Override
