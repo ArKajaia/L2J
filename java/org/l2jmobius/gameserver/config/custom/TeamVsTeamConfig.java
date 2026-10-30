@@ -66,6 +66,8 @@ public class TeamVsTeamConfig
 	public static int SPAWN_PROTECTION;
 	public static List<ItemChanceHolder> KILL_REWARDS;
 	public static List<ItemHolder> WIN_REWARD;
+	/** The extra rewards of the best players of the winning team, first place first: Crystal Scrolls of their grade (see TeamVsTeamManager). */
+	public static List<TopReward> TOP_REWARDS;
 	public static List<Location> MANAGER_LOCATIONS;
 	public static int BLUE_NAME_COLOR;
 	public static int RED_NAME_COLOR;
@@ -190,6 +192,34 @@ public class TeamVsTeamConfig
 		}
 		WIN_REWARD = Collections.unmodifiableList(winReward);
 
+		final List<TopReward> topRewards = new ArrayList<>();
+		for (String part : config.getString("TvTTopRewards", "weapon,1;armor,2;armor,1").split(";"))
+		{
+			final String[] values = part.trim().split(",");
+			if (values.length == 2)
+			{
+				final String kind = values[0].trim().toLowerCase();
+				try
+				{
+					final int count = Integer.parseInt(values[1].trim());
+					if ((count > 0) && (kind.equals("weapon") || kind.equals("armor")))
+					{
+						topRewards.add(new TopReward(kind.equals("weapon"), count));
+						continue;
+					}
+				}
+				catch (NumberFormatException e)
+				{
+					// Reported below.
+				}
+			}
+			if (!part.isBlank())
+			{
+				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad reward \"" + part + "\" in TvTTopRewards.");
+			}
+		}
+		TOP_REWARDS = Collections.unmodifiableList(topRewards);
+
 		final List<Location> managers = new ArrayList<>();
 		for (String part : config.getString("TvTManagerLocations", "83425,148585,-3406,32938").split(";"))
 		{
@@ -231,6 +261,15 @@ public class TeamVsTeamConfig
 			}
 		}
 		BUFFS = Collections.unmodifiableList(buffs);
+	}
+
+	/**
+	 * The reward of one place of the winning team: {@code count} Crystal Scrolls of the player's grade, for weapons or for armor.
+	 * @param weapon {@code true} for Crystal Scroll: Enchant Weapon, {@code false} for Crystal Scroll: Enchant Armor
+	 * @param count how many
+	 */
+	public record TopReward(boolean weapon, int count)
+	{
 	}
 
 	private static List<Location> parseLocations(String text, String key)

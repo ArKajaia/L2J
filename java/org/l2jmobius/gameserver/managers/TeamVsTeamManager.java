@@ -44,6 +44,7 @@ import org.l2jmobius.gameserver.ai.FakeBrain;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
+import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig.TopReward;
 import org.l2jmobius.gameserver.data.enums.CategoryType;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.geoengine.pathfinding.PathFinding;
@@ -95,7 +96,7 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
  * <li>The real players are spread evenly between the teams, and the free places are filled with fake players of the bracket's levels. A party of players gets the fake players it lacks (a tank, a healer, an archer...) up to {@link TeamVsTeamConfig#PARTY_SIZE}, the rest of a team
  * fights in parties of fake players. Fake players fight as parties (they call targets, heal, buff and resurrect each other), help the team mates that fight nearby, and go for the closest enemies otherwise.</li>
  * <li>The faction system's rules hold between the teams: the other team is attacked without Ctrl, the own team can't be hurt even with Ctrl, and no kill gives karma (the instance is a PvP one). Everyone shows a blue or red circle and name.</li>
- * <li>The dead come back in waves, each wave at one of its team's spawn points picked by chance. Each kill gives the killer one of {@link TeamVsTeamConfig#KILL_REWARDS}; the team with the most kills wins, and each of its players gets {@link TeamVsTeamConfig#WIN_REWARD}.</li>
+ * <li>The dead come back in waves, each wave at one of its team's spawn points picked by chance. Each kill gives the killer one of {@link TeamVsTeamConfig#KILL_REWARDS}; the team with the most kills wins, and each of its players gets {@link TeamVsTeamConfig#WIN_REWARD}, its best players {@link TeamVsTeamConfig#TOP_REWARDS} too.</li>
  * </ul>
  * The dialogs of the manager are in the TvT event script (custom/events/TeamVsTeam).
  */
@@ -107,6 +108,42 @@ public class TeamVsTeamManager
 	public static final int MANAGER_NPC_ID = 70010;
 	/** data/instances/custom/tvt_event.xml: a PvP instance without spawns. */
 	public static final int INSTANCE_TEMPLATE_ID = 3051;
+	/** Crystal Scroll: Enchant Weapon and Enchant Armor of each expertise level (none, D, C, B, A, S, S80, S84): S80 and S84 items take the S-grade ones. */
+	private static final int[][] CRYSTAL_SCROLLS =
+	{
+		{
+			957,
+			958
+		},
+		{
+			957,
+			958
+		},
+		{
+			953,
+			954
+		},
+		{
+			949,
+			950
+		},
+		{
+			731,
+			732
+		},
+		{
+			961,
+			962
+		},
+		{
+			961,
+			962
+		},
+		{
+			961,
+			962
+		}
+	};
 
 	/** {@code true} while a match goes on: the combat hooks only look further then. */
 	public static volatile boolean ACTIVE = false;
@@ -2022,8 +2059,53 @@ public class TeamVsTeamManager
 			}
 		}
 
+		if (winner != null)
+		{
+			rewardBest(match, winner);
+		}
+
 		LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " (levels " + match.getBracketName() + ") ended: " + result);
 		ThreadPool.schedule(() -> cleanup(match), abandoned ? 2000 : END_DELAY);
+	}
+
+	/**
+	 * The best players of the winning team get {@link TeamVsTeamConfig#TOP_REWARDS}, first place first: most kills, fewer deaths on a tie. Only real players with a kill or more; the fake players are left out of the places.
+	 * @param match the match
+	 * @param winner the winning team
+	 */
+	private void rewardBest(Match match, Side winner)
+	{
+		final List<Fighter> ranking = new ArrayList<>();
+		for (Fighter fighter : winner._fighters)
+		{
+			if (fighter.isPlayer() && (fighter._kills > 0))
+			{
+				ranking.add(fighter);
+			}
+		}
+		ranking.sort((a, b) -> a._kills != b._kills ? Integer.compare(b._kills, a._kills) : Integer.compare(a._deaths, b._deaths));
+
+		for (int i = 0; (i < TeamVsTeamConfig.TOP_REWARDS.size()) && (i < ranking.size()); i++)
+		{
+			final TopReward reward = TeamVsTeamConfig.TOP_REWARDS.get(i);
+			final Fighter fighter = ranking.get(i);
+			final Player player = fighter._creature.asPlayer();
+			final int itemId = getCrystalScroll(player, reward.weapon());
+			player.sendMessage("TvT: You are the number " + (i + 1) + " of your team with " + fighter._kills + " kills.");
+			player.addItem(ItemProcessType.REWARD, itemId, reward.count(), null, true);
+			LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " place " + (i + 1) + ": " + player.getName() + " (" + fighter._kills + " kills, " + fighter._deaths + " deaths) gets " + reward.count() + " of item " + itemId + ".");
+		}
+	}
+
+	/**
+	 * @param player a player
+	 * @param weapon {@code true} for the weapon scroll, {@code false} for the armor one
+	 * @return the Crystal Scroll of its grade (its expertise)
+	 */
+	private static int getCrystalScroll(Player player, boolean weapon)
+	{
+		final int expertise = Math.max(0, Math.min(CRYSTAL_SCROLLS.length - 1, player.getExpertiseLevel()));
+		return CRYSTAL_SCROLLS[expertise][weapon ? 0 : 1];
 	}
 
 	/**
