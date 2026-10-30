@@ -4,6 +4,7 @@ Custom skills - client additions (High Five)
 Rows for the server's custom skills:
   27000-27005  Hot Zone buffs        (data/stats/skills/custom/hotzone_skills.xml)
   27400-27465  Passive tree actives  (data/stats/skills/PassiveTreeActives.xml)
+  27470-27480  Keystone proc buffs   (same file)
 
 Without these rows the client shows the skills with no name and no icon.
 
@@ -22,11 +23,13 @@ level per line, no header line:
   Skillname-e.dat  skill_begin  skill_id=..  skill_level=..  name=[..]  desc=[..]
                    enchant_name=[none]  enchant_desc=[none]  skill_end
 
-97 rows each: the Hot Zone buffs (Kill Streak has
+108 rows each: the Hot Zone buffs (Kill Streak has
 10 levels), 10 single-level tree skills and 8 tree skills with 9 levels
 (Earthshatter, Volley, Arcane Nova, Mana Rift, Sacred Chorus, Reaving
 Strike, Hunter's Mark, Binding Rune), whose level follows the character
-level on the server.
+level on the server, and the 11 buffs the proc keystones give (Blood for
+Blood, Arcane Retort, Fleeting Shadow, Counterweight, Unbroken Faith and
+its ward, Last Light and its two wards, Tenacity, Bloodrush).
 
 Applying them
 -------------

@@ -87,6 +87,7 @@ import org.l2jmobius.gameserver.model.groups.Party;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
 import org.l2jmobius.gameserver.model.item.instance.Item;
+import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.siege.manor.Seed;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
@@ -284,6 +285,12 @@ public class Attackable extends Npc
 	@Override
 	public void reduceCurrentHp(double damage, Creature attacker, boolean awake, boolean isDOT, Skill skill)
 	{
+		// Passive tree Unbroken Faith and Last Light of a roaming fake player: no damage of the type warded against.
+		if (isPvpFakePlayer() && PassiveMechanics.isWarded(this, attacker, skill))
+		{
+			return;
+		}
+		
 		// Only players can bring a roaming fake player below its monster damage floor.
 		if (isPvpFakePlayer())
 		{
@@ -362,7 +369,12 @@ public class Attackable extends Npc
 		}
 		
 		// Reduce the current HP of the Attackable and launch the doDie Task if necessary
+		final double hpBefore = getCurrentHp();
 		super.reduceCurrentHp(damage, attacker, awake, isDOT, skill);
+		if (isPvpFakePlayer())
+		{
+			PassiveMechanics.onHpLost(this, attacker, skill, hpBefore - getCurrentHp(), isDOT); // Passive tree Last Light.
+		}
 	}
 	
 	public synchronized void setMustRewardExpSp(boolean value)

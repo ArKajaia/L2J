@@ -12,6 +12,7 @@ import java.util.function.DoubleSupplier;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.conditions.Condition;
@@ -33,6 +34,7 @@ import org.l2jmobius.gameserver.model.skill.AbnormalType;
 import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
 import org.l2jmobius.gameserver.model.skill.BuffInfo;
 import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.skill.targets.TargetType;
 import org.l2jmobius.gameserver.model.stats.BaseStat;
 import org.l2jmobius.gameserver.model.stats.Stat;
@@ -108,6 +110,22 @@ public final class PassiveMechanics
 	public static final String BLOODLETTER = "KS_BLOODLETTER";
 	/** % chance for a single-target damage spell to hit its target again ECHO_DELAY later, free, for ECHO_DAMAGE of the damage. */
 	public static final String SPELL_ECHO = "KS_SPELL_ECHO";
+	/** % chance, when a physical critical hit lands on you, to gain Blood for Blood (P.Atk and Atk. Spd for a few seconds). */
+	public static final String BLOOD_FOR_BLOOD = "KS_BLOOD_FOR_BLOOD";
+	/** % chance, when a magic critical hit lands on you, to gain Arcane Retort (M.Def, P.Atk and M.Atk for a few seconds). */
+	public static final String ARCANE_RETORT = "KS_ARCANE_RETORT";
+	/** % chance, when you evade an attack or dodge a physical skill, to gain Fleeting Shadow (critical rate and speed for a few seconds). */
+	public static final String FLEETING_SHADOW = "KS_FLEETING_SHADOW";
+	/** % chance, when you block with a shield, to gain Counterweight (P.Atk and Atk. Spd for a few seconds). */
+	public static final String COUNTERWEIGHT = "KS_COUNTERWEIGHT";
+	/** % chance, when an enemy cancels your buffs, to be immune to magic damage for a moment, then gain Unbroken Faith (M.Def and debuff resistance). */
+	public static final String UNBROKEN_FAITH = "KS_UNBROKEN_FAITH";
+	/** A single hit that takes at least this % of your max HP makes you immune to that damage type (physical or magic) for LAST_LIGHT_WARD, and gives you Speed. */
+	public static final String LAST_LIGHT = "KS_LAST_LIGHT";
+	/** Flag: when a stun, sleep or root on you ends, you can't be stunned, slept or rooted for a moment. */
+	public static final String TENACITY = "KS_TENACITY";
+	/** Flag: each kill gives Bloodrush (Atk. Spd and Casting Spd for a few seconds); another kill starts it again. */
+	public static final String BLOODRUSH = "KS_BLOODRUSH";
 	
 	/** Keys that cancel each other out; a node carrying one can't be allocated next to a node carrying another key of the same group. */
 	private static final List<Set<String>> EXCLUSIVE_GROUPS = List.of(Set.of(POINT_BLANK, FAR_SHOT), Set.of(RAMPAGE, BERSERK_PACT));
@@ -172,6 +190,31 @@ public final class PassiveMechanics
 	private static final int ECHO_RANGE = 1500;
 	/** Set while an echo is dealt, so an echo doesn't echo again. */
 	private static final ThreadLocal<Boolean> ECHOING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+	
+	/** Proc keystones: the buff each one gives (data/stats/skills/PassiveTreeActives.xml) and how long until it can come again. */
+	private static final int BLOOD_FOR_BLOOD_SKILL = 27470;
+	private static final long BLOOD_FOR_BLOOD_COOLDOWN = 12000;
+	private static final int ARCANE_RETORT_SKILL = 27471;
+	private static final long ARCANE_RETORT_COOLDOWN = 15000;
+	private static final int FLEETING_SHADOW_SKILL = 27472;
+	private static final long FLEETING_SHADOW_COOLDOWN = 8000;
+	private static final int COUNTERWEIGHT_SKILL = 27473;
+	private static final long COUNTERWEIGHT_COOLDOWN = 10000;
+	private static final int UNBROKEN_FAITH_SKILL = 27474;
+	private static final int UNBROKEN_FAITH_WARD_SKILL = 27475;
+	private static final long UNBROKEN_FAITH_COOLDOWN = 30000;
+	private static final int LAST_LIGHT_PHYSICAL_WARD_SKILL = 27476;
+	private static final int LAST_LIGHT_MAGIC_WARD_SKILL = 27477;
+	private static final int LAST_LIGHT_SKILL = 27478;
+	private static final long LAST_LIGHT_COOLDOWN = 60000;
+	/** Last Light: the ward is cut short to this (buff durations are whole seconds). */
+	private static final long LAST_LIGHT_WARD = 1500;
+	private static final int TENACITY_SKILL = 27479;
+	private static final int BLOODRUSH_SKILL = 27480;
+	/** objectId << 32 | proc skill id -> time that proc can come again. */
+	private static final Map<Long, Long> PROC_READY_AT = new ConcurrentHashMap<>();
+	/** Above this many entries, the ones whose cooldown has run out are dropped (a fake player comes back with a new object id). */
+	private static final int PROC_READY_PRUNE = 5000;
 	
 	/** Force charge skills: Sonic Focus, Focused Force, Sonic Mastery, Force Mastery. Their level is the most charges the class can hold. */
 	private static final int[] CHARGE_SKILLS =
@@ -246,11 +289,11 @@ public final class PassiveMechanics
 	 * @param player the player
 	 * @param statMaxMp max MP from the stat system
 	 * @param statMaxCp max CP from the stat system, which Eldritch Battery converts into MP
-	 * @return max MP after the tree's flat bonus and Eldritch Battery
+	 * @return max MP after the tree's flat and % bonuses and Eldritch Battery
 	 */
 	public static double maxMp(Player player, double statMaxMp, DoubleSupplier statMaxCp)
 	{
-		double result = statMaxMp + value(player, "MAXMP");
+		double result = (statMaxMp + value(player, "MAXMP")) * (1 + (value(player, "MAXMP_PCT") / 100));
 		final double battery = value(player, ELDRITCH_BATTERY);
 		if (battery > 0)
 		{
@@ -746,6 +789,8 @@ public final class PassiveMechanics
 		{
 			RIPOSTE_READY.put(target.getObjectId(), System.currentTimeMillis() + RIPOSTE_WINDOW);
 		}
+		
+		proc(target, value(target, COUNTERWEIGHT), COUNTERWEIGHT_SKILL, COUNTERWEIGHT_COOLDOWN, "Counterweight!");
 	}
 	
 	/**
@@ -1078,10 +1123,226 @@ public final class PassiveMechanics
 		return result;
 	}
 	
+	// ---------------------------------------------------------------- proc buffs
+	
+	/**
+	 * Rolls a proc keystone and, on success, gives its buff and starts its cooldown.
+	 * @param owner the player or roaming fake player
+	 * @param chance % chance, 0 or less if it doesn't have the keystone
+	 * @param skillId the buff
+	 * @param cooldown time before it can come again, 0 for none
+	 * @param message shown to a player when it comes, {@code null} for none
+	 * @return {@code true} if it came
+	 */
+	private static boolean proc(Creature owner, double chance, int skillId, long cooldown, String message)
+	{
+		if ((chance <= 0) || (owner == null) || owner.isDead())
+		{
+			return false;
+		}
+		
+		final long now = System.currentTimeMillis();
+		final long readyKey = (((long) owner.getObjectId()) << 32) | skillId;
+		if (cooldown > 0)
+		{
+			final Long readyAt = PROC_READY_AT.get(readyKey);
+			if ((readyAt != null) && (readyAt > now))
+			{
+				return false;
+			}
+		}
+		
+		if ((chance < 100) && ((Rnd.get(1000) / 10.0) >= chance))
+		{
+			return false;
+		}
+		
+		if (cooldown > 0)
+		{
+			if (PROC_READY_AT.size() > PROC_READY_PRUNE)
+			{
+				PROC_READY_AT.values().removeIf(readyAt -> readyAt <= now);
+			}
+			PROC_READY_AT.put(readyKey, now + cooldown);
+		}
+		
+		giveBuff(owner, skillId);
+		if (message != null)
+		{
+			owner.sendPacket(new ExShowScreenMessage(message, ExShowScreenMessage.BOTTOM_CENTER, 1500));
+		}
+		return true;
+	}
+	
+	/**
+	 * @param owner the creature
+	 * @param skillId a proc buff
+	 */
+	private static void giveBuff(Creature owner, int skillId)
+	{
+		final Skill skill = SkillData.getInstance().getSkill(skillId, 1);
+		if (skill != null)
+		{
+			skill.applyEffects(owner, owner);
+		}
+	}
+	
+	/**
+	 * Blood for Blood and Arcane Retort: a critical hit landed on you.
+	 * @param target the creature that took the hit
+	 * @param attacker the attacker
+	 * @param skill the skill that dealt it, {@code null} for a normal attack
+	 * @param critical whether it was a critical hit
+	 * @param damageOverTime whether it was a damage-over-time tick
+	 */
+	public static void onDamageTaken(Creature target, Creature attacker, Skill skill, boolean critical, boolean damageOverTime)
+	{
+		if (!critical || damageOverTime || (attacker == null) || (attacker == target) || target.isDead())
+		{
+			return;
+		}
+		
+		if ((skill != null) && skill.isMagic())
+		{
+			proc(target, value(target, ARCANE_RETORT), ARCANE_RETORT_SKILL, ARCANE_RETORT_COOLDOWN, "Arcane Retort!");
+		}
+		else
+		{
+			proc(target, value(target, BLOOD_FOR_BLOOD), BLOOD_FOR_BLOOD_SKILL, BLOOD_FOR_BLOOD_COOLDOWN, "Blood for Blood!");
+		}
+	}
+	
+	/**
+	 * Fleeting Shadow: you evaded a normal attack or dodged a physical skill.
+	 * @param target the creature that evaded
+	 */
+	public static void onEvaded(Creature target)
+	{
+		proc(target, value(target, FLEETING_SHADOW), FLEETING_SHADOW_SKILL, FLEETING_SHADOW_COOLDOWN, "Fleeting Shadow!");
+	}
+	
+	/**
+	 * Unbroken Faith: an enemy cancelled some of your buffs. You are immune to magic damage for a moment, then the buff takes over.
+	 * @param target the creature whose buffs were cancelled
+	 * @param canceller the creature that cancelled them
+	 */
+	public static void onBuffsCancelled(Creature target, Creature canceller)
+	{
+		if ((canceller == null) || (canceller == target))
+		{
+			return;
+		}
+		
+		if (proc(target, value(target, UNBROKEN_FAITH), UNBROKEN_FAITH_SKILL, UNBROKEN_FAITH_COOLDOWN, "Unbroken Faith: immune to magic damage!"))
+		{
+			giveBuff(target, UNBROKEN_FAITH_WARD_SKILL);
+		}
+	}
+	
+	/**
+	 * @param skill the skill that deals damage, {@code null} for a normal attack
+	 * @return {@code true} for magic damage, {@code false} for physical
+	 */
+	private static boolean isMagicDamage(Skill skill)
+	{
+		return (skill != null) && skill.isMagic();
+	}
+	
+	/**
+	 * Unbroken Faith and Last Light wards: damage of the type the target is warded against is not taken.
+	 * @param target the creature about to take damage
+	 * @param attacker the attacker
+	 * @param skill the skill that deals it, {@code null} for a normal attack
+	 * @return {@code true} if the damage must not be applied
+	 */
+	public static boolean isWarded(Creature target, Creature attacker, Skill skill)
+	{
+		if ((attacker == null) || (attacker == target) || (!target.isPlayer() && !target.isPvpFakePlayer()))
+		{
+			return false;
+		}
+		
+		if (isMagicDamage(skill))
+		{
+			return target.isAffectedBySkill(UNBROKEN_FAITH_WARD_SKILL) || target.isAffectedBySkill(LAST_LIGHT_MAGIC_WARD_SKILL);
+		}
+		return target.isAffectedBySkill(LAST_LIGHT_PHYSICAL_WARD_SKILL);
+	}
+	
+	/**
+	 * Last Light: a single hit took a large share of your max HP.
+	 * @param target the creature that took the hit
+	 * @param attacker the attacker
+	 * @param skill the skill that dealt it, {@code null} for a normal attack
+	 * @param hpLost the HP the hit took
+	 * @param damageOverTime whether it was a damage-over-time tick
+	 */
+	public static void onHpLost(Creature target, Creature attacker, Skill skill, double hpLost, boolean damageOverTime)
+	{
+		final double threshold = value(target, LAST_LIGHT);
+		if ((threshold <= 0) || damageOverTime || (attacker == null) || (attacker == target) || target.isDead() || (hpLost < ((target.getMaxHp() * threshold) / 100)))
+		{
+			return;
+		}
+		
+		final boolean magic = isMagicDamage(skill);
+		if (proc(target, 100, LAST_LIGHT_SKILL, LAST_LIGHT_COOLDOWN, magic ? "Last Light: immune to magic damage!" : "Last Light: immune to physical damage!"))
+		{
+			final int wardId = magic ? LAST_LIGHT_MAGIC_WARD_SKILL : LAST_LIGHT_PHYSICAL_WARD_SKILL;
+			giveBuff(target, wardId);
+			ThreadPool.schedule(() -> target.stopSkillEffects(SkillFinishType.REMOVED, wardId), LAST_LIGHT_WARD);
+		}
+	}
+	
+	/**
+	 * Bloodrush: you killed something.
+	 * @param killer the killer
+	 * @param victim the creature that died
+	 */
+	public static void onKill(Creature killer, Creature victim)
+	{
+		if ((killer != null) && (victim != null) && (killer != victim) && (victim.isAttackable() || victim.isPlayable()) && has(killer, BLOODRUSH))
+		{
+			proc(killer, 100, BLOODRUSH_SKILL, 0, null);
+		}
+	}
+	
+	/**
+	 * @param skill an effect's skill
+	 * @return {@code true} for a stun, sleep or root (what Tenacity answers)
+	 */
+	private static boolean isCrowdControl(Skill skill)
+	{
+		final AbnormalType type = skill.getAbnormalType();
+		return (type == AbnormalType.STUN) || (type == AbnormalType.SLEEP) || (type == AbnormalType.ROOT_PHYSICALLY) || (type == AbnormalType.ROOT_MAGICALLY) || skill.hasEffectType(EffectType.STUN, EffectType.SLEEP, EffectType.ROOT);
+	}
+	
+	/**
+	 * Tenacity: a stun, sleep or root an enemy put on you ended.
+	 * @param owner the creature it was on
+	 * @param info the effect that ended
+	 */
+	public static void onAbnormalEnded(Creature owner, BuffInfo info)
+	{
+		if ((info.getEffector() == owner) || owner.isDead() || !info.getSkill().isDebuff() || !isCrowdControl(info.getSkill()) || !has(owner, TENACITY))
+		{
+			return;
+		}
+		
+		// Not while the effect list is still busy removing it.
+		ThreadPool.execute(() ->
+		{
+			if (!owner.isDead() && owner.isSpawned())
+			{
+				proc(owner, 100, TENACITY_SKILL, 0, null);
+			}
+		});
+	}
+	
 	// ---------------------------------------------------------------- effects landing
 	
 	/**
-	 * Unwavering Stance blocks stuns, Purity of Flesh blocks poison and bleed.
+	 * Unwavering Stance blocks stuns, Purity of Flesh blocks poison and bleed, Tenacity's buff blocks stuns, sleeps and roots.
 	 * @param owner the creature the effect would land on
 	 * @param info the effect
 	 * @return {@code true} if the effect must not be applied
@@ -1095,7 +1356,7 @@ public final class PassiveMechanics
 		
 		final Skill skill = info.getSkill();
 		final AbnormalType type = skill.getAbnormalType();
-		final boolean blocked = (has(owner, STUN_IMMUNE) && ((type == AbnormalType.STUN) || skill.hasEffectType(EffectType.STUN))) || (has(owner, PURITY) && ((type == AbnormalType.POISON) || (type == AbnormalType.BLEEDING)));
+		final boolean blocked = (has(owner, STUN_IMMUNE) && ((type == AbnormalType.STUN) || skill.hasEffectType(EffectType.STUN))) || (has(owner, PURITY) && ((type == AbnormalType.POISON) || (type == AbnormalType.BLEEDING))) || (skill.isDebuff() && isCrowdControl(skill) && owner.isAffectedBySkill(TENACITY_SKILL));
 		if (blocked && (info.getEffector() != null))
 		{
 			final SystemMessage sm = new SystemMessage(SystemMessageId.C1_HAS_RESISTED_YOUR_S2);

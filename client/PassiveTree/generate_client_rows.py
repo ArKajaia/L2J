@@ -7,10 +7,12 @@ SKILL_FILES=['/dist/game/data/stats/skills/PassiveTreeActives.xml','/dist/game/d
 skills=[sk for f in SKILL_FILES for sk in ET.parse(ROOT+f).getroot().findall('skill')]
 ICON={27000:3123,27001:3123,27002:3123,27003:3123,27004:3123,27005:3123,
       27400:110,27401:121,27410:78,27411:347,27420:821,27421:922,27430:4,27431:772,27440:1417,27441:1157,
-      27450:1027,27451:1010,27460:1268,27461:96,27462:101,27463:1201,27464:1085,27465:1409}
+      27450:1027,27451:1010,27460:1268,27461:96,27462:101,27463:1201,27464:1085,27465:1409,
+      27470:1268,27471:1035,27472:922,27473:110,27474:1409,27475:1010,27476:1010,27477:1010,27478:4,27479:1268,27480:96}
 OPER={27000:2,27001:2,27002:2,27003:2,27004:2,27005:2,
       27400:2,27401:2,27410:2,27411:0,27420:0,27421:2,27430:2,27431:0,27440:1,27441:1,27450:1,27451:2,
-      27460:2,27461:0,27462:3,27463:3,27464:2,27465:2}
+      27460:2,27461:0,27462:3,27463:3,27464:2,27465:2,
+      27470:2,27471:2,27472:2,27473:2,27474:2,27475:2,27476:2,27477:2,27478:2,27479:2,27480:2}
 DESC={
  27000:"Hot zone monster buff: Speed +50%, Max HP +50%, Atk. Spd. and Casting Spd. +30%.",
  27001:"Hunting in an active hot zone: XP and SP +50%, Atk. Spd. +40%, Casting Spd. +20%, drop amount +25%.",
@@ -36,6 +38,17 @@ DESC={
  27463:"Holds the target in place for 4 seconds. Reuse time is 30 seconds.",
  27464:"Decreases the reuse time of magic skills by 25% and increases Casting Spd. by 10% for 15 seconds. Reuse time is 180 seconds.",
  27465:"Removes up to 3 debuffs and increases HP recovered from healing by 20% for 15 seconds. Reuse time is 150 seconds.",
+ 27470:"Blood for Blood keystone: a physical critical hit landed on you. P. Atk. +15% and Atk. Spd. +10%.",
+ 27471:"Arcane Retort keystone: a magic critical hit landed on you. M. Def. +25%, P. Atk. and M. Atk. +15%.",
+ 27472:"Fleeting Shadow keystone: you evaded an attack. Critical Rate +80 and Speed +15.",
+ 27473:"Counterweight keystone: you blocked with your shield. P. Atk. +12% and Atk. Spd. +10%.",
+ 27474:"Unbroken Faith keystone: an enemy cancelled your buffs. M. Def. +20% and debuff resistance +15%.",
+ 27475:"Unbroken Faith keystone: you take no magic damage.",
+ 27476:"Last Light keystone: you take no physical damage.",
+ 27477:"Last Light keystone: you take no magic damage.",
+ 27478:"Last Light keystone: a single hit took a large share of your HP. Speed +25.",
+ 27479:"Tenacity keystone: you cannot be stunned, put to sleep or rooted.",
+ 27480:"Bloodrush keystone: you made a kill. Atk. Spd. and Casting Spd. +10%.",
 }
 def f32(x): return '%.8f' % struct.unpack('f', struct.pack('f', x))[0]
 
@@ -94,7 +107,7 @@ for sk in skills:
         assert '{' not in d and 'None' not in d, (sid,d)
         names.append('\t'.join(['skill_begin','skill_id=%d'%sid,'skill_level=%d'%lvl,'name=[%s]'%name,'desc=[%s]'%d,'enchant_name=[none]','enchant_desc=[none]','skill_end']))
     icons_used[sid]=ICON[sid]
-assert len(grp)==97 and len(names)==97, (len(grp),len(names))
+assert len(grp)==108 and len(names)==108, (len(grp),len(names))
 out=ROOT+'/client/PassiveTree'; os.makedirs(out,exist_ok=True)
 # Both files are in the L2ClientDat skill_begin ... skill_end key=value format (see grp_line for
 # Skillgrp.dat; Skillname-e.dat: skill_id, skill_level, name, desc, enchant_name, enchant_desc).

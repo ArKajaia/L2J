@@ -2,7 +2,8 @@
 <!--
 	Passive tree ACTIVE skills, granted by the ACTIVE_SKILL nodes in data/passivetree/*.xml
 	(see PassiveTreeManager.applyAll). Ids 27400-27451 are the six archetype sectors (two
-	each), 27460-27465 the six hybrid sectors (one each).
+	each), 27460-27465 the six hybrid sectors (one each), 27470-27480 the buffs of the proc
+	keystones.
 
 	Keep custom skill ids below 32768 (retail H5 ends near 26xxx). The H5 client does not
 	resolve skill ids in the 90000s even when Skillgrp.dat has rows for them: such skills are
@@ -542,6 +543,220 @@
 			</effect>
 			<effect name="Buff">
 				<mul stat="healEffect">1.20</mul>
+			</effect>
+		</effects>
+	</skill>
+
+	<!-- ===================================================================
+	     27470-27480  KEYSTONE PROCS
+	     Short buffs the proc keystones give (PassiveMechanics): never cast,
+	     applied by the server. They take an activation slot, not a buff slot,
+	     and can't be cancelled or stolen. The wards (27475-27477) have no
+	     stats of their own: PassiveMechanics.isWarded stops the damage type
+	     while they are on.
+	     =================================================================== -->
+	<!-- 27470  BLOOD FOR BLOOD (Red Wastes): physical critical hit taken -->
+	<skill id="27470" levels="1" name="Blood for Blood">
+		<icon>icon.skill1268</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>5</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<canBeDispeled>false</canBeDispeled>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pAtk">1.15</mul>
+				<mul stat="pAtkSpd">1.10</mul>
+			</effect>
+		</effects>
+	</skill>
+	<!-- 27471  ARCANE RETORT (Ley Expanse): magic critical hit taken -->
+	<skill id="27471" levels="1" name="Arcane Retort">
+		<icon>icon.skill1035</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>5</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<canBeDispeled>false</canBeDispeled>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="mDef">1.25</mul>
+				<mul stat="pAtk">1.15</mul>
+				<mul stat="mAtk">1.15</mul>
+			</effect>
+		</effects>
+	</skill>
+	<!-- 27472  FLEETING SHADOW (Duskwood): attack evaded -->
+	<skill id="27472" levels="1" name="Fleeting Shadow">
+		<icon>icon.skill0922</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>3</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<canBeDispeled>false</canBeDispeled>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<add stat="critRate">80</add>
+				<add stat="runSpd">15</add>
+			</effect>
+		</effects>
+	</skill>
+	<!-- 27473  COUNTERWEIGHT (Ironmarch): shield block -->
+	<skill id="27473" levels="1" name="Counterweight">
+		<icon>icon.skill0110</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>4</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<canBeDispeled>false</canBeDispeled>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pAtk">1.12</mul>
+				<mul stat="pAtkSpd">1.10</mul>
+			</effect>
+		</effects>
+	</skill>
+	<!-- 27474  UNBROKEN FAITH (Hallowmere): buffs cancelled by an enemy -->
+	<skill id="27474" levels="1" name="Unbroken Faith">
+		<icon>icon.skill1409</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>8</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<canBeDispeled>false</canBeDispeled>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="mDef">1.20</mul>
+				<sub stat="debuffVuln">15</sub>
+			</effect>
+		</effects>
+	</skill>
+	<!-- 27475  UNBROKEN FAITH WARD: no magic damage for 2 seconds -->
+	<skill id="27475" levels="1" name="Unbroken Faith Ward">
+		<icon>icon.skill1010</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>2</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<canBeDispeled>false</canBeDispeled>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="mDef">1</mul>
+			</effect>
+		</effects>
+	</skill>
+	<!-- 27476  LAST LIGHT PHYSICAL WARD (Starfall): no physical damage, cut to 1.5 seconds -->
+	<skill id="27476" levels="1" name="Last Light: Physical Ward">
+		<icon>icon.skill1010</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>2</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<canBeDispeled>false</canBeDispeled>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pDef">1</mul>
+			</effect>
+		</effects>
+	</skill>
+	<!-- 27477  LAST LIGHT MAGIC WARD (Starfall): no magic damage, cut to 1.5 seconds -->
+	<skill id="27477" levels="1" name="Last Light: Magic Ward">
+		<icon>icon.skill1010</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>2</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<canBeDispeled>false</canBeDispeled>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="mDef">1</mul>
+			</effect>
+		</effects>
+	</skill>
+	<!-- 27478  LAST LIGHT (Starfall): one hit took 30% of max HP -->
+	<skill id="27478" levels="1" name="Last Light">
+		<icon>icon.skill0004</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>4</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<canBeDispeled>false</canBeDispeled>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<add stat="runSpd">25</add>
+			</effect>
+		</effects>
+	</skill>
+	<!-- 27479  TENACITY (Shadowblade): a stun, sleep or root ended; no stun, sleep or root while it lasts -->
+	<skill id="27479" levels="1" name="Tenacity">
+		<icon>icon.skill1268</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>2</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<canBeDispeled>false</canBeDispeled>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pDef">1</mul>
+			</effect>
+		</effects>
+	</skill>
+	<!-- 27480  BLOODRUSH (Deadeye): a kill -->
+	<skill id="27480" levels="1" name="Bloodrush">
+		<icon>icon.skill0096</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>5</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<canBeDispeled>false</canBeDispeled>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pAtkSpd">1.10</mul>
+				<mul stat="mAtkSpd">1.10</mul>
 			</effect>
 		</effects>
 	</skill>

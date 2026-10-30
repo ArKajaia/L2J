@@ -649,6 +649,9 @@ public class EffectList
 		{
 			info.getSkill().applyEffectScope(EffectScope.END, info, true, false);
 		}
+		
+		// Passive tree Tenacity.
+		PassiveMechanics.onAbnormalEnded(_owner, info);
 	}
 	
 	/**

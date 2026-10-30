@@ -910,6 +910,11 @@ public class PassiveTreeManager
 		{
 			npc.addStatFunc(new FuncAdd(Stat.MAX_MP, FAKE_GETTER_ORDER, PASSIVE_TREE_FUNC_OWNER, maxMp, null));
 		}
+		final double maxMpPct = bonus.get("MAXMP_PCT");
+		if (maxMpPct != 0)
+		{
+			npc.addStatFunc(new FuncMul(Stat.MAX_MP, FAKE_GETTER_ORDER + 1, PASSIVE_TREE_FUNC_OWNER, 1.0 + (maxMpPct / 100.0), null));
+		}
 		final double bloodMagic = bonus.get(PassiveMechanics.BLOOD_MAGIC);
 		if (bloodMagic > 0)
 		{

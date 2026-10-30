@@ -2775,6 +2775,9 @@ public abstract class Creature extends WorldObject
 			setDead(true);
 		}
 		
+		// Passive tree Bloodrush.
+		PassiveMechanics.onKill(killer, this);
+		
 		// Party-vs-party simulation log.
 		if (FakeSimulationManager.ACTIVE)
 		{
@@ -5578,6 +5581,7 @@ public abstract class Creature extends WorldObject
 				target.getAI().notifyAction(Action.EVADED, this);
 			}
 			
+			PassiveMechanics.onEvaded(target); // Passive tree Fleeting Shadow.
 			notifyAttackAvoid(target, false);
 		}
 		// else
@@ -7495,10 +7499,11 @@ public abstract class Creature extends WorldObject
 	 */
 	public void notifyDamageReceived(double damage, Creature attacker, Skill skill, boolean critical, boolean damageOverTime)
 	{
-		// Passive tree Vampiric Sorcery and Arc Conduit.
+		// Passive tree Vampiric Sorcery and Arc Conduit; Blood for Blood and Arcane Retort of the one hit.
 		if (attacker != null)
 		{
 			PassiveMechanics.onDamageDealt(attacker, this, skill, damage, damageOverTime);
+			PassiveMechanics.onDamageTaken(this, attacker, skill, critical, damageOverTime);
 			
 			// PvP combat log of the attacker.
 			CombatLogManager.onDamageDealt(this, attacker, skill, damage, critical, damageOverTime);
