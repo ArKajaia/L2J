@@ -62,6 +62,8 @@ public class TeamVsTeamConfig
 	public static int BASE_WARNING_DISTANCE;
 	/** The fence round the field: {middle x, middle y, radius along x, radius along y} of an ellipse, {@code null} for none (see TeamVsTeamBarrier). */
 	public static int[] BARRIER;
+	/** The battlefield's edge on the players' radar: minX, minY, maxX, maxY, or {@code null} for around the bases. */
+	public static int[] AREA;
 	public static int RESPAWN_DELAY;
 	public static int SPAWN_PROTECTION;
 	public static List<ItemChanceHolder> KILL_REWARDS;
@@ -141,6 +143,37 @@ public class TeamVsTeamConfig
 			catch (NumberFormatException e)
 			{
 				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad TvTBarrier \"" + barrier + "\" (x,y,radius x,radius y, radii at least 500): no barrier.");
+			}
+		}
+		AREA = null;
+		final String area = config.getString("TvTArea", "").trim();
+		if (!area.isEmpty())
+		{
+			try
+			{
+				final String[] parts = area.split(",");
+				final int minX = Integer.parseInt(parts[0].trim());
+				final int minY = Integer.parseInt(parts[1].trim());
+				final int maxX = Integer.parseInt(parts[2].trim());
+				final int maxY = Integer.parseInt(parts[3].trim());
+				if ((parts.length == 4) && (minX < maxX) && (minY < maxY))
+				{
+					AREA = new int[]
+					{
+						minX,
+						minY,
+						maxX,
+						maxY
+					};
+				}
+				else
+				{
+					LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad TvTArea \"" + area + "\", the area around the bases is shown.");
+				}
+			}
+			catch (Exception e)
+			{
+				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad TvTArea \"" + area + "\", the area around the bases is shown.");
 			}
 		}
 		RESPAWN_DELAY = Math.max(1, config.getInt("TvTRespawnDelay", 10));
@@ -272,7 +305,7 @@ public class TeamVsTeamConfig
 	{
 	}
 
-	private static List<Location> parseLocations(String text, String key)
+	static List<Location> parseLocations(String text, String key)
 	{
 		final List<Location> locations = new ArrayList<>();
 		for (String part : text.split(";"))

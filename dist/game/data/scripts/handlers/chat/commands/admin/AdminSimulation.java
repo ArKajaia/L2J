@@ -53,6 +53,7 @@ public class AdminSimulation implements IAdminCommandHandler
 		"admin_simulationdraw",
 		"admin_simulationweb",
 		"admin_simulationmatrix",
+		"admin_simulationarena",
 		"admin_simulationhelp"
 	};
 
@@ -97,6 +98,12 @@ public class AdminSimulation implements IAdminCommandHandler
 				{
 					st.nextToken();
 					return matrix(activeChar, new StringTokenizer("start " + (st.hasMoreTokens() ? st.nextToken("") : "")), manager);
+				}
+				// //Simulate ab [battles per level] [...]: the A/B arena, party battles of two brains, many at once in instances.
+				if (commandLine.toLowerCase(Locale.ROOT).matches("\\S+\\s+ab(\\s.*)?"))
+				{
+					st.nextToken();
+					return arena(activeChar, st, manager);
 				}
 				return simulate(activeChar, st, manager);
 			}
@@ -173,6 +180,11 @@ public class AdminSimulation implements IAdminCommandHandler
 			{
 				return matrix(activeChar, st, manager);
 			}
+			case "admin_simulationarena":
+			{
+				arenaPanel(activeChar, st, manager);
+				break;
+			}
 			default:
 			{
 				showHelp(activeChar);
@@ -240,6 +252,77 @@ public class AdminSimulation implements IAdminCommandHandler
 		}
 
 		send(activeChar, manager.simulate(activeChar, size, level, mirror, seed, rounds, time, brains, swap));
+		return true;
+	}
+
+	private static final String ARENA_USAGE = "Usage: //Simulate ab [battles per level, 20] [levels=40,61,80] [parallel=100] [size=5] [brains=A:B] [time=<s>] [distance=1500] [seed=<n>] - party battles of two brains at your place, every battle in its own instance, mirrored teams on both sides. //SimulationArena: the panel to watch each battle. //SimulationStatus, //SimulationStop.";
+
+	private boolean arena(Player activeChar, StringTokenizer st, FakeSimulationManager manager)
+	{
+		int rounds = 20;
+		final List<Integer> levels = new ArrayList<>();
+		int parallel = 100;
+		int size = 5;
+		String brains = "A:B";
+		int time = FakeSimulationConfig.TIME_LIMIT;
+		int distance = 1500;
+		long seed = Rnd.get(1, Integer.MAX_VALUE);
+		try
+		{
+			while (st.hasMoreTokens())
+			{
+				final String token = st.nextToken().toLowerCase(Locale.ROOT);
+				if (token.startsWith("levels="))
+				{
+					for (String level : token.substring(7).split(","))
+					{
+						if (!level.isEmpty())
+						{
+							levels.add(Math.max(1, Math.min(85, Integer.parseInt(level))));
+						}
+					}
+				}
+				else if (token.startsWith("parallel="))
+				{
+					parallel = Math.max(1, Math.min(500, Integer.parseInt(token.substring(9))));
+				}
+				else if (token.startsWith("size="))
+				{
+					size = Integer.parseInt(token.substring(5));
+				}
+				else if (token.startsWith("brains="))
+				{
+					brains = token.substring(7);
+				}
+				else if (token.startsWith("time="))
+				{
+					time = Math.max(10, Integer.parseInt(token.substring(5)));
+				}
+				else if (token.startsWith("distance="))
+				{
+					distance = Math.max(300, Math.min(3000, Integer.parseInt(token.substring(9))));
+				}
+				else if (token.startsWith("seed="))
+				{
+					seed = Long.parseLong(token.substring(5));
+				}
+				else
+				{
+					rounds = Math.max(2, Math.min(1000, Integer.parseInt(token.startsWith("battles=") ? token.substring(8) : token)));
+				}
+			}
+		}
+		catch (NumberFormatException e)
+		{
+			activeChar.sendSysMessage(ARENA_USAGE);
+			return false;
+		}
+		if (levels.isEmpty())
+		{
+			levels.add(activeChar.getLevel());
+		}
+
+		send(activeChar, manager.startArena(activeChar, activeChar.getX(), activeChar.getY(), activeChar.getZ(), activeChar.getHeading(), levels, rounds, parallel, size, brains, time, distance, seed));
 		return true;
 	}
 
@@ -395,6 +478,35 @@ public class AdminSimulation implements IAdminCommandHandler
 		return true;
 	}
 
+	/**
+	 * //SimulationArena [panel [page] | watch [battle] | leave | stop]: the arena's panel, with a button to watch each battle that runs.
+	 */
+	private void arenaPanel(Player activeChar, StringTokenizer st, FakeSimulationManager manager)
+	{
+		final String action = st.hasMoreTokens() ? st.nextToken().toLowerCase(Locale.ROOT) : "panel";
+		final Integer number = nextInt(st);
+		switch (action)
+		{
+			case "watch":
+			{
+				activeChar.sendSysMessage(manager.watchArenaBattle(activeChar, number != null ? number : 0));
+				break;
+			}
+			case "leave":
+			{
+				manager.leaveBattle(activeChar);
+				activeChar.sendSysMessage("Back in the open world.");
+				break;
+			}
+			case "stop":
+			{
+				activeChar.sendSysMessage(manager.stopArena());
+				break;
+			}
+		}
+		manager.showArenaPanel(activeChar, "panel".equals(action) && (number != null) ? number : 1);
+	}
+
 	private static Integer nextInt(StringTokenizer st)
 	{
 		if (!st.hasMoreTokens())
@@ -439,6 +551,8 @@ public class AdminSimulation implements IAdminCommandHandler
 		activeChar.sendSysMessage("//JoinParty <team> [tank|melee|ranged|healer|buffer] [lead] - take the place of a fake player of that team. //LeaveParty - leave it.");
 		activeChar.sendSysMessage("//SimulationTrace - the last AI decisions of your target (and trace it). //SimulationDraw - draw its ranges and targets.");
 		activeChar.sendSysMessage("//Simulate matrix [battles per pair, 20] [parallel=100] [level=85] [builds=...] (or //SimulationMatrix start) - a class-vs-class 1v1 win rate matrix at your place: every battle in its own instance, many at once. status, stop, resume [name], watch, leave, builds.");
+		activeChar.sendSysMessage("//Simulate ab [battles per level, 20] [levels=40,61,80] [parallel=100] [size=5] [brains=A:B] - an A/B test of two brains in party battles at your place: mirrored teams on both sides, every battle in its own instance, many at once.");
+		activeChar.sendSysMessage("//SimulationArena - the arena's panel: progress, wins so far, and every battle that runs with a button to watch it (Next, Leave, Stop).");
 		activeChar.sendSysMessage("//SimulationWeb - a link to the web page: past runs, one-click rerun, start/stop, points, and each character's decisions and path.");
 		activeChar.sendSysMessage("Logs: " + FakeSimulationConfig.LOG_DIR + "/<time>-<seed>/round-NN/ (run.json, events, decisions, positions, anomalies, summary).");
 	}

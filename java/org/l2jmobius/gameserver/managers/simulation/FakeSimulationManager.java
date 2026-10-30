@@ -123,6 +123,11 @@ public class FakeSimulationManager
 	/** Every round running: the one of //Simulate, or the battles of the class matrix. */
 	private final Map<Integer, SimulationRun> _runs = new ConcurrentHashMap<>();
 	private volatile SimulationMatrix _matrix;
+	/** The A/B arena running (party battles of two brains, many at once), {@code null} if none. */
+	private volatile SimulationArena _arena;
+	/** Seconds the bodies of an arena battle stay after it ends, and how many finished battle folders are kept. */
+	private static final int ARENA_CLEANUP_DELAY = 2;
+	private static final int ARENA_KEEP_LOGS = 300;
 	/** Admins in (or waiting to join) a team, by object id. */
 	private final Map<Integer, Guest> _guests = new ConcurrentHashMap<>();
 
@@ -415,7 +420,7 @@ public class FakeSimulationManager
 	public synchronized List<String> simulate(Player admin, int size, int level, boolean mirror, long seed, int rounds, int timeLimit, String brains, boolean swap, List<SimulationPoint> fromPoints, String pointsFrom, String rerunOf)
 	{
 		final List<String> lines = new ArrayList<>();
-		if ((_series != null) || (_run != null) || (_matrix != null))
+		if ((_series != null) || (_run != null) || (_matrix != null) || (_arena != null))
 		{
 			lines.add("A simulation is already running. //SimulationStop ends it.");
 			return lines;
@@ -1110,6 +1115,11 @@ public class FakeSimulationManager
 			endBattle(run);
 			return;
 		}
+		if (run.getArenaBattle() != null)
+		{
+			endArenaBattle(run);
+			return;
+		}
 
 		final Series series = _series;
 		final String text = SimulationSummary.write(run, series != null ? series.settings.rounds() : 1);
@@ -1244,10 +1254,15 @@ public class FakeSimulationManager
 			ThreadPool.schedule(() ->
 			{
 				removeFakes(run, leaving);
-				// A battle of the matrix had an instance of its own.
-				if (run.getBattle() != null)
+				// A battle of the matrix or the arena had an instance of its own.
+				if ((run.getBattle() != null) || (run.getArenaBattle() != null))
 				{
-					InstanceManager.getInstance().destroyInstance(run.getTeams().get(0).getPoint().instanceId());
+					final int instanceId = run.getTeams().get(0).getPoint().instanceId();
+					if (run.getArenaBattle() != null)
+					{
+						moveWatchers(instanceId);
+					}
+					InstanceManager.getInstance().destroyInstance(instanceId);
 				}
 			}, REMOVE_DELAY);
 		}
@@ -1272,6 +1287,11 @@ public class FakeSimulationManager
 		if (run.getBattle() != null)
 		{
 			onBattleFreed(run);
+			return;
+		}
+		if (run.getArenaBattle() != null)
+		{
+			onArenaBattleFreed(run);
 			return;
 		}
 
@@ -1364,6 +1384,10 @@ public class FakeSimulationManager
 		{
 			return stopMatrix();
 		}
+		if (_arena != null)
+		{
+			return stopArena();
+		}
 
 		final Series series = _series;
 		final SimulationRun run = _run;
@@ -1418,6 +1442,10 @@ public class FakeSimulationManager
 		if (_matrix != null)
 		{
 			return getMatrixStatus();
+		}
+		if (_arena != null)
+		{
+			return getArenaStatus();
 		}
 
 		final List<String> lines = new ArrayList<>();
@@ -1608,7 +1636,7 @@ public class FakeSimulationManager
 
 	private String getMatrixRefusal()
 	{
-		if ((_series != null) || (_run != null) || (_matrix != null))
+		if ((_series != null) || (_run != null) || (_matrix != null) || (_arena != null))
 		{
 			return "A simulation is already running. //SimulationStop ends it.";
 		}
@@ -1936,6 +1964,543 @@ public class FakeSimulationManager
 			starter.sendSysMessage("Matrix " + matrix.getName() + (matrix.isStopped() ? " stopped" : " finished") + ": " + matrix.getDone() + "/" + matrix.getTotal() + " battles. " + matrix.getDir().resolve("matrix.csv").toAbsolutePath());
 		}
 		LOGGER.info(getClass().getSimpleName() + ": Matrix " + matrix.getName() + (matrix.isStopped() ? " stopped" : " finished") + ", " + matrix.getDone() + "/" + matrix.getTotal() + " battles.");
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	// A/B arena: party battles of two brains, many at once
+	// ---------------------------------------------------------------------------------------------
+
+	/**
+	 * Starts an A/B arena (see {@link SimulationArena}): {@code rounds} party battles per level, {@code parallel} at once, every battle in an instance of its own at the place given. Both teams of a battle get the same builds, gear and personalities, and every composition is
+	 * fought twice with the brains on swapped sides, so only the brain differs.
+	 * @param admin the admin, {@code null} when started from the web without one
+	 * @param x the middle of the field
+	 * @param y the middle of the field
+	 * @param z the middle of the field
+	 * @param heading the two teams spawn along this heading, facing each other
+	 * @param levels the levels to fight at
+	 * @param rounds battles per level (rounded up to an even number)
+	 * @param parallel battles at once
+	 * @param size the party size (1-9)
+	 * @param brains the two brains ("A:B")
+	 * @param timeLimit the time limit of a battle, in seconds
+	 * @param distance how far apart the two teams spawn
+	 * @param seed the seed
+	 * @return the lines to tell the admin
+	 */
+	public synchronized List<String> startArena(Player admin, int x, int y, int z, int heading, List<Integer> levels, int rounds, int parallel, int size, String brains, int timeLimit, int distance, long seed)
+	{
+		final List<String> lines = new ArrayList<>();
+		final String refusal = getMatrixRefusal();
+		if (refusal != null)
+		{
+			lines.add(refusal);
+			return lines;
+		}
+		if ((size < 1) || (size > SimulationComposer.MAX_SIZE))
+		{
+			lines.add("The party size goes from 1 to " + SimulationComposer.MAX_SIZE + ".");
+			return lines;
+		}
+		if (levels.isEmpty())
+		{
+			lines.add("Which levels? (levels=40,61,80)");
+			return lines;
+		}
+		final String brainList = SimulationSettings.normalizeBrains(brains != null ? brains : "A:B");
+		final String[] letters = brainList != null ? brainList.split(":") : new String[0];
+		if (letters.length != 2)
+		{
+			lines.add("An arena compares two brains: brains=A:B (or A:A, B:B).");
+			return lines;
+		}
+
+		final String name = "arena-" + LocalDateTime.now().format(FOLDER_TIME);
+		final FakeBrain[] pair =
+		{
+			FakeBrain.parse(letters[0]),
+			FakeBrain.parse(letters[1])
+		};
+		final SimulationArena arena = new SimulationArena(name, getArenaRoot().resolve(name), levels, rounds, size, pair, parallel, timeLimit, distance, seed, x, y, GeoEngine.getInstance().getHeight(x, y, z), heading, admin != null ? admin.getObjectId() : 0);
+		_arena = arena;
+		ThreadPool.execute(() -> fillArena(arena));
+
+		final StringBuilder roles = new StringBuilder();
+		for (SimRole role : SimulationComposer.getRoles(size))
+		{
+			roles.append(roles.length() > 0 ? ", " : "").append(role.name().toLowerCase());
+		}
+		final long minutes = Math.round((arena.getTotal() * (FakeSimulationConfig.PREP_TIME + 70 + ARENA_CLEANUP_DELAY)) / (60.0 * parallel));
+		lines.add("Arena " + name + ": " + arena.getTotal() + " battles of " + size + " vs " + size + " (" + roles + "), levels " + levels + ", brains " + pair[0] + " vs " + pair[1] + " (mirrored teams, both sides), " + parallel + " at once, " + timeLimit + " s limit, seed " + seed + ".");
+		lines.add("At " + x + ", " + y + ", " + z + ", one instance per battle, the teams " + distance + " apart. Roughly " + minutes + " min if a fight lasts about a minute.");
+		lines.add("Results: " + arena.getDir().resolve(SimulationArena.RESULTS).toAbsolutePath() + " and summary.txt. //SimulationStatus, //SimulationStop.");
+		return lines;
+	}
+
+	/**
+	 * @return the folder of the A/B arenas, next to the simulation folders (their pruning leaves them alone)
+	 */
+	public static Path getArenaRoot()
+	{
+		return Path.of(FakeSimulationConfig.LOG_DIR + "-arena");
+	}
+
+	/**
+	 * @return the arena running, {@code null} if none
+	 */
+	public SimulationArena getArena()
+	{
+		return _arena;
+	}
+
+	/**
+	 * @return the lines of the arena's status
+	 */
+	public List<String> getArenaStatus()
+	{
+		final SimulationArena arena = _arena;
+		return arena != null ? arena.getStatus() : List.of("No arena is running.");
+	}
+
+	/**
+	 * @return what to tell the admin
+	 */
+	public String stopArena()
+	{
+		final SimulationArena arena = _arena;
+		if (arena == null)
+		{
+			return "No arena is running.";
+		}
+
+		arena.stop();
+		int stopped = 0;
+		for (SimulationRun run : _runs.values())
+		{
+			if ((run.getArenaBattle() != null) && (run.getPhase() != SimulationRun.Phase.ENDED))
+			{
+				end(run, 0, "stopped");
+				stopped++;
+			}
+		}
+		return "Arena " + arena.getName() + " stopped: " + stopped + " battle(s) cut (not counted). " + arena.getDir().resolve(SimulationArena.SUMMARY).toAbsolutePath();
+	}
+
+	/**
+	 * @return the battles of the arena that run now, in start order
+	 */
+	public List<SimulationRun> getArenaRuns()
+	{
+		final List<SimulationRun> battles = new ArrayList<>();
+		for (SimulationRun run : _runs.values())
+		{
+			if ((run.getArenaBattle() != null) && (run.getPhase() != SimulationRun.Phase.ENDED))
+			{
+				battles.add(run);
+			}
+		}
+		battles.sort(Comparator.comparingInt(SimulationRun::getId));
+		return battles;
+	}
+
+	/**
+	 * @param run an arena battle
+	 * @return the instance it fights in
+	 */
+	public static int getInstanceOf(SimulationRun run)
+	{
+		return run.getTeams().get(0).getPoint().instanceId();
+	}
+
+	/**
+	 * Takes {@code admin} into the instance of an arena battle that runs: it sees the fight and the fake players leave it alone. When that battle ends, it goes on to the next one.
+	 * @param admin the admin
+	 * @param runId the battle's run id, 0 for the next battle after the one it watches
+	 * @return what to tell the admin
+	 */
+	public String watchArenaBattle(Player admin, int runId)
+	{
+		final SimulationArena arena = _arena;
+		final List<SimulationRun> battles = getArenaRuns();
+		if ((arena == null) || battles.isEmpty())
+		{
+			leaveBattle(admin);
+			return "No arena battle is running.";
+		}
+
+		SimulationRun watched = null;
+		if (runId > 0)
+		{
+			for (SimulationRun run : battles)
+			{
+				if (run.getId() == runId)
+				{
+					watched = run;
+				}
+			}
+			if (watched == null)
+			{
+				return "That battle is over: refresh the list.";
+			}
+		}
+		else
+		{
+			// The next battle after the one it watches (in start order).
+			watched = battles.get(0);
+			for (SimulationRun run : battles)
+			{
+				if (getInstanceOf(run) > admin.getInstanceId())
+				{
+					watched = run;
+					break;
+				}
+			}
+		}
+		admin.teleToLocation(arena.getX(), arena.getY(), arena.getZ(), admin.getHeading(), getInstanceOf(watched));
+		return "Watching " + describeArenaBattle(arena, watched) + ".";
+	}
+
+	/**
+	 * Takes {@code admin} out of a battle's instance, back to the same place in the open world.
+	 * @param admin the admin
+	 */
+	public void leaveBattle(Player admin)
+	{
+		if (admin.getInstanceId() != 0)
+		{
+			admin.teleToLocation(admin.getX(), admin.getY(), admin.getZ(), admin.getHeading(), 0);
+		}
+	}
+
+	/**
+	 * @param arena the arena
+	 * @param run one of its battles
+	 * @return "battle 12 (level 61, composition 3, A vs B)"
+	 */
+	public static String describeArenaBattle(SimulationArena arena, SimulationRun run)
+	{
+		final SimulationArena.Battle battle = run.getArenaBattle();
+		final FakeBrain[] brains = arena.brainsOf(battle);
+		return "battle " + battle.number() + " (level " + battle.level() + ", composition " + (battle.composition() + 1) + ", team 1 brain " + brains[0].name() + " vs team 2 brain " + brains[1].name() + ")";
+	}
+
+	/**
+	 * The players who watch an arena battle whose instance closes go on to the next battle (otherwise the instance would send them to town).
+	 * @param instanceId the instance that closes
+	 */
+	private void moveWatchers(int instanceId)
+	{
+		final Instance instance = InstanceManager.getInstance().getInstance(instanceId);
+		if (instance == null)
+		{
+			return;
+		}
+		for (Integer objectId : new ArrayList<>(instance.getPlayers()))
+		{
+			final Player player = World.getInstance().getPlayer(objectId);
+			if ((player != null) && (player.getInstanceId() == instanceId))
+			{
+				final String text = watchArenaBattle(player, 0);
+				player.sendMessage("The battle you watched is over. " + text);
+			}
+		}
+	}
+
+	private static final int PANEL_PAGE = 15;
+
+	/**
+	 * Shows {@code admin} the arena's panel: its progress, its wins so far and the battles that run now, each with a button to watch it.
+	 * @param admin the admin
+	 * @param page the page of the battle list, from 1
+	 */
+	public void showArenaPanel(Player admin, int page)
+	{
+		final SimulationArena arena = _arena;
+		final StringBuilder sb = new StringBuilder(8192);
+		sb.append("<html><title>Simulation arena</title><body>");
+		if (arena == null)
+		{
+			sb.append("<font color=\"LEVEL\">No arena is running.</font><br>Start one with //Simulate ab [battles per level] [levels=40,61,80] [parallel=100].<br>");
+			if (admin.getInstanceId() != 0)
+			{
+				sb.append("<br><button value=\"Leave\" action=\"bypass -h admin_simulationarena leave\" width=80 height=21 back=\"L2UI_ct1.button_df\" fore=\"L2UI_ct1.button_df\">");
+			}
+			sb.append("</body></html>");
+			sendHtml(admin, sb.toString());
+			return;
+		}
+
+		final List<String> status = arena.getStatus();
+		sb.append("<font color=\"LEVEL\">Arena ").append(arena.getName()).append("</font><br1>");
+		sb.append(arena.getDone()).append("/").append(arena.getTotal()).append(" done, ").append(arena.getRunning()).append(" running").append(arena.isStopped() ? ", <font color=\"FF6666\">stopping</font>" : "").append("<br1>");
+		// The wins by brain and by side, the first lines of its summary.
+		for (String line : status.subList(1, Math.min(status.size(), 4)))
+		{
+			sb.append("<font color=\"808080\">").append(escape(line)).append("</font><br1>");
+		}
+		sb.append("<br><table width=280><tr>");
+		sb.append("<td><button value=\"Refresh\" action=\"bypass -h admin_simulationarena panel ").append(page).append("\" width=65 height=21 back=\"L2UI_ct1.button_df\" fore=\"L2UI_ct1.button_df\"></td>");
+		sb.append("<td><button value=\"Next\" action=\"bypass -h admin_simulationarena watch\" width=65 height=21 back=\"L2UI_ct1.button_df\" fore=\"L2UI_ct1.button_df\"></td>");
+		sb.append("<td><button value=\"Leave\" action=\"bypass -h admin_simulationarena leave\" width=65 height=21 back=\"L2UI_ct1.button_df\" fore=\"L2UI_ct1.button_df\"></td>");
+		sb.append("<td><button value=\"Stop\" action=\"bypass -h admin_simulationarena stop\" width=65 height=21 back=\"L2UI_ct1.button_df\" fore=\"L2UI_ct1.button_df\"></td>");
+		sb.append("</tr></table><br>");
+
+		final List<SimulationRun> battles = getArenaRuns();
+		final int pages = Math.max(1, (battles.size() + PANEL_PAGE - 1) / PANEL_PAGE);
+		final int shown = Math.max(1, Math.min(pages, page));
+		sb.append("<table width=280><tr><td width=40><font color=\"LEVEL\">#</font></td><td width=25>Lv</td><td width=45>Brains</td><td width=55>Alive</td><td width=45>Time</td><td width=70></td></tr>");
+		for (SimulationRun run : battles.subList((shown - 1) * PANEL_PAGE, Math.min(battles.size(), shown * PANEL_PAGE)))
+		{
+			final SimulationArena.Battle battle = run.getArenaBattle();
+			final FakeBrain[] brains = arena.brainsOf(battle);
+			final boolean watching = admin.getInstanceId() == getInstanceOf(run);
+			final StringBuilder alive = new StringBuilder();
+			for (SimulationTeam team : run.getTeams())
+			{
+				int count = 0;
+				for (SimulationMember member : team.getMembers())
+				{
+					if (team.isActive(member) && member.isAlive())
+					{
+						count++;
+					}
+				}
+				alive.append(alive.length() > 0 ? "-" : "").append(count);
+			}
+			final long fight = run.getFightStart() > 0 ? (run.time() - run.getFightStart()) / 1000 : -1;
+			sb.append("<tr><td>").append(watching ? "<font color=\"00FF00\">" : "").append(battle.number()).append(watching ? "</font>" : "").append("</td>");
+			sb.append("<td>").append(battle.level()).append("</td>");
+			sb.append("<td>").append(brains[0].name()).append(":").append(brains[1].name()).append("</td>");
+			sb.append("<td>").append(alive).append("</td>");
+			sb.append("<td>").append(fight >= 0 ? fight + "s" : "prep").append("</td>");
+			sb.append("<td><button value=\"Watch\" action=\"bypass -h admin_simulationarena watch ").append(run.getId()).append("\" width=60 height=18 back=\"L2UI_ct1.button_df\" fore=\"L2UI_ct1.button_df\"></td></tr>");
+		}
+		sb.append("</table>");
+		if (pages > 1)
+		{
+			sb.append("<br><center>");
+			for (int i = 1; i <= pages; i++)
+			{
+				sb.append(i == shown ? "<font color=\"LEVEL\">" + i + "</font>" : "<a action=\"bypass -h admin_simulationarena panel " + i + "\">" + i + "</a>").append(" ");
+			}
+			sb.append("</center>");
+		}
+		sb.append("<br><font color=\"808080\">Alive: team 1 - team 2. Brains: team 1 : team 2. When the battle you watch ends, you go on to the next one.</font></body></html>");
+		sendHtml(admin, sb.toString());
+	}
+
+	private static String escape(String text)
+	{
+		return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+	}
+
+	private static void sendHtml(Player player, String text)
+	{
+		final NpcHtmlMessage html = new NpcHtmlMessage(0);
+		html.setHtml(text);
+		player.sendPacket(html);
+	}
+
+	/**
+	 * Starts battles until {@link SimulationArena#getParallel} run.
+	 */
+	private void fillArena(SimulationArena arena)
+	{
+		while (_arena == arena)
+		{
+			final SimulationArena.Battle battle = arena.next();
+			if (battle == null)
+			{
+				return;
+			}
+			if (!startArenaBattle(arena, battle))
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": Could not start arena battle " + battle.number() + ": skipped.");
+				if (arena.onFreed(null, ARENA_KEEP_LOGS))
+				{
+					finishArena(arena);
+					return;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Spawns a battle of the arena in a new instance: two parties of the same builds, gear and personalities, each with its brain.
+	 * @return {@code true} if it started
+	 */
+	private boolean startArenaBattle(SimulationArena arena, SimulationArena.Battle battle)
+	{
+		final List<SimRole> roles = SimulationComposer.getRoles(arena.getSize());
+		final Random random = new Random(battle.seed());
+		final FakePlayerPvpBuild[] builds = new FakePlayerPvpBuild[roles.size()];
+		for (int i = 0; i < roles.size(); i++)
+		{
+			builds[i] = SimulationComposer.pick(roles.get(i), random);
+			if (builds[i] == null)
+			{
+				return false;
+			}
+		}
+
+		final Instance instance = InstanceManager.getInstance().createDynamicInstance(0);
+		final int instanceId = instance.getId();
+		instance.setExitLoc(new Location(arena.getX(), arena.getY(), arena.getZ()));
+
+		final FakeBrain[] brains = arena.brainsOf(battle);
+		final int runId = RUN_IDS.incrementAndGet();
+		final SimulationSettings settings = new SimulationSettings(arena.getSize(), battle.level(), true, battle.seed(), 1, arena.getTimeLimit(), arena.getStarterId(), brains[0].name() + ":" + brains[1].name(), false);
+		final SimulationLog log = new SimulationLog(arena.getDir().resolve("battles").resolve(String.format("%06d-L%d-c%d-s%d", battle.number(), battle.level(), battle.composition(), battle.side())));
+		final SimulationRun run = new SimulationRun(runId, battle.number(), settings, log);
+		run.setArenaBattle(battle);
+		addRun(run);
+
+		// The two points, along the way the field faces, facing each other.
+		final double angle = Math.toRadians(arena.getHeading() / 182.044444444);
+		final int half = arena.getDistance() / 2;
+		final List<Npc> spawned = new ArrayList<>();
+		for (int t = 0; t < 2; t++)
+		{
+			final int teamId = t + 1;
+			final int sign = t == 0 ? -1 : 1;
+			final int px = arena.getX() + (int) (Math.cos(angle) * half * sign);
+			final int py = arena.getY() + (int) (Math.sin(angle) * half * sign);
+			final Location spot = GeoEngine.getInstance().getValidLocation(arena.getX(), arena.getY(), arena.getZ(), px, py, arena.getZ(), instanceId);
+			final int heading = (arena.getHeading() + (t == 0 ? 0 : 32768)) & 0xFFFF;
+			final SimulationPoint point = new SimulationPoint(teamId, spot.getX(), spot.getY(), spot.getZ(), heading, instanceId);
+			final SimulationTeam team = new SimulationTeam(teamId, point, roles, brains[t]);
+			run.getTeams().add(team);
+
+			final List<Npc> fakes = new ArrayList<>();
+			for (int i = 0; i < roles.size(); i++)
+			{
+				// The same seed in both teams: the same gear and personality (the names differ by team).
+				final long seed = (battle.seed() * 31) + i;
+				final Location location = getSpawnLocation(point, i, roles.size());
+				final Npc fake = FakePlayerPvpManager.getInstance().spawnSimulant(builds[i], battle.level(), "Team " + teamId, seed, runId, teamId, team.getBrain(), location.getX(), location.getY(), location.getZ(), instanceId);
+				if (fake == null)
+				{
+					for (SimulationTeam made : run.getTeams())
+					{
+						if (made.getParty() != null)
+						{
+							FakePartyManager.getInstance().disbandSimulationParty(made.getParty());
+						}
+					}
+					spawned.addAll(fakes);
+					removeFakes(run, spawned);
+					InstanceManager.getInstance().destroyInstance(instanceId);
+					log.close();
+					removeRun(run);
+					return false;
+				}
+				fakes.add(fake);
+				run.addMember(team, new SimulationMember(fake, teamId, roles.get(i), builds[i].getName(), false, seed, run.time()));
+			}
+			spawned.addAll(fakes);
+			team.setParty(FakePartyManager.getInstance().createSimulationParty(fakes, team.getBrain()));
+		}
+
+		final JsonLine json = new JsonLine();
+		json.put("arena", arena.getName()).put("battle", battle.number()).put("level", battle.level()).put("composition", battle.composition()).put("side", battle.side()).put("runId", runId).put("instance", instanceId);
+		json.put("start", LocalDateTime.now().toString()).put("size", arena.getSize()).put("seed", battle.seed()).put("brains", settings.brains()).put("timeLimit", arena.getTimeLimit()).put("distance", arena.getDistance());
+		final Map<String, String> teamBrains = new LinkedHashMap<>();
+		for (SimulationTeam team : run.getTeams())
+		{
+			teamBrains.put(String.valueOf(team.getId()), team.getBrain().name());
+		}
+		json.put("teamBrains", teamBrains);
+		final List<JsonLine> members = new ArrayList<>();
+		for (SimulationMember member : run.getMembers().values())
+		{
+			members.add(describe(member));
+		}
+		json.put("members", members);
+		log.writeFile("run.json", json.toString());
+		log.write(SimulationLog.EVENTS, new JsonLine().put("t", run.time()).put("type", "round_start").put("battle", battle.number()).put("runId", runId));
+
+		keepRegionsAwake(run);
+		// Their AI starts now: waking a region doesn't start the AI in it (issue #24).
+		for (SimulationMember member : run.getMembers().values())
+		{
+			if (member.getCreature() instanceof Attackable fake)
+			{
+				fake.getAI().setIntention(Intention.ACTIVE);
+			}
+		}
+		run.setTask(ThreadPool.scheduleAtFixedRate(() -> tick(run), FakeSimulationConfig.POSITION_INTERVAL, FakeSimulationConfig.POSITION_INTERVAL));
+		return true;
+	}
+
+	/**
+	 * A battle of the arena ended: its result is written, and it is cleaned up a moment later.
+	 */
+	private void endArenaBattle(SimulationRun run)
+	{
+		final SimulationArena arena = _arena;
+		final SimulationArena.Battle battle = run.getArenaBattle();
+		try
+		{
+			SimulationSummary.write(run, arena != null ? arena.getTotal() : battle.number());
+			if (arena != null)
+			{
+				// The first death: its team and role.
+				SimulationMember first = null;
+				for (SimulationMember member : run.getMembers().values())
+				{
+					if ((member.getDiedAt() >= 0) && ((first == null) || (member.getDiedAt() < first.getDiedAt())))
+					{
+						first = member;
+					}
+				}
+				final SimulationTeam team1 = run.getTeam(1);
+				final SimulationTeam team2 = run.getTeam(2);
+				arena.record(battle, run.getWinner(), run.getEndReason(), run.getFightStart() > 0 ? run.getEnd() - run.getFightStart() : 0, run.getDecidedAt() > 0 ? run.getDecidedAt() - run.getFightStart() : 0, team1 != null ? team1.getHealthLeft() : 0, team2 != null ? team2.getHealthLeft() : 0, first != null ? first.getTeamId() : 0, first != null ? first.getRole().name() : null);
+			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem while recording arena battle " + battle.number() + ".", e);
+		}
+		ThreadPool.schedule(() -> cleanup(run), ARENA_CLEANUP_DELAY * 1000L);
+	}
+
+	/**
+	 * A battle of the arena was cleaned up: the next one takes its slot, or the arena is over.
+	 */
+	private void onArenaBattleFreed(SimulationRun run)
+	{
+		final SimulationArena arena = _arena;
+		if (arena == null)
+		{
+			return;
+		}
+		if (arena.onFreed(run.getLog().getDir(), ARENA_KEEP_LOGS))
+		{
+			finishArena(arena);
+			return;
+		}
+		fillArena(arena);
+	}
+
+	private void finishArena(SimulationArena arena)
+	{
+		synchronized (this)
+		{
+			if (_arena == arena)
+			{
+				_arena = null;
+			}
+		}
+
+		final List<String> lines = arena.writeSummary();
+		final Player starter = World.getInstance().getPlayer(arena.getStarterId());
+		if (starter != null)
+		{
+			showText(starter, "Arena " + arena.getName(), String.join("\n", lines));
+			starter.sendSysMessage("Arena " + arena.getName() + (arena.isStopped() ? " stopped" : " finished") + ": " + arena.getDone() + "/" + arena.getTotal() + " battles. " + arena.getDir().resolve(SimulationArena.SUMMARY).toAbsolutePath());
+		}
+		LOGGER.info(getClass().getSimpleName() + ": Arena " + arena.getName() + (arena.isStopped() ? " stopped" : " finished") + ", " + arena.getDone() + "/" + arena.getTotal() + " battles. " + String.join(" | ", lines));
 	}
 
 	// ---------------------------------------------------------------------------------------------

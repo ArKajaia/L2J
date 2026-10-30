@@ -60,6 +60,7 @@ import org.l2jmobius.gameserver.managers.ItemManager;
 import org.l2jmobius.gameserver.managers.PvpRankingManager;
 import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
 import org.l2jmobius.gameserver.managers.ShadowRaidManager;
+import org.l2jmobius.gameserver.managers.TeamEventRules;
 import org.l2jmobius.gameserver.managers.TownManager;
 import org.l2jmobius.gameserver.managers.WalkingManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
@@ -1260,9 +1261,12 @@ public class Npc extends Creature
 			
 			// A kill in a clan war (both clans declared it) is no PK, and moves clan reputation.
 			final boolean clanWar = FakeClanManager.getInstance().onFakeKilled(this, player);
+
+			// A Conquest fighter killed by an enemy: a PvP, never a PK, whatever its flag.
+			final boolean eventKill = TeamEventRules.isConquestFighter(this) && TeamEventRules.isConquestFighter(player);
 			
 			// Not flagged and no karma: a PK. (Karma is positive here, "< 0" could never be true.) Never in a PvP spot, where everyone is fair game, and never a Shadow Raider, an outlaw, or a rival after a Resonant monster's soul.
-			if (!clanWar && isScriptValue(0) && (getKarma() <= 0) && !isInsideZone(ZoneId.PVP_SPOT) && !ShadowRaidManager.isRaider(this) && !FakeJoinerManager.getInstance().isRival(this))
+			if (!clanWar && !eventKill && isScriptValue(0) && (getKarma() <= 0) && !isInsideZone(ZoneId.PVP_SPOT) && !ShadowRaidManager.isRaider(this) && !FakeJoinerManager.getInstance().isRival(this))
 			{
 				if (FakePlayersConfig.FAKE_PLAYER_KILL_KARMA)
 				{
@@ -1299,7 +1303,7 @@ public class Npc extends Creature
 				}
 			}
 			// No PvP credit for killing a fake player far below the killer's level.
-			else if (FakePlayersConfig.FAKE_PLAYER_KILL_PVP && ((FakePlayersConfig.FAKE_PLAYER_KILL_PVP_LEVEL_GAP <= 0) || ((player.getLevel() - getLevel()) < FakePlayersConfig.FAKE_PLAYER_KILL_PVP_LEVEL_GAP)))
+			else if (eventKill || (FakePlayersConfig.FAKE_PLAYER_KILL_PVP && ((FakePlayersConfig.FAKE_PLAYER_KILL_PVP_LEVEL_GAP <= 0) || ((player.getLevel() - getLevel()) < FakePlayersConfig.FAKE_PLAYER_KILL_PVP_LEVEL_GAP))))
 			{
 				player.setPvpKills(player.getPvpKills() + 1);
 				player.broadcastUserInfo();

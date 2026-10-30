@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.l2jmobius.gameserver.ai.FakePartyBrain;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -43,6 +44,8 @@ import org.l2jmobius.gameserver.model.skill.Skill;
 public class FakePlayerParty
 {
 	private final Player _host;
+	/** The party brain its fake players share (their AI's party tier). */
+	private final FakePartyBrain _brain = new FakePartyBrain(this);
 	private final List<Npc> _fakes = new CopyOnWriteArrayList<>();
 	// A team of a party-vs-party simulation (see FakeSimulationManager): it stays together until the run ends, with an admin that joined it as a guest member, who may lead it.
 	private volatile boolean _simulation;
@@ -65,6 +68,14 @@ public class FakePlayerParty
 	public FakePlayerParty(Player host)
 	{
 		_host = host;
+	}
+	
+	/**
+	 * @return the party brain its fake players share
+	 */
+	public FakePartyBrain getBrain()
+	{
+		return _brain;
 	}
 	
 	/**

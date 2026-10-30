@@ -25,8 +25,8 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 /**
  * Which AI a fake player of a party-vs-party simulation runs (see {@code FakeSimulationManager}), so a change to the AI can be tested against the current one before it replaces it. See docs/fake-player-simulation-issues.md.
  * <ul>
- * <li>{@link #A}: the current AI ({@link FakePlayerPvpAI}, {@code FakePlayerParty}), which every roaming fake player runs.</li>
- * <li>{@link #B}: the experimental AI ({@link FakePlayerPvpAIExperimental}, {@code FakePlayerPartyExperimental}), where changes go first.</li>
+ * <li>{@link #A}: the current AI, which every roaming fake player runs: a party brain shared by the party ({@link FakePartyBrain}, held by {@code FakePlayerParty}) and a player brain for each member ({@link FakePlayerPvpAI}).</li>
+ * <li>{@link #B}: the experimental AI, where changes go first, with the same two tiers: {@link FakePartyBrainExperimental} (held by {@code FakePlayerPartyExperimental}) and {@link FakePlayerPvpAIExperimental}.</li>
  * </ul>
  */
 public enum FakeBrain

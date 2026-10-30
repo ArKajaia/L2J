@@ -60,6 +60,7 @@ public class SimulationRun
 	private volatile ScheduledFuture<?> _task;
 	/** The battle of a class matrix this round plays, {@code null} for a round of //Simulate. */
 	private volatile SimulationMatrix.Battle _battle;
+	private volatile SimulationArena.Battle _arenaBattle;
 
 	public SimulationRun(int id, int round, SimulationSettings settings, SimulationLog log)
 	{
@@ -284,6 +285,19 @@ public class SimulationRun
 	public void setBattle(SimulationMatrix.Battle battle)
 	{
 		_battle = battle;
+	}
+
+	/**
+	 * @return the A/B arena battle this round is (see {@link SimulationArena}), {@code null} for a round of //Simulate or the matrix
+	 */
+	public SimulationArena.Battle getArenaBattle()
+	{
+		return _arenaBattle;
+	}
+
+	public void setArenaBattle(SimulationArena.Battle battle)
+	{
+		_arenaBattle = battle;
 	}
 
 	public SimulationTeam getTeamOf(SimulationMember member)

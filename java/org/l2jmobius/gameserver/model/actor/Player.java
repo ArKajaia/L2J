@@ -138,7 +138,9 @@ import org.l2jmobius.gameserver.managers.ScriptManager;
 import org.l2jmobius.gameserver.managers.BestiaryManager;
 import org.l2jmobius.gameserver.managers.SessionStatsManager;
 import org.l2jmobius.gameserver.managers.SiegeManager;
+import org.l2jmobius.gameserver.managers.TeamEventRules;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
+import org.l2jmobius.gameserver.managers.conquest.ConquestRegistration;
 import org.l2jmobius.gameserver.managers.TerritoryWarManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.Location;
@@ -5826,6 +5828,16 @@ public class Player extends Playable
 			return;
 		}
 		
+		// Conquest: killing an enemy of the match is a PvP, never a PK (its instance is a PvP zone, which counts nothing otherwise).
+		if (TeamEventRules.isConquestFighter(this) && TeamEventRules.isConquestFighter(killedPlayer))
+		{
+			if (TeamEventRules.isEnemy(this, killedPlayer))
+			{
+				increasePvpKills(target);
+			}
+			return;
+		}
+
 		// addExpAndSp nothing when in PVP zone.
 		if (isInsideZone(ZoneId.PVP) || target.isInsideZone(ZoneId.PVP))
 		{
@@ -8989,10 +9001,10 @@ public class Player extends Playable
 			return false;
 		}
 		
-		// Team vs Team: the other team (its players, fake players and summons), while the fight is on, without Ctrl like the faction system's enemies; never the own team, nor anyone outside the match.
-		if (TeamVsTeamManager.ACTIVE && (TeamVsTeamManager.getRelation(this, attacker) != TeamVsTeamManager.Relation.NONE))
+		// Team vs Team and Conquest: the other team (its players, fake players and summons), while the fight is on, without Ctrl like the faction system's enemies; never the own team, nor anyone outside the match.
+		if (TeamEventRules.isInvolved(this, attacker))
 		{
-			return TeamVsTeamManager.isEnemy(attacker, this);
+			return TeamEventRules.isEnemy(attacker, this);
 		}
 		
 		// Check if the attacker is a Monster
@@ -9444,8 +9456,8 @@ public class Player extends Playable
 				return false;
 			}
 			
-			// Team vs Team: not on the own team, even with Ctrl, and nobody before or after the fight.
-			if ((target != this) && (target instanceof Creature) && TeamVsTeamManager.isForbidden(this, (Creature) target))
+			// Team vs Team and Conquest: not on the own team, even with Ctrl, and nobody before or after the fight.
+			if ((target != this) && (target instanceof Creature) && TeamEventRules.isForbidden(this, (Creature) target))
 			{
 				sendPacket(SystemMessageId.INVALID_TARGET);
 				sendPacket(ActionFailed.STATIC_PACKET);
@@ -12022,6 +12034,16 @@ public class Player extends Playable
 		try
 		{
 			TeamVsTeamManager.getInstance().onLogout(this);
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.SEVERE, "deleteMe()", e);
+		}
+
+		// Conquest: the same.
+		try
+		{
+			ConquestRegistration.getInstance().onLogout(this);
 		}
 		catch (Exception e)
 		{

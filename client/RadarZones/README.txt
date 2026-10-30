@@ -61,3 +61,22 @@ rejected whole and changes nothing.
 
 On login the server sends Clear and then every published zone, so a relog
 or a character switch never keeps stale zones.
+
+
+0x19  Ex2RadarZoneProgress  - a sweep over a zone (a capture filling up)
+-------------------------------------------------------------------------
+  int   zoneId            a zone already shown with Ex2RadarZoneShow (0x05);
+                          an id the client does not hold is ignored
+  int   sweepArgb         the sweep's color, ARGB
+  short fraction          0 to 1000 of the zone swept; 0 takes the sweep off
+  short rate              per-mille per second, signed: until the next
+                          packet the client draws fraction + rate * dt,
+                          clamped to 0..1000
+  byte  flags             1 = contested: the border pulses and the zone is
+                          hatched; no other bits
+
+The sweep belongs to its zone: Ex2RadarZoneHide takes it off with the zone.
+A zone shown again (0x05, same id) may drop its sweep; the server sends the
+sweep again right after re-showing a zone.
+The first user is Conquest (client/TeamEvents/PROTOCOL.txt), which sends a
+capture's progress toward a team in that team's color.
