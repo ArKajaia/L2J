@@ -50,6 +50,7 @@ RIM_BASE = 39000  # rim ids: 39000 + sector * 100 (+0 gate, +1.. spur, +10.. arc
 BRANCH_STEP = 200  # spacing of the nodes on a branch off the outer edge (see place_branches)
 REGION_BASE = 40000  # region ids: 40000 + region * 1000 + local id, region i sitting beyond the rim between sectors i and i+1
 ROAD_IDS = range(33000, 34000)  # "Lifeblood Trail" nodes lengthening a hybrid's long links: spaced evenly along the link they split
+BRIDGE_IDS = range(38000, 38100)  # "Crossing" nodes from a hybrid's outer edge to the Outer Rim road (see place_bridges); outside the hybrids' id blocks so the rings never take them in
 
 RING_RADIUS = 105  # radius of a notable cluster's ring
 RING_STEP = 70  # degrees between consecutive nodes on a ring
@@ -602,11 +603,22 @@ def layout(nodes):
 				nodes[base + local].pos = add((u[0] * (r + du), u[1] * (r + du)), v, dv)
 				nodes[base + local].orbit = None
 
+	place_bridges(nodes, adj)
 	place_branches(nodes, adj)
 	
 	missing = [i for i, n in nodes.items() if n.pos is None]
 	assert not missing, f"nodes without a position: {missing}"
 	return adj
+
+
+def place_bridges(nodes, adj):
+	"""Bridge nodes (BRIDGE_IDS: a hybrid's outer edge to the Outer Rim road) sit halfway between the two nodes they join."""
+	for i in sorted(nodes):
+		ends = [j for j in adj[i] if nodes[j].pos is not None]
+		if (i in BRIDGE_IDS) and (nodes[i].pos is None) and (len(ends) == 2):
+			a, b = nodes[ends[0]].pos, nodes[ends[1]].pos
+			nodes[i].pos = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+			nodes[i].orbit = None
 
 
 def place_branches(nodes, adj):
