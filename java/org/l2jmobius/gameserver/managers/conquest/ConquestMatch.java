@@ -27,10 +27,13 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
 import org.l2jmobius.gameserver.config.custom.ConquestConfig;
 import org.l2jmobius.gameserver.model.WorldRegion;
+import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
 import org.l2jmobius.gameserver.model.conquest.ConquestMap;
 import org.l2jmobius.gameserver.model.conquest.ConquestPoint;
@@ -77,7 +80,11 @@ public class ConquestMatch
 	private final ConquestNavGrid _nav;
 	private final Deque<LogEntry> _log = new ArrayDeque<>();
 	final List<WorldRegion> _keptRegions = new ArrayList<>();
+	/** The GMs watching it ({@code //conquest watch}): object ids. They get its event strip and radar zones too. */
+	final Set<Integer> _watchers = ConcurrentHashMap.newKeySet();
 	volatile Phase _phase = Phase.PREP;
+	/** Players registered for it (see {@link ConquestRegistration}): it ends when they have all left. */
+	volatile boolean _withPlayers;
 	volatile long _prepEnd;
 	volatile long _fightStart;
 	volatile long _fightEnd;
@@ -90,6 +97,7 @@ public class ConquestMatch
 	volatile long _lastCommandNanos;
 	ScheduledFuture<?> _task;
 	ScheduledFuture<?> _spawnTask;
+	ScheduledFuture<?> _commandTask;
 	// The living fighters of each team by grid cell, rebuilt each tick.
 	private volatile Map<Long, List<ConquestFighter>> _blueGrid = Collections.emptyMap();
 	private volatile Map<Long, List<ConquestFighter>> _redGrid = Collections.emptyMap();
@@ -102,8 +110,8 @@ public class ConquestMatch
 		_perTeam = perTeam;
 		_minLevel = minLevel;
 		_maxLevel = maxLevel;
-		_blue = new ConquestTeam(Team.BLUE, "Blue", ConquestConfig.BLUE_NAME_COLOR, map.getPoints(ConquestPointType.BLUE), blueCommander);
-		_red = new ConquestTeam(Team.RED, "Red", ConquestConfig.RED_NAME_COLOR, map.getPoints(ConquestPointType.RED), redCommander);
+		_blue = new ConquestTeam(this, Team.BLUE, "Blue", ConquestConfig.BLUE_NAME_COLOR, map.getPoints(ConquestPointType.BLUE), blueCommander);
+		_red = new ConquestTeam(this, Team.RED, "Red", ConquestConfig.RED_NAME_COLOR, map.getPoints(ConquestPointType.RED), redCommander);
 		for (ConquestPoint point : map.getPoints(ConquestPointType.CAPTURE))
 		{
 			_captures.add(new ConquestCapture(point));
@@ -245,6 +253,30 @@ public class ConquestMatch
 		return (int) Math.max(0, (_fightEnd - _fightStart) / 1000);
 	}
 
+	/**
+	 * @return {@code true} if players registered for it, {@code false} for fake players only (a GM's match)
+	 */
+	public boolean hasPlayers()
+	{
+		return _withPlayers;
+	}
+
+	/**
+	 * @return the players fighting in it now
+	 */
+	public List<Player> getPlayers()
+	{
+		final List<Player> players = new ArrayList<>();
+		for (ConquestFighter fighter : getAllFighters())
+		{
+			if (fighter.isPlayer())
+			{
+				players.add(fighter.getCreature().asPlayer());
+			}
+		}
+		return players;
+	}
+
 	public List<ConquestFighter> getAllFighters()
 	{
 		final List<ConquestFighter> all = new ArrayList<>(_blue.getFighters());
@@ -306,7 +338,7 @@ public class ConquestMatch
 		{
 			if (fighter.isAlive())
 			{
-				grid.computeIfAbsent(key(fighter.getNpc().getX(), fighter.getNpc().getY()), _ -> new ArrayList<>()).add(fighter);
+				grid.computeIfAbsent(key(fighter.getCreature().getX(), fighter.getCreature().getY()), _ -> new ArrayList<>()).add(fighter);
 			}
 		}
 		return grid;
@@ -337,7 +369,7 @@ public class ConquestMatch
 				}
 				for (ConquestFighter fighter : cell)
 				{
-					if (Math.hypot(fighter.getNpc().getX() - x, fighter.getNpc().getY() - y) <= range)
+					if (Math.hypot(fighter.getCreature().getX() - x, fighter.getCreature().getY() - y) <= range)
 					{
 						near.add(fighter);
 					}

@@ -1,0 +1,117 @@
+Team Events - client event strip protocol
+=========================================
+
+While a player fights in a team event (TvT, Conquest) the client shows a
+strip at the top of its combat log window: the phase, the time left, both
+teams' scores and, for Conquest, the capture points. The server sends the
+whole state whenever it changes; the client counts the time down by itself
+between packets. The match's zones (bases, capture points, the edge of the
+battlefield) go to the radar with the radar zone packets
+(client/RadarZones/README.txt, 0x05 / 0x06 / 0x19).
+
+A GM watching a match (//tvt watch; //conquest watch or the Conquest web
+page's Watch) gets the same strip and zones with myTeam 0 (TvT: both teams'
+bases in their own colors), until a teleport out of the match's instance
+(//conquest leave, //instance, ...), a logout or the match's end closes them.
+
+Server side: network/serverpackets/Ex2TeamEventState, Ex2TeamEventClose,
+Ex2RadarZoneProgress; managers/TeamEventHud (zone ids, colors, close);
+sent by managers/TeamVsTeamManager and managers/conquest/ConquestManager.
+
+Framing
+-------
+EX2 server packets start with
+  byte  0xFE
+  short 0xFE
+  int   sub id
+(ServerPackets.writeId.)
+
+Types: byte = 1 byte, short = 2, int = 4, little endian like every L2
+packet. Strings are UTF-16LE with a terminating 0.
+
+
+0x17  Ex2TeamEventState  - the event's state, shows the strip
+--------------------------------------------------------------
+  byte  mode              1 TvT, 2 Conquest
+  byte  phase             0 preparation, 1 fight, 2 ended
+  byte  myTeam            the recipient's team: 0 none, 1 Blue, 2 Red
+  byte  result            0 none; once ended: 1 Blue won, 2 Red won,
+                          3 draw, 4 no result (stopped, every player left)
+  int   secondsLeft       time left in the current phase (preparation or
+                          fight); 0 once ended
+  int   blueScore
+  int   redScore
+  int   maxScore          Conquest: the score a team starts with
+                          (ConquestStartScore, 1000); TvT: 0 (kills, no cap)
+  int   blueDrain         score Blue loses per second (Conquest, during the
+  int   redDrain          fight; 0 otherwise and for TvT)
+  byte  pointCount        0 to 16 (0 for TvT)
+  pointCount x {
+    str   name            at most 8 characters
+    byte  owner           0 nobody, 1 Blue, 2 Red
+    short progress        -1000 (Red) .. 1000 (Blue), 0 neutral
+    short rate            how far the progress moved in the last second,
+                          same units and sign as progress
+    byte  flags           1 = contested: both teams are on it and neither
+                          can move it (a stalemate, or no majority)
+  }
+
+When it is sent
+  TvT       on entering the match (preparation), when the fight starts,
+            after every kill that scores, and once at the end (phase 2
+            with the result).
+  Conquest  on entering the match, when the fight starts, every second of
+            the fight (after the capture points and the score drain), and
+            once at the end.
+  The stock TIME_REMAINING countdown (ExSendUIEvent) and TvT's score line
+  on the screen (ExShowScreenMessage "Blue X : Y Red") are no longer sent:
+  this packet replaces them. Text announcements stay.
+
+A Conquest point holds its owner until the other team has pushed the
+progress down to neutral; it goes over to a team once the progress reaches
+that team's end (1000 Blue, -1000 Red).
+
+
+0x18  Ex2TeamEventClose  - the player left the event, hide the strip
+---------------------------------------------------------------------
+  (no body)
+
+Sent when the player leaves the match (its end and return home, logging
+off, leaving the instance), together with an Ex2RadarZoneHide for each of
+the match's zones. Never Ex2RadarZoneClear: the hot zones stay.
+
+
+Radar zones of a match
+----------------------
+Sent to the match's players only, each by itself, under ids out of the
+range of the server's zones:
+
+  id = 0x7E000000 | (kind << 8) | index
+  kind 1  capture point     (Conquest)     index = the point's number
+  kind 2  Blue spawn / base                index = the spawn point
+  kind 3  Red spawn / base                 index = the spawn point
+  kind 4  the battlefield's edge           index 0
+
+Colors (ARGB):
+  Blue          fill 0x403C8CFF  border 0xE070AAFF
+  Red           fill 0x40E8483C  border 0xE0FF7060
+  neutral       fill 0x30A0A0A0  border 0xA0C8C8C8
+  spawn points  the team's color with fill alpha 0x20, no flags
+  edge          fill 0 (border only), border 0x90E0C080
+  sweep         Blue 0x803C8CFF, Red 0x80E8483C
+
+Conquest: the capture points (cylinders of the point's radius, z +-
+ConquestCaptureHeight) in their owner's color, re-sent when a point changes
+hands; both teams' spawn points (radius + ConquestBaseRadius, z +- 300) in
+their team's color; the map's area as the edge (z +- 3000). Each capture's
+progress goes as an Ex2RadarZoneProgress sweep: the color of the team the
+progress lies toward, fraction = |progress|, rate = how fast |progress|
+moves (a red push on a blue point is a shrinking blue sweep), flags 1 when
+contested. A sweep is sent again only when its color, rate or flags change,
+or it drifted from what the client extrapolates; at the end every sweep
+stops (rate 0).
+
+TvT: the player's own team's bases (TvTBaseRadius, z +- 300) in the team's
+spawn color, the other team's in red, striped and pulsing (flags 3: nobody
+may enter them); the edge from TvTArea, or the box around every spawn point
+2000 wider.

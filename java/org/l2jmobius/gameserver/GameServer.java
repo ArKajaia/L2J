@@ -173,6 +173,7 @@ import org.l2jmobius.gameserver.managers.SiegeManager;
 import org.l2jmobius.gameserver.managers.TerritoryWarManager;
 import org.l2jmobius.gameserver.managers.TownLifeManager;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
+import org.l2jmobius.gameserver.managers.conquest.ConquestRegistration;
 import org.l2jmobius.gameserver.managers.VillageSiegeManager;
 import org.l2jmobius.gameserver.managers.WalkingManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
@@ -417,6 +418,7 @@ public class GameServer
 		VillageSiegeManager.getInstance();
 		TeamVsTeamManager.getInstance();
 		ConquestMapData.getInstance();
+		ConquestRegistration.getInstance();
 		
 		printSection("Siege");
 		SiegeManager.getInstance().getSieges();

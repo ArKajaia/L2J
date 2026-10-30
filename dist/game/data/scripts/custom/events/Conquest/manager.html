@@ -1,0 +1,49 @@
+<html>
+	<title>Conquest Event</title>
+	<body>
+		<center>
+			<table border=0 cellpadding=0 cellspacing=0 width=290 background=L2UI_CH3.refinewnd_back_Pattern>
+				<tr>
+					<td valign=top align=center>
+						<table border=0 cellpadding=0 cellspacing=0>
+							<tr>
+								<td align=center fixwidth=290>
+									<font name="hs15" color="CDB67F">Conquest</font><br1>
+									<img src="L2UI_CH3.herotower_deco" width=256 height=32>
+								</td>
+							</tr>
+						</table>
+						<table width=270 border=0>
+							<tr>
+								<td align=center><font color="LEVEL">%message%</font></td>
+							</tr>
+							<tr>
+								<td><font color="CDB67F">Blue against Red over the capture points of %map%, %size% a side. Each level bracket plays its own match. Free places are filled with fake players of your level, who fight in parties led by their team's commander.</font></td>
+							</tr>
+							<tr>
+								<td><font color="CDB67F">Every capture point the other team holds more than yours drains your score; a team at 0 loses, and after %fight% minutes the higher score wins: %reward% each. Every kill gives a Sealed Cache.</font></td>
+							</tr>
+							<tr>
+								<td><font color="CDB67F">A party plays in one team, its leader leading it. A party of fewer than 5 gets fake players in the roles it lacks; alone, you lead 4 of them. A party with members of different brackets is broken up, each member plays in their own bracket.</font></td>
+							</tr>
+							<tr>
+								<td><font color="B09878">Brackets: %brackets%</font></td>
+							</tr>
+							<tr>
+								<td><font color="B09878">Registration closes in %time%. Registered: %count% (%bracket_count% in your bracket).</font></td>
+							</tr>
+							<tr>
+								<td><font color="B09878">You: %you%</font></td>
+							</tr>
+						</table>
+						<br>
+						<button value="Register" action="bypass -h Script Conquest register" width=150 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"/>
+						<button value="Register my party" action="bypass -h Script Conquest registerParty" width=150 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"/>
+						<button value="Cancel registration" action="bypass -h Script Conquest cancel" width=150 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"/>
+						<br>
+					</td>
+				</tr>
+			</table>
+		</center>
+	</body>
+</html>

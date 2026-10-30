@@ -36,6 +36,7 @@ import org.l2jmobius.gameserver.model.conquest.ConquestPoint;
  */
 public class ConquestTeam
 {
+	private final ConquestMatch _match;
 	private final Team _team;
 	private final String _name;
 	private final int _nameColor;
@@ -49,15 +50,26 @@ public class ConquestTeam
 	private volatile int _kills;
 	// When the next wave of the dead comes back.
 	private long _nextWave;
+	// When its commander has its next turn.
+	volatile long _nextCommand;
 
-	ConquestTeam(Team team, String name, int nameColor, List<ConquestPoint> spawns, ConquestCommander commander)
+	ConquestTeam(ConquestMatch match, Team team, String name, int nameColor, List<ConquestPoint> spawns, ConquestCommander commander)
 	{
+		_match = match;
 		_team = team;
 		_name = name;
 		_nameColor = nameColor;
 		_spawns = spawns;
 		_commander = commander;
 		_score = ConquestConfig.START_SCORE;
+	}
+
+	/**
+	 * @return the match it plays in
+	 */
+	public ConquestMatch getMatch()
+	{
+		return _match;
 	}
 
 	public Team getTeam()
@@ -235,7 +247,7 @@ public class ConquestTeam
 		for (ConquestFighter fighter : _fighters)
 		{
 			final long at = fighter._respawnAt;
-			if ((at > now) && ((next == 0) || (at < next)) && fighter.getNpc().isDead())
+			if ((at > now) && ((next == 0) || (at < next)) && fighter.getCreature().isDead())
 			{
 				next = at;
 			}
@@ -251,7 +263,7 @@ public class ConquestTeam
 		int waiting = 0;
 		for (ConquestFighter fighter : _fighters)
 		{
-			if ((fighter._respawnAt > 0) && fighter.getNpc().isDead())
+			if ((fighter._respawnAt > 0) && fighter.getCreature().isDead())
 			{
 				waiting++;
 			}
@@ -269,7 +281,7 @@ public class ConquestTeam
 		for (ConquestFighter fighter : _fighters)
 		{
 			final Location base = fighter._respawnBase;
-			if ((fighter._respawnAt == at) && (base != null) && fighter.getNpc().isDead() && !bases.contains(base))
+			if ((fighter._respawnAt == at) && (base != null) && fighter.getCreature().isDead() && !bases.contains(base))
 			{
 				bases.add(base);
 			}

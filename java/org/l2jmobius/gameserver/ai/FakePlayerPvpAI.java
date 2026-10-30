@@ -6451,13 +6451,14 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 			return;
 		}
 
-		// With its party: support, its fights, following its leader (in its base it buffs and goes with its leader).
+		// With its party: support, its fights, following its leader (in its base it buffs and goes with its leader). A player leading it that is down or back at its base doesn't hold the party back: it goes where the commander sent it.
 		if (party != null)
 		{
 			final Creature leader = party.getActiveLeader();
-			if (atBase)
+			final boolean leaderAway = (leader != null) && leader.isPlayer() && (leader.isDead() || (ConquestManager.getFighter(leader) == null) || conquest.isAtOwnBase(leader));
+			if (leaderAway || atBase)
 			{
-				if (supportParty(npc, profile, party, false) || ((leader != null) && (leader != npc) && followLeader(npc, party, leader)))
+				if (supportParty(npc, profile, party, false) || (!leaderAway && (leader != null) && (leader != npc) && followLeader(npc, party, leader)))
 				{
 					return;
 				}

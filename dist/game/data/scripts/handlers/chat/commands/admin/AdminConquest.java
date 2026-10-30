@@ -28,6 +28,7 @@ import org.l2jmobius.gameserver.handler.IAdminCommandHandler;
 import org.l2jmobius.gameserver.managers.conquest.ConquestCapture;
 import org.l2jmobius.gameserver.managers.conquest.ConquestManager;
 import org.l2jmobius.gameserver.managers.conquest.ConquestMatch;
+import org.l2jmobius.gameserver.managers.conquest.ConquestRegistration;
 import org.l2jmobius.gameserver.managers.conquest.ConquestTeam;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
@@ -53,8 +54,10 @@ import custom.Conquest.ConquestWeb;
  * And the matches (see {@link ConquestManager}), of fake players only for now:
  * <ul>
  * <li>//conquest &lt;map&gt; start [players per team] [levels, e.g. 40-50] (or //conquest start &lt;map&gt; ...) - start a match</li>
+ * <li>//conquest register [map] - open the players' registration now (the map by chance from ConquestMaps when none is named)</li>
  * <li>//conquest stop - end it</li>
  * <li>//conquest status - the scores and points, in chat</li>
+ * <li>//conquest brain [&lt;blue&gt; &lt;red&gt; | reset] - the brain of each team in the next matches (generic, jev), and how each pairing did</li>
  * <li>//conquest live - the live page of the match (web)</li>
  * <li>//conquest watch | leave - go into the match's copy of the map to watch, or back</li>
  * </ul>
@@ -66,7 +69,7 @@ public class AdminConquest implements IAdminCommandHandler
 		"admin_conquest"
 	};
 
-	private static final String USAGE = "Usage: //conquest [web | list | show <map> | hide | tp <map> <blue|red|capture> <n|name> | set <map> <blue|red|capture> <n|name|new> | remove <map> <blue|red|capture> <n|name> | reload | <map> start [players per team] [min-max level] | stop | status | live | watch | leave]";
+	private static final String USAGE = "Usage: //conquest [web | list | show <map> | hide | tp <map> <blue|red|capture> <n|name> | set <map> <blue|red|capture> <n|name|new> | remove <map> <blue|red|capture> <n|name> | reload | <map> start [players per team] [min-max level] | register [map] | stop [id] | status | live | watch [id] | leave | brain [<blue> <red> | reset]]";
 
 	@Override
 	public boolean onCommand(String commandLine, Player activeChar)
@@ -149,14 +152,70 @@ public class AdminConquest implements IAdminCommandHandler
 				final ConquestMap map = findMap(activeChar, st);
 				return (map != null) && startMatch(activeChar, map, st);
 			}
+			case "register":
+			{
+				ConquestMap map = null;
+				if (st.hasMoreTokens())
+				{
+					map = findMap(activeChar, st);
+					if (map == null)
+					{
+						return false;
+					}
+				}
+				final String refusal = ConquestRegistration.getInstance().open(map);
+				activeChar.sendSysMessage(refusal == null ? "Conquest registration is open on " + ConquestRegistration.getInstance().getMap().name() + " for " + ConquestConfig.REGISTRATION_TIME + " minutes. //conquest stop cancels it." : "Registration did not open: " + refusal + ".");
+				break;
+			}
 			case "stop":
 			{
-				activeChar.sendSysMessage(ConquestManager.getInstance().stop());
+				// An open registration is canceled, a running match stopped.
+				if (ConquestRegistration.getInstance().cancel())
+				{
+					activeChar.sendSysMessage("Conquest registration canceled.");
+					if (ConquestManager.getInstance().getMatches().isEmpty())
+					{
+						break;
+					}
+				}
+				// //conquest stop [match id]
+				final String id = st.hasMoreTokens() ? st.nextToken() : null;
+				if ((id != null) && id.matches("\\d+"))
+				{
+					activeChar.sendSysMessage(ConquestManager.getInstance().stop(Integer.parseInt(id)));
+				}
+				else
+				{
+					activeChar.sendSysMessage(ConquestManager.getInstance().stop());
+				}
 				break;
 			}
 			case "status":
 			{
 				showStatus(activeChar);
+				break;
+			}
+			case "brain":
+			case "brains":
+			{
+				// //conquest brain [<blue> <red> | reset]: which brain leads each team in the next matches (A/B).
+				final ConquestManager manager = ConquestManager.getInstance();
+				if (st.countTokens() >= 2)
+				{
+					activeChar.sendSysMessage(manager.setBrains(st.nextToken(), st.nextToken()));
+				}
+				else if (st.hasMoreTokens() && st.nextToken().equalsIgnoreCase("reset"))
+				{
+					activeChar.sendSysMessage(manager.setBrains(null, null));
+				}
+				else
+				{
+					for (String line : manager.getBrainReport())
+					{
+						activeChar.sendSysMessage(line);
+					}
+					activeChar.sendSysMessage("//conquest brain <blue> <red> sets them (" + String.join(", ", ConquestManager.BRAINS) + "), //conquest brain reset goes back to Conquest.ini.");
+				}
 				break;
 			}
 			case "live":
@@ -169,7 +228,9 @@ public class AdminConquest implements IAdminCommandHandler
 			}
 			case "watch":
 			{
-				activeChar.sendSysMessage(ConquestManager.getInstance().watch(activeChar));
+				// //conquest watch [match id]: the next match without one.
+				final String id = st.hasMoreTokens() ? st.nextToken() : "";
+				activeChar.sendSysMessage(ConquestManager.getInstance().watch(activeChar, id.matches("\\d+") ? Integer.parseInt(id) : 0));
 				break;
 			}
 			case "leave":
@@ -238,22 +299,32 @@ public class AdminConquest implements IAdminCommandHandler
 
 	private static void showStatus(Player activeChar)
 	{
-		final ConquestMatch match = ConquestManager.getInstance().getMatch();
-		if (match == null)
+		final ConquestManager manager = ConquestManager.getInstance();
+		final List<ConquestMatch> matches = manager.getMatches();
+		if (matches.isEmpty())
 		{
 			activeChar.sendSysMessage("No Conquest match is running. //conquest <map> start starts one.");
 			return;
 		}
+		if (matches.size() > 1)
+		{
+			for (ConquestMatch other : matches)
+			{
+				activeChar.sendSysMessage("Match " + other.getId() + ": " + other.getMap().name() + ", levels " + other.getMinLevel() + "-" + other.getMaxLevel() + ", " + other.getPhase().name().toLowerCase(Locale.ROOT) + ", " + other.getPlayers().size() + " players, Blue " + other.getBlue().getScore() + " : " + other.getRed().getScore() + " Red.");
+			}
+		}
 
+		// The details of the one the GM watches, else the newest.
+		final ConquestMatch match = manager.getMatch(activeChar);
 		final int time = match.getTime();
-		activeChar.sendSysMessage("Conquest on " + match.getMap().name() + ": " + match.getPhase().name().toLowerCase(Locale.ROOT) + ", " + (time < 0 ? "starts in " + -time + "s" : (time / 60) + ":" + String.format("%02d", time % 60)) + (match.getResult() != null ? " - " + match.getResult() : ""));
+		activeChar.sendSysMessage("Conquest match " + match.getId() + " on " + match.getMap().name() + " (levels " + match.getMinLevel() + "-" + match.getMaxLevel() + "): " + match.getPhase().name().toLowerCase(Locale.ROOT) + ", " + (time < 0 ? "starts in " + -time + "s" : (time / 60) + ":" + String.format("%02d", time % 60)) + (match.getResult() != null ? " - " + match.getResult() : ""));
 		for (ConquestTeam team : new ConquestTeam[]
 		{
 			match.getBlue(),
 			match.getRed()
 		})
 		{
-			activeChar.sendSysMessage(team.getName() + ": score " + team.getScore() + " (-" + team.getDrain() + "/s), " + team.getHeld() + " point(s), " + team.getAlive() + "/" + team.getFighters().size() + " alive, " + team.getKills() + " kills.");
+			activeChar.sendSysMessage(team.getName() + " (" + team.getCommander().getName() + "): score " + team.getScore() + " (-" + team.getDrain() + "/s), " + team.getHeld() + " point(s), " + team.getAlive() + "/" + team.getFighters().size() + " alive, " + team.getKills() + " kills.");
 		}
 		final StringBuilder points = new StringBuilder();
 		for (ConquestCapture capture : match.getCaptures())

@@ -80,6 +80,23 @@
 	.progress { position: relative; height: 8px; background: #26262e; border-radius: 4px; overflow: hidden; min-width: 90px; }
 	.progress > i { position: absolute; top: 0; bottom: 0; }
 	.progress > b { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #555; }
+	.brain { display: flex; flex-direction: column; gap: 6px; }
+	.brain + .brain { border-top: 1px solid #1a1a21; padding-top: 8px; }
+	.brain .why { color: var(--cream); font-size: 12px; }
+	.brain .why b { color: var(--muted); font-weight: 600; }
+	.brain td, .brain th { font-size: 12px; }
+	.brain tr.off td { color: var(--dim); }
+	.answer { display: flex; height: 10px; border-radius: 3px; overflow: hidden; background: #26262e; min-width: 100px; }
+	.answer > i { display: block; height: 100%; }
+	.lv-0 { background: #e8c55a; }
+	.lv-1 { background: #a8862f; }
+	.lv-2 { background: #5e4d22; }
+	.lv-3 { background: #2e2e38; }
+	.levels { font-size: 11px; display: flex; gap: 10px; flex-wrap: wrap; }
+	.levels .swatch { border-radius: 2px; }
+	.delta { font-size: 11px; margin-left: 4px; }
+	.delta.up { color: #7fe07f; }
+	.delta.down { color: #ff9a9a; }
 	#log { font-size: 12px; max-height: 260px; overflow: auto; display: flex; flex-direction: column-reverse; }
 	#log div { padding: 2px 0; border-bottom: 1px solid #16161c; }
 	#log .t { color: var(--dim); font-variant-numeric: tabular-nums; margin-right: 6px; }
@@ -142,6 +159,10 @@
 			<div class="section">
 				<div class="teams" id="teams"></div>
 				<div id="result" class="chip good" hidden></div>
+			</div>
+			<div class="section" id="brainBox" hidden>
+				<h3>JEV decisions</h3>
+				<div id="brains"></div>
 			</div>
 			<div class="section" id="selectedBox" hidden>
 				<div class="row" style="justify-content:space-between"><h3>Selected</h3><button id="unselect" class="small">Clear</button></div>
@@ -339,6 +360,8 @@ function render() {
 		$("mapName").textContent = "";
 		fillStart(data);
 		$("teams").innerHTML = "";
+		$("brains").innerHTML = "";
+		$("brainBox").hidden = true;
 		$("points").innerHTML = "";
 		$("log").innerHTML = "";
 		$("parties").innerHTML = "";
@@ -362,7 +385,7 @@ function render() {
 	for (const team of match.teams) {
 		const share = Math.max(0, Math.min(1, team.score / data.defaults.startScore));
 		teams.appendChild(el("div", { class: "team " + team.team + (match.winner === team.team ? " won" : "") }, [
-			el("div", { class: "row", style: "justify-content:space-between" }, [el("h2", { style: "color:" + COLORS[team.team] }, team.name), el("span", { class: "chip", title: "commander" }, team.commander)]),
+			el("div", { class: "row", style: "justify-content:space-between" }, [el("h2", { style: "color:" + COLORS[team.team] }, team.name), el("span", { class: "chip", title: team.commanderStatus ? "commander: " + team.commanderStatus : "commander" }, team.commander)]),
 			el("div", { class: "score" }, fmt(team.score)),
 			el("div", { class: "bar" }, el("i", { style: "width:" + (share * 100) + "%;background:" + COLORS[team.team] })),
 			el("div", { class: "drain" }, phase === "FIGHT" ? "−" + team.drain + " / s" : " "),
@@ -375,6 +398,7 @@ function render() {
 	}
 	$("result").hidden = !match.result;
 	$("result").textContent = match.result || "";
+	renderBrains(match);
 
 	// Capture points.
 	const points = $("points");
@@ -421,6 +445,80 @@ function render() {
 	$("perf").textContent = "Tick " + match.tickMs + " ms · commanders " + match.commandMs + " ms · ways " + (match.navReady ? "ready" : "being worked out") +
 		(match.pending ? " · " + match.pending + " still to spawn" : "") + " · put back in the area: " + match.returned + " · put back on the ground: " + (match.unstuck || 0) + " · instance " + match.instance;
 	draw();
+}
+
+const LEVELS = ["most", "much", "little", "none"];
+
+/** @return a time span in ms as "0.8 s", "12 s" or "2:05" */
+function ago(ms) {
+	const s = ms / 1000;
+	return s < 10 ? s.toFixed(1) + " s" : s < 60 ? Math.round(s) + " s" : clock(Math.round(s));
+}
+
+/** The last question each JEV-led team asked, why, and what it did with the answer. */
+function renderBrains(match) {
+	const box = $("brains");
+	box.innerHTML = "";
+	const led = match.teams.filter((team) => team.brain);
+	$("brainBox").hidden = led.length === 0;
+	const owners = {};
+	for (const p of match.points) owners[p.name] = p.owner;
+
+	for (const team of led) {
+		const b = team.brain;
+		const head = el("div", { class: "row" }, [
+			el("b", { style: "color:" + COLORS[team.team] }, team.name),
+			el("span", { class: "chip" + (b.waiting ? " warn" : "") }, b.waiting ? "asking… " + ago(b.askedAgo) : b.askedAgo < 0 ? "not asked yet" : "asked " + ago(b.askedAgo) + " ago"),
+			el("span", { class: "chip", title: "The next regular question; news asks at once" }, "next in " + ago(b.nextIn)),
+			el("span", { class: "chip" }, b.turns + " asked · " + b.newsTurns + " on news"),
+			b.plain ? el("span", { class: "chip warn", title: b.plain }, "plain commander leads") : null
+		]);
+		const panel = el("div", { class: "brain" }, [head, el("div", { class: "why" }, [el("b", {}, "Why: "), b.why || "—"])]);
+
+		const last = b.last;
+		if (!last) {
+			panel.appendChild(el("div", { class: "muted" }, "Waiting for JEV's first answer."));
+			box.appendChild(panel);
+			continue;
+		}
+		panel.appendChild(el("div", { class: "muted", style: "font-size:12px" },
+			"Answer used " + ago(last.answeredAgo) + " ago · came in " + last.latency + " ms · " + last.moved + " part" + (last.moved === 1 ? "y" : "ies") + " moved" + (last.why !== b.why ? " · asked because: " + last.why : "")));
+
+		// Each option: JEV's answer as a stacked bar, its weight, and the parties it got.
+		const table = el("table", {}, el("tr", {}, [el("th", {}, "Option"), el("th", {}, "JEV's answer"), el("th", { class: "num" }, "Weight"), el("th", { class: "num" }, "Parties")]));
+		for (const option of last.options) {
+			const bar = el("div", { class: "answer", title: LEVELS.map((level, i) => level + " " + Math.round(option.p[i] * 100) + "%").join(" · ") });
+			option.p.forEach((p, i) => { if (p > 0) bar.appendChild(el("i", { class: "lv-" + i, style: "width:" + (p * 100) + "%" })); });
+			const delta = option.after - option.before;
+			const owner = owners[option.name];
+			table.appendChild(el("tr", { class: option.weight > 0 ? "" : "off" }, [
+				el("td", {}, option.name === "hunt" ? "hunt" : el("b", { style: owner && owner !== "none" ? "color:" + COLORS[owner] : "" }, option.name)),
+				el("td", {}, bar),
+				el("td", { class: "num", title: option.weight > 0 ? "" : "below the cutoff: no parties" }, option.weight > 0 ? option.weight.toFixed(2) : "—"),
+				el("td", { class: "num" }, [String(option.after), delta ? el("span", { class: "delta " + (delta > 0 ? "up" : "down") }, (delta > 0 ? "+" : "") + delta) : null])
+			]));
+		}
+		panel.appendChild(table);
+		panel.appendChild(el("div", { class: "levels muted" }, LEVELS.map((level, i) => el("span", {}, [el("span", { class: "swatch lv-" + i }), level]))));
+
+		// The enemy groups offered to the hunters.
+		if (last.groups.length) {
+			const groups = el("table", {}, el("tr", {}, [el("th", {}, "Hunt target"), el("th", { class: "num" }, "Fighters"), el("th", {}, "Near"), el("th", {}, "JEV"), el("th", { class: "num" }, "Hunters")]));
+			last.groups.forEach((group, i) => {
+				const bar = el("div", { class: "answer", title: Math.round(group.p * 100) + "%" }, el("i", { class: "lv-0", style: "width:" + (group.p * 100) + "%" }));
+				const owner = owners[group.point];
+				groups.appendChild(el("tr", { class: group.hunters > 0 ? "" : "off" }, [
+					el("td", {}, "group " + (i + 1)),
+					el("td", { class: "num" }, String(group.fighters)),
+					el("td", { style: owner && owner !== "none" ? "color:" + COLORS[owner] : "" }, group.point),
+					el("td", {}, bar),
+					el("td", { class: "num" }, String(group.hunters))
+				]));
+			});
+			panel.appendChild(groups);
+		}
+		box.appendChild(panel);
+	}
 }
 
 function renderSelected(match) {

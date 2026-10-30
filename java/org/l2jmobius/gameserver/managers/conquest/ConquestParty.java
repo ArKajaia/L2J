@@ -21,6 +21,7 @@
 package org.l2jmobius.gameserver.managers.conquest;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.l2jmobius.gameserver.model.Location;
@@ -65,6 +66,9 @@ public class ConquestParty
 	volatile long _waveAt;
 	volatile Location _waveBase;
 	volatile Location _waveSpot;
+	// When a player leading it may hear the commander's next order (they change often).
+	private volatile long _nextNotice;
+	private static final long NOTICE_INTERVAL = 10000;
 
 	ConquestParty(int id, ConquestTeam team)
 	{
@@ -96,6 +100,11 @@ public class ConquestParty
 		fighter.setParty(this);
 	}
 
+	void removeMember(ConquestFighter fighter)
+	{
+		_members.remove(fighter);
+	}
+
 	public FakePlayerParty getFakeParty()
 	{
 		return _party;
@@ -120,7 +129,45 @@ public class ConquestParty
 	 */
 	public void setOrder(Order order)
 	{
+		final Order old = _order;
 		_order = order;
+
+		// A player leading the party hears the commander's new orders: its fake players go there whenever it is dead or in its base.
+		final long now = System.currentTimeMillis();
+		if ((order == null) || ((old != null) && (old.kind() == order.kind()) && Objects.equals(old.point(), order.point())) || (now < _nextNotice))
+		{
+			return;
+		}
+		final FakePlayerParty party = _party;
+		final Creature leader = (party != null) && !party.isFakeOnly() ? party.getLeader() : null;
+		if ((leader != null) && leader.isPlayer())
+		{
+			_nextNotice = now + NOTICE_INTERVAL;
+			leader.sendMessage("Conquest: The commander's order for your party: " + describe(order) + ".");
+		}
+	}
+
+	private static String describe(Order order)
+	{
+		switch (order.kind())
+		{
+			case CAPTURE:
+			{
+				return "take " + order.point();
+			}
+			case DEFEND:
+			{
+				return "hold " + order.point();
+			}
+			case ATTACK:
+			{
+				return "attack the enemy group at " + order.target().getX() + ", " + order.target().getY();
+			}
+			default:
+			{
+				return "hold your ground";
+			}
+		}
 	}
 
 	/**
@@ -138,7 +185,7 @@ public class ConquestParty
 		{
 			if (member.isAlive())
 			{
-				return member.getNpc();
+				return member.getCreature();
 			}
 		}
 		return null;

@@ -140,6 +140,7 @@ import org.l2jmobius.gameserver.managers.SessionStatsManager;
 import org.l2jmobius.gameserver.managers.SiegeManager;
 import org.l2jmobius.gameserver.managers.TeamEventRules;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
+import org.l2jmobius.gameserver.managers.conquest.ConquestRegistration;
 import org.l2jmobius.gameserver.managers.TerritoryWarManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.model.Location;
@@ -12033,6 +12034,16 @@ public class Player extends Playable
 		try
 		{
 			TeamVsTeamManager.getInstance().onLogout(this);
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.SEVERE, "deleteMe()", e);
+		}
+
+		// Conquest: the same.
+		try
+		{
+			ConquestRegistration.getInstance().onLogout(this);
 		}
 		catch (Exception e)
 		{

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -45,6 +46,9 @@ import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.InstanceManager;
+import org.l2jmobius.gameserver.managers.BuffTemplateManager;
+import org.l2jmobius.gameserver.managers.TeamEventHud;
+import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager.Relation;
 import org.l2jmobius.gameserver.managers.simulation.SimRole;
 import org.l2jmobius.gameserver.managers.simulation.SimulationComposer;
@@ -56,6 +60,7 @@ import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
@@ -64,17 +69,26 @@ import org.l2jmobius.gameserver.model.conquest.ConquestDoor;
 import org.l2jmobius.gameserver.model.conquest.ConquestMap;
 import org.l2jmobius.gameserver.model.conquest.ConquestPoint;
 import org.l2jmobius.gameserver.model.conquest.ConquestPointType;
+import org.l2jmobius.gameserver.model.groups.Party;
 import org.l2jmobius.gameserver.model.instancezone.Instance;
+import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
+import org.l2jmobius.gameserver.model.item.holders.ItemChanceHolder;
+import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
+import org.l2jmobius.gameserver.model.skill.CommonSkill;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
+import org.l2jmobius.gameserver.network.serverpackets.Ex2RadarZoneProgress;
+import org.l2jmobius.gameserver.network.serverpackets.Ex2TeamEventState;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
+import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
 import org.l2jmobius.gameserver.taskmanagers.DecayTaskManager;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
- * Conquest: a GM starts a match on a map of {@link org.l2jmobius.gameserver.data.xml.ConquestMapData} (//conquest &lt;map&gt; start). It runs in its own copy of the map's place, without monsters, with the doors the map names opened or shut. For now only
- * fake players fight, in parties of 5, both teams the same (roles, builds, levels).
+ * Conquest: a match on a map of {@link org.l2jmobius.gameserver.data.xml.ConquestMapData}, for the players that registered (see {@link ConquestRegistration}), or of fake players only when a GM starts it (//conquest &lt;map&gt; start). It runs in its own
+ * copy of the map's place, without monsters, with the doors the map names opened or shut. The fighters play in parties of 5: a party of players is led by its leader and topped up with fake players in the roles it lacks, the rest of each team are parties of
+ * fake players, both teams the same (roles, builds, levels) as far as the players let them. Several matches can run at once, each in its own copy (one for each level bracket players registered in).
  * <ul>
  * <li>Each team starts with {@link ConquestConfig#START_SCORE}. Every second each loses max(1, the capture points the other team holds - those it holds); a team at 0 loses, and when the time runs out the higher score wins.</li>
  * <li>A capture point goes over to a team as {@link ConquestCapture} says, through neutral.</li>
@@ -95,6 +109,8 @@ public class ConquestManager
 	public static volatile boolean ACTIVE = false;
 
 	private static final long TICK_MS = 1000;
+	/** The commanders are given their turns in steps this long (each when its own interval is up). */
+	public static final long COMMAND_STEP_MS = 250;
 	/** The fake players are spawned this many at a time, every so many ms, so hundreds of them don't arrive in one go. */
 	private static final int SPAWN_BATCH = 20;
 	private static final long SPAWN_INTERVAL = 250;
@@ -141,26 +157,34 @@ public class ConquestManager
 		}
 	}
 
-	/** A party to spawn. */
+	/** A party to spawn: its players (the leader first), and the fake players. */
 	private static class PartyPlan
 	{
 		final ConquestTeam team;
 		final int number;
 		final List<Slot> slots;
+		final List<Player> players;
 
-		PartyPlan(ConquestTeam team, int number, List<Slot> slots)
+		PartyPlan(ConquestTeam team, int number, List<Slot> slots, List<Player> players)
 		{
 			this.team = team;
 			this.number = number;
 			this.slots = slots;
+			this.players = players;
 		}
 	}
 
 	private final Map<Integer, ConquestFighter> _fighters = new ConcurrentHashMap<>();
 	private final AtomicInteger _nextMatchId = new AtomicInteger(1);
-	private final Deque<PartyPlan> _toSpawn = new ArrayDeque<>();
-	private volatile ConquestMatch _match;
-	private volatile Supplier<ConquestCommander> _commanders = GenericConquestCommander::new;
+	/** The parties each match still has to spawn, by match id. */
+	private final Map<Integer, Deque<PartyPlan>> _toSpawn = new ConcurrentHashMap<>();
+	/** The matches running (or ending), by id. */
+	private final Map<Integer, ConquestMatch> _matches = new ConcurrentHashMap<>();
+	// The brain of each team in the next matches, null for the one Conquest.ini names.
+	private volatile Supplier<ConquestCommander> _blueBrain;
+	private volatile Supplier<ConquestCommander> _redBrain;
+	// The results of each pairing of brains: "blue brain vs red brain" -> {blue wins, red wins, draws}.
+	private final Map<String, int[]> _brainResults = new ConcurrentHashMap<>();
 
 	protected ConquestManager()
 	{
@@ -171,19 +195,35 @@ public class ConquestManager
 	// ---------------------------------------------------------------------------------------------
 
 	/**
-	 * Starts a match.
+	 * Starts a match of fake players only.
 	 * @param map the map
 	 * @param perTeam the fighters of each team (rounded down to whole parties; at most the map's maxPlayers)
 	 * @param minLevel the lowest level of the fake players
 	 * @param maxLevel the highest
 	 * @return what to tell the GM
 	 */
-	public synchronized String start(ConquestMap map, int perTeam, int minLevel, int maxLevel)
+	public String start(ConquestMap map, int perTeam, int minLevel, int maxLevel)
 	{
-		if (_match != null)
+		final String refusal = getStartRefusal(map);
+		if (refusal != null)
 		{
-			return "A Conquest match is already running on " + _match.getMap().name() + ": //conquest stop ends it.";
+			return refusal;
 		}
+		final ConquestMatch match = start(map, perTeam, minLevel, maxLevel, List.of(), List.of());
+		if (match == null)
+		{
+			return "Could not create the instance (data/instances/custom/conquest_event.xml, id " + INSTANCE_TEMPLATE_ID + ").";
+		}
+		final int size = match.getPerTeam();
+		return "Conquest on " + map.name() + ": " + size + " vs " + size + " fake players, levels " + minLevel + "-" + maxLevel + " (match " + match.getId() + "). The fight starts in " + ConquestConfig.PREP_TIME + " seconds. //conquest live shows it, //conquest watch takes you there.";
+	}
+
+	/**
+	 * @param map a map
+	 * @return why no match can start on it, {@code null} if one can
+	 */
+	public static String getStartRefusal(ConquestMap map)
+	{
 		if (!FakePlayerPvpManager.getInstance().isEnabled())
 		{
 			return "Conquest needs the fake players: EnableFakePlayers in FakePlayers.ini and FakePvpEnabled in FakePlayerPvp.ini.";
@@ -192,18 +232,43 @@ public class ConquestManager
 		{
 			return map.name() + " needs spawn points for both teams and at least one capture point.";
 		}
+		return null;
+	}
+
+	/**
+	 * Starts a match.
+	 * @param map the map
+	 * @param perTeam the fighters of each team, players and fake players (rounded down to whole parties; at most the map's maxPlayers)
+	 * @param minLevel the lowest level of the fake players
+	 * @param maxLevel the highest
+	 * @param blueGroups the players of Blue: a party (the leader first) or a lone player each, still registered on the event (see {@link ConquestRegistration#close})
+	 * @param redGroups the players of Red
+	 * @return the match, {@code null} if it could not start (see {@link #getStartRefusal}, or no instance)
+	 */
+	public synchronized ConquestMatch start(ConquestMap map, int perTeam, int minLevel, int maxLevel, List<List<Player>> blueGroups, List<List<Player>> redGroups)
+	{
+		if (getStartRefusal(map) != null)
+		{
+			return null;
+		}
 
 		final int size = Math.max(PARTY_SIZE, (Math.min(perTeam, map.maxPlayers()) / PARTY_SIZE) * PARTY_SIZE);
 		final Instance instance = InstanceManager.getInstance().createDynamicInstance(INSTANCE_TEMPLATE_ID);
 		if (instance == null)
 		{
-			return "Could not create the instance (data/instances/custom/conquest_event.xml, id " + INSTANCE_TEMPLATE_ID + ").";
+			return null;
 		}
 
-		final ConquestMatch match = new ConquestMatch(_nextMatchId.getAndIncrement(), map, instance.getId(), size, minLevel, maxLevel, _commanders.get(), _commanders.get());
+		// A match the registration started (it has players) is led on both sides by ConquestRegistrationBrain; a GM's by the brains of the next matches.
+		final boolean registered = !blueGroups.isEmpty() || !redGroups.isEmpty();
+		final boolean registrationBrain = registered && !ConquestConfig.REGISTRATION_BRAIN.isEmpty();
+		final ConquestCommander blueBrain = registrationBrain ? makeBrain(null, ConquestConfig.REGISTRATION_BRAIN) : makeBrain(_blueBrain, ConquestConfig.BLUE_BRAIN);
+		final ConquestCommander redBrain = registrationBrain ? makeBrain(null, ConquestConfig.REGISTRATION_BRAIN) : makeBrain(_redBrain, ConquestConfig.RED_BRAIN);
+		final ConquestMatch match = new ConquestMatch(_nextMatchId.getAndIncrement(), map, instance.getId(), size, minLevel, maxLevel, blueBrain, redBrain);
+		match._withPlayers = registered;
 		setUpDoors(map, instance);
 		keepDoors(match);
-		_match = match;
+		_matches.put(match.getId(), match);
 		ACTIVE = true;
 		keepRegionsAwake(match);
 
@@ -222,12 +287,22 @@ public class ConquestManager
 			}
 		});
 
-		// Both teams the same: the same roles, builds and levels, party for party.
+		// The players' parties first (they are taken in at once), topped up with the fake players they lack. Then parties of fake players fill both teams, the same roles, builds and levels party for party.
 		final ThreadLocalRandom random = ThreadLocalRandom.current();
-		synchronized (_toSpawn)
+		final Deque<PartyPlan> toSpawn = new ArrayDeque<>();
+		_toSpawn.put(match.getId(), toSpawn);
+		synchronized (toSpawn)
 		{
-			_toSpawn.clear();
-			for (int number = 1; number <= (size / PARTY_SIZE); number++)
+			final List<PartyPlan> bluePlans = planPlayerParties(match.getBlue(), blueGroups, size, minLevel, maxLevel, random);
+			final List<PartyPlan> redPlans = planPlayerParties(match.getRed(), redGroups, size, minLevel, maxLevel, random);
+			toSpawn.addAll(bluePlans);
+			toSpawn.addAll(redPlans);
+
+			int blueFree = size - countPlanned(bluePlans);
+			int redFree = size - countPlanned(redPlans);
+			int blueNumber = bluePlans.size();
+			int redNumber = redPlans.size();
+			while ((blueFree > 0) || (redFree > 0))
 			{
 				final List<Slot> slots = new ArrayList<>();
 				for (SimRole role : SimulationComposer.getRoles(PARTY_SIZE))
@@ -238,17 +313,136 @@ public class ConquestManager
 						slots.add(new Slot(role, build, Rnd.get(minLevel, maxLevel)));
 					}
 				}
-				_toSpawn.add(new PartyPlan(match.getBlue(), number, slots));
-				_toSpawn.add(new PartyPlan(match.getRed(), number, slots));
+				if (blueFree > 0)
+				{
+					toSpawn.add(new PartyPlan(match.getBlue(), ++blueNumber, slots.subList(0, Math.min(slots.size(), blueFree)), List.of()));
+					blueFree -= PARTY_SIZE;
+				}
+				if (redFree > 0)
+				{
+					toSpawn.add(new PartyPlan(match.getRed(), ++redNumber, slots.subList(0, Math.min(slots.size(), redFree)), List.of()));
+					redFree -= PARTY_SIZE;
+				}
 			}
 		}
 
 		match._prepEnd = System.currentTimeMillis() + (ConquestConfig.PREP_TIME * 1000L);
 		match._spawnTask = ThreadPool.scheduleAtFixedRate(() -> spawnSome(match), 0, SPAWN_INTERVAL);
 		match._task = ThreadPool.scheduleAtFixedRate(() -> tick(match), TICK_MS, TICK_MS);
-		match.log("Match " + match.getId() + " on " + map.name() + ": " + size + " vs " + size + ", levels " + minLevel + "-" + maxLevel + ".");
-		LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " started on " + map.name() + ", " + size + " vs " + size + ", levels " + minLevel + "-" + maxLevel + ", instance " + instance.getId() + ".");
-		return "Conquest on " + map.name() + ": " + size + " vs " + size + " fake players, levels " + minLevel + "-" + maxLevel + ". The fight starts in " + ConquestConfig.PREP_TIME + " seconds. //conquest live shows it, //conquest watch takes you there.";
+		match.log("Match " + match.getId() + " on " + map.name() + ": " + size + " vs " + size + ", levels " + minLevel + "-" + maxLevel + (match._withPlayers ? ", players: Blue " + countPlayers(blueGroups) + ", Red " + countPlayers(redGroups) : "") + ". Brains: Blue " + match.getBlue().getCommander().getName() + ", Red " + match.getRed().getCommander().getName() + ".");
+		LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " started on " + map.name() + ", " + size + " vs " + size + ", levels " + minLevel + "-" + maxLevel + ", instance " + instance.getId() + ", brains " + match.getBlue().getCommander().getName() + " vs " + match.getRed().getCommander().getName() + ".");
+		return match;
+	}
+
+	private static int countPlayers(List<List<Player>> groups)
+	{
+		int count = 0;
+		for (List<Player> group : groups)
+		{
+			count += group.size();
+		}
+		return count;
+	}
+
+	private static int countPlanned(List<PartyPlan> plans)
+	{
+		int count = 0;
+		for (PartyPlan plan : plans)
+		{
+			count += plan.players.size() + plan.slots.size();
+		}
+		return count;
+	}
+
+	/**
+	 * The parties of a team's players, like a Team vs Team team's: a party of players stays together, its leader leading it; the lone players get a party each while the team has room for parties, else join the smallest of those. Each party gets the fake
+	 * players it lacks up to {@link #PARTY_SIZE}, in the roles its players don't fill (a bigger party stays as it is).
+	 * @param team the team
+	 * @param groups its players' groups, the leader of each first
+	 * @param size the places of the team
+	 * @param minLevel the lowest level of the fake players
+	 * @param maxLevel the highest
+	 * @param random the random
+	 * @return the parties to spawn, numbered from 1
+	 */
+	private static List<PartyPlan> planPlayerParties(ConquestTeam team, List<List<Player>> groups, int size, int minLevel, int maxLevel, ThreadLocalRandom random)
+	{
+		final List<PartyPlan> plans = new ArrayList<>();
+		if (groups.isEmpty())
+		{
+			return plans;
+		}
+
+		final int partyCount = Math.max(1, size / PARTY_SIZE);
+		final List<List<Player>> parties = new ArrayList<>();
+		final List<List<Player>> soloParties = new ArrayList<>();
+		final List<Player> solos = new ArrayList<>();
+		for (List<Player> group : groups)
+		{
+			if (group.size() > 1)
+			{
+				parties.add(new ArrayList<>(group));
+			}
+			else
+			{
+				solos.addAll(group);
+			}
+		}
+		for (Player solo : solos)
+		{
+			if ((parties.size() + soloParties.size()) < partyCount)
+			{
+				final List<Player> party = new ArrayList<>();
+				party.add(solo);
+				soloParties.add(party);
+				continue;
+			}
+
+			// The solo party with the fewest players takes it (a party holds 9).
+			List<Player> smallest = null;
+			for (List<Player> party : soloParties)
+			{
+				if ((party.size() < 9) && ((smallest == null) || (party.size() < smallest.size())))
+				{
+					smallest = party;
+				}
+			}
+			if (smallest == null)
+			{
+				smallest = new ArrayList<>();
+				soloParties.add(smallest);
+			}
+			smallest.add(solo);
+		}
+		parties.addAll(soloParties);
+
+		int slots = Math.max(0, size - countPlayers(groups));
+		for (List<Player> members : parties)
+		{
+			final int wanted = Math.min(slots, Math.max(0, PARTY_SIZE - members.size()));
+			final List<SimRole> roles = new ArrayList<>(SimulationComposer.getRoles(members.size() + wanted));
+			for (Player player : members)
+			{
+				roles.remove(TeamVsTeamManager.getRole(player));
+			}
+			while (roles.size() > wanted)
+			{
+				roles.remove(roles.size() - 1);
+			}
+
+			final List<Slot> fakes = new ArrayList<>();
+			for (SimRole role : roles)
+			{
+				final FakePlayerPvpBuild build = SimulationComposer.pick(role, random);
+				if (build != null)
+				{
+					fakes.add(new Slot(role, build, Rnd.get(minLevel, maxLevel)));
+				}
+			}
+			slots -= wanted;
+			plans.add(new PartyPlan(team, plans.size() + 1, fakes, members));
+		}
+		return plans;
 	}
 
 	/**
@@ -317,10 +511,14 @@ public class ConquestManager
 			int spawned = 0;
 			while (spawned < SPAWN_BATCH)
 			{
-				final PartyPlan plan;
-				synchronized (_toSpawn)
+				final Deque<PartyPlan> toSpawn = _toSpawn.get(match.getId());
+				PartyPlan plan = null;
+				if (toSpawn != null)
 				{
-					plan = _toSpawn.pollFirst();
+					synchronized (toSpawn)
+					{
+						plan = toSpawn.pollFirst();
+					}
 				}
 				if ((plan == null) || (match._phase == ConquestMatch.Phase.ENDED))
 				{
@@ -332,7 +530,7 @@ public class ConquestManager
 					return;
 				}
 				spawnParty(match, plan);
-				spawned += plan.slots.size();
+				spawned += plan.slots.size() + plan.players.size();
 			}
 		}
 		catch (Exception e)
@@ -350,7 +548,48 @@ public class ConquestManager
 		final List<Npc> fakes = new ArrayList<>();
 		// The party together: around a spot of its own in the spawn point.
 		final Location anchor = spawnSpot(base, Math.max(0, spawn.radius() - PARTY_SPREAD), match.getInstanceId());
-		for (Slot slot : plan.slots)
+
+		// Its players that are still there and free to come (the place of one that isn't goes to a fake player of its role), out of their parties: the party is made afresh, its leader leading it.
+		final List<Player> players = new ArrayList<>();
+		final List<Slot> slots = new ArrayList<>(plan.slots);
+		for (Player player : plan.players)
+		{
+			final String refusal = player.isOnline() && (match._phase != ConquestMatch.Phase.ENDED) ? ConquestRegistration.getJoinRefusal(player) : "";
+			if (refusal == null)
+			{
+				players.add(player);
+				continue;
+			}
+
+			player.setRegisteredOnEvent(false);
+			if (!refusal.isEmpty())
+			{
+				player.sendMessage("Conquest: You can't take part: " + refusal);
+			}
+			final SimRole role = TeamVsTeamManager.getRole(player);
+			final FakePlayerPvpBuild build = SimulationComposer.pick(role, ThreadLocalRandom.current());
+			if (build != null)
+			{
+				slots.add(new Slot(role, build, Rnd.get(match.getMinLevel(), match.getMaxLevel())));
+			}
+		}
+		players.forEach(Player::leaveParty);
+		for (Player player : players)
+		{
+			enterPlayer(match, party, player, anchor, spawn.heading());
+		}
+		if (players.size() > 1)
+		{
+			final Player leader = players.get(0);
+			final Party group = new Party(leader, leader.getPartyDistributionType());
+			leader.setParty(group);
+			for (int i = 1; i < players.size(); i++)
+			{
+				players.get(i).joinParty(group);
+			}
+		}
+
+		for (Slot slot : slots)
 		{
 			final Location location = spawnSpot(anchor, PARTY_SPREAD, match.getInstanceId());
 			final Npc fake = FakePlayerPvpManager.getInstance().spawnConquestFighter(slot.build, slot.level, team.getName(), match.getId(), team.getTeam(), team.getNameColor(), location.getX(), location.getY(), location.getZ(), spawn.heading(), match.getInstanceId());
@@ -365,24 +604,39 @@ public class ConquestManager
 			party.addMember(fighter);
 			fakes.add(fake);
 		}
-		if (fakes.isEmpty())
+		if (fakes.isEmpty() && players.isEmpty())
 		{
 			return;
 		}
 
 		// Stopped while it spawned: the cleanup has gone by already.
-		if ((match._phase == ConquestMatch.Phase.ENDED) || (_match != match))
+		if ((match._phase == ConquestMatch.Phase.ENDED) || (_matches.get(match.getId()) != match))
 		{
 			for (ConquestFighter fighter : party.getMembers())
 			{
-				removeFake(fighter.getNpc());
-				_fighters.remove(fighter.getNpc().getObjectId(), fighter);
+				if (fighter.isPlayer())
+				{
+					restorePlayer(match, fighter, true);
+				}
+				else
+				{
+					removeFake(fighter.getNpc());
+				}
+				_fighters.remove(fighter.getCreature().getObjectId(), fighter);
 				team.getFighters().remove(fighter);
 			}
 			return;
 		}
 
-		if (fakes.size() > 1)
+		// A party of players: its fake players heal, buff and follow its leader like invited ones. One of fake players only: it follows its commander's orders.
+		if (!players.isEmpty())
+		{
+			if (!fakes.isEmpty())
+			{
+				party.setFakeParty(FakePartyManager.getInstance().createEventParty(players.get(0), fakes));
+			}
+		}
+		else if (fakes.size() > 1)
 		{
 			party.setFakeParty(FakePartyManager.getInstance().createSimulationParty(fakes, FakeBrain.A));
 		}
@@ -397,23 +651,265 @@ public class ConquestManager
 		}
 	}
 
+	// ---------------------------------------------------------------------------------------------
+	// Players
+	// ---------------------------------------------------------------------------------------------
+
 	/**
-	 * Ends the match running now, without a result.
+	 * Takes a player into the match: its team's name color and circle, a spot of its party in the spawn point, its TvT Event buffs and full HP.
+	 */
+	private void enterPlayer(ConquestMatch match, ConquestParty party, Player player, Location anchor, int heading)
+	{
+		final ConquestTeam team = party.getTeam();
+		final ConquestFighter fighter = new ConquestFighter(player, team, TeamVsTeamManager.getRole(player));
+		fighter._returnLocation = new Location(player.getX(), player.getY(), player.getZ(), player.getHeading());
+		fighter._nameColor = player.getAppearance().getNameColor();
+		team.getFighters().add(fighter);
+		_fighters.put(player.getObjectId(), fighter);
+		party.addMember(fighter);
+
+		player.setRegisteredOnEvent(false);
+		player.setOnEvent(true);
+		// No "To Village" when it dies: the dead come back with their team's waves (the button took a player out of the match).
+		player.setCanRevive(false);
+		if (player.isDead())
+		{
+			player.doRevive();
+		}
+		if (player.isSitting())
+		{
+			player.standUp();
+		}
+
+		player.getAppearance().setNameColor(team.getNameColor());
+		player.setTeam(team.getTeam());
+		final Location spot = spawnSpot(anchor, PARTY_SPREAD, match.getInstanceId());
+		player.teleToLocation(spot.getX(), spot.getY(), spot.getZ(), heading, match.getInstanceId(), 0);
+		buffAndHeal(player);
+		player.broadcastUserInfo();
+
+		final int prep = (int) Math.max(0, (match._prepEnd - System.currentTimeMillis()) / 1000);
+		TeamEventHud.sendState(player, state(match, Ex2TeamEventState.RESULT_NONE), team.getTeam());
+		showZones(match, player);
+		sendScreen(player, "You fight for team " + team.getName() + ". The fight starts in " + prep + " seconds.", 8, true);
+		player.sendMessage("Conquest: Team " + team.getName() + " on " + match.getMap().name() + ", " + match.getPerTeam() + " vs " + match.getPerTeam() + ". Every capture point the other team holds more than yours drains your score; a team at 0 loses. The other team is attacked without Ctrl.");
+		final BuffTemplateManager templates = BuffTemplateManager.getInstance();
+		if (templates.isTvtTemplateEnabled() && templates.getTemplate(player, BuffTemplateManager.TVT_SLOT).skillIds().isEmpty())
+		{
+			player.sendMessage("Conquest: Your TvT Event buff template is empty. Fill it on the Community Board (Buff Templates) to get those buffs whenever you come back at a spawn point.");
+		}
+	}
+
+	/**
+	 * Gives a player its TvT Event buff template (see {@link BuffTemplateManager#applyTvtTemplate}), then full HP, CP and MP.
+	 * @param player the player, alive
+	 */
+	private static void buffAndHeal(Player player)
+	{
+		BuffTemplateManager.getInstance().applyTvtTemplate(player);
+		player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
+		player.setCurrentCp(player.getMaxCp());
+	}
+
+	private static void sendScreen(Player player, String text, int seconds, boolean effect)
+	{
+		player.sendPacket(new ExShowScreenMessage(text, ExShowScreenMessage.TOP_CENTER, seconds * 1000, 0, true, effect));
+	}
+
+	/**
+	 * @return {@code false} if the player left the match (it went offline or out of the instance): it is taken out of it
+	 */
+	private boolean checkPlayerStillIn(ConquestMatch match, ConquestFighter fighter)
+	{
+		final Player player = fighter.getCreature().asPlayer();
+		if (player.isOnline() && !player.isInOfflineMode() && ((player.getInstanceId() == match.getInstanceId()) || player.isTeleporting()))
+		{
+			return true;
+		}
+
+		// One that went offline logs in again where it was before the match.
+		leave(match, fighter, !player.isOnline());
+		return false;
+	}
+
+	/**
+	 * Gives a player back its state from before the match.
+	 * @param match the match
+	 * @param fighter the player's fighter
+	 * @param teleport {@code true} to send it back where it was
+	 */
+	private static void restorePlayer(ConquestMatch match, ConquestFighter fighter, boolean teleport)
+	{
+		final Player player = fighter.getCreature().asPlayer();
+		unprotect(fighter);
+		player.setInvul(false);
+		player.setTeam(Team.NONE);
+		player.getAppearance().setNameColor(fighter._nameColor);
+		player.setOnEvent(false);
+		player.setRegisteredOnEvent(false);
+		player.setCanRevive(true);
+		player.leaveParty();
+		if (player.isDead())
+		{
+			player.doRevive();
+		}
+		player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
+		player.setCurrentCp(player.getMaxCp());
+		TeamEventHud.close(player, zoneIds(match));
+
+		final Instance instance = InstanceManager.getInstance().getInstance(match.getInstanceId());
+		if (instance != null)
+		{
+			instance.removePlayer(player.getObjectId());
+		}
+
+		final Location back = fighter._returnLocation;
+		if (teleport && player.isOnline() && (back != null))
+		{
+			player.teleToLocation(back.getX(), back.getY(), back.getZ(), back.getHeading(), 0, 0);
+		}
+		player.broadcastUserInfo();
+	}
+
+	/**
+	 * A player leaves the match before its end (logged off, left the instance): it gets its state back, and a fake player of its role takes its place in its party.
+	 * @param match the match
+	 * @param fighter the player's fighter
+	 * @param loggingOff {@code true} if it logs off: it logs in again where it was before the match
+	 */
+	private void leave(ConquestMatch match, ConquestFighter fighter, boolean loggingOff)
+	{
+		final Player player = fighter.getCreature().asPlayer();
+		if (!_fighters.remove(player.getObjectId(), fighter))
+		{
+			return;
+		}
+		final ConquestTeam team = fighter.getTeam();
+		team.getFighters().remove(fighter);
+		final ConquestParty party = fighter.getParty();
+		if (party != null)
+		{
+			party.removeMember(fighter);
+		}
+
+		// The fake players it led stay in the match, as a party of their own that follows the commander.
+		final FakePlayerParty fakeParty = party != null ? party.getFakeParty() : null;
+		if ((fakeParty != null) && (fakeParty.getHost() == player))
+		{
+			final List<Npc> fakes = new ArrayList<>(fakeParty.getFakes());
+			FakePartyManager.getInstance().disbandEventParty(fakeParty);
+			party.setFakeParty(fakes.size() > 1 ? FakePartyManager.getInstance().createSimulationParty(fakes, FakeBrain.A) : null);
+		}
+
+		restorePlayer(match, fighter, false);
+		if (loggingOff && (fighter._returnLocation != null))
+		{
+			player.setInstanceId(0);
+			player.setXYZInvisible(fighter._returnLocation.getX(), fighter._returnLocation.getY(), fighter._returnLocation.getZ());
+		}
+
+		// A fake player of its role takes its place.
+		if ((match._phase != ConquestMatch.Phase.ENDED) && (party != null))
+		{
+			final FakePlayerPvpBuild build = SimulationComposer.pick(fighter.getRole(), ThreadLocalRandom.current());
+			final ConquestPoint spawn = team.getClosestSpawn(player);
+			final Location location = spawnSpot(new Location(spawn.x(), spawn.y(), spawn.z(), spawn.heading()), spawn.radius(), match.getInstanceId());
+			final Npc fake = build == null ? null : FakePlayerPvpManager.getInstance().spawnConquestFighter(build, Rnd.get(match.getMinLevel(), match.getMaxLevel()), team.getName(), match.getId(), team.getTeam(), team.getNameColor(), location.getX(), location.getY(), location.getZ(), spawn.heading(), match.getInstanceId());
+			if (fake != null)
+			{
+				final ConquestFighter replacement = new ConquestFighter(fake, team, fighter.getRole());
+				team.getFighters().add(replacement);
+				_fighters.put(fake.getObjectId(), replacement);
+				party.addMember(replacement);
+				final FakePlayerParty current = party.getFakeParty();
+				if (current == null)
+				{
+					final List<Npc> fakes = new ArrayList<>();
+					for (ConquestFighter member : party.getMembers())
+					{
+						if (!member.isPlayer())
+						{
+							fakes.add(member.getNpc());
+						}
+					}
+					if (fakes.size() > 1)
+					{
+						party.setFakeParty(FakePartyManager.getInstance().createSimulationParty(fakes, FakeBrain.A));
+					}
+				}
+				else if (current.isFakeOnly())
+				{
+					FakePartyManager.getInstance().addToSimulationParty(current, fake);
+				}
+				else
+				{
+					FakePartyManager.getInstance().addToEventParty(current, fake);
+				}
+				if (match._phase == ConquestMatch.Phase.FIGHT)
+				{
+					fake.setRunning();
+					fake.getAI().setIntention(Intention.ACTIVE);
+					protect(replacement);
+				}
+			}
+		}
+
+		match.log(player.getName() + " left the match.");
+		for (Player other : match.getPlayers())
+		{
+			other.sendMessage("Conquest: " + player.getName() + " left the match.");
+		}
+	}
+
+	/**
+	 * Called through {@link ConquestRegistration#onLogout} by {@code Player#deleteMe}: a player in the match leaves it and logs in again where it was before.
+	 * @param player the player logging off
+	 */
+	public void onLogout(Player player)
+	{
+		final ConquestFighter fighter = _fighters.get(player.getObjectId());
+		if ((fighter != null) && fighter.isPlayer())
+		{
+			leave(fighter.getTeam().getMatch(), fighter, true);
+		}
+	}
+
+	/**
+	 * Ends every match running now, without a result.
 	 * @return what to tell the GM
 	 */
 	public synchronized String stop()
 	{
-		final ConquestMatch match = _match;
+		int stopped = 0;
+		for (ConquestMatch match : _matches.values())
+		{
+			if (match._phase != ConquestMatch.Phase.ENDED)
+			{
+				endMatch(match, null, "Stopped by a GM.", true);
+				stopped++;
+			}
+		}
+		return _matches.isEmpty() ? "No Conquest match is running." : stopped == 0 ? "The matches are ending already." : stopped + " match(es) stopped.";
+	}
+
+	/**
+	 * Ends one match, without a result.
+	 * @param id the match's id
+	 * @return what to tell the GM
+	 */
+	public synchronized String stop(int id)
+	{
+		final ConquestMatch match = _matches.get(id);
 		if (match == null)
 		{
-			return "No Conquest match is running.";
+			return "No Conquest match " + id + " is running.";
 		}
 		if (match._phase == ConquestMatch.Phase.ENDED)
 		{
-			return "The match on " + match.getMap().name() + " is ending already.";
+			return "Match " + id + " on " + match.getMap().name() + " is ending already.";
 		}
 		endMatch(match, null, "Stopped by a GM.", true);
-		return "The match on " + match.getMap().name() + " was stopped.";
+		return "Match " + id + " on " + match.getMap().name() + " was stopped.";
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -427,6 +923,7 @@ public class ConquestManager
 		{
 			final long now = System.currentTimeMillis();
 			match.rebuildGrid();
+			pruneWatchers(match);
 			if (match._phase != ConquestMatch.Phase.ENDED)
 			{
 				keepDoors(match);
@@ -439,7 +936,11 @@ public class ConquestManager
 					// Nobody leaves its spawn point before the fight.
 					for (ConquestFighter fighter : match.getAllFighters())
 					{
-						final Npc npc = fighter.getNpc();
+						if (fighter.isPlayer() && !checkPlayerStillIn(match, fighter))
+						{
+							continue;
+						}
+						final Creature npc = fighter.getCreature();
 						if (npc.isDead() || npc.isTeleporting())
 						{
 							continue;
@@ -448,6 +949,10 @@ public class ConquestManager
 						if (Math.hypot(spawn.x() - npc.getX(), spawn.y() - npc.getY()) > (spawn.radius() + ConquestConfig.BASE_RADIUS + PREP_LEASH))
 						{
 							sendHome(match, fighter, new Location(spawn.x(), spawn.y(), spawn.z(), spawn.heading()), spawn.radius());
+							if (fighter.isPlayer())
+							{
+								sendScreen(npc.asPlayer(), "The fight hasn't started yet!", 4, false);
+							}
 						}
 					}
 
@@ -485,11 +990,12 @@ public class ConquestManager
 		match._phase = ConquestMatch.Phase.FIGHT;
 		match.log("The fight begins: " + match.getBlue().getFighters().size() + " vs " + match.getRed().getFighters().size() + ".");
 		announce(match, "The fight has begun!");
-		command(match, now);
+		match._commandTask = ThreadPool.scheduleAtFixedRate(() -> command(match), 0, COMMAND_STEP_MS);
+		sendState(match, Ex2TeamEventState.RESULT_NONE);
 		for (ConquestFighter fighter : match.getAllFighters())
 		{
 			final Npc fake = fighter.getNpc();
-			if (!fake.isDead())
+			if ((fake != null) && !fake.isDead())
 			{
 				fake.setRunning();
 				fake.getAI().setIntention(Intention.ACTIVE);
@@ -501,10 +1007,23 @@ public class ConquestManager
 	{
 		for (ConquestFighter fighter : match.getAllFighters())
 		{
-			final Npc npc = fighter.getNpc();
+			if (fighter.isPlayer() && !checkPlayerStillIn(match, fighter))
+			{
+				continue;
+			}
+			final Creature npc = fighter.getCreature();
 			if (npc.isDead())
 			{
-				if ((fighter._respawnAt > 0) && (now >= fighter._respawnAt))
+				if (fighter._respawnAt <= 0)
+				{
+					// Dead without a wave (it died before the fight, or a respawn did not take): the next one takes it, players as fake players.
+					fighter.getTeam().joinWave(fighter, now);
+					if (fighter.isPlayer())
+					{
+						npc.sendMessage("Conquest: You come back with your team's next wave in " + (Math.max(0, fighter._respawnAt - now) / 1000) + " seconds.");
+					}
+				}
+				else if (now >= fighter._respawnAt)
 				{
 					respawn(match, fighter);
 				}
@@ -525,11 +1044,19 @@ public class ConquestManager
 				final int y = Math.max(map.minY() + BOUNDARY_INSET, Math.min(map.maxY() - BOUNDARY_INSET, npc.getY()));
 				sendHome(match, fighter, match.getNav().nearestGround(x, y, npc.getZ()), 0);
 				match._returned++;
+				if (fighter.isPlayer())
+				{
+					sendScreen(npc.asPlayer(), "You can't leave the battlefield!", 4, false);
+				}
 				continue;
 			}
 
-			// Nobody stays inside a wall or the rock (a knock back, a skill, a move with no way there): back on the nearest ground.
-			if (!match.getNav().isOnGround(npc.getX(), npc.getY(), npc.getZ()))
+			// Nobody stays inside a wall or the rock (a knock back, a skill, a move with no way there): back on the nearest ground. A player's own client keeps it on the ground.
+			if (fighter.isPlayer())
+			{
+				fighter._offGround = 0;
+			}
+			else if (!match.getNav().isOnGround(npc.getX(), npc.getY(), npc.getZ()))
 			{
 				if (++fighter._offGround >= OFF_GROUND_TICKS)
 				{
@@ -549,6 +1076,10 @@ public class ConquestManager
 			{
 				final ConquestPoint spawn = fighter.getTeam().getClosestSpawn(npc);
 				sendHome(match, fighter, new Location(spawn.x(), spawn.y(), spawn.z(), spawn.heading()), spawn.radius());
+				if (fighter.isPlayer())
+				{
+					sendScreen(npc.asPlayer(), "Entering the enemy base is not allowed!", 5, false);
+				}
 				continue;
 			}
 
@@ -556,6 +1087,13 @@ public class ConquestManager
 			{
 				unprotect(fighter);
 			}
+		}
+
+		// Every player left: the fake players don't fight on alone.
+		if (match._withPlayers && match.getPlayers().isEmpty())
+		{
+			endMatch(match, null, "Every player left.", true);
+			return;
 		}
 
 		// The capture points.
@@ -598,6 +1136,8 @@ public class ConquestManager
 		}
 		blue.setScore(Math.max(0, blue.getScore() - blue.getDrain()));
 		red.setScore(Math.max(0, red.getScore() - red.getDrain()));
+		sendState(match, Ex2TeamEventState.RESULT_NONE);
+		updateRadar(match, false);
 
 		if ((blue.getScore() <= 0) || (red.getScore() <= 0))
 		{
@@ -611,11 +1151,6 @@ public class ConquestManager
 			endMatch(match, winner, "Time is up.", false);
 			return;
 		}
-
-		if ((match._ticks % ConquestConfig.COMMANDER_INTERVAL) == 0)
-		{
-			command(match, now);
-		}
 	}
 
 	/**
@@ -627,7 +1162,7 @@ public class ConquestManager
 		final Location location = capture.getLocation();
 		for (ConquestFighter fighter : match.getNear(team, location.getX(), location.getY(), capture.getRadius()))
 		{
-			final Npc npc = fighter.getNpc();
+			final Creature npc = fighter.getCreature();
 			if (!npc.isDead() && capture.contains(npc.getX(), npc.getY(), npc.getZ()))
 			{
 				count++;
@@ -636,25 +1171,39 @@ public class ConquestManager
 		return count;
 	}
 
-	private static void command(ConquestMatch match, long now)
+	/**
+	 * Each step of {@link #COMMAND_STEP_MS} during the fight: the commanders whose interval is up have their turn, each at its own pace.
+	 */
+	private static void command(ConquestMatch match)
 	{
-		final long start = System.nanoTime();
+		if (match._phase != ConquestMatch.Phase.FIGHT)
+		{
+			return;
+		}
+		final long now = System.currentTimeMillis();
 		for (ConquestTeam team : new ConquestTeam[]
 		{
 			match.getBlue(),
 			match.getRed()
 		})
 		{
+			if (now < team._nextCommand)
+			{
+				continue;
+			}
+			final ConquestCommander commander = team.getCommander();
+			team._nextCommand = now + Math.max(COMMAND_STEP_MS, commander.getInterval());
+			final long start = System.nanoTime();
 			try
 			{
-				team.getCommander().command(match, team, now);
+				commander.command(match, team, now);
 			}
 			catch (Exception e)
 			{
 				LOGGER.log(Level.WARNING, ConquestManager.class.getSimpleName() + ": The " + team.getName() + " commander failed.", e);
 			}
+			match._lastCommandNanos = System.nanoTime() - start;
 		}
-		match._lastCommandNanos = System.nanoTime() - start;
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -664,8 +1213,8 @@ public class ConquestManager
 	private void respawn(ConquestMatch match, ConquestFighter fighter)
 	{
 		fighter._respawnAt = 0;
-		final Npc fake = fighter.getNpc();
-		if (!fake.isDead())
+		final Creature creature = fighter.getCreature();
+		if (!creature.isDead())
 		{
 			return;
 		}
@@ -684,12 +1233,36 @@ public class ConquestManager
 				party._waveSpot = spot;
 			}
 		}
-		DecayTaskManager.getInstance().cancel(fake);
-		fake.doRevive();
-		sendHome(match, fighter, spot != null ? spot : base, spot != null ? PARTY_SPREAD : spreadAt(fighter.getTeam(), base));
-		FakePartyManager.getInstance().onRevived(fake);
-		FakePlayerPvpManager.getInstance().prepareSimulant(fake);
-		fake.setRunning();
+		if (creature.isPlayer())
+		{
+			final Player player = creature.asPlayer();
+			// Still arriving from a teleport, the revive would only be noted for later: it comes back a second after its wave, at the same spot.
+			if (player.isTeleporting())
+			{
+				fighter._respawnAt = System.currentTimeMillis() + 1000;
+				return;
+			}
+			final Location to = spawnSpot(spot != null ? spot : base, spot != null ? PARTY_SPREAD : spreadAt(fighter.getTeam(), base), match.getInstanceId());
+			player.doRevive();
+			player.teleToLocation(to.getX(), to.getY(), to.getZ(), base.getHeading(), match.getInstanceId(), 0);
+			if (player.isDead())
+			{
+				// The revive did not take: the next tick tries again.
+				fighter._respawnAt = System.currentTimeMillis() + 1000;
+				return;
+			}
+			buffAndHeal(player);
+		}
+		else
+		{
+			final Npc fake = fighter.getNpc();
+			DecayTaskManager.getInstance().cancel(fake);
+			fake.doRevive();
+			sendHome(match, fighter, spot != null ? spot : base, spot != null ? PARTY_SPREAD : spreadAt(fighter.getTeam(), base));
+			FakePartyManager.getInstance().onRevived(fake);
+			FakePlayerPvpManager.getInstance().prepareSimulant(fake);
+			fake.setRunning();
+		}
 		protect(fighter);
 	}
 
@@ -712,11 +1285,15 @@ public class ConquestManager
 	 */
 	private static void sendHome(ConquestMatch match, ConquestFighter fighter, Location location, int radius)
 	{
-		final Npc npc = fighter.getNpc();
+		final Creature creature = fighter.getCreature();
 		final Location spot = spawnSpot(location, radius, match.getInstanceId());
-		npc.teleToLocation(spot.getX(), spot.getY(), spot.getZ(), location.getHeading(), match.getInstanceId(), 0);
-		restartAI(npc);
-		bringServitor(match, npc);
+		creature.teleToLocation(spot.getX(), spot.getY(), spot.getZ(), location.getHeading(), match.getInstanceId(), 0);
+		final Npc npc = fighter.getNpc();
+		if (npc != null)
+		{
+			restartAI(npc);
+			bringServitor(match, npc);
+		}
 	}
 
 	/**
@@ -782,7 +1359,7 @@ public class ConquestManager
 		for (ConquestFighter fighter : match.getAllFighters())
 		{
 			final Npc owner = fighter.getNpc();
-			if (owner.isDead() || owner.isTeleporting())
+			if ((owner == null) || owner.isDead() || owner.isTeleporting())
 			{
 				continue;
 			}
@@ -802,7 +1379,7 @@ public class ConquestManager
 			return;
 		}
 
-		final Npc npc = fighter.getNpc();
+		final Creature npc = fighter.getCreature();
 		fighter._protectedUntil = System.currentTimeMillis() + (ConquestConfig.SPAWN_PROTECTION * 1000L);
 		npc.setInvul(true);
 		final Skill skill = GHOST_WALKING.getSkill();
@@ -820,7 +1397,7 @@ public class ConquestManager
 		}
 
 		fighter._protectedUntil = 0;
-		final Npc npc = fighter.getNpc();
+		final Creature npc = fighter.getCreature();
 		npc.setInvul(false);
 		final Skill skill = GHOST_WALKING.getSkill();
 		if ((skill != null) && npc.isAffectedBySkill(skill.getId()))
@@ -837,8 +1414,8 @@ public class ConquestManager
 	public void onDeath(Creature victim, Creature killer)
 	{
 		final ConquestFighter dead = _fighters.get(victim.getObjectId());
-		final ConquestMatch match = _match;
-		if ((dead == null) || (match == null) || (match._phase != ConquestMatch.Phase.FIGHT))
+		final ConquestMatch match = dead != null ? dead.getTeam().getMatch() : null;
+		if ((match == null) || (match._phase != ConquestMatch.Phase.FIGHT))
 		{
 			return;
 		}
@@ -851,6 +1428,42 @@ public class ConquestManager
 		{
 			slayer._kills++;
 			slayer.getTeam().addKill();
+			if (slayer.isPlayer())
+			{
+				rewardKill(slayer.getCreature().asPlayer(), victim);
+			}
+		}
+
+		if (dead.isPlayer())
+		{
+			final long wait = Math.max(0, dead._respawnAt - System.currentTimeMillis()) / 1000;
+			victim.sendMessage("Conquest: You come back with your team's next wave in " + wait + " seconds.");
+		}
+	}
+
+	private static void rewardKill(Player killer, Creature victim)
+	{
+		final List<ItemChanceHolder> rewards = ConquestConfig.KILL_REWARDS;
+		if (rewards.isEmpty())
+		{
+			return;
+		}
+
+		double total = 0;
+		for (ItemChanceHolder reward : rewards)
+		{
+			total += reward.getChance();
+		}
+
+		double roll = Rnd.nextDouble() * Math.max(100, total);
+		for (ItemChanceHolder reward : rewards)
+		{
+			roll -= reward.getChance();
+			if (roll < 0)
+			{
+				killer.addItem(ItemProcessType.REWARD, reward.getId(), reward.getCount(), victim, true);
+				return;
+			}
 		}
 	}
 
@@ -884,25 +1497,65 @@ public class ConquestManager
 		match._fightEnd = Math.min(match._fightEnd > 0 ? match._fightEnd : Long.MAX_VALUE, System.currentTimeMillis());
 		match._phase = ConquestMatch.Phase.ENDED;
 		match._winner = winner;
+		if (match._commandTask != null)
+		{
+			match._commandTask.cancel(false);
+			match._commandTask = null;
+		}
 
 		final int blue = match.getBlue().getScore();
 		final int red = match.getRed().getScore();
 		match._result = abandoned ? reason : (winner == null ? "Draw, " + blue + " : " + red + ". " + reason : (winner == Team.BLUE ? "Blue" : "Red") + " wins, " + blue + " : " + red + ". " + reason);
 		match.log(match._result);
 		announce(match, match._result);
+		final ConquestCommander blueBrain = match.getBlue().getCommander();
+		final ConquestCommander redBrain = match.getRed().getCommander();
+		match.log("Brains: Blue " + describe(blueBrain) + ", Red " + describe(redBrain) + ".");
+		if (!abandoned)
+		{
+			_brainResults.computeIfAbsent(blueBrain.getName() + " vs " + redBrain.getName(), _ -> new int[3])[winner == Team.BLUE ? 0 : winner == Team.RED ? 1 : 2]++;
+		}
 		for (ConquestFighter fighter : match.getAllFighters())
 		{
-			final Npc npc = fighter.getNpc();
-			npc.abortAttack();
-			npc.abortCast();
-			npc.setInvul(true);
-			if (npc.hasAI())
+			final Creature creature = fighter.getCreature();
+			creature.abortAttack();
+			creature.abortCast();
+			creature.setInvul(true);
+			if (!fighter.isPlayer() && creature.hasAI())
 			{
-				npc.getAI().setIntention(Intention.IDLE);
+				creature.getAI().setIntention(Intention.IDLE);
 			}
 		}
 
-		LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " on " + match.getMap().name() + " ended: " + match._result);
+		// The players: their result, and the winners' reward.
+		final Ex2TeamEventState.State state = state(match, abandoned ? Ex2TeamEventState.RESULT_NO_RESULT : winner == Team.BLUE ? Ex2TeamEventState.RESULT_BLUE : winner == Team.RED ? Ex2TeamEventState.RESULT_RED : Ex2TeamEventState.RESULT_DRAW);
+		updateRadar(match, true);
+		final Skill firework = CommonSkill.FIREWORK.getSkill();
+		for (Player player : match.getPlayers())
+		{
+			final ConquestFighter fighter = _fighters.get(player.getObjectId());
+			TeamEventHud.sendState(player, state, fighter != null ? fighter.getTeam().getTeam() : Team.NONE);
+			player.sendMessage("Conquest: " + match._result + (fighter != null ? " You: " + fighter.getKills() + " kills, " + fighter.getDeaths() + " deaths." : ""));
+			if (!abandoned && (winner != null) && (fighter != null) && (fighter.getTeam().getTeam() == winner))
+			{
+				if (firework != null)
+				{
+					player.broadcastPacket(new MagicSkillUse(player, player, firework.getId(), firework.getLevel(), firework.getHitTime(), firework.getReuseDelay()));
+				}
+				player.broadcastSocialAction(3);
+				for (ItemHolder reward : ConquestConfig.WIN_REWARD)
+				{
+					player.addItem(ItemProcessType.REWARD, reward.getId(), reward.getCount(), null, true);
+				}
+			}
+		}
+
+		for (Player gm : watchers(match))
+		{
+			TeamEventHud.sendState(gm, state, Team.NONE);
+		}
+
+		LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " on " + match.getMap().name() + " ended: " + match._result + " Brains: Blue " + describe(blueBrain) + ", Red " + describe(redBrain) + ".");
 		ThreadPool.schedule(() -> cleanup(match), abandoned ? 2000 : ConquestConfig.END_DELAY * 1000L);
 	}
 
@@ -923,9 +1576,26 @@ public class ConquestManager
 				match._spawnTask.cancel(false);
 				match._spawnTask = null;
 			}
-			synchronized (_toSpawn)
+			if (match._commandTask != null)
 			{
-				_toSpawn.clear();
+				match._commandTask.cancel(false);
+				match._commandTask = null;
+			}
+			final Deque<PartyPlan> toSpawn = _toSpawn.remove(match.getId());
+			if (toSpawn != null)
+			{
+				synchronized (toSpawn)
+				{
+					// Players whose party had not come in yet are free again.
+					for (PartyPlan plan : toSpawn)
+					{
+						for (Player player : plan.players)
+						{
+							player.setRegisteredOnEvent(false);
+						}
+					}
+					toSpawn.clear();
+				}
 			}
 
 			for (ConquestTeam team : new ConquestTeam[]
@@ -936,9 +1606,18 @@ public class ConquestManager
 			{
 				for (ConquestParty party : team.getParties())
 				{
-					if (party.getFakeParty() != null)
+					final FakePlayerParty fakeParty = party.getFakeParty();
+					if (fakeParty == null)
 					{
-						FakePartyManager.getInstance().disbandSimulationParty(party.getFakeParty());
+						continue;
+					}
+					if (fakeParty.isFakeOnly())
+					{
+						FakePartyManager.getInstance().disbandSimulationParty(fakeParty);
+					}
+					else
+					{
+						FakePartyManager.getInstance().disbandEventParty(fakeParty);
 					}
 				}
 			}
@@ -946,9 +1625,16 @@ public class ConquestManager
 			int removed = 0;
 			for (ConquestFighter fighter : match.getAllFighters())
 			{
-				removeFake(fighter.getNpc());
-				_fighters.remove(fighter.getNpc().getObjectId(), fighter);
-				removed++;
+				if (fighter.isPlayer())
+				{
+					restorePlayer(match, fighter, true);
+				}
+				else
+				{
+					removeFake(fighter.getNpc());
+					removed++;
+				}
+				_fighters.remove(fighter.getCreature().getObjectId(), fighter);
 			}
 			LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + ": removed " + removed + " fake players (" + _fighters.size() + " left registered).");
 		}
@@ -958,15 +1644,21 @@ public class ConquestManager
 		}
 		finally
 		{
+			for (int objectId : match._watchers)
+			{
+				final Player gm = World.getInstance().getPlayer(objectId);
+				if (gm != null)
+				{
+					TeamEventHud.close(gm, zoneIds(match));
+				}
+			}
+			match._watchers.clear();
 			releaseRegions(match);
 			InstanceManager.getInstance().destroyInstance(match.getInstanceId());
 			synchronized (this)
 			{
-				if (_match == match)
-				{
-					_match = null;
-				}
-				ACTIVE = _match != null;
+				_matches.remove(match.getId(), match);
+				ACTIVE = !_matches.isEmpty();
 			}
 		}
 	}
@@ -1017,20 +1709,264 @@ public class ConquestManager
 	}
 
 	// ---------------------------------------------------------------------------------------------
+	// Event strip and radar (client/TeamEvents/PROTOCOL.txt)
+	// ---------------------------------------------------------------------------------------------
+
+	/** How far (per-mille) a capture's sweep may drift from where the client extrapolates it before it is sent again. */
+	private static final int SWEEP_TOLERANCE = 10;
+
+	/**
+	 * A capture's sweep on the radar: the color of the team the progress lies toward, filled as far as the progress, moving as it moved at the last tick (a red push on a blue point shrinks the blue sweep).
+	 * @param team the team it lies toward, {@link Team#NONE} at neutral
+	 * @param fraction 0 to 1000
+	 * @param rate per-mille per second, signed
+	 * @param flags {@link Ex2RadarZoneProgress#CONTESTED}
+	 */
+	private record Sweep(Team team, int fraction, int rate, int flags)
+	{
+		static Sweep of(ConquestCapture capture, boolean frozen)
+		{
+			final double progress = capture.getProgress();
+			final Team team = progress > 0 ? Team.BLUE : progress < 0 ? Team.RED : Team.NONE;
+			final int rate = frozen ? 0 : (int) Math.round(Math.signum(progress) * capture.getRate() * 10);
+			final int flags = !frozen && capture.isContested() ? Ex2RadarZoneProgress.CONTESTED : 0;
+			return new Sweep(team, (int) Math.round(Math.abs(progress) * 10), rate, flags);
+		}
+
+		Ex2RadarZoneProgress packet(int zoneId)
+		{
+			return new Ex2RadarZoneProgress(zoneId, team == Team.RED ? TeamEventHud.RED_SWEEP : TeamEventHud.BLUE_SWEEP, fraction, rate, flags);
+		}
+	}
+
+	/**
+	 * @param match a match
+	 * @param result {@link Ex2TeamEventState#RESULT_NONE} until it ended, then who won
+	 * @return its state for the event strip
+	 */
+	private static Ex2TeamEventState.State state(ConquestMatch match, int result)
+	{
+		final long now = System.currentTimeMillis();
+		final boolean ended = match._phase == ConquestMatch.Phase.ENDED;
+		final int phase = switch (match._phase)
+		{
+			case PREP -> Ex2TeamEventState.PHASE_PREP;
+			case FIGHT -> Ex2TeamEventState.PHASE_FIGHT;
+			case ENDED -> Ex2TeamEventState.PHASE_ENDED;
+		};
+		final int secondsLeft = ended ? 0 : (int) Math.max(0, ((match._phase == ConquestMatch.Phase.PREP ? match._prepEnd : match._fightEnd) - now) / 1000);
+
+		final List<Ex2TeamEventState.Point> points = new ArrayList<>();
+		final List<ConquestCapture> captures = match.getCaptures();
+		for (int i = 0; i < captures.size(); i++)
+		{
+			final ConquestCapture capture = captures.get(i);
+			final int rate = ended ? 0 : (int) Math.round(capture.getRate() * 10);
+			final int flags = !ended && capture.isContested() ? Ex2TeamEventState.POINT_CONTESTED : 0;
+			points.add(new Ex2TeamEventState.Point(pointName(capture, i), TeamEventHud.code(capture.getOwner()), (int) Math.round(capture.getProgress() * 10), rate, flags));
+		}
+
+		final ConquestTeam blue = match.getBlue();
+		final ConquestTeam red = match.getRed();
+		final boolean draining = match._phase == ConquestMatch.Phase.FIGHT;
+		return new Ex2TeamEventState.State(Ex2TeamEventState.MODE_CONQUEST, phase, result, secondsLeft, blue.getScore(), red.getScore(), ConquestConfig.START_SCORE, draining ? blue.getDrain() : 0, draining ? red.getDrain() : 0, points);
+	}
+
+	/**
+	 * Sends the match's state to each of its players.
+	 */
+	private void sendState(ConquestMatch match, int result)
+	{
+		final Ex2TeamEventState.State state = state(match, result);
+		for (Player player : audience(match))
+		{
+			final ConquestFighter fighter = _fighters.get(player.getObjectId());
+			TeamEventHud.sendState(player, state, fighter != null ? fighter.getTeam().getTeam() : Team.NONE);
+		}
+	}
+
+	/**
+	 * @return the players who see the match's strip and radar zones: its fighters, and the GMs watching it
+	 */
+	private List<Player> audience(ConquestMatch match)
+	{
+		final List<Player> players = match.getPlayers();
+		for (Player gm : watchers(match))
+		{
+			if (!players.contains(gm))
+			{
+				players.add(gm);
+			}
+		}
+		return players;
+	}
+
+	/**
+	 * @return the GMs watching the match who are still in its instance
+	 */
+	private static List<Player> watchers(ConquestMatch match)
+	{
+		final List<Player> watchers = new ArrayList<>();
+		for (int objectId : match._watchers)
+		{
+			final Player gm = World.getInstance().getPlayer(objectId);
+			if ((gm != null) && (gm.getInstanceId() == match.getInstanceId()))
+			{
+				watchers.add(gm);
+			}
+		}
+		return watchers;
+	}
+
+	/**
+	 * Lets go of the GMs who stopped watching the match without //conquest leave (another teleport, a logout): their strip and the match's zones go.
+	 */
+	private static void pruneWatchers(ConquestMatch match)
+	{
+		for (int objectId : match._watchers)
+		{
+			final Player gm = World.getInstance().getPlayer(objectId);
+			if ((gm == null) || (gm.getInstanceId() != match.getInstanceId()))
+			{
+				match._watchers.remove(objectId);
+				if (gm != null)
+				{
+					TeamEventHud.close(gm, zoneIds(match));
+				}
+			}
+		}
+	}
+
+	/**
+	 * A GM stops watching the match: its strip and zones go.
+	 */
+	private static void stopWatching(ConquestMatch match, Player gm)
+	{
+		if (match._watchers.remove(gm.getObjectId()))
+		{
+			TeamEventHud.close(gm, zoneIds(match));
+		}
+	}
+
+	/**
+	 * @return a capture's name on the strip: its own, or its number
+	 */
+	private static String pointName(ConquestCapture capture, int index)
+	{
+		return capture.getName().isEmpty() ? String.valueOf(index + 1) : capture.getName();
+	}
+
+	/**
+	 * @return the ids of every zone the match shows on a player's radar
+	 */
+	private static List<Integer> zoneIds(ConquestMatch match)
+	{
+		return TeamEventHud.zoneIds(match.getCaptures().size(), match.getBlue().getSpawns().size(), match.getRed().getSpawns().size());
+	}
+
+	private static void showCapture(Player player, int index, ConquestCapture capture)
+	{
+		final ConquestPoint point = capture.getPoint();
+		TeamEventHud.showCircle(player, TeamEventHud.zoneId(TeamEventHud.KIND_CAPTURE, index), point.x(), point.y(), point.z(), ConquestConfig.CAPTURE_HEIGHT, point.radius(), TeamEventHud.ownerStyle(capture.getOwner()), pointName(capture, index));
+	}
+
+	/**
+	 * Shows a player entering the match its zones: the capture points in their owners' colors with their sweeps, both teams' bases and the map's area.
+	 */
+	private static void showZones(ConquestMatch match, Player player)
+	{
+		final List<ConquestCapture> captures = match.getCaptures();
+		for (int i = 0; i < captures.size(); i++)
+		{
+			final ConquestCapture capture = captures.get(i);
+			showCapture(player, i, capture);
+			final Sweep sweep = Sweep.of(capture, match._phase == ConquestMatch.Phase.ENDED);
+			if (sweep.fraction() > 0)
+			{
+				player.sendPacket(sweep.packet(TeamEventHud.zoneId(TeamEventHud.KIND_CAPTURE, i)));
+			}
+		}
+		for (ConquestTeam team : List.of(match.getBlue(), match.getRed()))
+		{
+			final boolean blue = team.getTeam() == Team.BLUE;
+			final List<ConquestPoint> spawns = team.getSpawns();
+			for (int i = 0; i < spawns.size(); i++)
+			{
+				final ConquestPoint spawn = spawns.get(i);
+				TeamEventHud.showCircle(player, TeamEventHud.zoneId(blue ? TeamEventHud.KIND_BLUE_BASE : TeamEventHud.KIND_RED_BASE, i), spawn.x(), spawn.y(), spawn.z(), TeamEventHud.SPAWN_HEIGHT, spawn.radius() + ConquestConfig.BASE_RADIUS, TeamEventHud.spawnStyle(team.getTeam()), team.getName() + " base " + (i + 1));
+			}
+		}
+		final ConquestMap map = match.getMap();
+		TeamEventHud.showEdge(player, map.minX(), map.minY(), map.maxX(), map.maxY(), map.z());
+	}
+
+	/**
+	 * After a tick: the capture points that changed hands get their new colors, and the sweeps that went another way than the clients extrapolate are sent again.
+	 * @param match the match
+	 * @param frozen {@code true} once it ended: every sweep stops where it is
+	 */
+	private void updateRadar(ConquestMatch match, boolean frozen)
+	{
+		final List<Player> players = audience(match);
+		final long now = System.currentTimeMillis();
+		final List<ConquestCapture> captures = match.getCaptures();
+		for (int i = 0; i < captures.size(); i++)
+		{
+			final ConquestCapture capture = captures.get(i);
+			final int zoneId = TeamEventHud.zoneId(TeamEventHud.KIND_CAPTURE, i);
+			// A zone shown again may have lost its sweep: it goes with it.
+			final boolean reshown = capture.getOwner() != capture._sentOwner;
+			if (reshown)
+			{
+				capture._sentOwner = capture.getOwner();
+				for (Player player : players)
+				{
+					showCapture(player, i, capture);
+				}
+			}
+
+			final Sweep sweep = Sweep.of(capture, frozen);
+			final long expected = Math.max(0, Math.min(1000, capture._sentFraction + ((capture._sentRate * (now - capture._sentAt)) / 1000)));
+			if (!reshown && (sweep.team() == capture._sentSweep) && (sweep.rate() == capture._sentRate) && (sweep.flags() == capture._sentFlags) && (Math.abs(expected - sweep.fraction()) <= SWEEP_TOLERANCE))
+			{
+				continue;
+			}
+			capture._sentSweep = sweep.team();
+			capture._sentFraction = sweep.fraction();
+			capture._sentRate = sweep.rate();
+			capture._sentFlags = sweep.flags();
+			capture._sentAt = now;
+			final Ex2RadarZoneProgress packet = sweep.packet(zoneId);
+			for (Player player : players)
+			{
+				player.sendPacket(packet);
+			}
+		}
+	}
+
+	// ---------------------------------------------------------------------------------------------
 	// Watching
 	// ---------------------------------------------------------------------------------------------
 
 	/**
-	 * Takes a GM into the match's copy of the map, at its middle capture point.
+	 * Takes a GM into a match's copy of the map, at its middle capture point.
 	 * @param gm the GM
+	 * @param id the match's id, 0 for the next one after the one the GM watches (the newest first)
 	 * @return what to tell the GM
 	 */
-	public String watch(Player gm)
+	public String watch(Player gm, int id)
 	{
-		final ConquestMatch match = _match;
+		ConquestMatch match = id > 0 ? _matches.get(id) : null;
+		if (id <= 0)
+		{
+			final List<ConquestMatch> matches = getMatches();
+			final ConquestMatch current = getMatch(gm);
+			final int index = (current != null) && (gm.getInstanceId() == current.getInstanceId()) ? matches.indexOf(current) : -1;
+			match = matches.isEmpty() ? null : matches.get((index + 1) % matches.size());
+		}
 		if (match == null)
 		{
-			return "No Conquest match is running.";
+			return id > 0 ? "No Conquest match " + id + " is running." : "No Conquest match is running.";
 		}
 
 		final ConquestMap map = match.getMap();
@@ -1043,9 +1979,21 @@ public class ConquestManager
 				closest = capture;
 			}
 		}
+		// From another match: its strip and zones go first.
+		for (ConquestMatch other : getMatches())
+		{
+			if (other != match)
+			{
+				stopWatching(other, gm);
+			}
+		}
 		final Location spot = closest.getLocation();
 		gm.teleToLocation(spot.getX(), spot.getY(), spot.getZ(), gm.getHeading(), match.getInstanceId());
-		return "Watching " + map.name() + " at capture point " + closest.getName() + ". The fake players leave you alone. //conquest leave takes you back.";
+		// The event strip and radar zones, as a player of neither team sees them.
+		match._watchers.add(gm.getObjectId());
+		TeamEventHud.sendState(gm, state(match, Ex2TeamEventState.RESULT_NONE), Team.NONE);
+		showZones(match, gm);
+		return "Watching match " + match.getId() + " (levels " + match.getMinLevel() + "-" + match.getMaxLevel() + ") on " + map.name() + " at capture point " + closest.getName() + ". The fake players leave you alone. //conquest watch goes to the next match, //conquest leave takes you back.";
 	}
 
 	/**
@@ -1055,13 +2003,14 @@ public class ConquestManager
 	 */
 	public String leave(Player gm)
 	{
-		final ConquestMatch match = _match;
+		final ConquestMatch match = getMatch(gm);
 		if ((match == null) || (gm.getInstanceId() != match.getInstanceId()))
 		{
 			return "You are not watching a Conquest match.";
 		}
 		final Instance instance = InstanceManager.getInstance().getInstance(match.getInstanceId());
 		final Location exit = (instance != null) && (instance.getExitLoc() != null) ? instance.getExitLoc() : new Location(83425, 148585, -3406);
+		stopWatching(match, gm);
 		gm.teleToLocation(exit.getX(), exit.getY(), exit.getZ(), gm.getHeading(), 0);
 		return "Back in the open world.";
 	}
@@ -1091,13 +2040,34 @@ public class ConquestManager
 		}
 	}
 
-	private static void releaseRegions(ConquestMatch match)
+	private void releaseRegions(ConquestMatch match)
 	{
+		// Another match going on on the same map still needs them (a region holds every copy of its place): it takes them over.
+		ConquestMatch heir = null;
+		for (ConquestMatch other : _matches.values())
+		{
+			if ((other != match) && (other._phase != ConquestMatch.Phase.ENDED) && other.getMap().id().equals(match.getMap().id()))
+			{
+				heir = other;
+				break;
+			}
+		}
+
 		synchronized (match._keptRegions)
 		{
-			for (WorldRegion region : match._keptRegions)
+			if (heir != null)
 			{
-				region.releaseKeepActive();
+				synchronized (heir._keptRegions)
+				{
+					heir._keptRegions.addAll(match._keptRegions);
+				}
+			}
+			else
+			{
+				for (WorldRegion region : match._keptRegions)
+				{
+					region.releaseKeepActive();
+				}
 			}
 			match._keptRegions.clear();
 		}
@@ -1147,7 +2117,7 @@ public class ConquestManager
 		{
 			return Relation.NONE;
 		}
-		if ((fa == null) || (fb == null))
+		if ((fa == null) || (fb == null) || (fa.getTeam().getMatch() != fb.getTeam().getMatch()))
 		{
 			return Relation.STRANGER;
 		}
@@ -1186,10 +2156,9 @@ public class ConquestManager
 		{
 			return false;
 		}
-		final ConquestMatch match = getInstance()._match;
 		final ConquestFighter fa = getFighter(attacker);
 		final ConquestFighter fb = getFighter(target);
-		return (match != null) && (match._phase == ConquestMatch.Phase.FIGHT) && (fa != null) && (fb != null) && !fa.getTeam().isInBase(attacker.getX(), attacker.getY()) && !fb.getTeam().isInBase(target.getX(), target.getY());
+		return (fa != null) && (fb != null) && (fa.getTeam().getMatch() == fb.getTeam().getMatch()) && (fa.getTeam().getMatch()._phase == ConquestMatch.Phase.FIGHT) && !fa.getTeam().isInBase(attacker.getX(), attacker.getY()) && !fb.getTeam().isInBase(target.getX(), target.getY());
 	}
 
 	/**
@@ -1198,16 +2167,16 @@ public class ConquestManager
 	 */
 	public ConquestMatch.Phase getPhase(Npc fake)
 	{
-		final ConquestMatch match = _match;
 		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
-		return (match != null) && (profile != null) && (profile.getConquestMatchId() == match.getId()) ? match._phase : null;
+		final ConquestMatch match = profile != null ? _matches.get(profile.getConquestMatchId()) : null;
+		return match != null ? match._phase : null;
 	}
 
 	/**
-	 * @param fake a fake player of the match
+	 * @param fake a fighter of the match
 	 * @return {@code true} if it stands in its own team's base
 	 */
-	public boolean isAtOwnBase(Npc fake)
+	public boolean isAtOwnBase(Creature fake)
 	{
 		final ConquestFighter fighter = _fighters.get(fake.getObjectId());
 		return (fighter != null) && fighter.getTeam().isInBase(fake.getX(), fake.getY());
@@ -1221,15 +2190,15 @@ public class ConquestManager
 	public Creature findEnemyInSight(Npc fake)
 	{
 		final ConquestFighter fighter = _fighters.get(fake.getObjectId());
-		final ConquestMatch match = _match;
-		if ((fighter == null) || (match == null) || (match._phase != ConquestMatch.Phase.FIGHT))
+		final ConquestMatch match = fighter != null ? fighter.getTeam().getMatch() : null;
+		if ((match == null) || (match._phase != ConquestMatch.Phase.FIGHT))
 		{
 			return null;
 		}
 
 		final long now = System.currentTimeMillis();
 		final ConquestTeam other = match.getOther(fighter.getTeam());
-		final Npc seen = fighter._seen;
+		final Creature seen = fighter._seen;
 		if ((now < fighter._seenUntil) && ((seen == null) || isEngageable(fake, seen, other)))
 		{
 			return seen;
@@ -1238,13 +2207,13 @@ public class ConquestManager
 		final double knowledge = FakePlayerPvpPersonality.of(fake).getKnowledge();
 		final double sight = SIGHT_RANGE * (1 - (SIGHT_KNOWLEDGE_LOSS * (1 - knowledge)));
 		final List<ConquestFighter> near = match.getNear(other, fake.getX(), fake.getY(), (int) sight);
-		near.sort(Comparator.comparingDouble(enemy -> fake.calculateDistance2D(enemy.getNpc())));
-		Npc best = null;
+		near.sort(Comparator.comparingDouble(enemy -> fake.calculateDistance2D(enemy.getCreature())));
+		Creature best = null;
 		double bestScore = Double.MAX_VALUE;
 		int checked = 0;
 		for (ConquestFighter enemy : near)
 		{
-			final Npc npc = enemy.getNpc();
+			final Creature npc = enemy.getCreature();
 			if (enemy.isProtected() || !isEngageable(fake, npc, other))
 			{
 				continue;
@@ -1276,7 +2245,7 @@ public class ConquestManager
 		return best;
 	}
 
-	private static boolean isEngageable(Npc fake, Npc enemy, ConquestTeam enemyTeam)
+	private static boolean isEngageable(Npc fake, Creature enemy, ConquestTeam enemyTeam)
 	{
 		return !enemy.isDead() && enemy.isSpawned() && !enemy.isInvisible() && !enemy.isInvul() && (enemy.getInstanceId() == fake.getInstanceId()) && !enemyTeam.isInBase(enemy.getX(), enemy.getY());
 	}
@@ -1291,7 +2260,8 @@ public class ConquestManager
 	 */
 	public Location routeStep(Creature creature, int x, int y, int z)
 	{
-		final ConquestMatch match = _match;
+		final ConquestFighter fighter = getFighter(creature);
+		final ConquestMatch match = fighter != null ? fighter.getTeam().getMatch() : null;
 		if ((match == null) || (creature.getInstanceId() != match.getInstanceId()))
 		{
 			return null;
@@ -1307,12 +2277,12 @@ public class ConquestManager
 	public Location getMarchTarget(Npc fake)
 	{
 		final ConquestFighter fighter = _fighters.get(fake.getObjectId());
-		final ConquestMatch match = _match;
-		if ((fighter == null) || (match == null))
+		if (fighter == null)
 		{
 			return null;
 		}
 
+		final ConquestMatch match = fighter.getTeam().getMatch();
 		final ConquestParty party = fighter.getParty();
 		final ConquestParty.Order order = party != null ? party.getOrder() : null;
 		Location target = order != null ? order.target() : null;
@@ -1342,22 +2312,64 @@ public class ConquestManager
 	// ---------------------------------------------------------------------------------------------
 
 	/**
-	 * @return the match running now (or ending), {@code null} if none
+	 * @return the matches running now (or ending), the oldest first
 	 */
-	public ConquestMatch getMatch()
+	public List<ConquestMatch> getMatches()
 	{
-		return _match;
+		final List<ConquestMatch> matches = new ArrayList<>(_matches.values());
+		matches.sort(Comparator.comparingInt(ConquestMatch::getId));
+		return matches;
 	}
 
 	/**
-	 * @return the fake players still to spawn
+	 * @param id a match's id
+	 * @return that match, {@code null} if it doesn't run
 	 */
-	public int getPendingSpawns()
+	public ConquestMatch getMatch(int id)
 	{
-		int pending = 0;
-		synchronized (_toSpawn)
+		return _matches.get(id);
+	}
+
+	/**
+	 * @return the newest match running now (or ending), {@code null} if none
+	 */
+	public ConquestMatch getMatch()
+	{
+		final List<ConquestMatch> matches = getMatches();
+		return matches.isEmpty() ? null : matches.get(matches.size() - 1);
+	}
+
+	/**
+	 * @param gm a GM
+	 * @return the match the GM is in (watching it), else the newest one, {@code null} if none runs
+	 */
+	public ConquestMatch getMatch(Player gm)
+	{
+		for (ConquestMatch match : _matches.values())
 		{
-			for (PartyPlan plan : _toSpawn)
+			if (match.getInstanceId() == gm.getInstanceId())
+			{
+				return match;
+			}
+		}
+		return getMatch();
+	}
+
+	/**
+	 * @param match a match
+	 * @return its fake players still to spawn
+	 */
+	public int getPendingSpawns(ConquestMatch match)
+	{
+		final Deque<PartyPlan> toSpawn = _toSpawn.get(match.getId());
+		if (toSpawn == null)
+		{
+			return 0;
+		}
+		int pending = 0;
+		synchronized (toSpawn)
+		{
+			for (PartyPlan plan : toSpawn)
 			{
 				pending += plan.slots.size();
 			}
@@ -1365,13 +2377,95 @@ public class ConquestManager
 		return pending;
 	}
 
+	// ---------------------------------------------------------------------------------------------
+	// Brains
+	// ---------------------------------------------------------------------------------------------
+
+	/** The brains a team can have: the plain one (A), and JEV deciding with it (B, {@link JevConquestCommander}). */
+	public static final List<String> BRAINS = List.of("generic", "jev");
+
 	/**
-	 * Lets another commander lead the teams of the next matches (a learned one).
-	 * @param commanders makes one commander for each team
+	 * @param name a brain of {@link #BRAINS} (or "a", "b")
+	 * @return a new commander of it, {@code null} for an unknown name
+	 */
+	public static ConquestCommander createCommander(String name)
+	{
+		return switch (name.trim().toLowerCase(Locale.ROOT))
+		{
+			case "generic", "a" -> new GenericConquestCommander();
+			case "jev", "b" -> new JevConquestCommander();
+			default -> null;
+		};
+	}
+
+	/**
+	 * Lets another commander lead both teams of the next matches (a learned one).
+	 * @param commanders makes one commander for each team, {@code null} for the ones Conquest.ini names
 	 */
 	public void setCommanders(Supplier<ConquestCommander> commanders)
 	{
-		_commanders = commanders != null ? commanders : GenericConquestCommander::new;
+		setCommanders(commanders, commanders);
+	}
+
+	/**
+	 * Sets two commanders against each other in the next matches.
+	 * @param blue makes Blue's commander, {@code null} for the one Conquest.ini names (ConquestBlueBrain)
+	 * @param red makes Red's, {@code null} for ConquestRedBrain
+	 */
+	public void setCommanders(Supplier<ConquestCommander> blue, Supplier<ConquestCommander> red)
+	{
+		_blueBrain = blue;
+		_redBrain = red;
+	}
+
+	/**
+	 * Sets two of the known brains ({@link #BRAINS}) against each other in the next matches.
+	 * @param blue Blue's brain, {@code null} for the one Conquest.ini names
+	 * @param red Red's
+	 * @return what to tell the GM
+	 */
+	public String setBrains(String blue, String red)
+	{
+		for (String name : new String[]
+		{
+			blue,
+			red
+		})
+		{
+			if ((name != null) && (createCommander(name) == null))
+			{
+				return "No brain \"" + name + "\". The brains: " + String.join(", ", BRAINS) + ".";
+			}
+		}
+		setCommanders(blue != null ? () -> createCommander(blue) : null, red != null ? () -> createCommander(red) : null);
+		return getBrainReport().get(0);
+	}
+
+	/**
+	 * @return the brains of the next matches, then how each pairing did since the server started, for the GM
+	 */
+	public List<String> getBrainReport()
+	{
+		final List<String> lines = new ArrayList<>();
+		lines.add("The next matches: Blue " + makeBrain(_blueBrain, ConquestConfig.BLUE_BRAIN).getName() + " vs Red " + makeBrain(_redBrain, ConquestConfig.RED_BRAIN).getName() + "." + (ConquestConfig.REGISTRATION_BRAIN.isEmpty() ? "" : " Registered matches: " + makeBrain(null, ConquestConfig.REGISTRATION_BRAIN).getName() + " on both sides."));
+		for (Map.Entry<String, int[]> entry : _brainResults.entrySet())
+		{
+			final int[] result = entry.getValue();
+			lines.add(entry.getKey() + ": Blue won " + result[0] + ", Red won " + result[1] + ", " + result[2] + " draw(s).");
+		}
+		return lines;
+	}
+
+	private static ConquestCommander makeBrain(Supplier<ConquestCommander> brain, String configured)
+	{
+		final ConquestCommander commander = brain != null ? brain.get() : createCommander(configured);
+		return commander != null ? commander : new GenericConquestCommander();
+	}
+
+	private static String describe(ConquestCommander commander)
+	{
+		final String status = commander.getStatus();
+		return commander.getName() + (status.isEmpty() ? "" : " (" + status + ")");
 	}
 
 	public static ConquestManager getInstance()

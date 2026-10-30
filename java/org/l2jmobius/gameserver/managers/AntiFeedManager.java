@@ -42,6 +42,7 @@ public class AntiFeedManager
 	public static final int TVT_ID = 2;
 	public static final int L2EVENT_ID = 3;
 	public static final int OFFLINE_PLAY = 4;
+	public static final int CONQUEST_ID = 5;
 	
 	private final Map<Integer, Long> _lastDeathTimes = new ConcurrentHashMap<>();
 	private final Map<Integer, Map<Integer, AtomicInteger>> _eventIPs = new ConcurrentHashMap<>();

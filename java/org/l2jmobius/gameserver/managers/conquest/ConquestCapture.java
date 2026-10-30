@@ -38,6 +38,15 @@ public class ConquestCapture
 	private volatile int _blue;
 	private volatile int _red;
 	private volatile boolean _stalemate;
+	private volatile double _rate;
+	private volatile boolean _contested;
+	// The capture's sweep the match's players were sent last (Ex2RadarZoneProgress) and the owner their radar shows.
+	Team _sentOwner = Team.NONE;
+	Team _sentSweep = Team.NONE;
+	int _sentFraction;
+	int _sentRate;
+	int _sentFlags;
+	long _sentAt;
 
 	ConquestCapture(ConquestPoint point)
 	{
@@ -110,7 +119,11 @@ public class ConquestCapture
 		_blue = blue;
 		_red = red;
 		_stalemate = (blue >= ConquestConfig.CAPTURE_STALEMATE_COUNT) && (red >= ConquestConfig.CAPTURE_STALEMATE_COUNT);
-		_progress = step(_progress, blue, red, ConquestConfig.CAPTURE_BASE_RATE, ConquestConfig.CAPTURE_RATE_PER_EXTRA, ConquestConfig.CAPTURE_MAX_RATE, ConquestConfig.CAPTURE_MAJORITY_PERCENT, ConquestConfig.CAPTURE_STALEMATE_COUNT);
+		// Contested: both teams on it and neither has the majority to move it (from neutral nothing caps the step, so only the rule holds it).
+		_contested = (blue > 0) && (red > 0) && (step(0, blue, red, ConquestConfig.CAPTURE_BASE_RATE, ConquestConfig.CAPTURE_RATE_PER_EXTRA, ConquestConfig.CAPTURE_MAX_RATE, ConquestConfig.CAPTURE_MAJORITY_PERCENT, ConquestConfig.CAPTURE_STALEMATE_COUNT) == 0);
+		final double progress = _progress;
+		_progress = step(progress, blue, red, ConquestConfig.CAPTURE_BASE_RATE, ConquestConfig.CAPTURE_RATE_PER_EXTRA, ConquestConfig.CAPTURE_MAX_RATE, ConquestConfig.CAPTURE_MAJORITY_PERCENT, ConquestConfig.CAPTURE_STALEMATE_COUNT);
+		_rate = _progress - progress;
 		final Team before = _owner;
 		_owner = ownerAt(_progress, before);
 		return _owner != before ? before : null;
@@ -180,6 +193,22 @@ public class ConquestCapture
 	public boolean isStalemate()
 	{
 		return _stalemate;
+	}
+
+	/**
+	 * @return how far the progress moved at the last tick (a second), toward Blue if positive
+	 */
+	public double getRate()
+	{
+		return _rate;
+	}
+
+	/**
+	 * @return {@code true} if both teams were on it at the last tick and neither could move it (a stalemate, or no majority)
+	 */
+	public boolean isContested()
+	{
+		return _contested;
 	}
 
 	/**

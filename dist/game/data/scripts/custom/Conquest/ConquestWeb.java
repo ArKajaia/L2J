@@ -47,7 +47,7 @@ import org.l2jmobius.gameserver.managers.conquest.ConquestParty;
 import org.l2jmobius.gameserver.managers.conquest.ConquestTeam;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
-import org.l2jmobius.gameserver.model.actor.Npc;
+import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
@@ -903,7 +903,7 @@ public class ConquestWeb
 		}
 
 		final ConquestManager manager = ConquestManager.getInstance();
-		final ConquestMatch match = manager.getMatch();
+		final ConquestMatch match = manager.getMatch(gm);
 		final StringBuilder json = new StringBuilder(match != null ? 32768 : 512);
 		json.append("{\"admin\":").append(SimpleJson.quote(gm.getName()));
 		json.append(",\"watching\":").append((match != null) && (gm.getInstanceId() == match.getInstanceId()));
@@ -928,7 +928,7 @@ public class ConquestWeb
 			json.append(",\"phase\":").append(SimpleJson.quote(match.getPhase().name()));
 			json.append(",\"time\":").append(match.getTime()).append(",\"timeLimit\":").append(match.getTimeLimit());
 			json.append(",\"perTeam\":").append(match.getPerTeam()).append(",\"levels\":").append(SimpleJson.quote(match.getMinLevel() + "-" + match.getMaxLevel()));
-			json.append(",\"pending\":").append(manager.getPendingSpawns());
+			json.append(",\"pending\":").append(manager.getPendingSpawns(match));
 			json.append(",\"navReady\":").append(match.getNav().isReady());
 			json.append(",\"returned\":").append(match.getReturned());
 			json.append(",\"unstuck\":").append(match.getUnstuck());
@@ -972,9 +972,12 @@ public class ConquestWeb
 		json.append("{\"team\":").append(SimpleJson.quote(team.getTeam() == Team.BLUE ? "blue" : "red"));
 		json.append(",\"name\":").append(SimpleJson.quote(team.getName()));
 		json.append(",\"commander\":").append(SimpleJson.quote(team.getCommander().getName()));
+		json.append(",\"commanderStatus\":").append(SimpleJson.quote(team.getCommander().getStatus()));
 		json.append(",\"score\":").append(team.getScore()).append(",\"drain\":").append(team.getDrain()).append(",\"held\":").append(team.getHeld());
 		json.append(",\"alive\":").append(team.getAlive()).append(",\"total\":").append(team.getFighters().size()).append(",\"kills\":").append(team.getKills());
 		final long now = System.currentTimeMillis();
+		final String brain = team.getCommander().getReport(now);
+		json.append(",\"brain\":").append(brain != null ? brain : "null");
 		final long wave = team.getNextWave(now);
 		json.append(",\"wave\":");
 		if (wave > 0)
@@ -1021,9 +1024,9 @@ public class ConquestWeb
 		first = true;
 		for (ConquestFighter fighter : team.getFighters())
 		{
-			final Npc npc = fighter.getNpc();
+			final Creature npc = fighter.getCreature();
 			final ConquestParty party = fighter.getParty();
-			final FakePlayerPvpProfile profile = npc.getTemplate().getFakePlayerPvpProfile();
+			final FakePlayerPvpProfile profile = fighter.getNpc() != null ? fighter.getNpc().getTemplate().getFakePlayerPvpProfile() : null;
 			json.append(first ? "" : ",");
 			first = false;
 			json.append('[').append(npc.getObjectId()).append(',').append(npc.getX()).append(',').append(npc.getY());
@@ -1033,7 +1036,7 @@ public class ConquestWeb
 			json.append(',').append(SimpleJson.quote(fighter.getRole().name().toLowerCase()));
 			json.append(',').append((party != null) && (party.getLeader() == npc) ? 1 : 0);
 			json.append(',').append(SimpleJson.quote(npc.getName()));
-			json.append(',').append(SimpleJson.quote((profile != null) && (profile.getBuild() != null) ? profile.getBuild().getName() : ""));
+			json.append(',').append(SimpleJson.quote(fighter.isPlayer() ? "player" : (profile != null) && (profile.getBuild() != null) ? profile.getBuild().getName() : ""));
 			json.append(',').append(npc.getLevel()).append(',').append(fighter.getKills()).append(',').append(fighter.getDeaths()).append(']');
 		}
 		json.append("]}");
@@ -1087,7 +1090,7 @@ public class ConquestWeb
 			return;
 		}
 		final List<String> lines = new ArrayList<>();
-		lines.add(ConquestManager.getInstance().watch(gm));
+		lines.add(ConquestManager.getInstance().watch(gm, 0));
 		sendLines(exchange, lines);
 	}
 

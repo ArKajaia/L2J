@@ -537,7 +537,11 @@ public enum ServerPackets
 	EX2_BESTIARY_RESULT(0xFE, 0xFE, 0x13),
 	EX2_BESTIARY_OPEN(0xFE, 0xFE, 0x14),
 	EX2_BESTIARY_PORTRAIT(0xFE, 0xFE, 0x15),
-	EX2_BESTIARY_PORTRAIT_LOOK(0xFE, 0xFE, 0x16);
+	EX2_BESTIARY_PORTRAIT_LOOK(0xFE, 0xFE, 0x16),
+	// The team event strip (client/TeamEvents/PROTOCOL.txt) and the radar zones' capture sweep (client/RadarZones/README.txt).
+	EX2_TEAM_EVENT_STATE(0xFE, 0xFE, 0x17),
+	EX2_TEAM_EVENT_CLOSE(0xFE, 0xFE, 0x18),
+	EX2_RADAR_ZONE_PROGRESS(0xFE, 0xFE, 0x19);
 
 	private final int _id1;
 	private final int _id2;

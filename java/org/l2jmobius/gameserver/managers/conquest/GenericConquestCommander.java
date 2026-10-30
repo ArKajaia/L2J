@@ -22,12 +22,13 @@ package org.l2jmobius.gameserver.managers.conquest;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.l2jmobius.gameserver.config.custom.ConquestConfig;
 import org.l2jmobius.gameserver.model.Location;
-import org.l2jmobius.gameserver.model.actor.Npc;
+import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.conquest.ConquestMap;
 
 /**
@@ -39,14 +40,15 @@ import org.l2jmobius.gameserver.model.conquest.ConquestMap;
  * <li>A party keeps the point it was sent to while that point still needs it; the others go to the nearest point in need (by the way they would walk).</li>
  * <li>Parties left over go for the biggest enemy group near them.</li>
  * </ol>
- * The parties are spread around each point so they don't stand on each other.
+ * The parties are spread around each point so they don't stand on each other.<br>
+ * {@link #plan} works the orders out without giving them, so another commander can use it ({@link JevConquestCommander} tells JEV what it would do, and falls back on it).
  */
 public class GenericConquestCommander implements ConquestCommander
 {
 	/** Enemies (and allies) this far around a point's radius count as at it. */
-	private static final int THREAT_RANGE = 1500;
+	static final int THREAT_RANGE = 1500;
 	/** Enemy groups: the enemies are counted in cells this wide. */
-	private static final int GROUP_CELL = 1500;
+	static final int GROUP_CELL = 1500;
 	/** An attack order follows its enemy group when the group moved this far. */
 	private static final int ATTACK_UPDATE = 600;
 	/** The priorities. */
@@ -73,6 +75,25 @@ public class GenericConquestCommander implements ConquestCommander
 		}
 	}
 
+	/**
+	 * What a party is to do: go to a capture point (to take or hold it), or go for an enemy group.
+	 * @param kind what to do
+	 * @param capture the point, {@code null} for an attack
+	 * @param target where the enemy group is, {@code null} for a point
+	 */
+	public record Plan(ConquestParty.OrderKind kind, ConquestCapture capture, Location target)
+	{
+		static Plan point(ConquestParty.OrderKind kind, ConquestCapture capture)
+		{
+			return new Plan(kind, capture, null);
+		}
+
+		static Plan attack(Location target)
+		{
+			return new Plan(ConquestParty.OrderKind.ATTACK, null, target);
+		}
+	}
+
 	@Override
 	public String getName()
 	{
@@ -82,6 +103,21 @@ public class GenericConquestCommander implements ConquestCommander
 	@Override
 	public void command(ConquestMatch match, ConquestTeam team, long now)
 	{
+		for (Map.Entry<ConquestParty, Plan> entry : plan(match, team).entrySet())
+		{
+			apply(match, entry.getKey(), entry.getValue(), now);
+		}
+	}
+
+	/**
+	 * Works out what each party of the team should do, without telling them.
+	 * @param match the match
+	 * @param team the team
+	 * @return a plan for each party that has a living member
+	 */
+	public Map<ConquestParty, Plan> plan(ConquestMatch match, ConquestTeam team)
+	{
+		final Map<ConquestParty, Plan> plans = new LinkedHashMap<>();
 		final ConquestTeam enemy = match.getOther(team);
 		final List<ConquestParty> free = new ArrayList<>();
 		for (ConquestParty party : team.getParties())
@@ -93,7 +129,7 @@ public class GenericConquestCommander implements ConquestCommander
 		}
 		if (free.isEmpty())
 		{
-			return;
+			return plans;
 		}
 
 		// What each point needs.
@@ -162,7 +198,7 @@ public class GenericConquestCommander implements ConquestCommander
 		{
 			for (ConquestParty party : objective.assigned)
 			{
-				order(match, party, objective.kind, objective.capture, now);
+				plans.put(party, Plan.point(objective.kind, objective.capture));
 			}
 		}
 
@@ -170,26 +206,31 @@ public class GenericConquestCommander implements ConquestCommander
 		final List<int[]> groups = enemyGroups(enemy);
 		for (ConquestParty party : free)
 		{
-			final Location at = party.getLocation();
-			int[] best = null;
-			double bestScore = Double.MAX_VALUE;
-			for (int[] group : groups)
-			{
-				final double score = Math.hypot(group[0] - at.getX(), group[1] - at.getY()) / group[3];
-				if (score < bestScore)
-				{
-					best = group;
-					bestScore = score;
-				}
-			}
+			final int[] best = bestGroup(groups, party.getLocation());
 			if (best != null)
 			{
-				attack(match, party, new Location(best[0], best[1], best[2]), now);
+				plans.put(party, Plan.attack(new Location(best[0], best[1], best[2])));
 			}
 			else if (!objectives.isEmpty())
 			{
-				order(match, party, objectives.get(0).kind, objectives.get(0).capture, now);
+				plans.put(party, Plan.point(objectives.get(0).kind, objectives.get(0).capture));
 			}
+		}
+		return plans;
+	}
+
+	/**
+	 * Gives a party the order of a plan (it keeps the order it has when that is the same).
+	 */
+	static void apply(ConquestMatch match, ConquestParty party, Plan plan, long now)
+	{
+		if (plan.capture() != null)
+		{
+			order(match, party, plan.kind(), plan.capture(), now);
+		}
+		else
+		{
+			attack(match, party, plan.target(), now);
 		}
 	}
 
@@ -199,7 +240,26 @@ public class GenericConquestCommander implements ConquestCommander
 		return (int) Math.ceil(fighters / (double) ConquestManager.PARTY_SIZE);
 	}
 
-	private static ConquestParty closest(ConquestMatch match, List<ConquestParty> parties, Location target)
+	/**
+	 * @return the enemy group a party there would go for: the biggest for the way, {@code null} when there is none
+	 */
+	static int[] bestGroup(List<int[]> groups, Location at)
+	{
+		int[] best = null;
+		double bestScore = Double.MAX_VALUE;
+		for (int[] group : groups)
+		{
+			final double score = Math.hypot(group[0] - at.getX(), group[1] - at.getY()) / group[3];
+			if (score < bestScore)
+			{
+				best = group;
+				bestScore = score;
+			}
+		}
+		return best;
+	}
+
+	static ConquestParty closest(ConquestMatch match, List<ConquestParty> parties, Location target)
 	{
 		ConquestParty best = parties.get(0);
 		double bestDistance = Double.MAX_VALUE;
@@ -258,12 +318,12 @@ public class GenericConquestCommander implements ConquestCommander
 	/**
 	 * @return the enemy groups: {x, y, z, fighters} of each cell with living enemies out of their bases
 	 */
-	private static List<int[]> enemyGroups(ConquestTeam enemy)
+	static List<int[]> enemyGroups(ConquestTeam enemy)
 	{
 		final Map<Long, long[]> cells = new HashMap<>();
 		for (ConquestFighter fighter : enemy.getFighters())
 		{
-			final Npc npc = fighter.getNpc();
+			final Creature npc = fighter.getCreature();
 			if (!fighter.isAlive() || enemy.isInBase(npc.getX(), npc.getY()))
 			{
 				continue;

@@ -22,14 +22,15 @@ package org.l2jmobius.gameserver.managers.conquest;
 
 import org.l2jmobius.gameserver.managers.simulation.SimRole;
 import org.l2jmobius.gameserver.model.Location;
+import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 
 /**
- * A fake player of a Conquest match.
+ * A fighter of a Conquest match: a fake player, or a player that registered.
  */
 public class ConquestFighter
 {
-	private final Npc _npc;
+	private final Creature _creature;
 	private final ConquestTeam _team;
 	private final SimRole _role;
 	private volatile ConquestParty _party;
@@ -40,21 +41,38 @@ public class ConquestFighter
 	volatile Location _respawnBase;
 	volatile long _protectedUntil;
 	/** The enemy it saw last, kept a moment (looking is the costly part of its thinking). */
-	volatile Npc _seen;
+	volatile Creature _seen;
 	volatile long _seenUntil;
 	/** For how many ticks in a row it was found off the ground (inside a wall, in the rock). */
 	volatile int _offGround;
 
-	ConquestFighter(Npc npc, ConquestTeam team, SimRole role)
+	/** A player's: where it was and its name color before the match. */
+	volatile Location _returnLocation;
+	volatile int _nameColor;
+
+	ConquestFighter(Creature creature, ConquestTeam team, SimRole role)
 	{
-		_npc = npc;
+		_creature = creature;
 		_team = team;
 		_role = role;
 	}
 
+	public Creature getCreature()
+	{
+		return _creature;
+	}
+
+	/**
+	 * @return the fake player, {@code null} for a player
+	 */
 	public Npc getNpc()
 	{
-		return _npc;
+		return _creature instanceof Npc npc ? npc : null;
+	}
+
+	public boolean isPlayer()
+	{
+		return _creature.isPlayer();
 	}
 
 	public ConquestTeam getTeam()
@@ -97,6 +115,6 @@ public class ConquestFighter
 
 	public boolean isAlive()
 	{
-		return !_npc.isDead() && _npc.isSpawned();
+		return !_creature.isDead() && _creature.isSpawned();
 	}
 }

@@ -77,8 +77,7 @@ import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
-import org.l2jmobius.gameserver.network.NpcStringId;
-import org.l2jmobius.gameserver.network.serverpackets.ExSendUIEvent;
+import org.l2jmobius.gameserver.network.serverpackets.Ex2TeamEventState;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
 import org.l2jmobius.gameserver.network.serverpackets.NicknameChanged;
@@ -484,6 +483,8 @@ public class TeamVsTeamManager
 		private final Side _red;
 		private final long _prepEnd;
 		private final Set<WorldRegion> _keptRegions = new HashSet<>();
+		// The GMs watching it (//tvt watch): object ids. They get its event strip and radar zones too.
+		private final Set<Integer> _watchers = ConcurrentHashMap.newKeySet();
 		private volatile Phase _phase = Phase.PREP;
 		private volatile long _fightEnd;
 		private volatile ScheduledFuture<?> _task;
@@ -1179,7 +1180,6 @@ public class TeamVsTeamManager
 
 		for (Player player : match.getPlayers())
 		{
-			player.sendPacket(new ExSendUIEvent(player, false, false, TeamVsTeamConfig.PREP_TIME, 0, NpcStringId.TIME_REMAINING));
 			final Fighter fighter = _fighters.get(player.getObjectId());
 			sendScreen(player, "You fight for team " + fighter._side._name + ". The fight starts in " + TeamVsTeamConfig.PREP_TIME + " seconds.", 8, true);
 			player.sendMessage("TvT: Team " + fighter._side._name + " (levels " + match.getBracketName() + "): " + TeamVsTeamConfig.TEAM_SIZE + " vs " + TeamVsTeamConfig.TEAM_SIZE + ". The other team is attacked without Ctrl; most kills in " + TeamVsTeamConfig.FIGHT_TIME + " minutes wins.");
@@ -1362,7 +1362,9 @@ public class TeamVsTeamManager
 		player.teleToLocation(side._base, instance.getId(), TeamVsTeamConfig.SPAWN_RADIUS);
 		buffAndHeal(player);
 		player.broadcastUserInfo();
-		
+		TeamEventHud.sendState(player, state(match, Ex2TeamEventState.RESULT_NONE), side._team);
+		showZones(player, side._team);
+
 		final BuffTemplateManager templates = BuffTemplateManager.getInstance();
 		if (templates.isTvtTemplateEnabled() && templates.getTemplate(player, BuffTemplateManager.TVT_SLOT).skillIds().isEmpty())
 		{
@@ -1374,7 +1376,7 @@ public class TeamVsTeamManager
 	 * @param player a player
 	 * @return the slot of its class in a party: archer with a bow, healer for a cleric, nuker for another mystic, buffer for a dancer or bard, tank for a knight, melee otherwise
 	 */
-	private static SimRole getRole(Player player)
+	public static SimRole getRole(Player player)
 	{
 		final Weapon weapon = player.getActiveWeaponItem();
 		if ((weapon != null) && ((weapon.getItemType() == WeaponType.BOW) || (weapon.getItemType() == WeaponType.CROSSBOW)))
@@ -1409,6 +1411,7 @@ public class TeamVsTeamManager
 		try
 		{
 			final long now = System.currentTimeMillis();
+			pruneWatchers(match);
 			switch (match._phase)
 			{
 				case PREP:
@@ -1546,9 +1549,9 @@ public class TeamVsTeamManager
 	{
 		match._phase = Phase.FIGHT;
 		match._fightEnd = System.currentTimeMillis() + (TeamVsTeamConfig.FIGHT_TIME * 60000L);
+		sendState(match, Ex2TeamEventState.RESULT_NONE);
 		for (Player player : match.getPlayers())
 		{
-			player.sendPacket(new ExSendUIEvent(player, false, false, TeamVsTeamConfig.FIGHT_TIME * 60, 0, NpcStringId.TIME_REMAINING));
 			sendScreen(player, "The fight has begun!", 5, true);
 		}
 		for (Fighter fighter : match.getAllFighters())
@@ -1876,7 +1879,7 @@ public class TeamVsTeamManager
 			{
 				rewardKill(slayer._creature.asPlayer(), victim);
 			}
-			match.broadcast(new ExShowScreenMessage("Blue " + match._blue.getScore() + " : " + match._red.getScore() + " Red", ExShowScreenMessage.BOTTOM_RIGHT, 15000, 0, true, false));
+			sendState(match, Ex2TeamEventState.RESULT_NONE);
 		}
 		
 		if (match._simulated)
@@ -2002,10 +2005,10 @@ public class TeamVsTeamManager
 		}
 
 		final Skill firework = CommonSkill.FIREWORK.getSkill();
+		sendState(match, abandoned ? Ex2TeamEventState.RESULT_NO_RESULT : winner == match._blue ? Ex2TeamEventState.RESULT_BLUE : winner == match._red ? Ex2TeamEventState.RESULT_RED : Ex2TeamEventState.RESULT_DRAW);
 		for (Player player : match.getPlayers())
 		{
 			final Fighter fighter = _fighters.get(player.getObjectId());
-			player.sendPacket(new ExSendUIEvent(player, true, false, 0, 0, NpcStringId.TIME_REMAINING));
 			sendScreen(player, result, 7, true);
 			player.sendMessage("TvT: " + result + (best.length() > 0 ? " Best killers: " + best + "." : "") + ((fighter != null) ? " You: " + fighter._kills + " kills, " + fighter._deaths + " deaths." : ""));
 			if ((winner != null) && (fighter != null) && (fighter._side == winner))
@@ -2080,6 +2083,15 @@ public class TeamVsTeamManager
 		finally
 		{
 			TeamVsTeamBarrier.remove(match._barrier);
+			for (int objectId : match._watchers)
+			{
+				final Player gm = World.getInstance().getPlayer(objectId);
+				if (gm != null)
+				{
+					TeamEventHud.close(gm, zoneIds());
+				}
+			}
+			match._watchers.clear();
 			releaseRegions(match);
 			InstanceManager.getInstance().destroyInstance(match._instanceId);
 			_matches.remove(match.getId());
@@ -2139,7 +2151,7 @@ public class TeamVsTeamManager
 		}
 		player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
 		player.setCurrentCp(player.getMaxCp());
-		player.sendPacket(new ExSendUIEvent(player, true, false, 0, 0, NpcStringId.TIME_REMAINING));
+		TeamEventHud.close(player, zoneIds());
 
 		final Instance instance = InstanceManager.getInstance().getInstance(fighter._match._instanceId);
 		if (instance != null)
@@ -2262,6 +2274,173 @@ public class TeamVsTeamManager
 		{
 			endMatch(match, true);
 		}
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	// Event strip and radar (client/TeamEvents/PROTOCOL.txt)
+	// ---------------------------------------------------------------------------------------------
+
+	/**
+	 * @param match a match
+	 * @param result {@link Ex2TeamEventState#RESULT_NONE} until it ended, then who won
+	 * @return its state for the event strip
+	 */
+	private static Ex2TeamEventState.State state(Match match, int result)
+	{
+		final int phase = switch (match._phase)
+		{
+			case PREP -> Ex2TeamEventState.PHASE_PREP;
+			case FIGHT -> Ex2TeamEventState.PHASE_FIGHT;
+			case ENDED -> Ex2TeamEventState.PHASE_ENDED;
+		};
+		final int secondsLeft = match._phase == Phase.ENDED ? 0 : match.getSecondsLeft();
+		return new Ex2TeamEventState.State(Ex2TeamEventState.MODE_TVT, phase, result, secondsLeft, match._blue.getScore(), match._red.getScore(), 0, 0, 0, List.of());
+	}
+
+	/**
+	 * Sends the match's state to each of its players (the event strip of their combat log: time left and score).
+	 */
+	private void sendState(Match match, int result)
+	{
+		final Ex2TeamEventState.State state = state(match, result);
+		for (Player player : match.getPlayers())
+		{
+			final Fighter fighter = _fighters.get(player.getObjectId());
+			TeamEventHud.sendState(player, state, fighter != null ? fighter._side._team : Team.NONE);
+		}
+		for (Player gm : watchers(match))
+		{
+			if (!_fighters.containsKey(gm.getObjectId()))
+			{
+				TeamEventHud.sendState(gm, state, Team.NONE);
+			}
+		}
+	}
+
+	/**
+	 * @return the ids of every zone a match shows on a player's radar: both teams' bases and the edge
+	 */
+	private static List<Integer> zoneIds()
+	{
+		return TeamEventHud.zoneIds(0, TeamVsTeamConfig.BLUE_BASES.size(), TeamVsTeamConfig.RED_BASES.size());
+	}
+
+	/**
+	 * Takes a GM into a match's instance, between the bases, to watch it: the GM gets its event strip and radar zones as a player of neither team sees them, until a teleport out of the instance or the match's end.
+	 * @param gm the GM
+	 * @param match the match
+	 */
+	public void watch(Player gm, Match match)
+	{
+		// From another match: its strip and zones go first.
+		for (Match other : _matches.values())
+		{
+			if ((other != match) && other._watchers.remove(gm.getObjectId()))
+			{
+				TeamEventHud.close(gm, zoneIds());
+			}
+		}
+		final Location center = getFieldCenter();
+		gm.teleToLocation(center.getX(), center.getY(), center.getZ(), 0, match.getInstanceId(), 0);
+		match._watchers.add(gm.getObjectId());
+		TeamEventHud.sendState(gm, state(match, Ex2TeamEventState.RESULT_NONE), Team.NONE);
+		showZones(gm, Team.NONE);
+	}
+
+	/**
+	 * @return the GMs watching the match who are still in its instance
+	 */
+	private static List<Player> watchers(Match match)
+	{
+		final List<Player> watchers = new ArrayList<>();
+		for (int objectId : match._watchers)
+		{
+			final Player gm = World.getInstance().getPlayer(objectId);
+			if ((gm != null) && (gm.getInstanceId() == match._instanceId))
+			{
+				watchers.add(gm);
+			}
+		}
+		return watchers;
+	}
+
+	/**
+	 * Lets go of the GMs who stopped watching the match (a teleport out of its instance, a logout): their strip and the match's zones go.
+	 */
+	private static void pruneWatchers(Match match)
+	{
+		for (int objectId : match._watchers)
+		{
+			final Player gm = World.getInstance().getPlayer(objectId);
+			if ((gm == null) || (gm.getInstanceId() != match._instanceId))
+			{
+				match._watchers.remove(objectId);
+				if (gm != null)
+				{
+					TeamEventHud.close(gm, zoneIds());
+				}
+			}
+		}
+	}
+
+	/**
+	 * Shows a player entering a match the bases and the battlefield on its radar: its own team's bases in its color, the other team's in red, striped and pulsing. A GM watching ({@link Team#NONE}) sees each team's bases in its color.
+	 */
+	private static void showZones(Player player, Team viewer)
+	{
+		for (Team team : List.of(Team.BLUE, Team.RED))
+		{
+			final List<Location> bases = team == Team.BLUE ? TeamVsTeamConfig.BLUE_BASES : TeamVsTeamConfig.RED_BASES;
+			final boolean own = (viewer == Team.NONE) || (team == viewer);
+			for (int i = 0; i < bases.size(); i++)
+			{
+				final Location base = bases.get(i);
+				TeamEventHud.showCircle(player, TeamEventHud.zoneId(team == Team.BLUE ? TeamEventHud.KIND_BLUE_BASE : TeamEventHud.KIND_RED_BASE, i), base.getX(), base.getY(), base.getZ(), TeamEventHud.SPAWN_HEIGHT, TeamVsTeamConfig.BASE_RADIUS, own ? TeamEventHud.spawnStyle(team) : TeamEventHud.ENEMY_BASE, (team == Team.BLUE ? "Blue" : "Red") + " base " + (i + 1));
+			}
+		}
+
+		final List<Location> all = new ArrayList<>(TeamVsTeamConfig.BLUE_BASES);
+		all.addAll(TeamVsTeamConfig.RED_BASES);
+		long z = 0;
+		for (Location base : all)
+		{
+			z += base.getZ();
+		}
+		final int[] area = getFieldArea();
+		TeamEventHud.showEdge(player, area[0], area[1], area[2], area[3], (int) (z / all.size()));
+	}
+
+	/**
+	 * @return the battlefield's edge on the radar, minX, minY, maxX, maxY: {@link TeamVsTeamConfig#AREA}, or the box around every spawn point 2000 wider (as {@link #keepRegionsAwake} keeps awake)
+	 */
+	public static int[] getFieldArea()
+	{
+		if (TeamVsTeamConfig.AREA != null)
+		{
+			return TeamVsTeamConfig.AREA;
+		}
+
+		final List<Location> bases = new ArrayList<>(TeamVsTeamConfig.BLUE_BASES);
+		bases.addAll(TeamVsTeamConfig.RED_BASES);
+		int minX = Integer.MAX_VALUE;
+		int maxX = Integer.MIN_VALUE;
+		int minY = Integer.MAX_VALUE;
+		int maxY = Integer.MIN_VALUE;
+		for (Location base : bases)
+		{
+			minX = Math.min(minX, base.getX());
+			maxX = Math.max(maxX, base.getX());
+			minY = Math.min(minY, base.getY());
+			maxY = Math.max(maxY, base.getY());
+		}
+		final int margin = 2000;
+		return new int[]
+		{
+			minX - margin,
+			minY - margin,
+			maxX + margin,
+			maxY + margin
+		};
 	}
 
 	// ---------------------------------------------------------------------------------------------
