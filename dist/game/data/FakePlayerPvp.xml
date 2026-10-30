@@ -628,7 +628,7 @@
 		</combo>
 		<variant name="Dominator Tallum" armor="ROBE_TALLUM" weight="1" />
 	</build>
-	<build name="Soultaker" classId="95" role="MAGE" weapon="MAGE" armor="ROBE" keystones="+Soul Link" weight="2"> <!-- Necromancer line: Soul Link sends part of its damage to its servitor, like Transfer Pain -->
+	<build name="Soultaker" classId="95" role="MAGE" weapon="MAGE" armor="ROBE" keystones="+Soul Link*0.3" weight="2"> <!-- Necromancer line: Soul Link sends part of its damage to its servitor, like Transfer Pain -->
 		<attack>1467,1343,1159,1148,1234,1382,1181,1147,1220,1184,1177</attack>
 		<debuff>1336,1337,1064,1263,1269,1160,1164,1222,1163,1168,1298</debuff>
 		<buff>1532</buff>
@@ -1351,7 +1351,7 @@
 		</combo>
 		<variant name="Doom Oracle Tallum" armor="ROBE_TALLUM" weight="1" />
 	</build>
-	<build name="Battle Oracle" classId="98" role="FIGHTER" weapon="MAGE_BLUNT" armor="LIGHT_MAGE" buffs="BATTLEMAGE" keystones="Battlemage;Unwavering Stance;Relentless Assault" hybrid="true" weight="1"> <!-- Prophet line, the battlemage path: Battlemage adds 40% of its M. Atk. to its P. Atk., it fights with its mace and its prophecies hold the target down -->
+	<build name="Battle Oracle" classId="98" role="FIGHTER" weapon="MAGE_BLUNT" armor="LIGHT_MAGE" buffs="BATTLEMAGE" keystones="Battlemage;Unwavering Stance;Arcane Retort;Relentless Assault" hybrid="true" weight="1"> <!-- Prophet line, the battlemage path: Battlemage adds 40% of its M. Atk. to its P. Atk., it fights with its mace and its prophecies hold the target down -->
 		<attack>27530</attack> <!-- Prophecy of Doom: in melee the target stays put, x1.5 -->
 		<debuff>27533,27536,1412</debuff> <!-- Prophecy of Ruin, Prophecy of Reckoning, Spell Turning (on a player that is casting) -->
 		<buff>27538,27532,27540</buff> <!-- Fulfilment, Prophecy of Salvation on itself, Unwritten -->
