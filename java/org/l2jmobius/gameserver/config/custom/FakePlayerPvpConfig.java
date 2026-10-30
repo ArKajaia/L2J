@@ -200,11 +200,11 @@ public class FakePlayerPvpConfig
 		},
 		{
 			"ARCHER",
-			"Unwavering Stance;Far Shot@BOW;Relentless Assault"
+			"Unwavering Stance;Far Shot@BOW;Relentless Assault;Bloodrush;Tenacity;Last Light"
 		},
 		{
 			"MAGE",
-			"Mind Over Matter;Martyr's Vow;Spell Echo;Vampiric Sorcery;Ley Anchor;Unshaken Mind"
+			"Mind Over Matter;Martyr's Vow;Spell Echo;Vampiric Sorcery;Ley Anchor;Unshaken Mind;Arcane Retort;Unbroken Faith;Last Light"
 		}
 	};
 	

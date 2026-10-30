@@ -1351,7 +1351,7 @@
 		</combo>
 		<variant name="Doom Oracle Tallum" armor="ROBE_TALLUM" weight="1" />
 	</build>
-	<build name="Battle Oracle" classId="98" role="FIGHTER" weapon="MAGE_BLUNT" armor="LIGHT_MAGE" buffs="BATTLEMAGE" keystones="Battlemage;Unwavering Stance;Relentless Assault" hybrid="true" weight="1"> <!-- Prophet line, the battlemage path: Battlemage adds 40% of its M. Atk. to its P. Atk., it fights with its mace and its prophecies hold the target down -->
+	<build name="Battle Oracle" classId="98" role="FIGHTER" weapon="MAGE_BLUNT" armor="LIGHT_MAGE" buffs="BATTLEMAGE" keystones="Battlemage;Unwavering Stance;Arcane Retort;Relentless Assault" hybrid="true" weight="1"> <!-- Prophet line, the battlemage path: Battlemage adds 40% of its M. Atk. to its P. Atk., it fights with its mace and its prophecies hold the target down -->
 		<attack>27530</attack> <!-- Prophecy of Doom: in melee the target stays put, x1.5 -->
 		<debuff>27533,27536,1412</debuff> <!-- Prophecy of Ruin, Prophecy of Reckoning, Spell Turning (on a player that is casting) -->
 		<buff>27538,27532,27540</buff> <!-- Fulfilment, Prophecy of Salvation on itself, Unwritten -->
