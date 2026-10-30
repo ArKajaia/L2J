@@ -30,7 +30,7 @@ import org.l2jmobius.gameserver.config.NpcConfig;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.OfflinePlayConfig;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
-import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
+import org.l2jmobius.gameserver.managers.TeamEventRules;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -70,8 +70,8 @@ public class DecayTaskManager implements Runnable
 				entry = iterator.next();
 				if (currentTime > entry.getValue())
 				{
-					// The dead body of a fake player of a simulation or a Team vs Team match stays until its fight ends (it may be resurrected, or come back at its base), then the fight removes it.
-					if ((FakeSimulationManager.ACTIVE || TeamVsTeamManager.ACTIVE) && entry.getKey().isPvpFakePlayer() && entry.getKey().asNpc().getTemplate().getFakePlayerPvpProfile().isTeamFighter())
+					// The dead body of a fake player of a simulation, a Team vs Team or a Conquest match stays until its fight ends (it may be resurrected, or come back at its base), then the fight removes it.
+					if ((FakeSimulationManager.ACTIVE || TeamEventRules.isActive()) && entry.getKey().isPvpFakePlayer() && entry.getKey().asNpc().getTemplate().getFakePlayerPvpProfile().isTeamFighter())
 					{
 						entry.setValue(currentTime + 3000);
 						continue;

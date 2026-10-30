@@ -151,6 +151,35 @@ def report(api, names):
         print(f"  {brain}: " + ", ".join(f"{k} {v}" for k, v in counts.most_common()))
 
 
+def run_arena(api, args):
+    """Runs the A/B test as party battles in instances, --parallel at once (the arena), and prints its summary."""
+    status = api.call("arena/status")
+    if not status.get("arena"):
+        params = {"battles": args.rounds, "levels": args.levels, "parallel": args.parallel, "size": args.size, "brains": args.brains, "time": args.time, "distance": args.distance, "place": "field" if args.field else ""}
+        if args.seed:
+            params["seed"] = args.seed
+        answer = api.call("arena/start", params, post=True)
+        print("\n".join(answer.get("lines", [])), flush=True)
+        if not answer.get("arena"):
+            return
+    else:
+        print(f"following arena {status['arena']['name']}", flush=True)
+    last = -1
+    lines = []
+    while True:
+        time.sleep(15)
+        status = api.call("arena/status")
+        arena = status.get("arena")
+        if not arena:
+            break
+        if arena["done"] != last:
+            last = arena["done"]
+            print(f"  {arena['done']}/{arena['total']} battles done, {arena['running']} running", flush=True)
+        lines = status.get("lines", [])
+    print()
+    print("\n".join(lines), flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--url", default="http://127.0.0.1:8788", help="the simulation web server (PassiveTreeWebPort)")
@@ -166,9 +195,15 @@ def main():
     parser.add_argument("--points", default="saved")
     parser.add_argument("--swap-points", action="store_true", help="each team spawns at the next team's point (with --seed: the same teams on the other side)")
     parser.add_argument("--report", nargs="+", metavar="SERIES", help="only report on these finished simulations (folder names)")
+    parser.add_argument("--parallel", type=int, help="run the test as party battles in instances, this many at once (the arena: mirrored teams on both sides, --rounds battles per level)")
+    parser.add_argument("--distance", type=int, default=1500, help="with --parallel: how far apart the two teams spawn")
+    parser.add_argument("--field", action="store_true", help="with --parallel: fight at the Cruma Marshlands field even when a GM link gives a place")
     args = parser.parse_args()
 
     api = Api(args.url, args.token)
+    if args.parallel:
+        run_arena(api, args)
+        return
     if args.report:
         report(api, args.report)
         return

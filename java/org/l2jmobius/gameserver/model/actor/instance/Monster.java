@@ -36,7 +36,7 @@ import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.HotzoneModifierManager;
 import org.l2jmobius.gameserver.managers.NightCycleManager;
 import org.l2jmobius.gameserver.managers.ResonantMonsterManager;
-import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
+import org.l2jmobius.gameserver.managers.TeamEventRules;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -160,10 +160,10 @@ public class Monster extends Attackable
 	{
 		if (isFakePlayer())
 		{
-			// Team vs Team: the other team, while the fight is on (the faction rules, no Ctrl needed); never its own team, nor anyone outside the match.
-			if (TeamVsTeamManager.ACTIVE && (TeamVsTeamManager.getRelation(this, attacker) != TeamVsTeamManager.Relation.NONE))
+			// Team vs Team and Conquest: the other team, while the fight is on (the faction rules, no Ctrl needed); never its own team, nor anyone outside the match.
+			if (TeamEventRules.isInvolved(this, attacker))
 			{
-				return TeamVsTeamManager.isEnemy(attacker, this);
+				return TeamEventRules.isEnemy(attacker, this);
 			}
 			
 			// A member of the attacker's party.

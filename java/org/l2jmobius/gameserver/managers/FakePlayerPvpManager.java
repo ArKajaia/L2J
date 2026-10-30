@@ -1757,6 +1757,65 @@ public class FakePlayerPvpManager
 	}
 
 	/**
+	 * Spawns a fake player for a Conquest match (see {@link org.l2jmobius.gameserver.managers.conquest.ConquestManager}): like a Team vs Team one, it only fights the other team of its match.
+	 * @param build its build
+	 * @param level its level
+	 * @param title the title it shows (its team)
+	 * @param matchId its match
+	 * @param team its team (the circle around it)
+	 * @param nameColor the color of its name
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @param heading where it faces
+	 * @param instanceId the instance of the match
+	 * @return the fake player, or {@code null} if it could not be created
+	 */
+	public Npc spawnConquestFighter(FakePlayerPvpBuild build, int level, String title, int matchId, Team team, int nameColor, int x, int y, int z, int heading, int instanceId)
+	{
+		final String name = generateName();
+		try
+		{
+			final int npcId = _nextNpcId.getAndIncrement();
+			final NpcTemplate template = FakePlayerPvpFactory.createTemplate(build, level, npcId, name, null, title);
+			if (template == null)
+			{
+				releaseName(name);
+				return null;
+			}
+
+			final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+			profile.setConquestMatchId(matchId);
+			profile.setBrain(FakeBrain.A);
+			profile.setSpawnTime(System.currentTimeMillis());
+			profile.setHotzoneId(0);
+			profile.setBlessedEscape(false);
+			template.getFakePlayerInfo().setNameColor(nameColor);
+			final Npc fake = spawnFromTemplate(template, x, y, z, instanceId);
+			if (fake == null)
+			{
+				FakePlayerData.getInstance().removeFakePlayer(name);
+				releaseName(name);
+				return null;
+			}
+
+			fake.setHeading(heading);
+			fake.setTeam(team);
+			prepareSimulant(fake);
+			// Its AI only starts by itself when a player sees it spawn.
+			fake.getAI().setIntention(Intention.ACTIVE);
+			return fake;
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn Conquest fake player " + build.getName() + " level " + level + ".", e);
+			FakePlayerData.getInstance().removeFakePlayer(name);
+			releaseName(name);
+			return null;
+		}
+	}
+
+	/**
 	 * Gets a fake player of a simulation ready to fight, like a player before a PvP: every buff of its class's buff list (the &lt;buffs&gt; of data/FakePlayerPvp.xml its build uses, whatever FakePvpBuffsEnabled says), its toggles and performance, and its own class buffs
 	 * (Rapid Shot, Hawk Eye, Deflect Arrow, seeds...) except the long cooldown ones it saves for the fight (Frenzy, Zealot...) and the totems and prophecies it plays as the fight goes. HP, MP and CP full.
 	 * @param fake the fake player
@@ -2326,7 +2385,7 @@ public class FakePlayerPvpManager
 	public void onFakePlayerAttacked(Attackable fake, Creature attacker)
 	{
 		final Creature enemy = getPvpEnemy(attacker);
-		if ((enemy == null) || (enemy == fake) || fake.isDead() || isFighting(fake, enemy) || FakePartyManager.getInstance().isSameGroup(fake, enemy) || TeamVsTeamManager.isForbidden(fake, enemy))
+		if ((enemy == null) || (enemy == fake) || fake.isDead() || isFighting(fake, enemy) || FakePartyManager.getInstance().isSameGroup(fake, enemy) || TeamEventRules.isForbidden(fake, enemy))
 		{
 			return;
 		}
@@ -2341,8 +2400,8 @@ public class FakePlayerPvpManager
 		}
 		
 		final long now = System.currentTimeMillis();
-		// A Team vs Team fighter came to fight: it always hits back.
-		final boolean unflagged = fake.isScriptValue(0) && (fake.getKarma() <= 0) && !profile.isTvtFighter();
+		// A Team vs Team or Conquest fighter came to fight: it always hits back.
+		final boolean unflagged = fake.isScriptValue(0) && (fake.getKarma() <= 0) && !profile.isSquadFighter();
 		if (profile.isRefusing(enemy, now))
 		{
 			// Still not hitting back, for a while longer since they go on.
@@ -2862,10 +2921,10 @@ public class FakePlayerPvpManager
 	 */
 	public static boolean isFairAreaTarget(Attackable fake, Player player)
 	{
-		// In a Team vs Team match: the other team, while the fight is on.
-		if (TeamVsTeamManager.ACTIVE && (TeamVsTeamManager.getRelation(fake, player) != TeamVsTeamManager.Relation.NONE))
+		// In a Team vs Team or Conquest match: the other team, while the fight is on.
+		if (TeamEventRules.isInvolved(fake, player))
 		{
-			return TeamVsTeamManager.isEnemy(fake, player);
+			return TeamEventRules.isEnemy(fake, player);
 		}
 		
 		if (player.isInsideZone(ZoneId.PEACE))
@@ -2893,10 +2952,10 @@ public class FakePlayerPvpManager
 	 */
 	public static boolean isFairAreaTarget(Attackable fake, Npc other)
 	{
-		// In a Team vs Team match: the other team, while the fight is on.
-		if (TeamVsTeamManager.ACTIVE && (TeamVsTeamManager.getRelation(fake, other) != TeamVsTeamManager.Relation.NONE))
+		// In a Team vs Team or Conquest match: the other team, while the fight is on.
+		if (TeamEventRules.isInvolved(fake, other))
 		{
-			return TeamVsTeamManager.isEnemy(fake, other);
+			return TeamEventRules.isEnemy(fake, other);
 		}
 		
 		if (other.isInsideZone(ZoneId.PEACE))
@@ -3115,6 +3174,11 @@ public class FakePlayerPvpManager
 		}
 		
 		// A Team vs Team fighter talks like a player of an event match: about the match, and rarely. Its usual lines are about farming spots and ambushes, and forty fake players in one place each talking every 20 seconds made a wall of text.
+		// Hundreds of Conquest fighters in one place say nothing at all.
+		if (profile.isConquestFighter())
+		{
+			return false;
+		}
 		String[] lines = taunts;
 		if (profile.isTvtFighter())
 		{
@@ -3145,7 +3209,7 @@ public class FakePlayerPvpManager
 		taunt(fake, getDeathTaunts(fake), true);
 		
 		// A class transfer challenge opponent is part of the trial, a Team vs Team fighter part of its match: no return trip, no gear, no loot.
-		if (profile.isTrialDuelist() || profile.isTvtFighter())
+		if (profile.isTrialDuelist() || profile.isSquadFighter())
 		{
 			return;
 		}

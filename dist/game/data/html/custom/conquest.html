@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conquest Maps</title>
+<style>
+	:root {
+		--bg: #08080b;
+		--panel: rgba(20, 20, 26, 0.94);
+		--panel-2: #15151b;
+		--line: #2a2a33;
+		--gold: #d9b64c;
+		--cream: #f0e6c8;
+		--muted: #8a7a55;
+		--text: #c9c2ad;
+		--dim: #6f6a5e;
+		--good: #0ca30c;
+		--warning: #fab219;
+		--critical: #d03b3b;
+		--blue: #468cff;
+		--red: #ff4b3c;
+		--capture: #ffd228;
+		color-scheme: dark;
+	}
+	* { box-sizing: border-box; }
+	html, body { margin: 0; height: 100%; }
+	body { background: var(--bg); color: var(--text); font: 13px/1.45 "Segoe UI", system-ui, sans-serif; }
+	button, select, input, textarea { font: inherit; color: var(--cream); background: #1d1d25; border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; }
+	button { cursor: pointer; white-space: nowrap; }
+	button:hover:not(:disabled) { border-color: var(--gold); }
+	button:disabled { opacity: 0.45; cursor: default; }
+	button.primary { background: #3a3016; border-color: var(--gold); color: var(--gold); font-weight: 600; }
+	button.danger { border-color: #6a2626; color: #ff9a9a; }
+	button.on { background: #3a3016; border-color: var(--gold); color: var(--gold); }
+	button.small { padding: 1px 6px; font-size: 12px; }
+	input[type=number], input[type=text], textarea { width: 100%; min-width: 0; }
+	textarea { resize: vertical; min-height: 54px; }
+	h1, h2, h3 { color: var(--gold); font-weight: 600; margin: 0; }
+	h1 { font-size: 17px; letter-spacing: 0.04em; }
+	h2 { font-size: 14px; }
+	h3 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+	.muted { color: var(--dim); }
+	.chip { display: inline-block; padding: 1px 8px; border-radius: 10px; background: #1d1d25; border: 1px solid var(--line); font-size: 11px; color: var(--text); }
+	.chip.good { color: #7fe07f; border-color: #245c24; }
+	.chip.warn { color: var(--warning); border-color: #6a5220; }
+	.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: -1px; margin-right: 5px; }
+
+	#app { display: grid; grid-template-rows: auto 1fr; height: 100%; }
+	header { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+	header .grow { flex: 1; }
+	#gmChip { display: flex; align-items: center; gap: 8px; padding: 3px 10px; border-radius: 14px; border: 1px solid var(--line); background: #111117; }
+	#gmChip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); }
+	#gmChip.live .dot { background: var(--good); box-shadow: 0 0 6px var(--good); }
+
+	#layout { display: grid; grid-template-columns: 1fr 390px; min-height: 0; }
+	#viewWrap { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: #050508; }
+	#view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+	#view.panning { cursor: grabbing; }
+	#view.placing { cursor: crosshair; }
+	.overlay { position: absolute; display: flex; gap: 6px; align-items: center; background: rgba(12, 12, 16, 0.86); border: 1px solid var(--line); border-radius: 6px; padding: 5px 7px; flex-wrap: wrap; }
+	.overlay[hidden] { display: none; }
+	#toolbar { left: 10px; top: 10px; right: 10px; width: fit-content; max-width: calc(100% - 20px); }
+	#readout { left: 10px; bottom: 10px; font-variant-numeric: tabular-nums; color: var(--text); font-size: 12px; }
+	#legend { right: 10px; bottom: 10px; font-size: 12px; gap: 12px; }
+	#terrainState { right: 10px; top: 10px; font-size: 12px; color: var(--dim); }
+	#empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--dim); font-size: 14px; pointer-events: none; text-align: center; padding: 20px; }
+
+	aside { border-left: 1px solid var(--line); overflow: auto; background: #0c0c10; display: flex; flex-direction: column; }
+	.section { padding: 10px 12px; border-bottom: 1px solid #1a1a21; display: flex; flex-direction: column; gap: 8px; }
+	.section > .title { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+	.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; }
+	.field { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+	.field > span { color: var(--muted); font-size: 11px; }
+	.row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+	.pt { border: 1px solid var(--line); border-radius: 5px; padding: 6px 7px; background: #111116; display: flex; flex-direction: column; gap: 5px; cursor: pointer; }
+	.pt.sel { border-color: var(--gold); background: #1c1810; }
+	.pt .top { display: flex; align-items: center; gap: 6px; }
+	.pt .top .name { color: var(--cream); font-weight: 600; flex: 1; min-width: 0; }
+	.pt .coords { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+	.pt .bad { color: var(--warning); }
+	.pt .edit { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 8px; }
+	.pt .edit input { padding: 1px 6px; }
+	table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+	th { text-align: left; font-weight: 600; color: var(--muted); font-size: 11px; padding: 3px 4px; border-bottom: 1px solid var(--line); }
+	td { padding: 3px 4px; border-bottom: 1px solid #1a1a21; }
+	td.num, th.num { text-align: right; }
+	#saveBar { position: sticky; bottom: 0; background: #0f0f14; border-top: 1px solid var(--line); padding: 9px 12px; display: flex; gap: 8px; align-items: center; margin-top: auto; flex-wrap: wrap; }
+	#dirty { color: var(--warning); font-size: 12px; }
+	#warnings { margin: 0; padding-left: 18px; color: var(--warning); font-size: 12px; }
+	#warnings:empty { display: none; }
+
+	dialog { background: var(--panel-2); color: var(--text); border: 1px solid var(--gold); border-radius: 8px; padding: 16px; width: min(420px, calc(100% - 32px)); }
+	dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+	dialog form { display: flex; flex-direction: column; gap: 10px; }
+
+	#toasts { position: fixed; right: 14px; bottom: 14px; display: flex; flex-direction: column; gap: 6px; z-index: 40; max-width: 460px; }
+	.toast { background: #18181f; border: 1px solid var(--gold); border-left-width: 4px; border-radius: 4px; padding: 8px 10px; color: var(--cream); white-space: pre-wrap; }
+	.toast.err { border-color: var(--critical); }
+	#fatal { display: none; padding: 60px 16px; text-align: center; color: var(--cream); font-size: 15px; }
+
+	@media (max-width: 900px) {
+		#app { height: auto; min-height: 100%; }
+		#layout { grid-template-columns: 1fr; }
+		#viewWrap { height: 62vh; }
+		aside { border-left: 0; border-top: 1px solid var(--line); }
+		header { padding: 8px 16px; }
+	}
+</style>
+</head>
+<body>
+<div id="fatal"></div>
+<div id="app">
+	<header>
+		<h1>Conquest Maps</h1>
+		<select id="mapSelect" aria-label="Map"></select>
+		<button id="newMap">New map here</button>
+		<button id="reload" title="Read data/conquest again, after editing the files by hand">Reload files</button>
+		<span class="grow"></span>
+		<span id="shownChip" class="chip">Not drawn in game</span>
+		<button id="showInGame" title="Draw the saved map's waypoints in game for you">Show in game</button>
+		<button id="hideInGame">Hide</button>
+		<div id="gmChip" title="Where you are in game"><span class="dot"></span><span id="gmText">…</span></div>
+		<button id="findMe" title="Center the view on you">Find me</button>
+	</header>
+	<div id="layout">
+		<div id="viewWrap">
+			<canvas id="view"></canvas>
+			<div id="empty">No map selected. Pick one above, or stand on a battlefield in game and press “New map here”.</div>
+			<div id="toolbar" class="overlay">
+				<button id="zoomIn" class="small" title="Zoom in (wheel)">+</button>
+				<button id="zoomOut" class="small" title="Zoom out (wheel)">−</button>
+				<button id="fit" class="small" title="Show the whole area">Fit</button>
+				<span class="muted">Place:</span>
+				<button class="small place" data-type="blue"><span class="swatch" style="background:var(--blue)"></span>Blue spawn</button>
+				<button class="small place" data-type="red"><span class="swatch" style="background:var(--red)"></span>Red spawn</button>
+				<button class="small place" data-type="capture"><span class="swatch" style="background:var(--capture)"></span>Capture</button>
+				<label class="row muted" style="gap:4px"><input type="checkbox" id="showGrid" checked> grid</label>
+				<label class="row muted" style="gap:4px"><input type="checkbox" id="showLinks" checked> distances</label>
+			</div>
+			<div id="terrainState" class="overlay" hidden></div>
+			<div id="readout" class="overlay">—</div>
+			<div id="legend" class="overlay">
+				<span><span class="swatch" style="background:#2e4228"></span>low</span>
+				<span><span class="swatch" style="background:#c4b682"></span>high</span>
+				<span><span class="swatch" style="background:#b8402f"></span>wall / cliff</span>
+				<span><span class="swatch" style="background:#0b1224"></span>no geodata</span>
+				<span><span class="swatch" style="background:#24242a;border:1px solid #444"></span>other level</span>
+				<span><span class="swatch" style="background:#50e66e;border-radius:2px"></span>door opens</span>
+				<span><span class="swatch" style="background:#ff5ac8;border-radius:2px"></span>door shuts</span>
+			</div>
+		</div>
+		<aside>
+			<div class="section" id="mapSection">
+				<div class="title"><h2 id="mapTitle">—</h2><span id="readyChip" class="chip"></span></div>
+				<div class="grid2">
+					<label class="field"><span>Id (file name)</span><input id="fId" type="text" maxlength="40" spellcheck="false"></label>
+					<label class="field"><span>Name (shown to players)</span><input id="fName" type="text" maxlength="60"></label>
+				</div>
+				<div class="grid2">
+					<label class="row" style="flex-wrap:nowrap;align-self:end;padding-bottom:4px"><input type="checkbox" id="fEnabled"> Enabled (the event may pick it)</label>
+					<label class="field"><span>Max players per team</span><input id="fMaxPlayers" type="number" min="1" max="1000" step="10"></label>
+				</div>
+				<label class="field"><span>Description (for GMs)</span><textarea id="fDescription" maxlength="2000"></textarea></label>
+				<h3>Area</h3>
+				<div class="grid2">
+					<label class="field"><span>West edge (min X)</span><input id="fMinX" type="number" step="100"></label>
+					<label class="field"><span>East edge (max X)</span><input id="fMaxX" type="number" step="100"></label>
+					<label class="field"><span>North edge (min Y)</span><input id="fMinY" type="number" step="100"></label>
+					<label class="field"><span>South edge (max Y)</span><input id="fMaxY" type="number" step="100"></label>
+					<label class="field"><span>Ground Z (the layer to use)</span><input id="fZ" type="number" step="50"></label>
+				</div>
+				<div class="row">
+					<span id="areaSize" class="muted"></span>
+					<span class="grow"></span>
+					<button class="small" id="fitArea" title="Wrap the area around every point, with 3000 to spare">Fit to points</button>
+				</div>
+			</div>
+			<div class="section" id="pointsSection"></div>
+			<div class="section" id="doorsSection"></div>
+			<div class="section">
+				<div class="title"><h2>Balance</h2><span id="balanceChip" class="chip"></span></div>
+				<div id="balance" class="muted">Add spawn points for both teams and capture points.</div>
+				<div class="row">
+					<span class="muted">Copy blue spawns to red,</span>
+					<select id="mirrorAxis">
+						<option value="x">mirrored left ↔ right</option>
+						<option value="y">mirrored top ↕ bottom</option>
+						<option value="r">turned 180°</option>
+					</select>
+					<button class="small" id="mirror">Mirror</button>
+				</div>
+			</div>
+			<div class="section">
+				<h3>How it works</h3>
+				<div class="muted" style="font-size:12px">
+					Drag points and the area's corners on the map; drag elsewhere to pan, wheel to zoom. “Here” puts a point where you stand in game, “TP” takes you to it.
+					Click a door on the map (or pick in the Doors list) to choose whether the event opens it, shuts it, or leaves it as the world has it.
+					A moved point takes the height of the ground under it at once (the floor nearest the one it was on), and again when you save. Saving writes <code>data/conquest/&lt;id&gt;.xml</code> and redraws the waypoints of anyone showing the map in game.
+					The event picks one enabled map with spawn points for both teams and at least one capture point.
+				</div>
+			</div>
+			<div id="saveBar">
+				<button id="save" class="primary">Save</button>
+				<button id="revert">Revert</button>
+				<span id="dirty"></span>
+				<span class="grow" style="flex:1"></span>
+				<button id="deleteMap" class="danger">Delete map</button>
+				<label class="field" style="flex-basis:100%"><span>Also save to file (optional, a path on the server machine ending in .xml)</span><input id="saveTo" type="text" spellcheck="false" placeholder="e.g. D:\Development\L2J\dist\game\data\conquest\map_id.xml"></label>
+				<ul id="warnings" style="flex-basis:100%"></ul>
+			</div>
+		</aside>
+	</div>
+</div>
+
+<dialog id="newDialog">
+	<form method="dialog">
+		<h2>New map around you</h2>
+		<div class="muted">The area starts 24000 × 20000 around where you stand in game, without points.</div>
+		<label class="field"><span>Id (file name: lower case letters, digits, _)</span><input id="nId" type="text" maxlength="40" required pattern="[a-z0-9_]{1,40}" spellcheck="false"></label>
+		<label class="field"><span>Name</span><input id="nName" type="text" maxlength="60"></label>
+		<div class="row" style="justify-content:flex-end">
+			<button value="cancel" formnovalidate>Cancel</button>
+			<button value="ok" class="primary">Create</button>
+		</div>
+	</form>
+</dialog>
+<div id="toasts"></div>
+
+<script>
+"use strict";
+const TOKEN_KEY = "conquestToken";
+const GM_MS = 2500;
+const TYPES = ["blue", "red", "capture"];
+const TYPE_INFO = {
+	blue: { title: "Blue spawn points", label: "Blue spawn", color: "#468cff", fill: "rgba(70,140,255,0.22)", radius: 300 },
+	red: { title: "Red spawn points", label: "Red spawn", color: "#ff4b3c", fill: "rgba(255,75,60,0.22)", radius: 300 },
+	capture: { title: "Capture points", label: "Capture", color: "#ffd228", fill: "rgba(255,210,40,0.14)", radius: 600 }
+};
+
+let token = new URLSearchParams(location.search).get("admin");
+try {
+	if (token) sessionStorage.setItem(TOKEN_KEY, token);
+	else token = sessionStorage.getItem(TOKEN_KEY);
+} catch (e) { /* storage blocked: the token lives in this page only */ }
+if (location.search) history.replaceState(null, "", location.pathname);
+
+const $ = (id) => document.getElementById(id);
+
+function fatal(message) {
+	$("app").style.display = "none";
+	const box = $("fatal");
+	box.style.display = "block";
+	box.textContent = message;
+}
+
+async function request(path, params, asBlob) {
+	const options = { headers: token ? { Authorization: "Bearer " + token } : {} };
+	let url = "/api/conquest/" + path;
+	if (params && params.json) {
+		options.method = "POST";
+		options.headers["Content-Type"] = "application/json";
+		options.body = JSON.stringify(params.json);
+	} else if (params && params.post) {
+		delete params.post;
+		options.method = "POST";
+		options.headers["Content-Type"] = "application/x-www-form-urlencoded";
+		options.body = new URLSearchParams(params).toString();
+	} else if (params) {
+		url += "?" + new URLSearchParams(params).toString();
+	}
+	const response = await fetch(url, options);
+	if (asBlob && response.ok) return response.blob();
+	let data = null;
+	try { data = await response.json(); } catch (e) { /* not JSON */ }
+	if (response.status === 401 || response.status === 403) {
+		fatal((data && data.error) || "Not allowed - use //conquest in game again.");
+		throw new Error("auth");
+	}
+	if (!response.ok) throw new Error((data && data.error) || ("HTTP " + response.status));
+	return data;
+}
+
+function toast(text, error) {
+	const div = document.createElement("div");
+	div.className = "toast" + (error ? " err" : "");
+	div.textContent = text;
+	$("toasts").appendChild(div);
+	setTimeout(() => div.remove(), error ? 9000 : 5000);
+}
+
+function report(error) {
+	if (error.message !== "auth") toast(error.message, true);
+}
+
+function el(tag, attrs, children) {
+	const node = document.createElement(tag);
+	for (const key in attrs || {}) {
+		if (key === "class") node.className = attrs[key];
+		else if (key === "text") node.textContent = attrs[key];
+		else if (key.startsWith("on")) node.addEventListener(key.substring(2), attrs[key]);
+		else node.setAttribute(key, attrs[key]);
+	}
+	for (const child of [].concat(children || [])) {
+		if (child != null) node.appendChild(typeof child === "string" ? document.createTextNode(child) : child);
+	}
+	return node;
+}
+
+const fmt = (n) => Math.round(n).toLocaleString("en-US");
+
+// ------------------------------------------------------------------------------------------------
+// State
+// ------------------------------------------------------------------------------------------------
+
+const state = {
+	maps: [],
+	enabled: [],
+	world: null,
+	maxPoints: 50,
+	players: { default: 250, min: 1, max: 1000 },
+	shown: null,
+	gm: null,
+	map: null,          // the map being edited (a copy)
+	saved: "",          // the map as last loaded or saved, to tell unsaved changes
+	previousId: null,   // the id the map has on the server ("" for a new one)
+	selected: null,     // the selected point
+	placing: null,      // "blue", "red", "capture" while placing a point
+	terrain: null,      // { img, minX, minY, maxX, maxY, key }
+	terrainKey: null,
+	doors: [],          // the doors in and around the area: { id, name, x, y, z, defaultOpen, open, nodes }
+	doorsKey: null,
+	view: { cx: 0, cy: 0, scale: 20 },
+	viewMoved: false    // the GM panned or zoomed: a new size of the window no longer fits the area again
+};
+
+function copyMap(map) {
+	return JSON.parse(JSON.stringify(map));
+}
+
+function serialize(map) {
+	if (!map) return "";
+	return JSON.stringify({
+		id: map.id, name: map.name, enabled: map.enabled, maxPlayers: map.maxPlayers, description: map.description,
+		minX: map.minX, minY: map.minY, maxX: map.maxX, maxY: map.maxY, z: map.z,
+		points: map.points.map((p) => [p.type, p.name, p.x, p.y, p.z, p.heading, p.radius]),
+		doors: (map.doors || []).map((d) => [d.id, d.open]).sort((a, b) => a[0] - b[0])
+	});
+}
+
+function isDirty() {
+	return state.map != null && serialize(state.map) !== state.saved;
+}
+
+function pointsOf(type) {
+	return state.map ? state.map.points.filter((p) => p.type === type) : [];
+}
+
+function labelOf(p) {
+	if (p.type === "capture") return "Capture " + (p.name || "?");
+	return TYPE_INFO[p.type].label + " " + (pointsOf(p.type).indexOf(p) + 1);
+}
+
+function touched() {
+	updateDirty();
+	renderBalance();
+	draw();
+}
+
+// ------------------------------------------------------------------------------------------------
+// Loading
+// ------------------------------------------------------------------------------------------------
+
+async function loadMaps(selectId) {
+	const data = await request("maps");
+	state.maps = data.maps;
+	state.enabled = data.enabled;
+	state.world = data.world;
+	state.maxPoints = data.maxPoints;
+	state.players = data.players;
+	const players = $("fMaxPlayers");
+	players.min = data.players.min;
+	players.max = data.players.max;
+	state.shown = data.shown;
+	renderMapSelect(selectId);
+	updateShown();
+}
+
+function renderMapSelect(selectId) {
+	const select = $("mapSelect");
+	select.innerHTML = "";
+	select.appendChild(el("option", { value: "", text: state.maps.length ? "— pick a map —" : "— no maps yet —" }));
+	for (const map of state.maps) {
+		const ready = state.enabled.includes(map.id);
+		select.appendChild(el("option", { value: map.id, text: map.name + " (" + map.id + ")" + (ready ? "" : map.enabled ? " · incomplete" : " · disabled") }));
+	}
+	if (state.map && state.previousId === "") {
+		select.appendChild(el("option", { value: "\u0000new", text: (state.map.name || state.map.id) + " (new, not saved)" }));
+		select.value = "\u0000new";
+	} else {
+		select.value = selectId || (state.map ? state.map.id : "");
+	}
+}
+
+function selectMap(id) {
+	const map = state.maps.find((m) => m.id === id);
+	state.map = map ? copyMap(map) : null;
+	state.saved = serialize(state.map);
+	state.previousId = map ? map.id : null;
+	state.selected = null;
+	setPlacing(null);
+	$("warnings").innerHTML = "";
+	renderAll();
+	if (state.map) {
+		fitView();
+		loadTerrain();
+	}
+}
+
+const SAVE_TO_KEY = "conquestSaveTo:";
+
+function loadSaveTo() {
+	let path = "";
+	try { path = (state.map && localStorage.getItem(SAVE_TO_KEY + state.map.id)) || ""; } catch (e) { /* storage blocked */ }
+	$("saveTo").value = path;
+}
+
+function storeSaveTo(id, path) {
+	try {
+		if (path) localStorage.setItem(SAVE_TO_KEY + id, path);
+		else localStorage.removeItem(SAVE_TO_KEY + id);
+	} catch (e) { /* storage blocked */ }
+}
+
+/** Asks the server for the ground under a point that moved: its height (the layer nearest the one it had) and whether it is open ground. */
+async function reground(points) {
+	for (const p of points) {
+		try {
+			const ground = await request("ground", { x: p.x, y: p.y, z: p.z });
+			if (p.x !== ground.x || p.y !== ground.y) continue; // moved again meanwhile
+			p.z = ground.z;
+			p.open = ground.open;
+		} catch (e) {
+			report(e);
+			return;
+		}
+	}
+	renderPoints();
+	touched();
+}
+
+function confirmDiscard() {
+	return !isDirty() || confirm("Discard the unsaved changes to " + (state.map.name || state.map.id) + "?");
+}
+
+// ------------------------------------------------------------------------------------------------
+// Terrain
+// ------------------------------------------------------------------------------------------------
+
+let terrainTimer = 0;
+
+function scheduleTerrain() {
+	clearTimeout(terrainTimer);
+	terrainTimer = setTimeout(loadTerrain, 700);
+}
+
+async function loadTerrain() {
+	const map = state.map;
+	if (!map) return;
+	const w = map.maxX - map.minX;
+	const h = map.maxY - map.minY;
+	if (!(w > 0 && h > 0)) return;
+	const pad = Math.max(1500, Math.round(Math.max(w, h) * 0.15));
+	const snap = (v) => Math.round(v / 16) * 16;
+	const area = { minX: snap(map.minX - pad), minY: snap(map.minY - pad), maxX: snap(map.maxX + pad), maxY: snap(map.maxY + pad), z: Math.round(map.z || 0) };
+	if (state.world) {
+		area.minX = Math.max(state.world[0], area.minX);
+		area.minY = Math.max(state.world[1], area.minY);
+		area.maxX = Math.min(state.world[2] - 16, area.maxX);
+		area.maxY = Math.min(state.world[3] - 16, area.maxY);
+	}
+	loadDoors(area);
+	const key = [area.minX, area.minY, area.maxX, area.maxY, area.z].join(",");
+	if (key === state.terrainKey) return;
+	state.terrainKey = key;
+	const status = $("terrainState");
+	status.hidden = false;
+	status.textContent = "Drawing the ground from the geodata…";
+	try {
+		const blob = await request("terrain", area, true);
+		if (state.terrainKey !== key) return;
+		const img = new Image();
+		img.onload = () => {
+			if (state.terrainKey !== key) return;
+			if (state.terrain && state.terrain.img.src.startsWith("blob:")) URL.revokeObjectURL(state.terrain.img.src);
+			state.terrain = Object.assign({ img: img, key: key }, area);
+			status.hidden = true;
+			draw();
+		};
+		img.src = URL.createObjectURL(blob);
+	} catch (e) {
+		state.terrainKey = null;
+		status.textContent = "No terrain: " + e.message;
+	}
+}
+
+async function loadDoors(area) {
+	const key = [area.minX, area.minY, area.maxX, area.maxY].join(",");
+	if (key === state.doorsKey) return;
+	state.doorsKey = key;
+	try {
+		const data = await request("doors", { minX: area.minX, minY: area.minY, maxX: area.maxX, maxY: area.maxY });
+		if (state.doorsKey !== key) return;
+		state.doors = data.doors.sort((a, b) => a.name.localeCompare(b.name) || a.id - b.id);
+		renderDoors();
+		draw();
+	} catch (e) {
+		state.doorsKey = null;
+		report(e);
+	}
+}
+
+// ------------------------------------------------------------------------------------------------
+// View
+// ------------------------------------------------------------------------------------------------
+
+const canvas = $("view");
+const ctx = canvas.getContext("2d");
+let drawQueued = false;
+
+function canvasSize() {
+	const rect = canvas.getBoundingClientRect();
+	return { w: rect.width, h: rect.height };
+}
+
+function toScreen(x, y) {
+	const size = canvasSize();
+	const v = state.view;
+	return [(x - v.cx) / v.scale + size.w / 2, (y - v.cy) / v.scale + size.h / 2];
+}
+
+function toWorld(sx, sy) {
+	const size = canvasSize();
+	const v = state.view;
+	return [(sx - size.w / 2) * v.scale + v.cx, (sy - size.h / 2) * v.scale + v.cy];
+}
+
+function fitView() {
+	const map = state.map;
+	state.viewMoved = false;
+	if (!map) return;
+	const size = canvasSize();
+	const w = map.maxX - map.minX;
+	const h = map.maxY - map.minY;
+	state.view.cx = (map.minX + map.maxX) / 2;
+	state.view.cy = (map.minY + map.maxY) / 2;
+	state.view.scale = Math.max(w / Math.max(100, size.w - 80), h / Math.max(100, size.h - 120), 1);
+	draw();
+}
+
+function zoomAt(sx, sy, factor) {
+	const before = toWorld(sx, sy);
+	state.view.scale = Math.min(400, Math.max(0.5, state.view.scale * factor));
+	state.viewMoved = true;
+	const after = toWorld(sx, sy);
+	state.view.cx += before[0] - after[0];
+	state.view.cy += before[1] - after[1];
+	draw();
+}
+
+function draw() {
+	if (drawQueued) return;
+	drawQueued = true;
+	requestAnimationFrame(() => {
+		drawQueued = false;
+		paint();
+	});
+}
+
+function paint() {
+	const size = canvasSize();
+	const ratio = window.devicePixelRatio || 1;
+	if (canvas.width !== Math.round(size.w * ratio) || canvas.height !== Math.round(size.h * ratio)) {
+		canvas.width = Math.round(size.w * ratio);
+		canvas.height = Math.round(size.h * ratio);
+	}
+	ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+	ctx.fillStyle = "#050508";
+	ctx.fillRect(0, 0, size.w, size.h);
+	$("empty").style.display = state.map ? "none" : "flex";
+	if (!state.map) return;
+	const map = state.map;
+	const scale = state.view.scale;
+
+	const t = state.terrain;
+	if (t) {
+		const a = toScreen(t.minX, t.minY);
+		const b = toScreen(t.maxX, t.maxY);
+		ctx.imageSmoothingEnabled = scale > 8;
+		ctx.drawImage(t.img, a[0], a[1], b[0] - a[0], b[1] - a[1]);
+	}
+
+	// Grid: every 1000 when close, every 5000 further out, with the coordinates at the edges.
+	if ($("showGrid").checked) {
+		const step = scale < 12 ? 1000 : scale < 60 ? 5000 : 20000;
+		const tl = toWorld(0, 0);
+		const br = toWorld(size.w, size.h);
+		ctx.lineWidth = 1;
+		ctx.font = "10px Segoe UI, sans-serif";
+		ctx.fillStyle = "rgba(240,230,200,0.55)";
+		for (let x = Math.ceil(tl[0] / step) * step; x <= br[0]; x += step) {
+			const sx = Math.round(toScreen(x, 0)[0]) + 0.5;
+			ctx.strokeStyle = x % (step * 5) === 0 ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.08)";
+			ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, size.h); ctx.stroke();
+			ctx.fillText(String(x), sx + 3, size.h - 40);
+		}
+		for (let y = Math.ceil(tl[1] / step) * step; y <= br[1]; y += step) {
+			const sy = Math.round(toScreen(0, y)[1]) + 0.5;
+			ctx.strokeStyle = y % (step * 5) === 0 ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.08)";
+			ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(size.w, sy); ctx.stroke();
+			ctx.fillText(String(y), size.w - 52, sy - 3);
+		}
+	}
+
+	// The area: dimmed outside, a dashed edge, corner handles.
+	const a = toScreen(map.minX, map.minY);
+	const b = toScreen(map.maxX, map.maxY);
+	ctx.fillStyle = "rgba(0,0,0,0.45)";
+	ctx.beginPath();
+	ctx.rect(0, 0, size.w, size.h);
+	ctx.rect(a[0], a[1], b[0] - a[0], b[1] - a[1]);
+	ctx.fill("evenodd");
+	ctx.setLineDash([8, 6]);
+	ctx.strokeStyle = "rgba(240,240,240,0.9)";
+	ctx.lineWidth = 1.5;
+	ctx.strokeRect(a[0], a[1], b[0] - a[0], b[1] - a[1]);
+	ctx.setLineDash([]);
+	for (const c of corners()) {
+		const s = toScreen(c.x, c.y);
+		ctx.fillStyle = "#f0e6c8";
+		ctx.fillRect(s[0] - 5, s[1] - 5, 10, 10);
+	}
+
+	// Distances from the selected point (or every capture point) to the nearest spawn of each team.
+	if ($("showLinks").checked) {
+		const captures = state.selected && state.selected.type === "capture" ? [state.selected] : pointsOf("capture");
+		ctx.font = "11px Segoe UI, sans-serif";
+		for (const c of captures) {
+			for (const team of ["blue", "red"]) {
+				const near = nearest(c, pointsOf(team));
+				if (!near) continue;
+				const s1 = toScreen(c.x, c.y);
+				const s2 = toScreen(near.x, near.y);
+				ctx.strokeStyle = team === "blue" ? "rgba(110,165,255,0.85)" : "rgba(255,110,95,0.85)";
+				ctx.lineWidth = state.selected === c ? 2 : 1.25;
+				ctx.setLineDash([4, 4]);
+				ctx.beginPath(); ctx.moveTo(s1[0], s1[1]); ctx.lineTo(s2[0], s2[1]); ctx.stroke();
+				ctx.setLineDash([]);
+				if (state.selected === c) {
+					const mid = [(s1[0] + s2[0]) / 2, (s1[1] + s2[1]) / 2];
+					ctx.fillStyle = "rgba(0,0,0,0.7)";
+					const text = fmt(dist(c, near));
+					const w = ctx.measureText(text).width + 8;
+					ctx.fillRect(mid[0] - w / 2, mid[1] - 8, w, 16);
+					ctx.fillStyle = TYPE_INFO[team].color;
+					ctx.fillText(text, mid[0] - w / 2 + 4, mid[1] + 4);
+				}
+			}
+		}
+	}
+
+	for (const door of state.doors) drawDoor(door);
+	for (const p of map.points) drawPoint(p);
+
+	// The GM.
+	const gm = state.gm;
+	if (gm && gm.instance === 0) {
+		const s = toScreen(gm.x, gm.y);
+		const angle = gm.heading * 2 * Math.PI / 65536;
+		ctx.save();
+		ctx.translate(s[0], s[1]);
+		ctx.rotate(angle);
+		ctx.fillStyle = "#ffffff";
+		ctx.strokeStyle = "#000000";
+		ctx.lineWidth = 1.5;
+		ctx.beginPath(); ctx.moveTo(11, 0); ctx.lineTo(-7, 7); ctx.lineTo(-3, 0); ctx.lineTo(-7, -7); ctx.closePath();
+		ctx.fill(); ctx.stroke();
+		ctx.restore();
+		ctx.font = "11px Segoe UI, sans-serif";
+		ctx.fillStyle = "#ffffff";
+		ctx.fillText(gm.name, s[0] + 12, s[1] - 8);
+	}
+}
+
+function doorSetting(door) {
+	const setting = (state.map.doors || []).find((d) => d.id === door.id);
+	return setting ? setting.open : null;
+}
+
+function drawDoor(door) {
+	const setting = doorSetting(door);
+	const color = setting === true ? "#50e66e" : setting === false ? "#ff5ac8" : "rgba(220,220,220,0.75)";
+	ctx.strokeStyle = color;
+	ctx.fillStyle = color;
+	ctx.lineWidth = setting === null ? 1.5 : 3;
+	ctx.beginPath();
+	door.nodes.forEach((n, i) => {
+		const s = toScreen(n[0], n[1]);
+		if (i === 0) ctx.moveTo(s[0], s[1]); else ctx.lineTo(s[0], s[1]);
+	});
+	ctx.closePath();
+	ctx.stroke();
+	// A square as well, so the door can be seen and clicked from far out.
+	const c = toScreen(door.x, door.y);
+	ctx.beginPath();
+	if (setting === null) ctx.rect(c[0] - 3, c[1] - 3, 6, 6); else ctx.rect(c[0] - 4, c[1] - 4, 8, 8);
+	if (setting === null) ctx.stroke(); else ctx.fill();
+}
+
+function drawPoint(p) {
+	const info = TYPE_INFO[p.type];
+	const s = toScreen(p.x, p.y);
+	const r = Math.max(4, p.radius / state.view.scale);
+	const selected = state.selected === p;
+	ctx.fillStyle = info.fill;
+	ctx.strokeStyle = info.color;
+	ctx.lineWidth = selected ? 3 : 1.5;
+	ctx.beginPath(); ctx.arc(s[0], s[1], r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+	if (p.type === "capture") {
+		ctx.beginPath(); ctx.arc(s[0], s[1], Math.max(3, r / 4), 0, Math.PI * 2); ctx.stroke();
+		ctx.font = "bold " + Math.round(Math.min(26, Math.max(12, r * 0.7))) + "px Segoe UI, sans-serif";
+		ctx.fillStyle = "#ffffff";
+		ctx.textAlign = "center";
+		ctx.textBaseline = "middle";
+		ctx.strokeStyle = "rgba(0,0,0,0.8)";
+		ctx.lineWidth = 3;
+		ctx.strokeText(p.name || "?", s[0], s[1]);
+		ctx.fillText(p.name || "?", s[0], s[1]);
+		ctx.textAlign = "start";
+		ctx.textBaseline = "alphabetic";
+	} else {
+		const angle = (p.heading || 0) * 2 * Math.PI / 65536;
+		const len = r + 14;
+		ctx.lineWidth = 2;
+		ctx.strokeStyle = info.color;
+		ctx.beginPath(); ctx.moveTo(s[0], s[1]); ctx.lineTo(s[0] + Math.cos(angle) * len, s[1] + Math.sin(angle) * len); ctx.stroke();
+		ctx.fillStyle = info.color;
+		ctx.beginPath(); ctx.arc(s[0], s[1], 4, 0, Math.PI * 2); ctx.fill();
+		ctx.font = "11px Segoe UI, sans-serif";
+		ctx.fillStyle = "#ffffff";
+		ctx.strokeStyle = "rgba(0,0,0,0.8)";
+		ctx.lineWidth = 3;
+		const text = String(pointsOf(p.type).indexOf(p) + 1);
+		ctx.strokeText(text, s[0] + 6, s[1] - 6);
+		ctx.fillText(text, s[0] + 6, s[1] - 6);
+	}
+	if (p.open === false) {
+		ctx.fillStyle = "#fab219";
+		ctx.font = "bold 13px Segoe UI, sans-serif";
+		ctx.fillText("!", s[0] - r - 8, s[1] + 4);
+	}
+}
+
+function corners() {
+	const m = state.map;
+	return [
+		{ x: m.minX, y: m.minY, kx: "minX", ky: "minY" },
+		{ x: m.maxX, y: m.minY, kx: "maxX", ky: "minY" },
+		{ x: m.maxX, y: m.maxY, kx: "maxX", ky: "maxY" },
+		{ x: m.minX, y: m.maxY, kx: "minX", ky: "maxY" }
+	];
+}
+
+function dist(a, b) {
+	return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function nearest(p, list) {
+	let best = null;
+	for (const q of list) if (!best || dist(p, q) < dist(p, best)) best = q;
+	return best;
+}
+
+// ------------------------------------------------------------------------------------------------
+// Mouse
+// ------------------------------------------------------------------------------------------------
+
+let drag = null;
+
+function hitTest(sx, sy) {
+	if (!state.map) return null;
+	for (const c of corners()) {
+		const s = toScreen(c.x, c.y);
+		if (Math.abs(s[0] - sx) <= 8 && Math.abs(s[1] - sy) <= 8) return { corner: c };
+	}
+	// The point nearest the cursor, its centre within its ring (or a few pixels for a small one).
+	let best = null;
+	let bestDistance = Infinity;
+	for (const p of state.map.points) {
+		const s = toScreen(p.x, p.y);
+		const d = Math.hypot(s[0] - sx, s[1] - sy);
+		const reach = Math.max(10, Math.min(p.radius / state.view.scale, 40));
+		if (d <= reach && d < bestDistance) {
+			best = p;
+			bestDistance = d;
+		}
+	}
+	if (best) return { point: best };
+	for (const door of state.doors) {
+		const s = toScreen(door.x, door.y);
+		if (Math.hypot(s[0] - sx, s[1] - sy) <= 8) return { door: door };
+	}
+	return null;
+}
+
+canvas.addEventListener("pointerdown", (event) => {
+	if (!state.map || event.button !== 0) return;
+	const rect = canvas.getBoundingClientRect();
+	const sx = event.clientX - rect.left;
+	const sy = event.clientY - rect.top;
+	canvas.setPointerCapture(event.pointerId);
+	if (state.placing) {
+		const w = toWorld(sx, sy);
+		addPoint(state.placing, Math.round(w[0]), Math.round(w[1]), state.map.z, null);
+		if (!event.shiftKey) setPlacing(null);
+		return;
+	}
+	const hit = hitTest(sx, sy);
+	if (hit && hit.point) {
+		select(hit.point);
+		drag = { kind: "point", point: hit.point, moved: false };
+	} else if (hit && hit.corner) {
+		drag = { kind: "corner", corner: hit.corner };
+	} else if (hit && hit.door) {
+		cycleDoor(hit.door);
+	} else {
+		drag = { kind: "pan", sx: sx, sy: sy, cx: state.view.cx, cy: state.view.cy, moved: false };
+		canvas.classList.add("panning");
+	}
+});
+
+canvas.addEventListener("pointermove", (event) => {
+	if (!state.map) return;
+	const rect = canvas.getBoundingClientRect();
+	const sx = event.clientX - rect.left;
+	const sy = event.clientY - rect.top;
+	const w = toWorld(sx, sy);
+	$("readout").textContent = "x " + Math.round(w[0]) + "   y " + Math.round(w[1]) + "   ·   " + fmt(state.view.scale * 100) + " per 100 px";
+	if (!drag) return;
+	if (drag.kind === "pan") {
+		state.view.cx = drag.cx - (sx - drag.sx) * state.view.scale;
+		state.view.cy = drag.cy - (sy - drag.sy) * state.view.scale;
+		drag.moved = drag.moved || Math.hypot(sx - drag.sx, sy - drag.sy) > 3;
+		state.viewMoved = state.viewMoved || drag.moved;
+		draw();
+	} else if (drag.kind === "point") {
+		drag.point.x = Math.round(w[0]);
+		drag.point.y = Math.round(w[1]);
+		delete drag.point.open;
+		drag.moved = true;
+		touched();
+	} else if (drag.kind === "corner") {
+		const m = state.map;
+		const c = drag.corner;
+		const x = Math.round(w[0] / 100) * 100;
+		const y = Math.round(w[1] / 100) * 100;
+		if (c.kx === "minX") m.minX = Math.min(x, m.maxX - 1000); else m.maxX = Math.max(x, m.minX + 1000);
+		if (c.ky === "minY") m.minY = Math.min(y, m.maxY - 1000); else m.maxY = Math.max(y, m.minY + 1000);
+		renderAreaFields();
+		touched();
+	}
+});
+
+function endDrag() {
+	if (!drag) return;
+	if (drag.kind === "pan" && !drag.moved) select(null);
+	if (drag.kind === "point" && drag.moved) {
+		renderPoints();
+		reground([drag.point]);
+	}
+	if (drag.kind === "corner") scheduleTerrain();
+	drag = null;
+	canvas.classList.remove("panning");
+}
+canvas.addEventListener("pointerup", endDrag);
+canvas.addEventListener("pointercancel", endDrag);
+canvas.addEventListener("wheel", (event) => {
+	event.preventDefault();
+	const rect = canvas.getBoundingClientRect();
+	zoomAt(event.clientX - rect.left, event.clientY - rect.top, event.deltaY > 0 ? 1.2 : 1 / 1.2);
+}, { passive: false });
+// The page may first be laid out at another size (a tab opened in the background): fit the area again until the GM moves the view.
+new ResizeObserver(() => {
+	if (!state.viewMoved) fitView();
+	else draw();
+}).observe($("viewWrap"));
+
+document.addEventListener("keydown", (event) => {
+	if (event.target.matches("input, textarea, select")) return;
+	if (event.key === "Escape") setPlacing(null);
+	if ((event.key === "Delete" || event.key === "Backspace") && state.selected) {
+		removePoint(state.selected);
+		event.preventDefault();
+	}
+});
+
+// ------------------------------------------------------------------------------------------------
+// Editing
+// ------------------------------------------------------------------------------------------------
+
+function setPlacing(type) {
+	state.placing = type;
+	for (const button of document.querySelectorAll("button.place")) button.classList.toggle("on", button.dataset.type === type);
+	canvas.classList.toggle("placing", !!type);
+}
+
+function select(point) {
+	state.selected = point;
+	for (const node of document.querySelectorAll(".pt")) node.classList.toggle("sel", node._point === point);
+	const node = [...document.querySelectorAll(".pt")].find((n) => n._point === point);
+	if (node) node.scrollIntoView({ block: "nearest" });
+	draw();
+}
+
+function nextCaptureName() {
+	const used = new Set(pointsOf("capture").map((p) => (p.name || "").toUpperCase()));
+	for (let round = 1; ; round++) {
+		for (let c = 65; c <= 90; c++) {
+			const name = String.fromCharCode(c) + (round > 1 ? round : "");
+			if (!used.has(name)) return name;
+		}
+	}
+}
+
+/** Heading that faces from a point towards the middle of the capture points (or of the area). */
+function headingToCenter(p) {
+	const caps = pointsOf("capture");
+	const tx = caps.length ? caps.reduce((s, c) => s + c.x, 0) / caps.length : (state.map.minX + state.map.maxX) / 2;
+	const ty = caps.length ? caps.reduce((s, c) => s + c.y, 0) / caps.length : (state.map.minY + state.map.maxY) / 2;
+	const angle = Math.atan2(ty - p.y, tx - p.x);
+	return ((Math.round(angle * 65536 / (2 * Math.PI)) % 65536) + 65536) % 65536;
+}
+
+function addPoint(type, x, y, z, heading) {
+	if (pointsOf(type).length >= state.maxPoints) {
+		toast("A map has at most " + state.maxPoints + " points of a kind.", true);
+		return;
+	}
+	const p = { type: type, name: type === "capture" ? nextCaptureName() : "", x: x, y: y, z: z, heading: 0, radius: TYPE_INFO[type].radius };
+	// Points are kept in file order: blue, red, capture.
+	const order = TYPES.indexOf(type);
+	let index = state.map.points.length;
+	for (let i = 0; i < state.map.points.length; i++) {
+		if (TYPES.indexOf(state.map.points[i].type) > order) { index = i; break; }
+	}
+	state.map.points.splice(index, 0, p);
+	if (type !== "capture") p.heading = heading != null ? heading : headingToCenter(p);
+	state.selected = p;
+	renderPoints();
+	touched();
+	reground([p]);
+}
+
+/** What the event does with a door: true opens it, false shuts it, null leaves it as the world has it. */
+function setDoor(door, open) {
+	const doors = (state.map.doors || []).filter((d) => d.id !== door.id);
+	if (open !== null) doors.push({ id: door.id, open: open });
+	state.map.doors = doors;
+	renderDoors();
+	touched();
+}
+
+function cycleDoor(door) {
+	const setting = doorSetting(door);
+	setDoor(door, setting === null ? true : setting === true ? false : null);
+	toast(door.name + " (" + door.id + "): " + describeDoor(door));
+}
+
+function describeDoor(door) {
+	const setting = doorSetting(door);
+	if (setting === true) return "the event opens it";
+	if (setting === false) return "the event shuts it";
+	return "left as it is (" + (door.defaultOpen ? "open" : "shut") + " by default)";
+}
+
+function removePoint(p) {
+	const index = state.map.points.indexOf(p);
+	if (index < 0) return;
+	state.map.points.splice(index, 1);
+	if (state.selected === p) state.selected = null;
+	renderPoints();
+	touched();
+}
+
+async function gmNow() {
+	const gm = await request("gm");
+	state.gm = gm;
+	renderGm();
+	return gm;
+}
+
+async function setHere(p) {
+	try {
+		const gm = await gmNow();
+		if (gm.instance !== 0) toast("You are in an instance: the point is kept as a place in the open world.");
+		p.x = gm.x;
+		p.y = gm.y;
+		p.z = gm.z;
+		if (p.type !== "capture") p.heading = gm.heading;
+		delete p.open;
+		renderPoints();
+		touched();
+	} catch (e) { report(e); }
+}
+
+async function addHere(type) {
+	try {
+		const gm = await gmNow();
+		addPoint(type, gm.x, gm.y, gm.z, gm.heading);
+	} catch (e) { report(e); }
+}
+
+async function teleport(p, label) {
+	try {
+		const data = await request("teleport", { post: 1, x: p.x, y: p.y, z: p.z, heading: p.heading || 0, label: label || "" });
+		toast(data.lines.join("\n"));
+		setTimeout(() => gmNow().then(draw).catch(() => {}), 800);
+	} catch (e) { report(e); }
+}
+
+function mirror() {
+	const m = state.map;
+	const axis = $("mirrorAxis").value;
+	const cx = (m.minX + m.maxX) / 2;
+	const cy = (m.minY + m.maxY) / 2;
+	const blue = pointsOf("blue");
+	if (!blue.length) {
+		toast("There are no blue spawn points to copy.", true);
+		return;
+	}
+	if (pointsOf("red").length && !confirm("Replace the " + pointsOf("red").length + " red spawn point(s)?")) return;
+	m.points = m.points.filter((p) => p.type !== "red");
+	for (const p of blue) {
+		const x = axis === "y" ? p.x : Math.round(2 * cx - p.x);
+		const y = axis === "x" ? p.y : Math.round(2 * cy - p.y);
+		// The heading turns with the mirror: left-right flips x, top-bottom flips y, a half turn adds 180°.
+		const angle = p.heading * 2 * Math.PI / 65536;
+		const turned = axis === "x" ? Math.PI - angle : axis === "y" ? -angle : angle + Math.PI;
+		const heading = ((Math.round(turned * 65536 / (2 * Math.PI)) % 65536) + 65536) % 65536;
+		const red = { type: "red", name: "", x: x, y: y, z: m.z, heading: heading, radius: p.radius };
+		const firstCapture = m.points.findIndex((q) => q.type === "capture");
+		m.points.splice(firstCapture < 0 ? m.points.length : firstCapture, 0, red);
+	}
+	renderPoints();
+	touched();
+	reground(pointsOf("red"));
+	toast("Red spawn points copied from blue.");
+}
+
+function fitArea() {
+	const pts = state.map.points;
+	if (!pts.length) {
+		toast("There are no points to fit the area to.", true);
+		return;
+	}
+	const pad = 3000;
+	const m = state.map;
+	m.minX = Math.floor((Math.min(...pts.map((p) => p.x - p.radius)) - pad) / 100) * 100;
+	m.minY = Math.floor((Math.min(...pts.map((p) => p.y - p.radius)) - pad) / 100) * 100;
+	m.maxX = Math.ceil((Math.max(...pts.map((p) => p.x + p.radius)) + pad) / 100) * 100;
+	m.maxY = Math.ceil((Math.max(...pts.map((p) => p.y + p.radius)) + pad) / 100) * 100;
+	renderAreaFields();
+	touched();
+	scheduleTerrain();
+	fitView();
+}
+
+// ------------------------------------------------------------------------------------------------
+// Sidebar
+// ------------------------------------------------------------------------------------------------
+
+function renderAll() {
+	const has = !!state.map;
+	for (const id of ["mapSection", "pointsSection", "doorsSection"]) $(id).style.display = has ? "" : "none";
+	for (const id of ["save", "revert", "deleteMap", "fit", "zoomIn", "zoomOut", "mirror", "showInGame"]) $(id).disabled = !has;
+	for (const button of document.querySelectorAll("button.place")) button.disabled = !has;
+	if (has) {
+		const m = state.map;
+		$("fId").value = m.id;
+		$("fName").value = m.name;
+		$("fEnabled").checked = m.enabled;
+		$("fMaxPlayers").value = m.maxPlayers;
+		$("fDescription").value = m.description || "";
+		loadSaveTo();
+		renderAreaFields();
+		renderPoints();
+		renderDoors();
+	}
+	renderTitle();
+	updateDirty();
+	renderBalance();
+	updateShown();
+	draw();
+}
+
+function renderTitle() {
+	const m = state.map;
+	$("mapTitle").textContent = m ? (m.name || m.id) : "—";
+	const chip = $("readyChip");
+	if (!m) { chip.textContent = ""; return; }
+	const ready = m.enabled && pointsOf("blue").length && pointsOf("red").length && pointsOf("capture").length;
+	chip.className = "chip " + (ready ? "good" : "warn");
+	chip.textContent = !m.enabled ? "disabled" : ready ? "ready for the event" : "incomplete";
+}
+
+function renderAreaFields() {
+	const m = state.map;
+	$("fMinX").value = m.minX;
+	$("fMinY").value = m.minY;
+	$("fMaxX").value = m.maxX;
+	$("fMaxY").value = m.maxY;
+	$("fZ").value = m.z;
+	$("areaSize").textContent = fmt(m.maxX - m.minX) + " × " + fmt(m.maxY - m.minY);
+}
+
+function numberInput(value, onChange, attrs) {
+	const input = el("input", Object.assign({ type: "number" }, attrs || {}));
+	input.value = value;
+	input.addEventListener("click", (e) => e.stopPropagation());
+	input.addEventListener("input", () => {
+		const v = Number(input.value);
+		if (input.value !== "" && Number.isFinite(v)) onChange(Math.round(v));
+	});
+	return input;
+}
+
+function renderPoints() {
+	const section = $("pointsSection");
+	section.innerHTML = "";
+	if (!state.map) return;
+	for (const type of TYPES) {
+		const info = TYPE_INFO[type];
+		const list = pointsOf(type);
+		section.appendChild(el("div", { class: "title" }, [
+			el("h2", {}, [el("span", { class: "swatch", style: "background:" + info.color }), info.title + " (" + list.length + ")"]),
+			el("span", { class: "row" }, [
+				el("button", { class: "small", title: "Add one where you stand in game", onclick: () => addHere(type) }, "+ here"),
+				el("button", { class: "small", title: "Click the map to place it (Shift: several)", onclick: () => setPlacing(state.placing === type ? null : type) }, "+ on map")
+			])
+		]));
+		if (!list.length) section.appendChild(el("div", { class: "muted" }, "None yet."));
+		else if (type !== "capture") section.appendChild(el("div", { class: "muted", style: "font-size:12px" }, "Up to " + state.map.maxPlayers + " players: about " + Math.ceil(state.map.maxPlayers / list.length) + " per spawn point if they all come back at once."));
+		list.forEach((p, i) => section.appendChild(renderPoint(p, i)));
+	}
+	select(state.selected && state.map.points.includes(state.selected) ? state.selected : null);
+	renderTitle();
+}
+
+function renderPoint(p, index) {
+	const info = TYPE_INFO[p.type];
+	const label = labelOf(p);
+	const coords = el("div", { class: "coords" }, p.x + ", " + p.y + ", " + p.z);
+	if (p.open === false) coords.appendChild(el("span", { class: "bad", title: "By a wall or a cliff edge, or without geodata: players can't walk off it in every direction" }, "  ⚠ not open ground"));
+	const top = el("div", { class: "top" }, [
+		el("span", { class: "swatch", style: "background:" + info.color }),
+		el("span", { class: "name" }, label),
+		el("button", { class: "small", title: "Teleport there in game", onclick: (e) => { e.stopPropagation(); teleport(p, label); } }, "TP"),
+		el("button", { class: "small", title: "Move it to where you stand in game", onclick: (e) => { e.stopPropagation(); setHere(p); } }, "Here"),
+		el("button", { class: "small danger", title: "Remove (Delete)", onclick: (e) => { e.stopPropagation(); removePoint(p); } }, "×")
+	]);
+	const edit = el("div", { class: "edit" });
+	if (p.type === "capture") {
+		const name = el("input", { type: "text", maxlength: "12", value: p.name || "" });
+		name.addEventListener("click", (e) => e.stopPropagation());
+		name.addEventListener("input", () => {
+			p.name = name.value.trim().toUpperCase();
+			top.querySelector(".name").textContent = labelOf(p);
+			touched();
+		});
+		edit.appendChild(el("label", { class: "field" }, [el("span", {}, "Name"), name]));
+		edit.appendChild(el("label", { class: "field" }, [el("span", {}, "Capture radius"), numberInput(p.radius, (v) => { p.radius = v; touched(); }, { min: 50, max: 5000, step: 50 })]));
+	} else {
+		edit.appendChild(el("label", { class: "field" }, [el("span", {}, "Spread radius"), numberInput(p.radius, (v) => { p.radius = v; touched(); }, { min: 50, max: 5000, step: 50 })]));
+		const heading = numberInput(p.heading, (v) => { p.heading = ((v % 65536) + 65536) % 65536; touched(); }, { min: 0, max: 65535, step: 1024 });
+		const face = el("button", { class: "small", title: "Face the middle of the capture points", onclick: (e) => {
+			e.stopPropagation();
+			p.heading = headingToCenter(p);
+			heading.value = p.heading;
+			touched();
+		} }, "Face centre");
+		edit.appendChild(el("label", { class: "field" }, [el("span", {}, "Heading (0 east, 16384 south)"), el("div", { class: "row", style: "flex-wrap:nowrap" }, [heading, face])]));
+	}
+	const node = el("div", { class: "pt", onclick: () => { select(p); centerOn(p); } }, [top, coords, edit]);
+	node._point = p;
+	return node;
+}
+
+function renderDoors() {
+	const section = $("doorsSection");
+	section.innerHTML = "";
+	if (!state.map) return;
+	const opens = (state.map.doors || []).filter((d) => d.open).length;
+	const shuts = (state.map.doors || []).filter((d) => !d.open).length;
+	const openAll = el("button", { class: "small", title: "The event opens every door here", onclick: () => setAllDoors(true) }, "Open all");
+	const clear = el("button", { class: "small", title: "Leave every door as the world has it", onclick: () => setAllDoors(null) }, "Clear");
+	openAll.disabled = clear.disabled = !state.doors.length;
+	section.appendChild(el("div", { class: "title" }, [el("h2", {}, "Doors (" + state.doors.length + " here)"), el("span", { class: "row" }, [openAll, clear])]));
+	if (!state.doors.length) {
+		section.appendChild(el("div", { class: "muted" }, "No doors in this area."));
+		return;
+	}
+	section.appendChild(el("div", { class: "muted", style: "font-size:12px" }, "Opened by the event: " + opens + ", shut: " + shuts + ". Click a door on the map to switch it."));
+	const table = el("table");
+	for (const door of state.doors) {
+		const select = el("select", { "aria-label": "Door " + door.id });
+		select.appendChild(el("option", { value: "" }, "as it is (" + (door.defaultOpen ? "open" : "shut") + ")"));
+		select.appendChild(el("option", { value: "open" }, "event opens it"));
+		select.appendChild(el("option", { value: "shut" }, "event shuts it"));
+		const setting = doorSetting(door);
+		select.value = setting === true ? "open" : setting === false ? "shut" : "";
+		select.addEventListener("change", () => setDoor(door, select.value === "open" ? true : select.value === "shut" ? false : null));
+		table.appendChild(el("tr", {}, [
+			el("td", { title: door.id + " at " + door.x + ", " + door.y + ", " + door.z, style: "cursor:pointer", onclick: () => centerOn(door) }, [door.name, el("div", { class: "muted", style: "font-size:11px" }, String(door.id))]),
+			el("td", {}, select),
+			el("td", {}, el("button", { class: "small", title: "Teleport next to it in game", onclick: () => teleport({ x: door.x, y: door.y, z: door.z, heading: 0 }, door.name) }, "TP"))
+		]));
+	}
+	section.appendChild(table);
+}
+
+function setAllDoors(open) {
+	state.map.doors = open === null ? [] : state.doors.map((d) => ({ id: d.id, open: open }));
+	renderDoors();
+	touched();
+}
+
+function centerOn(p) {
+	const size = canvasSize();
+	const s = toScreen(p.x, p.y);
+	if (s[0] < 40 || s[1] < 40 || s[0] > size.w - 40 || s[1] > size.h - 40) {
+		state.view.cx = p.x;
+		state.view.cy = p.y;
+		state.viewMoved = true;
+	}
+	draw();
+}
+
+function renderBalance() {
+	const box = $("balance");
+	const chip = $("balanceChip");
+	const blue = pointsOf("blue");
+	const red = pointsOf("red");
+	const caps = pointsOf("capture");
+	if (!state.map || !blue.length || !red.length || !caps.length) {
+		box.className = "muted";
+		box.textContent = "Add spawn points for both teams and capture points.";
+		chip.textContent = "";
+		chip.className = "chip";
+		return;
+	}
+	box.className = "";
+	const rows = caps.map((c) => {
+		const b = dist(c, nearest(c, blue));
+		const r = dist(c, nearest(c, red));
+		return { c: c, b: b, r: r, diff: (b - r) / Math.max(1, (b + r) / 2) };
+	});
+	const table = el("table", {}, [el("tr", {}, [el("th", {}, "Point"), el("th", { class: "num" }, "Blue"), el("th", { class: "num" }, "Red"), el("th", {}, "Closer to")])]);
+	let blueHome = 0, redHome = 0, contested = 0, sumB = 0, sumR = 0;
+	for (const row of rows) {
+		sumB += row.b;
+		sumR += row.r;
+		const pct = Math.round(Math.abs(row.diff) * 100);
+		let side;
+		if (pct <= 10) { contested++; side = el("span", { class: "muted" }, "even (" + pct + "%)"); }
+		else if (row.diff < 0) { blueHome++; side = el("span", { style: "color:var(--blue)" }, "blue by " + pct + "%"); }
+		else { redHome++; side = el("span", { style: "color:var(--red)" }, "red by " + pct + "%"); }
+		table.appendChild(el("tr", { style: "cursor:pointer", onclick: () => { select(row.c); centerOn(row.c); } }, [
+			el("td", {}, row.c.name || "?"), el("td", { class: "num" }, fmt(row.b)), el("td", { class: "num" }, fmt(row.r)), el("td", {}, side)
+		]));
+	}
+	const between = Math.min(...blue.map((b) => Math.min(...red.map((r) => dist(b, r)))));
+	const skew = Math.abs(sumB - sumR) / Math.max(1, (sumB + sumR) / 2);
+	box.innerHTML = "";
+	box.appendChild(table);
+	box.appendChild(el("div", { class: "muted", style: "margin-top:6px;font-size:12px" },
+		"Distance from each team's nearest spawn. Home points: blue " + blueHome + ", red " + redHome + ", even " + contested +
+		". Total walk: blue " + fmt(sumB) + ", red " + fmt(sumR) + ". Closest enemy spawns: " + fmt(between) + "."));
+	const fair = blueHome === redHome && skew <= 0.05;
+	chip.className = "chip " + (fair ? "good" : "warn");
+	chip.textContent = fair ? "balanced" : "uneven by " + Math.round(skew * 100) + "%";
+}
+
+function updateDirty() {
+	const dirty = isDirty();
+	$("dirty").textContent = !state.map ? "" : state.previousId === "" ? "● new map, not saved" : dirty ? "● unsaved changes" : "saved";
+	$("save").disabled = !state.map || (!dirty && state.previousId !== "");
+	$("revert").disabled = !state.map || !dirty || state.previousId === "";
+	renderTitle();
+}
+
+function updateShown() {
+	const shown = state.shown && state.maps.find((m) => m.id === state.shown);
+	const chip = $("shownChip");
+	chip.textContent = shown ? "Drawn in game: " + shown.name : "Not drawn in game";
+	chip.className = "chip" + (shown ? " good" : "");
+	$("hideInGame").disabled = !shown;
+}
+
+function renderGm() {
+	const gm = state.gm;
+	$("gmChip").classList.toggle("live", !!gm);
+	$("gmText").textContent = gm ? gm.name + " · " + gm.x + ", " + gm.y + ", " + gm.z + (gm.instance ? " (instance " + gm.instance + ")" : "") : "offline";
+	if (gm && gm.shown !== undefined && gm.shown !== state.shown) {
+		state.shown = gm.shown;
+		updateShown();
+	}
+}
+
+// ------------------------------------------------------------------------------------------------
+// Fields and buttons
+// ------------------------------------------------------------------------------------------------
+
+$("fId").addEventListener("input", () => { state.map.id = $("fId").value.trim().toLowerCase(); touched(); });
+$("fName").addEventListener("input", () => { state.map.name = $("fName").value; renderTitle(); touched(); });
+$("fEnabled").addEventListener("change", () => { state.map.enabled = $("fEnabled").checked; touched(); });
+$("fMaxPlayers").addEventListener("input", () => {
+	const v = Number($("fMaxPlayers").value);
+	if ($("fMaxPlayers").value === "" || !Number.isInteger(v)) return;
+	state.map.maxPlayers = v;
+	renderPoints();
+	touched();
+});
+$("fDescription").addEventListener("input", () => { state.map.description = $("fDescription").value; touched(); });
+for (const [id, key] of [["fMinX", "minX"], ["fMinY", "minY"], ["fMaxX", "maxX"], ["fMaxY", "maxY"], ["fZ", "z"]]) {
+	$(id).addEventListener("input", () => {
+		const v = Number($(id).value);
+		if ($(id).value === "" || !Number.isFinite(v)) return;
+		state.map[key] = Math.round(v);
+		$("areaSize").textContent = fmt(state.map.maxX - state.map.minX) + " × " + fmt(state.map.maxY - state.map.minY);
+		touched();
+		scheduleTerrain();
+	});
+}
+$("fitArea").addEventListener("click", fitArea);
+$("mirror").addEventListener("click", mirror);
+$("zoomIn").addEventListener("click", () => { const s = canvasSize(); zoomAt(s.w / 2, s.h / 2, 1 / 1.4); });
+$("zoomOut").addEventListener("click", () => { const s = canvasSize(); zoomAt(s.w / 2, s.h / 2, 1.4); });
+$("fit").addEventListener("click", fitView);
+$("showGrid").addEventListener("change", draw);
+$("showLinks").addEventListener("change", draw);
+for (const button of document.querySelectorAll("button.place")) {
+	button.addEventListener("click", () => setPlacing(state.placing === button.dataset.type ? null : button.dataset.type));
+}
+
+$("mapSelect").addEventListener("change", () => {
+	const id = $("mapSelect").value;
+	if (id === "\u0000new") return;
+	if (!confirmDiscard()) {
+		renderMapSelect();
+		return;
+	}
+	selectMap(id);
+	renderMapSelect(id);
+});
+
+$("findMe").addEventListener("click", async () => {
+	try {
+		const gm = await gmNow();
+		if (gm.instance !== 0) toast("You are in an instance (" + gm.instance + "): the map shows the open world.");
+		state.view.cx = gm.x;
+		state.view.cy = gm.y;
+		state.viewMoved = true;
+		draw();
+	} catch (e) { report(e); }
+});
+
+$("newMap").addEventListener("click", () => {
+	if (!confirmDiscard()) return;
+	$("nId").value = "";
+	$("nName").value = "";
+	$("newDialog").showModal();
+});
+
+$("newDialog").addEventListener("close", async () => {
+	if ($("newDialog").returnValue !== "ok") return;
+	const id = $("nId").value.trim().toLowerCase();
+	if (state.maps.some((m) => m.id === id)) {
+		toast("There is already a map " + id + ".", true);
+		return;
+	}
+	try {
+		const gm = await gmNow();
+		const x = Math.round(gm.x / 100) * 100;
+		const y = Math.round(gm.y / 100) * 100;
+		state.map = { id: id, name: $("nName").value.trim() || id, enabled: false, maxPlayers: state.players.default, description: "", minX: x - 12000, minY: y - 10000, maxX: x + 12000, maxY: y + 10000, z: gm.z, points: [], doors: [] };
+		state.saved = "";
+		state.previousId = "";
+		state.selected = null;
+		$("warnings").innerHTML = "";
+		renderMapSelect();
+		renderAll();
+		fitView();
+		loadTerrain();
+		toast("New map around you. It starts disabled: enable it once its points are set, then save.");
+	} catch (e) { report(e); }
+});
+
+$("save").addEventListener("click", async () => {
+	const m = state.map;
+	if (!m) return;
+	const caps = pointsOf("capture").map((p) => (p.name || "").toUpperCase()).filter((n) => n);
+	if (new Set(caps).size !== caps.length) {
+		toast("Two capture points have the same name.", true);
+		return;
+	}
+	if (!(m.maxPlayers >= state.players.min && m.maxPlayers <= state.players.max)) {
+		toast("The players per team must be " + state.players.min + " to " + state.players.max + ".", true);
+		return;
+	}
+	$("save").disabled = true;
+	try {
+		const saveTo = $("saveTo").value.trim();
+		const data = await request("save", { json: Object.assign({}, m, { previousId: state.previousId || "", saveTo: saveTo }) });
+		storeSaveTo(data.map.id, saveTo);
+		const selectedIndex = state.selected ? m.points.indexOf(state.selected) : -1;
+		state.map = copyMap(data.map);
+		state.saved = serialize(state.map);
+		state.previousId = data.map.id;
+		state.selected = selectedIndex >= 0 ? state.map.points[selectedIndex] : null;
+		const warnings = $("warnings");
+		warnings.innerHTML = "";
+		for (const w of data.warnings) warnings.appendChild(el("li", {}, w));
+		await loadMaps(data.map.id);
+		renderAll();
+		scheduleTerrain();
+		toast("Saved data/conquest/" + data.map.id + ".xml" + (data.copiedTo ? "\nand " + data.copiedTo : "") + (data.warnings.length ? "\n(" + data.warnings.length + " warning(s))" : "") + ".");
+	} catch (e) {
+		report(e);
+		updateDirty();
+	}
+});
+
+$("revert").addEventListener("click", () => {
+	if (!state.previousId || !confirm("Throw away the changes since the last save?")) return;
+	selectMap(state.previousId);
+});
+
+$("deleteMap").addEventListener("click", async () => {
+	const m = state.map;
+	if (!m) return;
+	if (state.previousId === "") {
+		if (!confirm("Drop this new map? It was never saved.")) return;
+		state.map = null;
+		state.previousId = null;
+		renderMapSelect("");
+		renderAll();
+		return;
+	}
+	if (!confirm("Delete " + (m.name || m.id) + "? Its file becomes data/conquest/" + state.previousId + ".xml.deleted.")) return;
+	try {
+		const data = await request("delete", { post: 1, id: state.previousId });
+		toast(data.lines.join("\n"));
+		state.map = null;
+		state.previousId = null;
+		await loadMaps("");
+		renderAll();
+	} catch (e) { report(e); }
+});
+
+$("reload").addEventListener("click", async () => {
+	if (!confirmDiscard()) return;
+	try {
+		const data = await request("reload", { post: 1 });
+		toast(data.lines.join("\n"));
+		const id = state.previousId;
+		await loadMaps(id);
+		selectMap(state.maps.some((m) => m.id === id) ? id : "");
+		renderMapSelect();
+	} catch (e) { report(e); }
+});
+
+$("showInGame").addEventListener("click", async () => {
+	if (!state.map) return;
+	if (state.previousId === "" || isDirty()) {
+		toast("Save first: the saved map is what is drawn in game.", true);
+		if (state.previousId === "") return;
+	}
+	try {
+		const data = await request("show", { post: 1, id: state.previousId });
+		state.shown = state.previousId;
+		updateShown();
+		toast(data.lines.join("\n"));
+	} catch (e) { report(e); }
+});
+
+$("hideInGame").addEventListener("click", async () => {
+	try {
+		const data = await request("hide", { post: 1 });
+		state.shown = null;
+		updateShown();
+		toast(data.lines.join("\n"));
+	} catch (e) { report(e); }
+});
+
+window.addEventListener("beforeunload", (event) => {
+	if (isDirty() || state.previousId === "") {
+		event.preventDefault();
+		event.returnValue = "";
+	}
+});
+
+// ------------------------------------------------------------------------------------------------
+// Start
+// ------------------------------------------------------------------------------------------------
+
+async function pollGm() {
+	if (document.visibilityState === "visible") {
+		try {
+			await gmNow();
+			draw();
+		} catch (e) {
+			if (e.message === "auth") return;
+		}
+	}
+	setTimeout(pollGm, GM_MS);
+}
+
+(async function start() {
+	if (!token) {
+		fatal("This page opens from the game: use //conquest.");
+		return;
+	}
+	try {
+		await loadMaps("");
+		renderAll();
+		if (state.maps.length) {
+			selectMap(state.maps[0].id);
+			renderMapSelect(state.maps[0].id);
+		}
+		pollGm();
+	} catch (e) { report(e); }
+})();
+</script>
+</body>
+</html>

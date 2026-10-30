@@ -21,15 +21,27 @@
 package org.l2jmobius.gameserver.model.actor.holders.npc;
 
 import org.l2jmobius.gameserver.ai.FakeBrain;
+import org.l2jmobius.gameserver.ai.FakePartyBrainExperimental;
 
 /**
- * The party of a simulation team that runs the experimental AI ({@link FakeBrain#B}, see {@link org.l2jmobius.gameserver.ai.FakePlayerPvpAIExperimental}). Changes to how a party decides (its leader, its calls) are made here first, as overrides of {@link FakePlayerParty}, and move
- * there once simulations show they win more (see docs/fake-player-simulation-issues.md). Nothing is overridden yet: it plays like {@link FakePlayerParty}.
+ * The party of a simulation team that runs the experimental AI ({@link FakeBrain#B}, see {@link org.l2jmobius.gameserver.ai.FakePlayerPvpAIExperimental}). It holds the team's party brain ({@link FakePartyBrainExperimental}), shared by its members: the
+ * party's general decisions (who it fights, following, marching, its calls, who guards whom) are made there, and each member's AI carries them out. Changes to how a party decides are made there first, and move to brain A once simulations show they win
+ * more (see docs/fake-player-simulation-issues.md). Nothing is overridden here: the members, leader and call are kept as in {@link FakePlayerParty}.
  */
 public class FakePlayerPartyExperimental extends FakePlayerParty
 {
+	private final FakePartyBrainExperimental _brain = new FakePartyBrainExperimental(this);
+
 	public FakePlayerPartyExperimental()
 	{
 		super(null);
+	}
+
+	/**
+	 * @return the party brain its members share (brain B's; {@link #getBrain} is brain A's)
+	 */
+	public FakePartyBrainExperimental getExperimentalBrain()
+	{
+		return _brain;
 	}
 }

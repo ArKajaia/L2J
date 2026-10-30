@@ -35,6 +35,7 @@ import org.l2jmobius.gameserver.config.custom.ClassBalanceConfig;
 import org.l2jmobius.gameserver.config.custom.ClassTransferChallengeConfig;
 import org.l2jmobius.gameserver.config.custom.CombatLogConfig;
 import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
+import org.l2jmobius.gameserver.config.custom.ConquestConfig;
 import org.l2jmobius.gameserver.config.custom.CustomBuffConfig;
 import org.l2jmobius.gameserver.config.custom.CraftingGoalsConfig;
 import org.l2jmobius.gameserver.config.custom.CustomMailManagerConfig;
@@ -200,6 +201,7 @@ public class ConfigLoader
 		WarehouseSortingConfig.load();
 		VillageSiegeConfig.load();
 		TeamVsTeamConfig.load();
+		ConquestConfig.load();
 		WaveChallengeConfig.load();
 		WeddingConfig.load();
 		CustomBuffConfig.load();
