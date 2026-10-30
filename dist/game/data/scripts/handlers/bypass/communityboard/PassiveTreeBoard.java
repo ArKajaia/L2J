@@ -99,6 +99,7 @@ public class PassiveTreeBoard implements IParseBoardHandler
 		STAT_LABEL.put("INTERRUPT_RES_PCT", "Cast Interruption Resistance");
 		STAT_LABEL.put("DEBUFF_RES_PCT", "Debuff Resistance");
 		STAT_LABEL.put("MAXHP_PCT", "Maximum HP");
+		STAT_LABEL.put("MAXMP_PCT", "Maximum MP");
 		STAT_LABEL.put("SERVITOR_SHARE_PCT", "Damage Taken Redirected to Servitor");
 		STAT_LABEL.put("SHIELD_RATE_MUL_PCT", "More Shield Blocks");
 		STAT_LABEL.put("FIRE_ATK", "Fire Attack");
@@ -154,6 +155,14 @@ public class PassiveTreeBoard implements IParseBoardHandler
 		KEYSTONE_TEXT.put("KS_RELENTLESS", "+%s%% Attack Speed per normal hit on your target, up to 10 hits; resets on switching target or 3s without a hit");
 		KEYSTONE_TEXT.put("KS_BLOODLETTER", "Physical critical hits deal no extra damage up front; the target bleeds for %s%% of the critical bonus over 6s");
 		KEYSTONE_TEXT.put("KS_SPELL_ECHO", "%s%% chance for a single-target damage spell to hit again 0.5s later for 60%% damage");
+		KEYSTONE_TEXT.put("KS_BLOOD_FOR_BLOOD", "When a physical critical hit lands on you, %s%% chance for +15%% P.Atk and +10%% Attack Speed for 5s (once per 12s)");
+		KEYSTONE_TEXT.put("KS_ARCANE_RETORT", "When a magic critical hit lands on you (%s%% chance), +25%% M.Def, +15%% P.Atk and M.Atk for 5s (once per 15s)");
+		KEYSTONE_TEXT.put("KS_FLEETING_SHADOW", "When you evade an attack or dodge a physical skill, %s%% chance for +80 Critical Rate and +15 Speed for 3s (once per 8s)");
+		KEYSTONE_TEXT.put("KS_COUNTERWEIGHT", "When you block with your shield, %s%% chance for +12%% P.Atk and +10%% Attack Speed for 4s (once per 10s)");
+		KEYSTONE_TEXT.put("KS_UNBROKEN_FAITH", "When an enemy cancels your buffs (%s%% chance): no magic damage for 2s, then +20%% M.Def and +15%% debuff resistance for 8s (once per 30s)");
+		KEYSTONE_TEXT.put("KS_LAST_LIGHT", "When one hit takes %s%%+ of your max HP: no damage of that type (physical or magic) for 1.5s and +25 Speed for 4s (once per 60s)");
+		KEYSTONE_TEXT.put("KS_TENACITY", "When a stun, sleep or root on you ends, you can't be stunned, slept or rooted for 2s");
+		KEYSTONE_TEXT.put("KS_BLOODRUSH", "Each kill gives +10%% Attack Speed and Casting Speed for 5s; another kill starts it again");
 	}
 
 	// Conditional bonuses ("PDEF_PCT@HEAVY") only apply in that situation. Mirrors COND_TEXT in passive-tree.html.

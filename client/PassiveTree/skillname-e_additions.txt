@@ -80,6 +80,17 @@ skill_begin	skill_id=27463	skill_level=8	name=[Binding Rune]	desc=[Holds the tar
 skill_begin	skill_id=27463	skill_level=9	name=[Binding Rune]	desc=[Holds the target in place for 4 seconds. Reuse time is 30 seconds.]	enchant_name=[none]	enchant_desc=[none]	skill_end
 skill_begin	skill_id=27464	skill_level=1	name=[Temporal Flow]	desc=[Decreases the reuse time of magic skills by 25% and increases Casting Spd. by 10% for 15 seconds. Reuse time is 180 seconds.]	enchant_name=[none]	enchant_desc=[none]	skill_end
 skill_begin	skill_id=27465	skill_level=1	name=[Purifying Aegis]	desc=[Removes up to 3 debuffs and increases HP recovered from healing by 20% for 15 seconds. Reuse time is 150 seconds.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27470	skill_level=1	name=[Blood for Blood]	desc=[Blood for Blood keystone: a physical critical hit landed on you. P. Atk. +15% and Atk. Spd. +10%.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27471	skill_level=1	name=[Arcane Retort]	desc=[Arcane Retort keystone: a magic critical hit landed on you. M. Def. +25%, P. Atk. and M. Atk. +15%.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27472	skill_level=1	name=[Fleeting Shadow]	desc=[Fleeting Shadow keystone: you evaded an attack. Critical Rate +80 and Speed +15.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27473	skill_level=1	name=[Counterweight]	desc=[Counterweight keystone: you blocked with your shield. P. Atk. +12% and Atk. Spd. +10%.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27474	skill_level=1	name=[Unbroken Faith]	desc=[Unbroken Faith keystone: an enemy cancelled your buffs. M. Def. +20% and debuff resistance +15%.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27475	skill_level=1	name=[Unbroken Faith Ward]	desc=[Unbroken Faith keystone: you take no magic damage.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27476	skill_level=1	name=[Last Light: Physical Ward]	desc=[Last Light keystone: you take no physical damage.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27477	skill_level=1	name=[Last Light: Magic Ward]	desc=[Last Light keystone: you take no magic damage.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27478	skill_level=1	name=[Last Light]	desc=[Last Light keystone: a single hit took a large share of your HP. Speed +25.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27479	skill_level=1	name=[Tenacity]	desc=[Tenacity keystone: you cannot be stunned, put to sleep or rooted.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27480	skill_level=1	name=[Bloodrush]	desc=[Bloodrush keystone: you made a kill. Atk. Spd. and Casting Spd. +10%.]	enchant_name=[none]	enchant_desc=[none]	skill_end
 skill_begin	skill_id=27000	skill_level=1	name=[Hot Zone: Frenzy]	desc=[Hot zone monster buff: Speed +50%, Max HP +50%, Atk. Spd. and Casting Spd. +30%.]	enchant_name=[none]	enchant_desc=[none]	skill_end
 skill_begin	skill_id=27001	skill_level=1	name=[Hot Zone: Fortune]	desc=[Hunting in an active hot zone: XP and SP +50%, Atk. Spd. +40%, Casting Spd. +20%, drop amount +25%.]	enchant_name=[none]	enchant_desc=[none]	skill_end
 skill_begin	skill_id=27002	skill_level=1	name=[Hot Zone: Kill Streak]	desc=[Hot zone kill streak: XP and SP +3%. Kill again within 15 seconds to raise it.]	enchant_name=[none]	enchant_desc=[none]	skill_end

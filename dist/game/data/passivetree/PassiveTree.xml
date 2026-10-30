@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Passive tree: 1520 nodes. x/y are authoritative layout coords. -->
-<list version="1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
+<!-- Passive tree: 1544 nodes. x/y are authoritative layout coords. -->
+<list version="2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<!-- Arcanist -->
 	<node id="5000" name="Arcanist Origin" sector="Arcanist" type="START" tier="0" cost="0" x="-1650.0" y="-2857.9" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="5001" name="Crossroads" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1425.0" y="-2468.2" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2;MAXHP_PCT:0.5" description="Junction.">
@@ -951,7 +951,19 @@
 		<requires nodeId="47315" />
 	</node>
 	<node id="47315" name="Eye of the Storm" sector="Deadeye" type="NOTABLE" tier="0" cost="1" x="-4905.9" y="-52.5" orbitX="-4815.0" orbitY="0.0" effect="WIND_ATK:30;WIND_RES:15" icon="wind">
+		<requires nodeId="47320" />
 		<requires nodeId="47314" />
+	</node>
+	<node id="47320" name="Hunter's Trail" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-5105.9" y="-54.6" effect="ATK_SPD_PCT:1.5" icon="bow">
+		<requires nodeId="47315" />
+		<requires nodeId="47321" />
+	</node>
+	<node id="47321" name="Hunter's Trail" sector="Deadeye" type="SMALL" tier="0" cost="1" x="-5305.9" y="-56.8" effect="CAST_SPD_PCT:1.5" icon="bow">
+		<requires nodeId="47320" />
+		<requires nodeId="47322" />
+	</node>
+	<node id="47322" name="Bloodrush" sector="Deadeye" type="KEYSTONE" tier="0" cost="1" x="-5505.9" y="-58.9" effect="KS_BLOODRUSH:1;PDEF_PCT:-7.5" icon="ks-bloodrush" description="KEYSTONE: Each kill gives +10% Attack Speed and +10% Casting Speed for 5 seconds; another kill starts it again. -7.5% P.Def.">
+		<requires nodeId="47321" />
 	</node>
 	<!-- Duskwood: an outer region beyond the rim between Shadowblade and Deadeye. -->
 	<node id="42001" name="Shadowed Path" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-2948.6" y="2948.6" effect="EVASION_ADD:0.5">
@@ -1056,6 +1068,7 @@
 		<requires nodeId="42031" />
 	</node>
 	<node id="42031" name="Night Hunter" sector="Duskwood" type="NOTABLE" tier="0" cost="1" x="-4492.6" y="1631.4" orbitX="-4406.5" orbitY="1691.5" effect="PATK_PCT@NIGHT:6;ACCURACY_ADD@BOW:3" icon="bow" description="Moonlit Arrows mastery. Bows, and the night.">
+		<requires nodeId="42090" />
 		<requires nodeId="42030" />
 	</node>
 	<node id="42032" name="Leather Craft" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3987.4" y="1722.8" orbitX="-3882.6" orbitY="1728.6" effect="EVASION_ADD@LIGHT:0.6" icon="wind">
@@ -1149,6 +1162,17 @@
 	</node>
 	<node id="42082" name="Bloodletter" sector="Duskwood" type="KEYSTONE" tier="0" cost="1" x="-5604.6" y="1038.7" effect="KS_BLOODLETTER:150" icon="ks-bloodletter" description="KEYSTONE: Your physical critical hits (normal attacks and physical skills, not blows) deal no extra damage up front. Instead the target bleeds for 150% of the critical bonus over 6 seconds; more critical hits add to the bleed.">
 		<requires nodeId="42081" />
+	</node>
+	<node id="42090" name="Shadowstep Trail" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4680.6" y="1699.7" effect="EVASION_ADD:1" icon="mask">
+		<requires nodeId="42031" />
+		<requires nodeId="42091" />
+	</node>
+	<node id="42091" name="Shadowstep Trail" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-4868.6" y="1768.0" effect="CRIT_RATE_ADD:10" icon="mask">
+		<requires nodeId="42090" />
+		<requires nodeId="42092" />
+	</node>
+	<node id="42092" name="Fleeting Shadow" sector="Duskwood" type="KEYSTONE" tier="0" cost="1" x="-5056.6" y="1836.2" effect="KS_FLEETING_SHADOW:25;PDEF_PCT:-7.5" icon="ks-fleeting-shadow" description="KEYSTONE: When you evade an attack or dodge a physical skill, 25% chance for +80 Critical Rate and +15 Speed for 3 seconds (at most once every 8 seconds). -7.5% P.Def.">
+		<requires nodeId="42091" />
 	</node>
 	<!-- Hallowmere: an outer region beyond the rim between Hierophant and Vanguard. -->
 	<node id="45001" name="Pilgrim's Road" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="4027.9" y="-1079.3" effect="HP_REGEN_PCT:2">
@@ -1253,6 +1277,7 @@
 		<requires nodeId="45031" />
 	</node>
 	<node id="45031" name="Sanctum" sector="Hallowmere" type="NOTABLE" tier="0" cost="1" x="3659.2" y="-3075.0" orbitX="3668.1" orbitY="-2970.4" effect="MDEF_PCT:6;DEBUFF_RES_PCT:5" icon="sun" description="Holy Ward mastery. Spells and curses slide off.">
+		<requires nodeId="45090" />
 		<requires nodeId="45030" />
 	</node>
 	<node id="45032" name="Pilgrim's Mace" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3485.7" y="-2591.8" orbitX="3438.3" orbitY="-2498.1" effect="PATK_PCT@BLUNT:2" icon="hammer">
@@ -1346,6 +1371,17 @@
 	</node>
 	<node id="45082" name="Guardian's Oath" sector="Hallowmere" type="KEYSTONE" tier="0" cost="1" x="3701.9" y="-4334.3" effect="KS_GUARDIAN:25;PDEF_PCT:20;MDEF_PCT:20;PATK_PCT:-20;MATK_PCT:-20" icon="ks-guardians-oath" description="KEYSTONE: You take 25% of the damage dealt to party members within 900 range in their place (never enough to kill you). +20% P.Def and M.Def, but -20% P.Atk and M.Atk.">
 		<requires nodeId="45081" />
+	</node>
+	<node id="45090" name="Path of Faith" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3812.3" y="-3203.7" effect="DEBUFF_RES_PCT:1.5" icon="ankh">
+		<requires nodeId="45031" />
+		<requires nodeId="45091" />
+	</node>
+	<node id="45091" name="Path of Faith" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3965.4" y="-3332.3" effect="MDEF_PCT:1.5" icon="ankh">
+		<requires nodeId="45090" />
+		<requires nodeId="45092" />
+	</node>
+	<node id="45092" name="Unbroken Faith" sector="Hallowmere" type="KEYSTONE" tier="0" cost="1" x="4118.5" y="-3461.0" effect="KS_UNBROKEN_FAITH:100;MAXMP_PCT:-30" icon="ks-unbroken-faith" description="KEYSTONE: When an enemy cancels your buffs, you take no magic damage for 2 seconds, then gain +20% M.Def and +15% debuff resistance for 8 seconds (at most once every 30 seconds). -30% maximum MP.">
+		<requires nodeId="45091" />
 	</node>
 	<!-- Hierophant -->
 	<node id="6000" name="Hierophant Origin" sector="Hierophant" type="START" tier="0" cost="0" x="1650.0" y="-2857.9" effect="MAXHP:8" description="Starting point for this archetype." />
@@ -1963,6 +1999,7 @@
 		<requires nodeId="40043" />
 	</node>
 	<node id="40043" name="Unbowed" sector="Ironmarch" type="NOTABLE" tier="0" cost="1" x="4981.0" y="435.8" effect="MAXHP:150;HP_REGEN_PCT:8" icon="heart-plus" description="Stalwart mastery. Raw health, no strings attached.">
+		<requires nodeId="40090" />
 		<requires nodeId="40042" />
 	</node>
 	<node id="40044" name="Siege Training" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3814.9" y="3201.1" orbitX="0.0" orbitY="0.0" effect="PVE_PDMG_PCT:1" icon="hammer">
@@ -2058,6 +2095,17 @@
 	</node>
 	<node id="44102" name="Spell Echo" sector="Ironmarch" type="KEYSTONE" tier="0" cost="1" x="5376.1" y="1593.8" effect="KS_SPELL_ECHO:25;CAST_SPD_PCT:-15" icon="ks-spell-echo" description="KEYSTONE: Your single-target damage spells have a 25% chance to hit their target again 0.5 seconds later, free, for 60% of the damage. -15% Casting Speed.">
 		<requires nodeId="44101" />
+	</node>
+	<node id="40090" name="Counterweight Road" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="5180.2" y="453.2" effect="SHIELD_RATE_PCT:1.5" icon="tower-shield">
+		<requires nodeId="40043" />
+		<requires nodeId="40091" />
+	</node>
+	<node id="40091" name="Counterweight Road" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="5379.5" y="470.6" effect="PATK_PCT:1.5" icon="tower-shield">
+		<requires nodeId="40090" />
+		<requires nodeId="40092" />
+	</node>
+	<node id="40092" name="Counterweight" sector="Ironmarch" type="KEYSTONE" tier="0" cost="1" x="5578.7" y="488.1" effect="KS_COUNTERWEIGHT:30;SHIELD_DEF_PCT:-15" icon="ks-counterweight" description="KEYSTONE: When you block with your shield, 30% chance for +12% P.Atk and +10% Attack Speed for 4 seconds (at most once every 10 seconds). -15% shield defence.">
+		<requires nodeId="40091" />
 	</node>
 	<!-- Juggernaut -->
 	<node id="2000" name="Juggernaut Origin" sector="Juggernaut" type="START" tier="0" cost="0" x="1650.0" y="2857.9" effect="MAXHP:8" description="Starting point for this archetype." />
@@ -2599,6 +2647,7 @@
 		<requires nodeId="44023" />
 	</node>
 	<node id="44023" name="Arcane Flesh" sector="Ley Expanse" type="NOTABLE" tier="0" cost="1" x="1235.5" y="-4401.8" orbitX="1232.1" orbitY="-4296.8" effect="MAXHP_PCT:4;MDEF_PCT:3" icon="heart" description="Leyblood mastery. Mana-hardened flesh.">
+		<requires nodeId="44110" />
 		<requires nodeId="44022" />
 	</node>
 	<node id="44024" name="Robe Weaving" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="674.1" y="-4399.7" orbitX="631.8" orbitY="-4495.8" effect="CAST_SPD_PCT@ROBE:2" icon="robe">
@@ -2770,6 +2819,17 @@
 	</node>
 	<node id="44092" name="Battlemage" sector="Ley Expanse" type="KEYSTONE" tier="0" cost="1" x="2366.7" y="-5075.3" effect="KS_BATTLEMAGE:40;MANA_LEECH_PCT:5;CAST_SPD_PCT:-25;MOVE_SPEED_ADD@HEAVY:-20" icon="ks-battlemage" description="KEYSTONE: 40% of your M.Atk is added to your P.Atk, and 5% of your melee damage restores MP. -25% Casting Speed, and -20 Speed in heavy armour.">
 		<requires nodeId="44091" />
+	</node>
+	<node id="44110" name="Retort Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1289.5" y="-4594.3" effect="MDEF_PCT:1.5" icon="rune">
+		<requires nodeId="44023" />
+		<requires nodeId="44111" />
+	</node>
+	<node id="44111" name="Retort Path" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="1343.5" y="-4786.9" effect="MATK_PCT:1.8" icon="rune">
+		<requires nodeId="44110" />
+		<requires nodeId="44112" />
+	</node>
+	<node id="44112" name="Arcane Retort" sector="Ley Expanse" type="KEYSTONE" tier="0" cost="1" x="1397.6" y="-4979.5" effect="KS_ARCANE_RETORT:100;MDEF_PCT:-12" icon="ks-arcane-retort" description="KEYSTONE: When a magic critical hit lands on you, gain +25% M.Def and +15% P.Atk and M.Atk for 5 seconds (at most once every 15 seconds). -12% M.Def.">
+		<requires nodeId="44111" />
 	</node>
 	<!-- Mystic: hybrid of Arcanist and Hierophant filling the gap between their arms. -->
 	<node id="30401" name="Confluence" sector="Mystic" type="SMALL" tier="0" cost="1" x="0.0" y="-2400.0" effect="MATK_PCT:0.4;MAXMP:8">
@@ -3583,6 +3643,7 @@
 		<requires nodeId="41023" />
 	</node>
 	<node id="41023" name="Crimson Heart" sector="Red Wastes" type="NOTABLE" tier="0" cost="1" x="1416.4" y="4477.4" orbitX="1404.1" orbitY="4373.1" effect="MAXHP_PCT:4;HP_REGEN_PCT:10" icon="heart" description="Bloodboil mastery. More blood to spill.">
+		<requires nodeId="41090" />
 		<requires nodeId="41022" />
 	</node>
 	<node id="41024" name="Twin Fangs" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="929.5" y="4215.6" orbitX="876.8" orbitY="4124.8" effect="ATK_SPD_PCT@DUAL:2" icon="twin-blades">
@@ -3710,6 +3771,17 @@
 	</node>
 	<node id="41082" name="Relentless Assault" sector="Red Wastes" type="KEYSTONE" tier="0" cost="1" x="296.0" y="5748.8" effect="KS_RELENTLESS:3;ATK_SPD_PCT:-10" icon="ks-relentless-assault" description="KEYSTONE: Each normal hit you land on your target gives +3% Attack Speed, up to +30% after 10 hits. Switching target or 3 seconds without a hit starts over. -10% Attack Speed.">
 		<requires nodeId="41081" />
+	</node>
+	<node id="41090" name="Scar Tissue" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="1476.7" y="4668.1" effect="MAXHP_PCT:1.5" icon="blood">
+		<requires nodeId="41023" />
+		<requires nodeId="41091" />
+	</node>
+	<node id="41091" name="Scar Tissue" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="1537.1" y="4858.8" effect="PATK_PCT:1.5" icon="blood">
+		<requires nodeId="41090" />
+		<requires nodeId="41092" />
+	</node>
+	<node id="41092" name="Blood for Blood" sector="Red Wastes" type="KEYSTONE" tier="0" cost="1" x="1597.4" y="5049.5" effect="KS_BLOOD_FOR_BLOOD:50;MAXHP_PCT:-7.5" icon="ks-blood-for-blood" description="KEYSTONE: When a physical critical hit lands on you, 50% chance for +15% P.Atk and +10% Attack Speed for 5 seconds (at most once every 12 seconds). -7.5% maximum HP.">
+		<requires nodeId="41091" />
 	</node>
 	<!-- Rim: the outer ring road: three spurs from every Origin (to its gate and to the rim road either side of it), and an arc road between the gates. -->
 	<node id="39000" name="Rim Gate" sector="Vanguard" type="SMALL" tier="0" cost="1" x="4000.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:25;MAXHP_PCT:0.5" description="Where the Outer Rim meets the road from the Origin.">
@@ -4694,7 +4766,19 @@
 		<requires nodeId="47215" />
 	</node>
 	<node id="47215" name="Heart of Darkness" sector="Shadowblade" type="NOTABLE" tier="0" cost="1" x="-2498.4" y="4222.4" orbitX="-2407.5" orbitY="4169.9" effect="DARK_ATK:30;DARK_RES:15" icon="moon">
+		<requires nodeId="47220" />
 		<requires nodeId="47214" />
+	</node>
+	<node id="47220" name="Unyielding Path" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-2600.3" y="4394.5" effect="DEBUFF_RES_PCT:1.5" icon="moon">
+		<requires nodeId="47215" />
+		<requires nodeId="47221" />
+	</node>
+	<node id="47221" name="Unyielding Path" sector="Shadowblade" type="SMALL" tier="0" cost="1" x="-2702.1" y="4566.7" effect="MAXHP_PCT:1.5" icon="moon">
+		<requires nodeId="47220" />
+		<requires nodeId="47222" />
+	</node>
+	<node id="47222" name="Tenacity" sector="Shadowblade" type="KEYSTONE" tier="0" cost="1" x="-2804.0" y="4738.8" effect="KS_TENACITY:1;MAXHP_PCT:-7.5" icon="ks-tenacity" description="KEYSTONE: When a stun, sleep or root on you ends, you can't be stunned, slept or rooted for 2 seconds. -7.5% maximum HP.">
+		<requires nodeId="47221" />
 	</node>
 	<!-- Spellbow: hybrid of Deadeye and Arcanist filling the gap between their arms. -->
 	<node id="30301" name="Confluence" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-2078.5" y="-1200.0" effect="PATK_PCT:0.3;MATK_PCT:0.4">
@@ -5279,6 +5363,7 @@
 		<requires nodeId="43023" />
 	</node>
 	<node id="43023" name="Astral Body" sector="Starfall" type="NOTABLE" tier="0" cost="1" x="-3169.3" y="-3465.4" orbitX="-3085.2" orbitY="-3402.5" effect="MAXHP_PCT:4;MAXMP:80" icon="constellation" description="Starblood mastery. Body and mind both grow.">
+		<requires nodeId="43100" />
 		<requires nodeId="43022" />
 	</node>
 	<node id="43024" name="Perfect Form" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3186.1" y="-2912.8" orbitX="-3133.8" orbitY="-2821.7" effect="PATK_PCT@FULLHP:3" icon="sun">
@@ -5418,6 +5503,17 @@
 	</node>
 	<node id="43092" name="Chaos Weave" sector="Starfall" type="KEYSTONE" tier="0" cost="1" x="-4237.3" y="-3609.4" effect="KS_CHAOS_WEAVE:20" icon="ks-chaos-weave" description="KEYSTONE: Each damage spell has a 20% chance to Surge for 2.5x damage and a 10% chance to Fizzle and deal none. You can no longer land magic critical hits.">
 		<requires nodeId="43091" />
+	</node>
+	<node id="43100" name="Dying Star" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3304.3" y="-3612.9" effect="MAXHP_PCT:1.5" icon="comet">
+		<requires nodeId="43023" />
+		<requires nodeId="43101" />
+	</node>
+	<node id="43101" name="Dying Star" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3439.3" y="-3760.5" effect="MOVE_SPEED_ADD:1.5" icon="comet">
+		<requires nodeId="43100" />
+		<requires nodeId="43102" />
+	</node>
+	<node id="43102" name="Last Light" sector="Starfall" type="KEYSTONE" tier="0" cost="1" x="-3574.3" y="-3908.1" effect="KS_LAST_LIGHT:30;MAXHP_PCT:-7.5" icon="ks-last-light" description="KEYSTONE: When a single hit takes 30% or more of your maximum HP, you take no damage of that type (physical or magic) for 1.5 seconds and gain +25 Speed for 4 seconds (at most once every 60 seconds). -7.5% maximum HP.">
+		<requires nodeId="43101" />
 	</node>
 	<!-- Templar: hybrid of Hierophant and Vanguard filling the gap between their arms. -->
 	<node id="30501" name="Confluence" sector="Templar" type="SMALL" tier="0" cost="1" x="2078.5" y="-1200.0" effect="MDEF_PCT:0.3;MAXHP:8">

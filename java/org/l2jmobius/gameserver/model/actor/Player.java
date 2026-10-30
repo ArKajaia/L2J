@@ -11701,6 +11701,13 @@ public class Player extends Playable
 	@Override
 	public void reduceCurrentHp(double value, Creature attacker, boolean awake, boolean isDOT, Skill skill)
 	{
+		// Passive tree Unbroken Faith and Last Light: no damage of the type warded against.
+		if (PassiveMechanics.isWarded(this, attacker, skill))
+		{
+			return;
+		}
+		
+		final double hpBefore = getCurrentHp();
 		if (skill != null)
 		{
 			getStatus().reduceHp(value, attacker, awake, isDOT, skill.isToggle(), skill.getDmgDirectlyToHP(), skill);
@@ -11709,6 +11716,7 @@ public class Player extends Playable
 		{
 			getStatus().reduceHp(value, attacker, awake, isDOT, false, false, null);
 		}
+		PassiveMechanics.onHpLost(this, attacker, skill, hpBefore - getCurrentHp(), isDOT);
 		
 		// notify the tamed beast of attacks
 		if (_tamedBeast != null)

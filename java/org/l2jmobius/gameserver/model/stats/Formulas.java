@@ -1947,6 +1947,7 @@ public class Formulas
 				target.asPlayer().sendPacket(sm);
 			}
 			
+			PassiveMechanics.onEvaded(target); // Passive tree Fleeting Shadow.
 			return true;
 		}
 		
@@ -2192,6 +2193,12 @@ public class Formulas
 		}
 		
 		CombatLogManager.onCancelled(creature, target, skill, canceled);
+		
+		// Passive tree Unbroken Faith. Its buffs can't be cancelled, so they never end up in the list.
+		if (slot.equals("buff") && !canceled.isEmpty())
+		{
+			PassiveMechanics.onBuffsCancelled(target, creature);
+		}
 		return canceled;
 	}
 	

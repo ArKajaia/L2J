@@ -188,15 +188,15 @@ public class FakePlayerPvpConfig
 	{
 		{
 			"FIGHTER",
-			"Unending Fury;Relentless Assault;Whirling Steel;Berserk Pact;Bloodletter;Glass Cannon"
+			"Unending Fury;Relentless Assault;Whirling Steel;Berserk Pact;Bloodletter;Glass Cannon;Blood for Blood"
 		},
 		{
 			"TANK",
-			"Unwavering Stance;Deflection@SHIELD;Arcane Plating;Riposte@SHIELD;Living Fortress;Purity of Flesh"
+			"Unwavering Stance;Deflection@SHIELD;Arcane Plating;Riposte@SHIELD;Living Fortress;Purity of Flesh;Counterweight@SHIELD"
 		},
 		{
 			"DAGGER",
-			"Unwavering Stance;Child of Night"
+			"Unwavering Stance;Child of Night;Fleeting Shadow;Tenacity"
 		},
 		{
 			"ARCHER",
