@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Passive tree: 1544 nodes. x/y are authoritative layout coords. -->
-<list version="2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
+<!-- Passive tree: 1550 nodes. x/y are authoritative layout coords. -->
+<list version="3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../xsd/passivetree.xsd">
 	<!-- Arcanist -->
 	<node id="5000" name="Arcanist Origin" sector="Arcanist" type="START" tier="0" cost="0" x="-1650.0" y="-2857.9" effect="MAXHP:8" description="Starting point for this archetype." />
 	<node id="5001" name="Crossroads" sector="Arcanist" type="SMALL" tier="0" cost="1" x="-1425.0" y="-2468.2" orbitX="0.0" orbitY="0.0" effect="MATK_PCT:0.2;MAXHP_PCT:0.5" description="Junction.">
@@ -3065,6 +3065,7 @@
 		<requires nodeId="30477" />
 	</node>
 	<node id="30477" name="Robed Grace" sector="Mystic" type="SMALL" tier="0" cost="1" x="209.2" y="-3774.6" orbitX="200.0" orbitY="-3670.0" effect="MDEF_PCT@ROBE:1.5" icon="robe">
+		<requires nodeId="38004" />
 		<requires nodeId="30476" />
 		<requires nodeId="30478" />
 	</node>
@@ -3089,6 +3090,10 @@
 	</node>
 	<node id="30468" name="Lifeweave" sector="Mystic" type="NOTABLE" tier="0" cost="1" x="-450.8" y="-2026.3" orbitX="-364.5" orbitY="-1966.5" effect="MAXHP_PCT:4;CAST_SPD_PCT@ROBE:3" icon="heart-plus" description="Cloth of Life mastery. The casting speed needs a robe.">
 		<requires nodeId="30467" />
+	</node>
+	<node id="38004" name="Ley Expanse Crossing" sector="Mystic" type="SMALL" tier="0" cost="1" x="278.9" y="-3879.7" effect="MAXHP_PCT:-7" icon="boot" description="Bridge from the Mystic edge to the Outer Rim by Ley Expanse: up to 9 points shorter, at the price of half of them.">
+		<requires nodeId="30477" />
+		<requires nodeId="39416" />
 	</node>
 	<!-- Nexus -->
 	<node id="9001" name="Astral Filament" sector="Nexus" type="SMALL" tier="0" cost="1" x="520.0" y="0.0" orbitX="0.0" orbitY="0.0" effect="MAXHP:8">
@@ -3530,6 +3535,7 @@
 		<requires nodeId="30173" />
 	</node>
 	<node id="30173" name="Reaver's Blood" sector="Reaver" type="SMALL" tier="0" cost="1" x="-192.7" y="3754.7" orbitX="-200.0" orbitY="3650.0" effect="MAXHP_PCT:1.2" icon="heart">
+		<requires nodeId="38001" />
 		<requires nodeId="30172" />
 		<requires nodeId="30174" />
 	</node>
@@ -3569,6 +3575,10 @@
 	</node>
 	<node id="30168" name="Gutting Strike" sector="Reaver" type="NOTABLE" tier="0" cost="1" x="-88.3" y="708.2" orbitX="0.0" orbitY="765.0" effect="CRIT_DMG_PCT@DAGGER:6;MAXHP_PCT:2" icon="dagger" description="Killer's Pulse mastery. Daggers only.">
 		<requires nodeId="30167" />
+	</node>
+	<node id="38001" name="Red Wastes Crossing" sector="Reaver" type="SMALL" tier="0" cost="1" x="-270.7" y="3869.8" effect="MAXHP_PCT:-7" icon="boot" description="Bridge from the Reaver edge to the Outer Rim by Red Wastes: up to 9 points shorter, at the price of half of them.">
+		<requires nodeId="30173" />
+		<requires nodeId="39116" />
 	</node>
 	<!-- Red Wastes: an outer region beyond the rim between Juggernaut and Shadowblade. -->
 	<node id="41001" name="Ashen Trail" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="1426.2" y="3918.5" effect="PATK_PCT:0.6">
@@ -4061,6 +4071,7 @@
 		<requires nodeId="39014" />
 	</node>
 	<node id="39014" name="Outer Rim" sector="Ironmarch" type="SMALL" tier="0" cost="1" x="3625.2" y="1690.5" orbitX="0.0" orbitY="0.0" effect="CON:1">
+		<requires nodeId="38000" />
 		<requires nodeId="39013" />
 		<requires nodeId="39015" />
 	</node>
@@ -4118,6 +4129,7 @@
 		<requires nodeId="39116" />
 	</node>
 	<node id="39116" name="Outer Rim" sector="Red Wastes" type="SMALL" tier="0" cost="1" x="-348.6" y="3984.8" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="38001" />
 		<requires nodeId="39115" />
 		<requires nodeId="39117" />
 	</node>
@@ -4166,6 +4178,7 @@
 		<requires nodeId="39216" />
 	</node>
 	<node id="39216" name="Outer Rim" sector="Duskwood" type="SMALL" tier="0" cost="1" x="-3625.2" y="1690.5" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="38002" />
 		<requires nodeId="39215" />
 		<requires nodeId="39217" />
 	</node>
@@ -4206,6 +4219,7 @@
 		<requires nodeId="43008" />
 	</node>
 	<node id="39314" name="Outer Rim" sector="Starfall" type="SMALL" tier="0" cost="1" x="-3625.2" y="-1690.5" orbitX="0.0" orbitY="0.0" effect="WIT:1">
+		<requires nodeId="38003" />
 		<requires nodeId="39313" />
 		<requires nodeId="39315" />
 	</node>
@@ -4263,6 +4277,7 @@
 		<requires nodeId="44002" />
 	</node>
 	<node id="39416" name="Outer Rim" sector="Ley Expanse" type="SMALL" tier="0" cost="1" x="348.6" y="-3984.8" orbitX="0.0" orbitY="0.0" effect="MAXHP_PCT:0.6">
+		<requires nodeId="38004" />
 		<requires nodeId="39415" />
 		<requires nodeId="39417" />
 	</node>
@@ -4303,6 +4318,7 @@
 		<requires nodeId="39514" />
 	</node>
 	<node id="39514" name="Outer Rim" sector="Hallowmere" type="SMALL" tier="0" cost="1" x="3276.6" y="-2294.3" orbitX="0.0" orbitY="0.0" effect="MEN:1">
+		<requires nodeId="38005" />
 		<requires nodeId="39513" />
 		<requires nodeId="39515" />
 	</node>
@@ -5010,6 +5026,7 @@
 		<requires nodeId="30377" />
 	</node>
 	<node id="30377" name="Runed Bowstring" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3373.5" y="-1706.2" orbitX="-3278.3" orbitY="-1661.8" effect="MATK_PCT@BOW:1.8" icon="bow">
+		<requires nodeId="38003" />
 		<requires nodeId="30376" />
 		<requires nodeId="30378" />
 	</node>
@@ -5034,6 +5051,10 @@
 	</node>
 	<node id="30368" name="Enchanted Arrows" sector="Spellbow" type="NOTABLE" tier="0" cost="1" x="-569.2" y="-334.4" orbitX="-662.5" orbitY="-382.5" effect="PATK_PCT@BOW:5;MATK_PCT:3.6" icon="arrow" description="Arcane Quiver mastery. Bows only.">
 		<requires nodeId="30367" />
+	</node>
+	<node id="38003" name="Starfall Crossing" sector="Spellbow" type="SMALL" tier="0" cost="1" x="-3499.4" y="-1698.3" effect="MAXHP_PCT:-7" icon="boot" description="Bridge from the Spellbow edge to the Outer Rim by Starfall: up to 9 points shorter, at the price of half of them.">
+		<requires nodeId="30377" />
+		<requires nodeId="39314" />
 	</node>
 	<!-- Stalker: hybrid of Shadowblade and Deadeye filling the gap between their arms. -->
 	<node id="30201" name="Confluence" sector="Stalker" type="SMALL" tier="0" cost="1" x="-2078.5" y="1200.0" effect="EVASION_ADD:0.3;ACCURACY_ADD:0.3">
@@ -5265,6 +5286,7 @@
 		<requires nodeId="30277" />
 	</node>
 	<node id="30277" name="Light Step" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3373.5" y="1706.2" orbitX="-3278.3" orbitY="1661.8" effect="EVASION_ADD@LIGHT:0.5" icon="mask">
+		<requires nodeId="38002" />
 		<requires nodeId="30276" />
 		<requires nodeId="30278" />
 	</node>
@@ -5289,6 +5311,10 @@
 	</node>
 	<node id="30268" name="Survivalist" sector="Stalker" type="NOTABLE" tier="0" cost="1" x="-1615.8" y="1343.7" orbitX="-1520.8" orbitY="1298.9" effect="MAXHP_PCT:4;EVASION_ADD@LIGHT:2" icon="heart-plus" description="Ranger Hide mastery. The evasion needs light armour.">
 		<requires nodeId="30267" />
+	</node>
+	<node id="38002" name="Duskwood Crossing" sector="Stalker" type="SMALL" tier="0" cost="1" x="-3499.4" y="1698.3" effect="MAXHP_PCT:-5" icon="boot" description="Bridge from the Stalker edge to the Outer Rim by Duskwood: up to 7 points shorter, at the price of half of them.">
+		<requires nodeId="30277" />
+		<requires nodeId="39216" />
 	</node>
 	<!-- Starfall: an outer region beyond the rim between Deadeye and Arcanist. -->
 	<node id="43001" name="Starlit Path" sector="Starfall" type="SMALL" tier="0" cost="1" x="-2680.4" y="-3194.4" effect="CRIT_DMG_PCT:1">
@@ -5745,6 +5771,7 @@
 		<requires nodeId="30577" />
 	</node>
 	<node id="30577" name="Shield Prayer" sector="Templar" type="SMALL" tier="0" cost="1" x="3164.3" y="-2068.4" orbitX="3078.3" orbitY="-2008.2" effect="MDEF_PCT@SHIELD:1.5" icon="sun">
+		<requires nodeId="38005" />
 		<requires nodeId="30576" />
 		<requires nodeId="30578" />
 	</node>
@@ -5769,6 +5796,10 @@
 	</node>
 	<node id="30568" name="Templar's Oath" sector="Templar" type="NOTABLE" tier="0" cost="1" x="569.2" y="-334.4" orbitX="662.5" orbitY="-382.5" effect="MAXHP_PCT:4;MDEF_PCT@HEAVY:5" icon="helmet" description="Crusader Heart mastery. The M.Def needs heavy armour.">
 		<requires nodeId="30567" />
+	</node>
+	<node id="38005" name="Hallowmere Crossing" sector="Templar" type="SMALL" tier="0" cost="1" x="3220.5" y="-2181.4" effect="MAXHP_PCT:-5" icon="boot" description="Bridge from the Templar edge to the Outer Rim by Hallowmere: up to 7 points shorter, at the price of half of them.">
+		<requires nodeId="30577" />
+		<requires nodeId="39514" />
 	</node>
 	<!-- Vanguard -->
 	<node id="1000" name="Vanguard Origin" sector="Vanguard" type="START" tier="0" cost="0" x="3300.0" y="0.0" effect="MAXHP:8" description="Starting point for this archetype." />
@@ -6459,6 +6490,7 @@
 		<requires nodeId="30073" />
 	</node>
 	<node id="30073" name="Warblood" sector="Warlord" type="SMALL" tier="0" cost="1" x="3348.1" y="1710.5" orbitX="3261.0" orbitY="1651.8" effect="MAXHP_PCT:1.2" icon="heart">
+		<requires nodeId="38000" />
 		<requires nodeId="30072" />
 		<requires nodeId="30074" />
 	</node>
@@ -6498,5 +6530,9 @@
 	</node>
 	<node id="30068" name="Unbreakable" sector="Warlord" type="NOTABLE" tier="0" cost="1" x="657.5" y="277.6" orbitX="662.5" orbitY="382.5" effect="MAXHP_PCT:4;PDEF_PCT@SHIELD:4" icon="castle" description="Bulwark Heart mastery. The defence needs a shield.">
 		<requires nodeId="30067" />
+	</node>
+	<node id="38000" name="Ironmarch Crossing" sector="Warlord" type="SMALL" tier="0" cost="1" x="3486.7" y="1700.5" effect="MAXHP_PCT:-7" icon="boot" description="Bridge from the Warlord edge to the Outer Rim by Ironmarch: up to 9 points shorter, at the price of half of them.">
+		<requires nodeId="30073" />
+		<requires nodeId="39014" />
 	</node>
 </list>
