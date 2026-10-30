@@ -188,23 +188,23 @@ public class FakePlayerPvpConfig
 	{
 		{
 			"FIGHTER",
-			"Unending Fury;Relentless Assault;Whirling Steel;Berserk Pact;Bloodletter;Glass Cannon;Blood for Blood"
+			"Unending Fury*1.4;Relentless Assault*1.5;Whirling Steel;Berserk Pact;Bloodletter*0.6;Glass Cannon*0.3;Blood for Blood*1.6"
 		},
 		{
 			"TANK",
-			"Unwavering Stance;Deflection@SHIELD;Arcane Plating;Riposte@SHIELD;Living Fortress;Purity of Flesh;Counterweight@SHIELD"
+			"Unwavering Stance;Deflection@SHIELD;Arcane Plating*0.7;Riposte@SHIELD;Living Fortress;Purity of Flesh;Counterweight@SHIELD"
 		},
 		{
 			"DAGGER",
-			"Unwavering Stance;Child of Night;Fleeting Shadow;Tenacity"
+			"Unwavering Stance*0.6;Child of Night*3;Fleeting Shadow;Tenacity"
 		},
 		{
 			"ARCHER",
-			"Unwavering Stance;Far Shot@BOW;Relentless Assault;Bloodrush;Tenacity;Last Light"
+			"Unwavering Stance;Far Shot@BOW*1.6;Relentless Assault;Bloodrush;Tenacity;Last Light*0.4"
 		},
 		{
 			"MAGE",
-			"Mind Over Matter;Martyr's Vow;Spell Echo;Vampiric Sorcery;Ley Anchor;Unshaken Mind;Arcane Retort;Unbroken Faith;Last Light"
+			"Mind Over Matter*2.2;Martyr's Vow*0.7;Spell Echo;Vampiric Sorcery*0.8;Ley Anchor*0.5;Unshaken Mind*0.7;Arcane Retort*0.6;Unbroken Faith;Last Light"
 		}
 	};
 	
