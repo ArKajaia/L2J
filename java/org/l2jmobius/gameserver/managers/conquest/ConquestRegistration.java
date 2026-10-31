@@ -37,9 +37,11 @@ import org.l2jmobius.commons.time.SchedulingPattern;
 import org.l2jmobius.commons.time.TimeUtil;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.custom.ConquestConfig;
+import org.l2jmobius.gameserver.config.custom.EventRotationConfig;
 import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
 import org.l2jmobius.gameserver.data.xml.ConquestMapData;
 import org.l2jmobius.gameserver.managers.AntiFeedManager;
+import org.l2jmobius.gameserver.managers.EventRotationManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
@@ -81,7 +83,8 @@ public class ConquestRegistration
 
 	protected ConquestRegistration()
 	{
-		if (ConquestConfig.REGISTRATION_ENABLED)
+		// With the rotation on, it opens the registrations in turn with Team vs Team and Deathmatch (see EventRotationManager).
+		if (ConquestConfig.REGISTRATION_ENABLED && !EventRotationConfig.ENABLED)
 		{
 			scheduleNext();
 		}
@@ -137,6 +140,11 @@ public class ConquestRegistration
 		if (_open)
 		{
 			return "registration is already open";
+		}
+		final String busy = EventRotationManager.getBusyEvent();
+		if (busy != null)
+		{
+			return busy + " is going on (the events never overlap)";
 		}
 		if (ConquestConfig.BRACKETS.isEmpty())
 		{

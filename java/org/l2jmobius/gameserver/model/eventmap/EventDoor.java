@@ -18,13 +18,13 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.l2jmobius.gameserver.model.tvt;
+package org.l2jmobius.gameserver.model.eventmap;
 
 /**
- * A door of a Team vs Team map (data/Doors.xml) and how a match sets it in its instance. Doors the map doesn't name are not in the match's instance.
+ * A door of an event map (data/Doors.xml) and how a match of any of the events sets it in its copy of the place (its instance). Doors the map doesn't name are not in a match's instance.
  * @param id the door id
  * @param open {@code true} if the match opens it, {@code false} if it shuts it
  */
-public record TvTDoor(int id, boolean open)
+public record EventDoor(int id, boolean open)
 {
 }

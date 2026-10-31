@@ -29,11 +29,11 @@ import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.actor.enums.creature.FenceState;
 import org.l2jmobius.gameserver.model.actor.instance.Fence;
 import org.l2jmobius.gameserver.model.interfaces.ILocational;
-import org.l2jmobius.gameserver.model.tvt.TvTBarrier;
-import org.l2jmobius.gameserver.model.tvt.TvTMap;
+import org.l2jmobius.gameserver.model.eventmap.EventBarrier;
+import org.l2jmobius.gameserver.model.eventmap.EventMap;
 
 /**
- * The fence round the field of a Team vs Team match (the {@link TvTMap#barrier} of its map): an ellipse round every spawn point, that nobody gets through, players or fake players. On the Ruins of Despair it goes round the ring wall, which has gaps all round,
+ * The fence round the field of a Team vs Team match (the {@link EventMap#barrier} of its map): an ellipse round every spawn point, that nobody gets through, players or fake players. On the Ruins of Despair it goes round the ring wall, which has gaps all round,
  * so the fence closes the whole field rather than its gates.<br>
  * A fence is a rectangle drawn by the client and kept in the world regions round its middle, and it stops only who walks at most 100 above or below it. So the fence is many short walls: thin rectangles going round the ellipse in steps (one along x, one along y),
  * each at the height of the ground under it. Where the ground climbs fast along a wall, it is cut shorter, and on a slope steeper than that (a cliff's edge) it is stacked at several heights.
@@ -60,10 +60,10 @@ public final class TeamVsTeamBarrier
 	 * @param instanceId the instance
 	 * @return its walls, to take down with {@link #remove}; empty if the map has no barrier
 	 */
-	public static List<Fence> build(TvTMap map, int instanceId)
+	public static List<Fence> build(EventMap map, int instanceId)
 	{
 		final List<Fence> walls = new ArrayList<>();
-		final TvTBarrier barrier = map.barrier();
+		final EventBarrier barrier = map.barrier();
 		if (barrier == null)
 		{
 			return walls;
@@ -159,7 +159,7 @@ public final class TeamVsTeamBarrier
 	 * @param margin how far beyond the fence counts
 	 * @return {@code true} if the spot lies more than {@code margin} beyond the fence (someone got through: a skill that moves them, or a gap)
 	 */
-	public static boolean isOutside(TvTBarrier barrier, ILocational location, int margin)
+	public static boolean isOutside(EventBarrier barrier, ILocational location, int margin)
 	{
 		return (barrier != null) && !barrier.contains(location, margin);
 	}
@@ -169,7 +169,7 @@ public final class TeamVsTeamBarrier
 	 * @param location a spot beyond the fence
 	 * @return a spot on the ground inside it, on the way from {@code location} to the middle of the field
 	 */
-	public static Location getInside(TvTBarrier barrier, ILocational location)
+	public static Location getInside(EventBarrier barrier, ILocational location)
 	{
 		final double dx = (location.getX() - barrier.x()) / (double) barrier.radiusX();
 		final double dy = (location.getY() - barrier.y()) / (double) barrier.radiusY();

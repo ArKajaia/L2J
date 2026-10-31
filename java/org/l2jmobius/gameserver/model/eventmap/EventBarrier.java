@@ -18,18 +18,18 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.l2jmobius.gameserver.model.tvt;
+package org.l2jmobius.gameserver.model.eventmap;
 
 import org.l2jmobius.gameserver.model.interfaces.ILocational;
 
 /**
- * The fence round the field of a Team vs Team map: an ellipse that nobody gets through, players or fake players (see {@link org.l2jmobius.gameserver.managers.TeamVsTeamBarrier}).
+ * The fence round the field of an event map: an ellipse that nobody gets through, players or fake players, in a Team vs Team or Deathmatch match (see {@link org.l2jmobius.gameserver.managers.TeamVsTeamBarrier}).
  * @param x the middle's x
  * @param y the middle's y
  * @param radiusX the radius along x
  * @param radiusY the radius along y
  */
-public record TvTBarrier(int x, int y, int radiusX, int radiusY)
+public record EventBarrier(int x, int y, int radiusX, int radiusY)
 {
 	/** The smallest radius a fence may have. */
 	public static final int MIN_RADIUS = 500;

@@ -67,6 +67,14 @@ When it is sent
   on the screen (ExShowScreenMessage "Blue X : Y Red") are no longer sent:
   this packet replaces them. Text announcements stay.
 
+Deathmatch (every one for themselves, server: TeamVsTeamManager.Mode)
+  sends the TvT strip (mode 1) with myTeam 0: blueScore is the
+  recipient's own kills, redScore the most kills of anyone else. Sent on
+  entering the match, when the fight starts, after every kill and at the
+  end, where result is 1 if the recipient has the most kills, 2 if someone
+  has more, 3 if it ties for the first place (4 when stopped). Its radar
+  shows only the edge of the battlefield (no bases).
+
 A Conquest point holds its owner until the other team has pushed the
 progress down to neutral; it goes over to a team once the progress reaches
 that team's end (1000 Blue, -1000 Red).
@@ -113,4 +121,4 @@ stops (rate 0).
 
 TvT: the player's own team's bases (TvTBaseRadius, z +- 300) in the team's
 spawn color, the other team's in red, striped and pulsing (flags 3: nobody
-may enter them); the edge is the area of the match's map (data/tvt).
+may enter them); the edge is the area of the match's map (data/maps).

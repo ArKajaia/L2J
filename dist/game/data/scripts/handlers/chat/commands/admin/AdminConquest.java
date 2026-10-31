@@ -35,21 +35,25 @@ import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
 import org.l2jmobius.gameserver.model.conquest.ConquestMap;
 import org.l2jmobius.gameserver.model.conquest.ConquestPoint;
 import org.l2jmobius.gameserver.model.conquest.ConquestPointType;
+import org.l2jmobius.gameserver.model.eventmap.EventMapType;
 import org.l2jmobius.gameserver.network.serverpackets.ExLinkOpen;
 
 import custom.Conquest.ConquestMarkers;
 import custom.Conquest.ConquestWeb;
+import custom.EventMaps.EventMapMarkers;
+import custom.EventMaps.EventMapWeb;
 
 /**
- * The maps of the Conquest event ({@link ConquestMapData}): //conquest opens the map page, where the battlefields, their spawn points and capture points are edited. The same can be done in game:
+ * The maps of the Conquest event ({@link ConquestMapData}: the event maps of data/maps, shared with Team vs Team and Deathmatch): //conquest opens the event map page on the Conquest points, where the battlefields, their spawn points and capture points are edited.
+ * The same can be done in game:
  * <ul>
- * <li>//conquest - the map page (web, a link that works while the GM is online)</li>
+ * <li>//conquest - the event map page (web, a link that works while the GM is online), on the Conquest points</li>
  * <li>//conquest list - the maps</li>
  * <li>//conquest show &lt;map&gt; | hide - draw a map's waypoints in game, or take them away</li>
  * <li>//conquest tp &lt;map&gt; &lt;blue|red|capture&gt; &lt;number|name&gt; - go to a point</li>
  * <li>//conquest set &lt;map&gt; &lt;blue|red|capture&gt; &lt;number|name|new&gt; - your position becomes that point (new adds one)</li>
  * <li>//conquest remove &lt;map&gt; &lt;blue|red|capture&gt; &lt;number|name&gt; - take a point away</li>
- * <li>//conquest reload - read data/conquest again</li>
+ * <li>//conquest reload - read data/maps again</li>
  * </ul>
  * And the matches (see {@link ConquestManager}), of fake players only for now:
  * <ul>
@@ -82,8 +86,9 @@ public class AdminConquest implements IAdminCommandHandler
 		{
 			case "web":
 			{
-				final String url = ConquestWeb.getUrl(activeChar);
-				activeChar.sendSysMessage("Conquest map page (works while you stay online):");
+				// The event maps are shared with Team vs Team and Deathmatch: the page opens on the Conquest points.
+				final String url = EventMapWeb.getUrl(activeChar, EventMapType.CONQUEST);
+				activeChar.sendSysMessage("Event map page, Conquest (works while you stay online):");
 				activeChar.sendMessage(url);
 				activeChar.sendPacket(new ExLinkOpen(url));
 				break;
@@ -242,7 +247,8 @@ public class AdminConquest implements IAdminCommandHandler
 			{
 				data.load();
 				ConquestMarkers.getInstance().refreshAll();
-				activeChar.sendSysMessage("Read " + data.getMaps().size() + " Conquest map(s) again, " + data.getEnabledMaps().size() + " ready for the event.");
+				EventMapMarkers.getInstance().refreshAll();
+				activeChar.sendSysMessage("Read the event maps again: " + data.getMaps().size() + " Conquest map(s), " + data.getEnabledMaps().size() + " ready for the event.");
 				break;
 			}
 			default:
@@ -424,6 +430,7 @@ public class AdminConquest implements IAdminCommandHandler
 			return false;
 		}
 		ConquestMarkers.getInstance().refresh(map.id());
+		EventMapMarkers.getInstance().refresh(map.id());
 		return true;
 	}
 
