@@ -165,6 +165,23 @@ public final class TeamEventHud
 	}
 
 	/**
+	 * Shows an elliptic edge of the battlefield on the player's radar (TvT's fence, TvTBarrier).
+	 * @param player the player
+	 * @param x the middle's x
+	 * @param y the middle's y
+	 * @param radiusX the radius along x
+	 * @param radiusY the radius along y
+	 * @param z the ground's height
+	 */
+	public static void showEllipseEdge(Player player, int x, int y, int radiusX, int radiusY, int z)
+	{
+		if ((radiusX > 0) && (radiusY > 0))
+		{
+			player.sendPacket(new Ex2RadarZoneShow(zoneId(KIND_EDGE, 0), x, y, radiusX, radiusY, z - EDGE_HEIGHT, z + EDGE_HEIGHT, EDGE, "Battlefield"));
+		}
+	}
+
+	/**
 	 * Sends the match's state to a player.
 	 * @param player the player
 	 * @param state the match's state

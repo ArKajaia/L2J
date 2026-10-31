@@ -2406,6 +2406,13 @@ public class TeamVsTeamManager
 		{
 			z += base.getZ();
 		}
+		// The fence round the field when there is one (an ellipse), else the drawn area.
+		final int[] barrier = TeamVsTeamConfig.BARRIER;
+		if (barrier != null)
+		{
+			TeamEventHud.showEllipseEdge(player, barrier[0], barrier[1], barrier[2], barrier[3], (int) (z / all.size()));
+			return;
+		}
 		final int[] area = getFieldArea();
 		TeamEventHud.showEdge(player, area[0], area[1], area[2], area[3], (int) (z / all.size()));
 	}

@@ -28,15 +28,25 @@ public record RadarZoneStyle(int fillArgb, int borderArgb, int flags)
 	public static final int PULSE = 1;
 	/** Diagonal stripes over the fill. */
 	public static final int HATCH = 2;
+	/** The zone's name (up to 8 characters) written at its middle, as a Conquest capture point's letter. */
+	public static final int LABEL = 4;
 
 	/** Active farming hotzones: translucent orange with a pulsing border. */
 	public static final RadarZoneStyle HOTZONE = new RadarZoneStyle(0x40FF8C00, 0xC0FFA040, PULSE);
 
 	public RadarZoneStyle
 	{
-		if ((flags & ~(PULSE | HATCH)) != 0)
+		if ((flags & ~(PULSE | HATCH | LABEL)) != 0)
 		{
 			throw new IllegalArgumentException("Unknown radar zone flags: " + flags);
 		}
+	}
+
+	/**
+	 * @return this style with the zone's name written at its middle ({@link #LABEL})
+	 */
+	public RadarZoneStyle labelled()
+	{
+		return new RadarZoneStyle(fillArgb, borderArgb, flags | LABEL);
 	}
 }

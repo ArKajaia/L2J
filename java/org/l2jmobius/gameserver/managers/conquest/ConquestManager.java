@@ -1867,7 +1867,7 @@ public class ConquestManager
 	private static void showCapture(Player player, int index, ConquestCapture capture)
 	{
 		final ConquestPoint point = capture.getPoint();
-		TeamEventHud.showCircle(player, TeamEventHud.zoneId(TeamEventHud.KIND_CAPTURE, index), point.x(), point.y(), point.z(), ConquestConfig.CAPTURE_HEIGHT, point.radius(), TeamEventHud.ownerStyle(capture.getOwner()), pointName(capture, index));
+		TeamEventHud.showCircle(player, TeamEventHud.zoneId(TeamEventHud.KIND_CAPTURE, index), point.x(), point.y(), point.z(), ConquestConfig.CAPTURE_HEIGHT, point.radius(), TeamEventHud.ownerStyle(capture.getOwner()).labelled(), pointName(capture, index));
 	}
 
 	/**
