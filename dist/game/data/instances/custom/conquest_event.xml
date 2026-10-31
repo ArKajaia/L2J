@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Conquest event (see ConquestManager): a copy of a map's place without monsters. The doors of the map (data/conquest) are added by the event, opened or shut as the map says. -->
+<!-- Conquest event (see ConquestManager): a copy of a map's place without monsters. The doors of the map (data/maps) are added by the event, opened or shut as the map says. -->
 <instance id="3052" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/instance.xsd">
 	<PvPInstance val="true" />
 	<exitPoint x="83425" y="148585" z="-3406" />

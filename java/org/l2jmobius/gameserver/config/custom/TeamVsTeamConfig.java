@@ -51,7 +51,7 @@ public class TeamVsTeamConfig
 	public static int MIN_PLAYERS;
 	/** The level brackets, lowest first: {min, max} each. */
 	public static List<int[]> BRACKETS;
-	/** The maps a registration picks from, by id (data/tvt), empty for any enabled one (see TvTMapData). */
+	/** The maps a registration picks from, by id (data/maps), empty for any map ticked for Team vs Team (see EventMapData). */
 	public static List<String> MAPS;
 	public static int SPAWN_RADIUS;
 	public static int BASE_RADIUS;
@@ -76,7 +76,7 @@ public class TeamVsTeamConfig
 	public static int DM_SIZE;
 	public static int DM_FIGHT_TIME;
 	public static int DM_RESPAWN_DELAY;
-	/** The maps a Deathmatch registration picks from, by id (data/tvt), empty for any enabled one. */
+	/** The maps a Deathmatch registration picks from, by id (data/maps), empty for any map ticked for Deathmatch. */
 	public static List<String> DM_MAPS;
 	/** The reward of the best player (the fake players left out of the places). */
 	public static List<ItemHolder> DM_WIN_REWARD;

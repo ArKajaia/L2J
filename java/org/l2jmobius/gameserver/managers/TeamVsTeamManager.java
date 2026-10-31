@@ -48,9 +48,8 @@ import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig.TopReward;
 import org.l2jmobius.gameserver.data.enums.CategoryType;
 import org.l2jmobius.gameserver.data.xml.DoorData;
-import org.l2jmobius.gameserver.data.xml.TvTMapData;
+import org.l2jmobius.gameserver.data.xml.EventMapData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
-import org.l2jmobius.gameserver.geoengine.geodata.Cell;
 import org.l2jmobius.gameserver.geoengine.pathfinding.PathFinding;
 import org.l2jmobius.gameserver.managers.simulation.SimRole;
 import org.l2jmobius.gameserver.managers.simulation.SimulationComposer;
@@ -76,6 +75,9 @@ import org.l2jmobius.gameserver.model.item.holders.ItemChanceHolder;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
 import org.l2jmobius.gameserver.model.item.Weapon;
+import org.l2jmobius.gameserver.model.eventmap.EventDoor;
+import org.l2jmobius.gameserver.model.eventmap.EventMap;
+import org.l2jmobius.gameserver.model.eventmap.EventMapType;
 import org.l2jmobius.gameserver.model.olympiad.OlympiadManager;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
@@ -83,9 +85,6 @@ import org.l2jmobius.gameserver.model.skill.CommonSkill;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
-import org.l2jmobius.gameserver.model.tvt.TvTBarrier;
-import org.l2jmobius.gameserver.model.tvt.TvTDoor;
-import org.l2jmobius.gameserver.model.tvt.TvTMap;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.network.serverpackets.Ex2TeamEventState;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
@@ -98,8 +97,8 @@ import org.l2jmobius.gameserver.util.Broadcast;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
- * Team vs Team: every {@link TeamVsTeamConfig#SCHEDULE} the TvT Event Manager takes registrations for a map picked by chance ({@link TvTMapData}, {@link TeamVsTeamConfig#MAPS}), then every level bracket with players gets its own copy of that map's place (an
- * instance), each team with its spawn points ({@link TvTMap#blue}, {@link TvTMap#red}), the map's fence round the field and its doors, {@link TeamVsTeamConfig#TEAM_SIZE} a side.
+ * Team vs Team: every {@link TeamVsTeamConfig#SCHEDULE} the TvT Event Manager takes registrations for a map picked by chance among the event maps ticked for it ({@link EventMapData}, {@link TeamVsTeamConfig#MAPS}), then every level bracket with players gets
+ * its own copy of that map's place (an instance), each team with its bases ({@link EventMap#blue}, {@link EventMap#red}), the map's fence round the field and its doors, {@link TeamVsTeamConfig#TEAM_SIZE} a side.
  * <ul>
  * <li>A party plays in one team. One whose members are in different brackets is broken up, each member going to its own bracket (the members of a bracket stay together).</li>
  * <li>The real players are spread evenly between the teams, and the free places are filled with fake players of the bracket's levels. A party of players gets the fake players it lacks (a tank, a healer, an archer...) up to {@link TeamVsTeamConfig#PARTY_SIZE}, the rest of a team
@@ -107,7 +106,7 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
  * <li>The faction system's rules hold between the teams: the other team is attacked without Ctrl, the own team can't be hurt even with Ctrl, and no kill gives karma (the instance is a PvP one). Everyone shows a blue or red circle and name.</li>
  * <li>The dead come back in waves, each wave at one of its team's spawn points picked by chance. Each kill gives the killer one of {@link TeamVsTeamConfig#KILL_REWARDS}; the team with the most kills wins, and each of its players gets {@link TeamVsTeamConfig#WIN_REWARD}, its best players {@link TeamVsTeamConfig#TOP_REWARDS} too.</li>
  * </ul>
- * A registration may also be for a {@link Mode#DEATHMATCH Deathmatch} on the same maps: every one for themselves, everyone spawning at a spot of the field picked by chance and coming back at another one {@link TeamVsTeamConfig#DM_RESPAWN_DELAY} seconds after
+ * A registration may also be for a {@link Mode#DEATHMATCH Deathmatch} on the maps ticked for it: every one for themselves, everyone spawning at one of the map's Deathmatch spawn spots ({@link EventMap#deathmatch}) picked by chance and coming back at another one {@link TeamVsTeamConfig#DM_RESPAWN_DELAY} seconds after
  * dying, for {@link TeamVsTeamConfig#DM_FIGHT_TIME} minutes; the most kills wins. The hourly rotation ({@link EventRotationManager}) takes turns between Team vs Team, Conquest and Deathmatch.<br>
  * The dialogs of the manager are in the TvT event script (custom/events/TeamVsTeam).
  */
@@ -204,12 +203,6 @@ public class TeamVsTeamManager
 		SimRole.ARCHER,
 		SimRole.NUKER
 	};
-	/** Deathmatch spawn spots (see findSpawnSpots): so many at most, of so many tries, this far apart, this far inside the fence, at most this far above or below the map's ground. */
-	private static final int DM_SPOTS = 40;
-	private static final int DM_SPOT_TRIES = 600;
-	private static final int DM_SPOT_GAP = 400;
-	private static final int DM_SPOT_FENCE_MARGIN = 400;
-	private static final int DM_SPOT_LEVEL = 600;
 	/** Of so many spots picked by chance, one spawns at the one farthest from the others. */
 	private static final int DM_SPOT_PICKS = 6;
 	/** Deathmatch: a fighter doesn't leave this far from its spawn spot before the fight. */
@@ -269,6 +262,22 @@ public class TeamVsTeamManager
 		public String getTag()
 		{
 			return _tag;
+		}
+
+		/**
+		 * @return the event its maps are ticked for
+		 */
+		public EventMapType getMapType()
+		{
+			return this == DEATHMATCH ? EventMapType.DEATHMATCH : EventMapType.TVT;
+		}
+
+		/**
+		 * @return the points a map needs for it, as text
+		 */
+		public String describeNeeds()
+		{
+			return this == DEATHMATCH ? "at least " + EventMap.MIN_DEATHMATCH_SPAWNS + " Deathmatch spawn points" : "bases for both teams";
 		}
 	}
 
@@ -544,8 +553,8 @@ public class TeamVsTeamManager
 	{
 		private final int _id;
 		private final Mode _mode;
-		private final TvTMap _map;
-		// Deathmatch: the spots of the field its fighters spawn at, picked by chance (see findSpawnSpots).
+		private final EventMap _map;
+		// Deathmatch: the spots of the field its fighters spawn at (the map's Deathmatch spawns), one picked by chance for each.
 		private List<Location> _spots = List.of();
 		private final int _minLevel;
 		private final int _maxLevel;
@@ -566,7 +575,7 @@ public class TeamVsTeamManager
 		// The fence round its field (see TeamVsTeamBarrier).
 		private final List<Fence> _barrier = new ArrayList<>();
 
-		Match(int id, Mode mode, TvTMap map, int minLevel, int maxLevel, int instanceId)
+		Match(int id, Mode mode, EventMap map, int minLevel, int maxLevel, int instanceId)
 		{
 			_id = id;
 			_mode = mode;
@@ -577,8 +586,8 @@ public class TeamVsTeamManager
 			if (mode == Mode.DEATHMATCH)
 			{
 				// Everyone in one side, each the enemy of all the others (see getRelation); the other side stays empty.
-				_blue = new Side(Team.NONE, "Deathmatch", map.blue(), TeamVsTeamConfig.DM_NAME_COLOR);
-				_red = new Side(Team.NONE, "-", map.red(), TeamVsTeamConfig.DM_NAME_COLOR);
+				_blue = new Side(Team.NONE, "Deathmatch", map.deathmatch(), TeamVsTeamConfig.DM_NAME_COLOR);
+				_red = new Side(Team.NONE, "-", map.deathmatch(), TeamVsTeamConfig.DM_NAME_COLOR);
 			}
 			else
 			{
@@ -596,7 +605,7 @@ public class TeamVsTeamManager
 		/**
 		 * @return the map it is played on
 		 */
-		public TvTMap getMap()
+		public EventMap getMap()
 		{
 			return _map;
 		}
@@ -727,7 +736,7 @@ public class TeamVsTeamManager
 	private volatile State _state = State.INACTIVE;
 	private volatile long _registrationEnd;
 	/** The map of the registration open now (and of the matches it starts), and what it plays. */
-	private volatile TvTMap _registrationMap;
+	private volatile EventMap _registrationMap;
 	private volatile Mode _registrationMode = Mode.TVT;
 	private ScheduledFuture<?> _scheduleTask;
 
@@ -791,7 +800,7 @@ public class TeamVsTeamManager
 	 * @param map the map its matches are played on, {@code null} for one of {@link TeamVsTeamConfig#MAPS} picked by chance
 	 * @return {@code null} if it opened, else why not
 	 */
-	public String openRegistration(TvTMap map)
+	public String openRegistration(EventMap map)
 	{
 		return openRegistration(Mode.TVT, map);
 	}
@@ -802,7 +811,7 @@ public class TeamVsTeamManager
 	 * @param map the map its matches are played on, {@code null} for one of {@link TeamVsTeamConfig#MAPS} ({@link TeamVsTeamConfig#DM_MAPS} for a Deathmatch) picked by chance
 	 * @return {@code null} if it opened, else why not
 	 */
-	public synchronized String openRegistration(Mode mode, TvTMap map)
+	public synchronized String openRegistration(Mode mode, EventMap map)
 	{
 		if (mode == Mode.DEATHMATCH ? !TeamVsTeamConfig.DM_ENABLED : !TeamVsTeamConfig.ENABLED)
 		{
@@ -822,14 +831,14 @@ public class TeamVsTeamManager
 			return "there is no level bracket (TvTBrackets)";
 		}
 		final List<String> allowed = mode == Mode.DEATHMATCH ? TeamVsTeamConfig.DM_MAPS : TeamVsTeamConfig.MAPS;
-		final TvTMap picked = map != null ? map : TvTMapData.getInstance().getRandomMap(allowed);
+		final EventMap picked = map != null ? map : EventMapData.getInstance().getRandomMap(mode.getMapType(), allowed);
 		if (picked == null)
 		{
-			return "there is no enabled map with spawn points for both teams" + (allowed.isEmpty() ? "" : " among " + (mode == Mode.DEATHMATCH ? "DeathmatchMaps" : "TvTMaps")) + " (data/tvt, //tvt map)";
+			return "there is no map ticked for " + mode.getTitle() + " with " + mode.describeNeeds() + (allowed.isEmpty() ? "" : " among " + (mode == Mode.DEATHMATCH ? "DeathmatchMaps" : "TvTMaps")) + " (data/maps, //tvt map)";
 		}
-		if (!picked.isComplete())
+		if (!picked.isComplete(mode.getMapType()))
 		{
-			return picked.name() + " has no spawn point for " + (picked.blue().isEmpty() ? "Blue" : "Red");
+			return picked.name() + " lacks " + mode.describeNeeds();
 		}
 
 		_state = State.REGISTRATION;
@@ -908,7 +917,7 @@ public class TeamVsTeamManager
 	/**
 	 * @return the map of the registration open now, {@code null} if none is
 	 */
-	public TvTMap getRegistrationMap()
+	public EventMap getRegistrationMap()
 	{
 		return _state == State.REGISTRATION ? _registrationMap : null;
 	}
@@ -1141,8 +1150,8 @@ public class TeamVsTeamManager
 		final Mode mode = _registrationMode;
 		final String tag = mode.getTag();
 		// The map as last saved: a GM may have fixed it while the registration was open (one taken out or left without spawn points meanwhile is played as it was).
-		final TvTMap latest = TvTMapData.getInstance().getMap(_registrationMap.id());
-		final TvTMap map = (latest != null) && latest.isComplete() ? latest : _registrationMap;
+		final EventMap latest = EventMapData.getInstance().getMap(_registrationMap.id());
+		final EventMap map = (latest != null) && latest.isComplete(mode.getMapType()) ? latest : _registrationMap;
 
 		// Who is still there and can go.
 		final List<Player> players = new ArrayList<>();
@@ -1375,7 +1384,7 @@ public class TeamVsTeamManager
 	// Match setup
 	// ---------------------------------------------------------------------------------------------
 
-	private Match startMatch(TvTMap map, Mode mode, int[] bracket, List<List<Player>> blueGroups, List<List<Player>> redGroups, boolean simulated)
+	private Match startMatch(EventMap map, Mode mode, int[] bracket, List<List<Player>> blueGroups, List<List<Player>> redGroups, boolean simulated)
 	{
 		final Instance instance = InstanceManager.getInstance().createDynamicInstance(INSTANCE_TEMPLATE_ID);
 		if (instance == null)
@@ -1387,7 +1396,7 @@ public class TeamVsTeamManager
 		match._simulated = simulated;
 		if (match.isDeathmatch())
 		{
-			match._spots = findSpawnSpots(map);
+			match._spots = map.deathmatch();
 		}
 		match._barrier.addAll(TeamVsTeamBarrier.build(map, instance.getId()));
 		setUpDoors(map, instance);
@@ -1449,10 +1458,10 @@ public class TeamVsTeamManager
 	/**
 	 * The doors the map names, in the match's copy of its place: an instance only has the doors added to it, closed or open as data/Doors.xml has them, so each is set by {@link #keepDoors} as the map says.
 	 */
-	private static void setUpDoors(TvTMap map, Instance instance)
+	private static void setUpDoors(EventMap map, Instance instance)
 	{
 		boolean added = false;
-		for (TvTDoor door : map.doors())
+		for (EventDoor door : map.doors())
 		{
 			if (DoorData.getInstance().getDoorTemplate(door.id()) == null)
 			{
@@ -1474,9 +1483,9 @@ public class TeamVsTeamManager
 	/**
 	 * Sets the doors of a match's instance as its map says, again at every tick: a door is opened without its close timer ({@code Door#openMe} starts one), and one shut or opened by anything else goes back.
 	 */
-	private static void keepDoors(TvTMap map, Instance instance)
+	private static void keepDoors(EventMap map, Instance instance)
 	{
-		for (TvTDoor setting : map.doors())
+		for (EventDoor setting : map.doors())
 		{
 			final Door door = instance.getDoor(setting.id());
 			if ((door == null) || (door.isOpen() == setting.open()))
@@ -1523,73 +1532,6 @@ public class TeamVsTeamManager
 	}
 
 	/**
-	 * The spots a Deathmatch spawns its fighters at: open ground of the battlefield, inside its fence (with room to spare) and on its level, from which a player can walk to one of the map's spawn points (so none is on a roof or a ledge it can't leave). The
-	 * map's spawn points are spots too.
-	 * @param map the map
-	 * @return the spots, at least the map's spawn points
-	 */
-	private static List<Location> findSpawnSpots(TvTMap map)
-	{
-		final GeoEngine geo = GeoEngine.getInstance();
-		final List<Location> anchors = new ArrayList<>(map.blue());
-		anchors.addAll(map.red());
-		final List<Location> spots = new ArrayList<>(anchors);
-		final TvTBarrier barrier = map.barrier();
-		final int minX = barrier != null ? Math.max(map.minX(), barrier.x() - barrier.radiusX()) : map.minX();
-		final int maxX = barrier != null ? Math.min(map.maxX(), barrier.x() + barrier.radiusX()) : map.maxX();
-		final int minY = barrier != null ? Math.max(map.minY(), barrier.y() - barrier.radiusY()) : map.minY();
-		final int maxY = barrier != null ? Math.min(map.maxY(), barrier.y() + barrier.radiusY()) : map.maxY();
-		if ((maxX <= minX) || (maxY <= minY))
-		{
-			return spots;
-		}
-
-		int found = 0;
-		for (int tries = 0; (tries < DM_SPOT_TRIES) && (found < DM_SPOTS); tries++)
-		{
-			final int x = Rnd.get(minX, maxX);
-			final int y = Rnd.get(minY, maxY);
-			if (((barrier != null) && !barrier.contains(x, y, -DM_SPOT_FENCE_MARGIN)) || !geo.hasGeo(x, y))
-			{
-				continue;
-			}
-			final int z = geo.getHeight(x, y, map.z());
-			if ((Math.abs(z - map.z()) > DM_SPOT_LEVEL) || !geo.checkNearestNswe(GeoEngine.getGeoX(x), GeoEngine.getGeoY(y), z, Cell.NSWE_ALL))
-			{
-				continue;
-			}
-
-			// Not too close to another spot, and a way from it to the closest spawn point of the map.
-			Location anchor = null;
-			boolean crowded = false;
-			for (Location spot : spots)
-			{
-				final double distance = Math.hypot(spot.getX() - x, spot.getY() - y);
-				if (distance < DM_SPOT_GAP)
-				{
-					crowded = true;
-					break;
-				}
-				if (anchors.contains(spot) && ((anchor == null) || (distance < Math.hypot(anchor.getX() - x, anchor.getY() - y))))
-				{
-					anchor = spot;
-				}
-			}
-			if (crowded || (anchor == null))
-			{
-				continue;
-			}
-			if (!geo.canMoveToTarget(x, y, z, anchor.getX(), anchor.getY(), anchor.getZ(), 0) && (PathFinding.getInstance().findPath(x, y, z, anchor.getX(), anchor.getY(), anchor.getZ(), 0, false) == null))
-			{
-				continue;
-			}
-			spots.add(new Location(x, y, z, Rnd.get(65536)));
-			found++;
-		}
-		return spots;
-	}
-
-	/**
 	 * A spot of a Deathmatch for someone (re)spawning: of a few picked by chance, the one farthest from every other living fighter, so nobody spawns in front of an enemy.
 	 * @param match a Deathmatch
 	 * @param fighter who spawns, {@code null} for a fighter not made yet
@@ -1617,7 +1559,7 @@ public class TeamVsTeamManager
 				bestDistance = nearest;
 			}
 		}
-		return new Location(best.getX(), best.getY(), best.getZ(), Rnd.get(65536));
+		return new Location(best.getX(), best.getY(), best.getZ(), best.getHeading());
 	}
 
 	/**
@@ -3071,7 +3013,7 @@ public class TeamVsTeamManager
 			}
 		}
 
-		final TvTMap map = match._map;
+		final EventMap map = match._map;
 		TeamEventHud.showEdge(player, map.minX(), map.minY(), map.maxX(), map.maxY(), map.z());
 	}
 
@@ -3110,7 +3052,7 @@ public class TeamVsTeamManager
 	 */
 	private static int[] getRegionBox(Match match)
 	{
-		final TvTMap map = match._map;
+		final EventMap map = match._map;
 		int minX = map.minX();
 		int minY = map.minY();
 		int maxX = map.maxX();
@@ -3849,7 +3791,7 @@ public class TeamVsTeamManager
 	}
 
 	/**
-	 * Starts a match of fake players only on a map of {@link TeamVsTeamConfig#MAPS} picked by chance, see {@link #simulate(int, TvTMap)}.
+	 * Starts a match of fake players only on a map of {@link TeamVsTeamConfig#MAPS} picked by chance, see {@link #simulate(int, EventMap)}.
 	 * @param level a level of the bracket to play
 	 * @return what to tell the GM
 	 */
@@ -3859,12 +3801,12 @@ public class TeamVsTeamManager
 	}
 
 	/**
-	 * Starts a Team vs Team match of fake players only, see {@link #simulate(Mode, int, TvTMap)}.
+	 * Starts a Team vs Team match of fake players only, see {@link #simulate(Mode, int, EventMap)}.
 	 * @param level a level of the bracket to play
 	 * @param map the map to play on, {@code null} for one picked by chance
 	 * @return what to tell the GM
 	 */
-	public String simulate(int level, TvTMap map)
+	public String simulate(int level, EventMap map)
 	{
 		return simulate(Mode.TVT, level, map);
 	}
@@ -3876,20 +3818,20 @@ public class TeamVsTeamManager
 	 * @param map the map to play on, {@code null} for one of {@link TeamVsTeamConfig#MAPS} ({@link TeamVsTeamConfig#DM_MAPS}) picked by chance
 	 * @return what to tell the GM
 	 */
-	public synchronized String simulate(Mode mode, int level, TvTMap map)
+	public synchronized String simulate(Mode mode, int level, EventMap map)
 	{
 		if (!FakePlayerPvpManager.getInstance().isEnabled())
 		{
 			return "Fake players are disabled (EnableFakePlayers, FakePvpEnabled).";
 		}
-		final TvTMap picked = map != null ? map : TvTMapData.getInstance().getRandomMap(mode == Mode.DEATHMATCH ? TeamVsTeamConfig.DM_MAPS : TeamVsTeamConfig.MAPS);
+		final EventMap picked = map != null ? map : EventMapData.getInstance().getRandomMap(mode.getMapType(), mode == Mode.DEATHMATCH ? TeamVsTeamConfig.DM_MAPS : TeamVsTeamConfig.MAPS);
 		if (picked == null)
 		{
-			return "There is no enabled map with spawn points for both teams (data/tvt, //tvt map).";
+			return "There is no map ticked for " + mode.getTitle() + " with " + mode.describeNeeds() + " (data/maps, //tvt map).";
 		}
-		if (!picked.isComplete())
+		if (!picked.isComplete(mode.getMapType()))
 		{
-			return picked.name() + " has no spawn point for " + (picked.blue().isEmpty() ? "Blue" : "Red") + ".";
+			return picked.name() + " lacks " + mode.describeNeeds() + ".";
 		}
 		
 		final int index = getBracket(level);

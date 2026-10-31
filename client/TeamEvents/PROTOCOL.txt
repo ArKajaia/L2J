@@ -121,4 +121,4 @@ stops (rate 0).
 
 TvT: the player's own team's bases (TvTBaseRadius, z +- 300) in the team's
 spawn color, the other team's in red, striped and pulsing (flags 3: nobody
-may enter them); the edge is the area of the match's map (data/tvt).
+may enter them); the edge is the area of the match's map (data/maps).

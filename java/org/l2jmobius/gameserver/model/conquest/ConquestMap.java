@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A battlefield of the Conquest event (data/conquest/&lt;id&gt;.xml): its area, the spawn points of each team and the capture points. One of the enabled maps is picked by chance for each event.<br>
+ * A battlefield of the Conquest event, as Conquest sees an event map (data/maps/&lt;id&gt;.xml, see {@link org.l2jmobius.gameserver.model.eventmap.EventMap#toConquestMap}): its area, the spawn points of each team and the capture points. One of the enabled maps is picked by chance for each event.<br>
  * Immutable: an edit makes a new map, which {@link org.l2jmobius.gameserver.data.xml.ConquestMapData#save} writes and puts in place.
  * @param id the file name, lower case letters, digits and _
  * @param name the name shown to the players

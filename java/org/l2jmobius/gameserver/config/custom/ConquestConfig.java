@@ -73,7 +73,7 @@ public class ConquestConfig
 	public static boolean REGISTRATION_ENABLED;
 	public static String SCHEDULE;
 	public static int REGISTRATION_TIME;
-	/** The maps a registration may pick (ids of data/conquest), empty for any enabled one. */
+	/** The maps a registration may pick (ids of data/maps), empty for any map ticked for Conquest. */
 	public static List<String> MAPS;
 	/** Places per team in a match players registered for, 0 for the map's maxPlayers. */
 	public static int PLAYERS_PER_TEAM;

@@ -61,9 +61,9 @@ import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
 import custom.Bestiary.BestiaryPackets;
 import custom.Bestiary.BestiaryWeb;
 import custom.Conquest.ConquestWeb;
+import custom.EventMaps.EventMapWeb;
 import custom.PassiveSkillTree.PassiveTreeApiServer;
 import custom.Simulation.SimulationWeb;
-import custom.TeamVsTeam.TvTWeb;
 import handlers.actions.click.ArtefactClick;
 import handlers.actions.click.DecoyClick;
 import handlers.actions.click.DoorClick;
@@ -714,7 +714,7 @@ public class MasterHandler
 		BestiaryWeb.getInstance().register();
 		SimulationWeb.getInstance().register();
 		ConquestWeb.getInstance().register();
-		TvTWeb.getInstance().register();
+		EventMapWeb.getInstance().register();
 		BestiaryPackets.register();
 		
 		final Map<IHandler<?, ?>, Method> registerHandlerMethods = new HashMap<>();

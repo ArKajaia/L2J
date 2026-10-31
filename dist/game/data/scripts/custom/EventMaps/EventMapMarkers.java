@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package custom.TeamVsTeam;
+package custom.EventMaps;
 
 import java.awt.Color;
 import java.util.HashSet;
@@ -24,29 +24,36 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
 import org.l2jmobius.gameserver.data.xml.DoorData;
-import org.l2jmobius.gameserver.data.xml.TvTMapData;
+import org.l2jmobius.gameserver.data.xml.EventMapData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.instance.Door;
-import org.l2jmobius.gameserver.model.tvt.TvTBarrier;
-import org.l2jmobius.gameserver.model.tvt.TvTDoor;
-import org.l2jmobius.gameserver.model.tvt.TvTMap;
+import org.l2jmobius.gameserver.model.conquest.ConquestPoint;
+import org.l2jmobius.gameserver.model.conquest.ConquestPointType;
+import org.l2jmobius.gameserver.model.eventmap.EventBarrier;
+import org.l2jmobius.gameserver.model.eventmap.EventDoor;
+import org.l2jmobius.gameserver.model.eventmap.EventMap;
+import org.l2jmobius.gameserver.model.eventmap.EventMapType;
 import org.l2jmobius.gameserver.network.serverpackets.ExServerPrimitive;
 
 /**
- * The waypoints of a Team vs Team map drawn in game for a GM, like the Conquest ones: for every spawn point of each team (blue, red) a beacon, its name, an arrow where its players face, a small ring where they spawn (TvTSpawnRadius) and a wide one for its base
- * (TvTBaseRadius); the fence round the field in orange, the doors the map sets (green: the match opens it, pink: it shuts it), and the edge of the battlefield in white. Only the GM sees them. A GM who shows a map sees it again after every save of that
- * map, until //tvt hide.
+ * The waypoints of an event map drawn in game for a GM: the edge of the battlefield (white), the fence (orange), the doors (green: a match opens it, pink: it shuts it), and the points of one event or of every event the map is used in: Team vs Team bases (a
+ * small ring where they spawn, a wide one for the base), Conquest spawn points and capture points (gold, double ring), Deathmatch spawn spots (violet), each with a beacon, its name and (spawn points) an arrow where its players face. Only the GM sees them.
+ * A GM who shows a map sees it again after every save of it, until it is hidden.
  */
-public class TvTMarkers
+public class EventMapMarkers
 {
 	/** The name of the drawing in the client: a new one of the same name replaces it. */
-	private static final String PRIMITIVE_NAME = "TvTMap";
+	private static final String PRIMITIVE_NAME = "EventMap";
 
 	private static final Color BLUE = new Color(70, 140, 255);
 	private static final Color RED = new Color(255, 75, 60);
+	private static final Color CONQUEST_BLUE = new Color(120, 180, 255);
+	private static final Color CONQUEST_RED = new Color(255, 130, 110);
+	private static final Color CAPTURE = new Color(255, 210, 40);
+	private static final Color DEATHMATCH = new Color(195, 120, 255);
 	private static final Color FENCE = new Color(255, 160, 40);
 	private static final Color EDGE = new Color(230, 230, 230);
 	private static final Color DOOR_OPEN = new Color(80, 230, 110);
@@ -54,8 +61,11 @@ public class TvTMarkers
 
 	/** Drawn this far above the ground, so the lines don't sink into it. */
 	private static final int LIFT = 16;
-	/** The height of the beacon over a spawn point. */
+	/** The height of the beacon over a spawn point, and over a capture point. */
 	private static final int SPAWN_BEACON = 400;
+	private static final int CAPTURE_BEACON = 600;
+	/** The ring of a Deathmatch spawn spot (how far its fighter may walk before the fight). */
+	private static final int DEATHMATCH_RING = 300;
 	/** One line of the battlefield's edge is this long. */
 	private static final int EDGE_STEP = 400;
 	/** The edge and the fence are not drawn where the ground there is this far above or below the battlefield (the rock over an underground map). */
@@ -63,10 +73,11 @@ public class TvTMarkers
 	/** The client takes a packet of at most 64 KB: at about 45 bytes a line, this many lines and points at most. */
 	private static final int MAX_SHAPES = 1300;
 
-	/** GM object id -> the map drawn for them. */
+	/** GM object id -> the map drawn for them, and the event (null for every event). */
 	private final Map<Integer, String> _shown = new ConcurrentHashMap<>();
+	private final Map<Integer, EventMapType> _shownType = new ConcurrentHashMap<>();
 
-	private TvTMarkers()
+	private EventMapMarkers()
 	{
 	}
 
@@ -74,11 +85,20 @@ public class TvTMarkers
 	 * Draws a map for a GM, and again after every save of it.
 	 * @param gm the GM
 	 * @param map the map
+	 * @param type the event whose points are drawn, {@code null} for every event the map is used in
 	 */
-	public void show(Player gm, TvTMap map)
+	public void show(Player gm, EventMap map, EventMapType type)
 	{
 		_shown.put(gm.getObjectId(), map.id());
-		draw(gm, map);
+		if (type != null)
+		{
+			_shownType.put(gm.getObjectId(), type);
+		}
+		else
+		{
+			_shownType.remove(gm.getObjectId());
+		}
+		draw(gm, map, type);
 	}
 
 	/**
@@ -88,6 +108,7 @@ public class TvTMarkers
 	public void hide(Player gm)
 	{
 		_shown.remove(gm.getObjectId());
+		_shownType.remove(gm.getObjectId());
 		final ExServerPrimitive packet = new ExServerPrimitive(PRIMITIVE_NAME, gm.getX(), gm.getY(), gm.getZ());
 		packet.addPoint(Color.WHITE, 0, 0, Short.MIN_VALUE);
 		gm.sendPacket(packet);
@@ -108,7 +129,7 @@ public class TvTMarkers
 	 */
 	public void refresh(String mapId)
 	{
-		final TvTMap map = TvTMapData.getInstance().getMap(mapId);
+		final EventMap map = EventMapData.getInstance().getMap(mapId);
 		for (Map.Entry<Integer, String> entry : _shown.entrySet())
 		{
 			if (!entry.getValue().equals(mapId))
@@ -119,6 +140,7 @@ public class TvTMarkers
 			if (gm == null)
 			{
 				_shown.remove(entry.getKey());
+				_shownType.remove(entry.getKey());
 			}
 			else if (map == null)
 			{
@@ -126,7 +148,7 @@ public class TvTMarkers
 			}
 			else
 			{
-				draw(gm, map);
+				draw(gm, map, _shownType.get(entry.getKey()));
 			}
 		}
 	}
@@ -142,16 +164,19 @@ public class TvTMarkers
 		}
 	}
 
-	private static void draw(Player gm, TvTMap map)
+	private static void draw(Player gm, EventMap map, EventMapType only)
 	{
 		final ExServerPrimitive packet = new ExServerPrimitive(PRIMITIVE_NAME, gm.getX(), gm.getY(), gm.getZ());
 		final int z = map.z();
+		final boolean tvt = (only == null) ? map.belongsTo(EventMapType.TVT) : only == EventMapType.TVT;
+		final boolean conquest = (only == null) ? map.belongsTo(EventMapType.CONQUEST) : only == EventMapType.CONQUEST;
+		final boolean deathmatch = (only == null) ? map.belongsTo(EventMapType.DEATHMATCH) : only == EventMapType.DEATHMATCH;
 
 		// What is left of the budget after the beacons, names and arrows goes to the rings, the fence and the edge.
-		final int points = map.blue().size() + map.red().size();
+		final int points = (tvt ? map.blue().size() + map.red().size() : 0) + (conquest ? map.conquestPoints().size() : 0) + (deathmatch ? map.deathmatch().size() : 0);
 		final int perimeter = 2 * ((map.maxX() - map.minX()) + (map.maxY() - map.minY()));
 		final int edgeLines = Math.min(perimeter / EDGE_STEP, MAX_SHAPES / 5);
-		final int fenceLines = map.barrier() != null ? MAX_SHAPES / 5 : 0;
+		final int fenceLines = map.barrier() != null ? MAX_SHAPES / 6 : 0;
 		final int segments = Math.max(8, Math.min(32, (MAX_SHAPES - edgeLines - fenceLines - (map.doors().size() * 6) - (points * 6)) / Math.max(1, points * 2)));
 
 		final int[] xs =
@@ -176,11 +201,7 @@ public class TvTMarkers
 			final int steps = Math.max(1, (int) Math.round(((double) edgeLines * length) / Math.max(1, perimeter)));
 			for (int i = 0; i < steps; i++)
 			{
-				final int x1 = xs[side] + (((xs[side + 1] - xs[side]) * i) / steps);
-				final int y1 = ys[side] + (((ys[side + 1] - ys[side]) * i) / steps);
-				final int x2 = xs[side] + (((xs[side + 1] - xs[side]) * (i + 1)) / steps);
-				final int y2 = ys[side] + (((ys[side + 1] - ys[side]) * (i + 1)) / steps);
-				addLevelLine(packet, EDGE, x1, y1, x2, y2, z);
+				addLevelLine(packet, EDGE, xs[side] + (((xs[side + 1] - xs[side]) * i) / steps), ys[side] + (((ys[side + 1] - ys[side]) * i) / steps), xs[side] + (((xs[side + 1] - xs[side]) * (i + 1)) / steps), ys[side] + (((ys[side + 1] - ys[side]) * (i + 1)) / steps), z);
 			}
 		}
 		final int cornerZ = ground(map.minX(), map.minY(), z);
@@ -189,8 +210,7 @@ public class TvTMarkers
 			packet.addPoint(map.name() + " (north-west corner)", EDGE, true, map.minX(), map.minY(), cornerZ + 60);
 		}
 
-		// The fence: an ellipse on the ground.
-		final TvTBarrier barrier = map.barrier();
+		final EventBarrier barrier = map.barrier();
 		if (barrier != null)
 		{
 			int lastX = barrier.x() + barrier.radiusX();
@@ -204,45 +224,60 @@ public class TvTMarkers
 				lastX = nextX;
 				lastY = nextY;
 			}
-			final int northZ = ground(barrier.x(), barrier.y() - barrier.radiusY(), z);
-			packet.addPoint("Fence", FENCE, true, barrier.x(), barrier.y() - barrier.radiusY(), northZ + 80);
+			packet.addPoint("Fence (TvT, Deathmatch)", FENCE, true, barrier.x(), barrier.y() - barrier.radiusY(), ground(barrier.x(), barrier.y() - barrier.radiusY(), z) + 80);
 		}
 
-		for (boolean blue : new boolean[]
+		if (tvt)
 		{
-			true,
-			false
-		})
-		{
-			final Color color = blue ? BLUE : RED;
-			final List<Location> spawns = map.getSpawns(blue);
-			for (int i = 0; i < spawns.size(); i++)
+			for (boolean blue : new boolean[]
 			{
-				final Location spawn = spawns.get(i);
-				final int x = spawn.getX();
-				final int y = spawn.getY();
-				final int sz = spawn.getZ();
-				packet.addPoint((blue ? "Blue" : "Red") + " base " + (i + 1) + (i == 0 ? " (start)" : ""), color, true, x, y, sz + SPAWN_BEACON + 20);
-				packet.addLine(color, x, y, sz + LIFT, x, y, sz + SPAWN_BEACON);
-				addRing(packet, color, x, y, sz, Math.max(40, TeamVsTeamConfig.SPAWN_RADIUS), Math.max(8, segments / 2));
-				addRing(packet, color, x, y, sz, TeamVsTeamConfig.BASE_RADIUS, segments);
-
-				// Where the players spawned there face.
-				final double angle = (spawn.getHeading() * 2 * Math.PI) / 65536;
-				final int length = Math.max(40, TeamVsTeamConfig.SPAWN_RADIUS) + 250;
-				final int tipX = x + (int) (Math.cos(angle) * length);
-				final int tipY = y + (int) (Math.sin(angle) * length);
-				final int tipZ = ground(tipX, tipY, sz) + LIFT;
-				packet.addLine(color, x, y, sz + LIFT, tipX, tipY, tipZ);
-				for (int side = -1; side <= 1; side += 2)
+				true,
+				false
+			})
+			{
+				final List<Location> spawns = map.getSpawns(blue);
+				for (int i = 0; i < spawns.size(); i++)
 				{
-					final double back = angle + Math.PI + (side * 0.45);
-					packet.addLine(color, tipX, tipY, tipZ, tipX + (int) (Math.cos(back) * 120), tipY + (int) (Math.sin(back) * 120), tipZ);
+					final Location spawn = spawns.get(i);
+					final Color color = blue ? BLUE : RED;
+					addSpawn(packet, color, "TvT " + (blue ? "Blue" : "Red") + " base " + (i + 1) + (i == 0 ? " (start)" : ""), spawn.getX(), spawn.getY(), spawn.getZ(), spawn.getHeading(), Math.max(40, TeamVsTeamConfig.SPAWN_RADIUS), segments);
+					addRing(packet, color, spawn.getX(), spawn.getY(), spawn.getZ(), TeamVsTeamConfig.BASE_RADIUS, segments);
 				}
 			}
 		}
 
-		for (TvTDoor setting : map.doors())
+		if (conquest)
+		{
+			int blueCount = 0;
+			int redCount = 0;
+			for (ConquestPoint point : map.conquestPoints())
+			{
+				if (point.type() == ConquestPointType.CAPTURE)
+				{
+					final String label = "Capture " + point.name() + " (" + point.radius() + ")";
+					packet.addPoint(label, CAPTURE, true, point.x(), point.y(), point.z() + CAPTURE_BEACON + 20);
+					packet.addLine(CAPTURE, point.x(), point.y(), point.z() + LIFT, point.x(), point.y(), point.z() + CAPTURE_BEACON);
+					addRing(packet, CAPTURE, point.x(), point.y(), point.z(), point.radius(), segments);
+					addRing(packet, CAPTURE, point.x(), point.y(), point.z(), Math.max(40, point.radius() / 4), Math.max(8, segments / 2));
+					continue;
+				}
+				final boolean blue = point.type() == ConquestPointType.BLUE;
+				final int number = blue ? ++blueCount : ++redCount;
+				addSpawn(packet, blue ? CONQUEST_BLUE : CONQUEST_RED, "Conquest " + (blue ? "Blue" : "Red") + " spawn " + number, point.x(), point.y(), point.z(), point.heading(), point.radius(), segments);
+			}
+		}
+
+		if (deathmatch)
+		{
+			final List<Location> spawns = map.deathmatch();
+			for (int i = 0; i < spawns.size(); i++)
+			{
+				final Location spawn = spawns.get(i);
+				addSpawn(packet, DEATHMATCH, "DM spawn " + (i + 1), spawn.getX(), spawn.getY(), spawn.getZ(), spawn.getHeading(), DEATHMATCH_RING, Math.max(8, segments / 2));
+			}
+		}
+
+		for (EventDoor setting : map.doors())
 		{
 			final Door door = DoorData.getInstance().getDoor(setting.id());
 			if (door == null)
@@ -262,6 +297,25 @@ public class TvTMarkers
 			packet.addPoint("Door " + setting.id() + (setting.open() ? " opens" : " shuts"), color, true, door.getX(), door.getY(), door.getZ() + 270);
 		}
 		gm.sendPacket(packet);
+	}
+
+	/** A spawn point: a beacon with its name, a ring, and an arrow where its players face. */
+	private static void addSpawn(ExServerPrimitive packet, Color color, String label, int x, int y, int z, int heading, int radius, int segments)
+	{
+		packet.addPoint(label, color, true, x, y, z + SPAWN_BEACON + 20);
+		packet.addLine(color, x, y, z + LIFT, x, y, z + SPAWN_BEACON);
+		addRing(packet, color, x, y, z, radius, segments);
+		final double angle = (heading * 2 * Math.PI) / 65536;
+		final int length = radius + 200;
+		final int tipX = x + (int) (Math.cos(angle) * length);
+		final int tipY = y + (int) (Math.sin(angle) * length);
+		final int tipZ = ground(tipX, tipY, z) + LIFT;
+		packet.addLine(color, x, y, z + LIFT, tipX, tipY, tipZ);
+		for (int side = -1; side <= 1; side += 2)
+		{
+			final double back = angle + Math.PI + (side * 0.45);
+			packet.addLine(color, tipX, tipY, tipZ, tipX + (int) (Math.cos(back) * 120), tipY + (int) (Math.sin(back) * 120), tipZ);
+		}
 	}
 
 	/** A line on the ground, left out where the ground is on another level than the battlefield. */
@@ -305,13 +359,13 @@ public class TvTMarkers
 		return geo.hasGeo(x, y) ? geo.getHeight(x, y, z) : z;
 	}
 
-	public static TvTMarkers getInstance()
+	public static EventMapMarkers getInstance()
 	{
 		return SingletonHolder.INSTANCE;
 	}
 
 	private static class SingletonHolder
 	{
-		protected static final TvTMarkers INSTANCE = new TvTMarkers();
+		protected static final EventMapMarkers INSTANCE = new EventMapMarkers();
 	}
 }
