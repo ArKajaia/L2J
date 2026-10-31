@@ -1,0 +1,22 @@
+<html><title>Dynamic Quests</title><body>
+<center>
+<table width=270><tr>
+<td width=45><button value="Main" action="bypass admin_admin" width=45 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td width=180><center>Dynamic Quests</center></td>
+<td width=45><button value="Back" action="bypass admin_html custom_menu.htm" width=45 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><br>
+<table width=270 border=0 bgcolor="444444">
+<tr><td width=100>Player:</td><td width=170><edit var="dqname" width=150 height=15></td></tr>
+<tr><td width=100>Template id:</td><td width=170><edit var="dqid" width=150 height=15></td></tr>
+<tr><td width=100>Difficulty:</td><td width=170><edit var="dqdiff" width=150 height=15></td></tr>
+</table><br1><table width=270><tr>
+<td><button value="Status" action="bypass -h admin_dynquest $dqname" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Start" action="bypass -h admin_dynquest_start $dqid $dqdiff $dqname" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Herald" action="bypass -h admin_dynquest_herald $dqid $dqname" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Complete" action="bypass -h admin_dynquest_complete $dqname" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><table width=270><tr>
+<td><button value="Fail" action="bypass -h admin_dynquest_fail $dqname" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Reset Day" action="bypass -h admin_dynquest_reset $dqname" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Reroll Boards" action="bypass -h admin_dynquest_reroll" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><font color="A0A0A0">Difficulty: EASY, NORMAL, HARD or ELITE. Reset Day clears limits, cooldowns and board offers taken today.</font><br>
+</center></body></html>

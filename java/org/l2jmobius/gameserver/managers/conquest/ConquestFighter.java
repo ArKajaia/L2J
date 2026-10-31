@@ -20,6 +20,7 @@
  */
 package org.l2jmobius.gameserver.managers.conquest;
 
+import org.l2jmobius.gameserver.config.custom.ConquestConfig;
 import org.l2jmobius.gameserver.managers.simulation.SimRole;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.actor.Creature;
@@ -36,6 +37,8 @@ public class ConquestFighter
 	private volatile ConquestParty _party;
 	volatile int _kills;
 	volatile int _deaths;
+	/** How many capture points it stood on when its team took them. */
+	volatile int _captures;
 	/** When it comes back from the dead (0: not waiting), and where. */
 	volatile long _respawnAt;
 	volatile Location _respawnBase;
@@ -103,6 +106,19 @@ public class ConquestFighter
 	public int getDeaths()
 	{
 		return _deaths;
+	}
+
+	public int getCaptures()
+	{
+		return _captures;
+	}
+
+	/**
+	 * @return its contribution to its team: {@link ConquestConfig#CONTRIBUTION_KILL} a kill, {@link ConquestConfig#CONTRIBUTION_CAPTURE} a capture
+	 */
+	public int getContribution()
+	{
+		return (_kills * ConquestConfig.CONTRIBUTION_KILL) + (_captures * ConquestConfig.CONTRIBUTION_CAPTURE);
 	}
 
 	/**

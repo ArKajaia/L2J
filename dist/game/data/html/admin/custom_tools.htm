@@ -1,0 +1,25 @@
+<html><title>Web Tools</title><body>
+<center>
+<table width=270><tr>
+<td width=45><button value="Main" action="bypass admin_admin" width=45 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td width=180><center>Web Tools</center></td>
+<td width=45><button value="Back" action="bypass admin_html custom_menu.htm" width=45 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><br>
+<br><font color="LEVEL">PASSIVE SKILL TREE</font><br1><table width=270><tr>
+<td><button value="Editor" action="bypass -h admin_passivetree" width=130 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Reload" action="bypass -h admin_passivetree_reload" width=130 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><font color="A0A0A0">Web editor. Saves are live at once. Reload re-reads data/passivetree after hand edits.</font><br><br><font color="LEVEL">BESTIARY</font><br1><table width=270 border=0 bgcolor="444444">
+<tr><td width=100>Tier 1-4:</td><td width=170><edit var="bstier" width=150 height=15></td></tr>
+</table><br1><table width=270><tr>
+<td><button value="Bake Page" action="bypass -h admin_bestiary" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Unlock All" action="bypass -h admin_bestiary_unlock $bstier" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Export" action="bypass -h admin_bestiary_export" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><font color="A0A0A0">Unlock raises every monster to the tier for the targeted player's account, or yours. Export writes Bestiary.cache for the client.</font><br><br><font color="LEVEL">OTHER</font><br1><table width=270><tr>
+<td><button value="Town Life" action="bypass -h admin_townlife" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Festival On" action="bypass -h admin_townlife festival on" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Festival Off" action="bypass -h admin_townlife festival off" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Festival Auto" action="bypass -h admin_townlife festival auto" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><table width=270><tr>
+<td><button value="Fake Clans" action="bypass -h admin_fakeclans" width=130 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table>
+</center></body></html>

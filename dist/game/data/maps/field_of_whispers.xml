@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	A battlefield of the PvP events (EventMapData), shared by Team vs Team, Conquest and Deathmatch. Written by the event map page (//tvt map, //conquest): edits by hand are kept, comments are not.
+	map         id (the file name), name (shown to the players)
+	area        the battlefield's edge on the players' radar, minX/minY (north-west corner) to maxX/maxY (south-east corner); z: the ground's height, where it has several layers
+	barrier     optional, Team vs Team and Deathmatch: the fence round the field that nobody gets through, an ellipse: middle x, y and its radiusX, radiusY (at least 500)
+	door        a door of data/Doors.xml put in a match's copy of the place, open (open="true") or shut (open="false"); a match has no other doors
+	tvt         enabled: Team vs Team may pick the map. The bases of each team (blue, red): x, y, z, heading; a team starts at its first one
+	conquest    enabled: Conquest may pick the map; maxPlayers per team. The spawn points of each team (x, y, z, heading, radius: how far a wave is spread) and the capture points (name, x, y, z, radius)
+	deathmatch  enabled: Deathmatch may pick the map. The spots everyone spawns at: x, y, z, heading
+-->
+<map id="field_of_whispers" name="Field of Whispers">
+	<description>Innadril. A wide open bowl ringed by cliffs, 24000 x 20000. Mirrored west/east: each team has two home flags 6000 from its base (A/B blue side, D/E red side) and C in the middle, 10000 from both bases. The rock hill south-west of C is the only big cover; a dungeon well lies 1000 north-west of A.</description>
+	<area minX="73000" minY="204000" maxX="97000" maxY="224000" z="-3700" />
+	<conquest enabled="true" maxPlayers="250">
+		<team id="blue">
+			<spawn x="75000" y="211500" z="-3760" heading="0" radius="300" />
+			<spawn x="74500" y="214000" z="-3688" heading="0" radius="300" />
+			<spawn x="75000" y="216500" z="-3760" heading="0" radius="300" />
+		</team>
+		<team id="red">
+			<spawn x="95000" y="211500" z="-3760" heading="32768" radius="300" />
+			<spawn x="95500" y="214000" z="-3544" heading="32768" radius="300" />
+			<spawn x="95000" y="216500" z="-3760" heading="32768" radius="300" />
+		</team>
+		<capture name="A" x="80340" y="209067" z="-3696" radius="600" />
+		<capture name="B" x="84691" y="222443" z="-3544" radius="600" />
+		<capture name="C" x="83691" y="214843" z="-3592" radius="700" />
+		<capture name="D" x="89741" y="209092" z="-3640" radius="600" />
+		<capture name="E" x="86441" y="217143" z="-3568" radius="800" />
+	</conquest>
+</map>

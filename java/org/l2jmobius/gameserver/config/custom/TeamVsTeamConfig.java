@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 
 import org.l2jmobius.commons.util.ConfigReader;
 import org.l2jmobius.gameserver.model.Location;
+import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.item.holders.ItemChanceHolder;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
 
@@ -50,30 +51,38 @@ public class TeamVsTeamConfig
 	public static int MIN_PLAYERS;
 	/** The level brackets, lowest first: {min, max} each. */
 	public static List<int[]> BRACKETS;
-	/** The spawn points of the teams: each team starts at its first one, its dead come back at one of them (see TeamVsTeamManager). */
-	public static List<Location> BLUE_BASES;
-	public static List<Location> RED_BASES;
-	/** The first spawn point of each team, where it starts ({@code null} for none). */
-	public static Location BLUE_BASE;
-	public static Location RED_BASE;
+	/** The maps a registration picks from, by id (data/maps), empty for any map ticked for Team vs Team (see EventMapData). */
+	public static List<String> MAPS;
 	public static int SPAWN_RADIUS;
 	public static int BASE_RADIUS;
 	/** Players coming this close to the edge of an enemy base are warned that it stuns them (see TeamVsTeamManager). */
 	public static int BASE_WARNING_DISTANCE;
-	/** The fence round the field: {middle x, middle y, radius along x, radius along y} of an ellipse, {@code null} for none (see TeamVsTeamBarrier). */
-	public static int[] BARRIER;
-	/** The battlefield's edge on the players' radar: minX, minY, maxX, maxY, or {@code null} for around the bases. */
-	public static int[] AREA;
 	public static int RESPAWN_DELAY;
 	public static int SPAWN_PROTECTION;
 	public static List<ItemChanceHolder> KILL_REWARDS;
 	public static List<ItemHolder> WIN_REWARD;
+	/** The extra rewards of the best players of the winning team, first place first: Crystal Scrolls of their grade (see TeamVsTeamManager). */
+	public static List<TopReward> TOP_REWARDS;
 	public static List<Location> MANAGER_LOCATIONS;
 	public static int BLUE_NAME_COLOR;
 	public static int RED_NAME_COLOR;
 	public static boolean BUFF_TEMPLATE;
 	/** The buffs players may put in their TvT Event buff template: {skill id, level}, level 0 for the skill's highest. */
 	public static List<int[]> BUFFS;
+
+	// Deathmatch: every one for themselves on the TvT maps (see TeamVsTeamManager.Mode#DEATHMATCH).
+	public static boolean DM_ENABLED;
+	/** Fighters per match, players and fake players. */
+	public static int DM_SIZE;
+	public static int DM_FIGHT_TIME;
+	public static int DM_RESPAWN_DELAY;
+	/** The maps a Deathmatch registration picks from, by id (data/maps), empty for any map ticked for Deathmatch. */
+	public static List<String> DM_MAPS;
+	/** The reward of the best player (the fake players left out of the places). */
+	public static List<ItemHolder> DM_WIN_REWARD;
+	/** The extra rewards of the best players, first place first: Crystal Scrolls of their grade. */
+	public static List<TopReward> DM_TOP_REWARDS;
+	public static int DM_NAME_COLOR;
 
 	public static void load()
 	{
@@ -109,71 +118,18 @@ public class TeamVsTeamConfig
 		brackets.sort((a, b) -> Integer.compare(a[0], b[0]));
 		BRACKETS = Collections.unmodifiableList(brackets);
 
-		BLUE_BASES = parseLocations(config.getString("TvTBlueBase", "-17200,147000,-3704,46757;-19800,146600,-3736,52784;-21600,145400,-3760,57879"), "TvTBlueBase");
-		RED_BASES = parseLocations(config.getString("TvTRedBase", "-20200,138700,-3896,11380;-16400,138400,-3792,20956;-14600,139400,-3792,25627"), "TvTRedBase");
-		BLUE_BASE = BLUE_BASES.isEmpty() ? null : BLUE_BASES.get(0);
-		RED_BASE = RED_BASES.isEmpty() ? null : RED_BASES.get(0);
+		final List<String> maps = new ArrayList<>();
+		for (String id : config.getString("TvTMaps", "").split(","))
+		{
+			if (!id.isBlank())
+			{
+				maps.add(id.trim().toLowerCase());
+			}
+		}
+		MAPS = Collections.unmodifiableList(maps);
 		SPAWN_RADIUS = Math.max(0, config.getInt("TvTSpawnRadius", 150));
 		BASE_RADIUS = Math.max(100, config.getInt("TvTBaseRadius", 700));
 		BASE_WARNING_DISTANCE = Math.max(0, config.getInt("TvTBaseWarningDistance", 500));
-		BARRIER = null;
-		final String barrier = config.getString("TvTBarrier", "-17800,142600,5900,5300").trim();
-		if (!barrier.isEmpty())
-		{
-			final String[] values = barrier.split(",");
-			try
-			{
-				if (values.length != 4)
-				{
-					throw new NumberFormatException();
-				}
-				final int[] parsed = new int[4];
-				for (int i = 0; i < 4; i++)
-				{
-					parsed[i] = Integer.parseInt(values[i].trim());
-				}
-				if ((parsed[2] < 500) || (parsed[3] < 500))
-				{
-					throw new NumberFormatException();
-				}
-				BARRIER = parsed;
-			}
-			catch (NumberFormatException e)
-			{
-				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad TvTBarrier \"" + barrier + "\" (x,y,radius x,radius y, radii at least 500): no barrier.");
-			}
-		}
-		AREA = null;
-		final String area = config.getString("TvTArea", "").trim();
-		if (!area.isEmpty())
-		{
-			try
-			{
-				final String[] parts = area.split(",");
-				final int minX = Integer.parseInt(parts[0].trim());
-				final int minY = Integer.parseInt(parts[1].trim());
-				final int maxX = Integer.parseInt(parts[2].trim());
-				final int maxY = Integer.parseInt(parts[3].trim());
-				if ((parts.length == 4) && (minX < maxX) && (minY < maxY))
-				{
-					AREA = new int[]
-					{
-						minX,
-						minY,
-						maxX,
-						maxY
-					};
-				}
-				else
-				{
-					LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad TvTArea \"" + area + "\", the area around the bases is shown.");
-				}
-			}
-			catch (Exception e)
-			{
-				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad TvTArea \"" + area + "\", the area around the bases is shown.");
-			}
-		}
 		RESPAWN_DELAY = Math.max(1, config.getInt("TvTRespawnDelay", 10));
 		SPAWN_PROTECTION = Math.max(0, config.getInt("TvTSpawnProtection", 15));
 
@@ -200,28 +156,9 @@ public class TeamVsTeamConfig
 		}
 		KILL_REWARDS = Collections.unmodifiableList(killRewards);
 
-		final List<ItemHolder> winReward = new ArrayList<>();
-		for (String part : config.getString("TvTWinReward", "6393,10").split(";"))
-		{
-			final String[] values = part.trim().split(",");
-			if (values.length == 2)
-			{
-				try
-				{
-					winReward.add(new ItemHolder(Integer.parseInt(values[0].trim()), Long.parseLong(values[1].trim())));
-					continue;
-				}
-				catch (NumberFormatException e)
-				{
-					// Reported below.
-				}
-			}
-			if (!part.isBlank())
-			{
-				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad reward \"" + part + "\" in TvTWinReward.");
-			}
-		}
-		WIN_REWARD = Collections.unmodifiableList(winReward);
+		WIN_REWARD = parseItems(config.getString("TvTWinReward", "6393,10"), "TvTWinReward");
+
+		TOP_REWARDS = parseTopRewards(config.getString("TvTTopRewards", "weapon,1;armor,2;armor,1"), "TvTTopRewards");
 
 		final List<Location> managers = new ArrayList<>();
 		for (String part : config.getString("TvTManagerLocations", "83425,148585,-3406,32938").split(";"))
@@ -264,6 +201,167 @@ public class TeamVsTeamConfig
 			}
 		}
 		BUFFS = Collections.unmodifiableList(buffs);
+
+		DM_ENABLED = config.getBoolean("DeathmatchEnabled", true);
+		DM_SIZE = Math.max(2, Math.min(100, config.getInt("DeathmatchSize", 20)));
+		DM_FIGHT_TIME = Math.max(1, config.getInt("DeathmatchFightTime", 20));
+		DM_RESPAWN_DELAY = Math.max(1, config.getInt("DeathmatchRespawnDelay", 10));
+		final List<String> dmMaps = new ArrayList<>();
+		for (String id : config.getString("DeathmatchMaps", "").split(","))
+		{
+			if (!id.isBlank())
+			{
+				dmMaps.add(id.trim().toLowerCase());
+			}
+		}
+		DM_MAPS = Collections.unmodifiableList(dmMaps);
+		DM_WIN_REWARD = parseItems(config.getString("DeathmatchWinReward", "6393,10"), "DeathmatchWinReward");
+		DM_TOP_REWARDS = parseTopRewards(config.getString("DeathmatchTopRewards", "weapon,1;armor,2;armor,1"), "DeathmatchTopRewards");
+		DM_NAME_COLOR = Integer.decode("0x" + config.getString("DeathmatchNameColor", "FFFFFF"));
+	}
+
+	/**
+	 * @param text items: itemId,count;itemId,count...
+	 * @param key the config key, for the warnings
+	 * @return the items
+	 */
+	private static List<ItemHolder> parseItems(String text, String key)
+	{
+		final List<ItemHolder> items = new ArrayList<>();
+		for (String part : text.split(";"))
+		{
+			final String[] values = part.trim().split(",");
+			if (values.length == 2)
+			{
+				try
+				{
+					items.add(new ItemHolder(Integer.parseInt(values[0].trim()), Long.parseLong(values[1].trim())));
+					continue;
+				}
+				catch (NumberFormatException e)
+				{
+					// Reported below.
+				}
+			}
+			if (!part.isBlank())
+			{
+				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad reward \"" + part + "\" in " + key + ".");
+			}
+		}
+		return Collections.unmodifiableList(items);
+	}
+
+	/**
+	 * The reward of one place of the winning team: {@code count} Crystal Scrolls of the player's grade, for weapons or for armor.
+	 * @param weapon {@code true} for Crystal Scroll: Enchant Weapon, {@code false} for Crystal Scroll: Enchant Armor
+	 * @param count how many
+	 */
+	public record TopReward(boolean weapon, int count)
+	{
+		/** Crystal Scroll: Enchant Weapon and Enchant Armor of each expertise level (none, D, C, B, A, S, S80, S84): S80 and S84 items take the S-grade ones. */
+		private static final int[][] CRYSTAL_SCROLLS =
+		{
+			{
+				957,
+				958
+			},
+			{
+				957,
+				958
+			},
+			{
+				953,
+				954
+			},
+			{
+				949,
+				950
+			},
+			{
+				731,
+				732
+			},
+			{
+				961,
+				962
+			},
+			{
+				961,
+				962
+			},
+			{
+				961,
+				962
+			}
+		};
+
+		/**
+		 * @param player a player
+		 * @return the Crystal Scroll of its grade (its expertise)
+		 */
+		public int getItemId(Player player)
+		{
+			final int expertise = Math.max(0, Math.min(CRYSTAL_SCROLLS.length - 1, player.getExpertiseLevel()));
+			return CRYSTAL_SCROLLS[expertise][weapon ? 0 : 1];
+		}
+
+		/**
+		 * @param rewards the rewards of the places, first place first
+		 * @return them as text: "1st place 1 Crystal Scroll: Enchant Weapon, 2nd place..." (empty for none)
+		 */
+		public static String describe(List<TopReward> rewards)
+		{
+			final StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < rewards.size(); i++)
+			{
+				final TopReward reward = rewards.get(i);
+				sb.append(sb.length() > 0 ? ", " : "").append(ordinal(i + 1)).append(" place ").append(reward.count()).append(reward.weapon() ? " Crystal Scroll: Enchant Weapon" : " Crystal Scroll: Enchant Armor");
+			}
+			return sb.toString();
+		}
+
+		private static String ordinal(int place)
+		{
+			final int lastTwo = place % 100;
+			final int last = place % 10;
+			return place + (((lastTwo >= 11) && (lastTwo <= 13)) ? "th" : (last == 1 ? "st" : (last == 2 ? "nd" : (last == 3 ? "rd" : "th"))));
+		}
+	}
+
+	/**
+	 * @param text the rewards of the places, first place first: weapon,count;armor,count;...
+	 * @param key the config key, for the warnings
+	 * @return the rewards
+	 */
+	static List<TopReward> parseTopRewards(String text, String key)
+	{
+		final List<TopReward> topRewards = new ArrayList<>();
+		for (String part : text.split(";"))
+		{
+			final String[] values = part.trim().split(",");
+			if (values.length == 2)
+			{
+				final String kind = values[0].trim().toLowerCase();
+				try
+				{
+					final int count = Integer.parseInt(values[1].trim());
+					if ((count > 0) && (kind.equals("weapon") || kind.equals("armor")))
+					{
+						topRewards.add(new TopReward(kind.equals("weapon"), count));
+						continue;
+					}
+				}
+				catch (NumberFormatException e)
+				{
+					// Reported below.
+				}
+			}
+			if (!part.isBlank())
+			{
+				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad reward \"" + part + "\" in " + key + ".");
+			}
+		}
+		return Collections.unmodifiableList(topRewards);
 	}
 
 	static List<Location> parseLocations(String text, String key)

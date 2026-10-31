@@ -1,0 +1,49 @@
+<html>
+	<title>Deathmatch</title>
+	<body>
+		<center>
+			<table border=0 cellpadding=0 cellspacing=0 width=290 background=L2UI_CH3.refinewnd_back_Pattern>
+				<tr>
+					<td valign=top align=center>
+						<table border=0 cellpadding=0 cellspacing=0>
+							<tr>
+								<td align=center fixwidth=290>
+									<font name="hs15" color="CDB67F">Deathmatch</font><br1>
+									<img src="L2UI_CH3.herotower_deco" width=256 height=32>
+								</td>
+							</tr>
+						</table>
+						<table width=270 border=0>
+							<tr>
+								<td align=center><font color="LEVEL">%message%</font></td>
+							</tr>
+							<tr>
+								<td><font color="CDB67F">Every one for themselves, %size% fighters in the %map%. Everyone spawns somewhere on the field and comes back somewhere else %respawn% seconds after dying. Free places are filled with fake players of your level.</font></td>
+							</tr>
+							<tr>
+								<td><font color="CDB67F">Everyone else is attacked without Ctrl, and no kill gives karma. Every kill gives a Sealed Cache. After %fight% minutes the most kills wins: %reward% for the best player.%top%</font></td>
+							</tr>
+							<tr>
+								<td><font color="CDB67F">A party plays as its members alone: there are no friends in a Deathmatch.</font></td>
+							</tr>
+							<tr>
+								<td><font color="B09878">Brackets: %brackets%</font></td>
+							</tr>
+							<tr>
+								<td><font color="B09878">Registration closes in %time%. Registered: %count% (%bracket_count% in your bracket).</font></td>
+							</tr>
+							<tr>
+								<td><font color="B09878">You: %you%</font></td>
+							</tr>
+						</table>
+						<br>
+						<button value="Register" action="bypass -h Script TvT register" width=150 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"/>
+						<button value="Register my party" action="bypass -h Script TvT registerParty" width=150 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"/>
+						<button value="Cancel registration" action="bypass -h Script TvT cancel" width=150 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"/>
+						<br>
+					</td>
+				</tr>
+			</table>
+		</center>
+	</body>
+</html>

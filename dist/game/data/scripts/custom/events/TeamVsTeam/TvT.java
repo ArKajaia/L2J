@@ -20,18 +20,23 @@
  */
 package custom.events.TeamVsTeam;
 
+import java.util.List;
+
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
+import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig.TopReward;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
+import org.l2jmobius.gameserver.managers.TeamVsTeamManager.Mode;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
 import org.l2jmobius.gameserver.model.script.Event;
+import org.l2jmobius.gameserver.model.eventmap.EventMap;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 
 /**
- * Team vs Team event: the dialogs of the TvT Event Manager, and //event start/stop. The event itself (schedule, brackets, teams, fake players, the fight) is in the TeamVsTeamManager, see config/Custom/TeamVsTeam.ini.
+ * Team vs Team event: the dialogs of the TvT Event Manager (for a Team vs Team or a Deathmatch registration), and //event start/stop. The event itself (schedule, brackets, teams, fake players, the fight) is in the TeamVsTeamManager, see config/Custom/TeamVsTeam.ini.
  * @author Mobius
  */
 public class TvT extends Event
@@ -109,12 +114,18 @@ public class TvT extends Event
 		}
 
 		final int seconds = manager.getRegistrationSecondsLeft();
+		// The registration open now is for Team vs Team or a Deathmatch (they take turns, see EventRotationManager).
+		final boolean deathmatch = manager.getRegistrationMode() == Mode.DEATHMATCH;
 		final NpcHtmlMessage html = new NpcHtmlMessage(npc.getObjectId());
-		html.setFile(player, HTML_PATH + "manager.html");
+		html.setFile(player, HTML_PATH + (deathmatch ? "deathmatch.html" : "manager.html"));
 		html.replace("%message%", manager.isRegistrationOpen() ? message : "Registration is closed.");
-		html.replace("%size%", String.valueOf(TeamVsTeamConfig.TEAM_SIZE));
-		html.replace("%fight%", String.valueOf(TeamVsTeamConfig.FIGHT_TIME));
-		html.replace("%reward%", describeReward());
+		html.replace("%size%", String.valueOf(deathmatch ? TeamVsTeamConfig.DM_SIZE : TeamVsTeamConfig.TEAM_SIZE));
+		final EventMap map = manager.getRegistrationMap();
+		html.replace("%map%", map != null ? map.name() : "battlefield picked when registration opens");
+		html.replace("%fight%", String.valueOf(deathmatch ? TeamVsTeamConfig.DM_FIGHT_TIME : TeamVsTeamConfig.FIGHT_TIME));
+		html.replace("%respawn%", String.valueOf(TeamVsTeamConfig.DM_RESPAWN_DELAY));
+		html.replace("%reward%", describeReward(deathmatch ? TeamVsTeamConfig.DM_WIN_REWARD : TeamVsTeamConfig.WIN_REWARD));
+		html.replace("%top%", describeTopRewards(deathmatch));
 		html.replace("%brackets%", TeamVsTeamManager.describeBrackets());
 		html.replace("%time%", (seconds / 60) + " min " + (seconds % 60) + " s");
 		html.replace("%count%", String.valueOf(manager.getRegisteredCount()));
@@ -123,15 +134,25 @@ public class TvT extends Event
 		player.sendPacket(html);
 	}
 
-	private static String describeReward()
+	private static String describeReward(List<ItemHolder> rewards)
 	{
 		final StringBuilder sb = new StringBuilder();
-		for (ItemHolder reward : TeamVsTeamConfig.WIN_REWARD)
+		for (ItemHolder reward : rewards)
 		{
 			final ItemTemplate item = ItemData.getInstance().getTemplate(reward.getId());
 			sb.append(sb.length() > 0 ? ", " : "").append(reward.getCount()).append(' ').append(item != null ? item.getName() : String.valueOf(reward.getId()));
 		}
 		return sb.length() > 0 ? sb.toString() : "nothing";
+	}
+
+	private static String describeTopRewards(boolean deathmatch)
+	{
+		final String places = TopReward.describe(deathmatch ? TeamVsTeamConfig.DM_TOP_REWARDS : TeamVsTeamConfig.TOP_REWARDS);
+		if (places.isEmpty())
+		{
+			return "";
+		}
+		return deathmatch ? " The best players (by kills, the fake players left out) also get Crystal Scrolls of their grade: " + places + "." : " The best players of the whole winning team (by kills) also get Crystal Scrolls of their grade: " + places + ".";
 	}
 
 	@Override

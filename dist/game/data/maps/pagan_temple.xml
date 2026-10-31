@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	A battlefield of the PvP events (EventMapData), shared by Team vs Team, Conquest and Deathmatch. Written by the event map page (//tvt map, //conquest): edits by hand are kept, comments are not.
+	map         id (the file name), name (shown to the players)
+	area        the battlefield's edge on the players' radar, minX/minY (north-west corner) to maxX/maxY (south-east corner); z: the ground's height, where it has several layers
+	barrier     optional, Team vs Team and Deathmatch: the fence round the field that nobody gets through, an ellipse: middle x, y and its radiusX, radiusY (at least 500)
+	door        a door of data/Doors.xml put in a match's copy of the place, open (open="true") or shut (open="false"); a match has no other doors
+	tvt         enabled: Team vs Team may pick the map. The bases of each team (blue, red): x, y, z, heading; a team starts at its first one
+	conquest    enabled: Conquest may pick the map; maxPlayers per team. The spawn points of each team (x, y, z, heading, radius: how far a wave is spread) and the capture points (name, x, y, z, radius)
+	deathmatch  enabled: Deathmatch may pick the map. The spots everyone spawns at: x, y, z, heading
+-->
+<map id="pagan_temple" name="Pagan Temple">
+	<description>Rune, underground. Halls, corridors and doors, mirrored west/east around the sanctuary. Each team spawns in the four outer rooms of its wing; its home points are the wing's corner rooms (A/B west, F/G east). Down the middle: C in the sanctuary hall, which the wings reach only through its eight corridor doors; D in the pillared nave past the sanctuary gates; E before the altar. The middle rooms of each wing and the side rooms along the nave and altar are left empty, to hide and flank. The event opens the corridor doors, the sanctuary gates and the altar's secret side doors, and shuts the temple gate (the way out to the surface) and the gates to the inner altar.</description>
+	<area minX="-24766" minY="-50400" maxX="-7500" maxY="-36700" z="-10750" />
+	<door id="19160002" open="true" />
+	<door id="19160003" open="true" />
+	<door id="19160004" open="true" />
+	<door id="19160005" open="true" />
+	<door id="19160006" open="true" />
+	<door id="19160009" open="true" />
+	<door id="19160010" open="true" />
+	<door id="19160011" open="true" />
+	<door id="19160014" open="false" />
+	<door id="19160017" open="false" />
+	<door id="19160008" open="true" />
+	<door id="19160007" open="true" />
+	<door id="19160001" open="false" />
+	<door id="19160013" open="false" />
+	<door id="19160015" open="false" />
+	<door id="19160016" open="false" />
+	<conquest enabled="true" maxPlayers="100">
+		<team id="blue">
+			<spawn x="-23076" y="-43571" z="-10944" heading="0" radius="150" />
+			<spawn x="-23162" y="-41679" z="-10944" heading="0" radius="100" />
+			<spawn x="-23136" y="-39807" z="-10944" heading="0" radius="100" />
+			<spawn x="-22980" y="-37987" z="-10944" heading="0" radius="100" />
+		</team>
+		<team id="red">
+			<spawn x="-9641" y="-43551" z="-10944" heading="32768" radius="100" />
+			<spawn x="-9756" y="-41712" z="-10944" heading="32768" radius="100" />
+			<spawn x="-9756" y="-39840" z="-10944" heading="32768" radius="100" />
+			<spawn x="-9667" y="-37987" z="-10944" heading="32768" radius="100" />
+		</team>
+		<capture name="A" x="-20016" y="-43440" z="-10752" radius="500" />
+		<capture name="B" x="-20016" y="-38080" z="-10752" radius="500" />
+		<capture name="C" x="-16298" y="-39729" z="-10720" radius="600" />
+		<capture name="D" x="-19106" y="-47036" z="-10816" radius="500" />
+		<capture name="F" x="-12716" y="-43440" z="-10752" radius="500" />
+		<capture name="G" x="-12716" y="-38080" z="-10752" radius="500" />
+		<capture name="E" x="-13698" y="-47062" z="-10816" radius="500" />
+	</conquest>
+</map>

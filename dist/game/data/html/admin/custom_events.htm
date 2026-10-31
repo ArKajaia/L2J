@@ -1,0 +1,52 @@
+<html><title>Events</title><body>
+<center>
+<table width=270><tr>
+<td width=45><button value="Main" action="bypass admin_admin" width=45 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td width=180><center>Events</center></td>
+<td width=45><button value="Back" action="bypass admin_html custom_menu.htm" width=45 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><br>
+<br><font color="LEVEL">TEAM VS TEAM / DEATHMATCH</font><br1><table width=270 border=0 bgcolor="444444">
+<tr><td width=100>Map:</td><td width=170><edit var="evmap" width=150 height=15></td></tr>
+<tr><td width=100>Level:</td><td width=170><edit var="evlvl" width=150 height=15></td></tr>
+</table><br1><table width=270><tr>
+<td><button value="Status" action="bypass -h admin_tvt status" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Detail" action="bypass -h admin_tvt detail" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Open" action="bypass -h admin_tvt open $evmap" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Close" action="bypass -h admin_tvt close" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table>
+<table width=270><tr>
+<td><button value="Simulate" action="bypass -h admin_tvt simulate $evlvl $evmap" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Stop" action="bypass -h admin_tvt stop" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Watch" action="bypass -h admin_tvt watch" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Maps" action="bypass -h admin_tvt maps" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table>
+<table width=270><tr>
+<td><button value="DM Open" action="bypass -h admin_tvt dm open $evmap" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="DM Sim" action="bypass -h admin_tvt dm simulate $evlvl $evmap" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><font color="A0A0A0">Open starts registration on the map. Simulate fills a match with fake players. Empty fields: leave a space.</font><br><br><font color="LEVEL">HOURLY ROTATION</font><br1><table width=270><tr>
+<td><button value="Status" action="bypass -h admin_tvt rotation" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Next TvT" action="bypass -h admin_tvt rotation next tvt" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Next Conq." action="bypass -h admin_tvt rotation next conquest" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Next DM" action="bypass -h admin_tvt rotation next deathmatch" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><br><font color="LEVEL">CONQUEST</font><br1><table width=270 border=0 bgcolor="444444">
+<tr><td width=100>Map:</td><td width=170><edit var="cqmap" width=150 height=15></td></tr>
+<tr><td width=100>Players/team:</td><td width=170><edit var="cqn" width=150 height=15></td></tr>
+<tr><td width=100>Level range:</td><td width=170><edit var="cqlv" width=150 height=15></td></tr>
+</table><br1><table width=270><tr>
+<td><button value="Map Page" action="bypass -h admin_conquest web" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Maps" action="bypass -h admin_conquest list" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Start" action="bypass -h admin_conquest $cqmap start $cqn $cqlv" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Stop" action="bypass -h admin_conquest stop" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table>
+<table width=270><tr>
+<td><button value="Status" action="bypass -h admin_conquest status" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Live" action="bypass -h admin_conquest live" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Watch" action="bypass -h admin_conquest watch" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Leave" action="bypass -h admin_conquest leave" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><font color="A0A0A0">Level range looks like 76-85. Live opens the match page.</font><br><br><font color="LEVEL">EVENT MAPS</font><br1><table width=270><tr>
+<td><button value="Map Editor" action="bypass -h admin_tvt web" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Show" action="bypass -h admin_tvt show $evmap" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Hide" action="bypass -h admin_tvt hide" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Reload" action="bypass -h admin_tvt reload" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table>
+</center></body></html>
