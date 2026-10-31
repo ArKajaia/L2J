@@ -42,6 +42,7 @@ import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
+import org.l2jmobius.gameserver.managers.RaceWarsManager;
 import org.l2jmobius.gameserver.managers.TeamEventRules;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.VillageSiegeManager;
@@ -488,6 +489,13 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		if ((profile != null) && profile.isTvtFighter())
 		{
 			thinkTeamVsTeam(npc, profile);
+			return;
+		}
+
+		// And one of a Race Wars match: it fights for its race.
+		if ((profile != null) && profile.isRaceWarsFighter())
+		{
+			thinkRaceWars(npc, profile);
 			return;
 		}
 
@@ -6397,6 +6405,70 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	}
 
 	/**
+	 * A fake player of a Race Wars match (see {@link RaceWarsManager}): it gets ready at its army's start point before the fight, then engages a fighter of another race it sees (or a monster of the match close by), plays with its party, or marches on the closest
+	 * fighter of another race. Nobody comes back, so there are no bases to mind.
+	 */
+	private void thinkRaceWars(Attackable npc, FakePlayerPvpProfile profile)
+	{
+		final RaceWarsManager raceWars = RaceWarsManager.getInstance();
+		final RaceWarsManager.Phase phase = raceWars.getPhase(npc);
+		final FakePlayerParty party = profile.getParty();
+		if ((phase == null) || (phase == RaceWarsManager.Phase.ENDED))
+		{
+			trace(Reason.SIM_WAIT, null);
+			return;
+		}
+
+		// Its spawn follows it: nothing sends it back to where it appeared.
+		final Spawn spawn = npc.getSpawn();
+		if (spawn != null)
+		{
+			spawn.setXYZ(npc.getX(), npc.getY(), npc.getZ());
+		}
+
+		if (phase == RaceWarsManager.Phase.PREP)
+		{
+			// Supports buff the party, necromancers summon, duelists charge up.
+			if (((party != null) && supportParty(npc, profile, party, false)) || ((profile.getCharges() < profile.getMaxCharges()) && castOnSelf(npc, null, profile.getSkills(SkillCategory.CHARGE), true, false)))
+			{
+				return;
+			}
+			trace(Reason.SIM_PREP, null);
+			return;
+		}
+
+		// An enemy in sight: the fight is on.
+		final Creature enemy = raceWars.findEnemyInSight(npc);
+		if (enemy != null)
+		{
+			if (standUp(npc))
+			{
+				trace(Reason.STAND_UP, enemy);
+				return;
+			}
+			trace(Reason.SIM_ENGAGE, enemy);
+			npc.setRunning();
+			FakePlayerPvpManager.getInstance().assistFight(npc, enemy);
+			return;
+		}
+
+		// With its party: support, its fights, following its leader.
+		if ((party != null) && thinkParty(npc, profile, party))
+		{
+			return;
+		}
+
+		final Location destination = raceWars.getMarchTarget(npc);
+		if (destination == null)
+		{
+			trace(Reason.SIM_WAIT, null);
+			return;
+		}
+		trace(Reason.SIM_MARCH, null);
+		marchTo(npc, destination, true);
+	}
+
+	/**
 	 * A fake player of a Conquest match (see {@link ConquestManager}): it gets ready at its spawn point before the fight, then engages an enemy it sees, plays with its party, or (the leader, or one without a party) marches where its team's commander sent
 	 * its party, one stretch of the way at a time.
 	 */
@@ -7285,7 +7357,7 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		{
 			for (Creature member : members)
 			{
-				if (!member.isDead() || (member.isPlayer() && (member.asPlayer().isReviveRequested() || member.isPendingRevive())) || wasRecentlyCast(member, resurrects.get(0), now))
+				if (!member.isDead() || member.isResurrectionBlocked() || (member.isPlayer() && (member.asPlayer().isReviveRequested() || member.isPendingRevive())) || wasRecentlyCast(member, resurrects.get(0), now))
 				{
 					continue;
 				}

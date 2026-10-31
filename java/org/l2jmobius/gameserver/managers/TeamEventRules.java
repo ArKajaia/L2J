@@ -38,7 +38,7 @@ public final class TeamEventRules
 	 */
 	public static boolean isActive()
 	{
-		return TeamVsTeamManager.ACTIVE || ConquestManager.ACTIVE;
+		return TeamVsTeamManager.ACTIVE || ConquestManager.ACTIVE || RaceWarsManager.ACTIVE;
 	}
 
 	/**
@@ -57,7 +57,7 @@ public final class TeamEventRules
 	 */
 	public static boolean isInvolved(Creature a, Creature b)
 	{
-		return (TeamVsTeamManager.ACTIVE && (TeamVsTeamManager.getRelation(a, b) != TeamVsTeamManager.Relation.NONE)) || (ConquestManager.ACTIVE && (ConquestManager.getRelation(a, b) != TeamVsTeamManager.Relation.NONE));
+		return (TeamVsTeamManager.ACTIVE && (TeamVsTeamManager.getRelation(a, b) != TeamVsTeamManager.Relation.NONE)) || (ConquestManager.ACTIVE && (ConquestManager.getRelation(a, b) != TeamVsTeamManager.Relation.NONE)) || RaceWarsManager.isInvolved(a, b);
 	}
 
 	/**
@@ -67,7 +67,7 @@ public final class TeamEventRules
 	 */
 	public static boolean isForbidden(Creature attacker, Creature target)
 	{
-		return TeamVsTeamManager.isForbidden(attacker, target) || ConquestManager.isForbidden(attacker, target);
+		return TeamVsTeamManager.isForbidden(attacker, target) || ConquestManager.isForbidden(attacker, target) || RaceWarsManager.isForbidden(attacker, target);
 	}
 
 	/**
@@ -77,7 +77,7 @@ public final class TeamEventRules
 	 */
 	public static boolean isEnemy(Creature attacker, Creature target)
 	{
-		return TeamVsTeamManager.isEnemy(attacker, target) || ConquestManager.isEnemy(attacker, target);
+		return TeamVsTeamManager.isEnemy(attacker, target) || ConquestManager.isEnemy(attacker, target) || RaceWarsManager.isEnemy(attacker, target);
 	}
 
 	/**
@@ -110,6 +110,10 @@ public final class TeamEventRules
 		if (ConquestManager.ACTIVE)
 		{
 			ConquestManager.getInstance().onDeath(victim, killer);
+		}
+		if (RaceWarsManager.ACTIVE)
+		{
+			RaceWarsManager.getInstance().onDeath(victim, killer);
 		}
 	}
 }

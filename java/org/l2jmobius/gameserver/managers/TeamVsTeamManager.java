@@ -1459,7 +1459,7 @@ public class TeamVsTeamManager
 	/**
 	 * The doors the map names, in the match's copy of its place: an instance only has the doors added to it, closed or open as data/Doors.xml has them, so each is set by {@link #keepDoors} as the map says.
 	 */
-	private static void setUpDoors(EventMap map, Instance instance)
+	static void setUpDoors(EventMap map, Instance instance)
 	{
 		boolean added = false;
 		for (EventDoor door : map.doors())
@@ -1484,7 +1484,7 @@ public class TeamVsTeamManager
 	/**
 	 * Sets the doors of a match's instance as its map says, again at every tick: a door is opened without its close timer ({@code Door#openMe} starts one), and one shut or opened by anything else goes back.
 	 */
-	private static void keepDoors(EventMap map, Instance instance)
+	static void keepDoors(EventMap map, Instance instance)
 	{
 		for (EventDoor setting : map.doors())
 		{

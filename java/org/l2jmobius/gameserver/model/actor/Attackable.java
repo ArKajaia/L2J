@@ -57,6 +57,7 @@ import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.PcCafePointsManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
+import org.l2jmobius.gameserver.managers.RaceWarsManager;
 import org.l2jmobius.gameserver.managers.RaidLogManager;
 import org.l2jmobius.gameserver.managers.BestiaryManager;
 import org.l2jmobius.gameserver.managers.SessionStatsManager;
@@ -1311,10 +1312,12 @@ public class Attackable extends Npc
 			return 0;
 		}
 		
+		// A Race Wars monster keeps on a fighter of its match that hides (Hide makes a player invisible).
+		final boolean seesHidden = RaceWarsManager.seesThroughHide(this, ai.getAttacker());
 		if (ai.getAttacker().isPlayer())
 		{
 			final Player act = ai.getAttacker().asPlayer();
-			if (act.isInvisible() || act.isInvul() || act.isSpawnProtected())
+			if ((act.isInvisible() && !seesHidden) || act.isInvul() || act.isSpawnProtected())
 			{
 				// Remove Object Should Use This Method and Can be Blocked While Interacting
 				_aggroList.remove(target);
@@ -1322,7 +1325,7 @@ public class Attackable extends Npc
 			}
 		}
 		
-		if (!ai.getAttacker().isSpawned() || ai.getAttacker().isInvisible())
+		if (!ai.getAttacker().isSpawned() || (ai.getAttacker().isInvisible() && !seesHidden))
 		{
 			_aggroList.remove(target);
 			return 0;

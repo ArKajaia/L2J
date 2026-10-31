@@ -44,6 +44,7 @@ import org.l2jmobius.gameserver.handler.TargetHandler;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.TeamEventRules;
+import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Creature;
@@ -1251,6 +1252,12 @@ public class Skill
 		}
 		else if (caster.isPvpFakePlayer())
 		{
+			// The parties of a race war army spare each other, like the members of one party.
+			if (FakeSimulationManager.isRunAlly(caster, target))
+			{
+				return false;
+			}
+			
 			// A roaming fake player's area skills hit monsters like a player's, and, like a player that doesn't hold Ctrl, spare the players (and other roaming fake players) it isn't fighting unless they are flagged or PKs.
 			if (targetPlayer == null)
 			{

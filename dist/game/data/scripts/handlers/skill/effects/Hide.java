@@ -17,6 +17,7 @@
 package handlers.skill.effects;
 
 import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.managers.RaceWarsManager;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Creature;
@@ -51,7 +52,8 @@ public class Hide extends AbstractEffect
 			
 			World.getInstance().forEachVisibleObject(player, Creature.class, target ->
 			{
-				if ((target != null) && (target.getTarget() == player))
+				// A Race Wars monster isn't fooled by Hide: it keeps on its prey.
+				if ((target != null) && (target.getTarget() == player) && !RaceWarsManager.seesThroughHide(target, player))
 				{
 					if (target.isAttackable())
 					{

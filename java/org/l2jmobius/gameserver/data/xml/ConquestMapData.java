@@ -68,7 +68,7 @@ public class ConquestMapData
 	{
 		final EventMapData data = EventMapData.getInstance();
 		final EventMap existing = data.getMap(map.id());
-		final EventMap base = existing != null ? existing : new EventMap(map.id(), map.name(), map.description(), map.minX(), map.minY(), map.maxX(), map.maxY(), map.z(), null, List.of(), Set.of(), List.of(), List.of(), map.maxPlayers(), List.of(), List.of());
+		final EventMap base = existing != null ? existing : new EventMap(map.id(), map.name(), map.description(), map.minX(), map.minY(), map.maxX(), map.maxY(), map.z(), null, List.of(), Set.of(), List.of(), List.of(), map.maxPlayers(), List.of(), List.of(), List.of(), List.of());
 		data.save(base.withConquest(map));
 	}
 

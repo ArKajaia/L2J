@@ -138,6 +138,7 @@ import org.l2jmobius.gameserver.managers.ScriptManager;
 import org.l2jmobius.gameserver.managers.BestiaryManager;
 import org.l2jmobius.gameserver.managers.SessionStatsManager;
 import org.l2jmobius.gameserver.managers.SiegeManager;
+import org.l2jmobius.gameserver.managers.RaceWarsManager;
 import org.l2jmobius.gameserver.managers.TeamEventRules;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.conquest.ConquestRegistration;
@@ -7931,7 +7932,8 @@ public class Player extends Playable
 			ps.setInt(24, getRace().ordinal());
 			ps.setInt(25, getPlayerClass().getId());
 			ps.setLong(26, _deleteTimer);
-			ps.setString(27, TeamVsTeamManager.getOwnTitle(this));
+			final String raceWarsTitle = RaceWarsManager.getOwnTitle(this);
+			ps.setString(27, raceWarsTitle != null ? raceWarsTitle : TeamVsTeamManager.getOwnTitle(this));
 			ps.setInt(28, _appearance.getTitleColor());
 			ps.setInt(29, getAccessLevel().getLevel());
 			ps.setInt(30, isOnlineInt());
@@ -12034,6 +12036,16 @@ public class Player extends Playable
 		try
 		{
 			TeamVsTeamManager.getInstance().onLogout(this);
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.SEVERE, "deleteMe()", e);
+		}
+		
+		// Race Wars: likewise.
+		try
+		{
+			RaceWarsManager.getInstance().onLogout(this);
 		}
 		catch (Exception e)
 		{

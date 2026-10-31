@@ -220,6 +220,12 @@ public class CombatLogManager
 			TeamEventRules.onDamageDealt(attacker);
 		}
 		
+		// Race Wars: how much the monsters of a match hurt its fighters.
+		if (RaceWarsManager.ACTIVE && (attacker != null) && (damage > 0))
+		{
+			RaceWarsManager.getInstance().onDamage(target, attacker, damage);
+		}
+		
 		if (!CombatLogConfig.ENABLED || (attacker == null) || (damage <= 0) || !(target.isPlayable() || target.isFakePlayer() || (target instanceof FakePlayerPvpServitor) || (target instanceof Trap)))
 		{
 			return;

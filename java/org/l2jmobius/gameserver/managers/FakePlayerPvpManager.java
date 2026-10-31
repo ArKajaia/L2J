@@ -1757,6 +1757,63 @@ public class FakePlayerPvpManager
 	}
 
 	/**
+	 * Spawns a fake player for a Race Wars match (see {@link RaceWarsManager}): no clan, no hotzone, no Scroll of Escape, in its race's name color, and it only fights the other races of its match and the match's monsters.
+	 * @param build its build (one of its race)
+	 * @param level its level
+	 * @param title the title it shows (its race)
+	 * @param matchId its match
+	 * @param team its circle ({@link Team#NONE} for none)
+	 * @param nameColor the color of its name
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @param instanceId the instance of the match
+	 * @return the fake player, or {@code null} if it could not be created
+	 */
+	public Npc spawnRaceWarsFighter(FakePlayerPvpBuild build, int level, String title, int matchId, Team team, int nameColor, int x, int y, int z, int instanceId)
+	{
+		final String name = generateName();
+		try
+		{
+			final int npcId = _nextNpcId.getAndIncrement();
+			final NpcTemplate template = FakePlayerPvpFactory.createTemplate(build, level, npcId, name, null, title);
+			if (template == null)
+			{
+				releaseName(name);
+				return null;
+			}
+
+			final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+			profile.setRaceWarsMatchId(matchId);
+			profile.setBrain(FakeBrain.A);
+			profile.setSpawnTime(System.currentTimeMillis());
+			profile.setHotzoneId(0);
+			profile.setBlessedEscape(false);
+			template.getFakePlayerInfo().setNameColor(nameColor);
+			final Npc fake = spawnFromTemplate(template, x, y, z, instanceId);
+			if (fake == null)
+			{
+				FakePlayerData.getInstance().removeFakePlayer(name);
+				releaseName(name);
+				return null;
+			}
+
+			fake.setTeam(team);
+			prepareSimulant(fake);
+			// Its AI only starts by itself when a player sees it spawn.
+			fake.getAI().setIntention(Intention.ACTIVE);
+			return fake;
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn Race Wars fake player " + build.getName() + " level " + level + ".", e);
+			FakePlayerData.getInstance().removeFakePlayer(name);
+			releaseName(name);
+			return null;
+		}
+	}
+
+	/**
 	 * Spawns a fake player for a Conquest match (see {@link org.l2jmobius.gameserver.managers.conquest.ConquestManager}): like a Team vs Team one, it only fights the other team of its match.
 	 * @param build its build
 	 * @param level its level
@@ -2316,6 +2373,12 @@ public class FakePlayerPvpManager
 		
 		// Defending a village under siege, the monsters can kill it like a player.
 		if (VillageSiegeManager.isSiegeDefender(fake))
+		{
+			return damage;
+		}
+		
+		// The monsters of a Race Wars match kill its fake players like its players.
+		if (RaceWarsManager.isEventMonster(attacker))
 		{
 			return damage;
 		}
@@ -3174,8 +3237,8 @@ public class FakePlayerPvpManager
 		}
 		
 		// A Team vs Team fighter talks like a player of an event match: about the match, and rarely. Its usual lines are about farming spots and ambushes, and forty fake players in one place each talking every 20 seconds made a wall of text.
-		// Hundreds of Conquest fighters in one place say nothing at all.
-		if (profile.isConquestFighter())
+		// Hundreds of Conquest fighters in one place say nothing at all, nor do the armies of Race Wars.
+		if (profile.isConquestFighter() || profile.isRaceWarsFighter())
 		{
 			return false;
 		}
