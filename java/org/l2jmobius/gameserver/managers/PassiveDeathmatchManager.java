@@ -592,6 +592,41 @@ public class PassiveDeathmatchManager
 	}
 
 	/**
+	 * @param creature a player or fake player, may be {@code null}
+	 * @return the names of the passives it took in its Passive Deathmatch, in the order it took them for a fake player, empty for none
+	 */
+	public List<String> getPassiveNames(Creature creature)
+	{
+		if (creature == null)
+		{
+			return List.of();
+		}
+		final Collection<Integer> ids;
+		if (creature.isPlayer())
+		{
+			ids = getEventNodes(creature.asPlayer());
+		}
+		else
+		{
+			final FakePicks picks = _fakes.get(creature.getObjectId());
+			if (picks == null)
+			{
+				return List.of();
+			}
+			synchronized (picks)
+			{
+				ids = new ArrayList<>(picks._nodes);
+			}
+		}
+		final List<String> names = new ArrayList<>();
+		for (PassiveNode node : toNodes(ids))
+		{
+			names.add(node.getName() + (node.getType() == PassiveNode.NodeType.KEYSTONE ? " (K)" : ""));
+		}
+		return names;
+	}
+	
+	/**
 	 * A fake player leaves its match (removed from the world).
 	 * @param fake the fake player
 	 */

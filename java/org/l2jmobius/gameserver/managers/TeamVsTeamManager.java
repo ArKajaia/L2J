@@ -2404,7 +2404,7 @@ public class TeamVsTeamManager
 		{
 			// How the kill came about: its killer on its own, out of an ambush, its victim alone.
 			final String how = (slayer == null ? "" : (slayer.isLone() ? " [lone]" : "") + ((System.currentTimeMillis() - slayer._ambushSprungAt) < AMBUSH_KILL_TIME ? " [ambush]" : "")) + (deadAlone ? " [victim alone]" : "");
-			LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " " + (match.getSecondsLeft() / 60) + ":" + String.format("%02d", match.getSecondsLeft() % 60) + " left: " + (slayer != null ? describe(slayer) : (killer != null ? killer.getName() : "?")) + " killed " + describe(dead) + how + (match.isDeathmatch() ? "." : ". Blue " + match._blue.getScore() + " : " + match._red.getScore() + " Red."));
+			LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " " + (match.getSecondsLeft() / 60) + ":" + String.format("%02d", match.getSecondsLeft() % 60) + " left: " + (slayer != null ? describe(slayer) : (killer != null ? killer.getName() : "?")) + " killed " + describe(dead) + how + (match.isPassiveDeathmatch() ? " [passives " + PassiveDeathmatchManager.getInstance().getPassiveNames(slayer != null ? slayer._creature : null).size() + " vs " + PassiveDeathmatchManager.getInstance().getPassiveNames(victim).size() + "]" : "") + (match.isDeathmatch() ? "." : ". Blue " + match._blue.getScore() + " : " + match._red.getScore() + " Red."));
 		}
 
 		if (dead.isPlayer() && match.isPassiveDeathmatch())
@@ -2603,6 +2603,18 @@ public class TeamVsTeamManager
 			player.sendMessage(match._mode.getTag() + ": " + result + (best.length() > 0 ? " Best killers: " + best + "." : "") + (fighter != null ? " You: place " + place + " of " + ranking.size() + ", " + fighter._kills + " kills, " + fighter._deaths + " deaths." : ""));
 		}
 		sendState(match, abandoned ? Ex2TeamEventState.RESULT_NO_RESULT : Ex2TeamEventState.RESULT_NONE);
+
+		if (match._simulated || match.isPassiveDeathmatch())
+		{
+			// The final table: who killed how much, and in a Passive Deathmatch which passives each one took (the event trees go with the cleanup).
+			LOGGER.info(getClass().getSimpleName() + ": " + match._mode.getTitle() + " match " + match.getId() + " ended: " + result);
+			for (int i = 0; i < ranking.size(); i++)
+			{
+				final Fighter fighter = ranking.get(i);
+				final List<String> passives = match.isPassiveDeathmatch() ? PassiveDeathmatchManager.getInstance().getPassiveNames(fighter._creature) : List.of();
+				LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " #" + (i + 1) + " " + describe(fighter) + ": " + fighter._kills + " kills, " + fighter._deaths + " deaths" + (match.isPassiveDeathmatch() ? ", " + passives.size() + " passives: " + String.join(", ", passives) : "") + ".");
+			}
+		}
 
 		if (!abandoned)
 		{
