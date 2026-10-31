@@ -273,6 +273,7 @@ import handlers.chat.commands.voiced.Offline;
 import handlers.chat.commands.voiced.OfflinePlay;
 import handlers.chat.commands.voiced.Online;
 import handlers.chat.commands.voiced.PassiveTreeLinkVoiced;
+import handlers.chat.commands.voiced.PassiveDeathmatchVoiced;
 import handlers.chat.commands.voiced.PassiveTreeVoiced;
 //import handlers.chat.commands.voiced.PassivesCommand;
 import handlers.chat.commands.voiced.Premium;
@@ -639,6 +640,7 @@ public class MasterHandler
 			VoiceAutoLootFilter.class,
 			VoiceHelp.class,
 			PassiveTreeVoiced.class,
+			PassiveDeathmatchVoiced.class,
 			PassiveTreeLinkVoiced.class,
 			GearVoiced.class,
 			SaveHotzoneVoiced.class,

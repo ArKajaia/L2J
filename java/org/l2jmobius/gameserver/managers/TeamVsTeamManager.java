@@ -238,7 +238,9 @@ public class TeamVsTeamManager
 		/** Blue against Red, each team at its bases. */
 		TVT("Team vs Team", "TvT"),
 		/** Every one for themselves, spawning anywhere on the field. */
-		DEATHMATCH("Deathmatch", "Deathmatch");
+		DEATHMATCH("Deathmatch", "Deathmatch"),
+		/** A Deathmatch where everyone fights with a blank passive tree, and each kill lets the killer take one of a few strong passives (see {@link PassiveDeathmatchManager}). */
+		PASSIVE_DEATHMATCH("Passive Deathmatch", "Passive DM");
 
 		private final String _title;
 		private final String _tag;
@@ -266,11 +268,58 @@ public class TeamVsTeamManager
 		}
 
 		/**
-		 * @return the event its maps are ticked for
+		 * @return {@code true} for every one for themselves (a Deathmatch of either kind)
+		 */
+		public boolean isDeathmatch()
+		{
+			return this != TVT;
+		}
+
+		/**
+		 * @return {@code true} if it is enabled in TeamVsTeam.ini
+		 */
+		public boolean isEnabled()
+		{
+			return switch (this)
+			{
+				case TVT -> TeamVsTeamConfig.ENABLED;
+				case DEATHMATCH -> TeamVsTeamConfig.DM_ENABLED;
+				case PASSIVE_DEATHMATCH -> TeamVsTeamConfig.PDM_ENABLED;
+			};
+		}
+
+		/**
+		 * @return the maps its registration picks from, by id, empty for any map ticked for it
+		 */
+		public List<String> getAllowedMaps()
+		{
+			return switch (this)
+			{
+				case TVT -> TeamVsTeamConfig.MAPS;
+				case DEATHMATCH -> TeamVsTeamConfig.DM_MAPS;
+				case PASSIVE_DEATHMATCH -> TeamVsTeamConfig.PDM_MAPS.isEmpty() ? TeamVsTeamConfig.DM_MAPS : TeamVsTeamConfig.PDM_MAPS;
+			};
+		}
+
+		/**
+		 * @return the config key of {@link #getAllowedMaps}
+		 */
+		public String getMapsKey()
+		{
+			return switch (this)
+			{
+				case TVT -> "TvTMaps";
+				case DEATHMATCH -> "DeathmatchMaps";
+				case PASSIVE_DEATHMATCH -> "PassiveDeathmatchMaps";
+			};
+		}
+
+		/**
+		 * @return the event its maps are ticked for (both Deathmatches play on the maps ticked for Deathmatch)
 		 */
 		public EventMapType getMapType()
 		{
-			return this == DEATHMATCH ? EventMapType.DEATHMATCH : EventMapType.TVT;
+			return isDeathmatch() ? EventMapType.DEATHMATCH : EventMapType.TVT;
 		}
 
 		/**
@@ -278,7 +327,7 @@ public class TeamVsTeamManager
 		 */
 		public String describeNeeds()
 		{
-			return this == DEATHMATCH ? "at least " + EventMap.MIN_DEATHMATCH_SPAWNS + " Deathmatch spawn points" : "bases for both teams";
+			return isDeathmatch() ? "at least " + EventMap.MIN_DEATHMATCH_SPAWNS + " Deathmatch spawn points" : "bases for both teams";
 		}
 	}
 
@@ -584,7 +633,7 @@ public class TeamVsTeamManager
 			_minLevel = minLevel;
 			_maxLevel = maxLevel;
 			_instanceId = instanceId;
-			if (mode == Mode.DEATHMATCH)
+			if (mode.isDeathmatch())
 			{
 				// Everyone in one side, each the enemy of all the others (see getRelation); the other side stays empty.
 				_blue = new Side(Team.NONE, "Deathmatch", map.deathmatch(), TeamVsTeamConfig.DM_NAME_COLOR);
@@ -620,11 +669,19 @@ public class TeamVsTeamManager
 		}
 
 		/**
-		 * @return {@code true} for a Deathmatch: every one for themselves
+		 * @return {@code true} for a Deathmatch (of either kind): every one for themselves
 		 */
 		public boolean isDeathmatch()
 		{
-			return _mode == Mode.DEATHMATCH;
+			return _mode.isDeathmatch();
+		}
+
+		/**
+		 * @return {@code true} for a Passive Deathmatch: blank passive trees, a passive picked on each kill
+		 */
+		public boolean isPassiveDeathmatch()
+		{
+			return _mode == Mode.PASSIVE_DEATHMATCH;
 		}
 
 		/**
@@ -633,7 +690,7 @@ public class TeamVsTeamManager
 		 */
 		List<Fighter> getEnemies(Fighter fighter)
 		{
-			if (_mode != Mode.DEATHMATCH)
+			if (!_mode.isDeathmatch())
 			{
 				return getOther(fighter._side)._fighters;
 			}
@@ -814,7 +871,7 @@ public class TeamVsTeamManager
 	 */
 	public synchronized String openRegistration(Mode mode, EventMap map)
 	{
-		if (mode == Mode.DEATHMATCH ? !TeamVsTeamConfig.DM_ENABLED : !TeamVsTeamConfig.ENABLED)
+		if (!mode.isEnabled())
 		{
 			return "the event is disabled";
 		}
@@ -831,11 +888,11 @@ public class TeamVsTeamManager
 		{
 			return "there is no level bracket (TvTBrackets)";
 		}
-		final List<String> allowed = mode == Mode.DEATHMATCH ? TeamVsTeamConfig.DM_MAPS : TeamVsTeamConfig.MAPS;
+		final List<String> allowed = mode.getAllowedMaps();
 		final EventMap picked = map != null ? map : EventMapData.getInstance().getRandomMap(mode.getMapType(), allowed);
 		if (picked == null)
 		{
-			return "there is no map ticked for " + mode.getTitle() + " with " + mode.describeNeeds() + (allowed.isEmpty() ? "" : " among " + (mode == Mode.DEATHMATCH ? "DeathmatchMaps" : "TvTMaps")) + " (data/maps, //tvt map)";
+			return "there is no map ticked for " + mode.getTitle() + " with " + mode.describeNeeds() + (allowed.isEmpty() ? "" : " among " + mode.getMapsKey()) + " (data/maps, //tvt map)";
 		}
 		if (!picked.isComplete(mode.getMapType()))
 		{
@@ -873,7 +930,11 @@ public class TeamVsTeamManager
 		}
 		_registrationTasks.add(ThreadPool.schedule(this::closeRegistration, TeamVsTeamConfig.REGISTRATION_TIME * 60000L));
 
-		if (mode == Mode.DEATHMATCH)
+		if (mode == Mode.PASSIVE_DEATHMATCH)
+		{
+			Broadcast.toAllOnlinePlayers(tag + ": Registration is open for " + TeamVsTeamConfig.REGISTRATION_TIME + " minutes at the TvT Event Manager in Giran. Every one for themselves with a blank passive tree: each kill lets you take 1 of " + TeamVsTeamConfig.PDM_CHOICES + " strong passives. " + TeamVsTeamConfig.DM_SIZE + " fighters in the " + picked.name() + ", " + TeamVsTeamConfig.DM_FIGHT_TIME + " minutes, levels " + describeBrackets() + ".");
+		}
+		else if (mode == Mode.DEATHMATCH)
 		{
 			Broadcast.toAllOnlinePlayers(tag + ": Registration is open for " + TeamVsTeamConfig.REGISTRATION_TIME + " minutes at the TvT Event Manager in Giran. Every one for themselves, " + TeamVsTeamConfig.DM_SIZE + " fighters in the " + picked.name() + ", " + TeamVsTeamConfig.DM_FIGHT_TIME + " minutes, levels " + describeBrackets() + ".");
 		}
@@ -1252,7 +1313,7 @@ public class TeamVsTeamManager
 			}
 
 			// A Deathmatch: every one for themselves, a party plays as its members alone. More players than a match holds make more matches.
-			if (mode == Mode.DEATHMATCH)
+			if (mode.isDeathmatch())
 			{
 				final List<Player> all = new ArrayList<>();
 				for (List<Player> group : groups)
@@ -1435,6 +1496,13 @@ public class TeamVsTeamManager
 		for (Player player : match.getPlayers())
 		{
 			final Fighter fighter = _fighters.get(player.getObjectId());
+			if (match.isPassiveDeathmatch())
+			{
+				sendScreen(player, "Passive Deathmatch: your passive tree is blank! Each kill lets you take a strong passive. The fight starts in " + TeamVsTeamConfig.PREP_TIME + " seconds.", 8, true);
+				player.sendMessage("Passive Deathmatch (levels " + match.getBracketName() + ", " + match.getAllFighters().size() + " fighters): you fight without your passive tree. Each kill offers you " + TeamVsTeamConfig.PDM_CHOICES + " strong passives (notables and keystones) to pick 1 from, for this match only: the more you kill, the stronger you get. A pick you don't make waits for you: type .dmpick to see it again. Your own tree comes back when you leave.");
+				player.sendMessage("Everyone else is attacked without Ctrl. The dead come back somewhere on the field after " + TeamVsTeamConfig.DM_RESPAWN_DELAY + " seconds; most kills in " + TeamVsTeamConfig.DM_FIGHT_TIME + " minutes wins.");
+				continue;
+			}
 			if (match.isDeathmatch())
 			{
 				sendScreen(player, "Deathmatch: every one for themselves! The fight starts in " + TeamVsTeamConfig.PREP_TIME + " seconds.", 8, true);
@@ -1695,6 +1763,11 @@ public class TeamVsTeamManager
 				continue;
 			}
 
+			if (match.isPassiveDeathmatch())
+			{
+				// Like the players: a blank tree, a passive picked on each kill.
+				PassiveDeathmatchManager.getInstance().prepareFake(fake);
+			}
 			final Fighter fighter = new Fighter(fake, match, side, role);
 			fighter._home = location;
 			side._fighters.add(fighter);
@@ -1719,6 +1792,11 @@ public class TeamVsTeamManager
 
 		player.setRegisteredOnEvent(false);
 		player.setOnEvent(true);
+		if (match.isPassiveDeathmatch())
+		{
+			// Its own passive tree stops applying until it leaves (after setOnEvent: the event tree only exists on an event).
+			PassiveDeathmatchManager.getInstance().join(player);
+		}
 		// No "To Village" when it dies: the dead come back at their base by themselves (the button took a player out of the match).
 		player.setCanRevive(false);
 		if (player.isDead())
@@ -2093,6 +2171,11 @@ public class TeamVsTeamManager
 			player.setIsPendingRevive(true);
 			player.teleToLocation(base, match._instanceId, match.isDeathmatch() ? 0 : TeamVsTeamConfig.SPAWN_RADIUS);
 			buffAndHeal(player);
+			if (match.isPassiveDeathmatch())
+			{
+				// A pick left waiting (the window closed, or it died before choosing) comes up again.
+				PassiveDeathmatchManager.getInstance().remindPending(player);
+			}
 		}
 		else if (creature instanceof Npc fake)
 		{
@@ -2309,6 +2392,11 @@ public class TeamVsTeamManager
 			{
 				rewardKill(slayer._creature.asPlayer(), victim);
 			}
+			if (match.isPassiveDeathmatch())
+			{
+				// A passive to pick (a player keeps it waiting until it picks; a fake player picks at once).
+				PassiveDeathmatchManager.getInstance().onKill(slayer._creature);
+			}
 			sendState(match, Ex2TeamEventState.RESULT_NONE);
 		}
 		
@@ -2321,7 +2409,7 @@ public class TeamVsTeamManager
 
 		if (dead.isPlayer() && match.isDeathmatch())
 		{
-			dead._creature.sendMessage("Deathmatch: You come back somewhere on the field in " + TeamVsTeamConfig.DM_RESPAWN_DELAY + " seconds. Your score: " + dead._kills + " kills, " + dead._deaths + " deaths.");
+			dead._creature.sendMessage(match._mode.getTag() + ": You come back somewhere on the field in " + TeamVsTeamConfig.DM_RESPAWN_DELAY + " seconds. Your score: " + dead._kills + " kills, " + dead._deaths + " deaths.");
 		}
 		else if (dead.isPlayer())
 		{
@@ -2507,7 +2595,7 @@ public class TeamVsTeamManager
 			final Fighter fighter = _fighters.get(player.getObjectId());
 			final int place = fighter != null ? ranking.indexOf(fighter) + 1 : 0;
 			sendScreen(player, result, 7, true);
-			player.sendMessage("Deathmatch: " + result + (best.length() > 0 ? " Best killers: " + best + "." : "") + (fighter != null ? " You: place " + place + " of " + ranking.size() + ", " + fighter._kills + " kills, " + fighter._deaths + " deaths." : ""));
+			player.sendMessage(match._mode.getTag() + ": " + result + (best.length() > 0 ? " Best killers: " + best + "." : "") + (fighter != null ? " You: place " + place + " of " + ranking.size() + ", " + fighter._kills + " kills, " + fighter._deaths + " deaths." : ""));
 		}
 		sendState(match, abandoned ? Ex2TeamEventState.RESULT_NO_RESULT : Ex2TeamEventState.RESULT_NONE);
 
@@ -2542,7 +2630,7 @@ public class TeamVsTeamManager
 				{
 					final TopReward reward = TeamVsTeamConfig.DM_TOP_REWARDS.get(i);
 					final int itemId = reward.getItemId(player);
-					player.sendMessage("Deathmatch: You are number " + (i + 1) + " of the players with " + fighter._kills + " kills.");
+					player.sendMessage(match._mode.getTag() + ": You are number " + (i + 1) + " of the players with " + fighter._kills + " kills.");
 					player.addItem(ItemProcessType.REWARD, itemId, reward.count(), null, true);
 					LOGGER.info(getClass().getSimpleName() + ": Deathmatch " + match.getId() + " place " + (i + 1) + ": " + player.getName() + " (" + fighter._kills + " kills, " + fighter._deaths + " deaths) gets " + reward.count() + " of item " + itemId + ".");
 				}
@@ -2635,6 +2723,21 @@ public class TeamVsTeamManager
 		}
 		finally
 		{
+			// Whatever went wrong above, no player keeps a Passive Deathmatch tree (this does nothing for one already restored).
+			for (Fighter fighter : match.getAllFighters())
+			{
+				if (fighter.isPlayer())
+				{
+					try
+					{
+						PassiveDeathmatchManager.getInstance().leave(fighter._creature.asPlayer());
+					}
+					catch (Exception e)
+					{
+						LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not give " + fighter._creature.getName() + " their own passive tree back.", e);
+					}
+				}
+			}
 			TeamVsTeamBarrier.remove(match._barrier);
 			for (int objectId : match._watchers)
 			{
@@ -2654,6 +2757,7 @@ public class TeamVsTeamManager
 
 	private static void removeFake(Npc fake)
 	{
+		PassiveDeathmatchManager.getInstance().forgetFake(fake);
 		try
 		{
 			DecayTaskManager.getInstance().cancel(fake);
@@ -2684,6 +2788,8 @@ public class TeamVsTeamManager
 	private void restorePlayer(Fighter fighter, boolean teleport)
 	{
 		final Player player = fighter._creature.asPlayer();
+		// Its own passive tree back, before it is off the event (whatever took it out: the end, leaving, logging off). Done for any match, so nothing can keep an event tree.
+		PassiveDeathmatchManager.getInstance().leave(player);
 		unprotect(fighter);
 		untrap(fighter);
 		player.setInvul(false);
@@ -3832,7 +3938,7 @@ public class TeamVsTeamManager
 		{
 			return "Fake players are disabled (EnableFakePlayers, FakePvpEnabled).";
 		}
-		final EventMap picked = map != null ? map : EventMapData.getInstance().getRandomMap(mode.getMapType(), mode == Mode.DEATHMATCH ? TeamVsTeamConfig.DM_MAPS : TeamVsTeamConfig.MAPS);
+		final EventMap picked = map != null ? map : EventMapData.getInstance().getRandomMap(mode.getMapType(), mode.getAllowedMaps());
 		if (picked == null)
 		{
 			return "There is no map ticked for " + mode.getTitle() + " with " + mode.describeNeeds() + " (data/maps, //tvt map).";
@@ -3855,7 +3961,7 @@ public class TeamVsTeamManager
 		}
 		if (match.isDeathmatch())
 		{
-			return "Simulated Deathmatch " + match.getId() + " (levels " + match.getBracketName() + ") started on " + picked.name() + ": " + match._blue._fighters.size() + " fake players, " + match._spots.size() + " spawn spots, the fight in " + TeamVsTeamConfig.PREP_TIME + " seconds.";
+			return "Simulated " + mode.getTitle() + " " + match.getId() + " (levels " + match.getBracketName() + ") started on " + picked.name() + ": " + match._blue._fighters.size() + " fake players, " + match._spots.size() + " spawn spots, the fight in " + TeamVsTeamConfig.PREP_TIME + " seconds.";
 		}
 		return "Simulated match " + match.getId() + " (levels " + match.getBracketName() + ") started on " + picked.name() + ": " + match._blue._fighters.size() + " vs " + match._red._fighters.size() + " fake players, the fight in " + TeamVsTeamConfig.PREP_TIME + " seconds.";
 	}
@@ -3905,7 +4011,7 @@ public class TeamVsTeamManager
 		lines.add("Fighters tracked: " + _fighters.size() + ", Team vs Team fake players in the world: " + fakesInWorld + ".");
 		for (Match match : _matches.values())
 		{
-			lines.add((match.isDeathmatch() ? "Deathmatch " : "Match ") + match.getId() + " (levels " + match.getBracketName() + ", " + match._map.name() + (match._simulated ? ", simulated" : "") + "): " + match._phase + ", " + match.getSecondsLeft() + " s left, Blue " + match._blue.getScore() + " : " + match._red.getScore() + " Red, instance " + match._instanceId + ".");
+			lines.add((match.isDeathmatch() ? match._mode.getTitle() + " " : "Match ") + match.getId() + " (levels " + match.getBracketName() + ", " + match._map.name() + (match._simulated ? ", simulated" : "") + "): " + match._phase + ", " + match.getSecondsLeft() + " s left, Blue " + match._blue.getScore() + " : " + match._red.getScore() + " Red, instance " + match._instanceId + ".");
 			for (Side side : new Side[]
 			{
 				match._blue,

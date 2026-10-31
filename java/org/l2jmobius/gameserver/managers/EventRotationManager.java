@@ -139,6 +139,10 @@ public class EventRotationManager
 			{
 				return TeamVsTeamManager.getInstance().openRegistration(Mode.DEATHMATCH, null);
 			}
+			case "passivedeathmatch":
+			{
+				return TeamVsTeamManager.getInstance().openRegistration(Mode.PASSIVE_DEATHMATCH, null);
+			}
 			case "conquest":
 			{
 				return ConquestRegistration.getInstance().open(null);
@@ -169,6 +173,10 @@ public class EventRotationManager
 			case "deathmatch":
 			{
 				return Mode.DEATHMATCH.getTitle();
+			}
+			case "passivedeathmatch":
+			{
+				return Mode.PASSIVE_DEATHMATCH.getTitle();
 			}
 			case "conquest":
 			{
