@@ -76,6 +76,7 @@ import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
 import org.l2jmobius.gameserver.model.item.type.WeaponType;
 import org.l2jmobius.gameserver.model.item.Weapon;
 import org.l2jmobius.gameserver.model.eventmap.EventDoor;
+import org.l2jmobius.gameserver.model.eventmap.EventBarrier;
 import org.l2jmobius.gameserver.model.eventmap.EventMap;
 import org.l2jmobius.gameserver.model.eventmap.EventMapType;
 import org.l2jmobius.gameserver.model.olympiad.OlympiadManager;
@@ -3013,7 +3014,14 @@ public class TeamVsTeamManager
 			}
 		}
 
+		// The fence round the field when the map has one (an ellipse), else the map's area.
 		final EventMap map = match._map;
+		final EventBarrier barrier = map.barrier();
+		if (barrier != null)
+		{
+			TeamEventHud.showEllipseEdge(player, barrier.x(), barrier.y(), barrier.radiusX(), barrier.radiusY(), map.z());
+			return;
+		}
 		TeamEventHud.showEdge(player, map.minX(), map.minY(), map.maxX(), map.maxY(), map.z());
 	}
 

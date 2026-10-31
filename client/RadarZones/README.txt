@@ -36,14 +36,18 @@ Strings are UTF-16LE with a terminating 0.
   Cylinder:
     int x, int y          center
     int radiusX           > 0 (the wire carries an ellipse;
-    int radiusY           > 0  ZoneCylinder sends its radius twice)
+    int radiusY           > 0  ZoneCylinder sends its radius twice, the
+                               ellipse constructor both radii: TvT's fence)
   NPoly:
     int count             3 to 256
     count x { int x, int y }
 
   int   fill              ARGB, alpha in the top byte
   int   border            ARGB
-  byte  flags             1 = pulsing border, 2 = hatched fill; no other bits
+  byte  flags             1 = pulsing border, 2 = hatched fill, 4 = label:
+                          the name's first 8 characters written upright at
+                          the zone's middle (a Conquest capture point's
+                          letter); no other bits
   str   name              at most 64 characters
 
 Nothing may follow the name. A packet that breaks any rule above is

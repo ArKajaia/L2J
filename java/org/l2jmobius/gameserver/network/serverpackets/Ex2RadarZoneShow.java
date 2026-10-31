@@ -39,7 +39,10 @@ public class Ex2RadarZoneShow extends ServerPacket
 	public static final int MAX_NAME = 64;
 
 	private final int _zoneId;
+	/** {@code null} for an ellipse ({@link #_ellipse}). */
 	private final ZoneForm _form;
+	/** An ellipse no server zone form has: x, y, radius x, radius y, low z, high z. */
+	private final int[] _ellipse;
 	private final RadarZoneStyle _style;
 	private final String _name;
 
@@ -58,6 +61,42 @@ public class Ex2RadarZoneShow extends ServerPacket
 
 		_zoneId = zoneId;
 		_form = form;
+		_ellipse = null;
+		_style = style;
+		final String text = name == null ? "" : name;
+		_name = text.length() > MAX_NAME ? text.substring(0, MAX_NAME) : text;
+	}
+
+	/**
+	 * An ellipse, which the wire's cylinder carries (a server cylinder is only ever round).
+	 * @param zoneId the zone's id, the key of later hide packets
+	 * @param x the middle's x
+	 * @param y the middle's y
+	 * @param radiusX the radius along x, above 0
+	 * @param radiusY the radius along y, above 0
+	 * @param lowZ the lowest z it is drawn at
+	 * @param highZ the highest
+	 * @param style how the radar draws it
+	 * @param name the zone's name (cut to {@link #MAX_NAME} characters)
+	 */
+	public Ex2RadarZoneShow(int zoneId, int x, int y, int radiusX, int radiusY, int lowZ, int highZ, RadarZoneStyle style, String name)
+	{
+		if ((radiusX <= 0) || (radiusY <= 0) || (lowZ > highZ))
+		{
+			throw new IllegalArgumentException("Zone " + zoneId + " cannot be shown on the radar");
+		}
+
+		_zoneId = zoneId;
+		_form = null;
+		_ellipse = new int[]
+		{
+			x,
+			y,
+			radiusX,
+			radiusY,
+			lowZ,
+			highZ
+		};
 		_style = style;
 		final String text = name == null ? "" : name;
 		_name = text.length() > MAX_NAME ? text.substring(0, MAX_NAME) : text;
@@ -92,7 +131,17 @@ public class Ex2RadarZoneShow extends ServerPacket
 	{
 		ServerPackets.EX2_RADAR_ZONE_SHOW.writeId(this, buffer);
 		buffer.writeInt(_zoneId);
-		if (_form instanceof ZoneCuboid cuboid)
+		if (_ellipse != null)
+		{
+			buffer.writeByte(CYLINDER);
+			buffer.writeInt(_ellipse[4]);
+			buffer.writeInt(_ellipse[5]);
+			buffer.writeInt(_ellipse[0]);
+			buffer.writeInt(_ellipse[1]);
+			buffer.writeInt(_ellipse[2]);
+			buffer.writeInt(_ellipse[3]);
+		}
+		else if (_form instanceof ZoneCuboid cuboid)
 		{
 			buffer.writeByte(CUBOID);
 			buffer.writeInt(_form.getLowZ());
