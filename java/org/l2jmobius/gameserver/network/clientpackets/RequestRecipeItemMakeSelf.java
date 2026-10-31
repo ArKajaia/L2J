@@ -32,7 +32,9 @@ public class RequestRecipeItemMakeSelf extends ClientPacket
 	protected void readImpl()
 	{
 		_id = readInt();
-		_count = readInt();
+		// The stock High Five client sends only the recipe id. A client patched for multicraft
+		// may also send the number of items to make, so read it only when it is there.
+		_count = remaining() >= 4 ? readInt() : 1;
 	}
 	
 	@Override
