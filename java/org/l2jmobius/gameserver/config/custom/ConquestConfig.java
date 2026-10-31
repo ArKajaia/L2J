@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.util.ConfigReader;
+import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig.TopReward;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.item.holders.ItemChanceHolder;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
@@ -82,6 +83,11 @@ public class ConquestConfig
 	public static List<Location> MANAGER_LOCATIONS;
 	public static List<ItemChanceHolder> KILL_REWARDS;
 	public static List<ItemHolder> WIN_REWARD;
+	/** A player's contribution to its team: points for each kill, and for being on a capture point when its team takes it. */
+	public static int CONTRIBUTION_KILL;
+	public static int CONTRIBUTION_CAPTURE;
+	/** The extra rewards of the players of the winning team with the most contribution, first place first (see ConquestManager). */
+	public static List<TopReward> TOP_REWARDS;
 
 	public static void load()
 	{
@@ -194,6 +200,10 @@ public class ConquestConfig
 			}
 		}
 		WIN_REWARD = Collections.unmodifiableList(winReward);
+
+		CONTRIBUTION_KILL = Math.max(0, config.getInt("ConquestContributionKill", 1));
+		CONTRIBUTION_CAPTURE = Math.max(0, config.getInt("ConquestContributionCapture", 1));
+		TOP_REWARDS = TeamVsTeamConfig.parseTopRewards(config.getString("ConquestTopRewards", "weapon,1;armor,2;armor,1"), "ConquestTopRewards");
 	}
 
 	/**

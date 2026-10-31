@@ -20,8 +20,6 @@
  */
 package custom.events.TeamVsTeam;
 
-import java.util.List;
-
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig.TopReward;
 import org.l2jmobius.gameserver.data.xml.ItemData;
@@ -140,21 +138,8 @@ public class TvT extends Event
 
 	private static String describeTopRewards()
 	{
-		final StringBuilder sb = new StringBuilder();
-		final List<TopReward> rewards = TeamVsTeamConfig.TOP_REWARDS;
-		for (int i = 0; i < rewards.size(); i++)
-		{
-			final TopReward reward = rewards.get(i);
-			sb.append(sb.length() > 0 ? ", " : "").append(ordinal(i + 1)).append(' ').append(reward.count()).append(reward.weapon() ? " Crystal Scroll: Enchant Weapon" : " Crystal Scroll: Enchant Armor");
-		}
-		return sb.length() > 0 ? " Its best players also get Crystal Scrolls of their grade: " + sb + "." : "";
-	}
-
-	private static String ordinal(int place)
-	{
-		final int lastTwo = place % 100;
-		final int last = place % 10;
-		return place + (((lastTwo >= 11) && (lastTwo <= 13)) ? "th" : (last == 1 ? "st" : (last == 2 ? "nd" : (last == 3 ? "rd" : "th"))));
+		final String places = TopReward.describe(TeamVsTeamConfig.TOP_REWARDS);
+		return places.isEmpty() ? "" : " The best players of the whole winning team (by kills) also get Crystal Scrolls of their grade: " + places + ".";
 	}
 
 	@Override

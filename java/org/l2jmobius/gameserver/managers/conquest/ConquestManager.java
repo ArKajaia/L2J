@@ -40,6 +40,7 @@ import org.l2jmobius.gameserver.ai.AttackableAI;
 import org.l2jmobius.gameserver.ai.FakeBrain;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.custom.ConquestConfig;
+import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig.TopReward;
 import org.l2jmobius.gameserver.data.xml.DoorData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.CombatLogManager;
@@ -1110,6 +1111,10 @@ public class ConquestManager
 				final String text = owner == Team.NONE ? (before == Team.BLUE ? "Blue" : "Red") + " lost " + capture.getName() + "." : (owner == Team.BLUE ? "Blue" : "Red") + " captured " + capture.getName() + ".";
 				match.log(text);
 				announce(match, text);
+				if (owner != Team.NONE)
+				{
+					creditCapture(match, owner == Team.BLUE ? match.getBlue() : match.getRed(), capture);
+				}
 			}
 			if (capture.getOwner() == Team.BLUE)
 			{
@@ -1150,6 +1155,26 @@ public class ConquestManager
 			final Team winner = blue.getScore() > red.getScore() ? Team.BLUE : red.getScore() > blue.getScore() ? Team.RED : null;
 			endMatch(match, winner, "Time is up.", false);
 			return;
+		}
+	}
+
+	/**
+	 * The team took the capture point: each of its living fighters on it counts the capture to its contribution.
+	 */
+	private static void creditCapture(ConquestMatch match, ConquestTeam team, ConquestCapture capture)
+	{
+		final Location location = capture.getLocation();
+		for (ConquestFighter fighter : match.getNear(team, location.getX(), location.getY(), capture.getRadius()))
+		{
+			final Creature creature = fighter.getCreature();
+			if (!creature.isDead() && capture.contains(creature.getX(), creature.getY(), creature.getZ()))
+			{
+				fighter._captures++;
+				if (fighter.isPlayer())
+				{
+					creature.sendMessage("Conquest: You helped capture " + capture.getName() + ". Your contribution: " + fighter.getContribution() + " points.");
+				}
+			}
 		}
 	}
 
@@ -1535,7 +1560,7 @@ public class ConquestManager
 		{
 			final ConquestFighter fighter = _fighters.get(player.getObjectId());
 			TeamEventHud.sendState(player, state, fighter != null ? fighter.getTeam().getTeam() : Team.NONE);
-			player.sendMessage("Conquest: " + match._result + (fighter != null ? " You: " + fighter.getKills() + " kills, " + fighter.getDeaths() + " deaths." : ""));
+			player.sendMessage("Conquest: " + match._result + (fighter != null ? " You: " + fighter.getKills() + " kills, " + fighter.getCaptures() + " captures (" + fighter.getContribution() + " points), " + fighter.getDeaths() + " deaths." : ""));
 			if (!abandoned && (winner != null) && (fighter != null) && (fighter.getTeam().getTeam() == winner))
 			{
 				if (firework != null)
@@ -1550,6 +1575,11 @@ public class ConquestManager
 			}
 		}
 
+		if (!abandoned && (winner != null))
+		{
+			rewardBest(match, winner == Team.BLUE ? match.getBlue() : match.getRed());
+		}
+
 		for (Player gm : watchers(match))
 		{
 			TeamEventHud.sendState(gm, state, Team.NONE);
@@ -1557,6 +1587,36 @@ public class ConquestManager
 
 		LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " on " + match.getMap().name() + " ended: " + match._result + " Brains: Blue " + describe(blueBrain) + ", Red " + describe(redBrain) + ".");
 		ThreadPool.schedule(() -> cleanup(match), abandoned ? 2000 : ConquestConfig.END_DELAY * 1000L);
+	}
+
+	/**
+	 * The players of the whole winning team (every party of it) with the most contribution get {@link ConquestConfig#TOP_REWARDS}, first place first: most points, then most kills, then fewer deaths. Only players with a point or more (a player who left is off the team);
+	 * the fake players are left out of the places.
+	 * @param match the match
+	 * @param winner the winning team
+	 */
+	private void rewardBest(ConquestMatch match, ConquestTeam winner)
+	{
+		final List<ConquestFighter> ranking = new ArrayList<>();
+		for (ConquestFighter fighter : winner.getFighters())
+		{
+			if (fighter.isPlayer() && (fighter.getContribution() > 0))
+			{
+				ranking.add(fighter);
+			}
+		}
+		ranking.sort(Comparator.comparingInt(ConquestFighter::getContribution).reversed().thenComparing(Comparator.comparingInt(ConquestFighter::getKills).reversed()).thenComparingInt(ConquestFighter::getDeaths));
+
+		for (int i = 0; (i < ConquestConfig.TOP_REWARDS.size()) && (i < ranking.size()); i++)
+		{
+			final TopReward reward = ConquestConfig.TOP_REWARDS.get(i);
+			final ConquestFighter fighter = ranking.get(i);
+			final Player player = fighter.getCreature().asPlayer();
+			final int itemId = reward.getItemId(player);
+			player.sendMessage("Conquest: You are number " + (i + 1) + " of the whole " + winner.getName() + " team with " + fighter.getContribution() + " points (" + fighter.getKills() + " kills, " + fighter.getCaptures() + " captures).");
+			player.addItem(ItemProcessType.REWARD, itemId, reward.count(), null, true);
+			match.log("Place " + (i + 1) + ": " + player.getName() + " (" + fighter.getContribution() + " points: " + fighter.getKills() + " kills, " + fighter.getCaptures() + " captures, " + fighter.getDeaths() + " deaths) gets " + reward.count() + " of item " + itemId + ".");
+		}
 	}
 
 	/**
