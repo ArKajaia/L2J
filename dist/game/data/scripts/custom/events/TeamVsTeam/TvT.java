@@ -188,6 +188,7 @@ public class TvT extends Event
 		html.replace("%monster_time%", String.valueOf(RaceWarsConfig.MONSTER_TIME));
 		html.replace("%hard_limit%", String.valueOf(RaceWarsConfig.HARD_LIMIT));
 		html.replace("%reward%", describeReward(RaceWarsConfig.WIN_REWARD));
+		html.replace("%lose_reward%", describeReward(RaceWarsConfig.FINAL_LOSE_REWARD));
 		html.replace("%brackets%", RaceWarsManager.describeBrackets());
 		html.replace("%time%", (seconds / 60) + " min " + (seconds % 60) + " s");
 		html.replace("%count%", String.valueOf(manager.getRegisteredCount()));

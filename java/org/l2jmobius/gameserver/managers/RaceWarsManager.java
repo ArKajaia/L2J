@@ -91,7 +91,10 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
  * <li>The races are drawn into pairs; the race-vs-race matches run at once, each in an instance of its own of the map, the armies at the map's first Team vs Team bases. Nobody comes back: a dead fighter can't be resurrected (see {@link #isEliminated}) and a race
  * is out once its last fighter is dead. After {@link RaceWarsConfig#MONSTER_TIME} minutes, monsters of the bracket's level come, champions that go for every fighter, through Silent Move and Hide (see {@link #isPrey}). If they kill everyone, the race whose last
  * fighter died last wins; {@link RaceWarsConfig#HARD_LIMIT} minutes after they came, the race with the most fighters alive.</li>
- * <li>The winners meet in a final, all against all, with fresh fake players; each player of the race left standing gets {@link RaceWarsConfig#WIN_REWARD}.</li>
+ * <li>A race that wins its match waits in its field for the other matches to end; its players see how they go (see {@link #showWaitingStatus}).</li>
+ * <li>The winners meet in a final, with fresh fake players: a deathmatch, every fighter for themselves (the own race too), each from a spot of its own on the field. The race of the last one standing wins: each of its players gets {@link RaceWarsConfig#WIN_REWARD}, each player
+ * of the other races of the final {@link RaceWarsConfig#FINAL_LOSE_REWARD}.</li>
+ * <li>Every kill of an enemy is a PvP for the killer (see {@link TeamEventRules#isEventKill}).</li>
  * </ul>
  */
 public class RaceWarsManager
@@ -115,6 +118,10 @@ public class RaceWarsManager
 	private static final int BARRIER_MARGIN = 250;
 	/** The players see how many of each race are alive this often. */
 	private static final long STATUS_INTERVAL = 15000;
+	/** The players whose race waits for the final see how the other matches go this often. */
+	private static final long WAITING_STATUS_INTERVAL = 5000;
+	/** The final's fighters start this far inside the fence, at most. */
+	private static final double FINAL_FIELD_SHARE = 0.75;
 	/** Registration reminders, in minutes before its end. */
 	private static final int[] WARNINGS =
 	{
@@ -169,15 +176,18 @@ public class RaceWarsManager
 		final Match _match;
 		final Army _army;
 		final SimRole _role;
+		/** Where it starts: its army's start point, or in the final a spot of its own. */
+		final Location _start;
 		volatile int _kills;
 		volatile boolean _dead;
 
-		Fighter(Creature creature, Match match, Army army, SimRole role)
+		Fighter(Creature creature, Match match, Army army, SimRole role, Location start)
 		{
 			_creature = creature;
 			_match = match;
 			_army = army;
 			_role = role;
+			_start = start;
 		}
 
 		public boolean isPlayer()
@@ -243,6 +253,19 @@ public class RaceWarsManager
 			return max > 0 ? current / max : 0;
 		}
 
+		/**
+		 * @return the kills its fighters made
+		 */
+		int getKills()
+		{
+			int kills = 0;
+			for (Fighter fighter : _fighters)
+			{
+				kills += fighter._kills;
+			}
+			return kills;
+		}
+
 		int getPlayerCount()
 		{
 			int count = 0;
@@ -294,6 +317,70 @@ public class RaceWarsManager
 			_stage = stage;
 			_instanceId = instanceId;
 			_prepEnd = System.currentTimeMillis() + (RaceWarsConfig.PREP_TIME * 1000L);
+		}
+
+		/**
+		 * @return {@code true} for the final: a deathmatch, every fighter for themselves
+		 */
+		boolean isDeathmatch()
+		{
+			return _stage == Stage.FINAL;
+		}
+
+		/**
+		 * @return its living fighters
+		 */
+		List<Fighter> getAliveFighters()
+		{
+			final List<Fighter> alive = new ArrayList<>();
+			for (Army army : _armies)
+			{
+				for (Fighter fighter : army._fighters)
+				{
+					if (fighter.isAlive())
+					{
+						alive.add(fighter);
+					}
+				}
+			}
+			return alive;
+		}
+
+		/**
+		 * @return how it goes, for the players waiting for the final: its races, how many of each are alive, and the time to the next stage
+		 */
+		String describeProgress()
+		{
+			final long now = System.currentTimeMillis();
+			final StringBuilder sb = new StringBuilder();
+			for (Army army : _armies)
+			{
+				sb.append(sb.length() > 0 ? " vs " : "").append(SimulationWar.name(army._race)).append(' ').append(army.getAlive()).append('/').append(army._fighters.size());
+			}
+			switch (_phase)
+			{
+				case PREP:
+				{
+					sb.append(" (starts in ").append(formatTime(_prepEnd - now)).append(')');
+					break;
+				}
+				case FIGHT:
+				{
+					sb.append(" (monsters in ").append(formatTime(_monstersAt - now)).append(')');
+					break;
+				}
+				case MONSTERS:
+				{
+					sb.append(" (monsters, time up in ").append(formatTime(_hardLimitAt - now)).append(')');
+					break;
+				}
+				case ENDED:
+				{
+					sb.append(_winner != null ? " (" + SimulationWar.name(_winner) + " won)" : " (over)");
+					break;
+				}
+			}
+			return sb.toString();
 		}
 
 		List<Fighter> getAllFighters()
@@ -351,6 +438,16 @@ public class RaceWarsManager
 			return sb.toString();
 		}
 
+		String describeKills()
+		{
+			final StringBuilder sb = new StringBuilder();
+			for (Army army : _armies)
+			{
+				sb.append(sb.length() > 0 ? ", " : "").append(SimulationWar.name(army._race)).append(' ').append(army.getKills());
+			}
+			return sb.toString();
+		}
+
 		void screen(String text, int seconds, boolean effect)
 		{
 			for (Player player : getPlayers())
@@ -387,6 +484,8 @@ public class RaceWarsManager
 		final List<Race> _winners = new CopyOnWriteArrayList<>();
 		volatile Match _final;
 		volatile boolean _over;
+		/** Shows the players waiting for the final how the other matches go. */
+		volatile ScheduledFuture<?> _waitingTask;
 
 		Tournament(int id, int minLevel, int maxLevel, EventMap map, boolean simulated, int armySize)
 		{
@@ -976,12 +1075,16 @@ public class RaceWarsManager
 		LOGGER.info(getClass().getSimpleName() + ": Tournament " + tournament._id + " (levels " + tournament.getBracketName() + (simulated ? ", fake players only" : "") + ", armies of " + tournament._armySize + "): " + draw + ".");
 		for (Match match : tournament._semifinals)
 		{
-			match.message("Levels " + tournament.getBracketName() + ": " + draw + ". The winners meet in a final, all against all.");
+			match.message("Levels " + tournament.getBracketName() + ": " + draw + ". The winners meet in a final, a deathmatch: everyone for themselves.");
 		}
 		if (tournament._semifinals.isEmpty())
 		{
 			_tournaments.remove(tournament._id);
 			return null;
+		}
+		if (!simulated)
+		{
+			tournament._waitingTask = ThreadPool.scheduleAtFixedRate(() -> showWaitingStatus(tournament), WAITING_STATUS_INTERVAL, WAITING_STATUS_INTERVAL);
 		}
 		return tournament;
 	}
@@ -1006,7 +1109,8 @@ public class RaceWarsManager
 		final List<Location> starts = getStarts(map, stage, races.size());
 		for (int i = 0; i < races.size(); i++)
 		{
-			final Team team = races.size() == 2 ? (i == 0 ? Team.BLUE : Team.RED) : Team.NONE;
+			// A circle for each side of a race-vs-race match; none in the final, where everyone is on their own.
+			final Team team = (stage == Stage.SEMIFINAL) && (races.size() == 2) ? (i == 0 ? Team.BLUE : Team.RED) : Team.NONE;
 			match._armies.add(new Army(races.get(i), starts.get(i), team));
 		}
 		match._barrier.addAll(TeamVsTeamBarrier.build(map, instance.getId()));
@@ -1027,10 +1131,16 @@ public class RaceWarsManager
 			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem while setting up match " + match._id + ".", e);
 		}
 
-		final String what = stage == Stage.FINAL ? "The final: " + match.describe() + ", all against all" : match.describe();
+		final String what = stage == Stage.FINAL ? "The final: " + match.describe() + ", a deathmatch" : match.describe();
 		for (Player player : match.getPlayers())
 		{
 			final Fighter fighter = _fighters.get(player.getObjectId());
+			if (match.isDeathmatch())
+			{
+				sendScreen(player, what + "! Everyone for themselves, your own race too. The race of the last one standing wins. The fight starts in " + RaceWarsConfig.PREP_TIME + " seconds.", 8, true);
+				player.sendMessage(TAG + ": " + what + " (levels " + tournament.getBracketName() + ", " + tournament._armySize + " per race). Every fighter is your enemy, the " + SimulationWar.name(fighter._army._race) + " ones too, attacked without Ctrl. Nobody comes back: the race of the last one standing wins, the other races get a consolation prize. After " + RaceWarsConfig.MONSTER_TIME + " minutes " + RaceWarsConfig.MONSTER_COUNT + " monsters come for everyone, Silent Move and Hide or not.");
+				continue;
+			}
 			sendScreen(player, what + "! You fight for the " + SimulationWar.name(fighter._army._race) + " race. The fight starts in " + RaceWarsConfig.PREP_TIME + " seconds.", 8, true);
 			player.sendMessage(TAG + ": " + what + " (levels " + tournament.getBracketName() + ", " + tournament._armySize + " per race). Every other race is attacked without Ctrl. Nobody comes back: the dead stay dead, and a race is out once its last fighter falls. After " + RaceWarsConfig.MONSTER_TIME + " minutes " + RaceWarsConfig.MONSTER_COUNT + " monsters come for everyone, Silent Move and Hide or not.");
 		}
@@ -1126,6 +1236,26 @@ public class RaceWarsManager
 			group.forEach(Player::leaveParty);
 		}
 		int slots = Math.max(0, size - players);
+
+		// The final is a deathmatch: no parties, everyone on their own.
+		if (match.isDeathmatch())
+		{
+			for (List<Player> group : groups)
+			{
+				for (Player player : group)
+				{
+					enterPlayer(match, army, player, instance);
+				}
+			}
+			final Random random = ThreadLocalRandom.current();
+			while (slots > 0)
+			{
+				final int count = Math.min(RaceWarsConfig.PARTY_SIZE, slots);
+				slots -= count;
+				spawnFakes(match, army, SimulationComposer.getRoles(count), instance, random);
+			}
+			return;
+		}
 
 		// Lone players get a party each while the army has room for parties, the others join the smallest one.
 		final int partyCount = Math.max(1, (size + RaceWarsConfig.PARTY_SIZE - 1) / RaceWarsConfig.PARTY_SIZE);
@@ -1233,14 +1363,15 @@ public class RaceWarsManager
 				continue;
 			}
 			final int level = Rnd.get(tournament._minLevel, tournament._maxLevel);
-			final Location location = QuestSpawnUtil.findPoint(army._start, 20, Math.max(40, RaceWarsConfig.SPAWN_RADIUS), true, instance.getId());
+			final Location start = pickStart(match, army);
+			final Location location = QuestSpawnUtil.findPoint(start, 20, Math.max(40, RaceWarsConfig.SPAWN_RADIUS), true, instance.getId());
 			final Npc fake = FakePlayerPvpManager.getInstance().spawnRaceWarsFighter(recruit.build(), level, SimulationWar.name(army._race), match._id, army._team, getNameColor(army._race), location.getX(), location.getY(), location.getZ(), instance.getId());
 			if (fake == null)
 			{
 				continue;
 			}
-			fake.setHeading(army._start.getHeading());
-			final Fighter fighter = new Fighter(fake, match, army, recruit.role());
+			fake.setHeading(start.getHeading());
+			final Fighter fighter = new Fighter(fake, match, army, recruit.role(), start);
 			army._fighters.add(fighter);
 			_fighters.put(fake.getObjectId(), fighter);
 			showScore(fighter);
@@ -1254,7 +1385,7 @@ public class RaceWarsManager
 	 */
 	private void enterPlayer(Match match, Army army, Player player, Instance instance)
 	{
-		final Fighter fighter = new Fighter(player, match, army, TeamVsTeamManager.getRole(player));
+		final Fighter fighter = new Fighter(player, match, army, TeamVsTeamManager.getRole(player), pickStart(match, army));
 		army._fighters.add(fighter);
 		_fighters.put(player.getObjectId(), fighter);
 		_waiting.remove(player.getObjectId());
@@ -1276,9 +1407,44 @@ public class RaceWarsManager
 		player.getAppearance().setNameColor(getNameColor(army._race));
 		player.setTeam(army._team);
 		player.setTitle(scoreTitle(fighter));
-		player.teleToLocation(army._start, instance.getId(), RaceWarsConfig.SPAWN_RADIUS);
+		player.teleToLocation(fighter._start, instance.getId(), match.isDeathmatch() ? 0 : RaceWarsConfig.SPAWN_RADIUS);
 		buffAndHeal(player);
 		player.broadcastUserInfo();
+	}
+
+	/**
+	 * @param match a match
+	 * @param army an army of it
+	 * @return where a fighter of the army starts: its army's start point, or in the final (a deathmatch) a spot of the field picked by chance, facing the middle
+	 */
+	private static Location pickStart(Match match, Army army)
+	{
+		if (!match.isDeathmatch())
+		{
+			return army._start;
+		}
+		final EventMap map = match._tournament._map;
+		final EventBarrier field = getField(map);
+		final Location spot = randomFieldSpot(map, match._instanceId, FINAL_FIELD_SHARE);
+		final int heading = (int) Math.round(((Math.atan2(field.y() - spot.getY(), field.x() - spot.getX()) * 32768) / Math.PI)) & 0xFFFF;
+		return new Location(spot.getX(), spot.getY(), spot.getZ(), heading);
+	}
+
+	/**
+	 * @param map a map
+	 * @param instanceId the instance of the match
+	 * @param share how far towards the fence the spot may be, as a share of the field's radius
+	 * @return a spot of the field by chance, inside the fence (moved short of a wall in the way from the middle)
+	 */
+	private static Location randomFieldSpot(EventMap map, int instanceId, double share)
+	{
+		final EventBarrier field = getField(map);
+		final GeoEngine geo = GeoEngine.getInstance();
+		final double angle = Rnd.nextDouble() * 2 * Math.PI;
+		final double distance = Math.sqrt(Rnd.nextDouble()) * share;
+		final int x = field.x() + (int) (Math.cos(angle) * field.radiusX() * distance);
+		final int y = field.y() + (int) (Math.sin(angle) * field.radiusY() * distance);
+		return geo.getValidLocation(field.x(), field.y(), geo.getHeight(field.x(), field.y(), map.z()), x, y, geo.getHeight(x, y, map.z()), instanceId);
 	}
 
 	private static void buffAndHeal(Player player)
@@ -1365,9 +1531,9 @@ public class RaceWarsManager
 				// Nobody leaves the start points before the fight, nor the field during it.
 				if (match._phase == Phase.PREP)
 				{
-					if (creature.calculateDistance2D(fighter._army._start) > RaceWarsConfig.BASE_RADIUS)
+					if (creature.calculateDistance2D(fighter._start) > RaceWarsConfig.BASE_RADIUS)
 					{
-						sendTo(fighter, fighter._army._start, RaceWarsConfig.SPAWN_RADIUS);
+						sendTo(fighter, fighter._start, match.isDeathmatch() ? 0 : RaceWarsConfig.SPAWN_RADIUS);
 						if (fighter.isPlayer())
 						{
 							sendScreen(creature.asPlayer(), "The fight hasn't started yet!", 4, false);
@@ -1429,9 +1595,11 @@ public class RaceWarsManager
 						}
 					}
 
-					if (standing.size() <= 1)
+					// The final is a deathmatch: it goes on until one fighter is left, whatever its race; otherwise until one race is left.
+					final List<Fighter> survivors = match.isDeathmatch() ? match.getAliveFighters() : List.of();
+					if (match.isDeathmatch() ? survivors.size() <= 1 : standing.size() <= 1)
 					{
-						// The last race standing, or, everyone dead, the one whose last fighter fell last.
+						// The last one (race) standing, or, everyone dead, the race whose last fighter fell last.
 						Army winner = standing.isEmpty() ? null : standing.get(0);
 						if (winner == null)
 						{
@@ -1450,7 +1618,21 @@ public class RaceWarsManager
 								return;
 							}
 						}
-						endMatch(match, winner, standing.isEmpty() ? "everyone fell; the " + SimulationWar.name(winner._race) + " fell last" : "last race standing");
+						final String why;
+						if (standing.isEmpty())
+						{
+							why = "everyone fell; the " + SimulationWar.name(winner._race) + " fell last";
+						}
+						else if (match.isDeathmatch())
+						{
+							final Fighter last = survivors.get(0);
+							why = last._creature.getName() + " is the last one standing, with " + last._kills + " kills";
+						}
+						else
+						{
+							why = "last race standing";
+						}
+						endMatch(match, winner, why);
 						return;
 					}
 
@@ -1460,16 +1642,16 @@ public class RaceWarsManager
 					}
 					else if ((match._phase == Phase.MONSTERS) && (now >= match._hardLimitAt))
 					{
-						// Time is up: the most fighters alive, then the most HP and CP left, then chance.
+						// Time is up: the most fighters alive, then the most HP and CP left, then chance. In the final (a deathmatch), the most kills first.
 						Army winner = null;
 						for (Army army : standing)
 						{
-							if ((winner == null) || (army.getAlive() > winner.getAlive()) || ((army.getAlive() == winner.getAlive()) && (army.getHealthLeft() > winner.getHealthLeft())))
+							if ((winner == null) || isAhead(match, army, winner))
 							{
 								winner = army;
 							}
 						}
-						endMatch(match, winner, "time is up, most fighters alive (" + match.describeAlive() + ")");
+						endMatch(match, winner, match.isDeathmatch() ? "time is up, most kills (" + match.describeKills() + ")" : "time is up, most fighters alive (" + match.describeAlive() + ")");
 						return;
 					}
 
@@ -1477,7 +1659,7 @@ public class RaceWarsManager
 					{
 						match._nextStatus = now + STATUS_INTERVAL;
 						final long left = match._phase == Phase.FIGHT ? (match._monstersAt - now) / 1000 : (match._hardLimitAt - now) / 1000;
-						match.screen("Alive: " + match.describeAlive() + (match._phase == Phase.FIGHT ? " | monsters in " : " | time up in ") + (left / 60) + ":" + String.format("%02d", left % 60), 5, false);
+						match.screen("Alive: " + match.describeAlive() + (match.isDeathmatch() ? " | kills: " + match.describeKills() : "") + (match._phase == Phase.FIGHT ? " | monsters in " : " | time up in ") + (left / 60) + ":" + String.format("%02d", left % 60), 5, false);
 					}
 					break;
 				}
@@ -1491,6 +1673,22 @@ public class RaceWarsManager
 		{
 			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem in match " + match._id + ".", e);
 		}
+	}
+
+	/**
+	 * @return {@code true} if army {@code a} is ahead of army {@code b} when time is up: the most kills in the final (a deathmatch), then the most fighters alive, then the most HP and CP left
+	 */
+	private static boolean isAhead(Match match, Army a, Army b)
+	{
+		if (match.isDeathmatch() && (a.getKills() != b.getKills()))
+		{
+			return a.getKills() > b.getKills();
+		}
+		if (a.getAlive() != b.getAlive())
+		{
+			return a.getAlive() > b.getAlive();
+		}
+		return a.getHealthLeft() > b.getHealthLeft();
 	}
 
 	private boolean hasPlayers(Tournament tournament)
@@ -1545,7 +1743,7 @@ public class RaceWarsManager
 		match._fightStart = now;
 		match._monstersAt = now + (RaceWarsConfig.MONSTER_TIME * 60000L);
 		match._nextStatus = now + STATUS_INTERVAL;
-		match.screen("The fight has begun! The last race standing wins.", 5, true);
+		match.screen(match.isDeathmatch() ? "The final has begun! Everyone for themselves: the race of the last one standing wins." : "The fight has begun! The last race standing wins.", 5, true);
 		for (Fighter fighter : match.getAllFighters())
 		{
 			if (!fighter.isPlayer() && (fighter._creature instanceof Npc fake) && !fake.isDead())
@@ -1576,17 +1774,10 @@ public class RaceWarsManager
 		}
 
 		final EventMap map = tournament._map;
-		final EventBarrier field = getField(map);
-		final GeoEngine geo = GeoEngine.getInstance();
 		int spawned = 0;
 		for (int i = 0; (i < RaceWarsConfig.MONSTER_COUNT) && !kinds.isEmpty(); i++)
 		{
-			// A spot of the field by chance, inside the fence (moved short of a wall in the way from the middle).
-			final double angle = Rnd.nextDouble() * 2 * Math.PI;
-			final double distance = Math.sqrt(Rnd.nextDouble()) * MONSTER_FIELD_SHARE;
-			final int x = field.x() + (int) (Math.cos(angle) * field.radiusX() * distance);
-			final int y = field.y() + (int) (Math.sin(angle) * field.radiusY() * distance);
-			final Location spot = geo.getValidLocation(field.x(), field.y(), geo.getHeight(field.x(), field.y(), map.z()), x, y, geo.getHeight(x, y, map.z()), match._instanceId);
+			final Location spot = randomFieldSpot(map, match._instanceId, MONSTER_FIELD_SHARE);
 			final NpcTemplate kind = kinds.get(i % kinds.size());
 			final Npc npc = Quest.addSpawn(kind.getId(), spot.getX(), spot.getY(), spot.getZ(), Rnd.get(65536), false, 0, false, match._instanceId);
 			if ((npc == null) || !npc.isAttackable())
@@ -1741,13 +1932,13 @@ public class RaceWarsManager
 		}
 		final Fighter slayer = getFighter(killer);
 		final String by;
-		if ((slayer != null) && (slayer._match == match) && (slayer._army != dead._army))
+		if ((slayer != null) && (slayer._match == match) && (match.isDeathmatch() ? slayer != dead : slayer._army != dead._army))
 		{
 			slayer._kills++;
 			showScore(slayer);
 			if (slayer.isPlayer())
 			{
-				sendScreen(slayer._creature.asPlayer(), "You killed " + victim.getName() + "! " + match.describeAlive(), 3, false);
+				sendScreen(slayer._creature.asPlayer(), "You killed " + victim.getName() + "! " + (match.isDeathmatch() ? match.getAliveFighters().size() + " left standing. " : "") + match.describeAlive(), 3, false);
 			}
 			by = slayer._creature.getName() + " (" + SimulationWar.name(slayer._army._race) + ")";
 		}
@@ -1759,7 +1950,7 @@ public class RaceWarsManager
 		final int alive = dead._army.getAlive();
 		if (dead.isPlayer())
 		{
-			dead._creature.sendMessage(TAG + ": You fell to " + by + ". There is no coming back: you wait here until your race's match ends. " + SimulationWar.name(dead._army._race) + " fighters left: " + alive + ".");
+			dead._creature.sendMessage(TAG + ": You fell to " + by + ". There is no coming back: you wait here until " + (match.isDeathmatch() ? "the final ends" : "your race's match ends") + ". " + SimulationWar.name(dead._army._race) + " fighters left: " + alive + ".");
 		}
 		if (alive == 0)
 		{
@@ -1833,6 +2024,7 @@ public class RaceWarsManager
 			if (winner != null)
 			{
 				rewardWinners(match, winner);
+				rewardLosers(match, winner);
 				Broadcast.toAllOnlinePlayers(TAG + ": " + result);
 			}
 			ThreadPool.schedule(() ->
@@ -1846,6 +2038,11 @@ public class RaceWarsManager
 		if (winner != null)
 		{
 			tournament._winners.add(winner._race);
+		}
+		// The players already waiting for the final hear how this match ended.
+		for (Player player : getWaitingPlayers(tournament))
+		{
+			player.sendMessage(TAG + ": " + match.describe() + ": " + match._result);
 		}
 		ThreadPool.schedule(() ->
 		{
@@ -1903,6 +2100,47 @@ public class RaceWarsManager
 	}
 
 	/**
+	 * Each player of the races that lost the final gets {@link RaceWarsConfig#FINAL_LOSE_REWARD}, alive or not, unless it left the final before its end.
+	 */
+	private void rewardLosers(Match match, Army winner)
+	{
+		if (RaceWarsConfig.FINAL_LOSE_REWARD.isEmpty())
+		{
+			return;
+		}
+		final StringBuilder rewards = new StringBuilder();
+		for (ItemHolder reward : RaceWarsConfig.FINAL_LOSE_REWARD)
+		{
+			rewards.append(rewards.length() > 0 ? ", " : "").append(reward.getCount()).append(" of item ").append(reward.getId());
+		}
+		for (Army army : match._armies)
+		{
+			if (army == winner)
+			{
+				continue;
+			}
+			for (Fighter fighter : army._fighters)
+			{
+				if (!fighter.isPlayer() || (_fighters.get(fighter._creature.getObjectId()) != fighter))
+				{
+					continue;
+				}
+				final Player player = fighter._creature.asPlayer();
+				if (!player.isOnline())
+				{
+					continue;
+				}
+				for (ItemHolder reward : RaceWarsConfig.FINAL_LOSE_REWARD)
+				{
+					player.addItem(ItemProcessType.REWARD, reward.getId(), reward.getCount(), null, true);
+				}
+				player.sendMessage(TAG + ": Your race lost the final, but made it that far: here is your consolation prize.");
+				LOGGER.info(getClass().getSimpleName() + ": Final " + match._id + ": " + player.getName() + " (" + SimulationWar.name(army._race) + ", " + fighter._kills + " kills) lost and gets " + rewards + ".");
+			}
+		}
+	}
+
+	/**
 	 * After a match: its fake players leave the world, its players go home, but the players of the race that goes to the final wait in the field, healed and out of harm, until the final takes them.
 	 * @param match the match
 	 * @param advancing the army that goes to the final, {@code null} for none
@@ -1948,7 +2186,7 @@ public class RaceWarsManager
 					player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
 					player.setCurrentCp(player.getMaxCp());
 					_waiting.put(player.getObjectId(), match._tournament);
-					sendScreen(player, "Your race goes to the final! Wait here for the other matches.", 8, true);
+					sendScreen(player, "Your race goes to the final! Wait here for the other matches: you see how they go.", 8, true);
 					continue;
 				}
 				restorePlayer(player, match._tournament, true);
@@ -2055,7 +2293,7 @@ public class RaceWarsManager
 			final Player player = entry.getValue() == tournament ? World.getInstance().getPlayer(entry.getKey()) : null;
 			if (player != null)
 			{
-				sendScreen(player, "The final starts in " + RaceWarsConfig.FINAL_DELAY + " seconds: " + names + ", all against all!", 8, true);
+				sendScreen(player, "The final starts in " + RaceWarsConfig.FINAL_DELAY + " seconds: " + names + ", a deathmatch, everyone for themselves!", 8, true);
 			}
 		}
 		LOGGER.info(getClass().getSimpleName() + ": Tournament " + tournament._id + ": the final (" + names + ") starts in " + RaceWarsConfig.FINAL_DELAY + " s.");
@@ -2069,6 +2307,7 @@ public class RaceWarsManager
 			return;
 		}
 
+		stopWaitingStatus(tournament);
 		final Match finalMatch = startMatch(tournament, Stage.FINAL, finalists);
 		tournament._final = finalMatch;
 		// The fields the waiting players stood in go now that they are moved.
@@ -2101,6 +2340,7 @@ public class RaceWarsManager
 	private void finishTournament(Tournament tournament)
 	{
 		tournament._over = true;
+		stopWaitingStatus(tournament);
 		for (Map.Entry<Integer, Tournament> entry : new ArrayList<>(_waiting.entrySet()))
 		{
 			if (entry.getValue() == tournament)
@@ -2364,6 +2604,82 @@ public class RaceWarsManager
 		return sb.append(stopped).append(" tournament(s) stopped.").toString();
 	}
 
+	/**
+	 * @return the online players of a tournament that wait for its final
+	 */
+	private List<Player> getWaitingPlayers(Tournament tournament)
+	{
+		final List<Player> players = new ArrayList<>();
+		for (Map.Entry<Integer, Tournament> entry : _waiting.entrySet())
+		{
+			if (entry.getValue() != tournament)
+			{
+				continue;
+			}
+			final Player player = World.getInstance().getPlayer(entry.getKey());
+			if ((player != null) && player.isOnline())
+			{
+				players.add(player);
+			}
+		}
+		return players;
+	}
+
+	/**
+	 * The players whose race won its match early wait for the others: they see how the other matches of their tournament go, every {@link #WAITING_STATUS_INTERVAL}.
+	 * @param tournament the tournament
+	 */
+	private void showWaitingStatus(Tournament tournament)
+	{
+		try
+		{
+			if (tournament._over || (tournament._final != null))
+			{
+				stopWaitingStatus(tournament);
+				return;
+			}
+			final List<Player> players = getWaitingPlayers(tournament);
+			if (players.isEmpty())
+			{
+				return;
+			}
+			final StringBuilder sb = new StringBuilder();
+			for (Match match : tournament._semifinals)
+			{
+				if ((match._phase != Phase.ENDED) && _matches.containsKey(match._id))
+				{
+					sb.append(sb.length() > 0 ? " | " : "").append(match.describeProgress());
+				}
+			}
+			final String text = sb.length() > 0 ? "Waiting for the final. " + sb : "Every match is over: the final starts soon.";
+			// At the bottom of the screen: the announcements at the top stay readable.
+			for (Player player : players)
+			{
+				player.sendPacket(new ExShowScreenMessage(text, ExShowScreenMessage.BOTTOM_CENTER, (int) WAITING_STATUS_INTERVAL + 1000, 0, true, false));
+			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem while showing the waiting status of tournament " + tournament._id + ".", e);
+		}
+	}
+
+	private static void stopWaitingStatus(Tournament tournament)
+	{
+		final ScheduledFuture<?> task = tournament._waitingTask;
+		if (task != null)
+		{
+			task.cancel(false);
+			tournament._waitingTask = null;
+		}
+	}
+
+	private static String formatTime(long millis)
+	{
+		final long seconds = Math.max(0, millis / 1000);
+		return (seconds / 60) + ":" + String.format("%02d", seconds % 60);
+	}
+
 	private void updateActive()
 	{
 		ACTIVE = !_matches.isEmpty();
@@ -2449,6 +2765,11 @@ public class RaceWarsManager
 		{
 			return TeamVsTeamManager.Relation.STRANGER;
 		}
+		if (fa._match.isDeathmatch())
+		{
+			// The final: every one for themselves, only one's own summons are friends.
+			return fa == fb ? TeamVsTeamManager.Relation.ALLY : TeamVsTeamManager.Relation.ENEMY;
+		}
 		return fa._army == fb._army ? TeamVsTeamManager.Relation.ALLY : TeamVsTeamManager.Relation.ENEMY;
 	}
 
@@ -2530,16 +2851,17 @@ public class RaceWarsManager
 
 		Creature best = null;
 		double bestDistance = Double.MAX_VALUE;
+		final boolean deathmatch = fighter._match.isDeathmatch();
 		for (Army army : fighter._match._armies)
 		{
-			if (army == fighter._army)
+			if ((army == fighter._army) && !deathmatch)
 			{
 				continue;
 			}
 			for (Fighter enemy : army._fighters)
 			{
 				final Creature creature = enemy._creature;
-				if (!enemy.isAlive() || creature.isInvisible() || (creature.getInstanceId() != fake.getInstanceId()))
+				if ((enemy == fighter) || !enemy.isAlive() || creature.isInvisible() || (creature.getInstanceId() != fake.getInstanceId()))
 				{
 					continue;
 				}
@@ -2586,15 +2908,16 @@ public class RaceWarsManager
 
 		Location best = null;
 		double bestDistance = Double.MAX_VALUE;
+		final boolean deathmatch = fighter._match.isDeathmatch();
 		for (Army army : fighter._match._armies)
 		{
-			if (army == fighter._army)
+			if ((army == fighter._army) && !deathmatch)
 			{
 				continue;
 			}
 			for (Fighter enemy : army._fighters)
 			{
-				if (!enemy.isAlive())
+				if ((enemy == fighter) || !enemy.isAlive())
 				{
 					continue;
 				}

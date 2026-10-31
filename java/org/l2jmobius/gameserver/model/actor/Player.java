@@ -5829,13 +5829,14 @@ public class Player extends Playable
 			return;
 		}
 		
-		// Conquest: killing an enemy of the match is a PvP, never a PK (its instance is a PvP zone, which counts nothing otherwise).
-		if (TeamEventRules.isConquestFighter(this) && TeamEventRules.isConquestFighter(killedPlayer))
+		// Events (Team vs Team, Deathmatch, Conquest, Race Wars, the scripted ones): killing an enemy of the event is a PvP, never a PK (their fields are PvP zones, which count nothing otherwise).
+		if (TeamEventRules.isEventKill(this, target))
 		{
-			if (TeamEventRules.isEnemy(this, killedPlayer))
-			{
-				increasePvpKills(target);
-			}
+			increasePvpKills(target);
+			return;
+		}
+		if (TeamEventRules.isEventFight(this, killedPlayer))
+		{
 			return;
 		}
 
