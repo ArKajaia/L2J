@@ -30,7 +30,9 @@ public enum EventMapType
 	/** Conquest: the spawn points of Blue and Red, and the capture points. */
 	CONQUEST("conquest", "Conquest"),
 	/** Deathmatch: the spots everyone spawns at, every one for themselves. */
-	DEATHMATCH("deathmatch", "Deathmatch");
+	DEATHMATCH("deathmatch", "Deathmatch"),
+	/** Race Wars: the start points of the two races of a race-vs-race match, and of the three races of the final. */
+	RACEWARS("racewars", "Race Wars");
 
 	private final String _key;
 	private final String _title;
@@ -42,7 +44,7 @@ public enum EventMapType
 	}
 
 	/**
-	 * @return its name in the map files, the web page and the admin commands: tvt, conquest, deathmatch
+	 * @return its name in the map files, the web page and the admin commands: tvt, conquest, deathmatch, racewars
 	 */
 	public String getKey()
 	{
@@ -50,7 +52,7 @@ public enum EventMapType
 	}
 
 	/**
-	 * @return its name for people: Team vs Team, Conquest, Deathmatch
+	 * @return its name for people: Team vs Team, Conquest, Deathmatch, Race Wars
 	 */
 	public String getTitle()
 	{
@@ -58,7 +60,7 @@ public enum EventMapType
 	}
 
 	/**
-	 * @param key tvt, conquest or deathmatch (also dm), any case
+	 * @param key tvt, conquest, deathmatch (also dm) or racewars (also rw), any case
 	 * @return the type, {@code null} for none
 	 */
 	public static EventMapType fromKey(String key)
@@ -72,6 +74,7 @@ public enum EventMapType
 			case "tvt" -> TVT;
 			case "conquest" -> CONQUEST;
 			case "deathmatch", "dm" -> DEATHMATCH;
+			case "racewars", "rw" -> RACEWARS;
 			default -> null;
 		};
 	}

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.l2jmobius.gameserver.config.custom.RaceWarsConfig;
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
 import org.l2jmobius.gameserver.data.xml.DoorData;
 import org.l2jmobius.gameserver.data.xml.EventMapData;
@@ -54,6 +55,8 @@ public class EventMapMarkers
 	private static final Color CONQUEST_RED = new Color(255, 130, 110);
 	private static final Color CAPTURE = new Color(255, 210, 40);
 	private static final Color DEATHMATCH = new Color(195, 120, 255);
+	private static final Color RACEWARS_DUEL = new Color(60, 210, 180);
+	private static final Color RACEWARS_FINAL = new Color(240, 230, 80);
 	private static final Color FENCE = new Color(255, 160, 40);
 	private static final Color EDGE = new Color(230, 230, 230);
 	private static final Color DOOR_OPEN = new Color(80, 230, 110);
@@ -171,9 +174,10 @@ public class EventMapMarkers
 		final boolean tvt = (only == null) ? map.belongsTo(EventMapType.TVT) : only == EventMapType.TVT;
 		final boolean conquest = (only == null) ? map.belongsTo(EventMapType.CONQUEST) : only == EventMapType.CONQUEST;
 		final boolean deathmatch = (only == null) ? map.belongsTo(EventMapType.DEATHMATCH) : only == EventMapType.DEATHMATCH;
+		final boolean raceWars = (only == null) ? map.belongsTo(EventMapType.RACEWARS) : only == EventMapType.RACEWARS;
 
 		// What is left of the budget after the beacons, names and arrows goes to the rings, the fence and the edge.
-		final int points = (tvt ? map.blue().size() + map.red().size() : 0) + (conquest ? map.conquestPoints().size() : 0) + (deathmatch ? map.deathmatch().size() : 0);
+		final int points = (tvt ? map.blue().size() + map.red().size() : 0) + (conquest ? map.conquestPoints().size() : 0) + (deathmatch ? map.deathmatch().size() : 0) + (raceWars ? map.raceWarsDuel().size() + map.raceWarsFinal().size() : 0);
 		final int perimeter = 2 * ((map.maxX() - map.minX()) + (map.maxY() - map.minY()));
 		final int edgeLines = Math.min(perimeter / EDGE_STEP, MAX_SHAPES / 5);
 		final int fenceLines = map.barrier() != null ? MAX_SHAPES / 6 : 0;
@@ -224,7 +228,7 @@ public class EventMapMarkers
 				lastX = nextX;
 				lastY = nextY;
 			}
-			packet.addPoint("Fence (TvT, Deathmatch)", FENCE, true, barrier.x(), barrier.y() - barrier.radiusY(), ground(barrier.x(), barrier.y() - barrier.radiusY(), z) + 80);
+			packet.addPoint("Fence (TvT, Deathmatch, Race Wars)", FENCE, true, barrier.x(), barrier.y() - barrier.radiusY(), ground(barrier.x(), barrier.y() - barrier.radiusY(), z) + 80);
 		}
 
 		if (tvt)
@@ -274,6 +278,22 @@ public class EventMapMarkers
 			{
 				final Location spawn = spawns.get(i);
 				addSpawn(packet, DEATHMATCH, "DM spawn " + (i + 1), spawn.getX(), spawn.getY(), spawn.getZ(), spawn.getHeading(), DEATHMATCH_RING, Math.max(8, segments / 2));
+			}
+		}
+
+		if (raceWars)
+		{
+			for (int i = 0; i < map.raceWarsDuel().size(); i++)
+			{
+				final Location start = map.raceWarsDuel().get(i);
+				addSpawn(packet, RACEWARS_DUEL, "Race Wars duel start " + (i + 1) + (i == 0 ? " (first race)" : " (second race)"), start.getX(), start.getY(), start.getZ(), start.getHeading(), Math.max(40, RaceWarsConfig.SPAWN_RADIUS), segments);
+				addRing(packet, RACEWARS_DUEL, start.getX(), start.getY(), start.getZ(), RaceWarsConfig.BASE_RADIUS, segments);
+			}
+			for (int i = 0; i < map.raceWarsFinal().size(); i++)
+			{
+				final Location start = map.raceWarsFinal().get(i);
+				addSpawn(packet, RACEWARS_FINAL, "Race Wars final start " + (i + 1), start.getX(), start.getY(), start.getZ(), start.getHeading(), Math.max(40, RaceWarsConfig.SPAWN_RADIUS), segments);
+				addRing(packet, RACEWARS_FINAL, start.getX(), start.getY(), start.getZ(), RaceWarsConfig.BASE_RADIUS, segments);
 			}
 		}
 

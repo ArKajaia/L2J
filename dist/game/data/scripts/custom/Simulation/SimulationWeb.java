@@ -69,7 +69,7 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
  * place: the GM's own, else the Cruma Marshlands field)</li>
  * <li>GET /api/simulation/arena/battles - the arena running now, its status lines and the battles that run, each with its teams; GET /arena/list - the arenas run so far with their summary; POST /arena/watch (run: a battle, blank for the next one) and
  * /arena/leave - take the GM of the link into a battle's instance to watch it, or back out</li>
- * <li>GET /api/racewars/status, POST /api/racewars/simulate (level), /open, /close, /stop - Race Wars, like //racewars</li>
+ * <li>GET /api/racewars/status, POST /api/racewars/simulate (level, map), /open, /close, /stop - Race Wars, like //racewars</li>
  * <li>POST /api/simulation/war/start, /war/stop, GET /war/status - a race war, like //Simulate war: armies of every pair of races, or all at once (mode=ffa), the dead coming back (start: races, mode, power, repeats, size, level, parallel, time, respawn, distance, seed, and x, y, z, heading for the
  * place, the Cruma Marshlands field by default)</li>
  * <li>POST /api/simulation/matrix/start, /matrix/resume, /matrix/stop, GET /matrix/status - the class-vs-class matrix, like //SimulationMatrix (start: battles, parallel, level, time, distance, brain, builds, seed, and x, y, z, heading for the place: the GM's own
@@ -1459,7 +1459,8 @@ public class SimulationWeb
 		final Map<String, String> params = PassiveTreeApiServer.getInstance().readParams(exchange);
 		final int level = parseInt(params.get("level"), gm != null ? gm.getLevel() : DEFAULT_LEVEL);
 		final List<String> lines = new ArrayList<>();
-		lines.add(RaceWarsManager.getInstance().simulate(level));
+		final String map = params.get("map");
+		lines.add(RaceWarsManager.getInstance().simulate(level, (map == null) || map.trim().isEmpty() ? null : map.trim().toLowerCase()));
 		sendTvtLines(exchange, lines);
 	}
 

@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-	A battlefield of the PvP events (EventMapData), shared by Team vs Team, Conquest and Deathmatch. Written by the event map page (//tvt map, //conquest): edits by hand are kept, comments are not.
+	A battlefield of the PvP events (EventMapData), shared by Team vs Team, Conquest, Deathmatch and Race Wars. Written by the event map page (//tvt map, //conquest): edits by hand are kept, comments are not.
 	map         id (the file name), name (shown to the players)
 	area        the battlefield's edge on the players' radar, minX/minY (north-west corner) to maxX/maxY (south-east corner); z: the ground's height, where it has several layers
-	barrier     optional, Team vs Team and Deathmatch: the fence round the field that nobody gets through, an ellipse: middle x, y and its radiusX, radiusY (at least 500)
+	barrier     optional, Team vs Team, Deathmatch and Race Wars: the fence round the field that nobody gets through, an ellipse: middle x, y and its radiusX, radiusY (at least 500)
 	door        a door of data/Doors.xml put in a match's copy of the place, open (open="true") or shut (open="false"); a match has no other doors
 	tvt         enabled: Team vs Team may pick the map. The bases of each team (blue, red): x, y, z, heading; a team starts at its first one
 	conquest    enabled: Conquest may pick the map; maxPlayers per team. The spawn points of each team (x, y, z, heading, radius: how far a wave is spread) and the capture points (name, x, y, z, radius)
 	deathmatch  enabled: Deathmatch may pick the map. The spots everyone spawns at: x, y, z, heading
+	racewars    enabled: Race Wars may pick the map. Where the races start (x, y, z, heading): stage="duel" the two races of a race-vs-race match (the first race at the first one), stage="final" the three races of the final
 -->
 <map id="ruins_of_despair" name="Ruins of Despair">
 	<description>The walled bowl of the Ruins of Despair, the sunken ruins south of the Gludio teleport. Each team on its own half of the ring wall, as far from the other as the bowl allows (at least 8,100 on foot): Blue at the North Gate, the north wall and the north-west wall, Red just inside the South Gate, the south wall and the south-east wall. The two starts are as far from the middle on foot. The fence closes the ring wall (open on all sides) with every base at least 860 inside.</description>
@@ -51,4 +52,11 @@
 		<spawn x="-14757" y="138735" z="-3592" heading="23128" />
 		<spawn x="-16576" y="144470" z="-3800" heading="43043" />
 	</deathmatch>
+	<racewars enabled="true">
+		<start stage="duel" x="-17200" y="147000" z="-3704" heading="46757" />
+		<start stage="duel" x="-20200" y="138700" z="-3896" heading="11380" />
+		<start stage="final" x="-19800" y="146600" z="-3736" heading="53988" />
+		<start stage="final" x="-20200" y="138700" z="-3896" heading="10630" />
+		<start stage="final" x="-12652" y="141858" z="-3688" heading="31275" />
+	</racewars>
 </map>

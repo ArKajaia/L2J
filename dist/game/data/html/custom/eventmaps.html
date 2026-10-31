@@ -23,6 +23,7 @@
 		--fence: #ffa028;
 		--capture: #ffd228;
 		--dm: #c378ff;
+		--rw: #3cd2b4;
 		color-scheme: dark;
 	}
 	* { box-sizing: border-box; }
@@ -47,9 +48,9 @@
 	.chip.good { color: #7fe07f; border-color: #245c24; }
 	.chip.warn { color: var(--warning); border-color: #6a5220; }
 	.tabs { display: flex; gap: 0; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
-	.tabs button { border: 0; border-radius: 0; flex: 1; border-right: 1px solid var(--line); }
+	.tabs button { border: 0; border-radius: 0; flex: 1 1 0; min-width: 0; white-space: normal; line-height: 1.25; padding-left: 4px; padding-right: 4px; border-right: 1px solid var(--line); }
 	.tabs button:last-child { border-right: 0; }
-	.uses { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+	.uses { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 	.uses label { display: flex; flex-direction: column; gap: 3px; border: 1px solid var(--line); border-radius: 5px; padding: 5px 7px; background: #111116; }
 	.uses label .chip { align-self: flex-start; }
 	.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: -1px; margin-right: 5px; }
@@ -159,6 +160,7 @@
 				<span><span class="swatch" style="background:var(--fence);border-radius:2px"></span>fence</span>
 				<span><span class="swatch" style="background:var(--capture)"></span>capture</span>
 				<span><span class="swatch" style="background:var(--dm)"></span>deathmatch</span>
+				<span><span class="swatch" style="background:var(--rw)"></span>race wars</span>
 			</div>
 		</div>
 		<aside>
@@ -261,11 +263,12 @@
 "use strict";
 const TOKEN_KEY = "eventMapsToken";
 const GM_MS = 2500;
-const EVENTS = ["tvt", "conquest", "deathmatch"];
+const EVENTS = ["tvt", "conquest", "deathmatch", "racewars"];
 const EVENT_INFO = {
 	tvt: { title: "Team vs Team", short: "TvT", kinds: ["tvt.blue", "tvt.red"] },
 	conquest: { title: "Conquest", short: "Conquest", kinds: ["conquest.blue", "conquest.red", "conquest.capture"] },
-	deathmatch: { title: "Deathmatch", short: "DM", kinds: ["deathmatch.spawn"] }
+	deathmatch: { title: "Deathmatch", short: "DM", kinds: ["deathmatch.spawn"] },
+	racewars: { title: "Race Wars", short: "RW", kinds: ["racewars.duel", "racewars.final"] }
 };
 const KIND_INFO = {
 	"tvt.blue": { title: "Blue bases", label: "Blue base", place: "Blue base", color: "#468cff", fill: "rgba(70,140,255,0.18)", heading: true },
@@ -273,7 +276,9 @@ const KIND_INFO = {
 	"conquest.blue": { title: "Blue spawn points", label: "Blue spawn", place: "Blue spawn", color: "#78b4ff", fill: "rgba(120,180,255,0.20)", heading: true, radius: 300 },
 	"conquest.red": { title: "Red spawn points", label: "Red spawn", place: "Red spawn", color: "#ff826e", fill: "rgba(255,130,110,0.20)", heading: true, radius: 300 },
 	"conquest.capture": { title: "Capture points", label: "Capture", place: "Capture", color: "#ffd228", fill: "rgba(255,210,40,0.14)", radius: 600, named: true },
-	"deathmatch.spawn": { title: "Deathmatch spawn points", label: "Spawn", place: "DM spawn", color: "#c378ff", fill: "rgba(195,120,255,0.20)", heading: true }
+	"deathmatch.spawn": { title: "Deathmatch spawn points", label: "Spawn", place: "DM spawn", color: "#c378ff", fill: "rgba(195,120,255,0.20)", heading: true },
+	"racewars.duel": { title: "Race-vs-race starts", label: "Duel start", place: "Duel start", color: "#3cd2b4", fill: "rgba(60,210,180,0.18)", heading: true },
+	"racewars.final": { title: "Final starts", label: "Final start", place: "Final start", color: "#f0e650", fill: "rgba(240,230,80,0.16)", heading: true }
 };
 const KINDS = Object.keys(KIND_INFO);
 /** The ring of a Deathmatch spawn: how far its fighter may walk before the fight. */
@@ -361,14 +366,15 @@ const state = {
 	enabled: [],
 	world: null,
 	event: startEvent,  // the event whose points are edited
-	limits: { tvt: 20, conquest: 50, deathmatch: 100, deathmatchMin: 2, scatterMax: 60 },
+	limits: { tvt: 20, conquest: 50, deathmatch: 100, deathmatchMin: 2, scatterMax: 60, racewarsDuel: 2, racewarsFinal: 3 },
+	racewars: { baseRadius: 700, spawnRadius: 150, armySize: 20 },
 	baseRadius: 700,
 	spawnRadius: 150,
 	teamSize: 20,
 	dmSize: 20,
 	players: { default: 250, min: 1, max: 1000 },
 	minBarrier: 500,
-	allowed: { tvt: [], conquest: [], deathmatch: [] },
+	allowed: { tvt: [], conquest: [], deathmatch: [], racewars: [] },
 	shown: null,
 	gm: null,
 	map: null,          // the map being edited (a copy)
@@ -417,6 +423,7 @@ function labelOf(p) {
 	const kind = kindOf(p);
 	if (kind === "conquest.capture") return "Capture " + (p.name || "?");
 	const index = pointsOf(kind).indexOf(p);
+	if (kind === "racewars.duel") return "Duel start " + (index + 1) + " (" + (index === 0 ? "first race" : "second race") + ")";
 	return KIND_INFO[kind].label + " " + (index + 1) + (p.event === "tvt" && index === 0 ? " (start)" : "");
 }
 
@@ -424,6 +431,7 @@ function labelOf(p) {
 function ringOf(p) {
 	if (p.event === "tvt") return state.baseRadius;
 	if (p.event === "conquest") return p.radius || KIND_INFO[kindOf(p)].radius;
+	if (p.event === "racewars") return state.racewars.baseRadius;
 	return DM_RING;
 }
 
@@ -433,6 +441,7 @@ function lacks(event, map) {
 	const count = (kind) => m.points.filter((p) => kindOf(p) === kind).length;
 	if (event === "tvt") return !count("tvt.blue") ? "a Blue base" : !count("tvt.red") ? "a Red base" : "";
 	if (event === "conquest") return !count("conquest.blue") ? "a Blue spawn" : !count("conquest.red") ? "a Red spawn" : !count("conquest.capture") ? "a capture point" : "";
+	if (event === "racewars") return count("racewars.duel") < state.limits.racewarsDuel ? state.limits.racewarsDuel + " race-vs-race starts" : count("racewars.final") < state.limits.racewarsFinal ? state.limits.racewarsFinal + " final starts" : "";
 	return count("deathmatch.spawn") < state.limits.deathmatchMin ? state.limits.deathmatchMin + " spawn points" : "";
 }
 
@@ -455,6 +464,7 @@ async function loadMaps(selectId) {
 	state.spawnRadius = data.tvt.spawnRadius;
 	state.teamSize = data.tvt.teamSize;
 	state.dmSize = data.deathmatch.size;
+	if (data.racewars) state.racewars = data.racewars;
 	state.players = data.players;
 	state.minBarrier = data.minBarrier;
 	state.allowed = data.allowed;
@@ -803,6 +813,17 @@ function drawLinks() {
 				if (near) link(c, near, team === "blue" ? "rgba(110,165,255,0.85)" : "rgba(255,110,95,0.85)", sel === c, sel === c ? 2 : 1.25);
 			}
 		}
+	} else if (state.event === "racewars") {
+		// The two armies of a race-vs-race match, and the three of the final, each linked to the others.
+		for (const kind of ["racewars.duel", "racewars.final"]) {
+			const starts = pointsOf(kind);
+			for (let i = 0; i < starts.length; i++) {
+				for (let j = i + 1; j < starts.length; j++) {
+					const close = dist(starts[i], starts[j]) < 3000;
+					link(starts[i], starts[j], close ? "rgba(250,178,25,0.95)" : KIND_INFO[kind].color, !!sel && (sel === starts[i] || sel === starts[j]), sel === starts[i] || sel === starts[j] ? 2 : 1.25);
+				}
+			}
+		}
 	} else {
 		const spawns = pointsOf("deathmatch.spawn");
 		for (const p of sel ? [sel] : spawns) {
@@ -1118,6 +1139,8 @@ function nextCaptureName() {
 }
 
 function limitOf(kind) {
+	if (kind === "racewars.duel") return state.limits.racewarsDuel;
+	if (kind === "racewars.final") return state.limits.racewarsFinal;
 	return kind.startsWith("tvt.") ? state.limits.tvt : kind.startsWith("conquest.") ? state.limits.conquest : state.limits.deathmatch;
 }
 
@@ -1270,7 +1293,7 @@ async function teleport(p, label) {
 function mirror() {
 	const m = state.map;
 	const event = state.event;
-	if (event === "deathmatch") return;
+	if (event === "deathmatch" || event === "racewars") return;
 	const axis = $("mirrorAxis").value;
 	const cx = (m.minX + m.maxX) / 2;
 	const cy = (m.minY + m.maxY) / 2;
@@ -1430,7 +1453,8 @@ function renderEventTabs() {
 	const hints = {
 		tvt: "Bases of each team. A team starts at its first base; its dead come back at one of its bases.",
 		conquest: "Spawn points of each team (the ring is how far a wave spreads) and the capture points.",
-		deathmatch: "The spots everyone spawns at, every one for themselves: each fighter at one picked by chance, far from the others. " + state.dmSize + " fighters a match."
+		deathmatch: "The spots everyone spawns at, every one for themselves: each fighter at one picked by chance, far from the others. " + state.dmSize + " fighters a match.",
+		racewars: "Where the races start: the two of a race-vs-race match (" + state.limits.racewarsDuel + " duel starts, the first race at the first) and the three of the final (" + state.limits.racewarsFinal + " final starts), each an army of " + state.racewars.armySize + " that buffs within " + fmt(state.racewars.baseRadius) + " of its start. Nobody comes back, so there are no other spawns."
 	};
 	$("eventHint").textContent = hints[state.event];
 	// The place buttons of the event edited.
@@ -1441,7 +1465,7 @@ function renderEventTabs() {
 		button.disabled = !state.map;
 		place.appendChild(button);
 	}
-	$("mirrorRow").style.display = state.event === "deathmatch" ? "none" : "";
+	$("mirrorRow").style.display = state.event === "deathmatch" || state.event === "racewars" ? "none" : "";
 }
 
 function renderAreaFields() {
@@ -1501,6 +1525,7 @@ function renderPoints() {
 		]));
 		if (!list.length) section.appendChild(el("div", { class: "muted" }, "None yet."));
 		else if (event === "tvt") section.appendChild(el("div", { class: "muted", style: "font-size:12px" }, "The team (" + state.teamSize + ") starts at base 1; its dead come back at one of " + (list.length > 1 ? "the " + list.length + " bases" : "it") + ". Each base is " + fmt(state.baseRadius) + " round."));
+		else if (event === "racewars") section.appendChild(el("div", { class: "muted", style: "font-size:12px" }, kind === "racewars.duel" ? "The two races of each race-vs-race match start here (" + list.length + " of " + state.limits.racewarsDuel + ")." : "The three races of the final start here (" + list.length + " of " + state.limits.racewarsFinal + ")."));
 		else if (kind !== "conquest.capture" && event === "conquest") section.appendChild(el("div", { class: "muted", style: "font-size:12px" }, "Up to " + state.map.conquestMaxPlayers + " players: about " + Math.ceil(state.map.conquestMaxPlayers / list.length) + " per spawn point if they all come back at once."));
 		list.forEach((p, i) => section.appendChild(renderPoint(p, i)));
 	}
@@ -1634,6 +1659,7 @@ function renderBalance() {
 	if (!state.map) return;
 	if (state.event === "tvt") balanceTvt(box, setChip);
 	else if (state.event === "conquest") balanceConquest(box, setChip);
+	else if (state.event === "racewars") balanceRaceWars(box, setChip);
 	else balanceDeathmatch(box, setChip);
 }
 
@@ -1712,6 +1738,54 @@ function balanceConquest(box, setChip) {
 	box.appendChild(el("div", { class: "muted", style: "margin-top:6px;font-size:12px" }, "Distance from each team's nearest spawn. Home points: blue " + blueHome + ", red " + redHome + ", even " + contested + ". Total walk: blue " + fmt(sumB) + ", red " + fmt(sumR) + ". Closest enemy spawns: " + fmt(between) + "."));
 	const fair = blueHome === redHome && skew <= 0.05;
 	setChip(fair, fair ? "balanced" : "uneven by " + Math.round(skew * 100) + "%");
+}
+
+/** Race Wars: each army as far from the middle as the others (none closer to the fight), and the armies far enough apart not to see each other while they buff. */
+function balanceRaceWars(box, setChip) {
+	const duel = pointsOf("racewars.duel");
+	const finals = pointsOf("racewars.final");
+	if (duel.length < state.limits.racewarsDuel && finals.length < state.limits.racewarsFinal) {
+		box.className = "muted";
+		box.textContent = "Add " + state.limits.racewarsDuel + " race-vs-race starts and " + state.limits.racewarsFinal + " final starts.";
+		return;
+	}
+	box.className = "";
+	const table = el("table", {}, [el("tr", {}, [el("th", {}, "Start"), el("th", { class: "num" }, "To middle"), el("th", { class: "num" }, "Nearest other")])]);
+	let worstSkew = 0;
+	let close = 0;
+	let outside = 0;
+	const notes = [];
+	for (const [kind, starts, name] of [["racewars.duel", duel, "Race-vs-race"], ["racewars.final", finals, "Final"]]) {
+		if (starts.length < 2) continue;
+		const center = { x: starts.reduce((s, p) => s + p.x, 0) / starts.length, y: starts.reduce((s, p) => s + p.y, 0) / starts.length };
+		const fence = state.map.barrier;
+		const middle = fence ? { x: fence.x, y: fence.y } : center;
+		const toMiddle = starts.map((p) => dist(p, middle));
+		const avg = toMiddle.reduce((s, d) => s + d, 0) / toMiddle.length;
+		const skew = (Math.max(...toMiddle) - Math.min(...toMiddle)) / Math.max(1, avg);
+		worstSkew = Math.max(worstSkew, skew);
+		starts.forEach((p, i) => {
+			const near = dist(p, nearest(p, starts.filter((q) => q !== p)));
+			const isClose = near < 3000;
+			if (isClose) close++;
+			if (!insideFence(p, 0)) outside++;
+			table.appendChild(el("tr", { style: "cursor:pointer", onclick: () => { select(p); centerOn(p); } }, [
+				el("td", { style: "color:" + KIND_INFO[kind].color }, labelOf(p)),
+				el("td", { class: "num" }, fmt(toMiddle[i])),
+				el("td", { class: "num", style: isClose ? "color:var(--warning)" : "" }, fmt(near) + (isClose ? " ⚠" : ""))
+			]));
+		});
+		notes.push(name + ": " + fmt(Math.min(...toMiddle)) + " to " + fmt(Math.max(...toMiddle)) + " from the " + (fence ? "middle of the fence" : "middle of the starts") + " (uneven by " + Math.round(skew * 100) + "%).");
+	}
+	box.appendChild(table);
+	if (duel.length < state.limits.racewarsDuel) notes.push("Only " + duel.length + " of " + state.limits.racewarsDuel + " race-vs-race starts.");
+	if (finals.length < state.limits.racewarsFinal) notes.push("Only " + finals.length + " of " + state.limits.racewarsFinal + " final starts.");
+	if (close) notes.push(close + " start(s) closer than 3,000 to another: the armies see each other while they buff.");
+	if (outside) notes.push(outside + " start(s) beyond the fence.");
+	const warn = close || outside || duel.length < state.limits.racewarsDuel || finals.length < state.limits.racewarsFinal;
+	box.appendChild(el("div", { class: warn ? "" : "muted", style: "margin-top:6px;font-size:12px" + (warn ? ";color:var(--warning)" : "") }, "Straight-line distances. " + notes.join(" ")));
+	const fair = !warn && worstSkew <= 0.1;
+	setChip(fair, outside ? "start beyond the fence" : close ? "starts too close" : warn ? "starts missing" : fair ? "balanced" : "uneven by " + Math.round(worstSkew * 100) + "%");
 }
 
 function balanceDeathmatch(box, setChip) {
@@ -1866,7 +1940,7 @@ $("newDialog").addEventListener("close", async () => {
 		const gm = await gmNow();
 		const x = Math.round(gm.x / 100) * 100;
 		const y = Math.round(gm.y / 100) * 100;
-		state.map = { id: id, name: $("nName").value.trim() || id, description: "", uses: { tvt: false, conquest: false, deathmatch: false }, conquestMaxPlayers: state.players.default, minX: x - 8000, minY: y - 8000, maxX: x + 8000, maxY: y + 8000, z: gm.z, points: [], barrier: null, doors: [] };
+		state.map = { id: id, name: $("nName").value.trim() || id, description: "", uses: { tvt: false, conquest: false, deathmatch: false, racewars: false }, conquestMaxPlayers: state.players.default, minX: x - 8000, minY: y - 8000, maxX: x + 8000, maxY: y + 8000, z: gm.z, points: [], barrier: null, doors: [] };
 		state.saved = "";
 		state.previousId = "";
 		state.selected = null;

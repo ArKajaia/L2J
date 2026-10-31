@@ -69,6 +69,9 @@ public class EventMapData implements IXmlReader
 	public static final int MAX_CONQUEST_POINTS = 50;
 	/** Deathmatch: at most so many spawn spots. */
 	public static final int MAX_DEATHMATCH_SPAWNS = 100;
+	/** Race Wars start points: the two of a race-vs-race match and the three of the final (only so many are used). */
+	public static final int MAX_RACEWARS_DUEL_SPAWNS = EventMap.RACEWARS_DUEL_SPAWNS;
+	public static final int MAX_RACEWARS_FINAL_SPAWNS = EventMap.RACEWARS_FINAL_SPAWNS;
 	/** Conquest: how many players a team takes on a map that doesn't say, and the bounds of what a map may say. */
 	public static final int DEFAULT_MAX_PLAYERS = 250;
 	public static final int MIN_PLAYERS = 1;
@@ -188,7 +191,7 @@ public class EventMapData implements IXmlReader
 			}
 		}
 		final String description = conquest.description().isEmpty() ? tvt.description() : tvt.description().isEmpty() ? conquest.description() : conquest.description() + " " + tvt.description();
-		return new EventMap(conquest.id(), conquest.name(), description, Math.min(conquest.minX(), tvt.minX()), Math.min(conquest.minY(), tvt.minY()), Math.max(conquest.maxX(), tvt.maxX()), Math.max(conquest.maxY(), tvt.maxY()), conquest.z(), tvt.barrier(), doors, uses, tvt.blue(), tvt.red(), conquest.conquestMaxPlayers(), conquest.conquestPoints(), tvt.deathmatch());
+		return new EventMap(conquest.id(), conquest.name(), description, Math.min(conquest.minX(), tvt.minX()), Math.min(conquest.minY(), tvt.minY()), Math.max(conquest.maxX(), tvt.maxX()), Math.max(conquest.maxY(), tvt.maxY()), conquest.z(), tvt.barrier(), doors, uses, tvt.blue(), tvt.red(), conquest.conquestMaxPlayers(), conquest.conquestPoints(), tvt.deathmatch(), tvt.raceWarsDuel(), tvt.raceWarsFinal());
 	}
 
 	@Override
@@ -230,6 +233,8 @@ public class EventMapData implements IXmlReader
 			final List<Location> red = new ArrayList<>();
 			final List<ConquestPoint> conquestPoints = new ArrayList<>();
 			final List<Location> deathmatch = new ArrayList<>();
+			final List<Location> raceWarsDuel = new ArrayList<>();
+			final List<Location> raceWarsFinal = new ArrayList<>();
 			int maxPlayers = DEFAULT_MAX_PLAYERS;
 
 			// The old files: the whole map is the one event's, its ticks the map's "enabled".
@@ -347,6 +352,31 @@ public class EventMapData implements IXmlReader
 						}
 						break;
 					}
+					case "racewars":
+					{
+						if (parseBoolean(childAttrs, "enabled", true))
+						{
+							uses.add(EventMapType.RACEWARS);
+						}
+						for (Node start = child.getFirstChild(); start != null; start = start.getNextSibling())
+						{
+							if (!"start".equalsIgnoreCase(start.getNodeName()))
+							{
+								continue;
+							}
+							final String stage = parseString(start.getAttributes(), "stage", "duel");
+							final List<Location> starts = "final".equalsIgnoreCase(stage) ? raceWarsFinal : raceWarsDuel;
+							if (starts.size() < ("final".equalsIgnoreCase(stage) ? MAX_RACEWARS_FINAL_SPAWNS : MAX_RACEWARS_DUEL_SPAWNS))
+							{
+								starts.add(readLocation(start.getAttributes()));
+							}
+							else
+							{
+								LOGGER.warning(getClass().getSimpleName() + ": " + file.getName() + " has more Race Wars " + stage + " start points than are used; the extra ones are left out.");
+							}
+						}
+						break;
+					}
 				}
 			}
 
@@ -358,11 +388,13 @@ public class EventMapData implements IXmlReader
 			final List<Location> all = new ArrayList<>(blue);
 			all.addAll(red);
 			all.addAll(deathmatch);
+			all.addAll(raceWarsDuel);
+			all.addAll(raceWarsFinal);
 			for (ConquestPoint point : conquestPoints)
 			{
 				all.add(new Location(point.x(), point.y(), point.z()));
 			}
-			final EventMap map = new EventMap(fileId, parseString(attrs, "name", fileId), description, minX, minY, maxX, maxY, z != null ? z : averageZ(all), barrier, doors, uses, blue, red, Math.max(MIN_PLAYERS, Math.min(MAX_PLAYERS, maxPlayers)), conquestPoints, deathmatch);
+			final EventMap map = new EventMap(fileId, parseString(attrs, "name", fileId), description, minX, minY, maxX, maxY, z != null ? z : averageZ(all), barrier, doors, uses, blue, red, Math.max(MIN_PLAYERS, Math.min(MAX_PLAYERS, maxPlayers)), conquestPoints, deathmatch, raceWarsDuel, raceWarsFinal);
 			_loading.get(source).put(fileId, map);
 			if (source != Source.MAPS)
 			{
@@ -535,14 +567,15 @@ public class EventMapData implements IXmlReader
 		final StringBuilder sb = new StringBuilder(4096);
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 		sb.append("<!--\n");
-		sb.append("\tA battlefield of the PvP events (EventMapData), shared by Team vs Team, Conquest and Deathmatch. Written by the event map page (//tvt map, //conquest): edits by hand are kept, comments are not.\n");
+		sb.append("\tA battlefield of the PvP events (EventMapData), shared by Team vs Team, Conquest, Deathmatch and Race Wars. Written by the event map page (//tvt map, //conquest): edits by hand are kept, comments are not.\n");
 		sb.append("\tmap         id (the file name), name (shown to the players)\n");
 		sb.append("\tarea        the battlefield's edge on the players' radar, minX/minY (north-west corner) to maxX/maxY (south-east corner); z: the ground's height, where it has several layers\n");
-		sb.append("\tbarrier     optional, Team vs Team and Deathmatch: the fence round the field that nobody gets through, an ellipse: middle x, y and its radiusX, radiusY (at least 500)\n");
+		sb.append("\tbarrier     optional, Team vs Team, Deathmatch and Race Wars: the fence round the field that nobody gets through, an ellipse: middle x, y and its radiusX, radiusY (at least 500)\n");
 		sb.append("\tdoor        a door of data/Doors.xml put in a match's copy of the place, open (open=\"true\") or shut (open=\"false\"); a match has no other doors\n");
 		sb.append("\ttvt         enabled: Team vs Team may pick the map. The bases of each team (blue, red): x, y, z, heading; a team starts at its first one\n");
 		sb.append("\tconquest    enabled: Conquest may pick the map; maxPlayers per team. The spawn points of each team (x, y, z, heading, radius: how far a wave is spread) and the capture points (name, x, y, z, radius)\n");
 		sb.append("\tdeathmatch  enabled: Deathmatch may pick the map. The spots everyone spawns at: x, y, z, heading\n");
+		sb.append("\tracewars    enabled: Race Wars may pick the map. Where the races start (x, y, z, heading): stage=\"duel\" the two races of a race-vs-race match (the first race at the first one), stage=\"final\" the three races of the final\n");
 		sb.append("-->\n");
 		sb.append("<map id=\"").append(map.id()).append("\" name=\"").append(escape(map.name())).append("\">\n");
 		if (!map.description().isEmpty())
@@ -620,6 +653,24 @@ public class EventMapData implements IXmlReader
 				sb.append(" />\n");
 			}
 			sb.append("\t</deathmatch>\n");
+		}
+
+		if (map.belongsTo(EventMapType.RACEWARS))
+		{
+			sb.append("\t<racewars enabled=\"").append(map.isUsedBy(EventMapType.RACEWARS)).append("\">\n");
+			for (Location start : map.raceWarsDuel())
+			{
+				sb.append("\t\t<start stage=\"duel\"");
+				appendLocation(sb, start);
+				sb.append(" />\n");
+			}
+			for (Location start : map.raceWarsFinal())
+			{
+				sb.append("\t\t<start stage=\"final\"");
+				appendLocation(sb, start);
+				sb.append(" />\n");
+			}
+			sb.append("\t</racewars>\n");
 		}
 		sb.append("</map>\n");
 		return sb.toString();

@@ -31,6 +31,7 @@ import java.util.logging.Logger;
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.SimpleJson;
 import org.l2jmobius.gameserver.config.custom.ConquestConfig;
+import org.l2jmobius.gameserver.config.custom.RaceWarsConfig;
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
 import org.l2jmobius.gameserver.data.xml.DoorData;
 import org.l2jmobius.gameserver.data.xml.EventMapData;
@@ -92,6 +93,8 @@ public class EventMapWeb
 	private static final int MAX_DESCRIPTION = 2000;
 	/** Deathmatch spawn points closer than this are worth a warning: a fighter may spawn next to another. */
 	private static final int DEATHMATCH_CLOSE = 300;
+	/** Race Wars start points closer than this are worth a warning: the armies would see each other before the fight (a fake player sees 1200 far). */
+	private static final int RACEWARS_CLOSE = 3000;
 	/** A scatter asks for at most so many spots. */
 	private static final int MAX_SCATTER = 60;
 
@@ -161,9 +164,11 @@ public class EventMapWeb
 		json.append("{\"admin\":").append(SimpleJson.quote(gm.getName()));
 		json.append(",\"shown\":").append(quoteOrNull(EventMapMarkers.getInstance().getShown(gm)));
 		json.append(",\"limits\":{\"tvt\":").append(EventMapData.MAX_TVT_SPAWNS).append(",\"conquest\":").append(EventMapData.MAX_CONQUEST_POINTS).append(",\"deathmatch\":").append(EventMapData.MAX_DEATHMATCH_SPAWNS);
-		json.append(",\"deathmatchMin\":").append(EventMap.MIN_DEATHMATCH_SPAWNS).append(",\"scatterMax\":").append(MAX_SCATTER).append('}');
+		json.append(",\"deathmatchMin\":").append(EventMap.MIN_DEATHMATCH_SPAWNS).append(",\"scatterMax\":").append(MAX_SCATTER);
+		json.append(",\"racewarsDuel\":").append(EventMap.RACEWARS_DUEL_SPAWNS).append(",\"racewarsFinal\":").append(EventMap.RACEWARS_FINAL_SPAWNS).append('}');
 		json.append(",\"tvt\":{\"baseRadius\":").append(TeamVsTeamConfig.BASE_RADIUS).append(",\"spawnRadius\":").append(TeamVsTeamConfig.SPAWN_RADIUS).append(",\"teamSize\":").append(TeamVsTeamConfig.TEAM_SIZE).append('}');
 		json.append(",\"deathmatch\":{\"size\":").append(TeamVsTeamConfig.DM_SIZE).append('}');
+		json.append(",\"racewars\":{\"baseRadius\":").append(RaceWarsConfig.BASE_RADIUS).append(",\"spawnRadius\":").append(RaceWarsConfig.SPAWN_RADIUS).append(",\"armySize\":").append(RaceWarsConfig.ARMY_SIZE).append('}');
 		json.append(",\"players\":{\"default\":").append(EventMapData.DEFAULT_MAX_PLAYERS).append(",\"min\":").append(EventMapData.MIN_PLAYERS).append(",\"max\":").append(EventMapData.MAX_PLAYERS).append('}');
 		json.append(",\"minBarrier\":").append(EventBarrier.MIN_RADIUS);
 		json.append(",\"world\":[").append(World.WORLD_X_MIN).append(',').append(World.WORLD_Y_MIN).append(',').append(World.WORLD_X_MAX).append(',').append(World.WORLD_Y_MAX).append(']');
@@ -173,6 +178,8 @@ public class EventMapWeb
 		appendStrings(json, ConquestConfig.MAPS);
 		json.append(",\"deathmatch\":");
 		appendStrings(json, TeamVsTeamConfig.DM_MAPS);
+		json.append(",\"racewars\":");
+		appendStrings(json, RaceWarsConfig.MAPS);
 		json.append("},\"maps\":[");
 		for (int i = 0; i < maps.size(); i++)
 		{
@@ -275,6 +282,18 @@ public class EventMapWeb
 			json.append(first ? "" : ",");
 			first = false;
 			appendPoint(json, "deathmatch", "spawn", "", spawn.getX(), spawn.getY(), spawn.getZ(), spawn.getHeading(), 0);
+		}
+		for (Location start : map.raceWarsDuel())
+		{
+			json.append(first ? "" : ",");
+			first = false;
+			appendPoint(json, "racewars", "duel", "", start.getX(), start.getY(), start.getZ(), start.getHeading(), 0);
+		}
+		for (Location start : map.raceWarsFinal())
+		{
+			json.append(first ? "" : ",");
+			first = false;
+			appendPoint(json, "racewars", "final", "", start.getX(), start.getY(), start.getZ(), start.getHeading(), 0);
 		}
 		json.append("],\"barrier\":");
 		final EventBarrier barrier = map.barrier();
@@ -501,6 +520,7 @@ public class EventMapWeb
 		addListWarning(warnings, map, EventMapType.TVT, TeamVsTeamConfig.MAPS, "TvTMaps in TeamVsTeam.ini");
 		addListWarning(warnings, map, EventMapType.CONQUEST, ConquestConfig.MAPS, "ConquestMaps in Conquest.ini");
 		addListWarning(warnings, map, EventMapType.DEATHMATCH, TeamVsTeamConfig.DM_MAPS, "DeathmatchMaps in TeamVsTeam.ini");
+		addListWarning(warnings, map, EventMapType.RACEWARS, RaceWarsConfig.MAPS, "RaceWarsMaps in RaceWars.ini");
 
 		final StringBuilder answer = new StringBuilder(4096);
 		answer.append("{\"map\":");
@@ -613,6 +633,8 @@ public class EventMapWeb
 		final List<Location> red = new ArrayList<>();
 		final List<ConquestPoint> conquestPoints = new ArrayList<>();
 		final List<Location> deathmatch = new ArrayList<>();
+		final List<Location> raceWarsDuel = new ArrayList<>();
+		final List<Location> raceWarsFinal = new ArrayList<>();
 		final int[] conquestCounts = new int[ConquestPointType.values().length];
 		final Set<String> captureNames = new HashSet<>();
 		if (json.get("points") instanceof List)
@@ -628,7 +650,7 @@ public class EventMapWeb
 				final String type = asString(p.get("type")) != null ? asString(p.get("type")).toLowerCase() : "";
 				if (event == null)
 				{
-					throw new IllegalArgumentException("a point belongs to no event (tvt, conquest, deathmatch)");
+					throw new IllegalArgumentException("a point belongs to no event (tvt, conquest, deathmatch, racewars)");
 				}
 				final int x = asInt(p.get("x"));
 				final int y = asInt(p.get("y"));
@@ -693,6 +715,27 @@ public class EventMapWeb
 						}
 						conquestPoints.add(new ConquestPoint(pointType, pointName, x, y, z, pointType == ConquestPointType.CAPTURE ? 0 : heading, radius));
 						label = pointType == ConquestPointType.CAPTURE ? "Capture point " + pointName : "Conquest " + (pointType == ConquestPointType.BLUE ? "Blue" : "Red") + " spawn " + conquestCounts[pointType.ordinal()];
+						break;
+					}
+					case RACEWARS:
+					{
+						final boolean finals = type.equals("final");
+						if (!finals && !type.equals("duel"))
+						{
+							throw new IllegalArgumentException("a Race Wars start point is neither duel nor final");
+						}
+						final List<Location> starts = finals ? raceWarsFinal : raceWarsDuel;
+						final int max = finals ? EventMapData.MAX_RACEWARS_FINAL_SPAWNS : EventMapData.MAX_RACEWARS_DUEL_SPAWNS;
+						if (starts.size() >= max)
+						{
+							throw new IllegalArgumentException("more than " + max + " Race Wars " + (finals ? "final" : "race-vs-race") + " start points (only so many races start)");
+						}
+						starts.add(new Location(x, y, z, heading));
+						label = "Race Wars " + (finals ? "final" : "race-vs-race") + " start " + starts.size();
+						if ((barrier != null) && !barrier.contains(x, y, -Math.min(RaceWarsConfig.BASE_RADIUS, Math.min(barrier.radiusX(), barrier.radiusY()) - 1)))
+						{
+							warnings.add(label + (barrier.contains(x, y, 0) ? " is closer to the fence than the start radius (" + RaceWarsConfig.BASE_RADIUS + "): the army may stand beyond it while it buffs." : " is beyond the fence: the army is brought back inside at once when the fight starts."));
+						}
 						break;
 					}
 					default:
@@ -782,6 +825,16 @@ public class EventMapWeb
 			}
 		}
 
+		if (uses.contains(EventMapType.RACEWARS))
+		{
+			if ((raceWarsDuel.size() < EventMap.RACEWARS_DUEL_SPAWNS) || (raceWarsFinal.size() < EventMap.RACEWARS_FINAL_SPAWNS))
+			{
+				warnings.add("Race Wars: " + raceWarsDuel.size() + " of " + EventMap.RACEWARS_DUEL_SPAWNS + " race-vs-race and " + raceWarsFinal.size() + " of " + EventMap.RACEWARS_FINAL_SPAWNS + " final start points, Race Wars won't pick this map.");
+			}
+			addStartWarnings(warnings, raceWarsDuel, "race-vs-race");
+			addStartWarnings(warnings, raceWarsFinal, "final");
+		}
+
 		final List<EventDoor> doors = new ArrayList<>();
 		final Set<Integer> doorIds = new HashSet<>();
 		if (json.get("doors") instanceof List)
@@ -820,8 +873,28 @@ public class EventMapWeb
 		final List<Location> all = new ArrayList<>(blue);
 		all.addAll(red);
 		all.addAll(deathmatch);
+		all.addAll(raceWarsDuel);
+		all.addAll(raceWarsFinal);
 		final int z = json.get("z") instanceof Number ? asInt(json.get("z")) : EventMapData.averageZ(all);
-		return new EventMap(id, name, description, minX, minY, maxX, maxY, z, barrier, doors, uses, blue, red, maxPlayers, conquestPoints, deathmatch);
+		return new EventMap(id, name, description, minX, minY, maxX, maxY, z, barrier, doors, uses, blue, red, maxPlayers, conquestPoints, deathmatch, raceWarsDuel, raceWarsFinal);
+	}
+
+	/**
+	 * Race Wars start points too close together: two armies would start within reach of each other (each stands within {@link RaceWarsConfig#BASE_RADIUS} of its start while it buffs).
+	 */
+	private static void addStartWarnings(List<String> warnings, List<Location> starts, String stage)
+	{
+		for (int i = 0; i < starts.size(); i++)
+		{
+			for (int j = i + 1; j < starts.size(); j++)
+			{
+				final double distance = Math.hypot(starts.get(i).getX() - starts.get(j).getX(), starts.get(i).getY() - starts.get(j).getY());
+				if (distance < RACEWARS_CLOSE)
+				{
+					warnings.add("Race Wars " + stage + " starts " + (i + 1) + " and " + (j + 1) + " are only " + (int) distance + " apart: the armies see each other while they buff (keep them at least " + RACEWARS_CLOSE + " apart).");
+				}
+			}
+		}
 	}
 
 	/** @return the first letter A-Z (then A2, B2...) no capture point of the map is called yet */

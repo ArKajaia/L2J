@@ -62,6 +62,7 @@ import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.actor.instance.Fence;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.eventmap.EventBarrier;
 import org.l2jmobius.gameserver.model.eventmap.EventMap;
 import org.l2jmobius.gameserver.model.eventmap.EventMapType;
 import org.l2jmobius.gameserver.model.groups.Party;
@@ -424,6 +425,8 @@ public class RaceWarsManager
 	private final Set<WorldRegion> _keptRegions = new HashSet<>();
 	private volatile State _state = State.INACTIVE;
 	private volatile long _registrationEnd;
+	/** The map of the registration open now, and of the tournaments it starts. */
+	private volatile EventMap _registrationMap;
 
 	protected RaceWarsManager()
 	{
@@ -434,12 +437,33 @@ public class RaceWarsManager
 	// ---------------------------------------------------------------------------------------------
 
 	/**
-	 * @return the map of the event, {@code null} if it has no Team vs Team bases for both sides
+	 * @return a map for the event picked by chance: ticked for Race Wars with its start points (data/maps, the event map page), and named by {@link RaceWarsConfig#MAPS} unless it is empty; {@code null} if there is none
 	 */
-	private static EventMap getMap()
+	private static EventMap pickMap()
 	{
-		final EventMap map = EventMapData.getInstance().getMap(RaceWarsConfig.MAP);
-		return (map != null) && map.isComplete(EventMapType.TVT) ? map : null;
+		return EventMapData.getInstance().getRandomMap(EventMapType.RACEWARS, RaceWarsConfig.MAPS);
+	}
+
+	/**
+	 * @return why no map can be picked, as text
+	 */
+	private static String describeNoMap()
+	{
+		return "there is no map ticked for Race Wars with " + EventMap.RACEWARS_DUEL_SPAWNS + " race-vs-race and " + EventMap.RACEWARS_FINAL_SPAWNS + " final start points" + (RaceWarsConfig.MAPS.isEmpty() ? "" : " among RaceWarsMaps") + " (data/maps, //tvt map racewars)";
+	}
+
+	/**
+	 * @param map a map
+	 * @return its field as an ellipse: its fence, or without one an ellipse in its area
+	 */
+	private static EventBarrier getField(EventMap map)
+	{
+		if (map.barrier() != null)
+		{
+			return map.barrier();
+		}
+		final int[] center = map.getCenter();
+		return new EventBarrier(center[0], center[1], Math.max(EventBarrier.MIN_RADIUS, (map.maxX() - map.minX()) / 2), Math.max(EventBarrier.MIN_RADIUS, (map.maxY() - map.minY()) / 2));
 	}
 
 	/**
@@ -469,10 +493,10 @@ public class RaceWarsManager
 		{
 			return "there is no level bracket (RaceWarsBrackets)";
 		}
-		final EventMap map = getMap();
+		final EventMap map = pickMap();
 		if (map == null)
 		{
-			return "the map " + RaceWarsConfig.MAP + " has no Team vs Team bases for both teams (data/maps, RaceWarsMap)";
+			return describeNoMap();
 		}
 		if (!FakePlayerPvpManager.getInstance().isEnabled())
 		{
@@ -480,6 +504,7 @@ public class RaceWarsManager
 		}
 
 		_state = State.REGISTRATION;
+		_registrationMap = map;
 		_registered.clear();
 		_registrationEnd = System.currentTimeMillis() + (RaceWarsConfig.REGISTRATION_TIME * 60000L);
 		if (DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP > 0)
@@ -772,7 +797,9 @@ public class RaceWarsManager
 		_state = State.INACTIVE;
 		cancelRegistrationTasks();
 
-		final EventMap map = getMap();
+		// The map as last saved: a GM may have fixed it while the registration was open (one taken out or left without its points meanwhile is played as it was).
+		final EventMap latest = _registrationMap != null ? EventMapData.getInstance().getMap(_registrationMap.id()) : null;
+		final EventMap map = (latest != null) && latest.isComplete(EventMapType.RACEWARS) ? latest : _registrationMap;
 		final List<Player> players = new ArrayList<>();
 		for (int objectId : _registered.keySet())
 		{
@@ -1019,39 +1046,21 @@ public class RaceWarsManager
 	}
 
 	/**
-	 * @return the start points of the armies: the map's first blue and red bases for a race-vs-race match, {@link RaceWarsConfig#FINAL_SPAWNS} for the final
+	 * @return the start points of the armies, as the map has them (x, y, z, heading): its Race Wars race-vs-race starts for a match of two, its final starts for the final; if it lacks some (edited meanwhile), the others are spread round the middle of the field, facing it
 	 */
 	private static List<Location> getStarts(EventMap map, Stage stage, int count)
 	{
-		final List<Location> starts = new ArrayList<>();
-		if ((stage == Stage.SEMIFINAL) || (count == 2))
-		{
-			starts.add(map.blue().get(0));
-			starts.add(map.red().get(0));
-		}
-		else
-		{
-			starts.addAll(RaceWarsConfig.FINAL_SPAWNS);
-		}
-		// Not enough spots configured: the others around the middle of the field.
-		final Location middle = new Location(map.barrier().x(), map.barrier().y(), map.z());
+		final List<Location> starts = new ArrayList<>((stage == Stage.FINAL) && (count > 2) ? map.raceWarsFinal() : map.raceWarsDuel());
+		final EventBarrier field = getField(map);
 		while (starts.size() < count)
 		{
 			final double angle = (2 * Math.PI * starts.size()) / count;
-			final int x = middle.getX() + (int) (Math.cos(angle) * map.barrier().radiusX() * 0.7);
-			final int y = middle.getY() + (int) (Math.sin(angle) * map.barrier().radiusY() * 0.7);
-			starts.add(new Location(x, y, GeoEngine.getInstance().getHeight(x, y, map.z())));
+			final int x = field.x() + (int) (Math.cos(angle) * field.radiusX() * 0.7);
+			final int y = field.y() + (int) (Math.sin(angle) * field.radiusY() * 0.7);
+			final int heading = (int) Math.round(((Math.atan2(field.y() - y, field.x() - x) * 32768) / Math.PI)) & 0xFFFF;
+			starts.add(new Location(x, y, GeoEngine.getInstance().getHeight(x, y, map.z()), heading));
 		}
-
-		// Each faces the middle of the field.
-		final List<Location> facing = new ArrayList<>();
-		for (int i = 0; i < count; i++)
-		{
-			final Location start = starts.get(i);
-			final int heading = (int) Math.round(((Math.atan2(middle.getY() - start.getY(), middle.getX() - start.getX()) * 32768) / Math.PI)) & 0xFFFF;
-			facing.add(new Location(start.getX(), start.getY(), start.getZ(), heading));
-		}
-		return facing;
+		return new ArrayList<>(starts.subList(0, count));
 	}
 
 	/**
@@ -1567,6 +1576,7 @@ public class RaceWarsManager
 		}
 
 		final EventMap map = tournament._map;
+		final EventBarrier field = getField(map);
 		final GeoEngine geo = GeoEngine.getInstance();
 		int spawned = 0;
 		for (int i = 0; (i < RaceWarsConfig.MONSTER_COUNT) && !kinds.isEmpty(); i++)
@@ -1574,9 +1584,9 @@ public class RaceWarsManager
 			// A spot of the field by chance, inside the fence (moved short of a wall in the way from the middle).
 			final double angle = Rnd.nextDouble() * 2 * Math.PI;
 			final double distance = Math.sqrt(Rnd.nextDouble()) * MONSTER_FIELD_SHARE;
-			final int x = map.barrier().x() + (int) (Math.cos(angle) * map.barrier().radiusX() * distance);
-			final int y = map.barrier().y() + (int) (Math.sin(angle) * map.barrier().radiusY() * distance);
-			final Location spot = geo.getValidLocation(map.barrier().x(), map.barrier().y(), geo.getHeight(map.barrier().x(), map.barrier().y(), map.z()), x, y, geo.getHeight(x, y, map.z()), match._instanceId);
+			final int x = field.x() + (int) (Math.cos(angle) * field.radiusX() * distance);
+			final int y = field.y() + (int) (Math.sin(angle) * field.radiusY() * distance);
+			final Location spot = geo.getValidLocation(field.x(), field.y(), geo.getHeight(field.x(), field.y(), map.z()), x, y, geo.getHeight(x, y, map.z()), match._instanceId);
 			final NpcTemplate kind = kinds.get(i % kinds.size());
 			final Npc npc = Quest.addSpawn(kind.getId(), spot.getX(), spot.getY(), spot.getZ(), Rnd.get(65536), false, 0, false, match._instanceId);
 			if ((npc == null) || !npc.isAttackable())
@@ -2601,7 +2611,8 @@ public class RaceWarsManager
 			return best;
 		}
 		final EventMap map = fighter._match._tournament._map;
-		return new Location(map.barrier().x(), map.barrier().y(), GeoEngine.getInstance().getHeight(map.barrier().x(), map.barrier().y(), map.z()));
+		final EventBarrier field = getField(map);
+		return new Location(field.x(), field.y(), GeoEngine.getInstance().getHeight(field.x(), field.y(), map.z()));
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -2615,15 +2626,30 @@ public class RaceWarsManager
 	 */
 	public synchronized String simulate(int level)
 	{
+		return simulate(level, null);
+	}
+
+	/**
+	 * A tournament of fake players only (//racewars simulate), for testing: the bracket of the level, no registration.
+	 * @param level a level of the bracket
+	 * @param mapId the map to play on (it needs its Race Wars start points, ticked or not), {@code null} for one picked by chance like a registration
+	 * @return what to tell the GM
+	 */
+	public synchronized String simulate(int level, String mapId)
+	{
 		final int index = getBracket(level);
 		if (index < 0)
 		{
 			return "Level " + level + " is in no bracket (" + describeBrackets() + ").";
 		}
-		final EventMap map = getMap();
+		final EventMap map = mapId != null ? EventMapData.getInstance().getMap(mapId) : pickMap();
 		if (map == null)
 		{
-			return "The map " + RaceWarsConfig.MAP + " has no Team vs Team bases for both teams.";
+			return mapId != null ? "There is no event map " + mapId + "." : "No map: " + describeNoMap() + ".";
+		}
+		if (!map.isComplete(EventMapType.RACEWARS))
+		{
+			return map.name() + " lacks Race Wars start points (" + EventMap.RACEWARS_DUEL_SPAWNS + " race-vs-race, " + EventMap.RACEWARS_FINAL_SPAWNS + " final): //tvt map racewars.";
 		}
 		if (!FakePlayerPvpManager.getInstance().isEnabled())
 		{
@@ -2634,7 +2660,7 @@ public class RaceWarsManager
 		{
 			return "The tournament could not start.";
 		}
-		final StringBuilder sb = new StringBuilder("Tournament " + tournament._id + " (levels " + tournament.getBracketName() + ", fake players only, " + tournament._armySize + " per race): ");
+		final StringBuilder sb = new StringBuilder("Tournament " + tournament._id + " (levels " + tournament.getBracketName() + ", fake players only, " + tournament._armySize + " per race, " + map.name() + "): ");
 		for (Match match : tournament._semifinals)
 		{
 			sb.append(match.describe()).append(" (match ").append(match._id).append(", instance ").append(match._instanceId).append("); ");

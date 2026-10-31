@@ -25,7 +25,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
  * <ul>
  * <li>//racewars [status]: the registration and the tournaments going on.</li>
  * <li>//racewars open | close: opens the registration now (outside the rotation's turn), or closes it now (the tournaments start).</li>
- * <li>//racewars simulate [level]: a tournament of fake players only, of the bracket of that level (the GM's by default), to watch or test.</li>
+ * <li>//racewars simulate [level] [map]: a tournament of fake players only, of the bracket of that level (the GM's by default), on that event map (one ticked for Race Wars by chance by default), to watch or test.</li>
  * <li>//racewars stop: the registration and every tournament end now, without rewards.</li>
  * </ul>
  */
@@ -36,7 +36,7 @@ public class AdminRaceWars implements IAdminCommandHandler
 		"admin_racewars"
 	};
 
-	private static final String USAGE = "//racewars [status] | open | close | simulate [level] | stop";
+	private static final String USAGE = "//racewars [status] | open | close | simulate [level] [map] | stop - the battlefields are the event maps ticked for Race Wars (//tvt map racewars)";
 
 	@Override
 	public boolean onCommand(String command, Player activeChar)
@@ -86,7 +86,7 @@ public class AdminRaceWars implements IAdminCommandHandler
 						return false;
 					}
 				}
-				activeChar.sendMessage(manager.simulate(level));
+				activeChar.sendMessage(manager.simulate(level, args.length > 3 ? args[3].toLowerCase() : null));
 				return true;
 			}
 			case "stop":

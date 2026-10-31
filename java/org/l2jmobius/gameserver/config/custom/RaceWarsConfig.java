@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.util.ConfigReader;
-import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
 
 /**
@@ -36,7 +35,8 @@ public class RaceWarsConfig
 	private static final String RACE_WARS_CONFIG_FILE = "./config/Custom/RaceWars.ini";
 
 	public static boolean ENABLED;
-	public static String MAP;
+	/** The maps a registration may pick (ids of data/maps), empty for any map ticked for Race Wars. */
+	public static List<String> MAPS;
 	public static int REGISTRATION_TIME;
 	public static int PREP_TIME;
 	public static int ARMY_SIZE;
@@ -51,7 +51,6 @@ public class RaceWarsConfig
 	public static int HARD_LIMIT;
 	public static int FINAL_DELAY;
 	public static List<ItemHolder> WIN_REWARD;
-	public static List<Location> FINAL_SPAWNS;
 	public static int SPAWN_RADIUS;
 	public static int BASE_RADIUS;
 
@@ -59,7 +58,15 @@ public class RaceWarsConfig
 	{
 		final ConfigReader config = new ConfigReader(RACE_WARS_CONFIG_FILE);
 		ENABLED = config.getBoolean("RaceWarsEnabled", true);
-		MAP = config.getString("RaceWarsMap", "ruins_of_despair").trim();
+		final List<String> maps = new ArrayList<>();
+		for (String id : config.getString("RaceWarsMaps", "").split(","))
+		{
+			if (!id.isBlank())
+			{
+				maps.add(id.trim().toLowerCase());
+			}
+		}
+		MAPS = Collections.unmodifiableList(maps);
 		REGISTRATION_TIME = Math.max(1, config.getInt("RaceWarsRegistrationTime", 10));
 		PREP_TIME = Math.max(5, config.getInt("RaceWarsPrepTime", 60));
 		ARMY_SIZE = Math.max(1, Math.min(100, config.getInt("RaceWarsArmySize", 20)));
@@ -120,27 +127,5 @@ public class RaceWarsConfig
 		}
 		WIN_REWARD = Collections.unmodifiableList(rewards);
 
-		final List<Location> spawns = new ArrayList<>();
-		for (String part : config.getString("RaceWarsFinalSpawns", "-19800,146600,-3736;-20200,138700,-3896;-12652,141858,-3688").split(";"))
-		{
-			final String[] values = part.trim().split(",");
-			try
-			{
-				if (values.length >= 3)
-				{
-					spawns.add(new Location(Integer.parseInt(values[0].trim()), Integer.parseInt(values[1].trim()), Integer.parseInt(values[2].trim())));
-					continue;
-				}
-			}
-			catch (NumberFormatException e)
-			{
-				// Reported below.
-			}
-			if (!part.isBlank())
-			{
-				LOGGER.warning(RaceWarsConfig.class.getSimpleName() + ": Bad spot \"" + part + "\" in RaceWarsFinalSpawns.");
-			}
-		}
-		FINAL_SPAWNS = Collections.unmodifiableList(spawns);
 	}
 }

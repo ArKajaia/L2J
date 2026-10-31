@@ -56,12 +56,12 @@ import custom.EventMaps.EventMapWeb;
  * </ul>
  * And the event maps ({@link EventMapData}, data/maps), shared with Conquest:
  * <ul>
- * <li>//tvt map [tvt|conquest|dm] - the event map page (web, a link that works while the GM is online), on that event's points</li>
+ * <li>//tvt map [tvt|conquest|dm|racewars] - the event map page (web, a link that works while the GM is online), on that event's points</li>
  * <li>//tvt maps - the maps and the events they are used in</li>
- * <li>//tvt show &lt;map&gt; [tvt|conquest|dm] | hide - draw a map's waypoints in game (one event's, or every event's), or take them away</li>
- * <li>//tvt tp &lt;map&gt; &lt;blue|red|dm&gt; &lt;number&gt; - go to a Team vs Team base or a Deathmatch spawn point</li>
- * <li>//tvt set &lt;map&gt; &lt;blue|red|dm&gt; &lt;number|new&gt; - your position (and heading) becomes that point (new adds one); the height is the ground's</li>
- * <li>//tvt remove &lt;map&gt; &lt;blue|red|dm&gt; &lt;number&gt; - take a point away</li>
+ * <li>//tvt show &lt;map&gt; [tvt|conquest|dm|racewars] | hide - draw a map's waypoints in game (one event's, or every event's), or take them away</li>
+ * <li>//tvt tp &lt;map&gt; &lt;blue|red|dm|duel|final&gt; &lt;number&gt; - go to a Team vs Team base, a Deathmatch spawn point or a Race Wars start (duel: of a race-vs-race match, final: of the final)</li>
+ * <li>//tvt set &lt;map&gt; &lt;blue|red|dm|duel|final&gt; &lt;number|new&gt; - your position (and heading) becomes that point (new adds one); the height is the ground's</li>
+ * <li>//tvt remove &lt;map&gt; &lt;blue|red|dm|duel|final&gt; &lt;number&gt; - take a point away</li>
  * <li>//tvt fence &lt;map&gt; [radius x] [radius y] | off - the fence round the field (Team vs Team and Deathmatch): an ellipse round where you stand</li>
  * <li>//tvt reload - read data/maps again</li>
  * </ul>
@@ -73,7 +73,7 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 		"admin_tvt"
 	};
 
-	private static final String USAGE = "//tvt open [map] | close | simulate [level] [map] | dm open [map] | dm simulate [level] [map] | rotation [next <event>] | stop [match] | watch [match] | detail | map [tvt|conquest|dm] | maps | show <map> [event] | hide | tp <map> <blue|red|dm> <n> | set <map> <blue|red|dm> <n|new> | remove <map> <blue|red|dm> <n> | fence <map> [rx] [ry] | off | reload";
+	private static final String USAGE = "//tvt open [map] | close | simulate [level] [map] | dm open [map] | dm simulate [level] [map] | rotation [next <event>] | stop [match] | watch [match] | detail | map [tvt|conquest|dm|racewars] | maps | show <map> [event] | hide | tp <map> <blue|red|dm|duel|final> <n> | set <map> <blue|red|dm|duel|final> <n|new> | remove <map> <blue|red|dm|duel|final> <n> | fence <map> [rx] [ry] | off | reload";
 
 	@Override
 	public boolean onCommand(String command, Player activeChar)
@@ -223,7 +223,7 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 				{
 					if (args.length <= 2)
 					{
-						activeChar.sendSysMessage("Usage: //tvt show <map> [tvt|conquest|dm]");
+						activeChar.sendSysMessage("Usage: //tvt show <map> [tvt|conquest|dm|racewars]");
 					}
 					return false;
 				}
@@ -298,7 +298,7 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 		return true;
 	}
 
-	/** //tvt set &lt;map&gt; &lt;blue|red|dm&gt; &lt;n|new&gt;: the Team vs Team bases, or the Deathmatch spawn points */
+	/** //tvt set &lt;map&gt; &lt;blue|red|dm|duel|final&gt; &lt;n|new&gt;: the Team vs Team bases, or the Deathmatch spawn points */
 	private static boolean setSpawn(Player activeChar, String[] args)
 	{
 		final EventMap map = args.length > 2 ? findMap(activeChar, args[2]) : null;
@@ -310,7 +310,7 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 		final String key = args.length > 4 ? args[4] : "new";
 		final List<Location> spawns = new ArrayList<>(getSpawns(map, kind));
 		final Location here = new Location(activeChar.getX(), activeChar.getY(), activeChar.getZ(), activeChar.getHeading());
-		final int limit = kind.equals("dm") ? EventMapData.MAX_DEATHMATCH_SPAWNS : EventMapData.MAX_TVT_SPAWNS;
+		final int limit = kind.equals("dm") ? EventMapData.MAX_DEATHMATCH_SPAWNS : kind.equals("duel") ? EventMapData.MAX_RACEWARS_DUEL_SPAWNS : kind.equals("final") ? EventMapData.MAX_RACEWARS_FINAL_SPAWNS : EventMapData.MAX_TVT_SPAWNS;
 		final int number;
 		if (key.equalsIgnoreCase("new"))
 		{
@@ -339,9 +339,10 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 			return false;
 		}
 		activeChar.sendSysMessage(map.name() + ": " + describe(kind) + " " + number + " set at " + here.getX() + ", " + here.getY() + ", " + here.getZ() + " (heading " + here.getHeading() + ").");
-		if (!map.isUsedBy(kind.equals("dm") ? EventMapType.DEATHMATCH : EventMapType.TVT))
+		final EventMapType event = getEvent(kind);
+		if (!map.isUsedBy(event))
 		{
-			activeChar.sendSysMessage("The map is not ticked for " + (kind.equals("dm") ? "Deathmatch" : "Team vs Team") + " yet: tick it on the map page (//tvt map).");
+			activeChar.sendSysMessage("The map is not ticked for " + event.getTitle() + " yet: tick it on the map page (//tvt map " + event.getKey() + ").");
 		}
 		if ((here.getX() < map.minX()) || (here.getX() > map.maxX()) || (here.getY() < map.minY()) || (here.getY() > map.maxY()))
 		{
@@ -358,7 +359,7 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 		return true;
 	}
 
-	/** //tvt remove &lt;map&gt; &lt;blue|red|dm&gt; &lt;n&gt; */
+	/** //tvt remove &lt;map&gt; &lt;blue|red|dm|duel|final&gt; &lt;n&gt; */
 	private static boolean removeSpawn(Player activeChar, String[] args)
 	{
 		final EventMap map = args.length > 2 ? findMap(activeChar, args[2]) : null;
@@ -423,18 +424,20 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 			activeChar.sendSysMessage(map.name() + " has no fence now.");
 			return true;
 		}
-		activeChar.sendSysMessage(map.name() + ": the fence goes round " + barrier.x() + ", " + barrier.y() + ", " + barrier.radiusX() + " along x and " + barrier.radiusY() + " along y (Team vs Team and Deathmatch).");
+		activeChar.sendSysMessage(map.name() + ": the fence goes round " + barrier.x() + ", " + barrier.y() + ", " + barrier.radiusX() + " along x and " + barrier.radiusY() + " along y (Team vs Team, Deathmatch and Race Wars).");
 		int outside = 0;
 		final List<Location> all = new ArrayList<>(map.blue());
 		all.addAll(map.red());
 		all.addAll(map.deathmatch());
+		all.addAll(map.raceWarsDuel());
+		all.addAll(map.raceWarsFinal());
 		for (Location spawn : all)
 		{
 			outside += barrier.contains(spawn, 0) ? 0 : 1;
 		}
 		if (outside > 0)
 		{
-			activeChar.sendSysMessage(outside + " TvT base(s) or Deathmatch spawn point(s) are beyond it: make it wider or move it.");
+			activeChar.sendSysMessage(outside + " TvT base(s), Deathmatch spawn point(s) or Race Wars start(s) are beyond it: make it wider or move it.");
 		}
 		return true;
 	}
@@ -455,10 +458,34 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 		return true;
 	}
 
-	/** @return the points of a kind: blue or red (Team vs Team bases), dm (Deathmatch spawn points) */
+	/** @return the points of a kind: blue or red (Team vs Team bases), dm (Deathmatch spawn points), duel or final (Race Wars starts) */
 	private static List<Location> getSpawns(EventMap map, String kind)
 	{
-		return kind.equals("dm") ? map.deathmatch() : map.getSpawns(kind.equals("blue"));
+		switch (kind)
+		{
+			case "dm":
+			{
+				return map.deathmatch();
+			}
+			case "duel":
+			{
+				return map.raceWarsDuel();
+			}
+			case "final":
+			{
+				return map.raceWarsFinal();
+			}
+			default:
+			{
+				return map.getSpawns(kind.equals("blue"));
+			}
+		}
+	}
+
+	/** @return the event a kind of point belongs to */
+	private static EventMapType getEvent(String kind)
+	{
+		return kind.equals("dm") ? EventMapType.DEATHMATCH : kind.equals("duel") || kind.equals("final") ? EventMapType.RACEWARS : EventMapType.TVT;
 	}
 
 	private static EventMap withSpawns(EventMap map, String kind, List<Location> spawns)
@@ -467,12 +494,20 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 		{
 			return map.withDeathmatch(spawns);
 		}
+		if (kind.equals("duel"))
+		{
+			return map.withRaceWars(spawns, map.raceWarsFinal());
+		}
+		if (kind.equals("final"))
+		{
+			return map.withRaceWars(map.raceWarsDuel(), spawns);
+		}
 		return kind.equals("blue") ? map.withSpawns(spawns, map.red()) : map.withSpawns(map.blue(), spawns);
 	}
 
 	private static String describe(String kind)
 	{
-		return kind.equals("dm") ? "Deathmatch spawn" : kind.equals("blue") ? "TvT Blue base" : "TvT Red base";
+		return kind.equals("dm") ? "Deathmatch spawn" : kind.equals("duel") ? "Race Wars duel start" : kind.equals("final") ? "Race Wars final start" : kind.equals("blue") ? "TvT Blue base" : "TvT Red base";
 	}
 
 	private static String describeSpawns(EventMap map, String kind)
@@ -496,7 +531,7 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 		return map;
 	}
 
-	/** @return blue, red (Team vs Team bases) or dm (Deathmatch spawn points), {@code null} (after telling the GM) for none */
+	/** @return blue, red (Team vs Team bases), dm (Deathmatch spawn points), duel or final (Race Wars starts), {@code null} (after telling the GM) for none */
 	private static String findKind(Player activeChar, String[] args, int index)
 	{
 		final String key = args.length > index ? args[index].toLowerCase() : "";
@@ -512,7 +547,11 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 		{
 			return "dm";
 		}
-		activeChar.sendSysMessage("Which points: blue, red (Team vs Team bases) or dm (Deathmatch spawns)? Conquest points: //conquest set.");
+		if (key.equals("duel") || key.equals("final"))
+		{
+			return key;
+		}
+		activeChar.sendSysMessage("Which points: blue, red (Team vs Team bases), dm (Deathmatch spawns), duel or final (Race Wars starts of a race-vs-race match, of the final)? Conquest points: //conquest set.");
 		return null;
 	}
 
