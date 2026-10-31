@@ -375,7 +375,7 @@ public class ConquestWeb
 	 * @param z the height of the battlefield: where the ground has several layers, the one nearest the ground next to it, starting from this height
 	 * @return the picture, as PNG
 	 */
-	private static byte[] renderTerrain(int minX, int minY, int maxX, int maxY, int z) throws IOException
+	public static byte[] renderTerrain(int minX, int minY, int maxX, int maxY, int z) throws IOException
 	{
 		final GeoEngine geo = GeoEngine.getInstance();
 		final int span = Math.max(maxX - minX, maxY - minY);

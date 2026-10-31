@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	A battlefield of the Team vs Team event (TvTMapData). Written by the TvT map page (//tvt map): edits by hand are kept, comments are not.
+	map      id (the file name), name (shown to the players), enabled (a registration picks one of the enabled maps of TvTMaps by chance)
+	area     the battlefield's edge on the players' radar, minX/minY (north-west corner) to maxX/maxY (south-east corner); z: the ground's height, where it has several layers
+	team     blue or red, with its spawn points (its bases, TvTBaseRadius round each): x, y, z, heading. A team starts at its first one, its dead come back at one of them
+	barrier  optional: the fence round the field that nobody gets through, an ellipse: middle x, y and its radiusX, radiusY (at least 500). It must hold every base
+	door     a door of data/Doors.xml put in the match's copy of the place, opened (open="true") or shut (open="false"); a match has no other doors
+-->
+<map id="ruins_of_despair" name="Ruins of Despair" enabled="true">
+	<description>The walled bowl of the Ruins of Despair, the sunken ruins south of the Gludio teleport. Each team on its own half of the ring wall, as far from the other as the bowl allows (at least 8,100 on foot): Blue at the North Gate, the north wall and the north-west wall, Red just inside the South Gate, the south wall and the south-east wall. The two starts are as far from the middle on foot. The fence closes the ring wall (open on all sides) with every base at least 860 inside.</description>
+	<area minX="-24000" minY="136400" maxX="-11500" maxY="149000" z="-3800" />
+	<team id="blue">
+		<spawn x="-17200" y="147000" z="-3704" heading="46757" />
+		<spawn x="-19800" y="146600" z="-3736" heading="52784" />
+		<spawn x="-21600" y="145400" z="-3760" heading="57879" />
+	</team>
+	<team id="red">
+		<spawn x="-20200" y="138700" z="-3896" heading="11380" />
+		<spawn x="-16400" y="138400" z="-3792" heading="20956" />
+		<spawn x="-14600" y="139400" z="-3792" heading="25627" />
+	</team>
+	<barrier x="-17800" y="142600" radiusX="5900" radiusY="5300" />
+</map>
