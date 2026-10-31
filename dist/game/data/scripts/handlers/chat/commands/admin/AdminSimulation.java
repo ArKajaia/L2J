@@ -27,9 +27,11 @@ import org.l2jmobius.gameserver.handler.IAdminCommandHandler;
 import org.l2jmobius.gameserver.managers.simulation.FakeAiTrace;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.managers.simulation.SimulationMatrix;
+import org.l2jmobius.gameserver.managers.simulation.SimulationWar;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
 import org.l2jmobius.gameserver.network.serverpackets.ExLinkOpen;
 
 import custom.Simulation.SimulationWeb;
@@ -104,6 +106,12 @@ public class AdminSimulation implements IAdminCommandHandler
 				{
 					st.nextToken();
 					return arena(activeChar, st, manager);
+				}
+				// //Simulate war [...]: a race war, armies of every pair of races, the dead coming back.
+				if (commandLine.toLowerCase(Locale.ROOT).matches("\\S+\\s+war(\\s.*)?"))
+				{
+					st.nextToken();
+					return war(activeChar, st, manager);
 				}
 				return simulate(activeChar, st, manager);
 			}
@@ -323,6 +331,77 @@ public class AdminSimulation implements IAdminCommandHandler
 		}
 
 		send(activeChar, manager.startArena(activeChar, activeChar.getX(), activeChar.getY(), activeChar.getZ(), activeChar.getHeading(), levels, rounds, parallel, size, brains, time, distance, seed));
+		return true;
+	}
+
+	private static final String WAR_USAGE = "Usage: //Simulate war [races=all|human,elf,darkelf,orc,dwarf,kamael] [repeats=1] [size=50] [level=85] [parallel=2] [time=600] [respawn=10] [distance=2000] [seed=<n>] - armies of every pair of races at your place, every battle in its own instance; the dead come back at their base, the most kills wins. //SimulationStatus, //SimulationStop.";
+
+	private boolean war(Player activeChar, StringTokenizer st, FakeSimulationManager manager)
+	{
+		List<Race> races = SimulationWar.parseRaces("all");
+		int repeats = 1;
+		int size = 50;
+		int level = 85;
+		int parallel = 2;
+		int time = 600;
+		int respawn = 10;
+		int distance = 2000;
+		long seed = Rnd.get(1, Integer.MAX_VALUE);
+		try
+		{
+			while (st.hasMoreTokens())
+			{
+				final String token = st.nextToken().toLowerCase(Locale.ROOT);
+				if (token.startsWith("races="))
+				{
+					races = SimulationWar.parseRaces(token.substring(6));
+				}
+				else if (token.startsWith("repeats="))
+				{
+					repeats = Math.max(1, Math.min(100, Integer.parseInt(token.substring(8))));
+				}
+				else if (token.startsWith("size="))
+				{
+					size = Math.max(1, Math.min(200, Integer.parseInt(token.substring(5))));
+				}
+				else if (token.startsWith("level="))
+				{
+					level = Math.max(1, Math.min(85, Integer.parseInt(token.substring(6))));
+				}
+				else if (token.startsWith("parallel="))
+				{
+					parallel = Math.max(1, Math.min(50, Integer.parseInt(token.substring(9))));
+				}
+				else if (token.startsWith("time="))
+				{
+					time = Math.max(30, Integer.parseInt(token.substring(5)));
+				}
+				else if (token.startsWith("respawn="))
+				{
+					respawn = Math.max(0, Math.min(600, Integer.parseInt(token.substring(8))));
+				}
+				else if (token.startsWith("distance="))
+				{
+					distance = Math.max(300, Math.min(5000, Integer.parseInt(token.substring(9))));
+				}
+				else if (token.startsWith("seed="))
+				{
+					seed = Long.parseLong(token.substring(5));
+				}
+				else
+				{
+					activeChar.sendSysMessage(WAR_USAGE);
+					return false;
+				}
+			}
+		}
+		catch (NumberFormatException e)
+		{
+			activeChar.sendSysMessage(WAR_USAGE);
+			return false;
+		}
+
+		send(activeChar, manager.startWar(activeChar, activeChar.getX(), activeChar.getY(), activeChar.getZ(), activeChar.getHeading(), races, repeats, size, level, parallel, time, respawn, distance, seed));
 		return true;
 	}
 
@@ -552,6 +631,7 @@ public class AdminSimulation implements IAdminCommandHandler
 		activeChar.sendSysMessage("//SimulationTrace - the last AI decisions of your target (and trace it). //SimulationDraw - draw its ranges and targets.");
 		activeChar.sendSysMessage("//Simulate matrix [battles per pair, 20] [parallel=100] [level=85] [builds=...] (or //SimulationMatrix start) - a class-vs-class 1v1 win rate matrix at your place: every battle in its own instance, many at once. status, stop, resume [name], watch, leave, builds.");
 		activeChar.sendSysMessage("//Simulate ab [battles per level, 20] [levels=40,61,80] [parallel=100] [size=5] [brains=A:B] - an A/B test of two brains in party battles at your place: mirrored teams on both sides, every battle in its own instance, many at once.");
+		activeChar.sendSysMessage("//Simulate war [races=all] [repeats=1] [size=50] [level=85] [parallel=2] [time=600] [respawn=10] - a race war at your place: an army of each race against each other race, every battle in its own instance; the dead come back at their base after respawn seconds, the most kills wins.");
 		activeChar.sendSysMessage("//SimulationArena - the arena's panel: progress, wins so far, and every battle that runs with a button to watch it (Next, Leave, Stop).");
 		activeChar.sendSysMessage("//SimulationWeb - a link to the web page: past runs, one-click rerun, start/stop, points, and each character's decisions and path.");
 		activeChar.sendSysMessage("Logs: " + FakeSimulationConfig.LOG_DIR + "/<time>-<seed>/round-NN/ (run.json, events, decisions, positions, anomalies, summary).");

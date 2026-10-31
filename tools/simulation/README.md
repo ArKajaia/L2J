@@ -67,3 +67,12 @@ python tools/simulation/matrix.py log/simulation-matrix/matrix-20261025-213156
 python tools/simulation/matrix.py --start --battles 20 --parallel 100 --level 85
 python tools/simulation/matrix.py --resume
 ```
+
+## Race war: army against army, the dead coming back
+
+`//Simulate war [races=all] [repeats=1] [size=50] [level=85] [parallel=2] [time=600] [respawn=10] [distance=2000] [seed=<n>]` (or `POST /api/simulation/war/start` with the same names; `/war/status`, `/war/stop`) fights an army of every race against an army of every other race, each battle in an instance of its own at the GM's place (from the web without a GM: the Cruma Marshlands field).
+
+- An army is `size` fake players of one race in parties of up to 9, each party filled with the slots of a simulation party (tank, archer, healer, melee, nuker, buffer...) from its race's own builds. A race with no class for a slot takes the closest one it has, and each support class only once per party: an orc party gets one Doomcryer and no healer, Kamael parties have no support at all, and a dwarf army is all Fortune Seekers and Maestros. The parties of an army spare each other (single targets and areas), but each party's healers only look after their own party.
+- A dead fighter comes back at its army's base after `respawn` seconds, with full HP, MP and CP and its buffs again (unless a healer resurrected it first). A battle lasts `time` seconds and the army with more kills wins it.
+- With `repeats=2` every pair is fought twice, the races changing sides.
+- Output goes to `log/simulation-war/war-<time>/`: `results.csv` (one line per battle: races, kills of each army, winner, damage and healing), `members.csv` (one line per fighter per battle: build, role, kills, deaths, damage, healing), `summary.txt` (standings, the race-vs-race matrix of kill shares, and every build's kills, deaths, damage and healing per battle; rewritten after every battle) and `battles/` with the full logs of each battle.

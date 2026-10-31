@@ -42,9 +42,11 @@ import org.l2jmobius.gameserver.managers.simulation.SimulationMember;
 import org.l2jmobius.gameserver.managers.simulation.SimulationPoint;
 import org.l2jmobius.gameserver.managers.simulation.SimulationRun;
 import org.l2jmobius.gameserver.managers.simulation.SimulationTeam;
+import org.l2jmobius.gameserver.managers.simulation.SimulationWar;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
 
 import com.sun.net.httpserver.HttpExchange;
 
@@ -66,6 +68,8 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
  * place: the GM's own, else the Cruma Marshlands field)</li>
  * <li>GET /api/simulation/arena/battles - the arena running now, its status lines and the battles that run, each with its teams; GET /arena/list - the arenas run so far with their summary; POST /arena/watch (run: a battle, blank for the next one) and
  * /arena/leave - take the GM of the link into a battle's instance to watch it, or back out</li>
+ * <li>POST /api/simulation/war/start, /war/stop, GET /war/status - a race war, like //Simulate war: armies of every pair of races, the dead coming back (start: races, repeats, size, level, parallel, time, respawn, distance, seed, and x, y, z, heading for the
+ * place, the Cruma Marshlands field by default)</li>
  * <li>POST /api/simulation/matrix/start, /matrix/resume, /matrix/stop, GET /matrix/status - the class-vs-class matrix, like //SimulationMatrix (start: battles, parallel, level, time, distance, brain, builds, seed, and x, y, z, heading for the place: the GM's own
  * place by default, else the simulation field by Cruma Marshlands)</li>
  * </ul>
@@ -189,6 +193,9 @@ public class SimulationWeb
 		server.addRoute("/api/simulation/arena/list", "GET", false, this::handleArenaList);
 		server.addRoute("/api/simulation/arena/watch", "POST", true, this::handleArenaWatch);
 		server.addRoute("/api/simulation/arena/leave", "POST", true, this::handleArenaLeave);
+		server.addRoute("/api/simulation/war/start", "POST", true, this::handleWarStart);
+		server.addRoute("/api/simulation/war/stop", "POST", true, this::handleWarStop);
+		server.addRoute("/api/simulation/war/status", "GET", false, this::handleWarStatus);
 		if (FakeSimulationConfig.WEB_OPEN_ACCESS)
 		{
 			LOGGER.warning("SimulationWeb: SimulationWebOpenAccess is on - anyone who reaches " + server.getPageUrl("simulation.html") + " can start and stop simulations.");
@@ -949,6 +956,65 @@ public class SimulationWeb
 			return;
 		}
 		sendArenaLines(exchange, FakeSimulationManager.getInstance().startArena(gm, x, y, z, heading, levels, battles, parallel, size, brains, time, distance, seed));
+	}
+
+	private void handleWarStart(HttpExchange exchange) throws IOException
+	{
+		final PassiveTreeApiServer server = PassiveTreeApiServer.getInstance();
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+
+		final Map<String, String> params = server.readParams(exchange);
+		final boolean here = (gm != null) && (gm.getInstanceId() == 0) && !"field".equals(params.get("place"));
+		final int x = parseInt(params.get("x"), here ? gm.getX() : MATRIX_FIELD[0]);
+		final int y = parseInt(params.get("y"), here ? gm.getY() : MATRIX_FIELD[1]);
+		final int z = parseInt(params.get("z"), here ? gm.getZ() : MATRIX_FIELD[2]);
+		final int heading = parseInt(params.get("heading"), here ? gm.getHeading() : MATRIX_FIELD[3]);
+		final List<Race> races = SimulationWar.parseRaces((params.get("races") == null) || params.get("races").trim().isEmpty() ? "all" : params.get("races"));
+		final int repeats = Math.max(1, Math.min(100, parseInt(params.get("repeats"), 1)));
+		final int size = Math.max(1, Math.min(200, parseInt(params.get("size"), 50)));
+		final int level = Math.max(1, Math.min(85, parseInt(params.get("level"), 85)));
+		final int parallel = Math.max(1, Math.min(50, parseInt(params.get("parallel"), 2)));
+		final int time = Math.max(30, parseInt(params.get("time"), 600));
+		final int respawn = Math.max(0, Math.min(600, parseInt(params.get("respawn"), 10)));
+		final int distance = Math.max(300, Math.min(5000, parseInt(params.get("distance"), 2000)));
+		long seed;
+		try
+		{
+			final String text = params.get("seed");
+			seed = (text == null) || text.trim().isEmpty() ? Rnd.get(1, Integer.MAX_VALUE) : Long.parseLong(text.trim());
+		}
+		catch (NumberFormatException e)
+		{
+			server.sendText(exchange, 400, "application/json", "{\"error\":\"the seed must be a whole number\"}");
+			return;
+		}
+		sendLines(exchange, FakeSimulationManager.getInstance().startWar(gm, x, y, z, heading, races, repeats, size, level, parallel, time, respawn, distance, seed));
+	}
+
+	private void handleWarStop(HttpExchange exchange) throws IOException
+	{
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+
+		final List<String> lines = new ArrayList<>();
+		lines.add(FakeSimulationManager.getInstance().stopWar());
+		sendLines(exchange, lines);
+	}
+
+	private void handleWarStatus(HttpExchange exchange) throws IOException
+	{
+		if (!authorize(exchange))
+		{
+			return;
+		}
+		sendLines(exchange, FakeSimulationManager.getInstance().getWarStatus());
 	}
 
 	private void handleArenaStop(HttpExchange exchange) throws IOException

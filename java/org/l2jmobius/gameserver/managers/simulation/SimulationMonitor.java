@@ -359,7 +359,7 @@ public class SimulationMonitor
 		final boolean attacking = creature.isAttackingNow();
 		final Intention intention = creature.hasAI() ? creature.getAI().getIntention() : null;
 		final Boolean los = (target != null) && alive ? GeoEngine.getInstance().canSeeTarget(creature, target) : null;
-		final FakePlayerParty party = team.getParty();
+		final FakePlayerParty party = team.getPartyOf(member);
 		final Creature leader = party != null ? party.getActiveLeader() : null;
 		final double leaderDistance = (leader != null) && (leader != creature) ? creature.calculateDistance2D(leader) : 0;
 

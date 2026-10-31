@@ -43,6 +43,7 @@ import java.util.stream.Stream;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.GameServer;
+import org.l2jmobius.gameserver.ai.AttackableAI;
 import org.l2jmobius.gameserver.ai.FakeBrain;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.custom.FakeSimulationConfig;
@@ -64,6 +65,7 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
@@ -128,6 +130,15 @@ public class FakeSimulationManager
 	/** Seconds the bodies of an arena battle stay after it ends, and how many finished battle folders are kept. */
 	private static final int ARENA_CLEANUP_DELAY = 2;
 	private static final int ARENA_KEEP_LOGS = 300;
+	/** The race war running (armies of two races, many battles at once), {@code null} if none. */
+	private volatile SimulationWar _war;
+	/** Seconds the bodies of a race war battle stay after it ends. */
+	private static final int WAR_CLEANUP_DELAY = 3;
+	/** The members of a race war party appear within this distance of their party's spot, and come back within this distance of their base. */
+	private static final int WAR_PARTY_RADIUS = 100;
+	private static final int WAR_RESPAWN_RADIUS = 200;
+	/** The parties of an army stand this far apart, side by side across the field. */
+	private static final int WAR_PARTY_SPACING = 260;
 	/** Admins in (or waiting to join) a team, by object id. */
 	private final Map<Integer, Guest> _guests = new ConcurrentHashMap<>();
 
@@ -420,7 +431,7 @@ public class FakeSimulationManager
 	public synchronized List<String> simulate(Player admin, int size, int level, boolean mirror, long seed, int rounds, int timeLimit, String brains, boolean swap, List<SimulationPoint> fromPoints, String pointsFrom, String rerunOf)
 	{
 		final List<String> lines = new ArrayList<>();
-		if ((_series != null) || (_run != null) || (_matrix != null) || (_arena != null))
+		if ((_series != null) || (_run != null) || (_matrix != null) || (_arena != null) || (_war != null))
 		{
 			lines.add("A simulation is already running. //SimulationStop ends it.");
 			return lines;
@@ -846,6 +857,22 @@ public class FakeSimulationManager
 				kickIdleAis(run, time);
 			}
 
+			// A race war battle: the dead come back, so it goes on to its time limit, and the army with more kills wins.
+			if (run.getWarBattle() != null)
+			{
+				if ((time - run.getFightStart()) >= (run.getSettings().timeLimit() * 1000L))
+				{
+					final int kills1 = getWarKills(run, 1);
+					final int kills2 = getWarKills(run, 2);
+					end(run, kills1 > kills2 ? 1 : kills2 > kills1 ? 2 : 0, kills1 == kills2 ? "draw" : "timeout");
+				}
+				else if ((FakeSimulationConfig.STANDSTILL_TIME > 0) && ((time - Math.max(run.getFightStart(), run.getLastClash())) >= (FakeSimulationConfig.STANDSTILL_TIME * 1000L)))
+				{
+					pushToFight(run, time);
+				}
+				return;
+			}
+
 			final List<SimulationTeam> alive = new ArrayList<>();
 			for (SimulationTeam team : run.getTeams())
 			{
@@ -1120,6 +1147,11 @@ public class FakeSimulationManager
 			endArenaBattle(run);
 			return;
 		}
+		if (run.getWarBattle() != null)
+		{
+			endWarBattle(run);
+			return;
+		}
 
 		final Series series = _series;
 		final String text = SimulationSummary.write(run, series != null ? series.settings.rounds() : 1);
@@ -1210,23 +1242,20 @@ public class FakeSimulationManager
 		{
 			for (SimulationTeam team : run.getTeams())
 			{
-				final FakePlayerParty party = team.getParty();
-				if (party == null)
+				for (FakePlayerParty party : team.getParties())
 				{
-					continue;
-				}
-
-				final Player admin = party.getGuest();
-				if (admin != null)
-				{
-					final Guest guest = _guests.get(admin.getObjectId());
-					if (guest != null)
+					final Player admin = party.getGuest();
+					if (admin != null)
 					{
-						restoreGuest(guest);
-						guest.joined = false;
+						final Guest guest = _guests.get(admin.getObjectId());
+						if (guest != null)
+						{
+							restoreGuest(guest);
+							guest.joined = false;
+						}
 					}
+					FakePartyManager.getInstance().disbandSimulationParty(party);
 				}
-				FakePartyManager.getInstance().disbandSimulationParty(party);
 			}
 
 			// They stop, drop their transformation (a transformed fake player deleted as such leaves its name behind in the client), and leave a moment later.
@@ -1254,8 +1283,8 @@ public class FakeSimulationManager
 			ThreadPool.schedule(() ->
 			{
 				removeFakes(run, leaving);
-				// A battle of the matrix or the arena had an instance of its own.
-				if ((run.getBattle() != null) || (run.getArenaBattle() != null))
+				// A battle of the matrix, the arena or a race war had an instance of its own.
+				if ((run.getBattle() != null) || (run.getArenaBattle() != null) || (run.getWarBattle() != null))
 				{
 					final int instanceId = run.getTeams().get(0).getPoint().instanceId();
 					if (run.getArenaBattle() != null)
@@ -1292,6 +1321,11 @@ public class FakeSimulationManager
 		if (run.getArenaBattle() != null)
 		{
 			onArenaBattleFreed(run);
+			return;
+		}
+		if (run.getWarBattle() != null)
+		{
+			onWarBattleFreed(run);
 			return;
 		}
 
@@ -1388,6 +1422,10 @@ public class FakeSimulationManager
 		{
 			return stopArena();
 		}
+		if (_war != null)
+		{
+			return stopWar();
+		}
 
 		final Series series = _series;
 		final SimulationRun run = _run;
@@ -1446,6 +1484,10 @@ public class FakeSimulationManager
 		if (_arena != null)
 		{
 			return getArenaStatus();
+		}
+		if (_war != null)
+		{
+			return getWarStatus();
 		}
 
 		final List<String> lines = new ArrayList<>();
@@ -1636,7 +1678,7 @@ public class FakeSimulationManager
 
 	private String getMatrixRefusal()
 	{
-		if ((_series != null) || (_run != null) || (_matrix != null) || (_arena != null))
+		if ((_series != null) || (_run != null) || (_matrix != null) || (_arena != null) || (_war != null))
 		{
 			return "A simulation is already running. //SimulationStop ends it.";
 		}
@@ -2504,6 +2546,395 @@ public class FakeSimulationManager
 	}
 
 	// ---------------------------------------------------------------------------------------------
+	// Race war
+	// ---------------------------------------------------------------------------------------------
+
+	/**
+	 * Starts a race war (see {@link SimulationWar}): armies of every pair of {@code races}, each battle in an instance of its own at the given field, {@code parallel} at once.
+	 * @param admin the admin, {@code null} when started from the web page without one
+	 * @param x the middle of the field
+	 * @param y the middle of the field
+	 * @param z the middle of the field
+	 * @param heading the armies face each other along this heading
+	 * @param races the races (at least 2)
+	 * @param repeats how many times every pair is fought (the races change sides every time)
+	 * @param size the fighters of an army
+	 * @param level their level
+	 * @param parallel battles at once
+	 * @param timeLimit how long a battle lasts, in seconds
+	 * @param respawn seconds before the dead come back at their base
+	 * @param distance how far apart the two bases are
+	 * @param seed the seed
+	 * @return the lines to tell the admin
+	 */
+	public synchronized List<String> startWar(Player admin, int x, int y, int z, int heading, List<Race> races, int repeats, int size, int level, int parallel, int timeLimit, int respawn, int distance, long seed)
+	{
+		final List<String> lines = new ArrayList<>();
+		final String refusal = getMatrixRefusal();
+		if (refusal != null)
+		{
+			lines.add(refusal);
+			return lines;
+		}
+		if (races.size() < 2)
+		{
+			lines.add("A war needs at least two races: races=human,elf,darkelf,orc,dwarf,kamael (or all).");
+			return lines;
+		}
+		for (Race race : races)
+		{
+			if (SimulationWar.compose(race, 1, new Random(seed)).isEmpty())
+			{
+				lines.add("No build of data/FakePlayerPvp.xml is a " + SimulationWar.name(race) + ".");
+				return lines;
+			}
+		}
+
+		final String name = "war-" + LocalDateTime.now().format(FOLDER_TIME);
+		final SimulationWar war = new SimulationWar(name, getWarRoot().resolve(name), races, repeats, size, level, parallel, timeLimit, respawn, distance, seed, x, y, GeoEngine.getInstance().getHeight(x, y, z), heading, admin != null ? admin.getObjectId() : 0);
+		_war = war;
+		ThreadPool.execute(() -> fillWar(war));
+
+		final StringBuilder names = new StringBuilder();
+		for (Race race : races)
+		{
+			names.append(names.length() > 0 ? ", " : "").append(SimulationWar.name(race));
+		}
+		final long minutes = Math.round((war.getTotal() * (FakeSimulationConfig.PREP_TIME + timeLimit + WAR_CLEANUP_DELAY)) / (60.0 * parallel));
+		lines.add("Race war " + name + ": " + war.getTotal() + " battles (" + names + ", every pair " + repeats + " time(s)), " + size + " vs " + size + " at level " + level + ", " + timeLimit + " s each, the dead back after " + respawn + " s, " + parallel + " at once, seed " + seed + ". About " + minutes + " min.");
+		for (Map.Entry<Race, Map<String, Integer>> army : war.sampleArmies().entrySet())
+		{
+			lines.add("  A " + SimulationWar.name(army.getKey()) + " army: " + army.getValue());
+		}
+		lines.add("Results: " + war.getDir().resolve(SimulationWar.SUMMARY).toAbsolutePath() + " (results.csv, members.csv). //SimulationStatus, //SimulationStop.");
+		return lines;
+	}
+
+	/**
+	 * @return the folder of the race wars, next to the simulation folders (their pruning leaves them alone)
+	 */
+	public static Path getWarRoot()
+	{
+		return Path.of(FakeSimulationConfig.LOG_DIR + "-war");
+	}
+
+	public SimulationWar getWar()
+	{
+		return _war;
+	}
+
+	public List<String> getWarStatus()
+	{
+		final SimulationWar war = _war;
+		if (war == null)
+		{
+			return List.of("No race war is running.");
+		}
+
+		final List<String> lines = new ArrayList<>();
+		for (SimulationRun run : _runs.values())
+		{
+			final SimulationWar.Battle battle = run.getWarBattle();
+			if ((battle != null) && (run.getPhase() != SimulationRun.Phase.ENDED))
+			{
+				final long fight = run.getFightStart() > 0 ? (run.time() - run.getFightStart()) / 1000 : 0;
+				lines.add("Battle " + battle.number() + ": " + SimulationWar.name(battle.race1()) + " " + getWarKills(run, 1) + " - " + getWarKills(run, 2) + " " + SimulationWar.name(battle.race2()) + " (" + run.getPhase().name().toLowerCase() + ", " + fight + "/" + war.getTimeLimit() + " s)");
+			}
+		}
+		lines.addAll(0, war.getStatus());
+		return lines;
+	}
+
+	/**
+	 * @return what to tell the admin
+	 */
+	public String stopWar()
+	{
+		final SimulationWar war = _war;
+		if (war == null)
+		{
+			return "No race war is running.";
+		}
+
+		war.stop();
+		int stopped = 0;
+		for (SimulationRun run : _runs.values())
+		{
+			if ((run.getWarBattle() != null) && (run.getPhase() != SimulationRun.Phase.ENDED))
+			{
+				end(run, 0, "stopped");
+				stopped++;
+			}
+		}
+		return "Race war " + war.getName() + " stopped: " + stopped + " battle(s) cut (not counted). " + war.getDir().resolve(SimulationWar.SUMMARY).toAbsolutePath();
+	}
+
+	/**
+	 * @param run a race war battle
+	 * @param team a team
+	 * @return its kills: the deaths of the other army
+	 */
+	private static int getWarKills(SimulationRun run, int team)
+	{
+		final SimulationTeam enemy = run.getTeam(3 - team);
+		int kills = 0;
+		if (enemy != null)
+		{
+			for (SimulationMember member : enemy.getMembers())
+			{
+				kills += member.getDeaths();
+			}
+		}
+		return kills;
+	}
+
+	/**
+	 * Starts battles until {@link SimulationWar#getParallel} run.
+	 */
+	private void fillWar(SimulationWar war)
+	{
+		while (_war == war)
+		{
+			final SimulationWar.Battle battle = war.next();
+			if (battle == null)
+			{
+				return;
+			}
+			if (!startWarBattle(war, battle))
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": Could not start race war battle " + battle.number() + ": skipped.");
+				if (war.onFreed())
+				{
+					finishWar(war);
+					return;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Spawns a battle of the war in a new instance: an army of each race, its parties side by side at its base.
+	 * @return {@code true} if it started
+	 */
+	private boolean startWarBattle(SimulationWar war, SimulationWar.Battle battle)
+	{
+		final Instance instance = InstanceManager.getInstance().createDynamicInstance(0);
+		final int instanceId = instance.getId();
+		instance.setExitLoc(new Location(war.getX(), war.getY(), war.getZ()));
+
+		final int runId = RUN_IDS.incrementAndGet();
+		final SimulationSettings settings = new SimulationSettings(war.getSize(), war.getLevel(), false, battle.seed(), 1, war.getTimeLimit(), war.getStarterId(), "A:A", false);
+		final SimulationLog log = new SimulationLog(war.getDir().resolve("battles").resolve(String.format("%03d-%s-vs-%s", battle.number(), slug(SimulationWar.name(battle.race1())), slug(SimulationWar.name(battle.race2())))));
+		final SimulationRun run = new SimulationRun(runId, battle.number(), settings, log);
+		run.setWarBattle(battle);
+		addRun(run);
+
+		// The two bases, along the way the field faces, facing each other; the parties of an army side by side across it.
+		final double angle = Math.toRadians(war.getHeading() / 182.044444444);
+		final double across = angle + (Math.PI / 2);
+		final int half = war.getDistance() / 2;
+		final List<Npc> spawned = new ArrayList<>();
+		for (int t = 0; t < 2; t++)
+		{
+			final int teamId = t + 1;
+			final Race race = battle.raceOf(teamId);
+			final int sign = t == 0 ? -1 : 1;
+			final int bx = war.getX() + (int) (Math.cos(angle) * half * sign);
+			final int by = war.getY() + (int) (Math.sin(angle) * half * sign);
+			final Location base = GeoEngine.getInstance().getValidLocation(war.getX(), war.getY(), war.getZ(), bx, by, war.getZ(), instanceId);
+			final int heading = (war.getHeading() + (t == 0 ? 0 : 32768)) & 0xFFFF;
+			final SimulationPoint point = new SimulationPoint(teamId, base.getX(), base.getY(), base.getZ(), heading, instanceId);
+
+			final List<List<SimulationWar.Recruit>> parties = SimulationWar.compose(race, war.getSize(), new Random(battle.seed() ^ (race.ordinal() * 0x9E3779B97F4A7C15L)));
+			final List<SimRole> roles = new ArrayList<>();
+			for (List<SimulationWar.Recruit> party : parties)
+			{
+				for (SimulationWar.Recruit recruit : party)
+				{
+					roles.add(recruit.role());
+				}
+			}
+			final SimulationTeam team = new SimulationTeam(teamId, point, roles, FakeBrain.A);
+			run.getTeams().add(team);
+
+			int slot = 0;
+			for (int p = 0; p < parties.size(); p++)
+			{
+				final List<SimulationWar.Recruit> party = parties.get(p);
+				final double offset = (p - ((parties.size() - 1) / 2.0)) * WAR_PARTY_SPACING;
+				final int px = base.getX() + (int) (Math.cos(across) * offset);
+				final int py = base.getY() + (int) (Math.sin(across) * offset);
+				final List<Npc> fakes = new ArrayList<>();
+				for (int i = 0; i < party.size(); i++)
+				{
+					final SimulationWar.Recruit recruit = party.get(i);
+					final long seed = (battle.seed() * 31) + (teamId * 1009L) + slot++;
+					final double around = (2 * Math.PI * i) / party.size();
+					final int mx = px + (i == 0 ? 0 : (int) (Math.cos(around) * WAR_PARTY_RADIUS));
+					final int my = py + (i == 0 ? 0 : (int) (Math.sin(around) * WAR_PARTY_RADIUS));
+					final Location location = GeoEngine.getInstance().getValidLocation(base.getX(), base.getY(), base.getZ(), mx, my, base.getZ(), instanceId);
+					final Npc fake = FakePlayerPvpManager.getInstance().spawnSimulant(recruit.build(), war.getLevel(), SimulationWar.name(race), seed, runId, teamId, FakeBrain.A, location.getX(), location.getY(), location.getZ(), instanceId);
+					if (fake == null)
+					{
+						for (SimulationTeam made : run.getTeams())
+						{
+							for (FakePlayerParty madeParty : made.getParties())
+							{
+								FakePartyManager.getInstance().disbandSimulationParty(madeParty);
+							}
+						}
+						spawned.addAll(fakes);
+						removeFakes(run, spawned);
+						InstanceManager.getInstance().destroyInstance(instanceId);
+						log.close();
+						removeRun(run);
+						return false;
+					}
+					fake.setHeading(heading);
+					fakes.add(fake);
+					run.addMember(team, new SimulationMember(fake, teamId, recruit.role(), recruit.build().getName(), false, seed, run.time()));
+				}
+				spawned.addAll(fakes);
+				team.addParty(FakePartyManager.getInstance().createSimulationParty(fakes, FakeBrain.A));
+			}
+		}
+
+		final JsonLine json = new JsonLine();
+		json.put("war", war.getName()).put("battle", battle.number()).put("race1", battle.race1().name()).put("race2", battle.race2().name()).put("repeat", battle.repeat()).put("runId", runId).put("instance", instanceId);
+		json.put("start", LocalDateTime.now().toString()).put("size", war.getSize()).put("level", war.getLevel()).put("seed", battle.seed()).put("timeLimit", war.getTimeLimit()).put("respawn", war.getRespawn()).put("distance", war.getDistance());
+		final List<JsonLine> members = new ArrayList<>();
+		for (SimulationMember member : run.getMembers().values())
+		{
+			members.add(describe(member));
+		}
+		json.put("members", members);
+		log.writeFile("run.json", json.toString());
+		log.write(SimulationLog.EVENTS, new JsonLine().put("t", run.time()).put("type", "round_start").put("battle", battle.number()).put("runId", runId));
+
+		keepRegionsAwake(run);
+		// Their AI starts now: waking a region doesn't start the AI in it (issue #24).
+		for (SimulationMember member : run.getMembers().values())
+		{
+			if (member.getCreature() instanceof Attackable fake)
+			{
+				fake.getAI().setIntention(Intention.ACTIVE);
+			}
+		}
+		run.setTask(ThreadPool.scheduleAtFixedRate(() -> tick(run), FakeSimulationConfig.POSITION_INTERVAL, FakeSimulationConfig.POSITION_INTERVAL));
+		LOGGER.info(getClass().getSimpleName() + ": Race war " + war.getName() + " battle " + battle.number() + "/" + war.getTotal() + ": " + SimulationWar.name(battle.race1()) + " vs " + SimulationWar.name(battle.race2()) + " started (instance " + instanceId + ").");
+		return true;
+	}
+
+	/**
+	 * A race war warrior died {@link SimulationWar#getRespawn} seconds ago: it comes back at its army's base with full HP, MP and CP and its buffs again, as from a buffer (unless a healer brought it back meanwhile).
+	 * @param run its battle
+	 * @param member the warrior
+	 * @param fake its fake player
+	 */
+	private void respawnWarrior(SimulationRun run, SimulationMember member, Npc fake)
+	{
+		try
+		{
+			if ((run.getPhase() != SimulationRun.Phase.FIGHT) || !fake.isDead() || fake.isDecayed() || (_runs.get(run.getId()) != run))
+			{
+				return;
+			}
+
+			final SimulationTeam team = run.getTeamOf(member);
+			if (team == null)
+			{
+				return;
+			}
+
+			final SimulationPoint base = team.getPoint();
+			DecayTaskManager.getInstance().cancel(fake);
+			fake.doRevive();
+			fake.teleToLocation(new Location(base.x(), base.y(), base.z(), base.heading()), base.instanceId(), WAR_RESPAWN_RADIUS);
+			// A teleport stops a fake player's AI task (the old spot's decayMe) while its intention stays ACTIVE: it starts again here.
+			if (fake.hasAI() && (fake.getAI() instanceof AttackableAI ai))
+			{
+				ai.startAITask();
+			}
+			FakePartyManager.getInstance().onRevived(fake);
+			FakePlayerPvpManager.getInstance().prepareSimulant(fake);
+			fake.setRunning();
+			run.getLog().write(SimulationLog.EVENTS, new JsonLine().put("t", run.time()).put("type", "respawn").put("id", member.getObjectId()).put("name", member.getName()).put("team", member.getTeamId()));
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not bring back " + fake.getName() + " in race war battle " + run.getId() + ".", e);
+		}
+	}
+
+	/**
+	 * A battle of the war ended: its result is written, and it is cleaned up a moment later.
+	 */
+	private void endWarBattle(SimulationRun run)
+	{
+		final SimulationWar war = _war;
+		final SimulationWar.Battle battle = run.getWarBattle();
+		try
+		{
+			SimulationSummary.write(run, war != null ? war.getTotal() : battle.number());
+			if (war != null)
+			{
+				final List<SimulationWar.Line> lines = new ArrayList<>();
+				for (SimulationMember member : run.getMembers().values())
+				{
+					lines.add(new SimulationWar.Line(member.getTeamId(), member.getBuild(), member.getRole().name(), member.getKills(), member.getDeaths(), member.getDamageDealt(), member.getHealDone()));
+				}
+				final int kills1 = getWarKills(run, 1);
+				final int kills2 = getWarKills(run, 2);
+				war.record(battle, kills1, kills2, run.getEndReason(), run.getFightStart() > 0 ? run.getEnd() - run.getFightStart() : 0, lines);
+				LOGGER.info(getClass().getSimpleName() + ": Race war " + war.getName() + " battle " + battle.number() + ": " + SimulationWar.name(battle.race1()) + " " + kills1 + " - " + kills2 + " " + SimulationWar.name(battle.race2()) + " (" + run.getEndReason() + ").");
+			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Problem while recording race war battle " + battle.number() + ".", e);
+		}
+		ThreadPool.schedule(() -> cleanup(run), WAR_CLEANUP_DELAY * 1000L);
+	}
+
+	/**
+	 * A battle of the war was cleaned up: the next one takes its slot, or the war is over.
+	 */
+	private void onWarBattleFreed(SimulationRun run)
+	{
+		final SimulationWar war = _war;
+		if (war == null)
+		{
+			return;
+		}
+		if (war.onFreed())
+		{
+			finishWar(war);
+			return;
+		}
+		fillWar(war);
+	}
+
+	private void finishWar(SimulationWar war)
+	{
+		synchronized (this)
+		{
+			if (_war == war)
+			{
+				_war = null;
+			}
+		}
+
+		final List<String> lines = war.writeSummary();
+		final Player starter = World.getInstance().getPlayer(war.getStarterId());
+		if (starter != null)
+		{
+			showText(starter, "Race war " + war.getName(), String.join("\n", lines));
+			starter.sendSysMessage("Race war " + war.getName() + (war.isStopped() ? " stopped" : " finished") + ": " + war.getDone() + "/" + war.getTotal() + " battles. " + war.getDir().resolve(SimulationWar.SUMMARY).toAbsolutePath());
+		}
+		LOGGER.info(getClass().getSimpleName() + ": Race war " + war.getName() + (war.isStopped() ? " stopped" : " finished") + ", " + war.getDone() + "/" + war.getTotal() + " battles. " + war.getDir().resolve(SimulationWar.SUMMARY).toAbsolutePath());
+	}
+
+	// ---------------------------------------------------------------------------------------------
 	// Lookups for the AI
 	// ---------------------------------------------------------------------------------------------
 
@@ -2656,7 +3087,31 @@ public class FakeSimulationManager
 	 */
 	public static boolean canFight(Creature a, Creature b)
 	{
-		return getRunId(a) == getRunId(b);
+		return (getRunId(a) == getRunId(b)) && !isRunAlly(a, b);
+	}
+
+	/**
+	 * @param creature a creature (its servitor counts as its owner)
+	 * @param other another creature
+	 * @return {@code true} if both fight in the same simulation run on the same team: the parties of a race war army (see {@link SimulationWar}) spare each other like the members of one party
+	 */
+	public static boolean isRunAlly(Creature creature, Creature other)
+	{
+		if (!ACTIVE || (creature == null) || (other == null))
+		{
+			return false;
+		}
+
+		final int runId = getRunId(creature);
+		if ((runId == 0) || (getRunId(other) != runId))
+		{
+			return false;
+		}
+
+		final SimulationRun run = getInstance()._runs.get(runId);
+		final SimulationMember a = run != null ? getMemberBehind(run, creature) : null;
+		final SimulationMember b = run != null ? getMemberBehind(run, other) : null;
+		return (a != null) && (b != null) && (a != b) && (a.getTeamId() == b.getTeamId());
 	}
 
 	/**
@@ -3321,9 +3776,17 @@ public class FakeSimulationManager
 		line.put("killingBlow", blow);
 		run.addKill(line, String.format("%.1fs ", time / 1000.0) + (killer != null ? killer.getName() : "?") + (slayer != null ? " (team " + slayer.getTeamId() + ", " + slayer.getBuild() + ")" : "") + " killed " + victim.getName() + " (team " + member.getTeamId() + ", " + member.getBuild() + ")" + (blow != null ? " with " + blow : ""));
 
+		// A race war warrior comes back at its base.
+		if ((run.getWarBattle() != null) && (run.getPhase() == SimulationRun.Phase.FIGHT) && (victim instanceof Npc fake))
+		{
+			final SimulationWar war = _war;
+			final int respawn = war != null ? war.getRespawn() : 10;
+			ThreadPool.schedule(() -> respawnWarrior(run, member, fake), respawn * 1000L);
+		}
+
 		// The round is decided once a team is down to its last member.
 		final SimulationTeam team = run.getTeamOf(member);
-		if ((team != null) && (run.getDecidedAt() == 0))
+		if ((team != null) && (run.getDecidedAt() == 0) && (run.getWarBattle() == null))
 		{
 			int alive = 0;
 			for (SimulationMember other : team.getMembers())

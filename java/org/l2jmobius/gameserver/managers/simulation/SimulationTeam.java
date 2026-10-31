@@ -16,6 +16,7 @@
  */
 package org.l2jmobius.gameserver.managers.simulation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -33,6 +34,8 @@ public class SimulationTeam
 	private final FakeBrain _brain;
 	private final List<SimulationMember> _members = new CopyOnWriteArrayList<>();
 	private volatile FakePlayerParty _party;
+	/** The other parties of an army of several (a race war, see {@link SimulationWar}): the first one is {@link #getParty}. */
+	private final List<FakePlayerParty> _moreParties = new CopyOnWriteArrayList<>();
 	private volatile boolean _firstDeathSeen;
 
 	public SimulationTeam(int id, SimulationPoint point, List<SimRole> roles, FakeBrain brain)
@@ -88,6 +91,58 @@ public class SimulationTeam
 	}
 
 	/**
+	 * Adds a party to the team: the first one becomes {@link #getParty}, the next ones make it an army of several parties.
+	 * @param party the party
+	 */
+	public void addParty(FakePlayerParty party)
+	{
+		if (_party == null)
+		{
+			_party = party;
+		}
+		else
+		{
+			_moreParties.add(party);
+		}
+	}
+
+	/**
+	 * @return every party of the team, its first one first
+	 */
+	public List<FakePlayerParty> getParties()
+	{
+		final List<FakePlayerParty> parties = new ArrayList<>(1 + _moreParties.size());
+		final FakePlayerParty party = _party;
+		if (party != null)
+		{
+			parties.add(party);
+		}
+		parties.addAll(_moreParties);
+		return parties;
+	}
+
+	/**
+	 * @param member a member
+	 * @return the party of the team that holds it, {@code null} if none
+	 */
+	public FakePlayerParty getPartyOf(SimulationMember member)
+	{
+		final FakePlayerParty party = _party;
+		if ((party != null) && party.isMember(member.getCreature()))
+		{
+			return party;
+		}
+		for (FakePlayerParty other : _moreParties)
+		{
+			if (other.isMember(member.getCreature()))
+			{
+				return other;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * @return {@code true} if a member of the team is alive (its party still holds it)
 	 */
 	public boolean isAlive()
@@ -108,8 +163,7 @@ public class SimulationTeam
 	 */
 	public boolean isActive(SimulationMember member)
 	{
-		final FakePlayerParty party = _party;
-		return (party != null) && party.isMember(member.getCreature());
+		return getPartyOf(member) != null;
 	}
 
 	/**
