@@ -107,42 +107,6 @@ public class TeamVsTeamManager
 	public static final int MANAGER_NPC_ID = 70010;
 	/** data/instances/custom/tvt_event.xml: a PvP instance without spawns. */
 	public static final int INSTANCE_TEMPLATE_ID = 3051;
-	/** Crystal Scroll: Enchant Weapon and Enchant Armor of each expertise level (none, D, C, B, A, S, S80, S84): S80 and S84 items take the S-grade ones. */
-	private static final int[][] CRYSTAL_SCROLLS =
-	{
-		{
-			957,
-			958
-		},
-		{
-			957,
-			958
-		},
-		{
-			953,
-			954
-		},
-		{
-			949,
-			950
-		},
-		{
-			731,
-			732
-		},
-		{
-			961,
-			962
-		},
-		{
-			961,
-			962
-		},
-		{
-			961,
-			962
-		}
-	};
 
 	/** {@code true} while a match goes on: the combat hooks only look further then. */
 	public static volatile boolean ACTIVE = false;
@@ -2072,7 +2036,7 @@ public class TeamVsTeamManager
 	}
 
 	/**
-	 * The best players of the winning team get {@link TeamVsTeamConfig#TOP_REWARDS}, first place first: most kills, fewer deaths on a tie. Only real players with a kill or more; the fake players are left out of the places.
+	 * The best players of the whole winning team (every party of it) get {@link TeamVsTeamConfig#TOP_REWARDS}, first place first: most kills, fewer deaths on a tie. Only real players with a kill or more; the fake players are left out of the places.
 	 * @param match the match
 	 * @param winner the winning team
 	 */
@@ -2093,22 +2057,11 @@ public class TeamVsTeamManager
 			final TopReward reward = TeamVsTeamConfig.TOP_REWARDS.get(i);
 			final Fighter fighter = ranking.get(i);
 			final Player player = fighter._creature.asPlayer();
-			final int itemId = getCrystalScroll(player, reward.weapon());
-			player.sendMessage("TvT: You are the number " + (i + 1) + " of your team with " + fighter._kills + " kills.");
+			final int itemId = reward.getItemId(player);
+			player.sendMessage("TvT: You are number " + (i + 1) + " of the whole " + winner._name + " team with " + fighter._kills + " kills.");
 			player.addItem(ItemProcessType.REWARD, itemId, reward.count(), null, true);
 			LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " place " + (i + 1) + ": " + player.getName() + " (" + fighter._kills + " kills, " + fighter._deaths + " deaths) gets " + reward.count() + " of item " + itemId + ".");
 		}
-	}
-
-	/**
-	 * @param player a player
-	 * @param weapon {@code true} for the weapon scroll, {@code false} for the armor one
-	 * @return the Crystal Scroll of its grade (its expertise)
-	 */
-	private static int getCrystalScroll(Player player, boolean weapon)
-	{
-		final int expertise = Math.max(0, Math.min(CRYSTAL_SCROLLS.length - 1, player.getExpertiseLevel()));
-		return CRYSTAL_SCROLLS[expertise][weapon ? 0 : 1];
 	}
 
 	/**

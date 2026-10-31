@@ -21,6 +21,7 @@
 package custom.events.Conquest;
 
 import org.l2jmobius.gameserver.config.custom.ConquestConfig;
+import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig.TopReward;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.managers.conquest.ConquestManager;
 import org.l2jmobius.gameserver.managers.conquest.ConquestRegistration;
@@ -119,6 +120,7 @@ public class Conquest extends Event
 		html.replace("%size%", map != null ? String.valueOf(ConquestRegistration.getPerTeam(map)) : "?");
 		html.replace("%fight%", String.valueOf(ConquestConfig.TIME_LIMIT));
 		html.replace("%reward%", describeReward());
+		html.replace("%top%", describeTopRewards());
 		html.replace("%brackets%", ConquestRegistration.describeBrackets());
 		html.replace("%time%", (seconds / 60) + " min " + (seconds % 60) + " s");
 		html.replace("%count%", String.valueOf(registration.getRegisteredCount()));
@@ -136,6 +138,12 @@ public class Conquest extends Event
 			sb.append(sb.length() > 0 ? ", " : "").append(reward.getCount()).append(' ').append(item != null ? item.getName() : String.valueOf(reward.getId()));
 		}
 		return sb.length() > 0 ? sb.toString() : "nothing";
+	}
+
+	private static String describeTopRewards()
+	{
+		final String places = TopReward.describe(ConquestConfig.TOP_REWARDS);
+		return places.isEmpty() ? "" : " The best players of the whole winning team by contribution (kills and capture points taken) also get Crystal Scrolls of their grade: " + places + ".";
 	}
 
 	@Override

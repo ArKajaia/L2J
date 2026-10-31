@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 
 import org.l2jmobius.commons.util.ConfigReader;
 import org.l2jmobius.gameserver.model.Location;
+import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.item.holders.ItemChanceHolder;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
 
@@ -225,33 +226,7 @@ public class TeamVsTeamConfig
 		}
 		WIN_REWARD = Collections.unmodifiableList(winReward);
 
-		final List<TopReward> topRewards = new ArrayList<>();
-		for (String part : config.getString("TvTTopRewards", "weapon,1;armor,2;armor,1").split(";"))
-		{
-			final String[] values = part.trim().split(",");
-			if (values.length == 2)
-			{
-				final String kind = values[0].trim().toLowerCase();
-				try
-				{
-					final int count = Integer.parseInt(values[1].trim());
-					if ((count > 0) && (kind.equals("weapon") || kind.equals("armor")))
-					{
-						topRewards.add(new TopReward(kind.equals("weapon"), count));
-						continue;
-					}
-				}
-				catch (NumberFormatException e)
-				{
-					// Reported below.
-				}
-			}
-			if (!part.isBlank())
-			{
-				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad reward \"" + part + "\" in TvTTopRewards.");
-			}
-		}
-		TOP_REWARDS = Collections.unmodifiableList(topRewards);
+		TOP_REWARDS = parseTopRewards(config.getString("TvTTopRewards", "weapon,1;armor,2;armor,1"), "TvTTopRewards");
 
 		final List<Location> managers = new ArrayList<>();
 		for (String part : config.getString("TvTManagerLocations", "83425,148585,-3406,32938").split(";"))
@@ -303,6 +278,110 @@ public class TeamVsTeamConfig
 	 */
 	public record TopReward(boolean weapon, int count)
 	{
+		/** Crystal Scroll: Enchant Weapon and Enchant Armor of each expertise level (none, D, C, B, A, S, S80, S84): S80 and S84 items take the S-grade ones. */
+		private static final int[][] CRYSTAL_SCROLLS =
+		{
+			{
+				957,
+				958
+			},
+			{
+				957,
+				958
+			},
+			{
+				953,
+				954
+			},
+			{
+				949,
+				950
+			},
+			{
+				731,
+				732
+			},
+			{
+				961,
+				962
+			},
+			{
+				961,
+				962
+			},
+			{
+				961,
+				962
+			}
+		};
+
+		/**
+		 * @param player a player
+		 * @return the Crystal Scroll of its grade (its expertise)
+		 */
+		public int getItemId(Player player)
+		{
+			final int expertise = Math.max(0, Math.min(CRYSTAL_SCROLLS.length - 1, player.getExpertiseLevel()));
+			return CRYSTAL_SCROLLS[expertise][weapon ? 0 : 1];
+		}
+
+		/**
+		 * @param rewards the rewards of the places, first place first
+		 * @return them as text: "1st place 1 Crystal Scroll: Enchant Weapon, 2nd place..." (empty for none)
+		 */
+		public static String describe(List<TopReward> rewards)
+		{
+			final StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < rewards.size(); i++)
+			{
+				final TopReward reward = rewards.get(i);
+				sb.append(sb.length() > 0 ? ", " : "").append(ordinal(i + 1)).append(" place ").append(reward.count()).append(reward.weapon() ? " Crystal Scroll: Enchant Weapon" : " Crystal Scroll: Enchant Armor");
+			}
+			return sb.toString();
+		}
+
+		private static String ordinal(int place)
+		{
+			final int lastTwo = place % 100;
+			final int last = place % 10;
+			return place + (((lastTwo >= 11) && (lastTwo <= 13)) ? "th" : (last == 1 ? "st" : (last == 2 ? "nd" : (last == 3 ? "rd" : "th"))));
+		}
+	}
+
+	/**
+	 * @param text the rewards of the places, first place first: weapon,count;armor,count;...
+	 * @param key the config key, for the warnings
+	 * @return the rewards
+	 */
+	static List<TopReward> parseTopRewards(String text, String key)
+	{
+		final List<TopReward> topRewards = new ArrayList<>();
+		for (String part : text.split(";"))
+		{
+			final String[] values = part.trim().split(",");
+			if (values.length == 2)
+			{
+				final String kind = values[0].trim().toLowerCase();
+				try
+				{
+					final int count = Integer.parseInt(values[1].trim());
+					if ((count > 0) && (kind.equals("weapon") || kind.equals("armor")))
+					{
+						topRewards.add(new TopReward(kind.equals("weapon"), count));
+						continue;
+					}
+				}
+				catch (NumberFormatException e)
+				{
+					// Reported below.
+				}
+			}
+			if (!part.isBlank())
+			{
+				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad reward \"" + part + "\" in " + key + ".");
+			}
+		}
+		return Collections.unmodifiableList(topRewards);
 	}
 
 	static List<Location> parseLocations(String text, String key)
