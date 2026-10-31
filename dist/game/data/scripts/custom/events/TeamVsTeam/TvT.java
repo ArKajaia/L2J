@@ -29,6 +29,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
 import org.l2jmobius.gameserver.model.script.Event;
+import org.l2jmobius.gameserver.model.tvt.TvTMap;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 
 /**
@@ -114,6 +115,8 @@ public class TvT extends Event
 		html.setFile(player, HTML_PATH + "manager.html");
 		html.replace("%message%", manager.isRegistrationOpen() ? message : "Registration is closed.");
 		html.replace("%size%", String.valueOf(TeamVsTeamConfig.TEAM_SIZE));
+		final TvTMap map = manager.getRegistrationMap();
+		html.replace("%map%", map != null ? map.name() : "battlefield picked when registration opens");
 		html.replace("%fight%", String.valueOf(TeamVsTeamConfig.FIGHT_TIME));
 		html.replace("%reward%", describeReward());
 		html.replace("%top%", describeTopRewards());

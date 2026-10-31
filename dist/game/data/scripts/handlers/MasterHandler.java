@@ -63,6 +63,7 @@ import custom.Bestiary.BestiaryWeb;
 import custom.Conquest.ConquestWeb;
 import custom.PassiveSkillTree.PassiveTreeApiServer;
 import custom.Simulation.SimulationWeb;
+import custom.TeamVsTeam.TvTWeb;
 import handlers.actions.click.ArtefactClick;
 import handlers.actions.click.DecoyClick;
 import handlers.actions.click.DoorClick;
@@ -713,6 +714,7 @@ public class MasterHandler
 		BestiaryWeb.getInstance().register();
 		SimulationWeb.getInstance().register();
 		ConquestWeb.getInstance().register();
+		TvTWeb.getInstance().register();
 		BestiaryPackets.register();
 		
 		final Map<IHandler<?, ?>, Method> registerHandlerMethods = new HashMap<>();

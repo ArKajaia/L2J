@@ -46,11 +46,14 @@ import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig.TopReward;
 import org.l2jmobius.gameserver.data.enums.CategoryType;
+import org.l2jmobius.gameserver.data.xml.DoorData;
+import org.l2jmobius.gameserver.data.xml.TvTMapData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.geoengine.pathfinding.PathFinding;
 import org.l2jmobius.gameserver.managers.simulation.SimRole;
 import org.l2jmobius.gameserver.managers.simulation.SimulationComposer;
 import org.l2jmobius.gameserver.model.Location;
+import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldRegion;
 import org.l2jmobius.gameserver.model.actor.Creature;
@@ -59,6 +62,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerHolder;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerParty;
+import org.l2jmobius.gameserver.model.actor.instance.Door;
 import org.l2jmobius.gameserver.model.actor.instance.Fence;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPersonality;
@@ -77,6 +81,8 @@ import org.l2jmobius.gameserver.model.skill.CommonSkill;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
+import org.l2jmobius.gameserver.model.tvt.TvTDoor;
+import org.l2jmobius.gameserver.model.tvt.TvTMap;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
 import org.l2jmobius.gameserver.network.serverpackets.Ex2TeamEventState;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
@@ -89,7 +95,8 @@ import org.l2jmobius.gameserver.util.Broadcast;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
- * Team vs Team: every {@link TeamVsTeamConfig#SCHEDULE} the TvT Event Manager takes registrations, then every level bracket with players gets its own copy of the Ruins of Despair (an instance), each team with its spawn points on its own half of the ring wall ({@link TeamVsTeamConfig#BLUE_BASES}, {@link TeamVsTeamConfig#RED_BASES}), {@link TeamVsTeamConfig#TEAM_SIZE} a side.
+ * Team vs Team: every {@link TeamVsTeamConfig#SCHEDULE} the TvT Event Manager takes registrations for a map picked by chance ({@link TvTMapData}, {@link TeamVsTeamConfig#MAPS}), then every level bracket with players gets its own copy of that map's place (an
+ * instance), each team with its spawn points ({@link TvTMap#blue}, {@link TvTMap#red}), the map's fence round the field and its doors, {@link TeamVsTeamConfig#TEAM_SIZE} a side.
  * <ul>
  * <li>A party plays in one team. One whose members are in different brackets is broken up, each member going to its own bracket (the members of a bracket stay together).</li>
  * <li>The real players are spread evenly between the teams, and the free places are filled with fake players of the bracket's levels. A party of players gets the fake players it lacks (a tank, a healer, an archer...) up to {@link TeamVsTeamConfig#PARTY_SIZE}, the rest of a team
@@ -105,7 +112,7 @@ public class TeamVsTeamManager
 
 	/** The TvT Event Manager. */
 	public static final int MANAGER_NPC_ID = 70010;
-	/** data/instances/custom/tvt_event.xml: a PvP instance without spawns. */
+	/** data/instances/custom/tvt_event.xml: a PvP instance without spawns or doors (the map's doors are added to each match's copy). */
 	public static final int INSTANCE_TEMPLATE_ID = 3051;
 
 	/** {@code true} while a match goes on: the combat hooks only look further then. */
@@ -472,11 +479,12 @@ public class TeamVsTeamManager
 	}
 
 	/**
-	 * One instance of the Ruins of Despair, for one bracket.
+	 * One copy (instance) of a map's place, for one bracket.
 	 */
 	public static class Match
 	{
 		private final int _id;
+		private final TvTMap _map;
 		private final int _minLevel;
 		private final int _maxLevel;
 		private final int _instanceId;
@@ -496,20 +504,29 @@ public class TeamVsTeamManager
 		// The fence round its field (see TeamVsTeamBarrier).
 		private final List<Fence> _barrier = new ArrayList<>();
 
-		Match(int id, int minLevel, int maxLevel, int instanceId)
+		Match(int id, TvTMap map, int minLevel, int maxLevel, int instanceId)
 		{
 			_id = id;
+			_map = map;
 			_minLevel = minLevel;
 			_maxLevel = maxLevel;
 			_instanceId = instanceId;
-			_blue = new Side(Team.BLUE, "Blue", TeamVsTeamConfig.BLUE_BASES, TeamVsTeamConfig.BLUE_NAME_COLOR);
-			_red = new Side(Team.RED, "Red", TeamVsTeamConfig.RED_BASES, TeamVsTeamConfig.RED_NAME_COLOR);
+			_blue = new Side(Team.BLUE, "Blue", map.blue(), TeamVsTeamConfig.BLUE_NAME_COLOR);
+			_red = new Side(Team.RED, "Red", map.red(), TeamVsTeamConfig.RED_NAME_COLOR);
 			_prepEnd = System.currentTimeMillis() + (TeamVsTeamConfig.PREP_TIME * 1000L);
 		}
 
 		public int getId()
 		{
 			return _id;
+		}
+
+		/**
+		 * @return the map it is played on
+		 */
+		public TvTMap getMap()
+		{
+			return _map;
 		}
 
 		public String getBracketName()
@@ -596,6 +613,8 @@ public class TeamVsTeamManager
 	private final List<ScheduledFuture<?>> _registrationTasks = new CopyOnWriteArrayList<>();
 	private volatile State _state = State.INACTIVE;
 	private volatile long _registrationEnd;
+	/** The map of the registration open now (and of the matches it starts). */
+	private volatile TvTMap _registrationMap;
 	private ScheduledFuture<?> _scheduleTask;
 
 	protected TeamVsTeamManager()
@@ -644,10 +663,20 @@ public class TeamVsTeamManager
 	}
 
 	/**
-	 * Opens the registration (the schedule, or an admin's //event).
+	 * Opens the registration (the schedule, or an admin's //event), on a map of {@link TeamVsTeamConfig#MAPS} picked by chance.
 	 * @return {@code null} if it opened, else why not
 	 */
-	public synchronized String openRegistration()
+	public String openRegistration()
+	{
+		return openRegistration(null);
+	}
+
+	/**
+	 * Opens the registration (the schedule, or an admin's //event or //tvt open).
+	 * @param map the map its matches are played on, {@code null} for one of {@link TeamVsTeamConfig#MAPS} picked by chance
+	 * @return {@code null} if it opened, else why not
+	 */
+	public synchronized String openRegistration(TvTMap map)
 	{
 		if (!TeamVsTeamConfig.ENABLED)
 		{
@@ -661,12 +690,18 @@ public class TeamVsTeamManager
 		{
 			return "there is no level bracket (TvTBrackets)";
 		}
-		if ((TeamVsTeamConfig.BLUE_BASE == null) || (TeamVsTeamConfig.RED_BASE == null))
+		final TvTMap picked = map != null ? map : TvTMapData.getInstance().getRandomMap(TeamVsTeamConfig.MAPS);
+		if (picked == null)
 		{
-			return "a team has no spawn point (TvTBlueBase, TvTRedBase)";
+			return "there is no enabled map with spawn points for both teams" + (TeamVsTeamConfig.MAPS.isEmpty() ? "" : " among TvTMaps") + " (data/tvt, //tvt map)";
+		}
+		if (!picked.isComplete())
+		{
+			return picked.name() + " has no spawn point for " + (picked.blue().isEmpty() ? "Blue" : "Red");
 		}
 
 		_state = State.REGISTRATION;
+		_registrationMap = picked;
 		_registered.clear();
 		_registrationEnd = System.currentTimeMillis() + (TeamVsTeamConfig.REGISTRATION_TIME * 60000L);
 		if (DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP > 0)
@@ -694,8 +729,8 @@ public class TeamVsTeamManager
 		}
 		_registrationTasks.add(ThreadPool.schedule(this::closeRegistration, TeamVsTeamConfig.REGISTRATION_TIME * 60000L));
 
-		Broadcast.toAllOnlinePlayers("TvT: Registration is open for " + TeamVsTeamConfig.REGISTRATION_TIME + " minutes at the TvT Event Manager in Giran. " + TeamVsTeamConfig.TEAM_SIZE + " vs " + TeamVsTeamConfig.TEAM_SIZE + " in the Ruins of Despair, levels " + describeBrackets() + ".");
-		LOGGER.info(getClass().getSimpleName() + ": Registration opened.");
+		Broadcast.toAllOnlinePlayers("TvT: Registration is open for " + TeamVsTeamConfig.REGISTRATION_TIME + " minutes at the TvT Event Manager in Giran. " + TeamVsTeamConfig.TEAM_SIZE + " vs " + TeamVsTeamConfig.TEAM_SIZE + " in the " + picked.name() + ", levels " + describeBrackets() + ".");
+		LOGGER.info(getClass().getSimpleName() + ": Registration opened on " + picked.id() + ".");
 		return null;
 	}
 
@@ -727,6 +762,14 @@ public class TeamVsTeamManager
 			}
 		}
 		return -1;
+	}
+
+	/**
+	 * @return the map of the registration open now, {@code null} if none is
+	 */
+	public TvTMap getRegistrationMap()
+	{
+		return _state == State.REGISTRATION ? _registrationMap : null;
 	}
 
 	public boolean isRegistrationOpen()
@@ -946,6 +989,9 @@ public class TeamVsTeamManager
 
 		_state = State.INACTIVE;
 		cancelRegistrationTasks();
+		// The map as last saved: a GM may have fixed it while the registration was open (one taken out or left without spawn points meanwhile is played as it was).
+		final TvTMap latest = TvTMapData.getInstance().getMap(_registrationMap.id());
+		final TvTMap map = (latest != null) && latest.isComplete() ? latest : _registrationMap;
 
 		// Who is still there and can go.
 		final List<Player> players = new ArrayList<>();
@@ -1122,7 +1168,7 @@ public class TeamVsTeamManager
 					continue;
 				}
 
-				final Match match = startMatch(bracket, blue, red, false);
+				final Match match = startMatch(map, bracket, blue, red, false);
 				if (match != null)
 				{
 					started.append(started.length() > 0 ? ", " : "").append(match.getBracketName());
@@ -1132,7 +1178,7 @@ public class TeamVsTeamManager
 
 		if (started.length() > 0)
 		{
-			Broadcast.toAllOnlinePlayers("TvT: The matches start in the Ruins of Despair (levels " + started + "). Good luck!");
+			Broadcast.toAllOnlinePlayers("TvT: The matches start in the " + map.name() + " (levels " + started + "). Good luck!");
 		}
 		else
 		{
@@ -1144,7 +1190,7 @@ public class TeamVsTeamManager
 	// Match setup
 	// ---------------------------------------------------------------------------------------------
 
-	private Match startMatch(int[] bracket, List<List<Player>> blueGroups, List<List<Player>> redGroups, boolean simulated)
+	private Match startMatch(TvTMap map, int[] bracket, List<List<Player>> blueGroups, List<List<Player>> redGroups, boolean simulated)
 	{
 		final Instance instance = InstanceManager.getInstance().createDynamicInstance(INSTANCE_TEMPLATE_ID);
 		if (instance == null)
@@ -1152,9 +1198,10 @@ public class TeamVsTeamManager
 			return null;
 		}
 
-		final Match match = new Match(_nextMatchId.getAndIncrement(), bracket[0], bracket[1], instance.getId());
+		final Match match = new Match(_nextMatchId.getAndIncrement(), map, bracket[0], bracket[1], instance.getId());
 		match._simulated = simulated;
-		match._barrier.addAll(TeamVsTeamBarrier.build(instance.getId()));
+		match._barrier.addAll(TeamVsTeamBarrier.build(map, instance.getId()));
+		setUpDoors(map, instance);
 		_matches.put(match.getId(), match);
 		ACTIVE = true;
 		keepRegionsAwake(match);
@@ -1187,8 +1234,57 @@ public class TeamVsTeamManager
 		}
 
 		match._task = ThreadPool.scheduleAtFixedRate(() -> tick(match), TICK_MS, TICK_MS);
-		LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " (levels " + match.getBracketName() + ") started: Blue " + match._blue.getPlayerCount() + " players / " + match._blue._fighters.size() + ", Red " + match._red.getPlayerCount() + " players / " + match._red._fighters.size() + ", " + match._barrier.size() + " walls of fence round the field.");
+		LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " (levels " + match.getBracketName() + ", " + map.id() + ") started: Blue " + match._blue.getPlayerCount() + " players / " + match._blue._fighters.size() + ", Red " + match._red.getPlayerCount() + " players / " + match._red._fighters.size() + ", " + match._barrier.size() + " walls of fence round the field.");
 		return match;
+	}
+
+	/**
+	 * The doors the map names, in the match's copy of its place: an instance only has the doors added to it, closed or open as data/Doors.xml has them, so each is set by {@link #keepDoors} as the map says.
+	 */
+	private static void setUpDoors(TvTMap map, Instance instance)
+	{
+		boolean added = false;
+		for (TvTDoor door : map.doors())
+		{
+			if (DoorData.getInstance().getDoorTemplate(door.id()) == null)
+			{
+				LOGGER.warning(TeamVsTeamManager.class.getSimpleName() + ": " + map.id() + " names door " + door.id() + ", which is not in data/Doors.xml.");
+				continue;
+			}
+			final StatSet set = new StatSet();
+			set.set("DoorId", door.id());
+			instance.addDoor(set);
+			added = true;
+		}
+		if (added)
+		{
+			instance.spawnDoors();
+			keepDoors(map, instance);
+		}
+	}
+
+	/**
+	 * Sets the doors of a match's instance as its map says, again at every tick: a door is opened without its close timer ({@code Door#openMe} starts one), and one shut or opened by anything else goes back.
+	 */
+	private static void keepDoors(TvTMap map, Instance instance)
+	{
+		for (TvTDoor setting : map.doors())
+		{
+			final Door door = instance.getDoor(setting.id());
+			if ((door == null) || (door.isOpen() == setting.open()))
+			{
+				continue;
+			}
+			if (setting.open())
+			{
+				door.setOpen(true);
+				door.broadcastStatusUpdate();
+			}
+			else
+			{
+				door.closeMe();
+			}
+		}
 	}
 
 	/**
@@ -1364,7 +1460,7 @@ public class TeamVsTeamManager
 		buffAndHeal(player);
 		player.broadcastUserInfo();
 		TeamEventHud.sendState(player, state(match, Ex2TeamEventState.RESULT_NONE), side._team);
-		showZones(player, side._team);
+		showZones(match, player, side._team);
 
 		final BuffTemplateManager templates = BuffTemplateManager.getInstance();
 		if (templates.isTvtTemplateEnabled() && templates.getTemplate(player, BuffTemplateManager.TVT_SLOT).skillIds().isEmpty())
@@ -1413,6 +1509,14 @@ public class TeamVsTeamManager
 		{
 			final long now = System.currentTimeMillis();
 			pruneWatchers(match);
+			if (!match._map.doors().isEmpty() && (match._phase != Phase.ENDED))
+			{
+				final Instance instance = InstanceManager.getInstance().getInstance(match._instanceId);
+				if (instance != null)
+				{
+					keepDoors(match._map, instance);
+				}
+			}
 			switch (match._phase)
 			{
 				case PREP:
@@ -1468,7 +1572,7 @@ public class TeamVsTeamManager
 						}
 
 						// Nobody leaves the field: the fence stops everyone, and whoever got through anyway (a skill that moves them) is brought back inside.
-						if (TeamVsTeamBarrier.isOutside(creature, BARRIER_MARGIN))
+						if (TeamVsTeamBarrier.isOutside(match._map.barrier(), creature, BARRIER_MARGIN))
 						{
 							sendInside(fighter);
 							continue;
@@ -1724,7 +1828,7 @@ public class TeamVsTeamManager
 		}
 		creature.abortAttack();
 		creature.abortCast();
-		creature.teleToLocation(TeamVsTeamBarrier.getInside(creature), fighter._match._instanceId, 0);
+		creature.teleToLocation(TeamVsTeamBarrier.getInside(fighter._match._map.barrier(), creature), fighter._match._instanceId, 0);
 		if (creature.isPlayer())
 		{
 			sendScreen(creature.asPlayer(), "You can't leave the battlefield!", 4, false);
@@ -2123,7 +2227,7 @@ public class TeamVsTeamManager
 				final Player gm = World.getInstance().getPlayer(objectId);
 				if (gm != null)
 				{
-					TeamEventHud.close(gm, zoneIds());
+					TeamEventHud.close(gm, zoneIds(match));
 				}
 			}
 			match._watchers.clear();
@@ -2186,7 +2290,7 @@ public class TeamVsTeamManager
 		}
 		player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
 		player.setCurrentCp(player.getMaxCp());
-		TeamEventHud.close(player, zoneIds());
+		TeamEventHud.close(player, zoneIds(fighter._match));
 
 		final Instance instance = InstanceManager.getInstance().getInstance(fighter._match._instanceId);
 		if (instance != null)
@@ -2353,11 +2457,12 @@ public class TeamVsTeamManager
 	}
 
 	/**
-	 * @return the ids of every zone a match shows on a player's radar: both teams' bases and the edge
+	 * @param match a match
+	 * @return the ids of every zone it shows on a player's radar: both teams' bases and the edge
 	 */
-	private static List<Integer> zoneIds()
+	private static List<Integer> zoneIds(Match match)
 	{
-		return TeamEventHud.zoneIds(0, TeamVsTeamConfig.BLUE_BASES.size(), TeamVsTeamConfig.RED_BASES.size());
+		return TeamEventHud.zoneIds(0, match._blue._bases.size(), match._red._bases.size());
 	}
 
 	/**
@@ -2372,14 +2477,14 @@ public class TeamVsTeamManager
 		{
 			if ((other != match) && other._watchers.remove(gm.getObjectId()))
 			{
-				TeamEventHud.close(gm, zoneIds());
+				TeamEventHud.close(gm, zoneIds(other));
 			}
 		}
-		final Location center = getFieldCenter();
+		final Location center = getFieldCenter(match);
 		gm.teleToLocation(center.getX(), center.getY(), center.getZ(), 0, match.getInstanceId(), 0);
 		match._watchers.add(gm.getObjectId());
 		TeamEventHud.sendState(gm, state(match, Ex2TeamEventState.RESULT_NONE), Team.NONE);
-		showZones(gm, Team.NONE);
+		showZones(match, gm, Team.NONE);
 	}
 
 	/**
@@ -2412,7 +2517,7 @@ public class TeamVsTeamManager
 				match._watchers.remove(objectId);
 				if (gm != null)
 				{
-					TeamEventHud.close(gm, zoneIds());
+					TeamEventHud.close(gm, zoneIds(match));
 				}
 			}
 		}
@@ -2421,61 +2526,25 @@ public class TeamVsTeamManager
 	/**
 	 * Shows a player entering a match the bases and the battlefield on its radar: its own team's bases in its color, the other team's in red, striped and pulsing. A GM watching ({@link Team#NONE}) sees each team's bases in its color.
 	 */
-	private static void showZones(Player player, Team viewer)
+	private static void showZones(Match match, Player player, Team viewer)
 	{
-		for (Team team : List.of(Team.BLUE, Team.RED))
+		for (Side side : new Side[]
 		{
-			final List<Location> bases = team == Team.BLUE ? TeamVsTeamConfig.BLUE_BASES : TeamVsTeamConfig.RED_BASES;
+			match._blue,
+			match._red
+		})
+		{
+			final Team team = side._team;
 			final boolean own = (viewer == Team.NONE) || (team == viewer);
-			for (int i = 0; i < bases.size(); i++)
+			for (int i = 0; i < side._bases.size(); i++)
 			{
-				final Location base = bases.get(i);
-				TeamEventHud.showCircle(player, TeamEventHud.zoneId(team == Team.BLUE ? TeamEventHud.KIND_BLUE_BASE : TeamEventHud.KIND_RED_BASE, i), base.getX(), base.getY(), base.getZ(), TeamEventHud.SPAWN_HEIGHT, TeamVsTeamConfig.BASE_RADIUS, own ? TeamEventHud.spawnStyle(team) : TeamEventHud.ENEMY_BASE, (team == Team.BLUE ? "Blue" : "Red") + " base " + (i + 1));
+				final Location base = side._bases.get(i);
+				TeamEventHud.showCircle(player, TeamEventHud.zoneId(team == Team.BLUE ? TeamEventHud.KIND_BLUE_BASE : TeamEventHud.KIND_RED_BASE, i), base.getX(), base.getY(), base.getZ(), TeamEventHud.SPAWN_HEIGHT, TeamVsTeamConfig.BASE_RADIUS, own ? TeamEventHud.spawnStyle(team) : TeamEventHud.ENEMY_BASE, side._name + " base " + (i + 1));
 			}
 		}
 
-		final List<Location> all = new ArrayList<>(TeamVsTeamConfig.BLUE_BASES);
-		all.addAll(TeamVsTeamConfig.RED_BASES);
-		long z = 0;
-		for (Location base : all)
-		{
-			z += base.getZ();
-		}
-		final int[] area = getFieldArea();
-		TeamEventHud.showEdge(player, area[0], area[1], area[2], area[3], (int) (z / all.size()));
-	}
-
-	/**
-	 * @return the battlefield's edge on the radar, minX, minY, maxX, maxY: {@link TeamVsTeamConfig#AREA}, or the box around every spawn point 2000 wider (as {@link #keepRegionsAwake} keeps awake)
-	 */
-	public static int[] getFieldArea()
-	{
-		if (TeamVsTeamConfig.AREA != null)
-		{
-			return TeamVsTeamConfig.AREA;
-		}
-
-		final List<Location> bases = new ArrayList<>(TeamVsTeamConfig.BLUE_BASES);
-		bases.addAll(TeamVsTeamConfig.RED_BASES);
-		int minX = Integer.MAX_VALUE;
-		int maxX = Integer.MIN_VALUE;
-		int minY = Integer.MAX_VALUE;
-		int maxY = Integer.MIN_VALUE;
-		for (Location base : bases)
-		{
-			minX = Math.min(minX, base.getX());
-			maxX = Math.max(maxX, base.getX());
-			minY = Math.min(minY, base.getY());
-			maxY = Math.max(maxY, base.getY());
-		}
-		final int margin = 2000;
-		return new int[]
-		{
-			minX - margin,
-			minY - margin,
-			maxX + margin,
-			maxY + margin
-		};
+		final TvTMap map = match._map;
+		TeamEventHud.showEdge(player, map.minX(), map.minY(), map.maxX(), map.maxY(), map.z());
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -2487,27 +2556,14 @@ public class TeamVsTeamManager
 	 */
 	private static void keepRegionsAwake(Match match)
 	{
-		final List<Location> bases = new ArrayList<>(TeamVsTeamConfig.BLUE_BASES);
-		bases.addAll(TeamVsTeamConfig.RED_BASES);
-		int minX = Integer.MAX_VALUE;
-		int maxX = Integer.MIN_VALUE;
-		int minY = Integer.MAX_VALUE;
-		int maxY = Integer.MIN_VALUE;
-		for (Location base : bases)
-		{
-			minX = Math.min(minX, base.getX());
-			maxX = Math.max(maxX, base.getX());
-			minY = Math.min(minY, base.getY());
-			maxY = Math.max(maxY, base.getY());
-		}
-		final int z = bases.get(0).getZ();
-		final int margin = 2000;
+		final int[] box = getRegionBox(match);
+		final int z = match._map.z();
 		final int step = 1 << World.SHIFT_BY;
 		synchronized (match._keptRegions)
 		{
-			for (int x = minX - margin; x <= (maxX + margin); x += step)
+			for (int x = box[0]; x <= box[2]; x += step)
 			{
-				for (int y = minY - margin; y <= (maxY + margin); y += step)
+				for (int y = box[1]; y <= box[3]; y += step)
 				{
 					final WorldRegion region = World.getInstance().getRegion(x, y, z);
 					if ((region != null) && !region.isKeptActive())
@@ -2520,37 +2576,83 @@ public class TeamVsTeamManager
 		}
 	}
 
-	private void releaseRegions(Match match)
+	/**
+	 * @param match a match
+	 * @return the box of the world kept awake for it, minX, minY, maxX, maxY: its map's area and every spawn point, 2000 wider
+	 */
+	private static int[] getRegionBox(Match match)
 	{
-		// Another match going on still needs them (they all play in the same place): it takes them over.
-		Match heir = null;
-		for (Match other : _matches.values())
+		final TvTMap map = match._map;
+		int minX = map.minX();
+		int minY = map.minY();
+		int maxX = map.maxX();
+		int maxY = map.maxY();
+		for (Side side : new Side[]
 		{
-			if ((other != match) && (other._phase != Phase.ENDED))
+			match._blue,
+			match._red
+		})
+		{
+			for (Location base : side._bases)
 			{
-				heir = other;
-				break;
+				minX = Math.min(minX, base.getX());
+				maxX = Math.max(maxX, base.getX());
+				minY = Math.min(minY, base.getY());
+				maxY = Math.max(maxY, base.getY());
 			}
 		}
-		
+		final int margin = 2000;
+		return new int[]
+		{
+			minX - margin,
+			minY - margin,
+			maxX + margin,
+			maxY + margin
+		};
+	}
+
+	private void releaseRegions(Match match)
+	{
 		synchronized (match._keptRegions)
 		{
-			if (heir != null)
+			for (WorldRegion region : match._keptRegions)
 			{
-				synchronized (heir._keptRegions)
+				// Another match going on in the same place still needs it (a region is kept awake by one match only): that one takes it over.
+				Match heir = null;
+				for (Match other : _matches.values())
 				{
-					heir._keptRegions.addAll(match._keptRegions);
+					if ((other != match) && (other._phase != Phase.ENDED) && isInRegionBox(other, region))
+					{
+						heir = other;
+						break;
+					}
 				}
-			}
-			else
-			{
-				for (WorldRegion region : match._keptRegions)
+				if (heir != null)
+				{
+					synchronized (heir._keptRegions)
+					{
+						heir._keptRegions.add(region);
+					}
+				}
+				else
 				{
 					region.releaseKeepActive();
 				}
 			}
 			match._keptRegions.clear();
 		}
+	}
+
+	/**
+	 * @return {@code true} if the region lies (at least partly) in the box kept awake for the match
+	 */
+	private static boolean isInRegionBox(Match match, WorldRegion region)
+	{
+		final int[] box = getRegionBox(match);
+		final int size = 1 << World.SHIFT_BY;
+		final int regionMinX = (region.getRegionX() - World.OFFSET_X) << World.SHIFT_BY;
+		final int regionMinY = (region.getRegionY() - World.OFFSET_Y) << World.SHIFT_BY;
+		return (regionMinX <= box[2]) && ((regionMinX + size) >= box[0]) && (regionMinY <= box[3]) && ((regionMinY + size) >= box[1]);
 	}
 	
 	// ---------------------------------------------------------------------------------------------
@@ -2947,7 +3049,7 @@ public class TeamVsTeamManager
 
 		final Side side = fighter._side;
 		final Side enemySide = fighter._match.getOther(side);
-		final Location center = getFieldCenter();
+		final Location center = getFieldCenter(fighter._match);
 		final GeoEngine geo = GeoEngine.getInstance();
 		final int instanceId = fake.getInstanceId();
 
@@ -3056,7 +3158,7 @@ public class TeamVsTeamManager
 
 		final Side side = fighter._side;
 		final Side enemySide = fighter._match.getOther(side);
-		final Location center = getFieldCenter();
+		final Location center = getFieldCenter(fighter._match);
 		final double radius = Math.hypot(side.getCenter().getX() - enemySide.getCenter().getX(), side.getCenter().getY() - enemySide.getCenter().getY()) * 0.45;
 		final GeoEngine geo = GeoEngine.getInstance();
 		for (int i = 0; i < 12; i++)
@@ -3113,16 +3215,17 @@ public class TeamVsTeamManager
 		}
 
 		// The enemies are all back at their bases: it holds the middle of the field, where they come out to, instead of waiting at a base's edge.
-		return inLane(fake, fighter, getFieldCenter(), false);
+		return inLane(fake, fighter, getFieldCenter(fighter._match), false);
 	}
 
 	/**
-	 * @return the middle of the field: of every spawn point of both teams
+	 * @param match a match
+	 * @return the middle of its field: of every spawn point of both teams
 	 */
-	public static Location getFieldCenter()
+	public static Location getFieldCenter(Match match)
 	{
-		final List<Location> all = new ArrayList<>(TeamVsTeamConfig.BLUE_BASES);
-		all.addAll(TeamVsTeamConfig.RED_BASES);
+		final List<Location> all = new ArrayList<>(match._blue._bases);
+		all.addAll(match._red._bases);
 		return center(all);
 	}
 
@@ -3205,19 +3308,35 @@ public class TeamVsTeamManager
 	}
 
 	/**
-	 * Starts a match of fake players only (no registration, no players): both teams are parties of fake players of the bracket of {@code level}. It plays to its end with nobody watching and logs its kills, to try the event out.
+	 * Starts a match of fake players only on a map of {@link TeamVsTeamConfig#MAPS} picked by chance, see {@link #simulate(int, TvTMap)}.
 	 * @param level a level of the bracket to play
 	 * @return what to tell the GM
 	 */
-	public synchronized String simulate(int level)
+	public String simulate(int level)
+	{
+		return simulate(level, null);
+	}
+
+	/**
+	 * Starts a match of fake players only (no registration, no players): both teams are parties of fake players of the bracket of {@code level}. It plays to its end with nobody watching and logs its kills, to try the event out (or a map).
+	 * @param level a level of the bracket to play
+	 * @param map the map to play on, {@code null} for one of {@link TeamVsTeamConfig#MAPS} picked by chance
+	 * @return what to tell the GM
+	 */
+	public synchronized String simulate(int level, TvTMap map)
 	{
 		if (!FakePlayerPvpManager.getInstance().isEnabled())
 		{
 			return "Fake players are disabled (EnableFakePlayers, FakePvpEnabled).";
 		}
-		if ((TeamVsTeamConfig.BLUE_BASE == null) || (TeamVsTeamConfig.RED_BASE == null))
+		final TvTMap picked = map != null ? map : TvTMapData.getInstance().getRandomMap(TeamVsTeamConfig.MAPS);
+		if (picked == null)
 		{
-			return "A team has no spawn point (TvTBlueBase, TvTRedBase).";
+			return "There is no enabled map with spawn points for both teams (data/tvt, //tvt map).";
+		}
+		if (!picked.isComplete())
+		{
+			return picked.name() + " has no spawn point for " + (picked.blue().isEmpty() ? "Blue" : "Red") + ".";
 		}
 		
 		final int index = getBracket(level);
@@ -3226,12 +3345,12 @@ public class TeamVsTeamManager
 			return "Level " + level + " is outside every bracket (" + describeBrackets() + ").";
 		}
 		
-		final Match match = startMatch(TeamVsTeamConfig.BRACKETS.get(index), List.of(), List.of(), true);
+		final Match match = startMatch(picked, TeamVsTeamConfig.BRACKETS.get(index), List.of(), List.of(), true);
 		if (match == null)
 		{
 			return "The instance could not be created.";
 		}
-		return "Simulated match " + match.getId() + " (levels " + match.getBracketName() + ") started: " + match._blue._fighters.size() + " vs " + match._red._fighters.size() + " fake players, the fight in " + TeamVsTeamConfig.PREP_TIME + " seconds.";
+		return "Simulated match " + match.getId() + " (levels " + match.getBracketName() + ") started on " + picked.name() + ": " + match._blue._fighters.size() + " vs " + match._red._fighters.size() + " fake players, the fight in " + TeamVsTeamConfig.PREP_TIME + " seconds.";
 	}
 	
 	/**
@@ -3260,7 +3379,7 @@ public class TeamVsTeamManager
 	public List<String> getStatus(boolean detail)
 	{
 		final List<String> lines = new ArrayList<>();
-		lines.add(isRegistrationOpen() ? "Registration open, " + getRegistrationSecondsLeft() + " s left, " + getRegisteredCount() + " registered, " + _managers.size() + " TvT Event Manager(s) out." : "Registration closed.");
+		lines.add(isRegistrationOpen() ? "Registration open on " + _registrationMap.name() + ", " + getRegistrationSecondsLeft() + " s left, " + getRegisteredCount() + " registered, " + _managers.size() + " TvT Event Manager(s) out." : "Registration closed.");
 		if (_matches.isEmpty())
 		{
 			lines.add("No match going on.");
@@ -3279,7 +3398,7 @@ public class TeamVsTeamManager
 		lines.add("Fighters tracked: " + _fighters.size() + ", Team vs Team fake players in the world: " + fakesInWorld + ".");
 		for (Match match : _matches.values())
 		{
-			lines.add("Match " + match.getId() + " (levels " + match.getBracketName() + (match._simulated ? ", simulated" : "") + "): " + match._phase + ", " + match.getSecondsLeft() + " s left, Blue " + match._blue.getScore() + " : " + match._red.getScore() + " Red, instance " + match._instanceId + ".");
+			lines.add("Match " + match.getId() + " (levels " + match.getBracketName() + ", " + match._map.name() + (match._simulated ? ", simulated" : "") + "): " + match._phase + ", " + match.getSecondsLeft() + " s left, Blue " + match._blue.getScore() + " : " + match._red.getScore() + " Red, instance " + match._instanceId + ".");
 			for (Side side : new Side[]
 			{
 				match._blue,

@@ -51,20 +51,12 @@ public class TeamVsTeamConfig
 	public static int MIN_PLAYERS;
 	/** The level brackets, lowest first: {min, max} each. */
 	public static List<int[]> BRACKETS;
-	/** The spawn points of the teams: each team starts at its first one, its dead come back at one of them (see TeamVsTeamManager). */
-	public static List<Location> BLUE_BASES;
-	public static List<Location> RED_BASES;
-	/** The first spawn point of each team, where it starts ({@code null} for none). */
-	public static Location BLUE_BASE;
-	public static Location RED_BASE;
+	/** The maps a registration picks from, by id (data/tvt), empty for any enabled one (see TvTMapData). */
+	public static List<String> MAPS;
 	public static int SPAWN_RADIUS;
 	public static int BASE_RADIUS;
 	/** Players coming this close to the edge of an enemy base are warned that it stuns them (see TeamVsTeamManager). */
 	public static int BASE_WARNING_DISTANCE;
-	/** The fence round the field: {middle x, middle y, radius along x, radius along y} of an ellipse, {@code null} for none (see TeamVsTeamBarrier). */
-	public static int[] BARRIER;
-	/** The battlefield's edge on the players' radar: minX, minY, maxX, maxY, or {@code null} for around the bases. */
-	public static int[] AREA;
 	public static int RESPAWN_DELAY;
 	public static int SPAWN_PROTECTION;
 	public static List<ItemChanceHolder> KILL_REWARDS;
@@ -112,71 +104,18 @@ public class TeamVsTeamConfig
 		brackets.sort((a, b) -> Integer.compare(a[0], b[0]));
 		BRACKETS = Collections.unmodifiableList(brackets);
 
-		BLUE_BASES = parseLocations(config.getString("TvTBlueBase", "-17200,147000,-3704,46757;-19800,146600,-3736,52784;-21600,145400,-3760,57879"), "TvTBlueBase");
-		RED_BASES = parseLocations(config.getString("TvTRedBase", "-20200,138700,-3896,11380;-16400,138400,-3792,20956;-14600,139400,-3792,25627"), "TvTRedBase");
-		BLUE_BASE = BLUE_BASES.isEmpty() ? null : BLUE_BASES.get(0);
-		RED_BASE = RED_BASES.isEmpty() ? null : RED_BASES.get(0);
+		final List<String> maps = new ArrayList<>();
+		for (String id : config.getString("TvTMaps", "").split(","))
+		{
+			if (!id.isBlank())
+			{
+				maps.add(id.trim().toLowerCase());
+			}
+		}
+		MAPS = Collections.unmodifiableList(maps);
 		SPAWN_RADIUS = Math.max(0, config.getInt("TvTSpawnRadius", 150));
 		BASE_RADIUS = Math.max(100, config.getInt("TvTBaseRadius", 700));
 		BASE_WARNING_DISTANCE = Math.max(0, config.getInt("TvTBaseWarningDistance", 500));
-		BARRIER = null;
-		final String barrier = config.getString("TvTBarrier", "-17800,142600,5900,5300").trim();
-		if (!barrier.isEmpty())
-		{
-			final String[] values = barrier.split(",");
-			try
-			{
-				if (values.length != 4)
-				{
-					throw new NumberFormatException();
-				}
-				final int[] parsed = new int[4];
-				for (int i = 0; i < 4; i++)
-				{
-					parsed[i] = Integer.parseInt(values[i].trim());
-				}
-				if ((parsed[2] < 500) || (parsed[3] < 500))
-				{
-					throw new NumberFormatException();
-				}
-				BARRIER = parsed;
-			}
-			catch (NumberFormatException e)
-			{
-				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad TvTBarrier \"" + barrier + "\" (x,y,radius x,radius y, radii at least 500): no barrier.");
-			}
-		}
-		AREA = null;
-		final String area = config.getString("TvTArea", "").trim();
-		if (!area.isEmpty())
-		{
-			try
-			{
-				final String[] parts = area.split(",");
-				final int minX = Integer.parseInt(parts[0].trim());
-				final int minY = Integer.parseInt(parts[1].trim());
-				final int maxX = Integer.parseInt(parts[2].trim());
-				final int maxY = Integer.parseInt(parts[3].trim());
-				if ((parts.length == 4) && (minX < maxX) && (minY < maxY))
-				{
-					AREA = new int[]
-					{
-						minX,
-						minY,
-						maxX,
-						maxY
-					};
-				}
-				else
-				{
-					LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad TvTArea \"" + area + "\", the area around the bases is shown.");
-				}
-			}
-			catch (Exception e)
-			{
-				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad TvTArea \"" + area + "\", the area around the bases is shown.");
-			}
-		}
 		RESPAWN_DELAY = Math.max(1, config.getInt("TvTRespawnDelay", 10));
 		SPAWN_PROTECTION = Math.max(0, config.getInt("TvTSpawnProtection", 15));
 

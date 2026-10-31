@@ -70,6 +70,7 @@ import org.l2jmobius.gameserver.data.xml.CategoryData;
 import org.l2jmobius.gameserver.data.xml.ClassListData;
 import org.l2jmobius.gameserver.data.xml.ClassTransferChallengeData;
 import org.l2jmobius.gameserver.data.xml.ConquestMapData;
+import org.l2jmobius.gameserver.data.xml.TvTMapData;
 import org.l2jmobius.gameserver.data.xml.DoorData;
 import org.l2jmobius.gameserver.data.xml.DynamicExpRateData;
 import org.l2jmobius.gameserver.data.xml.ElementalAttributeData;
@@ -416,6 +417,7 @@ public class GameServer
 		TownLifeManager.getInstance();
 		VillageSiegeData.getInstance();
 		VillageSiegeManager.getInstance();
+		TvTMapData.getInstance();
 		TeamVsTeamManager.getInstance();
 		ConquestMapData.getInstance();
 		ConquestRegistration.getInstance();
