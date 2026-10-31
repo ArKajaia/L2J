@@ -51,6 +51,8 @@ public class RaceWarsConfig
 	public static int HARD_LIMIT;
 	public static int FINAL_DELAY;
 	public static List<ItemHolder> WIN_REWARD;
+	/** What each player of a race that lost the final gets. */
+	public static List<ItemHolder> FINAL_LOSE_REWARD;
 	public static int SPAWN_RADIUS;
 	public static int BASE_RADIUS;
 
@@ -104,8 +106,20 @@ public class RaceWarsConfig
 		brackets.sort((a, b) -> Integer.compare(a[0], b[0]));
 		BRACKETS = Collections.unmodifiableList(brackets);
 
+		WIN_REWARD = parseRewards(config, "RaceWarsWinReward", "6509,10");
+		FINAL_LOSE_REWARD = parseRewards(config, "RaceWarsFinalLoseReward", "6509,3");
+	}
+
+	/**
+	 * @param config the config
+	 * @param key a key of items, id,count;id,count
+	 * @param defaultValue its default
+	 * @return the items
+	 */
+	private static List<ItemHolder> parseRewards(ConfigReader config, String key, String defaultValue)
+	{
 		final List<ItemHolder> rewards = new ArrayList<>();
-		for (String part : config.getString("RaceWarsWinReward", "6509,10").split(";"))
+		for (String part : config.getString(key, defaultValue).split(";"))
 		{
 			final String[] values = part.trim().split(",");
 			try
@@ -122,10 +136,9 @@ public class RaceWarsConfig
 			}
 			if (!part.isBlank())
 			{
-				LOGGER.warning(RaceWarsConfig.class.getSimpleName() + ": Bad reward \"" + part + "\" in RaceWarsWinReward.");
+				LOGGER.warning(RaceWarsConfig.class.getSimpleName() + ": Bad reward \"" + part + "\" in " + key + ".");
 			}
 		}
-		WIN_REWARD = Collections.unmodifiableList(rewards);
-
+		return Collections.unmodifiableList(rewards);
 	}
 }

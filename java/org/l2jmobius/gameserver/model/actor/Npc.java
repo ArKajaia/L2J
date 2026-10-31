@@ -1254,16 +1254,15 @@ public class Npc extends Creature
 		
 		final Weapon weapon = (killer != null) ? killer.getActiveWeaponItem() : null;
 		_killingBlowWeaponId = (weapon != null) ? weapon.getId() : 0;
-		// A class transfer challenge opponent is part of the trial: killing it is neither a PK nor a PvP kill. Nor is a kill in a PvP zone (a PvP instance, such as a Team vs Team match, or an arena), as for a player (see Player#onKillUpdatePvPKarma).
-		if (_isFakePlayer && (killer != null) && killer.isPlayable() && !isTrialDuelist() && !isInsideZone(ZoneId.PVP))
+		// A class transfer challenge opponent is part of the trial: killing it is neither a PK nor a PvP kill. Nor is a kill in a PvP zone (a PvP instance, such as a Team vs Team match, or an arena), as for a player (see Player#onKillUpdatePvPKarma), unless it is an enemy of an event.
+		// An enemy of an event (Team vs Team, Deathmatch, Conquest, Race Wars) killed by a player of it: a PvP, never a PK, whatever its flag.
+		final boolean eventKill = _isFakePlayer && (killer != null) && killer.isPlayable() && TeamEventRules.isEventKill(killer, this);
+		if (_isFakePlayer && (killer != null) && killer.isPlayable() && !isTrialDuelist() && (eventKill || !isInsideZone(ZoneId.PVP)))
 		{
 			final Player player = killer.asPlayer();
-			
+
 			// A kill in a clan war (both clans declared it) is no PK, and moves clan reputation.
 			final boolean clanWar = FakeClanManager.getInstance().onFakeKilled(this, player);
-
-			// A Conquest fighter killed by an enemy: a PvP, never a PK, whatever its flag.
-			final boolean eventKill = TeamEventRules.isConquestFighter(this) && TeamEventRules.isConquestFighter(player);
 			
 			// Not flagged and no karma: a PK. (Karma is positive here, "< 0" could never be true.) Never in a PvP spot, where everyone is fair game, and never a Shadow Raider, an outlaw, or a rival after a Resonant monster's soul.
 			if (!clanWar && !eventKill && isScriptValue(0) && (getKarma() <= 0) && !isInsideZone(ZoneId.PVP_SPOT) && !ShadowRaidManager.isRaider(this) && !FakeJoinerManager.getInstance().isRival(this))
@@ -1319,7 +1318,7 @@ public class Npc extends Creature
 				}
 				
 				// announce pvp
-				if (PvpAnnounceConfig.ANNOUNCE_PK_PVP && !player.isGM())
+				if (PvpAnnounceConfig.ANNOUNCE_PK_PVP && !player.isGM() && !eventKill) // Not every kill of an event match.
 				{
 					final String msg = PvpAnnounceConfig.ANNOUNCE_PVP_MSG.replace("$killer", player.getName()).replace("$target", getName());
 					if (PvpAnnounceConfig.ANNOUNCE_PK_PVP_NORMAL_MESSAGE)

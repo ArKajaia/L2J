@@ -22,6 +22,8 @@ package org.l2jmobius.gameserver.managers;
 
 import org.l2jmobius.gameserver.managers.conquest.ConquestManager;
 import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.enums.creature.Team;
 
 /**
  * The faction rules of the team events ({@link TeamVsTeamManager}, {@link ConquestManager}) for the combat code: the other team is attacked without Ctrl while the fight is on, the own team can't be hurt even with Ctrl, and nobody outside the event is
@@ -78,6 +80,51 @@ public final class TeamEventRules
 	public static boolean isEnemy(Creature attacker, Creature target)
 	{
 		return TeamVsTeamManager.isEnemy(attacker, target) || ConquestManager.isEnemy(attacker, target) || RaceWarsManager.isEnemy(attacker, target);
+	}
+
+	/**
+	 * Whether a kill counts as a PvP of an event (see {@code Player#onKillUpdatePvPKarma} and {@code Npc#doDie}): the event fields are PvP zones, where a kill counts nothing otherwise.
+	 * <ul>
+	 * <li>Team vs Team, Deathmatch, Conquest and Race Wars: the victim (a player or fake player) is an enemy of the killer in the same match, whatever the phase (the fight may have just been decided by this kill).</li>
+	 * <li>The scripted events (Capture the Flag, the Deathmatch script...): two players on the event, not of the same team.</li>
+	 * </ul>
+	 * @param killer who killed (a summon counts as its owner)
+	 * @param victim who died
+	 * @return {@code true} if the killer earns a PvP for it
+	 */
+	public static boolean isEventKill(Creature killer, Creature victim)
+	{
+		if ((killer == null) || (victim == null) || (killer == victim))
+		{
+			return false;
+		}
+		if ((TeamVsTeamManager.getRelation(killer, victim) == TeamVsTeamManager.Relation.ENEMY) || (ConquestManager.getRelation(killer, victim) == TeamVsTeamManager.Relation.ENEMY) || (RaceWarsManager.getRelation(killer, victim) == TeamVsTeamManager.Relation.ENEMY))
+		{
+			return true;
+		}
+		if (isInvolved(killer, victim))
+		{
+			return false; // Its own team, or someone outside its match.
+		}
+		final Player killerPlayer = killer.asPlayer();
+		final Player victimPlayer = victim.isPlayer() ? victim.asPlayer() : null;
+		return (killerPlayer != null) && (victimPlayer != null) && (killerPlayer != victimPlayer) && killerPlayer.isOnEvent() && victimPlayer.isOnEvent() && ((killerPlayer.getTeam() == Team.NONE) || (killerPlayer.getTeam() != victimPlayer.getTeam()));
+	}
+
+	/**
+	 * @param a a creature
+	 * @param b another creature
+	 * @return {@code true} if both are on an event: a kill between them is never a PK
+	 */
+	public static boolean isEventFight(Creature a, Creature b)
+	{
+		if (isInvolved(a, b))
+		{
+			return true;
+		}
+		final Player pa = a != null ? a.asPlayer() : null;
+		final Player pb = b != null ? b.asPlayer() : null;
+		return (pa != null) && (pb != null) && pa.isOnEvent() && pb.isOnEvent();
 	}
 
 	/**
