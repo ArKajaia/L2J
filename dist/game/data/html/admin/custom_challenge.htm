@@ -1,0 +1,20 @@
+<html><title>Class Trials</title><body>
+<center>
+<table width=270><tr>
+<td width=45><button value="Main" action="bypass admin_admin" width=45 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td width=180><center>Class Trials</center></td>
+<td width=45><button value="Back" action="bypass admin_html custom_menu.htm" width=45 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><br>
+<font color="A0A0A0">Works on the named player, else your target, else you.</font><br><table width=270 border=0 bgcolor="444444">
+<tr><td width=100>Player:</td><td width=170><edit var="chname" width=150 height=15></td></tr>
+<tr><td width=100>Stage 1-3:</td><td width=170><edit var="chstage" width=150 height=15></td></tr>
+</table><br1><table width=270><tr>
+<td><button value="Status" action="bypass -h admin_challenge_status $chname" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Start" action="bypass -h admin_challenge_start $chstage $chname" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Complete" action="bypass -h admin_challenge_complete $chname" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Abort" action="bypass -h admin_challenge_abort $chname" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><table width=270><tr>
+<td><button value="Grant Stage" action="bypass -h admin_challenge_complete grant $chstage $chname" width=130 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Reset Stage" action="bypass -h admin_challenge_reset $chstage $chname" width=130 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table>
+</center></body></html>

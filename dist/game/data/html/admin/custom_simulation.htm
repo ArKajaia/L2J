@@ -1,0 +1,36 @@
+<html><title>Simulation</title><body>
+<center>
+<table width=270><tr>
+<td width=45><button value="Main" action="bypass admin_admin" width=45 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td width=180><center>Simulation</center></td>
+<td width=45><button value="Back" action="bypass admin_html custom_menu.htm" width=45 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><br>
+<br><font color="LEVEL">SPAWN POINTS</font><br1><table width=270 border=0 bgcolor="444444">
+<tr><td width=100>Point n:</td><td width=170><edit var="spn" width=150 height=15></td></tr>
+</table><br1><table width=270><tr>
+<td><button value="Set Point" action="bypass -h admin_setsimulationpoint $spn" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="List" action="bypass -h admin_simulationpoints" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Clear n" action="bypass -h admin_clearsimulationpoint $spn" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Clear All" action="bypass -h admin_clearsimulationpoint all" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><br><font color="LEVEL">RUN</font><br1><table width=270 border=0 bgcolor="444444">
+<tr><td width=100>Party size:</td><td width=170><edit var="sisize" width=150 height=15></td></tr>
+<tr><td width=100>Level:</td><td width=170><edit var="silvl" width=150 height=15></td></tr>
+</table><br1><table width=270><tr>
+<td><button value="Simulate" action="bypass -h admin_simulate $sisize $silvl" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Mirror" action="bypass -h admin_simulate $sisize $silvl mirror" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Status" action="bypass -h admin_simulationstatus" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Stop" action="bypass -h admin_simulationstop" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><font color="A0A0A0">One balanced party per point, fighting until one is left.</font><br><br><font color="LEVEL">JOIN A TEAM</font><br1><table width=270 border=0 bgcolor="444444">
+<tr><td width=100>Team:</td><td width=170><edit var="jpteam" width=150 height=15></td></tr>
+<tr><td width=100>Role:</td><td width=170><edit var="jprole" width=150 height=15></td></tr>
+</table><br1><table width=270><tr>
+<td><button value="Join" action="bypass -h admin_joinparty $jpteam $jprole" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Join Lead" action="bypass -h admin_joinparty $jpteam $jprole lead" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Leave" action="bypass -h admin_leaveparty" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table><font color="A0A0A0">Role: tank, melee, ranged, healer or buffer.</font><br><br><font color="LEVEL">TARGETED FAKE PLAYER</font><br1><table width=270><tr>
+<td><button value="Trace" action="bypass -h admin_simulationtrace" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Draw" action="bypass -h admin_simulationdraw" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Web Page" action="bypass -h admin_simulationweb" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+<td><button value="Help" action="bypass -h admin_simulationhelp" width=65 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+</tr></table>
+</center></body></html>
