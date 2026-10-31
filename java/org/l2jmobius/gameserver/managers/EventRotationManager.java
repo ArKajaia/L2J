@@ -143,6 +143,10 @@ public class EventRotationManager
 			{
 				return ConquestRegistration.getInstance().open(null);
 			}
+			case "racewars":
+			{
+				return RaceWarsManager.getInstance().openRegistration();
+			}
 			default:
 			{
 				return "unknown event";
@@ -169,6 +173,10 @@ public class EventRotationManager
 			case "conquest":
 			{
 				return "Conquest";
+			}
+			case "racewars":
+			{
+				return RaceWarsManager.TITLE;
 			}
 			default:
 			{
@@ -205,6 +213,15 @@ public class EventRotationManager
 			{
 				return "Conquest";
 			}
+		}
+		final RaceWarsManager raceWars = RaceWarsManager.getInstance();
+		if (raceWars.isRegistrationOpen())
+		{
+			return RaceWarsManager.TITLE + " registration";
+		}
+		if (raceWars.hasPlayersInEvent())
+		{
+			return RaceWarsManager.TITLE;
 		}
 		return null;
 	}

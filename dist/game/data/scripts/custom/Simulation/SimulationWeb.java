@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.commons.util.SimpleJson;
 import org.l2jmobius.gameserver.config.custom.FakeSimulationConfig;
+import org.l2jmobius.gameserver.managers.RaceWarsManager;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.simulation.FakeSimulationManager;
 import org.l2jmobius.gameserver.managers.simulation.SimulationArena;
@@ -68,6 +69,7 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
  * place: the GM's own, else the Cruma Marshlands field)</li>
  * <li>GET /api/simulation/arena/battles - the arena running now, its status lines and the battles that run, each with its teams; GET /arena/list - the arenas run so far with their summary; POST /arena/watch (run: a battle, blank for the next one) and
  * /arena/leave - take the GM of the link into a battle's instance to watch it, or back out</li>
+ * <li>GET /api/racewars/status, POST /api/racewars/simulate (level), /open, /close, /stop - Race Wars, like //racewars</li>
  * <li>POST /api/simulation/war/start, /war/stop, GET /war/status - a race war, like //Simulate war: armies of every pair of races, or all at once (mode=ffa), the dead coming back (start: races, mode, power, repeats, size, level, parallel, time, respawn, distance, seed, and x, y, z, heading for the
  * place, the Cruma Marshlands field by default)</li>
  * <li>POST /api/simulation/matrix/start, /matrix/resume, /matrix/stop, GET /matrix/status - the class-vs-class matrix, like //SimulationMatrix (start: battles, parallel, level, time, distance, brain, builds, seed, and x, y, z, heading for the place: the GM's own
@@ -186,6 +188,11 @@ public class SimulationWeb
 		server.addRoute("/api/tvt/stop", "POST", true, this::handleTvtStop);
 		server.addRoute("/api/tvt/open", "POST", true, this::handleTvtOpen);
 		server.addRoute("/api/tvt/close", "POST", true, this::handleTvtClose);
+		server.addRoute("/api/racewars/status", "GET", false, this::handleRaceWarsStatus);
+		server.addRoute("/api/racewars/simulate", "POST", true, this::handleRaceWarsSimulate);
+		server.addRoute("/api/racewars/open", "POST", true, this::handleRaceWarsOpen);
+		server.addRoute("/api/racewars/close", "POST", true, this::handleRaceWarsClose);
+		server.addRoute("/api/racewars/stop", "POST", true, this::handleRaceWarsStop);
 		server.addRoute("/api/simulation/arena/start", "POST", true, this::handleArenaStart);
 		server.addRoute("/api/simulation/arena/stop", "POST", true, this::handleArenaStop);
 		server.addRoute("/api/simulation/arena/status", "GET", false, this::handleArenaStatus);
@@ -1429,6 +1436,76 @@ public class SimulationWeb
 		{
 			lines.add("Registration is not open.");
 		}
+		sendTvtLines(exchange, lines);
+	}
+
+	private void handleRaceWarsStatus(HttpExchange exchange) throws IOException
+	{
+		if (!authorize(exchange))
+		{
+			return;
+		}
+		sendTvtLines(exchange, RaceWarsManager.getInstance().getStatus());
+	}
+
+	/** A Race Wars tournament of fake players only (level: a level of its bracket), like //racewars simulate. */
+	private void handleRaceWarsSimulate(HttpExchange exchange) throws IOException
+	{
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+		final Map<String, String> params = PassiveTreeApiServer.getInstance().readParams(exchange);
+		final int level = parseInt(params.get("level"), gm != null ? gm.getLevel() : DEFAULT_LEVEL);
+		final List<String> lines = new ArrayList<>();
+		lines.add(RaceWarsManager.getInstance().simulate(level));
+		sendTvtLines(exchange, lines);
+	}
+
+	private void handleRaceWarsOpen(HttpExchange exchange) throws IOException
+	{
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+		final String refusal = RaceWarsManager.getInstance().openRegistration();
+		final List<String> lines = new ArrayList<>();
+		lines.add(refusal == null ? "Race Wars registration is open." : "Race Wars: " + refusal + ".");
+		sendTvtLines(exchange, lines);
+	}
+
+	private void handleRaceWarsClose(HttpExchange exchange) throws IOException
+	{
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+		final RaceWarsManager manager = RaceWarsManager.getInstance();
+		final List<String> lines = new ArrayList<>();
+		if (manager.isRegistrationOpen())
+		{
+			manager.closeRegistration();
+			lines.add("Race Wars registration closed: the tournaments start.");
+		}
+		else
+		{
+			lines.add("Race Wars registration is not open.");
+		}
+		sendTvtLines(exchange, lines);
+	}
+
+	private void handleRaceWarsStop(HttpExchange exchange) throws IOException
+	{
+		final Player gm = getGm(exchange);
+		if ((gm == null) && !FakeSimulationConfig.WEB_OPEN_ACCESS)
+		{
+			return;
+		}
+		final List<String> lines = new ArrayList<>();
+		lines.add(RaceWarsManager.getInstance().stop());
 		sendTvtLines(exchange, lines);
 	}
 

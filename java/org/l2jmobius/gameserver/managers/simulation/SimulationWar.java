@@ -368,6 +368,37 @@ public class SimulationWar
 	}
 
 	/**
+	 * Picks a build of a race for a party slot, the closest one the race has when it has none for the slot (see {@link #FALLBACKS}); a party takes each support class once.
+	 * @param race the race
+	 * @param slot the slot
+	 * @param random a random source
+	 * @param supports the support classes the party has already (a pick of one is added to it)
+	 * @return the fighter, {@code null} if the race has no build at all
+	 */
+	public static Recruit pick(Race race, SimRole slot, Random random, Set<String> supports)
+	{
+		for (SimRole role : FALLBACKS.get(slot))
+		{
+			final List<FakePlayerPvpBuild> builds = pool(race, role);
+			// A party takes each support class once (an orc party gets one Doomcryer for its healer and buffer slots, not three): a slot left without one falls back further.
+			if ((role == SimRole.HEALER) || (role == SimRole.BUFFER))
+			{
+				builds.removeIf(build -> supports.contains(build.getName()));
+			}
+			if (!builds.isEmpty())
+			{
+				final FakePlayerPvpBuild picked = builds.get(random.nextInt(builds.size()));
+				if ((role == SimRole.HEALER) || (role == SimRole.BUFFER))
+				{
+					supports.add(picked.getName());
+				}
+				return new Recruit(picked, role);
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Fills an army of one race: parties of up to {@link SimulationComposer#MAX_SIZE}, as even as they go, each with the slots of a simulation party of its size.
 	 * @param race the race
 	 * @param size how many fighters
@@ -385,32 +416,12 @@ public class SimulationWar
 			final Set<String> supports = new HashSet<>();
 			for (SimRole slot : SimulationComposer.getRoles(partySize))
 			{
-				FakePlayerPvpBuild picked = null;
-				SimRole pickedRole = null;
-				for (SimRole role : FALLBACKS.get(slot))
-				{
-					final List<FakePlayerPvpBuild> builds = pool(race, role);
-					// A party takes each support class once (an orc party gets one Doomcryer for its healer and buffer slots, not three): a slot left without one falls back further.
-					if ((role == SimRole.HEALER) || (role == SimRole.BUFFER))
-					{
-						builds.removeIf(build -> supports.contains(build.getName()));
-					}
-					if (!builds.isEmpty())
-					{
-						picked = builds.get(random.nextInt(builds.size()));
-						pickedRole = role;
-						break;
-					}
-				}
-				if (picked == null)
+				final Recruit recruit = pick(race, slot, random, supports);
+				if (recruit == null)
 				{
 					return List.of();
 				}
-				if ((pickedRole == SimRole.HEALER) || (pickedRole == SimRole.BUFFER))
-				{
-					supports.add(picked.getName());
-				}
-				party.add(new Recruit(picked, pickedRole));
+				party.add(recruit);
 			}
 			parties.add(party);
 		}

@@ -44,6 +44,7 @@ import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.DimensionalRiftManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.managers.MageMonsterManager;
+import org.l2jmobius.gameserver.managers.RaceWarsManager;
 import org.l2jmobius.gameserver.managers.VillageSiegeManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.StatSet;
@@ -222,6 +223,16 @@ public class AttackableAI extends CreatureAI
 		if ((target == null) || (getActiveChar() == null))
 		{
 			return false;
+		}
+		
+		// A Race Wars monster goes for every fighter of its match in its range (fake players too), through Silent Move and Hide, and for nothing else.
+		if (RaceWarsManager.ACTIVE)
+		{
+			final Boolean prey = RaceWarsManager.isPrey(getActiveChar(), target);
+			if (prey != null)
+			{
+				return prey;
+			}
 		}
 		
 		// Check if the target isn't invulnerable
@@ -424,6 +435,11 @@ public class AttackableAI extends CreatureAI
 				}
 				// A fake player of a simulation thinks with no player around (a matrix battle has its own instance): idle, it would stand still until hit (issue #24 of docs/fake-player-simulation-issues.md).
 				else if ((npc.getTemplate().getFakePlayerPvpProfile() != null) && npc.getTemplate().getFakePlayerPvpProfile().isTeamFighter())
+				{
+					intention = Intention.ACTIVE;
+				}
+				// So does a monster of a Race Wars match: it hunts the fake players too.
+				else if (RaceWarsManager.isEventMonster(npc))
 				{
 					intention = Intention.ACTIVE;
 				}
@@ -673,7 +689,8 @@ public class AttackableAI extends CreatureAI
 							final long hating = npc.getHating(target);
 							if (hating == 0)
 							{
-								npc.addDamageHate(target, 0, 0);
+								// A player in range gets 1 hate (see Attackable#addDamageHate), a fake player 0, which never makes the monster attack: a Race Wars monster gives it 1 too, so it goes for the fake players like for the players.
+								npc.addDamageHate(target, 0, RaceWarsManager.isEventMonster(npc) ? 1 : 0);
 							}
 						}
 						return;

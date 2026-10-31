@@ -120,6 +120,7 @@ public class FakePlayerPvpProfile
 	private volatile int _simTeamId;
 	// A Team vs Team match (see TeamVsTeamManager) it fights in, 0 for none.
 	private volatile int _tvtMatchId;
+	private volatile int _raceWarsMatchId;
 	// A Conquest match (see ConquestManager) it fights in, 0 for none.
 	private volatile int _conquestMatchId;
 	// The AI it runs (only simulation teams run another one than A).
@@ -862,11 +863,32 @@ public class FakePlayerPvpProfile
 	}
 
 	/**
-	 * @return {@code true} for a fake player of a team fight (a simulation run, a Team vs Team or a Conquest match): it stays in the fight until it ends, no hunting, roaming, leashing, escaping or coming back from town
+	 * @return {@code true} for a fake player of a team fight (a simulation run, a Team vs Team, Conquest or Race Wars match): it stays in the fight until it ends, no hunting, roaming, leashing, escaping or coming back from town
 	 */
 	public boolean isTeamFighter()
 	{
-		return (_simRunId != 0) || (_tvtMatchId != 0) || (_conquestMatchId != 0);
+		return (_simRunId != 0) || (_tvtMatchId != 0) || (_conquestMatchId != 0) || (_raceWarsMatchId != 0);
+	}
+
+	/**
+	 * @return the Race Wars match it fights in (see {@link org.l2jmobius.gameserver.managers.RaceWarsManager}), 0 for none
+	 */
+	public int getRaceWarsMatchId()
+	{
+		return _raceWarsMatchId;
+	}
+
+	public void setRaceWarsMatchId(int matchId)
+	{
+		_raceWarsMatchId = matchId;
+	}
+
+	/**
+	 * @return {@code true} if it was spawned for a Race Wars match: it only fights the other races of its match (and the match's monsters)
+	 */
+	public boolean isRaceWarsFighter()
+	{
+		return _raceWarsMatchId != 0;
 	}
 
 	/**
@@ -891,11 +913,11 @@ public class FakePlayerPvpProfile
 	}
 
 	/**
-	 * @return {@code true} for a fake player of an event team (Team vs Team or Conquest): it plays its party's calls by its teamplay, moves in formation and always hits back
+	 * @return {@code true} for a fake player of an event team (Team vs Team, Conquest or Race Wars): it plays its party's calls by its teamplay, moves in formation and always hits back
 	 */
 	public boolean isSquadFighter()
 	{
-		return (_tvtMatchId != 0) || (_conquestMatchId != 0);
+		return (_tvtMatchId != 0) || (_conquestMatchId != 0) || (_raceWarsMatchId != 0);
 	}
 
 	/**

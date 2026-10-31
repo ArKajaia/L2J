@@ -22,13 +22,17 @@ package custom.events.TeamVsTeam;
 
 import java.util.List;
 
+import org.l2jmobius.gameserver.config.custom.RaceWarsConfig;
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig.TopReward;
 import org.l2jmobius.gameserver.data.xml.ItemData;
+import org.l2jmobius.gameserver.managers.RaceWarsManager;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager.Mode;
+import org.l2jmobius.gameserver.managers.simulation.SimulationWar;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
 import org.l2jmobius.gameserver.model.item.ItemTemplate;
 import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
 import org.l2jmobius.gameserver.model.script.Event;
@@ -36,7 +40,7 @@ import org.l2jmobius.gameserver.model.eventmap.EventMap;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 
 /**
- * Team vs Team event: the dialogs of the TvT Event Manager (for a Team vs Team or a Deathmatch registration), and //event start/stop. The event itself (schedule, brackets, teams, fake players, the fight) is in the TeamVsTeamManager, see config/Custom/TeamVsTeam.ini.
+ * Team vs Team event: the dialogs of the TvT Event Manager (for a Team vs Team, a Deathmatch or a Race Wars registration, see RaceWarsManager), and //event start/stop. The event itself (schedule, brackets, teams, fake players, the fight) is in the TeamVsTeamManager, see config/Custom/TeamVsTeam.ini.
  * @author Mobius
  */
 public class TvT extends Event
@@ -77,6 +81,21 @@ public class TvT extends Event
 				message = manager.unregister(player);
 				break;
 			}
+			case "rw_register":
+			{
+				showRaceWars(npc, player, RaceWarsManager.getInstance().register(player));
+				return null;
+			}
+			case "rw_registerParty":
+			{
+				showRaceWars(npc, player, RaceWarsManager.getInstance().registerParty(player));
+				return null;
+			}
+			case "rw_cancel":
+			{
+				showRaceWars(npc, player, RaceWarsManager.getInstance().unregister(player));
+				return null;
+			}
 			default:
 			{
 				message = "";
@@ -97,6 +116,13 @@ public class TvT extends Event
 
 	private void showMain(Npc npc, Player player, String message)
 	{
+		// Race Wars takes its turn in the rotation at this manager too.
+		if (RaceWarsManager.getInstance().isRegistrationOpen())
+		{
+			showRaceWars(npc, player, message);
+			return;
+		}
+
 		final TeamVsTeamManager manager = TeamVsTeamManager.getInstance();
 		final int bracket = TeamVsTeamManager.getBracket(player.getLevel());
 		final String you;
@@ -130,6 +156,43 @@ public class TvT extends Event
 		html.replace("%time%", (seconds / 60) + " min " + (seconds % 60) + " s");
 		html.replace("%count%", String.valueOf(manager.getRegisteredCount()));
 		html.replace("%bracket_count%", String.valueOf(bracket < 0 ? 0 : manager.getRegisteredCount(bracket)));
+		html.replace("%you%", you);
+		player.sendPacket(html);
+	}
+
+	/**
+	 * The Race Wars page: the rules, the bracket and race the player would fight for, and how many of its race registered in its bracket.
+	 */
+	private void showRaceWars(Npc npc, Player player, String message)
+	{
+		final RaceWarsManager manager = RaceWarsManager.getInstance();
+		final int bracket = RaceWarsManager.getBracket(player.getLevel());
+		final Race race = RaceWarsManager.getRaceOf(player);
+		final String you;
+		if (bracket < 0)
+		{
+			you = "your level is outside every bracket.";
+		}
+		else
+		{
+			final int[] levels = RaceWarsConfig.BRACKETS.get(bracket);
+			you = (manager.isRegistered(player) ? "registered" : "not registered") + ", levels " + levels[0] + "-" + levels[1] + ", for the " + SimulationWar.name(race) + " race (the race of the class you play when registration closes).";
+		}
+
+		final int seconds = manager.getRegistrationSecondsLeft();
+		final NpcHtmlMessage html = new NpcHtmlMessage(npc.getObjectId());
+		html.setFile(player, HTML_PATH + "racewars.html");
+		html.replace("%message%", manager.isRegistrationOpen() ? message : "Registration is closed.");
+		html.replace("%size%", String.valueOf(RaceWarsConfig.ARMY_SIZE));
+		html.replace("%monsters%", String.valueOf(RaceWarsConfig.MONSTER_COUNT));
+		html.replace("%monster_time%", String.valueOf(RaceWarsConfig.MONSTER_TIME));
+		html.replace("%hard_limit%", String.valueOf(RaceWarsConfig.HARD_LIMIT));
+		html.replace("%reward%", describeReward(RaceWarsConfig.WIN_REWARD));
+		html.replace("%brackets%", RaceWarsManager.describeBrackets());
+		html.replace("%time%", (seconds / 60) + " min " + (seconds % 60) + " s");
+		html.replace("%count%", String.valueOf(manager.getRegisteredCount()));
+		html.replace("%race_count%", String.valueOf(bracket < 0 ? 0 : manager.getRegisteredCount(race, bracket)));
+		html.replace("%race%", SimulationWar.name(race));
 		html.replace("%you%", you);
 		player.sendPacket(html);
 	}

@@ -341,7 +341,7 @@ GMs edit them on one web page, `//tvt map [tvt|conquest|dm]` or `//conquest` (a 
 
 ### Event rotation
 
-Team vs Team, Conquest and Deathmatch take turns: every hour, on the hour, the next one opens its registration (`config/Custom/EventRotation.ini`: the schedule and the order). They never overlap: while one still goes on (its registration is open, or a match with players runs), the turn is skipped and the same event opens at the next one, and a GM can't open one by hand meanwhile either; an event that can't open (disabled, no map) gives its turn to the next. With the rotation on, `TvTSchedule` and `ConquestSchedule` are not used. GMs see it with `//tvt rotation` and pick the next event with `//tvt rotation next <tvt|conquest|deathmatch>`.
+Team vs Team, Conquest, Deathmatch and Race Wars take turns: every hour, on the hour, the next one opens its registration (so each comes every 4 hours) (`config/Custom/EventRotation.ini`: the schedule and the order). They never overlap: while one still goes on (its registration is open, or a match with players runs), the turn is skipped and the same event opens at the next one, and a GM can't open one by hand meanwhile either; an event that can't open (disabled, no map) gives its turn to the next. With the rotation on, `TvTSchedule` and `ConquestSchedule` are not used. GMs see it with `//tvt rotation` and pick the next event with `//tvt rotation next <tvt|conquest|deathmatch|racewars>`.
 
 ### Team vs Team
 
@@ -360,6 +360,17 @@ Every 2 hours the TvT Event Manager in Giran takes registrations for 10 minutes,
 ### Deathmatch
 
 Every one for themselves, on the event maps ticked for Deathmatch, registered for at the TvT Event Manager in Giran like Team vs Team (the same level brackets; a party plays as its members alone). Everyone spawns at one of the map's Deathmatch spawn points picked by chance, as far from the other fighters as a few tries find, and comes back at another one 10 seconds after dying, under the same spawn protection as in TvT. Everyone else is attacked without Ctrl and no kill gives karma; the free places (20 fighters a match) are filled with fake players, damage dealers each on its own, who hunt whoever is closest. Every kill gives a Sealed Cache. After 20 minutes the most kills wins: the best player gets 10 Champion Medals and the best three players Crystal Scrolls of their grade (the fake players left out of the places). The settings are the `Deathmatch...` ones at the end of `config/Custom/TeamVsTeam.ini`. GMs open one with `//tvt dm open [map]` and play one of fake players only with `//tvt dm simulate [level] [map]`; `close`, `stop`, `watch` and `status` work for both.
+
+### Race Wars
+
+Race against race until one is left standing, registered for at the TvT Event Manager in Giran in its turn of the event rotation (`config/Custom/RaceWars.ini`). Each level bracket with players (the TvT brackets) gets its own tournament of the six races in instances of the Ruins of Despair:
+
+- **Armies.** A player fights for the race of the class it plays when registration closes, a subclass included (a Human with a Dark Elf subclass active fights for the Dark Elves). Every race fields an army of 20 (or as many as the race with the most players): its players, in their parties, and fake players of that race. A race without a class for a party slot takes the closest it has: Orc parties have a Doomcryer and no healer, Kamael parties no support at all, and a Dwarf army is all Fortune Seekers and Maestros. Party members of different races fight in their own races' armies.
+- **Race against race.** The six races are drawn into three pairs, and the three matches run at once, each army at its gate of the ring wall. After 60 seconds to buff, every other race is attacked without Ctrl. **Nobody comes back**: there is no To Village, nothing resurrects a fallen fighter (skills, scrolls and the fake players' healers alike), and a race is out once its last fighter falls.
+- **The monsters.** With no winner after 10 minutes, 100 monsters of the bracket's level come all over the field: Legendary (tier 3) champions of a few kinds that live in the world, that go for every fighter within 3,000, players and fake players alike, and see through Silent Move and Hide. If they kill everyone, the race whose last fighter fell last wins; 5 minutes after they came, the race with the most fighters alive (then the most HP and CP) wins.
+- **The final.** The three winning races meet in a final, all against all, from three far corners of the field (their players healed, their dead back up, fresh fake players), with the same rules. Each player of the race left standing gets 10 Sealed Caches (Epic), alive or fallen.
+
+A player who leaves before the fight is replaced by a fake player of its race; one who leaves during it counts as fallen. GMs open it outside the rotation with `//racewars open` (`close` starts the tournaments at once), follow it with `//racewars status`, stop it with `//racewars stop`, and play a tournament of fake players only with `//racewars simulate [level]` (also on the simulation web API: `/api/racewars/status`, `simulate`, `open`, `close`, `stop`).
 
 ### Master Blacksmith
 

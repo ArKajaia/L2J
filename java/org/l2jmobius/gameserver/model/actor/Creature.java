@@ -69,6 +69,7 @@ import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.managers.IdManager;
 import org.l2jmobius.gameserver.managers.InstanceManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
+import org.l2jmobius.gameserver.managers.RaceWarsManager;
 import org.l2jmobius.gameserver.managers.TeamEventRules;
 import org.l2jmobius.gameserver.managers.TerritoryWarManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
@@ -3417,7 +3418,8 @@ public abstract class Creature extends WorldObject
 	
 	public boolean isResurrectionBlocked()
 	{
-		return isAffected(EffectFlag.BLOCK_RESURRECTION);
+		// Race Wars: one that fell stays down until its race's match ends.
+		return isAffected(EffectFlag.BLOCK_RESURRECTION) || RaceWarsManager.isEliminated(this);
 	}
 	
 	public boolean isFlying()

@@ -38,7 +38,7 @@ public class EventRotationConfig
 	private static final String EVENT_ROTATION_CONFIG_FILE = "./config/Custom/EventRotation.ini";
 
 	/** The events a rotation can take turns between, as the config names them. */
-	public static final List<String> EVENTS = List.of("tvt", "conquest", "deathmatch");
+	public static final List<String> EVENTS = List.of("tvt", "conquest", "deathmatch", "racewars");
 
 	public static boolean ENABLED;
 	public static String SCHEDULE;
@@ -51,7 +51,7 @@ public class EventRotationConfig
 		ENABLED = config.getBoolean("EventRotationEnabled", true);
 		SCHEDULE = config.getString("EventRotationSchedule", "0 * * * *");
 		final List<String> order = new ArrayList<>();
-		for (String part : config.getString("EventRotationOrder", "TvT,Conquest,Deathmatch").split(","))
+		for (String part : config.getString("EventRotationOrder", "TvT,Conquest,Deathmatch,RaceWars").split(","))
 		{
 			final String event = part.trim().toLowerCase();
 			if (event.isEmpty())
@@ -64,7 +64,7 @@ public class EventRotationConfig
 			}
 			else
 			{
-				LOGGER.warning(EventRotationConfig.class.getSimpleName() + ": Unknown event \"" + part.trim() + "\" in EventRotationOrder (TvT, Conquest, Deathmatch).");
+				LOGGER.warning(EventRotationConfig.class.getSimpleName() + ": Unknown event \"" + part.trim() + "\" in EventRotationOrder (TvT, Conquest, Deathmatch, RaceWars).");
 			}
 		}
 		if (order.isEmpty())

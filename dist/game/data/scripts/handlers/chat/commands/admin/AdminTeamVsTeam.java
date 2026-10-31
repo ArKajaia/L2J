@@ -52,7 +52,7 @@ import custom.EventMaps.EventMapWeb;
  * <li>//tvt stop [match]: ends a match (all of them by default), without rewards.</li>
  * <li>//tvt watch [match]: goes into a match's instance, between the bases, to watch it (the fighters leave a GM outside the match alone).</li>
  * <li>//tvt dm open [map] | simulate [level] [map]: the same for a Deathmatch (every one for themselves); close, stop and watch work for both.</li>
- * <li>//tvt rotation [next &lt;tvt|conquest|deathmatch&gt;]: the hourly rotation of the events (see {@link EventRotationManager}), and which event takes the next turn.</li>
+ * <li>//tvt rotation [next &lt;tvt|conquest|deathmatch|racewars&gt;]: the hourly rotation of the events (see {@link EventRotationManager}), and which event takes the next turn.</li>
  * </ul>
  * And the event maps ({@link EventMapData}, data/maps), shared with Conquest:
  * <ul>
