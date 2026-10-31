@@ -1499,7 +1499,7 @@ public class TeamVsTeamManager
 			if (match.isPassiveDeathmatch())
 			{
 				sendScreen(player, "Passive Deathmatch: your passive tree is blank! Each kill lets you take a strong passive. The fight starts in " + TeamVsTeamConfig.PREP_TIME + " seconds.", 8, true);
-				player.sendMessage("Passive Deathmatch (levels " + match.getBracketName() + ", " + match.getAllFighters().size() + " fighters): you fight without your passive tree. Each kill offers you " + TeamVsTeamConfig.PDM_CHOICES + " strong passives (notables and keystones) to pick 1 from, for this match only: the more you kill, the stronger you get. A pick you don't make waits for you: type .dmpick to see it again. Your own tree comes back when you leave.");
+				player.sendMessage("Passive Deathmatch (levels " + match.getBracketName() + ", " + match.getAllFighters().size() + " fighters): you fight without your passive tree. Each kill offers you " + TeamVsTeamConfig.PDM_CHOICES + " strong passives (notables and keystones) to pick 1 from, for this match only: the more you kill, the stronger you get. A kill blinks the ? (click it to pick); picks you don't make wait for you, open by themselves when you die, and .dmpick shows them any time. Your own tree comes back when you leave.");
 				player.sendMessage("Everyone else is attacked without Ctrl. The dead come back somewhere on the field after " + TeamVsTeamConfig.DM_RESPAWN_DELAY + " seconds; most kills in " + TeamVsTeamConfig.DM_FIGHT_TIME + " minutes wins.");
 				continue;
 			}
@@ -2173,7 +2173,7 @@ public class TeamVsTeamManager
 			buffAndHeal(player);
 			if (match.isPassiveDeathmatch())
 			{
-				// A pick left waiting (the window closed, or it died before choosing) comes up again.
+				// A pick still waiting: its question mark blinks again (no window in the fight).
 				PassiveDeathmatchManager.getInstance().remindPending(player);
 			}
 		}
@@ -2407,6 +2407,11 @@ public class TeamVsTeamManager
 			LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " " + (match.getSecondsLeft() / 60) + ":" + String.format("%02d", match.getSecondsLeft() % 60) + " left: " + (slayer != null ? describe(slayer) : (killer != null ? killer.getName() : "?")) + " killed " + describe(dead) + how + (match.isDeathmatch() ? "." : ". Blue " + match._blue.getScore() + " : " + match._red.getScore() + " Red."));
 		}
 
+		if (dead.isPlayer() && match.isPassiveDeathmatch())
+		{
+			// Dead, it has the time to pick: its waiting picks come up by themselves.
+			PassiveDeathmatchManager.getInstance().onDeath(dead._creature.asPlayer());
+		}
 		if (dead.isPlayer() && match.isDeathmatch())
 		{
 			dead._creature.sendMessage(match._mode.getTag() + ": You come back somewhere on the field in " + TeamVsTeamConfig.DM_RESPAWN_DELAY + " seconds. Your score: " + dead._kills + " kills, " + dead._deaths + " deaths.");

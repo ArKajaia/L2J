@@ -257,6 +257,8 @@ public class FakePlayerPvpPassiveTree
 
 	/** Index -> node. */
 	private final PassiveNode[] _nodes;
+	/** Node id -> index. */
+	private final Map<Integer, Integer> _indexes;
 	/** Index -> point cost. */
 	private final int[] _costs;
 	/** Index -> indexes of its neighbours, both directions. */
@@ -332,6 +334,7 @@ public class FakePlayerPvpPassiveTree
 			index++;
 		}
 
+		_indexes = indexes;
 		_keys = keys.toArray(new String[0]);
 		_caps = new double[_keys.length];
 		for (int i = 0; i < _keys.length; i++)
@@ -1209,6 +1212,125 @@ public class FakePlayerPvpPassiveTree
 			}
 		}
 		return weights;
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	// Picking single nodes (Passive Deathmatch)
+	// ---------------------------------------------------------------------------------------------
+
+	/**
+	 * How much one fake player wants each node of the tree, outside a grown tree (a Passive Deathmatch offers it a few nodes per kill, see PassiveDeathmatchManager). It weighs the nodes the way {@link #growPool} does for its class: the role's (and build's)
+	 * key weights with a {@link Style} rolled for its role and the same group and key jitter, the gear conditions, and the keystones of its role's (or build's) FakePvpKeystones list with their weights. A notable's worth is scaled by the median worth of the
+	 * tree's notables to it, so a typical notable weighs about 1 like a keystone of weight 1 in the list.
+	 */
+	public static class NodeTaste
+	{
+		private final double[] _keyWeights;
+		private final double[] _keystoneWeights;
+		private final int _gear;
+		private final Style _style;
+		private double _notableScale = 1;
+
+		NodeTaste(double[] keyWeights, double[] keystoneWeights, int gear, Style style)
+		{
+			_keyWeights = keyWeights;
+			_keystoneWeights = keystoneWeights;
+			_gear = gear;
+			_style = style;
+		}
+
+		/**
+		 * @return the style it rolled, for the logs
+		 */
+		public String getStyle()
+		{
+			return _style.name().toLowerCase();
+		}
+	}
+
+	/**
+	 * Rolls a fake player's taste for single nodes (see {@link NodeTaste}): every call rolls its own style and jitter, so two fake players of one class don't want the same notables.
+	 * @param build its build
+	 * @param armorMask the item mask of its body armour, 0 for none
+	 * @param wornMask the item mask of everything it wears and holds
+	 * @return its taste
+	 */
+	public NodeTaste rollTaste(FakePlayerPvpBuild build, int armorMask, int wornMask)
+	{
+		final int gear = gearKey(armorMask, wornMask);
+		final PoolKey key = new PoolKey(0, build.getRole(), gear, build.getKeystones(), build.isHybrid(), build.getWeights());
+		final Map<String, Double> buildWeights = parseWeights(key.weights());
+		final Style style = Style.roll(key.role());
+		final double[] groups =
+		{
+			style._damage * jitter(GROUP_JITTER),
+			style._speed * jitter(GROUP_JITTER),
+			style._crit * jitter(GROUP_JITTER),
+			style._life * jitter(GROUP_JITTER),
+			style._guard * jitter(GROUP_JITTER)
+		};
+		final double[] keyWeights = new double[_keys.length];
+		for (int k = 0; k < _keys.length; k++)
+		{
+			keyWeights[k] = (keyWeight(key.role(), key.hybrid(), _keys[k]) * buildWeights.getOrDefault(_keys[k], 1.0) * groupFactor(_keys[k], groups) * jitter(KEY_JITTER)) / _units[k];
+		}
+		final double[] keystoneWeights = new double[_nodes.length];
+		for (Keystone keystone : getKeystones(key))
+		{
+			if (conditionWeight(keystone.gearToken(), gear) > 0)
+			{
+				keystoneWeights[keystone.index()] = keystone.weight() * jitter(KEY_JITTER);
+			}
+		}
+
+		final NodeTaste taste = new NodeTaste(keyWeights, keystoneWeights, gear, style);
+		final List<Double> notableWorths = new ArrayList<>();
+		for (int i = 0; i < _nodes.length; i++)
+		{
+			if (_nodes[i].getType() == NodeType.NOTABLE)
+			{
+				final double worth = effectWorth(taste, i);
+				if (worth > 0)
+				{
+					notableWorths.add(worth);
+				}
+			}
+		}
+		final double median = median(notableWorths);
+		taste._notableScale = median > 0 ? median : 1;
+		return taste;
+	}
+
+	/**
+	 * @param taste a fake player's taste
+	 * @param node a node of the tree
+	 * @return how much it wants the node, 0 for not at all: a keystone by its weight in the keystone list (0 for one not in it, or not of use with its gear), any other node by what its effects are worth to it, a typical notable about 1
+	 */
+	public double weigh(NodeTaste taste, PassiveNode node)
+	{
+		final Integer index = _indexes.get(node.getId());
+		if (index == null)
+		{
+			return 0;
+		}
+		if (node.getType() == NodeType.KEYSTONE)
+		{
+			return taste._keystoneWeights[index];
+		}
+		return Math.max(0, effectWorth(taste, index)) / taste._notableScale;
+	}
+
+	/**
+	 * @return what the effects of the node are worth to the taste, with its gear (a drawback counts against it)
+	 */
+	private double effectWorth(NodeTaste taste, int index)
+	{
+		double worth = 0;
+		for (int e = 0; e < _effectKeys[index].length; e++)
+		{
+			worth += taste._keyWeights[_effectKeys[index][e]] * conditionWeight(_effectTokens[index][e], taste._gear) * _effectValues[index][e];
+		}
+		return worth;
 	}
 
 	/** Made on first use, and made again by {@link #reload()} once the tree has been edited. */

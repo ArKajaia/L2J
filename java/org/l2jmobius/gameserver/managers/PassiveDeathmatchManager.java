@@ -39,11 +39,16 @@ import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
+import org.l2jmobius.gameserver.model.events.Containers;
+import org.l2jmobius.gameserver.model.events.EventType;
+import org.l2jmobius.gameserver.model.events.holders.actor.player.OnPlayerPressTutorialMark;
+import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
+import org.l2jmobius.gameserver.network.serverpackets.TutorialShowQuestionMark;
 
 /**
  * The passives of a Passive Deathmatch ({@link TeamVsTeamManager.Mode#PASSIVE_DEATHMATCH}): everyone fights with a blank passive tree, and each kill offers the killer {@link TeamVsTeamConfig#PDM_CHOICES} strong passives (by default the notables and keystones of the
@@ -51,8 +56,11 @@ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
  * <ul>
  * <li>A player's event tree stands in for its own one through {@link PassiveTreeManager#beginEventTree}: in memory only, never saved, and gone the moment the player is off the event (the match ends, it leaves, logs off, or the server restarts). Its own tree is never
  * touched and can't be changed meanwhile.</li>
- * <li>Each kill rolls an offer that waits in the player's queue until it picks: closing the window, dying, or killing again before choosing loses nothing. The window comes back on each kill and respawn, and with {@code .dmpick}.</li>
- * <li>A fake player takes one of its offer's passives at once, the same way.</li>
+ * <li>Each kill rolls an offer that waits in the player's queue until it picks: closing the window, dying, or killing again before choosing loses nothing. No window opens in the middle of a fight: a kill blinks the tutorial question mark
+ * ({@link #QUESTION_MARK_ID}), which opens it when clicked. The window opens by itself when the player dies with picks waiting, and again after each pick while one is left. The question mark comes back on respawn, and {@code .dmpick} opens the window
+ * any time.</li>
+ * <li>A fake player takes one of its offer's passives at once, chosen by the weights its class grows its own tree with ({@link FakePlayerPvpPassiveTree#weigh}), each fake player with a style and jitter of its own, and a little more jitter on each pick; by
+ * chance if none of the offer is of use to it.</li>
  * </ul>
  */
 public class PassiveDeathmatchManager
@@ -61,6 +69,12 @@ public class PassiveDeathmatchManager
 	public static final String COMMAND = "dmpick";
 
 	private static final String TAG = "Passive DM";
+
+	/** The tutorial question mark a kill blinks (the other systems use 9300 to 94xx, see HiddenQuestManager, CraftingGoalManager, DynamicQuestManager, AdventurersGuideManager). */
+	public static final int QUESTION_MARK_ID = 9330;
+
+	/** How far a fake player's want of each offered passive strays at random on each pick. */
+	private static final double FAKE_PICK_JITTER = 0.25;
 
 	/** A pick waiting for its player: its number, and the nodes it offers. */
 	private static class Offer
@@ -80,6 +94,8 @@ public class PassiveDeathmatchManager
 	{
 		private final Deque<Offer> _pending = new ArrayDeque<>();
 		private int _nextOfferId = 1;
+		/** {@code true} while its question mark blinks (sent and not clicked yet): one is enough for any number of picks. */
+		private boolean _markShown;
 	}
 
 	/** A fake player's passives: what it took, and the share of its max HP that max HP % bonuses grow (see {@link FakePlayerPvpPassives#getHpShare}). */
@@ -87,10 +103,13 @@ public class PassiveDeathmatchManager
 	{
 		private final List<Integer> _nodes = new ArrayList<>();
 		private final double _hpShare;
+		/** What it wants of the tree, by its class ({@code null} if it couldn't be worked out: it picks by chance). */
+		private final FakePlayerPvpPassiveTree.NodeTaste _taste;
 
-		FakePicks(double hpShare)
+		FakePicks(double hpShare, FakePlayerPvpPassiveTree.NodeTaste taste)
 		{
 			_hpShare = hpShare;
+			_taste = taste;
 		}
 	}
 
@@ -101,6 +120,46 @@ public class PassiveDeathmatchManager
 
 	protected PassiveDeathmatchManager()
 	{
+		Containers.Players().addListener(new ConsumerEventListener(Containers.Players(), EventType.ON_PLAYER_PRESS_TUTORIAL_MARK, (OnPlayerPressTutorialMark event) -> onQuestionMark(event.getPlayer(), event.getMarkId()), this));
+	}
+
+	private void onQuestionMark(Player player, int markId)
+	{
+		if (markId != QUESTION_MARK_ID)
+		{
+			return;
+		}
+		final Picks picks = _players.get(player.getObjectId());
+		if (picks != null)
+		{
+			synchronized (picks)
+			{
+				picks._markShown = false;
+			}
+		}
+		showWindow(player);
+	}
+
+	/**
+	 * Blinks the question mark of a player's waiting picks, unless it already does.
+	 * @param player the player
+	 */
+	private void showQuestionMark(Player player)
+	{
+		final Picks picks = _players.get(player.getObjectId());
+		if (picks == null)
+		{
+			return;
+		}
+		synchronized (picks)
+		{
+			if (picks._markShown || picks._pending.isEmpty())
+			{
+				return;
+			}
+			picks._markShown = true;
+		}
+		player.sendPacket(new TutorialShowQuestionMark(QUESTION_MARK_ID));
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -179,7 +238,7 @@ public class PassiveDeathmatchManager
 	}
 
 	/**
-	 * Rolls an offer for a player, puts it at the end of its waiting picks and shows the first one.
+	 * Rolls an offer for a player and puts it at the end of its waiting picks. No window in the middle of the fight: the question mark blinks (the window opens by itself if the killer is dead).
 	 * @param player the player
 	 */
 	private void offer(Player player)
@@ -206,21 +265,35 @@ public class PassiveDeathmatchManager
 			}
 			picks._pending.addLast(new Offer(picks._nextOfferId++, options));
 		}
-		showWindow(player);
+		if (player.isDead())
+		{
+			showWindow(player);
+			return;
+		}
+		showQuestionMark(player);
 		final int pending = getPendingCount(player);
-		player.sendPacket(new ExShowScreenMessage(pending > 1 ? "Kill! " + pending + " passives to pick." : "Kill! Pick a passive.", ExShowScreenMessage.TOP_CENTER, 3000, 0, true, false));
+		player.sendPacket(new ExShowScreenMessage(pending > 1 ? pending + " passives to pick: click the ?" : "A passive to pick: click the ?", ExShowScreenMessage.TOP_CENTER, 3000, 0, true, false));
 	}
 
 	/**
-	 * Shows a player its first waiting pick again, if it has one (on respawn).
+	 * A player of a Passive Deathmatch died: with picks waiting, their window opens by itself (it has the time now).
 	 * @param player the player
 	 */
-	public void remindPending(Player player)
+	public void onDeath(Player player)
 	{
 		if (getPendingCount(player) > 0)
 		{
 			showWindow(player);
 		}
+	}
+
+	/**
+	 * A player came back to the fight with picks still waiting: the question mark blinks again (no window in the fight).
+	 * @param player the player
+	 */
+	public void remindPending(Player player)
+	{
+		showQuestionMark(player);
 	}
 
 	/**
@@ -288,7 +361,7 @@ public class PassiveDeathmatchManager
 			}
 			sb.append("</font><br>");
 		}
-		sb.append("<font color=\"808080\">Closing this window keeps your pick: type .").append(COMMAND).append(" to see it again. Event passives last for this match only.</font>");
+		sb.append("<font color=\"808080\">Closing this window keeps your pick: it opens by itself when you die, the ? comes back when you respawn, and .").append(COMMAND).append(" opens it any time. Event passives last for this match only.</font>");
 		sb.append("</center></body></html>");
 		player.sendPacket(new NpcHtmlMessage(sb.toString()));
 	}
@@ -423,7 +496,16 @@ public class PassiveDeathmatchManager
 			return;
 		}
 		final FakePlayerPvpPassives own = profile.getPassives();
-		final FakePicks picks = new FakePicks(own != null ? own.getHpShare() : 1);
+		FakePlayerPvpPassiveTree.NodeTaste taste = null;
+		try
+		{
+			taste = FakePlayerPvpPassiveTree.getInstance().rollTaste(profile.getBuild(), profile.getArmorMask(), profile.getWornMask());
+		}
+		catch (Exception e)
+		{
+			// No taste: it picks by chance.
+		}
+		final FakePicks picks = new FakePicks(own != null ? own.getHpShare() : 1, taste);
 		_fakes.put(fake.getObjectId(), picks);
 		applyFake(fake, profile, picks);
 		fake.setCurrentHpMp(fake.getMaxHp(), fake.getMaxMp());
@@ -449,10 +531,51 @@ public class PassiveDeathmatchManager
 			{
 				return;
 			}
-			picks._nodes.add(options.get(Rnd.get(options.size())));
+			picks._nodes.add(pickForFake(picks._taste, options));
 			applyFake(fake, profile, picks);
 		}
 		fake.broadcastStatusUpdate();
+	}
+
+	/**
+	 * @param taste what the fake player wants of the tree, {@code null} for nothing in particular
+	 * @param options the passives offered, at least one
+	 * @return the one it takes: by chance weighted by what each is worth to it (with some jitter), or plain chance if none is worth anything to it
+	 */
+	private static int pickForFake(FakePlayerPvpPassiveTree.NodeTaste taste, List<Integer> options)
+	{
+		if (taste != null)
+		{
+			final FakePlayerPvpPassiveTree tree = FakePlayerPvpPassiveTree.getInstance();
+			final double[] weights = new double[options.size()];
+			double total = 0;
+			for (int i = 0; i < weights.length; i++)
+			{
+				final PassiveNode node = PassiveTreeData.getInstance().getNode(options.get(i));
+				weights[i] = node == null ? 0 : tree.weigh(taste, node) * (1 + (((Rnd.nextDouble() * 2) - 1) * FAKE_PICK_JITTER));
+				total += weights[i];
+			}
+			if (total > 0)
+			{
+				double roll = Rnd.nextDouble() * total;
+				for (int i = 0; i < weights.length; i++)
+				{
+					roll -= weights[i];
+					if ((roll < 0) && (weights[i] > 0))
+					{
+						return options.get(i);
+					}
+				}
+				for (int i = weights.length - 1; i >= 0; i--)
+				{
+					if (weights[i] > 0)
+					{
+						return options.get(i);
+					}
+				}
+			}
+		}
+		return options.get(Rnd.get(options.size()));
 	}
 
 	/**
