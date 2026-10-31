@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.EnumMap;
@@ -44,13 +45,14 @@ import org.l2jmobius.gameserver.model.actor.enums.creature.Race;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 
 /**
- * A race war: armies of one race against armies of another, every pair of the chosen races, each battle in an instance of its own (see {@link FakeSimulationManager#startWar}).
+ * A race war: armies of one race against armies of other races, each battle in an instance of its own (see {@link FakeSimulationManager#startWar}).
  * <ul>
  * <li>An army is {@code size} fake players of one race in parties of up to 9, each party filled like a simulation party (tank, archer, healer, melee, nuker, buffer...) from its race's own builds only. A race without a class for a slot takes the closest one it has
  * (an orc party's healer is a Doomcryer, a dwarf army is all Fortune Seekers and Maestros).</li>
+ * <li>In pairs mode every pair of the races fights {@code repeats} times, the races changing sides every time. In free-for-all mode every battle has an army of each race, all fighting each other at once, {@code repeats} battles.</li>
  * <li>The dead come back at their army's base after {@code respawn} seconds, with their buffs again, and fight on. A battle lasts {@code timeLimit} seconds; the army with the most kills wins it.</li>
- * <li>Every pair is fought {@code repeats} times, the races changing sides every time.</li>
- * <li>results.csv has a line per battle, members.csv a line per fighter; summary.txt (rewritten after every battle) has the standings, the pair matrix and the builds.</li>
+ * <li>A race may get a power: its fighters' attack (P.Atk, and M.Atk squared, as magic damage goes with its square root) and defence (P.Def, M.Def) multiplied, for this war only.</li>
+ * <li>results.csv has a line per army per battle, members.csv a line per fighter; summary.txt (rewritten after every battle) has the standings, who killed whom and the builds.</li>
  * </ul>
  */
 public class SimulationWar
@@ -60,8 +62,8 @@ public class SimulationWar
 	public static final String RESULTS = "results.csv";
 	public static final String MEMBERS = "members.csv";
 	public static final String SUMMARY = "summary.txt";
-	private static final String RESULTS_HEADER = "battle,race1,race2,repeat,kills1,kills2,winner,winner_race,reason,duration_ms,damage1,damage2,heal1,heal2";
-	private static final String MEMBERS_HEADER = "battle,team,race,enemy_race,build,role,kills,deaths,damage,heal,won";
+	private static final String RESULTS_HEADER = "battle,repeat,armies,team,race,attack,defence,kills,deaths,kd,place,won,reason,duration_ms,damage,heal";
+	private static final String MEMBERS_HEADER = "battle,team,race,build,role,kills,deaths,damage,heal,won";
 
 	/** The races of the war, in the order they are listed. */
 	public static final List<Race> PLAYABLE = List.of(Race.HUMAN, Race.ELF, Race.DARK_ELF, Race.ORC, Race.DWARF, Race.KAMAEL);
@@ -84,16 +86,30 @@ public class SimulationWar
 	/**
 	 * One battle to fight.
 	 * @param number its number in this war (from 1, the order it started in)
-	 * @param race1 the race of team 1 (point 1)
-	 * @param race2 the race of team 2
-	 * @param repeat which time this pair is fought (from 0)
+	 * @param races the race of each team, team 1 first
+	 * @param repeat which time these races are fought (from 0)
 	 * @param seed the seed of the battle: builds, gear, names, personalities
 	 */
-	public record Battle(int number, Race race1, Race race2, int repeat, long seed)
+	public record Battle(int number, List<Race> races, int repeat, long seed)
 	{
 		public Race raceOf(int team)
 		{
-			return team == 1 ? race1 : race2;
+			return races.get(team - 1);
+		}
+
+		public int teams()
+		{
+			return races.size();
+		}
+
+		public String describe()
+		{
+			final StringBuilder sb = new StringBuilder();
+			for (Race race : races)
+			{
+				sb.append(sb.length() > 0 ? " vs " : "").append(name(race));
+			}
+			return sb.toString();
 		}
 	}
 
@@ -114,6 +130,8 @@ public class SimulationWar
 	private final String _name;
 	private final Path _dir;
 	private final List<Race> _races;
+	private final boolean _ffa;
+	private final Map<Race, double[]> _power;
 	private final int _repeats;
 	private final int _size;
 	private final int _level;
@@ -139,17 +157,21 @@ public class SimulationWar
 
 	/** Race -> {battles, wins, draws, kills, deaths}. */
 	private final Map<Race, long[]> _raceStats = new EnumMap<>(Race.class);
-	/** Race -> other race -> {battles, wins, draws, kills, deaths}. */
+	/** Killer race -> victim race -> kills. */
+	private final Map<Race, Map<Race, long[]>> _killStats = new EnumMap<>(Race.class);
+	/** Race -> other race -> {battles, wins, draws} of the pairs mode. */
 	private final Map<Race, Map<Race, long[]>> _pairStats = new EnumMap<>(Race.class);
 	/** "Race / build" -> {fighter-battles, kills, deaths, damage, heal}. */
 	private final Map<String, double[]> _buildStats = new TreeMap<>();
 	private final Map<String, Integer> _reasons = new TreeMap<>();
 
-	public SimulationWar(String name, Path dir, List<Race> races, int repeats, int size, int level, int parallel, int timeLimit, int respawn, int distance, long seed, int x, int y, int z, int heading, int starterId)
+	public SimulationWar(String name, Path dir, List<Race> races, boolean ffa, Map<Race, double[]> power, int repeats, int size, int level, int parallel, int timeLimit, int respawn, int distance, long seed, int x, int y, int z, int heading, int starterId)
 	{
 		_name = name;
 		_dir = dir;
 		_races = races;
+		_ffa = ffa;
+		_power = power;
 		_repeats = repeats;
 		_size = size;
 		_level = level;
@@ -164,9 +186,19 @@ public class SimulationWar
 		_heading = heading;
 		_starterId = starterId;
 
-		// Round after round of every pair, so a war stopped early still covers every pair about evenly; the races change sides every repeat.
 		for (int repeat = 0; repeat < repeats; repeat++)
 		{
+			if (ffa)
+			{
+				// Every army in one battle; where each one stands around the field changes every battle.
+				final long battleSeed = SimulationSettings.mix(seed + (repeat * 1000003L));
+				final List<Race> order = new ArrayList<>(races);
+				Collections.shuffle(order, new Random(battleSeed));
+				_queue.add(new Battle(0, order, repeat, battleSeed));
+				continue;
+			}
+
+			// Round after round of every pair, so a war stopped early still covers every pair about evenly; the races change sides every repeat.
 			for (int i = 0; i < races.size(); i++)
 			{
 				for (int j = i + 1; j < races.size(); j++)
@@ -174,7 +206,7 @@ public class SimulationWar
 					final Race a = races.get(i);
 					final Race b = races.get(j);
 					final long battleSeed = SimulationSettings.mix(seed + (repeat * 1000003L) + (a.ordinal() * 131L) + b.ordinal());
-					_queue.add((repeat % 2) == 0 ? new Battle(0, a, b, repeat, battleSeed) : new Battle(0, b, a, repeat, battleSeed));
+					_queue.add(new Battle(0, (repeat % 2) == 0 ? List.of(a, b) : List.of(b, a), repeat, battleSeed));
 				}
 			}
 		}
@@ -185,7 +217,7 @@ public class SimulationWar
 			Files.createDirectories(dir);
 			Files.writeString(dir.resolve(RESULTS), RESULTS_HEADER + System.lineSeparator(), StandardCharsets.UTF_8);
 			Files.writeString(dir.resolve(MEMBERS), MEMBERS_HEADER + System.lineSeparator(), StandardCharsets.UTF_8);
-			Files.writeString(dir.resolve("war.properties"), "races=" + races + "\nrepeats=" + repeats + "\nsize=" + size + "\nlevel=" + level + "\nparallel=" + parallel + "\ntimeLimit=" + timeLimit + "\nrespawn=" + respawn + "\ndistance=" + distance + "\nseed=" + seed + "\nplace=" + x + "," + y + "," + z + "," + heading + "\n", StandardCharsets.UTF_8);
+			Files.writeString(dir.resolve("war.properties"), "races=" + races + "\nmode=" + (ffa ? "ffa" : "pairs") + "\npower=" + describePower() + "\nrepeats=" + repeats + "\nsize=" + size + "\nlevel=" + level + "\nparallel=" + parallel + "\ntimeLimit=" + timeLimit + "\nrespawn=" + respawn + "\ndistance=" + distance + "\nseed=" + seed + "\nplace=" + x + "," + y + "," + z + "," + heading + "\n", StandardCharsets.UTF_8);
 		}
 		catch (IOException e)
 		{
@@ -214,16 +246,89 @@ public class SimulationWar
 				}
 				continue;
 			}
-			for (Race race : PLAYABLE)
+			final Race race = parseRace(key);
+			if ((race != null) && !races.contains(race))
 			{
-				final String raceKey = race.name().toLowerCase(Locale.ROOT).replace("_", "");
-				if ((raceKey.equals(key) || (key.equals("de") && (race == Race.DARK_ELF))) && !races.contains(race))
-				{
-					races.add(race);
-				}
+				races.add(race);
 			}
 		}
 		return races;
+	}
+
+	private static Race parseRace(String key)
+	{
+		for (Race race : PLAYABLE)
+		{
+			if (race.name().toLowerCase(Locale.ROOT).replace("_", "").equals(key) || (key.equals("de") && (race == Race.DARK_ELF)))
+			{
+				return race;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @param text race=attack[/defence] pairs, comma separated (orc=1.5, dwarf=2.4/2.6): one number sets both
+	 * @return race -> {attack, defence}
+	 * @throws IllegalArgumentException for a race or number it can't read
+	 */
+	public static Map<Race, double[]> parsePower(String text)
+	{
+		final Map<Race, double[]> power = new EnumMap<>(Race.class);
+		if ((text == null) || text.trim().isEmpty())
+		{
+			return power;
+		}
+		for (String part : text.toLowerCase(Locale.ROOT).split(","))
+		{
+			final String[] pair = part.trim().split("=");
+			final Race race = pair.length == 2 ? parseRace(pair[0].trim().replace("_", "").replace(" ", "")) : null;
+			if (race == null)
+			{
+				throw new IllegalArgumentException("power: race=attack[/defence], not " + part);
+			}
+			final String[] values = pair[1].split("/");
+			final double attack = Double.parseDouble(values[0]);
+			final double defence = values.length > 1 ? Double.parseDouble(values[1]) : attack;
+			if ((attack <= 0) || (defence <= 0) || (attack > 20) || (defence > 20))
+			{
+				throw new IllegalArgumentException("power: the multipliers go from 0 to 20");
+			}
+			power.put(race, new double[]
+			{
+				attack,
+				defence
+			});
+		}
+		return power;
+	}
+
+	/**
+	 * @param race a race
+	 * @return its {attack, defence} multipliers, 1 if none
+	 */
+	public double[] getPower(Race race)
+	{
+		final double[] power = _power.get(race);
+		return power != null ? power : new double[]
+		{
+			1,
+			1
+		};
+	}
+
+	public String describePower()
+	{
+		if (_power.isEmpty())
+		{
+			return "none";
+		}
+		final StringBuilder sb = new StringBuilder();
+		for (Map.Entry<Race, double[]> entry : _power.entrySet())
+		{
+			sb.append(sb.length() > 0 ? ", " : "").append(name(entry.getKey())).append(String.format(Locale.ROOT, " atk x%.2f def x%.2f", entry.getValue()[0], entry.getValue()[1]));
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -323,19 +428,18 @@ public class SimulationWar
 		}
 		final Battle battle = _queue.poll();
 		_running.incrementAndGet();
-		return new Battle(_numbers.incrementAndGet(), battle.race1(), battle.race2(), battle.repeat(), battle.seed());
+		return new Battle(_numbers.incrementAndGet(), battle.races(), battle.repeat(), battle.seed());
 	}
 
 	/**
 	 * A battle ended: its lines go to results.csv and members.csv, and summary.txt is written again.
 	 * @param battle the battle
-	 * @param kills1 the kills of team 1 (deaths of team 2)
-	 * @param kills2 the kills of team 2
-	 * @param reason timeout or stopped
+	 * @param kills who killed whom: [killer team][victim team], team 0 for a death no army dealt
+	 * @param reason timeout, draw or stopped
 	 * @param duration how long the fight lasted, in milliseconds
 	 * @param lines how each fighter did
 	 */
-	public void record(Battle battle, int kills1, int kills2, String reason, long duration, List<Line> lines)
+	public void record(Battle battle, int[][] kills, String reason, long duration, List<Line> lines)
 	{
 		// A battle cut by a stop doesn't count.
 		if (reason.equals("stopped"))
@@ -343,9 +447,37 @@ public class SimulationWar
 			return;
 		}
 
-		final int winner = kills1 > kills2 ? 1 : kills2 > kills1 ? 2 : 0;
-		final double[] damage = new double[3];
-		final double[] heal = new double[3];
+		final int teams = battle.teams();
+		final int[] teamKills = new int[teams + 1];
+		final int[] teamDeaths = new int[teams + 1];
+		for (int killer = 0; killer <= teams; killer++)
+		{
+			for (int victim = 1; victim <= teams; victim++)
+			{
+				if (killer > 0)
+				{
+					teamKills[killer] += kills[killer][victim];
+				}
+				teamDeaths[victim] += kills[killer][victim];
+			}
+		}
+		// The most kills wins; places by kills.
+		int best = -1;
+		int winner = 0;
+		for (int team = 1; team <= teams; team++)
+		{
+			if (teamKills[team] > best)
+			{
+				best = teamKills[team];
+				winner = team;
+			}
+			else if (teamKills[team] == best)
+			{
+				winner = 0;
+			}
+		}
+		final double[] damage = new double[teams + 1];
+		final double[] heal = new double[teams + 1];
 		for (Line line : lines)
 		{
 			damage[line.team()] += line.damage();
@@ -358,8 +490,7 @@ public class SimulationWar
 			for (Line line : lines)
 			{
 				final Race race = battle.raceOf(line.team());
-				final Race enemy = battle.raceOf(3 - line.team());
-				members.append(battle.number()).append(',').append(line.team()).append(',').append(race).append(',').append(enemy).append(',').append(line.build()).append(',').append(line.role()).append(',').append(line.kills()).append(',').append(line.deaths()).append(',').append(Math.round(line.damage())).append(',').append(Math.round(line.heal())).append(',').append(winner == line.team() ? 1 : winner == 0 ? 0.5 : 0).append(System.lineSeparator());
+				members.append(battle.number()).append(',').append(line.team()).append(',').append(race).append(',').append(line.build()).append(',').append(line.role()).append(',').append(line.kills()).append(',').append(line.deaths()).append(',').append(Math.round(line.damage())).append(',').append(Math.round(line.heal())).append(',').append(winner == line.team() ? 1 : winner == 0 ? 0.5 : 0).append(System.lineSeparator());
 
 				final double[] stats = _buildStats.computeIfAbsent(name(race) + " / " + line.build(), _ -> new double[5]);
 				stats[0]++;
@@ -369,23 +500,45 @@ public class SimulationWar
 				stats[4] += line.heal();
 			}
 			append(MEMBERS, members.toString());
-			append(RESULTS, battle.number() + "," + battle.race1() + "," + battle.race2() + "," + battle.repeat() + "," + kills1 + "," + kills2 + "," + winner + "," + (winner > 0 ? battle.raceOf(winner) : "") + "," + reason + "," + duration + "," + Math.round(damage[1]) + "," + Math.round(damage[2]) + "," + Math.round(heal[1]) + "," + Math.round(heal[2]) + System.lineSeparator());
 
-			for (int team = 1; team <= 2; team++)
+			final StringBuilder results = new StringBuilder();
+			for (int team = 1; team <= teams; team++)
 			{
 				final Race race = battle.raceOf(team);
-				final Race enemy = battle.raceOf(3 - team);
-				final int kills = team == 1 ? kills1 : kills2;
-				final int deaths = team == 1 ? kills2 : kills1;
-				for (long[] stats : List.of(_raceStats.computeIfAbsent(race, _ -> new long[5]), _pairStats.computeIfAbsent(race, _ -> new EnumMap<>(Race.class)).computeIfAbsent(enemy, _ -> new long[5])))
+				final double[] power = getPower(race);
+				int place = 1;
+				for (int other = 1; other <= teams; other++)
 				{
-					stats[0]++;
-					stats[1] += winner == team ? 1 : 0;
-					stats[2] += winner == 0 ? 1 : 0;
-					stats[3] += kills;
-					stats[4] += deaths;
+					if (teamKills[other] > teamKills[team])
+					{
+						place++;
+					}
+				}
+				results.append(battle.number()).append(',').append(battle.repeat()).append(',').append(teams).append(',').append(team).append(',').append(race).append(',').append(String.format(Locale.ROOT, "%.3f,%.3f", power[0], power[1])).append(',').append(teamKills[team]).append(',').append(teamDeaths[team]).append(',').append(String.format(Locale.ROOT, "%.3f", teamDeaths[team] > 0 ? (double) teamKills[team] / teamDeaths[team] : teamKills[team])).append(',').append(place).append(',').append(winner == team ? 1 : winner == 0 ? 0.5 : 0).append(',').append(reason).append(',').append(duration).append(',').append(Math.round(damage[team])).append(',').append(Math.round(heal[team])).append(System.lineSeparator());
+
+				final long[] stats = _raceStats.computeIfAbsent(race, _ -> new long[5]);
+				stats[0]++;
+				stats[1] += winner == team ? 1 : 0;
+				stats[2] += winner == 0 ? 1 : 0;
+				stats[3] += teamKills[team];
+				stats[4] += teamDeaths[team];
+
+				for (int victim = 1; victim <= teams; victim++)
+				{
+					if (victim != team)
+					{
+						_killStats.computeIfAbsent(race, _ -> new EnumMap<>(Race.class)).computeIfAbsent(battle.raceOf(victim), _ -> new long[1])[0] += kills[team][victim];
+					}
+				}
+				if (teams == 2)
+				{
+					final long[] pair = _pairStats.computeIfAbsent(race, _ -> new EnumMap<>(Race.class)).computeIfAbsent(battle.raceOf(3 - team), _ -> new long[3]);
+					pair[0]++;
+					pair[1] += winner == team ? 1 : 0;
+					pair[2] += winner == 0 ? 1 : 0;
 				}
 			}
+			append(RESULTS, results.toString());
 			_reasons.merge(reason, 1, Integer::sum);
 			_done++;
 		}
@@ -433,26 +586,28 @@ public class SimulationWar
 	}
 
 	/**
-	 * Writes summary.txt: the standings, the race-vs-race matrix, every pair's score, and the builds.
+	 * Writes summary.txt: the standings, who killed whom, the pairs' records, and the builds.
 	 * @return its lines
 	 */
 	public synchronized List<String> writeSummary()
 	{
 		final List<String> lines = new ArrayList<>();
-		lines.add("Race war " + _name + ": " + _done + "/" + _total + " battles, " + _size + " vs " + _size + ", level " + _level + ", " + _timeLimit + " s each, respawn after " + _respawn + " s" + (_stopped ? " (stopped)" : ""));
+		lines.add("Race war " + _name + " (" + (_ffa ? "free-for-all" : "pairs") + "): " + _done + "/" + _total + " battles, " + _size + " per army, level " + _level + ", " + _timeLimit + " s each, respawn after " + _respawn + " s" + (_stopped ? " (stopped)" : ""));
+		lines.add("Power: " + describePower());
 		lines.add("");
-		lines.add("Standings (a battle is won by the army with more kills):");
-		lines.add(String.format(Locale.ROOT, "  %-9s %7s %5s %5s %6s %8s %8s %6s %7s", "race", "battles", "won", "drew", "lost", "kills", "deaths", "K/D", "kills%"));
+		lines.add("Standings (a battle is won by the army with the most kills):");
+		lines.add(String.format(Locale.ROOT, "  %-9s %7s %5s %5s %6s %8s %8s %6s %7s %13s", "race", "battles", "won", "drew", "lost", "kills", "deaths", "K/D", "kills%", "atk/def"));
 		final List<Race> ranked = new ArrayList<>(_raceStats.keySet());
-		ranked.sort(Comparator.comparingDouble((Race race) -> share(_raceStats.get(race))).reversed());
+		ranked.sort(Comparator.comparingDouble((Race race) -> kd(_raceStats.get(race))).reversed());
 		for (Race race : ranked)
 		{
 			final long[] s = _raceStats.get(race);
-			lines.add(String.format(Locale.ROOT, "  %-9s %7d %5d %5d %6d %8d %8d %6.2f %6.1f%%", name(race), s[0], s[1], s[2], s[0] - s[1] - s[2], s[3], s[4], s[4] > 0 ? (double) s[3] / s[4] : s[3], 100 * share(s)));
+			final double[] power = getPower(race);
+			lines.add(String.format(Locale.ROOT, "  %-9s %7d %5d %5d %6d %8d %8d %6.2f %6.1f%% %6.2f/%-6.2f", name(race), s[0], s[1], s[2], s[0] - s[1] - s[2], s[3], s[4], kd(s), (s[3] + s[4]) > 0 ? (100.0 * s[3]) / (s[3] + s[4]) : 50, power[0], power[1]));
 		}
 
 		lines.add("");
-		lines.add("Share of the kills, row against column (50% = even; battles won-drawn-lost below):");
+		lines.add("Kills, row killed column:");
 		final StringBuilder header = new StringBuilder(String.format(Locale.ROOT, "  %-9s", ""));
 		for (Race race : _races)
 		{
@@ -461,16 +616,37 @@ public class SimulationWar
 		lines.add(header.toString());
 		for (Race row : _races)
 		{
+			final StringBuilder sb = new StringBuilder(String.format(Locale.ROOT, "  %-9s", name(row)));
+			for (Race column : _races)
+			{
+				final long[] k = row == column ? null : _killStats.getOrDefault(row, Map.of()).get(column);
+				sb.append(String.format(Locale.ROOT, " %9s", row == column ? "-" : k == null ? "0" : String.valueOf(k[0])));
+			}
+			lines.add(sb.toString());
+		}
+
+		lines.add("");
+		lines.add("Share of the kills between each two races, row against column" + (_pairStats.isEmpty() ? ":" : " (battles won-drawn-lost below):"));
+		lines.add(header.toString());
+		for (Race row : _races)
+		{
 			final StringBuilder share = new StringBuilder(String.format(Locale.ROOT, "  %-9s", name(row)));
 			final StringBuilder record = new StringBuilder(String.format(Locale.ROOT, "  %-9s", ""));
 			for (Race column : _races)
 			{
+				final long[] mine = row == column ? null : _killStats.getOrDefault(row, Map.of()).get(column);
+				final long[] theirs = row == column ? null : _killStats.getOrDefault(column, Map.of()).get(row);
+				final long a = mine != null ? mine[0] : 0;
+				final long b = theirs != null ? theirs[0] : 0;
+				share.append(String.format(Locale.ROOT, " %9s", (row == column) || ((a + b) == 0) ? "-" : String.format(Locale.ROOT, "%.0f%%", (100.0 * a) / (a + b))));
 				final long[] s = row == column ? null : _pairStats.getOrDefault(row, Map.of()).get(column);
-				share.append(String.format(Locale.ROOT, " %9s", s == null ? "-" : String.format(Locale.ROOT, "%.0f%%", 100 * share(s))));
 				record.append(String.format(Locale.ROOT, " %9s", s == null ? "" : s[1] + "-" + s[2] + "-" + (s[0] - s[1] - s[2])));
 			}
 			lines.add(share.toString());
-			lines.add(record.toString());
+			if (!_pairStats.isEmpty())
+			{
+				lines.add(record.toString());
+			}
 		}
 
 		lines.add("");
@@ -499,11 +675,11 @@ public class SimulationWar
 
 	/**
 	 * @param stats {battles, wins, draws, kills, deaths}
-	 * @return the share of the kills, 0.5 when none
+	 * @return kills per death (the kills when it never died)
 	 */
-	private static double share(long[] stats)
+	private static double kd(long[] stats)
 	{
-		return (stats[3] + stats[4]) > 0 ? (double) stats[3] / (stats[3] + stats[4]) : 0.5;
+		return stats[4] > 0 ? (double) stats[3] / stats[4] : stats[3];
 	}
 
 	/**
@@ -578,6 +754,11 @@ public class SimulationWar
 	public List<Race> getRaces()
 	{
 		return _races;
+	}
+
+	public boolean isFreeForAll()
+	{
+		return _ffa;
 	}
 
 	public int getRepeats()

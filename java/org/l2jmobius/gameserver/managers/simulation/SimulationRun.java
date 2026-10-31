@@ -62,6 +62,8 @@ public class SimulationRun
 	private volatile SimulationMatrix.Battle _battle;
 	private volatile SimulationArena.Battle _arenaBattle;
 	private volatile SimulationWar.Battle _warBattle;
+	/** Kills by team: killer team * 1000 + victim team -> kills (killer team 0 for a death no team dealt). */
+	private final Map<Integer, Integer> _teamKills = new ConcurrentHashMap<>();
 
 	public SimulationRun(int id, int round, SimulationSettings settings, SimulationLog log)
 	{
@@ -312,6 +314,26 @@ public class SimulationRun
 	public void setWarBattle(SimulationWar.Battle battle)
 	{
 		_warBattle = battle;
+	}
+
+	/**
+	 * Counts a death by who dealt it.
+	 * @param killerTeam the team of the killer, 0 for none
+	 * @param victimTeam the team of the dead
+	 */
+	public void countTeamKill(int killerTeam, int victimTeam)
+	{
+		_teamKills.merge((killerTeam * 1000) + victimTeam, 1, Integer::sum);
+	}
+
+	/**
+	 * @param killerTeam a team, 0 for deaths no team dealt
+	 * @param victimTeam another team
+	 * @return how many of {@code victimTeam} {@code killerTeam} killed
+	 */
+	public int getTeamKills(int killerTeam, int victimTeam)
+	{
+		return _teamKills.getOrDefault((killerTeam * 1000) + victimTeam, 0);
 	}
 
 	public SimulationTeam getTeamOf(SimulationMember member)

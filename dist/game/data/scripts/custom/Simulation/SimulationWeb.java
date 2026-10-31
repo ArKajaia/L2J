@@ -68,7 +68,7 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
  * place: the GM's own, else the Cruma Marshlands field)</li>
  * <li>GET /api/simulation/arena/battles - the arena running now, its status lines and the battles that run, each with its teams; GET /arena/list - the arenas run so far with their summary; POST /arena/watch (run: a battle, blank for the next one) and
  * /arena/leave - take the GM of the link into a battle's instance to watch it, or back out</li>
- * <li>POST /api/simulation/war/start, /war/stop, GET /war/status - a race war, like //Simulate war: armies of every pair of races, the dead coming back (start: races, repeats, size, level, parallel, time, respawn, distance, seed, and x, y, z, heading for the
+ * <li>POST /api/simulation/war/start, /war/stop, GET /war/status - a race war, like //Simulate war: armies of every pair of races, or all at once (mode=ffa), the dead coming back (start: races, mode, power, repeats, size, level, parallel, time, respawn, distance, seed, and x, y, z, heading for the
  * place, the Cruma Marshlands field by default)</li>
  * <li>POST /api/simulation/matrix/start, /matrix/resume, /matrix/stop, GET /matrix/status - the class-vs-class matrix, like //SimulationMatrix (start: battles, parallel, level, time, distance, brain, builds, seed, and x, y, z, heading for the place: the GM's own
  * place by default, else the simulation field by Cruma Marshlands)</li>
@@ -992,7 +992,18 @@ public class SimulationWeb
 			server.sendText(exchange, 400, "application/json", "{\"error\":\"the seed must be a whole number\"}");
 			return;
 		}
-		sendLines(exchange, FakeSimulationManager.getInstance().startWar(gm, x, y, z, heading, races, repeats, size, level, parallel, time, respawn, distance, seed));
+		final boolean ffa = "ffa".equalsIgnoreCase(params.get("mode"));
+		final Map<Race, double[]> power;
+		try
+		{
+			power = SimulationWar.parsePower(params.get("power"));
+		}
+		catch (IllegalArgumentException e)
+		{
+			server.sendText(exchange, 400, "application/json", "{\"error\":" + SimpleJson.quote(e.getMessage()) + "}");
+			return;
+		}
+		sendLines(exchange, FakeSimulationManager.getInstance().startWar(gm, x, y, z, heading, races, ffa, power, repeats, size, level, parallel, time, respawn, distance, seed));
 	}
 
 	private void handleWarStop(HttpExchange exchange) throws IOException
