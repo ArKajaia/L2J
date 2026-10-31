@@ -39,6 +39,7 @@ import org.l2jmobius.gameserver.config.custom.ConquestConfig;
 import org.l2jmobius.gameserver.config.custom.CustomBuffConfig;
 import org.l2jmobius.gameserver.config.custom.CraftingGoalsConfig;
 import org.l2jmobius.gameserver.config.custom.CustomMailManagerConfig;
+import org.l2jmobius.gameserver.config.custom.EventRotationConfig;
 import org.l2jmobius.gameserver.config.custom.DelevelManagerConfig;
 import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
 import org.l2jmobius.gameserver.config.custom.DwarvenTradesConfig;
@@ -202,6 +203,7 @@ public class ConfigLoader
 		VillageSiegeConfig.load();
 		TeamVsTeamConfig.load();
 		ConquestConfig.load();
+		EventRotationConfig.load();
 		WaveChallengeConfig.load();
 		WeddingConfig.load();
 		CustomBuffConfig.load();

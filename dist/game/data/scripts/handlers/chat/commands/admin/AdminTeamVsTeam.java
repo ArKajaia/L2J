@@ -25,9 +25,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.l2jmobius.gameserver.data.xml.TvTMapData;
+import org.l2jmobius.gameserver.config.custom.EventRotationConfig;
 import org.l2jmobius.gameserver.handler.IAdminCommandHandler;
+import org.l2jmobius.gameserver.managers.EventRotationManager;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager.Match;
+import org.l2jmobius.gameserver.managers.TeamVsTeamManager.Mode;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.tvt.TvTBarrier;
@@ -46,6 +49,8 @@ import custom.TeamVsTeam.TvTWeb;
  * <li>//tvt simulate [level] [map]: a match of fake players only, of the bracket of that level (the GM's by default), to watch.</li>
  * <li>//tvt stop [match]: ends a match (all of them by default), without rewards.</li>
  * <li>//tvt watch [match]: goes into a match's instance, between the bases, to watch it (the fighters leave a GM outside the match alone).</li>
+ * <li>//tvt dm open [map] | simulate [level] [map]: the same for a Deathmatch (every one for themselves); close, stop and watch work for both.</li>
+ * <li>//tvt rotation [next &lt;tvt|conquest|deathmatch&gt;]: the hourly rotation of the events (see {@link EventRotationManager}), and which event takes the next turn.</li>
  * </ul>
  * And the maps ({@link TvTMapData}, data/tvt), like the Conquest ones:
  * <ul>
@@ -66,13 +71,23 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 		"admin_tvt"
 	};
 
-	private static final String USAGE = "//tvt open [map] | close | simulate [level] [map] | stop [match] | watch [match] | detail | map | maps | show <map> | hide | tp <map> <blue|red> <n> | set <map> <blue|red> <n|new> | remove <map> <blue|red> <n> | fence <map> [rx] [ry] | off | reload";
+	private static final String USAGE = "//tvt open [map] | close | simulate [level] [map] | dm open [map] | dm simulate [level] [map] | rotation [next <event>] | stop [match] | watch [match] | detail | map | maps | show <map> | hide | tp <map> <blue|red> <n> | set <map> <blue|red> <n|new> | remove <map> <blue|red> <n> | fence <map> [rx] [ry] | off | reload";
 
 	@Override
 	public boolean onCommand(String command, Player activeChar)
 	{
 		final TeamVsTeamManager manager = TeamVsTeamManager.getInstance();
-		final String[] args = command.trim().split("\\s+");
+		String[] args = command.trim().split("\\s+");
+		// //tvt dm <open|simulate> ...: the same commands for a Deathmatch.
+		Mode mode = Mode.TVT;
+		if ((args.length > 2) && (args[1].equalsIgnoreCase("dm") || args[1].equalsIgnoreCase("deathmatch")))
+		{
+			mode = Mode.DEATHMATCH;
+			final String[] rest = new String[args.length - 1];
+			rest[0] = args[0];
+			System.arraycopy(args, 2, rest, 1, args.length - 2);
+			args = rest;
+		}
 		final String action = args.length > 1 ? args[1].toLowerCase() : "status";
 		switch (action)
 		{
@@ -87,8 +102,22 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 						return false;
 					}
 				}
-				final String refusal = manager.openRegistration(map);
-				activeChar.sendMessage(refusal == null ? "TvT registration opened on " + manager.getRegistrationMap().name() + "." : "Could not open: " + refusal + ".");
+				final String refusal = manager.openRegistration(mode, map);
+				activeChar.sendMessage(refusal == null ? mode.getTitle() + " registration opened on " + manager.getRegistrationMap().name() + "." : "Could not open: " + refusal + ".");
+				break;
+			}
+			case "rotation":
+			{
+				final EventRotationManager rotation = EventRotationManager.getInstance();
+				if ((args.length > 3) && args[2].equalsIgnoreCase("next"))
+				{
+					final String event = args[3].toLowerCase().equals("dm") ? "deathmatch" : args[3].toLowerCase();
+					activeChar.sendMessage(rotation.setNext(event) ? EventRotationManager.getTitle(event) + " takes the next turn." : "Not in EventRotationOrder: " + args[3] + " (" + String.join(", ", EventRotationConfig.ORDER) + ").");
+				}
+				for (String line : rotation.getStatus())
+				{
+					activeChar.sendMessage(line);
+				}
 				break;
 			}
 			case "close":
@@ -122,7 +151,7 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 						}
 					}
 				}
-				activeChar.sendMessage(manager.simulate(level, map));
+				activeChar.sendMessage(manager.simulate(mode, level, map));
 				break;
 			}
 			case "stop":
@@ -148,7 +177,7 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 					break;
 				}
 				manager.watch(activeChar, match);
-				activeChar.sendMessage("Watching match " + match.getId() + " (levels " + match.getBracketName() + ", " + match.getMap().name() + "). //instance or a teleport takes you back out.");
+				activeChar.sendMessage("Watching " + match.getMode().getTitle() + " match " + match.getId() + " (levels " + match.getBracketName() + ", " + match.getMap().name() + "). //instance or a teleport takes you back out.");
 				break;
 			}
 			case "map":

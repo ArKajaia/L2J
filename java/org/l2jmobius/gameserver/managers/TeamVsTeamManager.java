@@ -43,12 +43,14 @@ import org.l2jmobius.gameserver.ai.AttackableAI;
 import org.l2jmobius.gameserver.ai.FakeBrain;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
+import org.l2jmobius.gameserver.config.custom.EventRotationConfig;
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig.TopReward;
 import org.l2jmobius.gameserver.data.enums.CategoryType;
 import org.l2jmobius.gameserver.data.xml.DoorData;
 import org.l2jmobius.gameserver.data.xml.TvTMapData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.geoengine.geodata.Cell;
 import org.l2jmobius.gameserver.geoengine.pathfinding.PathFinding;
 import org.l2jmobius.gameserver.managers.simulation.SimRole;
 import org.l2jmobius.gameserver.managers.simulation.SimulationComposer;
@@ -81,6 +83,7 @@ import org.l2jmobius.gameserver.model.skill.CommonSkill;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.skill.holders.SkillHolder;
+import org.l2jmobius.gameserver.model.tvt.TvTBarrier;
 import org.l2jmobius.gameserver.model.tvt.TvTDoor;
 import org.l2jmobius.gameserver.model.tvt.TvTMap;
 import org.l2jmobius.gameserver.model.zone.ZoneId;
@@ -104,6 +107,8 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
  * <li>The faction system's rules hold between the teams: the other team is attacked without Ctrl, the own team can't be hurt even with Ctrl, and no kill gives karma (the instance is a PvP one). Everyone shows a blue or red circle and name.</li>
  * <li>The dead come back in waves, each wave at one of its team's spawn points picked by chance. Each kill gives the killer one of {@link TeamVsTeamConfig#KILL_REWARDS}; the team with the most kills wins, and each of its players gets {@link TeamVsTeamConfig#WIN_REWARD}, its best players {@link TeamVsTeamConfig#TOP_REWARDS} too.</li>
  * </ul>
+ * A registration may also be for a {@link Mode#DEATHMATCH Deathmatch} on the same maps: every one for themselves, everyone spawning at a spot of the field picked by chance and coming back at another one {@link TeamVsTeamConfig#DM_RESPAWN_DELAY} seconds after
+ * dying, for {@link TeamVsTeamConfig#DM_FIGHT_TIME} minutes; the most kills wins. The hourly rotation ({@link EventRotationManager}) takes turns between Team vs Team, Conquest and Deathmatch.<br>
  * The dialogs of the manager are in the TvT event script (custom/events/TeamVsTeam).
  */
 public class TeamVsTeamManager
@@ -191,6 +196,24 @@ public class TeamVsTeamManager
 	private static final int TURN_BACK_STEP = 500;
 	/** Someone this far beyond the fence (a skill that moved them, a gap in it) is brought back inside it. */
 	private static final int BARRIER_MARGIN = 250;
+	/** Deathmatch: the fake players are of these roles (a tank, healer or buffer alone kills nobody). */
+	private static final SimRole[] DEATHMATCH_ROLES =
+	{
+		SimRole.MELEE,
+		SimRole.MELEE,
+		SimRole.ARCHER,
+		SimRole.NUKER
+	};
+	/** Deathmatch spawn spots (see findSpawnSpots): so many at most, of so many tries, this far apart, this far inside the fence, at most this far above or below the map's ground. */
+	private static final int DM_SPOTS = 40;
+	private static final int DM_SPOT_TRIES = 600;
+	private static final int DM_SPOT_GAP = 400;
+	private static final int DM_SPOT_FENCE_MARGIN = 400;
+	private static final int DM_SPOT_LEVEL = 600;
+	/** Of so many spots picked by chance, one spawns at the one farthest from the others. */
+	private static final int DM_SPOT_PICKS = 6;
+	/** Deathmatch: a fighter doesn't leave this far from its spawn spot before the fight. */
+	private static final int DM_PREP_RADIUS = 300;
 
 	public enum Phase
 	{
@@ -215,6 +238,40 @@ public class TeamVsTeamManager
 		STRANGER
 	}
 
+	/** What a registration and its matches play. */
+	public enum Mode
+	{
+		/** Blue against Red, each team at its bases. */
+		TVT("Team vs Team", "TvT"),
+		/** Every one for themselves, spawning anywhere on the field. */
+		DEATHMATCH("Deathmatch", "Deathmatch");
+
+		private final String _title;
+		private final String _tag;
+
+		Mode(String title, String tag)
+		{
+			_title = title;
+			_tag = tag;
+		}
+
+		/**
+		 * @return its name for the players: "Team vs Team", "Deathmatch"
+		 */
+		public String getTitle()
+		{
+			return _title;
+		}
+
+		/**
+		 * @return the start of its messages: "TvT", "Deathmatch"
+		 */
+		public String getTag()
+		{
+			return _tag;
+		}
+	}
+
 	/**
 	 * A player or fake player of a match.
 	 */
@@ -233,6 +290,8 @@ public class TeamVsTeamManager
 		private volatile long _respawnAt;
 		// The spawn point of its wave, where it comes back.
 		private volatile Location _respawnBase;
+		// Deathmatch: where it spawned last (it doesn't leave it before the fight).
+		private volatile Location _home;
 		private volatile long _protectedUntil;
 		// Worked out by the tick: how many living team mates stand within ALONE_RANGE of it.
 		private volatile int _alliesNear;
@@ -484,7 +543,10 @@ public class TeamVsTeamManager
 	public static class Match
 	{
 		private final int _id;
+		private final Mode _mode;
 		private final TvTMap _map;
+		// Deathmatch: the spots of the field its fighters spawn at, picked by chance (see findSpawnSpots).
+		private List<Location> _spots = List.of();
 		private final int _minLevel;
 		private final int _maxLevel;
 		private final int _instanceId;
@@ -504,15 +566,25 @@ public class TeamVsTeamManager
 		// The fence round its field (see TeamVsTeamBarrier).
 		private final List<Fence> _barrier = new ArrayList<>();
 
-		Match(int id, TvTMap map, int minLevel, int maxLevel, int instanceId)
+		Match(int id, Mode mode, TvTMap map, int minLevel, int maxLevel, int instanceId)
 		{
 			_id = id;
+			_mode = mode;
 			_map = map;
 			_minLevel = minLevel;
 			_maxLevel = maxLevel;
 			_instanceId = instanceId;
-			_blue = new Side(Team.BLUE, "Blue", map.blue(), TeamVsTeamConfig.BLUE_NAME_COLOR);
-			_red = new Side(Team.RED, "Red", map.red(), TeamVsTeamConfig.RED_NAME_COLOR);
+			if (mode == Mode.DEATHMATCH)
+			{
+				// Everyone in one side, each the enemy of all the others (see getRelation); the other side stays empty.
+				_blue = new Side(Team.NONE, "Deathmatch", map.blue(), TeamVsTeamConfig.DM_NAME_COLOR);
+				_red = new Side(Team.NONE, "-", map.red(), TeamVsTeamConfig.DM_NAME_COLOR);
+			}
+			else
+			{
+				_blue = new Side(Team.BLUE, "Blue", map.blue(), TeamVsTeamConfig.BLUE_NAME_COLOR);
+				_red = new Side(Team.RED, "Red", map.red(), TeamVsTeamConfig.RED_NAME_COLOR);
+			}
 			_prepEnd = System.currentTimeMillis() + (TeamVsTeamConfig.PREP_TIME * 1000L);
 		}
 
@@ -527,6 +599,47 @@ public class TeamVsTeamManager
 		public TvTMap getMap()
 		{
 			return _map;
+		}
+
+		/**
+		 * @return what it plays
+		 */
+		public Mode getMode()
+		{
+			return _mode;
+		}
+
+		/**
+		 * @return {@code true} for a Deathmatch: every one for themselves
+		 */
+		public boolean isDeathmatch()
+		{
+			return _mode == Mode.DEATHMATCH;
+		}
+
+		/**
+		 * @param fighter a fighter of this match
+		 * @return its enemies: the other team, or in a Deathmatch everyone else
+		 */
+		List<Fighter> getEnemies(Fighter fighter)
+		{
+			if (_mode != Mode.DEATHMATCH)
+			{
+				return getOther(fighter._side)._fighters;
+			}
+			final List<Fighter> enemies = new ArrayList<>(_blue._fighters);
+			enemies.remove(fighter);
+			return enemies;
+		}
+
+		/**
+		 * @return its fighters, most kills first (fewer deaths first on a tie)
+		 */
+		List<Fighter> getRanking()
+		{
+			final List<Fighter> ranking = getAllFighters();
+			ranking.sort((a, b) -> a._kills != b._kills ? Integer.compare(b._kills, a._kills) : Integer.compare(a._deaths, b._deaths));
+			return ranking;
 		}
 
 		public String getBracketName()
@@ -613,13 +726,15 @@ public class TeamVsTeamManager
 	private final List<ScheduledFuture<?>> _registrationTasks = new CopyOnWriteArrayList<>();
 	private volatile State _state = State.INACTIVE;
 	private volatile long _registrationEnd;
-	/** The map of the registration open now (and of the matches it starts). */
+	/** The map of the registration open now (and of the matches it starts), and what it plays. */
 	private volatile TvTMap _registrationMap;
+	private volatile Mode _registrationMode = Mode.TVT;
 	private ScheduledFuture<?> _scheduleTask;
 
 	protected TeamVsTeamManager()
 	{
-		if (!TeamVsTeamConfig.ENABLED)
+		// With the rotation on, it opens the registrations in turn with Conquest (see EventRotationManager).
+		if (!TeamVsTeamConfig.ENABLED || EventRotationConfig.ENABLED)
 		{
 			return;
 		}
@@ -668,32 +783,49 @@ public class TeamVsTeamManager
 	 */
 	public String openRegistration()
 	{
-		return openRegistration(null);
+		return openRegistration(Mode.TVT, null);
 	}
 
 	/**
-	 * Opens the registration (the schedule, or an admin's //event or //tvt open).
+	 * Opens a Team vs Team registration.
 	 * @param map the map its matches are played on, {@code null} for one of {@link TeamVsTeamConfig#MAPS} picked by chance
 	 * @return {@code null} if it opened, else why not
 	 */
-	public synchronized String openRegistration(TvTMap map)
+	public String openRegistration(TvTMap map)
 	{
-		if (!TeamVsTeamConfig.ENABLED)
+		return openRegistration(Mode.TVT, map);
+	}
+
+	/**
+	 * Opens the registration (the schedule or the rotation, or an admin's //event, //tvt open or //tvt dm open).
+	 * @param mode what it plays
+	 * @param map the map its matches are played on, {@code null} for one of {@link TeamVsTeamConfig#MAPS} ({@link TeamVsTeamConfig#DM_MAPS} for a Deathmatch) picked by chance
+	 * @return {@code null} if it opened, else why not
+	 */
+	public synchronized String openRegistration(Mode mode, TvTMap map)
+	{
+		if (mode == Mode.DEATHMATCH ? !TeamVsTeamConfig.DM_ENABLED : !TeamVsTeamConfig.ENABLED)
 		{
 			return "the event is disabled";
 		}
 		if (_state != State.INACTIVE)
 		{
-			return "registration is already open";
+			return _registrationMode.getTitle() + " registration is already open";
+		}
+		final String busy = EventRotationManager.getBusyEvent();
+		if (busy != null)
+		{
+			return busy + " is going on (the events never overlap)";
 		}
 		if (TeamVsTeamConfig.BRACKETS.isEmpty())
 		{
 			return "there is no level bracket (TvTBrackets)";
 		}
-		final TvTMap picked = map != null ? map : TvTMapData.getInstance().getRandomMap(TeamVsTeamConfig.MAPS);
+		final List<String> allowed = mode == Mode.DEATHMATCH ? TeamVsTeamConfig.DM_MAPS : TeamVsTeamConfig.MAPS;
+		final TvTMap picked = map != null ? map : TvTMapData.getInstance().getRandomMap(allowed);
 		if (picked == null)
 		{
-			return "there is no enabled map with spawn points for both teams" + (TeamVsTeamConfig.MAPS.isEmpty() ? "" : " among TvTMaps") + " (data/tvt, //tvt map)";
+			return "there is no enabled map with spawn points for both teams" + (allowed.isEmpty() ? "" : " among " + (mode == Mode.DEATHMATCH ? "DeathmatchMaps" : "TvTMaps")) + " (data/tvt, //tvt map)";
 		}
 		if (!picked.isComplete())
 		{
@@ -702,6 +834,8 @@ public class TeamVsTeamManager
 
 		_state = State.REGISTRATION;
 		_registrationMap = picked;
+		_registrationMode = mode;
+		final String tag = mode.getTag();
 		_registered.clear();
 		_registrationEnd = System.currentTimeMillis() + (TeamVsTeamConfig.REGISTRATION_TIME * 60000L);
 		if (DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP > 0)
@@ -724,13 +858,20 @@ public class TeamVsTeamManager
 		{
 			if (TeamVsTeamConfig.REGISTRATION_TIME > warning)
 			{
-				_registrationTasks.add(ThreadPool.schedule(() -> Broadcast.toAllOnlinePlayers("TvT: Registration closes in " + warning + " minute" + (warning > 1 ? "s" : "") + ". " + _registered.size() + " registered so far."), (TeamVsTeamConfig.REGISTRATION_TIME - warning) * 60000L));
+				_registrationTasks.add(ThreadPool.schedule(() -> Broadcast.toAllOnlinePlayers(tag + ": Registration closes in " + warning + " minute" + (warning > 1 ? "s" : "") + ". " + _registered.size() + " registered so far."), (TeamVsTeamConfig.REGISTRATION_TIME - warning) * 60000L));
 			}
 		}
 		_registrationTasks.add(ThreadPool.schedule(this::closeRegistration, TeamVsTeamConfig.REGISTRATION_TIME * 60000L));
 
-		Broadcast.toAllOnlinePlayers("TvT: Registration is open for " + TeamVsTeamConfig.REGISTRATION_TIME + " minutes at the TvT Event Manager in Giran. " + TeamVsTeamConfig.TEAM_SIZE + " vs " + TeamVsTeamConfig.TEAM_SIZE + " in the " + picked.name() + ", levels " + describeBrackets() + ".");
-		LOGGER.info(getClass().getSimpleName() + ": Registration opened on " + picked.id() + ".");
+		if (mode == Mode.DEATHMATCH)
+		{
+			Broadcast.toAllOnlinePlayers(tag + ": Registration is open for " + TeamVsTeamConfig.REGISTRATION_TIME + " minutes at the TvT Event Manager in Giran. Every one for themselves, " + TeamVsTeamConfig.DM_SIZE + " fighters in the " + picked.name() + ", " + TeamVsTeamConfig.DM_FIGHT_TIME + " minutes, levels " + describeBrackets() + ".");
+		}
+		else
+		{
+			Broadcast.toAllOnlinePlayers(tag + ": Registration is open for " + TeamVsTeamConfig.REGISTRATION_TIME + " minutes at the TvT Event Manager in Giran. " + TeamVsTeamConfig.TEAM_SIZE + " vs " + TeamVsTeamConfig.TEAM_SIZE + " in the " + picked.name() + ", levels " + describeBrackets() + ".");
+		}
+		LOGGER.info(getClass().getSimpleName() + ": " + mode.getTitle() + " registration opened on " + picked.id() + ".");
 		return null;
 	}
 
@@ -770,6 +911,14 @@ public class TeamVsTeamManager
 	public TvTMap getRegistrationMap()
 	{
 		return _state == State.REGISTRATION ? _registrationMap : null;
+	}
+
+	/**
+	 * @return what the registration open now plays (the last one's, when none is open)
+	 */
+	public Mode getRegistrationMode()
+	{
+		return _registrationMode;
 	}
 
 	public boolean isRegistrationOpen()
@@ -932,13 +1081,13 @@ public class TeamVsTeamManager
 				registered++;
 				if (member != leader)
 				{
-					member.sendMessage("TvT: " + leader.getName() + " registered the party. " + result);
+					member.sendMessage(_registrationMode.getTag() + ": " + leader.getName() + " registered the party. " + result);
 				}
 			}
 			else
 			{
 				sb.append(member.getName()).append(": ").append(result).append(" ");
-				member.sendMessage("TvT: You could not be registered: " + result);
+				member.sendMessage(_registrationMode.getTag() + ": You could not be registered: " + result);
 			}
 		}
 		return registered + " of " + party.getMemberCount() + " members are registered." + (sb.length() > 0 ? " " + sb.toString().trim() : "");
@@ -989,6 +1138,8 @@ public class TeamVsTeamManager
 
 		_state = State.INACTIVE;
 		cancelRegistrationTasks();
+		final Mode mode = _registrationMode;
+		final String tag = mode.getTag();
 		// The map as last saved: a GM may have fixed it while the registration was open (one taken out or left without spawn points meanwhile is played as it was).
 		final TvTMap latest = TvTMapData.getInstance().getMap(_registrationMap.id());
 		final TvTMap map = (latest != null) && latest.isComplete() ? latest : _registrationMap;
@@ -1007,7 +1158,7 @@ public class TeamVsTeamManager
 			final String refusal = getJoinRefusal(player);
 			if (refusal != null)
 			{
-				player.sendMessage("TvT: You can't take part: " + refusal);
+				player.sendMessage(tag + ": You can't take part: " + refusal);
 				continue;
 			}
 			players.add(player);
@@ -1016,7 +1167,7 @@ public class TeamVsTeamManager
 
 		if (players.isEmpty())
 		{
-			Broadcast.toAllOnlinePlayers("TvT: Nobody registered, no match this time.");
+			Broadcast.toAllOnlinePlayers(tag + ": Nobody registered, no match this time.");
 			return;
 		}
 
@@ -1057,7 +1208,7 @@ public class TeamVsTeamManager
 			{
 				for (Player member : members)
 				{
-					member.sendMessage("TvT: Your party has members of different level brackets: it is broken up, and each of you plays in the match of their level.");
+					member.sendMessage(tag + ": Your party has members of different level brackets: it is broken up, and each of you plays in the match of their level.");
 				}
 			}
 			for (Map.Entry<Integer, List<Player>> entry : byBracket.entrySet())
@@ -1084,7 +1235,41 @@ public class TeamVsTeamManager
 				{
 					for (Player player : group)
 					{
-						player.sendMessage("TvT: Not enough players registered for the levels " + bracket[0] + "-" + bracket[1] + " match.");
+						player.sendMessage(tag + ": Not enough players registered for the levels " + bracket[0] + "-" + bracket[1] + " match.");
+					}
+				}
+				continue;
+			}
+
+			// A Deathmatch: every one for themselves, a party plays as its members alone. More players than a match holds make more matches.
+			if (mode == Mode.DEATHMATCH)
+			{
+				final List<Player> all = new ArrayList<>();
+				for (List<Player> group : groups)
+				{
+					all.addAll(group);
+				}
+				final int matchCount = (all.size() + TeamVsTeamConfig.DM_SIZE - 1) / TeamVsTeamConfig.DM_SIZE;
+				for (int m = 0; m < matchCount; m++)
+				{
+					// Even matches: the players are dealt out in turn.
+					final List<List<Player>> singles = new ArrayList<>();
+					for (int i = m; i < all.size(); i += matchCount)
+					{
+						singles.add(List.of(all.get(i)));
+					}
+					if (!fakes && (singles.size() < 2))
+					{
+						for (List<Player> single : singles)
+						{
+							single.get(0).sendMessage(tag + ": Not enough players for the levels " + bracket[0] + "-" + bracket[1] + " match.");
+						}
+						continue;
+					}
+					final Match match = startMatch(map, mode, bracket, singles, List.of(), false);
+					if (match != null)
+					{
+						started.append(started.length() > 0 ? ", " : "").append(match.getBracketName());
 					}
 				}
 				continue;
@@ -1151,7 +1336,7 @@ public class TeamVsTeamManager
 				{
 					for (Player player : group)
 					{
-						player.sendMessage("TvT: There was no room left for your group in the levels " + bracket[0] + "-" + bracket[1] + " match.");
+						player.sendMessage(tag + ": There was no room left for your group in the levels " + bracket[0] + "-" + bracket[1] + " match.");
 					}
 				}
 
@@ -1162,13 +1347,13 @@ public class TeamVsTeamManager
 					{
 						for (Player player : group)
 						{
-							player.sendMessage("TvT: Not enough players for two teams in the levels " + bracket[0] + "-" + bracket[1] + " match.");
+							player.sendMessage(tag + ": Not enough players for two teams in the levels " + bracket[0] + "-" + bracket[1] + " match.");
 						}
 					}
 					continue;
 				}
 
-				final Match match = startMatch(map, bracket, blue, red, false);
+				final Match match = startMatch(map, mode, bracket, blue, red, false);
 				if (match != null)
 				{
 					started.append(started.length() > 0 ? ", " : "").append(match.getBracketName());
@@ -1178,11 +1363,11 @@ public class TeamVsTeamManager
 
 		if (started.length() > 0)
 		{
-			Broadcast.toAllOnlinePlayers("TvT: The matches start in the " + map.name() + " (levels " + started + "). Good luck!");
+			Broadcast.toAllOnlinePlayers(tag + ": The matches start in the " + map.name() + " (levels " + started + "). Good luck!");
 		}
 		else
 		{
-			Broadcast.toAllOnlinePlayers("TvT: Not enough players registered, no match this time.");
+			Broadcast.toAllOnlinePlayers(tag + ": Not enough players registered, no match this time.");
 		}
 	}
 
@@ -1190,7 +1375,7 @@ public class TeamVsTeamManager
 	// Match setup
 	// ---------------------------------------------------------------------------------------------
 
-	private Match startMatch(TvTMap map, int[] bracket, List<List<Player>> blueGroups, List<List<Player>> redGroups, boolean simulated)
+	private Match startMatch(TvTMap map, Mode mode, int[] bracket, List<List<Player>> blueGroups, List<List<Player>> redGroups, boolean simulated)
 	{
 		final Instance instance = InstanceManager.getInstance().createDynamicInstance(INSTANCE_TEMPLATE_ID);
 		if (instance == null)
@@ -1198,8 +1383,12 @@ public class TeamVsTeamManager
 			return null;
 		}
 
-		final Match match = new Match(_nextMatchId.getAndIncrement(), map, bracket[0], bracket[1], instance.getId());
+		final Match match = new Match(_nextMatchId.getAndIncrement(), mode, map, bracket[0], bracket[1], instance.getId());
 		match._simulated = simulated;
+		if (match.isDeathmatch())
+		{
+			match._spots = findSpawnSpots(map);
+		}
 		match._barrier.addAll(TeamVsTeamBarrier.build(map, instance.getId()));
 		setUpDoors(map, instance);
 		_matches.put(match.getId(), match);
@@ -1218,8 +1407,15 @@ public class TeamVsTeamManager
 				group.forEach(Player::leaveParty);
 			}
 
-			buildSide(match, match._blue, blueGroups, instance);
-			buildSide(match, match._red, redGroups, instance);
+			if (match.isDeathmatch())
+			{
+				buildDeathmatch(match, blueGroups, instance);
+			}
+			else
+			{
+				buildSide(match, match._blue, blueGroups, instance);
+				buildSide(match, match._red, redGroups, instance);
+			}
 		}
 		catch (Exception e)
 		{
@@ -1229,12 +1425,24 @@ public class TeamVsTeamManager
 		for (Player player : match.getPlayers())
 		{
 			final Fighter fighter = _fighters.get(player.getObjectId());
+			if (match.isDeathmatch())
+			{
+				sendScreen(player, "Deathmatch: every one for themselves! The fight starts in " + TeamVsTeamConfig.PREP_TIME + " seconds.", 8, true);
+				player.sendMessage("Deathmatch (levels " + match.getBracketName() + ", " + match.getAllFighters().size() + " fighters): everyone else is attacked without Ctrl. The dead come back somewhere on the field after " + TeamVsTeamConfig.DM_RESPAWN_DELAY + " seconds; most kills in " + TeamVsTeamConfig.DM_FIGHT_TIME + " minutes wins.");
+				continue;
+			}
 			sendScreen(player, "You fight for team " + fighter._side._name + ". The fight starts in " + TeamVsTeamConfig.PREP_TIME + " seconds.", 8, true);
 			player.sendMessage("TvT: Team " + fighter._side._name + " (levels " + match.getBracketName() + "): " + TeamVsTeamConfig.TEAM_SIZE + " vs " + TeamVsTeamConfig.TEAM_SIZE + ". The other team is attacked without Ctrl; most kills in " + TeamVsTeamConfig.FIGHT_TIME + " minutes wins.");
 		}
 
+		if (match.isDeathmatch())
+		{
+			// The event strip of each player (its own score against the best one), now that everyone is in.
+			sendState(match, Ex2TeamEventState.RESULT_NONE);
+		}
+
 		match._task = ThreadPool.scheduleAtFixedRate(() -> tick(match), TICK_MS, TICK_MS);
-		LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " (levels " + match.getBracketName() + ", " + map.id() + ") started: Blue " + match._blue.getPlayerCount() + " players / " + match._blue._fighters.size() + ", Red " + match._red.getPlayerCount() + " players / " + match._red._fighters.size() + ", " + match._barrier.size() + " walls of fence round the field.");
+		LOGGER.info(getClass().getSimpleName() + ": " + mode.getTitle() + " match " + match.getId() + " (levels " + match.getBracketName() + ", " + map.id() + (match.isDeathmatch() ? ", " + match._spots.size() + " spawn spots" : "") + ") started: Blue " + match._blue.getPlayerCount() + " players / " + match._blue._fighters.size() + ", Red " + match._red.getPlayerCount() + " players / " + match._red._fighters.size() + ", " + match._barrier.size() + " walls of fence round the field.");
 		return match;
 	}
 
@@ -1285,6 +1493,131 @@ public class TeamVsTeamManager
 				door.closeMe();
 			}
 		}
+	}
+
+	/**
+	 * Fills a Deathmatch: its players, then fake players of the damage dealing roles up to {@link TeamVsTeamConfig#DM_SIZE}, each on its own (no party: every one for themselves).
+	 */
+	private void buildDeathmatch(Match match, List<List<Player>> groups, Instance instance)
+	{
+		int players = 0;
+		for (List<Player> group : groups)
+		{
+			for (Player player : group)
+			{
+				enterPlayer(match, match._blue, player, instance);
+				players++;
+			}
+		}
+
+		if (!FakePlayerPvpManager.getInstance().isEnabled())
+		{
+			return;
+		}
+		final List<SimRole> roles = new ArrayList<>();
+		for (int i = players; i < TeamVsTeamConfig.DM_SIZE; i++)
+		{
+			roles.add(DEATHMATCH_ROLES[Rnd.get(DEATHMATCH_ROLES.length)]);
+		}
+		spawnFakes(match, match._blue, roles, instance);
+	}
+
+	/**
+	 * The spots a Deathmatch spawns its fighters at: open ground of the battlefield, inside its fence (with room to spare) and on its level, from which a player can walk to one of the map's spawn points (so none is on a roof or a ledge it can't leave). The
+	 * map's spawn points are spots too.
+	 * @param map the map
+	 * @return the spots, at least the map's spawn points
+	 */
+	private static List<Location> findSpawnSpots(TvTMap map)
+	{
+		final GeoEngine geo = GeoEngine.getInstance();
+		final List<Location> anchors = new ArrayList<>(map.blue());
+		anchors.addAll(map.red());
+		final List<Location> spots = new ArrayList<>(anchors);
+		final TvTBarrier barrier = map.barrier();
+		final int minX = barrier != null ? Math.max(map.minX(), barrier.x() - barrier.radiusX()) : map.minX();
+		final int maxX = barrier != null ? Math.min(map.maxX(), barrier.x() + barrier.radiusX()) : map.maxX();
+		final int minY = barrier != null ? Math.max(map.minY(), barrier.y() - barrier.radiusY()) : map.minY();
+		final int maxY = barrier != null ? Math.min(map.maxY(), barrier.y() + barrier.radiusY()) : map.maxY();
+		if ((maxX <= minX) || (maxY <= minY))
+		{
+			return spots;
+		}
+
+		int found = 0;
+		for (int tries = 0; (tries < DM_SPOT_TRIES) && (found < DM_SPOTS); tries++)
+		{
+			final int x = Rnd.get(minX, maxX);
+			final int y = Rnd.get(minY, maxY);
+			if (((barrier != null) && !barrier.contains(x, y, -DM_SPOT_FENCE_MARGIN)) || !geo.hasGeo(x, y))
+			{
+				continue;
+			}
+			final int z = geo.getHeight(x, y, map.z());
+			if ((Math.abs(z - map.z()) > DM_SPOT_LEVEL) || !geo.checkNearestNswe(GeoEngine.getGeoX(x), GeoEngine.getGeoY(y), z, Cell.NSWE_ALL))
+			{
+				continue;
+			}
+
+			// Not too close to another spot, and a way from it to the closest spawn point of the map.
+			Location anchor = null;
+			boolean crowded = false;
+			for (Location spot : spots)
+			{
+				final double distance = Math.hypot(spot.getX() - x, spot.getY() - y);
+				if (distance < DM_SPOT_GAP)
+				{
+					crowded = true;
+					break;
+				}
+				if (anchors.contains(spot) && ((anchor == null) || (distance < Math.hypot(anchor.getX() - x, anchor.getY() - y))))
+				{
+					anchor = spot;
+				}
+			}
+			if (crowded || (anchor == null))
+			{
+				continue;
+			}
+			if (!geo.canMoveToTarget(x, y, z, anchor.getX(), anchor.getY(), anchor.getZ(), 0) && (PathFinding.getInstance().findPath(x, y, z, anchor.getX(), anchor.getY(), anchor.getZ(), 0, false) == null))
+			{
+				continue;
+			}
+			spots.add(new Location(x, y, z, Rnd.get(65536)));
+			found++;
+		}
+		return spots;
+	}
+
+	/**
+	 * A spot of a Deathmatch for someone (re)spawning: of a few picked by chance, the one farthest from every other living fighter, so nobody spawns in front of an enemy.
+	 * @param match a Deathmatch
+	 * @param fighter who spawns, {@code null} for a fighter not made yet
+	 * @return the spot
+	 */
+	private static Location pickSpawnSpot(Match match, Fighter fighter)
+	{
+		final List<Location> spots = match._spots;
+		Location best = spots.get(Rnd.get(spots.size()));
+		double bestDistance = -1;
+		for (int i = 0; i < DM_SPOT_PICKS; i++)
+		{
+			final Location spot = spots.get(Rnd.get(spots.size()));
+			double nearest = Double.MAX_VALUE;
+			for (Fighter other : match._blue._fighters)
+			{
+				if ((other != fighter) && other.isAlive())
+				{
+					nearest = Math.min(nearest, other._creature.calculateDistance2D(spot));
+				}
+			}
+			if (nearest > bestDistance)
+			{
+				best = spot;
+				bestDistance = nearest;
+			}
+		}
+		return new Location(best.getX(), best.getY(), best.getZ(), Rnd.get(65536));
 	}
 
 	/**
@@ -1412,7 +1745,7 @@ public class TeamVsTeamManager
 			}
 
 			final int level = Rnd.get(match._minLevel, match._maxLevel);
-			final Location location = QuestSpawnUtil.findPoint(side._base, 20, Math.max(40, TeamVsTeamConfig.SPAWN_RADIUS), true, instance.getId());
+			final Location location = match.isDeathmatch() ? pickSpawnSpot(match, null) : QuestSpawnUtil.findPoint(side._base, 20, Math.max(40, TeamVsTeamConfig.SPAWN_RADIUS), true, instance.getId());
 			final Npc fake = FakePlayerPvpManager.getInstance().spawnTvtFighter(build, level, side._name, match.getId(), side._team, side._nameColor, location.getX(), location.getY(), location.getZ(), instance.getId());
 			if (fake == null)
 			{
@@ -1420,6 +1753,7 @@ public class TeamVsTeamManager
 			}
 
 			final Fighter fighter = new Fighter(fake, match, side, role);
+			fighter._home = location;
 			side._fighters.add(fighter);
 			_fighters.put(fake.getObjectId(), fighter);
 			showScore(fighter);
@@ -1456,10 +1790,21 @@ public class TeamVsTeamManager
 		player.getAppearance().setNameColor(side._nameColor);
 		player.setTeam(side._team);
 		player.setTitle(scoreTitle(fighter));
-		player.teleToLocation(side._base, instance.getId(), TeamVsTeamConfig.SPAWN_RADIUS);
+		if (match.isDeathmatch())
+		{
+			fighter._home = pickSpawnSpot(match, fighter);
+			player.teleToLocation(fighter._home, instance.getId(), 0);
+		}
+		else
+		{
+			player.teleToLocation(side._base, instance.getId(), TeamVsTeamConfig.SPAWN_RADIUS);
+		}
 		buffAndHeal(player);
 		player.broadcastUserInfo();
-		TeamEventHud.sendState(player, state(match, Ex2TeamEventState.RESULT_NONE), side._team);
+		if (!match.isDeathmatch())
+		{
+			TeamEventHud.sendState(player, state(match, Ex2TeamEventState.RESULT_NONE), side._team);
+		}
 		showZones(match, player, side._team);
 
 		final BuffTemplateManager templates = BuffTemplateManager.getInstance();
@@ -1530,9 +1875,10 @@ public class TeamVsTeamManager
 						}
 
 						final Creature creature = fighter._creature;
-						if (!creature.isDead() && !creature.isTeleporting() && (creature.calculateDistance2D(fighter._side._base) > TeamVsTeamConfig.BASE_RADIUS))
+						final Location home = match.isDeathmatch() ? fighter._home : fighter._side._base;
+						if ((home != null) && !creature.isDead() && !creature.isTeleporting() && (creature.calculateDistance2D(home) > (match.isDeathmatch() ? DM_PREP_RADIUS : TeamVsTeamConfig.BASE_RADIUS)))
 						{
-							sendHome(fighter, fighter._side._base);
+							sendHome(fighter, home);
 							if (fighter.isPlayer())
 							{
 								sendScreen(creature.asPlayer(), "The fight hasn't started yet!", 4, false);
@@ -1579,8 +1925,9 @@ public class TeamVsTeamManager
 						}
 
 						// No camping in front of the other team's spawn: whoever walks into one of its bases is stunned there until it dies, and its team may kill it from inside the base. Players coming close are warned first, fake players turn back.
+						// A Deathmatch has no bases.
 						final Side other = match.getOther(fighter._side);
-						final double enemyBase = other.getBaseDistance(creature);
+						final double enemyBase = match.isDeathmatch() ? Double.MAX_VALUE : other.getBaseDistance(creature);
 						if (enemyBase < TeamVsTeamConfig.BASE_RADIUS)
 						{
 							if (!fighter._trapped)
@@ -1591,13 +1938,13 @@ public class TeamVsTeamManager
 						}
 						if (fighter.isPlayer())
 						{
-							if ((enemyBase < (TeamVsTeamConfig.BASE_RADIUS + TeamVsTeamConfig.BASE_WARNING_DISTANCE)) && (now >= fighter._nextBaseWarning))
+							if (!match.isDeathmatch() && (enemyBase < (TeamVsTeamConfig.BASE_RADIUS + TeamVsTeamConfig.BASE_WARNING_DISTANCE)) && (now >= fighter._nextBaseWarning))
 							{
 								fighter._nextBaseWarning = now + BASE_WARNING_INTERVAL;
 								sendScreen(creature.asPlayer(), "Enemy base ahead! Step into it and you are stunned until you die.", 4, true);
 							}
 						}
-						else if (enemyBase < (TeamVsTeamConfig.BASE_RADIUS + FAKE_TURN_BACK_DISTANCE))
+						else if (!match.isDeathmatch() && (enemyBase < (TeamVsTeamConfig.BASE_RADIUS + FAKE_TURN_BACK_DISTANCE)))
 						{
 							turnBack(fighter, other);
 						}
@@ -1653,7 +2000,7 @@ public class TeamVsTeamManager
 	private void startFight(Match match)
 	{
 		match._phase = Phase.FIGHT;
-		match._fightEnd = System.currentTimeMillis() + (TeamVsTeamConfig.FIGHT_TIME * 60000L);
+		match._fightEnd = System.currentTimeMillis() + ((match.isDeathmatch() ? TeamVsTeamConfig.DM_FIGHT_TIME : TeamVsTeamConfig.FIGHT_TIME) * 60000L);
 		sendState(match, Ex2TeamEventState.RESULT_NONE);
 		for (Player player : match.getPlayers())
 		{
@@ -1674,6 +2021,12 @@ public class TeamVsTeamManager
 	 */
 	private static void updateTactics(Match match)
 	{
+		if (match.isDeathmatch())
+		{
+			updateDeathmatchTactics(match);
+			return;
+		}
+
 		// How many living team mates each fighter has close by: alone or in a group.
 		for (Side side : new Side[]
 		{
@@ -1760,6 +2113,25 @@ public class TeamVsTeamManager
 		}
 	}
 
+	/**
+	 * A Deathmatch for the fake players: nobody has team mates (so none is ever "in a group" to avoid), every living fighter out of spawn protection is a group of its own and alone; nobody fights "for" anyone.
+	 */
+	private static void updateDeathmatchTactics(Match match)
+	{
+		final List<Location> targets = new ArrayList<>();
+		for (Fighter fighter : match._blue._fighters)
+		{
+			fighter._alliesNear = 0;
+			if (fighter.isAlive() && !fighter.isProtected() && !fighter._creature.isInvisible())
+			{
+				targets.add(fighter._creature.getLocation());
+			}
+		}
+		match._blue._clashes = List.of();
+		match._blue._enemyGroups = targets;
+		match._blue._loneEnemies = targets;
+	}
+
 	private void respawn(Fighter fighter)
 	{
 		fighter._respawnAt = 0;
@@ -1770,12 +2142,13 @@ public class TeamVsTeamManager
 		}
 
 		final Match match = fighter._match;
-		final Location base = fighter._respawnBase != null ? fighter._respawnBase : fighter._side._base;
+		final Location base = match.isDeathmatch() ? pickSpawnSpot(match, fighter) : fighter._respawnBase != null ? fighter._respawnBase : fighter._side._base;
+		fighter._home = base;
 		if (creature.isPlayer())
 		{
 			final Player player = creature.asPlayer();
 			player.setIsPendingRevive(true);
-			player.teleToLocation(base, match._instanceId, TeamVsTeamConfig.SPAWN_RADIUS);
+			player.teleToLocation(base, match._instanceId, match.isDeathmatch() ? 0 : TeamVsTeamConfig.SPAWN_RADIUS);
 			buffAndHeal(player);
 		}
 		else if (creature instanceof Npc fake)
@@ -1809,7 +2182,7 @@ public class TeamVsTeamManager
 	private static void sendHome(Fighter fighter, Location base)
 	{
 		final Creature creature = fighter._creature;
-		creature.teleToLocation(base, fighter._match._instanceId, TeamVsTeamConfig.SPAWN_RADIUS);
+		creature.teleToLocation(base, fighter._match._instanceId, fighter._match.isDeathmatch() ? 0 : TeamVsTeamConfig.SPAWN_RADIUS);
 		if (!creature.isPlayer() && !creature.isDead() && creature.hasAI() && (creature.getAI() instanceof AttackableAI ai))
 		{
 			ai.startAITask();
@@ -1968,10 +2341,19 @@ public class TeamVsTeamManager
 		dead._loneUntil = 0;
 		dead._ambushSpot = null;
 		untrap(dead);
-		dead._side.joinWave(dead, System.currentTimeMillis());
+		if (match.isDeathmatch())
+		{
+			// Each comes back alone, at a spot picked when it does.
+			dead._respawnAt = System.currentTimeMillis() + (TeamVsTeamConfig.DM_RESPAWN_DELAY * 1000L);
+			dead._respawnBase = null;
+		}
+		else
+		{
+			dead._side.joinWave(dead, System.currentTimeMillis());
+		}
 
 		final Fighter slayer = getFighter(killer);
-		if ((slayer != null) && (slayer._match == match) && (slayer._side != dead._side))
+		if ((slayer != null) && (slayer._match == match) && (match.isDeathmatch() ? slayer != dead : slayer._side != dead._side))
 		{
 			slayer._kills++;
 			slayer._side._score.incrementAndGet();
@@ -1991,10 +2373,14 @@ public class TeamVsTeamManager
 		{
 			// How the kill came about: its killer on its own, out of an ambush, its victim alone.
 			final String how = (slayer == null ? "" : (slayer.isLone() ? " [lone]" : "") + ((System.currentTimeMillis() - slayer._ambushSprungAt) < AMBUSH_KILL_TIME ? " [ambush]" : "")) + (deadAlone ? " [victim alone]" : "");
-			LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " " + (match.getSecondsLeft() / 60) + ":" + String.format("%02d", match.getSecondsLeft() % 60) + " left: " + (slayer != null ? describe(slayer) : (killer != null ? killer.getName() : "?")) + " killed " + describe(dead) + how + ". Blue " + match._blue.getScore() + " : " + match._red.getScore() + " Red.");
+			LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " " + (match.getSecondsLeft() / 60) + ":" + String.format("%02d", match.getSecondsLeft() % 60) + " left: " + (slayer != null ? describe(slayer) : (killer != null ? killer.getName() : "?")) + " killed " + describe(dead) + how + (match.isDeathmatch() ? "." : ". Blue " + match._blue.getScore() + " : " + match._red.getScore() + " Red."));
 		}
 
-		if (dead.isPlayer())
+		if (dead.isPlayer() && match.isDeathmatch())
+		{
+			dead._creature.sendMessage("Deathmatch: You come back somewhere on the field in " + TeamVsTeamConfig.DM_RESPAWN_DELAY + " seconds. Your score: " + dead._kills + " kills, " + dead._deaths + " deaths.");
+		}
+		else if (dead.isPlayer())
 		{
 			dead._creature.sendMessage("TvT: You come back at your base in " + TeamVsTeamConfig.RESPAWN_DELAY + " seconds. Your score: " + dead._kills + " kills, " + dead._deaths + " deaths.");
 		}
@@ -2082,6 +2468,11 @@ public class TeamVsTeamManager
 			return;
 		}
 		match._phase = Phase.ENDED;
+		if (match.isDeathmatch())
+		{
+			endDeathmatch(match, abandoned);
+			return;
+		}
 
 		for (Fighter fighter : match.getAllFighters())
 		{
@@ -2136,6 +2527,86 @@ public class TeamVsTeamManager
 		}
 
 		LOGGER.info(getClass().getSimpleName() + ": Match " + match.getId() + " (levels " + match.getBracketName() + ") ended: " + result);
+		ThreadPool.schedule(() -> cleanup(match), abandoned ? 2000 : END_DELAY);
+	}
+
+	/**
+	 * The end of a Deathmatch: the one with the most kills wins (none on a tie for the first place). The players are ranked among themselves, the fake players left out: the first gets {@link TeamVsTeamConfig#DM_WIN_REWARD}, the places
+	 * {@link TeamVsTeamConfig#DM_TOP_REWARDS} (players with a kill or more).
+	 */
+	private void endDeathmatch(Match match, boolean abandoned)
+	{
+		for (Fighter fighter : match.getAllFighters())
+		{
+			final Creature creature = fighter._creature;
+			creature.abortAttack();
+			creature.abortCast();
+			creature.setInvul(true);
+			if (!fighter.isPlayer() && creature.hasAI())
+			{
+				creature.getAI().setIntention(Intention.IDLE);
+			}
+		}
+
+		final List<Fighter> ranking = match.getRanking();
+		final Fighter first = ranking.isEmpty() ? null : ranking.get(0);
+		final boolean tie = (first == null) || (first._kills == 0) || ((ranking.size() > 1) && (ranking.get(1)._kills == first._kills));
+		final Fighter winner = abandoned || tie ? null : first;
+		final String result = abandoned ? "The match is over." : winner == null ? "The Deathmatch ended in a tie" + ((first != null) && (first._kills > 0) ? " at " + first._kills + " kills." : ".") : winner._creature.getName() + " won the Deathmatch with " + winner._kills + " kills!";
+		final StringBuilder best = new StringBuilder();
+		for (int i = 0; (i < 3) && (i < ranking.size()) && (ranking.get(i)._kills > 0); i++)
+		{
+			best.append(best.length() > 0 ? ", " : "").append(ranking.get(i)._creature.getName()).append(" (").append(ranking.get(i)._kills).append(')');
+		}
+
+		for (Player player : match.getPlayers())
+		{
+			final Fighter fighter = _fighters.get(player.getObjectId());
+			final int place = fighter != null ? ranking.indexOf(fighter) + 1 : 0;
+			sendScreen(player, result, 7, true);
+			player.sendMessage("Deathmatch: " + result + (best.length() > 0 ? " Best killers: " + best + "." : "") + (fighter != null ? " You: place " + place + " of " + ranking.size() + ", " + fighter._kills + " kills, " + fighter._deaths + " deaths." : ""));
+		}
+		sendState(match, abandoned ? Ex2TeamEventState.RESULT_NO_RESULT : Ex2TeamEventState.RESULT_NONE);
+
+		if (!abandoned)
+		{
+			final List<Fighter> players = new ArrayList<>();
+			for (Fighter fighter : ranking)
+			{
+				if (fighter.isPlayer() && (fighter._kills > 0))
+				{
+					players.add(fighter);
+				}
+			}
+			final Skill firework = CommonSkill.FIREWORK.getSkill();
+			for (int i = 0; i < players.size(); i++)
+			{
+				final Fighter fighter = players.get(i);
+				final Player player = fighter._creature.asPlayer();
+				if (i == 0)
+				{
+					if (firework != null)
+					{
+						player.broadcastPacket(new MagicSkillUse(player, player, firework.getId(), firework.getLevel(), firework.getHitTime(), firework.getReuseDelay()));
+					}
+					player.broadcastSocialAction(3);
+					for (ItemHolder reward : TeamVsTeamConfig.DM_WIN_REWARD)
+					{
+						player.addItem(ItemProcessType.REWARD, reward.getId(), reward.getCount(), null, true);
+					}
+				}
+				if (i < TeamVsTeamConfig.DM_TOP_REWARDS.size())
+				{
+					final TopReward reward = TeamVsTeamConfig.DM_TOP_REWARDS.get(i);
+					final int itemId = reward.getItemId(player);
+					player.sendMessage("Deathmatch: You are number " + (i + 1) + " of the players with " + fighter._kills + " kills.");
+					player.addItem(ItemProcessType.REWARD, itemId, reward.count(), null, true);
+					LOGGER.info(getClass().getSimpleName() + ": Deathmatch " + match.getId() + " place " + (i + 1) + ": " + player.getName() + " (" + fighter._kills + " kills, " + fighter._deaths + " deaths) gets " + reward.count() + " of item " + itemId + ".");
+				}
+			}
+		}
+
+		LOGGER.info(getClass().getSimpleName() + ": Deathmatch " + match.getId() + " (levels " + match.getBracketName() + ") ended: " + result);
 		ThreadPool.schedule(() -> cleanup(match), abandoned ? 2000 : END_DELAY);
 	}
 
@@ -2366,7 +2837,7 @@ public class TeamVsTeamManager
 
 		for (Player other : match.getPlayers())
 		{
-			other.sendMessage("TvT: " + player.getName() + " left the match.");
+			other.sendMessage(match._mode.getTag() + ": " + player.getName() + " left the match.");
 		}
 	}
 
@@ -2406,7 +2877,7 @@ public class TeamVsTeamManager
 				}
 			}
 			_registered.clear();
-			Broadcast.toAllOnlinePlayers("TvT: The event was canceled.");
+			Broadcast.toAllOnlinePlayers(_registrationMode.getTag() + ": The event was canceled.");
 		}
 
 		for (Match match : _matches.values())
@@ -2441,6 +2912,11 @@ public class TeamVsTeamManager
 	 */
 	private void sendState(Match match, int result)
 	{
+		if (match.isDeathmatch())
+		{
+			sendDeathmatchState(match, result);
+			return;
+		}
 		final Ex2TeamEventState.State state = state(match, result);
 		for (Player player : match.getPlayers())
 		{
@@ -2457,11 +2933,55 @@ public class TeamVsTeamManager
 	}
 
 	/**
+	 * A Deathmatch on the event strip (the TvT one, myTeam 0): Blue's score is the player's own kills, Red's the most kills of anyone else. Once it ended the result says whether the player won (Blue), lost (Red) or tied for the first place (a draw).
+	 * @param match a Deathmatch
+	 * @param result {@link Ex2TeamEventState#RESULT_NO_RESULT} if it was stopped, else anything (worked out per player once it ended)
+	 */
+	private void sendDeathmatchState(Match match, int result)
+	{
+		final List<Fighter> ranking = match.getRanking();
+		final int phase = match._phase == Phase.PREP ? Ex2TeamEventState.PHASE_PREP : match._phase == Phase.FIGHT ? Ex2TeamEventState.PHASE_FIGHT : Ex2TeamEventState.PHASE_ENDED;
+		final int secondsLeft = match._phase == Phase.ENDED ? 0 : match.getSecondsLeft();
+		final List<Player> viewers = new ArrayList<>(match.getPlayers());
+		for (Player gm : watchers(match))
+		{
+			if (!_fighters.containsKey(gm.getObjectId()))
+			{
+				viewers.add(gm);
+			}
+		}
+		for (Player viewer : viewers)
+		{
+			final Fighter fighter = _fighters.get(viewer.getObjectId());
+			final int own = (fighter != null) && (fighter._match == match) ? fighter._kills : 0;
+			int others = 0;
+			for (Fighter other : ranking)
+			{
+				if (other != fighter)
+				{
+					others = other._kills;
+					break;
+				}
+			}
+			int outcome = Ex2TeamEventState.RESULT_NONE;
+			if (match._phase == Phase.ENDED)
+			{
+				outcome = result == Ex2TeamEventState.RESULT_NO_RESULT ? result : own > others ? Ex2TeamEventState.RESULT_BLUE : own < others ? Ex2TeamEventState.RESULT_RED : Ex2TeamEventState.RESULT_DRAW;
+			}
+			TeamEventHud.sendState(viewer, new Ex2TeamEventState.State(Ex2TeamEventState.MODE_TVT, phase, outcome, secondsLeft, own, others, 0, 0, 0, List.of()), Team.NONE);
+		}
+	}
+
+	/**
 	 * @param match a match
 	 * @return the ids of every zone it shows on a player's radar: both teams' bases and the edge
 	 */
 	private static List<Integer> zoneIds(Match match)
 	{
+		if (match.isDeathmatch())
+		{
+			return TeamEventHud.zoneIds(0, 0, 0);
+		}
 		return TeamEventHud.zoneIds(0, match._blue._bases.size(), match._red._bases.size());
 	}
 
@@ -2483,7 +3003,14 @@ public class TeamVsTeamManager
 		final Location center = getFieldCenter(match);
 		gm.teleToLocation(center.getX(), center.getY(), center.getZ(), 0, match.getInstanceId(), 0);
 		match._watchers.add(gm.getObjectId());
-		TeamEventHud.sendState(gm, state(match, Ex2TeamEventState.RESULT_NONE), Team.NONE);
+		if (match.isDeathmatch())
+		{
+			sendDeathmatchState(match, Ex2TeamEventState.RESULT_NONE);
+		}
+		else
+		{
+			TeamEventHud.sendState(gm, state(match, Ex2TeamEventState.RESULT_NONE), Team.NONE);
+		}
 		showZones(match, gm, Team.NONE);
 	}
 
@@ -2528,7 +3055,8 @@ public class TeamVsTeamManager
 	 */
 	private static void showZones(Match match, Player player, Team viewer)
 	{
-		for (Side side : new Side[]
+		// A Deathmatch has no bases: only the edge.
+		for (Side side : match.isDeathmatch() ? new Side[0] : new Side[]
 		{
 			match._blue,
 			match._red
@@ -2703,6 +3231,11 @@ public class TeamVsTeamManager
 		{
 			return Relation.STRANGER;
 		}
+		if (fa._match.isDeathmatch())
+		{
+			// Every one for themselves: only one's own summons are friends.
+			return fa == fb ? Relation.ALLY : Relation.ENEMY;
+		}
 		return fa._side == fb._side ? Relation.ALLY : Relation.ENEMY;
 	}
 
@@ -2753,7 +3286,7 @@ public class TeamVsTeamManager
 	 */
 	private static boolean isInBase(Creature creature, Fighter fighter)
 	{
-		return fighter._side.getBaseDistance(creature) <= TeamVsTeamConfig.BASE_RADIUS;
+		return !fighter._match.isDeathmatch() && (fighter._side.getBaseDistance(creature) <= TeamVsTeamConfig.BASE_RADIUS);
 	}
 
 	/**
@@ -2776,7 +3309,7 @@ public class TeamVsTeamManager
 	public static boolean isAtOwnBase(Creature creature)
 	{
 		final Fighter fighter = getFighter(creature);
-		return (fighter != null) && (fighter._side.getBaseDistance(creature) <= TeamVsTeamConfig.BASE_RADIUS);
+		return (fighter != null) && isInBase(creature, fighter);
 	}
 	
 	/**
@@ -2835,7 +3368,7 @@ public class TeamVsTeamManager
 		final boolean alone = fighter._alliesNear == 0;
 		Creature best = null;
 		double bestScore = Double.MAX_VALUE;
-		for (Fighter enemy : fighter._match.getOther(fighter._side)._fighters)
+		for (Fighter enemy : fighter._match.getEnemies(fighter))
 		{
 			final Creature creature = enemy._creature;
 			if (!enemy.isAlive() || enemy.isProtected() || creature.isInvisible() || (creature.getInstanceId() != fake.getInstanceId()) || isInBase(creature, enemy))
@@ -2894,7 +3427,8 @@ public class TeamVsTeamManager
 	public boolean goLone(Npc fake, long until)
 	{
 		final Fighter fighter = _fighters.get(fake.getObjectId());
-		if ((fighter == null) || (fighter._match._phase != Phase.FIGHT) || ((fighter._role != SimRole.MELEE) && (fighter._role != SimRole.ARCHER) && (fighter._role != SimRole.NUKER)))
+		// In a Deathmatch everyone is on its own anyway: it hunts whoever is closest.
+		if ((fighter == null) || fighter._match.isDeathmatch() || (fighter._match._phase != Phase.FIGHT) || ((fighter._role != SimRole.MELEE) && (fighter._role != SimRole.ARCHER) && (fighter._role != SimRole.NUKER)))
 		{
 			return false;
 		}
@@ -3194,6 +3728,13 @@ public class TeamVsTeamManager
 			return null;
 		}
 
+		// A Deathmatch: the closest fighter it knows of (anyone out of spawn protection), else the middle of the field.
+		if (fighter._match.isDeathmatch())
+		{
+			final Location target = closest(fake, fighter._side._enemyGroups, Integer.MAX_VALUE);
+			return target != null ? target : getFieldCenter(fighter._match);
+		}
+
 		final Location help = closest(fake, fighter._side._clashes, HELP_RANGE);
 
 		// One that knows the game picks off an enemy alone close by before it joins a fight further away.
@@ -3314,22 +3855,34 @@ public class TeamVsTeamManager
 	 */
 	public String simulate(int level)
 	{
-		return simulate(level, null);
+		return simulate(Mode.TVT, level, null);
+	}
+
+	/**
+	 * Starts a Team vs Team match of fake players only, see {@link #simulate(Mode, int, TvTMap)}.
+	 * @param level a level of the bracket to play
+	 * @param map the map to play on, {@code null} for one picked by chance
+	 * @return what to tell the GM
+	 */
+	public String simulate(int level, TvTMap map)
+	{
+		return simulate(Mode.TVT, level, map);
 	}
 
 	/**
 	 * Starts a match of fake players only (no registration, no players): both teams are parties of fake players of the bracket of {@code level}. It plays to its end with nobody watching and logs its kills, to try the event out (or a map).
+	 * @param mode what it plays
 	 * @param level a level of the bracket to play
-	 * @param map the map to play on, {@code null} for one of {@link TeamVsTeamConfig#MAPS} picked by chance
+	 * @param map the map to play on, {@code null} for one of {@link TeamVsTeamConfig#MAPS} ({@link TeamVsTeamConfig#DM_MAPS}) picked by chance
 	 * @return what to tell the GM
 	 */
-	public synchronized String simulate(int level, TvTMap map)
+	public synchronized String simulate(Mode mode, int level, TvTMap map)
 	{
 		if (!FakePlayerPvpManager.getInstance().isEnabled())
 		{
 			return "Fake players are disabled (EnableFakePlayers, FakePvpEnabled).";
 		}
-		final TvTMap picked = map != null ? map : TvTMapData.getInstance().getRandomMap(TeamVsTeamConfig.MAPS);
+		final TvTMap picked = map != null ? map : TvTMapData.getInstance().getRandomMap(mode == Mode.DEATHMATCH ? TeamVsTeamConfig.DM_MAPS : TeamVsTeamConfig.MAPS);
 		if (picked == null)
 		{
 			return "There is no enabled map with spawn points for both teams (data/tvt, //tvt map).";
@@ -3345,10 +3898,14 @@ public class TeamVsTeamManager
 			return "Level " + level + " is outside every bracket (" + describeBrackets() + ").";
 		}
 		
-		final Match match = startMatch(picked, TeamVsTeamConfig.BRACKETS.get(index), List.of(), List.of(), true);
+		final Match match = startMatch(picked, mode, TeamVsTeamConfig.BRACKETS.get(index), List.of(), List.of(), true);
 		if (match == null)
 		{
 			return "The instance could not be created.";
+		}
+		if (match.isDeathmatch())
+		{
+			return "Simulated Deathmatch " + match.getId() + " (levels " + match.getBracketName() + ") started on " + picked.name() + ": " + match._blue._fighters.size() + " fake players, " + match._spots.size() + " spawn spots, the fight in " + TeamVsTeamConfig.PREP_TIME + " seconds.";
 		}
 		return "Simulated match " + match.getId() + " (levels " + match.getBracketName() + ") started on " + picked.name() + ": " + match._blue._fighters.size() + " vs " + match._red._fighters.size() + " fake players, the fight in " + TeamVsTeamConfig.PREP_TIME + " seconds.";
 	}
@@ -3379,7 +3936,7 @@ public class TeamVsTeamManager
 	public List<String> getStatus(boolean detail)
 	{
 		final List<String> lines = new ArrayList<>();
-		lines.add(isRegistrationOpen() ? "Registration open on " + _registrationMap.name() + ", " + getRegistrationSecondsLeft() + " s left, " + getRegisteredCount() + " registered, " + _managers.size() + " TvT Event Manager(s) out." : "Registration closed.");
+		lines.add(isRegistrationOpen() ? _registrationMode.getTitle() + " registration open on " + _registrationMap.name() + ", " + getRegistrationSecondsLeft() + " s left, " + getRegisteredCount() + " registered, " + _managers.size() + " TvT Event Manager(s) out." : "Registration closed.");
 		if (_matches.isEmpty())
 		{
 			lines.add("No match going on.");
@@ -3398,7 +3955,7 @@ public class TeamVsTeamManager
 		lines.add("Fighters tracked: " + _fighters.size() + ", Team vs Team fake players in the world: " + fakesInWorld + ".");
 		for (Match match : _matches.values())
 		{
-			lines.add("Match " + match.getId() + " (levels " + match.getBracketName() + ", " + match._map.name() + (match._simulated ? ", simulated" : "") + "): " + match._phase + ", " + match.getSecondsLeft() + " s left, Blue " + match._blue.getScore() + " : " + match._red.getScore() + " Red, instance " + match._instanceId + ".");
+			lines.add((match.isDeathmatch() ? "Deathmatch " : "Match ") + match.getId() + " (levels " + match.getBracketName() + ", " + match._map.name() + (match._simulated ? ", simulated" : "") + "): " + match._phase + ", " + match.getSecondsLeft() + " s left, Blue " + match._blue.getScore() + " : " + match._red.getScore() + " Red, instance " + match._instanceId + ".");
 			for (Side side : new Side[]
 			{
 				match._blue,

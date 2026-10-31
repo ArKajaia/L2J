@@ -70,6 +70,20 @@ public class TeamVsTeamConfig
 	/** The buffs players may put in their TvT Event buff template: {skill id, level}, level 0 for the skill's highest. */
 	public static List<int[]> BUFFS;
 
+	// Deathmatch: every one for themselves on the TvT maps (see TeamVsTeamManager.Mode#DEATHMATCH).
+	public static boolean DM_ENABLED;
+	/** Fighters per match, players and fake players. */
+	public static int DM_SIZE;
+	public static int DM_FIGHT_TIME;
+	public static int DM_RESPAWN_DELAY;
+	/** The maps a Deathmatch registration picks from, by id (data/tvt), empty for any enabled one. */
+	public static List<String> DM_MAPS;
+	/** The reward of the best player (the fake players left out of the places). */
+	public static List<ItemHolder> DM_WIN_REWARD;
+	/** The extra rewards of the best players, first place first: Crystal Scrolls of their grade. */
+	public static List<TopReward> DM_TOP_REWARDS;
+	public static int DM_NAME_COLOR;
+
 	public static void load()
 	{
 		final ConfigReader config = new ConfigReader(TEAM_VS_TEAM_CONFIG_FILE);
@@ -142,28 +156,7 @@ public class TeamVsTeamConfig
 		}
 		KILL_REWARDS = Collections.unmodifiableList(killRewards);
 
-		final List<ItemHolder> winReward = new ArrayList<>();
-		for (String part : config.getString("TvTWinReward", "6393,10").split(";"))
-		{
-			final String[] values = part.trim().split(",");
-			if (values.length == 2)
-			{
-				try
-				{
-					winReward.add(new ItemHolder(Integer.parseInt(values[0].trim()), Long.parseLong(values[1].trim())));
-					continue;
-				}
-				catch (NumberFormatException e)
-				{
-					// Reported below.
-				}
-			}
-			if (!part.isBlank())
-			{
-				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad reward \"" + part + "\" in TvTWinReward.");
-			}
-		}
-		WIN_REWARD = Collections.unmodifiableList(winReward);
+		WIN_REWARD = parseItems(config.getString("TvTWinReward", "6393,10"), "TvTWinReward");
 
 		TOP_REWARDS = parseTopRewards(config.getString("TvTTopRewards", "weapon,1;armor,2;armor,1"), "TvTTopRewards");
 
@@ -208,6 +201,54 @@ public class TeamVsTeamConfig
 			}
 		}
 		BUFFS = Collections.unmodifiableList(buffs);
+
+		DM_ENABLED = config.getBoolean("DeathmatchEnabled", true);
+		DM_SIZE = Math.max(2, Math.min(100, config.getInt("DeathmatchSize", 20)));
+		DM_FIGHT_TIME = Math.max(1, config.getInt("DeathmatchFightTime", 20));
+		DM_RESPAWN_DELAY = Math.max(1, config.getInt("DeathmatchRespawnDelay", 10));
+		final List<String> dmMaps = new ArrayList<>();
+		for (String id : config.getString("DeathmatchMaps", "").split(","))
+		{
+			if (!id.isBlank())
+			{
+				dmMaps.add(id.trim().toLowerCase());
+			}
+		}
+		DM_MAPS = Collections.unmodifiableList(dmMaps);
+		DM_WIN_REWARD = parseItems(config.getString("DeathmatchWinReward", "6393,10"), "DeathmatchWinReward");
+		DM_TOP_REWARDS = parseTopRewards(config.getString("DeathmatchTopRewards", "weapon,1;armor,2;armor,1"), "DeathmatchTopRewards");
+		DM_NAME_COLOR = Integer.decode("0x" + config.getString("DeathmatchNameColor", "FFFFFF"));
+	}
+
+	/**
+	 * @param text items: itemId,count;itemId,count...
+	 * @param key the config key, for the warnings
+	 * @return the items
+	 */
+	private static List<ItemHolder> parseItems(String text, String key)
+	{
+		final List<ItemHolder> items = new ArrayList<>();
+		for (String part : text.split(";"))
+		{
+			final String[] values = part.trim().split(",");
+			if (values.length == 2)
+			{
+				try
+				{
+					items.add(new ItemHolder(Integer.parseInt(values[0].trim()), Long.parseLong(values[1].trim())));
+					continue;
+				}
+				catch (NumberFormatException e)
+				{
+					// Reported below.
+				}
+			}
+			if (!part.isBlank())
+			{
+				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad reward \"" + part + "\" in " + key + ".");
+			}
+		}
+		return Collections.unmodifiableList(items);
 	}
 
 	/**
