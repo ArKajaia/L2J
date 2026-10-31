@@ -433,6 +433,9 @@
 	<!-- ADMIN MONSTER MOD -->
 	<admin command="monstermod" description="Infused and Resonant monsters: //monstermod [status|infused [fire|water|wind|earth|holy|dark]|resonant|join [helper|rival]|clear] on the targeted monster, skipping the spawn chance (for testing). join brings a fake player into the fight against a Resonant monster." accessLevel="100" />
 
+	<!-- ADMIN TOWN LIFE -->
+	<admin command="townlife" description="Town Life: //townlife shows what every town is doing; //townlife festival on|off|auto forces festival day or follows the calendar." accessLevel="100" />
+
 	<!-- ADMIN NIGHT CYCLE -->
 	<admin command="night" description="Night Cycle: //night [status|day|dusk|night|witching|dawn|auto|omen name|nightlord|raid]. A forced phase lasts until the clock reaches its next one. //night raid starts a Shadow Raid near the targeted player, or a random one." accessLevel="100" />
 
