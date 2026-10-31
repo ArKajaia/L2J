@@ -141,9 +141,11 @@ public class TvT extends Event
 
 		final int seconds = manager.getRegistrationSecondsLeft();
 		// The registration open now is for Team vs Team or a Deathmatch (they take turns, see EventRotationManager).
-		final boolean deathmatch = manager.getRegistrationMode() == Mode.DEATHMATCH;
+		final boolean passive = manager.getRegistrationMode() == Mode.PASSIVE_DEATHMATCH;
+		final boolean deathmatch = manager.getRegistrationMode().isDeathmatch();
 		final NpcHtmlMessage html = new NpcHtmlMessage(npc.getObjectId());
-		html.setFile(player, HTML_PATH + (deathmatch ? "deathmatch.html" : "manager.html"));
+		html.setFile(player, HTML_PATH + (passive ? "passive-deathmatch.html" : deathmatch ? "deathmatch.html" : "manager.html"));
+		html.replace("%choices%", String.valueOf(TeamVsTeamConfig.PDM_CHOICES));
 		html.replace("%message%", manager.isRegistrationOpen() ? message : "Registration is closed.");
 		html.replace("%size%", String.valueOf(deathmatch ? TeamVsTeamConfig.DM_SIZE : TeamVsTeamConfig.TEAM_SIZE));
 		final EventMap map = manager.getRegistrationMap();

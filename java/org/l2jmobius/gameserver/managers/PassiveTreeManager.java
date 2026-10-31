@@ -64,6 +64,17 @@ public class PassiveTreeManager
 	// key: "objectId#classIndex" -> allocated node ids for that character+subclass
 	private final Map<String, Set<Integer>> _cache = new ConcurrentHashMap<>();
 	
+	/**
+	 * objectId -> the blank event tree that stands in for the player's own allocation while they fight in a Passive Deathmatch (see {@link PassiveDeathmatchManager}).
+	 * <p>
+	 * It lives in memory only: it is never written to the database, never parked as a template and never seen by {@link #_cache}, so the player's own tree is untouched underneath and comes back as it was the moment the event tree goes. A server restart, a logout or
+	 * leaving the event in any way drops it (see {@link #endEventTree}, {@link #onClassContextChanged} and the guard in {@link #getAllocatedNodes}). While it is in place every change to the tree (allocate, refund, reset, template switch, import) is refused.
+	 */
+	private final Map<Integer, Set<Integer>> _eventTrees = new ConcurrentHashMap<>();
+	
+	/** Told to a player who tries to change the tree while it is the event's. */
+	public static final String EVENT_TREE_LOCKED_MESSAGE = "Your passive tree is replaced by the event's during a Passive Deathmatch and can't be changed. Your own tree comes back when you leave the event.";
+	
 	private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(PassiveTreeManager.class.getName());
 	
 	public enum DeallocateResult
@@ -283,12 +294,111 @@ public class PassiveTreeManager
 	
 	public int getAvailablePoints(Player player)
 	{
+		// The event tree is not bought with points: none can be spent while it is in place.
+		if (isOnEventTree(player))
+		{
+			return 0;
+		}
 		return getEarnedPoints(player) - getSpentPoints(player);
 	}
 	
+	/**
+	 * @param player the player
+	 * @return the nodes that are in effect: the event tree while the player fights in a Passive Deathmatch (read only), its own allocation otherwise
+	 */
 	public Set<Integer> getAllocatedNodes(Player player)
 	{
+		final Set<Integer> eventTree = _eventTrees.get(player.getObjectId());
+		if (eventTree != null)
+		{
+			// Never outside an event: a player who is no longer on one gets its own tree back, whatever path took it out.
+			if (player.isOnEvent())
+			{
+				return Collections.unmodifiableSet(eventTree);
+			}
+			if (_eventTrees.remove(player.getObjectId(), eventTree))
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": " + player.getName() + " still had a Passive Deathmatch tree out of the event: their own tree is back.");
+				ThreadPool.execute(() -> applyAll(player, false));
+			}
+		}
+		return getOwnAllocatedNodes(player);
+	}
+	
+	/**
+	 * @param player the player
+	 * @return the player's own allocation (current class index), even while an event tree stands in for it
+	 */
+	private Set<Integer> getOwnAllocatedNodes(Player player)
+	{
 		return _cache.computeIfAbsent(key(player), k -> loadFromDb(player));
+	}
+	
+	// ------------------------------------------------------------------
+	// Event tree (Passive Deathmatch)
+	// ------------------------------------------------------------------
+	
+	/**
+	 * @param player the player
+	 * @return {@code true} while a Passive Deathmatch tree stands in for the player's own one
+	 */
+	public boolean isOnEventTree(Player player)
+	{
+		return _eventTrees.containsKey(player.getObjectId());
+	}
+	
+	/**
+	 * Replaces the player's tree with a blank event tree: its nodes stop applying (stats, keystones and the skills they grant), nothing is written anywhere. Call once the player is on the event ({@link Player#isOnEvent()}).
+	 * @param player the player
+	 */
+	public void beginEventTree(Player player)
+	{
+		_eventTrees.put(player.getObjectId(), ConcurrentHashMap.newKeySet());
+		applyAll(player, false);
+	}
+	
+	/**
+	 * Adds a node to the player's event tree and applies it.
+	 * @param player the player
+	 * @param nodeId the node
+	 * @return {@code false} if the player has no event tree, or the node is unknown or already in it
+	 */
+	public boolean addEventNode(Player player, int nodeId)
+	{
+		final Set<Integer> eventTree = _eventTrees.get(player.getObjectId());
+		if ((eventTree == null) || (PassiveTreeData.getInstance().getNode(nodeId) == null) || !eventTree.add(nodeId))
+		{
+			return false;
+		}
+		applyAll(player, false);
+		return true;
+	}
+	
+	/**
+	 * Takes the event tree away: the player's own tree applies again, as it was.
+	 * @param player the player
+	 */
+	public void endEventTree(Player player)
+	{
+		if (_eventTrees.remove(player.getObjectId()) != null)
+		{
+			applyAll(player, false);
+		}
+	}
+	
+	/**
+	 * Refuses a change to the tree while the event's stands in for it.
+	 * @param player the player
+	 * @return {@code true} (after telling the player) if the tree may not be changed now
+	 */
+	private boolean refuseEventTreeChange(Player player)
+	{
+		if (!isOnEventTree(player))
+		{
+			return false;
+		}
+		player.sendMessage(EVENT_TREE_LOCKED_MESSAGE);
+		return true;
 	}
 	
 	/**
@@ -376,7 +486,7 @@ public class PassiveTreeManager
 	public boolean canAllocate(Player player, int nodeId)
 	{
 		final PassiveNode node = PassiveTreeData.getInstance().getNode(nodeId);
-		if (node == null)
+		if ((node == null) || isOnEventTree(player))
 		{
 			return false;
 		}
@@ -445,12 +555,12 @@ public class PassiveTreeManager
 	
 	public boolean allocate(Player player, int nodeId)
 	{
-		if (!canAllocate(player, nodeId))
+		if (refuseEventTreeChange(player) || !canAllocate(player, nodeId))
 		{
 			return false;
 		}
 		
-		getAllocatedNodes(player).add(nodeId);
+		getOwnAllocatedNodes(player).add(nodeId);
 		persistInsert(player, nodeId);
 		applyAll(player);
 		return true;
@@ -493,7 +603,12 @@ public class PassiveTreeManager
 	 */
 	public ImportResult importNodes(Player player, List<Integer> nodeIds)
 	{
-		final Set<Integer> allocated = getAllocatedNodes(player);
+		if (refuseEventTreeChange(player))
+		{
+			return new ImportResult(0, 0, new LinkedHashSet<>(nodeIds).size(), 0);
+		}
+		
+		final Set<Integer> allocated = getOwnAllocatedNodes(player);
 		final List<Integer> pending = new ArrayList<>(new LinkedHashSet<>(nodeIds));
 		final int before = pending.size();
 		pending.removeIf(allocated::contains);
@@ -984,6 +1099,11 @@ public class PassiveTreeManager
 	 */
 	public void onClassContextChanged(Player player)
 	{
+		// Login (or a class change away from an event): an event tree never outlives the event.
+		if (!player.isOnEvent())
+		{
+			_eventTrees.remove(player.getObjectId());
+		}
 		_treeGranted.remove(player.getObjectId());
 		_replacedCreateItem.remove(player.getObjectId());
 		applyAll(player, false);
@@ -1098,6 +1218,12 @@ public class PassiveTreeManager
 	 */
 	public boolean resetTree(Player player)
 	{
+		// Before any cost is taken: the event tree is not the player's to reset.
+		if (refuseEventTreeChange(player))
+		{
+			return false;
+		}
+		
 		if (getAllocatedNodes(player).isEmpty())
 		{
 			player.sendMessage("Your passive tree has nothing to reset.");
@@ -1120,7 +1246,7 @@ public class PassiveTreeManager
 			}
 		}
 
-		getAllocatedNodes(player).clear();
+		getOwnAllocatedNodes(player).clear();
 		
 		final int classIndex = PassiveTreeConfig.SEPARATE_SUBCLASS_POINTS ? player.getClassIndex() : 0;
 		try (Connection con = DatabaseFactory.getConnection();
@@ -1239,7 +1365,7 @@ public class PassiveTreeManager
 		final List<TemplateInfo> result = new ArrayList<>();
 		for (int id = 1; id <= PassiveTreeConfig.TEMPLATE_COUNT; id++)
 		{
-			final Set<Integer> nodeIds = (id == active) ? getAllocatedNodes(player) : parked.getOrDefault(id, Collections.emptySet());
+			final Set<Integer> nodeIds = (id == active) ? getOwnAllocatedNodes(player) : parked.getOrDefault(id, Collections.emptySet());
 			int points = 0;
 			for (int nodeId : nodeIds)
 			{
@@ -1269,6 +1395,11 @@ public class PassiveTreeManager
 		if ((templateId < 1) || (templateId > PassiveTreeConfig.TEMPLATE_COUNT))
 		{
 			return SwitchResult.INVALID;
+		}
+		// The live allocation would be parked as a template: never the event tree.
+		if (isOnEventTree(player))
+		{
+			return SwitchResult.DISABLED;
 		}
 
 		final int from = getActiveTemplate(player);
@@ -1325,7 +1456,7 @@ public class PassiveTreeManager
 			return SwitchResult.NOT_ENOUGH_POINTS;
 		}
 
-		final Set<Integer> current = new HashSet<>(getAllocatedNodes(player));
+		final Set<Integer> current = new HashSet<>(getOwnAllocatedNodes(player));
 
 		// One transaction: a crash half way must never leave the old template's nodes lost.
 		try (Connection con = DatabaseFactory.getConnection())
@@ -1372,7 +1503,7 @@ public class PassiveTreeManager
 			return SwitchResult.ERROR;
 		}
 
-		final Set<Integer> allocated = getAllocatedNodes(player);
+		final Set<Integer> allocated = getOwnAllocatedNodes(player);
 		allocated.clear();
 		allocated.addAll(valid);
 		player.getVariables().set(VAR_ACTIVE_TEMPLATE + classIndex, templateId);
@@ -1421,7 +1552,7 @@ public class PassiveTreeManager
 		{
 			case DISABLED:
 			{
-				return "The passive tree is disabled.";
+				return isOnEventTree(player) ? EVENT_TREE_LOCKED_MESSAGE : "The passive tree is disabled.";
 			}
 			case INVALID:
 			{
@@ -1595,7 +1726,7 @@ public class PassiveTreeManager
 	public DeallocateResult deallocateNode(Player player, int nodeId)
 	{
 		final PassiveNode node = PassiveTreeData.getInstance().getNode(nodeId);
-		if (node == null)
+		if ((node == null) || refuseEventTreeChange(player))
 		{
 			return DeallocateResult.NOT_ALLOCATED;
 		}
@@ -1626,7 +1757,7 @@ public class PassiveTreeManager
 			}
 		}
 		
-		getAllocatedNodes(player).remove(nodeId);
+		getOwnAllocatedNodes(player).remove(nodeId);
 		persistDelete(player, nodeId);
 
 		// Rebuild stats and skills from the new allocation set - this reuses

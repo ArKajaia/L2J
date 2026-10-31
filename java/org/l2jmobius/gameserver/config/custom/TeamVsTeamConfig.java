@@ -22,7 +22,9 @@ package org.l2jmobius.gameserver.config.custom;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.util.ConfigReader;
@@ -83,6 +85,17 @@ public class TeamVsTeamConfig
 	/** The extra rewards of the best players, first place first: Crystal Scrolls of their grade. */
 	public static List<TopReward> DM_TOP_REWARDS;
 	public static int DM_NAME_COLOR;
+
+	// Passive Deathmatch: a Deathmatch with blank passive trees, a passive picked on each kill (see PassiveDeathmatchManager). Its size, time, respawn and rewards are the Deathmatch ones.
+	public static boolean PDM_ENABLED;
+	/** The maps a Passive Deathmatch registration picks from, by id (data/maps), empty for {@link #DM_MAPS}. */
+	public static List<String> PDM_MAPS;
+	/** How many passives a kill offers to pick 1 from. */
+	public static int PDM_CHOICES;
+	/** The node types the offered passives are of (PassiveNode.NodeType names: NOTABLE, KEYSTONE, MASTER...), upper case. */
+	public static Set<String> PDM_NODE_TYPES;
+	/** A node with any of these effect keys (their base key, without the @condition) is never offered: loot, PvE-only damage... */
+	public static Set<String> PDM_EXCLUDED_EFFECTS;
 
 	public static void load()
 	{
@@ -218,6 +231,41 @@ public class TeamVsTeamConfig
 		DM_WIN_REWARD = parseItems(config.getString("DeathmatchWinReward", "6393,10"), "DeathmatchWinReward");
 		DM_TOP_REWARDS = parseTopRewards(config.getString("DeathmatchTopRewards", "weapon,1;armor,2;armor,1"), "DeathmatchTopRewards");
 		DM_NAME_COLOR = Integer.decode("0x" + config.getString("DeathmatchNameColor", "FFFFFF"));
+
+		PDM_ENABLED = config.getBoolean("PassiveDeathmatchEnabled", true);
+		final List<String> pdmMaps = new ArrayList<>();
+		for (String id : config.getString("PassiveDeathmatchMaps", "").split(","))
+		{
+			if (!id.isBlank())
+			{
+				pdmMaps.add(id.trim().toLowerCase());
+			}
+		}
+		PDM_MAPS = Collections.unmodifiableList(pdmMaps);
+		PDM_CHOICES = Math.max(1, Math.min(5, config.getInt("PassiveDeathmatchChoices", 3)));
+		final Set<String> nodeTypes = new HashSet<>();
+		for (String type : config.getString("PassiveDeathmatchNodeTypes", "NOTABLE,KEYSTONE").split(","))
+		{
+			if (!type.isBlank())
+			{
+				nodeTypes.add(type.trim().toUpperCase());
+			}
+		}
+		if (nodeTypes.isEmpty())
+		{
+			nodeTypes.add("NOTABLE");
+			nodeTypes.add("KEYSTONE");
+		}
+		PDM_NODE_TYPES = Collections.unmodifiableSet(nodeTypes);
+		final Set<String> excluded = new HashSet<>();
+		for (String key : config.getString("PassiveDeathmatchExcludedEffects", "DROP_RATE_PCT,SPOIL_RATE_PCT,ADENA_RATE_PCT,EXP_RATE_PCT,SP_RATE_PCT,PVE_PDMG_PCT,PVE_MDMG_PCT,PVE_BOW_DMG_PCT").split(","))
+		{
+			if (!key.isBlank())
+			{
+				excluded.add(key.trim().toUpperCase());
+			}
+		}
+		PDM_EXCLUDED_EFFECTS = Collections.unmodifiableSet(excluded);
 	}
 
 	/**
