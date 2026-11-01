@@ -82,6 +82,8 @@ public class TeamVsTeamConfig
 	public static List<String> DM_MAPS;
 	/** The reward of the best player (the fake players left out of the places). */
 	public static List<ItemHolder> DM_WIN_REWARD;
+	/** What a player gets for each kill in a Deathmatch of either kind, on top of {@link #KILL_REWARDS}. */
+	public static List<ItemHolder> DM_KILL_REWARD;
 	/** The extra rewards of the best players, first place first: Crystal Scrolls of their grade. */
 	public static List<TopReward> DM_TOP_REWARDS;
 	public static int DM_NAME_COLOR;
@@ -229,6 +231,7 @@ public class TeamVsTeamConfig
 		}
 		DM_MAPS = Collections.unmodifiableList(dmMaps);
 		DM_WIN_REWARD = parseItems(config.getString("DeathmatchWinReward", "6393,10"), "DeathmatchWinReward");
+		DM_KILL_REWARD = parseItems(config.getString("DeathmatchKillReward", "6393,1"), "DeathmatchKillReward");
 		DM_TOP_REWARDS = parseTopRewards(config.getString("DeathmatchTopRewards", "weapon,1;armor,2;armor,1"), "DeathmatchTopRewards");
 		DM_NAME_COLOR = Integer.decode("0x" + config.getString("DeathmatchNameColor", "FFFFFF"));
 

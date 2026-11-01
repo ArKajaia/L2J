@@ -49,7 +49,7 @@ public class EventRotationConfig
 	{
 		final ConfigReader config = new ConfigReader(EVENT_ROTATION_CONFIG_FILE);
 		ENABLED = config.getBoolean("EventRotationEnabled", true);
-		SCHEDULE = config.getString("EventRotationSchedule", "0 * * * *");
+		SCHEDULE = config.getString("EventRotationSchedule", "0 0,3,6,9,12,15,18,21 * * *|30 1,4,7,10,13,16,19,22 * * *");
 		final List<String> order = new ArrayList<>();
 		for (String part : config.getString("EventRotationOrder", "TvT,Conquest,Deathmatch,RaceWars,PassiveDeathmatch").split(","))
 		{

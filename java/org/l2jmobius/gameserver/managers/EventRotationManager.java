@@ -36,7 +36,7 @@ import org.l2jmobius.gameserver.managers.conquest.ConquestMatch;
 import org.l2jmobius.gameserver.managers.conquest.ConquestRegistration;
 
 /**
- * The PvP events take turns: every {@link EventRotationConfig#SCHEDULE} (every hour by default) the next event of {@link EventRotationConfig#ORDER} opens its registration: Team vs Team, Conquest, Deathmatch, and again. They never overlap: while one still goes on
+ * The PvP events take turns: every {@link EventRotationConfig#SCHEDULE} (every hour and a half by default) the next event of {@link EventRotationConfig#ORDER} opens its registration: Team vs Team, Conquest, Deathmatch, Race Wars, Passive Deathmatch, and again. They never overlap: while one still goes on
  * (its registration is open, or a match with players runs) the turn is skipped, and the same event opens at the next one. An event that can't open (disabled, no map) gives its turn to the next one.<br>
  * With the rotation on, the events' own schedules (TvTSchedule, ConquestSchedule) are off; a GM can still open one by hand, as long as no other goes on.
  */
