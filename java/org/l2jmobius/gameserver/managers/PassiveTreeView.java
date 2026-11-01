@@ -1,10 +1,14 @@
 package org.l2jmobius.gameserver.managers;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.l2jmobius.gameserver.config.custom.PassiveTreeConfig;
+import org.l2jmobius.gameserver.data.custom.PassiveTreeData;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 
 /**
  * One player's passive tree as the planners show it: the web page (PassiveTreeApiServer's character JSON) and the game client's overlay (Ex2PassiveTreeState) both read this, so they always report the same numbers.
@@ -27,11 +31,29 @@ public record PassiveTreeView(String name, int level, int earnedPoints, int spen
 	 * @param player a player
 	 * @return the player's tree now
 	 */
+	/**
+	 * @param allocated allocated node ids
+	 * @return the ones on the tree: the event-only nodes of a Mayhem tree (see PassiveTreeData#EVENT_FILE) are not on the client's tree, and are shown in the event's pick window instead
+	 */
+	private static List<Integer> treeNodes(Collection<Integer> allocated)
+	{
+		final Map<Integer, PassiveNode> tree = PassiveTreeData.getInstance().getAllNodes();
+		final List<Integer> nodes = new ArrayList<>(allocated.size());
+		for (int id : allocated)
+		{
+			if (tree.containsKey(id))
+			{
+				nodes.add(id);
+			}
+		}
+		return nodes;
+	}
+	
 	public static PassiveTreeView of(Player player)
 	{
 		final PassiveTreeManager mgr = PassiveTreeManager.getInstance();
 		final int earned = mgr.getEarnedPoints(player);
 		final int spent = mgr.getSpentPoints(player);
-		return new PassiveTreeView(player.getName(), player.getLevel(), earned, spent, earned - spent, new ArrayList<>(mgr.getAllocatedNodes(player)), mgr.getActiveTemplate(player), PassiveTreeConfig.TEMPLATE_PEACE_ZONE_ONLY, mgr.canSwitchTemplateHere(player), PassiveTreeConfig.TEMPLATE_SWITCH_DELAY, mgr.getTemplateCooldownRemaining(player), mgr.getTemplates(player));
+		return new PassiveTreeView(player.getName(), player.getLevel(), earned, spent, earned - spent, treeNodes(mgr.getAllocatedNodes(player)), mgr.getActiveTemplate(player), PassiveTreeConfig.TEMPLATE_PEACE_ZONE_ONLY, mgr.canSwitchTemplateHere(player), PassiveTreeConfig.TEMPLATE_SWITCH_DELAY, mgr.getTemplateCooldownRemaining(player), mgr.getTemplates(player));
 	}
 }

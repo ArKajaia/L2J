@@ -755,6 +755,7 @@ public class Formulas
 		damage *= penaltyMod;
 		damage *= DwarvenTrades.getPlunderMultiplier(attacker, target); // Plunderer's Mark
 		damage *= BestiaryManager.getInstance().getSlayerMultiplier(attacker, target); // Bestiary slayer
+		damage *= PassiveMechanics.meleeDamageMultiplier(attacker, target, skill); // Deathmatch: Mayhem melee keystones
 		
 		return Math.max(damage, 1);
 	}
@@ -850,6 +851,7 @@ public class Formulas
 		damage *= penaltyMod;
 		damage *= DwarvenTrades.getPlunderMultiplier(attacker, target); // Plunderer's Mark
 		damage *= BestiaryManager.getInstance().getSlayerMultiplier(attacker, target); // Bestiary slayer
+		damage *= PassiveMechanics.meleeDamageMultiplier(attacker, target, skill); // Deathmatch: Mayhem melee keystones
 		
 		return Math.max(damage, 1);
 	}
@@ -998,8 +1000,9 @@ public class Formulas
 			damage = attacker.calcStat(Stat.PHYSICAL_SKILL_POWER, damage, null, null);
 		}
 		
-		// Passive tree Point Blank / Far Shot.
+		// Passive tree Point Blank / Far Shot, and the melee keystones of Deathmatch: Mayhem.
 		damage *= PassiveMechanics.bowDamageMultiplier(attacker, target);
+		damage *= PassiveMechanics.meleeDamageMultiplier(attacker, target, skill);
 		
 		damage *= calcAttributeBonus(attacker, target, skill);
 		if (target.isAttackable())

@@ -88,12 +88,19 @@ public class TeamVsTeamConfig
 	public static List<TopReward> DM_TOP_REWARDS;
 	public static int DM_NAME_COLOR;
 
-	// Passive Deathmatch: a Deathmatch with blank passive trees, a passive picked on each kill (see PassiveDeathmatchManager). Its size, time, respawn and rewards are the Deathmatch ones.
+	// Deathmatch: Mayhem (the Passive Deathmatch in the code): a Deathmatch with blank passive trees, a passive picked on each kill (see PassiveDeathmatchManager). Its size, time, respawn and rewards are the Deathmatch ones.
 	public static boolean PDM_ENABLED;
-	/** The maps a Passive Deathmatch registration picks from, by id (data/maps), empty for {@link #DM_MAPS}. */
+	/** The maps a Mayhem registration picks from, by id (data/maps), empty for {@link #DM_MAPS}. */
 	public static List<String> PDM_MAPS;
 	/** How many passives a kill offers to pick 1 from. */
 	public static int PDM_CHOICES;
+	/** How many of them are of use to the fighter's role, at least (when the pool has so many). */
+	public static int PDM_USEFUL_CHOICES;
+	/** % of their damage area skills deal to the fighters. */
+	public static int PDM_AREA_DAMAGE;
+	/** An assist (a pick too): at least this % of the damage the victim took in the last {@link #PDM_ASSIST_WINDOW} seconds, 0 for no assists. */
+	public static int PDM_ASSIST_SHARE;
+	public static int PDM_ASSIST_WINDOW;
 	/** The node types the offered passives are of (PassiveNode.NodeType names: NOTABLE, KEYSTONE, MASTER...), upper case. */
 	public static Set<String> PDM_NODE_TYPES;
 	/** A node with any of these effect keys (their base key, without the @condition) is never offered: loot, PvE-only damage... */
@@ -235,9 +242,9 @@ public class TeamVsTeamConfig
 		DM_TOP_REWARDS = parseTopRewards(config.getString("DeathmatchTopRewards", "weapon,1;armor,2;armor,1"), "DeathmatchTopRewards");
 		DM_NAME_COLOR = Integer.decode("0x" + config.getString("DeathmatchNameColor", "FFFFFF"));
 
-		PDM_ENABLED = config.getBoolean("PassiveDeathmatchEnabled", true);
+		PDM_ENABLED = config.getBoolean("MayhemEnabled", config.getBoolean("PassiveDeathmatchEnabled", true));
 		final List<String> pdmMaps = new ArrayList<>();
-		for (String id : config.getString("PassiveDeathmatchMaps", "").split(","))
+		for (String id : config.getString("MayhemMaps", config.getString("PassiveDeathmatchMaps", "")).split(","))
 		{
 			if (!id.isBlank())
 			{
@@ -245,9 +252,13 @@ public class TeamVsTeamConfig
 			}
 		}
 		PDM_MAPS = Collections.unmodifiableList(pdmMaps);
-		PDM_CHOICES = Math.max(1, Math.min(5, config.getInt("PassiveDeathmatchChoices", 3)));
+		PDM_CHOICES = Math.max(1, Math.min(5, config.getInt("MayhemChoices", config.getInt("PassiveDeathmatchChoices", 3))));
+		PDM_USEFUL_CHOICES = Math.max(0, Math.min(PDM_CHOICES, config.getInt("MayhemUsefulChoices", 2)));
+		PDM_AREA_DAMAGE = Math.max(0, config.getInt("MayhemAreaDamage", 70));
+		PDM_ASSIST_SHARE = Math.max(0, Math.min(100, config.getInt("MayhemAssistShare", 30)));
+		PDM_ASSIST_WINDOW = Math.max(1, config.getInt("MayhemAssistWindow", 10));
 		final Set<String> nodeTypes = new HashSet<>();
-		for (String type : config.getString("PassiveDeathmatchNodeTypes", "NOTABLE,KEYSTONE").split(","))
+		for (String type : config.getString("MayhemNodeTypes", config.getString("PassiveDeathmatchNodeTypes", "NOTABLE,KEYSTONE")).split(","))
 		{
 			if (!type.isBlank())
 			{
@@ -261,7 +272,7 @@ public class TeamVsTeamConfig
 		}
 		PDM_NODE_TYPES = Collections.unmodifiableSet(nodeTypes);
 		final Set<String> excluded = new HashSet<>();
-		for (String key : config.getString("PassiveDeathmatchExcludedEffects", "DROP_RATE_PCT,SPOIL_RATE_PCT,ADENA_RATE_PCT,EXP_RATE_PCT,SP_RATE_PCT,PVE_PDMG_PCT,PVE_MDMG_PCT,PVE_BOW_DMG_PCT").split(","))
+		for (String key : config.getString("MayhemExcludedEffects", config.getString("PassiveDeathmatchExcludedEffects", "DROP_RATE_PCT,SPOIL_RATE_PCT,ADENA_RATE_PCT,EXP_RATE_PCT,SP_RATE_PCT,PVE_PDMG_PCT,PVE_MDMG_PCT,PVE_BOW_DMG_PCT")).split(","))
 		{
 			if (!key.isBlank())
 			{

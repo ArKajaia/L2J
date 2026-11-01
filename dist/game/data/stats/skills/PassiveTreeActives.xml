@@ -761,4 +761,136 @@
 		</effects>
 	</skill>
 
+	<!-- Deathmatch: Mayhem keystones (data/passivetree/MayhemNodes.xml, see PassiveMechanics) -->
+	<!-- 27481  SPELLBREAKER: a melee hit broke the target's cast; it casts 25% slower -->
+	<skill id="27481" levels="1" name="Spellbreaker">
+		<icon>icon.skill0122</icon>
+		<operateType>A2</operateType>
+		<targetType>ONE</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>3</abnormalTime>
+		<abnormalType>CASTING_TIME_DOWN</abnormalType>
+		<canBeDispeled>false</canBeDispeled>
+		<isDebuff>true</isDebuff>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Debuff">
+				<mul stat="mAtkSpd">0.75</mul>
+			</effect>
+		</effects>
+	</skill>
+	<!-- 27482  CHARGE: the first hit on a fresh target stuns it -->
+	<skill id="27482" levels="1" name="Charge">
+		<icon>icon.skill0100</icon>
+		<operateType>A2</operateType>
+		<targetType>ONE</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>1</abnormalTime>
+		<abnormalType>STUN</abnormalType>
+		<abnormalVisualEffect>STUN</abnormalVisualEffect>
+		<canBeDispeled>false</canBeDispeled>
+		<isDebuff>true</isDebuff>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Stun" />
+		</effects>
+	</skill>
+	<!-- 27483  HAMSTRING: a melee hit slows the target -->
+	<skill id="27483" levels="1" name="Hamstring">
+		<icon>icon.skill0095</icon>
+		<operateType>A2</operateType>
+		<targetType>ONE</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>3</abnormalTime>
+		<abnormalType>SPEED_DOWN</abnormalType>
+		<canBeDispeled>false</canBeDispeled>
+		<isDebuff>true</isDebuff>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Debuff">
+				<mul stat="runSpd">0.7</mul>
+			</effect>
+		</effects>
+	</skill>
+	<!-- 27484  LAST STAND (dwarves): below the HP threshold; no damage taken while it lasts (see PassiveMechanics.isWarded), +20% P.Atk and M.Atk -->
+	<skill id="27484" levels="1" name="Last Stand">
+		<icon>icon.skill0440</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>6</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<canBeDispeled>false</canBeDispeled>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pAtk">1.2</mul>
+				<mul stat="mAtk">1.2</mul>
+			</effect>
+		</effects>
+	</skill>
+	<!-- 27485  PINNING SHOT: a bow hit pins the target -->
+	<skill id="27485" levels="1" name="Pinning Shot">
+		<icon>icon.skill0402</icon>
+		<operateType>A2</operateType>
+		<targetType>ONE</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>2</abnormalTime>
+		<abnormalType>ROOT_PHYSICALLY</abnormalType>
+		<abnormalVisualEffect>ROOT</abnormalVisualEffect>
+		<canBeDispeled>false</canBeDispeled>
+		<isDebuff>true</isDebuff>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Root" />
+		</effects>
+	</skill>
+	<!-- 27486  KITE STEP: hit in melee range; +25 Speed -->
+	<skill id="27486" levels="1" name="Kite Step">
+		<icon>icon.skill0230</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>3</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<canBeDispeled>false</canBeDispeled>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<add stat="runSpd">25</add>
+			</effect>
+		</effects>
+	</skill>
+	<!-- 27487  BLADE DANCE: a melee hit; +15% Atk. Spd and +10% P.Atk -->
+	<skill id="27487" levels="1" name="Blade Dance">
+		<icon>icon.skill0275</icon>
+		<operateType>A2</operateType>
+		<targetType>SELF</targetType>
+		<abnormalLevel>1</abnormalLevel>
+		<abnormalTime>5</abnormalTime>
+		<abnormalType>NONE</abnormalType>
+		<canBeDispeled>false</canBeDispeled>
+		<isTriggeredSkill>true</isTriggeredSkill>
+		<isMagic>2</isMagic> <!-- Static Skill -->
+		<magicLevel>1</magicLevel>
+		<effects>
+			<effect name="Buff">
+				<mul stat="pAtkSpd">1.15</mul>
+				<mul stat="pAtk">1.10</mul>
+			</effect>
+		</effects>
+	</skill>
+
 </list>

@@ -38,7 +38,7 @@ public class EventRotationConfig
 	private static final String EVENT_ROTATION_CONFIG_FILE = "./config/Custom/EventRotation.ini";
 
 	/** The events a rotation can take turns between, as the config names them. */
-	public static final List<String> EVENTS = List.of("tvt", "conquest", "deathmatch", "racewars", "passivedeathmatch");
+	public static final List<String> EVENTS = List.of("tvt", "conquest", "deathmatch", "racewars", "mayhem");
 
 	public static boolean ENABLED;
 	public static String SCHEDULE;
@@ -51,10 +51,11 @@ public class EventRotationConfig
 		ENABLED = config.getBoolean("EventRotationEnabled", true);
 		SCHEDULE = config.getString("EventRotationSchedule", "0 0,3,6,9,12,15,18,21 * * *|30 1,4,7,10,13,16,19,22 * * *");
 		final List<String> order = new ArrayList<>();
-		for (String part : config.getString("EventRotationOrder", "TvT,Conquest,Deathmatch,RaceWars,PassiveDeathmatch").split(","))
+		for (String part : config.getString("EventRotationOrder", "TvT,Conquest,Deathmatch,RaceWars,Mayhem").split(","))
 		{
 			final String trimmed = part.trim().toLowerCase();
-			final String event = trimmed.equals("pdm") ? "passivedeathmatch" : trimmed;
+			// The Passive Deathmatch is Deathmatch: Mayhem now: its old names still work.
+			final String event = trimmed.equals("pdm") || trimmed.equals("passivedeathmatch") ? "mayhem" : trimmed;
 			if (event.isEmpty())
 			{
 				continue;
@@ -65,7 +66,7 @@ public class EventRotationConfig
 			}
 			else
 			{
-				LOGGER.warning(EventRotationConfig.class.getSimpleName() + ": Unknown event \"" + part.trim() + "\" in EventRotationOrder (TvT, Conquest, Deathmatch, RaceWars, PassiveDeathmatch).");
+				LOGGER.warning(EventRotationConfig.class.getSimpleName() + ": Unknown event \"" + part.trim() + "\" in EventRotationOrder (TvT, Conquest, Deathmatch, RaceWars, Mayhem).");
 			}
 		}
 		if (order.isEmpty())

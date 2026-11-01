@@ -1257,29 +1257,47 @@ public class FakePlayerPvpPassiveTree
 	 */
 	public NodeTaste rollTaste(FakePlayerPvpBuild build, int armorMask, int wornMask)
 	{
+		return rollTaste(build.getRole(), build.isHybrid(), build.getKeystones(), build.getWeights(), armorMask, wornMask, true);
+	}
+
+	/**
+	 * A taste for single nodes by role and gear (see {@link NodeTaste}), for a fake player or a player: what of the tree is of use to that role.
+	 * @param role the role
+	 * @param hybrid {@code true} for a melee build whose M. Atk. counts too
+	 * @param keystones a build's own keystone list, {@code null} for the role's
+	 * @param weights a build's own weight factors, {@code null} for none
+	 * @param armorMask the item mask of the body armour, 0 for none
+	 * @param wornMask the item mask of everything worn and held
+	 * @param random {@code true} to roll a style and jitter (a fake player), {@code false} for the plain weights of the role (a player)
+	 * @return the taste
+	 */
+	public NodeTaste rollTaste(Role role, boolean hybrid, String keystones, String weights, int armorMask, int wornMask, boolean random)
+	{
 		final int gear = gearKey(armorMask, wornMask);
-		final PoolKey key = new PoolKey(0, build.getRole(), gear, build.getKeystones(), build.isHybrid(), build.getWeights());
+		final PoolKey key = new PoolKey(0, role, gear, keystones, hybrid, weights);
 		final Map<String, Double> buildWeights = parseWeights(key.weights());
-		final Style style = Style.roll(key.role());
+		final Style style = random ? Style.roll(key.role()) : Style.BALANCED;
+		final double groupJitter = random ? GROUP_JITTER : 0;
+		final double keyJitter = random ? KEY_JITTER : 0;
 		final double[] groups =
 		{
-			style._damage * jitter(GROUP_JITTER),
-			style._speed * jitter(GROUP_JITTER),
-			style._crit * jitter(GROUP_JITTER),
-			style._life * jitter(GROUP_JITTER),
-			style._guard * jitter(GROUP_JITTER)
+			style._damage * jitter(groupJitter),
+			style._speed * jitter(groupJitter),
+			style._crit * jitter(groupJitter),
+			style._life * jitter(groupJitter),
+			style._guard * jitter(groupJitter)
 		};
 		final double[] keyWeights = new double[_keys.length];
 		for (int k = 0; k < _keys.length; k++)
 		{
-			keyWeights[k] = (keyWeight(key.role(), key.hybrid(), _keys[k]) * buildWeights.getOrDefault(_keys[k], 1.0) * groupFactor(_keys[k], groups) * jitter(KEY_JITTER)) / _units[k];
+			keyWeights[k] = (keyWeight(key.role(), key.hybrid(), _keys[k]) * buildWeights.getOrDefault(_keys[k], 1.0) * groupFactor(_keys[k], groups) * jitter(keyJitter)) / _units[k];
 		}
 		final double[] keystoneWeights = new double[_nodes.length];
 		for (Keystone keystone : getKeystones(key))
 		{
 			if (conditionWeight(keystone.gearToken(), gear) > 0)
 			{
-				keystoneWeights[keystone.index()] = keystone.weight() * jitter(KEY_JITTER);
+				keystoneWeights[keystone.index()] = keystone.weight() * jitter(keyJitter);
 			}
 		}
 

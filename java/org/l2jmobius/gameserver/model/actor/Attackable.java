@@ -53,6 +53,8 @@ import org.l2jmobius.gameserver.config.custom.VillageSiegeConfig;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
 import org.l2jmobius.gameserver.managers.EventDropManager;
+import org.l2jmobius.gameserver.managers.PassiveDeathmatchManager;
+import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.PcCafePointsManager;
@@ -290,6 +292,16 @@ public class Attackable extends Npc
 		if (isPvpFakePlayer() && PassiveMechanics.isWarded(this, attacker, skill))
 		{
 			return;
+		}
+		
+		// Passive tree Arcane Bulwark of a fake player; Deathmatch: Mayhem's area damage cut and assist count.
+		if (isPvpFakePlayer())
+		{
+			damage *= PassiveMechanics.incomingDamageMultiplier(this, attacker, skill);
+			if (TeamVsTeamManager.ACTIVE)
+			{
+				damage = PassiveDeathmatchManager.getInstance().onIncomingDamage(this, attacker, skill, damage);
+			}
 		}
 		
 		// Only players can bring a roaming fake player below its monster damage floor.

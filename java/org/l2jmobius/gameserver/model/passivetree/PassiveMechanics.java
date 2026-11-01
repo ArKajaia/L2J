@@ -127,6 +127,34 @@ public final class PassiveMechanics
 	/** Flag: each kill gives Bloodrush (Atk. Spd and Casting Spd for a few seconds); another kill starts it again. */
 	public static final String BLOODRUSH = "KS_BLOODRUSH";
 	
+	// Deathmatch: Mayhem keystones: event-only nodes (data/passivetree/MayhemNodes.xml), offered to the classes that fall behind in that event.
+	/** % chance for a melee hit on a target that is casting to break the cast and slow its casting (Spellbreaker). */
+	public static final String SPELLBREAKER = "KS_SPELLBREAKER";
+	/** % more damage of the first melee hit on a target you haven't hit for CHARGE_FRESH; it stuns the target (at most once every CHARGE_STUN_COOLDOWN). */
+	public static final String CHARGE = "KS_CHARGE";
+	/** % chance for a melee hit to slow the target (Hamstring). */
+	public static final String HAMSTRING = "KS_HAMSTRING";
+	/** % of max HP (and CP) a kill restores (Bloodthirst). */
+	public static final String BLOODTHIRST = "KS_BLOODTHIRST";
+	/** % more physical damage, bows and crossbows aside, to a target below EXECUTE_HP of its HP (Executioner's Instinct). */
+	public static final String EXECUTIONER = "KS_EXECUTIONER";
+	/** % less damage taken from area skills (Arcane Bulwark). */
+	public static final String ARCANE_BULWARK = "KS_ARCANE_BULWARK";
+	/** Flag: slows and roots never land (Juggernaut). */
+	public static final String JUGGERNAUT = "KS_JUGGERNAUT";
+	/** HP % below which Last Stand comes: a barrier (no damage taken) and +20% P.Atk and M.Atk, at most once every LAST_STAND_COOLDOWN. */
+	public static final String LAST_STAND = "KS_LAST_STAND";
+	/** % chance for a bow or crossbow hit to pin the target (at most once every PIN_COOLDOWN). */
+	public static final String PINNING_SHOT = "KS_PINNING_SHOT";
+	/** Flag: a melee hit taken gives Kite Step (Speed for a few seconds, at most once every KITE_STEP_COOLDOWN). */
+	public static final String KITE_STEP = "KS_KITE_STEP";
+	/** % more melee damage from behind the target (Assassin's Mark). */
+	public static final String ASSASSINS_MARK = "KS_ASSASSINS_MARK";
+	/** % chance per melee hit for Blade Dance (Atk. Spd and P.Atk for a few seconds). */
+	public static final String BLADE_DANCE = "KS_BLADE_DANCE";
+	/** % more polearm damage for each other fighter within SWEEP_RANGE of the target, up to SWEEP_MAX of them (Sweeping Momentum). */
+	public static final String SWEEPING_MOMENTUM = "KS_SWEEPING_MOMENTUM";
+	
 	/** Keys that cancel each other out; a node carrying one can't be allocated next to a node carrying another key of the same group. */
 	private static final List<Set<String>> EXCLUSIVE_GROUPS = List.of(Set.of(POINT_BLANK, FAR_SHOT), Set.of(RAMPAGE, BERSERK_PACT));
 	
@@ -211,6 +239,27 @@ public final class PassiveMechanics
 	private static final long LAST_LIGHT_WARD = 1500;
 	private static final int TENACITY_SKILL = 27479;
 	private static final int BLOODRUSH_SKILL = 27480;
+	/** Mayhem keystones: their buffs and debuffs (data/stats/skills/PassiveTreeActives.xml) and how often they may come. */
+	private static final int SPELLBREAKER_SKILL = 27481;
+	private static final int CHARGE_SKILL = 27482;
+	private static final long CHARGE_FRESH = 8000;
+	private static final long CHARGE_STUN_COOLDOWN = 6000;
+	private static final int HAMSTRING_SKILL = 27483;
+	private static final double EXECUTE_HP = 0.3;
+	private static final int LAST_STAND_SKILL = 27484;
+	private static final long LAST_STAND_COOLDOWN = 120000;
+	private static final int PIN_SKILL = 27485;
+	private static final long PIN_COOLDOWN = 6000;
+	private static final int KITE_STEP_SKILL = 27486;
+	private static final long KITE_STEP_COOLDOWN = 8000;
+	private static final int KITE_STEP_RANGE = 200;
+	private static final int BLADE_DANCE_SKILL = 27487;
+	private static final int SWEEP_RANGE = 150;
+	private static final int SWEEP_MAX = 3;
+	/** Charge: attacker objectId << 32 | target objectId -> when the attacker last hit it. */
+	private static final Map<Long, Long> CHARGE_LAST_HIT = new ConcurrentHashMap<>();
+	/** Charge: the attacker/target pairs whose next landed hit is a charge (its damage was raised). */
+	private static final Set<Long> CHARGE_PENDING = ConcurrentHashMap.newKeySet();
 	/** objectId << 32 | proc skill id -> time that proc can come again. */
 	private static final Map<Long, Long> PROC_READY_AT = new ConcurrentHashMap<>();
 	/** Above this many entries, the ones whose cooldown has run out are dropped (a fake player comes back with a new object id). */
@@ -837,6 +886,229 @@ public final class PassiveMechanics
 	{
 		harvestSoul(attacker);
 		addRelentlessHit(attacker, target);
+		onMayhemHit(attacker, target);
+	}
+	
+	// ---------------------------------------------------------------- Deathmatch: Mayhem keystones
+	
+	/**
+	 * @param creature a player or roaming fake player
+	 * @return the weapon type it attacks with now (a fake player may have its bow out), {@code null} for none or anything else
+	 */
+	private static WeaponType attackWeapon(Creature creature)
+	{
+		if (creature.isPlayer())
+		{
+			final Weapon weapon = creature.getActiveWeaponItem();
+			return weapon != null ? weapon.getItemType() : WeaponType.FIST;
+		}
+		return creature.isPvpFakePlayer() ? creature.getAttackType() : null;
+	}
+	
+	private static boolean isRanged(WeaponType type)
+	{
+		return (type == WeaponType.BOW) || (type == WeaponType.CROSSBOW);
+	}
+	
+	private static long pairKey(Creature attacker, Creature target)
+	{
+		return (((long) attacker.getObjectId()) << 32) | (target.getObjectId() & 0xFFFFFFFFL);
+	}
+	
+	/**
+	 * Puts a Mayhem debuff on a target, unless a cooldown of the attacker's still runs.
+	 * @param attacker who puts it
+	 * @param target who gets it
+	 * @param skillId the debuff
+	 * @param cooldown time before the attacker may put it again, 0 for none
+	 * @return {@code true} if it was put
+	 */
+	private static boolean debuff(Creature attacker, Creature target, int skillId, long cooldown)
+	{
+		if ((target == null) || target.isDead())
+		{
+			return false;
+		}
+		final long now = System.currentTimeMillis();
+		final long readyKey = (((long) attacker.getObjectId()) << 32) | skillId;
+		if (cooldown > 0)
+		{
+			final Long readyAt = PROC_READY_AT.get(readyKey);
+			if ((readyAt != null) && (readyAt > now))
+			{
+				return false;
+			}
+			PROC_READY_AT.put(readyKey, now + cooldown);
+		}
+		final Skill skill = SkillData.getInstance().getSkill(skillId, 1);
+		if (skill == null)
+		{
+			return false;
+		}
+		skill.applyEffects(attacker, target);
+		return true;
+	}
+	
+	/**
+	 * Mayhem keystones of a landed normal hit: Spellbreaker, Charge's stun, Hamstring, Pinning Shot and Blade Dance.
+	 * @param attacker the attacker
+	 * @param target the target
+	 */
+	private static void onMayhemHit(Creature attacker, Creature target)
+	{
+		if ((target == null) || (!attacker.isPlayer() && !attacker.isPvpFakePlayer()))
+		{
+			return;
+		}
+		final WeaponType type = attackWeapon(attacker);
+		if (type == null)
+		{
+			return;
+		}
+		
+		if (isRanged(type))
+		{
+			final double pin = value(attacker, PINNING_SHOT);
+			if ((pin > 0) && (Rnd.get(100) < pin) && debuff(attacker, target, PIN_SKILL, PIN_COOLDOWN))
+			{
+				attacker.sendPacket(new ExShowScreenMessage("Pinning Shot!", ExShowScreenMessage.BOTTOM_CENTER, 1500));
+			}
+			return;
+		}
+		
+		final double spellbreaker = value(attacker, SPELLBREAKER);
+		if ((spellbreaker > 0) && target.isCastingNow() && (Rnd.get(100) < spellbreaker))
+		{
+			target.abortCast();
+			debuff(attacker, target, SPELLBREAKER_SKILL, 0);
+			attacker.sendPacket(new ExShowScreenMessage("Spellbreaker!", ExShowScreenMessage.BOTTOM_CENTER, 1500));
+		}
+		
+		if (value(attacker, CHARGE) > 0)
+		{
+			final long key = pairKey(attacker, target);
+			if (CHARGE_PENDING.remove(key) && debuff(attacker, target, CHARGE_SKILL, CHARGE_STUN_COOLDOWN))
+			{
+				attacker.sendPacket(new ExShowScreenMessage("Charge!", ExShowScreenMessage.BOTTOM_CENTER, 1500));
+			}
+			final long now = System.currentTimeMillis();
+			if (CHARGE_LAST_HIT.size() > PROC_READY_PRUNE)
+			{
+				CHARGE_LAST_HIT.values().removeIf(time -> (now - time) > CHARGE_FRESH);
+			}
+			CHARGE_LAST_HIT.put(key, now);
+		}
+		
+		final double hamstring = value(attacker, HAMSTRING);
+		if ((hamstring > 0) && (Rnd.get(100) < hamstring))
+		{
+			debuff(attacker, target, HAMSTRING_SKILL, 0);
+		}
+		
+		final double bladeDance = value(attacker, BLADE_DANCE);
+		if ((bladeDance > 0) && (Rnd.get(100) < bladeDance))
+		{
+			giveBuff(attacker, BLADE_DANCE_SKILL);
+		}
+	}
+	
+	/**
+	 * Mayhem keystones that raise physical damage: Executioner's Instinct, Charge, Assassin's Mark and Sweeping Momentum. Bows and crossbows aside.
+	 * @param attacker the attacker
+	 * @param target the target
+	 * @param skill the physical skill, {@code null} for a normal attack
+	 * @return the damage multiplier
+	 */
+	public static double meleeDamageMultiplier(Creature attacker, Creature target, Skill skill)
+	{
+		if ((attacker == null) || (target == null) || (!attacker.isPlayer() && !attacker.isPvpFakePlayer()))
+		{
+			return 1;
+		}
+		final WeaponType type = attackWeapon(attacker);
+		if ((type == null) || isRanged(type))
+		{
+			return 1;
+		}
+		
+		double multiplier = 1;
+		final double executioner = value(attacker, EXECUTIONER);
+		if ((executioner > 0) && (target.getCurrentHp() < (target.getMaxHp() * EXECUTE_HP)))
+		{
+			multiplier *= 1 + (executioner / 100);
+		}
+		
+		final double charge = value(attacker, CHARGE);
+		if ((charge > 0) && (skill == null))
+		{
+			final long key = pairKey(attacker, target);
+			final Long last = CHARGE_LAST_HIT.get(key);
+			if ((last == null) || ((System.currentTimeMillis() - last) > CHARGE_FRESH))
+			{
+				multiplier *= 1 + (charge / 100);
+				CHARGE_PENDING.add(key);
+			}
+		}
+		
+		final double mark = value(attacker, ASSASSINS_MARK);
+		if ((mark > 0) && attacker.isBehind(target))
+		{
+			multiplier *= 1 + (mark / 100);
+		}
+		
+		final double sweep = value(attacker, SWEEPING_MOMENTUM);
+		if ((sweep > 0) && (type == WeaponType.POLE))
+		{
+			int around = 0;
+			for (Creature other : World.getInstance().getVisibleObjectsInRange(target, Creature.class, SWEEP_RANGE))
+			{
+				if ((other != attacker) && !other.isDead() && (other.isPlayer() || other.isPvpFakePlayer()) && (++around >= SWEEP_MAX))
+				{
+					break;
+				}
+			}
+			multiplier *= 1 + ((sweep * around) / 100);
+		}
+		return multiplier;
+	}
+	
+	/**
+	 * Arcane Bulwark: less damage from area skills.
+	 * @param target the creature about to take damage
+	 * @param attacker the attacker
+	 * @param skill the skill that deals it, {@code null} for a normal attack
+	 * @return the damage multiplier
+	 */
+	public static double incomingDamageMultiplier(Creature target, Creature attacker, Skill skill)
+	{
+		if ((skill == null) || (attacker == null) || (attacker == target) || !skill.isAOE())
+		{
+			return 1;
+		}
+		final double bulwark = value(target, ARCANE_BULWARK);
+		return bulwark > 0 ? Math.max(0, 1 - (bulwark / 100)) : 1;
+	}
+	
+	/**
+	 * Mayhem keystones of HP lost: Last Stand (dwarves) and Kite Step.
+	 */
+	private static void onMayhemHpLost(Creature target, Creature attacker, Skill skill, double hpLost)
+	{
+		if ((hpLost <= 0) || (attacker == null) || (attacker == target) || target.isDead())
+		{
+			return;
+		}
+		
+		final double lastStand = value(target, LAST_STAND);
+		if ((lastStand > 0) && (target.getCurrentHp() < ((target.getMaxHp() * lastStand) / 100)))
+		{
+			proc(target, 100, LAST_STAND_SKILL, LAST_STAND_COOLDOWN, "Last Stand!");
+		}
+		
+		if (has(target, KITE_STEP) && ((skill == null) || !skill.isMagic()) && (target.calculateDistance2D(attacker) <= KITE_STEP_RANGE))
+		{
+			proc(target, 100, KITE_STEP_SKILL, KITE_STEP_COOLDOWN, "Kite Step!");
+		}
 	}
 	
 	/**
@@ -1262,6 +1534,11 @@ public final class PassiveMechanics
 			return false;
 		}
 		
+		// Last Stand: a barrier against all damage.
+		if (target.isAffectedBySkill(LAST_STAND_SKILL))
+		{
+			return true;
+		}
 		if (isMagicDamage(skill))
 		{
 			return target.isAffectedBySkill(UNBROKEN_FAITH_WARD_SKILL) || target.isAffectedBySkill(LAST_LIGHT_MAGIC_WARD_SKILL);
@@ -1279,6 +1556,7 @@ public final class PassiveMechanics
 	 */
 	public static void onHpLost(Creature target, Creature attacker, Skill skill, double hpLost, boolean damageOverTime)
 	{
+		onMayhemHpLost(target, attacker, skill, hpLost);
 		final double threshold = value(target, LAST_LIGHT);
 		if ((threshold <= 0) || damageOverTime || (attacker == null) || (attacker == target) || target.isDead() || (hpLost < ((target.getMaxHp() * threshold) / 100)))
 		{
@@ -1301,6 +1579,18 @@ public final class PassiveMechanics
 	 */
 	public static void onKill(Creature killer, Creature victim)
 	{
+		// Bloodthirst: a kill restores HP and CP.
+		final double bloodthirst = value(killer, BLOODTHIRST);
+		if ((bloodthirst > 0) && (victim != null) && (killer != victim) && !killer.isDead() && (victim.isPlayable() || victim.isPvpFakePlayer()))
+		{
+			killer.setCurrentHp(Math.min(killer.getMaxHp(), killer.getCurrentHp() + ((killer.getMaxHp() * bloodthirst) / 100)));
+			if (killer.isPlayer())
+			{
+				killer.setCurrentCp(Math.min(killer.getMaxCp(), killer.getCurrentCp() + ((killer.getMaxCp() * bloodthirst) / 100)));
+			}
+			killer.sendPacket(new ExShowScreenMessage("Bloodthirst!", ExShowScreenMessage.BOTTOM_CENTER, 1500));
+		}
+
 		if ((killer != null) && (victim != null) && (killer != victim) && (victim.isAttackable() || victim.isPlayable()) && has(killer, BLOODRUSH))
 		{
 			proc(killer, 100, BLOODRUSH_SKILL, 0, null);
@@ -1356,7 +1646,8 @@ public final class PassiveMechanics
 		
 		final Skill skill = info.getSkill();
 		final AbnormalType type = skill.getAbnormalType();
-		final boolean blocked = (has(owner, STUN_IMMUNE) && ((type == AbnormalType.STUN) || skill.hasEffectType(EffectType.STUN))) || (has(owner, PURITY) && ((type == AbnormalType.POISON) || (type == AbnormalType.BLEEDING))) || (skill.isDebuff() && isCrowdControl(skill) && owner.isAffectedBySkill(TENACITY_SKILL));
+		final boolean juggernaut = has(owner, JUGGERNAUT) && skill.isDebuff() && ((type == AbnormalType.SPEED_DOWN) || (type == AbnormalType.ROOT_PHYSICALLY) || (type == AbnormalType.ROOT_MAGICALLY) || skill.hasEffectType(EffectType.ROOT));
+		final boolean blocked = juggernaut || (has(owner, STUN_IMMUNE) && ((type == AbnormalType.STUN) || skill.hasEffectType(EffectType.STUN))) || (has(owner, PURITY) && ((type == AbnormalType.POISON) || (type == AbnormalType.BLEEDING))) || (skill.isDebuff() && isCrowdControl(skill) && owner.isAffectedBySkill(TENACITY_SKILL));
 		if (blocked && (info.getEffector() != null))
 		{
 			final SystemMessage sm = new SystemMessage(SystemMessageId.C1_HAS_RESISTED_YOUR_S2);

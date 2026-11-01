@@ -73,7 +73,7 @@ public class PassiveTreeManager
 	private final Map<Integer, Set<Integer>> _eventTrees = new ConcurrentHashMap<>();
 	
 	/** Told to a player who tries to change the tree while it is the event's. */
-	public static final String EVENT_TREE_LOCKED_MESSAGE = "Your passive tree is replaced by the event's during a Passive Deathmatch and can't be changed. Your own tree comes back when you leave the event.";
+	public static final String EVENT_TREE_LOCKED_MESSAGE = "Your passive tree is replaced by the event's during Deathmatch: Mayhem and can't be changed. Your own tree comes back when you leave the event.";
 	
 	private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(PassiveTreeManager.class.getName());
 	
@@ -486,7 +486,8 @@ public class PassiveTreeManager
 	public boolean canAllocate(Player player, int nodeId)
 	{
 		final PassiveNode node = PassiveTreeData.getInstance().getNode(nodeId);
-		if ((node == null) || isOnEventTree(player))
+		// An event-only node has no parents: it would pass for a starting point, but it is never part of anyone's own tree.
+		if ((node == null) || node.isEventOnly() || isOnEventTree(player))
 		{
 			return false;
 		}

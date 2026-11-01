@@ -52,7 +52,7 @@ import custom.EventMaps.EventMapWeb;
  * <li>//tvt stop [match]: ends a match (all of them by default), without rewards.</li>
  * <li>//tvt watch [match]: goes into a match's instance, between the bases, to watch it (the fighters leave a GM outside the match alone).</li>
  * <li>//tvt dm open [map] | simulate [level] [map]: the same for a Deathmatch (every one for themselves); close, stop and watch work for both.</li>
- * <li>//tvt pdm open [map] | simulate [level] [map]: the same for a Passive Deathmatch (blank passive trees, a passive picked on each kill).</li>
+ * <li>//tvt mayhem open [map] | simulate [level] [map] (or pdm): the same for Deathmatch: Mayhem (blank passive trees, a passive picked on each kill).</li>
  * <li>//tvt rotation [next &lt;tvt|conquest|deathmatch|racewars&gt;]: the hourly rotation of the events (see {@link EventRotationManager}), and which event takes the next turn.</li>
  * </ul>
  * And the event maps ({@link EventMapData}, data/maps), shared with Conquest:
@@ -74,7 +74,7 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 		"admin_tvt"
 	};
 
-	private static final String USAGE = "//tvt open [map] | close | simulate [level] [map] | dm open [map] | dm simulate [level] [map] | pdm open [map] | pdm simulate [level] [map] | rotation [next <event>] | stop [match] | watch [match] | detail | map [tvt|conquest|dm|racewars] | maps | show <map> [event] | hide | tp <map> <blue|red|dm|duel|final> <n> | set <map> <blue|red|dm|duel|final> <n|new> | remove <map> <blue|red|dm|duel|final> <n> | fence <map> [rx] [ry] | off | reload";
+	private static final String USAGE = "//tvt open [map] | close | simulate [level] [map] | dm open [map] | dm simulate [level] [map] | mayhem open [map] | mayhem simulate [level] [map] | rotation [next <event>] | stop [match] | watch [match] | detail | map [tvt|conquest|dm|racewars] | maps | show <map> [event] | hide | tp <map> <blue|red|dm|duel|final> <n> | set <map> <blue|red|dm|duel|final> <n|new> | remove <map> <blue|red|dm|duel|final> <n> | fence <map> [rx] [ry] | off | reload";
 
 	@Override
 	public boolean onCommand(String command, Player activeChar)
@@ -83,7 +83,7 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 		String[] args = command.trim().split("\\s+");
 		// //tvt dm <open|simulate> ...: the same commands for a Deathmatch.
 		Mode mode = Mode.TVT;
-		final boolean passive = (args.length > 2) && (args[1].equalsIgnoreCase("pdm") || args[1].equalsIgnoreCase("passivedeathmatch"));
+		final boolean passive = (args.length > 2) && (args[1].equalsIgnoreCase("mayhem") || args[1].equalsIgnoreCase("pdm") || args[1].equalsIgnoreCase("passivedeathmatch"));
 		if ((args.length > 2) && (passive || args[1].equalsIgnoreCase("dm") || args[1].equalsIgnoreCase("deathmatch")))
 		{
 			mode = passive ? Mode.PASSIVE_DEATHMATCH : Mode.DEATHMATCH;
@@ -115,7 +115,7 @@ public class AdminTeamVsTeam implements IAdminCommandHandler
 				final EventRotationManager rotation = EventRotationManager.getInstance();
 				if ((args.length > 3) && args[2].equalsIgnoreCase("next"))
 				{
-					final String event = args[3].toLowerCase().equals("dm") ? "deathmatch" : args[3].toLowerCase().equals("pdm") ? "passivedeathmatch" : args[3].toLowerCase();
+					final String event = args[3].toLowerCase().equals("dm") ? "deathmatch" : (args[3].toLowerCase().equals("pdm") || args[3].toLowerCase().equals("passivedeathmatch")) ? "mayhem" : args[3].toLowerCase();
 					activeChar.sendMessage(rotation.setNext(event) ? EventRotationManager.getTitle(event) + " takes the next turn." : "Not in EventRotationOrder: " + args[3] + " (" + String.join(", ", EventRotationConfig.ORDER) + ").");
 				}
 				for (String line : rotation.getStatus())
