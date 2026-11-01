@@ -948,6 +948,7 @@ public class PassiveDeathmatchManager
 	 * What a fake player takes of an offer:
 	 * <ul>
 	 * <li>one of its own event keystones, while it has none;</li>
+	 * <li>else one of the notables that raised kills most ({@link TeamVsTeamConfig#PDM_PRIORITY_NOTABLES}), if it is of use to it;</li>
 	 * <li>else the one worth most to it ({@link Profile#weigh(PassiveNode, PassiveStatBonusCache, double)}: its class's weights, what is past a cap worth nothing, a stat it has a lot of worth less, HP and defence worth more while it dies more than it kills), with a
 	 * little jitter, and now and then ({@link #FAKE_PICK_EXPLORE}) one by chance weighted by worth, so fake players of one class don't all end up alike;</li>
 	 * <li>by plain chance if none is worth anything to it.</li>
@@ -975,6 +976,27 @@ public class PassiveDeathmatchManager
 
 		final PassiveStatBonusCache have = current != null ? current.getBonus() : null;
 		final double survival = picks._deaths > picks._kills ? 1 + Math.min(1, (picks._deaths - picks._kills) / 5.0) : 1;
+
+		// The notables that raised kills most in the simulations (MayhemFakePriorityNotables): always taken when one of use to it is offered (the most useful one, if several).
+		int priority = -1;
+		double priorityWorth = 0;
+		for (int i = 0; i < options.size(); i++)
+		{
+			final PassiveNode node = PassiveTreeData.getInstance().getNode(options.get(i));
+			if ((node != null) && (node.getType() == PassiveNode.NodeType.NOTABLE) && TeamVsTeamConfig.PDM_PRIORITY_NOTABLES.contains(node.getName()))
+			{
+				final double worth = profile.weigh(node, have, survival);
+				if (worth > priorityWorth)
+				{
+					priority = i;
+					priorityWorth = worth;
+				}
+			}
+		}
+		if (priority >= 0)
+		{
+			return options.get(priority);
+		}
 		final double[] weights = new double[options.size()];
 		double total = 0;
 		int best = -1;
@@ -1006,6 +1028,26 @@ public class PassiveDeathmatchManager
 			}
 		}
 		return options.get(best);
+	}
+
+	/**
+	 * How often a fake player of a Mayhem match uses its attack skills, against its usual chance: a fighter or tank with {@link TeamVsTeamConfig#PDM_LATE_KILLS} kills or more uses them {@link TeamVsTeamConfig#PDM_LATE_SKILL_CHANCE} % as often, so it auto attacks more
+	 * (its skill picks have made its normal hits worth more by then).
+	 * @param fake a fake player
+	 * @return the factor of its attack skill chance, 1 for no change
+	 */
+	public double getSkillChanceFactor(Creature fake)
+	{
+		if ((TeamVsTeamConfig.PDM_LATE_KILLS <= 0) || (fake == null))
+		{
+			return 1;
+		}
+		final FakePicks picks = _fakes.get(fake.getObjectId());
+		if ((picks == null) || ((picks._profile._role != Role.FIGHTER) && (picks._profile._role != Role.TANK)) || (picks._kills < TeamVsTeamConfig.PDM_LATE_KILLS))
+		{
+			return 1;
+		}
+		return TeamVsTeamConfig.PDM_LATE_SKILL_CHANCE / 100.0;
 	}
 
 	/**
