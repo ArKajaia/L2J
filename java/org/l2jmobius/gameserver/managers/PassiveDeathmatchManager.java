@@ -238,7 +238,7 @@ public class PassiveDeathmatchManager
 		}
 
 		/**
-		 * How much its notables count: a hybrid's more (see {@link #makeHybrid}), a mage's {@link TeamVsTeamConfig#PDM_MAGE_NOTABLES} %, a tank's {@link TeamVsTeamConfig#PDM_TANK_NOTABLES} %. Call after {@link #makeHybrid}, before its tree is applied.
+		 * How much its notables count: a hybrid's more (see {@link #makeHybrid}), a mage's {@link TeamVsTeamConfig#PDM_MAGE_NOTABLES} %, a tank's {@link TeamVsTeamConfig#PDM_TANK_NOTABLES} %, an archer's {@link TeamVsTeamConfig#PDM_ARCHER_NOTABLES} %. Call after {@link #makeHybrid}, before its tree is applied.
 		 */
 		void initNotableScale()
 		{
@@ -253,6 +253,10 @@ public class PassiveDeathmatchManager
 			else if (_role == Role.TANK)
 			{
 				_notableScale = TeamVsTeamConfig.PDM_TANK_NOTABLES / 100.0;
+			}
+			else if (_role == Role.ARCHER)
+			{
+				_notableScale = TeamVsTeamConfig.PDM_ARCHER_NOTABLES / 100.0;
 			}
 		}
 	}
@@ -397,6 +401,11 @@ public class PassiveDeathmatchManager
 	{
 		creature.removeStatsOwner(MATK_OWNER);
 		mul(creature, Stat.MAGIC_ATTACK, TeamVsTeamConfig.PDM_MATK);
+		if (TeamVsTeamConfig.PDM_NUKER_CLASSES.contains(profile._className))
+		{
+			// The nukers lead both Deathmatches even at the common M.Atk: a second cut, for them alone.
+			mul(creature, Stat.MAGIC_ATTACK, TeamVsTeamConfig.PDM_NUKER_MATK);
+		}
 		mul(creature, Stat.MP_CONSUME, TeamVsTeamConfig.PDM_MP_COST);
 		mul(creature, Stat.BOW_MP_CONSUME_RATE, TeamVsTeamConfig.PDM_MP_COST);
 		if (((profile._role == Role.FIGHTER) || (profile._role == Role.TANK) || (profile._role == Role.ARCHER)) && !TeamVsTeamConfig.PDM_PATK_EXCLUDED.contains(profile._className))

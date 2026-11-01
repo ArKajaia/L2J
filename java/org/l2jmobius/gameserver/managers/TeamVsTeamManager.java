@@ -1749,8 +1749,13 @@ public class TeamVsTeamManager
 		final List<Npc> spawned = new ArrayList<>();
 		for (SimRole role : roles)
 		{
-			final FakePlayerPvpBuild build = SimulationComposer.pick(role, ThreadLocalRandom.current());
-			if (build == null)
+			FakePlayerPvpBuild build = SimulationComposer.pick(role, ThreadLocalRandom.current());
+			// A Deathmatch makes no fake players of the classes in DeathmatchFakeExcludedClasses (support classes the AI fights badly with): another build of the role instead.
+			for (int retry = 0; match.isDeathmatch() && (build != null) && (build.getPlayerClass() != null) && TeamVsTeamConfig.DM_FAKE_EXCLUDED_CLASSES.contains(build.getPlayerClass().name()) && (retry < 20); retry++)
+			{
+				build = SimulationComposer.pick(role, ThreadLocalRandom.current());
+			}
+			if ((build == null) || (match.isDeathmatch() && (build.getPlayerClass() != null) && TeamVsTeamConfig.DM_FAKE_EXCLUDED_CLASSES.contains(build.getPlayerClass().name())))
 			{
 				continue;
 			}

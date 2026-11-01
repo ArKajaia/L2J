@@ -87,6 +87,8 @@ public class TeamVsTeamConfig
 	/** The extra rewards of the best players, first place first: Crystal Scrolls of their grade. */
 	public static List<TopReward> DM_TOP_REWARDS;
 	public static int DM_NAME_COLOR;
+	/** Classes (PlayerClass names) never made fake players of in either Deathmatch: support classes the fake player AI fights badly with. Players of them still take part. */
+	public static Set<String> DM_FAKE_EXCLUDED_CLASSES;
 	/** The plain Deathmatch gets Deathmatch: Mayhem's stat balance too (the Mayhem* M.Atk, P.Atk, MP cost, HP, Speed and area damage settings; not the fake players' late auto attacks). */
 	public static boolean DM_BALANCE;
 
@@ -119,9 +121,13 @@ public class TeamVsTeamConfig
 	/** A fighter or tank fake player with this many kills or more uses its attack skills {@link #PDM_LATE_SKILL_CHANCE} % as often, auto attacking more (0: never). */
 	public static int PDM_LATE_KILLS;
 	public static int PDM_LATE_SKILL_CHANCE;
-	/** How effective the notables of mages and of tanks are, in %. */
+	/** How effective the notables of mages, tanks and archers are, in %. */
 	public static int PDM_MAGE_NOTABLES;
 	public static int PDM_TANK_NOTABLES;
+	public static int PDM_ARCHER_NOTABLES;
+	/** The nukers (PlayerClass names), whose M.Atk is cut a second time: {@link #PDM_NUKER_MATK} % on top of {@link #PDM_MATK}. */
+	public static Set<String> PDM_NUKER_CLASSES;
+	public static int PDM_NUKER_MATK;
 	/** % of their skills' MP cost everyone pays. */
 	public static int PDM_MP_COST;
 	/** % of their max HP tanks and dwarves have. */
@@ -275,6 +281,7 @@ public class TeamVsTeamConfig
 		DM_TOP_REWARDS = parseTopRewards(config.getString("DeathmatchTopRewards", "weapon,1;armor,2;armor,1"), "DeathmatchTopRewards");
 		DM_NAME_COLOR = Integer.decode("0x" + config.getString("DeathmatchNameColor", "FFFFFF"));
 		DM_BALANCE = config.getBoolean("DeathmatchBalance", true);
+		DM_FAKE_EXCLUDED_CLASSES = parseNames(config.getString("DeathmatchFakeExcludedClasses", "SPECTRAL_DANCER,JUDICATOR"));
 
 		PDM_ENABLED = config.getBoolean("MayhemEnabled", config.getBoolean("PassiveDeathmatchEnabled", true));
 		final List<String> pdmMaps = new ArrayList<>();
@@ -297,7 +304,7 @@ public class TeamVsTeamConfig
 		PDM_TANK_CLASSES = parseNames(config.getString("MayhemTankClasses", "SPECTRAL_DANCER,JUDICATOR"));
 		PDM_KEYSTONE_EVERY = Math.max(0, config.getInt("MayhemKeystoneEvery", 4));
 		final Set<String> priority = new HashSet<>();
-		for (String name : config.getString("MayhemFakePriorityNotables", "Quickened Mind;Backstabber;Aegis of Dawn;Radiant Smite;Untouched;Starfire;Pillar of Grace;Devout Disciple;Archon's Insight;Spell Surge").split(";"))
+		for (String name : config.getString("MayhemFakePriorityNotables", "Quickened Mind;Aegis of Dawn;Radiant Smite;Untouched;Starfire;Pillar of Grace;Devout Disciple;Archon's Insight;Spell Surge").split(";"))
 		{
 			if (!name.isBlank())
 			{
@@ -309,6 +316,9 @@ public class TeamVsTeamConfig
 		PDM_LATE_SKILL_CHANCE = Math.max(0, Math.min(100, config.getInt("MayhemFakeAutoAttackSkillChance", 75)));
 		PDM_MAGE_NOTABLES = Math.max(0, config.getInt("MayhemMageNotables", 70));
 		PDM_TANK_NOTABLES = Math.max(0, config.getInt("MayhemTankNotables", 120));
+		PDM_ARCHER_NOTABLES = Math.max(0, config.getInt("MayhemArcherNotables", 130));
+		PDM_NUKER_CLASSES = parseNames(config.getString("MayhemNukerClasses", "ARCHMAGE,MYSTIC_MUSE,STORM_SCREAMER"));
+		PDM_NUKER_MATK = Math.max(0, config.getInt("MayhemNukerMAtk", 85));
 		PDM_MP_COST = Math.max(0, config.getInt("MayhemMpCost", 30));
 		PDM_TANK_HP = Math.max(0, config.getInt("MayhemTankHp", 115));
 		PDM_HYBRID_CLASSES = parseNames(config.getString("MayhemHybridClasses", "MALE_SOUL_HOUND,FEMALE_SOUL_HOUND"));
@@ -331,7 +341,7 @@ public class TeamVsTeamConfig
 		}
 		PDM_NODE_TYPES = Collections.unmodifiableSet(nodeTypes);
 		final Set<String> excluded = new HashSet<>();
-		for (String key : config.getString("MayhemExcludedEffects", config.getString("PassiveDeathmatchExcludedEffects", "DROP_RATE_PCT,SPOIL_RATE_PCT,ADENA_RATE_PCT,EXP_RATE_PCT,SP_RATE_PCT,PVE_PDMG_PCT,PVE_MDMG_PCT,PVE_BOW_DMG_PCT")).split(","))
+		for (String key : config.getString("MayhemExcludedEffects", config.getString("PassiveDeathmatchExcludedEffects", "DROP_RATE_PCT,SPOIL_RATE_PCT,ADENA_RATE_PCT,EXP_RATE_PCT,SP_RATE_PCT,PVE_PDMG_PCT,PVE_MDMG_PCT")).split(","))
 		{
 			if (!key.isBlank())
 			{
