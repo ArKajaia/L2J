@@ -98,6 +98,8 @@ public class TeamVsTeamConfig
 	public static int PDM_USEFUL_CHOICES;
 	/** % of their damage area skills deal to the fighters. */
 	public static int PDM_AREA_DAMAGE;
+	/** % of their M.Atk the fighters have. */
+	public static int PDM_MATK;
 	/** An assist (a pick too): at least this % of the damage the victim took in the last {@link #PDM_ASSIST_WINDOW} seconds, 0 for no assists. */
 	public static int PDM_ASSIST_SHARE;
 	public static int PDM_ASSIST_WINDOW;
@@ -255,6 +257,7 @@ public class TeamVsTeamConfig
 		PDM_CHOICES = Math.max(1, Math.min(5, config.getInt("MayhemChoices", config.getInt("PassiveDeathmatchChoices", 3))));
 		PDM_USEFUL_CHOICES = Math.max(0, Math.min(PDM_CHOICES, config.getInt("MayhemUsefulChoices", 2)));
 		PDM_AREA_DAMAGE = Math.max(0, config.getInt("MayhemAreaDamage", 70));
+		PDM_MATK = Math.max(0, config.getInt("MayhemMAtk", 70));
 		PDM_ASSIST_SHARE = Math.max(0, Math.min(100, config.getInt("MayhemAssistShare", 30)));
 		PDM_ASSIST_WINDOW = Math.max(1, config.getInt("MayhemAssistWindow", 10));
 		final Set<String> nodeTypes = new HashSet<>();

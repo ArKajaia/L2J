@@ -56,6 +56,8 @@ import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
 import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 import org.l2jmobius.gameserver.network.serverpackets.TutorialShowQuestionMark;
@@ -84,6 +86,11 @@ public class PassiveDeathmatchManager
 
 	/** The tutorial question mark a kill blinks (the other systems use 9300 to 94xx, see HiddenQuestManager, CraftingGoalManager, DynamicQuestManager, AdventurersGuideManager). */
 	public static final int QUESTION_MARK_ID = 9330;
+
+	/** Owner of the stat Func that scales every fighter's M.Atk in a Mayhem match ({@link TeamVsTeamConfig#PDM_MATK}). */
+	private static final Object MATK_OWNER = new Object();
+	/** Order of that Func: after every other one (the passive tree's highest is 0x52), so it scales the whole M.Atk. */
+	private static final int MATK_ORDER = 0x60;
 
 	/** How far a fake player's want of each offered passive strays at random on each pick. */
 	private static final double FAKE_PICK_JITTER = 0.25;
@@ -270,6 +277,20 @@ public class PassiveDeathmatchManager
 		}
 		_players.put(player.getObjectId(), new Picks(new Profile(player.getName(), role, player.getRace().name(), player.getPlayerClass().name(), taste, simulated)));
 		PassiveTreeManager.getInstance().beginEventTree(player);
+		scaleMAtk(player);
+	}
+
+	/**
+	 * Mayhem's M.Atk cut: every fighter's M.Atk is {@link TeamVsTeamConfig#PDM_MATK} % of what it would be, for the match (it goes with {@link #leave}, and with a fake player's body).
+	 * @param creature a player or fake player entering a Mayhem match
+	 */
+	private static void scaleMAtk(Creature creature)
+	{
+		creature.removeStatsOwner(MATK_OWNER);
+		if (TeamVsTeamConfig.PDM_MATK != 100)
+		{
+			creature.addStatFunc(new FuncMul(Stat.MAGIC_ATTACK, MATK_ORDER, MATK_OWNER, TeamVsTeamConfig.PDM_MATK / 100.0, null));
+		}
 	}
 
 	/**
@@ -308,6 +329,7 @@ public class PassiveDeathmatchManager
 	public void leave(Player player)
 	{
 		final boolean had = _players.remove(player.getObjectId()) != null;
+		player.removeStatsOwner(MATK_OWNER);
 		_hits.remove(player.getObjectId());
 		final boolean onEventTree = PassiveTreeManager.getInstance().isOnEventTree(player);
 		PassiveTreeManager.getInstance().endEventTree(player);
@@ -738,6 +760,7 @@ public class PassiveDeathmatchManager
 		final FakePicks picks = new FakePicks(own != null ? own.getHpShare() : 1, new Profile(fake.getName() + " (" + buildName + ")", profile.getRole(), race, className, taste, simulated));
 		_fakes.put(fake.getObjectId(), picks);
 		applyFake(fake, profile, picks);
+		scaleMAtk(fake);
 		fake.setCurrentHpMp(fake.getMaxHp(), fake.getMaxMp());
 	}
 
