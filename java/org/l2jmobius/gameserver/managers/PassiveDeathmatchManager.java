@@ -87,7 +87,7 @@ public class PassiveDeathmatchManager
 	/** The tutorial question mark a kill blinks (the other systems use 9300 to 94xx, see HiddenQuestManager, CraftingGoalManager, DynamicQuestManager, AdventurersGuideManager). */
 	public static final int QUESTION_MARK_ID = 9330;
 
-	/** Owner of the stat Func that scales every fighter's M.Atk in a Mayhem match ({@link TeamVsTeamConfig#PDM_MATK}). */
+	/** Owner of the stat Funcs of Mayhem's balance (M.Atk, P.Atk, MP cost, max HP, see applyModifiers). */
 	private static final Object MATK_OWNER = new Object();
 	/** Order of that Func: after every other one (the passive tree's highest is 0x52), so it scales the whole M.Atk. */
 	private static final int MATK_ORDER = 0x60;
@@ -118,9 +118,14 @@ public class PassiveDeathmatchManager
 		private final String _race;
 		private final String _className;
 		/** What of the tree is of use to it ({@code null} if it couldn't be worked out: everything is). */
-		private final FakePlayerPvpPassiveTree.NodeTaste _taste;
+		private FakePlayerPvpPassiveTree.NodeTaste _taste;
 		/** Its picks are logged (a simulated match). */
 		private final boolean _log;
+		/** A hybrid class (MayhemHybridClasses): {@link #_taste} is a mage's, this a fighter's, {@link #_mainShare} of its useful passives are a mage's. {@code null} for the others. */
+		private FakePlayerPvpPassiveTree.NodeTaste _altTaste;
+		private double _mainShare = 1;
+		/** How much its notables count. */
+		private double _notableScale = 1;
 
 		Profile(String name, Role role, String race, String className, FakePlayerPvpPassiveTree.NodeTaste taste, boolean log)
 		{
@@ -151,11 +156,54 @@ public class PassiveDeathmatchManager
 		 */
 		double weigh(PassiveNode node)
 		{
+			if (_altTaste == null)
+			{
+				return weighWith(node, false);
+			}
+			return (_mainShare * weighWith(node, false)) + ((1 - _mainShare) * weighWith(node, true));
+		}
+
+		/**
+		 * @param node a node it may take
+		 * @param alt {@code true} for a hybrid's fighter side, {@code false} for its main one
+		 * @return how much that side wants it
+		 */
+		double weighWith(PassiveNode node, boolean alt)
+		{
 			if (node.isEventOnly())
 			{
 				return mayTake(node) ? node.getEventWeight() : 0;
 			}
-			return _taste == null ? 1 : FakePlayerPvpPassiveTree.getInstance().weigh(_taste, node);
+			final FakePlayerPvpPassiveTree.NodeTaste taste = alt && (_altTaste != null) ? _altTaste : _taste;
+			return taste == null ? 1 : FakePlayerPvpPassiveTree.getInstance().weigh(taste, node);
+		}
+
+		/**
+		 * Makes it a hybrid if its class is one of MayhemHybridClasses: offered a mage's and a fighter's passives, its notables worth more.
+		 * @param armorMask the item mask of its body armour
+		 * @param wornMask the item mask of everything it wears and holds
+		 * @param random {@code true} for a fake player's rolled tastes
+		 */
+		void makeHybrid(int armorMask, int wornMask, boolean random)
+		{
+			if (!TeamVsTeamConfig.PDM_HYBRID_CLASSES.contains(_className))
+			{
+				return;
+			}
+			try
+			{
+				final FakePlayerPvpPassiveTree tree = FakePlayerPvpPassiveTree.getInstance();
+				final FakePlayerPvpPassiveTree.NodeTaste magic = tree.rollTaste(Role.MAGE, false, null, null, armorMask, wornMask, random);
+				final FakePlayerPvpPassiveTree.NodeTaste fighter = tree.rollTaste(Role.FIGHTER, false, null, null, armorMask, wornMask, random);
+				_taste = magic;
+				_altTaste = fighter;
+				_mainShare = TeamVsTeamConfig.PDM_HYBRID_MAGIC / 100.0;
+			}
+			catch (Exception e)
+			{
+				// Not a hybrid then: its own taste.
+			}
+			_notableScale = 1 + (TeamVsTeamConfig.PDM_HYBRID_NOTABLE_BONUS / 100.0);
 		}
 	}
 
@@ -275,21 +323,41 @@ public class PassiveDeathmatchManager
 		{
 			// No taste: every passive counts as of use.
 		}
-		_players.put(player.getObjectId(), new Picks(new Profile(player.getName(), role, player.getRace().name(), player.getPlayerClass().name(), taste, simulated)));
-		PassiveTreeManager.getInstance().beginEventTree(player);
-		scaleMAtk(player);
+		final Profile profile = new Profile(player.getName(), role, player.getRace().name(), player.getPlayerClass().name(), taste, simulated);
+		final Item worn = player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_CHEST);
+		profile.makeHybrid(worn != null ? worn.getTemplate().getItemMask() : 0, player.getInventory().getWearedMask(), false);
+		_players.put(player.getObjectId(), new Picks(profile));
+		PassiveTreeManager.getInstance().beginEventTree(player, profile._notableScale);
+		applyModifiers(player, profile);
 	}
 
 	/**
-	 * Mayhem's M.Atk cut: every fighter's M.Atk is {@link TeamVsTeamConfig#PDM_MATK} % of what it would be, for the match (it goes with {@link #leave}, and with a fake player's body).
+	 * Mayhem's balance, for the match (it goes with {@link #leave}, and with a fake player's body): every fighter has {@link TeamVsTeamConfig#PDM_MATK} % of its M.Atk and pays {@link TeamVsTeamConfig#PDM_MP_COST} % of its skills' MP; fighters, tanks and archers
+	 * have {@link TeamVsTeamConfig#PDM_PATK} % of their P.Atk; tanks and dwarves {@link TeamVsTeamConfig#PDM_TANK_HP} % of their max HP.
 	 * @param creature a player or fake player entering a Mayhem match
+	 * @param profile who it is
 	 */
-	private static void scaleMAtk(Creature creature)
+	private static void applyModifiers(Creature creature, Profile profile)
 	{
 		creature.removeStatsOwner(MATK_OWNER);
-		if (TeamVsTeamConfig.PDM_MATK != 100)
+		mul(creature, Stat.MAGIC_ATTACK, TeamVsTeamConfig.PDM_MATK);
+		mul(creature, Stat.MP_CONSUME, TeamVsTeamConfig.PDM_MP_COST);
+		mul(creature, Stat.BOW_MP_CONSUME_RATE, TeamVsTeamConfig.PDM_MP_COST);
+		if ((profile._role == Role.FIGHTER) || (profile._role == Role.TANK) || (profile._role == Role.ARCHER))
 		{
-			creature.addStatFunc(new FuncMul(Stat.MAGIC_ATTACK, MATK_ORDER, MATK_OWNER, TeamVsTeamConfig.PDM_MATK / 100.0, null));
+			mul(creature, Stat.POWER_ATTACK, TeamVsTeamConfig.PDM_PATK);
+		}
+		if ((profile._role == Role.TANK) || "DWARF".equals(profile._race))
+		{
+			mul(creature, Stat.MAX_HP, TeamVsTeamConfig.PDM_TANK_HP);
+		}
+	}
+
+	private static void mul(Creature creature, Stat stat, int percent)
+	{
+		if (percent != 100)
+		{
+			creature.addStatFunc(new FuncMul(stat, MATK_ORDER, MATK_OWNER, percent / 100.0, null));
 		}
 	}
 
@@ -757,10 +825,12 @@ public class PassiveDeathmatchManager
 		final String className = profile.getPlayerClass() != null ? profile.getPlayerClass().name() : "";
 		final String race = profile.getPlayerClass() != null ? profile.getPlayerClass().getRace().name() : "";
 		final String buildName = profile.getBuild() != null ? profile.getBuild().getName() : className;
-		final FakePicks picks = new FakePicks(own != null ? own.getHpShare() : 1, new Profile(fake.getName() + " (" + buildName + ")", profile.getRole(), race, className, taste, simulated));
+		final Profile who = new Profile(fake.getName() + " (" + buildName + ")", profile.getRole(), race, className, taste, simulated);
+		who.makeHybrid(profile.getArmorMask(), profile.getWornMask(), true);
+		final FakePicks picks = new FakePicks(own != null ? own.getHpShare() : 1, who);
 		_fakes.put(fake.getObjectId(), picks);
 		applyFake(fake, profile, picks);
-		scaleMAtk(fake);
+		applyModifiers(fake, who);
 		fake.setCurrentHpMp(fake.getMaxHp(), fake.getMaxMp());
 	}
 
@@ -841,7 +911,7 @@ public class PassiveDeathmatchManager
 	private static void applyFake(Npc fake, FakePlayerPvpProfile profile, FakePicks picks)
 	{
 		final PassiveStatBonusCache bonus = new PassiveStatBonusCache();
-		bonus.recompute(picks._nodes);
+		bonus.recompute(picks._nodes, picks._profile._notableScale);
 		final FakePlayerPvpPassives passives = new FakePlayerPvpPassives(0, picks._nodes.size(), picks._nodes.size(), "Deathmatch: Mayhem", "event", picks._nodes, bonus);
 		passives.setHpShare(picks._hpShare);
 		profile.setPassives(passives);
@@ -922,17 +992,19 @@ public class PassiveDeathmatchManager
 		Collections.shuffle(pool);
 		final List<Integer> result = new ArrayList<>(count);
 		final Set<String> names = new HashSet<>();
-		// Class-aware: the first ones of use to the fighter's role (up to PDM_USEFUL_CHOICES), then any.
+		// Class-aware: the first ones of use to the fighter's role (up to PDM_USEFUL_CHOICES), then any. A hybrid's useful ones are a mage's or, now and then, a fighter's.
 		final int useful = Math.min(count, TeamVsTeamConfig.PDM_USEFUL_CHOICES);
-		for (PassiveNode node : pool)
+		for (int slot = 0; slot < useful; slot++)
 		{
-			if (result.size() >= useful)
+			final boolean alt = (profile._altTaste != null) && (Rnd.nextDouble() >= profile._mainShare);
+			for (PassiveNode node : pool)
 			{
-				break;
-			}
-			if ((profile.weigh(node) > 0) && names.add(node.getName()))
-			{
-				result.add(node.getId());
+				if (!names.contains(node.getName()) && (profile.weighWith(node, alt) > 0))
+				{
+					names.add(node.getName());
+					result.add(node.getId());
+					break;
+				}
 			}
 		}
 		for (PassiveNode node : pool)

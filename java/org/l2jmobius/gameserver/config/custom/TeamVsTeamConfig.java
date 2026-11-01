@@ -100,6 +100,17 @@ public class TeamVsTeamConfig
 	public static int PDM_AREA_DAMAGE;
 	/** % of their M.Atk the fighters have. */
 	public static int PDM_MATK;
+	/** % of their P.Atk fighters, tanks and archers have (daggers and mages keep theirs). */
+	public static int PDM_PATK;
+	/** % of their skills' MP cost everyone pays. */
+	public static int PDM_MP_COST;
+	/** % of their max HP tanks and dwarves have. */
+	public static int PDM_TANK_HP;
+	/** Classes (PlayerClass names) offered magic and fighter passives both: {@link #PDM_HYBRID_MAGIC} % of the passives of use to them are a mage's, the rest a fighter's. */
+	public static Set<String> PDM_HYBRID_CLASSES;
+	public static int PDM_HYBRID_MAGIC;
+	/** % more the notables of those classes give. */
+	public static int PDM_HYBRID_NOTABLE_BONUS;
 	/** An assist (a pick too): at least this % of the damage the victim took in the last {@link #PDM_ASSIST_WINDOW} seconds, 0 for no assists. */
 	public static int PDM_ASSIST_SHARE;
 	public static int PDM_ASSIST_WINDOW;
@@ -258,6 +269,20 @@ public class TeamVsTeamConfig
 		PDM_USEFUL_CHOICES = Math.max(0, Math.min(PDM_CHOICES, config.getInt("MayhemUsefulChoices", 2)));
 		PDM_AREA_DAMAGE = Math.max(0, config.getInt("MayhemAreaDamage", 70));
 		PDM_MATK = Math.max(0, config.getInt("MayhemMAtk", 70));
+		PDM_PATK = Math.max(0, config.getInt("MayhemPAtk", 115));
+		PDM_MP_COST = Math.max(0, config.getInt("MayhemMpCost", 30));
+		PDM_TANK_HP = Math.max(0, config.getInt("MayhemTankHp", 115));
+		final Set<String> hybrids = new HashSet<>();
+		for (String name : config.getString("MayhemHybridClasses", "MALE_SOUL_HOUND,FEMALE_SOUL_HOUND").split(","))
+		{
+			if (!name.isBlank())
+			{
+				hybrids.add(name.trim().toUpperCase());
+			}
+		}
+		PDM_HYBRID_CLASSES = Collections.unmodifiableSet(hybrids);
+		PDM_HYBRID_MAGIC = Math.max(0, Math.min(100, config.getInt("MayhemHybridMagicShare", 70)));
+		PDM_HYBRID_NOTABLE_BONUS = Math.max(0, config.getInt("MayhemHybridNotableBonus", 20));
 		PDM_ASSIST_SHARE = Math.max(0, Math.min(100, config.getInt("MayhemAssistShare", 30)));
 		PDM_ASSIST_WINDOW = Math.max(1, config.getInt("MayhemAssistWindow", 10));
 		final Set<String> nodeTypes = new HashSet<>();
