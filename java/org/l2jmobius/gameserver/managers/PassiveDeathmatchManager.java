@@ -126,6 +126,8 @@ public class PassiveDeathmatchManager
 		private double _mainShare = 1;
 		/** How much its notables count. */
 		private double _notableScale = 1;
+		/** One of MayhemHybridClasses. */
+		private boolean _hybrid;
 
 		Profile(String name, Role role, String race, String className, FakePlayerPvpPassiveTree.NodeTaste taste, boolean log)
 		{
@@ -190,6 +192,7 @@ public class PassiveDeathmatchManager
 			{
 				return;
 			}
+			_hybrid = true;
 			try
 			{
 				final FakePlayerPvpPassiveTree tree = FakePlayerPvpPassiveTree.getInstance();
@@ -204,6 +207,25 @@ public class PassiveDeathmatchManager
 				// Not a hybrid then: its own taste.
 			}
 			_notableScale = 1 + (TeamVsTeamConfig.PDM_HYBRID_NOTABLE_BONUS / 100.0);
+		}
+
+		/**
+		 * How much its notables count: a hybrid's more (see {@link #makeHybrid}), a mage's {@link TeamVsTeamConfig#PDM_MAGE_NOTABLES} %, a tank's {@link TeamVsTeamConfig#PDM_TANK_NOTABLES} %. Call after {@link #makeHybrid}, before its tree is applied.
+		 */
+		void initNotableScale()
+		{
+			if (_hybrid)
+			{
+				return;
+			}
+			if (_role == Role.MAGE)
+			{
+				_notableScale = TeamVsTeamConfig.PDM_MAGE_NOTABLES / 100.0;
+			}
+			else if (_role == Role.TANK)
+			{
+				_notableScale = TeamVsTeamConfig.PDM_TANK_NOTABLES / 100.0;
+			}
 		}
 	}
 
@@ -326,6 +348,7 @@ public class PassiveDeathmatchManager
 		final Profile profile = new Profile(player.getName(), role, player.getRace().name(), player.getPlayerClass().name(), taste, simulated);
 		final Item worn = player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_CHEST);
 		profile.makeHybrid(worn != null ? worn.getTemplate().getItemMask() : 0, player.getInventory().getWearedMask(), false);
+		profile.initNotableScale();
 		_players.put(player.getObjectId(), new Picks(profile));
 		PassiveTreeManager.getInstance().beginEventTree(player, profile._notableScale);
 		applyModifiers(player, profile);
@@ -333,7 +356,7 @@ public class PassiveDeathmatchManager
 
 	/**
 	 * Mayhem's balance, for the match (it goes with {@link #leave}, and with a fake player's body): every fighter has {@link TeamVsTeamConfig#PDM_MATK} % of its M.Atk and pays {@link TeamVsTeamConfig#PDM_MP_COST} % of its skills' MP; fighters, tanks and archers
-	 * have {@link TeamVsTeamConfig#PDM_PATK} % of their P.Atk; tanks and dwarves {@link TeamVsTeamConfig#PDM_TANK_HP} % of their max HP.
+	 * have {@link TeamVsTeamConfig#PDM_PATK} % of their P.Atk, daggers {@link TeamVsTeamConfig#PDM_DAGGER_PATK} %; tanks and dwarves {@link TeamVsTeamConfig#PDM_TANK_HP} % of their max HP.
 	 * @param creature a player or fake player entering a Mayhem match
 	 * @param profile who it is
 	 */
@@ -346,6 +369,10 @@ public class PassiveDeathmatchManager
 		if ((profile._role == Role.FIGHTER) || (profile._role == Role.TANK) || (profile._role == Role.ARCHER))
 		{
 			mul(creature, Stat.POWER_ATTACK, TeamVsTeamConfig.PDM_PATK);
+		}
+		else if (profile._role == Role.DAGGER)
+		{
+			mul(creature, Stat.POWER_ATTACK, TeamVsTeamConfig.PDM_DAGGER_PATK);
 		}
 		if ((profile._role == Role.TANK) || "DWARF".equals(profile._race))
 		{
@@ -827,6 +854,7 @@ public class PassiveDeathmatchManager
 		final String buildName = profile.getBuild() != null ? profile.getBuild().getName() : className;
 		final Profile who = new Profile(fake.getName() + " (" + buildName + ")", profile.getRole(), race, className, taste, simulated);
 		who.makeHybrid(profile.getArmorMask(), profile.getWornMask(), true);
+		who.initNotableScale();
 		final FakePicks picks = new FakePicks(own != null ? own.getHpShare() : 1, who);
 		_fakes.put(fake.getObjectId(), picks);
 		applyFake(fake, profile, picks);

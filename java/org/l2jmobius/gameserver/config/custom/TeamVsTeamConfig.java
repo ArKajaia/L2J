@@ -102,6 +102,11 @@ public class TeamVsTeamConfig
 	public static int PDM_MATK;
 	/** % of their P.Atk fighters, tanks and archers have (daggers and mages keep theirs). */
 	public static int PDM_PATK;
+	/** % of their P.Atk daggers have. */
+	public static int PDM_DAGGER_PATK;
+	/** How effective the notables of mages and of tanks are, in %. */
+	public static int PDM_MAGE_NOTABLES;
+	public static int PDM_TANK_NOTABLES;
 	/** % of their skills' MP cost everyone pays. */
 	public static int PDM_MP_COST;
 	/** % of their max HP tanks and dwarves have. */
@@ -270,6 +275,9 @@ public class TeamVsTeamConfig
 		PDM_AREA_DAMAGE = Math.max(0, config.getInt("MayhemAreaDamage", 70));
 		PDM_MATK = Math.max(0, config.getInt("MayhemMAtk", 70));
 		PDM_PATK = Math.max(0, config.getInt("MayhemPAtk", 115));
+		PDM_DAGGER_PATK = Math.max(0, config.getInt("MayhemDaggerPAtk", 85));
+		PDM_MAGE_NOTABLES = Math.max(0, config.getInt("MayhemMageNotables", 70));
+		PDM_TANK_NOTABLES = Math.max(0, config.getInt("MayhemTankNotables", 120));
 		PDM_MP_COST = Math.max(0, config.getInt("MayhemMpCost", 30));
 		PDM_TANK_HP = Math.max(0, config.getInt("MayhemTankHp", 115));
 		final Set<String> hybrids = new HashSet<>();
