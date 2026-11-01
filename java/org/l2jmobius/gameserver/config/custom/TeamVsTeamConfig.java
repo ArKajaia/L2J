@@ -87,6 +87,8 @@ public class TeamVsTeamConfig
 	/** The extra rewards of the best players, first place first: Crystal Scrolls of their grade. */
 	public static List<TopReward> DM_TOP_REWARDS;
 	public static int DM_NAME_COLOR;
+	/** The plain Deathmatch gets Deathmatch: Mayhem's stat balance too (the Mayhem* M.Atk, P.Atk, MP cost, HP, Speed, area damage and late auto attack settings). */
+	public static boolean DM_BALANCE;
 
 	// Deathmatch: Mayhem (the Passive Deathmatch in the code): a Deathmatch with blank passive trees, a passive picked on each kill (see PassiveDeathmatchManager). Its size, time, respawn and rewards are the Deathmatch ones.
 	public static boolean PDM_ENABLED;
@@ -272,6 +274,7 @@ public class TeamVsTeamConfig
 		DM_KILL_REWARD = parseItems(config.getString("DeathmatchKillReward", "6393,1"), "DeathmatchKillReward");
 		DM_TOP_REWARDS = parseTopRewards(config.getString("DeathmatchTopRewards", "weapon,1;armor,2;armor,1"), "DeathmatchTopRewards");
 		DM_NAME_COLOR = Integer.decode("0x" + config.getString("DeathmatchNameColor", "FFFFFF"));
+		DM_BALANCE = config.getBoolean("DeathmatchBalance", true);
 
 		PDM_ENABLED = config.getBoolean("MayhemEnabled", config.getBoolean("PassiveDeathmatchEnabled", true));
 		final List<String> pdmMaps = new ArrayList<>();

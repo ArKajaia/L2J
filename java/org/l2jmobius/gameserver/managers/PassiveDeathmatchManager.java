@@ -308,6 +308,8 @@ public class PassiveDeathmatchManager
 	private final Map<Integer, Picks> _players = new ConcurrentHashMap<>();
 	/** The fake players in a Mayhem match, by object id. */
 	private final Map<Integer, FakePicks> _fakes = new ConcurrentHashMap<>();
+	/** The fighters of a plain Deathmatch that get Mayhem's balance ({@link TeamVsTeamConfig#DM_BALANCE}), by object id: who they are, for their stat changes. */
+	private final Map<Integer, Profile> _balanced = new ConcurrentHashMap<>();
 	/** The hits each fighter took lately, by its object id (see {@link #onFighterDeath}). */
 	private final Map<Integer, Deque<Hit>> _hits = new ConcurrentHashMap<>();
 
@@ -459,6 +461,7 @@ public class PassiveDeathmatchManager
 	public void leave(Player player)
 	{
 		final boolean had = _players.remove(player.getObjectId()) != null;
+		_balanced.remove(player.getObjectId());
 		player.removeStatsOwner(MATK_OWNER);
 		_hits.remove(player.getObjectId());
 		final boolean onEventTree = PassiveTreeManager.getInstance().isOnEventTree(player);
@@ -535,7 +538,7 @@ public class PassiveDeathmatchManager
 	 */
 	private boolean isFighter(Creature creature)
 	{
-		return (creature != null) && (_players.containsKey(creature.getObjectId()) || _fakes.containsKey(creature.getObjectId()));
+		return (creature != null) && (_players.containsKey(creature.getObjectId()) || _fakes.containsKey(creature.getObjectId()) || _balanced.containsKey(creature.getObjectId()));
 	}
 
 	/**
@@ -1043,11 +1046,57 @@ public class PassiveDeathmatchManager
 			return 1;
 		}
 		final FakePicks picks = _fakes.get(fake.getObjectId());
-		if ((picks == null) || ((picks._profile._role != Role.FIGHTER) && (picks._profile._role != Role.TANK)) || (picks._kills < TeamVsTeamConfig.PDM_LATE_KILLS))
+		final Profile profile = picks != null ? picks._profile : _balanced.get(fake.getObjectId());
+		if ((profile == null) || ((profile._role != Role.FIGHTER) && (profile._role != Role.TANK)))
+		{
+			return 1;
+		}
+		final TeamVsTeamManager.Fighter fighter = TeamVsTeamManager.getFighter(fake);
+		if ((fighter == null) || (fighter.getKills() < TeamVsTeamConfig.PDM_LATE_KILLS))
 		{
 			return 1;
 		}
 		return TeamVsTeamConfig.PDM_LATE_SKILL_CHANCE / 100.0;
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	// A plain Deathmatch with Mayhem's balance
+	// ---------------------------------------------------------------------------------------------
+
+	/**
+	 * A player enters a plain Deathmatch: Mayhem's stat balance applies to it too ({@link TeamVsTeamConfig#DM_BALANCE}), its own passive tree stays as it is. It goes when the player leaves the match ({@link #leave}).
+	 * @param player the player
+	 */
+	public void applyDeathmatchBalance(Player player)
+	{
+		if (!TeamVsTeamConfig.DM_BALANCE)
+		{
+			return;
+		}
+		final Role role = TeamVsTeamConfig.PDM_TANK_CLASSES.contains(player.getPlayerClass().name()) ? Role.TANK : roleOf(player);
+		final Profile profile = new Profile(player.getName(), role, player.getRace().name(), player.getPlayerClass().name(), null, false);
+		_balanced.put(player.getObjectId(), profile);
+		applyModifiers(player, profile);
+	}
+
+	/**
+	 * A fake player enters a plain Deathmatch: Mayhem's stat balance applies to it too ({@link TeamVsTeamConfig#DM_BALANCE}), at full HP. It goes with its body.
+	 * @param fake the fake player, spawned
+	 */
+	public void applyDeathmatchBalance(Npc fake)
+	{
+		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
+		if (!TeamVsTeamConfig.DM_BALANCE || (profile == null))
+		{
+			return;
+		}
+		final String className = profile.getPlayerClass() != null ? profile.getPlayerClass().name() : "";
+		final String race = profile.getPlayerClass() != null ? profile.getPlayerClass().getRace().name() : "";
+		final Role role = TeamVsTeamConfig.PDM_TANK_CLASSES.contains(className) ? Role.TANK : profile.getRole();
+		final Profile who = new Profile(fake.getName(), role, race, className, null, false);
+		_balanced.put(fake.getObjectId(), who);
+		applyModifiers(fake, who);
+		fake.setCurrentHpMp(fake.getMaxHp(), fake.getMaxMp());
 	}
 
 	/**
@@ -1115,6 +1164,7 @@ public class PassiveDeathmatchManager
 	public void forgetFake(Npc fake)
 	{
 		_fakes.remove(fake.getObjectId());
+		_balanced.remove(fake.getObjectId());
 		_hits.remove(fake.getObjectId());
 	}
 

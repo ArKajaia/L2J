@@ -1768,6 +1768,10 @@ public class TeamVsTeamManager
 				// Like the players: a blank tree, a passive picked on each kill.
 				PassiveDeathmatchManager.getInstance().prepareFake(fake, match._simulated);
 			}
+			else if (match.isDeathmatch())
+			{
+				PassiveDeathmatchManager.getInstance().applyDeathmatchBalance(fake);
+			}
 			final Fighter fighter = new Fighter(fake, match, side, role);
 			fighter._home = location;
 			side._fighters.add(fighter);
@@ -1796,6 +1800,11 @@ public class TeamVsTeamManager
 		{
 			// Its own passive tree stops applying until it leaves (after setOnEvent: the event tree only exists on an event).
 			PassiveDeathmatchManager.getInstance().join(player, match._simulated);
+		}
+		else if (match.isDeathmatch())
+		{
+			// A plain Deathmatch has Mayhem's stat balance too (DeathmatchBalance); it goes when the player leaves.
+			PassiveDeathmatchManager.getInstance().applyDeathmatchBalance(player);
 		}
 		// No "To Village" when it dies: the dead come back at their base by themselves (the button took a player out of the match).
 		player.setCanRevive(false);
