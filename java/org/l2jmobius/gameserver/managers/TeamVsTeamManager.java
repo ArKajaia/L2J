@@ -2391,6 +2391,14 @@ public class TeamVsTeamManager
 			if (slayer.isPlayer())
 			{
 				rewardKill(slayer._creature.asPlayer(), victim);
+				if (match.isDeathmatch())
+				{
+					// Both kinds of Deathmatch: a medal (by default) for every kill, on top of the cache.
+					for (ItemHolder reward : TeamVsTeamConfig.DM_KILL_REWARD)
+					{
+						slayer._creature.asPlayer().addItem(ItemProcessType.REWARD, reward.getId(), reward.getCount(), victim, true);
+					}
+				}
 			}
 			if (match.isPassiveDeathmatch())
 			{

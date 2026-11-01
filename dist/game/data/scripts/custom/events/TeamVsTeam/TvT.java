@@ -153,6 +153,7 @@ public class TvT extends Event
 		html.replace("%fight%", String.valueOf(deathmatch ? TeamVsTeamConfig.DM_FIGHT_TIME : TeamVsTeamConfig.FIGHT_TIME));
 		html.replace("%respawn%", String.valueOf(TeamVsTeamConfig.DM_RESPAWN_DELAY));
 		html.replace("%reward%", describeReward(deathmatch ? TeamVsTeamConfig.DM_WIN_REWARD : TeamVsTeamConfig.WIN_REWARD));
+		html.replace("%kill%", TeamVsTeamConfig.DM_KILL_REWARD.isEmpty() ? "" : " and " + describeReward(TeamVsTeamConfig.DM_KILL_REWARD));
 		html.replace("%top%", describeTopRewards(deathmatch));
 		html.replace("%brackets%", TeamVsTeamManager.describeBrackets());
 		html.replace("%time%", (seconds / 60) + " min " + (seconds % 60) + " s");
