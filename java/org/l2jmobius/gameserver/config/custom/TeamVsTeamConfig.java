@@ -87,7 +87,7 @@ public class TeamVsTeamConfig
 	/** The extra rewards of the best players, first place first: Crystal Scrolls of their grade. */
 	public static List<TopReward> DM_TOP_REWARDS;
 	public static int DM_NAME_COLOR;
-	/** The plain Deathmatch gets Deathmatch: Mayhem's stat balance too (the Mayhem* M.Atk, P.Atk, MP cost, HP, Speed, area damage and late auto attack settings). */
+	/** The plain Deathmatch gets Deathmatch: Mayhem's stat balance too (the Mayhem* M.Atk, P.Atk, MP cost, HP, Speed and area damage settings; not the fake players' late auto attacks). */
 	public static boolean DM_BALANCE;
 
 	// Deathmatch: Mayhem (the Passive Deathmatch in the code): a Deathmatch with blank passive trees, a passive picked on each kill (see PassiveDeathmatchManager). Its size, time, respawn and rewards are the Deathmatch ones.

@@ -1045,8 +1045,9 @@ public class PassiveDeathmatchManager
 		{
 			return 1;
 		}
+		// Mayhem only: a plain Deathmatch's fake players fight as they always do.
 		final FakePicks picks = _fakes.get(fake.getObjectId());
-		final Profile profile = picks != null ? picks._profile : _balanced.get(fake.getObjectId());
+		final Profile profile = picks != null ? picks._profile : null;
 		if ((profile == null) || ((profile._role != Role.FIGHTER) && (profile._role != Role.TANK)))
 		{
 			return 1;
