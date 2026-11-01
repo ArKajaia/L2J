@@ -41,6 +41,7 @@ import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
@@ -57,6 +58,7 @@ import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.functions.FuncAdd;
 import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
@@ -93,7 +95,9 @@ public class PassiveDeathmatchManager
 	private static final int MATK_ORDER = 0x60;
 
 	/** How far a fake player's want of each offered passive strays at random on each pick. */
-	private static final double FAKE_PICK_JITTER = 0.25;
+	private static final double FAKE_PICK_JITTER = 0.15;
+	/** How often a fake player takes a passive by weighted chance instead of the one worth most to it. */
+	private static final double FAKE_PICK_EXPLORE = 0.15;
 
 	/** A pick waiting for its player: its number, and the nodes it offers. */
 	private static class Offer
@@ -172,12 +176,36 @@ public class PassiveDeathmatchManager
 		 */
 		double weighWith(PassiveNode node, boolean alt)
 		{
+			return weighWith(node, alt, null, 1);
+		}
+
+		/**
+		 * @param node a node it may take
+		 * @param alt {@code true} for a hybrid's fighter side
+		 * @param have the summed effects of what it has, {@code null} for nothing
+		 * @param survival how much more HP and defence count
+		 * @return how much it wants it, given what it has
+		 */
+		double weighWith(PassiveNode node, boolean alt, PassiveStatBonusCache have, double survival)
+		{
 			if (node.isEventOnly())
 			{
 				return mayTake(node) ? node.getEventWeight() : 0;
 			}
 			final FakePlayerPvpPassiveTree.NodeTaste taste = alt && (_altTaste != null) ? _altTaste : _taste;
-			return taste == null ? 1 : FakePlayerPvpPassiveTree.getInstance().weigh(taste, node);
+			return taste == null ? 1 : FakePlayerPvpPassiveTree.getInstance().weigh(taste, node, have, survival);
+		}
+
+		/**
+		 * @return how much it wants a node, given what it has
+		 */
+		double weigh(PassiveNode node, PassiveStatBonusCache have, double survival)
+		{
+			if (_altTaste == null)
+			{
+				return weighWith(node, false, have, survival);
+			}
+			return (_mainShare * weighWith(node, false, have, survival)) + ((1 - _mainShare) * weighWith(node, true, have, survival));
 		}
 
 		/**
@@ -265,6 +293,9 @@ public class PassiveDeathmatchManager
 		private final List<Integer> _nodes = new ArrayList<>();
 		private final double _hpShare;
 		private final Profile _profile;
+		/** Its kills and deaths in the match, for what it picks (see {@link #pickForFake}). */
+		private int _kills;
+		private int _deaths;
 
 		FakePicks(double hpShare, Profile profile)
 		{
@@ -334,7 +365,7 @@ public class PassiveDeathmatchManager
 	 */
 	public void join(Player player, boolean simulated)
 	{
-		final Role role = roleOf(player);
+		final Role role = TeamVsTeamConfig.PDM_TANK_CLASSES.contains(player.getPlayerClass().name()) ? Role.TANK : roleOf(player);
 		FakePlayerPvpPassiveTree.NodeTaste taste = null;
 		try
 		{
@@ -366,9 +397,13 @@ public class PassiveDeathmatchManager
 		mul(creature, Stat.MAGIC_ATTACK, TeamVsTeamConfig.PDM_MATK);
 		mul(creature, Stat.MP_CONSUME, TeamVsTeamConfig.PDM_MP_COST);
 		mul(creature, Stat.BOW_MP_CONSUME_RATE, TeamVsTeamConfig.PDM_MP_COST);
-		if ((profile._role == Role.FIGHTER) || (profile._role == Role.TANK) || (profile._role == Role.ARCHER))
+		if (((profile._role == Role.FIGHTER) || (profile._role == Role.TANK) || (profile._role == Role.ARCHER)) && !TeamVsTeamConfig.PDM_PATK_EXCLUDED.contains(profile._className))
 		{
 			mul(creature, Stat.POWER_ATTACK, TeamVsTeamConfig.PDM_PATK);
+		}
+		if ((profile._role == Role.ARCHER) && (TeamVsTeamConfig.PDM_ARCHER_SPEED != 0))
+		{
+			creature.addStatFunc(new FuncAdd(Stat.MOVE_SPEED, MATK_ORDER, MATK_OWNER, TeamVsTeamConfig.PDM_ARCHER_SPEED, null));
 		}
 		else if (profile._role == Role.DAGGER)
 		{
@@ -539,6 +574,14 @@ public class PassiveDeathmatchManager
 	 */
 	public void onFighterDeath(Creature victim, Creature killer)
 	{
+		final FakePicks dead = _fakes.get(victim.getObjectId());
+		if (dead != null)
+		{
+			synchronized (dead)
+			{
+				dead._deaths++;
+			}
+		}
 		final Deque<Hit> hits = _hits.remove(victim.getObjectId());
 		if ((hits == null) || (TeamVsTeamConfig.PDM_ASSIST_SHARE <= 0))
 		{
@@ -597,7 +640,7 @@ public class PassiveDeathmatchManager
 			{
 				taken.addAll(waiting._options);
 			}
-			final List<Integer> options = roll(getEventNodes(player), taken, TeamVsTeamConfig.PDM_CHOICES, picks._profile);
+			final List<Integer> options = roll(getEventNodes(player), taken, TeamVsTeamConfig.PDM_CHOICES, picks._profile, isKeystoneTurn(getEventNodes(player).size() + picks._pending.size()));
 			if (options.isEmpty())
 			{
 				player.sendMessage(TAG + ": You have every passive this event offers.");
@@ -794,7 +837,7 @@ public class PassiveDeathmatchManager
 					taken.addAll(other._options);
 				}
 				final Set<String> offerNames = names(toNodes(valid));
-				for (int id : roll(owned, taken, TeamVsTeamConfig.PDM_CHOICES - valid.size(), picks._profile))
+				for (int id : roll(owned, taken, TeamVsTeamConfig.PDM_CHOICES - valid.size(), picks._profile, false))
 				{
 					final PassiveNode node = PassiveTreeData.getInstance().getNode(id);
 					if ((node != null) && offerNames.add(node.getName()))
@@ -840,19 +883,22 @@ public class PassiveDeathmatchManager
 			return;
 		}
 		final FakePlayerPvpPassives own = profile.getPassives();
+		final String className = profile.getPlayerClass() != null ? profile.getPlayerClass().name() : "";
+		final String race = profile.getPlayerClass() != null ? profile.getPlayerClass().getRace().name() : "";
+		final String buildName = profile.getBuild() != null ? profile.getBuild().getName() : className;
+		// The classes that play as tanks in this mode (MayhemTankClasses) want what a tank wants.
+		final Role role = TeamVsTeamConfig.PDM_TANK_CLASSES.contains(className) ? Role.TANK : profile.getRole();
 		FakePlayerPvpPassiveTree.NodeTaste taste = null;
 		try
 		{
-			taste = FakePlayerPvpPassiveTree.getInstance().rollTaste(profile.getBuild(), profile.getArmorMask(), profile.getWornMask());
+			final FakePlayerPvpBuild build = profile.getBuild();
+			taste = FakePlayerPvpPassiveTree.getInstance().rollTaste(role, build.isHybrid(), role == build.getRole() ? build.getKeystones() : null, build.getWeights(), profile.getArmorMask(), profile.getWornMask(), true);
 		}
 		catch (Exception e)
 		{
 			// No taste: it picks by chance.
 		}
-		final String className = profile.getPlayerClass() != null ? profile.getPlayerClass().name() : "";
-		final String race = profile.getPlayerClass() != null ? profile.getPlayerClass().getRace().name() : "";
-		final String buildName = profile.getBuild() != null ? profile.getBuild().getName() : className;
-		final Profile who = new Profile(fake.getName() + " (" + buildName + ")", profile.getRole(), race, className, taste, simulated);
+		final Profile who = new Profile(fake.getName() + " (" + buildName + ")", role, race, className, taste, simulated);
 		who.makeHybrid(profile.getArmorMask(), profile.getWornMask(), true);
 		who.initNotableScale();
 		final FakePicks picks = new FakePicks(own != null ? own.getHpShare() : 1, who);
@@ -876,13 +922,17 @@ public class PassiveDeathmatchManager
 		}
 		synchronized (picks)
 		{
+			if (!assist)
+			{
+				picks._kills++;
+			}
 			final Set<Integer> owned = new HashSet<>(picks._nodes);
-			final List<Integer> options = roll(owned, owned, TeamVsTeamConfig.PDM_CHOICES, picks._profile);
+			final List<Integer> options = roll(owned, owned, TeamVsTeamConfig.PDM_CHOICES, picks._profile, isKeystoneTurn(picks._nodes.size()));
 			if (options.isEmpty())
 			{
 				return;
 			}
-			final int picked = pickForFake(picks._profile, options);
+			final int picked = pickForFake(picks, fake.getTemplate().getFakePlayerPvpProfile().getPassives(), options);
 			picks._nodes.add(picked);
 			applyFake(fake, profile, picks);
 			if (picks._profile._log)
@@ -895,42 +945,77 @@ public class PassiveDeathmatchManager
 	}
 
 	/**
-	 * @param profile the fake player
+	 * What a fake player takes of an offer:
+	 * <ul>
+	 * <li>one of its own event keystones, while it has none;</li>
+	 * <li>else the one worth most to it ({@link Profile#weigh(PassiveNode, PassiveStatBonusCache, double)}: its class's weights, what is past a cap worth nothing, a stat it has a lot of worth less, HP and defence worth more while it dies more than it kills), with a
+	 * little jitter, and now and then ({@link #FAKE_PICK_EXPLORE}) one by chance weighted by worth, so fake players of one class don't all end up alike;</li>
+	 * <li>by plain chance if none is worth anything to it.</li>
+	 * </ul>
+	 * @param picks the fake player's picks
+	 * @param current its passives now, {@code null} for none
 	 * @param options the passives offered, at least one
-	 * @return the one it takes: by chance weighted by what each is worth to it (with some jitter), or plain chance if none is worth anything to it
+	 * @return the one it takes
 	 */
-	private static int pickForFake(Profile profile, List<Integer> options)
+	private static int pickForFake(FakePicks picks, FakePlayerPvpPassives current, List<Integer> options)
 	{
+		final Profile profile = picks._profile;
+		final boolean hasEventKeystone = picks._nodes.stream().map(PassiveTreeData.getInstance()::getNode).anyMatch((n) -> (n != null) && n.isEventOnly());
+		if (!hasEventKeystone)
 		{
-			final double[] weights = new double[options.size()];
-			double total = 0;
-			for (int i = 0; i < weights.length; i++)
+			for (int id : options)
 			{
-				final PassiveNode node = PassiveTreeData.getInstance().getNode(options.get(i));
-				weights[i] = node == null ? 0 : profile.weigh(node) * (1 + (((Rnd.nextDouble() * 2) - 1) * FAKE_PICK_JITTER));
-				total += weights[i];
-			}
-			if (total > 0)
-			{
-				double roll = Rnd.nextDouble() * total;
-				for (int i = 0; i < weights.length; i++)
+				final PassiveNode node = PassiveTreeData.getInstance().getNode(id);
+				if ((node != null) && node.isEventOnly() && profile.mayTake(node))
 				{
-					roll -= weights[i];
-					if ((roll < 0) && (weights[i] > 0))
-					{
-						return options.get(i);
-					}
-				}
-				for (int i = weights.length - 1; i >= 0; i--)
-				{
-					if (weights[i] > 0)
-					{
-						return options.get(i);
-					}
+					return id;
 				}
 			}
 		}
-		return options.get(Rnd.get(options.size()));
+
+		final PassiveStatBonusCache have = current != null ? current.getBonus() : null;
+		final double survival = picks._deaths > picks._kills ? 1 + Math.min(1, (picks._deaths - picks._kills) / 5.0) : 1;
+		final double[] weights = new double[options.size()];
+		double total = 0;
+		int best = -1;
+		for (int i = 0; i < weights.length; i++)
+		{
+			final PassiveNode node = PassiveTreeData.getInstance().getNode(options.get(i));
+			weights[i] = node == null ? 0 : profile.weigh(node, have, survival) * (1 + (((Rnd.nextDouble() * 2) - 1) * FAKE_PICK_JITTER));
+			total += weights[i];
+			if ((weights[i] > 0) && ((best < 0) || (weights[i] > weights[best])))
+			{
+				best = i;
+			}
+		}
+		if (total <= 0)
+		{
+			return options.get(Rnd.get(options.size()));
+		}
+		if (Rnd.nextDouble() >= FAKE_PICK_EXPLORE)
+		{
+			return options.get(best);
+		}
+		double roll = Rnd.nextDouble() * total;
+		for (int i = 0; i < weights.length; i++)
+		{
+			roll -= weights[i];
+			if ((roll < 0) && (weights[i] > 0))
+			{
+				return options.get(i);
+			}
+		}
+		return options.get(best);
+	}
+
+	/**
+	 * @param picksSoFar how many passives the fighter has (and has waiting)
+	 * @return {@code true} if its next offer holds one of its own event keystones: its first, then every {@link TeamVsTeamConfig#PDM_KEYSTONE_EVERY}
+	 */
+	private static boolean isKeystoneTurn(int picksSoFar)
+	{
+		final int every = TeamVsTeamConfig.PDM_KEYSTONE_EVERY;
+		return (every > 0) && ((picksSoFar == 0) || (((picksSoFar + 1) % every) == 0));
 	}
 
 	/**
@@ -1002,7 +1087,7 @@ public class PassiveDeathmatchManager
 	 * @param count how many
 	 * @return the passives, fewer if the pool runs out
 	 */
-	private static List<Integer> roll(Collection<Integer> owned, Collection<Integer> exclude, int count, Profile profile)
+	private static List<Integer> roll(Collection<Integer> owned, Collection<Integer> exclude, int count, Profile profile, boolean keystoneTurn)
 	{
 		final List<PassiveNode> ownedNodes = toNodes(owned);
 		final Set<String> ownedNames = names(ownedNodes);
@@ -1020,9 +1105,26 @@ public class PassiveDeathmatchManager
 		Collections.shuffle(pool);
 		final List<Integer> result = new ArrayList<>(count);
 		final Set<String> names = new HashSet<>();
+		// A keystone turn: one of the fighter's own event keystones, the ones made for its class or race first.
+		if (keystoneTurn && (count > 0))
+		{
+			PassiveNode own = null;
+			for (PassiveNode node : pool)
+			{
+				if (node.isEventOnly() && ((own == null) || (isClassKeystone(node) && !isClassKeystone(own))))
+				{
+					own = node;
+				}
+			}
+			if (own != null)
+			{
+				names.add(own.getName());
+				result.add(own.getId());
+			}
+		}
 		// Class-aware: the first ones of use to the fighter's role (up to PDM_USEFUL_CHOICES), then any. A hybrid's useful ones are a mage's or, now and then, a fighter's.
-		final int useful = Math.min(count, TeamVsTeamConfig.PDM_USEFUL_CHOICES);
-		for (int slot = 0; slot < useful; slot++)
+		final int useful = Math.min(count, TeamVsTeamConfig.PDM_USEFUL_CHOICES + result.size());
+		for (int slot = result.size(); slot < useful; slot++)
 		{
 			final boolean alt = (profile._altTaste != null) && (Rnd.nextDouble() >= profile._mainShare);
 			for (PassiveNode node : pool)
@@ -1049,6 +1151,15 @@ public class PassiveDeathmatchManager
 		}
 		Collections.shuffle(result);
 		return result;
+	}
+
+	/**
+	 * @param node an event-only node
+	 * @return {@code true} if it is made for some classes or races, not a whole role
+	 */
+	private static boolean isClassKeystone(PassiveNode node)
+	{
+		return !node.getEventClasses().isEmpty() || !node.getEventRaces().isEmpty();
 	}
 
 	/**

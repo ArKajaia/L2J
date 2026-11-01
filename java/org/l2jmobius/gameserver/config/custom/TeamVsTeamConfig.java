@@ -104,6 +104,14 @@ public class TeamVsTeamConfig
 	public static int PDM_PATK;
 	/** % of their P.Atk daggers have. */
 	public static int PDM_DAGGER_PATK;
+	/** Classes (PlayerClass names) left out of {@link #PDM_PATK}. */
+	public static Set<String> PDM_PATK_EXCLUDED;
+	/** Speed archers get. */
+	public static int PDM_ARCHER_SPEED;
+	/** Classes (PlayerClass names) that play as tanks in this mode (their offers, HP, notables and keystones). */
+	public static Set<String> PDM_TANK_CLASSES;
+	/** A fighter's first offer and every this many after it holds one of its own event keystones (0: never). */
+	public static int PDM_KEYSTONE_EVERY;
 	/** How effective the notables of mages and of tanks are, in %. */
 	public static int PDM_MAGE_NOTABLES;
 	public static int PDM_TANK_NOTABLES;
@@ -276,19 +284,15 @@ public class TeamVsTeamConfig
 		PDM_MATK = Math.max(0, config.getInt("MayhemMAtk", 70));
 		PDM_PATK = Math.max(0, config.getInt("MayhemPAtk", 115));
 		PDM_DAGGER_PATK = Math.max(0, config.getInt("MayhemDaggerPAtk", 85));
+		PDM_PATK_EXCLUDED = parseNames(config.getString("MayhemPAtkExcludedClasses", "GRAND_KHAVATARI"));
+		PDM_ARCHER_SPEED = config.getInt("MayhemArcherSpeed", 20);
+		PDM_TANK_CLASSES = parseNames(config.getString("MayhemTankClasses", "SPECTRAL_DANCER,JUDICATOR"));
+		PDM_KEYSTONE_EVERY = Math.max(0, config.getInt("MayhemKeystoneEvery", 4));
 		PDM_MAGE_NOTABLES = Math.max(0, config.getInt("MayhemMageNotables", 70));
 		PDM_TANK_NOTABLES = Math.max(0, config.getInt("MayhemTankNotables", 120));
 		PDM_MP_COST = Math.max(0, config.getInt("MayhemMpCost", 30));
 		PDM_TANK_HP = Math.max(0, config.getInt("MayhemTankHp", 115));
-		final Set<String> hybrids = new HashSet<>();
-		for (String name : config.getString("MayhemHybridClasses", "MALE_SOUL_HOUND,FEMALE_SOUL_HOUND").split(","))
-		{
-			if (!name.isBlank())
-			{
-				hybrids.add(name.trim().toUpperCase());
-			}
-		}
-		PDM_HYBRID_CLASSES = Collections.unmodifiableSet(hybrids);
+		PDM_HYBRID_CLASSES = parseNames(config.getString("MayhemHybridClasses", "MALE_SOUL_HOUND,FEMALE_SOUL_HOUND"));
 		PDM_HYBRID_MAGIC = Math.max(0, Math.min(100, config.getInt("MayhemHybridMagicShare", 70)));
 		PDM_HYBRID_NOTABLE_BONUS = Math.max(0, config.getInt("MayhemHybridNotableBonus", 20));
 		PDM_ASSIST_SHARE = Math.max(0, Math.min(100, config.getInt("MayhemAssistShare", 30)));
@@ -316,6 +320,23 @@ public class TeamVsTeamConfig
 			}
 		}
 		PDM_EXCLUDED_EFFECTS = Collections.unmodifiableSet(excluded);
+	}
+
+	/**
+	 * @param text names separated by ,
+	 * @return them, upper case
+	 */
+	private static Set<String> parseNames(String text)
+	{
+		final Set<String> names = new HashSet<>();
+		for (String name : text.split(","))
+		{
+			if (!name.isBlank())
+			{
+				names.add(name.trim().toUpperCase());
+			}
+		}
+		return Collections.unmodifiableSet(names);
 	}
 
 	/**
