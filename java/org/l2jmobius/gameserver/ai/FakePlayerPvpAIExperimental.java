@@ -44,6 +44,7 @@ import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
 import org.l2jmobius.gameserver.managers.RaceWarsManager;
 import org.l2jmobius.gameserver.managers.TeamEventRules;
+import org.l2jmobius.gameserver.managers.PassiveDeathmatchManager;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.VillageSiegeManager;
 import org.l2jmobius.gameserver.managers.simulation.FakeAiTrace;
@@ -1203,7 +1204,12 @@ public class FakePlayerPvpAIExperimental extends AttackableAI implements FakePla
 		}
 		
 		// Attack skills, best first. Mages cast whenever they can, Gladiators, Tyrants and daggers fight with their skills, and the other classes (tanks, archers, most warriors) auto attack and use a skill now and then, like players.
-		final int skillChance = _autoAttacker ? (pvp ? personality.getAutoAttackPvpSkillChance() : personality.getAutoAttackSkillChance()) : (pvp ? personality.getPvpSkillChance() : personality.getSkillChance());
+		int skillChance = _autoAttacker ? (pvp ? personality.getAutoAttackPvpSkillChance() : personality.getAutoAttackSkillChance()) : (pvp ? personality.getPvpSkillChance() : personality.getSkillChance());
+		// Deathmatch: Mayhem: a fighter with many kills auto attacks more (see PassiveDeathmatchManager.getSkillChanceFactor).
+		if (TeamVsTeamManager.ACTIVE)
+		{
+			skillChance = (int) (skillChance * PassiveDeathmatchManager.getInstance().getSkillChanceFactor(npc));
+		}
 		// #29: an archer whose arrows would miss uses its skills every time (they don't miss), one whose arrows land none.
 		final boolean archerSkills = pvp && (role == Role.ARCHER);
 		if ((archerSkills ? !arrowsFirst : (mage || (Rnd.get(100) < skillChance))) && useSkill(npc, target, inReach(pickSkill(npc, target, affordable(npc, profile.getSkills(SkillCategory.ATTACK), safeCast), false, (role.isRanged() || bowHeld) ? reach : -1, pvp, defenses), bowHeld, reach), distance, collision, canMove))

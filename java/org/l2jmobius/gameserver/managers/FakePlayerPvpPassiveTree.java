@@ -1326,6 +1326,20 @@ public class FakePlayerPvpPassiveTree
 	 */
 	public double weigh(NodeTaste taste, PassiveNode node)
 	{
+		return weigh(taste, node, null, 1);
+	}
+
+	/**
+	 * Like {@link #weigh(NodeTaste, PassiveNode)}, for a fake player that already has some passives: what is past a stat's cap is worth nothing, a stat it has a lot of is worth less (half after about ten small nodes' worth), and one that dies more than it kills wants
+	 * HP and defence more.
+	 * @param taste a fake player's taste
+	 * @param node a node of the tree
+	 * @param have the summed effects of what it has, {@code null} for nothing
+	 * @param survival how much more HP and defence count (1: as usual)
+	 * @return how much it wants the node
+	 */
+	public double weigh(NodeTaste taste, PassiveNode node, PassiveStatBonusCache have, double survival)
+	{
 		final Integer index = _indexes.get(node.getId());
 		if (index == null)
 		{
@@ -1335,7 +1349,24 @@ public class FakePlayerPvpPassiveTree
 		{
 			return taste._keystoneWeights[index];
 		}
-		return Math.max(0, effectWorth(taste, index)) / taste._notableScale;
+		double worth = 0;
+		for (int e = 0; e < _effectKeys[index].length; e++)
+		{
+			final int k = _effectKeys[index][e];
+			double value = _effectValues[index][e];
+			if ((have != null) && (value > 0))
+			{
+				final double current = Math.max(0, have.get(_keys[k]));
+				if (!Double.isNaN(_caps[k]))
+				{
+					value = Math.max(0, Math.min(value, _caps[k] - current));
+				}
+				value /= 1 + (current / (10 * _units[k]));
+			}
+			final double groupNeed = (LIFE_KEYS.contains(_keys[k]) || GUARD_KEYS.contains(_keys[k])) ? survival : 1;
+			worth += taste._keyWeights[k] * conditionWeight(_effectTokens[index][e], taste._gear) * value * groupNeed;
+		}
+		return Math.max(0, worth) / taste._notableScale;
 	}
 
 	/**

@@ -87,6 +87,10 @@ public class TeamVsTeamConfig
 	/** The extra rewards of the best players, first place first: Crystal Scrolls of their grade. */
 	public static List<TopReward> DM_TOP_REWARDS;
 	public static int DM_NAME_COLOR;
+	/** Classes (PlayerClass names) never made fake players of in either Deathmatch: support classes the fake player AI fights badly with. Players of them still take part. */
+	public static Set<String> DM_FAKE_EXCLUDED_CLASSES;
+	/** The plain Deathmatch gets Deathmatch: Mayhem's stat balance too (the Mayhem* M.Atk, P.Atk, MP cost, HP, Speed and area damage settings; not the fake players' late auto attacks). */
+	public static boolean DM_BALANCE;
 
 	// Deathmatch: Mayhem (the Passive Deathmatch in the code): a Deathmatch with blank passive trees, a passive picked on each kill (see PassiveDeathmatchManager). Its size, time, respawn and rewards are the Deathmatch ones.
 	public static boolean PDM_ENABLED;
@@ -104,9 +108,26 @@ public class TeamVsTeamConfig
 	public static int PDM_PATK;
 	/** % of their P.Atk daggers have. */
 	public static int PDM_DAGGER_PATK;
-	/** How effective the notables of mages and of tanks are, in %. */
+	/** Classes (PlayerClass names) left out of {@link #PDM_PATK}. */
+	public static Set<String> PDM_PATK_EXCLUDED;
+	/** Speed archers get. */
+	public static int PDM_ARCHER_SPEED;
+	/** Classes (PlayerClass names) that play as tanks in this mode (their offers, HP, notables and keystones). */
+	public static Set<String> PDM_TANK_CLASSES;
+	/** A fighter's first offer and every this many after it holds one of its own event keystones (0: never). */
+	public static int PDM_KEYSTONE_EVERY;
+	/** Notables (names, as in the tree) a fake player always takes when offered one of use to it: the ones that raised kills most in the simulations. */
+	public static Set<String> PDM_PRIORITY_NOTABLES;
+	/** A fighter or tank fake player with this many kills or more uses its attack skills {@link #PDM_LATE_SKILL_CHANCE} % as often, auto attacking more (0: never). */
+	public static int PDM_LATE_KILLS;
+	public static int PDM_LATE_SKILL_CHANCE;
+	/** How effective the notables of mages, tanks and archers are, in %. */
 	public static int PDM_MAGE_NOTABLES;
 	public static int PDM_TANK_NOTABLES;
+	public static int PDM_ARCHER_NOTABLES;
+	/** The nukers (PlayerClass names), whose M.Atk is cut a second time: {@link #PDM_NUKER_MATK} % on top of {@link #PDM_MATK}. */
+	public static Set<String> PDM_NUKER_CLASSES;
+	public static int PDM_NUKER_MATK;
 	/** % of their skills' MP cost everyone pays. */
 	public static int PDM_MP_COST;
 	/** % of their max HP tanks and dwarves have. */
@@ -259,6 +280,8 @@ public class TeamVsTeamConfig
 		DM_KILL_REWARD = parseItems(config.getString("DeathmatchKillReward", "6393,1"), "DeathmatchKillReward");
 		DM_TOP_REWARDS = parseTopRewards(config.getString("DeathmatchTopRewards", "weapon,1;armor,2;armor,1"), "DeathmatchTopRewards");
 		DM_NAME_COLOR = Integer.decode("0x" + config.getString("DeathmatchNameColor", "FFFFFF"));
+		DM_BALANCE = config.getBoolean("DeathmatchBalance", true);
+		DM_FAKE_EXCLUDED_CLASSES = parseNames(config.getString("DeathmatchFakeExcludedClasses", "SPECTRAL_DANCER,JUDICATOR"));
 
 		PDM_ENABLED = config.getBoolean("MayhemEnabled", config.getBoolean("PassiveDeathmatchEnabled", true));
 		final List<String> pdmMaps = new ArrayList<>();
@@ -276,19 +299,29 @@ public class TeamVsTeamConfig
 		PDM_MATK = Math.max(0, config.getInt("MayhemMAtk", 70));
 		PDM_PATK = Math.max(0, config.getInt("MayhemPAtk", 115));
 		PDM_DAGGER_PATK = Math.max(0, config.getInt("MayhemDaggerPAtk", 85));
-		PDM_MAGE_NOTABLES = Math.max(0, config.getInt("MayhemMageNotables", 70));
-		PDM_TANK_NOTABLES = Math.max(0, config.getInt("MayhemTankNotables", 120));
-		PDM_MP_COST = Math.max(0, config.getInt("MayhemMpCost", 30));
-		PDM_TANK_HP = Math.max(0, config.getInt("MayhemTankHp", 115));
-		final Set<String> hybrids = new HashSet<>();
-		for (String name : config.getString("MayhemHybridClasses", "MALE_SOUL_HOUND,FEMALE_SOUL_HOUND").split(","))
+		PDM_PATK_EXCLUDED = parseNames(config.getString("MayhemPAtkExcludedClasses", "GRAND_KHAVATARI"));
+		PDM_ARCHER_SPEED = config.getInt("MayhemArcherSpeed", 20);
+		PDM_TANK_CLASSES = parseNames(config.getString("MayhemTankClasses", "SPECTRAL_DANCER,JUDICATOR"));
+		PDM_KEYSTONE_EVERY = Math.max(0, config.getInt("MayhemKeystoneEvery", 4));
+		final Set<String> priority = new HashSet<>();
+		for (String name : config.getString("MayhemFakePriorityNotables", "Quickened Mind;Aegis of Dawn;Radiant Smite;Untouched;Starfire;Pillar of Grace;Devout Disciple;Archon's Insight;Spell Surge").split(";"))
 		{
 			if (!name.isBlank())
 			{
-				hybrids.add(name.trim().toUpperCase());
+				priority.add(name.trim());
 			}
 		}
-		PDM_HYBRID_CLASSES = Collections.unmodifiableSet(hybrids);
+		PDM_PRIORITY_NOTABLES = Collections.unmodifiableSet(priority);
+		PDM_LATE_KILLS = Math.max(0, config.getInt("MayhemFakeAutoAttackKills", 10));
+		PDM_LATE_SKILL_CHANCE = Math.max(0, Math.min(100, config.getInt("MayhemFakeAutoAttackSkillChance", 75)));
+		PDM_MAGE_NOTABLES = Math.max(0, config.getInt("MayhemMageNotables", 70));
+		PDM_TANK_NOTABLES = Math.max(0, config.getInt("MayhemTankNotables", 120));
+		PDM_ARCHER_NOTABLES = Math.max(0, config.getInt("MayhemArcherNotables", 130));
+		PDM_NUKER_CLASSES = parseNames(config.getString("MayhemNukerClasses", "ARCHMAGE,MYSTIC_MUSE,STORM_SCREAMER"));
+		PDM_NUKER_MATK = Math.max(0, config.getInt("MayhemNukerMAtk", 85));
+		PDM_MP_COST = Math.max(0, config.getInt("MayhemMpCost", 30));
+		PDM_TANK_HP = Math.max(0, config.getInt("MayhemTankHp", 115));
+		PDM_HYBRID_CLASSES = parseNames(config.getString("MayhemHybridClasses", "MALE_SOUL_HOUND,FEMALE_SOUL_HOUND"));
 		PDM_HYBRID_MAGIC = Math.max(0, Math.min(100, config.getInt("MayhemHybridMagicShare", 70)));
 		PDM_HYBRID_NOTABLE_BONUS = Math.max(0, config.getInt("MayhemHybridNotableBonus", 20));
 		PDM_ASSIST_SHARE = Math.max(0, Math.min(100, config.getInt("MayhemAssistShare", 30)));
@@ -308,7 +341,7 @@ public class TeamVsTeamConfig
 		}
 		PDM_NODE_TYPES = Collections.unmodifiableSet(nodeTypes);
 		final Set<String> excluded = new HashSet<>();
-		for (String key : config.getString("MayhemExcludedEffects", config.getString("PassiveDeathmatchExcludedEffects", "DROP_RATE_PCT,SPOIL_RATE_PCT,ADENA_RATE_PCT,EXP_RATE_PCT,SP_RATE_PCT,PVE_PDMG_PCT,PVE_MDMG_PCT,PVE_BOW_DMG_PCT")).split(","))
+		for (String key : config.getString("MayhemExcludedEffects", config.getString("PassiveDeathmatchExcludedEffects", "DROP_RATE_PCT,SPOIL_RATE_PCT,ADENA_RATE_PCT,EXP_RATE_PCT,SP_RATE_PCT,PVE_PDMG_PCT,PVE_MDMG_PCT")).split(","))
 		{
 			if (!key.isBlank())
 			{
@@ -316,6 +349,23 @@ public class TeamVsTeamConfig
 			}
 		}
 		PDM_EXCLUDED_EFFECTS = Collections.unmodifiableSet(excluded);
+	}
+
+	/**
+	 * @param text names separated by ,
+	 * @return them, upper case
+	 */
+	private static Set<String> parseNames(String text)
+	{
+		final Set<String> names = new HashSet<>();
+		for (String name : text.split(","))
+		{
+			if (!name.isBlank())
+			{
+				names.add(name.trim().toUpperCase());
+			}
+		}
+		return Collections.unmodifiableSet(names);
 	}
 
 	/**

@@ -1749,8 +1749,13 @@ public class TeamVsTeamManager
 		final List<Npc> spawned = new ArrayList<>();
 		for (SimRole role : roles)
 		{
-			final FakePlayerPvpBuild build = SimulationComposer.pick(role, ThreadLocalRandom.current());
-			if (build == null)
+			FakePlayerPvpBuild build = SimulationComposer.pick(role, ThreadLocalRandom.current());
+			// A Deathmatch makes no fake players of the classes in DeathmatchFakeExcludedClasses (support classes the AI fights badly with): another build of the role instead.
+			for (int retry = 0; match.isDeathmatch() && (build != null) && (build.getPlayerClass() != null) && TeamVsTeamConfig.DM_FAKE_EXCLUDED_CLASSES.contains(build.getPlayerClass().name()) && (retry < 20); retry++)
+			{
+				build = SimulationComposer.pick(role, ThreadLocalRandom.current());
+			}
+			if ((build == null) || (match.isDeathmatch() && (build.getPlayerClass() != null) && TeamVsTeamConfig.DM_FAKE_EXCLUDED_CLASSES.contains(build.getPlayerClass().name())))
 			{
 				continue;
 			}
@@ -1767,6 +1772,10 @@ public class TeamVsTeamManager
 			{
 				// Like the players: a blank tree, a passive picked on each kill.
 				PassiveDeathmatchManager.getInstance().prepareFake(fake, match._simulated);
+			}
+			else if (match.isDeathmatch())
+			{
+				PassiveDeathmatchManager.getInstance().applyDeathmatchBalance(fake);
 			}
 			final Fighter fighter = new Fighter(fake, match, side, role);
 			fighter._home = location;
@@ -1796,6 +1805,11 @@ public class TeamVsTeamManager
 		{
 			// Its own passive tree stops applying until it leaves (after setOnEvent: the event tree only exists on an event).
 			PassiveDeathmatchManager.getInstance().join(player, match._simulated);
+		}
+		else if (match.isDeathmatch())
+		{
+			// A plain Deathmatch has Mayhem's stat balance too (DeathmatchBalance); it goes when the player leaves.
+			PassiveDeathmatchManager.getInstance().applyDeathmatchBalance(player);
 		}
 		// No "To Village" when it dies: the dead come back at their base by themselves (the button took a player out of the match).
 		player.setCanRevive(false);

@@ -5,6 +5,7 @@ Rows for the server's custom skills:
   27000-27005  Hot Zone buffs        (data/stats/skills/custom/hotzone_skills.xml)
   27400-27465  Passive tree actives  (data/stats/skills/PassiveTreeActives.xml)
   27470-27480  Keystone proc buffs   (same file)
+  27481-27487  Deathmatch: Mayhem keystone buffs and debuffs (same file)
 
 Without these rows the client shows the skills with no name and no icon.
 
