@@ -28,6 +28,30 @@
 		<current enchant="16-65535" chance="0" />
 	</enchantRateGroup>
 
+	<!-- Crystal Scroll armor enchant group: safe up to +3, then 33% up to +11 and 20% from +12. -->
+	<enchantRateGroup name="CRYSTAL_ARMOR_GROUP">
+		<current enchant="0-2" chance="100" />
+		<current enchant="3-11" chance="33" />
+		<current enchant="12-15" chance="20" />
+		<current enchant="16-65535" chance="0" />
+	</enchantRateGroup>
+
+	<!-- Crystal Scroll full armor enchant group: safe up to +4, then 33% up to +11 and 20% from +12. -->
+	<enchantRateGroup name="CRYSTAL_FULL_ARMOR_GROUP">
+		<current enchant="0-3" chance="100" />
+		<current enchant="4-11" chance="33" />
+		<current enchant="12-15" chance="20" />
+		<current enchant="16-65535" chance="0" />
+	</enchantRateGroup>
+
+	<!-- Crystal Scroll weapon enchant group: safe up to +3, then 33% up to +11 and 20% from +12. -->
+	<enchantRateGroup name="CRYSTAL_WEAPON_GROUP">
+		<current enchant="0-2" chance="100" />
+		<current enchant="3-11" chance="33" />
+		<current enchant="12-15" chance="20" />
+		<current enchant="16-65535" chance="0" />
+	</enchantRateGroup>
+
 	<!-- Default scrolls enchanting route line. -->
 	<enchantScrollGroup id="0">
 		<!-- Bind armor group to all item slots except full armor. -->
@@ -57,6 +81,30 @@
 		<enchantRate group="MAGE_WEAPON_GROUP">
 			<item slot="rhand" magicWeapon="true" /> <!-- Right hand: Weapons, Magic weapon -->
 			<item slot="lrhand" magicWeapon="true" /> <!-- Two hands: Weapons, Magic weapon -->
+		</enchantRate>
+	</enchantScrollGroup>
+
+	<!-- Crystal Scrolls (731/732, 949/950, 953/954, 957/958, 961/962). -->
+	<enchantScrollGroup id="1">
+		<enchantRate group="CRYSTAL_ARMOR_GROUP">
+			<item slot="lhand" />
+			<item slot="head" />
+			<item slot="chest" />
+			<item slot="legs" />
+			<item slot="feet" />
+			<item slot="gloves" />
+			<item slot="neck" />
+			<item slot="rear;lear" />
+			<item slot="rfinger;lfinger" />
+			<item slot="belt" />
+			<item slot="shirt" />
+		</enchantRate>
+		<enchantRate group="CRYSTAL_FULL_ARMOR_GROUP">
+			<item slot="fullarmor" />
+		</enchantRate>
+		<enchantRate group="CRYSTAL_WEAPON_GROUP">
+			<item slot="rhand" />
+			<item slot="lrhand" />
 		</enchantRate>
 	</enchantScrollGroup>
 </list>
