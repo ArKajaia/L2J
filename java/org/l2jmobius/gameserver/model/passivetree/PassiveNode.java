@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A single node in the passive tree.
@@ -52,6 +53,15 @@ public class PassiveNode
 	/** Themed glyph the web planner draws for this node (icon="hammer" in the XML), empty for "pick by stat". */
 	private String icon = "";
 
+	/** An event-only node (data/passivetree/MayhemNodes.xml): never part of the tree, only offered in Deathmatch: Mayhem, to the ones it is for. */
+	private boolean eventOnly;
+	/** Who an event-only node is for: fake player roles (FIGHTER, TANK, DAGGER, ARCHER, MAGE), races (DWARF...) and class names (PlayerClass); an empty set doesn't restrict. A creature must match every set that isn't empty. */
+	private Set<String> eventRoles = Set.of();
+	private Set<String> eventRaces = Set.of();
+	private Set<String> eventClasses = Set.of();
+	/** How much a fake player wants an event-only node it may take (a typical notable weighs about 1). */
+	private double eventWeight = 1;
+
 	public PassiveNode(int id, String name, String description, String sector, NodeType type, int tier, int cost,
 		double x, double y, String effectSpec, int skillId, int skillLevel)
 	{
@@ -92,6 +102,19 @@ public class PassiveNode
 	public void setOrbit(double centerX, double centerY) { orbitX = centerX; orbitY = centerY; }
 	public String getIcon() { return icon; }
 	public void setIcon(String name) { icon = name == null ? "" : name.trim(); }
+	public boolean isEventOnly() { return eventOnly; }
+	public Set<String> getEventRoles() { return eventRoles; }
+	public Set<String> getEventRaces() { return eventRaces; }
+	public Set<String> getEventClasses() { return eventClasses; }
+	public double getEventWeight() { return eventWeight; }
+	public void setEventOnly(Set<String> roles, Set<String> races, Set<String> classes, double weight)
+	{
+		eventOnly = true;
+		eventRoles = Set.copyOf(roles);
+		eventRaces = Set.copyOf(races);
+		eventClasses = Set.copyOf(classes);
+		eventWeight = weight;
+	}
 	public boolean grantsSkill() { return skillId > 0; }
 	/** skillLevel="auto" in the XML: the granted level follows the character level (see PassiveTreeManager.getScaledSkillLevel). */
 	public boolean isSkillLevelScaled() { return skillLevel <= 0; }

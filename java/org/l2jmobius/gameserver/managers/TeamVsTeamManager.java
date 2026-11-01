@@ -239,8 +239,8 @@ public class TeamVsTeamManager
 		TVT("Team vs Team", "TvT"),
 		/** Every one for themselves, spawning anywhere on the field. */
 		DEATHMATCH("Deathmatch", "Deathmatch"),
-		/** A Deathmatch where everyone fights with a blank passive tree, and each kill lets the killer take one of a few strong passives (see {@link PassiveDeathmatchManager}). */
-		PASSIVE_DEATHMATCH("Passive Deathmatch", "Passive DM");
+		/** Deathmatch: Mayhem, a Deathmatch where everyone fights with a blank passive tree, and each kill lets the killer take one of a few strong passives (see {@link PassiveDeathmatchManager}). */
+		PASSIVE_DEATHMATCH("Deathmatch: Mayhem", "Mayhem");
 
 		private final String _title;
 		private final String _tag;
@@ -310,7 +310,7 @@ public class TeamVsTeamManager
 			{
 				case TVT -> "TvTMaps";
 				case DEATHMATCH -> "DeathmatchMaps";
-				case PASSIVE_DEATHMATCH -> "PassiveDeathmatchMaps";
+				case PASSIVE_DEATHMATCH -> "MayhemMaps";
 			};
 		}
 
@@ -677,7 +677,7 @@ public class TeamVsTeamManager
 		}
 
 		/**
-		 * @return {@code true} for a Passive Deathmatch: blank passive trees, a passive picked on each kill
+		 * @return {@code true} for Deathmatch: Mayhem (internally the Passive Deathmatch): blank passive trees, a passive picked on each kill
 		 */
 		public boolean isPassiveDeathmatch()
 		{
@@ -1498,8 +1498,8 @@ public class TeamVsTeamManager
 			final Fighter fighter = _fighters.get(player.getObjectId());
 			if (match.isPassiveDeathmatch())
 			{
-				sendScreen(player, "Passive Deathmatch: your passive tree is blank! Each kill lets you take a strong passive. The fight starts in " + TeamVsTeamConfig.PREP_TIME + " seconds.", 8, true);
-				player.sendMessage("Passive Deathmatch (levels " + match.getBracketName() + ", " + match.getAllFighters().size() + " fighters): you fight without your passive tree. Each kill offers you " + TeamVsTeamConfig.PDM_CHOICES + " strong passives (notables and keystones) to pick 1 from, for this match only: the more you kill, the stronger you get. A kill blinks the ? (click it to pick); picks you don't make wait for you, open by themselves when you die, and .dmpick shows them any time. Your own tree comes back when you leave.");
+				sendScreen(player, "Deathmatch: Mayhem! Your passive tree is blank! Each kill lets you take a strong passive. The fight starts in " + TeamVsTeamConfig.PREP_TIME + " seconds.", 8, true);
+				player.sendMessage("Deathmatch: Mayhem (levels " + match.getBracketName() + ", " + match.getAllFighters().size() + " fighters): you fight without your passive tree. Each kill offers you " + TeamVsTeamConfig.PDM_CHOICES + " strong passives (notables and keystones) to pick 1 from, for this match only: the more you kill, the stronger you get. A kill blinks the ? (click it to pick); picks you don't make wait for you, open by themselves when you die, and .dmpick shows them any time. Your own tree comes back when you leave.");
 				player.sendMessage("Everyone else is attacked without Ctrl. The dead come back somewhere on the field after " + TeamVsTeamConfig.DM_RESPAWN_DELAY + " seconds; most kills in " + TeamVsTeamConfig.DM_FIGHT_TIME + " minutes wins.");
 				continue;
 			}
@@ -1766,7 +1766,7 @@ public class TeamVsTeamManager
 			if (match.isPassiveDeathmatch())
 			{
 				// Like the players: a blank tree, a passive picked on each kill.
-				PassiveDeathmatchManager.getInstance().prepareFake(fake);
+				PassiveDeathmatchManager.getInstance().prepareFake(fake, match._simulated);
 			}
 			final Fighter fighter = new Fighter(fake, match, side, role);
 			fighter._home = location;
@@ -1795,7 +1795,7 @@ public class TeamVsTeamManager
 		if (match.isPassiveDeathmatch())
 		{
 			// Its own passive tree stops applying until it leaves (after setOnEvent: the event tree only exists on an event).
-			PassiveDeathmatchManager.getInstance().join(player);
+			PassiveDeathmatchManager.getInstance().join(player, match._simulated);
 		}
 		// No "To Village" when it dies: the dead come back at their base by themselves (the button took a player out of the match).
 		player.setCanRevive(false);
@@ -2405,6 +2405,14 @@ public class TeamVsTeamManager
 				// A passive to pick (a player keeps it waiting until it picks; a fake player picks at once).
 				PassiveDeathmatchManager.getInstance().onKill(slayer._creature);
 			}
+		}
+		if (match.isPassiveDeathmatch())
+		{
+			// The ones who dealt a good share of its damage get a pick for the assist.
+			PassiveDeathmatchManager.getInstance().onFighterDeath(victim, killer);
+		}
+		if ((slayer != null) && (slayer._match == match) && (match.isDeathmatch() ? slayer != dead : slayer._side != dead._side))
+		{
 			sendState(match, Ex2TeamEventState.RESULT_NONE);
 		}
 		

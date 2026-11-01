@@ -3,7 +3,9 @@ package org.l2jmobius.gameserver.data.custom;
 import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -26,6 +28,8 @@ public class PassiveTreeData implements IXmlReader
 	
 	/** The tree, relative to the datapack. */
 	public static final String FILE = "data/passivetree/PassiveTree.xml";
+	/** The event-only nodes of Deathmatch: Mayhem: never part of the tree (no parents, no place on it), only offered in that event (see PassiveDeathmatchManager). */
+	public static final String EVENT_FILE = "data/passivetree/MayhemNodes.xml";
 	
 	/** The live tree. Replaced as a whole by {@link #load()}, never changed in place, so a reload while players use the tree never shows them a half-read one. */
 	private volatile Map<Integer, PassiveNode> _nodes = Collections.emptyMap();
@@ -33,6 +37,10 @@ public class PassiveTreeData implements IXmlReader
 	/** The tree being read by {@link #load()}. */
 	private Map<Integer, PassiveNode> _loading;
 	private int _loadingVersion;
+	/** The event-only nodes, by id: {@link #getNode} finds them, {@link #getAllNodes} (the tree) leaves them out. */
+	private volatile Map<Integer, PassiveNode> _eventNodes = Collections.emptyMap();
+	/** {@code true} while {@link #EVENT_FILE} is read. */
+	private boolean _loadingEvent;
 	
 	protected PassiveTreeData()
 	{
@@ -52,8 +60,34 @@ public class PassiveTreeData implements IXmlReader
 		nodes.putAll(new TreeMap<>(_loading));
 		_nodes = Collections.unmodifiableMap(nodes);
 		_version = _loadingVersion;
+		
+		// The event-only nodes, read the same way, kept apart from the tree.
+		_loading = new ConcurrentHashMap<>();
+		_loadingEvent = true;
+		try
+		{
+			if (new File(".", EVENT_FILE).isFile()) // The same place parseDatapackFile reads from.
+			{
+				parseDatapackFile(EVENT_FILE);
+			}
+		}
+		finally
+		{
+			_loadingEvent = false;
+		}
+		final Map<Integer, PassiveNode> eventNodes = new HashMap<>();
+		for (PassiveNode node : new TreeMap<>(_loading).values())
+		{
+			if (nodes.containsKey(node.getId()))
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": Event node " + node.getId() + " (" + node.getName() + ") has the id of a tree node - ignored.");
+				continue;
+			}
+			eventNodes.put(node.getId(), node);
+		}
+		_eventNodes = Collections.unmodifiableMap(eventNodes);
 		_loading = null;
-		LOGGER.info(getClass().getSimpleName() + ": Loaded " + nodes.size() + " passive tree nodes, version " + _version + ".");
+		LOGGER.info(getClass().getSimpleName() + ": Loaded " + nodes.size() + " passive tree nodes, version " + _version + ", and " + eventNodes.size() + " event-only nodes.");
 		PassiveTreeBlob.rebuild(nodes, _version);
 	}
 	
@@ -102,6 +136,10 @@ public class PassiveTreeData implements IXmlReader
 				{
 					node.setIcon(parseString(attrs, "icon"));
 				}
+				if (_loadingEvent)
+				{
+					node.setEventOnly(parseSet(attrs, "roles"), parseSet(attrs, "races"), parseSet(attrs, "classes"), attrs.getNamedItem("fakeWeight") != null ? Double.parseDouble(attrs.getNamedItem("fakeWeight").getNodeValue()) : 1);
+				}
 				
 				for (Node child = n.getFirstChild(); child != null; child = child.getNextSibling())
 				{
@@ -117,6 +155,27 @@ public class PassiveTreeData implements IXmlReader
 				}
 			}
 		}
+	}
+	
+	/**
+	 * @param attrs a node's attributes
+	 * @param name a comma separated attribute
+	 * @return its values, upper case, empty if it is missing
+	 */
+	private static Set<String> parseSet(NamedNodeMap attrs, String name)
+	{
+		final Set<String> values = new HashSet<>();
+		if (attrs.getNamedItem(name) != null)
+		{
+			for (String value : attrs.getNamedItem(name).getNodeValue().split(","))
+			{
+				if (!value.isBlank())
+				{
+					values.add(value.trim().toUpperCase());
+				}
+			}
+		}
+		return values;
 	}
 	
 	private int defaultCost(NodeType type)
@@ -232,9 +291,22 @@ public class PassiveTreeData implements IXmlReader
 		return _version;
 	}
 	
+	/**
+	 * @param id a node id
+	 * @return the tree node, or the event-only node (see {@link #EVENT_FILE}), of that id, {@code null} for none
+	 */
 	public PassiveNode getNode(int id)
 	{
-		return _nodes.get(id);
+		final PassiveNode node = _nodes.get(id);
+		return node != null ? node : _eventNodes.get(id);
+	}
+	
+	/**
+	 * @return the event-only nodes of Deathmatch: Mayhem, by id, read-only
+	 */
+	public Map<Integer, PassiveNode> getEventNodes()
+	{
+		return _eventNodes;
 	}
 	
 	/**

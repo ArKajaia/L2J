@@ -25,33 +25,45 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
 import org.l2jmobius.gameserver.data.custom.PassiveTreeData;
+import org.l2jmobius.gameserver.model.World;
+import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpBuild.Role;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpPassives;
 import org.l2jmobius.gameserver.model.actor.holders.npc.FakePlayerPvpProfile;
 import org.l2jmobius.gameserver.model.events.Containers;
 import org.l2jmobius.gameserver.model.events.EventType;
 import org.l2jmobius.gameserver.model.events.holders.actor.player.OnPlayerPressTutorialMark;
 import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
+import org.l2jmobius.gameserver.model.item.Weapon;
+import org.l2jmobius.gameserver.model.item.instance.Item;
+import org.l2jmobius.gameserver.model.item.type.WeaponType;
+import org.l2jmobius.gameserver.model.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.model.passivetree.PassiveMechanics;
 import org.l2jmobius.gameserver.model.passivetree.PassiveNode;
 import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
+import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 import org.l2jmobius.gameserver.network.serverpackets.TutorialShowQuestionMark;
 
 /**
- * The passives of a Passive Deathmatch ({@link TeamVsTeamManager.Mode#PASSIVE_DEATHMATCH}): everyone fights with a blank passive tree, and each kill offers the killer {@link TeamVsTeamConfig#PDM_CHOICES} strong passives (by default the notables and keystones of the
+ * The passives of Deathmatch: Mayhem ({@link TeamVsTeamManager.Mode#PASSIVE_DEATHMATCH}, the "Passive Deathmatch" in the code): everyone fights with a blank passive tree, and each kill offers the killer {@link TeamVsTeamConfig#PDM_CHOICES} strong passives (by default the notables and keystones of the
  * tree, {@link TeamVsTeamConfig#PDM_NODE_TYPES}) picked by chance, to take 1 of. The more one kills, the stronger one gets.
  * <ul>
  * <li>A player's event tree stands in for its own one through {@link PassiveTreeManager#beginEventTree}: in memory only, never saved, and gone the moment the player is off the event (the match ends, it leaves, logs off, or the server restarts). Its own tree is never
@@ -68,10 +80,17 @@ public class PassiveDeathmatchManager
 	/** The voiced command that shows the waiting pick (.dmpick) and takes one (.dmpick &lt;offer&gt; &lt;node&gt;, the window's buttons). */
 	public static final String COMMAND = "dmpick";
 
-	private static final String TAG = "Passive DM";
+	private static final Logger LOGGER = Logger.getLogger(PassiveDeathmatchManager.class.getName());
+
+	private static final String TAG = "Mayhem";
 
 	/** The tutorial question mark a kill blinks (the other systems use 9300 to 94xx, see HiddenQuestManager, CraftingGoalManager, DynamicQuestManager, AdventurersGuideManager). */
 	public static final int QUESTION_MARK_ID = 9330;
+
+	/** Owner of the stat Funcs of Mayhem's balance (M.Atk, P.Atk, MP cost, max HP, see applyModifiers). */
+	private static final Object MATK_OWNER = new Object();
+	/** Order of that Func: after every other one (the passive tree's highest is 0x52), so it scales the whole M.Atk. */
+	private static final int MATK_ORDER = 0x60;
 
 	/** How far a fake player's want of each offered passive strays at random on each pick. */
 	private static final double FAKE_PICK_JITTER = 0.25;
@@ -89,13 +108,155 @@ public class PassiveDeathmatchManager
 		}
 	}
 
+	/**
+	 * Who a fighter is, for its offers: its role (the fake player roles: FIGHTER, TANK, DAGGER, ARCHER, MAGE), race and class, which event-only nodes it may get, and what of the tree is of use to it.
+	 */
+	private static class Profile
+	{
+		private final String _name;
+		private final Role _role;
+		private final String _race;
+		private final String _className;
+		/** What of the tree is of use to it ({@code null} if it couldn't be worked out: everything is). */
+		private FakePlayerPvpPassiveTree.NodeTaste _taste;
+		/** Its picks are logged (a simulated match). */
+		private final boolean _log;
+		/** A hybrid class (MayhemHybridClasses): {@link #_taste} is a mage's, this a fighter's, {@link #_mainShare} of its useful passives are a mage's. {@code null} for the others. */
+		private FakePlayerPvpPassiveTree.NodeTaste _altTaste;
+		private double _mainShare = 1;
+		/** How much its notables count. */
+		private double _notableScale = 1;
+		/** One of MayhemHybridClasses. */
+		private boolean _hybrid;
+
+		Profile(String name, Role role, String race, String className, FakePlayerPvpPassiveTree.NodeTaste taste, boolean log)
+		{
+			_name = name;
+			_role = role;
+			_race = race;
+			_className = className;
+			_taste = taste;
+			_log = log;
+		}
+
+		/**
+		 * @param node a node
+		 * @return {@code true} if it may be offered to this fighter: any tree node, an event-only node only to the roles, races and classes it is for
+		 */
+		boolean mayTake(PassiveNode node)
+		{
+			if (!node.isEventOnly())
+			{
+				return true;
+			}
+			return (node.getEventRoles().isEmpty() || ((_role != null) && node.getEventRoles().contains(_role.name()))) && (node.getEventRaces().isEmpty() || node.getEventRaces().contains(_race)) && (node.getEventClasses().isEmpty() || node.getEventClasses().contains(_className));
+		}
+
+		/**
+		 * @param node a node it may take
+		 * @return how much it wants it, 0 for of no use: an event-only node by its fakeWeight, a tree node by the weights its role grows its tree with
+		 */
+		double weigh(PassiveNode node)
+		{
+			if (_altTaste == null)
+			{
+				return weighWith(node, false);
+			}
+			return (_mainShare * weighWith(node, false)) + ((1 - _mainShare) * weighWith(node, true));
+		}
+
+		/**
+		 * @param node a node it may take
+		 * @param alt {@code true} for a hybrid's fighter side, {@code false} for its main one
+		 * @return how much that side wants it
+		 */
+		double weighWith(PassiveNode node, boolean alt)
+		{
+			if (node.isEventOnly())
+			{
+				return mayTake(node) ? node.getEventWeight() : 0;
+			}
+			final FakePlayerPvpPassiveTree.NodeTaste taste = alt && (_altTaste != null) ? _altTaste : _taste;
+			return taste == null ? 1 : FakePlayerPvpPassiveTree.getInstance().weigh(taste, node);
+		}
+
+		/**
+		 * Makes it a hybrid if its class is one of MayhemHybridClasses: offered a mage's and a fighter's passives, its notables worth more.
+		 * @param armorMask the item mask of its body armour
+		 * @param wornMask the item mask of everything it wears and holds
+		 * @param random {@code true} for a fake player's rolled tastes
+		 */
+		void makeHybrid(int armorMask, int wornMask, boolean random)
+		{
+			if (!TeamVsTeamConfig.PDM_HYBRID_CLASSES.contains(_className))
+			{
+				return;
+			}
+			_hybrid = true;
+			try
+			{
+				final FakePlayerPvpPassiveTree tree = FakePlayerPvpPassiveTree.getInstance();
+				final FakePlayerPvpPassiveTree.NodeTaste magic = tree.rollTaste(Role.MAGE, false, null, null, armorMask, wornMask, random);
+				final FakePlayerPvpPassiveTree.NodeTaste fighter = tree.rollTaste(Role.FIGHTER, false, null, null, armorMask, wornMask, random);
+				_taste = magic;
+				_altTaste = fighter;
+				_mainShare = TeamVsTeamConfig.PDM_HYBRID_MAGIC / 100.0;
+			}
+			catch (Exception e)
+			{
+				// Not a hybrid then: its own taste.
+			}
+			_notableScale = 1 + (TeamVsTeamConfig.PDM_HYBRID_NOTABLE_BONUS / 100.0);
+		}
+
+		/**
+		 * How much its notables count: a hybrid's more (see {@link #makeHybrid}), a mage's {@link TeamVsTeamConfig#PDM_MAGE_NOTABLES} %, a tank's {@link TeamVsTeamConfig#PDM_TANK_NOTABLES} %. Call after {@link #makeHybrid}, before its tree is applied.
+		 */
+		void initNotableScale()
+		{
+			if (_hybrid)
+			{
+				return;
+			}
+			if (_role == Role.MAGE)
+			{
+				_notableScale = TeamVsTeamConfig.PDM_MAGE_NOTABLES / 100.0;
+			}
+			else if (_role == Role.TANK)
+			{
+				_notableScale = TeamVsTeamConfig.PDM_TANK_NOTABLES / 100.0;
+			}
+		}
+	}
+
+	/** A hit a fighter took: who dealt it, how much, when (assists, see {@link #onFighterDeath}). */
+	private static class Hit
+	{
+		private final int _attackerId;
+		private final double _damage;
+		private final long _time;
+
+		Hit(int attackerId, double damage, long time)
+		{
+			_attackerId = attackerId;
+			_damage = damage;
+			_time = time;
+		}
+	}
+
 	/** A player's picks: the ones waiting, first first. */
 	private static class Picks
 	{
+		private final Profile _profile;
 		private final Deque<Offer> _pending = new ArrayDeque<>();
 		private int _nextOfferId = 1;
 		/** {@code true} while its question mark blinks (sent and not clicked yet): one is enough for any number of picks. */
 		private boolean _markShown;
+
+		Picks(Profile profile)
+		{
+			_profile = profile;
+		}
 	}
 
 	/** A fake player's passives: what it took, and the share of its max HP that max HP % bonuses grow (see {@link FakePlayerPvpPassives#getHpShare}). */
@@ -103,20 +264,21 @@ public class PassiveDeathmatchManager
 	{
 		private final List<Integer> _nodes = new ArrayList<>();
 		private final double _hpShare;
-		/** What it wants of the tree, by its class ({@code null} if it couldn't be worked out: it picks by chance). */
-		private final FakePlayerPvpPassiveTree.NodeTaste _taste;
+		private final Profile _profile;
 
-		FakePicks(double hpShare, FakePlayerPvpPassiveTree.NodeTaste taste)
+		FakePicks(double hpShare, Profile profile)
 		{
 			_hpShare = hpShare;
-			_taste = taste;
+			_profile = profile;
 		}
 	}
 
-	/** The players in a Passive Deathmatch, by object id. */
+	/** The players in a Mayhem match, by object id. */
 	private final Map<Integer, Picks> _players = new ConcurrentHashMap<>();
-	/** The fake players in a Passive Deathmatch, by object id. */
+	/** The fake players in a Mayhem match, by object id. */
 	private final Map<Integer, FakePicks> _fakes = new ConcurrentHashMap<>();
+	/** The hits each fighter took lately, by its object id (see {@link #onFighterDeath}). */
+	private final Map<Integer, Deque<Hit>> _hits = new ConcurrentHashMap<>();
 
 	protected PassiveDeathmatchManager()
 	{
@@ -167,22 +329,103 @@ public class PassiveDeathmatchManager
 	// ---------------------------------------------------------------------------------------------
 
 	/**
-	 * A player enters a Passive Deathmatch: its tree is blank until it leaves. Call once it is on the event ({@link Player#isOnEvent()}).
+	 * A player enters a Mayhem match: its tree is blank until it leaves. Call once it is on the event ({@link Player#isOnEvent()}).
 	 * @param player the player
 	 */
-	public void join(Player player)
+	public void join(Player player, boolean simulated)
 	{
-		_players.put(player.getObjectId(), new Picks());
-		PassiveTreeManager.getInstance().beginEventTree(player);
+		final Role role = roleOf(player);
+		FakePlayerPvpPassiveTree.NodeTaste taste = null;
+		try
+		{
+			final Item chest = player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_CHEST);
+			taste = FakePlayerPvpPassiveTree.getInstance().rollTaste(role, false, null, null, chest != null ? chest.getTemplate().getItemMask() : 0, player.getInventory().getWearedMask(), false);
+		}
+		catch (Exception e)
+		{
+			// No taste: every passive counts as of use.
+		}
+		final Profile profile = new Profile(player.getName(), role, player.getRace().name(), player.getPlayerClass().name(), taste, simulated);
+		final Item worn = player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_CHEST);
+		profile.makeHybrid(worn != null ? worn.getTemplate().getItemMask() : 0, player.getInventory().getWearedMask(), false);
+		profile.initNotableScale();
+		_players.put(player.getObjectId(), new Picks(profile));
+		PassiveTreeManager.getInstance().beginEventTree(player, profile._notableScale);
+		applyModifiers(player, profile);
 	}
 
 	/**
-	 * A player leaves a match (any match, any way): its event passives and waiting picks are gone, its own tree applies again. Harmless for a player that wasn't in a Passive Deathmatch.
+	 * Mayhem's balance, for the match (it goes with {@link #leave}, and with a fake player's body): every fighter has {@link TeamVsTeamConfig#PDM_MATK} % of its M.Atk and pays {@link TeamVsTeamConfig#PDM_MP_COST} % of its skills' MP; fighters, tanks and archers
+	 * have {@link TeamVsTeamConfig#PDM_PATK} % of their P.Atk, daggers {@link TeamVsTeamConfig#PDM_DAGGER_PATK} %; tanks and dwarves {@link TeamVsTeamConfig#PDM_TANK_HP} % of their max HP.
+	 * @param creature a player or fake player entering a Mayhem match
+	 * @param profile who it is
+	 */
+	private static void applyModifiers(Creature creature, Profile profile)
+	{
+		creature.removeStatsOwner(MATK_OWNER);
+		mul(creature, Stat.MAGIC_ATTACK, TeamVsTeamConfig.PDM_MATK);
+		mul(creature, Stat.MP_CONSUME, TeamVsTeamConfig.PDM_MP_COST);
+		mul(creature, Stat.BOW_MP_CONSUME_RATE, TeamVsTeamConfig.PDM_MP_COST);
+		if ((profile._role == Role.FIGHTER) || (profile._role == Role.TANK) || (profile._role == Role.ARCHER))
+		{
+			mul(creature, Stat.POWER_ATTACK, TeamVsTeamConfig.PDM_PATK);
+		}
+		else if (profile._role == Role.DAGGER)
+		{
+			mul(creature, Stat.POWER_ATTACK, TeamVsTeamConfig.PDM_DAGGER_PATK);
+		}
+		if ((profile._role == Role.TANK) || "DWARF".equals(profile._race))
+		{
+			mul(creature, Stat.MAX_HP, TeamVsTeamConfig.PDM_TANK_HP);
+		}
+	}
+
+	private static void mul(Creature creature, Stat stat, int percent)
+	{
+		if (percent != 100)
+		{
+			creature.addStatFunc(new FuncMul(stat, MATK_ORDER, MATK_OWNER, percent / 100.0, null));
+		}
+	}
+
+	/**
+	 * @param player a player
+	 * @return its role among the fake player roles, for its offers: an archer with a bow, a mage for a mystic (healers too), a tank for a knight, a dagger with a dagger, a fighter otherwise
+	 */
+	private static Role roleOf(Player player)
+	{
+		switch (TeamVsTeamManager.getRole(player))
+		{
+			case ARCHER:
+			{
+				return Role.ARCHER;
+			}
+			case NUKER:
+			case HEALER:
+			{
+				return Role.MAGE;
+			}
+			case TANK:
+			{
+				return Role.TANK;
+			}
+			default:
+			{
+				final Weapon weapon = player.getActiveWeaponItem();
+				return (weapon != null) && ((weapon.getItemType() == WeaponType.DAGGER) || (weapon.getItemType() == WeaponType.DUALDAGGER)) ? Role.DAGGER : Role.FIGHTER;
+			}
+		}
+	}
+
+	/**
+	 * A player leaves a match (any match, any way): its event passives and waiting picks are gone, its own tree applies again. Harmless for a player that wasn't in a Mayhem match.
 	 * @param player the player
 	 */
 	public void leave(Player player)
 	{
 		final boolean had = _players.remove(player.getObjectId()) != null;
+		player.removeStatsOwner(MATK_OWNER);
+		_hits.remove(player.getObjectId());
 		final boolean onEventTree = PassiveTreeManager.getInstance().isOnEventTree(player);
 		PassiveTreeManager.getInstance().endEventTree(player);
 		if ((had || onEventTree) && player.isOnline())
@@ -193,7 +436,7 @@ public class PassiveDeathmatchManager
 
 	/**
 	 * @param player a player
-	 * @return {@code true} if it is in a Passive Deathmatch
+	 * @return {@code true} if it is in a Mayhem match
 	 */
 	public boolean isIn(Player player)
 	{
@@ -218,22 +461,119 @@ public class PassiveDeathmatchManager
 	}
 
 	/**
-	 * Someone of a Passive Deathmatch killed an enemy: a player gets a pick waiting (and the window), a fake player takes a passive at once.
+	 * Someone of a Mayhem match killed an enemy: a player gets a pick waiting (and the window), a fake player takes a passive at once.
 	 * @param killer the killer
 	 */
 	public void onKill(Creature killer)
 	{
-		if (killer == null)
+		grantPick(killer, false);
+	}
+
+	/**
+	 * A pick for a fighter: a player gets one waiting, a fake player takes a passive at once.
+	 * @param fighter the fighter
+	 * @param assist {@code true} for an assist, {@code false} for a kill
+	 */
+	private void grantPick(Creature fighter, boolean assist)
+	{
+		if (fighter == null)
 		{
 			return;
 		}
-		if (killer.isPlayer())
+		if (fighter.isPlayer())
 		{
-			offer(killer.asPlayer());
+			offer(fighter.asPlayer(), assist);
 		}
-		else if (killer.isNpc())
+		else if (fighter.isNpc())
 		{
-			onFakeKill(killer.asNpc());
+			onFakeKill(fighter.asNpc(), assist);
+		}
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	// Damage: the area damage cut and the assists
+	// ---------------------------------------------------------------------------------------------
+
+	/**
+	 * @param creature a creature
+	 * @return {@code true} if it fights in a Mayhem match
+	 */
+	private boolean isFighter(Creature creature)
+	{
+		return (creature != null) && (_players.containsKey(creature.getObjectId()) || _fakes.containsKey(creature.getObjectId()));
+	}
+
+	/**
+	 * Damage a fighter of a Mayhem match is about to take from another one (called by Player and Attackable while a match goes on): area skills deal {@link TeamVsTeamConfig#PDM_AREA_DAMAGE} % of their damage, and the hit is remembered for the assists.
+	 * @param target the creature about to take damage
+	 * @param attacker the attacker (a servitor counts as its owner)
+	 * @param skill the skill that deals it, {@code null} for a normal attack
+	 * @param damage the damage
+	 * @return the damage to take
+	 */
+	public double onIncomingDamage(Creature target, Creature attacker, Skill skill, double damage)
+	{
+		final Creature source = (attacker != null) && attacker.isSummon() ? attacker.asSummon().getOwner() : attacker;
+		if ((source == null) || (source == target) || (damage <= 0) || !isFighter(target) || !isFighter(source))
+		{
+			return damage;
+		}
+		final double taken = (skill != null) && skill.isAOE() ? (damage * TeamVsTeamConfig.PDM_AREA_DAMAGE) / 100 : damage;
+		final long now = System.currentTimeMillis();
+		final Deque<Hit> hits = _hits.computeIfAbsent(target.getObjectId(), k -> new ArrayDeque<>());
+		synchronized (hits)
+		{
+			hits.addLast(new Hit(source.getObjectId(), taken, now));
+			while (!hits.isEmpty() && ((now - hits.peekFirst()._time) > (TeamVsTeamConfig.PDM_ASSIST_WINDOW * 1000L)))
+			{
+				hits.removeFirst();
+			}
+		}
+		return taken;
+	}
+
+	/**
+	 * A fighter of a Mayhem match died: everyone but the killer who dealt it at least {@link TeamVsTeamConfig#PDM_ASSIST_SHARE} % of the damage it took in the last {@link TeamVsTeamConfig#PDM_ASSIST_WINDOW} seconds gets a pick for the assist.
+	 * @param victim who died
+	 * @param killer who killed it (a servitor counts as its owner), may be {@code null}
+	 */
+	public void onFighterDeath(Creature victim, Creature killer)
+	{
+		final Deque<Hit> hits = _hits.remove(victim.getObjectId());
+		if ((hits == null) || (TeamVsTeamConfig.PDM_ASSIST_SHARE <= 0))
+		{
+			return;
+		}
+		final Creature source = (killer != null) && killer.isSummon() ? killer.asSummon().getOwner() : killer;
+		final long now = System.currentTimeMillis();
+		final Map<Integer, Double> dealt = new HashMap<>();
+		double total = 0;
+		synchronized (hits)
+		{
+			for (Hit hit : hits)
+			{
+				if ((now - hit._time) <= (TeamVsTeamConfig.PDM_ASSIST_WINDOW * 1000L))
+				{
+					dealt.merge(hit._attackerId, hit._damage, Double::sum);
+					total += hit._damage;
+				}
+			}
+		}
+		if (total <= 0)
+		{
+			return;
+		}
+		for (Map.Entry<Integer, Double> entry : dealt.entrySet())
+		{
+			if (((source != null) && (entry.getKey() == source.getObjectId())) || (((entry.getValue() * 100) / total) < TeamVsTeamConfig.PDM_ASSIST_SHARE))
+			{
+				continue;
+			}
+			final WorldObject assister = World.getInstance().findObject(entry.getKey());
+			if ((assister != null) && assister.isCreature() && isFighter(assister.asCreature()))
+			{
+				grantPick(assister.asCreature(), true);
+			}
 		}
 	}
 
@@ -241,7 +581,7 @@ public class PassiveDeathmatchManager
 	 * Rolls an offer for a player and puts it at the end of its waiting picks. No window in the middle of the fight: the question mark blinks (the window opens by itself if the killer is dead).
 	 * @param player the player
 	 */
-	private void offer(Player player)
+	private void offer(Player player, boolean assist)
 	{
 		final Picks picks = _players.get(player.getObjectId());
 		if (picks == null)
@@ -257,7 +597,7 @@ public class PassiveDeathmatchManager
 			{
 				taken.addAll(waiting._options);
 			}
-			final List<Integer> options = roll(getEventNodes(player), taken, TeamVsTeamConfig.PDM_CHOICES);
+			final List<Integer> options = roll(getEventNodes(player), taken, TeamVsTeamConfig.PDM_CHOICES, picks._profile);
 			if (options.isEmpty())
 			{
 				player.sendMessage(TAG + ": You have every passive this event offers.");
@@ -272,11 +612,11 @@ public class PassiveDeathmatchManager
 		}
 		showQuestionMark(player);
 		final int pending = getPendingCount(player);
-		player.sendPacket(new ExShowScreenMessage(pending > 1 ? pending + " passives to pick: click the ?" : "A passive to pick: click the ?", ExShowScreenMessage.TOP_CENTER, 3000, 0, true, false));
+		player.sendPacket(new ExShowScreenMessage((assist ? "Assist! " : "") + (pending > 1 ? pending + " passives to pick: click the ?" : "A passive to pick: click the ?"), ExShowScreenMessage.TOP_CENTER, 3000, 0, true, false));
 	}
 
 	/**
-	 * A player of a Passive Deathmatch died: with picks waiting, their window opens by itself (it has the time now).
+	 * A player of a Mayhem match died: with picks waiting, their window opens by itself (it has the time now).
 	 * @param player the player
 	 */
 	public void onDeath(Player player)
@@ -305,7 +645,7 @@ public class PassiveDeathmatchManager
 		final Picks picks = _players.get(player.getObjectId());
 		if (picks == null)
 		{
-			player.sendMessage(TAG + ": You are not in a Passive Deathmatch.");
+			player.sendMessage(TAG + ": You are not in a Deathmatch: Mayhem.");
 			return;
 		}
 
@@ -323,7 +663,7 @@ public class PassiveDeathmatchManager
 		}
 
 		final StringBuilder sb = new StringBuilder(2048);
-		sb.append("<html><title>Passive Deathmatch</title><body><center>");
+		sb.append("<html><title>Deathmatch: Mayhem</title><body><center>");
 		sb.append("<font color=\"LEVEL\">Pick a passive</font>");
 		if (pending > 1)
 		{
@@ -378,7 +718,7 @@ public class PassiveDeathmatchManager
 		final Picks picks = _players.get(player.getObjectId());
 		if (picks == null)
 		{
-			player.sendMessage(TAG + ": You are not in a Passive Deathmatch.");
+			player.sendMessage(TAG + ": You are not in a Deathmatch: Mayhem.");
 			return false;
 		}
 
@@ -412,6 +752,10 @@ public class PassiveDeathmatchManager
 		}
 
 		player.sendMessage(TAG + ": You took " + node.getName() + " (" + describe(node) + ")." + (left > 0 ? " " + left + " more to pick." : ""));
+		if (picks._profile._log)
+		{
+			LOGGER.info(getClass().getSimpleName() + ": Mayhem pick: " + player.getName() + " (" + player.getPlayerClass().name() + ") took " + node.getName() + (node.isEventOnly() ? " [event]" : "") + " (" + node.getType() + "), " + getEventNodes(player).size() + " passives.");
+		}
 		if (left > 0)
 		{
 			showWindow(player);
@@ -450,7 +794,7 @@ public class PassiveDeathmatchManager
 					taken.addAll(other._options);
 				}
 				final Set<String> offerNames = names(toNodes(valid));
-				for (int id : roll(owned, taken, TeamVsTeamConfig.PDM_CHOICES - valid.size()))
+				for (int id : roll(owned, taken, TeamVsTeamConfig.PDM_CHOICES - valid.size(), picks._profile))
 				{
 					final PassiveNode node = PassiveTreeData.getInstance().getNode(id);
 					if ((node != null) && offerNames.add(node.getName()))
@@ -485,10 +829,10 @@ public class PassiveDeathmatchManager
 	// ---------------------------------------------------------------------------------------------
 
 	/**
-	 * A fake player enters a Passive Deathmatch: its passive tree is blank, at full HP.
+	 * A fake player enters a Mayhem match: its passive tree is blank, at full HP.
 	 * @param fake the fake player, spawned
 	 */
-	public void prepareFake(Npc fake)
+	public void prepareFake(Npc fake, boolean simulated)
 	{
 		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
 		if (profile == null)
@@ -505,17 +849,24 @@ public class PassiveDeathmatchManager
 		{
 			// No taste: it picks by chance.
 		}
-		final FakePicks picks = new FakePicks(own != null ? own.getHpShare() : 1, taste);
+		final String className = profile.getPlayerClass() != null ? profile.getPlayerClass().name() : "";
+		final String race = profile.getPlayerClass() != null ? profile.getPlayerClass().getRace().name() : "";
+		final String buildName = profile.getBuild() != null ? profile.getBuild().getName() : className;
+		final Profile who = new Profile(fake.getName() + " (" + buildName + ")", profile.getRole(), race, className, taste, simulated);
+		who.makeHybrid(profile.getArmorMask(), profile.getWornMask(), true);
+		who.initNotableScale();
+		final FakePicks picks = new FakePicks(own != null ? own.getHpShare() : 1, who);
 		_fakes.put(fake.getObjectId(), picks);
 		applyFake(fake, profile, picks);
+		applyModifiers(fake, who);
 		fake.setCurrentHpMp(fake.getMaxHp(), fake.getMaxMp());
 	}
 
 	/**
-	 * A fake player of a Passive Deathmatch killed someone: it takes one of an offer's passives at once.
+	 * A fake player of a Mayhem match killed someone: it takes one of an offer's passives at once.
 	 * @param fake the fake player
 	 */
-	private void onFakeKill(Npc fake)
+	private void onFakeKill(Npc fake, boolean assist)
 	{
 		final FakePicks picks = _fakes.get(fake.getObjectId());
 		final FakePlayerPvpProfile profile = fake.getTemplate().getFakePlayerPvpProfile();
@@ -526,33 +877,37 @@ public class PassiveDeathmatchManager
 		synchronized (picks)
 		{
 			final Set<Integer> owned = new HashSet<>(picks._nodes);
-			final List<Integer> options = roll(owned, owned, TeamVsTeamConfig.PDM_CHOICES);
+			final List<Integer> options = roll(owned, owned, TeamVsTeamConfig.PDM_CHOICES, picks._profile);
 			if (options.isEmpty())
 			{
 				return;
 			}
-			picks._nodes.add(pickForFake(picks._taste, options));
+			final int picked = pickForFake(picks._profile, options);
+			picks._nodes.add(picked);
 			applyFake(fake, profile, picks);
+			if (picks._profile._log)
+			{
+				final PassiveNode node = PassiveTreeData.getInstance().getNode(picked);
+				LOGGER.info(getClass().getSimpleName() + ": Mayhem pick: " + picks._profile._name + " took " + node.getName() + (node.isEventOnly() ? " [event]" : "") + " (" + node.getType() + (assist ? ", assist" : ", kill") + "), " + picks._nodes.size() + " passives.");
+			}
 		}
 		fake.broadcastStatusUpdate();
 	}
 
 	/**
-	 * @param taste what the fake player wants of the tree, {@code null} for nothing in particular
+	 * @param profile the fake player
 	 * @param options the passives offered, at least one
 	 * @return the one it takes: by chance weighted by what each is worth to it (with some jitter), or plain chance if none is worth anything to it
 	 */
-	private static int pickForFake(FakePlayerPvpPassiveTree.NodeTaste taste, List<Integer> options)
+	private static int pickForFake(Profile profile, List<Integer> options)
 	{
-		if (taste != null)
 		{
-			final FakePlayerPvpPassiveTree tree = FakePlayerPvpPassiveTree.getInstance();
 			final double[] weights = new double[options.size()];
 			double total = 0;
 			for (int i = 0; i < weights.length; i++)
 			{
 				final PassiveNode node = PassiveTreeData.getInstance().getNode(options.get(i));
-				weights[i] = node == null ? 0 : tree.weigh(taste, node) * (1 + (((Rnd.nextDouble() * 2) - 1) * FAKE_PICK_JITTER));
+				weights[i] = node == null ? 0 : profile.weigh(node) * (1 + (((Rnd.nextDouble() * 2) - 1) * FAKE_PICK_JITTER));
 				total += weights[i];
 			}
 			if (total > 0)
@@ -584,8 +939,8 @@ public class PassiveDeathmatchManager
 	private static void applyFake(Npc fake, FakePlayerPvpProfile profile, FakePicks picks)
 	{
 		final PassiveStatBonusCache bonus = new PassiveStatBonusCache();
-		bonus.recompute(picks._nodes);
-		final FakePlayerPvpPassives passives = new FakePlayerPvpPassives(0, picks._nodes.size(), picks._nodes.size(), "Passive Deathmatch", "event", picks._nodes, bonus);
+		bonus.recompute(picks._nodes, picks._profile._notableScale);
+		final FakePlayerPvpPassives passives = new FakePlayerPvpPassives(0, picks._nodes.size(), picks._nodes.size(), "Deathmatch: Mayhem", "event", picks._nodes, bonus);
 		passives.setHpShare(picks._hpShare);
 		profile.setPassives(passives);
 		PassiveTreeManager.getInstance().applyToFakePlayer(fake, passives);
@@ -593,7 +948,7 @@ public class PassiveDeathmatchManager
 
 	/**
 	 * @param creature a player or fake player, may be {@code null}
-	 * @return the names of the passives it took in its Passive Deathmatch, in the order it took them for a fake player, empty for none
+	 * @return the names of the passives it took in its Mayhem match, in the order it took them for a fake player, empty for none
 	 */
 	public List<String> getPassiveNames(Creature creature)
 	{
@@ -633,6 +988,7 @@ public class PassiveDeathmatchManager
 	public void forgetFake(Npc fake)
 	{
 		_fakes.remove(fake.getObjectId());
+		_hits.remove(fake.getObjectId());
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -646,14 +1002,16 @@ public class PassiveDeathmatchManager
 	 * @param count how many
 	 * @return the passives, fewer if the pool runs out
 	 */
-	private static List<Integer> roll(Collection<Integer> owned, Collection<Integer> exclude, int count)
+	private static List<Integer> roll(Collection<Integer> owned, Collection<Integer> exclude, int count, Profile profile)
 	{
 		final List<PassiveNode> ownedNodes = toNodes(owned);
 		final Set<String> ownedNames = names(ownedNodes);
 		final List<PassiveNode> pool = new ArrayList<>();
-		for (PassiveNode node : PassiveTreeData.getInstance().getAllNodes().values())
+		final List<PassiveNode> candidates = new ArrayList<>(PassiveTreeData.getInstance().getAllNodes().values());
+		candidates.addAll(PassiveTreeData.getInstance().getEventNodes().values());
+		for (PassiveNode node : candidates)
 		{
-			if (isOffered(node) && !exclude.contains(node.getId()) && isAllowed(node, owned, ownedNames, ownedNodes))
+			if (isOffered(node) && profile.mayTake(node) && !exclude.contains(node.getId()) && isAllowed(node, owned, ownedNames, ownedNodes))
 			{
 				pool.add(node);
 			}
@@ -662,6 +1020,21 @@ public class PassiveDeathmatchManager
 		Collections.shuffle(pool);
 		final List<Integer> result = new ArrayList<>(count);
 		final Set<String> names = new HashSet<>();
+		// Class-aware: the first ones of use to the fighter's role (up to PDM_USEFUL_CHOICES), then any. A hybrid's useful ones are a mage's or, now and then, a fighter's.
+		final int useful = Math.min(count, TeamVsTeamConfig.PDM_USEFUL_CHOICES);
+		for (int slot = 0; slot < useful; slot++)
+		{
+			final boolean alt = (profile._altTaste != null) && (Rnd.nextDouble() >= profile._mainShare);
+			for (PassiveNode node : pool)
+			{
+				if (!names.contains(node.getName()) && (profile.weighWith(node, alt) > 0))
+				{
+					names.add(node.getName());
+					result.add(node.getId());
+					break;
+				}
+			}
+		}
 		for (PassiveNode node : pool)
 		{
 			if (result.size() >= count)
@@ -674,12 +1047,13 @@ public class PassiveDeathmatchManager
 				result.add(node.getId());
 			}
 		}
+		Collections.shuffle(result);
 		return result;
 	}
 
 	/**
 	 * @param node a node of the tree
-	 * @return {@code true} if a Passive Deathmatch offers it at all: one of {@link TeamVsTeamConfig#PDM_NODE_TYPES}, with effects, none of them one of {@link TeamVsTeamConfig#PDM_EXCLUDED_EFFECTS}, granting no skill
+	 * @return {@code true} if a Mayhem match offers it at all: one of {@link TeamVsTeamConfig#PDM_NODE_TYPES}, with effects, none of them one of {@link TeamVsTeamConfig#PDM_EXCLUDED_EFFECTS}, granting no skill
 	 */
 	private static boolean isOffered(PassiveNode node)
 	{

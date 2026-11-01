@@ -140,6 +140,7 @@ import org.l2jmobius.gameserver.managers.SessionStatsManager;
 import org.l2jmobius.gameserver.managers.SiegeManager;
 import org.l2jmobius.gameserver.managers.RaceWarsManager;
 import org.l2jmobius.gameserver.managers.TeamEventRules;
+import org.l2jmobius.gameserver.managers.PassiveDeathmatchManager;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
 import org.l2jmobius.gameserver.managers.conquest.ConquestRegistration;
 import org.l2jmobius.gameserver.managers.TerritoryWarManager;
@@ -11720,6 +11721,13 @@ public class Player extends Playable
 		if (PassiveMechanics.isWarded(this, attacker, skill))
 		{
 			return;
+		}
+		
+		// Passive tree Arcane Bulwark; Deathmatch: Mayhem's area damage cut and assist count.
+		value *= PassiveMechanics.incomingDamageMultiplier(this, attacker, skill);
+		if (TeamVsTeamManager.ACTIVE)
+		{
+			value = PassiveDeathmatchManager.getInstance().onIncomingDamage(this, attacker, skill, value);
 		}
 		
 		final double hpBefore = getCurrentHp();

@@ -71,9 +71,11 @@ public class PassiveTreeManager
 	 * leaving the event in any way drops it (see {@link #endEventTree}, {@link #onClassContextChanged} and the guard in {@link #getAllocatedNodes}). While it is in place every change to the tree (allocate, refund, reset, template switch, import) is refused.
 	 */
 	private final Map<Integer, Set<Integer>> _eventTrees = new ConcurrentHashMap<>();
+	/** objectId -> how much the notables of the player's event tree count (1 when missing). */
+	private final Map<Integer, Double> _eventNotableScales = new ConcurrentHashMap<>();
 	
 	/** Told to a player who tries to change the tree while it is the event's. */
-	public static final String EVENT_TREE_LOCKED_MESSAGE = "Your passive tree is replaced by the event's during a Passive Deathmatch and can't be changed. Your own tree comes back when you leave the event.";
+	public static final String EVENT_TREE_LOCKED_MESSAGE = "Your passive tree is replaced by the event's during Deathmatch: Mayhem and can't be changed. Your own tree comes back when you leave the event.";
 	
 	private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(PassiveTreeManager.class.getName());
 	
@@ -353,8 +355,31 @@ public class PassiveTreeManager
 	 */
 	public void beginEventTree(Player player)
 	{
+		beginEventTree(player, 1);
+	}
+	
+	/**
+	 * @param player the player
+	 * @param notableScale how much the notables of its event tree count (1 as they are)
+	 * @see #beginEventTree(Player)
+	 */
+	public void beginEventTree(Player player, double notableScale)
+	{
 		_eventTrees.put(player.getObjectId(), ConcurrentHashMap.newKeySet());
+		if (notableScale != 1)
+		{
+			_eventNotableScales.put(player.getObjectId(), notableScale);
+		}
 		applyAll(player, false);
+	}
+	
+	/**
+	 * @param player a player
+	 * @return how much the notables of its tree count: 1, but more for some classes on a Mayhem event tree
+	 */
+	public double getEventNotableScale(Player player)
+	{
+		return isOnEventTree(player) ? _eventNotableScales.getOrDefault(player.getObjectId(), 1.0) : 1;
 	}
 	
 	/**
@@ -380,6 +405,7 @@ public class PassiveTreeManager
 	 */
 	public void endEventTree(Player player)
 	{
+		_eventNotableScales.remove(player.getObjectId());
 		if (_eventTrees.remove(player.getObjectId()) != null)
 		{
 			applyAll(player, false);
@@ -486,7 +512,8 @@ public class PassiveTreeManager
 	public boolean canAllocate(Player player, int nodeId)
 	{
 		final PassiveNode node = PassiveTreeData.getInstance().getNode(nodeId);
-		if ((node == null) || isOnEventTree(player))
+		// An event-only node has no parents: it would pass for a starting point, but it is never part of anyone's own tree.
+		if ((node == null) || node.isEventOnly() || isOnEventTree(player))
 		{
 			return false;
 		}

@@ -22,7 +22,7 @@ public class PassiveStatBonusCache
 	
 	public void recompute(Player player)
 	{
-		recompute(PassiveTreeManager.getInstance().getAllocatedNodes(player));
+		recompute(PassiveTreeManager.getInstance().getAllocatedNodes(player), PassiveTreeManager.getInstance().getEventNotableScale(player));
 	}
 	
 	/**
@@ -30,6 +30,15 @@ public class PassiveStatBonusCache
 	 * @param nodeIds the allocated node ids
 	 */
 	public void recompute(Collection<Integer> nodeIds)
+	{
+		recompute(nodeIds, 1);
+	}
+	
+	/**
+	 * @param nodeIds the allocated node ids
+	 * @param notableScale how much the effects of NOTABLE nodes count (1 as they are; a Deathmatch: Mayhem soul hound's count more)
+	 */
+	public void recompute(Collection<Integer> nodeIds, double notableScale)
 	{
 		final Map<String, Double> totals = new HashMap<>();
 		for (int nodeId : nodeIds)
@@ -40,9 +49,10 @@ public class PassiveStatBonusCache
 				continue;
 			}
 			
+			final double scale = node.getType() == PassiveNode.NodeType.NOTABLE ? notableScale : 1;
 			for (Map.Entry<String, Double> effect : node.getEffects().entrySet())
 			{
-				totals.merge(effect.getKey(), effect.getValue(), Double::sum);
+				totals.merge(effect.getKey(), effect.getValue() * scale, Double::sum);
 			}
 		}
 		
