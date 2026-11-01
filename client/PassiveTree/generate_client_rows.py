@@ -8,11 +8,15 @@ skills=[sk for f in SKILL_FILES for sk in ET.parse(ROOT+f).getroot().findall('sk
 ICON={27000:3123,27001:3123,27002:3123,27003:3123,27004:3123,27005:3123,
       27400:110,27401:121,27410:78,27411:347,27420:821,27421:922,27430:4,27431:772,27440:1417,27441:1157,
       27450:1027,27451:1010,27460:1268,27461:96,27462:101,27463:1201,27464:1085,27465:1409,
-      27470:1268,27471:1035,27472:922,27473:110,27474:1409,27475:1010,27476:1010,27477:1010,27478:4,27479:1268,27480:96}
+      27470:1268,27471:1035,27472:922,27473:110,27474:1409,27475:1010,27476:1010,27477:1010,27478:4,27479:1268,27480:96,
+      27481:122,27482:100,27483:95,27484:440,27485:402,27486:230,27487:275}
 OPER={27000:2,27001:2,27002:2,27003:2,27004:2,27005:2,
       27400:2,27401:2,27410:2,27411:0,27420:0,27421:2,27430:2,27431:0,27440:1,27441:1,27450:1,27451:2,
       27460:2,27461:0,27462:3,27463:3,27464:2,27465:2,
-      27470:2,27471:2,27472:2,27473:2,27474:2,27475:2,27476:2,27477:2,27478:2,27479:2,27480:2}
+      27470:2,27471:2,27472:2,27473:2,27474:2,27475:2,27476:2,27477:2,27478:2,27479:2,27480:2,
+      27481:2,27482:2,27483:2,27484:2,27485:2,27486:2,27487:2}
+# The ones that land on an enemy: shown in the client's debuff bar.
+DEBUFF={27481,27482,27483,27485}
 DESC={
  27000:"Hot zone monster buff: Speed +50%, Max HP +50%, Atk. Spd. and Casting Spd. +30%.",
  27001:"Hunting in an active hot zone: XP and SP +50%, Atk. Spd. +40%, Casting Spd. +20%, drop amount +25%.",
@@ -49,6 +53,13 @@ DESC={
  27478:"Last Light keystone: a single hit took a large share of your HP. Speed +25.",
  27479:"Tenacity keystone: you cannot be stunned, put to sleep or rooted.",
  27480:"Bloodrush keystone: you made a kill. Atk. Spd. and Casting Spd. +10%.",
+ 27481:"Spellbreaker (Deathmatch: Mayhem): a melee hit broke your cast. Casting Spd. -25%.",
+ 27482:"Charge (Deathmatch: Mayhem): stunned by a charging melee hit.",
+ 27483:"Hamstring (Deathmatch: Mayhem): Speed -30%.",
+ 27484:"Last Stand (Deathmatch: Mayhem): you take no damage, and P. Atk. and M. Atk. +20%.",
+ 27485:"Pinning Shot (Deathmatch: Mayhem): pinned in place by an arrow.",
+ 27486:"Kite Step (Deathmatch: Mayhem): hit in melee range. Speed +25.",
+ 27487:"Blade Dance (Deathmatch: Mayhem): Atk. Spd. +15% and P. Atk. +10%.",
 }
 def f32(x): return '%.8f' % struct.unpack('f', struct.pack('f', x))[0]
 
@@ -90,7 +101,7 @@ for sk in skills:
         attack = OPER[sid] in (0,1,3) and g('targetType',lvl,'SELF') not in ('SELF','PARTY')
         tpl = ('0','3','S','9','11') if attack else ('1','1','X','8','10')
         icon='icon.skill%04d'%ICON[sid]
-        row=[str(sid),str(lvl),str(OPER[sid]),tpl[0],str(mp),str(rng & 0xFFFFFFFF),tpl[1],f32(hit),str(ismagic),tpl[2],str(sid),icon,'','0','0',str(hp),'a,none\\0','0',tpl[3],tpl[4],'0','a,none\\0']
+        row=[str(sid),str(lvl),str(OPER[sid]),tpl[0],str(mp),str(rng & 0xFFFFFFFF),tpl[1],f32(hit),str(ismagic),tpl[2],str(sid),icon,'','1' if sid in DEBUFF else '0','0',str(hp),'a,none\\0','0',tpl[3],tpl[4],'0','a,none\\0']
         assert len(row)==22
         grp.append(grp_line(row))
         # power/amount/dot per level for descriptions
@@ -107,7 +118,7 @@ for sk in skills:
         assert '{' not in d and 'None' not in d, (sid,d)
         names.append('\t'.join(['skill_begin','skill_id=%d'%sid,'skill_level=%d'%lvl,'name=[%s]'%name,'desc=[%s]'%d,'enchant_name=[none]','enchant_desc=[none]','skill_end']))
     icons_used[sid]=ICON[sid]
-assert len(grp)==108 and len(names)==108, (len(grp),len(names))
+assert len(grp)==115 and len(names)==115, (len(grp),len(names))
 out=ROOT+'/client/PassiveTree'; os.makedirs(out,exist_ok=True)
 # Both files are in the L2ClientDat skill_begin ... skill_end key=value format (see grp_line for
 # Skillgrp.dat; Skillname-e.dat: skill_id, skill_level, name, desc, enchant_name, enchant_desc).

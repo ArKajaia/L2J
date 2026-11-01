@@ -91,6 +91,13 @@ skill_begin	skill_id=27477	skill_level=1	name=[Last Light: Magic Ward]	desc=[Las
 skill_begin	skill_id=27478	skill_level=1	name=[Last Light]	desc=[Last Light keystone: a single hit took a large share of your HP. Speed +25.]	enchant_name=[none]	enchant_desc=[none]	skill_end
 skill_begin	skill_id=27479	skill_level=1	name=[Tenacity]	desc=[Tenacity keystone: you cannot be stunned, put to sleep or rooted.]	enchant_name=[none]	enchant_desc=[none]	skill_end
 skill_begin	skill_id=27480	skill_level=1	name=[Bloodrush]	desc=[Bloodrush keystone: you made a kill. Atk. Spd. and Casting Spd. +10%.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27481	skill_level=1	name=[Spellbreaker]	desc=[Spellbreaker (Deathmatch: Mayhem): a melee hit broke your cast. Casting Spd. -25%.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27482	skill_level=1	name=[Charge]	desc=[Charge (Deathmatch: Mayhem): stunned by a charging melee hit.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27483	skill_level=1	name=[Hamstring]	desc=[Hamstring (Deathmatch: Mayhem): Speed -30%.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27484	skill_level=1	name=[Last Stand]	desc=[Last Stand (Deathmatch: Mayhem): you take no damage, and P. Atk. and M. Atk. +20%.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27485	skill_level=1	name=[Pinning Shot]	desc=[Pinning Shot (Deathmatch: Mayhem): pinned in place by an arrow.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27486	skill_level=1	name=[Kite Step]	desc=[Kite Step (Deathmatch: Mayhem): hit in melee range. Speed +25.]	enchant_name=[none]	enchant_desc=[none]	skill_end
+skill_begin	skill_id=27487	skill_level=1	name=[Blade Dance]	desc=[Blade Dance (Deathmatch: Mayhem): Atk. Spd. +15% and P. Atk. +10%.]	enchant_name=[none]	enchant_desc=[none]	skill_end
 skill_begin	skill_id=27000	skill_level=1	name=[Hot Zone: Frenzy]	desc=[Hot zone monster buff: Speed +50%, Max HP +50%, Atk. Spd. and Casting Spd. +30%.]	enchant_name=[none]	enchant_desc=[none]	skill_end
 skill_begin	skill_id=27001	skill_level=1	name=[Hot Zone: Fortune]	desc=[Hunting in an active hot zone: XP and SP +50%, Atk. Spd. +40%, Casting Spd. +20%, drop amount +25%.]	enchant_name=[none]	enchant_desc=[none]	skill_end
 skill_begin	skill_id=27002	skill_level=1	name=[Hot Zone: Kill Streak]	desc=[Hot zone kill streak: XP and SP +3%. Kill again within 15 seconds to raise it.]	enchant_name=[none]	enchant_desc=[none]	skill_end
