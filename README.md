@@ -252,7 +252,16 @@ Procedurally generated quests that anyone can take at any level. None of them is
   - Escorts go all the way to the town's Notice Board when the road allows it (up to `maxLegs` legs), along a road that bends. Their ambushes wait somewhere along a few of the legs, come from ahead, and the first leg is quiet. The wagon master, the rescued captive, the survivor and the lost child talk on the road.
   - A smuggler band walks one way to its meeting place instead of zig-zagging.
   - Clues, trails, quest monsters and nests are spread out: clues 2200-3200 apart, targets 1500-2800 from the last clue, escort and smuggler legs 2200-3200, nests at least 1200 apart. Time limits grew to match.
-  - Clues are named for what they are (Mauled Remains, Signs of a Struggle, Small Footprints...), and the main quests have several offer, success and opening texts, one picked for each quest.
+  - Clues are named after what is found there (Torn Ribbon, Broken Arrows, Journal Page...), and the main quests have several offer, success and opening texts, one picked for each quest.
+  - Hunted targets taunt their hunters (beasts growl, the kidnappers jeer, fugitives and rival adventurers talk back).
+  - Contacts remember the characters they worked with, and greet a regular by name.
+- **Every objective has a twist**:
+  - Escort ambushes pick a tactic: all at the charge, half at you, or all at you to pull you away.
+  - A courier on the road draws more ambushers the longer the trip goes on.
+  - Herbs can hide a snake; each nest breeds its own kind of monster; a defender standing by the banner patches it up between attacks.
+  - Smugglers travel disguised as merchants until you get close, and the radar only learns where they are every half minute until then.
+  - An outbreak names its best hunters every minute and a half, and at the end.
+- **Standing**: every quest done for a town raises your standing there, from Stranger to Known, Trusted, Honored and Hero of the town, each rank adding 3% to that town's rewards (up to 12%). A town npc whose requests you do again knows you and pays 5% more per favour done (up to 25%). Both show on the board and are kept as player variables.
 - **Where quests come from**:
   - A **Notice Board** stands next to the gatekeeper of every town. It has a few board offers each day and the requests of that town's npcs (its real blacksmith, grocer, warehouse keeper or gatekeeper by name). Requests are handed over at the board.
   - The **Community Board** (`_bbsquests`, "Bounties and Requests") and **`.quests`** show the same board for the nearest town, your quests and the world events. Board offers can be taken from anywhere; requests only at the board. The Community Board draws it wider: an icon for each category, a progress gauge for each of your quests, today's offers two by two (title, then category), the difficulties side by side with their rewards, and a gauge per stage and per objective on a running quest.
@@ -981,6 +990,7 @@ Changes from 28 September – 19 October 2026.
 - **Fixed**: quests sent players into places they can't reach: the catacombs and necropolises, the Pagan Temple, Hellbound, and the Cruma Tower above level 55.
 - **Fixed**: `{fugitive}` (Manhunt) and `{child}` (The Lost Child) were never filled in; every `<context>` of a template is now.
 - **Changed**: progress spots are spread further apart, escorts and smuggler bands travel 2-3 times as far, escorts reach the town itself, and their ambushes come along the road rather than at every waypoint. Escorted npcs talk on the road.
+- **New**: town standing and regulars (more rewards from towns and requesters you keep working for), taunting targets, contacts who remember you, escort ambush tactics, a courier's growing pursuit, trapped herbs, a brood per nest, repairs between waves, disguised smugglers and an outbreak leaderboard. Clue pool lines may read "Name|text" to name their spot.
 - **New**: quests name the land they take place in (`{place}`), smugglers head for a named place (`{meeting}`), clues have names of their own, and templates can give several texts for the same key (and stages several opening texts), one picked by the quest's seed.
 
 ### Bestiary

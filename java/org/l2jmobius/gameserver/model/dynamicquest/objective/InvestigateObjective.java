@@ -33,7 +33,7 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
  * INVESTIGATE: find {@code clues} clues ({@code clueNpc}) one after the other. The first is {@code firstMin}-{@code firstMax} from {@code at}, each next one {@code spacingMin}-{@code spacingMax} from the last.
- * A clue ({@code clueNpc}, named {@code clueName} and titled {@code clueTitle} if set) is searched by standing (or sitting) next to it for {@code searchTime} seconds; what is found is a line of the text pool {@code lines}, and with {@code ambushChance} percent {@code ambushCount} monsters jump the searcher. Where the last clue lay becomes the quest's LAST place.
+ * A clue ({@code clueNpc}, named {@code clueName} and titled {@code clueTitle} if set, or named by its line when the line reads "Name|text") is searched by standing (or sitting) next to it for {@code searchTime} seconds; what is found is a line of the text pool {@code lines}, and with {@code ambushChance} percent {@code ambushCount} monsters jump the searcher. Where the last clue lay becomes the quest's LAST place.
  * With {@code stealth="true"} it fails as soon as a participant is drawn into a fight ({@code seenText}).
  * @author Mobius
  */
@@ -86,6 +86,14 @@ public class InvestigateObjective extends AbstractObjective
 			return false;
 		}
 		dress(_clue, "clueName", "clueTitle");
+		// A line "Name|text" names the spot after what is found there.
+		final String entry = clueEntry(_found + 1);
+		final int bar = entry.indexOf('|');
+		if (bar > 0)
+		{
+			_clue.setName(_quest.format(entry.substring(0, bar).trim()));
+			_clue.broadcastInfo();
+		}
 		_progress = 0;
 		_quest.setMarker(location);
 		return true;
@@ -154,7 +162,8 @@ public class InvestigateObjective extends AbstractObjective
 		_quest.putLocation("last", where);
 
 		final Random random = random("line" + _found);
-		final String line = _quest.format(pickText(_params.getString("lines", null), random, "You find a trace and follow it."));
+		final String entry = clueEntry(_found);
+		final String line = _quest.format(entry.substring(entry.indexOf('|') + 1).trim());
 		searcher.sendMessage(_quest.getName() + ": " + line);
 		_quest.screen(line);
 
@@ -178,6 +187,15 @@ public class InvestigateObjective extends AbstractObjective
 		{
 			fail("The trail went cold.");
 		}
+	}
+
+	/**
+	 * @param number the clue (1 = the first)
+	 * @return what is found at that clue: a line of the pool {@code lines}, picked by the quest's seed; "Name|text" lines name the spot
+	 */
+	private String clueEntry(int number)
+	{
+		return pickText(_params.getString("lines", null), random("line" + number), "You find a trace and follow it.");
 	}
 
 	@Override

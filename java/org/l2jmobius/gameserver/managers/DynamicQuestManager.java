@@ -63,6 +63,7 @@ import org.l2jmobius.gameserver.model.dynamicquest.NoticeBoardSite;
 import org.l2jmobius.gameserver.model.dynamicquest.ObjectiveTemplate;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestInstance;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestOffer;
+import org.l2jmobius.gameserver.model.dynamicquest.QuestStanding;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestScope;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTemplate;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTier;
@@ -1523,6 +1524,7 @@ public class DynamicQuestManager
 			{
 				factor *= 0.5 + (0.5 * Math.min(1, quest.getContribution(player.getObjectId()) / fairShare));
 			}
+			factor *= QuestStanding.getRewardFactor(player, quest);
 			final Payout payout = RewardCalculator.compute(quest, factor, true);
 			if (player.getObjectId() == quest.getOwnerId())
 			{
@@ -1536,6 +1538,10 @@ public class DynamicQuestManager
 				player.sendMessage(quest.getName() + ": you earned the title \"" + player.getTitle() + "\".");
 			}
 			recordCompletion(player.getAccountName(), quest.getTemplate());
+			for (String line : QuestStanding.recordSuccess(player, quest))
+			{
+				player.sendMessage(quest.getName() + ": " + line);
+			}
 
 			final NpcHtmlMessage html = new NpcHtmlMessage(0, DynamicQuestHtml.complete(quest, payout, successText));
 			player.sendPacket(html);

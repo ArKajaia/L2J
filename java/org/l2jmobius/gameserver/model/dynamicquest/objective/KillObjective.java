@@ -49,12 +49,17 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
  */
 public class KillObjective extends AbstractObjective
 {
+	private static final int TAUNT_RANGE = 1500;
+
 	private final List<Npc> _targets = new ArrayList<>();
 	private final Set<Integer> _npcIds = new HashSet<>();
 	private int _total;
 	private int _killed;
 	private Location _spot;
 	private boolean _revealed;
+	private List<String> _taunts;
+	private int _tauntIndex;
+	private int _nextTaunt;
 
 	public KillObjective(QuestInstance quest, ObjectiveTemplate template, int index)
 	{
@@ -137,6 +142,38 @@ public class KillObjective extends AbstractObjective
 	}
 
 	/**
+	 * A target that knows it is hunted says a line of the text pool {@code taunts} now and then, while a hunter is near it.
+	 */
+	private void taunt(int second, List<Player> near)
+	{
+		if (_taunts == null)
+		{
+			_taunts = shuffledLines(_params.getString("taunts", null), "taunts");
+			_nextTaunt = 10 + random("tauntStart").nextInt(15);
+		}
+		if (_taunts.isEmpty() || (--_nextTaunt > 0))
+		{
+			return;
+		}
+		_nextTaunt = 30 + random("taunt" + second).nextInt(25);
+		for (Npc target : _targets)
+		{
+			if (!QuestSpawnUtil.isAlive(target))
+			{
+				continue;
+			}
+			for (Player player : near)
+			{
+				if (player.calculateDistance2D(target) <= TAUNT_RANGE)
+				{
+					_quest.say(target, _taunts.get(_tauntIndex++ % _taunts.size()));
+					return;
+				}
+			}
+		}
+	}
+
+	/**
 	 * Brings the fugitives out of hiding: fake players hunting the owner, or monsters of the place without fake players.
 	 */
 	private void revealFugitives(Player owner, int amount)
@@ -167,6 +204,7 @@ public class KillObjective extends AbstractObjective
 	@Override
 	public void onTick(int second, List<Player> near)
 	{
+		taunt(second, near);
 		if (!"FUGITIVE".equals(getSource()) || _revealed)
 		{
 			return;

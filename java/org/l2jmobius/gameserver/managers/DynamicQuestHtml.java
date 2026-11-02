@@ -35,6 +35,7 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.dynamicquest.DifficultyContext;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestInstance;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestOffer;
+import org.l2jmobius.gameserver.model.dynamicquest.QuestStanding;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTemplate;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTier;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTrigger;
@@ -190,6 +191,7 @@ public final class DynamicQuestHtml
 		if (boardTown != null)
 		{
 			sb.append(title("Notice Board of " + boardTown, channel));
+			sb.append("<font color=\"").append(COLOR_MUTED).append("\">Your standing here: ").append(QuestStanding.describeTown(player, boardTown)).append("</font><br><br>");
 		}
 		else
 		{
@@ -308,6 +310,24 @@ public final class DynamicQuestHtml
 	// Offer
 	// ---------------------------------------------------------------------------------------------
 
+	/**
+	 * @return what the town and the requester of an offer think of the player, {@code null} if nothing yet
+	 */
+	private static String getStanding(Player player, QuestOffer offer)
+	{
+		final StringBuilder sb = new StringBuilder();
+		final int favours = QuestStanding.getFavours(player, offer.getTemplate().getRequester() != null ? offer.getRequester() : null);
+		if (favours > 0)
+		{
+			sb.append(offer.getRequester()).append(" knows you: ").append(favours).append(favours == 1 ? " favour" : " favours").append(" done, +").append(QuestStanding.getRegularBonus(favours)).append("% rewards.");
+		}
+		if ((offer.getTown() != null) && (QuestStanding.getTownPoints(player, offer.getTown()) > 0))
+		{
+			sb.append(sb.length() > 0 ? " " : "").append(offer.getTown()).append(": ").append(QuestStanding.describeTown(player, offer.getTown())).append('.');
+		}
+		return sb.length() > 0 ? sb.toString() : null;
+	}
+
 	public static String offer(DynamicQuestManager manager, Player player, Npc npc, QuestOffer offer, Channel channel)
 	{
 		if (channel == Channel.BOARD)
@@ -320,6 +340,11 @@ public final class DynamicQuestHtml
 		if (offer.getRequester() != null)
 		{
 			sb.append("<font color=\"LEVEL\">").append(offer.getRequester()).append("</font> asks:<br1>");
+		}
+		final String standing = getStanding(player, offer);
+		if (standing != null)
+		{
+			sb.append("<font color=\"").append(COLOR_MUTED).append("\">").append(standing).append("</font><br1>");
 		}
 		sb.append("<font color=\"").append(COLOR_TEXT).append("\">").append(fill(manager, template.getText("offer", "There is work to be done.", offer.getSeed()), offer)).append("</font><br><br>");
 
@@ -533,6 +558,10 @@ public final class DynamicQuestHtml
 		final int owned = manager.getOwnedQuests(player).size();
 		final String chips = "<table cellpadding=0 cellspacing=0><tr><td>" + chip("ACTIVE", owned, DynamicQuestConfig.MAX_ACTIVE) + "</td><td width=6></td><td>" + chip("TODAY", manager.getAccountDailyTotal(player.getAccountName()), DynamicQuestConfig.ACCOUNT_DAILY_LIMIT) + "</td></tr></table>";
 		sb.append(boardHeader("Bounties &amp; Requests", (town != null ? town + " - " : "") + "new board at " + DynamicQuestConfig.BOARD_RESET_HOUR + ":00", chips, 150));
+		if (town != null)
+		{
+			sb.append(spacer(4)).append(note("Your standing in " + town + ": " + QuestStanding.describeTown(player, town)));
+		}
 
 		// Running quests.
 		final List<QuestInstance> quests = manager.getQuests(player);
@@ -657,6 +686,11 @@ public final class DynamicQuestHtml
 			text.append("<font color=\"LEVEL\">").append(offer.getRequester()).append("</font> <font color=\"").append(COLOR_DIM).append("\">asks:</font><br1>");
 		}
 		text.append("<font color=\"").append(COLOR_TEXT).append("\">").append(fill(manager, template.getText("offer", "There is work to be done.", offer.getSeed()), offer)).append("</font>");
+		final String standing = getStanding(player, offer);
+		if (standing != null)
+		{
+			text.append("<br1><font color=\"").append(COLOR_DIM).append("\">").append(standing).append("</font>");
+		}
 		sb.append(spacer(6)).append(panel(BG_CARD, text.toString()));
 
 		final List<Player> members = DynamicQuestManager.getMembers(player);

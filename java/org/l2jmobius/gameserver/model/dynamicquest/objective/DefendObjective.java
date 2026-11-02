@@ -34,12 +34,14 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
  * DEFEND: keep {@code target} (a QuestGuard) standing through {@code waves} waves of {@code waveCount} monsters of the place, each coming {@code waveInterval} seconds after the last or as soon as it is beaten, after {@code prep} seconds to get ready.
+ * With no attacker near it, a participant standing next to it (not fighting) repairs {@code repair} percent of the meter a second (0.5 by default, 0: none).
  * With {@code boss="true"} the last wave brings a champion ({@code bossTierBonus}, {@code bossTitle}). The target can't die: its meter ({@code meter}) drops by {@code drain} a second for every attacker next to it, and the defence fails when it is empty.
  * @author Mobius
  */
 public class DefendObjective extends AbstractObjective
 {
 	private static final int TOUCH_RANGE = 200;
+	private static final int REPAIR_CLEAR_RANGE = 700;
 
 	private final List<Npc> _attackers = new ArrayList<>();
 	private Npc _target;
@@ -111,6 +113,16 @@ public class DefendObjective extends AbstractObjective
 			return;
 		}
 
+		// Between the attacks, a defender standing by it patches it up.
+		if ((_meter < _maxMeter) && (_params.getDouble("repair", 0.5) > 0) && !isUnderAttack() && isTended(near))
+		{
+			_meter = Math.min(_maxMeter, _meter + ((_maxMeter * _params.getDouble("repair", 0.5)) / 100));
+			if ((second % 5) == 0)
+			{
+				_quest.screen(text("repairText", "Repairing") + ": " + text("meterName", "standing") + " " + getMeterPercent() + "%");
+			}
+		}
+
 		final int alive = QuestSpawnUtil.countAlive(_attackers);
 		if (_wave >= getWaves())
 		{
@@ -135,6 +147,37 @@ public class DefendObjective extends AbstractObjective
 		{
 			_quest.screen(getProgress());
 		}
+	}
+
+	/**
+	 * @return {@code true} if an attacker is near it
+	 */
+	private boolean isUnderAttack()
+	{
+		for (Npc attacker : _attackers)
+		{
+			if (QuestSpawnUtil.isAlive(attacker) && (attacker.calculateDistance2D(_target) <= REPAIR_CLEAR_RANGE))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * @param near the quest's players near it
+	 * @return {@code true} if one of them stands next to it, not fighting
+	 */
+	private boolean isTended(List<Player> near)
+	{
+		for (Player player : near)
+		{
+			if (!player.isDead() && !player.isInCombat() && (player.calculateDistance2D(_target) <= TOUCH_RANGE + 100))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void spawnWave()
