@@ -21,6 +21,7 @@
 			<xs:enumeration value="REACH" />
 			<xs:enumeration value="DESTROY" />
 			<xs:enumeration value="INTERCEPT" />
+			<xs:enumeration value="CAPTURE" />
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:simpleType name="transitionEvent">

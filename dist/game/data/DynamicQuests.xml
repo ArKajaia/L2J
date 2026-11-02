@@ -63,6 +63,9 @@
 	               REACH       dest (TOWN_FAR | TOWN_NEAR | HOME | AREA | LAST) radius noTeleport minDistance maxDistance ambushEvery ambushCount pursuitMax
 	                           (every second ambush brings one more monster, up to pursuitMax more)
 	               DESTROY     nests nestNpc spawnEvery maxAlive burnTime radius spacing (between nests) broodTitle broodTierBonus foreign (brood of a far land)
+	               CAPTURE     at spawnMin spawnMax tierBonus title guards guardTitle threshold (HP percent: subdued below it) bindTime breakFree
+	                           recover fleeMin fleeMax subduedTitle subdueText guardedText captureText breakText fleeText: take a monster alive.
+	                           It can't die; subdued, it is bound by standing next to it (not while a guard stands near), and breaks free if left alone.
 	               INTERCEPT   at legs legMin legMax guards leaderTitle leaderTierBonus guardTitle disguise revealRange revealText: kill the leader of a band on the move
 	                           before it reaches its meeting point ({meeting}: the land it lies in), all its legs heading one way
 	               at = AREA (the hunting ground) | LAST (where the previous step ended) | NEAR (the owner) | HOME (the board the quest was taken at).
@@ -394,6 +397,21 @@
 		<entry>Notched Tree|Notches cut into a tree trunk - the guild's sign for "keep going".</entry>
 		<entry>Hidden Note|A sealed note under a rock: "Further out. Watch your back."</entry>
 		<entry>Scratched Marker|The marker is here, but someone tried to scratch it out. Interesting.</entry>
+	</textPool>
+
+	<!-- Live captures (CAPTURE). -->
+	<textPool name="captureBeasts">
+		<entry>the Silver-Horned Stag</entry>
+		<entry>the Moonfur Wolf</entry>
+		<entry>the Ironhide Bull</entry>
+		<entry>the Gilded Lynx</entry>
+		<entry>the Ashback Boar</entry>
+	</textPool>
+	<textPool name="hideoutClues">
+		<entry>Lookout Post|An empty lookout post, still warm. Someone left in a hurry - towards their hideout.</entry>
+		<entry>Stolen Goods|A cache of stolen goods with the mark of {gang}. They'll be back for it.</entry>
+		<entry>Beaten Merchant|A beaten merchant points the way: "Their leader rides with them. Go!"</entry>
+		<entry>Fresh Hoofprints|Fresh hoofprints and the stub of a cigar. The leader's, by the smell of it.</entry>
 	</textPool>
 
 	<!-- What hunted targets say while a hunter is near (KILL taunts="..."). -->
@@ -1037,5 +1055,61 @@
 		<text key="offer">A guild factor is handing out contracts in the field today. Reliable hands are rewarded; the best earn a name.</text>
 		<text key="success">The guild pays and notes your name.</text>
 		<text key="failLogout">The guild gives the contract to someone else.</text>
+	</template>
+
+	<!-- 25. Live Capture: the Beast Farm wants a rare beast alive. Track it, wear it down without killing it, and bind it. -->
+	<template id="25" name="Live Capture: {beast}" category="Hunt">
+		<trigger type="BOARD_DAILY" weight="6" />
+		<eligibility minLevel="20" dailyLimit="2" />
+		<context key="beast" pool="captureBeasts" />
+		<contact npcName="Beastmaster Rolf" npcTitle="Beast Farm" dialog="The Beast Farm pays a fortune for {beast} - alive. Dead, it's just meat. Wear it down until it can't fight, then bind it before it gets its breath back. Its tracks start here." button="I'll bring it in" line="Alive, mind you! Alive!" />
+		<stage name="The Tracks" timeLimit="1800">
+			<text>Beastmaster Rolf shows you the first tracks of {beast}. Follow them.</text>
+			<text>The tracks of {beast} lead away from the farm's camp. Follow them, quietly.</text>
+			<objective type="INVESTIGATE" clues="2" clueNpc="900514" searchTime="5" firstMin="800" firstMax="1400" spacingMin="2000" spacingMax="3000" lines="beastTracks" ambushChance="10" ambushCount="2" />
+			<on event="SUCCESS" action="NEXT" />
+			<on event="TIMEOUT" action="FAIL" text="The tracks are gone. {beast} is lost to the wilds." />
+		</stage>
+		<stage name="The Capture" timeLimit="1200">
+			<text>{beast} is ahead. Wear it down - it won't die, but it fights back - and bind it when it falls.</text>
+			<objective type="CAPTURE" title="{beast}" at="LAST" spawnMin="1500" spawnMax="2500" tierBonus="2" threshold="25" bindTime="8" breakFree="25" recover="50" bonus="NO_DEATHS" subdueText="{beast} sinks to the ground, exhausted. Bind it - quickly!" captureText="{beast} is bound and ready for the farm!" breakText="{beast} shakes off the ropes and charges!" fleeText="{beast} bolted! Follow the radar." />
+			<on event="SUCCESS" action="COMPLETE" />
+			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="{beast} has fled deeper into the wilds!" />
+		</stage>
+		<reward exp="3.5" sp="0.1" adenaPerLevel="1700" table="bounty" />
+		<text key="title">Live Capture</text>
+		<text key="offer">The Beast Farm will pay a fortune for a rare beast brought in alive - and nothing for a carcass. Wear it down, bind it, and keep your blade from finishing the job.</text>
+		<text key="offer">A beastmaster of the Beast Farm wants {beast} for the breeding pens. Alive, unharmed enough to breed. The pay is better than any bounty.</text>
+		<text key="success">{beast} snorts in its ropes as the beastmaster's handlers lead it away. The farm pays as promised.</text>
+		<text key="success">The Beast Farm has a new prize, and you have the farm's gold.</text>
+		<text key="failLogout">With nobody holding the ropes, {beast} is long gone.</text>
+	</template>
+
+	<!-- 26. Alive or Not at All: the magistrate wants a gang leader alive, to name his partners. Clear the guards, subdue him, bind him. -->
+	<template id="26" name="Alive: the Leader of {gang}" category="Bounty">
+		<trigger type="BOARD_DAILY" weight="5" />
+		<eligibility minLevel="25" dailyLimit="2" />
+		<context key="gang" pool="gangs" />
+		<contact npcName="Marshal Tobias" npcTitle="Town Guard" dialog="The magistrate wants the leader of {gang} alive - a dead man can't name his partners. He hides in the wilds with his best blades around him. Deal with them, beat him down, and bind him. The trail starts here." button="Alive it is" line="Remember: alive. The magistrate was very clear." />
+		<stage name="The Hideout" timeLimit="1800">
+			<text>The marshal points out the trail of {gang}. It leads to their leader's hideout.</text>
+			<objective type="INVESTIGATE" clues="2" clueNpc="900506" searchTime="6" firstMin="800" firstMax="1400" spacingMin="2200" spacingMax="3200" lines="hideoutClues" ambushChance="30" ambushCount="2" ambushTitle="{gang}" />
+			<on event="SUCCESS" action="NEXT" />
+			<on event="TIMEOUT" action="FAIL" text="{gang} moved their hideout. The trail is cold." />
+		</stage>
+		<stage name="The Arrest" timeLimit="1200">
+			<text>The leader of {gang} is ahead, with his best blades. Cut down the guards, beat him down and bind him - alive.</text>
+			<objective type="CAPTURE" title="Leader of {gang}" at="LAST" spawnMin="1500" spawnMax="2500" tierBonus="2" guards="3" guardTitle="{gang}" threshold="30" bindTime="10" breakFree="30" recover="40" subduedTitle="Beaten" subdueText="The leader of {gang} drops his blade: &quot;Enough! Enough...&quot; Bind him!" guardedText="His blades are still standing - deal with them first!" captureText="The leader of {gang} is in chains!" breakText="He grabs his blade and fights on!" fleeText="The leader of {gang} slipped away! Follow the radar." />
+			<objective type="KILL" optional="true" source="AREA" count="6" text="Thin out the {monster} around the hideout." />
+			<on event="SUCCESS" action="COMPLETE" />
+			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="The leader of {gang} got away to another hideout!" />
+		</stage>
+		<reward exp="3.5" sp="0.1" adenaPerLevel="1800" table="bounty" />
+		<text key="title">Alive or Not at All</text>
+		<text key="offer">The magistrate posts a bounty on the leader of {gang} - payable only if he is brought in alive. His partners are the real prize, and only he can name them.</text>
+		<text key="offer">The town guard needs the leader of {gang} in chains, not in a grave. Beat him, bind him, bring him in. The marshal waits in the wilds.</text>
+		<text key="success">The leader of {gang} is marched into the cells, already bargaining. The magistrate pays in full.</text>
+		<text key="success">In chains and talking: by nightfall, half of {gang} will be in the cells with him.</text>
+		<text key="failLogout">With nobody holding him, the leader of {gang} walked away.</text>
 	</template>
 </list>
