@@ -309,7 +309,8 @@ public class KillObjective extends AbstractObjective
 					_targets.remove(npc);
 					_quest.despawn(npc);
 				}
-				spawnTargets(_spot, alive.size(), _params.getInt("tierBonus", 0) + 1, getTargetTitle());
+				// Only a lone named target grows stronger when it flees, never a whole band.
+				spawnTargets(_spot, alive.size(), _params.getInt("tierBonus", 0) + (isNamed() ? 1 : 0), getTargetTitle());
 				spawnGuards(_spot, _params.getInt("fleeGuards", 2));
 				_quest.setMarker(_spot);
 				_quest.announce(text("fleeText", "They have fled! Follow the radar."));

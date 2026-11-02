@@ -28,7 +28,8 @@ import org.l2jmobius.gameserver.model.dynamicquest.ObjectiveTemplate;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestInstance;
 
 /**
- * INTERACT: talk to {@code npc}, spawned {@code spawnMin}-{@code spawnMax} from {@code at}. Its dialog is {@code dialog} and its button {@code button}; it says {@code line} when the talk is done. Where it stands becomes the quest's LAST place.
+ * INTERACT: talk to {@code npc}, spawned {@code spawnMin}-{@code spawnMax} from {@code at}, named {@code npcName} and titled {@code npcTitle} if set. Its dialog is {@code dialog} and its button {@code button}; it says {@code line} when the talk is done.
+ * Where it stands becomes the quest's LAST place.
  * @author Mobius
  */
 public class InteractObjective extends AbstractObjective
@@ -52,6 +53,20 @@ public class InteractObjective extends AbstractObjective
 		if (_npc == null)
 		{
 			return "nobody to talk to";
+		}
+		final String name = title("npcName");
+		final String title = title("npcTitle");
+		if ((name != null) || (title != null))
+		{
+			if (name != null)
+			{
+				_npc.setName(name);
+			}
+			if (title != null)
+			{
+				_npc.setTitle(title);
+			}
+			_npc.broadcastInfo();
 		}
 		_quest.putLocation("talk" + _index, location);
 		_quest.putLocation("last", location);

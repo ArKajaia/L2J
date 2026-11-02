@@ -12,6 +12,7 @@
 	rewardTable  items a template's <reward table="..."> adds: id, count, minLevel/maxLevel (the quest's level), chance (percent), scaled (count x multipliers).
 	itemTable    items DELIVER asks for, same attributes.
 	textPool     lines a template picks from with <context key pool>, and the clue lines of INVESTIGATE (lines="...").
+	restrictedArea a place no quest sends anyone to (box, maxLevel: only for characters above it); see the list below.
 	requester    a kind of town npc whose requests are on the boards: title (part of the npc's title) or types (npc types), label (shown after its name),
 	             required="true": its requests only appear in towns that have such an npc.
 
@@ -30,6 +31,10 @@
 	               Any trigger: requires = NIGHT (only at night; a board keeps one offer of the night) | CASTLE_LORD (the town's castle has a lord).
 	  eligibility  minLevel maxLevel partyMin partyMax classes (class ids) races towns (board towns) nightOnly cooldown (seconds after a completion)
 	               dailyLimit (completions per account per day, 0 = only DynamicQuestAccountDailyLimit). A nightOnly quest fails at dawn (text failDawn).
+	  contact      someone waits at the hunting ground (npc, 900520 by default, npcName npcTitle dialog button line spawnMin spawnMax,
+	               timeLimit = seconds to get there, 3600 at Normal, failText): a first stage of its own, so the quest's work and its clock
+	               only start once the owner got there and talked to them. A player already near the ground starts the work at once.
+	               The data's stage numbers (entryStages, STAGE targets) don't count it.
 	  context      key pool: a line of the pool, picked by the quest's seed, fills {key} in every text (target, hostage, leader, gang, caravan,
 	               expedition, item, cargo, captain, beast).
 	  stage        name timeLimit (seconds at Normal, 0 = none) failOnDeath (the owner's death fails it); <text> is told when it starts.
@@ -58,7 +63,8 @@
 	               ESCALATE (max, extraTime), chance (percent; the first rule that rolls is taken), text, maxChain (skipped once the chain
 	               is that long). Without a rule: SUCCESS goes on, the rest fail.
 	  reward       exp (percent of the EXP from the quest's level to the next) sp (SP per EXP) adenaPerLevel table + its own items,
-	               title + minChain (a title for the owner at that chain length), treasuryPercent (the town's castle pays that share on top).
+	               title + minChain (a title for the owner at that chain length), treasuryPercent (the town's castle pays that share on top),
+	               distanceScale (EXP and SP by the road's length of its REACH: exp is paid for a road this long, 0.4x-2.5x of it otherwise).
 	               EXP and adenaPerLevel are multiplied by DynamicQuestExpRate and DynamicQuestAdenaRate (config/Custom/DynamicQuests.ini).
 	  text         key: title (board name), offer (board text), success, failTime, failText, failLogout, failDeath, failEscalate, failStart, failDawn, findText,
 	               heraldLine, worldAnnounce, worldSuccess, worldFail.
@@ -333,6 +339,28 @@
 		<entry>The torch at this post had gone out. You light it again.</entry>
 	</textPool>
 
+	<!-- Places no quest sends anyone to: the open-world spawns there are left out of the hunting grounds. A box (minX maxX minY maxY
+	     minZ maxZ, a little wider than the place's spawns); maxLevel="n": only left out for characters above level n (who can't enter).
+	     The catacombs and necropolises are only entered through the Seven Signs gatekeepers, the Cruma Tower's Gatekeeper Mozella
+	     turns away characters of level 56 and above, the Pagan Temple's doors need a Visitor's Mark and Hellbound has to be unlocked. -->
+	<restrictedArea name="Catacomb of Dark Omens" minX="-19920" maxX="-7904" minY="12660" maxY="24636" minZ="-5250" maxZ="-4430" />
+	<restrictedArea name="Catacomb of the Apostate" minX="-21036" maxX="-9012" minY="-251589" maxY="-239660" minZ="-8500" maxZ="-7700" />
+	<restrictedArea name="Catacomb of the Branded" minX="45764" maxX="57702" minY="169478" maxY="181434" minZ="-5300" maxZ="-4550" />
+	<restrictedArea name="Catacomb of the Forbidden Path" minX="12145" maxX="24161" minY="-249394" maxY="-243022" minZ="-9900" maxZ="-9100" />
+	<restrictedArea name="Catacomb of the Heretic" minX="-53676" maxX="-41716" minY="-251086" maxY="-239119" minZ="-8250" maxZ="-7450" />
+	<restrictedArea name="Catacomb of the Witch" minX="139932" maxX="151900" minY="78813" maxY="90809" minZ="-5800" maxZ="-4950" />
+	<restrictedArea name="Necropolis of Devotion" minX="-52757" maxX="-40807" minY="78274" maxY="90222" minZ="-5100" maxZ="-4300" />
+	<restrictedArea name="Necropolis of Martyrdom" minX="117832" maxX="129751" minY="131949" maxY="138266" minZ="-5200" maxZ="-4350" />
+	<restrictedArea name="Necropolis of Sacrifice" minX="-52720" maxX="-40675" minY="209293" maxY="221236" minZ="-5450" maxZ="-4600" />
+	<restrictedArea name="Necropolis of the Disciples" minX="171799" maxX="183840" minY="-18460" maxY="-6432" minZ="-5250" maxZ="-4400" />
+	<restrictedArea name="Necropolis of the Patriots" minX="-22193" maxX="-10270" minY="76559" maxY="88501" minZ="-5500" maxZ="-4700" />
+	<restrictedArea name="Necropolis of the Pilgrims" minX="44419" maxX="56387" minY="112401" maxY="124364" minZ="-5750" maxZ="-4950" />
+	<restrictedArea name="Necropolis of the Saints" minX="82604" maxX="94551" minY="208336" maxY="220360" minZ="-5800" maxZ="-4950" />
+	<restrictedArea name="Necropolis of Worship" minX="110783" maxX="122727" minY="173148" maxY="185198" minZ="-5800" maxZ="-4950" />
+	<restrictedArea name="Cruma Tower" minX="9951" maxX="25483" minY="106522" maxY="121797" minZ="-14581" maxZ="-4581" maxLevel="55" />
+	<restrictedArea name="Pagan Temple" minX="-24400" maxX="-8450" minY="-57600" maxY="-35400" minZ="-11900" maxZ="-10150" />
+	<restrictedArea name="Hellbound" minX="-32768" maxX="32768" minY="229376" maxY="294912" />
+
 	<!-- ============================================================================================ -->
 	<!-- 1. Wanted: a named monster is loose. The board posts its bounty; find its trail, then hunt it down. -->
 	<template id="1" name="Wanted: {target}" category="Bounty">
@@ -340,6 +368,7 @@
 		<eligibility minLevel="15" dailyLimit="3" />
 		<context key="target" pool="bountyNames" />
 		<context key="gang" pool="gangs" />
+		<contact npcName="Bounty Hunter Garrick" npcTitle="Board Tracker" dialog="So the board sent you. {target} tore through a camp here at dawn - two of my men won't see another sunrise. Its trail starts close by and it is still warm. Find it before it goes cold." button="I'll find the trail" line="Good hunting. Don't let it get behind you." />
 		<stage name="The Last Sighting" timeLimit="900">
 			<text>{target} was last seen near {near}. Search the place on your radar for its trail.</text>
 			<objective type="INVESTIGATE" clues="1" clueNpc="900506" searchTime="6" firstMin="0" firstMax="400" lines="bountyClues" ambushChance="20" ambushCount="2" text="Find {target}'s trail near {near}." />
@@ -367,7 +396,7 @@
 		<trigger type="TIMER" chance="15" />
 		<eligibility minLevel="15" dailyLimit="2" />
 		<context key="caravan" pool="caravans" />
-		<stage name="The Caravan Master" timeLimit="900">
+		<stage name="The Caravan Master" timeLimit="3600">
 			<text>{caravan} waits at the edge of the wilds near {near}. Find its master on your radar.</text>
 			<objective type="INTERACT" npc="900509" at="AREA" spawnMin="0" spawnMax="300" dialog="The road ahead is thick with brigands and worse. We leave now, with you leading. Keep them off the wagon and we'll all live to see town." button="Let's move" line="Wagons, roll out!" />
 			<on event="SUCCESS" action="NEXT" />
@@ -395,6 +424,7 @@
 		<eligibility minLevel="20" dailyLimit="2" />
 		<context key="hostage" pool="hostages" />
 		<context key="gang" pool="gangs" />
+		<contact npcName="Watchman Doran" npcTitle="Town Watch" dialog="You came! They dragged {hostage} off this very road - {gang}, by their colours. I counted five of them. The trail is fresh, but it won't stay that way for long." button="I'll follow them" line="Bring them home. Please." />
 		<stage name="The Trail" timeLimit="1200">
 			<text>{hostage} was taken on the road near {near}. Find out where they went.</text>
 			<objective type="INVESTIGATE" clues="2" clueNpc="900506" searchTime="8" spacingMin="900" spacingMax="1500" lines="kidnapClues" ambushChance="25" ambushCount="2" />
@@ -493,7 +523,7 @@
 		<trigger type="TIMER" chance="10" />
 		<eligibility minLevel="20" dailyLimit="2" />
 		<context key="captain" pool="captains" />
-		<stage name="The Camp" timeLimit="900">
+		<stage name="The Camp" timeLimit="3600">
 			<text>{captain}'s camp near {near} expects an attack. Report to the captain.</text>
 			<objective type="INTERACT" npc="900510" at="AREA" spawnMin="0" spawnMax="300" dialog="Our scouts saw them gathering - too many for us alone. Stand by our banner. If it falls, the camp falls with it." button="I'll hold the line" line="To arms! Here they come!" />
 			<on event="SUCCESS" action="NEXT" />
@@ -519,6 +549,7 @@
 		<eligibility minLevel="20" dailyLimit="2" />
 		<context key="expedition" pool="expeditions" />
 		<context key="beast" pool="beasts" />
+		<contact npcName="Porter Willem" npcTitle="Expedition Porter" dialog="I was the last to leave the camp - they sent me back for supplies. When I returned, {expedition} was gone: the tents, the people, everything. Whatever happened to them, the traces start here." button="Show me" line="Hurry. If anyone is still alive out there..." />
 		<stage name="The Trail" timeLimit="1800">
 			<text>{expedition} vanished near {near}. Follow their traces.</text>
 			<objective type="INVESTIGATE" clues="3" clueNpc="900506" searchTime="8" spacingMin="1000" spacingMax="1800" lines="expeditionClues" ambushChance="30" ambushCount="2" />
@@ -552,6 +583,7 @@
 		<trigger type="BOARD_DAILY" weight="8" />
 		<trigger type="WORLD_STATE" counter="AREA_KILLS" threshold="120" chance="30" />
 		<eligibility minLevel="15" dailyLimit="2" />
+		<contact npcName="Ranger Ilse" npcTitle="Wardens of the Wilds" dialog="The beasts here breed faster than we can cull them. I found their nests nearby. Burn them, and I will keep the young ones off your back for as long as I can." button="Let's burn them" line="Go! Before the next brood hatches." />
 		<stage name="The Nests" timeLimit="1200">
 			<text>Nests are breeding {monster} near {near}. Stand next to each nest to burn it, while their brood fights back.</text>
 			<objective type="DESTROY" nests="3" nestNpc="900507" spawnEvery="20" maxAlive="3" burnTime="6" radius="1200" broodTitle="Brood Mother" broodTierBonus="2" bonus="NO_DEATHS" />
@@ -576,7 +608,9 @@
 			<objective type="REACH" dest="TOWN_FAR" minDistance="8000" maxDistance="40000" radius="400" noTeleport="true" ambushEvery="90" ambushCount="2" ambushTitle="Highwayman" bonus="HP_ABOVE:50" teleportText="The seal shatters as you pass through the ether - the package is ruined." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
-		<reward exp="2" sp="0.1" adenaPerLevel="2000" table="supplies" />
+		<!-- Pays by the road's length: exp at a 20000 road (0.4x-2.5x of it for shorter or longer roads). exp and sp are four times the
+		     other quests' share, so the courier keeps the EXP it paid before DynamicQuestExpRate went from 10 to 2.5, with the same SP. -->
+		<reward exp="8" sp="0.025" adenaPerLevel="2000" table="supplies" distanceScale="20000" />
 		<text key="title">Urgent Courier</text>
 		<text key="offer">A sealed package must reach another town, and it can't go through the gatekeepers - the seal breaks in the ether. Carry it on foot, and watch the roads.</text>
 		<text key="success">The package arrives, seal unbroken. The recipient pays the courier's fee.</text>
@@ -614,6 +648,7 @@
 		<trigger type="BOARD_DAILY" weight="6" />
 		<eligibility minLevel="20" dailyLimit="2" />
 		<context key="fugitive" pool="fugitives" />
+		<contact npcName="Marshal Tobias" npcTitle="Town Guard" dialog="{fugitive} slipped past our patrol here last night and left a guard bleeding in the ditch. Someone saw them heading out into the wilds. They fight like an adventurer - don't let them pick the ground." button="I'll bring them in" line="Justice be with you." />
 		<stage name="Word on the Street" timeLimit="1200">
 			<text>{fugitive} was last seen near {near}. Follow the trail.</text>
 			<objective type="INVESTIGATE" clues="2" clueNpc="900506" searchTime="6" spacingMin="900" spacingMax="1500" lines="manhuntClues" ambushChance="0" />
@@ -637,6 +672,7 @@
 	<template id="13" name="Corrupted Ground near {near}" category="Purge">
 		<trigger type="BOARD_DAILY" weight="6" />
 		<eligibility minLevel="20" dailyLimit="2" />
+		<contact npcName="Druid Elowen" npcTitle="Keeper of the Grove" dialog="Can you smell it? The land here is sick. Someone planted totems that poison the soil and drive the beasts mad. Cleanse them - I will show you where the rot is thickest." button="I'll cleanse them" line="May the land remember your kindness." />
 		<stage name="The Taint" timeLimit="1200">
 			<text>Totems near {near} are poisoning the land and the beasts. Stand next to each one to cleanse it.</text>
 			<objective type="DESTROY" nests="4" nestNpc="900513" spawnEvery="25" maxAlive="2" burnTime="8" radius="1200" broodName="Infected" broodTitle="Heart of the Corruption" broodTierBonus="2" nestText="Black ooze seeps from the totem. Stand next to it to cleanse it." swarmText="The corruption fights back - its heart has awoken!" motherSlainText="The heart of the corruption is destroyed!" />
@@ -655,6 +691,7 @@
 		<trigger type="BOARD_DAILY" weight="6" />
 		<eligibility minLevel="20" dailyLimit="2" />
 		<context key="beast" pool="rareBeasts" />
+		<contact npcName="Old Hunter Aldric" npcTitle="Hunters' Guild" dialog="I have tracked {beast} for three seasons, and it has made a fool of me every time. Its tracks are fresh today, but my knees won't carry me any more. Yours will." button="I'll track it" line="Take it down clean. It deserves that much." />
 		<stage name="The Tracks" timeLimit="1500">
 			<text>{beast} was sighted near {near}. Follow its tracks.</text>
 			<objective type="INVESTIGATE" clues="4" clueNpc="900514" searchTime="4" spacingMin="900" spacingMax="1500" lines="beastTracks" ambushChance="10" ambushCount="2" />
@@ -678,6 +715,7 @@
 		<trigger type="BOARD_DAILY" weight="6" />
 		<eligibility minLevel="20" dailyLimit="2" />
 		<context key="gang" pool="smugglers" />
+		<contact npcName="Informant Wren" npcTitle="Board Informant" dialog="{gang} move their goods through here today - I have watched them for a week. They set out as soon as you give the word, and they won't wait for anyone. Catch their boss before they reach the buyers." button="I'm ready" line="They're moving. Go!" />
 		<stage name="The Interception" timeLimit="1500">
 			<text>{gang} are moving contraband through the land near {near}. Catch them and break their boss before they reach the meeting point.</text>
 			<objective type="INTERCEPT" at="AREA" legs="4" legMin="900" legMax="1300" guards="3" leaderTitle="Boss of {gang}" leaderTierBonus="2" guardTitle="{gang}" killText="The boss is down - the contraband is seized!" arriveText="{gang} reached their buyers and vanished. Too late." />
@@ -696,6 +734,7 @@
 		<trigger type="NPC_INTERACTION" weight="6" />
 		<eligibility minLevel="10" dailyLimit="2" />
 		<context key="child" pool="children" />
+		<contact npcName="Farmer Hollis" npcTitle="Search Party" dialog="We've been calling for {child} since noon. The little one was playing near here, and then... nothing. Help us look - and be gentle when you find them, they scare easily." button="I'll find them" line="Thank you. We'll keep calling." />
 		<stage name="The Search" timeLimit="1200">
 			<text>{child} wandered off near {near}. Look for signs of where they went.</text>
 			<objective type="INVESTIGATE" clues="2" clueNpc="900506" searchTime="6" spacingMin="800" spacingMax="1300" lines="childClues" ambushChance="15" ambushCount="2" />
@@ -733,6 +772,7 @@
 	<template id="18" name="Scout the Frontier" category="Scouting">
 		<trigger type="BOARD_DAILY" weight="5" />
 		<eligibility minLevel="20" dailyLimit="2" />
+		<contact npcName="Scout Captain Vey" npcTitle="Frontier Scouts" dialog="You're the one the board sent? Good. The vantage points are marked on your map. Keep low and keep quiet - if anything out there sees you, the whole report is worthless." button="Understood" line="Eyes open, head down." />
 		<stage name="The Vantage Points" timeLimit="1500">
 			<text>Reach the vantage points near {near} and watch from each (sitting helps). If anything sees you and attacks, the scouting is ruined.</text>
 			<objective type="INVESTIGATE" clues="3" clueNpc="900519" searchTime="10" firstMin="300" firstMax="800" spacingMin="1000" spacingMax="1600" lines="scoutLines" ambushChance="0" stealth="true" seenText="You were seen - the enemy knows they are watched now. The scouting is ruined." text="Watch from the vantage points near {near} without being seen." />
@@ -764,6 +804,7 @@
 		<trigger type="BOARD_DAILY" weight="5" />
 		<eligibility minLevel="25" dailyLimit="2" />
 		<context key="target" pool="bountyNames" />
+		<contact npcName="Clerk Petra" npcTitle="Board Clerk" dialog="You read the notice too? So did half the taverns. {target} was sighted near here not an hour ago, and a rival party set out just before you arrived. Move!" button="On my way" line="Run! They have a head start." />
 		<stage name="The Sighting" timeLimit="900">
 			<text>{target} was seen near {near}. Others read the same notice - be quick.</text>
 			<objective type="INVESTIGATE" clues="1" clueNpc="900506" searchTime="6" firstMin="0" firstMax="400" lines="bountyClues" ambushChance="0" />
@@ -787,6 +828,7 @@
 	<template id="21" name="Rifts near {near}" category="Purge">
 		<trigger type="BOARD_DAILY" weight="5" />
 		<eligibility minLevel="30" dailyLimit="2" />
+		<contact npcName="Magister Orin" npcTitle="Ivory Tower" dialog="The air itself is torn here. Rifts keep opening, and things from far-off lands crawl through them. I can show you how to seal them, but I can't hold them back alone." button="Show me the rifts" line="Seal them fast - they widen by the minute." />
 		<stage name="The Rifts" timeLimit="1200">
 			<text>Rifts have torn open near {near}, and beasts of {foreignLand} crawl through. Stand next to each rift to seal it.</text>
 			<objective type="DESTROY" nests="3" nestNpc="900517" foreign="true" spawnEvery="20" maxAlive="3" burnTime="8" radius="1200" broodTitle="Rift Warden" broodTierBonus="2" nestText="The air tears open here, and things from far away crawl through. Stand next to the rift to seal it." swarmText="The rifts widen - a warden comes through!" motherSlainText="The rift warden is slain!" />
@@ -804,6 +846,7 @@
 	<template id="22" name="Herbs for {requester}" category="Request" requester="townsfolk">
 		<trigger type="NPC_INTERACTION" weight="5" />
 		<eligibility minLevel="10" dailyLimit="2" />
+		<contact npcName="Apprentice Lin" npcTitle="Herbalist's Apprentice" dialog="The fever herbs grow wild around here, but they wilt soon after they are picked. Gather them and run them back to {town} as fast as you can. I'll show you which ones to take." button="Show me the herbs" line="Quick hands, and quicker feet!" />
 		<stage name="Fever Herbs" timeLimit="1200">
 			<objective type="COLLECT" source="NODE" nodeNpc="900518" count="6" scale="false" radius="1000" gatherTime="3" name="fever herbs" nodeText="A fever herb. Careful - the roots are fragile." text="Gather 6 fever herbs near {near}." />
 			<on event="SUCCESS" action="NEXT" />
@@ -842,6 +885,7 @@
 	<template id="24" name="Guild Contract" category="Contract" entryStages="1,2,3,4">
 		<trigger type="BOARD_DAILY" weight="3" />
 		<eligibility minLevel="20" dailyLimit="5" />
+		<contact npcName="Guild Factor Hale" npcTitle="Adventurers' Guild" dialog="The guild's contract is posted here, and the work is close by. Do this one right and there may be another. Ready to hear the terms?" button="Let's hear it" line="Then get to work. The guild is watching." />
 		<stage name="Contract: The Cull" timeLimit="2400">
 			<objective type="KILL" source="AREA" count="15" text="Thin out the {monster} near {near}." />
 			<on event="SUCCESS" action="FOLLOW_UP" target="24" maxChain="4" text="The guild has another contract for you, if you want it." />

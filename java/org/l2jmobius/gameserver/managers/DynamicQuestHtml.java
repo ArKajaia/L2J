@@ -335,7 +335,7 @@ public final class DynamicQuestHtml
 			final DifficultyContext context = DifficultyContext.of(player, members, tier);
 			final Payout preview = RewardCalculator.compute(template.getReward(), context.getQuestLevel(), tier.getRewardMultiplier() * (1 + ((offer.getChain() * DynamicQuestConfig.CHAIN_BONUS_PERCENT) / 100.0)), false);
 			sb.append("<tr><td width=70><font color=\"").append(tier.getColor()).append("\">").append(tier.getDisplayName()).append("</font></td>");
-			sb.append("<td><font color=\"").append(COLOR_TEXT).append("\">Lv. ").append(context.getQuestLevel()).append(" - ").append(String.format("%,d", preview._exp)).append(" EXP, ").append(String.format("%,d", preview._adena)).append(" Adena</font></td></tr>");
+			sb.append("<td><font color=\"").append(COLOR_TEXT).append("\">Lv. ").append(context.getQuestLevel()).append(" - ").append(String.format("%,d", preview._exp)).append(template.getReward().getDistanceScale() > 0 ? " EXP (by road length), " : " EXP, ").append(String.format("%,d", preview._adena)).append(" Adena</font></td></tr>");
 		}
 		sb.append("</table><br>");
 
@@ -688,7 +688,7 @@ public final class DynamicQuestHtml
 			sb.append("<table width=").append(inner).append(" cellpadding=0 cellspacing=0>");
 			sb.append("<tr><td><font color=\"").append(tier.getColor()).append("\">").append(tier.getDisplayName()).append("</font></td><td align=right><font color=\"").append(COLOR_DIM).append("\">Lv. ").append(context.getQuestLevel()).append("</font></td></tr>");
 			sb.append("<tr><td height=6 colspan=2></td></tr>");
-			sb.append("<tr><td colspan=2 height=18>").append(valueLine(String.format("%,d", preview._exp), "EXP")).append("</td></tr>");
+			sb.append("<tr><td colspan=2 height=18>").append(valueLine(String.format("%,d", preview._exp), template.getReward().getDistanceScale() > 0 ? "EXP (avg)" : "EXP")).append("</td></tr>");
 			sb.append("<tr><td height=3 colspan=2></td></tr>");
 			sb.append("<tr><td colspan=2 height=18>").append(valueLine(String.format("%,d", preview._adena), "Adena")).append("</td></tr>");
 			if (problem == null)

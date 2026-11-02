@@ -362,4 +362,23 @@
 			<height normal="20" />
 		</collision>
 	</npc>
+	<npc id="900520" displayId="30651" level="70" type="Folk" name="Contact" usingServerSideName="true" title="Notice Board" usingServerSideTitle="true"> <!-- Contact who meets the player at the hunting ground (<contact>); its name and title come from the quest -->
+		<race>HUMAN</race>
+		<sex>MALE</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+			<speed>
+				<walk ground="50" />
+				<run ground="120" />
+			</speed>
+		</stats>
+		<status attackable="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="8" />
+			<height normal="17" />
+		</collision>
+	</npc>
 </list>

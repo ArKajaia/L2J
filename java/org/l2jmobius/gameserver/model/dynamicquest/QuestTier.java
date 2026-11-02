@@ -26,21 +26,27 @@ package org.l2jmobius.gameserver.model.dynamicquest;
  */
 public enum QuestTier
 {
-	EASY("Easy", "99CC99", -3, 0.7, 0, 0.75, 1.3),
-	NORMAL("Normal", "FFFFFF", 0, 1.0, 0, 1.0, 1.0),
-	HARD("Hard", "FFCC33", 2, 1.3, 1, 1.35, 0.9),
-	ELITE("Elite", "FF6666", 4, 1.6, 2, 1.8, 0.8);
+	// Champion tiers (x3 HP at 1, x5 at 2, x10 at 3): a quest's ordinary monsters never go above minionCap, and its bosses (an
+	// objective's tierBonus of 2 or more: named targets, leaders, alphas, brood mothers) never above bossCap, whatever the party's size.
+	EASY("Easy", "99CC99", -3, 0.7, -1, 0, 1, 0.75, 1.3),
+	NORMAL("Normal", "FFFFFF", 0, 1.0, 0, 1, 2, 1.0, 1.0),
+	HARD("Hard", "FFCC33", 2, 1.3, 1, 2, 3, 1.35, 0.9),
+	ELITE("Elite", "FF6666", 4, 1.6, 2, 2, 3, 1.8, 0.8);
 
 	private final String _displayName;
 	private final String _color;
 	private final int _levelOffset;
 	private final double _countMultiplier;
 	private final int _championBonus;
+	private final int _minionCap;
+	private final int _bossCap;
 	private final double _rewardMultiplier;
 	private final double _timeMultiplier;
 
-	private QuestTier(String displayName, String color, int levelOffset, double countMultiplier, int championBonus, double rewardMultiplier, double timeMultiplier)
+	private QuestTier(String displayName, String color, int levelOffset, double countMultiplier, int championBonus, int minionCap, int bossCap, double rewardMultiplier, double timeMultiplier)
 	{
+		_minionCap = minionCap;
+		_bossCap = bossCap;
 		_displayName = displayName;
 		_color = color;
 		_levelOffset = levelOffset;
@@ -79,6 +85,15 @@ public enum QuestTier
 	public int getChampionBonus()
 	{
 		return _championBonus;
+	}
+
+	/**
+	 * @param boss {@code true} for a boss of the quest (an objective's tierBonus of 2 or more)
+	 * @return the highest champion tier such a monster of the quest gets at this tier
+	 */
+	public int getChampionCap(boolean boss)
+	{
+		return boss ? _bossCap : _minionCap;
 	}
 
 	public double getRewardMultiplier()

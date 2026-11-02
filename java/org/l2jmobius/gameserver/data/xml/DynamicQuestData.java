@@ -46,6 +46,7 @@ import org.l2jmobius.gameserver.model.dynamicquest.ObjectiveType;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestScope;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTemplate;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTrigger;
+import org.l2jmobius.gameserver.model.dynamicquest.RestrictedArea;
 import org.l2jmobius.gameserver.model.dynamicquest.RewardDefinition;
 import org.l2jmobius.gameserver.model.dynamicquest.RewardEntry;
 import org.l2jmobius.gameserver.model.dynamicquest.StageTemplate;
@@ -53,6 +54,7 @@ import org.l2jmobius.gameserver.model.dynamicquest.Transition;
 import org.l2jmobius.gameserver.model.dynamicquest.TransitionAction;
 import org.l2jmobius.gameserver.model.dynamicquest.TransitionEvent;
 import org.l2jmobius.gameserver.model.dynamicquest.TriggerType;
+import org.l2jmobius.gameserver.model.dynamicquest.WorldMonsterIndex;
 import org.l2jmobius.gameserver.model.hiddenquest.MonsterBand;
 import org.l2jmobius.gameserver.model.hiddenquest.MonsterSet;
 import org.l2jmobius.gameserver.model.interfaces.ILocational;
@@ -136,6 +138,7 @@ public class DynamicQuestData implements IXmlReader
 	private volatile Map<String, List<String>> _textPools = Collections.emptyMap();
 	private volatile Map<String, RequesterRole> _requesters = Collections.emptyMap();
 	private volatile List<NoticeBoardSite> _boards = Collections.emptyList();
+	private volatile List<RestrictedArea> _restrictedAreas = Collections.emptyList();
 	private volatile Set<Integer> _questNpcIds = Collections.emptySet();
 	private int _noticeBoardNpcId = 900500;
 	private int _heraldNpcId = 900501;
@@ -147,6 +150,7 @@ public class DynamicQuestData implements IXmlReader
 	private Map<String, List<String>> _loadingTexts;
 	private Map<String, RequesterRole> _loadingRequesters;
 	private List<NoticeBoardSite> _loadingBoards;
+	private List<RestrictedArea> _loadingRestricted;
 
 	protected DynamicQuestData()
 	{
@@ -162,6 +166,7 @@ public class DynamicQuestData implements IXmlReader
 		_loadingTexts = new HashMap<>();
 		_loadingRequesters = new HashMap<>();
 		_loadingBoards = new ArrayList<>();
+		_loadingRestricted = new ArrayList<>();
 		parseDatapackFile("data/DynamicQuests.xml");
 
 		final Set<Integer> npcIds = new HashSet<>();
@@ -189,6 +194,8 @@ public class DynamicQuestData implements IXmlReader
 		_textPools = Collections.unmodifiableMap(_loadingTexts);
 		_requesters = Collections.unmodifiableMap(_loadingRequesters);
 		_boards = Collections.unmodifiableList(_loadingBoards);
+		final boolean areasChanged = !_restrictedAreas.isEmpty() || !_loadingRestricted.isEmpty();
+		_restrictedAreas = Collections.unmodifiableList(_loadingRestricted);
 		_questNpcIds = Collections.unmodifiableSet(npcIds);
 		_loadingTemplates = null;
 		_loadingPools = null;
@@ -196,6 +203,12 @@ public class DynamicQuestData implements IXmlReader
 		_loadingTexts = null;
 		_loadingRequesters = null;
 		_loadingBoards = null;
+		_loadingRestricted = null;
+		if (areasChanged)
+		{
+			// The hunting grounds are indexed again, with the new restricted areas, the next time a quest needs one.
+			WorldMonsterIndex.getInstance().reset();
+		}
 		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _templates.size() + " dynamic quest templates, " + _monsterPools.size() + " monster pools, " + _itemTables.size() + " item tables and " + _boards.size() + " notice board towns.");
 	}
 
@@ -304,6 +317,11 @@ public class DynamicQuestData implements IXmlReader
 						_loadingTexts.put(parseString(attrs, "name"), lines);
 						break;
 					}
+					case "restrictedArea":
+					{
+						_loadingRestricted.add(new RestrictedArea(parseString(attrs, "name", "area"), parseInteger(attrs, "minX"), parseInteger(attrs, "maxX"), parseInteger(attrs, "minY"), parseInteger(attrs, "maxY"), parseInteger(attrs, "minZ", -32768), parseInteger(attrs, "maxZ", 32767), parseInteger(attrs, "maxLevel", 0)));
+						break;
+					}
 					case "requester":
 					{
 						final Set<String> types = new HashSet<>();
@@ -376,6 +394,17 @@ public class DynamicQuestData implements IXmlReader
 			throw new IllegalArgumentException("template " + id + ": unknown requester '" + requester + "'");
 		}
 
+		// A <contact> becomes the first stage: the stages of the data are one further, and so are their STAGE targets and entry stages.
+		Node contact = null;
+		for (Node child = node.getFirstChild(); child != null; child = child.getNextSibling())
+		{
+			if ("contact".equals(child.getNodeName()))
+			{
+				contact = child;
+			}
+		}
+		final int offset = contact != null ? 1 : 0;
+
 		final List<QuestTrigger> triggers = new ArrayList<>();
 		Eligibility eligibility = new Eligibility(1, 999, 1, 9, Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), false, 0, 0);
 		final List<StageTemplate> stages = new ArrayList<>();
@@ -423,7 +452,7 @@ public class DynamicQuestData implements IXmlReader
 				}
 				case "stage":
 				{
-					stages.add(parseStage(id, child));
+					stages.add(parseStage(id, child, offset));
 					break;
 				}
 				case "reward":
@@ -440,7 +469,7 @@ public class DynamicQuestData implements IXmlReader
 						items.addAll(table);
 					}
 					items.addAll(parseEntries(child));
-					reward = new RewardDefinition(parseDouble(childAttrs, "exp", 0d), parseDouble(childAttrs, "sp", 0.1), parseLong(childAttrs, "adenaPerLevel", 0L), items, parseString(childAttrs, "title", null), parseInteger(childAttrs, "minChain", 0), parseInteger(childAttrs, "treasuryPercent", 0));
+					reward = new RewardDefinition(parseDouble(childAttrs, "exp", 0d), parseDouble(childAttrs, "sp", 0.1), parseLong(childAttrs, "adenaPerLevel", 0L), items, parseString(childAttrs, "title", null), parseInteger(childAttrs, "minChain", 0), parseInteger(childAttrs, "treasuryPercent", 0), parseInteger(childAttrs, "distanceScale", 0));
 					break;
 				}
 				case "text":
@@ -451,7 +480,7 @@ public class DynamicQuestData implements IXmlReader
 				case "context":
 				{
 					// Seeded picks of the quest, stored as texts "context.<key>" = pool name.
-					texts.put("context." + parseString(childAttrs, "key"), parseString(childAttrs, "pool"));
+					texts.put(QuestTemplate.CONTEXT_PREFIX + parseString(childAttrs, "key"), parseString(childAttrs, "pool"));
 					break;
 				}
 			}
@@ -461,23 +490,63 @@ public class DynamicQuestData implements IXmlReader
 		{
 			throw new IllegalArgumentException("template " + id + " needs a trigger and a stage");
 		}
+		if (contact != null)
+		{
+			stages.add(0, parseContact(contact));
+		}
 		final List<Integer> entryStages = new ArrayList<>();
 		for (String value : parseString(attrs, "entryStages", "").split(","))
 		{
 			if (!value.trim().isEmpty())
 			{
-				final int stage = Integer.parseInt(value.trim()) - 1;
-				if ((stage < 0) || (stage >= stages.size()))
+				final int stage = (Integer.parseInt(value.trim()) - 1) + offset;
+				if ((stage < offset) || (stage >= stages.size()))
 				{
 					throw new IllegalArgumentException("template " + id + ": entry stage " + value.trim() + " doesn't exist");
 				}
 				entryStages.add(stage);
 			}
 		}
-		return new QuestTemplate(id, name, category, scope, requester, triggers, eligibility, stages, reward, texts, entryStages);
+		return new QuestTemplate(id, name, category, scope, requester, triggers, eligibility, stages, reward, texts, entryStages, contact != null);
 	}
 
-	private StageTemplate parseStage(int templateId, Node node)
+	/**
+	 * @param node a {@code <contact>}
+	 * @return the meeting stage: an INTERACT with the contact at the hunting ground, with a time limit to get there
+	 */
+	private StageTemplate parseContact(Node node)
+	{
+		final NamedNodeMap attrs = node.getAttributes();
+		final Map<String, Object> params = new HashMap<>();
+		params.put("type", "INTERACT");
+		params.put("npc", String.valueOf(parseInteger(attrs, "npc", 900520)));
+		params.put("at", "AREA");
+		params.put("spawnMin", String.valueOf(parseInteger(attrs, "spawnMin", 0)));
+		params.put("spawnMax", String.valueOf(parseInteger(attrs, "spawnMax", 300)));
+		for (String key : new String[]
+		{
+			"npcName",
+			"npcTitle",
+			"dialog",
+			"button",
+			"line"
+		})
+		{
+			final String value = parseString(attrs, key, null);
+			if (value != null)
+			{
+				params.put(key, value);
+			}
+		}
+		final String text = parseString(attrs, "text", "Meet {npc0} near {near}. The work starts when you have talked to them.");
+		final List<ObjectiveTemplate> objectives = new ArrayList<>();
+		objectives.add(new ObjectiveTemplate(ObjectiveType.INTERACT, new StatSet(params), false, false, text));
+		final List<Transition> transitions = new ArrayList<>();
+		transitions.add(new Transition(TransitionEvent.TIMEOUT, TransitionAction.FAIL, 0, 100, 1, 0, parseString(attrs, "failText", "Nobody came, and {npc0} gave up waiting."), 0));
+		return new StageTemplate(parseString(attrs, "name", "The Meeting"), parseInteger(attrs, "timeLimit", 3600), false, parseString(attrs, "stageText", "{npc0} waits for you near {near}. Find them on your radar - the clock starts when you have talked to them."), objectives, transitions);
+	}
+
+	private StageTemplate parseStage(int templateId, Node node, int offset)
 	{
 		final NamedNodeMap attrs = node.getAttributes();
 		final List<ObjectiveTemplate> objectives = new ArrayList<>();
@@ -502,7 +571,9 @@ public class DynamicQuestData implements IXmlReader
 				}
 				case "on":
 				{
-					transitions.add(new Transition(parseEnum(childAttrs, TransitionEvent.class, "event"), parseEnum(childAttrs, TransitionAction.class, "action"), parseInteger(childAttrs, "target", 0), parseDouble(childAttrs, "chance", 100d), parseInteger(childAttrs, "max", 1), parseInteger(childAttrs, "extraTime", 0), parseString(childAttrs, "text", null), parseInteger(childAttrs, "maxChain", 0)));
+					final TransitionAction action = parseEnum(childAttrs, TransitionAction.class, "action");
+					final int target = parseInteger(childAttrs, "target", 0) + (action == TransitionAction.STAGE ? offset : 0);
+					transitions.add(new Transition(parseEnum(childAttrs, TransitionEvent.class, "event"), action, target, parseDouble(childAttrs, "chance", 100d), parseInteger(childAttrs, "max", 1), parseInteger(childAttrs, "extraTime", 0), parseString(childAttrs, "text", null), parseInteger(childAttrs, "maxChain", 0)));
 					break;
 				}
 			}
@@ -551,6 +622,14 @@ public class DynamicQuestData implements IXmlReader
 	public List<NoticeBoardSite> getBoards()
 	{
 		return _boards;
+	}
+
+	/**
+	 * @return the parts of the world quests don't send anyone to
+	 */
+	public List<RestrictedArea> getRestrictedAreas()
+	{
+		return _restrictedAreas;
 	}
 
 	/**

@@ -21,9 +21,11 @@
 package org.l2jmobius.gameserver.managers;
 
 import java.time.LocalDateTime;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -153,6 +155,13 @@ public class DynamicQuestManager
 	private static final int REQUESTER_RANGE = 3500;
 	private static final int AREA_CELL = 4096;
 	private static final int HERALD_LEAVE_RANGE = 2500;
+	/** A player at most this far from the quest's ground starts the work at once, without meeting the contact first. */
+	private static final int CONTACT_SKIP_RANGE = 2000;
+	/** The context key of the stage the work starts at once the contact has been met. */
+	private static final String CONTEXT_ENTRY = "entry";
+	/** How many of a character's last quest grounds the next quests stay away from, and how far. */
+	private static final int RECENT_AREAS = 5;
+	private static final int RECENT_AREA_RANGE = 5000;
 	/** Player variable: the character wants no unasked offers (heralds, finds). */
 	public static final String VAR_NO_HERALDS = "DQ_NO_HERALDS";
 
@@ -168,6 +177,7 @@ public class DynamicQuestManager
 	private final Map<String, QuestOffer> _offerIndex = new ConcurrentHashMap<>();
 	private final Map<String, List<Integer>> _townNpcs = new ConcurrentHashMap<>();
 	private final Map<Long, List<Long>> _areaKills = new ConcurrentHashMap<>();
+	private final Map<Integer, Deque<Location>> _recentAreas = new ConcurrentHashMap<>();
 	private final List<Npc> _boardNpcs = new ArrayList<>();
 	private final AtomicLong _nextId = new AtomicLong();
 	private volatile int _offerDay = -1;
@@ -894,7 +904,12 @@ public class DynamicQuestManager
 		}
 		if (quest.getArea() == null)
 		{
-			final HuntingGround ground = WorldMonsterIndex.getInstance().pick(quest.getDifficulty().getQuestLevel(), quest.random("area"), player, offer.isBoardOffer() ? 25000 : 6000);
+			int entryLevel = player.getLevel();
+			for (Player member : members)
+			{
+				entryLevel = Math.max(entryLevel, member.getLevel());
+			}
+			final HuntingGround ground = WorldMonsterIndex.getInstance().pick(quest.getDifficulty().getQuestLevel(), quest.random("area"), player, offer.isBoardOffer() ? 25000 : 6000, getRecentAreas(player), RECENT_AREA_RANGE, entryLevel);
 			if (ground == null)
 			{
 				return "!There is nowhere to send you.";
@@ -913,14 +928,34 @@ public class DynamicQuestManager
 		}
 
 		final List<Integer> entries = quest.getTemplate().getEntryStages();
-		final int entry = entries.isEmpty() ? 0 : entries.get(quest.random("entry").nextInt(entries.size()));
+		final int entry = entries.isEmpty() ? quest.getTemplate().getFirstWorkStage() : entries.get(quest.random("entry").nextInt(entries.size()));
+		int firstStage = entry;
+		if (quest.getTemplate().hasContact())
+		{
+			// Far from the ground, a contact waits there and the work (and its clock) starts when the owner has talked to them.
+			final Location ground = quest.getArea();
+			if ((ground != null) && (player.calculateDistance2D(ground) > CONTACT_SKIP_RANGE))
+			{
+				quest.putContext(CONTEXT_ENTRY, String.valueOf(entry));
+				firstStage = 0;
+			}
+		}
 		synchronized (quest)
 		{
-			startStage(quest, entry, null);
+			startStage(quest, firstStage, null);
 		}
 		if (!quest.isActive())
 		{
 			return "!" + quest.format(quest.getTemplate().getText("failStart", "The trail is cold. Try another quest."));
+		}
+
+		final Location area = quest.getArea();
+		if (area != null)
+		{
+			for (Player member : members)
+			{
+				rememberArea(member, area);
+			}
 		}
 
 		if (offer.isBoardOffer())
@@ -948,12 +983,47 @@ public class DynamicQuestManager
 	}
 
 	/**
+	 * @param player a player
+	 * @return the grounds of the player's last quests, the newest last
+	 */
+	private List<Location> getRecentAreas(Player player)
+	{
+		final Deque<Location> areas = _recentAreas.get(player.getObjectId());
+		if (areas == null)
+		{
+			return Collections.emptyList();
+		}
+		synchronized (areas)
+		{
+			return new ArrayList<>(areas);
+		}
+	}
+
+	/**
+	 * Remembers where a player was sent, so the next quests go elsewhere.
+	 * @param player the player
+	 * @param area the quest's ground
+	 */
+	private void rememberArea(Player player, Location area)
+	{
+		final Deque<Location> areas = _recentAreas.computeIfAbsent(player.getObjectId(), key -> new ArrayDeque<>());
+		synchronized (areas)
+		{
+			areas.addLast(new Location(area.getX(), area.getY(), area.getZ()));
+			while (areas.size() > RECENT_AREAS)
+			{
+				areas.removeFirst();
+			}
+		}
+	}
+
+	/**
 	 * Fills the template's {@code <context key pool>} picks from the quest's seed.
 	 */
 	private static void fillContext(QuestInstance quest)
 	{
 		final String prefix = "context.";
-		for (String key : getContextKeys(quest.getTemplate()))
+		for (String key : quest.getTemplate().getContextKeys())
 		{
 			if (quest.getContext(key) != null)
 			{
@@ -965,31 +1035,6 @@ public class DynamicQuestManager
 				quest.putContext(key, quest.format(pool.get(quest.random(prefix + key).nextInt(pool.size()))));
 			}
 		}
-	}
-
-	private static List<String> getContextKeys(QuestTemplate template)
-	{
-		final List<String> keys = new ArrayList<>();
-		for (String key : new String[]
-		{
-			"target",
-			"hostage",
-			"leader",
-			"gang",
-			"caravan",
-			"expedition",
-			"item",
-			"cargo",
-			"captain",
-			"beast"
-		})
-		{
-			if (template.getText("context." + key, null) != null)
-			{
-				keys.add(key);
-			}
-		}
-		return keys;
 	}
 
 	private boolean isWorldQuestRunning(QuestTemplate template)
@@ -1017,7 +1062,7 @@ public class DynamicQuestManager
 			return "one is already running";
 		}
 		final Random random = new Random(Rnd.nextLong());
-		final HuntingGround ground = WorldMonsterIndex.getInstance().pick(near.getLevel(), random, near, 3000);
+		final HuntingGround ground = WorldMonsterIndex.getInstance().pick(near.getLevel(), random, near, 3000, Collections.emptyList(), 0, near.getLevel());
 		if (ground == null)
 		{
 			return "no hunting ground";
@@ -1184,6 +1229,22 @@ public class DynamicQuestManager
 
 	private void applyTransition(QuestInstance quest, TransitionEvent event, String reason)
 	{
+		if ((event == TransitionEvent.SUCCESS) && quest.getTemplate().hasContact() && (quest.getStageIndex() == 0))
+		{
+			// The contact is met: the work starts at the stage picked when the quest was taken.
+			int entry = quest.getTemplate().getFirstWorkStage();
+			try
+			{
+				entry = Integer.parseInt(quest.getContext(CONTEXT_ENTRY, String.valueOf(entry)));
+			}
+			catch (NumberFormatException e)
+			{
+				// The first stage of the work.
+			}
+			advance(quest, Math.max(quest.getTemplate().getFirstWorkStage(), entry));
+			return;
+		}
+
 		final StageTemplate stage = quest.getStage();
 		Transition chosen = null;
 		final Random random = quest.random("transition" + event + quest.getEscalations());
@@ -1384,19 +1445,15 @@ public class DynamicQuestManager
 			return;
 		}
 		final Map<String, String> carry = new LinkedHashMap<>();
+		// The story goes on (names, the town), but somewhere else: a follow-up picks its own hunting ground, away from this one.
 		for (String key : new String[]
 		{
-			"area",
-			"areaNpcs",
-			"near",
-			"monster",
 			"town",
 			"leader",
 			"gang",
 			"hostage",
 			"caravan",
-			"expedition",
-			"last"
+			"expedition"
 		})
 		{
 			final String value = quest.getContext(key);

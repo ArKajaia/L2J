@@ -108,7 +108,34 @@ public final class RewardCalculator
 	 */
 	public static Payout compute(QuestInstance quest, double factor, boolean roll)
 	{
-		return compute(quest.getTemplate().getReward(), quest.getDifficulty().getQuestLevel(), getQuestMultiplier(quest) * factor, roll);
+		final RewardDefinition reward = quest.getTemplate().getReward();
+		return compute(reward, quest.getDifficulty().getQuestLevel(), getQuestMultiplier(quest) * factor, getDistanceFactor(reward, quest.getContext("route", null)), roll);
+	}
+
+	/** The least and the most a road's length changes the EXP of a reward that pays by distance. */
+	private static final double MIN_DISTANCE_FACTOR = 0.4;
+	private static final double MAX_DISTANCE_FACTOR = 2.5;
+
+	/**
+	 * @param reward a reward
+	 * @param route the road's length (the quest's "route" context), {@code null} if unknown
+	 * @return the EXP factor of the road: its length over the reward's {@code distanceScale}, 1 if the reward doesn't pay by distance or the road is unknown
+	 */
+	public static double getDistanceFactor(RewardDefinition reward, String route)
+	{
+		if ((reward.getDistanceScale() <= 0) || (route == null))
+		{
+			return 1;
+		}
+		try
+		{
+			final double length = Double.parseDouble(route);
+			return Math.max(MIN_DISTANCE_FACTOR, Math.min(MAX_DISTANCE_FACTOR, length / reward.getDistanceScale()));
+		}
+		catch (NumberFormatException e)
+		{
+			return 1;
+		}
 	}
 
 	/**
@@ -120,6 +147,19 @@ public final class RewardCalculator
 	 */
 	public static Payout compute(RewardDefinition reward, int level, double multiplier, boolean roll)
 	{
+		return compute(reward, level, multiplier, 1, roll);
+	}
+
+	/**
+	 * @param reward the reward definition
+	 * @param level the quest's level
+	 * @param multiplier everything multiplied together
+	 * @param expFactor what multiplies the EXP and SP only (the road's length of a courier)
+	 * @param roll {@code true} to roll the item chances
+	 * @return the payout
+	 */
+	public static Payout compute(RewardDefinition reward, int level, double multiplier, double expFactor, boolean roll)
+	{
 		final Payout payout = new Payout();
 		payout._multiplier = multiplier;
 		if (multiplier <= 0)
@@ -130,7 +170,7 @@ public final class RewardCalculator
 		final ExperienceData experience = ExperienceData.getInstance();
 		final int safeLevel = Math.max(1, Math.min(experience.getMaxLevel() - 1, level));
 		final long levelExp = Math.max(0, experience.getExpForLevel(safeLevel + 1) - experience.getExpForLevel(safeLevel));
-		final double exp = (levelExp * reward.getExpPercent() * multiplier) / 100;
+		final double exp = (levelExp * reward.getExpPercent() * multiplier * expFactor) / 100;
 		payout._exp = (long) (exp * DynamicQuestConfig.EXP_RATE);
 		payout._sp = (long) (exp * reward.getSpRatio());
 		payout._adena = (long) (reward.getAdenaPerLevel() * level * multiplier * DynamicQuestConfig.ADENA_RATE);

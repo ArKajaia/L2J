@@ -123,6 +123,18 @@
 						<xs:attribute name="name" type="xs:token" use="required" />
 					</xs:complexType>
 				</xs:element>
+				<xs:element name="restrictedArea" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:attribute name="name" type="xs:string" />
+						<xs:attribute name="minX" type="xs:integer" use="required" />
+						<xs:attribute name="maxX" type="xs:integer" use="required" />
+						<xs:attribute name="minY" type="xs:integer" use="required" />
+						<xs:attribute name="maxY" type="xs:integer" use="required" />
+						<xs:attribute name="minZ" type="xs:integer" />
+						<xs:attribute name="maxZ" type="xs:integer" />
+						<xs:attribute name="maxLevel" type="xs:nonNegativeInteger" />
+					</xs:complexType>
+				</xs:element>
 				<xs:element name="template" minOccurs="0" maxOccurs="unbounded">
 					<xs:complexType>
 						<xs:sequence>
@@ -150,6 +162,23 @@
 								<xs:complexType>
 									<xs:attribute name="key" type="xs:token" use="required" />
 									<xs:attribute name="pool" type="xs:token" use="required" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="contact" minOccurs="0" maxOccurs="1">
+								<xs:complexType>
+									<xs:attribute name="npc" type="xs:positiveInteger" />
+									<xs:attribute name="npcName" type="xs:string" />
+									<xs:attribute name="npcTitle" type="xs:string" />
+									<xs:attribute name="dialog" type="xs:string" />
+									<xs:attribute name="button" type="xs:string" />
+									<xs:attribute name="line" type="xs:string" />
+									<xs:attribute name="text" type="xs:string" />
+									<xs:attribute name="stageText" type="xs:string" />
+									<xs:attribute name="name" type="xs:string" />
+									<xs:attribute name="failText" type="xs:string" />
+									<xs:attribute name="spawnMin" type="xs:nonNegativeInteger" />
+									<xs:attribute name="spawnMax" type="xs:nonNegativeInteger" />
+									<xs:attribute name="timeLimit" type="xs:nonNegativeInteger" />
 								</xs:complexType>
 							</xs:element>
 							<xs:element name="stage" maxOccurs="unbounded">
@@ -192,6 +221,7 @@
 									<xs:attribute name="title" type="xs:string" />
 									<xs:attribute name="minChain" type="xs:nonNegativeInteger" />
 									<xs:attribute name="treasuryPercent" type="xs:nonNegativeInteger" />
+									<xs:attribute name="distanceScale" type="xs:nonNegativeInteger" />
 								</xs:complexType>
 							</xs:element>
 							<xs:element name="text" type="text" minOccurs="0" maxOccurs="unbounded" />

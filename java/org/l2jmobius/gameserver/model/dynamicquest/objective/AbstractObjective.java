@@ -421,7 +421,7 @@ public abstract class AbstractObjective
 				final Player owner = _quest.getOwner();
 				if (owner != null)
 				{
-					location = owner.getLocation();
+					location = new Location(owner.getX(), owner.getY(), owner.getZ());
 				}
 				break;
 			}
@@ -433,7 +433,7 @@ public abstract class AbstractObjective
 		if (location == null)
 		{
 			final Player owner = _quest.getOwner();
-			location = owner != null ? owner.getLocation() : new Location(0, 0, 0);
+			location = owner != null ? new Location(owner.getX(), owner.getY(), owner.getZ()) : new Location(0, 0, 0);
 		}
 		return location;
 	}
