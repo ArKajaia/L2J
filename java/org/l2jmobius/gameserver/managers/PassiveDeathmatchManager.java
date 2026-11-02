@@ -393,7 +393,7 @@ public class PassiveDeathmatchManager
 
 	/**
 	 * Mayhem's balance, for the match (it goes with {@link #leave}, and with a fake player's body): every fighter has {@link TeamVsTeamConfig#PDM_MATK} % of its M.Atk and pays {@link TeamVsTeamConfig#PDM_MP_COST} % of its skills' MP; fighters, tanks and archers
-	 * have {@link TeamVsTeamConfig#PDM_PATK} % of their P.Atk, daggers {@link TeamVsTeamConfig#PDM_DAGGER_PATK} %; tanks and dwarves {@link TeamVsTeamConfig#PDM_TANK_HP} % of their max HP.
+	 * have {@link TeamVsTeamConfig#PDM_PATK} % of their P.Atk, daggers {@link TeamVsTeamConfig#PDM_DAGGER_PATK} %, the classes of {@link TeamVsTeamConfig#PDM_CLASS_PATK} that % of it on top; tanks and dwarves {@link TeamVsTeamConfig#PDM_TANK_HP} % of their max HP.
 	 * @param creature a player or fake player entering a Mayhem match
 	 * @param profile who it is
 	 */
@@ -419,6 +419,12 @@ public class PassiveDeathmatchManager
 		else if (profile._role == Role.DAGGER)
 		{
 			mul(creature, Stat.POWER_ATTACK, TeamVsTeamConfig.PDM_DAGGER_PATK);
+		}
+		final Integer classPAtk = TeamVsTeamConfig.PDM_CLASS_PATK.get(profile._className);
+		if (classPAtk != null)
+		{
+			// A class that leads both Deathmatches even at its role's P.Atk: a second cut, for it alone.
+			mul(creature, Stat.POWER_ATTACK, classPAtk);
 		}
 		if ((profile._role == Role.TANK) || "DWARF".equals(profile._race))
 		{
@@ -1229,14 +1235,34 @@ public class PassiveDeathmatchManager
 		for (int slot = result.size(); slot < useful; slot++)
 		{
 			final boolean alt = (profile._altTaste != null) && (Rnd.nextDouble() >= profile._mainShare);
-			for (PassiveNode node : pool)
+			PassiveNode found = null;
+			if ((profile._altTaste != null) && !alt)
 			{
-				if (!names.contains(node.getName()) && (profile.weighWith(node, alt) > 0))
+				// A hybrid's mage slot: a node its mage side wants more than its fighter side, not a P.Atk one that merely carries some HP or defence too.
+				for (PassiveNode node : pool)
 				{
-					names.add(node.getName());
-					result.add(node.getId());
-					break;
+					if (!names.contains(node.getName()) && (profile.weighWith(node, false) > profile.weighWith(node, true)))
+					{
+						found = node;
+						break;
+					}
 				}
+			}
+			if (found == null)
+			{
+				for (PassiveNode node : pool)
+				{
+					if (!names.contains(node.getName()) && (profile.weighWith(node, alt) > 0))
+					{
+						found = node;
+						break;
+					}
+				}
+			}
+			if (found != null)
+			{
+				names.add(found.getName());
+				result.add(found.getId());
 			}
 		}
 		for (PassiveNode node : pool)

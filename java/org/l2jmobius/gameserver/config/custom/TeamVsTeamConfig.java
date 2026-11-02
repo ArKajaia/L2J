@@ -22,8 +22,10 @@ package org.l2jmobius.gameserver.config.custom;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -110,6 +112,8 @@ public class TeamVsTeamConfig
 	public static int PDM_DAGGER_PATK;
 	/** Classes (PlayerClass names) left out of {@link #PDM_PATK}. */
 	public static Set<String> PDM_PATK_EXCLUDED;
+	/** Classes (PlayerClass names) whose P.Atk is cut a second time, by class: this % on top of {@link #PDM_PATK} (or {@link #PDM_DAGGER_PATK}). */
+	public static Map<String, Integer> PDM_CLASS_PATK;
 	/** Speed archers get. */
 	public static int PDM_ARCHER_SPEED;
 	/** Classes (PlayerClass names) that play as tanks in this mode (their offers, HP, notables and keystones). */
@@ -300,6 +304,7 @@ public class TeamVsTeamConfig
 		PDM_PATK = Math.max(0, config.getInt("MayhemPAtk", 115));
 		PDM_DAGGER_PATK = Math.max(0, config.getInt("MayhemDaggerPAtk", 85));
 		PDM_PATK_EXCLUDED = parseNames(config.getString("MayhemPAtkExcludedClasses", "GRAND_KHAVATARI"));
+		PDM_CLASS_PATK = parsePercents(config.getString("MayhemClassPAtk", "DREADNOUGHT:70"), "MayhemClassPAtk");
 		PDM_ARCHER_SPEED = config.getInt("MayhemArcherSpeed", 20);
 		PDM_TANK_CLASSES = parseNames(config.getString("MayhemTankClasses", "SPECTRAL_DANCER,JUDICATOR"));
 		PDM_KEYSTONE_EVERY = Math.max(0, config.getInt("MayhemKeystoneEvery", 4));
@@ -366,6 +371,37 @@ public class TeamVsTeamConfig
 			}
 		}
 		return Collections.unmodifiableSet(names);
+	}
+
+	/**
+	 * @param text classes with a %: NAME:percent,NAME:percent...
+	 * @param key the config key, for the warnings
+	 * @return the % of each class, by upper case name; a malformed entry is left out
+	 */
+	private static Map<String, Integer> parsePercents(String text, String key)
+	{
+		final Map<String, Integer> percents = new HashMap<>();
+		for (String part : text.split(","))
+		{
+			if (part.isBlank())
+			{
+				continue;
+			}
+			final int colon = part.indexOf(':');
+			try
+			{
+				if (colon <= 0)
+				{
+					throw new NumberFormatException();
+				}
+				percents.put(part.substring(0, colon).trim().toUpperCase(), Math.max(0, Integer.parseInt(part.substring(colon + 1).trim())));
+			}
+			catch (NumberFormatException e)
+			{
+				LOGGER.warning(TeamVsTeamConfig.class.getSimpleName() + ": Bad entry \"" + part.trim() + "\" in " + key + ".");
+			}
+		}
+		return Collections.unmodifiableMap(percents);
 	}
 
 	/**
