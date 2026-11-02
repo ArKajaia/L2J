@@ -47,6 +47,7 @@ import org.l2jmobius.gameserver.model.zone.type.BossZone;
 import org.l2jmobius.gameserver.model.zone.type.CastleZone;
 import org.l2jmobius.gameserver.model.zone.type.ClanHallZone;
 import org.l2jmobius.gameserver.model.zone.type.FortZone;
+import org.l2jmobius.gameserver.model.zone.type.HotZone;
 import org.l2jmobius.gameserver.model.zone.type.JailZone;
 import org.l2jmobius.gameserver.model.zone.type.OlympiadStadiumZone;
 import org.l2jmobius.gameserver.model.zone.type.PeaceZone;
@@ -224,6 +225,75 @@ public class WorldMonsterIndex
 		return true;
 	}
 
+	/** Last words of place names that read with "the" in front ("the Cruma Marshlands", "the Ant Nest"). */
+	private static final Set<String> THE_WORDS = Set.of("Grounds", "Plains", "Marshlands", "Hills", "Mines", "Springs", "Ruins", "Barracks", "Forest", "Swamp", "Territory", "Outskirts", "Waterfall", "Battleground", "Gateway", "Area", "Garden", "Hideaway", "Checkpoint", "Dwellings", "Stronghold", "Nest", "Zone", "Outpost", "Entrance", "Relic", "Temple", "Hive", "Labyrinth", "Cabin", "Village", "Tomb", "Farm", "Workshop", "Plateau");
+
+	/**
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @return the name of the land a point lies in, as it reads in a sentence ("the Plains of Dion", "Death Pass"), {@code null} if it has none
+	 */
+	public static String getPlaceName(int x, int y, int z)
+	{
+		ZoneType best = null;
+		long bestDistance = Long.MAX_VALUE;
+		for (ZoneType zone : ZoneManager.getInstance().getZones(x, y, z))
+		{
+			if (!(zone instanceof HotZone) || (zone.getName() == null) || (zone.getZone() == null))
+			{
+				continue;
+			}
+			final Location center = zone.getZone().getCenterPoint();
+			if (center == null)
+			{
+				continue;
+			}
+			final long dx = center.getX() - x;
+			final long dy = center.getY() - y;
+			final long distance = (dx * dx) + (dy * dy);
+			if (distance < bestDistance)
+			{
+				best = zone;
+				bestDistance = distance;
+			}
+		}
+		return best != null ? asPlace(best.getName()) : null;
+	}
+
+	/**
+	 * @param zoneName a zone's name ("Fields of Massacre (West)", "Immortal Plateau, Northern Region")
+	 * @return the name as it reads in a sentence ("the Fields of Massacre", "the Immortal Plateau")
+	 */
+	static String asPlace(String zoneName)
+	{
+		String name = zoneName.trim();
+		final int parenthesis = name.indexOf('(');
+		if (parenthesis > 0)
+		{
+			name = name.substring(0, parenthesis).trim();
+		}
+		final int comma = name.indexOf(',');
+		if (comma > 0)
+		{
+			name = name.substring(0, comma).trim();
+		}
+		if (name.endsWith(" Upper"))
+		{
+			name = name.substring(0, name.length() - 6).trim();
+		}
+		if (name.startsWith("The "))
+		{
+			return "the " + name.substring(4);
+		}
+		if (name.contains("'s "))
+		{
+			return name; // Breka's Stronghold, Devil's Isle
+		}
+		final String lastWord = name.substring(name.lastIndexOf(' ') + 1);
+		return name.contains(" of ") || THE_WORDS.contains(lastWord) ? "the " + name : name;
+	}
+
 	/**
 	 * @param areas the restricted areas
 	 * @param x the x
@@ -376,7 +446,7 @@ public class WorldMonsterIndex
 		{
 			npcIds.remove(npcIds.size() - 1);
 		}
-		return new HuntingGround(new Location(chosen._x, chosen._y, chosen._z), npcIds, (int) Math.round((double) levelSum / counted), MapRegionData.getInstance().getClosestTownName(chosen._x, chosen._y));
+		return new HuntingGround(new Location(chosen._x, chosen._y, chosen._z), npcIds, (int) Math.round((double) levelSum / counted), MapRegionData.getInstance().getClosestTownName(chosen._x, chosen._y), getPlaceName(chosen._x, chosen._y, chosen._z));
 	}
 
 	/**

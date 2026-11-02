@@ -20,6 +20,8 @@
  */
 package org.l2jmobius.gameserver.model.dynamicquest.objective;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -519,6 +521,53 @@ public abstract class AbstractObjective
 	protected boolean isWorthy(Attackable monster)
 	{
 		return monster.getLevel() >= (_quest.getDifficulty().getQuestLevel() - DynamicQuestConfig.KILL_LEVEL_GAP);
+	}
+
+	/**
+	 * Names and titles a spawned npc from the objective's parameters, with the quest's context filled in.
+	 * @param npc the npc
+	 * @param nameKey the parameter of its name ({@code null} or unset: it keeps its own)
+	 * @param titleKey the parameter of its title ({@code null} or unset: it keeps its own)
+	 */
+	protected void dress(Npc npc, String nameKey, String titleKey)
+	{
+		if (npc == null)
+		{
+			return;
+		}
+		final String name = nameKey != null ? title(nameKey) : null;
+		final String title = titleKey != null ? title(titleKey) : null;
+		if ((name == null) && (title == null))
+		{
+			return;
+		}
+		if (name != null)
+		{
+			npc.setName(name);
+		}
+		if (title != null)
+		{
+			npc.setTitle(title);
+		}
+		npc.broadcastInfo();
+	}
+
+	/**
+	 * Lines of a text pool in an order of the quest's own, so an npc doesn't repeat itself before it said them all.
+	 * @param poolName the text pool
+	 * @param key what the lines are for
+	 * @return the lines, shuffled; empty if the pool doesn't exist
+	 */
+	protected List<String> shuffledLines(String poolName, String key)
+	{
+		final List<String> pool = poolName != null ? DynamicQuestData.getInstance().getTextPool(poolName) : null;
+		if ((pool == null) || pool.isEmpty())
+		{
+			return new ArrayList<>();
+		}
+		final List<String> lines = new ArrayList<>(pool);
+		Collections.shuffle(lines, random(key));
+		return lines;
 	}
 
 	/**

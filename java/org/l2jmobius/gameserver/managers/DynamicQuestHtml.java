@@ -321,7 +321,7 @@ public final class DynamicQuestHtml
 		{
 			sb.append("<font color=\"LEVEL\">").append(offer.getRequester()).append("</font> asks:<br1>");
 		}
-		sb.append("<font color=\"").append(COLOR_TEXT).append("\">").append(fill(manager, template.getText("offer", "There is work to be done."), offer)).append("</font><br><br>");
+		sb.append("<font color=\"").append(COLOR_TEXT).append("\">").append(fill(manager, template.getText("offer", "There is work to be done.", offer.getSeed()), offer)).append("</font><br><br>");
 
 		final List<Player> members = DynamicQuestManager.getMembers(player);
 		sb.append("<font color=\"").append(COLOR_MUTED).append("\">It adjusts to you").append(members.size() > 1 ? " and the " + (members.size() - 1) + " party members near you" : "").append(". Choose how hard:</font><br1>");
@@ -419,7 +419,7 @@ public final class DynamicQuestHtml
 				sb.append("<font color=\"LEVEL\">").append(quest.getStageIndex() + 1).append("/").append(quest.getTemplate().getStages().size()).append(" - ").append(quest.format(stage.getName())).append("</font><br1>");
 				if (stage.getText() != null)
 				{
-					sb.append("<font color=\"").append(COLOR_TEXT).append("\">").append(quest.format(stage.getText())).append("</font><br1>");
+					sb.append("<font color=\"").append(COLOR_TEXT).append("\">").append(quest.format(stage.getText(quest.getSeed()))).append("</font><br1>");
 				}
 				sb.append("<br1>");
 				boolean deliverable = false;
@@ -656,7 +656,7 @@ public final class DynamicQuestHtml
 		{
 			text.append("<font color=\"LEVEL\">").append(offer.getRequester()).append("</font> <font color=\"").append(COLOR_DIM).append("\">asks:</font><br1>");
 		}
-		text.append("<font color=\"").append(COLOR_TEXT).append("\">").append(fill(manager, template.getText("offer", "There is work to be done."), offer)).append("</font>");
+		text.append("<font color=\"").append(COLOR_TEXT).append("\">").append(fill(manager, template.getText("offer", "There is work to be done.", offer.getSeed()), offer)).append("</font>");
 		sb.append(spacer(6)).append(panel(BG_CARD, text.toString()));
 
 		final List<Player> members = DynamicQuestManager.getMembers(player);
@@ -731,7 +731,7 @@ public final class DynamicQuestHtml
 				body.append(spacer(6)).append(stageGauge(quest, stages, BOARD_WIDTH - 24));
 				if (stage.getText() != null)
 				{
-					body.append(spacer(8)).append("<font color=\"").append(COLOR_TEXT).append("\">").append(quest.format(stage.getText())).append("</font>");
+					body.append(spacer(8)).append("<font color=\"").append(COLOR_TEXT).append("\">").append(quest.format(stage.getText(quest.getSeed()))).append("</font>");
 				}
 
 				boolean deliverable = false;

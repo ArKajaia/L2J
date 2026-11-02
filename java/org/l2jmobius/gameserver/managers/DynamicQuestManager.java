@@ -1171,8 +1171,8 @@ public class DynamicQuestManager
 		{
 			if (stage.getText() != null)
 			{
-				quest.message(stage.getText());
-				quest.announce(stage.getText());
+				quest.message(stage.getText(quest.getSeed()));
+				quest.announce(stage.getText(quest.getSeed()));
 			}
 			else if (index > 0)
 			{
@@ -1411,7 +1411,7 @@ public class DynamicQuestManager
 
 		if (state == DynamicQuestState.SUCCESS)
 		{
-			final String success = quest.getTemplate().getText("success", "It is done.");
+			final String success = quest.getTemplate().getText("success", "It is done.", quest.getSeed());
 			quest.announce(quest.getName() + " - complete!");
 			distributeRewards(quest, success);
 			if (quest.isWorld() && DynamicQuestConfig.ANNOUNCE_WORLD_EVENTS)
@@ -2357,7 +2357,7 @@ public class DynamicQuestManager
 				herald.getAI().setIntention(Intention.IDLE);
 				herald.setHeading(LocationUtil.calculateHeadingFrom(herald, player));
 				herald.broadcastInfo();
-				QuestSpawnUtil.say(player, herald, offer.getTemplate().getText("heraldLine", "You there! I have work for someone like you."));
+				QuestSpawnUtil.say(player, herald, offer.getTemplate().getText("heraldLine", "You there! I have work for someone like you.", offer.getSeed()));
 				QuestSpawnUtil.screen(player, herald.getName() + " wants a word with you. Talk to them, or type .quests.");
 				player.sendPacket(new TutorialShowQuestionMark(QUESTION_MARK_ID));
 			}

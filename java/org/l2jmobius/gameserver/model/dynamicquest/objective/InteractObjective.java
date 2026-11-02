@@ -54,20 +54,7 @@ public class InteractObjective extends AbstractObjective
 		{
 			return "nobody to talk to";
 		}
-		final String name = title("npcName");
-		final String title = title("npcTitle");
-		if ((name != null) || (title != null))
-		{
-			if (name != null)
-			{
-				_npc.setName(name);
-			}
-			if (title != null)
-			{
-				_npc.setTitle(title);
-			}
-			_npc.broadcastInfo();
-		}
+		dress(_npc, "npcName", "npcTitle");
 		_quest.putLocation("talk" + _index, location);
 		_quest.putLocation("last", location);
 		_quest.putContext("npc" + _index, _npc.getName());

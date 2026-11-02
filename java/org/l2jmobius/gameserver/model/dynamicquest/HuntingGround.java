@@ -35,9 +35,16 @@ public class HuntingGround
 	private final List<Integer> _npcIds;
 	private final int _level;
 	private final String _town;
+	private final String _place;
 
 	public HuntingGround(Location center, List<Integer> npcIds, int level, String town)
 	{
+		this(center, npcIds, level, town, null);
+	}
+
+	public HuntingGround(Location center, List<Integer> npcIds, int level, String town, String place)
+	{
+		_place = place;
 		_center = center;
 		_npcIds = Collections.unmodifiableList(npcIds);
 		_level = level;
@@ -63,6 +70,14 @@ public class HuntingGround
 	public int getLevel()
 	{
 		return _level;
+	}
+
+	/**
+	 * @return the name of the land it lies in, as it reads in a sentence ("the Plains of Dion"), else "the wilds near" the nearest town
+	 */
+	public String getPlace()
+	{
+		return _place != null ? _place : "the wilds near " + _town;
 	}
 
 	/**

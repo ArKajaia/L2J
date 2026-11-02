@@ -297,6 +297,7 @@ public class QuestInstance
 		}
 		putContext("areaNpcs", sb.toString());
 		putContext("near", ground.getTown());
+		putContext("place", ground.getPlace());
 		if (!ground.getNpcIds().isEmpty())
 		{
 			final NpcTemplate template = NpcData.getInstance().getTemplate(ground.getNpcIds().get(0));
@@ -351,6 +352,11 @@ public class QuestInstance
 		for (Map.Entry<String, String> entry : _context.entrySet())
 		{
 			result = result.replace("{" + entry.getKey() + "}", entry.getValue());
+		}
+		if (result.contains("{place}"))
+		{
+			// A quest saved before places had names.
+			result = result.replace("{place}", "the wilds near " + _context.getOrDefault("near", "town"));
 		}
 		result = result.replace("{level}", String.valueOf(_difficulty.getQuestLevel()));
 		result = result.replace("{tier}", _difficulty.getTier().getDisplayName());

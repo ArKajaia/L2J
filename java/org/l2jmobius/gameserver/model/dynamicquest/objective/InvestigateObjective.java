@@ -33,7 +33,7 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
  * INVESTIGATE: find {@code clues} clues ({@code clueNpc}) one after the other. The first is {@code firstMin}-{@code firstMax} from {@code at}, each next one {@code spacingMin}-{@code spacingMax} from the last.
- * A clue is searched by standing (or sitting) next to it for {@code searchTime} seconds; what is found is a line of the text pool {@code lines}, and with {@code ambushChance} percent {@code ambushCount} monsters jump the searcher. Where the last clue lay becomes the quest's LAST place.
+ * A clue ({@code clueNpc}, named {@code clueName} and titled {@code clueTitle} if set) is searched by standing (or sitting) next to it for {@code searchTime} seconds; what is found is a line of the text pool {@code lines}, and with {@code ambushChance} percent {@code ambushCount} monsters jump the searcher. Where the last clue lay becomes the quest's LAST place.
  * With {@code stealth="true"} it fails as soon as a participant is drawn into a fight ({@code seenText}).
  * @author Mobius
  */
@@ -85,6 +85,7 @@ public class InvestigateObjective extends AbstractObjective
 		{
 			return false;
 		}
+		dress(_clue, "clueName", "clueTitle");
 		_progress = 0;
 		_quest.setMarker(location);
 		return true;
@@ -196,7 +197,7 @@ public class InvestigateObjective extends AbstractObjective
 	@Override
 	protected String defaultDescription()
 	{
-		return "Follow the trail near {near}: search the places on your radar.";
+		return "Follow the trail in {place}: search the places on your radar.";
 	}
 
 	@Override

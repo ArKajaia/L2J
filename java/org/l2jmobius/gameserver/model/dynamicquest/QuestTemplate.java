@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * A dynamic quest as written in {@code data/DynamicQuests.xml}: its triggers, who can take it, its stages and how it pays. Every offer of it is rolled from a seed into a concrete quest.
@@ -33,6 +34,8 @@ public class QuestTemplate
 {
 	/** Texts under this prefix name the pool of a context pick. */
 	public static final String CONTEXT_PREFIX = "context.";
+	/** The 2nd, 3rd... text of a key are kept under "key#2", "key#3"... */
+	public static final String VARIANT_SEPARATOR = "#";
 
 	private final int _id;
 	private final String _name;
@@ -158,6 +161,32 @@ public class QuestTemplate
 	public RewardDefinition getReward()
 	{
 		return _reward;
+	}
+
+	/**
+	 * @param key a text key
+	 * @param defaultValue the text when the quest has none
+	 * @param seed what picks the variant (a quest's or an offer's seed), so the same quest always tells the same one
+	 * @return one of the texts given for the key (a template may give several {@code <text>} with the same key), with placeholders
+	 */
+	public String getText(String key, String defaultValue, long seed)
+	{
+		final String first = _texts.get(key);
+		if (first == null)
+		{
+			return defaultValue;
+		}
+		int variants = 1;
+		while (_texts.containsKey(key + VARIANT_SEPARATOR + (variants + 1)))
+		{
+			variants++;
+		}
+		if (variants == 1)
+		{
+			return first;
+		}
+		final int pick = new Random(seed ^ (key.hashCode() * 0x9E3779B97F4A7C15L)).nextInt(variants);
+		return pick == 0 ? first : _texts.get(key + VARIANT_SEPARATOR + (pick + 1));
 	}
 
 	/**

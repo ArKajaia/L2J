@@ -474,7 +474,14 @@ public class DynamicQuestData implements IXmlReader
 				}
 				case "text":
 				{
-					texts.put(parseString(childAttrs, "key"), clean(child.getTextContent()));
+					// The same key again is a variant, kept as "key#2", "key#3"...
+					final String key = parseString(childAttrs, "key");
+					String slot = key;
+					for (int variant = 2; texts.containsKey(slot); variant++)
+					{
+						slot = key + QuestTemplate.VARIANT_SEPARATOR + variant;
+					}
+					texts.put(slot, clean(child.getTextContent()));
 					break;
 				}
 				case "context":
@@ -538,12 +545,12 @@ public class DynamicQuestData implements IXmlReader
 				params.put(key, value);
 			}
 		}
-		final String text = parseString(attrs, "text", "Meet {npc0} near {near}. The work starts when you have talked to them.");
+		final String text = parseString(attrs, "text", "Meet {npc0} in {place}. The work starts when you have talked to them.");
 		final List<ObjectiveTemplate> objectives = new ArrayList<>();
 		objectives.add(new ObjectiveTemplate(ObjectiveType.INTERACT, new StatSet(params), false, false, text));
 		final List<Transition> transitions = new ArrayList<>();
 		transitions.add(new Transition(TransitionEvent.TIMEOUT, TransitionAction.FAIL, 0, 100, 1, 0, parseString(attrs, "failText", "Nobody came, and {npc0} gave up waiting."), 0));
-		return new StageTemplate(parseString(attrs, "name", "The Meeting"), parseInteger(attrs, "timeLimit", 3600), false, parseString(attrs, "stageText", "{npc0} waits for you near {near}. Find them on your radar - the clock starts when you have talked to them."), objectives, transitions);
+		return new StageTemplate(parseString(attrs, "name", "The Meeting"), parseInteger(attrs, "timeLimit", 3600), false, parseString(attrs, "stageText", "{npc0} waits for you in {place}. Find them on your radar - the clock starts when you have talked to them."), objectives, transitions);
 	}
 
 	private StageTemplate parseStage(int templateId, Node node, int offset)
@@ -551,7 +558,7 @@ public class DynamicQuestData implements IXmlReader
 		final NamedNodeMap attrs = node.getAttributes();
 		final List<ObjectiveTemplate> objectives = new ArrayList<>();
 		final List<Transition> transitions = new ArrayList<>();
-		String text = null;
+		final List<String> texts = new ArrayList<>();
 		for (Node child = node.getFirstChild(); child != null; child = child.getNextSibling())
 		{
 			final NamedNodeMap childAttrs = child.getAttributes();
@@ -559,7 +566,8 @@ public class DynamicQuestData implements IXmlReader
 			{
 				case "text":
 				{
-					text = clean(child.getTextContent());
+					// Several texts: one of them is told, picked by the quest's seed.
+					texts.add(clean(child.getTextContent()));
 					break;
 				}
 				case "objective":
@@ -582,7 +590,7 @@ public class DynamicQuestData implements IXmlReader
 		{
 			throw new IllegalArgumentException("template " + templateId + ": a stage without objectives");
 		}
-		return new StageTemplate(parseString(attrs, "name", "Stage"), parseInteger(attrs, "timeLimit", 0), parseBoolean(attrs, "failOnDeath", false), text, objectives, transitions);
+		return new StageTemplate(parseString(attrs, "name", "Stage"), parseInteger(attrs, "timeLimit", 0), parseBoolean(attrs, "failOnDeath", false), texts, objectives, transitions);
 	}
 
 	// ---------------------------------------------------------------------------------------------
