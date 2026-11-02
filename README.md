@@ -261,6 +261,9 @@ Procedurally generated quests that anyone can take at any level. None of them is
   - Herbs can hide a snake; each nest breeds its own kind of monster; a defender standing by the banner patches it up between attacks.
   - Smugglers travel disguised as merchants until you get close, and the radar only learns where they are every half minute until then.
   - An outbreak names its best hunters every minute and a half, and at the end.
+- **Taking them alive (CAPTURE)**: a new kind of objective. The target can't be killed: wear it below a share of its health and it is subdued, stops fighting and can't be hurt; stand next to it to bind it, but not while one of its guards still stands near. Leave it alone too long and it breaks free with half its health. Two quests use it:
+  - Live Capture (the Beast Farm wants a rare beast alive: follow its tracks, wear it down, bind it)
+  - Alive or Not at All (the magistrate wants a gang leader alive to name his partners: find the hideout, cut down his guards, beat him, bind him)
 - **Standing**: every quest done for a town raises your standing there, from Stranger to Known, Trusted, Honored and Hero of the town, each rank adding 3% to that town's rewards (up to 12%). A town npc whose requests you do again knows you and pays 5% more per favour done (up to 25%). Both show on the board and are kept as player variables.
 - **Where quests come from**:
   - A **Notice Board** stands next to the gatekeeper of every town. It has a few board offers each day and the requests of that town's npcs (its real blacksmith, grocer, warehouse keeper or gatekeeper by name). Requests are handed over at the board.
@@ -990,6 +993,7 @@ Changes from 28 September – 19 October 2026.
 - **Fixed**: quests sent players into places they can't reach: the catacombs and necropolises, the Pagan Temple, Hellbound, and the Cruma Tower above level 55.
 - **Fixed**: `{fugitive}` (Manhunt) and `{child}` (The Lost Child) were never filled in; every `<context>` of a template is now.
 - **Changed**: progress spots are spread further apart, escorts and smuggler bands travel 2-3 times as far, escorts reach the town itself, and their ambushes come along the road rather than at every waypoint. Escorted npcs talk on the road.
+- **New**: a CAPTURE objective (take a monster alive: it can't die, is subdued below a share of its health, bound by standing next to it while its guards are down, and breaks free if left alone), and two quests with it: Live Capture and Alive or Not at All.
 - **New**: town standing and regulars (more rewards from towns and requesters you keep working for), taunting targets, contacts who remember you, escort ambush tactics, a courier's growing pursuit, trapped herbs, a brood per nest, repairs between waves, disguised smugglers and an outbreak leaderboard. Clue pool lines may read "Name|text" to name their spot.
 - **New**: quests name the land they take place in (`{place}`), smugglers head for a named place (`{meeting}`), clues have names of their own, and templates can give several texts for the same key (and stages several opening texts), one picked by the quest's seed.
 

@@ -87,6 +87,10 @@ public final class ObjectiveFactory
 			{
 				return new InterceptObjective(quest, template, index);
 			}
+			case CAPTURE:
+			{
+				return new CaptureObjective(quest, template, index);
+			}
 		}
 		throw new IllegalArgumentException("Unknown objective type " + template.getType());
 	}

@@ -47,7 +47,9 @@ public enum ObjectiveType
 	/** Burn nests that keep spawning monsters until they are gone. */
 	DESTROY(false),
 	/** Stop a band on the move before it reaches its meeting point. */
-	INTERCEPT(false);
+	INTERCEPT(false),
+	/** Take a monster alive: wear it down until it is subdued, then bind it. */
+	CAPTURE(false);
 
 	private final boolean _persistent;
 
