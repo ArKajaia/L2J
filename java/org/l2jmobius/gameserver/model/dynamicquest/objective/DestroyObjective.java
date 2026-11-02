@@ -38,7 +38,7 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
  * DESTROY: burn {@code nests} nests ({@code nestNpc}) spread within {@code radius} of the hunting ground. While a player is near, each nest spawns one of the place's monsters every {@code spawnEvery} seconds, up to {@code maxAlive} at a time.
- * A nest burns after a player stands next to it for {@code burnTime} seconds. On escalation the nests spawn twice as fast and a brood mother ({@code broodTitle}, {@code broodTierBonus}) appears, who must die too.
+ * Each nest breeds a kind of its own (one of the place's monsters, or of the far land). A nest burns after a player stands next to it for {@code burnTime} seconds. On escalation the nests spawn twice as fast and a brood mother ({@code broodTitle}, {@code broodTierBonus}) appears, who must die too.
  * With {@code foreign="true"} the brood comes from a hunting ground of the same level far away (the context's {@code foreignLand} names its nearest town): rifts pouring out another land.
  * @author Mobius
  */
@@ -48,6 +48,8 @@ public class DestroyObjective extends AbstractObjective
 	{
 		final Npc _npc;
 		final List<Npc> _brood = new ArrayList<>();
+		/** The kind of monster this nest breeds. */
+		int _broodNpcId;
 		int _nextSpawn;
 		int _burn;
 
@@ -92,6 +94,7 @@ public class DestroyObjective extends AbstractObjective
 			{
 				final Nest nest = new Nest(npc);
 				nest._nextSpawn = 5 + (i * 3);
+				nest._broodNpcId = pickBrood(random("nestKind" + i));
 				_nests.add(nest);
 				_byNpc.put(npc, nest);
 			}
@@ -250,7 +253,7 @@ public class DestroyObjective extends AbstractObjective
 				nest._brood.removeIf(npc -> !QuestSpawnUtil.isAlive(npc));
 				if (nest._brood.size() < maxAlive)
 				{
-					final Npc add = _quest.spawnMonster(this, pickBrood(random("brood" + second)), point(nest._npc, 60, 200), _params.getInt("tierBonus", 0), title("broodName"), watcher);
+					final Npc add = _quest.spawnMonster(this, nest._broodNpcId > 0 ? nest._broodNpcId : pickBrood(random("brood" + second)), point(nest._npc, 60, 200), _params.getInt("tierBonus", 0), title("broodName"), watcher);
 					if (add != null)
 					{
 						nest._brood.add(add);

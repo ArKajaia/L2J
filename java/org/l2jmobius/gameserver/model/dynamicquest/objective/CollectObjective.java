@@ -23,6 +23,7 @@ package org.l2jmobius.gameserver.model.dynamicquest.objective;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import org.l2jmobius.commons.util.Rnd;
@@ -222,11 +223,32 @@ public class CollectObjective extends AbstractObjective
 		}
 		if (++_progress >= _params.getInt("gatherTime", 3))
 		{
-			_nodes.remove(_gathering);
-			_quest.despawn(_gathering);
+			final Npc node = _gathering;
+			_nodes.remove(node);
+			_quest.despawn(node);
 			_gathering = null;
 			gather(gatherer);
+			springTrap(node, gatherer, second);
 		}
+	}
+
+	/**
+	 * With {@code trapChance} percent, something was lurking by the node: {@code trapCount} monsters of the place jump the gatherer ({@code trapText}).
+	 */
+	private void springTrap(Npc node, Player gatherer, int second)
+	{
+		final int chance = _params.getInt("trapChance", 0);
+		if ((chance <= 0) || (gatherer == null) || (random("trap" + second).nextInt(100) >= chance))
+		{
+			return;
+		}
+		final Random random = random("trapMonsters" + second);
+		final int amount = count("trapCount", 2);
+		for (int i = 0; i < amount; i++)
+		{
+			_quest.spawnMonster(this, pickMonsterNear(node, random), point(node, 150, 350), 0, title("trapTitle"), gatherer);
+		}
+		QuestSpawnUtil.screen(gatherer, text("trapText", "Something was waiting by it!"));
 	}
 
 	@Override

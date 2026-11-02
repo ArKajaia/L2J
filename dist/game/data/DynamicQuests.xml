@@ -41,24 +41,29 @@
 	    objective  type + its own attributes (see the classes in model/dynamicquest/objective). Every objective takes optional="true" (adds
 	               DynamicQuestOptionalBonusPercent to the reward when done), text="..." (its line in the quest window) and bonus:
 	               HP_ABOVE:n | METER_ABOVE:n | FAST:n | NO_DEATHS (counts as an optional objective when it holds).
-	               KILL        source = QUEST (spawned: count, at, spawnMin/Max, tierBonus, title, named, guards, escalate FLEE|LEADER|FLEE_LEADER)
+	               KILL        taunts (a text pool its targets say while a hunter is near) source = QUEST (spawned: count, at, spawnMin/Max, tierBonus, title, named, guards, escalate FLEE|LEADER|FLEE_LEADER)
 	                                    | AREA (the hunting ground's monsters) | LEVEL (any of the quest's level) | NPC (npcIds)
 	                                    | FUGITIVE (fake players, flagged, no karma, who come out within revealRange and hunt the owner)
 	               CULL        count perPlayer max radius percent tierBonus alphaTitle alphaTierBonus spreadMin spreadMax
-	               COLLECT     name count chance source = AREA | LEVEL | NODE (nodeNpc, radius, gatherTime) | FISH (radius around the town, nightLure)
+	               COLLECT     name count chance source = AREA | LEVEL | NODE (nodeNpc, radius, gatherTime, trapChance trapCount trapText trapTitle)
+	                           | FISH (radius around the town, nightLure)
 	                           itemId (a real item too)
 	               DELIVER     table kinds | items ("id:count,..."): handed over at a Notice Board
 	               ESCORT      escortee escorteeName escorteeTitle dest (TOWN | HOME | ROUTE) legs maxLegs legMin legMax ambushes ambushCount
 	                           meter drain abandonRange lostTime at chatter (a text pool the escortee talks from on the road)
 	                           skittish skittishRange (wanders off when the owner runs ahead). TOWN/HOME: as many legs as the road needs
-	                           (legs-maxLegs), ending at the town's board when that is enough. The ambushes wait at seeded spots of seeded legs.
-	               INVESTIGATE clues clueNpc clueName clueTitle searchTime at firstMin firstMax spacingMin spacingMax lines ambushChance ambushCount
+	                           (legs-maxLegs), ending at the town's board when that is enough. The ambushes wait at seeded spots of seeded legs,
+	                           each attacking one way of tactics (RUSH,SPLIT,HARASS: the escortee, both, the owner).
+	               INVESTIGATE (a line "Name|text" of the pool names its clue) clues clueNpc clueName clueTitle searchTime at firstMin firstMax spacingMin spacingMax lines ambushChance ambushCount
 	                           stealth (fails when a participant is drawn into a fight, seenText)
-	               DEFEND      target waves waveCount waveInterval prep boss bossTierBonus bossTitle meter drain at
-	               INTERACT    npc at spawnMin spawnMax dialog button line
-	               REACH       dest (TOWN_FAR | TOWN_NEAR | HOME | AREA | LAST) radius noTeleport minDistance maxDistance ambushEvery ambushCount
+	               DEFEND      target waves waveCount waveInterval prep boss bossTierBonus bossTitle meter drain repair (percent a second a
+	                           defender standing by it repairs while no attacker is near, 0.5) at
+	               INTERACT    npc npcName npcTitle at spawnMin spawnMax dialog button line; a named npc remembers the players it worked with
+	                           (metText, regularText, veteranText, {player} {count})
+	               REACH       dest (TOWN_FAR | TOWN_NEAR | HOME | AREA | LAST) radius noTeleport minDistance maxDistance ambushEvery ambushCount pursuitMax
+	                           (every second ambush brings one more monster, up to pursuitMax more)
 	               DESTROY     nests nestNpc spawnEvery maxAlive burnTime radius spacing (between nests) broodTitle broodTierBonus foreign (brood of a far land)
-	               INTERCEPT   at legs legMin legMax guards leaderTitle leaderTierBonus guardTitle: kill the leader of a band on the move
+	               INTERCEPT   at legs legMin legMax guards leaderTitle leaderTierBonus guardTitle disguise revealRange revealText: kill the leader of a band on the move
 	                           before it reaches its meeting point ({meeting}: the land it lies in), all its legs heading one way
 	               at = AREA (the hunting ground) | LAST (where the previous step ended) | NEAR (the owner) | HOME (the board the quest was taken at).
 	    on         event = SUCCESS | FAILURE | TIMEOUT, action = NEXT | STAGE (target) | COMPLETE | FAIL | FOLLOW_UP (target template) |
@@ -266,26 +271,26 @@
 		<entry>Bram the carter</entry>
 	</textPool>
 	<textPool name="bountyClues">
-		<entry>Broken arrows, and no archer left to fire them. {target} doesn't leave survivors.</entry>
-		<entry>A hunter's camp, wrecked. Whoever slept here didn't wake up.</entry>
-		<entry>Fresh claw marks and a torn pack - {target} passed here not long ago.</entry>
-		<entry>A half-eaten carcass. {target} is close, and still hungry.</entry>
-		<entry>Tracks, deep and heavy, lead away into the wilds. The radar shows where.</entry>
+		<entry>Torn Pack|Fresh claw marks and a torn pack - {target} passed here not long ago.</entry>
+		<entry>Half-Eaten Carcass|A half-eaten carcass. {target} is close, and still hungry.</entry>
+		<entry>Deep Tracks|Tracks, deep and heavy, lead away into the wilds. The radar shows where.</entry>
+		<entry>Broken Arrows|Broken arrows, and no archer left to fire them. {target} doesn't leave survivors.</entry>
+		<entry>Wrecked Camp|A hunter's camp, wrecked. Whoever slept here didn't wake up.</entry>
 	</textPool>
 	<textPool name="kidnapClues">
-		<entry>A shoe, trampled into the mud. {hostage} fought them.</entry>
-		<entry>A torn ribbon caught on a thorn - {hostage} came this way.</entry>
-		<entry>Boot prints, several of them, and drag marks. They are not far.</entry>
-		<entry>A dropped token of {gang}. So that is who took {hostage}.</entry>
-		<entry>Ashes of a campfire, still warm. The trail goes on.</entry>
+		<entry>Torn Ribbon|A torn ribbon caught on a thorn - {hostage} came this way.</entry>
+		<entry>Drag Marks|Boot prints, several of them, and drag marks. They are not far.</entry>
+		<entry>Gang Token|A dropped token of {gang}. So that is who took {hostage}.</entry>
+		<entry>Warm Ashes|Ashes of a campfire, still warm. The trail goes on.</entry>
+		<entry>Lost Shoe|A shoe, trampled into the mud. {hostage} fought them.</entry>
 	</textPool>
 	<textPool name="expeditionClues">
-		<entry>A surveyor's chain, snapped clean in two. Something strong did this.</entry>
-		<entry>A broken surveyor's rod, stamped with the mark of {expedition}.</entry>
-		<entry>A journal page: "...the beasts came at night, we ran north..."</entry>
-		<entry>An abandoned camp. The tents are slashed, the fire long cold.</entry>
-		<entry>Blood on the rocks, and a trail of dropped supplies.</entry>
-		<entry>A signal flag, planted in haste. Someone wanted to be found.</entry>
+		<entry>Broken Surveyor's Rod|A broken surveyor's rod, stamped with the mark of {expedition}.</entry>
+		<entry>Journal Page|A journal page: "...the beasts came at night, we ran north..."</entry>
+		<entry>Abandoned Camp|An abandoned camp. The tents are slashed, the fire long cold.</entry>
+		<entry>Bloodied Rocks|Blood on the rocks, and a trail of dropped supplies.</entry>
+		<entry>Signal Flag|A signal flag, planted in haste. Someone wanted to be found.</entry>
+		<entry>Snapped Chain|A surveyor's chain, snapped clean in two. Something strong did this.</entry>
 	</textPool>
 
 	<textPool name="fugitives">
@@ -321,23 +326,23 @@
 		<entry>The landmarks match the map. Dig here.</entry>
 	</textPool>
 	<textPool name="manhuntClues">
-		<entry>A merchant swears {fugitive} paid him in stolen coin an hour ago.</entry>
-		<entry>A farmer saw {fugitive} pass by at dawn, heading into the wilds.</entry>
-		<entry>A bloodied cloak, left behind in haste. The trail goes on.</entry>
-		<entry>A cold camp and a stolen purse. {fugitive} is close.</entry>
+		<entry>Frightened Farmer|A farmer saw {fugitive} pass by at dawn, heading into the wilds.</entry>
+		<entry>Bloodied Cloak|A bloodied cloak, left behind in haste. The trail goes on.</entry>
+		<entry>Cold Camp|A cold camp and a stolen purse. {fugitive} is close.</entry>
+		<entry>Nervous Merchant|A merchant swears {fugitive} paid him in stolen coin an hour ago.</entry>
 	</textPool>
 	<textPool name="beastTracks">
-		<entry>Huge tracks, pressed deep into the earth. It passed here.</entry>
-		<entry>Torn bark, high up on a tree. It is bigger than you thought.</entry>
-		<entry>Fresh droppings. It isn't far now.</entry>
-		<entry>A tuft of {beast}'s fur caught on a thorn.</entry>
+		<entry>Huge Tracks|Huge tracks, pressed deep into the earth. It passed here.</entry>
+		<entry>Torn Bark|Torn bark, high up on a tree. It is bigger than you thought.</entry>
+		<entry>Fresh Droppings|Fresh droppings. It isn't far now.</entry>
+		<entry>Tuft of Fur|A tuft of {beast}'s fur caught on a thorn.</entry>
 	</textPool>
 	<textPool name="childClues">
-		<entry>A half-eaten apple, still fresh. Little teeth marks.</entry>
-		<entry>Someone tied a ribbon to a branch here - a child's way of not getting lost.</entry>
-		<entry>A small shoe, lost in the grass. {child} came this way.</entry>
-		<entry>Someone heard crying from the woods over there.</entry>
-		<entry>A doll, dropped by the path. The tracks go on.</entry>
+		<entry>Small Shoe|A small shoe, lost in the grass. {child} came this way.</entry>
+		<entry>Crying in the Woods|Someone heard crying from the woods over there.</entry>
+		<entry>Dropped Doll|A doll, dropped by the path. The tracks go on.</entry>
+		<entry>Half-Eaten Apple|A half-eaten apple, still fresh. Little teeth marks.</entry>
+		<entry>Ribbon on a Branch|Someone tied a ribbon to a branch here - a child's way of not getting lost.</entry>
 	</textPool>
 	<textPool name="scoutLines">
 		<entry>From up here you can see their camps. You note them down.</entry>
@@ -385,10 +390,35 @@
 		<entry>I heard wolves. Real ones! Did you hear them?</entry>
 	</textPool>
 	<textPool name="guildClues">
-		<entry>A guild marker, chalked on a stone. The next one should be further on.</entry>
-		<entry>Notches cut into a tree trunk - the guild's sign for "keep going".</entry>
-		<entry>A sealed note under a rock: "Further out. Watch your back."</entry>
-		<entry>The marker is here, but someone tried to scratch it out. Interesting.</entry>
+		<entry>Chalk Marker|A guild marker, chalked on a stone. The next one should be further on.</entry>
+		<entry>Notched Tree|Notches cut into a tree trunk - the guild's sign for "keep going".</entry>
+		<entry>Hidden Note|A sealed note under a rock: "Further out. Watch your back."</entry>
+		<entry>Scratched Marker|The marker is here, but someone tried to scratch it out. Interesting.</entry>
+	</textPool>
+
+	<!-- What hunted targets say while a hunter is near (KILL taunts="..."). -->
+	<textPool name="beastTaunts">
+		<entry>*A low growl rolls out of the undergrowth.*</entry>
+		<entry>*{target} sniffs the air - it has your scent.*</entry>
+		<entry>*Something heavy crashes through the brush, then goes quiet.*</entry>
+		<entry>*{target} lets out a howl that makes the birds scatter.*</entry>
+	</textPool>
+	<textPool name="gangTaunts">
+		<entry>You'll never see your precious captive again!</entry>
+		<entry>Another hero? We eat heroes for breakfast.</entry>
+		<entry>Turn back while you still have legs to walk on.</entry>
+		<entry>The boss pays double for every head. Come closer.</entry>
+	</textPool>
+	<textPool name="fugitiveTaunts">
+		<entry>The board sent you? They must really want me dead.</entry>
+		<entry>I've killed better than you for less.</entry>
+		<entry>Go home, hunter. There's no bounty worth your life.</entry>
+		<entry>I know these woods. You don't.</entry>
+	</textPool>
+	<textPool name="rivalTaunts">
+		<entry>Back off - this bounty's ours!</entry>
+		<entry>Find your own monster, amateur.</entry>
+		<entry>We were here first. Don't make this ugly.</entry>
 	</textPool>
 
 	<!-- Places no quest sends anyone to: the open-world spawns there are left out of the hunting grounds. A box (minX maxX minY maxY
@@ -431,7 +461,7 @@
 		<stage name="The Hunt" timeLimit="1200">
 			<text>The trail leads on. {target} is somewhere ahead - follow the radar and finish it.</text>
 			<text>The trail is clear now. {target} isn't far - and it knows it is being hunted.</text>
-			<objective type="KILL" source="QUEST" named="true" at="LAST" spawnMin="1800" spawnMax="2800" fleeMin="2500" fleeMax="3500" tierBonus="2" guards="2" guardTitle="{gang}" escalate="FLEE" fleeGuards="2" bonus="HP_ABOVE:30" killText="{target} has fallen!" fleeText="{target} caught your scent and fled! Follow the radar." />
+			<objective type="KILL" source="QUEST" named="true" at="LAST" spawnMin="1800" spawnMax="2800" fleeMin="2500" fleeMax="3500" tierBonus="2" guards="2" guardTitle="{gang}" escalate="FLEE" fleeGuards="2" taunts="beastTaunts" bonus="HP_ABOVE:30" killText="{target} has fallen!" fleeText="{target} caught your scent and fled! Follow the radar." />
 			<objective type="COLLECT" optional="true" source="AREA" name="tokens of {gang}" count="5" chance="35" />
 			<on event="SUCCESS" action="FOLLOW_UP" target="1" chance="20" text="Among the remains: a token of {gang}. There will be more of them." />
 			<on event="SUCCESS" action="COMPLETE" />
@@ -496,7 +526,7 @@
 		</stage>
 		<stage name="The Hideout" timeLimit="900">
 			<text>The trail ends at {gang}'s hideout. Clear it out before they move {hostage} again.</text>
-			<objective type="KILL" source="QUEST" count="4" at="LAST" spawnMin="1800" spawnMax="2600" fleeMin="2500" fleeMax="3500" tierBonus="1" title="{gang}" escalate="FLEE_LEADER" leaderTitle="Leader of {gang}" leaderTierBonus="2" text="Clear out {gang}'s hideout." />
+			<objective type="KILL" source="QUEST" count="4" at="LAST" spawnMin="1800" spawnMax="2600" fleeMin="2500" fleeMax="3500" tierBonus="1" title="{gang}" taunts="gangTaunts" escalate="FLEE_LEADER" leaderTitle="Leader of {gang}" leaderTierBonus="2" text="Clear out {gang}'s hideout." />
 			<on event="SUCCESS" action="NEXT" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="{gang} moved {hostage} to another hideout - and their leader is with them now!" />
 		</stage>
@@ -736,7 +766,7 @@
 		</stage>
 		<stage name="The Arrest" timeLimit="1200">
 			<text>{fugitive} hides ahead. They fight like any adventurer - be ready.</text>
-			<objective type="KILL" source="FUGITIVE" named="true" title="{fugitive}" at="LAST" spawnMin="1500" spawnMax="2500" revealRange="1200" revealText="{fugitive}: You should have stayed in town!" killText="{fugitive} is brought to justice." fleeText="{fugitive} slipped away again! Follow the radar." />
+			<objective type="KILL" source="FUGITIVE" named="true" title="{fugitive}" taunts="fugitiveTaunts" at="LAST" spawnMin="1500" spawnMax="2500" revealRange="1200" revealText="{fugitive}: You should have stayed in town!" killText="{fugitive} is brought to justice." fleeText="{fugitive} slipped away again! Follow the radar." />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="{fugitive} slipped away to a new hiding place!" />
 		</stage>
@@ -785,7 +815,7 @@
 		</stage>
 		<stage name="The Beast" timeLimit="1200">
 			<text>The tracks end ahead. {beast} is there - strong, and wary.</text>
-			<objective type="KILL" source="QUEST" named="true" title="{beast}" at="LAST" spawnMin="1500" spawnMax="2500" fleeMin="2500" fleeMax="3500" tierBonus="3" bonus="NO_DEATHS" killText="{beast} falls. What a trophy!" fleeText="{beast} bolts! Follow the radar." />
+			<objective type="KILL" source="QUEST" named="true" title="{beast}" at="LAST" spawnMin="1500" spawnMax="2500" fleeMin="2500" fleeMax="3500" tierBonus="3" taunts="beastTaunts" bonus="NO_DEATHS" killText="{beast} falls. What a trophy!" fleeText="{beast} bolts! Follow the radar." />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="{beast} has fled deeper into the wilds!" />
 		</stage>
@@ -805,7 +835,7 @@
 		<contact npcName="Informant Wren" npcTitle="Board Informant" dialog="{gang} move their goods through here today - I have watched them for a week. They set out as soon as you give the word, and they won't wait for anyone. Catch their boss before they reach the buyers." button="I'm ready" line="They're moving. Go!" />
 		<stage name="The Interception" timeLimit="2100">
 			<text>{gang} are moving contraband through the land in {place}. Catch them and break their boss before they reach {meeting}.</text>
-			<objective type="INTERCEPT" at="AREA" legs="4" legMin="2200" legMax="3200" guards="3" leaderTitle="Boss of {gang}" leaderTierBonus="2" guardTitle="{gang}" killText="The boss is down - the contraband is seized!" arriveText="{gang} reached their buyers in {meeting} and vanished. Too late." />
+			<objective type="INTERCEPT" at="AREA" legs="4" legMin="2200" legMax="3200" guards="3" leaderTitle="Boss of {gang}" leaderTierBonus="2" guardTitle="{gang}" disguise="Travelling Merchant" revealText="The merchants throw off their cloaks - it's {gang}!" killText="The boss is down - the contraband is seized!" arriveText="{gang} reached their buyers in {meeting} and vanished. Too late." />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="FAILURE" action="FAIL" />
 		</stage>
@@ -906,7 +936,7 @@
 		<stage name="The Race" timeLimit="1200">
 			<text>{target} is ahead - and so are rival adventurers who want the bounty for themselves.</text>
 			<objective type="KILL" source="QUEST" named="true" at="LAST" spawnMin="1800" spawnMax="2600" tierBonus="2" killText="{target} is yours!" />
-			<objective type="KILL" optional="true" source="FUGITIVE" count="3" scale="false" title="Rival Adventurer" at="LAST" spawnMin="200" spawnMax="500" revealRange="1500" revealText="Rival adventurers! They want the bounty too!" text="Beat the rival adventurers." />
+			<objective type="KILL" optional="true" source="FUGITIVE" count="3" scale="false" title="Rival Adventurer" taunts="rivalTaunts" at="LAST" spawnMin="200" spawnMax="500" revealRange="1500" revealText="Rival adventurers! They want the bounty too!" text="Beat the rival adventurers." />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="FAIL" text="The rivals took {target} while you dawdled." />
 		</stage>
@@ -940,7 +970,7 @@
 		<eligibility minLevel="10" dailyLimit="2" />
 		<contact npcName="Apprentice Lin" npcTitle="Herbalist's Apprentice" dialog="The fever herbs grow wild around here, but they wilt soon after they are picked. Gather them and run them back to {town} as fast as you can. I'll show you which ones to take." button="Show me the herbs" line="Quick hands, and quicker feet!" />
 		<stage name="Fever Herbs" timeLimit="1200">
-			<objective type="COLLECT" source="NODE" nodeNpc="900518" count="6" scale="false" radius="1800" gatherTime="3" name="fever herbs" nodeText="A fever herb. Careful - the roots are fragile." text="Gather 6 fever herbs in {place}." />
+			<objective type="COLLECT" source="NODE" nodeNpc="900518" count="6" scale="false" radius="1800" gatherTime="3" trapChance="20" trapCount="2" trapText="A snake was coiled among the roots!" name="fever herbs" nodeText="A fever herb. Careful - the roots are fragile." text="Gather 6 fever herbs in {place}." />
 			<on event="SUCCESS" action="NEXT" />
 			<on event="TIMEOUT" action="FAIL" text="The fever has run its course without the herbs." />
 		</stage>

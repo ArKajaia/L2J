@@ -34,6 +34,9 @@ import org.l2jmobius.gameserver.model.dynamicquest.QuestInstance;
  */
 public class InteractObjective extends AbstractObjective
 {
+	/** Player variable prefix: jobs done with a named character. */
+	private static final String MET_VAR = "DQ_MET_";
+
 	private Npc _npc;
 
 	public InteractObjective(QuestInstance quest, ObjectiveTemplate template, int index)
@@ -69,7 +72,7 @@ public class InteractObjective extends AbstractObjective
 		{
 			return null;
 		}
-		return "<font color=\"LEVEL\">" + npc.getName() + "</font><br>" + text("dialog", "Ah, you came. Good.") + "<br><br><center>" + button("talk", text("button", "I am ready")) + "</center>";
+		return "<font color=\"LEVEL\">" + npc.getName() + "</font><br>" + getGreeting(player) + text("dialog", "Ah, you came. Good.") + "<br><br><center>" + button("talk", text("button", "I am ready")) + "</center>";
 	}
 
 	@Override
@@ -77,10 +80,44 @@ public class InteractObjective extends AbstractObjective
 	{
 		if (action.equals("talk") && (npc == _npc) && !isDone())
 		{
+			rememberMeeting(player);
 			_quest.say(_npc, text("line", "Then let us begin."));
 			complete();
 		}
 		return null;
+	}
+
+	/**
+	 * @return the player variable counting the jobs a player did with this named character, {@code null} for an npc without a name of its own
+	 */
+	private String getMeetingVar()
+	{
+		final String name = _params.getString("npcName", null);
+		return name != null ? MET_VAR + name.replaceAll("[^A-Za-z0-9]", "") : null;
+	}
+
+	/**
+	 * A named character remembers the players it worked with: {@code metText}, {@code regularText} (2-4 jobs) and {@code veteranText} (5 and more), {count} and {player} filled in.
+	 */
+	private String getGreeting(Player player)
+	{
+		final String var = getMeetingVar();
+		final int count = var != null ? player.getVariables().getInt(var, 0) : 0;
+		if (count <= 0)
+		{
+			return "";
+		}
+		final String line = count >= 5 ? text("veteranText", "{player}, my most trusted hand. {count} jobs together, and you've never let me down.") : (count >= 2 ? text("regularText", "{player}! I hoped they'd send you. That's {count} jobs together now.") : text("metText", "You again! Good - I asked the board for you by name."));
+		return "<font color=\"99CCFF\">" + line.replace("{player}", player.getName()).replace("{count}", String.valueOf(count)) + "</font><br>";
+	}
+
+	private void rememberMeeting(Player player)
+	{
+		final String var = getMeetingVar();
+		if (var != null)
+		{
+			player.getVariables().set(var, player.getVariables().getInt(var, 0) + 1);
+		}
 	}
 
 	@Override

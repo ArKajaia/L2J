@@ -36,7 +36,7 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
  * REACH: get within {@code radius} of a place. {@code dest="TOWN_FAR"}: the Notice Board of another town {@code minDistance}-{@code maxDistance} away; {@code "TOWN_NEAR"}: the nearest other town's; {@code "HOME"}: the board the quest was taken at;
  * {@code "AREA"} or {@code "LAST"}: the quest's places.
  * <p>
- * With {@code noTeleport="true"} the owner must travel on foot: a teleport (more than 1500 in one second) fails it. Every {@code ambushEvery} seconds outside towns, {@code ambushCount} monsters of the land around jump the owner.
+ * With {@code noTeleport="true"} the owner must travel on foot: a teleport (more than 1500 in one second) fails it. Every {@code ambushEvery} seconds outside towns, {@code ambushCount} monsters of the land around jump the owner, one more every second ambush (up to {@code pursuitMax} more).
  * </p>
  * @author Mobius
  */
@@ -47,6 +47,7 @@ public class ReachObjective extends AbstractObjective
 	private Location _destination;
 	private Location _lastPosition;
 	private int _nextAmbush;
+	private int _ambushes;
 
 	public ReachObjective(QuestInstance quest, ObjectiveTemplate template, int index)
 	{
@@ -175,13 +176,16 @@ public class ReachObjective extends AbstractObjective
 			_nextAmbush = every;
 			if (!QuestSpawnUtil.isTown(owner.getX(), owner.getY(), owner.getZ()) && !owner.isDead())
 			{
+				// Word spreads on the road: every second ambush brings one more, up to pursuitMax more.
 				final Random random = random("ambush" + second);
-				final int amount = count("ambushCount", 2);
+				final int extra = Math.min(_params.getInt("pursuitMax", 3), _ambushes / 2);
+				final int amount = count("ambushCount", 2) + extra;
 				for (int i = 0; i < amount; i++)
 				{
 					_quest.spawnMonster(this, pickMonsterNear(owner, random), point(owner, 300, 500), _params.getInt("tierBonus", 0), title("ambushTitle"), owner);
 				}
-				_quest.announce(text("ambushText", "Ambush!"));
+				_ambushes++;
+				_quest.announce((extra > 0) && ((_ambushes % 2) == 1) ? text("pursuitText", "Ambush! Word of you has spread - there are more of them now!") : text("ambushText", "Ambush!"));
 			}
 		}
 	}

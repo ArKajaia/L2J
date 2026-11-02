@@ -36,7 +36,8 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
  * INTERCEPT: a band of the place's monsters - a leader ({@code leaderTitle}, {@code leaderTierBonus}) and {@code guards} guards ({@code guardTitle}) - sets out from {@code at} and walks {@code legs} legs of {@code legMin}-{@code legMax} towards a meeting
- * point, all in one general direction ({@code {meeting}}: the land it lies in). Killing the leader before it arrives does it; its arrival fails it ({@code arriveText}). The band only walks while it isn't fighting, so a player who catches it holds it up.
+ * point, all in one general direction ({@code {meeting}}: the land it lies in). With {@code disguise="..."} the band travels under that title, the radar only updated every half
+ * minute, until a participant comes within {@code revealRange} or they fight ({@code revealText}). Killing the leader before it arrives does it; its arrival fails it ({@code arriveText}). The band only walks while it isn't fighting, so a player who catches it holds it up.
  * @author Mobius
  */
 public class InterceptObjective extends AbstractObjective
@@ -47,6 +48,9 @@ public class InterceptObjective extends AbstractObjective
 	private final List<Npc> _guards = new ArrayList<>();
 	private Npc _leader;
 	private int _leg;
+	private boolean _disguised;
+	private String _leaderTitle;
+	private String _guardTitle;
 
 	public InterceptObjective(QuestInstance quest, ObjectiveTemplate template, int index)
 	{
@@ -78,6 +82,21 @@ public class InterceptObjective extends AbstractObjective
 		}
 		_quest.putLocation("last", start);
 		_quest.putContext("leaderName", _leader.getTitle());
+		// Disguised as honest travellers until someone gets close or they are attacked.
+		final String disguise = title("disguise");
+		if (disguise != null)
+		{
+			_disguised = true;
+			_leaderTitle = _leader.getTitle();
+			_guardTitle = title("guardTitle");
+			_leader.setTitle(disguise);
+			_leader.broadcastInfo();
+			for (Npc guard : _guards)
+			{
+				guard.setTitle(disguise);
+				guard.broadcastInfo();
+			}
+		}
 		_quest.setMarker(start);
 		return null;
 	}
@@ -121,6 +140,38 @@ public class InterceptObjective extends AbstractObjective
 		_quest.putContext("meeting", place != null ? place : "their meeting point");
 	}
 
+	/**
+	 * The band drops its disguise when a participant comes within {@code revealRange} or any of them is fighting.
+	 */
+	private void checkDisguise(List<Player> near)
+	{
+		boolean found = _leader.isInCombat();
+		for (Npc guard : _guards)
+		{
+			found |= QuestSpawnUtil.isAlive(guard) && guard.isInCombat();
+		}
+		for (Player player : near)
+		{
+			found |= player.calculateDistance2D(_leader) <= _params.getInt("revealRange", 450);
+		}
+		if (!found)
+		{
+			return;
+		}
+		_disguised = false;
+		_leader.setTitle(_leaderTitle);
+		_leader.broadcastInfo();
+		for (Npc guard : _guards)
+		{
+			if (QuestSpawnUtil.isAlive(guard))
+			{
+				guard.setTitle(_guardTitle != null ? _guardTitle : "");
+				guard.broadcastInfo();
+			}
+		}
+		_quest.announce(text("revealText", "The travellers throw off their cloaks - it's them!"));
+	}
+
 	@Override
 	public void onNpcDeath(Npc npc, Creature killer)
 	{
@@ -145,10 +196,15 @@ public class InterceptObjective extends AbstractObjective
 			return;
 		}
 
-		// The radar follows the band.
-		if ((second % 5) == 0)
+		if (_disguised)
 		{
-			_quest.setMarker(_leader.getLocation());
+			checkDisguise(near);
+		}
+
+		// The radar follows the band: closely once they are found out, from rumours (every half minute) while disguised.
+		if ((second % (_disguised ? 30 : 5)) == 0)
+		{
+			_quest.setMarker(new Location(_leader.getX(), _leader.getY(), _leader.getZ()));
 		}
 
 		final Location waypoint = _route.get(_leg);

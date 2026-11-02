@@ -43,7 +43,8 @@ import org.l2jmobius.gameserver.util.QuestSpawnUtil;
  * A {@code skittish="true"} escortee stops following when the owner gets more than {@code skittishRange} away and wanders off, until the owner comes back to it.
  * <p>
  * {@code ambushes} ambushes ({@code ambushCount} monsters each, the ones living there) wait somewhere along legs picked by the quest's seed, never on the first leg of a longer road; the
- * ambushers come from ahead, and the escortee stops until they are beaten. The escortee itself can't die: its meter ({@code meter}, lasting longer for bigger parties) drops by {@code drain} a
+ * ambushers come from ahead, and the escortee stops until they are beaten. Each ambush attacks one way of {@code tactics} (RUSH: all at the escortee, SPLIT: half at the owner,
+ * HARASS: all at the owner, and at the escortee once free), with {@code ambushText}, {@code splitText} or {@code harassText}. The escortee itself can't die: its meter ({@code meter}, lasting longer for bigger parties) drops by {@code drain} a
  * second for every attacker next to it. On the road it now and then says a line of the text pool {@code chatter}. Leaving it more than {@code abandonRange} away for {@code lostTime} seconds
  * fails, so does an empty meter. Starts at {@code at} (LAST: where the previous step ended).
  * </p>
@@ -213,15 +214,37 @@ public class EscortObjective extends AbstractObjective
 		final Location ahead = new Location(_escortee.getX() + (int) ((dx / distance) * 600), _escortee.getY() + (int) ((dy / distance) * 600), _escortee.getZ());
 		final Random random = random("ambush" + _leg);
 		final int amount = count("ambushCount", 3);
+		// How they attack: all at the charge (RUSH), half at the leader (SPLIT), or all at the leader, to draw it away (HARASS).
+		final Player owner = _quest.getOwner();
+		final String[] tactics = _params.getString("tactics", "RUSH,SPLIT,HARASS").toUpperCase().split(",");
+		final String tactic = owner != null ? tactics[random.nextInt(tactics.length)].trim() : "RUSH";
 		for (int i = 0; i < amount; i++)
 		{
-			final Npc monster = _quest.spawnMonster(this, pickMonsterNear(spot != null ? spot : waypoint, random), point(ahead, 0, 350), _params.getInt("tierBonus", 0), title("ambushTitle"), _escortee);
+			final boolean atLeader = tactic.equals("HARASS") || (tactic.equals("SPLIT") && ((i % 2) == 1));
+			final Npc monster = _quest.spawnMonster(this, pickMonsterNear(spot != null ? spot : waypoint, random), point(ahead, 0, 350), _params.getInt("tierBonus", 0), title("ambushTitle"), atLeader ? owner : _escortee);
 			if (monster != null)
 			{
 				_ambush.add(monster);
 			}
 		}
-		_quest.announce(text("ambushText", "Ambush! Protect your charge!"));
+		switch (tactic)
+		{
+			case "SPLIT":
+			{
+				_quest.announce(text("splitText", "Ambush! Some go for you, the rest for your charge!"));
+				break;
+			}
+			case "HARASS":
+			{
+				_quest.announce(text("harassText", "Ambush! They're after you - keep them off your charge!"));
+				break;
+			}
+			default:
+			{
+				_quest.announce(text("ambushText", "Ambush! Protect your charge!"));
+				break;
+			}
+		}
 	}
 
 	private void follow(Player owner)
