@@ -27,18 +27,18 @@
 	<enchant id="6576" targetGrade="D" maxEnchant="16" />
 	<enchant id="6578" targetGrade="S" maxEnchant="16" />
 
-	<!-- Crystal Scrolls: Enchant Weapon (rates: scroll group 1 in EnchantItemGroups.xml) -->
-	<enchant id="731" targetGrade="A" maxEnchant="16" scrollGroupId="1" />
-	<enchant id="949" targetGrade="B" maxEnchant="16" scrollGroupId="1" />
-	<enchant id="953" targetGrade="C" maxEnchant="16" scrollGroupId="1" />
-	<enchant id="957" targetGrade="D" maxEnchant="16" scrollGroupId="1" />
-	<enchant id="961" targetGrade="S" maxEnchant="16" scrollGroupId="1" />
-	<!-- Crystal Scrolls: Enchant Armor (rates: scroll group 1 in EnchantItemGroups.xml) -->
-	<enchant id="732" targetGrade="A" maxEnchant="16" scrollGroupId="1" />
-	<enchant id="950" targetGrade="B" maxEnchant="16" scrollGroupId="1" />
-	<enchant id="954" targetGrade="C" maxEnchant="16" scrollGroupId="1" />
-	<enchant id="958" targetGrade="D" maxEnchant="16" scrollGroupId="1" />
-	<enchant id="962" targetGrade="S" maxEnchant="16" scrollGroupId="1" />
+	<!-- Crystal Scrolls: Enchant Weapon (rates: scroll group 1 in EnchantItemGroups.xml; safe: a failed enchant keeps the item's enchant level) -->
+	<enchant id="731" targetGrade="A" maxEnchant="16" scrollGroupId="1" safe="true" />
+	<enchant id="949" targetGrade="B" maxEnchant="16" scrollGroupId="1" safe="true" />
+	<enchant id="953" targetGrade="C" maxEnchant="16" scrollGroupId="1" safe="true" />
+	<enchant id="957" targetGrade="D" maxEnchant="16" scrollGroupId="1" safe="true" />
+	<enchant id="961" targetGrade="S" maxEnchant="16" scrollGroupId="1" safe="true" />
+	<!-- Crystal Scrolls: Enchant Armor (rates: scroll group 1 in EnchantItemGroups.xml; safe: a failed enchant keeps the item's enchant level) -->
+	<enchant id="732" targetGrade="A" maxEnchant="16" scrollGroupId="1" safe="true" />
+	<enchant id="950" targetGrade="B" maxEnchant="16" scrollGroupId="1" safe="true" />
+	<enchant id="954" targetGrade="C" maxEnchant="16" scrollGroupId="1" safe="true" />
+	<enchant id="958" targetGrade="D" maxEnchant="16" scrollGroupId="1" safe="true" />
+	<enchant id="962" targetGrade="S" maxEnchant="16" scrollGroupId="1" safe="true" />
 
 	<!-- Weapon Enchant Scrolls -->
 	<enchant id="22006" targetGrade="D" bonusRate="10" maxEnchant="16" />

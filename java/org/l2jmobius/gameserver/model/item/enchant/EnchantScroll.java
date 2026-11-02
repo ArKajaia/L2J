@@ -52,7 +52,9 @@ public class EnchantScroll extends AbstractEnchantItem
 		final ItemType type = getItem().getItemType();
 		_isWeapon = (type == EtcItemType.ANCIENT_CRYSTAL_ENCHANT_WP) || (type == EtcItemType.BLESS_SCRL_ENCHANT_WP) || (type == EtcItemType.SCRL_ENCHANT_WP);
 		_isBlessed = (type == EtcItemType.BLESS_SCRL_ENCHANT_AM) || (type == EtcItemType.BLESS_SCRL_ENCHANT_WP);
-		_isSafe = (type == EtcItemType.ANCIENT_CRYSTAL_ENCHANT_AM) || (type == EtcItemType.ANCIENT_CRYSTAL_ENCHANT_WP);
+
+		// Ancient Crystal enchants are safe by their item type. Other scrolls, like the Crystal Scrolls (a normal scroll item type), opt in with safe="true" in EnchantItemData.xml.
+		_isSafe = set.getBoolean("safe", (type == EtcItemType.ANCIENT_CRYSTAL_ENCHANT_AM) || (type == EtcItemType.ANCIENT_CRYSTAL_ENCHANT_WP));
 	}
 	
 	@Override
@@ -70,7 +72,7 @@ public class EnchantScroll extends AbstractEnchantItem
 	}
 	
 	/**
-	 * @return {@code true} for safe-enchant scrolls (enchant level will remain on failure), {@code false} otherwise
+	 * @return {@code true} for safe-enchant scrolls (Crystal Scrolls and Ancient Crystal enchants: the enchant level remains on failure), {@code false} otherwise
 	 */
 	public boolean isSafe()
 	{
