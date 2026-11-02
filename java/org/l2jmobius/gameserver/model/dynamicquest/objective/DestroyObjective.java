@@ -87,7 +87,7 @@ public class DestroyObjective extends AbstractObjective
 		_spawnEvery = Math.max(5, _params.getInt("spawnEvery", 20));
 		for (int i = 0; i < _total; i++)
 		{
-			final Npc npc = _quest.spawn(this, _params.getInt("nestNpc", 0), point(area, 200, _params.getInt("radius", 1200)), 0);
+			final Npc npc = _quest.spawn(this, _params.getInt("nestNpc", 0), placeNest(area), 0);
 			if (npc != null)
 			{
 				final Nest nest = new Nest(npc);
@@ -104,6 +104,37 @@ public class DestroyObjective extends AbstractObjective
 		_quest.putContext("nests" + _index, String.valueOf(_total));
 		_quest.setMarker(_nests.get(0)._npc.getLocation());
 		return null;
+	}
+
+	/**
+	 * @param area the hunting ground
+	 * @return a spot within {@code radius} of it, at least {@code spacing} (half the radius by default) from the nests already placed when the land allows it
+	 */
+	private Location placeNest(Location area)
+	{
+		final int radius = _params.getInt("radius", 1200);
+		final int spacing = _params.getInt("spacing", radius / 2);
+		Location best = null;
+		double bestGap = -1;
+		for (int attempt = 0; attempt < 12; attempt++)
+		{
+			final Location candidate = point(area, 200, radius);
+			double gap = Double.MAX_VALUE;
+			for (Nest nest : _nests)
+			{
+				gap = Math.min(gap, nest._npc.calculateDistance2D(candidate));
+			}
+			if (gap >= spacing)
+			{
+				return candidate;
+			}
+			if (gap > bestGap)
+			{
+				best = candidate;
+				bestGap = gap;
+			}
+		}
+		return best;
 	}
 
 	/**

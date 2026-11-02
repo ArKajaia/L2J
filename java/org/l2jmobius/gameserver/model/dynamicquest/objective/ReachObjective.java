@@ -95,7 +95,13 @@ public class ReachObjective extends AbstractObjective
 			}
 		}
 		_quest.putLocation("dest" + _index, _destination);
-		_lastPosition = owner.getLocation();
+		if (!restored || (_quest.getContext("route", null) == null))
+		{
+			// The road's length, for rewards that pay by distance.
+			_quest.putContext("route", String.valueOf((int) owner.calculateDistance2D(_destination)));
+		}
+		// A copy: the player's own location object moves with the player.
+		_lastPosition = new Location(owner.getX(), owner.getY(), owner.getZ());
 		_nextAmbush = _params.getInt("ambushEvery", 0);
 		_quest.setMarker(_destination);
 		return null;
@@ -148,12 +154,12 @@ public class ReachObjective extends AbstractObjective
 
 		if (_params.getBoolean("noTeleport", false))
 		{
-			if ((owner.getInstanceId() != 0) || ((_lastPosition != null) && (owner.calculateDistance2D(_lastPosition) > TELEPORT_DISTANCE)))
+			if (owner.isTeleporting() || (owner.getInstanceId() != 0) || ((_lastPosition != null) && (owner.calculateDistance2D(_lastPosition) > TELEPORT_DISTANCE)))
 			{
 				fail(text("teleportText", "You took a shortcut through the ether - the seal is broken."));
 				return;
 			}
-			_lastPosition = owner.getLocation();
+			_lastPosition = new Location(owner.getX(), owner.getY(), owner.getZ());
 		}
 
 		if (owner.calculateDistance2D(_destination) <= _params.getInt("radius", 400))

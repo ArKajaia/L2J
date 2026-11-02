@@ -23,6 +23,7 @@ package org.l2jmobius.gameserver.model.dynamicquest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -30,6 +31,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.l2jmobius.gameserver.data.SpawnTable;
+import org.l2jmobius.gameserver.data.xml.DynamicQuestData;
 import org.l2jmobius.gameserver.data.xml.MapRegionData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.managers.ZoneManager;
@@ -45,6 +47,7 @@ import org.l2jmobius.gameserver.model.zone.type.BossZone;
 import org.l2jmobius.gameserver.model.zone.type.CastleZone;
 import org.l2jmobius.gameserver.model.zone.type.ClanHallZone;
 import org.l2jmobius.gameserver.model.zone.type.FortZone;
+import org.l2jmobius.gameserver.model.zone.type.HotZone;
 import org.l2jmobius.gameserver.model.zone.type.JailZone;
 import org.l2jmobius.gameserver.model.zone.type.OlympiadStadiumZone;
 import org.l2jmobius.gameserver.model.zone.type.PeaceZone;
@@ -56,7 +59,8 @@ import org.l2jmobius.gameserver.model.zone.type.WaterZone;
 /**
  * The spawn points of the plain monsters of the open world, by level, from the spawn table. Dynamic quests pick their hunting grounds and monsters from it, so every quest uses retail monsters where they really live.
  * <p>
- * Built the first time it is needed, once the world is spawned. Raid bosses, scripted monsters, instances, towns, boss lairs, sieges, arenas, jail, PvP spots and water are left out.
+ * Built the first time it is needed, once the world is spawned. Raid bosses, scripted monsters, instances, towns, boss lairs, sieges, arenas, jail, PvP spots, water and the
+ * restricted areas of data/DynamicQuests.xml (catacombs, necropolises...) are left out; places with a level limit (Cruma Tower) are only picked for characters who can enter.
  * </p>
  * @author Mobius
  */
@@ -68,6 +72,10 @@ public class WorldMonsterIndex
 	private static final int GROUND_RADIUS = 2500;
 	/** Most monster kinds a ground keeps. */
 	private static final int MAX_KINDS = 6;
+	/** Grounds are drawn by cells of this size, not by spawn points, so a dense area doesn't take every quest. */
+	private static final int CELL_SHIFT = 12;
+	/** Level windows a quest may widen to before it goes back to a place it was sent to lately. */
+	private static final int AVOID_MAX_WINDOW = 5;
 	private static final int[] LEVEL_WINDOWS =
 	{
 		3,
@@ -84,14 +92,22 @@ public class WorldMonsterIndex
 		final int _x;
 		final int _y;
 		final int _z;
+		/** The highest level of a character who can enter the place (Integer.MAX_VALUE: anyone). */
+		final int _maxEntryLevel;
 
-		Point(int npcId, int level, int x, int y, int z)
+		Point(int npcId, int level, int x, int y, int z, int maxEntryLevel)
 		{
 			_npcId = npcId;
 			_level = level;
 			_x = x;
 			_y = y;
 			_z = z;
+			_maxEntryLevel = maxEntryLevel;
+		}
+
+		long cell()
+		{
+			return (((long) (_x >> CELL_SHIFT)) << 32) | ((_y >> CELL_SHIFT) & 0xFFFFFFFFL);
 		}
 
 		long distanceSq(int x, int y)
@@ -103,6 +119,14 @@ public class WorldMonsterIndex
 	}
 
 	private volatile List<Point> _points;
+
+	/**
+	 * Forgets the index: it is built again the next time it is needed (after the restricted areas changed).
+	 */
+	public void reset()
+	{
+		_points = null;
+	}
 
 	private List<Point> getPoints()
 	{
@@ -126,6 +150,8 @@ public class WorldMonsterIndex
 	{
 		final long start = System.currentTimeMillis();
 		final List<Point> points = new ArrayList<>();
+		final List<RestrictedArea> restricted = DynamicQuestData.getInstance().getRestrictedAreas();
+		int left = 0;
 		for (Map.Entry<Integer, Set<Spawn>> entry : SpawnTable.getInstance().getSpawnTable().entrySet())
 		{
 			final NpcTemplate template = NpcData.getInstance().getTemplate(entry.getKey());
@@ -155,13 +181,20 @@ public class WorldMonsterIndex
 					y = last.getY();
 					z = last.getZ();
 				}
-				if (isOpenWorld(x, y, z))
+				if (!isOpenWorld(x, y, z))
 				{
-					points.add(new Point(template.getId(), template.getLevel(), x, y, z));
+					continue;
 				}
+				final int maxEntryLevel = getMaxEntryLevel(restricted, x, y, z);
+				if (maxEntryLevel <= 0)
+				{
+					left++;
+					continue;
+				}
+				points.add(new Point(template.getId(), template.getLevel(), x, y, z, maxEntryLevel));
 			}
 		}
-		LOGGER.info(getClass().getSimpleName() + ": " + points.size() + " monster spawn points for dynamic quests (" + (System.currentTimeMillis() - start) + " ms).");
+		LOGGER.info(getClass().getSimpleName() + ": " + points.size() + " monster spawn points for dynamic quests, " + left + " left out in restricted areas (" + (System.currentTimeMillis() - start) + " ms).");
 		return Collections.unmodifiableList(points);
 	}
 
@@ -192,6 +225,99 @@ public class WorldMonsterIndex
 		return true;
 	}
 
+	/** Last words of place names that read with "the" in front ("the Cruma Marshlands", "the Ant Nest"). */
+	private static final Set<String> THE_WORDS = Set.of("Grounds", "Plains", "Marshlands", "Hills", "Mines", "Springs", "Ruins", "Barracks", "Forest", "Swamp", "Territory", "Outskirts", "Waterfall", "Battleground", "Gateway", "Area", "Garden", "Hideaway", "Checkpoint", "Dwellings", "Stronghold", "Nest", "Zone", "Outpost", "Entrance", "Relic", "Temple", "Hive", "Labyrinth", "Cabin", "Village", "Tomb", "Farm", "Workshop", "Plateau");
+
+	/**
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @return the name of the land a point lies in, as it reads in a sentence ("the Plains of Dion", "Death Pass"), {@code null} if it has none
+	 */
+	public static String getPlaceName(int x, int y, int z)
+	{
+		ZoneType best = null;
+		long bestDistance = Long.MAX_VALUE;
+		for (ZoneType zone : ZoneManager.getInstance().getZones(x, y, z))
+		{
+			if (!(zone instanceof HotZone) || (zone.getName() == null) || (zone.getZone() == null))
+			{
+				continue;
+			}
+			final Location center = zone.getZone().getCenterPoint();
+			if (center == null)
+			{
+				continue;
+			}
+			final long dx = center.getX() - x;
+			final long dy = center.getY() - y;
+			final long distance = (dx * dx) + (dy * dy);
+			if (distance < bestDistance)
+			{
+				best = zone;
+				bestDistance = distance;
+			}
+		}
+		return best != null ? asPlace(best.getName()) : null;
+	}
+
+	/**
+	 * @param zoneName a zone's name ("Fields of Massacre (West)", "Immortal Plateau, Northern Region")
+	 * @return the name as it reads in a sentence ("the Fields of Massacre", "the Immortal Plateau")
+	 */
+	static String asPlace(String zoneName)
+	{
+		String name = zoneName.trim();
+		final int parenthesis = name.indexOf('(');
+		if (parenthesis > 0)
+		{
+			name = name.substring(0, parenthesis).trim();
+		}
+		final int comma = name.indexOf(',');
+		if (comma > 0)
+		{
+			name = name.substring(0, comma).trim();
+		}
+		if (name.endsWith(" Upper"))
+		{
+			name = name.substring(0, name.length() - 6).trim();
+		}
+		if (name.startsWith("The "))
+		{
+			return "the " + name.substring(4);
+		}
+		if (name.contains("'s "))
+		{
+			return name; // Breka's Stronghold, Devil's Isle
+		}
+		final String lastWord = name.substring(name.lastIndexOf(' ') + 1);
+		return name.contains(" of ") || THE_WORDS.contains(lastWord) ? "the " + name : name;
+	}
+
+	/**
+	 * @param areas the restricted areas
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @return the highest level of a character who can enter the point, 0 if nobody may be sent there, Integer.MAX_VALUE if anyone can
+	 */
+	private static int getMaxEntryLevel(List<RestrictedArea> areas, int x, int y, int z)
+	{
+		int maxLevel = Integer.MAX_VALUE;
+		for (RestrictedArea area : areas)
+		{
+			if (area.contains(x, y, z))
+			{
+				if (area.getMaxLevel() <= 0)
+				{
+					return 0;
+				}
+				maxLevel = Math.min(maxLevel, area.getMaxLevel());
+			}
+		}
+		return maxLevel;
+	}
+
 	/**
 	 * Picks a hunting ground for a level.
 	 * @param level the level wanted
@@ -202,7 +328,39 @@ public class WorldMonsterIndex
 	 */
 	public HuntingGround pick(int level, Random random, ILocational near, int nearRange)
 	{
-		final List<Point> points = getPoints();
+		return pick(level, random, near, nearRange, Collections.emptyList(), 0, 0);
+	}
+
+	/**
+	 * Picks a hunting ground for a level, away from the places a player was sent to lately when there are others.
+	 * @param level the level wanted
+	 * @param random the random source (seeded by the quest)
+	 * @param near a place to stay near, {@code null} for anywhere
+	 * @param nearRange how far from {@code near} the ground may be
+	 * @param avoid places to stay away from if possible (the last quests' grounds)
+	 * @param avoidRange how far from them
+	 * @param entryLevel the highest level of the characters sent there (places they can't enter are left out), 0 for any
+	 * @return the ground, {@code null} if the world has no monsters at all
+	 */
+	public HuntingGround pick(int level, Random random, ILocational near, int nearRange, List<? extends ILocational> avoid, int avoidRange, int entryLevel)
+	{
+		final List<Point> all = getPoints();
+		final List<Point> points;
+		if (entryLevel > 0)
+		{
+			points = new ArrayList<>(all.size());
+			for (Point point : all)
+			{
+				if (point._maxEntryLevel >= entryLevel)
+				{
+					points.add(point);
+				}
+			}
+		}
+		else
+		{
+			points = all;
+		}
 		if (points.isEmpty())
 		{
 			return null;
@@ -210,27 +368,50 @@ public class WorldMonsterIndex
 
 		List<Point> candidates = new ArrayList<>();
 		int window = LEVEL_WINDOWS[LEVEL_WINDOWS.length - 1];
-		for (boolean useNear : new boolean[]
+
+		// First somewhere new within the same range, without going far from the level. Rather the same place again than one across the world.
+		if (!avoid.isEmpty() && (avoidRange > 0))
 		{
-			true,
-			false
-		})
-		{
-			if (!useNear || (near != null))
+			for (int levelWindow : LEVEL_WINDOWS)
 			{
-				for (int levelWindow : LEVEL_WINDOWS)
+				if (levelWindow > AVOID_MAX_WINDOW)
 				{
-					candidates = collect(points, level, levelWindow, useNear ? near : null, nearRange);
-					if (!candidates.isEmpty())
-					{
-						window = levelWindow;
-						break;
-					}
+					break;
+				}
+				candidates = collect(points, level, levelWindow, near, nearRange);
+				removeNear(candidates, avoid, avoidRange);
+				if (!candidates.isEmpty())
+				{
+					window = levelWindow;
+					break;
 				}
 			}
-			if (!candidates.isEmpty())
+		}
+
+		if (candidates.isEmpty())
+		{
+			for (boolean useNear : new boolean[]
 			{
-				break;
+				true,
+				false
+			})
+			{
+				if (!useNear || (near != null))
+				{
+					for (int levelWindow : LEVEL_WINDOWS)
+					{
+						candidates = collect(points, level, levelWindow, useNear ? near : null, nearRange);
+						if (!candidates.isEmpty())
+						{
+							window = levelWindow;
+							break;
+						}
+					}
+				}
+				if (!candidates.isEmpty())
+				{
+					break;
+				}
 			}
 		}
 		if (candidates.isEmpty())
@@ -238,7 +419,7 @@ public class WorldMonsterIndex
 			candidates = points;
 		}
 
-		final Point chosen = candidates.get(random.nextInt(candidates.size()));
+		final Point chosen = pickByCell(candidates, random);
 		final long radiusSq = (long) GROUND_RADIUS * GROUND_RADIUS;
 		final Map<Integer, Integer> kinds = new HashMap<>();
 		long levelSum = 0;
@@ -265,7 +446,57 @@ public class WorldMonsterIndex
 		{
 			npcIds.remove(npcIds.size() - 1);
 		}
-		return new HuntingGround(new Location(chosen._x, chosen._y, chosen._z), npcIds, (int) Math.round((double) levelSum / counted), MapRegionData.getInstance().getClosestTownName(chosen._x, chosen._y));
+		return new HuntingGround(new Location(chosen._x, chosen._y, chosen._z), npcIds, (int) Math.round((double) levelSum / counted), MapRegionData.getInstance().getClosestTownName(chosen._x, chosen._y), getPlaceName(chosen._x, chosen._y, chosen._z));
+	}
+
+	/**
+	 * Draws a cell of the map (weighted by the logarithm of its spawn points, so big grounds are a little likelier but don't take every quest), then a point in it.
+	 */
+	private static Point pickByCell(List<Point> candidates, Random random)
+	{
+		final Map<Long, List<Point>> cells = new LinkedHashMap<>();
+		for (Point point : candidates)
+		{
+			cells.computeIfAbsent(point.cell(), key -> new ArrayList<>()).add(point);
+		}
+		final List<List<Point>> groups = new ArrayList<>(cells.values());
+		double total = 0;
+		for (List<Point> group : groups)
+		{
+			total += cellWeight(group.size());
+		}
+		double roll = random.nextDouble() * total;
+		for (List<Point> group : groups)
+		{
+			roll -= cellWeight(group.size());
+			if (roll <= 0)
+			{
+				return group.get(random.nextInt(group.size()));
+			}
+		}
+		final List<Point> last = groups.get(groups.size() - 1);
+		return last.get(random.nextInt(last.size()));
+	}
+
+	private static double cellWeight(int points)
+	{
+		return 1 + Math.log(points);
+	}
+
+	private static void removeNear(List<Point> candidates, List<? extends ILocational> avoid, int range)
+	{
+		final long rangeSq = (long) range * range;
+		candidates.removeIf(point ->
+		{
+			for (ILocational place : avoid)
+			{
+				if (point.distanceSq(place.getX(), place.getY()) <= rangeSq)
+				{
+					return true;
+				}
+			}
+			return false;
+		});
 	}
 
 	private static List<Point> collect(List<Point> points, int level, int window, ILocational near, int nearRange)

@@ -99,20 +99,22 @@ public class DifficultyContext
 
 	/**
 	 * @param bonus tiers added by the objective
-	 * @return the champion tier of the quest's own monsters (0-3)
+	 * @return the champion tier of the quest's own monsters (0-3), capped by the tier: bosses (bonus 2+) and the rest have their own cap
 	 */
 	public int championTier(int bonus)
 	{
 		final int party = _partySize >= 7 ? 2 : (_partySize >= 4 ? 1 : 0);
-		return Math.max(0, Math.min(3, _tier.getChampionBonus() + party + bonus));
+		final int cap = Math.min(3, _tier.getChampionCap(bonus >= 2));
+		return Math.max(0, Math.min(cap, _tier.getChampionBonus() + party + bonus));
 	}
 
 	/**
-	 * @return how much longer escort and defend meters last
+	 * @return how much longer escort and defend meters last (twice the data's meter for one player, more for a party)
 	 */
 	public double meterMultiplier()
 	{
-		return 1 + (0.5 * (_partySize - 1));
+		// Twice the data's meter, so slow killers (tanks) can hold a defence or an escort too.
+		return 2 * (1 + (0.5 * (_partySize - 1)));
 	}
 
 	/**

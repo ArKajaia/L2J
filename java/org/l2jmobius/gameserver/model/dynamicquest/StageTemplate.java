@@ -20,8 +20,10 @@
  */
 package org.l2jmobius.gameserver.model.dynamicquest;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 /**
  * A stage of a dynamic quest: objectives done together, then transitions.
@@ -33,11 +35,22 @@ public class StageTemplate
 	private final int _timeLimit;
 	private final boolean _failOnDeath;
 	private final String _text;
+	private final List<String> _variants;
 	private final List<ObjectiveTemplate> _objectives;
 	private final List<Transition> _transitions;
 
 	public StageTemplate(String name, int timeLimit, boolean failOnDeath, String text, List<ObjectiveTemplate> objectives, List<Transition> transitions)
 	{
+		this(name, timeLimit, failOnDeath, text == null ? Collections.emptyList() : Collections.singletonList(text), objectives, transitions);
+	}
+
+	/**
+	 * @param texts what the players may be told when the stage starts: one of them, picked by the quest's seed
+	 */
+	public StageTemplate(String name, int timeLimit, boolean failOnDeath, List<String> texts, List<ObjectiveTemplate> objectives, List<Transition> transitions)
+	{
+		_variants = Collections.unmodifiableList(new ArrayList<>(texts));
+		final String text = texts.isEmpty() ? null : texts.get(0);
 		_name = name;
 		_timeLimit = timeLimit;
 		_failOnDeath = failOnDeath;
@@ -73,6 +86,19 @@ public class StageTemplate
 	public String getText()
 	{
 		return _text;
+	}
+
+	/**
+	 * @param seed the quest's seed
+	 * @return what the players are told when the stage starts, one of its variants for this quest, may be {@code null}
+	 */
+	public String getText(long seed)
+	{
+		if (_variants.size() < 2)
+		{
+			return _text;
+		}
+		return _variants.get(new Random(seed ^ (_name.hashCode() * 0x9E3779B97F4A7C15L)).nextInt(_variants.size()));
 	}
 
 	public List<ObjectiveTemplate> getObjectives()

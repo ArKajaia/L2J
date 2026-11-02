@@ -36,9 +36,16 @@ public class RewardDefinition
 	private final String _title;
 	private final int _minChain;
 	private final int _treasuryPercent;
+	private final int _distanceScale;
 
 	public RewardDefinition(double expPercent, double spRatio, long adenaPerLevel, List<RewardEntry> items, String title, int minChain, int treasuryPercent)
 	{
+		this(expPercent, spRatio, adenaPerLevel, items, title, minChain, treasuryPercent, 0);
+	}
+
+	public RewardDefinition(double expPercent, double spRatio, long adenaPerLevel, List<RewardEntry> items, String title, int minChain, int treasuryPercent, int distanceScale)
+	{
+		_distanceScale = Math.max(0, distanceScale);
 		_expPercent = expPercent;
 		_spRatio = spRatio;
 		_adenaPerLevel = adenaPerLevel;
@@ -70,6 +77,14 @@ public class RewardDefinition
 	public int getTreasuryPercent()
 	{
 		return _treasuryPercent;
+	}
+
+	/**
+	 * @return the road length (from where the quest's REACH started to its destination) that pays the EXP as given; a longer or shorter road pays more or less EXP. 0: the EXP doesn't depend on the road.
+	 */
+	public int getDistanceScale()
+	{
+		return _distanceScale;
 	}
 
 	/**

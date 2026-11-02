@@ -239,12 +239,20 @@ Procedurally generated quests that anyone can take at any level. None of them is
   - **Eligibility**: level, class, race, party size, town, night only, a cooldown and a daily limit.
   - **Stages**: each is made of objectives done together. There are ten objective types: kill, cull a surge, collect, deliver, escort, investigate, defend, talk to someone, reach a place and burn nests.
   - **Transitions**: success, failure, timeout, escalation (the target flees, the nests swarm, the outbreak spreads, the kidnappers move their captive and their leader joins) and follow-up quests with a chance.
-  - **Reward**: EXP as a share of the quest level's EXP, SP, adena by level and items by grade.
+  - **Reward**: EXP as a share of the quest level's EXP, SP, adena by level and items by grade. The Urgent Courier pays EXP by the road's length.
 - **It adjusts to you**:
   - The quest's level is the party's average level, moved by the tier you choose (Easy, Normal, Hard, Elite).
-  - Its hunting ground and monsters come from the retail spawns at that level, near where it was taken.
-  - Monster counts grow with the party, and the quest's own monsters become champions in bigger parties and harder tiers.
-  - Escort and defence meters last longer for bigger parties, and time limits get shorter at harder tiers.
+  - Its hunting ground and monsters come from the retail spawns at that level, near where it was taken. Grounds are drawn by area, not by spawn point, so a dense dungeon doesn't take every quest, and a character's next quests stay away from the grounds of their last five when another ground of about the same level is near. A follow-up goes on somewhere else.
+  - Places a player can't simply walk into are never picked: the catacombs and necropolises, the Pagan Temple, Hellbound, and the Cruma Tower for characters above level 55 (`<restrictedArea>` in `data/DynamicQuests.xml`).
+  - Most quests that take place out in the wilds start with a contact who waits at the hunting ground (a bounty hunter, a watchman, a ranger...). The quest's work and its clock only start once you got there and talked to them, so nothing fails while you travel. A player already near the ground starts at once.
+  - Monster counts grow with the party, and the quest's own monsters become champions in bigger parties and harder tiers, within a cap per tier: on Easy, ordinary monsters stay plain and a boss is at most a tier 1 champion; on Normal tier 1 and tier 2; on Hard and Elite tier 2 and tier 3.
+  - Escort and defence meters hold twice as long as the data gives (more for bigger parties), so slow killers can hold a line too, and time limits get shorter at harder tiers.
+- **Made to feel written, not rolled**:
+  - Quests name the land they take place in ("the Plains of Dion", "Death Pass"), taken from the hot zones, and a smuggler band heads for a named place.
+  - Escorts go all the way to the town's Notice Board when the road allows it (up to `maxLegs` legs), along a road that bends. Their ambushes wait somewhere along a few of the legs, come from ahead, and the first leg is quiet. The wagon master, the rescued captive, the survivor and the lost child talk on the road.
+  - A smuggler band walks one way to its meeting place instead of zig-zagging.
+  - Clues, trails, quest monsters and nests are spread out: clues 2200-3200 apart, targets 1500-2800 from the last clue, escort and smuggler legs 2200-3200, nests at least 1200 apart. Time limits grew to match.
+  - Clues are named for what they are (Mauled Remains, Signs of a Struggle, Small Footprints...), and the main quests have several offer, success and opening texts, one picked for each quest.
 - **Where quests come from**:
   - A **Notice Board** stands next to the gatekeeper of every town. It has a few board offers each day and the requests of that town's npcs (its real blacksmith, grocer, warehouse keeper or gatekeeper by name). Requests are handed over at the board.
   - The **Community Board** (`_bbsquests`, "Bounties and Requests") and **`.quests`** show the same board for the nearest town, your quests and the world events. Board offers can be taken from anywhere; requests only at the board. The Community Board draws it wider: an icon for each category, a progress gauge for each of your quests, today's offers two by two (title, then category), the difficulties side by side with their rewards, and a gauge per stage and per objective on a running quest.
@@ -259,7 +267,7 @@ Procedurally generated quests that anyone can take at any level. None of them is
   - Hold the Line (defend a camp banner through waves and a warband leader)
   - The Lost Expedition (three clues, then save the survivor or slay what took them)
   - Monster Nests (burn nests that keep spawning their brood)
-  - Urgent Courier (a sealed package to another town on foot; a teleport breaks the seal)
+  - Urgent Courier (a sealed package to another town on foot; a teleport breaks the seal; the longer the road, the more EXP)
 - **Fourteen more, all optional**:
   - The Treasure Map (a rare find on a kill: dig at the marked spot, then guard the chest)
   - Manhunt (a fugitive fake player who fights back; flagged, so killing them gives no karma)
@@ -964,6 +972,16 @@ Changes from 28 September – 19 October 2026.
 - **New**: 14 more optional Dynamic Quests, among them Treasure Map, Manhunt, Smuggler Interception, The Lost Child, Fisherman's Request, Lord's Levy, Night Watch and Guild Contract. There is a new INTERCEPT objective, fishing, stealth and fugitive (fake player) objectives, and offers that depend on the night or a castle lord.
 - **Fixed**: the question mark of quests isn't shown by every client. Finds and follow-ups now open their window at once, and `.quests` shows everything the question mark would: Dynamic Quest offers, and the Hidden Quest under way (its riddle, its progress, a waiting messenger). Crafting Goals and Dynamic Quests no longer share a question mark id.
 - **Changed**: Dynamic Quests never pester. An unasked offer that is turned down, left to expire or failed doesn't come back that day, and `.quests heralds off` stops heralds.
+- **Changed**: Dynamic Quests pay a quarter of the EXP they did (`DynamicQuestExpRate` 10 to 2.5), fit for an x1 server. The Urgent Courier keeps its EXP for a road of average length (20000), and pays 0.4x to 2.5x of it by the road's length.
+- **Fixed**: the Urgent Courier never failed on a teleport. It kept the player's own location object as "where the player was a second ago", which moves with the player, so the distance was always 0. It now keeps a copy, and any teleport (gatekeeper, scroll, return to village) breaks the seal.
+- **New**: a contact waits at the hunting ground of most quests out in the wilds (Wanted, Kidnapped, The Lost Expedition, Monster Nests, Manhunt, Corrupted Ground, Rare Beast Tracking, Smuggler Interception, The Lost Child, Scout the Frontier, Rival Adventurers, Rift Closing, Herbalist's Plague, Guild Contract). The work and its time limit start when you talk to them, so a quest no longer fails, or a smuggler band reaches its buyers, while you are still on the road. Caravan Crossing and Hold the Line give an hour to reach their caravan master or captain.
+- **Changed**: champion tiers of quest monsters are capped by difficulty: Normal no longer spawns tier 3 champions, nor bands of tier 2 ones (ordinary monsters tier 1 at most, one boss tier 2 at most). A fleeing band no longer comes back a tier stronger; only a lone named target does.
+- **Changed**: escort and defence meters hold twice as long.
+- **Fixed**: consecutive quests sent players to the same place. Hunting grounds are drawn by area rather than spawn point, a character's next quests avoid their last five grounds, and follow-ups (such as the Guild Contract chain) pick a new ground.
+- **Fixed**: quests sent players into places they can't reach: the catacombs and necropolises, the Pagan Temple, Hellbound, and the Cruma Tower above level 55.
+- **Fixed**: `{fugitive}` (Manhunt) and `{child}` (The Lost Child) were never filled in; every `<context>` of a template is now.
+- **Changed**: progress spots are spread further apart, escorts and smuggler bands travel 2-3 times as far, escorts reach the town itself, and their ambushes come along the road rather than at every waypoint. Escorted npcs talk on the road.
+- **New**: quests name the land they take place in (`{place}`), smugglers head for a named place (`{meeting}`), clues have names of their own, and templates can give several texts for the same key (and stages several opening texts), one picked by the quest's seed.
 
 ### Bestiary
 - **New**: every monster a player kills fills their account's bestiary, a collection on the web page of the passive tree server (`.bestiary`). Entries go from Discovered to Legendary with more kills, each tier showing more of the monster (stats, elements and skills, then drops) and making its items drop more often, with a size comparison, a habitat map, server-wide numbers and a ranking of hunters. The monsters of a region give up to four times the EXP as the account completes it. Each monster has a profile page with its 3D model, taken from your own client by `client/Bestiary/extract_models.py`, and `//bestiary` makes the portraits of the collection. See [Bestiary](#bestiary).

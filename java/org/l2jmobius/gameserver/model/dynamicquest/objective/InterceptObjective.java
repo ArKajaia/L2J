@@ -31,11 +31,12 @@ import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.dynamicquest.ObjectiveTemplate;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestInstance;
+import org.l2jmobius.gameserver.model.dynamicquest.WorldMonsterIndex;
 import org.l2jmobius.gameserver.util.QuestSpawnUtil;
 
 /**
  * INTERCEPT: a band of the place's monsters - a leader ({@code leaderTitle}, {@code leaderTierBonus}) and {@code guards} guards ({@code guardTitle}) - sets out from {@code at} and walks {@code legs} legs of {@code legMin}-{@code legMax} towards a meeting
- * point. Killing the leader before it arrives does it; its arrival fails it ({@code arriveText}). The band only walks while it isn't fighting, so a player who catches it holds it up.
+ * point, all in one general direction ({@code {meeting}}: the land it lies in). Killing the leader before it arrives does it; its arrival fails it ({@code arriveText}). The band only walks while it isn't fighting, so a player who catches it holds it up.
  * @author Mobius
  */
 public class InterceptObjective extends AbstractObjective
@@ -56,13 +57,7 @@ public class InterceptObjective extends AbstractObjective
 	public String start(boolean restored)
 	{
 		final Location start = point(resolve(_params.getString("at", "AREA")), _params.getInt("spawnMin", 0), _params.getInt("spawnMax", 400));
-		final int legs = Math.max(1, _params.getInt("legs", 4));
-		Location from = start;
-		for (int i = 0; i < legs; i++)
-		{
-			from = point(from, _params.getInt("legMin", 900), _params.getInt("legMax", 1400));
-			_route.add(from);
-		}
+		buildRoute(start);
 
 		final Random random = random("band");
 		_leader = _quest.spawnMonster(this, pickMonster(random), start, _params.getInt("leaderTierBonus", 2), text("leaderTitle", "Smuggler Boss"), null);
@@ -85,6 +80,45 @@ public class InterceptObjective extends AbstractObjective
 		_quest.putContext("leaderName", _leader.getTitle());
 		_quest.setMarker(start);
 		return null;
+	}
+
+	/**
+	 * The band heads one way, to a meeting point: every leg bends a little off that heading, never doubling back.
+	 */
+	private void buildRoute(Location start)
+	{
+		final Random random = random("route");
+		final int legs = Math.max(1, _params.getInt("legs", 4));
+		final int legMin = _params.getInt("legMin", 2000);
+		final int legMax = Math.max(legMin, _params.getInt("legMax", 3000));
+		final double heading = random.nextDouble() * 2 * Math.PI;
+		Location from = start;
+		for (int i = 0; i < legs; i++)
+		{
+			Location next = null;
+			for (int attempt = 0; (attempt < 8) && (next == null); attempt++)
+			{
+				// Off the heading by up to 35 degrees, more on later attempts if the land is in the way.
+				final double angle = heading + ((random.nextDouble() - 0.5) * Math.toRadians(70 + (attempt * 20)));
+				final int length = legMin + random.nextInt((legMax - legMin) + 1);
+				final Location ahead = new Location(from.getX() + (int) (Math.cos(angle) * length), from.getY() + (int) (Math.sin(angle) * length), from.getZ());
+				final Location candidate = QuestSpawnUtil.findPoint(ahead, 0, 300, false, 0);
+				if (Math.hypot(candidate.getX() - from.getX(), candidate.getY() - from.getY()) >= (legMin / 2))
+				{
+					next = candidate;
+				}
+			}
+			if (next == null)
+			{
+				next = point(from, legMin, legMax);
+			}
+			_route.add(next);
+			from = next;
+		}
+
+		final Location meeting = _route.get(_route.size() - 1);
+		final String place = WorldMonsterIndex.getPlaceName(meeting.getX(), meeting.getY(), meeting.getZ());
+		_quest.putContext("meeting", place != null ? place : "their meeting point");
 	}
 
 	@Override
@@ -155,6 +189,6 @@ public class InterceptObjective extends AbstractObjective
 	@Override
 	protected String defaultDescription()
 	{
-		return "Stop {leaderName} and the band before they reach their meeting point.";
+		return "Stop {leaderName} and the band before they reach {meeting}.";
 	}
 }
