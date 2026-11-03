@@ -20,18 +20,14 @@
  */
 package org.l2jmobius.gameserver.model.dynamicquest.objective;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
 import org.l2jmobius.gameserver.config.custom.DynamicQuestConfig;
-import org.l2jmobius.gameserver.data.sql.CharInfoTable;
 import org.l2jmobius.gameserver.managers.DynamicQuestManager;
 import org.l2jmobius.gameserver.model.Location;
-import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -107,16 +103,16 @@ public class CullObjective extends AbstractObjective
 			_alphaSlain = true;
 			if (player != null)
 			{
-				join(player, 5);
+				join(player, 4); // On top of the kill every world event counts.
 			}
 			_quest.announce(text("alphaSlainText", "The alpha has fallen!"));
 		}
 		else if (_surge.remove(npc))
 		{
 			_killed++;
-			if (player != null)
+			if ((player != null) && !_quest.isWorld())
 			{
-				join(player, 1);
+				join(player, 1); // A world event counts the kill itself.
 			}
 			if ((_killed % 5) == 0)
 			{
@@ -172,10 +168,10 @@ public class CullObjective extends AbstractObjective
 		// The best hunters of the surge, every minute and a half.
 		if (((second % 90) == 0) && (_killed > 0))
 		{
-			final String board = getLeaders(3);
+			final String board = _quest.getLeaders(3);
 			if (!board.isEmpty())
 			{
-				_quest.message("Most kills: " + board + ".");
+				_quest.message("Top hunters: " + board + ".");
 			}
 		}
 
@@ -193,41 +189,13 @@ public class CullObjective extends AbstractObjective
 		}
 	}
 
-	/**
-	 * @param amount how many to name
-	 * @return the best contributors, "Name (n), Name (n)", empty if nobody has fought yet
-	 */
-	public String getLeaders(int amount)
-	{
-		final List<Map.Entry<Integer, Integer>> entries = new ArrayList<>(_quest.getContributions().entrySet());
-		entries.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
-		final StringBuilder sb = new StringBuilder();
-		int named = 0;
-		for (Map.Entry<Integer, Integer> entry : entries)
-		{
-			if ((named >= amount) || (entry.getValue() <= 0))
-			{
-				break;
-			}
-			final Player player = World.getInstance().getPlayer(entry.getKey());
-			final String name = player != null ? player.getName() : CharInfoTable.getInstance().getNameById(entry.getKey());
-			if (name == null)
-			{
-				continue;
-			}
-			sb.append(sb.length() > 0 ? ", " : "").append(name).append(" (").append(entry.getValue()).append(')');
-			named++;
-		}
-		return sb.toString();
-	}
-
 	@Override
 	public void cleanup()
 	{
-		final String board = getLeaders(3);
+		final String board = _quest.getLeaders(3);
 		if (isDone() && !board.isEmpty())
 		{
-			_quest.announce("Heroes of the outbreak: " + board + "!");
+			_quest.announce(text("brokenText", "The surge is broken!") + " Top hunters so far: " + board + ".");
 		}
 		super.cleanup();
 	}
