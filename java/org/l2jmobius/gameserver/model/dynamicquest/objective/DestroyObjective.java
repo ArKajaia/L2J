@@ -234,6 +234,8 @@ public class DestroyObjective extends AbstractObjective
 				{
 					_nests.remove(nest);
 					_byNpc.remove(nest._npc);
+					// The next step starts where the last nest burned.
+					_quest.putLocation("last", new Location(nest._npc.getX(), nest._npc.getY(), nest._npc.getZ()));
 					_quest.despawn(nest._npc);
 					_destroyed++;
 					_quest.addContribution(burner.getObjectId(), 3);
@@ -272,6 +274,10 @@ public class DestroyObjective extends AbstractObjective
 			}
 		}
 
+		if ((closest == null) && (owner == null) && !_nests.isEmpty())
+		{
+			closest = _nests.get(0); // A world event: the radar points at a nest still standing.
+		}
 		if ((closest != null) && ((second % 10) == 0))
 		{
 			_quest.setMarker(closest._npc.getLocation());

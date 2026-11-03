@@ -275,7 +275,7 @@ Procedurally generated quests that anyone can take at any level. None of them is
   - Kidnapped (clues, the kidnappers' hideout, then bring the captive home)
   - Blacksmith's Order (real crafting materials of your grade)
   - A Favour (one small errand from a pool)
-  - Outbreak (a world event: a hunting ground's monsters multiply without respawning, and everyone near trims them, rewarded by contribution)
+  - Outbreak (a world event in three acts: a hunting ground's monsters multiply and head for the nearest town; everyone near trims the surge, burns the nests it came from, then kills the matriarch behind it. Each act is announced to the whole server, running out of time after the surge still pays 60% or 80%, the event's heroes are named at the end, and everyone who fought earns standing in the town it threatened. Six or more hunters near it make it a Hard event.)
   - Hold the Line (defend a camp banner through waves and a warband leader)
   - The Lost Expedition (three clues, then save the survivor or slay what took them)
   - Monster Nests (burn nests that keep spawning their brood)
@@ -993,6 +993,7 @@ Changes from 28 September – 19 October 2026.
 - **Fixed**: quests sent players into places they can't reach: the catacombs and necropolises, the Pagan Temple, Hellbound, and the Cruma Tower above level 55.
 - **Fixed**: `{fugitive}` (Manhunt) and `{child}` (The Lost Child) were never filled in; every `<context>` of a template is now.
 - **Changed**: progress spots are spread further apart, escorts and smuggler bands travel 2-3 times as far, escorts reach the town itself, and their ambushes come along the road rather than at every waypoint. Escorted npcs talk on the road.
+- **Changed**: Outbreak is a three-act world event (the surge, its nests, the matriarch), up to about an hour long, with server-wide news for each act, partial rewards when time runs out after the surge, its heroes named at the end and standing in the town it threatened. A crowd of six or more starts it at Hard. Transitions take `reward="n"` (percent paid when they complete a quest). Anyone who kills a world event's monsters or burns its nests takes part, not only those who culled the surge.
 - **New**: a CAPTURE objective (take a monster alive: it can't die, is subdued below a share of its health, bound by standing next to it while its guards are down, and breaks free if left alone), and two quests with it: Live Capture and Alive or Not at All.
 - **New**: town standing and regulars (more rewards from towns and requesters you keep working for), taunting targets, contacts who remember you, escort ambush tactics, a courier's growing pursuit, trapped herbs, a brood per nest, repairs between waves, disguised smugglers and an outbreak leaderboard. Clue pool lines may read "Name|text" to name their spot.
 - **New**: quests name the land they take place in (`{place}`), smugglers head for a named place (`{meeting}`), clues have names of their own, and templates can give several texts for the same key (and stages several opening texts), one picked by the quest's seed.

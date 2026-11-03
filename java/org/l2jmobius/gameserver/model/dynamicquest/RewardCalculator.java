@@ -71,7 +71,8 @@ public final class RewardCalculator
 		double multiplier = quest.getDifficulty().getTier().getRewardMultiplier();
 		multiplier *= 1 + ((quest.getOptionalDone() * DynamicQuestConfig.OPTIONAL_BONUS_PERCENT) / 100.0);
 		multiplier *= 1 + ((quest.getChain() * DynamicQuestConfig.CHAIN_BONUS_PERCENT) / 100.0);
-		return Math.min(DynamicQuestConfig.MAX_REWARD_MULTIPLIER, multiplier);
+		// A partial success pays its share, after the cap.
+		return (Math.min(DynamicQuestConfig.MAX_REWARD_MULTIPLIER, multiplier) * quest.getRewardPercent()) / 100;
 	}
 
 	/**

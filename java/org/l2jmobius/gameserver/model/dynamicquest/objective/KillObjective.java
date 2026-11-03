@@ -281,9 +281,9 @@ public class KillObjective extends AbstractObjective
 	{
 		_killed++;
 		_quest.setDirty(true);
-		if (killer != null)
+		if ((killer != null) && !_quest.isWorld())
 		{
-			_quest.addContribution(killer.getObjectId(), 1);
+			_quest.addContribution(killer.getObjectId(), 1); // A world event counts every kill itself.
 		}
 		if (_killed >= _total)
 		{

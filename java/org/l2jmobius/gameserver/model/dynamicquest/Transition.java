@@ -34,9 +34,19 @@ public class Transition
 	private final int _extraTime;
 	private final String _text;
 	private final int _maxChain;
+	private final int _rewardPercent;
 
 	public Transition(TransitionEvent event, TransitionAction action, int target, double chance, int max, int extraTime, String text, int maxChain)
 	{
+		this(event, action, target, chance, max, extraTime, text, maxChain, 100);
+	}
+
+	/**
+	 * @param rewardPercent the share of the reward paid when this rule completes the quest (a partial success)
+	 */
+	public Transition(TransitionEvent event, TransitionAction action, int target, double chance, int max, int extraTime, String text, int maxChain, int rewardPercent)
+	{
+		_rewardPercent = Math.max(0, Math.min(100, rewardPercent));
 		_event = event;
 		_action = action;
 		_target = target;
@@ -50,6 +60,14 @@ public class Transition
 	/**
 	 * @return the chain length from which this transition is skipped, 0 for never (lets a quest follow up on itself a few times)
 	 */
+	/**
+	 * @return the share of the reward (percent) paid when this rule completes the quest
+	 */
+	public int getRewardPercent()
+	{
+		return _rewardPercent;
+	}
+
 	public int getMaxChain()
 	{
 		return _maxChain;

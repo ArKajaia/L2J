@@ -156,6 +156,8 @@ public class DynamicQuestManager
 	private static final int REQUESTER_RANGE = 3500;
 	private static final int AREA_CELL = 4096;
 	private static final int HERALD_LEAVE_RANGE = 2500;
+	/** Players near a world event's ground from which it starts at the Hard tier. */
+	private static final int WORLD_HARD_CROWD = 6;
 	/** A player at most this far from the quest's ground starts the work at once, without meeting the contact first. */
 	private static final int CONTACT_SKIP_RANGE = 2000;
 	/** The context key of the stage the work starts at once the contact has been met. */
@@ -1069,8 +1071,16 @@ public class DynamicQuestManager
 			return "no hunting ground";
 		}
 		final int players = QuestInstance.playersNear(ground.getCenter(), DynamicQuestConfig.WORLD_EVENT_RANGE).size();
-		final QuestInstance quest = new QuestInstance(_nextId.incrementAndGet(), template, random.nextLong(), new DifficultyContext(DifficultyContext.clampLevel(ground.getLevel()), Math.max(1, players), QuestTier.NORMAL), 0, null, null, "", System.currentTimeMillis());
+		// A crowd hunting there gets a harder event (stronger bosses, more of them, better pay).
+		final QuestTier tier = players >= WORLD_HARD_CROWD ? QuestTier.HARD : QuestTier.NORMAL;
+		final QuestInstance quest = new QuestInstance(_nextId.incrementAndGet(), template, random.nextLong(), new DifficultyContext(DifficultyContext.clampLevel(ground.getLevel()), Math.max(1, players), tier), 0, null, null, "", System.currentTimeMillis());
 		quest.setArea(ground);
+		// The town it threatens: everyone who stops it earns standing there.
+		final NoticeBoardSite threatened = DynamicQuestData.getInstance().getNearestBoard(ground.getCenter(), 0);
+		if (threatened != null)
+		{
+			quest.putContext("town", threatened.getTown());
+		}
 		fillContext(quest);
 		_quests.put(quest.getId(), quest);
 		synchronized (quest)
@@ -1170,6 +1180,14 @@ public class DynamicQuestManager
 
 		if (states == null)
 		{
+			if (quest.isWorld() && (index > 0) && DynamicQuestConfig.ANNOUNCE_WORLD_EVENTS)
+			{
+				final String news = quest.getTemplate().getText("worldStage" + (index + 1), null);
+				if (news != null)
+				{
+					Broadcast.toAllOnlinePlayers(quest.format(news.replace("{name}", quest.getName())));
+				}
+			}
 			if (stage.getText() != null)
 			{
 				quest.message(stage.getText(quest.getSeed()));
@@ -1302,11 +1320,13 @@ public class DynamicQuestManager
 			}
 			case COMPLETE:
 			{
+				quest.setRewardPercent(chosen != null ? chosen.getRewardPercent() : 100);
 				finish(quest, DynamicQuestState.SUCCESS, null);
 				break;
 			}
 			case FOLLOW_UP:
 			{
+				quest.setRewardPercent(chosen.getRewardPercent());
 				finish(quest, DynamicQuestState.SUCCESS, null);
 				offerFollowUp(quest, chosen.getTarget());
 				break;
@@ -1417,7 +1437,14 @@ public class DynamicQuestManager
 			distributeRewards(quest, success);
 			if (quest.isWorld() && DynamicQuestConfig.ANNOUNCE_WORLD_EVENTS)
 			{
-				Broadcast.toAllOnlinePlayers(quest.format(quest.getTemplate().getText("worldSuccess", "{name} near {near} is over. Well fought!").replace("{name}", quest.getName())));
+				final String key = quest.getRewardPercent() < 100 ? "worldPartial" : "worldSuccess";
+				final String fallback = quest.getTemplate().getText("worldSuccess", "{name} near {near} is over. Well fought!");
+				Broadcast.toAllOnlinePlayers(quest.format(quest.getTemplate().getText(key, fallback).replace("{name}", quest.getName())));
+				final String heroes = quest.getLeaders(3);
+				if (!heroes.isEmpty())
+				{
+					Broadcast.toAllOnlinePlayers(quest.format("Heroes of {place}: ") + heroes + ".");
+				}
 			}
 			log(quest.getName() + " completed" + (quest.getOwnerName() != null ? " by " + quest.getOwnerName() : "") + ".");
 		}
@@ -1820,6 +1847,10 @@ public class DynamicQuestManager
 			if ((objective == null) || !quest.isActive() || quest.isStageEnding() || !quest.getObjectives().contains(objective))
 			{
 				return;
+			}
+			if (quest.isWorld() && (killer != null) && (killer.asPlayer() != null))
+			{
+				quest.addContribution(killer.asPlayer().getObjectId(), 1);
 			}
 			objective.onNpcDeath(npc, killer);
 			if (quest.isNeedsCheck())

@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.config.custom.DynamicQuestConfig;
+import org.l2jmobius.gameserver.data.sql.CharInfoTable;
 import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.managers.DynamicQuestManager;
 import org.l2jmobius.gameserver.model.Location;
@@ -85,6 +86,7 @@ public class QuestInstance
 	private int _optionalDone;
 	private int _activeTicks;
 	private boolean _deathOccurred;
+	private int _rewardPercent = 100;
 	private boolean _dirty;
 	private boolean _stageEnding;
 	private boolean _needsCheck;
@@ -476,6 +478,56 @@ public class QuestInstance
 	public void addContribution(int objectId, int amount)
 	{
 		_contribution.merge(objectId, amount, Integer::sum);
+		// Anyone who fights for a world event takes part in it.
+		if (isWorld() && _participants.add(objectId))
+		{
+			final Player player = World.getInstance().getPlayer(objectId);
+			if (player != null)
+			{
+				DynamicQuestManager.getInstance().onParticipantAdded(this, player);
+			}
+		}
+	}
+
+	/**
+	 * @param amount how many to name
+	 * @return the best contributors, "Name (n), Name (n)", empty if nobody has fought yet
+	 */
+	public String getLeaders(int amount)
+	{
+		final List<Map.Entry<Integer, Integer>> entries = new ArrayList<>(_contribution.entrySet());
+		entries.sort((a, b) -> Integer.compare(b.getValue(), a.getValue()));
+		final StringBuilder sb = new StringBuilder();
+		int named = 0;
+		for (Map.Entry<Integer, Integer> entry : entries)
+		{
+			if ((named >= amount) || (entry.getValue() <= 0))
+			{
+				break;
+			}
+			final Player player = World.getInstance().getPlayer(entry.getKey());
+			final String name = player != null ? player.getName() : CharInfoTable.getInstance().getNameById(entry.getKey());
+			if (name == null)
+			{
+				continue;
+			}
+			sb.append(sb.length() > 0 ? ", " : "").append(name).append(" (").append(entry.getValue()).append(')');
+			named++;
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * @return the share of the reward (percent) the quest pays: less than 100 after a partial success
+	 */
+	public int getRewardPercent()
+	{
+		return _rewardPercent;
+	}
+
+	public void setRewardPercent(int rewardPercent)
+	{
+		_rewardPercent = rewardPercent;
 	}
 
 	public int getContribution(int objectId)

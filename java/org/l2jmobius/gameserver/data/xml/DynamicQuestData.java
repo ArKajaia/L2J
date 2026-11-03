@@ -581,7 +581,7 @@ public class DynamicQuestData implements IXmlReader
 				{
 					final TransitionAction action = parseEnum(childAttrs, TransitionAction.class, "action");
 					final int target = parseInteger(childAttrs, "target", 0) + (action == TransitionAction.STAGE ? offset : 0);
-					transitions.add(new Transition(parseEnum(childAttrs, TransitionEvent.class, "event"), action, target, parseDouble(childAttrs, "chance", 100d), parseInteger(childAttrs, "max", 1), parseInteger(childAttrs, "extraTime", 0), parseString(childAttrs, "text", null), parseInteger(childAttrs, "maxChain", 0)));
+					transitions.add(new Transition(parseEnum(childAttrs, TransitionEvent.class, "event"), action, target, parseDouble(childAttrs, "chance", 100d), parseInteger(childAttrs, "max", 1), parseInteger(childAttrs, "extraTime", 0), parseString(childAttrs, "text", null), parseInteger(childAttrs, "maxChain", 0), parseInteger(childAttrs, "reward", 100)));
 					break;
 				}
 			}

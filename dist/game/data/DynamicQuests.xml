@@ -69,7 +69,8 @@
 	               INTERCEPT   at legs legMin legMax guards leaderTitle leaderTierBonus guardTitle disguise revealRange revealText: kill the leader of a band on the move
 	                           before it reaches its meeting point ({meeting}: the land it lies in), all its legs heading one way
 	               at = AREA (the hunting ground) | LAST (where the previous step ended) | NEAR (the owner) | HOME (the board the quest was taken at).
-	    on         event = SUCCESS | FAILURE | TIMEOUT, action = NEXT | STAGE (target) | COMPLETE | FAIL | FOLLOW_UP (target template) |
+	    on         reward (percent of the reward paid when this rule completes the quest: a partial success, 100 by default)
+	               event = SUCCESS | FAILURE | TIMEOUT, action = NEXT | STAGE (target) | COMPLETE | FAIL | FOLLOW_UP (target template) |
 	               ESCALATE (max, extraTime), chance (percent; the first rule that rolls is taken), text, maxChain (skipped once the chain
 	               is that long). Without a rule: SUCCESS goes on, the rest fail.
 	  reward       exp (percent of the EXP from the quest's level to the next) sp (SP per EXP) adenaPerLevel table + its own items,
@@ -79,7 +80,8 @@
 	  text         Several texts with the same key (and several <text> in a stage) are variants: one is picked by the quest's seed.
 	               {place}: the land of the quest's hunting ground ("the Plains of Dion"), {near}: the nearest town.
 	               key: title (board name), offer (board text), success, failTime, failText, failLogout, failDeath, failEscalate, failStart, failDawn, findText,
-	               heraldLine, worldAnnounce, worldSuccess, worldFail.
+	               heraldLine, worldAnnounce, worldStage2, worldStage3... (told to the whole server when a world event reaches that stage),
+	               worldSuccess, worldPartial (a partial success), worldFail. A world event's town ({town}) is the nearest board's.
 	-->
 
 	<settings noticeBoardNpc="900500" heraldNpc="900501" />
@@ -399,6 +401,13 @@
 		<entry>Scratched Marker|The marker is here, but someone tried to scratch it out. Interesting.</entry>
 	</textPool>
 
+	<textPool name="matriarchTaunts">
+		<entry>*The matriarch shrieks, and the ground shakes with the answer of her brood.*</entry>
+		<entry>*She tears at the earth where her nests burned.*</entry>
+		<entry>*Her brood circles you, waiting for her signal.*</entry>
+		<entry>*A deafening screech: she knows who burned her nests.*</entry>
+	</textPool>
+
 	<!-- Live captures (CAPTURE). -->
 	<textPool name="captureBeasts">
 		<entry>the Silver-Horned Stag</entry>
@@ -612,24 +621,44 @@
 		<text key="success">{requester} thanks you warmly.</text>
 	</template>
 
-	<!-- 6. Outbreak: a hunting ground's monsters multiply. Everyone near trims the surge before it spreads. -->
+	<!-- 6. Outbreak: a world event in three acts. A hunting ground's monsters multiply and head for the nearest town: trim the surge, burn
+	     the nests it came from, then kill the matriarch behind it. Running out of time after the surge still pays a share. Everyone who
+	     fights takes part, rewarded by what they did, and earns standing in the town it threatened. A crowd gets a harder event. -->
 	<template id="6" name="Outbreak of {monster}" category="World event" scope="WORLD">
 		<trigger type="TIMER" chance="35" />
 		<eligibility minLevel="20" />
-		<stage name="The Surge" timeLimit="1200">
-			<text>The {monster} in {place} are multiplying. Trim them down before they spread!</text>
-			<objective type="CULL" count="15" perPlayer="4" max="60" radius="800" percent="80" alphaTitle="Alpha of the Swarm" alphaTierBonus="3" spreadMin="1500" spreadMax="2500" />
-			<on event="SUCCESS" action="COMPLETE" />
-			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="900" text="The outbreak spreads, and an alpha leads it!" />
+		<stage name="The Surge" timeLimit="900">
+			<text>The {monster} in {place} are multiplying, and {town} lies in their path. Trim them down before they spread!</text>
+			<text>A tide of {monster} pours across {place} towards {town}. Every blade counts - cut them down!</text>
+			<objective type="CULL" count="20" perPlayer="5" max="80" radius="900" percent="80" alphaTitle="Alpha of the Swarm" alphaTierBonus="3" spreadMin="1500" spreadMax="2500" brokenText="The surge is broken!" />
+			<on event="SUCCESS" action="NEXT" />
+			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="The outbreak spreads, and an alpha leads it!" />
 		</stage>
-		<reward exp="3" sp="0.1" adenaPerLevel="1200" table="caches">
+		<stage name="The Nests" timeLimit="1200">
+			<text>The surge came from nests hidden in {place}. Burn them all, or it will start again within the week.</text>
+			<text>Scouts have found where the swarm breeds: nests all over {place}. Burn them before the next brood hatches.</text>
+			<objective type="DESTROY" nests="4" nestNpc="900507" spawnEvery="18" maxAlive="4" burnTime="8" radius="2200" spacing="1200" broodTitle="Brood Mother" broodTierBonus="2" nestText="A swollen nest, pulsing with the next generation of the swarm. Stand next to it to burn it." />
+			<on event="SUCCESS" action="NEXT" />
+			<on event="TIMEOUT" action="COMPLETE" reward="60" text="The surge is beaten, but some nests survive. It will come again - and the reward is smaller." />
+		</stage>
+		<stage name="The Matriarch" timeLimit="900">
+			<text>With her nests in ashes, the matriarch of the swarm comes out to fight, her brood around her. End this!</text>
+			<objective type="KILL" source="QUEST" named="true" title="Matriarch of the Swarm" at="LAST" spawnMin="600" spawnMax="1200" tierBonus="3" guards="4" guardTitle="Brood Guard" taunts="matriarchTaunts" killText="The matriarch is dead. The outbreak is over!" />
+			<on event="SUCCESS" action="COMPLETE" />
+			<on event="TIMEOUT" action="COMPLETE" reward="80" text="The matriarch escapes into the wilds, wounded. Without her nests, she won't be back soon." />
+		</stage>
+		<reward exp="5" sp="0.1" adenaPerLevel="2000" table="caches">
 			<item id="736" count="1" scaled="false" /> <!-- Scroll of Escape -->
 		</reward>
 		<text key="title">Outbreak</text>
-		<text key="worldAnnounce">Outbreak! The {monster} in {place} are multiplying out of control. Hunters of level {level} or so, trim them down!</text>
-		<text key="worldSuccess">The outbreak in {place} has been trimmed down. Well fought!</text>
-		<text key="worldFail">The outbreak in {place} could not be stopped. The beasts scatter into the land.</text>
-		<text key="success">The surge is broken. Everyone who fought shares the reward.</text>
+		<text key="worldAnnounce">Outbreak! The {monster} in {place} are multiplying and heading for {town}. Hunters of level {level} or so, stop them!</text>
+		<text key="worldStage2">{name}: the surge in {place} is broken. Now burn the nests it came from!</text>
+		<text key="worldStage3">{name}: the nests in {place} are burning - and the matriarch of the swarm has come out to fight!</text>
+		<text key="worldSuccess">The outbreak in {place} is over: the surge, the nests and their matriarch are gone. {town} is safe. Well fought!</text>
+		<text key="worldPartial">The outbreak in {place} is held back, but not ended. {town} is safe - for now.</text>
+		<text key="worldFail">The outbreak in {place} could not be stopped. The {monster} scatter towards {town}.</text>
+		<text key="success">The outbreak is over. Everyone who fought shares the reward, by what they did - and {town} won't forget it.</text>
+		<text key="success">{town} is safe. Its people will remember who stood between them and the swarm.</text>
 	</template>
 
 	<!-- 7. Hold the Line: a camp in the wilds is about to be overrun. Hold its banner through the waves. -->
