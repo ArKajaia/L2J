@@ -319,6 +319,28 @@ Procedurally generated quests that anyone can take at any level. None of them is
   - `//dynquest_reroll` (roll every board again)
 - **Settings**: `config/Custom/DynamicQuests.ini`. The header of `data/DynamicQuests.xml` documents every trigger, objective, transition and reward attribute. New quests are added there.
 
+### Repeatable Hunts
+
+Ten repeatable hunting quests for the grounds of levels 40-75 that had none of their own. They were chosen against the hunting zones High Five guides recommend for each level bracket ([L2 Reborn's High Five guide](https://l2reborn.org/news/high-five-guide/)) and the monsters the server's retail repeatable quests already cover: below 40 and above 75 every recommended zone has its quests, between them about a dozen had none.
+
+| Hunt | Region | Levels | Giver | Pays for |
+|---|---|---|---|---|
+| Wardens of the Tower | Cruma Tower | 38-52 | Researcher Velmor, Dion | kills |
+| Ghost Fires of the Mirrors | Forest of Mirrors | 42-52 | Lamplighter Odessa, Aden | Ignition of Ghost Fire |
+| Medals of the Fallen | Plains of Glory | 44-53 | Veteran Halvard, Hunters Village | Medal of Victory |
+| Vouchers of the Old War | War-Torn Plains | 45-55 | Quartermaster Brenna, Hunters Village | War Veteran Voucher |
+| The Canyon Road | Tanor Canyon | 45-53 | Warden Kessler, Giran | kills |
+| Bones for the Burial | The Cemetery | 50-57 | Gravekeeper Mirela, Hunters Village | Jar of Bones |
+| Taking Back the Falls | Anghel Waterfall | 52-58 | Tracker Joanne, Aden | kills |
+| The Forsaken Frontier | Forsaken Plains | 54-62 | Sergeant Dorrick, Hunters Village | kills |
+| Relics of the Valley | Valley of Saints | 60-69 | Sister Aurelie, Rune | Ancient Statue of Goddess |
+| Fire in the Swamp | Blazing Swamp | 67-77 | Captain Rhodric, Goddard | kills |
+
+- **How they work**: the givers stand next to their town's gatekeeper. Take the hunt, kill the region's monsters (or gather the quest item they drop), and report back as often as you like: each report pays adena for every kill or item, plus a bonus for a report of 25 kills or 12 items, and the hunt goes on until you give it up. Kills count for every party member near the kill who has the hunt; an item goes to one of them. Characters more than 3 levels above a hunt's range count nothing.
+- **Couriers**: a player who kills a dozen of a hunt's monsters without it is found by a courier once out of the fight, with the offer, and can take the hunt on the spot. A courier doesn't bring the same hunt again for two hours (six after a refusal), and `.quests heralds off` stops them.
+- **Rewards**: modest and mostly adena, on the scale of retail repeatables such as Alligator Hunter: about 14% of the monsters' average adena per kill, and five kills' adena as the bonus, times `RateQuestRewardAdena`. The items are retail quest items no quest of the server uses, so the client shows them; they can't be traded or dropped.
+- **Settings**: `data/RepeatableHunts.xml` (its header documents every attribute); progress is kept in player variables (kills) and the inventory (items).
+
 ### Village Under Siege
 
 One village or town after the other, the monsters of the hunting grounds around it attack its entrances. Each siege is for the characters of its own levels, and only they hear of it: the starting villages, Gludin, Gludio and Dion call the characters up to level 40, the towns the higher levels, up to 85.
@@ -980,6 +1002,9 @@ Changes from 28 September – 19 October 2026.
 - **Fixed**: the tutorial question mark never appeared, only its sound. The client interface's `TutorialBtnWnd.uc` had its event handler commented out, so nothing showed the window. The restored script and how to build it are in `client/TutorialQuestionMark`.
 - **Fixed**: the welcome lesson no longer tells new players to click a question mark that isn't there yet. It says the marks come with new lessons, and that `.guide` holds them too (also in the chat notice), for clients that don't show the mark.
 - **Fixed**: with the retail tutorial off (`DisableTutorial = True`) the Newbie Guides, the Adventurer's Guide and the Gludin/Gludio guides said nothing to new characters, so no beginner coupons, buffs or help. They now start the tutorial's state themselves.
+
+### Repeatable Hunts
+- **New**: ten repeatable hunting quests for the level 40-75 grounds that had none (Cruma Tower, Forest of Mirrors, Plains of Glory, War-Torn Plains, Tanor Canyon, the Cemetery, Anghel Waterfall, Forsaken Plains, Valley of Saints, Blazing Swamp). Givers in Dion, Giran, Aden, Hunters Village, Rune and Goddard pay adena per kill or per quest item at every report, and couriers bring the offer to players already hunting there. See [Repeatable Hunts](#repeatable-hunts).
 
 ### Dynamic Quests
 - **New**: procedurally generated quests that adjust to the party: its level, its size and the tier chosen. Templates in `data/DynamicQuests.xml` are built from ten reusable objective types (kill, cull, collect, deliver, escort, investigate, defend, talk, reach, destroy), triggers, eligibility rules, transitions (success, failure, timeout, escalation, follow-up) and a reward formula.
