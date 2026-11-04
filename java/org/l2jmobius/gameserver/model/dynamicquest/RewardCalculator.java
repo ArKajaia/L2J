@@ -69,6 +69,11 @@ public final class RewardCalculator
 	public static double getQuestMultiplier(QuestInstance quest)
 	{
 		double multiplier = quest.getDifficulty().getTier().getRewardMultiplier();
+		final QuestTwist twist = quest.getDifficulty().getTwist();
+		if (twist != null)
+		{
+			multiplier *= twist.getRewardMultiplier();
+		}
 		multiplier *= 1 + ((quest.getOptionalDone() * DynamicQuestConfig.OPTIONAL_BONUS_PERCENT) / 100.0);
 		multiplier *= 1 + ((quest.getChain() * DynamicQuestConfig.CHAIN_BONUS_PERCENT) / 100.0);
 		// A partial success pays its share, after the cap.
@@ -110,7 +115,8 @@ public final class RewardCalculator
 	public static Payout compute(QuestInstance quest, double factor, boolean roll)
 	{
 		final RewardDefinition reward = quest.getTemplate().getReward();
-		return compute(reward, quest.getDifficulty().getQuestLevel(), getQuestMultiplier(quest) * factor, getDistanceFactor(reward, quest.getContext("route", null)), roll);
+		final QuestTwist twist = quest.getDifficulty().getTwist();
+		return compute(reward, quest.getDifficulty().getQuestLevel(), getQuestMultiplier(quest) * factor, getDistanceFactor(reward, quest.getContext("route", null)), twist != null ? twist.getAdenaMultiplier() : 1, roll);
 	}
 
 	/** The least and the most a road's length changes the EXP of a reward that pays by distance. */
@@ -161,6 +167,20 @@ public final class RewardCalculator
 	 */
 	public static Payout compute(RewardDefinition reward, int level, double multiplier, double expFactor, boolean roll)
 	{
+		return compute(reward, level, multiplier, expFactor, 1, roll);
+	}
+
+	/**
+	 * @param reward the reward definition
+	 * @param level the quest's level
+	 * @param multiplier everything multiplied together
+	 * @param expFactor what multiplies the EXP and SP only (the road's length of a courier)
+	 * @param adenaFactor what multiplies the adena only (a generous patron)
+	 * @param roll {@code true} to roll the item chances
+	 * @return the payout
+	 */
+	public static Payout compute(RewardDefinition reward, int level, double multiplier, double expFactor, double adenaFactor, boolean roll)
+	{
 		final Payout payout = new Payout();
 		payout._multiplier = multiplier;
 		if (multiplier <= 0)
@@ -174,7 +194,7 @@ public final class RewardCalculator
 		final double exp = (levelExp * reward.getExpPercent() * multiplier * expFactor) / 100;
 		payout._exp = (long) (exp * DynamicQuestConfig.EXP_RATE);
 		payout._sp = (long) (exp * reward.getSpRatio());
-		payout._adena = (long) (reward.getAdenaPerLevel() * level * multiplier * DynamicQuestConfig.ADENA_RATE);
+		payout._adena = (long) (reward.getAdenaPerLevel() * level * multiplier * adenaFactor * DynamicQuestConfig.ADENA_RATE);
 
 		for (RewardEntry entry : reward.getItems())
 		{

@@ -22,8 +22,12 @@ package org.l2jmobius.gameserver.model.dynamicquest.objective;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.l2jmobius.gameserver.config.custom.DynamicQuestConfig;
 import org.l2jmobius.gameserver.data.xml.DynamicQuestData;
@@ -70,8 +74,68 @@ public abstract class AbstractObjective
 	{
 		_quest = quest;
 		_template = template;
-		_params = template.getParams();
 		_index = index;
+		_params = resolveParams(template.getParams());
+	}
+
+	/** An integer range "min-max" in the data. */
+	private static final Pattern RANGE = Pattern.compile("(\\d+)-(\\d+)");
+	/** Alternatives "this||that" in the data. */
+	private static final String ALTERNATIVES = "||";
+
+	/**
+	 * Gives every quest its own version of the data: a range "2-4" becomes one number of it, alternatives "a||b" one of them, both picked by the quest's seed (the same again when
+	 * the quest is restored).
+	 * @param params the data's parameters
+	 * @return this quest's parameters
+	 */
+	private StatSet resolveParams(StatSet params)
+	{
+		Map<String, Object> resolved = null;
+		for (Map.Entry<String, Object> entry : params.getSet().entrySet())
+		{
+			if (!(entry.getValue() instanceof String))
+			{
+				continue;
+			}
+			final String value = ((String) entry.getValue()).trim();
+			final String picked = pickVariant(entry.getKey(), value);
+			if (picked != value)
+			{
+				if (resolved == null)
+				{
+					resolved = new HashMap<>(params.getSet());
+				}
+				resolved.put(entry.getKey(), picked);
+			}
+		}
+		return resolved != null ? new StatSet(resolved) : params;
+	}
+
+	/**
+	 * @param key what the value is for
+	 * @param value a value of the data
+	 * @return the quest's pick if it is a range or alternatives, else the value itself
+	 */
+	private String pickVariant(String key, String value)
+	{
+		if (value.contains(ALTERNATIVES))
+		{
+			final String[] options = value.split(Pattern.quote(ALTERNATIVES));
+			return options[random("variant." + key).nextInt(options.length)].trim();
+		}
+		final Matcher range = RANGE.matcher(value);
+		if (range.matches())
+		{
+			final int min = Integer.parseInt(range.group(1));
+			final int max = Integer.parseInt(range.group(2));
+			if (max > min)
+			{
+				return String.valueOf(min + random("variant." + key).nextInt((max - min) + 1));
+			}
+			return String.valueOf(min);
+		}
+		return value;
 	}
 
 	/**
@@ -345,7 +409,7 @@ public abstract class AbstractObjective
 	 */
 	public String describe()
 	{
-		return _quest.format(_template.getText() != null ? _template.getText() : defaultDescription());
+		return _quest.format(_template.getText() != null ? pickVariant("text", _template.getText()) : defaultDescription());
 	}
 
 	// ---------------------------------------------------------------------------------------------

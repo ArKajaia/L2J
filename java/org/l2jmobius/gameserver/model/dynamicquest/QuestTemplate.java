@@ -49,6 +49,7 @@ public class QuestTemplate
 	private final Map<String, String> _texts;
 	private final List<Integer> _entryStages;
 	private final boolean _contact;
+	private List<QuestTwist> _twists = Collections.emptyList();
 
 	public QuestTemplate(int id, String name, String category, QuestScope scope, String requester, List<QuestTrigger> triggers, Eligibility eligibility, List<StageTemplate> stages, RewardDefinition reward, Map<String, String> texts, List<Integer> entryStages)
 	{
@@ -77,6 +78,19 @@ public class QuestTemplate
 	public List<Integer> getEntryStages()
 	{
 		return _entryStages;
+	}
+
+	/**
+	 * @return the twists its offers may come with (empty: none)
+	 */
+	public List<QuestTwist> getTwists()
+	{
+		return _twists;
+	}
+
+	public void setTwists(List<QuestTwist> twists)
+	{
+		_twists = Collections.unmodifiableList(twists);
 	}
 
 	/**

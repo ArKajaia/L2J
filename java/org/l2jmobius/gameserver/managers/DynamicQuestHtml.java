@@ -38,6 +38,7 @@ import org.l2jmobius.gameserver.model.dynamicquest.QuestOffer;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestStanding;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTemplate;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTier;
+import org.l2jmobius.gameserver.model.dynamicquest.QuestTwist;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTrigger;
 import org.l2jmobius.gameserver.model.dynamicquest.RewardCalculator;
 import org.l2jmobius.gameserver.model.dynamicquest.RewardCalculator.Payout;
@@ -346,6 +347,11 @@ public final class DynamicQuestHtml
 		{
 			sb.append("<font color=\"").append(COLOR_MUTED).append("\">").append(standing).append("</font><br1>");
 		}
+		final QuestTwist twist = QuestTwist.roll(template, offer.getSeed());
+		if (twist != null)
+		{
+			sb.append("<font color=\"").append(COLOR_MUTED).append("\">Twist - </font>").append(twist.describe()).append("<br1>");
+		}
 		sb.append("<font color=\"").append(COLOR_TEXT).append("\">").append(fill(manager, template.getText("offer", "There is work to be done.", offer.getSeed()), offer)).append("</font><br><br>");
 
 		final List<Player> members = DynamicQuestManager.getMembers(player);
@@ -357,8 +363,8 @@ public final class DynamicQuestHtml
 			{
 				continue;
 			}
-			final DifficultyContext context = DifficultyContext.of(player, members, tier);
-			final Payout preview = RewardCalculator.compute(template.getReward(), context.getQuestLevel(), tier.getRewardMultiplier() * (1 + ((offer.getChain() * DynamicQuestConfig.CHAIN_BONUS_PERCENT) / 100.0)), false);
+			final DifficultyContext context = DifficultyContext.of(player, members, tier, twist);
+			final Payout preview = RewardCalculator.compute(template.getReward(), context.getQuestLevel(), tier.getRewardMultiplier() * (twist != null ? twist.getRewardMultiplier() : 1) * (1 + ((offer.getChain() * DynamicQuestConfig.CHAIN_BONUS_PERCENT) / 100.0)), 1, twist != null ? twist.getAdenaMultiplier() : 1, false);
 			sb.append("<tr><td width=70><font color=\"").append(tier.getColor()).append("\">").append(tier.getDisplayName()).append("</font></td>");
 			sb.append("<td><font color=\"").append(COLOR_TEXT).append("\">Lv. ").append(context.getQuestLevel()).append(" - ").append(String.format("%,d", preview._exp)).append(template.getReward().getDistanceScale() > 0 ? " EXP (by road length), " : " EXP, ").append(String.format("%,d", preview._adena)).append(" Adena</font></td></tr>");
 		}
@@ -435,6 +441,10 @@ public final class DynamicQuestHtml
 			sb.append(", near ").append(quest.getContext("near", "?"));
 		}
 		sb.append("</font><br>");
+		if (quest.getDifficulty().getTwist() != null)
+		{
+			sb.append(quest.getDifficulty().getTwist().describe()).append("<br>");
+		}
 
 		final StageTemplate stage = quest.getStage();
 		synchronized (quest)
@@ -691,6 +701,11 @@ public final class DynamicQuestHtml
 		{
 			text.append("<br1><font color=\"").append(COLOR_DIM).append("\">").append(standing).append("</font>");
 		}
+		final QuestTwist twist = QuestTwist.roll(template, offer.getSeed());
+		if (twist != null)
+		{
+			text.append("<br1><font color=\"").append(COLOR_DIM).append("\">Twist - </font>").append(twist.describe());
+		}
 		sb.append(spacer(6)).append(panel(BG_CARD, text.toString()));
 
 		final List<Player> members = DynamicQuestManager.getMembers(player);
@@ -710,8 +725,8 @@ public final class DynamicQuestHtml
 		for (int i = 0; i < tiers.size(); i++)
 		{
 			final QuestTier tier = tiers.get(i);
-			final DifficultyContext context = DifficultyContext.of(player, members, tier);
-			final Payout preview = RewardCalculator.compute(template.getReward(), context.getQuestLevel(), tier.getRewardMultiplier() * (1 + ((offer.getChain() * DynamicQuestConfig.CHAIN_BONUS_PERCENT) / 100.0)), false);
+			final DifficultyContext context = DifficultyContext.of(player, members, tier, twist);
+			final Payout preview = RewardCalculator.compute(template.getReward(), context.getQuestLevel(), tier.getRewardMultiplier() * (twist != null ? twist.getRewardMultiplier() : 1) * (1 + ((offer.getChain() * DynamicQuestConfig.CHAIN_BONUS_PERCENT) / 100.0)), 1, twist != null ? twist.getAdenaMultiplier() : 1, false);
 			final int inner = cardWidth - 16;
 			if (i > 0)
 			{
@@ -750,6 +765,10 @@ public final class DynamicQuestHtml
 		final QuestTier tier = quest.getDifficulty().getTier();
 		final String subtitle = "<font color=\"" + tier.getColor() + "\">" + tier.getDisplayName() + "</font> <font color=\"" + COLOR_DIM + "\">- level " + quest.getDifficulty().getQuestLevel() + (quest.isWorld() ? ", near " + quest.getContext("near", "?") : ", party of " + quest.getDifficulty().getPartySize() + ", taken by " + (quest.getOwnerId() == player.getObjectId() ? "you" : quest.getOwnerName())) + "</font>";
 		sb.append(boardHeader(quest.getName(), subtitle, null, 0));
+		if (quest.getDifficulty().getTwist() != null)
+		{
+			sb.append(spacer(4)).append(note(quest.getDifficulty().getTwist().describe()));
+		}
 
 		final StringBuilder actions = new StringBuilder();
 		synchronized (quest)
