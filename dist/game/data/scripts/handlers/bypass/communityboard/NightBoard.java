@@ -151,13 +151,17 @@ public class NightBoard implements IParseBoardHandler
 			if (nightlords.isEmpty())
 			{
 				sb.append("<table width=").append(width).append("><tr><td><font color=\"").append(COLOR_TEXT).append("\">");
-				if (phase.isNight())
+				if (!manager.isNightlordNight())
+				{
+					sb.append(phase.isNight() ? "The Nightlords rest tonight while the Shadow Raiders ride. They rise again the next night." : "The Nightlords rest the coming night while the Shadow Raiders ride. They rise again the night after.");
+				}
+				else if (phase.isNight())
 				{
 					sb.append("No Nightlord walks right now.");
 				}
 				else
 				{
-					sb.append("Soon after nightfall a Nightlord rises in each level bracket. Beat it in ").append(NightCycleConfig.NIGHTLORD_WAVES).append(" waves: everyone who fought it gets a Sealed Cache.");
+					sb.append("After nightfall a Nightlord rises in each level bracket. Beat it in ").append(NightCycleConfig.NIGHTLORD_WAVES).append(" waves: everyone who fought it gets a Sealed Cache.");
 				}
 				sb.append("</font></td></tr></table>");
 			}
@@ -183,7 +187,14 @@ public class NightBoard implements IParseBoardHandler
 			if (raids.isEmpty())
 			{
 				sb.append("<table width=").append(width).append("><tr><td><font color=\"").append(COLOR_TEXT).append("\">");
-				sb.append("At night warbands of the clans raid the open world and attack everyone they meet. Killing a raider is never a PK and pays ").append(NightCycleConfig.NIGHT_RAID_KILL_COINS).append(" Dragon Coins and a Sealed Cache.");
+				if (!manager.isShadowRaidNight())
+				{
+					sb.append(phase.isNight() ? "The Shadow Raiders rest tonight while the Nightlords walk. They ride again the next night." : "The Shadow Raiders rest the coming night while the Nightlords walk. They ride again the night after.");
+				}
+				else
+				{
+					sb.append("At night warbands of the clans raid the open world and attack everyone they meet. Killing a raider is never a PK and pays ").append(NightCycleConfig.NIGHT_RAID_KILL_COINS).append(" Dragon Coins and a Sealed Cache.");
+				}
 				sb.append("</font></td></tr></table>");
 			}
 			else

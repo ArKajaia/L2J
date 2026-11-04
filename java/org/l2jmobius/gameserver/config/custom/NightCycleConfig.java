@@ -60,6 +60,7 @@ public class NightCycleConfig
 	public static int WITCHING_HOUR_DAWN_BURN_PERCENT;
 
 	// Nightlords
+	public static boolean NIGHT_EVENTS_ALTERNATE;
 	public static boolean NIGHTLORD_ENABLED;
 	public static int NIGHTLORD_SPAWN_DELAY;
 	public static int NIGHTLORD_CHAMPION_TIER;
@@ -97,6 +98,8 @@ public class NightCycleConfig
 	// Shadow Raids
 	public static boolean NIGHT_RAID_ENABLED;
 	public static int NIGHT_RAID_COUNT;
+	public static int NIGHT_RAID_FIRST_DELAY_MIN;
+	public static int NIGHT_RAID_FIRST_DELAY_MAX;
 	public static int NIGHT_RAID_SIZE_MIN;
 	public static int NIGHT_RAID_SIZE_MAX;
 	public static int NIGHT_RAID_DURATION;
@@ -142,8 +145,9 @@ public class NightCycleConfig
 		WITCHING_HOUR_WAVE_COUNT = Math.max(1, config.getInt("WitchingHourWaveCount", 3));
 		WITCHING_HOUR_DAWN_BURN_PERCENT = Math.max(0, Math.min(99, config.getInt("WitchingHourDawnBurnPercent", 30)));
 
+		NIGHT_EVENTS_ALTERNATE = config.getBoolean("NightEventsAlternate", true);
 		NIGHTLORD_ENABLED = config.getBoolean("NightlordEnabled", true);
-		NIGHTLORD_SPAWN_DELAY = Math.max(0, config.getInt("NightlordSpawnDelay", 60));
+		NIGHTLORD_SPAWN_DELAY = Math.max(0, config.getInt("NightlordSpawnDelay", 900));
 		NIGHTLORD_CHAMPION_TIER = Math.max(0, Math.min(3, config.getInt("NightlordChampionTier", 3)));
 		NIGHTLORD_WAVES = Math.max(1, config.getInt("NightlordWaves", 4));
 		final String archetype = config.getString("NightlordArchetype", "RAGER").trim();
@@ -187,6 +191,8 @@ public class NightCycleConfig
 
 		NIGHT_RAID_ENABLED = config.getBoolean("NightRaidEnabled", true);
 		NIGHT_RAID_COUNT = Math.max(0, config.getInt("NightRaidCount", 2));
+		NIGHT_RAID_FIRST_DELAY_MIN = Math.max(0, config.getInt("NightRaidFirstDelayMin", 900));
+		NIGHT_RAID_FIRST_DELAY_MAX = Math.max(NIGHT_RAID_FIRST_DELAY_MIN, config.getInt("NightRaidFirstDelayMax", 1200));
 		NIGHT_RAID_SIZE_MIN = Math.max(1, config.getInt("NightRaidSizeMin", 4));
 		NIGHT_RAID_SIZE_MAX = Math.max(NIGHT_RAID_SIZE_MIN, config.getInt("NightRaidSizeMax", 8));
 		NIGHT_RAID_DURATION = Math.max(1, config.getInt("NightRaidDuration", 20));

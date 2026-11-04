@@ -46,7 +46,7 @@ import org.l2jmobius.gameserver.util.Broadcast;
  * Makes the day/night cycle something players notice. The game clock itself is unchanged ({@link GameTimeTaskManager}: night is game hours 0:00-5:59, about one real hour in four), but the night now runs through phases ({@link NightPhase}), each announced on screen:
  * <ul>
  * <li><b>Dusk</b>: tonight's Omen is told.</li>
- * <li><b>Night</b>: the Omen, a {@link HotzoneModifier}, lies over the whole open world (see {@link HotzoneModifierManager#getModifierFor}), and soon after nightfall the {@link NightlordManager Nightlords} rise.</li>
+ * <li><b>Night</b>: the Omen, a {@link HotzoneModifier}, lies over the whole open world (see {@link HotzoneModifierManager#getModifierFor}), and some time after nightfall the {@link NightlordManager Nightlords} rise (taking turns with the Shadow Raids, one night each, with {@link NightCycleConfig#NIGHT_EVENTS_ALTERNATE}).</li>
  * <li><b>Witching Hour</b>: the last minutes of the night. The Omen gives way to {@link HotzoneModifier#WITCHING_HOUR}, and kills may call a wave challenger nearby.</li>
  * <li><b>Dawn</b>: the Omen lifts, the Nightlords and Shadow Raiders flee, the sun burns the undead still fighting, the best of the Night Watch (the players with the most night kills) are rewarded, and the leader of each PvP spot is crowned its Night King.</li>
  * </ul>
@@ -264,11 +264,63 @@ public class NightCycleManager
 		{
 			sb.append(" - tonight's Omen: ").append(getOmenName(_omen));
 		}
-		announce(sb.append('.').toString());
+		sb.append('.');
+		final String tonight = getTonightsEvent();
+		if (tonight != null)
+		{
+			sb.append(' ').append(tonight);
+		}
+		announce(sb.toString());
 	}
 
 	/**
-	 * Night falls: the Omen lies over the open world, the Night Watch starts afresh and the Nightlords get ready to rise.
+	 * @return {@code true} if the Nightlords and the Shadow Raids take turns: {@link NightCycleConfig#NIGHT_EVENTS_ALTERNATE} and both of them on (with one of them off, the other comes every night)
+	 */
+	private static boolean isAlternating()
+	{
+		return NightCycleConfig.NIGHT_EVENTS_ALTERNATE && NightCycleConfig.NIGHTLORD_ENABLED && ShadowRaidManager.isEnabled();
+	}
+
+	/**
+	 * Counts the nights: the number of tonight's night, or by day of the coming one. One game day starts with its night and there are six a real day (an even number), so the count goes on odd/even from one real day to the next and over a restart.
+	 * @return the night's number
+	 */
+	private static int getNightNumber()
+	{
+		final int gameDay = GameTimeTaskManager.getInstance().getGameTicks() / GameTimeTaskManager.TICKS_PER_IG_DAY;
+		return getClockPhase().isNight() ? gameDay : gameDay + 1;
+	}
+
+	/**
+	 * @return {@code true} if the Nightlords rise tonight (by day: the coming night). With {@link NightCycleConfig#NIGHT_EVENTS_ALTERNATE} they take turns with the Shadow Raids.
+	 */
+	public boolean isNightlordNight()
+	{
+		return NightCycleConfig.NIGHTLORD_ENABLED && (!isAlternating() || ((getNightNumber() % 2) == 0));
+	}
+
+	/**
+	 * @return {@code true} if the Shadow Raids strike tonight (by day: the coming night). With {@link NightCycleConfig#NIGHT_EVENTS_ALTERNATE} they take turns with the Nightlords.
+	 */
+	public boolean isShadowRaidNight()
+	{
+		return NightCycleConfig.NIGHT_RAID_ENABLED && (!isAlternating() || ((getNightNumber() % 2) == 1));
+	}
+
+	/**
+	 * @return what tonight (by day: the coming night) brings when the Nightlords and the Shadow Raids take turns, as told at dusk; {@code null} when they don't
+	 */
+	public String getTonightsEvent()
+	{
+		if (!isAlternating())
+		{
+			return null;
+		}
+		return isNightlordNight() ? "Tonight the Nightlords rise; the Shadow Raiders rest until the next night." : "Tonight the Shadow Raiders ride; the Nightlords rest until the next night.";
+	}
+
+	/**
+	 * Night falls: the Omen lies over the open world, the Night Watch starts afresh and tonight's Nightlords and/or Shadow Raids get ready (see {@link #isNightlordNight()} and {@link #isShadowRaidNight()}).
 	 * @param announce {@code false} at boot, when nobody is online
 	 */
 	private void nightfall(boolean announce)
@@ -279,8 +331,14 @@ public class NightCycleManager
 		}
 		HotzoneModifierManager.getInstance().setNightModifier(NightCycleConfig.OMENS_ENABLED ? _omen : null);
 		_nightWatch.clear();
-		NightlordManager.getInstance().onNightfall();
-		ShadowRaidManager.getInstance().onNightfall(getRealSecondsToDawn());
+		if (isNightlordNight())
+		{
+			NightlordManager.getInstance().onNightfall();
+		}
+		if (isShadowRaidNight())
+		{
+			ShadowRaidManager.getInstance().onNightfall(getRealSecondsToDawn());
+		}
 
 		if (announce)
 		{

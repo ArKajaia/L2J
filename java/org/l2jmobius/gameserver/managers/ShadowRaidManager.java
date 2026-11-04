@@ -45,9 +45,6 @@ public class ShadowRaidManager
 
 	/** How often (ms) the raiders look for someone to attack, and the raids check their end. */
 	private static final long TICK_MS = 3000;
-	/** The first raid of a night comes this long (s) after nightfall, at the earliest and the latest. */
-	private static final int FIRST_RAID_MIN = 180;
-	private static final int FIRST_RAID_MAX = 300;
 	/** How far (game units) from the player the warband lands. */
 	private static final int LAND_MIN = 800;
 	private static final int LAND_MAX = 1500;
@@ -118,13 +115,13 @@ public class ShadowRaidManager
 	{
 	}
 
-	private static boolean isEnabled()
+	public static boolean isEnabled()
 	{
 		return NightCycleConfig.ENABLED && NightCycleConfig.NIGHT_RAID_ENABLED && FakePlayerPvpManager.getInstance().isEnabled() && FakeClanManager.getInstance().isEnabled();
 	}
 
 	/**
-	 * Night fell: the night's raids are set for random times before the Witching Hour.
+	 * Night fell: the night's raids are set for random times before the Witching Hour, the first {@link NightCycleConfig#NIGHT_RAID_FIRST_DELAY_MIN}-{@link NightCycleConfig#NIGHT_RAID_FIRST_DELAY_MAX} seconds after nightfall. With {@link NightCycleConfig#NIGHT_EVENTS_ALTERNATE} {@link NightCycleManager} calls this only on a Shadow Raid night.
 	 * @param secondsToDawn the real seconds until dawn; passed in because {@link NightCycleManager} calls this from its constructor at a night boot, before {@link NightCycleManager#getInstance()} can return it
 	 */
 	public synchronized void onNightfall(int secondsToDawn)
@@ -137,12 +134,13 @@ public class ShadowRaidManager
 
 		// Before the Witching Hour, which has its own dead to deal with.
 		final int nightSeconds = secondsToDawn - (NightCycleConfig.WITCHING_HOUR_MINUTES * 10);
-		final int last = Math.max(FIRST_RAID_MAX, nightSeconds - 300);
+		final int firstMax = NightCycleConfig.NIGHT_RAID_FIRST_DELAY_MAX;
+		final int last = Math.max(firstMax, nightSeconds - 300);
 		final long deadline = System.currentTimeMillis() + (Math.max(nightSeconds, last) * 1000L);
 		final int night = _night.get();
 		for (int i = 0; i < NightCycleConfig.NIGHT_RAID_COUNT; i++)
 		{
-			final int delay = i == 0 ? Rnd.get(FIRST_RAID_MIN, FIRST_RAID_MAX) : Rnd.get(FIRST_RAID_MAX, last);
+			final int delay = i == 0 ? Rnd.get(NightCycleConfig.NIGHT_RAID_FIRST_DELAY_MIN, firstMax) : Rnd.get(firstMax, last);
 			schedule(night, deadline, delay);
 		}
 	}

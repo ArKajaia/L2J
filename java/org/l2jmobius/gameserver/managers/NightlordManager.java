@@ -25,7 +25,7 @@ import org.l2jmobius.gameserver.network.enums.ChatType;
 import org.l2jmobius.gameserver.util.Broadcast;
 
 /**
- * Nightlords: soon after nightfall, {@link NightCycleManager} has one monster in each level bracket crowned Nightlord - a champion that must be beaten in several waves (the open-world Wave Challenge), found in one of the bracket's hot zones that the rotation hasn't made
+ * Nightlords: some time after nightfall ({@link NightCycleConfig#NIGHTLORD_SPAWN_DELAY}), {@link NightCycleManager} has one monster in each level bracket crowned Nightlord - a champion that must be beaten in several waves (the open-world Wave Challenge), found in one of the bracket's hot zones that the rotation hasn't made
  * active right now. Everyone who fought it gets a Sealed Cache on top of the wave challenge coins, and its killer is announced. At dawn the Nightlords still alive flee, and their spawns bring back an ordinary monster.
  * <p>
  * Fake players join a Nightlord's fight like a Resonant monster's ({@link FakeJoinerManager}): around {@link NightCycleConfig#NIGHTLORD_FAKE_JOIN_HP_PERCENTS} of the fight left (its HP over all its waves), a helper or a rival may turn up.
@@ -124,7 +124,7 @@ public class NightlordManager
 	}
 
 	/**
-	 * Night fell: the Nightlords rise after {@link NightCycleConfig#NIGHTLORD_SPAWN_DELAY}.
+	 * Night fell: the Nightlords rise after {@link NightCycleConfig#NIGHTLORD_SPAWN_DELAY}. With {@link NightCycleConfig#NIGHT_EVENTS_ALTERNATE} {@link NightCycleManager} calls this only on a Nightlord night.
 	 */
 	public synchronized void onNightfall()
 	{
