@@ -2543,9 +2543,9 @@ public class DynamicQuestManager
 					final Location target = quest.getMarker() != null ? quest.getMarker() : quest.getArea();
 					if (target != null)
 					{
-						QuestSpawnUtil.moveMarker(player, target, target);
+						QuestSpawnUtil.showOnMap(player, target);
 					}
-					player.sendMessage(target != null ? "Your radar points the way." : "There is nothing to point at right now.");
+					player.sendMessage(target != null ? "The place is flagged on your map, and your radar points the way." : "There is nothing to show right now.");
 					return DynamicQuestHtml.quest(this, player, npc, quest, channel);
 				}
 				return DynamicQuestHtml.main(this, player, npc, channel);

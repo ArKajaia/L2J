@@ -74,8 +74,12 @@ public class WorldMonsterIndex
 	private static final int MAX_KINDS = 6;
 	/** Grounds are drawn by cells of this size, not by spawn points, so a dense area doesn't take every quest. */
 	private static final int CELL_SHIFT = 12;
-	/** Level windows a quest may widen to before it goes back to a place it was sent to lately. */
-	private static final int AVOID_MAX_WINDOW = 5;
+	/** How far from where a quest is taken its ground may be when nothing of its level is near. */
+	private static final int FAR_RANGE = 60000;
+	/** A ground is too dangerous with this many monsters this many levels above the quest within this range. */
+	private static final int DANGER_COUNT = 3;
+	private static final int DANGER_LEVELS = 8;
+	private static final int DANGER_RANGE = 3500;
 	private static final int[] LEVEL_WINDOWS =
 	{
 		3,
@@ -119,6 +123,7 @@ public class WorldMonsterIndex
 	}
 
 	private volatile List<Point> _points;
+	private volatile Map<Long, List<Point>> _grid;
 
 	/**
 	 * Forgets the index: it is built again the next time it is needed (after the restricted areas changed).
@@ -126,6 +131,82 @@ public class WorldMonsterIndex
 	public void reset()
 	{
 		_points = null;
+		_grid = null;
+	}
+
+	/**
+	 * @return the spawn points by map cell, for looking around a point quickly
+	 */
+	private Map<Long, List<Point>> getGrid()
+	{
+		Map<Long, List<Point>> grid = _grid;
+		if (grid == null)
+		{
+			grid = new HashMap<>();
+			for (Point point : getPoints())
+			{
+				grid.computeIfAbsent(point.cell(), key -> new ArrayList<>()).add(point);
+			}
+			_grid = grid;
+		}
+		return grid;
+	}
+
+	/**
+	 * @param point a candidate ground
+	 * @param level the quest's level
+	 * @param cache what was found for the cells already looked at during this pick
+	 * @return {@code false} if {@link #DANGER_COUNT} or more monsters {@link #DANGER_LEVELS} levels above the quest live within {@link #DANGER_RANGE} of it (on its layer)
+	 */
+	private boolean isSafe(Point point, int level, Map<Long, Boolean> cache)
+	{
+		final Boolean known = cache.get(point.cell());
+		if (known != null)
+		{
+			return known;
+		}
+		final int dangerous = countDangerous(point._x, point._y, point._z, level);
+		final boolean safe = dangerous < DANGER_COUNT;
+		cache.put(point.cell(), safe);
+		return safe;
+	}
+
+	/**
+	 * @param location a place
+	 * @param level a quest's level
+	 * @return {@code true} if monsters much stronger than the quest live around the place (a quest shouldn't send anyone there)
+	 */
+	public boolean isDangerous(ILocational location, int level)
+	{
+		return countDangerous(location.getX(), location.getY(), location.getZ(), level) >= DANGER_COUNT;
+	}
+
+	private int countDangerous(int x, int y, int z, int level)
+	{
+		final Map<Long, List<Point>> grid = getGrid();
+		final long rangeSq = (long) DANGER_RANGE * DANGER_RANGE;
+		final int cellX = x >> CELL_SHIFT;
+		final int cellY = y >> CELL_SHIFT;
+		int dangerous = 0;
+		for (int dx = -1; dx <= 1; dx++)
+		{
+			for (int dy = -1; dy <= 1; dy++)
+			{
+				final List<Point> cell = grid.get((((long) (cellX + dx)) << 32) | ((cellY + dy) & 0xFFFFFFFFL));
+				if (cell == null)
+				{
+					continue;
+				}
+				for (Point other : cell)
+				{
+					if ((other._level > (level + DANGER_LEVELS)) && (Math.abs(other._z - z) < 1500) && (other.distanceSq(x, y) <= rangeSq))
+					{
+						dangerous++;
+					}
+				}
+			}
+		}
+		return dangerous;
 	}
 
 	private List<Point> getPoints()
@@ -366,51 +447,41 @@ public class WorldMonsterIndex
 			return null;
 		}
 
+		// The level comes first: a ground of about the right level anywhere within reach beats a near one 15 levels off. Within a level window, somewhere new
+		// beats somewhere the player was sent to lately, near beats far, and a ground with much stronger monsters around it is never picked.
 		List<Point> candidates = new ArrayList<>();
 		int window = LEVEL_WINDOWS[LEVEL_WINDOWS.length - 1];
-
-		// First somewhere new within the same range, without going far from the level. Rather the same place again than one across the world.
-		if (!avoid.isEmpty() && (avoidRange > 0))
+		final int farRange = Math.max(FAR_RANGE, nearRange * 3);
+		final boolean canAvoid = !avoid.isEmpty() && (avoidRange > 0);
+		// When every suitable ground was visited lately, at least not the very last one again: grounds take turns.
+		final List<? extends ILocational> last = canAvoid ? avoid.subList(avoid.size() - 1, avoid.size()) : Collections.emptyList();
+		final Map<Long, Boolean> safety = new HashMap<>();
+		search:
+		for (int levelWindow : LEVEL_WINDOWS)
 		{
-			for (int levelWindow : LEVEL_WINDOWS)
+			// near + new, far + new, near + not the last, far + not the last, near, far, anywhere + new, anywhere
+			for (int pass = 0; pass < 8; pass++)
 			{
-				if (levelWindow > AVOID_MAX_WINDOW)
+				final List<? extends ILocational> skip = (pass == 0) || (pass == 1) || (pass == 6) ? avoid : ((pass == 2) || (pass == 3) ? last : Collections.emptyList());
+				if (((pass < 4) || (pass == 6)) && !canAvoid)
 				{
-					break;
+					continue;
 				}
-				candidates = collect(points, level, levelWindow, near, nearRange);
-				removeNear(candidates, avoid, avoidRange);
+				final int range = (pass == 0) || (pass == 2) || (pass == 4) ? nearRange : ((pass == 1) || (pass == 3) || (pass == 5) ? farRange : 0);
+				if ((range > 0) && (near == null))
+				{
+					continue;
+				}
+				candidates = collect(points, level, levelWindow, range > 0 ? near : null, range);
+				if (!skip.isEmpty())
+				{
+					removeNear(candidates, skip, avoidRange);
+				}
+				candidates.removeIf(point -> !isSafe(point, level, safety));
 				if (!candidates.isEmpty())
 				{
 					window = levelWindow;
-					break;
-				}
-			}
-		}
-
-		if (candidates.isEmpty())
-		{
-			for (boolean useNear : new boolean[]
-			{
-				true,
-				false
-			})
-			{
-				if (!useNear || (near != null))
-				{
-					for (int levelWindow : LEVEL_WINDOWS)
-					{
-						candidates = collect(points, level, levelWindow, useNear ? near : null, nearRange);
-						if (!candidates.isEmpty())
-						{
-							window = levelWindow;
-							break;
-						}
-					}
-				}
-				if (!candidates.isEmpty())
-				{
-					break;
+					break search;
 				}
 			}
 		}

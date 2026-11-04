@@ -526,12 +526,25 @@ public abstract class AbstractObjective
 	 * @param from the origin
 	 * @param minDistance the minimum distance
 	 * @param maxDistance the maximum distance
-	 * @return a reachable point outside towns
+	 * @return a reachable point outside towns, away from monsters much stronger than the quest when possible
 	 */
-	protected static Location point(ILocational from, int minDistance, int maxDistance)
+	protected Location point(ILocational from, int minDistance, int maxDistance)
 	{
-		return QuestSpawnUtil.findPoint(from, minDistance, maxDistance, false, 0);
+		// Never a spot where monsters much stronger than the quest live, when the land allows another.
+		final int level = _quest.getDifficulty().getQuestLevel();
+		Location location = null;
+		for (int attempt = 0; attempt < SAFE_POINT_ATTEMPTS; attempt++)
+		{
+			location = QuestSpawnUtil.findPoint(from, minDistance, maxDistance, false, 0);
+			if (!WorldMonsterIndex.getInstance().isDangerous(location, level))
+			{
+				return location;
+			}
+		}
+		return location;
 	}
+
+	private static final int SAFE_POINT_ATTEMPTS = 8;
 
 	/**
 	 * @param random the random source

@@ -122,7 +122,7 @@ public class InterceptObjective extends AbstractObjective
 				final int length = legMin + random.nextInt((legMax - legMin) + 1);
 				final Location ahead = new Location(from.getX() + (int) (Math.cos(angle) * length), from.getY() + (int) (Math.sin(angle) * length), from.getZ());
 				final Location candidate = QuestSpawnUtil.findPoint(ahead, 0, 300, false, 0);
-				if (Math.hypot(candidate.getX() - from.getX(), candidate.getY() - from.getY()) >= (legMin / 2))
+				if ((Math.hypot(candidate.getX() - from.getX(), candidate.getY() - from.getY()) >= (legMin / 2)) && !WorldMonsterIndex.getInstance().isDangerous(candidate, _quest.getDifficulty().getQuestLevel()))
 				{
 					next = candidate;
 				}

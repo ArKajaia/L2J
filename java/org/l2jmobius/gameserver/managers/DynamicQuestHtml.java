@@ -505,7 +505,7 @@ public final class DynamicQuestHtml
 				}
 			}
 		}
-		sb.append(button("track " + quest.getId(), "Track on radar", 140)).append("<br1>");
+		sb.append(button("track " + quest.getId(), "Show on map", 140)).append("<br1>");
 		if (quest.getOwnerId() == player.getObjectId())
 		{
 			sb.append(button("abandon " + quest.getId(), "Abandon", 140)).append("<br1>");
@@ -672,7 +672,7 @@ public final class DynamicQuestHtml
 			for (QuestInstance quest : world)
 			{
 				final String bottom = "<font color=\"" + COLOR_LABEL + "\">Near " + quest.getContext("near", "?") + ", level " + quest.getDifficulty().getQuestLevel() + "</font>";
-				sb.append(card(BOARD_WIDTH, BG_CARD, WORLD_ICON, link("quest " + quest.getId(), quest.getName()), bottom, button("track " + quest.getId(), "Track", 60), 64)).append(spacer(5));
+				sb.append(card(BOARD_WIDTH, BG_CARD, WORLD_ICON, link("quest " + quest.getId(), quest.getName()), bottom, button("track " + quest.getId(), "Map", 60), 64)).append(spacer(5));
 			}
 		}
 
@@ -825,7 +825,7 @@ public final class DynamicQuestHtml
 
 		sb.append(spacer(12)).append("<table width=").append(BOARD_WIDTH).append(" cellpadding=0 cellspacing=0><tr>");
 		sb.append(actions);
-		sb.append("<td>").append(button("track " + quest.getId(), "Track on radar", 120)).append("</td><td width=6></td>");
+		sb.append("<td>").append(button("track " + quest.getId(), "Show on map", 120)).append("</td><td width=6></td>");
 		sb.append("<td>").append(button("main", "Back", 80)).append("</td>");
 		sb.append("<td align=right>").append(quest.getOwnerId() == player.getObjectId() ? button("abandon " + quest.getId(), "Abandon", 90) : "").append("</td>");
 		sb.append("</tr></table>");
