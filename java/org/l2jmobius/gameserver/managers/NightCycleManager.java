@@ -296,7 +296,7 @@ public class NightCycleManager
 	 */
 	public boolean isNightlordNight()
 	{
-		return NightCycleConfig.NIGHTLORD_ENABLED && (!isAlternating() || ((getNightNumber() % 2) == 0));
+		return NightCycleConfig.NIGHTLORD_ENABLED && (!isAlternating() || ((getNightNumber() % 2) == 1));
 	}
 
 	/**
@@ -304,7 +304,7 @@ public class NightCycleManager
 	 */
 	public boolean isShadowRaidNight()
 	{
-		return NightCycleConfig.NIGHT_RAID_ENABLED && (!isAlternating() || ((getNightNumber() % 2) == 1));
+		return NightCycleConfig.NIGHT_RAID_ENABLED && (!isAlternating() || ((getNightNumber() % 2) == 0));
 	}
 
 	/**
