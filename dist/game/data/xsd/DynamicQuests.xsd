@@ -234,6 +234,7 @@
 						<xs:attribute name="scope" type="scope" />
 						<xs:attribute name="requester" type="xs:token" />
 						<xs:attribute name="entryStages" type="xs:string" />
+						<xs:attribute name="twists" type="xs:string" />
 						<xs:attribute name="enabled" type="xs:boolean" />
 					</xs:complexType>
 				</xs:element>

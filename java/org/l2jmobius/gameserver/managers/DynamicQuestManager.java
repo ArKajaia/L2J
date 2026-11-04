@@ -67,6 +67,7 @@ import org.l2jmobius.gameserver.model.dynamicquest.QuestStanding;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestScope;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTemplate;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTier;
+import org.l2jmobius.gameserver.model.dynamicquest.QuestTwist;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTrigger;
 import org.l2jmobius.gameserver.model.dynamicquest.RewardCalculator;
 import org.l2jmobius.gameserver.model.dynamicquest.RewardCalculator.Payout;
@@ -871,7 +872,12 @@ public class DynamicQuestManager
 
 		final QuestTier tier = offer.getTier() != null ? offer.getTier() : chosenTier;
 		final long seed = offer.getSeed() ^ ((long) player.getAccountName().hashCode() << 20);
-		final QuestInstance quest = new QuestInstance(_nextId.incrementAndGet(), offer.getTemplate(), seed, DifficultyContext.of(player, members, tier), player.getObjectId(), player.getName(), player.getAccountName(), offer.isBoardOffer() ? offer.getKey() : "", System.currentTimeMillis());
+		final QuestTwist twist = QuestTwist.roll(offer.getTemplate(), offer.getSeed());
+		final QuestInstance quest = new QuestInstance(_nextId.incrementAndGet(), offer.getTemplate(), seed, DifficultyContext.of(player, members, tier, twist), player.getObjectId(), player.getName(), player.getAccountName(), offer.isBoardOffer() ? offer.getKey() : "", System.currentTimeMillis());
+		if (twist != null)
+		{
+			quest.putContext("twist", twist.name());
+		}
 		quest.setChain(offer.getChain());
 		for (Map.Entry<String, String> entry : offer.getCarry().entrySet())
 		{
@@ -981,7 +987,7 @@ public class DynamicQuestManager
 			}
 		}
 		AdventurersGuideManager.getInstance().trigger(player, GuideLesson.QUEST_TAKEN, "You have taken the quest " + quest.getName() + ".");
-		log(player.getName() + " took " + quest.getName() + " (template " + quest.getTemplate().getId() + ", " + tier + ", level " + quest.getDifficulty().getQuestLevel() + ", party " + quest.getDifficulty().getPartySize() + ").");
+		log(player.getName() + " took " + quest.getName() + " (template " + quest.getTemplate().getId() + ", " + tier + ", level " + quest.getDifficulty().getQuestLevel() + ", party " + quest.getDifficulty().getPartySize() + (twist != null ? ", " + twist : "") + ").");
 		return String.valueOf(quest.getId());
 	}
 
@@ -1695,7 +1701,7 @@ public class DynamicQuestManager
 				continue;
 			}
 
-			final QuestInstance quest = new QuestInstance(row._instanceId, template, row._seed, new DifficultyContext(row._questLevel, row._partySize, QuestTier.parse(row._tier, QuestTier.NORMAL)), row._charId, player.getName(), player.getAccountName(), row._offerKey, row._createdAt);
+			final QuestInstance quest = new QuestInstance(row._instanceId, template, row._seed, new DifficultyContext(row._questLevel, row._partySize, QuestTier.parse(row._tier, QuestTier.NORMAL), QuestTwist.fromContext(row._context)), row._charId, player.getName(), player.getAccountName(), row._offerKey, row._createdAt);
 			quest.loadContext(row._context);
 			quest.setChain(row._chain);
 			quest.setOptionalDone(row._optionalDone);

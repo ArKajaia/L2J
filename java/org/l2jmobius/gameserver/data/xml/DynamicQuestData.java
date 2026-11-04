@@ -46,6 +46,7 @@ import org.l2jmobius.gameserver.model.dynamicquest.ObjectiveType;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestScope;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTemplate;
 import org.l2jmobius.gameserver.model.dynamicquest.QuestTrigger;
+import org.l2jmobius.gameserver.model.dynamicquest.QuestTwist;
 import org.l2jmobius.gameserver.model.dynamicquest.RestrictedArea;
 import org.l2jmobius.gameserver.model.dynamicquest.RewardDefinition;
 import org.l2jmobius.gameserver.model.dynamicquest.RewardEntry;
@@ -514,7 +515,10 @@ public class DynamicQuestData implements IXmlReader
 				entryStages.add(stage);
 			}
 		}
-		return new QuestTemplate(id, name, category, scope, requester, triggers, eligibility, stages, reward, texts, entryStages, contact != null);
+		final QuestTemplate template = new QuestTemplate(id, name, category, scope, requester, triggers, eligibility, stages, reward, texts, entryStages, contact != null);
+		// World events never have twists; personal quests may have any unless the template says otherwise.
+		template.setTwists(scope == QuestScope.WORLD ? new ArrayList<>() : QuestTwist.parseList(parseString(attrs, "twists", "ALL")));
+		return template;
 	}
 
 	/**

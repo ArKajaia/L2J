@@ -21,6 +21,9 @@
 	stops unasked offers for a character.
 
 	template id name category scope (PERSONAL | WORLD) requester (a requester kind) entryStages (stages a quest may start at, picked by its seed)
+	             twists (ALL | NONE | a list: REINFORCED, VETERANS, URGENT, GENEROUS, QUIET, NIGHT_RAID): an offer may come with one of them,
+	             picked by its seed (4 in 10 do), shown on the board. World events never have twists.
+	  Any objective attribute may be a range "2-4" or alternatives "a||b" (also its text): each quest gets one, picked by its seed.
 	  trigger      type = BOARD_DAILY            on every town's board each day (weight)
 	                      NPC_INTERACTION        a request of a town npc of the template's requester kind, on its town's board each day (weight)
 	                      TIMER                  every DynamicQuestEventInterval seconds, with chance (percent): a herald brings it to a player hunting in the
@@ -401,6 +404,11 @@
 		<entry>Scratched Marker|The marker is here, but someone tried to scratch it out. Interesting.</entry>
 	</textPool>
 
+	<textPool name="stashClues">
+		<entry>Loose Stones|Behind loose stones: crates stamped with a merchant's mark that isn't theirs. The stash!</entry>
+		<entry>Buried Crates|Freshly turned earth, and under it, the crates. Someone will be glad to see these again.</entry>
+		<entry>Hollow Tree|A hollow tree, stuffed with sacks of contraband. The ledger was right.</entry>
+	</textPool>
 	<textPool name="matriarchTaunts">
 		<entry>*The matriarch shrieks, and the ground shakes with the answer of her brood.*</entry>
 		<entry>*She tears at the earth where her nests burned.*</entry>
@@ -482,17 +490,24 @@
 			<text>{target} was last seen in {place}. Search the place on your radar for its trail.</text>
 			<text>Your tracker points the way: {target} came through {place} at dawn. Find where it went.</text>
 			<objective type="INVESTIGATE" clues="1" clueNpc="900506" clueName="Mauled Remains" clueTitle="Bounty Trail" searchTime="6" firstMin="800" firstMax="1400" lines="bountyClues" ambushChance="20" ambushCount="2" text="Find {target}'s trail in {place}." />
+			<on event="SUCCESS" action="STAGE" target="3" chance="25" text="Two sets of tracks... {target} isn't hunting alone." />
 			<on event="SUCCESS" action="NEXT" />
 			<on event="TIMEOUT" action="FAIL" text="The trail has gone cold." />
 		</stage>
 		<stage name="The Hunt" timeLimit="1200">
 			<text>The trail leads on. {target} is somewhere ahead - follow the radar and finish it.</text>
 			<text>The trail is clear now. {target} isn't far - and it knows it is being hunted.</text>
-			<objective type="KILL" source="QUEST" named="true" at="LAST" spawnMin="1800" spawnMax="2800" fleeMin="2500" fleeMax="3500" tierBonus="2" guards="2" guardTitle="{gang}" escalate="FLEE" fleeGuards="2" taunts="beastTaunts" bonus="HP_ABOVE:30" killText="{target} has fallen!" fleeText="{target} caught your scent and fled! Follow the radar." />
+			<objective type="KILL" source="QUEST" named="true" at="LAST" spawnMin="1800" spawnMax="2800" fleeMin="2500" fleeMax="3500" tierBonus="2" guards="1-3" guardTitle="{gang}" escalate="FLEE" fleeGuards="2" taunts="beastTaunts" bonus="HP_ABOVE:30" killText="{target} has fallen!" fleeText="{target} caught your scent and fled! Follow the radar." />
 			<objective type="COLLECT" optional="true" source="AREA" name="tokens of {gang}" count="5" chance="35" />
 			<on event="SUCCESS" action="FOLLOW_UP" target="1" chance="20" text="Among the remains: a token of {gang}. There will be more of them." />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="{target} has slipped away to a new lair! You have one more chance." />
+		</stage>
+		<stage name="Two of a Kind" timeLimit="1200">
+			<text>{target} has a mate, and the two hunt together. Find them both and finish them.</text>
+			<objective type="KILL" source="QUEST" count="2" scale="false" title="{target}" at="LAST" spawnMin="1800" spawnMax="2800" fleeMin="2500" fleeMax="3500" tierBonus="1" escalate="FLEE" taunts="beastTaunts" text="Kill {target} and its mate." />
+			<on event="SUCCESS" action="COMPLETE" />
+			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="The pair has moved to a new lair! One more chance." />
 		</stage>
 		<reward exp="3" sp="0.1" adenaPerLevel="1200" table="bounty" />
 		<text key="title">Wanted</text>
@@ -514,14 +529,21 @@
 		<stage name="The Caravan Master" timeLimit="3600">
 			<text>{caravan} waits at the edge of {place}. Find its master on your radar.</text>
 			<objective type="INTERACT" npc="900509" at="AREA" spawnMin="0" spawnMax="300" dialog="The road ahead is thick with brigands and worse. We leave now, with you leading. Keep them off the wagon and we'll all live to see town." button="Let's move" line="Wagons, roll out!" />
+			<on event="SUCCESS" action="STAGE" target="3" chance="30" />
 			<on event="SUCCESS" action="NEXT" />
 		</stage>
 		<stage name="The Crossing" timeLimit="2700">
 			<text>Lead the wagon towards {dest}. When it stops, the ambushers come - beat them off.</text>
 			<text>The wagons creak into motion. Lead them towards {dest}, and keep your eyes on the treeline.</text>
-			<objective type="ESCORT" escortee="900502" at="LAST" dest="TOWN" legs="3" maxLegs="9" legMin="2200" legMax="3200" ambushes="3" ambushCount="3" chatter="caravanChatter" meter="100" drain="1.2" meterName="wagon" bonus="METER_ABOVE:75" startText="Hyah! Lead the way, we follow." ambushText="Brigands! Protect the wagon!" arriveText="We're through! You've earned your pay." failText="The wagon is lost, and the cargo with it." />
+			<objective type="ESCORT" escortee="900502" at="LAST" dest="TOWN" legs="3" maxLegs="9" legMin="2200" legMax="3200" ambushes="2-4" ambushCount="2-3" chatter="caravanChatter" meter="100" drain="1.2" meterName="wagon" bonus="METER_ABOVE:75" startText="Hyah! Lead the way, we follow." ambushText="Brigands! Protect the wagon!||Arrows from the treeline - guard the wagon!||Ambush! Circle the wagon!" arriveText="We're through! You've earned your pay." failText="The wagon is lost, and the cargo with it." />
 			<on event="SUCCESS" action="FOLLOW_UP" target="1" chance="25" text="The caravan master whispers: the brigands answer to someone. The board will want to know." />
 			<on event="SUCCESS" action="COMPLETE" />
+		</stage>
+		<stage name="The Broken Axle" timeLimit="900">
+			<text>Before the wagon has gone a hundred paces, its axle splits. The master's men need time to fix it - and the brigands have seen.</text>
+			<objective type="DEFEND" target="900502" at="LAST" waves="2-3" waveCount="2-3" waveInterval="35" prep="15" boss="false" meter="100" drain="1.2" meterName="wagon" startText="Crack! The axle's split! Hold them off while we fix it!" winText="Fixed! Roll out, before more of them come!" failText="The wagon is torn apart where it stands." />
+			<on event="SUCCESS" action="STAGE" target="2" />
+			<on event="FAILURE" action="FAIL" text="The wagon is lost before it ever left." />
 		</stage>
 		<reward exp="3" sp="0.1" adenaPerLevel="1500" table="caches">
 			<item id="736" count="2" scaled="false" /> <!-- Scroll of Escape -->
@@ -547,22 +569,29 @@
 		<stage name="The Trail" timeLimit="1200">
 			<text>{hostage} was taken on the road in {place}. Find out where they went.</text>
 			<text>The watchman shows you where {hostage} was taken. The kidnappers didn't bother hiding their tracks - they don't expect anyone to follow.</text>
-			<objective type="INVESTIGATE" clues="2" clueNpc="900506" clueName="Signs of a Struggle" clueTitle="{gang}" searchTime="8" firstMin="800" firstMax="1400" spacingMin="2200" spacingMax="3200" lines="kidnapClues" ambushChance="25" ambushCount="2" />
+			<objective type="INVESTIGATE" clues="2-3" clueNpc="900506" clueName="Signs of a Struggle" clueTitle="{gang}" searchTime="8" firstMin="800" firstMax="1400" spacingMin="2200" spacingMax="3200" lines="kidnapClues" ambushChance="25" ambushCount="2" />
 			<on event="SUCCESS" action="NEXT" />
 			<on event="TIMEOUT" action="FAIL" text="The trail has gone cold. {hostage} is lost." />
 		</stage>
 		<stage name="The Hideout" timeLimit="900">
 			<text>The trail ends at {gang}'s hideout. Clear it out before they move {hostage} again.</text>
-			<objective type="KILL" source="QUEST" count="4" at="LAST" spawnMin="1800" spawnMax="2600" fleeMin="2500" fleeMax="3500" tierBonus="1" title="{gang}" taunts="gangTaunts" escalate="FLEE_LEADER" leaderTitle="Leader of {gang}" leaderTierBonus="2" text="Clear out {gang}'s hideout." />
+			<objective type="KILL" source="QUEST" count="3-5" at="LAST" spawnMin="1800" spawnMax="2600" fleeMin="2500" fleeMax="3500" tierBonus="1" title="{gang}" taunts="gangTaunts" escalate="FLEE_LEADER" leaderTitle="Leader of {gang}" leaderTierBonus="2" text="Clear out {gang}'s hideout." />
+			<on event="SUCCESS" action="STAGE" target="4" chance="30" text="Horns in the distance - the rest of {gang} is coming back!" />
 			<on event="SUCCESS" action="NEXT" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="{gang} moved {hostage} to another hideout - and their leader is with them now!" />
 		</stage>
 		<stage name="The Way Home" timeLimit="2700">
 			<text>{hostage} is free, but shaken. Lead them safely towards {dest}.</text>
 			<text>{hostage} clings to your arm. The road to {dest} is long, and {gang} will want them back.</text>
-			<objective type="ESCORT" escortee="900503" at="LAST" dest="TOWN" legs="3" maxLegs="9" legMin="2200" legMax="3200" ambushes="2" ambushCount="2" chatter="captiveChatter" meter="100" drain="1.5" meterName="courage" bonus="NO_DEATHS" startText="Thank the gods... please, get me home." ambushText="They are coming back for me!" arriveText="Home... I never thought I'd see it again." failText="{gang} took {hostage} back, and this time for good." />
+			<objective type="ESCORT" escortee="900503" at="LAST" dest="TOWN" legs="3" maxLegs="9" legMin="2200" legMax="3200" ambushes="1-3" ambushCount="2" chatter="captiveChatter" meter="100" drain="1.5" meterName="courage" bonus="NO_DEATHS" startText="Thank the gods... please, get me home." ambushText="They are coming back for me!" arriveText="Home... I never thought I'd see it again." failText="{gang} took {hostage} back, and this time for good." />
 			<on event="SUCCESS" action="FOLLOW_UP" target="1" chance="30" text="{hostage} heard their leader's name. The board will post a bounty." />
 			<on event="SUCCESS" action="COMPLETE" />
+		</stage>
+		<stage name="Besieged" timeLimit="900">
+			<text>The rest of {gang} has come back for {hostage}. Hold the hideout until they give up - their leader leads the last charge.</text>
+			<objective type="DEFEND" target="900503" at="LAST" waves="3-4" waveCount="2-3" waveInterval="35" prep="15" boss="true" bossTierBonus="2" bossTitle="Leader of {gang}" title="{gang}" meter="100" drain="1.5" meterName="{hostage}" startText="They're coming back for me! Don't let them take me!" winText="They're running! Now... please, take me home." failText="{gang} dragged {hostage} away again." />
+			<on event="SUCCESS" action="STAGE" target="3" />
+			<on event="FAILURE" action="FAIL" text="{gang} took {hostage} back, and this time for good." />
 		</stage>
 		<reward exp="3.5" sp="0.1" adenaPerLevel="1500" table="bounty" />
 		<text key="title">Kidnapped!</text>
@@ -576,7 +605,7 @@
 	</template>
 
 	<!-- 4. Blacksmith's Order: a blacksmith of the town needs crafting materials of your grade. -->
-	<template id="4" name="Order for {requester}" category="Request" requester="blacksmith">
+	<template id="4" name="Order for {requester}" category="Request" requester="blacksmith" twists="URGENT,GENEROUS">
 		<trigger type="NPC_INTERACTION" weight="10" />
 		<eligibility minLevel="10" dailyLimit="2" />
 		<stage name="The Order" timeLimit="7200">
@@ -592,7 +621,7 @@
 	</template>
 
 	<!-- 5. Townsfolk Requests: one small task from a pool, for a townsman of the board's town. -->
-	<template id="5" name="A Favour for {requester}" category="Request" requester="townsfolk" entryStages="1,2,3,5">
+	<template id="5" name="A Favour for {requester}" category="Request" requester="townsfolk" entryStages="1,2,3,5" twists="URGENT,GENEROUS,QUIET">
 		<trigger type="NPC_INTERACTION" weight="14" />
 		<eligibility minLevel="10" dailyLimit="4" />
 		<stage name="Supplies" timeLimit="3600">
@@ -600,7 +629,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
 		<stage name="Pests" timeLimit="2400">
-			<objective type="COLLECT" source="AREA" name="pelts" count="6" chance="45" text="Bring {requester} 6 pelts of the {monster} in {place}." />
+			<objective type="COLLECT" source="AREA" name="pelts" count="5-8" chance="45" text="Bring {requester} {count0} pelts of the {monster} in {place}." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
 		<stage name="A Letter" timeLimit="2400">
@@ -612,7 +641,7 @@
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
 		<stage name="Wolves at the Door" timeLimit="2400">
-			<objective type="KILL" source="AREA" count="8" text="Thin out the {monster} in {place} that trouble {requester}." />
+			<objective type="KILL" source="AREA" count="6-10" text="Thin out the {monster} in {place} that trouble {requester}." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
 		<reward exp="1" sp="0.1" adenaPerLevel="700" table="supplies" />
@@ -637,13 +666,13 @@
 		<stage name="The Nests" timeLimit="1200">
 			<text>The surge came from nests hidden in {place}. Burn them all, or it will start again within the week.</text>
 			<text>Scouts have found where the swarm breeds: nests all over {place}. Burn them before the next brood hatches.</text>
-			<objective type="DESTROY" nests="4" nestNpc="900507" spawnEvery="18" maxAlive="4" burnTime="8" radius="2200" spacing="1200" broodTitle="Brood Mother" broodTierBonus="2" nestText="A swollen nest, pulsing with the next generation of the swarm. Stand next to it to burn it." />
+			<objective type="DESTROY" nests="3-5" nestNpc="900507" spawnEvery="18" maxAlive="4" burnTime="8" radius="2200" spacing="1200" broodTitle="Brood Mother" broodTierBonus="2" nestText="A swollen nest, pulsing with the next generation of the swarm. Stand next to it to burn it." />
 			<on event="SUCCESS" action="NEXT" />
 			<on event="TIMEOUT" action="COMPLETE" reward="60" text="The surge is beaten, but some nests survive. It will come again - and the reward is smaller." />
 		</stage>
 		<stage name="The Matriarch" timeLimit="900">
 			<text>With her nests in ashes, the matriarch of the swarm comes out to fight, her brood around her. End this!</text>
-			<objective type="KILL" source="QUEST" named="true" title="Matriarch of the Swarm" at="LAST" spawnMin="600" spawnMax="1200" tierBonus="3" guards="4" guardTitle="Brood Guard" taunts="matriarchTaunts" killText="The matriarch is dead. The outbreak is over!" />
+			<objective type="KILL" source="QUEST" named="true" title="Matriarch of the Swarm" at="LAST" spawnMin="600" spawnMax="1200" tierBonus="3" guards="3-5" guardTitle="Brood Guard" taunts="matriarchTaunts" killText="The matriarch is dead. The outbreak is over!" />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="COMPLETE" reward="80" text="The matriarch escapes into the wilds, wounded. Without her nests, she won't be back soon." />
 		</stage>
@@ -674,9 +703,16 @@
 		</stage>
 		<stage name="The Assault" timeLimit="1200">
 			<text>Defend the banner through every wave, and break their leader.</text>
-			<objective type="DEFEND" target="900505" at="LAST" waves="5" waveCount="3" waveInterval="45" prep="20" boss="true" bossTierBonus="2" bossTitle="Warband Leader" meter="100" drain="1" meterName="banner" bonus="METER_ABOVE:60" />
+			<objective type="DEFEND" target="900505" at="LAST" waves="4-6" waveCount="2-4" waveInterval="45" prep="20" boss="true" bossTierBonus="2" bossTitle="Warband Leader||Warlord||Raid Captain" meter="100" drain="1" meterName="banner" bonus="METER_ABOVE:60" />
+			<on event="SUCCESS" action="STAGE" target="3" chance="30" text="{captain}: Their chief is running for the hills! After him - end this for good!" />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="FAILURE" action="FAIL" text="The banner has fallen, and the camp with it." />
+		</stage>
+		<stage name="The Counterattack" timeLimit="900">
+			<text>The warband breaks, and its chief flees for their camp. {captain} wants him finished before he gathers another.</text>
+			<objective type="KILL" source="QUEST" named="true" title="Warband Chief" at="LAST" spawnMin="1800" spawnMax="2600" tierBonus="2" guards="2-3" guardTitle="Warband" killText="The warband's chief is dead. They won't be back." />
+			<on event="SUCCESS" action="COMPLETE" />
+			<on event="TIMEOUT" action="COMPLETE" reward="85" text="The chief got away - but the camp stands." />
 		</stage>
 		<reward exp="3.5" sp="0.1" adenaPerLevel="1500" table="bounty" />
 		<text key="title">Hold the Line</text>
@@ -700,20 +736,20 @@
 		<stage name="The Trail" timeLimit="2400">
 			<text>{expedition} vanished in {place}. Follow their traces.</text>
 			<text>The porter points to the last place he saw {expedition}. From here, you're on your own.</text>
-			<objective type="INVESTIGATE" clues="3" clueNpc="900506" clueName="Expedition Traces" clueTitle="Lost Expedition" searchTime="8" firstMin="800" firstMax="1400" spacingMin="2200" spacingMax="3200" lines="expeditionClues" ambushChance="30" ambushCount="2" />
+			<objective type="INVESTIGATE" clues="2-4" clueNpc="900506" clueName="Expedition Traces" clueTitle="Lost Expedition" searchTime="8" firstMin="800" firstMax="1400" spacingMin="2200" spacingMax="3200" lines="expeditionClues" ambushChance="30" ambushCount="2" />
 			<on event="SUCCESS" action="STAGE" target="2" chance="50" />
 			<on event="SUCCESS" action="STAGE" target="3" />
 			<on event="TIMEOUT" action="FAIL" text="The trail is lost. {expedition} will never be found." />
 		</stage>
 		<stage name="The Survivor" timeLimit="2700">
 			<text>One of {expedition} is alive! Lead the survivor towards {dest}.</text>
-			<objective type="ESCORT" escortee="900504" at="LAST" dest="TOWN" legs="3" maxLegs="9" legMin="2200" legMax="3200" ambushes="2" ambushCount="2" chatter="survivorChatter" meter="100" drain="1.2" meterName="strength" startText="You found me... I can walk, if you lead." arriveText="Safe at last. The others... I'll tell the board everything." failText="The survivor didn't make it." />
+			<objective type="ESCORT" escortee="900504" at="LAST" dest="TOWN" legs="3" maxLegs="9" legMin="2200" legMax="3200" ambushes="1-3" ambushCount="2" chatter="survivorChatter" meter="100" drain="1.2" meterName="strength" startText="You found me... I can walk, if you lead." arriveText="Safe at last. The others... I'll tell the board everything." failText="The survivor didn't make it." />
 			<on event="SUCCESS" action="FOLLOW_UP" target="8" chance="30" text="The survivor speaks of a second camp, further out." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
 		<stage name="The Culprit" timeLimit="1200">
 			<text>Nobody survived. Something lairs where the trail ends - {beast}. Slay it.</text>
-			<objective type="KILL" source="QUEST" named="false" count="1" at="LAST" spawnMin="1500" spawnMax="2500" tierBonus="2" guards="3" title="{beast}" text="Slay {beast}." />
+			<objective type="KILL" source="QUEST" named="false" count="1" at="LAST" spawnMin="1500" spawnMax="2500" tierBonus="2" guards="2-4" title="{beast}" text="Slay {beast}." />
 			<on event="SUCCESS" action="FOLLOW_UP" target="8" chance="30" text="In its lair: a map of the expedition's route - and a second camp, further out." />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="FAIL" text="{beast} has gone to ground." />
@@ -738,7 +774,7 @@
 		<stage name="The Nests" timeLimit="1500">
 			<text>Nests are breeding {monster} in {place}. Stand next to each nest to burn it, while their brood fights back.</text>
 			<text>The ranger marks the nests on your map. Burn them one by one - the brood will defend them.</text>
-			<objective type="DESTROY" nests="3" nestNpc="900507" spawnEvery="20" maxAlive="3" burnTime="6" radius="2200" spacing="1300" broodTitle="Brood Mother" broodTierBonus="2" bonus="NO_DEATHS" />
+			<objective type="DESTROY" nests="3-5" nestNpc="900507" spawnEvery="20" maxAlive="3" burnTime="6" radius="2200" spacing="1300" broodTitle="Brood Mother" broodTierBonus="2" bonus="NO_DEATHS" />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="The nests are swarming, and their mother has come!" />
 		</stage>
@@ -754,13 +790,13 @@
 	</template>
 
 	<!-- 10. Urgent Courier: a sealed package must reach another town's board on foot, through ambushes. -->
-	<template id="10" name="Urgent Courier" category="Courier" requester="gatekeeper">
+	<template id="10" name="Urgent Courier" category="Courier" requester="gatekeeper" twists="URGENT,GENEROUS,REINFORCED,QUIET">
 		<trigger type="NPC_INTERACTION" weight="10" />
 		<trigger type="BOARD_DAILY" weight="5" />
 		<eligibility minLevel="15" dailyLimit="2" />
 		<stage name="The Package" timeLimit="2400">
 			<text>Carry the sealed package to the Notice Board of {dest} on foot. A teleport breaks the seal.</text>
-			<objective type="REACH" dest="TOWN_FAR" minDistance="8000" maxDistance="40000" radius="400" noTeleport="true" ambushEvery="90" ambushCount="2" ambushTitle="Highwayman" bonus="HP_ABOVE:50" teleportText="The seal shatters as you pass through the ether - the package is ruined." />
+			<objective type="REACH" dest="TOWN_FAR" minDistance="8000" maxDistance="40000" radius="400" noTeleport="true" ambushEvery="70-110" ambushCount="2" ambushTitle="Highwayman||Road Bandit||Cutthroat" bonus="HP_ABOVE:50" teleportText="The seal shatters as you pass through the ether - the package is ruined." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
 		<!-- Pays by the road's length: exp at a 20000 road (0.4x-2.5x of it for shorter or longer roads). exp and sp are four times the
@@ -782,13 +818,20 @@
 		<stage name="X Marks the Spot" timeLimit="1800">
 			<text>The map shows a spot in {place}. Find it and search the ground.</text>
 			<objective type="INVESTIGATE" clues="1" clueNpc="900512" searchTime="10" firstMin="1500" firstMax="2500" lines="treasureClues" ambushChance="0" text="Find the spot the map marks in {place}." />
+			<on event="SUCCESS" action="STAGE" target="3" chance="25" text="Voices behind you - someone else has a copy of this map!" />
 			<on event="SUCCESS" action="NEXT" />
 			<on event="TIMEOUT" action="FAIL" text="The map's ink has run - the spot is lost." />
 		</stage>
 		<stage name="Digging" timeLimit="900">
 			<text>You found the chest! Its old guardians are stirring. Keep them off it while it comes loose.</text>
-			<objective type="DEFEND" target="900511" at="LAST" waves="3" waveCount="3" waveInterval="30" prep="10" boss="false" meter="100" drain="1" meterName="chest" bonus="METER_ABOVE:60" startText="The lid creaks... something is coming!" winText="The chest is yours." failText="The chest was smashed to splinters." />
+			<objective type="DEFEND" target="900511" at="LAST" waves="2-4" waveCount="2-3" waveInterval="30" prep="10" boss="false" meter="100" drain="1" meterName="chest" bonus="METER_ABOVE:60" startText="The lid creaks... something is coming!" winText="The chest is yours." failText="The chest was smashed to splinters." />
 			<on event="SUCCESS" action="COMPLETE" />
+		</stage>
+		<stage name="The Other Map" timeLimit="900">
+			<text>Treasure hunters with a copy of the same map. They won't share - deal with them, then dig.</text>
+			<objective type="KILL" source="QUEST" count="3-4" scale="false" title="Treasure Hunter" at="LAST" spawnMin="300" spawnMax="600" tierBonus="1" text="Drive off the rival treasure hunters." />
+			<on event="SUCCESS" action="STAGE" target="2" />
+			<on event="TIMEOUT" action="FAIL" text="The rivals dug it up first." />
 		</stage>
 		<reward exp="2.5" sp="0.1" adenaPerLevel="2500" table="bounty" />
 		<text key="title">Treasure Map</text>
@@ -807,7 +850,8 @@
 		<stage name="Word on the Street" timeLimit="1800">
 			<text>{fugitive} was last seen in {place}. Follow the trail.</text>
 			<text>The marshal shows you where {fugitive} was last seen. They are careful, but not careful enough.</text>
-			<objective type="INVESTIGATE" clues="2" clueNpc="900506" clueName="Cold Campfire" clueTitle="Fugitive's Trail" searchTime="6" firstMin="800" firstMax="1400" spacingMin="2200" spacingMax="3200" lines="manhuntClues" ambushChance="0" />
+			<objective type="INVESTIGATE" clues="2-3" clueNpc="900506" clueName="Cold Campfire" clueTitle="Fugitive's Trail" searchTime="6" firstMin="800" firstMax="1400" spacingMin="2200" spacingMax="3200" lines="manhuntClues" ambushChance="0" />
+			<on event="SUCCESS" action="STAGE" target="3" chance="30" text="{fugitive} has spent their stolen coin on hired blades." />
 			<on event="SUCCESS" action="NEXT" />
 			<on event="TIMEOUT" action="FAIL" text="The trail has gone cold. {fugitive} got away." />
 		</stage>
@@ -816,6 +860,12 @@
 			<objective type="KILL" source="FUGITIVE" named="true" title="{fugitive}" taunts="fugitiveTaunts" at="LAST" spawnMin="1500" spawnMax="2500" revealRange="1200" revealText="{fugitive}: You should have stayed in town!" killText="{fugitive} is brought to justice." fleeText="{fugitive} slipped away again! Follow the radar." />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="{fugitive} slipped away to a new hiding place!" />
+		</stage>
+		<stage name="Hired Blades" timeLimit="900">
+			<text>Hired blades guard the way to {fugitive}. Cut through them - the fugitive won't wait.</text>
+			<objective type="KILL" source="QUEST" count="3-4" scale="true" title="Hired Blade" at="LAST" spawnMin="1200" spawnMax="2000" tierBonus="0" taunts="fugitiveTaunts" text="Cut through {fugitive}'s hired blades." />
+			<on event="SUCCESS" action="STAGE" target="2" />
+			<on event="TIMEOUT" action="FAIL" text="While you fought the hirelings, {fugitive} slipped away." />
 		</stage>
 		<reward exp="3.5" sp="0.1" adenaPerLevel="1500" table="bounty" />
 		<text key="title">Manhunt</text>
@@ -834,7 +884,7 @@
 		<contact npcName="Druid Elowen" npcTitle="Keeper of the Grove" dialog="Can you smell it? The land here is sick. Someone planted totems that poison the soil and drive the beasts mad. Cleanse them - I will show you where the rot is thickest." button="I'll cleanse them" line="May the land remember your kindness." />
 		<stage name="The Taint" timeLimit="1500">
 			<text>Totems in {place} are poisoning the land and the beasts. Stand next to each one to cleanse it.</text>
-			<objective type="DESTROY" nests="4" nestNpc="900513" spawnEvery="25" maxAlive="2" burnTime="8" radius="2200" spacing="1200" broodName="Infected" broodTitle="Heart of the Corruption" broodTierBonus="2" nestText="Black ooze seeps from the totem. Stand next to it to cleanse it." swarmText="The corruption fights back - its heart has awoken!" motherSlainText="The heart of the corruption is destroyed!" />
+			<objective type="DESTROY" nests="3-5" nestNpc="900513" spawnEvery="25" maxAlive="2" burnTime="8" radius="2200" spacing="1200" broodName="Infected" broodTitle="Heart of the Corruption" broodTierBonus="2" nestText="Black ooze seeps from the totem. Stand next to it to cleanse it." swarmText="The corruption fights back - its heart has awoken!" motherSlainText="The heart of the corruption is destroyed!" />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="The corruption spreads faster!" />
 		</stage>
@@ -856,13 +906,20 @@
 		<stage name="The Tracks" timeLimit="2400">
 			<text>{beast} was sighted in {place}. Follow its tracks.</text>
 			<text>The old hunter points out the first print, pressed deep into the mud. {beast} passed here, not long ago.</text>
-			<objective type="INVESTIGATE" clues="4" clueNpc="900514" searchTime="4" firstMin="800" firstMax="1400" spacingMin="1800" spacingMax="2800" lines="beastTracks" ambushChance="10" ambushCount="2" />
+			<objective type="INVESTIGATE" clues="3-5" clueNpc="900514" searchTime="4" firstMin="800" firstMax="1400" spacingMin="1800" spacingMax="2800" lines="beastTracks" ambushChance="10" ambushCount="2" />
+			<on event="SUCCESS" action="STAGE" target="3" chance="25" text="A rider of the Beast Farm catches up with you: they'll pay the same for {beast} - alive." />
 			<on event="SUCCESS" action="NEXT" />
 			<on event="TIMEOUT" action="FAIL" text="The tracks are washed away. {beast} is gone." />
 		</stage>
 		<stage name="The Beast" timeLimit="1200">
 			<text>The tracks end ahead. {beast} is there - strong, and wary.</text>
 			<objective type="KILL" source="QUEST" named="true" title="{beast}" at="LAST" spawnMin="1500" spawnMax="2500" fleeMin="2500" fleeMax="3500" tierBonus="3" taunts="beastTaunts" bonus="NO_DEATHS" killText="{beast} falls. What a trophy!" fleeText="{beast} bolts! Follow the radar." />
+			<on event="SUCCESS" action="COMPLETE" />
+			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="{beast} has fled deeper into the wilds!" />
+		</stage>
+		<stage name="Alive, If You Can" timeLimit="1200">
+			<text>The Beast Farm wants {beast} alive. Wear it down and bind it - your blade won't finish it now.</text>
+			<objective type="CAPTURE" title="{beast}" at="LAST" spawnMin="1500" spawnMax="2500" tierBonus="3" threshold="25" bindTime="8" breakFree="25" recover="50" subdueText="{beast} sinks down, spent. Bind it - quickly!" captureText="{beast} is bound. The Beast Farm will be delighted." breakText="{beast} tears free and charges!" fleeText="{beast} bolted! Follow the radar." />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="{beast} has fled deeper into the wilds!" />
 		</stage>
@@ -882,9 +939,16 @@
 		<contact npcName="Informant Wren" npcTitle="Board Informant" dialog="{gang} move their goods through here today - I have watched them for a week. They set out as soon as you give the word, and they won't wait for anyone. Catch their boss before they reach the buyers." button="I'm ready" line="They're moving. Go!" />
 		<stage name="The Interception" timeLimit="2100">
 			<text>{gang} are moving contraband through the land in {place}. Catch them and break their boss before they reach {meeting}.</text>
-			<objective type="INTERCEPT" at="AREA" legs="4" legMin="2200" legMax="3200" guards="3" leaderTitle="Boss of {gang}" leaderTierBonus="2" guardTitle="{gang}" disguise="Travelling Merchant" revealText="The merchants throw off their cloaks - it's {gang}!" killText="The boss is down - the contraband is seized!" arriveText="{gang} reached their buyers in {meeting} and vanished. Too late." />
+			<objective type="INTERCEPT" at="AREA" legs="3-5" legMin="2200" legMax="3200" guards="2-4" leaderTitle="Boss of {gang}" leaderTierBonus="2" guardTitle="{gang}" disguise="Travelling Merchant" revealText="The merchants throw off their cloaks - it's {gang}!" killText="The boss is down - the contraband is seized!" arriveText="{gang} reached their buyers in {meeting} and vanished. Too late." />
+			<on event="SUCCESS" action="STAGE" target="2" chance="35" text="The boss's ledger names a stash nearby - the rest of the contraband." />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="FAILURE" action="FAIL" />
+		</stage>
+		<stage name="The Stash" timeLimit="900">
+			<text>The ledger points to where {gang} hid the rest of their goods. Recover it before the others come for it.</text>
+			<objective type="INVESTIGATE" clues="1" clueNpc="900506" searchTime="8" at="LAST" firstMin="1500" firstMax="2500" lines="stashClues" ambushChance="50" ambushCount="3" ambushTitle="{gang}" text="Recover the stash of {gang}." />
+			<on event="SUCCESS" action="COMPLETE" />
+			<on event="TIMEOUT" action="COMPLETE" reward="85" text="The stash is gone, but the boss is down." />
 		</stage>
 		<reward exp="3" sp="0.1" adenaPerLevel="1800" table="bounty" />
 		<text key="title">Smuggler Interception</text>
@@ -904,14 +968,21 @@
 		<stage name="The Search" timeLimit="1800">
 			<text>{child} wandered off in {place}. Look for signs of where they went.</text>
 			<text>The searchers spread out. You take the trail nobody else has checked yet.</text>
-			<objective type="INVESTIGATE" clues="2" clueNpc="900506" clueName="Small Footprints" clueTitle="A Child's Trail" searchTime="6" firstMin="800" firstMax="1400" spacingMin="2000" spacingMax="3000" lines="childClues" ambushChance="15" ambushCount="2" />
+			<objective type="INVESTIGATE" clues="2-3" clueNpc="900506" clueName="Small Footprints" clueTitle="A Child's Trail" searchTime="6" firstMin="800" firstMax="1400" spacingMin="2000" spacingMax="3000" lines="childClues" ambushChance="15" ambushCount="2" />
+			<on event="SUCCESS" action="STAGE" target="3" chance="25" text="A scream from the trees ahead - {child}!" />
 			<on event="SUCCESS" action="NEXT" />
 			<on event="TIMEOUT" action="FAIL" text="Night falls, and {child} is still out there. Others will keep looking." />
 		</stage>
 		<stage name="The Way Home" timeLimit="3000">
 			<text>You found {child}! Lead them home to {town} - and don't run ahead, or they'll wander off again.</text>
-			<objective type="ESCORT" escortee="900516" at="LAST" dest="HOME" legs="3" maxLegs="10" legMin="2200" legMax="3200" ambushes="2" ambushCount="2" chatter="childChatter" skittish="true" skittishRange="400" meter="100" drain="1.5" meterName="courage" startText="I want to go home..." arriveText="Mama! Thank you, thank you!" failText="{child} ran off in fright and is lost again." />
+			<objective type="ESCORT" escortee="900516" at="LAST" dest="HOME" legs="3" maxLegs="10" legMin="2200" legMax="3200" ambushes="1-3" ambushCount="2" chatter="childChatter" skittish="true" skittishRange="400" meter="100" drain="1.5" meterName="courage" startText="I want to go home..." arriveText="Mama! Thank you, thank you!" failText="{child} ran off in fright and is lost again." />
 			<on event="SUCCESS" action="COMPLETE" />
+		</stage>
+		<stage name="Cornered" timeLimit="600">
+			<text>{child} is up a tree, and beasts are circling below. Drive them off!</text>
+			<objective type="DEFEND" target="900516" at="LAST" waves="2-3" waveCount="2" waveInterval="30" prep="10" boss="false" meter="100" drain="1.5" meterName="courage" startText="Help! Help me, please!" winText="You came! Can we go home now?" failText="{child} jumped down and ran off into the dark." />
+			<on event="SUCCESS" action="STAGE" target="2" />
+			<on event="FAILURE" action="FAIL" text="{child} is lost in the dark. Others will keep looking." />
 		</stage>
 		<reward exp="2" sp="0.1" adenaPerLevel="1000" table="supplies" />
 		<text key="title">The Lost Child</text>
@@ -923,7 +994,7 @@
 	</template>
 
 	<!-- 17. Fisherman's Request: a fishing guild member of a harbour town needs fish. -->
-	<template id="17" name="Fish for {requester}" category="Request" requester="fisherman">
+	<template id="17" name="Fish for {requester}" category="Request" requester="fisherman" twists="URGENT,GENEROUS">
 		<trigger type="NPC_INTERACTION" weight="8" />
 		<eligibility minLevel="10" dailyLimit="2" />
 		<stage name="The Catch" timeLimit="5400">
@@ -944,7 +1015,7 @@
 		<contact npcName="Scout Captain Vey" npcTitle="Frontier Scouts" dialog="You're the one the board sent? Good. The vantage points are marked on your map. Keep low and keep quiet - if anything out there sees you, the whole report is worthless." button="Understood" line="Eyes open, head down." />
 		<stage name="The Vantage Points" timeLimit="2100">
 			<text>Reach the vantage points in {place} and watch from each (sitting helps). If anything sees you and attacks, the scouting is ruined.</text>
-			<objective type="INVESTIGATE" clues="3" clueNpc="900519" searchTime="10" firstMin="800" firstMax="1500" spacingMin="2200" spacingMax="3200" lines="scoutLines" ambushChance="0" stealth="true" seenText="You were seen - the enemy knows they are watched now. The scouting is ruined." text="Watch from the vantage points in {place} without being seen." />
+			<objective type="INVESTIGATE" clues="2-4" clueNpc="900519" searchTime="10" firstMin="800" firstMax="1500" spacingMin="2200" spacingMax="3200" lines="scoutLines" ambushChance="0" stealth="true" seenText="You were seen - the enemy knows they are watched now. The scouting is ruined." text="Watch from the vantage points in {place} without being seen." />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="FAILURE" action="FAIL" />
 		</stage>
@@ -959,7 +1030,7 @@
 		<trigger type="BOARD_DAILY" weight="6" requires="CASTLE_LORD" />
 		<eligibility minLevel="20" dailyLimit="2" />
 		<stage name="The Contract" timeLimit="2400">
-			<objective type="KILL" source="AREA" count="12" text="Clear the {monster} from the lands of {castle}, in {place}." />
+			<objective type="KILL" source="AREA" count="10-16" text="Clear the {monster} from the lands of {castle}, in {place}." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
 		<reward exp="2.5" sp="0.1" adenaPerLevel="1500" treasuryPercent="50" table="caches" />
@@ -1000,7 +1071,7 @@
 		<contact npcName="Magister Orin" npcTitle="Ivory Tower" dialog="The air itself is torn here. Rifts keep opening, and things from far-off lands crawl through them. I can show you how to seal them, but I can't hold them back alone." button="Show me the rifts" line="Seal them fast - they widen by the minute." />
 		<stage name="The Rifts" timeLimit="1500">
 			<text>Rifts have torn open in {place}, and beasts of {foreignLand} crawl through. Stand next to each rift to seal it.</text>
-			<objective type="DESTROY" nests="3" nestNpc="900517" foreign="true" spawnEvery="20" maxAlive="3" burnTime="8" radius="2200" spacing="1300" broodTitle="Rift Warden" broodTierBonus="2" nestText="The air tears open here, and things from far away crawl through. Stand next to the rift to seal it." swarmText="The rifts widen - a warden comes through!" motherSlainText="The rift warden is slain!" />
+			<objective type="DESTROY" nests="2-4" nestNpc="900517" foreign="true" spawnEvery="20" maxAlive="3" burnTime="8" radius="2200" spacing="1300" broodTitle="Rift Warden" broodTierBonus="2" nestText="The air tears open here, and things from far away crawl through. Stand next to the rift to seal it." swarmText="The rifts widen - a warden comes through!" motherSlainText="The rift warden is slain!" />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="The rifts are widening!" />
 		</stage>
@@ -1012,12 +1083,12 @@
 	</template>
 
 	<!-- 22. Herbalist's Plague: gather fever herbs, then hurry them home before it is too late. -->
-	<template id="22" name="Herbs for {requester}" category="Request" requester="townsfolk">
+	<template id="22" name="Herbs for {requester}" category="Request" requester="townsfolk" twists="URGENT,GENEROUS,QUIET">
 		<trigger type="NPC_INTERACTION" weight="5" />
 		<eligibility minLevel="10" dailyLimit="2" />
 		<contact npcName="Apprentice Lin" npcTitle="Herbalist's Apprentice" dialog="The fever herbs grow wild around here, but they wilt soon after they are picked. Gather them and run them back to {town} as fast as you can. I'll show you which ones to take." button="Show me the herbs" line="Quick hands, and quicker feet!" />
 		<stage name="Fever Herbs" timeLimit="1200">
-			<objective type="COLLECT" source="NODE" nodeNpc="900518" count="6" scale="false" radius="1800" gatherTime="3" trapChance="20" trapCount="2" trapText="A snake was coiled among the roots!" name="fever herbs" nodeText="A fever herb. Careful - the roots are fragile." text="Gather 6 fever herbs in {place}." />
+			<objective type="COLLECT" source="NODE" nodeNpc="900518" count="5-7" scale="false" radius="1800" gatherTime="3" trapChance="20" trapCount="2" trapText="A snake was coiled among the roots!" name="fever herbs" nodeText="A fever herb. Careful - the roots are fragile." text="Gather {count0} fever herbs in {place}." />
 			<on event="SUCCESS" action="NEXT" />
 			<on event="TIMEOUT" action="FAIL" text="The fever has run its course without the herbs." />
 		</stage>
@@ -1038,7 +1109,7 @@
 		<eligibility minLevel="15" dailyLimit="1" nightOnly="true" />
 		<stage name="The Watch" timeLimit="2400">
 			<text>Walk the watch posts around {town} and check each one. Things come out of the dark at night.</text>
-			<objective type="INVESTIGATE" at="HOME" clues="4" clueNpc="900515" searchTime="5" firstMin="1500" firstMax="2500" spacingMin="1500" spacingMax="2500" lines="watchLines" ambushChance="70" ambushCount="3" ambushTitle="Night Prowler" text="Check the 4 watch posts around {town}." />
+			<objective type="INVESTIGATE" at="HOME" clues="3-5" clueNpc="900515" searchTime="5" firstMin="1500" firstMax="2500" spacingMin="1500" spacingMax="2500" lines="watchLines" ambushChance="70" ambushCount="3" ambushTitle="Night Prowler||Shadow Stalker||Grave Robber" text="Check the {clues0} watch posts around {town}." />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="FAIL" text="The watch is over, and you didn't finish your round." />
 		</stage>
@@ -1056,23 +1127,23 @@
 		<eligibility minLevel="20" dailyLimit="5" />
 		<contact npcName="Guild Factor Hale" npcTitle="Adventurers' Guild" dialog="The guild's contract is posted here, and the work is close by. Do this one right and there may be another. Ready to hear the terms?" button="Let's hear it" line="Then get to work. The guild is watching." />
 		<stage name="Contract: The Cull" timeLimit="2400">
-			<objective type="KILL" source="AREA" count="15" text="Thin out the {monster} in {place}." />
+			<objective type="KILL" source="AREA" count="12-18" text="Thin out the {monster} in {place}." />
 			<on event="SUCCESS" action="FOLLOW_UP" target="24" maxChain="4" text="The guild has another contract for you, if you want it." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
 		<stage name="Contract: The Nests" timeLimit="1500">
-			<objective type="DESTROY" nests="3" nestNpc="900507" spawnEvery="20" maxAlive="3" burnTime="6" radius="2200" spacing="1300" />
+			<objective type="DESTROY" nests="3-4" nestNpc="900507" spawnEvery="20" maxAlive="3" burnTime="6" radius="2200" spacing="1300" />
 			<on event="SUCCESS" action="FOLLOW_UP" target="24" maxChain="4" text="The guild has another contract for you, if you want it." />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="FAIL" />
 		</stage>
 		<stage name="Contract: The Trail" timeLimit="2100">
-			<objective type="INVESTIGATE" clues="3" clueNpc="900506" clueName="Guild Marker" clueTitle="Adventurers' Guild" searchTime="6" firstMin="800" firstMax="1400" spacingMin="2200" spacingMax="3200" lines="guildClues" ambushChance="30" ambushCount="2" text="Follow the trail the guild marked in {place}." />
+			<objective type="INVESTIGATE" clues="2-4" clueNpc="900506" clueName="Guild Marker" clueTitle="Adventurers' Guild" searchTime="6" firstMin="800" firstMax="1400" spacingMin="2200" spacingMax="3200" lines="guildClues" ambushChance="30" ambushCount="2" text="Follow the trail the guild marked in {place}." />
 			<on event="SUCCESS" action="FOLLOW_UP" target="24" maxChain="4" text="The guild has another contract for you, if you want it." />
 			<on event="SUCCESS" action="COMPLETE" />
 		</stage>
 		<stage name="Contract: The Outpost" timeLimit="1200">
-			<objective type="DEFEND" target="900505" at="AREA" waves="4" waveCount="3" waveInterval="40" prep="20" boss="true" bossTierBonus="1" meter="100" drain="1" meterName="banner" />
+			<objective type="DEFEND" target="900505" at="AREA" waves="3-5" waveCount="2-3" waveInterval="40" prep="20" boss="true" bossTierBonus="1" meter="100" drain="1" meterName="banner" />
 			<on event="SUCCESS" action="FOLLOW_UP" target="24" maxChain="4" text="The guild has another contract for you, if you want it." />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="FAILURE" action="FAIL" />
@@ -1095,7 +1166,7 @@
 		<stage name="The Tracks" timeLimit="1800">
 			<text>Beastmaster Rolf shows you the first tracks of {beast}. Follow them.</text>
 			<text>The tracks of {beast} lead away from the farm's camp. Follow them, quietly.</text>
-			<objective type="INVESTIGATE" clues="2" clueNpc="900514" searchTime="5" firstMin="800" firstMax="1400" spacingMin="2000" spacingMax="3000" lines="beastTracks" ambushChance="10" ambushCount="2" />
+			<objective type="INVESTIGATE" clues="2-3" clueNpc="900514" searchTime="5" firstMin="800" firstMax="1400" spacingMin="2000" spacingMax="3000" lines="beastTracks" ambushChance="10" ambushCount="2" />
 			<on event="SUCCESS" action="NEXT" />
 			<on event="TIMEOUT" action="FAIL" text="The tracks are gone. {beast} is lost to the wilds." />
 		</stage>
@@ -1128,7 +1199,7 @@
 		</stage>
 		<stage name="The Arrest" timeLimit="1200">
 			<text>The leader of {gang} is ahead, with his best blades. Cut down the guards, beat him down and bind him - alive.</text>
-			<objective type="CAPTURE" title="Leader of {gang}" at="LAST" spawnMin="1500" spawnMax="2500" tierBonus="2" guards="3" guardTitle="{gang}" threshold="30" bindTime="10" breakFree="30" recover="40" subduedTitle="Beaten" subdueText="The leader of {gang} drops his blade: &quot;Enough! Enough...&quot; Bind him!" guardedText="His blades are still standing - deal with them first!" captureText="The leader of {gang} is in chains!" breakText="He grabs his blade and fights on!" fleeText="The leader of {gang} slipped away! Follow the radar." />
+			<objective type="CAPTURE" title="Leader of {gang}" at="LAST" spawnMin="1500" spawnMax="2500" tierBonus="2" guards="2-4" guardTitle="{gang}" threshold="30" bindTime="10" breakFree="30" recover="40" subduedTitle="Beaten" subdueText="The leader of {gang} drops his blade: &quot;Enough! Enough...&quot; Bind him!" guardedText="His blades are still standing - deal with them first!" captureText="The leader of {gang} is in chains!" breakText="He grabs his blade and fights on!" fleeText="The leader of {gang} slipped away! Follow the radar." />
 			<objective type="KILL" optional="true" source="AREA" count="6" text="Thin out the {monster} around the hideout." />
 			<on event="SUCCESS" action="COMPLETE" />
 			<on event="TIMEOUT" action="ESCALATE" max="1" extraTime="600" text="The leader of {gang} got away to another hideout!" />

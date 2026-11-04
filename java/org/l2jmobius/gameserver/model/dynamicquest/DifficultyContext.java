@@ -35,12 +35,27 @@ public class DifficultyContext
 	private final int _questLevel;
 	private final int _partySize;
 	private final QuestTier _tier;
+	private final QuestTwist _twist;
 
 	public DifficultyContext(int questLevel, int partySize, QuestTier tier)
+	{
+		this(questLevel, partySize, tier, null);
+	}
+
+	public DifficultyContext(int questLevel, int partySize, QuestTier tier, QuestTwist twist)
 	{
 		_questLevel = questLevel;
 		_partySize = Math.max(1, partySize);
 		_tier = tier;
+		_twist = twist;
+	}
+
+	/**
+	 * @return the twist of the quest, {@code null} for none
+	 */
+	public QuestTwist getTwist()
+	{
+		return _twist;
 	}
 
 	/**
@@ -50,6 +65,18 @@ public class DifficultyContext
 	 * @return the context: members too far from the leader's level don't count for the level nor the size
 	 */
 	public static DifficultyContext of(Player leader, List<Player> members, QuestTier tier)
+	{
+		return of(leader, members, tier, null);
+	}
+
+	/**
+	 * @param leader the player taking the quest
+	 * @param members the party members taking part (the leader included)
+	 * @param tier the tier
+	 * @param twist the offer's twist, {@code null} for none
+	 * @return the context
+	 */
+	public static DifficultyContext of(Player leader, List<Player> members, QuestTier tier, QuestTwist twist)
 	{
 		final int gap = DynamicQuestConfig.MAX_LEVEL_GAP * 2;
 		int sum = 0;
@@ -63,7 +90,7 @@ public class DifficultyContext
 			}
 		}
 		final int average = counted > 0 ? Math.round((float) sum / counted) : leader.getLevel();
-		return new DifficultyContext(clampLevel(average + tier.getLevelOffset()), Math.max(1, counted), tier);
+		return new DifficultyContext(clampLevel(average + tier.getLevelOffset()), Math.max(1, counted), tier, twist);
 	}
 
 	public static int clampLevel(int level)
@@ -94,7 +121,8 @@ public class DifficultyContext
 	public int count(int base, boolean scaleWithParty)
 	{
 		final double party = scaleWithParty ? 1 + (0.6 * (_partySize - 1)) : 1;
-		return Math.max(1, (int) Math.round(base * _tier.getCountMultiplier() * party));
+		final double twist = _twist != null ? _twist.getCountMultiplier() : 1;
+		return Math.max(1, (int) Math.round(base * _tier.getCountMultiplier() * party * twist));
 	}
 
 	/**
@@ -105,7 +133,8 @@ public class DifficultyContext
 	{
 		final int party = _partySize >= 7 ? 2 : (_partySize >= 4 ? 1 : 0);
 		final int cap = Math.min(3, _tier.getChampionCap(bonus >= 2));
-		return Math.max(0, Math.min(cap, _tier.getChampionBonus() + party + bonus));
+		final int twist = _twist != null ? _twist.getChampionBonus() : 0;
+		return Math.max(0, Math.min(cap, _tier.getChampionBonus() + party + bonus + twist));
 	}
 
 	/**
@@ -123,6 +152,7 @@ public class DifficultyContext
 	 */
 	public int timeLimit(int base)
 	{
-		return base <= 0 ? 0 : Math.max(60, (int) Math.round(base * _tier.getTimeMultiplier()));
+		final double twist = _twist != null ? _twist.getTimeMultiplier() : 1;
+		return base <= 0 ? 0 : Math.max(60, (int) Math.round(base * _tier.getTimeMultiplier() * twist));
 	}
 }
