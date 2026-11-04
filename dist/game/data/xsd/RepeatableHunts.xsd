@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="list">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="settings" minOccurs="0" maxOccurs="1">
+					<xs:complexType>
+						<xs:attribute name="enabled" type="xs:boolean" />
+						<xs:attribute name="giverNpc" type="xs:positiveInteger" />
+						<xs:attribute name="courierNpc" type="xs:positiveInteger" />
+						<xs:attribute name="courierKills" type="xs:positiveInteger" />
+						<xs:attribute name="courierStay" type="xs:positiveInteger" />
+						<xs:attribute name="courierCooldown" type="xs:nonNegativeInteger" />
+						<xs:attribute name="declineCooldown" type="xs:nonNegativeInteger" />
+						<xs:attribute name="countLevelGap" type="xs:nonNegativeInteger" />
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="hunt" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="monster" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:attribute name="id" type="xs:positiveInteger" use="required" />
+									<xs:attribute name="chance" type="xs:decimal" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="text" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:simpleContent>
+										<xs:extension base="xs:string">
+											<xs:attribute name="key" type="xs:token" use="required" />
+										</xs:extension>
+									</xs:simpleContent>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+						<xs:attribute name="id" type="xs:positiveInteger" use="required" />
+						<xs:attribute name="name" type="xs:string" use="required" />
+						<xs:attribute name="place" type="xs:string" use="required" />
+						<xs:attribute name="town" type="xs:string" use="required" />
+						<xs:attribute name="anchor" type="xs:positiveInteger" use="required" />
+						<xs:attribute name="giverName" type="xs:string" use="required" />
+						<xs:attribute name="giverTitle" type="xs:string" />
+						<xs:attribute name="type" use="required">
+							<xs:simpleType>
+								<xs:restriction base="xs:token">
+									<xs:enumeration value="KILL" />
+									<xs:enumeration value="COLLECT" />
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:attribute>
+						<xs:attribute name="item" type="xs:positiveInteger" />
+						<xs:attribute name="unit" type="xs:string" />
+						<xs:attribute name="minLevel" type="xs:positiveInteger" use="required" />
+						<xs:attribute name="maxLevel" type="xs:positiveInteger" use="required" />
+						<xs:attribute name="perUnit" type="xs:positiveInteger" use="required" />
+						<xs:attribute name="bonus" type="xs:nonNegativeInteger" />
+						<xs:attribute name="bonusMin" type="xs:nonNegativeInteger" />
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

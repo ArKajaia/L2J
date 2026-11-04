@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="xsd/RepeatableHunts.xsd">
+	<!--
+	Repeatable hunts (RepeatableHuntManager). A giver next to a town's gatekeeper pays, as often as the player reports back, for every kill of a
+	region's monsters (KILL) or every quest item they drop (COLLECT). A player who keeps killing a hunt's monsters without the hunt is brought the
+	offer by a courier, once out of the fight.
+
+	They fill the hunting grounds of levels 40-75 that had no repeatable hunt of their own: the zones the High Five guides recommend for
+	40-52 (Cruma Tower, Forest of Mirrors, Plains of Glory, War-Torn Plains, Tanor Canyon), 52-61 (Cemetery, Anghel Waterfall, Forsaken Plains)
+	and 61-75 (Valley of Saints, Blazing Swamp). Below 40 and above 75 the retail quests already cover every zone.
+
+	Rewards follow retail repeatables such as Alligator Hunter (60 adena a pelt, about 12% of an alligator's adena, and 3430 for 10 or more):
+	about 14% of the monsters' average base adena per kill (an item pays that divided by its drop chance), and a bonus of five kills' adena for
+	a report of 25 kills or 12 items. Both are multiplied by RateQuestRewardAdena (config/Rates.ini), like any quest's adena.
+	The items are retail quest items no quest of the server uses, so the client knows them; they can't be traded or dropped.
+
+	settings  enabled, giverNpc, courierNpc (data/stats/npcs/custom/RepeatableHunts.xml), courierKills (kills without the hunt before a
+	          courier comes), courierStay (seconds it waits), courierCooldown / declineCooldown (seconds before it brings the same hunt again,
+	          after an offer / a refusal), countLevelGap (levels above maxLevel at which kills still count). `.quests heralds off` (the
+	          Dynamic Quests' setting) stops couriers too.
+	hunt      id name place (as it reads in a sentence) town anchor (the npc its giver stands next to) giverName giverTitle type (KILL | COLLECT)
+	          item unit (COLLECT) minLevel maxLevel (who can take it) perUnit bonus bonusMin (adena before the rate)
+	  monster id chance (percent that it drops the item, COLLECT)
+	  text    key: offer, accepted, progress, report, nothing, courier. {place} {town} {giver} {unit} are filled in.
+	-->
+	<settings enabled="true" giverNpc="900530" courierNpc="900531" courierKills="12" courierStay="120" courierCooldown="7200" declineCooldown="21600" countLevelGap="3" />
+
+	<!-- 1. Cruma Tower (40-49), the 40-52 grounds: none of its monsters had a repeatable hunt. Dion. -->
+	<hunt id="1" name="Wardens of the Tower" place="the Cruma Tower" town="Dion" anchor="30059" giverName="Researcher Velmor" giverTitle="Ivory Tower Expedition" type="KILL" minLevel="38" maxLevel="52" perUnit="240" bonus="8400" bonusMin="25">
+		<monster id="20213" /> <!-- Porta 40 -->
+		<monster id="20214" /> <!-- Excuro 41 -->
+		<monster id="20215" /> <!-- Mordeo 42 -->
+		<monster id="20216" /> <!-- Ricenseo 43 -->
+		<monster id="20217" /> <!-- Krator 44 -->
+		<monster id="20218" /> <!-- Premo 45 -->
+		<monster id="20219" /> <!-- Validus 46 -->
+		<monster id="20220" /> <!-- Dicor 47 -->
+		<monster id="20222" /> <!-- Torfe 49 -->
+		<monster id="21035" /> <!-- Catherok 42 -->
+		<monster id="21036" /> <!-- Shindebarn 44 -->
+		<monster id="21037" /> <!-- Ossiud 47 -->
+		<monster id="21038" /> <!-- Liangma 49 -->
+		<text key="offer">Mozella's researchers can't study the Tower of the Giants while its wardens roam the halls. Thin them out inside the Cruma Tower and I'll pay for every one you put down. Mind the Gate of Time and Space: it won't open for anyone of level 56 or above.</text>
+		<text key="accepted">Splendid. The tower's gatekeeper is Mozella, at its foot in the Cruma Marshlands. Come back to me in Dion whenever you like - I keep count.</text>
+		<text key="progress">Back from the tower? The expedition's notes grow thicker with every warden that falls.</text>
+		<text key="report">The halls will be quieter for my colleagues. Here is the expedition's pay.</text>
+		<text key="courier">Researcher Velmor of the Ivory Tower expedition in Dion heard you've been fighting the tower's wardens. He pays for that kind of work.</text>
+	</hunt>
+
+	<!-- 2. The Forest of Mirrors (45-49 spirits). Aden. -->
+	<hunt id="2" name="Ghost Fires of the Mirrors" place="the Forest of Mirrors" town="Aden" anchor="30233" giverName="Lamplighter Odessa" giverTitle="Aden Cathedral" type="COLLECT" item="3661" unit="Ignition of Ghost Fire" minLevel="42" maxLevel="52" perUnit="265" bonus="5200" bonusMin="12">
+		<monster id="20635" chance="55" /> <!-- Carinkain 45 -->
+		<monster id="20636" chance="55" /> <!-- Forest of Mirrors Ghost 46 -->
+		<monster id="20638" chance="55" /> <!-- Forest of Mirrors Ghost 48 -->
+		<monster id="20639" chance="55" /> <!-- Mirror 49 -->
+		<text key="offer">The ghosts of the Forest of Mirrors carry cold fires that never go out. The cathedral of Aden lights its lamps for the dead with them. Bring me every ghost fire you can take from them.</text>
+		<text key="accepted">Take care - the forest plays tricks on the eyes. Bring the ghost fires to me here in Aden; I pay for each one.</text>
+		<text key="progress">Do you carry the ghost fires? Their light is the only thing that keeps the restless dead from the city.</text>
+		<text key="report">Cold, and still burning... The lamps will be lit for another month. Here is your pay.</text>
+		<text key="courier">Lamplighter Odessa of the Aden cathedral needs the ghost fires the forest's spirits carry, and she saw you hunting them.</text>
+	</hunt>
+
+	<!-- 3. Plains of Glory (45-50 Vanor Silenos). Hunters Village. -->
+	<hunt id="3" name="Medals of the Fallen" place="the Plains of Glory" town="Hunters Village" anchor="30848" giverName="Veteran Halvard" giverTitle="Old Soldiers' Guild" type="COLLECT" item="4676" unit="Medal of Victory" minLevel="44" maxLevel="53" perUnit="280" bonus="5000" bonusMin="12">
+		<monster id="20681" chance="50" /> <!-- Vanor Silenos 45 -->
+		<monster id="20682" chance="50" /> <!-- Vanor Silenos Grunt 46 -->
+		<monster id="20683" chance="50" /> <!-- Vanor Silenos Scout 47 -->
+		<monster id="20684" chance="50" /> <!-- Vanor Silenos Warrior 48 -->
+		<monster id="20685" chance="50" /> <!-- Vanor Silenos Shaman 49 -->
+		<monster id="20686" chance="50" /> <!-- Vanor Silenos Chieftain 50 -->
+		<text key="offer">The Vanor Silenos loot the old battlefields of the Plains of Glory - and the medals of the fallen with them. Take those medals back. The soldiers' families pay to have them home, and so do I.</text>
+		<text key="accepted">My thanks. The Silenos camp all over the plains west of here. Bring the medals to me in Hunters Village, as many as you find.</text>
+		<text key="progress">Any medals? Every one is a name somebody remembers.</text>
+		<text key="report">These go back to the families. The guild pays what it promised.</text>
+		<text key="courier">Veteran Halvard of the Old Soldiers' Guild in Hunters Village pays for the medals the Vanor Silenos stole from the fallen.</text>
+	</hunt>
+
+	<!-- 4. War-Torn Plains (45-53). Hunters Village. -->
+	<hunt id="4" name="Vouchers of the Old War" place="the War-Torn Plains" town="Hunters Village" anchor="30848" giverName="Quartermaster Brenna" giverTitle="Veterans' Office" type="COLLECT" item="15711" unit="War Veteran Voucher" minLevel="45" maxLevel="55" perUnit="295" bonus="4700" bonusMin="12">
+		<monster id="20659" chance="45" /> <!-- Grave Wanderer 45 -->
+		<monster id="20660" chance="45" /> <!-- Archer of Greed 46 -->
+		<monster id="20661" chance="45" /> <!-- Hatar Ratman Thief 47 -->
+		<monster id="20662" chance="45" /> <!-- Hatar Ratman Boss 48 -->
+		<monster id="20663" chance="45" /> <!-- Hatar Hanishee 49 -->
+		<monster id="20664" chance="45" /> <!-- Deprive 50 -->
+		<monster id="20665" chance="45" /> <!-- Taik Orc Supply 51 -->
+		<monster id="20667" chance="45" /> <!-- Farcran 53 -->
+		<text key="offer">Ratmen and grave robbers on the War-Torn Plains strip the vouchers off the soldiers buried there. Each voucher you bring back is a pension the Veterans' Office can finally pay out.</text>
+		<text key="accepted">Good. The plains lie north-east of the village. Bring the vouchers to me here; I pay for every one.</text>
+		<text key="progress">Vouchers? The widows have waited long enough.</text>
+		<text key="report">Every one of these is a pension paid. Here is the office's fee.</text>
+		<text key="courier">Quartermaster Brenna of the Veterans' Office in Hunters Village needs the war vouchers the plains' thieves carry.</text>
+	</hunt>
+
+	<!-- 5. Tanor Canyon (46-50). Giran. -->
+	<hunt id="5" name="The Canyon Road" place="Tanor Canyon" town="Giran" anchor="30080" giverName="Warden Kessler" giverTitle="Giran Road Watch" type="KILL" minLevel="45" maxLevel="53" perUnit="90" bonus="3200" bonusMin="25">
+		<monster id="20939" /> <!-- Tanor Silenos Warrior 46 -->
+		<monster id="20941" /> <!-- Tanor Silenos Chieftain 50 -->
+		<monster id="20944" /> <!-- Nightmare Lord 47 -->
+		<text key="offer">The Tanor Silenos and the Nightmare Lords of Tanor Canyon raid every caravan on the canyon road. The Road Watch pays a bounty for each of them you put down.</text>
+		<text key="accepted">The canyon is south-west of Giran. Report back to me here whenever you like; the bounty stands.</text>
+		<text key="progress">The caravans still won't take the canyon road. How many have you put down?</text>
+		<text key="report">The road is a little safer. The bounty, as promised.</text>
+		<text key="courier">Warden Kessler of the Giran Road Watch pays a bounty on the canyon's raiders - and you've been taking them down already.</text>
+	</hunt>
+
+	<!-- 6. The Cemetery (51-54 undead). Hunters Village. -->
+	<hunt id="6" name="Bones for the Burial" place="the Cemetery" town="Hunters Village" anchor="30848" giverName="Gravekeeper Mirela" giverTitle="Keeper of the Dead" type="COLLECT" item="4279" unit="Jar of Bones" minLevel="50" maxLevel="57" perUnit="290" bonus="5100" bonusMin="12">
+		<monster id="20997" chance="50" /> <!-- Soldier of Grief 51 -->
+		<monster id="20998" chance="50" /> <!-- Cruel Punisher 52 -->
+		<monster id="20999" chance="50" /> <!-- Roving Soul 53 -->
+		<monster id="21000" chance="50" /> <!-- Soul of Ruins 54 -->
+		<monster id="20678" chance="50" /> <!-- Tortured Undead 53 -->
+		<text key="offer">The dead of the Cemetery won't lie still, and every one you put down leaves its bones on unhallowed ground. Gather them in jars and bring them to me - I'll see them buried properly, and pay for your trouble.</text>
+		<text key="accepted">May the goddess keep you. The Cemetery lies east of the village. Bring the jars here; I pay for each.</text>
+		<text key="progress">More bones for the burial? The dead don't rest until they're in hallowed ground.</text>
+		<text key="report">They'll rest now. Here - for every jar you carried.</text>
+		<text key="courier">Gravekeeper Mirela of Hunters Village wants the bones of the Cemetery's dead brought home for burial.</text>
+	</hunt>
+
+	<!-- 7. Anghel Waterfall (53-55 Harit lizardmen). Aden. -->
+	<hunt id="7" name="Taking Back the Falls" place="Anghel Waterfall" town="Aden" anchor="30233" giverName="Tracker Joanne" giverTitle="Aden Hunters' Lodge" type="KILL" minLevel="52" maxLevel="58" perUnit="205" bonus="7300" bonusMin="25">
+		<monster id="20643" /> <!-- Harit Lizardman Warrior 53 -->
+		<monster id="20644" /> <!-- Harit Lizardman Shaman 54 -->
+		<monster id="20645" /> <!-- Harit Lizardman Matriarch 55 -->
+		<text key="offer">The Harit lizardmen have taken Anghel Waterfall, and our hunters can't get near the falls. The lodge pays for every lizardman you drive out - matriarchs included.</text>
+		<text key="accepted">The falls are east of Aden. Come back to me here and the lodge pays for every kill.</text>
+		<text key="progress">How many of the lizardmen have you put down at the falls?</text>
+		<text key="report">The lodge's hunters will thank you. Your pay.</text>
+		<text key="courier">Tracker Joanne of the Aden Hunters' Lodge pays for every Harit lizardman driven from Anghel Waterfall.</text>
+	</hunt>
+
+	<!-- 8. Forsaken Plains (54-59). Hunters Village. -->
+	<hunt id="8" name="The Forsaken Frontier" place="the Forsaken Plains" town="Hunters Village" anchor="30848" giverName="Sergeant Dorrick" giverTitle="Hunters Village Watch" type="KILL" minLevel="54" maxLevel="62" perUnit="215" bonus="7700" bonusMin="25">
+		<monster id="20647" /> <!-- Yintzu 56 -->
+		<monster id="20648" /> <!-- Paliote 57 -->
+		<monster id="20649" /> <!-- Hamrut 58 -->
+		<monster id="20650" /> <!-- Kranrot 59 -->
+		<monster id="20679" /> <!-- Marsh Stalker 54 -->
+		<monster id="20680" /> <!-- Marsh Drake 55 -->
+		<monster id="21017" /> <!-- Fallen Orc 55 -->
+		<monster id="21018" /> <!-- Ancient Gargoyle 56 -->
+		<monster id="21019" /> <!-- Fallen Orc Archer 57 -->
+		<monster id="21020" /> <!-- Fallen Orc Shaman 58 -->
+		<monster id="21021" /> <!-- Sharp Talon Tiger 59 -->
+		<text key="offer">Every week something new crawls out of the Forsaken Plains towards the village - fallen orcs, drakes, worse. The Watch pays for every beast you put down out there.</text>
+		<text key="accepted">The plains are south-east of here. Report to me whenever you like; the Watch keeps count.</text>
+		<text key="progress">Still holding the frontier? How many this time?</text>
+		<text key="report">The village sleeps better. The Watch's pay.</text>
+		<text key="courier">Sergeant Dorrick of the Hunters Village Watch pays for every beast put down on the Forsaken Plains.</text>
+	</hunt>
+
+	<!-- 9. Valley of Saints (60-67 Splendor). Rune. -->
+	<hunt id="9" name="Relics of the Valley" place="the Valley of Saints" town="Rune" anchor="31320" giverName="Sister Aurelie" giverTitle="Rune Cathedral" type="COLLECT" item="4251" unit="Ancient Statue of Goddess" minLevel="60" maxLevel="69" perUnit="725" bonus="10400" bonusMin="12">
+		<monster id="21520" chance="40" /> <!-- Eye of Splendor 60 -->
+		<monster id="21521" chance="40" /> <!-- Claws of Splendor 60 -->
+		<monster id="21523" chance="40" /> <!-- Flash of Splendor 61 -->
+		<monster id="21524" chance="40" /> <!-- Blade of Splendor 61 -->
+		<monster id="21526" chance="40" /> <!-- Wisdom of Splendor 62 -->
+		<monster id="21527" chance="40" /> <!-- Anger of Splendor 63 -->
+		<monster id="21529" chance="40" /> <!-- Soul of Splendor 63 -->
+		<monster id="21530" chance="40" /> <!-- Victory of Splendor 64 -->
+		<monster id="21531" chance="40" /> <!-- Punishment of Splendor 64 -->
+		<monster id="21532" chance="40" /> <!-- Shout of Splendor 65 -->
+		<monster id="21533" chance="40" /> <!-- Alliance of Splendor 65 -->
+		<monster id="21535" chance="40" /> <!-- Signet of Splendor 66 -->
+		<monster id="21536" chance="40" /> <!-- Crown of Splendor 66 -->
+		<monster id="21537" chance="40" /> <!-- Fang of Splendor 67 -->
+		<monster id="21539" chance="40" /> <!-- Wailing of Splendor 67 -->
+		<monster id="21541" chance="40" /> <!-- Pilgrim of Splendor 63 -->
+		<text key="offer">The creatures of Splendor that haunt the Valley of Saints hoard the old statues of the goddess from its ruined shrines. Bring them back to the cathedral - each one is worth its weight to us.</text>
+		<text key="accepted">The valley lies far to the north-east of Rune. Bring the statues to me here, as many as you can carry.</text>
+		<text key="progress">Have you found more of the goddess's statues?</text>
+		<text key="report">Another shrine restored. The cathedral pays its debt.</text>
+		<text key="courier">Sister Aurelie of the Rune Cathedral wants the goddess's statues the valley's creatures hoard, and she pays well.</text>
+	</hunt>
+
+	<!-- 10. Blazing Swamp (67-75), whose only quest is the alchemists' Supplier of Reagents. Goddard. -->
+	<hunt id="10" name="Fire in the Swamp" place="the Blazing Swamp" town="Goddard" anchor="31275" giverName="Captain Rhodric" giverTitle="Goddard Garrison" type="KILL" minLevel="67" maxLevel="77" perUnit="300" bonus="10800" bonusMin="25">
+		<monster id="21108" /> <!-- Glow Wisp 67 -->
+		<monster id="21109" /> <!-- Hames Orc Scout 68 -->
+		<monster id="21110" /> <!-- Marsh Predator 69 -->
+		<monster id="21111" /> <!-- Lava Wyrm 70 -->
+		<monster id="21112" /> <!-- Hames Orc Footman 71 -->
+		<monster id="21113" /> <!-- Hames Orc Sniper 72 -->
+		<monster id="21114" /> <!-- Cursed Guardian 73 -->
+		<monster id="21115" /> <!-- Hames Orc Shaman 74 -->
+		<monster id="21116" /> <!-- Hames Orc Overlord 75 -->
+		<text key="offer">The Hames orcs of the Blazing Swamp gather for something, and the swamp's beasts with them. The garrison wants their numbers down before they march - and pays for every one you burn.</text>
+		<text key="accepted">The swamp is south of Goddard. Report to me here whenever you like; the garrison keeps count.</text>
+		<text key="progress">Back from the swamp? How many this time?</text>
+		<text key="report">Fewer of them to march on Goddard. The garrison's pay.</text>
+		<text key="courier">Captain Rhodric of the Goddard garrison pays for every orc and beast put down in the Blazing Swamp.</text>
+	</hunt>
+</list>
