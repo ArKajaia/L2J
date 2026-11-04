@@ -450,6 +450,10 @@ public class RepeatableHuntManager
 				player.getVariables().set(VAR_KILLS + hunt.getId(), 0);
 				player.sendPacket(QuestSound.ITEMSOUND_QUEST_MIDDLE.getPacket());
 				player.sendMessage(hunt.getName() + ": taken. Report to " + hunt.getGiverName() + " in " + hunt.getTown() + " whenever you like.");
+				if (isGiver)
+				{
+					showGround(player, hunt);
+				}
 				if (isCourier)
 				{
 					QuestSpawnUtil.say(player, npc, "Good. " + hunt.getGiverName() + " will be glad. Report in " + hunt.getTown() + " when you're done.");
@@ -457,6 +461,15 @@ public class RepeatableHuntManager
 					ThreadPool.schedule(() -> removeCourier(objectId), 4000);
 				}
 				return page(npc.getName(), hunt.getText("accepted", "Good. Hunt in {place} and come back whenever you like - I pay for every {unit}."));
+			}
+			case "map":
+			{
+				if (!isGiver && !isCourier)
+				{
+					return null;
+				}
+				showGround(player, hunt != null ? hunt : courier._hunt);
+				return null;
 			}
 			case "report":
 			{
@@ -497,6 +510,45 @@ public class RepeatableHuntManager
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Opens the player's map with the nearest place the hunt's monsters live flagged on it.
+	 */
+	private static void showGround(Player player, RepeatableHunt hunt)
+	{
+		Location best = null;
+		double bestDistance = Double.MAX_VALUE;
+		for (int npcId : hunt.getMonsterIds())
+		{
+			for (Spawn spawn : SpawnTable.getInstance().getSpawns(npcId))
+			{
+				if (spawn.getInstanceId() != 0)
+				{
+					continue;
+				}
+				// A territory spawn has no point of its own: where its monster stands.
+				final Npc last = spawn.getLastSpawn();
+				final int x = (spawn.getX() != 0) || (spawn.getY() != 0) ? spawn.getX() : (last != null ? last.getX() : 0);
+				final int y = (spawn.getX() != 0) || (spawn.getY() != 0) ? spawn.getY() : (last != null ? last.getY() : 0);
+				final int z = (spawn.getX() != 0) || (spawn.getY() != 0) ? spawn.getZ() : (last != null ? last.getZ() : 0);
+				if ((x == 0) && (y == 0))
+				{
+					continue;
+				}
+				final double distance = player.calculateDistance2D(x, y, z);
+				if (distance < bestDistance)
+				{
+					bestDistance = distance;
+					best = new Location(x, y, z);
+				}
+			}
+		}
+		if (best != null)
+		{
+			QuestSpawnUtil.showOnMap(player, best);
+			player.sendMessage(hunt.getName() + ": the hunting ground in " + hunt.getPlace() + " is flagged on your map.");
+		}
 	}
 
 	private String report(Player player, Npc npc, RepeatableHunt hunt)
@@ -547,7 +599,7 @@ public class RepeatableHuntManager
 			sb.append(hunt.getText("offer", "There is work in {place}.")).append("<br><br>").append(terms(hunt)).append("<br><br>");
 			if (canTake(player, hunt))
 			{
-				sb.append("<center>").append(button("accept " + hunt.getId(), "Take the hunt")).append("</center>");
+				sb.append("<center>").append(button("accept " + hunt.getId(), "Take the hunt")).append("<br>").append(button("map " + hunt.getId(), "Show on map")).append("</center>");
 			}
 			else
 			{
@@ -573,6 +625,7 @@ public class RepeatableHuntManager
 		{
 			sb.append(button("report " + hunt.getId(), "Report")).append("<br>");
 		}
+		sb.append(button("map " + hunt.getId(), "Show on map")).append("<br>");
 		sb.append(button("abandon " + hunt.getId(), "Give up the hunt")).append("</center>");
 		return page(npc.getName(), sb.toString());
 	}

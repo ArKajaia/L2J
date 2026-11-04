@@ -22,6 +22,7 @@ package org.l2jmobius.gameserver.util;
 
 import java.util.Collection;
 
+import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
@@ -38,6 +39,8 @@ import org.l2jmobius.gameserver.model.zone.type.TownZone;
 import org.l2jmobius.gameserver.network.enums.ChatType;
 import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
+import org.l2jmobius.gameserver.network.serverpackets.RadarControl;
+import org.l2jmobius.gameserver.network.serverpackets.ShowMiniMap;
 
 /**
  * Spawning, placement and message helpers shared by the scripted quest engines (Hidden Quests, Dynamic Quests).
@@ -236,11 +239,30 @@ public final class QuestSpawnUtil
 		if (previous != null)
 		{
 			player.getRadar().removeMarker(previous.getX(), previous.getY(), previous.getZ());
+			player.sendPacket(new RadarControl(1, 2, previous.getX(), previous.getY(), previous.getZ()));
 		}
 		if (location != null)
 		{
+			// The radar's arrow, and the flag on the map (the map only shows type 2 marks).
 			player.getRadar().addMarker(location.getX(), location.getY(), location.getZ());
+			player.sendPacket(new RadarControl(0, 2, location.getX(), location.getY(), location.getZ()));
 		}
+	}
+
+	/**
+	 * Opens the player's map with a place flagged on it (and the radar pointing at it).
+	 * @param player the player
+	 * @param location the place
+	 */
+	public static void showOnMap(Player player, Location location)
+	{
+		if ((player == null) || (location == null))
+		{
+			return;
+		}
+		player.sendPacket(new ShowMiniMap(-1));
+		// The map has to be open before the flag is set, or the client doesn't draw it.
+		ThreadPool.schedule(() -> moveMarker(player, location, location), 500);
 	}
 
 	public static String formatTime(int seconds)
