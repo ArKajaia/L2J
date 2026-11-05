@@ -68,6 +68,7 @@ import org.l2jmobius.gameserver.managers.CaptchaManager;
 import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.managers.IdManager;
 import org.l2jmobius.gameserver.managers.InstanceManager;
+import org.l2jmobius.gameserver.managers.MapDeviceManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
 import org.l2jmobius.gameserver.managers.RaceWarsManager;
 import org.l2jmobius.gameserver.managers.TeamEventRules;
@@ -5683,6 +5684,12 @@ public abstract class Creature extends WorldObject
 			try (CombatInfo.Scope _ = CombatInfo.scope(CombatInfo.KIND_NORMAL_ATTACK, null, hitFlags))
 			{
 				target.reduceCurrentHp(damage, this, null);
+			}
+			
+			// Map Device modifiers: Mana Siphon, Venomous, Lacerating.
+			if (isMonster() && target.isPlayer())
+			{
+				MapDeviceManager.onMonsterHit(asMonster(), target.asPlayer(), crit);
 			}
 			
 			target.notifyDamageReceived(damage, this, null, crit, false);

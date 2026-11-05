@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -97,6 +98,16 @@ public class MapRun
 	private final Set<Integer> _playersInside = ConcurrentHashMap.newKeySet();
 	/** Owners of the stat functions a run adds to its monsters and players. */
 	private final Object _monsterFuncOwner = new Object();
+	/** Owns the stat functions of Death Curse on the players (apart from the map's own, which are put back on every arrival). */
+	private final Object _curseFuncOwner = new Object();
+	/** Death Curse: player object id -> {stacks, when it wears off (ms)}. */
+	private final Map<Integer, long[]> _curses = new ConcurrentHashMap<>();
+	/** Linked Souls: monster object id -> its partner's. */
+	private final Map<Integer, Integer> _partners = new ConcurrentHashMap<>();
+	/** Bounty Mark: the marked monster (0 for none) and when its bounty runs out. */
+	private volatile int _bountyId;
+	private volatile long _bountyUntil;
+	private volatile boolean _speedrunOver;
 	private final Object _playerFuncOwner = new Object();
 	private volatile ScheduledFuture<?> _tickTask;
 	/** The kinds of monster the map was filled with (its theme), for the monsters that join later (Ambush). */
@@ -111,6 +122,12 @@ public class MapRun
 	private final double _monsterElementRes;
 	private final double _monsterReflectPct;
 	private final double _monsterHpRegen;
+	private final double _monsterMCritRate;
+	private final double _monsterControlChance;
+	private final double _monsterDebuffChance;
+	private final int _monsterShieldPct;
+	private final double _monsterCritDamageTaken;
+	private final double _monsterSkillDamageTaken;
 	private final double _playerMaxHp;
 	private final double _playerDef;
 	private final double _playerMpRegen;
@@ -123,6 +140,8 @@ public class MapRun
 	private final double _playerCritRate;
 	private final double _playerCritDamageTaken;
 	private final double _playerHealReceived;
+	private final double _playerDebuffChance;
+	private final double _playerDamage;
 	private final int _magePct;
 	private final int _championPct;
 	private final int _thiefPct;
@@ -145,6 +164,15 @@ public class MapRun
 	private final boolean _storm;
 	private final boolean _burningGround;
 	private final boolean _flaskless;
+	private final int _manaSiphonPct;
+	private final int _venomPct;
+	private final boolean _lacerating;
+	private final boolean _linkedSouls;
+	private final int _summonerPct;
+	private final boolean _splitters;
+	private final boolean _deathCurse;
+	private final boolean _bounty;
+	private final int _speedrunMinutes;
 	private final int _portalCount;
 	private final double _xpMultiplier;
 	private final double _dropMultiplier;
@@ -178,6 +206,23 @@ public class MapRun
 		double monsterElementRes = 0;
 		double monsterReflectPct = 0;
 		double monsterHpRegen = 1;
+		double monsterMCritRate = 1;
+		double monsterControlChance = 1;
+		double monsterDebuffChance = 1;
+		int monsterShieldPct = 0;
+		double monsterCritDamageTaken = 1;
+		double monsterSkillDamageTaken = 1;
+		double playerDebuffChance = 1;
+		double playerDamage = 1;
+		int manaSiphonPct = 0;
+		int venomPct = 0;
+		boolean lacerating = false;
+		boolean linkedSouls = false;
+		int summonerPct = 0;
+		boolean splitters = false;
+		boolean deathCurse = false;
+		boolean bounty = false;
+		int speedrunMinutes = 0;
 		double playerMaxHp = 1;
 		double playerDef = 1;
 		double playerMpRegen = 1;
@@ -231,6 +276,26 @@ public class MapRun
 			monsterElementRes += modifier.getMonsterElementRes();
 			monsterReflectPct += modifier.getMonsterReflectPct();
 			monsterHpRegen *= modifier.getMonsterHpRegen();
+			monsterMCritRate *= modifier.getMonsterMCritRate();
+			monsterControlChance *= modifier.getMonsterControlChance();
+			monsterDebuffChance *= modifier.getMonsterDebuffChance();
+			monsterShieldPct = Math.max(monsterShieldPct, modifier.getMonsterShieldPct());
+			monsterCritDamageTaken *= modifier.getMonsterCritDamageTaken();
+			monsterSkillDamageTaken *= modifier.getMonsterSkillDamageTaken();
+			playerDebuffChance *= modifier.getPlayerDebuffChance();
+			playerDamage *= modifier.getPlayerDamage();
+			manaSiphonPct = Math.max(manaSiphonPct, modifier.getManaSiphonPct());
+			venomPct = Math.max(venomPct, modifier.getVenomPct());
+			lacerating |= modifier.isLacerating();
+			linkedSouls |= modifier.isLinkedSouls();
+			summonerPct = Math.max(summonerPct, modifier.getSummonerPct());
+			splitters |= modifier.isSplitters();
+			deathCurse |= modifier.isDeathCurse();
+			bounty |= modifier.isBounty();
+			if (modifier.getSpeedrunMinutes() > 0)
+			{
+				speedrunMinutes = speedrunMinutes > 0 ? Math.min(speedrunMinutes, modifier.getSpeedrunMinutes()) : modifier.getSpeedrunMinutes();
+			}
 			playerMaxHp *= modifier.getPlayerMaxHp();
 			playerDef *= modifier.getPlayerDef();
 			playerMpRegen *= modifier.getPlayerMpRegen();
@@ -300,6 +365,23 @@ public class MapRun
 		_monsterElementRes = monsterElementRes;
 		_monsterReflectPct = monsterReflectPct;
 		_monsterHpRegen = monsterHpRegen;
+		_monsterMCritRate = monsterMCritRate;
+		_monsterControlChance = monsterControlChance;
+		_monsterDebuffChance = monsterDebuffChance;
+		_monsterShieldPct = monsterShieldPct;
+		_monsterCritDamageTaken = monsterCritDamageTaken;
+		_monsterSkillDamageTaken = monsterSkillDamageTaken;
+		_playerDebuffChance = playerDebuffChance;
+		_playerDamage = playerDamage;
+		_manaSiphonPct = manaSiphonPct;
+		_venomPct = venomPct;
+		_lacerating = lacerating;
+		_linkedSouls = linkedSouls;
+		_summonerPct = summonerPct;
+		_splitters = splitters;
+		_deathCurse = deathCurse;
+		_bounty = bounty;
+		_speedrunMinutes = speedrunMinutes;
 		_playerMaxHp = playerMaxHp;
 		_playerDef = playerDef;
 		_playerMpRegen = playerMpRegen;
@@ -792,5 +874,143 @@ public class MapRun
 	public double getDropMultiplier()
 	{
 		return _dropMultiplier;
+	}
+
+	public double getMonsterMCritRate()
+	{
+		return _monsterMCritRate;
+	}
+
+	public double getMonsterControlChance()
+	{
+		return _monsterControlChance;
+	}
+
+	public double getMonsterDebuffChance()
+	{
+		return _monsterDebuffChance;
+	}
+
+	public int getMonsterShieldPct()
+	{
+		return _monsterShieldPct;
+	}
+
+	public double getMonsterCritDamageTaken()
+	{
+		return _monsterCritDamageTaken;
+	}
+
+	public double getMonsterSkillDamageTaken()
+	{
+		return _monsterSkillDamageTaken;
+	}
+
+	public double getPlayerDebuffChance()
+	{
+		return _playerDebuffChance;
+	}
+
+	public double getPlayerDamage()
+	{
+		return _playerDamage;
+	}
+
+	public int getManaSiphonPct()
+	{
+		return _manaSiphonPct;
+	}
+
+	public int getVenomPct()
+	{
+		return _venomPct;
+	}
+
+	public boolean isLacerating()
+	{
+		return _lacerating;
+	}
+
+	public boolean isLinkedSouls()
+	{
+		return _linkedSouls;
+	}
+
+	public int getSummonerPct()
+	{
+		return _summonerPct;
+	}
+
+	public boolean isSplitters()
+	{
+		return _splitters;
+	}
+
+	public boolean isDeathCurse()
+	{
+		return _deathCurse;
+	}
+
+	public boolean isBounty()
+	{
+		return _bounty;
+	}
+
+	public int getSpeedrunMinutes()
+	{
+		return _speedrunMinutes;
+	}
+
+	public Object getCurseFuncOwner()
+	{
+		return _curseFuncOwner;
+	}
+
+	public Map<Integer, long[]> getCurses()
+	{
+		return _curses;
+	}
+
+	public Map<Integer, Integer> getPartners()
+	{
+		return _partners;
+	}
+
+	public int getBountyId()
+	{
+		return _bountyId;
+	}
+
+	public long getBountyUntil()
+	{
+		return _bountyUntil;
+	}
+
+	public boolean isSpeedrunOver()
+	{
+		return _speedrunOver;
+	}
+
+	/**
+	 * @param objectId the marked monster, 0 for none
+	 * @param until when its bounty runs out (ms)
+	 */
+	public void setBounty(int objectId, long until)
+	{
+		_bountyId = objectId;
+		_bountyUntil = until;
+	}
+
+	public void setSpeedrunOver(boolean over)
+	{
+		_speedrunOver = over;
+	}
+
+	/**
+	 * @return {@code true} if the map was completed within the Speedrun time
+	 */
+	public boolean isSpeedrunMade()
+	{
+		return (_speedrunMinutes > 0) && (_completedAt > 0) && ((_completedAt - _openedAt) <= (_speedrunMinutes * 60000L));
 	}
 }

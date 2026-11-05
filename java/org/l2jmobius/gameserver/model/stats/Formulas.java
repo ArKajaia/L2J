@@ -39,6 +39,7 @@ import org.l2jmobius.gameserver.managers.BestiaryManager;
 import org.l2jmobius.gameserver.managers.CastleManager;
 import org.l2jmobius.gameserver.managers.CombatLogManager;
 import org.l2jmobius.gameserver.managers.FortManager;
+import org.l2jmobius.gameserver.managers.MapDeviceManager;
 import org.l2jmobius.gameserver.managers.MonsterRageManager;
 import org.l2jmobius.gameserver.managers.SiegeManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
@@ -1518,6 +1519,13 @@ public class Formulas
 			return 0;
 		}
 		
+		// Map Device modifier Shieldbearers: the map's monsters block without a shield item.
+		final int mapShieldRate = MapDeviceManager.getShieldRate(target);
+		if (mapShieldRate > 0)
+		{
+			return Rnd.get(100) < mapShieldRate ? SHIELD_DEFENSE_SUCCEED : SHIELD_DEFENSE_FAILED;
+		}
+		
 		// A roaming fake player holds a real shield (while it doesn't have its bow out).
 		final boolean pvpFakePlayer = target.isPvpFakePlayer();
 		final ItemTemplate item = pvpFakePlayer ? ItemData.getInstance().getTemplate(target.asNpc().getTemplate().getLHandId()) : target.getSecondaryWeaponItem();
@@ -1723,7 +1731,7 @@ public class Formulas
 			mAtkMod = val;
 		}
 		
-		final double rate = baseMod * elementMod * traitMod * mAtkMod * buffDebuffMod * DwarvenTrades.getEffectChanceMultiplier(attacker, skill);
+		final double rate = baseMod * elementMod * traitMod * mAtkMod * buffDebuffMod * DwarvenTrades.getEffectChanceMultiplier(attacker, skill) * MapDeviceManager.getEffectChanceMultiplier(attacker, target, skill);
 		final double finalRate = traitMod > 0 ? MathUtil.clamp(rate, skill.getMinChance(), skill.getMaxChance()) : 0;
 		
 		if (finalRate <= Rnd.get(100))

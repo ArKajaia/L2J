@@ -1943,8 +1943,11 @@ public class Monster extends Attackable
 	}
 	
 	@Override
-	public void reduceCurrentHp(double amount, Creature attacker, boolean awake, boolean isDOT, Skill skill)
+	public void reduceCurrentHp(double value, Creature attacker, boolean awake, boolean isDOT, Skill skill)
 	{
+		// Map Device modifiers: Spell-Warded, Glass Cannon, Summoners, Linked Souls.
+		final double amount = MapDeviceManager.onMonsterDamaged(this, value, attacker, isDOT, skill);
+		
 		if (isArenaChallenger() && ((getCurrentHp() - amount) <= 0) && onArenaWaveCleared(attacker, amount))
 		{
 			return;
