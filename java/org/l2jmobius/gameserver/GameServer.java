@@ -129,6 +129,7 @@ import org.l2jmobius.gameserver.managers.CastleManorManager;
 import org.l2jmobius.gameserver.managers.ClanHallAuctionManager;
 import org.l2jmobius.gameserver.managers.ClassTransferChallengeManager;
 import org.l2jmobius.gameserver.managers.MapDeviceManager;
+import org.l2jmobius.gameserver.managers.MapQuestManager;
 import org.l2jmobius.gameserver.managers.CoupleManager;
 import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
 import org.l2jmobius.gameserver.managers.CustomMailManager;
@@ -344,6 +345,7 @@ public class GameServer
 		ClassTransferChallengeManager.getInstance();
 		MapDeviceData.getInstance();
 		MapDeviceManager.getInstance();
+		MapQuestManager.getInstance();
 		HiddenQuestData.getInstance();
 		HiddenQuestManager.getInstance();
 		DynamicQuestData.getInstance();

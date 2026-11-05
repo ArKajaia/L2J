@@ -78,6 +78,10 @@ public class MapDeviceConfig
 	public static boolean COMPLETION_REWARD;
 	public static int GUARDIAN_EXTRA_MAPS;
 
+	// The quest.
+	public static boolean QUEST_ENABLED;
+	public static int QUEST_REWARD_MEDALS;
+
 	public static void load()
 	{
 		final ConfigReader config = new ConfigReader(FILE);
@@ -132,5 +136,8 @@ public class MapDeviceConfig
 		IN_MAP_TIER_UP_TWO_CHANCE = Math.max(0, Math.min(100, config.getInt("InMapTierUpTwoChance", 5)));
 		COMPLETION_REWARD = config.getBoolean("CompletionMapReward", true);
 		GUARDIAN_EXTRA_MAPS = Math.max(0, config.getInt("GuardianExtraMaps", 2));
+
+		QUEST_ENABLED = config.getBoolean("MapQuestEnabled", true);
+		QUEST_REWARD_MEDALS = Math.max(0, config.getInt("MapQuestRewardMedals", 5));
 	}
 }

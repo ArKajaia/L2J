@@ -35,6 +35,7 @@ import custom.MapDevice.MapDeviceWindow;
  * <li>{@code .hideout party} - visit the hideout of your party (its leader's first).</li>
  * <li>{@code .hideout back} - from a map, back to the hideout.</li>
  * <li>{@code .hideout leave} - from a hideout, back to where you came from.</li>
+ * <li>{@code .hideout quest} - the Map Device quest "A Map of Your Own" (also opened by its question mark).</li>
  * </ul>
  * The device window's buttons come here too ({@code bypass voiced_hideout ...}), so they work wherever the window was opened: {@code device}, {@code insert <tier>}, {@code medals <tier> <count>}, {@code open <tier> <count>}, {@code close [confirm]}. The manager checks every action.
  * @author Mobius
@@ -89,6 +90,18 @@ public class HideoutVoiced implements IVoicedCommandHandler
 			case "leave":
 			{
 				report(player, manager.leaveHideout(player));
+				break;
+			}
+			case "quest":
+			{
+				if (MapDeviceConfig.QUEST_ENABLED)
+				{
+					MapDeviceWindow.showQuest(player);
+				}
+				else
+				{
+					player.sendMessage("The Map Device quest is disabled.");
+				}
 				break;
 			}
 			case "device":
@@ -159,7 +172,7 @@ public class HideoutVoiced implements IVoicedCommandHandler
 			}
 			default:
 			{
-				player.sendMessage("Usage: .hideout | .hideout party | .hideout back | .hideout leave");
+				player.sendMessage("Usage: .hideout | .hideout party | .hideout back | .hideout leave | .hideout quest");
 				break;
 			}
 		}

@@ -26,6 +26,8 @@ import java.util.Map;
 import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
 import org.l2jmobius.gameserver.data.xml.MapDeviceData;
 import org.l2jmobius.gameserver.managers.MapDeviceManager;
+import org.l2jmobius.gameserver.managers.MapQuestManager;
+import org.l2jmobius.gameserver.managers.MapQuestManager.Step;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
@@ -352,6 +354,102 @@ public final class MapDeviceWindow
 		sb.append("</td><td align=center>");
 		sb.append("<button value=\"Back\" action=\"").append(COMMAND).append(" device\" width=100 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
 		sb.append("</td></tr></table>");
+		send(player, sb);
+	}
+
+	/**
+	 * The quest "A Map of Your Own": its steps, done and to do, and its reward. Opened by its question mark and by {@code .hideout quest}.
+	 * @param player the player
+	 */
+	public static void showQuest(Player player)
+	{
+		final MapQuestManager quest = MapQuestManager.getInstance();
+		quest.markRead(player);
+		final Step current = quest.getStep(player);
+		final StringBuilder sb = start(MapQuestManager.QUEST_NAME);
+
+		if (current == Step.NONE)
+		{
+			sb.append(text("CCCCCC", "This quest starts when you find your first map.")).append("<br1>");
+			sb.append(text(COLOR_MUTED, "Maps drop from monsters of level 78 and up.")).append("<br>");
+			send(player, sb);
+			return;
+		}
+
+		if (current == Step.DONE)
+		{
+			sb.append(text(COLOR_POSITIVE, "Quest complete!")).append("<br1>");
+			sb.append(text("CCCCCC", "You know the way now: every map you find opens at your Map Device. Clearing a map drops another one, and maps found inside are often of a higher tier.")).append("<br>");
+		}
+		else
+		{
+			sb.append(text("CCCCCC", "You found a map! A map opens at the Map Device of your own hideout into a fenced field full of monsters that never respawn. Feed the device Champion Medals for modifiers that make the map harder and its rewards richer.")).append("<br1>");
+			sb.append(text(COLOR_MUTED, "Here is how to run your first one.")).append("<br>");
+		}
+
+		section(sb, "Steps");
+		sb.append("<table width=").append(CONTENT_WIDTH).append(" cellpadding=3 cellspacing=0>");
+		boolean shade = false;
+		for (Step step : Step.values())
+		{
+			if (!step.isActive())
+			{
+				continue;
+			}
+			final boolean done = step.ordinal() < current.ordinal();
+			final boolean now = step == current;
+			final String bg = shade ? " bgcolor=\"" + BG_CARD + "\"" : "";
+			sb.append("<tr><td width=60 valign=top").append(bg).append(">");
+			sb.append(done ? text(COLOR_POSITIVE, "Done") : now ? text(COLOR_VALUE, "Now") : text(COLOR_HINT, "Next"));
+			sb.append("</td><td width=330").append(bg).append(">");
+			sb.append(text(done ? COLOR_MUTED : now ? COLOR_TITLE : COLOR_HINT, step.getTitle()));
+			if (now)
+			{
+				sb.append("<br1>").append(text(COLOR_MUTED, step.getObjective()));
+				if ((step == Step.HIDEOUT) && (player.getLevel() < MapDeviceConfig.HIDEOUT_MIN_LEVEL))
+				{
+					sb.append("<br1>").append(text(COLOR_NEGATIVE, "Your hideout opens at level " + MapDeviceConfig.HIDEOUT_MIN_LEVEL + "."));
+				}
+			}
+			sb.append("</td></tr>");
+			shade = !shade;
+		}
+		sb.append("</table><br>");
+
+		section(sb, "Reward");
+		table(sb);
+		final int medals = quest.getRewardMedals();
+		row(sb, "For clearing the map", medals > 0 ? text(COLOR_VALUE, medals + " " + medalName() + (medals == 1 ? "" : "s")) + (current == Step.DONE ? text(COLOR_POSITIVE, " - received") : "") : text(COLOR_HINT, "none"), false);
+		sb.append("</table><br>");
+
+		final MapDeviceManager manager = MapDeviceManager.getInstance();
+		final boolean inHideoutOrMap = MapDeviceManager.isHideoutInstance(player.getInstanceId()) || MapDeviceManager.isMapInstance(player.getInstanceId());
+		if (current == Step.HIDEOUT)
+		{
+			if (!inHideoutOrMap)
+			{
+				button(sb, "Go to my hideout", "", 140);
+			}
+		}
+		else if (current == Step.OPEN_MAP)
+		{
+			if (manager.isDeviceOwner(player))
+			{
+				button(sb, "Open the Map Device", "device", 160);
+			}
+			else if (!inHideoutOrMap)
+			{
+				button(sb, "Go to my hideout", "", 140);
+			}
+		}
+		else if ((current == Step.TAKE_PORTAL) || (current == Step.CLEAR_MAP))
+		{
+			if (inHideoutOrMap)
+			{
+				button(sb, "The open map", "device", 140);
+			}
+		}
+		sb.append(text(COLOR_HINT, "Type .hideout quest to see this window again.")).append("<br>");
 		send(player, sb);
 	}
 
