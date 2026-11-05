@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -149,7 +150,11 @@ public class MapDeviceManager
 	private static final int LAST_HUNT_AGGRO_RANGE = 2500;
 	private static final int PACK_MIN = 6;
 	private static final int PACK_MAX = 10;
-	private static final int PACK_RADIUS = 220;
+	private static final int PACK_RADIUS = 420;
+	/** How close two monsters of one Pack Hunters pack may stand. */
+	private static final int PACK_SPACING = 140;
+	/** How many spots are tried for a monster before the one farthest from the others is taken. */
+	private static final int SPACING_ATTEMPTS = 20;
 	private static final int ENTRY_SPREAD = 80;
 	/** How long (s) a map whose portals are all used stays open once nobody is inside. */
 	private static final int NO_PORTALS_CLOSE_DELAY = 20;
@@ -1247,24 +1252,27 @@ public class MapDeviceManager
 			final EventMapDevice.Pack pack = packs.get(i % packs.size());
 			final int radius = run.isPacks() ? Math.max(100, pack.radius() / 3) : pack.radius();
 			final int centerZ = geo.getHeight(pack.x(), pack.y(), pack.z());
-			final double angle = Rnd.nextDouble() * 2 * Math.PI;
-			final double distance = Math.sqrt(Rnd.nextDouble()) * radius;
-			final int x = pack.x() + (int) (Math.cos(angle) * distance);
-			final int y = pack.y() + (int) (Math.sin(angle) * distance);
-			spots.add(geo.getValidLocation(pack.x(), pack.y(), centerZ, x, y, geo.getHeight(x, y, centerZ), run.getInstanceId()));
+			spots.add(spacedSpot(() ->
+			{
+				final double angle = Rnd.nextDouble() * 2 * Math.PI;
+				final double distance = Math.sqrt(Rnd.nextDouble()) * radius;
+				final int x = pack.x() + (int) (Math.cos(angle) * distance);
+				final int y = pack.y() + (int) (Math.sin(angle) * distance);
+				return geo.getValidLocation(pack.x(), pack.y(), centerZ, x, y, geo.getHeight(x, y, centerZ), run.getInstanceId());
+			}, spots, run.isPacks() ? PACK_SPACING : MapDeviceConfig.MONSTER_SPACING));
 		}
 		return spots;
 	}
 	
 	/**
-	 * @return spots at random over the field, away from the entry
+	 * @return spots at random over the field, away from the entry and {@link MapDeviceConfig#MONSTER_SPACING} apart where the field has room
 	 */
 	private static List<Location> scatteredSpots(MapRun run, int count)
 	{
 		final List<Location> spots = new ArrayList<>(count);
 		for (int i = 0; i < count; i++)
 		{
-			spots.add(randomFieldSpot(run, 0.92, true));
+			spots.add(spacedSpot(() -> randomFieldSpot(run, 0.92, true), spots, MapDeviceConfig.MONSTER_SPACING));
 		}
 		return spots;
 	}
@@ -1275,21 +1283,65 @@ public class MapDeviceManager
 	private static List<Location> packSpots(MapRun run, int count)
 	{
 		final List<Location> spots = new ArrayList<>(count);
+		final List<Location> centers = new ArrayList<>();
 		final GeoEngine geo = GeoEngine.getInstance();
+		final int packGap = (2 * PACK_RADIUS) + MapDeviceConfig.MONSTER_SPACING;
 		while (spots.size() < count)
 		{
-			final Location center = randomFieldSpot(run, 0.85, true);
+			final Location center = spacedSpot(() -> randomFieldSpot(run, 0.85, true), centers, packGap);
+			centers.add(center);
 			final int size = Math.min(count - spots.size(), Rnd.get(PACK_MIN, PACK_MAX));
+			final List<Location> pack = new ArrayList<>(size);
 			for (int i = 0; i < size; i++)
 			{
-				final double angle = Rnd.nextDouble() * 2 * Math.PI;
-				final int distance = Rnd.get(PACK_RADIUS);
-				final int x = center.getX() + (int) (Math.cos(angle) * distance);
-				final int y = center.getY() + (int) (Math.sin(angle) * distance);
-				spots.add(geo.getValidLocation(center.getX(), center.getY(), center.getZ(), x, y, geo.getHeight(x, y, center.getZ()), run.getInstanceId()));
+				pack.add(spacedSpot(() ->
+				{
+					final double angle = Rnd.nextDouble() * 2 * Math.PI;
+					final double distance = Math.sqrt(Rnd.nextDouble()) * PACK_RADIUS;
+					final int x = center.getX() + (int) (Math.cos(angle) * distance);
+					final int y = center.getY() + (int) (Math.sin(angle) * distance);
+					return geo.getValidLocation(center.getX(), center.getY(), center.getZ(), x, y, geo.getHeight(x, y, center.getZ()), run.getInstanceId());
+				}, pack, PACK_SPACING));
 			}
+			spots.addAll(pack);
 		}
 		return spots;
+	}
+
+	/**
+	 * Picks a spot that keeps its distance from the spots already taken: the first of up to {@value #SPACING_ATTEMPTS} tries that is at least {@code spacing} from all of them, or, if the field is too full for that, the try farthest from its nearest neighbour.
+	 * @param candidates makes a random spot
+	 * @param taken the spots already taken
+	 * @param spacing how close two spots may be
+	 * @return the spot
+	 */
+	private static Location spacedSpot(Supplier<Location> candidates, List<Location> taken, int spacing)
+	{
+		Location best = null;
+		double bestGap = -1;
+		for (int attempt = 0; attempt < SPACING_ATTEMPTS; attempt++)
+		{
+			final Location candidate = candidates.get();
+			double gap = Double.MAX_VALUE;
+			for (Location other : taken)
+			{
+				gap = Math.min(gap, Math.hypot(candidate.getX() - other.getX(), candidate.getY() - other.getY()));
+				if (gap < spacing)
+				{
+					break;
+				}
+			}
+			if (gap >= spacing)
+			{
+				return candidate;
+			}
+			if (gap > bestGap)
+			{
+				best = candidate;
+				bestGap = gap;
+			}
+		}
+		return best;
 	}
 
 	/**
