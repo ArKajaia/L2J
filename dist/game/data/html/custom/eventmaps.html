@@ -24,6 +24,7 @@
 		--capture: #ffd228;
 		--dm: #c378ff;
 		--rw: #3cd2b4;
+		--md: #5ad2ff;
 		color-scheme: dark;
 	}
 	* { box-sizing: border-box; }
@@ -161,6 +162,8 @@
 				<span><span class="swatch" style="background:var(--capture)"></span>capture</span>
 				<span><span class="swatch" style="background:var(--dm)"></span>deathmatch</span>
 				<span><span class="swatch" style="background:var(--rw)"></span>race wars</span>
+				<span><span class="swatch" style="background:var(--md)"></span>map entry</span>
+				<span><span class="swatch" style="background:#aadc5a"></span>monster spot</span>
 			</div>
 		</div>
 		<aside>
@@ -194,8 +197,8 @@
 			</div>
 			<div class="section" id="pointsSection"></div>
 			<div class="section" id="fenceSection">
-				<div class="title"><h2><span class="swatch" style="background:var(--fence)"></span>Fence (TvT, Deathmatch)</h2><label class="row" style="gap:4px"><input type="checkbox" id="fFence"> on</label></div>
-				<div class="muted" style="font-size:12px">An ellipse nobody gets through in a Team vs Team or Deathmatch match, players or fake players; whoever gets beyond it anyway is brought back inside. It must hold every base and Deathmatch spawn. Conquest doesn't use it. Drag its middle or its east and south handles on the map.</div>
+				<div class="title"><h2><span class="swatch" style="background:var(--fence)"></span>Fence (TvT, Deathmatch, Race Wars, Map Device)</h2><label class="row" style="gap:4px"><input type="checkbox" id="fFence"> on</label></div>
+				<div class="muted" style="font-size:12px">An ellipse nobody gets through in a Team vs Team or Deathmatch match, players or fake players; whoever gets beyond it anyway is brought back inside. It must hold every base and Deathmatch spawn. Conquest doesn't use it. A Map Device map needs it: it is the edge of the map's field, and its monsters are placed inside it. Drag its middle or its east and south handles on the map.</div>
 				<div class="grid2" id="fenceFields">
 					<label class="field"><span>Middle X</span><input id="fBx" type="number" step="100"></label>
 					<label class="field"><span>Middle Y</span><input id="fBy" type="number" step="100"></label>
@@ -229,7 +232,8 @@
 					Drag points, the fence and the area's corners on the map; drag elsewhere to pan, wheel to zoom. “+ on map” places points where you click (Shift: several), “+ here” and “Here” where you stand in game (facing the way you face), “TP” takes you there. Every point takes the height of the ground under it at once, and again when you save.
 					Team vs Team: each base is a ring of TvTBaseRadius (safe for its team, a stun trap for the other); a team starts at its first base. Conquest: the spawn points of each team (the ring is how far a wave spreads) and the capture points. Deathmatch: the spots everyone spawns at, each fighter at one picked by chance (“Scatter” puts open ground spots on the field for you).
 					A match is played in a copy of the place with only the doors named here: click a door on the map (or pick in the Doors list) to put it in the match open or shut.
-					Saving writes <code>data/maps/&lt;id&gt;.xml</code> and redraws the waypoints of anyone showing the map in game (//tvt show).
+					Map Device: a map ticked for it, with a fence and an entry, is one of the places a map item opens in (//mapdevice test &lt;id&gt; tries it from your hideout). Monster spots gather its monsters (none: spread over the field), the Map Guardian spot is where that modifier's boss stands (none: the fence's middle); the tiers and monsters below the points say which maps open here and what fills them.
+					Saving writes <code>data/maps/&lt;id&gt;.xml</code> and redraws the waypoints of anyone showing the map in game (//tvt show, //mapdevice show).
 				</div>
 			</div>
 			<div id="saveBar">
@@ -263,12 +267,13 @@
 "use strict";
 const TOKEN_KEY = "eventMapsToken";
 const GM_MS = 2500;
-const EVENTS = ["tvt", "conquest", "deathmatch", "racewars"];
+const EVENTS = ["tvt", "conquest", "deathmatch", "racewars", "mapdevice"];
 const EVENT_INFO = {
 	tvt: { title: "Team vs Team", short: "TvT", kinds: ["tvt.blue", "tvt.red"] },
 	conquest: { title: "Conquest", short: "Conquest", kinds: ["conquest.blue", "conquest.red", "conquest.capture"] },
 	deathmatch: { title: "Deathmatch", short: "DM", kinds: ["deathmatch.spawn"] },
-	racewars: { title: "Race Wars", short: "RW", kinds: ["racewars.duel", "racewars.final"] }
+	racewars: { title: "Race Wars", short: "RW", kinds: ["racewars.duel", "racewars.final"] },
+	mapdevice: { title: "Map Device", short: "Map", kinds: ["mapdevice.entry", "mapdevice.guardian", "mapdevice.pack"] }
 };
 const KIND_INFO = {
 	"tvt.blue": { title: "Blue bases", label: "Blue base", place: "Blue base", color: "#468cff", fill: "rgba(70,140,255,0.18)", heading: true },
@@ -278,7 +283,10 @@ const KIND_INFO = {
 	"conquest.capture": { title: "Capture points", label: "Capture", place: "Capture", color: "#ffd228", fill: "rgba(255,210,40,0.14)", radius: 600, named: true },
 	"deathmatch.spawn": { title: "Deathmatch spawn points", label: "Spawn", place: "DM spawn", color: "#c378ff", fill: "rgba(195,120,255,0.20)", heading: true },
 	"racewars.duel": { title: "Race-vs-race starts", label: "Duel start", place: "Duel start", color: "#3cd2b4", fill: "rgba(60,210,180,0.18)", heading: true },
-	"racewars.final": { title: "Final starts", label: "Final start", place: "Final start", color: "#f0e650", fill: "rgba(240,230,80,0.16)", heading: true }
+	"racewars.final": { title: "Final starts", label: "Final start", place: "Final start", color: "#f0e650", fill: "rgba(240,230,80,0.16)", heading: true },
+	"mapdevice.entry": { title: "Entry", label: "Entry", place: "Map entry", color: "#5ad2ff", fill: "rgba(90,210,255,0.08)", heading: true },
+	"mapdevice.guardian": { title: "Map Guardian spot", label: "Map Guardian", place: "Guardian", color: "#ff3c8c", fill: "rgba(255,60,140,0.18)" },
+	"mapdevice.pack": { title: "Monster spots", label: "Monster spot", place: "Monster spot", color: "#aadc5a", fill: "rgba(170,220,90,0.16)", radius: 600 }
 };
 const KINDS = Object.keys(KIND_INFO);
 /** The ring of a Deathmatch spawn: how far its fighter may walk before the fight. */
@@ -322,7 +330,7 @@ async function request(path, params, asBlob) {
 	let data = null;
 	try { data = await response.json(); } catch (e) { /* not JSON */ }
 	if (response.status === 401 || response.status === 403) {
-		fatal((data && data.error) || "Not allowed - use //tvt map or //conquest in game again.");
+		fatal((data && data.error) || "Not allowed - use //tvt map, //conquest or //mapdevice in game again.");
 		throw new Error("auth");
 	}
 	if (!response.ok) throw new Error((data && data.error) || ("HTTP " + response.status));
@@ -366,7 +374,8 @@ const state = {
 	enabled: [],
 	world: null,
 	event: startEvent,  // the event whose points are edited
-	limits: { tvt: 20, conquest: 50, deathmatch: 100, deathmatchMin: 2, scatterMax: 60, racewarsDuel: 2, racewarsFinal: 3 },
+	limits: { tvt: 20, conquest: 50, deathmatch: 100, deathmatchMin: 2, scatterMax: 60, racewarsDuel: 2, racewarsFinal: 3, mapdevicePacks: 50 },
+	mapdevice: { enabled: true, monsterCount: 100, maxCount: 300, maxKinds: 30, kinds: 6, packRadius: 600, minPackRadius: 100, maxPackRadius: 3000, safeRadius: 900, tiers: [] },
 	racewars: { baseRadius: 700, spawnRadius: 150, armySize: 20 },
 	baseRadius: 700,
 	spawnRadius: 150,
@@ -374,7 +383,7 @@ const state = {
 	dmSize: 20,
 	players: { default: 250, min: 1, max: 1000 },
 	minBarrier: 500,
-	allowed: { tvt: [], conquest: [], deathmatch: [], racewars: [] },
+	allowed: { tvt: [], conquest: [], deathmatch: [], racewars: [], mapdevice: [] },
 	shown: null,
 	gm: null,
 	map: null,          // the map being edited (a copy)
@@ -401,7 +410,8 @@ function serialize(map) {
 		minX: map.minX, minY: map.minY, maxX: map.maxX, maxY: map.maxY, z: map.z,
 		points: map.points.map((p) => [p.event, p.type, p.name || "", p.x, p.y, p.z, p.heading || 0, p.radius || 0]),
 		barrier: map.barrier ? [map.barrier.x, map.barrier.y, map.barrier.radiusX, map.barrier.radiusY] : null,
-		doors: (map.doors || []).map((d) => [d.id, d.open]).sort((a, b) => a[0] - b[0])
+		doors: (map.doors || []).map((d) => [d.id, d.open]).sort((a, b) => a[0] - b[0]),
+		mapDevice: map.mapDevice ? [map.mapDevice.minTier || 0, map.mapDevice.maxTier || 0, map.mapDevice.monsterCount || 0, map.mapDevice.monsters || []] : null
 	});
 }
 
@@ -424,6 +434,8 @@ function labelOf(p) {
 	if (kind === "conquest.capture") return "Capture " + (p.name || "?");
 	const index = pointsOf(kind).indexOf(p);
 	if (kind === "racewars.duel") return "Duel start " + (index + 1) + " (" + (index === 0 ? "first race" : "second race") + ")";
+	if (kind === "mapdevice.entry") return "Entry";
+	if (kind === "mapdevice.guardian") return "Map Guardian";
 	return KIND_INFO[kind].label + " " + (index + 1) + (p.event === "tvt" && index === 0 ? " (start)" : "");
 }
 
@@ -432,6 +444,7 @@ function ringOf(p) {
 	if (p.event === "tvt") return state.baseRadius;
 	if (p.event === "conquest") return p.radius || KIND_INFO[kindOf(p)].radius;
 	if (p.event === "racewars") return state.racewars.baseRadius;
+	if (p.event === "mapdevice") return p.type === "entry" ? state.mapdevice.safeRadius : p.type === "pack" ? (p.radius || state.mapdevice.packRadius) : 150;
 	return DM_RING;
 }
 
@@ -442,6 +455,7 @@ function lacks(event, map) {
 	if (event === "tvt") return !count("tvt.blue") ? "a Blue base" : !count("tvt.red") ? "a Red base" : "";
 	if (event === "conquest") return !count("conquest.blue") ? "a Blue spawn" : !count("conquest.red") ? "a Red spawn" : !count("conquest.capture") ? "a capture point" : "";
 	if (event === "racewars") return count("racewars.duel") < state.limits.racewarsDuel ? state.limits.racewarsDuel + " race-vs-race starts" : count("racewars.final") < state.limits.racewarsFinal ? state.limits.racewarsFinal + " final starts" : "";
+	if (event === "mapdevice") return !m.barrier ? "a fence" : !count("mapdevice.entry") ? "an entry" : "";
 	return count("deathmatch.spawn") < state.limits.deathmatchMin ? state.limits.deathmatchMin + " spawn points" : "";
 }
 
@@ -465,6 +479,7 @@ async function loadMaps(selectId) {
 	state.teamSize = data.tvt.teamSize;
 	state.dmSize = data.deathmatch.size;
 	if (data.racewars) state.racewars = data.racewars;
+	if (data.mapdevice) state.mapdevice = data.mapdevice;
 	state.players = data.players;
 	state.minBarrier = data.minBarrier;
 	state.allowed = data.allowed;
@@ -864,10 +879,12 @@ function drawPoint(p, faint) {
 		ctx.lineWidth = 1;
 		ctx.beginPath(); ctx.arc(s[0], s[1], Math.max(3, Math.max(40, state.spawnRadius) / state.view.scale), 0, Math.PI * 2); ctx.stroke();
 	}
-	const angle = (p.heading || 0) * 2 * Math.PI / 65536;
-	const len = Math.max(12, Math.min(r + 10, 50));
-	ctx.lineWidth = 2;
-	ctx.beginPath(); ctx.moveTo(s[0], s[1]); ctx.lineTo(s[0] + Math.cos(angle) * len, s[1] + Math.sin(angle) * len); ctx.stroke();
+	if (info.heading) {
+		const angle = (p.heading || 0) * 2 * Math.PI / 65536;
+		const len = Math.max(12, Math.min(r + 10, 50));
+		ctx.lineWidth = 2;
+		ctx.beginPath(); ctx.moveTo(s[0], s[1]); ctx.lineTo(s[0] + Math.cos(angle) * len, s[1] + Math.sin(angle) * len); ctx.stroke();
+	}
 	ctx.fillStyle = info.color;
 	ctx.beginPath(); ctx.arc(s[0], s[1], faint ? 3 : 4, 0, Math.PI * 2); ctx.fill();
 	if (!faint) {
@@ -1141,6 +1158,8 @@ function nextCaptureName() {
 function limitOf(kind) {
 	if (kind === "racewars.duel") return state.limits.racewarsDuel;
 	if (kind === "racewars.final") return state.limits.racewarsFinal;
+	if (kind === "mapdevice.entry" || kind === "mapdevice.guardian") return 1;
+	if (kind === "mapdevice.pack") return state.limits.mapdevicePacks;
 	return kind.startsWith("tvt.") ? state.limits.tvt : kind.startsWith("conquest.") ? state.limits.conquest : state.limits.deathmatch;
 }
 
@@ -1153,7 +1172,7 @@ function addPoint(kind, x, y, z, heading, quiet) {
 	const info = KIND_INFO[kind];
 	const parts = kind.split(".");
 	const p = { event: parts[0], type: parts[1], x: x, y: y, z: z, heading: 0 };
-	if (info.radius) p.radius = info.radius;
+	if (info.radius) p.radius = kind === "mapdevice.pack" ? state.mapdevice.packRadius : info.radius;
 	if (info.named) p.name = nextCaptureName();
 	const order = KINDS.indexOf(kind);
 	let index = state.map.points.length;
@@ -1214,7 +1233,7 @@ function fitFence() {
 	const up = (v) => Math.ceil(v / 100) * 100;
 	const b = { x: Math.round(cx / 100) * 100, y: Math.round(cy / 100) * 100, radiusX: Math.max(state.minBarrier, up(hw * reach + pad)), radiusY: Math.max(state.minBarrier, up(hh * reach + pad)) };
 	state.map.barrier = b;
-	for (let i = 0; i < 40 && !pts.every((p) => insideFence(p, -(p.event === "tvt" ? state.baseRadius : DM_RING) - 100)); i++) {
+	for (let i = 0; i < 40 && !pts.every((p) => insideFence(p, -(p.event === "tvt" ? state.baseRadius : kindOf(p) === "mapdevice.pack" ? (p.radius || state.mapdevice.packRadius) : DM_RING) - 100)); i++) {
 		b.radiusX = up(b.radiusX * 1.03);
 		b.radiusY = up(b.radiusY * 1.03);
 	}
@@ -1293,7 +1312,7 @@ async function teleport(p, label) {
 function mirror() {
 	const m = state.map;
 	const event = state.event;
-	if (event === "deathmatch" || event === "racewars") return;
+	if (event === "deathmatch" || event === "racewars" || event === "mapdevice") return;
 	const axis = $("mirrorAxis").value;
 	const cx = (m.minX + m.maxX) / 2;
 	const cy = (m.minY + m.maxY) / 2;
@@ -1454,7 +1473,8 @@ function renderEventTabs() {
 		tvt: "Bases of each team. A team starts at its first base; its dead come back at one of its bases.",
 		conquest: "Spawn points of each team (the ring is how far a wave spreads) and the capture points.",
 		deathmatch: "The spots everyone spawns at, every one for themselves: each fighter at one picked by chance, far from the others. " + state.dmSize + " fighters a match.",
-		racewars: "Where the races start: the two of a race-vs-race match (" + state.limits.racewarsDuel + " duel starts, the first race at the first) and the three of the final (" + state.limits.racewarsFinal + " final starts), each an army of " + state.racewars.armySize + " that buffs within " + fmt(state.racewars.baseRadius) + " of its start. Nobody comes back, so there are no other spawns."
+		racewars: "Where the races start: the two of a race-vs-race match (" + state.limits.racewarsDuel + " duel starts, the first race at the first) and the three of the final (" + state.limits.racewarsFinal + " final starts), each an army of " + state.racewars.armySize + " that buffs within " + fmt(state.racewars.baseRadius) + " of its start. Nobody comes back, so there are no other spawns.",
+		mapdevice: "A place maps of the Map Device open in: the fence is the field's edge, the players come in at the entry (its ring: no monster stands that close, unless a monster spot reaches it) where the Return Portal stands. Monster spots gather the map's monsters; without any they are spread over the field. The Map Guardian modifier's boss stands at its spot, or else in the fence's middle."
 	};
 	$("eventHint").textContent = hints[state.event];
 	// The place buttons of the event edited.
@@ -1465,7 +1485,7 @@ function renderEventTabs() {
 		button.disabled = !state.map;
 		place.appendChild(button);
 	}
-	$("mirrorRow").style.display = state.event === "deathmatch" || state.event === "racewars" ? "none" : "";
+	$("mirrorRow").style.display = state.event === "deathmatch" || state.event === "racewars" || state.event === "mapdevice" ? "none" : "";
 }
 
 function renderAreaFields() {
@@ -1513,6 +1533,7 @@ function renderPoints() {
 			} }, "Clear")
 		]));
 	}
+	if (event === "mapdevice") renderMapDeviceSettings(section);
 	for (const kind of EVENT_INFO[event].kinds) {
 		const info = KIND_INFO[kind];
 		const list = pointsOf(kind);
@@ -1526,6 +1547,7 @@ function renderPoints() {
 		if (!list.length) section.appendChild(el("div", { class: "muted" }, "None yet."));
 		else if (event === "tvt") section.appendChild(el("div", { class: "muted", style: "font-size:12px" }, "The team (" + state.teamSize + ") starts at base 1; its dead come back at one of " + (list.length > 1 ? "the " + list.length + " bases" : "it") + ". Each base is " + fmt(state.baseRadius) + " round."));
 		else if (event === "racewars") section.appendChild(el("div", { class: "muted", style: "font-size:12px" }, kind === "racewars.duel" ? "The two races of each race-vs-race match start here (" + list.length + " of " + state.limits.racewarsDuel + ")." : "The three races of the final start here (" + list.length + " of " + state.limits.racewarsFinal + ")."));
+		else if (kind === "mapdevice.pack") section.appendChild(el("div", { class: "muted", style: "font-size:12px" }, "The monsters are shared out among the spots in turn, each within its spot's spread: about " + Math.round(mapMonsterCount() / list.length) + " a spot (Pack Hunters draws them in closer)."));
 		else if (kind !== "conquest.capture" && event === "conquest") section.appendChild(el("div", { class: "muted", style: "font-size:12px" }, "Up to " + state.map.conquestMaxPlayers + " players: about " + Math.ceil(state.map.conquestMaxPlayers / list.length) + " per spawn point if they all come back at once."));
 		list.forEach((p, i) => section.appendChild(renderPoint(p, i)));
 	}
@@ -1570,7 +1592,8 @@ function renderPoint(p, index) {
 		edit.appendChild(el("label", { class: "field" }, [el("span", {}, "Name"), name]));
 	}
 	if (info.radius) {
-		edit.appendChild(el("label", { class: "field" }, [el("span", {}, info.named ? "Capture radius" : "Spread radius"), numberInput(p.radius, (v) => { p.radius = v; touched(); }, { min: 50, max: 5000, step: 50 })]));
+		const pack = kind === "mapdevice.pack";
+		edit.appendChild(el("label", { class: "field", style: info.heading ? "" : "grid-column:1 / span 2" }, [el("span", {}, info.named ? "Capture radius" : "Spread radius"), numberInput(p.radius, (v) => { p.radius = pack ? Math.max(state.mapdevice.minPackRadius, Math.min(state.mapdevice.maxPackRadius, v)) : v; touched(); }, { min: pack ? state.mapdevice.minPackRadius : 50, max: pack ? state.mapdevice.maxPackRadius : 5000, step: 50 })]));
 	}
 	if (info.heading) {
 		const heading = numberInput(p.heading, (v) => { p.heading = ((v % 65536) + 65536) % 65536; touched(); }, { min: 0, max: 65535, step: 1024 });
@@ -1660,6 +1683,7 @@ function renderBalance() {
 	if (state.event === "tvt") balanceTvt(box, setChip);
 	else if (state.event === "conquest") balanceConquest(box, setChip);
 	else if (state.event === "racewars") balanceRaceWars(box, setChip);
+	else if (state.event === "mapdevice") balanceMapDevice(box, setChip);
 	else balanceDeathmatch(box, setChip);
 }
 
@@ -1786,6 +1810,136 @@ function balanceRaceWars(box, setChip) {
 	box.appendChild(el("div", { class: warn ? "" : "muted", style: "margin-top:6px;font-size:12px" + (warn ? ";color:var(--warning)" : "") }, "Straight-line distances. " + notes.join(" ")));
 	const fair = !warn && worstSkew <= 0.1;
 	setChip(fair, outside ? "start beyond the fence" : close ? "starts too close" : warn ? "starts missing" : fair ? "balanced" : "uneven by " + Math.round(worstSkew * 100) + "%");
+}
+
+// ------------------------------------------------------------------------------------------------
+// Map Device
+// ------------------------------------------------------------------------------------------------
+
+/** The Map Device settings of the map edited, made if it has none yet. */
+function mapDeviceOf() {
+	if (!state.map.mapDevice) state.map.mapDevice = { minTier: 0, maxTier: 0, monsterCount: 0, monsters: [] };
+	if (!state.map.mapDevice.monsters) state.map.mapDevice.monsters = [];
+	return state.map.mapDevice;
+}
+
+function maxTierOf() {
+	return state.mapdevice.tiers.length ? Math.max(...state.mapdevice.tiers.map((t) => t.tier)) : 10;
+}
+
+/** How many monsters a map opened here holds before its modifiers. */
+function mapMonsterCount() {
+	return mapDeviceOf().monsterCount || state.mapdevice.monsterCount;
+}
+
+function tierLabel(tier) {
+	const info = state.mapdevice.tiers.find((t) => t.tier === tier);
+	return "Tier " + tier + (info ? " (Lv " + info.minLevel + "-" + info.maxLevel + ")" : "");
+}
+
+function parseIds(text) {
+	const ids = [];
+	for (const part of text.split(/[\s,;]+/)) {
+		const n = Number(part);
+		if (part && Number.isInteger(n) && n > 0 && !ids.includes(n)) ids.push(n);
+	}
+	return ids.slice(0, state.mapdevice.maxKinds);
+}
+
+/** The tiers, monster count and monsters of a Map Device map. */
+function renderMapDeviceSettings(section) {
+	const md = mapDeviceOf();
+	const tierSelect = (value, anyText, onChange) => {
+		const select = el("select", {});
+		select.appendChild(el("option", { value: "0", text: anyText }));
+		for (const t of state.mapdevice.tiers) select.appendChild(el("option", { value: String(t.tier), text: tierLabel(t.tier) }));
+		select.value = String(value || 0);
+		select.addEventListener("click", (e) => e.stopPropagation());
+		select.addEventListener("change", () => { onChange(Number(select.value)); touched(); renderUseChips(); });
+		return select;
+	};
+	section.appendChild(el("h3", {}, "Map Device: which maps open here, and what fills them"));
+	if (!state.mapdevice.enabled) section.appendChild(el("div", {}, el("span", { class: "chip warn" }, "MapDeviceEnabled is off in MapDevice.ini")));
+	section.appendChild(el("div", { class: "grid2" }, [
+		el("label", { class: "field" }, [el("span", {}, "Lowest tier"), tierSelect(md.minTier, "any (from tier 1)", (v) => { md.minTier = v; })]),
+		el("label", { class: "field" }, [el("span", {}, "Highest tier"), tierSelect(md.maxTier, "any (up to tier " + maxTierOf() + ")", (v) => { md.maxTier = v; })]),
+		el("label", { class: "field", style: "grid-column:1 / span 2" }, [el("span", {}, "Monsters in the map, before its modifiers (0: the server's " + state.mapdevice.monsterCount + ")"), numberInput(md.monsterCount || 0, (v) => { md.monsterCount = Math.max(0, Math.min(state.mapdevice.maxCount, v)); touched(); }, { min: 0, max: state.mapdevice.maxCount, step: 10 })])
+	]));
+	const monsters = el("input", { type: "text", spellcheck: "false", placeholder: "npc ids, e.g. 22660, 22661 - empty: monsters of the tier" });
+	monsters.value = md.monsters.join(", ");
+	const names = el("div", { class: "muted", style: "font-size:12px" });
+	monsters.addEventListener("input", () => {
+		md.monsters = parseIds(monsters.value);
+		touched();
+		lookupMonsters(md.monsters, names);
+	});
+	section.appendChild(el("label", { class: "field" }, [el("span", {}, "Monsters that fill it (npc ids, up to " + state.mapdevice.maxKinds + "; every tier uses them, with the tier's strength)"), monsters]));
+	section.appendChild(names);
+	lookupMonsters(md.monsters, names);
+}
+
+const npcCache = {};
+let monsterLookup = 0;
+
+/** Shows the name and level of the monsters a map names (after a short pause in the typing). */
+async function lookupMonsters(ids, box) {
+	const ticket = ++monsterLookup;
+	if (!ids.length) {
+		box.textContent = "Empty: each map picks " + state.mapdevice.kinds + " kinds of monster of the tier's levels by chance (plain monsters that live in the world).";
+		return;
+	}
+	const missing = ids.filter((id) => !(id in npcCache));
+	if (missing.length) {
+		box.textContent = "…";
+		await new Promise((resolve) => setTimeout(resolve, 350));
+		if (ticket !== monsterLookup) return;
+		try {
+			const data = await request("npcs", { ids: missing.join(",") });
+			for (const npc of data.npcs) npcCache[npc.id] = npc;
+		} catch (e) {
+			report(e);
+			return;
+		}
+	}
+	if (ticket !== monsterLookup) return;
+	box.innerHTML = "";
+	for (const id of ids) {
+		const npc = npcCache[id];
+		const ok = npc && npc.name && npc.monster;
+		box.appendChild(el("div", { style: ok ? "" : "color:var(--warning)" }, id + ": " + (!npc || !npc.name ? "no such npc, left out" : npc.name + " (Lv " + npc.level + ")" + (ok ? "" : " - a " + npc.type + ", not a Monster: left out"))));
+	}
+}
+
+function balanceMapDevice(box, setChip) {
+	const m = state.map;
+	const md = mapDeviceOf();
+	const entry = pointsOf("mapdevice.entry")[0];
+	const guardian = pointsOf("mapdevice.guardian")[0];
+	const packs = pointsOf("mapdevice.pack");
+	const count = mapMonsterCount();
+	const problems = [];
+	if (!m.barrier) problems.push("No fence: it is the edge of the map's field (needed).");
+	if (!entry) problems.push("No entry: where the players come in (needed).");
+	if (entry && !insideFence(entry, 0)) problems.push("The entry is beyond the fence.");
+	const near = entry ? packs.filter((p) => dist(p, entry) < state.mapdevice.safeRadius + (p.radius || 0)).length : 0;
+	if (near) problems.push(near + " monster spot(s) reach within " + fmt(state.mapdevice.safeRadius) + " of the entry: monsters stand where the players come in.");
+	const outside = packs.filter((p) => !insideFence(p, 0)).length;
+	if (outside) problems.push(outside + " monster spot(s) beyond the fence.");
+	if (guardian && !insideFence(guardian, 0)) problems.push("The Map Guardian stands beyond the fence.");
+	const blocked = m.points.filter((p) => p.event === "mapdevice" && p.open === false).length;
+	if (blocked) problems.push(blocked + " point(s) by a wall or a cliff edge.");
+	const info = ["About " + count + " monsters (Horde +30%, Titans half)" + (packs.length ? ", about " + Math.round(count / packs.length) + " a spot over " + packs.length + " spot(s)." : ", spread over the field.")];
+	if (m.barrier) {
+		const side = Math.sqrt(Math.PI * m.barrier.radiusX * m.barrier.radiusY / count);
+		info.push("Without spots, one monster per " + fmt(side) + " × " + fmt(side) + ".");
+	}
+	info.push("Tiers " + (md.minTier || 1) + "-" + (md.maxTier || maxTierOf()) + ", " + (md.monsters.length ? md.monsters.length + " kind(s) of monster named." : "monsters of the tier."));
+	if (entry && guardian) info.push("The Map Guardian is " + fmt(dist(entry, guardian)) + " from the entry.");
+	box.className = "";
+	if (problems.length) box.appendChild(el("div", { style: "font-size:12px;color:var(--warning)" }, problems.join(" ")));
+	box.appendChild(el("div", { style: "font-size:12px" }, info.join(" ")));
+	const ready = !!m.barrier && !!entry;
+	setChip(ready && !problems.length, !ready ? "not ready" : problems.length ? "check" : "ready");
 }
 
 function balanceDeathmatch(box, setChip) {
@@ -1940,7 +2094,7 @@ $("newDialog").addEventListener("close", async () => {
 		const gm = await gmNow();
 		const x = Math.round(gm.x / 100) * 100;
 		const y = Math.round(gm.y / 100) * 100;
-		state.map = { id: id, name: $("nName").value.trim() || id, description: "", uses: { tvt: false, conquest: false, deathmatch: false, racewars: false }, conquestMaxPlayers: state.players.default, minX: x - 8000, minY: y - 8000, maxX: x + 8000, maxY: y + 8000, z: gm.z, points: [], barrier: null, doors: [] };
+		state.map = { id: id, name: $("nName").value.trim() || id, description: "", uses: { tvt: false, conquest: false, deathmatch: false, racewars: false, mapdevice: false }, mapDevice: { minTier: 0, maxTier: 0, monsterCount: 0, monsters: [] }, conquestMaxPlayers: state.players.default, minX: x - 8000, minY: y - 8000, maxX: x + 8000, maxY: y + 8000, z: gm.z, points: [], barrier: null, doors: [] };
 		state.saved = "";
 		state.previousId = "";
 		state.selected = null;
@@ -1967,6 +2121,10 @@ $("save").addEventListener("click", async () => {
 	}
 	if (m.barrier && (m.barrier.radiusX < state.minBarrier || m.barrier.radiusY < state.minBarrier)) {
 		toast("The fence's radii are at least " + state.minBarrier + ".", true);
+		return;
+	}
+	if (m.mapDevice && m.mapDevice.minTier && m.mapDevice.maxTier && m.mapDevice.minTier > m.mapDevice.maxTier) {
+		toast("The Map Device's lowest tier is above its highest.", true);
 		return;
 	}
 	$("save").disabled = true;

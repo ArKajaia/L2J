@@ -49,6 +49,7 @@ import org.l2jmobius.gameserver.model.conquest.ConquestPointType;
 import org.l2jmobius.gameserver.model.eventmap.EventBarrier;
 import org.l2jmobius.gameserver.model.eventmap.EventDoor;
 import org.l2jmobius.gameserver.model.eventmap.EventMap;
+import org.l2jmobius.gameserver.model.eventmap.EventMapDevice;
 import org.l2jmobius.gameserver.model.eventmap.EventMapType;
 
 /**
@@ -191,7 +192,7 @@ public class EventMapData implements IXmlReader
 			}
 		}
 		final String description = conquest.description().isEmpty() ? tvt.description() : tvt.description().isEmpty() ? conquest.description() : conquest.description() + " " + tvt.description();
-		return new EventMap(conquest.id(), conquest.name(), description, Math.min(conquest.minX(), tvt.minX()), Math.min(conquest.minY(), tvt.minY()), Math.max(conquest.maxX(), tvt.maxX()), Math.max(conquest.maxY(), tvt.maxY()), conquest.z(), tvt.barrier(), doors, uses, tvt.blue(), tvt.red(), conquest.conquestMaxPlayers(), conquest.conquestPoints(), tvt.deathmatch(), tvt.raceWarsDuel(), tvt.raceWarsFinal());
+		return new EventMap(conquest.id(), conquest.name(), description, Math.min(conquest.minX(), tvt.minX()), Math.min(conquest.minY(), tvt.minY()), Math.max(conquest.maxX(), tvt.maxX()), Math.max(conquest.maxY(), tvt.maxY()), conquest.z(), tvt.barrier(), doors, uses, tvt.blue(), tvt.red(), conquest.conquestMaxPlayers(), conquest.conquestPoints(), tvt.deathmatch(), tvt.raceWarsDuel(), tvt.raceWarsFinal(), tvt.mapDevice().isEmpty() ? conquest.mapDevice() : tvt.mapDevice());
 	}
 
 	@Override
@@ -236,6 +237,7 @@ public class EventMapData implements IXmlReader
 			final List<Location> raceWarsDuel = new ArrayList<>();
 			final List<Location> raceWarsFinal = new ArrayList<>();
 			int maxPlayers = DEFAULT_MAX_PLAYERS;
+			EventMapDevice mapDevice = EventMapDevice.NONE;
 
 			// The old files: the whole map is the one event's, its ticks the map's "enabled".
 			final boolean enabled = parseBoolean(attrs, "enabled", true);
@@ -377,6 +379,15 @@ public class EventMapData implements IXmlReader
 						}
 						break;
 					}
+					case "mapdevice":
+					{
+						if (parseBoolean(childAttrs, "enabled", true))
+						{
+							uses.add(EventMapType.MAPDEVICE);
+						}
+						mapDevice = readMapDevice(file, child);
+						break;
+					}
 				}
 			}
 
@@ -394,7 +405,7 @@ public class EventMapData implements IXmlReader
 			{
 				all.add(new Location(point.x(), point.y(), point.z()));
 			}
-			final EventMap map = new EventMap(fileId, parseString(attrs, "name", fileId), description, minX, minY, maxX, maxY, z != null ? z : averageZ(all), barrier, doors, uses, blue, red, Math.max(MIN_PLAYERS, Math.min(MAX_PLAYERS, maxPlayers)), conquestPoints, deathmatch, raceWarsDuel, raceWarsFinal);
+			final EventMap map = new EventMap(fileId, parseString(attrs, "name", fileId), description, minX, minY, maxX, maxY, z != null ? z : averageZ(all), barrier, doors, uses, blue, red, Math.max(MIN_PLAYERS, Math.min(MAX_PLAYERS, maxPlayers)), conquestPoints, deathmatch, raceWarsDuel, raceWarsFinal, mapDevice);
 			_loading.get(source).put(fileId, map);
 			if (source != Source.MAPS)
 			{
@@ -413,6 +424,63 @@ public class EventMapData implements IXmlReader
 			return null;
 		}
 		return new EventBarrier(parseInteger(attrs, "x"), parseInteger(attrs, "y"), radiusX, radiusY);
+	}
+
+	/**
+	 * The Map Device part of a map: its tiers, monster count and monsters, the entry, the Map Guardian's spot and the monster spots.
+	 */
+	private EventMapDevice readMapDevice(File file, Node node)
+	{
+		final NamedNodeMap attrs = node.getAttributes();
+		final List<Integer> monsters = new ArrayList<>();
+		for (String id : parseString(attrs, "monsters", "").split("[,\\s]+"))
+		{
+			if (id.isEmpty())
+			{
+				continue;
+			}
+			try
+			{
+				if (monsters.size() < EventMapDevice.MAX_MONSTER_KINDS)
+				{
+					monsters.add(Integer.parseInt(id));
+				}
+			}
+			catch (NumberFormatException e)
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": " + file.getName() + " names a Map Device monster that is no npc id: " + id + ".");
+			}
+		}
+		
+		Location entry = null;
+		Location guardian = null;
+		final List<EventMapDevice.Pack> packs = new ArrayList<>();
+		for (Node child = node.getFirstChild(); child != null; child = child.getNextSibling())
+		{
+			switch (child.getNodeName().toLowerCase())
+			{
+				case "entry":
+				{
+					entry = readLocation(child.getAttributes());
+					break;
+				}
+				case "guardian":
+				{
+					guardian = readLocation(child.getAttributes());
+					break;
+				}
+				case "pack":
+				{
+					if (packs.size() < EventMapDevice.MAX_PACKS)
+					{
+						final NamedNodeMap pack = child.getAttributes();
+						packs.add(new EventMapDevice.Pack(parseInteger(pack, "x"), parseInteger(pack, "y"), parseInteger(pack, "z"), Math.max(EventMapDevice.MIN_PACK_RADIUS, Math.min(EventMapDevice.MAX_PACK_RADIUS, parseInteger(pack, "radius", EventMapDevice.DEFAULT_PACK_RADIUS)))));
+					}
+					break;
+				}
+			}
+		}
+		return new EventMapDevice(entry, guardian, packs, parseInteger(attrs, "minTier", 0), parseInteger(attrs, "maxTier", 0), parseInteger(attrs, "monsterCount", 0), monsters);
 	}
 
 	private void readTvtTeam(File file, Node team, List<Location> blue, List<Location> red)
@@ -567,15 +635,18 @@ public class EventMapData implements IXmlReader
 		final StringBuilder sb = new StringBuilder(4096);
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 		sb.append("<!--\n");
-		sb.append("\tA battlefield of the PvP events (EventMapData), shared by Team vs Team, Conquest, Deathmatch and Race Wars. Written by the event map page (//tvt map, //conquest): edits by hand are kept, comments are not.\n");
+		sb.append("\tA battlefield of the PvP events (EventMapData), shared by Team vs Team, Conquest, Deathmatch, Race Wars and the Map Device. Written by the event map page (//tvt map, //conquest, //mapdevice): edits by hand are kept, comments are not.\n");
 		sb.append("\tmap         id (the file name), name (shown to the players)\n");
 		sb.append("\tarea        the battlefield's edge on the players' radar, minX/minY (north-west corner) to maxX/maxY (south-east corner); z: the ground's height, where it has several layers\n");
-		sb.append("\tbarrier     optional, Team vs Team, Deathmatch and Race Wars: the fence round the field that nobody gets through, an ellipse: middle x, y and its radiusX, radiusY (at least 500)\n");
+		sb.append("\tbarrier     optional, Team vs Team, Deathmatch, Race Wars and the Map Device (which needs it): the fence round the field that nobody gets through, an ellipse: middle x, y and its radiusX, radiusY (at least 500)\n");
 		sb.append("\tdoor        a door of data/Doors.xml put in a match's copy of the place, open (open=\"true\") or shut (open=\"false\"); a match has no other doors\n");
 		sb.append("\ttvt         enabled: Team vs Team may pick the map. The bases of each team (blue, red): x, y, z, heading; a team starts at its first one\n");
 		sb.append("\tconquest    enabled: Conquest may pick the map; maxPlayers per team. The spawn points of each team (x, y, z, heading, radius: how far a wave is spread) and the capture points (name, x, y, z, radius)\n");
 		sb.append("\tdeathmatch  enabled: Deathmatch may pick the map. The spots everyone spawns at: x, y, z, heading\n");
 		sb.append("\tracewars    enabled: Race Wars may pick the map. Where the races start (x, y, z, heading): stage=\"duel\" the two races of a race-vs-race match (the first race at the first one), stage=\"final\" the three races of the final\n");
+		sb.append("\tmapdevice   enabled: maps of the Map Device may open here (it needs the fence and an entry). minTier/maxTier: the map tiers that may (0: any); monsterCount (0: MonsterCount of MapDevice.ini);\n");
+		sb.append("\t            monsters: npc ids the map is filled with, whatever the tier (none: monsters of the tier's levels by chance). entry: where the players come in (x, y, z, heading);\n");
+		sb.append("\t            guardian: where the Map Guardian stands (none: the fence's middle); pack: spots the monsters stand round (x, y, z, radius; none: spread over the field)\n");
 		sb.append("-->\n");
 		sb.append("<map id=\"").append(map.id()).append("\" name=\"").append(escape(map.name())).append("\">\n");
 		if (!map.description().isEmpty())
@@ -671,6 +742,39 @@ public class EventMapData implements IXmlReader
 				sb.append(" />\n");
 			}
 			sb.append("\t</racewars>\n");
+		}
+
+		if (map.belongsTo(EventMapType.MAPDEVICE))
+		{
+			final EventMapDevice device = map.mapDevice();
+			sb.append("\t<mapdevice enabled=\"").append(map.isUsedBy(EventMapType.MAPDEVICE)).append("\" minTier=\"").append(device.minTier()).append("\" maxTier=\"").append(device.maxTier()).append("\" monsterCount=\"").append(device.monsterCount()).append('"');
+			if (!device.monsters().isEmpty())
+			{
+				sb.append(" monsters=\"");
+				for (int i = 0; i < device.monsters().size(); i++)
+				{
+					sb.append(i > 0 ? "," : "").append(device.monsters().get(i));
+				}
+				sb.append('"');
+			}
+			sb.append(">\n");
+			if (device.entry() != null)
+			{
+				sb.append("\t\t<entry");
+				appendLocation(sb, device.entry());
+				sb.append(" />\n");
+			}
+			if (device.guardian() != null)
+			{
+				sb.append("\t\t<guardian");
+				appendLocation(sb, device.guardian());
+				sb.append(" />\n");
+			}
+			for (EventMapDevice.Pack pack : device.packs())
+			{
+				sb.append("\t\t<pack x=\"").append(pack.x()).append("\" y=\"").append(pack.y()).append("\" z=\"").append(pack.z()).append("\" radius=\"").append(pack.radius()).append("\" />\n");
+			}
+			sb.append("\t</mapdevice>\n");
 		}
 		sb.append("</map>\n");
 		return sb.toString();

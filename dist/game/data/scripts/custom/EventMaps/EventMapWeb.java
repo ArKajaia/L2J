@@ -31,10 +31,13 @@ import java.util.logging.Logger;
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.SimpleJson;
 import org.l2jmobius.gameserver.config.custom.ConquestConfig;
+import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
 import org.l2jmobius.gameserver.config.custom.RaceWarsConfig;
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
 import org.l2jmobius.gameserver.data.xml.DoorData;
 import org.l2jmobius.gameserver.data.xml.EventMapData;
+import org.l2jmobius.gameserver.data.xml.MapDeviceData;
+import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.geoengine.geodata.Cell;
 import org.l2jmobius.gameserver.managers.EventMapScatter;
@@ -42,12 +45,15 @@ import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.instance.Door;
+import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.conquest.ConquestPoint;
 import org.l2jmobius.gameserver.model.conquest.ConquestPointType;
 import org.l2jmobius.gameserver.model.eventmap.EventBarrier;
 import org.l2jmobius.gameserver.model.eventmap.EventDoor;
 import org.l2jmobius.gameserver.model.eventmap.EventMap;
+import org.l2jmobius.gameserver.model.eventmap.EventMapDevice;
 import org.l2jmobius.gameserver.model.eventmap.EventMapType;
+import org.l2jmobius.gameserver.model.mapdevice.MapTier;
 
 import com.sun.net.httpserver.HttpExchange;
 
@@ -65,6 +71,7 @@ import custom.PassiveSkillTree.PassiveTreeApiServer;
  * <li>GET /api/maps/doors?minX=&amp;minY=&amp;maxX=&amp;maxY= - the doors in an area (data/Doors.xml), with their shape and whether they are open by default</li>
  * <li>GET /api/maps/terrain?minX=&amp;minY=&amp;maxX=&amp;maxY=&amp;z= - a picture of the ground from the geodata, seen from above</li>
  * <li>GET /api/maps/ground?x=&amp;y=&amp;z= - the height of the ground at a spot (the layer nearest z), for a point the page placed or moved</li>
+ * <li>GET /api/maps/npcs?ids=1,2 - the name, level and type of npcs, for the monsters a Map Device map names</li>
  * <li>POST /api/maps/scatter (JSON: the map, count, gap) - spots of open ground picked by chance for Deathmatch spawn points (see {@link EventMapScatter})</li>
  * <li>POST /api/maps/save (JSON: the map, previousId when it was renamed, saveTo for a file to write a copy to) - checks the map, puts every point on the ground, writes data/maps/&lt;id&gt;.xml (and the copy) and draws it again for the GMs who show it</li>
  * <li>POST /api/maps/delete (id) - takes a map out (its file becomes &lt;id&gt;.xml.deleted)</li>
@@ -126,6 +133,7 @@ public class EventMapWeb
 		server.addRoute("/api/maps/ground", "GET", false, this::handleGround);
 		server.addRoute("/api/maps/terrain", "GET", false, this::handleTerrain);
 		server.addRoute("/api/maps/doors", "GET", false, this::handleDoors);
+		server.addRoute("/api/maps/npcs", "GET", false, this::handleNpcs);
 		server.addRoute("/api/maps/scatter", "POST", true, this::handleScatter);
 		server.addRoute("/api/maps/save", "POST", true, this::handleSave);
 		server.addRoute("/api/maps/delete", "POST", true, this::handleDelete);
@@ -165,7 +173,8 @@ public class EventMapWeb
 		json.append(",\"shown\":").append(quoteOrNull(EventMapMarkers.getInstance().getShown(gm)));
 		json.append(",\"limits\":{\"tvt\":").append(EventMapData.MAX_TVT_SPAWNS).append(",\"conquest\":").append(EventMapData.MAX_CONQUEST_POINTS).append(",\"deathmatch\":").append(EventMapData.MAX_DEATHMATCH_SPAWNS);
 		json.append(",\"deathmatchMin\":").append(EventMap.MIN_DEATHMATCH_SPAWNS).append(",\"scatterMax\":").append(MAX_SCATTER);
-		json.append(",\"racewarsDuel\":").append(EventMap.RACEWARS_DUEL_SPAWNS).append(",\"racewarsFinal\":").append(EventMap.RACEWARS_FINAL_SPAWNS).append('}');
+		json.append(",\"racewarsDuel\":").append(EventMap.RACEWARS_DUEL_SPAWNS).append(",\"racewarsFinal\":").append(EventMap.RACEWARS_FINAL_SPAWNS).append(",\"mapdevicePacks\":").append(EventMapDevice.MAX_PACKS).append('}');
+		appendMapDeviceSettings(json);
 		json.append(",\"tvt\":{\"baseRadius\":").append(TeamVsTeamConfig.BASE_RADIUS).append(",\"spawnRadius\":").append(TeamVsTeamConfig.SPAWN_RADIUS).append(",\"teamSize\":").append(TeamVsTeamConfig.TEAM_SIZE).append('}');
 		json.append(",\"deathmatch\":{\"size\":").append(TeamVsTeamConfig.DM_SIZE).append('}');
 		json.append(",\"racewars\":{\"baseRadius\":").append(RaceWarsConfig.BASE_RADIUS).append(",\"spawnRadius\":").append(RaceWarsConfig.SPAWN_RADIUS).append(",\"armySize\":").append(RaceWarsConfig.ARMY_SIZE).append('}');
@@ -180,6 +189,7 @@ public class EventMapWeb
 		appendStrings(json, TeamVsTeamConfig.DM_MAPS);
 		json.append(",\"racewars\":");
 		appendStrings(json, RaceWarsConfig.MAPS);
+		json.append(",\"mapdevice\":[]");
 		json.append("},\"maps\":[");
 		for (int i = 0; i < maps.size(); i++)
 		{
@@ -198,6 +208,26 @@ public class EventMapWeb
 			json.append(i > 0 ? "," : "").append(SimpleJson.quote(strings.get(i)));
 		}
 		json.append(']');
+	}
+
+	/**
+	 * What the page needs to edit a Map Device map: the tiers with their monster levels, and the server's settings the map can leave to it.
+	 */
+	private static void appendMapDeviceSettings(StringBuilder json)
+	{
+		json.append(",\"mapdevice\":{\"enabled\":").append(MapDeviceConfig.ENABLED);
+		json.append(",\"monsterCount\":").append(MapDeviceConfig.MONSTER_COUNT).append(",\"maxCount\":").append(EventMapDevice.MAX_MONSTER_COUNT);
+		json.append(",\"maxKinds\":").append(EventMapDevice.MAX_MONSTER_KINDS).append(",\"kinds\":").append(MapDeviceConfig.MONSTER_TYPES);
+		json.append(",\"packRadius\":").append(EventMapDevice.DEFAULT_PACK_RADIUS).append(",\"minPackRadius\":").append(EventMapDevice.MIN_PACK_RADIUS).append(",\"maxPackRadius\":").append(EventMapDevice.MAX_PACK_RADIUS);
+		json.append(",\"safeRadius\":").append(MapDeviceConfig.SAFE_RADIUS);
+		json.append(",\"tiers\":[");
+		boolean first = true;
+		for (MapTier tier : MapDeviceData.getInstance().getTiers().values())
+		{
+			json.append(first ? "" : ",").append("{\"tier\":").append(tier.tier()).append(",\"minLevel\":").append(tier.minLevel()).append(",\"maxLevel\":").append(tier.maxLevel()).append('}');
+			first = false;
+		}
+		json.append("]}");
 	}
 
 	private void handleGm(HttpExchange exchange) throws IOException
@@ -295,7 +325,32 @@ public class EventMapWeb
 			first = false;
 			appendPoint(json, "racewars", "final", "", start.getX(), start.getY(), start.getZ(), start.getHeading(), 0);
 		}
-		json.append("],\"barrier\":");
+		final EventMapDevice device = map.mapDevice();
+		if (device.entry() != null)
+		{
+			json.append(first ? "" : ",");
+			first = false;
+			appendPoint(json, "mapdevice", "entry", "", device.entry().getX(), device.entry().getY(), device.entry().getZ(), device.entry().getHeading(), 0);
+		}
+		if (device.guardian() != null)
+		{
+			json.append(first ? "" : ",");
+			first = false;
+			appendPoint(json, "mapdevice", "guardian", "", device.guardian().getX(), device.guardian().getY(), device.guardian().getZ(), device.guardian().getHeading(), 0);
+		}
+		for (EventMapDevice.Pack pack : device.packs())
+		{
+			json.append(first ? "" : ",");
+			first = false;
+			appendPoint(json, "mapdevice", "pack", "", pack.x(), pack.y(), pack.z(), 0, pack.radius());
+		}
+		json.append("],\"mapDevice\":{\"minTier\":").append(device.minTier()).append(",\"maxTier\":").append(device.maxTier()).append(",\"monsterCount\":").append(device.monsterCount()).append(",\"monsters\":[");
+		for (int i = 0; i < device.monsters().size(); i++)
+		{
+			json.append(i > 0 ? "," : "").append(device.monsters().get(i));
+		}
+		json.append("]}");
+		json.append(",\"barrier\":");
 		final EventBarrier barrier = map.barrier();
 		if (barrier == null)
 		{
@@ -367,6 +422,42 @@ public class EventMapWeb
 				json.append(i > 0 ? "," : "").append('[').append(nodeX[i]).append(',').append(nodeY[i]).append(']');
 			}
 			json.append("]}");
+		}
+		json.append("]}");
+		server.sendJson(exchange, 200, json.toString());
+	}
+
+	/**
+	 * The name, level and type of the npcs a Map Device map names, so the page can show what it picked.
+	 */
+	private void handleNpcs(HttpExchange exchange) throws IOException
+	{
+		final PassiveTreeApiServer server = PassiveTreeApiServer.getInstance();
+		if (getGm(exchange) == null)
+		{
+			return;
+		}
+
+		final String ids = server.readParams(exchange).get("ids");
+		final StringBuilder json = new StringBuilder(512);
+		json.append("{\"npcs\":[");
+		boolean first = true;
+		int count = 0;
+		for (String text : (ids != null ? ids : "").split("[,\\s]+"))
+		{
+			if (text.isEmpty() || (++count > EventMapDevice.MAX_MONSTER_KINDS))
+			{
+				continue;
+			}
+			final int id = parseInt(text, -1);
+			final NpcTemplate template = id > 0 ? NpcData.getInstance().getTemplate(id) : null;
+			json.append(first ? "" : ",").append("{\"id\":").append(id);
+			first = false;
+			if (template != null)
+			{
+				json.append(",\"name\":").append(SimpleJson.quote(template.getName())).append(",\"level\":").append(template.getLevel()).append(",\"type\":").append(SimpleJson.quote(template.getType())).append(",\"monster\":").append(template.isType("Monster"));
+			}
+			json.append('}');
 		}
 		json.append("]}");
 		server.sendJson(exchange, 200, json.toString());
@@ -635,6 +726,9 @@ public class EventMapWeb
 		final List<Location> deathmatch = new ArrayList<>();
 		final List<Location> raceWarsDuel = new ArrayList<>();
 		final List<Location> raceWarsFinal = new ArrayList<>();
+		Location mapEntry = null;
+		Location mapGuardian = null;
+		final List<EventMapDevice.Pack> mapPacks = new ArrayList<>();
 		final int[] conquestCounts = new int[ConquestPointType.values().length];
 		final Set<String> captureNames = new HashSet<>();
 		if (json.get("points") instanceof List)
@@ -650,7 +744,7 @@ public class EventMapWeb
 				final String type = asString(p.get("type")) != null ? asString(p.get("type")).toLowerCase() : "";
 				if (event == null)
 				{
-					throw new IllegalArgumentException("a point belongs to no event (tvt, conquest, deathmatch, racewars)");
+					throw new IllegalArgumentException("a point belongs to no event (tvt, conquest, deathmatch, racewars, mapdevice)");
 				}
 				final int x = asInt(p.get("x"));
 				final int y = asInt(p.get("y"));
@@ -735,6 +829,46 @@ public class EventMapWeb
 						if ((barrier != null) && !barrier.contains(x, y, -Math.min(RaceWarsConfig.BASE_RADIUS, Math.min(barrier.radiusX(), barrier.radiusY()) - 1)))
 						{
 							warnings.add(label + (barrier.contains(x, y, 0) ? " is closer to the fence than the start radius (" + RaceWarsConfig.BASE_RADIUS + "): the army may stand beyond it while it buffs." : " is beyond the fence: the army is brought back inside at once when the fight starts."));
+						}
+						break;
+					}
+					case MAPDEVICE:
+					{
+						if (type.equals("entry"))
+						{
+							if (mapEntry != null)
+							{
+								throw new IllegalArgumentException("a Map Device map has one entry");
+							}
+							mapEntry = new Location(x, y, z, heading);
+							label = "Map Device entry";
+						}
+						else if (type.equals("guardian"))
+						{
+							if (mapGuardian != null)
+							{
+								throw new IllegalArgumentException("a Map Device map has one Map Guardian spot");
+							}
+							mapGuardian = new Location(x, y, z, heading);
+							label = "Map Guardian spot";
+						}
+						else if (type.equals("pack"))
+						{
+							if (mapPacks.size() >= EventMapDevice.MAX_PACKS)
+							{
+								throw new IllegalArgumentException("more than " + EventMapDevice.MAX_PACKS + " Map Device monster spots");
+							}
+							final int radius = Math.max(EventMapDevice.MIN_PACK_RADIUS, Math.min(EventMapDevice.MAX_PACK_RADIUS, p.get("radius") instanceof Number ? asInt(p.get("radius")) : EventMapDevice.DEFAULT_PACK_RADIUS));
+							mapPacks.add(new EventMapDevice.Pack(x, y, z, radius));
+							label = "Monster spot " + mapPacks.size();
+						}
+						else
+						{
+							throw new IllegalArgumentException("a Map Device point is neither the entry, the Map Guardian nor a monster spot");
+						}
+						if ((barrier != null) && !barrier.contains(x, y, 0))
+						{
+							warnings.add(label + " is beyond the fence: " + (type.equals("pack") ? "its monsters are put on the nearest open ground inside, or can't be reached." : "players and monsters can't get there."));
 						}
 						break;
 					}
@@ -835,6 +969,8 @@ public class EventMapWeb
 			addStartWarnings(warnings, raceWarsFinal, "final");
 		}
 
+		final EventMapDevice mapDevice = readMapDevice(json, mapEntry, mapGuardian, mapPacks, uses.contains(EventMapType.MAPDEVICE), barrier, warnings);
+
 		final List<EventDoor> doors = new ArrayList<>();
 		final Set<Integer> doorIds = new HashSet<>();
 		if (json.get("doors") instanceof List)
@@ -876,7 +1012,7 @@ public class EventMapWeb
 		all.addAll(raceWarsDuel);
 		all.addAll(raceWarsFinal);
 		final int z = json.get("z") instanceof Number ? asInt(json.get("z")) : EventMapData.averageZ(all);
-		return new EventMap(id, name, description, minX, minY, maxX, maxY, z, barrier, doors, uses, blue, red, maxPlayers, conquestPoints, deathmatch, raceWarsDuel, raceWarsFinal);
+		return new EventMap(id, name, description, minX, minY, maxX, maxY, z, barrier, doors, uses, blue, red, maxPlayers, conquestPoints, deathmatch, raceWarsDuel, raceWarsFinal, mapDevice);
 	}
 
 	/**
@@ -895,6 +1031,110 @@ public class EventMapWeb
 				}
 			}
 		}
+	}
+
+	/**
+	 * The Map Device part of a map sent by the page: its points (read with the others) and its settings (tiers, monster count, monsters), checked.
+	 */
+	private static EventMapDevice readMapDevice(Map<?, ?> json, Location entry, Location guardian, List<EventMapDevice.Pack> packs, boolean used, EventBarrier barrier, List<String> warnings)
+	{
+		final Map<?, ?> settings = json.get("mapDevice") instanceof Map ? (Map<?, ?>) json.get("mapDevice") : null;
+		final int maxTier = MapDeviceData.getInstance().getMaxTier();
+		int minTierSet = 0;
+		int maxTierSet = 0;
+		int monsterCount = 0;
+		final List<Integer> monsters = new ArrayList<>();
+		if (settings != null)
+		{
+			minTierSet = asInt(settings.get("minTier"));
+			maxTierSet = asInt(settings.get("maxTier"));
+			monsterCount = asInt(settings.get("monsterCount"));
+			if ((minTierSet < 0) || (maxTierSet < 0) || (minTierSet > maxTier) || (maxTierSet > maxTier))
+			{
+				throw new IllegalArgumentException("the Map Device tiers must be 1 to " + maxTier + " (0: any)");
+			}
+			if ((minTierSet > 0) && (maxTierSet > 0) && (minTierSet > maxTierSet))
+			{
+				throw new IllegalArgumentException("the Map Device's lowest tier is above its highest");
+			}
+			if ((monsterCount < 0) || (monsterCount > EventMapDevice.MAX_MONSTER_COUNT))
+			{
+				throw new IllegalArgumentException("the Map Device monster count must be 0 to " + EventMapDevice.MAX_MONSTER_COUNT + " (0: the server's " + MapDeviceConfig.MONSTER_COUNT + ")");
+			}
+			if (settings.get("monsters") instanceof List)
+			{
+				for (Object entryId : (List<?>) settings.get("monsters"))
+				{
+					final int npcId = asInt(entryId);
+					if (monsters.contains(npcId))
+					{
+						continue;
+					}
+					final NpcTemplate template = NpcData.getInstance().getTemplate(npcId);
+					if ((template == null) || !template.isType("Monster"))
+					{
+						warnings.add("Map Device: " + npcId + (template == null ? " is no npc" : " (" + template.getName() + ") is a " + template.getType() + ", not a Monster") + ": it is left out.");
+						continue;
+					}
+					if (monsters.size() >= EventMapDevice.MAX_MONSTER_KINDS)
+					{
+						throw new IllegalArgumentException("a Map Device map names at most " + EventMapDevice.MAX_MONSTER_KINDS + " monsters");
+					}
+					monsters.add(npcId);
+				}
+			}
+		}
+
+		// Monsters far from the levels of the tiers that open here: the tier's stats still apply, but their experience and the players' level penalties follow their own level.
+		if (!monsters.isEmpty())
+		{
+			int lowLevel = Integer.MAX_VALUE;
+			int highLevel = 0;
+			for (MapTier tier : MapDeviceData.getInstance().getTiers().values())
+			{
+				if (((minTierSet <= 0) || (tier.tier() >= minTierSet)) && ((maxTierSet <= 0) || (tier.tier() <= maxTierSet)))
+				{
+					lowLevel = Math.min(lowLevel, tier.minLevel());
+					highLevel = Math.max(highLevel, tier.maxLevel());
+				}
+			}
+			for (int npcId : monsters)
+			{
+				final NpcTemplate template = NpcData.getInstance().getTemplate(npcId);
+				if ((highLevel > 0) && ((template.getLevel() < (lowLevel - 3)) || (template.getLevel() > (highLevel + 3))))
+				{
+					warnings.add("Map Device: " + template.getName() + " (" + npcId + ") is level " + template.getLevel() + ", the tiers that open here hold levels " + lowLevel + "-" + highLevel + ".");
+				}
+			}
+		}
+
+		if (used)
+		{
+			if (!MapDeviceConfig.ENABLED)
+			{
+				warnings.add("Map Device: MapDeviceEnabled is off in MapDevice.ini.");
+			}
+			if ((barrier == null) || (entry == null))
+			{
+				warnings.add("Map Device: it needs " + (barrier == null ? "the fence (the field's edge)" + (entry == null ? " and an entry" : "") : "an entry (where the players come in)") + ", the Map Device won't pick this map.");
+			}
+			if (entry != null)
+			{
+				for (int i = 0; i < packs.size(); i++)
+				{
+					final EventMapDevice.Pack pack = packs.get(i);
+					if (Math.hypot(pack.x() - entry.getX(), pack.y() - entry.getY()) < (MapDeviceConfig.SAFE_RADIUS + pack.radius()))
+					{
+						warnings.add("Monster spot " + (i + 1) + " reaches within " + MapDeviceConfig.SAFE_RADIUS + " of the entry (EntrySafeRadius): monsters stand where the players come in.");
+					}
+				}
+				if ((barrier != null) && barrier.contains(entry, 0) && !barrier.contains(entry, -300))
+				{
+					warnings.add("Map Device entry is close to the fence: players come in against it.");
+				}
+			}
+		}
+		return new EventMapDevice(entry, guardian, packs, minTierSet, maxTierSet, monsterCount, monsters);
 	}
 
 	/** @return the first letter A-Z (then A2, B2...) no capture point of the map is called yet */

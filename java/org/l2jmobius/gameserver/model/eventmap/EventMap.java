@@ -52,8 +52,9 @@ import org.l2jmobius.gameserver.model.conquest.ConquestPointType;
  * @param deathmatch Deathmatch: the spots everyone spawns at (x, y, z, heading)
  * @param raceWarsDuel Race Wars: where the two races of a race-vs-race match start (x, y, z, heading), the first race at the first one
  * @param raceWarsFinal Race Wars: where the three races of the final start
+ * @param mapDevice Map Device: where the players come in, where the monsters and the Map Guardian stand, which tiers and monsters (see {@link EventMapDevice})
  */
-public record EventMap(String id, String name, String description, int minX, int minY, int maxX, int maxY, int z, EventBarrier barrier, List<EventDoor> doors, Set<EventMapType> uses, List<Location> blue, List<Location> red, int conquestMaxPlayers, List<ConquestPoint> conquestPoints, List<Location> deathmatch, List<Location> raceWarsDuel, List<Location> raceWarsFinal)
+public record EventMap(String id, String name, String description, int minX, int minY, int maxX, int maxY, int z, EventBarrier barrier, List<EventDoor> doors, Set<EventMapType> uses, List<Location> blue, List<Location> red, int conquestMaxPlayers, List<ConquestPoint> conquestPoints, List<Location> deathmatch, List<Location> raceWarsDuel, List<Location> raceWarsFinal, EventMapDevice mapDevice)
 {
 	/** A Deathmatch needs at least so many spawn spots. */
 	public static final int MIN_DEATHMATCH_SPAWNS = 2;
@@ -71,6 +72,7 @@ public record EventMap(String id, String name, String description, int minX, int
 		deathmatch = copy(deathmatch);
 		raceWarsDuel = copy(raceWarsDuel);
 		raceWarsFinal = copy(raceWarsFinal);
+		mapDevice = mapDevice != null ? mapDevice : EventMapDevice.NONE;
 	}
 
 	private static List<Location> copy(List<Location> locations)
@@ -95,7 +97,7 @@ public record EventMap(String id, String name, String description, int minX, int
 	/**
 	 * @param type an event
 	 * @return {@code true} if the map has the points that event needs: bases for both teams (Team vs Team), spawn points for both teams and a capture point (Conquest), {@link #MIN_DEATHMATCH_SPAWNS} spawn spots (Deathmatch), {@link #RACEWARS_DUEL_SPAWNS} and
-	 *         {@link #RACEWARS_FINAL_SPAWNS} start points (Race Wars)
+	 *         {@link #RACEWARS_FINAL_SPAWNS} start points (Race Wars), a fence and an entry (Map Device)
 	 */
 	public boolean isComplete(EventMapType type)
 	{
@@ -105,6 +107,7 @@ public record EventMap(String id, String name, String description, int minX, int
 			case CONQUEST -> hasConquestPoints(ConquestPointType.BLUE) && hasConquestPoints(ConquestPointType.RED) && hasConquestPoints(ConquestPointType.CAPTURE);
 			case DEATHMATCH -> deathmatch.size() >= MIN_DEATHMATCH_SPAWNS;
 			case RACEWARS -> (raceWarsDuel.size() >= RACEWARS_DUEL_SPAWNS) && (raceWarsFinal.size() >= RACEWARS_FINAL_SPAWNS);
+			case MAPDEVICE -> (barrier != null) && (mapDevice.entry() != null);
 		};
 	}
 
@@ -129,6 +132,7 @@ public record EventMap(String id, String name, String description, int minX, int
 			case CONQUEST -> !conquestPoints.isEmpty();
 			case DEATHMATCH -> !deathmatch.isEmpty();
 			case RACEWARS -> !raceWarsDuel.isEmpty() || !raceWarsFinal.isEmpty();
+			case MAPDEVICE -> !mapDevice.isEmpty();
 		};
 	}
 
@@ -182,7 +186,7 @@ public record EventMap(String id, String name, String description, int minX, int
 		{
 			newUses.remove(EventMapType.CONQUEST);
 		}
-		return new EventMap(id, name, description, minX, minY, maxX, maxY, z, barrier, doors, newUses, blue, red, conquest.maxPlayers(), conquest.points(), deathmatch, raceWarsDuel, raceWarsFinal);
+		return new EventMap(id, name, description, minX, minY, maxX, maxY, z, barrier, doors, newUses, blue, red, conquest.maxPlayers(), conquest.points(), deathmatch, raceWarsDuel, raceWarsFinal, mapDevice);
 	}
 
 	/**
@@ -192,7 +196,7 @@ public record EventMap(String id, String name, String description, int minX, int
 	 */
 	public EventMap withSpawns(List<Location> newBlue, List<Location> newRed)
 	{
-		return new EventMap(id, name, description, minX, minY, maxX, maxY, z, barrier, doors, uses, newBlue, newRed, conquestMaxPlayers, conquestPoints, deathmatch, raceWarsDuel, raceWarsFinal);
+		return new EventMap(id, name, description, minX, minY, maxX, maxY, z, barrier, doors, uses, newBlue, newRed, conquestMaxPlayers, conquestPoints, deathmatch, raceWarsDuel, raceWarsFinal, mapDevice);
 	}
 
 	/**
@@ -201,7 +205,7 @@ public record EventMap(String id, String name, String description, int minX, int
 	 */
 	public EventMap withDeathmatch(List<Location> spawns)
 	{
-		return new EventMap(id, name, description, minX, minY, maxX, maxY, z, barrier, doors, uses, blue, red, conquestMaxPlayers, conquestPoints, spawns, raceWarsDuel, raceWarsFinal);
+		return new EventMap(id, name, description, minX, minY, maxX, maxY, z, barrier, doors, uses, blue, red, conquestMaxPlayers, conquestPoints, spawns, raceWarsDuel, raceWarsFinal, mapDevice);
 	}
 
 	/**
@@ -211,7 +215,7 @@ public record EventMap(String id, String name, String description, int minX, int
 	 */
 	public EventMap withRaceWars(List<Location> duel, List<Location> finals)
 	{
-		return new EventMap(id, name, description, minX, minY, maxX, maxY, z, barrier, doors, uses, blue, red, conquestMaxPlayers, conquestPoints, deathmatch, duel, finals);
+		return new EventMap(id, name, description, minX, minY, maxX, maxY, z, barrier, doors, uses, blue, red, conquestMaxPlayers, conquestPoints, deathmatch, duel, finals, mapDevice);
 	}
 
 	/**
@@ -220,7 +224,16 @@ public record EventMap(String id, String name, String description, int minX, int
 	 */
 	public EventMap withBarrier(EventBarrier newBarrier)
 	{
-		return new EventMap(id, name, description, minX, minY, maxX, maxY, z, newBarrier, doors, uses, blue, red, conquestMaxPlayers, conquestPoints, deathmatch, raceWarsDuel, raceWarsFinal);
+		return new EventMap(id, name, description, minX, minY, maxX, maxY, z, newBarrier, doors, uses, blue, red, conquestMaxPlayers, conquestPoints, deathmatch, raceWarsDuel, raceWarsFinal, mapDevice);
+	}
+
+	/**
+	 * @param newMapDevice the new Map Device points and settings
+	 * @return this map with them instead
+	 */
+	public EventMap withMapDevice(EventMapDevice newMapDevice)
+	{
+		return new EventMap(id, name, description, minX, minY, maxX, maxY, z, barrier, doors, uses, blue, red, conquestMaxPlayers, conquestPoints, deathmatch, raceWarsDuel, raceWarsFinal, newMapDevice);
 	}
 
 	/**

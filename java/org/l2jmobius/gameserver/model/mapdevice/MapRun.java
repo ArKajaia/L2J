@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.enums.npc.MonsterArchetype;
 import org.l2jmobius.gameserver.model.actor.instance.Fence;
+import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 
 /**
@@ -98,6 +99,8 @@ public class MapRun
 	private final Object _monsterFuncOwner = new Object();
 	private final Object _playerFuncOwner = new Object();
 	private volatile ScheduledFuture<?> _tickTask;
+	/** The kinds of monster the map was filled with (its theme), for the monsters that join later (Ambush). */
+	private volatile List<NpcTemplate> _monsterKinds = List.of();
 
 	// Combined effect of the modifiers.
 	private final double _monsterMoveSpeed;
@@ -512,6 +515,16 @@ public class MapRun
 	public ScheduledFuture<?> getTickTask()
 	{
 		return _tickTask;
+	}
+	
+	public List<NpcTemplate> getMonsterKinds()
+	{
+		return _monsterKinds;
+	}
+	
+	public void setMonsterKinds(List<NpcTemplate> monsterKinds)
+	{
+		_monsterKinds = List.copyOf(monsterKinds);
 	}
 
 	public void setTickTask(ScheduledFuture<?> tickTask)

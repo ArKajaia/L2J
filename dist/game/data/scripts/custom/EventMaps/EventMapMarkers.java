@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
 import org.l2jmobius.gameserver.config.custom.RaceWarsConfig;
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
 import org.l2jmobius.gameserver.data.xml.DoorData;
@@ -36,6 +37,7 @@ import org.l2jmobius.gameserver.model.conquest.ConquestPointType;
 import org.l2jmobius.gameserver.model.eventmap.EventBarrier;
 import org.l2jmobius.gameserver.model.eventmap.EventDoor;
 import org.l2jmobius.gameserver.model.eventmap.EventMap;
+import org.l2jmobius.gameserver.model.eventmap.EventMapDevice;
 import org.l2jmobius.gameserver.model.eventmap.EventMapType;
 import org.l2jmobius.gameserver.network.serverpackets.ExServerPrimitive;
 
@@ -57,6 +59,9 @@ public class EventMapMarkers
 	private static final Color DEATHMATCH = new Color(195, 120, 255);
 	private static final Color RACEWARS_DUEL = new Color(60, 210, 180);
 	private static final Color RACEWARS_FINAL = new Color(240, 230, 80);
+	private static final Color MAP_ENTRY = new Color(90, 210, 255);
+	private static final Color MAP_GUARDIAN = new Color(255, 60, 140);
+	private static final Color MAP_PACK = new Color(170, 220, 90);
 	private static final Color FENCE = new Color(255, 160, 40);
 	private static final Color EDGE = new Color(230, 230, 230);
 	private static final Color DOOR_OPEN = new Color(80, 230, 110);
@@ -175,9 +180,11 @@ public class EventMapMarkers
 		final boolean conquest = (only == null) ? map.belongsTo(EventMapType.CONQUEST) : only == EventMapType.CONQUEST;
 		final boolean deathmatch = (only == null) ? map.belongsTo(EventMapType.DEATHMATCH) : only == EventMapType.DEATHMATCH;
 		final boolean raceWars = (only == null) ? map.belongsTo(EventMapType.RACEWARS) : only == EventMapType.RACEWARS;
+		final boolean mapDevice = (only == null) ? map.belongsTo(EventMapType.MAPDEVICE) : only == EventMapType.MAPDEVICE;
+		final EventMapDevice device = map.mapDevice();
 
 		// What is left of the budget after the beacons, names and arrows goes to the rings, the fence and the edge.
-		final int points = (tvt ? map.blue().size() + map.red().size() : 0) + (conquest ? map.conquestPoints().size() : 0) + (deathmatch ? map.deathmatch().size() : 0) + (raceWars ? map.raceWarsDuel().size() + map.raceWarsFinal().size() : 0);
+		final int points = (tvt ? map.blue().size() + map.red().size() : 0) + (conquest ? map.conquestPoints().size() : 0) + (deathmatch ? map.deathmatch().size() : 0) + (raceWars ? map.raceWarsDuel().size() + map.raceWarsFinal().size() : 0) + (mapDevice ? (device.entry() != null ? 2 : 0) + (device.guardian() != null ? 1 : 0) + device.packs().size() : 0);
 		final int perimeter = 2 * ((map.maxX() - map.minX()) + (map.maxY() - map.minY()));
 		final int edgeLines = Math.min(perimeter / EDGE_STEP, MAX_SHAPES / 5);
 		final int fenceLines = map.barrier() != null ? MAX_SHAPES / 6 : 0;
@@ -228,7 +235,7 @@ public class EventMapMarkers
 				lastX = nextX;
 				lastY = nextY;
 			}
-			packet.addPoint("Fence (TvT, Deathmatch, Race Wars)", FENCE, true, barrier.x(), barrier.y() - barrier.radiusY(), ground(barrier.x(), barrier.y() - barrier.radiusY(), z) + 80);
+			packet.addPoint("Fence (TvT, Deathmatch, Race Wars, Map Device)", FENCE, true, barrier.x(), barrier.y() - barrier.radiusY(), ground(barrier.x(), barrier.y() - barrier.radiusY(), z) + 80);
 		}
 
 		if (tvt)
@@ -294,6 +301,29 @@ public class EventMapMarkers
 				final Location start = map.raceWarsFinal().get(i);
 				addSpawn(packet, RACEWARS_FINAL, "Race Wars final start " + (i + 1), start.getX(), start.getY(), start.getZ(), start.getHeading(), Math.max(40, RaceWarsConfig.SPAWN_RADIUS), segments);
 				addRing(packet, RACEWARS_FINAL, start.getX(), start.getY(), start.getZ(), RaceWarsConfig.BASE_RADIUS, segments);
+			}
+		}
+
+		if (mapDevice)
+		{
+			final Location entry = device.entry();
+			if (entry != null)
+			{
+				addSpawn(packet, MAP_ENTRY, "Map Device entry", entry.getX(), entry.getY(), entry.getZ(), entry.getHeading(), 60, segments);
+				// No monster stands within this of the entry, unless a monster spot reaches it.
+				addRing(packet, MAP_ENTRY, entry.getX(), entry.getY(), entry.getZ(), Math.max(60, MapDeviceConfig.SAFE_RADIUS), segments);
+			}
+			final Location guardian = device.guardian();
+			if (guardian != null)
+			{
+				addSpawn(packet, MAP_GUARDIAN, "Map Guardian", guardian.getX(), guardian.getY(), guardian.getZ(), guardian.getHeading(), 150, segments);
+			}
+			for (int i = 0; i < device.packs().size(); i++)
+			{
+				final EventMapDevice.Pack pack = device.packs().get(i);
+				packet.addPoint("Monster spot " + (i + 1) + " (" + pack.radius() + ")", MAP_PACK, true, pack.x(), pack.y(), pack.z() + SPAWN_BEACON + 20);
+				packet.addLine(MAP_PACK, pack.x(), pack.y(), pack.z() + LIFT, pack.x(), pack.y(), pack.z() + SPAWN_BEACON);
+				addRing(packet, MAP_PACK, pack.x(), pack.y(), pack.z(), pack.radius(), segments);
 			}
 		}
 

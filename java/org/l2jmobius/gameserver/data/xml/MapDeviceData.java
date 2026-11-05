@@ -37,6 +37,8 @@ import org.l2jmobius.commons.util.IXmlReader;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.StatSet;
 import org.l2jmobius.gameserver.model.eventmap.EventBarrier;
+import org.l2jmobius.gameserver.model.eventmap.EventMap;
+import org.l2jmobius.gameserver.model.eventmap.EventMapType;
 import org.l2jmobius.gameserver.model.mapdevice.MapArena;
 import org.l2jmobius.gameserver.model.mapdevice.MapTier;
 
@@ -142,7 +144,7 @@ public class MapDeviceData implements IXmlReader
 				final StatSet set = new StatSet(parseAttributes(arenaNode));
 				final int radiusX = Math.max(EventBarrier.MIN_RADIUS, set.getInt("radiusX"));
 				final int radiusY = Math.max(EventBarrier.MIN_RADIUS, set.getInt("radiusY", radiusX));
-				_newArenas.add(new MapArena(set.getString("name"), set.getInt("x"), set.getInt("y"), set.getInt("z"), radiusX, radiusY, set.getInt("entryAngle", 0)));
+				_newArenas.add(MapArena.of(set.getString("name"), set.getInt("x"), set.getInt("y"), set.getInt("z"), radiusX, radiusY, set.getInt("entryAngle", 0), set.getInt("minTier", 0), set.getInt("maxTier", 0)));
 			});
 			forEach(listNode, "excludedNpcs", excludedNode ->
 			{
@@ -237,11 +239,52 @@ public class MapDeviceData implements IXmlReader
 	}
 
 	/**
-	 * @return the places a map can be opened in
+	 * @return the places of data/MapDevice.xml a map can be opened in (see {@link #getArenas(int)} for those of the event map page too)
 	 */
 	public List<MapArena> getArenas()
 	{
 		return _arenas;
+	}
+	
+	/**
+	 * @return the places of the event map page (data/maps) a map can be opened in: ticked for the Map Device, with a fence and an entry
+	 */
+	public List<MapArena> getEditorArenas()
+	{
+		final List<MapArena> arenas = new ArrayList<>();
+		for (EventMap map : EventMapData.getInstance().getPlayableMaps(EventMapType.MAPDEVICE))
+		{
+			final MapArena arena = MapArena.of(map);
+			if (arena != null)
+			{
+				arenas.add(arena);
+			}
+		}
+		return arenas;
+	}
+	
+	/**
+	 * @param tier a map tier
+	 * @return every place a map of that tier can open in: the arenas of data/MapDevice.xml and the maps of the event map page that take the tier
+	 */
+	public List<MapArena> getArenas(int tier)
+	{
+		final List<MapArena> arenas = new ArrayList<>();
+		for (MapArena arena : _arenas)
+		{
+			if (arena.allowsTier(tier))
+			{
+				arenas.add(arena);
+			}
+		}
+		for (MapArena arena : getEditorArenas())
+		{
+			if (arena.allowsTier(tier))
+			{
+				arenas.add(arena);
+			}
+		}
+		return arenas;
 	}
 
 	/**
