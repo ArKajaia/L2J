@@ -5324,6 +5324,9 @@ public class Player extends Playable
 		// Lucky Loot: dying ends the kill streak.
 		org.l2jmobius.gameserver.managers.LuckyLootManager.getInstance().onPlayerDied(this);
 		
+		// Map Device: who dies in a map wakes up in the hideout.
+		org.l2jmobius.gameserver.managers.MapDeviceManager.getInstance().onPlayerDied(this);
+		
 		SessionStatsManager.add(this, SessionStat.DEATHS, 1);
 		
 		// PvP combat log of the fight that ends here.

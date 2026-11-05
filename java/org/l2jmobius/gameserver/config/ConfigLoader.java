@@ -59,6 +59,7 @@ import org.l2jmobius.gameserver.config.custom.HotzoneMinibossConfig;
 import org.l2jmobius.gameserver.config.custom.InfusedMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.LuckyLootConfig;
 import org.l2jmobius.gameserver.config.custom.MageMonsterConfig;
+import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
 import org.l2jmobius.gameserver.config.custom.MerchantZeroSellPriceConfig;
 import org.l2jmobius.gameserver.config.custom.MonsterRageConfig;
 import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
@@ -168,6 +169,7 @@ public class ConfigLoader
 		InfusedMonsterConfig.load();
 		LuckyLootConfig.load();
 		MageMonsterConfig.load();
+		MapDeviceConfig.load();
 		MerchantZeroSellPriceConfig.load();
 		MonsterRageConfig.load();
 		MultilingualSupportConfig.load();

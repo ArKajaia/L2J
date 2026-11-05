@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.managers.FakeClanManager;
 import org.l2jmobius.gameserver.managers.FakeJoinerManager;
 import org.l2jmobius.gameserver.managers.FakePartyManager;
 import org.l2jmobius.gameserver.managers.HotzoneModifierManager;
+import org.l2jmobius.gameserver.managers.MapDeviceManager;
 import org.l2jmobius.gameserver.managers.NightCycleManager;
 import org.l2jmobius.gameserver.managers.ResonantMonsterManager;
 import org.l2jmobius.gameserver.managers.TeamEventRules;
@@ -44,6 +45,7 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.creature.InstanceType;
+import org.l2jmobius.gameserver.model.actor.enums.npc.AIType;
 import org.l2jmobius.gameserver.model.actor.holders.npc.MinionList;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.effects.EffectFlag;
@@ -51,6 +53,7 @@ import org.l2jmobius.gameserver.model.effects.EffectType;
 import org.l2jmobius.gameserver.model.guide.GuideLesson;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.item.holders.Elementals;
+import org.l2jmobius.gameserver.model.mapdevice.MapRun.MonsterStat;
 import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
 import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
@@ -223,6 +226,12 @@ public class Monster extends Attackable
 			return true;
 		}
 
+		// A Hunters map makes every monster aggressive.
+		if (MapDeviceManager.isForcedAggressive(this))
+		{
+			return true;
+		}
+
 		// HORNETS_NEST-style hotzone modifiers make every regular monster aggressive.
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
 		return (hotzoneModifier != null) && hotzoneModifier.isForceAggressive() && !isFakePlayer() && !isQuestMonster() && !(this instanceof Chest);
@@ -230,6 +239,15 @@ public class Monster extends Attackable
 
 	@Override
 	public int getAggroRange()
+	{
+		// A Hunters map notices players from farther.
+		return MapDeviceManager.getAggroRange(this, getZoneAggroRange());
+	}
+
+	/**
+	 * @return the aggro range of this monster with its hotzone's modifier, before its map's
+	 */
+	private int getZoneAggroRange()
 	{
 		final int aggroRange = super.getAggroRange();
 		if (hasAIValue("aggroRange"))
@@ -273,6 +291,9 @@ public class Monster extends Attackable
 		{
 			passiveMultiplier *= 0.5;
 		}
+
+		// The map's tier, its medals and Titans.
+		passiveMultiplier *= MapDeviceManager.getDropMultiplier(this);
 
 		return passiveMultiplier;
 	}
@@ -381,7 +402,7 @@ public class Monster extends Attackable
 	 */
 	private boolean canRollRandomPassives()
 	{
-		return !ClassTransferChallengeManager.isChallengeInstance(getInstanceId());
+		return !ClassTransferChallengeManager.isChallengeInstance(getInstanceId()) && MapDeviceManager.allowsRandomPassives(getInstanceId());
 	}
 	
 	// Random Passive skills
@@ -819,6 +840,7 @@ public class Monster extends Attackable
 		{
 			multiplier *= hotzoneModifier.getXpSpMult() * getHotzoneHeatRewardMultiplier(hotzoneModifier);
 		}
+		multiplier *= MapDeviceManager.getXpMultiplier(this);
 		return (long) (super.getExpReward(level) * multiplier);
 	}
 
@@ -840,6 +862,7 @@ public class Monster extends Attackable
 		{
 			multiplier *= hotzoneModifier.getXpSpMult() * getHotzoneHeatRewardMultiplier(hotzoneModifier);
 		}
+		multiplier *= MapDeviceManager.getXpMultiplier(this);
 		return (int) (super.getSpReward(level) * multiplier);
 	}
 
@@ -2031,7 +2054,7 @@ public class Monster extends Attackable
 
 		final double variantHpMultiplier = (isInfused() ? InfusedMonsterConfig.HP_MULTIPLIER : 1.0) * (isResonant() ? Math.max(ResonantMonsterConfig.HP_MULTIPLIER, getResonantRaidMultiplier(ResonantMonsterManager.STAT_HP)) : 1.0);
 
-		return (int) (baseMaxHp * hpMultiplier * arenaMultiplier * championHpMult * getHotzoneMinibossMultiplier() * hotzoneHpMultiplier * getWaveChallengeStatMultiplier() * variantHpMultiplier);
+		return (int) (baseMaxHp * hpMultiplier * arenaMultiplier * championHpMult * getHotzoneMinibossMultiplier() * hotzoneHpMultiplier * getWaveChallengeStatMultiplier() * variantHpMultiplier * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.HP));
 
 	}
 
@@ -2058,7 +2081,7 @@ public class Monster extends Attackable
 		final double basePAtk = super.getPAtk(target);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return basePAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier) * getInfusedAttackMultiplier() * getResonantRaidMultiplier(ResonantMonsterManager.STAT_PATK);
+		return basePAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier) * getInfusedAttackMultiplier() * getResonantRaidMultiplier(ResonantMonsterManager.STAT_PATK) * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.P_ATK);
 	}
 
 	@Override
@@ -2067,7 +2090,7 @@ public class Monster extends Attackable
 		final double baseMAtk = super.getMAtk(target, skill);
 		final double multiplier = isArenaChallenger() ? getArenaOffenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return baseMAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getMonsterMAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier) * getInfusedAttackMultiplier() * getResonantRaidMultiplier(ResonantMonsterManager.STAT_MATK);
+		return baseMAtk * multiplier * getWaveChallengeOffenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterAtkMult() * hotzoneModifier.getMonsterMAtkMult() * hotzoneModifier.getRaceAtkMult(getTemplate().getRace()) : 1.0) * getHotzoneHeatAttackMultiplier(hotzoneModifier) * getInfusedAttackMultiplier() * getResonantRaidMultiplier(ResonantMonsterManager.STAT_MATK) * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.M_ATK);
 	}
 
 	@Override
@@ -2076,7 +2099,7 @@ public class Monster extends Attackable
 		final double basePDef = super.getPDef(target);
 		final double multiplier = isArenaChallenger() ? getArenaDefenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return basePDef * multiplier * getWaveChallengeDefenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0) * getResonantRaidMultiplier(ResonantMonsterManager.STAT_PDEF);
+		return basePDef * multiplier * getWaveChallengeDefenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0) * getResonantRaidMultiplier(ResonantMonsterManager.STAT_PDEF) * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.P_DEF);
 	}
 
 	@Override
@@ -2085,7 +2108,7 @@ public class Monster extends Attackable
 		final double baseMDef = super.getMDef(target, skill);
 		final double multiplier = isArenaChallenger() ? getArenaDefenseMultiplier() : getHotzoneMinibossMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
-		return baseMDef * multiplier * getWaveChallengeDefenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0) * getResonantRaidMultiplier(ResonantMonsterManager.STAT_MDEF);
+		return baseMDef * multiplier * getWaveChallengeDefenseMultiplier() * (hotzoneModifier != null ? hotzoneModifier.getMonsterDefMult() : 1.0) * getResonantRaidMultiplier(ResonantMonsterManager.STAT_MDEF) * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.M_DEF);
 	}
 
 	@Override
@@ -2095,7 +2118,7 @@ public class Monster extends Attackable
 		final double multiplier = (isArenaChallenger() ? getArenaOffenseMultiplier() : 1.0) * getWaveChallengeOffenseMultiplier();
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
 		final double hotzoneMultiplier = hotzoneModifier != null ? hotzoneModifier.getMonsterSpdMult() : 1.0;
-		return basePAtkSpd * Math.sqrt(multiplier * hotzoneMultiplier);
+		return basePAtkSpd * Math.sqrt(multiplier * hotzoneMultiplier) * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.ATK_SPD);
 	}
 
 	@Override
@@ -2106,7 +2129,24 @@ public class Monster extends Attackable
 		final HotzoneModifier hotzoneModifier = getHotzoneStatModifier();
 		final double hotzoneMultiplier = hotzoneModifier != null ? hotzoneModifier.getMonsterSpdMult() : 1.0;
 		final double mageMultiplier = isMageMonster() ? 1.0 + (MageMonsterConfig.CAST_SPEED_BONUS / 100.0) : 1.0;
-		return (int) (baseMAtkSpd * Math.sqrt(multiplier * hotzoneMultiplier) * mageMultiplier);
+		return (int) (baseMAtkSpd * Math.sqrt(multiplier * hotzoneMultiplier) * mageMultiplier * MapDeviceManager.getMonsterMultiplier(this, MonsterStat.CAST_SPD));
+	}
+
+	/**
+	 * A Hail of Arrows map makes every monster an archer: it keeps its distance and shoots (see {@code AttackableAI}).
+	 */
+	@Override
+	public AIType getAiType()
+	{
+		final AIType type = super.getAiType();
+		return (type != AIType.CORPSE) && MapDeviceManager.isRanged(this) ? AIType.ARCHER : type;
+	}
+
+	@Override
+	public int getPhysicalAttackRange()
+	{
+		final int range = super.getPhysicalAttackRange();
+		return MapDeviceManager.isRanged(this) ? Math.max(range, MapDeviceManager.getRangedAttackRange()) : range;
 	}
 
 	public static long calculateArenaReward(int finalWave)

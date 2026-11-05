@@ -574,7 +574,7 @@ public class Spawn extends Location
 		npc.setSpawn(this);
 		
 		// Class transfer challenge monsters are hand-tuned: none of the random spawn rolls below apply to them.
-		final boolean challengeInstance = ClassTransferChallengeManager.isChallengeInstance(getInstanceId());
+		final boolean challengeInstance = ClassTransferChallengeManager.isChallengeInstance(getInstanceId()) || org.l2jmobius.gameserver.managers.MapDeviceManager.isMapInstance(getInstanceId());
 		
 		// Roaming fake player roll: a fake player hunts here instead, and this monster stays out of the world (still counted by this spawn) until the fake player is gone.
 		if (!challengeInstance && org.l2jmobius.gameserver.managers.FakePlayerPvpManager.getInstance().tryReplace(npc, this, newlocx, newlocy, newlocz))

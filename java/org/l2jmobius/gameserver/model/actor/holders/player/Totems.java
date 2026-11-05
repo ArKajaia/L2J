@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.config.custom.OraclesWarchiefsConfig;
 import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.managers.MapDeviceManager;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
@@ -250,7 +251,8 @@ public class Totems
 	 */
 	public static double getLeechRate(WorldObject target)
 	{
-		return target instanceof Totem ? OraclesWarchiefsConfig.TOTEM_LEECH_RATE : 1;
+		// A Bloodless map: nothing leeches from its monsters.
+		return (target instanceof Totem ? OraclesWarchiefsConfig.TOTEM_LEECH_RATE : 1) * MapDeviceManager.getLeechRate(target);
 	}
 
 	/**

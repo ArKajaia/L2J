@@ -1,0 +1,2334 @@
+/*
+ * Copyright (c) 2013 L2jMobius
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+ * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+package org.l2jmobius.gameserver.managers;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.l2jmobius.commons.threads.ThreadPool;
+import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.ai.AttackableAI;
+import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
+import org.l2jmobius.gameserver.config.custom.InfusedMonsterConfig;
+import org.l2jmobius.gameserver.config.custom.MageMonsterConfig;
+import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
+import org.l2jmobius.gameserver.config.custom.ResonantMonsterConfig;
+import org.l2jmobius.gameserver.config.custom.ThiefMonsterConfig;
+import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
+import org.l2jmobius.gameserver.data.SpawnTable;
+import org.l2jmobius.gameserver.data.xml.ItemData;
+import org.l2jmobius.gameserver.data.xml.MapDeviceData;
+import org.l2jmobius.gameserver.data.xml.MapRegionData;
+import org.l2jmobius.gameserver.data.xml.NpcData;
+import org.l2jmobius.gameserver.data.xml.SkillData;
+import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.model.Location;
+import org.l2jmobius.gameserver.model.World;
+import org.l2jmobius.gameserver.model.WorldObject;
+import org.l2jmobius.gameserver.model.actor.Attackable;
+import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.Npc;
+import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.enums.npc.MonsterArchetype;
+import org.l2jmobius.gameserver.model.actor.enums.player.TeleportWhereType;
+import org.l2jmobius.gameserver.model.actor.instance.Chest;
+import org.l2jmobius.gameserver.model.actor.instance.Monster;
+import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.events.Containers;
+import org.l2jmobius.gameserver.model.events.EventType;
+import org.l2jmobius.gameserver.model.events.holders.actor.player.OnPlayerLogin;
+import org.l2jmobius.gameserver.model.events.holders.actor.player.OnPlayerSelect;
+import org.l2jmobius.gameserver.model.events.listeners.ConsumerEventListener;
+import org.l2jmobius.gameserver.model.groups.Party;
+import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
+import org.l2jmobius.gameserver.model.instancezone.Instance;
+import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
+import org.l2jmobius.gameserver.model.item.holders.ItemHolder;
+import org.l2jmobius.gameserver.model.item.instance.Item;
+import org.l2jmobius.gameserver.model.item.type.EtcItemType;
+import org.l2jmobius.gameserver.model.mapdevice.Hideout;
+import org.l2jmobius.gameserver.model.mapdevice.MapArena;
+import org.l2jmobius.gameserver.model.mapdevice.MapModifier;
+import org.l2jmobius.gameserver.model.mapdevice.MapRun;
+import org.l2jmobius.gameserver.model.mapdevice.MapRun.MonsterStat;
+import org.l2jmobius.gameserver.model.mapdevice.MapRun.Status;
+import org.l2jmobius.gameserver.model.mapdevice.MapTier;
+import org.l2jmobius.gameserver.model.script.Quest;
+import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
+import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
+import org.l2jmobius.gameserver.model.spawns.Spawn;
+import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.functions.AbstractFunction;
+import org.l2jmobius.gameserver.model.stats.functions.FuncAdd;
+import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
+import org.l2jmobius.gameserver.model.variables.PlayerVariables;
+import org.l2jmobius.gameserver.model.zone.ZoneId;
+import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
+import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
+import org.l2jmobius.gameserver.taskmanagers.AttackStanceTaskManager;
+
+/**
+ * Maps and the Map Device, after the atlas of Path of Exile.
+ * <ul>
+ * <li><b>Maps</b>: monsters of level 78 and up may drop a "Map (Tier N)". The tier follows the monster's level, and stronger monsters (champions, the special kinds, raid bosses) drop higher tiers (data/MapDevice.xml). The monsters of a map drop maps of its tier, sometimes one or two
+ * higher.</li>
+ * <li><b>Hideout</b>: {@code .hideout} in a peaceful place takes a player to their own hideout, a private instance with a Map Device. Party members can visit it ({@code .hideout party}).</li>
+ * <li><b>Map Device</b>: its owner puts in a map and feeds it up to {@link MapDeviceConfig#MAX_MEDALS} Champion Medals. Each medal rolls one {@link MapModifier} (never twice the same) and raises the experience and drop rate of the map. The map also rolls a hot zone effect
+ * ({@link HotzoneModifier}) for its whole instance. The device then opens portals in a ring round it.</li>
+ * <li><b>The map</b>: a fenced field ({@link MapArena}) in its own instance, filled with monsters of the tier's levels, made stronger by the tier, all carrying every modifier. Nothing respawns. A portal takes one player in and is gone. A player who dies inside wakes up in the hideout
+ * and may take another portal. Slaying every monster completes the map.</li>
+ * </ul>
+ * Everything is checked on the server: only the owner works the device, only the owner and their party take the portals, and a portal or a map is only used while its run is still open.
+ * @author Mobius
+ */
+public class MapDeviceManager
+{
+	private static final Logger LOGGER = Logger.getLogger(MapDeviceManager.class.getName());
+
+	/** Where a player goes back to when leaving the hideout ("x;y;z;heading"), saved when they enter it from the world. */
+	public static final String RETURN_LOC_VAR = "MAPDEVICE_RETURN_LOC";
+
+	/** Set on the monster a slain one rose again as (Undying Legion): it never rises twice. */
+	private static final String RISEN_VAR = "MAP_RISEN";
+	/** Set on the Map Guardian. */
+	private static final String GUARDIAN_VAR = "MAP_GUARDIAN";
+	/** Soul Eaters: how many souls a monster has devoured. */
+	private static final String SOULS_VAR = "MAP_SOULS";
+
+	private static final int ATTACK_RANGE_RANGED = 600;
+	private static final double AGGRO_RANGE_MULT = 1.5;
+	private static final int FORCED_AGGRO_RANGE = 400;
+	private static final double BERSERK_HP = 0.35;
+	private static final int SOUL_RANGE = 600;
+	private static final int SOUL_MAX = 5;
+	private static final int VOLATILE_DELAY = 1500;
+	private static final int VOLATILE_RADIUS = 250;
+	private static final double VOLATILE_DAMAGE = 0.10;
+	private static final int VOLATILE_SKILL_ID = 4529; // Quest - Summoned Explosion (visual only)
+	private static final int STORM_INTERVAL = 20;
+	private static final double STORM_DAMAGE = 0.12;
+	private static final int STORM_SKILL_ID = 4130; // Striking of Thunderbolt (visual only)
+	private static final int BURNING_INTERVAL = 3;
+	private static final double BURNING_DAMAGE = 0.015;
+	private static final int AMBUSH_SIZE = 20;
+	/** When this few monsters are left, they hunt the players down (none stays hidden in a corner of the field). */
+	private static final int LAST_HUNT_COUNT = 10;
+	private static final int LAST_HUNT_AGGRO_RANGE = 2500;
+	private static final int PACK_MIN = 6;
+	private static final int PACK_MAX = 10;
+	private static final int PACK_RADIUS = 220;
+	private static final int ENTRY_SPREAD = 80;
+	/** How long (s) a map whose portals are all used stays open once nobody is inside. */
+	private static final int NO_PORTALS_CLOSE_DELAY = 20;
+	private static final int HIDEOUT_CHECK_INTERVAL = 10000;
+
+	/** map instance id -> its run. Static so the hooks of core classes can read it without making the manager. */
+	private static final Map<Integer, MapRun> RUNS_BY_INSTANCE = new ConcurrentHashMap<>();
+	/** hideout instance id -> the hideout. */
+	private static final Map<Integer, Hideout> HIDEOUTS_BY_INSTANCE = new ConcurrentHashMap<>();
+
+	/** owner object id -> their hideout. */
+	private final Map<Integer, Hideout> _hideouts = new ConcurrentHashMap<>();
+	/** tier -> the monsters a map of that tier may hold. */
+	private final Map<Integer, List<NpcTemplate>> _monsterPools = new ConcurrentHashMap<>();
+	/** Players working the device right now (a double click must not open two maps). */
+	private final Set<Integer> _opening = ConcurrentHashMap.newKeySet();
+	private final AtomicInteger _runIds = new AtomicInteger();
+
+	protected MapDeviceManager()
+	{
+		Containers.Players().addListener(new ConsumerEventListener(Containers.Players(), EventType.ON_PLAYER_SELECT, (OnPlayerSelect event) -> onPlayerSelect(event.getPlayer()), this));
+		Containers.Players().addListener(new ConsumerEventListener(Containers.Players(), EventType.ON_PLAYER_LOGIN, (OnPlayerLogin event) -> onPlayerLogin(event.getPlayer()), this));
+		ThreadPool.scheduleAtFixedRate(this::checkHideouts, HIDEOUT_CHECK_INTERVAL, HIDEOUT_CHECK_INTERVAL);
+		LOGGER.info(getClass().getSimpleName() + ": Map Device " + (MapDeviceConfig.ENABLED ? "enabled" : "disabled") + ", " + MapModifier.values().length + " map modifiers.");
+	}
+
+	// =========================================================================
+	// Lookups (static: read by core hooks on every hit)
+	// =========================================================================
+
+	/**
+	 * @param instanceId an instance id
+	 * @return the map run in that instance, {@code null} for none
+	 */
+	public static MapRun getRun(int instanceId)
+	{
+		return (instanceId > 0) && !RUNS_BY_INSTANCE.isEmpty() ? RUNS_BY_INSTANCE.get(instanceId) : null;
+	}
+
+	/**
+	 * @param instanceId an instance id
+	 * @return {@code true} if a map runs in it
+	 */
+	public static boolean isMapInstance(int instanceId)
+	{
+		return getRun(instanceId) != null;
+	}
+
+	/**
+	 * @param instanceId an instance id
+	 * @return {@code true} if it is a hideout
+	 */
+	public static boolean isHideoutInstance(int instanceId)
+	{
+		return (instanceId > 0) && HIDEOUTS_BY_INSTANCE.containsKey(instanceId);
+	}
+
+	/**
+	 * @param creature a monster
+	 * @return the run whose monster stat changes apply to it, {@code null} for none (outside a map, or a roaming fake player)
+	 */
+	private static MapRun getMonsterRun(Creature creature)
+	{
+		if ((creature == null) || !creature.isMonster() || creature.isPvpFakePlayer())
+		{
+			return null;
+		}
+		return getRun(creature.getInstanceId());
+	}
+
+	/**
+	 * Read by the stat getters of {@link Monster}.
+	 * @param monster a monster
+	 * @param stat one of its stats
+	 * @return what its map multiplies the stat by: the tier and modifiers, plus Berserkers, Rising Dread and Soul Eaters; 1.0 outside a map
+	 */
+	public static double getMonsterMultiplier(Monster monster, MonsterStat stat)
+	{
+		final MapRun run = getMonsterRun(monster);
+		if (run == null)
+		{
+			return 1.0;
+		}
+
+		double multiplier = run.getMonsterMultiplier(stat);
+		switch (stat)
+		{
+			case P_ATK, M_ATK ->
+			{
+				if (run.isRisingDread())
+				{
+					multiplier *= 1.0 + Math.min(0.5, (run.getKills() / 10) * 0.05);
+				}
+				if (run.isSoulEaters())
+				{
+					multiplier *= 1.0 + (0.10 * monster.getVariables().getInt(SOULS_VAR, 0));
+				}
+				if (run.isBerserkers() && isBerserk(monster))
+				{
+					multiplier *= 1.5;
+				}
+			}
+			case ATK_SPD ->
+			{
+				if (run.isBerserkers() && isBerserk(monster))
+				{
+					multiplier *= 1.3;
+				}
+			}
+			default ->
+			{
+			}
+		}
+		return multiplier;
+	}
+
+	private static boolean isBerserk(Monster monster)
+	{
+		final int maxHp = monster.getMaxHp();
+		return (maxHp > 0) && (monster.getCurrentHp() < (maxHp * BERSERK_HP));
+	}
+
+	/**
+	 * Read by the experience and SP getters of {@link Monster}.
+	 * @param monster a monster
+	 * @return its map's experience multiplier, 1.0 outside a map
+	 */
+	public static double getXpMultiplier(Monster monster)
+	{
+		final MapRun run = getMonsterRun(monster);
+		return run != null ? run.getXpMultiplier() : 1.0;
+	}
+
+	/**
+	 * Read by the drop chance multiplier of {@link Monster}.
+	 * @param monster a monster
+	 * @return its map's drop chance multiplier, 1.0 outside a map
+	 */
+	public static double getDropMultiplier(Monster monster)
+	{
+		final MapRun run = getMonsterRun(monster);
+		return run != null ? run.getDropMultiplier() : 1.0;
+	}
+
+	/**
+	 * Hail of Arrows: read by {@code Monster.getAiType()} and {@code Monster.getPhysicalAttackRange()}.
+	 * @param monster a monster
+	 * @return {@code true} if its map makes every monster fight from range
+	 */
+	public static boolean isRanged(Monster monster)
+	{
+		final MapRun run = getMonsterRun(monster);
+		return (run != null) && run.isAllRanged();
+	}
+
+	/**
+	 * @return the attack range of a monster of a Hail of Arrows map
+	 */
+	public static int getRangedAttackRange()
+	{
+		return ATTACK_RANGE_RANGED;
+	}
+
+	/**
+	 * Hunters: read by {@code Monster.isAggressive()}.
+	 * @param monster a monster
+	 * @return {@code true} if its map makes every monster aggressive
+	 */
+	public static boolean isForcedAggressive(Monster monster)
+	{
+		final MapRun run = getMonsterRun(monster);
+		return (run != null) && (run.isAggressive() || isLastHunt(run)) && !monster.isFakePlayer() && !(monster instanceof Chest);
+	}
+	
+	/**
+	 * @param run a run
+	 * @return {@code true} once so few of its monsters are left that they hunt the players down
+	 */
+	private static boolean isLastHunt(MapRun run)
+	{
+		return (run.getStatus() == Status.OPEN) && (run.getMonsters().size() <= LAST_HUNT_COUNT);
+	}
+
+	/**
+	 * Hunters: read by {@code Monster.getAggroRange()}.
+	 * @param monster a monster
+	 * @param aggroRange its aggro range so far
+	 * @return its aggro range in its map
+	 */
+	public static int getAggroRange(Monster monster, int aggroRange)
+	{
+		if (!isForcedAggressive(monster))
+		{
+			return aggroRange;
+		}
+		final MapRun run = getMonsterRun(monster);
+		if (isLastHunt(run))
+		{
+			return Math.max(aggroRange, LAST_HUNT_AGGRO_RANGE);
+		}
+		return (int) ((aggroRange > 0 ? aggroRange : FORCED_AGGRO_RANGE) * AGGRO_RANGE_MULT);
+	}
+
+	/**
+	 * Bloodless: read by {@code Totems.getLeechRate}, which every life and mana leech goes through (auto-attack absorb, drain skills, the passive tree, cubics).
+	 * @param target what was hit
+	 * @return 0 if it is a monster of a Bloodless map, 1 otherwise
+	 */
+	public static double getLeechRate(WorldObject target)
+	{
+		if ((target == null) || !target.isMonster())
+		{
+			return 1;
+		}
+		final MapRun run = getRun(target.getInstanceId());
+		return (run != null) && run.isNoLeech() ? 0 : 1;
+	}
+
+	/**
+	 * Flaskless: read by the item skill handler potions and elixirs go through (by hand, auto potions or auto use).
+	 * @param user who uses the item
+	 * @param item the item
+	 * @return {@code true} if the item can't be used here (and the user was told why)
+	 */
+	public static boolean isItemSealed(Creature user, Item item)
+	{
+		if ((user == null) || (item == null) || (item.getEtcItem() == null))
+		{
+			return false;
+		}
+		final MapRun run = getRun(user.getInstanceId());
+		if ((run == null) || !run.isFlaskless())
+		{
+			return false;
+		}
+		final EtcItemType type = item.getEtcItem().getItemType();
+		if ((type != EtcItemType.POTION) && (type != EtcItemType.ELIXIR))
+		{
+			return false;
+		}
+		if (user.isPlayer())
+		{
+			user.sendMessage("Flaskless: potions and elixirs can't be used in this map.");
+		}
+		return true;
+	}
+
+	/**
+	 * Random passives are the open world's surprise; a map already rolls its own difficulty, so they follow {@link MapDeviceConfig#RANDOM_PASSIVES} there.
+	 * @param instanceId the monster's instance
+	 * @return {@code true} if a monster of that instance may roll random passives
+	 */
+	public static boolean allowsRandomPassives(int instanceId)
+	{
+		return MapDeviceConfig.RANDOM_PASSIVES || !isMapInstance(instanceId);
+	}
+
+	// =========================================================================
+	// Hideout
+	// =========================================================================
+
+	/**
+	 * @param ownerId a player's object id
+	 * @return their hideout, {@code null} if they have none open
+	 */
+	public Hideout getHideout(int ownerId)
+	{
+		return _hideouts.get(ownerId);
+	}
+
+	/**
+	 * @param instanceId an instance id
+	 * @return the hideout of that instance, {@code null} for none
+	 */
+	public Hideout getHideoutByInstance(int instanceId)
+	{
+		return instanceId > 0 ? HIDEOUTS_BY_INSTANCE.get(instanceId) : null;
+	}
+
+	/**
+	 * @param player a player
+	 * @return the hideout the player stands in, {@code null} if they are in none
+	 */
+	public Hideout getCurrentHideout(Player player)
+	{
+		return getHideoutByInstance(player.getInstanceId());
+	}
+
+	/**
+	 * @param player a player
+	 * @return the run of the map the player stands in, or of the device of the hideout they stand in; {@code null} for none
+	 */
+	public MapRun getCurrentRun(Player player)
+	{
+		final MapRun run = getRun(player.getInstanceId());
+		if (run != null)
+		{
+			return run;
+		}
+		final Hideout hideout = getCurrentHideout(player);
+		return hideout != null ? hideout.getRun() : null;
+	}
+
+	/**
+	 * Takes a player from the world to their own hideout, making it first if needed.
+	 * @param player the player
+	 * @return why they can't go, {@code null} if they went
+	 */
+	public String enterHideout(Player player)
+	{
+		final String denied = checkCanLeaveWorld(player);
+		if (denied != null)
+		{
+			return denied;
+		}
+
+		Hideout hideout = _hideouts.get(player.getObjectId());
+		if ((hideout == null) || (InstanceManager.getInstance().getInstance(hideout.getInstanceId()) == null))
+		{
+			hideout = createHideout(player);
+			if (hideout == null)
+			{
+				return "Your hideout could not be prepared. Please contact an administrator.";
+			}
+		}
+
+		saveReturnLocation(player);
+		teleportToHideout(player, hideout);
+		player.sendMessage("Welcome to your hideout. Talk to the Map Device to open a map, or type .hideout leave to go back.");
+		return null;
+	}
+
+	/**
+	 * Takes a player from the world to the hideout of a member of their party (the leader's first).
+	 * @param player the player
+	 * @return why they can't go, {@code null} if they went
+	 */
+	public String visitPartyHideout(Player player)
+	{
+		if (!MapDeviceConfig.HIDEOUT_ALLOW_PARTY)
+		{
+			return "Hideouts can't be visited on this server.";
+		}
+
+		final Party party = player.getParty();
+		if (party == null)
+		{
+			return "You are not in a party.";
+		}
+
+		Hideout hideout = null;
+		final Player leader = party.getLeader();
+		if ((leader != null) && (leader != player))
+		{
+			hideout = _hideouts.get(leader.getObjectId());
+		}
+		if (hideout == null)
+		{
+			for (Player member : party.getMembers())
+			{
+				if ((member != null) && (member != player) && _hideouts.containsKey(member.getObjectId()))
+				{
+					hideout = _hideouts.get(member.getObjectId());
+					break;
+				}
+			}
+		}
+		if ((hideout == null) || (InstanceManager.getInstance().getInstance(hideout.getInstanceId()) == null))
+		{
+			return "Nobody in your party has a hideout open.";
+		}
+
+		if (player.getInstanceId() == hideout.getInstanceId())
+		{
+			return "You are already there.";
+		}
+
+		final MapRun run = getRun(player.getInstanceId());
+		if (run == null)
+		{
+			final String denied = checkCanLeaveWorld(player);
+			if (denied != null)
+			{
+				return denied;
+			}
+			saveReturnLocation(player);
+		}
+		else if (AttackStanceTaskManager.getInstance().hasAttackStanceTask(player))
+		{
+			return "You can't leave the map while fighting.";
+		}
+
+		teleportToHideout(player, hideout);
+		player.sendMessage("Welcome to " + hideout.getOwnerName() + "'s hideout.");
+		return null;
+	}
+
+	/**
+	 * Takes a player from a map back to the hideout it was opened from. The portal they came through is gone: going back in takes another one.
+	 * @param player the player
+	 * @return why they can't go, {@code null} if they went
+	 */
+	public String returnToHideout(Player player)
+	{
+		final MapRun run = getRun(player.getInstanceId());
+		if (run == null)
+		{
+			return "You are not in a map.";
+		}
+		if (player.isDead())
+		{
+			return "You are dead.";
+		}
+		if (AttackStanceTaskManager.getInstance().hasAttackStanceTask(player))
+		{
+			return "You can't leave the map while fighting.";
+		}
+		sendOut(player, run);
+		return null;
+	}
+
+	/**
+	 * Takes a player from a hideout (or a map) back to where they entered from.
+	 * @param player the player
+	 * @return why they can't go, {@code null} if they went
+	 */
+	public String leaveHideout(Player player)
+	{
+		final int instanceId = player.getInstanceId();
+		if (!isHideoutInstance(instanceId) && !isMapInstance(instanceId))
+		{
+			return "You are not in a hideout.";
+		}
+		if (AttackStanceTaskManager.getInstance().hasAttackStanceTask(player))
+		{
+			return "You can't leave while fighting.";
+		}
+
+		final Location loc = getReturnLocation(player);
+		player.teleToLocation(loc.getX(), loc.getY(), loc.getZ(), loc.getHeading(), 0);
+		return null;
+	}
+
+	/**
+	 * @param player a player about to leave the world for a hideout
+	 * @return why they can't, {@code null} if they can
+	 */
+	private String checkCanLeaveWorld(Player player)
+	{
+		if (!MapDeviceConfig.ENABLED)
+		{
+			return "Hideouts and maps are disabled.";
+		}
+		if (player.getLevel() < MapDeviceConfig.HIDEOUT_MIN_LEVEL)
+		{
+			return "You must be level " + MapDeviceConfig.HIDEOUT_MIN_LEVEL + " or higher to have a hideout.";
+		}
+		if (isHideoutInstance(player.getInstanceId()))
+		{
+			return "You are already in a hideout.";
+		}
+		if (player.getInstanceId() != 0)
+		{
+			return "You can't go to a hideout from here.";
+		}
+		if (player.isDead() || player.isAlikeDead())
+		{
+			return "You are dead.";
+		}
+		if (MapDeviceConfig.HIDEOUT_PEACE_ZONE_ONLY && !player.isInsideZone(ZoneId.PEACE))
+		{
+			return "You can only go to your hideout from a peaceful place, like a town.";
+		}
+		if (AttackStanceTaskManager.getInstance().hasAttackStanceTask(player) || player.isInCombat())
+		{
+			return "You can't go to your hideout while fighting.";
+		}
+		if (player.isInOlympiadMode() || player.isOnEvent() || player.isInDuel() || player.isInSiege() || player.isJailed() || player.inObserverMode() || (player.getKrateiArena() != null))
+		{
+			return "You can't go to your hideout right now.";
+		}
+		if (player.isCursedWeaponEquipped() || player.isFlyingMounted() || player.isInStoreMode() || player.isFishing() || player.isTeleporting() || (player.getKarma() > 0))
+		{
+			return "You can't go to your hideout right now.";
+		}
+		return null;
+	}
+
+	private Hideout createHideout(Player player)
+	{
+		try
+		{
+			final Instance instance = InstanceManager.getInstance().createDynamicInstance(0);
+			instance.setAllowSummon(false);
+			instance.setEjectTime(0);
+			final Hideout hideout = new Hideout(player.getObjectId(), player.getName(), instance.getId());
+			HIDEOUTS_BY_INSTANCE.put(instance.getId(), hideout);
+			_hideouts.put(player.getObjectId(), hideout);
+
+			final Location device = getGroundLocation(MapDeviceData.getInstance().getDevicePosition());
+			final Npc deviceNpc = Quest.addSpawn(MapDeviceConfig.DEVICE_NPC_ID, device.getX(), device.getY(), device.getZ(), device.getHeading(), false, 0, false, instance.getId());
+			hideout.setDevice(deviceNpc);
+			if (deviceNpc != null)
+			{
+				deviceNpc.setTitle(player.getName() + "'s Map Device");
+				deviceNpc.broadcastInfo();
+			}
+			return hideout;
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not make the hideout of " + player.getName() + ".", e);
+			return null;
+		}
+	}
+
+	private void teleportToHideout(Player player, Hideout hideout)
+	{
+		final Location entry = getGroundLocation(MapDeviceData.getInstance().getHideoutEntry());
+		player.teleToLocation(entry.getX(), entry.getY(), entry.getZ(), entry.getHeading(), hideout.getInstanceId(), ENTRY_SPREAD / 2);
+		hideout.setEmptySince(0);
+	}
+
+	/**
+	 * Every few seconds: closes the hideouts nobody has used for {@link MapDeviceConfig#HIDEOUT_EMPTY_MINUTES}, and those whose instance went away.
+	 */
+	private void checkHideouts()
+	{
+		final long now = System.currentTimeMillis();
+		for (Hideout hideout : _hideouts.values())
+		{
+			try
+			{
+				final Instance instance = InstanceManager.getInstance().getInstance(hideout.getInstanceId());
+				if (instance == null)
+				{
+					destroyHideout(hideout);
+					continue;
+				}
+
+				final MapRun run = hideout.getRun();
+				if ((run != null) && !run.isClosed())
+				{
+					hideout.setEmptySince(0);
+					continue;
+				}
+
+				if (hasPlayersInside(instance))
+				{
+					hideout.setEmptySince(0);
+					continue;
+				}
+
+				if (hideout.getEmptySince() == 0)
+				{
+					hideout.setEmptySince(now);
+				}
+				else if ((now - hideout.getEmptySince()) >= (MapDeviceConfig.HIDEOUT_EMPTY_MINUTES * 60000L))
+				{
+					destroyHideout(hideout);
+				}
+			}
+			catch (Exception e)
+			{
+				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Hideout check failed.", e);
+			}
+		}
+	}
+
+	private void destroyHideout(Hideout hideout)
+	{
+		_hideouts.remove(hideout.getOwnerId(), hideout);
+		HIDEOUTS_BY_INSTANCE.remove(hideout.getInstanceId());
+		final MapRun run = hideout.getRun();
+		if ((run != null) && !run.isClosed())
+		{
+			closeRun(run, null);
+		}
+		final Npc device = hideout.getDevice();
+		if (device != null)
+		{
+			device.deleteMe();
+		}
+		InstanceManager.getInstance().destroyInstance(hideout.getInstanceId());
+	}
+
+	private static boolean hasPlayersInside(Instance instance)
+	{
+		for (int objectId : instance.getPlayers())
+		{
+			final Player player = World.getInstance().getPlayer(objectId);
+			if ((player != null) && player.isOnline() && (player.getInstanceId() == instance.getId()))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// =========================================================================
+	// Opening a map
+	// =========================================================================
+
+	/**
+	 * @param player a player
+	 * @return {@code true} if they stand in their own hideout and may work its device
+	 */
+	public boolean isDeviceOwner(Player player)
+	{
+		final Hideout hideout = getCurrentHideout(player);
+		return (hideout != null) && (hideout.getOwnerId() == player.getObjectId());
+	}
+
+	/**
+	 * @param player a player
+	 * @return the map tiers they carry a map of, lowest first, with how many
+	 */
+	public Map<MapTier, Long> getCarriedMaps(Player player)
+	{
+		final Map<MapTier, Long> carried = new java.util.LinkedHashMap<>();
+		for (MapTier tier : MapDeviceData.getInstance().getTiers().values())
+		{
+			final long count = player.getInventory().getInventoryItemCount(tier.itemId(), -1);
+			if (count > 0)
+			{
+				carried.put(tier, count);
+			}
+		}
+		return carried;
+	}
+
+	/**
+	 * Opens a map at the device of the player's own hideout: takes the map and the medals, rolls the modifiers and the hot zone effect, builds the field and its monsters, and opens the portals.
+	 * @param player the hideout's owner
+	 * @param tierId the tier of the map they put in
+	 * @param medals how many Champion Medals they feed it
+	 * @return why it didn't open, {@code null} if it opened
+	 */
+	public String openMap(Player player, int tierId, int medals)
+	{
+		if (!MapDeviceConfig.ENABLED)
+		{
+			return "Maps are disabled.";
+		}
+		if (!isDeviceOwner(player))
+		{
+			return "Only the owner of this hideout can work its Map Device.";
+		}
+		if (!_opening.add(player.getObjectId()))
+		{
+			return "The Map Device is already working.";
+		}
+		try
+		{
+			final Hideout hideout = getCurrentHideout(player);
+			if ((hideout.getRun() != null) && !hideout.getRun().isClosed())
+			{
+				return "A map is already open. Finish it, or let it close, first.";
+			}
+
+			final MapTier tier = MapDeviceData.getInstance().getTier(tierId);
+			if (tier == null)
+			{
+				return "That map is unknown.";
+			}
+			if ((medals < 0) || (medals > MapDeviceConfig.MAX_MEDALS))
+			{
+				return "You can feed the device 0 to " + MapDeviceConfig.MAX_MEDALS + " " + getItemName(MapDeviceConfig.MEDAL_ITEM_ID) + "s.";
+			}
+			if (player.getInventory().getInventoryItemCount(tier.itemId(), -1) < 1)
+			{
+				return "You don't have a " + getItemName(tier.itemId()) + ".";
+			}
+			if ((medals > 0) && (player.getInventory().getInventoryItemCount(MapDeviceConfig.MEDAL_ITEM_ID, -1) < medals))
+			{
+				return "You don't have " + medals + " " + getItemName(MapDeviceConfig.MEDAL_ITEM_ID) + "s.";
+			}
+
+			final List<MapArena> arenas = MapDeviceData.getInstance().getArenas();
+			if (arenas.isEmpty())
+			{
+				return "The Map Device has nowhere to open a map. Please contact an administrator.";
+			}
+			final List<NpcTemplate> pool = getMonsterPool(tier);
+			if (pool.isEmpty())
+			{
+				return "No monster fits a tier " + tier.tier() + " map. Please contact an administrator.";
+			}
+
+			// Everything is checked: now take what the map costs.
+			if (!player.destroyItemByItemId(ItemProcessType.FEE, tier.itemId(), 1, player, true))
+			{
+				return "You don't have a " + getItemName(tier.itemId()) + ".";
+			}
+			if ((medals > 0) && !player.destroyItemByItemId(ItemProcessType.FEE, MapDeviceConfig.MEDAL_ITEM_ID, medals, player, true))
+			{
+				player.addItem(ItemProcessType.REFUND, tier.itemId(), 1, player, true);
+				return "You don't have " + medals + " " + getItemName(MapDeviceConfig.MEDAL_ITEM_ID) + "s.";
+			}
+
+			final List<MapModifier> modifiers = rollModifiers(medals);
+			final HotzoneModifier hotzone = rollHotzoneEffect(tier);
+			final MapArena arena = arenas.get(Rnd.get(arenas.size()));
+			try
+			{
+				final MapRun run = createRun(player, hideout, tier, medals, modifiers, hotzone, arena, pool);
+				announceOpened(player, run);
+				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " opened a tier " + tier.tier() + " map in " + arena.name() + " (instance " + run.getInstanceId() + ") with " + medals + " medals " + modifiers + ", hot zone effect " + hotzone + ".");
+				return null;
+			}
+			catch (Exception e)
+			{
+				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not open a tier " + tier.tier() + " map for " + player.getName() + ".", e);
+				player.addItem(ItemProcessType.REFUND, tier.itemId(), 1, player, true);
+				if (medals > 0)
+				{
+					player.addItem(ItemProcessType.REFUND, MapDeviceConfig.MEDAL_ITEM_ID, medals, player, true);
+				}
+				return "The map could not be opened. Your map and medals were given back.";
+			}
+		}
+		finally
+		{
+			_opening.remove(player.getObjectId());
+		}
+	}
+
+	/**
+	 * @param count how many modifiers
+	 * @return that many different modifiers, picked at random among the ones the server can run
+	 */
+	public static List<MapModifier> rollModifiers(int count)
+	{
+		final List<MapModifier> pool = new ArrayList<>();
+		for (MapModifier modifier : MapModifier.values())
+		{
+			if (modifier.isAvailable())
+			{
+				pool.add(modifier);
+			}
+		}
+		Collections.shuffle(pool);
+		final List<MapModifier> rolled = new ArrayList<>(pool.subList(0, Math.min(count, pool.size())));
+		rolled.sort(null);
+		return rolled;
+	}
+
+	/**
+	 * @param tier the map's tier
+	 * @return a hot zone effect for the whole map, {@code null} if none can apply
+	 */
+	private static HotzoneModifier rollHotzoneEffect(MapTier tier)
+	{
+		final List<HotzoneModifier> pool = new ArrayList<>();
+		for (HotzoneModifier modifier : HotzoneModifier.values())
+		{
+			if (!modifier.isNightOnly() && !MapDeviceConfig.EXCLUDED_HOTZONE_EFFECTS.contains(modifier) && HotzoneModifierManager.canApplyAt(modifier, tier.maxLevel()))
+			{
+				pool.add(modifier);
+			}
+		}
+		return pool.isEmpty() ? null : pool.get(Rnd.get(pool.size()));
+	}
+
+	private MapRun createRun(Player player, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, HotzoneModifier hotzone, MapArena arena, List<NpcTemplate> pool)
+	{
+		final Instance instance = InstanceManager.getInstance().createDynamicInstance(0);
+		final MapRun run = new MapRun(_runIds.incrementAndGet(), player.getObjectId(), player.getName(), hideout, tier, medals, modifiers, hotzone, arena, instance.getId());
+		instance.setExitLoc(getReturnLocation(player));
+		instance.setEjectTime(0);
+		instance.setAllowSummon(false);
+		instance.setDuration((int) Math.min(Integer.MAX_VALUE, (run.getClosesAt() - System.currentTimeMillis()) + 120000L));
+
+		// Registered before anything spawns, so the stat hooks already see a map.
+		RUNS_BY_INSTANCE.put(instance.getId(), run);
+		if (hotzone != null)
+		{
+			HotzoneModifierManager.getInstance().setInstanceModifier(instance.getId(), hotzone);
+		}
+		hideout.setRun(run);
+
+		try
+		{
+			run.getFences().addAll(TeamVsTeamBarrier.build(arena.toBarrier(), arena.z(), instance.getId(), "Map Barrier"));
+			spawnMonsters(run, pool);
+			spawnReturnPortal(run);
+			spawnPortals(run, hideout);
+		}
+		catch (RuntimeException e)
+		{
+			closeRun(run, null);
+			throw e;
+		}
+
+		run.setTickTask(ThreadPool.scheduleAtFixedRate(new RunTick(run), 1000, 1000));
+		return run;
+	}
+
+	private void announceOpened(Player player, MapRun run)
+	{
+		player.sendPacket(new ExShowScreenMessage("Tier " + run.getTier().tier() + " map opened: " + run.getArena().name(), 5000));
+		player.sendMessage("The Map Device hums: a tier " + run.getTier().tier() + " map to " + run.getArena().name() + " is open, with " + run.getPortalCount() + " portals and " + run.getMonsterTotal() + " monsters.");
+		for (MapModifier modifier : run.getModifiers())
+		{
+			player.sendMessage("Modifier - " + modifier.getDisplayName() + ": " + modifier.getDescription());
+		}
+		if (run.getHotzoneEffect() != null)
+		{
+			player.sendMessage("Hot zone effect - " + ClassTransferChallengeManager.formatOmen(run.getHotzoneEffect()) + ": " + run.getHotzoneEffect().getDescription());
+		}
+		if (run.getMedals() > 0)
+		{
+			player.sendMessage("Experience +" + (run.getMedals() * MapDeviceConfig.XP_BONUS_PER_MEDAL) + "%, drop rate +" + (run.getMedals() * MapDeviceConfig.DROP_BONUS_PER_MEDAL) + "% from the medals.");
+		}
+
+		// The party sees it too.
+		final Party party = player.getParty();
+		if ((party != null) && MapDeviceConfig.HIDEOUT_ALLOW_PARTY)
+		{
+			for (Player member : party.getMembers())
+			{
+				if ((member != null) && (member != player))
+				{
+					member.sendMessage(player.getName() + " opened a tier " + run.getTier().tier() + " map. Type .hideout party to join through their portals.");
+				}
+			}
+		}
+	}
+
+	// =========================================================================
+	// Monsters
+	// =========================================================================
+
+	/**
+	 * The monsters a map of a tier may hold: plain monsters of the tier's levels that live somewhere in the open world (a spawn that respawns), so no quest, event, instance or raid monster.
+	 * @param tier a tier
+	 * @return its monsters, empty if none fits
+	 */
+	public List<NpcTemplate> getMonsterPool(MapTier tier)
+	{
+		return _monsterPools.computeIfAbsent(tier.tier(), _ -> buildMonsterPool(tier));
+	}
+
+	private static List<NpcTemplate> buildMonsterPool(MapTier tier)
+	{
+		final Set<Integer> excluded = MapDeviceData.getInstance().getExcludedNpcIds();
+		final List<NpcTemplate> pool = new ArrayList<>();
+		for (Map.Entry<Integer, Set<Spawn>> entry : SpawnTable.getInstance().getSpawnTable().entrySet())
+		{
+			final NpcTemplate template = NpcData.getInstance().getTemplate(entry.getKey());
+			if ((template == null) || !template.isType("Monster") || excluded.contains(template.getId()))
+			{
+				continue;
+			}
+			if ((template.getLevel() < tier.minLevel()) || (template.getLevel() > tier.maxLevel()))
+			{
+				continue;
+			}
+			if (template.isUndying() || !template.canMove() || !template.isAttackable() || template.isQuestMonster() || template.isFakePlayer() || (template.getFakePlayerPvpProfile() != null))
+			{
+				continue;
+			}
+
+			boolean worldSpawn = false;
+			for (Spawn spawn : entry.getValue())
+			{
+				if ((spawn.getInstanceId() == 0) && (spawn.getRespawnMinDelay() > 0))
+				{
+					worldSpawn = true;
+					break;
+				}
+			}
+			if (worldSpawn)
+			{
+				pool.add(template);
+			}
+		}
+		LOGGER.info(MapDeviceManager.class.getSimpleName() + ": " + pool.size() + " monsters can fill a tier " + tier.tier() + " map (levels " + tier.minLevel() + "-" + tier.maxLevel() + ").");
+		return Collections.unmodifiableList(pool);
+	}
+
+	/**
+	 * Clears the monster pools, so they are worked out again (after a reload of the spawns or of data/MapDevice.xml).
+	 */
+	public void clearMonsterPools()
+	{
+		_monsterPools.clear();
+	}
+
+	private void spawnMonsters(MapRun run, List<NpcTemplate> pool)
+	{
+		// A map has a theme: a few kinds of monster, not a hundred.
+		final List<NpcTemplate> shuffled = new ArrayList<>(pool);
+		Collections.shuffle(shuffled);
+		final List<NpcTemplate> kinds = shuffled.subList(0, Math.min(MapDeviceConfig.MONSTER_TYPES, shuffled.size()));
+
+		final int count = Math.max(1, (int) Math.round(MapDeviceConfig.MONSTER_COUNT * run.getPackSize()));
+		final List<Location> spots = run.isPacks() ? packSpots(run, count) : scatteredSpots(run, count);
+
+		// Gauntlet: which monsters are wave challenges.
+		final Set<Integer> waveIndexes = new HashSet<>();
+		final int waves = Math.min(run.getWaveMonsters(), spots.size());
+		while (waveIndexes.size() < waves)
+		{
+			waveIndexes.add(Rnd.get(spots.size()));
+		}
+
+		for (int i = 0; i < spots.size(); i++)
+		{
+			final Monster monster = spawnMapMonster(run, kinds.get(Rnd.get(kinds.size())), spots.get(i));
+			if (monster != null)
+			{
+				applyVariants(run, monster, waveIndexes.contains(i));
+			}
+		}
+
+		if (run.isGuardian())
+		{
+			spawnGuardian(run, kinds);
+		}
+
+		run.setMonsterTotal(run.getMonsters().size());
+	}
+
+	/**
+	 * @return spots at random over the field, away from the entry
+	 */
+	private static List<Location> scatteredSpots(MapRun run, int count)
+	{
+		final List<Location> spots = new ArrayList<>(count);
+		for (int i = 0; i < count; i++)
+		{
+			spots.add(randomFieldSpot(run, 0.92, true));
+		}
+		return spots;
+	}
+
+	/**
+	 * Pack Hunters: the monsters stand in packs of {@value #PACK_MIN}-{@value #PACK_MAX} round a few spots.
+	 */
+	private static List<Location> packSpots(MapRun run, int count)
+	{
+		final List<Location> spots = new ArrayList<>(count);
+		final GeoEngine geo = GeoEngine.getInstance();
+		while (spots.size() < count)
+		{
+			final Location center = randomFieldSpot(run, 0.85, true);
+			final int size = Math.min(count - spots.size(), Rnd.get(PACK_MIN, PACK_MAX));
+			for (int i = 0; i < size; i++)
+			{
+				final double angle = Rnd.nextDouble() * 2 * Math.PI;
+				final int distance = Rnd.get(PACK_RADIUS);
+				final int x = center.getX() + (int) (Math.cos(angle) * distance);
+				final int y = center.getY() + (int) (Math.sin(angle) * distance);
+				spots.add(geo.getValidLocation(center.getX(), center.getY(), center.getZ(), x, y, geo.getHeight(x, y, center.getZ()), run.getInstanceId()));
+			}
+		}
+		return spots;
+	}
+
+	/**
+	 * @param run a run
+	 * @param share how far towards the fence the spot may be, as a share of the field's radius
+	 * @param awayFromEntry {@code true} to keep {@link MapDeviceConfig#SAFE_RADIUS} away from where the players come in
+	 * @return a spot on the ground of the field, inside the fence
+	 */
+	private static Location randomFieldSpot(MapRun run, double share, boolean awayFromEntry)
+	{
+		final MapArena arena = run.getArena();
+		final GeoEngine geo = GeoEngine.getInstance();
+		final int centerZ = geo.getHeight(arena.x(), arena.y(), arena.z());
+		int x = arena.x();
+		int y = arena.y();
+		for (int attempt = 0; attempt < 12; attempt++)
+		{
+			final double angle = Rnd.nextDouble() * 2 * Math.PI;
+			final double distance = Math.sqrt(Rnd.nextDouble()) * share;
+			x = arena.x() + (int) (Math.cos(angle) * arena.radiusX() * distance);
+			y = arena.y() + (int) (Math.sin(angle) * arena.radiusY() * distance);
+			if (!awayFromEntry || (Math.hypot(x - arena.getEntryX(), y - arena.getEntryY()) >= MapDeviceConfig.SAFE_RADIUS))
+			{
+				break;
+			}
+		}
+		return geo.getValidLocation(arena.x(), arena.y(), centerZ, x, y, geo.getHeight(x, y, arena.z()), run.getInstanceId());
+	}
+
+	/**
+	 * Spawns one monster of a map: no spawn point (nothing respawns), its map's stat functions, tracked by the run.
+	 */
+	private Monster spawnMapMonster(MapRun run, NpcTemplate template, Location spot)
+	{
+		try
+		{
+			final Monster monster = new Monster(template);
+			monster.setInstanceId(run.getInstanceId());
+			monster.setHeading(Rnd.get(65536));
+			monster.spawnMe(spot.getX(), spot.getY(), spot.getZ());
+			addMonsterFunctions(run, monster);
+			run.getMonsters().add(monster.getObjectId());
+			return monster;
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn " + template.getId() + " in map instance " + run.getInstanceId() + ".", e);
+			return null;
+		}
+	}
+
+	/**
+	 * The monster stats that don't change during a fight are plain stat functions, owned by the run.
+	 */
+	private static void addMonsterFunctions(MapRun run, Monster monster)
+	{
+		final Object owner = run.getMonsterFuncOwner();
+		final List<AbstractFunction> functions = new ArrayList<>();
+		mul(functions, Stat.MOVE_SPEED, run.getMonsterMoveSpeed(), owner);
+		mul(functions, Stat.CRITICAL_RATE, run.getMonsterCritRate(), owner);
+		mul(functions, Stat.CRITICAL_DAMAGE, run.getMonsterCritDamage(), owner);
+		mul(functions, Stat.REGENERATE_HP_RATE, run.getMonsterHpRegen(), owner);
+		add(functions, Stat.EVASION_RATE, run.getMonsterEvasion(), owner);
+		add(functions, Stat.ABSORB_DAMAGE_PERCENT, run.getMonsterLeechPct(), owner);
+		add(functions, Stat.REFLECT_DAMAGE_PERCENT, run.getMonsterReflectPct(), owner);
+		for (Stat stat : ELEMENT_RESISTANCES)
+		{
+			add(functions, stat, run.getMonsterElementRes(), owner);
+		}
+		if (!functions.isEmpty())
+		{
+			monster.addStatFuncs(functions);
+		}
+	}
+
+	private static final Stat[] ELEMENT_RESISTANCES =
+	{
+		Stat.FIRE_RES,
+		Stat.WATER_RES,
+		Stat.WIND_RES,
+		Stat.EARTH_RES,
+		Stat.HOLY_RES,
+		Stat.DARK_RES
+	};
+
+	private static void mul(List<AbstractFunction> functions, Stat stat, double value, Object owner)
+	{
+		if (value != 1.0)
+		{
+			functions.add(new FuncMul(stat, 0x30, owner, value, null));
+		}
+	}
+
+	private static void add(List<AbstractFunction> functions, Stat stat, double value, Object owner)
+	{
+		if (value != 0)
+		{
+			functions.add(new FuncAdd(stat, 0x40, owner, value, null));
+		}
+	}
+
+	/**
+	 * Makes a freshly spawned map monster one of the server's special monsters, as its map's modifiers and hot zone effect ask (or by the open world's own chances), and gives it its forced personality. Order matters: the champion tier first (its title rebuild drops the other
+	 * tags), then Mage or Thief, Infused, Resonant, the wave challenge.
+	 */
+	private static void applyVariants(MapRun run, Monster monster, boolean wave)
+	{
+		final HotzoneModifier hotzone = run.getHotzoneEffect();
+
+		// Champion.
+		if (ChampionMonstersConfig.CHAMPION_ENABLE)
+		{
+			int tier = 0;
+			if (run.getChampionPct() > 0)
+			{
+				if (Rnd.get(100) < run.getChampionPct())
+				{
+					final int roll = Rnd.get(100);
+					tier = roll < 10 ? 3 : roll < 40 ? 2 : 1;
+				}
+			}
+			else
+			{
+				final double mult = hotzone != null ? hotzone.getChampionSpawnMult() : 1.0;
+				if ((Rnd.nextDouble() * 100) < (ChampionMonstersConfig.CHAMPION_T3_CHANCE * mult))
+				{
+					tier = 3;
+				}
+				else if ((Rnd.nextDouble() * 100) < (ChampionMonstersConfig.CHAMPION_T2_CHANCE * mult))
+				{
+					tier = 2;
+				}
+				else if ((Rnd.nextDouble() * 100) < (ChampionMonstersConfig.CHAMPION_T1_CHANCE * mult))
+				{
+					tier = 1;
+				}
+			}
+			monster.setChampionTier(tier);
+		}
+
+		// Personality first: a supporter or a coward keeps its kit, and a Mage needs spells to cast.
+		final MonsterArchetype archetype = run.rollArchetype(Rnd.get(100));
+
+		// Mage or Thief.
+		final double mageChance = run.getMagePct() > 0 ? run.getMagePct() : MageMonsterConfig.SPAWN_CHANCE * (hotzone != null ? hotzone.getMageSpawnMult() : 1.0);
+		final double thiefChance = run.getThiefPct() > 0 ? run.getThiefPct() : ThiefMonsterConfig.SPAWN_CHANCE * (hotzone != null ? hotzone.getThiefSpawnMult() : 1.0);
+		if (MageMonsterConfig.ENABLED && ((Rnd.nextDouble() * 100) < mageChance))
+		{
+			if ((archetype == null) && MageMonsterManager.getMagicDamageSkills(monster).isEmpty() && (monster.getAI() instanceof AttackableAI ai))
+			{
+				ai.setArchetype(MonsterArchetype.MAGE);
+			}
+			monster.startMage();
+		}
+		else if (ThiefMonsterConfig.ENABLED && ((Rnd.nextDouble() * 100) < thiefChance))
+		{
+			monster.startThief();
+		}
+
+		if ((archetype != null) && (monster.getAI() instanceof AttackableAI ai))
+		{
+			ai.setArchetype(archetype);
+		}
+
+		// Infused.
+		final double infusedChance = run.getInfusedPct() > 0 ? run.getInfusedPct() : InfusedMonsterConfig.SPAWN_CHANCE * (hotzone != null ? hotzone.getInfusedSpawnMult() : 1.0);
+		if (InfusedMonsterConfig.ENABLED && ((Rnd.nextDouble() * 100) < infusedChance))
+		{
+			monster.startInfused((byte) Rnd.get(InfusedMonsterConfig.ELEMENT_COUNT));
+		}
+
+		// Resonant: only at the open world's chance, never with an attribute too.
+		if (ResonantMonsterConfig.ENABLED && !monster.isInfused() && ((Rnd.nextDouble() * 100) < (ResonantMonsterConfig.SPAWN_CHANCE * (hotzone != null ? hotzone.getResonantSpawnMult() : 1.0))))
+		{
+			monster.startResonant();
+		}
+
+		// Wave challenge: the Gauntlet's, or at the open world's chance.
+		if (WaveChallengeConfig.ENABLED && !monster.isThief() && (wave || ((Rnd.nextDouble() * 100) < (WaveChallengeConfig.SPAWN_CHANCE * (hotzone != null ? hotzone.getWaveSpawnMult() : 1.0)))))
+		{
+			monster.startWaveChallenge(wave ? 3 : WaveChallengeConfig.WAVE_COUNT);
+		}
+
+		if (run.isTitans())
+		{
+			monster.startAbnormalVisualEffect(true, AbnormalVisualEffect.BIG_BODY);
+		}
+
+		monster.setCurrentHpMp(monster.getMaxHp(), monster.getMaxMp());
+		monster.broadcastInfo();
+	}
+
+	/**
+	 * Map Guardian: the strongest kind of the map, in the middle of the field, a tier 3 Champion that rises twice.
+	 */
+	private void spawnGuardian(MapRun run, List<NpcTemplate> kinds)
+	{
+		NpcTemplate strongest = kinds.get(0);
+		for (NpcTemplate template : kinds)
+		{
+			if (template.getLevel() > strongest.getLevel())
+			{
+				strongest = template;
+			}
+		}
+
+		final MapArena arena = run.getArena();
+		final Location middle = getGroundLocation(new Location(arena.x(), arena.y(), arena.z()));
+		final Monster guardian = spawnMapMonster(run, strongest, middle);
+		if (guardian == null)
+		{
+			return;
+		}
+
+		guardian.getVariables().set(GUARDIAN_VAR, true);
+		if (ChampionMonstersConfig.CHAMPION_ENABLE)
+		{
+			guardian.setChampionTier(3);
+		}
+		if (WaveChallengeConfig.ENABLED)
+		{
+			guardian.startWaveChallenge(3);
+		}
+		guardian.setEventTitleTag("[Map Guardian]");
+		guardian.startAbnormalVisualEffect(true, AbnormalVisualEffect.BIG_BODY);
+		guardian.setCurrentHpMp(guardian.getMaxHp(), guardian.getMaxMp());
+		guardian.broadcastInfo();
+	}
+
+	// =========================================================================
+	// Portals
+	// =========================================================================
+
+	private static void spawnPortals(MapRun run, Hideout hideout)
+	{
+		final Location device = getGroundLocation(MapDeviceData.getInstance().getDevicePosition());
+		final GeoEngine geo = GeoEngine.getInstance();
+		final int count = run.getPortalCount();
+		for (int i = 0; i < count; i++)
+		{
+			final double angle = (i * 2 * Math.PI) / count;
+			final int x = device.getX() + (int) Math.round(Math.cos(angle) * MapDeviceConfig.PORTAL_RADIUS);
+			final int y = device.getY() + (int) Math.round(Math.sin(angle) * MapDeviceConfig.PORTAL_RADIUS);
+			final Location spot = geo.getValidLocation(device.getX(), device.getY(), device.getZ(), x, y, geo.getHeight(x, y, device.getZ()), hideout.getInstanceId());
+			final int heading = (int) Math.round((Math.atan2(device.getY() - spot.getY(), device.getX() - spot.getX()) * 32768) / Math.PI) & 0xFFFF;
+			final Npc portal = Quest.addSpawn(MapDeviceConfig.PORTAL_NPC_ID, spot.getX(), spot.getY(), spot.getZ(), heading, false, 0, false, hideout.getInstanceId());
+			if (portal != null)
+			{
+				portal.setTitle("Tier " + run.getTier().tier() + " - " + run.getArena().name());
+				portal.broadcastInfo();
+				run.getPortals().add(portal);
+			}
+		}
+	}
+
+	private static void spawnReturnPortal(MapRun run)
+	{
+		final MapArena arena = run.getArena();
+		final Location entry = getGroundLocation(new Location(arena.getEntryX(), arena.getEntryY(), arena.z()));
+		final Npc portal = Quest.addSpawn(MapDeviceConfig.RETURN_PORTAL_NPC_ID, entry.getX(), entry.getY(), entry.getZ(), 0, false, 0, false, run.getInstanceId());
+		run.setReturnPortal(portal);
+	}
+
+	/**
+	 * @param player a player
+	 * @param run a run
+	 * @return {@code true} if the player may take its portals: its owner, or a member of the owner's party
+	 */
+	public static boolean isAllowed(Player player, MapRun run)
+	{
+		if (player.getObjectId() == run.getOwnerId())
+		{
+			return true;
+		}
+		final Party party = player.getParty();
+		if (!MapDeviceConfig.HIDEOUT_ALLOW_PARTY || (party == null))
+		{
+			return false;
+		}
+		for (Player member : party.getMembers())
+		{
+			if ((member != null) && (member.getObjectId() == run.getOwnerId()))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Takes a player through a portal into the map. The portal is used up.
+	 * @param player the player
+	 * @param portal the portal they clicked
+	 * @return why they can't go, {@code null} if they went
+	 */
+	public String usePortal(Player player, Npc portal)
+	{
+		final Hideout hideout = getCurrentHideout(player);
+		final MapRun run = hideout != null ? hideout.getRun() : null;
+		if ((run == null) || (portal == null) || (portal.getInstanceId() != hideout.getInstanceId()) || !run.getPortals().contains(portal))
+		{
+			return "This portal leads nowhere.";
+		}
+		if (run.getStatus() != Status.OPEN)
+		{
+			return run.getStatus() == Status.COMPLETED ? "This map is complete: every monster is slain." : "This map is closed.";
+		}
+		if (!isAllowed(player, run))
+		{
+			return "Only " + run.getOwnerName() + " and their party may take these portals.";
+		}
+		if (player.isDead() || player.isAlikeDead())
+		{
+			return "You are dead.";
+		}
+		if (player.calculateDistance2D(portal) > 300)
+		{
+			return "Come closer to the portal.";
+		}
+
+		synchronized (run)
+		{
+			// The check and the removal at once: two players can't take the same portal.
+			if (!run.getPortals().remove(portal))
+			{
+				return "This portal is already used.";
+			}
+		}
+		portal.deleteMe();
+
+		final MapArena arena = run.getArena();
+		final Location entry = getGroundLocation(new Location(arena.getEntryX(), arena.getEntryY(), arena.z()));
+		final int heading = (int) Math.round((Math.atan2(arena.y() - entry.getY(), arena.x() - entry.getX()) * 32768) / Math.PI) & 0xFFFF;
+		player.teleToLocation(entry.getX(), entry.getY(), entry.getZ(), heading, run.getInstanceId(), ENTRY_SPREAD);
+		return null;
+	}
+
+	/**
+	 * The return portal of a map takes a player back to the hideout. It never runs out.
+	 * @param player the player
+	 * @return why they can't go, {@code null} if they went
+	 */
+	public String useReturnPortal(Player player)
+	{
+		final MapRun run = getRun(player.getInstanceId());
+		if (run == null)
+		{
+			return "This portal leads nowhere.";
+		}
+		if (player.isDead())
+		{
+			return "You are dead.";
+		}
+		sendOut(player, run);
+		return null;
+	}
+
+	/**
+	 * The owner closes their open map early: everyone inside is sent back, the portals vanish.
+	 * @param player the owner
+	 * @return why it didn't close, {@code null} if it did
+	 */
+	public String abandonMap(Player player)
+	{
+		if (!isDeviceOwner(player))
+		{
+			return "Only the owner of this hideout can work its Map Device.";
+		}
+		final MapRun run = getCurrentHideout(player).getRun();
+		if ((run == null) || run.isClosed())
+		{
+			return "No map is open.";
+		}
+		closeRun(run, "The map was closed by " + player.getName() + ".");
+		return null;
+	}
+
+	// =========================================================================
+	// Players in a map
+	// =========================================================================
+
+	/**
+	 * Hook of {@code WorldObject.setInstanceId}: a player who comes into a map gets its player modifiers and hot zone buff, one who leaves it loses them, and one who goes back to the world from a hideout or a map no longer needs their way back.
+	 * @param player the player
+	 * @param oldInstanceId the instance they were in
+	 * @param newInstanceId the instance they are in now
+	 */
+	public static void onInstanceChanged(Player player, int oldInstanceId, int newInstanceId)
+	{
+		if (RUNS_BY_INSTANCE.isEmpty() && HIDEOUTS_BY_INSTANCE.isEmpty())
+		{
+			if ((newInstanceId == 0) && player.getVariables().hasVariable(RETURN_LOC_VAR))
+			{
+				player.getVariables().remove(RETURN_LOC_VAR);
+			}
+			return;
+		}
+
+		final MapRun oldRun = getRun(oldInstanceId);
+		if (oldRun != null)
+		{
+			oldRun.getPlayersInside().remove(player.getObjectId());
+			removePlayerEffects(player, oldRun);
+		}
+
+		final MapRun newRun = getRun(newInstanceId);
+		if (newRun != null)
+		{
+			newRun.getPlayersInside().add(player.getObjectId());
+			addPlayerEffects(player, newRun);
+		}
+
+		if ((newInstanceId == 0) && ((oldRun != null) || isHideoutInstance(oldInstanceId) || player.getVariables().hasVariable(RETURN_LOC_VAR)))
+		{
+			player.getVariables().remove(RETURN_LOC_VAR);
+		}
+	}
+
+	private static void addPlayerEffects(Player player, MapRun run)
+	{
+		final Object owner = run.getPlayerFuncOwner();
+		player.removeStatsOwner(owner);
+		final List<AbstractFunction> functions = new ArrayList<>();
+		mul(functions, Stat.MAX_HP, run.getPlayerMaxHp(), owner);
+		mul(functions, Stat.POWER_DEFENCE, run.getPlayerDef(), owner);
+		mul(functions, Stat.MAGIC_DEFENCE, run.getPlayerDef(), owner);
+		mul(functions, Stat.REGENERATE_MP_RATE, run.getPlayerMpRegen(), owner);
+		mul(functions, Stat.REGENERATE_HP_RATE, run.getPlayerHpRegen(), owner);
+		mul(functions, Stat.MAGICAL_MP_CONSUME_RATE, run.getPlayerMpCost(), owner);
+		mul(functions, Stat.PHYSICAL_MP_CONSUME_RATE, run.getPlayerMpCost(), owner);
+		mul(functions, Stat.DANCE_MP_CONSUME_RATE, run.getPlayerMpCost(), owner);
+		mul(functions, Stat.MOVE_SPEED, run.getPlayerMoveSpeed(), owner);
+		mul(functions, Stat.MAGIC_REUSE_RATE, run.getPlayerReuse(), owner);
+		mul(functions, Stat.P_REUSE, run.getPlayerReuse(), owner);
+		mul(functions, Stat.DANCE_REUSE, run.getPlayerReuse(), owner);
+		mul(functions, Stat.CRITICAL_RATE, run.getPlayerCritRate(), owner);
+		mul(functions, Stat.MCRITICAL_RATE, run.getPlayerCritRate(), owner);
+		mul(functions, Stat.DEFENCE_CRITICAL_DAMAGE, run.getPlayerCritDamageTaken(), owner);
+		mul(functions, Stat.HEAL_EFFECT, run.getPlayerHealReceived(), owner);
+		add(functions, Stat.ACCURACY_COMBAT, run.getPlayerAccuracy(), owner);
+		for (Stat stat : ELEMENT_RESISTANCES)
+		{
+			add(functions, stat, run.getPlayerElementRes(), owner);
+		}
+		if (!functions.isEmpty())
+		{
+			player.addStatFuncs(functions);
+		}
+		applyHotzoneBuff(player, run.getHotzoneEffect());
+		ThreadPool.schedule(() -> refreshPlayer(player), 500);
+	}
+
+	private static void removePlayerEffects(Player player, MapRun run)
+	{
+		player.removeStatsOwner(run.getPlayerFuncOwner());
+		final HotzoneModifier hotzone = run.getHotzoneEffect();
+		if (hotzone != null)
+		{
+			if (hotzone.getPlayerBuffSkillId() > 0)
+			{
+				player.getEffectList().stopSkillEffects(SkillFinishType.REMOVED, hotzone.getPlayerBuffSkillId());
+			}
+			if (hotzone.isKillStreak())
+			{
+				player.getEffectList().stopSkillEffects(SkillFinishType.REMOVED, HotzoneModifier.KILL_STREAK_SKILL_ID);
+			}
+		}
+		ThreadPool.schedule(() -> refreshPlayer(player), 500);
+	}
+
+	private static void applyHotzoneBuff(Player player, HotzoneModifier hotzone)
+	{
+		if ((hotzone == null) || (hotzone.getPlayerBuffSkillId() <= 0) || player.isDead() || (player.getEffectList().getBuffInfoBySkillId(hotzone.getPlayerBuffSkillId()) != null))
+		{
+			return;
+		}
+		final Skill buff = SkillData.getInstance().getSkill(hotzone.getPlayerBuffSkillId(), 1);
+		if (buff != null)
+		{
+			buff.applyEffects(player, player);
+		}
+	}
+
+	private static void refreshPlayer(Player player)
+	{
+		if (!player.isOnline())
+		{
+			return;
+		}
+		if (player.getCurrentHp() > player.getMaxHp())
+		{
+			player.setCurrentHp(player.getMaxHp());
+		}
+		player.broadcastUserInfo();
+	}
+
+	/**
+	 * Hook of {@code Player.doDie}: a player who dies in a map wakes up in the hideout a moment later, and may take another portal.
+	 * @param player the player who died
+	 */
+	public void onPlayerDied(Player player)
+	{
+		final MapRun run = getRun(player.getInstanceId());
+		if (run == null)
+		{
+			return;
+		}
+
+		player.sendMessage("You have fallen. You will wake up in the hideout.");
+		final int instanceId = run.getInstanceId();
+		ThreadPool.schedule(() ->
+		{
+			try
+			{
+				if (!player.isOnline() || !player.isDead() || (player.getInstanceId() != instanceId))
+				{
+					return; // Resurrected, gone, or already out.
+				}
+				player.doRevive();
+				if (MapDeviceConfig.DEATH_REVIVE_FULL)
+				{
+					player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
+					player.setCurrentCp(player.getMaxCp());
+				}
+				sendOut(player, run);
+				final int portals = run.getPortals().size();
+				player.sendMessage(portals > 0 ? portals + " portal" + (portals == 1 ? "" : "s") + " to the map remain." : "No portal to the map remains.");
+			}
+			catch (Exception e)
+			{
+				LOGGER.log(Level.WARNING, MapDeviceManager.class.getSimpleName() + ": Could not bring " + player.getName() + " back from a map.", e);
+			}
+		}, MapDeviceConfig.DEATH_RETURN_DELAY * 1000L);
+	}
+
+	/**
+	 * Sends a player out of a map: to the hideout it was opened from, or where they entered the hideout from if it is gone.
+	 */
+	private void sendOut(Player player, MapRun run)
+	{
+		final Hideout hideout = run.getHideout();
+		if ((hideout != null) && (InstanceManager.getInstance().getInstance(hideout.getInstanceId()) != null) && HIDEOUTS_BY_INSTANCE.containsKey(hideout.getInstanceId()))
+		{
+			teleportToHideout(player, hideout);
+			return;
+		}
+		final Location loc = getReturnLocation(player);
+		player.teleToLocation(loc.getX(), loc.getY(), loc.getZ(), loc.getHeading(), 0);
+	}
+
+	/**
+	 * @param run a run
+	 * @return the players inside its map, alive or not
+	 */
+	private static List<Player> getPlayersInside(MapRun run)
+	{
+		final List<Player> players = new ArrayList<>();
+		for (int objectId : run.getPlayersInside())
+		{
+			final Player player = World.getInstance().getPlayer(objectId);
+			if ((player != null) && player.isOnline() && (player.getInstanceId() == run.getInstanceId()))
+			{
+				players.add(player);
+			}
+		}
+		return players;
+	}
+
+	private static void sendToMap(MapRun run, String message)
+	{
+		for (Player player : getPlayersInside(run))
+		{
+			player.sendMessage(message);
+		}
+	}
+
+	private static void sendScreenToMap(MapRun run, String message)
+	{
+		final ExShowScreenMessage packet = new ExShowScreenMessage(message, 4000);
+		for (Player player : getPlayersInside(run))
+		{
+			player.sendPacket(packet);
+		}
+	}
+
+	// =========================================================================
+	// Kills and drops
+	// =========================================================================
+
+	/**
+	 * Hook of {@code Attackable.doDie}, for every death: counts the monsters of a map, runs its death modifiers, and rolls a map drop.
+	 * @param victim what died
+	 * @param killer who killed it, may be {@code null}
+	 * @param player the player credited with the kill, {@code null} for none
+	 * @param rewards {@code true} if the kill rewards experience (no drop otherwise)
+	 */
+	public void onAttackableDied(Attackable victim, Creature killer, Player player, boolean rewards)
+	{
+		if (!MapDeviceConfig.ENABLED || (victim == null))
+		{
+			return;
+		}
+
+		final MapRun run = getRun(victim.getInstanceId());
+		if ((run != null) && victim.isMonster())
+		{
+			onMapMonsterDied(run, victim.asMonster(), player);
+		}
+
+		if ((player != null) && rewards)
+		{
+			rollMapDrop(victim, player, run);
+		}
+	}
+
+	private void onMapMonsterDied(MapRun run, Monster victim, Player player)
+	{
+		if (run.isClosed())
+		{
+			return;
+		}
+
+		final boolean counted = run.getMonsters().remove(victim.getObjectId());
+		if (counted)
+		{
+			run.addKill();
+		}
+
+		final Location corpse = new Location(victim.getX(), victim.getY(), victim.getZ(), victim.getHeading());
+
+		if (run.isVolatileDeath())
+		{
+			ThreadPool.schedule(() -> explode(run, victim, corpse), VOLATILE_DELAY);
+		}
+
+		if (run.isSoulEaters())
+		{
+			devourSoul(run, victim);
+		}
+
+		if (victim.getVariables().getBoolean(GUARDIAN_VAR, false) && (player != null))
+		{
+			for (int i = 0; i < MapDeviceConfig.GUARDIAN_EXTRA_MAPS; i++)
+			{
+				dropMap(victim, player, rollInMapTier(run));
+			}
+			sendScreenToMap(run, "The Map Guardian has fallen!");
+		}
+
+		// Undying Legion: a counted monster that never rose before may come back once.
+		if (counted && (run.getRisePct() > 0) && !victim.getVariables().getBoolean(RISEN_VAR, false) && !victim.getVariables().getBoolean(GUARDIAN_VAR, false) && (Rnd.get(100) < run.getRisePct()))
+		{
+			ThreadPool.schedule(() -> riseAgain(run, victim.getTemplate(), corpse), VOLATILE_DELAY);
+			return; // Not cleared yet: it comes back.
+		}
+
+		if (run.isAmbush() && !run.isAmbushed() && (run.getKills() >= Math.max(1, run.getMonsterTotal() / 2)))
+		{
+			run.setAmbushed(true);
+			ThreadPool.schedule(() -> ambush(run), 1000);
+			return;
+		}
+
+		if (counted && run.getMonsters().isEmpty() && (run.getStatus() == Status.OPEN))
+		{
+			completeRun(run, victim, player);
+		}
+		else if (counted && (run.getMonsters().size() == LAST_HUNT_COUNT))
+		{
+			sendScreenToMap(run, "Only " + LAST_HUNT_COUNT + " monsters remain: they are coming for you!");
+		}
+	}
+
+	/**
+	 * Volatile: the corpse bursts, hitting the players nearby.
+	 */
+	private static void explode(MapRun run, Monster victim, Location corpse)
+	{
+		if (run.isClosed())
+		{
+			return;
+		}
+		victim.broadcastPacket(new MagicSkillUse(victim, victim, VOLATILE_SKILL_ID, 1, 0, 0));
+		for (Player player : getPlayersInside(run))
+		{
+			if (!player.isDead() && !player.isInvul() && (player.calculateDistance2D(corpse) <= VOLATILE_RADIUS))
+			{
+				player.reduceCurrentHp(player.getMaxHp() * VOLATILE_DAMAGE, null, false, false, null);
+				player.sendMessage("The " + victim.getName() + " explodes!");
+			}
+		}
+	}
+
+	/**
+	 * Soul Eaters: the monsters near a slain one heal and grow stronger.
+	 */
+	private static void devourSoul(MapRun run, Monster victim)
+	{
+		for (Monster eater : World.getInstance().getVisibleObjectsInRange(victim, Monster.class, SOUL_RANGE))
+		{
+			if (eater.isDead() || (eater.getInstanceId() != run.getInstanceId()) || eater.isPvpFakePlayer())
+			{
+				continue;
+			}
+			final int souls = eater.getVariables().getInt(SOULS_VAR, 0);
+			if (souls < SOUL_MAX)
+			{
+				eater.getVariables().set(SOULS_VAR, souls + 1);
+			}
+			eater.setCurrentHp(Math.min(eater.getMaxHp(), eater.getCurrentHp() + (eater.getMaxHp() * 0.20)));
+			eater.broadcastPacket(new MagicSkillUse(eater, eater, 4529, 1, 0, 0));
+		}
+	}
+
+	/**
+	 * Undying Legion: the slain monster gets up again at half HP. It counts for the map again.
+	 */
+	private void riseAgain(MapRun run, NpcTemplate template, Location corpse)
+	{
+		if (run.isClosed())
+		{
+			return;
+		}
+		final Monster risen = spawnMapMonster(run, template, corpse);
+		if (risen == null)
+		{
+			checkCompleted(run);
+			return;
+		}
+		risen.getVariables().set(RISEN_VAR, true);
+		risen.setEventTitleTag("[Risen]");
+		risen.setCurrentHp(risen.getMaxHp() * 0.5);
+		run.setMonsterTotal(run.getMonsterTotal() + 1);
+		sendToMap(run, "The " + risen.getName() + " rises again!");
+	}
+
+	/**
+	 * Ambush: a pack springs on one of the players inside.
+	 */
+	private void ambush(MapRun run)
+	{
+		if (run.isClosed())
+		{
+			return;
+		}
+		final List<Player> players = getPlayersInside(run);
+		players.removeIf(Player::isDead);
+		final List<NpcTemplate> pool = getMonsterPool(run.getTier());
+		if (players.isEmpty() || pool.isEmpty())
+		{
+			checkCompleted(run);
+			return;
+		}
+
+		final Player target = players.get(Rnd.get(players.size()));
+		final GeoEngine geo = GeoEngine.getInstance();
+		for (int i = 0; i < AMBUSH_SIZE; i++)
+		{
+			final double angle = Rnd.nextDouble() * 2 * Math.PI;
+			final int distance = Rnd.get(350, 650);
+			final int x = target.getX() + (int) (Math.cos(angle) * distance);
+			final int y = target.getY() + (int) (Math.sin(angle) * distance);
+			final Location spot = geo.getValidLocation(target.getX(), target.getY(), target.getZ(), x, y, geo.getHeight(x, y, target.getZ()), run.getInstanceId());
+			final Monster monster = spawnMapMonster(run, pool.get(Rnd.get(pool.size())), spot);
+			if (monster != null)
+			{
+				applyVariants(run, monster, false);
+				monster.setEventTitleTag("[Ambush]");
+				monster.addDamageHate(target, 0, 1000);
+				monster.getAI().setIntention(Intention.ATTACK, target);
+			}
+		}
+		run.setMonsterTotal(run.getMonsterTotal() + AMBUSH_SIZE);
+		sendScreenToMap(run, "Ambush! The monsters close in on " + target.getName() + "!");
+	}
+
+	private void checkCompleted(MapRun run)
+	{
+		if (run.getMonsters().isEmpty() && (run.getStatus() == Status.OPEN))
+		{
+			completeRun(run, null, null);
+		}
+	}
+
+	private void completeRun(MapRun run, Monster lastKill, Player player)
+	{
+		synchronized (run)
+		{
+			if (run.getStatus() != Status.OPEN)
+			{
+				return;
+			}
+			run.setStatus(Status.COMPLETED);
+			run.setCompletedAt(System.currentTimeMillis());
+		}
+
+		sendScreenToMap(run, "Map complete!");
+		sendToMap(run, "Every monster of the map is slain. The map collapses in " + MapDeviceConfig.COMPLETED_CLOSE_DELAY + " seconds.");
+		if (MapDeviceConfig.COMPLETION_REWARD && (lastKill != null) && (player != null))
+		{
+			dropMap(lastKill, player, rollInMapTier(run));
+		}
+
+		final Player owner = World.getInstance().getPlayer(run.getOwnerId());
+		if ((owner != null) && !run.getPlayersInside().contains(owner.getObjectId()))
+		{
+			owner.sendMessage("Your tier " + run.getTier().tier() + " map is complete.");
+		}
+		LOGGER.info(getClass().getSimpleName() + ": " + run.getOwnerName() + "'s tier " + run.getTier().tier() + " map (instance " + run.getInstanceId() + ") is complete.");
+	}
+
+	/**
+	 * Rolls a map drop for a kill: in the open world from monsters of level {@code dropLevel} and up, a tier by their level and difficulty; in a map, its own tier or a little higher.
+	 */
+	private void rollMapDrop(Attackable victim, Player player, MapRun run)
+	{
+		if (victim.isFakePlayer() || victim.isPvpFakePlayer() || (victim instanceof Chest))
+		{
+			return;
+		}
+		if ((MapDeviceConfig.DROP_MAX_LEVEL_DIFFERENCE >= 0) && ((player.getLevel() - victim.getLevel()) > MapDeviceConfig.DROP_MAX_LEVEL_DIFFERENCE))
+		{
+			return;
+		}
+
+		final int baseTier = run != null ? run.getTier().tier() : MapDeviceData.getInstance().getDropTier(victim.getLevel());
+		if (baseTier <= 0)
+		{
+			return; // Below the lowest drop level: the common case, so it is checked first.
+		}
+		
+		final double rateMultiplier = victim.isMonster() ? victim.asMonster().getCustomPassiveDropMultiplier() : 1.0;
+		final int tier;
+		final double chance;
+		if (run != null)
+		{
+			tier = rollInMapTier(run);
+			chance = MapDeviceConfig.DROP_CHANCE_IN_MAP * rateMultiplier;
+		}
+		else
+		{
+
+			int bonus = 0;
+			double baseChance = MapDeviceConfig.DROP_CHANCE;
+			if (victim.isRaid())
+			{
+				bonus += MapDeviceData.getInstance().getRaidDifficulty();
+				baseChance = MapDeviceConfig.DROP_CHANCE_RAID;
+			}
+			else if (victim.isMonster())
+			{
+				final Monster monster = victim.asMonster();
+				final int championTier = monster.getChampionTier();
+				if (championTier > 0)
+				{
+					bonus += MapDeviceData.getInstance().getChampionDifficulty(championTier);
+					baseChance += championTier * MapDeviceConfig.DROP_CHANCE_PER_CHAMPION_TIER;
+				}
+				if (monster.isMageMonster() || monster.isThief() || monster.isInfused() || monster.isResonant() || monster.isWaveChallenge())
+				{
+					bonus += MapDeviceData.getInstance().getSpecialDifficulty();
+				}
+			}
+			tier = Math.min(MapDeviceData.getInstance().getMaxTier(), baseTier + bonus);
+			chance = baseChance * rateMultiplier;
+		}
+
+		if ((Rnd.nextDouble() * 100) < chance)
+		{
+			dropMap(victim, player, tier);
+		}
+	}
+
+	/**
+	 * @param run a run
+	 * @return a tier its monsters drop: its own, sometimes one or two higher
+	 */
+	private static int rollInMapTier(MapRun run)
+	{
+		final int roll = Rnd.get(100);
+		int tier = run.getTier().tier();
+		if (roll < MapDeviceConfig.IN_MAP_TIER_UP_TWO_CHANCE)
+		{
+			tier += 2;
+		}
+		else if (roll < (MapDeviceConfig.IN_MAP_TIER_UP_TWO_CHANCE + MapDeviceConfig.IN_MAP_TIER_UP_CHANCE))
+		{
+			tier += 1;
+		}
+		return Math.min(MapDeviceData.getInstance().getMaxTier(), tier);
+	}
+
+	private static void dropMap(Attackable victim, Player player, int tierId)
+	{
+		final MapTier tier = MapDeviceData.getInstance().getTier(tierId);
+		if ((tier == null) || (ItemData.getInstance().getTemplate(tier.itemId()) == null))
+		{
+			return;
+		}
+		victim.dropOrAutoLoot(player, new ItemHolder(tier.itemId(), 1));
+		player.sendMessage(victim.getName() + " left behind a " + getItemName(tier.itemId()) + "!");
+	}
+
+	// =========================================================================
+	// The run's clock
+	// =========================================================================
+
+	/**
+	 * Once a second: the map's timers (Storm Caller, Burning Ground, the hot zone drain), the hot zone buff, and when the map closes.
+	 */
+	private class RunTick implements Runnable
+	{
+		private final MapRun _run;
+		private int _tick;
+		private long _noPortalsSince;
+		private boolean _warned5;
+		private boolean _warned1;
+
+		RunTick(MapRun run)
+		{
+			_run = run;
+		}
+
+		@Override
+		public void run()
+		{
+			try
+			{
+				tick();
+			}
+			catch (Exception e)
+			{
+				LOGGER.log(Level.WARNING, MapDeviceManager.class.getSimpleName() + ": Map tick failed for instance " + _run.getInstanceId() + ".", e);
+			}
+		}
+
+		private void tick()
+		{
+			if (_run.isClosed())
+			{
+				return;
+			}
+			_tick++;
+			final long now = System.currentTimeMillis();
+
+			// The map collapses: its time is up, or it was completed a while ago.
+			if (now >= _run.getClosesAt())
+			{
+				closeRun(_run, "The map collapses: its time is up.");
+				return;
+			}
+			if ((_run.getStatus() == Status.COMPLETED) && ((now - _run.getCompletedAt()) >= (MapDeviceConfig.COMPLETED_CLOSE_DELAY * 1000L)))
+			{
+				closeRun(_run, "The completed map collapses.");
+				return;
+			}
+			if (InstanceManager.getInstance().getInstance(_run.getInstanceId()) == null)
+			{
+				closeRun(_run, null);
+				return;
+			}
+
+			final List<Player> players = getPlayersInside(_run);
+
+			// Every portal used and nobody left inside: nobody can come back.
+			if (_run.getPortals().isEmpty() && players.isEmpty())
+			{
+				if (_noPortalsSince == 0)
+				{
+					_noPortalsSince = now;
+				}
+				else if ((now - _noPortalsSince) >= (NO_PORTALS_CLOSE_DELAY * 1000L))
+				{
+					closeRun(_run, "Every portal is used and nobody is left inside: the map collapses.");
+					return;
+				}
+			}
+			else
+			{
+				_noPortalsSince = 0;
+			}
+
+			final int remaining = _run.getRemainingSeconds();
+			if (!_warned5 && (remaining <= 300) && (remaining > 60))
+			{
+				_warned5 = true;
+				sendScreenToMap(_run, "The map collapses in 5 minutes.");
+			}
+			if (!_warned1 && (remaining <= 60))
+			{
+				_warned1 = true;
+				sendScreenToMap(_run, "The map collapses in 1 minute!");
+			}
+
+			if (players.isEmpty())
+			{
+				return;
+			}
+
+			final HotzoneModifier hotzone = _run.getHotzoneEffect();
+			if ((hotzone != null) && ((_tick % 10) == 0))
+			{
+				for (Player player : players)
+				{
+					applyHotzoneBuff(player, hotzone); // Back on if a death or a cleanse took it.
+				}
+			}
+			if ((hotzone != null) && (hotzone.getPlayerHpDrainPctPerTick() > 0) && ((_tick % (HotzoneModifierManager.PLAYER_DRAIN_INTERVAL_MS / 1000)) == 0))
+			{
+				hurt(players, hotzone.getPlayerHpDrainPctPerTick() / 100.0, null);
+			}
+			if (_run.isBurningGround() && ((_tick % BURNING_INTERVAL) == 0))
+			{
+				hurt(players, BURNING_DAMAGE, null);
+			}
+			if (_run.isStorm() && ((_tick % STORM_INTERVAL) == 0))
+			{
+				final List<Player> alive = new ArrayList<>(players);
+				alive.removeIf(Player::isDead);
+				if (!alive.isEmpty())
+				{
+					final Player struck = alive.get(Rnd.get(alive.size()));
+					struck.broadcastPacket(new MagicSkillUse(struck, struck, STORM_SKILL_ID, 1, 0, 0));
+					hurt(List.of(struck), STORM_DAMAGE, "Lightning strikes you!");
+				}
+			}
+		}
+	}
+
+	private static void hurt(Collection<Player> players, double share, String message)
+	{
+		for (Player player : players)
+		{
+			if (player.isDead() || player.isInvul())
+			{
+				continue;
+			}
+			player.reduceCurrentHp(player.getMaxHp() * share, null, false, false, null);
+			if (message != null)
+			{
+				player.sendMessage(message);
+			}
+		}
+	}
+
+	/**
+	 * Tears a run down: everyone inside goes back to the hideout, the portals vanish, the fence and the instance go away.
+	 * @param run the run
+	 * @param message what the players inside and the owner are told, {@code null} for nothing
+	 */
+	public void closeRun(MapRun run, String message)
+	{
+		synchronized (run)
+		{
+			if (run.isClosed())
+			{
+				return;
+			}
+			run.setStatus(Status.CLOSED);
+		}
+
+		try
+		{
+			if (run.getTickTask() != null)
+			{
+				run.getTickTask().cancel(false);
+			}
+
+			for (Player player : getPlayersInside(run))
+			{
+				if (message != null)
+				{
+					player.sendMessage(message);
+				}
+				if (player.isDead())
+				{
+					player.doRevive();
+				}
+				sendOut(player, run);
+			}
+
+			for (Npc portal : run.getPortals())
+			{
+				portal.deleteMe();
+			}
+			run.getPortals().clear();
+			if (run.getReturnPortal() != null)
+			{
+				run.getReturnPortal().deleteMe();
+			}
+			TeamVsTeamBarrier.remove(run.getFences());
+		}
+		finally
+		{
+			RUNS_BY_INSTANCE.remove(run.getInstanceId());
+			HotzoneModifierManager.getInstance().clearInstanceModifier(run.getInstanceId());
+			InstanceManager.getInstance().destroyInstance(run.getInstanceId());
+			final Hideout hideout = run.getHideout();
+			if ((hideout != null) && (hideout.getRun() == run))
+			{
+				hideout.setRun(null);
+			}
+		}
+
+		final Player owner = World.getInstance().getPlayer(run.getOwnerId());
+		if ((owner != null) && (message != null) && !run.getPlayersInside().contains(owner.getObjectId()))
+		{
+			owner.sendMessage("Your map: " + message);
+		}
+	}
+
+	// =========================================================================
+	// Logging in and out
+	// =========================================================================
+
+	private static void saveReturnLocation(Player player)
+	{
+		final PlayerVariables vars = player.getVariables();
+		vars.set(RETURN_LOC_VAR, player.getX() + ";" + player.getY() + ";" + player.getZ() + ";" + player.getHeading());
+		vars.saveNow();
+	}
+
+	/**
+	 * @param player a player
+	 * @return where they entered their hideout from, or the nearest town if that is lost
+	 */
+	public static Location getReturnLocation(Player player)
+	{
+		final String saved = player.getVariables().getString(RETURN_LOC_VAR, "");
+		if (!saved.isEmpty())
+		{
+			try
+			{
+				final String[] parts = saved.split(";");
+				return new Location(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]), parts.length > 3 ? Integer.parseInt(parts[3]) : 0);
+			}
+			catch (Exception e)
+			{
+				// Fall through to town.
+			}
+		}
+		return MapRegionData.getInstance().getTeleToLocation(player, TeleportWhereType.TOWN);
+	}
+
+	/**
+	 * Character selection, before the player enters the world: one whose hideout or map is gone (or who won't be put back in it) is moved to where they entered from, instead of standing at the hideout's or the map's coordinates in the open world.
+	 */
+	private void onPlayerSelect(Player player)
+	{
+		if (!player.getVariables().hasVariable(RETURN_LOC_VAR))
+		{
+			return;
+		}
+
+		final int instanceId = InstanceManager.getInstance().getPlayer(player.getObjectId());
+		final boolean restored = org.l2jmobius.gameserver.config.GeneralConfig.RESTORE_PLAYER_INSTANCE && (instanceId > 0) && (isHideoutInstance(instanceId) || isMapInstance(instanceId));
+		if (restored)
+		{
+			return;
+		}
+
+		final Location loc = getReturnLocation(player);
+		player.setXYZ(loc.getX(), loc.getY(), loc.getZ());
+		player.getVariables().remove(RETURN_LOC_VAR);
+		player.getVariables().saveNow();
+	}
+
+	/**
+	 * Safety net if selection could not move the player.
+	 */
+	private void onPlayerLogin(Player player)
+	{
+		if (!player.getVariables().hasVariable(RETURN_LOC_VAR))
+		{
+			return;
+		}
+		final int instanceId = player.getInstanceId();
+		if (isHideoutInstance(instanceId) || isMapInstance(instanceId))
+		{
+			return;
+		}
+		final Location loc = getReturnLocation(player);
+		player.getVariables().remove(RETURN_LOC_VAR);
+		player.teleToLocation(loc.getX(), loc.getY(), loc.getZ(), loc.getHeading(), 0);
+	}
+
+	// =========================================================================
+	// Helpers
+	// =========================================================================
+
+	/**
+	 * @param location a spot
+	 * @return the same spot on the ground
+	 */
+	private static Location getGroundLocation(Location location)
+	{
+		return new Location(location.getX(), location.getY(), GeoEngine.getInstance().getHeight(location.getX(), location.getY(), location.getZ()), location.getHeading());
+	}
+
+	/**
+	 * @param itemId an item
+	 * @return its name
+	 */
+	public static String getItemName(int itemId)
+	{
+		final org.l2jmobius.gameserver.model.item.ItemTemplate item = ItemData.getInstance().getTemplate(itemId);
+		return item != null ? item.getName() : "Item " + itemId;
+	}
+
+	/**
+	 * @param run a run
+	 * @return the name of its hot zone effect, "None" for none
+	 */
+	public static String getHotzoneEffectName(MapRun run)
+	{
+		return run.getHotzoneEffect() != null ? ClassTransferChallengeManager.formatOmen(run.getHotzoneEffect()) : "None";
+	}
+
+	public static MapDeviceManager getInstance()
+	{
+		return SingletonHolder.INSTANCE;
+	}
+
+	private static class SingletonHolder
+	{
+		protected static final MapDeviceManager INSTANCE = new MapDeviceManager();
+	}
+}

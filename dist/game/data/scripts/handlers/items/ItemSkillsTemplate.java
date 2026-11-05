@@ -47,6 +47,13 @@ public class ItemSkillsTemplate implements IItemHandler
 			return false;
 		}
 		
+		// A Flaskless map: no potion or elixir works inside (by hand, auto potions or auto use).
+		if (org.l2jmobius.gameserver.managers.MapDeviceManager.isItemSealed(playable, item))
+		{
+			playable.sendPacket(ActionFailed.STATIC_PACKET);
+			return false;
+		}
+		
 		// Pets can use items only when they are tradable.
 		if (playable.isPet() && !item.isTradeable())
 		{

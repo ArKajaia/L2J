@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Maps and the Map Device (MapDeviceData, MapDeviceManager; settings in config/Custom/MapDevice.ini).
+
+	hideout     where a player arrives in their hideout (.hideout): x, y, z, heading. It is a private copy (instance) of the place.
+	            Default: the cabin of the Jinia Guild Hideout, an instance-only room (about 560 x 800).
+	  device    where the Map Device stands; its portals open in a ring round it (PortalRadius in the ini).
+
+	difficulty  how many tiers higher a map stronger monsters drop, on top of the tier of their level:
+	            champion1/2/3 a Champion of that tier, special a Mage, Thief, Infused, Resonant or wave challenge monster, raid a raid boss.
+
+	tier        a map tier: tier (1 = lowest), itemId (its "Map (Tier N)" item),
+	            minLevel/maxLevel the levels of the monsters of its map (plain open world monsters of those levels that respawn: no quest, event or raid monster),
+	            dropLevel the lowest monster level that drops this tier (a monster drops the highest tier its level reaches, plus its difficulty),
+	            hp/attack/defence how much stronger the monsters of its map are, reward the experience, SP and drop chance multiplier of its map.
+
+	arena       a field a map can open in, picked at random: name, the middle x, y and the ground z, the fence's radiusX/radiusY (an ellipse,
+	            at least 500), entryAngle where the players come in (degrees round the middle, 0 = east, 90 = south; the entry is at 80% of the radius).
+	            The defaults were checked against the geodata: open, mostly flat ground. A map is its own copy of the place, without its world monsters.
+
+	excludedNpcs monster ids that never fill a map, comma separated.
+-->
+<list>
+	<hideout x="-23560" y="-8963" z="-5384" heading="32768">
+		<device x="-23770" y="-8975" z="-5384" heading="0" />
+	</hideout>
+
+	<difficulty champion1="0" champion2="1" champion3="2" special="1" raid="2" />
+
+	<tier tier="1" itemId="50101" minLevel="78" maxLevel="79" dropLevel="78" hp="1.00" attack="1.00" defence="1.00" reward="1.00" />
+	<tier tier="2" itemId="50102" minLevel="78" maxLevel="80" dropLevel="79" hp="1.10" attack="1.05" defence="1.03" reward="1.10" />
+	<tier tier="3" itemId="50103" minLevel="80" maxLevel="81" dropLevel="80" hp="1.15" attack="1.08" defence="1.05" reward="1.20" />
+	<tier tier="4" itemId="50104" minLevel="81" maxLevel="82" dropLevel="81" hp="1.25" attack="1.12" defence="1.08" reward="1.30" />
+	<tier tier="5" itemId="50105" minLevel="82" maxLevel="83" dropLevel="82" hp="1.35" attack="1.16" defence="1.10" reward="1.45" />
+	<tier tier="6" itemId="50106" minLevel="83" maxLevel="84" dropLevel="83" hp="1.50" attack="1.20" defence="1.12" reward="1.60" />
+	<tier tier="7" itemId="50107" minLevel="84" maxLevel="85" dropLevel="84" hp="1.70" attack="1.25" defence="1.15" reward="1.80" />
+	<tier tier="8" itemId="50108" minLevel="84" maxLevel="86" dropLevel="85" hp="2.00" attack="1.32" defence="1.20" reward="2.00" />
+	<tier tier="9" itemId="50109" minLevel="85" maxLevel="87" dropLevel="86" hp="2.40" attack="1.40" defence="1.25" reward="2.30" />
+	<tier tier="10" itemId="50110" minLevel="85" maxLevel="87" dropLevel="87" hp="3.00" attack="1.50" defence="1.30" reward="2.70" />
+
+	<!-- The Team vs Team ring of the Ruins of Despair, drawn a little inside its ring wall. -->
+	<arena name="Ruins of Despair" x="-17800" y="142600" z="-3900" radiusX="4800" radiusY="4400" entryAngle="0" />
+	<!-- Innadril: the wide bowl of the Field of Whispers. -->
+	<arena name="Field of Whispers" x="84000" y="214000" z="-3620" radiusX="4000" radiusY="3500" entryAngle="180" />
+	<!-- Aden: the floor of the Silent Valley. -->
+	<arena name="Silent Valley" x="172136" y="20325" z="-3328" radiusX="4000" radiusY="4000" entryAngle="90" />
+	<!-- Aden: the plain of the Fields of Massacre. -->
+	<arena name="Fields of Massacre" x="181000" y="8000" z="-2728" radiusX="3000" radiusY="3000" entryAngle="270" />
+
+	<excludedNpcs></excludedNpcs>
+</list>
