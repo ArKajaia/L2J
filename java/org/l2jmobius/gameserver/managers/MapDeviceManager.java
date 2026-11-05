@@ -46,6 +46,7 @@ import org.l2jmobius.gameserver.config.custom.ResonantMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.ThiefMonsterConfig;
 import org.l2jmobius.gameserver.config.custom.WaveChallengeConfig;
 import org.l2jmobius.gameserver.data.SpawnTable;
+import org.l2jmobius.gameserver.data.xml.ExperienceData;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.MapDeviceData;
 import org.l2jmobius.gameserver.data.xml.MapRegionData;
@@ -138,6 +139,8 @@ public class MapDeviceManager
 	private static final String BOUNTY_TAG_VAR = "MAP_BOUNTY_TAG";
 	/** Where {@code Monster.setEventTitleTag} keeps the tag. */
 	private static final String EVENT_TITLE_TAG_VAR = "EVENT_TITLE_TAG";
+	/** Set on a character once it got its guaranteed first map ({@link MapDeviceConfig#FIRST_MAP_LEVEL}). */
+	public static final String FIRST_MAP_VAR = "MAP_FIRST_GIVEN";
 	/** Soul Eaters: how many souls a monster has devoured. */
 	private static final String SOULS_VAR = "MAP_SOULS";
 
@@ -2409,8 +2412,58 @@ public class MapDeviceManager
 
 		if ((player != null) && rewards)
 		{
+			if ((run == null) && giveFirstMap(victim, player))
+			{
+				return;
+			}
 			rollMapDrop(victim, player, run);
 		}
+	}
+
+	/**
+	 * The guaranteed first map: the first monster a character kills once it is at least {@link MapDeviceConfig#FIRST_MAP_LEVEL_PERCENT}% into level {@link MapDeviceConfig#FIRST_MAP_LEVEL} (or above) drops a tier 1 map, once per character.
+	 * @param victim the monster slain
+	 * @param player the player credited
+	 * @return {@code true} if it dropped the first map
+	 */
+	private static boolean giveFirstMap(Attackable victim, Player player)
+	{
+		if (!MapDeviceConfig.FIRST_MAP_ENABLED || !victim.isMonster() || victim.isFakePlayer() || victim.isPvpFakePlayer() || (victim instanceof Chest) || (player.getLevel() < MapDeviceConfig.FIRST_MAP_LEVEL) || player.getVariables().getBoolean(FIRST_MAP_VAR, false))
+		{
+			return false;
+		}
+		if (player.getLevel() == MapDeviceConfig.FIRST_MAP_LEVEL)
+		{
+			final long start = ExperienceData.getInstance().getExpForLevel(MapDeviceConfig.FIRST_MAP_LEVEL);
+			final long next = ExperienceData.getInstance().getExpForLevel(MapDeviceConfig.FIRST_MAP_LEVEL + 1);
+			if ((next > start) && (((player.getExp() - start) * 100) < ((next - start) * MapDeviceConfig.FIRST_MAP_LEVEL_PERCENT)))
+			{
+				return false;
+			}
+		}
+		final MapTier first = MapDeviceData.getInstance().getTier(1);
+		if ((first == null) || (ItemData.getInstance().getTemplate(first.itemId()) == null))
+		{
+			return false;
+		}
+		player.getVariables().set(FIRST_MAP_VAR, true);
+		dropMap(victim, player, first.tier());
+		player.sendPacket(new ExShowScreenMessage("Your first map! Open it at the Map Device: type .hideout in a town.", 6000));
+		return true;
+	}
+
+	/**
+	 * Drops a map of a run, if its map budget ({@link MapDeviceConfig#MAX_MAPS_PER_RUN}) allows.
+	 * @return {@code true} if it dropped
+	 */
+	static boolean dropRunMap(MapRun run, Attackable victim, Player player, int tierId)
+	{
+		if (!run.claimMapDrop())
+		{
+			return false;
+		}
+		dropMap(victim, player, tierId);
+		return true;
 	}
 
 	private void onMapMonsterDied(MapRun run, Monster victim, Player player)
@@ -2464,7 +2517,7 @@ public class MapDeviceManager
 		{
 			for (int i = 0; i < MapDeviceConfig.GUARDIAN_EXTRA_MAPS; i++)
 			{
-				dropMap(victim, player, rollInMapTier(run));
+				dropRunMap(run, victim, player, rollInMapTier(run));
 			}
 			sendScreenToMap(run, "The Map Guardian has fallen!");
 		}
@@ -2829,22 +2882,14 @@ public class MapDeviceManager
 		sendToMap(run, "Every monster of the map is slain. The map collapses in " + MapDeviceConfig.COMPLETED_CLOSE_DELAY + " seconds.");
 		if (MapDeviceConfig.COMPLETION_REWARD && (lastKill != null) && (player != null))
 		{
-			dropMap(lastKill, player, rollInMapTier(run));
+			dropRunMap(run, lastKill, player, rollInMapTier(run));
 		}
 		UniqueMapManager.getInstance().onRunCompleted(run, lastKill, player);
 
-		// Speedrun: cleared in time, everyone inside gets a map.
-		if (run.isSpeedrunMade())
+		// Speedrun: cleared in time, a bonus map (within the map budget).
+		if (run.isSpeedrunMade() && (lastKill != null) && (player != null))
 		{
-			for (Player inside : getPlayersInside(run))
-			{
-				final MapTier bonus = MapDeviceData.getInstance().getTier(rollInMapTier(run));
-				if ((bonus != null) && (ItemData.getInstance().getTemplate(bonus.itemId()) != null))
-				{
-					inside.addItem(ItemProcessType.REWARD, bonus.itemId(), 1, inside, true);
-				}
-			}
-			sendScreenToMap(run, "Speedrun! Cleared in time: everyone gets a bonus map.");
+			sendScreenToMap(run, dropRunMap(run, lastKill, player, rollInMapTier(run)) ? "Speedrun! Cleared in time: a bonus map." : "Speedrun! Cleared in time, but the map has given all its maps.");
 		}
 
 		for (int objectId : run.getPlayersInside())
@@ -2878,27 +2923,23 @@ public class MapDeviceManager
 			return;
 		}
 
-		if ((run == null) && victim.isRaid() && !victim.isMinion())
-		{
-			UniqueMapManager.getInstance().rollRaidDrop(victim, player);
-		}
-
 		final int baseTier = run != null ? run.getTier().tier() : getOpenWorldDropTier(victim);
 		if (baseTier <= 0)
 		{
 			return; // Below the lowest drop level: the common case, so it is checked first.
 		}
 		
-		final double rateMultiplier = victim.isMonster() ? victim.asMonster().getCustomPassiveDropMultiplier() : 1.0;
 		final int tier;
 		final double chance;
 		if (run != null)
 		{
+			// A map's monsters drop MapDropsInMapAverage maps over a full clear, whatever the medals and drop bonuses: with the completion map, about 1.5, never more than MapDropsPerMapMax.
 			tier = rollInMapTier(run);
-			chance = MapDeviceConfig.DROP_CHANCE_IN_MAP * rateMultiplier;
+			chance = (MapDeviceConfig.IN_MAP_EXPECTED_DROPS * 100.0) / Math.max(1, run.getMonsterTotal());
 		}
 		else
 		{
+			final double rateMultiplier = victim.isMonster() ? victim.asMonster().getCustomPassiveDropMultiplier() : 1.0;
 
 			int bonus = 0;
 			double baseChance = MapDeviceConfig.DROP_CHANCE;
@@ -2927,7 +2968,14 @@ public class MapDeviceManager
 
 		if ((Rnd.nextDouble() * 100) < chance)
 		{
-			dropMap(victim, player, tier);
+			if (run != null)
+			{
+				dropRunMap(run, victim, player, tier);
+			}
+			else
+			{
+				dropMap(victim, player, tier);
+			}
 		}
 	}
 

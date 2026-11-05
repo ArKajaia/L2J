@@ -73,7 +73,13 @@ public class MapDeviceConfig
 	public static double DROP_CHANCE;
 	public static double DROP_CHANCE_PER_CHAMPION_TIER;
 	public static double DROP_CHANCE_RAID;
-	public static double DROP_CHANCE_IN_MAP;
+	/** How many maps a run's monsters drop on average over a full clear (before the completion map). */
+	public static double IN_MAP_EXPECTED_DROPS;
+	/** The most maps one run drops in all. */
+	public static int MAX_MAPS_PER_RUN;
+	public static boolean FIRST_MAP_ENABLED;
+	public static int FIRST_MAP_LEVEL;
+	public static int FIRST_MAP_LEVEL_PERCENT;
 	public static int DROP_MAX_LEVEL_DIFFERENCE;
 	public static int IN_MAP_TIER_UP_CHANCE;
 	public static int IN_MAP_TIER_UP_TWO_CHANCE;
@@ -83,8 +89,6 @@ public class MapDeviceConfig
 	public static int UNIQUE_MAP_MIN_TIER;
 	public static double UNIQUE_MAP_COMPLETION_CHANCE;
 	public static double UNIQUE_MAP_CHANCE_PER_MEDAL;
-	public static double UNIQUE_MAP_RAID_CHANCE;
-	public static int UNIQUE_MAP_RAID_LEVEL;
 	public static double UNIQUE_MAP_BOSS_CHANCE;
 
 	// The quest.
@@ -138,21 +142,23 @@ public class MapDeviceConfig
 		DEATH_REVIVE_FULL = config.getBoolean("DeathReviveFull", true);
 		DEATH_EXP_LOSS = config.getBoolean("DeathExpLoss", false);
 
-		DROP_CHANCE = Math.max(0, config.getDouble("MapDropChance", 1.0));
-		DROP_CHANCE_PER_CHAMPION_TIER = Math.max(0, config.getDouble("MapDropChancePerChampionTier", 3.0));
-		DROP_CHANCE_RAID = Math.max(0, config.getDouble("MapDropChanceRaid", 50.0));
-		DROP_CHANCE_IN_MAP = Math.max(0, config.getDouble("MapDropChanceInMap", 2.5));
+		DROP_CHANCE = Math.max(0, config.getDouble("MapDropChance", 0.3));
+		DROP_CHANCE_PER_CHAMPION_TIER = Math.max(0, config.getDouble("MapDropChancePerChampionTier", 1.0));
+		DROP_CHANCE_RAID = Math.max(0, config.getDouble("MapDropChanceRaid", 20.0));
+		IN_MAP_EXPECTED_DROPS = Math.max(0, config.getDouble("MapDropsInMapAverage", 0.5));
+		MAX_MAPS_PER_RUN = Math.max(0, config.getInt("MapDropsPerMapMax", 3));
+		FIRST_MAP_ENABLED = config.getBoolean("FirstMapEnabled", true);
+		FIRST_MAP_LEVEL = config.getInt("FirstMapLevel", 75);
+		FIRST_MAP_LEVEL_PERCENT = Math.max(0, Math.min(99, config.getInt("FirstMapLevelPercent", 50)));
 		DROP_MAX_LEVEL_DIFFERENCE = config.getInt("MapDropMaxLevelDifference", 9);
 		IN_MAP_TIER_UP_CHANCE = Math.max(0, Math.min(100, config.getInt("InMapTierUpChance", 25)));
 		IN_MAP_TIER_UP_TWO_CHANCE = Math.max(0, Math.min(100, config.getInt("InMapTierUpTwoChance", 5)));
 		COMPLETION_REWARD = config.getBoolean("CompletionMapReward", true);
-		GUARDIAN_EXTRA_MAPS = Math.max(0, config.getInt("GuardianExtraMaps", 2));
+		GUARDIAN_EXTRA_MAPS = Math.max(0, config.getInt("GuardianExtraMaps", 1));
 		UNIQUE_MAPS_ENABLED = config.getBoolean("UniqueMapsEnabled", true);
 		UNIQUE_MAP_MIN_TIER = config.getInt("UniqueMapMinTier", 5);
 		UNIQUE_MAP_COMPLETION_CHANCE = Math.max(0, config.getDouble("UniqueMapCompletionChance", 2.0));
 		UNIQUE_MAP_CHANCE_PER_MEDAL = Math.max(0, config.getDouble("UniqueMapChancePerMedal", 0.5));
-		UNIQUE_MAP_RAID_CHANCE = Math.max(0, config.getDouble("UniqueMapRaidChance", 1.0));
-		UNIQUE_MAP_RAID_LEVEL = config.getInt("UniqueMapRaidLevel", 80);
 		UNIQUE_MAP_BOSS_CHANCE = Math.max(0, config.getDouble("UniqueMapBossChance", 10.0));
 
 		QUEST_ENABLED = config.getBoolean("MapQuestEnabled", true);

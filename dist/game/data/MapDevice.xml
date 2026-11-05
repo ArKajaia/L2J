@@ -35,8 +35,8 @@
 
 	uniqueMap   a unique map (UniqueMapManager): an item that always opens the same map, with the modifiers it names instead of random ones, no medal
 	            and no hot zone effect, a twist of its own while it is cleared and a final encounter once it is (both worked by type, see
-	            docs/map-device.md). Unique maps drop on completing a map of tier UniqueMapMinTier and up, from raid bosses, and from the unique
-	            bosses themselves (config/Custom/MapDevice.ini).
+	            docs/map-device.md). Unique maps only drop inside maps: on completing a map of tier UniqueMapMinTier and up, and from the
+	            unique bosses themselves (config/Custom/MapDevice.ini).
 	  type      COLISEUM, VAULT or OSSUARY: which twist and final encounter it has.
 	  itemId    the item that opens it (data/stats/items/custom/map_device_items.xml).
 	  tier      the tier whose monsters fill it (their levels and strength) and whose multipliers they get.

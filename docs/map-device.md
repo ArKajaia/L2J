@@ -6,7 +6,7 @@ Code: `MapDeviceManager` (core logic), `UniqueMapManager` (the unique maps), `Ma
 
 ## How it plays
 
-1. **Maps drop.** Monsters of level 78 and up may drop a **Map (Tier 1-10)** (items 50101-50110). The tier follows the monster's level and strength (`dropLevel` and `minScore` in the XML: solo monsters drop tiers 1-5, party monsters 6-10), and stronger monsters drop higher tiers: Champion tier 2 +1, tier 3 +2, Mage/Thief/Infused/Resonant/wave challenge +1, raid boss +2 (`<difficulty>`). Base chance 1%, +3% per champion tier, 50% for raids, all raised by the monster's own drop rate bonuses (random passives, hot zones). No drop from monsters more than 9 levels below the player.
+1. **Maps drop.** Monsters of level 78 and up may drop a **Map (Tier 1-10)** (items 50101-50110). The tier follows the monster's level and strength (`dropLevel` and `minScore` in the XML: solo monsters drop tiers 1-5, party monsters 6-10), and stronger monsters drop higher tiers: Champion tier 2 +1, tier 3 +2, Mage/Thief/Infused/Resonant/wave challenge +1, raid boss +2 (`<difficulty>`). Base chance 0.3%, +1% per champion tier, 20% for raids, all raised by the monster's own drop rate bonuses (random passives, hot zones). No drop from monsters more than 9 levels below the player.
 2. **`.hideout`** in a town (any peace zone) takes the player to their own hideout: a private copy of the Jinia Guild Hideout cabin with the **Map Device** in it.
 3. **Insert a map.** Double-click a map in the hideout, or talk to the device and press *Insert*. The device asks how many **Champion Medals** (the Survival Arena medal) to feed it: 0 to 8.
 4. **Each medal** rolls one **modifier** out of 67 (never twice the same) and adds **+20% experience and +20% drop rate**. The map also rolls one random **hot zone effect** (the server's `HotzoneModifier`s) for its whole field.
@@ -19,7 +19,9 @@ Code: `MapDeviceManager` (core logic), `UniqueMapManager` (the unique maps), `Ma
 
 The first map a character gets starts the quest **A Map of Your Own** (see below).
 
-Monsters inside a map drop maps at 2.5% (times the map's drop multiplier), of the map's tier, 25% of the time one higher and 5% two higher, so good runs sustain themselves.
+**The first map is guaranteed**: the first monster a character kills once it is 50% into level 75 (or higher) drops a Map (Tier 1), once per character (`FirstMapLevel`, `FirstMapLevelPercent`; player variable `MAP_FIRST_GIVEN`).
+
+**Maps from maps**: a map's monsters drop 0.5 maps on average over a full clear (`MapDropsInMapAverage`: each monster has a 0.5 in *monsters in the map* chance), and the last kill drops one more, so a cleared map gives **about 1.5 maps**. Medals and drop bonuses don't change this. A map drops **at most 3 maps in all** (`MapDropsPerMapMax`), counting its monsters' drops, the completion map, the Map Guardian's, Speedrun's and unique maps. Their tier is the map's own, 25% of the time one higher and 5% two higher.
 
 ## Tiers
 
@@ -117,13 +119,13 @@ The first 33 change numbers; the other 34 change how the map plays.
 | 58 | War Priests | Gameplay | 30% of the monsters are supporters that heal and empower their allies. |
 | 59 | Ambush | Gameplay | Once half the map is cleared, 20 monsters ambush one of you. |
 | 60 | Bounty Mark | Gameplay | One monster at a time is marked: kill it within 2 minutes for triple drops. |
-| 61 | Map Guardian | Gameplay | A Guardian holds the middle of the map: a tier 3 Champion that rises twice. It drops two more maps. |
+| 61 | Map Guardian | Gameplay | A Guardian holds the middle of the map: a tier 3 Champion that rises twice. It drops a bonus map. |
 | 62 | Storm Caller | Gameplay | Every 20 seconds lightning strikes one of you for 12% of max HP. |
 | 63 | Burning Ground | Gameplay | The ground burns: players lose 1.5% of max HP every 3 seconds. |
 | 64 | Flaskless | Gameplay | Potions and elixirs can't be used. |
 | 65 | Fragile Portals | Gameplay | The Map Device opens only 4 portals. |
 | 66 | Hourglass | Gameplay | The map collapses after 15 minutes. |
-| 67 | Speedrun | Gameplay | Clear the map within 10 minutes and everyone inside gets a bonus map. |
+| 67 | Speedrun | Gameplay | Clear the map within 10 minutes for a bonus map. |
 
 Modifiers that draw a kind of monster the server has switched off (Mage, Thief, Infused, wave challenge, Champion) are never rolled.
 
@@ -148,7 +150,7 @@ Modifiers that draw a kind of monster the server has switched off (Mage, Thief, 
 
 Three map items that always open the same map: its modifiers are chosen for it (no medal, no hot zone effect), it has a twist of its own while the field is cleared, a **final encounter** once it is, and drops of its own for every monster of the map and for its boss. Defined in `data/MapDevice.xml` (`<uniqueMap>`: tier, monster count, arena, modifiers, boss npc and multipliers, drops); the twists and encounters are worked by `UniqueMapManager`.
 
-**Getting one**: completing a map of tier `UniqueMapMinTier` (5) or higher drops one at random `UniqueMapCompletionChance` (2%) + `UniqueMapChancePerMedal` (0.5%) per medal; open world raid bosses of level 80+ drop one at 1%; each unique boss drops another at 10% (all in `MapDevice.ini`). Double-click it in the hideout (or *Insert* under **Unique Maps** at the device) to see what it holds and open it.
+**Getting one**: completing a map of tier `UniqueMapMinTier` (5) or higher drops one at random `UniqueMapCompletionChance` (2%) + `UniqueMapChancePerMedal` (0.5%) per medal; each unique boss drops another at 10% (all in `MapDevice.ini`). Unique maps **only drop inside maps**, and count toward the map's limit of 3. Double-click it in the hideout (or *Insert* under **Unique Maps** at the device) to see what it holds and open it.
 
 | | The Crimson Coliseum (50111) | The Gilded Vault (50112) | The Ossuary of Echoes (50113) |
 |---|---|---|---|

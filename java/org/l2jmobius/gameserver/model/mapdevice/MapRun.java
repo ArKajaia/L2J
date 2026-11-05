@@ -95,6 +95,8 @@ public class MapRun
 	private final Set<Integer> _monsters = ConcurrentHashMap.newKeySet();
 	private volatile int _monsterTotal;
 	private final AtomicInteger _kills = new AtomicInteger();
+	/** Maps (plain and unique) this run has dropped so far, at most {@link MapDeviceConfig#MAX_MAPS_PER_RUN}. */
+	private final AtomicInteger _mapsDropped = new AtomicInteger();
 	private volatile boolean _ambushed;
 	/** Object ids of the players inside right now. */
 	private final Set<Integer> _playersInside = ConcurrentHashMap.newKeySet();
@@ -1040,6 +1042,28 @@ public class MapRun
 	public void setSpeedrunOver(boolean over)
 	{
 		_speedrunOver = over;
+	}
+
+	/**
+	 * Takes one map from the run's map budget: a run drops at most {@link MapDeviceConfig#MAX_MAPS_PER_RUN} maps in all (its monsters' drops, the completion map, the Guardian's, Speedrun's, unique maps).
+	 * @return {@code true} if the run may drop one more map (it is counted), {@code false} if its budget is spent
+	 */
+	public boolean claimMapDrop()
+	{
+		if (_mapsDropped.incrementAndGet() <= MapDeviceConfig.MAX_MAPS_PER_RUN)
+		{
+			return true;
+		}
+		_mapsDropped.decrementAndGet();
+		return false;
+	}
+
+	/**
+	 * @return how many maps the run has dropped so far
+	 */
+	public int getMapsDropped()
+	{
+		return _mapsDropped.get();
 	}
 
 	/**

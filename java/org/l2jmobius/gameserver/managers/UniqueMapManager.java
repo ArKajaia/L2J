@@ -62,6 +62,7 @@ import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
 /**
  * The unique maps of the Map Device (data/MapDevice.xml {@code <uniqueMap>}, {@link UniqueMap}): their twists while the field is cleared, their final encounters once it is, and their drops. {@link MapDeviceManager} opens them like any map and calls in here at its hooks
  * (spawning, damage, deaths, the field cleared, the run's clock, players coming and going, the run closing).
+ * Unique maps only drop inside maps: on completing a plain map of tier {@link MapDeviceConfig#UNIQUE_MAP_MIN_TIER} and up, and from the unique bosses.
  * <ul>
  * <li><b>The Crimson Coliseum</b> ({@link UniqueMap.Type#COLISEUM}): Deathmatch: Mayhem against monsters. Every kill (or assist) offers the killer a strong passive, stacked on its own tree until the map closes ({@link PassiveDeathmatchManager#joinMap}). Its 30 monsters come in
  * waves of {@link #COLISEUM_WAVES}; then the Crimson Champion, who roars at 75/50/25% of its HP (+10% attack each time) and calls 3 Challengers.</li>
@@ -805,7 +806,7 @@ public class UniqueMapManager
 					drop(victim, player, unique.bossDrops(), greed);
 					if ((Rnd.nextDouble() * 100) < MapDeviceConfig.UNIQUE_MAP_BOSS_CHANCE)
 					{
-						dropUniqueMap(victim, player);
+						dropUniqueMap(run, victim, player);
 					}
 				}
 				default ->
@@ -1146,28 +1147,22 @@ public class UniqueMapManager
 		final double chance = MapDeviceConfig.UNIQUE_MAP_COMPLETION_CHANCE + (run.getMedals() * MapDeviceConfig.UNIQUE_MAP_CHANCE_PER_MEDAL);
 		if ((Rnd.nextDouble() * 100) < chance)
 		{
-			dropUniqueMap(lastKill, player);
+			dropUniqueMap(run, lastKill, player);
 		}
 	}
 
 	/**
-	 * An open world raid boss died: it may drop a unique map.
-	 * @param victim the raid boss
-	 * @param player who is credited
+	 * Drops a unique map at random. Unique maps only drop inside maps, and count toward the run's map budget ({@link MapDeviceConfig#MAX_MAPS_PER_RUN}).
 	 */
-	public void rollRaidDrop(Attackable victim, Player player)
-	{
-		if (MapDeviceConfig.UNIQUE_MAPS_ENABLED && (victim.getLevel() >= MapDeviceConfig.UNIQUE_MAP_RAID_LEVEL) && ((Rnd.nextDouble() * 100) < MapDeviceConfig.UNIQUE_MAP_RAID_CHANCE))
-		{
-			dropUniqueMap(victim, player);
-		}
-	}
-
-	private static void dropUniqueMap(Attackable victim, Player player)
+	private static void dropUniqueMap(MapRun run, Attackable victim, Player player)
 	{
 		final List<UniqueMap> uniques = new ArrayList<>(MapDeviceData.getInstance().getUniqueMaps().values());
 		uniques.removeIf(unique -> ItemData.getInstance().getTemplate(unique.itemId()) == null);
 		if (uniques.isEmpty())
+		{
+			return;
+		}
+		if (!run.claimMapDrop())
 		{
 			return;
 		}
