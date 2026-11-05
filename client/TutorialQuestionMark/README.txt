@@ -2,8 +2,8 @@ Tutorial question mark - client fix
 ===================================
 
 The tutorial (Q00255_Tutorial), the Adventurer's Guide, Dynamic Quests,
-Hidden Quests and Crafting Goals raise the blinking question mark with
-ShowTutorialMark (0xA7, int markId). Clicking it sends
+Hidden Quests, Crafting Goals and the Map Device quest raise the blinking
+question mark with ShowTutorialMark (0xA7, int markId). Clicking it sends
 RequestTutorialQuestionMark (0x87, int markId) back.
 
 Why it never showed

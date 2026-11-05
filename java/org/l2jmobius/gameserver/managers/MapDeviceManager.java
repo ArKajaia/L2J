@@ -922,6 +922,10 @@ public class MapDeviceManager
 			{
 				final MapRun run = createRun(player, hideout, tier, medals, modifiers, hotzone, arena, pool);
 				announceOpened(player, run);
+				if (!free)
+				{
+					MapQuestManager.getInstance().onMapOpened(player);
+				}
 				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + (free ? " test-opened" : " opened") + " a tier " + tier.tier() + " map in " + arena.name() + " (" + arena.id() + ", instance " + run.getInstanceId() + ") with " + medals + " medals " + modifiers + ", hot zone effect " + hotzone + ".");
 				return null;
 			}
@@ -1697,6 +1701,11 @@ public class MapDeviceManager
 			addPlayerEffects(player, newRun);
 		}
 
+		if ((newRun != null) || isHideoutInstance(newInstanceId))
+		{
+			MapQuestManager.getInstance().onArrived(player);
+		}
+
 		if ((newInstanceId == 0) && ((oldRun != null) || isHideoutInstance(oldInstanceId) || player.getVariables().hasVariable(RETURN_LOC_VAR)))
 		{
 			player.getVariables().remove(RETURN_LOC_VAR);
@@ -2086,6 +2095,15 @@ public class MapDeviceManager
 		if (MapDeviceConfig.COMPLETION_REWARD && (lastKill != null) && (player != null))
 		{
 			dropMap(lastKill, player, rollInMapTier(run));
+		}
+
+		for (int objectId : run.getPlayersInside())
+		{
+			final Player inside = World.getInstance().getPlayer(objectId);
+			if ((inside != null) && (inside.getInstanceId() == run.getInstanceId()))
+			{
+				MapQuestManager.getInstance().onMapCompleted(inside);
+			}
 		}
 
 		final Player owner = World.getInstance().getPlayer(run.getOwnerId());

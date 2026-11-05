@@ -2,37 +2,49 @@
 
 An endgame loop after the atlas of Path of Exile: high level monsters drop maps, a player opens them at the Map Device of their private hideout, feeds them Champion Medals for harder modifiers and better rewards, and fights through a fenced field of monsters that never respawn.
 
-Code: `MapDeviceManager` (core logic), `MapDeviceData` (`data/MapDevice.xml`), `MapDeviceConfig` (`config/Custom/MapDevice.ini`), `model/mapdevice/*` (modifiers, tiers, arenas, runs), the Map Device part of the event maps (`EventMapType.MAPDEVICE`, `EventMapDevice`, edited on the event map page), and the scripts `custom/MapDevice` (device window, NPCs), `handlers/chat/commands/voiced/HideoutVoiced` (`.hideout`), `handlers/chat/commands/admin/AdminMapDevice` (`//mapdevice`) and `handlers/items/MapItem`.
+Code: `MapDeviceManager` (core logic), `MapQuestManager` (the quest "A Map of Your Own"), `MapDeviceData` (`data/MapDevice.xml`), `MapDeviceConfig` (`config/Custom/MapDevice.ini`), `model/mapdevice/*` (modifiers, tiers, arenas, runs, `MonsterStrength`), the Map Device part of the event maps (`EventMapType.MAPDEVICE`, `EventMapDevice`, edited on the event map page), and the scripts `custom/MapDevice` (device window, NPCs), `handlers/chat/commands/voiced/HideoutVoiced` (`.hideout`), `handlers/chat/commands/admin/AdminMapDevice` (`//mapdevice`) and `handlers/items/MapItem`.
 
 ## How it plays
 
-1. **Maps drop.** Monsters of level 78 and up may drop a **Map (Tier 1-10)** (items 50101-50110). The tier follows the monster's level (`dropLevel` in the XML), and stronger monsters drop higher tiers: Champion tier 2 +1, tier 3 +2, Mage/Thief/Infused/Resonant/wave challenge +1, raid boss +2 (`<difficulty>`). Base chance 1%, +3% per champion tier, 50% for raids, all raised by the monster's own drop rate bonuses (random passives, hot zones). No drop from monsters more than 9 levels below the player.
+1. **Maps drop.** Monsters of level 78 and up may drop a **Map (Tier 1-10)** (items 50101-50110). The tier follows the monster's level and strength (`dropLevel` and `minScore` in the XML: ordinary monsters drop tiers 1-6, party monsters 7-10), and stronger monsters drop higher tiers: Champion tier 2 +1, tier 3 +2, Mage/Thief/Infused/Resonant/wave challenge +1, raid boss +2 (`<difficulty>`). Base chance 1%, +3% per champion tier, 50% for raids, all raised by the monster's own drop rate bonuses (random passives, hot zones). No drop from monsters more than 9 levels below the player.
 2. **`.hideout`** in a town (any peace zone) takes the player to their own hideout: a private copy of the Jinia Guild Hideout cabin with the **Map Device** in it.
 3. **Insert a map.** Double-click a map in the hideout, or talk to the device and press *Insert*. The device asks how many **Champion Medals** (the Survival Arena medal) to feed it: 0 to 8.
 4. **Each medal** rolls one **modifier** out of 50 (never twice the same) and adds **+20% experience and +20% drop rate**. The map also rolls one random **hot zone effect** (the server's `HotzoneModifier`s) for its whole field.
 5. **Eight portals** open in a ring round the device. Each takes one player into the map and is gone. The owner and the owner's party may take them (`.hideout party` brings party members to the hideout).
-6. **The map** is a fenced field (the Team vs Team barrier code) in its own instance, picked at random among the places that take its tier (the `<arena>`s of `data/MapDevice.xml` and your own maps from the map editor), with **100 monsters** of the tier's levels, made stronger by the tier (`hp`/`attack`/`defence`) and carrying every rolled modifier. A map has a theme: its monsters are drawn from up to 6 kinds. Nothing respawns. When 10 monsters are left they come for the players, so none stays hidden.
+6. **The map** is a fenced field (the Team vs Team barrier code) in its own instance, picked at random among the places that take its tier (the `<arena>`s of `data/MapDevice.xml` and your own maps from the map editor), with **100 monsters** of the tier's levels and strength, made stronger by the tier (`hp`/`attack`/`defence`) and carrying every rolled modifier. A map has a theme: its monsters are drawn from up to 6 kinds. Nothing respawns. When 10 monsters are left they come for the players, so none stays hidden.
 7. **Dying** in a map: 3 seconds later the player wakes up in the hideout (full HP/MP/CP, normal death penalty) and may take another portal. A **Return Portal** at the map's entry (or `.hideout back`) goes back to the hideout without dying.
 8. **Completing** a map (every monster slain) drops one more map and closes it 2 minutes later. A map also closes after 60 minutes, or 20 seconds after its last portal is used and nobody is left inside. The owner can close it early at the device.
+
+The first map a character gets starts the quest **A Map of Your Own** (see below).
 
 Monsters inside a map drop maps at 2.5% (times the map's drop multiplier), of the map's tier, 25% of the time one higher and 5% two higher, so good runs sustain themselves.
 
 ## Tiers
 
-| Tier | Item | Monster levels | HP | Attack | Defence | Exp/drops | Drops from level |
-|---|---|---|---|---|---|---|---|
-| 1 | 50101 | 78-79 | x1.00 | x1.00 | x1.00 | x1.00 | 78 |
-| 2 | 50102 | 78-80 | x1.10 | x1.05 | x1.03 | x1.10 | 79 |
-| 3 | 50103 | 80-81 | x1.15 | x1.08 | x1.05 | x1.20 | 80 |
-| 4 | 50104 | 81-82 | x1.25 | x1.12 | x1.08 | x1.30 | 81 |
-| 5 | 50105 | 82-83 | x1.35 | x1.16 | x1.10 | x1.45 | 82 |
-| 6 | 50106 | 83-84 | x1.50 | x1.20 | x1.12 | x1.60 | 83 |
-| 7 | 50107 | 84-85 | x1.70 | x1.25 | x1.15 | x1.80 | 84 |
-| 8 | 50108 | 84-86 | x2.00 | x1.32 | x1.20 | x2.00 | 85 |
-| 9 | 50109 | 85-87 | x2.40 | x1.40 | x1.25 | x2.30 | 86 |
-| 10 | 50110 | 85-87 | x3.00 | x1.50 | x1.30 | x2.70 | 87 |
+| Tier | Item | Monster levels | Strength | Monsters | HP | Attack | Defence | Exp/drops | Drops from |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 50101 | 78-79 | 0-1.5 | ordinary | x1.00 | x1.00 | x1.00 | x1.00 | level 78 |
+| 2 | 50102 | 78-80 | 0-1.5 | ordinary | x1.10 | x1.05 | x1.03 | x1.10 | level 79 |
+| 3 | 50103 | 80-81 | 0-1.5 | ordinary | x1.15 | x1.08 | x1.05 | x1.20 | level 80 |
+| 4 | 50104 | 81-82 | 0-1.5 | ordinary | x1.25 | x1.12 | x1.08 | x1.30 | level 81 |
+| 5 | 50105 | 82-83 | 0-1.5 | ordinary | x1.35 | x1.16 | x1.10 | x1.45 | level 82 |
+| 6 | 50106 | 83-84 | 0-1.5 | ordinary | x1.50 | x1.20 | x1.12 | x1.60 | level 83 |
+| 7 | 50107 | 83-85 | 3.0-4.5 | Drakos, Divinity, Maluk Princess, Hellbound scouts (3.8-4.1) | x1.00 | x1.00 | x1.00 | x1.80 | level 83, strength 3.0 |
+| 8 | 50108 | 83-85 | 4.5-6.0 | drakes, Dragon Valley trackers, Maluk Leaders, Hellbound watchers (4.9-5.7) | x1.05 | x1.03 | x1.02 | x2.00 | level 84, strength 4.5 |
+| 9 | 50109 | 83-85 | 6.0-7.5 | Seed of Annihilation elites, Tully's Workshop guards (6.7-6.9) | x1.10 | x1.05 | x1.03 | x2.30 | level 85, strength 6.0 |
+| 10 | 50110 | 83-87 | 7.5+ | Knoriks, Bloody Karik, Hellbound lords (9.0-9.2) | x1.15 | x1.08 | x1.05 | x2.70 | level 86, strength 7.5 |
 
-The monsters of a map are plain open world monsters of those levels with a respawning world spawn (no quest, event, instance-only or raid monster). Exclude more with `<excludedNpcs>`.
+The monsters of a map are plain open world monsters of the tier's levels **and** strength, with a respawning world spawn (no quest, event, instance-only or raid monster, nothing that gives no experience or lies still like the cocoons). Exclude more with `<excludedNpcs>`. Tiers 1-6 are solo maps; from tier 7 the monsters are party monsters, so the tier multipliers start again near 1: the monsters' own strength is the step up. `//mapdevice pool <tier>` lists a tier's monsters with their strength.
+
+### Monster strength
+
+Two monsters of the same level can be miles apart: a level 84 Batwing Drake has 14 times the HP and 10 times the P. Atk. of a level 84 Sel Mahum Soldier. So every monster gets a **strength score** (`MonsterStrength`):
+
+1. **The standard monster of a level**: for each stat (HP, P. Atk., M. Atk., P. Def., M. Def., Atk. Spd.), the lower quartile of that stat over every monster of the level. Most monsters of a level share the stats of the ordinary monster of that level, so that is what the lower quartile lands on, and the party monsters don't pull it up. A level with fewer than 5 monsters takes its standard from the levels round it.
+2. **Relative strength of each stat**: the monster's stat divided by the standard's (Batwing Drake: HP x13.9, P. Atk. x9.9, M. Atk. x10.6, P. Def. x1.6, M. Def. x2.4, Atk. Spd. x1.0).
+3. **Score**: the weighted geometric mean of those ratios (weights in `<strength>` of `data/MapDevice.xml`: HP 2, P./M. Atk. 1, P./M. Def. 1, Atk. Spd. 0.5, so toughness and offence weigh the same). 1.0 is an ordinary monster; the Batwing Drake is 5.7, Knoriks 9.1. A geometric mean, because the stats multiply into how hard a monster is.
+
+A tier takes the monsters whose level is within `minLevel`-`maxLevel` and whose score is within `minScore`-`maxScore` (0 = no upper limit). If none fits, it takes the closest in strength of its levels and the server log says so. An open world monster drops the highest tier whose `dropLevel` and `minScore` it reaches. The device windows show each tier's strength; `//mapdevice score` shows the score of your target and the tiers it fits.
 
 ## The 50 modifiers
 
@@ -105,6 +117,17 @@ Modifiers that draw a kind of monster the server has switched off (Mage, Thief, 
 - Deaths: `Attackable.doDie` (counting, Volatile, Soul Eaters, Undying Legion, Ambush, completion, map drops) and `Player.doDie` (back to the hideout).
 - Map monsters are spawned without a spawn point (so they never respawn) and skip the open world's random spawn rolls (`Spawn`); the map rolls Champions, Mages, Thieves, Infused, Resonant and wave challenge monsters itself, at the open world's chances times the hot zone effect's multipliers, or at the modifier's share.
 
+## The quest: A Map of Your Own
+
+The first time a character gets a map (a drop, a trade, a GM gift), a quest pops up: the blinking tutorial question mark (it needs the client fix in `client/TutorialQuestionMark`) and a line in chat. Clicking the mark, or `.hideout quest`, opens the quest window with its steps and reward. Each new step raises the mark again; an unclicked mark comes back at login.
+
+1. **Go to your hideout**: `.hideout` in a town.
+2. **Open the map** at the Map Device.
+3. **Take a portal** into the map.
+4. **Clear the map**: be inside a map when its last monster falls.
+
+A step already done is passed at once: a map picked up in the hideout skips the first, and a party member who enters their party's map skips to the last. Clearing the map pays `MapQuestRewardMedals` Champion Medals (5). Each character does it once (player variable `MAP_QUEST_STEP`). `MapQuestEnabled = False` in `MapDevice.ini` turns it off.
+
 ## Hot zone effect
 
 Every map rolls one of the server's hot zone modifiers for its whole instance (`HotzoneModifierManager.setInstanceModifier`), shown on the device. Those that need a world hot zone or respawning monsters are excluded (`ExcludedHotzoneEffects`: Bounty Hunt, Rising Heat, Miniboss Frenzy, Blood Moon, Contested Ground). Their spawn multipliers (Coven, Thieves' Den, Elemental Storm...) apply to the map's own variant rolls, their player buffs are given inside the map, and Fragile Ground drains HP there.
@@ -122,7 +145,7 @@ Maps open in places made on the **event map page**, the same editor as the Team 
    - **Map Guardian spot**: where the Map Guardian modifier's boss stands (else the fence's middle).
    - **Lowest / highest tier**: which map tiers may open here (any by default).
    - **Monsters in the map**: overrides `MonsterCount` for this place (the modifiers still change it).
-   - **Monsters that fill it**: npc ids of `type="Monster"` npcs. Every tier then uses exactly these, made stronger by the tier; the page shows their names and levels and warns about a level far from the tiers. Empty: 6 kinds of the tier's levels by chance.
+   - **Monsters that fill it**: npc ids of `type="Monster"` npcs. Every tier then uses exactly these, made stronger by the tier; the page shows their names, levels and strength, and warns about a level or a strength far from the tiers, and about monsters of very different strength in one map. Empty: 6 kinds of the tier's levels and strength by chance.
    - **Doors**: click a door on the map to have it open or shut in the map's copy of the place (good for dungeons).
 6. **Save** (it checks the map and warns about what's missing, like an entry beyond the fence or monster spots reaching the entry). `//mapdevice show <id>` draws the points in game.
 7. **Try it**: in your hideout (`.hideout`), `//mapdevice test <id> [tier] [medals]` opens a map there for free.
@@ -137,6 +160,7 @@ A saved map takes part at once: the next map item opened (of a tier it allows) m
 | `.hideout party` | Visit the hideout of your party (the leader's first). |
 | `.hideout back` | From a map, back to the hideout (not while fighting). |
 | `.hideout leave` | From the hideout, back to where you came from. |
+| `.hideout quest` | The quest "A Map of Your Own". |
 
 GM commands (`//mapdevice`, the same access as `//tvt` for the page):
 
@@ -147,6 +171,8 @@ GM commands (`//mapdevice`, the same access as `//tvt` for the page):
 | `//mapdevice show <id>` / `hide` | Draw an editor map's Map Device points in game / take them away. |
 | `//mapdevice test <id> [tier] [medals]` | In your own hideout: open a map in that place for free, to try it. |
 | `//mapdevice give <tier> [count]` | Give maps to your target (or you). |
+| `//mapdevice pool <tier>` | The monsters a map of that tier may hold, with their strength and each stat against the standard monster of their level. |
+| `//mapdevice score` | The strength of your target, and which tiers it fits and drops. |
 | `//mapdevice runs` / `close <instance>` | The maps open right now / close one. |
 | `//mapdevice reload` | Read `data/MapDevice.xml` and the event maps again, and rebuild the monster pools. |
 
