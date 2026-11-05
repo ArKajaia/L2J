@@ -9,10 +9,20 @@
 	difficulty  how many tiers higher a map stronger monsters drop, on top of the tier of their level:
 	            champion1/2/3 a Champion of that tier, special a Mage, Thief, Infused, Resonant or wave challenge monster, raid a raid boss.
 
+	strength    how a monster's strength score is worked out (MonsterStrength). Every stat is compared with the standard monster of the monster's level
+	            (the lower quartile of that stat over every monster of the level, which is the ordinary monster of that level): 2.0 is twice the standard.
+	            The score is the weighted geometric mean of those ratios: 1.0 is an ordinary monster, a Dragon Valley drake about 5.7, Knoriks about 9.
+	            The attributes are the weights: hp, pAtk, mAtk, pDef, mDef, pAtkSpd (0 leaves a stat out). HP counts twice, so toughness
+	            (HP, P. Def., M. Def.) and offence (P. Atk., M. Atk., Atk. Spd.) weigh about the same. Casting speed is not scored: every npc casts at 333.
+
 	tier        a map tier: tier (1 = lowest), itemId (its "Map (Tier N)" item),
-	            minLevel/maxLevel the levels of the monsters of its map (plain open world monsters of those levels that respawn: no quest, event or raid monster),
-	            dropLevel the lowest monster level that drops this tier (a monster drops the highest tier its level reaches, plus its difficulty),
+	            minLevel/maxLevel the levels of the monsters of its map, minScore/maxScore their strength score (maxScore 0 = no limit). A map is filled
+	            with plain open world monsters that match both (a respawning spawn, they move and give experience: no quest, event or raid monster).
+	            If no monster matches, the tier takes the closest in strength of its levels and the server log says so (//mapdevice pool <tier> lists them).
+	            dropLevel the lowest monster level that drops this tier; the monster's score must also reach minScore (a monster drops the highest
+	            tier both allow, plus its difficulty), so ordinary monsters never drop the party tiers.
 	            hp/attack/defence how much stronger the monsters of its map are, reward the experience, SP and drop chance multiplier of its map.
+	            Tiers 1-6 hold ordinary monsters, tiers 7-10 party monsters: their own strength makes them harder, so their multipliers start again near 1.
 
 	arena       a field a map can open in, picked at random: name, the middle x, y and the ground z, the fence's radiusX/radiusY (an ellipse,
 	            at least 500), entryAngle where the players come in (degrees round the middle, 0 = east, 90 = south; the entry is at 80% of the radius).
@@ -27,16 +37,21 @@
 
 	<difficulty champion1="0" champion2="1" champion3="2" special="1" raid="2" />
 
-	<tier tier="1" itemId="50101" minLevel="78" maxLevel="79" dropLevel="78" hp="1.00" attack="1.00" defence="1.00" reward="1.00" />
-	<tier tier="2" itemId="50102" minLevel="78" maxLevel="80" dropLevel="79" hp="1.10" attack="1.05" defence="1.03" reward="1.10" />
-	<tier tier="3" itemId="50103" minLevel="80" maxLevel="81" dropLevel="80" hp="1.15" attack="1.08" defence="1.05" reward="1.20" />
-	<tier tier="4" itemId="50104" minLevel="81" maxLevel="82" dropLevel="81" hp="1.25" attack="1.12" defence="1.08" reward="1.30" />
-	<tier tier="5" itemId="50105" minLevel="82" maxLevel="83" dropLevel="82" hp="1.35" attack="1.16" defence="1.10" reward="1.45" />
-	<tier tier="6" itemId="50106" minLevel="83" maxLevel="84" dropLevel="83" hp="1.50" attack="1.20" defence="1.12" reward="1.60" />
-	<tier tier="7" itemId="50107" minLevel="84" maxLevel="85" dropLevel="84" hp="1.70" attack="1.25" defence="1.15" reward="1.80" />
-	<tier tier="8" itemId="50108" minLevel="84" maxLevel="86" dropLevel="85" hp="2.00" attack="1.32" defence="1.20" reward="2.00" />
-	<tier tier="9" itemId="50109" minLevel="85" maxLevel="87" dropLevel="86" hp="2.40" attack="1.40" defence="1.25" reward="2.30" />
-	<tier tier="10" itemId="50110" minLevel="85" maxLevel="87" dropLevel="87" hp="3.00" attack="1.50" defence="1.30" reward="2.70" />
+	<strength hp="2" pAtk="1" mAtk="1" pDef="1" mDef="1" pAtkSpd="0.5" />
+
+	<!-- Ordinary monsters (strength about 1.0). -->
+	<tier tier="1" itemId="50101" minLevel="78" maxLevel="79" minScore="0" maxScore="1.5" dropLevel="78" hp="1.00" attack="1.00" defence="1.00" reward="1.00" />
+	<tier tier="2" itemId="50102" minLevel="78" maxLevel="80" minScore="0" maxScore="1.5" dropLevel="79" hp="1.10" attack="1.05" defence="1.03" reward="1.10" />
+	<tier tier="3" itemId="50103" minLevel="80" maxLevel="81" minScore="0" maxScore="1.5" dropLevel="80" hp="1.15" attack="1.08" defence="1.05" reward="1.20" />
+	<tier tier="4" itemId="50104" minLevel="81" maxLevel="82" minScore="0" maxScore="1.5" dropLevel="81" hp="1.25" attack="1.12" defence="1.08" reward="1.30" />
+	<tier tier="5" itemId="50105" minLevel="82" maxLevel="83" minScore="0" maxScore="1.5" dropLevel="82" hp="1.35" attack="1.16" defence="1.10" reward="1.45" />
+	<tier tier="6" itemId="50106" minLevel="83" maxLevel="84" minScore="0" maxScore="1.5" dropLevel="83" hp="1.50" attack="1.20" defence="1.12" reward="1.60" />
+	<!-- Party monsters. 7: Drakos, Divinity, Maluk Princess, Hellbound scouts (about 3.8-4.1). 8: drakes, Dragon Valley trackers, Maluk Leaders, Hellbound watchers (4.9-5.7). -->
+	<tier tier="7" itemId="50107" minLevel="83" maxLevel="85" minScore="3.0" maxScore="4.5" dropLevel="83" hp="1.00" attack="1.00" defence="1.00" reward="1.80" />
+	<tier tier="8" itemId="50108" minLevel="83" maxLevel="85" minScore="4.5" maxScore="6.0" dropLevel="84" hp="1.05" attack="1.03" defence="1.02" reward="2.00" />
+	<!-- 9: the Seed of Annihilation elites, Tully's Workshop guards (about 6.7-6.9). 10: Knoriks, Bloody Karik, Hellbound lords (9+). -->
+	<tier tier="9" itemId="50109" minLevel="83" maxLevel="85" minScore="6.0" maxScore="7.5" dropLevel="85" hp="1.10" attack="1.05" defence="1.03" reward="2.30" />
+	<tier tier="10" itemId="50110" minLevel="83" maxLevel="87" minScore="7.5" maxScore="0" dropLevel="86" hp="1.15" attack="1.08" defence="1.05" reward="2.70" />
 
 	<!-- The Team vs Team ring of the Ruins of Despair, drawn a little inside its ring wall. -->
 	<arena name="Ruins of Despair" x="-17800" y="142600" z="-3900" radiusX="4800" radiusY="4400" entryAngle="0" />

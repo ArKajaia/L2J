@@ -23,6 +23,7 @@ package org.l2jmobius.gameserver.managers;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,7 @@ import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.enums.npc.AIType;
 import org.l2jmobius.gameserver.model.actor.enums.npc.MonsterArchetype;
 import org.l2jmobius.gameserver.model.actor.enums.player.TeleportWhereType;
 import org.l2jmobius.gameserver.model.actor.instance.Chest;
@@ -82,6 +84,7 @@ import org.l2jmobius.gameserver.model.mapdevice.MapRun;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun.MonsterStat;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun.Status;
 import org.l2jmobius.gameserver.model.mapdevice.MapTier;
+import org.l2jmobius.gameserver.model.mapdevice.MonsterStrength;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
 import org.l2jmobius.gameserver.model.skill.Skill;
@@ -1054,7 +1057,7 @@ public class MapDeviceManager
 	// =========================================================================
 
 	/**
-	 * The monsters a map of a tier may hold: plain monsters of the tier's levels that live somewhere in the open world (a spawn that respawns), so no quest, event, instance or raid monster.
+	 * The monsters a map of a tier may hold: plain monsters of the tier's levels and strength ({@link MonsterStrength}) that live somewhere in the open world (a spawn that respawns), so no quest, event, instance or raid monster.
 	 * @param tier a tier
 	 * @return its monsters, empty if none fits
 	 */
@@ -1065,8 +1068,42 @@ public class MapDeviceManager
 
 	private static List<NpcTemplate> buildMonsterPool(MapTier tier)
 	{
-		final Set<Integer> excluded = MapDeviceData.getInstance().getExcludedNpcIds();
+		final List<NpcTemplate> ofLevel = new ArrayList<>();
 		final List<NpcTemplate> pool = new ArrayList<>();
+		for (NpcTemplate template : getWorldMonsters())
+		{
+			if (tier.allowsLevel(template.getLevel()))
+			{
+				ofLevel.add(template);
+				if (tier.allowsScore(MonsterStrength.getScore(template)))
+				{
+					pool.add(template);
+				}
+			}
+		}
+
+		if (pool.isEmpty() && !ofLevel.isEmpty())
+		{
+			// Nothing of the tier's levels is that strong (or that weak): the closest in strength rather than no map at all.
+			ofLevel.sort(Comparator.comparingDouble(template -> tier.scoreDistance(MonsterStrength.getScore(template))));
+			pool.addAll(ofLevel.subList(0, Math.min(MapDeviceConfig.MONSTER_TYPES, ofLevel.size())));
+			LOGGER.warning(MapDeviceManager.class.getSimpleName() + ": No monster of levels " + tier.minLevel() + "-" + tier.maxLevel() + " has a strength of " + tier.scoreRange() + " for tier " + tier.tier() + "; it takes the " + pool.size() + " closest (" + describeScores(pool) + "). Check minScore/maxScore in data/MapDevice.xml.");
+		}
+		else
+		{
+			LOGGER.info(MapDeviceManager.class.getSimpleName() + ": " + pool.size() + " of " + ofLevel.size() + " monsters can fill a tier " + tier.tier() + " map (levels " + tier.minLevel() + "-" + tier.maxLevel() + ", strength " + tier.scoreRange() + (pool.isEmpty() ? "" : ": " + describeScores(pool)) + ").");
+		}
+		pool.sort(Comparator.comparingDouble(MonsterStrength::getScore));
+		return Collections.unmodifiableList(pool);
+	}
+
+	/**
+	 * @return every monster that may fill a map of some tier: a plain monster with a respawning open world spawn, that moves, fights and gives experience
+	 */
+	private static List<NpcTemplate> getWorldMonsters()
+	{
+		final Set<Integer> excluded = MapDeviceData.getInstance().getExcludedNpcIds();
+		final List<NpcTemplate> monsters = new ArrayList<>();
 		for (Map.Entry<Integer, Set<Spawn>> entry : SpawnTable.getInstance().getSpawnTable().entrySet())
 		{
 			final NpcTemplate template = NpcData.getInstance().getTemplate(entry.getKey());
@@ -1074,31 +1111,38 @@ public class MapDeviceManager
 			{
 				continue;
 			}
-			if ((template.getLevel() < tier.minLevel()) || (template.getLevel() > tier.maxLevel()))
-			{
-				continue;
-			}
-			if (template.isUndying() || !template.canMove() || !template.isAttackable() || template.isQuestMonster() || template.isFakePlayer() || (template.getFakePlayerPvpProfile() != null))
+			// No quest, event or decoration monster: those that give no experience or lie still (cocoons, crops, the Kratei's Cube maids).
+			if (template.isUndying() || !template.canMove() || !template.isAttackable() || template.isQuestMonster() || template.isFakePlayer() || (template.getFakePlayerPvpProfile() != null) || (template.getExp() <= 0) || (template.getAIType() == AIType.CORPSE))
 			{
 				continue;
 			}
 
-			boolean worldSpawn = false;
 			for (Spawn spawn : entry.getValue())
 			{
 				if ((spawn.getInstanceId() == 0) && (spawn.getRespawnMinDelay() > 0))
 				{
-					worldSpawn = true;
+					monsters.add(template);
 					break;
 				}
 			}
-			if (worldSpawn)
-			{
-				pool.add(template);
-			}
 		}
-		LOGGER.info(MapDeviceManager.class.getSimpleName() + ": " + pool.size() + " monsters can fill a tier " + tier.tier() + " map (levels " + tier.minLevel() + "-" + tier.maxLevel() + ").");
-		return Collections.unmodifiableList(pool);
+		return monsters;
+	}
+
+	/**
+	 * @return the lowest and highest strength of these monsters, such as "3.8-4.1"
+	 */
+	private static String describeScores(List<NpcTemplate> monsters)
+	{
+		double low = Double.MAX_VALUE;
+		double high = 0;
+		for (NpcTemplate template : monsters)
+		{
+			final double score = MonsterStrength.getScore(template);
+			low = Math.min(low, score);
+			high = Math.max(high, score);
+		}
+		return "strength " + MonsterStrength.format(low) + "-" + MonsterStrength.format(high);
 	}
 
 	/**
@@ -1139,10 +1183,11 @@ public class MapDeviceManager
 	}
 	
 	/**
-	 * Clears the monster pools, so they are worked out again (after a reload of the spawns or of data/MapDevice.xml).
+	 * Clears the monster pools and the strength scores, so they are worked out again (after a reload of the spawns or of data/MapDevice.xml).
 	 */
 	public void clearMonsterPools()
 	{
+		MonsterStrength.clear();
 		_monsterPools.clear();
 	}
 
@@ -1441,7 +1486,7 @@ public class MapDeviceManager
 		NpcTemplate strongest = kinds.get(0);
 		for (NpcTemplate template : kinds)
 		{
-			if (template.getLevel() > strongest.getLevel())
+			if ((template.getLevel() > strongest.getLevel()) || ((template.getLevel() == strongest.getLevel()) && (MonsterStrength.getScore(template) > MonsterStrength.getScore(strongest))))
 			{
 				strongest = template;
 			}
@@ -2065,7 +2110,7 @@ public class MapDeviceManager
 			return;
 		}
 
-		final int baseTier = run != null ? run.getTier().tier() : MapDeviceData.getInstance().getDropTier(victim.getLevel());
+		final int baseTier = run != null ? run.getTier().tier() : getOpenWorldDropTier(victim);
 		if (baseTier <= 0)
 		{
 			return; // Below the lowest drop level: the common case, so it is checked first.
@@ -2111,6 +2156,20 @@ public class MapDeviceManager
 		{
 			dropMap(victim, player, tier);
 		}
+	}
+
+	/**
+	 * @param victim a monster of the open world
+	 * @return the tier it drops before its difficulty bonus: the highest whose drop level its level reaches and whose lowest strength its strength reaches; 0 for none
+	 */
+	private static int getOpenWorldDropTier(Attackable victim)
+	{
+		final MapDeviceData data = MapDeviceData.getInstance();
+		if (data.getDropTier(victim.getLevel(), Double.MAX_VALUE) <= 0)
+		{
+			return 0; // Below every drop level: no need to score it.
+		}
+		return data.getDropTier(victim.getLevel(), MonsterStrength.getScore(victim.getTemplate()));
 	}
 
 	/**

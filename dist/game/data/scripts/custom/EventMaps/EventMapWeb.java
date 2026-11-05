@@ -54,6 +54,7 @@ import org.l2jmobius.gameserver.model.eventmap.EventMap;
 import org.l2jmobius.gameserver.model.eventmap.EventMapDevice;
 import org.l2jmobius.gameserver.model.eventmap.EventMapType;
 import org.l2jmobius.gameserver.model.mapdevice.MapTier;
+import org.l2jmobius.gameserver.model.mapdevice.MonsterStrength;
 
 import com.sun.net.httpserver.HttpExchange;
 
@@ -224,7 +225,7 @@ public class EventMapWeb
 		boolean first = true;
 		for (MapTier tier : MapDeviceData.getInstance().getTiers().values())
 		{
-			json.append(first ? "" : ",").append("{\"tier\":").append(tier.tier()).append(",\"minLevel\":").append(tier.minLevel()).append(",\"maxLevel\":").append(tier.maxLevel()).append('}');
+			json.append(first ? "" : ",").append("{\"tier\":").append(tier.tier()).append(",\"minLevel\":").append(tier.minLevel()).append(",\"maxLevel\":").append(tier.maxLevel()).append(",\"strength\":").append(SimpleJson.quote(tier.scoreRange())).append('}');
 			first = false;
 		}
 		json.append("]}");
@@ -456,6 +457,10 @@ public class EventMapWeb
 			if (template != null)
 			{
 				json.append(",\"name\":").append(SimpleJson.quote(template.getName())).append(",\"level\":").append(template.getLevel()).append(",\"type\":").append(SimpleJson.quote(template.getType())).append(",\"monster\":").append(template.isType("Monster"));
+				if (template.isType("Monster"))
+				{
+					json.append(",\"strength\":").append(SimpleJson.quote(MonsterStrength.format(MonsterStrength.getScore(template))));
+				}
 			}
 			json.append('}');
 		}
@@ -1090,14 +1095,22 @@ public class EventMapWeb
 		{
 			int lowLevel = Integer.MAX_VALUE;
 			int highLevel = 0;
+			double lowScore = Double.MAX_VALUE;
+			double highScore = 0; // 0: no upper limit
+			boolean anyTier = false;
 			for (MapTier tier : MapDeviceData.getInstance().getTiers().values())
 			{
 				if (((minTierSet <= 0) || (tier.tier() >= minTierSet)) && ((maxTierSet <= 0) || (tier.tier() <= maxTierSet)))
 				{
 					lowLevel = Math.min(lowLevel, tier.minLevel());
 					highLevel = Math.max(highLevel, tier.maxLevel());
+					lowScore = Math.min(lowScore, tier.minScore());
+					highScore = !anyTier ? tier.maxScore() : ((highScore <= 0) || (tier.maxScore() <= 0) ? 0 : Math.max(highScore, tier.maxScore()));
+					anyTier = true;
 				}
 			}
+			double weakest = Double.MAX_VALUE;
+			double strongest = 0;
 			for (int npcId : monsters)
 			{
 				final NpcTemplate template = NpcData.getInstance().getTemplate(npcId);
@@ -1105,6 +1118,18 @@ public class EventMapWeb
 				{
 					warnings.add("Map Device: " + template.getName() + " (" + npcId + ") is level " + template.getLevel() + ", the tiers that open here hold levels " + lowLevel + "-" + highLevel + ".");
 				}
+				// Every tier fills this map with these same monsters (made stronger by the tier), so a strength far from the tiers' makes it much easier or harder than other maps of those tiers.
+				final double score = MonsterStrength.getScore(template);
+				weakest = Math.min(weakest, score);
+				strongest = Math.max(strongest, score);
+				if (anyTier && ((score < (lowScore * 0.75)) || ((highScore > 0) && (score > (highScore * 1.25)))))
+				{
+					warnings.add("Map Device: " + template.getName() + " (" + npcId + ") has strength " + MonsterStrength.format(score) + " (" + MonsterStrength.describe(score) + "), the tiers that open here hold " + MonsterStrength.format(lowScore) + (highScore > 0 ? "-" + MonsterStrength.format(highScore) : "+") + ".");
+				}
+			}
+			if ((monsters.size() > 1) && (strongest > (weakest * 2)))
+			{
+				warnings.add("Map Device: the monsters named here range from strength " + MonsterStrength.format(weakest) + " to " + MonsterStrength.format(strongest) + "; a map holds them all, so its difficulty changes a lot from one monster to the next.");
 			}
 		}
 

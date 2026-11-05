@@ -1834,7 +1834,7 @@ function mapMonsterCount() {
 
 function tierLabel(tier) {
 	const info = state.mapdevice.tiers.find((t) => t.tier === tier);
-	return "Tier " + tier + (info ? " (Lv " + info.minLevel + "-" + info.maxLevel + ")" : "");
+	return "Tier " + tier + (info ? " (Lv " + info.minLevel + "-" + info.maxLevel + (info.strength ? ", strength " + info.strength : "") + ")" : "");
 }
 
 function parseIds(text) {
@@ -1873,7 +1873,7 @@ function renderMapDeviceSettings(section) {
 		touched();
 		lookupMonsters(md.monsters, names);
 	});
-	section.appendChild(el("label", { class: "field" }, [el("span", {}, "Monsters that fill it (npc ids, up to " + state.mapdevice.maxKinds + "; every tier uses them, with the tier's strength)"), monsters]));
+	section.appendChild(el("label", { class: "field" }, [el("span", {}, "Monsters that fill it (npc ids, up to " + state.mapdevice.maxKinds + "; every tier uses them, made stronger by the tier)"), monsters]));
 	section.appendChild(names);
 	lookupMonsters(md.monsters, names);
 }
@@ -1906,7 +1906,7 @@ async function lookupMonsters(ids, box) {
 	for (const id of ids) {
 		const npc = npcCache[id];
 		const ok = npc && npc.name && npc.monster;
-		box.appendChild(el("div", { style: ok ? "" : "color:var(--warning)" }, id + ": " + (!npc || !npc.name ? "no such npc, left out" : npc.name + " (Lv " + npc.level + ")" + (ok ? "" : " - a " + npc.type + ", not a Monster: left out"))));
+		box.appendChild(el("div", { style: ok ? "" : "color:var(--warning)" }, id + ": " + (!npc || !npc.name ? "no such npc, left out" : npc.name + " (Lv " + npc.level + (npc.strength ? ", strength " + npc.strength : "") + ")" + (ok ? "" : " - a " + npc.type + ", not a Monster: left out"))));
 	}
 }
 

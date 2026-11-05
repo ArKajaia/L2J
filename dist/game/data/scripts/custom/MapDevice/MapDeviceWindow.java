@@ -20,17 +20,20 @@
  */
 package custom.MapDevice;
 
+import java.util.List;
 import java.util.Map;
 
 import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
 import org.l2jmobius.gameserver.data.xml.MapDeviceData;
 import org.l2jmobius.gameserver.managers.MapDeviceManager;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.hotzone.HotzoneModifier;
 import org.l2jmobius.gameserver.model.mapdevice.Hideout;
 import org.l2jmobius.gameserver.model.mapdevice.MapModifier;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun;
 import org.l2jmobius.gameserver.model.mapdevice.MapTier;
+import org.l2jmobius.gameserver.model.mapdevice.MonsterStrength;
 import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 
@@ -146,7 +149,7 @@ public final class MapDeviceWindow
 				final MapTier tier = entry.getKey();
 				final String bg = shade ? " bgcolor=\"" + BG_CARD + "\"" : "";
 				sb.append("<tr><td width=150").append(bg).append(">").append(text(COLOR_VALUE, "Tier " + tier.tier())).append(text(COLOR_MUTED, " x" + entry.getValue())).append("</td>");
-				sb.append("<td width=130").append(bg).append(">").append(text(COLOR_MUTED, "Lv. " + tier.minLevel() + "-" + tier.maxLevel())).append("</td>");
+				sb.append("<td width=130").append(bg).append(">").append(text(COLOR_MUTED, "Lv. " + tier.minLevel() + "-" + tier.maxLevel())).append("<br1>").append(text(strengthColor(tier), MonsterStrength.describe(tier.minScore()))).append("</td>");
 				sb.append("<td width=110").append(bg).append(" align=right><button value=\"Insert\" action=\"").append(COMMAND).append(" insert ").append(tier.tier()).append("\" width=80 height=21 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr>");
 				shade = !shade;
 			}
@@ -177,12 +180,14 @@ public final class MapDeviceWindow
 		section(sb, "The Map");
 		table(sb);
 		row(sb, "Monsters", text(COLOR_VALUE, "Lv. " + tier.minLevel() + "-" + tier.maxLevel()), false);
-		row(sb, "Their HP", "x" + two(tier.hp()), true);
-		row(sb, "Their attack", "x" + two(tier.attack()), false);
-		row(sb, "Their defence", "x" + two(tier.defence()), true);
-		row(sb, "Experience and drops", text(COLOR_POSITIVE, "x" + two(tier.reward())), false);
-		row(sb, "Portals", String.valueOf(MapDeviceConfig.PORTAL_COUNT), true);
-		sb.append("</table><br>");
+		row(sb, "Their strength", strength(tier), true);
+		row(sb, "Their HP", "x" + two(tier.hp()), false);
+		row(sb, "Their attack", "x" + two(tier.attack()), true);
+		row(sb, "Their defence", "x" + two(tier.defence()), false);
+		row(sb, "Experience and drops", text(COLOR_POSITIVE, "x" + two(tier.reward())), true);
+		row(sb, "Portals", String.valueOf(MapDeviceConfig.PORTAL_COUNT), false);
+		sb.append("</table>");
+		sb.append(text(COLOR_HINT, "Strength 1.0 is an ordinary monster of its level; a party monster with ten times its HP and attack is about 5. The tier's multipliers come on top.")).append("<br><br>");
 
 		section(sb, "Feed it " + medalName() + "s");
 		sb.append(text(COLOR_MUTED, "You have " + format(medals) + ". Each one rolls a modifier (out of " + MapModifier.values().length + ") and adds +" + MapDeviceConfig.XP_BONUS_PER_MEDAL + "% experience and +" + MapDeviceConfig.DROP_BONUS_PER_MEDAL + "% drop rate.")).append("<br1>");
@@ -233,13 +238,14 @@ public final class MapDeviceWindow
 		final StringBuilder sb = start("Open the Map?");
 		table(sb);
 		row(sb, "Map", text(COLOR_VALUE, "Tier " + tier.tier()) + text(COLOR_MUTED, " (Lv. " + tier.minLevel() + "-" + tier.maxLevel() + ")"), false);
-		row(sb, "It costs", "1 " + MapDeviceManager.getItemName(tier.itemId()) + (medals > 0 ? ", " + medals + " " + medalName() + (medals == 1 ? "" : "s") : ""), true);
-		row(sb, "Modifiers", medals > 0 ? text(COLOR_CREATIVE, medals + " at random") : text(COLOR_HINT, "none"), false);
-		row(sb, "Hot zone effect", "1 at random", true);
-		row(sb, "Experience", text(COLOR_POSITIVE, "+" + (medals * MapDeviceConfig.XP_BONUS_PER_MEDAL) + "%") + text(COLOR_MUTED, " (and the tier's x" + two(tier.reward()) + ")"), false);
-		row(sb, "Drop rate", text(COLOR_POSITIVE, "+" + (medals * MapDeviceConfig.DROP_BONUS_PER_MEDAL) + "%"), true);
-		row(sb, "Monsters", "about " + MapDeviceConfig.MONSTER_COUNT + ", none respawn", false);
-		row(sb, "Portals", MapDeviceConfig.PORTAL_COUNT + ", one player each", true);
+		row(sb, "Monster strength", strength(tier), true);
+		row(sb, "It costs", "1 " + MapDeviceManager.getItemName(tier.itemId()) + (medals > 0 ? ", " + medals + " " + medalName() + (medals == 1 ? "" : "s") : ""), false);
+		row(sb, "Modifiers", medals > 0 ? text(COLOR_CREATIVE, medals + " at random") : text(COLOR_HINT, "none"), true);
+		row(sb, "Hot zone effect", "1 at random", false);
+		row(sb, "Experience", text(COLOR_POSITIVE, "+" + (medals * MapDeviceConfig.XP_BONUS_PER_MEDAL) + "%") + text(COLOR_MUTED, " (and the tier's x" + two(tier.reward()) + ")"), true);
+		row(sb, "Drop rate", text(COLOR_POSITIVE, "+" + (medals * MapDeviceConfig.DROP_BONUS_PER_MEDAL) + "%"), false);
+		row(sb, "Monsters", "about " + MapDeviceConfig.MONSTER_COUNT + ", none respawn", true);
+		row(sb, "Portals", MapDeviceConfig.PORTAL_COUNT + ", one player each", false);
 		sb.append("</table><br>");
 		sb.append(text(COLOR_MUTED, "If you die inside, you wake up here and may take another portal. Slay every monster to complete the map.")).append("<br>");
 		sb.append("<table width=").append(CONTENT_WIDTH).append("><tr><td align=center>");
@@ -273,7 +279,7 @@ public final class MapDeviceWindow
 		row(sb, "Portals left", run.getPortals().size() + " / " + run.getPortalCount(), false);
 		final int seconds = run.getRemainingSeconds();
 		row(sb, "Collapses in", (seconds / 60) + "m " + (seconds % 60) + "s", true);
-		row(sb, "Monsters", "Lv. " + run.getTier().minLevel() + "-" + run.getTier().maxLevel(), false);
+		row(sb, "Monsters", "Lv. " + run.getTier().minLevel() + "-" + run.getTier().maxLevel() + text(COLOR_MUTED, ", strength " + kindsStrength(run)), false);
 		row(sb, "Experience / drops", text(COLOR_POSITIVE, "x" + two(run.getXpMultiplier()) + " / x" + two(run.getDropMultiplier())), true);
 		sb.append("</table><br>");
 
@@ -409,6 +415,40 @@ public final class MapDeviceWindow
 	private static String two(double value)
 	{
 		return String.format("%.2f", value);
+	}
+
+	/**
+	 * @return a tier's strength range and what its monsters are, such as "3.0-4.5 party monsters"
+	 */
+	private static String strength(MapTier tier)
+	{
+		return text(strengthColor(tier), tier.scoreRange()) + text(COLOR_MUTED, " " + MonsterStrength.describe(tier.minScore()));
+	}
+
+	private static String strengthColor(MapTier tier)
+	{
+		return tier.minScore() < 2 ? COLOR_POSITIVE : tier.minScore() < 6 ? COLOR_VALUE : COLOR_NEGATIVE;
+	}
+
+	/**
+	 * @return the strength of the monster kinds a map was filled with, such as "3.8-4.1"
+	 */
+	private static String kindsStrength(MapRun run)
+	{
+		final List<NpcTemplate> kinds = run.getMonsterKinds();
+		if (kinds.isEmpty())
+		{
+			return run.getTier().scoreRange();
+		}
+		double low = Double.MAX_VALUE;
+		double high = 0;
+		for (NpcTemplate template : kinds)
+		{
+			final double score = MonsterStrength.getScore(template);
+			low = Math.min(low, score);
+			high = Math.max(high, score);
+		}
+		return MonsterStrength.format(low) + (high - low >= 0.05 ? "-" + MonsterStrength.format(high) : "");
 	}
 
 	private static String medalName()

@@ -20,6 +20,7 @@
  */
 package handlers.chat.commands.admin;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
 
@@ -27,7 +28,9 @@ import org.l2jmobius.gameserver.data.xml.EventMapData;
 import org.l2jmobius.gameserver.data.xml.MapDeviceData;
 import org.l2jmobius.gameserver.handler.IAdminCommandHandler;
 import org.l2jmobius.gameserver.managers.MapDeviceManager;
+import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Player;
+import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
 import org.l2jmobius.gameserver.model.eventmap.EventMap;
 import org.l2jmobius.gameserver.model.eventmap.EventMapDevice;
 import org.l2jmobius.gameserver.model.eventmap.EventMapType;
@@ -35,6 +38,7 @@ import org.l2jmobius.gameserver.model.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.model.mapdevice.MapArena;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun;
 import org.l2jmobius.gameserver.model.mapdevice.MapTier;
+import org.l2jmobius.gameserver.model.mapdevice.MonsterStrength;
 import org.l2jmobius.gameserver.network.serverpackets.ExLinkOpen;
 
 import custom.Conquest.ConquestMarkers;
@@ -49,6 +53,7 @@ import custom.EventMaps.EventMapWeb;
  * <li>{@code //mapdevice show <map>} - draws a map's Map Device points in game ({@code //mapdevice hide} takes them away).</li>
  * <li>{@code //mapdevice test <map> [tier] [medals]} - opens a map there at the device of your own hideout, for nothing, to try it out.</li>
  * <li>{@code //mapdevice give <tier> [count]} - gives maps to your target (or you).</li>
+ * <li>{@code //mapdevice pool <tier>} - the monsters a map of that tier may hold, with their strength score; {@code //mapdevice score} - the strength of your target.</li>
  * <li>{@code //mapdevice runs} - the maps open right now; {@code //mapdevice close <instance>} closes one.</li>
  * <li>{@code //mapdevice reload} - reads data/MapDevice.xml and the event maps again, and works the monster pools out again.</li>
  * </ul>
@@ -140,6 +145,44 @@ public class AdminMapDevice implements IAdminCommandHandler
 				activeChar.sendSysMessage("Gave " + count + " " + MapDeviceManager.getItemName(tier.itemId()) + " to " + target.getName() + ".");
 				break;
 			}
+			case "pool":
+			{
+				final MapTier tier = st.hasMoreTokens() ? MapDeviceData.getInstance().getTier(parse(st.nextToken(), -1)) : null;
+				if (tier == null)
+				{
+					activeChar.sendSysMessage("Usage: //mapdevice pool <tier 1-" + MapDeviceData.getInstance().getMaxTier() + ">");
+					return false;
+				}
+				final List<NpcTemplate> pool = manager.getMonsterPool(tier);
+				activeChar.sendSysMessage("== Tier " + tier.tier() + ": levels " + tier.minLevel() + "-" + tier.maxLevel() + ", strength " + tier.scoreRange() + " (" + MonsterStrength.describe(tier.minScore()) + "), " + pool.size() + " kind(s) ==");
+				for (NpcTemplate template : pool)
+				{
+					activeChar.sendSysMessage(template.getId() + " " + template.getName() + " Lv. " + template.getLevel() + ": strength " + MonsterStrength.format(MonsterStrength.getScore(template)) + " (" + relativeStats(template) + ")");
+				}
+				break;
+			}
+			case "score":
+			{
+				final WorldObject target = activeChar.getTarget();
+				if ((target == null) || !target.isNpc())
+				{
+					activeChar.sendSysMessage("Usage: target a monster, then //mapdevice score");
+					return false;
+				}
+				final NpcTemplate template = target.asNpc().getTemplate();
+				final double score = MonsterStrength.getScore(template);
+				activeChar.sendSysMessage(template.getName() + " (" + template.getId() + ") Lv. " + template.getLevel() + ": strength " + MonsterStrength.format(score) + ", " + MonsterStrength.describe(score) + " (" + relativeStats(template) + ").");
+				final StringBuilder tiers = new StringBuilder();
+				for (MapTier tier : MapDeviceData.getInstance().getTiers().values())
+				{
+					if (tier.allowsLevel(template.getLevel()) && tier.allowsScore(score))
+					{
+						tiers.append(tiers.length() == 0 ? "" : ", ").append(tier.tier());
+					}
+				}
+				activeChar.sendSysMessage("Its level and strength fit tier(s): " + (tiers.length() == 0 ? "none" : tiers) + ". It drops tier " + MapDeviceData.getInstance().getDropTier(template.getLevel(), score) + " maps (before champion and other bonuses).");
+				break;
+			}
 			case "runs":
 			{
 				if (MapDeviceManager.getRuns().isEmpty())
@@ -178,11 +221,29 @@ public class AdminMapDevice implements IAdminCommandHandler
 			}
 			default:
 			{
-				activeChar.sendSysMessage("Usage: //mapdevice [editor|list|show <map>|hide|test <map> [tier] [medals]|give <tier> [count]|runs|close <instance>|reload]");
+				activeChar.sendSysMessage("Usage: //mapdevice [editor|list|show <map>|hide|test <map> [tier] [medals]|give <tier> [count]|pool <tier>|score|runs|close <instance>|reload]");
 				return false;
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * @return each stat against the standard monster of the level, such as "HP x13.9, P. Atk. x9.9, ..."
+	 */
+	private static String relativeStats(NpcTemplate template)
+	{
+		final double[] relative = MonsterStrength.getRelativeStats(template);
+		final StringBuilder sb = new StringBuilder();
+		for (MonsterStrength.Stat stat : MonsterStrength.Stat.values())
+		{
+			final double ratio = relative[stat.ordinal()];
+			if (!Double.isNaN(ratio))
+			{
+				sb.append(sb.length() == 0 ? "" : ", ").append(stat.getDisplayName()).append(" x").append(MonsterStrength.format(ratio));
+			}
+		}
+		return sb.toString();
 	}
 
 	private static String tiers(int min, int max)
