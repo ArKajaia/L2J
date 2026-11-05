@@ -62,18 +62,29 @@ public final class TeamVsTeamBarrier
 	 */
 	public static List<Fence> build(EventMap map, int instanceId)
 	{
-		final List<Fence> walls = new ArrayList<>();
 		final EventBarrier barrier = map.barrier();
 		if (barrier == null)
 		{
-			return walls;
+			return new ArrayList<>();
 		}
+		return build(barrier, map.z(), instanceId, "TvT Barrier");
+	}
 
+	/**
+	 * Puts up a fence round a field in an instance (a map of the Map Device uses it too).
+	 * @param barrier the field's ellipse
+	 * @param groundZ the height of the field's ground
+	 * @param instanceId the instance
+	 * @param name the name of the walls
+	 * @return its walls, to take down with {@link #remove}
+	 */
+	public static List<Fence> build(EventBarrier barrier, int groundZ, int instanceId, String name)
+	{
+		final List<Fence> walls = new ArrayList<>();
 		final int cx = barrier.x();
 		final int cy = barrier.y();
 		final int rx = barrier.radiusX();
 		final int ry = barrier.radiusY();
-		final int groundZ = map.z();
 		// Ramanujan's length of an ellipse.
 		final double length = Math.PI * ((3 * (rx + ry)) - Math.sqrt(((3 * rx) + ry) * (rx + (3 * ry))));
 		final int steps = Math.max(16, (int) Math.ceil(length / STEP));
@@ -84,8 +95,8 @@ public final class TeamVsTeamBarrier
 			final double angle = (i * 2 * Math.PI) / steps;
 			final int x = cx + (int) Math.round(Math.cos(angle) * rx);
 			final int y = cy + (int) Math.round(Math.sin(angle) * ry);
-			addWall(walls, px, py, x, py, groundZ, instanceId);
-			addWall(walls, x, py, x, y, groundZ, instanceId);
+			addWall(walls, px, py, x, py, groundZ, instanceId, name);
+			addWall(walls, x, py, x, y, groundZ, instanceId, name);
 			px = x;
 			py = y;
 		}
@@ -108,7 +119,7 @@ public final class TeamVsTeamBarrier
 	/**
 	 * A wall along x or along y, at the height of the ground under it: cut in two while the ground climbs too much along it, stacked at several heights when it is short and still climbs.
 	 */
-	private static void addWall(List<Fence> walls, int x1, int y1, int x2, int y2, int groundZ, int instanceId)
+	private static void addWall(List<Fence> walls, int x1, int y1, int x2, int y2, int groundZ, int instanceId, String name)
 	{
 		final int length = Math.abs(x2 - x1) + Math.abs(y2 - y1);
 		if (length < 2)
@@ -134,8 +145,8 @@ public final class TeamVsTeamBarrier
 		{
 			final int mx = (x1 + x2) / 2;
 			final int my = (y1 + y2) / 2;
-			addWall(walls, x1, y1, mx, my, groundZ, instanceId);
-			addWall(walls, mx, my, x2, y2, groundZ, instanceId);
+			addWall(walls, x1, y1, mx, my, groundZ, instanceId, name);
+			addWall(walls, mx, my, x2, y2, groundZ, instanceId, name);
 			return;
 		}
 
@@ -145,7 +156,7 @@ public final class TeamVsTeamBarrier
 		final int y = (y1 + y2) / 2;
 		for (int z = (high - low) <= MAX_CLIMB ? (low + high) / 2 : low; z <= Math.max(low, high); z += STACK_STEP)
 		{
-			walls.add(FenceData.getInstance().spawnFence(x, y, z, "TvT Barrier", width, depth, 1, instanceId, FenceState.CLOSED));
+			walls.add(FenceData.getInstance().spawnFence(x, y, z, name, width, depth, 1, instanceId, FenceState.CLOSED));
 			if ((high - low) <= MAX_CLIMB)
 			{
 				break;

@@ -29,6 +29,7 @@ import org.l2jmobius.gameserver.handler.IActionClickHandler;
 import org.l2jmobius.gameserver.handler.IActionShiftHandler;
 import org.l2jmobius.gameserver.managers.IdManager;
 import org.l2jmobius.gameserver.managers.InstanceManager;
+import org.l2jmobius.gameserver.managers.MapDeviceManager;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
@@ -860,6 +861,12 @@ public abstract class WorldObject extends ListenersContainer implements IPositio
 		}
 		
 		_location.setInstanceId(instanceId);
+		
+		// Map Device: a map's player modifiers come and go with the player.
+		if (isPlayer())
+		{
+			MapDeviceManager.onInstanceChanged(asPlayer(), oldInstanceId, instanceId);
+		}
 	}
 	
 	/**

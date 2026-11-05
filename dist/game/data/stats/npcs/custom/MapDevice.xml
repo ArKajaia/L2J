@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/npcs.xsd">
+	<!-- Maps and the Map Device (MapDeviceManager, custom/MapDevice). Clones of retail objects: displayId keeps the retail model. -->
+	<!-- The Map Device in a player's hideout. Based on the Teleportation Cubic (29055). -->
+	<npc id="900700" displayId="29055" level="85" type="Folk" name="Map Device" usingServerSideName="true" title="Hideout" usingServerSideTitle="true">
+		<race>CONSTRUCT</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+		</stats>
+		<status attackable="false" canMove="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="20" />
+			<height normal="40" />
+		</collision>
+	</npc>
+	<!-- A portal the Map Device opens into a map: one player each, then it is gone. Based on the Dimensional Vortex (30952). -->
+	<npc id="900701" displayId="30952" level="85" type="Folk" name="Map Portal" usingServerSideName="true" title="" usingServerSideTitle="true">
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+		</stats>
+		<status attackable="false" canMove="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="12" />
+			<height normal="35" />
+		</collision>
+	</npc>
+	<!-- Where the players come into a map: takes them back to the hideout, as often as they like. Based on the Dimensional Vortex (30953). -->
+	<npc id="900702" displayId="30953" level="85" type="Folk" name="Return Portal" usingServerSideName="true" title="To the Hideout" usingServerSideTitle="true">
+		<race>ETC</race>
+		<sex>ETC</sex>
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5000" hpRegen="10" mp="100" mpRegen="1" />
+			<attack physical="8" magical="7" />
+			<defence physical="500" magical="500" />
+		</stats>
+		<status attackable="false" canMove="false" undying="true" />
+		<ai aggroRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="12" />
+			<height normal="35" />
+		</collision>
+	</npc>
+</list>

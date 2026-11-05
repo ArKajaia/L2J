@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/items.xsd">
+	<!-- Maps of the Map Device (MapDeviceManager, data/MapDevice.xml, config/Custom/MapDevice.ini).
+	     Dropped by monsters of level 78 and up; double-click one in your hideout (.hideout) to put it in the Map Device.
+	     displayId: until the client knows these ids (client/MapDevice), it shows them as the retail "Pirate's Treasure Map" (5915).
+	     Once ItemName-e.dat and EtcItemgrp.dat have the rows of client/MapDevice, remove the displayId lines so each tier shows its own name. -->
+	<item id="50101" type="EtcItem" name="Map (Tier 1)">
+		<set name="icon" val="icon.etc_map_ivory_i00" />
+		<set name="displayId" val="5915" />
+		<set name="material" val="PAPER" />
+		<set name="is_stackable" val="true" />
+		<set name="is_sellable" val="false" />
+		<set name="handler" val="MapItem" />
+	</item>
+	<item id="50102" type="EtcItem" name="Map (Tier 2)">
+		<set name="icon" val="icon.etc_map_ivory_i00" />
+		<set name="displayId" val="5915" />
+		<set name="material" val="PAPER" />
+		<set name="is_stackable" val="true" />
+		<set name="is_sellable" val="false" />
+		<set name="handler" val="MapItem" />
+	</item>
+	<item id="50103" type="EtcItem" name="Map (Tier 3)">
+		<set name="icon" val="icon.etc_map_ivory_i00" />
+		<set name="displayId" val="5915" />
+		<set name="material" val="PAPER" />
+		<set name="is_stackable" val="true" />
+		<set name="is_sellable" val="false" />
+		<set name="handler" val="MapItem" />
+	</item>
+	<item id="50104" type="EtcItem" name="Map (Tier 4)">
+		<set name="icon" val="icon.etc_map_ivory_i00" />
+		<set name="displayId" val="5915" />
+		<set name="material" val="PAPER" />
+		<set name="is_stackable" val="true" />
+		<set name="is_sellable" val="false" />
+		<set name="handler" val="MapItem" />
+	</item>
+	<item id="50105" type="EtcItem" name="Map (Tier 5)">
+		<set name="icon" val="icon.etc_map_ivory_i00" />
+		<set name="displayId" val="5915" />
+		<set name="material" val="PAPER" />
+		<set name="is_stackable" val="true" />
+		<set name="is_sellable" val="false" />
+		<set name="handler" val="MapItem" />
+	</item>
+	<item id="50106" type="EtcItem" name="Map (Tier 6)">
+		<set name="icon" val="icon.etc_map_yellow_i00" />
+		<set name="displayId" val="5915" />
+		<set name="material" val="PAPER" />
+		<set name="is_stackable" val="true" />
+		<set name="is_sellable" val="false" />
+		<set name="handler" val="MapItem" />
+	</item>
+	<item id="50107" type="EtcItem" name="Map (Tier 7)">
+		<set name="icon" val="icon.etc_map_yellow_i00" />
+		<set name="displayId" val="5915" />
+		<set name="material" val="PAPER" />
+		<set name="is_stackable" val="true" />
+		<set name="is_sellable" val="false" />
+		<set name="handler" val="MapItem" />
+	</item>
+	<item id="50108" type="EtcItem" name="Map (Tier 8)">
+		<set name="icon" val="icon.etc_map_yellow_i00" />
+		<set name="displayId" val="5915" />
+		<set name="material" val="PAPER" />
+		<set name="is_stackable" val="true" />
+		<set name="is_sellable" val="false" />
+		<set name="handler" val="MapItem" />
+	</item>
+	<item id="50109" type="EtcItem" name="Map (Tier 9)">
+		<set name="icon" val="icon.etc_map_yellow_i00" />
+		<set name="displayId" val="5915" />
+		<set name="material" val="PAPER" />
+		<set name="is_stackable" val="true" />
+		<set name="is_sellable" val="false" />
+		<set name="handler" val="MapItem" />
+	</item>
+	<item id="50110" type="EtcItem" name="Map (Tier 10)">
+		<set name="icon" val="icon.etc_map_yellow_i00" />
+		<set name="displayId" val="5915" />
+		<set name="material" val="PAPER" />
+		<set name="is_stackable" val="true" />
+		<set name="is_sellable" val="false" />
+		<set name="handler" val="MapItem" />
+	</item>
+</list>

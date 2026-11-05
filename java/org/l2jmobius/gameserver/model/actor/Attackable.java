@@ -436,6 +436,10 @@ public class Attackable extends Npc
 			RaidLogManager.onRaidDied(this, killer);
 		}
 		
+		// Map Device: every death counts in a map (whoever killed it), and a kill may drop a map.
+		final Player mapPlayer = killer == null ? null : killer.asPlayer() != null ? killer.asPlayer() : FakePartyManager.getInstance().getRewardPlayer(killer, this);
+		org.l2jmobius.gameserver.managers.MapDeviceManager.getInstance().onAttackableDied(this, killer, mapPlayer, getMustRewardExpSP());
+		
 		// Delayed notification.
 		if (killer != null)
 		{

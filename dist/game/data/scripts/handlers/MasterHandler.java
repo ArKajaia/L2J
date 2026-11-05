@@ -24,6 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.l2jmobius.gameserver.config.custom.AdventurersGuideConfig;
+import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPotionsConfig;
 import org.l2jmobius.gameserver.config.custom.BankingConfig;
@@ -266,6 +267,7 @@ import handlers.chat.commands.voiced.CombatLogVoiced;
 import handlers.chat.commands.voiced.ExperienceGain;
 import handlers.chat.commands.voiced.GearVoiced;
 import handlers.chat.commands.voiced.GuideVoiced;
+import handlers.chat.commands.voiced.HideoutVoiced;
 import handlers.chat.commands.voiced.Lang;
 import handlers.chat.commands.voiced.CraftingGoalVoiced;
 import handlers.chat.commands.voiced.NightVoiced;
@@ -305,6 +307,7 @@ import handlers.items.Harvester;
 import handlers.items.ItemSkills;
 import handlers.items.ItemSkillsTemplate;
 import handlers.items.LifeStone;
+import handlers.items.MapItem;
 import handlers.items.Maps;
 import handlers.items.MercTicket;
 import handlers.items.NicknameColor;
@@ -596,6 +599,7 @@ public class MasterHandler
 			ItemSkills.class,
 			ItemSkillsTemplate.class,
 			LifeStone.class,
+			MapItem.class,
 			Maps.class,
 			MercTicket.class,
 			NicknameColor.class,
@@ -671,6 +675,7 @@ public class MasterHandler
 			DynamicQuestConfig.ENABLED || HiddenQuestConfig.ENABLED ? QuestsVoiced.class : null,
 			VillageSiegeConfig.ENABLED ? VillageSiegeVoiced.class : null,
 			AdventurersGuideConfig.ENABLED ? GuideVoiced.class : null,
+			MapDeviceConfig.ENABLED ? HideoutVoiced.class : null,
 		},
 		{
 			// Target Handlers
