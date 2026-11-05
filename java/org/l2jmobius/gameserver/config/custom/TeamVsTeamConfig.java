@@ -82,7 +82,7 @@ public class TeamVsTeamConfig
 	public static int DM_RESPAWN_DELAY;
 	/** The maps a Deathmatch registration picks from, by id (data/maps), empty for any map ticked for Deathmatch. */
 	public static List<String> DM_MAPS;
-	/** The reward of the best player (the fake players left out of the places). */
+	/** The reward of the winner (a real player first, no tie). */
 	public static List<ItemHolder> DM_WIN_REWARD;
 	/** What a player gets for each kill in a Deathmatch of either kind, on top of {@link #KILL_REWARDS}. */
 	public static List<ItemHolder> DM_KILL_REWARD;

@@ -219,7 +219,7 @@ public class TvT extends Event
 		{
 			return "";
 		}
-		return deathmatch ? " The best players (by kills, the fake players left out) also get Crystal Scrolls of their grade: " + places + "." : " The best players of the whole winning team (by kills) also get Crystal Scrolls of their grade: " + places + ".";
+		return deathmatch ? " The best players (by kills, the fake players counted in the places) also get Crystal Scrolls of their grade: " + places + "." : " The best players of the whole winning team (by kills) also get Crystal Scrolls of their grade: " + places + ".";
 	}
 
 	@Override

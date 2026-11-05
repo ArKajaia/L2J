@@ -1590,8 +1590,8 @@ public class ConquestManager
 	}
 
 	/**
-	 * The players of the whole winning team (every party of it) with the most contribution get {@link ConquestConfig#TOP_REWARDS}, first place first: most points, then most kills, then fewer deaths. Only players with a point or more (a player who left is off the team);
-	 * the fake players are left out of the places.
+	 * The players of the whole winning team (every party of it) with the most contribution get {@link ConquestConfig#TOP_REWARDS}, first place first: most points, then most kills, then fewer deaths. Only fighters with a point or more (a player who left is off the team);
+	 * the fake players hold places too, but only real players are rewarded: a place a fake player holds is not given to the next player.
 	 * @param match the match
 	 * @param winner the winning team
 	 */
@@ -1600,7 +1600,7 @@ public class ConquestManager
 		final List<ConquestFighter> ranking = new ArrayList<>();
 		for (ConquestFighter fighter : winner.getFighters())
 		{
-			if (fighter.isPlayer() && (fighter.getContribution() > 0))
+			if (fighter.getContribution() > 0)
 			{
 				ranking.add(fighter);
 			}
@@ -1611,6 +1611,10 @@ public class ConquestManager
 		{
 			final TopReward reward = ConquestConfig.TOP_REWARDS.get(i);
 			final ConquestFighter fighter = ranking.get(i);
+			if (!fighter.isPlayer())
+			{
+				continue;
+			}
 			final Player player = fighter.getCreature().asPlayer();
 			final int itemId = reward.getItemId(player);
 			player.sendMessage("Conquest: You are number " + (i + 1) + " of the whole " + winner.getName() + " team with " + fighter.getContribution() + " points (" + fighter.getKills() + " kills, " + fighter.getCaptures() + " captures).");
