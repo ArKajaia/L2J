@@ -33,10 +33,16 @@ import java.util.logging.Logger;
 import org.l2jmobius.gameserver.data.xml.MapDeviceData;
 import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.effects.AbstractEffect;
+import org.l2jmobius.gameserver.model.skill.EffectScope;
+import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.stats.functions.FuncTemplate;
 
 /**
  * How strong a monster is for its level, so a map can be filled with monsters of the same strength and not only of the same level (a level 84 Batwing Drake has 14 times the HP and 10 times the P. Atk. of a level 84 Sel Mahum Soldier).
  * <ul>
+ * <li><b>Effective stats</b>: a monster's stats as it fights: its template's stats times the multipliers of its passive skills (the retail npc skills such as 4408 "HP Increase (3x)", 4410 "Strong P. Atk.", 4412 "Strong P. Def."). Two monsters with the
+ * same stats in the npc data can be far apart once those are counted.</li>
  * <li><b>The standard monster of a level</b>: for every {@link Stat}, the lower quartile of that stat over every {@code type="Monster"} template of the level. Most monsters of a level share the stats of the server's ordinary monster of that level, so the lower quartile is that
  * monster, and the party monsters (Dragon Valley, Antharas' Lair, the Seed of Annihilation, Hellbound) don't pull it up. A level with fewer than {@link #MIN_SAMPLES} templates takes its standard from the levels round it.</li>
  * <li><b>Relative strength of a stat</b>: the monster's stat divided by the standard monster's. 1.0 is ordinary, 14.0 is fourteen times as much.</li>
@@ -62,25 +68,27 @@ public final class MonsterStrength
 	 */
 	public enum Stat
 	{
-		HP("hp", "HP", 2.0, t -> t.getBaseHpMax()),
-		P_ATK("pAtk", "P. Atk.", 1.0, NpcTemplate::getBasePAtk),
-		M_ATK("mAtk", "M. Atk.", 1.0, NpcTemplate::getBaseMAtk),
-		P_DEF("pDef", "P. Def.", 1.0, NpcTemplate::getBasePDef),
-		M_DEF("mDef", "M. Def.", 1.0, NpcTemplate::getBaseMDef),
-		P_ATK_SPD("pAtkSpd", "Atk. Spd.", 0.5, NpcTemplate::getBasePAtkSpd);
+		HP("hp", "HP", 2.0, t -> t.getBaseHpMax(), org.l2jmobius.gameserver.model.stats.Stat.MAX_HP),
+		P_ATK("pAtk", "P. Atk.", 1.0, NpcTemplate::getBasePAtk, org.l2jmobius.gameserver.model.stats.Stat.POWER_ATTACK),
+		M_ATK("mAtk", "M. Atk.", 1.0, NpcTemplate::getBaseMAtk, org.l2jmobius.gameserver.model.stats.Stat.MAGIC_ATTACK),
+		P_DEF("pDef", "P. Def.", 1.0, NpcTemplate::getBasePDef, org.l2jmobius.gameserver.model.stats.Stat.POWER_DEFENCE),
+		M_DEF("mDef", "M. Def.", 1.0, NpcTemplate::getBaseMDef, org.l2jmobius.gameserver.model.stats.Stat.MAGIC_DEFENCE),
+		P_ATK_SPD("pAtkSpd", "Atk. Spd.", 0.5, NpcTemplate::getBasePAtkSpd, org.l2jmobius.gameserver.model.stats.Stat.POWER_ATTACK_SPEED);
 		// No casting speed: the npc data has none, every npc casts at the default 333.
 
 		private final String _xmlName;
 		private final String _displayName;
 		private final double _defaultWeight;
 		private final ToDoubleFunction<NpcTemplate> _getter;
+		private final org.l2jmobius.gameserver.model.stats.Stat _gameStat;
 
-		Stat(String xmlName, String displayName, double defaultWeight, ToDoubleFunction<NpcTemplate> getter)
+		Stat(String xmlName, String displayName, double defaultWeight, ToDoubleFunction<NpcTemplate> getter, org.l2jmobius.gameserver.model.stats.Stat gameStat)
 		{
 			_xmlName = xmlName;
 			_displayName = displayName;
 			_defaultWeight = defaultWeight;
 			_getter = getter;
+			_gameStat = gameStat;
 		}
 
 		public String getXmlName()
@@ -98,13 +106,53 @@ public final class MonsterStrength
 			return _defaultWeight;
 		}
 
+		/**
+		 * @param template a monster
+		 * @return its effective value of this stat: the template's, times the multipliers of its passive skills
+		 */
 		public double getValue(NpcTemplate template)
 		{
-			return _getter.applyAsDouble(template);
+			return _getter.applyAsDouble(template) * passiveMultiplier(template, _gameStat);
 		}
 	}
 
 	private static final Stat[] STATS = Stat.values();
+
+	/**
+	 * @return the product of the unconditional multipliers its passive skills put on that stat (1.0 for none)
+	 */
+	static double passiveMultiplier(NpcTemplate template, org.l2jmobius.gameserver.model.stats.Stat stat)
+	{
+		double multiplier = 1.0;
+		for (Skill skill : template.getSkills().values())
+		{
+			if ((skill == null) || !skill.isPassive())
+			{
+				continue;
+			}
+			final List<AbstractEffect> effects = skill.getEffects(EffectScope.PASSIVE);
+			if (effects == null)
+			{
+				continue;
+			}
+			for (AbstractEffect effect : effects)
+			{
+				final List<FuncTemplate> functions = effect.getFuncTemplates();
+				if (functions == null)
+				{
+					continue;
+				}
+				for (FuncTemplate function : functions)
+				{
+					if ((function.getStat() == stat) && function.isMultiplier() && !function.hasConditions() && (function.getValue() > 0))
+					{
+						multiplier *= function.getValue();
+					}
+				}
+			}
+		}
+		return multiplier;
+	}
 
 	/** level -> the standard value of every stat (NaN: none), worked out from the levels round it where the level has too few templates. */
 	private static final Map<Integer, double[]> REFERENCES = new ConcurrentHashMap<>();
@@ -323,19 +371,23 @@ public final class MonsterStrength
 
 	/**
 	 * @param score a score
-	 * @return what monsters of that strength are, in words: "ordinary monsters" (below 2), "party monsters" (below 6), "elite party monsters" (below 7.5), else "giants"
+	 * @return what monsters of that strength are, in words: "ordinary monsters" (below 1.5), "tough monsters" (below 2.6), "party monsters" (below 5), "elite party monsters" (below 9), else "giants"
 	 */
 	public static String describe(double score)
 	{
-		if (score < 2)
+		if (score < 1.5)
 		{
 			return "ordinary monsters";
 		}
-		if (score < 6)
+		if (score < 2.6)
+		{
+			return "tough monsters";
+		}
+		if (score < 5)
 		{
 			return "party monsters";
 		}
-		return score < 7.5 ? "elite party monsters" : "giants";
+		return score < 9 ? "elite party monsters" : "giants";
 	}
 
 	/**

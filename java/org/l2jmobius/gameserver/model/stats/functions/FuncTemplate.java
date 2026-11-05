@@ -101,6 +101,22 @@ public class FuncTemplate
 	}
 	
 	/**
+	 * @return {@code true} if the function multiplies its stat ({@code <mul>})
+	 */
+	public boolean isMultiplier()
+	{
+		return _constructor.getDeclaringClass() == FuncMul.class;
+	}
+	
+	/**
+	 * @return {@code true} if the function only applies under a condition
+	 */
+	public boolean hasConditions()
+	{
+		return (_attachCond != null) || (_applyCond != null);
+	}
+	
+	/**
 	 * Gets the functions for skills.
 	 * @param caster the caster
 	 * @param target the target

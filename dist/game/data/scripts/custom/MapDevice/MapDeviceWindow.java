@@ -189,7 +189,7 @@ public final class MapDeviceWindow
 		row(sb, "Experience and drops", text(COLOR_POSITIVE, "x" + two(tier.reward())), true);
 		row(sb, "Portals", String.valueOf(MapDeviceConfig.PORTAL_COUNT), false);
 		sb.append("</table>");
-		sb.append(text(COLOR_HINT, "Strength 1.0 is an ordinary monster of its level; a party monster with ten times its HP and attack is about 5. The tier's multipliers come on top.")).append("<br><br>");
+		sb.append(text(COLOR_HINT, "Strength 1.0 is an ordinary monster of its level, 2.0 twice as strong (a Spiked Stakato); party monsters start near 3, the Seed of Annihilation elites are 10. The tier's multipliers come on top.")).append("<br><br>");
 
 		section(sb, "Feed it " + medalName() + "s");
 		sb.append(text(COLOR_MUTED, "You have " + format(medals) + ". Each one rolls a modifier (out of " + MapModifier.values().length + ") and adds +" + MapDeviceConfig.XP_BONUS_PER_MEDAL + "% experience and +" + MapDeviceConfig.DROP_BONUS_PER_MEDAL + "% drop rate.")).append("<br1>");
@@ -525,7 +525,7 @@ public final class MapDeviceWindow
 
 	private static String strengthColor(MapTier tier)
 	{
-		return tier.minScore() < 2 ? COLOR_POSITIVE : tier.minScore() < 6 ? COLOR_VALUE : COLOR_NEGATIVE;
+		return tier.minScore() < 1.5 ? COLOR_POSITIVE : tier.minScore() < 2.6 ? COLOR_VALUE : COLOR_NEGATIVE;
 	}
 
 	/**
