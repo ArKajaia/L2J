@@ -41,6 +41,7 @@ import org.l2jmobius.gameserver.model.eventmap.EventMap;
 import org.l2jmobius.gameserver.model.eventmap.EventMapType;
 import org.l2jmobius.gameserver.model.mapdevice.MapArena;
 import org.l2jmobius.gameserver.model.mapdevice.MapTier;
+import org.l2jmobius.gameserver.model.mapdevice.MonsterStrength;
 
 /**
  * Loads data/MapDevice.xml: the hideout (where its owner arrives and where the Map Device stands), the map tiers (their item, their monsters and which monsters drop them), the difficulty bonus that lets stronger monsters drop higher tiers, and the arenas a map can be opened in.
@@ -63,6 +64,7 @@ public class MapDeviceData implements IXmlReader
 	private volatile int _difficultyChampion3 = 2;
 	private volatile int _difficultySpecial = 1;
 	private volatile int _difficultyRaid = 2;
+	private volatile double[] _strengthWeights = defaultStrengthWeights();
 
 	// Filled while a file is parsed, then put in place at once.
 	private Location _newHideoutEntry;
@@ -70,6 +72,7 @@ public class MapDeviceData implements IXmlReader
 	private Map<Integer, MapTier> _newTiers;
 	private List<MapArena> _newArenas;
 	private Set<Integer> _newExcluded;
+	private double[] _newStrengthWeights;
 
 	protected MapDeviceData()
 	{
@@ -84,6 +87,7 @@ public class MapDeviceData implements IXmlReader
 		_newTiers = new TreeMap<>();
 		_newArenas = new ArrayList<>();
 		_newExcluded = new HashSet<>();
+		_newStrengthWeights = defaultStrengthWeights();
 		parseDatapackFile(FILE);
 
 		final Map<Integer, MapTier> byItem = new TreeMap<>();
@@ -98,6 +102,8 @@ public class MapDeviceData implements IXmlReader
 		_tiersByItem = Collections.unmodifiableMap(byItem);
 		_arenas = List.copyOf(_newArenas);
 		_excludedNpcIds = Set.copyOf(_newExcluded);
+		_strengthWeights = _newStrengthWeights;
+		MonsterStrength.clear();
 		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _tiers.size() + " map tiers and " + _arenas.size() + " arenas.");
 	}
 
@@ -137,7 +143,22 @@ public class MapDeviceData implements IXmlReader
 				final int tier = set.getInt("tier");
 				final int minLevel = set.getInt("minLevel");
 				final int maxLevel = Math.max(minLevel, set.getInt("maxLevel", minLevel));
-				_newTiers.put(tier, new MapTier(tier, set.getInt("itemId"), minLevel, maxLevel, set.getInt("dropLevel", minLevel), set.getDouble("hp", 1.0), set.getDouble("attack", 1.0), set.getDouble("defence", 1.0), set.getDouble("reward", 1.0)));
+				final double minScore = Math.max(0, set.getDouble("minScore", 0));
+				double maxScore = Math.max(0, set.getDouble("maxScore", 0));
+				if ((maxScore > 0) && (maxScore < minScore))
+				{
+					LOGGER.warning(getClass().getSimpleName() + ": Tier " + tier + " has maxScore " + maxScore + " below its minScore " + minScore + "; it takes no upper limit.");
+					maxScore = 0;
+				}
+				_newTiers.put(tier, new MapTier(tier, set.getInt("itemId"), minLevel, maxLevel, minScore, maxScore, set.getInt("dropLevel", minLevel), set.getDouble("hp", 1.0), set.getDouble("attack", 1.0), set.getDouble("defence", 1.0), set.getDouble("reward", 1.0)));
+			});
+			forEach(listNode, "strength", strengthNode ->
+			{
+				final StatSet set = new StatSet(parseAttributes(strengthNode));
+				for (MonsterStrength.Stat stat : MonsterStrength.Stat.values())
+				{
+					_newStrengthWeights[stat.ordinal()] = Math.max(0, set.getDouble(stat.getXmlName(), stat.getDefaultWeight()));
+				}
 			});
 			forEach(listNode, "arena", arenaNode ->
 			{
@@ -223,14 +244,15 @@ public class MapDeviceData implements IXmlReader
 
 	/**
 	 * @param level a monster's level
-	 * @return the highest tier whose drop level the monster reaches, 0 if it drops none
+	 * @param score the monster's strength score ({@link MonsterStrength})
+	 * @return the highest tier whose drop level and lowest score the monster reaches, 0 if it drops none
 	 */
-	public int getDropTier(int level)
+	public int getDropTier(int level, double score)
 	{
 		int best = 0;
 		for (MapTier tier : _tiers.values())
 		{
-			if ((level >= tier.dropLevel()) && (tier.tier() > best))
+			if ((level >= tier.dropLevel()) && (score >= tier.minScore()) && (tier.tier() > best))
 			{
 				best = tier.tier();
 			}
@@ -285,6 +307,24 @@ public class MapDeviceData implements IXmlReader
 			}
 		}
 		return arenas;
+	}
+
+	/**
+	 * @return how much each stat counts in a monster's strength score, in {@link MonsterStrength.Stat} order (the {@code <strength>} element)
+	 */
+	public double[] getStrengthWeights()
+	{
+		return _strengthWeights;
+	}
+
+	private static double[] defaultStrengthWeights()
+	{
+		final double[] weights = new double[MonsterStrength.Stat.values().length];
+		for (MonsterStrength.Stat stat : MonsterStrength.Stat.values())
+		{
+			weights[stat.ordinal()] = stat.getDefaultWeight();
+		}
+		return weights;
 	}
 
 	/**
