@@ -6,7 +6,7 @@ Code: `MapDeviceManager` (core logic), `MapQuestManager` (the quest "A Map of Yo
 
 ## How it plays
 
-1. **Maps drop.** Monsters of level 78 and up may drop a **Map (Tier 1-10)** (items 50101-50110). The tier follows the monster's level and strength (`dropLevel` and `minScore` in the XML: ordinary monsters drop tiers 1-6, party monsters 7-10), and stronger monsters drop higher tiers: Champion tier 2 +1, tier 3 +2, Mage/Thief/Infused/Resonant/wave challenge +1, raid boss +2 (`<difficulty>`). Base chance 1%, +3% per champion tier, 50% for raids, all raised by the monster's own drop rate bonuses (random passives, hot zones). No drop from monsters more than 9 levels below the player.
+1. **Maps drop.** Monsters of level 78 and up may drop a **Map (Tier 1-10)** (items 50101-50110). The tier follows the monster's level and strength (`dropLevel` and `minScore` in the XML: solo monsters drop tiers 1-5, party monsters 6-10), and stronger monsters drop higher tiers: Champion tier 2 +1, tier 3 +2, Mage/Thief/Infused/Resonant/wave challenge +1, raid boss +2 (`<difficulty>`). Base chance 1%, +3% per champion tier, 50% for raids, all raised by the monster's own drop rate bonuses (random passives, hot zones). No drop from monsters more than 9 levels below the player.
 2. **`.hideout`** in a town (any peace zone) takes the player to their own hideout: a private copy of the Jinia Guild Hideout cabin with the **Map Device** in it.
 3. **Insert a map.** Double-click a map in the hideout, or talk to the device and press *Insert*. The device asks how many **Champion Medals** (the Survival Arena medal) to feed it: 0 to 8.
 4. **Each medal** rolls one **modifier** out of 50 (never twice the same) and adds **+20% experience and +20% drop rate**. The map also rolls one random **hot zone effect** (the server's `HotzoneModifier`s) for its whole field.
@@ -23,28 +23,31 @@ Monsters inside a map drop maps at 2.5% (times the map's drop multiplier), of th
 
 | Tier | Item | Monster levels | Strength | Monsters | HP | Attack | Defence | Exp/drops | Drops from |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | 50101 | 78-79 | 0-1.5 | ordinary | x1.00 | x1.00 | x1.00 | x1.00 | level 78 |
-| 2 | 50102 | 78-80 | 0-1.5 | ordinary | x1.10 | x1.05 | x1.03 | x1.10 | level 79 |
-| 3 | 50103 | 80-81 | 0-1.5 | ordinary | x1.15 | x1.08 | x1.05 | x1.20 | level 80 |
-| 4 | 50104 | 81-82 | 0-1.5 | ordinary | x1.25 | x1.12 | x1.08 | x1.30 | level 81 |
-| 5 | 50105 | 82-83 | 0-1.5 | ordinary | x1.35 | x1.16 | x1.10 | x1.45 | level 82 |
-| 6 | 50106 | 83-84 | 0-1.5 | ordinary | x1.50 | x1.20 | x1.12 | x1.60 | level 83 |
-| 7 | 50107 | 83-85 | 3.0-4.5 | Drakos, Divinity, Maluk Princess, Hellbound scouts (3.8-4.1) | x1.00 | x1.00 | x1.00 | x1.80 | level 83, strength 3.0 |
-| 8 | 50108 | 83-85 | 4.5-6.0 | drakes, Dragon Valley trackers, Maluk Leaders, Hellbound watchers (4.9-5.7) | x1.05 | x1.03 | x1.02 | x2.00 | level 84, strength 4.5 |
-| 9 | 50109 | 83-85 | 6.0-7.5 | Seed of Annihilation elites, Tully's Workshop guards (6.7-6.9) | x1.10 | x1.05 | x1.03 | x2.30 | level 85, strength 6.0 |
-| 10 | 50110 | 83-87 | 7.5+ | Knoriks, Bloody Karik, Hellbound lords (9.0-9.2) | x1.15 | x1.08 | x1.05 | x2.70 | level 86, strength 7.5 |
+| 1 | 50101 | 78-79 | 0-1.0 | Ketra/Varka, the grazing beasts (48 kinds) | x1.00 | x1.00 | x1.00 | x1.00 | level 78 |
+| 2 | 50102 | 78-80 | 1.0-1.5 | the Imperial Tomb, the beetles (117) | x1.05 | x1.03 | x1.02 | x1.10 | level 78, strength 1.0 |
+| 3 | 50103 | 80-82 | 0.8-1.5 | Ragna Orcs, Grave Robbers, the dinosaurs (54) | x1.10 | x1.05 | x1.03 | x1.20 | level 80, strength 0.8 |
+| 4 | 50104 | 82-84 | 1.0-1.5 | Sel Mahum, Mucrokian, Solina (41) | x1.20 | x1.10 | x1.05 | x1.30 | level 82, strength 1.0 |
+| 5 | 50105 | 81-84 | 1.5-2.6 | tough solo monsters: Spiked Stakato, Tanta Lizardmen, Contaminated Batur (23) | x1.10 | x1.05 | x1.03 | x1.45 | level 81, strength 1.5 |
+| 6 | 50106 | 82-85 | 2.6-3.8 | light party: Hellbound scouts and mystics, Drake Scout/Mage (11) | x1.00 | x1.00 | x1.00 | x1.60 | level 82, strength 2.6 |
+| 7 | 50107 | 82-85 | 3.8-5.0 | Drakos, Divinity, Dragon Valley scouts, Hellbound watchers (23) | x1.00 | x1.00 | x1.00 | x1.80 | level 82, strength 3.8 |
+| 8 | 50108 | 82-85 | 5.0-6.5 | Maluks, Dragon Knights, Drake Leader, Tully's Workshop (21) | x1.00 | x1.00 | x1.00 | x2.00 | level 82, strength 5.0 |
+| 9 | 50109 | 82-86 | 6.5-9.0 | Batwing Drake, Bloody Karik, the Lesser Giants, Hellbound masters (17) | x1.00 | x1.00 | x1.00 | x2.30 | level 82, strength 6.5 |
+| 10 | 50110 | 83-87 | 9.0+ | the Seed of Annihilation elites, Knoriks (11) | x1.05 | x1.03 | x1.02 | x2.70 | level 85, strength 9.0 |
 
-The monsters of a map are plain open world monsters of the tier's levels **and** strength, with a respawning world spawn (no quest, event, instance-only or raid monster, nothing that gives no experience or lies still like the cocoons). Exclude more with `<excludedNpcs>`. Tiers 1-6 are solo maps; from tier 7 the monsters are party monsters, so the tier multipliers start again near 1: the monsters' own strength is the step up. `//mapdevice pool <tier>` lists a tier's monsters with their strength.
+The monsters of a map are plain open world monsters of the tier's levels **and** strength, with a respawning world spawn (no quest, event, instance-only or raid monster, nothing that gives no experience or lies still like the cocoons). Exclude more with `<excludedNpcs>`. Tiers 1-5 are solo maps; from tier 6 the monsters are party monsters, whose own strength is the step up, so the tier multipliers stay near 1. `//mapdevice pool <tier>` lists a tier's monsters with their strength.
 
 ### Monster strength
 
 Two monsters of the same level can be miles apart: a level 84 Batwing Drake has 14 times the HP and 10 times the P. Atk. of a level 84 Sel Mahum Soldier. So every monster gets a **strength score** (`MonsterStrength`):
 
-1. **The standard monster of a level**: for each stat (HP, P. Atk., M. Atk., P. Def., M. Def., Atk. Spd.), the lower quartile of that stat over every monster of the level. Most monsters of a level share the stats of the ordinary monster of that level, so that is what the lower quartile lands on, and the party monsters don't pull it up. A level with fewer than 5 monsters takes its standard from the levels round it.
-2. **Relative strength of each stat**: the monster's stat divided by the standard's (Batwing Drake: HP x13.9, P. Atk. x9.9, M. Atk. x10.6, P. Def. x1.6, M. Def. x2.4, Atk. Spd. x1.0).
-3. **Score**: the weighted geometric mean of those ratios (weights in `<strength>` of `data/MapDevice.xml`: HP 2, P./M. Atk. 1, P./M. Def. 1, Atk. Spd. 0.5, so toughness and offence weigh the same). 1.0 is an ordinary monster; the Batwing Drake is 5.7, Knoriks 9.1. A geometric mean, because the stats multiply into how hard a monster is.
+1. **Effective stats**: the npc data's stats times the multipliers of the monster's passive skills: the retail npc skills 4408 "HP Increase (0.25x-12x)", 4410/4411 "P./M. Atk." and 4412/4413 "P./M. Def." (Weak to Ultra Strong). Over 7,000 monsters carry them, and they change a lot: a Male Spiked Stakato has "HP Increase (6x)", a Drakos Guardian 4x. The scores read them from the loaded skills, so a change to a skill or an npc's skill list changes the score.
+2. **The standard monster of a level**: for each stat (HP, P. Atk., M. Atk., P. Def., M. Def., Atk. Spd.), the lower quartile of that effective stat over every monster of the level. Most monsters of a level share the stats of the ordinary monster of that level, so that is what the lower quartile lands on, and the party monsters don't pull it up. A level with fewer than 5 monsters takes its standard from the levels round it.
+3. **Relative strength of each stat**: the monster's effective stat divided by the standard's (Batwing Drake: HP x13.9, P. Atk. x16.0, M. Atk. x18.7, P. Def. x2.6, M. Def. x1.4, Atk. Spd. x1.0).
+4. **Score**: the weighted geometric mean of those ratios (weights in `<strength>` of `data/MapDevice.xml`: HP 2, P./M. Atk. 1, P./M. Def. 1, Atk. Spd. 0.5, so toughness and offence weigh the same). 1.0 is an ordinary monster; a Spiked Stakato is about 2, a Maluk Leader 6.1, Knoriks and the Seed elites 10.3. A geometric mean, because the stats multiply into how hard a monster is.
 
 A tier takes the monsters whose level is within `minLevel`-`maxLevel` and whose score is within `minScore`-`maxScore` (0 = no upper limit). If none fits, it takes the closest in strength of its levels and the server log says so. An open world monster drops the highest tier whose `dropLevel` and `minScore` it reaches. The device windows show each tier's strength; `//mapdevice score` shows the score of your target and the tiers it fits.
+
+What still varies inside a map, on purpose: the map's own Champions, Mages, Thieves, Infused, Resonant and wave challenge monsters, the server's random passives (up to +100% HP at 20 passives) and the hot zone effect. In a live test of a tier 8 map the six kinds' plain monsters were within 1.5x of each other (3.8x before effective stats were scored), the median monster 1.7x the weakest, and the strongest single monster (a tier 2 Champion with 20 passives) 6.7x.
 
 ## The 50 modifiers
 
