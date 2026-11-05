@@ -92,6 +92,7 @@ import org.l2jmobius.gameserver.model.skill.Skill;
 import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.spawns.Spawn;
 import org.l2jmobius.gameserver.model.stats.Stat;
+import org.l2jmobius.gameserver.model.stats.TraitType;
 import org.l2jmobius.gameserver.model.stats.functions.AbstractFunction;
 import org.l2jmobius.gameserver.model.stats.functions.FuncAdd;
 import org.l2jmobius.gameserver.model.stats.functions.FuncMul;
@@ -126,6 +127,16 @@ public class MapDeviceManager
 	private static final String RISEN_VAR = "MAP_RISEN";
 	/** Set on the Map Guardian. */
 	private static final String GUARDIAN_VAR = "MAP_GUARDIAN";
+	/** Splitters: a copy of a split monster (half HP, half rewards, never splits again). */
+	private static final String SPLIT_VAR = "MAP_SPLIT";
+	/** Summoners: a monster that calls its minions when first hit. */
+	private static final String SUMMONER_VAR = "MAP_SUMMONER";
+	/** Summoners: a summoned minion (half HP, 70% damage, half rewards). */
+	private static final String MINION_VAR = "MAP_MINION";
+	/** Bounty Mark: the tag the marked monster wore before. */
+	private static final String BOUNTY_TAG_VAR = "MAP_BOUNTY_TAG";
+	/** Where {@code Monster.setEventTitleTag} keeps the tag. */
+	private static final String EVENT_TITLE_TAG_VAR = "EVENT_TITLE_TAG";
 	/** Soul Eaters: how many souls a monster has devoured. */
 	private static final String SOULS_VAR = "MAP_SOULS";
 
@@ -145,6 +156,36 @@ public class MapDeviceManager
 	private static final int BURNING_INTERVAL = 3;
 	private static final double BURNING_DAMAGE = 0.015;
 	private static final int AMBUSH_SIZE = 20;
+	private static final int SPLIT_COUNT = 2;
+	private static final int SUMMON_COUNT = 2;
+	private static final int SUMMON_SKILL_ID = 4526; // Quest - BOSS Summon (visual only)
+	private static final double MINION_ATTACK = 0.70;
+	/** Splitters and Summoners: the extra monsters give half the experience and drops. */
+	private static final double SPAWNLING_REWARD = 0.5;
+	/** Linked Souls: partners share damage only this close to each other, and stand this close when spawned. */
+	private static final int LINK_RANGE = 1200;
+	private static final int LINK_SPAWN_RANGE = 220;
+	private static final int CURSE_SECONDS = 10;
+	private static final int CURSE_MAX_STACKS = 6;
+	private static final double CURSE_PER_STACK = 0.05;
+	private static final Stat[] CURSED_STATS =
+	{
+		Stat.POWER_ATTACK,
+		Stat.MAGIC_ATTACK,
+		Stat.POWER_DEFENCE,
+		Stat.MAGIC_DEFENCE,
+		Stat.POWER_ATTACK_SPEED,
+		Stat.MAGIC_ATTACK_SPEED,
+		Stat.MOVE_SPEED
+	};
+	private static final int VENOM_SKILL_ID = 4182; // Poison (NPC), 30 s
+	private static final int BLEED_SKILL_ID = 4188; // Bleed (NPC), 20 s
+	private static final int BOUNTY_SECONDS = 120;
+	private static final double BOUNTY_DROP = 3.0;
+	/** Shieldbearers: a monster's shield adds this share of its P. Def. when it blocks. */
+	private static final double SHIELD_DEF_SHARE = 0.5;
+	/** Linked Souls: true while damage is being passed on to a partner, so it isn't shared (or reduced) twice. */
+	private static final ThreadLocal<Boolean> SHARING = ThreadLocal.withInitial(() -> Boolean.FALSE);
 	/** When this few monsters are left, they hunt the players down (none stays hidden in a corner of the field). */
 	private static final int LAST_HUNT_COUNT = 10;
 	private static final int LAST_HUNT_AGGRO_RANGE = 2500;
@@ -240,6 +281,17 @@ public class MapDeviceManager
 		}
 
 		double multiplier = run.getMonsterMultiplier(stat);
+		if ((run.isSplitters() || (run.getSummonerPct() > 0)) && ((stat == MonsterStat.HP) || (stat == MonsterStat.P_ATK) || (stat == MonsterStat.M_ATK)))
+		{
+			if (monster.getVariables().getBoolean(SPLIT_VAR, false))
+			{
+				multiplier *= stat == MonsterStat.HP ? 0.5 : 1.0;
+			}
+			else if (monster.getVariables().getBoolean(MINION_VAR, false))
+			{
+				multiplier *= stat == MonsterStat.HP ? 0.5 : MINION_ATTACK;
+			}
+		}
 		switch (stat)
 		{
 			case P_ATK, M_ATK ->
@@ -285,7 +337,7 @@ public class MapDeviceManager
 	public static double getXpMultiplier(Monster monster)
 	{
 		final MapRun run = getMonsterRun(monster);
-		return run != null ? run.getXpMultiplier() : 1.0;
+		return run != null ? run.getXpMultiplier() * getSpawnlingReward(run, monster) : 1.0;
 	}
 
 	/**
@@ -296,7 +348,182 @@ public class MapDeviceManager
 	public static double getDropMultiplier(Monster monster)
 	{
 		final MapRun run = getMonsterRun(monster);
-		return run != null ? run.getDropMultiplier() : 1.0;
+		if (run == null)
+		{
+			return 1.0;
+		}
+		final double bounty = isBountyTarget(run, monster) ? BOUNTY_DROP : 1.0;
+		return run.getDropMultiplier() * getSpawnlingReward(run, monster) * bounty;
+	}
+
+	/**
+	 * @return {@link #SPAWNLING_REWARD} for a copy of Splitters or a minion of Summoners, else 1.0
+	 */
+	private static double getSpawnlingReward(MapRun run, Monster monster)
+	{
+		if ((run.isSplitters() || (run.getSummonerPct() > 0)) && (monster.getVariables().getBoolean(SPLIT_VAR, false) || monster.getVariables().getBoolean(MINION_VAR, false)))
+		{
+			return SPAWNLING_REWARD;
+		}
+		return 1.0;
+	}
+
+	/**
+	 * @return {@code true} if the monster carries Bounty Mark's bounty and it hasn't run out
+	 */
+	private static boolean isBountyTarget(MapRun run, Monster monster)
+	{
+		return run.isBounty() && (run.getBountyId() == monster.getObjectId()) && (System.currentTimeMillis() <= run.getBountyUntil());
+	}
+
+	/**
+	 * Hook of {@code Monster.reduceCurrentHp}, before the damage is taken: Spell-Warded, Glass Cannon, Summoners (the first hit calls the minions) and Linked Souls (half goes to the partner).
+	 * @param monster the monster hit
+	 * @param amount the damage
+	 * @param attacker who deals it, may be {@code null}
+	 * @param isDOT {@code true} for a damage over time tick
+	 * @param skill the skill, {@code null} for an attack
+	 * @return the damage the monster itself takes
+	 */
+	public static double onMonsterDamaged(Monster monster, double amount, Creature attacker, boolean isDOT, Skill skill)
+	{
+		if (SHARING.get())
+		{
+			return amount; // A partner's share: already worked out.
+		}
+		final MapRun run = getMonsterRun(monster);
+		if ((run == null) || (amount <= 0) || monster.isDead())
+		{
+			return amount;
+		}
+
+		double damage = amount;
+		if (skill != null)
+		{
+			damage *= run.getMonsterSkillDamageTaken();
+		}
+		if ((attacker != null) && attacker.isPlayable())
+		{
+			damage *= run.getPlayerDamage();
+		}
+
+		if ((attacker != null) && (run.getSummonerPct() > 0) && monster.getVariables().getBoolean(SUMMONER_VAR, false))
+		{
+			monster.getVariables().remove(SUMMONER_VAR);
+			ThreadPool.schedule(() -> getInstance().summonMinions(run, monster, attacker), 300);
+		}
+
+		if (run.isLinkedSouls() && (attacker != null))
+		{
+			final Integer partnerId = run.getPartners().get(monster.getObjectId());
+			final Creature partner = partnerId != null ? World.getInstance().findObject(partnerId) instanceof Creature creature ? creature : null : null;
+			if ((partner != null) && partner.isMonster() && !partner.isDead() && (partner.getInstanceId() == monster.getInstanceId()) && (monster.calculateDistance2D(partner) <= LINK_RANGE))
+			{
+				final double share = damage / 2;
+				SHARING.set(Boolean.TRUE);
+				try
+				{
+					partner.reduceCurrentHp(share, attacker, true, isDOT, skill);
+				}
+				finally
+				{
+					SHARING.set(Boolean.FALSE);
+				}
+				damage -= share;
+			}
+		}
+		return damage;
+	}
+
+	/**
+	 * Hook of {@code Creature.onHitTimer}: a map monster's attack landed on a player (Mana Siphon, Venomous, Lacerating).
+	 * @param monster the monster
+	 * @param target the player hit
+	 * @param crit {@code true} for a critical hit
+	 */
+	public static void onMonsterHit(Monster monster, Player target, boolean crit)
+	{
+		final MapRun run = getMonsterRun(monster);
+		if ((run == null) || target.isDead() || target.isInvul())
+		{
+			return;
+		}
+		if (run.getManaSiphonPct() > 0)
+		{
+			target.reduceCurrentMp(target.getMaxMp() * (run.getManaSiphonPct() / 100.0));
+		}
+		if ((run.getVenomPct() > 0) && (Rnd.get(100) < run.getVenomPct()))
+		{
+			applyNpcDebuff(monster, target, VENOM_SKILL_ID);
+		}
+		if (crit && run.isLacerating())
+		{
+			applyNpcDebuff(monster, target, BLEED_SKILL_ID);
+		}
+	}
+
+	/**
+	 * Lands an NPC damage over time debuff on a player, at the level that fits the monster (the skill's levels step every 10 levels, from 14).
+	 */
+	private static void applyNpcDebuff(Monster monster, Player target, int skillId)
+	{
+		final int level = Math.max(1, Math.min(12, ((monster.getLevel() - 14) / 10) + 2));
+		final Skill skill = SkillData.getInstance().getSkill(skillId, level);
+		if (skill != null)
+		{
+			skill.applyEffects(monster, target);
+		}
+	}
+
+	/**
+	 * Hook of {@code Formulas.calcEffectSuccess}: Hexproof and Unshakable on the map's monsters, Weakened Will on its players.
+	 * @param attacker who casts
+	 * @param target who it lands on
+	 * @param skill the skill
+	 * @return what the chance is multiplied by, 1.0 outside a map
+	 */
+	public static double getEffectChanceMultiplier(Creature attacker, Creature target, Skill skill)
+	{
+		if (RUNS_BY_INSTANCE.isEmpty() || !skill.isDebuff())
+		{
+			return 1.0;
+		}
+		double multiplier = 1.0;
+		final MapRun run = getMonsterRun(target);
+		if (run != null)
+		{
+			multiplier *= run.getMonsterDebuffChance();
+			switch (skill.getTraitType())
+			{
+				case SHOCK, SLEEP, HOLD, ROOT_PHYSICALLY, ROOT_MAGICALLY, DERANGEMENT ->
+				{
+					multiplier *= run.getMonsterControlChance();
+				}
+				default ->
+				{
+				}
+			}
+		}
+		if ((attacker != null) && attacker.isPlayable())
+		{
+			final MapRun attackerRun = getRun(attacker.getInstanceId());
+			if (attackerRun != null)
+			{
+				multiplier *= attackerRun.getPlayerDebuffChance();
+			}
+		}
+		return multiplier;
+	}
+
+	/**
+	 * Hook of {@code Formulas.calcShldUse}: Shieldbearers.
+	 * @param target the creature attacked
+	 * @return the chance (%) it blocks with its map's shield, 0 for none (its own shield rules then)
+	 */
+	public static int getShieldRate(Creature target)
+	{
+		final MapRun run = getMonsterRun(target);
+		return run != null ? run.getMonsterShieldPct() : 0;
 	}
 
 	/**
@@ -1221,13 +1448,26 @@ public class MapDeviceManager
 			waveIndexes.add(Rnd.get(spots.size()));
 		}
 
+		Monster previous = null;
 		for (int i = 0; i < spots.size(); i++)
 		{
-			final Monster monster = spawnMapMonster(run, kinds.get(Rnd.get(kinds.size())), spots.get(i));
+			// Linked Souls: every second monster is its predecessor's twin, at its side.
+			final boolean twin = run.isLinkedSouls() && ((i % 2) == 1) && (previous != null);
+			final NpcTemplate template = twin ? previous.getTemplate() : kinds.get(Rnd.get(kinds.size()));
+			final Location spot = twin ? nearSpot(run, previous, LINK_SPAWN_RANGE) : spots.get(i);
+			final Monster monster = spawnMapMonster(run, template, spot);
 			if (monster != null)
 			{
 				applyVariants(run, monster, waveIndexes.contains(i));
+				if (twin)
+				{
+					run.getPartners().put(monster.getObjectId(), previous.getObjectId());
+					run.getPartners().put(previous.getObjectId(), monster.getObjectId());
+					monster.setEventTitleTag("[Linked]");
+					previous.setEventTitleTag("[Linked]");
+				}
 			}
+			previous = twin ? null : monster;
 		}
 
 		if (run.isGuardian())
@@ -1306,6 +1546,19 @@ public class MapDeviceManager
 			spots.addAll(pack);
 		}
 		return spots;
+	}
+
+	/**
+	 * @return a spot on the ground within {@code range} of a creature, in its run's instance
+	 */
+	private static Location nearSpot(MapRun run, Creature center, int range)
+	{
+		final GeoEngine geo = GeoEngine.getInstance();
+		final double angle = Rnd.nextDouble() * 2 * Math.PI;
+		final int distance = Rnd.get(range / 3, range);
+		final int x = center.getX() + (int) (Math.cos(angle) * distance);
+		final int y = center.getY() + (int) (Math.sin(angle) * distance);
+		return geo.getValidLocation(center.getX(), center.getY(), center.getZ(), x, y, geo.getHeight(x, y, center.getZ()), run.getInstanceId());
 	}
 
 	/**
@@ -1407,6 +1660,12 @@ public class MapDeviceManager
 		add(functions, Stat.EVASION_RATE, run.getMonsterEvasion(), owner);
 		add(functions, Stat.ABSORB_DAMAGE_PERCENT, run.getMonsterLeechPct(), owner);
 		add(functions, Stat.REFLECT_DAMAGE_PERCENT, run.getMonsterReflectPct(), owner);
+		mul(functions, Stat.MCRITICAL_RATE, run.getMonsterMCritRate(), owner);
+		mul(functions, Stat.DEFENCE_CRITICAL_DAMAGE, run.getMonsterCritDamageTaken(), owner);
+		if (run.getMonsterShieldPct() > 0)
+		{
+			add(functions, Stat.SHIELD_DEFENCE, Math.round(monster.getPDef(null) * SHIELD_DEF_SHARE), owner);
+		}
 		for (Stat stat : ELEMENT_RESISTANCES)
 		{
 			add(functions, stat, run.getMonsterElementRes(), owner);
@@ -1528,6 +1787,13 @@ public class MapDeviceManager
 		if (run.isTitans())
 		{
 			monster.startAbnormalVisualEffect(true, AbnormalVisualEffect.BIG_BODY);
+		}
+
+		// Summoners: calls its minions when first hit.
+		if ((run.getSummonerPct() > 0) && (Rnd.get(100) < run.getSummonerPct()))
+		{
+			monster.getVariables().set(SUMMONER_VAR, true);
+			monster.setEventTitleTag("[Summoner]");
 		}
 
 		monster.setCurrentHpMp(monster.getMaxHp(), monster.getMaxMp());
@@ -1801,6 +2067,10 @@ public class MapDeviceManager
 	private static void removePlayerEffects(Player player, MapRun run)
 	{
 		player.removeStatsOwner(run.getPlayerFuncOwner());
+		if (run.getCurses().remove(player.getObjectId()) != null)
+		{
+			player.removeStatsOwner(run.getCurseFuncOwner());
+		}
 		final HotzoneModifier hotzone = run.getHotzoneEffect();
 		if (hotzone != null)
 		{
@@ -1996,6 +2266,18 @@ public class MapDeviceManager
 
 		final Location corpse = new Location(victim.getX(), victim.getY(), victim.getZ(), victim.getHeading());
 
+		if (run.isBounty() && (run.getBountyId() == victim.getObjectId()))
+		{
+			final boolean inTime = System.currentTimeMillis() <= run.getBountyUntil();
+			run.setBounty(0, 0);
+			sendScreenToMap(run, inTime ? "Bounty claimed: the " + victim.getName() + " drops triple!" : "The " + victim.getName() + " is slain, too late for its bounty.");
+		}
+
+		if (run.isDeathCurse() && (player != null) && (player.getInstanceId() == run.getInstanceId()))
+		{
+			curse(run, player);
+		}
+
 		if (run.isVolatileDeath())
 		{
 			ThreadPool.schedule(() -> explode(run, victim, corpse), VOLATILE_DELAY);
@@ -2015,8 +2297,15 @@ public class MapDeviceManager
 			sendScreenToMap(run, "The Map Guardian has fallen!");
 		}
 
+		// Splitters: a counted monster that is no copy itself splits in two.
+		if (counted && run.isSplitters() && !victim.getVariables().getBoolean(SPLIT_VAR, false) && !victim.getVariables().getBoolean(MINION_VAR, false) && !victim.getVariables().getBoolean(GUARDIAN_VAR, false))
+		{
+			ThreadPool.schedule(() -> split(run, victim.getTemplate(), corpse), 800);
+			return; // Not cleared yet: its copies come.
+		}
+
 		// Undying Legion: a counted monster that never rose before may come back once.
-		if (counted && (run.getRisePct() > 0) && !victim.getVariables().getBoolean(RISEN_VAR, false) && !victim.getVariables().getBoolean(GUARDIAN_VAR, false) && (Rnd.get(100) < run.getRisePct()))
+		if (counted && (run.getRisePct() > 0) && !victim.getVariables().getBoolean(RISEN_VAR, false) && !victim.getVariables().getBoolean(SPLIT_VAR, false) && !victim.getVariables().getBoolean(GUARDIAN_VAR, false) && (Rnd.get(100) < run.getRisePct()))
 		{
 			ThreadPool.schedule(() -> riseAgain(run, victim.getTemplate(), corpse), VOLATILE_DELAY);
 			return; // Not cleared yet: it comes back.
@@ -2103,6 +2392,199 @@ public class MapDeviceManager
 	}
 
 	/**
+	 * Splitters: the slain monster splits into copies with half its HP. They count for the map.
+	 */
+	private void split(MapRun run, NpcTemplate template, Location corpse)
+	{
+		if (run.isClosed())
+		{
+			return;
+		}
+		final GeoEngine geo = GeoEngine.getInstance();
+		int spawned = 0;
+		for (int i = 0; i < SPLIT_COUNT; i++)
+		{
+			final double angle = (Rnd.nextDouble() * 2 * Math.PI);
+			final int x = corpse.getX() + (int) (Math.cos(angle) * 80);
+			final int y = corpse.getY() + (int) (Math.sin(angle) * 80);
+			final Location spot = geo.getValidLocation(corpse.getX(), corpse.getY(), corpse.getZ(), x, y, geo.getHeight(x, y, corpse.getZ()), run.getInstanceId());
+			final Monster copy = spawnMapMonster(run, template, spot);
+			if (copy != null)
+			{
+				copy.getVariables().set(SPLIT_VAR, true);
+				copy.setEventTitleTag("[Split]");
+				copy.setCurrentHpMp(copy.getMaxHp(), copy.getMaxMp());
+				copy.broadcastInfo();
+				spawned++;
+			}
+		}
+		if (spawned == 0)
+		{
+			checkCompleted(run);
+			return;
+		}
+		run.setMonsterTotal(run.getMonsterTotal() + spawned);
+	}
+
+	/**
+	 * Summoners: the monster calls its minions on whoever hit it first. They count for the map.
+	 */
+	private void summonMinions(MapRun run, Monster summoner, Creature attacker)
+	{
+		if (run.isClosed() || summoner.isDead() || (run.getStatus() != Status.OPEN))
+		{
+			return;
+		}
+		final List<NpcTemplate> pool = run.getMonsterKinds().isEmpty() ? List.of(summoner.getTemplate()) : run.getMonsterKinds();
+		summoner.broadcastPacket(new MagicSkillUse(summoner, summoner, SUMMON_SKILL_ID, 1, 0, 0));
+		int spawned = 0;
+		for (int i = 0; i < SUMMON_COUNT; i++)
+		{
+			final Monster minion = spawnMapMonster(run, pool.get(Rnd.get(pool.size())), nearSpot(run, summoner, 150));
+			if (minion == null)
+			{
+				continue;
+			}
+			minion.getVariables().set(MINION_VAR, true);
+			minion.setEventTitleTag("[Minion]");
+			minion.setCurrentHpMp(minion.getMaxHp(), minion.getMaxMp());
+			minion.broadcastInfo();
+			if (!attacker.isDead() && (attacker.getInstanceId() == run.getInstanceId()))
+			{
+				minion.addDamageHate(attacker, 0, 500);
+				minion.getAI().setIntention(Intention.ATTACK, attacker);
+			}
+			spawned++;
+		}
+		run.setMonsterTotal(run.getMonsterTotal() + spawned);
+	}
+
+	/**
+	 * Death Curse: one more stack on the killer, and the clock starts again.
+	 */
+	private static void curse(MapRun run, Player player)
+	{
+		final long[] curse = run.getCurses().computeIfAbsent(player.getObjectId(), _ -> new long[2]);
+		final int stacks;
+		synchronized (curse)
+		{
+			curse[0] = Math.min(CURSE_MAX_STACKS, curse[0] + 1);
+			curse[1] = System.currentTimeMillis() + (CURSE_SECONDS * 1000L);
+			stacks = (int) curse[0];
+		}
+		applyCurse(run, player, stacks);
+		player.sendMessage("Death Curse: you are " + Math.round(stacks * CURSE_PER_STACK * 100) + "% weaker for " + CURSE_SECONDS + " seconds.");
+	}
+
+	private static void applyCurse(MapRun run, Player player, int stacks)
+	{
+		final Object owner = run.getCurseFuncOwner();
+		player.removeStatsOwner(owner);
+		if (stacks > 0)
+		{
+			final List<AbstractFunction> functions = new ArrayList<>();
+			for (Stat stat : CURSED_STATS)
+			{
+				mul(functions, stat, 1.0 - (stacks * CURSE_PER_STACK), owner);
+			}
+			player.addStatFuncs(functions);
+		}
+		player.broadcastUserInfo();
+	}
+
+	/**
+	 * Death Curse: lifts the curses whose time is up.
+	 */
+	private static void liftCurses(MapRun run, long now)
+	{
+		for (Map.Entry<Integer, long[]> entry : run.getCurses().entrySet())
+		{
+			if (now < entry.getValue()[1])
+			{
+				continue;
+			}
+			run.getCurses().remove(entry.getKey());
+			final Player player = World.getInstance().getPlayer(entry.getKey());
+			if (player != null)
+			{
+				applyCurse(run, player, 0);
+				player.sendMessage("The Death Curse fades.");
+			}
+		}
+	}
+
+	/**
+	 * Bounty Mark: when there is no bounty (or it ran out), another monster is marked, and the players are told where it is.
+	 */
+	private static void updateBounty(MapRun run, List<Player> players, long now)
+	{
+		final int bountyId = run.getBountyId();
+		Monster marked = null;
+		if (bountyId != 0)
+		{
+			final WorldObject object = World.getInstance().findObject(bountyId);
+			marked = (object != null) && object.isMonster() && !((Monster) object).isDead() ? (Monster) object : null;
+			if ((marked != null) && (now <= run.getBountyUntil()))
+			{
+				return; // Still running.
+			}
+			if (marked != null)
+			{
+				marked.setEventTitleTag(marked.getVariables().getString(BOUNTY_TAG_VAR, null));
+				sendScreenToMap(run, "The bounty on the " + marked.getName() + " has run out.");
+			}
+			run.setBounty(0, 0);
+		}
+
+		final List<Integer> alive = new ArrayList<>(run.getMonsters());
+		alive.remove(Integer.valueOf(bountyId)); // Another one.
+		Collections.shuffle(alive);
+		for (int objectId : alive)
+		{
+			final WorldObject object = World.getInstance().findObject(objectId);
+			if ((object == null) || !object.isMonster() || ((Monster) object).isDead() || ((Monster) object).getVariables().getBoolean(GUARDIAN_VAR, false))
+			{
+				continue;
+			}
+			final Monster target = (Monster) object;
+			run.setBounty(objectId, now + (BOUNTY_SECONDS * 1000L));
+			final String tag = target.getVariables().getString(EVENT_TITLE_TAG_VAR, null);
+			if (tag != null)
+			{
+				target.getVariables().set(BOUNTY_TAG_VAR, tag); // Back on if the bounty runs out.
+			}
+			target.setEventTitleTag("[Bounty]");
+			for (Player player : players)
+			{
+				player.sendPacket(new ExShowScreenMessage("Bounty on a " + target.getName() + ": " + describeWay(player, target) + ". " + (BOUNTY_SECONDS / 60) + " minutes!", 5000));
+			}
+			return;
+		}
+	}
+
+	/**
+	 * @return where a creature is from a player, e.g. "1,200 to the north-east"
+	 */
+	private static String describeWay(Player player, Creature target)
+	{
+		final int dx = target.getX() - player.getX();
+		final int dy = target.getY() - player.getY();
+		final String[] directions =
+		{
+			"east",
+			"south-east",
+			"south",
+			"south-west",
+			"west",
+			"north-west",
+			"north",
+			"north-east"
+		};
+		final int sector = (int) Math.round(Math.toDegrees(Math.atan2(dy, dx)) / 45.0) & 7; // y grows to the south.
+		return String.format("%,d to the %s", (int) Math.hypot(dx, dy), directions[sector]);
+	}
+
+	/**
 	 * Ambush: a pack springs on one of the players inside.
 	 */
 	private void ambush(MapRun run)
@@ -2167,6 +2649,20 @@ public class MapDeviceManager
 		if (MapDeviceConfig.COMPLETION_REWARD && (lastKill != null) && (player != null))
 		{
 			dropMap(lastKill, player, rollInMapTier(run));
+		}
+
+		// Speedrun: cleared in time, everyone inside gets a map.
+		if (run.isSpeedrunMade())
+		{
+			for (Player inside : getPlayersInside(run))
+			{
+				final MapTier bonus = MapDeviceData.getInstance().getTier(rollInMapTier(run));
+				if ((bonus != null) && (ItemData.getInstance().getTemplate(bonus.itemId()) != null))
+				{
+					inside.addItem(ItemProcessType.REWARD, bonus.itemId(), 1, inside, true);
+				}
+			}
+			sendScreenToMap(run, "Speedrun! Cleared in time: everyone gets a bonus map.");
 		}
 
 		for (int objectId : run.getPlayersInside())
@@ -2306,6 +2802,8 @@ public class MapDeviceManager
 		private long _noPortalsSince;
 		private boolean _warned5;
 		private boolean _warned1;
+		private boolean _speedrunWarned5;
+		private boolean _speedrunWarned1;
 
 		RunTick(MapRun run)
 		{
@@ -2388,9 +2886,40 @@ public class MapDeviceManager
 				sendScreenToMap(_run, "The map collapses in 1 minute!");
 			}
 
+			if (!_run.getCurses().isEmpty())
+			{
+				liftCurses(_run, now);
+			}
+
+			// Speedrun: its clock.
+			if ((_run.getSpeedrunMinutes() > 0) && !_run.isSpeedrunOver() && (_run.getStatus() == Status.OPEN))
+			{
+				final long left = ((_run.getOpenedAt() + (_run.getSpeedrunMinutes() * 60000L)) - now) / 1000;
+				if (left <= 0)
+				{
+					_run.setSpeedrunOver(true);
+					sendScreenToMap(_run, "Speedrun failed: the time is up.");
+				}
+				else if (!_speedrunWarned5 && (left <= 300) && (left > 60))
+				{
+					_speedrunWarned5 = true;
+					sendScreenToMap(_run, "Speedrun: 5 minutes left to clear the map!");
+				}
+				else if (!_speedrunWarned1 && (left <= 60))
+				{
+					_speedrunWarned1 = true;
+					sendScreenToMap(_run, "Speedrun: 1 minute left to clear the map!");
+				}
+			}
+
 			if (players.isEmpty())
 			{
 				return;
+			}
+
+			if (_run.isBounty() && (_run.getStatus() == Status.OPEN))
+			{
+				updateBounty(_run, players, now);
 			}
 
 			final HotzoneModifier hotzone = _run.getHotzoneEffect();

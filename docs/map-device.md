@@ -9,7 +9,7 @@ Code: `MapDeviceManager` (core logic), `MapQuestManager` (the quest "A Map of Yo
 1. **Maps drop.** Monsters of level 78 and up may drop a **Map (Tier 1-10)** (items 50101-50110). The tier follows the monster's level and strength (`dropLevel` and `minScore` in the XML: solo monsters drop tiers 1-5, party monsters 6-10), and stronger monsters drop higher tiers: Champion tier 2 +1, tier 3 +2, Mage/Thief/Infused/Resonant/wave challenge +1, raid boss +2 (`<difficulty>`). Base chance 1%, +3% per champion tier, 50% for raids, all raised by the monster's own drop rate bonuses (random passives, hot zones). No drop from monsters more than 9 levels below the player.
 2. **`.hideout`** in a town (any peace zone) takes the player to their own hideout: a private copy of the Jinia Guild Hideout cabin with the **Map Device** in it.
 3. **Insert a map.** Double-click a map in the hideout, or talk to the device and press *Insert*. The device asks how many **Champion Medals** (the Survival Arena medal) to feed it: 0 to 8.
-4. **Each medal** rolls one **modifier** out of 50 (never twice the same) and adds **+20% experience and +20% drop rate**. The map also rolls one random **hot zone effect** (the server's `HotzoneModifier`s) for its whole field.
+4. **Each medal** rolls one **modifier** out of 67 (never twice the same) and adds **+20% experience and +20% drop rate**. The map also rolls one random **hot zone effect** (the server's `HotzoneModifier`s) for its whole field.
 5. **Eight portals** open in a ring round the device. Each takes one player into the map and is gone. The owner and the owner's party may take them (`.hideout party` brings party members to the hideout).
 6. **The map** is a fenced field (the Team vs Team barrier code) in its own instance, picked at random among the places that take its tier (the `<arena>`s of `data/MapDevice.xml` and your own maps from the map editor), with **100 monsters** of the tier's levels and strength, made stronger by the tier (`hp`/`attack`/`defence`) and carrying every rolled modifier. A map has a theme: its monsters are drawn from up to 6 kinds. Nothing respawns. When 10 monsters are left they come for the players, so none stays hidden.
 7. **Dying** in a map: 3 seconds later the player wakes up in the hideout (full HP/MP/CP) and may take another portal. **No experience is lost** dying in a map (`DeathExpLoss = False`; the Death Penalty debuff still applies as anywhere). A **Return Portal** at the map's entry (or `.hideout back`) goes back to the hideout without dying.
@@ -51,9 +51,9 @@ A tier takes the monsters whose level is within `minLevel`-`maxLevel` and whose 
 
 What still varies inside a map, on purpose: the map's own Champions, Mages, Thieves, Infused, Resonant and wave challenge monsters, the server's random passives (up to +100% HP at 20 passives) and the hot zone effect. In a live test of a tier 8 map the six kinds' plain monsters were within 1.5x of each other (3.8x before effective stats were scored), the median monster 1.7x the weakest, and the strongest single monster (a tier 2 Champion with 20 passives) 6.7x.
 
-## The 50 modifiers
+## The 67 modifiers
 
-The first 25 change numbers; the other 25 change how the map plays.
+The first 33 change numbers; the other 34 change how the map plays.
 
 | # | Modifier | Kind | Effect |
 |---|---|---|---|
@@ -82,31 +82,48 @@ The first 25 change numbers; the other 25 change how the map plays.
 | 23 | Blurred Vision | Numbers | Players have -6 accuracy and land critical hits 30% less often. |
 | 24 | Fragile | Numbers | Players take 30% more damage from critical hits. |
 | 25 | Desecrated | Numbers | Healing received by players is halved. |
-| 26 | Coven | Gameplay | Mage infestation: 40% of the monsters are Mages that cast without pause and keep their distance. |
-| 27 | Champions' Rally | Gameplay | 30% of the monsters are Champions, some of them of the highest tier. |
-| 28 | Bloodless | Gameplay | The monsters have no blood: you can't leech life or mana from them. |
-| 29 | Hail of Arrows | Gameplay | Every monster fights from range and backs away when you close in. |
-| 30 | Thieves' Guild | Gameplay | 25% of the monsters are Thieves that loot the fallen and run once their bag is full. |
-| 31 | Elemental Chaos | Gameplay | 40% of the monsters are Infused with a random attribute. |
-| 32 | Gauntlet | Gameplay | 8 monsters are wave challenges: they rise twice more, stronger each time. |
-| 33 | Horde | Gameplay | The map holds 30% more monsters. |
-| 34 | Pack Hunters | Gameplay | The monsters gather in tight packs of 6 to 10. |
-| 35 | Titans | Gameplay | Half as many monsters, but giants: triple HP, 30% more damage, double experience and drops. |
-| 36 | Volatile | Gameplay | Slain monsters explode a moment later, hitting players nearby for 10% of their max HP. |
-| 37 | Undying Legion | Gameplay | 25% of the slain monsters rise once more at half HP. |
-| 38 | Soul Eaters | Gameplay | When a monster dies, the monsters nearby devour its soul: they heal 20% and hit 10% harder (up to 5 times). |
-| 39 | Rising Dread | Gameplay | Every 10 monsters slain make the survivors 5% stronger, up to 50%. |
-| 40 | Berserkers | Gameplay | Below 35% HP, monsters deal 50% more damage and attack 30% faster. |
-| 41 | Hunters | Gameplay | Every monster is aggressive and notices you from 50% farther. |
-| 42 | Skittish | Gameplay | The monsters run when they're hurt, and lead you into their friends. |
-| 43 | War Priests | Gameplay | 30% of the monsters are supporters that heal and empower their allies. |
-| 44 | Ambush | Gameplay | Once half the map is cleared, 20 monsters ambush one of you. |
-| 45 | Map Guardian | Gameplay | A Guardian holds the middle of the map: a tier 3 Champion that rises twice. It drops two more maps. |
-| 46 | Storm Caller | Gameplay | Every 20 seconds lightning strikes one of you for 12% of max HP. |
-| 47 | Burning Ground | Gameplay | The ground burns: players lose 1.5% of max HP every 3 seconds. |
-| 48 | Flaskless | Gameplay | Potions and elixirs can't be used. |
-| 49 | Fragile Portals | Gameplay | The Map Device opens only 4 portals. |
-| 50 | Hourglass | Gameplay | The map collapses after 15 minutes. |
+| 26 | Arcane Precision | Numbers | Monsters land magic critical hits twice as often. |
+| 27 | Unshakable | Numbers | Monsters resist stun, sleep, root and fear 50% better. |
+| 28 | Hexproof | Numbers | Debuffs land on monsters 40% less often. |
+| 29 | Shieldbearers | Numbers | Monsters block 25% of attacks with a shield. |
+| 30 | Thick-Skinned | Numbers | Monsters take 30% less damage from physical critical hits. |
+| 31 | Spell-Warded | Numbers | Monsters take 25% less damage from skills. |
+| 32 | Weakened Will | Numbers | Players' debuffs land 40% less often. |
+| 33 | Glass Cannon | Numbers | Players deal 20% more damage, but monsters deal 25% more. |
+| 34 | Coven | Gameplay | Mage infestation: 40% of the monsters are Mages that cast without pause and keep their distance. |
+| 35 | Champions' Rally | Gameplay | 30% of the monsters are Champions, some of them of the highest tier. |
+| 36 | Bloodless | Gameplay | The monsters have no blood: you can't leech life or mana from them. |
+| 37 | Hail of Arrows | Gameplay | Every monster fights from range and backs away when you close in. |
+| 38 | Thieves' Guild | Gameplay | 25% of the monsters are Thieves that loot the fallen and run once their bag is full. |
+| 39 | Elemental Chaos | Gameplay | 40% of the monsters are Infused with a random attribute. |
+| 40 | Gauntlet | Gameplay | 8 monsters are wave challenges: they rise twice more, stronger each time. |
+| 41 | Horde | Gameplay | The map holds 30% more monsters. |
+| 42 | Pack Hunters | Gameplay | The monsters gather in tight packs of 6 to 10. |
+| 43 | Titans | Gameplay | Half as many monsters, but giants: triple HP, 30% more damage, double experience and drops. |
+| 44 | Mana Siphon | Gameplay | Monster attacks burn 2% of your max MP. |
+| 45 | Venomous | Gameplay | Monster attacks have a 10% chance to poison you. |
+| 46 | Lacerating | Gameplay | Monster critical hits make you bleed. |
+| 47 | Linked Souls | Gameplay | Monsters come in pairs that share the damage they take, while they stand near each other. |
+| 48 | Summoners | Gameplay | 20% of the monsters call 2 minions when the fight starts. |
+| 49 | Volatile | Gameplay | Slain monsters explode a moment later, hitting players nearby for 10% of their max HP. |
+| 50 | Undying Legion | Gameplay | 25% of the slain monsters rise once more at half HP. |
+| 51 | Splitters | Gameplay | A slain monster splits into two copies with half its HP, once. |
+| 52 | Death Curse | Gameplay | A slain monster curses its killer: 5% weaker for 10 seconds, stacking up to 6 times. |
+| 53 | Soul Eaters | Gameplay | When a monster dies, the monsters nearby devour its soul: they heal 20% and hit 10% harder (up to 5 times). |
+| 54 | Rising Dread | Gameplay | Every 10 monsters slain make the survivors 5% stronger, up to 50%. |
+| 55 | Berserkers | Gameplay | Below 35% HP, monsters deal 50% more damage and attack 30% faster. |
+| 56 | Hunters | Gameplay | Every monster is aggressive and notices you from 50% farther. |
+| 57 | Skittish | Gameplay | The monsters run when they're hurt, and lead you into their friends. |
+| 58 | War Priests | Gameplay | 30% of the monsters are supporters that heal and empower their allies. |
+| 59 | Ambush | Gameplay | Once half the map is cleared, 20 monsters ambush one of you. |
+| 60 | Bounty Mark | Gameplay | One monster at a time is marked: kill it within 2 minutes for triple drops. |
+| 61 | Map Guardian | Gameplay | A Guardian holds the middle of the map: a tier 3 Champion that rises twice. It drops two more maps. |
+| 62 | Storm Caller | Gameplay | Every 20 seconds lightning strikes one of you for 12% of max HP. |
+| 63 | Burning Ground | Gameplay | The ground burns: players lose 1.5% of max HP every 3 seconds. |
+| 64 | Flaskless | Gameplay | Potions and elixirs can't be used. |
+| 65 | Fragile Portals | Gameplay | The Map Device opens only 4 portals. |
+| 66 | Hourglass | Gameplay | The map collapses after 15 minutes. |
+| 67 | Speedrun | Gameplay | Clear the map within 10 minutes and everyone inside gets a bonus map. |
 
 Modifiers that draw a kind of monster the server has switched off (Mage, Thief, Infused, wave challenge, Champion) are never rolled.
 
@@ -119,7 +136,12 @@ Modifiers that draw a kind of monster the server has switched off (Mage, Thief, 
 - Hunters (and the last 10 monsters): `Monster.isAggressive` / `getAggroRange`.
 - Flaskless: `ItemSkillsTemplate`, which potions and elixirs go through, by hand, auto potions or auto use.
 - Experience, SP and drop chance: `Monster.getExpReward` / `getSpReward` / `getCustomPassiveDropMultiplier`.
-- Deaths: `Attackable.doDie` (counting, Volatile, Soul Eaters, Undying Legion, Ambush, completion, map drops) and `Player.doDie` (back to the hideout).
+- Deaths: `Attackable.doDie` (counting, Volatile, Soul Eaters, Splitters, Undying Legion, Death Curse, Bounty Mark, Ambush, completion, Speedrun, map drops) and `Player.doDie` (back to the hideout).
+- Damage taken by map monsters: `Monster.reduceCurrentHp`, via `MapDeviceManager.onMonsterDamaged` (Spell-Warded, Glass Cannon's extra damage, Summoners calling their minions on the first hit, Linked Souls passing half to a partner within 1,200).
+- Monster attacks landing on players: `Creature.onHitTimer`, via `MapDeviceManager.onMonsterHit` (Mana Siphon, Venomous with NPC Poison 4182, Lacerating with NPC Bleed 4188, at the level that fits the monster).
+- Debuff chances: `Formulas.calcEffectSuccess`, via `MapDeviceManager.getEffectChanceMultiplier` (Hexproof, Unshakable on stun/sleep/root/fear traits, Weakened Will). Shield blocks: `Formulas.calcShldUse`, via `MapDeviceManager.getShieldRate` (Shieldbearers; a block adds half the monster's P. Def.).
+- The run's clock (`RunTick`, once a second): Bounty Mark picks and times the marked monster (players are told how far and which way), Death Curse stacks wear off, the Speedrun countdown.
+- Splitters' copies and Summoners' minions have half HP (minions 70% damage) and give half the experience and drops; they count toward clearing the map.
 - Map monsters are spawned without a spawn point (so they never respawn) and skip the open world's random spawn rolls (`Spawn`); the map rolls Champions, Mages, Thieves, Infused, Resonant and wave challenge monsters itself, at the open world's chances times the hot zone effect's multipliers, or at the modifier's share.
 
 ## The quest: A Map of Your Own

@@ -30,7 +30,7 @@ import org.l2jmobius.gameserver.model.actor.enums.npc.MonsterArchetype;
 /**
  * A difficulty modifier of a map run (see {@link org.l2jmobius.gameserver.managers.MapDeviceManager}): every Champion Medal fed to the Map Device rolls one of these, never twice the same, and every monster of the map carries all of them.
  * <p>
- * The first half only changes numbers, on the monsters or on the players inside. The second half changes how the map plays: what kind of monsters it holds and how many, how they fight, what happens when they die, and what the map itself does to the players.
+ * The first {@value #STAT_MODIFIER_COUNT} only change numbers, on the monsters or on the players inside. The rest change how the map plays: what kind of monsters it holds and how many, how they fight, what happens when they die, and what the map itself does to the players.
  * <p>
  * Every field defaults to "no effect" (1.0 for a multiplier, 0/false otherwise), so a modifier only sets what it changes. Every read site lives in {@code MapDeviceManager}, {@link MapRun} and the hooks they feed ({@code Monster}, {@code Totems.getLeechRate}, {@code ItemSkillsTemplate}).
  * @author Mobius
@@ -196,6 +196,56 @@ public enum MapModifier
 			playerHealReceived = 0.50;
 		}
 	},
+	ARCANE_PRECISION("Arcane Precision", "Monsters land magic critical hits twice as often.")
+	{
+		{
+			monsterMCritRate = 2.0;
+		}
+	},
+	UNSHAKABLE("Unshakable", "Monsters resist stun, sleep, root and fear 50% better.")
+	{
+		{
+			monsterControlChance = 0.50;
+		}
+	},
+	HEXPROOF("Hexproof", "Debuffs land on monsters 40% less often.")
+	{
+		{
+			monsterDebuffChance = 0.60;
+		}
+	},
+	SHIELDBEARERS("Shieldbearers", "Monsters block 25% of attacks with a shield.")
+	{
+		{
+			monsterShieldPct = 25;
+		}
+	},
+	THICK_SKINNED("Thick-Skinned", "Monsters take 30% less damage from physical critical hits.")
+	{
+		{
+			monsterCritDamageTaken = 0.70;
+		}
+	},
+	SPELL_WARDED("Spell-Warded", "Monsters take 25% less damage from skills.")
+	{
+		{
+			monsterSkillDamageTaken = 0.75;
+		}
+	},
+	WEAKENED_WILL("Weakened Will", "Players' debuffs land 40% less often.")
+	{
+		{
+			playerDebuffChance = 0.60;
+		}
+	},
+	GLASS_CANNON("Glass Cannon", "Players deal 20% more damage, but monsters deal 25% more.")
+	{
+		{
+			playerDamage = 1.20;
+			monsterPAtk = 1.25;
+			monsterMAtk = 1.25;
+		}
+	},
 
 	// =========================================================================
 	// How the map plays
@@ -291,6 +341,36 @@ public enum MapModifier
 			titans = true;
 		}
 	},
+	MANA_SIPHON("Mana Siphon", "Monster attacks burn 2% of your max MP.")
+	{
+		{
+			manaSiphonPct = 2;
+		}
+	},
+	VENOMOUS("Venomous", "Monster attacks have a 10% chance to poison you.")
+	{
+		{
+			venomPct = 10;
+		}
+	},
+	LACERATING("Lacerating", "Monster critical hits make you bleed.")
+	{
+		{
+			lacerating = true;
+		}
+	},
+	LINKED_SOULS("Linked Souls", "Monsters come in pairs that share the damage they take, while they stand near each other.")
+	{
+		{
+			linkedSouls = true;
+		}
+	},
+	SUMMONERS("Summoners", "20% of the monsters call 2 minions when the fight starts.")
+	{
+		{
+			summonerPct = 20;
+		}
+	},
 	VOLATILE("Volatile", "Slain monsters explode a moment later, hitting players nearby for 10% of their max HP.")
 	{
 		{
@@ -301,6 +381,18 @@ public enum MapModifier
 	{
 		{
 			risePct = 25;
+		}
+	},
+	SPLITTERS("Splitters", "A slain monster splits into two copies with half its HP, once.")
+	{
+		{
+			splitters = true;
+		}
+	},
+	DEATH_CURSE("Death Curse", "A slain monster curses its killer: 5% weaker for 10 seconds, stacking up to 6 times.")
+	{
+		{
+			deathCurse = true;
 		}
 	},
 	SOUL_EATERS("Soul Eaters", "When a monster dies, the monsters nearby devour its soul: they heal 20% and hit 10% harder (up to 5 times).")
@@ -347,6 +439,12 @@ public enum MapModifier
 			ambush = true;
 		}
 	},
+	BOUNTY_MARK("Bounty Mark", "One monster at a time is marked: kill it within 2 minutes for triple drops.")
+	{
+		{
+			bounty = true;
+		}
+	},
 	MAP_GUARDIAN("Map Guardian", "A Guardian holds the middle of the map: a tier 3 Champion that rises twice. It drops two more maps.")
 	{
 		{
@@ -382,10 +480,16 @@ public enum MapModifier
 		{
 			timeLimitMinutes = 15;
 		}
+	},
+	SPEEDRUN("Speedrun", "Clear the map within 10 minutes and everyone inside gets a bonus map.")
+	{
+		{
+			speedrunMinutes = 10;
+		}
 	};
 
 	/** How many of these only change numbers: the first ones of the enum. The rest change how the map plays. */
-	public static final int STAT_MODIFIER_COUNT = 25;
+	public static final int STAT_MODIFIER_COUNT = 33;
 
 	private final String _displayName;
 	private final String _description;
@@ -406,6 +510,12 @@ public enum MapModifier
 	protected double monsterElementRes = 0;
 	protected double monsterReflectPct = 0;
 	protected double monsterHpRegen = 1.0;
+	protected double monsterMCritRate = 1.0;
+	protected double monsterControlChance = 1.0;
+	protected double monsterDebuffChance = 1.0;
+	protected int monsterShieldPct = 0;
+	protected double monsterCritDamageTaken = 1.0;
+	protected double monsterSkillDamageTaken = 1.0;
 
 	// The players inside.
 	protected double playerMaxHp = 1.0;
@@ -420,6 +530,8 @@ public enum MapModifier
 	protected double playerCritRate = 1.0;
 	protected double playerCritDamageTaken = 1.0;
 	protected double playerHealReceived = 1.0;
+	protected double playerDebuffChance = 1.0;
+	protected double playerDamage = 1.0;
 
 	// What the map holds.
 	/** Percent of the monsters made Mages. */
@@ -454,6 +566,14 @@ public enum MapModifier
 	protected boolean risingDread = false;
 	protected boolean ambush = false;
 	protected boolean guardian = false;
+	protected int manaSiphonPct = 0;
+	protected int venomPct = 0;
+	protected boolean lacerating = false;
+	protected boolean linkedSouls = false;
+	protected int summonerPct = 0;
+	protected boolean splitters = false;
+	protected boolean deathCurse = false;
+	protected boolean bounty = false;
 
 	// What the map does.
 	protected boolean storm = false;
@@ -463,6 +583,7 @@ public enum MapModifier
 	protected int portalLimit = 0;
 	/** How long the map stays open at most, 0 for the configured time. */
 	protected int timeLimitMinutes = 0;
+	protected int speedrunMinutes = 0;
 
 	MapModifier(String displayName, String description)
 	{
@@ -761,5 +882,90 @@ public enum MapModifier
 	public int getTimeLimitMinutes()
 	{
 		return timeLimitMinutes;
+	}
+
+	public double getMonsterMCritRate()
+	{
+		return monsterMCritRate;
+	}
+
+	public double getMonsterControlChance()
+	{
+		return monsterControlChance;
+	}
+
+	public double getMonsterDebuffChance()
+	{
+		return monsterDebuffChance;
+	}
+
+	public int getMonsterShieldPct()
+	{
+		return monsterShieldPct;
+	}
+
+	public double getMonsterCritDamageTaken()
+	{
+		return monsterCritDamageTaken;
+	}
+
+	public double getMonsterSkillDamageTaken()
+	{
+		return monsterSkillDamageTaken;
+	}
+
+	public double getPlayerDebuffChance()
+	{
+		return playerDebuffChance;
+	}
+
+	public double getPlayerDamage()
+	{
+		return playerDamage;
+	}
+
+	public int getManaSiphonPct()
+	{
+		return manaSiphonPct;
+	}
+
+	public int getVenomPct()
+	{
+		return venomPct;
+	}
+
+	public boolean isLacerating()
+	{
+		return lacerating;
+	}
+
+	public boolean isLinkedSouls()
+	{
+		return linkedSouls;
+	}
+
+	public int getSummonerPct()
+	{
+		return summonerPct;
+	}
+
+	public boolean isSplitters()
+	{
+		return splitters;
+	}
+
+	public boolean isDeathCurse()
+	{
+		return deathCurse;
+	}
+
+	public boolean isBounty()
+	{
+		return bounty;
+	}
+
+	public int getSpeedrunMinutes()
+	{
+		return speedrunMinutes;
 	}
 }
