@@ -1802,7 +1802,7 @@ public class MapDeviceManager
 			return;
 		}
 
-		player.sendMessage("You have fallen. You will wake up in the hideout.");
+		player.sendMessage(isAllowed(player, run) ? "You have fallen. You will wake up in the hideout." : "You have fallen. You are no longer in " + run.getOwnerName() + "'s party: you will wake up in your own hideout.");
 		final int instanceId = run.getInstanceId();
 		ThreadPool.schedule(() ->
 		{
@@ -1818,9 +1818,13 @@ public class MapDeviceManager
 					player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
 					player.setCurrentCp(player.getMaxCp());
 				}
+				final boolean allowed = isAllowed(player, run);
 				sendOut(player, run);
-				final int portals = run.getPortals().size();
-				player.sendMessage(portals > 0 ? portals + " portal" + (portals == 1 ? "" : "s") + " to the map remain." : "No portal to the map remains.");
+				if (allowed)
+				{
+					final int portals = run.getPortals().size();
+					player.sendMessage(portals > 0 ? portals + " portal" + (portals == 1 ? "" : "s") + " to the map remain." : "No portal to the map remains.");
+				}
 			}
 			catch (Exception e)
 			{
@@ -1834,6 +1838,22 @@ public class MapDeviceManager
 	 */
 	private void sendOut(Player player, MapRun run)
 	{
+		// Someone who left the owner's party (or was removed from it) farms on until they die or leave, then goes to a hideout of their own: the owner's is no longer theirs to wake up in.
+		if (!isAllowed(player, run))
+		{
+			Hideout own = _hideouts.get(player.getObjectId());
+			if ((own == null) || (InstanceManager.getInstance().getInstance(own.getInstanceId()) == null))
+			{
+				own = createHideout(player);
+			}
+			if (own != null)
+			{
+				teleportToHideout(player, own);
+				player.sendMessage("You are no longer in " + run.getOwnerName() + "'s party: you are in your own hideout. Type .hideout leave to go back where you came from.");
+				return;
+			}
+		}
+
 		final Hideout hideout = run.getHideout();
 		if ((hideout != null) && (InstanceManager.getInstance().getInstance(hideout.getInstanceId()) != null) && HIDEOUTS_BY_INSTANCE.containsKey(hideout.getInstanceId()))
 		{

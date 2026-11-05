@@ -1459,6 +1459,12 @@ public class FakePlayerPvpManager
 	 */
 	public Npc spawnFakePlayer(FakePlayerPvpBuild build, int level, int x, int y, int z, int instanceId, Npc replacedMonster, Spawn replacedSpawn)
 	{
+		// Never in a map of the Map Device or a hideout: they are private to their owner and party.
+		if (MapDeviceManager.isMapInstance(instanceId) || MapDeviceManager.isHideoutInstance(instanceId))
+		{
+			return null;
+		}
+		
 		final FakePlayerPvpBuild usedBuild = build != null ? build : FakePlayerPvpData.getInstance().getRandomBuild();
 		if (usedBuild == null)
 		{
