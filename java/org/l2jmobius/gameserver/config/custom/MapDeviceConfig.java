@@ -79,6 +79,13 @@ public class MapDeviceConfig
 	public static int IN_MAP_TIER_UP_TWO_CHANCE;
 	public static boolean COMPLETION_REWARD;
 	public static int GUARDIAN_EXTRA_MAPS;
+	public static boolean UNIQUE_MAPS_ENABLED;
+	public static int UNIQUE_MAP_MIN_TIER;
+	public static double UNIQUE_MAP_COMPLETION_CHANCE;
+	public static double UNIQUE_MAP_CHANCE_PER_MEDAL;
+	public static double UNIQUE_MAP_RAID_CHANCE;
+	public static int UNIQUE_MAP_RAID_LEVEL;
+	public static double UNIQUE_MAP_BOSS_CHANCE;
 
 	// The quest.
 	public static boolean QUEST_ENABLED;
@@ -140,6 +147,13 @@ public class MapDeviceConfig
 		IN_MAP_TIER_UP_TWO_CHANCE = Math.max(0, Math.min(100, config.getInt("InMapTierUpTwoChance", 5)));
 		COMPLETION_REWARD = config.getBoolean("CompletionMapReward", true);
 		GUARDIAN_EXTRA_MAPS = Math.max(0, config.getInt("GuardianExtraMaps", 2));
+		UNIQUE_MAPS_ENABLED = config.getBoolean("UniqueMapsEnabled", true);
+		UNIQUE_MAP_MIN_TIER = config.getInt("UniqueMapMinTier", 5);
+		UNIQUE_MAP_COMPLETION_CHANCE = Math.max(0, config.getDouble("UniqueMapCompletionChance", 2.0));
+		UNIQUE_MAP_CHANCE_PER_MEDAL = Math.max(0, config.getDouble("UniqueMapChancePerMedal", 0.5));
+		UNIQUE_MAP_RAID_CHANCE = Math.max(0, config.getDouble("UniqueMapRaidChance", 1.0));
+		UNIQUE_MAP_RAID_LEVEL = config.getInt("UniqueMapRaidLevel", 80);
+		UNIQUE_MAP_BOSS_CHANCE = Math.max(0, config.getDouble("UniqueMapBossChance", 10.0));
 
 		QUEST_ENABLED = config.getBoolean("MapQuestEnabled", true);
 		QUEST_REWARD_MEDALS = Math.max(0, config.getInt("MapQuestRewardMedals", 5));

@@ -22,7 +22,7 @@ public class PassiveStatBonusCache
 	
 	public void recompute(Player player)
 	{
-		recompute(PassiveTreeManager.getInstance().getAllocatedNodes(player), PassiveTreeManager.getInstance().getEventNotableScale(player));
+		recompute(PassiveTreeManager.getInstance().getEffectiveNodes(player), PassiveTreeManager.getInstance().getEventNotableScale(player));
 	}
 	
 	/**

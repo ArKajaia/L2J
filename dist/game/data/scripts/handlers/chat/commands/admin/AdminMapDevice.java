@@ -39,6 +39,7 @@ import org.l2jmobius.gameserver.model.mapdevice.MapArena;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun;
 import org.l2jmobius.gameserver.model.mapdevice.MapTier;
 import org.l2jmobius.gameserver.model.mapdevice.MonsterStrength;
+import org.l2jmobius.gameserver.model.mapdevice.UniqueMap;
 import org.l2jmobius.gameserver.network.serverpackets.ExLinkOpen;
 
 import custom.Conquest.ConquestMarkers;
@@ -145,6 +146,34 @@ public class AdminMapDevice implements IAdminCommandHandler
 				activeChar.sendSysMessage("Gave " + count + " " + MapDeviceManager.getItemName(tier.itemId()) + " to " + target.getName() + ".");
 				break;
 			}
+			case "unique":
+			{
+				// //mapdevice unique give <type> [count] | //mapdevice unique test <type> | //mapdevice unique list
+				final String sub = st.hasMoreTokens() ? st.nextToken().toLowerCase(Locale.ROOT) : "list";
+				final UniqueMap unique = st.hasMoreTokens() ? findUnique(st.nextToken()) : null;
+				if (sub.equals("give") && (unique != null))
+				{
+					final int count = st.hasMoreTokens() ? Math.max(1, Math.min(100, parse(st.nextToken(), 1))) : 1;
+					final Player target = (activeChar.getTarget() != null) && activeChar.getTarget().isPlayer() ? activeChar.getTarget().asPlayer() : activeChar;
+					target.addItem(ItemProcessType.REWARD, unique.itemId(), count, activeChar, true);
+					activeChar.sendSysMessage("Gave " + count + " " + MapDeviceManager.getItemName(unique.itemId()) + " to " + target.getName() + ".");
+				}
+				else if (sub.equals("test") && (unique != null))
+				{
+					final String denied = manager.openUniqueMap(activeChar, unique.type(), true);
+					activeChar.sendSysMessage(denied != null ? denied : "Opened " + unique.name() + " for free: take a portal round your device.");
+				}
+				else
+				{
+					activeChar.sendSysMessage("== Unique maps ==");
+					for (UniqueMap entry : MapDeviceData.getInstance().getUniqueMaps().values())
+					{
+						activeChar.sendSysMessage(entry.type().name() + " - " + entry.name() + " (item " + entry.itemId() + "): tier " + entry.tier() + ", " + entry.monsterCount() + " monsters, " + entry.modifiers().size() + " modifiers, boss " + entry.bossName() + " (npc " + entry.bossNpcId() + ").");
+					}
+					activeChar.sendSysMessage("Usage: //mapdevice unique give <type> [count] | //mapdevice unique test <type> (in your own hideout)");
+				}
+				break;
+			}
 			case "pool":
 			{
 				final MapTier tier = st.hasMoreTokens() ? MapDeviceData.getInstance().getTier(parse(st.nextToken(), -1)) : null;
@@ -249,6 +278,22 @@ public class AdminMapDevice implements IAdminCommandHandler
 	private static String tiers(int min, int max)
 	{
 		return (min <= 0 ? "1" : String.valueOf(min)) + "-" + (max <= 0 ? String.valueOf(MapDeviceData.getInstance().getMaxTier()) : String.valueOf(max));
+	}
+
+	/**
+	 * @param name a unique map's type (COLISEUM, VAULT, OSSUARY), any case
+	 * @return that unique map, {@code null} if unknown
+	 */
+	private static UniqueMap findUnique(String name)
+	{
+		for (UniqueMap unique : MapDeviceData.getInstance().getUniqueMaps().values())
+		{
+			if (unique.type().name().equalsIgnoreCase(name))
+			{
+				return unique;
+			}
+		}
+		return null;
 	}
 
 	private static int parse(String text, int fallback)

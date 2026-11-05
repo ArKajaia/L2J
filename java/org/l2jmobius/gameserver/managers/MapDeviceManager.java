@@ -85,6 +85,7 @@ import org.l2jmobius.gameserver.model.mapdevice.MapRun;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun.MonsterStat;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun.Status;
 import org.l2jmobius.gameserver.model.mapdevice.MapTier;
+import org.l2jmobius.gameserver.model.mapdevice.UniqueMap;
 import org.l2jmobius.gameserver.model.mapdevice.MonsterStrength;
 import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
@@ -281,6 +282,10 @@ public class MapDeviceManager
 		}
 
 		double multiplier = run.getMonsterMultiplier(stat);
+		if (run.isUnique())
+		{
+			multiplier *= UniqueMapManager.getEncounterMultiplier(run, monster, stat);
+		}
 		if ((run.isSplitters() || (run.getSummonerPct() > 0)) && ((stat == MonsterStat.HP) || (stat == MonsterStat.P_ATK) || (stat == MonsterStat.M_ATK)))
 		{
 			if (monster.getVariables().getBoolean(SPLIT_VAR, false))
@@ -405,6 +410,14 @@ public class MapDeviceManager
 		if ((attacker != null) && attacker.isPlayable())
 		{
 			damage *= run.getPlayerDamage();
+		}
+		if (run.isUnique())
+		{
+			damage = UniqueMapManager.getInstance().onMonsterDamaged(run, monster, damage, attacker);
+			if (damage <= 0)
+			{
+				return 0;
+			}
 		}
 
 		if ((attacker != null) && (run.getSummonerPct() > 0) && monster.getVariables().getBoolean(SUMMONER_VAR, false))
@@ -1044,6 +1057,125 @@ public class MapDeviceManager
 	}
 	
 	/**
+	 * Opens a unique map at the device of the player's own hideout: takes the unique map item, and opens its map with its own modifiers (no medal, no hot zone effect), in its own arena.
+	 * @param player the hideout's owner
+	 * @param type the unique map
+	 * @param free {@code true} for a GM's test (nothing is taken)
+	 * @return why it didn't open, {@code null} if it opened
+	 */
+	public String openUniqueMap(Player player, UniqueMap.Type type, boolean free)
+	{
+		if (!MapDeviceConfig.ENABLED || !MapDeviceConfig.UNIQUE_MAPS_ENABLED)
+		{
+			return "Unique maps are disabled.";
+		}
+		final UniqueMap unique = MapDeviceData.getInstance().getUniqueMap(type);
+		if (unique == null)
+		{
+			return "That unique map is unknown.";
+		}
+		if (!isDeviceOwner(player))
+		{
+			return "Only the owner of this hideout can work its Map Device.";
+		}
+		if (!_opening.add(player.getObjectId()))
+		{
+			return "The Map Device is already working.";
+		}
+		try
+		{
+			final Hideout hideout = getCurrentHideout(player);
+			if ((hideout.getRun() != null) && !hideout.getRun().isClosed())
+			{
+				return "A map is already open. Finish it, or let it close, first.";
+			}
+			final MapTier tier = MapDeviceData.getInstance().getTier(unique.tier());
+			if (tier == null)
+			{
+				return "The tier of " + unique.name() + " is unknown. Please contact an administrator.";
+			}
+			if (!free && (player.getInventory().getInventoryItemCount(unique.itemId(), -1) < 1))
+			{
+				return "You don't have a " + getItemName(unique.itemId()) + ".";
+			}
+
+			MapArena arena = findArena(unique.arena());
+			if (arena == null)
+			{
+				final List<MapArena> arenas = MapDeviceData.getInstance().getArenas(tier.tier());
+				if (arenas.isEmpty())
+				{
+					return "The Map Device has nowhere to open " + unique.name() + ". Please contact an administrator.";
+				}
+				arena = arenas.get(Rnd.get(arenas.size()));
+			}
+			final List<NpcTemplate> pool = getArenaMonsters(arena, tier);
+			if (pool.isEmpty() || (NpcData.getInstance().getTemplate(unique.bossNpcId()) == null))
+			{
+				return "No monster fits " + unique.name() + ". Please contact an administrator.";
+			}
+
+			if (!free && !player.destroyItemByItemId(ItemProcessType.FEE, unique.itemId(), 1, player, true))
+			{
+				return "You don't have a " + getItemName(unique.itemId()) + ".";
+			}
+
+			final List<MapModifier> modifiers = new ArrayList<>();
+			for (MapModifier modifier : unique.modifiers())
+			{
+				if (modifier.isAvailable())
+				{
+					modifiers.add(modifier);
+				}
+			}
+			try
+			{
+				final MapRun run = createRun(player, hideout, tier, 0, modifiers, null, arena, pool, unique);
+				UniqueMapManager.getInstance().onRunOpened(run);
+				announceOpened(player, run);
+				if (!free)
+				{
+					MapQuestManager.getInstance().onMapOpened(player);
+				}
+				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + (free ? " test-opened " : " opened ") + unique.name() + " in " + arena.name() + " (" + arena.id() + ", instance " + run.getInstanceId() + ") with " + modifiers + ".");
+				return null;
+			}
+			catch (Exception e)
+			{
+				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not open " + unique.name() + " in " + arena.id() + " for " + player.getName() + ".", e);
+				if (free)
+				{
+					return "The map could not be opened: " + e.getMessage() + " (see the server log).";
+				}
+				player.addItem(ItemProcessType.REFUND, unique.itemId(), 1, player, true);
+				return "The map could not be opened. Your map was given back.";
+			}
+		}
+		finally
+		{
+			_opening.remove(player.getObjectId());
+		}
+	}
+
+	/**
+	 * @param player a player
+	 * @return the unique maps they carry, with how many
+	 */
+	public Map<UniqueMap, Long> getCarriedUniqueMaps(Player player)
+	{
+		final Map<UniqueMap, Long> carried = new java.util.LinkedHashMap<>();
+		for (UniqueMap unique : MapDeviceData.getInstance().getUniqueMaps().values())
+		{
+			final long count = player.getInventory().getInventoryItemCount(unique.itemId(), -1);
+			if (count > 0)
+			{
+				carried.put(unique, count);
+			}
+		}
+		return carried;
+	}
+
+	/**
 	 * @param arenaId an event map's id, or the name of an arena of data/MapDevice.xml (with or without "xml:")
 	 * @return that place, {@code null} if there is none (or the event map lacks its fence or entry)
 	 */
@@ -1221,8 +1353,13 @@ public class MapDeviceManager
 
 	private MapRun createRun(Player player, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, HotzoneModifier hotzone, MapArena arena, List<NpcTemplate> pool)
 	{
+		return createRun(player, hideout, tier, medals, modifiers, hotzone, arena, pool, null);
+	}
+
+	private MapRun createRun(Player player, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, HotzoneModifier hotzone, MapArena arena, List<NpcTemplate> pool, UniqueMap unique)
+	{
 		final Instance instance = InstanceManager.getInstance().createDynamicInstance(0);
-		final MapRun run = new MapRun(_runIds.incrementAndGet(), player.getObjectId(), player.getName(), hideout, tier, medals, modifiers, hotzone, arena, instance.getId());
+		final MapRun run = new MapRun(_runIds.incrementAndGet(), player.getObjectId(), player.getName(), hideout, tier, medals, modifiers, hotzone, arena, instance.getId(), unique);
 		instance.setExitLoc(getReturnLocation(player));
 		instance.setEjectTime(0);
 		instance.setAllowSummon(false);
@@ -1259,8 +1396,19 @@ public class MapDeviceManager
 
 	private void announceOpened(Player player, MapRun run)
 	{
-		player.sendPacket(new ExShowScreenMessage("Tier " + run.getTier().tier() + " map opened: " + run.getArena().name(), 5000));
-		player.sendMessage("The Map Device hums: a tier " + run.getTier().tier() + " map to " + run.getArena().name() + " is open, with " + run.getPortalCount() + " portals and " + run.getMonsterTotal() + " monsters.");
+		final UniqueMap unique = run.getUnique();
+		if (unique != null)
+		{
+			player.sendPacket(new ExShowScreenMessage("Unique map opened: " + unique.name(), 5000));
+			player.sendMessage("The Map Device burns crimson and gold: " + unique.name() + " is open, with " + run.getPortalCount() + " portals and " + unique.monsterCount() + " monsters before its end.");
+			player.sendMessage("Twist - " + unique.twist());
+			player.sendMessage("Final encounter - " + unique.finale());
+		}
+		else
+		{
+			player.sendPacket(new ExShowScreenMessage("Tier " + run.getTier().tier() + " map opened: " + run.getArena().name(), 5000));
+			player.sendMessage("The Map Device hums: a tier " + run.getTier().tier() + " map to " + run.getArena().name() + " is open, with " + run.getPortalCount() + " portals and " + run.getMonsterTotal() + " monsters.");
+		}
 		for (MapModifier modifier : run.getModifiers())
 		{
 			player.sendMessage("Modifier - " + modifier.getDisplayName() + ": " + modifier.getDescription());
@@ -1282,7 +1430,7 @@ public class MapDeviceManager
 			{
 				if ((member != null) && (member != player))
 				{
-					member.sendMessage(player.getName() + " opened a tier " + run.getTier().tier() + " map. Type .hideout party to join through their portals.");
+					member.sendMessage(player.getName() + " opened " + (unique != null ? unique.name() : "a tier " + run.getTier().tier() + " map") + ". Type .hideout party to join through their portals.");
 				}
 			}
 		}
@@ -1436,7 +1584,13 @@ public class MapDeviceManager
 		final List<NpcTemplate> kinds = arena.monsters().isEmpty() ? new ArrayList<>(shuffled.subList(0, Math.min(MapDeviceConfig.MONSTER_TYPES, shuffled.size()))) : shuffled;
 		run.setMonsterKinds(kinds);
 		
-		final int baseCount = arena.monsterCount() > 0 ? arena.monsterCount() : MapDeviceConfig.MONSTER_COUNT;
+		// A unique map that fills itself (the Coliseum's waves).
+		if (run.isUnique() && UniqueMapManager.getInstance().spawnMonsters(run))
+		{
+			return;
+		}
+
+		final int baseCount = run.isUnique() ? run.getUnique().monsterCount() : arena.monsterCount() > 0 ? arena.monsterCount() : MapDeviceConfig.MONSTER_COUNT;
 		final int count = Math.max(1, (int) Math.round(baseCount * run.getPackSize()));
 		final List<Location> spots = !arena.packs().isEmpty() ? arenaPackSpots(run, count) : run.isPacks() ? packSpots(run, count) : scatteredSpots(run, count);
 
@@ -1551,7 +1705,7 @@ public class MapDeviceManager
 	/**
 	 * @return a spot on the ground within {@code range} of a creature, in its run's instance
 	 */
-	private static Location nearSpot(MapRun run, Creature center, int range)
+	static Location nearSpot(MapRun run, Creature center, int range)
 	{
 		final GeoEngine geo = GeoEngine.getInstance();
 		final double angle = Rnd.nextDouble() * 2 * Math.PI;
@@ -1568,7 +1722,7 @@ public class MapDeviceManager
 	 * @param spacing how close two spots may be
 	 * @return the spot
 	 */
-	private static Location spacedSpot(Supplier<Location> candidates, List<Location> taken, int spacing)
+	static Location spacedSpot(Supplier<Location> candidates, List<Location> taken, int spacing)
 	{
 		Location best = null;
 		double bestGap = -1;
@@ -1603,7 +1757,7 @@ public class MapDeviceManager
 	 * @param awayFromEntry {@code true} to keep {@link MapDeviceConfig#SAFE_RADIUS} away from where the players come in
 	 * @return a spot on the ground of the field, inside the fence
 	 */
-	private static Location randomFieldSpot(MapRun run, double share, boolean awayFromEntry)
+	static Location randomFieldSpot(MapRun run, double share, boolean awayFromEntry)
 	{
 		final MapArena arena = run.getArena();
 		final GeoEngine geo = GeoEngine.getInstance();
@@ -1627,7 +1781,7 @@ public class MapDeviceManager
 	/**
 	 * Spawns one monster of a map: no spawn point (nothing respawns), its map's stat functions, tracked by the run.
 	 */
-	private Monster spawnMapMonster(MapRun run, NpcTemplate template, Location spot)
+	Monster spawnMapMonster(MapRun run, NpcTemplate template, Location spot)
 	{
 		try
 		{
@@ -1706,7 +1860,7 @@ public class MapDeviceManager
 	 * Makes a freshly spawned map monster one of the server's special monsters, as its map's modifiers and hot zone effect ask (or by the open world's own chances), and gives it its forced personality. Order matters: the champion tier first (its title rebuild drops the other
 	 * tags), then Mage or Thief, Infused, Resonant, the wave challenge.
 	 */
-	private static void applyVariants(MapRun run, Monster monster, boolean wave)
+	static void applyVariants(MapRun run, Monster monster, boolean wave)
 	{
 		final HotzoneModifier hotzone = run.getHotzoneEffect();
 
@@ -2010,6 +2164,10 @@ public class MapDeviceManager
 		{
 			oldRun.getPlayersInside().remove(player.getObjectId());
 			removePlayerEffects(player, oldRun);
+			if (oldRun.isUnique())
+			{
+				UniqueMapManager.getInstance().onPlayerLeft(player, oldRun);
+			}
 		}
 
 		final MapRun newRun = getRun(newInstanceId);
@@ -2017,6 +2175,10 @@ public class MapDeviceManager
 		{
 			newRun.getPlayersInside().add(player.getObjectId());
 			addPlayerEffects(player, newRun);
+			if (newRun.isUnique())
+			{
+				UniqueMapManager.getInstance().onPlayerEntered(player, newRun);
+			}
 		}
 
 		if ((newRun != null) || isHideoutInstance(newInstanceId))
@@ -2190,7 +2352,7 @@ public class MapDeviceManager
 	 * @param run a run
 	 * @return the players inside its map, alive or not
 	 */
-	private static List<Player> getPlayersInside(MapRun run)
+	static List<Player> getPlayersInside(MapRun run)
 	{
 		final List<Player> players = new ArrayList<>();
 		for (int objectId : run.getPlayersInside())
@@ -2204,7 +2366,7 @@ public class MapDeviceManager
 		return players;
 	}
 
-	private static void sendToMap(MapRun run, String message)
+	static void sendToMap(MapRun run, String message)
 	{
 		for (Player player : getPlayersInside(run))
 		{
@@ -2212,7 +2374,7 @@ public class MapDeviceManager
 		}
 	}
 
-	private static void sendScreenToMap(MapRun run, String message)
+	static void sendScreenToMap(MapRun run, String message)
 	{
 		final ExShowScreenMessage packet = new ExShowScreenMessage(message, 4000);
 		for (Player player : getPlayersInside(run))
@@ -2265,10 +2427,20 @@ public class MapDeviceManager
 		}
 
 		final Location corpse = new Location(victim.getX(), victim.getY(), victim.getZ(), victim.getHeading());
+		final boolean encounter = UniqueMapManager.isEncounterMonster(victim);
+
+		if (run.isUnique())
+		{
+			UniqueMapManager.getInstance().onMonsterDied(run, victim, player, counted);
+		}
 
 		if (run.isBounty() && (run.getBountyId() == victim.getObjectId()))
 		{
 			final boolean inTime = System.currentTimeMillis() <= run.getBountyUntil();
+			if (inTime && run.isUnique())
+			{
+				UniqueMapManager.getInstance().onBountyClaimed(run);
+			}
 			run.setBounty(0, 0);
 			sendScreenToMap(run, inTime ? "Bounty claimed: the " + victim.getName() + " drops triple!" : "The " + victim.getName() + " is slain, too late for its bounty.");
 		}
@@ -2298,14 +2470,14 @@ public class MapDeviceManager
 		}
 
 		// Splitters: a counted monster that is no copy itself splits in two.
-		if (counted && run.isSplitters() && !victim.getVariables().getBoolean(SPLIT_VAR, false) && !victim.getVariables().getBoolean(MINION_VAR, false) && !victim.getVariables().getBoolean(GUARDIAN_VAR, false))
+		if (counted && !encounter && run.isSplitters() && !victim.getVariables().getBoolean(SPLIT_VAR, false) && !victim.getVariables().getBoolean(MINION_VAR, false) && !victim.getVariables().getBoolean(GUARDIAN_VAR, false))
 		{
 			ThreadPool.schedule(() -> split(run, victim.getTemplate(), corpse), 800);
 			return; // Not cleared yet: its copies come.
 		}
 
 		// Undying Legion: a counted monster that never rose before may come back once.
-		if (counted && (run.getRisePct() > 0) && !victim.getVariables().getBoolean(RISEN_VAR, false) && !victim.getVariables().getBoolean(SPLIT_VAR, false) && !victim.getVariables().getBoolean(GUARDIAN_VAR, false) && (Rnd.get(100) < run.getRisePct()))
+		if (counted && !encounter && (run.getRisePct() > 0) && !victim.getVariables().getBoolean(RISEN_VAR, false) && !victim.getVariables().getBoolean(SPLIT_VAR, false) && !victim.getVariables().getBoolean(GUARDIAN_VAR, false) && (Rnd.get(100) < run.getRisePct()))
 		{
 			ThreadPool.schedule(() -> riseAgain(run, victim.getTemplate(), corpse), VOLATILE_DELAY);
 			return; // Not cleared yet: it comes back.
@@ -2320,9 +2492,14 @@ public class MapDeviceManager
 
 		if (counted && run.getMonsters().isEmpty() && (run.getStatus() == Status.OPEN))
 		{
+			// A unique map's field is cleared: its next wave or its final encounter, unless that was its end.
+			if (run.isUnique() && UniqueMapManager.getInstance().onFieldCleared(run))
+			{
+				return;
+			}
 			completeRun(run, victim, player);
 		}
-		else if (counted && (run.getMonsters().size() == LAST_HUNT_COUNT))
+		else if (counted && !run.isUnique() && (run.getMonsters().size() == LAST_HUNT_COUNT))
 		{
 			sendScreenToMap(run, "Only " + LAST_HUNT_COUNT + " monsters remain: they are coming for you!");
 		}
@@ -2628,11 +2805,15 @@ public class MapDeviceManager
 	{
 		if (run.getMonsters().isEmpty() && (run.getStatus() == Status.OPEN))
 		{
+			if (run.isUnique() && UniqueMapManager.getInstance().onFieldCleared(run))
+			{
+				return;
+			}
 			completeRun(run, null, null);
 		}
 	}
 
-	private void completeRun(MapRun run, Monster lastKill, Player player)
+	void completeRun(MapRun run, Monster lastKill, Player player)
 	{
 		synchronized (run)
 		{
@@ -2644,12 +2825,13 @@ public class MapDeviceManager
 			run.setCompletedAt(System.currentTimeMillis());
 		}
 
-		sendScreenToMap(run, "Map complete!");
+		sendScreenToMap(run, run.isUnique() ? run.getUnique().name() + " is conquered!" : "Map complete!");
 		sendToMap(run, "Every monster of the map is slain. The map collapses in " + MapDeviceConfig.COMPLETED_CLOSE_DELAY + " seconds.");
 		if (MapDeviceConfig.COMPLETION_REWARD && (lastKill != null) && (player != null))
 		{
 			dropMap(lastKill, player, rollInMapTier(run));
 		}
+		UniqueMapManager.getInstance().onRunCompleted(run, lastKill, player);
 
 		// Speedrun: cleared in time, everyone inside gets a map.
 		if (run.isSpeedrunMade())
@@ -2694,6 +2876,11 @@ public class MapDeviceManager
 		if ((MapDeviceConfig.DROP_MAX_LEVEL_DIFFERENCE >= 0) && ((player.getLevel() - victim.getLevel()) > MapDeviceConfig.DROP_MAX_LEVEL_DIFFERENCE))
 		{
 			return;
+		}
+
+		if ((run == null) && victim.isRaid() && !victim.isMinion())
+		{
+			UniqueMapManager.getInstance().rollRaidDrop(victim, player);
 		}
 
 		final int baseTier = run != null ? run.getTier().tier() : getOpenWorldDropTier(victim);
@@ -2762,7 +2949,7 @@ public class MapDeviceManager
 	 * @param run a run
 	 * @return a tier its monsters drop: its own, sometimes one or two higher
 	 */
-	private static int rollInMapTier(MapRun run)
+	static int rollInMapTier(MapRun run)
 	{
 		final int roll = Rnd.get(100);
 		int tier = run.getTier().tier();
@@ -2777,7 +2964,7 @@ public class MapDeviceManager
 		return Math.min(MapDeviceData.getInstance().getMaxTier(), tier);
 	}
 
-	private static void dropMap(Attackable victim, Player player, int tierId)
+	static void dropMap(Attackable victim, Player player, int tierId)
 	{
 		final MapTier tier = MapDeviceData.getInstance().getTier(tierId);
 		if ((tier == null) || (ItemData.getInstance().getTemplate(tier.itemId()) == null))
@@ -2891,6 +3078,15 @@ public class MapDeviceManager
 				liftCurses(_run, now);
 			}
 
+			if (_run.isUnique())
+			{
+				UniqueMapManager.getInstance().onTick(_run, _tick, now);
+				if (_run.isClosed())
+				{
+					return;
+				}
+			}
+
 			// Speedrun: its clock.
 			if ((_run.getSpeedrunMinutes() > 0) && !_run.isSpeedrunOver() && (_run.getStatus() == Status.OPEN))
 			{
@@ -2952,7 +3148,7 @@ public class MapDeviceManager
 		}
 	}
 
-	private static void hurt(Collection<Player> players, double share, String message)
+	static void hurt(Collection<Player> players, double share, String message)
 	{
 		for (Player player : players)
 		{
@@ -3017,6 +3213,10 @@ public class MapDeviceManager
 		}
 		finally
 		{
+			if (run.isUnique())
+			{
+				UniqueMapManager.getInstance().onRunClosed(run);
+			}
 			RUNS_BY_INSTANCE.remove(run.getInstanceId());
 			HotzoneModifierManager.getInstance().clearInstanceModifier(run.getInstanceId());
 			InstanceManager.getInstance().destroyInstance(run.getInstanceId());
@@ -3117,7 +3317,7 @@ public class MapDeviceManager
 	 * @param location a spot
 	 * @return the same spot on the ground
 	 */
-	private static Location getGroundLocation(Location location)
+	static Location getGroundLocation(Location location)
 	{
 		return new Location(location.getX(), location.getY(), GeoEngine.getInstance().getHeight(location.getX(), location.getY(), location.getZ()), location.getHeading());
 	}

@@ -74,6 +74,15 @@ public class PassiveTreeManager
 	/** objectId -> how much the notables of the player's event tree count (1 when missing). */
 	private final Map<Integer, Double> _eventNotableScales = new ConcurrentHashMap<>();
 	
+	/**
+	 * objectId -> passives stacked on top of the player's own tree for one map of the Map Device (the Mayhem map, see {@link PassiveDeathmatchManager#joinMap}). Unlike the event tree they replace nothing: the player keeps its own allocation and gets these too. In memory only, never
+	 * saved; the Map Device takes them away when the player leaves the map. While they are in place the tree can't be changed.
+	 */
+	private final Map<Integer, Set<Integer>> _bonusNodes = new ConcurrentHashMap<>();
+	
+	/** Told to a player who tries to change the tree while map passives are stacked on it. */
+	public static final String BONUS_TREE_LOCKED_MESSAGE = "Your passive tree can't be changed while the passives of a map are stacked on it. They go when you leave the map.";
+	
 	/** Told to a player who tries to change the tree while it is the event's. */
 	public static final String EVENT_TREE_LOCKED_MESSAGE = "Your passive tree is replaced by the event's during Deathmatch: Mayhem and can't be changed. Your own tree comes back when you leave the event.";
 	
@@ -336,6 +345,59 @@ public class PassiveTreeManager
 		return _cache.computeIfAbsent(key(player), k -> loadFromDb(player));
 	}
 	
+	/**
+	 * @param player the player
+	 * @return every node in effect: {@link #getAllocatedNodes} and the map passives stacked on it ({@link #setBonusNodes})
+	 */
+	public Set<Integer> getEffectiveNodes(Player player)
+	{
+		final Set<Integer> allocated = getAllocatedNodes(player);
+		final Set<Integer> bonus = _bonusNodes.get(player.getObjectId());
+		if ((bonus == null) || bonus.isEmpty())
+		{
+			return allocated;
+		}
+		final Set<Integer> all = new HashSet<>(allocated);
+		all.addAll(bonus);
+		return all;
+	}
+	
+	// ------------------------------------------------------------------
+	// Map passives (stacked on the own tree)
+	// ------------------------------------------------------------------
+	
+	/**
+	 * Stacks passives on top of the player's own tree (or takes them away) and applies the result.
+	 * @param player the player
+	 * @param nodeIds the passives, {@code null} or empty to take them all away
+	 */
+	public void setBonusNodes(Player player, Collection<Integer> nodeIds)
+	{
+		final Set<Integer> had = (nodeIds == null) || nodeIds.isEmpty() ? _bonusNodes.remove(player.getObjectId()) : _bonusNodes.put(player.getObjectId(), Set.copyOf(nodeIds));
+		if ((had != null) || ((nodeIds != null) && !nodeIds.isEmpty()))
+		{
+			applyAll(player, false);
+		}
+	}
+	
+	/**
+	 * @param player the player
+	 * @return the passives stacked on its tree, empty for none
+	 */
+	public Set<Integer> getBonusNodes(Player player)
+	{
+		return _bonusNodes.getOrDefault(player.getObjectId(), Collections.emptySet());
+	}
+	
+	/**
+	 * @param player the player
+	 * @return {@code true} while map passives are stacked on its tree
+	 */
+	public boolean hasBonusNodes(Player player)
+	{
+		return _bonusNodes.containsKey(player.getObjectId());
+	}
+	
 	// ------------------------------------------------------------------
 	// Event tree (Passive Deathmatch)
 	// ------------------------------------------------------------------
@@ -419,6 +481,11 @@ public class PassiveTreeManager
 	 */
 	private boolean refuseEventTreeChange(Player player)
 	{
+		if (hasBonusNodes(player))
+		{
+			player.sendMessage(BONUS_TREE_LOCKED_MESSAGE);
+			return true;
+		}
 		if (!isOnEventTree(player))
 		{
 			return false;
@@ -1130,6 +1197,11 @@ public class PassiveTreeManager
 		if (!player.isOnEvent())
 		{
 			_eventTrees.remove(player.getObjectId());
+		}
+		// Map passives never outlive the map: a login is never inside one.
+		if (!org.l2jmobius.gameserver.managers.MapDeviceManager.isMapInstance(player.getInstanceId()))
+		{
+			_bonusNodes.remove(player.getObjectId());
 		}
 		_treeGranted.remove(player.getObjectId());
 		_replacedCreateItem.remove(player.getObjectId());

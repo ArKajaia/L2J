@@ -40,7 +40,9 @@ import org.l2jmobius.gameserver.model.eventmap.EventBarrier;
 import org.l2jmobius.gameserver.model.eventmap.EventMap;
 import org.l2jmobius.gameserver.model.eventmap.EventMapType;
 import org.l2jmobius.gameserver.model.mapdevice.MapArena;
+import org.l2jmobius.gameserver.model.mapdevice.MapModifier;
 import org.l2jmobius.gameserver.model.mapdevice.MapTier;
+import org.l2jmobius.gameserver.model.mapdevice.UniqueMap;
 import org.l2jmobius.gameserver.model.mapdevice.MonsterStrength;
 
 /**
@@ -58,6 +60,8 @@ public class MapDeviceData implements IXmlReader
 	private volatile Map<Integer, MapTier> _tiers = Collections.emptyMap();
 	private volatile Map<Integer, MapTier> _tiersByItem = Collections.emptyMap();
 	private volatile List<MapArena> _arenas = Collections.emptyList();
+	private volatile Map<UniqueMap.Type, UniqueMap> _uniqueMaps = Collections.emptyMap();
+	private volatile Map<Integer, UniqueMap> _uniqueMapsByItem = Collections.emptyMap();
 	private volatile Set<Integer> _excludedNpcIds = Collections.emptySet();
 	private volatile int _difficultyChampion1 = 0;
 	private volatile int _difficultyChampion2 = 1;
@@ -71,6 +75,7 @@ public class MapDeviceData implements IXmlReader
 	private Location _newDevicePosition;
 	private Map<Integer, MapTier> _newTiers;
 	private List<MapArena> _newArenas;
+	private Map<UniqueMap.Type, UniqueMap> _newUniqueMaps;
 	private Set<Integer> _newExcluded;
 	private double[] _newStrengthWeights;
 
@@ -86,6 +91,7 @@ public class MapDeviceData implements IXmlReader
 		_newDevicePosition = _devicePosition;
 		_newTiers = new TreeMap<>();
 		_newArenas = new ArrayList<>();
+		_newUniqueMaps = new java.util.EnumMap<>(UniqueMap.Type.class);
 		_newExcluded = new HashSet<>();
 		_newStrengthWeights = defaultStrengthWeights();
 		parseDatapackFile(FILE);
@@ -101,10 +107,17 @@ public class MapDeviceData implements IXmlReader
 		_tiers = Collections.unmodifiableMap(_newTiers);
 		_tiersByItem = Collections.unmodifiableMap(byItem);
 		_arenas = List.copyOf(_newArenas);
+		final Map<Integer, UniqueMap> uniqueByItem = new TreeMap<>();
+		for (UniqueMap unique : _newUniqueMaps.values())
+		{
+			uniqueByItem.put(unique.itemId(), unique);
+		}
+		_uniqueMaps = Collections.unmodifiableMap(_newUniqueMaps);
+		_uniqueMapsByItem = Collections.unmodifiableMap(uniqueByItem);
 		_excludedNpcIds = Set.copyOf(_newExcluded);
 		_strengthWeights = _newStrengthWeights;
 		MonsterStrength.clear();
-		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _tiers.size() + " map tiers and " + _arenas.size() + " arenas.");
+		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _tiers.size() + " map tiers, " + _arenas.size() + " arenas and " + _uniqueMaps.size() + " unique maps.");
 	}
 
 	@Override
@@ -167,6 +180,7 @@ public class MapDeviceData implements IXmlReader
 				final int radiusY = Math.max(EventBarrier.MIN_RADIUS, set.getInt("radiusY", radiusX));
 				_newArenas.add(MapArena.of(set.getString("name"), set.getInt("x"), set.getInt("y"), set.getInt("z"), radiusX, radiusY, set.getInt("entryAngle", 0), set.getInt("minTier", 0), set.getInt("maxTier", 0)));
 			});
+			forEach(listNode, "uniqueMap", uniqueNode -> parseUniqueMap(uniqueNode));
 			forEach(listNode, "excludedNpcs", excludedNode ->
 			{
 				for (String id : excludedNode.getTextContent().split("[,\\s]+"))
@@ -190,6 +204,101 @@ public class MapDeviceData implements IXmlReader
 	/**
 	 * @return where the owner of a hideout (and their visitors) arrive in it
 	 */
+	private void parseUniqueMap(Node uniqueNode)
+	{
+		final StatSet set = new StatSet(parseAttributes(uniqueNode));
+		final UniqueMap.Type type;
+		try
+		{
+			type = UniqueMap.Type.valueOf(set.getString("type"));
+		}
+		catch (Exception e)
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": Unknown unique map type " + set.getString("type", "") + ": it is left out.");
+			return;
+		}
+
+		final List<MapModifier> modifiers = new ArrayList<>();
+		for (String name : set.getString("modifiers", "").split("[,\\s]+"))
+		{
+			if (name.isEmpty())
+			{
+				continue;
+			}
+			try
+			{
+				final MapModifier modifier = MapModifier.valueOf(name);
+				if (!modifiers.contains(modifier))
+				{
+					modifiers.add(modifier);
+				}
+			}
+			catch (IllegalArgumentException e)
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": The unique map " + type + " names an unknown modifier " + name + ": it is left out.");
+			}
+		}
+		modifiers.sort(null);
+
+		final String[] texts = new String[3];
+		final List<UniqueMap.Drop> drops = new ArrayList<>();
+		final List<UniqueMap.Drop> bossDrops = new ArrayList<>();
+		final List<UniqueMap.Drop> specialDrops = new ArrayList<>();
+		for (Node child = uniqueNode.getFirstChild(); child != null; child = child.getNextSibling())
+		{
+			switch (child.getNodeName())
+			{
+				case "description" -> texts[0] = child.getTextContent().trim().replaceAll("\\s+", " ");
+				case "twist" -> texts[1] = child.getTextContent().trim().replaceAll("\\s+", " ");
+				case "finale" -> texts[2] = child.getTextContent().trim().replaceAll("\\s+", " ");
+				case "drop" ->
+				{
+					final StatSet drop = new StatSet(parseAttributes(child));
+					final long min = Math.max(1, drop.getLong("min", 1));
+					final UniqueMap.Drop entry = new UniqueMap.Drop(drop.getInt("id"), min, Math.max(min, drop.getLong("max", min)), Math.max(0, Math.min(100, drop.getDouble("chance", 100))));
+					switch (drop.getString("group", "map"))
+					{
+						case "boss" -> bossDrops.add(entry);
+						case "special" -> specialDrops.add(entry);
+						default -> drops.add(entry);
+					}
+				}
+				default ->
+				{
+				}
+			}
+		}
+
+		final String arena = set.getString("arena", "");
+		_newUniqueMaps.put(type, new UniqueMap(type, set.getString("name", type.name()), set.getInt("itemId"), set.getInt("tier", 1), Math.max(1, set.getInt("monsters", 50)), arena.isEmpty() ? null : arena, List.copyOf(modifiers), Math.max(0, set.getDouble("reward", 1.0)), set.getInt("boss"), set.getString("bossName", "Boss"), Math.max(0.01, set.getDouble("bossHp", 1.0)), Math.max(0.01, set.getDouble("bossAttack", 1.0)), Math.max(0.01, set.getDouble("bossDefence", 1.0)), texts[0] == null ? "" : texts[0], texts[1] == null ? "" : texts[1], texts[2] == null ? "" : texts[2], List.copyOf(drops), List.copyOf(bossDrops), List.copyOf(specialDrops)));
+	}
+
+	/**
+	 * @return the unique maps, by type
+	 */
+	public Map<UniqueMap.Type, UniqueMap> getUniqueMaps()
+	{
+		return _uniqueMaps;
+	}
+
+	/**
+	 * @param type a unique map type
+	 * @return its unique map, {@code null} if the XML has none
+	 */
+	public UniqueMap getUniqueMap(UniqueMap.Type type)
+	{
+		return _uniqueMaps.get(type);
+	}
+
+	/**
+	 * @param itemId an item id
+	 * @return the unique map that item opens, {@code null} for none
+	 */
+	public UniqueMap getUniqueMapByItem(int itemId)
+	{
+		return _uniqueMapsByItem.get(itemId);
+	}
+
 	public Location getHideoutEntry()
 	{
 		return _hideoutEntry;

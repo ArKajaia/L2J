@@ -284,10 +284,30 @@ public class PassiveDeathmatchManager
 		private int _nextOfferId = 1;
 		/** {@code true} while its question mark blinks (sent and not clicked yet): one is enough for any number of picks. */
 		private boolean _markShown;
+		/** The instance of the Map Device map these picks are for, 0 for a Mayhem match. */
+		private final int _mapInstanceId;
+		/** The map's name, for the window ({@code null} for a Mayhem match). */
+		private final String _mapName;
+		/** A map's passives: stacked on the player's own tree while it is inside (see {@link PassiveTreeManager#setBonusNodes}), kept while it is out (dead, in the hideout) until the map closes. */
+		private final Set<Integer> _bonus = ConcurrentHashMap.newKeySet();
+		/** {@code true} while the player is inside the map and its passives apply. */
+		private volatile boolean _active;
 
 		Picks(Profile profile)
 		{
+			this(profile, 0, null);
+		}
+
+		Picks(Profile profile, int mapInstanceId, String mapName)
+		{
 			_profile = profile;
+			_mapInstanceId = mapInstanceId;
+			_mapName = mapName;
+		}
+
+		boolean isMap()
+		{
+			return _mapInstanceId > 0;
 		}
 	}
 
@@ -310,6 +330,8 @@ public class PassiveDeathmatchManager
 
 	/** The players in a Mayhem match, by object id. */
 	private final Map<Integer, Picks> _players = new ConcurrentHashMap<>();
+	/** The players of a Mayhem map of the Map Device, by object id: inside it or out of it (dead, in the hideout) while it is open. */
+	private final Map<Integer, Picks> _mapPlayers = new ConcurrentHashMap<>();
 	/** The fake players in a Mayhem match, by object id. */
 	private final Map<Integer, FakePicks> _fakes = new ConcurrentHashMap<>();
 	/** The fighters of a plain Deathmatch that get Mayhem's balance ({@link TeamVsTeamConfig#DM_BALANCE}), by object id: who they are, for their stat changes. */
@@ -328,7 +350,7 @@ public class PassiveDeathmatchManager
 		{
 			return;
 		}
-		final Picks picks = _players.get(player.getObjectId());
+		final Picks picks = getPicks(player);
 		if (picks != null)
 		{
 			synchronized (picks)
@@ -345,7 +367,7 @@ public class PassiveDeathmatchManager
 	 */
 	private void showQuestionMark(Player player)
 	{
-		final Picks picks = _players.get(player.getObjectId());
+		final Picks picks = getPicks(player);
 		if (picks == null)
 		{
 			return;
@@ -371,6 +393,19 @@ public class PassiveDeathmatchManager
 	 */
 	public void join(Player player, boolean simulated)
 	{
+		final Profile profile = makeProfile(player, simulated);
+		_players.put(player.getObjectId(), new Picks(profile));
+		PassiveTreeManager.getInstance().beginEventTree(player, profile._notableScale);
+		applyModifiers(player, profile);
+	}
+
+	/**
+	 * @param player a player
+	 * @param simulated its picks are logged
+	 * @return who it is, for its offers
+	 */
+	private static Profile makeProfile(Player player, boolean simulated)
+	{
 		final Role role = TeamVsTeamConfig.PDM_TANK_CLASSES.contains(player.getPlayerClass().name()) ? Role.TANK : roleOf(player);
 		FakePlayerPvpPassiveTree.NodeTaste taste = null;
 		try
@@ -386,9 +421,134 @@ public class PassiveDeathmatchManager
 		final Item worn = player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_CHEST);
 		profile.makeHybrid(worn != null ? worn.getTemplate().getItemMask() : 0, player.getInventory().getWearedMask(), false);
 		profile.initNotableScale();
-		_players.put(player.getObjectId(), new Picks(profile));
-		PassiveTreeManager.getInstance().beginEventTree(player, profile._notableScale);
-		applyModifiers(player, profile);
+		return profile;
+	}
+
+	// ---------------------------------------------------------------------------------------------
+	// A Mayhem map of the Map Device
+	// ---------------------------------------------------------------------------------------------
+
+	/**
+	 * A player enters a Mayhem map of the Map Device (or comes back into it): each kill offers it a passive, as in a Mayhem match, but the passives are stacked on top of its own tree (nothing is replaced, no Mayhem balance), and stay for as long as the map is open,
+	 * whether it dies or not. The passives apply only while it is inside.
+	 * @param player the player
+	 * @param instanceId the map's instance
+	 * @param mapName the map's name, for the window
+	 */
+	public void joinMap(Player player, int instanceId, String mapName)
+	{
+		Picks picks = _mapPlayers.get(player.getObjectId());
+		if ((picks == null) || (picks._mapInstanceId != instanceId))
+		{
+			picks = new Picks(makeProfile(player, false), instanceId, mapName);
+			_mapPlayers.put(player.getObjectId(), picks);
+			player.sendMessage(mapName + ": every kill offers you a passive, stacked on top of your own tree until the map closes. Click the ? (or type ." + COMMAND + ") to pick.");
+		}
+		else if (!picks._bonus.isEmpty())
+		{
+			player.sendMessage(mapName + ": your " + picks._bonus.size() + " map passive" + (picks._bonus.size() == 1 ? " is" : "s are") + " back.");
+		}
+		picks._active = true;
+		PassiveTreeManager.getInstance().setBonusNodes(player, picks._bonus);
+		synchronized (picks)
+		{
+			picks._markShown = false;
+		}
+		showQuestionMark(player);
+	}
+
+	/**
+	 * A player left its Mayhem map (died, went back to the hideout, logged off): its map passives stop applying, but are kept (and it may still pick) until the map closes.
+	 * @param player the player
+	 */
+	public void leaveMap(Player player)
+	{
+		final Picks picks = _mapPlayers.get(player.getObjectId());
+		if ((picks == null) || !picks._active)
+		{
+			return;
+		}
+		picks._active = false;
+		PassiveTreeManager.getInstance().setBonusNodes(player, null);
+	}
+
+	/**
+	 * A Mayhem map closed: the passives of everyone who fought in it are gone.
+	 * @param instanceId the map's instance
+	 */
+	public void forgetMap(int instanceId)
+	{
+		for (Map.Entry<Integer, Picks> entry : _mapPlayers.entrySet())
+		{
+			if ((entry.getValue()._mapInstanceId == instanceId) && _mapPlayers.remove(entry.getKey(), entry.getValue()))
+			{
+				final Player player = World.getInstance().getPlayer(entry.getKey());
+				if (player != null)
+				{
+					PassiveTreeManager.getInstance().setBonusNodes(player, null);
+				}
+			}
+		}
+	}
+
+	/**
+	 * A player of a Mayhem map killed one of its monsters (or helped to): a pick waits for it.
+	 * @param player the player
+	 * @param assist {@code true} for an assist
+	 */
+	public void onMapKill(Player player, boolean assist)
+	{
+		final Picks picks = _mapPlayers.get(player.getObjectId());
+		if ((picks != null) && picks._active)
+		{
+			offer(player, assist);
+		}
+	}
+
+	/**
+	 * @param player a player
+	 * @return how many passives it took in its Mayhem map, 0 for none
+	 */
+	public int getMapPickCount(Player player)
+	{
+		final Picks picks = _mapPlayers.get(player.getObjectId());
+		return picks == null ? 0 : picks._bonus.size();
+	}
+
+	/**
+	 * @param player a player
+	 * @return its picks: of a Mayhem match, else of a Mayhem map, {@code null} for none
+	 */
+	private Picks getPicks(Player player)
+	{
+		final Picks picks = _players.get(player.getObjectId());
+		return picks != null ? picks : _mapPlayers.get(player.getObjectId());
+	}
+
+	/**
+	 * @param player a player
+	 * @param picks its picks
+	 * @return the passives it can't be offered: its whole tree with a map's passives, its event tree in a match
+	 */
+	private static Set<Integer> getOwned(Player player, Picks picks)
+	{
+		if (!picks.isMap())
+		{
+			return getEventNodes(player);
+		}
+		final Set<Integer> owned = new HashSet<>(PassiveTreeManager.getInstance().getAllocatedNodes(player));
+		owned.addAll(picks._bonus);
+		return owned;
+	}
+
+	/**
+	 * @param player a player
+	 * @param picks its picks
+	 * @return the passives it took: a map's, or its event tree in a match
+	 */
+	private static Set<Integer> getTaken(Player player, Picks picks)
+	{
+		return picks.isMap() ? picks._bonus : getEventNodes(player);
 	}
 
 	/**
@@ -502,7 +662,7 @@ public class PassiveDeathmatchManager
 	 */
 	public int getPendingCount(Player player)
 	{
-		final Picks picks = _players.get(player.getObjectId());
+		final Picks picks = getPicks(player);
 		if (picks == null)
 		{
 			return 0;
@@ -644,7 +804,7 @@ public class PassiveDeathmatchManager
 	 */
 	private void offer(Player player, boolean assist)
 	{
-		final Picks picks = _players.get(player.getObjectId());
+		final Picks picks = getPicks(player);
 		if (picks == null)
 		{
 			return;
@@ -653,12 +813,13 @@ public class PassiveDeathmatchManager
 		synchronized (picks)
 		{
 			// The waiting offers' passives too: each offer has its own, so one pick never empties another.
-			final Set<Integer> taken = new HashSet<>(getEventNodes(player));
+			final Set<Integer> owned = getOwned(player, picks);
+			final Set<Integer> taken = new HashSet<>(owned);
 			for (Offer waiting : picks._pending)
 			{
 				taken.addAll(waiting._options);
 			}
-			final List<Integer> options = roll(getEventNodes(player), taken, TeamVsTeamConfig.PDM_CHOICES, picks._profile, isKeystoneTurn(getEventNodes(player).size() + picks._pending.size()));
+			final List<Integer> options = roll(owned, taken, TeamVsTeamConfig.PDM_CHOICES, picks._profile, isKeystoneTurn(getTaken(player, picks).size() + picks._pending.size()));
 			if (options.isEmpty())
 			{
 				player.sendMessage(TAG + ": You have every passive this event offers.");
@@ -703,12 +864,13 @@ public class PassiveDeathmatchManager
 	 */
 	public void showWindow(Player player)
 	{
-		final Picks picks = _players.get(player.getObjectId());
+		final Picks picks = getPicks(player);
 		if (picks == null)
 		{
 			player.sendMessage(TAG + ": You are not in a Deathmatch: Mayhem.");
 			return;
 		}
+		final String title = picks.isMap() ? picks._mapName : "Deathmatch: Mayhem";
 
 		final Offer offer;
 		final int pending;
@@ -724,7 +886,7 @@ public class PassiveDeathmatchManager
 		}
 
 		final StringBuilder sb = new StringBuilder(2048);
-		sb.append("<html><title>Deathmatch: Mayhem</title><body><center>");
+		sb.append("<html><title>").append(escape(title)).append("</title><body><center>");
 		sb.append("<font color=\"LEVEL\">Pick a passive</font>");
 		if (pending > 1)
 		{
@@ -746,10 +908,10 @@ public class PassiveDeathmatchManager
 			sb.append("<button value=\"Take ").append(escape(shorten(node.getName(), 22))).append("\" action=\"bypass -h voiced_").append(COMMAND).append(' ').append(offer._id).append(' ').append(nodeId).append("\" width=200 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"><br>");
 		}
 
-		final Set<Integer> owned = getEventNodes(player);
+		final Set<Integer> owned = getTaken(player, picks);
 		if (!owned.isEmpty())
 		{
-			sb.append("<font color=\"808080\">Your event passives (").append(owned.size()).append("): ");
+			sb.append("<font color=\"808080\">").append(picks.isMap() ? "Your map passives (" : "Your event passives (").append(owned.size()).append("): ");
 			boolean first = true;
 			for (int id : owned)
 			{
@@ -762,7 +924,14 @@ public class PassiveDeathmatchManager
 			}
 			sb.append("</font><br>");
 		}
-		sb.append("<font color=\"808080\">Closing this window keeps your pick: it opens by itself when you die, the ? comes back when you respawn, and .").append(COMMAND).append(" opens it any time. Event passives last for this match only.</font>");
+		if (picks.isMap())
+		{
+			sb.append("<font color=\"808080\">Closing this window keeps your pick: .").append(COMMAND).append(" opens it any time, even in the hideout. Map passives stack on your own tree inside the map, and last until it closes.</font>");
+		}
+		else
+		{
+			sb.append("<font color=\"808080\">Closing this window keeps your pick: it opens by itself when you die, the ? comes back when you respawn, and .").append(COMMAND).append(" opens it any time. Event passives last for this match only.</font>");
+		}
 		sb.append("</center></body></html>");
 		player.sendPacket(new NpcHtmlMessage(sb.toString()));
 	}
@@ -776,7 +945,7 @@ public class PassiveDeathmatchManager
 	 */
 	public boolean choose(Player player, int offerId, int nodeId)
 	{
-		final Picks picks = _players.get(player.getObjectId());
+		final Picks picks = getPicks(player);
 		if (picks == null)
 		{
 			player.sendMessage(TAG + ": You are not in a Deathmatch: Mayhem.");
@@ -797,7 +966,22 @@ public class PassiveDeathmatchManager
 			else
 			{
 				node = PassiveTreeData.getInstance().getNode(nodeId);
-				if ((node == null) || !PassiveTreeManager.getInstance().addEventNode(player, nodeId))
+				if (node == null)
+				{
+					return false;
+				}
+				if (picks.isMap())
+				{
+					if (!picks._bonus.add(nodeId))
+					{
+						return false;
+					}
+					if (picks._active)
+					{
+						PassiveTreeManager.getInstance().setBonusNodes(player, picks._bonus);
+					}
+				}
+				else if (!PassiveTreeManager.getInstance().addEventNode(player, nodeId))
 				{
 					return false;
 				}
@@ -812,7 +996,7 @@ public class PassiveDeathmatchManager
 			return false;
 		}
 
-		player.sendMessage(TAG + ": You took " + node.getName() + " (" + describe(node) + ")." + (left > 0 ? " " + left + " more to pick." : ""));
+		player.sendMessage((picks.isMap() ? picks._mapName : TAG) + ": You took " + node.getName() + " (" + describe(node) + ")." + (left > 0 ? " " + left + " more to pick." : "") + (picks.isMap() && !picks._active ? " It applies when you are back in the map." : ""));
 		if (picks._profile._log)
 		{
 			LOGGER.info(getClass().getSimpleName() + ": Mayhem pick: " + player.getName() + " (" + player.getPlayerClass().name() + ") took " + node.getName() + (node.isEventOnly() ? " [event]" : "") + " (" + node.getType() + "), " + getEventNodes(player).size() + " passives.");
@@ -835,7 +1019,7 @@ public class PassiveDeathmatchManager
 		while (!picks._pending.isEmpty())
 		{
 			final Offer offer = picks._pending.peekFirst();
-			final Set<Integer> owned = getEventNodes(player);
+			final Set<Integer> owned = getOwned(player, picks);
 			final List<PassiveNode> ownedNodes = toNodes(owned);
 			final Set<String> ownedNames = names(ownedNodes);
 			final List<Integer> valid = new ArrayList<>();

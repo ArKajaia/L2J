@@ -2,7 +2,7 @@
 
 An endgame loop after the atlas of Path of Exile: high level monsters drop maps, a player opens them at the Map Device of their private hideout, feeds them Champion Medals for harder modifiers and better rewards, and fights through a fenced field of monsters that never respawn.
 
-Code: `MapDeviceManager` (core logic), `MapQuestManager` (the quest "A Map of Your Own"), `MapDeviceData` (`data/MapDevice.xml`), `MapDeviceConfig` (`config/Custom/MapDevice.ini`), `model/mapdevice/*` (modifiers, tiers, arenas, runs, `MonsterStrength`), the Map Device part of the event maps (`EventMapType.MAPDEVICE`, `EventMapDevice`, edited on the event map page), and the scripts `custom/MapDevice` (device window, NPCs), `handlers/chat/commands/voiced/HideoutVoiced` (`.hideout`), `handlers/chat/commands/admin/AdminMapDevice` (`//mapdevice`) and `handlers/items/MapItem`.
+Code: `MapDeviceManager` (core logic), `UniqueMapManager` (the unique maps), `MapQuestManager` (the quest "A Map of Your Own"), `MapDeviceData` (`data/MapDevice.xml`), `MapDeviceConfig` (`config/Custom/MapDevice.ini`), `model/mapdevice/*` (modifiers, tiers, arenas, runs, `MonsterStrength`), the Map Device part of the event maps (`EventMapType.MAPDEVICE`, `EventMapDevice`, edited on the event map page), and the scripts `custom/MapDevice` (device window, NPCs), `handlers/chat/commands/voiced/HideoutVoiced` (`.hideout`), `handlers/chat/commands/admin/AdminMapDevice` (`//mapdevice`) and `handlers/items/MapItem`.
 
 ## How it plays
 
@@ -144,6 +144,29 @@ Modifiers that draw a kind of monster the server has switched off (Mage, Thief, 
 - Splitters' copies and Summoners' minions have half HP (minions 70% damage) and give half the experience and drops; they count toward clearing the map.
 - Map monsters are spawned without a spawn point (so they never respawn) and skip the open world's random spawn rolls (`Spawn`); the map rolls Champions, Mages, Thieves, Infused, Resonant and wave challenge monsters itself, at the open world's chances times the hot zone effect's multipliers, or at the modifier's share.
 
+## Unique maps
+
+Three map items that always open the same map: its modifiers are chosen for it (no medal, no hot zone effect), it has a twist of its own while the field is cleared, a **final encounter** once it is, and drops of its own for every monster of the map and for its boss. Defined in `data/MapDevice.xml` (`<uniqueMap>`: tier, monster count, arena, modifiers, boss npc and multipliers, drops); the twists and encounters are worked by `UniqueMapManager`.
+
+**Getting one**: completing a map of tier `UniqueMapMinTier` (5) or higher drops one at random `UniqueMapCompletionChance` (2%) + `UniqueMapChancePerMedal` (0.5%) per medal; open world raid bosses of level 80+ drop one at 1%; each unique boss drops another at 10% (all in `MapDevice.ini`). Double-click it in the hideout (or *Insert* under **Unique Maps** at the device) to see what it holds and open it.
+
+| | The Crimson Coliseum (50111) | The Gilded Vault (50112) | The Ossuary of Echoes (50113) |
+|---|---|---|---|
+| Monsters | 30 of tier 5 (Lv. 81-84), Ruins of Despair | 60 of tier 4 (Lv. 82-84), Fields of Massacre | 70 of tier 6 (Lv. 82-85 party), Silent Valley |
+| Modifiers | Brutal, Fortified, Hunters, Berserkers, Rising Dread, Soul Eaters | Thieves' Guild, Fleet, Elusive, Skittish, Bounty Mark, Speedrun | Undying Legion, Volatile, Death Curse, Linked Souls, Desecrated, Withered |
+| The idea | An arms race: the monsters grow with every death, and so do you. | A heist against the clock. | The dead don't stay down. |
+| Twist | **Deathmatch: Mayhem.** Every kill (and every assist: `MayhemAssistShare` % of the damage) offers a strong passive, notables and keystones of the tree plus the Mayhem keystones, to stack **on top of your own tree** until the map closes. The monsters come in three waves: 6, 10, 14. | **Borrowed Time and Greed.** The vault seals in 5 minutes; every kill adds 12 s (a claimed bounty 60 s) and 1% Greed, which raises the map's and the boss's drop chances (up to x2 at 100 kills). | **Echoes.** A quarter of the slain counted monsters leave an Echo (half HP, faster attacks, uncounted, its own drops). Every Echo still standing at the end feeds the boss +5% HP (up to +100%). |
+| Final encounter | The **Crimson Champion** (a Maluk Warlord, x25 HP, x1.5 defence) in the middle of the ring. At 75/50/25% HP the crowd roars: +10% attack each time and 3 **Challengers** (tier 2 Champions of the map's kinds, double HP), each another passive. | The **Gilded Mimic** (a Mutant Treasure Chest, x400 HP) wakes with at least 2 minutes on the clock. A coward: it runs, spills coins when struck (8% per hit), and at 80/60/40/20% HP vanishes to another corner, leaving 4 Vault Thieves behind. If the vault seals first, it escapes with the hoard. | **The Hollow King** (an Immortal Necromancer, x500 HP, x5 attack) is shielded while his **Bone Phylacteries** stand: 4 at the edges of the field, then 3 more at 60% HP, then 2 more at 30%. Each raises a Bone Servant every 20 s (up to 10). From 30% a **Death Nova** hits everyone within 900 for 12% of max HP every 15 s. |
+| Map drops | Champion Medal, Life Stones Lv 84, Scroll: Enchant Weapon (S), Giant's Codex | Adena, Ancient Adena, Gemstone S, Golden Apiga, Scroll: Enchant Armor (S) | Dark/Holy Stones, Mid-Grade Life Stone Lv 84, Dark/Holy Crystals, Giant's Codex - Oblivion |
+| Special drops | Challengers: Champion Medals, High-Grade Life Stone | Spilled coins: 100k-300k Adena, Golden Apiga | Echoes: Dark/Holy Stones and Crystals, High-Grade Life Stone |
+| Boss drops | Champion Medals, Top-Grade Life Stones, Blessed Scroll: Enchant Weapon (S), Giant's Codex - Mastery, Vesper Ring, Elegia Ring, Ring of Baium (0.5%) | 15-30M Adena, 1-3M Ancient Adena, Gemstone S, Golden Apiga, Blessed Scrolls: Enchant Armor/Weapon (S), Vesper Earring/Necklace | Dark/Holy Crystals, Giant's Codex - Oblivion, Top-Grade Life Stones, Blessed Scroll: Enchant Weapon (S), Vesper Earring, Elegia Ring |
+
+Exact chances and amounts are in the XML. The boss of each takes the map's tier and modifier multipliers too, then its own (`bossHp`, `bossAttack`, `bossDefence`); the boss, Challengers and phylacteries count toward the clear, so the map completes when the last of them falls. Bosses and the other encounter monsters never split or rise again.
+
+### The Coliseum's passives
+
+They use the Deathmatch: Mayhem picks (`PassiveDeathmatchManager.joinMap`): the same offers (`MayhemChoices`, class-aware, a keystone turn every `MayhemKeystoneEvery` picks), the blinking question mark and `.dmpick`, but stacked on the player's own tree (`PassiveTreeManager.setBonusNodes`) rather than replacing it, and without Mayhem's PvP balance. They apply only inside the map; dying (you wake up in the hideout) or going back keeps them, and you can pick in the hideout too. They are gone when the map closes. While they are stacked the tree can't be changed.
+
 ## The quest: A Map of Your Own
 
 The first time a character gets a map (a drop, a trade, a GM gift), a quest pops up: the blinking tutorial question mark (it needs the client fix in `client/TutorialQuestionMark`) and a line in chat. Clicking the mark, or `.hideout quest`, opens the quest window with its steps and reward. Each new step raises the mark again; an unclicked mark comes back at login.
@@ -198,6 +221,9 @@ GM commands (`//mapdevice`, the same access as `//tvt` for the page):
 | `//mapdevice show <id>` / `hide` | Draw an editor map's Map Device points in game / take them away. |
 | `//mapdevice test <id> [tier] [medals]` | In your own hideout: open a map in that place for free, to try it. |
 | `//mapdevice give <tier> [count]` | Give maps to your target (or you). |
+| `//mapdevice unique [list]` | The unique maps. |
+| `//mapdevice unique give <COLISEUM\|VAULT\|OSSUARY> [count]` | Give a unique map to your target (or you). |
+| `//mapdevice unique test <COLISEUM\|VAULT\|OSSUARY>` | In your own hideout: open that unique map for free. |
 | `//mapdevice pool <tier>` | The monsters a map of that tier may hold, with their strength and each stat against the standard monster of their level. |
 | `//mapdevice score` | The strength of your target, and which tiers it fits and drops. |
 | `//mapdevice runs` / `close <instance>` | The maps open right now / close one. |

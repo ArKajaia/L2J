@@ -3,6 +3,8 @@ Maps of the Map Device - client additions (High Five)
 
 New items (data/stats/items/custom/map_device_items.xml):
   50101 .. 50110  Map (Tier 1) .. Map (Tier 10)
+  50111 .. 50113  Unique Map: The Crimson Coliseum, The Gilded Vault,
+                  The Ossuary of Echoes
 
 Without these rows the server still works: the item XML gives each map
 displayId 5915, so an unpatched client shows every tier as the retail
@@ -10,7 +12,7 @@ displayId 5915, so an unpatched client shows every tier as the retail
 drop messages - still name the tier). Patch the client so each tier
 shows its own name and description:
 
-  itemname-e_additions.txt  -> ItemName-e.dat (add these ten rows)
+  itemname-e_additions.txt  -> ItemName-e.dat (add these rows)
   add_etcitemgrp_rows.py    -> EtcItemgrp.dat
 
 L2ClientDat key=value text format, tab-separated, one item per line, no
@@ -36,7 +38,7 @@ change the text.
 
 Applying them
 -------------
-1. Add the ten rows of itemname-e_additions.txt to ItemName-e.dat.
+1. Add the rows of itemname-e_additions.txt to ItemName-e.dat.
 2. Run add_etcitemgrp_rows.py on your EtcItemgrp text and load the result.
 3. Save & Encrypt, copy both .dat files into the client's system folder and
    restart the client.
