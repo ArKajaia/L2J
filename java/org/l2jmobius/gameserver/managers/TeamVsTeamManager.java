@@ -2597,8 +2597,8 @@ public class TeamVsTeamManager
 	}
 
 	/**
-	 * The end of a Deathmatch: the one with the most kills wins (none on a tie for the first place). The players are ranked among themselves, the fake players left out: the first gets {@link TeamVsTeamConfig#DM_WIN_REWARD}, the places
-	 * {@link TeamVsTeamConfig#DM_TOP_REWARDS} (players with a kill or more).
+	 * The end of a Deathmatch: the one with the most kills wins (none on a tie for the first place). The places count every fighter, the fake players too, but only real players are rewarded: the winner gets
+	 * {@link TeamVsTeamConfig#DM_WIN_REWARD}, a player in one of the first places {@link TeamVsTeamConfig#DM_TOP_REWARDS} (players with a kill or more). A place a fake player holds is not given to the next player.
 	 */
 	private void endDeathmatch(Match match, boolean abandoned)
 	{
@@ -2648,20 +2648,17 @@ public class TeamVsTeamManager
 
 		if (!abandoned)
 		{
-			final List<Fighter> players = new ArrayList<>();
-			for (Fighter fighter : ranking)
-			{
-				if (fighter.isPlayer() && (fighter._kills > 0))
-				{
-					players.add(fighter);
-				}
-			}
+			// The places are the real ones, the fake players counted: a player behind 25 fake players is 26th, not the first of the players.
 			final Skill firework = CommonSkill.FIREWORK.getSkill();
-			for (int i = 0; i < players.size(); i++)
+			for (int i = 0; i < ranking.size(); i++)
 			{
-				final Fighter fighter = players.get(i);
+				final Fighter fighter = ranking.get(i);
+				if (!fighter.isPlayer() || (fighter._kills == 0))
+				{
+					continue;
+				}
 				final Player player = fighter._creature.asPlayer();
-				if (i == 0)
+				if (fighter == winner)
 				{
 					if (firework != null)
 					{
@@ -2677,7 +2674,7 @@ public class TeamVsTeamManager
 				{
 					final TopReward reward = TeamVsTeamConfig.DM_TOP_REWARDS.get(i);
 					final int itemId = reward.getItemId(player);
-					player.sendMessage(match._mode.getTag() + ": You are number " + (i + 1) + " of the players with " + fighter._kills + " kills.");
+					player.sendMessage(match._mode.getTag() + ": You took place " + (i + 1) + " of " + ranking.size() + " with " + fighter._kills + " kills.");
 					player.addItem(ItemProcessType.REWARD, itemId, reward.count(), null, true);
 					LOGGER.info(getClass().getSimpleName() + ": Deathmatch " + match.getId() + " place " + (i + 1) + ": " + player.getName() + " (" + fighter._kills + " kills, " + fighter._deaths + " deaths) gets " + reward.count() + " of item " + itemId + ".");
 				}
@@ -2689,7 +2686,7 @@ public class TeamVsTeamManager
 	}
 
 	/**
-	 * The best players of the whole winning team (every party of it) get {@link TeamVsTeamConfig#TOP_REWARDS}, first place first: most kills, fewer deaths on a tie. Only real players with a kill or more; the fake players are left out of the places.
+	 * The best players of the whole winning team (every party of it) get {@link TeamVsTeamConfig#TOP_REWARDS}, first place first: most kills, fewer deaths on a tie. The places count the fake players too (with a kill or more), but only real players are rewarded: a place a fake player holds is not given to the next player.
 	 * @param match the match
 	 * @param winner the winning team
 	 */
@@ -2698,7 +2695,7 @@ public class TeamVsTeamManager
 		final List<Fighter> ranking = new ArrayList<>();
 		for (Fighter fighter : winner._fighters)
 		{
-			if (fighter.isPlayer() && (fighter._kills > 0))
+			if (fighter._kills > 0)
 			{
 				ranking.add(fighter);
 			}
@@ -2709,6 +2706,10 @@ public class TeamVsTeamManager
 		{
 			final TopReward reward = TeamVsTeamConfig.TOP_REWARDS.get(i);
 			final Fighter fighter = ranking.get(i);
+			if (!fighter.isPlayer())
+			{
+				continue;
+			}
 			final Player player = fighter._creature.asPlayer();
 			final int itemId = reward.getItemId(player);
 			player.sendMessage("TvT: You are number " + (i + 1) + " of the whole " + winner._name + " team with " + fighter._kills + " kills.");
