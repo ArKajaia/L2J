@@ -32,7 +32,9 @@ public enum EventMapType
 	/** Deathmatch: the spots everyone spawns at, every one for themselves. */
 	DEATHMATCH("deathmatch", "Deathmatch"),
 	/** Race Wars: the start points of the two races of a race-vs-race match, and of the three races of the final. */
-	RACEWARS("racewars", "Race Wars");
+	RACEWARS("racewars", "Race Wars"),
+	/** Map Device: a place a map item opens in (see {@link EventMapDevice}): the fence, where the players come in, and where the monsters and the Map Guardian stand. */
+	MAPDEVICE("mapdevice", "Map Device");
 
 	private final String _key;
 	private final String _title;
@@ -44,7 +46,7 @@ public enum EventMapType
 	}
 
 	/**
-	 * @return its name in the map files, the web page and the admin commands: tvt, conquest, deathmatch, racewars
+	 * @return its name in the map files, the web page and the admin commands: tvt, conquest, deathmatch, racewars, mapdevice
 	 */
 	public String getKey()
 	{
@@ -75,6 +77,7 @@ public enum EventMapType
 			case "conquest" -> CONQUEST;
 			case "deathmatch", "dm" -> DEATHMATCH;
 			case "racewars", "rw" -> RACEWARS;
+			case "mapdevice", "map", "md" -> MAPDEVICE;
 			default -> null;
 		};
 	}

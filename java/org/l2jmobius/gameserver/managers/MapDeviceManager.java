@@ -62,6 +62,7 @@ import org.l2jmobius.gameserver.model.actor.enums.player.TeleportWhereType;
 import org.l2jmobius.gameserver.model.actor.instance.Chest;
 import org.l2jmobius.gameserver.model.actor.instance.Monster;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
+import org.l2jmobius.gameserver.model.eventmap.EventMapDevice;
 import org.l2jmobius.gameserver.model.events.Containers;
 import org.l2jmobius.gameserver.model.events.EventType;
 import org.l2jmobius.gameserver.model.events.holders.actor.player.OnPlayerLogin;
@@ -786,6 +787,63 @@ public class MapDeviceManager
 	 */
 	public String openMap(Player player, int tierId, int medals)
 	{
+		return openMap(player, tierId, medals, null, false);
+	}
+	
+	/**
+	 * A GM tries a map out (//mapdevice test): it opens at the device of their own hideout in the place they name, for nothing (no map item, no medal taken). A map of the event map page needs its fence and entry, ticked for the Map Device or not.
+	 * @param gm the GM, in their own hideout
+	 * @param arenaId the place: an event map's id, or the name of an arena of data/MapDevice.xml
+	 * @param tierId the tier
+	 * @param medals how many modifiers to roll
+	 * @return why it didn't open, {@code null} if it opened
+	 */
+	public String openTestMap(Player gm, String arenaId, int tierId, int medals)
+	{
+		final MapArena arena = findArena(arenaId);
+		if (arena == null)
+		{
+			return "No place " + arenaId + ": name an event map with a fence and an entry (//mapdevice list), or an arena of data/MapDevice.xml.";
+		}
+		return openMap(gm, tierId, medals, arena, true);
+	}
+	
+	/**
+	 * @param arenaId an event map's id, or the name of an arena of data/MapDevice.xml (with or without "xml:")
+	 * @return that place, {@code null} if there is none (or the event map lacks its fence or entry)
+	 */
+	public static MapArena findArena(String arenaId)
+	{
+		if (arenaId == null)
+		{
+			return null;
+		}
+		final org.l2jmobius.gameserver.model.eventmap.EventMap map = org.l2jmobius.gameserver.data.xml.EventMapData.getInstance().getMap(arenaId);
+		if (map != null)
+		{
+			return MapArena.of(map);
+		}
+		final String name = arenaId.startsWith("xml:") ? arenaId.substring(4) : arenaId;
+		for (MapArena arena : MapDeviceData.getInstance().getArenas())
+		{
+			if (arena.name().equalsIgnoreCase(name) || arena.name().replace(' ', '_').equalsIgnoreCase(name))
+			{
+				return arena;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * @return the maps open right now
+	 */
+	public static Collection<MapRun> getRuns()
+	{
+		return Collections.unmodifiableCollection(RUNS_BY_INSTANCE.values());
+	}
+	
+	private String openMap(Player player, int tierId, int medals, MapArena forcedArena, boolean free)
+	{
 		if (!MapDeviceConfig.ENABLED)
 		{
 			return "Maps are disabled.";
@@ -815,32 +873,41 @@ public class MapDeviceManager
 			{
 				return "You can feed the device 0 to " + MapDeviceConfig.MAX_MEDALS + " " + getItemName(MapDeviceConfig.MEDAL_ITEM_ID) + "s.";
 			}
-			if (player.getInventory().getInventoryItemCount(tier.itemId(), -1) < 1)
+			if (!free && (player.getInventory().getInventoryItemCount(tier.itemId(), -1) < 1))
 			{
 				return "You don't have a " + getItemName(tier.itemId()) + ".";
 			}
-			if ((medals > 0) && (player.getInventory().getInventoryItemCount(MapDeviceConfig.MEDAL_ITEM_ID, -1) < medals))
+			if (!free && (medals > 0) && (player.getInventory().getInventoryItemCount(MapDeviceConfig.MEDAL_ITEM_ID, -1) < medals))
 			{
 				return "You don't have " + medals + " " + getItemName(MapDeviceConfig.MEDAL_ITEM_ID) + "s.";
 			}
 
-			final List<MapArena> arenas = MapDeviceData.getInstance().getArenas();
-			if (arenas.isEmpty())
+			final MapArena arena;
+			if (forcedArena != null)
 			{
-				return "The Map Device has nowhere to open a map. Please contact an administrator.";
+				arena = forcedArena;
 			}
-			final List<NpcTemplate> pool = getMonsterPool(tier);
+			else
+			{
+				final List<MapArena> arenas = MapDeviceData.getInstance().getArenas(tier.tier());
+				if (arenas.isEmpty())
+				{
+					return "The Map Device has nowhere to open a tier " + tier.tier() + " map. Please contact an administrator.";
+				}
+				arena = arenas.get(Rnd.get(arenas.size()));
+			}
+			final List<NpcTemplate> pool = getArenaMonsters(arena, tier);
 			if (pool.isEmpty())
 			{
 				return "No monster fits a tier " + tier.tier() + " map. Please contact an administrator.";
 			}
 
 			// Everything is checked: now take what the map costs.
-			if (!player.destroyItemByItemId(ItemProcessType.FEE, tier.itemId(), 1, player, true))
+			if (!free && !player.destroyItemByItemId(ItemProcessType.FEE, tier.itemId(), 1, player, true))
 			{
 				return "You don't have a " + getItemName(tier.itemId()) + ".";
 			}
-			if ((medals > 0) && !player.destroyItemByItemId(ItemProcessType.FEE, MapDeviceConfig.MEDAL_ITEM_ID, medals, player, true))
+			if (!free && (medals > 0) && !player.destroyItemByItemId(ItemProcessType.FEE, MapDeviceConfig.MEDAL_ITEM_ID, medals, player, true))
 			{
 				player.addItem(ItemProcessType.REFUND, tier.itemId(), 1, player, true);
 				return "You don't have " + medals + " " + getItemName(MapDeviceConfig.MEDAL_ITEM_ID) + "s.";
@@ -848,17 +915,20 @@ public class MapDeviceManager
 
 			final List<MapModifier> modifiers = rollModifiers(medals);
 			final HotzoneModifier hotzone = rollHotzoneEffect(tier);
-			final MapArena arena = arenas.get(Rnd.get(arenas.size()));
 			try
 			{
 				final MapRun run = createRun(player, hideout, tier, medals, modifiers, hotzone, arena, pool);
 				announceOpened(player, run);
-				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " opened a tier " + tier.tier() + " map in " + arena.name() + " (instance " + run.getInstanceId() + ") with " + medals + " medals " + modifiers + ", hot zone effect " + hotzone + ".");
+				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + (free ? " test-opened" : " opened") + " a tier " + tier.tier() + " map in " + arena.name() + " (" + arena.id() + ", instance " + run.getInstanceId() + ") with " + medals + " medals " + modifiers + ", hot zone effect " + hotzone + ".");
 				return null;
 			}
 			catch (Exception e)
 			{
-				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not open a tier " + tier.tier() + " map for " + player.getName() + ".", e);
+				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not open a tier " + tier.tier() + " map in " + arena.id() + " for " + player.getName() + ".", e);
+				if (free)
+				{
+					return "The map could not be opened: " + e.getMessage() + " (see the server log).";
+				}
 				player.addItem(ItemProcessType.REFUND, tier.itemId(), 1, player, true);
 				if (medals > 0)
 				{
@@ -930,6 +1000,10 @@ public class MapDeviceManager
 		try
 		{
 			run.getFences().addAll(TeamVsTeamBarrier.build(arena.toBarrier(), arena.z(), instance.getId(), "Map Barrier"));
+			if ((arena.source() != null) && !arena.source().doors().isEmpty())
+			{
+				TeamVsTeamManager.setUpDoors(arena.source(), instance);
+			}
 			spawnMonsters(run, pool);
 			spawnReturnPortal(run);
 			spawnPortals(run, hideout);
@@ -1028,6 +1102,43 @@ public class MapDeviceManager
 	}
 
 	/**
+	 * @param arena where the map opens
+	 * @param tier the map's tier
+	 * @return the monsters the arena names (whatever their level: the event map page chose them), or else those of the tier
+	 */
+	public List<NpcTemplate> getArenaMonsters(MapArena arena, MapTier tier)
+	{
+		if (arena.monsters().isEmpty())
+		{
+			return getMonsterPool(tier);
+		}
+		final List<NpcTemplate> monsters = new ArrayList<>();
+		for (int npcId : arena.monsters())
+		{
+			final NpcTemplate template = NpcData.getInstance().getTemplate(npcId);
+			if ((template != null) && template.isType("Monster"))
+			{
+				monsters.add(template);
+			}
+			else
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": The map " + arena.id() + " names " + npcId + ", which is no monster: it is left out.");
+			}
+		}
+		return monsters.isEmpty() ? getMonsterPool(tier) : monsters;
+	}
+	
+	/**
+	 * @param npcId an npc id
+	 * @return {@code true} if it can fill a map: a plain monster ({@code type="Monster"})
+	 */
+	public static boolean isMapMonster(int npcId)
+	{
+		final NpcTemplate template = NpcData.getInstance().getTemplate(npcId);
+		return (template != null) && template.isType("Monster");
+	}
+	
+	/**
 	 * Clears the monster pools, so they are worked out again (after a reload of the spawns or of data/MapDevice.xml).
 	 */
 	public void clearMonsterPools()
@@ -1037,13 +1148,16 @@ public class MapDeviceManager
 
 	private void spawnMonsters(MapRun run, List<NpcTemplate> pool)
 	{
-		// A map has a theme: a few kinds of monster, not a hundred.
+		// A map has a theme: a few kinds of monster, not a hundred. A map of the event map page that names its monsters keeps them all.
+		final MapArena arena = run.getArena();
 		final List<NpcTemplate> shuffled = new ArrayList<>(pool);
 		Collections.shuffle(shuffled);
-		final List<NpcTemplate> kinds = shuffled.subList(0, Math.min(MapDeviceConfig.MONSTER_TYPES, shuffled.size()));
-
-		final int count = Math.max(1, (int) Math.round(MapDeviceConfig.MONSTER_COUNT * run.getPackSize()));
-		final List<Location> spots = run.isPacks() ? packSpots(run, count) : scatteredSpots(run, count);
+		final List<NpcTemplate> kinds = arena.monsters().isEmpty() ? new ArrayList<>(shuffled.subList(0, Math.min(MapDeviceConfig.MONSTER_TYPES, shuffled.size()))) : shuffled;
+		run.setMonsterKinds(kinds);
+		
+		final int baseCount = arena.monsterCount() > 0 ? arena.monsterCount() : MapDeviceConfig.MONSTER_COUNT;
+		final int count = Math.max(1, (int) Math.round(baseCount * run.getPackSize()));
+		final List<Location> spots = !arena.packs().isEmpty() ? arenaPackSpots(run, count) : run.isPacks() ? packSpots(run, count) : scatteredSpots(run, count);
 
 		// Gauntlet: which monsters are wave challenges.
 		final Set<Integer> waveIndexes = new HashSet<>();
@@ -1070,6 +1184,29 @@ public class MapDeviceManager
 		run.setMonsterTotal(run.getMonsters().size());
 	}
 
+	/**
+	 * The monster spots of a map of the event map page: the monsters are shared out among them in turn, each somewhere within its spot's spread (Pack Hunters draws them in closer).
+	 */
+	private static List<Location> arenaPackSpots(MapRun run, int count)
+	{
+		final List<EventMapDevice.Pack> packs = new ArrayList<>(run.getArena().packs());
+		Collections.shuffle(packs);
+		final GeoEngine geo = GeoEngine.getInstance();
+		final List<Location> spots = new ArrayList<>(count);
+		for (int i = 0; i < count; i++)
+		{
+			final EventMapDevice.Pack pack = packs.get(i % packs.size());
+			final int radius = run.isPacks() ? Math.max(100, pack.radius() / 3) : pack.radius();
+			final int centerZ = geo.getHeight(pack.x(), pack.y(), pack.z());
+			final double angle = Rnd.nextDouble() * 2 * Math.PI;
+			final double distance = Math.sqrt(Rnd.nextDouble()) * radius;
+			final int x = pack.x() + (int) (Math.cos(angle) * distance);
+			final int y = pack.y() + (int) (Math.sin(angle) * distance);
+			spots.add(geo.getValidLocation(pack.x(), pack.y(), centerZ, x, y, geo.getHeight(x, y, centerZ), run.getInstanceId()));
+		}
+		return spots;
+	}
+	
 	/**
 	 * @return spots at random over the field, away from the entry
 	 */
@@ -1311,7 +1448,7 @@ public class MapDeviceManager
 		}
 
 		final MapArena arena = run.getArena();
-		final Location middle = getGroundLocation(new Location(arena.x(), arena.y(), arena.z()));
+		final Location middle = getGroundLocation(arena.guardian() != null ? arena.guardian() : new Location(arena.x(), arena.y(), arena.z()));
 		final Monster guardian = spawnMapMonster(run, strongest, middle);
 		if (guardian == null)
 		{
@@ -1362,8 +1499,8 @@ public class MapDeviceManager
 	private static void spawnReturnPortal(MapRun run)
 	{
 		final MapArena arena = run.getArena();
-		final Location entry = getGroundLocation(new Location(arena.getEntryX(), arena.getEntryY(), arena.z()));
-		final Npc portal = Quest.addSpawn(MapDeviceConfig.RETURN_PORTAL_NPC_ID, entry.getX(), entry.getY(), entry.getZ(), 0, false, 0, false, run.getInstanceId());
+		final Location entry = getGroundLocation(arena.entry());
+		final Npc portal = Quest.addSpawn(MapDeviceConfig.RETURN_PORTAL_NPC_ID, entry.getX(), entry.getY(), entry.getZ(), entry.getHeading(), false, 0, false, run.getInstanceId());
 		run.setReturnPortal(portal);
 	}
 
@@ -1435,9 +1572,8 @@ public class MapDeviceManager
 		portal.deleteMe();
 
 		final MapArena arena = run.getArena();
-		final Location entry = getGroundLocation(new Location(arena.getEntryX(), arena.getEntryY(), arena.z()));
-		final int heading = (int) Math.round((Math.atan2(arena.y() - entry.getY(), arena.x() - entry.getX()) * 32768) / Math.PI) & 0xFFFF;
-		player.teleToLocation(entry.getX(), entry.getY(), entry.getZ(), heading, run.getInstanceId(), ENTRY_SPREAD);
+		final Location entry = getGroundLocation(arena.entry());
+		player.teleToLocation(entry.getX(), entry.getY(), entry.getZ(), entry.getHeading(), run.getInstanceId(), ENTRY_SPREAD);
 		return null;
 	}
 
@@ -1851,7 +1987,7 @@ public class MapDeviceManager
 		}
 		final List<Player> players = getPlayersInside(run);
 		players.removeIf(Player::isDead);
-		final List<NpcTemplate> pool = getMonsterPool(run.getTier());
+		final List<NpcTemplate> pool = run.getMonsterKinds().isEmpty() ? getMonsterPool(run.getTier()) : run.getMonsterKinds();
 		if (players.isEmpty() || pool.isEmpty())
 		{
 			checkCompleted(run);
@@ -2060,10 +2196,15 @@ public class MapDeviceManager
 				closeRun(_run, "The completed map collapses.");
 				return;
 			}
-			if (InstanceManager.getInstance().getInstance(_run.getInstanceId()) == null)
+			final Instance instance = InstanceManager.getInstance().getInstance(_run.getInstanceId());
+			if (instance == null)
 			{
 				closeRun(_run, null);
 				return;
+			}
+			if (((_tick % 5) == 0) && (_run.getArena().source() != null) && !_run.getArena().source().doors().isEmpty())
+			{
+				TeamVsTeamManager.keepDoors(_run.getArena().source(), instance); // A door opened or shut by anything else goes back.
 			}
 
 			final List<Player> players = getPlayersInside(_run);

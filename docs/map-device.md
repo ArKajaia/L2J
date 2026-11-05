@@ -2,7 +2,7 @@
 
 An endgame loop after the atlas of Path of Exile: high level monsters drop maps, a player opens them at the Map Device of their private hideout, feeds them Champion Medals for harder modifiers and better rewards, and fights through a fenced field of monsters that never respawn.
 
-Code: `MapDeviceManager` (core logic), `MapDeviceData` (`data/MapDevice.xml`), `MapDeviceConfig` (`config/Custom/MapDevice.ini`), `model/mapdevice/*` (modifiers, tiers, arenas, runs), and the scripts `custom/MapDevice` (device window, NPCs), `handlers/chat/commands/voiced/HideoutVoiced` (`.hideout`) and `handlers/items/MapItem`.
+Code: `MapDeviceManager` (core logic), `MapDeviceData` (`data/MapDevice.xml`), `MapDeviceConfig` (`config/Custom/MapDevice.ini`), `model/mapdevice/*` (modifiers, tiers, arenas, runs), the Map Device part of the event maps (`EventMapType.MAPDEVICE`, `EventMapDevice`, edited on the event map page), and the scripts `custom/MapDevice` (device window, NPCs), `handlers/chat/commands/voiced/HideoutVoiced` (`.hideout`), `handlers/chat/commands/admin/AdminMapDevice` (`//mapdevice`) and `handlers/items/MapItem`.
 
 ## How it plays
 
@@ -11,7 +11,7 @@ Code: `MapDeviceManager` (core logic), `MapDeviceData` (`data/MapDevice.xml`), `
 3. **Insert a map.** Double-click a map in the hideout, or talk to the device and press *Insert*. The device asks how many **Champion Medals** (the Survival Arena medal) to feed it: 0 to 8.
 4. **Each medal** rolls one **modifier** out of 50 (never twice the same) and adds **+20% experience and +20% drop rate**. The map also rolls one random **hot zone effect** (the server's `HotzoneModifier`s) for its whole field.
 5. **Eight portals** open in a ring round the device. Each takes one player into the map and is gone. The owner and the owner's party may take them (`.hideout party` brings party members to the hideout).
-6. **The map** is a fenced field (the Team vs Team barrier code) in its own instance, picked at random from the `<arena>`s, with **100 monsters** of the tier's levels, made stronger by the tier (`hp`/`attack`/`defence`) and carrying every rolled modifier. A map has a theme: its monsters are drawn from up to 6 kinds. Nothing respawns. When 10 monsters are left they come for the players, so none stays hidden.
+6. **The map** is a fenced field (the Team vs Team barrier code) in its own instance, picked at random among the places that take its tier (the `<arena>`s of `data/MapDevice.xml` and your own maps from the map editor), with **100 monsters** of the tier's levels, made stronger by the tier (`hp`/`attack`/`defence`) and carrying every rolled modifier. A map has a theme: its monsters are drawn from up to 6 kinds. Nothing respawns. When 10 monsters are left they come for the players, so none stays hidden.
 7. **Dying** in a map: 3 seconds later the player wakes up in the hideout (full HP/MP/CP, normal death penalty) and may take another portal. A **Return Portal** at the map's entry (or `.hideout back`) goes back to the hideout without dying.
 8. **Completing** a map (every monster slain) drops one more map and closes it 2 minutes later. A map also closes after 60 minutes, or 20 seconds after its last portal is used and nobody is left inside. The owner can close it early at the device.
 
@@ -109,6 +109,26 @@ Modifiers that draw a kind of monster the server has switched off (Mage, Thief, 
 
 Every map rolls one of the server's hot zone modifiers for its whole instance (`HotzoneModifierManager.setInstanceModifier`), shown on the device. Those that need a world hot zone or respawning monsters are excluded (`ExcludedHotzoneEffects`: Bounty Hunt, Rising Heat, Miniboss Frenzy, Blood Moon, Contested Ground). Their spawn multipliers (Coven, Thieves' Den, Elemental Storm...) apply to the map's own variant rolls, their player buffs are given inside the map, and Fragile Ground drains HP there.
 
+## Making your own maps (the map editor)
+
+Maps open in places made on the **event map page**, the same editor as the Team vs Team, Conquest, Deathmatch and Race Wars battlefields (`data/maps/<id>.xml`). The four arenas of `data/MapDevice.xml` stay in the rotation next to them (delete them there if you only want your own; an `<arena>` there can also take `minTier`/`maxTier`).
+
+1. In game, stand where the map should be and type **`//mapdevice`**: the page opens on the **Map Device** points. *New map here* starts a map round you (or pick an existing battlefield: one place can serve several events).
+2. Tick **Map Device** under *Used in*.
+3. Put up the **fence** (it is the field's edge; nothing gets through it, the monsters are placed inside it).
+4. Place the **entry** (where the players come in through a portal, facing into the field; the Return Portal stands there). Its ring is `EntrySafeRadius`: no monster stands that close.
+5. Optional:
+   - **Monster spots** with a spread radius: the monsters are shared out among them in turn (about 100 / spots each). Without spots they are spread over the whole field.
+   - **Map Guardian spot**: where the Map Guardian modifier's boss stands (else the fence's middle).
+   - **Lowest / highest tier**: which map tiers may open here (any by default).
+   - **Monsters in the map**: overrides `MonsterCount` for this place (the modifiers still change it).
+   - **Monsters that fill it**: npc ids of `type="Monster"` npcs. Every tier then uses exactly these, made stronger by the tier; the page shows their names and levels and warns about a level far from the tiers. Empty: 6 kinds of the tier's levels by chance.
+   - **Doors**: click a door on the map to have it open or shut in the map's copy of the place (good for dungeons).
+6. **Save** (it checks the map and warns about what's missing, like an entry beyond the fence or monster spots reaching the entry). `//mapdevice show <id>` draws the points in game.
+7. **Try it**: in your hideout (`.hideout`), `//mapdevice test <id> [tier] [medals]` opens a map there for free.
+
+A saved map takes part at once: the next map item opened (of a tier it allows) may land in it. `//mapdevice list` shows every place and whether it is ready.
+
 ## Commands
 
 | Command | |
@@ -118,10 +138,20 @@ Every map rolls one of the server's hot zone modifiers for its whole instance (`
 | `.hideout back` | From a map, back to the hideout (not while fighting). |
 | `.hideout leave` | From the hideout, back to where you came from. |
 
-GMs can hand out maps with `//create_item 50101` .. `50110`.
+GM commands (`//mapdevice`, the same access as `//tvt` for the page):
+
+| Command | |
+|---|---|
+| `//mapdevice` | The map editor, on the Map Device points. |
+| `//mapdevice list` | Every place a map can open in, from the editor and from `data/MapDevice.xml`, and whether it is ready. |
+| `//mapdevice show <id>` / `hide` | Draw an editor map's Map Device points in game / take them away. |
+| `//mapdevice test <id> [tier] [medals]` | In your own hideout: open a map in that place for free, to try it. |
+| `//mapdevice give <tier> [count]` | Give maps to your target (or you). |
+| `//mapdevice runs` / `close <instance>` | The maps open right now / close one. |
+| `//mapdevice reload` | Read `data/MapDevice.xml` and the event maps again, and rebuild the monster pools. |
 
 ## Setup notes
 
 - **Client**: the map items reuse the look of the retail *Pirate's Treasure Map* (`displayId` 5915) until the client is patched with `client/MapDevice` (item names and EtcItemgrp rows); then remove the `displayId` lines from `data/stats/items/custom/map_device_items.xml`.
-- **Places**: the hideout and the four arenas were checked against the geodata in `data/geodata` (single ground layer, little height difference). New arenas need open, mostly flat ground: the fence follows the ground, and monsters are placed from the middle outwards.
+- **Places**: the hideout and the four arenas of `data/MapDevice.xml` were checked against the geodata in `data/geodata` (single ground layer, little height difference). Your own places need open ground the monsters can walk on: the fence follows the ground, and monsters are placed from the middle (or from their spot) outwards, never through a wall or the fence. The editor's terrain view shows walls and cliffs in red.
 - **Restarts**: open maps and hideouts live in memory. A restart closes them (the map and medals are spent); players inside are moved back to where they entered the hideout from when they log in.

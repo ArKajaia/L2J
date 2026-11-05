@@ -198,6 +198,7 @@ import handlers.chat.commands.admin.AdminLevel;
 import handlers.chat.commands.admin.AdminLogin;
 import handlers.chat.commands.admin.AdminMammon;
 import handlers.chat.commands.admin.AdminManor;
+import handlers.chat.commands.admin.AdminMapDevice;
 import handlers.chat.commands.admin.AdminMenu;
 import handlers.chat.commands.admin.AdminMessages;
 import handlers.chat.commands.admin.AdminMonsterMod;
@@ -464,6 +465,7 @@ public class MasterHandler
 			AdminLogin.class,
 			AdminMammon.class,
 			AdminManor.class,
+			AdminMapDevice.class,
 			AdminMenu.class,
 			AdminMonsterMod.class,
 			AdminMessages.class,
