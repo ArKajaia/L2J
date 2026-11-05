@@ -60,6 +60,7 @@ public class MapDeviceConfig
 	public static int MAP_DURATION;
 	public static int COMPLETED_CLOSE_DELAY;
 	public static int SAFE_RADIUS;
+	public static int MONSTER_SPACING;
 	public static boolean RANDOM_PASSIVES;
 	public static Set<HotzoneModifier> EXCLUDED_HOTZONE_EFFECTS = EnumSet.noneOf(HotzoneModifier.class);
 
@@ -107,6 +108,7 @@ public class MapDeviceConfig
 		MAP_DURATION = Math.max(5, config.getInt("MapDurationMinutes", 60));
 		COMPLETED_CLOSE_DELAY = Math.max(10, config.getInt("CompletedMapCloseSeconds", 120));
 		SAFE_RADIUS = Math.max(0, config.getInt("EntrySafeRadius", 900));
+		MONSTER_SPACING = Math.max(0, config.getInt("MonsterSpacing", 500));
 		RANDOM_PASSIVES = config.getBoolean("MapMonsterRandomPassives", true);
 		EXCLUDED_HOTZONE_EFFECTS = EnumSet.noneOf(HotzoneModifier.class);
 		for (String name : config.getString("ExcludedHotzoneEffects", "BOUNTY_HUNT,RISING_HEAT,MINIBOSS_FRENZY,BLOOD_MOON,CONTESTED_GROUND").split(","))
