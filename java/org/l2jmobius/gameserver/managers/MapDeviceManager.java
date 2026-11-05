@@ -2153,6 +2153,9 @@ public class MapDeviceManager
 	 */
 	public static void onInstanceChanged(Player player, int oldInstanceId, int newInstanceId)
 	{
+		// A map's passives (the Crimson Coliseum's) never leave its instance, before anything else and whatever else happens.
+		PassiveTreeManager.getInstance().onInstanceChanged(player, newInstanceId);
+
 		if (RUNS_BY_INSTANCE.isEmpty() && HIDEOUTS_BY_INSTANCE.isEmpty())
 		{
 			if ((newInstanceId == 0) && player.getVariables().hasVariable(RETURN_LOC_VAR))

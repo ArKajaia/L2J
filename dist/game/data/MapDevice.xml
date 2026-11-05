@@ -91,7 +91,7 @@
 		modifiers="BRUTAL,FORTIFIED,HUNTERS,BERSERKERS,RISING_DREAD,SOUL_EATERS"
 		boss="22839" bossName="Crimson Champion" bossHp="25" bossAttack="1.0" bossDefence="1.5">
 		<description>The old ring of the Ruins of Despair, filled once more for the crowd. Thirty fighters come through its gates, the Crimson Champion last.</description>
-		<twist>Deathmatch: Mayhem. Every kill (or a fair share of one) offers you a strong passive of the tree, a notable or a keystone, to stack on top of your own tree until the map closes: die, and you keep them. The 30 monsters come in three waves (6, 10, 14), each once the last is down.</twist>
+		<twist>Deathmatch: Mayhem. Every kill (or a fair share of one) offers you a strong passive of the tree, a notable or a keystone, to stack on top of your own tree. They work only inside the map and never leave it: out of it (dead in the hideout, gone back) they are off, and they come back if you return while it is open. The 30 monsters come in three waves (6, 10, 14), each once the last is down.</twist>
 		<finale>The Crimson Champion steps into the ring once the 30 are slain. At 75%, 50% and 25% of its HP the crowd roars: it hits 10% harder, and 3 Challengers (Champions of the map's kinds) jump in. Every Challenger slain is another passive.</finale>
 		<drop group="map" id="6393" min="1" max="1" chance="10" /> <!-- Champion Medal -->
 		<drop group="map" id="14167" min="1" max="1" chance="6" /> <!-- Mid-Grade Life Stone - Level 84 -->

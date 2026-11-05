@@ -442,14 +442,14 @@ public class PassiveDeathmatchManager
 		{
 			picks = new Picks(makeProfile(player, false), instanceId, mapName);
 			_mapPlayers.put(player.getObjectId(), picks);
-			player.sendMessage(mapName + ": every kill offers you a passive, stacked on top of your own tree until the map closes. Click the ? (or type ." + COMMAND + ") to pick.");
+			player.sendMessage(mapName + ": every kill offers you a passive, stacked on top of your own tree. They work only inside this map: the moment you leave it they are gone, and they come back if you return before it closes. Click the ? (or type ." + COMMAND + ") to pick.");
 		}
 		else if (!picks._bonus.isEmpty())
 		{
 			player.sendMessage(mapName + ": your " + picks._bonus.size() + " map passive" + (picks._bonus.size() == 1 ? " is" : "s are") + " back.");
 		}
 		picks._active = true;
-		PassiveTreeManager.getInstance().setBonusNodes(player, picks._bonus);
+		PassiveTreeManager.getInstance().setBonusNodes(player, instanceId, picks._bonus);
 		synchronized (picks)
 		{
 			picks._markShown = false;
@@ -464,12 +464,12 @@ public class PassiveDeathmatchManager
 	public void leaveMap(Player player)
 	{
 		final Picks picks = _mapPlayers.get(player.getObjectId());
-		if ((picks == null) || !picks._active)
+		if (picks != null)
 		{
-			return;
+			picks._active = false;
 		}
-		picks._active = false;
-		PassiveTreeManager.getInstance().setBonusNodes(player, null);
+		// Always, active or not: nothing of the map goes out with the player.
+		PassiveTreeManager.getInstance().clearBonusNodes(player);
 	}
 
 	/**
@@ -485,7 +485,7 @@ public class PassiveDeathmatchManager
 				final Player player = World.getInstance().getPlayer(entry.getKey());
 				if (player != null)
 				{
-					PassiveTreeManager.getInstance().setBonusNodes(player, null);
+					PassiveTreeManager.getInstance().clearBonusNodes(player);
 				}
 			}
 		}
@@ -499,7 +499,7 @@ public class PassiveDeathmatchManager
 	public void onMapKill(Player player, boolean assist)
 	{
 		final Picks picks = _mapPlayers.get(player.getObjectId());
-		if ((picks != null) && picks._active)
+		if ((picks != null) && picks._active && (player.getInstanceId() == picks._mapInstanceId))
 		{
 			offer(player, assist);
 		}
@@ -976,9 +976,10 @@ public class PassiveDeathmatchManager
 					{
 						return false;
 					}
-					if (picks._active)
+					// Applied only standing in the map; picked in the hideout, it waits there.
+					if (picks._active && (player.getInstanceId() == picks._mapInstanceId))
 					{
-						PassiveTreeManager.getInstance().setBonusNodes(player, picks._bonus);
+						PassiveTreeManager.getInstance().setBonusNodes(player, picks._mapInstanceId, picks._bonus);
 					}
 				}
 				else if (!PassiveTreeManager.getInstance().addEventNode(player, nodeId))
@@ -996,7 +997,7 @@ public class PassiveDeathmatchManager
 			return false;
 		}
 
-		player.sendMessage((picks.isMap() ? picks._mapName : TAG) + ": You took " + node.getName() + " (" + describe(node) + ")." + (left > 0 ? " " + left + " more to pick." : "") + (picks.isMap() && !picks._active ? " It applies when you are back in the map." : ""));
+		player.sendMessage((picks.isMap() ? picks._mapName : TAG) + ": You took " + node.getName() + " (" + describe(node) + ")." + (left > 0 ? " " + left + " more to pick." : "") + (picks.isMap() && (!picks._active || (player.getInstanceId() != picks._mapInstanceId)) ? " It applies only inside the map, when you are back in it." : ""));
 		if (picks._profile._log)
 		{
 			LOGGER.info(getClass().getSimpleName() + ": Mayhem pick: " + player.getName() + " (" + player.getPlayerClass().name() + ") took " + node.getName() + (node.isEventOnly() ? " [event]" : "") + " (" + node.getType() + "), " + getEventNodes(player).size() + " passives.");
