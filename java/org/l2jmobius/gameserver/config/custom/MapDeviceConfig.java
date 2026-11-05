@@ -66,6 +66,7 @@ public class MapDeviceConfig
 	// Dying.
 	public static int DEATH_RETURN_DELAY;
 	public static boolean DEATH_REVIVE_FULL;
+	public static boolean DEATH_EXP_LOSS;
 
 	// Map drops.
 	public static double DROP_CHANCE;
@@ -126,6 +127,7 @@ public class MapDeviceConfig
 
 		DEATH_RETURN_DELAY = Math.max(1, config.getInt("DeathReturnDelay", 3));
 		DEATH_REVIVE_FULL = config.getBoolean("DeathReviveFull", true);
+		DEATH_EXP_LOSS = config.getBoolean("DeathExpLoss", false);
 
 		DROP_CHANCE = Math.max(0, config.getDouble("MapDropChance", 1.0));
 		DROP_CHANCE_PER_CHAMPION_TIER = Math.max(0, config.getDouble("MapDropChancePerChampionTier", 3.0));

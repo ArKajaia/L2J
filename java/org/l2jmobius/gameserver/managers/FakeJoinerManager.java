@@ -372,6 +372,12 @@ public class FakeJoinerManager
 			return null;
 		}
 
+		// A map of the Map Device belongs to its party: no helper or rival walks in (a Resonant monster there fights alone).
+		if (MapDeviceManager.isMapInstance(monster.getInstanceId()))
+		{
+			return null;
+		}
+
 		final FakePlayerPvpManager fakes = FakePlayerPvpManager.getInstance();
 		if (!fakes.isEnabled() || ((FakePlayerPvpConfig.MAX_ALIVE > 0) && (fakes.getFakePlayers().size() >= FakePlayerPvpConfig.MAX_ALIVE)))
 		{

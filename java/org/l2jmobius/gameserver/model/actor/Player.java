@@ -71,6 +71,7 @@ import org.l2jmobius.gameserver.config.custom.DualboxCheckConfig;
 import org.l2jmobius.gameserver.config.custom.FactionSystemConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
 import org.l2jmobius.gameserver.config.custom.FreeMountsConfig;
+import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
 import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
 import org.l2jmobius.gameserver.config.custom.OfflinePlayConfig;
 import org.l2jmobius.gameserver.config.custom.OfflineTradeConfig;
@@ -5600,7 +5601,8 @@ public class Player extends Playable
 					}
 					
 					// Should not penalize player when lucky, in a non siege PvP zone, in a PvP spot (PvpSpotNoDeathPenalty), has advent blessing or is in an event.
-					if (PlayerConfig.PLAYER_DELEVEL && !isLucky() && (insideSiegeZone || !insidePvpZone) && !isSparedByPvpSpot() && !_nevitSystem.isAdventBlessingActive() && !isOnEvent())
+					// Nor in a map of the Map Device (DeathExpLoss in MapDevice.ini).
+					if (PlayerConfig.PLAYER_DELEVEL && !isLucky() && (insideSiegeZone || !insidePvpZone) && !isSparedByPvpSpot() && !_nevitSystem.isAdventBlessingActive() && !isOnEvent() && (MapDeviceConfig.DEATH_EXP_LOSS || !org.l2jmobius.gameserver.managers.MapDeviceManager.isMapInstance(getInstanceId())))
 					{
 						calculateDeathExpPenalty(killer, isAtWarWith(pk) || FakeClanManager.getInstance().isWarEnemy(killer, this));
 					}
