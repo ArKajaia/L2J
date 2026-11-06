@@ -64,7 +64,7 @@ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 /**
  * The Primal Crucible, a unique map of the Map Device ({@link UniqueMap.Type#CRUCIBLE}): "Evolve, or be eaten". {@link UniqueMapManager} calls in here at its hooks.
  * <ul>
- * <li><b>Evolution</b>: every kill gives the players near it {@link Hunter#_essence Essence}. At {@link #ESSENCE_STAGES} each player evolves: one form of each path (fighter, caster, support) is offered, retail transformations, or <b>Defiance</b> (stay
+ * <li><b>Evolution</b>: every kill gives the players near it {@link Hunter#_essence Essence}. At {@link #ESSENCE_STAGES} each player evolves (the first, Stage I, comes free on entering): one form of each path (fighter, caster, support) is offered, retail transformations, or <b>Defiance</b> (stay
  * yourself). Every stage adds HP and damage on top of the form; stage IV is the <b>Titan</b>: a giant (BIG_BODY), a burning aura, and <b>Rampage</b>.</li>
  * <li><b>The Food Chain</b>: every {@link #MEAL_INTERVAL} seconds the strongest monster with a weaker one near it eats it, and grows. Three meals make an <b>Alpha</b> (Essence and a <b>Mutation</b> for everyone), six an <b>Apex Predator</b> that hunts
  * the player with the most Essence. Every meal also feeds the final boss.</li>
@@ -83,9 +83,9 @@ public class PrimalCrucibleManager
 	private static final int[] ESSENCE_STAGES =
 	{
 		40,
-		130,
-		270,
-		450
+		100,
+		200,
+		330
 	};
 	/** HP and damage of each stage (0 = not evolved yet). */
 	private static final double[] STAGE_BONUS =
@@ -188,6 +188,12 @@ public class PrimalCrucibleManager
 	private static final int MEAL_INTERVAL = 40;
 	private static final int MEALS_MAX = 12;
 	private static final int MEAL_RANGE = 800;
+	/** A monster that has eaten hunts its next meal this far, walking to it. */
+	private static final int HUNT_RANGE = 3000;
+	/** Close enough to eat a hunted meal. */
+	private static final int HUNT_REACH = 200;
+	/** A hunt is given up after this long. */
+	private static final int HUNT_SECONDS = 30;
 	private static final int MIN_FIELD_LEFT = 6;
 	private static final int ALPHA_MEALS = 3;
 	private static final int APEX_MEALS = 6;
@@ -205,7 +211,7 @@ public class PrimalCrucibleManager
 	private static final int EGG_NPC_ID = 18344; // Ancient Egg
 	private static final int EGG_COUNT = 3;
 	private static final int EGG_SECONDS = 20;
-	/** The Ancient Egg has 10 HP (its passives make it less): this makes it about 40,000 in a tier 7 map. */
+	/** The Ancient Egg has 10 HP (its passives make it less): this makes it about 40,000. */
 	private static final double EGG_HP = 7500;
 	private static final double EGG_SPREAD = 0.55;
 	private static final int ROAR_SKILL_ID = 4526; // Quest - BOSS Summon (visual only)
@@ -306,6 +312,10 @@ public class PrimalCrucibleManager
 		/** Meals eaten in the field. */
 		int _meals;
 		final Set<Integer> _apexes = ConcurrentHashMap.newKeySet();
+		/** The hunt under way: the eater, its prey and when it gives up (0 for none). */
+		volatile int _hunter;
+		volatile int _prey;
+		volatile long _huntUntil;
 		/** Eggs by object id, with the time they hatch. */
 		final Map<Integer, Long> _eggs = new ConcurrentHashMap<>();
 	}
@@ -408,6 +418,11 @@ public class PrimalCrucibleManager
 		final Crucible crucible = crucible(run);
 		final Hunter hunter = hunter(crucible, player);
 		endCosmetic(player);
+		// Stage I comes free: you walk in already offered a Beast form, so even a solo player gets the evolution going.
+		if ((hunter._stage == 0) && hunter._choices.isEmpty() && (hunter._essence < ESSENCE_STAGES[0]))
+		{
+			gain(player, hunter, ESSENCE_STAGES[0] - hunter._essence);
+		}
 		// Not in the middle of the instance change: a moment later, if still inside.
 		ThreadPool.schedule(() ->
 		{
@@ -416,7 +431,7 @@ public class PrimalCrucibleManager
 				apply(player, crucible, hunter);
 			}
 		}, ENTER_DELAY);
-		player.sendMessage(run.getUnique().name() + ": evolve, or be eaten. Kills give Essence; at " + ESSENCE_STAGES[0] + " you evolve into a Beast, then a Monster, a Legend and a Titan. The monsters eat each other: three meals make an Alpha. Type .crucible for your evolution.");
+		player.sendMessage(run.getUnique().name() + ": evolve, or be eaten. You start as a Beast; kills give Essence, and at " + ESSENCE_STAGES[1] + ", " + ESSENCE_STAGES[2] + " and " + ESSENCE_STAGES[3] + " you evolve into a Monster, a Legend and a Titan. The monsters eat each other: three meals make an Alpha. Type .crucible for your evolution.");
 		if (!hunter._choices.isEmpty())
 		{
 			remind(player, hunter);
@@ -1099,6 +1114,7 @@ public class PrimalCrucibleManager
 			{
 				devour(run, crucible);
 			}
+			hunt(run, crucible, now);
 			if ((tick % APEX_RETARGET) == 0)
 			{
 				huntWithApexes(run, crucible, players);
@@ -1123,7 +1139,7 @@ public class PrimalCrucibleManager
 	 */
 	private static void devour(MapRun run, Crucible crucible)
 	{
-		if ((crucible._meals >= MEALS_MAX) || (run.getMonsters().size() <= MIN_FIELD_LEFT))
+		if ((crucible._meals >= MEALS_MAX) || (run.getMonsters().size() <= MIN_FIELD_LEFT) || (crucible._hunter != 0))
 		{
 			return;
 		}
@@ -1140,12 +1156,18 @@ public class PrimalCrucibleManager
 		field.sort((a, b) -> Integer.compare(b.getVariables().getInt(MEALS_VAR, 0), a.getVariables().getInt(MEALS_VAR, 0)));
 		for (Monster eater : field)
 		{
+			if (eater.isInCombat())
+			{
+				continue; // Busy with the players.
+			}
 			final int meals = eater.getVariables().getInt(MEALS_VAR, 0);
+			// A monster that has eaten already hunts far for its next meal: the strong get stronger, and Alphas grow even in a spread-out field.
+			final int range = meals > 0 ? HUNT_RANGE : MEAL_RANGE;
 			Monster prey = null;
-			double nearest = MEAL_RANGE;
+			double nearest = range;
 			for (Monster other : field)
 			{
-				if ((other == eater) || (other.getVariables().getInt(MEALS_VAR, 0) > meals))
+				if ((other == eater) || (other.getVariables().getInt(MEALS_VAR, 0) > meals) || other.isInCombat())
 				{
 					continue;
 				}
@@ -1156,11 +1178,63 @@ public class PrimalCrucibleManager
 					prey = other;
 				}
 			}
-			if (prey != null)
+			if (prey == null)
+			{
+				continue;
+			}
+			if (nearest <= MEAL_RANGE)
 			{
 				eat(run, crucible, eater, prey);
-				return;
 			}
+			else
+			{
+				// It stalks the prey across the field, and eats it when it gets there.
+				crucible._hunter = eater.getObjectId();
+				crucible._prey = prey.getObjectId();
+				crucible._huntUntil = System.currentTimeMillis() + (HUNT_SECONDS * 1000L);
+				prey.setRandomWalking(false);
+				if (eater.hasAI())
+				{
+					eater.getAI().setIntention(Intention.MOVE_TO, new Location(prey.getX(), prey.getY(), prey.getZ()));
+				}
+				MapDeviceManager.sendToMap(run, "A " + eater.getName() + " (" + meals + (meals == 1 ? " meal" : " meals") + ") is hunting a " + prey.getName() + " " + describeWhere(run, eater) + "...");
+			}
+			return;
+		}
+	}
+
+	/**
+	 * The hunt under way, once a second: the eater eats its prey when it reaches it, and gives up when it is fighting, or after {@link #HUNT_SECONDS}.
+	 */
+	private static void hunt(MapRun run, Crucible crucible, long now)
+	{
+		if (crucible._hunter == 0)
+		{
+			return;
+		}
+		final WorldObject a = World.getInstance().findObject(crucible._hunter);
+		final WorldObject b = World.getInstance().findObject(crucible._prey);
+		final Monster eater = (a instanceof Monster m) && !m.isDead() ? m : null;
+		final Monster prey = (b instanceof Monster m) && !m.isDead() && run.getMonsters().contains(m.getObjectId()) ? m : null;
+		if ((eater == null) || (prey == null) || eater.isInCombat() || (now > crucible._huntUntil))
+		{
+			if (prey != null)
+			{
+				prey.setRandomWalking(true);
+			}
+			crucible._hunter = 0;
+			crucible._prey = 0;
+			return;
+		}
+		if (eater.calculateDistance2D(prey) <= HUNT_REACH)
+		{
+			crucible._hunter = 0;
+			crucible._prey = 0;
+			eat(run, crucible, eater, prey);
+		}
+		else if (eater.hasAI() && !eater.isMoving())
+		{
+			eater.getAI().setIntention(Intention.MOVE_TO, new Location(prey.getX(), prey.getY(), prey.getZ()));
 		}
 	}
 

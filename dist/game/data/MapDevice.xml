@@ -191,13 +191,13 @@
 	</uniqueMap>
 
 	<!-- The Primal Crucible: evolve, or be eaten (PrimalCrucibleManager). The players evolve through four transformations into Titans; the monsters eat each other into Alphas and Apex Predators. -->
-	<!-- Hunting monsters (Hunters, Pack Hunters: packs to feed on), fierce when hurt (Berserkers, Vampiric, Lacerating), tough (Fortified). -->
-	<!-- arena: the event map "primeval_isle" (make it with //mapdevice on Primeval Isle, fill it with its dinosaurs); until it exists, any arena of tier 7. -->
-	<uniqueMap type="CRUCIBLE" name="The Primal Crucible" itemId="50115" tier="7" monsters="60" arena="primeval_isle" reward="2.4"
-		modifiers="HUNTERS,PACK_HUNTERS,BERSERKERS,VAMPIRIC,FORTIFIED,LACERATING"
-		boss="22215" bossName="The Primordial" bossHp="8" bossAttack="1.6" bossDefence="1.5">
+	<!-- Quick and venomous (Fleet, Venomous), fierce when hurt (Berserkers, Vampiric, Lacerating), tough (Fortified). Soloable: tier 5, no Hunters or Pack Hunters (live tests showed a geared solo Duelist dying to whole packs, and dying even at tier 6 without them), Stage I free on entering. -->
+	<!-- arena: the event map "primeval_isle" (make it with //mapdevice on Primeval Isle, fill it with its dinosaurs); until it exists, any arena of tier 5. -->
+	<uniqueMap type="CRUCIBLE" name="The Primal Crucible" itemId="50115" tier="5" monsters="60" arena="primeval_isle" reward="2.4"
+		modifiers="FLEET,VENOMOUS,BERSERKERS,VAMPIRIC,FORTIFIED,LACERATING"
+		boss="22215" bossName="The Primordial" bossHp="3.5" bossAttack="1.6" bossDefence="1.5">
 		<description>A valley older than Aden, where everything eats everything. You come in as yourself. You may leave as a Titan, if you are not eaten first.</description>
-		<twist>Evolve, or be eaten. Every kill gives Essence to the players near it: at 40, 130, 270 and 450 you evolve. Pick one of three forms (a fighter, a caster, a support), or defy and stay yourself: a Beast, a Monster, a Legend, then a giant Titan with a burning aura and a Rampage. Meanwhile the monsters eat each other: three meals make an Alpha (Essence and a Mutation for everyone who kills it), six an Apex Predator that hunts the strongest of you. Every meal also feeds the Primordial.</twist>
+		<twist>Evolve, or be eaten. You walk in as a Beast (Stage I is free); every kill gives Essence to the players near it, and at 100, 200 and 330 you evolve again. Pick one of three forms (a fighter, a caster, a support), or defy and stay yourself: a Beast, a Monster, a Legend, then a giant Titan with a burning aura and a Rampage. Meanwhile the monsters eat each other: three meals make an Alpha (Essence and a Mutation for everyone who kills it), six an Apex Predator that hunts the strongest of you. Every meal also feeds the Primordial.</twist>
 		<finale>The Primordial rises once the valley is cleared, +4% HP for every meal the field ate. At 60% and 20% of its HP it lays 3 eggs that hatch into Alphas after 20 seconds unless smashed; at 40% it goes into a frenzy. Everyone inside when it falls gets Primal Essence, three times as much if a Titan stood in the Crucible.</finale>
 		<drop group="map" id="6393" min="1" max="1" chance="8" /> <!-- Champion Medal -->
 		<drop group="map" id="14167" min="1" max="1" chance="6" /> <!-- Mid-Grade Life Stone - Level 84 -->
