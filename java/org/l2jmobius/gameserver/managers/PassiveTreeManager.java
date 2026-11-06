@@ -45,6 +45,7 @@ import org.l2jmobius.gameserver.model.passivetree.PassiveStatBonusCache;
 import org.l2jmobius.gameserver.model.skill.CommonSkill;
 import org.l2jmobius.gameserver.model.skill.PassiveTreeArchetypes;
 import org.l2jmobius.gameserver.model.skill.Skill;
+import org.l2jmobius.gameserver.model.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.model.stats.Stat;
 import org.l2jmobius.gameserver.model.stats.functions.AbstractFunction;
 import org.l2jmobius.gameserver.model.stats.functions.FuncAdd;
@@ -74,6 +75,30 @@ public class PassiveTreeManager
 	/** objectId -> how much the notables of the player's event tree count (1 when missing). */
 	private final Map<Integer, Double> _eventNotableScales = new ConcurrentHashMap<>();
 	
+	/**
+	 * objectId -> passives stacked on top of the player's own tree for one map of the Map Device (the Mayhem map, see {@link PassiveDeathmatchManager#joinMap}). Unlike the event tree they replace nothing: the player keeps its own allocation and gets these too. In memory only, never
+	 * saved. While they are in place the tree can't be changed.
+	 * <p>
+	 * They are <b>bound to the map's instance</b> and never apply anywhere else. Every way out is covered, each on its own: {@link #setBonusNodes} refuses a player who is not in that instance; {@link #onInstanceChanged} (every instance change, from
+	 * {@code WorldObject.setInstanceId}) takes them away the moment the player is elsewhere; {@link #getEffectiveNodes} leaves them out of every stat rebuild unless the player is inside a map still open in that instance; a login takes them away unless the player logs in inside it;
+	 * and {@link #BONUS_SWEEP_INTERVAL} sweeps every holder, dropping the ones offline, elsewhere, or whose map has closed.
+	 */
+	private final Map<Integer, Bonus> _bonusNodes = new ConcurrentHashMap<>();
+	
+	/** How often (ms) every player with map passives is checked to still be inside their map. */
+	private static final long BONUS_SWEEP_INTERVAL = 1000;
+	/** The tree's proc buffs (data/stats/skills/PassiveTreeActives.xml: Blood for Blood ... Blade Dance): stripped when map passives come off, so no proc a map passive gave leaves the map. */
+	private static final int PROC_BUFF_FIRST = 27470;
+	private static final int PROC_BUFF_LAST = 27487;
+	
+	/** Map passives and the instance of the map they belong to. */
+	private record Bonus(int instanceId, Set<Integer> nodes)
+	{
+	}
+	
+	/** Told to a player who tries to change the tree while map passives are stacked on it. */
+	public static final String BONUS_TREE_LOCKED_MESSAGE = "Your passive tree can't be changed while the passives of a map are stacked on it. They go when you leave the map.";
+	
 	/** Told to a player who tries to change the tree while it is the event's. */
 	public static final String EVENT_TREE_LOCKED_MESSAGE = "Your passive tree is replaced by the event's during Deathmatch: Mayhem and can't be changed. Your own tree comes back when you leave the event.";
 	
@@ -92,6 +117,7 @@ public class PassiveTreeManager
 	protected PassiveTreeManager()
 	{
 		createTables();
+		ThreadPool.scheduleAtFixedRate(this::sweepBonusNodes, BONUS_SWEEP_INTERVAL, BONUS_SWEEP_INTERVAL);
 	}
 
 	/**
@@ -336,6 +362,173 @@ public class PassiveTreeManager
 		return _cache.computeIfAbsent(key(player), k -> loadFromDb(player));
 	}
 	
+	/**
+	 * @param player the player
+	 * @return every node in effect: {@link #getAllocatedNodes} and the map passives stacked on it ({@link #setBonusNodes})
+	 */
+	public Set<Integer> getEffectiveNodes(Player player)
+	{
+		final Set<Integer> allocated = getAllocatedNodes(player);
+		final Bonus bonus = _bonusNodes.get(player.getObjectId());
+		if (bonus == null)
+		{
+			return allocated;
+		}
+		if (!isInBonusMap(player, bonus))
+		{
+			// Never outside their map, whatever path took the player out.
+			if (_bonusNodes.remove(player.getObjectId(), bonus))
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": " + player.getName() + " still had map passives outside their map (instance " + bonus.instanceId() + ", now " + player.getInstanceId() + "): taken away.");
+				ThreadPool.execute(() -> afterBonusRemoved(player));
+			}
+			return allocated;
+		}
+		final Set<Integer> all = new HashSet<>(allocated);
+		all.addAll(bonus.nodes());
+		return all;
+	}
+	
+	/**
+	 * @return {@code true} if the player stands in the instance its map passives belong to, and a map is still open there
+	 */
+	private static boolean isInBonusMap(Player player, Bonus bonus)
+	{
+		return (bonus.instanceId() > 0) && (player.getInstanceId() == bonus.instanceId()) && MapDeviceManager.isMapInstance(bonus.instanceId());
+	}
+	
+	// ------------------------------------------------------------------
+	// Map passives (stacked on the own tree)
+	// ------------------------------------------------------------------
+	
+	/**
+	 * Stacks passives on top of the player's own tree, bound to the map it stands in, and applies the result. Refused (nothing is stacked) unless the player is inside that map right now.
+	 * @param player the player
+	 * @param instanceId the instance of the map the passives belong to
+	 * @param nodeIds the passives, {@code null} or empty to take them all away
+	 */
+	public void setBonusNodes(Player player, int instanceId, Collection<Integer> nodeIds)
+	{
+		if ((nodeIds == null) || nodeIds.isEmpty())
+		{
+			clearBonusNodes(player);
+			return;
+		}
+		final Bonus bonus = new Bonus(instanceId, Set.copyOf(nodeIds));
+		if (!isInBonusMap(player, bonus))
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": Refused map passives to " + player.getName() + ", who is not inside map instance " + instanceId + " (instance " + player.getInstanceId() + ").");
+			clearBonusNodes(player);
+			return;
+		}
+		_bonusNodes.put(player.getObjectId(), bonus);
+		applyAll(player, false);
+	}
+	
+	/**
+	 * Takes the map passives stacked on a player's tree away (if it has any) and applies the result.
+	 * @param player the player
+	 */
+	public void clearBonusNodes(Player player)
+	{
+		if (_bonusNodes.remove(player.getObjectId()) != null)
+		{
+			afterBonusRemoved(player);
+		}
+	}
+	
+	/**
+	 * Map passives were just taken away: the tree is applied again without them, the proc buffs they may have given are stripped, and HP/MP/CP come down to the lower maximums.
+	 * @param player the player
+	 */
+	private void afterBonusRemoved(Player player)
+	{
+		for (int skillId = PROC_BUFF_FIRST; skillId <= PROC_BUFF_LAST; skillId++)
+		{
+			if (player.getEffectList().getBuffInfoBySkillId(skillId) != null)
+			{
+				player.getEffectList().stopSkillEffects(SkillFinishType.REMOVED, skillId);
+			}
+		}
+		applyAll(player, false);
+		if (player.getCurrentHp() > player.getMaxHp())
+		{
+			player.setCurrentHp(player.getMaxHp());
+		}
+		if (player.getCurrentMp() > player.getMaxMp())
+		{
+			player.setCurrentMp(player.getMaxMp());
+		}
+		if (player.getCurrentCp() > player.getMaxCp())
+		{
+			player.setCurrentCp(player.getMaxCp());
+		}
+	}
+	
+	/**
+	 * Every instance change of a player ({@code WorldObject.setInstanceId}, through the Map Device hook): map passives never leave their map.
+	 * @param player the player
+	 * @param newInstanceId the instance it is in now
+	 */
+	public void onInstanceChanged(Player player, int newInstanceId)
+	{
+		final Bonus bonus = _bonusNodes.get(player.getObjectId());
+		if ((bonus != null) && (bonus.instanceId() != newInstanceId) && _bonusNodes.remove(player.getObjectId(), bonus))
+		{
+			afterBonusRemoved(player);
+		}
+	}
+	
+	/**
+	 * The safety net: drops the map passives of every holder that is offline, out of its map, or whose map has closed.
+	 */
+	private void sweepBonusNodes()
+	{
+		if (_bonusNodes.isEmpty())
+		{
+			return;
+		}
+		for (Map.Entry<Integer, Bonus> entry : _bonusNodes.entrySet())
+		{
+			try
+			{
+				final Player player = World.getInstance().getPlayer(entry.getKey());
+				if ((player == null) || !player.isOnline())
+				{
+					_bonusNodes.remove(entry.getKey(), entry.getValue());
+				}
+				else if (!isInBonusMap(player, entry.getValue()) && _bonusNodes.remove(entry.getKey(), entry.getValue()))
+				{
+					LOGGER.warning(getClass().getSimpleName() + ": Swept map passives off " + player.getName() + ", out of their map (instance " + entry.getValue().instanceId() + ", now " + player.getInstanceId() + ").");
+					afterBonusRemoved(player);
+				}
+			}
+			catch (Exception e)
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": Map passive sweep failed for " + entry.getKey() + ": " + e.getMessage());
+			}
+		}
+	}
+	
+	/**
+	 * @param player the player
+	 * @return the passives stacked on its tree, empty for none
+	 */
+	public Set<Integer> getBonusNodes(Player player)
+	{
+		final Bonus bonus = _bonusNodes.get(player.getObjectId());
+		return bonus == null ? Collections.emptySet() : bonus.nodes();
+	}
+	
+	/**
+	 * @param player the player
+	 * @return {@code true} while map passives are stacked on its tree
+	 */
+	public boolean hasBonusNodes(Player player)
+	{
+		return _bonusNodes.containsKey(player.getObjectId());
+	}
+	
 	// ------------------------------------------------------------------
 	// Event tree (Passive Deathmatch)
 	// ------------------------------------------------------------------
@@ -419,6 +612,11 @@ public class PassiveTreeManager
 	 */
 	private boolean refuseEventTreeChange(Player player)
 	{
+		if (hasBonusNodes(player))
+		{
+			player.sendMessage(BONUS_TREE_LOCKED_MESSAGE);
+			return true;
+		}
 		if (!isOnEventTree(player))
 		{
 			return false;
@@ -1130,6 +1328,15 @@ public class PassiveTreeManager
 		if (!player.isOnEvent())
 		{
 			_eventTrees.remove(player.getObjectId());
+		}
+		// Map passives never outlive the map: a login (or class change) keeps them only standing inside it.
+		final Bonus bonus = _bonusNodes.get(player.getObjectId());
+		if ((bonus != null) && !isInBonusMap(player, bonus) && _bonusNodes.remove(player.getObjectId(), bonus))
+		{
+			for (int skillId = PROC_BUFF_FIRST; skillId <= PROC_BUFF_LAST; skillId++)
+			{
+				player.getEffectList().stopSkillEffects(SkillFinishType.REMOVED, skillId);
+			}
 		}
 		_treeGranted.remove(player.getObjectId());
 		_replacedCreateItem.remove(player.getObjectId());

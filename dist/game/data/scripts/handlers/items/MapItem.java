@@ -28,12 +28,13 @@ import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.item.instance.Item;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun;
 import org.l2jmobius.gameserver.model.mapdevice.MapTier;
+import org.l2jmobius.gameserver.model.mapdevice.UniqueMap;
 import org.l2jmobius.gameserver.network.SystemMessageId;
 
 import custom.MapDevice.MapDeviceWindow;
 
 /**
- * A "Map (Tier N)": double-clicked in its owner's hideout, it goes in the Map Device (the medal choice window opens); anywhere else, it tells the player how to use it. The map is only taken when the map opens.
+ * A "Map (Tier N)" or a unique map: double-clicked in its owner's hideout, it goes in the Map Device (the medal choice window opens); anywhere else, it tells the player how to use it. The map is only taken when the map opens.
  * @author Mobius
  */
 public class MapItem implements IItemHandler
@@ -49,7 +50,8 @@ public class MapItem implements IItemHandler
 
 		final Player player = playable.asPlayer();
 		final MapTier tier = MapDeviceData.getInstance().getTierByItem(item.getId());
-		if (tier == null)
+		final UniqueMap unique = tier == null ? MapDeviceData.getInstance().getUniqueMapByItem(item.getId()) : null;
+		if ((tier == null) && (unique == null))
 		{
 			return false;
 		}
@@ -70,7 +72,14 @@ public class MapItem implements IItemHandler
 			return false;
 		}
 
-		MapDeviceWindow.showInsert(player, tier.tier());
+		if (unique != null)
+		{
+			MapDeviceWindow.showUniqueInsert(player, unique);
+		}
+		else
+		{
+			MapDeviceWindow.showInsert(player, tier.tier());
+		}
 		return true;
 	}
 }

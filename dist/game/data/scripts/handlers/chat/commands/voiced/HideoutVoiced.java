@@ -21,10 +21,12 @@
 package handlers.chat.commands.voiced;
 
 import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
+import org.l2jmobius.gameserver.data.xml.MapDeviceData;
 import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
 import org.l2jmobius.gameserver.managers.MapDeviceManager;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun;
+import org.l2jmobius.gameserver.model.mapdevice.UniqueMap;
 
 import custom.MapDevice.MapDeviceWindow;
 
@@ -144,6 +146,37 @@ public class HideoutVoiced implements IVoicedCommandHandler
 				MapDeviceWindow.showDevice(player);
 				break;
 			}
+			case "unique":
+			{
+				final UniqueMap unique = parseUnique(args, 1);
+				if ((unique == null) || !checkOwner(player, manager))
+				{
+					break;
+				}
+				if (player.getInventory().getInventoryItemCount(unique.itemId(), -1) < 1)
+				{
+					player.sendMessage("You don't have that map.");
+					MapDeviceWindow.showDevice(player);
+					break;
+				}
+				MapDeviceWindow.showUniqueInsert(player, unique);
+				break;
+			}
+			case "openunique":
+			{
+				final UniqueMap unique = parseUnique(args, 1);
+				if (unique == null)
+				{
+					break;
+				}
+				final String denied = manager.openUniqueMap(player, unique.type(), false);
+				if (denied != null)
+				{
+					player.sendMessage(denied);
+				}
+				MapDeviceWindow.showDevice(player);
+				break;
+			}
 			case "close":
 			{
 				if (!checkOwner(player, manager))
@@ -196,6 +229,25 @@ public class HideoutVoiced implements IVoicedCommandHandler
 	{
 		final org.l2jmobius.gameserver.model.mapdevice.MapTier mapTier = org.l2jmobius.gameserver.data.xml.MapDeviceData.getInstance().getTier(tier);
 		return mapTier != null ? mapTier.itemId() : -1;
+	}
+
+	/**
+	 * @return the unique map named at that place of the arguments (its type), {@code null} if none
+	 */
+	private static UniqueMap parseUnique(String[] args, int index)
+	{
+		if (args.length <= index)
+		{
+			return null;
+		}
+		for (UniqueMap unique : MapDeviceData.getInstance().getUniqueMaps().values())
+		{
+			if (unique.type().name().equalsIgnoreCase(args[index]))
+			{
+				return unique;
+			}
+		}
+		return null;
 	}
 
 	private static int parse(String[] args, int index)

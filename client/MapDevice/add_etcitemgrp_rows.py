@@ -1,5 +1,5 @@
 """
-Adds the ten "Map (Tier N)" rows (object_id 50101-50110) to an EtcItemgrp.dat exported by
+Adds the ten "Map (Tier N)" rows (object_id 50101-50110) and the three unique maps (50111-50113) to an EtcItemgrp.dat exported by
 L2ClientDat as text (item_begin ... item_end, tab-separated key=value).
 
 Each new row is a copy of the retail Pirate's Treasure Map row (object_id 5915), so every field
@@ -20,6 +20,7 @@ import sys
 SOURCE_ID = 5915  # Pirate's Treasure Map
 FIRST_ID = 50101
 TIERS = 10
+UNIQUE_IDS = (50111, 50112, 50113)  # The Crimson Coliseum, The Gilded Vault, The Ossuary of Echoes
 ICONS = {
 	"ivory": "{[icon.etc_map_ivory_i00]}",
 	"yellow": "{[icon.etc_map_yellow_i00]}",
@@ -51,7 +52,7 @@ def main():
 	encoding = "utf-16" if raw[:2] in (b"\xff\xfe", b"\xfe\xff") else "utf-8-sig" if raw[:3] == b"\xef\xbb\xbf" else "utf-8"
 	lines = raw.decode(encoding).splitlines(keepends=True)
 
-	new_ids = set(range(FIRST_ID, FIRST_ID + TIERS))
+	new_ids = set(range(FIRST_ID, FIRST_ID + TIERS)) | set(UNIQUE_IDS)
 	lines = [line for line in lines if object_id(line) not in new_ids]
 	source = next((line for line in lines if object_id(line) == SOURCE_ID), None)
 	if source is None:
@@ -60,11 +61,13 @@ def main():
 	ending = "\r\n" if source.endswith("\r\n") else "\n"
 	if lines and not lines[-1].endswith(("\n", "\r\n")):
 		lines[-1] += ending
-	for tier in range(1, TIERS + 1):
+	rows = [(FIRST_ID + tier - 1, ICONS["ivory" if tier <= 5 else "yellow"]) for tier in range(1, TIERS + 1)]
+	rows += [(item_id, ICONS["yellow"]) for item_id in UNIQUE_IDS]
+	for item_id, icon in rows:
 		fields, keys = parse(source)
 		values = {
-			"object_id": str(FIRST_ID + tier - 1),
-			"icon": ICONS["ivory" if tier <= 5 else "yellow"],
+			"object_id": str(item_id),
+			"icon": icon,
 			"weight": "0",
 			"related_quest_id": "{}",
 		}

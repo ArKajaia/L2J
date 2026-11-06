@@ -445,7 +445,7 @@ public enum MapModifier
 			bounty = true;
 		}
 	},
-	MAP_GUARDIAN("Map Guardian", "A Guardian holds the middle of the map: a tier 3 Champion that rises twice. It drops two more maps.")
+	MAP_GUARDIAN("Map Guardian", "A Guardian holds the middle of the map: a tier 3 Champion that rises twice. It drops a bonus map.")
 	{
 		{
 			guardian = true;
@@ -481,7 +481,7 @@ public enum MapModifier
 			timeLimitMinutes = 15;
 		}
 	},
-	SPEEDRUN("Speedrun", "Clear the map within 10 minutes and everyone inside gets a bonus map.")
+	SPEEDRUN("Speedrun", "Clear the map within 10 minutes for a bonus map.")
 	{
 		{
 			speedrunMinutes = 10;

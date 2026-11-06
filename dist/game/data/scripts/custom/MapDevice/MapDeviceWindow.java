@@ -27,6 +27,7 @@ import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
 import org.l2jmobius.gameserver.data.xml.MapDeviceData;
 import org.l2jmobius.gameserver.managers.MapDeviceManager;
 import org.l2jmobius.gameserver.managers.MapQuestManager;
+import org.l2jmobius.gameserver.managers.PassiveDeathmatchManager;
 import org.l2jmobius.gameserver.managers.MapQuestManager.Step;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.templates.NpcTemplate;
@@ -36,6 +37,7 @@ import org.l2jmobius.gameserver.model.mapdevice.MapModifier;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun;
 import org.l2jmobius.gameserver.model.mapdevice.MapTier;
 import org.l2jmobius.gameserver.model.mapdevice.MonsterStrength;
+import org.l2jmobius.gameserver.model.mapdevice.UniqueMap;
 import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 
@@ -54,6 +56,7 @@ public final class MapDeviceWindow
 	private static final String COLOR_TITLE = "FFFFFF";
 	private static final String COLOR_VALUE = "E6C35C";
 	private static final String COLOR_CREATIVE = "FF9955";
+	private static final String COLOR_UNIQUE = "FF5555";
 	private static final String COLOR_STAT = "99CCFF";
 	private static final String COLOR_POSITIVE = "66CC66";
 	private static final String COLOR_NEGATIVE = "FF6666";
@@ -158,8 +161,93 @@ public final class MapDeviceWindow
 			sb.append("</table><br>");
 		}
 
+		final Map<UniqueMap, Long> uniques = MapDeviceManager.getInstance().getCarriedUniqueMaps(player);
+		if (!uniques.isEmpty())
+		{
+			section(sb, "Unique Maps");
+			sb.append("<table width=").append(CONTENT_WIDTH).append(" cellpadding=3 cellspacing=0>");
+			boolean shade = false;
+			for (Map.Entry<UniqueMap, Long> entry : uniques.entrySet())
+			{
+				final UniqueMap unique = entry.getKey();
+				final String bg = shade ? " bgcolor=\"" + BG_CARD + "\"" : "";
+				sb.append("<tr><td width=280").append(bg).append(">").append(text(COLOR_UNIQUE, unique.name())).append(text(COLOR_MUTED, " x" + entry.getValue())).append("<br1>").append(text(COLOR_MUTED, "Tier " + unique.tier() + " monsters, " + unique.modifiers().size() + " fixed modifiers")).append("</td>");
+				sb.append("<td width=110").append(bg).append(" align=right><button value=\"Insert\" action=\"").append(COMMAND).append(" unique ").append(unique.type().name()).append("\" width=80 height=21 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr>");
+				shade = !shade;
+			}
+			sb.append("</table><br>");
+		}
+
 		button(sb, "Leave the hideout", "leave", 140);
 		send(player, sb);
+	}
+
+	/**
+	 * A unique map put in: what it is, its fixed modifiers, its twist, its final encounter and its best drops. Unique maps take no medal.
+	 * @param player the owner
+	 * @param unique the unique map
+	 */
+	public static void showUniqueInsert(Player player, UniqueMap unique)
+	{
+		final MapTier tier = MapDeviceData.getInstance().getTier(unique.tier());
+		final StringBuilder sb = start(unique.name());
+		sb.append(text(COLOR_MUTED, unique.description())).append("<br><br>");
+
+		section(sb, "The Map");
+		table(sb);
+		if (tier != null)
+		{
+			row(sb, "Monsters", text(COLOR_VALUE, unique.monsterCount() + ", Lv. " + tier.minLevel() + "-" + tier.maxLevel()) + text(COLOR_MUTED, " (tier " + tier.tier() + ")"), false);
+			row(sb, "Their strength", strength(tier), true);
+			row(sb, "Experience and drops", text(COLOR_POSITIVE, "x" + two(tier.reward() * unique.reward())), false);
+		}
+		row(sb, "Final boss", text(COLOR_UNIQUE, unique.bossName()), true);
+		row(sb, "It costs", "1 " + MapDeviceManager.getItemName(unique.itemId()) + text(COLOR_MUTED, ", no medal"), false);
+		sb.append("</table><br>");
+
+		section(sb, "Modifiers (fixed)");
+		modifiers(sb, unique.modifiers());
+
+		section(sb, "Twist");
+		sb.append(text(COLOR_CREATIVE, unique.twist())).append("<br><br>");
+		section(sb, "Final Encounter");
+		sb.append(text(COLOR_CREATIVE, unique.finale())).append("<br><br>");
+
+		section(sb, "Boss Drops");
+		final StringBuilder drops = new StringBuilder();
+		for (UniqueMap.Drop drop : unique.bossDrops())
+		{
+			if (drops.length() > 0)
+			{
+				drops.append(", ");
+			}
+			drops.append(MapDeviceManager.getItemName(drop.itemId())).append(drop.chance() < 100 ? " (" + two(drop.chance()) + "%)" : "");
+		}
+		sb.append(text(COLOR_MUTED, drops.toString())).append("<br1>");
+		sb.append(text(COLOR_HINT, "Every monster of the map has drops of its own too.")).append("<br><br>");
+
+		sb.append("<table width=").append(CONTENT_WIDTH).append("><tr><td align=center>");
+		sb.append("<button value=\"Open the Map\" action=\"").append(COMMAND).append(" openunique ").append(unique.type().name()).append("\" width=130 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
+		sb.append("</td><td align=center>");
+		sb.append("<button value=\"Back\" action=\"").append(COMMAND).append(" device\" width=100 height=25 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">");
+		sb.append("</td></tr></table>");
+		send(player, sb);
+	}
+
+	private static void modifiers(StringBuilder sb, List<MapModifier> modifiers)
+	{
+		sb.append("<table width=").append(CONTENT_WIDTH).append(" cellpadding=2 cellspacing=0>");
+		boolean shade = false;
+		for (MapModifier modifier : modifiers)
+		{
+			final String bg = shade ? " bgcolor=\"" + BG_CARD + "\"" : "";
+			sb.append("<tr><td width=").append(CONTENT_WIDTH).append(bg).append(">");
+			sb.append(text(modifier.isStatModifier() ? COLOR_STAT : COLOR_CREATIVE, modifier.getDisplayName())).append("<br1>");
+			sb.append(text(COLOR_MUTED, modifier.getDescription()));
+			sb.append("</td></tr>");
+			shade = !shade;
+		}
+		sb.append("</table><br>");
 	}
 
 	/**
@@ -267,7 +355,8 @@ public final class MapDeviceWindow
 	{
 		final boolean inMap = player.getInstanceId() == run.getInstanceId();
 		final boolean owner = player.getObjectId() == run.getOwnerId();
-		final StringBuilder sb = start("Tier " + run.getTier().tier() + " Map");
+		final UniqueMap unique = run.getUnique();
+		final StringBuilder sb = start(unique != null ? unique.name() : "Tier " + run.getTier().tier() + " Map");
 
 		sb.append("<table width=").append(CONTENT_WIDTH).append(" cellpadding=0 cellspacing=0><tr><td align=center>");
 		sb.append(text(COLOR_VALUE, run.getArena().name())).append(text(COLOR_MUTED, " - opened by " + run.getOwnerName()));
@@ -283,27 +372,28 @@ public final class MapDeviceWindow
 		row(sb, "Collapses in", (seconds / 60) + "m " + (seconds % 60) + "s", true);
 		row(sb, "Monsters", "Lv. " + run.getTier().minLevel() + "-" + run.getTier().maxLevel() + text(COLOR_MUTED, ", strength " + kindsStrength(run)), false);
 		row(sb, "Experience / drops", text(COLOR_POSITIVE, "x" + two(run.getXpMultiplier()) + " / x" + two(run.getDropMultiplier())), true);
+		if ((unique != null) && (unique.type() == UniqueMap.Type.COLISEUM))
+		{
+			row(sb, "Your map passives", text(COLOR_UNIQUE, String.valueOf(PassiveDeathmatchManager.getInstance().getMapPickCount(player))) + text(COLOR_MUTED, " (." + PassiveDeathmatchManager.COMMAND + " to pick)"), false);
+		}
 		sb.append("</table><br>");
 
-		section(sb, "Modifiers (" + run.getModifiers().size() + ")");
+		if (unique != null)
+		{
+			section(sb, "Twist");
+			sb.append(text(COLOR_CREATIVE, unique.twist())).append("<br><br>");
+			section(sb, "Final Encounter: " + unique.bossName());
+			sb.append(text(COLOR_CREATIVE, unique.finale())).append("<br><br>");
+		}
+
+		section(sb, "Modifiers (" + run.getModifiers().size() + (unique != null ? ", fixed" : "") + ")");
 		if (run.getModifiers().isEmpty())
 		{
 			sb.append(text(COLOR_HINT, "None: no medal was fed to this map.")).append("<br>");
 		}
 		else
 		{
-			sb.append("<table width=").append(CONTENT_WIDTH).append(" cellpadding=2 cellspacing=0>");
-			boolean shade = false;
-			for (MapModifier modifier : run.getModifiers())
-			{
-				final String bg = shade ? " bgcolor=\"" + BG_CARD + "\"" : "";
-				sb.append("<tr><td width=").append(CONTENT_WIDTH).append(bg).append(">");
-				sb.append(text(modifier.isStatModifier() ? COLOR_STAT : COLOR_CREATIVE, modifier.getDisplayName())).append("<br1>");
-				sb.append(text(COLOR_MUTED, modifier.getDescription()));
-				sb.append("</td></tr>");
-				shade = !shade;
-			}
-			sb.append("</table><br>");
+			modifiers(sb, run.getModifiers());
 		}
 
 		section(sb, "Hot Zone Effect");

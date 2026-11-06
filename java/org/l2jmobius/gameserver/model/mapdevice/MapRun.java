@@ -82,7 +82,9 @@ public class MapRun
 	private final MapArena _arena;
 	private final int _instanceId;
 	private final long _openedAt;
-	private final long _closesAt;
+	private volatile long _closesAt;
+	/** The unique map this run is, {@code null} for a plain map. */
+	private final UniqueMap _unique;
 	private volatile Status _status = Status.OPEN;
 	private volatile long _completedAt;
 
@@ -93,6 +95,8 @@ public class MapRun
 	private final Set<Integer> _monsters = ConcurrentHashMap.newKeySet();
 	private volatile int _monsterTotal;
 	private final AtomicInteger _kills = new AtomicInteger();
+	/** Maps (plain and unique) this run has dropped so far, at most {@link MapDeviceConfig#MAX_MAPS_PER_RUN}. */
+	private final AtomicInteger _mapsDropped = new AtomicInteger();
 	private volatile boolean _ambushed;
 	/** Object ids of the players inside right now. */
 	private final Set<Integer> _playersInside = ConcurrentHashMap.newKeySet();
@@ -179,7 +183,16 @@ public class MapRun
 
 	public MapRun(int id, int ownerId, String ownerName, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, HotzoneModifier hotzoneEffect, MapArena arena, int instanceId)
 	{
+		this(id, ownerId, ownerName, hideout, tier, medals, modifiers, hotzoneEffect, arena, instanceId, null);
+	}
+
+	/**
+	 * @param unique the unique map this run is, {@code null} for a plain map: its modifiers are the ones given, its reward multiplies the tier's
+	 */
+	public MapRun(int id, int ownerId, String ownerName, Hideout hideout, MapTier tier, int medals, List<MapModifier> modifiers, HotzoneModifier hotzoneEffect, MapArena arena, int instanceId, UniqueMap unique)
+	{
 		_id = id;
+		_unique = unique;
 		_ownerId = ownerId;
 		_ownerName = ownerName;
 		_hideout = hideout;
@@ -421,7 +434,7 @@ public class MapRun
 		_portalCount = portalCount;
 		_closesAt = _openedAt + (timeLimit * 60000L);
 
-		final double titanReward = titans ? 2.0 : 1.0;
+		final double titanReward = (titans ? 2.0 : 1.0) * (unique != null ? unique.reward() : 1.0);
 		_xpMultiplier = tier.reward() * (1.0 + ((medals * MapDeviceConfig.XP_BONUS_PER_MEDAL) / 100.0)) * titanReward;
 		_dropMultiplier = tier.reward() * (1.0 + ((medals * MapDeviceConfig.DROP_BONUS_PER_MEDAL) / 100.0)) * titanReward;
 	}
@@ -489,6 +502,31 @@ public class MapRun
 	public long getClosesAt()
 	{
 		return _closesAt;
+	}
+
+	/**
+	 * Moves the time the map collapses (the Gilded Vault's clock). The map's instance lasts {@code MapDuration} plus 2 minutes from its opening: keep it before that.
+	 * @param closesAt when it collapses (ms)
+	 */
+	public void setClosesAt(long closesAt)
+	{
+		_closesAt = closesAt;
+	}
+
+	/**
+	 * @return the unique map this run is, {@code null} for a plain map
+	 */
+	public UniqueMap getUnique()
+	{
+		return _unique;
+	}
+
+	/**
+	 * @return {@code true} for a unique map
+	 */
+	public boolean isUnique()
+	{
+		return _unique != null;
 	}
 
 	/**
@@ -1004,6 +1042,28 @@ public class MapRun
 	public void setSpeedrunOver(boolean over)
 	{
 		_speedrunOver = over;
+	}
+
+	/**
+	 * Takes one map from the run's map budget: a run drops at most {@link MapDeviceConfig#MAX_MAPS_PER_RUN} maps in all (its monsters' drops, the completion map, the Guardian's, Speedrun's, unique maps).
+	 * @return {@code true} if the run may drop one more map (it is counted), {@code false} if its budget is spent
+	 */
+	public boolean claimMapDrop()
+	{
+		if (_mapsDropped.incrementAndGet() <= MapDeviceConfig.MAX_MAPS_PER_RUN)
+		{
+			return true;
+		}
+		_mapsDropped.decrementAndGet();
+		return false;
+	}
+
+	/**
+	 * @return how many maps the run has dropped so far
+	 */
+	public int getMapsDropped()
+	{
+		return _mapsDropped.get();
 	}
 
 	/**

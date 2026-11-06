@@ -32,6 +32,23 @@
 	            A map is its own copy of the place, without its world monsters.
 
 	excludedNpcs monster ids that never fill a map, comma separated.
+
+	uniqueMap   a unique map (UniqueMapManager): an item that always opens the same map, with the modifiers it names instead of random ones, no medal
+	            and no hot zone effect, a twist of its own while it is cleared and a final encounter once it is (both worked by type, see
+	            docs/map-device.md). Unique maps only drop inside maps: on completing a map of tier UniqueMapMinTier and up, and from the
+	            unique bosses themselves (config/Custom/MapDevice.ini).
+	  type      COLISEUM, VAULT or OSSUARY: which twist and final encounter it has.
+	  itemId    the item that opens it (data/stats/items/custom/map_device_items.xml).
+	  tier      the tier whose monsters fill it (their levels and strength) and whose multipliers they get.
+	  monsters  how many monsters it holds before the final encounter.
+	  arena     the arena of this file (or the id of an event map) it opens in; any of the tier's if unknown.
+	  modifiers the map's modifiers (MapModifier names, see docs/map-device.md).
+	  reward    experience, SP and drop chance multiplier, on top of the tier's.
+	  boss      the plain monster (type="Monster") its boss is made from; bossName its title; bossHp/bossAttack/bossDefence multiply its stats
+	            on top of the map's.
+	  drop      group="map": every monster of the map may drop it (half as often from a copy or a minion); group="boss": the boss drops it;
+	            group="special": the twist's own monsters drop it (the Coliseum's Challengers, the Vault's spilled coins, the Ossuary's Echoes).
+	            id, min, max, chance in percent. The Vault's Greed raises the chance of its map and boss drops.
 -->
 <list>
 	<hideout x="-23560" y="-8963" z="-5384" heading="32768">
@@ -66,6 +83,82 @@
 	<arena name="Silent Valley" x="172136" y="20325" z="-3328" radiusX="8000" radiusY="8000" entryAngle="90" />
 	<!-- Aden: the plain of the Fields of Massacre. -->
 	<arena name="Fields of Massacre" x="181000" y="8000" z="-2728" radiusX="6000" radiusY="6000" entryAngle="90" />
+
+	<!-- ================================================================ Unique maps ================================================================ -->
+
+	<!-- The Crimson Coliseum: Deathmatch: Mayhem against monsters. The crowd wants blood, and the monsters grow with every death (Rising Dread, Soul Eaters, Berserkers)... but so do you. -->
+	<uniqueMap type="COLISEUM" name="The Crimson Coliseum" itemId="50111" tier="5" monsters="30" arena="Ruins of Despair" reward="2.0"
+		modifiers="BRUTAL,FORTIFIED,HUNTERS,BERSERKERS,RISING_DREAD,SOUL_EATERS"
+		boss="22839" bossName="Crimson Champion" bossHp="25" bossAttack="1.0" bossDefence="1.5">
+		<description>The old ring of the Ruins of Despair, filled once more for the crowd. Thirty fighters come through its gates, the Crimson Champion last.</description>
+		<twist>Deathmatch: Mayhem. Every kill (or a fair share of one) offers you a strong passive of the tree, a notable or a keystone, to stack on top of your own tree. They work only inside the map and never leave it: out of it (dead in the hideout, gone back) they are off, and they come back if you return while it is open. The 30 monsters come in three waves (6, 10, 14), each once the last is down.</twist>
+		<finale>The Crimson Champion steps into the ring once the 30 are slain. At 75%, 50% and 25% of its HP the crowd roars: it hits 10% harder, and 3 Challengers (Champions of the map's kinds) jump in. Every Challenger slain is another passive.</finale>
+		<drop group="map" id="6393" min="1" max="1" chance="10" /> <!-- Champion Medal -->
+		<drop group="map" id="14167" min="1" max="1" chance="6" /> <!-- Mid-Grade Life Stone - Level 84 -->
+		<drop group="map" id="14168" min="1" max="1" chance="2" /> <!-- High-Grade Life Stone - Level 84 -->
+		<drop group="map" id="959" min="1" max="1" chance="1.5" /> <!-- Scroll: Enchant Weapon (S-Grade) -->
+		<drop group="map" id="6622" min="1" max="1" chance="1" /> <!-- Giant's Codex -->
+		<drop group="special" id="6393" min="1" max="2" chance="50" /> <!-- Champion Medal (Challengers) -->
+		<drop group="special" id="14168" min="1" max="1" chance="20" /> <!-- High-Grade Life Stone - Level 84 (Challengers) -->
+		<drop group="boss" id="6393" min="5" max="10" chance="100" /> <!-- Champion Medal -->
+		<drop group="boss" id="14169" min="1" max="3" chance="60" /> <!-- Top-Grade Life Stone - Level 84 -->
+		<drop group="boss" id="6577" min="1" max="1" chance="25" /> <!-- Blessed Scroll: Enchant Weapon (S-Grade) -->
+		<drop group="boss" id="9627" min="1" max="1" chance="20" /> <!-- Giant's Codex - Mastery -->
+		<drop group="boss" id="14165" min="1" max="1" chance="12" /> <!-- Vesper Ring -->
+		<drop group="boss" id="15717" min="1" max="1" chance="2" /> <!-- Elegia Ring -->
+		<drop group="boss" id="6658" min="1" max="1" chance="0.5" /> <!-- Ring of Baium -->
+	</uniqueMap>
+
+	<!-- The Gilded Vault: a heist against the clock. Thieves everywhere (Thieves' Guild), quick and slippery (Fleet, Elusive, Skittish), a bounty to chase, a speedrun to make. -->
+	<uniqueMap type="VAULT" name="The Gilded Vault" itemId="50112" tier="4" monsters="60" arena="Fields of Massacre" reward="1.8"
+		modifiers="THIEVES_GUILD,FLEET,ELUSIVE,SKITTISH,BOUNTY_MARK,SPEEDRUN"
+		boss="18822" bossName="Gilded Mimic" bossHp="400" bossAttack="3.0" bossDefence="2.0">
+		<description>A vault of stolen gold, open for five minutes before its wards seal it again. Every thief in Aden is already inside.</description>
+		<twist>Borrowed Time and Greed. The vault seals in 5 minutes, but every kill buys 12 more seconds (a bounty 60) and adds 1% Greed: the map's drops and the Mimic's hoard come more often, up to twice as often at 100 kills. Its monsters drop coin and gems.</twist>
+		<finale>The Gilded Mimic wakes once the vault is cleared, with at least 2 minutes on the clock. It runs from you, spills coins when struck, and at 80%, 60%, 40% and 20% of its HP it vanishes to another corner of the vault, leaving 4 thieves behind. If the vault seals first, it escapes with the hoard.</finale>
+		<drop group="map" id="57" min="20000" max="60000" chance="100" /> <!-- Adena -->
+		<drop group="map" id="5575" min="3000" max="9000" chance="35" /> <!-- Ancient Adena -->
+		<drop group="map" id="2134" min="3" max="10" chance="15" /> <!-- Gemstone S -->
+		<drop group="map" id="9143" min="1" max="3" chance="6" /> <!-- Golden Apiga -->
+		<drop group="map" id="960" min="1" max="1" chance="1.5" /> <!-- Scroll: Enchant Armor (S-Grade) -->
+		<drop group="special" id="57" min="100000" max="300000" chance="100" /> <!-- Adena (spilled coins) -->
+		<drop group="special" id="9143" min="1" max="3" chance="20" /> <!-- Golden Apiga (spilled coins) -->
+		<drop group="boss" id="57" min="15000000" max="30000000" chance="100" /> <!-- Adena -->
+		<drop group="boss" id="5575" min="1000000" max="3000000" chance="100" /> <!-- Ancient Adena -->
+		<drop group="boss" id="2134" min="200" max="500" chance="100" /> <!-- Gemstone S -->
+		<drop group="boss" id="9143" min="40" max="120" chance="100" /> <!-- Golden Apiga -->
+		<drop group="boss" id="6578" min="1" max="1" chance="30" /> <!-- Blessed Scroll: Enchant Armor (S-Grade) -->
+		<drop group="boss" id="6577" min="1" max="1" chance="10" /> <!-- Blessed Scroll: Enchant Weapon (S-Grade) -->
+		<drop group="boss" id="14163" min="1" max="1" chance="10" /> <!-- Vesper Earring -->
+		<drop group="boss" id="14164" min="1" max="1" chance="8" /> <!-- Vesper Necklace -->
+	</uniqueMap>
+
+	<!-- The Ossuary of Echoes: the dead don't stay down (Undying Legion, Linked Souls), they burst (Volatile) and curse (Death Curse), and nothing heals you well here (Desecrated, Withered). -->
+	<uniqueMap type="OSSUARY" name="The Ossuary of Echoes" itemId="50113" tier="6" monsters="70" arena="Silent Valley" reward="2.2"
+		modifiers="UNDYING_LEGION,VOLATILE,DEATH_CURSE,LINKED_SOULS,DESECRATED,WITHERED"
+		boss="22821" bossName="The Hollow King" bossHp="500" bossAttack="5.0" bossDefence="2.5">
+		<description>A valley of bones that remembers every death in it. Its king waits under it for the field to fall silent.</description>
+		<twist>Echoes. A quarter of the slain leave an Echo behind: a quick, half-lived copy that hunts you. Echoes don't count toward the clear and drop attribute stones and crystals. Kill them before the end: every Echo still standing when the Hollow King rises is drawn into him, +5% HP each.</twist>
+		<finale>The Hollow King rises in the middle of the valley, shielded while his Bone Phylacteries stand (4 at the edges of the field); each one raises a servant every 20 seconds. Break them all and he is vulnerable. At 60% of his HP he shields again behind 3 new ones, at 30% behind 2 more, and from then on a Death Nova bursts from him every 15 seconds.</finale>
+		<drop group="map" id="9550" min="1" max="1" chance="8" /> <!-- Dark Stone -->
+		<drop group="map" id="9551" min="1" max="1" chance="8" /> <!-- Holy Stone -->
+		<drop group="map" id="14167" min="1" max="1" chance="5" /> <!-- Mid-Grade Life Stone - Level 84 -->
+		<drop group="map" id="9556" min="1" max="1" chance="0.8" /> <!-- Dark Crystal -->
+		<drop group="map" id="9557" min="1" max="1" chance="0.8" /> <!-- Holy Crystal -->
+		<drop group="map" id="9625" min="1" max="1" chance="1" /> <!-- Giant's Codex - Oblivion -->
+		<drop group="special" id="9550" min="1" max="2" chance="30" /> <!-- Dark Stone (Echoes) -->
+		<drop group="special" id="9551" min="1" max="2" chance="30" /> <!-- Holy Stone (Echoes) -->
+		<drop group="special" id="9556" min="1" max="1" chance="3" /> <!-- Dark Crystal (Echoes) -->
+		<drop group="special" id="9557" min="1" max="1" chance="3" /> <!-- Holy Crystal (Echoes) -->
+		<drop group="special" id="14168" min="1" max="1" chance="5" /> <!-- High-Grade Life Stone - Level 84 (Echoes) -->
+		<drop group="boss" id="9556" min="1" max="2" chance="50" /> <!-- Dark Crystal -->
+		<drop group="boss" id="9557" min="1" max="2" chance="50" /> <!-- Holy Crystal -->
+		<drop group="boss" id="9625" min="1" max="2" chance="40" /> <!-- Giant's Codex - Oblivion -->
+		<drop group="boss" id="14169" min="1" max="2" chance="50" /> <!-- Top-Grade Life Stone - Level 84 -->
+		<drop group="boss" id="6577" min="1" max="1" chance="20" /> <!-- Blessed Scroll: Enchant Weapon (S-Grade) -->
+		<drop group="boss" id="14163" min="1" max="1" chance="12" /> <!-- Vesper Earring -->
+		<drop group="boss" id="15717" min="1" max="1" chance="2" /> <!-- Elegia Ring -->
+	</uniqueMap>
 
 	<excludedNpcs></excludedNpcs>
 </list>

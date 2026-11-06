@@ -2,11 +2,11 @@
 
 An endgame loop after the atlas of Path of Exile: high level monsters drop maps, a player opens them at the Map Device of their private hideout, feeds them Champion Medals for harder modifiers and better rewards, and fights through a fenced field of monsters that never respawn.
 
-Code: `MapDeviceManager` (core logic), `MapQuestManager` (the quest "A Map of Your Own"), `MapDeviceData` (`data/MapDevice.xml`), `MapDeviceConfig` (`config/Custom/MapDevice.ini`), `model/mapdevice/*` (modifiers, tiers, arenas, runs, `MonsterStrength`), the Map Device part of the event maps (`EventMapType.MAPDEVICE`, `EventMapDevice`, edited on the event map page), and the scripts `custom/MapDevice` (device window, NPCs), `handlers/chat/commands/voiced/HideoutVoiced` (`.hideout`), `handlers/chat/commands/admin/AdminMapDevice` (`//mapdevice`) and `handlers/items/MapItem`.
+Code: `MapDeviceManager` (core logic), `UniqueMapManager` (the unique maps), `MapQuestManager` (the quest "A Map of Your Own"), `MapDeviceData` (`data/MapDevice.xml`), `MapDeviceConfig` (`config/Custom/MapDevice.ini`), `model/mapdevice/*` (modifiers, tiers, arenas, runs, `MonsterStrength`), the Map Device part of the event maps (`EventMapType.MAPDEVICE`, `EventMapDevice`, edited on the event map page), and the scripts `custom/MapDevice` (device window, NPCs), `handlers/chat/commands/voiced/HideoutVoiced` (`.hideout`), `handlers/chat/commands/admin/AdminMapDevice` (`//mapdevice`) and `handlers/items/MapItem`.
 
 ## How it plays
 
-1. **Maps drop.** Monsters of level 78 and up may drop a **Map (Tier 1-10)** (items 50101-50110). The tier follows the monster's level and strength (`dropLevel` and `minScore` in the XML: solo monsters drop tiers 1-5, party monsters 6-10), and stronger monsters drop higher tiers: Champion tier 2 +1, tier 3 +2, Mage/Thief/Infused/Resonant/wave challenge +1, raid boss +2 (`<difficulty>`). Base chance 1%, +3% per champion tier, 50% for raids, all raised by the monster's own drop rate bonuses (random passives, hot zones). No drop from monsters more than 9 levels below the player.
+1. **Maps drop.** Monsters of level 78 and up may drop a **Map (Tier 1-10)** (items 50101-50110). The tier follows the monster's level and strength (`dropLevel` and `minScore` in the XML: solo monsters drop tiers 1-5, party monsters 6-10), and stronger monsters drop higher tiers: Champion tier 2 +1, tier 3 +2, Mage/Thief/Infused/Resonant/wave challenge +1, raid boss +2 (`<difficulty>`). Base chance 0.3%, +1% per champion tier, 20% for raids, all raised by the monster's own drop rate bonuses (random passives, hot zones). No drop from monsters more than 9 levels below the player.
 2. **`.hideout`** in a town (any peace zone) takes the player to their own hideout: a private copy of the Jinia Guild Hideout cabin with the **Map Device** in it.
 3. **Insert a map.** Double-click a map in the hideout, or talk to the device and press *Insert*. The device asks how many **Champion Medals** (the Survival Arena medal) to feed it: 0 to 8.
 4. **Each medal** rolls one **modifier** out of 67 (never twice the same) and adds **+20% experience and +20% drop rate**. The map also rolls one random **hot zone effect** (the server's `HotzoneModifier`s) for its whole field.
@@ -19,7 +19,9 @@ Code: `MapDeviceManager` (core logic), `MapQuestManager` (the quest "A Map of Yo
 
 The first map a character gets starts the quest **A Map of Your Own** (see below).
 
-Monsters inside a map drop maps at 2.5% (times the map's drop multiplier), of the map's tier, 25% of the time one higher and 5% two higher, so good runs sustain themselves.
+**The first map is guaranteed**: the first monster a character kills once it is 50% into level 75 (or higher) drops a Map (Tier 1), once per character (`FirstMapLevel`, `FirstMapLevelPercent`; player variable `MAP_FIRST_GIVEN`).
+
+**Maps from maps**: a map's monsters drop 0.5 maps on average over a full clear (`MapDropsInMapAverage`: each monster has a 0.5 in *monsters in the map* chance), and the last kill drops one more, so a cleared map gives **about 1.5 maps**. Medals and drop bonuses don't change this. A map drops **at most 3 maps in all** (`MapDropsPerMapMax`), counting its monsters' drops, the completion map, the Map Guardian's, Speedrun's and unique maps. Their tier is the map's own, 25% of the time one higher and 5% two higher.
 
 ## Tiers
 
@@ -117,13 +119,13 @@ The first 33 change numbers; the other 34 change how the map plays.
 | 58 | War Priests | Gameplay | 30% of the monsters are supporters that heal and empower their allies. |
 | 59 | Ambush | Gameplay | Once half the map is cleared, 20 monsters ambush one of you. |
 | 60 | Bounty Mark | Gameplay | One monster at a time is marked: kill it within 2 minutes for triple drops. |
-| 61 | Map Guardian | Gameplay | A Guardian holds the middle of the map: a tier 3 Champion that rises twice. It drops two more maps. |
+| 61 | Map Guardian | Gameplay | A Guardian holds the middle of the map: a tier 3 Champion that rises twice. It drops a bonus map. |
 | 62 | Storm Caller | Gameplay | Every 20 seconds lightning strikes one of you for 12% of max HP. |
 | 63 | Burning Ground | Gameplay | The ground burns: players lose 1.5% of max HP every 3 seconds. |
 | 64 | Flaskless | Gameplay | Potions and elixirs can't be used. |
 | 65 | Fragile Portals | Gameplay | The Map Device opens only 4 portals. |
 | 66 | Hourglass | Gameplay | The map collapses after 15 minutes. |
-| 67 | Speedrun | Gameplay | Clear the map within 10 minutes and everyone inside gets a bonus map. |
+| 67 | Speedrun | Gameplay | Clear the map within 10 minutes for a bonus map. |
 
 Modifiers that draw a kind of monster the server has switched off (Mage, Thief, Infused, wave challenge, Champion) are never rolled.
 
@@ -143,6 +145,36 @@ Modifiers that draw a kind of monster the server has switched off (Mage, Thief, 
 - The run's clock (`RunTick`, once a second): Bounty Mark picks and times the marked monster (players are told how far and which way), Death Curse stacks wear off, the Speedrun countdown.
 - Splitters' copies and Summoners' minions have half HP (minions 70% damage) and give half the experience and drops; they count toward clearing the map.
 - Map monsters are spawned without a spawn point (so they never respawn) and skip the open world's random spawn rolls (`Spawn`); the map rolls Champions, Mages, Thieves, Infused, Resonant and wave challenge monsters itself, at the open world's chances times the hot zone effect's multipliers, or at the modifier's share.
+
+## Unique maps
+
+Three map items that always open the same map: its modifiers are chosen for it (no medal, no hot zone effect), it has a twist of its own while the field is cleared, a **final encounter** once it is, and drops of its own for every monster of the map and for its boss. Defined in `data/MapDevice.xml` (`<uniqueMap>`: tier, monster count, arena, modifiers, boss npc and multipliers, drops); the twists and encounters are worked by `UniqueMapManager`.
+
+**Getting one**: completing a map of tier `UniqueMapMinTier` (5) or higher drops one at random `UniqueMapCompletionChance` (2%) + `UniqueMapChancePerMedal` (0.5%) per medal; each unique boss drops another at 10% (all in `MapDevice.ini`). Unique maps **only drop inside maps**, and count toward the map's limit of 3. Double-click it in the hideout (or *Insert* under **Unique Maps** at the device) to see what it holds and open it.
+
+| | The Crimson Coliseum (50111) | The Gilded Vault (50112) | The Ossuary of Echoes (50113) |
+|---|---|---|---|
+| Monsters | 30 of tier 5 (Lv. 81-84), Ruins of Despair | 60 of tier 4 (Lv. 82-84), Fields of Massacre | 70 of tier 6 (Lv. 82-85 party), Silent Valley |
+| Modifiers | Brutal, Fortified, Hunters, Berserkers, Rising Dread, Soul Eaters | Thieves' Guild, Fleet, Elusive, Skittish, Bounty Mark, Speedrun | Undying Legion, Volatile, Death Curse, Linked Souls, Desecrated, Withered |
+| The idea | An arms race: the monsters grow with every death, and so do you. | A heist against the clock. | The dead don't stay down. |
+| Twist | **Deathmatch: Mayhem.** Every kill (and every assist: `MayhemAssistShare` % of the damage) offers a strong passive, notables and keystones of the tree plus the Mayhem keystones, to stack **on top of your own tree**, working only inside the map (see below). The monsters come in three waves: 6, 10, 14. | **Borrowed Time and Greed.** The vault seals in 5 minutes; every kill adds 12 s (a claimed bounty 60 s) and 1% Greed, which raises the map's and the boss's drop chances (up to x2 at 100 kills). | **Echoes.** A quarter of the slain counted monsters leave an Echo (half HP, faster attacks, uncounted, its own drops). Every Echo still standing at the end feeds the boss +5% HP (up to +100%). |
+| Final encounter | The **Crimson Champion** (a Maluk Warlord, x25 HP, x1.5 defence) in the middle of the ring. At 75/50/25% HP the crowd roars: +10% attack each time and 3 **Challengers** (tier 2 Champions of the map's kinds, double HP), each another passive. | The **Gilded Mimic** (a Mutant Treasure Chest, x400 HP) wakes with at least 2 minutes on the clock. A coward: it runs, spills coins when struck (8% per hit), and at 80/60/40/20% HP vanishes to another corner, leaving 4 Vault Thieves behind. If the vault seals first, it escapes with the hoard. | **The Hollow King** (an Immortal Necromancer, x500 HP, x5 attack) is shielded while his **Bone Phylacteries** stand: 4 at the edges of the field, then 3 more at 60% HP, then 2 more at 30%. Each raises a Bone Servant every 20 s (up to 10). From 30% a **Death Nova** hits everyone within 900 for 12% of max HP every 15 s. |
+| Map drops | Champion Medal, Life Stones Lv 84, Scroll: Enchant Weapon (S), Giant's Codex | Adena, Ancient Adena, Gemstone S, Golden Apiga, Scroll: Enchant Armor (S) | Dark/Holy Stones, Mid-Grade Life Stone Lv 84, Dark/Holy Crystals, Giant's Codex - Oblivion |
+| Special drops | Challengers: Champion Medals, High-Grade Life Stone | Spilled coins: 100k-300k Adena, Golden Apiga | Echoes: Dark/Holy Stones and Crystals, High-Grade Life Stone |
+| Boss drops | Champion Medals, Top-Grade Life Stones, Blessed Scroll: Enchant Weapon (S), Giant's Codex - Mastery, Vesper Ring, Elegia Ring, Ring of Baium (0.5%) | 15-30M Adena, 1-3M Ancient Adena, Gemstone S, Golden Apiga, Blessed Scrolls: Enchant Armor/Weapon (S), Vesper Earring/Necklace | Dark/Holy Crystals, Giant's Codex - Oblivion, Top-Grade Life Stones, Blessed Scroll: Enchant Weapon (S), Vesper Earring, Elegia Ring |
+
+Exact chances and amounts are in the XML. The boss of each takes the map's tier and modifier multipliers too, then its own (`bossHp`, `bossAttack`, `bossDefence`); the boss, Challengers and phylacteries count toward the clear, so the map completes when the last of them falls. Bosses and the other encounter monsters never split or rise again.
+
+### The Coliseum's passives
+
+They use the Deathmatch: Mayhem picks (`PassiveDeathmatchManager.joinMap`): the same offers (`MayhemChoices`, class-aware, a keystone turn every `MayhemKeystoneEvery` picks), the blinking question mark and `.dmpick`, but stacked on the player's own tree (`PassiveTreeManager.setBonusNodes`) rather than replacing it, and without Mayhem's PvP balance. **They never leave the map.** They apply only while the player stands in the map's instance: the hideout, the world, anywhere else, they are off. Dying or going back to the hideout keeps the *picks* (they come back on re-entering the map while it is open, and you may pick in the hideout, applied once back inside), but never their effect. This is enforced on its own at every layer (`PassiveTreeManager`, the map passives are bound to the instance they were given in):
+- they are refused to a player who is not standing in that map;
+- every instance change (death, portal, `.hideout back`, a GM teleport, the map closing, the instance being destroyed) takes them off before anything else, strips the tree's proc buffs (Last Stand, Blade Dance... skills 27470-27487) and lowers HP/MP/CP to the new maximums;
+- every stat rebuild leaves them out unless the player is inside a map still open in that instance;
+- a login keeps them only if the player logs in inside that map;
+- a sweep every second takes them off anyone offline, elsewhere, or whose map has closed (and logs it).
+
+While they are stacked the tree can't be changed.
 
 ## The quest: A Map of Your Own
 
@@ -198,6 +230,9 @@ GM commands (`//mapdevice`, the same access as `//tvt` for the page):
 | `//mapdevice show <id>` / `hide` | Draw an editor map's Map Device points in game / take them away. |
 | `//mapdevice test <id> [tier] [medals]` | In your own hideout: open a map in that place for free, to try it. |
 | `//mapdevice give <tier> [count]` | Give maps to your target (or you). |
+| `//mapdevice unique [list]` | The unique maps. |
+| `//mapdevice unique give <COLISEUM\|VAULT\|OSSUARY> [count]` | Give a unique map to your target (or you). |
+| `//mapdevice unique test <COLISEUM\|VAULT\|OSSUARY>` | In your own hideout: open that unique map for free. |
 | `//mapdevice pool <tier>` | The monsters a map of that tier may hold, with their strength and each stat against the standard monster of their level. |
 | `//mapdevice score` | The strength of your target, and which tiers it fits and drops. |
 | `//mapdevice runs` / `close <instance>` | The maps open right now / close one. |
