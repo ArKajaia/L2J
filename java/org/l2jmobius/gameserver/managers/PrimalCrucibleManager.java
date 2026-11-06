@@ -181,6 +181,7 @@ public class PrimalCrucibleManager
 	private static final double AURA_BOSS_DAMAGE = 0.002;
 	private static final double HUNGER_HEAL = 0.03;
 	private static final int ENTER_DELAY = 1000;
+	private static final int HEAL_DELAY = 600;
 
 	// The Food Chain.
 	private static final String MEALS_VAR = "CRUCIBLE_MEALS";
@@ -204,8 +205,8 @@ public class PrimalCrucibleManager
 	private static final int EGG_NPC_ID = 18344; // Ancient Egg
 	private static final int EGG_COUNT = 3;
 	private static final int EGG_SECONDS = 20;
-	/** The Ancient Egg has 10 HP: this makes it about 40,000. */
-	private static final double EGG_HP = 4000;
+	/** The Ancient Egg has 10 HP (its passives make it less): this makes it about 40,000 in a tier 7 map. */
+	private static final double EGG_HP = 7500;
 	private static final double EGG_SPREAD = 0.55;
 	private static final int ROAR_SKILL_ID = 4526; // Quest - BOSS Summon (visual only)
 
@@ -733,9 +734,16 @@ public class PrimalCrucibleManager
 
 		if (choice._stage > 0)
 		{
-			player.setCurrentCp(player.getMaxCp());
 			apply(player, crucible, hunter);
-			player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
+			// Healed to full once the new form and bonuses count (the max HP is read again a moment later).
+			ThreadPool.schedule(() ->
+			{
+				if (player.isOnline() && !player.isDead())
+				{
+					player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
+					player.setCurrentCp(player.getMaxCp());
+				}
+			}, HEAL_DELAY);
 			player.broadcastPacket(new MagicSkillUse(player, player, ROAR_SKILL_ID, 1, 0, 0));
 			final String form = hunter._form > 0 ? "a " + formName(hunter._form) : "Defiant, as " + player.getName();
 			if (hunter._stage >= 4)
