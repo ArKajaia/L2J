@@ -1257,7 +1257,7 @@ public class Npc extends Creature
 		// A class transfer challenge opponent is part of the trial: killing it is neither a PK nor a PvP kill. Nor is a kill in a PvP zone (a PvP instance, such as a Team vs Team match, or an arena), as for a player (see Player#onKillUpdatePvPKarma), unless it is an enemy of an event.
 		// An enemy of an event (Team vs Team, Deathmatch, Conquest, Race Wars) killed by a player of it: a PvP, never a PK, whatever its flag.
 		final boolean eventKill = _isFakePlayer && (killer != null) && killer.isPlayable() && TeamEventRules.isEventKill(killer, this);
-		if (_isFakePlayer && (killer != null) && killer.isPlayable() && !isTrialDuelist() && (eventKill || !isInsideZone(ZoneId.PVP)))
+		if (_isFakePlayer && (killer != null) && killer.isPlayable() && !isTrialDuelist() && !isMapRival() && (eventKill || !isInsideZone(ZoneId.PVP)))
 		{
 			final Player player = killer.asPlayer();
 
@@ -1336,7 +1336,7 @@ public class Npc extends Creature
 		}
 		
 		// PvP ranking: a fake player (or its servitor) that killed this fake player.
-		if (_isFakePlayer && !isTrialDuelist())
+		if (_isFakePlayer && !isTrialDuelist() && !isMapRival())
 		{
 			PvpRankingManager.getInstance().onFakePlayerKill(killer, this);
 		}
@@ -2113,6 +2113,14 @@ public class Npc extends Creature
 	public boolean isTrialDuelist()
 	{
 		return isPvpFakePlayer() && getTemplate().getFakePlayerPvpProfile().isTrialDuelist();
+	}
+
+	/**
+	 * @return {@code true} if this is a fake player of a rival party of a Map Device map (the Tomb Raiders): part of the map, so killing it (or being killed by it) is neither a PK nor a PvP kill
+	 */
+	public boolean isMapRival()
+	{
+		return isPvpFakePlayer() && getTemplate().getFakePlayerPvpProfile().isMapRival();
 	}
 	
 	/**

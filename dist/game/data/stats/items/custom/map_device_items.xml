@@ -142,4 +142,21 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="TitanScroll" />
 	</item>
+	<!-- Unique maps of the low tiers: they drop on completing maps of tier 1-4 (dropMinTier/dropMaxTier of their <uniqueMap>). -->
+	<item id="50118" type="EtcItem" name="Unique Map: The Ketra-Varka Front (Tier 1)">
+		<set name="icon" val="icon.etc_map_yellow_i00" />
+		<set name="displayId" val="5915" />
+		<set name="material" val="PAPER" />
+		<set name="is_stackable" val="true" />
+		<set name="is_sellable" val="false" />
+		<set name="handler" val="MapItem" />
+	</item>
+	<item id="50119" type="EtcItem" name="Unique Map: The Tomb Raiders (Tier 2)">
+		<set name="icon" val="icon.etc_map_yellow_i00" />
+		<set name="displayId" val="5915" />
+		<set name="material" val="PAPER" />
+		<set name="is_stackable" val="true" />
+		<set name="is_sellable" val="false" />
+		<set name="handler" val="MapItem" />
+	</item>
 </list>

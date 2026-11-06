@@ -44,9 +44,22 @@ import java.util.List;
  * @param drops what every monster of the map may drop (not the boss)
  * @param bossDrops what the boss drops
  * @param specialDrops what the twist's own monsters drop (the Ossuary's Echoes, the Vault's spilled coins, the Den's Jackpot Chest and Bluffs...)
+ * @param npcs the monsters that fill it ({@code type="Monster"} npc ids), empty for the tier's own (its levels and strength) or the arena's
+ * @param dropMinTier the lowest tier of plain map whose completion may drop it, 0 for {@code UniqueMapMinTier} of MapDevice.ini
+ * @param dropMaxTier the highest tier of plain map whose completion may drop it, 0 for no limit
  */
-public record UniqueMap(Type type, String name, int itemId, int tier, int monsterCount, String arena, List<MapModifier> modifiers, double reward, int bossNpcId, String bossName, double bossHp, double bossAttack, double bossDefence, String description, String twist, String finale, List<Drop> drops, List<Drop> bossDrops, List<Drop> specialDrops)
+public record UniqueMap(Type type, String name, int itemId, int tier, int monsterCount, String arena, List<MapModifier> modifiers, double reward, int bossNpcId, String bossName, double bossHp, double bossAttack, double bossDefence, String description, String twist, String finale, List<Drop> drops, List<Drop> bossDrops, List<Drop> specialDrops, List<Integer> npcs, int dropMinTier, int dropMaxTier)
 {
+	/**
+	 * @param mapTier the tier of a map just completed (or of the unique map whose boss just fell)
+	 * @param defaultMinTier {@code UniqueMapMinTier} of MapDevice.ini, for a unique map that names no lowest tier of its own
+	 * @return whether this unique map may drop from it
+	 */
+	public boolean dropsAt(int mapTier, int defaultMinTier)
+	{
+		return (mapTier >= (dropMinTier > 0 ? dropMinTier : defaultMinTier)) && ((dropMaxTier <= 0) || (mapTier <= dropMaxTier));
+	}
+
 	/** The unique maps: each one's twist and final encounter. */
 	public enum Type
 	{
@@ -59,7 +72,11 @@ public record UniqueMap(Type type, String name, int itemId, int tier, int monste
 		/** The Gambler's Den: a Wheel of Fate every 12 kills, a Dealer's double-or-half bets on the Pot, then the House and its deck of cards. */
 		DEN,
 		/** The Primal Crucible: the players evolve through four transformations into Titans while the monsters eat each other into Alphas, then the Primordial. */
-		CRUCIBLE
+		CRUCIBLE,
+		/** The Ketra-Varka Front: swear to Ketra or Varka, take three war totems with your side's warriors, maybe betray them, then hold the camp against the enemy Warlord. */
+		FRONT,
+		/** The Tomb Raiders: a rival party of adventurers races you for five Sealed Reliquaries, truce or rivalry, then the Undying Emperor and his Honour Guards. */
+		TOMB
 	}
 
 	/**

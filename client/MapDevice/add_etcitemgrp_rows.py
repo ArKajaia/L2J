@@ -23,7 +23,7 @@ import sys
 SOURCE_ID = 5915  # Pirate's Treasure Map
 FIRST_ID = 50101
 TIERS = 10
-UNIQUE_IDS = (50111, 50112, 50113, 50114, 50115)  # The Crimson Coliseum, The Gilded Vault, The Ossuary of Echoes, The Gambler's Den, The Primal Crucible
+UNIQUE_IDS = (50111, 50112, 50113, 50114, 50115, 50118, 50119)  # The Crimson Coliseum, The Gilded Vault, The Ossuary of Echoes, The Gambler's Den, The Primal Crucible, The Ketra-Varka Front, The Tomb Raiders
 COPIES = {50116: 3835, 50117: 17140}  # Primal Essence (Blood of Eva), Titan Scroll (Transformation Scroll: Zaken): new id -> retail row
 ICONS = {
 	"ivory": "{[icon.etc_map_ivory_i00]}",

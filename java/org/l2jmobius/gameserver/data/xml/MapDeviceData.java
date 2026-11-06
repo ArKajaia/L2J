@@ -269,8 +269,29 @@ public class MapDeviceData implements IXmlReader
 			}
 		}
 
+		final List<Integer> npcs = new ArrayList<>();
+		for (String id : set.getString("npcs", "").split("[,\\s]+"))
+		{
+			if (id.isEmpty())
+			{
+				continue;
+			}
+			try
+			{
+				final int npcId = Integer.parseInt(id);
+				if (!npcs.contains(npcId))
+				{
+					npcs.add(npcId);
+				}
+			}
+			catch (NumberFormatException e)
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": The unique map " + type + " names an invalid npc id " + id + ": it is left out.");
+			}
+		}
+
 		final String arena = set.getString("arena", "");
-		_newUniqueMaps.put(type, new UniqueMap(type, set.getString("name", type.name()), set.getInt("itemId"), set.getInt("tier", 1), Math.max(1, set.getInt("monsters", 50)), arena.isEmpty() ? null : arena, List.copyOf(modifiers), Math.max(0, set.getDouble("reward", 1.0)), set.getInt("boss"), set.getString("bossName", "Boss"), Math.max(0.01, set.getDouble("bossHp", 1.0)), Math.max(0.01, set.getDouble("bossAttack", 1.0)), Math.max(0.01, set.getDouble("bossDefence", 1.0)), texts[0] == null ? "" : texts[0], texts[1] == null ? "" : texts[1], texts[2] == null ? "" : texts[2], List.copyOf(drops), List.copyOf(bossDrops), List.copyOf(specialDrops)));
+		_newUniqueMaps.put(type, new UniqueMap(type, set.getString("name", type.name()), set.getInt("itemId"), set.getInt("tier", 1), Math.max(1, set.getInt("monsters", 50)), arena.isEmpty() ? null : arena, List.copyOf(modifiers), Math.max(0, set.getDouble("reward", 1.0)), set.getInt("boss"), set.getString("bossName", "Boss"), Math.max(0.01, set.getDouble("bossHp", 1.0)), Math.max(0.01, set.getDouble("bossAttack", 1.0)), Math.max(0.01, set.getDouble("bossDefence", 1.0)), texts[0] == null ? "" : texts[0], texts[1] == null ? "" : texts[1], texts[2] == null ? "" : texts[2], List.copyOf(drops), List.copyOf(bossDrops), List.copyOf(specialDrops), List.copyOf(npcs), Math.max(0, set.getInt("dropMinTier", 0)), Math.max(0, set.getInt("dropMaxTier", 0))));
 	}
 
 	/**

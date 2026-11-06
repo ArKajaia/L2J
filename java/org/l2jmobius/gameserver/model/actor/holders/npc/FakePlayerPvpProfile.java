@@ -123,6 +123,7 @@ public class FakePlayerPvpProfile
 	private volatile int _raceWarsMatchId;
 	// A Conquest match (see ConquestManager) it fights in, 0 for none.
 	private volatile int _conquestMatchId;
+	private volatile int _mapRivalInstance;
 	// The AI it runs (only simulation teams run another one than A).
 	private volatile FakeBrain _brain = FakeBrain.A;
 	
@@ -863,11 +864,33 @@ public class FakePlayerPvpProfile
 	}
 
 	/**
-	 * @return {@code true} for a fake player of a team fight (a simulation run, a Team vs Team, Conquest or Race Wars match): it stays in the fight until it ends, no hunting, roaming, leashing, escaping or coming back from town
+	 * @return {@code true} for a fake player of a team fight (a simulation run, a Team vs Team, Conquest or Race Wars match, a rival party of a Map Device map): it stays in the fight until it ends, no hunting, roaming, leashing, escaping or coming back from
+	 *         town
 	 */
 	public boolean isTeamFighter()
 	{
-		return (_simRunId != 0) || (_tvtMatchId != 0) || (_conquestMatchId != 0) || (_raceWarsMatchId != 0);
+		return (_simRunId != 0) || (_tvtMatchId != 0) || (_conquestMatchId != 0) || (_raceWarsMatchId != 0) || (_mapRivalInstance != 0);
+	}
+
+	/**
+	 * @return the Map Device map whose rival party it belongs to (see {@link org.l2jmobius.gameserver.managers.TombRaidersManager}), 0 for none
+	 */
+	public int getMapRivalInstance()
+	{
+		return _mapRivalInstance;
+	}
+
+	public void setMapRivalInstance(int instanceId)
+	{
+		_mapRivalInstance = instanceId;
+	}
+
+	/**
+	 * @return {@code true} if it was spawned as a rival party of a Map Device map: it races the players for the map's prizes, where its map sends it, and fights to the end
+	 */
+	public boolean isMapRival()
+	{
+		return _mapRivalInstance != 0;
 	}
 
 	/**

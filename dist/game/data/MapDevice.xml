@@ -35,14 +35,17 @@
 
 	uniqueMap   a unique map (UniqueMapManager): an item that always opens the same map, with the modifiers it names instead of random ones, no medal
 	            and no hot zone effect, a twist of its own while it is cleared and a final encounter once it is (both worked by type, see
-	            docs/map-device.md). Unique maps only drop inside maps: on completing a map of tier UniqueMapMinTier and up, and from the
-	            unique bosses themselves (config/Custom/MapDevice.ini).
-	  type      COLISEUM, VAULT or OSSUARY: which twist and final encounter it has.
+	            docs/map-device.md). Unique maps only drop inside maps: on completing a map of a tier they drop at (dropMinTier-dropMaxTier),
+	            and from the unique bosses themselves (config/Custom/MapDevice.ini).
+	  type      COLISEUM, VAULT, OSSUARY, DEN, CRUCIBLE, FRONT or TOMB: which twist and final encounter it has.
 	  itemId    the item that opens it (data/stats/items/custom/map_device_items.xml).
 	  tier      the tier whose monsters fill it (their levels and strength) and whose multipliers they get.
 	  monsters  how many monsters it holds before the final encounter.
 	  arena     the arena of this file (or the id of an event map) it opens in; any of the tier's if unknown.
 	  modifiers the map's modifiers (MapModifier names, see docs/map-device.md).
+	  npcs      optional: the monsters that fill it (type="Monster" npc ids, comma separated), all of them, instead of 6 kinds of the tier's.
+	  dropMinTier, dropMaxTier  optional: the tiers of map whose completion may drop it (default UniqueMapMinTier of MapDevice.ini to 10).
+	            The boss of a unique map drops another unique map of its own tier's.
 	  reward    experience, SP and drop chance multiplier, on top of the tier's.
 	  boss      the plain monster (type="Monster") its boss is made from; bossName its title; bossHp/bossAttack/bossDefence multiply its stats
 	            on top of the map's.
@@ -217,6 +220,61 @@
 		<drop group="boss" id="14165" min="1" max="1" chance="10" /> <!-- Vesper Ring -->
 		<drop group="boss" id="14163" min="1" max="1" chance="4" /> <!-- Vesper Earring -->
 		<drop group="boss" id="14164" min="1" max="1" chance="1" /> <!-- Vesper Necklace -->
+	</uniqueMap>
+
+	<!-- The Ketra-Varka Front (KetraVarkaFrontManager): the first unique map, tier 1. Swear to a side, take its war totems with its warriors, maybe betray it, then hold the camp.
+	     Its field is both factions (no Commander, Head Shaman or Prophet: their guards would follow them); the Ketra Orc General is the Warlord if you swore to Varka, else the Varka Silenos General (21366). -->
+	<uniqueMap type="FRONT" name="The Ketra-Varka Front" itemId="50118" tier="1" monsters="80" arena="Ruins of Despair" reward="1.4"
+		modifiers="WAR_PRIESTS,SUMMONERS,BOUNTY_MARK,FLEET"
+		npcs="21324,21327,21328,21329,21331,21332,21334,21335,21336,21338,21340,21342,21350,21351,21353,21354,21355,21357,21358,21360,21361,21362,21364,21365,21368"
+		dropMinTier="1" dropMaxTier="4"
+		boss="21339" bossName="Warlord" bossHp="30" bossAttack="1.3" bossDefence="1.3">
+		<description>The endless war of the Ketra Orcs and the Varka Silenos, fought over three war totems. Both sides would have you. Neither will trust you for long.</description>
+		<twist>The Front Line. Swear to Ketra or Varka at the War Banner by the portal: that side's monsters in the field lower their weapons and fight beside you, and its Prophet holds your camp. Take the 3 war totems by standing on them with your warriors: the enemy in a sector you hold is 20% weaker, your warriors gather at your totems, and every 3 minutes the enemy counterattacks one of them. Hold 2 totems and the enemy's envoy comes with an offer: betray your side, and everything you fought beside turns on you, for half again the rewards.</twist>
+		<finale>The Siege of the Camp. The enemy Warlord marches on your Prophet with 3 Siege Totems behind him (each one standing makes him 15% stronger), and calls his escorts at 75%, 50% and 25% of his HP. If the Prophet falls, the Warlord grows stronger and his spoils smaller. Everyone inside at his death is named a Hero of their side for 7 days.</finale>
+		<drop group="map" id="6393" min="1" max="1" chance="5" /> <!-- Champion Medal -->
+		<drop group="map" id="9574" min="1" max="1" chance="4" /> <!-- Mid-Grade Life Stone - Level 80 -->
+		<drop group="map" id="9575" min="1" max="1" chance="1" /> <!-- High-Grade Life Stone - Level 80 -->
+		<drop group="map" id="9546" min="1" max="1" chance="2" /> <!-- Fire Stone -->
+		<drop group="map" id="9548" min="1" max="1" chance="2" /> <!-- Earth Stone -->
+		<drop group="map" id="960" min="1" max="1" chance="0.6" /> <!-- Scroll: Enchant Armor (S-Grade) -->
+		<drop group="special" id="6393" min="1" max="2" chance="40" /> <!-- Champion Medal (Siege Totems and escorts) -->
+		<drop group="special" id="9575" min="1" max="1" chance="15" /> <!-- High-Grade Life Stone - Level 80 -->
+		<drop group="boss" id="6393" min="3" max="6" chance="100" /> <!-- Champion Medal -->
+		<drop group="boss" id="9576" min="1" max="1" chance="40" /> <!-- Top-Grade Life Stone - Level 80 -->
+		<drop group="boss" id="10485" min="1" max="2" chance="40" /> <!-- High-Grade Life Stone - Level 82 -->
+		<drop group="boss" id="959" min="1" max="1" chance="25" /> <!-- Scroll: Enchant Weapon (S-Grade) -->
+		<drop group="boss" id="960" min="1" max="2" chance="40" /> <!-- Scroll: Enchant Armor (S-Grade) -->
+		<drop group="boss" id="2134" min="30" max="80" chance="100" /> <!-- Gemstone S -->
+		<drop group="boss" id="57" min="1000000" max="2000000" chance="100" /> <!-- Adena -->
+	</uniqueMap>
+
+	<!-- The Tomb Raiders (TombRaidersManager): tier 2. A rival party of adventurers (fake players) races you for 5 Sealed Reliquaries in the Imperial Tomb's dead.
+	     Its field is the Imperial Tomb (the guards, royal guards and healers); the Imperial Commander is the Undying Emperor. -->
+	<uniqueMap type="TOMB" name="The Tomb Raiders" itemId="50119" tier="2" monsters="70" arena="Silent Valley" reward="1.5"
+		modifiers="SHIELDBEARERS,ARMOURED,WAR_PRIESTS,VOLATILE"
+		npcs="18132,18166,18167,18168,18169,18170,18171,18172,21417,21418,21419"
+		dropMinTier="1" dropMaxTier="4"
+		boss="21416" bossName="Undying Emperor" bossHp="35" bossAttack="1.3" bossDefence="1.3">
+		<description>The Imperial Tomb's dead, and five Sealed Reliquaries among them. You are not the only party down here.</description>
+		<twist>The Race. A rival party of adventurers comes in from the far side. Break the seal of a reliquary (30 seconds, and a hit breaks your focus) before they do: every relic counts. They hunt the tomb with you, steal your marks, and ambush you when they fall behind; you may ambush them too, and a slain rival drops the relics it carries. When the second reliquary opens, their leader parleys: a Truce (they fight beside you and the relics are shared) or Rivalry (the winner takes all).</twist>
+		<finale>The Undying Emperor rises with 4 Honour Guards at 4 Relic Pedestals. While a guard stands, he takes half damage, and a slain guard rises again at its pedestal 10 seconds later, unless you seal the pedestal with a relic. In Rivalry the rivals come for his last blow too, and if one of them lands it his spoils are halved. Every relic you hold at the end is one more roll of the reliquaries' spoils; all five add a Map (Tier 3).</finale>
+		<drop group="map" id="6393" min="1" max="1" chance="5" /> <!-- Champion Medal -->
+		<drop group="map" id="10484" min="1" max="1" chance="4" /> <!-- Mid-Grade Life Stone - Level 82 -->
+		<drop group="map" id="2134" min="1" max="4" chance="10" /> <!-- Gemstone S -->
+		<drop group="map" id="9550" min="1" max="1" chance="2" /> <!-- Dark Stone -->
+		<drop group="map" id="9551" min="1" max="1" chance="2" /> <!-- Holy Stone -->
+		<drop group="map" id="959" min="1" max="1" chance="0.6" /> <!-- Scroll: Enchant Weapon (S-Grade) -->
+		<drop group="special" id="6393" min="1" max="3" chance="100" /> <!-- Champion Medal (one roll per relic) -->
+		<drop group="special" id="10485" min="1" max="1" chance="35" /> <!-- High-Grade Life Stone - Level 82 -->
+		<drop group="special" id="2134" min="10" max="30" chance="60" /> <!-- Gemstone S -->
+		<drop group="special" id="960" min="1" max="1" chance="20" /> <!-- Scroll: Enchant Armor (S-Grade) -->
+		<drop group="boss" id="6393" min="3" max="6" chance="100" /> <!-- Champion Medal -->
+		<drop group="boss" id="10486" min="1" max="1" chance="35" /> <!-- Top-Grade Life Stone - Level 82 -->
+		<drop group="boss" id="959" min="1" max="1" chance="30" /> <!-- Scroll: Enchant Weapon (S-Grade) -->
+		<drop group="boss" id="960" min="1" max="2" chance="40" /> <!-- Scroll: Enchant Armor (S-Grade) -->
+		<drop group="boss" id="6578" min="1" max="1" chance="5" /> <!-- Blessed Scroll: Enchant Armor (S-Grade) -->
+		<drop group="boss" id="57" min="1500000" max="2500000" chance="100" /> <!-- Adena -->
 	</uniqueMap>
 
 	<excludedNpcs></excludedNpcs>

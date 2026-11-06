@@ -5461,7 +5461,8 @@ public class Player extends Playable
 		if (killer != null)
 		{
 			final Player pk = killer.asPlayer();
-			final boolean fpcKill = killer.isFakePlayer();
+			// A rival party of a Map Device map is part of the map: its kills are no PK, no PvP and no news.
+			final boolean fpcKill = killer.isFakePlayer() && !killer.asNpc().isMapRival();
 			if ((pk != null) || fpcKill)
 			{
 				if ((getParty() != null) && (getParty().getUCState() instanceof UCTeam))

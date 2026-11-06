@@ -2065,6 +2065,66 @@ public class FakePlayerPvpManager
 	}
 	
 	/**
+	 * Spawns a fake player of a rival party of a Map Device map (the Tomb Raiders, see {@link TombRaidersManager}): it races the players where its map sends it ({@code FakePlayerPvpAI} asks the map), never flees, escapes, logs off or comes back after
+	 * dying, and is flagged for good (fighting it is never a PK). It goes with its map's instance, or with {@code deleteMe()}.
+	 * @param build the build
+	 * @param level the level
+	 * @param title the title it shows
+	 * @param x the x
+	 * @param y the y
+	 * @param z the z
+	 * @param instanceId the map's instance
+	 * @return the rival, or {@code null} if it could not be created
+	 */
+	public Npc spawnMapRival(FakePlayerPvpBuild build, int level, String title, int x, int y, int z, int instanceId)
+	{
+		if (build == null)
+		{
+			return null;
+		}
+
+		final String name = generateName();
+		try
+		{
+			final NpcTemplate template = FakePlayerPvpFactory.createTemplate(build, level, _nextNpcId.getAndIncrement(), name, null, title);
+			if (template == null)
+			{
+				releaseName(name);
+				return null;
+			}
+
+			final FakePlayerPvpProfile profile = template.getFakePlayerPvpProfile();
+			profile.setSpawnTime(System.currentTimeMillis());
+			profile.setHotzoneId(0);
+			profile.setBlessedEscape(false);
+			profile.setBrain(FakeBrain.A);
+			profile.setMapRivalInstance(instanceId);
+			profile.onReturn(0); // Marks it as already returned: it never walks back after dying.
+
+			final Npc fake = spawnFromTemplate(template, x, y, z, instanceId);
+			if (fake == null)
+			{
+				FakePlayerData.getInstance().removeFakePlayer(name);
+				releaseName(name);
+				return null;
+			}
+
+			// Flagged for good (no PvP flag timer is started for a script value set by hand).
+			fake.setScriptValue(1);
+			fake.broadcastInfo();
+			fake.getAI().setIntention(Intention.ACTIVE);
+			return fake;
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not spawn map rival " + build.getName() + " level " + level + ".", e);
+			FakePlayerData.getInstance().removeFakePlayer(name);
+			releaseName(name);
+			return null;
+		}
+	}
+
+	/**
 	 * Points a class transfer challenge opponent at its challenger when the challenger can be fought (online, alive, attackable and in the same instance).
 	 * @param fake the opponent
 	 * @return {@code true} if it is (now) fighting its challenger
@@ -2385,6 +2445,13 @@ public class FakePlayerPvpManager
 		
 		// The monsters of a Race Wars match kill its fake players like its players.
 		if (RaceWarsManager.isEventMonster(attacker))
+		{
+			return damage;
+		}
+
+		// A rival party of a Map Device map runs the same risks as the players it races.
+		final FakePlayerPvpProfile rivalProfile = fake.getTemplate().getFakePlayerPvpProfile();
+		if ((rivalProfile != null) && rivalProfile.isMapRival())
 		{
 			return damage;
 		}

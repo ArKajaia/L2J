@@ -43,6 +43,7 @@ import org.l2jmobius.gameserver.managers.FakePlayerPvpManager;
 import org.l2jmobius.gameserver.managers.ItemsOnGroundManager;
 import org.l2jmobius.gameserver.managers.PvpSpotManager;
 import org.l2jmobius.gameserver.managers.RaceWarsManager;
+import org.l2jmobius.gameserver.managers.TombRaidersManager;
 import org.l2jmobius.gameserver.managers.TeamEventRules;
 import org.l2jmobius.gameserver.managers.PassiveDeathmatchManager;
 import org.l2jmobius.gameserver.managers.TeamVsTeamManager;
@@ -504,6 +505,13 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 		if ((profile != null) && profile.isConquestFighter())
 		{
 			thinkConquest(npc, profile);
+			return;
+		}
+
+		// And a rival party of a Map Device map: it races the players where its map sends it.
+		if ((profile != null) && profile.isMapRival())
+		{
+			thinkMapRival(npc, profile);
 			return;
 		}
 		
@@ -1712,8 +1720,8 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 	 */
 	private boolean shouldFlee(Attackable npc, FakePlayerPvpProfile profile, Creature target, double hpRatio)
 	{
-		// A class transfer challenge opponent fights to the end.
-		if (_lastStand || profile.isTrialDuelist())
+		// A class transfer challenge opponent fights to the end, and so does a rival party of a Map Device map.
+		if (_lastStand || profile.isTrialDuelist() || profile.isMapRival())
 		{
 			return false;
 		}
@@ -6466,6 +6474,55 @@ public class FakePlayerPvpAI extends AttackableAI implements FakePlayerPvpBrain
 
 		final Location destination = raceWars.getMarchTarget(npc);
 		if (destination == null)
+		{
+			trace(Reason.SIM_WAIT, null);
+			return;
+		}
+		trace(Reason.SIM_MARCH, null);
+		marchTo(npc, destination, true);
+	}
+
+	/**
+	 * A fake player of a rival party of a Map Device map (the Tomb Raiders, see {@link TombRaidersManager}): it stands still while it breaks a seal, fights what its map gives it (a monster near its goal, a player it ambushes, the boss), plays with its
+	 * party, or marches on the goal its map gives it.
+	 */
+	private void thinkMapRival(Attackable npc, FakePlayerPvpProfile profile)
+	{
+		// Its spawn follows it: nothing sends it back to where it appeared.
+		final Spawn spawn = npc.getSpawn();
+		if (spawn != null)
+		{
+			spawn.setXYZ(npc.getX(), npc.getY(), npc.getZ());
+		}
+
+		if (TombRaidersManager.isChanneling(npc))
+		{
+			trace(Reason.SIM_WAIT, null);
+			return;
+		}
+
+		final Creature enemy = TombRaidersManager.findTarget(npc);
+		if (enemy != null)
+		{
+			if (standUp(npc))
+			{
+				trace(Reason.STAND_UP, enemy);
+				return;
+			}
+			trace(Reason.SIM_ENGAGE, enemy);
+			npc.setRunning();
+			FakePlayerPvpManager.getInstance().assistFight(npc, enemy);
+			return;
+		}
+
+		final FakePlayerParty party = profile.getParty();
+		if ((party != null) && thinkParty(npc, profile, party))
+		{
+			return;
+		}
+
+		final Location destination = TombRaidersManager.getGoal(npc);
+		if ((destination == null) || (npc.calculateDistance2D(destination) <= 100))
 		{
 			trace(Reason.SIM_WAIT, null);
 			return;

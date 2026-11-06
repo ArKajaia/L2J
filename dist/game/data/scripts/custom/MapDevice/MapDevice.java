@@ -21,7 +21,9 @@
 package custom.MapDevice;
 
 import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
+import org.l2jmobius.gameserver.managers.KetraVarkaFrontManager;
 import org.l2jmobius.gameserver.managers.MapDeviceManager;
+import org.l2jmobius.gameserver.managers.TombRaidersManager;
 import org.l2jmobius.gameserver.managers.UniqueMapManager;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -31,16 +33,32 @@ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
 
 /**
  * The NPCs of the Map Device (see {@link MapDeviceManager}): the device in a hideout opens its window, a portal round it takes the player into the map, and the return portal of a map takes them back to the hideout.
- * The Dealer of the unique map The Gambler's Den takes bets on its Pot ({@link UniqueMapManager#placeBet}).
+ * The Dealer of the unique map The Gambler's Den takes bets on its Pot ({@link UniqueMapManager#placeBet}). The War Banner, the envoys and the war totems of the Ketra-Varka Front open its window ({@link KetraVarkaFrontManager}), and so do the reliquaries
+ * and pedestals of the Tomb Raiders ({@link TombRaidersManager}).
  * @author Mobius
  */
 public class MapDevice extends Quest
 {
+	// The Ketra-Varka Front's npcs that open its window.
+	private static final int[] FRONT_NPCS =
+	{
+		KetraVarkaFrontManager.BANNER,
+		KetraVarkaFrontManager.KETRA_ENVOY,
+		KetraVarkaFrontManager.VARKA_ENVOY,
+		KetraVarkaFrontManager.TOTEM_NEUTRAL,
+		KetraVarkaFrontManager.TOTEM_KETRA,
+		KetraVarkaFrontManager.TOTEM_VARKA
+	};
+
 	public MapDevice()
 	{
 		super(-1);
 		addFirstTalkId(MapDeviceConfig.DEVICE_NPC_ID, MapDeviceConfig.PORTAL_NPC_ID, MapDeviceConfig.RETURN_PORTAL_NPC_ID, MapDeviceConfig.DEALER_NPC_ID);
 		addTalkId(MapDeviceConfig.DEVICE_NPC_ID, MapDeviceConfig.PORTAL_NPC_ID, MapDeviceConfig.RETURN_PORTAL_NPC_ID, MapDeviceConfig.DEALER_NPC_ID);
+		addFirstTalkId(FRONT_NPCS);
+		addTalkId(FRONT_NPCS);
+		addFirstTalkId(TombRaidersManager.RELIQUARY, TombRaidersManager.PEDESTAL);
+		addTalkId(TombRaidersManager.RELIQUARY, TombRaidersManager.PEDESTAL);
 	}
 
 	@Override
@@ -130,6 +148,19 @@ public class MapDevice extends Quest
 		if (npcId == MapDeviceConfig.DEALER_NPC_ID)
 		{
 			showDealer(npc, player, null);
+			return null;
+		}
+		for (int frontNpc : FRONT_NPCS)
+		{
+			if (npcId == frontNpc)
+			{
+				KetraVarkaFrontManager.showWindow(player);
+				return null;
+			}
+		}
+		if ((npcId == TombRaidersManager.RELIQUARY) || (npcId == TombRaidersManager.PEDESTAL))
+		{
+			TombRaidersManager.showWindow(player);
 			return null;
 		}
 		if (npcId == MapDeviceConfig.RETURN_PORTAL_NPC_ID)
