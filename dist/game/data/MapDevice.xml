@@ -86,6 +86,8 @@
 
 	<!-- ================================================================ Unique maps ================================================================ -->
 
+	<!-- Unique maps never drop raid-only items: everything here can also be had without raids (an ordinary monster drops it, or a player shop or recipe makes it). -->
+
 	<!-- The Crimson Coliseum: Deathmatch: Mayhem against monsters. The crowd wants blood, and the monsters grow with every death (Rising Dread, Soul Eaters, Berserkers)... but so do you. -->
 	<uniqueMap type="COLISEUM" name="The Crimson Coliseum" itemId="50111" tier="5" monsters="30" arena="Ruins of Despair" reward="2.0"
 		modifiers="BRUTAL,FORTIFIED,HUNTERS,BERSERKERS,RISING_DREAD,SOUL_EATERS"
@@ -105,8 +107,8 @@
 		<drop group="boss" id="6577" min="1" max="1" chance="25" /> <!-- Blessed Scroll: Enchant Weapon (S-Grade) -->
 		<drop group="boss" id="9627" min="1" max="1" chance="20" /> <!-- Giant's Codex - Mastery -->
 		<drop group="boss" id="14165" min="1" max="1" chance="12" /> <!-- Vesper Ring -->
-		<drop group="boss" id="15717" min="1" max="1" chance="2" /> <!-- Elegia Ring -->
-		<drop group="boss" id="6658" min="1" max="1" chance="0.5" /> <!-- Ring of Baium -->
+		<drop group="boss" id="14163" min="1" max="1" chance="2" /> <!-- Vesper Earring (was the raid-only Elegia Ring) -->
+		<drop group="boss" id="14164" min="1" max="1" chance="0.5" /> <!-- Vesper Necklace (was the raid-only Ring of Baium) -->
 	</uniqueMap>
 
 	<!-- The Gilded Vault: a heist against the clock. Thieves everywhere (Thieves' Guild), quick and slippery (Fleet, Elusive, Skittish), a bounty to chase, a speedrun to make. -->
@@ -157,7 +159,7 @@
 		<drop group="boss" id="14169" min="1" max="2" chance="50" /> <!-- Top-Grade Life Stone - Level 84 -->
 		<drop group="boss" id="6577" min="1" max="1" chance="20" /> <!-- Blessed Scroll: Enchant Weapon (S-Grade) -->
 		<drop group="boss" id="14163" min="1" max="1" chance="12" /> <!-- Vesper Earring -->
-		<drop group="boss" id="15717" min="1" max="1" chance="2" /> <!-- Elegia Ring -->
+		<drop group="boss" id="14165" min="1" max="1" chance="2" /> <!-- Vesper Ring (was the raid-only Elegia Ring) -->
 	</uniqueMap>
 
 	<!-- The Gambler's Den: luck both ways. Champions everywhere (Champions' Rally) and random elements (Elemental Chaos), big crits for both sides (Glass Cannon, Deadly, Fragile), kills that split (Splitters). -->
@@ -184,8 +186,8 @@
 		<drop group="boss" id="6578" min="1" max="1" chance="25" /> <!-- Blessed Scroll: Enchant Armor (S-Grade) -->
 		<drop group="boss" id="6577" min="1" max="1" chance="20" /> <!-- Blessed Scroll: Enchant Weapon (S-Grade) -->
 		<drop group="boss" id="14165" min="1" max="1" chance="10" /> <!-- Vesper Ring -->
-		<drop group="boss" id="15717" min="1" max="1" chance="2" /> <!-- Elegia Ring -->
-		<drop group="boss" id="6658" min="1" max="1" chance="0.5" /> <!-- Ring of Baium -->
+		<drop group="boss" id="14163" min="1" max="1" chance="2" /> <!-- Vesper Earring (was the raid-only Elegia Ring) -->
+		<drop group="boss" id="14164" min="1" max="1" chance="0.5" /> <!-- Vesper Necklace (was the raid-only Ring of Baium) -->
 	</uniqueMap>
 
 	<excludedNpcs></excludedNpcs>
