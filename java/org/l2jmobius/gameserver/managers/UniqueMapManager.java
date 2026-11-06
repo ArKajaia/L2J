@@ -21,6 +21,7 @@
 package org.l2jmobius.gameserver.managers;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +33,7 @@ import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.ai.AttackableAI;
 import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.config.custom.MapDeviceConfig;
 import org.l2jmobius.gameserver.config.custom.TeamVsTeamConfig;
@@ -44,6 +46,7 @@ import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
+import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
 import org.l2jmobius.gameserver.model.actor.enums.npc.MonsterArchetype;
 import org.l2jmobius.gameserver.model.actor.holders.npc.AggroInfo;
@@ -55,6 +58,7 @@ import org.l2jmobius.gameserver.model.mapdevice.MapRun;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun.MonsterStat;
 import org.l2jmobius.gameserver.model.mapdevice.MapRun.Status;
 import org.l2jmobius.gameserver.model.mapdevice.UniqueMap;
+import org.l2jmobius.gameserver.model.script.Quest;
 import org.l2jmobius.gameserver.model.skill.AbnormalVisualEffect;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
@@ -70,6 +74,8 @@ import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
  * 80/60/40/20% of its HP, leaving thieves behind. If the vault seals first, it escapes.</li>
  * <li><b>The Ossuary of Echoes</b> ({@link UniqueMap.Type#OSSUARY}): a quarter of the slain leave an Echo (half HP, uncounted, its own drops); every Echo still standing at the end feeds the Hollow King (+5% HP). He is shielded while his Bone Phylacteries stand (4, then 3
  * at 60% HP, then 2 at 30%), which raise servants; from 30% a Death Nova bursts from him every 15 seconds.</li>
+ * <li><b>The Gambler's Den</b> ({@link UniqueMap.Type#DEN}): every {@link #DEN_KILLS_PER_SPIN} kills the Wheel of Fate turns up one of 24 {@link Fortune}s (a shuffled bag: no repeat until all have come) and a bet; at the Dealer a bet doubles or halves the Pot, which
+ * multiplies the Den's drops (past 100% they grow bigger). The Den's drops follow the server rates. Then The House, who draws a {@link Card} at 80/60/40/20% of its HP.</li>
  * </ul>
  * @author Mobius
  */
@@ -85,6 +91,10 @@ public class UniqueMapManager
 	private static final int ROLE_SERVANT = 4;
 	private static final int ROLE_ECHO = 5;
 	private static final int ROLE_THIEF = 6;
+	private static final int ROLE_JACKPOT = 7;
+	private static final int ROLE_BLUFF = 8;
+	private static final int ROLE_CARD_GUARD = 9;
+	private static final int ROLE_PICKPOCKET = 10;
 
 	// The Crimson Coliseum.
 	private static final int[] COLISEUM_WAVES =
@@ -154,6 +164,103 @@ public class UniqueMapManager
 	private static final int NOVA_SKILL_ID = 4529; // Quest - Summoned Explosion (visual only)
 	private static final int RAISE_SKILL_ID = 4526; // Quest - BOSS Summon (visual only)
 
+	// The Gambler's Den.
+	private static final int DEN_KILLS_PER_SPIN = 12;
+	private static final double POT_START = 1.0;
+	private static final double POT_MIN = 0.25;
+	private static final double POT_MAX = 4.0;
+	private static final double[] DEN_THRESHOLDS =
+	{
+		0.80,
+		0.60,
+		0.40,
+		0.20
+	};
+	private static final int JACKPOT_NPC_ID = 18822; // Mutant Treasure Chest
+	private static final double JACKPOT_HP = 3;
+	private static final int JACKPOT_SECONDS = 30;
+	private static final int JACKPOT_ROLLS = 3;
+	private static final int STAKES_CHAMPIONS = 6;
+	private static final int PICKPOCKET_COUNT = 3;
+	private static final int PICKPOCKET_SECONDS = 45;
+	private static final double PICKPOCKET_POT = 0.05;
+	private static final int LUCKY_SEVEN = 7;
+	private static final double CARD_COUNTER_POT = 0.02;
+	private static final int PULSE_INTERVAL = 5;
+	private static final double COMPED_HEAL = 0.05;
+	private static final double HANGOVER_DAMAGE = 0.04;
+	private static final double HOUSE_RULES_HEAL = 0.03;
+	private static final double BUST_DAMAGE = 0.30;
+	private static final int FREE_SPIN_DELAY = 3000;
+	private static final int CARD_GUARDS = 3;
+	private static final double CARD_GUARD_HP = 2.0;
+	private static final int BLUFFS = 2;
+	private static final double BLUFF_HP = 0.15;
+	private static final double BLUFF_ATTACK = 0.5;
+	private static final double BLUFF_POT = 0.10;
+	private static final int DEN_THIEVES = 4;
+	private static final int DEALER_OFFSET = 150;
+	private static final int ADENA_ID = 57;
+
+	/** The fortunes of the Den's Wheel of Fate. The lasting ones hold until the next spin (or, from the Joker, the next card); the others happen once, when the wheel stops. */
+	private enum Fortune
+	{
+		LUCKY_STREAK("Lucky Streak", true, "You deal 30% more damage."),
+		GOLDEN_TOUCH("Golden Touch", true, "The Pot grows by 25%."),
+		SECOND_WIND("Second Wind", true, "You are healed to full."),
+		JACKPOT("Jackpot", true, "A Jackpot Chest appears: break it within " + JACKPOT_SECONDS + " seconds!"),
+		SLEIGHT_OF_HAND("Sleight of Hand", true, "Monsters have 25% less P. Def. and M. Def."),
+		FOLD("Fold", true, "Monsters deal 20% less damage."),
+		FREE_SPIN("Free Spin", true, "The Pot grows by 10%, and the wheel spins again!"),
+		HOT_TABLE("Hot Table", true, "The Den's drops come twice as often."),
+		CARD_COUNTER("Card Counter", true, "Every kill adds 2% to the Pot."),
+		LUCKY_SEVEN("Lucky Seven", true, "Every 7th kill also rolls the Jackpot's drops."),
+		COMPED_DRINKS("Comp'd Drinks", true, "You heal 5% HP and MP every " + PULSE_INTERVAL + " seconds."),
+		HIGH_ROLLER("High Roller", true, "One more bet at the Dealer."),
+		COLD_DECK("Cold Deck", false, "You deal 20% less damage."),
+		BAD_BEAT("Bad Beat", false, "The Pot shrinks by 15%."),
+		BUST("Bust", false, "You lose 30% of your HP."),
+		RAISE_THE_STAKES("Raise the Stakes", false, STAKES_CHAMPIONS + " Champions join the game!"),
+		IRON_SKIN("Iron Skin", false, "Monsters have 40% more P. Def. and M. Def."),
+		LOADED_DICE("Loaded Dice", false, "Monsters deal 30% more damage."),
+		CRACKED_DICE("Cracked Dice", false, "Monsters attack and cast 25% faster."),
+		COLD_STREAK("Cold Streak", false, "The Den's drops come half as often."),
+		SHORT_STACK("Short Stack", false, "You lose a bet."),
+		PICKPOCKETS("Pickpockets", false, PICKPOCKET_COUNT + " Pickpockets grab for the Pot: catch them within " + PICKPOCKET_SECONDS + " seconds, or each takes 5%!"),
+		HANGOVER("Hangover", false, "You lose 4% HP every " + PULSE_INTERVAL + " seconds."),
+		HOUSE_RULES("House Rules", false, "Monsters heal 3% HP every " + PULSE_INTERVAL + " seconds.");
+
+		final String _name;
+		final boolean _blessing;
+		final String _text;
+
+		Fortune(String name, boolean blessing, String text)
+		{
+			_name = name;
+			_blessing = blessing;
+			_text = text;
+		}
+	}
+
+	/** The House's deck: one card drawn at each HP threshold, no repeats. A card holds until the next one. */
+	private enum Card
+	{
+		ACE("Ace of Blades", "The House hits 40% harder and attacks 30% faster."),
+		KING("King of Shields", "The House is invulnerable until its " + CARD_GUARDS + " Card Guards fall."),
+		QUEEN("Queen of Mirrors", "Two Bluffs join the House: each one slain adds 10% to the Pot."),
+		JACK("Jack of Thieves", "The House vanishes, leaving thieves behind."),
+		JOKER("Joker", "The wheel spins for the House.");
+
+		final String _name;
+		final String _text;
+
+		Card(String name, String text)
+		{
+			_name = name;
+			_text = text;
+		}
+	}
+
 	/** How long after the field is cleared the next wave or the final encounter comes (ms). */
 	private static final int FINALE_DELAY = 5000;
 
@@ -187,6 +294,25 @@ public class UniqueMapManager
 		final Set<Integer> _phylacteries = ConcurrentHashMap.newKeySet();
 		final Set<Integer> _echoes = ConcurrentHashMap.newKeySet();
 		final Set<Integer> _servants = ConcurrentHashMap.newKeySet();
+		/** The Den. */
+		volatile double _pot = POT_START;
+		volatile int _bets;
+		volatile Fortune _fortune;
+		final List<Fortune> _fortuneBag = new ArrayList<>();
+		/** Counted kills of the field. */
+		int _denKills;
+		/** Kills since the fortune came (Lucky Seven). */
+		int _fortuneKills;
+		volatile Card _card;
+		final List<Card> _deck = new ArrayList<>();
+		volatile int _jackpotId;
+		volatile long _jackpotUntil;
+		final Set<Integer> _bluffs = ConcurrentHashMap.newKeySet();
+		final Set<Integer> _cardGuards = ConcurrentHashMap.newKeySet();
+		/** The Adena the Den's own drops gave so far ({@link MapDeviceConfig#GAMBLERS_DEN_MAX_ADENA}). */
+		long _adena;
+		/** Pickpockets by object id, with the time they escape. */
+		final Map<Integer, Long> _pickpockets = new ConcurrentHashMap<>();
 	}
 
 	protected UniqueMapManager()
@@ -226,10 +352,51 @@ public class UniqueMapManager
 	public static double getEncounterMultiplier(MapRun run, Monster monster, MonsterStat stat)
 	{
 		final int role = roleOf(monster);
-		if (role == 0)
+		final double den = run.getUnique().type() == UniqueMap.Type.DEN ? getDenMultiplier(run, role, stat) : 1.0;
+		return role == 0 ? den : den * getRoleMultiplier(run, role, stat);
+	}
+
+	/**
+	 * @return what the Den's fortune (all its monsters but the Jackpot Chest) and the House's card (the House alone) multiply a stat by
+	 */
+	private static double getDenMultiplier(MapRun run, int role, MonsterStat stat)
+	{
+		final State state = STATES.get(run.getInstanceId());
+		if ((state == null) || (role == ROLE_JACKPOT))
 		{
 			return 1.0;
 		}
+		final boolean attack = (stat == MonsterStat.P_ATK) || (stat == MonsterStat.M_ATK);
+		final boolean defence = (stat == MonsterStat.P_DEF) || (stat == MonsterStat.M_DEF);
+		final boolean speed = (stat == MonsterStat.ATK_SPD) || (stat == MonsterStat.CAST_SPD);
+		double multiplier = 1.0;
+		final Fortune fortune = state._fortune;
+		if (fortune != null)
+		{
+			switch (fortune)
+			{
+				case SLEIGHT_OF_HAND -> multiplier *= defence ? 0.75 : 1.0;
+				case IRON_SKIN -> multiplier *= defence ? 1.4 : 1.0;
+				case FOLD -> multiplier *= attack ? 0.8 : 1.0;
+				case LOADED_DICE -> multiplier *= attack ? 1.3 : 1.0;
+				case CRACKED_DICE -> multiplier *= speed ? 1.25 : 1.0;
+				default ->
+				{
+				}
+			}
+		}
+		if ((role == ROLE_BOSS) && (state._card == Card.ACE))
+		{
+			multiplier *= attack ? 1.4 : stat == MonsterStat.ATK_SPD ? 1.3 : 1.0;
+		}
+		return multiplier;
+	}
+
+	/**
+	 * @return what a twist's or final encounter's role multiplies a stat by
+	 */
+	private static double getRoleMultiplier(MapRun run, int role, MonsterStat stat)
+	{
 		final UniqueMap unique = run.getUnique();
 		switch (role)
 		{
@@ -260,6 +427,24 @@ public class UniqueMapManager
 			{
 				return stat == MonsterStat.HP ? SERVANT_HP : 1.0;
 			}
+			case ROLE_JACKPOT ->
+			{
+				return stat == MonsterStat.HP ? JACKPOT_HP : 1.0;
+			}
+			case ROLE_CARD_GUARD ->
+			{
+				return stat == MonsterStat.HP ? CARD_GUARD_HP : 1.0;
+			}
+			case ROLE_BLUFF ->
+			{
+				return switch (stat)
+				{
+					case HP -> unique.bossHp() * BLUFF_HP;
+					case P_ATK, M_ATK -> unique.bossAttack() * BLUFF_ATTACK;
+					case P_DEF, M_DEF -> unique.bossDefence();
+					default -> 1.0;
+				};
+			}
 			default ->
 			{
 				return 1.0;
@@ -281,6 +466,30 @@ public class UniqueMapManager
 		if (run.getUnique().type() == UniqueMap.Type.VAULT)
 		{
 			run.setClosesAt(Math.min(maxClose(run), System.currentTimeMillis() + (VAULT_START_SECONDS * 1000L)));
+		}
+		else if (run.getUnique().type() == UniqueMap.Type.DEN)
+		{
+			spawnDealer(run);
+		}
+	}
+
+	/**
+	 * The Den: the Dealer stands beside the Return Portal, facing the field like it.
+	 */
+	private static void spawnDealer(MapRun run)
+	{
+		if (NpcData.getInstance().getTemplate(MapDeviceConfig.DEALER_NPC_ID) == null)
+		{
+			LOGGER.warning(UniqueMapManager.class.getSimpleName() + ": No Dealer npc " + MapDeviceConfig.DEALER_NPC_ID + ": the Gambler's Den opens without its bets.");
+			return;
+		}
+		final Location entry = run.getArena().entry();
+		final double side = ((entry.getHeading() * 2 * Math.PI) / 65536) + (Math.PI / 2);
+		final Location spot = MapDeviceManager.getGroundLocation(new Location(entry.getX() + (int) (Math.cos(side) * DEALER_OFFSET), entry.getY() + (int) (Math.sin(side) * DEALER_OFFSET), entry.getZ(), entry.getHeading()));
+		final Npc dealer = Quest.addSpawn(MapDeviceConfig.DEALER_NPC_ID, spot.getX(), spot.getY(), spot.getZ(), entry.getHeading(), false, 0, false, run.getInstanceId());
+		if (dealer != null)
+		{
+			dealer.setRandomWalking(false);
 		}
 	}
 
@@ -443,6 +652,7 @@ public class UniqueMapManager
 			case COLISEUM -> "The gates grind open... the " + unique.bossName() + " enters the ring!";
 			case VAULT -> "The hoard stirs... the " + unique.bossName() + " wakes!";
 			case OSSUARY -> "The valley falls silent... " + unique.bossName() + " rises!";
+			case DEN -> "The tables clear... " + unique.bossName() + " takes the table!";
 		};
 	}
 
@@ -522,7 +732,421 @@ public class UniqueMapManager
 					shield(run, state, boss, PHYLACTERIES[0]);
 				}
 			}
+			case DEN ->
+			{
+				final int bets;
+				synchronized (state)
+				{
+					state._fortune = null; // The fortunes end at the table.
+					state._bets++;
+					bets = state._bets;
+					state._deck.clear();
+					Collections.addAll(state._deck, Card.values());
+					Collections.shuffle(state._deck);
+				}
+				final Monster boss = spawnEncounter(run, template, middle, ROLE_BOSS, "[" + unique.bossName() + "]", true);
+				if (boss != null)
+				{
+					state._bossId = boss.getObjectId();
+					attackSomeone(boss, players);
+				}
+				MapDeviceManager.sendToMap(run, "The wheel stops: no more fortunes. One last bet at the Dealer (" + bets + " in hand), Pot " + formatPot(state._pot) + ". " + unique.bossName() + " draws a card at 80%, 60%, 40% and 20% of its HP.");
+			}
 		}
+	}
+
+	// =========================================================================
+	// The Gambler's Den: the Pot, the Wheel of Fate, the Dealer, the House's cards
+	// =========================================================================
+
+	private static String formatPot(double pot)
+	{
+		return "x" + String.format("%.2f", pot);
+	}
+
+	/**
+	 * Adds to the Pot (or takes from it), within {@link #POT_MIN} and {@link #POT_MAX}.
+	 * @return the Pot now
+	 */
+	private static double addPot(State state, double amount)
+	{
+		synchronized (state)
+		{
+			state._pot = Math.max(POT_MIN, Math.min(POT_MAX, state._pot + amount));
+			return state._pot;
+		}
+	}
+
+	/**
+	 * @return what the Den's drop chances are multiplied by: the Pot, and Hot Table or Cold Streak
+	 */
+	private static double denDropFactor(State state)
+	{
+		final Fortune fortune = state._fortune;
+		return state._pot * (fortune == Fortune.HOT_TABLE ? 2.0 : fortune == Fortune.COLD_STREAK ? 0.5 : 1.0);
+	}
+
+	/**
+	 * The Wheel of Fate turns: the next fortune of the bag (refilled and shuffled when empty), which holds until the next spin.
+	 * @param joker {@code true} when the House's Joker spins it (no bet comes with it)
+	 */
+	private static void spin(MapRun run, State state, boolean joker)
+	{
+		if (run.isClosed())
+		{
+			return;
+		}
+		final Fortune fortune;
+		final int bets;
+		synchronized (state)
+		{
+			if (state._fortuneBag.isEmpty())
+			{
+				Collections.addAll(state._fortuneBag, Fortune.values());
+				Collections.shuffle(state._fortuneBag);
+			}
+			fortune = state._fortuneBag.remove(0);
+			state._fortune = fortune;
+			state._fortuneKills = 0;
+			if (!joker)
+			{
+				state._bets++;
+			}
+			switch (fortune)
+			{
+				case HIGH_ROLLER -> state._bets++;
+				case SHORT_STACK -> state._bets = Math.max(0, state._bets - 1);
+				default ->
+				{
+				}
+			}
+			bets = state._bets;
+		}
+
+		final List<Player> players = MapDeviceManager.getPlayersInside(run);
+		switch (fortune)
+		{
+			case GOLDEN_TOUCH -> addPot(state, 0.25);
+			case BAD_BEAT -> addPot(state, -0.15);
+			case FREE_SPIN -> addPot(state, 0.10);
+			case SECOND_WIND ->
+			{
+				for (Player player : players)
+				{
+					if (!player.isDead())
+					{
+						player.setCurrentCp(player.getMaxCp());
+						player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
+					}
+				}
+			}
+			case BUST ->
+			{
+				for (Player player : players)
+				{
+					if (!player.isDead() && !player.isInvul())
+					{
+						player.reduceCurrentHp(player.getCurrentHp() * BUST_DAMAGE, null, false, false, null);
+					}
+				}
+			}
+			case JACKPOT -> spawnJackpot(run, state);
+			case RAISE_THE_STAKES -> raiseTheStakes(run, players);
+			case PICKPOCKETS -> spawnPickpockets(run, state, players);
+			default ->
+			{
+			}
+		}
+
+		final String kind = fortune._blessing ? "Blessing" : "Curse";
+		MapDeviceManager.sendScreenToMap(run, "Wheel of Fate - " + kind + ": " + fortune._name + "!");
+		MapDeviceManager.sendToMap(run, "Wheel of Fate: " + fortune._name + " (" + kind.toLowerCase() + "). " + fortune._text + " Pot " + formatPot(state._pot) + ", " + bets + (bets == 1 ? " bet" : " bets") + " in hand.");
+
+		if (fortune == Fortune.FREE_SPIN)
+		{
+			ThreadPool.schedule(() ->
+			{
+				// Only if nothing else turned the wheel meanwhile.
+				if (!run.isClosed() && (state._fortune == Fortune.FREE_SPIN) && (joker || (state._phase == 0)))
+				{
+					spin(run, state, joker);
+				}
+			}, FREE_SPIN_DELAY);
+		}
+	}
+
+	/**
+	 * Jackpot: a chest that doesn't count toward the clear, gone after {@link #JACKPOT_SECONDS} seconds, with the special drops {@link #JACKPOT_ROLLS} times.
+	 */
+	private static void spawnJackpot(MapRun run, State state)
+	{
+		final NpcTemplate template = NpcData.getInstance().getTemplate(JACKPOT_NPC_ID);
+		if (template == null)
+		{
+			return;
+		}
+		removeJackpot(state);
+		final Monster chest = spawnEncounter(run, template, MapDeviceManager.randomFieldSpot(run, 0.5, true), ROLE_JACKPOT, "[Jackpot]", false);
+		if (chest != null)
+		{
+			chest.setImmobilized(true);
+			chest.setRandomWalking(false);
+			chest.startAbnormalVisualEffect(true, AbnormalVisualEffect.VP_UP);
+			state._jackpotUntil = System.currentTimeMillis() + (JACKPOT_SECONDS * 1000L);
+			state._jackpotId = chest.getObjectId();
+			MapDeviceManager.sendToMap(run, "The Jackpot Chest stands " + describeWay(new Location(run.getArena().entry().getX(), run.getArena().entry().getY(), 0), new Location(chest.getX(), chest.getY(), 0)) + " of the entry.");
+		}
+	}
+
+	/**
+	 * @return {@code true} if a Jackpot Chest was still standing (it is gone now)
+	 */
+	private static boolean removeJackpot(State state)
+	{
+		final int objectId = state._jackpotId;
+		state._jackpotId = 0;
+		if (objectId != 0)
+		{
+			final WorldObject object = World.getInstance().findObject(objectId);
+			if ((object instanceof Monster chest) && !chest.isDead())
+			{
+				chest.deleteMe();
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Raise the Stakes: Champions of the map's kinds rush one of the players. They count toward the clear.
+	 */
+	private static void raiseTheStakes(MapRun run, List<Player> players)
+	{
+		final List<NpcTemplate> kinds = run.getMonsterKinds();
+		final List<Player> alive = new ArrayList<>(players);
+		alive.removeIf(Player::isDead);
+		if (kinds.isEmpty() || alive.isEmpty())
+		{
+			return;
+		}
+		final Player target = alive.get(Rnd.get(alive.size()));
+		int spawned = 0;
+		for (int i = 0; i < STAKES_CHAMPIONS; i++)
+		{
+			final Monster champion = MapDeviceManager.getInstance().spawnMapMonster(run, kinds.get(Rnd.get(kinds.size())), MapDeviceManager.nearSpot(run, target, 700));
+			if (champion == null)
+			{
+				continue;
+			}
+			spawned++;
+			if (ChampionMonstersConfig.CHAMPION_ENABLE)
+			{
+				champion.setChampionTier(Rnd.get(1, 2));
+				champion.setCurrentHpMp(champion.getMaxHp(), champion.getMaxMp());
+				champion.broadcastInfo();
+			}
+			attackSomeone(champion, List.of(target));
+		}
+		run.setMonsterTotal(run.getMonsterTotal() + spawned);
+	}
+
+	/**
+	 * Pickpockets: thieves that don't count toward the clear. Each one slain adds to the Pot, each that gets away takes from it.
+	 */
+	private static void spawnPickpockets(MapRun run, State state, List<Player> players)
+	{
+		final List<NpcTemplate> kinds = run.getMonsterKinds();
+		if (kinds.isEmpty())
+		{
+			return;
+		}
+		final long escapes = System.currentTimeMillis() + (PICKPOCKET_SECONDS * 1000L);
+		for (int i = 0; i < PICKPOCKET_COUNT; i++)
+		{
+			final Monster thief = spawnEncounter(run, kinds.get(Rnd.get(kinds.size())), MapDeviceManager.randomFieldSpot(run, 0.6, true), ROLE_PICKPOCKET, "[Pickpocket]", false);
+			if (thief != null)
+			{
+				if (ThiefMonsterConfig.ENABLED)
+				{
+					thief.startThief();
+				}
+				state._pickpockets.put(thief.getObjectId(), escapes);
+				attackSomeone(thief, players);
+			}
+		}
+	}
+
+	/**
+	 * The House draws the next card of its deck. The card before it ends (the Joker's fortune with it).
+	 */
+	private static void drawCard(MapRun run, State state, Monster boss)
+	{
+		final Card card;
+		synchronized (state)
+		{
+			if (state._deck.isEmpty())
+			{
+				Collections.addAll(state._deck, Card.values());
+				Collections.shuffle(state._deck);
+			}
+			card = state._deck.remove(0);
+			state._card = card;
+			state._fortune = null;
+		}
+		final UniqueMap unique = run.getUnique();
+		boss.broadcastPacket(new MagicSkillUse(boss, boss, RAISE_SKILL_ID, 1, 0, 0));
+		MapDeviceManager.sendScreenToMap(run, unique.bossName() + " draws the " + card._name + "!");
+		MapDeviceManager.sendToMap(run, unique.bossName() + " draws the " + card._name + ": " + card._text);
+		final List<NpcTemplate> kinds = run.getMonsterKinds();
+		final List<Player> players = MapDeviceManager.getPlayersInside(run);
+		switch (card)
+		{
+			case KING ->
+			{
+				int spawned = 0;
+				for (int i = 0; (i < CARD_GUARDS) && !kinds.isEmpty(); i++)
+				{
+					final Monster guard = spawnEncounter(run, kinds.get(Rnd.get(kinds.size())), MapDeviceManager.nearSpot(run, boss, 600), ROLE_CARD_GUARD, "[Card Guard]", true);
+					if (guard != null)
+					{
+						state._cardGuards.add(guard.getObjectId());
+						attackSomeone(guard, players);
+						spawned++;
+					}
+				}
+				if (spawned > 0)
+				{
+					run.setMonsterTotal(run.getMonsterTotal() + spawned);
+					state._shielded = true;
+					boss.setInvul(true);
+					boss.startAbnormalVisualEffect(true, AbnormalVisualEffect.INVINCIBILITY);
+				}
+			}
+			case QUEEN ->
+			{
+				for (int i = 0; i < BLUFFS; i++)
+				{
+					final Monster bluff = spawnEncounter(run, boss.getTemplate(), MapDeviceManager.nearSpot(run, boss, 500), ROLE_BLUFF, "[" + unique.bossName() + "]", false);
+					if (bluff != null)
+					{
+						bluff.startAbnormalVisualEffect(true, AbnormalVisualEffect.BIG_BODY);
+						state._bluffs.add(bluff.getObjectId());
+						attackSomeone(bluff, players);
+					}
+				}
+			}
+			case JACK ->
+			{
+				final String way = vanishWithThieves(run, boss, DEN_THIEVES, "[Card Sharp]");
+				MapDeviceManager.sendToMap(run, unique.bossName() + " vanishes " + way + ".");
+			}
+			case JOKER -> spin(run, state, true);
+			default ->
+			{
+			}
+		}
+	}
+
+	/**
+	 * The Dealer: a bet doubles the Pot or halves it, at even odds. The bets are the map's, shared by everyone inside.
+	 * @param player who bets
+	 * @return what the player is told, {@code null} if the whole map was told
+	 */
+	public String placeBet(Player player)
+	{
+		final MapRun run = MapDeviceManager.getRun(player.getInstanceId());
+		if ((run == null) || !run.isUnique() || (run.getUnique().type() != UniqueMap.Type.DEN))
+		{
+			return "The Dealer only takes bets in the Gambler's Den.";
+		}
+		final State state = STATES.get(run.getInstanceId());
+		if ((state == null) || (run.getStatus() != Status.OPEN) || state._bossDead)
+		{
+			return "The tables are closed.";
+		}
+		final boolean won;
+		final double pot;
+		synchronized (state)
+		{
+			if (state._bets <= 0)
+			{
+				return "You have no bet in hand. The Wheel of Fate gives one at every spin, and the House one more.";
+			}
+			state._bets--;
+			won = Rnd.nextBoolean();
+			state._pot = won ? Math.min(POT_MAX, state._pot * 2) : Math.max(POT_MIN, state._pot / 2);
+			pot = state._pot;
+		}
+		MapDeviceManager.sendScreenToMap(run, player.getName() + (won ? " wins the bet! Pot " : " loses the bet. Pot ") + formatPot(pot));
+		MapDeviceManager.sendToMap(run, player.getName() + " bets the Pot at the Dealer and " + (won ? "wins: it doubles" : "loses: it halves") + " to " + formatPot(pot) + ". " + state._bets + (state._bets == 1 ? " bet" : " bets") + " left.");
+		return null;
+	}
+
+	/**
+	 * @param run a run
+	 * @return the Pot of a Gambler's Den, 0 for any other map
+	 */
+	public double getPot(MapRun run)
+	{
+		final State state = denState(run);
+		return state != null ? state._pot : 0;
+	}
+
+	/**
+	 * @param run a run
+	 * @return the bets in hand of a Gambler's Den
+	 */
+	public int getBets(MapRun run)
+	{
+		final State state = denState(run);
+		return state != null ? state._bets : 0;
+	}
+
+	/**
+	 * @param run a run
+	 * @return the Den's fortune ("Lucky Streak (blessing): You deal 30% more damage."), {@code null} for none
+	 */
+	public String getFortuneText(MapRun run)
+	{
+		final State state = denState(run);
+		final Fortune fortune = state != null ? state._fortune : null;
+		return fortune != null ? fortune._name + " (" + (fortune._blessing ? "blessing" : "curse") + "): " + fortune._text : null;
+	}
+
+	/**
+	 * @param run a run
+	 * @return {@code true} if the Den's fortune is a blessing
+	 */
+	public boolean isFortuneBlessing(MapRun run)
+	{
+		final State state = denState(run);
+		final Fortune fortune = state != null ? state._fortune : null;
+		return (fortune != null) && fortune._blessing;
+	}
+
+	/**
+	 * @param run a run
+	 * @return the House's card ("Ace of Blades: ..."), {@code null} for none
+	 */
+	public String getCardText(MapRun run)
+	{
+		final State state = denState(run);
+		final Card card = state != null ? state._card : null;
+		return card != null ? card._name + ": " + card._text : null;
+	}
+
+	/**
+	 * @return how many kills until the next spin of the wheel, 0 once the field is cleared
+	 */
+	public int getKillsToSpin(MapRun run)
+	{
+		final State state = denState(run);
+		return (state == null) || (state._phase != 0) ? 0 : DEN_KILLS_PER_SPIN - (state._denKills % DEN_KILLS_PER_SPIN);
+	}
+
+	private static State denState(MapRun run)
+	{
+		return (run != null) && run.isUnique() && (run.getUnique().type() == UniqueMap.Type.DEN) ? STATES.get(run.getInstanceId()) : null;
 	}
 
 	/**
@@ -564,21 +1188,33 @@ public class UniqueMapManager
 	 */
 	public double onMonsterDamaged(MapRun run, Monster monster, double damage, Creature attacker)
 	{
-		if (roleOf(monster) != ROLE_BOSS)
-		{
-			return damage;
-		}
 		final State state = STATES.get(run.getInstanceId());
 		if (state == null)
 		{
 			return damage;
 		}
 		final UniqueMap unique = run.getUnique();
+		if ((unique.type() == UniqueMap.Type.DEN) && (attacker != null) && attacker.isPlayable())
+		{
+			final Fortune fortune = state._fortune;
+			if (fortune == Fortune.LUCKY_STREAK)
+			{
+				damage *= 1.3;
+			}
+			else if (fortune == Fortune.COLD_DECK)
+			{
+				damage *= 0.8;
+			}
+		}
+		if (roleOf(monster) != ROLE_BOSS)
+		{
+			return damage;
+		}
 		if (state._shielded)
 		{
 			if ((attacker != null) && attacker.isPlayer() && (Rnd.get(10) == 0))
 			{
-				attacker.sendPacket(new ExShowScreenMessage(unique.bossName() + " is shielded: break his Bone Phylacteries!", 2000));
+				attacker.sendPacket(new ExShowScreenMessage(unique.type() == UniqueMap.Type.DEN ? unique.bossName() + " is shielded: kill its Card Guards!" : unique.bossName() + " is shielded: break his Bone Phylacteries!", 2000));
 			}
 			return 0;
 		}
@@ -588,6 +1224,7 @@ public class UniqueMapManager
 			case COLISEUM -> COLISEUM_THRESHOLDS;
 			case VAULT -> VAULT_THRESHOLDS;
 			case OSSUARY -> OSSUARY_THRESHOLDS;
+			case DEN -> DEN_THRESHOLDS;
 		};
 		final double maxHp = monster.getMaxHp();
 		final double after = monster.getCurrentHp() - damage;
@@ -660,40 +1297,10 @@ public class UniqueMapManager
 			}
 			case VAULT ->
 			{
-				final Location from = new Location(boss.getX(), boss.getY(), boss.getZ());
-				Location to = null;
-				for (int attempt = 0; attempt < 10; attempt++)
-				{
-					to = MapDeviceManager.randomFieldSpot(run, 0.85, true);
-					if (Math.hypot(to.getX() - from.getX(), to.getY() - from.getY()) > 2000)
-					{
-						break;
-					}
-				}
-				boss.broadcastPacket(new MagicSkillUse(boss, boss, VANISH_SKILL_ID, 1, 0, 0));
-				boss.clearAggroList();
-				boss.teleToLocation(to.getX(), to.getY(), to.getZ(), boss.getHeading(), run.getInstanceId());
-				if (boss.hasAI())
-				{
-					boss.getAI().setIntention(Intention.ACTIVE);
-				}
-				final List<NpcTemplate> kinds = run.getMonsterKinds();
-				final List<Player> players = MapDeviceManager.getPlayersInside(run);
-				for (int i = 0; (i < VAULT_THIEVES) && !kinds.isEmpty(); i++)
-				{
-					final Monster thief = spawnEncounter(run, kinds.get(Rnd.get(kinds.size())), MapDeviceManager.getGroundLocation(new Location(from.getX() + Rnd.get(-250, 250), from.getY() + Rnd.get(-250, 250), from.getZ())), ROLE_THIEF, null, false);
-					if (thief != null)
-					{
-						if (ThiefMonsterConfig.ENABLED)
-						{
-							thief.startThief();
-						}
-						thief.setEventTitleTag("[Vault Thief]");
-						attackSomeone(thief, players);
-					}
-				}
-				MapDeviceManager.sendScreenToMap(run, "The " + unique.bossName() + " vanishes " + describeWay(from, to) + ", leaving its thieves behind!");
+				final String way = vanishWithThieves(run, boss, VAULT_THIEVES, "[Vault Thief]");
+				MapDeviceManager.sendScreenToMap(run, "The " + unique.bossName() + " vanishes " + way + ", leaving its thieves behind!");
 			}
+			case DEN -> drawCard(run, state, boss);
 			case OSSUARY ->
 			{
 				shield(run, state, boss, PHYLACTERIES[Math.min(PHYLACTERIES.length - 1, index + 1)]);
@@ -704,6 +1311,47 @@ public class UniqueMapManager
 				}
 			}
 		}
+	}
+
+	/**
+	 * A boss vanishes to another corner of the field (2,000 away if it can), leaving thieves where it stood (the Vault's Mimic, the Den's Jack of Thieves).
+	 * @return which way it went ("to the north-east")
+	 */
+	private static String vanishWithThieves(MapRun run, Monster boss, int thieves, String tag)
+	{
+		final Location from = new Location(boss.getX(), boss.getY(), boss.getZ());
+		Location to = null;
+		for (int attempt = 0; attempt < 10; attempt++)
+		{
+			to = MapDeviceManager.randomFieldSpot(run, 0.85, true);
+			if (Math.hypot(to.getX() - from.getX(), to.getY() - from.getY()) > 2000)
+			{
+				break;
+			}
+		}
+		boss.broadcastPacket(new MagicSkillUse(boss, boss, VANISH_SKILL_ID, 1, 0, 0));
+		boss.clearAggroList();
+		boss.teleToLocation(to.getX(), to.getY(), to.getZ(), boss.getHeading(), run.getInstanceId());
+		if (boss.hasAI())
+		{
+			boss.getAI().setIntention(Intention.ACTIVE);
+		}
+		final List<NpcTemplate> kinds = run.getMonsterKinds();
+		final List<Player> players = MapDeviceManager.getPlayersInside(run);
+		for (int i = 0; (i < thieves) && !kinds.isEmpty(); i++)
+		{
+			final Monster thief = spawnEncounter(run, kinds.get(Rnd.get(kinds.size())), MapDeviceManager.getGroundLocation(new Location(from.getX() + Rnd.get(-250, 250), from.getY() + Rnd.get(-250, 250), from.getZ())), ROLE_THIEF, null, false);
+			if (thief != null)
+			{
+				if (ThiefMonsterConfig.ENABLED)
+				{
+					thief.startThief();
+				}
+				thief.setEventTitleTag(tag);
+				attackSomeone(thief, players);
+			}
+		}
+		return describeWay(from, to);
 	}
 
 	private static String describeWay(Location from, Location to)
@@ -788,22 +1436,31 @@ public class UniqueMapManager
 		final State state = state(run);
 		final UniqueMap unique = run.getUnique();
 		final int role = roleOf(victim);
-		final double greed = unique.type() == UniqueMap.Type.VAULT ? 1 + (Math.min(GREED_MAX, state._greed) / 100.0) : 1;
+		final boolean den = unique.type() == UniqueMap.Type.DEN;
+		// The Vault's Greed, the Den's Pot (and Hot Table / Cold Streak). The Den's drops also follow the server rates, and past 100% they grow bigger.
+		final double greed = unique.type() == UniqueMap.Type.VAULT ? 1 + (Math.min(GREED_MAX, state._greed) / 100.0) : den ? denDropFactor(state) : 1;
 
 		// Drops.
 		if (player != null)
 		{
 			switch (role)
 			{
-				case 0, ROLE_THIEF ->
+				case 0, ROLE_THIEF, ROLE_CARD_GUARD, ROLE_PICKPOCKET ->
 				{
 					final boolean spawnling = victim.getVariables().getBoolean("MAP_SPLIT", false) || victim.getVariables().getBoolean("MAP_MINION", false);
-					drop(victim, player, unique.drops(), greed * (spawnling ? 0.5 : 1));
+					drop(victim, player, unique.drops(), greed * (spawnling ? 0.5 : 1), den ? state : null);
 				}
-				case ROLE_CHALLENGER, ROLE_ECHO -> drop(victim, player, unique.specialDrops(), 1);
+				case ROLE_CHALLENGER, ROLE_ECHO, ROLE_BLUFF -> drop(victim, player, unique.specialDrops(), den ? greed : 1, den ? state : null);
+				case ROLE_JACKPOT ->
+				{
+					for (int i = 0; i < JACKPOT_ROLLS; i++)
+					{
+						drop(victim, player, unique.specialDrops(), greed, state);
+					}
+				}
 				case ROLE_BOSS ->
 				{
-					drop(victim, player, unique.bossDrops(), greed);
+					drop(victim, player, unique.bossDrops(), greed, den ? state : null);
 					if ((Rnd.nextDouble() * 100) < MapDeviceConfig.UNIQUE_MAP_BOSS_CHANCE)
 					{
 						dropUniqueMap(run, victim, player);
@@ -873,6 +1530,80 @@ public class UniqueMapManager
 					final Location corpse = new Location(victim.getX(), victim.getY(), victim.getZ(), victim.getHeading());
 					ThreadPool.schedule(() -> raiseEcho(run, state, template, corpse, player), 1500);
 				}
+			}
+			case DEN -> onDenDeath(run, state, victim, role, player, counted);
+		}
+	}
+
+	/**
+	 * The Den: the deaths of the Jackpot Chest, Bluffs, Card Guards and Pickpockets, and the field's kills that turn the wheel.
+	 */
+	private static void onDenDeath(MapRun run, State state, Monster victim, int role, Player player, boolean counted)
+	{
+		final UniqueMap unique = run.getUnique();
+		switch (role)
+		{
+			case ROLE_JACKPOT ->
+			{
+				state._jackpotId = 0;
+				MapDeviceManager.sendToMap(run, "The Jackpot Chest bursts open" + (player != null ? " for " + player.getName() : "") + "!");
+			}
+			case ROLE_BLUFF ->
+			{
+				state._bluffs.remove(victim.getObjectId());
+				MapDeviceManager.sendToMap(run, "A Bluff of " + unique.bossName() + " falls: the Pot grows to " + formatPot(addPot(state, BLUFF_POT)) + ".");
+			}
+			case ROLE_CARD_GUARD ->
+			{
+				state._cardGuards.remove(victim.getObjectId());
+				if (state._cardGuards.isEmpty() && state._shielded)
+				{
+					final WorldObject object = World.getInstance().findObject(state._bossId);
+					if ((object instanceof Monster boss) && !boss.isDead())
+					{
+						unshield(run, state, boss);
+					}
+				}
+			}
+			case ROLE_PICKPOCKET ->
+			{
+				if (state._pickpockets.remove(victim.getObjectId()) != null)
+				{
+					MapDeviceManager.sendToMap(run, "A Pickpocket is caught: the Pot grows to " + formatPot(addPot(state, PICKPOCKET_POT)) + ".");
+				}
+			}
+			case 0 ->
+			{
+				if (!counted || (state._phase != 0))
+				{
+					return;
+				}
+				final Fortune fortune = state._fortune;
+				final boolean spin;
+				final boolean seven;
+				synchronized (state)
+				{
+					state._denKills++;
+					state._fortuneKills++;
+					spin = (state._denKills % DEN_KILLS_PER_SPIN) == 0;
+					seven = (fortune == Fortune.LUCKY_SEVEN) && ((state._fortuneKills % LUCKY_SEVEN) == 0);
+				}
+				if (fortune == Fortune.CARD_COUNTER)
+				{
+					addPot(state, CARD_COUNTER_POT);
+				}
+				if (seven && (player != null))
+				{
+					drop(victim, player, unique.specialDrops(), denDropFactor(state), state);
+					player.sendPacket(new ExShowScreenMessage("Lucky Seven!", 2000));
+				}
+				if (spin && !run.getMonsters().isEmpty())
+				{
+					spin(run, state, false);
+				}
+			}
+			default ->
+			{
 			}
 		}
 	}
@@ -1047,6 +1778,79 @@ public class UniqueMapManager
 					MapDeviceManager.hurt(struck, NOVA_DAMAGE, "The Death Nova tears through you!");
 				}
 			}
+			case DEN -> denTick(run, state, tick, now);
+			default ->
+			{
+			}
+		}
+	}
+
+	/**
+	 * The Den's clock: the Jackpot Chest closing, Pickpockets getting away, and the pulses of Comp'd Drinks, Hangover and House Rules.
+	 */
+	private static void denTick(MapRun run, State state, int tick, long now)
+	{
+		if ((state._jackpotId != 0) && (now >= state._jackpotUntil) && removeJackpot(state))
+		{
+			MapDeviceManager.sendToMap(run, "The Jackpot Chest snaps shut and vanishes.");
+		}
+		for (Map.Entry<Integer, Long> entry : state._pickpockets.entrySet())
+		{
+			if ((now < entry.getValue()) || (state._pickpockets.remove(entry.getKey()) == null))
+			{
+				continue;
+			}
+			final WorldObject object = World.getInstance().findObject(entry.getKey());
+			if (object instanceof Monster thief)
+			{
+				if (thief.isDead())
+				{
+					continue;
+				}
+				thief.deleteMe();
+			}
+			MapDeviceManager.sendToMap(run, "A Pickpocket gets away: the Pot shrinks to " + formatPot(addPot(state, -PICKPOCKET_POT)) + ".");
+		}
+
+		final Fortune fortune = state._fortune;
+		if ((fortune == null) || ((tick % PULSE_INTERVAL) != 0))
+		{
+			return;
+		}
+		switch (fortune)
+		{
+			case COMPED_DRINKS ->
+			{
+				for (Player player : MapDeviceManager.getPlayersInside(run))
+				{
+					if (!player.isDead())
+					{
+						player.setCurrentHpMp(Math.min(player.getMaxHp(), player.getCurrentHp() + (player.getMaxHp() * COMPED_HEAL)), Math.min(player.getMaxMp(), player.getCurrentMp() + (player.getMaxMp() * COMPED_HEAL)));
+					}
+				}
+			}
+			case HANGOVER ->
+			{
+				for (Player player : MapDeviceManager.getPlayersInside(run))
+				{
+					final double damage = Math.min(player.getMaxHp() * HANGOVER_DAMAGE, player.getCurrentHp() - 1);
+					if (!player.isDead() && !player.isInvul() && (damage > 0))
+					{
+						player.reduceCurrentHp(damage, null, false, false, null);
+					}
+				}
+			}
+			case HOUSE_RULES ->
+			{
+				for (int objectId : run.getMonsters())
+				{
+					final WorldObject object = World.getInstance().findObject(objectId);
+					if ((object instanceof Monster monster) && !monster.isDead() && (monster.getCurrentHp() < monster.getMaxHp()))
+					{
+						monster.setCurrentHp(Math.min(monster.getMaxHp(), monster.getCurrentHp() + (monster.getMaxHp() * HOUSE_RULES_HEAL)));
+					}
+				}
+			}
 			default ->
 			{
 			}
@@ -1099,6 +1903,11 @@ public class UniqueMapManager
 			case COLISEUM -> PassiveDeathmatchManager.getInstance().joinMap(player, run.getInstanceId(), unique.name());
 			case VAULT -> player.sendMessage(unique.name() + ": the vault seals in " + formatTime(run.getRemainingSeconds()) + ". Every kill buys " + VAULT_SECONDS_PER_KILL + " seconds and 1% Greed.");
 			case OSSUARY -> player.sendMessage(unique.name() + ": a quarter of the slain leave Echoes. Kill them before the end, or they feed the " + unique.bossName() + ".");
+			case DEN ->
+			{
+				final State state = state(run);
+				player.sendMessage(unique.name() + ": every " + DEN_KILLS_PER_SPIN + " kills the Wheel of Fate spins a blessing or a curse, and gives a bet. At the Dealer by the portal, a bet doubles or halves the Pot. Pot " + formatPot(state._pot) + ", " + state._bets + " bets in hand.");
+			}
 		}
 	}
 
@@ -1178,12 +1987,56 @@ public class UniqueMapManager
 	 */
 	private static void drop(Attackable victim, Player player, List<UniqueMap.Drop> drops, double chanceMultiplier)
 	{
+		drop(victim, player, drops, chanceMultiplier, null);
+	}
+
+	/**
+	 * Rolls a list of drops for a kill.
+	 * @param chanceMultiplier multiplies every chance
+	 * @param den the Gambler's Den's state, {@code null} for any other map. In the Den the server rates apply first, as to a monster's own death drop ({@link RatesConfig}: the item's own multipliers, else the death drop ones), a chance the
+	 *            multiplier lifts past 100% makes the drop bigger instead, and the Adena of the whole run stops at {@link MapDeviceConfig#GAMBLERS_DEN_MAX_ADENA}
+	 */
+	private static void drop(Attackable victim, Player player, List<UniqueMap.Drop> drops, double chanceMultiplier, State den)
+	{
+		final boolean denRules = den != null;
 		for (UniqueMap.Drop drop : drops)
 		{
-			if (((Rnd.nextDouble() * 100) < Math.min(100, drop.chance() * chanceMultiplier)) && (ItemData.getInstance().getTemplate(drop.itemId()) != null))
+			if (ItemData.getInstance().getTemplate(drop.itemId()) == null)
+			{
+				continue;
+			}
+			double chance = drop.chance();
+			double amount = 1;
+			if (denRules)
+			{
+				final Float chanceRate = RatesConfig.RATE_DROP_CHANCE_BY_ID.get(drop.itemId());
+				final Float amountRate = RatesConfig.RATE_DROP_AMOUNT_BY_ID.get(drop.itemId());
+				chance = Math.min(100, chance * (chanceRate != null ? chanceRate : RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER)); // The rates never raise the count, as for any monster.
+				amount = amountRate != null ? amountRate : RatesConfig.RATE_DEATH_DROP_AMOUNT_MULTIPLIER;
+			}
+			chance *= chanceMultiplier;
+			if (denRules && (chance > 100))
+			{
+				amount *= chance / 100;
+				chance = 100;
+			}
+			if ((Rnd.nextDouble() * 100) < Math.min(100, chance))
 			{
 				final long count = drop.max() > drop.min() ? Rnd.get(drop.min(), drop.max() + 1) : drop.min();
-				victim.dropOrAutoLoot(player, new ItemHolder(drop.itemId(), count));
+				long rated = Math.max(1, Math.round(count * amount));
+				if (denRules && (drop.itemId() == ADENA_ID) && (MapDeviceConfig.GAMBLERS_DEN_MAX_ADENA > 0))
+				{
+					synchronized (den)
+					{
+						rated = Math.min(rated, MapDeviceConfig.GAMBLERS_DEN_MAX_ADENA - den._adena);
+						if (rated <= 0)
+						{
+							continue; // The house is out of Adena.
+						}
+						den._adena += rated;
+					}
+				}
+				victim.dropOrAutoLoot(player, new ItemHolder(drop.itemId(), rated));
 			}
 		}
 	}

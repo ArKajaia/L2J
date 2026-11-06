@@ -281,7 +281,7 @@ public class AdminMapDevice implements IAdminCommandHandler
 	}
 
 	/**
-	 * @param name a unique map's type (COLISEUM, VAULT, OSSUARY), any case
+	 * @param name a unique map's type (COLISEUM, VAULT, OSSUARY, DEN), any case
 	 * @return that unique map, {@code null} if unknown
 	 */
 	private static UniqueMap findUnique(String name)

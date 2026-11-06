@@ -43,7 +43,7 @@ import java.util.List;
  * @param finale what its final encounter is
  * @param drops what every monster of the map may drop (not the boss)
  * @param bossDrops what the boss drops
- * @param specialDrops what the twist's own monsters drop (the Ossuary's Echoes, the Vault's spilled coins...)
+ * @param specialDrops what the twist's own monsters drop (the Ossuary's Echoes, the Vault's spilled coins, the Den's Jackpot Chest and Bluffs...)
  */
 public record UniqueMap(Type type, String name, int itemId, int tier, int monsterCount, String arena, List<MapModifier> modifiers, double reward, int bossNpcId, String bossName, double bossHp, double bossAttack, double bossDefence, String description, String twist, String finale, List<Drop> drops, List<Drop> bossDrops, List<Drop> specialDrops)
 {
@@ -55,7 +55,9 @@ public record UniqueMap(Type type, String name, int itemId, int tier, int monste
 		/** The Gilded Vault: five minutes on the clock, every kill buys time and greed, then the Gilded Mimic that runs with the hoard. */
 		VAULT,
 		/** The Ossuary of Echoes: the slain leave Echoes behind, then the Hollow King behind his phylacteries. */
-		OSSUARY
+		OSSUARY,
+		/** The Gambler's Den: a Wheel of Fate every 12 kills, a Dealer's double-or-half bets on the Pot, then the House and its deck of cards. */
+		DEN
 	}
 
 	/**

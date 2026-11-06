@@ -3,8 +3,8 @@ Maps of the Map Device - client additions (High Five)
 
 New items (data/stats/items/custom/map_device_items.xml):
   50101 .. 50110  Map (Tier 1) .. Map (Tier 10)
-  50111 .. 50113  Unique Map: The Crimson Coliseum, The Gilded Vault,
-                  The Ossuary of Echoes
+  50111 .. 50114  Unique Map: The Crimson Coliseum, The Gilded Vault,
+                  The Ossuary of Echoes, The Gambler's Den
 
 Without these rows the server still works: the item XML gives each map
 displayId 5915, so an unpatched client shows every tier as the retail

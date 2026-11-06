@@ -47,6 +47,7 @@ public class MapDeviceConfig
 	public static int DEVICE_NPC_ID;
 	public static int PORTAL_NPC_ID;
 	public static int RETURN_PORTAL_NPC_ID;
+	public static int DEALER_NPC_ID;
 
 	// Opening a map.
 	public static int MEDAL_ITEM_ID;
@@ -90,6 +91,7 @@ public class MapDeviceConfig
 	public static double UNIQUE_MAP_COMPLETION_CHANCE;
 	public static double UNIQUE_MAP_CHANCE_PER_MEDAL;
 	public static double UNIQUE_MAP_BOSS_CHANCE;
+	public static long GAMBLERS_DEN_MAX_ADENA;
 
 	// The quest.
 	public static boolean QUEST_ENABLED;
@@ -107,6 +109,7 @@ public class MapDeviceConfig
 		DEVICE_NPC_ID = config.getInt("MapDeviceNpcId", 900700);
 		PORTAL_NPC_ID = config.getInt("MapPortalNpcId", 900701);
 		RETURN_PORTAL_NPC_ID = config.getInt("MapReturnPortalNpcId", 900702);
+		DEALER_NPC_ID = config.getInt("MapDealerNpcId", 900703);
 
 		MEDAL_ITEM_ID = config.getInt("MedalItemId", 6393);
 		MAX_MEDALS = Math.max(0, Math.min(50, config.getInt("MaxMedals", 8)));
@@ -160,6 +163,7 @@ public class MapDeviceConfig
 		UNIQUE_MAP_COMPLETION_CHANCE = Math.max(0, config.getDouble("UniqueMapCompletionChance", 2.0));
 		UNIQUE_MAP_CHANCE_PER_MEDAL = Math.max(0, config.getDouble("UniqueMapChancePerMedal", 0.5));
 		UNIQUE_MAP_BOSS_CHANCE = Math.max(0, config.getDouble("UniqueMapBossChance", 10.0));
+		GAMBLERS_DEN_MAX_ADENA = Math.max(0, config.getLong("GamblersDenMaxAdena", 150000000));
 
 		QUEST_ENABLED = config.getBoolean("MapQuestEnabled", true);
 		QUEST_REWARD_MEDALS = Math.max(0, config.getInt("MapQuestRewardMedals", 5));
