@@ -2,7 +2,7 @@
 
 An endgame loop after the atlas of Path of Exile: high level monsters drop maps, a player opens them at the Map Device of their private hideout, feeds them Champion Medals for harder modifiers and better rewards, and fights through a fenced field of monsters that never respawn.
 
-Code: `MapDeviceManager` (core logic), `UniqueMapManager` (the unique maps), `MapQuestManager` (the quest "A Map of Your Own"), `MapDeviceData` (`data/MapDevice.xml`), `MapDeviceConfig` (`config/Custom/MapDevice.ini`), `model/mapdevice/*` (modifiers, tiers, arenas, runs, `MonsterStrength`), the Map Device part of the event maps (`EventMapType.MAPDEVICE`, `EventMapDevice`, edited on the event map page), and the scripts `custom/MapDevice` (device window, NPCs, the Gambler's Den Dealer), `handlers/chat/commands/voiced/HideoutVoiced` (`.hideout`), `handlers/chat/commands/admin/AdminMapDevice` (`//mapdevice`) and `handlers/items/MapItem`.
+Code: `MapDeviceManager` (core logic), `UniqueMapManager` (the unique maps, with `PrimalCrucibleManager`, `KetraVarkaFrontManager` and `TombRaidersManager`), `MapQuestManager` (the quest "A Map of Your Own"), `MapDeviceData` (`data/MapDevice.xml`), `MapDeviceConfig` (`config/Custom/MapDevice.ini`), `model/mapdevice/*` (modifiers, tiers, arenas, runs, `MonsterStrength`), the Map Device part of the event maps (`EventMapType.MAPDEVICE`, `EventMapDevice`, edited on the event map page), and the scripts `custom/MapDevice` (device window, NPCs, the Gambler's Den Dealer), `handlers/chat/commands/voiced/HideoutVoiced` (`.hideout`), `handlers/chat/commands/admin/AdminMapDevice` (`//mapdevice`) and `handlers/items/MapItem`.
 
 ## How it plays
 
@@ -148,11 +148,11 @@ Modifiers that draw a kind of monster the server has switched off (Mage, Thief, 
 
 ## Unique maps
 
-Five map items that always open the same map: its modifiers are chosen for it (no medal, no hot zone effect), it has a twist of its own while the field is cleared, a **final encounter** once it is, and drops of its own for every monster of the map and for its boss. Defined in `data/MapDevice.xml` (`<uniqueMap>`: tier, monster count, arena, modifiers, boss npc and multipliers, drops); the twists and encounters are worked by `UniqueMapManager` (the Primal Crucible's by `PrimalCrucibleManager`). The first four are compared in the table below; the Primal Crucible has its own section.
+Seven map items that always open the same map: its modifiers are chosen for it (no medal, no hot zone effect), it has a twist of its own while the field is cleared, a **final encounter** once it is, and drops of its own for every monster of the map and for its boss. Defined in `data/MapDevice.xml` (`<uniqueMap>`: tier, monster count, arena, modifiers, boss npc and multipliers, drops); the twists and encounters are worked by `UniqueMapManager` (the Primal Crucible's by `PrimalCrucibleManager`, the Ketra-Varka Front's by `KetraVarkaFrontManager`, the Tomb Raiders' by `TombRaidersManager`). The first four are compared in the table below; the Primal Crucible, the Ketra-Varka Front and the Tomb Raiders have their own sections.
 
-**Getting one**: they are rare, **about one map in 100**. Completing a map of tier `UniqueMapMinTier` (5) or higher drops one at random `UniqueMapCompletionChance` (1%) + `UniqueMapChancePerMedal` (0%) per medal; each unique boss drops another at `UniqueMapBossChance` (1%) (all in `MapDevice.ini`). Unique maps **only drop inside maps**, and count toward the map's limit of 3. Double-click it in the hideout (or *Insert* under **Unique Maps** at the device) to see what it holds and open it.
+**Getting one**: they are rare, **about one map in 100**. Completing a map drops one at `UniqueMapCompletionChance` (1%) + `UniqueMapChancePerMedal` (0%) per medal, at random among the unique maps that drop at its tier; each unique boss drops another at `UniqueMapBossChance` (1%), among those that drop at the boss's tier (all in `MapDevice.ini`). A unique map drops at the tiers `dropMinTier`-`dropMaxTier` of its `<uniqueMap>`, by default `UniqueMapMinTier` (5) and up: the Ketra-Varka Front and the Tomb Raiders drop from tiers **1-4**, the other five from 5 and up. Unique maps **only drop inside maps**, and count toward the map's limit of 3. Double-click it in the hideout (or *Insert* under **Unique Maps** at the device) to see what it holds and open it.
 
-**Their difficulty** shows like a normal map's: every unique map has a tier (its monsters' levels and strength, and the tier's multipliers), in its item name ("Unique Map: The Crimson Coliseum (Tier 5)"), in the device's list and windows, and on its portals. Tiers: the Gilded Vault 4; the Crimson Coliseum, the Gambler's Den and the Primal Crucible 5; the Ossuary of Echoes 6.
+**Their difficulty** shows like a normal map's: every unique map has a tier (its monsters' levels and strength, and the tier's multipliers), in its item name ("Unique Map: The Crimson Coliseum (Tier 5)"), in the device's list and windows, and on its portals. Tiers: the Ketra-Varka Front 1; the Tomb Raiders 2; the Gilded Vault 4; the Crimson Coliseum, the Gambler's Den and the Primal Crucible 5; the Ossuary of Echoes 6.
 
 | | The Crimson Coliseum (50111) | The Gilded Vault (50112) | The Ossuary of Echoes (50113) | The Gambler's Den (50114) |
 |---|---|---|---|---|
@@ -232,6 +232,32 @@ Monster HP is never changed by a fortune, so a monster's HP can't end up above i
 
 **Setting up its arena.** In game on Primeval Isle, type `//mapdevice`, *New map here*, give it the id **`primeval_isle`**, tick *Map Device*, place the fence and the entry, and under *Monsters that fill it* list the island's dinosaurs (Velociraptor, Ornithomimus, Deinonychus, Pachycephalosaurus, Tyrannosaurus...): they are made stronger by tier 5. Save. From then on the Crucible opens there.
 
+### The Ketra-Varka Front (50118)
+
+*Pick a side. Then maybe pick the other one.* Tier 1, 80 monsters, both factions (the Ketra Orcs and the Varka Silenos of level 77-78, without the Commanders, Head Shamans and Prophets whose guards would follow them: `npcs` of its `<uniqueMap>`), in the Ruins of Despair. Modifiers: War Priests, Summoners, Bounty Mark, Fleet. Code: `KetraVarkaFrontManager`. The players type **`.front`** (the War Banner, the envoy and the totems open the same window).
+
+- **The field**: three **war totems** on the line from the entry to the far side (the Near, Middle and Far Totem), the monsters shared out in sectors round them, half of each side.
+- **The oath**: at the **War Banner** by the Return Portal (its window opens by itself the first time a player comes in) the first player to swear to Ketra or Varka picks the side for everyone. Every monster of that side in the field becomes one of its **warriors** (Ketra Warrior/Archer, Varka Warrior/Hunter: `QuestGuard`s, so players can't hit them and their area skills spare them) and leaves the count; the side's **Prophet** stands at the camp by the entry (safe until the siege). Without an oath the Front plays like a plain map.
+- **The warriors** fight the nearest enemy within 1,200 every 3 seconds, else walk to the nearest totem you don't hold. Every 30 seconds each totem you hold sends 2 more (14 at most).
+- **The totems** use Conquest's capture rule (`ConquestCapture.step`): the players and their warriors within 600 against the enemy within 600; 5% a second with one more, +2.5% for each more, 15% at most, only with 25% more, never with 10 of each. A totem's flag and title show its owner and progress. The enemy of a sector you hold is **20% weaker** (attack and defence).
+- **Counterattacks**: 3 minutes after the first capture, and every 3 minutes after (4 at most, none once the field is cleared), 6 enemies march on a totem you hold. They count toward the clear.
+- **Betrayal**: holding 2 totems brings the enemy's **envoy** to the banner, once a run, for 2 minutes. Taking the deal turns your warriors into monsters of their side (counted), the enemy's monsters into your warriors, and its Prophet takes your camp; the totems you hold stay yours. The Front's drops (map, special, boss) come **50% more often**.
+- **The Siege of the Camp**: the enemy General (the Ketra Orc General or the Varka Silenos General, x30 HP, x1.3 attack and defence) marches on your Prophet from the far totem with **3 Siege Totems** (Wards of Death, x8 HP, counted): each one standing makes him 15% stronger. At 75/50/25% of his HP he calls 3 **escorts**. The siege totems and escorts drop the special drops. **If the Prophet falls** he hits 30% harder and his own drops come half as often.
+- **The title**: everyone inside when the Warlord falls is named **Hero of Ketra**, **Hero of Varka**, or **the Twice-Sworn** after a betrayal, for 7 days (player variables `FRONT_TITLE`, `FRONT_TITLE_END`). It shows only over an empty title, through the title-carrying packets (`LuckyLootManager.decorateTitle`): the saved title never changes. `.front` outside the map shows it and its end.
+- **The alliance**: the Ketra and Varka of any map (the Front, and the tier 1 maps) are not the barracks': killing them costs no Ketra or Varka alliance, and the marks of an alliance don't keep them from attacking you (`ai/others/VarkaKetra`).
+
+### The Tomb Raiders (50119)
+
+*You are not the only party down here.* Tier 2, 70 monsters of the Imperial Tomb (the Imperial Guards, Royal Guards, Healers and a Commander), in Silent Valley. Modifiers: Shieldbearers, Armoured, War Priests, Volatile. Code: `TombRaidersManager`, and the rivals' `FakePlayerPvpAI.thinkMapRival`. The players type **`.tomb`** (the reliquaries and pedestals open the same window).
+
+- **The rivals**: when the first player comes in, a rival party of 4 **Tomb Raiders** (fake players: one support, three fighters, 2 levels below that player, at most 78) comes in from the far side (`FakePlayerPvpManager.spawnMapRival`; the only fake players a map ever has). They race you for the reliquaries, hunt the tomb's monsters (their kills count toward the clear), attack a player breaking a seal within 900, and ambush the players near them when they are behind in relics. They never flee, escape, log off or come back after dying, and they stay flagged: killing them, or being killed by them, is no PK, no PvP count and no announcement.
+- **The reliquaries**: 5 **Sealed Reliquaries** spread over the field. Talk to one (or `.tomb break` beside it) to break its seal: **30 seconds** of standing still, broken by any hit (HP or CP lost), a step, or death. A rival breaks one the same way, standing still out of a fight, and a hit breaks it too. You bank your relics; a rival carries its own, and **drops them to you when slain**.
+- **The parley**: when the second reliquary opens the rivals' leader calls a parley (a window for everyone inside, 30 seconds). **A Truce**: the rivals join your party (a fake party, like invited fake players: they heal, buff and fight beside you) and every relic is shared, yours being half of them, rounded up. **Rivalry** (or no answer): winner takes all.
+- **The Undying Emperor** (an Imperial Commander, x35 HP, x1.3 attack and defence) rises in the middle with **4 Honour Guards** (Imperial Royal Guards, x3 HP, uncounted, no drops) at 4 **Relic Pedestals**. While one stands he takes **half damage**; a slain guard rises again at its pedestal 10 seconds later, and at half his HP every fallen guard rises at once, unless its pedestal is **sealed**: talk to it (or `.tomb seal`) and spend a relic. In Rivalry the rivals come for the Emperor too, and every 15 seconds one turns on a player: a three-way fight. **If a rival lands the last blow** his spoils are halved (they still fall for the owner, or someone inside).
+- **The spoils**: every relic you hold at the end (minus those spent on the pedestals) is **one roll of the special drops**. All five relics yours (not in a Truce) add a **Map (Tier 3)**, within the map budget.
+
+Both maps keep the world regions of their field awake while they are open (`UniqueMapManager.keepAwake`), so the warriors, the counterattacks and the rival party carry on where no player stands.
+
 ### The Coliseum's passives
 
 They use the Deathmatch: Mayhem picks (`PassiveDeathmatchManager.joinMap`): the same offers (`MayhemChoices`, class-aware, a keystone turn every `MayhemKeystoneEvery` picks), the blinking question mark and `.dmpick`, but stacked on the player's own tree (`PassiveTreeManager.setBonusNodes`) rather than replacing it, and without Mayhem's PvP balance. **They never leave the map.** They apply only while the player stands in the map's instance: the hideout, the world, anywhere else, they are off. Dying or going back to the hideout keeps the *picks* (they come back on re-entering the map while it is open, and you may pick in the hideout, applied once back inside), but never their effect. This is enforced on its own at every layer (`PassiveTreeManager`, the map passives are bound to the instance they were given in):
@@ -288,6 +314,8 @@ A saved map takes part at once: the next map item opened (of a tier it allows) m
 | `.hideout leave` | From the hideout, back to where you came from. |
 | `.hideout quest` | The quest "A Map of Your Own". |
 | `.crucible` | The Primal Crucible: inside it your stage, Essence, Mutations and choices (`evolve <n>`, `mutate <n>`, `rampage`, `form`); outside, the Titan Scroll exchange (`exchange`). |
+| `.front` | The Ketra-Varka Front: your side, the war totems, the Prophet, the envoy (`swear ketra`, `swear varka`, `betray`); outside, your Hero title. |
+| `.tomb` | The Tomb Raiders: the relics, the reliquaries, the parley and the pedestals (`break`, `truce`, `rivalry`, `seal`). |
 
 GM commands (`//mapdevice`, the same access as `//tvt` for the page):
 
@@ -299,8 +327,8 @@ GM commands (`//mapdevice`, the same access as `//tvt` for the page):
 | `//mapdevice test <id> [tier] [medals]` | In your own hideout: open a map in that place for free, to try it. |
 | `//mapdevice give <tier> [count]` | Give maps to your target (or you). |
 | `//mapdevice unique [list]` | The unique maps. |
-| `//mapdevice unique give <COLISEUM\|VAULT\|OSSUARY\|DEN\|CRUCIBLE> [count]` | Give a unique map to your target (or you). |
-| `//mapdevice unique test <COLISEUM\|VAULT\|OSSUARY\|DEN\|CRUCIBLE>` | In your own hideout: open that unique map for free. |
+| `//mapdevice unique give <COLISEUM\|VAULT\|OSSUARY\|DEN\|CRUCIBLE\|FRONT\|TOMB> [count]` | Give a unique map to your target (or you). |
+| `//mapdevice unique test <COLISEUM\|VAULT\|OSSUARY\|DEN\|CRUCIBLE\|FRONT\|TOMB>` | In your own hideout: open that unique map for free. |
 | `//mapdevice pool <tier>` | The monsters a map of that tier may hold, with their strength and each stat against the standard monster of their level. |
 | `//mapdevice score` | The strength of your target, and which tiers it fits and drops. |
 | `//mapdevice runs` / `close <instance>` | The maps open right now / close one. |

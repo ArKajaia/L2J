@@ -7,6 +7,7 @@ New items (data/stats/items/custom/map_device_items.xml):
                   The Ossuary of Echoes, The Gambler's Den, The Primal Crucible
   50116           Primal Essence (shown as Blood of Eva without the patch)
   50117           Titan Scroll (shown as Transformation Scroll: Zaken without the patch)
+  50118 .. 50119  Unique Map: The Ketra-Varka Front, The Tomb Raiders
 
 Without these rows the server still works: the item XML gives each map
 displayId 5915, so an unpatched client shows every tier as the retail
