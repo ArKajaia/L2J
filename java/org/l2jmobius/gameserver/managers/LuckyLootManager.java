@@ -185,6 +185,8 @@ public class LuckyLootManager
 	 */
 	public String decorateTitle(Player player, String baseTitle)
 	{
+		// A Hero of the Ketra-Varka Front, over an empty title.
+		baseTitle = KetraVarkaFrontManager.decorateTitle(player, baseTitle);
 		if (!LuckyLootConfig.LUCK_ENABLED || !LuckyLootConfig.LUCK_TITLE_ENABLED || (player == null) || (player.getLuckStacks() <= 0))
 		{
 			return baseTitle;

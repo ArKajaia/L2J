@@ -22,6 +22,7 @@ package org.l2jmobius.gameserver.managers;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,6 +45,7 @@ import org.l2jmobius.gameserver.data.xml.NpcData;
 import org.l2jmobius.gameserver.model.Location;
 import org.l2jmobius.gameserver.model.World;
 import org.l2jmobius.gameserver.model.WorldObject;
+import org.l2jmobius.gameserver.model.WorldRegion;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Creature;
 import org.l2jmobius.gameserver.model.actor.Npc;
@@ -66,7 +68,7 @@ import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
 /**
  * The unique maps of the Map Device (data/MapDevice.xml {@code <uniqueMap>}, {@link UniqueMap}): their twists while the field is cleared, their final encounters once it is, and their drops. {@link MapDeviceManager} opens them like any map and calls in here at its hooks
  * (spawning, damage, deaths, the field cleared, the run's clock, players coming and going, the run closing).
- * Unique maps only drop inside maps: on completing a plain map of tier {@link MapDeviceConfig#UNIQUE_MAP_MIN_TIER} and up, and from the unique bosses.
+ * Unique maps only drop inside maps: on completing a plain map of a tier they drop at (by default {@link MapDeviceConfig#UNIQUE_MAP_MIN_TIER} and up), and from the unique bosses.
  * <ul>
  * <li><b>The Crimson Coliseum</b> ({@link UniqueMap.Type#COLISEUM}): Deathmatch: Mayhem against monsters. Every kill (or assist) offers the killer a strong passive, stacked on its own tree until the map closes ({@link PassiveDeathmatchManager#joinMap}). Its 30 monsters come in
  * waves of {@link #COLISEUM_WAVES}; then the Crimson Champion, who roars at 75/50/25% of its HP (+10% attack each time) and calls 3 Challengers.</li>
@@ -77,6 +79,8 @@ import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
  * <li><b>The Gambler's Den</b> ({@link UniqueMap.Type#DEN}): every {@link #DEN_KILLS_PER_SPIN} kills the Wheel of Fate turns up one of 24 {@link Fortune}s (a shuffled bag: no repeat until all have come) and a bet; at the Dealer a bet doubles or halves the Pot, which
  * multiplies the Den's drops (past 100% they grow bigger). The Den's drops follow the server rates. Then The House, who draws a {@link Card} at 80/60/40/20% of its HP.</li>
  * <li><b>The Primal Crucible</b> ({@link UniqueMap.Type#CRUCIBLE}): evolve, or be eaten. Worked by {@link PrimalCrucibleManager}.</li>
+ * <li><b>The Ketra-Varka Front</b> ({@link UniqueMap.Type#FRONT}): swear to a side, take its war totems, maybe betray it, then hold the camp against the Warlord. Worked by {@link KetraVarkaFrontManager}.</li>
+ * <li><b>The Tomb Raiders</b> ({@link UniqueMap.Type#TOMB}): a rival party races you for five Sealed Reliquaries, then the Undying Emperor and his Honour Guards. Worked by {@link TombRaidersManager}.</li>
  * </ul>
  * @author Mobius
  */
@@ -98,6 +102,12 @@ public class UniqueMapManager
 	private static final int ROLE_PICKPOCKET = 10;
 	private static final int ROLE_EGG = 11;
 	private static final int ROLE_HATCHLING = 12;
+	/** The Ketra-Varka Front's Siege Totems, which make the Warlord stronger while they stand. */
+	static final int ROLE_SIEGE_TOTEM = 13;
+	/** The Ketra-Varka Front's Warlord's escorts. */
+	static final int ROLE_ESCORT = 14;
+	/** The Tomb Raiders' Honour Guards, who rise again at their pedestals. */
+	static final int ROLE_HONOUR_GUARD = 15;
 
 	// The Crimson Coliseum.
 	private static final int[] COLISEUM_WAVES =
@@ -213,6 +223,23 @@ public class UniqueMapManager
 	};
 	private static final int ADENA_ID = 57;
 
+	// The Ketra-Varka Front (KetraVarkaFrontManager): the Warlord calls his escorts.
+	private static final double[] FRONT_THRESHOLDS =
+	{
+		0.75,
+		0.50,
+		0.25
+	};
+	private static final double SIEGE_TOTEM_HP = 8;
+	private static final double ESCORT_HP = 1.5;
+
+	// The Tomb Raiders (TombRaidersManager): the Emperor calls every fallen guard back at once.
+	private static final double[] TOMB_THRESHOLDS =
+	{
+		0.50
+	};
+	private static final double HONOUR_GUARD_HP = 3;
+
 	/** The fortunes of the Den's Wheel of Fate. The lasting ones hold until the next spin (or, from the Joker, the next card); the others happen once, when the wheel stops. */
 	private enum Fortune
 	{
@@ -277,6 +304,11 @@ public class UniqueMapManager
 
 	/** The state of each open unique map, by its instance id. */
 	private static final Map<Integer, State> STATES = new ConcurrentHashMap<>();
+
+	/** The world regions unique maps keep awake ({@link #keepAwake}), with how many maps keep each one, and those each map keeps. */
+	private static final Map<WorldRegion, Integer> KEPT_REGIONS = new HashMap<>();
+	private static final Map<Integer, List<WorldRegion>> KEPT_BY_RUN = new ConcurrentHashMap<>();
+	private static final int KEEP_AWAKE_MARGIN = 2000;
 
 	/** What a unique map is doing. */
 	private static class State
@@ -364,7 +396,13 @@ public class UniqueMapManager
 	{
 		final int role = roleOf(monster);
 		final UniqueMap.Type type = run.getUnique().type();
-		final double extra = type == UniqueMap.Type.DEN ? getDenMultiplier(run, role, stat) : type == UniqueMap.Type.CRUCIBLE ? PrimalCrucibleManager.getStatMultiplier(monster, stat) : 1.0;
+		final double extra = switch (type)
+		{
+			case DEN -> getDenMultiplier(run, role, stat);
+			case CRUCIBLE -> PrimalCrucibleManager.getStatMultiplier(monster, stat);
+			case FRONT -> KetraVarkaFrontManager.getStatMultiplier(run, monster, role == ROLE_BOSS, stat);
+			default -> 1.0;
+		};
 		return role == 0 ? extra : extra * getRoleMultiplier(run, role, stat);
 	}
 
@@ -451,6 +489,18 @@ public class UniqueMapManager
 			{
 				return stat == MonsterStat.HP ? CARD_GUARD_HP : 1.0;
 			}
+			case ROLE_SIEGE_TOTEM ->
+			{
+				return stat == MonsterStat.HP ? SIEGE_TOTEM_HP : 1.0;
+			}
+			case ROLE_ESCORT ->
+			{
+				return stat == MonsterStat.HP ? ESCORT_HP : 1.0;
+			}
+			case ROLE_HONOUR_GUARD ->
+			{
+				return stat == MonsterStat.HP ? HONOUR_GUARD_HP : 1.0;
+			}
 			case ROLE_BLUFF ->
 			{
 				return switch (stat)
@@ -487,6 +537,10 @@ public class UniqueMapManager
 		{
 			spawnDealer(run);
 		}
+		else if (run.getUnique().type() == UniqueMap.Type.TOMB)
+		{
+			TombRaidersManager.onRunOpened(run);
+		}
 	}
 
 	/**
@@ -516,6 +570,11 @@ public class UniqueMapManager
 	 */
 	public boolean spawnMonsters(MapRun run)
 	{
+		if (run.getUnique().type() == UniqueMap.Type.FRONT)
+		{
+			state(run);
+			return KetraVarkaFrontManager.spawnField(run);
+		}
 		if (run.getUnique().type() != UniqueMap.Type.COLISEUM)
 		{
 			return false;
@@ -670,6 +729,8 @@ public class UniqueMapManager
 			case OSSUARY -> "The valley falls silent... " + unique.bossName() + " rises!";
 			case DEN -> "The tables clear... " + unique.bossName() + " takes the table!";
 			case CRUCIBLE -> "The ground splits... " + unique.bossName() + " rises!";
+			case FRONT -> "War drums! The enemy " + unique.bossName() + " marches on your camp!";
+			case TOMB -> "The great sarcophagus cracks open... the " + unique.bossName() + " rises!";
 		};
 	}
 
@@ -786,6 +847,8 @@ public class UniqueMapManager
 				final int meals = PrimalCrucibleManager.getMeals(run);
 				MapDeviceManager.sendToMap(run, unique.bossName() + " rises" + (meals > 0 ? ", fed by the " + meals + " meals of the field: +" + Math.round((state._bossHpBonus - 1) * 100) + "% HP" : "") + ". It lays eggs at 60% and 20% of its HP, and goes into a frenzy at 40%.");
 			}
+			case FRONT -> KetraVarkaFrontManager.startFinale(run);
+			case TOMB -> TombRaidersManager.startFinale(run, template, middle);
 		}
 	}
 
@@ -1187,7 +1250,7 @@ public class UniqueMapManager
 	 * Spawns a monster of a twist or final encounter.
 	 * @param counted {@code true} if it counts toward the clear
 	 */
-	private static Monster spawnEncounter(MapRun run, NpcTemplate template, Location spot, int role, String tag, boolean counted)
+	static Monster spawnEncounter(MapRun run, NpcTemplate template, Location spot, int role, String tag, boolean counted)
 	{
 		final Monster monster = MapDeviceManager.getInstance().spawnMapMonster(run, template, spot);
 		if (monster == null)
@@ -1244,6 +1307,10 @@ public class UniqueMapManager
 		{
 			damage = PrimalCrucibleManager.onMonsterDamaged(run, monster, damage, attacker.asPlayer());
 		}
+		if ((unique.type() == UniqueMap.Type.TOMB) && (roleOf(monster) == ROLE_BOSS))
+		{
+			damage = TombRaidersManager.onBossDamaged(run, monster, damage, attacker);
+		}
 		if (roleOf(monster) != ROLE_BOSS)
 		{
 			return damage;
@@ -1264,6 +1331,8 @@ public class UniqueMapManager
 			case OSSUARY -> OSSUARY_THRESHOLDS;
 			case DEN -> DEN_THRESHOLDS;
 			case CRUCIBLE -> CRUCIBLE_THRESHOLDS;
+			case FRONT -> FRONT_THRESHOLDS;
+			case TOMB -> TOMB_THRESHOLDS;
 		};
 		final double maxHp = monster.getMaxHp();
 		final double after = monster.getCurrentHp() - damage;
@@ -1341,6 +1410,8 @@ public class UniqueMapManager
 			}
 			case DEN -> drawCard(run, state, boss);
 			case CRUCIBLE -> PrimalCrucibleManager.onBossThreshold(run, boss, index, CRUCIBLE_THRESHOLDS.length);
+			case FRONT -> KetraVarkaFrontManager.onBossThreshold(run, boss, index);
+			case TOMB -> TombRaidersManager.onBossThreshold(run, boss, index);
 			case OSSUARY ->
 			{
 				shield(run, state, boss, PHYLACTERIES[Math.min(PHYLACTERIES.length - 1, index + 1)]);
@@ -1478,32 +1549,43 @@ public class UniqueMapManager
 		final int role = roleOf(victim);
 		final boolean den = unique.type() == UniqueMap.Type.DEN;
 		// The Vault's Greed, the Den's Pot (and Hot Table / Cold Streak). The Den's drops also follow the server rates, and past 100% they grow bigger.
-		final double greed = unique.type() == UniqueMap.Type.VAULT ? 1 + (Math.min(GREED_MAX, state._greed) / 100.0) : den ? denDropFactor(state) : 1;
+		double greed = unique.type() == UniqueMap.Type.VAULT ? 1 + (Math.min(GREED_MAX, state._greed) / 100.0) : den ? denDropFactor(state) : 1;
+		// The Front's betrayal (and a fallen Prophet), the Tomb's stolen last blow.
+		if (unique.type() == UniqueMap.Type.FRONT)
+		{
+			greed *= KetraVarkaFrontManager.getDropFactor(run, role == ROLE_BOSS);
+		}
+		if ((unique.type() == UniqueMap.Type.TOMB) && (role == ROLE_BOSS))
+		{
+			greed *= TombRaidersManager.getBossDropFactor(run, player);
+		}
+		// A rival's last blow in the Tomb: the spoils still fall for the players.
+		final Player dropTo = (player == null) && (unique.type() == UniqueMap.Type.TOMB) && (role == ROLE_BOSS) ? TombRaidersManager.getHeir(run) : player;
 
 		// Drops.
-		if (player != null)
+		if (dropTo != null)
 		{
 			switch (role)
 			{
 				case 0, ROLE_THIEF, ROLE_CARD_GUARD, ROLE_PICKPOCKET ->
 				{
 					final boolean spawnling = victim.getVariables().getBoolean("MAP_SPLIT", false) || victim.getVariables().getBoolean("MAP_MINION", false);
-					drop(victim, player, unique.drops(), greed * (spawnling ? 0.5 : 1), den ? state : null);
+					drop(victim, dropTo, unique.drops(), greed * (spawnling ? 0.5 : 1), den ? state : null);
 				}
-				case ROLE_CHALLENGER, ROLE_ECHO, ROLE_BLUFF -> drop(victim, player, unique.specialDrops(), den ? greed : 1, den ? state : null);
+				case ROLE_CHALLENGER, ROLE_ECHO, ROLE_BLUFF, ROLE_SIEGE_TOTEM, ROLE_ESCORT -> drop(victim, dropTo, unique.specialDrops(), den || (unique.type() == UniqueMap.Type.FRONT) ? greed : 1, den ? state : null);
 				case ROLE_JACKPOT ->
 				{
 					for (int i = 0; i < JACKPOT_ROLLS; i++)
 					{
-						drop(victim, player, unique.specialDrops(), greed, state);
+						drop(victim, dropTo, unique.specialDrops(), greed, state);
 					}
 				}
 				case ROLE_BOSS ->
 				{
-					drop(victim, player, unique.bossDrops(), greed, den ? state : null);
+					drop(victim, dropTo, unique.bossDrops(), greed, den ? state : null);
 					if ((Rnd.nextDouble() * 100) < MapDeviceConfig.UNIQUE_MAP_BOSS_CHANCE)
 					{
-						dropUniqueMap(run, victim, player);
+						dropUniqueMap(run, victim, dropTo);
 					}
 				}
 				default ->
@@ -1517,6 +1599,14 @@ public class UniqueMapManager
 			if (unique.type() == UniqueMap.Type.CRUCIBLE)
 			{
 				PrimalCrucibleManager.onMonsterDied(run, victim, player, counted, false, false, true);
+			}
+			else if (unique.type() == UniqueMap.Type.FRONT)
+			{
+				KetraVarkaFrontManager.onBossDied(run, victim);
+			}
+			else if (unique.type() == UniqueMap.Type.TOMB)
+			{
+				TombRaidersManager.onBossDied(run, victim, dropTo);
 			}
 			state._bossDead = true;
 			state._nova = false;
@@ -1577,6 +1667,22 @@ public class UniqueMapManager
 			}
 			case DEN -> onDenDeath(run, state, victim, role, player, counted);
 			case CRUCIBLE -> PrimalCrucibleManager.onMonsterDied(run, victim, player, counted, role == ROLE_EGG, role == ROLE_HATCHLING, false);
+			case FRONT -> KetraVarkaFrontManager.onMonsterDied(run, victim, role);
+			case TOMB -> TombRaidersManager.onMonsterDied(run, victim, role);
+		}
+	}
+
+	/**
+	 * A fake player died in a unique map (the Tomb Raiders' rivals): no drop, no count, only its own map's say ({@link MapDeviceManager}'s death hook).
+	 * @param run the run
+	 * @param victim the fake player
+	 * @param player the player credited, {@code null} for none
+	 */
+	public void onFakePlayerDied(MapRun run, Monster victim, Player player)
+	{
+		if (run.getUnique().type() == UniqueMap.Type.TOMB)
+		{
+			TombRaidersManager.onRivalDied(run, victim, player);
 		}
 	}
 
@@ -1825,6 +1931,8 @@ public class UniqueMapManager
 			}
 			case DEN -> denTick(run, state, tick, now);
 			case CRUCIBLE -> PrimalCrucibleManager.onTick(run, tick, now, state._phase);
+			case FRONT -> KetraVarkaFrontManager.onTick(run, tick, now, state._phase);
+			case TOMB -> TombRaidersManager.onTick(run, tick, now, state._phase);
 			default ->
 			{
 			}
@@ -1950,6 +2058,8 @@ public class UniqueMapManager
 			case VAULT -> player.sendMessage(unique.name() + ": the vault seals in " + formatTime(run.getRemainingSeconds()) + ". Every kill buys " + VAULT_SECONDS_PER_KILL + " seconds and 1% Greed.");
 			case OSSUARY -> player.sendMessage(unique.name() + ": a quarter of the slain leave Echoes. Kill them before the end, or they feed the " + unique.bossName() + ".");
 			case CRUCIBLE -> PrimalCrucibleManager.onPlayerEntered(player, run);
+			case FRONT -> KetraVarkaFrontManager.onPlayerEntered(player, run);
+			case TOMB -> TombRaidersManager.onPlayerEntered(player, run);
 			case DEN ->
 			{
 				final State state = state(run);
@@ -1973,6 +2083,10 @@ public class UniqueMapManager
 		{
 			PrimalCrucibleManager.onPlayerLeft(player, run);
 		}
+		else if (run.getUnique().type() == UniqueMap.Type.TOMB)
+		{
+			TombRaidersManager.onPlayerLeft(player, run);
+		}
 	}
 
 	/**
@@ -1982,9 +2096,18 @@ public class UniqueMapManager
 	public void onRunClosed(MapRun run)
 	{
 		STATES.remove(run.getInstanceId());
+		releaseAwake(run);
 		if (run.getUnique().type() == UniqueMap.Type.CRUCIBLE)
 		{
 			PrimalCrucibleManager.onRunClosed(run);
+		}
+		if (run.getUnique().type() == UniqueMap.Type.FRONT)
+		{
+			KetraVarkaFrontManager.onRunClosed(run);
+		}
+		if (run.getUnique().type() == UniqueMap.Type.TOMB)
+		{
+			TombRaidersManager.onRunClosed(run);
 		}
 		if (run.getUnique().type() == UniqueMap.Type.COLISEUM)
 		{
@@ -1997,14 +2120,14 @@ public class UniqueMapManager
 	// =========================================================================
 
 	/**
-	 * A map is complete: a plain map of tier {@link MapDeviceConfig#UNIQUE_MAP_MIN_TIER} and up may drop a unique map.
+	 * A map is complete: a plain map may drop a unique map, if any unique map drops at its tier ({@code dropMinTier}/{@code dropMaxTier} of its {@code <uniqueMap>}, by default {@link MapDeviceConfig#UNIQUE_MAP_MIN_TIER} and up).
 	 * @param run the run
 	 * @param lastKill the last monster slain, {@code null} if unknown
 	 * @param player who slew it, {@code null} if unknown
 	 */
 	public void onRunCompleted(MapRun run, Monster lastKill, Player player)
 	{
-		if (run.isUnique() || (lastKill == null) || (player == null) || !MapDeviceConfig.UNIQUE_MAPS_ENABLED || (run.getTier().tier() < MapDeviceConfig.UNIQUE_MAP_MIN_TIER))
+		if (run.isUnique() || (lastKill == null) || (player == null) || !MapDeviceConfig.UNIQUE_MAPS_ENABLED || droppableAt(run.getTier().tier()).isEmpty())
 		{
 			return;
 		}
@@ -2016,12 +2139,22 @@ public class UniqueMapManager
 	}
 
 	/**
-	 * Drops a unique map at random. Unique maps only drop inside maps, and count toward the run's map budget ({@link MapDeviceConfig#MAX_MAPS_PER_RUN}).
+	 * @param mapTier the tier of a map just completed (or of the unique map whose boss fell)
+	 * @return the unique maps that may drop from it (their item known)
+	 */
+	private static List<UniqueMap> droppableAt(int mapTier)
+	{
+		final List<UniqueMap> uniques = new ArrayList<>(MapDeviceData.getInstance().getUniqueMaps().values());
+		uniques.removeIf(unique -> !unique.dropsAt(mapTier, MapDeviceConfig.UNIQUE_MAP_MIN_TIER) || (ItemData.getInstance().getTemplate(unique.itemId()) == null));
+		return uniques;
+	}
+
+	/**
+	 * Drops a unique map at random, among those that drop at the run's tier. Unique maps only drop inside maps, and count toward the run's map budget ({@link MapDeviceConfig#MAX_MAPS_PER_RUN}).
 	 */
 	private static void dropUniqueMap(MapRun run, Attackable victim, Player player)
 	{
-		final List<UniqueMap> uniques = new ArrayList<>(MapDeviceData.getInstance().getUniqueMaps().values());
-		uniques.removeIf(unique -> ItemData.getInstance().getTemplate(unique.itemId()) == null);
+		final List<UniqueMap> uniques = droppableAt(run.getTier().tier());
 		if (uniques.isEmpty())
 		{
 			return;
@@ -2122,6 +2255,112 @@ public class UniqueMapManager
 	static boolean isBoss(Monster monster)
 	{
 		return roleOf(monster) == ROLE_BOSS;
+	}
+
+	/**
+	 * Keeps the world regions of a map's field awake while it is open, so what moves in it with no player near (the Front's warriors and counterattacks, the Tomb Raiders' rival party) goes on. A region another system keeps awake is left to it; one that
+	 * several maps keep (the same arena) sleeps again only when the last of them closes.
+	 * @param run the run
+	 */
+	static void keepAwake(MapRun run)
+	{
+		if (KEPT_BY_RUN.containsKey(run.getInstanceId()))
+		{
+			return;
+		}
+		final MapArena arena = run.getArena();
+		final int step = 1 << World.SHIFT_BY;
+		final List<WorldRegion> kept = new ArrayList<>();
+		synchronized (KEPT_REGIONS)
+		{
+			for (int x = arena.x() - arena.radiusX() - KEEP_AWAKE_MARGIN; x <= (arena.x() + arena.radiusX() + KEEP_AWAKE_MARGIN); x += step)
+			{
+				for (int y = arena.y() - arena.radiusY() - KEEP_AWAKE_MARGIN; y <= (arena.y() + arena.radiusY() + KEEP_AWAKE_MARGIN); y += step)
+				{
+					final WorldRegion region = World.getInstance().getRegion(x, y, arena.z());
+					if ((region == null) || kept.contains(region))
+					{
+						continue;
+					}
+					final Integer count = KEPT_REGIONS.get(region);
+					if (count != null)
+					{
+						KEPT_REGIONS.put(region, count + 1);
+						kept.add(region);
+					}
+					else if (!region.isKeptActive())
+					{
+						region.keepActive();
+						KEPT_REGIONS.put(region, 1);
+						kept.add(region);
+					}
+				}
+			}
+		}
+		KEPT_BY_RUN.put(run.getInstanceId(), kept);
+	}
+
+	/**
+	 * Lets the regions a map kept awake sleep again, unless another map still keeps them.
+	 */
+	private static void releaseAwake(MapRun run)
+	{
+		final List<WorldRegion> kept = KEPT_BY_RUN.remove(run.getInstanceId());
+		if (kept == null)
+		{
+			return;
+		}
+		synchronized (KEPT_REGIONS)
+		{
+			for (WorldRegion region : kept)
+			{
+				final Integer count = KEPT_REGIONS.get(region);
+				if ((count == null) || (count <= 1))
+				{
+					KEPT_REGIONS.remove(region);
+					region.releaseKeepActive();
+				}
+				else
+				{
+					KEPT_REGIONS.put(region, count - 1);
+				}
+			}
+		}
+	}
+
+	/** @return the role of a monster of a twist or final encounter ({@code ROLE_*}), 0 for a plain monster of the map */
+	static int role(Monster monster)
+	{
+		return roleOf(monster);
+	}
+
+	/**
+	 * Spawns a unique map's boss (giant, counted, under its title) and remembers it as the run's boss.
+	 * @return the boss, {@code null} if it could not be spawned
+	 */
+	static Monster spawnBoss(MapRun run, NpcTemplate template, Location spot, String tag)
+	{
+		final Monster boss = spawnEncounter(run, template, spot, ROLE_BOSS, tag, true);
+		if (boss != null)
+		{
+			state(run)._bossId = boss.getObjectId();
+		}
+		return boss;
+	}
+
+	/**
+	 * @param run a unique map
+	 * @return its boss while it stands, {@code null} before it comes or once it fell
+	 */
+	static Monster getBoss(MapRun run)
+	{
+		final State state = STATES.get(run.getInstanceId());
+		if ((state == null) || (state._bossId == 0) || state._bossDead)
+		{
+			return null;
+		}
+		final WorldObject object = World.getInstance().findObject(state._bossId);
+		return (object instanceof Monster boss) && !boss.isDead() ? boss : null;
 	}
 
 	/** Rolls the run's special drops for a kill. */

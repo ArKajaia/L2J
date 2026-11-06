@@ -1112,7 +1112,7 @@ public class MapDeviceManager
 				}
 				arena = arenas.get(Rnd.get(arenas.size()));
 			}
-			final List<NpcTemplate> pool = getArenaMonsters(arena, tier);
+			final List<NpcTemplate> pool = unique.npcs().isEmpty() ? getArenaMonsters(arena, tier) : getUniqueMonsters(unique);
 			if (pool.isEmpty() || (NpcData.getInstance().getTemplate(unique.bossNpcId()) == null))
 			{
 				return "No monster fits " + unique.name() + ". Please contact an administrator.";
@@ -1560,6 +1560,27 @@ public class MapDeviceManager
 	}
 	
 	/**
+	 * @param unique a unique map that names its own monsters ({@code npcs} of its {@code <uniqueMap>})
+	 * @return those monsters (whatever their level: the XML chose them), the ones that are no plain monster left out
+	 */
+	private List<NpcTemplate> getUniqueMonsters(UniqueMap unique)
+	{
+		final List<NpcTemplate> monsters = new ArrayList<>();
+		for (int npcId : unique.npcs())
+		{
+			if (isMapMonster(npcId))
+			{
+				monsters.add(NpcData.getInstance().getTemplate(npcId));
+			}
+			else
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": The unique map " + unique.name() + " names " + npcId + ", which is no monster: it is left out.");
+			}
+		}
+		return monsters;
+	}
+
+	/**
 	 * @param npcId an npc id
 	 * @return {@code true} if it can fill a map: a plain monster ({@code type="Monster"})
 	 */
@@ -1580,11 +1601,12 @@ public class MapDeviceManager
 
 	private void spawnMonsters(MapRun run, List<NpcTemplate> pool)
 	{
-		// A map has a theme: a few kinds of monster, not a hundred. A map of the event map page that names its monsters keeps them all.
+		// A map has a theme: a few kinds of monster, not a hundred. A map of the event map page, or a unique map, that names its monsters keeps them all.
 		final MapArena arena = run.getArena();
 		final List<NpcTemplate> shuffled = new ArrayList<>(pool);
 		Collections.shuffle(shuffled);
-		final List<NpcTemplate> kinds = arena.monsters().isEmpty() ? new ArrayList<>(shuffled.subList(0, Math.min(MapDeviceConfig.MONSTER_TYPES, shuffled.size()))) : shuffled;
+		final boolean named = !arena.monsters().isEmpty() || (run.isUnique() && !run.getUnique().npcs().isEmpty());
+		final List<NpcTemplate> kinds = named ? shuffled : new ArrayList<>(shuffled.subList(0, Math.min(MapDeviceConfig.MONSTER_TYPES, shuffled.size())));
 		run.setMonsterKinds(kinds);
 		
 		// A unique map that fills itself (the Coliseum's waves).
@@ -2410,6 +2432,15 @@ public class MapDeviceManager
 		final MapRun run = getRun(victim.getInstanceId());
 		if ((run != null) && victim.isMonster())
 		{
+			// A fake player of a map (the Tomb Raiders' rivals) is no monster of it: no count, no death modifier, no map drop.
+			if (victim.isPvpFakePlayer())
+			{
+				if (run.isUnique())
+				{
+					UniqueMapManager.getInstance().onFakePlayerDied(run, victim.asMonster(), player);
+				}
+				return;
+			}
 			onMapMonsterDied(run, victim.asMonster(), player);
 		}
 
@@ -2857,7 +2888,11 @@ public class MapDeviceManager
 		sendScreenToMap(run, "Ambush! The monsters close in on " + target.getName() + "!");
 	}
 
-	private void checkCompleted(MapRun run)
+	/**
+	 * Completes a run whose counted monsters are all gone (or calls a unique map's next wave or final encounter): for monsters taken off the count without dying.
+	 * @param run the run
+	 */
+	void checkCompleted(MapRun run)
 	{
 		if (run.getMonsters().isEmpty() && (run.getStatus() == Status.OPEN))
 		{

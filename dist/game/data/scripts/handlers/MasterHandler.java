@@ -269,8 +269,10 @@ import handlers.chat.commands.voiced.ExperienceGain;
 import handlers.chat.commands.voiced.GearVoiced;
 import handlers.chat.commands.voiced.GuideVoiced;
 import handlers.chat.commands.voiced.CrucibleVoiced;
+import handlers.chat.commands.voiced.FrontVoiced;
 import handlers.chat.commands.voiced.HideoutVoiced;
 import handlers.chat.commands.voiced.Lang;
+import handlers.chat.commands.voiced.TombVoiced;
 import handlers.chat.commands.voiced.CraftingGoalVoiced;
 import handlers.chat.commands.voiced.NightVoiced;
 import handlers.chat.commands.voiced.Offline;
@@ -682,6 +684,8 @@ public class MasterHandler
 			AdventurersGuideConfig.ENABLED ? GuideVoiced.class : null,
 			MapDeviceConfig.ENABLED ? HideoutVoiced.class : null,
 			MapDeviceConfig.ENABLED ? CrucibleVoiced.class : null,
+			MapDeviceConfig.ENABLED ? FrontVoiced.class : null,
+			MapDeviceConfig.ENABLED ? TombVoiced.class : null,
 		},
 		{
 			// Target Handlers

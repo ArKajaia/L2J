@@ -16,6 +16,7 @@
  */
 package ai.others;
 
+import org.l2jmobius.gameserver.managers.MapDeviceManager;
 import org.l2jmobius.gameserver.model.actor.Attackable;
 import org.l2jmobius.gameserver.model.actor.Npc;
 import org.l2jmobius.gameserver.model.actor.Player;
@@ -196,12 +197,22 @@ public class VarkaKetra extends Script
 	@Override
 	public void onKill(Npc npc, Player killer, boolean isSummon)
 	{
+		// The Ketra and Varka of a Map Device map are not the barracks': killing them costs no alliance.
+		if (MapDeviceManager.isMapInstance(npc.getInstanceId()))
+		{
+			return;
+		}
 		executeForEachPlayer(killer, npc, isSummon, true, false);
 	}
 	
 	@Override
 	public boolean onNpcHate(Attackable mob, Player player, boolean isSummon)
 	{
+		// Nor do they know the marks of an alliance.
+		if (MapDeviceManager.isMapInstance(mob.getInstanceId()))
+		{
+			return true;
+		}
 		if (ArrayUtil.contains(KETRA, mob.getId()))
 		{
 			return !hasAtLeastOneQuestItem(player, KETRA_MARKS);

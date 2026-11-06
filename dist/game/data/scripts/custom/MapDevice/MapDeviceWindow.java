@@ -383,6 +383,14 @@ public final class MapDeviceWindow
 		{
 			row(sb, "Your evolution", text(COLOR_UNIQUE, ".crucible") + text(COLOR_MUTED, " (stage, Essence, choices, Rampage)"), false);
 		}
+		if ((unique != null) && (unique.type() == UniqueMap.Type.FRONT))
+		{
+			row(sb, "The front", text(COLOR_UNIQUE, ".front") + text(COLOR_MUTED, " (your oath, the war totems, the envoy)"), false);
+		}
+		if ((unique != null) && (unique.type() == UniqueMap.Type.TOMB))
+		{
+			row(sb, "The race", text(COLOR_UNIQUE, ".tomb") + text(COLOR_MUTED, " (relics, reliquaries, the parley, the pedestals)"), false);
+		}
 		if ((unique != null) && (unique.type() == UniqueMap.Type.DEN))
 		{
 			final UniqueMapManager den = UniqueMapManager.getInstance();
