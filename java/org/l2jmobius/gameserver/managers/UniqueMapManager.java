@@ -76,6 +76,7 @@ import org.l2jmobius.gameserver.network.serverpackets.MagicSkillUse;
  * at 60% HP, then 2 at 30%), which raise servants; from 30% a Death Nova bursts from him every 15 seconds.</li>
  * <li><b>The Gambler's Den</b> ({@link UniqueMap.Type#DEN}): every {@link #DEN_KILLS_PER_SPIN} kills the Wheel of Fate turns up one of 24 {@link Fortune}s (a shuffled bag: no repeat until all have come) and a bet; at the Dealer a bet doubles or halves the Pot, which
  * multiplies the Den's drops (past 100% they grow bigger). The Den's drops follow the server rates. Then The House, who draws a {@link Card} at 80/60/40/20% of its HP.</li>
+ * <li><b>The Primal Crucible</b> ({@link UniqueMap.Type#CRUCIBLE}): evolve, or be eaten. Worked by {@link PrimalCrucibleManager}.</li>
  * </ul>
  * @author Mobius
  */
@@ -95,6 +96,8 @@ public class UniqueMapManager
 	private static final int ROLE_BLUFF = 8;
 	private static final int ROLE_CARD_GUARD = 9;
 	private static final int ROLE_PICKPOCKET = 10;
+	private static final int ROLE_EGG = 11;
+	private static final int ROLE_HATCHLING = 12;
 
 	// The Crimson Coliseum.
 	private static final int[] COLISEUM_WAVES =
@@ -200,6 +203,14 @@ public class UniqueMapManager
 	private static final double BLUFF_POT = 0.10;
 	private static final int DEN_THIEVES = 4;
 	private static final int DEALER_OFFSET = 150;
+
+	// The Primal Crucible (PrimalCrucibleManager): eggs at the first and last, a frenzy in the middle.
+	private static final double[] CRUCIBLE_THRESHOLDS =
+	{
+		0.60,
+		0.40,
+		0.20
+	};
 	private static final int ADENA_ID = 57;
 
 	/** The fortunes of the Den's Wheel of Fate. The lasting ones hold until the next spin (or, from the Joker, the next card); the others happen once, when the wheel stops. */
@@ -352,8 +363,9 @@ public class UniqueMapManager
 	public static double getEncounterMultiplier(MapRun run, Monster monster, MonsterStat stat)
 	{
 		final int role = roleOf(monster);
-		final double den = run.getUnique().type() == UniqueMap.Type.DEN ? getDenMultiplier(run, role, stat) : 1.0;
-		return role == 0 ? den : den * getRoleMultiplier(run, role, stat);
+		final UniqueMap.Type type = run.getUnique().type();
+		final double extra = type == UniqueMap.Type.DEN ? getDenMultiplier(run, role, stat) : type == UniqueMap.Type.CRUCIBLE ? PrimalCrucibleManager.getStatMultiplier(monster, stat) : 1.0;
+		return role == 0 ? extra : extra * getRoleMultiplier(run, role, stat);
 	}
 
 	/**
@@ -430,6 +442,10 @@ public class UniqueMapManager
 			case ROLE_JACKPOT ->
 			{
 				return stat == MonsterStat.HP ? JACKPOT_HP : 1.0;
+			}
+			case ROLE_EGG ->
+			{
+				return PrimalCrucibleManager.getEggMultiplier(stat);
 			}
 			case ROLE_CARD_GUARD ->
 			{
@@ -653,6 +669,7 @@ public class UniqueMapManager
 			case VAULT -> "The hoard stirs... the " + unique.bossName() + " wakes!";
 			case OSSUARY -> "The valley falls silent... " + unique.bossName() + " rises!";
 			case DEN -> "The tables clear... " + unique.bossName() + " takes the table!";
+			case CRUCIBLE -> "The ground splits... " + unique.bossName() + " rises!";
 		};
 	}
 
@@ -751,6 +768,23 @@ public class UniqueMapManager
 					attackSomeone(boss, players);
 				}
 				MapDeviceManager.sendToMap(run, "The wheel stops: no more fortunes. One last bet at the Dealer (" + bets + " in hand), Pot " + formatPot(state._pot) + ". " + unique.bossName() + " draws a card at 80%, 60%, 40% and 20% of its HP.");
+			}
+			case CRUCIBLE ->
+			{
+				// Every meal of the field fed it.
+				state._bossHpBonus = PrimalCrucibleManager.getBossHpBonus(run);
+				final Monster boss = spawnEncounter(run, template, middle, ROLE_BOSS, "[" + unique.bossName() + "]", true);
+				if (boss != null)
+				{
+					state._bossId = boss.getObjectId();
+					if (boss.getAI() instanceof AttackableAI ai)
+					{
+						ai.setArchetype(MonsterArchetype.RAGER);
+					}
+					attackSomeone(boss, players);
+				}
+				final int meals = PrimalCrucibleManager.getMeals(run);
+				MapDeviceManager.sendToMap(run, unique.bossName() + " rises" + (meals > 0 ? ", fed by the " + meals + " meals of the field: +" + Math.round((state._bossHpBonus - 1) * 100) + "% HP" : "") + ". It lays eggs at 60% and 20% of its HP, and goes into a frenzy at 40%.");
 			}
 		}
 	}
@@ -1206,6 +1240,10 @@ public class UniqueMapManager
 				damage *= 0.8;
 			}
 		}
+		if ((unique.type() == UniqueMap.Type.CRUCIBLE) && (attacker != null) && (attacker.asPlayer() != null))
+		{
+			damage = PrimalCrucibleManager.onMonsterDamaged(run, monster, damage, attacker.asPlayer());
+		}
 		if (roleOf(monster) != ROLE_BOSS)
 		{
 			return damage;
@@ -1225,6 +1263,7 @@ public class UniqueMapManager
 			case VAULT -> VAULT_THRESHOLDS;
 			case OSSUARY -> OSSUARY_THRESHOLDS;
 			case DEN -> DEN_THRESHOLDS;
+			case CRUCIBLE -> CRUCIBLE_THRESHOLDS;
 		};
 		final double maxHp = monster.getMaxHp();
 		final double after = monster.getCurrentHp() - damage;
@@ -1301,6 +1340,7 @@ public class UniqueMapManager
 				MapDeviceManager.sendScreenToMap(run, "The " + unique.bossName() + " vanishes " + way + ", leaving its thieves behind!");
 			}
 			case DEN -> drawCard(run, state, boss);
+			case CRUCIBLE -> PrimalCrucibleManager.onBossThreshold(run, boss, index, CRUCIBLE_THRESHOLDS.length);
 			case OSSUARY ->
 			{
 				shield(run, state, boss, PHYLACTERIES[Math.min(PHYLACTERIES.length - 1, index + 1)]);
@@ -1474,6 +1514,10 @@ public class UniqueMapManager
 
 		if (role == ROLE_BOSS)
 		{
+			if (unique.type() == UniqueMap.Type.CRUCIBLE)
+			{
+				PrimalCrucibleManager.onMonsterDied(run, victim, player, counted, false, false, true);
+			}
 			state._bossDead = true;
 			state._nova = false;
 			MapDeviceManager.sendScreenToMap(run, "The " + unique.bossName() + " has fallen!");
@@ -1532,6 +1576,7 @@ public class UniqueMapManager
 				}
 			}
 			case DEN -> onDenDeath(run, state, victim, role, player, counted);
+			case CRUCIBLE -> PrimalCrucibleManager.onMonsterDied(run, victim, player, counted, role == ROLE_EGG, role == ROLE_HATCHLING, false);
 		}
 	}
 
@@ -1779,6 +1824,7 @@ public class UniqueMapManager
 				}
 			}
 			case DEN -> denTick(run, state, tick, now);
+			case CRUCIBLE -> PrimalCrucibleManager.onTick(run, tick, now, state._phase);
 			default ->
 			{
 			}
@@ -1903,6 +1949,7 @@ public class UniqueMapManager
 			case COLISEUM -> PassiveDeathmatchManager.getInstance().joinMap(player, run.getInstanceId(), unique.name());
 			case VAULT -> player.sendMessage(unique.name() + ": the vault seals in " + formatTime(run.getRemainingSeconds()) + ". Every kill buys " + VAULT_SECONDS_PER_KILL + " seconds and 1% Greed.");
 			case OSSUARY -> player.sendMessage(unique.name() + ": a quarter of the slain leave Echoes. Kill them before the end, or they feed the " + unique.bossName() + ".");
+			case CRUCIBLE -> PrimalCrucibleManager.onPlayerEntered(player, run);
 			case DEN ->
 			{
 				final State state = state(run);
@@ -1922,6 +1969,10 @@ public class UniqueMapManager
 		{
 			PassiveDeathmatchManager.getInstance().leaveMap(player);
 		}
+		else if (run.getUnique().type() == UniqueMap.Type.CRUCIBLE)
+		{
+			PrimalCrucibleManager.onPlayerLeft(player, run);
+		}
 	}
 
 	/**
@@ -1931,6 +1982,10 @@ public class UniqueMapManager
 	public void onRunClosed(MapRun run)
 	{
 		STATES.remove(run.getInstanceId());
+		if (run.getUnique().type() == UniqueMap.Type.CRUCIBLE)
+		{
+			PrimalCrucibleManager.onRunClosed(run);
+		}
 		if (run.getUnique().type() == UniqueMap.Type.COLISEUM)
 		{
 			PassiveDeathmatchManager.getInstance().forgetMap(run.getInstanceId());
@@ -2039,6 +2094,40 @@ public class UniqueMapManager
 				victim.dropOrAutoLoot(player, new ItemHolder(drop.itemId(), rated));
 			}
 		}
+	}
+
+	// =========================================================================
+	// Helpers for the Primal Crucible
+	// =========================================================================
+
+	/** One of the Primordial's eggs: it doesn't count toward the clear. */
+	static Monster spawnEgg(MapRun run, NpcTemplate template, Location spot)
+	{
+		return spawnEncounter(run, template, spot, ROLE_EGG, "[Primordial Egg]", false);
+	}
+
+	/** An Alpha hatched from an egg: it doesn't count toward the clear. */
+	static Monster spawnHatchling(MapRun run, NpcTemplate template, Location spot)
+	{
+		return spawnEncounter(run, template, spot, ROLE_HATCHLING, "[Hatchling Alpha]", false);
+	}
+
+	/** Sends a monster at one of the players. */
+	static void attack(Monster monster, List<Player> players)
+	{
+		attackSomeone(monster, players);
+	}
+
+	/** @return {@code true} for a unique map's boss */
+	static boolean isBoss(Monster monster)
+	{
+		return roleOf(monster) == ROLE_BOSS;
+	}
+
+	/** Rolls the run's special drops for a kill. */
+	static void dropSpecial(MapRun run, Monster victim, Player killer, double chanceMultiplier)
+	{
+		drop(victim, killer, run.getUnique().specialDrops(), chanceMultiplier);
 	}
 
 	public static UniqueMapManager getInstance()

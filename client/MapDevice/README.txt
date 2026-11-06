@@ -3,8 +3,10 @@ Maps of the Map Device - client additions (High Five)
 
 New items (data/stats/items/custom/map_device_items.xml):
   50101 .. 50110  Map (Tier 1) .. Map (Tier 10)
-  50111 .. 50114  Unique Map: The Crimson Coliseum, The Gilded Vault,
-                  The Ossuary of Echoes, The Gambler's Den
+  50111 .. 50115  Unique Map: The Crimson Coliseum, The Gilded Vault,
+                  The Ossuary of Echoes, The Gambler's Den, The Primal Crucible
+  50116           Primal Essence (shown as Blood of Eva without the patch)
+  50117           Titan Scroll (shown as Transformation Scroll: Zaken without the patch)
 
 Without these rows the server still works: the item XML gives each map
 displayId 5915, so an unpatched client shows every tier as the retail

@@ -377,6 +377,10 @@ public final class MapDeviceWindow
 		{
 			row(sb, "Your map passives", text(COLOR_UNIQUE, String.valueOf(PassiveDeathmatchManager.getInstance().getMapPickCount(player))) + text(COLOR_MUTED, " (." + PassiveDeathmatchManager.COMMAND + " to pick)"), false);
 		}
+		if ((unique != null) && (unique.type() == UniqueMap.Type.CRUCIBLE))
+		{
+			row(sb, "Your evolution", text(COLOR_UNIQUE, ".crucible") + text(COLOR_MUTED, " (stage, Essence, choices, Rampage)"), false);
+		}
 		if ((unique != null) && (unique.type() == UniqueMap.Type.DEN))
 		{
 			final UniqueMapManager den = UniqueMapManager.getInstance();

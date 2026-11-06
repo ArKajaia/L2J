@@ -148,7 +148,7 @@ Modifiers that draw a kind of monster the server has switched off (Mage, Thief, 
 
 ## Unique maps
 
-Four map items that always open the same map: its modifiers are chosen for it (no medal, no hot zone effect), it has a twist of its own while the field is cleared, a **final encounter** once it is, and drops of its own for every monster of the map and for its boss. Defined in `data/MapDevice.xml` (`<uniqueMap>`: tier, monster count, arena, modifiers, boss npc and multipliers, drops); the twists and encounters are worked by `UniqueMapManager`.
+Five map items that always open the same map: its modifiers are chosen for it (no medal, no hot zone effect), it has a twist of its own while the field is cleared, a **final encounter** once it is, and drops of its own for every monster of the map and for its boss. Defined in `data/MapDevice.xml` (`<uniqueMap>`: tier, monster count, arena, modifiers, boss npc and multipliers, drops); the twists and encounters are worked by `UniqueMapManager` (the Primal Crucible's by `PrimalCrucibleManager`). The first four are compared in the table below; the Primal Crucible has its own section.
 
 **Getting one**: completing a map of tier `UniqueMapMinTier` (5) or higher drops one at random `UniqueMapCompletionChance` (2%) + `UniqueMapChancePerMedal` (0.5%) per medal; each unique boss drops another at 10% (all in `MapDevice.ini`). Unique maps **only drop inside maps**, and count toward the map's limit of 3. Double-click it in the hideout (or *Insert* under **Unique Maps** at the device) to see what it holds and open it.
 
@@ -203,6 +203,32 @@ Monster HP is never changed by a fortune, so a monster's HP can't end up above i
 | Queen of Mirrors | 2 Bluffs: copies of the House under the same title, at 15% of its HP and half its attack, uncounted. Each slain gives Pot +10% and a roll of the special drops. |
 | Jack of Thieves | The House vanishes to another corner, leaving 4 Card Sharps (thieves) behind. |
 | Joker | The wheel spins for the House (no bet); that fortune holds until the next card. |
+
+### The Primal Crucible (50115)
+
+*Evolve, or be eaten.* 60 monsters of tier 7 (party monsters), on the event map `primeval_isle`; until that map exists, in any arena of tier 7 (see *Setting up its arena* below). Modifiers: Hunters, Pack Hunters, Berserkers, Vampiric, Fortified, Lacerating. Code: `PrimalCrucibleManager`, called from `UniqueMapManager`. The players type **`.crucible`** for their evolution (it also opens by itself when a choice comes up).
+
+**Essence and Evolution.** Every counted kill gives 10 Essence to each living player inside within 2,000 of it, and 5 more to the killer (double during a Rampage). An Alpha gives everyone 60 more, an Apex Predator 150. At **40, 130, 270 and 450** Essence the player evolves: one form of each path is offered (retail H5 transformations, with their own models and skill bars), or Defiance.
+
+| Stage | Fighter | Caster | Support | HP and damage |
+|---|---|---|---|---|
+| I Beast | Saber Tooth Tiger or Doll Blader | Veil Master | Heretic | x1.2 |
+| II Monster | Dragon Bomber, Lilim Knight, Golem Guardian or Oel Mahum | Inferno Drake | Unicorn or Grail Apostle | x1.5 |
+| III Legend | Zaken, Kechi, Gordon, Venom or Demon Prince | Anakim, Ranku or Divine Wizard | Divine Healer, Divine Knight or Divine Enchanter | x2 |
+| IV **Titan** | your Legend form and two other Legends | | | x3, giant (BIG_BODY), burning aura, Rampage |
+
+- **Defiance**: refuse the forms and stay yourself, with your own skills: +15% HP and damage for every refusal, on top of the stage. Defying at stage IV makes a **Defiant Titan**: yourself, giant.
+- **The Titan**: the aura burns every monster within 250 for 1% of its max HP every 2 s (0.2% for the Primordial). **Rampage** (`.crucible rampage`, good in a macro; once a minute): 10 s of +50% damage that splashes 30% onto the monsters within 200 of the target, double P. Def. and M. Def., +20% attack speed and double Essence.
+- **Mutations**: everyone inside is offered 1 of 3 when an Alpha, an Apex Predator or a hatchling dies, for the rest of the run: Horns (+20% P. Atk.), Arcane Gland (+20% M. Atk.), Adrenal Surge (+15% attack and casting speed), Thick Hide (+25% P./M. Def.), Wings (+25% speed), Predator's Eye (+30% critical rate), Hunger (heal 3% of max HP per kill), Regeneration (triple HP regeneration).
+- **The forms never leave the map**, like the Coliseum's passives: dying, going back or the map closing takes the form, the giant look, Rampage and every bonus off (and a sweep every second catches anyone who slips out). Coming back puts them on again. After *Transform Dispel*, `.crucible form` (or the button) takes the form again.
+
+**The Food Chain.** Every 40 s, the monster with the most meals that has another monster with no more meals within 800 eats it: the meal vanishes (it no longer counts toward the clear), the eater heals and grows (+40% HP, +12% attack, +5% defence per meal). **3 meals: an Alpha** (giant, "[Alpha]"), which drops the special drops, more often the more it ate. **6 meals: an Apex Predator**, which hunts the player with the most Essence. At most 12 meals a run, and none once 6 monsters or fewer are left. Every meal is announced, with where it happened.
+
+**The Primordial** (a Tyrannosaurus, x8 HP, x1.6 attack, x1.5 defence) rises once the valley is cleared, **+4% HP for every meal the field ate**. At 60% and 20% of its HP it lays **3 eggs** (Ancient Eggs, uncounted) at the edges of the field; each hatches after 20 s into a **hatchling Alpha** unless smashed. At 40% it goes into a **frenzy** (+25% attack and attack speed).
+
+**Rewards.** The drops are in the XML (the special group is the Alphas'). When the Primordial dies everyone inside gets **Primal Essence** (50116): 10, 12 if a Legend stood in the Crucible, 30 if a Titan did. **30 Primal Essence buy a Titan Scroll** (50117, `.crucible` outside the map, *Buy a Titan Scroll*). The **Titan Scroll** shows your last Titan form, giant, for 30 minutes in a town or another peace zone. It is looks only: the form is a non-combat copy (`data/stats/transformations/09xxx.xml`, id 9000 + the form's id, its `displayId` the real form), with no stats of its own. It ends when you leave the peace zone, use Transform Dispel, or the time runs out. A Defiant Titan is just giant. It needs a Titan reached once (player variable `CRUCIBLE_TITAN_FORM`).
+
+**Setting up its arena.** In game on Primeval Isle, type `//mapdevice`, *New map here*, give it the id **`primeval_isle`**, tick *Map Device*, place the fence and the entry, and under *Monsters that fill it* list the island's dinosaurs (Velociraptor, Ornithomimus, Deinonychus, Pachycephalosaurus, Tyrannosaurus...): they are made stronger by tier 7. Save. From then on the Crucible opens there.
 
 ### The Coliseum's passives
 
@@ -259,6 +285,7 @@ A saved map takes part at once: the next map item opened (of a tier it allows) m
 | `.hideout back` | From a map, back to the hideout (not while fighting). |
 | `.hideout leave` | From the hideout, back to where you came from. |
 | `.hideout quest` | The quest "A Map of Your Own". |
+| `.crucible` | The Primal Crucible: inside it your stage, Essence, Mutations and choices (`evolve <n>`, `mutate <n>`, `rampage`, `form`); outside, the Titan Scroll exchange (`exchange`). |
 
 GM commands (`//mapdevice`, the same access as `//tvt` for the page):
 
@@ -270,8 +297,8 @@ GM commands (`//mapdevice`, the same access as `//tvt` for the page):
 | `//mapdevice test <id> [tier] [medals]` | In your own hideout: open a map in that place for free, to try it. |
 | `//mapdevice give <tier> [count]` | Give maps to your target (or you). |
 | `//mapdevice unique [list]` | The unique maps. |
-| `//mapdevice unique give <COLISEUM\|VAULT\|OSSUARY\|DEN> [count]` | Give a unique map to your target (or you). |
-| `//mapdevice unique test <COLISEUM\|VAULT\|OSSUARY\|DEN>` | In your own hideout: open that unique map for free. |
+| `//mapdevice unique give <COLISEUM\|VAULT\|OSSUARY\|DEN\|CRUCIBLE> [count]` | Give a unique map to your target (or you). |
+| `//mapdevice unique test <COLISEUM\|VAULT\|OSSUARY\|DEN\|CRUCIBLE>` | In your own hideout: open that unique map for free. |
 | `//mapdevice pool <tier>` | The monsters a map of that tier may hold, with their strength and each stat against the standard monster of their level. |
 | `//mapdevice score` | The strength of your target, and which tiers it fits and drops. |
 | `//mapdevice runs` / `close <instance>` | The maps open right now / close one. |
