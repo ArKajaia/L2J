@@ -85,7 +85,7 @@
 		<set name="handler" val="MapItem" />
 	</item>
 	<!-- Unique maps (data/MapDevice.xml <uniqueMap>): always the same map, its own modifiers, twist, final encounter and drops. -->
-	<item id="50111" type="EtcItem" name="Unique Map: The Crimson Coliseum">
+	<item id="50111" type="EtcItem" name="Unique Map: The Crimson Coliseum (Tier 5)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -93,7 +93,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50112" type="EtcItem" name="Unique Map: The Gilded Vault">
+	<item id="50112" type="EtcItem" name="Unique Map: The Gilded Vault (Tier 4)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -101,7 +101,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50113" type="EtcItem" name="Unique Map: The Ossuary of Echoes">
+	<item id="50113" type="EtcItem" name="Unique Map: The Ossuary of Echoes (Tier 6)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -109,7 +109,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50114" type="EtcItem" name="Unique Map: The Gambler's Den">
+	<item id="50114" type="EtcItem" name="Unique Map: The Gambler's Den (Tier 5)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />
@@ -117,7 +117,7 @@
 		<set name="is_sellable" val="false" />
 		<set name="handler" val="MapItem" />
 	</item>
-	<item id="50115" type="EtcItem" name="Unique Map: The Primal Crucible">
+	<item id="50115" type="EtcItem" name="Unique Map: The Primal Crucible (Tier 5)">
 		<set name="icon" val="icon.etc_map_yellow_i00" />
 		<set name="displayId" val="5915" />
 		<set name="material" val="PAPER" />

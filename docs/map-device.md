@@ -150,7 +150,9 @@ Modifiers that draw a kind of monster the server has switched off (Mage, Thief, 
 
 Five map items that always open the same map: its modifiers are chosen for it (no medal, no hot zone effect), it has a twist of its own while the field is cleared, a **final encounter** once it is, and drops of its own for every monster of the map and for its boss. Defined in `data/MapDevice.xml` (`<uniqueMap>`: tier, monster count, arena, modifiers, boss npc and multipliers, drops); the twists and encounters are worked by `UniqueMapManager` (the Primal Crucible's by `PrimalCrucibleManager`). The first four are compared in the table below; the Primal Crucible has its own section.
 
-**Getting one**: completing a map of tier `UniqueMapMinTier` (5) or higher drops one at random `UniqueMapCompletionChance` (2%) + `UniqueMapChancePerMedal` (0.5%) per medal; each unique boss drops another at 10% (all in `MapDevice.ini`). Unique maps **only drop inside maps**, and count toward the map's limit of 3. Double-click it in the hideout (or *Insert* under **Unique Maps** at the device) to see what it holds and open it.
+**Getting one**: they are rare, **about one map in 100**. Completing a map of tier `UniqueMapMinTier` (5) or higher drops one at random `UniqueMapCompletionChance` (1%) + `UniqueMapChancePerMedal` (0%) per medal; each unique boss drops another at `UniqueMapBossChance` (1%) (all in `MapDevice.ini`). Unique maps **only drop inside maps**, and count toward the map's limit of 3. Double-click it in the hideout (or *Insert* under **Unique Maps** at the device) to see what it holds and open it.
+
+**Their difficulty** shows like a normal map's: every unique map has a tier (its monsters' levels and strength, and the tier's multipliers), in its item name ("Unique Map: The Crimson Coliseum (Tier 5)"), in the device's list and windows, and on its portals. Tiers: the Gilded Vault 4; the Crimson Coliseum, the Gambler's Den and the Primal Crucible 5; the Ossuary of Echoes 6.
 
 | | The Crimson Coliseum (50111) | The Gilded Vault (50112) | The Ossuary of Echoes (50113) | The Gambler's Den (50114) |
 |---|---|---|---|---|

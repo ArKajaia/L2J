@@ -172,7 +172,8 @@ public final class MapDeviceWindow
 			{
 				final UniqueMap unique = entry.getKey();
 				final String bg = shade ? " bgcolor=\"" + BG_CARD + "\"" : "";
-				sb.append("<tr><td width=280").append(bg).append(">").append(text(COLOR_UNIQUE, unique.name())).append(text(COLOR_MUTED, " x" + entry.getValue())).append("<br1>").append(text(COLOR_MUTED, "Tier " + unique.tier() + " monsters, " + unique.modifiers().size() + " fixed modifiers")).append("</td>");
+				final MapTier uniqueTier = MapDeviceData.getInstance().getTier(unique.tier());
+				sb.append("<tr><td width=280").append(bg).append(">").append(text(COLOR_VALUE, "Tier " + unique.tier())).append(" ").append(text(COLOR_UNIQUE, unique.name())).append(text(COLOR_MUTED, " x" + entry.getValue())).append("<br1>").append(uniqueTier != null ? text(COLOR_MUTED, "Lv. " + uniqueTier.minLevel() + "-" + uniqueTier.maxLevel() + ", ") + text(strengthColor(uniqueTier), MonsterStrength.describe(uniqueTier.minScore())) : "").append(text(COLOR_MUTED, ", " + unique.modifiers().size() + " fixed modifiers")).append("</td>");
 				sb.append("<td width=110").append(bg).append(" align=right><button value=\"Insert\" action=\"").append(COMMAND).append(" unique ").append(unique.type().name()).append("\" width=80 height=21 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr>");
 				shade = !shade;
 			}
@@ -191,14 +192,15 @@ public final class MapDeviceWindow
 	public static void showUniqueInsert(Player player, UniqueMap unique)
 	{
 		final MapTier tier = MapDeviceData.getInstance().getTier(unique.tier());
-		final StringBuilder sb = start(unique.name());
+		final StringBuilder sb = start(unique.name() + " (Tier " + unique.tier() + ")");
 		sb.append(text(COLOR_MUTED, unique.description())).append("<br><br>");
 
 		section(sb, "The Map");
 		table(sb);
 		if (tier != null)
 		{
-			row(sb, "Monsters", text(COLOR_VALUE, unique.monsterCount() + ", Lv. " + tier.minLevel() + "-" + tier.maxLevel()) + text(COLOR_MUTED, " (tier " + tier.tier() + ")"), false);
+			row(sb, "Difficulty", text(COLOR_VALUE, "Tier " + tier.tier()) + text(COLOR_MUTED, " (as a Map (Tier " + tier.tier() + "))"), true);
+			row(sb, "Monsters", text(COLOR_VALUE, unique.monsterCount() + ", Lv. " + tier.minLevel() + "-" + tier.maxLevel()), false);
 			row(sb, "Their strength", strength(tier), true);
 			row(sb, "Experience and drops", text(COLOR_POSITIVE, "x" + two(tier.reward() * unique.reward())), false);
 		}
@@ -357,7 +359,7 @@ public final class MapDeviceWindow
 		final boolean inMap = player.getInstanceId() == run.getInstanceId();
 		final boolean owner = player.getObjectId() == run.getOwnerId();
 		final UniqueMap unique = run.getUnique();
-		final StringBuilder sb = start(unique != null ? unique.name() : "Tier " + run.getTier().tier() + " Map");
+		final StringBuilder sb = start(unique != null ? unique.name() + " (Tier " + run.getTier().tier() + ")" : "Tier " + run.getTier().tier() + " Map");
 
 		sb.append("<table width=").append(CONTENT_WIDTH).append(" cellpadding=0 cellspacing=0><tr><td align=center>");
 		sb.append(text(COLOR_VALUE, run.getArena().name())).append(text(COLOR_MUTED, " - opened by " + run.getOwnerName()));
