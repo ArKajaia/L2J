@@ -160,9 +160,9 @@ public class MapDeviceConfig
 		GUARDIAN_EXTRA_MAPS = Math.max(0, config.getInt("GuardianExtraMaps", 1));
 		UNIQUE_MAPS_ENABLED = config.getBoolean("UniqueMapsEnabled", true);
 		UNIQUE_MAP_MIN_TIER = config.getInt("UniqueMapMinTier", 5);
-		UNIQUE_MAP_COMPLETION_CHANCE = Math.max(0, config.getDouble("UniqueMapCompletionChance", 2.0));
-		UNIQUE_MAP_CHANCE_PER_MEDAL = Math.max(0, config.getDouble("UniqueMapChancePerMedal", 0.5));
-		UNIQUE_MAP_BOSS_CHANCE = Math.max(0, config.getDouble("UniqueMapBossChance", 10.0));
+		UNIQUE_MAP_COMPLETION_CHANCE = Math.max(0, config.getDouble("UniqueMapCompletionChance", 1.0));
+		UNIQUE_MAP_CHANCE_PER_MEDAL = Math.max(0, config.getDouble("UniqueMapChancePerMedal", 0.0));
+		UNIQUE_MAP_BOSS_CHANCE = Math.max(0, config.getDouble("UniqueMapBossChance", 1.0));
 		GAMBLERS_DEN_MAX_ADENA = Math.max(0, config.getLong("GamblersDenMaxAdena", 150000000));
 
 		QUEST_ENABLED = config.getBoolean("MapQuestEnabled", true);

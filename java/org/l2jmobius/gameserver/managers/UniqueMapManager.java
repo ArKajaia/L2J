@@ -2033,7 +2033,7 @@ public class UniqueMapManager
 		final UniqueMap unique = uniques.get(Rnd.get(uniques.size()));
 		victim.dropOrAutoLoot(player, new ItemHolder(unique.itemId(), 1));
 		player.sendMessage(victim.getName() + " left behind a " + MapDeviceManager.getItemName(unique.itemId()) + "!");
-		player.sendPacket(new ExShowScreenMessage("Unique map: " + unique.name() + "!", 5000));
+		player.sendPacket(new ExShowScreenMessage("Unique map: " + unique.name() + " (Tier " + unique.tier() + ")!", 5000));
 	}
 
 	/**
